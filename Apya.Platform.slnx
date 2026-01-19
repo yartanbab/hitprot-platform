@@ -1,0 +1,35 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Apya.Platform.Application.Contracts/Apya.Platform.Application.Contracts.csproj" />
+    <Project Path="src/Apya.Platform.Application/Apya.Platform.Application.csproj" />
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    <Project Path="src/Apya.Platform.DbMigrator/Apya.Platform.DbMigrator.csproj" />
+    <Project Path="src/Apya.Platform.Domain.Shared/Apya.Platform.Domain.Shared.csproj" />
+    <Project Path="src/Apya.Platform.Domain/Apya.Platform.Domain.csproj" />
+    <Project Path="src/Apya.Platform.EntityFrameworkCore/Apya.Platform.EntityFrameworkCore.csproj" />
+    <Project Path="src/Apya.Platform.HttpApi.Client/Apya.Platform.HttpApi.Client.csproj" />
+    
+    
+    <Project Path="src/Apya.Platform.HttpApi/Apya.Platform.HttpApi.csproj" />
+    
+    
+    <Project Path="src/Apya.Platform.Web/Apya.Platform.Web.csproj" />
+  </Folder>
+  <Folder Name="/test/">
+    <Project Path="test/Apya.Platform.Application.Tests/Apya.Platform.Application.Tests.csproj" />
+    <Project Path="test/Apya.Platform.Domain.Tests/Apya.Platform.Domain.Tests.csproj" />
+    <Project Path="test/Apya.Platform.EntityFrameworkCore.Tests/Apya.Platform.EntityFrameworkCore.Tests.csproj" />
+    <Project Path="test/Apya.Platform.HttpApi.Client.ConsoleTestApp/Apya.Platform.HttpApi.Client.ConsoleTestApp.csproj" />
+    
+    <Project Path="test/Apya.Platform.TestBase/Apya.Platform.TestBase.csproj" />
+    <Project Path="test/Apya.Platform.Web.Tests/Apya.Platform.Web.Tests.csproj" />
+  </Folder>
+</Solution>
