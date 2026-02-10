@@ -8,9 +8,23 @@ public class PlatformPermissionDefinitionProvider : PermissionDefinitionProvider
 {
     public override void Define(IPermissionDefinitionContext context)
     {
-        var myGroup = context.AddGroup(PlatformPermissions.GroupName);
-        //Define your own permissions here. Example:
-        //myGroup.AddPermission(PlatformPermissions.MyPermission1, L("Permission:MyPermission1"));
+        var myGroup = context.AddGroup(PlatformPermissions.GroupName, L("Permission:Platform"));
+
+        // --- PROJE YETKİLERİ ---
+        var projectsPermission = myGroup.AddPermission(PlatformPermissions.Projects.Default, L("Permission:Projects"));
+        projectsPermission.AddChild(PlatformPermissions.Projects.Create, L("Permission:Projects.Create"));
+        projectsPermission.AddChild(PlatformPermissions.Projects.Edit, L("Permission:Projects.Edit"));
+        projectsPermission.AddChild(PlatformPermissions.Projects.Delete, L("Permission:Projects.Delete"));
+        projectsPermission.AddChild(PlatformPermissions.Projects.ViewBudget, L("Permission:Projects.ViewBudget"));
+        projectsPermission.AddChild(PlatformPermissions.Projects.ManageTeam, L("Permission:Projects.ManageTeam"));
+
+        // --- GÖREV (TASK) YETKİLERİ --- (Burası Eksik Olabilir)
+        var tasksPermission = myGroup.AddPermission(PlatformPermissions.Tasks.Default, L("Permission:Tasks"));
+        tasksPermission.AddChild(PlatformPermissions.Tasks.Create, L("Permission:Tasks.Create"));
+        tasksPermission.AddChild(PlatformPermissions.Tasks.Edit, L("Permission:Tasks.Edit"));
+        tasksPermission.AddChild(PlatformPermissions.Tasks.Delete, L("Permission:Tasks.Delete"));
+        tasksPermission.AddChild(PlatformPermissions.Tasks.Assign, L("Permission:Tasks.Assign"));
+        tasksPermission.AddChild(PlatformPermissions.Tasks.ChangeStatus, L("Permission:Tasks.ChangeStatus"));
     }
 
     private static LocalizableString L(string name)

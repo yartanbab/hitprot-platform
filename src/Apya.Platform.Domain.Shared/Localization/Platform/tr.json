@@ -1,9 +1,21 @@
 {
-  "culture": "tr",
-  "texts": {
-    "AppName": "Platform",
-    "Menu:Home": "Ana sayfa",
-    "Welcome": "Hoşgeldiniz",
-    "LongWelcomeMessage": "Uygulamaya hoşgeldiniz. Bu, ABP framework'ü üzerine bina edilmiş bir başlangıç projesidir. Daha fazla bilgi için abp.io adresini ziyaret edebilirsiniz."
-  }
+    "culture": "tr",
+    "texts": {
+        "Menu:Home": "Ana Sayfa",
+        "Permission:Platform": "Platform Yönetimi",
+
+        "Permission:Projects": "Proje Yönetimi",
+        "Permission:Projects.Create": "Proje Oluşturma",
+        "Permission:Projects.Edit": "Proje Düzenleme",
+        "Permission:Projects.Delete": "Proje Silme",
+        "Permission:Projects.ViewBudget": "Bütçe Görüntüleme",
+        "Permission:Projects.ManageTeam": "Ekip Yönetimi",
+
+        "Permission:Tasks": "Görev Yönetimi",
+        "Permission:Tasks.Create": "Görev Oluşturma",
+        "Permission:Tasks.Edit": "Görev Düzenleme",
+        "Permission:Tasks.Delete": "Görev Silme",
+        "Permission:Tasks.Assign": "Görev Atama",
+        "Permission:Tasks.ChangeStatus": "Durum Değiştirme"
+    }
 }

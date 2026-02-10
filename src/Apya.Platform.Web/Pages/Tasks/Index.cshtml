@@ -1,0 +1,26 @@
+﻿@page
+@using Apya.Platform.Web.Pages.Tasks
+@model IndexModel
+@section scripts
+{
+    <abp-script src="/Pages/Tasks/index.js" />
+}
+
+<abp-card>
+    <abp-card-header>
+        <abp-row>
+            <abp-column size-md="_6">
+                <abp-card-title>Görev Yönetimi</abp-card-title>
+            </abp-column>
+            <abp-column size-md="_6" class="text-end">
+                <abp-button id="NewTaskButton"
+                            text="Yeni Görev Ekle"
+                            icon="plus"
+                            button-type="Primary" />
+            </abp-column>
+        </abp-row>
+    </abp-card-header>
+    <abp-card-body>
+        <abp-table striped-rows="true" id="TasksTable"></abp-table>
+    </abp-card-body>
+</abp-card>

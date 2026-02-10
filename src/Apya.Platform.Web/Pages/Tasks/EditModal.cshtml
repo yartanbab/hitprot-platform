@@ -1,0 +1,281 @@
+﻿@page
+@using Apya.Platform.Web.Pages.Tasks
+@using Apya.Platform.Tasks
+@using Volo.Abp.AspNetCore.Mvc.UI.Bootstrap.TagHelpers.Modal
+@model EditModalModel
+@{
+    Layout = null;
+}
+
+<abp-modal size="Large">
+    <abp-modal-header title="Görev Detayları"></abp-modal-header>
+
+    <abp-modal-body>
+        <ul class="nav nav-tabs" id="taskTabs" role="tablist">
+            <li class="nav-item">
+                <a class="nav-link active" id="details-tab" data-bs-toggle="tab" href="#details" role="tab">Genel Bilgiler</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" id="subtasks-tab" data-bs-toggle="tab" href="#subtasks" role="tab">Alt Görevler</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" id="comments-tab" data-bs-toggle="tab" href="#comments" role="tab">Yorumlar</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" id="files-tab" data-bs-toggle="tab" href="#files" role="tab">Dosyalar</a>
+            </li>
+        </ul>
+
+        <div class="tab-content mt-3" id="taskTabsContent">
+
+            <div class="tab-pane fade show active" id="details" role="tabpanel">
+                <form asp-page="/Tasks/EditModal" method="post" id="EditTaskForm">
+                    <abp-input asp-for="Id" />
+                    <abp-input asp-for="Task.Title" label="Görev Başlığı" />
+                    <abp-input asp-for="Task.Description" type="textarea" label="Açıklama" rows="4" />
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <abp-input asp-for="Task.StartDate" type="date" label="Başlangıç" />
+                        </div>
+                        <div class="col-md-6">
+                            <abp-input asp-for="Task.DueDate" type="date" label="Bitiş" />
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <abp-select asp-for="Task.Priority" label="Öncelik" />
+                        </div>
+                        <div class="col-md-6">
+                            <abp-select asp-for="Task.Status" label="Durum" />
+                        </div>
+                    </div>
+
+                    <abp-select asp-for="Task.AssigneeId" asp-items="Model.UserList" label="Sorumlu Kişi" />
+
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-3">
+                        <button type="submit" class="btn btn-primary"><i class="fa fa-save"></i> Değişiklikleri Kaydet</button>
+                    </div>
+                </form>
+            </div>
+
+            <div class="tab-pane fade" id="subtasks" role="tabpanel">
+                <div class="input-group mb-3">
+                    <input type="text" id="NewSubTaskTitle" class="form-control" placeholder="Yeni alt görev yaz...">
+                    <button class="btn btn-success" type="button" id="BtnAddSubTask">Hızlı Ekle</button>
+                </div>
+
+                <div class="list-group" id="SubTaskList">
+                    @if (Model.SubTasks != null && Model.SubTasks.Any())
+                    {
+                    @foreach (var sub in Model.SubTasks)
+                        {
+                    <div class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                        <div>
+                            @if(sub.Status == Apya.Platform.Tasks.TaskStatus.Done) { <i class="fa fa-check-circle text-success me-2"></i> }
+                                    else { <i class="fa fa-circle-o text-secondary me-2"></i> }
+
+                            <strong>@sub.Title</strong>
+
+                            <span class="badge bg-secondary ms-2">@sub.Status</span>
+                            @if(!string.IsNullOrEmpty(sub.AssigneeName))
+                                    {
+                            <span class="badge bg-info text-dark ms-1"><i class="fa fa-user"></i> @sub.AssigneeName</span>
+                                    }
+                        </div>
+
+                        <div class="btn-group" role="group">
+                            <button type="button" class="btn btn-sm btn-outline-primary edit-subtask-btn"
+                                    data-id="@sub.Id" title="Detaylı Düzenle">
+                                <i class="fa fa-edit"></i>
+                            </button>
+
+                            <button type="button" class="btn btn-sm btn-outline-danger delete-subtask-btn"
+                                    data-id="@sub.Id" title="Sil">
+                                <i class="fa fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                        }
+                    }
+                    else
+                    {
+                    <div class="text-center text-muted p-3">Henüz alt görev yok.</div>
+                    }
+                </div>
+            </div>
+
+            <div class="tab-pane fade" id="comments" role="tabpanel">
+                <div class="input-group mb-3">
+                    <input type="text" id="NewCommentText" class="form-control" placeholder="Bir yorum yaz...">
+                    <button class="btn btn-primary" type="button" id="BtnAddComment"><i class="fa fa-paper-plane"></i> Gönder</button>
+                </div>
+                <div class="list-group list-group-flush" id="CommentList">
+                    @if (Model.Comments != null && Model.Comments.Any())
+                    {
+                    @foreach (var comment in Model.Comments)
+                        {
+                    <div class="list-group-item">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1 fw-bold">@comment.AuthorName</h6>
+                            <small class="text-muted">@comment.CreationTime.ToShortDateString() @comment.CreationTime.ToShortTimeString()</small>
+                        </div>
+                        <p class="mb-1">@comment.Text</p>
+                    </div>
+                        }
+                    }
+                    else
+                    {
+                    <div class="text-center text-muted p-3">Henüz yorum yok.</div>
+                    }
+                </div>
+            </div>
+
+            <div class="tab-pane fade" id="files" role="tabpanel">
+                <div class="input-group mb-3">
+                    <input type="file" class="form-control" id="FileInput">
+                    <button class="btn btn-outline-secondary" type="button" id="BtnUploadFile">Yükle</button>
+                </div>
+
+                <ul class="list-group" id="FileList">
+                    @if (Model.Attachments != null && Model.Attachments.Any())
+                    {
+                    @foreach (var file in Model.Attachments)
+                        {
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                            <i class="fa fa-file me-2"></i>
+                            <a href="/file/get/@file.FileName" target="_blank" class="text-decoration-none fw-bold">
+                                @file.FileName
+                                <i class="fa fa-external-link-alt ms-1 small"></i>
+                            </a>
+                            <small class="text-muted ms-2">(@(file.FileSize / 1024) KB) - @file.UploaderName</small>
+                        </div>
+                        <span class="text-muted small">@file.CreationTime.ToShortDateString()</span>
+                    </li>
+                        }
+                    }
+                    else
+                    {
+                    <div class="text-center text-muted p-3">Henüz dosya yok.</div>
+                    }
+                </ul>
+            </div>
+
+        </div>
+    </abp-modal-body>
+</abp-modal>
+
+<script>
+    // --- ALT GÖREV İŞLEMLERİ ---
+
+    // 1. Hızlı Ekle Butonu
+    $('#BtnAddSubTask').click(function () {
+        var title = $('#NewSubTaskTitle').val();
+        var parentId = '@Model.Id';
+        if (!title) return;
+
+        abp.ajax({
+            type: 'POST',
+            url: '/Tasks/EditModal?handler=AddSubTask',
+            data: { parentId: parentId, subTaskTitle: title }
+        }).then(function () {
+            abp.notify.success('Alt görev eklendi!');
+            // Listeye manuel eklemek yerine, sayfanın yenilenmesini tercih edebilirsiniz
+            // veya burada HTML append yapabilirsiniz. Şimdilik basit append:
+            $('#SubTaskList').append('<div class="list-group-item">' + title + ' <span class="badge bg-warning">Todo</span></div>');
+            $('#NewSubTaskTitle').val('');
+        });
+    });
+
+    // 2. Düzenle Butonu (İç İçe Modal - Süper Özellik)
+    $(document).on('click', '.edit-subtask-btn', function () {
+        var subTaskId = $(this).data('id');
+
+        // Yeni bir Modal Manager oluşturuyoruz
+        // Bu, mevcut modalın üzerine ikinci bir katman olarak açılacak
+        var subTaskModal = new abp.ModalManager({
+            viewUrl: abp.appPath + 'Tasks/EditModal'
+        });
+
+        subTaskModal.open({ id: subTaskId });
+    });
+
+    // 3. Sil Butonu
+    $(document).on('click', '.delete-subtask-btn', function () {
+        var subTaskId = $(this).data('id');
+        var $li = $(this).closest('.list-group-item');
+
+        abp.message.confirm('Bu alt görevi silmek istediğinize emin misiniz?', function (confirmed) {
+            if (confirmed) {
+                // Task servisini çağır (Delete metodu standarttır)
+                // Not: JS servis adını kontrol edin, genelde apya.platform.tasks.taskAppService olur
+                apya.platform.tasks.task.delete(subTaskId).then(function () {
+                    abp.notify.info('Silindi');
+                    $li.remove();
+                });
+            }
+        });
+    });
+
+    // --- YORUM EKLEME ---
+    $('#BtnAddComment').click(function () {
+        var text = $('#NewCommentText').val();
+        var taskId = '@Model.Id';
+        if (!text) return;
+        abp.ajax({
+            type: 'POST',
+            url: '/Tasks/EditModal?handler=AddComment',
+            data: { taskId: taskId, commentText: text }
+        }).then(function () {
+            abp.notify.success('Yorum gönderildi!');
+            var now = new Date().toLocaleString();
+            var newCommentHtml = `
+                <div class="list-group-item bg-light">
+                    <div class="d-flex w-100 justify-content-between">
+                        <h6 class="mb-1 fw-bold">Ben (Az önce)</h6>
+                        <small class="text-muted">${now}</small>
+                    </div>
+                    <p class="mb-1">${text}</p>
+                </div>`;
+            $('#CommentList').prepend(newCommentHtml);
+            $('#NewCommentText').val('');
+        });
+    });
+
+    // --- DOSYA YÜKLEME ---
+    $('#BtnUploadFile').click(function () {
+        var fileInput = document.getElementById('FileInput');
+        var file = fileInput.files[0];
+        var taskId = '@Model.Id';
+
+        if (!file) {
+            abp.notify.warn('Lütfen bir dosya seçin.');
+            return;
+        }
+
+        var formData = new FormData();
+        formData.append('file', file);
+        formData.append('taskId', taskId);
+
+        $.ajax({
+            url: '/Tasks/EditModal?handler=UploadFile',
+            type: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            headers: {
+                'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
+            },
+            success: function () {
+                abp.notify.success('Dosya yüklendi!');
+                $('#FileList').append('<li class="list-group-item"><i class="fa fa-file me-2"></i> ' + file.name + ' <span class="badge bg-success">Yeni</span></li>');
+                fileInput.value = '';
+            },
+            error: function () {
+                abp.notify.error('Dosya yüklenirken hata oluştu.');
+            }
+        });
+    });
+</script>

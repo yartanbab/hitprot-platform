@@ -1,0 +1,46 @@
+﻿@page
+@using Apya.Platform.Web.Pages.Tasks
+@using Apya.Platform.Tasks
+@using Volo.Abp.AspNetCore.Mvc.UI.Bootstrap.TagHelpers.Modal
+@model CreateModalModel
+@{
+    Layout = null;
+}
+
+<abp-modal>
+    <abp-modal-header title="Yeni Görev Oluştur"></abp-modal-header>
+
+    <abp-modal-body>
+        <form asp-page="/Tasks/CreateModal" method="post">
+
+            <abp-input asp-for="Task.Title" label="Görev Başlığı" />
+            <abp-input asp-for="Task.Description" type="textarea" label="Açıklama" />
+
+            <div class="row">
+                <div class="col-md-6">
+                    <abp-input asp-for="Task.StartDate" type="date" label="Başlangıç" />
+                </div>
+                <div class="col-md-6">
+                    <abp-input asp-for="Task.DueDate" type="date" label="Bitiş" />
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6">
+                    <abp-select asp-for="Task.Priority" label="Öncelik" />
+                </div>
+                <div class="col-md-6">
+                    <abp-select asp-for="Task.Status" label="Durum" />
+                </div>
+            </div>
+
+            <abp-select asp-for="Task.AssigneeId" asp-items="Model.UserList" label="Sorumlu Kişi" />
+
+            <div class="modal-footer" style="padding-right: 0; padding-bottom: 0;">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Vazgeç</button>
+                <button type="submit" class="btn btn-primary"><i class="fa fa-check"></i> Kaydet</button>
+            </div>
+
+        </form>
+    </abp-modal-body>
+</abp-modal>

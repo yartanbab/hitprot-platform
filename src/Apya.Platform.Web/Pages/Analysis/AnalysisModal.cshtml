@@ -1,0 +1,49 @@
+﻿@page
+@using Apya.Platform.Projects.Dtos
+@using Apya.Platform.Web.Pages.Analysis
+@using Volo.Abp.AspNetCore.Mvc.UI.Bootstrap.TagHelpers.Modal
+@model AnalysisModalModel
+@{
+    Layout = null;
+}
+
+<abp-modal>
+    <abp-modal-header title="Proje Analiz Raporu"></abp-modal-header>
+
+    <abp-modal-body>
+        @if (Model.Analysis != null)
+        {
+        <div class="text-center mb-4">
+            <h1 class="display-4 fw-bold @(Model.Analysis.SuccessScore >= 70 ? "text-success" : "text-warning")">
+                @Model.Analysis.SuccessScore
+            </h1>
+            <span class="text-muted">Başarı Skoru</span>
+        </div>
+
+        <div class="mb-3">
+            <h6 class="fw-bold">📝 Yönetici Özeti</h6>
+            <p class="text-justify">@Model.Analysis.Summary</p>
+        </div>
+
+        <div class="mb-3">
+            <h6 class="fw-bold text-danger">⚠️ Tespit Edilen Riskler</h6>
+            <p>@Model.Analysis.Risks</p>
+        </div>
+
+        @if (!string.IsNullOrEmpty(Model.Analysis.SuggestedTasksJson))
+            {
+        <div class="alert alert-info">
+            <i class="fa fa-info-circle"></i> Bu analiz sonucunda otomatik görev önerileri oluşturulmuştur.
+        </div>
+            }
+        }
+        else
+        {
+        <div class="alert alert-warning">
+            Bu proje için henüz bir analiz yapılmamış.
+        </div>
+        }
+    </abp-modal-body>
+
+    <abp-modal-footer buttons="@(AbpModalButtons.Close)"></abp-modal-footer>
+</abp-modal>

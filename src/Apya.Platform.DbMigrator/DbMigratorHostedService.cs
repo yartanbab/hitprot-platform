@@ -4,9 +4,9 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Apya.Platform.Data;
-using Serilog;
 using Volo.Abp;
 using Volo.Abp.Data;
+using Serilog;
 
 namespace Apya.Platform.DbMigrator;
 
@@ -23,20 +23,22 @@ public class DbMigratorHostedService : IHostedService
 
     public async Task StartAsync(CancellationToken cancellationToken)
     {
+        // DİKKAT: Aşağıdaki 'PlatformDbMigratorModule' ismi 1. dosya ile aynı olmalı
         using (var application = await AbpApplicationFactory.CreateAsync<PlatformDbMigratorModule>(options =>
         {
-           options.Services.ReplaceConfiguration(_configuration);
-           options.UseAutofac();
-           options.Services.AddLogging(c => c.AddSerilog());
-           options.AddDataMigrationEnvironment();
+            options.Services.ReplaceConfiguration(_configuration);
+            options.UseAutofac();
+            options.Services.AddLogging(c => c.AddSerilog());
         }))
         {
             await application.InitializeAsync();
 
-            await application
-                .ServiceProvider
-                .GetRequiredService<PlatformDbMigrationService>()
-                .MigrateAsync();
+            using (var scope = application.ServiceProvider.CreateScope())
+            {
+                await application.ServiceProvider
+                    .GetRequiredService<ApyaPlatformDbMigrationService>()
+                    .MigrateAsync();
+            }
 
             await application.ShutdownAsync();
 

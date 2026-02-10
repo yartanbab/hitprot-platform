@@ -106,7 +106,7 @@ public class PlatformWebModule : AbpModule
 
         ConfigureAuthentication(context);
         ConfigureUrls(configuration);
-        ConfigureBundles();
+        ConfigureBundles(context);
         ConfigureVirtualFileSystem(hostingEnvironment);
         ConfigureNavigationServices();
         ConfigureAutoApiControllers();
@@ -132,17 +132,30 @@ public class PlatformWebModule : AbpModule
         });
     }
 
-    private void ConfigureBundles()
+    private void ConfigureBundles(ServiceConfigurationContext context)
     {
         Configure<AbpBundlingOptions>(options =>
         {
+            // Stil (CSS) dosyalarý ayarý (Zaten vardýr, dokunmayýn)
             options.StyleBundles.Configure(
                 LeptonXLiteThemeBundles.Styles.Global,
                 bundle =>
                 {
-                    bundle.AddFiles("/global-styles.css");
+                    bundle.AddFiles("/global.css");
                 }
             );
+
+            // --- BURAYI EKLEYÝN ---
+            // Script (JS) dosyalarý ayarý
+            options.ScriptBundles.Configure(
+                LeptonXLiteThemeBundles.Scripts.Global,
+                bundle =>
+                {
+                    // Oluþturduðumuz dosyayý buraya ekliyoruz
+                    bundle.AddFiles("/js/jquery-fix.js");
+                }
+            );
+            // ----------------------
         });
     }
 
@@ -173,7 +186,9 @@ public class PlatformWebModule : AbpModule
     {
         Configure<AbpAspNetCoreMvcOptions>(options =>
         {
+            // Hem uygulama hem de kontrat katmanlarýný tarýyoruz
             options.ConventionalControllers.Create(typeof(PlatformApplicationModule).Assembly);
+            options.ConventionalControllers.Create(typeof(PlatformApplicationContractsModule).Assembly);
         });
     }
 

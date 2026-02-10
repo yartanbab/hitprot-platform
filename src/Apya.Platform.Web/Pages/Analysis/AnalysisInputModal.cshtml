@@ -1,0 +1,234 @@
+﻿@*@page
+    @model Apya.Platform.Web.Pages.AnalysisModalModel
+    @{
+        Layout = null;
+        var score = Model.Analysis?.FinalScore ?? 0;
+        string scoreColor = score >= 70 ? "success" : (score >= 50 ? "warning" : "danger");
+    }
+
+    <div class="modal-header bg-dark text-white">
+        <h5 class="modal-title"><i class="fa fa-trophy text-warning"></i> Analiz Sonucu ve Hibeler</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+    </div>
+
+    <div class="modal-body">
+
+        @if (Model.Analysis == null)
+        {
+        <div class="alert alert-warning text-center">
+            <i class="fa fa-exclamation-triangle fa-2x mb-2"></i><br />
+            Henüz analiz verisi girişi yapılmamış.<br />
+            <small>Lütfen önce "Veri Gir / Puanla" butonunu kullanın.</small>
+        </div>
+        }
+        else
+        {
+        <div class="text-center p-4 mb-3 rounded border" style="background-color: #f8f9fa;">
+            <h6 class="text-muted text-uppercase fw-bold">Proje Uygunluk Skoru</h6>
+            <div class="display-1 fw-bold text-@scoreColor">
+                @score.ToString("0.0")
+            </div>
+            <div class="progress mt-2" style="height: 10px;">
+                <div class="progress-bar bg-@scoreColor" role="progressbar" style="width: @((int)score)%;"></div>
+            </div>
+            <p class="mt-2 mb-0 text-muted">
+                @(score >= 70 ? "Harika! Projeniz hibe almaya çok uygun." : "Geliştirilmesi gereken alanlar var.")
+            </p>
+        </div>
+
+        <h6 class="border-bottom pb-2 mb-3"><i class="fa fa-gift text-primary"></i> Eşleşen Hibeler</h6>
+
+        @if (Model.SuitableGrants.Any())
+            {
+        <div class="list-group">
+            @foreach (var grant in Model.SuitableGrants)
+                    {
+            <div class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="d-flex w-100 justify-content-between">
+                        <h6 class="mb-1 fw-bold text-primary">@grant.Name</h6>
+                    </div>
+                    <small class="text-muted">Min Puan: @grant.MinMatchScore | Max Destek: @grant.MaxAmount.ToString("N0") TL</small>
+                </div>
+                <span class="badge bg-success rounded-pill"><i class="fa fa-check"></i> Uygun</span>
+            </div>
+                    }
+        </div>
+            }
+            else
+            {
+        <div class="alert alert-secondary">
+            <i class="fa fa-search"></i> Şu anki puanınızla eşleşen bir hibe programı bulunamadı.
+        </div>
+            }
+        }
+
+    </div>
+
+    <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Kapat</button>
+    </div>*@
+
+
+
+
+
+@page
+@using System.Text.Json
+@model Apya.Platform.Web.Pages.AnalysisInputModalModel
+@{
+    Layout = null;
+    var jsonVeri = Model.ExistingAnalysis != null
+        ? JsonSerializer.Serialize(Model.ExistingAnalysis)
+        : "null";
+}
+
+<style>
+    .modal-body label {
+        color: #333 !important;
+        font-weight: 600;
+        font-size: 0.9rem;
+    }
+
+    .modal-body input, .modal-body select {
+        background-color: #fff !important;
+        color: #000 !important;
+        border: 1px solid #ced4da !important;
+    }
+</style>
+
+<input type="hidden" id="hidden-project-id" value="@Model.ProjectId" />
+
+<abp-modal size="Large">
+    <abp-modal-header title="📈 Analiz Verisi Girişi"></abp-modal-header>
+
+    <abp-modal-body>
+        <div class="row">
+            <div class="col-md-6">
+                <div class="mb-3">
+                    <label class="form-label">Sektör (NACE)</label>
+                    <input type="text" id="inp-sector" class="form-control" placeholder="Örn: Yazılım" />
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Şehir</label>
+                    <input type="text" id="inp-city" class="form-control" placeholder="İstanbul" />
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Çalışan Sayısı</label>
+                    <input type="number" id="inp-employees" class="form-control" value="5" />
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Yıllık Ciro (TL)</label>
+                    <input type="number" id="inp-turnover" class="form-control" value="1000000" />
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="mb-3">
+                    <label class="form-label">Proje Tipi</label>
+                    <select id="inp-type" class="form-select">
+                        <option value="0">SaaS Platform</option>
+                        <option value="1">Mobil Uygulama</option>
+                        <option value="2">IoT / Donanım</option>
+                        <option value="3">Diğer</option>
+                    </select>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">İhracat</label>
+                    <select id="inp-export" class="form-select">
+                        <option value="false">Hayır</option>
+                        <option value="true">Evet</option>
+                    </select>
+                </div>
+
+                <div class="p-3 bg-light border rounded mt-2">
+                    <label class="form-label text-primary mb-1">Yapay Zeka (1-10)</label>
+                    <div class="d-flex align-items-center">
+                        <input type="range" id="inp-ai" class="form-range flex-grow-1 me-2" min="1" max="10" value="1" oninput="this.nextElementSibling.value = this.value">
+                        <span class="badge bg-primary">1</span>
+                    </div>
+                </div>
+
+                <div class="p-3 bg-light border rounded mt-2">
+                    <label class="form-label text-primary mb-1">Teknik Yetkinlik (1-10)</label>
+                    <div class="d-flex align-items-center">
+                        <input type="range" id="inp-tech" class="form-range flex-grow-1 me-2" min="1" max="10" value="5" oninput="this.nextElementSibling.value = this.value">
+                        <span class="badge bg-primary">5</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </abp-modal-body>
+
+    <abp-modal-footer>
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Vazgeç</button>
+        <button type="button" id="btn-save-analysis" class="btn btn-primary"><i class="fa fa-calculator"></i> Kaydet ve Puanla</button>
+    </abp-modal-footer>
+</abp-modal>
+
+
+<script>
+    (function ($) {
+        var $btnSave = $('#btn-save-analysis');
+
+        $(document).ready(function() {
+            var existingData = @Html.Raw(jsonVeri);
+
+            if (existingData) {
+                $('#inp-sector').val(existingData.NaceSector);
+                $('#inp-city').val(existingData.City);
+                $('#inp-employees').val(existingData.EmployeeCount);
+                $('#inp-turnover').val(existingData.AnnualTurnover);
+
+                $('#inp-type').val(existingData.ProjectType);
+                $('#inp-export').val(existingData.ExportStatus.toString().toLowerCase());
+
+                $('#inp-ai').val(existingData.AiLevel).trigger('input');
+                $('#inp-ai').next('span').text(existingData.AiLevel);
+
+                $('#inp-tech').val(existingData.TechCompetenceLevel).trigger('input');
+                $('#inp-tech').next('span').text(existingData.TechCompetenceLevel);
+            }
+        });
+
+        $btnSave.off('click').on('click', function () {
+            var $btn = $(this);
+
+            var inputData = {
+                projectId: $('#hidden-project-id').val(),
+                naceSector: $('#inp-sector').val(),
+                city: $('#inp-city').val(),
+                employeeCount: parseInt($('#inp-employees').val()) || 0,
+                annualTurnover: parseFloat($('#inp-turnover').val()) || 0,
+                projectType: parseInt($('#inp-type').val()),
+                exportStatus: $('#inp-export').val() === 'true',
+                aiLevel: parseInt($('#inp-ai').val()),
+                techCompetenceLevel: parseInt($('#inp-tech').val()),
+                creationMethod: 0,
+                complianceScore: 5,
+                capacityScore: 5,
+                impactScore: 5
+            };
+
+            if (!inputData.naceSector || !inputData.city) {
+                abp.notify.warn('Lütfen Sektör ve Şehir bilgilerini giriniz.');
+                return;
+            }
+
+            $btn.prop('disabled', true).html('<i class="fa fa-cog fa-spin"></i> Hesaplanıyor...');
+
+            apya.platform.application.projects.project
+                .addAnalysis(inputData)
+                .then(function () {
+                    abp.notify.success('Analiz Başarıyla Kaydedildi!');
+                    $btn.closest('.modal').modal('hide');
+                })
+                .catch(function (err) {
+                    abp.notify.error('Hata oluştu.');
+                    console.error(err);
+                    $btn.prop('disabled', false).html('<i class="fa fa-calculator"></i> Kaydet ve Puanla');
+                });
+        });
+    })(jQuery);
+</script>

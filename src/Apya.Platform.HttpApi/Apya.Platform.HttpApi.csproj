@@ -10,6 +10,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Apya.Platform.Application.Contracts\Apya.Platform.Application.Contracts.csproj" />
+	<ProjectReference Include="..\Apya.Platform.Application\Apya.Platform.Application.csproj" />
   </ItemGroup>
 
   <ItemGroup>

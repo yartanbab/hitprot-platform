@@ -8,8 +8,6 @@ public class PlatformTestDataSeedContributor : IDataSeedContributor, ITransientD
 {
     public Task SeedAsync(DataSeedContext context)
     {
-        /* Seed additional test data... */
-
         return Task.CompletedTask;
     }
 }

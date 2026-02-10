@@ -34,6 +34,29 @@ public class PlatformMenuContributor : IMenuContributor
             )
         );
 
+        // --- PROJELER MENÜSÜ DÜZELTMESİ ---
+        context.Menu.AddItem(
+            new ApplicationMenuItem(
+                "Platform.Projects",    // Menü ID
+                l["Permission:Projects"], // Görünen İsim
+                icon: "fa fa-rocket",
+
+                // ESKİSİ (Hatalı): url: "/Projects"
+                // YENİSİ (Doğru):  url: "/" 
+                url: "/"
+            )
+        );
+
+        // "Tasks" menü öğesi
+        context.Menu.AddItem(
+            new ApplicationMenuItem(
+                "Apya.Platform.Tasks", // Benzersiz iç isim
+                "Görev Yönetimi",      // Ekranda görünecek isim (L10n ile de yapılabilir ama şimdilik düz yazalım)
+                icon: "fa fa-tasks",   // FontAwesome ikonu
+                url: "/Tasks"          // Tıklayınca gideceği adres
+            )
+        );
+
         if (MultiTenancyConsts.IsEnabled)
         {
             administration.SetSubItemOrder(TenantManagementMenuNames.GroupName, 1);

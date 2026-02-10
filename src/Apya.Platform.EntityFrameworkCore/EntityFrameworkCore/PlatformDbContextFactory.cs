@@ -6,14 +6,11 @@ using Microsoft.Extensions.Configuration;
 
 namespace Apya.Platform.EntityFrameworkCore;
 
-/* This class is needed for EF Core console commands
- * (like Add-Migration and Update-Database commands) */
 public class PlatformDbContextFactory : IDesignTimeDbContextFactory<PlatformDbContext>
 {
     public PlatformDbContext CreateDbContext(string[] args)
     {
-        PlatformEfCoreEntityExtensionMappings.Configure();
-
+        // Connection string'i DbMigrator veya HttpApi içindeki appsettings.json'dan okur
         var configuration = BuildConfiguration();
 
         var builder = new DbContextOptionsBuilder<PlatformDbContext>()
