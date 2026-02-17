@@ -1,25 +1,14 @@
-﻿// jQuery 3.0+ uyumluluk yaması ($.isFunction hatasını giderir)
-if (typeof $.isFunction !== 'function') {
-    $.isFunction = function (obj) {
-        return typeof obj === "function";
-    };
-}
-
-$(function () {
+﻿$(function () {
     var l = abp.localization.getResource('Platform');
-
-    // Konsol ağacına göre kesinleşen adres
     var projectService = apya.platform.application.projects.project;
 
-    var createModal = new abp.ModalManager(abp.appPath + 'CreateModal');
-    var analysisInputModal = new abp.ModalManager(abp.appPath + 'AnalysisInputModal');
-    var analysisResultModal = new abp.ModalManager(abp.appPath + 'AnalysisModal');
+    var createModal = new abp.ModalManager(abp.appPath + 'Projects/CreateModal');
 
     var dataTable = $('#ProjectsTable').DataTable(
         abp.libs.datatables.normalizeConfiguration({
             serverSide: true,
             paging: true,
-            order: [[1, "asc"]],
+            order: [[2, "asc"]], // Sıralamayı Proje Adı sütununa göre ayarladık
             searching: false,
             scrollX: true,
             ajax: abp.libs.datatables.createAjax(projectService.getList),
@@ -31,25 +20,19 @@ $(function () {
                             {
                                 text: "📂 Projeye Git / Görevler",
                                 action: function (data) {
-                                    window.location.href = "/ProjectDetails/" + data.record.id;
-                                }
-                            },
-                            {
-                                text: "➕ Veri Gir / Puanla",
-                                action: function (data) {
-                                    analysisInputModal.open({ projectId: data.record.id });
-                                }
-                            },
-                            {
-                                text: "🏆 Sonuç Gör",
-                                visible: function (data) {
-                                    return true;
-                                },
-                                action: function (data) {
-                                    analysisResultModal.open({ projectId: data.record.id });
+                                    window.location.href = "/Projects/ProjectDetails/" + data.record.id;
                                 }
                             }
                         ]
+                    }
+                },
+                {
+                    title: "Müşteri",
+                    data: "tenantName",
+                    // Yeni ABP mimarisine uygun kullanım (Root Admin kontrolü)
+                    visible: (!abp.currentTenant || !abp.currentTenant.id),
+                    render: function (data) {
+                        return data ? '<span class="text-info fw-bold">' + data + '</span>' : '<span class="text-muted">Platform (Host)</span>';
                     }
                 },
                 {
@@ -75,6 +58,7 @@ $(function () {
                     title: "Oluşturulma Tarihi",
                     data: "creationTime",
                     render: function (data) {
+                        if (!data) return "—";
                         return luxon
                             .DateTime
                             .fromISO(data, { locale: abp.localization.currentCulture.name })
@@ -92,6 +76,5 @@ $(function () {
 
     createModal.onResult(function () {
         dataTable.ajax.reload();
-        abp.notify.success('Proje başarıyla oluşturuldu!');
     });
 });

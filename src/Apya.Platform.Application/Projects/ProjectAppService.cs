@@ -7,14 +7,16 @@ using Microsoft.AspNetCore.Authorization;
 using Volo.Abp.Application.Dtos;
 using Volo.Abp.Application.Services;
 using Volo.Abp.Domain.Repositories;
-using Volo.Abp.Guids;
 using Apya.Platform.Projects;
 using Apya.Platform.Projects.Dtos;
 using Apya.Platform.Grants;
 using Apya.Platform.Grants.Dtos;
+using Volo.Abp.MultiTenancy;
+using Volo.Abp.TenantManagement; // ITenantStore için gerekli kütüphane
 
 namespace Apya.Platform.Application.Projects;
 
+[Authorize]
 public class ProjectAppService :
     CrudAppService<
         Project,
@@ -26,27 +28,33 @@ public class ProjectAppService :
 {
     private readonly ProjectManager _projectManager;
     private readonly IRepository<Grant, Guid> _grantRepository;
-    private readonly IRepository<ProjectTask, Guid> _taskRepository;
     private readonly IRepository<ProjectAttachment, Guid> _projectAttachmentRepository;
+    private readonly ITenantStore _tenantStore; // Müşteri isimlerini bulmak için servis
 
     public ProjectAppService(
         IRepository<Project, Guid> repository,
         ProjectManager projectManager,
         IRepository<Grant, Guid> grantRepository,
-        IRepository<ProjectTask, Guid> taskRepository,
-        IRepository<ProjectAttachment, Guid> projectAttachmentRepository)
+        IRepository<ProjectAttachment, Guid> projectAttachmentRepository,
+        ITenantStore tenantStore) // Constructor'a eklendi
         : base(repository)
     {
         _projectManager = projectManager;
         _grantRepository = grantRepository;
-        _taskRepository = taskRepository;
         _projectAttachmentRepository = projectAttachmentRepository;
+        _tenantStore = tenantStore;
     }
 
     // --- CREATE ---
     public override async Task<ProjectDto> CreateAsync(CreateProjectDto input)
     {
-        var project = await _projectManager.CreateAsync(input.GrantId, input.Name, input.Code, input.Description ?? "");
+        var project = await _projectManager.CreateAsync(
+            input.GrantId,
+            input.Name,
+            input.Code,
+            input.Description ?? ""
+        );
+
         await Repository.InsertAsync(project);
         return ObjectMapper.Map<Project, ProjectDto>(project);
     }
@@ -54,22 +62,43 @@ public class ProjectAppService :
     // --- GET LIST ---
     public override async Task<PagedResultDto<ProjectDto>> GetListAsync(PagedAndSortedResultRequestDto input)
     {
-        var totalCount = await Repository.GetCountAsync();
-        var query = await Repository.GetQueryableAsync();
+        // Root Admin (Host) için tenant filtresini kapatıyoruz
+        using (CurrentTenant.Id == null ? DataFilter.Disable<IMultiTenant>() : null)
+        {
+            var queryable = await Repository.GetQueryableAsync();
 
-        if (!input.Sorting.IsNullOrWhiteSpace()) query = query.OrderBy(input.Sorting);
-        else query = query.OrderBy(p => p.Name);
+            var query = queryable
+                .OrderBy(input.Sorting.IsNullOrWhiteSpace() ? "Name asc" : input.Sorting)
+                .PageBy(input.SkipCount, input.MaxResultCount);
 
-        query = query.Skip(input.SkipCount).Take(input.MaxResultCount);
-        var items = await AsyncExecuter.ToListAsync(query);
+            var totalCount = await Repository.GetCountAsync();
+            var items = await AsyncExecuter.ToListAsync(query);
 
-        return new PagedResultDto<ProjectDto>(
-            totalCount,
-            ObjectMapper.Map<List<Project>, List<ProjectDto>>(items)
-        );
+            var dtos = ObjectMapper.Map<List<Project>, List<ProjectDto>>(items);
+
+            // SADECE ROOT ADMIN İÇİN MÜŞTERİ İSİMLERİNİ ÇEKİYORUZ
+            if (CurrentTenant.Id == null)
+            {
+                foreach (var dto in dtos)
+                {
+                    if (dto.TenantId.HasValue)
+                    {
+                        var tenant = await _tenantStore.FindAsync(dto.TenantId.Value);
+                        dto.TenantName = tenant?.Name ?? "Bilinmeyen Müşteri";
+                    }
+                    else
+                    {
+                        dto.TenantName = "Platform (Host)";
+                    }
+                }
+            }
+
+            return new PagedResultDto<ProjectDto>(totalCount, dtos);
+        }
     }
 
-    // --- DİĞER METODLAR ---
+    // --- INTERFACE TARAFINDAN BEKLENEN EKSİK METODLAR ---
+
     public async Task<List<GrantDto>> GetAllGrantsAsync()
     {
         var grants = await _grantRepository.GetListAsync();
@@ -87,22 +116,18 @@ public class ProjectAppService :
         });
     }
 
-    // --- ANALİZ VE HİBE (DUMMY IMPLEMENTATION - Hataları çözmek için) ---
     public Task<ProjectAnalysisDto?> GetAnalysisAsync(Guid projectId)
     {
-        // Şimdilik boş dönüyoruz, sonra dolduracağız
         return Task.FromResult<ProjectAnalysisDto?>(null);
     }
 
     public Task<ProjectAnalysisDto> AddAnalysisAsync(CreateAnalysisDto input)
     {
-        // Şimdilik boş bir nesne dönüyoruz
         return Task.FromResult(new ProjectAnalysisDto());
     }
 
     public Task<List<GrantDto>> GetSuitableGrantsAsync(Guid projectId)
     {
-        // Şimdilik boş liste dönüyoruz
         return Task.FromResult(new List<GrantDto>());
     }
 }

@@ -6,33 +6,32 @@ namespace Apya.Platform.Projects;
 
 public class Project : FullAuditedAggregateRoot<Guid>, IMultiTenant
 {
-    public Guid? TenantId { get; set; } // Proje kime ait?
+    public Guid? TenantId { get; set; }
 
-    public Guid GrantId { get; set; } // Hangi hibeye başvuruluyor?
+    public Guid? GrantId { get; set; } // Boş olabilir
 
-    public string Name { get; set; } // Proje Adı
+    public string Name { get; set; }
 
-    public string Code { get; set; } // Proje Kodu (Örn: PRJ-2026-001)
+    public string Code { get; set; }
 
-    public string Description { get; set; } // Proje Özeti
+    public string Description { get; set; }
 
     public DateTime? StartDate { get; set; }
     public DateTime? EndDate { get; set; }
 
-    public bool IsApproved { get; set; } // Onaylandı mı?
+    public bool IsApproved { get; set; }
 
-    // EF Core için boş constructor
     public Project()
     {
     }
 
-    public Project(Guid id, Guid grantId, string name, string code, string description)
-        : base(id)
+    // DÜZELTİLEN KISIM BURASI: grantId yanına ? ekledik
+    public Project(Guid id, Guid? grantId, string name, string code, string description)
+    : base(id)
     {
         GrantId = grantId;
         Name = name;
         Code = code;
         Description = description;
     }
-
 }

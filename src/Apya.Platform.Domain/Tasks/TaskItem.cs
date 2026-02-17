@@ -20,6 +20,7 @@ namespace Apya.Platform.Tasks
         // --- Durum ve Öncelik (Enumlarımız) ---
         public TaskStatus Status { get; set; }
         public TaskPriority Priority { get; set; }
+        public Guid? ProjectId { get; set; } // Görev bir projeye ait olabilir veya bağımsız olabilir
 
         // --- İlişkiler ---
 

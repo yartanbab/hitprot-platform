@@ -11,10 +11,10 @@ namespace Apya.Platform.Projects
         public string Summary { get; set; }
 
         // Tespit edilen riskler (Virgülle ayrılmış veya JSON)
-        public string Risks { get; set; }
+        public string Risks { get; set; } = string.Empty;
 
         // Önerilen Görevler (JSON formatında tutacağız)
-        public string SuggestedTasksJson { get; set; }
+        public string SuggestedTasksJson { get; set; } = string.Empty;
 
         // Analiz skoru (0-100 arası başarı ihtimali vb.)
         public int SuccessScore { get; set; }

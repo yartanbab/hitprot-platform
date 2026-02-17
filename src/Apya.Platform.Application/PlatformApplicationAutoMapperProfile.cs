@@ -12,6 +12,8 @@ namespace Apya.Platform
         public ApyaPlatformApplicationAutoMapperProfile()
         {
             // --- MEVCUT PROJE (PROJECTS) MODÜLÜ ---
+            // Mevcut satırı şununla değiştir:
+            // Hata veren satırı şununla değiştirin:
             CreateMap<Project, ProjectDto>();
             CreateMap<CreateProjectDto, Project>();
 
@@ -25,6 +27,7 @@ namespace Apya.Platform
             // BURASI KARIŞIYORDU - DÜZELTİLDİ:
             // ProjectTask -> Eski TaskDto
             CreateMap<ProjectTask, Apya.Platform.Projects.Dtos.TaskDto>();
+            CreateMap<CreateUpdateProjectTaskDto, ProjectTask>();
 
 
             // --- YENİ GÖREV (TASKS) MODÜLÜ ---

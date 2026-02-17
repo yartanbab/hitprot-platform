@@ -19,6 +19,7 @@ namespace Apya.Platform.Tasks
 
         public TaskStatus Status { get; set; } = TaskStatus.Todo;
         public TaskPriority Priority { get; set; } = TaskPriority.Medium;
+        public Guid? ProjectId { get; set; }
 
         public Guid? AssigneeId { get; set; }
         public Guid? ParentTaskId { get; set; }

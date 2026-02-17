@@ -1,11 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using System.Linq; // Select/ToList için gerekli
+using System.Linq;
 using Microsoft.AspNetCore.Authorization;
 using Volo.Abp.Application.Dtos;
 using Volo.Abp.Domain.Repositories;
-using Volo.Abp.Identity; // IdentityUserRepository için gerekli
+using Volo.Abp.Identity;
 using Apya.Platform.Permissions;
 using Apya.Platform.Projects.Dtos;
 
@@ -15,23 +15,20 @@ namespace Apya.Platform.Projects;
 public class ProjectTaskAppService : PlatformAppService, IProjectTaskAppService
 {
     private readonly IRepository<ProjectTask, Guid> _taskRepository;
-    private readonly IIdentityUserRepository _userRepository; // <--- EKLENDİ (Enjeksiyon)
+    private readonly IIdentityUserRepository _userRepository;
 
-    // Constructor (Yapıcı Metot) Güncellendi
     public ProjectTaskAppService(
         IRepository<ProjectTask, Guid> taskRepository,
-        IIdentityUserRepository userRepository) // <--- EKLENDİ
+        IIdentityUserRepository userRepository)
     {
         _taskRepository = taskRepository;
         _userRepository = userRepository;
     }
 
-    // YENİ METOT: Kullanıcı Listesini Getir (Dropdown için)
     public async Task<List<UserLookupDto>> GetUserLookupAsync()
     {
         var users = await _userRepository.GetListAsync();
 
-        // Kullanıcı entity'lerini DTO'ya çeviriyoruz
         return users.Select(u => new UserLookupDto
         {
             Id = u.Id,
@@ -41,23 +38,51 @@ public class ProjectTaskAppService : PlatformAppService, IProjectTaskAppService
         }).ToList();
     }
 
-    // LISTELEME
     public async Task<List<ProjectTaskDto>> GetListByProjectIdAsync(Guid projectId)
     {
         var tasks = await _taskRepository.GetListAsync(t => t.ProjectId == projectId);
         return ObjectMapper.Map<List<ProjectTask>, List<ProjectTaskDto>>(tasks);
     }
 
-    // OLUŞTURMA
     [Authorize(PlatformPermissions.Tasks.Create)]
     public async Task<ProjectTaskDto> CreateAsync(CreateUpdateProjectTaskDto input)
     {
         var task = ObjectMapper.Map<CreateUpdateProjectTaskDto, ProjectTask>(input);
-        await _taskRepository.InsertAsync(task);
+
+        // --- Alt Görevleri (SubTasks) Parçala ve Ekle ---
+        if (!string.IsNullOrWhiteSpace(input.SubTasksText))
+        {
+            var subTaskLines = input.SubTasksText.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+
+            foreach (var line in subTaskLines)
+            {
+                var cleanLine = line.Trim();
+                if (!string.IsNullOrEmpty(cleanLine))
+                {
+                    // Not: Domain katmanındaki Alt Görev sınıfının adı farklıysa (örn: ProjectSubTask) 'SubTask' kısmını düzeltmelisin.
+                    task.SubTasks.Add(new SubTask
+                    {
+                        Title = cleanLine,
+                        IsCompleted = false
+                    });
+                }
+            }
+        }
+
+        // --- İlk Yorumu (InitialComment) Ekle ---
+        if (!string.IsNullOrWhiteSpace(input.InitialComment))
+        {
+            // Not: Domain katmanındaki Yorum sınıfının adı farklıysa (örn: ProjectTaskComment) 'TaskComment' kısmını düzeltmelisin.
+            task.Comments.Add(new TaskComment
+            {
+                Text = input.InitialComment.Trim()
+            });
+        }
+
+        await _taskRepository.InsertAsync(task, autoSave: true);
         return ObjectMapper.Map<ProjectTask, ProjectTaskDto>(task);
     }
 
-    // GÜNCELLEME
     [Authorize(PlatformPermissions.Tasks.Edit)]
     public async Task<ProjectTaskDto> UpdateAsync(Guid id, CreateUpdateProjectTaskDto input)
     {
@@ -67,12 +92,9 @@ public class ProjectTaskAppService : PlatformAppService, IProjectTaskAppService
         return ObjectMapper.Map<ProjectTask, ProjectTaskDto>(task);
     }
 
-    // SİLME
     [Authorize(PlatformPermissions.Tasks.Delete)]
     public async Task DeleteAsync(Guid id)
     {
         await _taskRepository.DeleteAsync(id);
     }
-
-    
 }

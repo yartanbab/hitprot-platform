@@ -2,42 +2,54 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Apya.Platform.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using Volo.Abp.AspNetCore.Mvc.UI.RazorPages;
+using Apya.Platform.Tasks;
 
-namespace Apya.Platform.Web.Pages.Tasks
+namespace Apya.Platform.Web.Pages.Tasks;
+
+public class CreateModalModel : PlatformPageModel
 {
-    public class CreateModalModel : AbpPageModel
+    [BindProperty(SupportsGet = true)]
+    public Guid? ProjectId { get; set; }
+
+    [BindProperty]
+    public CreateUpdateTaskDto Task { get; set; } = new();
+
+    public List<SelectListItem> UserList { get; set; } = new();
+
+    private readonly ITaskAppService _taskAppService;
+
+    public CreateModalModel(ITaskAppService taskAppService)
     {
-        [BindProperty]
-        public CreateUpdateTaskDto Task { get; set; }
+        _taskAppService = taskAppService;
+    }
 
-        public List<SelectListItem> UserList { get; set; }
-
-        private readonly ITaskAppService _taskAppService;
-
-        public CreateModalModel(ITaskAppService taskAppService)
+    public async System.Threading.Tasks.Task OnGetAsync()
+    {
+        Task = new CreateUpdateTaskDto
         {
-            _taskAppService = taskAppService;
+            ProjectId = ProjectId,
+            StartDate = DateTime.Now,
+            DueDate = DateTime.Now.AddDays(7),
+            Priority = TaskPriority.Medium,
+            Status = Apya.Platform.Tasks.TaskStatus.Todo
+        };
+
+        var userLookup = await _taskAppService.GetUsersLookupAsync();
+        UserList = userLookup.Items
+            .Select(u => new SelectListItem(u.UserName, u.Id.ToString()))
+            .ToList();
+    }
+
+    public async Task<IActionResult> OnPostAsync()
+    {
+        if (ProjectId.HasValue && Task.ProjectId == null)
+        {
+            Task.ProjectId = ProjectId;
         }
 
-        public async Task OnGetAsync()
-        {
-            Task = new CreateUpdateTaskDto();
-
-            var userLookup = await _taskAppService.GetUsersLookupAsync();
-
-            UserList = userLookup.Items
-                .Select(u => new SelectListItem(u.UserName, u.Id.ToString()))
-                .ToList();
-        }
-
-        public async Task<IActionResult> OnPostAsync()
-        {
-            await _taskAppService.CreateAsync(Task);
-            return NoContent();
-        }
+        await _taskAppService.CreateAsync(Task);
+        return NoContent();
     }
 }
