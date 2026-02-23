@@ -1,9 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
-using Apya.Platform.Projects;
-using Apya.Platform.Tasks;
 using Microsoft.AspNetCore.Mvc;
+using Apya.Platform.Projects;
+using Apya.Platform.Projects.Dtos;
+using Apya.Platform.Tasks;
+using Volo.Abp.Data; // EKLENDİ: IDataFilter arayüzü için gerekli
+using Volo.Abp.MultiTenancy; // EKLENDİ: IMultiTenant arayüzü için gerekli
+
+// Derleyiciye çakışmayı önleme talimatı
+using TaskDto = Apya.Platform.Tasks.TaskDto;
 
 namespace Apya.Platform.Web.Pages.Projects;
 
@@ -18,21 +25,32 @@ public class ProjectDetailsModel : PlatformPageModel
     private readonly IProjectAppService _projectAppService;
     private readonly ITaskAppService _taskAppService;
 
-    public ProjectDetailsModel(IProjectAppService projectAppService, ITaskAppService taskAppService)
+    // EKLENDİ: ABP'nin Veri Filtresi yöneticisi
+    private readonly IDataFilter _dataFilter;
+
+    // Constructor (Oluşturucu) güncellendi
+    public ProjectDetailsModel(
+        IProjectAppService projectAppService,
+        ITaskAppService taskAppService,
+        IDataFilter dataFilter)
     {
         _projectAppService = projectAppService;
         _taskAppService = taskAppService;
+        _dataFilter = dataFilter;
     }
 
-    public async Task OnGetAsync()
+    public async System.Threading.Tasks.Task OnGetAsync()
     {
-        // Proje bilgilerini çekiyoruz
-        Project = await _projectAppService.GetAsync(Id);
+        // KİLİT NOKTA: Host (Ana Yönetici) kullanıcısının, müşterilere (Tenant) ait projeleri 
+        // ve görevleri de görebilmesi için Multi-Tenancy filtresini bu bloğun içinde devredışı bırakıyoruz.
+        using (_dataFilter.Disable<IMultiTenant>())
+        {
+            // 1. Proje bilgilerini çekiyoruz (Filtre kapalı olduğu için artık bulabilecek)
+            Project = await _projectAppService.GetAsync(Id);
 
-        // Bu projeye ait görevleri çekiyoruz (Zengin Task modülünden)
-        // Not: GetListAsync metodunuzun filtreleme parametrelerine göre burayı düzenleyebilirsiniz
-        var taskResult = await _taskAppService.GetListAsync(new GetTasksInput { ProjectId = Id });
-        Tasks = taskResult.Items.ToList();
+            // 2. Bu projeye ait görevleri çekiyoruz (Müşteriye ait görevleri de getirecek)
+            var taskResult = await _taskAppService.GetListAsync(new GetTasksInput { ProjectId = Id });
+            Tasks = taskResult.Items.ToList();
+        }
     }
 }
-

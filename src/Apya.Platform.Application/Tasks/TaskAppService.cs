@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
+using System.Linq; // WhereIf için şart
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
@@ -17,14 +17,14 @@ namespace Apya.Platform.Tasks
             TaskItem,
             TaskDto,
             Guid,
-            PagedAndSortedResultRequestDto,
+            GetTasksInput, // 1. KİLİT NOKTA: PagedAndSorted... yerine kendi filtre DTO'muzu koyduk!
             CreateUpdateTaskDto>,
         ITaskAppService
     {
         private readonly IIdentityUserRepository _userRepository;
         private readonly IRepository<TaskComment, Guid> _commentRepository;
-        private readonly IRepository<TaskAttachment, Guid> _attachmentRepository; // Dosya Deposu
-        private readonly IRepository<IdentityUser, Guid> _identityRepository; // Kullanıcı Sorguları İçin
+        private readonly IRepository<TaskAttachment, Guid> _attachmentRepository;
+        private readonly IRepository<IdentityUser, Guid> _identityRepository;
 
         public TaskAppService(
             IRepository<TaskItem, Guid> repository,
@@ -69,7 +69,8 @@ namespace Apya.Platform.Tasks
                 Status = input.Status,
                 Priority = input.Priority,
                 AssigneeId = input.AssigneeId,
-                ParentTaskId = input.ParentTaskId
+                ParentTaskId = input.ParentTaskId,
+                ProjectId = input.ProjectId // KİLİT NOKTA: Proje ID'sini veritabanına kaydediyoruz!
             };
 
             await Repository.InsertAsync(newTask);
@@ -92,7 +93,8 @@ namespace Apya.Platform.Tasks
                 Priority = newTask.Priority,
                 AssigneeId = newTask.AssigneeId,
                 AssigneeName = assigneeName,
-                ParentTaskId = newTask.ParentTaskId
+                ParentTaskId = newTask.ParentTaskId,
+                ProjectId = newTask.ProjectId
             };
         }
 
@@ -108,6 +110,7 @@ namespace Apya.Platform.Tasks
             task.Priority = input.Priority;
             task.Status = input.Status;
             task.AssigneeId = input.AssigneeId;
+            // Not: Proje ID genelde güncellenmez, görev bir projeye aittir. O yüzden eklemiyoruz.
 
             await Repository.UpdateAsync(task);
 
@@ -132,10 +135,14 @@ namespace Apya.Platform.Tasks
             };
         }
 
-        // --- 4. LIST (Listeleme) ---
-        protected override async Task<IQueryable<TaskItem>> CreateFilteredQueryAsync(PagedAndSortedResultRequestDto input)
+        // --- 4. LIST (Listeleme & Filtreleme) ---
+        // 2. KİLİT NOKTA: Artık PagedAndSortedResultRequestDto değil, GetTasksInput alıyor.
+        protected override async Task<IQueryable<TaskItem>> CreateFilteredQueryAsync(GetTasksInput input)
         {
-            return (await base.CreateFilteredQueryAsync(input))
+            var query = await base.CreateFilteredQueryAsync(input);
+
+            return query
+                .WhereIf(input.ProjectId.HasValue, t => t.ProjectId == input.ProjectId) // Görevleri Projeye göre izole et!
                 .Include(t => t.Assignee)
                 .Include(t => t.ParentTask);
         }
@@ -192,7 +199,7 @@ namespace Apya.Platform.Tasks
             .ToList();
         }
 
-        // --- 7. DOSYA METODLARI (EKSİK OLANLAR) ---
+        // --- 7. DOSYA METODLARI ---
         public async Task AddAttachmentAsync(Guid taskId, string fileName, string storedFileName, long fileSize)
         {
             await _attachmentRepository.InsertAsync(new TaskAttachment

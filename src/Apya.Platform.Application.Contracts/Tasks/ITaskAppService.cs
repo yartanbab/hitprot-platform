@@ -11,7 +11,7 @@ namespace Apya.Platform.Tasks
         ICrudAppService<
             TaskDto,
             Guid,
-            PagedAndSortedResultRequestDto,
+            GetTasksInput, // KİLİT NOKTA: PagedAndSorted... yerine kendi filtremizi ekledik!
             CreateUpdateTaskDto>
     {
         // Kullanıcı Listesi

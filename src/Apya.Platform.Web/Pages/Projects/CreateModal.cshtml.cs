@@ -1,6 +1,11 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Http; // IFormFile (Dosya yükleme) için gerekli kütüphane
+using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.AspNetCore.Http;
+using Volo.Abp.TenantManagement; // Müþterileri çekmek için gerekli
 using Apya.Platform.Projects;
 using Apya.Platform.Projects.Dtos;
 
@@ -11,20 +16,40 @@ public class CreateModalModel : PlatformPageModel
     [BindProperty]
     public CreateProjectDto Project { get; set; } = new();
 
-    // KÝLÝT NOKTA: HTML tarafýnýn aradýðý eksik özellik buraya eklendi
     [BindProperty]
     public IFormFile? UploadFile { get; set; }
 
-    private readonly IProjectAppService _projectAppService;
+    // EKLENDÝ: Arayüzdeki Müþteri Dropdown'ý için liste
+    public List<SelectListItem> Tenants { get; set; } = new();
 
-    public CreateModalModel(IProjectAppService projectAppService)
+    private readonly IProjectAppService _projectAppService;
+    private readonly ITenantAppService _tenantAppService; // EKLENDÝ: Müþteri Servisi
+
+    // Constructor güncellendi
+    public CreateModalModel(IProjectAppService projectAppService, ITenantAppService tenantAppService)
     {
         _projectAppService = projectAppService;
+        _tenantAppService = tenantAppService;
     }
 
-    public void OnGet()
+    // DÝKKAT: Veritabanýndan veri çekeceðimiz için 'void OnGet' yerine 'async Task OnGetAsync' yaptýk!
+    public async Task OnGetAsync()
     {
-        Project = new CreateProjectDto();
+        // Tarihlere varsayýlan deðerleri atýyoruz
+        Project = new CreateProjectDto
+        {
+            StartDate = DateTime.Now,
+            EndDate = DateTime.Now.AddMonths(1)
+        };
+
+        // EKLENDÝ: Sadece Platform yetkilisi (Host) ise Müþterileri listele
+        if (!CurrentUser.TenantId.HasValue)
+        {
+            var tenantResult = await _tenantAppService.GetListAsync(new GetTenantsInput { MaxResultCount = 1000 });
+            Tenants = tenantResult.Items
+                .Select(t => new SelectListItem(t.Name, t.Id.ToString()))
+                .ToList();
+        }
     }
 
     public async Task<IActionResult> OnPostAsync()
@@ -36,76 +61,8 @@ public class CreateModalModel : PlatformPageModel
         if (UploadFile != null && UploadFile.Length > 0)
         {
             // Ýlerleyen adýmlarda buraya gerçek dosya kaydetme (Attachment) mantýðýný yazacaðýz.
-            // Þimdilik sadece modelin hata vermemesi için deðiþkeni tanýmlamýþ olduk.
         }
 
         return NoContent();
     }
 }
-
-
-
-
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
-using Apya.Platform.Tasks;
-
-namespace Apya.Platform.Web.Pages.Tasks;
-
-public class CreateModalModel : PlatformPageModel
-{
-    // [BindProperty(SupportsGet = true)] özelliði GET isteðiyle gelen parametreyi KESÝN yakalar
-    [BindProperty(SupportsGet = true)]
-    public Guid? ProjectId { get; set; }
-
-    [BindProperty]
-    public CreateUpdateTaskDto Task { get; set; } = new();
-
-    public List<SelectListItem> UserList { get; set; } = new();
-
-    private readonly ITaskAppService _taskAppService;
-
-    public CreateModalModel(ITaskAppService taskAppService)
-    {
-        _taskAppService = taskAppService;
-    }
-
-    public async System.Threading.Tasks.Task OnGetAsync()
-    {
-        // 1. Yeni form oluþturulurken ProjectId'yi doðrudan modelin içine GÖMÜYORUZ.
-        Task = new CreateUpdateTaskDto
-        {
-            ProjectId = ProjectId, // GET ile gelen ID'yi DTO'ya veriyoruz
-            StartDate = DateTime.Now,
-            DueDate = DateTime.Now.AddDays(7),
-            Priority = TaskPriority.Medium,
-            Status = Apya.Platform.Tasks.TaskStatus.Todo
-        };
-
-        // 2. Kullanýcý listesini doldur
-        var userLookup = await _taskAppService.GetUsersLookupAsync();
-        UserList = userLookup.Items
-            .Select(u => new SelectListItem(u.UserName, u.Id.ToString()))
-            .ToList();
-    }
-
-    public async Task<IActionResult> OnPostAsync()
-    {
-        // 3. POST iþlemi sýrasýnda (Kaydet'e basýldýðýnda) ID'nin kaybolma ihtimaline karþý son güvenlik kilidi:
-        if (ProjectId.HasValue && Task.ProjectId == null)
-        {
-            Task.ProjectId = ProjectId;
-        }
-
-        // Görevi kaydet
-        await _taskAppService.CreateAsync(Task);
-        return NoContent();
-    }
-}
-
-
-

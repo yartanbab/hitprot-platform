@@ -4,6 +4,7 @@
 @using Volo.Abp.AspNetCore.Mvc.UI.Bootstrap.TagHelpers.Modal
 @inject IAuthorizationService AuthorizationService
 @model Apya.Platform.Web.Pages.Projects.ProjectDetailsModel
+@{  // <-- 1. DÜZELTME: EKSİK OLAN AÇILIŞ PARANTEZİ EKLENDİ
     ViewBag.Title = Model.Project?.Name;
 }
 
@@ -18,7 +19,7 @@
                 <p>@Model.Project?.Description</p>
             </div>
             <div class="col-md-4 text-end">
-                <a href="/" class="btn btn-outline-secondary btn-sm">
+                <a href="/Projects" class="btn btn-outline-secondary btn-sm">
                     <i class="fa fa-arrow-left"></i> Listeye Dön
                 </a>
             </div>
@@ -32,38 +33,41 @@
 
         @if (await AuthorizationService.IsGrantedAsync(PlatformPermissions.Tasks.Create))
         {
-        <button id="btn-create-task"
-                class="btn btn-primary btn-sm"
-                data-project-id="@Model.Id">
-            <i class="fa fa-plus"></i> Yeni Görev Ekle
-        </button>
+            <button id="btn-create-task"
+                    class="btn btn-primary btn-sm"
+                    data-project-id="@Model.Id">
+                <i class="fa fa-plus"></i> Yeni Görev Ekle
+            </button>
         }
     </div>
     <div class="card-body p-0">
         @if (Model.Tasks != null && Model.Tasks.Any())
         {
-        <div class="list-group list-group-flush">
-            @foreach (var task in Model.Tasks)
+            <div class="list-group list-group-flush">
+                @foreach (var task in Model.Tasks)
                 {
-            <div class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
-                <div>
-                    <h6 class="mb-1 fw-bold">@task.Title</h6>
-                    <small class="text-muted">@task.Description</small>
-                </div>
+                    <div class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="mb-1 fw-bold">@task.Title</h6>
+                            <small class="text-muted">@task.Description</small>
+                        </div>
 
-                @if(task.Status == 0) { <span class="badge bg-secondary rounded-pill">Bekliyor</span> }
-                        else if(task.Status == 1) { <span class="badge bg-warning text-dark rounded-pill">Sürüyor</span> }
-                        else { <span class="badge bg-success rounded-pill">Tamamlandı</span> }
-            </div>
+                        <div>
+                            @if((int)task.Status == 0) { <span class="badge bg-secondary rounded-pill">Bekliyor</span> }
+                            else if((int)task.Status == 1) { <span class="badge bg-warning text-dark rounded-pill">Sürüyor</span> }
+                            else if((int)task.Status == 2) { <span class="badge bg-info rounded-pill">Testte</span> }
+                            else { <span class="badge bg-success rounded-pill">Tamamlandı</span> }
+                        </div>
+                    </div>
                 }
-        </div>
+            </div>
         }
         else
         {
-        <div class="p-5 text-center text-muted">
-            <i class="fa fa-clipboard-list fa-3x mb-3 text-secondary"></i>
-            <p>Henüz bu projeye ait görev bulunmuyor.</p>
-        </div>
+            <div class="p-5 text-center text-muted">
+                <i class="fa fa-clipboard-list fa-3x mb-3 text-secondary"></i>
+                <p>Henüz bu projeye ait görev bulunmuyor.</p>
+            </div>
         }
     </div>
 </div>
