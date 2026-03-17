@@ -9,23 +9,26 @@
     <abp-script src="/Pages/Tasks/index.js" />
 }
 
-<div class="accordion mb-4" id="taskFiltersAccordion">
-    <div class="accordion-item shadow-sm border-0 rounded-4">
+@* ─── Gelişmiş Filtreleme Paneli ─── *@
+<div class="accordion mb-3" id="taskFiltersAccordion">
+    <div class="accordion-item shadow-sm border-0" style="border-radius:0.75rem;">
         <h2 class="accordion-header" id="headingFilters">
-            <button class="accordion-button collapsed fw-bold text-primary rounded-4" type="button" data-bs-toggle="collapse" data-bs-toggle="collapse" data-bs-target="#collapseFilters" aria-expanded="false" aria-controls="collapseFilters">
+            <button class="accordion-button collapsed fw-bold text-primary"
+                    type="button"
+                    data-bs-toggle="collapse"
+                    data-bs-target="#collapseFilters"
+                    aria-expanded="false"
+                    aria-controls="collapseFilters"
+                    style="border-radius:0.75rem;">
                 <i class="fa fa-filter me-2"></i> Gelişmiş Filtreleme Seçenekleri
             </button>
         </h2>
-        <div id="collapseFilters" class="accordion-collapse collapse" aria-labelledby="headingFilters" data-bs-parent="#taskFiltersAccordion">
-            <div class="accordion-body bg-light rounded-bottom-4">
+        <div id="collapseFilters"
+             class="accordion-collapse collapse"
+             aria-labelledby="headingFilters"
+             data-bs-parent="#taskFiltersAccordion">
+            <div class="accordion-body bg-light" style="border-radius:0 0 0.75rem 0.75rem;">
                 <form id="TaskFilterForm" class="row g-3">
-                    <div class="col-md-3">
-                        <label for="Filter_TenantId" class="form-label fw-bold small text-muted">Müşteri Seçimi</label>
-                        <select id="Filter_TenantId" class="form-select border-0 shadow-sm">
-                            <option value="">Tümü</option>
-                            <!-- TODO: Müşteri listesi eklenebilir -->
-                        </select>
-                    </div>
                     <div class="col-md-3">
                         <label for="Filter_AssigneeId" class="form-label fw-bold small text-muted">Sorumlu Kişi</label>
                         <select id="Filter_AssigneeId" class="form-select border-0 shadow-sm">
@@ -43,18 +46,18 @@
                         </select>
                     </div>
                     <div class="col-md-2">
-                        <label for="Filter_MinDueDate" class="form-label fw-bold small text-muted">Başlangıç (Bitiş Trh)</label>
+                        <label for="Filter_MinDueDate" class="form-label fw-bold small text-muted">Bitiş Tarihi (Başlangıç)</label>
                         <input type="date" id="Filter_MinDueDate" class="form-control border-0 shadow-sm">
                     </div>
                     <div class="col-md-2">
-                        <label for="Filter_MaxDueDate" class="form-label fw-bold small text-muted">Bitiş (Bitiş Trh)</label>
+                        <label for="Filter_MaxDueDate" class="form-label fw-bold small text-muted">Bitiş Tarihi (Son)</label>
                         <input type="date" id="Filter_MaxDueDate" class="form-control border-0 shadow-sm">
                     </div>
-                    <div class="col-12 text-end mt-3">
-                        <button type="button" id="btn-clear-filters" class="btn btn-light shadow-sm me-2 fw-bold">Temizle</button>
-                        <button type="button" id="btn-apply-filters" class="btn btn-primary shadow-sm fw-bold">
+                    <div class="col-md-3 d-flex align-items-end gap-2">
+                        <button type="button" id="btn-apply-filters" class="btn btn-primary shadow-sm fw-bold flex-fill">
                             <i class="fa fa-search me-1"></i> Filtrele
                         </button>
+                        <button type="button" id="btn-clear-filters" class="btn btn-light shadow-sm fw-bold flex-fill">Temizle</button>
                     </div>
                 </form>
             </div>
@@ -62,6 +65,7 @@
     </div>
 </div>
 
+@* ─── Görev Tablosu ─── *@
 <abp-card>
     <abp-card-header>
         <abp-row>

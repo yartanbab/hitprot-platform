@@ -1,0 +1,28 @@
+  Determining projects to restore...
+C:\Users\ybaba\apya-platform\src\Apya.Platform.Web\Apya.Platform.Web.csproj : warning NU1903: 'AutoMapper' 14.0.0 paketinde ├Ânem derecesi y├╝ksek olan bilinen bir https://github.com/advisories/GHSA-rvv3-g6hj-g44x g├╝venlik a├ğ─▒─ş─▒ var
+C:\Users\ybaba\apya-platform\src\Apya.Platform.Application\Apya.Platform.Application.csproj : warning NU1903: 'AutoMapper' 14.0.0 paketinde ├Ânem derecesi y├╝ksek olan bilinen bir https://github.com/advisories/GHSA-rvv3-g6hj-g44x g├╝venlik a├ğ─▒─ş─▒ var [C:\Users\ybaba\apya-platform\src\Apya.Platform.Web\Apya.Platform.Web.csproj]
+C:\Users\ybaba\apya-platform\src\Apya.Platform.HttpApi\Apya.Platform.HttpApi.csproj : warning NU1903: 'AutoMapper' 14.0.0 paketinde ├Ânem derecesi y├╝ksek olan bilinen bir https://github.com/advisories/GHSA-rvv3-g6hj-g44x g├╝venlik a├ğ─▒─ş─▒ var [C:\Users\ybaba\apya-platform\src\Apya.Platform.Web\Apya.Platform.Web.csproj]
+  All projects are up-to-date for restore.
+C:\Users\ybaba\apya-platform\src\Apya.Platform.Web\Apya.Platform.Web.csproj : warning NU1903: 'AutoMapper' 14.0.0 paketinde ├Ânem derecesi y├╝ksek olan bilinen bir https://github.com/advisories/GHSA-rvv3-g6hj-g44x g├╝venlik a├ğ─▒─ş─▒ var
+C:\Users\ybaba\apya-platform\src\Apya.Platform.Application\Apya.Platform.Application.csproj : warning NU1903: 'AutoMapper' 14.0.0 paketinde ├Ânem derecesi y├╝ksek olan bilinen bir https://github.com/advisories/GHSA-rvv3-g6hj-g44x g├╝venlik a├ğ─▒─ş─▒ var
+C:\Users\ybaba\apya-platform\src\Apya.Platform.HttpApi\Apya.Platform.HttpApi.csproj : warning NU1903: 'AutoMapper' 14.0.0 paketinde ├Ânem derecesi y├╝ksek olan bilinen bir https://github.com/advisories/GHSA-rvv3-g6hj-g44x g├╝venlik a├ğ─▒─ş─▒ var
+  Apya.Platform.Domain.Shared -> C:\Users\ybaba\apya-platform\src\Apya.Platform.Domain.Shared\bin\Debug\net10.0\Apya.Platform.Domain.Shared.dll
+  Apya.Platform.Domain -> C:\Users\ybaba\apya-platform\src\Apya.Platform.Domain\bin\Debug\net10.0\Apya.Platform.Domain.dll
+  Apya.Platform.Application.Contracts -> C:\Users\ybaba\apya-platform\src\Apya.Platform.Application.Contracts\bin\Debug\net10.0\Apya.Platform.Application.Contracts.dll
+  Apya.Platform.EntityFrameworkCore -> C:\Users\ybaba\apya-platform\src\Apya.Platform.EntityFrameworkCore\bin\Debug\net10.0\Apya.Platform.EntityFrameworkCore.dll
+  Apya.Platform.Application -> C:\Users\ybaba\apya-platform\src\Apya.Platform.Application\bin\Debug\net10.0\Apya.Platform.Application.dll
+  Apya.Platform.HttpApi -> C:\Users\ybaba\apya-platform\src\Apya.Platform.HttpApi\bin\Debug\net10.0\Apya.Platform.HttpApi.dll
+  Apya.Platform.Web -> C:\Users\ybaba\apya-platform\src\Apya.Platform.Web\bin\Debug\net10.0\Apya.Platform.Web.dll
+
+Build succeeded.
+
+C:\Users\ybaba\apya-platform\src\Apya.Platform.Web\Apya.Platform.Web.csproj : warning NU1903: 'AutoMapper' 14.0.0 paketinde ├Ânem derecesi y├╝ksek olan bilinen bir https://github.com/advisories/GHSA-rvv3-g6hj-g44x g├╝venlik a├ğ─▒─ş─▒ var
+C:\Users\ybaba\apya-platform\src\Apya.Platform.Application\Apya.Platform.Application.csproj : warning NU1903: 'AutoMapper' 14.0.0 paketinde ├Ânem derecesi y├╝ksek olan bilinen bir https://github.com/advisories/GHSA-rvv3-g6hj-g44x g├╝venlik a├ğ─▒─ş─▒ var [C:\Users\ybaba\apya-platform\src\Apya.Platform.Web\Apya.Platform.Web.csproj]
+C:\Users\ybaba\apya-platform\src\Apya.Platform.HttpApi\Apya.Platform.HttpApi.csproj : warning NU1903: 'AutoMapper' 14.0.0 paketinde ├Ânem derecesi y├╝ksek olan bilinen bir https://github.com/advisories/GHSA-rvv3-g6hj-g44x g├╝venlik a├ğ─▒─ş─▒ var [C:\Users\ybaba\apya-platform\src\Apya.Platform.Web\Apya.Platform.Web.csproj]
+C:\Users\ybaba\apya-platform\src\Apya.Platform.Web\Apya.Platform.Web.csproj : warning NU1903: 'AutoMapper' 14.0.0 paketinde ├Ânem derecesi y├╝ksek olan bilinen bir https://github.com/advisories/GHSA-rvv3-g6hj-g44x g├╝venlik a├ğ─▒─ş─▒ var
+C:\Users\ybaba\apya-platform\src\Apya.Platform.Application\Apya.Platform.Application.csproj : warning NU1903: 'AutoMapper' 14.0.0 paketinde ├Ânem derecesi y├╝ksek olan bilinen bir https://github.com/advisories/GHSA-rvv3-g6hj-g44x g├╝venlik a├ğ─▒─ş─▒ var
+C:\Users\ybaba\apya-platform\src\Apya.Platform.HttpApi\Apya.Platform.HttpApi.csproj : warning NU1903: 'AutoMapper' 14.0.0 paketinde ├Ânem derecesi y├╝ksek olan bilinen bir https://github.com/advisories/GHSA-rvv3-g6hj-g44x g├╝venlik a├ğ─▒─ş─▒ var
+    6 Warning(s)
+    0 Error(s)
+
+Time Elapsed 00:00:03.49
