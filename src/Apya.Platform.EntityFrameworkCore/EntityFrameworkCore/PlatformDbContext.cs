@@ -165,20 +165,28 @@ namespace Apya.Platform.EntityFrameworkCore
                  .HasForeignKey(t => t.ParentTaskId)
                  .IsRequired(false)
                  .OnDelete(DeleteBehavior.Restrict);
+
+                b.HasMany(t => t.Comments)
+                 .WithOne()
+                 .HasForeignKey(c => c.TaskId)
+                 .IsRequired();
+
+                b.HasMany(t => t.Attachments)
+                 .WithOne()
+                 .HasForeignKey(a => a.TaskId)
+                 .IsRequired();
             });
 
             builder.Entity<Apya.Platform.Tasks.TaskComment>(b =>
             {
                 b.ToTable("AppTaskComments");
                 b.ConfigureByConvention();
-                b.HasOne<TaskItem>().WithMany().HasForeignKey(x => x.TaskId).IsRequired();
             });
 
             builder.Entity<TaskAttachment>(b =>
             {
                 b.ToTable("AppTaskAttachments");
                 b.ConfigureByConvention();
-                b.HasOne<TaskItem>().WithMany().HasForeignKey(x => x.TaskId).IsRequired();
             });
         }
     }

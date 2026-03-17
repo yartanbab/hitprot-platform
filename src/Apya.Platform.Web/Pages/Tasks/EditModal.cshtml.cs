@@ -52,9 +52,9 @@ namespace Apya.Platform.Web.Pages.Tasks
             };
 
             // Eğer servis null dönerse diye önlem alıyoruz
-            SubTasks = taskDto.SubTasks ?? new List<TaskDto>();
-            Comments = await _taskAppService.GetCommentsAsync(Id) ?? new List<TaskCommentDto>();
-            Attachments = await _taskAppService.GetAttachmentsAsync(Id) ?? new List<TaskAttachmentDto>();
+            SubTasks = taskDto.SubTasks?.OrderByDescending(x => x.CreationTime).ToList() ?? new List<TaskDto>();
+            Comments = taskDto.Comments?.OrderByDescending(x => x.CreationTime).ToList() ?? new List<TaskCommentDto>();
+            Attachments = taskDto.Attachments?.OrderByDescending(x => x.CreationTime).ToList() ?? new List<TaskAttachmentDto>();
 
             var userLookup = await _taskAppService.GetUsersLookupAsync();
             UserList = userLookup.Items

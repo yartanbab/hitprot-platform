@@ -24,5 +24,7 @@ namespace Apya.Platform.Tasks
         public Guid? ProjectId { get; set; }
 
         public List<TaskDto> SubTasks { get; set; } = new List<TaskDto>();
+        public List<TaskCommentDto> Comments { get; set; } = new List<TaskCommentDto>();
+        public List<TaskAttachmentDto> Attachments { get; set; } = new List<TaskAttachmentDto>();
     }
 }

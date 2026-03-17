@@ -39,6 +39,10 @@ namespace Apya.Platform
 
             // 2. CreateUpdateTaskDto -> TaskItem
             CreateMap<Apya.Platform.Tasks.CreateUpdateTaskDto, Apya.Platform.Tasks.TaskItem>();
+
+            // 3. Comments and Attachments
+            CreateMap<Apya.Platform.Tasks.TaskComment, Apya.Platform.Tasks.TaskCommentDto>();
+            CreateMap<Apya.Platform.Tasks.TaskAttachment, Apya.Platform.Tasks.TaskAttachmentDto>();
         }
     }
 }

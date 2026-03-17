@@ -7,6 +7,7 @@
     Layout = null;
 }
 
+<form asp-page="/Tasks/EditModal" method="post" id="EditTaskForm">
 <abp-modal size="ExtraLarge">
     <abp-modal-header title="🚀 Görev Paneli: @Model.Task.Title"></abp-modal-header>
 
@@ -36,8 +37,7 @@
 
         <div class="tab-content p-4 bg-white border-top" id="taskTabsContent" style="min-height: 450px;">
             <div class="tab-pane fade show active" id="details" role="tabpanel">
-                <form asp-page="/Tasks/EditModal" method="post" id="EditTaskForm">
-                    <abp-input asp-for="Id" type="hidden" />
+                    <abp-input asp-for="Id" type="hidden" class="task-id-input" />
                     <abp-input asp-for="Task.ProjectId" type="hidden" />
 
                     <div class="row">
@@ -58,7 +58,6 @@
                             <abp-select asp-for="Task.AssigneeId" asp-items="Model.UserList" label="Sorumlu Kişi" />
                         </div>
                     </div>
-                </form>
             </div>
 
             <div class="tab-pane fade" id="subtasks" role="tabpanel">
@@ -143,7 +142,7 @@
                     <li class="list-group-item d-flex justify-content-between align-items-center bg-light border-0 mb-2 rounded-3">
                         <div>
                             <i class="fa fa-file-alt text-info fs-4 me-3"></i>
-                            <a href="/file/get/@file.FileName" target="_blank" class="text-decoration-none fw-bold fs-6">@file.FileName</a>
+                            <a href="@file.DownloadUrl" target="_blank" class="text-decoration-none fw-bold fs-6">@file.FileName</a>
                             <small class="text-muted ms-3">(@(file.FileSize / 1024) KB) - @file.UploaderName</small>
                         </div>
                         <span class="text-muted small">@file.CreationTime.ToShortDateString()</span>
@@ -152,7 +151,7 @@
                     }
                     else
                     {
-                    <div class="text-center text-muted p-5">Henüz dosya yüklenmemiş.</div>
+                    <div class="text-center text-muted p-5 no-file-text">Henüz dosya yüklenmemiş.</div>
                     }
                 </ul>
             </div>
@@ -160,21 +159,28 @@
     </abp-modal-body>
     <abp-modal-footer buttons="@(AbpModalButtons.Cancel | AbpModalButtons.Save)"></abp-modal-footer>
 </abp-modal>
+</form>
 
 <script>
     $('#BtnAddSubTask').click(function () {
         var title = $('#NewSubTaskTitle').val();
-        var parentId = '@Model.Id';
+        var parentId = $('.task-id-input').val();
         if (!title) return;
 
-        abp.ajax({
+        $.ajax({
             type: 'POST',
             url: '/Tasks/EditModal?handler=AddSubTask',
-            data: { parentId: parentId, subTaskTitle: title }
-        }).then(function () {
-            abp.notify.success('Alt görev eklendi!');
-            $('#SubTaskList').prepend('<div class="list-group-item list-group-item-action d-flex justify-content-between align-items-center p-3 bg-light border-warning"><strong class="fs-5"><i class="fa fa-circle-o text-secondary fs-5 me-2"></i>' + title + '</strong><span class="badge bg-warning">Yeni</span></div>');
-            $('#NewSubTaskTitle').val('');
+            headers: { 'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val() },
+            data: { parentId: parentId, subTaskTitle: title },
+            success: function (result) {
+                abp.notify.success('Alt görev eklendi!');
+                $('#SubTaskList').prepend('<div class="list-group-item list-group-item-action d-flex justify-content-between align-items-center p-3 bg-light border-warning"><strong class="fs-5"><i class="fa fa-circle-o text-secondary fs-5 me-2"></i>' + title + '</strong><span class="badge bg-warning">Yeni</span></div>');
+                $('#NewSubTaskTitle').val('');
+            },
+            error: function (xhr) {
+                abp.notify.error('Alt görev eklenemedi!');
+                console.error("Alt görev ekleme hatası", xhr);
+            }
         });
     });
 
@@ -199,44 +205,61 @@
 
     $('#BtnAddComment').click(function () {
         var text = $('#NewCommentText').val();
-        var taskId = '@Model.Id';
+        var taskId = $('.task-id-input').val();
         if (!text) return;
-        abp.ajax({
+        
+        $.ajax({
             type: 'POST',
             url: '/Tasks/EditModal?handler=AddComment',
-            data: { taskId: taskId, commentText: text }
-        }).then(function () {
-            abp.notify.success('Yorum gönderildi!');
-            var now = new Date().toLocaleString();
-            var newCommentHtml = `<div class="list-group-item bg-light border-success mb-2 rounded-3"><div class="d-flex w-100 justify-content-between mb-2"><h6 class="mb-1 fw-bold text-success">Siz (Az önce)</h6><small class="text-muted">${now}</small></div><p class="mb-1">${text}</p></div>`;
-            $('#CommentList').prepend(newCommentHtml);
-            $('#NewCommentText').val('');
+            headers: { 'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val() },
+            data: { taskId: taskId, commentText: text },
+            success: function (result) {
+                abp.notify.success('Yorum gönderildi!');
+                var now = new Date().toLocaleString();
+                var newCommentHtml = `<div class="list-group-item bg-light border-success mb-2 rounded-3"><div class="d-flex w-100 justify-content-between mb-2"><h6 class="mb-1 fw-bold text-success">Siz (Az önce)</h6><small class="text-muted">${now}</small></div><p class="mb-1">${text}</p></div>`;
+                $('#CommentList').prepend(newCommentHtml);
+                $('#NewCommentText').val('');
+            },
+            error: function (xhr) {
+                abp.notify.error('Yorum gönderilemedi!');
+                console.error("Yorum gönderme hatası", xhr);
+            }
         });
     });
 
     $('#BtnUploadFile').click(function () {
         var fileInput = document.getElementById('FileInput');
         var file = fileInput.files[0];
-        var taskId = '@Model.Id';
+        var taskId = $('.task-id-input').val();
         if (!file) { abp.notify.warn('Lütfen bir dosya seçin.'); return; }
 
         var formData = new FormData();
         formData.append('file', file);
-        formData.append('taskId', taskId);
 
         $.ajax({
-            url: '/Tasks/EditModal?handler=UploadFile',
+            url: '/api/tasks/attachments/upload/' + taskId,
             type: 'POST',
             data: formData,
             processData: false,
             contentType: false,
             headers: { 'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val() },
-            success: function () {
-                abp.notify.success('Dosya yüklendi!');
-                $('#FileList').prepend('<li class="list-group-item d-flex justify-content-between align-items-center bg-light border-info mb-2 rounded-3"><div><i class="fa fa-file-alt text-info fs-4 me-3"></i><span class="fw-bold fs-6">' + file.name + '</span></div><span class="badge bg-success">Yeni</span></li>');
-                fileInput.value = '';
+            success: function (result) {
+                if (result.success) {
+                    abp.notify.success('Dosya yüklendi!');
+                    $('.no-file-text').remove();
+                    $('#FileList').prepend('<li class="list-group-item d-flex justify-content-between align-items-center bg-light border-info mb-2 rounded-3"><div><i class="fa fa-file-alt text-info fs-4 me-3"></i><a href="/file/get/' + result.storedFileName + '" target="_blank" class="text-decoration-none fw-bold fs-6">' + file.name + '</a><small class="text-muted ms-3">Şimdi yüklendi</small></div><span class="badge bg-success">Yeni</span></li>');
+                    fileInput.value = '';
+                } else {
+                    abp.notify.error('Dosya yüklenirken hata oluştu: ' + result.error);
+                }
             },
-            error: function () { abp.notify.error('Dosya yüklenirken hata oluştu.'); }
+            error: function (xhr) { 
+                var msg = 'Dosya yüklenirken hata oluştu.';
+                if (xhr.responseJSON && xhr.responseJSON.error) {
+                    msg = xhr.responseJSON.error;
+                }
+                abp.notify.error(msg);
+            }
         });
     });
 </script>

@@ -37,11 +37,16 @@ namespace Apya.Platform.Tasks
         public virtual TaskItem ParentTask { get; set; }
         public virtual ICollection<TaskItem> SubTasks { get; set; }
 
+        public virtual ICollection<TaskComment> Comments { get; set; }
+        public virtual ICollection<TaskAttachment> Attachments { get; set; }
+
         // Constructor: Varsayılan değerleri atarız
         public TaskItem()
         {
             // Listeyi initialize etmezsek "Null Reference" hatası alırız
             SubTasks = new List<TaskItem>();
+            Comments = new List<TaskComment>();
+            Attachments = new List<TaskAttachment>();
 
             // Varsayılanlar
             Status = TaskStatus.Todo;

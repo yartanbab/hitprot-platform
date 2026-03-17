@@ -47,12 +47,43 @@ namespace Apya.Platform.Tasks
             var task = await query
                 .Include(x => x.Assignee)
                 .Include(x => x.SubTasks)
+                .Include(x => x.Comments)
+                .Include(x => x.Attachments)
                 .FirstOrDefaultAsync(x => x.Id == id);
 
             if (task == null) throw new Volo.Abp.Domain.Entities.EntityNotFoundException(typeof(TaskItem), id);
 
             var taskDto = ObjectMapper.Map<TaskItem, TaskDto>(task);
             if (task.Assignee != null) taskDto.AssigneeName = task.Assignee.UserName;
+            
+            // Populate usernames for comments
+            if (taskDto.Comments != null && taskDto.Comments.Any())
+            {
+                var commentUserIds = task.Comments.Select(c => c.CreatorId).Where(id => id.HasValue).Select(id => id!.Value).Distinct().ToList();
+                var commentUsers = await _identityRepository.GetListAsync(u => commentUserIds.Contains(u.Id));
+                var userMap = commentUsers.ToDictionary(u => u.Id, u => u.UserName);
+                
+                foreach (var c in taskDto.Comments)
+                {
+                    var entityComment = task.Comments.FirstOrDefault(x => x.Id == c.Id);
+                    c.AuthorName = (entityComment?.CreatorId.HasValue == true && userMap.ContainsKey(entityComment.CreatorId.Value)) ? userMap[entityComment.CreatorId.Value] : "Bilinmeyen Kullanıcı";
+                }
+            }
+
+            // Populate usernames for attachments
+            if (taskDto.Attachments != null && taskDto.Attachments.Any())
+            {
+                var attUserIds = task.Attachments.Select(a => a.CreatorId).Where(id => id.HasValue).Select(id => id!.Value).Distinct().ToList();
+                var attUsers = await _identityRepository.GetListAsync(u => attUserIds.Contains(u.Id));
+                var userMap = attUsers.ToDictionary(u => u.Id, u => u.UserName);
+                
+                foreach (var a in taskDto.Attachments)
+                {
+                    var entityAtt = task.Attachments.FirstOrDefault(x => x.Id == a.Id);
+                    a.UploaderName = (entityAtt?.CreatorId.HasValue == true && userMap.ContainsKey(entityAtt.CreatorId.Value)) ? userMap[entityAtt.CreatorId.Value] : "Sistem";
+                    a.DownloadUrl = "/file/get/" + entityAtt?.StoredFileName;
+                }
+            }
 
             return taskDto;
         }
