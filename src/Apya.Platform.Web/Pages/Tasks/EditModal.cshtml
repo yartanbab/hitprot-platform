@@ -201,10 +201,27 @@
     $(document).on('click', '.delete-subtask-btn', function () {
         var subTaskId = $(this).data('id');
         var $li = $(this).closest('.list-group-item');
-        abp.message.confirm('Bu alt görevi silmek istediğinize emin misiniz?', function (confirmed) {
-            if (confirmed) {
+        
+        Swal.fire({
+            title: 'Alt Görev Silinecek!',
+            text: 'Bu alt görevi kalıcı olarak silmek üzeresiniz. Onaylamak için aşağıdaki alana "SİL" yazmalısınız.',
+            icon: 'warning',
+            input: 'text',
+            inputPlaceholder: 'SİL',
+            showCancelButton: true,
+            confirmButtonText: '<i class="fa fa-trash"></i> Evet, Sil!',
+            cancelButtonText: 'İptal',
+            confirmButtonColor: '#dc3545',
+            preConfirm: (inputValue) => {
+                if (inputValue !== 'SİL') {
+                    Swal.showValidationMessage('Silme işlemini onaylamak için tam olarak "SİL" yazmalısınız.');
+                }
+                return inputValue;
+            }
+        }).then((result) => {
+            if (result.isConfirmed) {
                 apya.platform.tasks.task.delete(subTaskId).then(function () {
-                    abp.notify.info('Silindi');
+                    abp.notify.info('Başarıyla silindi.');
                     $li.remove();
                 });
             }

@@ -31,11 +31,30 @@ $(function () {
                                        data.record.creatorId === abp.currentUser.id || 
                                        data.record.assigneeId === abp.currentUser.id;
                             },
-                            confirmMessage: function (data) { return data.record.title + " görevini silmek istediğinize emin misiniz?"; },
                             action: function (data) {
-                                taskService.delete(data.record.id).then(function () {
-                                    abp.notify.info("Başarıyla silindi.");
-                                    dataTable.ajax.reload();
+                                Swal.fire({
+                                    title: 'Görev Silinecek!',
+                                    text: 'Görevi kalıcı olarak silmek üzeresiniz. Onaylamak için aşağıdaki alana "SİL" yazmalısınız.',
+                                    icon: 'warning',
+                                    input: 'text',
+                                    inputPlaceholder: 'SİL',
+                                    showCancelButton: true,
+                                    confirmButtonText: '<i class="fa fa-trash"></i> Evet, Sil!',
+                                    cancelButtonText: 'İptal',
+                                    confirmButtonColor: '#dc3545',
+                                    preConfirm: (inputValue) => {
+                                        if (inputValue !== 'SİL') {
+                                            Swal.showValidationMessage('Silme işlemini onaylamak için tam olarak "SİL" yazmalısınız.');
+                                        }
+                                        return inputValue;
+                                    }
+                                }).then((result) => {
+                                    if (result.isConfirmed) {
+                                        taskService.delete(data.record.id).then(function () {
+                                            abp.notify.info("Başarıyla silindi.");
+                                            dataTable.ajax.reload();
+                                        });
+                                    }
                                 });
                             }
                         }
