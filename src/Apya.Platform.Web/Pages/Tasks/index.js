@@ -9,7 +9,16 @@ $(function () {
         order: [[1, "desc"]], // Başlık sütununa veya tarihe göre sırala
         searching: true,
         scrollX: true,
-        ajax: abp.libs.datatables.createAjax(taskService.getList),
+        ajax: abp.libs.datatables.createAjax(taskService.getList, function () {
+            // APYA-25: Gelişmiş Filtreleme Parametreleri
+            return {
+                tenantId: $('#Filter_TenantId').val() || null,
+                assigneeId: $('#Filter_AssigneeId').val() || null,
+                statuses: $('#Filter_Status').val() ? [$('#Filter_Status').val()] : null, // Çoklu seçim eklenebilir, şimdilik tekli listeye çevrildi.
+                minDueDate: $('#Filter_MinDueDate').val() || null,
+                maxDueDate: $('#Filter_MaxDueDate').val() || null
+            };
+        }),
         columnDefs: [
             {
                 title: "İşlemler",
@@ -82,6 +91,19 @@ $(function () {
     });
 
     createModal.onResult(function () { dataTable.ajax.reload(); });
-    editModal.onResult(function () { dataTable.ajax.reload(); });
+    editModal.onResult(function () {
+        dataTable.ajax.reload();
+    });
 
+    // Filtreleme ve Temizleme Butonları
+    $('#btn-apply-filters').click(function () {
+        dataTable.ajax.reload();
+    });
+
+    $('#btn-clear-filters').click(function () {
+        $('#TaskFilterForm')[0].reset();
+        // select2 gibi eklentiler varsa onların da değerlerini sıfırlamak için trigger eklenebilir
+        // $('#Filter_TenantId').val('').trigger('change');
+        dataTable.ajax.reload();
+    });
 }); // KİLİT NOKTA: İŞTE EKSİK OLAN VE SİSTEMİ ÇÖKERTEN PARANTEZLER BURADA

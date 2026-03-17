@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Dynamic.Core;
@@ -13,6 +13,7 @@ using Apya.Platform.Grants;
 using Apya.Platform.Grants.Dtos;
 using Volo.Abp.MultiTenancy;
 using Volo.Abp.TenantManagement; // ITenantStore için gerekli kütüphane
+using Apya.Platform.Permissions; // Permissions eklendi
 
 namespace Apya.Platform.Application.Projects;
 
@@ -95,6 +96,17 @@ public class ProjectAppService :
 
             return new PagedResultDto<ProjectDto>(totalCount, dtos);
         }
+    }
+
+    // --- DELETE ---
+    [Authorize(PlatformPermissions.Projects.Delete)]
+    public override async Task DeleteAsync(Guid id)
+    {
+        // Yalnızca SİLME yetkisi olanlar bu metoda girebilir.
+        // Projeye ait alt kayıtların silinmesi mantığı (görevler vb.) Entity Framework Cascade Delete ile,
+        // veya ABP'nin Domain Event'leri ile halledilebilir. 
+        // Temel güvenlik Katmanı:
+        await base.DeleteAsync(id);
     }
 
     // --- INTERFACE TARAFINDAN BEKLENEN EKSİK METODLAR ---

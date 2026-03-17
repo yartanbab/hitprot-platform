@@ -1,0 +1,20 @@
+  Geri yüklenecek projeler belirleniyor...
+C:\Users\ybaba\apya-platform\src\Apya.Platform.Application\Apya.Platform.Application.csproj : warning NU1903: 'AutoMapper' 14.0.0 paketinde önem derecesi yüksek olan bilinen bir https://github.com/advisories/GHSA-rvv3-g6hj-g44x güvenlik açığı var
+  Geri yükleme için tüm projeler güncel.
+C:\Users\ybaba\apya-platform\src\Apya.Platform.Application\Apya.Platform.Application.csproj : warning NU1903: 'AutoMapper' 14.0.0 paketinde önem derecesi yüksek olan bilinen bir https://github.com/advisories/GHSA-rvv3-g6hj-g44x güvenlik açığı var
+  Apya.Platform.Domain.Shared -> C:\Users\ybaba\apya-platform\src\Apya.Platform.Domain.Shared\bin\Debug\net10.0\Apya.Platform.Domain.Shared.dll
+  Apya.Platform.Domain -> C:\Users\ybaba\apya-platform\src\Apya.Platform.Domain\bin\Debug\net10.0\Apya.Platform.Domain.dll
+  Apya.Platform.Application.Contracts -> C:\Users\ybaba\apya-platform\src\Apya.Platform.Application.Contracts\bin\Debug\net10.0\Apya.Platform.Application.Contracts.dll
+C:\Users\ybaba\apya-platform\src\Apya.Platform.Application\Tasks\TaskAppService.cs(13,7): warning CS0105: 'System.Collections.Generic' için using yönergesi bu ad alanında daha önce göründü [C:\Users\ybaba\apya-platform\src\Apya.Platform.Application\Apya.Platform.Application.csproj]
+C:\Users\ybaba\apya-platform\src\Apya.Platform.Application\Tasks\TaskAppService.cs(233,44): error CS1061: 'TaskItem' bir 'TenantId' tanımı içermiyor ve 'TaskItem' türünde bir ilk bağımsız değişken kabul eden hiçbir erişilebilir 'TenantId' genişletme yöntemi bulunamadı (bir kullanma yönergeniz veya derleme başvurunuz eksik olabilir mi?) [C:\Users\ybaba\apya-platform\src\Apya.Platform.Application\Apya.Platform.Application.csproj]
+
+Oluşturma BAŞARISIZ OLDU.
+
+C:\Users\ybaba\apya-platform\src\Apya.Platform.Application\Apya.Platform.Application.csproj : warning NU1903: 'AutoMapper' 14.0.0 paketinde önem derecesi yüksek olan bilinen bir https://github.com/advisories/GHSA-rvv3-g6hj-g44x güvenlik açığı var
+C:\Users\ybaba\apya-platform\src\Apya.Platform.Application\Apya.Platform.Application.csproj : warning NU1903: 'AutoMapper' 14.0.0 paketinde önem derecesi yüksek olan bilinen bir https://github.com/advisories/GHSA-rvv3-g6hj-g44x güvenlik açığı var
+C:\Users\ybaba\apya-platform\src\Apya.Platform.Application\Tasks\TaskAppService.cs(13,7): warning CS0105: 'System.Collections.Generic' için using yönergesi bu ad alanında daha önce göründü [C:\Users\ybaba\apya-platform\src\Apya.Platform.Application\Apya.Platform.Application.csproj]
+C:\Users\ybaba\apya-platform\src\Apya.Platform.Application\Tasks\TaskAppService.cs(233,44): error CS1061: 'TaskItem' bir 'TenantId' tanımı içermiyor ve 'TaskItem' türünde bir ilk bağımsız değişken kabul eden hiçbir erişilebilir 'TenantId' genişletme yöntemi bulunamadı (bir kullanma yönergeniz veya derleme başvurunuz eksik olabilir mi?) [C:\Users\ybaba\apya-platform\src\Apya.Platform.Application\Apya.Platform.Application.csproj]
+    3 Uyarı
+    1 Hata
+
+Geçen Süre 00:00:01.34
