@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq; // WhereIf için şart
 using System.Threading.Tasks;
@@ -8,6 +8,7 @@ using Volo.Abp.Application.Dtos;
 using Volo.Abp.Application.Services;
 using Volo.Abp.Domain.Repositories;
 using Volo.Abp.Identity;
+using Apya.Platform.Permissions;
 
 namespace Apya.Platform.Tasks
 {
@@ -38,6 +39,10 @@ namespace Apya.Platform.Tasks
             _commentRepository = commentRepository;
             _attachmentRepository = attachmentRepository;
             _identityRepository = identityRepository;
+
+            CreatePolicyName = PlatformPermissions.Tasks.Create;
+            UpdatePolicyName = PlatformPermissions.Tasks.Edit;
+            DeletePolicyName = PlatformPermissions.Tasks.Delete;
         }
 
         // --- 1. GET (Tek Kayıt) ---
@@ -52,6 +57,13 @@ namespace Apya.Platform.Tasks
                 .FirstOrDefaultAsync(x => x.Id == id);
 
             if (task == null) throw new Volo.Abp.Domain.Entities.EntityNotFoundException(typeof(TaskItem), id);
+
+            // APYA-22: Impersonation Gizlilik Kontrolü
+            bool isImpersonated = CurrentUser.FindClaim(Volo.Abp.Security.Claims.AbpClaimTypes.ImpersonatorUserId) != null;
+            if (isImpersonated && task.IsPrivate)
+            {
+                throw new Volo.Abp.Authorization.AbpAuthorizationException("Bu özel görevi görüntüleme yetkiniz yok.");
+            }
 
             var taskDto = ObjectMapper.Map<TaskItem, TaskDto>(task);
             if (task.Assignee != null) taskDto.AssigneeName = task.Assignee.UserName;
@@ -101,7 +113,8 @@ namespace Apya.Platform.Tasks
                 Priority = input.Priority,
                 AssigneeId = input.AssigneeId,
                 ParentTaskId = input.ParentTaskId,
-                ProjectId = input.ProjectId // KİLİT NOKTA: Proje ID'sini veritabanına kaydediyoruz!
+                ProjectId = input.ProjectId, // KİLİT NOKTA: Proje ID'sini veritabanına kaydediyoruz!
+                IsPrivate = input.IsPrivate 
             };
 
             await Repository.InsertAsync(newTask);
@@ -132,7 +145,18 @@ namespace Apya.Platform.Tasks
         // --- 3. UPDATE (Güncelleme) ---
         public override async Task<TaskDto> UpdateAsync(Guid id, CreateUpdateTaskDto input)
         {
+            await CheckUpdatePolicyAsync();
+
             var task = await Repository.GetAsync(id);
+
+            // Özel Yetki Kuralı: Görevi sadece oluşturan veya atanan kişi (ya da projelere yönetim yetkisi olan) güncelleyebilir.
+            if (task.CreatorId != CurrentUser.Id && task.AssigneeId != CurrentUser.Id)
+            {
+                if (!await AuthorizationService.IsGrantedAsync(PlatformPermissions.Projects.ManageTeam))
+                {
+                    throw new Volo.Abp.Authorization.AbpAuthorizationException("Bu görevi güncellemek için yetkiniz yok. Sadece görevi oluşturan veya atanan kişi güncelleyebilir.");
+                }
+            }
 
             task.Title = input.Title;
             task.Description = input.Description;
@@ -141,6 +165,7 @@ namespace Apya.Platform.Tasks
             task.Priority = input.Priority;
             task.Status = input.Status;
             task.AssigneeId = input.AssigneeId;
+            task.IsPrivate = input.IsPrivate;
             // Not: Proje ID genelde güncellenmez, görev bir projeye aittir. O yüzden eklemiyoruz.
 
             await Repository.UpdateAsync(task);
@@ -166,11 +191,37 @@ namespace Apya.Platform.Tasks
             };
         }
 
-        // --- 4. LIST (Listeleme & Filtreleme) ---
+        // --- 4. DELETE (Silme) ---
+        public override async Task DeleteAsync(Guid id)
+        {
+            await CheckDeletePolicyAsync();
+
+            var task = await Repository.GetAsync(id);
+
+            // Özel Yetki Kuralı: Görevi sadece oluşturan veya atanan kişi (ya da projelere yönetim yetkisi olan) silebilir.
+            if (task.CreatorId != CurrentUser.Id && task.AssigneeId != CurrentUser.Id)
+            {
+                if (!await AuthorizationService.IsGrantedAsync(PlatformPermissions.Projects.ManageTeam))
+                {
+                    throw new Volo.Abp.Authorization.AbpAuthorizationException("Bu görevi silmek için yetkiniz yok. Sadece görevi oluşturan veya atanan kişi silebilir.");
+                }
+            }
+
+            await base.DeleteAsync(id);
+        }
+
+        // --- 5. LIST (Listeleme & Filtreleme) ---
         // 2. KİLİT NOKTA: Artık PagedAndSortedResultRequestDto değil, GetTasksInput alıyor.
         protected override async Task<IQueryable<TaskItem>> CreateFilteredQueryAsync(GetTasksInput input)
         {
             var query = await base.CreateFilteredQueryAsync(input);
+
+            // APYA-22: Impersonation Gizlilik Kontrolü
+            bool isImpersonated = CurrentUser.FindClaim(Volo.Abp.Security.Claims.AbpClaimTypes.ImpersonatorUserId) != null;
+            if (isImpersonated)
+            {
+                query = query.Where(t => !t.IsPrivate);
+            }
 
             return query
                 .WhereIf(input.ProjectId.HasValue, t => t.ProjectId == input.ProjectId) // Görevleri Projeye göre izole et!

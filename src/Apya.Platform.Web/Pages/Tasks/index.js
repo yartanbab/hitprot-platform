@@ -1,4 +1,4 @@
-﻿$(function () {
+$(function () {
     var taskService = apya.platform.tasks.task;
     var createModal = new abp.ModalManager(abp.appPath + 'Tasks/CreateModal');
     var editModal = new abp.ModalManager(abp.appPath + 'Tasks/EditModal');
@@ -17,10 +17,20 @@
                     items: [
                         {
                             text: "Düzenle",
+                            visible: function (data) {
+                                return abp.auth.isGranted('Platform.Projects.ManageTeam') || 
+                                       data.record.creatorId === abp.currentUser.id || 
+                                       data.record.assigneeId === abp.currentUser.id;
+                            },
                             action: function (data) { editModal.open({ id: data.record.id }); }
                         },
                         {
                             text: "Sil",
+                            visible: function (data) {
+                                return abp.auth.isGranted('Platform.Projects.ManageTeam') || 
+                                       data.record.creatorId === abp.currentUser.id || 
+                                       data.record.assigneeId === abp.currentUser.id;
+                            },
                             confirmMessage: function (data) { return data.record.title + " görevini silmek istediğinize emin misiniz?"; },
                             action: function (data) {
                                 taskService.delete(data.record.id).then(function () {

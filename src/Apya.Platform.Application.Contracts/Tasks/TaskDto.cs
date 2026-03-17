@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Volo.Abp.Application.Dtos;
 
@@ -22,6 +22,8 @@ namespace Apya.Platform.Tasks
 
         // KİLİT NOKTA: Derleyicinin aradığı ve görevin projeye ait olduğunu belirten alan!
         public Guid? ProjectId { get; set; }
+
+        public bool IsPrivate { get; set; }
 
         public List<TaskDto> SubTasks { get; set; } = new List<TaskDto>();
         public List<TaskCommentDto> Comments { get; set; } = new List<TaskCommentDto>();

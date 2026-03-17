@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Apya.Platform.Tasks; // Az önce oluşturduğumuz Enum'ları buradan çekiyoruz
 using Volo.Abp.Domain.Entities.Auditing; // ABP'nin hazır audit sınıfları
@@ -21,6 +21,9 @@ namespace Apya.Platform.Tasks
         public TaskStatus Status { get; set; }
         public TaskPriority Priority { get; set; }
         public Guid? ProjectId { get; set; } // Görev bir projeye ait olabilir veya bağımsız olabilir
+
+        // --- Gizlilik (Başkası adına girişte saklama) ---
+        public bool IsPrivate { get; set; }
 
         // --- İlişkiler ---
 

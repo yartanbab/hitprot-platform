@@ -1,4 +1,7 @@
-﻿@page
+@page
+@using Microsoft.AspNetCore.Authorization
+@using Apya.Platform.Permissions
+@inject IAuthorizationService AuthorizationService
 @using Apya.Platform.Web.Pages.Tasks
 @model IndexModel
 @section scripts
@@ -13,10 +16,13 @@
                 <abp-card-title>Görev Yönetimi</abp-card-title>
             </abp-column>
             <abp-column size-md="_6" class="text-end">
-                <abp-button id="NewTaskButton"
-                            text="Yeni Görev Ekle"
-                            icon="plus"
-                            button-type="Primary" />
+                @if (await AuthorizationService.IsGrantedAsync(PlatformPermissions.Tasks.Create))
+                {
+                    <abp-button id="NewTaskButton"
+                                text="Yeni Görev Ekle"
+                                icon="plus"
+                                button-type="Primary" />
+                }
             </abp-column>
         </abp-row>
     </abp-card-header>

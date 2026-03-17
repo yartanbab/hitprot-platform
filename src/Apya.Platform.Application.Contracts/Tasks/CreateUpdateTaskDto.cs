@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.ComponentModel.DataAnnotations;
 using Apya.Platform.Tasks;
 
@@ -23,5 +23,6 @@ namespace Apya.Platform.Tasks
 
         public Guid? AssigneeId { get; set; }
         public Guid? ParentTaskId { get; set; }
+        public bool IsPrivate { get; set; }
     }
 }

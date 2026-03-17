@@ -1,4 +1,4 @@
-﻿@page
+@page
 @using Apya.Platform.Web.Pages.Tasks
 @using Apya.Platform.Tasks
 @using Volo.Abp.AspNetCore.Mvc.UI.Bootstrap.TagHelpers.Modal
@@ -56,6 +56,14 @@
                             <abp-select asp-for="Task.Priority" label="Öncelik" />
                             <abp-select asp-for="Task.Status" label="Durum" />
                             <abp-select asp-for="Task.AssigneeId" asp-items="Model.UserList" label="Sorumlu Kişi" />
+
+                            <div class="form-check form-switch mt-4 bg-light p-2 rounded border shadow-sm">
+                                <input class="form-check-input ms-1 mt-2" style="transform: scale(1.2);" type="checkbox" asp-for="Task.IsPrivate">
+                                <label class="form-check-label fw-bold text-danger ms-2 mt-1" asp-for="Task.IsPrivate">
+                                    <i class="fa fa-user-secret me-1"></i> Gizli Görev
+                                </label>
+                                <small class="d-block text-muted ms-2 mt-1 px-1" style="font-size: 0.8rem; line-height: 1.2;">Sadece siz ve sorumlu kişi görebilir. Admin dahil başkası profilinize girdiğinde göremez.</small>
+                            </div>
                         </div>
                     </div>
             </div>
