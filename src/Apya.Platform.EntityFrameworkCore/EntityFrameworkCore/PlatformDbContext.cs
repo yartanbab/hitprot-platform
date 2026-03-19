@@ -14,11 +14,11 @@ using Volo.Abp.TenantManagement;
 using Volo.Abp.TenantManagement.EntityFrameworkCore;
 using Volo.Abp.EntityFrameworkCore.Modeling;
 
-// Çakışan Modüller:
 using Apya.Platform.Projects;
 using Apya.Platform.Grants;
 using Apya.Platform.Tasks;
 using Apya.Platform.Notifications;
+using Apya.Platform.Calendars;
 
 namespace Apya.Platform.EntityFrameworkCore
 {
@@ -49,6 +49,10 @@ namespace Apya.Platform.EntityFrameworkCore
 
         /* --- BİLDİRİM MODÜLÜ --- */
         public DbSet<Notification> Notifications { get; set; }
+
+        /* --- TAKVİM MODÜLÜ --- */
+        public DbSet<ExternalCalendarAccount> ExternalCalendarAccounts { get; set; }
+        public DbSet<CalendarSyncMapping> CalendarSyncMappings { get; set; }
 
 
         #region Entities from the Modules
@@ -204,6 +208,24 @@ namespace Apya.Platform.EntityFrameworkCore
                 // Performans için index
                 b.HasIndex(x => new { x.UserId, x.IsRead });
                 b.HasIndex(x => x.CreationTime);
+            });
+
+            /* --- TAKVİM MODÜLÜ YAPILANDIRMASI --- */
+            builder.Entity<ExternalCalendarAccount>(b =>
+            {
+                b.ToTable("AppExternalCalendarAccounts");
+                b.ConfigureByConvention();
+                b.Property(x => x.ExternalEmail).IsRequired().HasMaxLength(256);
+                b.Property(x => x.AccessToken).IsRequired();
+                b.HasIndex(x => new { x.UserId, x.Provider });
+            });
+
+            builder.Entity<CalendarSyncMapping>(b =>
+            {
+                b.ToTable("AppCalendarSyncMappings");
+                b.ConfigureByConvention();
+                b.HasIndex(x => new { x.TaskId, x.ExternalCalendarAccountId });
+                b.HasIndex(x => x.ExternalEventId);
             });
         }
     }

@@ -33,4 +33,11 @@ public static class PlatformPermissions
         public const string MarkRead = Default + ".MarkRead";
         public const string Delete   = Default + ".Delete";
     }
-}
+
+    // --- TAKVİM YETKİLERİ ---
+    public static class Calendars
+    {
+        public const string Default = GroupName + ".Calendars";
+        public const string Connect = Default + ".Connect";
+    }
+}

@@ -30,6 +30,10 @@ public class PlatformPermissionDefinitionProvider : PermissionDefinitionProvider
         var notificationsPermission = myGroup.AddPermission(PlatformPermissions.Notifications.Default, L("Permission:Notifications"));
         notificationsPermission.AddChild(PlatformPermissions.Notifications.MarkRead, L("Permission:Notifications.MarkRead"));
         notificationsPermission.AddChild(PlatformPermissions.Notifications.Delete, L("Permission:Notifications.Delete"));
+
+        // --- TAKVİM YETKİLERİ ---
+        var calendarsPermission = myGroup.AddPermission(PlatformPermissions.Calendars.Default, L("Permission:Calendars"));
+        calendarsPermission.AddChild(PlatformPermissions.Calendars.Connect, L("Permission:Calendars.Connect"));
     }
 
     private static LocalizableString L(string name)

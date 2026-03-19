@@ -16,6 +16,11 @@
         "Permission:Tasks.Edit": "Görev Düzenleme",
         "Permission:Tasks.Delete": "Görev Silme",
         "Permission:Tasks.Assign": "Görev Atama",
-        "Permission:Tasks.ChangeStatus": "Durum Değiştirme"
+        "Permission:Tasks.ChangeStatus": "Durum Değiştirme",
+        "Permission:Notifications": "Bildirim Yönetimi",
+        "Permission:Notifications.MarkRead": "Okundu Olarak İşaretle",
+        "Permission:Notifications.Delete": "Bildirim Silme",
+        "Permission:Calendars": "Takvim Entegrasyonu",
+        "Permission:Calendars.Connect": "Hesap Bağlama"
     }
-}
+}
