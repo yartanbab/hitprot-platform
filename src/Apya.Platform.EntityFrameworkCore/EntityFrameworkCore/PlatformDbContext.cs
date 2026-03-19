@@ -47,6 +47,7 @@ namespace Apya.Platform.EntityFrameworkCore
         public DbSet<Apya.Platform.Tasks.TaskComment> TaskComments { get; set; }
         public DbSet<TaskAttachment> TaskAttachments { get; set; }
         public DbSet<TaskDependency> TaskDependencies { get; set; }
+        public DbSet<TaskTimeLog> TaskTimeLogs { get; set; }
 
         /* --- BİLDİRİM MODÜLÜ --- */
         public DbSet<Notification> Notifications { get; set; }
@@ -203,6 +204,13 @@ namespace Apya.Platform.EntityFrameworkCore
                 b.ToTable("AppTaskDependencies");
                 b.ConfigureByConvention();
                 b.HasIndex(x => new { x.TaskId, x.PredecessorTaskId });
+            });
+
+            builder.Entity<TaskTimeLog>(b =>
+            {
+                b.ToTable("AppTaskTimeLogs");
+                b.ConfigureByConvention();
+                b.HasIndex(x => new { x.TaskId, x.UserId });
             });
 
             /* --- BİLDİRİM MODÜLÜ YAPILANDIRMASI --- */

@@ -30,19 +30,25 @@ public class ProjectAppService :
     private readonly ProjectManager _projectManager;
     private readonly IRepository<Grant, Guid> _grantRepository;
     private readonly IRepository<ProjectAttachment, Guid> _projectAttachmentRepository;
-    private readonly ITenantStore _tenantStore; // Müşteri isimlerini bulmak için servis
+    private readonly IRepository<TaskItem, Guid> _taskRepository;
+    private readonly IRepository<TaskTimeLog, Guid> _timeLogRepository;
+    private readonly ITenantStore _tenantStore; 
 
     public ProjectAppService(
         IRepository<Project, Guid> repository,
         ProjectManager projectManager,
         IRepository<Grant, Guid> grantRepository,
         IRepository<ProjectAttachment, Guid> projectAttachmentRepository,
-        ITenantStore tenantStore) // Constructor'a eklendi
+        IRepository<TaskItem, Guid> taskRepository,
+        IRepository<TaskTimeLog, Guid> timeLogRepository,
+        ITenantStore tenantStore)
         : base(repository)
     {
         _projectManager = projectManager;
         _grantRepository = grantRepository;
         _projectAttachmentRepository = projectAttachmentRepository;
+        _taskRepository = taskRepository;
+        _timeLogRepository = timeLogRepository;
         _tenantStore = tenantStore;
     }
 
@@ -57,6 +63,11 @@ public class ProjectAppService :
         );
 
         await Repository.InsertAsync(project);
+        
+        project.TotalBudget = input.TotalBudget;
+        project.HourlyRate = input.HourlyRate;
+        project.Currency = input.Currency;
+        
         return ObjectMapper.Map<Project, ProjectDto>(project);
     }
 
@@ -77,10 +88,21 @@ public class ProjectAppService :
 
             var dtos = ObjectMapper.Map<List<Project>, List<ProjectDto>>(items);
 
-            // SADECE ROOT ADMIN İÇİN MÜŞTERİ İSİMLERİNİ ÇEKİYORUZ
-            if (CurrentTenant.Id == null)
+            // BÜTÇE: Harcanan bütçeyi hesapla (APYA-31)
+            var projectIds = items.Select(x => x.Id).ToList();
+            var allTasks = await _taskRepository.GetListAsync(x => x.ProjectId.HasValue && projectIds.Contains(x.ProjectId.Value));
+            var allTaskIds = allTasks.Select(x => x.Id).ToList();
+            var allLogs = await _timeLogRepository.GetListAsync(x => allTaskIds.Contains(x.TaskId));
+
+            foreach (var dto in dtos)
             {
-                foreach (var dto in dtos)
+                var projectTasks = allTasks.Where(x => x.ProjectId == dto.Id).Select(x => x.Id).ToList();
+                var projectSeconds = allLogs.Where(x => projectTasks.Contains(x.TaskId)).Sum(x => x.SecondsSpent ?? 0);
+                
+                dto.SpentBudget = (decimal)(projectSeconds / 3600.0) * dto.HourlyRate;
+
+                // SADECE ROOT ADMIN İÇİN MÜŞTERİ İSİMLERİNİ ÇEKİYORUZ
+                if (CurrentTenant.Id == null)
                 {
                     if (dto.TenantId.HasValue)
                     {

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Volo.Abp.Domain.Entities.Auditing;
 using Volo.Abp.MultiTenancy;
 
@@ -20,6 +20,11 @@ public class Project : FullAuditedAggregateRoot<Guid>, IMultiTenant
     public DateTime? EndDate { get; set; }
 
     public bool IsApproved { get; set; }
+
+    /* --- BÜTÇE & KAYNAK YÖNETİMİ --- */
+    public decimal TotalBudget { get; set; } = 0;
+    public decimal HourlyRate { get; set; } = 0; // Saatlik maliyet (opsiyonel)
+    public string Currency { get; set; } = "TRY";
 
     public Project()
     {

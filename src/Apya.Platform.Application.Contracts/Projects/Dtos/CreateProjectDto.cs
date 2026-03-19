@@ -21,6 +21,9 @@ public class CreateProjectDto
     public DateTime? StartDate { get; set; }
     public DateTime? EndDate { get; set; }
 
-    // DERLEYÝCÝNÝN ÝSYAN ETTÝÐÝ EKSÝK ALAN BURASI:
     public Guid? GrantId { get; set; }
+
+    public decimal TotalBudget { get; set; }
+    public decimal HourlyRate { get; set; }
+    public string Currency { get; set; } = "TRY";
 }

@@ -24,5 +24,13 @@ namespace Apya.Platform.Tasks
         Task AddAttachmentAsync(Guid taskId, string fileName, string storedFileName, long fileSize);
         Task<List<TaskAttachmentDto>> GetAttachmentsAsync(Guid taskId);
         Task UpdateStatusAsync(Guid id, TaskStatus status);
+
+        // Zaman Takibi
+        Task StartTimeTrackingAsync(Guid taskId);
+        Task StopTimeTrackingAsync(Guid taskId);
+        Task<List<TaskTimeLogDto>> GetTimeLogsAsync(Guid taskId);
+        Task<TaskTimeLogDto?> GetActiveTimeLogAsync();
     }
-}
+}
+
+

@@ -27,6 +27,7 @@ namespace Apya.Platform.Tasks
         private readonly IRepository<TaskComment, Guid> _commentRepository;
         private readonly IRepository<TaskAttachment, Guid> _attachmentRepository;
         private readonly IRepository<TaskDependency, Guid> _dependencyRepository;
+        private readonly IRepository<TaskTimeLog, Guid> _timeLogRepository;
         private readonly IRepository<IdentityUser, Guid> _identityRepository;
         private readonly ILocalEventBus _localEventBus;
 
@@ -36,6 +37,7 @@ namespace Apya.Platform.Tasks
             IRepository<TaskComment, Guid> commentRepository,
             IRepository<TaskAttachment, Guid> attachmentRepository,
             IRepository<TaskDependency, Guid> dependencyRepository,
+            IRepository<TaskTimeLog, Guid> timeLogRepository,
             IRepository<IdentityUser, Guid> identityRepository,
             ILocalEventBus localEventBus)
             : base(repository)
@@ -44,6 +46,7 @@ namespace Apya.Platform.Tasks
             _commentRepository    = commentRepository;
             _attachmentRepository = attachmentRepository;
             _dependencyRepository = dependencyRepository;
+            _timeLogRepository    = timeLogRepository;
             _identityRepository   = identityRepository;
             _localEventBus        = localEventBus;
 
@@ -389,10 +392,72 @@ namespace Apya.Platform.Tasks
         {
             var task = await Repository.GetAsync(id);
             task.Status = status;
-            await Repository.UpdateAsync(task);
 
-            // BİLDİRİM: Durum değişikliği real-time (SignalR) ile yayınlanabilir.
-            // Şimdilik sadece veritabanını güncelliyoruz.
+            if (status == TaskStatus.Done)
+            {
+                task.CompletedDate = Clock.Now;
+            }
+
+            await Repository.UpdateAsync(task);
+        }
+
+        // --- ZAMAN TAKİBİ ---
+        public async Task StartTimeTrackingAsync(Guid taskId)
+        {
+            // Zaten açık bir log var mı? (Aynı anda sadece bir timer çalışabilir)
+            var activeLog = await _timeLogRepository.FirstOrDefaultAsync(x => x.UserId == CurrentUser.Id && x.EndTime == null);
+            if (activeLog != null) throw new Volo.Abp.UserFriendlyException("Zaten çalışan bir saymanınız var.");
+
+            await _timeLogRepository.InsertAsync(new TaskTimeLog(GuidGenerator.Create(), taskId, CurrentUser.Id!.Value, Clock.Now));
+        }
+
+        public async Task StopTimeTrackingAsync(Guid taskId)
+        {
+            var log = await _timeLogRepository.FirstOrDefaultAsync(x => x.TaskId == taskId && x.UserId == CurrentUser.Id && x.EndTime == null);
+            if (log == null) return;
+
+            log.EndTime = Clock.Now;
+            log.SecondsSpent = (long)(log.EndTime.Value - log.StartTime).TotalSeconds;
+            
+            await _timeLogRepository.UpdateAsync(log);
+
+            // BÜTÇE: Proje saatlik maliyeti varsa bütçeden düşelim logic buraya gelebilir.
+        }
+
+        public async Task<List<TaskTimeLogDto>> GetTimeLogsAsync(Guid taskId)
+        {
+            var logs = await _timeLogRepository.GetListAsync(x => x.TaskId == taskId);
+            var userIds = logs.Select(x => x.UserId).Distinct().ToList();
+            var users = await _identityRepository.GetListAsync(u => userIds.Contains(u.Id));
+            var userMap = users.ToDictionary(u => u.Id, u => u.UserName);
+
+            return logs.Select(x => new TaskTimeLogDto
+            {
+                Id = x.Id,
+                TaskId = x.TaskId,
+                UserId = x.UserId,
+                UserName = userMap.ContainsKey(x.UserId) ? userMap[x.UserId] : "Bilinmeyen",
+                StartTime = x.StartTime,
+                EndTime = x.EndTime,
+                SecondsSpent = x.SecondsSpent,
+                Note = x.Note
+            }).ToList();
+        }
+
+        public async Task<TaskTimeLogDto?> GetActiveTimeLogAsync()
+        {
+            var log = await _timeLogRepository.FirstOrDefaultAsync(x => x.UserId == CurrentUser.Id && x.EndTime == null);
+            if (log == null) return null;
+
+            return new TaskTimeLogDto
+            {
+                Id = log.Id,
+                TaskId = log.TaskId,
+                UserId = log.UserId,
+                StartTime = log.StartTime
+            };
         }
     }
-}
+}
+
+

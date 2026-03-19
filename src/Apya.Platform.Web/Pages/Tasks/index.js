@@ -216,29 +216,39 @@ $(function () {
     // --- Kanban Mantığı ---
     function loadKanban() {
         var params = {
-            maxResultCount: 1000, // Kanban için tümünü çekelim (sayfalama yerine)
+            maxResultCount: 1000,
             assigneeId: $('#Filter_AssigneeId').val() || null,
             statuses: $('#Filter_Status').val() ? [$('#Filter_Status').val()] : null,
             minDueDate: $('#Filter_MinDueDate').val() || null,
             maxDueDate: $('#Filter_MaxDueDate').val() || null
         };
 
-        taskService.getList(params).then(function (result) {
-            renderKanban(result.items);
+        Promise.all([
+            taskService.getList(params),
+            taskService.getActiveTimeLog()
+        ]).then(function (results) {
+            renderKanban(results[0].items, results[1]);
         });
     }
 
-    function renderKanban(tasks) {
+    function renderKanban(tasks, activeLog) {
         $('.kanban-items').empty();
         var counts = { 1:0, 2:0, 3:0, 4:0 };
 
         tasks.forEach(function (task) {
+            var isActive = activeLog && activeLog.taskId === task.id;
+            var timerHtml = isActive 
+                ? `<button class="btn btn-sm btn-danger btn-stop-timer p-1 px-2" data-id="${task.id}"><i class="fa fa-pause fa-beat"></i></button>`
+                : `<button class="btn btn-sm btn-outline-success btn-start-timer p-1 px-2" data-id="${task.id}"><i class="fa fa-play"></i></button>`;
+
             var cardHtml = `
-                <div class="kanban-card p-3 mb-2 bg-white shadow-sm border priority-${getPriorityClass(task.priority)}" 
+                <div class="kanban-card p-3 mb-2 bg-white shadow-sm border priority-${getPriorityClass(task.priority)} ${isActive ? 'timer-active' : ''}" 
                      draggable="true" data-id="${task.id}" id="task-${task.id}">
                     <div class="d-flex justify-content-between mb-1">
                         <small class="text-muted"><i class="fa fa-tag me-1"></i> #${task.id.substring(0,4)}</small>
-                        <span class="badge bg-light text-dark border p-1">${getPriorityText(task.priority)}</span>
+                        <div class="timer-controls">
+                            ${timerHtml}
+                        </div>
                     </div>
                     <div class="fw-bold mb-2 task-title text-truncate" title="${task.title}">${task.title}</div>
                     <div class="d-flex justify-content-between align-items-center">
@@ -277,6 +287,25 @@ $(function () {
             if (e.target.closest('.btn')) return;
             var id = $(this).data('id');
             editModal.open({ id: id });
+        });
+
+        // Zaman Takibi
+        $('.btn-start-timer').on('click', function(e) {
+            e.stopPropagation();
+            var id = $(this).data('id');
+            taskService.startTimeTracking(id).then(function() {
+                abp.notify.success('Sayman başlatıldı.');
+                loadKanban();
+            });
+        });
+
+        $('.btn-stop-timer').on('click', function(e) {
+            e.stopPropagation();
+            var id = $(this).data('id');
+            taskService.stopTimeTracking(id).then(function() {
+                abp.notify.success('Sayman durduruldu.');
+                loadKanban();
+            });
         });
 
         // HTML5 Drag & Drop
