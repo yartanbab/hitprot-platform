@@ -1,12 +1,13 @@
 using System;
 using System.Collections.Generic;
-using System.Linq; // WhereIf için şart
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Volo.Abp.Application.Dtos;
 using Volo.Abp.Application.Services;
 using Volo.Abp.Domain.Repositories;
+using Volo.Abp.EventBus.Local;
 using Volo.Abp.Identity;
 using Apya.Platform.Permissions;
 
@@ -26,19 +27,22 @@ namespace Apya.Platform.Tasks
         private readonly IRepository<TaskComment, Guid> _commentRepository;
         private readonly IRepository<TaskAttachment, Guid> _attachmentRepository;
         private readonly IRepository<IdentityUser, Guid> _identityRepository;
+        private readonly ILocalEventBus _localEventBus;
 
         public TaskAppService(
             IRepository<TaskItem, Guid> repository,
             IIdentityUserRepository userRepository,
             IRepository<TaskComment, Guid> commentRepository,
             IRepository<TaskAttachment, Guid> attachmentRepository,
-            IRepository<IdentityUser, Guid> identityRepository)
+            IRepository<IdentityUser, Guid> identityRepository,
+            ILocalEventBus localEventBus)
             : base(repository)
         {
-            _userRepository = userRepository;
-            _commentRepository = commentRepository;
+            _userRepository       = userRepository;
+            _commentRepository    = commentRepository;
             _attachmentRepository = attachmentRepository;
-            _identityRepository = identityRepository;
+            _identityRepository   = identityRepository;
+            _localEventBus        = localEventBus;
 
             CreatePolicyName = PlatformPermissions.Tasks.Create;
             UpdatePolicyName = PlatformPermissions.Tasks.Edit;
@@ -124,6 +128,15 @@ namespace Apya.Platform.Tasks
             {
                 var user = await _userRepository.FindAsync(input.AssigneeId.Value);
                 assigneeName = user?.UserName;
+
+                // BİLDİRİM: Görev atandı etkinliği yayınla
+                await _localEventBus.PublishAsync(new TaskAssignedEto
+                {
+                    TaskId       = newTask.Id,
+                    TaskTitle    = newTask.Title,
+                    AssigneeId   = input.AssigneeId.Value,
+                    AssignerName = CurrentUser.UserName ?? "Sistem"
+                });
             }
 
             return new TaskDto
@@ -168,6 +181,7 @@ namespace Apya.Platform.Tasks
             task.IsPrivate = input.IsPrivate;
             // Not: Proje ID genelde güncellenmez, görev bir projeye aittir. O yüzden eklemiyoruz.
 
+            var previousAssigneeId = (await Repository.GetAsync(id)).AssigneeId;
             await Repository.UpdateAsync(task);
 
             string? assigneeName = null;
@@ -175,6 +189,18 @@ namespace Apya.Platform.Tasks
             {
                 var user = await _userRepository.FindAsync(task.AssigneeId.Value);
                 assigneeName = user?.UserName;
+
+                // BİLDİRİM: Atanan kişi değiştiyse event yayınla
+                if (task.AssigneeId != previousAssigneeId)
+                {
+                    await _localEventBus.PublishAsync(new TaskAssignedEto
+                    {
+                        TaskId       = task.Id,
+                        TaskTitle    = task.Title,
+                        AssigneeId   = task.AssigneeId.Value,
+                        AssignerName = CurrentUser.UserName ?? "Sistem"
+                    });
+                }
             }
 
             return new TaskDto
@@ -250,8 +276,22 @@ namespace Apya.Platform.Tasks
         // --- 6. YORUM METODLARI ---
         public async Task AddCommentAsync(Guid taskId, string text)
         {
-            await _commentRepository.InsertAsync(new TaskComment(taskId, text));
+            var comment = await _commentRepository.InsertAsync(new TaskComment(taskId, text));
+
+            // BİLDİRİM: Yorum yapıldı event'ini yayınla
+            var task = await Repository.GetAsync(taskId);
+            await _localEventBus.PublishAsync(new TaskCommentAddedEto
+            {
+                TaskId        = taskId,
+                TaskTitle     = task.Title,
+                AssigneeId    = task.AssigneeId,
+                CreatorId     = task.CreatorId,
+                CommentUserId = CurrentUser.Id ?? Guid.Empty,
+                CommenterName = CurrentUser.UserName ?? "Bilinmeyen",
+                CommentText   = text
+            });
         }
+
 
         public async Task<List<TaskCommentDto>> GetCommentsAsync(Guid taskId)
         {

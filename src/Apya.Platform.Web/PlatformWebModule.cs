@@ -15,6 +15,7 @@ using OpenIddict.Validation.AspNetCore;
 using Volo.Abp;
 using Volo.Abp.Account.Web;
 using Volo.Abp.AspNetCore.Mvc;
+using Volo.Abp.AspNetCore.SignalR;
 using Volo.Abp.AspNetCore.Mvc.Localization;
 using Volo.Abp.AspNetCore.Mvc.UI;
 using Volo.Abp.AspNetCore.Mvc.UI.Bootstrap;
@@ -23,6 +24,7 @@ using Volo.Abp.AspNetCore.Mvc.UI.MultiTenancy;
 using Volo.Abp.AspNetCore.Mvc.UI.Theme.LeptonXLite;
 using Volo.Abp.AspNetCore.Mvc.UI.Theme.LeptonXLite.Bundling;
 using Volo.Abp.AspNetCore.Mvc.UI.Theme.Shared;
+using Volo.Abp.AspNetCore.Mvc.UI.Theme.Shared.Toolbars;
 using Volo.Abp.AspNetCore.Serilog;
 using Volo.Abp.Autofac;
 using Volo.Abp.Mapperly;
@@ -52,6 +54,7 @@ namespace Apya.Platform.Web;
     typeof(AbpSettingManagementWebModule),
     typeof(AbpAccountWebOpenIddictModule),
     typeof(AbpAspNetCoreMvcUiLeptonXLiteThemeModule),
+    typeof(AbpAspNetCoreSignalRModule),
     typeof(AbpTenantManagementWebModule),
     typeof(AbpAspNetCoreSerilogModule),
     typeof(AbpSwashbuckleModule)
@@ -136,7 +139,7 @@ public class PlatformWebModule : AbpModule
     {
         Configure<AbpBundlingOptions>(options =>
         {
-            // Stil (CSS) dosyalarý ayarý (Zaten vardýr, dokunmayýn)
+            // Stil (CSS) dosyalarï¿½ ayarï¿½ (Zaten vardï¿½r, dokunmayï¿½n)
             options.StyleBundles.Configure(
                 LeptonXLiteThemeBundles.Styles.Global,
                 bundle =>
@@ -145,14 +148,15 @@ public class PlatformWebModule : AbpModule
                 }
             );
 
-            // --- BURAYI EKLEYÝN ---
-            // Script (JS) dosyalarý ayarý
+            // --- BURAYI EKLEYï¿½N ---
+            // Script (JS) dosyalarï¿½ ayarï¿½
             options.ScriptBundles.Configure(
                 LeptonXLiteThemeBundles.Scripts.Global,
                 bundle =>
                 {
-                    // Oluþturduðumuz dosyayý buraya ekliyoruz
+                    // Oluï¿½turduï¿½umuz dosyayï¿½ buraya ekliyoruz
                     bundle.AddFiles("/js/jquery-fix.js");
+                    bundle.AddFiles("/Pages/Notifications/notification-bell.js");
                 }
             );
             // ----------------------
@@ -180,13 +184,18 @@ public class PlatformWebModule : AbpModule
         {
             options.MenuContributors.Add(new PlatformMenuContributor());
         });
+
+        Configure<AbpToolbarOptions>(options =>
+        {
+            options.Contributors.Add(new Apya.Platform.Web.Notifications.NotificationToolbarContributor());
+        });
     }
 
     private void ConfigureAutoApiControllers()
     {
         Configure<AbpAspNetCoreMvcOptions>(options =>
         {
-            // Hem uygulama hem de kontrat katmanlarýný tarýyoruz
+            // Hem uygulama hem de kontrat katmanlarï¿½nï¿½ tarï¿½yoruz
             options.ConventionalControllers.Create(typeof(PlatformApplicationModule).Assembly);
             options.ConventionalControllers.Create(typeof(PlatformApplicationContractsModule).Assembly);
         });
@@ -244,6 +253,9 @@ public class PlatformWebModule : AbpModule
 
         app.UseAuditing();
         app.UseAbpSerilogEnrichers();
-        app.UseConfiguredEndpoints();
+        app.UseConfiguredEndpoints(endpoints =>
+        {
+            endpoints.MapHub<Apya.Platform.Web.Hubs.NotificationHub>("/notification-hub");
+        });
     }
 }

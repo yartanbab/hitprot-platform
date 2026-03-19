@@ -1,4 +1,4 @@
-﻿using Apya.Platform.Localization;
+using Apya.Platform.Localization;
 using Volo.Abp.Authorization.Permissions;
 using Volo.Abp.Localization;
 
@@ -25,6 +25,11 @@ public class PlatformPermissionDefinitionProvider : PermissionDefinitionProvider
         tasksPermission.AddChild(PlatformPermissions.Tasks.Delete, L("Permission:Tasks.Delete"));
         tasksPermission.AddChild(PlatformPermissions.Tasks.Assign, L("Permission:Tasks.Assign"));
         tasksPermission.AddChild(PlatformPermissions.Tasks.ChangeStatus, L("Permission:Tasks.ChangeStatus"));
+
+        // --- BİLDİRİM YETKİLERİ ---
+        var notificationsPermission = myGroup.AddPermission(PlatformPermissions.Notifications.Default, L("Permission:Notifications"));
+        notificationsPermission.AddChild(PlatformPermissions.Notifications.MarkRead, L("Permission:Notifications.MarkRead"));
+        notificationsPermission.AddChild(PlatformPermissions.Notifications.Delete, L("Permission:Notifications.Delete"));
     }
 
     private static LocalizableString L(string name)

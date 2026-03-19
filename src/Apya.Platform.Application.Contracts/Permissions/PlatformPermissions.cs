@@ -1,4 +1,4 @@
-﻿namespace Apya.Platform.Permissions;
+namespace Apya.Platform.Permissions;
 
 public static class PlatformPermissions
 {
@@ -24,5 +24,13 @@ public static class PlatformPermissions
         public const string Delete = Default + ".Delete";
         public const string Assign = Default + ".Assign"; // Başkasına görev atama
         public const string ChangeStatus = Default + ".ChangeStatus"; // Durum değiştirme (Tamamla/Geri Al)
+    }
+
+    // --- BİLDİRİM YETKİLERİ ---
+    public static class Notifications
+    {
+        public const string Default  = GroupName + ".Notifications";
+        public const string MarkRead = Default + ".MarkRead";
+        public const string Delete   = Default + ".Delete";
     }
 }

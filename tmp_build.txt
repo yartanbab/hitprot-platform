@@ -1,0 +1,17 @@
+  Geri y├╝klenecek projeler belirleniyor...
+C:\Users\ybaba\apya-platform\src\Apya.Platform.Application\Apya.Platform.Application.csproj : warning NU1903: 'AutoMapper' 14.0.0 paketinde ├Ânem derecesi y├╝ksek olan bilinen bir https://github.com/advisories/GHSA-rvv3-g6hj-g44x g├╝venlik a├ğ─▒─ş─▒ var
+  Geri y├╝kleme i├ğin t├╝m projeler g├╝ncel.
+C:\Users\ybaba\apya-platform\src\Apya.Platform.Application\Apya.Platform.Application.csproj : warning NU1903: 'AutoMapper' 14.0.0 paketinde ├Ânem derecesi y├╝ksek olan bilinen bir https://github.com/advisories/GHSA-rvv3-g6hj-g44x g├╝venlik a├ğ─▒─ş─▒ var
+  Apya.Platform.Domain.Shared -> C:\Users\ybaba\apya-platform\src\Apya.Platform.Domain.Shared\bin\Debug\net10.0\Apya.Platform.Domain.Shared.dll
+  Apya.Platform.Domain -> C:\Users\ybaba\apya-platform\src\Apya.Platform.Domain\bin\Debug\net10.0\Apya.Platform.Domain.dll
+  Apya.Platform.Application.Contracts -> C:\Users\ybaba\apya-platform\src\Apya.Platform.Application.Contracts\bin\Debug\net10.0\Apya.Platform.Application.Contracts.dll
+  Apya.Platform.Application -> C:\Users\ybaba\apya-platform\src\Apya.Platform.Application\bin\Debug\net10.0\Apya.Platform.Application.dll
+
+Olu┼şturma ba┼şar─▒l─▒ oldu.
+
+C:\Users\ybaba\apya-platform\src\Apya.Platform.Application\Apya.Platform.Application.csproj : warning NU1903: 'AutoMapper' 14.0.0 paketinde ├Ânem derecesi y├╝ksek olan bilinen bir https://github.com/advisories/GHSA-rvv3-g6hj-g44x g├╝venlik a├ğ─▒─ş─▒ var
+C:\Users\ybaba\apya-platform\src\Apya.Platform.Application\Apya.Platform.Application.csproj : warning NU1903: 'AutoMapper' 14.0.0 paketinde ├Ânem derecesi y├╝ksek olan bilinen bir https://github.com/advisories/GHSA-rvv3-g6hj-g44x g├╝venlik a├ğ─▒─ş─▒ var
+    2 Uyar─▒
+    0 Hata
+
+Ge├ğen S├╝re 00:00:01.45

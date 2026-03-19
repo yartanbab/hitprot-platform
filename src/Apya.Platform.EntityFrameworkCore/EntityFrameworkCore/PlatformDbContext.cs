@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Volo.Abp.AuditLogging.EntityFrameworkCore;
 using Volo.Abp.BackgroundJobs.EntityFrameworkCore;
 using Volo.Abp.Data;
@@ -18,6 +18,7 @@ using Volo.Abp.EntityFrameworkCore.Modeling;
 using Apya.Platform.Projects;
 using Apya.Platform.Grants;
 using Apya.Platform.Tasks;
+using Apya.Platform.Notifications;
 
 namespace Apya.Platform.EntityFrameworkCore
 {
@@ -45,6 +46,9 @@ namespace Apya.Platform.EntityFrameworkCore
         // DİKKAT: Eski Task modülündeki yorumlar (Açık Adresiyle!)
         public DbSet<Apya.Platform.Tasks.TaskComment> TaskComments { get; set; }
         public DbSet<TaskAttachment> TaskAttachments { get; set; }
+
+        /* --- BİLDİRİM MODÜLÜ --- */
+        public DbSet<Notification> Notifications { get; set; }
 
 
         #region Entities from the Modules
@@ -187,6 +191,19 @@ namespace Apya.Platform.EntityFrameworkCore
             {
                 b.ToTable("AppTaskAttachments");
                 b.ConfigureByConvention();
+            });
+
+            /* --- BİLDİRİM MODÜLÜ YAPILANDIRMASI --- */
+            builder.Entity<Notification>(b =>
+            {
+                b.ToTable("AppNotifications");
+                b.ConfigureByConvention();
+                b.Property(x => x.Title).IsRequired().HasMaxLength(NotificationConsts.MaxTitleLength);
+                b.Property(x => x.Body).HasMaxLength(NotificationConsts.MaxBodyLength);
+                b.Property(x => x.EntityType).HasMaxLength(NotificationConsts.MaxEntityType);
+                // Performans için index
+                b.HasIndex(x => new { x.UserId, x.IsRead });
+                b.HasIndex(x => x.CreationTime);
             });
         }
     }
