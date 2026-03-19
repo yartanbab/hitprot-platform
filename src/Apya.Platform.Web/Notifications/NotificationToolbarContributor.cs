@@ -1,8 +1,5 @@
-using System.Collections.Generic;
 using System.Threading.Tasks;
-using Microsoft.Extensions.DependencyInjection;
 using Volo.Abp.AspNetCore.Mvc.UI.Theme.Shared.Toolbars;
-using Apya.Platform.Web.Components.NotificationBell;
 
 namespace Apya.Platform.Web.Notifications;
 
