@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Volo.Abp.Application.Dtos;
@@ -21,8 +21,8 @@ namespace Apya.Platform.Tasks
         Task AddCommentAsync(Guid taskId, string text);
         Task<List<TaskCommentDto>> GetCommentsAsync(Guid taskId);
 
-        // --- EKSİK OLAN DOSYA METODLARI (BUNLARI EKLEDİK) ---
         Task AddAttachmentAsync(Guid taskId, string fileName, string storedFileName, long fileSize);
         Task<List<TaskAttachmentDto>> GetAttachmentsAsync(Guid taskId);
+        Task UpdateStatusAsync(Guid id, TaskStatus status);
     }
-}
+}

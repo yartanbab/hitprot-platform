@@ -39,10 +39,10 @@
                         <label for="Filter_Status" class="form-label fw-bold small text-muted">Durum</label>
                         <select id="Filter_Status" class="form-select border-0 shadow-sm">
                             <option value="">Tümü</option>
-                            <option value="0">Bekliyor</option>
-                            <option value="1">Sürüyor</option>
-                            <option value="2">Testte</option>
-                            <option value="3">Tamamlandı</option>
+                            <option value="1">Bekliyor</option>
+                            <option value="2">Sürüyor</option>
+                            <option value="3">Testte</option>
+                            <option value="4">Tamamlandı</option>
                         </select>
                     </div>
                     <div class="col-md-2">
@@ -65,18 +65,26 @@
     </div>
 </div>
 
-@* ─── Görev Tablosu ─── *@
+@* ─── Görev Yönetimi ─── *@
 <abp-card>
-    <abp-card-header>
+    <abp-card-header class="border-bottom-0 pb-0">
         <abp-row>
             <abp-column size-md="_6">
-                <abp-card-title>Görev Yönetimi</abp-card-title>
+                <abp-card-title>Görev Panosu</abp-card-title>
             </abp-column>
             <abp-column size-md="_6" class="text-end">
+                <div class="btn-group me-2" role="group">
+                    <button type="button" id="btn-view-list" class="btn btn-outline-primary active">
+                        <i class="fa fa-list me-1"></i> Liste
+                    </button>
+                    <button type="button" id="btn-view-kanban" class="btn btn-outline-primary">
+                        <i class="fa fa-columns me-1"></i> Kanban
+                    </button>
+                </div>
                 @if (await AuthorizationService.IsGrantedAsync(PlatformPermissions.Tasks.Create))
                 {
                     <abp-button id="NewTaskButton"
-                                text="Yeni Görev Ekle"
+                                text="Yeni Görev"
                                 icon="plus"
                                 button-type="Primary" />
                 }
@@ -84,6 +92,63 @@
         </abp-row>
     </abp-card-header>
     <abp-card-body>
-        <abp-table striped-rows="true" id="TasksTable"></abp-table>
+        @* --- LİSTE GÖRÜNÜMÜ --- *@
+        <div id="view-list" class="view-panel">
+            <abp-table striped-rows="true" id="TasksTable"></abp-table>
+        </div>
+
+        @* --- KANBAN GÖRÜNÜMÜ --- *@
+        <div id="view-kanban" class="view-panel d-none">
+            <div id="kanban-container" class="row gx-3 py-2 scroll-x" style="overflow-x: auto; flex-wrap: nowrap; min-height: 600px;">
+                @* Todo Column *@
+                <div class="col-kanban p-2" data-status="1">
+                    <div class="kanban-header p-2 bg-light border rounded-top shadow-sm d-flex justify-content-between align-items-center">
+                        <span class="fw-bold"><i class="fa fa-clock me-1 text-secondary"></i> Bekliyor</span>
+                        <span class="badge bg-secondary rounded-pill" id="count-todo">0</span>
+                    </div>
+                    <div class="kanban-items p-2 bg-white border border-top-0 rounded-bottom shadow-sm" style="min-height: 500px;" id="kanban-todo"></div>
+                </div>
+
+                @* In Progress Column *@
+                <div class="col-kanban p-2" data-status="2">
+                    <div class="kanban-header p-2 bg-light border rounded-top shadow-sm d-flex justify-content-between align-items-center border-primary border-opacity-25" style="border-top: 3px solid #007bff !important;">
+                        <span class="fw-bold text-primary"><i class="fa fa-spinner fa-spin me-1"></i> Sürüyor</span>
+                        <span class="badge bg-primary rounded-pill" id="count-inprogress">0</span>
+                    </div>
+                    <div class="kanban-items p-2 bg-white border border-top-0 rounded-bottom shadow-sm" style="min-height: 500px;" id="kanban-inprogress"></div>
+                </div>
+
+                @* Test Column *@
+                <div class="col-kanban p-2" data-status="3">
+                    <div class="kanban-header p-2 bg-light border rounded-top shadow-sm d-flex justify-content-between align-items-center border-warning border-opacity-25" style="border-top: 3px solid #ffc107 !important;">
+                        <span class="fw-bold text-warning"><i class="fa fa-flask me-1"></i> Testte</span>
+                        <span class="badge bg-warning rounded-pill" id="count-test">0</span>
+                    </div>
+                    <div class="kanban-items p-2 bg-white border border-top-0 rounded-bottom shadow-sm" style="min-height: 500px;" id="kanban-test"></div>
+                </div>
+
+                @* Done Column *@
+                <div class="col-kanban p-2" data-status="4">
+                    <div class="kanban-header p-2 bg-light border rounded-top shadow-sm d-flex justify-content-between align-items-center border-success border-opacity-25" style="border-top: 3px solid #28a745 !important;">
+                        <span class="fw-bold text-success"><i class="fa fa-check-circle me-1"></i> Tamamlandı</span>
+                        <span class="badge bg-success rounded-pill" id="count-done">0</span>
+                    </div>
+                    <div class="kanban-items p-2 bg-white border border-top-0 rounded-bottom shadow-sm" style="min-height: 500px;" id="kanban-done"></div>
+                </div>
+            </div>
+        </div>
     </abp-card-body>
 </abp-card>
+
+<style>
+    .col-kanban { width: 300px; flex: 0 0 300px; }
+    .kanban-items { min-height: 200px; background-color: #fafafa !important; }
+    .kanban-card { cursor: grab; transition: transform 0.2s, box-shadow 0.2s; border-radius: 0.5rem; border-left: 4px solid #dee2e6; }
+    .kanban-card:hover { transform: translateY(-2px); box-shadow: 0 .5rem 1rem rgba(0,0,0,.15)!important; }
+    .kanban-card.priority-high { border-left-color: #dc3545; }
+    .kanban-card.priority-medium { border-left-color: #ffc107; }
+    .kanban-card.priority-low { border-left-color: #28a745; }
+    .kanban-placeholder { border: 2px dashed #ccc; background: #eee; height: 100px; border-radius: 0.5rem; margin-bottom: 0.5rem; }
+    .scroll-x::-webkit-scrollbar { height: 8px; }
+    .scroll-x::-webkit-scrollbar-thumb { background: #ccc; border-radius: 4px; }
+</style>

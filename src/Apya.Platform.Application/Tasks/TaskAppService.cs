@@ -353,5 +353,15 @@ namespace Apya.Platform.Tasks
                 UploaderName = (x.CreatorId.HasValue && userDict.ContainsKey(x.CreatorId.Value)) ? userDict[x.CreatorId.Value] : "Sistem"
             }).ToList();
         }
+
+        public async Task UpdateStatusAsync(Guid id, TaskStatus status)
+        {
+            var task = await Repository.GetAsync(id);
+            task.Status = status;
+            await Repository.UpdateAsync(task);
+
+            // BİLDİRİM: Durum değişikliği real-time (SignalR) ile yayınlanabilir.
+            // Şimdilik sadece veritabanını güncelliyoruz.
+        }
     }
-}
+}
