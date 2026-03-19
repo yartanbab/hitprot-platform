@@ -46,6 +46,7 @@ namespace Apya.Platform.EntityFrameworkCore
         // DİKKAT: Eski Task modülündeki yorumlar (Açık Adresiyle!)
         public DbSet<Apya.Platform.Tasks.TaskComment> TaskComments { get; set; }
         public DbSet<TaskAttachment> TaskAttachments { get; set; }
+        public DbSet<TaskDependency> TaskDependencies { get; set; }
 
         /* --- BİLDİRİM MODÜLÜ --- */
         public DbSet<Notification> Notifications { get; set; }
@@ -195,6 +196,13 @@ namespace Apya.Platform.EntityFrameworkCore
             {
                 b.ToTable("AppTaskAttachments");
                 b.ConfigureByConvention();
+            });
+
+            builder.Entity<TaskDependency>(b =>
+            {
+                b.ToTable("AppTaskDependencies");
+                b.ConfigureByConvention();
+                b.HasIndex(x => new { x.TaskId, x.PredecessorTaskId });
             });
 
             /* --- BİLDİRİM MODÜLÜ YAPILANDIRMASI --- */

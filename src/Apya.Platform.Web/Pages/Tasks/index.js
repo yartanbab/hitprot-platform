@@ -122,6 +122,11 @@ $(function () {
         loadKanban();
     });
 
+    $('#btn-view-gantt').click(function() {
+        switchView('gantt');
+        loadGantt();
+    });
+
     function switchView(mode) {
         $('.view-panel').addClass('d-none');
         $('.btn-group .btn').removeClass('active');
@@ -129,10 +134,83 @@ $(function () {
         if (mode === 'list') {
             $('#view-list').removeClass('d-none');
             $('#btn-view-list').addClass('active');
-        } else {
+        } else if (mode === 'kanban') {
             $('#view-kanban').removeClass('d-none');
             $('#btn-view-kanban').addClass('active');
+        } else {
+            $('#view-gantt').removeClass('d-none');
+            $('#btn-view-gantt').addClass('active');
         }
+    }
+
+    // --- Gantt Mantığı ---
+    var gantt = null;
+
+    function loadGantt() {
+        var params = {
+            maxResultCount: 1000,
+            assigneeId: $('#Filter_AssigneeId').val() || null,
+            statuses: $('#Filter_Status').val() ? [$('#Filter_Status').val()] : null,
+            minDueDate: $('#Filter_MinDueDate').val() || null,
+            maxDueDate: $('#Filter_MaxDueDate').val() || null
+        };
+
+        taskService.getList(params).then(function (result) {
+            renderGantt(result.items);
+        });
+    }
+
+    function renderGantt(tasks) {
+        if (!tasks.length) {
+            $('#gantt-svg').empty();
+            return;
+        }
+
+        var ganttTasks = tasks.map(function (task) {
+            return {
+                id: task.id,
+                name: task.title,
+                start: moment(task.startDate).format('YYYY-MM-DD'),
+                end: moment(task.dueDate || moment(task.startDate).add(1, 'days')).format('YYYY-MM-DD'),
+                progress: task.status === 4 ? 100 : (task.status === 1 ? 0 : 50),
+                dependencies: (task.predecessorIds || []).join(','),
+                custom_class: 'priority-' + getPriorityClass(task.priority)
+            };
+        });
+
+        gantt = new Gantt("#gantt-svg", ganttTasks, {
+            on_click: function (task) {
+                editModal.open({ id: task.id });
+            },
+            on_date_change: function(task, start, end) {
+                // Sürükle bırak ile tarih güncelleme
+                taskService.get(task.id).then(function(original) {
+                    var input = {
+                        title: original.title,
+                        description: original.description,
+                        startDate: start,
+                        dueDate: end,
+                        status: original.status,
+                        priority: original.priority,
+                        projectId: original.projectId,
+                        assigneeId: original.assigneeId,
+                        predecessorIds: original.predecessorIds
+                    };
+                    taskService.update(task.id, input).then(function() {
+                        abp.notify.success('Tarih güncellendi.');
+                    });
+                });
+            },
+            language: 'tr'
+        });
+
+        // View Mode Change
+        $('.gantt-change-view').on('click', function() {
+            var view = $(this).data('view');
+            gantt.change_view_mode(view);
+            $('.gantt-change-view').removeClass('active');
+            $(this).addClass('active');
+        });
     }
 
     // --- Kanban Mantığı ---
@@ -265,22 +343,27 @@ $(function () {
     createModal.onResult(function () { 
         dataTable.ajax.reload(); 
         if (!$('#view-kanban').hasClass('d-none')) loadKanban();
+        if (!$('#view-gantt').hasClass('d-none')) loadGantt();
     });
 
     editModal.onResult(function () { 
         dataTable.ajax.reload(); 
         if (!$('#view-kanban').hasClass('d-none')) loadKanban();
+        if (!$('#view-gantt').hasClass('d-none')) loadGantt();
     });
 
     // --- APYA-25: Filtre Butonları ---
     $('#btn-apply-filters').click(function () {
         dataTable.ajax.reload();
         if (!$('#view-kanban').hasClass('d-none')) loadKanban();
+        if (!$('#view-gantt').hasClass('d-none')) loadGantt();
     });
 
     $('#btn-clear-filters').click(function () {
         $('#TaskFilterForm')[0].reset();
         dataTable.ajax.reload();
         if (!$('#view-kanban').hasClass('d-none')) loadKanban();
+        if (!$('#view-gantt').hasClass('d-none')) loadGantt();
     });
-});
+});
+

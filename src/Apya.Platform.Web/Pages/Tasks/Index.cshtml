@@ -4,10 +4,7 @@
 @inject IAuthorizationService AuthorizationService
 @using Apya.Platform.Web.Pages.Tasks
 @model IndexModel
-@section scripts
-{
-    <abp-script src="/Pages/Tasks/index.js" />
-}
+
 
 @* ─── Gelişmiş Filtreleme Paneli ─── *@
 <div class="accordion mb-3" id="taskFiltersAccordion">
@@ -80,6 +77,9 @@
                     <button type="button" id="btn-view-kanban" class="btn btn-outline-primary">
                         <i class="fa fa-columns me-1"></i> Kanban
                     </button>
+                    <button type="button" id="btn-view-gantt" class="btn btn-outline-primary">
+                        <i class="fa fa-stream me-1"></i> Gantt
+                    </button>
                 </div>
                 @if (await AuthorizationService.IsGrantedAsync(PlatformPermissions.Tasks.Create))
                 {
@@ -137,8 +137,40 @@
                 </div>
             </div>
         </div>
+
+        @* --- GANTT GÖRÜNÜMÜ --- *@
+        <div id="view-gantt" class="view-panel d-none">
+            <div class="gantt-controls mb-3 text-center">
+                <div class="btn-group btn-group-sm">
+                    <button type="button" class="btn btn-light border gantt-change-view" data-view="Day">Günlük</button>
+                    <button type="button" class="btn btn-light border gantt-change-view" data-view="Week">Haftalık</button>
+                    <button type="button" class="btn btn-light border gantt-change-view active" data-view="Month">Aylık</button>
+                </div>
+            </div>
+            <div style="overflow-x: auto;">
+                <svg id="gantt-svg"></svg>
+            </div>
+        </div>
     </abp-card-body>
 </abp-card>
+
+@section styles {
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/frappe-gantt/0.6.1/frappe-gantt.min.css" />
+    <style>
+        /* Proje stili için Gantt özelleştirmesi */
+        .gantt .bar-label { fill: #fff; font-weight: bold; }
+        .gantt .bar-progress { fill: #007bff; }
+        .gantt .bar { fill: #cbd5e0; }
+        .gantt .priority-high .bar-progress { fill: #dc3545; }
+        .gantt .priority-medium .bar-progress { fill: #ffc107; }
+        .gantt .priority-low .bar-progress { fill: #28a745; }
+    </style>
+}
+
+@section scripts {
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/frappe-gantt/0.6.1/frappe-gantt.min.js"></script>
+    <abp-script src="/Pages/Tasks/index.js" />
+}
 
 <style>
     .col-kanban { width: 300px; flex: 0 0 300px; }

@@ -26,6 +26,7 @@ namespace Apya.Platform.Tasks
         private readonly IIdentityUserRepository _userRepository;
         private readonly IRepository<TaskComment, Guid> _commentRepository;
         private readonly IRepository<TaskAttachment, Guid> _attachmentRepository;
+        private readonly IRepository<TaskDependency, Guid> _dependencyRepository;
         private readonly IRepository<IdentityUser, Guid> _identityRepository;
         private readonly ILocalEventBus _localEventBus;
 
@@ -34,6 +35,7 @@ namespace Apya.Platform.Tasks
             IIdentityUserRepository userRepository,
             IRepository<TaskComment, Guid> commentRepository,
             IRepository<TaskAttachment, Guid> attachmentRepository,
+            IRepository<TaskDependency, Guid> dependencyRepository,
             IRepository<IdentityUser, Guid> identityRepository,
             ILocalEventBus localEventBus)
             : base(repository)
@@ -41,6 +43,7 @@ namespace Apya.Platform.Tasks
             _userRepository       = userRepository;
             _commentRepository    = commentRepository;
             _attachmentRepository = attachmentRepository;
+            _dependencyRepository = dependencyRepository;
             _identityRepository   = identityRepository;
             _localEventBus        = localEventBus;
 
@@ -101,6 +104,10 @@ namespace Apya.Platform.Tasks
                 }
             }
 
+            // --- BAĞIMLILIKLARIN EKLENMESİ (APYA-30) ---
+            var dependencies = await _dependencyRepository.GetListAsync(x => x.TaskId == id);
+            taskDto.PredecessorIds = dependencies.Select(d => d.PredecessorTaskId).ToList();
+
             return taskDto;
         }
 
@@ -122,6 +129,15 @@ namespace Apya.Platform.Tasks
             };
 
             await Repository.InsertAsync(newTask);
+
+            // --- BAĞIMLILIKLARIN KAYDEDİLMESİ (APYA-30) ---
+            if (input.PredecessorIds != null && input.PredecessorIds.Any())
+            {
+                foreach (var predId in input.PredecessorIds)
+                {
+                    await _dependencyRepository.InsertAsync(new TaskDependency(GuidGenerator.Create(), newTask.Id, predId));
+                }
+            }
 
             string? assigneeName = null;
             if (input.AssigneeId.HasValue)
@@ -151,7 +167,8 @@ namespace Apya.Platform.Tasks
                 AssigneeId = newTask.AssigneeId,
                 AssigneeName = assigneeName,
                 ParentTaskId = newTask.ParentTaskId,
-                ProjectId = newTask.ProjectId
+                ProjectId = newTask.ProjectId,
+                PredecessorIds = input.PredecessorIds ?? new()
             };
         }
 
@@ -184,6 +201,16 @@ namespace Apya.Platform.Tasks
             var previousAssigneeId = (await Repository.GetAsync(id)).AssigneeId;
             await Repository.UpdateAsync(task);
 
+            // --- BAĞIMLILIKLARIN GÜNCELLENMESİ (APYA-30) ---
+            await _dependencyRepository.DeleteDirectAsync(x => x.TaskId == id);
+            if (input.PredecessorIds != null && input.PredecessorIds.Any())
+            {
+                foreach (var predId in input.PredecessorIds)
+                {
+                    await _dependencyRepository.InsertAsync(new TaskDependency(GuidGenerator.Create(), id, predId));
+                }
+            }
+
             string? assigneeName = null;
             if (task.AssigneeId.HasValue)
             {
@@ -213,7 +240,8 @@ namespace Apya.Platform.Tasks
                 Status = task.Status,
                 Priority = task.Priority,
                 AssigneeId = task.AssigneeId,
-                AssigneeName = assigneeName
+                AssigneeName = assigneeName,
+                PredecessorIds = input.PredecessorIds ?? new()
             };
         }
 
@@ -232,6 +260,9 @@ namespace Apya.Platform.Tasks
                     throw new Volo.Abp.Authorization.AbpAuthorizationException("Bu görevi silmek için yetkiniz yok. Sadece görevi oluşturan veya atanan kişi silebilir.");
                 }
             }
+
+            // Bağımlılıkları da temizleyelim (APYA-30)
+            await _dependencyRepository.DeleteDirectAsync(x => x.TaskId == id || x.PredecessorTaskId == id);
 
             await base.DeleteAsync(id);
         }

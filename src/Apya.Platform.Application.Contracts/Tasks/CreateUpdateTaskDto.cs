@@ -24,5 +24,6 @@ namespace Apya.Platform.Tasks
         public Guid? AssigneeId { get; set; }
         public Guid? ParentTaskId { get; set; }
         public bool IsPrivate { get; set; }
+        public System.Collections.Generic.List<Guid> PredecessorIds { get; set; } = new();
     }
-}
+}
