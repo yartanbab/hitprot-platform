@@ -19,6 +19,7 @@ using Apya.Platform.Grants;
 using Apya.Platform.Tasks;
 using Apya.Platform.Notifications;
 using Apya.Platform.Calendars;
+using Apya.Platform.Invoices;
 
 namespace Apya.Platform.EntityFrameworkCore
 {
@@ -48,6 +49,9 @@ namespace Apya.Platform.EntityFrameworkCore
         public DbSet<TaskAttachment> TaskAttachments { get; set; }
         public DbSet<TaskDependency> TaskDependencies { get; set; }
         public DbSet<TaskTimeLog> TaskTimeLogs { get; set; }
+        public DbSet<Invoice> Invoices { get; set; }
+        public DbSet<InvoiceItem> InvoiceItems { get; set; }
+        public DbSet<Payment> Payments { get; set; }
 
         /* --- BİLDİRİM MODÜLÜ --- */
         public DbSet<Notification> Notifications { get; set; }
@@ -211,6 +215,29 @@ namespace Apya.Platform.EntityFrameworkCore
                 b.ToTable("AppTaskTimeLogs");
                 b.ConfigureByConvention();
                 b.HasIndex(x => new { x.TaskId, x.UserId });
+            });
+
+            builder.Entity<Invoice>(b =>
+            {
+                b.ToTable("AppInvoices");
+                b.ConfigureByConvention();
+                b.HasIndex(x => x.InvoiceNumber).IsUnique();
+                b.HasIndex(x => x.ProjectId);
+                b.HasIndex(x => x.Status);
+                b.HasMany(x => x.Items).WithOne().HasForeignKey(x => x.InvoiceId).IsRequired();
+            });
+
+            builder.Entity<InvoiceItem>(b =>
+            {
+                b.ToTable("AppInvoiceItems");
+                b.ConfigureByConvention();
+            });
+
+            builder.Entity<Payment>(b =>
+            {
+                b.ToTable("AppPayments");
+                b.ConfigureByConvention();
+                b.HasIndex(x => x.InvoiceId);
             });
 
             /* --- BİLDİRİM MODÜLÜ YAPILANDIRMASI --- */

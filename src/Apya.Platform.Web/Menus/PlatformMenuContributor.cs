@@ -67,6 +67,16 @@ public class PlatformMenuContributor : IMenuContributor
             )
         );
 
+        // "Invoices" menü öğesi
+        context.Menu.AddItem(
+            new ApplicationMenuItem(
+                "Apya.Platform.Invoices",
+                "Faturalar & Ödemeler",
+                icon: "fa fa-file-invoice-dollar",
+                url: "/Invoices"
+            )
+        );
+
         if (MultiTenancyConsts.IsEnabled)
         {
             administration.SetSubItemOrder(TenantManagementMenuNames.GroupName, 1);
