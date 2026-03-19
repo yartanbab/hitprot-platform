@@ -1,0 +1,69 @@
+@page
+@model Apya.Platform.Web.Pages.Reports.IndexModel
+@using Apya.Platform.Reports
+@using Microsoft.AspNetCore.Mvc.Localization
+@inject IHtmlLocalizer<Apya.Platform.Localization.PlatformResource> L
+
+<div id="ReportsContainer">
+    <abp-row>
+        <abp-column size="_12">
+            <abp-card>
+                <abp-card-header>
+                    <h3 class="card-title"><i class="fa fa-chart-line me-2"></i> Gelişmiş Proje Raporları</h3>
+                </abp-card-header>
+                <abp-card-body>
+                    <abp-row>
+                        <abp-column size-md="_6">
+                            <h5 class="text-center mb-4">Bütçe Kullanımı (Spent vs Total)</h5>
+                            <canvas id="budgetChart" height="200"></canvas>
+                        </abp-column>
+                        <abp-column size-md="_6">
+                            <h5 class="text-center mb-4">Personel Çalışma Saatleri</h5>
+                            <canvas id="efficiencyChart" height="200"></canvas>
+                        </abp-column>
+                    </abp-row>
+                </abp-card-body>
+            </abp-card>
+        </abp-column>
+    </abp-row>
+
+    <abp-row class="mt-4">
+        <abp-column size-md="_8">
+            <abp-card>
+                <abp-card-header>
+                    <h5 class="mb-0">Proje Detaylı Analiz</h5>
+                </abp-card-header>
+                <abp-card-body>
+                    <abp-table striped-rows="true" class="mb-0">
+                        <thead>
+                            <tr>
+                                <th>Proje Adı</th>
+                                <th>Toplam Bütçe</th>
+                                <th>Harcanan</th>
+                                <th>Kullanım %</th>
+                                <th>Toplam Saat</th>
+                            </tr>
+                        </thead>
+                        <tbody id="projectReportTableBody">
+                        </tbody>
+                    </abp-table>
+                </abp-card-body>
+            </abp-card>
+        </abp-column>
+        <abp-column size-md="_4">
+            <abp-card>
+                <abp-card-header>
+                    <h5 class="mb-0">Personel Performansı</h5>
+                </abp-card-header>
+                <abp-card-body>
+                    <div id="personnelSummaryList"></div>
+                </abp-card-body>
+            </abp-card>
+        </abp-column>
+    </abp-row>
+</div>
+
+@section scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <abp-script src="/Pages/Reports/index.js" />
+}

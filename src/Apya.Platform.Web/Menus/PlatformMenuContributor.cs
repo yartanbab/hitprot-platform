@@ -1,4 +1,4 @@
-﻿using System.Threading.Tasks;
+using System.Threading.Tasks;
 using Apya.Platform.Localization;
 using Apya.Platform.MultiTenancy;
 using Volo.Abp.Identity.Web.Navigation;
@@ -54,6 +54,16 @@ public class PlatformMenuContributor : IMenuContributor
                 "Görev Yönetimi",      // Ekranda görünecek isim (L10n ile de yapılabilir ama şimdilik düz yazalım)
                 icon: "fa fa-tasks",   // FontAwesome ikonu
                 url: "/Tasks"          // Tıklayınca gideceği adres
+            )
+        );
+
+        // "Reports" menü öğesi
+        context.Menu.AddItem(
+            new ApplicationMenuItem(
+                "Apya.Platform.Reports",
+                "Raporlar & Analiz",
+                icon: "fa fa-chart-pie",
+                url: "/Reports"
             )
         );
 
