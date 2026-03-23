@@ -89,16 +89,6 @@ public class PlatformMenuContributor : IMenuContributor
             )
         );
 
-        // "Custom Tenant Management" menü öğesi
-        context.Menu.AddItem(
-            new ApplicationMenuItem(
-                "Apya.Platform.CustomTenants",
-                "Müşteri (Tenant) Yönetimi",
-                icon: "fa fa-users-cog",
-                url: "/Tenants"
-            )
-        );
-
         if (MultiTenancyConsts.IsEnabled)
         {
             administration.SetSubItemOrder(TenantManagementMenuNames.GroupName, 1);

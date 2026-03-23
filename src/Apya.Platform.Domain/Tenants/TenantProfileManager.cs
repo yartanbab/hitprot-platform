@@ -14,9 +14,6 @@ public class TenantProfileManager : DomainService
         _tenantProfileRepository = tenantProfileRepository;
     }
 
-    /// <summary>
-    /// Creates a new TenantProfile with the necessary business rule checks.
-    /// </summary>
     public async Task<TenantProfile> CreateProfileAsync(
         Guid tenantId,
         CompanyType companyType,
@@ -34,15 +31,9 @@ public class TenantProfileManager : DomainService
         );
     }
 
-    /// <summary>
-    /// Checks if the given tax number is unique across all tenant profiles.
-    /// </summary>
     public async Task CheckTaxNumberUniqueAsync(string taxNumber, Guid? excludeProfileId = null)
     {
-        if (string.IsNullOrWhiteSpace(taxNumber))
-        {
-            return; // Or throw BusinessException depending on requirements
-        }
+        if (string.IsNullOrWhiteSpace(taxNumber)) return;
 
         var existingProfile = await _tenantProfileRepository.FirstOrDefaultAsync(x => x.TaxNumber == taxNumber);
         

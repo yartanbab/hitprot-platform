@@ -1,10 +1,10 @@
 @page
-@model Apya.Platform.Web.Pages.Tenants.CreateModalModel
+@model Apya.Platform.Web.Pages.TenantManagement.Tenants.CreateModalModel
 @using Volo.Abp.AspNetCore.Mvc.UI.Bootstrap.TagHelpers.Modal
 @{
     Layout = null;
 }
-<form method="post" action="@Url.Page("/Tenants/CreateModal")" id="WizardForm">
+<form method="post" action="@Url.Page("/TenantManagement/Tenants/CreateModal")" id="WizardForm">
     <abp-modal>
         <abp-modal-header title="Yeni Müşteri & Profil Ekle"></abp-modal-header>
         <abp-modal-body>
@@ -15,21 +15,28 @@
                 <li class="nav-item" role="presentation">
                     <button class="nav-link" id="legal-tab" data-bs-toggle="tab" data-bs-target="#legal" type="button" role="tab" aria-controls="legal" aria-selected="false">Resmi (Kurumsal) Bilgiler</button>
                 </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="contact-tab" data-bs-toggle="tab" data-bs-target="#contact" type="button" role="tab" aria-controls="contact" aria-selected="false">Adres & İletişim</button>
+                </li>
             </ul>
             <div class="tab-content pt-3" id="tenantWizardTabContent">
-                <!-- Adım 1 -->
                 <div class="tab-pane fade show active" id="basics" role="tabpanel" aria-labelledby="basics-tab">
                     <abp-input asp-for="Tenant.Name" label="Sistem Müşteri Adı (Tenant Name)" />
                     <abp-input asp-for="Tenant.AdminEmailAddress" label="Yönetici E-Posta Adresi" />
                     <abp-input asp-for="Tenant.AdminPassword" label="Yönetici Şifresi" />
                 </div>
                 
-                <!-- Adım 2 -->
                 <div class="tab-pane fade" id="legal" role="tabpanel" aria-labelledby="legal-tab">
                     <abp-select asp-for="Tenant.CompanyType" label="Kurum Türü" />
                     <abp-input asp-for="Tenant.CorporateEmail" label="Kurumsal Genel E-Posta" />
                     <abp-input asp-for="Tenant.TaxNumber" label="Vergi Numarası" />
                     <abp-input asp-for="Tenant.TaxOffice" label="Vergi Dairesi" />
+                </div>
+
+                <div class="tab-pane fade" id="contact" role="tabpanel" aria-labelledby="contact-tab">
+                    <abp-input asp-for="Tenant.Address" label="Açık Adres" />
+                    <abp-input asp-for="Tenant.LegalRepresentativeName" label="Yasal Yetkili Kişi" />
+                    <abp-input asp-for="Tenant.OperationalContactName" label="Operasyonel İletişim Kişisi" />
                 </div>
             </div>
         </abp-modal-body>

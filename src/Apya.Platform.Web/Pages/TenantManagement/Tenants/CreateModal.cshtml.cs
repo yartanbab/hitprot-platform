@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Volo.Abp.AspNetCore.Mvc.UI.RazorPages;
 using Apya.Platform.Tenants;
 
-namespace Apya.Platform.Web.Pages.Tenants;
+namespace Apya.Platform.Web.Pages.TenantManagement.Tenants;
 
 public class CreateModalModel : AbpPageModel
 {
@@ -17,7 +17,12 @@ public class CreateModalModel : AbpPageModel
         _tenantProfileAppService = tenantProfileAppService;
     }
 
-    public async Task<IActionResult> OnPostAsync()
+    public virtual async Task<IActionResult> OnGetAsync()
+    {
+        return await Task.FromResult<IActionResult>(Page());
+    }
+
+    public virtual async Task<IActionResult> OnPostAsync()
     {
         ValidateModel();
         

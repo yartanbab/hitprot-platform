@@ -4,7 +4,6 @@ namespace Apya.Platform.Tenants;
 
 public class CreateTenantExtendedDto
 {
-    // Temel ABP Tenant Bilgileri
     [Required]
     [StringLength(64)]
     public string Name { get; set; } = string.Empty;
@@ -18,7 +17,6 @@ public class CreateTenantExtendedDto
     [StringLength(128)]
     public string AdminPassword { get; set; } = string.Empty;
 
-    // Uzantı Profil Bilgileri
     public CompanyType CompanyType { get; set; } = CompanyType.Company;
 
     [StringLength(50)]
@@ -29,4 +27,13 @@ public class CreateTenantExtendedDto
 
     [StringLength(256)]
     public string CorporateEmail { get; set; } = string.Empty;
+
+    [StringLength(500)]
+    public string Address { get; set; } = string.Empty;
+
+    [StringLength(128)]
+    public string LegalRepresentativeName { get; set; } = string.Empty;
+
+    [StringLength(128)]
+    public string OperationalContactName { get; set; } = string.Empty;
 }

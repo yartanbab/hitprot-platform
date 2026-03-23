@@ -106,7 +106,6 @@ namespace Apya.Platform.EntityFrameworkCore
             builder.ConfigureFeatureManagement();
             builder.ConfigureTenantManagement();
 
-
             /* --- TENANT PROFILE YAPILANDIRMASI --- */
             builder.Entity<Apya.Platform.Tenants.TenantProfile>(b => 
             {

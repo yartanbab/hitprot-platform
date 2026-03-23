@@ -1,23 +1,22 @@
 @page
-@model Apya.Platform.Web.Pages.Tenants.IndexModel
+@model Apya.Platform.Web.Pages.TenantManagement.Tenants.IndexModel
 @{
     ViewBag.PageTitle = "Müşteri (Tenant) Yönetimi";
 }
 @section scripts {
-    <abp-script src="/Pages/Tenants/Index.js" />
+    <abp-script src="/Pages/TenantManagement/Tenants/Index.js" />
 }
 
 <abp-card>
     <abp-card-header>
         <abp-row>
-            <abp-column size-md="_6">
+            <abp-column size="_6">
                 <abp-card-title>@ViewBag.PageTitle</abp-card-title>
             </abp-column>
-            <abp-column size-md="_6" class="text-end">
-                <abp-button id="NewTenantButton"
-                            text="Yeni Müşteri Ekle (Wizard)"
-                            icon="plus"
-                            button-type="Primary" />
+            <abp-column size="_6" class="text-end">
+                <button id="NewTenantButton" class="btn btn-primary btn-sm">
+                    <i class="fa fa-plus"></i> Yeni Müşteri Ekle (Gelişmiş)
+                </button>
             </abp-column>
         </abp-row>
     </abp-card-header>

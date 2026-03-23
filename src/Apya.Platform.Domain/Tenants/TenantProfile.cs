@@ -5,9 +5,6 @@ namespace Apya.Platform.Tenants;
 
 public class TenantProfile : FullAuditedAggregateRoot<Guid>
 {
-    /// <summary>
-    /// ID of the related ABP Tenant wrapper. (1:1 with AbpTenants)
-    /// </summary>
     public Guid TenantId { get; protected set; }
 
     public CompanyType CompanyType { get; set; }
