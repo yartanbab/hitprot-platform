@@ -17,6 +17,12 @@
         "Permission:Tasks.Delete": "Görev Silme",
         "Permission:Tasks.Assign": "Görev Atama",
         "Permission:Tasks.ChangeStatus": "Durum Değiştirme",
+        
+        "Permission:Documents": "Doküman & Wiki Yönetimi",
+        "Permission:Documents.Create": "Doküman Oluşturma",
+        "Permission:Documents.Edit": "Doküman Düzenleme",
+        "Permission:Documents.Delete": "Doküman Silme",
+        
         "Permission:Notifications": "Bildirim Yönetimi",
         "Permission:Notifications.MarkRead": "Okundu Olarak İşaretle",
         "Permission:Notifications.Delete": "Bildirim Silme",
