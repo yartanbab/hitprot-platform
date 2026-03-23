@@ -12,6 +12,24 @@
     <abp-modal-header title="🚀 Görev Paneli: @Model.Task.Title"></abp-modal-header>
 
     <abp-modal-body class="p-0 bg-light">
+        
+        <!-- ZAMAN TAKİBİ (TIME TRACKING) BANNER -->
+        <div class="d-flex justify-content-between align-items-center bg-white px-4 py-3 border-bottom shadow-sm">
+            <div>
+                <span class="badge bg-dark bg-opacity-10 text-dark border border-secondary rounded-pill px-3 py-2 fs-6">
+                    <i class="fa fa-clock text-primary me-2"></i>Zaman Takibi (Kronometre)
+                </span>
+            </div>
+            <div>
+                <button type="button" class="btn btn-outline-danger rounded-pill fw-bold shadow-sm px-4 pulse-animation" id="BtnStopTimer" style="display:none; transition: all 0.3s;">
+                    <i class="fa fa-stop-circle me-1"></i> <span id="TimerElapsed">00:00:00</span>
+                </button>
+                <button type="button" class="btn btn-success rounded-pill fw-bold shadow-sm px-4" id="BtnStartTimer" style="transition: all 0.3s;">
+                    <i class="fa fa-play me-1"></i> Süreyi Başlat
+                </button>
+            </div>
+        </div>
+
         <ul class="nav nav-tabs nav-justified px-3 pt-3 border-bottom-0 shadow-sm bg-white" id="taskTabs" role="tablist">
             <li class="nav-item">
                 <a class="nav-link active fw-bold text-primary" id="details-tab" data-bs-toggle="tab" href="#details" role="tab">
@@ -287,4 +305,93 @@
             }
         });
     });
+
+    // --- ZAMAN TAKİBİ (TIME TRACKING) JS ---
+    var timerInterval = null;
+    var startTime = null;
+
+    function refreshTimerState() {
+        var taskId = $('.task-id-input').val();
+        if(!taskId || taskId === '00000000-0000-0000-0000-000000000000') return;
+
+        apya.platform.tasks.task.getActiveTimeLog().then(function(log) {
+            if (log && log.taskId === taskId) {
+                // Bu görev için sayaç çalışıyor
+                startTime = new Date(log.startTime);
+                $('#BtnStartTimer').hide();
+                $('#BtnStopTimer').show();
+                if (!timerInterval) {
+                    timerInterval = setInterval(updateTimerDisplay, 1000);
+                    updateTimerDisplay(); // ilk saniyeyi bekleme
+                }
+            } else if (log && log.taskId !== taskId) {
+                // Başka görev için sayaç var, bunu kitleyelim
+                $('#BtnStartTimer').prop('disabled', true).html('<i class="fa fa-lock me-1"></i> Başka Görevde Çalışıyor');
+                $('#BtnStopTimer').hide();
+            } else {
+                // Sayaç çalışmıyor
+                $('#BtnStartTimer').show().prop('disabled', false).html('<i class="fa fa-play me-1"></i> Süreyi Başlat');
+                $('#BtnStopTimer').hide();
+                if(timerInterval) {
+                    clearInterval(timerInterval);
+                    timerInterval = null;
+                }
+            }
+        });
+    }
+
+    function updateTimerDisplay() {
+        if (!startTime) return;
+        var now = new Date();
+        var diff = Math.floor((now - startTime) / 1000); // saniye
+        var h = Math.floor(diff / 3600).toString().padStart(2, '0');
+        var m = Math.floor((diff % 3600) / 60).toString().padStart(2, '0');
+        var s = (diff % 60).toString().padStart(2, '0');
+        $('#TimerElapsed').text(h + ":" + m + ":" + s);
+    }
+
+    $('#BtnStartTimer').click(function() {
+        var taskId = $('.task-id-input').val();
+        // UI olarak hemen feedback ver (optimistik)
+        var originalBtnHtml = $(this).html();
+        $(this).html('<i class="fa fa-spinner fa-spin me-1"></i> Başlatılıyor...').prop('disabled', true);
+
+        apya.platform.tasks.task.startTimeTracking(taskId).then(function() {
+            abp.notify.success('Zaman takibi başlatıldı!');
+            refreshTimerState();
+        }).catch(function(err) {
+            $('#BtnStartTimer').html(originalBtnHtml).prop('disabled', false); // rollback
+            abp.message.error(err.message || 'Zaman kaydı başlatılamadı, başka bir aktif sayaç olabilir.', 'Hata');
+        });
+    });
+
+    $('#BtnStopTimer').click(function() {
+        var taskId = $('.task-id-input').val();
+        var originalBtnHtml = $(this).html();
+        $(this).html('<i class="fa fa-spinner fa-spin me-1"></i> Kaydediliyor...').prop('disabled', true);
+
+        apya.platform.tasks.task.stopTimeTracking(taskId).then(function() {
+            abp.notify.success('Kronometre durduruldu ve sisteme kaydedildi!');
+            refreshTimerState();
+        }).catch(function() {
+             $(this).html(originalBtnHtml).prop('disabled', false); // rollback
+        });
+    });
+
+    // Animasyon CSS'i
+    $("<style>")
+    .prop("type", "text/css")
+    .html("\
+    @keyframes pulse-border {\
+      0% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.7); }\
+      70% { box-shadow: 0 0 0 10px rgba(220, 53, 69, 0); }\
+      100% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0); }\
+    }\
+    .pulse-animation {\
+      animation: pulse-border 2s infinite;\
+    }")
+    .appendTo("head");
+
+    // INIT
+    setTimeout(refreshTimerState, 300);
 </script>
