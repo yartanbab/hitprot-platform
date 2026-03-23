@@ -16,6 +16,9 @@ public interface ICalendarAppService : IApplicationService
     // Bağlantıyı kopar
     Task DisconnectAccountAsync(Guid id);
 
+    // Hesap bağlama için Auth URL'ini getir (Redirect için)
+    Task<string> GetAuthUrlAsync(CalendarProviderType provider);
+
     // Zorla senkronizasyon başlat
     Task ForceSyncAsync(Guid id);
 }

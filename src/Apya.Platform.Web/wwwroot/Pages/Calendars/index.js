@@ -5,6 +5,12 @@ $(function () {
     refreshAccounts();
 
     function refreshAccounts() {
+        if (new URLSearchParams(window.location.search).get('msg') === 'success') {
+            abp.notify.success('Takvim başarıyla bağlandı!');
+            // URL'i temizleyelim
+            window.history.replaceState({}, document.title, window.location.pathname);
+        }
+        
         calendarService.getMyAccounts().then(function (result) {
             updateUI(result);
         });
@@ -47,23 +53,10 @@ $(function () {
                 }
             });
         } else {
-            // CONNECT (Simulation for now)
-            var email = prompt('Bağlamak istediğiniz ' + (provider === 1 ? 'Google' : 'Outlook') + ' e-posta adresini girin:');
-            if (email && email.includes('@')) {
-                abp.ui.setBusy('#CalendarManagerArea');
-                
-                // Simulating OAuth result
-                calendarService.connectAccount({
-                    provider: provider,
-                    externalEmail: email,
-                    accessToken: 'simulated_token',
-                    refreshToken: 'simulated_refresh'
-                }).then(function() {
-                    abp.notify.success('Takvim başarıyla bağlandı!');
-                    refreshAccounts();
-                    abp.ui.clearBusy();
-                });
-            }
+            // CONNECT (Server provided Auth URL)
+            calendarService.getAuthUrl(provider).then(function(url) {
+                window.location.href = url;
+            });
         }
     });
 });

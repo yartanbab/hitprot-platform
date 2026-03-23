@@ -10,23 +10,26 @@ public class ExternalCalendarAccount : FullAuditedAggregateRoot<Guid>
 {
     public Guid UserId { get; set; }
     public CalendarProviderType Provider { get; set; }
-    public string ExternalEmail { get; set; }
+    public string ExternalEmail { get; set; } = string.Empty;
     
     // Güvenlik: Token'lar veritabanında şifreli (encrypted) saklanmalıdır.
-    public string AccessToken { get; set; }
-    public string RefreshToken { get; set; }
+    public string AccessToken { get; set; } = string.Empty;
+    public string RefreshToken { get; set; } = string.Empty;
     public DateTime? TokenExpiryTime { get; set; }
     
     // Otomatik senkronizasyon açık mı?
     public bool IsSyncEnabled { get; set; }
     
     // Dış servis tarafındaki Sync Token veya Resource ID (webhook takibi için)
-    public string ExternalSyncToken { get; set; }
+    public string ExternalSyncToken { get; set; } = string.Empty;
     public DateTime? LastSyncTime { get; set; }
 
     public ExternalCalendarAccount()
     {
         IsSyncEnabled = true;
+        AccessToken = string.Empty;
+        RefreshToken = string.Empty;
+        ExternalSyncToken = string.Empty;
     }
 
     public ExternalCalendarAccount(Guid id, Guid userId, CalendarProviderType provider, string email) : base(id)

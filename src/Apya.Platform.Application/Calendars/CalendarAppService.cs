@@ -14,12 +14,16 @@ public class CalendarAppService : ApplicationService, ICalendarAppService
     private readonly IRepository<ExternalCalendarAccount, Guid> _accountRepository;
     private readonly CalendarManager _calendarManager;
 
+    private readonly Microsoft.Extensions.Configuration.IConfiguration _configuration;
+
     public CalendarAppService(
         IRepository<ExternalCalendarAccount, Guid> accountRepository,
-        CalendarManager calendarManager)
+        CalendarManager calendarManager,
+        Microsoft.Extensions.Configuration.IConfiguration configuration)
     {
         _accountRepository = accountRepository;
         _calendarManager = calendarManager;
+        _configuration = configuration;
     }
 
     public async Task<List<CalendarAccountDto>> GetMyAccountsAsync()
@@ -71,6 +75,27 @@ public class CalendarAppService : ApplicationService, ICalendarAppService
         if (account.UserId != CurrentUser.Id) throw new UnauthorizedAccessException();
 
         await _accountRepository.DeleteAsync(account);
+    }
+
+    public async Task<string> GetAuthUrlAsync(CalendarProviderType provider)
+    {
+        var clientId = provider == CalendarProviderType.Google 
+            ? _configuration["Calendars:Google:ClientId"]
+            : _configuration["Calendars:Outlook:ClientId"];
+
+        if (string.IsNullOrEmpty(clientId))
+        {
+            // Client ID yoksa bir simülatör sayfasına yönlendirelim ki kullanıcı textbox'la uğraşmasın
+            return $"/Calendars/SimulateAuth?provider={(int)provider}";
+        }
+
+        // Örn: Google Auth URL (Parametreler appsettings'ten alınmalı gerçek hayatta)
+        if (provider == CalendarProviderType.Google)
+        {
+            return $"https://accounts.google.com/o/oauth2/v2/auth?client_id={clientId}&response_type=code&scope=https://www.googleapis.com/auth/calendar.events&access_type=offline&redirect_uri=https://localhost:44386/api/app/calendar/callback";
+        }
+        
+        return $"https://login.microsoftonline.com/common/oauth2/v2.0/authorize?client_id={clientId}&response_type=code&scope=Calendars.ReadWrite&redirect_uri=https://localhost:44386/api/app/calendar/callback";
     }
 
     public async Task ForceSyncAsync(Guid id)
