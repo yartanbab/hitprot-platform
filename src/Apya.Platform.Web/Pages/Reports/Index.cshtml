@@ -4,61 +4,133 @@
 @using Microsoft.AspNetCore.Mvc.Localization
 @inject IHtmlLocalizer<Apya.Platform.Localization.PlatformResource> L
 
-<div id="ReportsContainer">
-    <abp-row>
-        <abp-column size="_12">
-            <abp-card>
-                <abp-card-header>
-                    <h3 class="card-title"><i class="fa fa-chart-line me-2"></i> Gelişmiş Proje Raporları</h3>
-                </abp-card-header>
-                <abp-card-body>
-                    <abp-row>
-                        <abp-column size-md="_6">
-                            <h5 class="text-center mb-4">Bütçe Kullanımı (Spent vs Total)</h5>
-                            <canvas id="budgetChart" height="200"></canvas>
-                        </abp-column>
-                        <abp-column size-md="_6">
-                            <h5 class="text-center mb-4">Personel Çalışma Saatleri</h5>
-                            <canvas id="efficiencyChart" height="200"></canvas>
-                        </abp-column>
-                    </abp-row>
-                </abp-card-body>
-            </abp-card>
+<style>
+    .dashboard-card { border-radius: 12px; border: none; box-shadow: 0 4px 15px rgba(0,0,0,0.05); transition: transform 0.2s; }
+    .dashboard-card:hover { transform: translateY(-4px); }
+    .kpi-icon-box { width: 50px; height: 50px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; }
+</style>
+
+<div id="ReportsContainer" class="pb-5">
+    
+    <!-- HEADER -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold text-dark mb-0"><i class="fa fa-chart-pie text-primary me-2"></i> Yönetim & Raporlama Paneli</h2>
+            <p class="text-muted mt-1 mb-0">Platform genelindeki efor, maliyet ve Ar-Ge metrikleri</p>
+        </div>
+        <div>
+            <button class="btn btn-outline-primary bg-white fw-bold shadow-sm rounded-pill px-4">
+                <i class="fa fa-download me-2"></i> Excel Olarak İndir (Çok Yakında)
+            </button>
+        </div>
+    </div>
+
+    <!-- KPI CARDS -->
+    <abp-row class="mb-4">
+        <abp-column size-md="_3">
+            <div class="card dashboard-card bg-white">
+                <div class="card-body d-flex align-items-center">
+                    <div class="kpi-icon-box bg-primary bg-opacity-10 text-primary me-3"><i class="fa fa-project-diagram"></i></div>
+                    <div>
+                        <h6 class="text-uppercase text-muted fw-bold mb-1" style="font-size:0.75rem;">Aktif Projeler</h6>
+                        <h3 class="fw-bold text-dark mb-0" id="KpiTotalProjects">0</h3>
+                    </div>
+                </div>
+            </div>
+        </abp-column>
+        <abp-column size-md="_3">
+            <div class="card dashboard-card bg-white">
+                <div class="card-body d-flex align-items-center">
+                    <div class="kpi-icon-box bg-success bg-opacity-10 text-success me-3"><i class="fa fa-clock"></i></div>
+                    <div>
+                        <h6 class="text-uppercase text-muted fw-bold mb-1" style="font-size:0.75rem;">Toplam Harcanan Efor</h6>
+                        <h3 class="fw-bold text-dark mb-0" id="KpiTotalHours">0s</h3>
+                    </div>
+                </div>
+            </div>
+        </abp-column>
+        <abp-column size-md="_3">
+            <div class="card dashboard-card bg-white">
+                <div class="card-body d-flex align-items-center">
+                    <div class="kpi-icon-box bg-danger bg-opacity-10 text-danger me-3"><i class="fa fa-wallet"></i></div>
+                    <div>
+                        <h6 class="text-uppercase text-muted fw-bold mb-1" style="font-size:0.75rem;">Toplam Bütçe Kullanımı</h6>
+                        <h3 class="fw-bold text-dark mb-0" id="KpiTotalBudget">0 ₺</h3>
+                    </div>
+                </div>
+            </div>
+        </abp-column>
+        <abp-column size-md="_3">
+            <div class="card dashboard-card border border-warning shadow-sm" style="background: linear-gradient(135deg, #fff9e6 0%, #fff 100%);">
+                <div class="card-body d-flex align-items-center justify-content-between">
+                    <div>
+                        <h6 class="text-uppercase text-warning text-dark fw-bold mb-1" style="font-size:0.75rem;">Ar-Ge Uyum Puanı (AI)</h6>
+                        <h3 class="fw-bold text-dark mb-0">%84</h3>
+                        <small class="text-muted" style="font-size:0.7rem;">(Hibe projelerindeki sapma)</small>
+                    </div>
+                    <div class="kpi-icon-box bg-warning text-white"><i class="fa fa-robot"></i></div>
+                </div>
+            </div>
         </abp-column>
     </abp-row>
 
-    <abp-row class="mt-4">
+    <!-- CHARTS -->
+    <abp-row class="mb-4">
+        <abp-column size-md="_6">
+            <div class="card dashboard-card bg-white h-100 p-2">
+                <div class="card-header bg-white border-0 pt-3 pb-0">
+                    <h5 class="fw-bold mb-0 text-dark">Bütçe ve Finansal Sapma</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="budgetChart" height="220"></canvas>
+                </div>
+            </div>
+        </abp-column>
+        <abp-column size-md="_6">
+            <div class="card dashboard-card bg-white h-100 p-2">
+                <div class="card-header bg-white border-0 pt-3 pb-0">
+                    <h5 class="fw-bold mb-0 text-dark">Personel Bazlı Efor Yükü</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="efficiencyChart" height="220"></canvas>
+                </div>
+            </div>
+        </abp-column>
+    </abp-row>
+
+    <!-- TABLES -->
+    <abp-row>
         <abp-column size-md="_8">
-            <abp-card>
-                <abp-card-header>
-                    <h5 class="mb-0">Proje Detaylı Analiz</h5>
-                </abp-card-header>
-                <abp-card-body>
-                    <abp-table striped-rows="true" class="mb-0">
-                        <thead>
+            <div class="card dashboard-card bg-white p-2">
+                <div class="card-header bg-white border-bottom-0 pb-0">
+                    <h5 class="fw-bold mb-0 text-dark">Proje Bazlı Kapsamlı Analiz</h5>
+                </div>
+                <div class="card-body">
+                    <abp-table striped-rows="true" class="mb-0 table-hover align-middle border" id="DetailedReportTable">
+                        <thead class="bg-light text-muted">
                             <tr>
-                                <th>Proje Adı</th>
-                                <th>Toplam Bütçe</th>
-                                <th>Harcanan</th>
-                                <th>Kullanım %</th>
-                                <th>Toplam Saat</th>
+                                <th class="border-0">Proje Adı</th>
+                                <th class="border-0">Toplam Bütçe</th>
+                                <th class="border-0">Harcanan</th>
+                                <th class="border-0 text-center">Bütçe Doluluğu</th>
+                                <th class="border-0">Top. Efor (Saat)</th>
                             </tr>
                         </thead>
                         <tbody id="projectReportTableBody">
                         </tbody>
                     </abp-table>
-                </abp-card-body>
-            </abp-card>
+                </div>
+            </div>
         </abp-column>
         <abp-column size-md="_4">
-            <abp-card>
-                <abp-card-header>
-                    <h5 class="mb-0">Personel Performansı</h5>
-                </abp-card-header>
-                <abp-card-body>
-                    <div id="personnelSummaryList"></div>
-                </abp-card-body>
-            </abp-card>
+            <div class="card dashboard-card bg-white p-2 h-100">
+                <div class="card-header bg-white border-bottom-0 pb-0">
+                    <h5 class="fw-bold mb-0 text-dark">PDKS / Personel Özeti</h5>
+                </div>
+                <div class="card-body">
+                    <div id="personnelSummaryList" class="list-group list-group-flush mt-2"></div>
+                </div>
+            </div>
         </abp-column>
     </abp-row>
 </div>
