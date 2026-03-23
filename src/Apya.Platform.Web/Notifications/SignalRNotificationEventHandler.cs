@@ -13,8 +13,7 @@ namespace Apya.Platform.Web.Notifications;
 /// Web katmanındaki bu handler, domain event'leri dinleyip SignalR üzerinden anlık yayın yapar.
 /// </summary>
 public class SignalRNotificationEventHandler : 
-    ILocalEventHandler<TaskAssignedEto>,
-    ILocalEventHandler<TaskCommentAddedEto>,
+    ILocalEventHandler<NotificationCreatedEto>,
     ITransientDependency
 {
     private readonly IHubContext<NotificationHub> _hubContext;
@@ -24,43 +23,16 @@ public class SignalRNotificationEventHandler :
         _hubContext = hubContext;
     }
 
-    // --- Görev Atandığında ---
-    public async Task HandleEventAsync(TaskAssignedEto eventData)
+    public async Task HandleEventAsync(NotificationCreatedEto eventData)
     {
-        await _hubContext.Clients.User(eventData.AssigneeId.ToString())
+        await _hubContext.Clients.User(eventData.UserId.ToString())
             .SendAsync("ReceiveNotification", new 
             {
-                title = "📋 Yeni Görev",
-                body = $"\"{eventData.TaskTitle}\" size atandı.",
-                entityType = "Task",
-                entityId = eventData.TaskId
-            });
-    }
-
-    // --- Yorum Yapıldığında ---
-    public async Task HandleEventAsync(TaskCommentAddedEto eventData)
-    {
-        // Alıcıları (Yorumu yapan hariç) bul
-        if (eventData.AssigneeId.HasValue && eventData.AssigneeId != eventData.CommentUserId)
-        {
-            await SendAsync(eventData.AssigneeId.Value, eventData);
-        }
-
-        if (eventData.CreatorId.HasValue && eventData.CreatorId != eventData.CommentUserId && eventData.CreatorId != eventData.AssigneeId)
-        {
-            await SendAsync(eventData.CreatorId.Value, eventData);
-        }
-    }
-
-    private async Task SendAsync(Guid userId, TaskCommentAddedEto eventData)
-    {
-         await _hubContext.Clients.User(userId.ToString())
-            .SendAsync("ReceiveNotification", new 
-            {
-                title = "💬 Görev Yorumu",
-                body = $"{eventData.CommenterName}: {eventData.CommentText}",
-                entityType = "Task",
-                entityId = eventData.TaskId
+                title = eventData.Title,
+                body = eventData.Body,
+                entityType = eventData.EntityType,
+                entityId = eventData.EntityId,
+                type = (int)eventData.Type
             });
     }
 }

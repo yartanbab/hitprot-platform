@@ -406,6 +406,7 @@ namespace Apya.Platform.Tasks
         public async Task UpdateStatusAsync(Guid id, TaskStatus status)
         {
             var task = await Repository.GetAsync(id);
+            var oldStatus = task.Status;
             task.Status = status;
 
             if (status == TaskStatus.Done)
@@ -414,6 +415,18 @@ namespace Apya.Platform.Tasks
             }
 
             await Repository.UpdateAsync(task);
+
+            // BİLDİRİM: Durum değişikliğini yayınla
+            await _localEventBus.PublishAsync(new TaskStatusChangedEto
+            {
+                TaskId = id,
+                TaskTitle = task.Title,
+                OldStatus = oldStatus,
+                NewStatus = status,
+                AssigneeId = task.AssigneeId,
+                CreatorId = task.CreatorId,
+                ChangedByName = CurrentUser.UserName ?? "Bilinmeyen"
+            });
         }
 
         // --- ZAMAN TAKİBİ ---

@@ -1,5 +1,6 @@
 using System;
 using Volo.Abp.Domain.Entities.Auditing;
+using Volo.Abp.MultiTenancy;
 
 namespace Apya.Platform.Notifications;
 
@@ -7,8 +8,10 @@ namespace Apya.Platform.Notifications;
 /// Kullanıcıya gönderilen bir bildirimi temsil eder.
 /// FullAuditedAggregateRoot: CreationTime, CreatorId, SoftDelete otomatik.
 /// </summary>
-public class Notification : FullAuditedAggregateRoot<Guid>
+public class Notification : FullAuditedAggregateRoot<Guid>, IMultiTenant
 {
+    public Guid? TenantId { get; set; }
+
     // Bildirimin alıcısı
     public Guid UserId { get; set; }
 
@@ -37,6 +40,7 @@ public class Notification : FullAuditedAggregateRoot<Guid>
 
     public Notification(
         Guid id,
+        Guid? tenantId,
         Guid userId,
         NotificationType type,
         string title,
@@ -45,6 +49,7 @@ public class Notification : FullAuditedAggregateRoot<Guid>
         Guid? entityId = null)
         : base(id)
     {
+        TenantId   = tenantId;
         UserId     = userId;
         Type       = type;
         Title      = title;

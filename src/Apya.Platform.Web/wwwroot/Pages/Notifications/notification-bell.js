@@ -1,24 +1,73 @@
 (function($) {
-    var notificationService = apya.platform.notifications.notification;
+    var notificationService = null;
+    function getService() {
+        if (!notificationService && window.apya && apya.platform && apya.platform.notifications) {
+            notificationService = apya.platform.notifications.notification;
+        }
+        return notificationService;
+    }
+    
     var $badge = $('#notification-unread-badge');
     var $container = $('#notification-items-list');
     var isListOpen = false;
 
-    // --- SignalR Bağlantısı ---
-    var connection = new signalR.HubConnectionBuilder()
-        .withUrl("/notification-hub") // Bu isim module'de map edilecek
-        .withAutomaticReconnect()
-        .build();
+    function init() {
+        // --- SignalR Bağlantısı ---
+        if (typeof signalR !== "undefined") {
+            var connection = new signalR.HubConnectionBuilder()
+                .withUrl("/notification-hub")
+                .withAutomaticReconnect()
+                .build();
 
-    connection.on("ReceiveNotification", function(notificationDto) {
-        updateBadge(1); // Mevcut sayıya 1 ekle
-        abp.notify.info(notificationDto.title, "Yeni Bildirim");
-        if (isListOpen) {
-            fetchNotifications(); // Liste açıksa yenile
+            connection.on("ReceiveNotification", function(notificationDto) {
+                updateBadge(1);
+                abp.notify.info(notificationDto.title, "Yeni Bildirim");
+                if (isListOpen) {
+                    fetchNotifications();
+                }
+            });
+
+            connection.start().catch(err => console.error("SignalR hatası: " + err.toString()));
         }
-    });
 
-    connection.start().catch(err => console.error("SignalR hatası: " + err.toString()));
+        // --- Event Handlers ---
+        $('#notificationDropdown').on('show.bs.dropdown', function () {
+            isListOpen = true;
+            fetchNotifications();
+        });
+
+        $('#notificationDropdown').on('hide.bs.dropdown', function () {
+            isListOpen = false;
+        });
+
+        $(document).on('click', '.notification-item', function() {
+            var id = $(this).data('id');
+            var url = $(this).data('url');
+            var service = getService();
+            if (service) {
+                service.markAsRead(id).then(function() {
+                    if (url && url !== '#') {
+                        window.location.href = url;
+                    } else {
+                        fetchNotifications();
+                        updateBadge(-1);
+                    }
+                });
+            }
+        });
+
+        $('#mark-all-as-read').click(function(e) {
+            e.preventDefault();
+            var service = getService();
+            if (service) {
+                service.markAllAsRead().then(function() {
+                    $badge.addClass('d-none').text('0');
+                    fetchNotifications();
+                    abp.notify.success("Tüm bildirimler okundu işaretlendi.");
+                });
+            }
+        });
+    }
 
     // --- Badge Güncelleme ---
     function updateBadge(diff) {
@@ -33,7 +82,13 @@
 
     // --- Bildirimleri Getir ---
     function fetchNotifications() {
-        notificationService.getMyNotifications({
+        var service = getService();
+        if (!service) {
+            console.warn("Bildirim servisi henüz hazır değil...");
+            return;
+        }
+
+        service.getMyNotifications({
             maxResultCount: 5,
             isRead: false
         }).then(function(result) {
@@ -53,39 +108,15 @@
                     </li>`;
                 $container.append(itemHtml);
             });
+        }).catch(function(err) {
+            $container.empty().append('<li class="p-4 text-center text-danger text-sm">Bildirimler yüklenirken bir hata oluştu.</li>');
+            console.error(err);
         });
     }
 
-    // --- Event Handlers ---
-    $('#notificationDropdown').on('show.bs.dropdown', function () {
-        isListOpen = true;
-        fetchNotifications();
-    });
-
-    $('#notificationDropdown').on('hide.bs.dropdown', function () {
-        isListOpen = false;
-    });
-
-    $(document).on('click', '.notification-item', function() {
-        var id = $(this).data('id');
-        var url = $(this).data('url');
-        notificationService.markAsRead(id).then(function() {
-            if (url && url !== '#') {
-                window.location.href = url;
-            } else {
-                fetchNotifications();
-                updateBadge(-1);
-            }
-        });
-    });
-
-    $('#mark-all-as-read').click(function(e) {
-        e.preventDefault();
-        notificationService.markAllAsRead().then(function() {
-            $badge.addClass('d-none').text('0');
-            fetchNotifications();
-            abp.notify.success("Tüm bildirimler okundu işaretlendi.");
-        });
+    // ABP ve DOM hazır olduğunda başlat
+    $(function() {
+        init();
     });
 
 })(jQuery);

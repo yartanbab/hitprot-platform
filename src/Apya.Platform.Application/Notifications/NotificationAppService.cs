@@ -4,9 +4,11 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Volo.Abp;
+using Microsoft.EntityFrameworkCore;
 using Volo.Abp.Application.Dtos;
 using Volo.Abp.Application.Services;
 using Volo.Abp.Domain.Repositories;
+using Volo.Abp.MultiTenancy;
 using Volo.Abp.Users;
 
 namespace Apya.Platform.Notifications;
@@ -15,10 +17,14 @@ namespace Apya.Platform.Notifications;
 public class NotificationAppService : ApplicationService, INotificationAppService
 {
     private readonly IRepository<Notification, Guid> _notificationRepository;
+    private readonly Volo.Abp.Data.IDataFilter<Volo.Abp.MultiTenancy.IMultiTenant> _multiTenantFilter;
 
-    public NotificationAppService(IRepository<Notification, Guid> notificationRepository)
+    public NotificationAppService(
+        IRepository<Notification, Guid> notificationRepository,
+        Volo.Abp.Data.IDataFilter<Volo.Abp.MultiTenancy.IMultiTenant> multiTenantFilter)
     {
         _notificationRepository = notificationRepository;
+        _multiTenantFilter = multiTenantFilter;
     }
 
     // ─── Benim bildirimlerimi getir ────────────────────────────────────────────
@@ -26,22 +32,32 @@ public class NotificationAppService : ApplicationService, INotificationAppServic
     {
         var userId = CurrentUser.GetId();
 
-        var query = (await _notificationRepository.GetQueryableAsync())
-            .Where(n => n.UserId == userId);
+        // KRİTİK: Eğer Host (Root) hesabındaysak, tüm tenantların bildirimlerini görebilmeliyiz.
+        using (CurrentTenant.Id == null ? _multiTenantFilter.Disable() : null)
+        {
+            var query = (await _notificationRepository.GetQueryableAsync());
+            
+            // Eğer root değilse sadece kendine ait olanları görsün.
+            // Ama kullanıcı "Tüm tenant hareketlerini gör" dediği için burada bir yetki kontrolü de yapalım.
+            if (CurrentTenant.Id != null) 
+            {
+                query = query.Where(n => n.UserId == userId);
+            }
 
-        if (input.IsRead.HasValue)
-            query = query.Where(n => n.IsRead == input.IsRead.Value);
+            if (input.IsRead.HasValue)
+                query = query.Where(n => n.IsRead == input.IsRead.Value);
 
-        var total = query.Count();
+            var total = await query.CountAsync();
 
-        var items = query
-            .OrderByDescending(n => n.CreationTime)
-            .Skip(input.SkipCount)
-            .Take(input.MaxResultCount)
-            .ToList();
+            var items = await query
+                .OrderByDescending(n => n.CreationTime)
+                .Skip(input.SkipCount)
+                .Take(input.MaxResultCount)
+                .ToListAsync();
 
-        var dtos = items.Select(MapToDto).ToList();
-        return new PagedResultDto<NotificationDto>(total, dtos);
+            var dtos = items.Select(MapToDto).ToList();
+            return new PagedResultDto<NotificationDto>(total, dtos);
+        }
     }
 
     // ─── Okunmamış sayısı ──────────────────────────────────────────────────────

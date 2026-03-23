@@ -11,13 +11,12 @@ $(function () {
         searching: true,
         scrollX: true,
         ajax: abp.libs.datatables.createAjax(taskService.getList, function () {
-            // APYA-25 : Gelişmiş filtre parametreleri
-            return {
-                assigneeId : $('#Filter_AssigneeId').val() || null,
-                statuses   : $('#Filter_Status').val() ? [$('#Filter_Status').val()] : null,
-                minDueDate : $('#Filter_MinDueDate').val() || null,
-                maxDueDate : $('#Filter_MaxDueDate').val() || null
-            };
+            var input = {};
+            if ($('#Filter_AssigneeId').val()) input.assigneeId = $('#Filter_AssigneeId').val();
+            if ($('#Filter_Status').val()) input.statuses = [parseInt($('#Filter_Status').val())];
+            if ($('#Filter_MinDueDate').val()) input.minDueDate = $('#Filter_MinDueDate').val();
+            if ($('#Filter_MaxDueDate').val()) input.maxDueDate = $('#Filter_MaxDueDate').val();
+            return input;
         }),
         columnDefs: [
             {
@@ -147,13 +146,11 @@ $(function () {
     var gantt = null;
 
     function loadGantt() {
-        var params = {
-            maxResultCount: 1000,
-            assigneeId: $('#Filter_AssigneeId').val() || null,
-            statuses: $('#Filter_Status').val() ? [$('#Filter_Status').val()] : null,
-            minDueDate: $('#Filter_MinDueDate').val() || null,
-            maxDueDate: $('#Filter_MaxDueDate').val() || null
-        };
+        var params = { maxResultCount: 1000 };
+        if ($('#Filter_AssigneeId').val()) params.assigneeId = $('#Filter_AssigneeId').val();
+        if ($('#Filter_Status').val()) params.statuses = [parseInt($('#Filter_Status').val())];
+        if ($('#Filter_MinDueDate').val()) params.minDueDate = $('#Filter_MinDueDate').val();
+        if ($('#Filter_MaxDueDate').val()) params.maxDueDate = $('#Filter_MaxDueDate').val();
 
         taskService.getList(params).then(function (result) {
             renderGantt(result.items);
@@ -215,13 +212,11 @@ $(function () {
 
     // --- Kanban Mantığı ---
     function loadKanban() {
-        var params = {
-            maxResultCount: 1000,
-            assigneeId: $('#Filter_AssigneeId').val() || null,
-            statuses: $('#Filter_Status').val() ? [$('#Filter_Status').val()] : null,
-            minDueDate: $('#Filter_MinDueDate').val() || null,
-            maxDueDate: $('#Filter_MaxDueDate').val() || null
-        };
+        var params = { maxResultCount: 1000 };
+        if ($('#Filter_AssigneeId').val()) params.assigneeId = $('#Filter_AssigneeId').val();
+        if ($('#Filter_Status').val()) params.statuses = [parseInt($('#Filter_Status').val())];
+        if ($('#Filter_MinDueDate').val()) params.minDueDate = $('#Filter_MinDueDate').val();
+        if ($('#Filter_MaxDueDate').val()) params.maxDueDate = $('#Filter_MaxDueDate').val();
 
         Promise.all([
             taskService.getList(params),
