@@ -107,6 +107,16 @@ public class PlatformWebModule : AbpModule
         var hostingEnvironment = context.Services.GetHostingEnvironment();
         var configuration = context.Services.GetConfiguration();
 
+        // New configurations from the instruction
+        // ConfigureMenus(context.Services.GetConfiguration()); // This method is not defined in the original code. Assuming it's a placeholder or needs to be added elsewhere.
+        // ConfigureErrorPageOptions(); // This method is not defined in the original code. Assuming it's a placeholder or needs to be added elsewhere.
+
+        // Layout Hook for Impersonation Alert
+        Configure<Volo.Abp.Ui.LayoutHooks.AbpLayoutHookOptions>(options =>
+        {
+            options.Add(Volo.Abp.Ui.LayoutHooks.LayoutHooks.Body.First, typeof(Apya.Platform.Web.Components.ImpersonationAlert.ImpersonationAlertViewComponent));
+        });
+
         ConfigureAuthentication(context);
         ConfigureUrls(configuration);
         ConfigureBundles(context);

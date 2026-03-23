@@ -1,0 +1,15 @@
+@model Apya.Platform.Web.Components.ImpersonationAlert.ImpersonationAlertViewModel
+
+@if (Model.IsImpersonated)
+{
+    <div class="alert alert-warning text-center m-0 border-radius-0" role="alert" style="border-radius: 0; z-index: 9999; position: relative;">
+        <i class="fa fa-user-secret me-2"></i>
+        <strong>Güvenlik Uyarısı:</strong> Şu an <b>@Model.CurrentTenantName</b> hesabı adına işlem yapıyorsunuz. Yaptığınız tüm işlemler kayıt altına alınmaktadır.
+        
+        <form id="ReturnToMyAccountForm" method="post" action="/Account/BackToImpersonator" class="d-inline ms-3">
+            <button type="submit" class="btn btn-sm btn-danger fw-bold shadow-sm">
+                <i class="fa fa-sign-out-alt me-1"></i> Asıl Hesabıma Geri Dön
+            </button>
+        </form>
+    </div>
+}

@@ -1,0 +1,38 @@
+@page
+@model Apya.Platform.Web.Pages.Tenants.CreateModalModel
+@using Volo.Abp.AspNetCore.Mvc.UI.Bootstrap.TagHelpers.Modal
+@{
+    Layout = null;
+}
+<form method="post" action="@Url.Page("/Tenants/CreateModal")" id="WizardForm">
+    <abp-modal>
+        <abp-modal-header title="Yeni Müşteri & Profil Ekle"></abp-modal-header>
+        <abp-modal-body>
+            <ul class="nav nav-tabs" id="tenantWizardTab" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="basics-tab" data-bs-toggle="tab" data-bs-target="#basics" type="button" role="tab" aria-controls="basics" aria-selected="true">Temel Bilgiler</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="legal-tab" data-bs-toggle="tab" data-bs-target="#legal" type="button" role="tab" aria-controls="legal" aria-selected="false">Resmi (Kurumsal) Bilgiler</button>
+                </li>
+            </ul>
+            <div class="tab-content pt-3" id="tenantWizardTabContent">
+                <!-- Adım 1 -->
+                <div class="tab-pane fade show active" id="basics" role="tabpanel" aria-labelledby="basics-tab">
+                    <abp-input asp-for="Tenant.Name" label="Sistem Müşteri Adı (Tenant Name)" />
+                    <abp-input asp-for="Tenant.AdminEmailAddress" label="Yönetici E-Posta Adresi" />
+                    <abp-input asp-for="Tenant.AdminPassword" label="Yönetici Şifresi" />
+                </div>
+                
+                <!-- Adım 2 -->
+                <div class="tab-pane fade" id="legal" role="tabpanel" aria-labelledby="legal-tab">
+                    <abp-select asp-for="Tenant.CompanyType" label="Kurum Türü" />
+                    <abp-input asp-for="Tenant.CorporateEmail" label="Kurumsal Genel E-Posta" />
+                    <abp-input asp-for="Tenant.TaxNumber" label="Vergi Numarası" />
+                    <abp-input asp-for="Tenant.TaxOffice" label="Vergi Dairesi" />
+                </div>
+            </div>
+        </abp-modal-body>
+        <abp-modal-footer buttons="@(AbpModalButtons.Cancel | AbpModalButtons.Save)"></abp-modal-footer>
+    </abp-modal>
+</form>
