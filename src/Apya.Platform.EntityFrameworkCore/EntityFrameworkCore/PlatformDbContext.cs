@@ -60,6 +60,9 @@ namespace Apya.Platform.EntityFrameworkCore
         public DbSet<ExternalCalendarAccount> ExternalCalendarAccounts { get; set; }
         public DbSet<CalendarSyncMapping> CalendarSyncMappings { get; set; }
 
+        /* --- DOKÜMAN (WIKI) MODÜLÜ --- */
+        public DbSet<Apya.Platform.Documents.Document> Documents { get; set; }
+
 
         #region Entities from the Modules
 
@@ -269,6 +272,32 @@ namespace Apya.Platform.EntityFrameworkCore
                 b.ConfigureByConvention();
                 b.HasIndex(x => new { x.TaskId, x.ExternalCalendarAccountId });
                 b.HasIndex(x => x.ExternalEventId);
+            });
+
+            /* --- DOKÜMAN (WIKI) YAPILANDIRMASI --- */
+            builder.Entity<Apya.Platform.Documents.Document>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "Documents", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+                
+                b.Property(x => x.Title).IsRequired().HasMaxLength(255);
+                b.Property(x => x.Content).HasColumnType("nvarchar(max)"); // Özelleştirilmiş uzunluk / Markdown desteği
+                b.Property(x => x.Icon).HasMaxLength(16);
+
+                // Hierarchy relation (Self-referencing)
+                b.HasOne<Apya.Platform.Documents.Document>()
+                 .WithMany()
+                 .HasForeignKey(x => x.ParentDocumentId)
+                 .OnDelete(DeleteBehavior.Restrict);
+
+                // Project relation
+                b.HasOne<Project>()
+                 .WithMany()
+                 .HasForeignKey(x => x.ProjectId)
+                 .OnDelete(DeleteBehavior.SetNull);
+
+                b.HasIndex(x => x.ProjectId);
+                b.HasIndex(x => x.ParentDocumentId);
             });
         }
     }

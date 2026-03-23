@@ -1,4 +1,4 @@
-﻿using AutoMapper;
+using AutoMapper;
 using Apya.Platform.Projects;
 using Apya.Platform.Projects.Dtos;
 using Apya.Platform.Grants;
@@ -43,6 +43,10 @@ namespace Apya.Platform
             // 3. Comments and Attachments
             CreateMap<Apya.Platform.Tasks.TaskComment, Apya.Platform.Tasks.TaskCommentDto>();
             CreateMap<Apya.Platform.Tasks.TaskAttachment, Apya.Platform.Tasks.TaskAttachmentDto>();
+
+            // --- WIKI / DOKÜMAN (DOCUMENTS) MODÜLÜ ---
+            CreateMap<Apya.Platform.Documents.Document, Apya.Platform.Documents.DocumentDto>();
+            CreateMap<Apya.Platform.Documents.CreateUpdateDocumentDto, Apya.Platform.Documents.Document>();
         }
     }
 }

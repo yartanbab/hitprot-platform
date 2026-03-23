@@ -26,6 +26,15 @@ public static class PlatformPermissions
         public const string ChangeStatus = Default + ".ChangeStatus"; // Durum değiştirme (Tamamla/Geri Al)
     }
 
+    // --- WIKI / DOKÜMANTASYON YETKİLERİ ---
+    public static class Documents
+    {
+        public const string Default = GroupName + ".Documents";
+        public const string Create = Default + ".Create";
+        public const string Edit = Default + ".Edit";
+        public const string Delete = Default + ".Delete";
+    }
+
     // --- BİLDİRİM YETKİLERİ ---
     public static class Notifications
     {

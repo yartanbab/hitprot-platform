@@ -26,6 +26,12 @@ public class PlatformPermissionDefinitionProvider : PermissionDefinitionProvider
         tasksPermission.AddChild(PlatformPermissions.Tasks.Assign, L("Permission:Tasks.Assign"));
         tasksPermission.AddChild(PlatformPermissions.Tasks.ChangeStatus, L("Permission:Tasks.ChangeStatus"));
 
+        // --- DOKÜMAN YETKİLERİ ---
+        var docsPermission = myGroup.AddPermission(PlatformPermissions.Documents.Default, L("Permission:Documents"));
+        docsPermission.AddChild(PlatformPermissions.Documents.Create, L("Permission:Documents.Create"));
+        docsPermission.AddChild(PlatformPermissions.Documents.Edit, L("Permission:Documents.Edit"));
+        docsPermission.AddChild(PlatformPermissions.Documents.Delete, L("Permission:Documents.Delete"));
+
         // --- BİLDİRİM YETKİLERİ ---
         var notificationsPermission = myGroup.AddPermission(PlatformPermissions.Notifications.Default, L("Permission:Notifications"));
         notificationsPermission.AddChild(PlatformPermissions.Notifications.MarkRead, L("Permission:Notifications.MarkRead"));

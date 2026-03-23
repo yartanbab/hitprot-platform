@@ -67,6 +67,16 @@ public class PlatformMenuContributor : IMenuContributor
             )
         );
 
+        // "Wiki / Documents" menü öğesi
+        context.Menu.AddItem(
+            new ApplicationMenuItem(
+                "Apya.Platform.Documents",
+                "Wiki / Belgeler",
+                icon: "fa fa-book",
+                url: "/Documents"
+            )
+        );
+
         // "Invoices" menü öğesi
         context.Menu.AddItem(
             new ApplicationMenuItem(

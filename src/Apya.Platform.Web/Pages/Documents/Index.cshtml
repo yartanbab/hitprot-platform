@@ -1,0 +1,112 @@
+@page
+@model Apya.Platform.Web.Pages.Documents.IndexModel
+@{
+    ViewBag.Title = "Wiki / Belgeler";
+}
+
+<style>
+    /* Premium Wiki Layout */
+    #WikiContainer { height: calc(100vh - 160px); display: flex; overflow: hidden; border-radius: 12px; background: #fff; box-shadow: 0 10px 30px rgba(0,0,0,0.08); }
+    
+    /* Sidebar */
+    .wiki-sidebar { width: 300px; min-width: 300px; border-right: 1px solid #eee; display: flex; flex-direction: column; background: #fdfdfd; }
+    .wiki-sidebar-header { padding: 20px; border-bottom: 1px solid #eee; }
+    .wiki-tree-container { flex-grow: 1; overflow-y: auto; padding: 10px; }
+    
+    /* Content Area */
+    .wiki-content { flex-grow: 1; display: flex; flex-direction: column; background: #fff; position: relative; }
+    .wiki-content-header { padding: 20px 40px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; }
+    .wiki-editor-area { flex-grow: 1; overflow-y: auto; padding: 40px; max-width: 900px; margin: 0 auto; width: 100%; }
+    
+    /* Tree Items */
+    .doc-item { padding: 8px 12px; border-radius: 6px; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; color: #444; margin-bottom: 2px; font-size: 0.9rem; }
+    .doc-item:hover { background: #f0f4f8; color: #007bff; }
+    .doc-item.active { background: #e7f1ff; color: #007bff; font-weight: 600; }
+    .doc-item .fa { width: 20px; margin-right: 8px; font-size: 1rem; }
+    .doc-sub-list { padding-left: 20px; }
+
+    /* Empty State */
+    .wiki-empty { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: #999; text-align: center; }
+    .wiki-empty i { font-size: 4rem; color: #eee; margin-bottom: 20px; }
+
+    /* Floating Save Button */
+    #SaveBtn { position: absolute; bottom: 30px; right: 30px; border-radius: 50%; width: 60px; height: 60px; box-shadow: 0 4px 15px rgba(0,123,255,0.4); display: none; }
+</style>
+
+<div id="WikiContainer">
+    <!-- LEFT SIDEBAR: TREE VIEW -->
+    <div class="wiki-sidebar">
+        <div class="wiki-sidebar-header">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <h5 class="fw-bold mb-0 text-dark">Dizin</h5>
+                <button class="btn btn-sm btn-outline-primary rounded-circle" id="NewRootDocBtn" title="Yeni Ana Belge">
+                    <i class="fa fa-plus"></i>
+                </button>
+            </div>
+            <div class="input-group input-group-sm">
+                <span class="input-group-text bg-white border-end-0 text-muted"><i class="fa fa-search"></i></span>
+                <input type="text" class="form-control border-start-0" id="TreeSearch" placeholder="Belge ara...">
+            </div>
+        </div>
+        
+        <div class="wiki-tree-container" id="DocTree">
+            @* JS ile yüklenecek *@
+            <div class="text-center mt-5 text-muted small">
+                <div class="spinner-border spinner-border-sm mb-2"></div><br>Belgeler yükleniyor...
+            </div>
+        </div>
+    </div>
+
+    <!-- RIGHT CONTENT: EDITOR -->
+    <div class="wiki-content">
+        <!-- View State -->
+        <div id="DocViewPanel" style="display:none;" class="h-100 flex-column">
+            <div class="wiki-content-header bg-light bg-opacity-10">
+                <div class="d-flex align-items-center">
+                    <span id="CurrentDocIcon" class="me-3 fs-3">📄</span>
+                    <h2 id="CurrentDocTitle" class="fw-bold mb-0 text-dark">Belge Başlığı</h2>
+                </div>
+                <div class="btn-group shadow-sm">
+                    <button id="EditBtn" class="btn btn-white text-primary border"><i class="fa fa-edit me-1"></i> Düzenle</button>
+                    <button id="DeleteBtn" class="btn btn-white text-danger border"><i class="fa fa-trash me-1"></i> Sil</button>
+                </div>
+            </div>
+            <div class="wiki-editor-area">
+                <div id="DocBodyDisplay" class="markdown-body text-dark lh-base fs-5">
+                    @* İçerik buraya gelecek *@
+                </div>
+            </div>
+        </div>
+
+        <!-- Edit State -->
+        <div id="DocEditPanel" style="display:none;" class="h-100 flex-column">
+            <div class="wiki-content-header border-bottom">
+                <div class="w-75 d-flex align-items-center">
+                    <input type="text" id="EditDocIcon" class="form-control border-0 fw-bold me-2 fs-3" style="width:70px; background: transparent;" placeholder="📄">
+                    <input type="text" id="EditDocTitle" class="form-control border-0 fw-bold fs-2" style="background: transparent;" placeholder="Başlık girin...">
+                </div>
+                <div class="">
+                    <button id="CancelEditBtn" class="btn btn-link text-muted me-2 text-decoration-none">Vazgeç</button>
+                    <button id="SaveDocBtn" class="btn btn-primary px-4 rounded-pill shadow-sm">Kaydet</button>
+                </div>
+            </div>
+            <div class="wiki-editor-area">
+                <textarea id="EditDocContent" class="form-control border-0 shadow-none fs-5" style="height: 100%; min-height: 500px; resize: none;" placeholder="İçeriğinizi buraya yazın (HTML/Markdown destekler)..."></textarea>
+            </div>
+        </div>
+
+        <!-- Empty State -->
+        <div id="WikiWelcome" class="wiki-empty">
+            <i class="fa fa-book-open"></i>
+            <h3>Hoş Geldiniz</h3>
+            <p class="text-muted">Sol menüden bir belge seçin veya yeni bir tane oluşturun.</p>
+            <button class="btn btn-primary rounded-pill px-4 mt-2" onclick="$('#NewRootDocBtn').click()">
+                <i class="fa fa-plus me-2"></i> İlk Belgeyi Oluştur
+            </button>
+        </div>
+    </div>
+</div>
+
+@section scripts {
+    <abp-script src="/Pages/Documents/index.js" />
+}
