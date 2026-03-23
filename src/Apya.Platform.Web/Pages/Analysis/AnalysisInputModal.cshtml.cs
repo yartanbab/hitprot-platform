@@ -11,12 +11,12 @@ namespace Apya.Platform.Web.Pages
     {
         [HiddenInput]
         [BindProperty(SupportsGet = true)]
-        public Guid ProjectId { get; set; } // EKSÝKTÝ EKLENDÝ
+        public Guid ProjectId { get; set; }
 
         [BindProperty]
-        public CreateAnalysisDto Analysis { get; set; }
+        public CreateAnalysisDto Analysis { get; set; } = null!;
 
-        public ProjectAnalysisDto ExistingAnalysis { get; set; } // EKSÝKTÝ EKLENDÝ
+        public ProjectAnalysisDto? ExistingAnalysis { get; set; }
 
         private readonly IProjectAppService _projectAppService;
 
@@ -28,8 +28,14 @@ namespace Apya.Platform.Web.Pages
         public async Task OnGetAsync()
         {
             Analysis = new CreateAnalysisDto { ProjectId = ProjectId };
-            // Mevcut analizi kontrol et (varsa getir)
-            ExistingAnalysis = await _projectAppService.GetAnalysisAsync(ProjectId);
+            try
+            {
+                ExistingAnalysis = await _projectAppService.GetAnalysisAsync(ProjectId);
+            }
+            catch(Exception)
+            {
+                ExistingAnalysis = null;
+            }
         }
 
         public async Task<IActionResult> OnPostAsync()

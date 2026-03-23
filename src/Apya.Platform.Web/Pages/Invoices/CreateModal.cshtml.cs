@@ -55,7 +55,7 @@ public class CreateModalModel : AbpPageModel
     public class CreateInvoiceViewModel
     {
         public Guid ProjectId { get; set; }
-        public string InvoiceNumber { get; set; }
+        public string InvoiceNumber { get; set; } = null!;
         public DateTime InvoiceDate { get; set; } = DateTime.Now;
         public DateTime DueDate { get; set; } = DateTime.Now.AddDays(15);
         public decimal TaxRate { get; set; } = 20;
@@ -66,7 +66,7 @@ public class CreateModalModel : AbpPageModel
 
     public class CreateInvoiceItemViewModel
     {
-        public string Description { get; set; }
+        public string Description { get; set; } = null!;
         public decimal Quantity { get; set; } = 1;
         public decimal UnitPrice { get; set; }
     }

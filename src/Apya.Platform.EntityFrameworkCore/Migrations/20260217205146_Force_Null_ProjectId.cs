@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore.Migrations;
+using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
@@ -10,8 +10,13 @@ namespace Apya.Platform.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            // EF Core'un varsayılanlarını ezip kendi SQL emrimizi gönderiyoruz:
-            migrationBuilder.Sql("ALTER TABLE [AppTasks] ALTER COLUMN [ProjectId] uniqueidentifier NULL;");
+            // EF Core'un varsayılanlarını ezip kendi SQL emrimizi gönderiyoruz (Sadece varsa):
+            migrationBuilder.Sql(@"
+                IF EXISTS(SELECT 1 FROM sys.columns WHERE Name = N'ProjectId' AND Object_ID = Object_ID(N'AppTasks'))
+                BEGIN
+                    ALTER TABLE [AppTasks] ALTER COLUMN [ProjectId] uniqueidentifier NULL;
+                END
+            ");
         }
 
         /// <inheritdoc />

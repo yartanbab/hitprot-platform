@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
@@ -12,14 +12,12 @@ namespace Apya.Platform.Migrations
         protected override void Up(MigrationBuilder migrationBuilder)
         {
           
-            // AppTasks tablosundaki ProjectId sütununu zorla NULL yapılabilir hale getiriyoruz
-            migrationBuilder.AlterColumn<Guid>(
-                name: "ProjectId",
-                table: "AppTasks",
-                type: "uniqueidentifier",
-                nullable: true,
-                oldClrType: typeof(Guid),
-                oldType: "uniqueidentifier");
+            migrationBuilder.Sql(@"
+                IF EXISTS(SELECT 1 FROM sys.columns WHERE Name = N'ProjectId' AND Object_ID = Object_ID(N'AppTasks'))
+                BEGIN
+                    ALTER TABLE [AppTasks] ALTER COLUMN [ProjectId] uniqueidentifier NULL;
+                END
+            ");
         }
 
         /// <inheritdoc />
