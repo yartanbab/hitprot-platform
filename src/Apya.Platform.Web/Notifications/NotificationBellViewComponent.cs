@@ -16,6 +16,11 @@ public class NotificationBellViewComponent : AbpViewComponent
 
     public async Task<IViewComponentResult> InvokeAsync()
     {
+        if (!CurrentUser.IsAuthenticated)
+        {
+            return View(0);
+        }
+
         var unreadCount = await NotificationAppService.GetUnreadCountAsync();
         return View(unreadCount);
     }
