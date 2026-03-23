@@ -117,6 +117,16 @@ public class InvoiceAppService : ApplicationService, IInvoiceAppService
         }).ToList();
     }
 
+    public async Task<ListResultDto<ProjectLookupDto>> GetProjectLookupAsync()
+    {
+        var projects = await _projectRepository.GetListAsync();
+        return new ListResultDto<ProjectLookupDto>(projects.Select(p => new ProjectLookupDto
+        {
+            Id = p.Id,
+            Name = p.Name
+        }).ToList());
+    }
+
     private InvoiceDto MapToDto(Invoice x, Project project)
     {
         return new InvoiceDto

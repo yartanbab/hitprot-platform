@@ -69,11 +69,12 @@ $(function () {
                     rowAction: {
                         items: [
                             {
-                                text: 'Detay',
+                                text: 'Yazdır / PDF',
                                 action: function (data) {
-                                    // Detay sayfası veya modal
+                                    window.open('/Invoices/Print/' + data.record.id, '_blank');
                                 }
                             },
+
                             {
                                 text: 'Ödeme Ekle',
                                 action: function (data) {
@@ -101,8 +102,16 @@ $(function () {
         });
     }
 
+    var createModal = new abp.ModalManager(abp.appPath + 'Invoices/CreateModal');
+
+    createModal.onResult(function () {
+        dataTable.ajax.reload();
+        abp.notify.success('Fatura başarıyla oluşturuldu.');
+    });
+
     $('#NewInvoiceButton').click(function (e) {
         e.preventDefault();
-        abp.notify.info('Fatura oluşturma ekranı geliştirme aşamasındadır.');
+        createModal.open();
     });
 });
+

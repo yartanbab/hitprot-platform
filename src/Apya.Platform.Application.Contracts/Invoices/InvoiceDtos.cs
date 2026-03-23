@@ -46,3 +46,9 @@ public class CreateInvoiceItemDto
     public decimal Quantity { get; set; }
     public decimal UnitPrice { get; set; }
 }
+
+public class ProjectLookupDto
+{
+    public Guid Id { get; set; }
+    public string Name { get; set; }
+}

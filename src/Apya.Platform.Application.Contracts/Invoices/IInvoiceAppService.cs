@@ -14,6 +14,7 @@ public interface IInvoiceAppService : IApplicationService
     Task<InvoiceDto> CreateAsync(CreateInvoiceDto input);
     Task AddPaymentAsync(Guid invoiceId, decimal amount, string method, string reference);
     Task<List<PaymentDto>> GetPaymentsAsync(Guid invoiceId);
+    Task<ListResultDto<ProjectLookupDto>> GetProjectLookupAsync();
 }
 
 public class PaymentDto : FullAuditedEntityDto<Guid>
