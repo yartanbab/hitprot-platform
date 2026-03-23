@@ -11,7 +11,7 @@ public class PrintModel : AbpPageModel
 {
     private readonly IInvoiceAppService _invoiceAppService;
 
-    public InvoiceDto InvoiceInfo { get; set; }
+    public InvoiceDto InvoiceInfo { get; set; } = null!;
 
     public PrintModel(IInvoiceAppService invoiceAppService)
     {
