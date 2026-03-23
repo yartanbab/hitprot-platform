@@ -89,18 +89,36 @@ public class ProjectAppService :
 
             var dtos = ObjectMapper.Map<List<Project>, List<ProjectDto>>(items);
 
-            // BÜTÇE: Harcanan bütçeyi hesapla (APYA-31)
-            var projectIds = items.Select(x => x.Id).ToList();
-            var allTasks = await _taskRepository.GetListAsync(x => x.ProjectId.HasValue && projectIds.Contains(x.ProjectId.Value));
-            var allTaskIds = allTasks.Select(x => x.Id).ToList();
-            var allLogs = await _timeLogRepository.GetListAsync(x => allTaskIds.Contains(x.TaskId));
+            // YETKİ KONTROLÜ: Kullanıcı bütçeleri görebilir mi? (APYA-Rol/Müşteri Gizliliği)
+            bool canViewBudget = await AuthorizationService.IsGrantedAsync(PlatformPermissions.Projects.ViewBudget);
+
+            // BÜTÇE HESAPLAMALARINI SADECE YETKİLİLER İÇİN YAP
+            List<TaskItem> allTasks = new();
+            List<TaskTimeLog> allLogs = new();
+            if (canViewBudget)
+            {
+                var projectIds = items.Select(x => x.Id).ToList();
+                allTasks = await _taskRepository.GetListAsync(x => x.ProjectId.HasValue && projectIds.Contains(x.ProjectId.Value));
+                var allTaskIds = allTasks.Select(x => x.Id).ToList();
+                allLogs = await _timeLogRepository.GetListAsync(x => allTaskIds.Contains(x.TaskId));
+            }
 
             foreach (var dto in dtos)
             {
-                var projectTasks = allTasks.Where(x => x.ProjectId == dto.Id).Select(x => x.Id).ToList();
-                var projectSeconds = allLogs.Where(x => projectTasks.Contains(x.TaskId)).Sum(x => x.SecondsSpent ?? 0);
-                
-                dto.SpentBudget = (decimal)(projectSeconds / 3600.0) * dto.HourlyRate;
+                if (canViewBudget)
+                {
+                    var projectTasks = allTasks.Where(x => x.ProjectId == dto.Id).Select(x => x.Id).ToList();
+                    var projectSeconds = allLogs.Where(x => projectTasks.Contains(x.TaskId)).Sum(x => x.SecondsSpent ?? 0);
+                    dto.SpentBudget = (decimal)(projectSeconds / 3600.0) * dto.HourlyRate;
+                }
+                else
+                {
+                    // Katılımcı / proje üyesi için finansal verileri sıfırla/kapat
+                    dto.TotalBudget = 0;
+                    dto.HourlyRate = 0;
+                    dto.SpentBudget = 0;
+                    dto.Currency = "***";
+                }
 
                 // SADECE ROOT ADMIN İÇİN MÜŞTERİ İSİMLERİNİ ÇEKİYORUZ
                 if (CurrentTenant.Id == null)

@@ -68,11 +68,21 @@ namespace Apya.Platform.Tasks
 
             if (task == null) throw new Volo.Abp.Domain.Entities.EntityNotFoundException(typeof(TaskItem), id);
 
-            // APYA-22: Impersonation Gizlilik Kontrolü
+            // Kapsamlı Rol ve Gizlilik Kontrolü (APYA-22)
             bool isImpersonated = CurrentUser.FindClaim(Volo.Abp.Security.Claims.AbpClaimTypes.ImpersonatorUserId) != null;
-            if (isImpersonated && task.IsPrivate)
+            bool canManageTeam = await AuthorizationService.IsGrantedAsync(PlatformPermissions.Projects.ManageTeam);
+
+            if (task.IsPrivate)
             {
-                throw new Volo.Abp.Authorization.AbpAuthorizationException("Bu özel görevi görüntüleme yetkiniz yok.");
+                if (isImpersonated)
+                {
+                    throw new Volo.Abp.Authorization.AbpAuthorizationException("Bu gizli görevi destek yetkisiyle (Impersonation) görüntüleyemezsiniz.");
+                }
+                
+                if (!canManageTeam && task.CreatorId != CurrentUser.Id && task.AssigneeId != CurrentUser.Id)
+                {
+                    throw new Volo.Abp.Authorization.AbpAuthorizationException("Bu gizli görevi görüntüleme yetkiniz yok. Görevi yalnızca oluşturanlar ve atananlar görebilir.");
+                }
             }
 
             var taskDto = ObjectMapper.Map<TaskItem, TaskDto>(task);
@@ -276,12 +286,17 @@ namespace Apya.Platform.Tasks
         {
             var query = await base.CreateFilteredQueryAsync(input);
 
-            // APYA-22: Impersonation Gizlilik Kontrolü
+            // Gelişmiş Gizlilik Filtresi (APYA-22)
             bool isImpersonated = CurrentUser.FindClaim(Volo.Abp.Security.Claims.AbpClaimTypes.ImpersonatorUserId) != null;
-            if (isImpersonated)
-            {
-                query = query.Where(t => !t.IsPrivate);
-            }
+            bool canManageTeam = await AuthorizationService.IsGrantedAsync(PlatformPermissions.Projects.ManageTeam);
+            var currentUserId = CurrentUser.Id;
+
+            // 1. Eğer impersonated ise (örn. Admin), diğer tenantın "gizli" verilerini ASLA göremez.
+            // 2. Normal kullanıcıysa; gizli görevleri sadece kendisi açtıysa, kendisine atandıysa VEYA yöneticiyse görebilir.
+            query = query.Where(t => 
+                !t.IsPrivate || 
+                (!isImpersonated && (canManageTeam || t.CreatorId == currentUserId || t.AssigneeId == currentUserId))
+            );
 
             return query
                 .WhereIf(input.ProjectId.HasValue, t => t.ProjectId == input.ProjectId) // Görevleri Projeye göre izole et!
