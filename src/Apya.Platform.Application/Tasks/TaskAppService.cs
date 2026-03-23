@@ -161,10 +161,11 @@ namespace Apya.Platform.Tasks
                 // BİLDİRİM: Görev atandı etkinliği yayınla
                 await _localEventBus.PublishAsync(new TaskAssignedEto
                 {
-                    TaskId       = newTask.Id,
-                    TaskTitle    = newTask.Title,
-                    AssigneeId   = input.AssigneeId.Value,
-                    AssignerName = CurrentUser.UserName ?? "Sistem"
+                    TaskId         = newTask.Id,
+                    TaskTitle      = newTask.Title,
+                    AssigneeId     = input.AssigneeId.Value,
+                    ModifierUserId = CurrentUser.Id,
+                    AssignerName   = CurrentUser.UserName ?? "Sistem"
                 });
             }
 
@@ -191,6 +192,7 @@ namespace Apya.Platform.Tasks
             await CheckUpdatePolicyAsync();
 
             var task = await Repository.GetAsync(id);
+            var previousAssigneeId = task.AssigneeId;
 
             // Özel Yetki Kuralı: Görevi sadece oluşturan veya atanan kişi (ya da projelere yönetim yetkisi olan) güncelleyebilir.
             if (task.CreatorId != CurrentUser.Id && task.AssigneeId != CurrentUser.Id)
@@ -211,7 +213,6 @@ namespace Apya.Platform.Tasks
             task.IsPrivate = input.IsPrivate;
             // Not: Proje ID genelde güncellenmez, görev bir projeye aittir. O yüzden eklemiyoruz.
 
-            var previousAssigneeId = (await Repository.GetAsync(id)).AssigneeId;
             await Repository.UpdateAsync(task);
 
             // --- BAĞIMLILIKLARIN GÜNCELLENMESİ (APYA-30) ---
@@ -235,10 +236,11 @@ namespace Apya.Platform.Tasks
                 {
                     await _localEventBus.PublishAsync(new TaskAssignedEto
                     {
-                        TaskId       = task.Id,
-                        TaskTitle    = task.Title,
-                        AssigneeId   = task.AssigneeId.Value,
-                        AssignerName = CurrentUser.UserName ?? "Sistem"
+                        TaskId         = task.Id,
+                        TaskTitle      = task.Title,
+                        AssigneeId     = task.AssigneeId.Value,
+                        ModifierUserId = CurrentUser.Id,
+                        AssignerName   = CurrentUser.UserName ?? "Sistem"
                     });
                 }
             }
@@ -419,13 +421,14 @@ namespace Apya.Platform.Tasks
             // BİLDİRİM: Durum değişikliğini yayınla
             await _localEventBus.PublishAsync(new TaskStatusChangedEto
             {
-                TaskId = id,
-                TaskTitle = task.Title,
-                OldStatus = oldStatus,
-                NewStatus = status,
-                AssigneeId = task.AssigneeId,
-                CreatorId = task.CreatorId,
-                ChangedByName = CurrentUser.UserName ?? "Bilinmeyen"
+                TaskId         = id,
+                TaskTitle      = task.Title,
+                OldStatus      = oldStatus,
+                NewStatus      = status,
+                AssigneeId     = task.AssigneeId,
+                CreatorId      = task.CreatorId,
+                ModifierUserId = CurrentUser.Id,
+                ChangedByName  = CurrentUser.UserName ?? "Bilinmeyen"
             });
         }
 

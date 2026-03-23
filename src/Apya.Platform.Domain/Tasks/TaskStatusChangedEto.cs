@@ -10,5 +10,6 @@ public class TaskStatusChangedEto
     public TaskStatus NewStatus { get; set; }
     public Guid? AssigneeId { get; set; }
     public Guid? CreatorId { get; set; }
+    public Guid? ModifierUserId { get; set; }
     public string ChangedByName { get; set; } = string.Empty;
 }

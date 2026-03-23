@@ -8,5 +8,6 @@ public class TaskAssignedEto
     public Guid   TaskId       { get; set; }
     public string TaskTitle    { get; set; } = string.Empty;
     public Guid   AssigneeId   { get; set; }
+    public Guid?  ModifierUserId { get; set; }
     public string AssignerName { get; set; } = string.Empty;
 }

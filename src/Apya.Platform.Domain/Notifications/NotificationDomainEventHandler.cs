@@ -19,9 +19,11 @@ public class NotificationDomainEventHandler :
         _notificationManager = notificationManager;
     }
 
-    // --- Görev Atandığında ---
     public async Task HandleEventAsync(TaskAssignedEto eventData)
     {
+        // Eğer atanan kişi kendisi atadıysa bildirim gönderme
+        if (eventData.AssigneeId == eventData.ModifierUserId) return;
+
         await _notificationManager.PublishAsync(
             eventData.AssigneeId,
             "📋 Yeni Görev",
@@ -76,9 +78,8 @@ public class NotificationDomainEventHandler :
         var body = $"\"{eventData.TaskTitle}\" görevi {eventData.ChangedByName} tarafından {statusText} olarak işaretlendi.";
 
         // Atanan kişiye bildir (Değiştiren o değilse)
-        if (eventData.AssigneeId.HasValue && eventData.AssigneeId != eventData.CreatorId) 
+        if (eventData.AssigneeId.HasValue && eventData.AssigneeId != eventData.ModifierUserId) 
         {
-             // Not: Burada 'değiştiren' bilgisini saklamak lazım aslında ama current user id domain eventte yoksa isimlendirme üzerinden yapıyoruz.
              await _notificationManager.PublishAsync(
                 eventData.AssigneeId.Value,
                 title,
@@ -89,8 +90,10 @@ public class NotificationDomainEventHandler :
             );
         }
 
-        // Oluşturana bildir (Değiştiren o değilse)
-        if (eventData.CreatorId.HasValue && eventData.CreatorId != eventData.AssigneeId)
+        // Oluşturana bildir (Değiştiren o değilse ve atanan kişiyle aynı değilse [zaten atanan kişiye yukarıda gitti])
+        if (eventData.CreatorId.HasValue && 
+            eventData.CreatorId != eventData.ModifierUserId && 
+            eventData.CreatorId != eventData.AssigneeId)
         {
             await _notificationManager.PublishAsync(
                 eventData.CreatorId.Value,
