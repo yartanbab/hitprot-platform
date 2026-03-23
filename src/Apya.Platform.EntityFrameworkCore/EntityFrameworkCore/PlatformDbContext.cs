@@ -82,6 +82,8 @@ namespace Apya.Platform.EntityFrameworkCore
         public DbSet<Tenant> Tenants { get; set; }
         public DbSet<TenantConnectionString> TenantConnectionStrings { get; set; }
 
+        public DbSet<Apya.Platform.Tenants.TenantProfile> TenantProfiles { get; set; }
+
         #endregion
 
         public PlatformDbContext(DbContextOptions<PlatformDbContext> options)
@@ -104,6 +106,16 @@ namespace Apya.Platform.EntityFrameworkCore
             builder.ConfigureFeatureManagement();
             builder.ConfigureTenantManagement();
 
+
+            /* --- TENANT PROFILE YAPILANDIRMASI --- */
+            builder.Entity<Apya.Platform.Tenants.TenantProfile>(b => 
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "TenantProfiles", PlatformConsts.DbSchema);
+                b.ConfigureByConvention(); // Auto configure for the base class props
+                b.HasIndex(x => x.TenantId).IsUnique(); // 1:1 relation logic
+                b.Property(x => x.TaxNumber).HasMaxLength(50);
+                b.Property(x => x.CorporateEmail).HasMaxLength(256);
+            });
 
             /* --- PROJE MODÜLÜ YAPILANDIRMASI --- */
 

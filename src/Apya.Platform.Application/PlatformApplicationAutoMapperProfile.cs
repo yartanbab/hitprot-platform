@@ -47,6 +47,9 @@ namespace Apya.Platform
             // --- WIKI / DOKÜMAN (DOCUMENTS) MODÜLÜ ---
             CreateMap<Apya.Platform.Documents.Document, Apya.Platform.Documents.DocumentDto>();
             CreateMap<Apya.Platform.Documents.CreateUpdateDocumentDto, Apya.Platform.Documents.Document>();
+
+            // --- TENANT PROFILE MODÜLÜ ---
+            CreateMap<Apya.Platform.Tenants.TenantProfile, Apya.Platform.Tenants.TenantProfileDto>();
         }
     }
 }
