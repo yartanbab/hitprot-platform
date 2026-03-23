@@ -1,0 +1,91 @@
+@page
+@model Apya.Platform.Web.Pages.Calendars.IndexModel
+@{
+    ViewBag.Title = "Takvim Entegrasyonu";
+}
+
+<style>
+    /* Professional Calendar Page Layout */
+    .calendar-card { border-radius: 12px; border: 1px solid #eee; background: #fff; transition: transform 0.2s, box-shadow 0.2s; padding: 25px; margin-bottom: 25px; display: flex; align-items: center; justify-content: space-between; }
+    .calendar-card:hover { transform: translateY(-3px); box-shadow: 0 10px 25px rgba(0,0,0,0.05); }
+    
+    .provider-info { display: flex; align-items: center; }
+    .provider-logo { width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; border-radius: 10px; margin-right: 20px; font-size: 1.5rem; color: #fff; }
+    .logo-google { background: #ea4335; } 
+    .logo-outlook { background: #0078d4; }
+    
+    .status-badge { font-size: 0.75rem; padding: 4px 10px; border-radius: 20px; margin-top: 5px; display: inline-block; }
+    .status-linked { background: #e6ffec; color: #008a1d; border: 1px solid #008a1d33; }
+    .status-unlinked { background: #f8f9fa; color: #6c757d; border: 1px solid #dee2e6; }
+    
+    .connected-email { font-size: 0.9rem; color: #6c757d; margin-top: 4px; }
+    .provider-name { font-weight: 700; font-size: 1.15rem; color: #343a40; margin-bottom: 0; }
+</style>
+
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="text-center mb-5">
+                <i class="fa fa-calendar-alt fa-3x text-primary mb-3"></i>
+                <h1 class="fw-bold">Takvim Entegrasyonları</h1>
+                <p class="text-muted fs-5">Görevlerinizi ve planlarınızı dış takvimlerinizle senkronize edin.</p>
+            </div>
+
+            <div id="CalendarManagerArea">
+                <!-- GOOGLE CARD -->
+                <div class="calendar-card" id="CardGoogle">
+                    <div class="provider-info">
+                        <div class="provider-logo logo-google">
+                            <i class="fab fa-google"></i>
+                        </div>
+                        <div>
+                            <h5 class="provider-name">Google Calendar</h5>
+                            <div class="status-area">
+                                <span class="status-badge status-unlinked">Bağlı Değil</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="action-area">
+                        <button class="btn btn-outline-primary btn-connect" data-provider="1">
+                            <i class="fa fa-link me-2"></i>Hesap Bağla
+                        </button>
+                    </div>
+                </div>
+
+                <!-- OUTLOOK CARD -->
+                <div class="calendar-card" id="CardOutlook">
+                    <div class="provider-info">
+                        <div class="provider-logo logo-outlook">
+                            <i class="fab fa-windows"></i>
+                        </div>
+                        <div>
+                            <h5 class="provider-name">Microsoft Outlook</h5>
+                            <div class="status-area">
+                                <span class="status-badge status-unlinked">Bağlı Değil</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="action-area">
+                        <button class="btn btn-outline-primary btn-connect" data-provider="2">
+                            <i class="fa fa-link me-2"></i>Hesap Bağla
+                        </button>
+                    </div>
+                </div>
+
+                <div class="alert alert-info border-0 shadow-sm rounded-3 mt-4">
+                    <div class="d-flex">
+                        <i class="fa fa-info-circle fs-4 me-3 mt-1"></i>
+                        <div>
+                            <h6 class="fw-bold mb-1">Dış Takvim Senkronizasyonu Nasıl Çalışır?</h6>
+                            <p class="mb-0 small opacity-75">Takviminizi bağladığınızda, APYA üzerindeki size atanan tarihli görevler otomatik olarak dış takviminize bir "Etkinlik" olarak işlenir. Durum veya tarih değişiklikleri çift taraflı güncellenir.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section scripts {
+    <abp-script src="/Pages/Calendars/index.js" />
+}

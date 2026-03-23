@@ -77,6 +77,16 @@ public class PlatformMenuContributor : IMenuContributor
             )
         );
 
+        // "Calendar" menü öğesi
+        context.Menu.AddItem(
+            new ApplicationMenuItem(
+                "Apya.Platform.Calendars",
+                "Takvim Bağlantıları",
+                icon: "fa fa-calendar-alt",
+                url: "/Calendars"
+            )
+        );
+
         // "Invoices" menü öğesi
         context.Menu.AddItem(
             new ApplicationMenuItem(
