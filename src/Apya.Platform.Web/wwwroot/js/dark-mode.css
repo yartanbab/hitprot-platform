@@ -1,0 +1,83 @@
+/* --- APYA PREMIUM DARK MODE --- */
+[data-theme="dark"] {
+    --apya-bg: #0b111a;
+    --apya-surface: #121b28;
+    --apya-surface-hover: #1b2636;
+    --apya-text: #e1e7ef;
+    --apya-text-muted: #94a3b8;
+    --apya-border: #1e293b;
+    --apya-primary: #38bdf8;
+    --apya-primary-glow: rgba(56, 189, 248, 0.3);
+}
+
+/* Base Overrides when Dark Mode is Active */
+body[data-theme="dark"] {
+    background-color: var(--apya-bg) !important;
+    color: var(--apya-text);
+}
+
+body[data-theme="dark"] .card, 
+body[data-theme="dark"] .modal-content, 
+body[data-theme="dark"] #WikiContainer,
+body[data-theme="dark"] .wiki-sidebar,
+body[data-theme="dark"] .wiki-content {
+    background-color: var(--apya-surface) !important;
+    color: var(--apya-text) !important;
+    border-color: var(--apya-border) !important;
+}
+
+body[data-theme="dark"] .text-dark { color: var(--apya-text) !important; }
+body[data-theme="dark"] .text-muted { color: var(--apya-text-muted) !important; }
+body[data-theme="dark"] .border, body[data-theme="dark"] .border-bottom, body[data-theme="dark"] .border-right { border-color: var(--apya-border) !important; }
+
+/* Dashboard and List Overrides */
+body[data-theme="dark"] .table { color: var(--apya-text) !important; }
+body[data-theme="dark"] .table thead th { background-color: rgba(255,255,255,0.05) !important; border-color: var(--apya-border) !important; }
+body[data-theme="dark"] .table td { border-color: var(--apya-border) !important; }
+
+/* Navbar/Sidebar tweaks if needed */
+body[data-theme="dark"] .lpx-navbar,
+body[data-theme="dark"] .lpx-sidebar {
+    background-color: #0d141f !important;
+    border-color: #1e293b !important;
+}
+
+/* Floating Toggle Styling */
+#ThemeToggle {
+    position: fixed;
+    bottom: 25px;
+    right: 25px;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 9999;
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    font-size: 1.4rem;
+    color: #ffd700;
+}
+
+#ThemeToggle:hover { transform: scale(1.1); box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.4); }
+
+body[data-theme="dark"] #ThemeToggle {
+    color: #fff;
+    background: rgba(0, 0, 0, 0.5);
+    border-color: rgba(255, 255, 255, 0.1);
+}
+
+body[data-theme="dark"] .form-control {
+    background-color: #0b111a !important;
+    border-color: #1e293b !important;
+    color: #fff !important;
+}
+
+/* Special Wiki Overrides */
+body[data-theme="dark"] .doc-item:hover { background: #1e293b !important; }
+body[data-theme="dark"] .doc-item.active { background: #1e293b !important; color: var(--apya-primary) !important; border-left: 3px solid var(--apya-primary); }

@@ -157,6 +157,7 @@ public class PlatformWebModule : AbpModule
                     // Olu�turdu�umuz dosyay� buraya ekliyoruz
                     bundle.AddFiles("/js/jquery-fix.js");
                     bundle.AddFiles("/Pages/Notifications/notification-bell.js");
+                    bundle.AddFiles("/js/dark-mode.js");
                 }
             );
             // ----------------------
