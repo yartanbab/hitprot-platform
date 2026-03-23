@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Threading.Tasks;
 using Volo.Abp.Data;
 using Volo.Abp.DependencyInjection;
@@ -68,12 +68,15 @@ public class PlatformTestDataSeedContributor : IDataSeedContributor, ITransientD
         }
 
         // 2. Admin Kullanıcısını Ekle (SIRALAMA DÜZELTİLDİ)
-        // Doğru Sıra: (Email, Password, TenantId, UserName)
+        // DbMigrator Seed işleminde ConnectionString hatasına yol açtığı için 
+        // ABP'nin dahili Identity Data Seeder'ına bırakıyoruz.
+        /*
         await _identityDataSeeder.SeedAsync(
             "admin@apya.com",    // 1. Email (E-posta formatında olmalı)
             "1q2w3E*",           // 2. Şifre
             _currentTenant.Id,   // 3. Tenant (Kiracı)
             "admin"              // 4. Kullanıcı Adı
         );
+        */
     }
 }
