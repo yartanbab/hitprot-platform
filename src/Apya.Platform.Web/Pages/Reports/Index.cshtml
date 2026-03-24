@@ -133,6 +133,43 @@
             </div>
         </abp-column>
     </abp-row>
+
+    <!-- TENANT ROI ANALiZi -->
+    <abp-row class="mt-4">
+        <abp-column size-md="_12">
+            <div class="card dashboard-card bg-white p-2">
+                <div class="card-header bg-white border-bottom-0 pb-0 d-flex align-items-center">
+                    <div class="kpi-icon-box bg-info bg-opacity-10 text-info me-3" style="width:40px;height:40px;border-radius:10px;">
+                        <i class="fa fa-building"></i>
+                    </div>
+                    <div>
+                        <h5 class="fw-bold mb-0 text-dark">Müşteri ROI Analizi</h5>
+                        <small class="text-muted">Tenant bazında kârlılık ve efor karşılaştırması</small>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <abp-table striped-rows="true" class="mb-0 table-hover align-middle border" id="TenantRoiTable">
+                        <thead class="bg-light text-muted">
+                            <tr>
+                                <th class="border-0">Müşteri</th>
+                                <th class="border-0 text-center">Proje Sayısı</th>
+                                <th class="border-0">Toplam Bütçe</th>
+                                <th class="border-0">Harcanan</th>
+                                <th class="border-0">Kâr</th>
+                                <th class="border-0 text-center">ROI %</th>
+                                <th class="border-0">Toplam Efor</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tenantRoiTableBody">
+                        </tbody>
+                    </abp-table>
+                    <div id="noTenantRoiMessage" class="text-center text-muted py-3 d-none">
+                        <i class="fa fa-info-circle me-1"></i>Henüz müşteriye atanmış proje bulunmuyor.
+                    </div>
+                </div>
+            </div>
+        </abp-column>
+    </abp-row>
 </div>
 
 @section scripts {

@@ -33,6 +33,7 @@ $(function () {
             renderEfficiencyChart(result.personnel);
             renderProjectTable(result.projects);
             renderPersonnelSummary(result.personnel);
+            renderTenantRoi(result.tenantRoi || []);
         });
     }
 
@@ -41,6 +42,13 @@ $(function () {
         var labels = projects.map(p => p.projectName);
         var budgets = projects.map(p => p.totalBudget);
         var spent = projects.map(p => p.spentBudget);
+        // Forecast: Tahmini tukenme noktasi (gun bazli yanma hizi x toplam gun)
+        var forecast = projects.map(p => {
+            if (p.dailyBurnRate > 0 && p.totalProjectDays > 0) {
+                return Math.min(p.totalBudget, p.dailyBurnRate * p.totalProjectDays);
+            }
+            return 0;
+        });
 
         budgetChart = new Chart(ctx, {
             type: 'bar',
@@ -48,7 +56,7 @@ $(function () {
                 labels: labels,
                 datasets: [
                     {
-                        label: 'Toplam Bütçe (₺)',
+                        label: 'Toplam Butce',
                         data: budgets,
                         backgroundColor: 'rgba(54, 162, 235, 0.2)',
                         borderColor: 'rgb(54, 162, 235)',
@@ -56,12 +64,24 @@ $(function () {
                         borderRadius: 4
                     },
                     {
-                        label: 'Harcanan (₺)',
+                        label: 'Harcanan',
                         data: spent,
                         backgroundColor: 'rgba(255, 99, 132, 0.2)',
                         borderColor: 'rgb(255, 99, 132)',
                         borderWidth: 1,
                         borderRadius: 4
+                    },
+                    {
+                        label: 'Tahmini Toplam Harcama (Forecast)',
+                        data: forecast,
+                        type: 'line',
+                        borderColor: 'rgb(255, 159, 64)',
+                        borderWidth: 2,
+                        borderDash: [6, 3],
+                        pointRadius: 4,
+                        pointBackgroundColor: 'rgb(255, 159, 64)',
+                        fill: false,
+                        tension: 0.3
                     }
                 ]
             },
@@ -186,6 +206,48 @@ $(function () {
                         ${hours} Saat
                     </div>
                 </div>
+            `);
+        });
+    }
+    function renderTenantRoi(tenantRoi) {
+        var body = $('#tenantRoiTableBody');
+        var noDataMsg = $('#noTenantRoiMessage');
+        body.empty();
+
+        if (!tenantRoi || tenantRoi.length === 0) {
+            noDataMsg.removeClass('d-none');
+            $('#TenantRoiTable').addClass('d-none');
+            return;
+        }
+
+        noDataMsg.addClass('d-none');
+        $('#TenantRoiTable').removeClass('d-none');
+
+        tenantRoi.forEach(t => {
+            var profit = t.profit || (t.totalBudget - t.totalSpent);
+            var roiPercent = t.roiPercent || (t.totalBudget > 0 ? (profit / t.totalBudget * 100) : 0);
+            var profitClass = profit >= 0 ? 'text-success' : 'text-danger';
+            var roiClass = roiPercent >= 0 ? 'bg-success' : 'bg-danger';
+            var hours = (t.totalHours || 0).toFixed(1);
+
+            body.append(`
+                <tr class="bg-white">
+                    <td class="fw-bold text-dark">
+                        <i class="fa fa-building text-info me-2"></i>${t.tenantName}
+                    </td>
+                    <td class="text-center">
+                        <span class="badge bg-primary bg-opacity-10 text-primary rounded-pill px-3">${t.projectCount}</span>
+                    </td>
+                    <td class="text-muted">${t.totalBudget.toLocaleString('tr-TR')} \u20BA</td>
+                    <td class="text-dark fw-bold">${t.totalSpent.toLocaleString('tr-TR')} \u20BA</td>
+                    <td class="fw-bold ${profitClass}">${profit.toLocaleString('tr-TR')} \u20BA</td>
+                    <td class="text-center">
+                        <span class="badge ${roiClass} bg-opacity-15 ${profitClass} rounded-pill px-3 py-1">
+                            %${roiPercent.toFixed(1)}
+                        </span>
+                    </td>
+                    <td><span class="badge bg-light text-dark border"><i class="fa fa-clock text-secondary me-1"></i>${hours} sa</span></td>
+                </tr>
             `);
         });
     }

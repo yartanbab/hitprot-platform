@@ -9,6 +9,7 @@ using Volo.Abp.Identity;
 using Apya.Platform.Tasks;
 using Microsoft.Extensions.Logging;
 using Apya.Platform.Projects;
+using Volo.Abp.MultiTenancy;
 
 namespace Apya.Platform.Reports;
 
@@ -19,17 +20,20 @@ public class ReportAppService : ApplicationService, IReportAppService
     private readonly IRepository<TaskItem, Guid> _taskRepository;
     private readonly IRepository<TaskTimeLog, Guid> _timeLogRepository;
     private readonly IRepository<IdentityUser, Guid> _userRepository;
+    private readonly ITenantStore _tenantStore;
 
     public ReportAppService(
         IRepository<Project, Guid> projectRepository,
         IRepository<TaskItem, Guid> taskRepository,
         IRepository<TaskTimeLog, Guid> timeLogRepository,
-        IRepository<IdentityUser, Guid> userRepository)
+        IRepository<IdentityUser, Guid> userRepository,
+        ITenantStore tenantStore)
     {
         _projectRepository = projectRepository;
         _taskRepository = taskRepository;
         _timeLogRepository = timeLogRepository;
         _userRepository = userRepository;
+        _tenantStore = tenantStore;
     }
 
     public async Task<DashboardReportDto> GetDashboardStatsAsync()
@@ -88,6 +92,36 @@ public class ReportAppService : ApplicationService, IReportAppService
                             timeHealthColor = "warning";
                     }
 
+                    // Butce Forecast hesaplama
+                    var spentBudget = (decimal)(pSeconds / 3600.0) * p.HourlyRate;
+                    int totalProjectDays = 0;
+                    int daysPassedInt = 0;
+                    decimal dailyBurnRate = 0;
+                    int estimatedExhaustionDay = 0;
+
+                    if (p.StartDate.HasValue && p.EndDate.HasValue)
+                    {
+                        totalProjectDays = (int)(p.EndDate.Value - p.StartDate.Value).TotalDays;
+                        daysPassedInt = Math.Max(1, (int)(now - p.StartDate.Value).TotalDays);
+
+                        if (daysPassedInt > 0 && spentBudget > 0)
+                        {
+                            dailyBurnRate = spentBudget / daysPassedInt;
+                            if (dailyBurnRate > 0 && p.TotalBudget > 0)
+                            {
+                                estimatedExhaustionDay = (int)(p.TotalBudget / dailyBurnRate);
+                            }
+                        }
+                    }
+
+                    // Tenant adi
+                    var tenantName = "Platform (Host)";
+                    if (p.TenantId.HasValue)
+                    {
+                        var tenant = await _tenantStore.FindAsync(p.TenantId.Value);
+                        tenantName = tenant?.Name ?? "Bilinmeyen";
+                    }
+
                     result.Projects.Add(new ProjectReportDto
                     {
                         ProjectId = p.Id,
@@ -96,12 +130,19 @@ public class ReportAppService : ApplicationService, IReportAppService
                         Currency = p.Currency ?? "TRY",
                         CurrencySymbol = currencySymbol,
                         TotalBudget = p.TotalBudget,
-                        SpentBudget = (decimal)(pSeconds / 3600.0) * p.HourlyRate,
+                        SpentBudget = spentBudget,
                         TotalSeconds = pSeconds,
                         RemainingDays = remainingDays,
                         TimeUsagePercent = timeUsagePercent,
                         TimeHealthColor = timeHealthColor,
-                        HasAttachments = false // TODO: ProjectAttachment kontrolu eklenecek
+                        HasAttachments = false,
+                        TotalProjectDays = totalProjectDays,
+                        DaysPassed = daysPassedInt,
+                        DailyBurnRate = dailyBurnRate,
+                        EstimatedBudgetExhaustionDay = estimatedExhaustionDay,
+                        StartDate = p.StartDate,
+                        EndDate = p.EndDate,
+                        TenantName = tenantName
                     });
                 }
 
@@ -120,7 +161,25 @@ public class ReportAppService : ApplicationService, IReportAppService
                     }
                 }
 
-                Logger.LogInformation("Dashboard istatistikleri başarıyla hesaplandı. Proje: {ProjectCount}, Personel: {UserCount}", result.Projects.Count, result.Personnel.Count);
+                Logger.LogInformation("Dashboard istatistikleri basariyla hesaplandi. Proje: {ProjectCount}, Personel: {UserCount}", result.Projects.Count, result.Personnel.Count);
+
+                // 3. Tenant ROI Analizi
+                var tenantGroups = result.Projects
+                    .Where(p => p.TenantName != "Platform (Host)")
+                    .GroupBy(p => p.TenantName);
+
+                foreach (var group in tenantGroups)
+                {
+                    result.TenantRoi.Add(new TenantRoiDto
+                    {
+                        TenantName = group.Key,
+                        ProjectCount = group.Count(),
+                        TotalBudget = group.Sum(p => p.TotalBudget),
+                        TotalSpent = group.Sum(p => p.SpentBudget),
+                        TotalHours = group.Sum(p => p.TotalHours)
+                    });
+                }
+
                 return result;
             }
         }
