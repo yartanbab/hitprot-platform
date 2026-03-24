@@ -20,7 +20,16 @@
             <abp-input asp-for="Project.Name" label="Proje Adı" />
             <abp-input asp-for="Project.Code" label="Proje Kodu (Örn: PRJ-2026-001)" />
             <abp-input asp-for="Project.Purpose" label="Amacı" />
-            <abp-input asp-for="Project.Duration" label="Süresi (Ay/Yıl)" />
+            <abp-input asp-for="Project.Duration" label="Süresi" />
+            
+            <abp-row>
+                <abp-column size="_6">
+                    <abp-input asp-for="Project.StartDate" type="date" label="Başlangıç Tarihi" />
+                </abp-column>
+                <abp-column size="_6">
+                    <abp-input asp-for="Project.EndDate" type="date" label="Bitiş Tarihi" />
+                </abp-column>
+            </abp-row>
             <abp-input asp-for="Project.TargetAudience" label="Hedef Kitlesi" />
             <abp-input asp-for="Project.Activities" label="Faaliyetleri" />
             <abp-row>

@@ -263,3 +263,4 @@ src/Apya.Platform.Blazor.Server.Tiered/Logs/*
 
 # Use abp install-libs to restore.
 **/wwwroot/libs/*
+src/Apya.Platform.Web/wwwroot/uploads/*

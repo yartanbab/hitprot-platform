@@ -81,6 +81,9 @@ public class ProjectAppService :
         project.TargetAudience = input.TargetAudience;
         project.Activities = input.Activities;
         
+        project.StartDate = input.StartDate;
+        project.EndDate = input.EndDate;
+        
         return ObjectMapper.Map<Project, ProjectDto>(project);
     }
 
