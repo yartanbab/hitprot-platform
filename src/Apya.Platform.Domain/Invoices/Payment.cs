@@ -1,10 +1,12 @@
 using System;
 using Volo.Abp.Domain.Entities.Auditing;
+using Volo.Abp.MultiTenancy;
 
 namespace Apya.Platform.Invoices;
 
-public class Payment : FullAuditedEntity<Guid>
+public class Payment : FullAuditedEntity<Guid>, IMultiTenant
 {
+    public Guid? TenantId { get; set; }
     public Guid InvoiceId { get; set; }
     public decimal Amount { get; set; }
     public DateTime PaymentDate { get; set; }

@@ -15,7 +15,7 @@ public class EditModalModel : AbpPageModel
     public Guid TenantId { get; set; }
 
     [BindProperty]
-    public string TenantName { get; set; } = string.Empty;
+    public string? TenantName { get; set; }
 
     [BindProperty]
     public UpdateTenantProfileDto Tenant { get; set; } = new();

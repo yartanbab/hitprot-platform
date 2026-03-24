@@ -1,10 +1,12 @@
 using System;
 using Volo.Abp.Domain.Entities.Auditing;
+using Volo.Abp.MultiTenancy;
 
 namespace Apya.Platform.Tasks;
 
-public class TaskTimeLog : FullAuditedEntity<Guid>
+public class TaskTimeLog : FullAuditedEntity<Guid>, IMultiTenant
 {
+    public Guid? TenantId { get; set; }
     public Guid TaskId { get; set; }
     public Guid UserId { get; set; }
     
