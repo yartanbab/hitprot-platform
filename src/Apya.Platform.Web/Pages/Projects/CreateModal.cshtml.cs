@@ -23,6 +23,8 @@ public class CreateModalModel : PlatformPageModel
 
     public List<SelectListItem> Tenants { get; set; } = new();
     public List<SelectListItem> Currencies { get; set; } = new();
+    
+    public Guid? CurrentTenantId => CurrentUser.TenantId;
 
     private readonly IProjectAppService _projectAppService;
     private readonly ITenantAppService _tenantAppService;

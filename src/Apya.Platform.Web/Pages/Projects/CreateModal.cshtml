@@ -11,6 +11,12 @@
         <abp-modal-header title="Yeni Proje Oluştur"></abp-modal-header>
 
         <abp-modal-body>
+            @if (Model.CurrentTenantId == null)
+            {
+                <abp-select asp-for="Project.TenantId" asp-items="Model.Tenants" label="Müşteri Seçin (Boş bırakılırsa Host adına açılır)">
+                    <option value="">Kendi Hesabım (Platform)</option>
+                </abp-select>
+            }
             <abp-input asp-for="Project.Name" label="Proje Adı" />
             <abp-input asp-for="Project.Code" label="Proje Kodu (Örn: PRJ-2026-001)" />
             <abp-input asp-for="Project.Purpose" label="Amacı" />

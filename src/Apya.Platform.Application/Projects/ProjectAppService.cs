@@ -64,6 +64,11 @@ public class ProjectAppService :
             input.Description ?? ""
         );
 
+        if (CurrentTenant.Id == null && input.TenantId.HasValue)
+        {
+            project.TenantId = input.TenantId;
+        }
+
         await Repository.InsertAsync(project);
         
         project.TotalBudget = input.TotalBudget;
