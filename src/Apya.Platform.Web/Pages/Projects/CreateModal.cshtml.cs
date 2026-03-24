@@ -5,7 +5,9 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.AspNetCore.Http;
-using Volo.Abp.TenantManagement; // Müþterileri çekmek için gerekli
+using Microsoft.AspNetCore.Hosting;
+using System.IO;
+using Volo.Abp.TenantManagement;
 using Apya.Platform.Projects;
 using Apya.Platform.Projects.Dtos;
 
@@ -19,30 +21,31 @@ public class CreateModalModel : PlatformPageModel
     [BindProperty]
     public IFormFile? UploadFile { get; set; }
 
-    // EKLENDÝ: Arayüzdeki Müþteri Dropdown'ý için liste
     public List<SelectListItem> Tenants { get; set; } = new();
+    public List<SelectListItem> Currencies { get; set; } = new();
 
     private readonly IProjectAppService _projectAppService;
-    private readonly ITenantAppService _tenantAppService; // EKLENDÝ: Müþteri Servisi
+    private readonly ITenantAppService _tenantAppService;
+    private readonly IWebHostEnvironment _environment;
 
-    // Constructor güncellendi
-    public CreateModalModel(IProjectAppService projectAppService, ITenantAppService tenantAppService)
+    public CreateModalModel(
+        IProjectAppService projectAppService, 
+        ITenantAppService tenantAppService,
+        IWebHostEnvironment environment)
     {
         _projectAppService = projectAppService;
         _tenantAppService = tenantAppService;
+        _environment = environment;
     }
 
-    // DÝKKAT: Veritabanýndan veri çekeceðimiz için 'void OnGet' yerine 'async Task OnGetAsync' yaptýk!
     public async Task OnGetAsync()
     {
-        // Tarihlere varsayýlan deðerleri atýyoruz
         Project = new CreateProjectDto
         {
             StartDate = DateTime.Now,
             EndDate = DateTime.Now.AddMonths(1)
         };
 
-        // EKLENDÝ: Sadece Platform yetkilisi (Host) ise Müþterileri listele
         if (!CurrentUser.TenantId.HasValue)
         {
             var tenantResult = await _tenantAppService.GetListAsync(new GetTenantsInput { MaxResultCount = 1000 });
@@ -50,17 +53,42 @@ public class CreateModalModel : PlatformPageModel
                 .Select(t => new SelectListItem(t.Name, t.Id.ToString()))
                 .ToList();
         }
+
+        // PARA BÄ°RÄ°MLERÄ°
+        Currencies = new List<SelectListItem>
+        {
+            new SelectListItem("â‚º (TL)", "TRY"),
+            new SelectListItem("$ (USD)", "USD"),
+            new SelectListItem("â‚¬ (EUR)", "EUR")
+        };
     }
 
     public async Task<IActionResult> OnPostAsync()
     {
-        // 1. Önce projeyi oluþturuyoruz
+        // 1. Once projeyi olusturuyoruz
         var createdProject = await _projectAppService.CreateAsync(Project);
 
-        // 2. Eðer kullanýcý bir dosya seçmiþse, bunu iþlemek için gereken altyapý
+        // 2. Dosya yukleme (Attachment)
         if (UploadFile != null && UploadFile.Length > 0)
         {
-            // Ýlerleyen adýmlarda buraya gerçek dosya kaydetme (Attachment) mantýðýný yazacaðýz.
+            var uploadsFolder = Path.Combine(_environment.WebRootPath, "uploads");
+            if (!Directory.Exists(uploadsFolder)) 
+                Directory.CreateDirectory(uploadsFolder);
+
+            var storedFileName = Guid.NewGuid().ToString() + Path.GetExtension(UploadFile.FileName);
+            var filePath = Path.Combine(uploadsFolder, storedFileName);
+
+            using (var stream = new FileStream(filePath, FileMode.Create))
+            {
+                await UploadFile.CopyToAsync(stream);
+            }
+
+            // ProjectAppService icindeki AddAttachmentAsync metodunu cagiriyoruz
+            await _projectAppService.AddAttachmentAsync(
+                createdProject.Id, 
+                UploadFile.FileName, 
+                storedFileName, 
+                UploadFile.Length);
         }
 
         return NoContent();

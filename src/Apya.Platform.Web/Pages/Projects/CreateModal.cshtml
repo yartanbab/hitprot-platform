@@ -1,4 +1,4 @@
-﻿@page
+@page
 @using Apya.Platform.Web.Pages.Projects
 @using Volo.Abp.AspNetCore.Mvc.UI.Bootstrap.TagHelpers.Modal
 @model CreateModalModel
@@ -12,9 +12,19 @@
 
         <abp-modal-body>
             <abp-input asp-for="Project.Name" label="Proje Adı" />
-
             <abp-input asp-for="Project.Code" label="Proje Kodu (Örn: PRJ-2026-001)" />
-
+            <abp-input asp-for="Project.Purpose" label="Amacı" />
+            <abp-input asp-for="Project.Duration" label="Süresi (Ay/Yıl)" />
+            <abp-input asp-for="Project.TargetAudience" label="Hedef Kitlesi" />
+            <abp-input asp-for="Project.Activities" label="Faaliyetleri" />
+            <abp-row>
+                <abp-column size="_8">
+                    <abp-input asp-for="Project.TotalBudget" label="Bütçesi (Miktar)" />
+                </abp-column>
+                <abp-column size="_4">
+                    <abp-select asp-for="Project.Currency" asp-items="Model.Currencies" label="Para Birimi" />
+                </abp-column>
+            </abp-row>
             <abp-input asp-for="Project.Description" type="textarea" label="Açıklama" />
 
             <div class="mb-3">
