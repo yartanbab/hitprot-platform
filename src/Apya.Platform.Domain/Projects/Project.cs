@@ -16,6 +16,11 @@ public class Project : FullAuditedAggregateRoot<Guid>, IMultiTenant
 
     public string Description { get; set; }
 
+    public string Purpose { get; set; } // Amacı
+    public string Duration { get; set; } // Süresi
+    public string TargetAudience { get; set; } // Hedef Kitlesi
+    public string Activities { get; set; } // Faaliyetleri
+
     public DateTime? StartDate { get; set; }
     public DateTime? EndDate { get; set; }
 
