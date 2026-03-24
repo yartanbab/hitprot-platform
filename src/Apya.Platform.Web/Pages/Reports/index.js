@@ -116,21 +116,41 @@ $(function () {
             var usage = p.totalBudget > 0 ? (p.spentBudget / p.totalBudget * 100).toFixed(1) : 0;
             var usageClass = usage > 90 ? 'bg-danger' : (usage > 50 ? 'bg-warning' : 'bg-success');
             var hours = (p.totalSeconds / 3600).toFixed(1);
+            var sym = p.currencySymbol || '\u20BA';
+            
+            // Zaman sagligi trafik isigi
+            var healthDot = '';
+            if (p.timeHealthColor === 'danger') {
+                healthDot = '<span class="badge bg-danger rounded-pill ms-1" style="font-size:0.65rem;">Kritik</span>';
+            } else if (p.timeHealthColor === 'warning') {
+                healthDot = '<span class="badge bg-warning text-dark rounded-pill ms-1" style="font-size:0.65rem;">Dikkat</span>';
+            } else {
+                healthDot = '<span class="badge bg-success rounded-pill ms-1" style="font-size:0.65rem;">Saglam</span>';
+            }
+
+            var remainingText = p.remainingDays > 0 ? `${p.remainingDays} gun` : 'Bitis!';
             
             body.append(`
                 <tr class="bg-white">
-                    <td class="fw-bold text-dark"><i class="fa fa-folder-open text-primary me-2"></i>${p.projectName}</td>
-                    <td class="text-muted">${p.totalBudget.toLocaleString('tr-TR')} ₺</td>
-                    <td class="text-dark fw-bold">${p.spentBudget.toLocaleString('tr-TR')} ₺</td>
+                    <td class="fw-bold text-dark">
+                        <i class="fa fa-folder-open text-primary me-2"></i>${p.projectName}
+                        <br><small class="text-muted fw-normal">${p.projectCode || ''}</small>
+                    </td>
+                    <td class="text-muted">${p.totalBudget.toLocaleString('tr-TR')} ${sym}</td>
+                    <td class="text-dark fw-bold">${p.spentBudget.toLocaleString('tr-TR')} ${sym}</td>
                     <td>
                         <div class="d-flex align-items-center">
                             <div class="progress shadow-sm w-100 me-2" style="height: 6px;">
-                                <div class="progress-bar ${usageClass}" role="progressbar" style="width: ${usage}%" aria-valuenow="${usage}" aria-valuemin="0" aria-valuemax="100"></div>
+                                <div class="progress-bar ${usageClass}" role="progressbar" style="width: ${usage}%"></div>
                             </div>
                             <span class="small fw-bold ${usage > 90 ? 'text-danger' : 'text-muted'}">%${usage}</span>
                         </div>
                     </td>
-                    <td><span class="badge bg-light text-dark border"><i class="fa fa-clock text-secondary me-1"></i>${hours} sa</span></td>
+                    <td>
+                        <span class="badge bg-light text-dark border"><i class="fa fa-clock text-secondary me-1"></i>${hours} sa</span>
+                        ${healthDot}
+                        <br><small class="text-muted" style="font-size:0.7rem;"><i class="fa fa-hourglass-half me-1"></i>${remainingText}</small>
+                    </td>
                 </tr>
             `);
         });
@@ -141,18 +161,28 @@ $(function () {
         list.empty();
         personnel.forEach(p => {
             var hours = (p.totalSeconds / 3600).toFixed(1);
+            var isOverloaded = p.isOverloaded || false;
+            var borderClass = isOverloaded ? 'border-danger' : '';
+            var nameClass = isOverloaded ? 'text-danger' : 'text-dark';
+            var badgeClass = isOverloaded 
+                ? 'bg-danger bg-opacity-10 text-danger border-danger' 
+                : 'bg-primary bg-opacity-10 text-primary border-primary';
+            var overloadBadge = isOverloaded 
+                ? '<span class="badge bg-danger text-white ms-2" style="font-size:0.65rem;">Kapasite Asimi!</span>' 
+                : '';
+
             list.append(`
-                <div class="list-group-item d-flex justify-content-between align-items-center px-0 py-3 border-bottom">
+                <div class="list-group-item d-flex justify-content-between align-items-center px-0 py-3 border-bottom ${borderClass}">
                     <div class="d-flex align-items-center">
-                        <div class="kpi-icon-box bg-light text-secondary me-3" style="width:40px;height:40px;border-radius:50%;">
+                        <div class="kpi-icon-box ${isOverloaded ? 'bg-danger bg-opacity-10 text-danger' : 'bg-light text-secondary'} me-3" style="width:40px;height:40px;border-radius:50%;">
                             <i class="fa fa-user"></i>
                         </div>
                         <div>
-                            <div class="fw-bold text-dark">${p.userName}</div>
-                            <small class="text-muted"><i class="fa fa-tasks me-1"></i>${p.taskCount} Görevde Çalıştı</small>
+                            <div class="fw-bold ${nameClass}">${p.userName}${overloadBadge}</div>
+                            <small class="text-muted"><i class="fa fa-tasks me-1"></i>${p.taskCount} Gorevde Calisti</small>
                         </div>
                     </div>
-                    <div class="badge bg-primary bg-opacity-10 text-primary border border-primary rounded-pill px-3 py-2 fs-6">
+                    <div class="badge ${badgeClass} border rounded-pill px-3 py-2 fs-6">
                         ${hours} Saat
                     </div>
                 </div>

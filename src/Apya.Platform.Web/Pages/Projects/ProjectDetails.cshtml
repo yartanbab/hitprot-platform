@@ -85,63 +85,143 @@
     .sortable-ghost { opacity: 0.4; }
 </style>
 
-@* ─── Dashboard Header Card ─── *@
+@* ─── PROJE OPERASYON MERKEZi - Dashboard Header ─── *@
 <div class="card shadow-sm mb-4 project-dashboard-card">
     <div class="card-body p-4">
         <div class="row align-items-center">
 
-            @* Proje Bilgileri *@
-            @* Proje Bilgileri *@
-            <div class="col-md-4">
-                <span class="badge bg-primary bg-opacity-10 text-primary mb-2 rounded-pill px-3 py-2">
-                    <i class="fa fa-tag me-1"></i> @Model.Project?.Code
+            @* ── Proje Bilgileri + Tenant Rozeti ── *@
+            <div class="col-md-3">
+                @* Tenant Rozeti *@
+                <span class="badge @(Model.IsInternalProject ? "bg-secondary bg-opacity-10 text-secondary" : "bg-info bg-opacity-10 text-info") mb-2 rounded-pill px-3 py-1" style="font-size: 0.75rem;">
+                    <i class="fa @(Model.IsInternalProject ? "fa-home" : "fa-building") me-1"></i>
+                    @(Model.IsInternalProject ? "Dahili Proje" : $"Müşteri: {Model.TenantName}")
                 </span>
-                <h1 class="display-6 fw-bold text-dark mb-2" style="font-size: 1.8rem;">
+
+                @* Proje Adı + Kopyalanabilir Kod *@
+                <h1 class="fw-bold text-dark mb-2" style="font-size: 1.6rem;">
                     <i class="fa fa-rocket text-primary me-2"></i>@Model.Project?.Name
                 </h1>
-                <p class="text-muted mb-0" style="font-size: 0.95rem;">@Model.Project?.Description</p>
+                <div class="d-flex align-items-center gap-2 mb-2">
+                    <span class="badge bg-primary bg-opacity-10 text-primary rounded-pill px-3 py-2" style="font-size: 0.8rem;">
+                        <i class="fa fa-tag me-1"></i>@Model.Project?.Code
+                    </span>
+                    <button class="btn btn-sm btn-outline-secondary rounded-pill px-2 py-0"
+                            onclick="navigator.clipboard.writeText('@Model.Project?.Code'); abp.notify.success('Proje kodu kopyalandı!');"
+                            title="Proje kodunu kopyala">
+                        <i class="fa fa-copy" style="font-size: 0.75rem;"></i>
+                    </button>
+                </div>
+                <p class="text-muted mb-0 small" style="display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">
+                    @Model.Project?.Description
+                </p>
             </div>
 
-            @* APYA AI Karar Motoru - Risk Skoru *@
-            <div class="col-md-3 border-start px-4">
+            @* ── AI Risk Öngörüsü ── *@
+            <div class="col-md-2 border-start px-3">
                 <div class="d-flex align-items-center mb-2">
-                    <div class="bg-@Model.AiRiskColor bg-opacity-10 p-2 rounded-circle me-3 border border-@Model.AiRiskColor shadow-sm d-flex align-items-center justify-content-center" style="width: 45px; height: 45px;">
-                        <i class="fa fa-robot text-@Model.AiRiskColor fs-4"></i>
+                    <div class="bg-@Model.AiRiskColor bg-opacity-10 p-2 rounded-circle me-2 border border-@Model.AiRiskColor shadow-sm d-flex align-items-center justify-content-center" style="width:40px;height:40px;">
+                        <i class="fa fa-robot text-@Model.AiRiskColor fs-5"></i>
                     </div>
                     <div>
-                        <h6 class="text-uppercase text-muted fw-bold mb-0" style="font-size:0.75rem;letter-spacing:1px;">AI Risk Öngörüsü</h6>
-                        <span class="fw-bold fs-5 text-@Model.AiRiskColor">%@Model.AiRiskScore Risk</span>
+                        <h6 class="text-uppercase text-muted fw-bold mb-0" style="font-size:0.7rem;letter-spacing:1px;">AI Risk</h6>
+                        <span class="fw-bold fs-5 text-@Model.AiRiskColor">%@Model.AiRiskScore</span>
                     </div>
                 </div>
-                <p class="text-muted small mb-0 lh-sm" style="font-size: 0.8rem; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;">
+                <p class="text-muted mb-0 lh-sm" style="font-size:0.75rem;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;">
                     @Model.AiRiskMessage
                 </p>
             </div>
 
-            @* İlerleme *@
-            <div class="col-md-2 border-start border-end px-3">
-                <h6 class="text-uppercase text-muted fw-bold mb-3" style="font-size:0.75rem;letter-spacing:1px;">Proje İlerlemesi</h6>
-                <div class="d-flex justify-content-between align-items-center mb-1">
-                    <span class="fw-bold fs-5 @(progressPct == 100 ? "text-success" : "text-primary")">%@progressPct</span>
-                </div>
-                <div class="progress shadow-sm" style="height:8px;border-radius:4px;">
-                    <div class="progress-bar @(progressPct == 100 ? "bg-success" : "bg-primary progress-bar-striped progress-bar-animated")"
-                         role="progressbar"
-                         style="width:@progressPct%"
-                         aria-valuenow="@progressPct" aria-valuemin="0" aria-valuemax="100"></div>
-                </div>
-                <div class="text-muted small mt-1">@completedTasks / @totalTasks Görev Bitti</div>
+            @* ── Kalan Süre Countdown + Zaman Sapma ── *@
+            <div class="col-md-2 border-start px-3">
+                <h6 class="text-uppercase text-muted fw-bold mb-2" style="font-size:0.7rem;letter-spacing:1px;">
+                    <i class="fa fa-hourglass-half me-1"></i>Kalan Süre
+                </h6>
+                @if (Model.Project?.EndDate.HasValue == true)
+                {
+                    <div class="d-flex align-items-baseline gap-1 mb-1">
+                        <span class="fw-bold fs-4 text-dark">@Model.RemainingDays</span>
+                        <span class="text-muted small">Gün Kaldı</span>
+                    </div>
+                    <div class="progress shadow-sm mb-1" style="height:6px;border-radius:4px;">
+                        <div class="progress-bar bg-@Model.TimeHealthColor @(Model.TimeUsagePercent < 100 ? "progress-bar-striped progress-bar-animated" : "")"
+                             style="width:@Model.TimeUsagePercent%"></div>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <small class="text-muted" style="font-size:0.7rem;">Sürenin %@Model.TimeUsagePercent'i</small>
+                        <span class="badge bg-@Model.TimeHealthColor bg-opacity-15 text-@Model.TimeHealthColor rounded-pill" style="font-size:0.65rem;">
+                            @Model.TimeHealthLabel
+                        </span>
+                    </div>
+                }
+                else
+                {
+                    <span class="text-muted small">Tarih belirlenmemiş</span>
+                }
             </div>
 
-            @* Ekip & Geri Butonu *@
-            <div class="col-md-3 ps-4 d-flex flex-column justify-content-center">
-                <div class="d-flex justify-content-between align-items-start mb-3">
-                    <a href="/Projects" class="btn btn-light border btn-sm shadow-sm rounded-pill fw-bold px-3 ms-auto">
-                        <i class="fa fa-arrow-left me-1"></i> Geri Dön
+            @* ── Bütçe Tüketimi ── *@
+            <div class="col-md-2 border-start px-3">
+                <h6 class="text-uppercase text-muted fw-bold mb-2" style="font-size:0.7rem;letter-spacing:1px;">
+                    <i class="fa fa-wallet me-1"></i>Bütçe Tüketimi
+                </h6>
+                @if (Model.Project?.TotalBudget > 0)
+                {
+                    <div class="mb-1">
+                        <span class="fw-bold text-dark" style="font-size:1rem;">
+                            @Model.CurrencySymbol@Model.BudgetSpent.ToString("N0")
+                        </span>
+                        <span class="text-muted small"> / @Model.CurrencySymbol@Model.Project?.TotalBudget.ToString("N0")</span>
+                    </div>
+                    <div class="progress shadow-sm mb-1" style="height:6px;border-radius:4px;">
+                        <div class="progress-bar @(Model.BudgetPercent > 90 ? "bg-danger" : Model.BudgetPercent > 60 ? "bg-warning" : "bg-success")"
+                             style="width:@Model.BudgetPercent%"></div>
+                    </div>
+                    <small class="text-muted" style="font-size:0.7rem;">%@Model.BudgetPercent kullanıldı</small>
+                }
+                else
+                {
+                    <span class="text-muted small">Bütçe tanımsız</span>
+                }
+            </div>
+
+            @* ── İlerleme + Ekip + Aksiyonlar ── *@
+            <div class="col-md-3 border-start ps-3">
+                @* Aksiyon Kısayolları + Geri *@
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                    <div class="btn-group btn-group-sm" role="group">
+                        <button class="btn btn-outline-primary rounded-start-pill px-3" title="Hızlı Efor Gir" id="btn-quick-effort">
+                            <i class="fa fa-clock"></i>
+                        </button>
+                        <button class="btn btn-outline-primary px-3" title="Dosya Yükle" id="btn-quick-upload">
+                            <i class="fa fa-upload"></i>
+                        </button>
+                        <button class="btn btn-outline-primary rounded-end-pill px-3" title="Not Ekle" id="btn-quick-note">
+                            <i class="fa fa-sticky-note"></i>
+                        </button>
+                    </div>
+                    <a href="/Projects" class="btn btn-light border btn-sm shadow-sm rounded-pill fw-bold px-3">
+                        <i class="fa fa-arrow-left me-1"></i> Geri
                     </a>
                 </div>
+
+                @* İlerleme *@
+                <div class="mb-2">
+                    <h6 class="text-uppercase text-muted fw-bold mb-1" style="font-size:0.7rem;letter-spacing:1px;">Proje İlerlemesi</h6>
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="fw-bold fs-5 @(progressPct == 100 ? "text-success" : "text-primary")">%@progressPct</span>
+                        <div class="progress flex-grow-1 shadow-sm" style="height:6px;border-radius:4px;">
+                            <div class="progress-bar @(progressPct == 100 ? "bg-success" : "bg-primary progress-bar-striped progress-bar-animated")"
+                                 style="width:@progressPct%"></div>
+                        </div>
+                    </div>
+                    <small class="text-muted" style="font-size:0.7rem;">@completedTasks / @totalTasks Görev Bitti</small>
+                </div>
+
+                @* Ekip Avatarları *@
                 <div>
-                    <h6 class="text-uppercase text-muted fw-bold mb-2" style="font-size:0.75rem;letter-spacing:1px;">Ekip (@assigneeCount)</h6>
+                    <h6 class="text-uppercase text-muted fw-bold mb-1" style="font-size:0.7rem;letter-spacing:1px;">Ekip (@assigneeCount)</h6>
                     <div class="avatar-group">
                         @for (int i = 0; i < facepileCount; i++)
                         {
@@ -158,6 +238,7 @@
                     </div>
                 </div>
             </div>
+
         </div>
     </div>
 </div>

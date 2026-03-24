@@ -49,17 +49,59 @@ public class ReportAppService : ApplicationService, IReportAppService
                 var result = new DashboardReportDto();
 
                 // 1. Proje Analizi
+                var now = DateTime.Now;
                 foreach (var p in projects)
                 {
                     var pTasks = allTasks.Where(x => x.ProjectId == p.Id).Select(x => x.Id).ToList();
                     var pSeconds = allLogs.Where(x => pTasks.Contains(x.TaskId)).Sum(x => x.SecondsSpent ?? 0);
-                    
+
+                    // Para birimi cevrimle
+                    var currencySymbol = (p.Currency ?? "TRY") switch
+                    {
+                        "USD" => "$",
+                        "EUR" => "\u20AC",
+                        _ => "\u20BA"
+                    };
+
+                    // Zaman sagligi hesaplama
+                    int remainingDays = 0;
+                    int timeUsagePercent = 0;
+                    string timeHealthColor = "success";
+
+                    if (p.StartDate.HasValue && p.EndDate.HasValue)
+                    {
+                        var totalDays = (p.EndDate.Value - p.StartDate.Value).TotalDays;
+                        var daysPassed = (now - p.StartDate.Value).TotalDays;
+                        remainingDays = Math.Max(0, (int)(p.EndDate.Value - now).TotalDays);
+                        timeUsagePercent = totalDays > 0
+                            ? Math.Min(100, (int)Math.Round(daysPassed / totalDays * 100))
+                            : 0;
+
+                        // Tamamlanma orani ile kiyasla
+                        var totalTaskCount = allTasks.Count(x => x.ProjectId == p.Id);
+                        var completedCount = allTasks.Count(x => x.ProjectId == p.Id && (int)x.Status == 3);
+                        var completionRate = totalTaskCount > 0 ? (double)completedCount / totalTaskCount * 100 : 0;
+
+                        if (timeUsagePercent > 80 && completionRate < 50)
+                            timeHealthColor = "danger";
+                        else if (timeUsagePercent > 50 && completionRate < (timeUsagePercent - 20))
+                            timeHealthColor = "warning";
+                    }
+
                     result.Projects.Add(new ProjectReportDto
                     {
-                        ProjectName = p.Name ?? "İsimsiz Proje",
+                        ProjectId = p.Id,
+                        ProjectName = p.Name ?? "Isimsiz Proje",
+                        ProjectCode = p.Code ?? "",
+                        Currency = p.Currency ?? "TRY",
+                        CurrencySymbol = currencySymbol,
                         TotalBudget = p.TotalBudget,
                         SpentBudget = (decimal)(pSeconds / 3600.0) * p.HourlyRate,
-                        TotalSeconds = pSeconds
+                        TotalSeconds = pSeconds,
+                        RemainingDays = remainingDays,
+                        TimeUsagePercent = timeUsagePercent,
+                        TimeHealthColor = timeHealthColor,
+                        HasAttachments = false // TODO: ProjectAttachment kontrolu eklenecek
                     });
                 }
 
