@@ -9,6 +9,7 @@
         <abp-modal-header title="Müşteri & Profil Düzenle"></abp-modal-header>
         <abp-modal-body>
             <abp-input asp-for="TenantId" />
+            <input type="hidden" asp-for="TenantName" />
             <ul class="nav nav-tabs" id="tenantWizardTab" role="tablist">
                 <li class="nav-item" role="presentation">
                     <button class="nav-link active" id="basics-tab" data-bs-toggle="tab" data-bs-target="#basics" type="button" role="tab" aria-controls="basics" aria-selected="true">Temel Bilgiler</button>

@@ -37,6 +37,7 @@ public class EditModalModel : AbpPageModel
         Tenant.TaxOffice = profile.TaxOffice;
         Tenant.Address = profile.Address;
         Tenant.LegalRepresentativeName = profile.LegalRepresentativeName;
+        Tenant.LegalRepresentativePhone = profile.LegalRepresentativePhone;
         Tenant.OperationalContactName = profile.OperationalContactName;
         Tenant.OperationalContactPhone = profile.OperationalContactPhone;
         
