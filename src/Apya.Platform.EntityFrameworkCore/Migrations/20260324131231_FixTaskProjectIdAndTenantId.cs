@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
@@ -19,6 +19,12 @@ namespace Apya.Platform.Migrations
 
             migrationBuilder.AddColumn<Guid>(
                 name: "TenantId",
+                table: "AppTasks",
+                type: "uniqueidentifier",
+                nullable: true);
+
+            migrationBuilder.AddColumn<Guid>(
+                name: "ProjectId",
                 table: "AppTasks",
                 type: "uniqueidentifier",
                 nullable: true);
