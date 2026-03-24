@@ -1,0 +1,338 @@
+@page
+@using Volo.Abp.AspNetCore.Mvc.UI.Bootstrap.TagHelpers.Modal
+@model Apya.Platform.Web.Pages.Projects.AiTaskGeneratorModalModel
+@{
+    Layout = null;
+}
+
+<style>
+    .ai-wizard-step { display: none; }
+    .ai-wizard-step.active { display: block; }
+    .ai-step-indicator { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; }
+    .ai-step-indicator .step {
+        flex: 1; padding: 0.5rem; text-align: center;
+        border-radius: 0.5rem; font-size: 0.85rem; font-weight: 600;
+        background: #f0f0f0; color: #999; transition: all 0.3s;
+    }
+    .ai-step-indicator .step.active { background: linear-gradient(135deg, #4e73df, #6f42c1); color: #fff; }
+    .ai-step-indicator .step.done { background: #d1fae5; color: #059669; }
+    .suggestion-card {
+        border: 1px solid #e5e7eb; border-radius: 0.75rem; padding: 1rem;
+        margin-bottom: 0.75rem; transition: all 0.2s;
+    }
+    .suggestion-card:hover { border-color: #4e73df; box-shadow: 0 2px 8px rgba(78,115,223,0.15); }
+    .suggestion-card.deselected { opacity: 0.5; background: #f9fafb; }
+    .confidence-bar { height: 8px; border-radius: 4px; background: #e5e7eb; overflow: hidden; }
+    .confidence-fill { height: 100%; border-radius: 4px; transition: width 0.5s; }
+    .ai-spinner { display: inline-block; width: 20px; height: 20px; border: 3px solid #e5e7eb;
+        border-top: 3px solid #4e73df; border-radius: 50%; animation: spin 0.8s linear infinite; }
+    @@keyframes spin { to { transform: rotate(360deg); } }
+    .section-badge { font-size: 0.7rem; padding: 2px 8px; border-radius: 12px;
+        background: #ede9fe; color: #6d28d9; }
+</style>
+
+<form id="AiTaskGeneratorForm">
+    <abp-modal size="ExtraLarge">
+        <abp-modal-header title="🤖 AI Görev Oluşturucu"></abp-modal-header>
+        <abp-modal-body>
+            <input type="hidden" id="AiProjectId" value="@Model.ProjectId" />
+
+            <!-- Step Indicators -->
+            <div class="ai-step-indicator">
+                <div class="step active" id="stepInd1"><i class="fa fa-file me-1"></i>Dosya Seç</div>
+                <div class="step" id="stepInd2"><i class="fa fa-robot me-1"></i>AI Analiz</div>
+                <div class="step" id="stepInd3"><i class="fa fa-check-circle me-1"></i>Onay & Oluştur</div>
+            </div>
+
+            <!-- STEP 1: Dosya Secimi -->
+            <div class="ai-wizard-step active" id="step1">
+                <div class="text-center py-4">
+                    <div class="mb-4">
+                        <div class="bg-primary bg-opacity-10 d-inline-flex align-items-center justify-content-center rounded-circle" style="width:80px;height:80px;">
+                            <i class="fa fa-file-pdf text-primary" style="font-size:2.5rem;"></i>
+                        </div>
+                    </div>
+                    <h5 class="fw-bold mb-2">Proje Dosyasını Yükleyin</h5>
+                    <p class="text-muted mb-4">AI, yüklediğiniz PDF dosyasını analiz ederek otomatik görev önerileri oluşturacak.</p>
+
+                    <div class="mb-4">
+                        <input type="file" class="form-control" id="aiDocumentFile" accept=".pdf" style="max-width:400px;margin:0 auto;">
+                        <small class="text-muted mt-1 d-block">PDF formatı desteklenmektedir.</small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- STEP 2: AI Analiz Sonuclari -->
+            <div class="ai-wizard-step" id="step2">
+                <!-- Loading -->
+                <div id="aiLoadingState" class="text-center py-5">
+                    <div class="ai-spinner mb-3" style="width:40px;height:40px;border-width:4px;"></div>
+                    <h5 class="fw-bold">Dosya Analiz Ediliyor...</h5>
+                    <p class="text-muted">AI motoru dosyanızı okuyor ve görev adaylarını çıkarıyor.</p>
+                </div>
+
+                <!-- Results -->
+                <div id="aiResultsState" style="display:none;">
+                    <div class="row">
+                        <!-- Sol Panel: Ozet -->
+                        <div class="col-md-4">
+                            <div class="card border-0 bg-light rounded-3 p-3">
+                                <h6 class="fw-bold mb-3"><i class="fa fa-chart-bar text-primary me-2"></i>Analiz Özeti</h6>
+                                <div class="mb-2">
+                                    <small class="text-muted text-uppercase fw-bold">Dosya</small>
+                                    <div class="fw-bold text-dark" id="aiFileName">—</div>
+                                </div>
+                                <div class="mb-2">
+                                    <small class="text-muted text-uppercase fw-bold">Tespit Edilen Görev</small>
+                                    <div class="fw-bold text-dark fs-4" id="aiTaskCount">0</div>
+                                </div>
+                                <div class="mb-2">
+                                    <small class="text-muted text-uppercase fw-bold">Tahmini Süre</small>
+                                    <div class="fw-bold text-dark" id="aiEstDuration">— gün</div>
+                                </div>
+                                <div class="mb-3">
+                                    <small class="text-muted text-uppercase fw-bold">Güven Skoru</small>
+                                    <div class="d-flex align-items-center gap-2 mt-1">
+                                        <div class="confidence-bar flex-grow-1">
+                                            <div class="confidence-fill bg-success" id="aiConfidenceBar" style="width:0%"></div>
+                                        </div>
+                                        <span class="fw-bold" id="aiConfidenceText">%0</span>
+                                    </div>
+                                </div>
+                                <hr>
+                                <h6 class="fw-bold mb-2"><i class="fa fa-layer-group text-primary me-2"></i>Bölümler</h6>
+                                <div id="aiSectionsList"></div>
+                            </div>
+                        </div>
+
+                        <!-- Sag Panel: Gorev Listesi -->
+                        <div class="col-md-8">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h6 class="fw-bold mb-0"><i class="fa fa-tasks text-primary me-2"></i>Görev Önerileri</h6>
+                                <div>
+                                    <button type="button" class="btn btn-sm btn-outline-primary" onclick="toggleAllSuggestions(true)">Tümünü Seç</button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary ms-1" onclick="toggleAllSuggestions(false)">Tümünü Kaldır</button>
+                                </div>
+                            </div>
+                            <div id="aiSuggestionsList" style="max-height:400px;overflow-y:auto;"></div>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-info mt-3 mb-0 d-flex align-items-center" role="alert">
+                        <i class="fa fa-info-circle me-2"></i>
+                        <small>AI önerileri taslaktır. Her öneriyi inceleyebilir, düzenleyebilir ve istemediğiniz önerilerin seçimini kaldırabilirsiniz.</small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- STEP 3: Onay & Sonuc -->
+            <div class="ai-wizard-step" id="step3">
+                <div class="text-center py-4" id="aiCreatingState">
+                    <div class="ai-spinner mb-3" style="width:40px;height:40px;border-width:4px;"></div>
+                    <h5 class="fw-bold">Görevler Oluşturuluyor...</h5>
+                </div>
+                <div id="aiSuccessState" style="display:none;" class="text-center py-4">
+                    <div class="mb-3">
+                        <div class="bg-success bg-opacity-10 d-inline-flex align-items-center justify-content-center rounded-circle" style="width:80px;height:80px;">
+                            <i class="fa fa-check-circle text-success" style="font-size:2.5rem;"></i>
+                        </div>
+                    </div>
+                    <h4 class="fw-bold text-success mb-2">Başarılı!</h4>
+                    <p class="text-muted mb-3"><span class="fw-bold text-dark" id="aiCreatedCount">0</span> görev başarıyla oluşturuldu.</p>
+                    <div id="aiCreatedList" class="text-start mx-auto" style="max-width:400px;"></div>
+                </div>
+            </div>
+        </abp-modal-body>
+        <abp-modal-footer>
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" id="aiCloseBtn">Vazgeç</button>
+            <button type="button" class="btn btn-primary" id="aiNextBtn" onclick="aiWizardNext()">
+                <i class="fa fa-arrow-right me-1"></i>Analiz Et
+            </button>
+            <button type="button" class="btn btn-success" id="aiCreateBtn" style="display:none;" onclick="aiCreateTasks()">
+                <i class="fa fa-check me-1"></i>Görevleri Oluştur
+            </button>
+        </abp-modal-footer>
+    </abp-modal>
+</form>
+
+<script>
+    var aiParsedResult = null;
+    var currentStep = 1;
+
+    function aiWizardNext() {
+        if (currentStep === 1) {
+            var fileInput = document.getElementById('aiDocumentFile');
+            if (!fileInput.files || !fileInput.files[0]) {
+                abp.notify.warn('Lütfen bir PDF dosyası seçin.');
+                return;
+            }
+            goToStep(2);
+            uploadAndParse();
+        }
+    }
+
+    function goToStep(step) {
+        currentStep = step;
+        document.querySelectorAll('.ai-wizard-step').forEach(s => s.classList.remove('active'));
+        document.getElementById('step' + step).classList.add('active');
+
+        for (var i = 1; i <= 3; i++) {
+            var ind = document.getElementById('stepInd' + i);
+            ind.classList.remove('active', 'done');
+            if (i < step) ind.classList.add('done');
+            if (i === step) ind.classList.add('active');
+        }
+
+        document.getElementById('aiNextBtn').style.display = step === 1 ? '' : 'none';
+        document.getElementById('aiCreateBtn').style.display = step === 2 ? '' : 'none';
+        if (step === 3) {
+            document.getElementById('aiCloseBtn').textContent = 'Kapat';
+        }
+    }
+
+    function uploadAndParse() {
+        var fileInput = document.getElementById('aiDocumentFile');
+        var file = fileInput.files[0];
+        var projectId = document.getElementById('AiProjectId').value;
+
+        document.getElementById('aiLoadingState').style.display = '';
+        document.getElementById('aiResultsState').style.display = 'none';
+
+        var formData = new FormData();
+        formData.append('file', file);
+        formData.append('projectId', projectId);
+
+        $.ajax({
+            url: '/api/ai-task-generator/parse?projectId=' + projectId,
+            type: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            headers: { 'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val() },
+            success: function (result) {
+                aiParsedResult = result;
+                renderAiResults(result);
+            },
+            error: function (err) {
+                abp.notify.error(err.responseJSON?.error?.message || 'Dosya analiz edilirken hata olustu.');
+                goToStep(1);
+            }
+        });
+    }
+
+    function renderAiResults(result) {
+        document.getElementById('aiLoadingState').style.display = 'none';
+        document.getElementById('aiResultsState').style.display = '';
+
+        document.getElementById('aiFileName').textContent = result.fileName;
+        document.getElementById('aiTaskCount').textContent = result.totalSuggestedTasks;
+        document.getElementById('aiEstDuration').textContent = result.estimatedDurationDays + ' gün';
+        document.getElementById('aiConfidenceText').textContent = '%' + result.confidenceScore.toFixed(0);
+
+        var confBar = document.getElementById('aiConfidenceBar');
+        confBar.style.width = result.confidenceScore + '%';
+        confBar.className = 'confidence-fill ' + (result.confidenceScore > 70 ? 'bg-success' : result.confidenceScore > 40 ? 'bg-warning' : 'bg-danger');
+
+        // Sections
+        var sectList = document.getElementById('aiSectionsList');
+        sectList.innerHTML = '';
+        (result.detectedSections || []).forEach(function (s) {
+            sectList.innerHTML += '<span class="section-badge me-1 mb-1 d-inline-block">' + s + '</span>';
+        });
+
+        // Suggestions
+        var sugList = document.getElementById('aiSuggestionsList');
+        sugList.innerHTML = '';
+        (result.suggestions || []).forEach(function (s, idx) {
+            var priorityLabels = { 1: 'Düşük', 2: 'Orta', 3: 'Yüksek', 4: 'Kritik' };
+            var priorityColors = { 1: 'success', 2: 'primary', 3: 'warning', 4: 'danger' };
+            var dateStr = s.suggestedDueDate ? new Date(s.suggestedDueDate).toLocaleDateString('tr-TR') : '';
+
+            sugList.innerHTML += `
+                <div class="suggestion-card ${s.isSelected ? '' : 'deselected'}" id="sug-${idx}">
+                    <div class="d-flex align-items-start">
+                        <div class="form-check me-3 mt-1">
+                            <input class="form-check-input" type="checkbox" ${s.isSelected ? 'checked' : ''} 
+                                   onchange="toggleSuggestion(${idx}, this.checked)" id="chk-${idx}">
+                        </div>
+                        <div class="flex-grow-1">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <h6 class="fw-bold mb-1" style="font-size:0.9rem;">${s.title}</h6>
+                                <span class="badge bg-${priorityColors[s.suggestedPriority]} bg-opacity-15 text-${priorityColors[s.suggestedPriority]} rounded-pill" style="font-size:0.7rem;">
+                                    ${priorityLabels[s.suggestedPriority]}
+                                </span>
+                            </div>
+                            <div class="d-flex gap-3 mt-1">
+                                <small class="text-muted"><i class="fa fa-layer-group me-1"></i>${s.sourceSection}</small>
+                                ${dateStr ? '<small class="text-muted"><i class="fa fa-calendar me-1"></i>' + dateStr + '</small>' : ''}
+                            </div>
+                        </div>
+                    </div>
+                </div>`;
+        });
+    }
+
+    function toggleSuggestion(idx, checked) {
+        aiParsedResult.suggestions[idx].isSelected = checked;
+        var card = document.getElementById('sug-' + idx);
+        if (checked) { card.classList.remove('deselected'); } else { card.classList.add('deselected'); }
+        updateSelectedCount();
+    }
+
+    function toggleAllSuggestions(val) {
+        aiParsedResult.suggestions.forEach(function (s, idx) {
+            s.isSelected = val;
+            document.getElementById('chk-' + idx).checked = val;
+            var card = document.getElementById('sug-' + idx);
+            val ? card.classList.remove('deselected') : card.classList.add('deselected');
+        });
+        updateSelectedCount();
+    }
+
+    function updateSelectedCount() {
+        var count = aiParsedResult.suggestions.filter(s => s.isSelected).length;
+        document.getElementById('aiCreateBtn').innerHTML = '<i class="fa fa-check me-1"></i>' + count + ' Görevi Oluştur';
+    }
+
+    function aiCreateTasks() {
+        var selectedTasks = aiParsedResult.suggestions.filter(s => s.isSelected);
+        if (selectedTasks.length === 0) {
+            abp.notify.warn('Lütfen en az bir görev seçin.');
+            return;
+        }
+
+        goToStep(3);
+        document.getElementById('aiCreatingState').style.display = '';
+        document.getElementById('aiSuccessState').style.display = 'none';
+
+        var projectId = document.getElementById('AiProjectId').value;
+
+        $.ajax({
+            url: '/api/ai-task-generator/create-tasks',
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({ projectId: projectId, approvedTasks: selectedTasks }),
+            headers: { 'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val() },
+            success: function (createdCount) {
+                document.getElementById('aiCreatingState').style.display = 'none';
+                document.getElementById('aiSuccessState').style.display = '';
+                document.getElementById('aiCreatedCount').textContent = createdCount;
+
+                var list = document.getElementById('aiCreatedList');
+                list.innerHTML = '';
+                selectedTasks.forEach(function (t) {
+                    list.innerHTML += '<div class="d-flex align-items-center py-1"><i class="fa fa-check-circle text-success me-2"></i><span>' + t.title + '</span></div>';
+                });
+
+                document.getElementById('aiCloseBtn').textContent = 'Kapat & Görüntüle';
+                document.getElementById('aiCloseBtn').onclick = function () {
+                    location.reload();
+                };
+            },
+            error: function (err) {
+                abp.notify.error(err.responseJSON?.error?.message || 'Görevler oluşturulurken hata oluştu.');
+                goToStep(2);
+            }
+        });
+    }
+</script>

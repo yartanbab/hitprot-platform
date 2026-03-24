@@ -123,6 +123,20 @@ $(function () {
         createModal.open({ projectId: projectId });
     });
 
+    // --- 2b. AI Görev Oluşturucu ---
+    var aiTaskModal = new abp.ModalManager({ viewUrl: abp.appPath + 'Projects/AiTaskGeneratorModal' });
+
+    $('#btn-ai-task-generator').click(function (e) {
+        e.preventDefault();
+        aiTaskModal.open({ projectId: projectId });
+    });
+
+    aiTaskModal.onResult(function () {
+        abp.notify.success('AI görevleri başarıyla oluşturuldu!');
+        dataTable.ajax.reload();
+        setTimeout(function () { location.reload(); }, 1500);
+    });
+
     // --- 3. Modal sonuçları ---
     createModal.onResult(function () {
         abp.notify.success('Görev başarıyla eklendi!');
