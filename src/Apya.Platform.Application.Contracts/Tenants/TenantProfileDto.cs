@@ -13,6 +13,7 @@ public class TenantProfileDto : FullAuditedEntityDto<Guid>
     public string Address { get; set; } = string.Empty;
     public string CorporateEmail { get; set; } = string.Empty;
     public string LegalRepresentativeName { get; set; } = string.Empty;
+    public string LegalRepresentativePhone { get; set; } = string.Empty;
     public string OperationalContactName { get; set; } = string.Empty;
     public string OperationalContactPhone { get; set; } = string.Empty;
     public bool IsActive { get; set; }

@@ -7,6 +7,7 @@ using Volo.Abp.Application.Services;
 using Volo.Abp.Domain.Repositories;
 using Volo.Abp.Identity;
 using Apya.Platform.Tasks;
+using Microsoft.Extensions.Logging;
 using Apya.Platform.Projects;
 
 namespace Apya.Platform.Reports;
@@ -33,43 +34,58 @@ public class ReportAppService : ApplicationService, IReportAppService
 
     public async Task<DashboardReportDto> GetDashboardStatsAsync()
     {
-        var projects = await _projectRepository.GetListAsync();
-        var allTasks = await _taskRepository.GetListAsync();
-        var allLogs = await _timeLogRepository.GetListAsync();
-        var users = await _userRepository.GetListAsync();
-
-        var result = new DashboardReportDto();
-
-        // 1. Proje Analizi
-        foreach (var p in projects)
+        try
         {
-            var pTasks = allTasks.Where(x => x.ProjectId == p.Id).Select(x => x.Id).ToList();
-            var pSeconds = allLogs.Where(x => pTasks.Contains(x.TaskId)).Sum(x => x.SecondsSpent ?? 0);
-            
-            result.Projects.Add(new ProjectReportDto
+            // Root Admin (Host) ise tüm kiracıların verilerini görsün
+            using (CurrentTenant.Id == null ? DataFilter.Disable<Volo.Abp.MultiTenancy.IMultiTenant>() : null)
             {
-                ProjectName = p.Name,
-                TotalBudget = p.TotalBudget,
-                SpentBudget = (decimal)(pSeconds / 3600.0) * p.HourlyRate,
-                TotalSeconds = pSeconds
-            });
-        }
+                Logger.LogInformation("Dashboard istatistikleri hesaplanıyor... TenantId: {TenantId}", CurrentTenant.Id);
 
-        // 2. Personel Verimliliği
-        foreach (var u in users)
-        {
-            var uLogs = allLogs.Where(x => x.UserId == u.Id).ToList();
-            if (uLogs.Any())
-            {
-                result.Personnel.Add(new PersonnelEfficiencyDto
+                var projects = await _projectRepository.GetListAsync();
+                var allTasks = await _taskRepository.GetListAsync();
+                var allLogs = await _timeLogRepository.GetListAsync();
+                var users = await _userRepository.GetListAsync();
+
+                var result = new DashboardReportDto();
+
+                // 1. Proje Analizi
+                foreach (var p in projects)
                 {
-                    UserName = u.UserName,
-                    TotalSeconds = uLogs.Sum(x => x.SecondsSpent ?? 0),
-                    TaskCount = uLogs.Select(x => x.TaskId).Distinct().Count()
-                });
+                    var pTasks = allTasks.Where(x => x.ProjectId == p.Id).Select(x => x.Id).ToList();
+                    var pSeconds = allLogs.Where(x => pTasks.Contains(x.TaskId)).Sum(x => x.SecondsSpent ?? 0);
+                    
+                    result.Projects.Add(new ProjectReportDto
+                    {
+                        ProjectName = p.Name ?? "İsimsiz Proje",
+                        TotalBudget = p.TotalBudget,
+                        SpentBudget = (decimal)(pSeconds / 3600.0) * p.HourlyRate,
+                        TotalSeconds = pSeconds
+                    });
+                }
+
+                // 2. Personel Verimliliği
+                foreach (var u in users)
+                {
+                    var uLogs = allLogs.Where(x => x.UserId == u.Id).ToList();
+                    if (uLogs.Any())
+                    {
+                        result.Personnel.Add(new PersonnelEfficiencyDto
+                        {
+                            UserName = u.UserName ?? "Bilinmeyen Kullanıcı",
+                            TotalSeconds = uLogs.Sum(x => x.SecondsSpent ?? 0),
+                            TaskCount = uLogs.Select(x => x.TaskId).Distinct().Count()
+                        });
+                    }
+                }
+
+                Logger.LogInformation("Dashboard istatistikleri başarıyla hesaplandı. Proje: {ProjectCount}, Personel: {UserCount}", result.Projects.Count, result.Personnel.Count);
+                return result;
             }
         }
-
-        return result;
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Dashboard istatistikleri alınırken kritik hata oluştu!");
+            throw;
+        }
     }
 }

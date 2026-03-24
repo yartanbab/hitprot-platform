@@ -9,19 +9,19 @@ public class TenantProfile : FullAuditedAggregateRoot<Guid>
 
     public CompanyType CompanyType { get; set; }
 
-    public string TaxNumber { get; set; }
+    public string TaxNumber { get; set; } = string.Empty;
 
-    public string TaxOffice { get; set; }
+    public string TaxOffice { get; set; } = string.Empty;
 
-    public string Address { get; set; }
+    public string Address { get; set; } = string.Empty;
 
-    public string CorporateEmail { get; set; }
+    public string CorporateEmail { get; set; } = string.Empty;
 
-    public string LegalRepresentativeName { get; set; }
+    public string LegalRepresentativeName { get; set; } = string.Empty;
+    public string LegalRepresentativePhone { get; set; } = string.Empty;
 
-    public string OperationalContactName { get; set; }
-
-    public string OperationalContactPhone { get; set; }
+    public string OperationalContactName { get; set; } = string.Empty;
+    public string OperationalContactPhone { get; set; } = string.Empty;
 
     protected TenantProfile()
     {

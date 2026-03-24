@@ -34,6 +34,12 @@ public class CreateTenantExtendedDto
     [StringLength(128)]
     public string LegalRepresentativeName { get; set; } = string.Empty;
 
+    [StringLength(32)]
+    public string LegalRepresentativePhone { get; set; } = string.Empty;
+
     [StringLength(128)]
     public string OperationalContactName { get; set; } = string.Empty;
+
+    [StringLength(32)]
+    public string OperationalContactPhone { get; set; } = string.Empty;
 }

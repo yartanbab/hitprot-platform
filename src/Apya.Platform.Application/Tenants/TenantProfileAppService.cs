@@ -63,7 +63,9 @@ public class TenantProfileAppService : PlatformAppService, ITenantProfileAppServ
                 TaxNumber = profile?.TaxNumber,
                 Address = profile?.Address,
                 LegalRepresentativeName = profile?.LegalRepresentativeName,
+                LegalRepresentativePhone = profile?.LegalRepresentativePhone,
                 OperationalContactName = profile?.OperationalContactName,
+                OperationalContactPhone = profile?.OperationalContactPhone,
                 IsActive = true
             });
         }
@@ -90,10 +92,12 @@ public class TenantProfileAppService : PlatformAppService, ITenantProfileAppServ
             input.CorporateEmail
         );
 
-        profile.TaxOffice = input.TaxOffice;
-        profile.Address = input.Address;
-        profile.LegalRepresentativeName = input.LegalRepresentativeName;
-        profile.OperationalContactName = input.OperationalContactName;
+        profile.TaxOffice = input.TaxOffice ?? string.Empty;
+        profile.Address = input.Address ?? string.Empty;
+        profile.LegalRepresentativeName = input.LegalRepresentativeName ?? string.Empty;
+        profile.LegalRepresentativePhone = input.LegalRepresentativePhone ?? string.Empty;
+        profile.OperationalContactName = input.OperationalContactName ?? string.Empty;
+        profile.OperationalContactPhone = input.OperationalContactPhone ?? string.Empty;
 
         await _tenantProfileRepository.InsertAsync(profile);
 
@@ -106,7 +110,13 @@ public class TenantProfileAppService : PlatformAppService, ITenantProfileAppServ
 
         if (profile == null)
         {
-            throw new UserFriendlyException(L["ProfileNotFound", tenantId]);
+            var defaultTenant = await _tenantRepository.FindAsync(tenantId);
+            return new TenantProfileDto
+            {
+                TenantId = tenantId,
+                TenantName = defaultTenant?.Name ?? "",
+                CompanyType = CompanyType.Company
+            };
         }
 
         return ObjectMapper.Map<TenantProfile, TenantProfileDto>(profile);
@@ -119,19 +129,36 @@ public class TenantProfileAppService : PlatformAppService, ITenantProfileAppServ
 
         if (profile == null)
         {
-            throw new UserFriendlyException(L["ProfileNotFound", tenantId]);
+            var newProfile = await _tenantProfileManager.CreateProfileAsync(
+                tenantId,
+                input.CompanyType,
+                input.TaxNumber ?? string.Empty,
+                input.CorporateEmail ?? string.Empty
+            );
+
+            newProfile.TaxOffice = input.TaxOffice ?? string.Empty;
+            newProfile.Address = input.Address ?? string.Empty;
+            newProfile.LegalRepresentativeName = input.LegalRepresentativeName ?? string.Empty;
+            newProfile.LegalRepresentativePhone = input.LegalRepresentativePhone ?? string.Empty;
+            newProfile.OperationalContactName = input.OperationalContactName ?? string.Empty;
+            newProfile.OperationalContactPhone = input.OperationalContactPhone ?? string.Empty;
+
+            await _tenantProfileRepository.InsertAsync(newProfile);
+
+            return ObjectMapper.Map<TenantProfile, TenantProfileDto>(newProfile);
         }
 
         await _tenantProfileManager.CheckTaxNumberUniqueAsync(input.TaxNumber, profile.Id);
 
         profile.CompanyType = input.CompanyType;
-        profile.TaxNumber = input.TaxNumber;
-        profile.TaxOffice = input.TaxOffice;
-        profile.Address = input.Address;
-        profile.CorporateEmail = input.CorporateEmail;
-        profile.LegalRepresentativeName = input.LegalRepresentativeName;
-        profile.OperationalContactName = input.OperationalContactName;
-        profile.OperationalContactPhone = input.OperationalContactPhone;
+        profile.TaxNumber = input.TaxNumber ?? string.Empty;
+        profile.TaxOffice = input.TaxOffice ?? string.Empty;
+        profile.Address = input.Address ?? string.Empty;
+        profile.CorporateEmail = input.CorporateEmail ?? string.Empty;
+        profile.LegalRepresentativeName = input.LegalRepresentativeName ?? string.Empty;
+        profile.LegalRepresentativePhone = input.LegalRepresentativePhone ?? string.Empty;
+        profile.OperationalContactName = input.OperationalContactName ?? string.Empty;
+        profile.OperationalContactPhone = input.OperationalContactPhone ?? string.Empty;
 
         await _tenantProfileRepository.UpdateAsync(profile);
 

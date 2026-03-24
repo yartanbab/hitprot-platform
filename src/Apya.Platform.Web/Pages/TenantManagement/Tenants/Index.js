@@ -121,12 +121,22 @@ $(function () {
             {
                 title: 'Yasal Yetkili',
                 data: "legalRepresentativeName",
-                render: function(data) { return data || '-'; }
+                render: function(data, type, row) { 
+                    var name = data || '-';
+                    var phone = row.legalRepresentativePhone;
+                    if (phone) return name + ' <br/><small><a href="tel:' + phone + '"><i class="fa fa-phone"></i> ' + phone + '</a></small>';
+                    return name;
+                }
             },
             {
                 title: 'İletişim Kişisi',
                 data: "operationalContactName",
-                render: function(data) { return data || '-'; }
+                render: function(data, type, row) { 
+                    var name = data || '-';
+                    var phone = row.operationalContactPhone;
+                    if (phone) return name + ' <br/><small><a href="tel:' + phone + '"><i class="fa fa-phone"></i> ' + phone + '</a></small>';
+                    return name;
+                }
             }
         ]
     }));
