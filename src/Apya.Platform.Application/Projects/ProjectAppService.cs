@@ -70,6 +70,12 @@ public class ProjectAppService :
         project.HourlyRate = input.HourlyRate;
         project.Currency = input.Currency;
         
+        // YENİ ALANLAR:
+        project.Purpose = input.Purpose;
+        project.Duration = input.Duration;
+        project.TargetAudience = input.TargetAudience;
+        project.Activities = input.Activities;
+        
         return ObjectMapper.Map<Project, ProjectDto>(project);
     }
 

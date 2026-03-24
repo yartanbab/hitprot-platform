@@ -13,8 +13,11 @@ public class CreateProjectDto
     [MaxLength(64)]
     public string Code { get; set; } = string.Empty;
 
-    [MaxLength(1024)]
     public string? Description { get; set; }
+    public string? Purpose { get; set; }
+    public string? Duration { get; set; }
+    public string? TargetAudience { get; set; }
+    public string? Activities { get; set; }
 
     public Guid? TenantId { get; set; }
 

@@ -14,6 +14,10 @@ public class ProjectDto : AuditedEntityDto<Guid>
     public string Code { get; set; }
 
     public string Description { get; set; } = string.Empty;
+    public string? Purpose { get; set; }
+    public string? Duration { get; set; }
+    public string? TargetAudience { get; set; }
+    public string? Activities { get; set; }
 
     public DateTime? StartDate { get; set; }
 
