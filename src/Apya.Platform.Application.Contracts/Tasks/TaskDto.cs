@@ -19,9 +19,10 @@ namespace Apya.Platform.Tasks
         public Guid? AssigneeId { get; set; }
         public string? AssigneeName { get; set; }
         public Guid? ParentTaskId { get; set; }
+        public string? ParentTaskTitle { get; set; }
 
-        // KİLİT NOKTA: Derleyicinin aradığı ve görevin projeye ait olduğunu belirten alan!
         public Guid? ProjectId { get; set; }
+        public string? ProjectName { get; set; }
 
         public bool IsPrivate { get; set; }
 

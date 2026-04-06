@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.Extensions.Logging;
 using Volo.Abp.AspNetCore.Mvc.UI.RazorPages;
 
 namespace Apya.Platform.Web.Pages.Tasks
@@ -48,10 +49,11 @@ namespace Apya.Platform.Web.Pages.Tasks
                 DueDate = taskDto.DueDate,
                 Priority = taskDto.Priority,
                 Status = taskDto.Status,
-                AssigneeId = taskDto.AssigneeId
+                AssigneeId = taskDto.AssigneeId,
+                ProjectId = taskDto.ProjectId ?? Guid.Empty,
+                IsPrivate = taskDto.IsPrivate
             };
 
-            // Eğer servis null dönerse diye önlem alıyoruz
             SubTasks = taskDto.SubTasks?.OrderByDescending(x => x.CreationTime).ToList() ?? new List<TaskDto>();
             Comments = taskDto.Comments?.OrderByDescending(x => x.CreationTime).ToList() ?? new List<TaskCommentDto>();
             Attachments = taskDto.Attachments?.OrderByDescending(x => x.CreationTime).ToList() ?? new List<TaskAttachmentDto>();
@@ -64,8 +66,34 @@ namespace Apya.Platform.Web.Pages.Tasks
 
         public async Task<IActionResult> OnPostAsync()
         {
-            await _taskAppService.UpdateAsync(Id, Task);
-            return NoContent();
+            if (!ModelState.IsValid)
+            {
+                var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
+                Logger.LogWarning("AutoSave Validation Error: {Errors}", string.Join(", ", errors));
+                return BadRequest("Doğrulama Hatası: " + string.Join(", ", errors));
+            }
+
+            try 
+            {
+                // DB CONSTRAINT FIX: Description alanı veritabanında "Not Null" ise hata verir.
+                // Eğer formdan null geldiyse boş stringe çevirerek veritabanını tatmin edelim.
+                if (Task.Description == null) Task.Description = string.Empty;
+
+                // Task.ProjectId eğer formdan 0'lanmış gelirse, veritabanındaki değeri korumaya çalışalım
+                if (!Task.ProjectId.HasValue || Task.ProjectId == Guid.Empty)
+                {
+                    var current = await _taskAppService.GetAsync(Id);
+                    Task.ProjectId = current.ProjectId;
+                }
+
+                await _taskAppService.UpdateAsync(Id, Task);
+                return NoContent();
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError(ex, "AutoSave System Error for Task {TaskId}", Id);
+                return BadRequest("Sistem Hatası: " + ex.Message);
+            }
         }
 
         public async Task<IActionResult> OnPostAddSubTaskAsync(Guid parentId, string subTaskTitle)
@@ -96,10 +124,24 @@ namespace Apya.Platform.Web.Pages.Tasks
         {
             if (file == null || file.Length == 0) return NoContent();
 
+            // BUG-004: Güvenlik — Yalnızca izin verilen dosya uzantıları kabul edilir
+            var allowedExtensions = new[] { ".pdf", ".docx", ".doc", ".xlsx", ".xls", ".pptx", ".ppt", ".png", ".jpg", ".jpeg", ".gif", ".txt", ".csv", ".zip", ".rar" };
+            var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
+            if (!allowedExtensions.Contains(ext))
+            {
+                throw new Volo.Abp.BusinessException(PlatformDomainErrorCodes.FileUnsupportedExtension);
+            }
+
+            // Dosya boyutu kontrolü (maks 25 MB)
+            if (file.Length > 25 * 1024 * 1024)
+            {
+                throw new Volo.Abp.BusinessException(PlatformDomainErrorCodes.FileSizeExceeded);
+            }
+
             var uploadsFolder = Path.Combine(_environment.WebRootPath, "uploads");
             if (!Directory.Exists(uploadsFolder)) Directory.CreateDirectory(uploadsFolder);
 
-            var storedFileName = Guid.NewGuid().ToString() + Path.GetExtension(file.FileName);
+            var storedFileName = Guid.NewGuid().ToString() + ext; // ext zaten doğrulanmış
             var filePath = Path.Combine(uploadsFolder, storedFileName);
 
             using (var stream = new FileStream(filePath, FileMode.Create))

@@ -20,14 +20,7 @@ namespace Apya.Platform
             // Hibe Eşleştirmeleri
             CreateMap<Grant, GrantDto>();
 
-            // Eski Görev (ProjectTask) Eşleştirmeleri
-            CreateMap<CreateTaskDto, ProjectTask>();
-            CreateMap<ProjectTask, ProjectTaskDto>();
-
-            // BURASI KARIŞIYORDU - DÜZELTİLDİ:
-            // ProjectTask -> Eski TaskDto
-            CreateMap<ProjectTask, Apya.Platform.Projects.Dtos.TaskDto>();
-            CreateMap<CreateUpdateProjectTaskDto, ProjectTask>();
+            // (BUG-001) Eski ProjectTask eşlemeleri kaldırıldı — Artık yalnızca Tasks.TaskItem kullanılıyor.
 
 
             // --- YENİ GÖREV (TASKS) MODÜLÜ ---
@@ -35,7 +28,8 @@ namespace Apya.Platform
             // 1. TaskItem -> Yeni TaskDto
             // Başına Apya.Platform.Tasks yazarak yenisini kastettiğimizi belirttik.
             CreateMap<Apya.Platform.Tasks.TaskItem, Apya.Platform.Tasks.TaskDto>()
-                .ForMember(dest => dest.AssigneeName, opt => opt.MapFrom(src => src.Assignee.UserName));
+                .ForMember(dest => dest.AssigneeName, opt => opt.MapFrom(src => src.Assignee.UserName))
+                .ForMember(dest => dest.ParentTaskTitle, opt => opt.MapFrom(src => src.ParentTask != null ? src.ParentTask.Title : null));
 
             // 2. CreateUpdateTaskDto -> TaskItem
             CreateMap<Apya.Platform.Tasks.CreateUpdateTaskDto, Apya.Platform.Tasks.TaskItem>();

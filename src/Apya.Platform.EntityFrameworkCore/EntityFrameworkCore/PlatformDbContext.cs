@@ -34,12 +34,8 @@ namespace Apya.Platform.EntityFrameworkCore
         /* --- PROJE MODÜLÜ TABLOLARI --- */
         public DbSet<Project> Projects { get; set; }
         public DbSet<ProjectAnalysis> ProjectAnalyses { get; set; }
-        public DbSet<ProjectTask> ProjectTasks { get; set; }
+        // (BUG-001) ProjectTask, ProjectSubTasks, ProjectTaskComments kaldırıldı.
         public DbSet<Grant> Grants { get; set; }
-
-        // YENİ: ProjectTask'ın Alt Görevleri ve Yorumları (Açık Adresleriyle!)
-        public DbSet<Apya.Platform.Projects.SubTask> ProjectSubTasks { get; set; }
-        public DbSet<Apya.Platform.Projects.TaskComment> ProjectTaskComments { get; set; }
 
 
         /* --- ESKİ/DİĞER TASK MODÜLÜ TABLOLARI --- */
@@ -143,31 +139,7 @@ namespace Apya.Platform.EntityFrameworkCore
                 b.Property(x => x.MaxAmount).IsRequired();
             });
 
-            builder.Entity<ProjectTask>(b =>
-            {
-                b.ToTable(PlatformConsts.DbTablePrefix + "ProjectTasks", PlatformConsts.DbSchema);
-                b.ConfigureByConvention();
-                b.Property(x => x.Title).IsRequired().HasMaxLength(256);
-                b.HasOne<Project>().WithMany().HasForeignKey(x => x.ProjectId).IsRequired();
-            });
-
-            // YENİ: Project SubTask Yapılandırması
-            builder.Entity<Apya.Platform.Projects.SubTask>(b =>
-            {
-                // Tablo adını ProjectSubTasks yaptık ki eskilerle çakışmasın
-                b.ToTable(PlatformConsts.DbTablePrefix + "ProjectSubTasks", PlatformConsts.DbSchema);
-                b.ConfigureByConvention();
-                b.HasOne<Apya.Platform.Projects.ProjectTask>().WithMany(x => x.SubTasks).HasForeignKey(x => x.ProjectTaskId).IsRequired();
-            });
-
-            // YENİ: Project Task Comment Yapılandırması
-            builder.Entity<Apya.Platform.Projects.TaskComment>(b =>
-            {
-                // Tablo adını ProjectTaskComments yaptık
-                b.ToTable(PlatformConsts.DbTablePrefix + "ProjectTaskComments", PlatformConsts.DbSchema);
-                b.ConfigureByConvention();
-                b.HasOne<Apya.Platform.Projects.ProjectTask>().WithMany(x => x.Comments).HasForeignKey(x => x.ProjectTaskId).IsRequired();
-            });
+            // (BUG-001) ProjectTask, SubTask, ProjectTaskComment konfigürasyonları kaldırıldı.
 
             builder.Entity<ProjectAttachment>(b =>
             {
@@ -203,18 +175,25 @@ namespace Apya.Platform.EntityFrameworkCore
                  .WithOne()
                  .HasForeignKey(a => a.TaskId)
                  .IsRequired();
+
+                // REV-004: Performans indeksleri
+                b.HasIndex(x => x.ProjectId);
+                b.HasIndex(x => x.ParentTaskId);
+                b.HasIndex(x => new { x.Status, x.AssigneeId });
             });
 
             builder.Entity<Apya.Platform.Tasks.TaskComment>(b =>
             {
                 b.ToTable("AppTaskComments");
                 b.ConfigureByConvention();
+                b.HasIndex(x => x.TaskId); // REV-004
             });
 
             builder.Entity<TaskAttachment>(b =>
             {
                 b.ToTable("AppTaskAttachments");
                 b.ConfigureByConvention();
+                b.HasIndex(x => x.TaskId); // REV-004
             });
 
             builder.Entity<TaskDependency>(b =>

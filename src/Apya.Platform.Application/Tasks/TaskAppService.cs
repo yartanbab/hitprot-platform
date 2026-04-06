@@ -76,12 +76,12 @@ namespace Apya.Platform.Tasks
             {
                 if (isImpersonated)
                 {
-                    throw new Volo.Abp.Authorization.AbpAuthorizationException("Bu gizli görevi destek yetkisiyle (Impersonation) görüntüleyemezsiniz.");
+                    throw new Volo.Abp.BusinessException(PlatformDomainErrorCodes.TaskViewImpersonationDenied);
                 }
                 
                 if (!canManageTeam && task.CreatorId != CurrentUser.Id && task.AssigneeId != CurrentUser.Id)
                 {
-                    throw new Volo.Abp.Authorization.AbpAuthorizationException("Bu gizli görevi görüntüleme yetkiniz yok. Görevi yalnızca oluşturanlar ve atananlar görebilir.");
+                    throw new Volo.Abp.BusinessException(PlatformDomainErrorCodes.TaskViewPrivateDenied);
                 }
             }
 
@@ -124,26 +124,31 @@ namespace Apya.Platform.Tasks
             return taskDto;
         }
 
-        // --- 2. CREATE (Ekleme) ---
+        // --- 2. CREATE (Ekleme) - REV-001: Rich Domain Model ---
         public override async Task<TaskDto> CreateAsync(CreateUpdateTaskDto input)
         {
-            var newTask = new TaskItem
+            var newTask = new TaskItem(
+                GuidGenerator.Create(),
+                input.Title,
+                projectId: input.ProjectId,
+                parentTaskId: input.ParentTaskId,
+                description: input.Description,
+                startDate: input.StartDate,
+                dueDate: input.DueDate,
+                priority: input.Priority,
+                assigneeId: input.AssigneeId,
+                isPrivate: input.IsPrivate
+            );
+
+            // Durum varsayılandan farklıysa set et
+            if (input.Status != Apya.Platform.Tasks.TaskStatus.Todo)
             {
-                Title = input.Title,
-                Description = input.Description,
-                StartDate = input.StartDate,
-                DueDate = input.DueDate,
-                Status = input.Status,
-                Priority = input.Priority,
-                AssigneeId = input.AssigneeId,
-                ParentTaskId = input.ParentTaskId,
-                ProjectId = input.ProjectId, // KİLİT NOKTA: Proje ID'sini veritabanına kaydediyoruz!
-                IsPrivate = input.IsPrivate 
-            };
+                newTask.ChangeStatus(input.Status, Clock.Now);
+            }
 
             await Repository.InsertAsync(newTask);
 
-            // --- BAĞIMLILIKLARIN KAYDEDİLMESİ (APYA-30) ---
+            // --- BAĞIMLILIKLARIN KAYDEDILMESI (APYA-30) ---
             if (input.PredecessorIds != null && input.PredecessorIds.Any())
             {
                 foreach (var predId in input.PredecessorIds)
@@ -152,13 +157,9 @@ namespace Apya.Platform.Tasks
                 }
             }
 
-            string? assigneeName = null;
+            // BİLDİRİM: Görev atandı etkinliği yayınla
             if (input.AssigneeId.HasValue)
             {
-                var user = await _userRepository.FindAsync(input.AssigneeId.Value);
-                assigneeName = user?.UserName;
-
-                // BİLDİRİM: Görev atandı etkinliği yayınla
                 await _localEventBus.PublishAsync(new TaskAssignedEto
                 {
                     TaskId         = newTask.Id,
@@ -169,53 +170,51 @@ namespace Apya.Platform.Tasks
                 });
             }
 
-            return new TaskDto
+            // REV-002: Manuel DTO yerine AutoMapper
+            var taskDto = ObjectMapper.Map<TaskItem, TaskDto>(newTask);
+            taskDto.PredecessorIds = input.PredecessorIds ?? new();
+
+            if (input.AssigneeId.HasValue)
             {
-                Id = newTask.Id,
-                Title = newTask.Title,
-                Description = newTask.Description,
-                StartDate = newTask.StartDate,
-                DueDate = newTask.DueDate,
-                Status = newTask.Status,
-                Priority = newTask.Priority,
-                AssigneeId = newTask.AssigneeId,
-                AssigneeName = assigneeName,
-                ParentTaskId = newTask.ParentTaskId,
-                ProjectId = newTask.ProjectId,
-                PredecessorIds = input.PredecessorIds ?? new()
-            };
+                var user = await _userRepository.FindAsync(input.AssigneeId.Value);
+                taskDto.AssigneeName = user?.UserName;
+            }
+
+            return taskDto;
         }
 
-        // --- 3. UPDATE (Güncelleme) ---
+        // --- 3. UPDATE (Güncelleme) - REV-001: Rich Domain Model ---
         public override async Task<TaskDto> UpdateAsync(Guid id, CreateUpdateTaskDto input)
         {
             await CheckUpdatePolicyAsync();
 
             var task = await Repository.GetAsync(id);
-            var previousAssigneeId = task.AssigneeId;
 
-            // Özel Yetki Kuralı: Görevi sadece oluşturan veya atanan kişi (ya da projelere yönetim yetkisi olan) güncelleyebilir.
+            // Özel Yetki Kuralı
             if (task.CreatorId != CurrentUser.Id && task.AssigneeId != CurrentUser.Id)
             {
                 if (!await AuthorizationService.IsGrantedAsync(PlatformPermissions.Projects.ManageTeam))
                 {
-                    throw new Volo.Abp.Authorization.AbpAuthorizationException("Bu görevi güncellemek için yetkiniz yok. Sadece görevi oluşturan veya atanan kişi güncelleyebilir.");
+                    throw new Volo.Abp.BusinessException(PlatformDomainErrorCodes.TaskUpdateDenied);
                 }
             }
 
-            task.Title = input.Title;
-            task.Description = input.Description;
-            task.StartDate = input.StartDate;
-            task.DueDate = input.DueDate;
-            task.Priority = input.Priority;
-            task.Status = input.Status;
-            task.AssigneeId = input.AssigneeId;
-            task.IsPrivate = input.IsPrivate;
-            // Not: Proje ID genelde güncellenmez, görev bir projeye aittir. O yüzden eklemiyoruz.
+            // Rich Domain: tüm alanları tek metotta güncelle
+            var previousAssigneeId = task.Update(
+                input.Title,
+                input.Description,
+                input.StartDate,
+                input.DueDate,
+                input.Priority,
+                input.Status,
+                input.AssigneeId,
+                input.IsPrivate,
+                Clock.Now
+            );
 
             await Repository.UpdateAsync(task);
 
-            // --- BAĞIMLILIKLARIN GÜNCELLENMESİ (APYA-30) ---
+            // --- BAĞIMLILIKLARIN GÜNCELLENMESI (APYA-30) ---
             await _dependencyRepository.DeleteDirectAsync(x => x.TaskId == id);
             if (input.PredecessorIds != null && input.PredecessorIds.Any())
             {
@@ -225,39 +224,30 @@ namespace Apya.Platform.Tasks
                 }
             }
 
-            string? assigneeName = null;
+            // BİLDİRİM: Atanan kişi değiştiyse event yayınla
+            if (task.AssigneeId.HasValue && task.AssigneeId != previousAssigneeId)
+            {
+                await _localEventBus.PublishAsync(new TaskAssignedEto
+                {
+                    TaskId         = task.Id,
+                    TaskTitle      = task.Title,
+                    AssigneeId     = task.AssigneeId.Value,
+                    ModifierUserId = CurrentUser.Id,
+                    AssignerName   = CurrentUser.UserName ?? "Sistem"
+                });
+            }
+
+            // REV-002: Manuel DTO yerine AutoMapper
+            var taskDto = ObjectMapper.Map<TaskItem, TaskDto>(task);
+            taskDto.PredecessorIds = input.PredecessorIds ?? new();
+
             if (task.AssigneeId.HasValue)
             {
                 var user = await _userRepository.FindAsync(task.AssigneeId.Value);
-                assigneeName = user?.UserName;
-
-                // BİLDİRİM: Atanan kişi değiştiyse event yayınla
-                if (task.AssigneeId != previousAssigneeId)
-                {
-                    await _localEventBus.PublishAsync(new TaskAssignedEto
-                    {
-                        TaskId         = task.Id,
-                        TaskTitle      = task.Title,
-                        AssigneeId     = task.AssigneeId.Value,
-                        ModifierUserId = CurrentUser.Id,
-                        AssignerName   = CurrentUser.UserName ?? "Sistem"
-                    });
-                }
+                taskDto.AssigneeName = user?.UserName;
             }
 
-            return new TaskDto
-            {
-                Id = task.Id,
-                Title = task.Title,
-                Description = task.Description,
-                StartDate = task.StartDate,
-                DueDate = task.DueDate,
-                Status = task.Status,
-                Priority = task.Priority,
-                AssigneeId = task.AssigneeId,
-                AssigneeName = assigneeName,
-                PredecessorIds = input.PredecessorIds ?? new()
-            };
+            return taskDto;
         }
 
         // --- 4. DELETE (Silme) ---
@@ -272,7 +262,7 @@ namespace Apya.Platform.Tasks
             {
                 if (!await AuthorizationService.IsGrantedAsync(PlatformPermissions.Projects.ManageTeam))
                 {
-                    throw new Volo.Abp.Authorization.AbpAuthorizationException("Bu görevi silmek için yetkiniz yok. Sadece görevi oluşturan veya atanan kişi silebilir.");
+                    throw new Volo.Abp.BusinessException(PlatformDomainErrorCodes.TaskDeleteDenied);
                 }
             }
 
@@ -301,7 +291,11 @@ namespace Apya.Platform.Tasks
             );
 
             return query
-                .WhereIf(input.ProjectId.HasValue, t => t.ProjectId == input.ProjectId) // Görevleri Projeye göre izole et!
+                .WhereIf(input.ProjectId.HasValue, t => t.ProjectId == input.ProjectId)
+                .WhereIf(input.AssigneeId.HasValue, t => t.AssigneeId == input.AssigneeId)
+                .WhereIf(input.Statuses != null && input.Statuses.Any(), t => input.Statuses!.Contains(t.Status))
+                .WhereIf(input.MinDueDate.HasValue, t => t.DueDate >= input.MinDueDate.Value)
+                .WhereIf(input.MaxDueDate.HasValue, t => t.DueDate <= input.MaxDueDate.Value)
                 .Include(t => t.Assignee)
                 .Include(t => t.ParentTask);
         }
@@ -405,16 +399,12 @@ namespace Apya.Platform.Tasks
             }).ToList();
         }
 
-        public async Task UpdateStatusAsync(Guid id, TaskStatus status)
+        public async Task UpdateStatusAsync(Guid id, Apya.Platform.Tasks.TaskStatus status)
         {
             var task = await Repository.GetAsync(id);
             var oldStatus = task.Status;
-            task.Status = status;
-
-            if (status == TaskStatus.Done)
-            {
-                task.CompletedDate = Clock.Now;
-            }
+            // REV-001: Rich Domain Model kullan
+            task.ChangeStatus(status, Clock.Now);
 
             await Repository.UpdateAsync(task);
 

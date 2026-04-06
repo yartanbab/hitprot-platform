@@ -76,17 +76,19 @@ public class AiTaskGeneratorAppService : ApplicationService, IAiTaskGeneratorApp
 
         foreach (var suggestion in approvedTasks)
         {
-            var taskItem = new TaskItem
-            {
-                ProjectId = input.ProjectId,
-                TenantId = project.TenantId,
-                Title = suggestion.Title,
-                Description = suggestion.Description,
-                Priority = (TaskPriority)suggestion.SuggestedPriority,
-                Status = Tasks.TaskStatus.Todo,
-                StartDate = DateTime.Now,
-                DueDate = suggestion.SuggestedDueDate
-            };
+            var taskItem = new TaskItem(
+                id: GuidGenerator.Create(),
+                title: suggestion.Title,
+                projectId: input.ProjectId,
+                parentTaskId: null,
+                description: suggestion.Description,
+                startDate: DateTime.Now,
+                dueDate: suggestion.SuggestedDueDate,
+                priority: (TaskPriority)suggestion.SuggestedPriority
+            );
+            
+            // IMultiTenant interface setter
+            taskItem.TenantId = project.TenantId;
 
             await _taskRepository.InsertAsync(taskItem, autoSave: true);
             createdCount++;

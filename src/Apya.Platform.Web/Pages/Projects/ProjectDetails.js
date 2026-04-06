@@ -73,7 +73,16 @@ $(function () {
                         ]
                     }
                 },
-                { title: 'Başlık', data: 'title' },
+                {
+                    title: 'Başlık', 
+                    data: 'title',
+                    render: function (data, type, row) {
+                        if (row.parentTaskTitle) {
+                            return '<div class="d-flex flex-column"><span class="fw-bold">' + data + '</span><span class="text-muted small"><i class="fa fa-level-up-alt fa-rotate-90 me-1"></i> ' + row.parentTaskTitle + '</span></div>';
+                        }
+                        return '<span class="fw-bold">' + data + '</span>';
+                    }
+                },
                 {
                     title: 'Durum',
                     data: 'status',
@@ -94,11 +103,12 @@ $(function () {
                     data: 'priority',
                     render: function (data) {
                         var map = {
-                            0: { color: 'success', text: 'Düşük' },
-                            1: { color: 'warning text-dark', text: 'Normal' },
-                            2: { color: 'danger', text: 'Yüksek' }
+                            1: { color: 'success', text: 'Düşük' },
+                            2: { color: 'warning text-dark', text: 'Orta' },
+                            3: { color: 'danger', text: 'Yüksek' },
+                            4: { color: 'dark', text: 'Kritik' }
                         };
-                        var p = map[data] || map[0];
+                        var p = map[data] || { color: 'secondary', text: 'Bilinmiyor' };
                         var baseColor = p.color.split(' ')[0];
                         return '<span class="badge border border-' + baseColor + ' text-' + baseColor + ' rounded-pill bg-white px-2 py-1"><i class="fa fa-circle text-' + baseColor + ' me-1" style="font-size:0.6rem;"></i>' + p.text + '</span>';
                     }
@@ -111,7 +121,18 @@ $(function () {
                 {
                     title: 'Bitiş Tarihi',
                     data: 'dueDate',
-                    render: function (data) { return data ? moment(data).format('L') : ''; }
+                    render: function (data, type, row) {
+                        if (!data) return '';
+                        if (row.status !== 4 && row.status !== 0) {
+                            var dueDiff = moment(data).diff(moment(), 'hours');
+                            if (dueDiff < 0) {
+                                return '<span class="badge bg-danger heartbeat-animation px-2 py-1"><i class="fa fa-exclamation-circle me-1"></i>' + moment(data).format('DD MMM YYYY') + '</span>';
+                            } else if (dueDiff <= 48) {
+                                return '<span class="badge bg-warning text-dark px-2 py-1"><i class="fa fa-clock me-1"></i>' + moment(data).format('DD MMM YYYY') + '</span>';
+                            }
+                        }
+                        return '<span class="text-muted">' + moment(data).format('DD MMM YYYY') + '</span>';
+                    }
                 }
             ]
         })
@@ -145,8 +166,18 @@ $(function () {
     });
 
     editModal.onResult(function () {
-        dataTable.ajax.reload();
-        setTimeout(function () { location.reload(); }, 1500);
+        dataTable.ajax.reload(null, false);
+        if ($('#board-tab').hasClass('border-primary')) {
+            loadKanban();
+        }
+    });
+
+    // Otomatik kayıt event'ini dinle:
+    abp.event.on('app.task.updated', function () {
+        dataTable.ajax.reload(null, false);
+        if ($('#board-tab').hasClass('border-primary')) {
+            loadKanban();
+        }
     });
 
     // --- 4. Projeyi Sil (Danger Zone) ---
@@ -174,7 +205,7 @@ $(function () {
             if (result.isConfirmed) {
                 apya.platform.application.projects.project.delete(pId).then(function () {
                     abp.notify.success('Proje ve bağlı tüm veriler başarıyla silindi.');
-                    setTimeout(function () { window.location.href = '/Projects'; }, 1500);
+                    setTimeout(function () { window.location.href = '/'; }, 1500);
                 });
             }
         });
@@ -201,10 +232,30 @@ $(function () {
                 var statusId = task.status;
                 var priorityId = task.priority;
                 var assigneeHtml = task.assigneeName ? '<div class="small fw-bold text-muted mt-2"><i class="fa fa-user me-1"></i>' + task.assigneeName + '</div>' : '';
-                var dueHtml = task.dueDate ? '<div class="small text-danger mt-1"><i class="fa fa-clock me-1"></i>' + moment(task.dueDate).format("DD MMM") + '</div>' : '';
                 
+                var dueHtml = '';
+                var cardBorder = '';
+                if (task.dueDate) {
+                    if (statusId !== 4 && statusId !== 0) { // 4: Tamamlandı, 0: İptal
+                        var dueDiff = moment(task.dueDate).diff(moment(), 'hours');
+                        if (dueDiff < 0) {
+                            cardBorder = 'border-danger border-2 bg-light bg-opacity-50';
+                            dueHtml = '<div class="small text-white bg-danger mt-2 px-2 py-1 rounded fw-bold text-center heartbeat-animation"><i class="fa fa-exclamation-circle me-1"></i>Süresi Geçti (' + moment(task.dueDate).format("DD MMM") + ')</div>';
+                        } else if (dueDiff <= 48) {
+                            cardBorder = 'border-warning border-2';
+                            dueHtml = '<div class="small text-dark bg-warning mt-2 px-2 py-1 rounded fw-bold text-center"><i class="fa fa-clock me-1"></i>Yaklaşıyor (' + moment(task.dueDate).format("DD MMM") + ')</div>';
+                        } else {
+                            dueHtml = '<div class="small text-muted mt-2 px-1"><i class="fa fa-clock me-1"></i>' + moment(task.dueDate).format("DD MMM") + '</div>';
+                        }
+                    } else {
+                        dueHtml = '<div class="small text-success mt-2 px-1"><i class="fa fa-check-circle me-1"></i>' + moment(task.dueDate).format("DD MMM") + '</div>';
+                    }
+                }
+
+                var parentHtml = task.parentTaskTitle ? '<div class="d-flex align-items-center mb-1 text-primary small"><i class="fa fa-level-up-alt fa-rotate-90 me-1"></i> ' + task.parentTaskTitle + '</div>' : '';
                 var cardHtml = `
-                    <div class="kanban-card" data-id="${task.id}" data-priority="${priorityId}">
+                    <div class="kanban-card shadow-sm ${cardBorder}" data-id="${task.id}" data-priority="${priorityId}">
+                        ${parentHtml}
                         <div class="fw-bold mb-1 text-dark">${task.title}</div>
                         ${assigneeHtml}
                         ${dueHtml}

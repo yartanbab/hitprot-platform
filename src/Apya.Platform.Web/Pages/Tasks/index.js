@@ -69,7 +69,16 @@ $(function () {
                     ]
                 }
             },
-            { title: 'Başlık', data: 'title' },
+            {
+                title: 'Başlık', 
+                data: 'title',
+                render: function(data, type, row) {
+                    if (row.parentTaskTitle) {
+                        return '<div class="d-flex flex-column"><span class="fw-bold">' + data + '</span><span class="text-muted small"><i class="fa fa-level-up-alt fa-rotate-90 me-1"></i> ' + row.parentTaskTitle + '</span></div>';
+                    }
+                    return '<span class="fw-bold">' + data + '</span>';
+                }
+            },
             {
                 title: 'Durum',
                 data: 'status',
@@ -100,7 +109,18 @@ $(function () {
             {
                 title: 'Bitiş Tarihi',
                 data: 'dueDate',
-                render: function (data) { return data ? moment(data).format('L') : ''; }
+                render: function (data, type, row) {
+                    if (!data) return '';
+                    if (row.status !== 4 && row.status !== 0) {
+                        var dueDiff = moment(data).diff(moment(), 'hours');
+                        if (dueDiff < 0) {
+                            return '<span class="badge bg-danger heartbeat-animation px-2 py-1"><i class="fa fa-exclamation-circle me-1"></i>' + moment(data).format('DD MMM YYYY') + '</span>';
+                        } else if (dueDiff <= 48) {
+                            return '<span class="badge bg-warning text-dark px-2 py-1"><i class="fa fa-clock me-1"></i>' + moment(data).format('DD MMM YYYY') + '</span>';
+                        }
+                    }
+                    return '<span class="text-muted">' + moment(data).format('DD MMM YYYY') + '</span>';
+                }
             }
         ]
     }));
@@ -236,22 +256,44 @@ $(function () {
                 ? `<button class="btn btn-sm btn-danger btn-stop-timer p-1 px-2" data-id="${task.id}"><i class="fa fa-pause fa-beat"></i></button>`
                 : `<button class="btn btn-sm btn-outline-success btn-start-timer p-1 px-2" data-id="${task.id}"><i class="fa fa-play"></i></button>`;
 
+            var dueHtml = '';
+            var cardBorder = '';
+            if (task.dueDate) {
+                if (task.status !== 4 && task.status !== 0) { // 4: Tamamlandı, 0: İptal
+                    var dueDiff = moment(task.dueDate).diff(moment(), 'hours');
+                    if (dueDiff < 0) {
+                        cardBorder = 'border-danger border-2 bg-light bg-opacity-50';
+                        dueHtml = '<div class="small text-white bg-danger mt-2 px-2 py-1 rounded fw-bold text-center heartbeat-animation w-100"><i class="fa fa-exclamation-circle me-1"></i>Süresi Geçti</div>';
+                    } else if (dueDiff <= 48) {
+                        cardBorder = 'border-warning border-2';
+                        dueHtml = '<div class="small text-dark bg-warning mt-2 px-2 py-1 rounded fw-bold text-center w-100"><i class="fa fa-clock me-1"></i>Yaklaşıyor</div>';
+                    } else {
+                        dueHtml = '<div class="small text-danger fw-bold"><i class="fa fa-calendar-alt me-1"></i> ' + moment(task.dueDate).format('DD MMM') + '</div>';
+                    }
+                } else {
+                    dueHtml = '<div class="small text-success fw-bold"><i class="fa fa-check-circle me-1"></i> ' + moment(task.dueDate).format('DD MMM') + '</div>';
+                }
+            }
+
             var cardHtml = `
-                <div class="kanban-card p-3 mb-2 bg-white shadow-sm border priority-${getPriorityClass(task.priority)} ${isActive ? 'timer-active' : ''}" 
+                <div class="kanban-card p-3 mb-2 bg-white shadow-sm border priority-${getPriorityClass(task.priority)} ${isActive ? 'timer-active' : ''} ${cardBorder}" 
                      draggable="true" data-id="${task.id}" id="task-${task.id}">
                     <div class="d-flex justify-content-between mb-1">
-                        <small class="text-muted"><i class="fa fa-tag me-1"></i> #${task.id.substring(0,4)}</small>
+                        <small class="text-muted border px-1 rounded bg-light" style="font-size: 0.75rem;">
+                            <i class="fa fa-tag me-1"></i>#${task.id.substring(0,4)}
+                            ${task.parentTaskTitle ? `<span class="ms-1 border-start ps-1 text-primary"><i class="fa fa-level-up-alt fa-rotate-90"></i> ${task.parentTaskTitle}</span>` : ''}
+                        </small>
                         <div class="timer-controls">
                             ${timerHtml}
                         </div>
                     </div>
                     <div class="fw-bold mb-2 task-title text-truncate" title="${task.title}">${task.title}</div>
-                    <div class="d-flex justify-content-between align-items-center">
+                    <div class="d-flex justify-content-between align-items-center flex-wrap">
                         <div class="avatar-group small">
                             <i class="fa fa-user-circle me-1 text-secondary"></i> 
                             ${task.assigneeName || 'Atanmamış'}
                         </div>
-                        ${task.dueDate ? `<div class="small text-danger fw-bold"><i class="fa fa-calendar-alt me-1"></i> ${moment(task.dueDate).format('DD MMM')}</div>` : ''}
+                        ${dueHtml}
                     </div>
                 </div>`;
             
@@ -303,52 +345,53 @@ $(function () {
             });
         });
 
-        // HTML5 Drag & Drop
-        var cards = document.querySelectorAll('.kanban-card');
-        var columns = document.querySelectorAll('.col-kanban');
+        // HTML5 Drag & Drop (jQuery .off() ile event çakışmasını engelliyoruz)
+        var $cards = $('.kanban-card');
+        var $columns = $('.col-kanban');
 
-        cards.forEach(card => {
-            card.addEventListener('dragstart', () => {
-                card.classList.add('dragging');
-            });
-            card.addEventListener('dragend', () => {
-                card.classList.remove('dragging');
-            });
+        // Önceki eventleri temizle
+        $cards.off('dragstart dragend');
+        $columns.off('dragover dragleave drop');
+
+        $cards.on('dragstart', function() {
+            $(this).addClass('dragging');
+        });
+        $cards.on('dragend', function() {
+            $(this).removeClass('dragging');
         });
 
-        columns.forEach(column => {
-            column.addEventListener('dragover', e => {
-                e.preventDefault();
-                column.querySelector('.kanban-items').classList.add('bg-light');
-            });
+        $columns.on('dragover', function(e) {
+            e.preventDefault();
+            $(this).find('.kanban-items').addClass('bg-light');
+        });
 
-            column.addEventListener('dragleave', () => {
-                column.querySelector('.kanban-items').classList.remove('bg-light');
-            });
+        $columns.on('dragleave', function() {
+            $(this).find('.kanban-items').removeClass('bg-light');
+        });
 
-            column.addEventListener('drop', e => {
-                e.preventDefault();
-                column.querySelector('.kanban-items').classList.remove('bg-light');
-                const draggable = document.querySelector('.dragging');
-                if (!draggable) return;
+        $columns.on('drop', function(e) {
+            e.preventDefault();
+            $(this).find('.kanban-items').removeClass('bg-light');
+            
+            var $draggable = $('.dragging');
+            if (!$draggable.length) return;
 
-                const taskId = draggable.dataset.id;
-                const newStatus = parseInt(column.dataset.status);
-                
-                // UI'da hemen taşıyalım
-                column.querySelector('.kanban-items').appendChild(draggable);
-                
-                // Servis çağrısı
-                taskService.updateStatus(taskId, newStatus)
-                    .then(function() {
-                        abp.notify.success('Durum güncellendi.');
-                        loadKanban(); // Sayacı vs güncellemek için yenileyelim
-                    })
-                    .catch(function(err) {
-                        abp.notify.error('Hata oluştu.');
-                        loadKanban();
-                    });
-            });
+            const taskId = $draggable.data('id');
+            const newStatus = parseInt($(this).data('status'));
+            
+            // UI'da hemen taşıyalım
+            $(this).find('.kanban-items').append($draggable);
+            
+            // Servis çağrısı
+            taskService.updateStatus(taskId, newStatus)
+                .then(function() {
+                    abp.notify.success('Durum güncellendi.');
+                    loadKanban(); // Sayacı vs güncellemek için yenileyelim
+                })
+                .catch(function() {
+                    abp.notify.error('Hata oluştu veya bu duruma geçirilemez.');
+                    loadKanban();
+                });
         });
     }
 
@@ -371,7 +414,14 @@ $(function () {
     });
 
     editModal.onResult(function () { 
-        dataTable.ajax.reload(); 
+        dataTable.ajax.reload(null, false); 
+        if (!$('#view-kanban').hasClass('d-none')) loadKanban();
+        if (!$('#view-gantt').hasClass('d-none')) loadGantt();
+    });
+
+    // Otomatik kayıt event'ini dinle:
+    abp.event.on('app.task.updated', function () {
+        dataTable.ajax.reload(null, false);
         if (!$('#view-kanban').hasClass('d-none')) loadKanban();
         if (!$('#view-gantt').hasClass('d-none')) loadGantt();
     });

@@ -23,7 +23,7 @@ namespace Apya.Platform.Tasks
 
         Task AddAttachmentAsync(Guid taskId, string fileName, string storedFileName, long fileSize);
         Task<List<TaskAttachmentDto>> GetAttachmentsAsync(Guid taskId);
-        Task UpdateStatusAsync(Guid id, TaskStatus status);
+        Task UpdateStatusAsync(Guid id, Apya.Platform.Tasks.TaskStatus status);
 
         // Zaman Takibi
         Task StartTimeTrackingAsync(Guid taskId);

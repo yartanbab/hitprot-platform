@@ -27,6 +27,16 @@
         "Permission:Notifications.MarkRead": "Okundu Olarak İşaretle",
         "Permission:Notifications.Delete": "Bildirim Silme",
         "Permission:Calendars": "Takvim Entegrasyonu",
-        "Permission:Calendars.Connect": "Hesap Bağlama"
+        "Permission:Calendars.Connect": "Hesap Bağlama",
+
+        "Platform:Task:TitleRequired": "Görev başlığı boş bırakılamaz.",
+        "Platform:Task:ViewPrivateDenied": "Bu gizli görevi görüntüleme yetkiniz yok. Görevi yalnızca oluşturanlar ve atananlar görebilir.",
+        "Platform:Task:ViewImpersonationDenied": "Bu gizli görevi destek yetkisiyle (Impersonation) görüntüleyemezsiniz.",
+        "Platform:Task:UpdateDenied": "Bu görevi güncellemek için yetkiniz yok. Sadece görevi oluşturan veya atanan kişi güncelleyebilir.",
+        "Platform:Task:DeleteDenied": "Bu görevi silmek için yetkiniz yok. Sadece görevi oluşturan veya atanan kişi silebilir.",
+        "Platform:Project:NotFound": "İstenen proje bulunamadı.",
+        "Platform:Project:CodeAlreadyExists": "Bu proje kodu zaten kullanılıyor.",
+        "Platform:File:UnsupportedExtension": "Desteklenmeyen dosya türü. Yalnızca PDF, Office, resim ve arşiv dosyaları yüklenebilir.",
+        "Platform:File:SizeExceeded": "Dosya boyutu 25 MB'ı aşamaz."
     }
-}
+}

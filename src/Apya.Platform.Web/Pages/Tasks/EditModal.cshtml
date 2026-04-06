@@ -7,7 +7,7 @@
     Layout = null;
 }
 
-<form asp-page="/Tasks/EditModal" method="post" id="EditTaskForm">
+<form asp-page="/Tasks/EditModal" method="post" id="EditTaskForm_@Model.Id" data-check-form-on-close="false">
 <abp-modal size="ExtraLarge">
     <abp-modal-header title="🚀 Görev Paneli: @Model.Task.Title"></abp-modal-header>
 
@@ -30,31 +30,31 @@
             </div>
         </div>
 
-        <ul class="nav nav-tabs nav-justified px-3 pt-3 border-bottom-0 shadow-sm bg-white" id="taskTabs" role="tablist">
+        <ul class="nav nav-tabs nav-justified px-3 pt-3 border-bottom-0 shadow-sm bg-white" id="taskTabs_@Model.Id" role="tablist">
             <li class="nav-item">
-                <a class="nav-link active fw-bold text-primary" id="details-tab" data-bs-toggle="tab" href="#details" role="tab">
+                <a class="nav-link active fw-bold text-primary" id="details-tab_@Model.Id" data-bs-toggle="tab" href="#details_@Model.Id" role="tab">
                     <i class="fa fa-info-circle me-1"></i> Genel Bilgiler
                 </a>
             </li>
             <li class="nav-item">
-                <a class="nav-link fw-bold text-dark" id="subtasks-tab" data-bs-toggle="tab" href="#subtasks" role="tab">
+                <a class="nav-link fw-bold text-dark" id="subtasks-tab_@Model.Id" data-bs-toggle="tab" href="#subtasks_@Model.Id" role="tab">
                     <i class="fa fa-check-square text-success me-1"></i> Alt Görevler
                 </a>
             </li>
             <li class="nav-item">
-                <a class="nav-link fw-bold text-dark" id="comments-tab" data-bs-toggle="tab" href="#comments" role="tab">
+                <a class="nav-link fw-bold text-dark" id="comments-tab_@Model.Id" data-bs-toggle="tab" href="#comments_@Model.Id" role="tab">
                     <i class="fa fa-comments text-warning me-1"></i> Yorumlar
                 </a>
             </li>
             <li class="nav-item">
-                <a class="nav-link fw-bold text-dark" id="files-tab" data-bs-toggle="tab" href="#files" role="tab">
+                <a class="nav-link fw-bold text-dark" id="files-tab_@Model.Id" data-bs-toggle="tab" href="#files_@Model.Id" role="tab">
                     <i class="fa fa-paperclip text-info me-1"></i> Dosyalar
                 </a>
             </li>
         </ul>
 
-        <div class="tab-content p-4 bg-white border-top" id="taskTabsContent" style="min-height: 450px;">
-            <div class="tab-pane fade show active" id="details" role="tabpanel">
+        <div class="tab-content p-4 bg-white border-top" id="taskTabsContent_@Model.Id" style="min-height: 450px;">
+            <div class="tab-pane fade show active" id="details_@Model.Id" role="tabpanel">
                     <abp-input asp-for="Id" type="hidden" class="task-id-input" />
                     <abp-input asp-for="Task.ProjectId" type="hidden" />
 
@@ -86,7 +86,7 @@
                     </div>
             </div>
 
-            <div class="tab-pane fade" id="subtasks" role="tabpanel">
+            <div class="tab-pane fade" id="subtasks_@Model.Id" role="tabpanel">
                 <h5 class="fw-bold mb-3">Yapılacaklar (Checklist)</h5>
                 <div class="input-group mb-4 shadow-sm">
                     <input type="text" id="NewSubTaskTitle" class="form-control form-control-lg" placeholder="Yeni alt görev yaz...">
@@ -120,7 +120,7 @@
                     }
                     else
                     {
-                    <div class="text-center text-muted p-5 bg-light rounded-3">
+                    <div class="text-center text-muted p-5 bg-light rounded-3" id="NoSubTasksPlaceholder">
                         <i class="fa fa-list-ul fa-3x mb-3 text-secondary"></i>
                         <p class="fs-5">Henüz alt görev yok.</p>
                     </div>
@@ -128,7 +128,7 @@
                 </div>
             </div>
 
-            <div class="tab-pane fade" id="comments" role="tabpanel">
+            <div class="tab-pane fade" id="comments_@Model.Id" role="tabpanel">
                 <div class="input-group mb-4 shadow-sm">
                     <input type="text" id="NewCommentText" class="form-control form-control-lg" placeholder="Bir yorum yaz...">
                     <button class="btn btn-primary px-4" type="button" id="BtnAddComment"><i class="fa fa-paper-plane me-1"></i> Gönder</button>
@@ -154,7 +154,7 @@
                 </div>
             </div>
 
-            <div class="tab-pane fade" id="files" role="tabpanel">
+            <div class="tab-pane fade" id="files_@Model.Id" role="tabpanel">
                 <div class="input-group mb-4 shadow-sm">
                     <input type="file" class="form-control form-control-lg" id="FileInput">
                     <button class="btn btn-outline-secondary px-4" type="button" id="BtnUploadFile"><i class="fa fa-upload me-1"></i> Yükle</button>
@@ -183,8 +183,8 @@
             </div>
         </div>
     </abp-modal-body>
-    <abp-modal-footer buttons="@(AbpModalButtons.Cancel | AbpModalButtons.Save)"></abp-modal-footer>
 </abp-modal>
+    <!-- Footer kaldırıldı (Auto-save) -->
 </form>
 
 <script>
@@ -200,7 +200,21 @@
             data: { parentId: parentId, subTaskTitle: title },
             success: function (result) {
                 abp.notify.success('Alt görev eklendi!');
-                $('#SubTaskList').prepend('<div class="list-group-item list-group-item-action d-flex justify-content-between align-items-center p-3 bg-light border-warning"><strong class="fs-5"><i class="fa fa-circle-o text-secondary fs-5 me-2"></i>' + title + '</strong><span class="badge bg-warning">Yeni</span></div>');
+                $('#NoSubTasksPlaceholder').remove();
+                
+                var newRowHtml = 
+                    '<div class="list-group-item list-group-item-action d-flex justify-content-between align-items-center p-3 bg-light border-warning">' +
+                        '<div>' +
+                            '<i class="fa fa-circle-o text-secondary fs-5 me-2"></i>' +
+                            '<strong class="fs-5">' + title + '</strong>' +
+                            '<span class="badge bg-warning ms-2 text-dark">Yeni</span>' +
+                        '</div>' +
+                        '<div class="btn-group shadow-sm" role="group">' +
+                            '<button type="button" class="btn btn-sm btn-light border" disabled title="Değiştirmek için sayfayı yenileyin"><i class="fa fa-edit text-primary"></i></button>' +
+                            '<button type="button" class="btn btn-sm btn-light border" disabled title="Silmek için sayfayı yenileyin"><i class="fa fa-trash text-danger"></i></button>' +
+                        '</div>' +
+                    '</div>';
+                $('#SubTaskList').prepend(newRowHtml);
                 $('#NewSubTaskTitle').val('');
             },
             error: function (xhr) {
@@ -210,13 +224,13 @@
         });
     });
 
-    $(document).on('click', '.edit-subtask-btn', function () {
+    $(document).off('click', '.edit-subtask-btn').on('click', '.edit-subtask-btn', function () {
         var subTaskId = $(this).data('id');
         var subTaskModal = new abp.ModalManager({ viewUrl: abp.appPath + 'Tasks/EditModal' });
         subTaskModal.open({ id: subTaskId });
     });
 
-    $(document).on('click', '.delete-subtask-btn', function () {
+    $(document).off('click', '.delete-subtask-btn').on('click', '.delete-subtask-btn', function () {
         var subTaskId = $(this).data('id');
         var $li = $(this).closest('.list-group-item');
         
@@ -230,13 +244,13 @@
             confirmButtonText: '<i class="fa fa-trash"></i> Evet, Sil!',
             cancelButtonText: 'İptal',
             confirmButtonColor: '#dc3545',
-            preConfirm: (inputValue) => {
+            preConfirm: function (inputValue) {
                 if (inputValue !== 'SİL') {
                     Swal.showValidationMessage('Silme işlemini onaylamak için tam olarak "SİL" yazmalısınız.');
                 }
                 return inputValue;
             }
-        }).then((result) => {
+        }).then(function (result) {
             if (result.isConfirmed) {
                 apya.platform.tasks.task.delete(subTaskId).then(function () {
                     abp.notify.info('Başarıyla silindi.');
@@ -259,7 +273,13 @@
             success: function (result) {
                 abp.notify.success('Yorum gönderildi!');
                 var now = new Date().toLocaleString();
-                var newCommentHtml = `<div class="list-group-item bg-light border-success mb-2 rounded-3"><div class="d-flex w-100 justify-content-between mb-2"><h6 class="mb-1 fw-bold text-success">Siz (Az önce)</h6><small class="text-muted">${now}</small></div><p class="mb-1">${text}</p></div>`;
+                var newCommentHtml = '<div class="list-group-item bg-light border-success mb-2 rounded-3">' +
+                    '<div class="d-flex w-100 justify-content-between mb-2">' +
+                        '<h6 class="mb-1 fw-bold text-success">Siz (Az önce)</h6>' +
+                        '<small class="text-muted">' + now + '</small>' +
+                    '</div>' +
+                    '<p class="mb-1">' + text + '</p>' +
+                '</div>';
                 $('#CommentList').prepend(newCommentHtml);
                 $('#NewCommentText').val('');
             },
@@ -380,6 +400,73 @@
 
     // INIT
     setTimeout(refreshTimerState, 300);
+
+    // === OTOMATİK KAYIT (AUTO-SAVE) MANTIĞI ===
+    if (typeof window.taskAutoSaveTimeouts === 'undefined') {
+        window.taskAutoSaveTimeouts = {};
+    }
+    
+    $('#EditTaskForm_@Model.Id').on('input change', 'input:not(#NewSubTaskTitle, #NewCommentText, #FileInput), select, textarea', function() {
+        if ($(this).hasClass('task-id-input')) return;
+        
+        var modalId = '@Model.Id';
+        clearTimeout(window.taskAutoSaveTimeouts[modalId]);
+        
+        // Formda değişiklik olunca 1 sn sonra POST atar.
+        window.taskAutoSaveTimeouts[modalId] = setTimeout(function() {
+            var $form = $('#EditTaskForm_' + modalId);
+            
+            // Eğer form client-side validasyona takılıyorsa (zorunlu alanlar boşsa) POST atma.
+            // Bu, "Description field is required" gibi sunucu hatalarını önler.
+            if ($form.length && typeof $form.valid === 'function' && !$form.valid()) {
+                console.log('Form henüz geçerli değil, kayıt ertelendi.');
+                return;
+            }
+
+            var formData = $form.serialize();
+            
+            var $modal = $form.closest('.modal-content');
+            var $titleContainer = $modal.find('.modal-title');
+            
+            var $status = $('#AutoSaveStatus_' + modalId.replace(/-/g, ''));
+            if (!$status.length) {
+                $titleContainer.append(' <small class="text-muted ms-2" id="AutoSaveStatus_' + modalId.replace(/-/g, '') + '" style="font-size: 0.75rem;"></small>');
+                $status = $('#AutoSaveStatus_' + modalId.replace(/-/g, ''));
+            }
+            
+            $status.html('<i class="fa fa-sync-alt fa-spin me-1"></i> Kaydediliyor...').show();
+
+            abp.ajax({
+                type: 'POST',
+                url: '/Tasks/EditModal?Id=' + modalId,
+                data: formData,
+                headers: { 'RequestVerificationToken': $form.find('input[name="__RequestVerificationToken"]').val() }
+            }).done(function () {
+                $status.html('<i class="fa fa-check-circle text-success me-1"></i> Kaydedildi').show();
+                setTimeout(function() { $status.fadeOut(500); }, 3000);
+                abp.event.trigger('app.task.updated');
+            }).fail(function (err) {
+                $status.html('<i class="fa fa-exclamation-triangle text-danger me-1"></i> Kayıt Başarısız').show();
+                if (err && err.message) {
+                    abp.notify.error(err.message);
+                } else if (err && err.responseText) {
+                    abp.notify.error(err.responseText);
+                }
+            });
+        }, 1000);
+    });
+
+    // Modal dışındayken değişiklikleri ebeveyn tablosuna yansıtmak istenir ise:
+    $('#EditTaskForm_@Model.Id').closest('.modal').on('hidden.bs.modal', function () {
+        // Eğer dış dünyada bir abp veritabanı gridi varsa onu tazeleyelim
+        if (typeof window.dataTable !== 'undefined') {
+            window.dataTable.ajax.reload(null, false);
+        } else if (typeof window.projectsTable !== 'undefined') {
+            window.projectsTable.ajax.reload(null, false);
+        } else if (typeof window.tasksTable !== 'undefined') {
+            window.tasksTable.ajax.reload(null, false);
+        }
+    });
 </script>
 
 <style>

@@ -57,6 +57,16 @@ public class PlatformMenuContributor : IMenuContributor
             )
         );
 
+        // "Board" menü öğesi
+        context.Menu.AddItem(
+            new ApplicationMenuItem(
+                "Apya.Platform.Board", 
+                "Kanban Board",      
+                icon: "fa fa-columns",   
+                url: "/Board"          
+            )
+        );
+
         // "Reports" menü öğesi
         context.Menu.AddItem(
             new ApplicationMenuItem(

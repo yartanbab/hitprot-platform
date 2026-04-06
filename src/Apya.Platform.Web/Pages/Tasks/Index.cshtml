@@ -191,5 +191,11 @@
         50% { transform: scale(1.2); }
         100% { transform: scale(1); }
     }
+    @@keyframes heartbeat {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+        100% { transform: scale(1); }
+    }
+    .heartbeat-animation { animation: heartbeat 1.5s infinite; }
 </style>
 

@@ -10,6 +10,7 @@ public class NotificationDomainEventHandler :
     ILocalEventHandler<TaskAssignedEto>,
     ILocalEventHandler<TaskCommentAddedEto>,
     ILocalEventHandler<TaskStatusChangedEto>,
+    ILocalEventHandler<TaskDueSoonEto>,
     ITransientDependency
 {
     private readonly NotificationManager _notificationManager;

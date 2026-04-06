@@ -1,0 +1,47 @@
+@page
+@using Apya.Platform.Permissions
+@using Microsoft.AspNetCore.Authorization
+@inject IAuthorizationService AuthorizationService
+@model Apya.Platform.Web.Pages.Projects.IndexModel
+@{
+    ViewBag.Title = "Projeler";
+}
+
+@section scripts {
+    @* JavaScript dosyanın yolunu buraya ekliyoruz *@
+    <abp-script src="/Pages/Projects/Index.js" />
+}
+
+<abp-card>
+    <abp-card-header>
+        <abp-row>
+            <abp-column size-md="_6">
+                <abp-card-title>
+                    <i class="fa fa-rocket me-2"></i> Projeler
+                </abp-card-title>
+            </abp-column>
+            <abp-column size-md="_6" class="text-end">
+                @* Yetki kontrolü: Sadece izni olanlar butonu görür *@
+                <abp-button id="NewProjectButton"
+                            text="Yeni Proje Ekle"
+                            icon="plus"
+                            button-type="Primary" />
+            </abp-column>
+        </abp-row>
+    </abp-card-header>
+    <abp-card-body>
+        <abp-table striped-rows="true" id="ProjectsTable">
+            <thead>
+                <tr>
+                    <th>İşlemler</th>
+                    @* Burası JS tarafındaki 'visible' mantığına göre otomatik gizlenip açılacak *@
+                    <th>Müşteri</th>
+                    <th>Proje Adı</th>
+                    <th>Kod</th>
+                    <th>Durum</th>
+                    <th>Oluşturulma Tarihi</th>
+                </tr>
+            </thead>
+        </abp-table>
+    </abp-card-body>
+</abp-card>

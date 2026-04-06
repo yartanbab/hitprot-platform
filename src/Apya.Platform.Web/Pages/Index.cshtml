@@ -1,4 +1,4 @@
-﻿@page
+@page
 @using Microsoft.AspNetCore.Authorization
 @using Volo.Abp.AspNetCore.Mvc.UI.Layout
 @using Apya.Platform.Web.Pages
@@ -12,6 +12,36 @@
 @section scripts {
     <abp-script src="/Pages/Index.js" />
 }
+
+<div class="row mb-4" id="DashboardAlertsContainer" style="display: none;">
+    <div class="col-12">
+        <div class="card bg-danger bg-opacity-10 border-danger border-2 shadow-sm">
+            <div class="card-body py-3">
+                <h5 class="card-title text-danger mb-3 fw-bold">
+                    <i class="fa fa-exclamation-circle fa-beat me-2"></i> Gecikmiş & Acil Görevleriniz Var!
+                </h5>
+                <div id="OverdueTasksList" class="d-flex flex-wrap gap-2">
+                    <!-- JS Tarafından Yüklenecek -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4" id="DashboardUpcomingContainer" style="display: none;">
+    <div class="col-12">
+        <div class="card bg-warning bg-opacity-10 border-warning border-2 shadow-sm">
+            <div class="card-body py-3">
+                <h5 class="card-title text-dark mb-3 fw-bold">
+                    <i class="fa fa-clock me-2"></i> Yaklaşan Görevler (Son 48 Saat)
+                </h5>
+                <div id="UpcomingTasksList" class="d-flex flex-wrap gap-2">
+                    <!-- JS Tarafından Yüklenecek -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
 <abp-card>
     <abp-card-header>

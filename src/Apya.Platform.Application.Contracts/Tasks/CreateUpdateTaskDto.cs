@@ -10,7 +10,7 @@ namespace Apya.Platform.Tasks
         [StringLength(200)]
         public string Title { get; set; }
 
-        public string Description { get; set; } = string.Empty;
+        public string? Description { get; set; }
 
         [Required]
         public DateTime StartDate { get; set; } = DateTime.Now;

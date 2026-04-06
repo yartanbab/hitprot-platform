@@ -131,6 +131,18 @@ public class ProjectAppService :
                     allLogs = await _timeLogRepository.GetListAsync(x => allTaskIds.Contains(x.TaskId));
                 }
 
+                // BUG-003: N+1 sorgu düzeltmesi — Tenant isimlerini tek seferde çek
+                var tenantNameMap = new Dictionary<Guid, string>();
+                if (CurrentTenant.Id == null)
+                {
+                    var tenantIds = dtos.Where(d => d.TenantId.HasValue).Select(d => d.TenantId!.Value).Distinct().ToList();
+                    foreach (var tid in tenantIds)
+                    {
+                        var t = await _tenantStore.FindAsync(tid);
+                        if (t != null) tenantNameMap[tid] = t.Name;
+                    }
+                }
+
                 foreach (var dto in dtos)
                 {
                     if (canViewBudget)
@@ -149,8 +161,7 @@ public class ProjectAppService :
 
                     if (CurrentTenant.Id == null && dto.TenantId.HasValue)
                     {
-                        var tenant = await _tenantStore.FindAsync(dto.TenantId.Value);
-                        dto.TenantName = tenant?.Name ?? "Bilinmeyen Müşteri";
+                        dto.TenantName = tenantNameMap.TryGetValue(dto.TenantId.Value, out var name) ? name : "Bilinmeyen Müşteri";
                     }
                     else if (CurrentTenant.Id == null)
                     {

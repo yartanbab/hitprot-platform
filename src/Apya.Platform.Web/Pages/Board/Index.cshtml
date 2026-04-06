@@ -1,0 +1,125 @@
+@page
+@using Apya.Platform.Web.Menus
+@using Microsoft.AspNetCore.Authorization
+@using Apya.Platform.Permissions
+@inject IAuthorizationService AuthorizationService
+@model Apya.Platform.Web.Pages.Board.IndexModel
+@{
+    // "Board" menüsünün aktif görünmesi için
+    ViewBag.PageTitle = "Kanban Board";
+}
+
+@section styles {
+    <style>
+        .kanban-board {
+            display: flex;
+            gap: 1.5rem;
+            overflow-x: auto;
+            padding-bottom: 1rem;
+            min-height: 70vh;
+        }
+        .kanban-column {
+            flex: 0 0 300px;
+            background: #f8f9fa;
+            border-radius: 0.75rem;
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+        }
+        .kanban-header {
+            font-weight: 700;
+            font-size: 0.95rem;
+            text-transform: uppercase;
+            margin-bottom: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .kanban-cards {
+            flex: 1;
+            min-height: 100px;
+        }
+        .kanban-card {
+            background: #fff;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            margin-bottom: 0.75rem;
+            cursor: grab;
+            border-left: 5px solid transparent;
+            transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s;
+            border-top: 1px solid #eee;
+            border-right: 1px solid #eee;
+            border-bottom: 1px solid #eee;
+        }
+        .kanban-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+        }
+        .kanban-card:active {
+            cursor: grabbing;
+        }
+        .kanban-card[data-priority="1"] { border-left-color: #28a745; } /* Low */
+        .kanban-card[data-priority="2"] { border-left-color: #ffc107; } /* Medium */
+        .kanban-card[data-priority="3"] { border-left-color: #fd7e14; } /* High */
+        .kanban-card[data-priority="4"] { border-left-color: #dc3545; } /* Critical */
+
+        .sortable-ghost { opacity: 0.4; }
+    </style>
+}
+
+<abp-card>
+    <abp-card-header>
+        <abp-row>
+            <abp-column size="_6">
+                <abp-card-title><i class="fa fa-columns text-primary me-2"></i> @ViewBag.PageTitle</abp-card-title>
+            </abp-column>
+            <abp-column size="_6" class="text-end">
+                <button id="btn-refresh-board" class="btn btn-outline-secondary btn-sm"><i class="fa fa-sync"></i> Yenile</button>
+            </abp-column>
+        </abp-row>
+    </abp-card-header>
+    <abp-card-body>
+        <div class="kanban-board mt-2">
+            <!-- Todo/Yapılacak Column -->
+            <div class="kanban-column shadow-sm border" data-status-id="1">
+                <div class="kanban-header">
+                    <span class="text-secondary"><i class="fa fa-circle me-2"></i>Yapılacak</span>
+                    <span class="badge bg-secondary rounded-pill kanban-count">0</span>
+                </div>
+                <div class="kanban-cards" id="kanban-todo"></div>
+            </div>
+
+            <!-- In Progress/Sürüyor Column -->
+            <div class="kanban-column shadow-sm border" data-status-id="2">
+                <div class="kanban-header">
+                    <span class="text-warning text-dark"><i class="fa fa-circle me-2"></i>Sürüyor</span>
+                    <span class="badge bg-warning text-dark rounded-pill kanban-count">0</span>
+                </div>
+                <div class="kanban-cards" id="kanban-inprogress"></div>
+            </div>
+
+            <!-- In Review/Testte Column -->
+            <div class="kanban-column shadow-sm border" data-status-id="3">
+                <div class="kanban-header">
+                    <span class="text-info"><i class="fa fa-circle me-2"></i>Testte</span>
+                    <span class="badge bg-info rounded-pill kanban-count">0</span>
+                </div>
+                <div class="kanban-cards" id="kanban-inreview"></div>
+            </div>
+
+            <!-- Done/Tamamlandı Column -->
+            <div class="kanban-column shadow-sm border" data-status-id="4">
+                <div class="kanban-header">
+                    <span class="text-success"><i class="fa fa-check-circle me-2"></i>Tamamlandı</span>
+                    <span class="badge bg-success rounded-pill kanban-count">0</span>
+                </div>
+                <div class="kanban-cards" id="kanban-done"></div>
+            </div>
+        </div>
+    </abp-card-body>
+</abp-card>
+
+@section scripts {
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+    <abp-script src="/Pages/Board/index.js" />
+}
