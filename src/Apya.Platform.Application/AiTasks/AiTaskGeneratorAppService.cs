@@ -13,6 +13,7 @@ using Volo.Abp.Domain.Repositories;
 using Apya.Platform.AiTasks;
 using Apya.Platform.Projects;
 using Apya.Platform.Tasks;
+using Apya.Platform.AI;
 
 namespace Apya.Platform.Application.AiTasks;
 
@@ -21,13 +22,16 @@ public class AiTaskGeneratorAppService : ApplicationService, IAiTaskGeneratorApp
 {
     private readonly IRepository<Project, Guid> _projectRepository;
     private readonly IRepository<TaskItem, Guid> _taskRepository;
+    private readonly TaskAiAgentManager _taskAiAgentManager;
 
     public AiTaskGeneratorAppService(
         IRepository<Project, Guid> projectRepository,
-        IRepository<TaskItem, Guid> taskRepository)
+        IRepository<TaskItem, Guid> taskRepository,
+        TaskAiAgentManager taskAiAgentManager)
     {
         _projectRepository = projectRepository;
         _taskRepository = taskRepository;
+        _taskAiAgentManager = taskAiAgentManager;
     }
 
     /// <summary>
@@ -44,12 +48,37 @@ public class AiTaskGeneratorAppService : ApplicationService, IAiTaskGeneratorApp
 
         using var stream = new MemoryStream(fileBytes);
         var text = ExtractTextFromPdf(stream);
+        
+        // Cok buyuk PDF ise maliyet/hata onlemek icin kirp
+        if (text.Length > 40000) text = text.Substring(0, 40000);
 
         Logger.LogInformation("AI gorev olusturucu: Dosya analiz ediliyor. Proje: {ProjectId}, Dosya: {FileName}",
             projectId, fileName);
 
-        var result = AnalyzeTextAndGenerateSuggestions(text, project);
+        // Eski regex motoru yerine direkt yeni gelistirdigimiz OpenAI Agent'ina gonder
+        var aiTasks = await _taskAiAgentManager.ExtractTasksFromTextAsync(text);
+        
+        var result = new DocumentParseResultDto();
         result.FileName = fileName;
+        result.TotalSuggestedTasks = aiTasks.Count;
+        result.EstimatedDurationDays = 30; // Gecici sabitleme
+        result.ConfidenceScore = aiTasks.Count > 0 ? 95 : 0;
+        result.DetectedSections = new List<string> { "AI Doküman Analizi" };
+        
+        var suggestions = new List<AiTaskSuggestionDto>();
+        foreach (var t in aiTasks)
+        {
+            suggestions.Add(new AiTaskSuggestionDto
+            {
+                Title = t.Title,
+                Description = t.Description,
+                SuggestedPriority = (int)t.Priority, 
+                SuggestedDueDate = project.StartDate?.AddDays(t.EstimatedHours / 8.0) ?? DateTime.Now.AddDays(7),
+                IsSelected = true,
+                SourceSection = "AI Analizi"
+            });
+        }
+        result.Suggestions = suggestions;
 
         Logger.LogInformation("AI gorev olusturucu: {TaskCount} gorev onerisi olusturuldu. Proje: {ProjectId}",
             result.TotalSuggestedTasks, projectId);

@@ -81,12 +81,19 @@
                         <i class="fa fa-stream me-1"></i> Gantt
                     </button>
                 </div>
+                @if (await AuthorizationService.IsGrantedAsync(PlatformPermissions.Projects.UseAiFeatures))
+                {
+                    <button type="button" id="BtnImportAI" class="btn btn-outline-primary bg-light fw-bold" style="border-radius: 20px;">
+                        <i class="fa fa-cloud-upload-alt me-1 text-primary"></i> <span class="text-dark">AI ile Görev Oluştur</span>
+                    </button>
+                }
                 @if (await AuthorizationService.IsGrantedAsync(PlatformPermissions.Tasks.Create))
                 {
                     <abp-button id="NewTaskButton"
-                                text="Yeni Görev"
+                                text="Yeni Görev Ekle"
                                 icon="plus"
-                                button-type="Primary" />
+                                button-type="Primary" 
+                                class="ms-1" style="border-radius: 20px;" />
                 }
             </abp-column>
         </abp-row>

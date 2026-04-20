@@ -436,21 +436,29 @@
             
             $status.html('<i class="fa fa-sync-alt fa-spin me-1"></i> Kaydediliyor...').show();
 
-            abp.ajax({
+            $.ajax({
                 type: 'POST',
                 url: '/Tasks/EditModal?Id=' + modalId,
                 data: formData,
-                headers: { 'RequestVerificationToken': $form.find('input[name="__RequestVerificationToken"]').val() }
-            }).done(function () {
-                $status.html('<i class="fa fa-check-circle text-success me-1"></i> Kaydedildi').show();
-                setTimeout(function() { $status.fadeOut(500); }, 3000);
-                abp.event.trigger('app.task.updated');
-            }).fail(function (err) {
-                $status.html('<i class="fa fa-exclamation-triangle text-danger me-1"></i> Kayıt Başarısız').show();
-                if (err && err.message) {
-                    abp.notify.error(err.message);
-                } else if (err && err.responseText) {
-                    abp.notify.error(err.responseText);
+                headers: { 'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val() },
+                success: function () {
+                    $status.html('<i class="fa fa-check-circle text-success me-1"></i> Kaydedildi').show();
+                    setTimeout(function() { $status.fadeOut(500); }, 3000);
+                    abp.event.trigger('app.task.updated');
+                },
+                error: function (xhr) {
+                    $status.html('<i class="fa fa-exclamation-triangle text-danger me-1"></i> Kayıt Başarısız').show();
+                    var errMsg = "Kayıt işlemi sırasında sunucu hatası oluştu.";
+                    if (xhr.responseText) {
+                        try {
+                            // ABP bazen JSON döndürüyor olabilir
+                            var errObj = JSON.parse(xhr.responseText);
+                            errMsg = errObj.error ? errObj.error.message : xhr.responseText;
+                        } catch (e) {
+                            errMsg = xhr.responseText;
+                        }
+                    }
+                    abp.notify.error(errMsg);
                 }
             });
         }, 1000);

@@ -17,6 +17,7 @@ public class PlatformPermissionDefinitionProvider : PermissionDefinitionProvider
         projectsPermission.AddChild(PlatformPermissions.Projects.Delete, L("Permission:Projects.Delete"));
         projectsPermission.AddChild(PlatformPermissions.Projects.ViewBudget, L("Permission:Projects.ViewBudget"));
         projectsPermission.AddChild(PlatformPermissions.Projects.ManageTeam, L("Permission:Projects.ManageTeam"));
+        projectsPermission.AddChild(PlatformPermissions.Projects.UseAiFeatures, L("Permission:UseAiFeatures"));
 
         // --- GÖREV (TASK) YETKİLERİ --- (Burası Eksik Olabilir)
         var tasksPermission = myGroup.AddPermission(PlatformPermissions.Tasks.Default, L("Permission:Tasks"));

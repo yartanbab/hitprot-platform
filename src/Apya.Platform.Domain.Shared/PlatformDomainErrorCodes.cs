@@ -21,4 +21,9 @@ public static class PlatformDomainErrorCodes
     // --- Dosya (File) Modülü ---
     public const string FileUnsupportedExtension = "Platform:File:UnsupportedExtension";
     public const string FileSizeExceeded = "Platform:File:SizeExceeded";
+
+    // --- Dinamik Varlıklar (DynamicAssets) Modülü ---
+    public const string DocumentSlugAlreadyExists = "Platform:DynamicAssets:SlugAlreadyExists";
+    public const string DocumentBlockNotFound = "Platform:DynamicAssets:BlockNotFound";
+    public const string DocumentTitleRequired = "Platform:DynamicAssets:TitleRequired";
 }

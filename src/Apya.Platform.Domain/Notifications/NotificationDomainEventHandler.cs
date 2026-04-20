@@ -106,4 +106,21 @@ public class NotificationDomainEventHandler :
             );
         }
     }
+
+    // --- Deadline Uyarıları (FEA-002) ---
+    public async Task HandleEventAsync(TaskDueSoonEto eventData)
+    {
+        // Yalnızca atanan biri varsa bildirim gönder
+        if (eventData.AssigneeId != Guid.Empty)
+        {
+            await _notificationManager.PublishAsync(
+                eventData.AssigneeId,
+                "🚨 Süresi Yaklaşan Görev",
+                $"\"{eventData.TaskTitle}\" adlı görevin bitiş süresine 48 saatten az kaldı!",
+                NotificationType.TaskDueSoon,
+                entityType: "Task",
+                entityId: eventData.TaskId
+            );
+        }
+    }
 }

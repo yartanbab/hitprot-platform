@@ -36,7 +36,7 @@ public class TaskDeadlineWorker : AsyncPeriodicBackgroundWorkerBase
         // 1. Bitmemiş, süresi belli, henüz uyarı atılmamış ve 48 saatten az kalmış görevler
         var query = await taskRepository.GetQueryableAsync();
         var dueTasks = query
-            .Where(t => t.Status != TaskStatus.Done && t.Status != TaskStatus.Canceled)
+            .Where(t => t.Status != Apya.Platform.Tasks.TaskStatus.Done && t.Status != Apya.Platform.Tasks.TaskStatus.Cancelled)
             .Where(t => t.DueDate.HasValue)
             .Where(t => t.DueDate.Value > now && t.DueDate.Value <= limitDate)
             .Where(t => !t.IsDeadlineWarningSent)

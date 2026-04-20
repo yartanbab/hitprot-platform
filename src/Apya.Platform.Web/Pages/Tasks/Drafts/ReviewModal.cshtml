@@ -1,0 +1,126 @@
+@page
+@using Volo.Abp.AspNetCore.Mvc.UI.Bootstrap.TagHelpers.Modal
+@using Apya.Platform.Tasks
+@model Apya.Platform.Web.Pages.Tasks.Drafts.ReviewModalModel
+@{
+    Layout = null;
+}
+
+<form method="post" id="ReviewDraftsForm">
+    <abp-modal size="ExtraLarge">
+        <abp-modal-header title="🚀 AI Sonuçları: Taslak Görevler"></abp-modal-header>
+        
+        <abp-modal-body class="bg-light p-3">
+            <input type="hidden" id="FinalBatchId" name="BatchId" value="@Model.BatchId" />
+
+            <div class="alert alert-info border-info shadow-sm d-flex align-items-center mb-4">
+                <i class="fa fa-info-circle fa-2x me-3"></i>
+                <div>Döküman başarıyla analiz edildi! Aşağıdaki tabloda AI'ın bulduğu görevleri görebilirsiniz. İstemediğiniz öğelerin başındaki kutucuğu kaldırın.</div>
+            </div>
+
+            @if(Model.DraftTasks == null || Model.DraftTasks.Count == 0)
+            {
+                <div class="text-center py-5 text-muted">
+                    <i class="fa fa-robot fa-3x mb-3 text-secondary"></i>
+                    <h5>AI herhangi bir görev bulamadı.</h5>
+                    <p>Yüklediğiniz döküman bir format sorunu içeriyor olabilir veya tamamen ilgisiz bir metne sahip olabilir.</p>
+                </div>
+            }
+            else
+            {
+                <div class="table-responsive rounded shadow-sm bg-white" style="max-height: 500px; overflow-y: auto;">
+                    <table class="table table-hover table-striped mb-0 align-middle">
+                        <thead class="table-light sticky-top">
+                            <tr>
+                                <th style="width: 40px;" class="text-center">
+                                    <input type="checkbox" class="form-check-input select-all-drafts" checked style="transform: scale(1.2);" />
+                                </th>
+                                <th>Görev Başlığı</th>
+                                <th>Tahmini Saat</th>
+                                <th>Öncelik</th>
+                                <th>Açıklama Özeti</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach(var draft in Model.DraftTasks)
+                            {
+                                <tr>
+                                    <td class="text-center">
+                                        <input type="checkbox" class="form-check-input draft-item-checkbox" name="SelectedDraftIds" value="@draft.Id" checked style="transform: scale(1.2);" />
+                                    </td>
+                                    <td class="fw-bold text-dark">@draft.Title</td>
+                                    <td><span class="badge bg-secondary rounded-pill">@(draft.EstimatedHours)s</span></td>
+                                    <td>
+                                        @if(draft.Priority == TaskPriority.Low){ <span class="badge bg-success bg-opacity-10 text-success border border-success rounded-pill px-2">Düşük</span> }
+                                        else if(draft.Priority == TaskPriority.Medium){ <span class="badge bg-warning bg-opacity-10 text-warning border border-warning rounded-pill px-2">Orta</span> }
+                                        else { <span class="badge bg-danger bg-opacity-10 text-danger border border-danger rounded-pill px-2">Yüksek</span> }
+                                    </td>
+                                    <td class="text-muted small" style="max-width:250px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                                        @draft.Description
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </abp-modal-body>
+
+        <abp-modal-footer>
+            <button class="btn btn-light" data-bs-dismiss="modal">İptal</button>
+            @if(Model.DraftTasks != null && Model.DraftTasks.Count > 0)
+            {
+                <button type="submit" class="btn btn-primary fw-bold px-4" id="btn-approve-drafts">
+                    <i class="fa fa-save me-1"></i> Seçili Görevleri Ata
+                </button>
+            }
+        </abp-modal-footer>
+    </abp-modal>
+</form>
+
+<script>
+    $(function(){
+        // Tümünü seç / kaldır mantığı
+        $('.select-all-drafts').on('change', function(){
+            var isChecked = $(this).is(':checked');
+            $('.draft-item-checkbox').prop('checked', isChecked);
+        });
+
+        $('#ReviewDraftsForm').on('submit', function(e){
+            e.preventDefault();
+
+            var selectedIds = [];
+            $('.draft-item-checkbox:checked').each(function(){
+                selectedIds.push($(this).val());
+            });
+
+            if(selectedIds.length === 0){
+                abp.notify.warning("Lütfen eklemek istediğiniz en az bir görev seçin.");
+                return;
+            }
+
+            var $btn = $('#btn-approve-drafts');
+            $btn.html('<i class="fa fa-spinner fa-spin me-1"></i> Aktarılıyor...').prop('disabled', true);
+
+            var batchId = $('#FinalBatchId').val();
+
+            // abp.ajax yardımıyla JSON yollama (Application Service direkt JSON parametresi 'ApproveDraftsInput' bekliyor)
+            var input = {
+                batchId: batchId,
+                selectedDraftIds: selectedIds
+            };
+
+            abp.ajax({
+                type: 'POST',
+                url: '/api/app/draft-task/approve-drafts', // ABP'nin oto oluşturduğu API yolu
+                data: JSON.stringify(input)
+            }).done(function(){
+                abp.notify.success("Görevler başarıyla panoya/listeye aktarıldı!");
+                $('#ReviewDraftsForm').closest('.modal').modal('hide');
+                abp.event.trigger('app.task.updated');
+            }).fail(function(err){
+                $btn.html('<i class="fa fa-save me-1"></i> Seçili Görevleri Ata').prop('disabled', false);
+            });
+        });
+    });
+</script>

@@ -1,5 +1,6 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Volo.Abp;
 using Apya.Platform.MultiTenancy;
 using Volo.Abp.AuditLogging;
 using Volo.Abp.BackgroundJobs;
@@ -24,6 +25,7 @@ namespace Apya.Platform;
     typeof(PlatformDomainSharedModule),
     typeof(AbpAuditLoggingDomainModule),
     typeof(AbpBackgroundJobsDomainModule),
+    typeof(AbpBackgroundWorkersModule),
     typeof(AbpFeatureManagementDomainModule),
     typeof(AbpIdentityDomainModule),
     typeof(AbpOpenIddictDomainModule),

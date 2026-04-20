@@ -144,15 +144,45 @@ $(function () {
         createModal.open({ projectId: projectId });
     });
 
-    // --- 2b. AI Görev Oluşturucu ---
-    var aiTaskModal = new abp.ModalManager({ viewUrl: abp.appPath + 'Projects/AiTaskGeneratorModal' });
+    var reviewModal = new abp.ModalManager({ viewUrl: abp.appPath + 'Tasks/Drafts/ReviewModal' });
+
+    // --- 2b. AI Görev Oluşturucu (Yeni Arka Plan İşleme Modülü) ---
+    var aiTaskModal = new abp.ModalManager({ 
+        viewUrl: abp.appPath + 'Tasks/Drafts/ImportModal',
+        modalClass: 'aiTaskImport' // Opsiyonel CSS class
+    });
 
     $('#btn-ai-task-generator').click(function (e) {
         e.preventDefault();
         aiTaskModal.open({ projectId: projectId });
     });
 
-    aiTaskModal.onResult(function () {
+    $(document).on('ai.drafts.batchStarted', function(e, batchId) {
+        var checkLimit = 0;
+        var checkInterval = setInterval(function() {
+            checkLimit++;
+            if (checkLimit > 20) { // Max 1 dakika beklet
+                clearInterval(checkInterval);
+                abp.notify.error("İşlem zaman aşımına uğradı veya beklenen veri gelmedi.");
+                return;
+            }
+
+            abp.ajax({
+                type: 'GET',
+                url: '/api/app/draft-task/pending-drafts/' + batchId,
+                cache: false
+            }).done(function(result) {
+                if (result && result.length > 0) {
+                    clearInterval(checkInterval);
+                    setTimeout(function() {
+                        reviewModal.open({ BatchId: batchId });
+                    }, 500); 
+                }
+            });
+        }, 3000); 
+    });
+
+    reviewModal.onResult(function () {
         abp.notify.success('AI görevleri başarıyla oluşturuldu!');
         dataTable.ajax.reload();
         setTimeout(function () { location.reload(); }, 1500);

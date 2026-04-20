@@ -1,0 +1,105 @@
+@page
+@using Volo.Abp.AspNetCore.Mvc.UI.Bootstrap.TagHelpers.Modal
+@model Apya.Platform.Web.Pages.Tasks.Drafts.ImportModalModel
+@{
+    Layout = null;
+}
+
+<form method="post" id="ImportDraftForm" enctype="multipart/form-data">
+    <abp-modal>
+        <abp-modal-header title="✨ AI ile Görev Oluştur"></abp-modal-header>
+        
+        <abp-modal-body class="p-4 bg-light">
+            <!-- Normal Yükleme Durumu -->
+            <div id="upload-panel">
+                <p class="text-muted text-center mb-4">
+                    Projenize ait bir gereksinim dosyasını, toplantı özetini veya maddeler halinde yönerge barındıran
+                    herhangi bir <b>PDF</b> dosyasını yükleyin. AI sizin için okuyup taslak görevlere (Kanban kartlarına) bölecektir.
+                </p>
+
+                <div class="border border-primary border-dashed rounded p-5 text-center bg-white shadow-sm" style="border-width: 2px; border-style: dashed !important; transition: all 0.3s;">
+                    <i class="fa fa-cloud-upload-alt text-primary fa-3x mb-3"></i>
+                    <h5 class="fw-bold text-dark">Dosya Sürükleyin veya Seçin</h5>
+                    <p class="text-muted small">Sadece .pdf uzantılı dosyalar desteklenmektedir.</p>
+                    <input type="file" asp-for="PdfInput.File" class="form-control mt-3" accept=".pdf" />
+                </div>
+            </div>
+
+            <!-- AI Animasyon Durumu (Gizli Başlar) -->
+            <div id="ai-processing-panel" class="d-none text-center py-5">
+                <div class="spinner-grow text-primary" style="width: 3rem; height: 3rem;" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <h4 class="mt-4 fw-bold text-dark animate__animated animate__pulse animate__infinite">AI Dokümanı Analiz Ediyor...</h4>
+                <p class="text-muted mt-2">Bu işlem dosya boyutuna göre birkaç saniye sürebilir.<br/>Lütfen pencereyi kapatmayın.</p>
+            </div>
+            
+            <input type="hidden" id="DraftBatchId" name="BatchId" />
+        </abp-modal-body>
+
+        <abp-modal-footer buttons="@(AbpModalButtons.Cancel)"></abp-modal-footer>
+    </abp-modal>
+</form>
+
+<script>
+    $(function() {
+        var $form = $('#ImportDraftForm');
+        var $uploadPanel = $('#upload-panel');
+        var $processingPanel = $('#ai-processing-panel');
+        
+        // Modalın Abp footer'ına özel submit butonu ekliyoruz (Standart save butonu dosya yollamak için özel ajax gerektirdiği için kendi submit event'imizi yöneteceğiz)
+        var $footer = $form.find('.modal-footer');
+        var $saveBtn = $('<button type="button" class="btn btn-primary shadow-sm"><i class="fa fa-magic me-1"></i> Analiz Et</button>');
+        $footer.append($saveBtn);
+
+        $saveBtn.on('click', function(e) {
+            e.preventDefault();
+            
+            var fileInput = $form.find('input[type="file"]')[0];
+            if(!fileInput.files || fileInput.files.length === 0){
+                abp.notify.error("Lütfen bir PDF dosyası seçin.");
+                return;
+            }
+
+            var formData = new FormData();
+            formData.append('PdfInput.File', fileInput.files[0]);
+            formData.append('__RequestVerificationToken', $form.find('input[name="__RequestVerificationToken"]').val());
+
+            // UI'ı loading state'e geçir
+            $uploadPanel.hide();
+            $processingPanel.removeClass('d-none');
+            $saveBtn.prop('disabled', true);
+            $form.find('button[data-bs-dismiss="modal"]').prop('disabled', true);
+
+            $.ajax({
+                url: '/Tasks/Drafts/ImportModal',
+                type: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                success: function(response) {
+                    if(response && response.batchId) {
+                        // Polling işlemi abp.ModalManager üzerinden veya js dosyasından yapılacak, batch id modal kapatılırken taşınacak
+                        $('#DraftBatchId').val(response.batchId);
+                        
+                        // Modalyı sakla ve Onay modalını tetikleyecek js eventi yarat (Index.js veya custom.js dinleyebilir)
+                        $form.closest('.modal').modal('hide');
+                        $(document).trigger('ai.drafts.batchStarted', [response.batchId]);
+                    }
+                },
+                error: function(err) {
+                    $uploadPanel.show();
+                    $processingPanel.addClass('d-none');
+                    $saveBtn.prop('disabled', false);
+                    $form.find('button[data-bs-dismiss="modal"]').prop('disabled', false);
+
+                    if (err.responseText) {
+                        abp.notify.error(err.responseText);
+                    } else {
+                         abp.notify.error("Dosya yüklenirken kritik bir hata oluştu.");
+                    }
+                }
+            });
+        });
+    });
+</script>

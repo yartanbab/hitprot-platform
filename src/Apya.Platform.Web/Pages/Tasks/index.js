@@ -439,5 +439,39 @@ $(function () {
         if (!$('#view-kanban').hasClass('d-none')) loadKanban();
         if (!$('#view-gantt').hasClass('d-none')) loadGantt();
     });
+
+    // --- AI Draft Tasks ---
+    var importModal = new abp.ModalManager(abp.appPath + 'Tasks/Drafts/ImportModal');
+    var reviewModal = new abp.ModalManager(abp.appPath + 'Tasks/Drafts/ReviewModal');
+
+    $('#BtnImportAI').click(function(e) {
+        e.preventDefault();
+        importModal.open();
+    });
+
+    $(document).on('ai.drafts.batchStarted', function(e, batchId) {
+        var checkLimit = 0;
+        var checkInterval = setInterval(function() {
+            checkLimit++;
+            if (checkLimit > 20) { // Max 1 dakika beklet
+                clearInterval(checkInterval);
+                abp.notify.error("İşlem zaman aşımına uğradı veya beklenen veri gelmedi.");
+                return;
+            }
+
+            abp.ajax({
+                type: 'GET',
+                url: '/api/app/draft-task/pending-drafts/' + batchId,
+                cache: false
+            }).done(function(result) {
+                if (result && result.length > 0) {
+                    clearInterval(checkInterval);
+                    setTimeout(function() {
+                        reviewModal.open({ BatchId: batchId });
+                    }, 500); // Modalların çakışmaması için yarım saniye gecikme
+                }
+            });
+        }, 3000); // 3 saniyede 1 polling (yüklenme durumunu simule eder)
+    });
 });
 
