@@ -20,6 +20,12 @@ using Apya.Platform.Tasks;
 using Apya.Platform.Notifications;
 using Apya.Platform.Calendars;
 using Apya.Platform.Invoices;
+using Apya.Platform.DynamicAssets;
+using Apya.Platform.DynamicAssets.Webhooks;
+using Apya.Platform.AssetRelations;
+
+using Apya.Platform.Tasks.Drafts;
+using Apya.Platform.EntityFrameworkCore.Configuration;
 
 namespace Apya.Platform.EntityFrameworkCore
 {
@@ -44,6 +50,7 @@ namespace Apya.Platform.EntityFrameworkCore
         public DbSet<Apya.Platform.Tasks.TaskComment> TaskComments { get; set; }
         public DbSet<TaskAttachment> TaskAttachments { get; set; }
         public DbSet<TaskDependency> TaskDependencies { get; set; }
+        public DbSet<DraftTaskItem> DraftTasks { get; set; }
         public DbSet<TaskTimeLog> TaskTimeLogs { get; set; }
         public DbSet<Invoice> Invoices { get; set; }
         public DbSet<InvoiceItem> InvoiceItems { get; set; }
@@ -58,6 +65,18 @@ namespace Apya.Platform.EntityFrameworkCore
 
         /* --- DOKÜMAN (WIKI) MODÜLÜ --- */
         public DbSet<Apya.Platform.Documents.Document> Documents { get; set; }
+
+        /* --- DİNAMİK VARLIKLAR (DYNAMIC ASSETS) MODÜLÜ --- */
+        public DbSet<AppDocument> AppDocuments { get; set; }
+        public DbSet<AppBlock> AppBlocks { get; set; }
+        public DbSet<AppResponse> AppResponses { get; set; }
+
+        /* --- POLİMORFİK BAĞLANTI (ASSET RELATIONS) MODÜLÜ --- */
+        public DbSet<EntityLink> EntityLinks { get; set; }
+
+        /* --- WEBHOOK (DYNAMIC ASSETS WEBHOOKS) MODÜLÜ --- */
+        public DbSet<WebhookSubscription> WebhookSubscriptions { get; set; }
+        public DbSet<WebhookDeliveryLog> WebhookDeliveryLogs { get; set; }
 
 
         #region Entities from the Modules
@@ -196,11 +215,21 @@ namespace Apya.Platform.EntityFrameworkCore
                 b.HasIndex(x => x.TaskId); // REV-004
             });
 
+            // APYA-30: TaskDependency
             builder.Entity<TaskDependency>(b =>
             {
-                b.ToTable("AppTaskDependencies");
+                b.ToTable(PlatformConsts.DbTablePrefix + "TaskDependencies", PlatformConsts.DbSchema);
                 b.ConfigureByConvention();
-                b.HasIndex(x => new { x.TaskId, x.PredecessorTaskId });
+                b.HasIndex(x => new { x.TaskId, x.PredecessorTaskId }).IsUnique();
+            });
+
+            // FEA-007: DraftTaskItem
+            builder.Entity<DraftTaskItem>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "DraftTasks", PlatformConsts.DbSchema);
+                b.ConfigureByConvention(); 
+                b.Property(x => x.Title).IsRequired().HasMaxLength(200);
+                b.HasIndex(x => x.ImportBatchId); // O batch'i kolayca çekebilmek için
             });
 
             builder.Entity<TaskTimeLog>(b =>
@@ -289,6 +318,18 @@ namespace Apya.Platform.EntityFrameworkCore
                 b.HasIndex(x => x.ProjectId);
                 b.HasIndex(x => x.ParentDocumentId);
             });
+
+            /* --- DİNAMİK VARLIKLAR (DYNAMIC ASSETS) YAPILANDIRMASI --- */
+            builder.ApplyConfiguration(new AppDocumentConfiguration());
+            builder.ApplyConfiguration(new AppBlockConfiguration());
+            builder.ApplyConfiguration(new AppResponseConfiguration());
+
+            /* --- POLİMORFİK BAĞLANTI (ASSET RELATIONS) YAPILANDIRMASI --- */
+            builder.ApplyConfiguration(new EntityLinkConfiguration());
+
+            /* --- WEBHOOK (DYNAMIC ASSETS WEBHOOKS) YAPILANDIRMASI --- */
+            builder.ApplyConfiguration(new WebhookSubscriptionConfiguration());
+            builder.ApplyConfiguration(new WebhookDeliveryLogConfiguration());
         }
     }
 }
