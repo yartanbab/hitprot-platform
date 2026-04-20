@@ -87,6 +87,16 @@ public class PlatformMenuContributor : IMenuContributor
             )
         );
 
+        // "Dynamic Assets / Forms" YENİ ÖZELLİK
+        context.Menu.AddItem(
+            new ApplicationMenuItem(
+                "Apya.Platform.DynamicAssets",
+                "Şablonlar & Formlar",
+                icon: "fa fa-file-signature",
+                url: "/DynamicAssets"
+            )
+        );
+
 // Just viewing the context again to be sure.
 
         // "Invoices" menü öğesi
