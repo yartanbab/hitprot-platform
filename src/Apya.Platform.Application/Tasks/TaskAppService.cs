@@ -321,7 +321,12 @@ namespace Apya.Platform.Tasks
         // --- 6. YORUM METODLARI ---
         public async Task AddCommentAsync(Guid taskId, string text)
         {
-            var comment = await _commentRepository.InsertAsync(new TaskComment(taskId, text));
+            if (string.IsNullOrWhiteSpace(text))
+            {
+                throw new Volo.Abp.UserFriendlyException("Yorum içeriği boş olamaz.", "Platform:Task:CommentRequired");
+            }
+
+            var comment = await _commentRepository.InsertAsync(new TaskComment(taskId, text.Trim()));
 
             // BİLDİRİM: Yorum yapıldı event'ini yayınla
             var task = await Repository.GetAsync(taskId);

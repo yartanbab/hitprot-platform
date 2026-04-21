@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Volo.Abp.Domain.Entities.Auditing;
 
 namespace Apya.Platform.Tasks
@@ -14,7 +14,16 @@ namespace Apya.Platform.Tasks
         public TaskComment(Guid taskId, string text)
         {
             TaskId = taskId;
-            Text = text;
+            SetText(text);
+        }
+
+        public void SetText(string text)
+        {
+            if (string.IsNullOrWhiteSpace(text))
+            {
+                throw new Volo.Abp.BusinessException("Platform:Task:CommentRequired", "Yorum içeriği boş olamaz.");
+            }
+            Text = text.Trim();
         }
     }
 }
