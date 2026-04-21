@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Dynamic.Core;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Volo.Abp.Application.Dtos;
@@ -31,15 +32,28 @@ public class InvoiceAppService : ApplicationService, IInvoiceAppService
     public async Task<PagedResultDto<InvoiceDto>> GetListAsync(PagedAndSortedResultRequestDto input)
     {
         var query = await _invoiceRepository.GetQueryableAsync();
-        var totalCount = await _invoiceRepository.GetCountAsync();
-        var items = await _invoiceRepository.GetListAsync(); // Optimization omitted for simplicity
-        
-        var projects = await _projectRepository.GetListAsync();
-        var allPayments = await _paymentRepository.GetListAsync();
+        var totalCount = await AsyncExecuter.CountAsync(query);
+
+        var sorting = string.IsNullOrWhiteSpace(input.Sorting) ? "InvoiceDate desc" : input.Sorting;
+
+        // 1. Pagination: Sadece istenen sayfadaki kayıtları veritabanından çek.
+        var items = await AsyncExecuter.ToListAsync(
+            query.OrderBy(sorting).PageBy(input.SkipCount, input.MaxResultCount)
+        );
+
+        if (!items.Any()) 
+            return new PagedResultDto<InvoiceDto>(totalCount, new List<InvoiceDto>());
+
+        // 2. Alt Sorgular: Sadece elimizdeki ID'lere ait Proje ve Ödemeleri çek.
+        var invoiceIds = items.Select(x => x.Id).ToList();
+        var projectIds = items.Select(x => x.ProjectId).Distinct().ToList();
+
+        var projects = await _projectRepository.GetListAsync(p => projectIds.Contains(p.Id));
+        var payments = await _paymentRepository.GetListAsync(p => invoiceIds.Contains(p.InvoiceId));
 
         var dtos = items.Select(x => {
             var dto = MapToDto(x, projects.FirstOrDefault(p => p.Id == x.ProjectId));
-            dto.PaidAmount = allPayments.Where(p => p.InvoiceId == x.Id).Sum(p => p.Amount);
+            dto.PaidAmount = payments.Where(p => p.InvoiceId == x.Id).Sum(p => p.Amount);
             return dto;
         }).ToList();
 
