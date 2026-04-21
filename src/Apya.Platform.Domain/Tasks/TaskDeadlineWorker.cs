@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
@@ -8,6 +9,8 @@ using Volo.Abp.Domain.Repositories;
 using Volo.Abp.EventBus.Local;
 using Volo.Abp.Threading;
 using Volo.Abp.Uow;
+using Volo.Abp.Data;
+using Volo.Abp.MultiTenancy;
 
 namespace Apya.Platform.Tasks;
 
@@ -30,18 +33,25 @@ public class TaskDeadlineWorker : AsyncPeriodicBackgroundWorkerBase
         var taskRepository = workerContext.ServiceProvider.GetRequiredService<IRepository<TaskItem, Guid>>();
         var localEventBus = workerContext.ServiceProvider.GetRequiredService<ILocalEventBus>();
         var clock = workerContext.ServiceProvider.GetRequiredService<Volo.Abp.Timing.IClock>();
+        var dataFilter = workerContext.ServiceProvider.GetRequiredService<IDataFilter<IMultiTenant>>();
+        var currentTenant = workerContext.ServiceProvider.GetRequiredService<ICurrentTenant>();
 
         var now = clock.Now;
         var limitDate = now.AddHours(48);
 
-        // 1. Bitmemiş, süresi belli, henüz uyarı atılmamış ve 48 saatten az kalmış görevler
-        var query = await taskRepository.GetQueryableAsync();
-        var dueTasks = query
-            .Where(t => t.Status != Apya.Platform.Tasks.TaskStatus.Done && t.Status != Apya.Platform.Tasks.TaskStatus.Cancelled)
-            .Where(t => t.DueDate.HasValue)
-            .Where(t => t.DueDate.Value > now && t.DueDate.Value <= limitDate)
-            .Where(t => !t.IsDeadlineWarningSent)
-            .ToList();
+        List<TaskItem> dueTasks;
+
+        // 1. Tüm tenant'lardaki görevleri okuyabilmek için filtreyi geçici olarak devre dışı bırak
+        using (dataFilter.Disable<IMultiTenant>())
+        {
+            var query = await taskRepository.GetQueryableAsync();
+            dueTasks = query
+                .Where(t => t.Status != Apya.Platform.Tasks.TaskStatus.Done && t.Status != Apya.Platform.Tasks.TaskStatus.Cancelled)
+                .Where(t => t.DueDate.HasValue)
+                .Where(t => t.DueDate.Value > now && t.DueDate.Value <= limitDate)
+                .Where(t => !t.IsDeadlineWarningSent)
+                .ToList();
+        }
 
         if (!dueTasks.Any())
         {
@@ -49,23 +59,33 @@ public class TaskDeadlineWorker : AsyncPeriodicBackgroundWorkerBase
             return;
         }
 
-        foreach (var task in dueTasks)
-        {
-            // 2. Event fırlat
-            await localEventBus.PublishAsync(new TaskDueSoonEto
-            {
-                TaskId = task.Id,
-                TaskTitle = task.Title,
-                AssigneeId = task.AssigneeId ?? Guid.Empty,
-                CreatorId = task.CreatorId ?? Guid.Empty,
-                DueDate = task.DueDate!.Value
-            });
+        // 2. GAP-009: Tenant izolasyonunu sağlamak için görevleri TenantId'ye göre grupla
+        var taskGroups = dueTasks.GroupBy(t => t.TenantId);
 
-            // 3. Tekrar gitmemesi için işaretle
-            task.MarkDeadlineWarningAsSent();
-            await taskRepository.UpdateAsync(task);
-            
-            Logger.LogInformation("Görevin deadline uyarısı fırlatıldı ve işaretlendi. TaskId: {TaskId}", task.Id);
+        foreach (var tenantGroup in taskGroups)
+        {
+            // 3. Orijinal Tenant context'ine geçiş yap (Güvenlik Kalkanı)
+            using (currentTenant.Change(tenantGroup.Key))
+            {
+                foreach (var task in tenantGroup)
+                {
+                    // 4. Event fırlat (Böylece event handler'lar doğru tenant context'inde çalışır)
+                    await localEventBus.PublishAsync(new TaskDueSoonEto
+                    {
+                        TaskId = task.Id,
+                        TaskTitle = task.Title,
+                        AssigneeId = task.AssigneeId ?? Guid.Empty,
+                        CreatorId = task.CreatorId ?? Guid.Empty,
+                        DueDate = task.DueDate!.Value
+                    });
+
+                    // 5. Tekrar gitmemesi için işaretle
+                    task.MarkDeadlineWarningAsSent();
+                    await taskRepository.UpdateAsync(task);
+                    
+                    Logger.LogInformation("Görevin deadline uyarısı fırlatıldı ve işaretlendi. TaskId: {TaskId}, TenantId: {TenantId}", task.Id, tenantGroup.Key);
+                }
+            }
         }
     }
 }
