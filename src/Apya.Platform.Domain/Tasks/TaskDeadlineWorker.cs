@@ -29,8 +29,9 @@ public class TaskDeadlineWorker : AsyncPeriodicBackgroundWorkerBase
 
         var taskRepository = workerContext.ServiceProvider.GetRequiredService<IRepository<TaskItem, Guid>>();
         var localEventBus = workerContext.ServiceProvider.GetRequiredService<ILocalEventBus>();
+        var clock = workerContext.ServiceProvider.GetRequiredService<Volo.Abp.Timing.IClock>();
 
-        var now = DateTime.Now;
+        var now = clock.Now;
         var limitDate = now.AddHours(48);
 
         // 1. Bitmemiş, süresi belli, henüz uyarı atılmamış ve 48 saatten az kalmış görevler
