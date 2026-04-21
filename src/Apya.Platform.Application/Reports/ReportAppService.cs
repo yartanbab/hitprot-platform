@@ -45,29 +45,39 @@ public class ReportAppService : ApplicationService, IReportAppService
             {
                 Logger.LogInformation("Dashboard istatistikleri hesaplanıyor... TenantId: {TenantId}", CurrentTenant.Id);
 
-                var projects = await _projectRepository.GetListAsync();
-                var allTasks = await _taskRepository.GetListAsync();
-                var allLogs = await _timeLogRepository.GetListAsync();
-                var users = await _userRepository.GetListAsync();
+                var projectQuery = await _projectRepository.GetQueryableAsync();
+                var taskQuery = await _taskRepository.GetQueryableAsync();
+                var logQuery = await _timeLogRepository.GetQueryableAsync();
+                var userQuery = await _userRepository.GetQueryableAsync();
 
                 var result = new DashboardReportDto();
 
-                // 1. Proje Analizi
-                var now = DateTime.Now;
-                foreach (var p in projects)
-                {
-                    var pTasks = allTasks.Where(x => x.ProjectId == p.Id).Select(x => x.Id).ToList();
-                    var pSeconds = allLogs.Where(x => pTasks.Contains(x.TaskId)).Sum(x => x.SecondsSpent ?? 0);
+                // 1. Proje Analizi (Tamamen SQL tarafında gruplanarak çekilir)
+                var projectStats = await AsyncExecuter.ToListAsync(
+                    projectQuery.Select(p => new
+                    {
+                        Project = p,
+                        TotalTaskCount = taskQuery.Count(t => t.ProjectId == p.Id),
+                        CompletedTaskCount = taskQuery.Count(t => t.ProjectId == p.Id && (int)t.Status == 3),
+                        TotalSeconds = logQuery
+                            .Where(l => taskQuery.Where(t => t.ProjectId == p.Id).Select(t => t.Id).Contains(l.TaskId))
+                            .Sum(l => (long?)l.SecondsSpent) ?? 0
+                    })
+                );
 
-                    // Para birimi cevrimle
+                var now = DateTime.Now;
+                foreach (var stat in projectStats)
+                {
+                    var p = stat.Project;
+                    var pSeconds = stat.TotalSeconds;
+
                     var currencySymbol = (p.Currency ?? "TRY") switch
                     {
                         "USD" => "$",
-                        "EUR" => "\u20AC",
-                        _ => "\u20BA"
+                        "EUR" => "€",
+                        _ => "₺"
                     };
 
-                    // Zaman sagligi hesaplama
                     int remainingDays = 0;
                     int timeUsagePercent = 0;
                     string timeHealthColor = "success";
@@ -81,10 +91,9 @@ public class ReportAppService : ApplicationService, IReportAppService
                             ? Math.Min(100, (int)Math.Round(daysPassed / totalDays * 100))
                             : 0;
 
-                        // Tamamlanma orani ile kiyasla
-                        var totalTaskCount = allTasks.Count(x => x.ProjectId == p.Id);
-                        var completedCount = allTasks.Count(x => x.ProjectId == p.Id && (int)x.Status == 3);
-                        var completionRate = totalTaskCount > 0 ? (double)completedCount / totalTaskCount * 100 : 0;
+                        var completionRate = stat.TotalTaskCount > 0 
+                            ? (double)stat.CompletedTaskCount / stat.TotalTaskCount * 100 
+                            : 0;
 
                         if (timeUsagePercent > 80 && completionRate < 50)
                             timeHealthColor = "danger";
@@ -92,7 +101,6 @@ public class ReportAppService : ApplicationService, IReportAppService
                             timeHealthColor = "warning";
                     }
 
-                    // Butce Forecast hesaplama
                     var spentBudget = (decimal)(pSeconds / 3600.0) * p.HourlyRate;
                     int totalProjectDays = 0;
                     int daysPassedInt = 0;
@@ -114,7 +122,6 @@ public class ReportAppService : ApplicationService, IReportAppService
                         }
                     }
 
-                    // Tenant adi
                     var tenantName = "Platform (Host)";
                     if (p.TenantId.HasValue)
                     {
@@ -125,7 +132,7 @@ public class ReportAppService : ApplicationService, IReportAppService
                     result.Projects.Add(new ProjectReportDto
                     {
                         ProjectId = p.Id,
-                        ProjectName = p.Name ?? "Isimsiz Proje",
+                        ProjectName = p.Name ?? "İsimsiz Proje",
                         ProjectCode = p.Code ?? "",
                         Currency = p.Currency ?? "TRY",
                         CurrencySymbol = currencySymbol,
@@ -146,22 +153,27 @@ public class ReportAppService : ApplicationService, IReportAppService
                     });
                 }
 
-                // 2. Personel Verimliliği
-                foreach (var u in users)
-                {
-                    var uLogs = allLogs.Where(x => x.UserId == u.Id).ToList();
-                    if (uLogs.Any())
+                // 2. Personel Verimliliği (Veritabanı bazlı aggregation)
+                var userStats = await AsyncExecuter.ToListAsync(
+                    userQuery.Select(u => new
                     {
-                        result.Personnel.Add(new PersonnelEfficiencyDto
-                        {
-                            UserName = u.UserName ?? "Bilinmeyen Kullanıcı",
-                            TotalSeconds = uLogs.Sum(x => x.SecondsSpent ?? 0),
-                            TaskCount = uLogs.Select(x => x.TaskId).Distinct().Count()
-                        });
-                    }
+                        UserName = u.UserName,
+                        TotalSeconds = logQuery.Where(l => l.UserId == u.Id).Sum(l => (long?)l.SecondsSpent) ?? 0,
+                        TaskCount = logQuery.Where(l => l.UserId == u.Id).Select(l => l.TaskId).Distinct().Count()
+                    }).Where(u => u.TotalSeconds > 0)
+                );
+
+                foreach (var stat in userStats)
+                {
+                    result.Personnel.Add(new PersonnelEfficiencyDto
+                    {
+                        UserName = stat.UserName ?? "Bilinmeyen Kullanıcı",
+                        TotalSeconds = stat.TotalSeconds,
+                        TaskCount = stat.TaskCount
+                    });
                 }
 
-                Logger.LogInformation("Dashboard istatistikleri basariyla hesaplandi. Proje: {ProjectCount}, Personel: {UserCount}", result.Projects.Count, result.Personnel.Count);
+                Logger.LogInformation("Dashboard istatistikleri başarıyla hesaplandı. Proje: {ProjectCount}, Personel: {UserCount}", result.Projects.Count, result.Personnel.Count);
 
                 // 3. Tenant ROI Analizi
                 var tenantGroups = result.Projects
