@@ -4,6 +4,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
+using Polly;
 using Volo.Abp.BackgroundJobs;
 using Volo.Abp.DependencyInjection;
 using Volo.Abp.Domain.Repositories;
@@ -66,39 +67,60 @@ public class WebhookSenderJob : AsyncBackgroundJob<WebhookSenderJobArgs>, ITrans
         int responseCode = 0;
         string? responseBody = null;
         bool isSuccess = false;
+        int tryCount = 1;
+
+        // GAP-008: Üstel Geri Çekilme (Exponential Backoff) ile Retry Stratejisi
+        var retryPolicy = Policy
+            .Handle<Exception>()
+            .WaitAndRetryAsync(
+                retryCount: 3, // Maksimum 3 kez tekrar dene
+                sleepDurationProvider: attempt => TimeSpan.FromSeconds(Math.Pow(2, attempt)), // 2, 4, 8 saniye bekle
+                onRetry: (exception, timeSpan, attempt, context) =>
+                {
+                    tryCount = attempt + 1;
+                    _logger.LogWarning(
+                        exception,
+                        "Webhook isteği başarısız oldu. Hedef: {TargetUrl}. {Delay}sn sonra yeniden denenecek. (Deneme: {Attempt}/3)",
+                        subscription.TargetUrl, timeSpan.TotalSeconds, attempt);
+                });
 
         try
         {
-            using var client = _httpClientFactory.CreateClient("WebhookClient");
-            using var request = new HttpRequestMessage(HttpMethod.Post, subscription.TargetUrl);
-
-            request.Content = new StringContent(payload, Encoding.UTF8, "application/json");
-            request.Headers.Add(WebhookConsts.SignatureHeaderName, signature);
-
-            using var httpResponse = await client.SendAsync(request);
-
-            responseCode = (int)httpResponse.StatusCode;
-            responseBody = await httpResponse.Content.ReadAsStringAsync();
-
-            // Truncate response body for storage
-            if (responseBody?.Length > WebhookConsts.MaxResponseBodyLength)
+            await retryPolicy.ExecuteAsync(async () =>
             {
-                responseBody = responseBody[..WebhookConsts.MaxResponseBodyLength];
-            }
+                using var client = _httpClientFactory.CreateClient("WebhookClient");
+                using var request = new HttpRequestMessage(HttpMethod.Post, subscription.TargetUrl);
 
-            isSuccess = httpResponse.IsSuccessStatusCode;
+                request.Content = new StringContent(payload, Encoding.UTF8, "application/json");
+                request.Headers.Add(WebhookConsts.SignatureHeaderName, signature);
+
+                using var httpResponse = await client.SendAsync(request);
+
+                responseCode = (int)httpResponse.StatusCode;
+                responseBody = await httpResponse.Content.ReadAsStringAsync();
+
+                if (responseBody?.Length > WebhookConsts.MaxResponseBodyLength)
+                {
+                    responseBody = responseBody[..WebhookConsts.MaxResponseBodyLength];
+                }
+
+                isSuccess = httpResponse.IsSuccessStatusCode;
+
+                // Polly'nin 500 hatalarında da tekrar denemesi için HTTP seviyesi hata fırlatılır
+                httpResponse.EnsureSuccessStatusCode(); 
+            });
 
             _logger.LogInformation(
-                "Webhook gönderildi. SubscriptionId: {SubscriptionId}, StatusCode: {StatusCode}, Success: {IsSuccess}",
-                subscription.Id, responseCode, isSuccess);
+                "Webhook başarıyla gönderildi. SubscriptionId: {SubscriptionId}, StatusCode: {StatusCode}, Success: {IsSuccess}, Toplam Deneme: {TryCount}",
+                subscription.Id, responseCode, isSuccess, tryCount);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex,
-                "Webhook gönderimi sırasında hata oluştu. SubscriptionId: {SubscriptionId}, TargetUrl: {TargetUrl}",
+                "Webhook maksimum deneme sonrasında da gönderilemedi. SubscriptionId: {SubscriptionId}, TargetUrl: {TargetUrl}",
                 subscription.Id, subscription.TargetUrl);
 
-            responseBody = ex.Message;
+            responseBody ??= ex.Message;
         }
 
         // Log the delivery attempt
@@ -108,7 +130,7 @@ public class WebhookSenderJob : AsyncBackgroundJob<WebhookSenderJobArgs>, ITrans
             payload,
             responseCode,
             responseBody,
-            tryCount: 1,
+            tryCount,
             isSuccess
         );
 
