@@ -17,8 +17,8 @@ public class DraftTaskItem : FullAuditedAggregateRoot<Guid>, IMultiTenant
     // Hangi import işleminden (batch) geldiği (Örn: "Toplantı.pdf" yüklemesi)
     public Guid ImportBatchId { get; private set; }
 
-    public string Title { get; private set; }
-    public string Description { get; private set; }
+    public string Title { get; private set; } = null!;
+    public string? Description { get; private set; }
     public TaskPriority Priority { get; private set; }
     public double EstimatedHours { get; private set; }
     

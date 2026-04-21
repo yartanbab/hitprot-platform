@@ -13,8 +13,8 @@ namespace Apya.Platform.Tasks;
 public class TaskItem : FullAuditedAggregateRoot<Guid>, IMultiTenant
 {
     public Guid? TenantId { get; set; }
-    public string Title { get; private set; }
-    public string Description { get; private set; }
+    public string Title { get; private set; } = null!;
+    public string? Description { get; private set; }
 
     // --- Zamanlama ---
     public DateTime StartDate { get; private set; }
@@ -33,11 +33,11 @@ public class TaskItem : FullAuditedAggregateRoot<Guid>, IMultiTenant
 
     // --- İlişkiler ---
     public Guid? AssigneeId { get; private set; }
-    public virtual IdentityUser Assignee { get; set; }
+    public virtual IdentityUser? Assignee { get; set; }
 
     // --- Alt Görevler ---
     public Guid? ParentTaskId { get; private set; }
-    public virtual TaskItem ParentTask { get; set; }
+    public virtual TaskItem? ParentTask { get; set; }
     public virtual ICollection<TaskItem> SubTasks { get; set; }
 
     public virtual ICollection<TaskComment> Comments { get; set; }
@@ -59,7 +59,7 @@ public class TaskItem : FullAuditedAggregateRoot<Guid>, IMultiTenant
         string title,
         Guid? projectId = null,
         Guid? parentTaskId = null,
-        string description = null,
+        string? description = null,
         DateTime? startDate = null,
         DateTime? dueDate = null,
         TaskPriority priority = TaskPriority.Medium,

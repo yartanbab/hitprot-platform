@@ -22,10 +22,10 @@ public class ProjectManager : DomainService
         decimal totalBudget = 0,
         decimal hourlyRate = 0,
         string currency = "TRY",
-        string purpose = null,
-        string duration = null,
-        string targetAudience = null,
-        string activities = null,
+        string? purpose = null,
+        string? duration = null,
+        string? targetAudience = null,
+        string? activities = null,
         DateTime? startDate = null,
         DateTime? endDate = null)
     {

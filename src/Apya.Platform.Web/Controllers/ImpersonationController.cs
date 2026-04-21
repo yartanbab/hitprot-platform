@@ -71,12 +71,13 @@ public class ImpersonationController : AbpController
     [HttpPost("BackToImpersonator")]
     public async Task<IActionResult> BackToImpersonatorAsync()
     {
-        if (!CurrentUser.FindImpersonatorUserId().HasValue)
+        var impersonatorUserIdOrNull = CurrentUser.FindImpersonatorUserId();
+        if (!impersonatorUserIdOrNull.HasValue)
         {
             throw new UnauthorizedAccessException("Zaten kendi hesanizdasiniz.");
         }
 
-        var impersonatorUserId = CurrentUser.FindImpersonatorUserId().Value;
+        var impersonatorUserId = impersonatorUserIdOrNull.Value;
         
         // Host'a dön (TenantId = null)
         using (CurrentTenant.Change(null))

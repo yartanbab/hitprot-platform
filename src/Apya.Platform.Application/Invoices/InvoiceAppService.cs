@@ -141,7 +141,7 @@ public class InvoiceAppService : ApplicationService, IInvoiceAppService
         }).ToList());
     }
 
-    private InvoiceDto MapToDto(Invoice x, Project project)
+    private InvoiceDto MapToDto(Invoice x, Project? project)
     {
         return new InvoiceDto
         {

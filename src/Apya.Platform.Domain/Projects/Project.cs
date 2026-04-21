@@ -21,10 +21,10 @@ public class Project : FullAuditedAggregateRoot<Guid>, IMultiTenant
 
     public string Description { get; set; }
 
-    public string Purpose { get; set; } // Amacı
-    public string Duration { get; set; } // Süresi
-    public string TargetAudience { get; set; } // Hedef Kitlesi
-    public string Activities { get; set; } // Faaliyetleri
+    public string Purpose { get; set; } = null!; // Amacı
+    public string Duration { get; set; } = null!; // Süresi
+    public string TargetAudience { get; set; } = null!; // Hedef Kitlesi
+    public string Activities { get; set; } = null!; // Faaliyetleri
 
     public DateTime? StartDate { get; set; }
     public DateTime? EndDate { get; set; }
@@ -56,10 +56,10 @@ public class Project : FullAuditedAggregateRoot<Guid>, IMultiTenant
         decimal totalBudget = 0,
         decimal hourlyRate = 0,
         string currency = "TRY",
-        string purpose = null,
-        string duration = null,
-        string targetAudience = null,
-        string activities = null,
+        string? purpose = null,
+        string? duration = null,
+        string? targetAudience = null,
+        string? activities = null,
         DateTime? startDate = null,
         DateTime? endDate = null)
         : base(id)

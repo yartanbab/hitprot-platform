@@ -42,13 +42,12 @@ public class TaskDeadlineWorker : AsyncPeriodicBackgroundWorkerBase
         List<TaskItem> dueTasks;
 
         // 1. Tüm tenant'lardaki görevleri okuyabilmek için filtreyi geçici olarak devre dışı bırak
-        using (dataFilter.Disable<IMultiTenant>())
+        using (dataFilter.Disable())
         {
             var query = await taskRepository.GetQueryableAsync();
             dueTasks = query
                 .Where(t => t.Status != Apya.Platform.Tasks.TaskStatus.Done && t.Status != Apya.Platform.Tasks.TaskStatus.Cancelled)
-                .Where(t => t.DueDate.HasValue)
-                .Where(t => t.DueDate.Value > now && t.DueDate.Value <= limitDate)
+                .Where(t => t.DueDate != null && t.DueDate > now && t.DueDate <= limitDate)
                 .Where(t => !t.IsDeadlineWarningSent)
                 .ToList();
         }

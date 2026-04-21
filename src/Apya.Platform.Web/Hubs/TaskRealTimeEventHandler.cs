@@ -35,13 +35,6 @@ public class TaskRealTimeEventHandler : ILocalEventHandler<TaskStatusChangedEto>
             "ReceiveTaskStatusUpdate", 
             eventData.TaskId, 
             eventData.NewStatus.ToString());
-            
-        // You can also notify a global project board group if needed:
-        if (eventData.ProjectId.HasValue)
-        {
-            await _taskHubContext.Clients.Group($"Project_{eventData.ProjectId.Value}").SendAsync(
-                "ReceiveTaskUpdate",
-                eventData.TaskId);
-        }
+        // TODO: Proje bazlı yayın istenirse TaskStatusChangedEto içerisine ProjectId eklenmelidir.
     }
 }

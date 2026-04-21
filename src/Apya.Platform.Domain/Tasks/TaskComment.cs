@@ -6,7 +6,7 @@ namespace Apya.Platform.Tasks
     public class TaskComment : FullAuditedEntity<Guid>
     {
         public Guid TaskId { get; set; } // Hangi göreve ait?
-        public string Text { get; set; } // Yorum içeriği
+        public string Text { get; set; } = null!; // Yorum içeriği
 
         // Constructor
         public TaskComment() { }

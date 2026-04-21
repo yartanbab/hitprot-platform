@@ -13,7 +13,7 @@ namespace Apya.Platform.Web.Pages.Tasks.Drafts;
 public class ImportModalModel : AbpPageModel
 {
     [BindProperty]
-    public ImportPdfViewModel PdfInput { get; set; }
+    public ImportPdfViewModel PdfInput { get; set; } = null!;
 
     private readonly IDraftTaskAppService _draftTaskAppService;
     private readonly IWebHostEnvironment _env;
@@ -76,6 +76,6 @@ public class ImportModalModel : AbpPageModel
     {
         [Required]
         [Display(Name = "Proje Yönergesi veya Dosyası (PDF)")]
-        public IFormFile File { get; set; }
+        public IFormFile File { get; set; } = null!;
     }
 }

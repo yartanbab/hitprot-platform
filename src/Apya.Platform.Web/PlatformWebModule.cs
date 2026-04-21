@@ -121,7 +121,7 @@ public class PlatformWebModule : AbpModule
         Configure<Volo.Abp.Auditing.AbpAuditingOptions>(options =>
         {
             options.EntityHistorySelectors.Add(
-                new Volo.Abp.Auditing.NamedTypeSelector(
+                new Volo.Abp.NamedTypeSelector(
                     "SensitiveEntities",
                     type => typeof(Apya.Platform.Tasks.TaskItem).IsAssignableFrom(type) ||
                             typeof(Apya.Platform.DynamicAssets.AppDocument).IsAssignableFrom(type)
