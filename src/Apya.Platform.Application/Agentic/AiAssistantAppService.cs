@@ -11,6 +11,8 @@ using Volo.Abp.Domain.Repositories;
 using Apya.Platform.Agentic.Dtos;
 using Apya.Platform.DynamicAssets;
 using Apya.Platform.DynamicAssets.Dtos;
+using Apya.Platform.Agentic.Plugins;
+using Apya.Platform.Tasks;
 
 namespace Apya.Platform.Agentic;
 
@@ -25,17 +27,23 @@ public class AiAssistantAppService : PlatformAppService, IAiAssistantAppService
     private readonly ITemplateAppService _templateAppService;
     private readonly IRepository<AppResponse, Guid> _responseRepository;
     private readonly IAppDocumentRepository _documentRepository;
+    private readonly IRepository<TaskItem, Guid> _taskRepository;
+    private readonly Volo.Abp.Timing.IClock _clock;
 
     public AiAssistantAppService(
         Kernel kernel,
         ITemplateAppService templateAppService,
         IRepository<AppResponse, Guid> responseRepository,
-        IAppDocumentRepository documentRepository)
+        IAppDocumentRepository documentRepository,
+        IRepository<TaskItem, Guid> taskRepository,
+        Volo.Abp.Timing.IClock clock)
     {
         _kernel = kernel;
         _templateAppService = templateAppService;
         _responseRepository = responseRepository;
         _documentRepository = documentRepository;
+        _taskRepository = taskRepository;
+        _clock = clock;
     }
 
     public async Task<AgentResponseDto> GenerateFormFromPromptAsync(AgentPromptDto input)
@@ -138,6 +146,38 @@ Yanıtın doğrudan Türkçe ve 3 maddelik bir liste olmalıdır.";
         return new AgentResponseDto
         {
             Result = result.Content ?? "Analiz tamamlanamadı."
+        };
+    }
+
+    public async Task<AgentResponseDto> RunPlanAsync(string goal)
+    {
+        // 1. Create a planner/execution setting that allows AI to auto-invoke native plugins
+        var executionSettings = new OpenAIPromptExecutionSettings
+        {
+            ToolCallBehavior = ToolCallBehavior.AutoInvokeKernelFunctions
+        };
+
+        // 2. Clone the kernel so we don't dirty the singleton/scoped kernel with ad-hoc plugins
+        var localKernel = _kernel.Clone();
+
+        // 3. Register our Task Automation skills
+        localKernel.ImportPluginFromObject(new TasksPlugin(_taskRepository, _clock), "TasksPlugin");
+
+        var chatCompletionService = localKernel.GetRequiredService<IChatCompletionService>();
+
+        var systemPrompt = @"Sen Apya platformunun 'Akıllı Görev Otomasyonu' özellikli yapay zeka asistanısın.
+Sana verilen eklentileri (plugins) dilediğin gibi çağırabilirsin. 
+Amacın, kullanıcıların hedeflerine ulaşmasını sağlamak adına elindeki araçları uçtan uca çalıştırarak en iyi sonucu vermektir.";
+
+        var chatHistory = new ChatHistory(systemPrompt);
+        chatHistory.AddUserMessage(goal);
+
+        // 4. Let Kernel Planner auto-orchestrate the steps
+        var result = await chatCompletionService.GetChatMessageContentAsync(chatHistory, executionSettings, kernel: localKernel);
+
+        return new AgentResponseDto
+        {
+            Result = result.Content ?? "Plan tamamlanamadı."
         };
     }
 }

@@ -23,4 +23,10 @@ public interface IAiAssistantAppService : IApplicationService
     /// and extracts a 3-point summary and trends for the admin.
     /// </summary>
     Task<AgentResponseDto> AnalyzeResponsesAsync(Guid documentId);
+
+    /// <summary>
+    /// Orchestrates a multi-step plan using Semantic Kernel to achieve a user-defined goal.
+    /// E.g., "Find all overdue tasks and summarize them".
+    /// </summary>
+    Task<AgentResponseDto> RunPlanAsync(string goal);
 }
