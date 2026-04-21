@@ -77,13 +77,14 @@ public class TemplateAppService : PlatformAppService, ITemplateAppService
 
         queryable = queryable.Where(d => d.IsTemplate);
 
-        var totalCount = queryable.Count();
+        var totalCount = await AsyncExecuter.CountAsync(queryable);
 
-        var items = queryable
+        var query = queryable
             .OrderByDescending(d => d.CreationTime)
             .Skip(input.SkipCount)
-            .Take(input.MaxResultCount)
-            .ToList();
+            .Take(input.MaxResultCount);
+
+        var items = await AsyncExecuter.ToListAsync(query);
 
         var dtos = ObjectMapper.Map<List<AppDocument>, List<DocumentDto>>(items);
 
