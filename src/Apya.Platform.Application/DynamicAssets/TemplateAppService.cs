@@ -65,7 +65,7 @@ public class TemplateAppService : PlatformAppService, ITemplateAppService
 
         if (!document.IsTemplate)
         {
-            throw new UserFriendlyException("Bu kayıt bir şablon değildir.");
+            throw new UserFriendlyException("Bu kayıt bir şablon değildir.", code: PlatformDomainErrorCodes.DocumentNotATemplate);
         }
 
         return ObjectMapper.Map<AppDocument, DocumentDto>(document);
@@ -96,7 +96,7 @@ public class TemplateAppService : PlatformAppService, ITemplateAppService
 
         if (!document.IsTemplate)
         {
-            throw new UserFriendlyException("Bu kayıt bir şablon değildir.");
+            throw new UserFriendlyException("Bu kayıt bir şablon değildir.", code: PlatformDomainErrorCodes.DocumentNotATemplate);
         }
 
         await _documentRepository.DeleteAsync(id);
