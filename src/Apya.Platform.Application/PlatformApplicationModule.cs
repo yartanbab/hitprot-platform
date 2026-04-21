@@ -1,4 +1,4 @@
-﻿using Volo.Abp.Account;
+using Volo.Abp.Account;
 using Volo.Abp.AutoMapper;
 using Volo.Abp.FeatureManagement;
 using Volo.Abp.Identity;
@@ -28,6 +28,12 @@ public class PlatformApplicationModule : AbpModule
         {
             // PROJE İÇİNDEKİ MAPPING PROFİLLERİNİ TARA VE YÜKLE
             options.AddMaps<PlatformApplicationModule>();
+        });
+
+        // GAP-011: ABAC İzin Yönetimi Entegrasyonu
+        Configure<Volo.Abp.Authorization.Permissions.AbpPermissionOptions>(options =>
+        {
+            options.ValueProviders.Add<Apya.Platform.Permissions.AiAttributePermissionValueProvider>();
         });
     }
 }
