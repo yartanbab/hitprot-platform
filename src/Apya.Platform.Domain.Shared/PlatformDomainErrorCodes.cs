@@ -17,6 +17,9 @@ public static class PlatformDomainErrorCodes
     // --- Proje (Project) Modülü ---
     public const string ProjectNotFound = "Platform:Project:NotFound";
     public const string ProjectCodeAlreadyExists = "Platform:Project:CodeAlreadyExists";
+    public const string ProjectNameRequired = "Platform:Project:NameRequired";
+    public const string ProjectBudgetInvalid = "Platform:Project:BudgetInvalid";
+    public const string ProjectScheduleInvalid = "Platform:Project:ScheduleInvalid";
 
     // --- Dosya (File) Modülü ---
     public const string FileUnsupportedExtension = "Platform:File:UnsupportedExtension";

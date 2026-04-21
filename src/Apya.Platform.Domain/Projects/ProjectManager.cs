@@ -1,28 +1,51 @@
-﻿using System;
+using System;
 using System.Threading.Tasks;
 using Volo.Abp.Domain.Services;
 
 namespace Apya.Platform.Projects;
 
+/// <summary>
+/// Domain Service responsible for creating and validating Project entities.
+/// REV-GAP001: All fields are set before the entity leaves this service.
+/// </summary>
 public class ProjectManager : DomainService
 {
-    // Proje oluşturma işini yapan ana metodumuz
+    /// <summary>
+    /// Creates a fully initialized Project entity.
+    /// All domain rules are enforced within the entity's constructor and domain methods.
+    /// </summary>
     public Task<Project> CreateAsync(
-        Guid? grantId, // <-- İŞTE BURAYA SORU İŞARETİ EKLENDİ
+        Guid? grantId,
         string name,
         string code,
-        string description)
+        string description,
+        decimal totalBudget = 0,
+        decimal hourlyRate = 0,
+        string currency = "TRY",
+        string purpose = null,
+        string duration = null,
+        string targetAudience = null,
+        string activities = null,
+        DateTime? startDate = null,
+        DateTime? endDate = null)
     {
-        // Yeni projeyi oluştur
         var project = new Project(
             GuidGenerator.Create(),
             grantId,
             name,
             code,
-            description
+            description,
+            totalBudget,
+            hourlyRate,
+            currency,
+            purpose,
+            duration,
+            targetAudience,
+            activities,
+            startDate,
+            endDate
         );
 
-        // Geri döndür (Task.FromResult asenkron metodlar için sarmalayıcıdır)
         return Task.FromResult(project);
     }
 }

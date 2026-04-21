@@ -54,14 +54,23 @@ public class ProjectAppService :
         _tenantStore = tenantStore;
     }
 
-    // --- CREATE ---
+    // --- CREATE --- REV-GAP001: Tüm alanlar INSERT öncesinde set edilir
     public override async Task<ProjectDto> CreateAsync(CreateProjectDto input)
     {
         var project = await _projectManager.CreateAsync(
             input.GrantId,
             input.Name,
             input.Code,
-            input.Description ?? ""
+            input.Description ?? "",
+            input.TotalBudget,
+            input.HourlyRate,
+            input.Currency,
+            input.Purpose,
+            input.Duration,
+            input.TargetAudience,
+            input.Activities,
+            input.StartDate,
+            input.EndDate
         );
 
         if (CurrentTenant.Id == null && input.TenantId.HasValue)
@@ -70,20 +79,7 @@ public class ProjectAppService :
         }
 
         await Repository.InsertAsync(project);
-        
-        project.TotalBudget = input.TotalBudget;
-        project.HourlyRate = input.HourlyRate;
-        project.Currency = input.Currency;
-        
-        // YENİ ALANLAR:
-        project.Purpose = input.Purpose;
-        project.Duration = input.Duration;
-        project.TargetAudience = input.TargetAudience;
-        project.Activities = input.Activities;
-        
-        project.StartDate = input.StartDate;
-        project.EndDate = input.EndDate;
-        
+
         return ObjectMapper.Map<Project, ProjectDto>(project);
     }
 
