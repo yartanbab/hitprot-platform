@@ -1,0 +1,233 @@
+import React, { useState } from 'react';
+import { createRoot } from 'react-dom/client';
+import './index.css';
+
+// --- Premium İkonlar ---
+const IconTrash = () => <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>;
+const IconUp = () => <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M5 15l7-7 7 7" /></svg>;
+const IconDown = () => <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>;
+const IconPlus = () => <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>;
+
+// --- Şablon Oluşturucu (TemplateBuilder) Bileşeni ---
+const TemplateBuilder = () => {
+    const [title, setTitle] = useState("");
+    const [blocks, setBlocks] = useState([]);
+    const [isSaving, setIsSaving] = useState(false);
+
+    const AVAILABLE_BLOCKS = [
+        { type: 'TextInput', label: 'Metin Kutusu', defaultContent: 'Kısa Yanıt' },
+        { type: 'NumberInput', label: 'Sayısal Girdi', defaultContent: 'Sayısal Değer' },
+        { type: 'Select', label: 'Açılır Liste', defaultContent: 'Lütfen Birini Seçin' },
+        { type: 'Rating', label: 'Derecelendirme', defaultContent: 'Memnuniyet Puanı' },
+    ];
+
+    const addBlock = (type, content) => {
+        const newBlock = {
+            id: Math.random().toString(36).substr(2, 9),
+            type,
+            order: blocks.length + 1,
+            content,
+            settings: type === 'Select' ? { options: ['Seçenek 1', 'Seçenek 2'], required: false } : { required: false },
+        };
+        setBlocks([...blocks, newBlock]);
+    };
+
+    const removeBlock = (id) => {
+        setBlocks(blocks.filter((b) => b.id !== id).map((b, idx) => ({ ...b, order: idx + 1 })));
+    };
+
+    const moveBlock = (index, direction) => {
+        if (direction === 'up' && index === 0) return;
+        if (direction === 'down' && index === blocks.length - 1) return;
+
+        const newBlocks = [...blocks];
+        const targetIndex = direction === 'up' ? index - 1 : index + 1;
+        
+        [newBlocks[index], newBlocks[targetIndex]] = [newBlocks[targetIndex], newBlocks[index]];
+        setBlocks(newBlocks.map((b, idx) => ({ ...b, order: idx + 1 })));
+    };
+
+    const updateBlockContent = (id, newContent) => {
+        setBlocks(blocks.map((b) => b.id === id ? { ...b, content: newContent } : b));
+    };
+
+    const handleSave = () => {
+        if (!title.trim()) {
+            window.abp.message.warn("Lütfen formunuza şık bir başlık verin!", "Başlık Eksik");
+            return;
+        }
+        if (blocks.length === 0) {
+            window.abp.message.warn("Forma henüz hiçbir soru eklemediniz. Lütfen sol menüden blok seçin.", "Sorular Eksik");
+            return;
+        }
+
+        setIsSaving(true);
+
+        const safeSlug = title.trim().toLowerCase()
+            .replace(/ğ/g, 'g').replace(/ü/g, 'u').replace(/ş/g, 's')
+            .replace(/ı/g, 'i').replace(/ö/g, 'o').replace(/ç/g, 'c')
+            .replace(/[^a-z0-9-]/g, '-')
+            .replace(/-+/g, '-') + '-' + Math.random().toString(36).substr(2, 6);
+
+        const payload = {
+            title: title,
+            slug: safeSlug,
+            blocks: blocks.map(b => {
+                let typeEnum = 0;
+                if (b.type === 'NumberInput') typeEnum = 1;
+                else if (b.type === 'Select') typeEnum = 2;
+                else if (b.type === 'Rating') typeEnum = 4;
+
+                return {
+                    type: typeEnum,
+                    order: b.order,
+                    content: b.content || 'İsimsiz Soru',
+                    settings: JSON.stringify(b.settings || {})
+                };
+            })
+        };
+
+        window.abp.ajax({
+            type: 'POST',
+            url: '/api/app/template',
+            data: JSON.stringify(payload)
+        }).then(function (result) {
+            window.abp.notify.success("Şablon başarıyla veritabanına kaydedildi!", "Tebrikler");
+            setTitle("");
+            setBlocks([]);
+            setIsSaving(false);
+        }).catch(function (error) {
+            let errorMsg = (error && error.message) ? error.message : 'Şablon kaydedilirken bir hata oluştu.';
+            window.abp.message.error(errorMsg, "Hata");
+            setIsSaving(false);
+        });
+    };
+
+    return (
+        <div className="relative flex h-full min-h-[calc(100vh-80px)] bg-slate-50 overflow-hidden rounded-tl-3xl shadow-inner text-slate-800">
+            <div className="absolute top-[-10%] left-[10%] w-96 h-96 bg-purple-400 rounded-full mix-blend-multiply filter blur-[100px] opacity-20 animate-blob"></div>
+            <div className="absolute top-[20%] right-[10%] w-[500px] h-[500px] bg-indigo-400 rounded-full mix-blend-multiply filter blur-[120px] opacity-20 animate-blob" style={{ animationDelay: '2s' }}></div>
+            <div className="absolute bottom-[-10%] left-[30%] w-[400px] h-[400px] bg-blue-300 rounded-full mix-blend-multiply filter blur-[100px] opacity-20 animate-blob" style={{ animationDelay: '4s' }}></div>
+
+            <div className="relative w-80 bg-white/60 backdrop-blur-3xl border-r border-white/50 p-8 flex flex-col gap-8 shadow-[10px_0_30px_rgba(0,0,0,0.02)] z-10">
+                <div>
+                    <h3 className="text-xs font-bold text-indigo-500 tracking-widest uppercase mb-1">Araç Kutusu</h3>
+                    <p className="text-2xl font-extrabold tracking-tight text-slate-900 border-b-2 border-indigo-100 pb-4 inline-block">Yapı Taşları</p>
+                </div>
+                
+                <div className="flex flex-col gap-3">
+                    {AVAILABLE_BLOCKS.map((item) => (
+                        <button
+                            key={item.type}
+                            onClick={() => addBlock(item.type, item.defaultContent)}
+                            disabled={isSaving}
+                            className="group flex items-center gap-4 w-full p-4 bg-white/70 border border-white rounded-[1.25rem] hover:bg-gradient-to-r hover:from-white hover:to-indigo-50/50 hover:border-indigo-100/80 shadow-sm hover:shadow-[0_8px_20px_rgba(99,102,241,0.08)] transition-all duration-300 ease-out hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            <div className="p-2.5 bg-gradient-to-br from-indigo-100 to-indigo-50 text-indigo-600 rounded-xl group-hover:scale-110 group-hover:from-indigo-500 group-hover:to-indigo-600 group-hover:text-white transition-all duration-300 shadow-sm">
+                                <IconPlus />
+                            </div>
+                            <span className="font-bold text-[15px] text-slate-700 group-hover:text-indigo-950 transition-colors">{item.label}</span>
+                        </button>
+                    ))}
+                </div>
+            </div>
+
+            <div className="relative flex-1 p-12 overflow-y-auto z-10 scroll-smooth">
+                <div className="flex justify-between items-center max-w-4xl mx-auto mb-12">
+                    <div>
+                        <h2 className="text-[2.5rem] leading-tight font-black bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 via-purple-600 to-blue-500">
+                            Dinamik Şablon Motoru
+                        </h2>
+                        <p className="text-slate-500 font-semibold mt-2 flex items-center gap-2">
+                            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> Sistemi inşa eden gelecek nesil arayüz
+                        </p>
+                    </div>
+                    <button 
+                        onClick={handleSave}
+                        disabled={isSaving}
+                        className="relative inline-flex items-center justify-center p-0.5 overflow-hidden text-sm font-medium rounded-2xl group bg-gradient-to-br from-indigo-500 to-purple-600 hover:text-white focus:ring-4 focus:outline-none focus:ring-indigo-300 hover:shadow-[0_10px_25px_rgba(99,102,241,0.3)] transition-all duration-300 hover:-translate-y-1 disabled:opacity-50 disabled:hover:-translate-y-0 disabled:cursor-not-allowed"
+                    >
+                        <span className="relative px-8 py-3.5 transition-all ease-in duration-200 bg-white rounded-[14px] group-hover:bg-opacity-0 text-slate-800 group-hover:text-white font-bold tracking-wide text-[15px] flex items-center gap-2">
+                            {isSaving ? (
+                                <span>
+                                    <svg className="animate-spin h-5 w-5 text-current inline-block mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                                    Kaydediliyor...
+                                </span>
+                            ) : (
+                                "Taslağı Canlıya Al"
+                            )}
+                        </span>
+                    </button>
+                </div>
+
+
+                <div className="max-w-4xl mx-auto bg-white/70 backdrop-blur-2xl rounded-[2.5rem] shadow-[0_10px_40px_rgba(0,0,0,0.03)] border border-white p-14 relative overflow-hidden group/canvas">
+                    
+                    <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-indigo-500/5 to-purple-500/5 rounded-bl-full -z-10 group-hover/canvas:scale-110 transition-transform duration-700"></div>
+
+                    <input
+                        type="text"
+                        className="w-full text-5xl font-black bg-transparent border-none p-0 focus:ring-0 text-slate-900 placeholder-slate-300/80 mb-14 border-b-[3px] border-slate-100 hover:border-slate-200 focus:border-indigo-500 pb-5 transition-all focus:outline-none"
+                        value={title}
+                        onChange={(e) => setTitle(e.target.value)}
+                        placeholder="Müşteri Formu Başlığı..."
+                    />
+
+                    {blocks.length === 0 ? (
+                        <div className="text-center py-28 px-4 bg-slate-50/50 border-2 border-dashed border-slate-200/80 rounded-[2.5rem] animate-fade-in hover:bg-slate-50 hover:border-indigo-300/50 transition-all duration-500 cursor-pointer">
+                            <div className="inline-flex items-center justify-center w-24 h-24 rounded-full bg-white shadow-[0_10px_30px_rgba(0,0,0,0.05)] mb-8">
+                                <svg className="w-10 h-10 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 002-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>
+                            </div>
+                            <h3 className="text-3xl text-slate-800 font-extrabold mb-3 tracking-tight">Ekrana bir şey sürükleyin</h3>
+                            <p className="text-slate-400 font-semibold text-lg">Mucize yaratmak için sol paneli kullanın.</p>
+                        </div>
+                    ) : (
+                        <div className="flex flex-col gap-8">
+                        {blocks.map((block, idx) => (
+                            <div key={block.id} className="group/block relative bg-white border border-slate-100/80 rounded-[2rem] p-10 hover:border-indigo-200 hover:shadow-[0_12px_40px_rgba(99,102,241,0.06)] transition-all duration-400 animate-fade-in hover:-translate-y-1">
+                            
+                                {/* Aksiyon Barı */}
+                                <div className="absolute -top-5 -right-5 hidden group-hover/block:flex items-center gap-2 bg-slate-900 border border-slate-800 shadow-2xl rounded-2xl p-2 z-20 animate-fade-in">
+                                    <button onClick={() => moveBlock(idx, 'up')} className="p-2.5 hover:bg-slate-800 rounded-xl text-slate-300 hover:text-white transition-colors" title="Yukarı Taşı"><IconUp /></button>
+                                    <button onClick={() => moveBlock(idx, 'down')} className="p-2.5 hover:bg-slate-800 rounded-xl text-slate-300 hover:text-white transition-colors" title="Aşağı Taşı"><IconDown /></button>
+                                    <div className="w-px h-6 bg-slate-700 mx-1"></div>
+                                    <button onClick={() => removeBlock(block.id)} className="p-2.5 hover:bg-red-500/20 rounded-xl text-red-400 hover:text-red-300 transition-colors" title="Bileşeni Sil"><IconTrash /></button>
+                                </div>
+
+                                <div className="flex gap-4 items-start">
+                                    <div className="flex-1 w-full">
+                                        <div className="flex items-center justify-between mb-4">
+                                            <span className="inline-flex items-center px-4 py-1.5 rounded-full text-xs font-extrabold bg-gradient-to-r from-indigo-50 to-blue-50 text-indigo-600 uppercase tracking-widest border border-indigo-100/50">
+                                                {block.type}
+                                            </span>
+                                        </div>
+                                        <input
+                                            type="text"
+                                            value={block.content}
+                                            onChange={(e) => updateBlockContent(block.id, e.target.value)}
+                                            className="w-full font-extrabold text-slate-800 border-none p-0 focus:ring-0 text-2xl focus:outline-none mb-2 bg-transparent placeholder-slate-300"
+                                            placeholder="Buraya sorunuzu yazın..."
+                                        />
+                                    </div>
+                                </div>
+                                <div className="mt-8 pt-8 border-t border-slate-100">
+                                    {block.type === 'TextInput' && <input type="text" disabled className="w-full bg-slate-50/50 border-2 border-slate-100 rounded-2xl p-5 text-slate-400 font-semibold text-[15px]" placeholder="Kullanıcı metin girecek..." />}
+                                    {block.type === 'Select' && <select disabled className="w-full bg-slate-50/50 border-2 border-slate-100 rounded-2xl p-5 text-slate-400 font-semibold text-[15px] appearance-none"><option>Açılır liste görünümü...</option></select>}
+                                    {block.type === 'Rating' && <div className="flex gap-4">{[1,2,3,4,5].map(i => <div key={i} className="w-14 h-14 rounded-full border-2 border-slate-200 bg-white flex items-center justify-center text-slate-300 font-black text-xl shadow-sm">{i}</div>)}</div>}
+                                    {block.type === 'NumberInput' && <input type="number" disabled className="w-full bg-slate-50/50 border-2 border-slate-100 rounded-2xl p-5 text-slate-400 font-semibold text-[15px]" placeholder="Sayısal Değer..." />}
+                                </div>
+                            </div>
+                        ))}
+                        </div>
+                    )}
+                </div>
+            </div>
+        </div>
+    );
+};
+
+const rootElement = document.getElementById("dynamic-assets-app-root");
+if (rootElement) {
+    const root = createRoot(rootElement);
+    root.render(<TemplateBuilder />);
+}
