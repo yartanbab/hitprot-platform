@@ -82,7 +82,7 @@ Kullanıcının isteğine göre JSON formatında bir form şeması dönmelisin.
 
             if (createTemplateDto == null || string.IsNullOrWhiteSpace(createTemplateDto.Title))
             {
-                throw new UserFriendlyException("Yapay zeka geçerli bir form üretemedi.");
+                throw new UserFriendlyException("Yapay zeka geçerli bir form üretemedi.", code: PlatformDomainErrorCodes.AiFormGenerationFailed);
             }
 
             // 5. Agent TAKES ACTION: Directly updates the system by utilizing the core Feature AppService
@@ -95,7 +95,11 @@ Kullanıcının isteğine göre JSON formatında bir form şeması dönmelisin.
         }
         catch (JsonException ex)
         {
-            throw new UserFriendlyException($"Yapay zeka yanıtı sisteme uygun formatta deşifre edilemedi. Gelen JSON:\n{jsonResponse}", innerException: ex);
+            throw new UserFriendlyException(
+                "Yapay zeka yanıtı sisteme uygun formatta deşifre edilemedi.", 
+                code: PlatformDomainErrorCodes.AiFormParseFailed, 
+                details: $"Gelen JSON:\n{jsonResponse}", 
+                innerException: ex);
         }
     }
 

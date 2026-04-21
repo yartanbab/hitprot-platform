@@ -29,4 +29,6 @@ public static class PlatformDomainErrorCodes
     public const string DocumentSlugAlreadyExists = "Platform:DynamicAssets:SlugAlreadyExists";
     public const string DocumentBlockNotFound = "Platform:DynamicAssets:BlockNotFound";
     public const string DocumentTitleRequired = "Platform:DynamicAssets:TitleRequired";
+    public const string AiFormGenerationFailed = "Platform:DynamicAssets:AiFormGenerationFailed";
+    public const string AiFormParseFailed = "Platform:DynamicAssets:AiFormParseFailed";
 }
