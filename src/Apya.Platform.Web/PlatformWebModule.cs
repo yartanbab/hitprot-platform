@@ -117,6 +117,18 @@ public class PlatformWebModule : AbpModule
             options.Add(Volo.Abp.Ui.LayoutHooks.LayoutHooks.Body.First, typeof(Apya.Platform.Web.Components.ImpersonationAlert.ImpersonationAlertViewComponent));
         });
 
+        // GAP-012: Audit Logging Settings - Hassas entity'ler (Görevler ve Dinamik Formlar) izlenir
+        Configure<Volo.Abp.Auditing.AbpAuditingOptions>(options =>
+        {
+            options.EntityHistorySelectors.Add(
+                new Volo.Abp.Auditing.NamedTypeSelector(
+                    "SensitiveEntities",
+                    type => typeof(Apya.Platform.Tasks.TaskItem).IsAssignableFrom(type) ||
+                            typeof(Apya.Platform.DynamicAssets.AppDocument).IsAssignableFrom(type)
+                )
+            );
+        });
+
         ConfigureAuthentication(context);
         ConfigureUrls(configuration);
         ConfigureBundles(context);

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
@@ -23,6 +23,14 @@ public class Program
             .Enrich.FromLogContext()
             .WriteTo.Async(c => c.File("Logs/logs.txt"))
             .WriteTo.Async(c => c.Console())
+            // GAP-012: Audit Log'ların Elasticsearch'e Yönlendirilmesi (Kibana ile İzleme İçin)
+            .WriteTo.Elasticsearch(new Serilog.Sinks.Elasticsearch.ElasticsearchSinkOptions(new Uri("http://localhost:9200"))
+            {
+                AutoRegisterTemplate = true,
+                AutoRegisterTemplateVersion = Serilog.Sinks.Elasticsearch.AutoRegisterTemplateVersion.ESv7,
+                IndexFormat = "apya-platform-auditlogs-{0:yyyy.MM}",
+                MinimumLogEventLevel = LogEventLevel.Information
+            })
             .CreateLogger();
 
         try
