@@ -267,6 +267,7 @@ public class PlatformWebModule : AbpModule
         app.UseConfiguredEndpoints(endpoints =>
         {
             endpoints.MapHub<Apya.Platform.Web.Hubs.NotificationHub>("/notification-hub");
+            endpoints.MapHub<Apya.Platform.Web.Hubs.TaskHub>("/task-hub");
         });
     }
 }
