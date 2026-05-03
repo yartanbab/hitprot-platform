@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Apya PWA icon — viewBox 512x512, maskable safe-zone (centered, 80% area).
+  Brand mavi gradient + monogram "A". Tek dosya hem any hem maskable purpose.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="brand" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#3B82F6"/>
+      <stop offset="100%" stop-color="#1D4ED8"/>
+    </linearGradient>
+  </defs>
+  <!-- Maskable background (full-bleed) -->
+  <rect width="512" height="512" fill="url(#brand)"/>
+  <!-- Monogram A — safe-zone içinde (102-410) -->
+  <g fill="#FFFFFF">
+    <path d="M256 128 L380 384 H324 L296 320 H216 L188 384 H132 L256 128 Z M236 272 H276 L256 224 Z"/>
+  </g>
+</svg>

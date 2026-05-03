@@ -1,0 +1,37 @@
+{
+  "name": "Apya — Akıllı Proje Yönetimi",
+  "short_name": "Apya",
+  "description": "AI destekli proje, finans ve görev yönetimi platformu",
+  "start_url": "/Dashboard",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "lang": "tr",
+  "dir": "ltr",
+  "background_color": "#0F172A",
+  "theme_color": "#2563EB",
+  "categories": ["business", "productivity", "finance"],
+  "icons": [
+    {
+      "src": "/icons/apya-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Genel Bakış",
+      "short_name": "Bakış",
+      "url": "/Dashboard",
+      "description": "Bento dashboard"
+    },
+    {
+      "name": "Masraf Ekle",
+      "short_name": "Masraf",
+      "url": "/Expenses/Capture",
+      "description": "Mobil masraf yakalama"
+    }
+  ],
+  "prefer_related_applications": false
+}

@@ -5,7 +5,11 @@ import { QueryProvider } from './lib/api/QueryProvider';
 import { SignalRProvider } from './lib/realtime/SignalRProvider';
 import { BentoDashboard } from './dashboard/BentoDashboard';
 import { DashboardRealtimeBridge } from './dashboard/DashboardRealtimeBridge';
+import { registerServiceWorker } from './lib/pwa/registerServiceWorker';
 import './index.css';
+
+/* PWA — install + push handler. Sessizce çalışır, hata UI'a yansımaz. */
+registerServiceWorker();
 
 /**
  * Dashboard entry — Razor sayfasından mount edilir.
