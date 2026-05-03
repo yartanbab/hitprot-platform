@@ -70,6 +70,10 @@ function applyThemeToDocument(resolved) {
     } else {
         root.classList.remove('dark');
     }
+    /* LeptonX class mirror (APYA-100) — Razor sayfalarındaki .card / .table /
+       sidebar / topbar Apya theme'i takip eder. */
+    root.classList.remove('lpx-theme-light', 'lpx-theme-dark', 'lpx-theme-dim');
+    root.classList.add(resolved === 'dark' ? 'lpx-theme-dark' : 'lpx-theme-light');
 }
 
 export function ThemeProvider({ children, defaultPreference = DEFAULT_PREFERENCE }) {

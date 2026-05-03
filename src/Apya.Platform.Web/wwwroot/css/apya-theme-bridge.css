@@ -1,0 +1,121 @@
+/* =============================================================================
+   APYA Theme Bridge — Apya tokens ↔ Bootstrap (--bs-*) ↔ LeptonX (--lpx-*)
+   -----------------------------------------------------------------------------
+   Site-wide dark mode için. ThemeProvider <html data-theme="dark"> set eder;
+   bu CSS Bootstrap/LeptonX değişkenlerini override ederek Razor sayfalarındaki
+   .card, .btn, .table, navbar, sidebar dark görünür.
+
+   Yaklaşım: SADECE renk değişkenleri override edilir; layout/typography
+   LeptonX'in kendi yönetiminde kalır. Bu sayede LeptonX güncellemeleri
+   bridge'i kırmaz.
+
+   Lookup edilen değişkenler ABP LeptonX Lite v5 baz alındı; major version
+   geçişlerinde gözden geçirilmeli.
+   ============================================================================= */
+
+/* ----------------------------------------------------------------------------
+   LIGHT (default) — Bootstrap default'larını koruyoruz, sadece accent
+   bizim brand'imize çekilir. LeptonX brand mavi tonu Apya brand-500 ile uyumlu.
+   ---------------------------------------------------------------------------- */
+:root {
+    /* Bootstrap brand köprüsü */
+    --bs-primary: var(--apya-brand-500);
+    --bs-primary-rgb: 37, 99, 235;
+    --bs-link-color: var(--apya-brand-600);
+    --bs-link-hover-color: var(--apya-brand-700);
+
+    --bs-success: var(--apya-positive-500);
+    --bs-danger:  var(--apya-negative-500);
+    --bs-warning: var(--apya-warning-500);
+    --bs-info:    var(--apya-brand-400);
+}
+
+/* ----------------------------------------------------------------------------
+   DARK — Razor sayfalarının da koyu görünmesi için Bootstrap surface
+   değişkenleri ezilir.
+   ---------------------------------------------------------------------------- */
+[data-theme="dark"] {
+    /* Bootstrap surface */
+    --bs-body-bg:  var(--apya-surface-base);
+    --bs-body-color: var(--apya-text-primary);
+    --bs-emphasis-color: var(--apya-text-primary);
+    --bs-secondary-color: var(--apya-text-secondary);
+    --bs-tertiary-color:  var(--apya-text-tertiary);
+    --bs-tertiary-bg:     var(--apya-surface-sunken);
+    --bs-secondary-bg:    var(--apya-surface-raised);
+
+    --bs-border-color: var(--apya-border-default);
+    --bs-border-color-translucent: var(--apya-border-subtle);
+
+    /* Card / dropdown / list-group */
+    --bs-card-bg:        var(--apya-surface-raised);
+    --bs-card-color:     var(--apya-text-primary);
+    --bs-card-border-color: var(--apya-border-subtle);
+
+    --bs-dropdown-bg:    var(--apya-surface-elevated);
+    --bs-dropdown-color: var(--apya-text-primary);
+    --bs-dropdown-border-color: var(--apya-border-subtle);
+    --bs-dropdown-link-color: var(--apya-text-secondary);
+    --bs-dropdown-link-hover-bg: var(--apya-surface-raised);
+
+    --bs-list-group-bg: var(--apya-surface-raised);
+    --bs-list-group-color: var(--apya-text-primary);
+
+    /* Form controls */
+    --bs-form-control-bg: var(--apya-surface-base);
+    --bs-form-control-color: var(--apya-text-primary);
+    --bs-form-control-border-color: var(--apya-border-default);
+
+    /* Modal */
+    --bs-modal-bg: var(--apya-surface-elevated);
+    --bs-modal-color: var(--apya-text-primary);
+
+    /* Table */
+    --bs-table-bg: var(--apya-surface-raised);
+    --bs-table-color: var(--apya-text-primary);
+    --bs-table-border-color: var(--apya-border-subtle);
+    --bs-table-striped-bg: var(--apya-surface-base);
+    --bs-table-hover-bg: var(--apya-surface-elevated);
+
+    /* LeptonX surface köprüleri — sidebar, topbar, content */
+    --lpx-bg: var(--apya-surface-base);
+    --lpx-section-bg: var(--apya-surface-raised);
+    --lpx-content-bg: var(--apya-surface-base);
+    --lpx-card-bg: var(--apya-surface-raised);
+    --lpx-text-color: var(--apya-text-primary);
+    --lpx-text-color-secondary: var(--apya-text-secondary);
+    --lpx-text-color-tertiary: var(--apya-text-tertiary);
+    --lpx-border-color: var(--apya-border-default);
+
+    /* color-scheme — native form control'leri (date/select/scroll) dark olur */
+    color-scheme: dark;
+}
+
+/* LeptonX kendi class-based dark mode'u → Apya'nın data-theme'i SoT.
+   LeptonX class'ları varsa (lpx-theme-dark, lpx-theme-dim) tabaklarımız hala
+   geçerli kalsın diye OR selector. */
+.lpx-theme-dark,
+.lpx-theme-dim {
+    --bs-body-bg:  var(--apya-surface-base);
+    --bs-body-color: var(--apya-text-primary);
+}
+
+/* DataTables (mevcut sayfalar kullanıyor) — temel dark renk uyumu. */
+[data-theme="dark"] table.dataTable {
+    color: var(--apya-text-primary);
+}
+[data-theme="dark"] table.dataTable thead th,
+[data-theme="dark"] table.dataTable thead td {
+    border-bottom-color: var(--apya-border-default);
+    color: var(--apya-text-secondary);
+}
+[data-theme="dark"] .dataTables_wrapper .dataTables_paginate .paginate_button {
+    color: var(--apya-text-secondary) !important;
+}
+
+/* Card header gradient'leri override — LeptonX bazı yerlerde light gradient
+   kullanır, dark'ta düz surface'e indir. */
+[data-theme="dark"] .card-header {
+    background: var(--apya-surface-raised);
+    border-bottom-color: var(--apya-border-subtle);
+}
