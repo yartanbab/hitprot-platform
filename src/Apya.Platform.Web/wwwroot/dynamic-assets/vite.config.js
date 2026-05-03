@@ -67,6 +67,12 @@ export default defineConfig({
                         id.includes('node_modules/tailwind-merge/')) {
                         return 'ui-vendor';
                     }
+                    if (id.includes('node_modules/@tanstack/')) {
+                        return 'query-vendor';
+                    }
+                    if (id.includes('node_modules/@microsoft/signalr/')) {
+                        return 'signalr-vendor';
+                    }
                     return undefined;
                 },
             },

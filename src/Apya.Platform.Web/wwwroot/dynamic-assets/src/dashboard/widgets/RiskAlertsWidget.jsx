@@ -2,6 +2,7 @@ import React from 'react';
 import { WidgetShell } from './WidgetShell';
 import { Badge, Button } from '../../components/ui';
 import { cn } from '../../lib/utils';
+import { useRiskAlerts, useDismissRisk, useAcceptRisk } from '../hooks/useRiskAlerts';
 
 /**
  * RiskAlertsWidget — "Neye dikkat etmem gerek?" — AI-powered.
@@ -17,62 +18,20 @@ import { cn } from '../../lib/utils';
  *   - Severity tiering: critical/actionable/info. Critical en üstte sticky.
  */
 
-const MOCK_RISKS = [
-    {
-        id: 'r-001',
-        severity: 'critical',
-        title: 'KOSGEB Ar-Ge projesi 14 gün içinde teslim — kritik yol kaymış',
-        confidence: 92,
-        confidenceLabel: 'Yüksek',
-        reasons: [
-            'Görev T-142 son 5 gündür hareketsiz',
-            'Bağımlı 3 görev gecikmeli',
-            'Geçmiş projelerde benzer örüntü %78 gecikme ile sonuçlandı',
-        ],
-        suggestedAction: 'Kritik yolu yeniden planla',
-    },
-    {
-        id: 'r-002',
-        severity: 'actionable',
-        title: 'Dijitalleşme bütçesi %86 — kalan 2 ay yetmeyebilir',
-        confidence: 74,
-        confidenceLabel: 'Orta',
-        reasons: [
-            'Aylık ortalama harcama hızı 187K ₺',
-            'Kalan bütçe 63K ₺',
-            'Önceki dönemde benzer hızda %22 aşım yaşanmış',
-        ],
-        suggestedAction: 'Bütçe revizyonu öner',
-    },
-    {
-        id: 'r-003',
-        severity: 'info',
-        title: 'Yeni hibe çağrısı: TÜBİTAK 1505 firma profilinizle %88 uyumlu',
-        confidence: 88,
-        confidenceLabel: 'Yüksek',
-        reasons: [
-            'NACE sektörü uyumlu',
-            'Çalışan sayısı eşleşiyor',
-            'Önceki başarılı projeniz 1501 → 1505 kombinasyonu yaygın',
-        ],
-        suggestedAction: 'Çağrıyı incele',
-    },
-];
-
 const SEVERITY_META = {
     critical:   { label: 'Kritik',     variant: 'critical', priority: 0 },
     actionable: { label: 'Eyleme açık', variant: 'warning',  priority: 1 },
     info:       { label: 'Bilgi',       variant: 'ai',       priority: 2 },
 };
 
-function RiskAlertsWidget({
-    risks = MOCK_RISKS,
-    isLoading,
-    isError,
-    onRetry,
-    onAccept,
-    onDismiss,
-}) {
+function RiskAlertsWidget() {
+    const { data: risks, isLoading, isError, refetch } = useRiskAlerts();
+    const dismiss = useDismissRisk();
+    const accept  = useAcceptRisk();
+    const onRetry   = () => refetch();
+    const onDismiss = (risk) => dismiss.mutateAsync(risk).catch(() => { /* rollback in onError */ });
+    const onAccept  = (risk) => accept.mutateAsync(risk).catch(() => { /* rollback in onError */ });
+
     const sorted = React.useMemo(
         () => [...(risks ?? [])].sort(
             (a, b) => SEVERITY_META[a.severity].priority - SEVERITY_META[b.severity].priority,

@@ -1,6 +1,7 @@
 import React, { useId } from 'react';
 import { WidgetShell } from './WidgetShell';
 import { formatMoneyCompact, formatDelta, cn } from '../../lib/utils';
+import { useCashFlow } from '../hooks/useCashFlow';
 
 /**
  * CashFlowWidget — "Nakit akışım hangi yöne gidiyor?" — 4×1 yatay widget.
@@ -10,23 +11,12 @@ import { formatMoneyCompact, formatDelta, cn } from '../../lib/utils';
  * (deferred — Bento'da hover etkileşimi minimal tutulur, drill için
  * tıklama tercih edilir).
  *
- * Datasource (gerçek): JournalEntry sequence'ından accumulated cashflow.
- * Mock: son 30 gün fixture.
+ * Veri kaynağı: useCashFlow hook (TanStack Query, APYA-97).
  */
 
-const MOCK = {
-    currency:   'TRY',
-    netCurrent: 487_300,
-    deltaPct:   12.4,
-    /* 30 günlük seri — son 30 gün, 0 = en eski */
-    series: [
-        320, 312, 305, 318, 332, 340, 355, 348, 360, 372,
-        380, 365, 390, 410, 405, 420, 435, 425, 440, 455,
-        448, 462, 470, 458, 472, 480, 475, 482, 487, 487,
-    ],
-};
-
-function CashFlowWidget({ data = MOCK, isLoading, isError, onRetry }) {
+function CashFlowWidget() {
+    const { data, isLoading, isError, refetch } = useCashFlow();
+    const onRetry = () => refetch();
     const delta = data ? formatDelta(data.deltaPct) : null;
     const trendUp = data ? data.deltaPct >= 0 : true;
 

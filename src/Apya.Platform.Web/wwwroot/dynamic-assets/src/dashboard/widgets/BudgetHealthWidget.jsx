@@ -2,6 +2,7 @@ import React from 'react';
 import { WidgetShell } from './WidgetShell';
 import { Badge } from '../../components/ui';
 import { formatMoneyCompact, formatDelta, cn } from '../../lib/utils';
+import { useBudgetSummary } from '../hooks/useBudgetSummary';
 
 /**
  * BudgetHealthWidget — "Bütçem sağlıklı mı?" sorusuna 1 saniyede cevap.
@@ -14,24 +15,13 @@ import { formatMoneyCompact, formatDelta, cn } from '../../lib/utils';
  * Scan level (L2 — hover/focus): proje bazında dağılım
  * Drill level (L3 — tıklama): /reports/budget detayı
  *
- * Mock data: gerçek API gelene kadar deterministik fixture (sayılar
- * tasarımcının vurgusunu kaybetmesin diye değişmez).
+ * Veri kaynağı: useBudgetSummary hook (TanStack Query).
+ * APYA-97'de fetcher mock; backend endpoint hazırlanınca swap edilir.
  */
 
-const MOCK = {
-    spent:    1_847_500,
-    budget:   2_400_000,
-    currency: 'TRY',
-    deltaPct: -8.4,             /* önceki aya göre düşmüş — pozitif sinyal */
-    breakdown: [
-        { project: 'KOSGEB Ar-Ge',          spent: 720_000, budget:  900_000, ratio: 0.80 },
-        { project: 'TÜBİTAK 1501',          spent: 540_000, budget:  800_000, ratio: 0.68 },
-        { project: 'Dijitalleşme Hibesi',   spent: 387_500, budget:  450_000, ratio: 0.86 },
-        { project: 'İhracat Geliştirme',    spent: 200_000, budget:  250_000, ratio: 0.80 },
-    ],
-};
-
-function BudgetHealthWidget({ data = MOCK, isLoading, isError, onRetry }) {
+function BudgetHealthWidget() {
+    const { data, isLoading, isError, refetch } = useBudgetSummary();
+    const onRetry = () => refetch();
     const usagePct = data ? (data.spent / data.budget) * 100 : 0;
     const health   = healthForUsage(usagePct);
     const delta    = data ? formatDelta(data.deltaPct) : null;

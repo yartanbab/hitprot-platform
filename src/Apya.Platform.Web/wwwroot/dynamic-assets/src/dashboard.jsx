@@ -1,18 +1,23 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import { ThemeProvider } from './lib/theme/ThemeProvider';
+import { QueryProvider } from './lib/api/QueryProvider';
+import { SignalRProvider } from './lib/realtime/SignalRProvider';
 import { BentoDashboard } from './dashboard/BentoDashboard';
+import { DashboardRealtimeBridge } from './dashboard/DashboardRealtimeBridge';
 import './index.css';
 
 /**
  * Dashboard entry — Razor sayfasından mount edilir.
  *
- * Razor side kullanım:
- *   <div id="apya-dashboard-root"></div>
- *   <script type="module" src="~/js/dashboard.js"></script>
+ * Provider sırası önemli:
+ *   ThemeProvider     → DOM-level (data-theme), en dış
+ *   QueryProvider     → server state cache
+ *   SignalRProvider   → realtime; QueryProvider'a bağımlı (invalidation hook'u
+ *                       useQueryClient çağırır)
  *
- * FOUC engelleme için _Layout.cshtml'in <head>'ine inline script eklenmiş
- * olmalı (bk. styles/README.md).
+ * DashboardRealtimeBridge — null render eden bridge component;
+ * mapping'leri tek yerde tutar, BentoDashboard'ı kirletmez.
  */
 
 const rootElement = document.getElementById('apya-dashboard-root');
@@ -20,7 +25,12 @@ if (rootElement) {
     const root = createRoot(rootElement);
     root.render(
         <ThemeProvider>
-            <BentoDashboard />
+            <QueryProvider>
+                <SignalRProvider>
+                    <DashboardRealtimeBridge />
+                    <BentoDashboard />
+                </SignalRProvider>
+            </QueryProvider>
         </ThemeProvider>,
     );
 }

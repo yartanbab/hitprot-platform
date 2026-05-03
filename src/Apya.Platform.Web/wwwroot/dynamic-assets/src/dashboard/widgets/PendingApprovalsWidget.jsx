@@ -2,6 +2,7 @@ import React from 'react';
 import { WidgetShell } from './WidgetShell';
 import { Button, Badge } from '../../components/ui';
 import { formatMoney, cn } from '../../lib/utils';
+import { usePendingApprovals, useApproveItem, useRejectItem } from '../hooks/usePendingApprovals';
 
 /**
  * PendingApprovalsWidget — "Bana ne bekliyor?"
@@ -18,59 +19,19 @@ import { formatMoney, cn } from '../../lib/utils';
  * Bento'da 2×2 ya da 3×2 alabilir. Mobile'da tek sütun stack.
  */
 
-const MOCK_ITEMS = [
-    {
-        id: 'inv-001',
-        type: 'invoice',
-        title: 'TÜBİTAK 1501 — Eylül faturası',
-        requester: 'Ahmet Yıldız',
-        amount: 12_450,
-        currency: 'TRY',
-        ageHours: 4,
-    },
-    {
-        id: 'exp-002',
-        type: 'expense',
-        title: 'Yazılım lisansı — JetBrains All',
-        requester: 'Mehmet Kaya',
-        amount: 8_240,
-        currency: 'TRY',
-        ageHours: 18,
-    },
-    {
-        id: 'po-003',
-        type: 'po',
-        title: 'Bulut hosting (Q3 yenileme)',
-        requester: 'Zeynep Aksoy',
-        amount: 24_900,
-        currency: 'TRY',
-        ageHours: 36,
-    },
-    {
-        id: 'inv-004',
-        type: 'invoice',
-        title: 'KOSGEB danışmanlık — Ağustos',
-        requester: 'Selin Aydın',
-        amount: 6_800,
-        currency: 'TRY',
-        ageHours: 52,
-    },
-];
-
 const TYPE_LABELS = {
     invoice:  { label: 'Fatura',   variant: 'brand' },
     expense:  { label: 'Masraf',   variant: 'neutral' },
     po:       { label: 'Sipariş',  variant: 'ai' },
 };
 
-function PendingApprovalsWidget({
-    items = MOCK_ITEMS,
-    isLoading,
-    isError,
-    onRetry,
-    onApprove,
-    onReject,
-}) {
+function PendingApprovalsWidget() {
+    const { data: items, isLoading, isError, refetch } = usePendingApprovals();
+    const approve = useApproveItem();
+    const reject  = useRejectItem();
+    const onRetry  = () => refetch();
+    const onApprove = (item) => approve.mutateAsync(item).catch(() => { /* rollback handled in onError */ });
+    const onReject  = (item) => reject.mutateAsync(item).catch(() => { /* rollback handled in onError */ });
     const count = items?.length ?? 0;
 
     return (
