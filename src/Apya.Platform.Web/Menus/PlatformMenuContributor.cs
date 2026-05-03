@@ -34,6 +34,18 @@ public class PlatformMenuContributor : IMenuContributor
             )
         );
 
+        // "Genel Bakış" — Bento dashboard (APYA-95). React island host'ı.
+        // Home'un hemen altına yerleşir (order: 1) — kullanıcı ilk dikkat noktası.
+        context.Menu.AddItem(
+            new ApplicationMenuItem(
+                "Apya.Platform.Dashboard",
+                "Genel Bakış",
+                icon: "fa fa-th-large",
+                url: "/Dashboard",
+                order: 1
+            )
+        );
+
         // --- PROJELER MENÜSÜ DÜZELTMESİ ---
         context.Menu.AddItem(
             new ApplicationMenuItem(
