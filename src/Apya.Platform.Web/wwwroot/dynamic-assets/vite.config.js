@@ -32,6 +32,7 @@ export default defineConfig({
             entry: {
                 'template-builder': resolve(__dirname, 'src/template-builder.jsx'),
                 'dashboard':        resolve(__dirname, 'src/dashboard.jsx'),
+                'expense-capture':  resolve(__dirname, 'src/expense-capture.jsx'),
             },
             formats: ['es'],
             fileName: (_format, entryName) => `${entryName}.js`,

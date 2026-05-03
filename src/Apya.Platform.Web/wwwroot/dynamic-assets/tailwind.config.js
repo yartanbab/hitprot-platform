@@ -171,9 +171,12 @@ export default {
 
             /* ---------------------- ANIMATION (existing + skeleton) ---------------------- */
             animation: {
-                'fade-in': 'fadeIn 0.6s var(--apya-easing-standard) forwards',
-                'shimmer': 'shimmer var(--apya-motion-skeleton) linear infinite',
-                'blob':    'blob 7s infinite',
+                'fade-in':         'fadeIn 0.6s var(--apya-easing-standard) forwards',
+                'shimmer':         'shimmer var(--apya-motion-skeleton) linear infinite',
+                'blob':            'blob 7s infinite',
+                'sheet-bottom':    'sheetBottomIn 250ms var(--apya-easing-decelerate) forwards',
+                'sheet-right':     'sheetRightIn 200ms var(--apya-easing-decelerate) forwards',
+                'overlay-fade':    'overlayFade 200ms var(--apya-easing-standard) forwards',
             },
             keyframes: {
                 fadeIn: {
@@ -183,6 +186,18 @@ export default {
                 shimmer: {
                     '0%':   { backgroundPosition: '-1000px 0' },
                     '100%': { backgroundPosition: '1000px 0' },
+                },
+                sheetBottomIn: {
+                    '0%':   { transform: 'translateY(100%)' },
+                    '100%': { transform: 'translateY(0)' },
+                },
+                sheetRightIn: {
+                    '0%':   { transform: 'translateX(100%)' },
+                    '100%': { transform: 'translateX(0)' },
+                },
+                overlayFade: {
+                    '0%':   { opacity: '0' },
+                    '100%': { opacity: '1' },
                 },
                 blob: {
                     '0%':   { transform: 'translate(0px, 0px) scale(1)' },

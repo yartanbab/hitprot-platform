@@ -1,0 +1,29 @@
+@page
+@model Apya.Platform.Web.Pages.Expenses.CaptureModel
+@{
+    ViewBag.Title = "Masraf Yakala";
+}
+
+@* PWA + tema kurulumu (Dashboard ile aynı) *@
+<link rel="manifest" href="~/manifest.webmanifest" />
+<meta name="theme-color" content="#2563EB" media="(prefers-color-scheme: light)" />
+<meta name="theme-color" content="#0F172A" media="(prefers-color-scheme: dark)" />
+<link rel="icon" type="image/svg+xml" href="~/icons/apya-icon.svg" />
+<link rel="apple-touch-icon" href="~/icons/apya-icon.svg" />
+
+<script>
+    (function () {
+        try {
+            var s = localStorage.getItem('apya-theme');
+            var d = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            var r = s === 'dark' || (s !== 'light' && d) ? 'dark' : 'light';
+            document.documentElement.setAttribute('data-theme', r);
+        } catch (_) {}
+    })();
+</script>
+
+<link rel="stylesheet" href="~/js/style.css" asp-append-version="true" />
+
+<div id="apya-expense-capture-root" style="margin: -1.5rem -1rem;"></div>
+
+<script type="module" src="~/js/expense-capture.js" asp-append-version="true"></script>

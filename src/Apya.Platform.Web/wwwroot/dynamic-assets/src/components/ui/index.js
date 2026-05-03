@@ -14,3 +14,4 @@ export { Card, CardHeader, CardTitle, CardDescription, CardBody, CardFooter } fr
 export { Skeleton, SkeletonText } from './Skeleton';
 export { Badge, badgeVariants } from './Badge';
 export { ThemeToggle } from './ThemeToggle';
+export { Sheet, SheetTrigger, SheetClose, SheetContent } from './Sheet';

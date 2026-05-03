@@ -46,6 +46,18 @@ public class PlatformMenuContributor : IMenuContributor
             )
         );
 
+        // "Masraf Yakala" — Mobile-first expense capture (APYA-99). PWA install
+        // sonrası ana ekran shortcut'u olarak da erişilebilir.
+        context.Menu.AddItem(
+            new ApplicationMenuItem(
+                "Apya.Platform.ExpenseCapture",
+                "Masraf Yakala",
+                icon: "fa fa-camera",
+                url: "/Expenses/Capture",
+                order: 2
+            )
+        );
+
         // --- PROJELER MENÜSÜ DÜZELTMESİ ---
         context.Menu.AddItem(
             new ApplicationMenuItem(
