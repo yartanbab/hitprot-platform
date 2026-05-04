@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Responsive, WidthProvider } from 'react-grid-layout';
 import 'react-grid-layout/css/styles.css';
 import 'react-resizable/css/styles.css';
@@ -23,6 +23,7 @@ import { CashFlowWidget } from './widgets/CashFlowWidget';
 import { PendingApprovalsWidget } from './widgets/PendingApprovalsWidget';
 import { RiskAlertsWidget } from './widgets/RiskAlertsWidget';
 import { AISuggestionsWidget } from './widgets/AISuggestionsWidget';
+import { ApprovalDetailSheet } from './approvals/ApprovalDetailSheet';
 
 import { Button, ThemeToggle } from '../components/ui';
 import { cn } from '../lib/utils';
@@ -56,6 +57,22 @@ const WIDGET_REGISTRY = {
 function BentoDashboard() {
     const [persona, setPersonaState] = useState(() => readPersonaPreference());
     const [editMode, setEditMode] = useState(false);
+    const [approvalSheetId, setApprovalSheetId] = useState(null);
+
+    /* Deep-link: /Dashboard?approval=ID → push notification tap'inden gelen
+       direkt sheet açılışı. URL param'ı tek seferlik okur, history'yi temiz
+       bırakmak için pushState ile siler (kullanıcı geri tuşuna basınca dashboard
+       state'ine dönsün, aynı sheet'i tekrar açmasın). */
+    useEffect(() => {
+        if (typeof window === 'undefined') return;
+        const params = new URLSearchParams(window.location.search);
+        const approvalId = params.get('approval');
+        if (!approvalId) return;
+        setApprovalSheetId(approvalId);
+        params.delete('approval');
+        const cleanUrl = window.location.pathname + (params.toString() ? `?${params}` : '') + window.location.hash;
+        window.history.replaceState(null, '', cleanUrl);
+    }, []);
 
     /* Layout = persona default + kullanıcı override (varsa) */
     const layouts = useMemo(() => {
@@ -136,6 +153,13 @@ function BentoDashboard() {
                     })}
                 </ResponsiveGridLayout>
             </main>
+
+            {/* Push notification deep-link → onay detayı sheet'i (APYA-108) */}
+            <ApprovalDetailSheet
+                approvalId={approvalSheetId}
+                open={Boolean(approvalSheetId)}
+                onOpenChange={(open) => { if (!open) setApprovalSheetId(null); }}
+            />
 
             {/* Edit mode hint — discoverability */}
             {editMode && (

@@ -57,6 +57,38 @@ export const fixtures = {
         ];
     },
 
+    /* Tek bir onay kaydı + zenginleştirilmiş context (push notification deep-link
+       senaryosu — APYA-108). Liste API'sinden bağımsız endpoint. */
+    async fetchApproval(id) {
+        await delay(280);
+        const list = await this.pendingApprovals();
+        const item = list.find((i) => i.id === id);
+        if (!item) {
+            const e = new Error('Onay bulunamadı veya başka kullanıcıca işlendi.');
+            e.status = 404;
+            throw e;
+        }
+        return {
+            ...item,
+            ai: {
+                confidence: 0.92,
+                anomaly: false,
+                /* Reasons — neden anomaly değil/değil. Şeffaf AI: kullanıcı
+                   güvenmek için "neden"i görmek ister. */
+                reasons: [
+                    'Tutar son 90 günlük ortalamanın %12 altında',
+                    'Tedarikçi son 6 ayda 4 fatura (sürekli)',
+                    'KDV oranı kategori için tipik (%20)',
+                ],
+            },
+            context: {
+                budget: { remaining: 78_400, total: 250_000, currency: 'TRY' },
+                category: { spentMonth: 14_200, label: item.type === 'expense' ? 'Yazılım' : 'Operasyon' },
+                project: { name: 'KOSGEB Ar-Ge', code: 'PRJ-2026-014' },
+            },
+        };
+    },
+
     async approveItem(item) {
         await delay(600);
         /* Simülatif: %5 ihtimalle 409 (concurrency çakışması) — rollback testi */

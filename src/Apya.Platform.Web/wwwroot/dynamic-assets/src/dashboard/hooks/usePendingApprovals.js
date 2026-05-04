@@ -12,6 +12,17 @@ export function usePendingApprovals() {
     });
 }
 
+/* Tek onay kaydı detayı — push notification deep-link veya satıra tıkla. */
+export function useApprovalDetail(id) {
+    return useQuery({
+        queryKey: QK.dashboard.approvalDetail(id),
+        queryFn:  () => fixtures.fetchApproval(id),
+        enabled:  Boolean(id),
+        /* Detail kullanıcı sheet'i kapatınca refetch'e gerek yok */
+        staleTime: 60_000,
+    });
+}
+
 /**
  * Approve / Reject — optimistic UI:
  *   - Satır cache'ten anında düşer.

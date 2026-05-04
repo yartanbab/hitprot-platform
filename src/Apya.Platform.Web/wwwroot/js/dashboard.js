@@ -1,59 +1,65 @@
-import { r as y, j as t, e as z, d as ne } from "./react-vendor.js";
-import { S as j, c as g, C as ie, a as re, b as le, d as oe, B as A, Q as x, f as V, e as I, u as U, A as ce, g as de, h as k, i as B, T as ue, r as me, j as he, k as xe, l as fe } from "./registerServiceWorker.js";
-import { H as J, a as ge, L as ye } from "./signalr-vendor.js";
-import { r as F } from "./grid-vendor.js";
-import { u as D, a as H, b as pe } from "./query-vendor.js";
+import { r as h, j as t, e as D, d as de } from "./react-vendor.js";
+import { B as k, c as p, S as w, C as ue, a as me, b as xe, d as fe, e as A, Q as g, f as Z, g as B, u as ee, A as he, h as C, i as I, j as G, T as ge, r as pe, k as ye, l as be, m as ve } from "./registerServiceWorker.js";
+import { H as te, a as je, L as we } from "./signalr-vendor.js";
+import { r as W } from "./grid-vendor.js";
+import { u as z, a as $, b as ke } from "./query-vendor.js";
 /* empty css      */
-const X = y.createContext({
+const ae = h.createContext({
   connection: null,
-  state: J.Disconnected
+  state: te.Disconnected
 });
-function be({ hubUrl: e = "/signalr-hubs/notifications", children: a, enabled: s = !0 }) {
-  const [n, r] = y.useState(J.Disconnected), i = y.useRef(null);
-  y.useEffect(() => {
+function Ne({ hubUrl: e = "/signalr-hubs/notifications", children: a, enabled: s = !0 }) {
+  const [n, l] = h.useState(te.Disconnected), r = h.useRef(null);
+  h.useEffect(() => {
     if (!s || typeof window > "u") return;
-    const l = new ge().withUrl(e, { withCredentials: !0 }).withAutomaticReconnect([0, 2e3, 5e3, 1e4, 3e4]).configureLogging(ye.Warning).build();
-    i.current = l, r(l.state);
-    const m = () => r(l.state);
-    return l.onreconnecting(m), l.onreconnected(m), l.onclose(m), l.start().then(m).catch((c) => {
-      console.warn("[SignalR] connect failed:", c == null ? void 0 : c.message), m();
+    const i = new je().withUrl(e, { withCredentials: !0 }).withAutomaticReconnect([0, 2e3, 5e3, 1e4, 3e4]).configureLogging(we.Warning).build();
+    r.current = i, l(i.state);
+    const m = () => l(i.state);
+    return i.onreconnecting(m), i.onreconnected(m), i.onclose(m), i.start().then(m).catch((d) => {
+      console.warn("[SignalR] connect failed:", d == null ? void 0 : d.message), m();
     }), () => {
-      l.stop().catch(() => {
-      }), i.current = null;
+      i.stop().catch(() => {
+      }), r.current = null;
     };
   }, [e, s]);
-  const d = y.useMemo(() => ({
+  const u = h.useMemo(() => ({
     get connection() {
-      return i.current;
+      return r.current;
     },
     state: n
   }), [n]);
-  return /* @__PURE__ */ t.jsx(X.Provider, { value: d, children: a });
+  return /* @__PURE__ */ t.jsx(ae.Provider, { value: u, children: a });
 }
-function Z() {
-  return y.useContext(X);
+function se() {
+  return h.useContext(ae);
 }
-const M = {
+const _ = {
   triage: "(min-width: 768px)",
   analysis: "(min-width: 1280px)",
   command: "(min-width: 1920px)"
 };
-function ve() {
-  return typeof window > "u" || !window.matchMedia ? "analysis" : window.matchMedia(M.command).matches ? "command" : window.matchMedia(M.analysis).matches ? "analysis" : window.matchMedia(M.triage).matches ? "triage" : "decision";
+function Ae() {
+  return typeof window > "u" || !window.matchMedia ? "analysis" : window.matchMedia(_.command).matches ? "command" : window.matchMedia(_.analysis).matches ? "analysis" : window.matchMedia(_.triage).matches ? "triage" : "decision";
 }
-const je = y.createContext(null);
-function we({ children: e, override: a }) {
-  const s = y.useCallback((i) => {
+const ne = h.createContext(null);
+function Se({ children: e, override: a }) {
+  const s = h.useCallback((r) => {
     if (typeof window > "u" || !window.matchMedia) return () => {
     };
-    const d = Object.values(M).map((l) => window.matchMedia(l));
-    return d.forEach((l) => l.addEventListener("change", i)), () => d.forEach((l) => l.removeEventListener("change", i));
-  }, []), n = y.useSyncExternalStore(s, ve, () => "analysis"), r = a ?? n;
-  return y.useEffect(() => {
-    typeof document > "u" || (document.documentElement.dataset.deviceMode = r);
-  }, [r]), /* @__PURE__ */ t.jsx(je.Provider, { value: r, children: e });
+    const u = Object.values(_).map((i) => window.matchMedia(i));
+    return u.forEach((i) => i.addEventListener("change", r)), () => u.forEach((i) => i.removeEventListener("change", r));
+  }, []), n = h.useSyncExternalStore(s, Ae, () => "analysis"), l = a ?? n;
+  return h.useEffect(() => {
+    typeof document > "u" || (document.documentElement.dataset.deviceMode = l);
+  }, [l]), /* @__PURE__ */ t.jsx(ne.Provider, { value: l, children: e });
 }
-const ke = {
+function Re() {
+  const e = h.useContext(ne);
+  if (e === null)
+    throw new Error("useDeviceMode must be used within <DeviceModeProvider>.");
+  return e;
+}
+const Ee = {
   desktop: [
     { i: "budget-health", x: 0, y: 0, w: 6, h: 4, minW: 4, minH: 3 },
     { i: "cash-flow", x: 6, y: 0, w: 6, h: 2, minW: 4, minH: 2 },
@@ -76,7 +82,7 @@ const ke = {
     { i: "pending-approvals", x: 0, y: 10, w: 1, h: 4, isResizable: !1, isDraggable: !1 },
     { i: "ai-suggestions", x: 0, y: 14, w: 1, h: 4, isResizable: !1, isDraggable: !1 }
   ]
-}, Ne = {
+}, De = {
   desktop: [
     { i: "risk-alerts", x: 0, y: 0, w: 6, h: 4, minW: 4, minH: 3 },
     { i: "pending-approvals", x: 6, y: 0, w: 6, h: 4, minW: 4, minH: 3 },
@@ -98,7 +104,7 @@ const ke = {
     { i: "cash-flow", x: 0, y: 12, w: 1, h: 2, isResizable: !1, isDraggable: !1 },
     { i: "ai-suggestions", x: 0, y: 14, w: 1, h: 4, isResizable: !1, isDraggable: !1 }
   ]
-}, Se = {
+}, ze = {
   desktop: [
     /* Saha personası desktop'ta da erişebilsin diye basit layout */
     { i: "pending-approvals", x: 0, y: 0, w: 8, h: 4 },
@@ -112,163 +118,223 @@ const ke = {
     { i: "pending-approvals", x: 0, y: 0, w: 1, h: 5, isResizable: !1, isDraggable: !1 },
     { i: "risk-alerts", x: 0, y: 5, w: 1, h: 4, isResizable: !1, isDraggable: !1 }
   ]
-}, T = {
-  cfo: ke,
-  pm: Ne,
-  field: Se
-}, ee = {
+}, F = {
+  cfo: Ee,
+  pm: De,
+  field: ze
+}, ie = {
   cfo: "CFO / Finansman",
   pm: "Proje Yöneticisi",
   field: "Saha Kullanıcısı"
-}, Ae = {
+}, Le = {
   desktop: 1280,
   tablet: 768,
   mobile: 0
-}, Re = {
+}, Me = {
   desktop: 12,
   tablet: 8,
   mobile: 1
-}, Ee = 64, ze = [12, 12], te = "apya-dashboard-persona", O = "apya-dashboard-layout-overrides";
-function Ce() {
+}, Ce = 64, _e = [12, 12], re = "apya-dashboard-persona", H = "apya-dashboard-layout-overrides";
+function Ie() {
   if (typeof window > "u") return "cfo";
   try {
-    const e = window.localStorage.getItem(te);
-    if (e && T[e]) return e;
+    const e = window.localStorage.getItem(re);
+    if (e && F[e]) return e;
   } catch {
   }
   return "cfo";
 }
-function Le(e) {
+function Pe(e) {
   if (!(typeof window > "u"))
     try {
-      window.localStorage.setItem(te, e);
+      window.localStorage.setItem(re, e);
     } catch {
     }
 }
-function De(e) {
+function Te(e) {
   if (typeof window > "u") return null;
   try {
-    const a = window.localStorage.getItem(`${O}-${e}`);
+    const a = window.localStorage.getItem(`${H}-${e}`);
     return a ? JSON.parse(a) : null;
   } catch {
     return null;
   }
 }
-function Me(e, a) {
+function Be(e, a) {
   if (!(typeof window > "u"))
     try {
       window.localStorage.setItem(
-        `${O}-${e}`,
+        `${H}-${e}`,
         JSON.stringify(a)
       );
     } catch {
     }
 }
-function _e(e) {
+function Fe(e) {
   if (!(typeof window > "u"))
     try {
-      window.localStorage.removeItem(`${O}-${e}`);
+      window.localStorage.removeItem(`${H}-${e}`);
     } catch {
     }
 }
-function ae({ className: e, withDelta: a = !0, withBar: s = !1 }) {
-  return /* @__PURE__ */ t.jsxs("div", { className: g("flex flex-col gap-3 h-full", e), "aria-busy": "true", children: [
+function Ke({
+  holdMs: e = 200,
+  onConfirm: a,
+  children: s,
+  className: n,
+  disabled: l,
+  isLoading: r,
+  ...u
+}) {
+  const [i, m] = h.useState(0), d = h.useRef(0), x = h.useRef(0), f = e <= 0, o = h.useCallback(() => {
+    cancelAnimationFrame(d.current), d.current = 0, x.current = 0, m(0);
+  }, []), c = h.useCallback(() => {
+    if (!x.current) return;
+    const y = performance.now() - x.current, N = Math.min(y / e, 1);
+    m(N), N >= 1 ? (o(), a == null || a()) : d.current = requestAnimationFrame(c);
+  }, [e, a, o]), b = h.useCallback((y) => {
+    l || r || f || y.button !== void 0 && y.button !== 0 || (x.current = performance.now(), d.current = requestAnimationFrame(c));
+  }, [l, r, f, c]);
+  return h.useEffect(() => () => cancelAnimationFrame(d.current), []), f ? /* @__PURE__ */ t.jsx(
+    k,
+    {
+      onClick: a,
+      disabled: l,
+      isLoading: r,
+      className: n,
+      ...u,
+      children: s
+    }
+  ) : /* @__PURE__ */ t.jsxs(
+    k,
+    {
+      disabled: l,
+      isLoading: r,
+      onPointerDown: b,
+      onPointerUp: o,
+      onPointerLeave: o,
+      onPointerCancel: o,
+      onBlur: o,
+      onClick: (y) => {
+        y.detail === 0 ? a == null || a() : y.preventDefault();
+      },
+      className: p("relative overflow-hidden", n),
+      ...u,
+      children: [
+        /* @__PURE__ */ t.jsx(
+          "span",
+          {
+            className: p(
+              "absolute inset-y-0 left-0 bg-white/25 pointer-events-none",
+              "transition-[width] duration-[40ms] ease-linear"
+            ),
+            style: { width: `${i * 100}%` },
+            "aria-hidden": "true"
+          }
+        ),
+        /* @__PURE__ */ t.jsx("span", { className: "relative", children: s })
+      ]
+    }
+  );
+}
+function O({ className: e, withDelta: a = !0, withBar: s = !1 }) {
+  return /* @__PURE__ */ t.jsxs("div", { className: p("flex flex-col gap-3 h-full", e), "aria-busy": "true", children: [
     /* @__PURE__ */ t.jsxs("div", { className: "flex items-baseline gap-2", children: [
-      /* @__PURE__ */ t.jsx(j, { width: 140, height: 32, rounded: "md" }),
-      /* @__PURE__ */ t.jsx(j, { width: 70, height: 16, rounded: "sm" })
+      /* @__PURE__ */ t.jsx(w, { width: 140, height: 32, rounded: "md" }),
+      /* @__PURE__ */ t.jsx(w, { width: 70, height: 16, rounded: "sm" })
     ] }),
-    a && /* @__PURE__ */ t.jsx(j, { width: 180, height: 12, rounded: "sm" }),
-    s && /* @__PURE__ */ t.jsx(j, { height: 6, rounded: "full" })
+    a && /* @__PURE__ */ t.jsx(w, { width: 180, height: 12, rounded: "sm" }),
+    s && /* @__PURE__ */ t.jsx(w, { height: 6, rounded: "full" })
   ] });
 }
-function Ie({ className: e, height: a = 64 }) {
+function $e({ className: e, height: a = 64 }) {
   const s = [0.4, 0.55, 0.45, 0.7, 0.6, 0.8, 0.65, 0.85, 0.75, 0.9, 0.7, 0.95];
   return /* @__PURE__ */ t.jsx(
     "div",
     {
-      className: g("flex items-end justify-between gap-1 w-full", e),
+      className: p("flex items-end justify-between gap-1 w-full", e),
       style: { height: a },
       "aria-busy": "true",
-      children: s.map((n, r) => /* @__PURE__ */ t.jsx(
-        j,
+      children: s.map((n, l) => /* @__PURE__ */ t.jsx(
+        w,
         {
           height: `${n * 100}%`,
           className: "flex-1 min-w-0",
           rounded: "sm"
         },
-        r
+        l
       ))
     }
   );
 }
-function K({ rows: e = 4, withLeading: a = !0, withTrailing: s = !0, className: n }) {
-  return /* @__PURE__ */ t.jsx("ul", { className: g("flex flex-col gap-2", n), "aria-busy": "true", children: Array.from({ length: e }).map((r, i) => /* @__PURE__ */ t.jsxs(
+function q({ rows: e = 4, withLeading: a = !0, withTrailing: s = !0, className: n }) {
+  return /* @__PURE__ */ t.jsx("ul", { className: p("flex flex-col gap-2", n), "aria-busy": "true", children: Array.from({ length: e }).map((l, r) => /* @__PURE__ */ t.jsxs(
     "li",
     {
       className: "flex items-center gap-3 p-2 rounded-md border border-subtle bg-surface-base",
       children: [
-        a && /* @__PURE__ */ t.jsx(j, { width: 32, height: 32, rounded: "md" }),
+        a && /* @__PURE__ */ t.jsx(w, { width: 32, height: 32, rounded: "md" }),
         /* @__PURE__ */ t.jsxs("div", { className: "flex-1 min-w-0 flex flex-col gap-1.5", children: [
-          /* @__PURE__ */ t.jsx(j, { height: 12, className: i % 2 === 0 ? "w-3/4" : "w-2/3" }),
-          /* @__PURE__ */ t.jsx(j, { height: 10, className: "w-1/2" })
+          /* @__PURE__ */ t.jsx(w, { height: 12, className: r % 2 === 0 ? "w-3/4" : "w-2/3" }),
+          /* @__PURE__ */ t.jsx(w, { height: 10, className: "w-1/2" })
         ] }),
-        s && /* @__PURE__ */ t.jsx(j, { width: 64, height: 12, rounded: "sm" })
+        s && /* @__PURE__ */ t.jsx(w, { width: 64, height: 12, rounded: "sm" })
       ]
     },
-    i
+    r
   )) });
 }
-const $ = {
+const Y = {
   default: { ring: "bg-neutral-100 text-neutral-500", text: "text-text-tertiary" },
   success: { ring: "bg-positive-50 text-positive-600", text: "text-text-secondary" },
   info: { ring: "bg-brand-50 text-brand-600", text: "text-text-secondary" }
 };
-function _({
+function P({
   icon: e,
   title: a,
   description: s,
   action: n,
   /* ReactNode — Button, link vs. */
-  variant: r = "default",
-  compact: i = !1,
+  variant: l = "default",
+  compact: r = !1,
   /* compact: ikonu küçült, padding düşür — Bento widget için */
-  className: d
+  className: u
 }) {
-  const l = $[r] ?? $.default;
+  const i = Y[l] ?? Y.default;
   return /* @__PURE__ */ t.jsxs(
     "div",
     {
       role: "status",
       "aria-live": "polite",
-      className: g(
+      className: p(
         "flex flex-col items-center justify-center text-center",
-        i ? "gap-2 py-3" : "gap-3 py-6",
-        d
+        r ? "gap-2 py-3" : "gap-3 py-6",
+        u
       ),
       children: [
         e && /* @__PURE__ */ t.jsx(
           "span",
           {
-            className: g(
+            className: p(
               "inline-flex items-center justify-center rounded-full",
-              l.ring,
-              i ? "h-8 w-8" : "h-12 w-12"
+              i.ring,
+              r ? "h-8 w-8" : "h-12 w-12"
             ),
             "aria-hidden": "true",
             children: e
           }
         ),
-        a && /* @__PURE__ */ t.jsx("p", { className: g(
+        a && /* @__PURE__ */ t.jsx("p", { className: p(
           "font-medium text-text-primary",
-          i ? "text-sm" : "text-base"
+          r ? "text-sm" : "text-base"
         ), children: a }),
-        s && /* @__PURE__ */ t.jsx("p", { className: g("max-w-sm", l.text, i ? "text-xs" : "text-sm"), children: s }),
+        s && /* @__PURE__ */ t.jsx("p", { className: p("max-w-sm", i.text, r ? "text-xs" : "text-sm"), children: s }),
         n && /* @__PURE__ */ t.jsx("div", { className: "mt-1", children: n })
       ]
     }
   );
 }
-const se = {
+const le = {
   /* react-grid-layout drag handle'ı için class — yalnızca header'dan sürüklenir */
   DRAG_HANDLE_CLASS: "widget-drag-handle"
 };
@@ -278,44 +344,44 @@ function S({
   badge: s,
   actions: n,
   /* sağ üstteki action button'lar */
-  isLoading: r = !1,
-  isError: i = !1,
-  errorMessage: d,
-  onRetry: l,
+  isLoading: l = !1,
+  isError: r = !1,
+  errorMessage: u,
+  onRetry: i,
   isEmpty: m = !1,
-  emptyMessage: c,
+  emptyMessage: d,
   /* legacy: tek satır metin; yeni kod emptyState kullanmalı */
-  emptyState: o,
+  emptyState: x,
   /* yeni: <EmptyState .../> ReactNode */
-  skeleton: u,
+  skeleton: f,
   /* yeni: shape-aware loading state — ReactNode */
-  isFetching: f = !1,
+  isFetching: o = !1,
   /* React Query background refetch */
-  isStale: h = !1,
+  isStale: c = !1,
   /* React Query staleTime aşıldı */
-  dataUpdatedAt: p,
+  dataUpdatedAt: b,
   /* number (ms) | Date | undefined — son başarılı fetch */
-  density: v = "compact",
+  density: y = "compact",
   children: N,
   className: E
 }) {
-  const C = !r && !i && h && f;
-  return /* @__PURE__ */ t.jsxs(ie, { variant: "default", className: g("h-full flex flex-col", E), children: [
+  const L = !l && !r && c && o;
+  return /* @__PURE__ */ t.jsxs(ue, { variant: "default", className: p("h-full flex flex-col", E), children: [
     /* @__PURE__ */ t.jsxs(
-      re,
+      me,
       {
-        density: v,
-        className: g(
-          se.DRAG_HANDLE_CLASS,
+        density: y,
+        className: p(
+          le.DRAG_HANDLE_CLASS,
           "cursor-grab active:cursor-grabbing select-none",
           "flex-row items-center justify-between flex-none"
         ),
         children: [
           /* @__PURE__ */ t.jsxs("div", { className: "flex flex-col gap-0.5 min-w-0 flex-1", children: [
             /* @__PURE__ */ t.jsxs("div", { className: "flex items-center gap-2", children: [
-              /* @__PURE__ */ t.jsx(le, { className: "text-sm font-semibold truncate", children: e }),
+              /* @__PURE__ */ t.jsx(xe, { className: "text-sm font-semibold truncate", children: e }),
               s,
-              C && /* @__PURE__ */ t.jsx(He, {})
+              L && /* @__PURE__ */ t.jsx(Ge, {})
             ] }),
             a && /* @__PURE__ */ t.jsx("p", { className: "text-xs text-text-tertiary truncate", children: a })
           ] }),
@@ -323,40 +389,40 @@ function S({
             "div",
             {
               className: "flex items-center gap-1 flex-none",
-              onMouseDown: (L) => L.stopPropagation(),
-              onTouchStart: (L) => L.stopPropagation(),
+              onMouseDown: (M) => M.stopPropagation(),
+              onTouchStart: (M) => M.stopPropagation(),
               children: n
             }
           )
         ]
       }
     ),
-    /* @__PURE__ */ t.jsxs(oe, { density: v, className: "flex-1 overflow-auto", children: [
-      i && /* @__PURE__ */ t.jsx(
-        Be,
+    /* @__PURE__ */ t.jsxs(fe, { density: y, className: "flex-1 overflow-auto", children: [
+      r && /* @__PURE__ */ t.jsx(
+        qe,
         {
-          message: d,
-          onRetry: l,
-          dataUpdatedAt: p
+          message: u,
+          onRetry: i,
+          dataUpdatedAt: b
         }
       ),
-      !i && r && (u ?? /* @__PURE__ */ t.jsx(Te, { density: v })),
-      !i && !r && m && (o ?? /* @__PURE__ */ t.jsx(Pe, { message: c })),
-      !i && !r && !m && N
+      !r && l && (f ?? /* @__PURE__ */ t.jsx(He, { density: y })),
+      !r && !l && m && (x ?? /* @__PURE__ */ t.jsx(Oe, { message: d })),
+      !r && !l && !m && N
     ] })
   ] });
 }
-function Te({ density: e }) {
+function He({ density: e }) {
   return /* @__PURE__ */ t.jsxs("div", { className: "flex flex-col gap-3", "aria-busy": "true", children: [
-    /* @__PURE__ */ t.jsx(j, { height: e === "spacious" ? 48 : 32, className: "w-1/3" }),
-    /* @__PURE__ */ t.jsx(j, { height: 16 }),
-    /* @__PURE__ */ t.jsx(j, { height: 16, className: "w-5/6" }),
-    /* @__PURE__ */ t.jsx(j, { height: 16, className: "w-3/4" })
+    /* @__PURE__ */ t.jsx(w, { height: e === "spacious" ? 48 : 32, className: "w-1/3" }),
+    /* @__PURE__ */ t.jsx(w, { height: 16 }),
+    /* @__PURE__ */ t.jsx(w, { height: 16, className: "w-5/6" }),
+    /* @__PURE__ */ t.jsx(w, { height: 16, className: "w-3/4" })
   ] });
 }
-function Pe({ message: e }) {
+function Oe({ message: e }) {
   return /* @__PURE__ */ t.jsx(
-    _,
+    P,
     {
       compact: !0,
       title: e ?? "Görüntülenecek veri yok",
@@ -364,8 +430,8 @@ function Pe({ message: e }) {
     }
   );
 }
-function Be({ message: e, onRetry: a, dataUpdatedAt: s }) {
-  const n = Oe(s);
+function qe({ message: e, onRetry: a, dataUpdatedAt: s }) {
+  const n = We(s);
   return /* @__PURE__ */ t.jsxs("div", { className: "flex flex-col items-center justify-center text-center gap-2 py-4", children: [
     /* @__PURE__ */ t.jsx(A, { variant: "negative", withDot: !0, children: "Yüklenemedi" }),
     /* @__PURE__ */ t.jsx("p", { className: "text-sm text-text-secondary max-w-xs", children: e || "Veri alınırken bir hata oluştu." }),
@@ -380,7 +446,7 @@ function Be({ message: e, onRetry: a, dataUpdatedAt: s }) {
       {
         type: "button",
         onClick: a,
-        className: g(
+        className: p(
           "text-sm text-text-link underline-offset-2 hover:underline",
           "focus-visible:outline-none focus-visible:shadow-focus rounded-sm"
         ),
@@ -389,7 +455,7 @@ function Be({ message: e, onRetry: a, dataUpdatedAt: s }) {
     )
   ] });
 }
-function He() {
+function Ge() {
   return /* @__PURE__ */ t.jsxs(
     "span",
     {
@@ -409,21 +475,21 @@ function He() {
     }
   );
 }
-function Oe(e) {
+function We(e) {
   if (e == null) return null;
   const a = e instanceof Date ? e.getTime() : Number(e);
   if (!Number.isFinite(a)) return null;
-  const s = Math.round((a - Date.now()) / 1e3), n = Math.abs(s), r = new Intl.RelativeTimeFormat("tr-TR", { numeric: "auto" });
-  return n < 60 ? r.format(s, "second") : n < 3600 ? r.format(Math.round(s / 60), "minute") : n < 86400 ? r.format(Math.round(s / 3600), "hour") : r.format(Math.round(s / 86400), "day");
+  const s = Math.round((a - Date.now()) / 1e3), n = Math.abs(s), l = new Intl.RelativeTimeFormat("tr-TR", { numeric: "auto" });
+  return n < 60 ? l.format(s, "second") : n < 3600 ? l.format(Math.round(s / 60), "minute") : n < 86400 ? l.format(Math.round(s / 3600), "hour") : l.format(Math.round(s / 86400), "day");
 }
-S.DRAG_HANDLE_CLASS = se.DRAG_HANDLE_CLASS;
-const G = 250, Ke = 450;
-function w(e = G + Math.random() * (Ke - G)) {
+S.DRAG_HANDLE_CLASS = le.DRAG_HANDLE_CLASS;
+const Q = 250, Ye = 450;
+function j(e = Q + Math.random() * (Ye - Q)) {
   return new Promise((a) => setTimeout(a, e));
 }
-const b = {
+const v = {
   async budgetSummary() {
-    return await w(), {
+    return await j(), {
       spent: 1847500,
       budget: 24e5,
       currency: "TRY",
@@ -437,7 +503,7 @@ const b = {
     };
   },
   async cashFlow() {
-    return await w(), {
+    return await j(), {
       currency: "TRY",
       netCurrent: 487300,
       deltaPct: 12.4,
@@ -476,25 +542,54 @@ const b = {
     };
   },
   async pendingApprovals() {
-    return await w(), [
+    return await j(), [
       { id: "inv-001", type: "invoice", title: "TÜBİTAK 1501 — Eylül faturası", requester: "Ahmet Yıldız", amount: 12450, currency: "TRY", ageHours: 4 },
       { id: "exp-002", type: "expense", title: "Yazılım lisansı — JetBrains All", requester: "Mehmet Kaya", amount: 8240, currency: "TRY", ageHours: 18 },
       { id: "po-003", type: "po", title: "Bulut hosting (Q3 yenileme)", requester: "Zeynep Aksoy", amount: 24900, currency: "TRY", ageHours: 36 },
       { id: "inv-004", type: "invoice", title: "KOSGEB danışmanlık — Ağustos", requester: "Selin Aydın", amount: 6800, currency: "TRY", ageHours: 52 }
     ];
   },
+  /* Tek bir onay kaydı + zenginleştirilmiş context (push notification deep-link
+     senaryosu — APYA-108). Liste API'sinden bağımsız endpoint. */
+  async fetchApproval(e) {
+    await j(280);
+    const s = (await this.pendingApprovals()).find((n) => n.id === e);
+    if (!s) {
+      const n = new Error("Onay bulunamadı veya başka kullanıcıca işlendi.");
+      throw n.status = 404, n;
+    }
+    return {
+      ...s,
+      ai: {
+        confidence: 0.92,
+        anomaly: !1,
+        /* Reasons — neden anomaly değil/değil. Şeffaf AI: kullanıcı
+           güvenmek için "neden"i görmek ister. */
+        reasons: [
+          "Tutar son 90 günlük ortalamanın %12 altında",
+          "Tedarikçi son 6 ayda 4 fatura (sürekli)",
+          "KDV oranı kategori için tipik (%20)"
+        ]
+      },
+      context: {
+        budget: { remaining: 78400, total: 25e4, currency: "TRY" },
+        category: { spentMonth: 14200, label: s.type === "expense" ? "Yazılım" : "Operasyon" },
+        project: { name: "KOSGEB Ar-Ge", code: "PRJ-2026-014" }
+      }
+    };
+  },
   async approveItem(e) {
-    if (await w(600), Math.random() < 0.05) {
+    if (await j(600), Math.random() < 0.05) {
       const a = new Error("Bu kayıt başka bir kullanıcı tarafından onaylanmış.");
       throw a.status = 409, a;
     }
     return { id: e.id, status: "approved" };
   },
   async rejectItem(e) {
-    return await w(400), { id: e.id, status: "rejected" };
+    return await j(400), { id: e.id, status: "rejected" };
   },
   async riskAlerts() {
-    return await w(), [
+    return await j(), [
       {
         id: "r-001",
         severity: "critical",
@@ -537,16 +632,16 @@ const b = {
     ];
   },
   async dismissRisk(e) {
-    return await w(300), { id: e.id, dismissed: !0 };
+    return await j(300), { id: e.id, dismissed: !0 };
   },
   async acceptRisk(e) {
-    return await w(500), { id: e.id, accepted: !0 };
+    return await j(500), { id: e.id, accepted: !0 };
   },
   /* AI suggestion inbox — dashboard widget'ı için top-N öneri.
      Risk alerts'ten ayrı: risk = "neye dikkat", suggestion = "ne yap".
      Tone: opportunity | warning | critical | neutral */
   async aiSuggestions() {
-    return await w(), [
+    return await j(), [
       {
         id: "s-001",
         tone: "opportunity",
@@ -601,83 +696,83 @@ const b = {
     ];
   },
   async applySuggestion(e) {
-    if (await w(500), Math.random() < 0.03) {
+    if (await j(500), Math.random() < 0.03) {
       const a = new Error("Bu öneri başka bir kullanıcı tarafından uygulanmış.");
       throw a.status = 409, a;
     }
     return { id: e.id, applied: !0 };
   },
   async snoozeSuggestion(e) {
-    return await w(250), { id: e.id, snoozed: !0, until: new Date(Date.now() + 7 * 864e5).toISOString() };
+    return await j(250), { id: e.id, snoozed: !0, until: new Date(Date.now() + 7 * 864e5).toISOString() };
   },
   async dismissSuggestion(e, a = "irrelevant") {
-    return await w(250), { id: e.id, dismissed: !0, reason: a };
+    return await j(250), { id: e.id, dismissed: !0, reason: a };
   }
-}, Fe = () => b.budgetSummary();
-function $e() {
-  return D({
-    queryKey: x.dashboard.budget(),
-    queryFn: Fe
+}, Qe = () => v.budgetSummary();
+function Ve() {
+  return z({
+    queryKey: g.dashboard.budget(),
+    queryFn: Qe
   });
 }
-function Ge() {
-  const { data: e, isLoading: a, isError: s, isFetching: n, isStale: r, dataUpdatedAt: i, refetch: d } = $e(), l = () => d(), m = e ? e.spent / e.budget * 100 : 0, c = W(m), o = e ? V(e.deltaPct) : null;
+function Ue() {
+  const { data: e, isLoading: a, isError: s, isFetching: n, isStale: l, dataUpdatedAt: r, refetch: u } = Ve(), i = () => u(), m = e ? e.spent / e.budget * 100 : 0, d = V(m), x = e ? Z(e.deltaPct) : null;
   return /* @__PURE__ */ t.jsx(
     S,
     {
       title: "Bütçe Sağlığı",
       subtitle: "Tüm aktif projeler — bu ay",
-      badge: /* @__PURE__ */ t.jsx(A, { variant: c.badgeVariant, size: "sm", withDot: !0, children: c.label }),
+      badge: /* @__PURE__ */ t.jsx(A, { variant: d.badgeVariant, size: "sm", withDot: !0, children: d.label }),
       isLoading: a,
       isError: s,
       isFetching: n,
-      isStale: r,
-      dataUpdatedAt: i,
-      onRetry: l,
-      skeleton: /* @__PURE__ */ t.jsx(ae, { withDelta: !0, withBar: !0 }),
+      isStale: l,
+      dataUpdatedAt: r,
+      onRetry: i,
+      skeleton: /* @__PURE__ */ t.jsx(O, { withDelta: !0, withBar: !0 }),
       children: e && /* @__PURE__ */ t.jsxs("div", { className: "flex flex-col gap-3 h-full", children: [
         /* @__PURE__ */ t.jsxs("div", { className: "flex items-baseline gap-2 font-tabular", children: [
-          /* @__PURE__ */ t.jsx("span", { className: "text-3xl font-semibold tracking-tight", children: I(e.spent, e.currency) }),
+          /* @__PURE__ */ t.jsx("span", { className: "text-3xl font-semibold tracking-tight", children: B(e.spent, e.currency) }),
           /* @__PURE__ */ t.jsxs("span", { className: "text-sm text-text-tertiary", children: [
             "/ ",
-            I(e.budget, e.currency)
+            B(e.budget, e.currency)
           ] })
         ] }),
-        o && /* @__PURE__ */ t.jsxs("div", { className: "flex items-center gap-1.5 text-xs", children: [
-          /* @__PURE__ */ t.jsxs("span", { className: g(
+        x && /* @__PURE__ */ t.jsxs("div", { className: "flex items-center gap-1.5 text-xs", children: [
+          /* @__PURE__ */ t.jsxs("span", { className: p(
             "inline-flex items-center gap-1 font-medium font-tabular",
             /* delta < 0 = harcama düşmüş = pozitif sinyal */
             e.deltaPct < 0 ? "text-text-positive" : "text-text-negative"
           ), children: [
-            o.symbol,
+            x.symbol,
             " ",
-            o.text
+            x.text
           ] }),
           /* @__PURE__ */ t.jsx("span", { className: "text-text-tertiary", children: "geçen aya göre" })
         ] }),
-        /* @__PURE__ */ t.jsx(We, { value: m, variant: c.barVariant }),
-        /* @__PURE__ */ t.jsx("ul", { className: "flex flex-col gap-1.5 mt-1 overflow-y-auto", children: e.breakdown.map((u) => /* @__PURE__ */ t.jsxs(
+        /* @__PURE__ */ t.jsx(Je, { value: m, variant: d.barVariant }),
+        /* @__PURE__ */ t.jsx("ul", { className: "flex flex-col gap-1.5 mt-1 overflow-y-auto", children: e.breakdown.map((f) => /* @__PURE__ */ t.jsxs(
           "li",
           {
             className: "flex items-center justify-between text-xs gap-3",
             children: [
-              /* @__PURE__ */ t.jsx("span", { className: "truncate text-text-secondary", children: u.project }),
-              /* @__PURE__ */ t.jsxs("span", { className: g(
+              /* @__PURE__ */ t.jsx("span", { className: "truncate text-text-secondary", children: f.project }),
+              /* @__PURE__ */ t.jsxs("span", { className: p(
                 "font-tabular font-medium",
-                W(u.ratio * 100).textVariant
+                V(f.ratio * 100).textVariant
               ), children: [
-                Math.round(u.ratio * 100),
+                Math.round(f.ratio * 100),
                 "%"
               ] })
             ]
           },
-          u.project
+          f.project
         )) })
       ] })
     }
   );
 }
-function W(e) {
+function V(e) {
   return e >= 90 ? {
     label: "Kritik",
     badgeVariant: "critical",
@@ -695,7 +790,7 @@ function W(e) {
     textVariant: "text-text-positive"
   };
 }
-function We({ value: e, variant: a = "positive" }) {
+function Je({ value: e, variant: a = "positive" }) {
   const s = {
     positive: "bg-positive-500",
     warning: "bg-warning-500",
@@ -712,7 +807,7 @@ function We({ value: e, variant: a = "positive" }) {
       children: /* @__PURE__ */ t.jsx(
         "div",
         {
-          className: g(
+          className: p(
             s,
             "h-full rounded-full transition-all duration-slow ease-standard"
           ),
@@ -722,15 +817,15 @@ function We({ value: e, variant: a = "positive" }) {
     }
   );
 }
-const qe = () => b.cashFlow();
-function Ye() {
-  return D({
-    queryKey: x.dashboard.cashflow(),
-    queryFn: qe
+const Xe = () => v.cashFlow();
+function Ze() {
+  return z({
+    queryKey: g.dashboard.cashflow(),
+    queryFn: Xe
   });
 }
-function Qe() {
-  const { data: e, isLoading: a, isError: s, isFetching: n, isStale: r, dataUpdatedAt: i, refetch: d } = Ye(), l = () => d(), m = e ? V(e.deltaPct) : null, c = e ? e.deltaPct >= 0 : !0;
+function et() {
+  const { data: e, isLoading: a, isError: s, isFetching: n, isStale: l, dataUpdatedAt: r, refetch: u } = Ze(), i = () => u(), m = e ? Z(e.deltaPct) : null, d = e ? e.deltaPct >= 0 : !0;
   return /* @__PURE__ */ t.jsx(
     S,
     {
@@ -739,20 +834,20 @@ function Qe() {
       isLoading: a,
       isError: s,
       isFetching: n,
-      isStale: r,
-      dataUpdatedAt: i,
-      onRetry: l,
+      isStale: l,
+      dataUpdatedAt: r,
+      onRetry: i,
       skeleton: /* @__PURE__ */ t.jsxs("div", { className: "flex items-center justify-between gap-4 h-full", children: [
-        /* @__PURE__ */ t.jsx(ae, { className: "flex-none" }),
-        /* @__PURE__ */ t.jsx("div", { className: "flex-1 min-w-0 h-full max-h-16", children: /* @__PURE__ */ t.jsx(Ie, { height: 64 }) })
+        /* @__PURE__ */ t.jsx(O, { className: "flex-none" }),
+        /* @__PURE__ */ t.jsx("div", { className: "flex-1 min-w-0 h-full max-h-16", children: /* @__PURE__ */ t.jsx($e, { height: 64 }) })
       ] }),
       children: e && /* @__PURE__ */ t.jsxs("div", { className: "flex items-center justify-between gap-4 h-full", children: [
         /* @__PURE__ */ t.jsxs("div", { className: "flex flex-col gap-1 flex-none", children: [
-          /* @__PURE__ */ t.jsx("div", { className: "text-2xl font-semibold tracking-tight font-tabular", children: I(e.netCurrent, e.currency) }),
+          /* @__PURE__ */ t.jsx("div", { className: "text-2xl font-semibold tracking-tight font-tabular", children: B(e.netCurrent, e.currency) }),
           m && /* @__PURE__ */ t.jsxs("div", { className: "flex items-center gap-1 text-xs", children: [
-            /* @__PURE__ */ t.jsxs("span", { className: g(
+            /* @__PURE__ */ t.jsxs("span", { className: p(
               "inline-flex items-center gap-1 font-medium font-tabular",
-              c ? "text-text-positive" : "text-text-negative"
+              d ? "text-text-positive" : "text-text-negative"
             ), children: [
               m.symbol,
               " ",
@@ -761,37 +856,37 @@ function Qe() {
             /* @__PURE__ */ t.jsx("span", { className: "text-text-tertiary", children: "vs önceki dönem" })
           ] })
         ] }),
-        /* @__PURE__ */ t.jsx("div", { className: "flex-1 min-w-0 h-full max-h-16", children: /* @__PURE__ */ t.jsx(Ve, { series: e.series, variant: c ? "positive" : "negative" }) })
+        /* @__PURE__ */ t.jsx("div", { className: "flex-1 min-w-0 h-full max-h-16", children: /* @__PURE__ */ t.jsx(tt, { series: e.series, variant: d ? "positive" : "negative" }) })
       ] })
     }
   );
 }
-function Ve({ series: e, variant: a = "positive" }) {
-  const n = `cashflow-grad-${y.useId().replace(/:/g, "")}`;
+function tt({ series: e, variant: a = "positive" }) {
+  const n = `cashflow-grad-${h.useId().replace(/:/g, "")}`;
   if (!e || e.length < 2) return null;
-  const r = 100, i = 40, d = Math.min(...e), m = Math.max(...e) - d || 1, o = e.map((h, p) => {
-    const v = p / (e.length - 1) * r, N = i - (h - d) / m * i;
-    return [v, N];
-  }).map(([h, p], v) => `${v === 0 ? "M" : "L"} ${h.toFixed(2)} ${p.toFixed(2)}`).join(" "), u = `${o} L ${r} ${i} L 0 ${i} Z`, f = a === "positive" ? "var(--apya-positive-500)" : "var(--apya-negative-500)";
+  const l = 100, r = 40, u = Math.min(...e), m = Math.max(...e) - u || 1, x = e.map((c, b) => {
+    const y = b / (e.length - 1) * l, N = r - (c - u) / m * r;
+    return [y, N];
+  }).map(([c, b], y) => `${y === 0 ? "M" : "L"} ${c.toFixed(2)} ${b.toFixed(2)}`).join(" "), f = `${x} L ${l} ${r} L 0 ${r} Z`, o = a === "positive" ? "var(--apya-positive-500)" : "var(--apya-negative-500)";
   return /* @__PURE__ */ t.jsxs(
     "svg",
     {
-      viewBox: `0 0 ${r} ${i}`,
+      viewBox: `0 0 ${l} ${r}`,
       preserveAspectRatio: "none",
       className: "w-full h-full",
       "aria-hidden": "true",
       children: [
         /* @__PURE__ */ t.jsx("defs", { children: /* @__PURE__ */ t.jsxs("linearGradient", { id: n, x1: "0", y1: "0", x2: "0", y2: "1", children: [
-          /* @__PURE__ */ t.jsx("stop", { offset: "0%", stopColor: f, stopOpacity: "0.25" }),
-          /* @__PURE__ */ t.jsx("stop", { offset: "100%", stopColor: f, stopOpacity: "0" })
+          /* @__PURE__ */ t.jsx("stop", { offset: "0%", stopColor: o, stopOpacity: "0.25" }),
+          /* @__PURE__ */ t.jsx("stop", { offset: "100%", stopColor: o, stopOpacity: "0" })
         ] }) }),
-        /* @__PURE__ */ t.jsx("path", { d: u, fill: `url(#${n})` }),
+        /* @__PURE__ */ t.jsx("path", { d: f, fill: `url(#${n})` }),
         /* @__PURE__ */ t.jsx(
           "path",
           {
-            d: o,
+            d: x,
             fill: "none",
-            stroke: f,
+            stroke: o,
             strokeWidth: "1.5",
             strokeLinecap: "round",
             strokeLinejoin: "round",
@@ -802,114 +897,123 @@ function Ve({ series: e, variant: a = "positive" }) {
     }
   );
 }
-const Ue = (e, a) => (e ?? []).filter((s) => s.id !== (a == null ? void 0 : a.id));
+const at = (e, a) => (e ?? []).filter((s) => s.id !== (a == null ? void 0 : a.id));
 function R({
   queryKey: e,
   mutationFn: a,
   /* Mutation arg'ı liste'deki hedef row'a nasıl eşlenir? Default: arg = row */
-  extractTarget: s = (c) => c,
+  extractTarget: s = (d) => d,
   /* Optimistic cache transform — default: id eşleşen row'u sil */
-  transform: n = Ue,
+  transform: n = at,
   /* Side-effect query'leri — onSettled'da invalidate edilir */
-  extraInvalidations: r = [],
+  extraInvalidations: l = [],
   /* Başarı toast'i (undo destekli). undoFn varsa "Geri al" gösterilir. */
-  undoMessage: i,
+  undoMessage: r,
   /* (target) => string  | undefined */
-  undoFn: d,
+  undoFn: u,
   /* (target) => Promise | undefined */
   /* Hata toast'leri — varsayılan generic mesajlar */
-  errorMessage: l = "İşlem başarısız oldu",
+  errorMessage: i = "İşlem başarısız oldu",
   conflictMessage: m = "Bu kayıt başka bir kullanıcı tarafından değiştirildi"
 }) {
-  const c = H(), o = U();
-  return pe({
+  const d = $(), x = ee();
+  return ke({
     mutationFn: a,
-    onMutate: async (u) => {
-      const f = s(u);
-      await c.cancelQueries({ queryKey: e });
-      const h = c.getQueryData(e);
-      return c.setQueryData(e, (p) => n(p, f, u)), { previous: h, target: f };
+    onMutate: async (f) => {
+      const o = s(f);
+      await d.cancelQueries({ queryKey: e });
+      const c = d.getQueryData(e);
+      return d.setQueryData(e, (b) => n(b, o, f)), { previous: c, target: o };
     },
-    onError: (u, f, h) => {
-      (h == null ? void 0 : h.previous) !== void 0 && c.setQueryData(e, h.previous), (u instanceof ce ? u.status === 409 : (u == null ? void 0 : u.status) === 409) ? o.warning(m, {
+    onError: (f, o, c) => {
+      (c == null ? void 0 : c.previous) !== void 0 && d.setQueryData(e, c.previous), (f instanceof he ? f.status === 409 : (f == null ? void 0 : f.status) === 409) ? x.warning(m, {
         description: "Veriyi tazeleyip tekrar deneyebilirsin.",
-        action: { label: "Yenile", onClick: () => c.invalidateQueries({ queryKey: e }) }
-      }) : o.error(l, {
-        description: u == null ? void 0 : u.message
+        action: { label: "Yenile", onClick: () => d.invalidateQueries({ queryKey: e }) }
+      }) : x.error(i, {
+        description: f == null ? void 0 : f.message
       });
     },
-    onSuccess: (u, f, h) => {
-      if (!d || !i) return;
-      const p = (h == null ? void 0 : h.target) ?? s(f), v = typeof i == "function" ? i(p) : i;
-      o.success(v, {
+    onSuccess: (f, o, c) => {
+      if (!u || !r) return;
+      const b = (c == null ? void 0 : c.target) ?? s(o), y = typeof r == "function" ? r(b) : r;
+      x.success(y, {
         action: {
           label: "Geri al",
           onClick: () => {
-            c.setQueryData(e, h == null ? void 0 : h.previous), Promise.resolve(d(p)).catch((N) => {
-              o.error("Geri alınamadı", { description: N == null ? void 0 : N.message }), c.invalidateQueries({ queryKey: e });
+            d.setQueryData(e, c == null ? void 0 : c.previous), Promise.resolve(u(b)).catch((N) => {
+              x.error("Geri alınamadı", { description: N == null ? void 0 : N.message }), d.invalidateQueries({ queryKey: e });
             });
           }
         }
       });
     },
     onSettled: () => {
-      c.invalidateQueries({ queryKey: e }), r.forEach((u) => c.invalidateQueries({ queryKey: u }));
+      d.invalidateQueries({ queryKey: e }), l.forEach((f) => d.invalidateQueries({ queryKey: f }));
     }
   });
 }
-const Je = () => b.pendingApprovals();
-function Xe() {
-  return D({
-    queryKey: x.dashboard.approvals(),
-    queryFn: Je
+const st = () => v.pendingApprovals();
+function nt() {
+  return z({
+    queryKey: g.dashboard.approvals(),
+    queryFn: st
   });
 }
-function Ze() {
+function it(e) {
+  return z({
+    queryKey: g.dashboard.approvalDetail(e),
+    queryFn: () => v.fetchApproval(e),
+    enabled: !!e,
+    /* Detail kullanıcı sheet'i kapatınca refetch'e gerek yok */
+    staleTime: 6e4
+  });
+}
+function oe() {
   return R({
-    queryKey: x.dashboard.approvals(),
-    mutationFn: (e) => b.approveItem(e),
-    extraInvalidations: [x.dashboard.budget(), x.dashboard.cashflow()],
+    queryKey: g.dashboard.approvals(),
+    mutationFn: (e) => v.approveItem(e),
+    extraInvalidations: [g.dashboard.budget(), g.dashboard.cashflow()],
     undoMessage: (e) => `${e.title} onaylandı`,
-    undoFn: (e) => b.rejectItem(e),
+    undoFn: (e) => v.rejectItem(e),
     /* "geri al" = ters yöne kaydet */
     errorMessage: "Onay başarısız oldu"
   });
 }
-function et() {
+function ce() {
   return R({
-    queryKey: x.dashboard.approvals(),
-    mutationFn: (e) => b.rejectItem(e),
-    extraInvalidations: [x.dashboard.budget(), x.dashboard.cashflow()],
+    queryKey: g.dashboard.approvals(),
+    mutationFn: (e) => v.rejectItem(e),
+    extraInvalidations: [g.dashboard.budget(), g.dashboard.cashflow()],
     undoMessage: (e) => `${e.title} reddedildi`,
-    undoFn: (e) => b.approveItem(e),
+    undoFn: (e) => v.approveItem(e),
     errorMessage: "Reddetme başarısız oldu"
   });
 }
-const q = {
+const U = {
   invoice: { label: "Fatura", variant: "brand" },
   expense: { label: "Masraf", variant: "neutral" },
   po: { label: "Sipariş", variant: "ai" }
 };
-function tt() {
-  const { data: e, isLoading: a, isError: s, isFetching: n, isStale: r, dataUpdatedAt: i, refetch: d } = Xe(), l = Ze(), m = et(), c = () => d(), o = (h) => l.mutateAsync(h).catch(() => {
-  }), u = (h) => m.mutateAsync(h).catch(() => {
-  }), f = (e == null ? void 0 : e.length) ?? 0;
+function rt() {
+  const { data: e, isLoading: a, isError: s, isFetching: n, isStale: l, dataUpdatedAt: r, refetch: u } = nt(), i = oe(), m = ce(), d = () => u(), x = (c) => i.mutateAsync(c).catch(() => {
+  }), f = (c) => m.mutateAsync(c).catch(() => {
+  }), o = (e == null ? void 0 : e.length) ?? 0;
   return /* @__PURE__ */ t.jsx(
     S,
     {
       title: "Onay Bekleyenler",
-      subtitle: f > 0 ? `${f} kalem inceleme bekliyor` : void 0,
-      badge: f > 0 && /* @__PURE__ */ t.jsx(A, { variant: "warning", size: "sm", withDot: !0, children: f }),
+      subtitle: o > 0 ? `${o} kalem inceleme bekliyor` : void 0,
+      badge: o > 0 && /* @__PURE__ */ t.jsx(A, { variant: "warning", size: "sm", withDot: !0, children: o }),
       isLoading: a,
       isError: s,
       isFetching: n,
-      isStale: r,
-      dataUpdatedAt: i,
-      onRetry: c,
-      skeleton: /* @__PURE__ */ t.jsx(K, { rows: 4 }),
-      isEmpty: !a && !s && f === 0,
+      isStale: l,
+      dataUpdatedAt: r,
+      onRetry: d,
+      skeleton: /* @__PURE__ */ t.jsx(q, { rows: 4 }),
+      isEmpty: !a && !s && o === 0,
       emptyState: /* @__PURE__ */ t.jsx(
-        _,
+        P,
         {
           compact: !0,
           variant: "success",
@@ -918,30 +1022,30 @@ function tt() {
           description: "Bugün karar bekleyen kalmadı."
         }
       ),
-      children: /* @__PURE__ */ t.jsx("ul", { className: "flex flex-col gap-2 h-full overflow-y-auto", children: e == null ? void 0 : e.map((h) => /* @__PURE__ */ t.jsx(
-        at,
+      children: /* @__PURE__ */ t.jsx("ul", { className: "flex flex-col gap-2 h-full overflow-y-auto", children: e == null ? void 0 : e.map((c) => /* @__PURE__ */ t.jsx(
+        lt,
         {
-          item: h,
-          onApprove: o,
-          onReject: u
+          item: c,
+          onApprove: x,
+          onReject: f
         },
-        h.id
+        c.id
       )) })
     }
   );
 }
-function at({ item: e, onApprove: a, onReject: s }) {
-  const [n, r] = z.useState(null), i = q[e.type] ?? q.expense, d = st(e.ageHours), l = async (m, c) => {
+function lt({ item: e, onApprove: a, onReject: s }) {
+  const [n, l] = D.useState(null), r = U[e.type] ?? U.expense, u = ot(e.ageHours), i = async (m, d) => {
     if (!n) {
-      r(m);
+      l(m);
       try {
-        await (c == null ? void 0 : c(e));
+        await (d == null ? void 0 : d(e));
       } finally {
-        r(null);
+        l(null);
       }
     }
   };
-  return /* @__PURE__ */ t.jsxs("li", { className: g(
+  return /* @__PURE__ */ t.jsxs("li", { className: p(
     "flex items-center gap-3 p-2.5 rounded-md",
     "bg-surface-base border border-subtle",
     "transition-opacity duration-fast",
@@ -949,23 +1053,23 @@ function at({ item: e, onApprove: a, onReject: s }) {
   ), children: [
     /* @__PURE__ */ t.jsxs("div", { className: "flex flex-col gap-1 min-w-0 flex-1", children: [
       /* @__PURE__ */ t.jsxs("div", { className: "flex items-center gap-2", children: [
-        /* @__PURE__ */ t.jsx(A, { variant: i.variant, size: "sm", children: i.label }),
+        /* @__PURE__ */ t.jsx(A, { variant: r.variant, size: "sm", children: r.label }),
         /* @__PURE__ */ t.jsxs("span", { className: "text-xs text-text-tertiary truncate", children: [
           e.requester,
           " · ",
-          d
+          u
         ] })
       ] }),
       /* @__PURE__ */ t.jsx("p", { className: "text-sm font-medium text-text-primary truncate", children: e.title })
     ] }),
-    /* @__PURE__ */ t.jsx("div", { className: "font-tabular font-semibold text-sm text-text-primary flex-none", children: de(e.amount, e.currency) }),
+    /* @__PURE__ */ t.jsx("div", { className: "font-tabular font-semibold text-sm text-text-primary flex-none", children: C(e.amount, e.currency) }),
     /* @__PURE__ */ t.jsxs("div", { className: "flex items-center gap-1 flex-none", children: [
       /* @__PURE__ */ t.jsx(
         k,
         {
           size: "sm",
           variant: "ghost",
-          onClick: () => l("reject", s),
+          onClick: () => i("reject", s),
           isLoading: n === "reject",
           "aria-label": `${e.title} reddet`,
           className: "text-text-negative hover:bg-negative-50 hover:text-negative-700",
@@ -977,7 +1081,7 @@ function at({ item: e, onApprove: a, onReject: s }) {
         {
           size: "sm",
           variant: "primary",
-          onClick: () => l("approve", a),
+          onClick: () => i("approve", a),
           isLoading: n === "approve",
           "aria-label": `${e.title} onayla`,
           children: "Onayla"
@@ -986,10 +1090,10 @@ function at({ item: e, onApprove: a, onReject: s }) {
     ] })
   ] });
 }
-function st(e) {
+function ot(e) {
   return e < 1 ? "az önce" : e < 24 ? `${Math.round(e)} sa önce` : `${Math.floor(e / 24)} gün önce`;
 }
-const Y = {
+const J = {
   /* Neutral default — AI'ın sakin, ısrarsız tonu */
   neutral: { border: "border-default", ribbon: null },
   /* Pozitif — fırsat, gelişim önerisi */
@@ -999,7 +1103,7 @@ const Y = {
   /* Kritik — derhal aksiyon */
   critical: { border: "border-critical-50 ring-1 ring-critical-50", ribbon: "bg-critical-50" }
 };
-function nt({
+function ct({
   headline: e,
   why: a = [],
   /* string[] — bullet'lara dönüşür */
@@ -1007,66 +1111,66 @@ function nt({
   /* 0-1 ya da 0-100 */
   confidenceLabel: n,
   /* opsiyonel custom label; yoksa otomatik band */
-  tone: r = "neutral",
-  badge: i,
+  tone: l = "neutral",
+  badge: r,
   /* opsiyonel custom badge; yoksa "AI" rozetı */
-  primaryActionLabel: d = "Uygula",
-  onApply: l,
+  primaryActionLabel: u = "Uygula",
+  onApply: i,
   onSnooze: m,
-  onDismiss: c,
-  pending: o,
+  onDismiss: d,
+  pending: x,
   /* 'apply' | 'snooze' | 'dismiss' | null */
-  className: u,
-  children: f
+  className: f,
+  children: o
   /* ekstra içerik — örn. before/after diff snippet */
 }) {
-  const [h, p] = z.useState(!1), v = Y[r] ?? Y.neutral, N = Array.isArray(a) && a.length > 0, E = !!o;
+  const [c, b] = D.useState(!1), y = J[l] ?? J.neutral, N = Array.isArray(a) && a.length > 0, E = !!x;
   return /* @__PURE__ */ t.jsxs(
     "article",
     {
-      className: g(
+      className: p(
         "rounded-md border bg-surface-base",
         "transition-opacity duration-fast",
-        v.border,
+        y.border,
         E && "opacity-60",
-        u
+        f
       ),
-      "data-suggestion-tone": r,
+      "data-suggestion-tone": l,
       children: [
-        v.ribbon && /* Tone ribbon — sade renk şeridi; arka planı ezmeden tonu işaret eder */
-        /* @__PURE__ */ t.jsx("div", { className: g("h-1 rounded-t-md", v.ribbon), "aria-hidden": "true" }),
+        y.ribbon && /* Tone ribbon — sade renk şeridi; arka planı ezmeden tonu işaret eder */
+        /* @__PURE__ */ t.jsx("div", { className: p("h-1 rounded-t-md", y.ribbon), "aria-hidden": "true" }),
         /* @__PURE__ */ t.jsxs("div", { className: "p-3 flex flex-col gap-2", children: [
           /* @__PURE__ */ t.jsxs("div", { className: "flex items-center justify-between gap-2", children: [
-            i ?? /* @__PURE__ */ t.jsx(A, { variant: "ai", size: "sm", withDot: !0, children: "AI" }),
-            /* @__PURE__ */ t.jsx(B, { score: s, label: n, size: "md" })
+            r ?? /* @__PURE__ */ t.jsx(A, { variant: "ai", size: "sm", withDot: !0, children: "AI" }),
+            /* @__PURE__ */ t.jsx(I, { score: s, label: n, size: "md" })
           ] }),
           /* @__PURE__ */ t.jsx("p", { className: "text-sm font-medium text-text-primary leading-snug text-balance", children: e }),
-          f,
+          o,
           N && /* @__PURE__ */ t.jsxs(t.Fragment, { children: [
             /* @__PURE__ */ t.jsx(
               "button",
               {
                 type: "button",
-                onClick: () => p((C) => !C),
-                "aria-expanded": h,
-                className: g(
+                onClick: () => b((L) => !L),
+                "aria-expanded": c,
+                className: p(
                   "self-start text-xs text-text-link hover:underline",
                   "focus-visible:outline-none focus-visible:shadow-focus rounded-sm"
                 ),
-                children: h ? "Açıklamayı gizle" : "Neden bu öneri?"
+                children: c ? "Açıklamayı gizle" : "Neden bu öneri?"
               }
             ),
-            h && /* @__PURE__ */ t.jsx("ul", { className: "text-xs text-text-secondary list-disc pl-5 space-y-1", children: a.map((C, L) => /* @__PURE__ */ t.jsx("li", { children: C }, L)) })
+            c && /* @__PURE__ */ t.jsx("ul", { className: "text-xs text-text-secondary list-disc pl-5 space-y-1", children: a.map((L, M) => /* @__PURE__ */ t.jsx("li", { children: L }, M)) })
           ] }),
           /* @__PURE__ */ t.jsxs("div", { className: "flex items-center justify-end gap-1 mt-1", children: [
-            c && /* @__PURE__ */ t.jsx(
+            d && /* @__PURE__ */ t.jsx(
               k,
               {
                 size: "sm",
                 variant: "ghost",
-                onClick: c,
-                isLoading: o === "dismiss",
-                disabled: E && o !== "dismiss",
+                onClick: d,
+                isLoading: x === "dismiss",
+                disabled: E && x !== "dismiss",
                 children: "İlgisiz"
               }
             ),
@@ -1076,20 +1180,20 @@ function nt({
                 size: "sm",
                 variant: "ghost",
                 onClick: m,
-                isLoading: o === "snooze",
-                disabled: E && o !== "snooze",
+                isLoading: x === "snooze",
+                disabled: E && x !== "snooze",
                 children: "Sonra"
               }
             ),
-            l && /* @__PURE__ */ t.jsx(
+            i && /* @__PURE__ */ t.jsx(
               k,
               {
                 size: "sm",
-                variant: r === "critical" ? "destructive" : "primary",
-                onClick: l,
-                isLoading: o === "apply",
-                disabled: E && o !== "apply",
-                children: d
+                variant: l === "critical" ? "destructive" : "primary",
+                onClick: i,
+                isLoading: x === "apply",
+                disabled: E && x !== "apply",
+                children: u
               }
             )
           ] })
@@ -1098,40 +1202,40 @@ function nt({
     }
   );
 }
-const it = () => b.riskAlerts();
-function rt() {
-  return D({
-    queryKey: x.dashboard.risks(),
-    queryFn: it
+const dt = () => v.riskAlerts();
+function ut() {
+  return z({
+    queryKey: g.dashboard.risks(),
+    queryFn: dt
   });
 }
-function lt() {
+function mt() {
   return R({
-    queryKey: x.dashboard.risks(),
-    mutationFn: (e) => b.dismissRisk(e),
+    queryKey: g.dashboard.risks(),
+    mutationFn: (e) => v.dismissRisk(e),
     errorMessage: "Uyarı reddedilemedi"
   });
 }
-function ot() {
+function xt() {
   return R({
-    queryKey: x.dashboard.risks(),
-    mutationFn: (e) => b.acceptRisk(e),
+    queryKey: g.dashboard.risks(),
+    mutationFn: (e) => v.acceptRisk(e),
     undoMessage: (e) => `Uygulandı: ${e.title}`,
-    undoFn: (e) => b.dismissRisk(e),
+    undoFn: (e) => v.dismissRisk(e),
     errorMessage: "Aksiyon uygulanamadı"
   });
 }
-const P = {
+const K = {
   critical: { label: "Kritik", variant: "critical", priority: 0 },
   actionable: { label: "Eyleme açık", variant: "warning", priority: 1 },
   info: { label: "Bilgi", variant: "ai", priority: 2 }
 };
-function ct() {
-  const { data: e, isLoading: a, isError: s, isFetching: n, isStale: r, dataUpdatedAt: i, refetch: d } = rt(), l = lt(), m = ot(), c = () => d(), o = (h) => l.mutateAsync(h).catch(() => {
-  }), u = (h) => m.mutateAsync(h).catch(() => {
-  }), f = z.useMemo(
+function ft() {
+  const { data: e, isLoading: a, isError: s, isFetching: n, isStale: l, dataUpdatedAt: r, refetch: u } = ut(), i = mt(), m = xt(), d = () => u(), x = (c) => i.mutateAsync(c).catch(() => {
+  }), f = (c) => m.mutateAsync(c).catch(() => {
+  }), o = D.useMemo(
     () => [...e ?? []].sort(
-      (h, p) => P[h.severity].priority - P[p.severity].priority
+      (c, b) => K[c.severity].priority - K[b.severity].priority
     ),
     [e]
   );
@@ -1144,13 +1248,13 @@ function ct() {
       isLoading: a,
       isError: s,
       isFetching: n,
-      isStale: r,
-      dataUpdatedAt: i,
-      onRetry: c,
-      skeleton: /* @__PURE__ */ t.jsx(K, { rows: 3, withTrailing: !1 }),
-      isEmpty: !a && !s && f.length === 0,
+      isStale: l,
+      dataUpdatedAt: r,
+      onRetry: d,
+      skeleton: /* @__PURE__ */ t.jsx(q, { rows: 3, withTrailing: !1 }),
+      isEmpty: !a && !s && o.length === 0,
       emptyState: /* @__PURE__ */ t.jsx(
-        _,
+        P,
         {
           compact: !0,
           variant: "success",
@@ -1159,56 +1263,56 @@ function ct() {
           description: "AI motoru taramayı tamamladı. Yeni veri geldikçe burada görünecek."
         }
       ),
-      children: /* @__PURE__ */ t.jsx("ul", { className: "flex flex-col gap-2 h-full overflow-y-auto", children: f.map((h) => /* @__PURE__ */ t.jsx(
-        dt,
+      children: /* @__PURE__ */ t.jsx("ul", { className: "flex flex-col gap-2 h-full overflow-y-auto", children: o.map((c) => /* @__PURE__ */ t.jsx(
+        ht,
         {
-          risk: h,
-          onAccept: u,
-          onDismiss: o
+          risk: c,
+          onAccept: f,
+          onDismiss: x
         },
-        h.id
+        c.id
       )) })
     }
   );
 }
-function dt({ risk: e, onAccept: a, onDismiss: s }) {
-  const [n, r] = z.useState(!1), [i, d] = z.useState(null), l = P[e.severity], m = async (c, o) => {
-    if (!i) {
-      d(c);
+function ht({ risk: e, onAccept: a, onDismiss: s }) {
+  const [n, l] = D.useState(!1), [r, u] = D.useState(null), i = K[e.severity], m = async (d, x) => {
+    if (!r) {
+      u(d);
       try {
-        await (o == null ? void 0 : o(e));
+        await (x == null ? void 0 : x(e));
       } finally {
-        d(null);
+        u(null);
       }
     }
   };
-  return /* @__PURE__ */ t.jsx("li", { className: g(
+  return /* @__PURE__ */ t.jsx("li", { className: p(
     "rounded-md border bg-surface-base",
     "transition-opacity duration-fast",
     e.severity === "critical" && "border-critical-50 bg-critical-50",
     e.severity === "actionable" && "border-warning-100",
     e.severity === "info" && "border-subtle",
-    i && "opacity-60"
+    r && "opacity-60"
   ), children: /* @__PURE__ */ t.jsxs("div", { className: "p-2.5 flex flex-col gap-2", children: [
     /* @__PURE__ */ t.jsxs("div", { className: "flex items-center justify-between gap-2", children: [
-      /* @__PURE__ */ t.jsx(A, { variant: l.variant, size: "sm", withDot: !0, children: l.label }),
-      /* @__PURE__ */ t.jsx(B, { score: e.confidence, label: e.confidenceLabel, size: "md" })
+      /* @__PURE__ */ t.jsx(A, { variant: i.variant, size: "sm", withDot: !0, children: i.label }),
+      /* @__PURE__ */ t.jsx(I, { score: e.confidence, label: e.confidenceLabel, size: "md" })
     ] }),
     /* @__PURE__ */ t.jsx("p", { className: "text-sm font-medium text-text-primary leading-snug", children: e.title }),
     /* @__PURE__ */ t.jsx(
       "button",
       {
         type: "button",
-        onClick: () => r((c) => !c),
+        onClick: () => l((d) => !d),
         "aria-expanded": n,
-        className: g(
+        className: p(
           "self-start text-xs text-text-link hover:underline",
           "focus-visible:outline-none focus-visible:shadow-focus rounded-sm"
         ),
         children: n ? "Açıklamayı gizle" : "Neden bu öneri?"
       }
     ),
-    n && /* @__PURE__ */ t.jsx("ul", { className: "text-xs text-text-secondary list-disc pl-5 space-y-1", children: e.reasons.map((c, o) => /* @__PURE__ */ t.jsx("li", { children: c }, o)) }),
+    n && /* @__PURE__ */ t.jsx("ul", { className: "text-xs text-text-secondary list-disc pl-5 space-y-1", children: e.reasons.map((d, x) => /* @__PURE__ */ t.jsx("li", { children: d }, x)) }),
     /* @__PURE__ */ t.jsxs("div", { className: "flex items-center justify-end gap-1 mt-1", children: [
       /* @__PURE__ */ t.jsx(
         k,
@@ -1216,7 +1320,7 @@ function dt({ risk: e, onAccept: a, onDismiss: s }) {
           size: "sm",
           variant: "ghost",
           onClick: () => m("dismiss", s),
-          isLoading: i === "dismiss",
+          isLoading: r === "dismiss",
           children: "Şimdi değil"
         }
       ),
@@ -1226,24 +1330,24 @@ function dt({ risk: e, onAccept: a, onDismiss: s }) {
           size: "sm",
           variant: e.severity === "critical" ? "destructive" : "primary",
           onClick: () => m("accept", a),
-          isLoading: i === "accept",
+          isLoading: r === "accept",
           children: e.suggestedAction
         }
       )
     ] })
   ] }) });
 }
-const ut = () => b.aiSuggestions();
-function mt() {
-  return D({
-    queryKey: x.dashboard.aiSuggestions(),
-    queryFn: ut
+const gt = () => v.aiSuggestions();
+function pt() {
+  return z({
+    queryKey: g.dashboard.aiSuggestions(),
+    queryFn: gt
   });
 }
-function ht() {
+function yt() {
   return R({
-    queryKey: x.dashboard.aiSuggestions(),
-    mutationFn: (e) => b.applySuggestion(e),
+    queryKey: g.dashboard.aiSuggestions(),
+    mutationFn: (e) => v.applySuggestion(e),
     undoMessage: (e) => `Uygulandı: ${e.headline}`,
     /* Server reverse henüz yok — undo cache restore'la sınırlı (factory zaten
        previous'ı koyar). Reverse hazırlanınca undoFn dolar. */
@@ -1251,26 +1355,26 @@ function ht() {
     errorMessage: "Öneri uygulanamadı"
   });
 }
-function xt() {
+function bt() {
   return R({
-    queryKey: x.dashboard.aiSuggestions(),
-    mutationFn: (e) => b.snoozeSuggestion(e),
+    queryKey: g.dashboard.aiSuggestions(),
+    mutationFn: (e) => v.snoozeSuggestion(e),
     errorMessage: "Erteleme başarısız"
   });
 }
-function ft() {
+function vt() {
   return R({
-    queryKey: x.dashboard.aiSuggestions(),
-    mutationFn: ({ suggestion: e, reason: a }) => b.dismissSuggestion(e, a),
+    queryKey: g.dashboard.aiSuggestions(),
+    mutationFn: ({ suggestion: e, reason: a }) => v.dismissSuggestion(e, a),
     extractTarget: ({ suggestion: e }) => e,
     errorMessage: "Reddetme kaydedilemedi"
   });
 }
-const gt = 5, yt = 0.3;
-function pt() {
-  const { data: e, isLoading: a, isError: s, isFetching: n, isStale: r, dataUpdatedAt: i, refetch: d } = mt(), l = ht(), m = xt(), c = ft(), o = z.useMemo(() => (e ?? []).filter(
-    (h) => B.normalize(h.confidence) >= yt
-  ).slice(0, gt), [e]), u = ((e == null ? void 0 : e.length) ?? 0) - o.length;
+const jt = 5, wt = 0.3;
+function kt() {
+  const { data: e, isLoading: a, isError: s, isFetching: n, isStale: l, dataUpdatedAt: r, refetch: u } = pt(), i = yt(), m = bt(), d = vt(), x = D.useMemo(() => (e ?? []).filter(
+    (c) => I.normalize(c.confidence) >= wt
+  ).slice(0, jt), [e]), f = ((e == null ? void 0 : e.length) ?? 0) - x.length;
   return /* @__PURE__ */ t.jsx(
     S,
     {
@@ -1280,13 +1384,13 @@ function pt() {
       isLoading: a,
       isError: s,
       isFetching: n,
-      isStale: r,
-      dataUpdatedAt: i,
-      onRetry: () => d(),
-      skeleton: /* @__PURE__ */ t.jsx(K, { rows: 3, withLeading: !1 }),
-      isEmpty: !a && !s && o.length === 0,
+      isStale: l,
+      dataUpdatedAt: r,
+      onRetry: () => u(),
+      skeleton: /* @__PURE__ */ t.jsx(q, { rows: 3, withLeading: !1 }),
+      isEmpty: !a && !s && x.length === 0,
       emptyState: /* @__PURE__ */ t.jsx(
-        _,
+        P,
         {
           compact: !0,
           variant: "info",
@@ -1296,36 +1400,36 @@ function pt() {
         }
       ),
       children: /* @__PURE__ */ t.jsxs("ul", { className: "flex flex-col gap-2 h-full overflow-y-auto", children: [
-        o.map((f) => /* @__PURE__ */ t.jsx("li", { children: /* @__PURE__ */ t.jsx(
-          bt,
+        x.map((o) => /* @__PURE__ */ t.jsx("li", { children: /* @__PURE__ */ t.jsx(
+          Nt,
           {
-            suggestion: f,
-            apply: l,
+            suggestion: o,
+            apply: i,
             snooze: m,
-            dismiss: c
+            dismiss: d
           }
-        ) }, f.id)),
-        u > 0 && /* @__PURE__ */ t.jsxs("li", { className: "text-xs text-text-tertiary text-center pt-1", children: [
+        ) }, o.id)),
+        f > 0 && /* @__PURE__ */ t.jsxs("li", { className: "text-xs text-text-tertiary text-center pt-1", children: [
           "+",
-          u,
+          f,
           " öneri daha"
         ] })
       ] })
     }
   );
 }
-function bt({ suggestion: e, apply: a, snooze: s, dismiss: n }) {
-  var i, d, l, m;
-  const r = a.isPending && ((i = a.variables) == null ? void 0 : i.id) === e.id ? "apply" : s.isPending && ((d = s.variables) == null ? void 0 : d.id) === e.id ? "snooze" : n.isPending && ((m = (l = n.variables) == null ? void 0 : l.suggestion) == null ? void 0 : m.id) === e.id ? "dismiss" : null;
+function Nt({ suggestion: e, apply: a, snooze: s, dismiss: n }) {
+  var r, u, i, m;
+  const l = a.isPending && ((r = a.variables) == null ? void 0 : r.id) === e.id ? "apply" : s.isPending && ((u = s.variables) == null ? void 0 : u.id) === e.id ? "snooze" : n.isPending && ((m = (i = n.variables) == null ? void 0 : i.suggestion) == null ? void 0 : m.id) === e.id ? "dismiss" : null;
   return /* @__PURE__ */ t.jsx(
-    nt,
+    ct,
     {
       headline: e.headline,
       why: e.why,
       confidence: e.confidence,
       tone: e.tone,
       primaryActionLabel: e.primaryActionLabel,
-      pending: r,
+      pending: l,
       onApply: () => a.mutateAsync(e).catch(() => {
       }),
       onSnooze: () => s.mutateAsync(e).catch(() => {
@@ -1335,65 +1439,201 @@ function bt({ suggestion: e, apply: a, snooze: s, dismiss: n }) {
     }
   );
 }
-const vt = F.WidthProvider(F.Responsive), jt = {
-  "budget-health": Ge,
-  "cash-flow": Qe,
-  "pending-approvals": tt,
-  "risk-alerts": ct,
-  "ai-suggestions": pt
+const At = 200;
+function St({ approvalId: e, open: a, onOpenChange: s }) {
+  var c;
+  const n = Re(), l = it(e), r = oe(), u = ce(), i = l.data, m = h.useCallback(async () => {
+    if (i)
+      try {
+        await r.mutateAsync(i), s == null || s(!1);
+      } catch {
+      }
+  }, [i, r, s]), d = h.useCallback(async () => {
+    if (i)
+      try {
+        await u.mutateAsync(i), s == null || s(!1);
+      } catch {
+      }
+  }, [i, u, s]), x = h.useMemo(() => {
+    var b, y;
+    return i ? `${C(i.amount, i.currency)} — ${i.requester} — ${((y = (b = i.context) == null ? void 0 : b.category) == null ? void 0 : y.label) ?? i.type}` : null;
+  }, [i]), f = n === "decision" ? At : 0, o = r.isPending || u.isPending;
+  return /* @__PURE__ */ t.jsx(G, { open: a, onOpenChange: s, children: /* @__PURE__ */ t.jsx(
+    G.Content,
+    {
+      title: "Onay detayı",
+      description: "Tek bir kararı bağlamıyla incele ve uygula",
+      children: /* @__PURE__ */ t.jsxs("div", { className: "flex flex-col h-full", children: [
+        /* @__PURE__ */ t.jsxs("header", { className: "px-4 pt-2 pb-3 border-b border-subtle", children: [
+          /* @__PURE__ */ t.jsx("h2", { className: "text-lg font-semibold text-balance", children: l.isLoading ? /* @__PURE__ */ t.jsx(O, { withDelta: !1 }) : x }),
+          i && /* @__PURE__ */ t.jsx("p", { className: "text-xs text-text-tertiary mt-1", children: i.title })
+        ] }),
+        /* @__PURE__ */ t.jsxs("div", { className: "flex-1 overflow-y-auto px-4 py-4 flex flex-col gap-4", children: [
+          l.isError && /* @__PURE__ */ t.jsx("div", { className: "rounded-md border border-negative-100 bg-negative-50 p-3", children: /* @__PURE__ */ t.jsx("p", { className: "text-sm text-text-negative", children: ((c = l.error) == null ? void 0 : c.message) ?? "Onay yüklenemedi." }) }),
+          i && /* @__PURE__ */ t.jsxs(t.Fragment, { children: [
+            /* @__PURE__ */ t.jsx(Rt, { ai: i.ai }),
+            /* @__PURE__ */ t.jsx(Et, { context: i.context })
+          ] })
+        ] }),
+        /* @__PURE__ */ t.jsxs("footer", { className: "px-4 py-3 border-t border-subtle bg-surface-sunken flex items-center justify-end gap-2", children: [
+          /* @__PURE__ */ t.jsx(
+            k,
+            {
+              type: "button",
+              variant: "ghost",
+              size: "md",
+              onClick: d,
+              isLoading: u.isPending,
+              disabled: !i || o,
+              className: "text-text-negative hover:bg-negative-50 hover:text-negative-700",
+              children: "Reddet"
+            }
+          ),
+          /* @__PURE__ */ t.jsx(
+            Ke,
+            {
+              holdMs: f,
+              variant: "primary",
+              size: "md",
+              onConfirm: m,
+              isLoading: r.isPending,
+              disabled: !i || o,
+              children: f > 0 ? "Onaylamak için bas" : "Onayla"
+            }
+          )
+        ] })
+      ] })
+    }
+  ) });
+}
+function Rt({ ai: e }) {
+  var a;
+  return e ? /* @__PURE__ */ t.jsxs("section", { className: "rounded-md border border-subtle bg-surface-base p-3", children: [
+    /* @__PURE__ */ t.jsxs("div", { className: "flex items-center justify-between gap-2 mb-2", children: [
+      /* @__PURE__ */ t.jsx(A, { variant: e.anomaly ? "warning" : "ai", size: "sm", withDot: !0, children: e.anomaly ? "AI: anomali işareti var" : "AI: anomaly yok" }),
+      /* @__PURE__ */ t.jsx(I, { score: e.confidence, size: "md" })
+    ] }),
+    ((a = e.reasons) == null ? void 0 : a.length) > 0 && /* @__PURE__ */ t.jsx("ul", { className: "text-xs text-text-secondary list-disc pl-5 space-y-1", children: e.reasons.map((s, n) => /* @__PURE__ */ t.jsx("li", { children: s }, n)) })
+  ] }) : null;
+}
+function Et({ context: e }) {
+  if (!e) return null;
+  const { budget: a, category: s, project: n } = e, l = a != null && a.total ? a.remaining / a.total : 0, r = l >= 0.3 ? "positive" : l >= 0.1 ? "warning" : "critical";
+  return /* @__PURE__ */ t.jsxs("section", { className: "grid grid-cols-1 gap-2", children: [
+    /* @__PURE__ */ t.jsx(
+      T,
+      {
+        label: "Bütçe kalanı",
+        value: a && C(a.remaining, a.currency),
+        hint: a && `${Math.round(l * 100)}% / ${C(a.total, a.currency)}`,
+        variant: r
+      }
+    ),
+    /* @__PURE__ */ t.jsx(
+      T,
+      {
+        label: `${(s == null ? void 0 : s.label) ?? "Kategori"} — bu ay`,
+        value: s && C(s.spentMonth, (a == null ? void 0 : a.currency) ?? "TRY")
+      }
+    ),
+    /* @__PURE__ */ t.jsx(
+      T,
+      {
+        label: "Proje",
+        value: n == null ? void 0 : n.name,
+        hint: n == null ? void 0 : n.code
+      }
+    )
+  ] });
+}
+function T({ label: e, value: a, hint: s, variant: n }) {
+  const l = n === "positive" ? "text-text-positive" : n === "warning" ? "text-text-warning" : n === "critical" ? "text-text-negative" : "text-text-primary";
+  return /* @__PURE__ */ t.jsxs("div", { className: "flex items-center justify-between gap-3 py-1.5 border-b border-subtle last:border-b-0", children: [
+    /* @__PURE__ */ t.jsx("span", { className: "text-sm text-text-secondary", children: e }),
+    /* @__PURE__ */ t.jsxs("div", { className: "flex flex-col items-end min-w-0", children: [
+      /* @__PURE__ */ t.jsx("span", { className: `text-sm font-tabular font-medium ${l}`, children: a ?? "—" }),
+      s && /* @__PURE__ */ t.jsx("span", { className: "text-xs text-text-tertiary", children: s })
+    ] })
+  ] });
+}
+const Dt = W.WidthProvider(W.Responsive), zt = {
+  "budget-health": Ue,
+  "cash-flow": et,
+  "pending-approvals": rt,
+  "risk-alerts": ft,
+  "ai-suggestions": kt
 };
-function wt() {
-  const [e, a] = y.useState(() => Ce()), [s, n] = y.useState(!1), r = y.useMemo(() => {
-    const o = T[e] ?? T.cfo, u = De(e);
-    return u ? { ...o, ...u } : o;
-  }, [e]), i = y.useCallback((o) => {
-    a(o), Le(o);
-  }, []), d = y.useCallback(
-    (o, u) => {
-      s && Me(e, u);
+function Lt() {
+  const [e, a] = h.useState(() => Ie()), [s, n] = h.useState(!1), [l, r] = h.useState(null);
+  h.useEffect(() => {
+    if (typeof window > "u") return;
+    const o = new URLSearchParams(window.location.search), c = o.get("approval");
+    if (!c) return;
+    r(c), o.delete("approval");
+    const b = window.location.pathname + (o.toString() ? `?${o}` : "") + window.location.hash;
+    window.history.replaceState(null, "", b);
+  }, []);
+  const u = h.useMemo(() => {
+    const o = F[e] ?? F.cfo, c = Te(e);
+    return c ? { ...o, ...c } : o;
+  }, [e]), i = h.useCallback((o) => {
+    a(o), Pe(o);
+  }, []), m = h.useCallback(
+    (o, c) => {
+      s && Be(e, c);
     },
     [s, e]
-  ), l = y.useCallback(() => {
-    _e(e), a(e);
-  }, [e]), c = (r.desktop ?? []).map((o) => o.i);
+  ), d = h.useCallback(() => {
+    Fe(e), a(e);
+  }, [e]), f = (u.desktop ?? []).map((o) => o.i);
   return /* @__PURE__ */ t.jsxs("div", { className: "min-h-screen bg-surface-base text-text-primary", children: [
     /* @__PURE__ */ t.jsx(
-      kt,
+      Mt,
       {
         persona: e,
         onPersonaChange: i,
         editMode: s,
         onEditModeToggle: () => n((o) => !o),
-        onReset: l
+        onReset: d
       }
     ),
     /* @__PURE__ */ t.jsx("main", { className: "px-4 py-4 mobile:px-2 mobile:py-2", children: /* @__PURE__ */ t.jsx(
-      vt,
+      Dt,
       {
-        className: g("apya-bento", s && "apya-bento--edit"),
-        layouts: r,
-        breakpoints: Ae,
-        cols: Re,
-        rowHeight: Ee,
-        margin: ze,
+        className: p("apya-bento", s && "apya-bento--edit"),
+        layouts: u,
+        breakpoints: Le,
+        cols: Me,
+        rowHeight: Ce,
+        margin: _e,
         isDraggable: s,
         isResizable: s,
         draggableHandle: `.${S.DRAG_HANDLE_CLASS}`,
-        onLayoutChange: d,
+        onLayoutChange: m,
         compactType: "vertical",
         preventCollision: !1,
-        children: c.map((o) => {
-          const u = jt[o];
-          return u ? /* @__PURE__ */ t.jsx("div", { className: "apya-bento-item", children: /* @__PURE__ */ t.jsx(u, {}) }, o) : /* @__PURE__ */ t.jsx("div", { children: /* @__PURE__ */ t.jsx(S, { title: `Bilinmeyen widget: ${o}` }) }, o);
+        children: f.map((o) => {
+          const c = zt[o];
+          return c ? /* @__PURE__ */ t.jsx("div", { className: "apya-bento-item", children: /* @__PURE__ */ t.jsx(c, {}) }, o) : /* @__PURE__ */ t.jsx("div", { children: /* @__PURE__ */ t.jsx(S, { title: `Bilinmeyen widget: ${o}` }) }, o);
         })
       }
     ) }),
+    /* @__PURE__ */ t.jsx(
+      St,
+      {
+        approvalId: l,
+        open: !!l,
+        onOpenChange: (o) => {
+          o || r(null);
+        }
+      }
+    ),
     s && /* @__PURE__ */ t.jsxs(
       "div",
       {
         role: "status",
         "aria-live": "polite",
-        className: g(
+        className: p(
           "fixed bottom-4 left-1/2 -translate-x-1/2 z-toast",
           "bg-surface-inverse text-text-inverse text-sm",
           "px-4 py-2 rounded-md shadow-lg",
@@ -1416,8 +1656,8 @@ function wt() {
     )
   ] });
 }
-function kt({ persona: e, onPersonaChange: a, editMode: s, onEditModeToggle: n, onReset: r }) {
-  return /* @__PURE__ */ t.jsxs("header", { className: g(
+function Mt({ persona: e, onPersonaChange: a, editMode: s, onEditModeToggle: n, onReset: l }) {
+  return /* @__PURE__ */ t.jsxs("header", { className: p(
     "sticky top-0 z-sticky",
     "bg-surface-raised/95 backdrop-blur-sm",
     "border-b border-default",
@@ -1428,18 +1668,18 @@ function kt({ persona: e, onPersonaChange: a, editMode: s, onEditModeToggle: n, 
     /* @__PURE__ */ t.jsxs("div", { className: "flex flex-col gap-0.5 min-w-0", children: [
       /* @__PURE__ */ t.jsx("h1", { className: "text-base font-semibold text-text-primary truncate", children: "Genel Bakış" }),
       /* @__PURE__ */ t.jsxs("p", { className: "text-xs text-text-tertiary truncate mobile:hidden", children: [
-        ee[e],
+        ie[e],
         " görünümü"
       ] })
     ] }),
     /* @__PURE__ */ t.jsxs("div", { className: "flex items-center gap-2 flex-none", children: [
-      /* @__PURE__ */ t.jsx(Nt, { value: e, onChange: a }),
+      /* @__PURE__ */ t.jsx(Ct, { value: e, onChange: a }),
       s ? /* @__PURE__ */ t.jsx(
         k,
         {
           size: "sm",
           variant: "secondary",
-          onClick: r,
+          onClick: l,
           title: "Layout'u persona varsayılanına döndür",
           children: "Sıfırla"
         }
@@ -1453,11 +1693,11 @@ function kt({ persona: e, onPersonaChange: a, editMode: s, onEditModeToggle: n, 
           children: s ? "Tamamla" : "Düzenle"
         }
       ),
-      /* @__PURE__ */ t.jsx(ue, {})
+      /* @__PURE__ */ t.jsx(ge, {})
     ] })
   ] });
 }
-function Nt({ value: e, onChange: a }) {
+function Ct({ value: e, onChange: a }) {
   return /* @__PURE__ */ t.jsxs("label", { className: "flex items-center gap-2", children: [
     /* @__PURE__ */ t.jsx("span", { className: "sr-only", children: "Persona seç" }),
     /* @__PURE__ */ t.jsx(
@@ -1465,7 +1705,7 @@ function Nt({ value: e, onChange: a }) {
       {
         value: e,
         onChange: (s) => a(s.target.value),
-        className: g(
+        className: p(
           "h-10 px-3 text-sm rounded-md",
           "bg-surface-base text-text-primary",
           "border border-default",
@@ -1473,90 +1713,90 @@ function Nt({ value: e, onChange: a }) {
           "focus-visible:outline-none focus-visible:shadow-focus",
           "transition-colors duration-fast"
         ),
-        children: Object.entries(ee).map(([s, n]) => /* @__PURE__ */ t.jsx("option", { value: s, children: n }, s))
+        children: Object.entries(ie).map(([s, n]) => /* @__PURE__ */ t.jsx("option", { value: s, children: n }, s))
       }
     )
   ] });
 }
-function St(e) {
-  const { connection: a, state: s } = Z(), n = H();
-  y.useEffect(() => {
+function _t(e) {
+  const { connection: a, state: s } = se(), n = $();
+  h.useEffect(() => {
     if (!a || !(e != null && e.length)) return;
-    const r = e.map(([i, d]) => {
-      const l = () => {
-        d.forEach((m) => {
+    const l = e.map(([r, u]) => {
+      const i = () => {
+        u.forEach((m) => {
           n.invalidateQueries({ queryKey: m });
         });
       };
-      return a.on(i, l), [i, l];
+      return a.on(r, i), [r, i];
     });
     return () => {
-      r.forEach(([i, d]) => {
-        a.off(i, d);
+      l.forEach(([r, u]) => {
+        a.off(r, u);
       });
     };
   }, [a, s, n]);
 }
-function At(e) {
-  const { connection: a, state: s } = Z(), n = H(), r = U();
-  y.useEffect(() => {
+function It(e) {
+  const { connection: a, state: s } = se(), n = $(), l = ee();
+  h.useEffect(() => {
     if (!a || !(e != null && e.length)) return;
-    const i = e.map(([d, l]) => {
-      const m = (c) => {
-        var o;
-        (o = l.queryKeys) == null || o.forEach(
-          (u) => n.invalidateQueries({ queryKey: u })
-        ), r.warning(l.message ?? "Bu kayıtta çakışma oldu", {
-          description: l.description ?? (c == null ? void 0 : c.message),
+    const r = e.map(([u, i]) => {
+      const m = (d) => {
+        var x;
+        (x = i.queryKeys) == null || x.forEach(
+          (f) => n.invalidateQueries({ queryKey: f })
+        ), l.warning(i.message ?? "Bu kayıtta çakışma oldu", {
+          description: i.description ?? (d == null ? void 0 : d.message),
           action: {
             label: "Yenile",
             onClick: () => {
-              var u;
-              (u = l.queryKeys) == null || u.forEach(
-                (f) => n.invalidateQueries({ queryKey: f })
+              var f;
+              (f = i.queryKeys) == null || f.forEach(
+                (o) => n.invalidateQueries({ queryKey: o })
               );
             }
           }
         });
       };
-      return a.on(d, m), [d, m];
+      return a.on(u, m), [u, m];
     });
     return () => {
-      i.forEach(([d, l]) => a.off(d, l));
+      r.forEach(([u, i]) => a.off(u, i));
     };
   }, [a, s, n]);
 }
-function Rt() {
-  const e = y.useMemo(() => [
-    ["JournalEntryPosted", [x.dashboard.budget(), x.dashboard.cashflow()]],
-    ["ApprovalDecided", [x.dashboard.approvals(), x.dashboard.budget(), x.dashboard.cashflow()]],
-    ["RiskDetected", [x.dashboard.risks()]],
-    ["RiskDismissed", [x.dashboard.risks()]],
-    ["AISuggestionPosted", [x.dashboard.aiSuggestions()]]
-  ], []), a = y.useMemo(() => [
+function Pt() {
+  const e = h.useMemo(() => [
+    ["JournalEntryPosted", [g.dashboard.budget(), g.dashboard.cashflow()]],
+    ["ApprovalDecided", [g.dashboard.approvals(), g.dashboard.budget(), g.dashboard.cashflow()]],
+    ["RiskDetected", [g.dashboard.risks()]],
+    ["RiskDismissed", [g.dashboard.risks()]],
+    ["AISuggestionPosted", [g.dashboard.aiSuggestions()]]
+  ], []), a = h.useMemo(() => [
     ["ApprovalConflict", {
-      queryKeys: [x.dashboard.approvals(), x.dashboard.budget(), x.dashboard.cashflow()],
+      queryKeys: [g.dashboard.approvals(), g.dashboard.budget(), g.dashboard.cashflow()],
       message: "Onay kaydında çakışma",
       description: "Bu kayıt başka bir kullanıcı tarafından işlendi."
     }],
     ["BudgetConflict", {
-      queryKeys: [x.dashboard.budget()],
+      queryKeys: [g.dashboard.budget()],
       message: "Bütçe kaydında çakışma",
       description: "Aynı bütçeyi başka bir kullanıcı güncelledi."
     }],
     ["SuggestionConflict", {
-      queryKeys: [x.dashboard.aiSuggestions()],
+      queryKeys: [g.dashboard.aiSuggestions()],
       message: "AI önerisinde çakışma",
       description: "Bu öneri başka bir kullanıcı tarafından uygulanmış."
     }]
   ], []);
-  return St(e), At(a), null;
+  return _t(e), It(a), null;
 }
-me();
-const Q = document.getElementById("apya-dashboard-root");
-Q && ne(Q).render(
-  /* @__PURE__ */ t.jsx(he, { children: /* @__PURE__ */ t.jsx(we, { children: /* @__PURE__ */ t.jsx(xe, { children: /* @__PURE__ */ t.jsx(fe, { children: /* @__PURE__ */ t.jsxs(be, { children: [
-    /* @__PURE__ */ t.jsx(Rt, {}),
-    /* @__PURE__ */ t.jsx(wt, {})
+pe();
+const X = document.getElementById("apya-dashboard-root");
+X && de(X).render(
+  /* @__PURE__ */ t.jsx(ye, { children: /* @__PURE__ */ t.jsx(Se, { children: /* @__PURE__ */ t.jsx(be, { children: /* @__PURE__ */ t.jsx(ve, { children: /* @__PURE__ */ t.jsxs(Ne, { children: [
+    /* @__PURE__ */ t.jsx(Pt, {}),
+    /* @__PURE__ */ t.jsx(Lt, {})
   ] }) }) }) }) })
 );

@@ -45,29 +45,29 @@ function Ye({ children: e, defaultPreference: t = k }) {
     if (r !== "system" || typeof window > "u" || !window.matchMedia)
       return;
     const c = window.matchMedia("(prefers-color-scheme: dark)"), m = () => {
-      const x = Y() ? "dark" : "light";
-      n(x), M(x);
+      const b = Y() ? "dark" : "light";
+      n(b), M(b);
     };
     return c.addEventListener("change", m), () => c.removeEventListener("change", m);
   }, [r]), f.useEffect(() => {
     M(S(r));
   }, []);
   const o = f.useCallback(() => {
-    const c = ["light", "dark", "system"], m = c.indexOf(r), x = c[(m + 1) % c.length];
-    l(x);
+    const c = ["light", "dark", "system"], m = c.indexOf(r), b = c[(m + 1) % c.length];
+    l(b);
   }, [r, l]), u = f.useMemo(
     () => ({ preference: r, resolvedTheme: i, setPreference: l, toggle: o }),
     [r, i, l, o]
   );
   return /* @__PURE__ */ s.jsx(W.Provider, { value: u, children: e });
 }
-function xe() {
+function be() {
   const e = f.useContext(W);
   if (!e)
     throw new Error("useTheme must be used inside a <ThemeProvider>.");
   return e;
 }
-class be extends Error {
+class xe extends Error {
   constructor(t, { status: r, code: a, details: i, validationErrors: n } = {}) {
     super(t), this.name = "ApiError", this.status = r, this.code = a, this.details = i, this.validationErrors = n;
   }
@@ -80,7 +80,7 @@ function he() {
         gcTime: 5 * 6e4,
         refetchOnWindowFocus: !0,
         refetchOnReconnect: !0,
-        retry: (e, t) => t instanceof be && t.status >= 400 && t.status < 500 ? !1 : e < 2
+        retry: (e, t) => t instanceof xe && t.status >= 400 && t.status < 500 ? !1 : e < 2
       },
       mutations: {
         /* Mutation default'ta retry YAPMAZ — duplicate finansal işlem riski. */
@@ -94,6 +94,7 @@ const Qe = {
     budget: () => ["dashboard", "budget"],
     cashflow: () => ["dashboard", "cashflow"],
     approvals: (e) => e ? ["dashboard", "approvals", e] : ["dashboard", "approvals"],
+    approvalDetail: (e) => ["dashboard", "approval-detail", e],
     risks: () => ["dashboard", "risks"],
     aiSuggestions: (e) => e ? ["dashboard", "ai-suggestions", e] : ["dashboard", "ai-suggestions"]
   }
@@ -321,7 +322,7 @@ const ke = F(
   trailingIcon: u,
   disabled: c,
   children: m,
-  type: x = "button",
+  type: b = "button",
   ...j
 }, N) {
   const B = i ? ne : "button", g = c || n;
@@ -329,7 +330,7 @@ const ke = F(
     B,
     {
       ref: N,
-      type: i ? void 0 : x,
+      type: i ? void 0 : b,
       disabled: i ? void 0 : g,
       "aria-busy": n || void 0,
       "data-loading": n || void 0,
@@ -591,7 +592,7 @@ const Ue = h.forwardRef(function({
   min: u,
   max: c,
   invalid: m,
-  size: x,
+  size: b,
   placeholder: j = "0,00",
   className: N,
   inputClassName: B,
@@ -601,33 +602,33 @@ const Ue = h.forwardRef(function({
   h.useEffect(() => {
     C.current || y(E(t, l, o));
   }, [t, l, o]);
-  const K = f.useCallback((b) => {
-    const p = b.target.value;
+  const K = f.useCallback((x) => {
+    const p = x.target.value;
     y(p);
     const v = O(p);
     r == null || r(v);
-  }, [r]), J = f.useCallback((b) => {
+  }, [r]), J = f.useCallback((x) => {
     C.current = !0, t != null && (y(String(t).replace(".", l.startsWith("tr") ? "," : ".")), requestAnimationFrame(() => {
       var p, v;
-      return (v = (p = b.target) == null ? void 0 : p.select) == null ? void 0 : v.call(p);
+      return (v = (p = x.target) == null ? void 0 : p.select) == null ? void 0 : v.call(p);
     }));
-  }, [t, l]), Z = f.useCallback((b) => {
+  }, [t, l]), Z = f.useCallback((x) => {
     var v;
     C.current = !1;
     const p = O(T);
-    r == null || r(p), y(E(p, l, o)), (v = g.onBlur) == null || v.call(g, b);
+    r == null || r(p), y(E(p, l, o)), (v = g.onBlur) == null || v.call(g, x);
   }, [T, r, l, o, g]), X = f.useMemo(() => t == null ? !1 : u != null && t < u || c != null && t > c, [t, u, c]), U = L[a] ?? a, V = i && i.length > 1 && n ? /* @__PURE__ */ s.jsx(
     "select",
     {
       value: a,
-      onChange: (b) => n(b.target.value),
+      onChange: (x) => n(x.target.value),
       "aria-label": "Para birimi",
       className: d(
         "bg-transparent border-0 outline-none text-sm text-text-secondary",
         "pr-1 -mr-1 cursor-pointer",
         "focus-visible:outline-none"
       ),
-      children: i.map((b) => /* @__PURE__ */ s.jsx("option", { value: b, children: L[b] ?? b }, b))
+      children: i.map((x) => /* @__PURE__ */ s.jsx("option", { value: x, children: L[x] ?? x }, x))
     }
   ) : /* @__PURE__ */ s.jsx("span", { className: "font-medium text-text-secondary", children: U });
   return /* @__PURE__ */ s.jsx(
@@ -642,7 +643,7 @@ const Ue = h.forwardRef(function({
       onFocus: J,
       onBlur: Z,
       invalid: m || X,
-      size: x,
+      size: b,
       trailing: V,
       className: d("font-tabular text-right", N),
       ...g
@@ -704,7 +705,7 @@ const P = {
   system: "Sistem teması (Sıradaki: Açık)"
 };
 function et({ className: e = "" }) {
-  const { preference: t, toggle: r } = xe();
+  const { preference: t, toggle: r } = be();
   return /* @__PURE__ */ s.jsxs(
     "button",
     {
@@ -853,16 +854,16 @@ function q({ score: e, label: t, size: r = "md", showLabel: a = !0, className: i
       className: d("inline-flex items-center gap-1 text-xs text-text-tertiary", i),
       title: `${l.label} (%${c})`,
       children: [
-        /* @__PURE__ */ s.jsx("span", { className: d("inline-flex items-center", o.gap), "aria-hidden": "true", children: Array.from({ length: 5 }, (m, x) => /* @__PURE__ */ s.jsx(
+        /* @__PURE__ */ s.jsx("span", { className: d("inline-flex items-center", o.gap), "aria-hidden": "true", children: Array.from({ length: 5 }, (m, b) => /* @__PURE__ */ s.jsx(
           "span",
           {
             className: d(
               "inline-block rounded-full",
               o.dot,
-              x < l.dots ? "bg-ai-500" : "bg-neutral-200"
+              b < l.dots ? "bg-ai-500" : "bg-neutral-200"
             )
           },
-          x
+          b
         )) }),
         a && /* @__PURE__ */ s.jsx("span", { "aria-hidden": "true", children: u }),
         /* @__PURE__ */ s.jsxs("span", { className: "sr-only", children: [
@@ -896,8 +897,8 @@ function tt({ onUpdate: e, onReady: t } = {}) {
   }));
 }
 export {
-  be as A,
-  Ve as B,
+  xe as A,
+  Ze as B,
   w as C,
   Fe as I,
   Ue as M,
@@ -908,15 +909,15 @@ export {
   Ce as b,
   d as c,
   Me as d,
-  qe as e,
+  Ve as e,
   Ge as f,
-  $e as g,
-  Ze as h,
+  qe as g,
+  $e as h,
   q as i,
-  Ye as j,
-  He as k,
-  Ke as l,
-  I as m,
+  I as j,
+  Ye as k,
+  He as l,
+  Ke as m,
   tt as r,
   Je as u
 };

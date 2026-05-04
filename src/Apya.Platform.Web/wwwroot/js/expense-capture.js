@@ -1,5 +1,5 @@
 import { r as l, j as e, e as K, d as X } from "./react-vendor.js";
-import { I as F, c as R, u as H, h as A, S as P, m as B, B as Z, M as ee, g as Y, i as te, T as ae, r as ne, j as re, k as se, l as ie } from "./registerServiceWorker.js";
+import { I as F, c as R, u as H, B as A, S as P, j as B, e as Z, M as ee, h as Y, i as te, T as ae, r as ne, k as re, l as se, m as ie } from "./registerServiceWorker.js";
 import { b as V } from "./query-vendor.js";
 /* empty css      */
 function oe(t, n) {

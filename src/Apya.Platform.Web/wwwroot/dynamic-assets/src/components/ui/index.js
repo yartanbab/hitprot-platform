@@ -10,6 +10,7 @@
  *   3) varsa cva variant'larını da export et
  */
 export { Button, buttonVariants } from './Button';
+export { HoldButton } from './HoldButton';
 export { Card, CardHeader, CardTitle, CardDescription, CardBody, CardFooter } from './Card';
 export { Skeleton, SkeletonText } from './Skeleton';
 export { SkeletonHeadline, SkeletonChart, SkeletonList } from './SkeletonShape';
