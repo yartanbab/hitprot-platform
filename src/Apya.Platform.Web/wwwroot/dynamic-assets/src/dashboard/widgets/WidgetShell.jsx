@@ -1,30 +1,31 @@
 import React from 'react';
-import { Card, CardHeader, CardTitle, CardBody, Skeleton, Badge } from '../../components/ui';
+import { Card, CardHeader, CardTitle, CardBody, Skeleton, Badge, EmptyState } from '../../components/ui';
 import { cn } from '../../lib/utils';
 
 /**
  * WidgetShell — Bento grid içindeki TÜM widget'ların ortak chrome'u.
  *
- * Sorumluluklar:
- *   - Üst başlık + opsiyonel badge ("LIVE", "AI", "BETA")
- *   - Drag handle bölgesi (react-grid-layout `drag-handle` class'ını arar)
- *   - Loading state → Skeleton fallback
- *   - Error state → kullanıcıya ne oldu + retry CTA
- *   - Empty state → "Veri yok" mesajı
- *   - Body slot → widget'ın gerçek içeriği
+ * 4-state kontratı (UX strategy doc § Widget kontratı):
+ *   1. skeleton  → shape-aware. Caller `skeleton` prop'una SkeletonHeadline /
+ *                   SkeletonChart / SkeletonList verir; yoksa generic 3-satır.
+ *   2. empty     → ikon + 1 satır + 1 CTA. "Veri yok" yasak.
+ *                   Caller `emptyState={<EmptyState ... />}` ile özelleştirir;
+ *                   yoksa fallback nötr ipucu.
+ *   3. error     → "Yeniden dene" + son başarılı snapshot timestamp'i
+ *                   (caller `dataUpdatedAt` verirse "X dk önce güncellendi").
+ *   4. stale     → Sessiz "Güncelleniyor…" rozeti header'da.
+ *                   Caller `isStale` + `isFetching` verir; ikisi de true ise
+ *                   eski veri görünür ama yenisi geliyor.
  *
  * UX kuralı (strategy doc § Performance):
- *   - <150ms yükleme → skeleton GÖSTERME
- *   - 150-1000ms → skeleton + shimmer (default)
- *   - >1000ms → "Veriler yükleniyor..." metni eklenmeli (ilerleme metni)
- *
- * Bu shell `density` prop'u alır — Bento grid'de "compact" tercih edilir
- * çünkü hücreler küçük; standalone kullanımda "comfortable" varsayılan.
+ *   - <150ms yükleme → skeleton GÖSTERME (caller `isLoading` <150ms ise debounce'lamalı,
+ *     React Query default'unda olabiliyor; primitive bunu enforce etmez)
+ *   - 150-1000ms → skeleton (default davranış)
+ *   - >1000ms → skeleton + "Veriler yükleniyor..." metni (caller eklemeli)
  */
 
 const STATE_PROPS = {
-    /* react-grid-layout drag handle'ı için class — yalnızca header'dan sürüklenir,
-       body'den sürüklendiğinde widget içindeki interactive element'leri tetiklemez. */
+    /* react-grid-layout drag handle'ı için class — yalnızca header'dan sürüklenir */
     DRAG_HANDLE_CLASS: 'widget-drag-handle',
 };
 
@@ -32,23 +33,32 @@ function WidgetShell({
     title,
     subtitle,
     badge,
-    actions,           /* sağ üstteki action button'lar */
+    actions,                    /* sağ üstteki action button'lar */
     isLoading = false,
     isError = false,
     errorMessage,
     onRetry,
     isEmpty = false,
-    emptyMessage = 'Görüntülenecek veri yok.',
+    emptyMessage,               /* legacy: tek satır metin; yeni kod emptyState kullanmalı */
+    emptyState,                 /* yeni: <EmptyState .../> ReactNode */
+    skeleton,                   /* yeni: shape-aware loading state — ReactNode */
+    isFetching = false,         /* React Query background refetch */
+    isStale = false,            /* React Query staleTime aşıldı */
+    dataUpdatedAt,              /* number (ms) | Date | undefined — son başarılı fetch */
     density = 'compact',
     children,
     className,
 }) {
+    /* Stale banner: stale + background fetch sürüyorsa "güncelleniyor"
+       sinyali. Tek başına stale (refetch yok) ise sessiz kal — refetch
+       window-focus'ta otomatik olur, kullanıcıyı uyarmana gerek yok. */
+    const showStale = !isLoading && !isError && isStale && isFetching;
+
     return (
         <Card variant="default" className={cn('h-full flex flex-col', className)}>
             <CardHeader
                 density={density}
                 className={cn(
-                    /* Header drag-handle olur — sadece BURASI sürüklenir */
                     STATE_PROPS.DRAG_HANDLE_CLASS,
                     'cursor-grab active:cursor-grabbing select-none',
                     'flex-row items-center justify-between flex-none',
@@ -58,13 +68,13 @@ function WidgetShell({
                     <div className="flex items-center gap-2">
                         <CardTitle className="text-sm font-semibold truncate">{title}</CardTitle>
                         {badge}
+                        {showStale && <StaleIndicator />}
                     </div>
                     {subtitle && (
                         <p className="text-xs text-text-tertiary truncate">{subtitle}</p>
                     )}
                 </div>
                 {actions && (
-                    /* Action button'ların onClick'leri drag'i tetiklemesin diye stopPropagation */
                     <div
                         className="flex items-center gap-1 flex-none"
                         onMouseDown={(e) => e.stopPropagation()}
@@ -77,11 +87,15 @@ function WidgetShell({
 
             <CardBody density={density} className="flex-1 overflow-auto">
                 {isError && (
-                    <ErrorState message={errorMessage} onRetry={onRetry} />
+                    <ErrorState
+                        message={errorMessage}
+                        onRetry={onRetry}
+                        dataUpdatedAt={dataUpdatedAt}
+                    />
                 )}
-                {!isError && isLoading && <LoadingState density={density} />}
+                {!isError && isLoading && (skeleton ?? <DefaultLoadingState density={density} />)}
                 {!isError && !isLoading && isEmpty && (
-                    <EmptyState message={emptyMessage} />
+                    emptyState ?? <FallbackEmptyState message={emptyMessage} />
                 )}
                 {!isError && !isLoading && !isEmpty && children}
             </CardBody>
@@ -89,7 +103,7 @@ function WidgetShell({
     );
 }
 
-function LoadingState({ density }) {
+function DefaultLoadingState({ density }) {
     return (
         <div className="flex flex-col gap-3" aria-busy="true">
             <Skeleton height={density === 'spacious' ? 48 : 32} className="w-1/3" />
@@ -100,13 +114,33 @@ function LoadingState({ density }) {
     );
 }
 
-function ErrorState({ message, onRetry }) {
+function FallbackEmptyState({ message }) {
+    /* Caller emptyState vermediyse — geriye düşüş. Yeni widget'larda EmptyState
+       primitive'i tercih edilmeli (UX kontrat: ikon + başlık + CTA). */
+    return (
+        <EmptyState
+            compact
+            title={message ?? 'Görüntülenecek veri yok'}
+            description="Yeni veri girildiğinde burada görünecek."
+        />
+    );
+}
+
+function ErrorState({ message, onRetry, dataUpdatedAt }) {
+    const lastSeen = formatRelative(dataUpdatedAt);
     return (
         <div className="flex flex-col items-center justify-center text-center gap-2 py-4">
             <Badge variant="negative" withDot>Yüklenemedi</Badge>
             <p className="text-sm text-text-secondary max-w-xs">
                 {message || 'Veri alınırken bir hata oluştu.'}
             </p>
+            {lastSeen && (
+                /* Son başarılı snapshot — kullanıcı "veri ne kadar eski" bilsin.
+                   Critical UX: kullanıcı kararlarını eski veriyle vermesin diye. */
+                <p className="text-xs text-text-tertiary">
+                    Son başarılı güncelleme: {lastSeen}
+                </p>
+            )}
             {onRetry && (
                 <button
                     type="button"
@@ -123,12 +157,37 @@ function ErrorState({ message, onRetry }) {
     );
 }
 
-function EmptyState({ message }) {
+/* Sessiz stale rozeti — küçük spinner-dot + tooltip. Kullanıcıyı rahatsız
+   etmesin diye text minimal. */
+function StaleIndicator() {
     return (
-        <div className="flex flex-col items-center justify-center text-center gap-1 py-6">
-            <p className="text-sm text-text-tertiary">{message}</p>
-        </div>
+        <span
+            className="inline-flex items-center gap-1 text-xs text-text-tertiary"
+            title="Arka planda güncelleniyor"
+            aria-live="polite"
+        >
+            <span
+                className="inline-block h-1.5 w-1.5 rounded-full bg-warning-500 animate-pulse"
+                aria-hidden="true"
+            />
+            <span>güncelleniyor</span>
+        </span>
     );
+}
+
+/* Relative time — son başarılı veri için "3 dk önce" tarzı kısa biçim.
+   Intl.RelativeTimeFormat tek lokalle kuruluyor; Apya tr-TR varsayılan. */
+function formatRelative(when) {
+    if (when == null) return null;
+    const ts = when instanceof Date ? when.getTime() : Number(when);
+    if (!Number.isFinite(ts)) return null;
+    const diffSec = Math.round((ts - Date.now()) / 1000);
+    const abs = Math.abs(diffSec);
+    const fmt = new Intl.RelativeTimeFormat('tr-TR', { numeric: 'auto' });
+    if (abs < 60)    return fmt.format(diffSec, 'second');
+    if (abs < 3600)  return fmt.format(Math.round(diffSec / 60), 'minute');
+    if (abs < 86400) return fmt.format(Math.round(diffSec / 3600), 'hour');
+    return fmt.format(Math.round(diffSec / 86400), 'day');
 }
 
 WidgetShell.DRAG_HANDLE_CLASS = STATE_PROPS.DRAG_HANDLE_CLASS;

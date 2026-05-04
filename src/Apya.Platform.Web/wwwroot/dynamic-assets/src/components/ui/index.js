@@ -12,6 +12,8 @@
 export { Button, buttonVariants } from './Button';
 export { Card, CardHeader, CardTitle, CardDescription, CardBody, CardFooter } from './Card';
 export { Skeleton, SkeletonText } from './Skeleton';
+export { SkeletonHeadline, SkeletonChart, SkeletonList } from './SkeletonShape';
+export { EmptyState } from './EmptyState';
 export { Badge, badgeVariants } from './Badge';
 export { ThemeToggle } from './ThemeToggle';
 export { Sheet, SheetTrigger, SheetClose, SheetContent } from './Sheet';

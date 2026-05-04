@@ -1,6 +1,6 @@
 import React from 'react';
 import { WidgetShell } from './WidgetShell';
-import { Button, Badge } from '../../components/ui';
+import { Button, Badge, SkeletonList, EmptyState } from '../../components/ui';
 import { formatMoney, cn } from '../../lib/utils';
 import { usePendingApprovals, useApproveItem, useRejectItem } from '../hooks/usePendingApprovals';
 
@@ -26,7 +26,7 @@ const TYPE_LABELS = {
 };
 
 function PendingApprovalsWidget() {
-    const { data: items, isLoading, isError, refetch } = usePendingApprovals();
+    const { data: items, isLoading, isError, isFetching, isStale, dataUpdatedAt, refetch } = usePendingApprovals();
     const approve = useApproveItem();
     const reject  = useRejectItem();
     const onRetry  = () => refetch();
@@ -45,9 +45,21 @@ function PendingApprovalsWidget() {
             )}
             isLoading={isLoading}
             isError={isError}
+            isFetching={isFetching}
+            isStale={isStale}
+            dataUpdatedAt={dataUpdatedAt}
             onRetry={onRetry}
+            skeleton={<SkeletonList rows={4} />}
             isEmpty={!isLoading && !isError && count === 0}
-            emptyMessage="🎉 Bekleyen onay yok."
+            emptyState={(
+                <EmptyState
+                    compact
+                    variant="success"
+                    icon={<span className="text-base">✓</span>}
+                    title="Hepsi tamam"
+                    description="Bugün karar bekleyen kalmadı."
+                />
+            )}
         >
             <ul className="flex flex-col gap-2 h-full overflow-y-auto">
                 {items?.map((item) => (

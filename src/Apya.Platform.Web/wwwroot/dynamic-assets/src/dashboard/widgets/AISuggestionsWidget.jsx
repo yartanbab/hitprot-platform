@@ -1,6 +1,6 @@
 import React from 'react';
 import { WidgetShell } from './WidgetShell';
-import { Badge } from '../../components/ui';
+import { Badge, SkeletonList, EmptyState } from '../../components/ui';
 import { SuggestionCard, ConfidenceMeter } from '../../components/ai';
 import {
     useAISuggestions,
@@ -23,7 +23,7 @@ const MAX_VISIBLE = 5;
 const MIN_CONFIDENCE = 0.30;
 
 function AISuggestionsWidget() {
-    const { data, isLoading, isError, refetch } = useAISuggestions();
+    const { data, isLoading, isError, isFetching, isStale, dataUpdatedAt, refetch } = useAISuggestions();
     const apply   = useApplySuggestion();
     const snooze  = useSnoozeSuggestion();
     const dismiss = useDismissSuggestion();
@@ -45,9 +45,21 @@ function AISuggestionsWidget() {
             badge={<Badge variant="ai" size="sm" withDot>AI</Badge>}
             isLoading={isLoading}
             isError={isError}
+            isFetching={isFetching}
+            isStale={isStale}
+            dataUpdatedAt={dataUpdatedAt}
             onRetry={() => refetch()}
+            skeleton={<SkeletonList rows={3} withLeading={false} />}
             isEmpty={!isLoading && !isError && visible.length === 0}
-            emptyMessage="Şu an gösterilecek öneri yok — AI sessiz."
+            emptyState={(
+                <EmptyState
+                    compact
+                    variant="info"
+                    icon={<span className="text-base">✦</span>}
+                    title="AI şu an sessiz"
+                    description="Anlamlı bir öneri çıkarsa burada gözükecek. Şimdilik aksiyona gerek yok."
+                />
+            )}
         >
             <ul className="flex flex-col gap-2 h-full overflow-y-auto">
                 {visible.map((s) => (

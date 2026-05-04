@@ -1,6 +1,6 @@
 import React from 'react';
 import { WidgetShell } from './WidgetShell';
-import { Badge } from '../../components/ui';
+import { Badge, SkeletonHeadline } from '../../components/ui';
 import { formatMoneyCompact, formatDelta, cn } from '../../lib/utils';
 import { useBudgetSummary } from '../hooks/useBudgetSummary';
 
@@ -20,7 +20,7 @@ import { useBudgetSummary } from '../hooks/useBudgetSummary';
  */
 
 function BudgetHealthWidget() {
-    const { data, isLoading, isError, refetch } = useBudgetSummary();
+    const { data, isLoading, isError, isFetching, isStale, dataUpdatedAt, refetch } = useBudgetSummary();
     const onRetry = () => refetch();
     const usagePct = data ? (data.spent / data.budget) * 100 : 0;
     const health   = healthForUsage(usagePct);
@@ -33,7 +33,11 @@ function BudgetHealthWidget() {
             badge={<Badge variant={health.badgeVariant} size="sm" withDot>{health.label}</Badge>}
             isLoading={isLoading}
             isError={isError}
+            isFetching={isFetching}
+            isStale={isStale}
+            dataUpdatedAt={dataUpdatedAt}
             onRetry={onRetry}
+            skeleton={<SkeletonHeadline withDelta withBar />}
         >
             {data && (
                 <div className="flex flex-col gap-3 h-full">

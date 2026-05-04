@@ -1,6 +1,6 @@
 import React from 'react';
 import { WidgetShell } from './WidgetShell';
-import { Badge, Button } from '../../components/ui';
+import { Badge, Button, SkeletonList, EmptyState } from '../../components/ui';
 import { ConfidenceMeter } from '../../components/ai';
 import { cn } from '../../lib/utils';
 import { useRiskAlerts, useDismissRisk, useAcceptRisk } from '../hooks/useRiskAlerts';
@@ -26,7 +26,7 @@ const SEVERITY_META = {
 };
 
 function RiskAlertsWidget() {
-    const { data: risks, isLoading, isError, refetch } = useRiskAlerts();
+    const { data: risks, isLoading, isError, isFetching, isStale, dataUpdatedAt, refetch } = useRiskAlerts();
     const dismiss = useDismissRisk();
     const accept  = useAcceptRisk();
     const onRetry   = () => refetch();
@@ -47,9 +47,21 @@ function RiskAlertsWidget() {
             badge={<Badge variant="ai" size="sm" withDot>AI</Badge>}
             isLoading={isLoading}
             isError={isError}
+            isFetching={isFetching}
+            isStale={isStale}
+            dataUpdatedAt={dataUpdatedAt}
             onRetry={onRetry}
+            skeleton={<SkeletonList rows={3} withTrailing={false} />}
             isEmpty={!isLoading && !isError && sorted.length === 0}
-            emptyMessage="Şu an risk yok — AI motoru tarama tamamladı."
+            emptyState={(
+                <EmptyState
+                    compact
+                    variant="success"
+                    icon={<span className="text-base">✓</span>}
+                    title="Görünen risk yok"
+                    description="AI motoru taramayı tamamladı. Yeni veri geldikçe burada görünecek."
+                />
+            )}
         >
             <ul className="flex flex-col gap-2 h-full overflow-y-auto">
                 {sorted.map((risk) => (

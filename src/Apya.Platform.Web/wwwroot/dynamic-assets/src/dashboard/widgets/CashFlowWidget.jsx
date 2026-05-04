@@ -1,5 +1,6 @@
 import React, { useId } from 'react';
 import { WidgetShell } from './WidgetShell';
+import { SkeletonHeadline, SkeletonChart } from '../../components/ui';
 import { formatMoneyCompact, formatDelta, cn } from '../../lib/utils';
 import { useCashFlow } from '../hooks/useCashFlow';
 
@@ -15,7 +16,7 @@ import { useCashFlow } from '../hooks/useCashFlow';
  */
 
 function CashFlowWidget() {
-    const { data, isLoading, isError, refetch } = useCashFlow();
+    const { data, isLoading, isError, isFetching, isStale, dataUpdatedAt, refetch } = useCashFlow();
     const onRetry = () => refetch();
     const delta = data ? formatDelta(data.deltaPct) : null;
     const trendUp = data ? data.deltaPct >= 0 : true;
@@ -26,7 +27,18 @@ function CashFlowWidget() {
             subtitle="Son 30 gün"
             isLoading={isLoading}
             isError={isError}
+            isFetching={isFetching}
+            isStale={isStale}
+            dataUpdatedAt={dataUpdatedAt}
             onRetry={onRetry}
+            skeleton={(
+                <div className="flex items-center justify-between gap-4 h-full">
+                    <SkeletonHeadline className="flex-none" />
+                    <div className="flex-1 min-w-0 h-full max-h-16">
+                        <SkeletonChart height={64} />
+                    </div>
+                </div>
+            )}
         >
             {data && (
                 <div className="flex items-center justify-between gap-4 h-full">
