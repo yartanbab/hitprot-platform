@@ -1,8 +1,8 @@
-import { r as l, j as s, e as f } from "./react-vendor.js";
-import { Q as F, c as P } from "./query-vendor.js";
-import { t as B, c as L, a as j, S as R, P as A, O as I, C as W, T as _, D as z, R as O, b as Q, d as K } from "./ui-vendor.js";
-const C = "apya-theme", x = "system", T = l.createContext({
-  preference: x,
+import { r as c, j as s, e as m } from "./react-vendor.js";
+import { Q as F, c as L } from "./query-vendor.js";
+import { t as P, c as B, a as j, S as R, P as A, O as I, C as W, T as _, D as z, R as O, b as Q, d as K } from "./ui-vendor.js";
+const C = "apya-theme", g = "system", T = c.createContext({
+  preference: g,
   resolvedTheme: "light",
   setPreference: () => {
   },
@@ -10,59 +10,59 @@ const C = "apya-theme", x = "system", T = l.createContext({
   }
 });
 function V() {
-  if (typeof window > "u") return x;
+  if (typeof window > "u") return g;
   try {
     const e = window.localStorage.getItem(C);
     if (e === "light" || e === "dark" || e === "system")
       return e;
   } catch {
   }
-  return x;
+  return g;
 }
 function S() {
   return typeof window > "u" || !window.matchMedia ? !1 : window.matchMedia("(prefers-color-scheme: dark)").matches;
 }
-function v(e) {
+function p(e) {
   return e === "dark" ? "dark" : e === "light" ? "light" : S() ? "dark" : "light";
 }
-function p(e) {
+function v(e) {
   if (typeof document > "u") return;
   const t = document.documentElement;
-  t.setAttribute("data-theme", e), e === "dark" ? t.classList.add("dark") : t.classList.remove("dark");
+  t.setAttribute("data-theme", e), e === "dark" ? t.classList.add("dark") : t.classList.remove("dark"), t.classList.remove("lpx-theme-light", "lpx-theme-dark", "lpx-theme-dim"), t.classList.add(e === "dark" ? "lpx-theme-dark" : "lpx-theme-light");
 }
-function me({ children: e, defaultPreference: t = x }) {
-  const [r, a] = l.useState(() => V() ?? t), [o, n] = l.useState(() => v(r)), c = l.useCallback((d) => {
+function fe({ children: e, defaultPreference: t = g }) {
+  const [r, a] = c.useState(() => V() ?? t), [o, n] = c.useState(() => p(r)), l = c.useCallback((d) => {
     if (d !== "light" && d !== "dark" && d !== "system") return;
     a(d);
     try {
       window.localStorage.setItem(C, d);
     } catch {
     }
-    const u = v(d);
-    n(u), p(u);
+    const u = p(d);
+    n(u), v(u);
   }, []);
-  l.useEffect(() => {
+  c.useEffect(() => {
     if (r !== "system" || typeof window > "u" || !window.matchMedia)
       return;
     const d = window.matchMedia("(prefers-color-scheme: dark)"), u = () => {
-      const m = S() ? "dark" : "light";
-      n(m), p(m);
+      const f = S() ? "dark" : "light";
+      n(f), v(f);
     };
     return d.addEventListener("change", u), () => d.removeEventListener("change", u);
-  }, [r]), l.useEffect(() => {
-    p(v(r));
+  }, [r]), c.useEffect(() => {
+    v(p(r));
   }, []);
-  const b = l.useCallback(() => {
-    const d = ["light", "dark", "system"], u = d.indexOf(r), m = d[(u + 1) % d.length];
-    c(m);
-  }, [r, c]), h = l.useMemo(
-    () => ({ preference: r, resolvedTheme: o, setPreference: c, toggle: b }),
-    [r, o, c, b]
+  const b = c.useCallback(() => {
+    const d = ["light", "dark", "system"], u = d.indexOf(r), f = d[(u + 1) % d.length];
+    l(f);
+  }, [r, l]), h = c.useMemo(
+    () => ({ preference: r, resolvedTheme: o, setPreference: l, toggle: b }),
+    [r, o, l, b]
   );
   return /* @__PURE__ */ s.jsx(T.Provider, { value: h, children: e });
 }
 function H() {
-  const e = l.useContext(T);
+  const e = c.useContext(T);
   if (!e)
     throw new Error("useTheme must be used inside a <ThemeProvider>.");
   return e;
@@ -98,13 +98,13 @@ const be = {
   }
 };
 function he({ children: e }) {
-  const [t] = l.useState(() => $());
-  return /* @__PURE__ */ s.jsx(P, { client: t, children: e });
+  const [t] = c.useState(() => $());
+  return /* @__PURE__ */ s.jsx(L, { client: t, children: e });
 }
 function i(...e) {
-  return B(L(e));
+  return P(B(e));
 }
-function ge(e, t, r = "tr-TR") {
+function xe(e, t, r = "tr-TR") {
   return typeof e != "number" || !Number.isFinite(e) ? "—" : new Intl.NumberFormat(r, {
     style: "currency",
     currency: t,
@@ -113,7 +113,7 @@ function ge(e, t, r = "tr-TR") {
     maximumFractionDigits: 2
   }).format(e);
 }
-function xe(e, t, r = "tr-TR") {
+function ge(e, t, r = "tr-TR") {
   return typeof e != "number" || !Number.isFinite(e) ? "—" : new Intl.NumberFormat(r, {
     style: "currency",
     currency: t,
@@ -121,7 +121,7 @@ function xe(e, t, r = "tr-TR") {
     maximumFractionDigits: 1
   }).format(e);
 }
-function ve(e, t = "tr-TR") {
+function pe(e, t = "tr-TR") {
   if (typeof e != "number" || !Number.isFinite(e))
     return { sign: "", symbol: "•", text: "—" };
   const r = Math.abs(e), a = new Intl.NumberFormat(t, {
@@ -182,18 +182,18 @@ const G = j(
       size: "md"
     }
   }
-), pe = f.forwardRef(function({
+), ve = m.forwardRef(function({
   className: t,
   variant: r,
   size: a,
   asChild: o = !1,
   isLoading: n = !1,
-  loadingText: c,
+  loadingText: l,
   leadingIcon: b,
   trailingIcon: h,
   disabled: d,
   children: u,
-  type: m = "button",
+  type: f = "button",
   ...N
 }, E) {
   const M = o ? R : "button", D = d || n;
@@ -201,7 +201,7 @@ const G = j(
     M,
     {
       ref: E,
-      type: o ? void 0 : m,
+      type: o ? void 0 : f,
       disabled: o ? void 0 : D,
       "aria-busy": n || void 0,
       "data-loading": n || void 0,
@@ -209,7 +209,7 @@ const G = j(
       ...N,
       children: [
         n ? /* @__PURE__ */ s.jsx(Y, {}) : b,
-        /* @__PURE__ */ s.jsx("span", { className: n ? "opacity-80" : void 0, children: n && c ? c : u }),
+        /* @__PURE__ */ s.jsx("span", { className: n ? "opacity-80" : void 0, children: n && l ? l : u }),
         !n && h
       ]
     }
@@ -244,11 +244,11 @@ const J = {
   compact: "p-3",
   comfortable: "p-4",
   spacious: "p-6"
-}, g = f.forwardRef(function({ className: t, variant: r = "default", density: a, children: o, ...n }, c) {
+}, x = m.forwardRef(function({ className: t, variant: r = "default", density: a, children: o, ...n }, l) {
   return /* @__PURE__ */ s.jsx(
     "div",
     {
-      ref: c,
+      ref: l,
       "data-density": a,
       className: i(
         "rounded-lg overflow-hidden",
@@ -260,7 +260,7 @@ const J = {
       children: o
     }
   );
-}), X = f.forwardRef(function({ className: t, density: r = "comfortable", children: a, ...o }, n) {
+}), X = m.forwardRef(function({ className: t, density: r = "comfortable", children: a, ...o }, n) {
   return /* @__PURE__ */ s.jsx(
     "div",
     {
@@ -275,7 +275,7 @@ const J = {
       children: a
     }
   );
-}), Z = f.forwardRef(function({ className: t, as: r = "h3", children: a, ...o }, n) {
+}), Z = m.forwardRef(function({ className: t, as: r = "h3", children: a, ...o }, n) {
   return /* @__PURE__ */ s.jsx(
     r,
     {
@@ -288,7 +288,7 @@ const J = {
       children: a
     }
   );
-}), U = f.forwardRef(function({ className: t, children: r, ...a }, o) {
+}), U = m.forwardRef(function({ className: t, children: r, ...a }, o) {
   return /* @__PURE__ */ s.jsx(
     "p",
     {
@@ -298,7 +298,7 @@ const J = {
       children: r
     }
   );
-}), ee = f.forwardRef(function({ className: t, density: r = "comfortable", children: a, ...o }, n) {
+}), ee = m.forwardRef(function({ className: t, density: r = "comfortable", children: a, ...o }, n) {
   return /* @__PURE__ */ s.jsx(
     "div",
     {
@@ -308,7 +308,7 @@ const J = {
       children: a
     }
   );
-}), te = f.forwardRef(function({ className: t, density: r = "comfortable", children: a, ...o }, n) {
+}), te = m.forwardRef(function({ className: t, density: r = "comfortable", children: a, ...o }, n) {
   return /* @__PURE__ */ s.jsx(
     "div",
     {
@@ -324,11 +324,11 @@ const J = {
     }
   );
 });
-g.Header = X;
-g.Title = Z;
-g.Description = U;
-g.Body = ee;
-g.Footer = te;
+x.Header = X;
+x.Title = Z;
+x.Description = U;
+x.Body = ee;
+x.Footer = te;
 function we({ className: e, width: t, height: r, rounded: a = "md", ...o }) {
   const n = {};
   return t !== void 0 && (n.width = typeof t == "number" ? `${t}px` : t), r !== void 0 && (n.height = typeof r == "number" ? `${r}px` : r), /* @__PURE__ */ s.jsx(
@@ -494,7 +494,7 @@ function oe() {
 function y({ open: e, onOpenChange: t, children: r }) {
   return /* @__PURE__ */ s.jsx(O, { open: e, onOpenChange: t, children: r });
 }
-const ie = f.forwardRef(function({ side: t, className: r, children: a, title: o, description: n, ...c }, b) {
+const ie = m.forwardRef(function({ side: t, className: r, children: a, title: o, description: n, ...l }, b) {
   const h = t === "bottom" ? "inset-x-0 bottom-0 max-h-[90vh] rounded-t-xl border-t animate-sheet-bottom" : t === "right" ? "inset-y-0 right-0 w-full max-w-md border-l animate-sheet-right" : i(
     "inset-x-0 bottom-0 max-h-[90vh] rounded-t-xl border-t animate-sheet-bottom",
     "tablet:inset-x-auto tablet:inset-y-0 tablet:right-0 tablet:left-auto tablet:bottom-auto",
@@ -521,7 +521,7 @@ const ie = f.forwardRef(function({ side: t, className: r, children: a, title: o,
           h,
           r
         ),
-        ...c,
+        ...l,
         children: [
           /* @__PURE__ */ s.jsx("div", { className: "tablet:hidden flex justify-center pt-2 pb-1", children: /* @__PURE__ */ s.jsx("div", { className: "h-1 w-10 rounded-full bg-neutral-300", "aria-hidden": "true" }) }),
           o && /* @__PURE__ */ s.jsx(_, { className: "sr-only", children: o }),
@@ -531,9 +531,9 @@ const ie = f.forwardRef(function({ side: t, className: r, children: a, title: o,
       }
     )
   ] });
-}), de = Q, ce = K;
+}), de = Q, le = K;
 y.Trigger = de;
-y.Close = ce;
+y.Close = le;
 y.Content = ie;
 function je({ onUpdate: e, onReady: t } = {}) {
   typeof window > "u" || !("serviceWorker" in navigator) || (window.addEventListener("beforeinstallprompt", (r) => {
@@ -554,7 +554,7 @@ function je({ onUpdate: e, onReady: t } = {}) {
 }
 export {
   ye as B,
-  g as C,
+  x as C,
   be as Q,
   we as S,
   ke as T,
@@ -562,11 +562,11 @@ export {
   Z as b,
   i as c,
   ee as d,
-  xe as e,
-  ve as f,
-  ge as g,
-  pe as h,
-  me as i,
+  ge as e,
+  pe as f,
+  xe as g,
+  ve as h,
+  fe as i,
   he as j,
   y as k,
   je as r
