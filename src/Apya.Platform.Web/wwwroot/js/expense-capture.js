@@ -1,8 +1,8 @@
 import { r as f, e as b, j as e, d as F } from "./react-vendor.js";
-import { h as j, c as w, S as N, k as S, B as L, g as E, T as U, r as z, i as P, j as B } from "./registerServiceWorker.js";
+import { h as j, c as w, S as N, l as S, B as L, g as E, T as U, r as P, i as z, j as B, k as I } from "./registerServiceWorker.js";
 import { b as M } from "./query-vendor.js";
 /* empty css      */
-function I({ onFile: t }) {
+function Y({ onFile: t }) {
   const s = f.useRef(null), [n, r] = b.useState(!1), i = (a) => {
     if (a) {
       if (!a.type.startsWith("image/")) {
@@ -31,7 +31,7 @@ function I({ onFile: t }) {
         a.preventDefault(), r(!1), i((o = a.dataTransfer.files) == null ? void 0 : o[0]);
       },
       children: [
-        /* @__PURE__ */ e.jsx(Y, {}),
+        /* @__PURE__ */ e.jsx(q, {}),
         /* @__PURE__ */ e.jsxs("div", { className: "text-center max-w-xs", children: [
           /* @__PURE__ */ e.jsx("p", { className: "text-base font-semibold text-text-primary", children: "Faturayı çek" }),
           /* @__PURE__ */ e.jsx("p", { className: "text-sm text-text-secondary mt-1", children: "Kamerayı aç veya bilgisayardan resim sürükle. AI tutarı, tarihi ve tedarikçiyi otomatik okur." })
@@ -67,7 +67,7 @@ function I({ onFile: t }) {
     }
   );
 }
-function Y() {
+function q() {
   return /* @__PURE__ */ e.jsxs(
     "svg",
     {
@@ -88,12 +88,12 @@ function Y() {
     }
   );
 }
-const q = [
+const W = [
   "Görüntü temizleniyor...",
   "Metin tanınıyor (OCR)...",
   "Alanlar çıkartılıyor..."
 ];
-function W({ previewUrl: t }) {
+function K({ previewUrl: t }) {
   const [s, n] = b.useState(0);
   return b.useEffect(() => {
     const r = setTimeout(() => n(1), 350), i = setTimeout(() => n(2), 800);
@@ -109,10 +109,10 @@ function W({ previewUrl: t }) {
         className: "max-h-48 rounded-md border border-default object-contain"
       }
     ),
-    /* @__PURE__ */ e.jsx("div", { className: "w-full max-w-xs flex flex-col gap-2", children: q.map((r, i) => /* @__PURE__ */ e.jsxs("div", { className: "flex items-center gap-2 text-sm", children: [
-      i < s && /* @__PURE__ */ e.jsx(K, {}),
-      i === s && /* @__PURE__ */ e.jsx(V, {}),
-      i > s && /* @__PURE__ */ e.jsx(G, {}),
+    /* @__PURE__ */ e.jsx("div", { className: "w-full max-w-xs flex flex-col gap-2", children: W.map((r, i) => /* @__PURE__ */ e.jsxs("div", { className: "flex items-center gap-2 text-sm", children: [
+      i < s && /* @__PURE__ */ e.jsx(V, {}),
+      i === s && /* @__PURE__ */ e.jsx(G, {}),
+      i > s && /* @__PURE__ */ e.jsx(H, {}),
       /* @__PURE__ */ e.jsx("span", { className: i <= s ? "text-text-primary" : "text-text-tertiary", children: r })
     ] }, i)) }),
     /* @__PURE__ */ e.jsxs("div", { className: "w-full max-w-xs flex flex-col gap-2 mt-2", children: [
@@ -122,7 +122,7 @@ function W({ previewUrl: t }) {
     ] })
   ] });
 }
-const K = () => /* @__PURE__ */ e.jsx(
+const V = () => /* @__PURE__ */ e.jsx(
   "svg",
   {
     width: "16",
@@ -136,7 +136,7 @@ const K = () => /* @__PURE__ */ e.jsx(
     className: "text-positive-500 flex-none",
     children: /* @__PURE__ */ e.jsx("path", { d: "M20 6 9 17l-5-5" })
   }
-), V = () => /* @__PURE__ */ e.jsx(
+), G = () => /* @__PURE__ */ e.jsx(
   "svg",
   {
     className: "animate-spin text-brand-500 flex-none",
@@ -148,8 +148,8 @@ const K = () => /* @__PURE__ */ e.jsx(
     strokeWidth: "2",
     children: /* @__PURE__ */ e.jsx("path", { d: "M21 12a9 9 0 1 1-6.219-8.56", strokeLinecap: "round" })
   }
-), G = () => /* @__PURE__ */ e.jsx("span", { className: "inline-block h-1.5 w-1.5 rounded-full bg-neutral-300 mx-[2px] flex-none", "aria-hidden": "true" });
-function H({
+), H = () => /* @__PURE__ */ e.jsx("span", { className: "inline-block h-1.5 w-1.5 rounded-full bg-neutral-300 mx-[2px] flex-none", "aria-hidden": "true" });
+function $({
   open: t,
   onOpenChange: s,
   ocrResult: n,
@@ -312,9 +312,9 @@ function C(t) {
     note: ""
   };
 }
-function $({ result: t, onAddAnother: s, onClose: n }) {
+function _({ result: t, onAddAnother: s, onClose: n }) {
   return /* @__PURE__ */ e.jsxs("div", { className: "flex flex-col items-center justify-center gap-4 py-12 px-6 text-center", children: [
-    /* @__PURE__ */ e.jsx(_, {}),
+    /* @__PURE__ */ e.jsx(J, {}),
     /* @__PURE__ */ e.jsxs("div", { children: [
       /* @__PURE__ */ e.jsx("h2", { className: "text-xl font-semibold text-text-primary", children: "Masraf gönderildi" }),
       /* @__PURE__ */ e.jsxs("p", { className: "text-sm text-text-secondary mt-1", children: [
@@ -329,7 +329,7 @@ function $({ result: t, onAddAnother: s, onClose: n }) {
     ] })
   ] });
 }
-const _ = () => /* @__PURE__ */ e.jsxs(
+const J = () => /* @__PURE__ */ e.jsxs(
   "svg",
   {
     width: "64",
@@ -387,12 +387,12 @@ KDV %20`
     };
   }
 };
-function J() {
+function Q() {
   return M({
     mutationFn: (t) => D.ocr(t)
   });
 }
-function Q() {
+function X() {
   return M({
     mutationFn: (t) => D.submit(t),
     retry: !1
@@ -400,8 +400,8 @@ function Q() {
   });
 }
 const l = { CAPTURE: "capture", OCR: "ocr", FORM: "form", SUCCESS: "success" };
-function X() {
-  const [t, s] = f.useState(l.CAPTURE), [n, r] = f.useState(null), [i, a] = f.useState(null), o = J(), u = Q(), v = async (d) => {
+function Z() {
+  const [t, s] = f.useState(l.CAPTURE), [n, r] = f.useState(null), [i, a] = f.useState(null), o = Q(), u = X(), v = async (d) => {
     n && URL.revokeObjectURL(n), r(URL.createObjectURL(d)), s(l.OCR);
     try {
       await o.mutateAsync(d), s(l.FORM);
@@ -422,10 +422,10 @@ function X() {
       /* @__PURE__ */ e.jsx(U, {})
     ] }),
     /* @__PURE__ */ e.jsxs("main", { className: "max-w-2xl mx-auto p-4", children: [
-      t === l.CAPTURE && /* @__PURE__ */ e.jsx(I, { onFile: v }),
-      t === l.OCR && /* @__PURE__ */ e.jsx(W, { previewUrl: n }),
+      t === l.CAPTURE && /* @__PURE__ */ e.jsx(Y, { onFile: v }),
+      t === l.OCR && /* @__PURE__ */ e.jsx(K, { previewUrl: n }),
       t === l.SUCCESS && /* @__PURE__ */ e.jsx(
-        $,
+        _,
         {
           result: i,
           onAddAnother: y,
@@ -434,7 +434,7 @@ function X() {
       )
     ] }),
     /* @__PURE__ */ e.jsx(
-      H,
+      $,
       {
         open: t === l.FORM,
         onOpenChange: (d) => {
@@ -447,8 +447,8 @@ function X() {
     )
   ] });
 }
-z();
+P();
 const O = document.getElementById("apya-expense-capture-root");
 O && F(O).render(
-  /* @__PURE__ */ e.jsx(P, { children: /* @__PURE__ */ e.jsx(B, { children: /* @__PURE__ */ e.jsx(X, {}) }) })
+  /* @__PURE__ */ e.jsx(z, { children: /* @__PURE__ */ e.jsx(B, { children: /* @__PURE__ */ e.jsx(I, { children: /* @__PURE__ */ e.jsx(Z, {}) }) }) })
 );

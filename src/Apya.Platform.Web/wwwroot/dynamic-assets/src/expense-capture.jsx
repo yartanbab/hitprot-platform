@@ -2,6 +2,7 @@ import React from 'react';
 import { createRoot } from 'react-dom/client';
 import { ThemeProvider } from './lib/theme/ThemeProvider';
 import { QueryProvider } from './lib/api/QueryProvider';
+import { ToastProvider } from './lib/feedback';
 import { ExpenseCaptureFlow } from './expense/ExpenseCaptureFlow';
 import { registerServiceWorker } from './lib/pwa/registerServiceWorker';
 import './index.css';
@@ -14,7 +15,9 @@ if (rootElement) {
     root.render(
         <ThemeProvider>
             <QueryProvider>
-                <ExpenseCaptureFlow />
+                <ToastProvider>
+                    <ExpenseCaptureFlow />
+                </ToastProvider>
             </QueryProvider>
         </ThemeProvider>,
     );

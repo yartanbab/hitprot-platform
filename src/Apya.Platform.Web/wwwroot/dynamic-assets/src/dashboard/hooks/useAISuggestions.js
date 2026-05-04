@@ -1,16 +1,7 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { QK } from '../../lib/api/queryClient';
+import { useOptimisticListMutation } from '../../lib/api/optimisticList';
 import { fixtures } from './fixtures';
-
-/**
- * AI suggestions — inbox feed.
- *
- * Tasarım kararları:
- *   - Suggestion'lar push popup değil, inbox: kullanıcı görmek istediğinde bakar
- *   - Apply / Snooze / Dismiss üçü de optimistic — listeden anında kalkar
- *   - Dismiss `reason` taşır (irrelevant | wrong | not-now) → model retraining
- *   - 409 (concurrency) durumunda rollback otomatik (onError)
- */
 
 const fetcher = () => fixtures.aiSuggestions();
 
@@ -21,42 +12,42 @@ export function useAISuggestions() {
     });
 }
 
-/* Genel mutation factory — apply/snooze/dismiss aynı optimistic pattern.
-   `extractTarget` mutation arg'ından suggestion'ı çıkarır (dismiss `{ suggestion, reason }` alır;
-   diğerleri direkt suggestion alır). */
-function useSuggestionMutation(performer, extractTarget = (arg) => arg) {
-    const qc = useQueryClient();
-    return useMutation({
-        mutationFn: performer,
-        onMutate: async (arg) => {
-            const target = extractTarget(arg);
-            await qc.cancelQueries({ queryKey: QK.dashboard.aiSuggestions() });
-            const previous = qc.getQueryData(QK.dashboard.aiSuggestions());
-            qc.setQueryData(QK.dashboard.aiSuggestions(), (old = []) =>
-                old.filter((s) => s.id !== target.id),
-            );
-            return { previous };
-        },
-        onError: (_err, _arg, ctx) => {
-            if (ctx?.previous) qc.setQueryData(QK.dashboard.aiSuggestions(), ctx.previous);
-        },
-        onSettled: () => {
-            qc.invalidateQueries({ queryKey: QK.dashboard.aiSuggestions() });
-        },
+/**
+ * AI suggestion mutations — apply/snooze/dismiss aynı optimistic pattern,
+ * factory üzerinden.
+ *
+ * Apply için "Geri al" toast'i — 10s window. Reverse fixture yok; undoFn yerine
+ * yalnızca cache restore (server side reverse implementasyonu sonra).
+ *
+ * Dismiss `reason` taşır — model retraining sinyali. Factory `extractTarget`
+ * ile mutation arg'ından suggestion'ı çıkarıyor.
+ */
+
+export function useApplySuggestion() {
+    return useOptimisticListMutation({
+        queryKey: QK.dashboard.aiSuggestions(),
+        mutationFn: (suggestion) => fixtures.applySuggestion(suggestion),
+        undoMessage: (s) => `Uygulandı: ${s.headline}`,
+        /* Server reverse henüz yok — undo cache restore'la sınırlı (factory zaten
+           previous'ı koyar). Reverse hazırlanınca undoFn dolar. */
+        undoFn: () => Promise.resolve(),
+        errorMessage: 'Öneri uygulanamadı',
     });
 }
 
-export function useApplySuggestion() {
-    return useSuggestionMutation((suggestion) => fixtures.applySuggestion(suggestion));
-}
-
 export function useSnoozeSuggestion() {
-    return useSuggestionMutation((suggestion) => fixtures.snoozeSuggestion(suggestion));
+    return useOptimisticListMutation({
+        queryKey: QK.dashboard.aiSuggestions(),
+        mutationFn: (suggestion) => fixtures.snoozeSuggestion(suggestion),
+        errorMessage: 'Erteleme başarısız',
+    });
 }
 
 export function useDismissSuggestion() {
-    return useSuggestionMutation(
-        ({ suggestion, reason }) => fixtures.dismissSuggestion(suggestion, reason),
-        ({ suggestion }) => suggestion,
-    );
+    return useOptimisticListMutation({
+        queryKey: QK.dashboard.aiSuggestions(),
+        mutationFn: ({ suggestion, reason }) => fixtures.dismissSuggestion(suggestion, reason),
+        extractTarget: ({ suggestion }) => suggestion,
+        errorMessage: 'Reddetme kaydedilemedi',
+    });
 }

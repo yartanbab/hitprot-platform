@@ -1,5 +1,6 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { QK } from '../../lib/api/queryClient';
+import { useOptimisticListMutation } from '../../lib/api/optimisticList';
 import { fixtures } from './fixtures';
 
 const fetcher = () => fixtures.pendingApprovals();
@@ -12,45 +13,32 @@ export function usePendingApprovals() {
 }
 
 /**
- * Approve — optimistic UI:
- *   1) cancelQueries — in-flight refetch'leri durdur
- *   2) snapshot al → rollback için
- *   3) cache'ten satırı kaldır + _pending: 'approve' işaretle (UI half-opacity)
- *   4) backend çağrısı
- *   5) onError: snapshot'a rollback + hata toast'i
- *   6) onSettled: invalidate (gerçek state'le sync)
+ * Approve / Reject — optimistic UI:
+ *   - Satır cache'ten anında düşer.
+ *   - Onay/red başarılı → "Geri al" toast'i 10s görünür (undo restore + reverse call).
+ *   - 409 → rollback + "Yenile" CTA toast'i (başkası onaylamış).
  *
- * Concurrency çakışması (409) → rollback + kullanıcıya "başkası onayladı" mesajı.
- */
-function useApprovalMutation(performer) {
-    const qc = useQueryClient();
-    return useMutation({
-        mutationFn: performer,
-        onMutate: async (item) => {
-            await qc.cancelQueries({ queryKey: QK.dashboard.approvals() });
-            const previous = qc.getQueryData(QK.dashboard.approvals());
-            qc.setQueryData(QK.dashboard.approvals(), (old = []) =>
-                old.filter((i) => i.id !== item.id),
-            );
-            return { previous, item };
-        },
-        onError: (_err, _item, ctx) => {
-            if (ctx?.previous) qc.setQueryData(QK.dashboard.approvals(), ctx.previous);
-        },
-        onSettled: () => {
-            qc.invalidateQueries({ queryKey: QK.dashboard.approvals() });
-            /* Approve/Reject ledger'ı etkiler — bütçe ve cashflow da invalidate edilir.
-               Backend SignalR event yayınlayınca da olur ama buradan da defansif. */
-            qc.invalidateQueries({ queryKey: QK.dashboard.budget() });
-            qc.invalidateQueries({ queryKey: QK.dashboard.cashflow() });
-        },
+ * Approve ledger'ı etkiler — extraInvalidations'la budget/cashflow tazelenir.
+ * Backend SignalR de yayar; bu defansif. */
+
+export function useApproveItem() {
+    return useOptimisticListMutation({
+        queryKey: QK.dashboard.approvals(),
+        mutationFn: (item) => fixtures.approveItem(item),
+        extraInvalidations: [QK.dashboard.budget(), QK.dashboard.cashflow()],
+        undoMessage: (item) => `${item.title} onaylandı`,
+        undoFn: (item) => fixtures.rejectItem(item),  /* "geri al" = ters yöne kaydet */
+        errorMessage: 'Onay başarısız oldu',
     });
 }
 
-export function useApproveItem() {
-    return useApprovalMutation((item) => fixtures.approveItem(item));
-}
-
 export function useRejectItem() {
-    return useApprovalMutation((item) => fixtures.rejectItem(item));
+    return useOptimisticListMutation({
+        queryKey: QK.dashboard.approvals(),
+        mutationFn: (item) => fixtures.rejectItem(item),
+        extraInvalidations: [QK.dashboard.budget(), QK.dashboard.cashflow()],
+        undoMessage: (item) => `${item.title} reddedildi`,
+        undoFn: (item) => fixtures.approveItem(item),
+        errorMessage: 'Reddetme başarısız oldu',
+    });
 }

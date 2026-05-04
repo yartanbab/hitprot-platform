@@ -4,6 +4,7 @@ import { ThemeProvider } from './lib/theme/ThemeProvider';
 import { QueryProvider } from './lib/api/QueryProvider';
 import { SignalRProvider } from './lib/realtime/SignalRProvider';
 import { DeviceModeProvider } from './lib/device';
+import { ToastProvider } from './lib/feedback';
 import { BentoDashboard } from './dashboard/BentoDashboard';
 import { DashboardRealtimeBridge } from './dashboard/DashboardRealtimeBridge';
 import { registerServiceWorker } from './lib/pwa/registerServiceWorker';
@@ -20,8 +21,10 @@ registerServiceWorker();
  *   DeviceModeProvider  → DOM-level (data-device-mode); UI'a hangi mod aktif
  *                         olduğunu yayınlar, alt component'lar useDeviceMode ile okur
  *   QueryProvider       → server state cache
- *   SignalRProvider     → realtime; QueryProvider'a bağımlı (invalidation hook'u
- *                         useQueryClient çağırır)
+ *   ToastProvider       → bildirim kuyruğu; mutation'lar ve conflict listener
+ *                         buradan toast yayınlar (QueryProvider'a bağımlı)
+ *   SignalRProvider     → realtime; QueryProvider + ToastProvider'a bağımlı
+ *                         (invalidation + conflict toast'ı için)
  *
  * DashboardRealtimeBridge — null render eden bridge component;
  * mapping'leri tek yerde tutar, BentoDashboard'ı kirletmez.
@@ -34,10 +37,12 @@ if (rootElement) {
         <ThemeProvider>
             <DeviceModeProvider>
                 <QueryProvider>
-                    <SignalRProvider>
-                        <DashboardRealtimeBridge />
-                        <BentoDashboard />
-                    </SignalRProvider>
+                    <ToastProvider>
+                        <SignalRProvider>
+                            <DashboardRealtimeBridge />
+                            <BentoDashboard />
+                        </SignalRProvider>
+                    </ToastProvider>
                 </QueryProvider>
             </DeviceModeProvider>
         </ThemeProvider>,
