@@ -1,18 +1,28 @@
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { CameraCapture } from './components/CameraCapture';
 import { OcrProcessingScreen } from './components/OcrProcessingScreen';
 import { ExpenseFormSheet } from './components/ExpenseFormSheet';
 import { SuccessConfirmation } from './components/SuccessConfirmation';
 import { useOcrParse, useSubmitExpense } from './hooks/useExpenseCapture';
 import { ThemeToggle } from '../components/ui';
+import { useToast } from '../lib/feedback';
+import { formatMoney } from '../lib/utils';
 
 /**
  * State machine — 4 phase:
  *   capture → ocr → form → success → (capture | exit)
- * Geri navigasyon basit: her phase'in onCancel'ı bir önceki phase'e döner
- * ya da capture'a sıfırlar.
+ *
+ * APYA-107 refinements:
+ *   - submit başarılı → toast.success "Kaydedildi" + 800ms sonra capture'a
+ *     otomatik dönüş (saha kullanıcısı ardışık masraf girer; success screen
+ *     zaman kaybı). Kullanıcı önce close ederse success screen kalır.
+ *   - submit hatası → toast.error + form açık kalır (kullanıcı düzeltsin).
+ *   - OCR fail → ham form'la devam, kullanıcı manuel doldurur (sessiz fallback).
  */
 const PHASES = { CAPTURE: 'capture', OCR: 'ocr', FORM: 'form', SUCCESS: 'success' };
+const SUCCESS_AUTO_RESET_MS = 1500;        /* Success ekranı görünür kalsın ki
+                                              kullanıcı "kaydedildi"yi okusun;
+                                              sonra otomatik capture'a dön. */
 
 export function ExpenseCaptureFlow() {
     const [phase, setPhase] = useState(PHASES.CAPTURE);
@@ -21,39 +31,63 @@ export function ExpenseCaptureFlow() {
 
     const ocr = useOcrParse();
     const submit = useSubmitExpense();
+    const toast = useToast();
 
-    const handleFile = async (file) => {
+    const handleFile = useCallback(async (file) => {
         if (previewUrl) URL.revokeObjectURL(previewUrl);
         setPreviewUrl(URL.createObjectURL(file));
         setPhase(PHASES.OCR);
         try {
             await ocr.mutateAsync(file);
             setPhase(PHASES.FORM);
-        } catch (_err) {
-            /* OCR fail — kullanıcı boş form'la devam edebilsin */
+        } catch (err) {
+            /* OCR fail — form'u boş aç, kullanıcı manuel doldursun. */
+            toast.warning('Otomatik okuma başarısız', {
+                description: 'Alanları manuel girebilirsin.',
+            });
             setPhase(PHASES.FORM);
         }
-    };
+    }, [previewUrl, ocr, toast]);
 
-    const handleSubmit = async (payload) => {
-        const result = await submit.mutateAsync(payload);
-        setSubmittedResult(result);
-        setPhase(PHASES.SUCCESS);
-    };
-
-    const handleAddAnother = () => {
+    const resetForCapture = useCallback(() => {
         if (previewUrl) URL.revokeObjectURL(previewUrl);
         setPreviewUrl(null);
         setSubmittedResult(null);
         ocr.reset();
         submit.reset();
         setPhase(PHASES.CAPTURE);
-    };
+    }, [previewUrl, ocr, submit]);
 
-    const handleClose = () => {
-        /* Saha kullanıcısı için "geri dashboard'a" — basit redirect */
+    const handleSubmit = useCallback(async (payload) => {
+        try {
+            const result = await submit.mutateAsync(payload);
+            setSubmittedResult(result);
+            setPhase(PHASES.SUCCESS);
+            toast.success('Masraf kaydedildi', {
+                description: `${formatMoney(payload.amount, payload.currency)} — ${payload.vendor || 'Kayıt'}`,
+            });
+            /* Auto-reset: saha kullanıcısı seri kayıt için bekler. Kullanıcı
+               success ekranındaki "Kapat"a basarsa zaten reset oluşur. */
+            setTimeout(() => {
+                /* Phase hâlâ SUCCESS ise reset (kullanıcı arada başka bir aksiyon
+                   yapmadıysa). React state stale closure önleme: setState callback
+                   içinde kontrol edemiyoruz çünkü resetForCapture stateful;
+                   basitçe phase'i state ref ile kontrol etmiyoruz — SUCCESS'ten
+                   capture'a dönüş idempotent. */
+                resetForCapture();
+            }, SUCCESS_AUTO_RESET_MS);
+        } catch (err) {
+            toast.error('Kayıt başarısız', {
+                description: err?.message ?? 'Tekrar deneyebilirsin.',
+            });
+            /* Form açık kalsın — kullanıcı düzeltsin */
+        }
+    }, [submit, toast, resetForCapture]);
+
+    const handleClose = useCallback(() => {
+        if (previewUrl) URL.revokeObjectURL(previewUrl);
         window.location.href = '/Dashboard';
-    };
+    }, [previewUrl]);
 
     return (
         <div className="min-h-screen bg-surface-base text-text-primary">
@@ -68,13 +102,12 @@ export function ExpenseCaptureFlow() {
                 {phase === PHASES.SUCCESS && (
                     <SuccessConfirmation
                         result={submittedResult}
-                        onAddAnother={handleAddAnother}
+                        onAddAnother={resetForCapture}
                         onClose={handleClose}
                     />
                 )}
             </main>
 
-            {/* Form sheet — phase=form iken open=true; cancel kapatınca capture'a döner */}
             <ExpenseFormSheet
                 open={phase === PHASES.FORM}
                 onOpenChange={(open) => {

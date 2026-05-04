@@ -1,18 +1,18 @@
-import { r as p, j as t, e as E, d as le } from "./react-vendor.js";
-import { S as j, c as g, C as oe, a as ce, b as de, d as ue, B as A, Q as x, f as U, e as T, u as J, A as me, g as he, h as k, T as xe, r as fe, i as ge, j as pe, k as ye } from "./registerServiceWorker.js";
-import { H as Z, a as be, L as ve } from "./signalr-vendor.js";
-import { r as K } from "./grid-vendor.js";
-import { u as L, a as F, b as je } from "./query-vendor.js";
+import { r as y, j as t, e as z, d as ne } from "./react-vendor.js";
+import { S as j, c as g, C as ie, a as re, b as le, d as oe, B as A, Q as x, f as V, e as I, u as U, A as ce, g as de, h as k, i as B, T as ue, r as me, j as he, k as xe, l as fe } from "./registerServiceWorker.js";
+import { H as J, a as ge, L as ye } from "./signalr-vendor.js";
+import { r as F } from "./grid-vendor.js";
+import { u as D, a as H, b as pe } from "./query-vendor.js";
 /* empty css      */
-const X = p.createContext({
+const X = y.createContext({
   connection: null,
-  state: Z.Disconnected
+  state: J.Disconnected
 });
-function we({ hubUrl: e = "/signalr-hubs/notifications", children: a, enabled: s = !0 }) {
-  const [n, r] = p.useState(Z.Disconnected), i = p.useRef(null);
-  p.useEffect(() => {
+function be({ hubUrl: e = "/signalr-hubs/notifications", children: a, enabled: s = !0 }) {
+  const [n, r] = y.useState(J.Disconnected), i = y.useRef(null);
+  y.useEffect(() => {
     if (!s || typeof window > "u") return;
-    const l = new be().withUrl(e, { withCredentials: !0 }).withAutomaticReconnect([0, 2e3, 5e3, 1e4, 3e4]).configureLogging(ve.Warning).build();
+    const l = new ge().withUrl(e, { withCredentials: !0 }).withAutomaticReconnect([0, 2e3, 5e3, 1e4, 3e4]).configureLogging(ye.Warning).build();
     i.current = l, r(l.state);
     const m = () => r(l.state);
     return l.onreconnecting(m), l.onreconnected(m), l.onclose(m), l.start().then(m).catch((c) => {
@@ -22,7 +22,7 @@ function we({ hubUrl: e = "/signalr-hubs/notifications", children: a, enabled: s
       }), i.current = null;
     };
   }, [e, s]);
-  const d = p.useMemo(() => ({
+  const d = y.useMemo(() => ({
     get connection() {
       return i.current;
     },
@@ -30,30 +30,30 @@ function we({ hubUrl: e = "/signalr-hubs/notifications", children: a, enabled: s
   }), [n]);
   return /* @__PURE__ */ t.jsx(X.Provider, { value: d, children: a });
 }
-function ee() {
-  return p.useContext(X);
+function Z() {
+  return y.useContext(X);
 }
-const _ = {
+const M = {
   triage: "(min-width: 768px)",
   analysis: "(min-width: 1280px)",
   command: "(min-width: 1920px)"
 };
-function ke() {
-  return typeof window > "u" || !window.matchMedia ? "analysis" : window.matchMedia(_.command).matches ? "command" : window.matchMedia(_.analysis).matches ? "analysis" : window.matchMedia(_.triage).matches ? "triage" : "decision";
+function ve() {
+  return typeof window > "u" || !window.matchMedia ? "analysis" : window.matchMedia(M.command).matches ? "command" : window.matchMedia(M.analysis).matches ? "analysis" : window.matchMedia(M.triage).matches ? "triage" : "decision";
 }
-const Ne = p.createContext(null);
-function Se({ children: e, override: a }) {
-  const s = p.useCallback((i) => {
+const je = y.createContext(null);
+function we({ children: e, override: a }) {
+  const s = y.useCallback((i) => {
     if (typeof window > "u" || !window.matchMedia) return () => {
     };
-    const d = Object.values(_).map((l) => window.matchMedia(l));
+    const d = Object.values(M).map((l) => window.matchMedia(l));
     return d.forEach((l) => l.addEventListener("change", i)), () => d.forEach((l) => l.removeEventListener("change", i));
-  }, []), n = p.useSyncExternalStore(s, ke, () => "analysis"), r = a ?? n;
-  return p.useEffect(() => {
+  }, []), n = y.useSyncExternalStore(s, ve, () => "analysis"), r = a ?? n;
+  return y.useEffect(() => {
     typeof document > "u" || (document.documentElement.dataset.deviceMode = r);
-  }, [r]), /* @__PURE__ */ t.jsx(Ne.Provider, { value: r, children: e });
+  }, [r]), /* @__PURE__ */ t.jsx(je.Provider, { value: r, children: e });
 }
-const Ae = {
+const ke = {
   desktop: [
     { i: "budget-health", x: 0, y: 0, w: 6, h: 4, minW: 4, minH: 3 },
     { i: "cash-flow", x: 6, y: 0, w: 6, h: 2, minW: 4, minH: 2 },
@@ -76,7 +76,7 @@ const Ae = {
     { i: "pending-approvals", x: 0, y: 10, w: 1, h: 4, isResizable: !1, isDraggable: !1 },
     { i: "ai-suggestions", x: 0, y: 14, w: 1, h: 4, isResizable: !1, isDraggable: !1 }
   ]
-}, Re = {
+}, Ne = {
   desktop: [
     { i: "risk-alerts", x: 0, y: 0, w: 6, h: 4, minW: 4, minH: 3 },
     { i: "pending-approvals", x: 6, y: 0, w: 6, h: 4, minW: 4, minH: 3 },
@@ -98,7 +98,7 @@ const Ae = {
     { i: "cash-flow", x: 0, y: 12, w: 1, h: 2, isResizable: !1, isDraggable: !1 },
     { i: "ai-suggestions", x: 0, y: 14, w: 1, h: 4, isResizable: !1, isDraggable: !1 }
   ]
-}, ze = {
+}, Se = {
   desktop: [
     /* Saha personası desktop'ta da erişebilsin diye basit layout */
     { i: "pending-approvals", x: 0, y: 0, w: 8, h: 4 },
@@ -112,40 +112,40 @@ const Ae = {
     { i: "pending-approvals", x: 0, y: 0, w: 1, h: 5, isResizable: !1, isDraggable: !1 },
     { i: "risk-alerts", x: 0, y: 5, w: 1, h: 4, isResizable: !1, isDraggable: !1 }
   ]
-}, P = {
-  cfo: Ae,
-  pm: Re,
-  field: ze
-}, te = {
+}, T = {
+  cfo: ke,
+  pm: Ne,
+  field: Se
+}, ee = {
   cfo: "CFO / Finansman",
   pm: "Proje Yöneticisi",
   field: "Saha Kullanıcısı"
-}, Ee = {
+}, Ae = {
   desktop: 1280,
   tablet: 768,
   mobile: 0
-}, Ce = {
+}, Re = {
   desktop: 12,
   tablet: 8,
   mobile: 1
-}, De = 64, Le = [12, 12], ae = "apya-dashboard-persona", O = "apya-dashboard-layout-overrides";
-function Me() {
+}, Ee = 64, ze = [12, 12], te = "apya-dashboard-persona", O = "apya-dashboard-layout-overrides";
+function Ce() {
   if (typeof window > "u") return "cfo";
   try {
-    const e = window.localStorage.getItem(ae);
-    if (e && P[e]) return e;
+    const e = window.localStorage.getItem(te);
+    if (e && T[e]) return e;
   } catch {
   }
   return "cfo";
 }
-function _e(e) {
+function Le(e) {
   if (!(typeof window > "u"))
     try {
-      window.localStorage.setItem(ae, e);
+      window.localStorage.setItem(te, e);
     } catch {
     }
 }
-function Ie(e) {
+function De(e) {
   if (typeof window > "u") return null;
   try {
     const a = window.localStorage.getItem(`${O}-${e}`);
@@ -154,7 +154,7 @@ function Ie(e) {
     return null;
   }
 }
-function Te(e, a) {
+function Me(e, a) {
   if (!(typeof window > "u"))
     try {
       window.localStorage.setItem(
@@ -164,14 +164,14 @@ function Te(e, a) {
     } catch {
     }
 }
-function Pe(e) {
+function _e(e) {
   if (!(typeof window > "u"))
     try {
       window.localStorage.removeItem(`${O}-${e}`);
     } catch {
     }
 }
-function se({ className: e, withDelta: a = !0, withBar: s = !1 }) {
+function ae({ className: e, withDelta: a = !0, withBar: s = !1 }) {
   return /* @__PURE__ */ t.jsxs("div", { className: g("flex flex-col gap-3 h-full", e), "aria-busy": "true", children: [
     /* @__PURE__ */ t.jsxs("div", { className: "flex items-baseline gap-2", children: [
       /* @__PURE__ */ t.jsx(j, { width: 140, height: 32, rounded: "md" }),
@@ -181,7 +181,7 @@ function se({ className: e, withDelta: a = !0, withBar: s = !1 }) {
     s && /* @__PURE__ */ t.jsx(j, { height: 6, rounded: "full" })
   ] });
 }
-function Be({ className: e, height: a = 64 }) {
+function Ie({ className: e, height: a = 64 }) {
   const s = [0.4, 0.55, 0.45, 0.7, 0.6, 0.8, 0.65, 0.85, 0.75, 0.9, 0.7, 0.95];
   return /* @__PURE__ */ t.jsx(
     "div",
@@ -201,7 +201,7 @@ function Be({ className: e, height: a = 64 }) {
     }
   );
 }
-function H({ rows: e = 4, withLeading: a = !0, withTrailing: s = !0, className: n }) {
+function K({ rows: e = 4, withLeading: a = !0, withTrailing: s = !0, className: n }) {
   return /* @__PURE__ */ t.jsx("ul", { className: g("flex flex-col gap-2", n), "aria-busy": "true", children: Array.from({ length: e }).map((r, i) => /* @__PURE__ */ t.jsxs(
     "li",
     {
@@ -223,7 +223,7 @@ const $ = {
   success: { ring: "bg-positive-50 text-positive-600", text: "text-text-secondary" },
   info: { ring: "bg-brand-50 text-brand-600", text: "text-text-secondary" }
 };
-function I({
+function _({
   icon: e,
   title: a,
   description: s,
@@ -268,7 +268,7 @@ function I({
     }
   );
 }
-const ne = {
+const se = {
   /* react-grid-layout drag handle'ı için class — yalnızca header'dan sürüklenir */
   DRAG_HANDLE_CLASS: "widget-drag-handle"
 };
@@ -293,29 +293,29 @@ function S({
   /* React Query background refetch */
   isStale: h = !1,
   /* React Query staleTime aşıldı */
-  dataUpdatedAt: y,
+  dataUpdatedAt: p,
   /* number (ms) | Date | undefined — son başarılı fetch */
   density: v = "compact",
   children: N,
-  className: z
+  className: E
 }) {
   const C = !r && !i && h && f;
-  return /* @__PURE__ */ t.jsxs(oe, { variant: "default", className: g("h-full flex flex-col", z), children: [
+  return /* @__PURE__ */ t.jsxs(ie, { variant: "default", className: g("h-full flex flex-col", E), children: [
     /* @__PURE__ */ t.jsxs(
-      ce,
+      re,
       {
         density: v,
         className: g(
-          ne.DRAG_HANDLE_CLASS,
+          se.DRAG_HANDLE_CLASS,
           "cursor-grab active:cursor-grabbing select-none",
           "flex-row items-center justify-between flex-none"
         ),
         children: [
           /* @__PURE__ */ t.jsxs("div", { className: "flex flex-col gap-0.5 min-w-0 flex-1", children: [
             /* @__PURE__ */ t.jsxs("div", { className: "flex items-center gap-2", children: [
-              /* @__PURE__ */ t.jsx(de, { className: "text-sm font-semibold truncate", children: e }),
+              /* @__PURE__ */ t.jsx(le, { className: "text-sm font-semibold truncate", children: e }),
               s,
-              C && /* @__PURE__ */ t.jsx(Ke, {})
+              C && /* @__PURE__ */ t.jsx(He, {})
             ] }),
             a && /* @__PURE__ */ t.jsx("p", { className: "text-xs text-text-tertiary truncate", children: a })
           ] }),
@@ -323,30 +323,30 @@ function S({
             "div",
             {
               className: "flex items-center gap-1 flex-none",
-              onMouseDown: (D) => D.stopPropagation(),
-              onTouchStart: (D) => D.stopPropagation(),
+              onMouseDown: (L) => L.stopPropagation(),
+              onTouchStart: (L) => L.stopPropagation(),
               children: n
             }
           )
         ]
       }
     ),
-    /* @__PURE__ */ t.jsxs(ue, { density: v, className: "flex-1 overflow-auto", children: [
+    /* @__PURE__ */ t.jsxs(oe, { density: v, className: "flex-1 overflow-auto", children: [
       i && /* @__PURE__ */ t.jsx(
-        He,
+        Be,
         {
           message: d,
           onRetry: l,
-          dataUpdatedAt: y
+          dataUpdatedAt: p
         }
       ),
-      !i && r && (u ?? /* @__PURE__ */ t.jsx(Fe, { density: v })),
-      !i && !r && m && (o ?? /* @__PURE__ */ t.jsx(Oe, { message: c })),
+      !i && r && (u ?? /* @__PURE__ */ t.jsx(Te, { density: v })),
+      !i && !r && m && (o ?? /* @__PURE__ */ t.jsx(Pe, { message: c })),
       !i && !r && !m && N
     ] })
   ] });
 }
-function Fe({ density: e }) {
+function Te({ density: e }) {
   return /* @__PURE__ */ t.jsxs("div", { className: "flex flex-col gap-3", "aria-busy": "true", children: [
     /* @__PURE__ */ t.jsx(j, { height: e === "spacious" ? 48 : 32, className: "w-1/3" }),
     /* @__PURE__ */ t.jsx(j, { height: 16 }),
@@ -354,9 +354,9 @@ function Fe({ density: e }) {
     /* @__PURE__ */ t.jsx(j, { height: 16, className: "w-3/4" })
   ] });
 }
-function Oe({ message: e }) {
+function Pe({ message: e }) {
   return /* @__PURE__ */ t.jsx(
-    I,
+    _,
     {
       compact: !0,
       title: e ?? "Görüntülenecek veri yok",
@@ -364,8 +364,8 @@ function Oe({ message: e }) {
     }
   );
 }
-function He({ message: e, onRetry: a, dataUpdatedAt: s }) {
-  const n = $e(s);
+function Be({ message: e, onRetry: a, dataUpdatedAt: s }) {
+  const n = Oe(s);
   return /* @__PURE__ */ t.jsxs("div", { className: "flex flex-col items-center justify-center text-center gap-2 py-4", children: [
     /* @__PURE__ */ t.jsx(A, { variant: "negative", withDot: !0, children: "Yüklenemedi" }),
     /* @__PURE__ */ t.jsx("p", { className: "text-sm text-text-secondary max-w-xs", children: e || "Veri alınırken bir hata oluştu." }),
@@ -389,7 +389,7 @@ function He({ message: e, onRetry: a, dataUpdatedAt: s }) {
     )
   ] });
 }
-function Ke() {
+function He() {
   return /* @__PURE__ */ t.jsxs(
     "span",
     {
@@ -409,16 +409,16 @@ function Ke() {
     }
   );
 }
-function $e(e) {
+function Oe(e) {
   if (e == null) return null;
   const a = e instanceof Date ? e.getTime() : Number(e);
   if (!Number.isFinite(a)) return null;
   const s = Math.round((a - Date.now()) / 1e3), n = Math.abs(s), r = new Intl.RelativeTimeFormat("tr-TR", { numeric: "auto" });
   return n < 60 ? r.format(s, "second") : n < 3600 ? r.format(Math.round(s / 60), "minute") : n < 86400 ? r.format(Math.round(s / 3600), "hour") : r.format(Math.round(s / 86400), "day");
 }
-S.DRAG_HANDLE_CLASS = ne.DRAG_HANDLE_CLASS;
-const G = 250, Ge = 450;
-function w(e = G + Math.random() * (Ge - G)) {
+S.DRAG_HANDLE_CLASS = se.DRAG_HANDLE_CLASS;
+const G = 250, Ke = 450;
+function w(e = G + Math.random() * (Ke - G)) {
   return new Promise((a) => setTimeout(a, e));
 }
 const b = {
@@ -613,15 +613,15 @@ const b = {
   async dismissSuggestion(e, a = "irrelevant") {
     return await w(250), { id: e.id, dismissed: !0, reason: a };
   }
-}, We = () => b.budgetSummary();
-function qe() {
-  return L({
+}, Fe = () => b.budgetSummary();
+function $e() {
+  return D({
     queryKey: x.dashboard.budget(),
-    queryFn: We
+    queryFn: Fe
   });
 }
-function Ye() {
-  const { data: e, isLoading: a, isError: s, isFetching: n, isStale: r, dataUpdatedAt: i, refetch: d } = qe(), l = () => d(), m = e ? e.spent / e.budget * 100 : 0, c = W(m), o = e ? U(e.deltaPct) : null;
+function Ge() {
+  const { data: e, isLoading: a, isError: s, isFetching: n, isStale: r, dataUpdatedAt: i, refetch: d } = $e(), l = () => d(), m = e ? e.spent / e.budget * 100 : 0, c = W(m), o = e ? V(e.deltaPct) : null;
   return /* @__PURE__ */ t.jsx(
     S,
     {
@@ -634,13 +634,13 @@ function Ye() {
       isStale: r,
       dataUpdatedAt: i,
       onRetry: l,
-      skeleton: /* @__PURE__ */ t.jsx(se, { withDelta: !0, withBar: !0 }),
+      skeleton: /* @__PURE__ */ t.jsx(ae, { withDelta: !0, withBar: !0 }),
       children: e && /* @__PURE__ */ t.jsxs("div", { className: "flex flex-col gap-3 h-full", children: [
         /* @__PURE__ */ t.jsxs("div", { className: "flex items-baseline gap-2 font-tabular", children: [
-          /* @__PURE__ */ t.jsx("span", { className: "text-3xl font-semibold tracking-tight", children: T(e.spent, e.currency) }),
+          /* @__PURE__ */ t.jsx("span", { className: "text-3xl font-semibold tracking-tight", children: I(e.spent, e.currency) }),
           /* @__PURE__ */ t.jsxs("span", { className: "text-sm text-text-tertiary", children: [
             "/ ",
-            T(e.budget, e.currency)
+            I(e.budget, e.currency)
           ] })
         ] }),
         o && /* @__PURE__ */ t.jsxs("div", { className: "flex items-center gap-1.5 text-xs", children: [
@@ -655,7 +655,7 @@ function Ye() {
           ] }),
           /* @__PURE__ */ t.jsx("span", { className: "text-text-tertiary", children: "geçen aya göre" })
         ] }),
-        /* @__PURE__ */ t.jsx(Qe, { value: m, variant: c.barVariant }),
+        /* @__PURE__ */ t.jsx(We, { value: m, variant: c.barVariant }),
         /* @__PURE__ */ t.jsx("ul", { className: "flex flex-col gap-1.5 mt-1 overflow-y-auto", children: e.breakdown.map((u) => /* @__PURE__ */ t.jsxs(
           "li",
           {
@@ -695,7 +695,7 @@ function W(e) {
     textVariant: "text-text-positive"
   };
 }
-function Qe({ value: e, variant: a = "positive" }) {
+function We({ value: e, variant: a = "positive" }) {
   const s = {
     positive: "bg-positive-500",
     warning: "bg-warning-500",
@@ -722,15 +722,15 @@ function Qe({ value: e, variant: a = "positive" }) {
     }
   );
 }
-const Ve = () => b.cashFlow();
-function Ue() {
-  return L({
+const qe = () => b.cashFlow();
+function Ye() {
+  return D({
     queryKey: x.dashboard.cashflow(),
-    queryFn: Ve
+    queryFn: qe
   });
 }
-function Je() {
-  const { data: e, isLoading: a, isError: s, isFetching: n, isStale: r, dataUpdatedAt: i, refetch: d } = Ue(), l = () => d(), m = e ? U(e.deltaPct) : null, c = e ? e.deltaPct >= 0 : !0;
+function Qe() {
+  const { data: e, isLoading: a, isError: s, isFetching: n, isStale: r, dataUpdatedAt: i, refetch: d } = Ye(), l = () => d(), m = e ? V(e.deltaPct) : null, c = e ? e.deltaPct >= 0 : !0;
   return /* @__PURE__ */ t.jsx(
     S,
     {
@@ -743,12 +743,12 @@ function Je() {
       dataUpdatedAt: i,
       onRetry: l,
       skeleton: /* @__PURE__ */ t.jsxs("div", { className: "flex items-center justify-between gap-4 h-full", children: [
-        /* @__PURE__ */ t.jsx(se, { className: "flex-none" }),
-        /* @__PURE__ */ t.jsx("div", { className: "flex-1 min-w-0 h-full max-h-16", children: /* @__PURE__ */ t.jsx(Be, { height: 64 }) })
+        /* @__PURE__ */ t.jsx(ae, { className: "flex-none" }),
+        /* @__PURE__ */ t.jsx("div", { className: "flex-1 min-w-0 h-full max-h-16", children: /* @__PURE__ */ t.jsx(Ie, { height: 64 }) })
       ] }),
       children: e && /* @__PURE__ */ t.jsxs("div", { className: "flex items-center justify-between gap-4 h-full", children: [
         /* @__PURE__ */ t.jsxs("div", { className: "flex flex-col gap-1 flex-none", children: [
-          /* @__PURE__ */ t.jsx("div", { className: "text-2xl font-semibold tracking-tight font-tabular", children: T(e.netCurrent, e.currency) }),
+          /* @__PURE__ */ t.jsx("div", { className: "text-2xl font-semibold tracking-tight font-tabular", children: I(e.netCurrent, e.currency) }),
           m && /* @__PURE__ */ t.jsxs("div", { className: "flex items-center gap-1 text-xs", children: [
             /* @__PURE__ */ t.jsxs("span", { className: g(
               "inline-flex items-center gap-1 font-medium font-tabular",
@@ -761,18 +761,18 @@ function Je() {
             /* @__PURE__ */ t.jsx("span", { className: "text-text-tertiary", children: "vs önceki dönem" })
           ] })
         ] }),
-        /* @__PURE__ */ t.jsx("div", { className: "flex-1 min-w-0 h-full max-h-16", children: /* @__PURE__ */ t.jsx(Ze, { series: e.series, variant: c ? "positive" : "negative" }) })
+        /* @__PURE__ */ t.jsx("div", { className: "flex-1 min-w-0 h-full max-h-16", children: /* @__PURE__ */ t.jsx(Ve, { series: e.series, variant: c ? "positive" : "negative" }) })
       ] })
     }
   );
 }
-function Ze({ series: e, variant: a = "positive" }) {
-  const n = `cashflow-grad-${p.useId().replace(/:/g, "")}`;
+function Ve({ series: e, variant: a = "positive" }) {
+  const n = `cashflow-grad-${y.useId().replace(/:/g, "")}`;
   if (!e || e.length < 2) return null;
-  const r = 100, i = 40, d = Math.min(...e), m = Math.max(...e) - d || 1, o = e.map((h, y) => {
-    const v = y / (e.length - 1) * r, N = i - (h - d) / m * i;
+  const r = 100, i = 40, d = Math.min(...e), m = Math.max(...e) - d || 1, o = e.map((h, p) => {
+    const v = p / (e.length - 1) * r, N = i - (h - d) / m * i;
     return [v, N];
-  }).map(([h, y], v) => `${v === 0 ? "M" : "L"} ${h.toFixed(2)} ${y.toFixed(2)}`).join(" "), u = `${o} L ${r} ${i} L 0 ${i} Z`, f = a === "positive" ? "var(--apya-positive-500)" : "var(--apya-negative-500)";
+  }).map(([h, p], v) => `${v === 0 ? "M" : "L"} ${h.toFixed(2)} ${p.toFixed(2)}`).join(" "), u = `${o} L ${r} ${i} L 0 ${i} Z`, f = a === "positive" ? "var(--apya-positive-500)" : "var(--apya-negative-500)";
   return /* @__PURE__ */ t.jsxs(
     "svg",
     {
@@ -802,14 +802,14 @@ function Ze({ series: e, variant: a = "positive" }) {
     }
   );
 }
-const Xe = (e, a) => (e ?? []).filter((s) => s.id !== (a == null ? void 0 : a.id));
+const Ue = (e, a) => (e ?? []).filter((s) => s.id !== (a == null ? void 0 : a.id));
 function R({
   queryKey: e,
   mutationFn: a,
   /* Mutation arg'ı liste'deki hedef row'a nasıl eşlenir? Default: arg = row */
   extractTarget: s = (c) => c,
   /* Optimistic cache transform — default: id eşleşen row'u sil */
-  transform: n = Xe,
+  transform: n = Ue,
   /* Side-effect query'leri — onSettled'da invalidate edilir */
   extraInvalidations: r = [],
   /* Başarı toast'i (undo destekli). undoFn varsa "Geri al" gösterilir. */
@@ -821,17 +821,17 @@ function R({
   errorMessage: l = "İşlem başarısız oldu",
   conflictMessage: m = "Bu kayıt başka bir kullanıcı tarafından değiştirildi"
 }) {
-  const c = F(), o = J();
-  return je({
+  const c = H(), o = U();
+  return pe({
     mutationFn: a,
     onMutate: async (u) => {
       const f = s(u);
       await c.cancelQueries({ queryKey: e });
       const h = c.getQueryData(e);
-      return c.setQueryData(e, (y) => n(y, f, u)), { previous: h, target: f };
+      return c.setQueryData(e, (p) => n(p, f, u)), { previous: h, target: f };
     },
     onError: (u, f, h) => {
-      (h == null ? void 0 : h.previous) !== void 0 && c.setQueryData(e, h.previous), (u instanceof me ? u.status === 409 : (u == null ? void 0 : u.status) === 409) ? o.warning(m, {
+      (h == null ? void 0 : h.previous) !== void 0 && c.setQueryData(e, h.previous), (u instanceof ce ? u.status === 409 : (u == null ? void 0 : u.status) === 409) ? o.warning(m, {
         description: "Veriyi tazeleyip tekrar deneyebilirsin.",
         action: { label: "Yenile", onClick: () => c.invalidateQueries({ queryKey: e }) }
       }) : o.error(l, {
@@ -840,12 +840,12 @@ function R({
     },
     onSuccess: (u, f, h) => {
       if (!d || !i) return;
-      const y = (h == null ? void 0 : h.target) ?? s(f), v = typeof i == "function" ? i(y) : i;
+      const p = (h == null ? void 0 : h.target) ?? s(f), v = typeof i == "function" ? i(p) : i;
       o.success(v, {
         action: {
           label: "Geri al",
           onClick: () => {
-            c.setQueryData(e, h == null ? void 0 : h.previous), Promise.resolve(d(y)).catch((N) => {
+            c.setQueryData(e, h == null ? void 0 : h.previous), Promise.resolve(d(p)).catch((N) => {
               o.error("Geri alınamadı", { description: N == null ? void 0 : N.message }), c.invalidateQueries({ queryKey: e });
             });
           }
@@ -857,14 +857,14 @@ function R({
     }
   });
 }
-const et = () => b.pendingApprovals();
-function tt() {
-  return L({
+const Je = () => b.pendingApprovals();
+function Xe() {
+  return D({
     queryKey: x.dashboard.approvals(),
-    queryFn: et
+    queryFn: Je
   });
 }
-function at() {
+function Ze() {
   return R({
     queryKey: x.dashboard.approvals(),
     mutationFn: (e) => b.approveItem(e),
@@ -875,7 +875,7 @@ function at() {
     errorMessage: "Onay başarısız oldu"
   });
 }
-function st() {
+function et() {
   return R({
     queryKey: x.dashboard.approvals(),
     mutationFn: (e) => b.rejectItem(e),
@@ -890,8 +890,8 @@ const q = {
   expense: { label: "Masraf", variant: "neutral" },
   po: { label: "Sipariş", variant: "ai" }
 };
-function nt() {
-  const { data: e, isLoading: a, isError: s, isFetching: n, isStale: r, dataUpdatedAt: i, refetch: d } = tt(), l = at(), m = st(), c = () => d(), o = (h) => l.mutateAsync(h).catch(() => {
+function tt() {
+  const { data: e, isLoading: a, isError: s, isFetching: n, isStale: r, dataUpdatedAt: i, refetch: d } = Xe(), l = Ze(), m = et(), c = () => d(), o = (h) => l.mutateAsync(h).catch(() => {
   }), u = (h) => m.mutateAsync(h).catch(() => {
   }), f = (e == null ? void 0 : e.length) ?? 0;
   return /* @__PURE__ */ t.jsx(
@@ -906,10 +906,10 @@ function nt() {
       isStale: r,
       dataUpdatedAt: i,
       onRetry: c,
-      skeleton: /* @__PURE__ */ t.jsx(H, { rows: 4 }),
+      skeleton: /* @__PURE__ */ t.jsx(K, { rows: 4 }),
       isEmpty: !a && !s && f === 0,
       emptyState: /* @__PURE__ */ t.jsx(
-        I,
+        _,
         {
           compact: !0,
           variant: "success",
@@ -919,7 +919,7 @@ function nt() {
         }
       ),
       children: /* @__PURE__ */ t.jsx("ul", { className: "flex flex-col gap-2 h-full overflow-y-auto", children: e == null ? void 0 : e.map((h) => /* @__PURE__ */ t.jsx(
-        it,
+        at,
         {
           item: h,
           onApprove: o,
@@ -930,8 +930,8 @@ function nt() {
     }
   );
 }
-function it({ item: e, onApprove: a, onReject: s }) {
-  const [n, r] = E.useState(null), i = q[e.type] ?? q.expense, d = rt(e.ageHours), l = async (m, c) => {
+function at({ item: e, onApprove: a, onReject: s }) {
+  const [n, r] = z.useState(null), i = q[e.type] ?? q.expense, d = st(e.ageHours), l = async (m, c) => {
     if (!n) {
       r(m);
       try {
@@ -958,7 +958,7 @@ function it({ item: e, onApprove: a, onReject: s }) {
       ] }),
       /* @__PURE__ */ t.jsx("p", { className: "text-sm font-medium text-text-primary truncate", children: e.title })
     ] }),
-    /* @__PURE__ */ t.jsx("div", { className: "font-tabular font-semibold text-sm text-text-primary flex-none", children: he(e.amount, e.currency) }),
+    /* @__PURE__ */ t.jsx("div", { className: "font-tabular font-semibold text-sm text-text-primary flex-none", children: de(e.amount, e.currency) }),
     /* @__PURE__ */ t.jsxs("div", { className: "flex items-center gap-1 flex-none", children: [
       /* @__PURE__ */ t.jsx(
         k,
@@ -986,54 +986,10 @@ function it({ item: e, onApprove: a, onReject: s }) {
     ] })
   ] });
 }
-function rt(e) {
+function st(e) {
   return e < 1 ? "az önce" : e < 24 ? `${Math.round(e)} sa önce` : `${Math.floor(e / 24)} gün önce`;
 }
 const Y = {
-  sm: { dot: "h-1 w-1", gap: "gap-0.5" },
-  md: { dot: "h-1.5 w-1.5", gap: "gap-0.5" },
-  lg: { dot: "h-2 w-2", gap: "gap-1" }
-};
-function ie(e) {
-  return typeof e != "number" || !Number.isFinite(e) ? 0 : e > 1 ? Math.max(0, Math.min(100, e)) / 100 : Math.max(0, Math.min(1, e));
-}
-function re(e) {
-  return e >= 0.85 ? { dots: 5, label: "Çok yüksek güven" } : e >= 0.7 ? { dots: 4, label: "Yüksek güven" } : e >= 0.5 ? { dots: 3, label: "Orta güven" } : e >= 0.3 ? { dots: 2, label: "Düşük güven" } : { dots: 1, label: "Çok düşük güven" };
-}
-function M({ score: e, label: a, size: s = "md", showLabel: n = !0, className: r }) {
-  const i = ie(e), d = re(i), l = Y[s] ?? Y.md, m = a ?? d.label, c = Math.round(i * 100);
-  return /* @__PURE__ */ t.jsxs(
-    "span",
-    {
-      className: g("inline-flex items-center gap-1 text-xs text-text-tertiary", r),
-      title: `${d.label} (%${c})`,
-      children: [
-        /* @__PURE__ */ t.jsx("span", { className: g("inline-flex items-center", l.gap), "aria-hidden": "true", children: Array.from({ length: 5 }, (o, u) => /* @__PURE__ */ t.jsx(
-          "span",
-          {
-            className: g(
-              "inline-block rounded-full",
-              l.dot,
-              u < d.dots ? "bg-ai-500" : "bg-neutral-200"
-            )
-          },
-          u
-        )) }),
-        n && /* @__PURE__ */ t.jsx("span", { "aria-hidden": "true", children: m }),
-        /* @__PURE__ */ t.jsxs("span", { className: "sr-only", children: [
-          "Güven düzeyi: ",
-          d.label,
-          " (%",
-          c,
-          ")"
-        ] })
-      ]
-    }
-  );
-}
-M.bandFor = re;
-M.normalize = ie;
-const Q = {
   /* Neutral default — AI'ın sakin, ısrarsız tonu */
   neutral: { border: "border-default", ribbon: null },
   /* Pozitif — fırsat, gelişim önerisi */
@@ -1043,7 +999,7 @@ const Q = {
   /* Kritik — derhal aksiyon */
   critical: { border: "border-critical-50 ring-1 ring-critical-50", ribbon: "bg-critical-50" }
 };
-function lt({
+function nt({
   headline: e,
   why: a = [],
   /* string[] — bullet'lara dönüşür */
@@ -1064,7 +1020,7 @@ function lt({
   children: f
   /* ekstra içerik — örn. before/after diff snippet */
 }) {
-  const [h, y] = E.useState(!1), v = Q[r] ?? Q.neutral, N = Array.isArray(a) && a.length > 0, z = !!o;
+  const [h, p] = z.useState(!1), v = Y[r] ?? Y.neutral, N = Array.isArray(a) && a.length > 0, E = !!o;
   return /* @__PURE__ */ t.jsxs(
     "article",
     {
@@ -1072,7 +1028,7 @@ function lt({
         "rounded-md border bg-surface-base",
         "transition-opacity duration-fast",
         v.border,
-        z && "opacity-60",
+        E && "opacity-60",
         u
       ),
       "data-suggestion-tone": r,
@@ -1082,7 +1038,7 @@ function lt({
         /* @__PURE__ */ t.jsxs("div", { className: "p-3 flex flex-col gap-2", children: [
           /* @__PURE__ */ t.jsxs("div", { className: "flex items-center justify-between gap-2", children: [
             i ?? /* @__PURE__ */ t.jsx(A, { variant: "ai", size: "sm", withDot: !0, children: "AI" }),
-            /* @__PURE__ */ t.jsx(M, { score: s, label: n, size: "md" })
+            /* @__PURE__ */ t.jsx(B, { score: s, label: n, size: "md" })
           ] }),
           /* @__PURE__ */ t.jsx("p", { className: "text-sm font-medium text-text-primary leading-snug text-balance", children: e }),
           f,
@@ -1091,7 +1047,7 @@ function lt({
               "button",
               {
                 type: "button",
-                onClick: () => y((C) => !C),
+                onClick: () => p((C) => !C),
                 "aria-expanded": h,
                 className: g(
                   "self-start text-xs text-text-link hover:underline",
@@ -1100,7 +1056,7 @@ function lt({
                 children: h ? "Açıklamayı gizle" : "Neden bu öneri?"
               }
             ),
-            h && /* @__PURE__ */ t.jsx("ul", { className: "text-xs text-text-secondary list-disc pl-5 space-y-1", children: a.map((C, D) => /* @__PURE__ */ t.jsx("li", { children: C }, D)) })
+            h && /* @__PURE__ */ t.jsx("ul", { className: "text-xs text-text-secondary list-disc pl-5 space-y-1", children: a.map((C, L) => /* @__PURE__ */ t.jsx("li", { children: C }, L)) })
           ] }),
           /* @__PURE__ */ t.jsxs("div", { className: "flex items-center justify-end gap-1 mt-1", children: [
             c && /* @__PURE__ */ t.jsx(
@@ -1110,7 +1066,7 @@ function lt({
                 variant: "ghost",
                 onClick: c,
                 isLoading: o === "dismiss",
-                disabled: z && o !== "dismiss",
+                disabled: E && o !== "dismiss",
                 children: "İlgisiz"
               }
             ),
@@ -1121,7 +1077,7 @@ function lt({
                 variant: "ghost",
                 onClick: m,
                 isLoading: o === "snooze",
-                disabled: z && o !== "snooze",
+                disabled: E && o !== "snooze",
                 children: "Sonra"
               }
             ),
@@ -1132,7 +1088,7 @@ function lt({
                 variant: r === "critical" ? "destructive" : "primary",
                 onClick: l,
                 isLoading: o === "apply",
-                disabled: z && o !== "apply",
+                disabled: E && o !== "apply",
                 children: d
               }
             )
@@ -1142,21 +1098,21 @@ function lt({
     }
   );
 }
-const ot = () => b.riskAlerts();
-function ct() {
-  return L({
+const it = () => b.riskAlerts();
+function rt() {
+  return D({
     queryKey: x.dashboard.risks(),
-    queryFn: ot
+    queryFn: it
   });
 }
-function dt() {
+function lt() {
   return R({
     queryKey: x.dashboard.risks(),
     mutationFn: (e) => b.dismissRisk(e),
     errorMessage: "Uyarı reddedilemedi"
   });
 }
-function ut() {
+function ot() {
   return R({
     queryKey: x.dashboard.risks(),
     mutationFn: (e) => b.acceptRisk(e),
@@ -1165,17 +1121,17 @@ function ut() {
     errorMessage: "Aksiyon uygulanamadı"
   });
 }
-const B = {
+const P = {
   critical: { label: "Kritik", variant: "critical", priority: 0 },
   actionable: { label: "Eyleme açık", variant: "warning", priority: 1 },
   info: { label: "Bilgi", variant: "ai", priority: 2 }
 };
-function mt() {
-  const { data: e, isLoading: a, isError: s, isFetching: n, isStale: r, dataUpdatedAt: i, refetch: d } = ct(), l = dt(), m = ut(), c = () => d(), o = (h) => l.mutateAsync(h).catch(() => {
+function ct() {
+  const { data: e, isLoading: a, isError: s, isFetching: n, isStale: r, dataUpdatedAt: i, refetch: d } = rt(), l = lt(), m = ot(), c = () => d(), o = (h) => l.mutateAsync(h).catch(() => {
   }), u = (h) => m.mutateAsync(h).catch(() => {
-  }), f = E.useMemo(
+  }), f = z.useMemo(
     () => [...e ?? []].sort(
-      (h, y) => B[h.severity].priority - B[y.severity].priority
+      (h, p) => P[h.severity].priority - P[p.severity].priority
     ),
     [e]
   );
@@ -1191,10 +1147,10 @@ function mt() {
       isStale: r,
       dataUpdatedAt: i,
       onRetry: c,
-      skeleton: /* @__PURE__ */ t.jsx(H, { rows: 3, withTrailing: !1 }),
+      skeleton: /* @__PURE__ */ t.jsx(K, { rows: 3, withTrailing: !1 }),
       isEmpty: !a && !s && f.length === 0,
       emptyState: /* @__PURE__ */ t.jsx(
-        I,
+        _,
         {
           compact: !0,
           variant: "success",
@@ -1204,7 +1160,7 @@ function mt() {
         }
       ),
       children: /* @__PURE__ */ t.jsx("ul", { className: "flex flex-col gap-2 h-full overflow-y-auto", children: f.map((h) => /* @__PURE__ */ t.jsx(
-        ht,
+        dt,
         {
           risk: h,
           onAccept: u,
@@ -1215,8 +1171,8 @@ function mt() {
     }
   );
 }
-function ht({ risk: e, onAccept: a, onDismiss: s }) {
-  const [n, r] = E.useState(!1), [i, d] = E.useState(null), l = B[e.severity], m = async (c, o) => {
+function dt({ risk: e, onAccept: a, onDismiss: s }) {
+  const [n, r] = z.useState(!1), [i, d] = z.useState(null), l = P[e.severity], m = async (c, o) => {
     if (!i) {
       d(c);
       try {
@@ -1236,7 +1192,7 @@ function ht({ risk: e, onAccept: a, onDismiss: s }) {
   ), children: /* @__PURE__ */ t.jsxs("div", { className: "p-2.5 flex flex-col gap-2", children: [
     /* @__PURE__ */ t.jsxs("div", { className: "flex items-center justify-between gap-2", children: [
       /* @__PURE__ */ t.jsx(A, { variant: l.variant, size: "sm", withDot: !0, children: l.label }),
-      /* @__PURE__ */ t.jsx(M, { score: e.confidence, label: e.confidenceLabel, size: "md" })
+      /* @__PURE__ */ t.jsx(B, { score: e.confidence, label: e.confidenceLabel, size: "md" })
     ] }),
     /* @__PURE__ */ t.jsx("p", { className: "text-sm font-medium text-text-primary leading-snug", children: e.title }),
     /* @__PURE__ */ t.jsx(
@@ -1277,14 +1233,14 @@ function ht({ risk: e, onAccept: a, onDismiss: s }) {
     ] })
   ] }) });
 }
-const xt = () => b.aiSuggestions();
-function ft() {
-  return L({
+const ut = () => b.aiSuggestions();
+function mt() {
+  return D({
     queryKey: x.dashboard.aiSuggestions(),
-    queryFn: xt
+    queryFn: ut
   });
 }
-function gt() {
+function ht() {
   return R({
     queryKey: x.dashboard.aiSuggestions(),
     mutationFn: (e) => b.applySuggestion(e),
@@ -1295,14 +1251,14 @@ function gt() {
     errorMessage: "Öneri uygulanamadı"
   });
 }
-function pt() {
+function xt() {
   return R({
     queryKey: x.dashboard.aiSuggestions(),
     mutationFn: (e) => b.snoozeSuggestion(e),
     errorMessage: "Erteleme başarısız"
   });
 }
-function yt() {
+function ft() {
   return R({
     queryKey: x.dashboard.aiSuggestions(),
     mutationFn: ({ suggestion: e, reason: a }) => b.dismissSuggestion(e, a),
@@ -1310,11 +1266,11 @@ function yt() {
     errorMessage: "Reddetme kaydedilemedi"
   });
 }
-const bt = 5, vt = 0.3;
-function jt() {
-  const { data: e, isLoading: a, isError: s, isFetching: n, isStale: r, dataUpdatedAt: i, refetch: d } = ft(), l = gt(), m = pt(), c = yt(), o = E.useMemo(() => (e ?? []).filter(
-    (h) => M.normalize(h.confidence) >= vt
-  ).slice(0, bt), [e]), u = ((e == null ? void 0 : e.length) ?? 0) - o.length;
+const gt = 5, yt = 0.3;
+function pt() {
+  const { data: e, isLoading: a, isError: s, isFetching: n, isStale: r, dataUpdatedAt: i, refetch: d } = mt(), l = ht(), m = xt(), c = ft(), o = z.useMemo(() => (e ?? []).filter(
+    (h) => B.normalize(h.confidence) >= yt
+  ).slice(0, gt), [e]), u = ((e == null ? void 0 : e.length) ?? 0) - o.length;
   return /* @__PURE__ */ t.jsx(
     S,
     {
@@ -1327,10 +1283,10 @@ function jt() {
       isStale: r,
       dataUpdatedAt: i,
       onRetry: () => d(),
-      skeleton: /* @__PURE__ */ t.jsx(H, { rows: 3, withLeading: !1 }),
+      skeleton: /* @__PURE__ */ t.jsx(K, { rows: 3, withLeading: !1 }),
       isEmpty: !a && !s && o.length === 0,
       emptyState: /* @__PURE__ */ t.jsx(
-        I,
+        _,
         {
           compact: !0,
           variant: "info",
@@ -1341,7 +1297,7 @@ function jt() {
       ),
       children: /* @__PURE__ */ t.jsxs("ul", { className: "flex flex-col gap-2 h-full overflow-y-auto", children: [
         o.map((f) => /* @__PURE__ */ t.jsx("li", { children: /* @__PURE__ */ t.jsx(
-          wt,
+          bt,
           {
             suggestion: f,
             apply: l,
@@ -1358,11 +1314,11 @@ function jt() {
     }
   );
 }
-function wt({ suggestion: e, apply: a, snooze: s, dismiss: n }) {
+function bt({ suggestion: e, apply: a, snooze: s, dismiss: n }) {
   var i, d, l, m;
   const r = a.isPending && ((i = a.variables) == null ? void 0 : i.id) === e.id ? "apply" : s.isPending && ((d = s.variables) == null ? void 0 : d.id) === e.id ? "snooze" : n.isPending && ((m = (l = n.variables) == null ? void 0 : l.suggestion) == null ? void 0 : m.id) === e.id ? "dismiss" : null;
   return /* @__PURE__ */ t.jsx(
-    lt,
+    nt,
     {
       headline: e.headline,
       why: e.why,
@@ -1379,30 +1335,30 @@ function wt({ suggestion: e, apply: a, snooze: s, dismiss: n }) {
     }
   );
 }
-const kt = K.WidthProvider(K.Responsive), Nt = {
-  "budget-health": Ye,
-  "cash-flow": Je,
-  "pending-approvals": nt,
-  "risk-alerts": mt,
-  "ai-suggestions": jt
+const vt = F.WidthProvider(F.Responsive), jt = {
+  "budget-health": Ge,
+  "cash-flow": Qe,
+  "pending-approvals": tt,
+  "risk-alerts": ct,
+  "ai-suggestions": pt
 };
-function St() {
-  const [e, a] = p.useState(() => Me()), [s, n] = p.useState(!1), r = p.useMemo(() => {
-    const o = P[e] ?? P.cfo, u = Ie(e);
+function wt() {
+  const [e, a] = y.useState(() => Ce()), [s, n] = y.useState(!1), r = y.useMemo(() => {
+    const o = T[e] ?? T.cfo, u = De(e);
     return u ? { ...o, ...u } : o;
-  }, [e]), i = p.useCallback((o) => {
-    a(o), _e(o);
-  }, []), d = p.useCallback(
+  }, [e]), i = y.useCallback((o) => {
+    a(o), Le(o);
+  }, []), d = y.useCallback(
     (o, u) => {
-      s && Te(e, u);
+      s && Me(e, u);
     },
     [s, e]
-  ), l = p.useCallback(() => {
-    Pe(e), a(e);
+  ), l = y.useCallback(() => {
+    _e(e), a(e);
   }, [e]), c = (r.desktop ?? []).map((o) => o.i);
   return /* @__PURE__ */ t.jsxs("div", { className: "min-h-screen bg-surface-base text-text-primary", children: [
     /* @__PURE__ */ t.jsx(
-      At,
+      kt,
       {
         persona: e,
         onPersonaChange: i,
@@ -1412,14 +1368,14 @@ function St() {
       }
     ),
     /* @__PURE__ */ t.jsx("main", { className: "px-4 py-4 mobile:px-2 mobile:py-2", children: /* @__PURE__ */ t.jsx(
-      kt,
+      vt,
       {
         className: g("apya-bento", s && "apya-bento--edit"),
         layouts: r,
-        breakpoints: Ee,
-        cols: Ce,
-        rowHeight: De,
-        margin: Le,
+        breakpoints: Ae,
+        cols: Re,
+        rowHeight: Ee,
+        margin: ze,
         isDraggable: s,
         isResizable: s,
         draggableHandle: `.${S.DRAG_HANDLE_CLASS}`,
@@ -1427,7 +1383,7 @@ function St() {
         compactType: "vertical",
         preventCollision: !1,
         children: c.map((o) => {
-          const u = Nt[o];
+          const u = jt[o];
           return u ? /* @__PURE__ */ t.jsx("div", { className: "apya-bento-item", children: /* @__PURE__ */ t.jsx(u, {}) }, o) : /* @__PURE__ */ t.jsx("div", { children: /* @__PURE__ */ t.jsx(S, { title: `Bilinmeyen widget: ${o}` }) }, o);
         })
       }
@@ -1460,7 +1416,7 @@ function St() {
     )
   ] });
 }
-function At({ persona: e, onPersonaChange: a, editMode: s, onEditModeToggle: n, onReset: r }) {
+function kt({ persona: e, onPersonaChange: a, editMode: s, onEditModeToggle: n, onReset: r }) {
   return /* @__PURE__ */ t.jsxs("header", { className: g(
     "sticky top-0 z-sticky",
     "bg-surface-raised/95 backdrop-blur-sm",
@@ -1472,12 +1428,12 @@ function At({ persona: e, onPersonaChange: a, editMode: s, onEditModeToggle: n, 
     /* @__PURE__ */ t.jsxs("div", { className: "flex flex-col gap-0.5 min-w-0", children: [
       /* @__PURE__ */ t.jsx("h1", { className: "text-base font-semibold text-text-primary truncate", children: "Genel Bakış" }),
       /* @__PURE__ */ t.jsxs("p", { className: "text-xs text-text-tertiary truncate mobile:hidden", children: [
-        te[e],
+        ee[e],
         " görünümü"
       ] })
     ] }),
     /* @__PURE__ */ t.jsxs("div", { className: "flex items-center gap-2 flex-none", children: [
-      /* @__PURE__ */ t.jsx(Rt, { value: e, onChange: a }),
+      /* @__PURE__ */ t.jsx(Nt, { value: e, onChange: a }),
       s ? /* @__PURE__ */ t.jsx(
         k,
         {
@@ -1497,11 +1453,11 @@ function At({ persona: e, onPersonaChange: a, editMode: s, onEditModeToggle: n, 
           children: s ? "Tamamla" : "Düzenle"
         }
       ),
-      /* @__PURE__ */ t.jsx(xe, {})
+      /* @__PURE__ */ t.jsx(ue, {})
     ] })
   ] });
 }
-function Rt({ value: e, onChange: a }) {
+function Nt({ value: e, onChange: a }) {
   return /* @__PURE__ */ t.jsxs("label", { className: "flex items-center gap-2", children: [
     /* @__PURE__ */ t.jsx("span", { className: "sr-only", children: "Persona seç" }),
     /* @__PURE__ */ t.jsx(
@@ -1517,14 +1473,14 @@ function Rt({ value: e, onChange: a }) {
           "focus-visible:outline-none focus-visible:shadow-focus",
           "transition-colors duration-fast"
         ),
-        children: Object.entries(te).map(([s, n]) => /* @__PURE__ */ t.jsx("option", { value: s, children: n }, s))
+        children: Object.entries(ee).map(([s, n]) => /* @__PURE__ */ t.jsx("option", { value: s, children: n }, s))
       }
     )
   ] });
 }
-function zt(e) {
-  const { connection: a, state: s } = ee(), n = F();
-  p.useEffect(() => {
+function St(e) {
+  const { connection: a, state: s } = Z(), n = H();
+  y.useEffect(() => {
     if (!a || !(e != null && e.length)) return;
     const r = e.map(([i, d]) => {
       const l = () => {
@@ -1541,9 +1497,9 @@ function zt(e) {
     };
   }, [a, s, n]);
 }
-function Et(e) {
-  const { connection: a, state: s } = ee(), n = F(), r = J();
-  p.useEffect(() => {
+function At(e) {
+  const { connection: a, state: s } = Z(), n = H(), r = U();
+  y.useEffect(() => {
     if (!a || !(e != null && e.length)) return;
     const i = e.map(([d, l]) => {
       const m = (c) => {
@@ -1570,14 +1526,14 @@ function Et(e) {
     };
   }, [a, s, n]);
 }
-function Ct() {
-  const e = p.useMemo(() => [
+function Rt() {
+  const e = y.useMemo(() => [
     ["JournalEntryPosted", [x.dashboard.budget(), x.dashboard.cashflow()]],
     ["ApprovalDecided", [x.dashboard.approvals(), x.dashboard.budget(), x.dashboard.cashflow()]],
     ["RiskDetected", [x.dashboard.risks()]],
     ["RiskDismissed", [x.dashboard.risks()]],
     ["AISuggestionPosted", [x.dashboard.aiSuggestions()]]
-  ], []), a = p.useMemo(() => [
+  ], []), a = y.useMemo(() => [
     ["ApprovalConflict", {
       queryKeys: [x.dashboard.approvals(), x.dashboard.budget(), x.dashboard.cashflow()],
       message: "Onay kaydında çakışma",
@@ -1594,13 +1550,13 @@ function Ct() {
       description: "Bu öneri başka bir kullanıcı tarafından uygulanmış."
     }]
   ], []);
-  return zt(e), Et(a), null;
+  return St(e), At(a), null;
 }
-fe();
-const V = document.getElementById("apya-dashboard-root");
-V && le(V).render(
-  /* @__PURE__ */ t.jsx(ge, { children: /* @__PURE__ */ t.jsx(Se, { children: /* @__PURE__ */ t.jsx(pe, { children: /* @__PURE__ */ t.jsx(ye, { children: /* @__PURE__ */ t.jsxs(we, { children: [
-    /* @__PURE__ */ t.jsx(Ct, {}),
-    /* @__PURE__ */ t.jsx(St, {})
+me();
+const Q = document.getElementById("apya-dashboard-root");
+Q && ne(Q).render(
+  /* @__PURE__ */ t.jsx(he, { children: /* @__PURE__ */ t.jsx(we, { children: /* @__PURE__ */ t.jsx(xe, { children: /* @__PURE__ */ t.jsx(fe, { children: /* @__PURE__ */ t.jsxs(be, { children: [
+    /* @__PURE__ */ t.jsx(Rt, {}),
+    /* @__PURE__ */ t.jsx(wt, {})
   ] }) }) }) }) })
 );
