@@ -1,6 +1,7 @@
 import React from 'react';
 import { WidgetShell } from './WidgetShell';
 import { Badge, Button } from '../../components/ui';
+import { ConfidenceMeter } from '../../components/ai';
 import { cn } from '../../lib/utils';
 import { useRiskAlerts, useDismissRisk, useAcceptRisk } from '../hooks/useRiskAlerts';
 
@@ -94,7 +95,7 @@ function RiskCard({ risk, onAccept, onDismiss }) {
                     <Badge variant={meta.variant} size="sm" withDot>
                         {meta.label}
                     </Badge>
-                    <ConfidenceIndicator score={risk.confidence} label={risk.confidenceLabel} />
+                    <ConfidenceMeter score={risk.confidence} label={risk.confidenceLabel} size="md" />
                 </div>
 
                 {/* Başlık */}
@@ -143,25 +144,6 @@ function RiskCard({ risk, onAccept, onDismiss }) {
                 </div>
             </div>
         </li>
-    );
-}
-
-/* Confidence göstergesi: ●●●○○ — sayı yerine 5-dot scale.
-   Ham yüzde tooltip'te (title attr — basit). */
-function ConfidenceIndicator({ score, label }) {
-    const filled = Math.max(0, Math.min(5, Math.round((score / 100) * 5)));
-    return (
-        <span
-            className="inline-flex items-center gap-1 text-xs text-text-tertiary"
-            title={`Güven: %${score}`}
-        >
-            <span className="font-tabular tracking-wider" aria-hidden="true">
-                {'●'.repeat(filled)}
-                <span className="text-text-disabled">{'○'.repeat(5 - filled)}</span>
-            </span>
-            <span className="sr-only">Güven düzeyi: {label} (%{score})</span>
-            <span aria-hidden="true">{label}</span>
-        </span>
     );
 }
 

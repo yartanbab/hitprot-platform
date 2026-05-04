@@ -47,5 +47,6 @@ export const QK = {
         cashflow:  () => ['dashboard', 'cashflow'],
         approvals: (filter) => filter ? ['dashboard', 'approvals', filter] : ['dashboard', 'approvals'],
         risks:     () => ['dashboard', 'risks'],
+        aiSuggestions: (scope) => scope ? ['dashboard', 'ai-suggestions', scope] : ['dashboard', 'ai-suggestions'],
     },
 };

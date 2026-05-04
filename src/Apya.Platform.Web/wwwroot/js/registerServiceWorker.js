@@ -1,8 +1,8 @@
 import { r as c, j as s, e as m } from "./react-vendor.js";
 import { Q as F, c as L } from "./query-vendor.js";
 import { t as P, c as B, a as j, S as R, P as A, O as I, C as W, T as _, D as z, R as O, b as Q, d as K } from "./ui-vendor.js";
-const C = "apya-theme", g = "system", T = c.createContext({
-  preference: g,
+const C = "apya-theme", x = "system", T = c.createContext({
+  preference: x,
   resolvedTheme: "light",
   setPreference: () => {
   },
@@ -10,14 +10,14 @@ const C = "apya-theme", g = "system", T = c.createContext({
   }
 });
 function V() {
-  if (typeof window > "u") return g;
+  if (typeof window > "u") return x;
   try {
     const e = window.localStorage.getItem(C);
     if (e === "light" || e === "dark" || e === "system")
       return e;
   } catch {
   }
-  return g;
+  return x;
 }
 function S() {
   return typeof window > "u" || !window.matchMedia ? !1 : window.matchMedia("(prefers-color-scheme: dark)").matches;
@@ -30,7 +30,7 @@ function v(e) {
   const t = document.documentElement;
   t.setAttribute("data-theme", e), e === "dark" ? t.classList.add("dark") : t.classList.remove("dark"), t.classList.remove("lpx-theme-light", "lpx-theme-dark", "lpx-theme-dim"), t.classList.add(e === "dark" ? "lpx-theme-dark" : "lpx-theme-light");
 }
-function fe({ children: e, defaultPreference: t = g }) {
+function fe({ children: e, defaultPreference: t = x }) {
   const [r, a] = c.useState(() => V() ?? t), [o, n] = c.useState(() => p(r)), l = c.useCallback((d) => {
     if (d !== "light" && d !== "dark" && d !== "system") return;
     a(d);
@@ -94,7 +94,8 @@ const be = {
     budget: () => ["dashboard", "budget"],
     cashflow: () => ["dashboard", "cashflow"],
     approvals: (e) => e ? ["dashboard", "approvals", e] : ["dashboard", "approvals"],
-    risks: () => ["dashboard", "risks"]
+    risks: () => ["dashboard", "risks"],
+    aiSuggestions: (e) => e ? ["dashboard", "ai-suggestions", e] : ["dashboard", "ai-suggestions"]
   }
 };
 function he({ children: e }) {
@@ -104,7 +105,7 @@ function he({ children: e }) {
 function i(...e) {
   return P(B(e));
 }
-function xe(e, t, r = "tr-TR") {
+function ge(e, t, r = "tr-TR") {
   return typeof e != "number" || !Number.isFinite(e) ? "—" : new Intl.NumberFormat(r, {
     style: "currency",
     currency: t,
@@ -113,7 +114,7 @@ function xe(e, t, r = "tr-TR") {
     maximumFractionDigits: 2
   }).format(e);
 }
-function ge(e, t, r = "tr-TR") {
+function xe(e, t, r = "tr-TR") {
   return typeof e != "number" || !Number.isFinite(e) ? "—" : new Intl.NumberFormat(r, {
     style: "currency",
     currency: t,
@@ -244,7 +245,7 @@ const J = {
   compact: "p-3",
   comfortable: "p-4",
   spacious: "p-6"
-}, x = m.forwardRef(function({ className: t, variant: r = "default", density: a, children: o, ...n }, l) {
+}, g = m.forwardRef(function({ className: t, variant: r = "default", density: a, children: o, ...n }, l) {
   return /* @__PURE__ */ s.jsx(
     "div",
     {
@@ -324,11 +325,11 @@ const J = {
     }
   );
 });
-x.Header = X;
-x.Title = Z;
-x.Description = U;
-x.Body = ee;
-x.Footer = te;
+g.Header = X;
+g.Title = Z;
+g.Description = U;
+g.Body = ee;
+g.Footer = te;
 function we({ className: e, width: t, height: r, rounded: a = "md", ...o }) {
   const n = {};
   return t !== void 0 && (n.width = typeof t == "number" ? `${t}px` : t), r !== void 0 && (n.height = typeof r == "number" ? `${r}px` : r), /* @__PURE__ */ s.jsx(
@@ -554,7 +555,7 @@ function je({ onUpdate: e, onReady: t } = {}) {
 }
 export {
   ye as B,
-  x as C,
+  g as C,
   be as Q,
   we as S,
   ke as T,
@@ -562,9 +563,9 @@ export {
   Z as b,
   i as c,
   ee as d,
-  ge as e,
+  xe as e,
   pe as f,
-  xe as g,
+  ge as g,
   ve as h,
   fe as i,
   he as j,

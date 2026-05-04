@@ -22,6 +22,7 @@ import { BudgetHealthWidget } from './widgets/BudgetHealthWidget';
 import { CashFlowWidget } from './widgets/CashFlowWidget';
 import { PendingApprovalsWidget } from './widgets/PendingApprovalsWidget';
 import { RiskAlertsWidget } from './widgets/RiskAlertsWidget';
+import { AISuggestionsWidget } from './widgets/AISuggestionsWidget';
 
 import { Button, ThemeToggle } from '../components/ui';
 import { cn } from '../lib/utils';
@@ -49,6 +50,7 @@ const WIDGET_REGISTRY = {
     'cash-flow':         CashFlowWidget,
     'pending-approvals': PendingApprovalsWidget,
     'risk-alerts':       RiskAlertsWidget,
+    'ai-suggestions':    AISuggestionsWidget,
 };
 
 function BentoDashboard() {

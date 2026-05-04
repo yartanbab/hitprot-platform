@@ -118,4 +118,86 @@ export const fixtures = {
         await delay(500);
         return { id: risk.id, accepted: true };
     },
+
+    /* AI suggestion inbox — dashboard widget'ı için top-N öneri.
+       Risk alerts'ten ayrı: risk = "neye dikkat", suggestion = "ne yap".
+       Tone: opportunity | warning | critical | neutral */
+    async aiSuggestions() {
+        await delay();
+        return [
+            {
+                id: 's-001',
+                tone: 'opportunity',
+                confidence: 0.91,
+                headline: 'Reklam bütçesini Q3\'te %15 düşür — ROAS son 2 çeyrekte 1.8 → 1.2',
+                why: [
+                    'Q1 ROAS 1.8 → Q2 ROAS 1.2 (%33 düşüş)',
+                    'Aynı kategoride sektör medyanı 1.4',
+                    'Geçen sezon benzer kararı veren 4 müşteride %12 net marj kazanımı',
+                ],
+                primaryActionLabel: 'Bütçeyi düşür',
+                affects: { module: 'budgets', resource: 'campaign-q3' },
+            },
+            {
+                id: 's-002',
+                tone: 'warning',
+                confidence: 0.74,
+                headline: 'Dijitalleşme kategorisi son 30 günde %22 hızlandı, eşik 2 ay önce aşılır',
+                why: [
+                    'Aylık ortalama harcama hızı 187K ₺',
+                    'Kalan bütçe 63K ₺',
+                    'Trend devam ederse 28 Haziran\'da limit aşılır',
+                ],
+                primaryActionLabel: 'Bütçe revizyonu öner',
+                affects: { module: 'budgets', resource: 'cat-digital' },
+            },
+            {
+                id: 's-003',
+                tone: 'opportunity',
+                confidence: 0.88,
+                headline: 'TÜBİTAK 1505 çağrısı firma profilinizle %88 uyumlu — son başvuru 18 gün',
+                why: [
+                    'NACE sektör kodu uyumlu',
+                    'Çalışan sayısı eşik aralığında',
+                    'Önceki başarılı 1501 projeniz 1505\'e geçişte sık görülen örüntü',
+                ],
+                primaryActionLabel: 'Çağrıyı incele',
+                affects: { module: 'grants', resource: 'tubitak-1505' },
+            },
+            {
+                id: 's-004',
+                tone: 'neutral',
+                confidence: 0.42,
+                headline: 'Yazılım abonelik gideri 3 ay üst üste yükseldi — kontrol etmek isteyebilirsin',
+                why: [
+                    'Mart: 4.2K — Nisan: 5.1K — Mayıs: 6.3K ₺',
+                    'Yeni eklenen 3 lisans tespit edildi',
+                ],
+                primaryActionLabel: 'Faturaları gör',
+                affects: { module: 'expenses', resource: 'subs' },
+            },
+        ];
+    },
+
+    async applySuggestion(suggestion) {
+        await delay(500);
+        /* Simülatif: %3 ihtimalle çakışma — undo ile geri alınır */
+        if (Math.random() < 0.03) {
+            const e = new Error('Bu öneri başka bir kullanıcı tarafından uygulanmış.');
+            e.status = 409;
+            throw e;
+        }
+        return { id: suggestion.id, applied: true };
+    },
+
+    async snoozeSuggestion(suggestion) {
+        await delay(250);
+        return { id: suggestion.id, snoozed: true, until: new Date(Date.now() + 7 * 86400_000).toISOString() };
+    },
+
+    async dismissSuggestion(suggestion, reason = 'irrelevant') {
+        /* `reason` model retraining sinyali — server bunu öğrenme katmanına iletir. */
+        await delay(250);
+        return { id: suggestion.id, dismissed: true, reason };
+    },
 };
