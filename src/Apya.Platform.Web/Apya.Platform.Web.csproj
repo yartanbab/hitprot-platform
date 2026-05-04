@@ -57,6 +57,9 @@
     <ProjectReference Include="..\Apya.Platform.Application\Apya.Platform.Application.csproj" />
     <ProjectReference Include="..\Apya.Platform.HttpApi\Apya.Platform.HttpApi.csproj" />
     <ProjectReference Include="..\Apya.Platform.EntityFrameworkCore\Apya.Platform.EntityFrameworkCore.csproj" />
+    <ProjectReference Include="..\Apya.Platform.Ai.Application\Apya.Platform.Ai.Application.csproj" />
+    <ProjectReference Include="..\Apya.Platform.Ai.HttpApi\Apya.Platform.Ai.HttpApi.csproj" />
+    <ProjectReference Include="..\Apya.Platform.Ai.EntityFrameworkCore\Apya.Platform.Ai.EntityFrameworkCore.csproj" />
     <PackageReference Include="Volo.Abp.Autofac" Version="10.0.2" />
     <PackageReference Include="Volo.Abp.Swashbuckle" Version="10.0.2" />
     <PackageReference Include="Volo.Abp.AspNetCore.Serilog" Version="10.0.2" />

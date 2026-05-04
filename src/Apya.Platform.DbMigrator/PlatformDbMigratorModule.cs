@@ -8,7 +8,9 @@ namespace Apya.Platform.DbMigrator;
 [DependsOn(
     typeof(AbpAutofacModule),
     typeof(PlatformEntityFrameworkCoreModule), // İsim düzeltildi
-    typeof(PlatformApplicationContractsModule) // İsim düzeltildi
+    typeof(PlatformApplicationContractsModule), // İsim düzeltildi
+    typeof(Apya.Platform.Ai.PlatformAiEntityFrameworkCoreModule),
+    typeof(Apya.Platform.Ai.PlatformAiApplicationContractsModule)
     )]
 public class PlatformDbMigratorModule : AbpModule
 {

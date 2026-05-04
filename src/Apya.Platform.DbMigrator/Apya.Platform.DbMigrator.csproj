@@ -49,6 +49,8 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Apya.Platform.Domain\Apya.Platform.Domain.csproj" />
+    <ProjectReference Include="..\Apya.Platform.Ai.EntityFrameworkCore\Apya.Platform.Ai.EntityFrameworkCore.csproj" />
+    <ProjectReference Include="..\Apya.Platform.Ai.Application.Contracts\Apya.Platform.Ai.Application.Contracts.csproj" />
   </ItemGroup>
 
 </Project>

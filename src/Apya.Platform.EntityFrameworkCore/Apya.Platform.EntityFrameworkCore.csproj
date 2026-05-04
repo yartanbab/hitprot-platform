@@ -11,6 +11,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Apya.Platform.Domain\Apya.Platform.Domain.csproj" />
     <ProjectReference Include="..\Apya.Platform.Domain.Shared\Apya.Platform.Domain.Shared.csproj" />
+    <ProjectReference Include="..\Apya.Platform.Ai.EntityFrameworkCore\Apya.Platform.Ai.EntityFrameworkCore.csproj" />
   </ItemGroup>
 
   <ItemGroup>

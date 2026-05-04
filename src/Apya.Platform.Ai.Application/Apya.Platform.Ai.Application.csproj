@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <Import Project="..\..\common.props" />
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <RootNamespace>Apya.Platform.Ai</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Apya.Platform.Ai.Domain\Apya.Platform.Ai.Domain.csproj" />
+    <ProjectReference Include="..\Apya.Platform.Ai.Application.Contracts\Apya.Platform.Ai.Application.Contracts.csproj" />
+    <ProjectReference Include="..\Apya.Platform.Application\Apya.Platform.Application.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Volo.Abp.Ddd.Application" Version="10.0.2" />
+    <PackageReference Include="Volo.Abp.AutoMapper" Version="10.0.2" />
+  </ItemGroup>
+
+</Project>

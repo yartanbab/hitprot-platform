@@ -26,6 +26,7 @@ using Apya.Platform.AssetRelations;
 
 using Apya.Platform.Tasks.Drafts;
 using Apya.Platform.EntityFrameworkCore.Configuration;
+using Apya.Platform.Ai;
 
 namespace Apya.Platform.EntityFrameworkCore
 {
@@ -120,6 +121,9 @@ namespace Apya.Platform.EntityFrameworkCore
             builder.ConfigureOpenIddict();
             builder.ConfigureFeatureManagement();
             builder.ConfigureTenantManagement();
+
+            /* AI bounded context — entity mappings come in 109.3 */
+            builder.ConfigureAi();
 
             /* --- TENANT PROFILE YAPILANDIRMASI --- */
             builder.Entity<Apya.Platform.Tenants.TenantProfile>(b => 
