@@ -24,7 +24,7 @@ using Apya.Platform.DynamicAssets;
 using Apya.Platform.DynamicAssets.Webhooks;
 using Apya.Platform.AssetRelations;
 
-using Apya.Platform.Tasks.Drafts;
+using Apya.Platform.Ai.Drafts;
 using Apya.Platform.EntityFrameworkCore.Configuration;
 using Apya.Platform.Ai;
 
@@ -225,15 +225,6 @@ namespace Apya.Platform.EntityFrameworkCore
                 b.ToTable(PlatformConsts.DbTablePrefix + "TaskDependencies", PlatformConsts.DbSchema);
                 b.ConfigureByConvention();
                 b.HasIndex(x => new { x.TaskId, x.PredecessorTaskId }).IsUnique();
-            });
-
-            // FEA-007: DraftTaskItem
-            builder.Entity<DraftTaskItem>(b =>
-            {
-                b.ToTable(PlatformConsts.DbTablePrefix + "DraftTasks", PlatformConsts.DbSchema);
-                b.ConfigureByConvention(); 
-                b.Property(x => x.Title).IsRequired().HasMaxLength(200);
-                b.HasIndex(x => x.ImportBatchId); // O batch'i kolayca çekebilmek için
             });
 
             builder.Entity<TaskTimeLog>(b =>

@@ -9,6 +9,7 @@ using Volo.Abp.BackgroundJobs;
 using Volo.Abp.Domain.Repositories;
 using Apya.Platform.Permissions;
 using Apya.Platform.Projects;
+using Apya.Platform.Ai.Drafts;
 using Volo.Abp;
 
 namespace Apya.Platform.Tasks.Drafts;

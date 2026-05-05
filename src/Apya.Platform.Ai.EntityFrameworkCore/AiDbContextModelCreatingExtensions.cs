@@ -1,5 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Volo.Abp;
+using Volo.Abp.EntityFrameworkCore.Modeling;
+using Apya.Platform.Ai.Drafts;
 
 namespace Apya.Platform.Ai;
 
@@ -9,7 +11,12 @@ public static class AiDbContextModelCreatingExtensions
     {
         Check.NotNull(builder, nameof(builder));
 
-        // 109.3'te DraftBatch / AiRequest / DraftItem entity mapping'leri burada eklenecek.
-        // 109.1 sadece module + extension method iskeletini açar; tablo yapısı değişmez.
+        builder.Entity<DraftTaskItem>(b =>
+        {
+            b.ToTable(AiPlatformConsts.DbTablePrefix + "DraftTasks", AiPlatformConsts.DbSchema);
+            b.ConfigureByConvention();
+            b.Property(x => x.Title).IsRequired().HasMaxLength(200);
+            b.HasIndex(x => x.ImportBatchId);
+        });
     }
 }

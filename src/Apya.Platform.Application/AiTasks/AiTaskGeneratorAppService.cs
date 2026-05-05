@@ -13,7 +13,7 @@ using Volo.Abp.Domain.Repositories;
 using Apya.Platform.AiTasks;
 using Apya.Platform.Projects;
 using Apya.Platform.Tasks;
-using Apya.Platform.AI;
+using Apya.Platform.Ai;
 
 namespace Apya.Platform.Application.AiTasks;
 

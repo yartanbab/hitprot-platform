@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//c/Users/ybaba/.claude/projects/C--Users-ybaba-apya-platform/memory/**)",
+      "Read(//c/Users/ybaba/apya-platform/**)",
+      "Bash(git log *)",
+      "Bash(dotnet build *)",
+      "Bash(git add *)",
+      "Bash(gh --version)",
+      "PowerShell(gh --version)",
+      "Bash(git push *)",
+      "Bash(dotnet ef *)"
+    ]
+  }
+}
