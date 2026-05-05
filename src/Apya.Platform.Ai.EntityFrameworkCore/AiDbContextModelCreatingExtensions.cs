@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Volo.Abp;
 using Volo.Abp.EntityFrameworkCore.Modeling;
 using Apya.Platform.Ai.Drafts;
@@ -11,12 +12,23 @@ public static class AiDbContextModelCreatingExtensions
     {
         Check.NotNull(builder, nameof(builder));
 
+        builder.Entity<DraftBatch>(b =>
+        {
+            b.ToTable(AiPlatformConsts.DbTablePrefix + "DraftBatches", AiPlatformConsts.DbSchema);
+            b.ConfigureByConvention();
+            b.Property(x => x.SourceFileName).HasMaxLength(255);
+            b.HasIndex(x => new { x.Status, x.TenantId });
+            b.HasIndex(x => x.AiRequestId);
+        });
+
         builder.Entity<DraftTaskItem>(b =>
         {
             b.ToTable(AiPlatformConsts.DbTablePrefix + "DraftTasks", AiPlatformConsts.DbSchema);
             b.ConfigureByConvention();
             b.Property(x => x.Title).IsRequired().HasMaxLength(200);
             b.HasIndex(x => x.ImportBatchId);
+            b.HasIndex(x => x.DraftBatchId);
+            b.HasOne<DraftBatch>().WithMany().HasForeignKey(x => x.DraftBatchId).IsRequired(false).OnDelete(DeleteBehavior.SetNull);
         });
 
         builder.Entity<AiRequest>(b =>

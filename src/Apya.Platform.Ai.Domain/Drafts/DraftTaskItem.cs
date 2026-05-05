@@ -10,6 +10,7 @@ public class DraftTaskItem : FullAuditedAggregateRoot<Guid>, IMultiTenant
     public Guid? TenantId { get; set; }
     public Guid? ProjectId { get; private set; }
     public Guid ImportBatchId { get; private set; }
+    public Guid? DraftBatchId { get; private set; }
 
     public string Title { get; private set; } = null!;
     public string? Description { get; private set; }
@@ -38,6 +39,8 @@ public class DraftTaskItem : FullAuditedAggregateRoot<Guid>, IMultiTenant
         TenantId = tenantId;
         IsApproved = false;
     }
+
+    public void LinkToBatch(Guid draftBatchId) => DraftBatchId = draftBatchId;
 
     public void MarkAsApproved() => IsApproved = true;
 }

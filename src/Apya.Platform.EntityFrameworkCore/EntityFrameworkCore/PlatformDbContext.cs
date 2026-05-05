@@ -67,6 +67,7 @@ namespace Apya.Platform.EntityFrameworkCore
         public DbSet<Apya.Platform.Documents.Document> Documents { get; set; }
 
         /* --- AI MODÜLÜ --- */
+        public DbSet<DraftBatch> DraftBatches { get; set; }
         public DbSet<DraftTaskItem> DraftTasks { get; set; }
         public DbSet<AiRequest> AiRequests { get; set; }
         public DbSet<AiDecisionTrace> AiDecisionTraces { get; set; }
