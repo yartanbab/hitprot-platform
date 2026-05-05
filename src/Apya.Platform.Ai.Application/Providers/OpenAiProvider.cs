@@ -5,11 +5,9 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using OpenAI.Chat;
-using Volo.Abp.DependencyInjection;
-
 namespace Apya.Platform.Ai.Providers;
 
-public class OpenAiProvider : IAiProvider, ITransientDependency
+public class OpenAiProvider : IAiProvider
 {
     public string Name => "openai";
 
