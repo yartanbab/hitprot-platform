@@ -157,29 +157,95 @@ $(function () {
         aiTaskModal.open({ projectId: projectId });
     });
 
-    $(document).on('ai.drafts.batchStarted', function(e, batchId) {
-        var checkLimit = 0;
-        var checkInterval = setInterval(function() {
-            checkLimit++;
-            if (checkLimit > 20) { // Max 1 dakika beklet
-                clearInterval(checkInterval);
-                abp.notify.error("İşlem zaman aşımına uğradı veya beklenen veri gelmedi.");
+    // APYA-117: SignalR canlı güncelleme. Polling fallback'i de tutuyoruz (SignalR başarısız olursa devreye girer).
+    var aiHubClient = null;
+    var aiHubReady = false;
+
+    function ensureAiHubClient() {
+        if (aiHubClient) return Promise.resolve(aiHubClient);
+        if (typeof window.AiHubClient === 'undefined') {
+            console.warn('AiHubClient not loaded — falling back to polling.');
+            return Promise.reject('hub-unavailable');
+        }
+        aiHubClient = new window.AiHubClient();
+        return aiHubClient.connect().then(function () {
+            aiHubReady = true;
+            return aiHubClient;
+        });
+    }
+
+    function showProgressToast(message, type) {
+        type = type || 'info';
+        if (abp.notify && abp.notify[type]) abp.notify[type](message);
+    }
+
+    function openReviewForBatch(batchId, totalItems) {
+        showProgressToast('AI ' + totalItems + ' taslak görev üretti. İncelemeye geçiliyor.', 'success');
+        setTimeout(function () {
+            reviewModal.open({ BatchId: batchId });
+        }, 500);
+    }
+
+    function startPollingFallback(batchId) {
+        var checks = 0;
+        var iv = setInterval(function () {
+            checks++;
+            if (checks > 20) {
+                clearInterval(iv);
+                abp.notify.error('İşlem zaman aşımına uğradı.');
                 return;
             }
-
             abp.ajax({
                 type: 'GET',
                 url: '/api/app/draft-task/pending-drafts/' + batchId,
                 cache: false
-            }).done(function(result) {
+            }).done(function (result) {
                 if (result && result.length > 0) {
-                    clearInterval(checkInterval);
-                    setTimeout(function() {
-                        reviewModal.open({ BatchId: batchId });
-                    }, 500); 
+                    clearInterval(iv);
+                    openReviewForBatch(batchId, result.length);
                 }
             });
-        }, 3000); 
+        }, 3000);
+    }
+
+    // SignalR event listener — single global handler, multiplexes by batchId
+    var subscribedBatches = {};
+    document.addEventListener('apya:draft-batch-update', function (e) {
+        var d = e.detail;
+        if (!subscribedBatches[d.batchId]) return; // not our batch
+
+        switch (d.status) {
+            case 'Processing':
+                showProgressToast('AI dokümanı analiz ediyor…', 'info');
+                break;
+            case 'ReadyForReview':
+                delete subscribedBatches[d.batchId];
+                openReviewForBatch(d.batchId, d.totalItems);
+                break;
+            case 'Abandoned':
+                delete subscribedBatches[d.batchId];
+                abp.notify.warning(d.errorMessage || 'AI geçerli görev bulamadı.');
+                break;
+            case 'Failed':
+                delete subscribedBatches[d.batchId];
+                abp.notify.error(d.errorMessage || 'AI işleme sırasında hata oluştu.');
+                break;
+        }
+    });
+
+    $(document).on('ai.drafts.batchStarted', function (e, batchId) {
+        ensureAiHubClient()
+            .then(function (client) {
+                subscribedBatches[batchId] = true;
+                return client.subscribeToBatch(batchId);
+            })
+            .then(function () {
+                showProgressToast('Canlı bağlantı kuruldu, AI işleminin sonucu beklenecek.', 'info');
+            })
+            .catch(function () {
+                // Hub unavailable → fall back to polling
+                startPollingFallback(batchId);
+            });
     });
 
     reviewModal.onResult(function () {
