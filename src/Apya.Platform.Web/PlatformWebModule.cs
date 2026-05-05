@@ -221,9 +221,9 @@ public class PlatformWebModule : AbpModule
     {
         Configure<AbpAspNetCoreMvcOptions>(options =>
         {
-            // Hem uygulama hem de kontrat katmanlar�n� tar�yoruz
             options.ConventionalControllers.Create(typeof(PlatformApplicationModule).Assembly);
             options.ConventionalControllers.Create(typeof(PlatformApplicationContractsModule).Assembly);
+            options.ConventionalControllers.Create(typeof(Apya.Platform.Ai.PlatformAiApplicationModule).Assembly);
         });
     }
 

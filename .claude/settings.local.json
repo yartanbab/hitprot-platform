@@ -9,7 +9,8 @@
       "Bash(gh --version)",
       "PowerShell(gh --version)",
       "Bash(git push *)",
-      "Bash(dotnet ef *)"
+      "Bash(dotnet ef *)",
+      "Bash(git commit -m ' *)"
     ]
   }
 }

@@ -5,7 +5,6 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Apya.Platform.AiTasks;
-using Apya.Platform.Application.AiTasks;
 using Volo.Abp.AspNetCore.Mvc;
 
 namespace Apya.Platform.Web.Controllers;
@@ -14,9 +13,9 @@ namespace Apya.Platform.Web.Controllers;
 [Route("api/ai-task-generator")]
 public class AiTaskGeneratorController : AbpController
 {
-    private readonly AiTaskGeneratorAppService _aiTaskService;
+    private readonly IAiTaskGeneratorAppService _aiTaskService;
 
-    public AiTaskGeneratorController(AiTaskGeneratorAppService aiTaskService)
+    public AiTaskGeneratorController(IAiTaskGeneratorAppService aiTaskService)
     {
         _aiTaskService = aiTaskService;
     }
@@ -25,15 +24,11 @@ public class AiTaskGeneratorController : AbpController
     public async Task<DocumentParseResultDto> ParseDocumentAsync([FromQuery] Guid projectId, IFormFile file)
     {
         if (file == null || file.Length == 0)
-        {
             throw new Volo.Abp.UserFriendlyException("Lutfen bir PDF dosyasi yukleyin.");
-        }
 
         using var ms = new MemoryStream();
         await file.CopyToAsync(ms);
-        var bytes = ms.ToArray();
-
-        return await _aiTaskService.ParseDocumentFromBytesAsync(projectId, bytes, file.FileName);
+        return await _aiTaskService.ParseDocumentFromBytesAsync(projectId, ms.ToArray(), file.FileName);
     }
 
     [HttpPost("create-tasks")]

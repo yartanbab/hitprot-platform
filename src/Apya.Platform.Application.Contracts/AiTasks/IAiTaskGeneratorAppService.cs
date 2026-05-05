@@ -9,13 +9,9 @@ namespace Apya.Platform.AiTasks;
 /// </summary>
 public interface IAiTaskGeneratorAppService : IApplicationService
 {
-    /// <summary>
-    /// Mevcut projede yuklu dosyayi analiz eder ve gorev onerisi doner.
-    /// </summary>
+    Task<DocumentParseResultDto> ParseDocumentFromBytesAsync(Guid projectId, byte[] fileBytes, string fileName);
+
     Task<DocumentParseResultDto> ParseExistingDocumentAsync(Guid projectId);
 
-    /// <summary>
-    /// Kullanicinin onayladigi AI gorev onerilerini topluca olusturur.
-    /// </summary>
     Task<int> CreateTasksFromSuggestionsAsync(CreateTasksFromAiInput input);
 }
