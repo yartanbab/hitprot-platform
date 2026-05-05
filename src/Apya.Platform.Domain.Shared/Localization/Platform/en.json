@@ -14,6 +14,14 @@
     "Platform:Project:NotFound": "The requested project was not found.",
     "Platform:Project:CodeAlreadyExists": "This project code is already in use.",
     "Platform:File:UnsupportedExtension": "Unsupported file type. Only PDF, Office, image and archive files are allowed.",
-    "Platform:File:SizeExceeded": "File size cannot exceed 25 MB."
+    "Platform:File:SizeExceeded": "File size cannot exceed 25 MB.",
+
+    "Permission:Ai": "AI Features",
+    "Permission:Ai.Generation": "AI Generation",
+    "Permission:Ai.Generation.Request": "Request AI Generation",
+    "Permission:Ai.Drafts": "AI Drafts",
+    "Permission:Ai.Drafts.View": "View AI Drafts",
+    "Permission:Ai.Drafts.Edit": "Edit AI Drafts",
+    "Permission:Ai.Drafts.Approve": "Approve AI Drafts"
   }
 }

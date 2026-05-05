@@ -7,7 +7,7 @@ using Microsoft.Extensions.Logging;
 using Volo.Abp.Application.Services;
 using Volo.Abp.BackgroundJobs;
 using Volo.Abp.Domain.Repositories;
-using Apya.Platform.Permissions;
+using Apya.Platform.Ai.Permissions;
 using Apya.Platform.Projects;
 using Apya.Platform.Tasks;
 using Apya.Platform.Tasks.Drafts;
@@ -15,7 +15,7 @@ using Volo.Abp;
 
 namespace Apya.Platform.Ai.Drafts;
 
-[Authorize(PlatformPermissions.Projects.UseAiFeatures)]
+[Authorize(AiPermissions.Drafts.Default)]
 public class DraftTaskAppService : ApplicationService, IDraftTaskAppService
 {
     private readonly IBackgroundJobManager _backgroundJobManager;
@@ -84,6 +84,7 @@ public class DraftTaskAppService : ApplicationService, IDraftTaskAppService
         }).ToList();
     }
 
+    [Authorize(AiPermissions.Drafts.Approve)]
     public async Task ApproveDraftsAsync(ApproveDraftsInput input)
     {
         var drafts = await _draftTaskRepository.GetListAsync(x => x.ImportBatchId == input.BatchId && !x.IsApproved);
