@@ -2,9 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Text.Json;
 using System.Threading.Tasks;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using OpenAI.Chat;
 using Volo.Abp.Domain.Services;
 using Apya.Platform.Ai.Drafts;
 
@@ -12,52 +10,37 @@ namespace Apya.Platform.Ai;
 
 public class TaskAiAgentManager : DomainService
 {
-    private readonly IConfiguration _configuration;
+    private readonly IAiProvider _aiProvider;
 
-    public TaskAiAgentManager(IConfiguration configuration)
+    private const string SystemPrompt =
+        "Sen, yazılım ve iş dünyası uzmanı kıdemli bir Proje Yöneticisisin.\n" +
+        "Sana bir proje yönergesi, toplantı dökümü veya gereksinim listesi içeren bir PDF metni vereceğim.\n" +
+        "Görevin, bu metindeki süreçleri analiz edip çalışılabilir görevlere (tasks) bölmektir.\n\n" +
+        "KURALLAR:\n" +
+        "1. Sonuç KESİNLİKLE VE YALNIZCA JSON formatında olmalıdır. JSON dışında hiçbir açıklama ekleme!\n" +
+        "2. Metinde mantıklı bir görev bulamazsan boş liste '[]' dön.\n" +
+        "3. Her bir görev yapısı:\n" +
+        "[\n" +
+        "  {\n" +
+        "    \"Title\": \"Kısa başlık (Max 200 karakter)\",\n" +
+        "    \"Description\": \"Detaylı görev tanımı\",\n" +
+        "    \"Priority\": 2,\n" +
+        "    \"EstimatedHours\": 4.5\n" +
+        "  }\n" +
+        "]\n" +
+        "4. Çıktı dili tamamen Türkçe olmalıdır.";
+
+    public TaskAiAgentManager(IAiProvider aiProvider)
     {
-        _configuration = configuration;
+        _aiProvider = aiProvider;
     }
 
     public async Task<List<DraftTaskResult>> ExtractTasksFromTextAsync(string text)
     {
-        var apiKey = _configuration["OpenAI:ApiKey"];
-        if (string.IsNullOrEmpty(apiKey))
-        {
-            Logger.LogWarning("OpenAI:ApiKey is missing in settings. Returning empty task list.");
-            return new List<DraftTaskResult>();
-        }
-
         try
         {
-            var chatClient = new ChatClient("gpt-4o-mini", apiKey);
-
-            var systemPrompt = @"Sen, yazılım ve iş dünyası uzmanı kıdemli bir Proje Yöneticisisin.
-Sana bir proje yönergesi, toplantı dökümü veya gereksinim listesi içeren bir PDF metni vereceğim.
-Görevin, bu metindeki süreçleri analiz edip çalışılabilir görevlere (tasks) bölmektir.
-
-KURALLAR:
-1. Sonuç KESİNLİKLE VE YALNIZCA JSON formatında olmalıdır. JSON dışında hiçbir açıklama, selamlama veya markdown ('```json' vb.) ekleme!
-2. Metinde mantıklı bir görev bulamazsan boş liste '[]' dön.
-3. Her bir görev yapısı aşağıdaki gibi olmalıdır:
-[
-  {
-    ""Title"": ""Kısa ve açıklayıcı görev başlığı (Max 200 karakter)"",
-    ""Description"": ""Bağlamı koruyan detaylı görev tanımı"",
-    ""Priority"": 2, // (Low: 1, Medium: 2, High: 3)
-    ""EstimatedHours"": 4.5 // Ondalıklı rakam olarak tahmin
-  }
-]
-4. Çıktı dili tamamen Türkçe olmalıdır.";
-
-            var messages = new List<ChatMessage>
-            {
-                new SystemChatMessage(systemPrompt),
-                new UserChatMessage("Aşağıdaki doküman metnini analiz et:\n\n" + text)
-            };
-
-            var response = await chatClient.CompleteChatAsync(messages);
-            var jsonContent = response.Value.Content[0].Text;
+            var userMessage = "Aşağıdaki doküman metnini analiz et:\n\n" + text;
+            var jsonContent = await _aiProvider.CompleteAsync(SystemPrompt, userMessage);
 
             if (jsonContent.StartsWith("```json", StringComparison.OrdinalIgnoreCase))
             {
@@ -72,7 +55,7 @@ KURALLAR:
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "OpenAI API ile bağlantı veya parse sırasında hata oluştu.");
+            Logger.LogError(ex, "AI provider ile iletişim sırasında hata oluştu.");
             return new List<DraftTaskResult>();
         }
     }
