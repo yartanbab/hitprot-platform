@@ -81,12 +81,9 @@
                         <i class="fa fa-stream me-1"></i> Gantt
                     </button>
                 </div>
-                @if (await AuthorizationService.IsGrantedAsync(PlatformPermissions.Projects.UseAiFeatures))
-                {
-                    <button type="button" id="BtnImportAI" class="btn btn-outline-primary bg-light fw-bold" style="border-radius: 20px;">
-                        <i class="fa fa-cloud-upload-alt me-1 text-primary"></i> <span class="text-dark">AI ile Görev Oluştur</span>
-                    </button>
-                }
+                @* APYA-122: AI ile Görev Oluştur butonu kaldırıldı.
+                   Generic Tasks sayfasında AI özelliği uygunsuz — proje bağlamı olmadan
+                   anlamlı bir AI üretimi yapılamaz. AI girişi proje detay sayfasından yapılmalı. *@
                 @if (await AuthorizationService.IsGrantedAsync(PlatformPermissions.Tasks.Create))
                 {
                     <abp-button id="NewTaskButton"

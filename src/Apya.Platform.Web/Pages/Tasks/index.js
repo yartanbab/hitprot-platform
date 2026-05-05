@@ -441,13 +441,9 @@ $(function () {
     });
 
     // --- AI Draft Tasks ---
-    var importModal = new abp.ModalManager(abp.appPath + 'Tasks/Drafts/ImportModal');
+    // APYA-122: BtnImportAI generic Tasks sayfasından kaldırıldı.
+    // Review modalı hâlâ batch sonrası açılıyor (event-driven) — yalnızca tetikleyici buton taşındı.
     var reviewModal = new abp.ModalManager(abp.appPath + 'Tasks/Drafts/ReviewModal');
-
-    $('#BtnImportAI').click(function(e) {
-        e.preventDefault();
-        importModal.open();
-    });
 
     $(document).on('ai.drafts.batchStarted', function(e, batchId) {
         var checkLimit = 0;
