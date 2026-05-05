@@ -7,6 +7,7 @@ using UglyToad.PdfPig.DocumentLayoutAnalysis.TextExtractor;
 using Volo.Abp.BackgroundJobs;
 using Volo.Abp.Domain.Repositories;
 using Volo.Abp.DependencyInjection;
+using Volo.Abp.EventBus.Local;
 
 namespace Apya.Platform.Ai.Drafts;
 
@@ -14,31 +15,37 @@ public class PdfTaskExtractionJob : AsyncBackgroundJob<PdfTaskExtractionArgs>, I
 {
     private readonly TaskAiAgentManager _aiAgentManager;
     private readonly IRepository<DraftTaskItem, Guid> _draftTaskRepository;
+    private readonly ILocalEventBus _localEventBus;
 
     public PdfTaskExtractionJob(
         TaskAiAgentManager aiAgentManager,
-        IRepository<DraftTaskItem, Guid> draftTaskRepository)
+        IRepository<DraftTaskItem, Guid> draftTaskRepository,
+        ILocalEventBus localEventBus)
     {
         _aiAgentManager = aiAgentManager;
         _draftTaskRepository = draftTaskRepository;
+        _localEventBus = localEventBus;
     }
 
     public override async Task ExecuteAsync(PdfTaskExtractionArgs args)
     {
         Logger.LogInformation("PDF Task Extraction Job Started. BatchId: {BatchId}", args.ImportBatchId);
 
+        await PublishStatusAsync(args, DraftBatchStatus.Processing, totalItems: 0, errorMessage: null);
+
         try
         {
             if (!File.Exists(args.FileBlobName))
             {
                 Logger.LogWarning("PDF dosyası bulunamadı. Path: {Path}", args.FileBlobName);
+                await PublishStatusAsync(args, DraftBatchStatus.Failed, 0, "PDF dosyası bulunamadı.");
                 return;
             }
 
             var pdfBytes = await File.ReadAllBytesAsync(args.FileBlobName);
             if (pdfBytes.Length == 0)
             {
-                Logger.LogWarning("PDF dosyası boş. Path: {Path}", args.FileBlobName);
+                await PublishStatusAsync(args, DraftBatchStatus.Failed, 0, "PDF dosyası boş.");
                 return;
             }
 
@@ -47,29 +54,27 @@ public class PdfTaskExtractionJob : AsyncBackgroundJob<PdfTaskExtractionArgs>, I
             {
                 var textBuilder = new System.Text.StringBuilder();
                 foreach (var page in document.GetPages())
-                {
                     textBuilder.AppendLine(ContentOrderTextExtractor.GetText(page));
-                }
                 extractedText = textBuilder.ToString();
             }
 
             if (string.IsNullOrWhiteSpace(extractedText))
             {
-                Logger.LogWarning("PDF dokümanından hiç metin çıkarılamadı. BatchId: {BatchId}", args.ImportBatchId);
+                await PublishStatusAsync(args, DraftBatchStatus.Abandoned, 0, "PDF'ten metin çıkarılamadı.");
                 return;
             }
 
             if (extractedText.Length > 40000)
             {
                 extractedText = extractedText.Substring(0, 40000);
-                Logger.LogWarning("PDF metni çok uzundu, ilk 40.000 karakteri analiz edilecek. BatchId: {BatchId}", args.ImportBatchId);
+                Logger.LogWarning("PDF metni çok uzundu, ilk 40000 karakter analiz edilecek.");
             }
 
             var aiTasks = await _aiAgentManager.ExtractTasksFromTextAsync(extractedText);
 
             if (aiTasks == null || aiTasks.Count == 0)
             {
-                Logger.LogWarning("AI, geçerli bir görev yapısı bulamadı. BatchId: {BatchId}", args.ImportBatchId);
+                await PublishStatusAsync(args, DraftBatchStatus.Abandoned, 0, "AI geçerli görev bulamadı.");
                 return;
             }
 
@@ -85,18 +90,33 @@ public class PdfTaskExtractionJob : AsyncBackgroundJob<PdfTaskExtractionArgs>, I
                     args.ProjectId,
                     args.TenantId
                 );
-
                 await _draftTaskRepository.InsertAsync(draft);
             }
 
-            Logger.LogInformation(
-                "PDF Task Extraction Başarılı. {Count} taslak oluşturuldu. BatchId: {BatchId}",
+            Logger.LogInformation("PDF Task Extraction Başarılı. {Count} taslak. BatchId: {BatchId}",
                 aiTasks.Count, args.ImportBatchId);
+
+            await PublishStatusAsync(args, DraftBatchStatus.ReadyForReview, aiTasks.Count, null);
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "PdfTaskExtractionJob sırasında kritik hata. BatchId: {BatchId}", args.ImportBatchId);
+            Logger.LogError(ex, "PdfTaskExtractionJob hata. BatchId: {BatchId}", args.ImportBatchId);
+            await PublishStatusAsync(args, DraftBatchStatus.Failed, 0, ex.Message);
             throw;
         }
+    }
+
+    private Task PublishStatusAsync(PdfTaskExtractionArgs args, DraftBatchStatus status, int totalItems, string? errorMessage)
+    {
+        return _localEventBus.PublishAsync(new DraftBatchStatusChangedEto
+        {
+            BatchId = args.ImportBatchId,
+            TenantId = args.TenantId,
+            UserId = args.UserId,
+            NewStatus = status,
+            TotalItems = totalItems,
+            ApprovedItems = 0,
+            ErrorMessage = errorMessage
+        });
     }
 }

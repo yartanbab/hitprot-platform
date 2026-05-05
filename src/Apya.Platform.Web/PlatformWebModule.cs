@@ -183,6 +183,7 @@ public class PlatformWebModule : AbpModule
                     bundle.AddFiles("/js/jquery-fix.js");
                     bundle.AddFiles("/Pages/Notifications/notification-bell.js");
                     bundle.AddFiles("/js/dark-mode.js");
+                    bundle.AddFiles("/js/ai-hub-client.js");
                 }
             );
             // ----------------------
@@ -283,6 +284,7 @@ public class PlatformWebModule : AbpModule
         {
             endpoints.MapHub<Apya.Platform.Web.Hubs.NotificationHub>("/notification-hub");
             endpoints.MapHub<Apya.Platform.Web.Hubs.TaskHub>("/task-hub");
+            endpoints.MapHub<Apya.Platform.Web.Hubs.AiHub>("/ai-hub");
         });
     }
 }
