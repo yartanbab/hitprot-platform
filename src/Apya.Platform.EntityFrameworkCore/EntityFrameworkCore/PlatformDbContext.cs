@@ -51,7 +51,6 @@ namespace Apya.Platform.EntityFrameworkCore
         public DbSet<Apya.Platform.Tasks.TaskComment> TaskComments { get; set; }
         public DbSet<TaskAttachment> TaskAttachments { get; set; }
         public DbSet<TaskDependency> TaskDependencies { get; set; }
-        public DbSet<DraftTaskItem> DraftTasks { get; set; }
         public DbSet<TaskTimeLog> TaskTimeLogs { get; set; }
         public DbSet<Invoice> Invoices { get; set; }
         public DbSet<InvoiceItem> InvoiceItems { get; set; }
@@ -66,6 +65,11 @@ namespace Apya.Platform.EntityFrameworkCore
 
         /* --- DOKÜMAN (WIKI) MODÜLÜ --- */
         public DbSet<Apya.Platform.Documents.Document> Documents { get; set; }
+
+        /* --- AI MODÜLÜ --- */
+        public DbSet<DraftTaskItem> DraftTasks { get; set; }
+        public DbSet<AiRequest> AiRequests { get; set; }
+        public DbSet<AiDecisionTrace> AiDecisionTraces { get; set; }
 
         /* --- DİNAMİK VARLIKLAR (DYNAMIC ASSETS) MODÜLÜ --- */
         public DbSet<AppDocument> AppDocuments { get; set; }
