@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Volo.Abp;
 using Volo.Abp.EntityFrameworkCore.Modeling;
 using Apya.Platform.Ai.Drafts;
+using Apya.Platform.Ai.Tenants;
 
 namespace Apya.Platform.Ai;
 
@@ -51,6 +52,15 @@ public static class AiDbContextModelCreatingExtensions
             b.Property(x => x.UserMessage).HasColumnType("nvarchar(max)");
             b.Property(x => x.Response).HasColumnType("nvarchar(max)");
             b.HasIndex(x => x.AiRequestId);
+        });
+
+        builder.Entity<TenantAiSettings>(b =>
+        {
+            b.ToTable(AiPlatformConsts.DbTablePrefix + "TenantSettings", AiPlatformConsts.DbSchema);
+            b.ConfigureByConvention();
+            b.Property(x => x.PreferredProvider).IsRequired().HasMaxLength(64);
+            b.Property(x => x.PreferredModel).IsRequired().HasMaxLength(128);
+            b.HasIndex(x => x.TenantId).IsUnique();
         });
     }
 }

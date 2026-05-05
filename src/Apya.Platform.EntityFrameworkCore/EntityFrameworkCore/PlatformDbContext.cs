@@ -71,6 +71,7 @@ namespace Apya.Platform.EntityFrameworkCore
         public DbSet<DraftTaskItem> DraftTasks { get; set; }
         public DbSet<AiRequest> AiRequests { get; set; }
         public DbSet<AiDecisionTrace> AiDecisionTraces { get; set; }
+        public DbSet<Apya.Platform.Ai.Tenants.TenantAiSettings> TenantAiSettings { get; set; }
 
         /* --- DİNAMİK VARLIKLAR (DYNAMIC ASSETS) MODÜLÜ --- */
         public DbSet<AppDocument> AppDocuments { get; set; }
