@@ -7,6 +7,7 @@ using Microsoft.Extensions.Logging;
 using Volo.Abp.Application.Services;
 using Volo.Abp.BackgroundJobs;
 using Volo.Abp.Domain.Repositories;
+using Volo.Abp.EventBus.Local;
 using Apya.Platform.Ai.Permissions;
 using Apya.Platform.Projects;
 using Apya.Platform.Tasks;
@@ -20,19 +21,19 @@ public class DraftTaskAppService : ApplicationService, IDraftTaskAppService
 {
     private readonly IBackgroundJobManager _backgroundJobManager;
     private readonly IRepository<DraftTaskItem, Guid> _draftTaskRepository;
-    private readonly IRepository<TaskItem, Guid> _taskRepository;
     private readonly IRepository<ProjectAttachment, Guid> _projectAttachmentRepository;
+    private readonly ILocalEventBus _localEventBus;
 
     public DraftTaskAppService(
         IBackgroundJobManager backgroundJobManager,
         IRepository<DraftTaskItem, Guid> draftTaskRepository,
-        IRepository<TaskItem, Guid> taskRepository,
-        IRepository<ProjectAttachment, Guid> projectAttachmentRepository)
+        IRepository<ProjectAttachment, Guid> projectAttachmentRepository,
+        ILocalEventBus localEventBus)
     {
         _backgroundJobManager = backgroundJobManager;
         _draftTaskRepository = draftTaskRepository;
-        _taskRepository = taskRepository;
         _projectAttachmentRepository = projectAttachmentRepository;
+        _localEventBus = localEventBus;
     }
 
     public async Task<Guid> UploadPdfForExtractionAsync(UploadPdfInput input)
@@ -90,27 +91,34 @@ public class DraftTaskAppService : ApplicationService, IDraftTaskAppService
         var drafts = await _draftTaskRepository.GetListAsync(x => x.ImportBatchId == input.BatchId && !x.IsApproved);
         var selectedDrafts = drafts.Where(d => input.SelectedDraftIds.Contains(d.Id)).ToList();
 
+        // APYA-121: Publish integration event instead of directly creating TaskItem.
+        // The Tasks bounded context owns task creation — AI just signals intent.
         foreach (var draft in selectedDrafts)
         {
-            var newTask = new TaskItem(
-                GuidGenerator.Create(),
-                draft.Title,
-                projectId: draft.ProjectId,
-                parentTaskId: null,
-                description: draft.Description,
-                startDate: Clock.Now,
-                dueDate: null,
-                priority: draft.Priority,
-                assigneeId: null,
-                isPrivate: false
-            );
-            await _taskRepository.InsertAsync(newTask);
+            await _localEventBus.PublishAsync(new DraftApprovedEto
+            {
+                DraftId = draft.Id,
+                TenantId = draft.TenantId,
+                UserId = CurrentUser.Id,
+                ProjectId = draft.ProjectId,
+                Title = draft.Title,
+                Description = draft.Description,
+                Priority = draft.Priority,
+                EstimatedHours = draft.EstimatedHours,
+                ImportBatchId = draft.ImportBatchId
+            });
+
             draft.MarkAsApproved();
             await _draftTaskRepository.UpdateAsync(draft);
         }
 
+        // Clean up unselected drafts
         var unselectedDrafts = drafts.Where(d => !input.SelectedDraftIds.Contains(d.Id)).ToList();
         foreach (var unselected in unselectedDrafts)
             await _draftTaskRepository.DeleteAsync(unselected);
+
+        Logger.LogInformation(
+            "Approved {Approved}/{Total} drafts in batch {BatchId} (events published).",
+            selectedDrafts.Count, drafts.Count, input.BatchId);
     }
 }
