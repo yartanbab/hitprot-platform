@@ -1,14 +1,7 @@
 @import '/js/dark-mode.css';
-/* APYA-100: Apya tokens → Bootstrap/LeptonX bridge — site-wide dark mode */
-@import '/css/apya-theme-bridge.css';
-
 /* Your Global Styles */
 
 :root .lpx-brand-logo {
     --lpx-logo: url('/images/logo/leptonx/logo-light.png');
     --lpx-logo-icon: url('/images/logo/leptonx/logo-light-thumbnail.png');
 }
-
-/* Dark theme'de logo varyantı — light versiyonu koyu zeminde görünmüyorsa
-   buraya alternatif eklenir; şimdilik logo zaten beyaz "lp" monogram
-   olduğu için aynı kalıyor. */
