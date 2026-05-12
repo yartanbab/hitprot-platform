@@ -14,7 +14,7 @@ public class PlatformDbContextFactory : IDesignTimeDbContextFactory<PlatformDbCo
         var configuration = BuildConfiguration();
 
         var builder = new DbContextOptionsBuilder<PlatformDbContext>()
-            .UseSqlServer(configuration.GetConnectionString("Default"));
+            .UseNpgsql(configuration.GetConnectionString("Default"));
 
         return new PlatformDbContext(builder.Options);
     }

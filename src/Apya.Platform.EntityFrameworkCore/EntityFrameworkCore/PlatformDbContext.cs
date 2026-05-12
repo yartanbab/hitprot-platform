@@ -301,7 +301,7 @@ namespace Apya.Platform.EntityFrameworkCore
                 b.ConfigureByConvention();
                 
                 b.Property(x => x.Title).IsRequired().HasMaxLength(255);
-                b.Property(x => x.Content).HasColumnType("nvarchar(max)"); // Özelleştirilmiş uzunluk / Markdown desteği
+                b.Property(x => x.Content).HasColumnType("text"); // Uzun metin / Markdown desteği
                 b.Property(x => x.Icon).HasMaxLength(16);
 
                 // Hierarchy relation (Self-referencing)

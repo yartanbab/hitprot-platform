@@ -48,9 +48,9 @@ public static class AiDbContextModelCreatingExtensions
         {
             b.ToTable(AiPlatformConsts.DbTablePrefix + "DecisionTraces", AiPlatformConsts.DbSchema);
             b.ConfigureByConvention();
-            b.Property(x => x.SystemPrompt).HasColumnType("nvarchar(max)");
-            b.Property(x => x.UserMessage).HasColumnType("nvarchar(max)");
-            b.Property(x => x.Response).HasColumnType("nvarchar(max)");
+            b.Property(x => x.SystemPrompt).HasColumnType("text");
+            b.Property(x => x.UserMessage).HasColumnType("text");
+            b.Property(x => x.Response).HasColumnType("text");
             b.HasIndex(x => x.AiRequestId);
         });
 
