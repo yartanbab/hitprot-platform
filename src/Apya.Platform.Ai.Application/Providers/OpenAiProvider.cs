@@ -1,10 +1,11 @@
-using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using OpenAI.Chat;
+
 namespace Apya.Platform.Ai.Providers;
 
 public class OpenAiProvider : IAiProvider
@@ -20,7 +21,7 @@ public class OpenAiProvider : IAiProvider
         _logger = logger;
     }
 
-    public async Task<string> CompleteAsync(
+    public async Task<AiCompletionResult> CompleteAsync(
         string systemPrompt,
         string userMessage,
         CancellationToken cancellationToken = default)
@@ -29,7 +30,9 @@ public class OpenAiProvider : IAiProvider
         if (string.IsNullOrEmpty(apiKey))
         {
             _logger.LogWarning("OpenAI:ApiKey yapılandırmada bulunamadı.");
-            return "[]";
+            throw new AiProviderException(
+                PlatformDomainErrorCodes.AiProviderUnavailable,
+                "OpenAI:ApiKey yapılandırmada bulunamadı.");
         }
 
         var model = _configuration["OpenAI:Model"] ?? "gpt-4o-mini";
@@ -41,7 +44,19 @@ public class OpenAiProvider : IAiProvider
             new UserChatMessage(userMessage)
         };
 
+        var stopwatch = Stopwatch.StartNew();
         var response = await chatClient.CompleteChatAsync(messages, cancellationToken: cancellationToken);
-        return response.Value.Content[0].Text;
+        stopwatch.Stop();
+
+        var content = response.Value.Content[0].Text;
+        var usage = response.Value.Usage;
+
+        return new AiCompletionResult
+        {
+            Response = content,
+            InputTokens = usage?.InputTokenCount ?? 0,
+            OutputTokens = usage?.OutputTokenCount ?? 0,
+            Duration = stopwatch.Elapsed
+        };
     }
 }

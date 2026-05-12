@@ -64,13 +64,9 @@ public class PdfTaskExtractionJob : AsyncBackgroundJob<PdfTaskExtractionArgs>, I
                 return;
             }
 
-            if (extractedText.Length > 40000)
-            {
-                extractedText = extractedText.Substring(0, 40000);
-                Logger.LogWarning("PDF metni çok uzundu, ilk 40000 karakter analiz edilecek.");
-            }
-
-            var aiTasks = await _aiAgentManager.ExtractTasksFromTextAsync(extractedText);
+            var aiTasks = await _aiAgentManager.ExtractTasksFromTextAsync(
+                extractedText,
+                correlationId: args.ImportBatchId);
 
             if (aiTasks == null || aiTasks.Count == 0)
             {

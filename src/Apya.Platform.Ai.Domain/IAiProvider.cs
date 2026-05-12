@@ -7,7 +7,7 @@ public interface IAiProvider
 {
     string Name { get; }
 
-    Task<string> CompleteAsync(
+    Task<AiCompletionResult> CompleteAsync(
         string systemPrompt,
         string userMessage,
         CancellationToken cancellationToken = default);

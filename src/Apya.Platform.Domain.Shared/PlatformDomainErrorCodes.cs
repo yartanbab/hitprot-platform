@@ -32,4 +32,9 @@ public static class PlatformDomainErrorCodes
     public const string DocumentNotATemplate = "Platform:DynamicAssets:DocumentNotATemplate";
     public const string AiFormGenerationFailed = "Platform:DynamicAssets:AiFormGenerationFailed";
     public const string AiFormParseFailed = "Platform:DynamicAssets:AiFormParseFailed";
+
+    // --- AI Modülü ---
+    public const string AiProviderUnavailable = "Platform:Ai:ProviderUnavailable";
+    public const string AiResponseInvalid = "Platform:Ai:ResponseInvalid";
+    public const string AiQuotaExceeded = "Platform:Ai:QuotaExceeded";
 }
