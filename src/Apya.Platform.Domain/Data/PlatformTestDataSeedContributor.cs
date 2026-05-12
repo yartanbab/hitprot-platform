@@ -66,10 +66,10 @@ public class PlatformTestDataSeedContributor : IDataSeedContributor, ITransientD
     public async Task SeedAsync(DataSeedContext context)
     {
         await _permissionDataSeeder.SeedAsync(
-            providerName: "R",
-            providerKey: "admin",
-            grantedPermissionsNames: AdminPermissions,
-            tenantId: context.TenantId);
+            "R",
+            "admin",
+            AdminPermissions,
+            context.TenantId);
 
         // 1. Hibe (Grant) Verilerini Ekle
         if (await _grantRepository.GetCountAsync() <= 0)
