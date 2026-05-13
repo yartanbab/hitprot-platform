@@ -40,7 +40,15 @@ public class PlatformTestDataSeedContributor : IDataSeedContributor, ITransientD
         "AbpIdentity.Roles.ManagePermissions",
         "AbpIdentity.Users.ManagePermissions",
         "AbpIdentity.Roles",
-        "AbpIdentity.Users"
+        "AbpIdentity.Users",
+        "Ai.Generation",
+        "Ai.Generation.Request",
+        "Ai.Drafts",
+        "Ai.Drafts.View",
+        "Ai.Drafts.Edit",
+        "Ai.Drafts.Approve",
+        "Ai.TenantSettings",
+        "Ai.TenantSettings.Manage"
     };
 
     private readonly IRepository<Grant, Guid> _grantRepository;

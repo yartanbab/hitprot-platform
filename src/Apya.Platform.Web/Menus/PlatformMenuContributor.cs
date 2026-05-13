@@ -51,6 +51,12 @@ public class PlatformMenuContributor : IMenuContributor
         context.Menu.AddItem(new ApplicationMenuItem(
             "Apya.Reports", "Raporlar & Analiz", icon: "fa fa-chart-pie", url: "/Reports", order: 5));
 
+        administration.AddItem(new ApplicationMenuItem(
+            "Apya.Admin.AiSettings",
+            "AI Ayarları",
+            icon: "fa fa-robot",
+            url: "/TenantManagement/AiSettings"));
+
         if (MultiTenancyConsts.IsEnabled)
         {
             administration.SetSubItemOrder(TenantManagementMenuNames.GroupName, 1);
