@@ -1,0 +1,34 @@
+@page
+@model Apya.Platform.Web.Pages.Customers.CreateModalModel
+@using Volo.Abp.AspNetCore.Mvc.UI.Bootstrap.TagHelpers.Modal
+@{
+    Layout = null;
+}
+<form method="post" action="@Url.Page("/Customers/CreateModal")">
+    <abp-modal>
+        <abp-modal-header title="Yeni Cari Ekle"></abp-modal-header>
+        <abp-modal-body>
+            <abp-input asp-for="Customer.Name" label="Cari Adı" />
+            <abp-row>
+                <abp-column size-md="_6">
+                    <abp-input asp-for="Customer.TaxNumber" label="Vergi / TC Numarası" />
+                </abp-column>
+                <abp-column size-md="_6">
+                    <abp-input asp-for="Customer.TaxOffice" label="Vergi Dairesi" />
+                </abp-column>
+            </abp-row>
+            <abp-row>
+                <abp-column size-md="_6">
+                    <abp-input asp-for="Customer.Phone" label="Telefon" />
+                </abp-column>
+                <abp-column size-md="_6">
+                    <abp-input asp-for="Customer.Email" label="E-Posta" />
+                </abp-column>
+            </abp-row>
+            <abp-input asp-for="Customer.Address" label="Adres" />
+            <abp-input asp-for="Customer.Notes" label="Notlar" />
+            <abp-input asp-for="Customer.IsActive" label="Aktif" />
+        </abp-modal-body>
+        <abp-modal-footer buttons="@(AbpModalButtons.Cancel | AbpModalButtons.Save)"></abp-modal-footer>
+    </abp-modal>
+</form>
