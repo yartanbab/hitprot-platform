@@ -4,6 +4,15 @@ public static class PlatformPermissions
 {
     public const string GroupName = "Platform";
 
+    // --- CARİ (MÜŞTERİ) YETKİLERİ ---
+    public static class Customers
+    {
+        public const string Default = GroupName + ".Customers";
+        public const string Create = Default + ".Create";
+        public const string Edit = Default + ".Edit";
+        public const string Delete = Default + ".Delete";
+    }
+
     // --- PROJE YETKİLERİ ---
     public static class Projects
     {

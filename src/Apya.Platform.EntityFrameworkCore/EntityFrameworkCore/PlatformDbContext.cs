@@ -23,6 +23,7 @@ using Volo.Abp.TenantManagement;
 using Volo.Abp.TenantManagement.EntityFrameworkCore;
 using Volo.Abp.EntityFrameworkCore.Modeling;
 
+using Apya.Platform.Customers;
 using Apya.Platform.Projects;
 using Apya.Platform.Grants;
 using Apya.Platform.Tasks;
@@ -85,6 +86,9 @@ namespace Apya.Platform.EntityFrameworkCore
         public DbSet<OpenIddictAuthorization> Authorizations { get; set; }
         public DbSet<OpenIddictScope> Scopes { get; set; }
         public DbSet<OpenIddictToken> Tokens { get; set; }
+
+        /* --- CARİ (MÜŞTERİ) MODÜLÜ TABLOLARI --- */
+        public DbSet<Customer> Customers { get; set; }
 
         /* --- PROJE MODÜLÜ TABLOLARI --- */
         public DbSet<Project> Projects { get; set; }
@@ -187,6 +191,22 @@ namespace Apya.Platform.EntityFrameworkCore
                 b.HasIndex(x => x.TenantId).IsUnique(); // 1:1 relation logic
                 b.Property(x => x.TaxNumber).HasMaxLength(50);
                 b.Property(x => x.CorporateEmail).HasMaxLength(256);
+            });
+
+            /* --- CARİ (MÜŞTERİ) MODÜLÜ YAPILANDIRMASI --- */
+            builder.Entity<Customer>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "Customers", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+                b.Property(x => x.Name).IsRequired().HasMaxLength(CustomerConsts.MaxNameLength);
+                b.Property(x => x.TaxNumber).HasMaxLength(CustomerConsts.MaxTaxNumberLength);
+                b.Property(x => x.TaxOffice).HasMaxLength(CustomerConsts.MaxTaxOfficeLength);
+                b.Property(x => x.Address).HasMaxLength(CustomerConsts.MaxAddressLength);
+                b.Property(x => x.Phone).HasMaxLength(CustomerConsts.MaxPhoneLength);
+                b.Property(x => x.Email).HasMaxLength(CustomerConsts.MaxEmailLength);
+                b.Property(x => x.Notes).HasMaxLength(CustomerConsts.MaxNotesLength);
+                b.HasIndex(x => new { x.TenantId, x.Name });
+                b.HasIndex(x => new { x.TenantId, x.IsActive });
             });
 
             /* --- PROJE MODÜLÜ YAPILANDIRMASI --- */
