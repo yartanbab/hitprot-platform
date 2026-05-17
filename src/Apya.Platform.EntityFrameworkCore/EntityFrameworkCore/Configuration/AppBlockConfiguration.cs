@@ -18,18 +18,18 @@ public class AppBlockConfiguration : IEntityTypeConfiguration<AppBlock>
         builder.Property(x => x.Order)
             .IsRequired();
 
-        // JSON columns → MSSQL nvarchar(max)
+        // JSON columns (Postgres text; promote to jsonb in a follow-up if indexed search is needed)
         builder.Property(x => x.Content)
             .IsRequired()
-            .HasColumnType("nvarchar(max)");
+            .HasColumnType("text");
 
         builder.Property(x => x.Settings)
             .IsRequired()
-            .HasColumnType("nvarchar(max)");
+            .HasColumnType("text");
 
         builder.Property(x => x.AgentContext)
             .IsRequired(false)
-            .HasColumnType("nvarchar(max)");
+            .HasColumnType("text");
 
         // Composite index for efficient ordering queries
         builder.HasIndex(x => new { x.AppDocumentId, x.Order });

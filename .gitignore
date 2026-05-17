@@ -264,3 +264,6 @@ src/Apya.Platform.Blazor.Server.Tiered/Logs/*
 # Use abp install-libs to restore.
 **/wwwroot/libs/*
 src/Apya.Platform.Web/wwwroot/uploads/*
+
+# Local secrets — must never be committed (contains DB password, API keys vb.)
+**/appsettings.secrets.json

@@ -35,8 +35,13 @@ public class InvoiceAppService : ApplicationService, IInvoiceAppService
         var totalCount = await AsyncExecuter.CountAsync(query);
 
         var sorting = string.IsNullOrWhiteSpace(input.Sorting) ? "InvoiceDate desc" : input.Sorting;
+        // projectName ve paidAmount DTO-only alanlar; DB tarafında sort'a uygulanamaz.
+        if (sorting.StartsWith("projectName", StringComparison.OrdinalIgnoreCase)
+            || sorting.StartsWith("paidAmount", StringComparison.OrdinalIgnoreCase))
+        {
+            sorting = "InvoiceDate desc";
+        }
 
-        // 1. Pagination: Sadece istenen sayfadaki kayıtları veritabanından çek.
         var items = await AsyncExecuter.ToListAsync(
             query.OrderBy(sorting).PageBy(input.SkipCount, input.MaxResultCount)
         );

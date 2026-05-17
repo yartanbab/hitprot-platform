@@ -17,4 +17,10 @@ public static class AiPermissions
         public const string Edit = Default + ".Edit";
         public const string Approve = Default + ".Approve";
     }
+
+    public static class TenantSettings
+    {
+        public const string Default = GroupName + ".TenantSettings";
+        public const string Manage = Default + ".Manage";
+    }
 }

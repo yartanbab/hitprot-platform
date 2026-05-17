@@ -6,31 +6,79 @@ using Volo.Abp.Domain.Repositories;
 using Volo.Abp.Guids;
 using Volo.Abp.Identity;
 using Volo.Abp.MultiTenancy;
+using Volo.Abp.PermissionManagement;
 using Apya.Platform.Grants;
 
 namespace Apya.Platform;
 
 public class PlatformTestDataSeedContributor : IDataSeedContributor, ITransientDependency
 {
+    private static readonly string[] AdminPermissions = new[]
+    {
+        "Platform.Projects",
+        "Platform.Projects.Create",
+        "Platform.Projects.Edit",
+        "Platform.Projects.Delete",
+        "Platform.Projects.ViewBudget",
+        "Platform.Projects.ManageTeam",
+        "Platform.Tasks",
+        "Platform.Tasks.Create",
+        "Platform.Tasks.Edit",
+        "Platform.Tasks.Delete",
+        "Platform.Tasks.Assign",
+        "Platform.Tasks.ChangeStatus",
+        "Platform.Documents",
+        "Platform.Documents.Create",
+        "Platform.Documents.Edit",
+        "Platform.Documents.Delete",
+        "Platform.Notifications",
+        "Platform.Notifications.MarkRead",
+        "Platform.Notifications.Delete",
+        "Platform.Calendars",
+        "Platform.Calendars.Connect",
+        "AbpPermissionManagement.Update",
+        "AbpIdentity.Roles.ManagePermissions",
+        "AbpIdentity.Users.ManagePermissions",
+        "AbpIdentity.Roles",
+        "AbpIdentity.Users",
+        "Ai.Generation",
+        "Ai.Generation.Request",
+        "Ai.Drafts",
+        "Ai.Drafts.View",
+        "Ai.Drafts.Edit",
+        "Ai.Drafts.Approve",
+        "Ai.TenantSettings",
+        "Ai.TenantSettings.Manage"
+    };
+
     private readonly IRepository<Grant, Guid> _grantRepository;
     private readonly IGuidGenerator _guidGenerator;
     private readonly IIdentityDataSeeder _identityDataSeeder;
     private readonly ICurrentTenant _currentTenant;
+    private readonly IPermissionDataSeeder _permissionDataSeeder;
 
     public PlatformTestDataSeedContributor(
         IRepository<Grant, Guid> grantRepository,
         IGuidGenerator guidGenerator,
         IIdentityDataSeeder identityDataSeeder,
-        ICurrentTenant currentTenant)
+        ICurrentTenant currentTenant,
+        IPermissionDataSeeder permissionDataSeeder)
     {
         _grantRepository = grantRepository;
         _guidGenerator = guidGenerator;
         _identityDataSeeder = identityDataSeeder;
         _currentTenant = currentTenant;
+        _permissionDataSeeder = permissionDataSeeder;
     }
 
     public async Task SeedAsync(DataSeedContext context)
     {
+        await _permissionDataSeeder.SeedAsync(
+            "R",
+            "admin",
+            AdminPermissions,
+            context.TenantId);
+
         // 1. Hibe (Grant) Verilerini Ekle
         if (await _grantRepository.GetCountAsync() <= 0)
         {

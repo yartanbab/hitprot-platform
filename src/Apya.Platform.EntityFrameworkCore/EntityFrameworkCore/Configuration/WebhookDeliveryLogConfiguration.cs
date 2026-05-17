@@ -14,7 +14,7 @@ public class WebhookDeliveryLogConfiguration : IEntityTypeConfiguration<WebhookD
 
         builder.Property(x => x.Payload)
             .IsRequired()
-            .HasColumnType("nvarchar(max)");
+            .HasColumnType("text");
 
         builder.Property(x => x.ResponseBody)
             .IsRequired(false)

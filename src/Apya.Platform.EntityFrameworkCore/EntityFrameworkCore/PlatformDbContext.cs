@@ -1,14 +1,23 @@
 using Microsoft.EntityFrameworkCore;
+using Volo.Abp.AuditLogging;
 using Volo.Abp.AuditLogging.EntityFrameworkCore;
+using Volo.Abp.BackgroundJobs;
 using Volo.Abp.BackgroundJobs.EntityFrameworkCore;
 using Volo.Abp.Data;
 using Volo.Abp.DependencyInjection;
 using Volo.Abp.EntityFrameworkCore;
+using Volo.Abp.FeatureManagement;
 using Volo.Abp.FeatureManagement.EntityFrameworkCore;
 using Volo.Abp.Identity;
 using Volo.Abp.Identity.EntityFrameworkCore;
+using Volo.Abp.OpenIddict.Applications;
+using Volo.Abp.OpenIddict.Authorizations;
 using Volo.Abp.OpenIddict.EntityFrameworkCore;
+using Volo.Abp.OpenIddict.Scopes;
+using Volo.Abp.OpenIddict.Tokens;
+using Volo.Abp.PermissionManagement;
 using Volo.Abp.PermissionManagement.EntityFrameworkCore;
+using Volo.Abp.SettingManagement;
 using Volo.Abp.SettingManagement.EntityFrameworkCore;
 using Volo.Abp.TenantManagement;
 using Volo.Abp.TenantManagement.EntityFrameworkCore;
@@ -32,12 +41,51 @@ namespace Apya.Platform.EntityFrameworkCore
 {
     [ReplaceDbContext(typeof(IIdentityDbContext))]
     [ReplaceDbContext(typeof(ITenantManagementDbContext))]
+    [ReplaceDbContext(typeof(IPermissionManagementDbContext))]
+    [ReplaceDbContext(typeof(ISettingManagementDbContext))]
+    [ReplaceDbContext(typeof(IFeatureManagementDbContext))]
+    [ReplaceDbContext(typeof(IBackgroundJobsDbContext))]
+    [ReplaceDbContext(typeof(IAuditLoggingDbContext))]
+    [ReplaceDbContext(typeof(IOpenIddictDbContext))]
     [ConnectionStringName("Default")]
     public class PlatformDbContext :
         AbpDbContext<PlatformDbContext>,
         IIdentityDbContext,
-        ITenantManagementDbContext
+        ITenantManagementDbContext,
+        IPermissionManagementDbContext,
+        ISettingManagementDbContext,
+        IFeatureManagementDbContext,
+        IBackgroundJobsDbContext,
+        IAuditLoggingDbContext,
+        IOpenIddictDbContext
     {
+        // --- ABP Permission Management (IPermissionManagementDbContext) ---
+        public DbSet<PermissionGroupDefinitionRecord> PermissionGroups { get; set; }
+        public DbSet<PermissionDefinitionRecord> Permissions { get; set; }
+        public DbSet<PermissionGrant> PermissionGrants { get; set; }
+
+        // --- ABP Setting Management (ISettingManagementDbContext) ---
+        public DbSet<Setting> Settings { get; set; }
+        public DbSet<SettingDefinitionRecord> SettingDefinitionRecords { get; set; }
+
+        // --- ABP Feature Management (IFeatureManagementDbContext) ---
+        public DbSet<FeatureGroupDefinitionRecord> FeatureGroups { get; set; }
+        public DbSet<FeatureDefinitionRecord> Features { get; set; }
+        public DbSet<FeatureValue> FeatureValues { get; set; }
+
+        // --- ABP Background Jobs (IBackgroundJobsDbContext) ---
+        public DbSet<BackgroundJobRecord> BackgroundJobs { get; set; }
+
+        // --- ABP Audit Logging (IAuditLoggingDbContext) ---
+        public DbSet<AuditLog> AuditLogs { get; set; }
+        public DbSet<AuditLogExcelFile> AuditLogExcelFiles { get; set; }
+
+        // --- ABP OpenIddict (IOpenIddictDbContext) ---
+        public DbSet<OpenIddictApplication> Applications { get; set; }
+        public DbSet<OpenIddictAuthorization> Authorizations { get; set; }
+        public DbSet<OpenIddictScope> Scopes { get; set; }
+        public DbSet<OpenIddictToken> Tokens { get; set; }
+
         /* --- PROJE MODÜLÜ TABLOLARI --- */
         public DbSet<Project> Projects { get; set; }
         public DbSet<ProjectAnalysis> ProjectAnalyses { get; set; }
@@ -301,7 +349,7 @@ namespace Apya.Platform.EntityFrameworkCore
                 b.ConfigureByConvention();
                 
                 b.Property(x => x.Title).IsRequired().HasMaxLength(255);
-                b.Property(x => x.Content).HasColumnType("nvarchar(max)"); // Özelleştirilmiş uzunluk / Markdown desteği
+                b.Property(x => x.Content).HasColumnType("text"); // Uzun metin / Markdown desteği
                 b.Property(x => x.Icon).HasMaxLength(16);
 
                 // Hierarchy relation (Self-referencing)

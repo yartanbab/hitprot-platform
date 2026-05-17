@@ -23,91 +23,39 @@ public class PlatformMenuContributor : IMenuContributor
         var administration = context.Menu.GetAdministration();
         var l = context.GetLocalizer<PlatformResource>();
 
-        context.Menu.Items.Insert(
-            0,
-            new ApplicationMenuItem(
-                PlatformMenus.Home,
-                l["Menu:Home"],
-                "~/",
-                icon: "fas fa-home",
-                order: 0
-            )
-        );
+        context.Menu.Items.Insert(0, new ApplicationMenuItem(
+            PlatformMenus.Home, l["Menu:Home"], "~/", icon: "fas fa-home", order: 0));
 
-        // --- PROJELER MENÜSÜ DÜZELTMESİ ---
-        context.Menu.AddItem(
-            new ApplicationMenuItem(
-                "Platform.Projects",    // Menü ID
-                l["Permission:Projects"], // Görünen İsim
-                icon: "fa fa-rocket",
+        context.Menu.AddItem(new ApplicationMenuItem(
+            "Apya.Dashboard", "Dashboard", icon: "fa fa-chart-line", url: "/Dashboard", order: 1));
 
-                // ESKİSİ (Hatalı): url: "/Projects"
-                // YENİSİ (Doğru):  url: "/" 
-                url: "/"
-            )
-        );
+        // İşler
+        var work = new ApplicationMenuItem("Apya.Work", "İşler", icon: "fa fa-briefcase", order: 2);
+        work.AddItem(new ApplicationMenuItem("Apya.Work.Projects", "Projeler", icon: "fa fa-rocket", url: "/"));
+        work.AddItem(new ApplicationMenuItem("Apya.Work.Tasks", "Görevler", icon: "fa fa-tasks", url: "/Tasks"));
+        work.AddItem(new ApplicationMenuItem("Apya.Work.Board", "Kanban Board", icon: "fa fa-columns", url: "/Board"));
+        context.Menu.AddItem(work);
 
-        // "Tasks" menü öğesi
-        context.Menu.AddItem(
-            new ApplicationMenuItem(
-                "Apya.Platform.Tasks", // Benzersiz iç isim
-                "Görev Yönetimi",      // Ekranda görünecek isim (L10n ile de yapılabilir ama şimdilik düz yazalım)
-                icon: "fa fa-tasks",   // FontAwesome ikonu
-                url: "/Tasks"          // Tıklayınca gideceği adres
-            )
-        );
+        // Finans
+        var finance = new ApplicationMenuItem("Apya.Finance", "Finans", icon: "fa fa-coins", order: 3);
+        finance.AddItem(new ApplicationMenuItem("Apya.Finance.Invoices", "Faturalar & Ödemeler", icon: "fa fa-file-invoice-dollar", url: "/Invoices"));
+        finance.AddItem(new ApplicationMenuItem("Apya.Finance.ExpenseCapture", "Masraf Yakala", icon: "fa fa-camera", url: "/Expenses/Capture"));
+        context.Menu.AddItem(finance);
 
-        // "Board" menü öğesi
-        context.Menu.AddItem(
-            new ApplicationMenuItem(
-                "Apya.Platform.Board", 
-                "Kanban Board",      
-                icon: "fa fa-columns",   
-                url: "/Board"          
-            )
-        );
+        // İçerik
+        var content = new ApplicationMenuItem("Apya.Content", "İçerik", icon: "fa fa-folder-open", order: 4);
+        content.AddItem(new ApplicationMenuItem("Apya.Content.Documents", "Wiki / Belgeler", icon: "fa fa-book", url: "/Documents"));
+        content.AddItem(new ApplicationMenuItem("Apya.Content.DynamicAssets", "Şablonlar & Formlar", icon: "fa fa-file-signature", url: "/DynamicAssets"));
+        context.Menu.AddItem(content);
 
-        // "Reports" menü öğesi
-        context.Menu.AddItem(
-            new ApplicationMenuItem(
-                "Apya.Platform.Reports",
-                "Raporlar & Analiz",
-                icon: "fa fa-chart-pie",
-                url: "/Reports"
-            )
-        );
+        context.Menu.AddItem(new ApplicationMenuItem(
+            "Apya.Reports", "Raporlar & Analiz", icon: "fa fa-chart-pie", url: "/Reports", order: 5));
 
-        // "Wiki / Documents" menü öğesi
-        context.Menu.AddItem(
-            new ApplicationMenuItem(
-                "Apya.Platform.Documents",
-                "Wiki / Belgeler",
-                icon: "fa fa-book",
-                url: "/Documents"
-            )
-        );
-
-        // "Dynamic Assets / Forms" YENİ ÖZELLİK
-        context.Menu.AddItem(
-            new ApplicationMenuItem(
-                "Apya.Platform.DynamicAssets",
-                "Şablonlar & Formlar",
-                icon: "fa fa-file-signature",
-                url: "/DynamicAssets"
-            )
-        );
-
-// Just viewing the context again to be sure.
-
-        // "Invoices" menü öğesi
-        context.Menu.AddItem(
-            new ApplicationMenuItem(
-                "Apya.Platform.Invoices",
-                "Faturalar & Ödemeler",
-                icon: "fa fa-file-invoice-dollar",
-                url: "/Invoices"
-            )
-        );
+        administration.AddItem(new ApplicationMenuItem(
+            "Apya.Admin.AiSettings",
+            "AI Ayarları",
+            icon: "fa fa-robot",
+            url: "/TenantManagement/AiSettings"));
 
         if (MultiTenancyConsts.IsEnabled)
         {

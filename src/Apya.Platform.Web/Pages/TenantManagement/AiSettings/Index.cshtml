@@ -1,0 +1,74 @@
+@page "/TenantManagement/AiSettings"
+@model Apya.Platform.Web.Pages.TenantManagement.AiSettings.IndexModel
+@{
+    ViewBag.Title = "AI Ayarları";
+    var usagePct = Model.Current?.MonthlyTokenQuota > 0
+        ? (int)(100.0 * Model.Current.TokensUsedThisMonth / Model.Current.MonthlyTokenQuota)
+        : 0;
+}
+
+<abp-card>
+    <abp-card-header>
+        <abp-card-title>Tenant AI Ayarları</abp-card-title>
+    </abp-card-header>
+    <abp-card-body>
+        <form method="get" class="mb-4">
+            <label class="form-label">Tenant:</label>
+            <select name="TenantId" class="form-select" onchange="this.form.submit()">
+                @foreach (var t in Model.TenantOptions)
+                {
+                    if (t.Id == Model.TenantId)
+                    {
+                        <option value="@t.Id" selected>@t.Name</option>
+                    }
+                    else
+                    {
+                        <option value="@t.Id">@t.Name</option>
+                    }
+                }
+            </select>
+        </form>
+
+        @if (Model.Current != null)
+        {
+            <div class="alert alert-info">
+                <strong>Aylık Kullanım:</strong> @Model.Current.TokensUsedThisMonth / @Model.Current.MonthlyTokenQuota token (kalan: @Model.Current.RemainingTokens)
+                <div class="progress mt-2" style="height: 20px;">
+                    <div class="progress-bar @(usagePct > 80 ? "bg-danger" : usagePct > 50 ? "bg-warning" : "bg-success")"
+                         role="progressbar" style="width: @usagePct%;">@usagePct%</div>
+                </div>
+                <small class="text-muted">Dönem başlangıcı: @Model.Current.QuotaPeriodStart.ToString("yyyy-MM-dd")</small>
+            </div>
+        }
+
+        <form method="post">
+            <input type="hidden" name="TenantId" value="@Model.TenantId" />
+
+            <div class="mb-3">
+                <label asp-for="Input.PreferredProvider" class="form-label">AI Sağlayıcı</label>
+                <input asp-for="Input.PreferredProvider" class="form-control" />
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Input.PreferredModel" class="form-label">Model</label>
+                <input asp-for="Input.PreferredModel" class="form-control" placeholder="gpt-4o-mini" />
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Input.MonthlyTokenQuota" class="form-label">Aylık Token Kotası</label>
+                <input asp-for="Input.MonthlyTokenQuota" type="number" min="0" class="form-control" />
+            </div>
+
+            <div class="form-check mb-3">
+                <input asp-for="Input.IsEnabled" class="form-check-input" />
+                <label asp-for="Input.IsEnabled" class="form-check-label">AI özellikleri aktif</label>
+            </div>
+
+            <button type="submit" class="btn btn-primary">Kaydet</button>
+            <button type="submit" asp-page-handler="Reset" class="btn btn-warning ms-2"
+                    onclick="return confirm('Bu tenant için aylık kullanımı sıfırlamak istediğinize emin misiniz?')">
+                Kotayı Sıfırla
+            </button>
+        </form>
+    </abp-card-body>
+</abp-card>

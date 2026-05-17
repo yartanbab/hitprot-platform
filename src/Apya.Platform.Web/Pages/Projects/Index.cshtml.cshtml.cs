@@ -1,1 +1,0 @@
-// Bu dosya gecersizdir, isim hatasi nedeniyle ici bosaltilmistir. Lutfen silebilirsiniz.

@@ -23,6 +23,13 @@ public class AiPermissionDefinitionProvider : PermissionDefinitionProvider
         drafts.AddChild(AiPermissions.Drafts.View, L("Permission:Ai.Drafts.View"));
         drafts.AddChild(AiPermissions.Drafts.Edit, L("Permission:Ai.Drafts.Edit"));
         drafts.AddChild(AiPermissions.Drafts.Approve, L("Permission:Ai.Drafts.Approve"));
+
+        var tenantSettings = aiGroup.AddPermission(
+            AiPermissions.TenantSettings.Default,
+            L("Permission:Ai.TenantSettings"));
+        tenantSettings.AddChild(
+            AiPermissions.TenantSettings.Manage,
+            L("Permission:Ai.TenantSettings.Manage"));
     }
 
     private static LocalizableString L(string name)

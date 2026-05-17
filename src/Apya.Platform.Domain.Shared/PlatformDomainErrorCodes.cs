@@ -32,4 +32,39 @@ public static class PlatformDomainErrorCodes
     public const string DocumentNotATemplate = "Platform:DynamicAssets:DocumentNotATemplate";
     public const string AiFormGenerationFailed = "Platform:DynamicAssets:AiFormGenerationFailed";
     public const string AiFormParseFailed = "Platform:DynamicAssets:AiFormParseFailed";
+
+    // --- AI Modülü ---
+    public const string AiProviderUnavailable = "Platform:Ai:ProviderUnavailable";
+    public const string AiResponseInvalid = "Platform:Ai:ResponseInvalid";
+    public const string AiQuotaExceeded = "Platform:Ai:QuotaExceeded";
+
+    // --- Muhasebe (Accounting) — Hesap (Account) ---
+    public const string AccountCodeRequired = "Platform:Accounting:Account:CodeRequired";
+    public const string AccountNameRequired = "Platform:Accounting:Account:NameRequired";
+    public const string AccountInactive = "Platform:Accounting:Account:Inactive";
+    public const string AccountParentSelfReference = "Platform:Accounting:Account:ParentSelfReference";
+
+    // --- Muhasebe (Accounting) — Yevmiye (JournalEntry) ---
+    public const string JournalEntryRequiresAtLeastTwoLines = "Platform:Accounting:JournalEntry:RequiresAtLeastTwoLines";
+    public const string JournalEntryTooManyLines = "Platform:Accounting:JournalEntry:TooManyLines";
+    public const string JournalEntryNotBalanced = "Platform:Accounting:JournalEntry:NotBalanced";
+    public const string JournalEntryCurrencyInconsistent = "Platform:Accounting:JournalEntry:CurrencyInconsistent";
+    public const string JournalEntryLineAmountMustBePositive = "Platform:Accounting:JournalEntry:LineAmountMustBePositive";
+    public const string JournalEntryIdempotencyKeyRequired = "Platform:Accounting:JournalEntry:IdempotencyKeyRequired";
+    public const string JournalEntryDuplicateIdempotencyKey = "Platform:Accounting:JournalEntry:DuplicateIdempotencyKey";
+    public const string JournalEntryDescriptionRequired = "Platform:Accounting:JournalEntry:DescriptionRequired";
+    public const string JournalEntryPostingDateInvalid = "Platform:Accounting:JournalEntry:PostingDateInvalid";
+    public const string JournalEntryAccountNotFound = "Platform:Accounting:JournalEntry:AccountNotFound";
+    public const string JournalEntryAccountTenantMismatch = "Platform:Accounting:JournalEntry:AccountTenantMismatch";
+    public const string JournalEntryReversalTargetMissing = "Platform:Accounting:JournalEntry:ReversalTargetMissing";
+    public const string JournalEntryReversalAlreadyExists = "Platform:Accounting:JournalEntry:ReversalAlreadyExists";
+    public const string JournalEntryReversalSelfReference = "Platform:Accounting:JournalEntry:ReversalSelfReference";
+
+    // --- Muhasebe (Accounting) — Money Value Object ---
+    public const string MoneyCurrencyInvalid = "Platform:Accounting:Money:CurrencyInvalid";
+    public const string MoneyCurrencyMismatch = "Platform:Accounting:Money:CurrencyMismatch";
+    public const string MoneyAmountInvalidPrecision = "Platform:Accounting:Money:AmountInvalidPrecision";
+
+    // --- Muhasebe (Accounting) — Outbox ---
+    public const string OutboxMessageInvalidTransition = "Platform:Accounting:Outbox:InvalidTransition";
 }
