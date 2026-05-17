@@ -9,6 +9,9 @@ using Volo.Abp.Application.Services;
 using Volo.Abp.Domain.Repositories;
 using Apya.Platform.Invoices.Dtos;
 using Apya.Platform.Projects;
+using Apya.Platform.CashAccounts;
+using Apya.Platform.CashMovements;
+using Apya.Platform.ExchangeRates;
 
 namespace Apya.Platform.Invoices;
 
@@ -18,15 +21,24 @@ public class InvoiceAppService : ApplicationService, IInvoiceAppService
     private readonly IRepository<Invoice, Guid> _invoiceRepository;
     private readonly IRepository<Payment, Guid> _paymentRepository;
     private readonly IRepository<Project, Guid> _projectRepository;
+    private readonly IRepository<CashAccount, Guid> _cashAccountRepository;
+    private readonly IRepository<CashMovement, Guid> _cashMovementRepository;
+    private readonly IRepository<ExchangeRate, Guid> _exchangeRateRepository;
 
     public InvoiceAppService(
         IRepository<Invoice, Guid> invoiceRepository,
         IRepository<Payment, Guid> paymentRepository,
-        IRepository<Project, Guid> projectRepository)
+        IRepository<Project, Guid> projectRepository,
+        IRepository<CashAccount, Guid> cashAccountRepository,
+        IRepository<CashMovement, Guid> cashMovementRepository,
+        IRepository<ExchangeRate, Guid> exchangeRateRepository)
     {
         _invoiceRepository = invoiceRepository;
         _paymentRepository = paymentRepository;
         _projectRepository = projectRepository;
+        _cashAccountRepository = cashAccountRepository;
+        _cashMovementRepository = cashMovementRepository;
+        _exchangeRateRepository = exchangeRateRepository;
     }
 
     public async Task<PagedResultDto<InvoiceDto>> GetListAsync(PagedAndSortedResultRequestDto input)
@@ -96,28 +108,51 @@ public class InvoiceAppService : ApplicationService, IInvoiceAppService
         return await GetAsync(invoice.Id);
     }
 
-    public async Task AddPaymentAsync(Guid invoiceId, decimal amount, string method, string reference)
+    public async Task AddPaymentAsync(Guid invoiceId, decimal amount, string method, string reference, Guid? cashAccountId = null)
     {
         var invoice = await _invoiceRepository.GetAsync(invoiceId);
-        
-        await _paymentRepository.InsertAsync(new Payment(GuidGenerator.Create(), invoiceId, amount, Clock.Now, method)
+
+        var payment = new Payment(GuidGenerator.Create(), invoiceId, amount, Clock.Now, method)
         {
-            ReferenceNumber = reference
-        });
+            ReferenceNumber = reference,
+            CashAccountId = cashAccountId
+        };
+        await _paymentRepository.InsertAsync(payment, autoSave: true);
+
+        // APYA-136: Kasa seçildiyse otomatik giriş hareketi (FX dönüşümlü)
+        if (cashAccountId.HasValue && amount > 0)
+        {
+            var cash = await _cashAccountRepository.GetAsync(cashAccountId.Value);
+
+            decimal? rate = null;
+            if (!string.Equals(invoice.Currency?.Trim(), cash.Currency?.Trim(), StringComparison.OrdinalIgnoreCase))
+            {
+                var er = (await _exchangeRateRepository.GetListAsync(
+                        x => x.FromCurrency == invoice.Currency && x.ToCurrency == cash.Currency))
+                    .OrderByDescending(x => x.RateDate)
+                    .FirstOrDefault();
+                rate = er?.Rate;
+            }
+
+            var cashAmount = PaymentCashConverter.ToCashCurrency(amount, invoice.Currency, cash.Currency, rate);
+
+            await _cashMovementRepository.InsertAsync(new CashMovement(
+                GuidGenerator.Create(),
+                cashAccountId.Value,
+                CashMovementDirection.In,
+                cashAmount,
+                Clock.Now,
+                $"Fatura tahsilatı: {invoice.InvoiceNumber}",
+                CashMovementSource.Invoice,
+                payment.Id,
+                CurrentTenant.Id), autoSave: true);
+        }
 
         // Durumu güncelle
         var payments = await _paymentRepository.GetListAsync(p => p.InvoiceId == invoiceId);
         var totalPaid = payments.Sum(p => p.Amount);
-        
-        if (totalPaid >= invoice.TotalAmount)
-        {
-            invoice.Status = InvoiceStatus.Paid;
-        }
-        else
-        {
-            invoice.Status = InvoiceStatus.Sent;
-        }
 
+        invoice.Status = totalPaid >= invoice.TotalAmount ? InvoiceStatus.Paid : InvoiceStatus.Sent;
         await _invoiceRepository.UpdateAsync(invoice);
     }
 
@@ -132,6 +167,7 @@ public class InvoiceAppService : ApplicationService, IInvoiceAppService
             PaymentDate = x.PaymentDate,
             PaymentMethod = x.PaymentMethod,
             ReferenceNumber = x.ReferenceNumber,
+            CashAccountId = x.CashAccountId,
             CreationTime = x.CreationTime
         }).ToList();
     }

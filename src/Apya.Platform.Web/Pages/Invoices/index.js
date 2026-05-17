@@ -91,16 +91,16 @@ $(function () {
         })
     );
 
+    var paymentModal = new abp.ModalManager(abp.appPath + 'Invoices/PaymentModal');
+
     function addPayment(id) {
-        abp.message.confirm('Bu fatura için ödeme alındı olarak işaretlensin mi?', function (confirmed) {
-            if (confirmed) {
-                invoiceService.addPayment(id, 0, 'Sisteme İşlendi', 'Referans No Yok').then(function() {
-                    abp.notify.success('Ödeme başarıyla kaydedildi.');
-                    dataTable.ajax.reload();
-                });
-            }
-        });
+        paymentModal.open({ invoiceId: id });
     }
+
+    paymentModal.onResult(function () {
+        abp.notify.success('Tahsilat kaydedildi.');
+        dataTable.ajax.reload();
+    });
 
     var createModal = new abp.ModalManager(abp.appPath + 'Invoices/CreateModal');
 
