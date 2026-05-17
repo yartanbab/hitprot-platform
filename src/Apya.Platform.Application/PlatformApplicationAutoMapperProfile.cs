@@ -1,6 +1,7 @@
 using AutoMapper;
 using Apya.Platform.Customers;
 using Apya.Platform.CashAccounts;
+using Apya.Platform.CashMovements;
 using Apya.Platform.ExchangeRates;
 using Apya.Platform.Projects;
 using Apya.Platform.Projects.Dtos;
@@ -56,6 +57,10 @@ namespace Apya.Platform
             // --- DÖVİZ KURU (EXCHANGE RATE) MODÜLÜ — APYA-137 ---
             CreateMap<ExchangeRate, ExchangeRateDto>();
             CreateMap<CreateUpdateExchangeRateDto, ExchangeRate>();
+
+            // --- KASA HAREKETİ (CASH MOVEMENT) MODÜLÜ — APYA-134 ---
+            CreateMap<CashMovement, CashMovementDto>();
+            CreateMap<CreateUpdateCashMovementDto, CashMovement>();
 
             // --- TENANT PROFILE MODÜLÜ ---
             CreateMap<Apya.Platform.Tenants.TenantProfile, Apya.Platform.Tenants.TenantProfileDto>();
