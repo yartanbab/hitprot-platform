@@ -28,6 +28,10 @@ public static class PlatformDomainErrorCodes
     public const string ExchangeRateSameCurrency = "Platform:ExchangeRate:SameCurrency";
     public const string ExchangeRateInvalid = "Platform:ExchangeRate:RateInvalid";
 
+    // --- Kasa Hareketi (CashMovement) Modülü — APYA-134 ---
+    public const string CashMovementAccountRequired = "Platform:CashMovement:AccountRequired";
+    public const string CashMovementAmountInvalid = "Platform:CashMovement:AmountInvalid";
+
     // --- Proje (Project) Modülü ---
     public const string ProjectNotFound = "Platform:Project:NotFound";
     public const string ProjectCodeAlreadyExists = "Platform:Project:CodeAlreadyExists";

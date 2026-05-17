@@ -1,0 +1,27 @@
+@page
+@model Apya.Platform.Web.Pages.CashMovements.CreateModalModel
+@using Volo.Abp.AspNetCore.Mvc.UI.Bootstrap.TagHelpers.Modal
+@{
+    Layout = null;
+}
+<form method="post" action="@Url.Page("/CashMovements/CreateModal")">
+    <abp-modal>
+        <abp-modal-header title="Yeni Kasa Hareketi"></abp-modal-header>
+        <abp-modal-body>
+            <abp-select asp-for="Movement.CashAccountId" asp-items="Model.Accounts" label="Kasa" />
+            <abp-row>
+                <abp-column size-md="_4">
+                    <abp-select asp-for="Movement.Direction" asp-items="Model.Directions" label="Yön" />
+                </abp-column>
+                <abp-column size-md="_4">
+                    <abp-input asp-for="Movement.Amount" label="Tutar" />
+                </abp-column>
+                <abp-column size-md="_4">
+                    <abp-input asp-for="Movement.MovementDate" type="date" label="Tarih" />
+                </abp-column>
+            </abp-row>
+            <abp-input asp-for="Movement.Description" label="Açıklama" />
+        </abp-modal-body>
+        <abp-modal-footer buttons="@(AbpModalButtons.Cancel | AbpModalButtons.Save)"></abp-modal-footer>
+    </abp-modal>
+</form>

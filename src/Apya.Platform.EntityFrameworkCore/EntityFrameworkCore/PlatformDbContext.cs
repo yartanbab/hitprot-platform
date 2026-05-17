@@ -25,6 +25,7 @@ using Volo.Abp.EntityFrameworkCore.Modeling;
 
 using Apya.Platform.Customers;
 using Apya.Platform.CashAccounts;
+using Apya.Platform.CashMovements;
 using Apya.Platform.ExchangeRates;
 using Apya.Platform.Projects;
 using Apya.Platform.Grants;
@@ -93,6 +94,7 @@ namespace Apya.Platform.EntityFrameworkCore
         public DbSet<Customer> Customers { get; set; }
         public DbSet<CashAccount> CashAccounts { get; set; }
         public DbSet<ExchangeRate> ExchangeRates { get; set; }
+        public DbSet<CashMovement> CashMovements { get; set; }
 
         /* --- PROJE MODÜLÜ TABLOLARI --- */
         public DbSet<Project> Projects { get; set; }
@@ -224,6 +226,18 @@ namespace Apya.Platform.EntityFrameworkCore
                 b.Property(x => x.OpeningBalance).HasColumnType("decimal(18,2)");
                 b.HasIndex(x => new { x.TenantId, x.Name });
                 b.HasIndex(x => new { x.TenantId, x.Type });
+            });
+
+            /* --- KASA HAREKETİ MODÜLÜ YAPILANDIRMASI — APYA-134 --- */
+            builder.Entity<CashMovement>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "CashMovements", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+                b.Property(x => x.Amount).HasColumnType("decimal(18,2)");
+                b.Property(x => x.Description).HasMaxLength(CashMovementConsts.MaxDescriptionLength);
+                b.HasOne<CashAccount>().WithMany().HasForeignKey(x => x.CashAccountId).OnDelete(DeleteBehavior.Cascade);
+                b.HasIndex(x => new { x.TenantId, x.CashAccountId, x.MovementDate });
+                b.HasIndex(x => x.ReferenceId);
             });
 
             /* --- DÖVİZ KURU MODÜLÜ YAPILANDIRMASI — APYA-137 --- */
