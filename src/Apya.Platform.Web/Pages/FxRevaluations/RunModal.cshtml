@@ -1,0 +1,20 @@
+@page
+@model Apya.Platform.Web.Pages.FxRevaluations.RunModalModel
+@using Volo.Abp.AspNetCore.Mvc.UI.Bootstrap.TagHelpers.Modal
+@{
+    Layout = null;
+}
+<form method="post" action="@Url.Page("/FxRevaluations/RunModal")">
+    <abp-modal>
+        <abp-modal-header title="Yeni Döviz Değerleme"></abp-modal-header>
+        <abp-modal-body>
+            <abp-input asp-for="Input.AsOfDate" type="date" label="Değerleme Tarihi (örn. yıl sonu 31.12)" />
+            <abp-input asp-for="Input.Notes" label="Not (opsiyonel)" />
+            <small class="text-muted">
+                Aktif tüm kasalar için bakiye hesaplanır; döviz kasaları bu tarihe kadarki
+                en güncel TCMB/manuel kurla TL'ye çevrilir. Kuru olmayan döviz kasası varsa hata verir.
+            </small>
+        </abp-modal-body>
+        <abp-modal-footer buttons="@(AbpModalButtons.Cancel | AbpModalButtons.Save)"></abp-modal-footer>
+    </abp-modal>
+</form>

@@ -4,6 +4,14 @@ public static class PlatformPermissions
 {
     public const string GroupName = "Platform";
 
+    // --- YIL SONU DEĞERLEME YETKİLERİ ---
+    public static class FxRevaluations
+    {
+        public const string Default = GroupName + ".FxRevaluations";
+        public const string Run = Default + ".Run";
+        public const string Delete = Default + ".Delete";
+    }
+
     // --- CARİ (MÜŞTERİ) YETKİLERİ ---
     public static class Customers
     {

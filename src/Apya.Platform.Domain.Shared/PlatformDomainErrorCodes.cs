@@ -41,6 +41,9 @@ public static class PlatformDomainErrorCodes
     // --- Fatura Tahsilatı → Kasa (APYA-136) ---
     public const string PaymentExchangeRateMissing = "Platform:Payment:ExchangeRateMissing";
 
+    // --- Yıl Sonu Değerleme (APYA-138) ---
+    public const string FxRevaluationRateMissing = "Platform:FxRevaluation:RateMissing";
+
     // --- Proje (Project) Modülü ---
     public const string ProjectNotFound = "Platform:Project:NotFound";
     public const string ProjectCodeAlreadyExists = "Platform:Project:CodeAlreadyExists";

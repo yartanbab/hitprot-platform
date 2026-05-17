@@ -1,0 +1,27 @@
+@page
+@model Apya.Platform.Web.Pages.FxRevaluations.IndexModel
+@{
+    ViewBag.PageTitle = "Yıl Sonu Döviz Değerleme";
+}
+@section scripts {
+    <abp-script src="/Pages/FxRevaluations/Index.js" />
+}
+
+<abp-card>
+    <abp-card-header>
+        <abp-row>
+            <abp-column size="_7">
+                <abp-card-title>@ViewBag.PageTitle</abp-card-title>
+                <small class="text-muted">Döviz kasalarının seçilen tarihteki TL karşılığı. Ardışık değerlemeler arası fark = kur farkı.</small>
+            </abp-column>
+            <abp-column size="_5" class="text-end">
+                <button id="NewRevaluationButton" class="btn btn-primary btn-sm">
+                    <i class="fa fa-calculator"></i> Yeni Değerleme
+                </button>
+            </abp-column>
+        </abp-row>
+    </abp-card-header>
+    <abp-card-body>
+        <abp-table striped-rows="true" id="FxRevaluationsTable" class="nowrap"></abp-table>
+    </abp-card-body>
+</abp-card>
