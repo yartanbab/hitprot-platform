@@ -26,6 +26,12 @@ public class CreateProjectDto
 
     public Guid? GrantId { get; set; }
 
+    /// <summary>APYA-132 — opsiyonel cari bağlantısı</summary>
+    public Guid? CustomerId { get; set; }
+
+    /// <summary>APYA-132 — Hibe / Etkinlik / Diğer</summary>
+    public ProjectCategory Category { get; set; } = ProjectCategory.Other;
+
     public decimal TotalBudget { get; set; }
     public decimal HourlyRate { get; set; }
     public string Currency { get; set; } = "TRY";

@@ -15,6 +15,12 @@ public class Project : FullAuditedAggregateRoot<Guid>, IMultiTenant
 
     public Guid? GrantId { get; set; } // Boş olabilir
 
+    /// <summary>APYA-132: Project'in bağlı olduğu Cari (Müşteri). Eski projelerde boş olabilir.</summary>
+    public Guid? CustomerId { get; set; }
+
+    /// <summary>APYA-132: Cari kategorisi. Varsayılan Other — Hibe/Etkinlik/Diğer ayrımı için.</summary>
+    public ProjectCategory Category { get; set; } = ProjectCategory.Other;
+
     public string Name { get; set; }
 
     public string Code { get; set; }
@@ -61,11 +67,15 @@ public class Project : FullAuditedAggregateRoot<Guid>, IMultiTenant
         string? targetAudience = null,
         string? activities = null,
         DateTime? startDate = null,
-        DateTime? endDate = null)
+        DateTime? endDate = null,
+        Guid? customerId = null,
+        ProjectCategory category = ProjectCategory.Other)
         : base(id)
     {
         SetName(name);
         GrantId = grantId;
+        CustomerId = customerId;
+        Category = category;
         Code = code;
         Description = description;
         SetBudgetInfo(totalBudget, hourlyRate, currency);

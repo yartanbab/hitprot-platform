@@ -27,7 +27,9 @@ public class ProjectManager : DomainService
         string? targetAudience = null,
         string? activities = null,
         DateTime? startDate = null,
-        DateTime? endDate = null)
+        DateTime? endDate = null,
+        Guid? customerId = null,
+        ProjectCategory category = ProjectCategory.Other)
     {
         var project = new Project(
             GuidGenerator.Create(),
@@ -43,7 +45,9 @@ public class ProjectManager : DomainService
             targetAudience,
             activities,
             startDate,
-            endDate
+            endDate,
+            customerId,
+            category
         );
 
         return Task.FromResult(project);

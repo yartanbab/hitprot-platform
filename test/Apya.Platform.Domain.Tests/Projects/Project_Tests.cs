@@ -42,4 +42,50 @@ public class Project_Tests
         var ex = Assert.Throws<BusinessException>(() => project.SetName("  "));
         ex.Code.ShouldBe(PlatformDomainErrorCodes.ProjectNameRequired);
     }
+
+    // --- APYA-132 ---
+
+    [Fact]
+    public void Constructor_Default_Category_Should_Be_Other()
+    {
+        var project = new Project(Guid.NewGuid(), null, "Test", "PRJ", "");
+
+        project.Category.ShouldBe(ProjectCategory.Other);
+        project.CustomerId.ShouldBeNull();
+    }
+
+    [Fact]
+    public void Constructor_Should_Set_CustomerId_And_Category_When_Provided()
+    {
+        var customerId = Guid.NewGuid();
+        var project = new Project(
+            id: Guid.NewGuid(),
+            grantId: null,
+            name: "TÜBİTAK 1501 Projesi",
+            code: "PRJ-1501",
+            description: "",
+            customerId: customerId,
+            category: ProjectCategory.GrantProject);
+
+        project.CustomerId.ShouldBe(customerId);
+        project.Category.ShouldBe(ProjectCategory.GrantProject);
+    }
+
+    [Fact]
+    public void Constructor_Should_Allow_Event_Category_Without_GrantId()
+    {
+        var customerId = Guid.NewGuid();
+        var project = new Project(
+            id: Guid.NewGuid(),
+            grantId: null,
+            name: "Lansman Etkinliği",
+            code: "EVT-001",
+            description: "",
+            customerId: customerId,
+            category: ProjectCategory.Event);
+
+        project.Category.ShouldBe(ProjectCategory.Event);
+        project.GrantId.ShouldBeNull();
+        project.CustomerId.ShouldBe(customerId);
+    }
 }

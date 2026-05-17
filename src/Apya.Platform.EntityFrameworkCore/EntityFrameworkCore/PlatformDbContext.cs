@@ -218,6 +218,10 @@ namespace Apya.Platform.EntityFrameworkCore
                 b.Property(x => x.Name).IsRequired().HasMaxLength(128);
                 b.Property(x => x.Code).IsRequired().HasMaxLength(32);
                 b.HasOne<Grant>().WithMany().HasForeignKey(x => x.GrantId);
+                // APYA-132: Customer ilişkisi + Type filtreleme
+                b.HasOne<Customer>().WithMany().HasForeignKey(x => x.CustomerId).OnDelete(DeleteBehavior.SetNull);
+                b.HasIndex(x => x.CustomerId);
+                b.HasIndex(x => new { x.TenantId, x.Category });
             });
 
             builder.Entity<ProjectAnalysis>(b =>
