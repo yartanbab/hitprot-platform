@@ -23,6 +23,11 @@ public static class PlatformDomainErrorCodes
     public const string CashAccountFieldTooLong = "Platform:CashAccount:FieldTooLong";
     public const string CashAccountCurrencyInvalid = "Platform:CashAccount:CurrencyInvalid";
 
+    // --- Döviz Kuru (ExchangeRate) Modülü — APYA-137 ---
+    public const string ExchangeRateCurrencyInvalid = "Platform:ExchangeRate:CurrencyInvalid";
+    public const string ExchangeRateSameCurrency = "Platform:ExchangeRate:SameCurrency";
+    public const string ExchangeRateInvalid = "Platform:ExchangeRate:RateInvalid";
+
     // --- Proje (Project) Modülü ---
     public const string ProjectNotFound = "Platform:Project:NotFound";
     public const string ProjectCodeAlreadyExists = "Platform:Project:CodeAlreadyExists";

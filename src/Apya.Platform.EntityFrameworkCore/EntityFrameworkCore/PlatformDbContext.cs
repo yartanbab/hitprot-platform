@@ -25,6 +25,7 @@ using Volo.Abp.EntityFrameworkCore.Modeling;
 
 using Apya.Platform.Customers;
 using Apya.Platform.CashAccounts;
+using Apya.Platform.ExchangeRates;
 using Apya.Platform.Projects;
 using Apya.Platform.Grants;
 using Apya.Platform.Tasks;
@@ -91,6 +92,7 @@ namespace Apya.Platform.EntityFrameworkCore
         /* --- CARİ (MÜŞTERİ) MODÜLÜ TABLOLARI --- */
         public DbSet<Customer> Customers { get; set; }
         public DbSet<CashAccount> CashAccounts { get; set; }
+        public DbSet<ExchangeRate> ExchangeRates { get; set; }
 
         /* --- PROJE MODÜLÜ TABLOLARI --- */
         public DbSet<Project> Projects { get; set; }
@@ -222,6 +224,17 @@ namespace Apya.Platform.EntityFrameworkCore
                 b.Property(x => x.OpeningBalance).HasColumnType("decimal(18,2)");
                 b.HasIndex(x => new { x.TenantId, x.Name });
                 b.HasIndex(x => new { x.TenantId, x.Type });
+            });
+
+            /* --- DÖVİZ KURU MODÜLÜ YAPILANDIRMASI — APYA-137 --- */
+            builder.Entity<ExchangeRate>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "ExchangeRates", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+                b.Property(x => x.FromCurrency).IsRequired().HasMaxLength(ExchangeRateConsts.CurrencyLength);
+                b.Property(x => x.ToCurrency).IsRequired().HasMaxLength(ExchangeRateConsts.CurrencyLength);
+                b.Property(x => x.Rate).HasColumnType("decimal(18,6)");
+                b.HasIndex(x => new { x.TenantId, x.FromCurrency, x.ToCurrency, x.RateDate });
             });
 
             /* --- PROJE MODÜLÜ YAPILANDIRMASI --- */

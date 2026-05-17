@@ -22,6 +22,12 @@ public class PlatformPermissionDefinitionProvider : PermissionDefinitionProvider
         cashAccountsPermission.AddChild(PlatformPermissions.CashAccounts.Edit, L("Permission:CashAccounts.Edit"));
         cashAccountsPermission.AddChild(PlatformPermissions.CashAccounts.Delete, L("Permission:CashAccounts.Delete"));
 
+        // --- DÖVİZ KURU YETKİLERİ ---
+        var exchangeRatesPermission = myGroup.AddPermission(PlatformPermissions.ExchangeRates.Default, L("Permission:ExchangeRates"));
+        exchangeRatesPermission.AddChild(PlatformPermissions.ExchangeRates.Create, L("Permission:ExchangeRates.Create"));
+        exchangeRatesPermission.AddChild(PlatformPermissions.ExchangeRates.Edit, L("Permission:ExchangeRates.Edit"));
+        exchangeRatesPermission.AddChild(PlatformPermissions.ExchangeRates.Delete, L("Permission:ExchangeRates.Delete"));
+
         // --- PROJE YETKİLERİ ---
         var projectsPermission = myGroup.AddPermission(PlatformPermissions.Projects.Default, L("Permission:Projects"));
         projectsPermission.AddChild(PlatformPermissions.Projects.Create, L("Permission:Projects.Create"));
