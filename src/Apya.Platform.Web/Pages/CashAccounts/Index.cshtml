@@ -1,0 +1,26 @@
+@page
+@model Apya.Platform.Web.Pages.CashAccounts.IndexModel
+@{
+    ViewBag.PageTitle = "Kasa Yönetimi";
+}
+@section scripts {
+    <abp-script src="/Pages/CashAccounts/Index.js" />
+}
+
+<abp-card>
+    <abp-card-header>
+        <abp-row>
+            <abp-column size="_6">
+                <abp-card-title>@ViewBag.PageTitle</abp-card-title>
+            </abp-column>
+            <abp-column size="_6" class="text-end">
+                <button id="NewCashAccountButton" class="btn btn-primary btn-sm">
+                    <i class="fa fa-plus"></i> Yeni Kasa Ekle
+                </button>
+            </abp-column>
+        </abp-row>
+    </abp-card-header>
+    <abp-card-body>
+        <abp-table striped-rows="true" id="CashAccountsTable" class="nowrap"></abp-table>
+    </abp-card-body>
+</abp-card>

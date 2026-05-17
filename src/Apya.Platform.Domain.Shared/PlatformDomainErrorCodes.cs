@@ -18,6 +18,11 @@ public static class PlatformDomainErrorCodes
     public const string CustomerNameRequired = "Platform:Customer:NameRequired";
     public const string CustomerFieldTooLong = "Platform:Customer:FieldTooLong";
 
+    // --- Kasa (CashAccount) Modülü — APYA-133 ---
+    public const string CashAccountNameRequired = "Platform:CashAccount:NameRequired";
+    public const string CashAccountFieldTooLong = "Platform:CashAccount:FieldTooLong";
+    public const string CashAccountCurrencyInvalid = "Platform:CashAccount:CurrencyInvalid";
+
     // --- Proje (Project) Modülü ---
     public const string ProjectNotFound = "Platform:Project:NotFound";
     public const string ProjectCodeAlreadyExists = "Platform:Project:CodeAlreadyExists";

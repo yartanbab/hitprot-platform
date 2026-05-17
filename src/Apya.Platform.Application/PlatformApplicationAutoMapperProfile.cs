@@ -1,5 +1,6 @@
 using AutoMapper;
 using Apya.Platform.Customers;
+using Apya.Platform.CashAccounts;
 using Apya.Platform.Projects;
 using Apya.Platform.Projects.Dtos;
 using Apya.Platform.Grants;
@@ -46,6 +47,10 @@ namespace Apya.Platform
             // --- CARİ (MÜŞTERİ) MODÜLÜ ---
             CreateMap<Customer, CustomerDto>();
             CreateMap<CreateUpdateCustomerDto, Customer>();
+
+            // --- KASA (CASH ACCOUNT) MODÜLÜ — APYA-133 ---
+            CreateMap<CashAccount, CashAccountDto>();
+            CreateMap<CreateUpdateCashAccountDto, CashAccount>();
 
             // --- TENANT PROFILE MODÜLÜ ---
             CreateMap<Apya.Platform.Tenants.TenantProfile, Apya.Platform.Tenants.TenantProfileDto>();

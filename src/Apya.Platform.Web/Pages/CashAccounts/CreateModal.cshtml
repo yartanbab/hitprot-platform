@@ -1,0 +1,28 @@
+@page
+@model Apya.Platform.Web.Pages.CashAccounts.CreateModalModel
+@using Volo.Abp.AspNetCore.Mvc.UI.Bootstrap.TagHelpers.Modal
+@{
+    Layout = null;
+}
+<form method="post" action="@Url.Page("/CashAccounts/CreateModal")">
+    <abp-modal>
+        <abp-modal-header title="Yeni Kasa Ekle"></abp-modal-header>
+        <abp-modal-body>
+            <abp-input asp-for="CashAccount.Name" label="Kasa Adı (Örn: Ana Kasa, Ziraat TL)" />
+            <abp-row>
+                <abp-column size-md="_6">
+                    <abp-select asp-for="CashAccount.Type" asp-items="Model.Types" label="Kasa Türü" />
+                </abp-column>
+                <abp-column size-md="_3">
+                    <abp-select asp-for="CashAccount.Currency" asp-items="Model.Currencies" label="Para Birimi" />
+                </abp-column>
+                <abp-column size-md="_3">
+                    <abp-input asp-for="CashAccount.OpeningBalance" label="Açılış Bakiyesi" />
+                </abp-column>
+            </abp-row>
+            <abp-input asp-for="CashAccount.Description" label="Açıklama" />
+            <abp-input asp-for="CashAccount.IsActive" label="Aktif" />
+        </abp-modal-body>
+        <abp-modal-footer buttons="@(AbpModalButtons.Cancel | AbpModalButtons.Save)"></abp-modal-footer>
+    </abp-modal>
+</form>

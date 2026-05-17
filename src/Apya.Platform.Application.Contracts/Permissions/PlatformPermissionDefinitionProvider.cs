@@ -16,6 +16,12 @@ public class PlatformPermissionDefinitionProvider : PermissionDefinitionProvider
         customersPermission.AddChild(PlatformPermissions.Customers.Edit, L("Permission:Customers.Edit"));
         customersPermission.AddChild(PlatformPermissions.Customers.Delete, L("Permission:Customers.Delete"));
 
+        // --- KASA YETKİLERİ ---
+        var cashAccountsPermission = myGroup.AddPermission(PlatformPermissions.CashAccounts.Default, L("Permission:CashAccounts"));
+        cashAccountsPermission.AddChild(PlatformPermissions.CashAccounts.Create, L("Permission:CashAccounts.Create"));
+        cashAccountsPermission.AddChild(PlatformPermissions.CashAccounts.Edit, L("Permission:CashAccounts.Edit"));
+        cashAccountsPermission.AddChild(PlatformPermissions.CashAccounts.Delete, L("Permission:CashAccounts.Delete"));
+
         // --- PROJE YETKİLERİ ---
         var projectsPermission = myGroup.AddPermission(PlatformPermissions.Projects.Default, L("Permission:Projects"));
         projectsPermission.AddChild(PlatformPermissions.Projects.Create, L("Permission:Projects.Create"));
