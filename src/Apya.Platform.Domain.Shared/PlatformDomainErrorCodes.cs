@@ -38,6 +38,9 @@ public static class PlatformDomainErrorCodes
     public const string ExpenseAmountInvalid = "Platform:Expense:AmountInvalid";
     public const string ExpenseCashAccountRequired = "Platform:Expense:CashAccountRequired";
 
+    // --- Fatura Tahsilatı → Kasa (APYA-136) ---
+    public const string PaymentExchangeRateMissing = "Platform:Payment:ExchangeRateMissing";
+
     // --- Proje (Project) Modülü ---
     public const string ProjectNotFound = "Platform:Project:NotFound";
     public const string ProjectCodeAlreadyExists = "Platform:Project:CodeAlreadyExists";

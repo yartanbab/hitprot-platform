@@ -12,7 +12,7 @@ public interface IInvoiceAppService : IApplicationService
     Task<PagedResultDto<InvoiceDto>> GetListAsync(PagedAndSortedResultRequestDto input);
     Task<InvoiceDto> GetAsync(Guid id);
     Task<InvoiceDto> CreateAsync(CreateInvoiceDto input);
-    Task AddPaymentAsync(Guid invoiceId, decimal amount, string method, string reference);
+    Task AddPaymentAsync(Guid invoiceId, decimal amount, string method, string reference, Guid? cashAccountId = null);
     Task<List<PaymentDto>> GetPaymentsAsync(Guid invoiceId);
     Task<ListResultDto<ProjectLookupDto>> GetProjectLookupAsync();
 }
@@ -24,4 +24,5 @@ public class PaymentDto : FullAuditedEntityDto<Guid>
     public DateTime PaymentDate { get; set; }
     public string PaymentMethod { get; set; }
     public string ReferenceNumber { get; set; }
+    public Guid? CashAccountId { get; set; }
 }

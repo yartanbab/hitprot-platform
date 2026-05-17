@@ -1,0 +1,31 @@
+@page
+@model Apya.Platform.Web.Pages.Invoices.PaymentModalModel
+@using Volo.Abp.AspNetCore.Mvc.UI.Bootstrap.TagHelpers.Modal
+@{
+    Layout = null;
+}
+<form method="post" action="@Url.Page("/Invoices/PaymentModal")">
+    <abp-modal>
+        <abp-modal-header title="Fatura Tahsilatı"></abp-modal-header>
+        <abp-modal-body>
+            <abp-input asp-for="InvoiceId" />
+            <abp-row>
+                <abp-column size-md="_6">
+                    <abp-input asp-for="Amount" label="Tutar (@Model.InvoiceCurrency)" />
+                </abp-column>
+                <abp-column size-md="_6">
+                    <abp-input asp-for="Method" label="Ödeme Yöntemi" />
+                </abp-column>
+            </abp-row>
+            <abp-input asp-for="Reference" label="Referans No" />
+            <abp-select asp-for="CashAccountId" asp-items="Model.Accounts" label="Tahsilatın Girdiği Kasa (boş = sadece fatura işaretlenir)">
+                <option value="">— Kasaya işlenmesin —</option>
+            </abp-select>
+            <small class="text-muted">
+                Kasa seçilirse otomatik giriş hareketi oluşur. Fatura para birimi (@Model.InvoiceCurrency)
+                kasa biriminden farklıysa güncel döviz kuruyla çevrilir (kur yoksa hata verir).
+            </small>
+        </abp-modal-body>
+        <abp-modal-footer buttons="@(AbpModalButtons.Cancel | AbpModalButtons.Save)"></abp-modal-footer>
+    </abp-modal>
+</form>

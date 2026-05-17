@@ -393,6 +393,7 @@ namespace Apya.Platform.EntityFrameworkCore
                 b.ToTable("AppPayments");
                 b.ConfigureByConvention();
                 b.HasIndex(x => x.InvoiceId);
+                b.HasIndex(x => x.CashAccountId); // APYA-136
             });
 
             /* --- BİLDİRİM MODÜLÜ YAPILANDIRMASI --- */
