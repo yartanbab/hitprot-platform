@@ -1,0 +1,26 @@
+@page
+@model Apya.Platform.Web.Pages.Expenses.IndexModel
+@{
+    ViewBag.PageTitle = "Giderler";
+}
+@section scripts {
+    <abp-script src="/Pages/Expenses/Index.js" />
+}
+
+<abp-card>
+    <abp-card-header>
+        <abp-row>
+            <abp-column size="_6">
+                <abp-card-title>@ViewBag.PageTitle</abp-card-title>
+            </abp-column>
+            <abp-column size="_6" class="text-end">
+                <button id="NewExpenseButton" class="btn btn-primary btn-sm">
+                    <i class="fa fa-plus"></i> Yeni Gider
+                </button>
+            </abp-column>
+        </abp-row>
+    </abp-card-header>
+    <abp-card-body>
+        <abp-table striped-rows="true" id="ExpensesTable" class="nowrap"></abp-table>
+    </abp-card-body>
+</abp-card>

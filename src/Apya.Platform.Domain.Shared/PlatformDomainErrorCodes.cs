@@ -32,6 +32,12 @@ public static class PlatformDomainErrorCodes
     public const string CashMovementAccountRequired = "Platform:CashMovement:AccountRequired";
     public const string CashMovementAmountInvalid = "Platform:CashMovement:AmountInvalid";
 
+    // --- Gider (Expense) Modülü — APYA-135 ---
+    public const string ExpenseTitleRequired = "Platform:Expense:TitleRequired";
+    public const string ExpenseFieldTooLong = "Platform:Expense:FieldTooLong";
+    public const string ExpenseAmountInvalid = "Platform:Expense:AmountInvalid";
+    public const string ExpenseCashAccountRequired = "Platform:Expense:CashAccountRequired";
+
     // --- Proje (Project) Modülü ---
     public const string ProjectNotFound = "Platform:Project:NotFound";
     public const string ProjectCodeAlreadyExists = "Platform:Project:CodeAlreadyExists";

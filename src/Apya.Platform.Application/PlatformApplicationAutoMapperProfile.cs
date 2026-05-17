@@ -2,6 +2,7 @@ using AutoMapper;
 using Apya.Platform.Customers;
 using Apya.Platform.CashAccounts;
 using Apya.Platform.CashMovements;
+using Apya.Platform.Expenses;
 using Apya.Platform.ExchangeRates;
 using Apya.Platform.Projects;
 using Apya.Platform.Projects.Dtos;
@@ -61,6 +62,10 @@ namespace Apya.Platform
             // --- KASA HAREKETİ (CASH MOVEMENT) MODÜLÜ — APYA-134 ---
             CreateMap<CashMovement, CashMovementDto>();
             CreateMap<CreateUpdateCashMovementDto, CashMovement>();
+
+            // --- GİDER (EXPENSE) MODÜLÜ — APYA-135 ---
+            CreateMap<Expense, ExpenseDto>();
+            CreateMap<CreateUpdateExpenseDto, Expense>();
 
             // --- TENANT PROFILE MODÜLÜ ---
             CreateMap<Apya.Platform.Tenants.TenantProfile, Apya.Platform.Tenants.TenantProfileDto>();
