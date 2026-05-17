@@ -28,6 +28,7 @@ using Apya.Platform.CashAccounts;
 using Apya.Platform.CashMovements;
 using Apya.Platform.Expenses;
 using Apya.Platform.ExchangeRates;
+using Apya.Platform.FxRevaluations;
 using Apya.Platform.Projects;
 using Apya.Platform.Grants;
 using Apya.Platform.Tasks;
@@ -97,6 +98,7 @@ namespace Apya.Platform.EntityFrameworkCore
         public DbSet<ExchangeRate> ExchangeRates { get; set; }
         public DbSet<CashMovement> CashMovements { get; set; }
         public DbSet<Expense> Expenses { get; set; }
+        public DbSet<FxRevaluationSnapshot> FxRevaluationSnapshots { get; set; }
 
         /* --- PROJE MODÜLÜ TABLOLARI --- */
         public DbSet<Project> Projects { get; set; }
@@ -228,6 +230,27 @@ namespace Apya.Platform.EntityFrameworkCore
                 b.Property(x => x.OpeningBalance).HasColumnType("decimal(18,2)");
                 b.HasIndex(x => new { x.TenantId, x.Name });
                 b.HasIndex(x => new { x.TenantId, x.Type });
+            });
+
+            /* --- YIL SONU DEĞERLEME MODÜLÜ YAPILANDIRMASI — APYA-138 --- */
+            builder.Entity<FxRevaluationSnapshot>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "FxRevaluationSnapshots", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+                b.Property(x => x.TotalTryValue).HasColumnType("decimal(18,2)");
+                b.Property(x => x.Notes).HasMaxLength(500);
+                b.HasMany(x => x.Lines).WithOne().HasForeignKey(x => x.SnapshotId).IsRequired();
+                b.HasIndex(x => new { x.TenantId, x.AsOfDate });
+            });
+            builder.Entity<FxRevaluationLine>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "FxRevaluationLines", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+                b.Property(x => x.CashAccountName).IsRequired().HasMaxLength(200);
+                b.Property(x => x.Currency).IsRequired().HasMaxLength(3);
+                b.Property(x => x.Balance).HasColumnType("decimal(18,2)");
+                b.Property(x => x.Rate).HasColumnType("decimal(18,6)");
+                b.Property(x => x.TryValue).HasColumnType("decimal(18,2)");
             });
 
             /* --- GİDER MODÜLÜ YAPILANDIRMASI — APYA-135 --- */

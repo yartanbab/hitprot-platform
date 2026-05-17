@@ -10,6 +10,11 @@ public class PlatformPermissionDefinitionProvider : PermissionDefinitionProvider
     {
         var myGroup = context.AddGroup(PlatformPermissions.GroupName, L("Permission:Platform"));
 
+        // --- YIL SONU DEĞERLEME YETKİLERİ ---
+        var fxRevaluationPermission = myGroup.AddPermission(PlatformPermissions.FxRevaluations.Default, L("Permission:FxRevaluations"));
+        fxRevaluationPermission.AddChild(PlatformPermissions.FxRevaluations.Run, L("Permission:FxRevaluations.Run"));
+        fxRevaluationPermission.AddChild(PlatformPermissions.FxRevaluations.Delete, L("Permission:FxRevaluations.Delete"));
+
         // --- CARİ (MÜŞTERİ) YETKİLERİ ---
         var customersPermission = myGroup.AddPermission(PlatformPermissions.Customers.Default, L("Permission:Customers"));
         customersPermission.AddChild(PlatformPermissions.Customers.Create, L("Permission:Customers.Create"));

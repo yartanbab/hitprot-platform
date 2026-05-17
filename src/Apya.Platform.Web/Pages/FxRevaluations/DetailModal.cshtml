@@ -1,0 +1,49 @@
+@page
+@model Apya.Platform.Web.Pages.FxRevaluations.DetailModalModel
+@using Volo.Abp.AspNetCore.Mvc.UI.Bootstrap.TagHelpers.Modal
+@{
+    Layout = null;
+}
+<abp-modal>
+    <abp-modal-header title="Değerleme Detayı"></abp-modal-header>
+    <abp-modal-body>
+        <p>
+            <strong>Tarih:</strong> @Model.Snapshot.AsOfDate.ToString("dd.MM.yyyy")
+            &nbsp;|&nbsp; <strong>Toplam TL:</strong>
+            @Model.Snapshot.TotalTryValue.ToString("N2") ₺
+        </p>
+        @if (!string.IsNullOrWhiteSpace(Model.Snapshot.Notes))
+        {
+            <p class="text-muted">@Model.Snapshot.Notes</p>
+        }
+        <table class="table table-sm table-striped">
+            <thead>
+                <tr>
+                    <th>Kasa</th><th>Birim</th>
+                    <th class="text-end">Bakiye</th>
+                    <th class="text-end">Kur</th>
+                    <th class="text-end">TL Karşılığı</th>
+                </tr>
+            </thead>
+            <tbody>
+            @foreach (var l in Model.Snapshot.Lines)
+            {
+                <tr>
+                    <td>@l.CashAccountName</td>
+                    <td>@l.Currency</td>
+                    <td class="text-end">@l.Balance.ToString("N2")</td>
+                    <td class="text-end">@(l.Rate.HasValue ? l.Rate.Value.ToString("N4") : "-")</td>
+                    <td class="text-end">@l.TryValue.ToString("N2")</td>
+                </tr>
+            }
+            </tbody>
+            <tfoot>
+                <tr class="fw-bold">
+                    <td colspan="4" class="text-end">TOPLAM</td>
+                    <td class="text-end">@Model.Snapshot.TotalTryValue.ToString("N2") ₺</td>
+                </tr>
+            </tfoot>
+        </table>
+    </abp-modal-body>
+    <abp-modal-footer buttons="@(AbpModalButtons.Close)"></abp-modal-footer>
+</abp-modal>
