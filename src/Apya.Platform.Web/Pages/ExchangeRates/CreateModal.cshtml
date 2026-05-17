@@ -1,0 +1,26 @@
+@page
+@model Apya.Platform.Web.Pages.ExchangeRates.CreateModalModel
+@using Volo.Abp.AspNetCore.Mvc.UI.Bootstrap.TagHelpers.Modal
+@{
+    Layout = null;
+}
+<form method="post" action="@Url.Page("/ExchangeRates/CreateModal")">
+    <abp-modal>
+        <abp-modal-header title="Yeni Döviz Kuru"></abp-modal-header>
+        <abp-modal-body>
+            <abp-row>
+                <abp-column size-md="_4">
+                    <abp-select asp-for="ExchangeRate.FromCurrency" asp-items="Model.Currencies" label="Kaynak Para Birimi" />
+                </abp-column>
+                <abp-column size-md="_4">
+                    <abp-select asp-for="ExchangeRate.ToCurrency" asp-items="Model.Currencies" label="Hedef Para Birimi" />
+                </abp-column>
+                <abp-column size-md="_4">
+                    <abp-input asp-for="ExchangeRate.Rate" label="Kur (1 kaynak = ? hedef)" />
+                </abp-column>
+            </abp-row>
+            <abp-input asp-for="ExchangeRate.RateDate" type="date" label="Kur Tarihi" />
+        </abp-modal-body>
+        <abp-modal-footer buttons="@(AbpModalButtons.Cancel | AbpModalButtons.Save)"></abp-modal-footer>
+    </abp-modal>
+</form>

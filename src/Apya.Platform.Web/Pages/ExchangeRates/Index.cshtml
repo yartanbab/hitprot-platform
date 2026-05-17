@@ -1,0 +1,29 @@
+@page
+@model Apya.Platform.Web.Pages.ExchangeRates.IndexModel
+@{
+    ViewBag.PageTitle = "Döviz Kurları";
+}
+@section scripts {
+    <abp-script src="/Pages/ExchangeRates/Index.js" />
+}
+
+<abp-card>
+    <abp-card-header>
+        <abp-row>
+            <abp-column size="_6">
+                <abp-card-title>@ViewBag.PageTitle</abp-card-title>
+            </abp-column>
+            <abp-column size="_6" class="text-end">
+                <button id="SyncTcmbButton" class="btn btn-outline-secondary btn-sm me-2">
+                    <i class="fa fa-sync"></i> TCMB'den Güncelle
+                </button>
+                <button id="NewExchangeRateButton" class="btn btn-primary btn-sm">
+                    <i class="fa fa-plus"></i> Yeni Kur Ekle
+                </button>
+            </abp-column>
+        </abp-row>
+    </abp-card-header>
+    <abp-card-body>
+        <abp-table striped-rows="true" id="ExchangeRatesTable" class="nowrap"></abp-table>
+    </abp-card-body>
+</abp-card>

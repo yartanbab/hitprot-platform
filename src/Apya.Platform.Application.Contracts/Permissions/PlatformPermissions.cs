@@ -22,6 +22,15 @@ public static class PlatformPermissions
         public const string Delete = Default + ".Delete";
     }
 
+    // --- DÖVİZ KURU YETKİLERİ ---
+    public static class ExchangeRates
+    {
+        public const string Default = GroupName + ".ExchangeRates";
+        public const string Create = Default + ".Create";
+        public const string Edit = Default + ".Edit";
+        public const string Delete = Default + ".Delete";
+    }
+
     // --- PROJE YETKİLERİ ---
     public static class Projects
     {
