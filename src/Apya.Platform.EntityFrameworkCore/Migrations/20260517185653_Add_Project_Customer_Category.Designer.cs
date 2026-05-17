@@ -13,7 +13,7 @@ using Volo.Abp.EntityFrameworkCore;
 namespace Apya.Platform.Migrations
 {
     [DbContext(typeof(PlatformDbContext))]
-    [Migration("20260517182107_Add_Project_Customer_Category")]
+    [Migration("20260517185653_Add_Project_Customer_Category")]
     partial class Add_Project_Customer_Category
     {
         /// <inheritdoc />
@@ -1414,6 +1414,9 @@ namespace Apya.Platform.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<int>("Category")
+                        .HasColumnType("integer");
+
                     b.Property<string>("Code")
                         .IsRequired()
                         .HasMaxLength(32)
@@ -1437,6 +1440,9 @@ namespace Apya.Platform.Migrations
                     b.Property<string>("Currency")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<Guid?>("CustomerId")
+                        .HasColumnType("uuid");
 
                     b.Property<Guid?>("DeleterId")
                         .HasColumnType("uuid")
@@ -1510,7 +1516,11 @@ namespace Apya.Platform.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("CustomerId");
+
                     b.HasIndex("GrantId");
+
+                    b.HasIndex("TenantId", "Category");
 
                     b.ToTable("AppProjects", (string)null);
                 });
@@ -3783,6 +3793,11 @@ namespace Apya.Platform.Migrations
 
             modelBuilder.Entity("Apya.Platform.Projects.Project", b =>
                 {
+                    b.HasOne("Apya.Platform.Customers.Customer", null)
+                        .WithMany()
+                        .HasForeignKey("CustomerId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.HasOne("Apya.Platform.Grants.Grant", null)
                         .WithMany()
                         .HasForeignKey("GrantId");
