@@ -31,6 +31,15 @@ public static class PlatformPermissions
         public const string Delete = Default + ".Delete";
     }
 
+    // --- GİDER YETKİLERİ ---
+    public static class Expenses
+    {
+        public const string Default = GroupName + ".Expenses";
+        public const string Create = Default + ".Create";
+        public const string Edit = Default + ".Edit";
+        public const string Delete = Default + ".Delete";
+    }
+
     // --- KASA HAREKETİ YETKİLERİ ---
     public static class CashMovements
     {

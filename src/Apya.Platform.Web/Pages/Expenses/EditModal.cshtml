@@ -1,0 +1,48 @@
+@page
+@model Apya.Platform.Web.Pages.Expenses.EditModalModel
+@using Volo.Abp.AspNetCore.Mvc.UI.Bootstrap.TagHelpers.Modal
+@{
+    Layout = null;
+}
+<form method="post" action="@Url.Page("/Expenses/EditModal")">
+    <abp-modal>
+        <abp-modal-header title="Gideri Düzenle"></abp-modal-header>
+        <abp-modal-body>
+            <abp-input asp-for="ExpenseId" />
+            <abp-input asp-for="Expense.Title" label="Başlık" />
+            <abp-row>
+                <abp-column size-md="_4">
+                    <abp-input asp-for="Expense.Amount" label="Tutar" />
+                </abp-column>
+                <abp-column size-md="_4">
+                    <abp-input asp-for="Expense.Currency" label="Para Birimi" />
+                </abp-column>
+                <abp-column size-md="_4">
+                    <abp-input asp-for="Expense.ExpenseDate" type="date" label="Tarih" />
+                </abp-column>
+            </abp-row>
+            <abp-row>
+                <abp-column size-md="_6">
+                    <abp-select asp-for="Expense.Category" asp-items="Model.Categories" label="Kategori" />
+                </abp-column>
+                <abp-column size-md="_6">
+                    <abp-select asp-for="Expense.CashAccountId" asp-items="Model.Accounts" label="Kasa" />
+                </abp-column>
+            </abp-row>
+            <abp-row>
+                <abp-column size-md="_6">
+                    <abp-select asp-for="Expense.ProjectId" asp-items="Model.Projects" label="Proje (opsiyonel)">
+                        <option value="">— Proje yok —</option>
+                    </abp-select>
+                </abp-column>
+                <abp-column size-md="_6">
+                    <abp-select asp-for="Expense.CustomerId" asp-items="Model.Customers" label="Cari (opsiyonel)">
+                        <option value="">— Cari yok —</option>
+                    </abp-select>
+                </abp-column>
+            </abp-row>
+            <abp-input asp-for="Expense.Description" label="Açıklama" />
+        </abp-modal-body>
+        <abp-modal-footer buttons="@(AbpModalButtons.Cancel | AbpModalButtons.Save)"></abp-modal-footer>
+    </abp-modal>
+</form>
