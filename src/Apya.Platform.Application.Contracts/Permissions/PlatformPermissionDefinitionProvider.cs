@@ -10,6 +10,12 @@ public class PlatformPermissionDefinitionProvider : PermissionDefinitionProvider
     {
         var myGroup = context.AddGroup(PlatformPermissions.GroupName, L("Permission:Platform"));
 
+        // --- CARİ (MÜŞTERİ) YETKİLERİ ---
+        var customersPermission = myGroup.AddPermission(PlatformPermissions.Customers.Default, L("Permission:Customers"));
+        customersPermission.AddChild(PlatformPermissions.Customers.Create, L("Permission:Customers.Create"));
+        customersPermission.AddChild(PlatformPermissions.Customers.Edit, L("Permission:Customers.Edit"));
+        customersPermission.AddChild(PlatformPermissions.Customers.Delete, L("Permission:Customers.Delete"));
+
         // --- PROJE YETKİLERİ ---
         var projectsPermission = myGroup.AddPermission(PlatformPermissions.Projects.Default, L("Permission:Projects"));
         projectsPermission.AddChild(PlatformPermissions.Projects.Create, L("Permission:Projects.Create"));

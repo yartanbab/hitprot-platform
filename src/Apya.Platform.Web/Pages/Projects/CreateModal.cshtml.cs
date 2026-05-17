@@ -8,8 +8,10 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Hosting;
 using System.IO;
 using Volo.Abp.TenantManagement;
+using Volo.Abp.Application.Dtos;
 using Apya.Platform.Projects;
 using Apya.Platform.Projects.Dtos;
+using Apya.Platform.Customers;
 
 namespace Apya.Platform.Web.Pages.Projects;
 
@@ -23,20 +25,25 @@ public class CreateModalModel : PlatformPageModel
 
     public List<SelectListItem> Tenants { get; set; } = new();
     public List<SelectListItem> Currencies { get; set; } = new();
-    
+    public List<SelectListItem> Customers { get; set; } = new();
+    public List<SelectListItem> Categories { get; set; } = new();
+
     public Guid? CurrentTenantId => CurrentUser.TenantId;
 
     private readonly IProjectAppService _projectAppService;
     private readonly ITenantAppService _tenantAppService;
+    private readonly ICustomerAppService _customerAppService;
     private readonly IWebHostEnvironment _environment;
 
     public CreateModalModel(
-        IProjectAppService projectAppService, 
+        IProjectAppService projectAppService,
         ITenantAppService tenantAppService,
+        ICustomerAppService customerAppService,
         IWebHostEnvironment environment)
     {
         _projectAppService = projectAppService;
         _tenantAppService = tenantAppService;
+        _customerAppService = customerAppService;
         _environment = environment;
     }
 
@@ -62,6 +69,21 @@ public class CreateModalModel : PlatformPageModel
             new SelectListItem("₺ (TL)", "TRY"),
             new SelectListItem("$ (USD)", "USD"),
             new SelectListItem("€ (EUR)", "EUR")
+        };
+
+        // APYA-132: CARİLER (aktif olanlar)
+        var customerResult = await _customerAppService.GetListAsync(
+            new GetCustomersInput { MaxResultCount = 1000, IsActive = true });
+        Customers = customerResult.Items
+            .Select(c => new SelectListItem(c.Name, c.Id.ToString()))
+            .ToList();
+
+        // APYA-132: PROJE KATEGORİLERİ
+        Categories = new List<SelectListItem>
+        {
+            new SelectListItem("Diğer / Genel", ((int)ProjectCategory.Other).ToString()),
+            new SelectListItem("Hibe Projesi", ((int)ProjectCategory.GrantProject).ToString()),
+            new SelectListItem("Etkinlik", ((int)ProjectCategory.Event).ToString())
         };
     }
 

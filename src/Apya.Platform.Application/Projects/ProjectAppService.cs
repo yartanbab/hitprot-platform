@@ -15,6 +15,7 @@ using Volo.Abp.MultiTenancy;
 using Volo.Abp.TenantManagement; // ITenantStore için gerekli kütüphane
 using Apya.Platform.Permissions; // Permissions eklendi
 using Apya.Platform.Tasks;
+using Apya.Platform.Customers;
 using Microsoft.Extensions.Logging;
 
 namespace Apya.Platform.Application.Projects;
@@ -34,7 +35,8 @@ public class ProjectAppService :
     private readonly IRepository<ProjectAttachment, Guid> _projectAttachmentRepository;
     private readonly IRepository<TaskItem, Guid> _taskRepository;
     private readonly IRepository<TaskTimeLog, Guid> _timeLogRepository;
-    private readonly ITenantStore _tenantStore; 
+    private readonly IRepository<Customer, Guid> _customerRepository;
+    private readonly ITenantStore _tenantStore;
 
     public ProjectAppService(
         IRepository<Project, Guid> repository,
@@ -43,6 +45,7 @@ public class ProjectAppService :
         IRepository<ProjectAttachment, Guid> projectAttachmentRepository,
         IRepository<TaskItem, Guid> taskRepository,
         IRepository<TaskTimeLog, Guid> timeLogRepository,
+        IRepository<Customer, Guid> customerRepository,
         ITenantStore tenantStore)
         : base(repository)
     {
@@ -51,6 +54,7 @@ public class ProjectAppService :
         _projectAttachmentRepository = projectAttachmentRepository;
         _taskRepository = taskRepository;
         _timeLogRepository = timeLogRepository;
+        _customerRepository = customerRepository;
         _tenantStore = tenantStore;
     }
 
@@ -70,7 +74,9 @@ public class ProjectAppService :
             input.TargetAudience,
             input.Activities,
             input.StartDate,
-            input.EndDate
+            input.EndDate,
+            input.CustomerId,
+            input.Category
         );
 
         if (CurrentTenant.Id == null && input.TenantId.HasValue)
@@ -139,6 +145,13 @@ public class ProjectAppService :
                     }
                 }
 
+                // APYA-132: CustomerName'leri tek seferde çek
+                var customerIds = dtos.Where(d => d.CustomerId.HasValue).Select(d => d.CustomerId!.Value).Distinct().ToList();
+                var customerNameMap = customerIds.Any()
+                    ? (await _customerRepository.GetListAsync(c => customerIds.Contains(c.Id)))
+                        .ToDictionary(c => c.Id, c => c.Name)
+                    : new Dictionary<Guid, string>();
+
                 foreach (var dto in dtos)
                 {
                     if (canViewBudget)
@@ -162,6 +175,12 @@ public class ProjectAppService :
                     else if (CurrentTenant.Id == null)
                     {
                         dto.TenantName = "Platform (Host)";
+                    }
+
+                    // APYA-132: CustomerName doldur
+                    if (dto.CustomerId.HasValue && customerNameMap.TryGetValue(dto.CustomerId.Value, out var custName))
+                    {
+                        dto.CustomerName = custName;
                     }
                 }
 

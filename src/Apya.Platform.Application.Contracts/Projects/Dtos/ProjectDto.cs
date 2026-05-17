@@ -9,6 +9,13 @@ public class ProjectDto : AuditedEntityDto<Guid>
     public Guid? TenantId { get; set; }
     public string TenantName { get; set; } = string.Empty;
 
+    /// <summary>APYA-132</summary>
+    public Guid? CustomerId { get; set; }
+    /// <summary>APYA-132 — listede gösterim için AppService dolduruyor.</summary>
+    public string? CustomerName { get; set; }
+    /// <summary>APYA-132 — Hibe / Etkinlik / Diğer</summary>
+    public ProjectCategory Category { get; set; }
+
     public string Name { get; set; }
 
     public string Code { get; set; }

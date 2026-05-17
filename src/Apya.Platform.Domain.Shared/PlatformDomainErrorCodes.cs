@@ -14,6 +14,10 @@ public static class PlatformDomainErrorCodes
     public const string TaskUpdateDenied = "Platform:Task:UpdateDenied";
     public const string TaskDeleteDenied = "Platform:Task:DeleteDenied";
 
+    // --- Cari (Customer) Modülü ---
+    public const string CustomerNameRequired = "Platform:Customer:NameRequired";
+    public const string CustomerFieldTooLong = "Platform:Customer:FieldTooLong";
+
     // --- Proje (Project) Modülü ---
     public const string ProjectNotFound = "Platform:Project:NotFound";
     public const string ProjectCodeAlreadyExists = "Platform:Project:CodeAlreadyExists";
