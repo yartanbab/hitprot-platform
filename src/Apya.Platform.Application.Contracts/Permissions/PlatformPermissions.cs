@@ -13,6 +13,15 @@ public static class PlatformPermissions
         public const string Delete = Default + ".Delete";
     }
 
+    // --- KASA YETKİLERİ ---
+    public static class CashAccounts
+    {
+        public const string Default = GroupName + ".CashAccounts";
+        public const string Create = Default + ".Create";
+        public const string Edit = Default + ".Edit";
+        public const string Delete = Default + ".Delete";
+    }
+
     // --- PROJE YETKİLERİ ---
     public static class Projects
     {

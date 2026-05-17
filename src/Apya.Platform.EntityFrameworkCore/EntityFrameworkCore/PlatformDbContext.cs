@@ -24,6 +24,7 @@ using Volo.Abp.TenantManagement.EntityFrameworkCore;
 using Volo.Abp.EntityFrameworkCore.Modeling;
 
 using Apya.Platform.Customers;
+using Apya.Platform.CashAccounts;
 using Apya.Platform.Projects;
 using Apya.Platform.Grants;
 using Apya.Platform.Tasks;
@@ -89,6 +90,7 @@ namespace Apya.Platform.EntityFrameworkCore
 
         /* --- CARİ (MÜŞTERİ) MODÜLÜ TABLOLARI --- */
         public DbSet<Customer> Customers { get; set; }
+        public DbSet<CashAccount> CashAccounts { get; set; }
 
         /* --- PROJE MODÜLÜ TABLOLARI --- */
         public DbSet<Project> Projects { get; set; }
@@ -207,6 +209,19 @@ namespace Apya.Platform.EntityFrameworkCore
                 b.Property(x => x.Notes).HasMaxLength(CustomerConsts.MaxNotesLength);
                 b.HasIndex(x => new { x.TenantId, x.Name });
                 b.HasIndex(x => new { x.TenantId, x.IsActive });
+            });
+
+            /* --- KASA MODÜLÜ YAPILANDIRMASI — APYA-133 --- */
+            builder.Entity<CashAccount>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "CashAccounts", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+                b.Property(x => x.Name).IsRequired().HasMaxLength(CashAccountConsts.MaxNameLength);
+                b.Property(x => x.Currency).IsRequired().HasMaxLength(CashAccountConsts.CurrencyLength);
+                b.Property(x => x.Description).HasMaxLength(CashAccountConsts.MaxDescriptionLength);
+                b.Property(x => x.OpeningBalance).HasColumnType("decimal(18,2)");
+                b.HasIndex(x => new { x.TenantId, x.Name });
+                b.HasIndex(x => new { x.TenantId, x.Type });
             });
 
             /* --- PROJE MODÜLÜ YAPILANDIRMASI --- */

@@ -39,6 +39,7 @@ public class PlatformMenuContributor : IMenuContributor
         // Finans
         var finance = new ApplicationMenuItem("Apya.Finance", "Finans", icon: "fa fa-coins", order: 3);
         finance.AddItem(new ApplicationMenuItem("Apya.Finance.Customers", "Cariler", icon: "fa fa-id-card", url: "/Customers"));
+        finance.AddItem(new ApplicationMenuItem("Apya.Finance.CashAccounts", "Kasalar", icon: "fa fa-cash-register", url: "/CashAccounts"));
         finance.AddItem(new ApplicationMenuItem("Apya.Finance.Invoices", "Faturalar & Ödemeler", icon: "fa fa-file-invoice-dollar", url: "/Invoices"));
         finance.AddItem(new ApplicationMenuItem("Apya.Finance.ExpenseCapture", "Masraf Yakala", icon: "fa fa-camera", url: "/Expenses/Capture"));
         context.Menu.AddItem(finance);
