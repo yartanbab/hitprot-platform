@@ -14,4 +14,7 @@ public class CustomerDto : FullAuditedEntityDto<Guid>
     public string? Email { get; set; }
     public string? Notes { get; set; }
     public bool IsActive { get; set; }
+
+    /// <summary>APYA-142e: Cari bakiye (Σ Borç − Σ Alacak; pozitif → müşteri bize borçlu).</summary>
+    public decimal Balance { get; set; }
 }
