@@ -24,6 +24,7 @@ using Volo.Abp.TenantManagement.EntityFrameworkCore;
 using Volo.Abp.EntityFrameworkCore.Modeling;
 
 using Apya.Platform.Customers;
+using Apya.Platform.CustomerLedger;
 using Apya.Platform.CashAccounts;
 using Apya.Platform.CashMovements;
 using Apya.Platform.Expenses;
@@ -94,6 +95,7 @@ namespace Apya.Platform.EntityFrameworkCore
 
         /* --- CARİ (MÜŞTERİ) MODÜLÜ TABLOLARI --- */
         public DbSet<Customer> Customers { get; set; }
+        public DbSet<CustomerLedgerEntry> CustomerLedgerEntries { get; set; }
         public DbSet<CashAccount> CashAccounts { get; set; }
         public DbSet<ExchangeRate> ExchangeRates { get; set; }
         public DbSet<CashMovement> CashMovements { get; set; }
@@ -217,6 +219,19 @@ namespace Apya.Platform.EntityFrameworkCore
                 b.Property(x => x.Notes).HasMaxLength(CustomerConsts.MaxNotesLength);
                 b.HasIndex(x => new { x.TenantId, x.Name });
                 b.HasIndex(x => new { x.TenantId, x.IsActive });
+            });
+
+            /* --- CARİ HAREKET (CUSTOMER LEDGER) MODÜLÜ YAPILANDIRMASI — APYA-142 --- */
+            builder.Entity<CustomerLedgerEntry>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "CustomerLedgerEntries", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+                b.Property(x => x.Amount).HasColumnType("decimal(18,2)");
+                b.Property(x => x.Currency).IsRequired().HasMaxLength(CustomerLedgerConsts.CurrencyLength);
+                b.Property(x => x.Description).HasMaxLength(CustomerLedgerConsts.MaxDescriptionLength);
+                b.HasOne<Customer>().WithMany().HasForeignKey(x => x.CustomerId).OnDelete(DeleteBehavior.Restrict);
+                b.HasIndex(x => new { x.TenantId, x.CustomerId, x.EntryDate });
+                b.HasIndex(x => x.ReferenceId);
             });
 
             /* --- KASA MODÜLÜ YAPILANDIRMASI — APYA-133 --- */
