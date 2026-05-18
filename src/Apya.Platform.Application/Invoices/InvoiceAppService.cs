@@ -175,7 +175,10 @@ public class InvoiceAppService : ApplicationService, IInvoiceAppService
 
         // APYA-142c: Cari varsa tahsilat → cari Alacak tahakkuku
         // (vadeli: fatura Borç + sonra tahsilat Alacak; peşin: ikisi peş peşe → cari net 0)
-        if (invoice.CustomerId.HasValue && amount > 0)
+        // APYA-144 (BUG-1): Sadece SATIŞ faturası cariye Alacak yazar. Alış (Purchase)
+        // faturasında Borç tahakkuku yok (GAP-1) — bu yüzden ödemesi de Alacak yazmamalı,
+        // aksi halde karşılıksız Alacak cari bakiyesini bozar.
+        if (invoice.CustomerId.HasValue && invoice.Direction == InvoiceDirection.Sales && amount > 0)
         {
             await _customerLedgerRepository.InsertAsync(new CustomerLedgerEntry(
                 GuidGenerator.Create(),
