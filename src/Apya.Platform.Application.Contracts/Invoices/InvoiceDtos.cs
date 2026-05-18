@@ -9,6 +9,10 @@ public class InvoiceDto : FullAuditedEntityDto<Guid>
 {
     public Guid ProjectId { get; set; }
     public string ProjectName { get; set; }
+    public Guid? CustomerId { get; set; }
+    public string? CustomerName { get; set; }
+    public InvoiceDirection Direction { get; set; }
+    public Guid? TaskId { get; set; }
     public string InvoiceNumber { get; set; }
     public DateTime InvoiceDate { get; set; }
     public DateTime DueDate { get; set; }
@@ -32,6 +36,9 @@ public class InvoiceItemDto : EntityDto<Guid>
 public class CreateInvoiceDto
 {
     public Guid ProjectId { get; set; }
+    public Guid? CustomerId { get; set; }
+    public InvoiceDirection Direction { get; set; } = InvoiceDirection.Sales;
+    public Guid? TaskId { get; set; }
     public string InvoiceNumber { get; set; }
     public DateTime InvoiceDate { get; set; }
     public DateTime DueDate { get; set; }

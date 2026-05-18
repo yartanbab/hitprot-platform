@@ -417,6 +417,7 @@ namespace Apya.Platform.EntityFrameworkCore
                 b.HasIndex(x => x.InvoiceNumber).IsUnique();
                 b.HasIndex(x => x.ProjectId);
                 b.HasIndex(x => x.Status);
+                b.HasIndex(x => x.CustomerId); // APYA-142c
                 b.HasMany(x => x.Items).WithOne().HasForeignKey(x => x.InvoiceId).IsRequired();
             });
 
