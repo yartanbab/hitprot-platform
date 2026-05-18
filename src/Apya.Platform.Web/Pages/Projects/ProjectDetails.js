@@ -418,4 +418,12 @@ $(function () {
             sortables.push(sortable);
         });
     }
+
+    // APYA-143b: Bütçe-vs-Gerçekleşen modalı
+    var budgetModal = new abp.ModalManager(abp.appPath + 'Projects/BudgetSummaryModal');
+    $('#btn-budget-summary').click(function (e) {
+        e.preventDefault();
+        var pid = $(this).data('project-id');
+        if (pid) budgetModal.open({ projectId: pid });
+    });
 });
