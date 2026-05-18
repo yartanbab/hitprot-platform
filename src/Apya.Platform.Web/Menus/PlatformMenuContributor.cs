@@ -44,6 +44,7 @@ public class PlatformMenuContributor : IMenuContributor
         finance.AddItem(new ApplicationMenuItem("Apya.Finance.ExchangeRates", "Döviz Kurları", icon: "fa fa-money-bill-transfer", url: "/ExchangeRates"));
         finance.AddItem(new ApplicationMenuItem("Apya.Finance.FxRevaluation", "Yıl Sonu Değerleme", icon: "fa fa-scale-balanced", url: "/FxRevaluations"));
         finance.AddItem(new ApplicationMenuItem("Apya.Finance.Expenses", "Giderler", icon: "fa fa-receipt", url: "/Expenses"));
+        finance.AddItem(new ApplicationMenuItem("Apya.Finance.Incomes", "Gelirler (Hibe/Faturasız)", icon: "fa fa-hand-holding-dollar", url: "/Incomes"));
         finance.AddItem(new ApplicationMenuItem("Apya.Finance.Invoices", "Faturalar & Ödemeler", icon: "fa fa-file-invoice-dollar", url: "/Invoices"));
         finance.AddItem(new ApplicationMenuItem("Apya.Finance.ExpenseCapture", "Masraf Yakala", icon: "fa fa-camera", url: "/Expenses/Capture"));
         context.Menu.AddItem(finance);

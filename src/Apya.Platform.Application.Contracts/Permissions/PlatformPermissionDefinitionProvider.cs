@@ -10,6 +10,12 @@ public class PlatformPermissionDefinitionProvider : PermissionDefinitionProvider
     {
         var myGroup = context.AddGroup(PlatformPermissions.GroupName, L("Permission:Platform"));
 
+        // --- GELİR YETKİLERİ ---
+        var incomesPermission = myGroup.AddPermission(PlatformPermissions.Incomes.Default, L("Permission:Incomes"));
+        incomesPermission.AddChild(PlatformPermissions.Incomes.Create, L("Permission:Incomes.Create"));
+        incomesPermission.AddChild(PlatformPermissions.Incomes.Edit, L("Permission:Incomes.Edit"));
+        incomesPermission.AddChild(PlatformPermissions.Incomes.Delete, L("Permission:Incomes.Delete"));
+
         // --- YIL SONU DEĞERLEME YETKİLERİ ---
         var fxRevaluationPermission = myGroup.AddPermission(PlatformPermissions.FxRevaluations.Default, L("Permission:FxRevaluations"));
         fxRevaluationPermission.AddChild(PlatformPermissions.FxRevaluations.Run, L("Permission:FxRevaluations.Run"));
