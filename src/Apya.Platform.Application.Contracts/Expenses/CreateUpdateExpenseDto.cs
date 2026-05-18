@@ -24,6 +24,7 @@ public class CreateUpdateExpenseDto
     public Guid CashAccountId { get; set; }
 
     public Guid? ProjectId { get; set; }
+    public Guid? TaskId { get; set; }
     public Guid? CustomerId { get; set; }
 
     [StringLength(ExpenseConsts.MaxDescriptionLength)]

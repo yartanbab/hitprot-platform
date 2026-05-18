@@ -15,6 +15,7 @@ public class IncomeEntryDto : FullAuditedEntityDto<Guid>
     public Guid? CashAccountId { get; set; }
     public string? CashAccountName { get; set; }
     public Guid? ProjectId { get; set; }
+    public Guid? TaskId { get; set; }
     public Guid? CustomerId { get; set; }
     public string? Description { get; set; }
 }
@@ -38,6 +39,7 @@ public class CreateUpdateIncomeEntryDto
 
     public Guid? CashAccountId { get; set; }
     public Guid? ProjectId { get; set; }
+    public Guid? TaskId { get; set; }
     public Guid? CustomerId { get; set; }
 
     [StringLength(IncomeConsts.MaxDescriptionLength)]
@@ -50,6 +52,7 @@ public class GetIncomeEntriesInput : PagedAndSortedResultRequestDto
     public IncomeCategory? Category { get; set; }
     public Guid? CashAccountId { get; set; }
     public Guid? ProjectId { get; set; }
+    public Guid? TaskId { get; set; }
     public Guid? CustomerId { get; set; }
     public DateTime? FromDate { get; set; }
     public DateTime? ToDate { get; set; }
