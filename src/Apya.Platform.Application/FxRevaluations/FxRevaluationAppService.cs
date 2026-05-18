@@ -59,7 +59,9 @@ public class FxRevaluationAppService : ApplicationService, IFxRevaluationAppServ
         var snapshot = new FxRevaluationSnapshot(GuidGenerator.Create(), asOf, CurrentTenant.Id, input.Notes);
 
         var accounts = await _cashAccountRepository.GetListAsync(a => a.IsActive);
-        var movements = await _cashMovementRepository.GetListAsync();
+        // APYA-145 (BUG-2): Değerleme tarihine kadarki hareketler — sonraki tarihli
+        // hareketler yıl-sonu bakiyesine girmemeli (kur zaten RateDate<=asOf kullanıyor).
+        var movements = await _cashMovementRepository.GetListAsync(m => m.MovementDate <= asOf);
         var rates = await _exchangeRateRepository.GetListAsync(r => r.ToCurrency == FxRevaluationCalculator.BaseCurrency);
 
         foreach (var acc in accounts.OrderBy(a => a.Name))
