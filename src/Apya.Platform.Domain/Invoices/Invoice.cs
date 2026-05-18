@@ -27,6 +27,15 @@ public class Invoice : FullAuditedAggregateRoot<Guid>, IMultiTenant
 
     public ICollection<InvoiceItem> Items { get; set; }
 
+    /// <summary>APYA-142: Cari (müşteri/tedarikçi). Eski faturalarda null olabilir.</summary>
+    public Guid? CustomerId { get; set; }
+
+    /// <summary>APYA-142: Satış (AR/cari Borç) | Alış (AP). Varsayılan Satış.</summary>
+    public InvoiceDirection Direction { get; set; } = InvoiceDirection.Sales;
+
+    /// <summary>APYA-142: Maliyet boyutu — opsiyonel task etiketi (Faz 9).</summary>
+    public Guid? TaskId { get; set; }
+
     public Invoice()
     {
         Items = new Collection<InvoiceItem>();

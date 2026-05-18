@@ -12,6 +12,7 @@ using Apya.Platform.Projects;
 using Apya.Platform.CashAccounts;
 using Apya.Platform.CashMovements;
 using Apya.Platform.ExchangeRates;
+using Apya.Platform.CustomerLedger;
 
 namespace Apya.Platform.Invoices;
 
@@ -24,6 +25,7 @@ public class InvoiceAppService : ApplicationService, IInvoiceAppService
     private readonly IRepository<CashAccount, Guid> _cashAccountRepository;
     private readonly IRepository<CashMovement, Guid> _cashMovementRepository;
     private readonly IRepository<ExchangeRate, Guid> _exchangeRateRepository;
+    private readonly IRepository<CustomerLedgerEntry, Guid> _customerLedgerRepository;
 
     public InvoiceAppService(
         IRepository<Invoice, Guid> invoiceRepository,
@@ -31,7 +33,8 @@ public class InvoiceAppService : ApplicationService, IInvoiceAppService
         IRepository<Project, Guid> projectRepository,
         IRepository<CashAccount, Guid> cashAccountRepository,
         IRepository<CashMovement, Guid> cashMovementRepository,
-        IRepository<ExchangeRate, Guid> exchangeRateRepository)
+        IRepository<ExchangeRate, Guid> exchangeRateRepository,
+        IRepository<CustomerLedgerEntry, Guid> customerLedgerRepository)
     {
         _invoiceRepository = invoiceRepository;
         _paymentRepository = paymentRepository;
@@ -39,6 +42,7 @@ public class InvoiceAppService : ApplicationService, IInvoiceAppService
         _cashAccountRepository = cashAccountRepository;
         _cashMovementRepository = cashMovementRepository;
         _exchangeRateRepository = exchangeRateRepository;
+        _customerLedgerRepository = customerLedgerRepository;
     }
 
     public async Task<PagedResultDto<InvoiceDto>> GetListAsync(PagedAndSortedResultRequestDto input)
@@ -94,7 +98,10 @@ public class InvoiceAppService : ApplicationService, IInvoiceAppService
         {
             TaxRate = input.TaxRate,
             Currency = input.Currency,
-            Status = InvoiceStatus.Draft
+            Status = InvoiceStatus.Draft,
+            CustomerId = input.CustomerId,
+            Direction = input.Direction,
+            TaskId = input.TaskId
         };
 
         foreach (var item in input.Items)
@@ -104,7 +111,25 @@ public class InvoiceAppService : ApplicationService, IInvoiceAppService
 
         invoice.TotalAmount = invoice.Items.Sum(x => x.TotalPrice) * (1 + (invoice.TaxRate / 100));
 
-        await _invoiceRepository.InsertAsync(invoice);
+        await _invoiceRepository.InsertAsync(invoice, autoSave: true);
+
+        // APYA-142c: Satış faturası + cari → cari Borç tahakkuku
+        if (invoice.CustomerId.HasValue && invoice.Direction == InvoiceDirection.Sales && invoice.TotalAmount > 0)
+        {
+            await _customerLedgerRepository.InsertAsync(new CustomerLedgerEntry(
+                GuidGenerator.Create(),
+                invoice.CustomerId.Value,
+                CustomerLedgerDirection.Debit,
+                invoice.TotalAmount,
+                invoice.InvoiceDate,
+                CustomerLedgerSource.Invoice,
+                invoice.Currency,
+                invoice.Id,
+                invoice.ProjectId,
+                $"Satış faturası: {invoice.InvoiceNumber}",
+                CurrentTenant.Id), autoSave: true);
+        }
+
         return await GetAsync(invoice.Id);
     }
 
@@ -145,6 +170,24 @@ public class InvoiceAppService : ApplicationService, IInvoiceAppService
                 $"Fatura tahsilatı: {invoice.InvoiceNumber}",
                 CashMovementSource.Invoice,
                 payment.Id,
+                CurrentTenant.Id), autoSave: true);
+        }
+
+        // APYA-142c: Cari varsa tahsilat → cari Alacak tahakkuku
+        // (vadeli: fatura Borç + sonra tahsilat Alacak; peşin: ikisi peş peşe → cari net 0)
+        if (invoice.CustomerId.HasValue && amount > 0)
+        {
+            await _customerLedgerRepository.InsertAsync(new CustomerLedgerEntry(
+                GuidGenerator.Create(),
+                invoice.CustomerId.Value,
+                CustomerLedgerDirection.Credit,
+                amount,
+                Clock.Now,
+                CustomerLedgerSource.Payment,
+                invoice.Currency,
+                payment.Id,
+                invoice.ProjectId,
+                $"Tahsilat: {invoice.InvoiceNumber}",
                 CurrentTenant.Id), autoSave: true);
         }
 
@@ -189,6 +232,9 @@ public class InvoiceAppService : ApplicationService, IInvoiceAppService
             Id = x.Id,
             ProjectId = x.ProjectId,
             ProjectName = project?.Name ?? "Bilinmeyen Proje",
+            CustomerId = x.CustomerId,
+            Direction = x.Direction,
+            TaskId = x.TaskId,
             InvoiceNumber = x.InvoiceNumber,
             InvoiceDate = x.InvoiceDate,
             DueDate = x.DueDate,
