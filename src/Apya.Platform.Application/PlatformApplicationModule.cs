@@ -1,3 +1,4 @@
+using Microsoft.Extensions.DependencyInjection;
 using Volo.Abp.Account;
 using Volo.Abp.AutoMapper;
 using Volo.Abp.FeatureManagement;
@@ -24,6 +25,10 @@ public class PlatformApplicationModule : AbpModule
 {
     public override void ConfigureServices(ServiceConfigurationContext context)
     {
+        // APYA-147 (BUG-A): IHttpClientFactory kaydı — ExchangeRateAppService TCMB
+        // senkronu için inject ediyor; kayıt olmadan tüm servis construct edilemiyor (500).
+        context.Services.AddHttpClient();
+
         Configure<AbpAutoMapperOptions>(options =>
         {
             // PROJE İÇİNDEKİ MAPPING PROFİLLERİNİ TARA VE YÜKLE
