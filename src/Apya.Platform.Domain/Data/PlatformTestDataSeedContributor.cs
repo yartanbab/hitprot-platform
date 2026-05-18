@@ -15,6 +15,10 @@ public class PlatformTestDataSeedContributor : IDataSeedContributor, ITransientD
 {
     private static readonly string[] AdminPermissions = new[]
     {
+        "Platform.Incomes",
+        "Platform.Incomes.Create",
+        "Platform.Incomes.Edit",
+        "Platform.Incomes.Delete",
         "Platform.FxRevaluations",
         "Platform.FxRevaluations.Run",
         "Platform.FxRevaluations.Delete",

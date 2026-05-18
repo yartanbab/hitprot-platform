@@ -4,6 +4,15 @@ public static class PlatformPermissions
 {
     public const string GroupName = "Platform";
 
+    // --- GELİR YETKİLERİ ---
+    public static class Incomes
+    {
+        public const string Default = GroupName + ".Incomes";
+        public const string Create = Default + ".Create";
+        public const string Edit = Default + ".Edit";
+        public const string Delete = Default + ".Delete";
+    }
+
     // --- YIL SONU DEĞERLEME YETKİLERİ ---
     public static class FxRevaluations
     {

@@ -22,6 +22,11 @@ public static class PlatformDomainErrorCodes
     public const string CustomerLedgerCustomerRequired = "Platform:CustomerLedger:CustomerRequired";
     public const string CustomerLedgerAmountInvalid = "Platform:CustomerLedger:AmountInvalid";
 
+    // --- Gelir (Income) Modülü — APYA-142d ---
+    public const string IncomeTitleRequired = "Platform:Income:TitleRequired";
+    public const string IncomeFieldTooLong = "Platform:Income:FieldTooLong";
+    public const string IncomeAmountInvalid = "Platform:Income:AmountInvalid";
+
     // --- Kasa (CashAccount) Modülü — APYA-133 ---
     public const string CashAccountNameRequired = "Platform:CashAccount:NameRequired";
     public const string CashAccountFieldTooLong = "Platform:CashAccount:FieldTooLong";

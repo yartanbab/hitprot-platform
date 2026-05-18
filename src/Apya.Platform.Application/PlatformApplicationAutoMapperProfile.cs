@@ -3,6 +3,7 @@ using Apya.Platform.Customers;
 using Apya.Platform.CashAccounts;
 using Apya.Platform.CashMovements;
 using Apya.Platform.Expenses;
+using Apya.Platform.Incomes;
 using Apya.Platform.ExchangeRates;
 using Apya.Platform.Projects;
 using Apya.Platform.Projects.Dtos;
@@ -66,6 +67,10 @@ namespace Apya.Platform
             // --- GİDER (EXPENSE) MODÜLÜ — APYA-135 ---
             CreateMap<Expense, ExpenseDto>();
             CreateMap<CreateUpdateExpenseDto, Expense>();
+
+            // --- GELİR (INCOME) MODÜLÜ — APYA-142d ---
+            CreateMap<IncomeEntry, IncomeEntryDto>();
+            CreateMap<CreateUpdateIncomeEntryDto, IncomeEntry>();
 
             // --- TENANT PROFILE MODÜLÜ ---
             CreateMap<Apya.Platform.Tenants.TenantProfile, Apya.Platform.Tenants.TenantProfileDto>();

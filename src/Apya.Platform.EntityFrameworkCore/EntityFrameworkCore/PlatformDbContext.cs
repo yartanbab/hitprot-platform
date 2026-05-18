@@ -28,6 +28,7 @@ using Apya.Platform.CustomerLedger;
 using Apya.Platform.CashAccounts;
 using Apya.Platform.CashMovements;
 using Apya.Platform.Expenses;
+using Apya.Platform.Incomes;
 using Apya.Platform.ExchangeRates;
 using Apya.Platform.FxRevaluations;
 using Apya.Platform.Projects;
@@ -100,6 +101,7 @@ namespace Apya.Platform.EntityFrameworkCore
         public DbSet<ExchangeRate> ExchangeRates { get; set; }
         public DbSet<CashMovement> CashMovements { get; set; }
         public DbSet<Expense> Expenses { get; set; }
+        public DbSet<IncomeEntry> IncomeEntries { get; set; }
         public DbSet<FxRevaluationSnapshot> FxRevaluationSnapshots { get; set; }
 
         /* --- PROJE MODÜLÜ TABLOLARI --- */
@@ -279,6 +281,21 @@ namespace Apya.Platform.EntityFrameworkCore
                 b.Property(x => x.Amount).HasColumnType("decimal(18,2)");
                 b.HasOne<CashAccount>().WithMany().HasForeignKey(x => x.CashAccountId).OnDelete(DeleteBehavior.Restrict);
                 b.HasIndex(x => new { x.TenantId, x.ExpenseDate });
+                b.HasIndex(x => new { x.TenantId, x.Category });
+                b.HasIndex(x => x.ProjectId);
+                b.HasIndex(x => x.CustomerId);
+            });
+
+            /* --- GELİR MODÜLÜ YAPILANDIRMASI — APYA-142d --- */
+            builder.Entity<IncomeEntry>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "IncomeEntries", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+                b.Property(x => x.Title).IsRequired().HasMaxLength(IncomeConsts.MaxTitleLength);
+                b.Property(x => x.Description).HasMaxLength(IncomeConsts.MaxDescriptionLength);
+                b.Property(x => x.Currency).IsRequired().HasMaxLength(IncomeConsts.CurrencyLength);
+                b.Property(x => x.Amount).HasColumnType("decimal(18,2)");
+                b.HasIndex(x => new { x.TenantId, x.IncomeDate });
                 b.HasIndex(x => new { x.TenantId, x.Category });
                 b.HasIndex(x => x.ProjectId);
                 b.HasIndex(x => x.CustomerId);

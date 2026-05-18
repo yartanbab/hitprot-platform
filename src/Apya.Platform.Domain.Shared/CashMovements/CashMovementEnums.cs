@@ -14,4 +14,5 @@ public enum CashMovementSource
     Invoice = 1,
     Expense = 2,
     Transfer = 3,
+    Income = 4, // APYA-142d: faturasız gelir/fon (hibe vb.)
 }

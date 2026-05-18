@@ -1,0 +1,27 @@
+@page
+@model Apya.Platform.Web.Pages.Incomes.IndexModel
+@{
+    ViewBag.PageTitle = "Gelirler (Faturasız / Hibe)";
+}
+@section scripts {
+    <abp-script src="/Pages/Incomes/Index.js" />
+}
+
+<abp-card>
+    <abp-card-header>
+        <abp-row>
+            <abp-column size="_7">
+                <abp-card-title>@ViewBag.PageTitle</abp-card-title>
+                <small class="text-muted">Hibe, bağış, faturasız nakit gelir. Kasa seçilirse otomatik kasa girişi oluşur.</small>
+            </abp-column>
+            <abp-column size="_5" class="text-end">
+                <button id="NewIncomeButton" class="btn btn-primary btn-sm">
+                    <i class="fa fa-plus"></i> Yeni Gelir
+                </button>
+            </abp-column>
+        </abp-row>
+    </abp-card-header>
+    <abp-card-body>
+        <abp-table striped-rows="true" id="IncomesTable" class="nowrap"></abp-table>
+    </abp-card-body>
+</abp-card>
