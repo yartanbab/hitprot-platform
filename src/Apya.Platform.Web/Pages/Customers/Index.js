@@ -2,6 +2,7 @@ $(function () {
 
     var createModal = new abp.ModalManager(abp.appPath + 'Customers/CreateModal');
     var editModal = new abp.ModalManager(abp.appPath + 'Customers/EditModal');
+    var statementModal = new abp.ModalManager(abp.appPath + 'Customers/StatementModal');
 
     var dataTable = $('#CustomersTable').DataTable(abp.libs.datatables.normalizeConfiguration({
         processing: true,
@@ -22,6 +23,12 @@ $(function () {
                             visible: abp.auth.isGranted('Platform.Customers.Edit'),
                             action: function (data) {
                                 editModal.open({ id: data.record.id });
+                            }
+                        },
+                        {
+                            text: 'Cari Ekstre',
+                            action: function (data) {
+                                statementModal.open({ customerId: data.record.id });
                             }
                         },
                         {
@@ -53,6 +60,17 @@ $(function () {
             {
                 title: 'Cari Adı',
                 data: 'name'
+            },
+            {
+                title: 'Bakiye',
+                data: 'balance',
+                render: function (data) {
+                    var v = Number(data || 0);
+                    var txt = v.toLocaleString('tr-TR', { minimumFractionDigits: 2 }) + ' ₺';
+                    if (v > 0) return '<span class="text-danger" title="Müşteri bize borçlu">' + txt + '</span>';
+                    if (v < 0) return '<span class="text-success" title="Biz müşteriye borçluyuz / fazla tahsilat">' + txt + '</span>';
+                    return '<span class="text-muted">' + txt + '</span>';
+                }
             },
             {
                 title: 'Vergi / TC No',
