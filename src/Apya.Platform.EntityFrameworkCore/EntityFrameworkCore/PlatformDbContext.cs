@@ -283,6 +283,7 @@ namespace Apya.Platform.EntityFrameworkCore
                 b.HasIndex(x => new { x.TenantId, x.ExpenseDate });
                 b.HasIndex(x => new { x.TenantId, x.Category });
                 b.HasIndex(x => x.ProjectId);
+                b.HasIndex(x => x.TaskId);
                 b.HasIndex(x => x.CustomerId);
             });
 
@@ -298,6 +299,7 @@ namespace Apya.Platform.EntityFrameworkCore
                 b.HasIndex(x => new { x.TenantId, x.IncomeDate });
                 b.HasIndex(x => new { x.TenantId, x.Category });
                 b.HasIndex(x => x.ProjectId);
+                b.HasIndex(x => x.TaskId);
                 b.HasIndex(x => x.CustomerId);
             });
 

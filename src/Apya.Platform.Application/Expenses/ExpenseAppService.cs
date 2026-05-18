@@ -55,6 +55,8 @@ public class ExpenseAppService :
             query = query.Where(x => x.CashAccountId == input.CashAccountId.Value);
         if (input.ProjectId.HasValue)
             query = query.Where(x => x.ProjectId == input.ProjectId.Value);
+        if (input.TaskId.HasValue)
+            query = query.Where(x => x.TaskId == input.TaskId.Value);
         if (input.CustomerId.HasValue)
             query = query.Where(x => x.CustomerId == input.CustomerId.Value);
         if (input.FromDate.HasValue)

@@ -24,6 +24,8 @@ public class IncomeEntry : FullAuditedAggregateRoot<Guid>, IMultiTenant
     public Guid? CashAccountId { get; set; }
 
     public Guid? ProjectId { get; set; }
+    /// <summary>APYA-143: Opsiyonel task etiketi — task bazlı maliyet kırılımı.</summary>
+    public Guid? TaskId { get; set; }
     public Guid? CustomerId { get; set; }
     public string? Description { get; set; }
 
@@ -40,6 +42,7 @@ public class IncomeEntry : FullAuditedAggregateRoot<Guid>, IMultiTenant
         Guid? projectId = null,
         Guid? customerId = null,
         string? description = null,
+        Guid? taskId = null,
         Guid? tenantId = null) : base(id)
     {
         TenantId = tenantId;
@@ -50,6 +53,7 @@ public class IncomeEntry : FullAuditedAggregateRoot<Guid>, IMultiTenant
         Currency = string.IsNullOrWhiteSpace(currency) ? "TRY" : currency.Trim().ToUpperInvariant();
         CashAccountId = cashAccountId;
         ProjectId = projectId;
+        TaskId = taskId;
         CustomerId = customerId;
         Description = description;
     }

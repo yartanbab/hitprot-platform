@@ -26,6 +26,9 @@ public class Expense : FullAuditedAggregateRoot<Guid>, IMultiTenant
     /// <summary>Opsiyonel proje ilişkisi (proje bütçesine yansıtmak için).</summary>
     public Guid? ProjectId { get; set; }
 
+    /// <summary>APYA-143: Opsiyonel task etiketi — task bazlı maliyet kırılımı.</summary>
+    public Guid? TaskId { get; set; }
+
     /// <summary>Opsiyonel cari ilişkisi.</summary>
     public Guid? CustomerId { get; set; }
 
@@ -44,6 +47,7 @@ public class Expense : FullAuditedAggregateRoot<Guid>, IMultiTenant
         Guid? projectId = null,
         Guid? customerId = null,
         string? description = null,
+        Guid? taskId = null,
         Guid? tenantId = null) : base(id)
     {
         TenantId = tenantId;
@@ -56,6 +60,7 @@ public class Expense : FullAuditedAggregateRoot<Guid>, IMultiTenant
         Category = category;
         Currency = string.IsNullOrWhiteSpace(currency) ? "TRY" : currency.Trim().ToUpperInvariant();
         ProjectId = projectId;
+        TaskId = taskId;
         CustomerId = customerId;
         Description = description;
     }
