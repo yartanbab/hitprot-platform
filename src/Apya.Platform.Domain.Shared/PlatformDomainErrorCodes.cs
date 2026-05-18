@@ -18,6 +18,10 @@ public static class PlatformDomainErrorCodes
     public const string CustomerNameRequired = "Platform:Customer:NameRequired";
     public const string CustomerFieldTooLong = "Platform:Customer:FieldTooLong";
 
+    // --- Cari Hareket (CustomerLedger) Modülü — APYA-142 ---
+    public const string CustomerLedgerCustomerRequired = "Platform:CustomerLedger:CustomerRequired";
+    public const string CustomerLedgerAmountInvalid = "Platform:CustomerLedger:AmountInvalid";
+
     // --- Kasa (CashAccount) Modülü — APYA-133 ---
     public const string CashAccountNameRequired = "Platform:CashAccount:NameRequired";
     public const string CashAccountFieldTooLong = "Platform:CashAccount:FieldTooLong";
