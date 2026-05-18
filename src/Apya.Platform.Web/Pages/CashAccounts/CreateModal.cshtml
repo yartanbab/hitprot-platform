@@ -14,7 +14,14 @@
                     <abp-select asp-for="CashAccount.Type" asp-items="Model.Types" label="Kasa Türü" />
                 </abp-column>
                 <abp-column size-md="_3">
-                    <abp-select asp-for="CashAccount.Currency" asp-items="Model.Currencies" label="Para Birimi" />
+                    <div class="mb-3">
+                        <label class="form-label">Para Birimi *</label>
+                        <select asp-for="CashAccount.Currency" class="form-select">
+                            <option value="TRY">₺ TRY</option>
+                            <option value="USD">$ USD</option>
+                            <option value="EUR">€ EUR</option>
+                        </select>
+                    </div>
                 </abp-column>
                 <abp-column size-md="_3">
                     <abp-input asp-for="CashAccount.OpeningBalance" label="Açılış Bakiyesi" />
