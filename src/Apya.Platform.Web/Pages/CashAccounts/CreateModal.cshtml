@@ -14,12 +14,16 @@
                     <abp-select asp-for="CashAccount.Type" asp-items="Model.Types" label="Kasa Türü" />
                 </abp-column>
                 <abp-column size-md="_3">
+                    @* asp-for KULLANMA: string [StringLength(3,3)] → <select>'te jQuery
+                       unobtrusive 'length' kuralı "3 seçili option" sanıp sessizce bloklar
+                       (APYA-148/BUG-B). Manuel name ile client-val attribute üretilmez;
+                       sunucu ValidateModel() yine "TRY"yi 3 char olarak doğrular. *@
                     <div class="mb-3">
-                        <label class="form-label">Para Birimi *</label>
-                        <select asp-for="CashAccount.Currency" class="form-select">
-                            <option value="TRY">₺ TRY</option>
-                            <option value="USD">$ USD</option>
-                            <option value="EUR">€ EUR</option>
+                        <label class="form-label" for="CashAccount_Currency">Para Birimi *</label>
+                        <select name="CashAccount.Currency" id="CashAccount_Currency" class="form-select">
+                            <option value="TRY" selected="@(Model.CashAccount.Currency == "TRY")">₺ TRY</option>
+                            <option value="USD" selected="@(Model.CashAccount.Currency == "USD")">$ USD</option>
+                            <option value="EUR" selected="@(Model.CashAccount.Currency == "EUR")">€ EUR</option>
                         </select>
                     </div>
                 </abp-column>
