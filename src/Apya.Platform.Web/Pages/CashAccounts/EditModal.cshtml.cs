@@ -20,7 +20,6 @@ public class EditModalModel : AbpPageModel
     public CreateUpdateCashAccountDto CashAccount { get; set; } = new();
 
     public List<SelectListItem> Types { get; set; } = new();
-    public List<SelectListItem> Currencies { get; set; } = new();
 
     public EditModalModel(ICashAccountAppService cashAccountAppService)
     {
@@ -57,12 +56,6 @@ public class EditModalModel : AbpPageModel
             new("Nakit", ((int)CashAccountType.Cash).ToString()),
             new("Banka", ((int)CashAccountType.Bank).ToString()),
             new("Kredi Kartı", ((int)CashAccountType.CreditCard).ToString())
-        };
-        Currencies = new List<SelectListItem>
-        {
-            new("₺ TRY", "TRY"),
-            new("$ USD", "USD"),
-            new("€ EUR", "EUR")
         };
     }
 }
