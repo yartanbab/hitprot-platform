@@ -5,7 +5,6 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Volo.Abp.BackgroundWorkers;
-using Volo.Abp.Domain.Repositories;
 using Volo.Abp.EventBus.Local;
 using Volo.Abp.Threading;
 using Volo.Abp.Uow;
@@ -25,12 +24,12 @@ public class TaskDeadlineWorker : AsyncPeriodicBackgroundWorkerBase
         Timer.Period = 60 * 60 * 1000; // 60 dakika (milisaniye cinsinden)
     }
 
-    [UnitOfWork] // Veritabanı işlemi olacağı için transaction açıyoruz
+    [UnitOfWork]
     protected override async Task DoWorkAsync(PeriodicBackgroundWorkerContext workerContext)
     {
         Logger.LogInformation("TaskDeadlineWorker çalışıyor: Süresi yaklaşan görevler aranıyor...");
 
-        var taskRepository = workerContext.ServiceProvider.GetRequiredService<IRepository<TaskItem, Guid>>();
+        var taskRepository = workerContext.ServiceProvider.GetRequiredService<ITaskItemRepository>();
         var localEventBus = workerContext.ServiceProvider.GetRequiredService<ILocalEventBus>();
         var clock = workerContext.ServiceProvider.GetRequiredService<Volo.Abp.Timing.IClock>();
         var dataFilter = workerContext.ServiceProvider.GetRequiredService<IDataFilter<IMultiTenant>>();
@@ -41,15 +40,16 @@ public class TaskDeadlineWorker : AsyncPeriodicBackgroundWorkerBase
 
         List<TaskItem> dueTasks;
 
-        // 1. Tüm tenant'lardaki görevleri okuyabilmek için filtreyi geçici olarak devre dışı bırak
+        // Tüm tenant'lardaki görevleri okuyabilmek için filtreyi geçici olarak devre dışı bırak
         using (dataFilter.Disable())
         {
-            var query = await taskRepository.GetQueryableAsync();
-            dueTasks = query
-                .Where(t => t.Status != Apya.Platform.Tasks.TaskStatus.Done && t.Status != Apya.Platform.Tasks.TaskStatus.Cancelled)
-                .Where(t => t.DueDate != null && t.DueDate > now && t.DueDate <= limitDate)
-                .Where(t => !t.IsDeadlineWarningSent)
-                .ToList();
+            dueTasks = await taskRepository.GetListAsync(t =>
+                t.Status != Apya.Platform.Tasks.TaskStatus.Done &&
+                t.Status != Apya.Platform.Tasks.TaskStatus.Cancelled &&
+                t.DueDate != null &&
+                t.DueDate > now &&
+                t.DueDate <= limitDate &&
+                !t.IsDeadlineWarningSent);
         }
 
         if (!dueTasks.Any())
@@ -58,17 +58,17 @@ public class TaskDeadlineWorker : AsyncPeriodicBackgroundWorkerBase
             return;
         }
 
-        // 2. GAP-009: Tenant izolasyonunu sağlamak için görevleri TenantId'ye göre grupla
+        // GAP-009: Tenant izolasyonu — olayları doğru tenant context'inde yayınla
         var taskGroups = dueTasks.GroupBy(t => t.TenantId);
 
         foreach (var tenantGroup in taskGroups)
         {
-            // 3. Orijinal Tenant context'ine geçiş yap (Güvenlik Kalkanı)
             using (currentTenant.Change(tenantGroup.Key))
             {
+                var groupIds = new List<Guid>();
+
                 foreach (var task in tenantGroup)
                 {
-                    // 4. Event fırlat (Böylece event handler'lar doğru tenant context'inde çalışır)
                     await localEventBus.PublishAsync(new TaskDueSoonEto
                     {
                         TaskId = task.Id,
@@ -78,12 +78,15 @@ public class TaskDeadlineWorker : AsyncPeriodicBackgroundWorkerBase
                         DueDate = task.DueDate!.Value
                     });
 
-                    // 5. Tekrar gitmemesi için işaretle
-                    task.MarkDeadlineWarningAsSent();
-                    await taskRepository.UpdateAsync(task);
-                    
-                    Logger.LogInformation("Görevin deadline uyarısı fırlatıldı ve işaretlendi. TaskId: {TaskId}, TenantId: {TenantId}", task.Id, tenantGroup.Key);
+                    groupIds.Add(task.Id);
                 }
+
+                // Tek bir SQL UPDATE — N×UpdateAsync yerine
+                await taskRepository.BulkMarkDeadlineWarningSentAsync(groupIds);
+
+                Logger.LogInformation(
+                    "TenantId={TenantId}: {Count} görev için deadline uyarısı gönderildi.",
+                    tenantGroup.Key, groupIds.Count);
             }
         }
     }
