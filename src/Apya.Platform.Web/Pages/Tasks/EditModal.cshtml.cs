@@ -1,10 +1,9 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Apya.Platform.Tasks;
-using Microsoft.AspNetCore.Hosting;
+using Apya.Platform.Web.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -29,12 +28,12 @@ namespace Apya.Platform.Web.Pages.Tasks
         public List<TaskAttachmentDto> Attachments { get; set; } = new();
 
         private readonly ITaskAppService _taskAppService;
-        private readonly IWebHostEnvironment _environment;
+        private readonly IUploadedFileStorage _fileStorage;
 
-        public EditModalModel(ITaskAppService taskAppService, IWebHostEnvironment environment)
+        public EditModalModel(ITaskAppService taskAppService, IUploadedFileStorage fileStorage)
         {
             _taskAppService = taskAppService;
-            _environment = environment;
+            _fileStorage = fileStorage;
         }
 
         public async Task OnGetAsync()
@@ -124,31 +123,7 @@ namespace Apya.Platform.Web.Pages.Tasks
         {
             if (file == null || file.Length == 0) return NoContent();
 
-            // BUG-004: Güvenlik — Yalnızca izin verilen dosya uzantıları kabul edilir
-            var allowedExtensions = new[] { ".pdf", ".docx", ".doc", ".xlsx", ".xls", ".pptx", ".ppt", ".png", ".jpg", ".jpeg", ".gif", ".txt", ".csv", ".zip", ".rar" };
-            var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
-            if (!allowedExtensions.Contains(ext))
-            {
-                throw new Volo.Abp.BusinessException(PlatformDomainErrorCodes.FileUnsupportedExtension);
-            }
-
-            // Dosya boyutu kontrolü (maks 25 MB)
-            if (file.Length > 25 * 1024 * 1024)
-            {
-                throw new Volo.Abp.BusinessException(PlatformDomainErrorCodes.FileSizeExceeded);
-            }
-
-            var uploadsFolder = Path.Combine(_environment.WebRootPath, "uploads");
-            if (!Directory.Exists(uploadsFolder)) Directory.CreateDirectory(uploadsFolder);
-
-            var storedFileName = Guid.NewGuid().ToString() + ext; // ext zaten doğrulanmış
-            var filePath = Path.Combine(uploadsFolder, storedFileName);
-
-            using (var stream = new FileStream(filePath, FileMode.Create))
-            {
-                await file.CopyToAsync(stream);
-            }
-
+            var storedFileName = await _fileStorage.StoreAsync(file);
             await _taskAppService.AddAttachmentAsync(taskId, file.FileName, storedFileName, file.Length);
             return NoContent();
         }
