@@ -9,10 +9,6 @@ using Volo.Abp.Application.Services;
 using Volo.Abp.Domain.Repositories;
 using Apya.Platform.Invoices.Dtos;
 using Apya.Platform.Projects;
-using Apya.Platform.CashAccounts;
-using Apya.Platform.CashMovements;
-using Apya.Platform.ExchangeRates;
-using Apya.Platform.CustomerLedger;
 
 namespace Apya.Platform.Invoices;
 
@@ -22,27 +18,18 @@ public class InvoiceAppService : ApplicationService, IInvoiceAppService
     private readonly IRepository<Invoice, Guid> _invoiceRepository;
     private readonly IRepository<Payment, Guid> _paymentRepository;
     private readonly IRepository<Project, Guid> _projectRepository;
-    private readonly IRepository<CashAccount, Guid> _cashAccountRepository;
-    private readonly IRepository<CashMovement, Guid> _cashMovementRepository;
-    private readonly IRepository<ExchangeRate, Guid> _exchangeRateRepository;
-    private readonly IRepository<CustomerLedgerEntry, Guid> _customerLedgerRepository;
+    private readonly InvoiceManager _invoiceManager;
 
     public InvoiceAppService(
         IRepository<Invoice, Guid> invoiceRepository,
         IRepository<Payment, Guid> paymentRepository,
         IRepository<Project, Guid> projectRepository,
-        IRepository<CashAccount, Guid> cashAccountRepository,
-        IRepository<CashMovement, Guid> cashMovementRepository,
-        IRepository<ExchangeRate, Guid> exchangeRateRepository,
-        IRepository<CustomerLedgerEntry, Guid> customerLedgerRepository)
+        InvoiceManager invoiceManager)
     {
         _invoiceRepository = invoiceRepository;
         _paymentRepository = paymentRepository;
         _projectRepository = projectRepository;
-        _cashAccountRepository = cashAccountRepository;
-        _cashMovementRepository = cashMovementRepository;
-        _exchangeRateRepository = exchangeRateRepository;
-        _customerLedgerRepository = customerLedgerRepository;
+        _invoiceManager = invoiceManager;
     }
 
     public async Task<PagedResultDto<InvoiceDto>> GetListAsync(PagedAndSortedResultRequestDto input)
@@ -62,17 +49,17 @@ public class InvoiceAppService : ApplicationService, IInvoiceAppService
             query.OrderBy(sorting).PageBy(input.SkipCount, input.MaxResultCount)
         );
 
-        if (!items.Any()) 
+        if (!items.Any())
             return new PagedResultDto<InvoiceDto>(totalCount, new List<InvoiceDto>());
 
-        // 2. Alt Sorgular: Sadece elimizdeki ID'lere ait Proje ve Ödemeleri çek.
         var invoiceIds = items.Select(x => x.Id).ToList();
         var projectIds = items.Select(x => x.ProjectId).Distinct().ToList();
 
         var projects = await _projectRepository.GetListAsync(p => projectIds.Contains(p.Id));
         var payments = await _paymentRepository.GetListAsync(p => invoiceIds.Contains(p.InvoiceId));
 
-        var dtos = items.Select(x => {
+        var dtos = items.Select(x =>
+        {
             var dto = MapToDto(x, projects.FirstOrDefault(p => p.Id == x.ProjectId));
             dto.PaidAmount = payments.Where(p => p.InvoiceId == x.Id).Sum(p => p.Amount);
             return dto;
@@ -86,7 +73,7 @@ public class InvoiceAppService : ApplicationService, IInvoiceAppService
         var invoice = await _invoiceRepository.GetAsync(id);
         var project = await _projectRepository.FindAsync(invoice.ProjectId);
         var payments = await _paymentRepository.GetListAsync(p => p.InvoiceId == id);
-        
+
         var dto = MapToDto(invoice, project);
         dto.PaidAmount = payments.Sum(p => p.Amount);
         return dto;
@@ -94,9 +81,11 @@ public class InvoiceAppService : ApplicationService, IInvoiceAppService
 
     public async Task<InvoiceDto> CreateAsync(CreateInvoiceDto input)
     {
-        var invoice = new Invoice(
-            GuidGenerator.Create(),
-            CurrentTenant.Id,
+        var items = input.Items
+            .Select(i => new InvoiceItemDescriptor(i.Description, i.Quantity, i.UnitPrice))
+            .ToList();
+
+        var invoice = await _invoiceManager.CreateAsync(
             input.ProjectId,
             input.InvoiceNumber,
             input.InvoiceDate,
@@ -105,104 +94,15 @@ public class InvoiceAppService : ApplicationService, IInvoiceAppService
             input.Currency,
             input.Direction,
             input.CustomerId,
-            input.TaskId);
-
-        foreach (var item in input.Items)
-        {
-            invoice.AddItem(GuidGenerator.Create(), item.Description, item.Quantity, item.UnitPrice);
-        }
-
-        await _invoiceRepository.InsertAsync(invoice, autoSave: true);
-
-        // APYA-142c/146: Fatura tahakkuku — Satış: cari Borç (müşteri bize borçlanır),
-        // Alış: cari Alacak (biz tedarikçiye borçlanırız). Tek model, simetrik.
-        if (invoice.CustomerId.HasValue && invoice.TotalAmount > 0)
-        {
-            var isSales = invoice.Direction == InvoiceDirection.Sales;
-            await _customerLedgerRepository.InsertAsync(new CustomerLedgerEntry(
-                GuidGenerator.Create(),
-                invoice.CustomerId.Value,
-                isSales ? CustomerLedgerDirection.Debit : CustomerLedgerDirection.Credit,
-                invoice.TotalAmount,
-                invoice.InvoiceDate,
-                CustomerLedgerSource.Invoice,
-                invoice.Currency,
-                invoice.Id,
-                invoice.ProjectId,
-                (isSales ? "Satış faturası: " : "Alış faturası: ") + invoice.InvoiceNumber,
-                CurrentTenant.Id), autoSave: true);
-        }
+            input.TaskId,
+            items);
 
         return await GetAsync(invoice.Id);
     }
 
     public async Task AddPaymentAsync(Guid invoiceId, decimal amount, string method, string reference, Guid? cashAccountId = null)
     {
-        var invoice = await _invoiceRepository.GetAsync(invoiceId);
-
-        var payment = new Payment(GuidGenerator.Create(), invoiceId, amount, Clock.Now, method)
-        {
-            ReferenceNumber = reference,
-            CashAccountId = cashAccountId
-        };
-        await _paymentRepository.InsertAsync(payment, autoSave: true);
-
-        var isSalesInvoice = invoice.Direction == InvoiceDirection.Sales;
-
-        // APYA-136/146: Kasa seçildiyse otomatik kasa hareketi (FX dönüşümlü).
-        // Satış ödemesi = tahsilat (kasa GİRİŞ). Alış ödemesi = tedarikçiye ödeme (kasa ÇIKIŞ).
-        if (cashAccountId.HasValue && amount > 0)
-        {
-            var cash = await _cashAccountRepository.GetAsync(cashAccountId.Value);
-
-            decimal? rate = null;
-            if (!string.Equals(invoice.Currency?.Trim(), cash.Currency?.Trim(), StringComparison.OrdinalIgnoreCase))
-            {
-                var er = (await _exchangeRateRepository.GetListAsync(
-                        x => x.FromCurrency == invoice.Currency && x.ToCurrency == cash.Currency))
-                    .OrderByDescending(x => x.RateDate)
-                    .FirstOrDefault();
-                rate = er?.Rate;
-            }
-
-            var cashAmount = PaymentCashConverter.ToCashCurrency(amount, invoice.Currency, cash.Currency, rate);
-
-            await _cashMovementRepository.InsertAsync(new CashMovement(
-                GuidGenerator.Create(),
-                cashAccountId.Value,
-                isSalesInvoice ? CashMovementDirection.In : CashMovementDirection.Out,
-                cashAmount,
-                Clock.Now,
-                (isSalesInvoice ? "Fatura tahsilatı: " : "Tedarikçi ödemesi: ") + invoice.InvoiceNumber,
-                CashMovementSource.Invoice,
-                payment.Id,
-                CurrentTenant.Id), autoSave: true);
-        }
-
-        // APYA-142c/146: Ödeme → cari tahakkuku. Satış: Alacak (müşteri borcu azalır).
-        // Alış: Borç (tedarikçiye olan borcumuz azalır). Fatura tahakkuku ile simetrik.
-        if (invoice.CustomerId.HasValue && amount > 0)
-        {
-            await _customerLedgerRepository.InsertAsync(new CustomerLedgerEntry(
-                GuidGenerator.Create(),
-                invoice.CustomerId.Value,
-                isSalesInvoice ? CustomerLedgerDirection.Credit : CustomerLedgerDirection.Debit,
-                amount,
-                Clock.Now,
-                CustomerLedgerSource.Payment,
-                invoice.Currency,
-                payment.Id,
-                invoice.ProjectId,
-                (isSalesInvoice ? "Tahsilat: " : "Tedarikçi ödemesi: ") + invoice.InvoiceNumber,
-                CurrentTenant.Id), autoSave: true);
-        }
-
-        // Durumu güncelle
-        var payments = await _paymentRepository.GetListAsync(p => p.InvoiceId == invoiceId);
-        var totalPaid = payments.Sum(p => p.Amount);
-
-        invoice.UpdateStatus(totalPaid);
-        await _invoiceRepository.UpdateAsync(invoice);
+        await _invoiceManager.RecordPaymentAsync(invoiceId, amount, method, reference, cashAccountId);
     }
 
     public async Task<List<PaymentDto>> GetPaymentsAsync(Guid invoiceId)
@@ -249,7 +149,8 @@ public class InvoiceAppService : ApplicationService, IInvoiceAppService
             Currency = x.Currency,
             Status = x.Status,
             CreationTime = x.CreationTime,
-            Items = x.Items.Select(i => new InvoiceItemDto {
+            Items = x.Items.Select(i => new InvoiceItemDto
+            {
                 Description = i.Description,
                 Quantity = i.Quantity,
                 UnitPrice = i.UnitPrice,
