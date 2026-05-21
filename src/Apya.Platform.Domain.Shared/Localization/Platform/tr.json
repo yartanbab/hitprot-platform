@@ -2,6 +2,28 @@
     "culture": "tr",
     "texts": {
         "Menu:Home": "Ana Sayfa",
+        "Menu:Dashboard": "Gösterge Paneli",
+        "Menu:Work": "İşler",
+        "Menu:Projects": "Projeler",
+        "Menu:Tasks": "Görevler",
+        "Menu:KanbanBoard": "Kanban Pano",
+        "Menu:Finance": "Finans",
+        "Menu:Customers": "Cariler",
+        "Menu:CashAccounts": "Kasalar",
+        "Menu:CashMovements": "Kasa Hareketleri",
+        "Menu:ExchangeRates": "Döviz Kurları",
+        "Menu:FxRevaluation": "Yıl Sonu Değerleme",
+        "Menu:Expenses": "Giderler",
+        "Menu:Incomes": "Gelirler (Hibe/Faturasız)",
+        "Menu:Invoices": "Faturalar & Ödemeler",
+        "Menu:ExpenseCapture": "Masraf Yakala",
+        "Menu:TrialBalance": "Mizan (Özet)",
+        "Menu:Content": "İçerik",
+        "Menu:Documents": "Wiki / Belgeler",
+        "Menu:DynamicAssets": "Şablonlar & Formlar",
+        "Menu:Reports": "Raporlar & Analiz",
+        "Menu:AiSettings": "AI Ayarları",
+
         "Permission:Platform": "Platform Yönetimi",
 
         "Permission:Projects": "Proje Yönetimi",
@@ -28,6 +50,22 @@
         "Permission:Notifications.Delete": "Bildirim Silme",
         "Permission:Calendars": "Takvim Entegrasyonu",
         "Permission:Calendars.Connect": "Hesap Bağlama",
+
+        "Permission:Invoices": "Fatura Yönetimi",
+        "Permission:Invoices.Create": "Fatura Oluşturma",
+        "Permission:Invoices.Edit": "Fatura Düzenleme",
+        "Permission:Invoices.Delete": "Fatura Silme",
+
+        "Permission:Reports": "Raporlar",
+        "Permission:Reports.TrialBalance": "Mizan Raporu",
+
+        "Permission:DynamicAssets": "Dinamik Varlık Yönetimi",
+        "Permission:DynamicAssets.Create": "Şablon/Form Oluşturma",
+        "Permission:DynamicAssets.Edit": "Şablon/Form Düzenleme",
+        "Permission:DynamicAssets.Delete": "Şablon/Form Silme",
+
+        "Permission:TenantSettings": "Tenant Ayarları",
+        "Permission:TenantSettings.ManageAi": "AI Ayarlarını Yönet",
 
         "Platform:Task:TitleRequired": "Görev başlığı boş bırakılamaz.",
         "Platform:Task:ViewPrivateDenied": "Bu gizli görevi görüntüleme yetkiniz yok. Görevi yalnızca oluşturanlar ve atananlar görebilir.",

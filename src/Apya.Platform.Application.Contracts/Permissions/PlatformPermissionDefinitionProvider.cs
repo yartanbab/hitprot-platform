@@ -82,6 +82,26 @@ public class PlatformPermissionDefinitionProvider : PermissionDefinitionProvider
         // --- TAKVİM YETKİLERİ ---
         var calendarsPermission = myGroup.AddPermission(PlatformPermissions.Calendars.Default, L("Permission:Calendars"));
         calendarsPermission.AddChild(PlatformPermissions.Calendars.Connect, L("Permission:Calendars.Connect"));
+
+        // --- FATURA YETKİLERİ ---
+        var invoicesPermission = myGroup.AddPermission(PlatformPermissions.Invoices.Default, L("Permission:Invoices"));
+        invoicesPermission.AddChild(PlatformPermissions.Invoices.Create, L("Permission:Invoices.Create"));
+        invoicesPermission.AddChild(PlatformPermissions.Invoices.Edit, L("Permission:Invoices.Edit"));
+        invoicesPermission.AddChild(PlatformPermissions.Invoices.Delete, L("Permission:Invoices.Delete"));
+
+        // --- RAPOR YETKİLERİ ---
+        var reportsPermission = myGroup.AddPermission(PlatformPermissions.Reports.Default, L("Permission:Reports"));
+        reportsPermission.AddChild(PlatformPermissions.Reports.TrialBalance, L("Permission:Reports.TrialBalance"));
+
+        // --- DİNAMİK VARLIK YETKİLERİ ---
+        var dynamicAssetsPermission = myGroup.AddPermission(PlatformPermissions.DynamicAssets.Default, L("Permission:DynamicAssets"));
+        dynamicAssetsPermission.AddChild(PlatformPermissions.DynamicAssets.Create, L("Permission:DynamicAssets.Create"));
+        dynamicAssetsPermission.AddChild(PlatformPermissions.DynamicAssets.Edit, L("Permission:DynamicAssets.Edit"));
+        dynamicAssetsPermission.AddChild(PlatformPermissions.DynamicAssets.Delete, L("Permission:DynamicAssets.Delete"));
+
+        // --- TENANT AYAR YETKİLERİ ---
+        var tenantSettingsPermission = myGroup.AddPermission(PlatformPermissions.TenantSettings.Default, L("Permission:TenantSettings"));
+        tenantSettingsPermission.AddChild(PlatformPermissions.TenantSettings.ManageAi, L("Permission:TenantSettings.ManageAi"));
     }
 
     private static LocalizableString L(string name)
