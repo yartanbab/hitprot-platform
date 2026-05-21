@@ -27,6 +27,23 @@
                 }
             });
 
+            // TD-W-006: Reconnect lifecycle — kullanıcıyı bağlantı durumundan haberdar et.
+            var l = abp.localization.getResource('Platform');
+
+            connection.onreconnecting(function(error) {
+                console.warn('[NotificationHub] reconnecting:', error);
+                abp.notify.warn(l('Connection:Reconnecting'), l('Connection:Title'));
+            });
+
+            connection.onreconnected(function(connectionId) {
+                abp.notify.success(l('Connection:Reconnected'), l('Connection:Title'));
+            });
+
+            connection.onclose(function(error) {
+                console.error('[NotificationHub] connection closed:', error);
+                abp.notify.error(l('Connection:Lost'), l('Connection:ErrorTitle'), { sticky: true });
+            });
+
             connection.start().catch(err => console.error("SignalR hatası: " + err.toString()));
         }
 

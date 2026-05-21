@@ -67,6 +67,12 @@
         "Permission:TenantSettings": "Tenant Ayarları",
         "Permission:TenantSettings.ManageAi": "AI Ayarlarını Yönet",
 
+        "Connection:Reconnecting": "Bağlantı geçici olarak kesildi, yeniden bağlanıyor...",
+        "Connection:Reconnected": "Bağlantı geri sağlandı.",
+        "Connection:Lost": "Sunucu bağlantısı koptu. Lütfen sayfayı yenileyin.",
+        "Connection:Title": "Bağlantı",
+        "Connection:ErrorTitle": "Bağlantı Hatası",
+
         "Common:All": "Tümü",
         "Common:Everyone": "Herkes",
         "Common:Filter": "Filtrele",
