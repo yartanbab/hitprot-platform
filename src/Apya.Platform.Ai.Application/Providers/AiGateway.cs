@@ -4,7 +4,6 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Polly;
 using Polly.CircuitBreaker;
-using Polly.Retry;
 using Volo.Abp.DependencyInjection;
 
 namespace Apya.Platform.Ai.Providers;
@@ -14,29 +13,16 @@ public class AiGateway : IAiProvider, ITransientDependency
     public string Name => $"gateway({_inner.Name})";
 
     private readonly IAiProvider _inner;
+    private readonly ResiliencePipeline<AiCompletionResult> _pipeline;
     private readonly ILogger<AiGateway> _logger;
 
-    private static readonly ResiliencePipeline<AiCompletionResult> Pipeline =
-        new ResiliencePipelineBuilder<AiCompletionResult>()
-            .AddRetry(new RetryStrategyOptions<AiCompletionResult>
-            {
-                MaxRetryAttempts = 3,
-                BackoffType = DelayBackoffType.Exponential,
-                Delay = TimeSpan.FromSeconds(1),
-                UseJitter = true
-            })
-            .AddCircuitBreaker(new CircuitBreakerStrategyOptions<AiCompletionResult>
-            {
-                FailureRatio = 0.5,
-                SamplingDuration = TimeSpan.FromSeconds(30),
-                MinimumThroughput = 5,
-                BreakDuration = TimeSpan.FromSeconds(60)
-            })
-            .Build();
-
-    public AiGateway(OpenAiProvider inner, ILogger<AiGateway> logger)
+    public AiGateway(
+        OpenAiProvider inner,
+        ResiliencePipeline<AiCompletionResult> pipeline,
+        ILogger<AiGateway> logger)
     {
         _inner = inner;
+        _pipeline = pipeline;
         _logger = logger;
     }
 
@@ -47,7 +33,7 @@ public class AiGateway : IAiProvider, ITransientDependency
     {
         try
         {
-            return await Pipeline.ExecuteAsync(
+            return await _pipeline.ExecuteAsync(
                 async ct => await _inner.CompleteAsync(systemPrompt, userMessage, ct),
                 cancellationToken);
         }
