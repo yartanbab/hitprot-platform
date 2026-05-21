@@ -112,4 +112,36 @@ public static class PlatformPermissions
         public const string Default = GroupName + ".Calendars";
         public const string Connect = Default + ".Connect";
     }
+
+    // --- FATURA YETKİLERİ ---
+    public static class Invoices
+    {
+        public const string Default = GroupName + ".Invoices";
+        public const string Create = Default + ".Create";
+        public const string Edit = Default + ".Edit";
+        public const string Delete = Default + ".Delete";
+    }
+
+    // --- RAPOR YETKİLERİ ---
+    public static class Reports
+    {
+        public const string Default = GroupName + ".Reports";
+        public const string TrialBalance = Default + ".TrialBalance";
+    }
+
+    // --- DİNAMİK VARLIK (FORM/ŞABLON) YETKİLERİ ---
+    public static class DynamicAssets
+    {
+        public const string Default = GroupName + ".DynamicAssets";
+        public const string Create = Default + ".Create";
+        public const string Edit = Default + ".Edit";
+        public const string Delete = Default + ".Delete";
+    }
+
+    // --- TENANT AYAR YETKİLERİ (AI vb.) ---
+    public static class TenantSettings
+    {
+        public const string Default = GroupName + ".TenantSettings";
+        public const string ManageAi = Default + ".ManageAi";
+    }
 }
