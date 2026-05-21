@@ -12,7 +12,7 @@ namespace Apya.Platform.Tasks;
 /// </summary>
 public class TaskItem : FullAuditedAggregateRoot<Guid>, IMultiTenant
 {
-    public Guid? TenantId { get; set; }
+    public Guid? TenantId { get; private set; }
     public string Title { get; private set; } = null!;
     public string? Description { get; private set; }
 
@@ -64,8 +64,10 @@ public class TaskItem : FullAuditedAggregateRoot<Guid>, IMultiTenant
         DateTime? dueDate = null,
         TaskPriority priority = TaskPriority.Medium,
         Guid? assigneeId = null,
-        bool isPrivate = false) : base(id)
+        bool isPrivate = false,
+        Guid? tenantId = null) : base(id)
     {
+        TenantId = tenantId;
         SetTitle(title);
         Description = description;
         ProjectId = projectId;

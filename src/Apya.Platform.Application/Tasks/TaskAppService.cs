@@ -137,7 +137,8 @@ namespace Apya.Platform.Tasks
                 dueDate: input.DueDate,
                 priority: input.Priority,
                 assigneeId: input.AssigneeId,
-                isPrivate: input.IsPrivate
+                isPrivate: input.IsPrivate,
+                tenantId: CurrentTenant.Id
             );
 
             // Durum varsayılandan farklıysa set et

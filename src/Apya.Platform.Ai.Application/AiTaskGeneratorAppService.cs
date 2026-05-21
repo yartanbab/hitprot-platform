@@ -92,9 +92,9 @@ public class AiTaskGeneratorAppService : ApplicationService, IAiTaskGeneratorApp
                 description: suggestion.Description,
                 startDate: DateTime.Now,
                 dueDate: suggestion.SuggestedDueDate,
-                priority: (TaskPriority)suggestion.SuggestedPriority
+                priority: (TaskPriority)suggestion.SuggestedPriority,
+                tenantId: CurrentTenant.Id
             );
-            taskItem.TenantId = project.TenantId;
             await _taskRepository.InsertAsync(taskItem, autoSave: true);
             createdCount++;
         }

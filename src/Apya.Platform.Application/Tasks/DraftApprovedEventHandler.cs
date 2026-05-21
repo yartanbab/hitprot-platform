@@ -45,11 +45,9 @@ public class DraftApprovedEventHandler : ILocalEventHandler<DraftApprovedEto>, I
             dueDate: null,
             priority: eventData.Priority,
             assigneeId: null,
-            isPrivate: false
+            isPrivate: false,
+            tenantId: eventData.TenantId
         );
-
-        // IMultiTenant setter (TaskItem has public TenantId in this codebase)
-        task.TenantId = eventData.TenantId;
 
         await _taskRepository.InsertAsync(task);
 
