@@ -21,11 +21,13 @@
                 </abp-card-title>
             </abp-column>
             <abp-column size-md="_6" class="text-end">
-                @* Yetki kontrolü: Sadece izni olanlar butonu görür *@
-                <abp-button id="NewProjectButton"
-                            text="Yeni Proje Ekle"
-                            icon="plus"
-                            button-type="Primary" />
+                @if (await AuthorizationService.IsGrantedAsync(PlatformPermissions.Projects.Create))
+                {
+                    <abp-button id="NewProjectButton"
+                                text="Yeni Proje Ekle"
+                                icon="plus"
+                                button-type="Primary" />
+                }
             </abp-column>
         </abp-row>
     </abp-card-header>

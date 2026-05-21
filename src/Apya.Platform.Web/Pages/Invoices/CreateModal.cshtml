@@ -95,7 +95,7 @@
                         if ($('.invoice-item').length > 1) {
                             $(this).closest('.invoice-item').remove();
                         } else {
-                            abp.notify.warn('En az bir fatura kalemi gereklidir.');
+                            abp.notify.warn(abp.localization.getResource('Platform')('Notify:Invoice:ItemRequired'));
                         }
                     });
                 });

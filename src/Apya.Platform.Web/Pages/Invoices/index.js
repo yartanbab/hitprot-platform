@@ -10,6 +10,12 @@ $(function () {
             searching: false,
             scrollX: true,
             ajax: abp.libs.datatables.createAjax(invoiceService.getList),
+            language: {
+                emptyTable: l('DataTable:Invoice:Empty'),
+                zeroRecords: l('DataTable:Invoice:Empty'),
+                loadingRecords: l('DataTable:Invoice:Loading'),
+                processing: l('DataTable:Invoice:Loading')
+            },
             columnDefs: [
                 {
                     title: 'Fatura No',
@@ -98,7 +104,7 @@ $(function () {
     }
 
     paymentModal.onResult(function () {
-        abp.notify.success('Tahsilat kaydedildi.');
+        abp.notify.success(l('Notify:Invoice:PaymentRecorded'));
         dataTable.ajax.reload();
     });
 
@@ -106,7 +112,7 @@ $(function () {
 
     createModal.onResult(function () {
         dataTable.ajax.reload();
-        abp.notify.success('Fatura başarıyla oluşturuldu.');
+        abp.notify.success(l('Notify:Invoice:Created'));
     });
 
     $('#NewInvoiceButton').click(function (e) {

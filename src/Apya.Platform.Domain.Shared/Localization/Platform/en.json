@@ -41,6 +41,12 @@
     "Permission:TenantSettings": "Tenant Settings",
     "Permission:TenantSettings.ManageAi": "Manage AI Settings",
 
+    "Notify:Invoice:Created": "Invoice created successfully.",
+    "Notify:Invoice:PaymentRecorded": "Payment recorded.",
+    "Notify:Invoice:ItemRequired": "At least one invoice item is required.",
+    "DataTable:Invoice:Empty": "No invoices yet. Use the button at the top right to create one.",
+    "DataTable:Invoice:Loading": "Loading invoices...",
+
     "Welcome": "Welcome",
     "LongWelcomeMessage": "Welcome to the application. This is a startup project based on the ABP framework. For more information, visit abp.io.",
 

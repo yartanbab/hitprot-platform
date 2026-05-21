@@ -67,6 +67,12 @@
         "Permission:TenantSettings": "Tenant Ayarları",
         "Permission:TenantSettings.ManageAi": "AI Ayarlarını Yönet",
 
+        "Notify:Invoice:Created": "Fatura başarıyla oluşturuldu.",
+        "Notify:Invoice:PaymentRecorded": "Tahsilat kaydedildi.",
+        "Notify:Invoice:ItemRequired": "En az bir fatura kalemi gereklidir.",
+        "DataTable:Invoice:Empty": "Henüz fatura yok. Yeni bir fatura oluşturmak için sağ üstteki butonu kullanın.",
+        "DataTable:Invoice:Loading": "Faturalar yükleniyor...",
+
         "Platform:Task:TitleRequired": "Görev başlığı boş bırakılamaz.",
         "Platform:Task:ViewPrivateDenied": "Bu gizli görevi görüntüleme yetkiniz yok. Görevi yalnızca oluşturanlar ve atananlar görebilir.",
         "Platform:Task:ViewImpersonationDenied": "Bu gizli görevi destek yetkisiyle (Impersonation) görüntüleyemezsiniz.",
