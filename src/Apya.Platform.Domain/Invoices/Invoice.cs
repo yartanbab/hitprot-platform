@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
+using System.Linq;
+using Volo.Abp;
 using Volo.Abp.Domain.Entities;
 using Volo.Abp.Domain.Entities.Auditing;
 using Volo.Abp.MultiTenancy;
@@ -9,60 +10,123 @@ namespace Apya.Platform.Invoices;
 
 public class Invoice : FullAuditedAggregateRoot<Guid>, IMultiTenant
 {
-    public Guid? TenantId { get; set; }
-    public Guid ProjectId { get; set; }
-    
-    public string InvoiceNumber { get; set; }
-    public DateTime InvoiceDate { get; set; }
-    public DateTime DueDate { get; set; }
-    
-    public decimal TotalAmount { get; set; }
-    public decimal TaxRate { get; set; } = 20; // Default %20 KDV
-    
-    public string Currency { get; set; } = "TRY";
-    
-    public InvoiceStatus Status { get; set; } = InvoiceStatus.Draft;
-    
-    public string Notes { get; set; }
+    public Guid? TenantId { get; private set; }
+    public Guid ProjectId { get; private set; }
+    public Guid? CustomerId { get; private set; }
+    public InvoiceDirection Direction { get; private set; } = InvoiceDirection.Sales;
+    public Guid? TaskId { get; private set; }
 
-    public ICollection<InvoiceItem> Items { get; set; }
+    public string InvoiceNumber { get; private set; } = null!;
+    public DateTime InvoiceDate { get; private set; }
+    public DateTime DueDate { get; private set; }
 
-    /// <summary>APYA-142: Cari (müşteri/tedarikçi). Eski faturalarda null olabilir.</summary>
-    public Guid? CustomerId { get; set; }
+    public decimal TotalAmount { get; private set; }
+    public decimal TaxRate { get; private set; } = 20;
+    public string Currency { get; private set; } = "TRY";
+    public InvoiceStatus Status { get; private set; } = InvoiceStatus.Draft;
+    public string? Notes { get; private set; }
 
-    /// <summary>APYA-142: Satış (AR/cari Borç) | Alış (AP). Varsayılan Satış.</summary>
-    public InvoiceDirection Direction { get; set; } = InvoiceDirection.Sales;
+    public ICollection<InvoiceItem> Items { get; private set; } = new List<InvoiceItem>();
 
-    /// <summary>APYA-142: Maliyet boyutu — opsiyonel task etiketi (Faz 9).</summary>
-    public Guid? TaskId { get; set; }
+    /// <summary>EF Core için.</summary>
+    protected Invoice() { }
 
-    public Invoice()
+    public Invoice(
+        Guid id,
+        Guid? tenantId,
+        Guid projectId,
+        string invoiceNumber,
+        DateTime invoiceDate,
+        DateTime dueDate,
+        decimal taxRate,
+        string currency,
+        InvoiceDirection direction,
+        Guid? customerId,
+        Guid? taskId) : base(id)
     {
-        Items = new Collection<InvoiceItem>();
-    }
-
-    public Invoice(Guid id, Guid projectId, string invoiceNumber, DateTime invoiceDate, DateTime dueDate) : base(id)
-    {
+        TenantId = tenantId;
         ProjectId = projectId;
-        InvoiceNumber = invoiceNumber;
+        SetInvoiceNumber(invoiceNumber);
         InvoiceDate = invoiceDate;
         DueDate = dueDate;
-        Items = new Collection<InvoiceItem>();
+        SetTaxRate(taxRate);
+        SetCurrency(currency);
+        Direction = direction;
+        CustomerId = customerId;
+        TaskId = taskId;
+        Status = InvoiceStatus.Draft;
+        Items = new List<InvoiceItem>();
     }
+
+    // ======================== Domain Methods ========================
+
+    /// <summary>
+    /// Faturaya kalem ekler. Yalnızca Draft durumundaki faturaya ekleme yapılabilir.
+    /// Ekleme sonrası TotalAmount otomatik yeniden hesaplanır.
+    /// </summary>
+    public void AddItem(Guid itemId, string description, decimal quantity, decimal unitPrice)
+    {
+        if (Status != InvoiceStatus.Draft)
+            throw new BusinessException(PlatformDomainErrorCodes.InvoiceNotEditable)
+                .WithData("Status", Status);
+
+        Items.Add(new InvoiceItem(itemId, Id, description, quantity, unitPrice));
+        RecalculateTotal();
+    }
+
+    /// <summary>
+    /// Toplam ödemeye göre fatura durumunu günceller.
+    /// İptal edilmiş faturalar bu çağrıdan etkilenmez.
+    /// </summary>
+    public void UpdateStatus(decimal totalPaid)
+    {
+        if (Status == InvoiceStatus.Cancelled) return;
+        Status = totalPaid >= TotalAmount ? InvoiceStatus.Paid : InvoiceStatus.Sent;
+    }
+
+    // ======================== Private Guards ========================
+
+    private void SetInvoiceNumber(string invoiceNumber)
+    {
+        if (string.IsNullOrWhiteSpace(invoiceNumber))
+            throw new BusinessException(PlatformDomainErrorCodes.InvoiceNumberRequired);
+        InvoiceNumber = invoiceNumber.Trim();
+    }
+
+    private void SetTaxRate(decimal taxRate)
+    {
+        if (taxRate < 0)
+            throw new BusinessException(PlatformDomainErrorCodes.InvoiceTaxRateInvalid)
+                .WithData("TaxRate", taxRate);
+        TaxRate = taxRate;
+    }
+
+    private void SetCurrency(string currency)
+    {
+        if (string.IsNullOrWhiteSpace(currency) || currency.Trim().Length != 3)
+            throw new BusinessException(PlatformDomainErrorCodes.InvoiceCurrencyInvalid)
+                .WithData("Currency", currency ?? "<null>");
+        Currency = currency.Trim().ToUpperInvariant();
+    }
+
+    private void RecalculateTotal()
+        => TotalAmount = Items.Sum(x => x.TotalPrice) * (1 + TaxRate / 100);
 }
 
 public class InvoiceItem : Entity<Guid>
 {
-    public Guid InvoiceId { get; set; }
-    public string Description { get; set; }
-    public decimal Quantity { get; set; }
-    public decimal UnitPrice { get; set; }
-    
+    public Guid InvoiceId { get; private set; }
+    public string Description { get; private set; } = null!;
+    public decimal Quantity { get; private set; }
+    public decimal UnitPrice { get; private set; }
+
     public decimal TotalPrice => Quantity * UnitPrice;
 
-    public InvoiceItem() { }
+    /// <summary>EF Core için.</summary>
+    protected InvoiceItem() { }
 
-    public InvoiceItem(Guid id, Guid invoiceId, string description, decimal quantity, decimal unitPrice) : base(id)
+    public InvoiceItem(Guid id, Guid invoiceId, string description, decimal quantity, decimal unitPrice)
+        : base(id)
     {
         InvoiceId = invoiceId;
         Description = description;
