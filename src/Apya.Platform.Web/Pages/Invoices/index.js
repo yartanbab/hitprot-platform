@@ -87,7 +87,8 @@ $(function () {
                                     addPayment(data.record.id);
                                 },
                                 visible: function(data) {
-                                    return data.status !== 2;
+                                    return abp.auth.isGranted('Platform.Invoices.Edit')
+                                        && data.status !== 2;
                                 }
                             }
                         ]
