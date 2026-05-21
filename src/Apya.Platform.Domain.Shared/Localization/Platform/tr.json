@@ -67,6 +67,14 @@
         "Permission:TenantSettings": "Tenant Ayarları",
         "Permission:TenantSettings.ManageAi": "AI Ayarlarını Yönet",
 
+        "Feature:Platform": "Platform Özellikleri",
+        "Feature:Platform:AiAssist": "AI Asistan",
+        "Feature:Platform:AiAssist:Description": "AI tabanlı görev üretimi, öneriler ve otomasyon özelliklerini bu tenant için aktif eder.",
+        "Feature:Platform:MultiCurrency": "Çoklu Döviz",
+        "Feature:Platform:MultiCurrency:Description": "TRY dışındaki para birimleri (USD, EUR) ile işlem desteği. Kapalıysa yalnızca TL kullanılır.",
+        "Feature:Platform:AdvancedReports": "Gelişmiş Raporlar",
+        "Feature:Platform:AdvancedReports:Description": "Mizan, yıl sonu değerleme ve diğer premium finansal raporlar.",
+
         "Connection:Reconnecting": "Bağlantı geçici olarak kesildi, yeniden bağlanıyor...",
         "Connection:Reconnected": "Bağlantı geri sağlandı.",
         "Connection:Lost": "Sunucu bağlantısı koptu. Lütfen sayfayı yenileyin.",

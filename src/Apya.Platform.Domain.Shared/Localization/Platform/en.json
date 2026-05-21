@@ -41,6 +41,14 @@
     "Permission:TenantSettings": "Tenant Settings",
     "Permission:TenantSettings.ManageAi": "Manage AI Settings",
 
+    "Feature:Platform": "Platform Features",
+    "Feature:Platform:AiAssist": "AI Assistant",
+    "Feature:Platform:AiAssist:Description": "Enables AI-powered task generation, suggestions and automation features for this tenant.",
+    "Feature:Platform:MultiCurrency": "Multi-Currency",
+    "Feature:Platform:MultiCurrency:Description": "Support for non-TRY currencies (USD, EUR). When disabled, only TRY is allowed.",
+    "Feature:Platform:AdvancedReports": "Advanced Reports",
+    "Feature:Platform:AdvancedReports:Description": "Trial balance, year-end FX revaluation and other premium financial reports.",
+
     "Connection:Reconnecting": "Connection temporarily lost. Reconnecting...",
     "Connection:Reconnected": "Connection restored.",
     "Connection:Lost": "Connection to server lost. Please refresh the page.",

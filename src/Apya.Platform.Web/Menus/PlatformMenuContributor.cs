@@ -1,4 +1,5 @@
 using System.Threading.Tasks;
+using Apya.Platform.Features;
 using Apya.Platform.Localization;
 using Apya.Platform.MultiTenancy;
 using Apya.Platform.Permissions;
@@ -51,7 +52,8 @@ public class PlatformMenuContributor : IMenuContributor
         finance.AddItem(new ApplicationMenuItem("Apya.Finance.ExchangeRates", l["Menu:ExchangeRates"], icon: "fa fa-money-bill-transfer", url: "/ExchangeRates")
             .RequirePermissions(PlatformPermissions.ExchangeRates.Default));
         finance.AddItem(new ApplicationMenuItem("Apya.Finance.FxRevaluation", l["Menu:FxRevaluation"], icon: "fa fa-scale-balanced", url: "/FxRevaluations")
-            .RequirePermissions(PlatformPermissions.FxRevaluations.Default));
+            .RequirePermissions(PlatformPermissions.FxRevaluations.Default)
+            .RequireFeatures(PlatformFeatures.AdvancedReports));
         finance.AddItem(new ApplicationMenuItem("Apya.Finance.Expenses", l["Menu:Expenses"], icon: "fa fa-receipt", url: "/Expenses")
             .RequirePermissions(PlatformPermissions.Expenses.Default));
         finance.AddItem(new ApplicationMenuItem("Apya.Finance.Incomes", l["Menu:Incomes"], icon: "fa fa-hand-holding-dollar", url: "/Incomes")
@@ -61,7 +63,8 @@ public class PlatformMenuContributor : IMenuContributor
         finance.AddItem(new ApplicationMenuItem("Apya.Finance.ExpenseCapture", l["Menu:ExpenseCapture"], icon: "fa fa-camera", url: "/Expenses/Capture")
             .RequirePermissions(PlatformPermissions.Expenses.Create));
         finance.AddItem(new ApplicationMenuItem("Apya.Finance.TrialBalance", l["Menu:TrialBalance"], icon: "fa fa-scale-unbalanced", url: "/Reports/TrialBalance")
-            .RequirePermissions(PlatformPermissions.Reports.TrialBalance));
+            .RequirePermissions(PlatformPermissions.Reports.TrialBalance)
+            .RequireFeatures(PlatformFeatures.AdvancedReports));
         context.Menu.AddItem(finance);
 
         // İçerik
@@ -81,7 +84,8 @@ public class PlatformMenuContributor : IMenuContributor
             l["Menu:AiSettings"],
             icon: "fa fa-robot",
             url: "/TenantManagement/AiSettings")
-            .RequirePermissions(PlatformPermissions.TenantSettings.ManageAi));
+            .RequirePermissions(PlatformPermissions.TenantSettings.ManageAi)
+            .RequireFeatures(PlatformFeatures.AiAssist));
 
         if (MultiTenancyConsts.IsEnabled)
         {
