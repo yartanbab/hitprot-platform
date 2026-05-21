@@ -94,22 +94,23 @@ public class InvoiceAppService : ApplicationService, IInvoiceAppService
 
     public async Task<InvoiceDto> CreateAsync(CreateInvoiceDto input)
     {
-        var invoice = new Invoice(GuidGenerator.Create(), input.ProjectId, input.InvoiceNumber, input.InvoiceDate, input.DueDate)
-        {
-            TaxRate = input.TaxRate,
-            Currency = input.Currency,
-            Status = InvoiceStatus.Draft,
-            CustomerId = input.CustomerId,
-            Direction = input.Direction,
-            TaskId = input.TaskId
-        };
+        var invoice = new Invoice(
+            GuidGenerator.Create(),
+            CurrentTenant.Id,
+            input.ProjectId,
+            input.InvoiceNumber,
+            input.InvoiceDate,
+            input.DueDate,
+            input.TaxRate,
+            input.Currency,
+            input.Direction,
+            input.CustomerId,
+            input.TaskId);
 
         foreach (var item in input.Items)
         {
-            invoice.Items.Add(new InvoiceItem(GuidGenerator.Create(), invoice.Id, item.Description, item.Quantity, item.UnitPrice));
+            invoice.AddItem(GuidGenerator.Create(), item.Description, item.Quantity, item.UnitPrice);
         }
-
-        invoice.TotalAmount = invoice.Items.Sum(x => x.TotalPrice) * (1 + (invoice.TaxRate / 100));
 
         await _invoiceRepository.InsertAsync(invoice, autoSave: true);
 
@@ -200,7 +201,7 @@ public class InvoiceAppService : ApplicationService, IInvoiceAppService
         var payments = await _paymentRepository.GetListAsync(p => p.InvoiceId == invoiceId);
         var totalPaid = payments.Sum(p => p.Amount);
 
-        invoice.Status = totalPaid >= invoice.TotalAmount ? InvoiceStatus.Paid : InvoiceStatus.Sent;
+        invoice.UpdateStatus(totalPaid);
         await _invoiceRepository.UpdateAsync(invoice);
     }
 
