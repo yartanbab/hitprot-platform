@@ -29,10 +29,16 @@ public class ProjectManager : DomainService
         DateTime? startDate = null,
         DateTime? endDate = null,
         Guid? customerId = null,
-        ProjectCategory category = ProjectCategory.Other)
+        ProjectCategory category = ProjectCategory.Other,
+        Guid? overrideTenantId = null)
     {
+        // Host admin başka bir tenant adına proje oluşturabilir (overrideTenantId).
+        // Normal tenant kullanıcısı için CurrentTenant.Id kullanılır.
+        var effectiveTenantId = overrideTenantId ?? CurrentTenant.Id;
+
         var project = new Project(
             GuidGenerator.Create(),
+            effectiveTenantId,
             grantId,
             name,
             code,

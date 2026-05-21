@@ -11,7 +11,7 @@ namespace Apya.Platform.Projects;
 /// </summary>
 public class Project : FullAuditedAggregateRoot<Guid>, IMultiTenant
 {
-    public Guid? TenantId { get; set; }
+    public Guid? TenantId { get; private set; }
 
     public Guid? GrantId { get; set; } // Boş olabilir
 
@@ -55,6 +55,7 @@ public class Project : FullAuditedAggregateRoot<Guid>, IMultiTenant
     /// </summary>
     public Project(
         Guid id,
+        Guid? tenantId,
         Guid? grantId,
         string name,
         string code,
@@ -72,6 +73,7 @@ public class Project : FullAuditedAggregateRoot<Guid>, IMultiTenant
         ProjectCategory category = ProjectCategory.Other)
         : base(id)
     {
+        TenantId = tenantId;
         SetName(name);
         GrantId = grantId;
         CustomerId = customerId;

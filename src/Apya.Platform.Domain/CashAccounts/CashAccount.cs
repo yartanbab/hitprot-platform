@@ -11,7 +11,7 @@ namespace Apya.Platform.CashAccounts;
 /// </summary>
 public class CashAccount : FullAuditedAggregateRoot<Guid>, IMultiTenant
 {
-    public Guid? TenantId { get; set; }
+    public Guid? TenantId { get; private set; }
 
     public string Name { get; set; } = null!;
 

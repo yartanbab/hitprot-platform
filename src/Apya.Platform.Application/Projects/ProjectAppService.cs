@@ -61,6 +61,9 @@ public class ProjectAppService :
     // --- CREATE --- REV-GAP001: Tüm alanlar INSERT öncesinde set edilir
     public override async Task<ProjectDto> CreateAsync(CreateProjectDto input)
     {
+        // Host admin başka bir tenant adına proje oluşturabilir.
+        var overrideTenantId = CurrentTenant.Id == null ? input.TenantId : null;
+
         var project = await _projectManager.CreateAsync(
             input.GrantId,
             input.Name,
@@ -76,13 +79,9 @@ public class ProjectAppService :
             input.StartDate,
             input.EndDate,
             input.CustomerId,
-            input.Category
+            input.Category,
+            overrideTenantId: overrideTenantId
         );
-
-        if (CurrentTenant.Id == null && input.TenantId.HasValue)
-        {
-            project.TenantId = input.TenantId;
-        }
 
         await Repository.InsertAsync(project);
 
