@@ -41,6 +41,12 @@
     "Permission:TenantSettings": "Tenant Settings",
     "Permission:TenantSettings.ManageAi": "Manage AI Settings",
 
+    "Connection:Reconnecting": "Connection temporarily lost. Reconnecting...",
+    "Connection:Reconnected": "Connection restored.",
+    "Connection:Lost": "Connection to server lost. Please refresh the page.",
+    "Connection:Title": "Connection",
+    "Connection:ErrorTitle": "Connection Error",
+
     "Common:All": "All",
     "Common:Everyone": "Everyone",
     "Common:Filter": "Filter",
