@@ -21,6 +21,7 @@ namespace Apya.Platform
             // Mevcut satırı şununla değiştir:
             // Hata veren satırı şununla değiştirin:
             CreateMap<Project, ProjectDto>();
+            CreateMap<Project, ProjectDetailDto>().IncludeBase<Project, ProjectDto>();
             CreateMap<CreateProjectDto, Project>();
 
             // Hibe Eşleştirmeleri
