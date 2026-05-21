@@ -1,4 +1,7 @@
 @page
+@using Microsoft.AspNetCore.Authorization
+@using Apya.Platform.Permissions
+@inject IAuthorizationService AuthorizationService
 @model Apya.Platform.Web.Pages.CashAccounts.IndexModel
 @{
     ViewBag.PageTitle = "Kasa Yönetimi";
@@ -14,9 +17,12 @@
                 <abp-card-title>@ViewBag.PageTitle</abp-card-title>
             </abp-column>
             <abp-column size="_6" class="text-end">
-                <button id="NewCashAccountButton" class="btn btn-primary btn-sm">
-                    <i class="fa fa-plus"></i> Yeni Kasa Ekle
-                </button>
+                @if (await AuthorizationService.IsGrantedAsync(PlatformPermissions.CashAccounts.Create))
+                {
+                    <button id="NewCashAccountButton" class="btn btn-primary btn-sm">
+                        <i class="fa fa-plus"></i> Yeni Kasa Ekle
+                    </button>
+                }
             </abp-column>
         </abp-row>
     </abp-card-header>

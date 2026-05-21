@@ -1,8 +1,11 @@
 @page
 @model Apya.Platform.Web.Pages.Invoices.IndexModel
 @using Apya.Platform.Invoices
+@using Apya.Platform.Permissions
+@using Microsoft.AspNetCore.Authorization
 @using Microsoft.AspNetCore.Mvc.Localization
 @inject IHtmlLocalizer<Apya.Platform.Localization.PlatformResource> L
+@inject IAuthorizationService AuthorizationService
 
 <abp-card>
     <abp-card-header>
@@ -11,10 +14,13 @@
                 <abp-card-title><i class="fa fa-file-invoice-dollar me-2"></i> Faturalar ve Ödemeler</abp-card-title>
             </abp-column>
             <abp-column size-md="_6" class="text-end">
-                <abp-button id="NewInvoiceButton"
-                            text="Yeni Fatura Oluştur"
-                            icon="plus"
-                            button-type="Primary" />
+                @if (await AuthorizationService.IsGrantedAsync(PlatformPermissions.Invoices.Create))
+                {
+                    <abp-button id="NewInvoiceButton"
+                                text="Yeni Fatura Oluştur"
+                                icon="plus"
+                                button-type="Primary" />
+                }
             </abp-column>
         </abp-row>
     </abp-card-header>
