@@ -237,4 +237,61 @@ public class ProjectAppService :
     {
         return Task.FromResult(new List<GrantDto>());
     }
+
+    public async Task<ProjectDetailDto> GetDetailAsync(Guid id)
+    {
+        // ProjectDetails view'ı için tüm hesaplanmış metrikleri tek çağrıda topla.
+        // ARCH-W-002: PageModel artık business logic barındırmıyor.
+        using (CurrentTenant.Id == null ? DataFilter.Disable<IMultiTenant>() : null)
+        {
+            var project = await Repository.GetAsync(id);
+            var dto = ObjectMapper.Map<Project, ProjectDetailDto>(project);
+
+            var taskItems = await _taskRepository.GetListAsync(t => t.ProjectId == id);
+            dto.Tasks = ObjectMapper.Map<List<TaskItem>, List<Apya.Platform.Tasks.TaskDto>>(taskItems);
+
+            var taskIds = taskItems.Select(t => t.Id).ToList();
+            var timeLogs = taskIds.Count > 0
+                ? await _timeLogRepository.GetListAsync(x => taskIds.Contains(x.TaskId))
+                : new List<TaskTimeLog>();
+
+            var now = DateTime.Now;
+
+            if (project.TenantId.HasValue)
+            {
+                var tenant = await _tenantStore.FindAsync(project.TenantId.Value);
+                dto.TenantDisplayName = tenant?.Name ?? "Bilinmeyen";
+                dto.IsInternalProject = false;
+            }
+            else
+            {
+                dto.TenantDisplayName = "Platform (Host)";
+                dto.IsInternalProject = true;
+            }
+
+            dto.CurrencySymbol = Apya.Platform.Application.Projects.ProjectMetricsCalculator
+                .ResolveCurrencySymbol(project.Currency);
+
+            var time = Apya.Platform.Application.Projects.ProjectMetricsCalculator
+                .CalculateTimeMetrics(dto, dto.Tasks, now);
+            dto.RemainingDays = time.remainingDays;
+            dto.TotalProjectDays = time.totalProjectDays;
+            dto.TimeUsagePercent = time.timeUsagePercent;
+            dto.TimeHealthColor = time.color;
+            dto.TimeHealthLabel = time.label;
+
+            dto.SpentBudget = Apya.Platform.Application.Projects.ProjectMetricsCalculator
+                .CalculateBudgetSpent(timeLogs, project.HourlyRate);
+            dto.BudgetPercent = Apya.Platform.Application.Projects.ProjectMetricsCalculator
+                .CalculateBudgetPercent(dto.SpentBudget, project.TotalBudget);
+
+            var risk = Apya.Platform.Application.Projects.ProjectMetricsCalculator
+                .CalculateAiRisk(dto, dto.Tasks, now);
+            dto.AiRiskScore = risk.score;
+            dto.AiRiskColor = risk.color;
+            dto.AiRiskMessage = risk.message;
+
+            return dto;
+        }
+    }
 }

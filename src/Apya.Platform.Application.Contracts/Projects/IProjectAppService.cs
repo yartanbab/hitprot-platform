@@ -17,6 +17,12 @@ namespace Apya.Platform.Projects
     {
         Task<List<GrantDto>> GetAllGrantsAsync();
 
+        /// <summary>
+        /// ProjectDetails ekranı için tüm view-ready veriyi tek çağrıda döner:
+        /// proje, görevler, AI risk, zaman/bütçe metrikleri.
+        /// </summary>
+        Task<ProjectDetailDto> GetDetailAsync(Guid id);
+
         // --- DOSYA YÖNETİMİ ---
         Task AddAttachmentAsync(Guid projectId, string fileName, string storedFileName, long fileSize);
 
