@@ -1,7 +1,10 @@
 @page
 @using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Mvc.Localization
+@using Apya.Platform.Localization
 @using Apya.Platform.Permissions
 @inject IAuthorizationService AuthorizationService
+@inject IHtmlLocalizer<PlatformResource> L
 @using Apya.Platform.Web.Pages.Tasks
 @model IndexModel
 
@@ -17,7 +20,7 @@
                     aria-expanded="false"
                     aria-controls="collapseFilters"
                     style="border-radius:0.75rem;">
-                <i class="fa fa-filter me-2"></i> Gelişmiş Filtreleme Seçenekleri
+                <i class="fa fa-filter me-2"></i> @L["Tasks:AdvancedFilters"]
             </button>
         </h2>
         <div id="collapseFilters"
@@ -27,34 +30,34 @@
             <div class="accordion-body bg-light" style="border-radius:0 0 0.75rem 0.75rem;">
                 <form id="TaskFilterForm" class="row g-3">
                     <div class="col-md-3">
-                        <label for="Filter_AssigneeId" class="form-label fw-bold small text-muted">Sorumlu Kişi</label>
+                        <label for="Filter_AssigneeId" class="form-label fw-bold small text-muted">@L["Tasks:Filter:Assignee"]</label>
                         <select id="Filter_AssigneeId" class="form-select border-0 shadow-sm">
-                            <option value="">Herkes</option>
+                            <option value="">@L["Common:Everyone"]</option>
                         </select>
                     </div>
                     <div class="col-md-2">
-                        <label for="Filter_Status" class="form-label fw-bold small text-muted">Durum</label>
+                        <label for="Filter_Status" class="form-label fw-bold small text-muted">@L["Tasks:Filter:Status"]</label>
                         <select id="Filter_Status" class="form-select border-0 shadow-sm">
-                            <option value="">Tümü</option>
-                            <option value="1">Bekliyor</option>
-                            <option value="2">Sürüyor</option>
-                            <option value="3">Testte</option>
-                            <option value="4">Tamamlandı</option>
+                            <option value="">@L["Common:All"]</option>
+                            <option value="1">@L["Tasks:Status:Todo"]</option>
+                            <option value="2">@L["Tasks:Status:InProgress"]</option>
+                            <option value="3">@L["Tasks:Status:InReview"]</option>
+                            <option value="4">@L["Tasks:Status:Done"]</option>
                         </select>
                     </div>
                     <div class="col-md-2">
-                        <label for="Filter_MinDueDate" class="form-label fw-bold small text-muted">Bitiş Tarihi (Başlangıç)</label>
+                        <label for="Filter_MinDueDate" class="form-label fw-bold small text-muted">@L["Tasks:Filter:MinDueDate"]</label>
                         <input type="date" id="Filter_MinDueDate" class="form-control border-0 shadow-sm">
                     </div>
                     <div class="col-md-2">
-                        <label for="Filter_MaxDueDate" class="form-label fw-bold small text-muted">Bitiş Tarihi (Son)</label>
+                        <label for="Filter_MaxDueDate" class="form-label fw-bold small text-muted">@L["Tasks:Filter:MaxDueDate"]</label>
                         <input type="date" id="Filter_MaxDueDate" class="form-control border-0 shadow-sm">
                     </div>
                     <div class="col-md-3 d-flex align-items-end gap-2">
                         <button type="button" id="btn-apply-filters" class="btn btn-primary shadow-sm fw-bold flex-fill">
-                            <i class="fa fa-search me-1"></i> Filtrele
+                            <i class="fa fa-search me-1"></i> @L["Common:Filter"]
                         </button>
-                        <button type="button" id="btn-clear-filters" class="btn btn-light shadow-sm fw-bold flex-fill">Temizle</button>
+                        <button type="button" id="btn-clear-filters" class="btn btn-light shadow-sm fw-bold flex-fill">@L["Common:Clear"]</button>
                     </div>
                 </form>
             </div>
@@ -67,18 +70,18 @@
     <abp-card-header class="border-bottom-0 pb-0">
         <abp-row>
             <abp-column size-md="_6">
-                <abp-card-title>Görev Panosu</abp-card-title>
+                <abp-card-title>@L["Tasks:BoardTitle"]</abp-card-title>
             </abp-column>
             <abp-column size-md="_6" class="text-end">
                 <div class="btn-group me-2" role="group">
                     <button type="button" id="btn-view-list" class="btn btn-outline-primary active">
-                        <i class="fa fa-list me-1"></i> Liste
+                        <i class="fa fa-list me-1"></i> @L["Tasks:View:List"]
                     </button>
                     <button type="button" id="btn-view-kanban" class="btn btn-outline-primary">
-                        <i class="fa fa-columns me-1"></i> Kanban
+                        <i class="fa fa-columns me-1"></i> @L["Tasks:View:Kanban"]
                     </button>
                     <button type="button" id="btn-view-gantt" class="btn btn-outline-primary">
-                        <i class="fa fa-stream me-1"></i> Gantt
+                        <i class="fa fa-stream me-1"></i> @L["Tasks:View:Gantt"]
                     </button>
                 </div>
                 @* APYA-122: AI ile Görev Oluştur butonu kaldırıldı.
@@ -87,9 +90,9 @@
                 @if (await AuthorizationService.IsGrantedAsync(PlatformPermissions.Tasks.Create))
                 {
                     <abp-button id="NewTaskButton"
-                                text="Yeni Görev Ekle"
+                                text="@L["Tasks:NewButton"].Value"
                                 icon="plus"
-                                button-type="Primary" 
+                                button-type="Primary"
                                 class="ms-1" style="border-radius: 20px;" />
                 }
             </abp-column>
@@ -107,7 +110,7 @@
                 @* Todo Column *@
                 <div class="col-kanban p-2" data-status="1">
                     <div class="kanban-header p-2 bg-light border rounded-top shadow-sm d-flex justify-content-between align-items-center">
-                        <span class="fw-bold"><i class="fa fa-clock me-1 text-secondary"></i> Bekliyor</span>
+                        <span class="fw-bold"><i class="fa fa-clock me-1 text-secondary"></i> @L["Tasks:Status:Todo"]</span>
                         <span class="badge bg-secondary rounded-pill" id="count-todo">0</span>
                     </div>
                     <div class="kanban-items p-2 bg-white border border-top-0 rounded-bottom shadow-sm" style="min-height: 500px;" id="kanban-todo"></div>
@@ -116,7 +119,7 @@
                 @* In Progress Column *@
                 <div class="col-kanban p-2" data-status="2">
                     <div class="kanban-header p-2 bg-light border rounded-top shadow-sm d-flex justify-content-between align-items-center border-primary border-opacity-25" style="border-top: 3px solid #007bff !important;">
-                        <span class="fw-bold text-primary"><i class="fa fa-spinner fa-spin me-1"></i> Sürüyor</span>
+                        <span class="fw-bold text-primary"><i class="fa fa-spinner fa-spin me-1"></i> @L["Tasks:Status:InProgress"]</span>
                         <span class="badge bg-primary rounded-pill" id="count-inprogress">0</span>
                     </div>
                     <div class="kanban-items p-2 bg-white border border-top-0 rounded-bottom shadow-sm" style="min-height: 500px;" id="kanban-inprogress"></div>
@@ -125,7 +128,7 @@
                 @* Test Column *@
                 <div class="col-kanban p-2" data-status="3">
                     <div class="kanban-header p-2 bg-light border rounded-top shadow-sm d-flex justify-content-between align-items-center border-warning border-opacity-25" style="border-top: 3px solid #ffc107 !important;">
-                        <span class="fw-bold text-warning"><i class="fa fa-flask me-1"></i> Testte</span>
+                        <span class="fw-bold text-warning"><i class="fa fa-flask me-1"></i> @L["Tasks:Status:InReview"]</span>
                         <span class="badge bg-warning rounded-pill" id="count-test">0</span>
                     </div>
                     <div class="kanban-items p-2 bg-white border border-top-0 rounded-bottom shadow-sm" style="min-height: 500px;" id="kanban-test"></div>
@@ -134,7 +137,7 @@
                 @* Done Column *@
                 <div class="col-kanban p-2" data-status="4">
                     <div class="kanban-header p-2 bg-light border rounded-top shadow-sm d-flex justify-content-between align-items-center border-success border-opacity-25" style="border-top: 3px solid #28a745 !important;">
-                        <span class="fw-bold text-success"><i class="fa fa-check-circle me-1"></i> Tamamlandı</span>
+                        <span class="fw-bold text-success"><i class="fa fa-check-circle me-1"></i> @L["Tasks:Status:Done"]</span>
                         <span class="badge bg-success rounded-pill" id="count-done">0</span>
                     </div>
                     <div class="kanban-items p-2 bg-white border border-top-0 rounded-bottom shadow-sm" style="min-height: 500px;" id="kanban-done"></div>
@@ -146,9 +149,9 @@
         <div id="view-gantt" class="view-panel d-none">
             <div class="gantt-controls mb-3 text-center">
                 <div class="btn-group btn-group-sm">
-                    <button type="button" class="btn btn-light border gantt-change-view" data-view="Day">Günlük</button>
-                    <button type="button" class="btn btn-light border gantt-change-view" data-view="Week">Haftalık</button>
-                    <button type="button" class="btn btn-light border gantt-change-view active" data-view="Month">Aylık</button>
+                    <button type="button" class="btn btn-light border gantt-change-view" data-view="Day">@L["Tasks:Gantt:Day"]</button>
+                    <button type="button" class="btn btn-light border gantt-change-view" data-view="Week">@L["Tasks:Gantt:Week"]</button>
+                    <button type="button" class="btn btn-light border gantt-change-view active" data-view="Month">@L["Tasks:Gantt:Month"]</button>
                 </div>
             </div>
             <div style="overflow-x: auto;">
