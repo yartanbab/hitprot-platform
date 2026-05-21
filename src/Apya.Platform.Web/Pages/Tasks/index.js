@@ -326,23 +326,39 @@ $(function () {
             editModal.open({ id: id });
         });
 
-        // Zaman Takibi
+        // Zaman Takibi — setBusy ile çift-tıklama korumalı
         $('.btn-start-timer').on('click', function(e) {
             e.stopPropagation();
-            var id = $(this).data('id');
-            taskService.startTimeTracking(id).then(function() {
-                abp.notify.success('Sayman başlatıldı.');
-                loadKanban();
-            });
+            var $btn = $(this);
+            if ($btn.prop('disabled')) return;
+            var id = $btn.data('id');
+            $btn.prop('disabled', true);
+            abp.ui.setBusy($btn);
+            taskService.startTimeTracking(id)
+                .then(function() {
+                    abp.notify.success('Sayman başlatıldı.');
+                    loadKanban();
+                })
+                .always(function() {
+                    abp.ui.clearBusy($btn);
+                });
         });
 
         $('.btn-stop-timer').on('click', function(e) {
             e.stopPropagation();
-            var id = $(this).data('id');
-            taskService.stopTimeTracking(id).then(function() {
-                abp.notify.success('Sayman durduruldu.');
-                loadKanban();
-            });
+            var $btn = $(this);
+            if ($btn.prop('disabled')) return;
+            var id = $btn.data('id');
+            $btn.prop('disabled', true);
+            abp.ui.setBusy($btn);
+            taskService.stopTimeTracking(id)
+                .then(function() {
+                    abp.notify.success('Sayman durduruldu.');
+                    loadKanban();
+                })
+                .always(function() {
+                    abp.ui.clearBusy($btn);
+                });
         });
 
         // HTML5 Drag & Drop (jQuery .off() ile event çakışmasını engelliyoruz)
@@ -372,25 +388,31 @@ $(function () {
         $columns.on('drop', function(e) {
             e.preventDefault();
             $(this).find('.kanban-items').removeClass('bg-light');
-            
+
             var $draggable = $('.dragging');
             if (!$draggable.length) return;
 
             const taskId = $draggable.data('id');
             const newStatus = parseInt($(this).data('status'));
-            
-            // UI'da hemen taşıyalım
+            const $kanban = $('#kanban-container');
+
+            // UI'da hemen taşıyalım (optimistic)
             $(this).find('.kanban-items').append($draggable);
-            
-            // Servis çağrısı
+
+            // Drop sırasında tüm kanban'ı block et — race condition önlenir
+            abp.ui.block({ elements: [$kanban[0]] });
+
             taskService.updateStatus(taskId, newStatus)
                 .then(function() {
                     abp.notify.success('Durum güncellendi.');
-                    loadKanban(); // Sayacı vs güncellemek için yenileyelim
+                    loadKanban();
                 })
                 .catch(function() {
                     abp.notify.error('Hata oluştu veya bu duruma geçirilemez.');
                     loadKanban();
+                })
+                .always(function() {
+                    abp.ui.unblock({ elements: [$kanban[0]] });
                 });
         });
     }
