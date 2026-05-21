@@ -343,7 +343,7 @@ namespace Apya.Platform.EntityFrameworkCore
 
             builder.Entity<ProjectAnalysis>(b =>
             {
-                b.ToTable("AppProjectAnalyses");
+                b.ToTable(PlatformConsts.DbTablePrefix + "ProjectAnalyses", PlatformConsts.DbSchema);
                 b.ConfigureByConvention();
             });
 
@@ -361,7 +361,7 @@ namespace Apya.Platform.EntityFrameworkCore
 
             builder.Entity<ProjectAttachment>(b =>
             {
-                b.ToTable("AppProjectAttachments");
+                b.ToTable(PlatformConsts.DbTablePrefix + "ProjectAttachments", PlatformConsts.DbSchema);
                 b.ConfigureByConvention();
             });
 
@@ -370,7 +370,7 @@ namespace Apya.Platform.EntityFrameworkCore
 
             builder.Entity<TaskItem>(b =>
             {
-                b.ToTable("AppTasks");
+                b.ToTable(PlatformConsts.DbTablePrefix + "Tasks", PlatformConsts.DbSchema);
                 b.ConfigureByConvention();
 
                 b.HasOne(t => t.Assignee)
@@ -402,14 +402,14 @@ namespace Apya.Platform.EntityFrameworkCore
 
             builder.Entity<Apya.Platform.Tasks.TaskComment>(b =>
             {
-                b.ToTable("AppTaskComments");
+                b.ToTable(PlatformConsts.DbTablePrefix + "TaskComments", PlatformConsts.DbSchema);
                 b.ConfigureByConvention();
                 b.HasIndex(x => x.TaskId); // REV-004
             });
 
             builder.Entity<TaskAttachment>(b =>
             {
-                b.ToTable("AppTaskAttachments");
+                b.ToTable(PlatformConsts.DbTablePrefix + "TaskAttachments", PlatformConsts.DbSchema);
                 b.ConfigureByConvention();
                 b.HasIndex(x => x.TaskId); // REV-004
             });
@@ -424,14 +424,14 @@ namespace Apya.Platform.EntityFrameworkCore
 
             builder.Entity<TaskTimeLog>(b =>
             {
-                b.ToTable("AppTaskTimeLogs");
+                b.ToTable(PlatformConsts.DbTablePrefix + "TaskTimeLogs", PlatformConsts.DbSchema);
                 b.ConfigureByConvention();
                 b.HasIndex(x => new { x.TaskId, x.UserId });
             });
 
             builder.Entity<Invoice>(b =>
             {
-                b.ToTable("AppInvoices");
+                b.ToTable(PlatformConsts.DbTablePrefix + "Invoices", PlatformConsts.DbSchema);
                 b.ConfigureByConvention();
                 b.HasIndex(x => x.InvoiceNumber).IsUnique();
                 b.HasIndex(x => x.ProjectId);
@@ -442,13 +442,13 @@ namespace Apya.Platform.EntityFrameworkCore
 
             builder.Entity<InvoiceItem>(b =>
             {
-                b.ToTable("AppInvoiceItems");
+                b.ToTable(PlatformConsts.DbTablePrefix + "InvoiceItems", PlatformConsts.DbSchema);
                 b.ConfigureByConvention();
             });
 
             builder.Entity<Payment>(b =>
             {
-                b.ToTable("AppPayments");
+                b.ToTable(PlatformConsts.DbTablePrefix + "Payments", PlatformConsts.DbSchema);
                 b.ConfigureByConvention();
                 b.HasIndex(x => x.InvoiceId);
                 b.HasIndex(x => x.CashAccountId); // APYA-136
@@ -457,7 +457,7 @@ namespace Apya.Platform.EntityFrameworkCore
             /* --- BİLDİRİM MODÜLÜ YAPILANDIRMASI --- */
             builder.Entity<Notification>(b =>
             {
-                b.ToTable("AppNotifications");
+                b.ToTable(PlatformConsts.DbTablePrefix + "Notifications", PlatformConsts.DbSchema);
                 b.ConfigureByConvention();
                 b.Property(x => x.Title).IsRequired().HasMaxLength(NotificationConsts.MaxTitleLength);
                 b.Property(x => x.Body).HasMaxLength(NotificationConsts.MaxBodyLength);
@@ -470,7 +470,7 @@ namespace Apya.Platform.EntityFrameworkCore
             /* --- TAKVİM MODÜLÜ YAPILANDIRMASI --- */
             builder.Entity<ExternalCalendarAccount>(b =>
             {
-                b.ToTable("AppExternalCalendarAccounts");
+                b.ToTable(PlatformConsts.DbTablePrefix + "ExternalCalendarAccounts", PlatformConsts.DbSchema);
                 b.ConfigureByConvention();
                 b.Property(x => x.ExternalEmail).IsRequired().HasMaxLength(256);
                 b.Property(x => x.AccessToken).IsRequired();
@@ -479,7 +479,7 @@ namespace Apya.Platform.EntityFrameworkCore
 
             builder.Entity<CalendarSyncMapping>(b =>
             {
-                b.ToTable("AppCalendarSyncMappings");
+                b.ToTable(PlatformConsts.DbTablePrefix + "CalendarSyncMappings", PlatformConsts.DbSchema);
                 b.ConfigureByConvention();
                 b.HasIndex(x => new { x.TaskId, x.ExternalCalendarAccountId });
                 b.HasIndex(x => x.ExternalEventId);
