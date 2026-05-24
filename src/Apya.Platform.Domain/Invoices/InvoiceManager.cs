@@ -110,6 +110,13 @@ public class InvoiceManager : DomainService
     /// <summary>
     /// Fatura için ödeme kaydeder. İlgili kasa hareketi ve cari tahakkukunu oluşturur.
     /// Fatura durumu toplam ödemeye göre güncellenir (Sent → Paid).
+    /// <para>
+    /// ARCH-009: Idempotent. Boş olmayan <paramref name="reference"/> ile retry geldiğinde
+    /// mevcut Payment'i bulup yeniden side-effect üretmeden döner. DB unique index (partial,
+    /// reference &lt;&gt; '') belt-and-suspenders olarak race-window'u kapatır — nadir yarış
+    /// durumunda <see cref="Microsoft.EntityFrameworkCore.DbUpdateException"/> UoW'u abort
+    /// eder ve HTTP client retry edebilir (yeni pre-check duplicate'i yakalar).
+    /// </para>
     /// </summary>
     public async Task RecordPaymentAsync(
         Guid invoiceId,
@@ -120,6 +127,21 @@ public class InvoiceManager : DomainService
     {
         var invoice = await _invoiceRepository.GetAsync(invoiceId);
         var isSales = invoice.Direction == InvoiceDirection.Sales;
+
+        // Idempotency pre-check. Original successful call'un side-effect'leri (CashMovement,
+        // CustomerLedgerEntry, Invoice.Status) zaten persist edilmiş — sessizce return ile
+        // caller'a aynı sonucu sunuyoruz. Boş reference = manuel giriş, idempotency dışı.
+        // (GetListAsync kullanılır çünkü FirstOrDefaultAsync(predicate) bir extension method
+        //  ve unit testlerde mock edilemiyor. Unique index sayesinde en fazla 1 row döner.)
+        if (!string.IsNullOrWhiteSpace(reference))
+        {
+            var duplicates = await _paymentRepository.GetListAsync(
+                p => p.InvoiceId == invoiceId && p.ReferenceNumber == reference);
+            if (duplicates.Count > 0)
+            {
+                return;
+            }
+        }
 
         var payment = new Payment(GuidGenerator.Create(), invoiceId, amount, Clock.Now, paymentMethod)
         {

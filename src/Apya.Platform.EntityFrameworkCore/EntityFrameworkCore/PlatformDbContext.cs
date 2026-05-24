@@ -452,6 +452,12 @@ namespace Apya.Platform.EntityFrameworkCore
                 b.ConfigureByConvention();
                 b.HasIndex(x => x.InvoiceId);
                 b.HasIndex(x => x.CashAccountId); // APYA-136
+                // ARCH-009: Payment idempotency — aynı (TenantId, InvoiceId, ReferenceNumber)
+                // ile retry'da duplicate önlenir. Empty string referansı dışlamak için
+                // partial unique (boş ref = manuel giriş, idempotency beklenmez).
+                b.HasIndex(x => new { x.TenantId, x.InvoiceId, x.ReferenceNumber })
+                    .IsUnique()
+                    .HasFilter("\"ReferenceNumber\" <> ''");
             });
 
             /* --- BİLDİRİM MODÜLÜ YAPILANDIRMASI --- */
