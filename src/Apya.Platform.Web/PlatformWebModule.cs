@@ -100,7 +100,19 @@ public class PlatformWebModule : AbpModule
 
             PreConfigure<OpenIddictServerBuilder>(serverBuilder =>
             {
-                serverBuilder.AddProductionEncryptionAndSigningCertificate("openiddict.pfx", "62c2cd20-9a93-47f2-b9f1-dfcc2d300e4f");
+                // ARCH-008: Cert password must come from User Secrets / appsettings.secrets.json,
+                // never hardcoded. Source-controlled secret = key leak via repo clone.
+                // Fail-fast in non-dev — silent fallback to a default would be worse.
+                var certificatePassword = configuration["OpenIddict:CertificatePassword"];
+                if (string.IsNullOrWhiteSpace(certificatePassword))
+                {
+                    throw new InvalidOperationException(
+                        "OpenIddict:CertificatePassword yapılandırmada eksik. " +
+                        "Production'da openiddict.pfx açılamaz; lütfen User Secrets veya " +
+                        "appsettings.secrets.json üzerinden sağlayın. Detay: ARCH-008.");
+                }
+                serverBuilder.AddProductionEncryptionAndSigningCertificate(
+                    "openiddict.pfx", certificatePassword);
             });
         }
     }
