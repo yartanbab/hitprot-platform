@@ -164,6 +164,12 @@ public class PlatformWebModule : AbpModule
         ConfigureAutoApiControllers();
         ConfigureSwaggerServices(context.Services);
 
+        // ARCH-013: Health checks. Şu an check listesi boş ama altyapı hazır —
+        // /health/live (predicate=false, hep 200) liveness probe için; /health/ready
+        // default check seti çalıştırır (gelecekte DbContextCheck eklenebilir, paket
+        // gerektirir). K8s / Cloud Run / load balancer ihtiyaçlarını karşılar.
+        context.Services.AddHealthChecks();
+
         context.Services.AddMapperlyObjectMapper<PlatformWebModule>();
     }
 
@@ -306,6 +312,17 @@ public class PlatformWebModule : AbpModule
         app.UseAbpSerilogEnrichers();
         app.UseConfiguredEndpoints(endpoints =>
         {
+            // ARCH-013: Health endpoints.
+            // /health/live → pure liveness (predicate _ => false hiçbir check çalıştırmaz,
+            // app process'i ayakta = 200). K8s livenessProbe için.
+            // /health/ready → readiness (kayıtlı tüm check'leri çalıştırır, şu an boş = 200).
+            endpoints.MapHealthChecks("/health/live",
+                new Microsoft.AspNetCore.Diagnostics.HealthChecks.HealthCheckOptions
+                {
+                    Predicate = _ => false
+                });
+            endpoints.MapHealthChecks("/health/ready");
+
             endpoints.MapHub<Apya.Platform.Web.Hubs.NotificationHub>("/notification-hub");
             endpoints.MapHub<Apya.Platform.Web.Hubs.TaskHub>("/task-hub");
             endpoints.MapHub<Apya.Platform.Web.Hubs.AiHub>("/ai-hub");
