@@ -112,10 +112,11 @@ public class ExpenseAppService :
 
     public override async Task DeleteAsync(Guid id)
     {
-        var linked = await _cashMovementRepository.GetListAsync(
+        // ARCH-014: Önceki kod tüm linked CashMovement'leri belleğe yüklüyor sonra
+        // foreach ile siliyor. Predicate overload'u tek aksiyonda halleder; audit
+        // history korunur (change tracker üzerinden, DeleteDirectAsync DEĞİL).
+        await _cashMovementRepository.DeleteAsync(
             x => x.ReferenceId == id && x.Source == CashMovementSource.Expense);
-        foreach (var m in linked)
-            await _cashMovementRepository.DeleteAsync(m);
 
         await base.DeleteAsync(id);
     }
