@@ -132,14 +132,26 @@ public class PlatformWebModule : AbpModule
             options.Add(Volo.Abp.Ui.LayoutHooks.LayoutHooks.Body.First, typeof(Apya.Platform.Web.Components.ImpersonationAlert.ImpersonationAlertViewComponent));
         });
 
-        // GAP-012: Audit Logging Settings - Hassas entity'ler (Görevler ve Dinamik Formlar) izlenir
+        // GAP-012 + ARCH-010: Audit Logging Selectors.
+        // Tasks + DynamicAssets'e ek olarak FİNANSAL aggregate root'lar audit'lenmeli —
+        // KVKK / vergi audit / iç inceleme için "kim, ne zaman, ne değiştirdi" zorunlu.
+        // CashAccount + ExchangeRate config-ish; transactional değil → şu an dışarıda.
+        // FxRevaluationSnapshot append-only/snapshot → modify edilmez, gereksiz.
         Configure<Volo.Abp.Auditing.AbpAuditingOptions>(options =>
         {
             options.EntityHistorySelectors.Add(
                 new Volo.Abp.NamedTypeSelector(
                     "SensitiveEntities",
                     type => typeof(Apya.Platform.Tasks.TaskItem).IsAssignableFrom(type) ||
-                            typeof(Apya.Platform.DynamicAssets.AppDocument).IsAssignableFrom(type)
+                            typeof(Apya.Platform.DynamicAssets.AppDocument).IsAssignableFrom(type) ||
+                            // ARCH-010: finansal transactional aggregate'ler
+                            typeof(Apya.Platform.Invoices.Invoice).IsAssignableFrom(type) ||
+                            typeof(Apya.Platform.Invoices.InvoiceItem).IsAssignableFrom(type) ||
+                            typeof(Apya.Platform.Invoices.Payment).IsAssignableFrom(type) ||
+                            typeof(Apya.Platform.CashMovements.CashMovement).IsAssignableFrom(type) ||
+                            typeof(Apya.Platform.CustomerLedger.CustomerLedgerEntry).IsAssignableFrom(type) ||
+                            typeof(Apya.Platform.Expenses.Expense).IsAssignableFrom(type) ||
+                            typeof(Apya.Platform.Incomes.IncomeEntry).IsAssignableFrom(type)
                 )
             );
         });
