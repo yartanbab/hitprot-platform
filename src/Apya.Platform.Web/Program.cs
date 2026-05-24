@@ -1,6 +1,8 @@
 using System;
+using System.IO;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Serilog;
@@ -12,7 +14,22 @@ public class Program
 {
     public async static Task<int> Main(string[] args)
     {
-        Log.Logger = new LoggerConfiguration()
+        // ARCH-013: Bootstrap IConfiguration — Serilog'u kurmadan ÖNCE Elasticsearch URI'sini
+        // okumak için. Hardcoded "http://localhost:9200" → config-driven. URI yoksa ES sink
+        // hiç eklenmez → container startup'ı ES erişilemezliği yüzünden gecikmez.
+        var environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Production";
+        var bootstrapConfiguration = new ConfigurationBuilder()
+            .SetBasePath(Directory.GetCurrentDirectory())
+            .AddJsonFile("appsettings.json", optional: true)
+            .AddJsonFile($"appsettings.{environment}.json", optional: true)
+            .AddJsonFile("appsettings.secrets.json", optional: true)
+            .AddEnvironmentVariables()
+            .AddCommandLine(args)
+            .Build();
+
+        var elasticsearchUri = bootstrapConfiguration["Serilog:Elasticsearch:Uri"];
+
+        var logConfiguration = new LoggerConfiguration()
 #if DEBUG
             .MinimumLevel.Debug()
 #else
@@ -22,16 +39,24 @@ public class Program
             .MinimumLevel.Override("Microsoft.EntityFrameworkCore", LogEventLevel.Warning)
             .Enrich.FromLogContext()
             .WriteTo.Async(c => c.File("Logs/logs.txt"))
-            .WriteTo.Async(c => c.Console())
-            // GAP-012: Audit Log'ların Elasticsearch'e Yönlendirilmesi (Kibana ile İzleme İçin)
-            .WriteTo.Elasticsearch(new Serilog.Sinks.Elasticsearch.ElasticsearchSinkOptions(new Uri("http://localhost:9200"))
-            {
-                AutoRegisterTemplate = true,
-                AutoRegisterTemplateVersion = Serilog.Sinks.Elasticsearch.AutoRegisterTemplateVersion.ESv7,
-                IndexFormat = "apya-platform-auditlogs-{0:yyyy.MM}",
-                MinimumLogEventLevel = LogEventLevel.Information
-            })
-            .CreateLogger();
+            .WriteTo.Async(c => c.Console());
+
+        // GAP-012 + ARCH-013: Elasticsearch sink yalnızca URI yapılandırılmışsa eklenir.
+        // appsettings.json'da Serilog:Elasticsearch:Uri = "http://localhost:9200" şeklinde
+        // tanımlanırsa eskisiyle aynı davranış.
+        if (!string.IsNullOrWhiteSpace(elasticsearchUri))
+        {
+            logConfiguration = logConfiguration.WriteTo.Elasticsearch(
+                new Serilog.Sinks.Elasticsearch.ElasticsearchSinkOptions(new Uri(elasticsearchUri))
+                {
+                    AutoRegisterTemplate = true,
+                    AutoRegisterTemplateVersion = Serilog.Sinks.Elasticsearch.AutoRegisterTemplateVersion.ESv7,
+                    IndexFormat = "apya-platform-auditlogs-{0:yyyy.MM}",
+                    MinimumLogEventLevel = LogEventLevel.Information
+                });
+        }
+
+        Log.Logger = logConfiguration.CreateLogger();
 
         try
         {
