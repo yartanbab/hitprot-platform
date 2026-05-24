@@ -37,6 +37,7 @@ public class ProjectAppService :
     private readonly IRepository<TaskTimeLog, Guid> _timeLogRepository;
     private readonly IRepository<Customer, Guid> _customerRepository;
     private readonly ITenantStore _tenantStore;
+    private readonly IRepository<Volo.Abp.TenantManagement.Tenant, Guid> _tenantRepository;
 
     public ProjectAppService(
         IRepository<Project, Guid> repository,
@@ -46,7 +47,8 @@ public class ProjectAppService :
         IRepository<TaskItem, Guid> taskRepository,
         IRepository<TaskTimeLog, Guid> timeLogRepository,
         IRepository<Customer, Guid> customerRepository,
-        ITenantStore tenantStore)
+        ITenantStore tenantStore,
+        IRepository<Volo.Abp.TenantManagement.Tenant, Guid> tenantRepository)
         : base(repository)
     {
         _projectManager = projectManager;
@@ -56,6 +58,7 @@ public class ProjectAppService :
         _timeLogRepository = timeLogRepository;
         _customerRepository = customerRepository;
         _tenantStore = tenantStore;
+        _tenantRepository = tenantRepository;
     }
 
     // --- CREATE --- REV-GAP001: Tüm alanlar INSERT öncesinde set edilir
@@ -132,15 +135,16 @@ public class ProjectAppService :
                     allLogs = await _timeLogRepository.GetListAsync(x => allTaskIds.Contains(x.TaskId));
                 }
 
-                // BUG-003: N+1 sorgu düzeltmesi — Tenant isimlerini tek seferde çek
+                // BUG-003 + ARCH-011: Tenant isimlerini tek SQL ile çek (önceki kod foreach +
+                // await ile sequential N round-trip yapıyordu — 50 tenant × 80ms = 4s p99).
                 var tenantNameMap = new Dictionary<Guid, string>();
                 if (CurrentTenant.Id == null)
                 {
                     var tenantIds = dtos.Where(d => d.TenantId.HasValue).Select(d => d.TenantId!.Value).Distinct().ToList();
-                    foreach (var tid in tenantIds)
+                    if (tenantIds.Count > 0)
                     {
-                        var t = await _tenantStore.FindAsync(tid);
-                        if (t != null) tenantNameMap[tid] = t.Name;
+                        var tenants = await _tenantRepository.GetListAsync(t => tenantIds.Contains(t.Id));
+                        tenantNameMap = tenants.ToDictionary(t => t.Id, t => t.Name);
                     }
                 }
 
