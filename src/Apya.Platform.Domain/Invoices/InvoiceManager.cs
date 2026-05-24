@@ -181,10 +181,15 @@ public class InvoiceManager : DomainService
         decimal? rate = null;
         if (!string.Equals(invoice.Currency.Trim(), cash.Currency.Trim(), StringComparison.OrdinalIgnoreCase))
         {
-            var er = (await _exchangeRateRepository.GetListAsync(
-                    x => x.FromCurrency == invoice.Currency && x.ToCurrency == cash.Currency))
-                .OrderByDescending(x => x.RateDate)
-                .FirstOrDefault();
+            // ARCH-012: DB-side ordering + LIMIT 1. Önceki kod tüm tarihli kur kayıtlarını
+            // bellek-içine yüklüyor sonra client-side sort yapıyordu — TCMB yıllarca veri
+            // birikince (1000+ row her currency pair için) latency + bellek darboğazı.
+            // PlatformDbContext'teki composite index (TenantId, FromCurrency, ToCurrency, RateDate)
+            // DB engine'in backward scan ile tek-row lookup yapmasını sağlar.
+            var query = await _exchangeRateRepository.GetQueryableAsync();
+            var er = await AsyncExecuter.FirstOrDefaultAsync(
+                query.Where(x => x.FromCurrency == invoice.Currency && x.ToCurrency == cash.Currency)
+                     .OrderByDescending(x => x.RateDate));
             rate = er?.Rate;
         }
 
