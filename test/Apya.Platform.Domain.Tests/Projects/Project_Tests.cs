@@ -12,7 +12,7 @@ public class Project_Tests
     public void SetBudgetInfo_Should_Throw_Exception_When_Negative()
     {
         // Arrange
-        var project = new Project(Guid.NewGuid(), null, "Tübitak Projesi", "PRJ-001", "Açıklama");
+        var project = new Project(Guid.NewGuid(), null, null, "Tübitak Projesi", "PRJ-001", "Açıklama");
 
         // Act & Assert
         var ex = Assert.Throws<BusinessException>(() => project.SetBudgetInfo(-50, 0, "TRY"));
@@ -23,7 +23,7 @@ public class Project_Tests
     public void SetSchedule_Should_Throw_Exception_When_EndDate_Before_StartDate()
     {
         // Arrange
-        var project = new Project(Guid.NewGuid(), null, "Tübitak Projesi", "PRJ-001", "Açıklama");
+        var project = new Project(Guid.NewGuid(), null, null, "Tübitak Projesi", "PRJ-001", "Açıklama");
         var startDate = new DateTime(2025, 1, 10);
         var endDate = new DateTime(2025, 1, 5); // Bitiş tarihi başlangıçtan önce!
 
@@ -36,7 +36,7 @@ public class Project_Tests
     public void SetName_Should_Throw_Exception_When_Null_Or_Whitespace()
     {
         // Arrange
-        var project = new Project(Guid.NewGuid(), null, "Tübitak Projesi", "PRJ-001", "Açıklama");
+        var project = new Project(Guid.NewGuid(), null, null, "Tübitak Projesi", "PRJ-001", "Açıklama");
 
         // Act & Assert
         var ex = Assert.Throws<BusinessException>(() => project.SetName("  "));
@@ -48,7 +48,7 @@ public class Project_Tests
     [Fact]
     public void Constructor_Default_Category_Should_Be_Other()
     {
-        var project = new Project(Guid.NewGuid(), null, "Test", "PRJ", "");
+        var project = new Project(Guid.NewGuid(), null, null, "Test", "PRJ", "");
 
         project.Category.ShouldBe(ProjectCategory.Other);
         project.CustomerId.ShouldBeNull();
@@ -60,6 +60,7 @@ public class Project_Tests
         var customerId = Guid.NewGuid();
         var project = new Project(
             id: Guid.NewGuid(),
+            tenantId: null,
             grantId: null,
             name: "TÜBİTAK 1501 Projesi",
             code: "PRJ-1501",
@@ -77,6 +78,7 @@ public class Project_Tests
         var customerId = Guid.NewGuid();
         var project = new Project(
             id: Guid.NewGuid(),
+            tenantId: null,
             grantId: null,
             name: "Lansman Etkinliği",
             code: "EVT-001",
