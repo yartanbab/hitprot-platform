@@ -3,33 +3,41 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
+using Apya.Platform.Ai.Tenants;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using OpenAI;
 using OpenAI.Chat;
+using Volo.Abp.Domain.Repositories;
 using Volo.Abp.DependencyInjection;
+using Volo.Abp.MultiTenancy;
 
 namespace Apya.Platform.Ai.Providers;
 
-// ISingletonDependency: ChatClient wraps HttpClient internally — one instance per app avoids
-// connection pool exhaustion that occurs when new ChatClient() is called per request.
-public class OpenAiProvider : IAiProvider, ISingletonDependency
+// IScopedDependency: one instance per request so ICurrentTenant and IRepository (scoped) can be injected.
+// OpenAIClient (singleton) owns the HTTP connection pool; GetChatClient() creates a lightweight wrapper.
+public class OpenAiProvider : IAiProvider, IScopedDependency
 {
     public string Name => "openai";
 
-    private readonly ChatClient _chatClient;
+    private readonly OpenAIClient _openAIClient;
+    private readonly IRepository<TenantAiSettings, Guid> _settingsRepository;
+    private readonly ICurrentTenant _currentTenant;
+    private readonly string _defaultModel;
     private readonly ILogger<OpenAiProvider> _logger;
 
-    public OpenAiProvider(IConfiguration configuration, ILogger<OpenAiProvider> logger)
+    public OpenAiProvider(
+        OpenAIClient openAIClient,
+        IRepository<TenantAiSettings, Guid> settingsRepository,
+        ICurrentTenant currentTenant,
+        IConfiguration configuration,
+        ILogger<OpenAiProvider> logger)
     {
+        _openAIClient = openAIClient;
+        _settingsRepository = settingsRepository;
+        _currentTenant = currentTenant;
+        _defaultModel = configuration["OpenAI:Model"] ?? "gpt-4o-mini";
         _logger = logger;
-
-        var apiKey = configuration["OpenAI:ApiKey"];
-        if (string.IsNullOrWhiteSpace(apiKey))
-            throw new InvalidOperationException(
-                "OpenAI:ApiKey yapılandırmada eksik. Uygulama başlatılamaz.");
-
-        var model = configuration["OpenAI:Model"] ?? "gpt-4o-mini";
-        _chatClient = new ChatClient(model, apiKey);
     }
 
     public async Task<AiCompletionResult> CompleteAsync(
@@ -37,6 +45,9 @@ public class OpenAiProvider : IAiProvider, ISingletonDependency
         string userMessage,
         CancellationToken cancellationToken = default)
     {
+        var model = await ResolveModelAsync();
+        var chatClient = _openAIClient.GetChatClient(model);
+
         var messages = new List<ChatMessage>
         {
             new SystemChatMessage(systemPrompt),
@@ -44,7 +55,7 @@ public class OpenAiProvider : IAiProvider, ISingletonDependency
         };
 
         var stopwatch = Stopwatch.StartNew();
-        var response = await _chatClient.CompleteChatAsync(messages, cancellationToken: cancellationToken);
+        var response = await chatClient.CompleteChatAsync(messages, cancellationToken: cancellationToken);
         stopwatch.Stop();
 
         var content = response.Value.Content[0].Text;
@@ -57,5 +68,17 @@ public class OpenAiProvider : IAiProvider, ISingletonDependency
             OutputTokens = usage?.OutputTokenCount ?? 0,
             Duration = stopwatch.Elapsed
         };
+    }
+
+    private async Task<string> ResolveModelAsync()
+    {
+        var settings = await _settingsRepository.FindAsync(s => s.TenantId == _currentTenant.Id);
+        if (settings != null && !string.IsNullOrWhiteSpace(settings.PreferredModel))
+        {
+            _logger.LogDebug("Tenant {TenantId} için AI model: {Model}", _currentTenant.Id, settings.PreferredModel);
+            return settings.PreferredModel;
+        }
+
+        return _defaultModel;
     }
 }
