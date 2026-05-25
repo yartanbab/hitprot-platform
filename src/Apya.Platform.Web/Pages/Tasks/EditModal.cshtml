@@ -51,6 +51,11 @@
                     <i class="fa fa-paperclip text-info me-1"></i> Dosyalar
                 </a>
             </li>
+            <li class="nav-item">
+                <a class="nav-link fw-bold text-dark" id="finance-tab_@Model.Id" data-bs-toggle="tab" href="#finance_@Model.Id" role="tab">
+                    <i class="fa fa-coins text-warning me-1"></i> Finans
+                </a>
+            </li>
         </ul>
 
         <div class="tab-content p-4 bg-white border-top" id="taskTabsContent_@Model.Id" style="min-height: 450px;">
@@ -180,6 +185,106 @@
                     <div class="text-center text-muted p-5 no-file-text">Henüz dosya yüklenmemiş.</div>
                     }
                 </ul>
+            </div>
+
+            @{
+                var totalExpense = Model.TaskExpenses.Sum(x => x.Amount);
+                var totalIncome  = Model.TaskIncomes.Sum(x => x.Amount);
+                var netFinance   = totalIncome - totalExpense;
+            }
+            <div class="tab-pane fade" id="finance_@Model.Id" role="tabpanel">
+                <div class="row text-center mb-4">
+                    <div class="col-4">
+                        <div class="card py-2 border-danger">
+                            <div class="text-muted small">Toplam Gider</div>
+                            <div class="fw-bold fs-5 text-danger">@totalExpense.ToString("N2")</div>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="card py-2 border-success">
+                            <div class="text-muted small">Toplam Gelir</div>
+                            <div class="fw-bold fs-5 text-success">@totalIncome.ToString("N2")</div>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="card py-2">
+                            <div class="text-muted small">Net</div>
+                            <div class="fw-bold fs-5 @(netFinance >= 0 ? "text-success" : "text-danger")">@netFinance.ToString("N2")</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h6 class="fw-bold mb-0"><i class="fa fa-arrow-down text-danger me-1"></i> Giderler</h6>
+                    <button type="button" class="btn btn-sm btn-outline-danger"
+                            onclick="(new abp.ModalManager({ viewUrl: '/Expenses/CreateModal?TaskId=@Model.Id' })).open()">
+                        <i class="fa fa-plus me-1"></i> Gider Ekle
+                    </button>
+                </div>
+                @if (!Model.TaskExpenses.Any())
+                {
+                    <p class="text-muted small mb-3">Bu görev için gider kaydı yok.</p>
+                }
+                else
+                {
+                    <table class="table table-sm table-striped table-bordered mb-4">
+                        <thead class="table-light">
+                            <tr>
+                                <th style="width:100px;">Tarih</th>
+                                <th>Başlık</th>
+                                <th style="width:90px;">Kategori</th>
+                                <th class="text-end" style="width:100px;">Tutar</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        @foreach (var e in Model.TaskExpenses)
+                        {
+                            <tr>
+                                <td>@e.ExpenseDate.ToString("dd.MM.yyyy")</td>
+                                <td>@e.Title</td>
+                                <td>@e.Category</td>
+                                <td class="text-end text-danger">@e.Amount.ToString("N2") @e.Currency</td>
+                            </tr>
+                        }
+                        </tbody>
+                    </table>
+                }
+
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h6 class="fw-bold mb-0"><i class="fa fa-arrow-up text-success me-1"></i> Gelirler</h6>
+                    <button type="button" class="btn btn-sm btn-outline-success"
+                            onclick="(new abp.ModalManager({ viewUrl: '/Incomes/CreateModal?TaskId=@Model.Id' })).open()">
+                        <i class="fa fa-plus me-1"></i> Gelir Ekle
+                    </button>
+                </div>
+                @if (!Model.TaskIncomes.Any())
+                {
+                    <p class="text-muted small">Bu görev için gelir kaydı yok.</p>
+                }
+                else
+                {
+                    <table class="table table-sm table-striped table-bordered">
+                        <thead class="table-light">
+                            <tr>
+                                <th style="width:100px;">Tarih</th>
+                                <th>Başlık</th>
+                                <th style="width:90px;">Kategori</th>
+                                <th class="text-end" style="width:100px;">Tutar</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        @foreach (var i in Model.TaskIncomes)
+                        {
+                            <tr>
+                                <td>@i.IncomeDate.ToString("dd.MM.yyyy")</td>
+                                <td>@i.Title</td>
+                                <td>@i.Category</td>
+                                <td class="text-end text-success">@i.Amount.ToString("N2") @i.Currency</td>
+                            </tr>
+                        }
+                        </tbody>
+                    </table>
+                }
             </div>
         </div>
     </abp-modal-body>
