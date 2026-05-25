@@ -32,7 +32,7 @@ namespace Apya.Platform.Web.Pages
             {
                 ExistingAnalysis = await _projectAppService.GetAnalysisAsync(ProjectId);
             }
-            catch(Exception)
+            catch (Volo.Abp.Domain.Entities.EntityNotFoundException)
             {
                 ExistingAnalysis = null;
             }

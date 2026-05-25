@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Apya.Platform.Expenses;
+using Apya.Platform.Incomes;
 using Apya.Platform.Tasks;
 using Apya.Platform.Web.Services;
 using Microsoft.AspNetCore.Http;
@@ -26,14 +28,24 @@ namespace Apya.Platform.Web.Pages.Tasks
         public List<TaskDto> SubTasks { get; set; } = new();
         public List<TaskCommentDto> Comments { get; set; } = new();
         public List<TaskAttachmentDto> Attachments { get; set; } = new();
+        public List<ExpenseDto> TaskExpenses { get; set; } = new();
+        public List<IncomeEntryDto> TaskIncomes { get; set; } = new();
 
         private readonly ITaskAppService _taskAppService;
         private readonly IUploadedFileStorage _fileStorage;
+        private readonly IExpenseAppService _expenseAppService;
+        private readonly IIncomeEntryAppService _incomeEntryAppService;
 
-        public EditModalModel(ITaskAppService taskAppService, IUploadedFileStorage fileStorage)
+        public EditModalModel(
+            ITaskAppService taskAppService,
+            IUploadedFileStorage fileStorage,
+            IExpenseAppService expenseAppService,
+            IIncomeEntryAppService incomeEntryAppService)
         {
             _taskAppService = taskAppService;
             _fileStorage = fileStorage;
+            _expenseAppService = expenseAppService;
+            _incomeEntryAppService = incomeEntryAppService;
         }
 
         public async Task OnGetAsync()
@@ -61,6 +73,14 @@ namespace Apya.Platform.Web.Pages.Tasks
             UserList = userLookup.Items
                 .Select(u => new SelectListItem(u.UserName, u.Id.ToString()))
                 .ToList();
+
+            var expensePage = await _expenseAppService.GetListAsync(
+                new GetExpensesInput { TaskId = Id, MaxResultCount = 500 });
+            TaskExpenses = expensePage.Items.OrderByDescending(x => x.ExpenseDate).ToList();
+
+            var incomePage = await _incomeEntryAppService.GetListAsync(
+                new GetIncomeEntriesInput { TaskId = Id, MaxResultCount = 500 });
+            TaskIncomes = incomePage.Items.OrderByDescending(x => x.IncomeDate).ToList();
         }
 
         public async Task<IActionResult> OnPostAsync()

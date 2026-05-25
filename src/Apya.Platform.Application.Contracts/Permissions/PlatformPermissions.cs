@@ -144,4 +144,13 @@ public static class PlatformPermissions
         public const string Default = GroupName + ".TenantSettings";
         public const string ManageAi = Default + ".ManageAi";
     }
+
+    // --- HİBE YETKİLERİ ---
+    public static class Grants
+    {
+        public const string Default = GroupName + ".Grants";
+        public const string Create = Default + ".Create";
+        public const string Edit   = Default + ".Edit";
+        public const string Delete = Default + ".Delete";
+    }
 }

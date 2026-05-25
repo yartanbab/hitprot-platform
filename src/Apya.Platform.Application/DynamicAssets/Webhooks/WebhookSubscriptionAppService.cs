@@ -7,6 +7,7 @@ using Microsoft.Extensions.Logging;
 using Volo.Abp.Application.Dtos;
 using Volo.Abp.Domain.Repositories;
 using Apya.Platform.DynamicAssets.Webhooks.Dtos;
+using Apya.Platform.Permissions;
 
 namespace Apya.Platform.DynamicAssets.Webhooks;
 
@@ -92,6 +93,7 @@ public class WebhookSubscriptionAppService : PlatformAppService, IWebhookSubscri
         return new PagedResultDto<WebhookSubscriptionDto>(totalCount, dtos);
     }
 
+    [Authorize(PlatformPermissions.DynamicAssets.Delete)]
     public async Task DeleteAsync(Guid id)
     {
         await _subscriptionRepository.DeleteAsync(id);

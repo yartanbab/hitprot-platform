@@ -63,30 +63,38 @@ public class TaskDeadlineWorker : AsyncPeriodicBackgroundWorkerBase
 
         foreach (var tenantGroup in taskGroups)
         {
-            using (currentTenant.Change(tenantGroup.Key))
+            try
             {
-                var groupIds = new List<Guid>();
-
-                foreach (var task in tenantGroup)
+                using (currentTenant.Change(tenantGroup.Key))
                 {
-                    await localEventBus.PublishAsync(new TaskDueSoonEto
+                    var groupIds = new List<Guid>();
+
+                    foreach (var task in tenantGroup)
                     {
-                        TaskId = task.Id,
-                        TaskTitle = task.Title,
-                        AssigneeId = task.AssigneeId ?? Guid.Empty,
-                        CreatorId = task.CreatorId ?? Guid.Empty,
-                        DueDate = task.DueDate!.Value
-                    });
+                        await localEventBus.PublishAsync(new TaskDueSoonEto
+                        {
+                            TaskId = task.Id,
+                            TaskTitle = task.Title,
+                            AssigneeId = task.AssigneeId ?? Guid.Empty,
+                            CreatorId = task.CreatorId ?? Guid.Empty,
+                            DueDate = task.DueDate!.Value
+                        });
 
-                    groupIds.Add(task.Id);
+                        groupIds.Add(task.Id);
+                    }
+
+                    // Tek bir SQL UPDATE — N×UpdateAsync yerine
+                    await taskRepository.BulkMarkDeadlineWarningSentAsync(groupIds);
+
+                    Logger.LogInformation(
+                        "TenantId={TenantId}: {Count} görev için deadline uyarısı gönderildi.",
+                        tenantGroup.Key, groupIds.Count);
                 }
-
-                // Tek bir SQL UPDATE — N×UpdateAsync yerine
-                await taskRepository.BulkMarkDeadlineWarningSentAsync(groupIds);
-
-                Logger.LogInformation(
-                    "TenantId={TenantId}: {Count} görev için deadline uyarısı gönderildi.",
-                    tenantGroup.Key, groupIds.Count);
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError(ex, "TenantId={TenantId}: Deadline uyarıları işlenirken hata oluştu. Sonraki tenant'a geçiliyor.",
+                    tenantGroup.Key);
             }
         }
     }

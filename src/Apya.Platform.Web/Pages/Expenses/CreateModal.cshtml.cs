@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
@@ -16,6 +17,9 @@ public class CreateModalModel : AbpPageModel
     private readonly ICashAccountAppService _cashAccountAppService;
     private readonly IProjectAppService _projectAppService;
     private readonly ICustomerAppService _customerAppService;
+
+    [BindProperty(SupportsGet = true)]
+    public Guid? TaskId { get; set; }
 
     [BindProperty]
     public CreateUpdateExpenseDto Expense { get; set; } = new();
@@ -41,6 +45,8 @@ public class CreateModalModel : AbpPageModel
     {
         (Accounts, Projects, Customers, Categories) =
             await ExpenseLookups.LoadAsync(_cashAccountAppService, _projectAppService, _customerAppService);
+        if (TaskId.HasValue)
+            Expense.TaskId = TaskId;
         return Page();
     }
 

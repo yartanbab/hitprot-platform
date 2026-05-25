@@ -1,5 +1,7 @@
 using System;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using OpenAI;
 using Polly;
 using Polly.CircuitBreaker;
 using Polly.Retry;
@@ -26,13 +28,25 @@ public class PlatformAiApplicationModule : AbpModule
             options.AddMaps<PlatformAiApplicationModule>();
         });
 
-        // OpenAiProvider is the inner concrete dependency — register explicitly.
-        context.Services.AddTransient<OpenAiProvider>();
+        // OpenAIClient singleton owns the HTTP connection pool; OpenAiProvider (scoped) calls
+        // GetChatClient(model) per request to pick the tenant's preferred model at runtime.
+        context.Services.AddSingleton(sp =>
+        {
+            var config = sp.GetRequiredService<IConfiguration>();
+            var apiKey = config["OpenAI:ApiKey"];
+            if (string.IsNullOrWhiteSpace(apiKey))
+                throw new InvalidOperationException(
+                    "OpenAI:ApiKey yapılandırmada eksik. Uygulama başlatılamaz.");
+            return new OpenAIClient(apiKey);
+        });
 
         // ResiliencePipeline registered as singleton so the circuit breaker holds
         // app-wide state. AiGateway (transient) receives it via constructor injection,
         // enabling test doubles without a static field.
-        context.Services.AddSingleton(_ =>
+        // ARCH-041: Explicit type parameter ensures the DI container tracks this instance
+        // for disposal (ResiliencePipeline<T> implements IDisposable; omitting the type
+        // parameter still works but the disposal contract is ambiguous to the reader).
+        context.Services.AddSingleton<ResiliencePipeline<AiCompletionResult>>(_ =>
             new ResiliencePipelineBuilder<AiCompletionResult>()
                 .AddRetry(new RetryStrategyOptions<AiCompletionResult>
                 {

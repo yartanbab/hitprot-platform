@@ -1,0 +1,144 @@
+@page
+@model Apya.Platform.Web.Pages.Reports.CustomerStatementModel
+@using Apya.Platform.CustomerLedger
+@{
+    ViewBag.PageTitle = "Cari Ekstre Raporu";
+    string SourceText(CustomerLedgerSource s) => s switch
+    {
+        CustomerLedgerSource.Invoice  => "Satış Faturası",
+        CustomerLedgerSource.Payment  => "Tahsilat",
+        CustomerLedgerSource.Opening  => "Açılış",
+        _                             => "Manuel"
+    };
+}
+
+<style>
+    @@media print {
+        .no-print { display: none !important; }
+        .abp-card { border: none !important; box-shadow: none !important; }
+        body { font-size: 12px; }
+    }
+</style>
+
+<abp-card>
+    <abp-card-header>
+        <div class="d-flex justify-content-between align-items-center">
+            <abp-card-title>@ViewBag.PageTitle</abp-card-title>
+            @if (Model.Statement != null)
+            {
+                var excelUrl = $"?handler=Excel&CustomerId={Model.CustomerId}&FromDate={Model.FromDate?.ToString("yyyy-MM-dd")}&ToDate={Model.ToDate?.ToString("yyyy-MM-dd")}";
+                var pdfUrl   = $"?handler=Pdf&CustomerId={Model.CustomerId}&FromDate={Model.FromDate?.ToString("yyyy-MM-dd")}&ToDate={Model.ToDate?.ToString("yyyy-MM-dd")}";
+                <div class="btn-group no-print">
+                    <a href="@excelUrl" class="btn btn-outline-success btn-sm">
+                        <i class="fa fa-file-excel"></i> Excel
+                    </a>
+                    <a href="@pdfUrl" class="btn btn-outline-danger btn-sm">
+                        <i class="fa fa-file-pdf"></i> PDF
+                    </a>
+                    <button class="btn btn-outline-secondary btn-sm" onclick="window.print()">
+                        <i class="fa fa-print"></i> Yazdır
+                    </button>
+                </div>
+            }
+        </div>
+    </abp-card-header>
+    <abp-card-body>
+        <form method="get" class="row g-2 align-items-end mb-3 no-print">
+            <div class="col-auto">
+                <label class="form-label small">Cari</label>
+                <select name="CustomerId" class="form-select form-select-sm" style="min-width:220px;">
+                    <option value="">-- Seçiniz --</option>
+                    @foreach (var c in Model.Customers)
+                    {
+                        if (c.Id == Model.CustomerId)
+                        {
+                            <option value="@c.Id" selected>@c.Name</option>
+                        }
+                        else
+                        {
+                            <option value="@c.Id">@c.Name</option>
+                        }
+                    }
+                </select>
+            </div>
+            <div class="col-auto">
+                <label class="form-label small">Başlangıç</label>
+                <input type="date" name="FromDate" class="form-control form-control-sm"
+                       value="@(Model.FromDate?.ToString("yyyy-MM-dd"))" />
+            </div>
+            <div class="col-auto">
+                <label class="form-label small">Bitiş</label>
+                <input type="date" name="ToDate" class="form-control form-control-sm"
+                       value="@(Model.ToDate?.ToString("yyyy-MM-dd"))" />
+            </div>
+            <div class="col-auto">
+                <button type="submit" class="btn btn-primary btn-sm">
+                    <i class="fa fa-filter"></i> Getir
+                </button>
+            </div>
+        </form>
+
+        @if (Model.Statement == null)
+        {
+            <p class="text-muted">Lütfen bir cari seçin.</p>
+        }
+        else
+        {
+            var s = Model.Statement;
+            <h5 class="mb-3">@s.CustomerName — Ekstre</h5>
+
+            <div class="alert @(s.Balance > 0 ? "alert-danger" : s.Balance < 0 ? "alert-success" : "alert-secondary") py-2">
+                <strong>Net Bakiye: @s.Balance.ToString("N2") ₺</strong>
+                @if (s.Balance > 0)      { <span> — Müşteri bize borçlu</span> }
+                else if (s.Balance < 0) { <span> — Fazla tahsilat / bizim borcumuz</span> }
+                <span class="float-end">
+                    Toplam Borç: @s.TotalDebit.ToString("N2") &nbsp;|&nbsp;
+                    Toplam Alacak: @s.TotalCredit.ToString("N2")
+                </span>
+            </div>
+
+            @if (!s.Lines.Any())
+            {
+                <p class="text-muted">Bu cari için hareket yok.</p>
+            }
+            else
+            {
+                <table class="table table-sm table-striped table-bordered">
+                    <thead class="table-light">
+                        <tr>
+                            <th style="width:110px;">Tarih</th>
+                            <th style="width:130px;">Kaynak</th>
+                            <th>Açıklama</th>
+                            <th class="text-end" style="width:110px;">Borç</th>
+                            <th class="text-end" style="width:110px;">Alacak</th>
+                            <th class="text-end" style="width:120px;">Bakiye</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    @foreach (var l in s.Lines)
+                    {
+                        <tr>
+                            <td>@l.EntryDate.ToString("dd.MM.yyyy")</td>
+                            <td>@SourceText(l.Source)</td>
+                            <td>@(l.Description ?? "-")</td>
+                            <td class="text-end">@(l.Debit > 0 ? l.Debit.ToString("N2") : "")</td>
+                            <td class="text-end">@(l.Credit > 0 ? l.Credit.ToString("N2") : "")</td>
+                            <td class="text-end fw-bold @(l.RunningBalance < 0 ? "text-success" : l.RunningBalance > 0 ? "text-danger" : "")">
+                                @l.RunningBalance.ToString("N2")
+                            </td>
+                        </tr>
+                    }
+                    </tbody>
+                    <tfoot>
+                        <tr class="fw-bold table-secondary">
+                            <td colspan="3" class="text-end">TOPLAM</td>
+                            <td class="text-end">@s.TotalDebit.ToString("N2")</td>
+                            <td class="text-end">@s.TotalCredit.ToString("N2")</td>
+                            <td class="text-end">@s.Balance.ToString("N2")</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            }
+        }
+    </abp-card-body>
+</abp-card>

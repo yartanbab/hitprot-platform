@@ -32,4 +32,26 @@ public class TrialBalanceModel : AbpPageModel
         });
         return Page();
     }
+
+    public virtual async Task<IActionResult> OnGetExcelAsync()
+    {
+        var report = await _trialBalanceAppService.GetAsync(new GetTrialBalanceInput
+        {
+            FromDate = FromDate,
+            ToDate = ToDate
+        });
+        var bytes = ReportExporter.TrialBalanceToExcel(report, FromDate, ToDate);
+        return File(bytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "Mizan.xlsx");
+    }
+
+    public virtual async Task<IActionResult> OnGetPdfAsync()
+    {
+        var report = await _trialBalanceAppService.GetAsync(new GetTrialBalanceInput
+        {
+            FromDate = FromDate,
+            ToDate = ToDate
+        });
+        var bytes = ReportExporter.TrialBalanceToPdf(report, FromDate, ToDate);
+        return File(bytes, "application/pdf", "Mizan.pdf");
+    }
 }
