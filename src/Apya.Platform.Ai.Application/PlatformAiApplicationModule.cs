@@ -43,7 +43,10 @@ public class PlatformAiApplicationModule : AbpModule
         // ResiliencePipeline registered as singleton so the circuit breaker holds
         // app-wide state. AiGateway (transient) receives it via constructor injection,
         // enabling test doubles without a static field.
-        context.Services.AddSingleton(_ =>
+        // ARCH-041: Explicit type parameter ensures the DI container tracks this instance
+        // for disposal (ResiliencePipeline<T> implements IDisposable; omitting the type
+        // parameter still works but the disposal contract is ambiguous to the reader).
+        context.Services.AddSingleton<ResiliencePipeline<AiCompletionResult>>(_ =>
             new ResiliencePipelineBuilder<AiCompletionResult>()
                 .AddRetry(new RetryStrategyOptions<AiCompletionResult>
                 {

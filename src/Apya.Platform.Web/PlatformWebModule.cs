@@ -291,6 +291,20 @@ public class PlatformWebModule : AbpModule
         }
 
         app.UseCorrelationId();
+
+        // ARCH-039: Temel güvenlik başlıkları — clickjacking, MIME sniff, referrer sızıntısı.
+        // CSP kasıtlı olarak dışarıda; LeptonX teması inline script/style kullandığından
+        // report-only modunda ayrı bir bilet ile ele alınmalı.
+        app.Use(async (ctx, next) =>
+        {
+            ctx.Response.Headers["X-Frame-Options"] = "SAMEORIGIN";
+            ctx.Response.Headers["X-Content-Type-Options"] = "nosniff";
+            ctx.Response.Headers["X-XSS-Protection"] = "1; mode=block";
+            ctx.Response.Headers["Referrer-Policy"] = "strict-origin-when-cross-origin";
+            ctx.Response.Headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()";
+            await next();
+        });
+
         app.MapAbpStaticAssets();
         app.UseRouting();
         app.UseAuthentication();

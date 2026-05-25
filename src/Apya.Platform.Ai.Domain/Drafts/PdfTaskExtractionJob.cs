@@ -97,7 +97,9 @@ public class PdfTaskExtractionJob : AsyncBackgroundJob<PdfTaskExtractionArgs>, I
         catch (Exception ex)
         {
             Logger.LogError(ex, "PdfTaskExtractionJob hata. BatchId: {BatchId}", args.ImportBatchId);
-            await PublishStatusAsync(args, DraftBatchStatus.Failed, 0, ex.Message);
+            // ARCH-040: ex.Message frontend'e sızdırılmamalı — iç hata detayı (stack path,
+            // DB bağlantı bilgisi vb.) SignalR üzerinden tarayıcıya gidebilir.
+            await PublishStatusAsync(args, DraftBatchStatus.Failed, 0, "Görev çıkarma işlemi sırasında bir hata oluştu. Lütfen tekrar deneyin.");
             throw;
         }
     }
