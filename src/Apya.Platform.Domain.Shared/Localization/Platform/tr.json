@@ -133,6 +133,10 @@
         "Tasks:Field:Private": "Bu görevi Gizli (Private) işaretle",
         "Tasks:Field:PrivateHint": "Gizli görevler, profilinize başkası (Admin vb.) girdiğinde görünmez.",
 
+        "Menu:Grants": "Hibe Programları",
+        "Notify:Grant:Created": "Hibe programı oluşturuldu.",
+        "Notify:Grant:Updated": "Hibe programı güncellendi.",
+        "Notify:Grant:Deleted": "Hibe programı silindi.",
         "Notify:Project:Created": "Proje başarıyla oluşturuldu.",
         "Notify:Project:Deleted": "Proje silindi.",
         "Notify:Invoice:Created": "Fatura başarıyla oluşturuldu.",

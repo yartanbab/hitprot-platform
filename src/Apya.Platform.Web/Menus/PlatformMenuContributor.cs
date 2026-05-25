@@ -40,6 +40,8 @@ public class PlatformMenuContributor : IMenuContributor
         var work = new ApplicationMenuItem("Apya.Work", l["Menu:Work"], icon: "fa fa-briefcase", order: 2);
         if (await permission.IsGrantedAsync(PlatformPermissions.Projects.Default))
             work.AddItem(new ApplicationMenuItem("Apya.Work.Projects", l["Menu:Projects"], icon: "fa fa-rocket", url: "/"));
+        if (await permission.IsGrantedAsync(PlatformPermissions.Grants.Default))
+            work.AddItem(new ApplicationMenuItem("Apya.Work.Grants", l["Menu:Grants"], icon: "fa fa-award", url: "/Grants"));
         if (await permission.IsGrantedAsync(PlatformPermissions.Tasks.Default))
         {
             work.AddItem(new ApplicationMenuItem("Apya.Work.Tasks", l["Menu:Tasks"], icon: "fa fa-tasks", url: "/Tasks"));
