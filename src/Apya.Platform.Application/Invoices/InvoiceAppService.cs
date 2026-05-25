@@ -16,17 +16,20 @@ namespace Apya.Platform.Invoices;
 public class InvoiceAppService : ApplicationService, IInvoiceAppService
 {
     private readonly IRepository<Invoice, Guid> _invoiceRepository;
+    private readonly IRepository<InvoiceItem, Guid> _invoiceItemRepository;
     private readonly IRepository<Payment, Guid> _paymentRepository;
     private readonly IRepository<Project, Guid> _projectRepository;
     private readonly InvoiceManager _invoiceManager;
 
     public InvoiceAppService(
         IRepository<Invoice, Guid> invoiceRepository,
+        IRepository<InvoiceItem, Guid> invoiceItemRepository,
         IRepository<Payment, Guid> paymentRepository,
         IRepository<Project, Guid> projectRepository,
         InvoiceManager invoiceManager)
     {
         _invoiceRepository = invoiceRepository;
+        _invoiceItemRepository = invoiceItemRepository;
         _paymentRepository = paymentRepository;
         _projectRepository = projectRepository;
         _invoiceManager = invoiceManager;
@@ -55,12 +58,15 @@ public class InvoiceAppService : ApplicationService, IInvoiceAppService
         var invoiceIds = items.Select(x => x.Id).ToList();
         var projectIds = items.Select(x => x.ProjectId).Distinct().ToList();
 
-        var projects = await _projectRepository.GetListAsync(p => projectIds.Contains(p.Id));
-        var payments = await _paymentRepository.GetListAsync(p => invoiceIds.Contains(p.InvoiceId));
+        var projects     = await _projectRepository.GetListAsync(p => projectIds.Contains(p.Id));
+        var payments     = await _paymentRepository.GetListAsync(p => invoiceIds.Contains(p.InvoiceId));
+        var invoiceItems = await _invoiceItemRepository.GetListAsync(i => invoiceIds.Contains(i.InvoiceId));
+        var itemsByInvoice = invoiceItems.GroupBy(i => i.InvoiceId).ToDictionary(g => g.Key, g => (IEnumerable<InvoiceItem>)g);
 
         var dtos = items.Select(x =>
         {
-            var dto = MapToDto(x, projects.FirstOrDefault(p => p.Id == x.ProjectId));
+            itemsByInvoice.TryGetValue(x.Id, out var lineItems);
+            var dto = MapToDto(x, projects.FirstOrDefault(p => p.Id == x.ProjectId), lineItems);
             dto.PaidAmount = payments.Where(p => p.InvoiceId == x.Id).Sum(p => p.Amount);
             return dto;
         }).ToList();
@@ -70,11 +76,12 @@ public class InvoiceAppService : ApplicationService, IInvoiceAppService
 
     public async Task<InvoiceDto> GetAsync(Guid id)
     {
-        var invoice = await _invoiceRepository.GetAsync(id);
-        var project = await _projectRepository.FindAsync(invoice.ProjectId);
+        var invoice  = await _invoiceRepository.GetAsync(id);
+        var project  = await _projectRepository.FindAsync(invoice.ProjectId);
         var payments = await _paymentRepository.GetListAsync(p => p.InvoiceId == id);
+        var items    = await _invoiceItemRepository.GetListAsync(i => i.InvoiceId == id);
 
-        var dto = MapToDto(invoice, project);
+        var dto = MapToDto(invoice, project, items);
         dto.PaidAmount = payments.Sum(p => p.Amount);
         return dto;
     }
@@ -132,7 +139,7 @@ public class InvoiceAppService : ApplicationService, IInvoiceAppService
         }).ToList());
     }
 
-    private InvoiceDto MapToDto(Invoice x, Project? project)
+    private InvoiceDto MapToDto(Invoice x, Project? project, IEnumerable<InvoiceItem>? lineItems = null)
     {
         return new InvoiceDto
         {
@@ -150,7 +157,7 @@ public class InvoiceAppService : ApplicationService, IInvoiceAppService
             Currency = x.Currency,
             Status = x.Status,
             CreationTime = x.CreationTime,
-            Items = x.Items.Select(i => new InvoiceItemDto
+            Items = (lineItems ?? x.Items).Select(i => new InvoiceItemDto
             {
                 Description = i.Description,
                 Quantity = i.Quantity,

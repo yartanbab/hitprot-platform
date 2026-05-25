@@ -80,7 +80,7 @@ public class CalendarManager : DomainService
         catch (Exception ex)
         {
             // Loglama yapılmalı. Belki token geçersizdir.
-            Logger.LogError($"Takvim senkronizasyon hatası ({account.Provider}): {ex.Message}");
+            Logger.LogError(ex, "Takvim senkronizasyon hatası. Provider: {Provider}", account.Provider);
         }
     }
 
