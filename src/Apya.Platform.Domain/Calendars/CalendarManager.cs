@@ -87,15 +87,29 @@ public class CalendarManager : DomainService
     public async Task DeleteTaskFromExternalCalendarsAsync(Guid taskId)
     {
         var mappings = await _mappingRepository.GetListAsync(x => x.TaskId == taskId);
+        if (mappings.Count == 0) return;
+
+        var accountIds = mappings.Select(m => m.ExternalCalendarAccountId).Distinct().ToList();
+        var accounts = await _accountRepository.GetListAsync(a => accountIds.Contains(a.Id));
+        var accountMap = accounts.ToDictionary(a => a.Id);
+
         foreach (var mapping in mappings)
         {
-            var account = await _accountRepository.GetAsync(mapping.ExternalCalendarAccountId);
-            var provider = _providers.FirstOrDefault(x => x.ProviderType == account.Provider);
-            if (provider != null)
+            if (accountMap.TryGetValue(mapping.ExternalCalendarAccountId, out var account))
             {
-                try {
-                    await provider.DeleteEventAsync(account, mapping.ExternalEventId);
-                } catch { /* Ignored */ }
+                var provider = _providers.FirstOrDefault(x => x.ProviderType == account.Provider);
+                if (provider != null)
+                {
+                    try
+                    {
+                        await provider.DeleteEventAsync(account, mapping.ExternalEventId);
+                    }
+                    catch (Exception ex)
+                    {
+                        Logger.LogWarning(ex, "Harici takvimden etkinlik silinemedi. AccountId: {AccountId}, EventId: {EventId}",
+                            mapping.ExternalCalendarAccountId, mapping.ExternalEventId);
+                    }
+                }
             }
             await _mappingRepository.DeleteAsync(mapping);
         }
