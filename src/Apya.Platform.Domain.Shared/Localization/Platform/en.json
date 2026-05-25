@@ -100,6 +100,8 @@
     "Tasks:Field:Private": "Mark this task as Private",
     "Tasks:Field:PrivateHint": "Private tasks are hidden when someone else (e.g., Admin) accesses your profile.",
 
+    "Notify:Project:Created": "Project created successfully.",
+    "Notify:Project:Deleted": "Project deleted.",
     "Notify:Invoice:Created": "Invoice created successfully.",
     "Notify:Invoice:PaymentRecorded": "Payment recorded.",
     "Notify:Invoice:ItemRequired": "At least one invoice item is required.",

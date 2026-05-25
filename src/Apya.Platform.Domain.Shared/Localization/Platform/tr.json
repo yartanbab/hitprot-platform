@@ -133,6 +133,8 @@
         "Tasks:Field:Private": "Bu görevi Gizli (Private) işaretle",
         "Tasks:Field:PrivateHint": "Gizli görevler, profilinize başkası (Admin vb.) girdiğinde görünmez.",
 
+        "Notify:Project:Created": "Proje başarıyla oluşturuldu.",
+        "Notify:Project:Deleted": "Proje silindi.",
         "Notify:Invoice:Created": "Fatura başarıyla oluşturuldu.",
         "Notify:Invoice:PaymentRecorded": "Tahsilat kaydedildi.",
         "Notify:Invoice:ItemRequired": "En az bir fatura kalemi gereklidir.",
