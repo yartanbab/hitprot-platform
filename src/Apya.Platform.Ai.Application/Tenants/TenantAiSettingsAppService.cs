@@ -27,8 +27,17 @@ public class TenantAiSettingsAppService : ApplicationService, ITenantAiSettingsA
         var entity = await _repository.FirstOrDefaultAsync(x => x.TenantId == tenantId);
         if (entity == null)
         {
-            entity = new TenantAiSettings(GuidGenerator.Create(), tenantId, BuildPeriodStart(_clock.Now));
-            await _repository.InsertAsync(entity, autoSave: true);
+            try
+            {
+                entity = new TenantAiSettings(GuidGenerator.Create(), tenantId, BuildPeriodStart(_clock.Now));
+                await _repository.InsertAsync(entity, autoSave: true);
+            }
+            catch (Exception)
+            {
+                // Eşzamanlı insert yarışı: başka bir istek zaten oluşturmuş olabilir.
+                entity = await _repository.FirstOrDefaultAsync(x => x.TenantId == tenantId);
+                if (entity == null) throw;
+            }
         }
         return ObjectMapper.Map<TenantAiSettings, TenantAiSettingsDto>(entity);
     }
