@@ -182,7 +182,8 @@ public class ProjectAppService :
     // --- GRANTS ---
     public async Task<List<GrantDto>> GetAllGrantsAsync()
     {
-        var grants = await _grantRepository.GetListAsync();
+        var q = await _grantRepository.GetQueryableAsync();
+        var grants = await AsyncExecuter.ToListAsync(q.OrderBy(g => g.Name).Take(1000));
         return ObjectMapper.Map<List<Grant>, List<GrantDto>>(grants);
     }
 

@@ -304,7 +304,7 @@ namespace Apya.Platform.Tasks
         // --- 5. USER LOOKUP (Kullanıcı Listesi) ---
         public async Task<ListResultDto<IdentityUserDto>> GetUsersLookupAsync()
         {
-            var users = await _userRepository.GetListAsync();
+            var users = await _userRepository.GetListAsync(maxResultCount: 500, sorting: "UserName");
             var userDtos = users.Select(u => new IdentityUserDto
             {
                 Id = u.Id,

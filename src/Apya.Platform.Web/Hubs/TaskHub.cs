@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
 using Volo.Abp.AspNetCore.SignalR;
 using System.Threading.Tasks;
@@ -9,6 +10,7 @@ namespace Apya.Platform.Web.Hubs;
 /// Task Collaboration Hub.
 /// Allows clients to connect to task-specific groups for realtime updates.
 /// </summary>
+[Authorize]
 public class TaskHub : AbpHub
 {
     public async Task SubscribeToTask(Guid taskId)

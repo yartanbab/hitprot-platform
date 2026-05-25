@@ -123,7 +123,8 @@ public class InvoiceAppService : ApplicationService, IInvoiceAppService
 
     public async Task<ListResultDto<ProjectLookupDto>> GetProjectLookupAsync()
     {
-        var projects = await _projectRepository.GetListAsync();
+        var q = await _projectRepository.GetQueryableAsync();
+        var projects = await AsyncExecuter.ToListAsync(q.OrderBy(p => p.Name).Take(1000));
         return new ListResultDto<ProjectLookupDto>(projects.Select(p => new ProjectLookupDto
         {
             Id = p.Id,
