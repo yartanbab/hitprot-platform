@@ -61,7 +61,7 @@ public class CustomerStatementModel : AbpPageModel
     {
         if (!CustomerId.HasValue) return BadRequest();
         var s = await _ledgerService.GetStatementAsync(CustomerId.Value, FromDate, ToDate);
-        var bytes = ReportExporter.CustomerStatementToPdf(s, FromDate, ToDate);
+        var bytes = ReportExporter.CustomerStatementToPdf(s, FromDate, ToDate, Clock.Now);
         var fileName = $"Ekstre_{s.CustomerName.Replace(" ", "_")}.pdf";
         return File(bytes, "application/pdf", fileName);
     }

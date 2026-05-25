@@ -234,7 +234,8 @@ public class ProjectAppService :
                 ? await _timeLogRepository.GetListAsync(x => taskIds.Contains(x.TaskId))
                 : new List<TaskTimeLog>();
 
-            var now = DateTime.Now;
+            // ARCH-046: Clock.Now (IClock) — DateTime.Now yerine ABP zaman soyutlaması
+            var now = Clock.Now;
 
             if (project.TenantId.HasValue)
             {

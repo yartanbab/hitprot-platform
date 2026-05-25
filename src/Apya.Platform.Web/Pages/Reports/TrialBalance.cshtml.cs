@@ -51,7 +51,7 @@ public class TrialBalanceModel : AbpPageModel
             FromDate = FromDate,
             ToDate = ToDate
         });
-        var bytes = ReportExporter.TrialBalanceToPdf(report, FromDate, ToDate);
+        var bytes = ReportExporter.TrialBalanceToPdf(report, FromDate, ToDate, Clock.Now);
         return File(bytes, "application/pdf", "Mizan.pdf");
     }
 }

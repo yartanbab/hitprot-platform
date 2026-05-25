@@ -57,7 +57,7 @@ public class ProjectBudgetModel : AbpPageModel
     {
         if (!ProjectId.HasValue) return BadRequest();
         var s = await _financeService.GetSummaryAsync(ProjectId.Value);
-        var bytes = ReportExporter.ProjectBudgetToPdf(s);
+        var bytes = ReportExporter.ProjectBudgetToPdf(s, Clock.Now);
         var fileName = $"Butce_{s.ProjectName.Replace(" ", "_")}.pdf";
         return File(bytes, "application/pdf", fileName);
     }

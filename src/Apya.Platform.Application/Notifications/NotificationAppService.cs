@@ -61,11 +61,12 @@ public class NotificationAppService : ApplicationService, INotificationAppServic
     }
 
     // ─── Okunmamış sayısı ──────────────────────────────────────────────────────
+    // ARCH-044: Senkron .Count() EF queryable üzerinde çağrılıyordu → AsyncExecuter.CountAsync
     public async Task<int> GetUnreadCountAsync()
     {
         var userId = CurrentUser.GetId();
         var query  = await _notificationRepository.GetQueryableAsync();
-        return query.Count(n => n.UserId == userId && !n.IsRead);
+        return await AsyncExecuter.CountAsync(query.Where(n => n.UserId == userId && !n.IsRead));
     }
 
     // ─── Okundu işaretle ──────────────────────────────────────────────────────
@@ -82,14 +83,14 @@ public class NotificationAppService : ApplicationService, INotificationAppServic
     }
 
     // ─── Tümünü okundu yap ────────────────────────────────────────────────────
+    // ARCH-045: Senkron .ToList() EF queryable üzerinde çağrılıyordu → AsyncExecuter.ToListAsync
     public async Task MarkAllAsReadAsync()
     {
         var userId = CurrentUser.GetId();
         var query  = await _notificationRepository.GetQueryableAsync();
 
-        var unread = query
-            .Where(n => n.UserId == userId && !n.IsRead)
-            .ToList();
+        var unread = await AsyncExecuter.ToListAsync(
+            query.Where(n => n.UserId == userId && !n.IsRead));
 
         foreach (var n in unread)
             n.MarkAsRead();
