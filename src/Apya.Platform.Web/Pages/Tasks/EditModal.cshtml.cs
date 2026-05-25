@@ -30,6 +30,7 @@ namespace Apya.Platform.Web.Pages.Tasks
         public List<TaskAttachmentDto> Attachments { get; set; } = new();
         public List<ExpenseDto> TaskExpenses { get; set; } = new();
         public List<IncomeEntryDto> TaskIncomes { get; set; } = new();
+        public List<TaskDto> ProjectTasks { get; set; } = new();
 
         private readonly ITaskAppService _taskAppService;
         private readonly IUploadedFileStorage _fileStorage;
@@ -62,7 +63,8 @@ namespace Apya.Platform.Web.Pages.Tasks
                 Status = taskDto.Status,
                 AssigneeId = taskDto.AssigneeId,
                 ProjectId = taskDto.ProjectId ?? Guid.Empty,
-                IsPrivate = taskDto.IsPrivate
+                IsPrivate = taskDto.IsPrivate,
+                PredecessorIds = taskDto.PredecessorIds ?? new List<Guid>()
             };
 
             SubTasks = taskDto.SubTasks?.OrderByDescending(x => x.CreationTime).ToList() ?? new List<TaskDto>();
@@ -73,6 +75,20 @@ namespace Apya.Platform.Web.Pages.Tasks
             UserList = userLookup.Items
                 .Select(u => new SelectListItem(u.UserName, u.Id.ToString()))
                 .ToList();
+
+            if (taskDto.ProjectId.HasValue)
+            {
+                var projectTasksResult = await _taskAppService.GetListAsync(new GetTasksInput
+                {
+                    ProjectId = taskDto.ProjectId,
+                    MaxResultCount = 1000,
+                    SkipCount = 0
+                });
+                ProjectTasks = projectTasksResult.Items
+                    .Where(t => t.Id != Id)
+                    .OrderBy(t => t.Title)
+                    .ToList();
+            }
 
             var expensePage = await _expenseAppService.GetListAsync(
                 new GetExpensesInput { TaskId = Id, MaxResultCount = 500 });

@@ -57,6 +57,11 @@
                 </a>
             </li>
             <li class="nav-item">
+                <a class="nav-link fw-bold text-dark" id="deps-tab_@Model.Id" data-bs-toggle="tab" href="#deps_@Model.Id" role="tab">
+                    <i class="fa fa-link text-primary me-1"></i> Bağımlılıklar
+                </a>
+            </li>
+            <li class="nav-item">
                 <a class="nav-link fw-bold text-dark" id="timelog-tab_@Model.Id" data-bs-toggle="tab" href="#timelog_@Model.Id" role="tab">
                     <i class="fa fa-history text-secondary me-1"></i> Zaman Geçmişi
                 </a>
@@ -289,6 +294,58 @@
                         }
                         </tbody>
                     </table>
+                }
+            </div>
+
+            <div class="tab-pane fade" id="deps_@Model.Id" role="tabpanel">
+                <h6 class="fw-bold mb-1"><i class="fa fa-link me-1 text-primary"></i> Görev Bağımlılıkları (Önkoşullar)</h6>
+                <p class="text-muted small mb-3">Bu görev başlamadan önce tamamlanması gereken görevleri seçin.</p>
+
+                <div id="PredecessorInputs_@Model.Id">
+                    @foreach (var predId in Model.Task.PredecessorIds)
+                    {
+                        <input type="hidden" name="Task.PredecessorIds" value="@predId" class="predecessor-input" data-pred-id="@predId" />
+                    }
+                </div>
+
+                <div id="PredecessorBadges_@Model.Id" class="mb-3 d-flex flex-wrap gap-2">
+                    @if (Model.Task.PredecessorIds.Any())
+                    {
+                        foreach (var predId in Model.Task.PredecessorIds)
+                        {
+                            var predTask = Model.ProjectTasks.FirstOrDefault(t => t.Id == predId);
+                            var predTitle = predTask?.Title ?? predId.ToString()[..8] + "…";
+                            <span class="badge bg-primary p-2 fs-6 pred-badge d-flex align-items-center gap-1" data-pred-id="@predId">
+                                <i class="fa fa-arrow-right me-1"></i> @predTitle
+                                <button type="button" class="btn-close btn-close-white btn-remove-pred ms-1"
+                                        data-pred-id="@predId" style="font-size: 0.6em;" aria-label="Kaldır"></button>
+                            </span>
+                        }
+                    }
+                    else
+                    {
+                        <p class="text-muted small mb-0" id="NoPredecessorsMsg_@Model.Id">Henüz bağımlılık eklenmemiş.</p>
+                    }
+                </div>
+
+                @if (Model.ProjectTasks.Any())
+                {
+                    <div class="input-group shadow-sm" style="max-width: 500px;">
+                        <select class="form-select" id="PredecessorSelect_@Model.Id">
+                            <option value="">-- Önkoşul görev seçin --</option>
+                            @foreach (var t in Model.ProjectTasks)
+                            {
+                                <option value="@t.Id" data-title="@t.Title">@t.Title</option>
+                            }
+                        </select>
+                        <button class="btn btn-outline-primary px-4" type="button" id="BtnAddPredecessor_@Model.Id">
+                            <i class="fa fa-plus me-1"></i> Ekle
+                        </button>
+                    </div>
+                }
+                else
+                {
+                    <p class="text-muted small"><i class="fa fa-info-circle me-1"></i> Bu görevin projesinde başka görev bulunamadı.</p>
                 }
             </div>
 
@@ -615,6 +672,46 @@
         }).catch(function () {
             $('#TimeLogList_@Model.Id').html('<p class="text-danger">Zaman kayıtları yüklenemedi.</p>');
         });
+    });
+
+    // --- BAĞIMLILIK (PREDECESSOR) YÖNETİMİ ---
+    $('#BtnAddPredecessor_@Model.Id').click(function () {
+        var $select = $('#PredecessorSelect_@Model.Id');
+        var predId = $select.val();
+        var predTitle = $select.find(':selected').data('title');
+        if (!predId) return;
+
+        if ($('#PredecessorInputs_@Model.Id').find('[data-pred-id="' + predId + '"]').length > 0) {
+            abp.notify.warn('Bu görev zaten bağımlılık listesinde.');
+            return;
+        }
+
+        var $newInput = $('<input type="hidden" name="Task.PredecessorIds" class="predecessor-input" />')
+            .val(predId).attr('data-pred-id', predId);
+        $('#PredecessorInputs_@Model.Id').append($newInput);
+
+        $('#NoPredecessorsMsg_@Model.Id').remove();
+        $('#PredecessorBadges_@Model.Id').append(
+            '<span class="badge bg-primary p-2 fs-6 pred-badge d-flex align-items-center gap-1" data-pred-id="' + predId + '">' +
+                '<i class="fa fa-arrow-right me-1"></i> ' + predTitle +
+                '<button type="button" class="btn-close btn-close-white btn-remove-pred ms-1" data-pred-id="' + predId + '" style="font-size:0.6em;" aria-label="Kaldır"></button>' +
+            '</span>'
+        );
+
+        $select.val('');
+        $newInput.trigger('change');
+    });
+
+    $(document).on('click', '#deps_@Model.Id .btn-remove-pred', function () {
+        var predId = $(this).data('pred-id');
+        $('#PredecessorInputs_@Model.Id').find('[data-pred-id="' + predId + '"]').remove();
+        $('#PredecessorBadges_@Model.Id').find('.pred-badge[data-pred-id="' + predId + '"]').remove();
+
+        if ($('#PredecessorBadges_@Model.Id .pred-badge').length === 0) {
+            $('#PredecessorBadges_@Model.Id').append('<p class="text-muted small mb-0" id="NoPredecessorsMsg_@Model.Id">Henüz bağımlılık eklenmemiş.</p>');
+        }
+
+        $('#EditTaskForm_@Model.Id').find('input[name="Task.Title"]').trigger('input');
     });
 
     // Modal dışındayken değişiklikleri ebeveyn tablosuna yansıtmak istenir ise:
