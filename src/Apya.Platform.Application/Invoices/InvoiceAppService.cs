@@ -112,7 +112,8 @@ public class InvoiceAppService : ApplicationService, IInvoiceAppService
             input.Direction,
             input.CustomerId,
             input.TaskId,
-            items);
+            items,
+            input.Notes);
 
         return await GetAsync(invoice.Id);
     }
@@ -177,6 +178,7 @@ public class InvoiceAppService : ApplicationService, IInvoiceAppService
             TaxRate = x.TaxRate,
             Currency = x.Currency,
             Status = x.Status,
+            Notes = x.Notes,
             CreationTime = x.CreationTime,
             Items = (lineItems ?? x.Items).Select(i => new InvoiceItemDto
             {
