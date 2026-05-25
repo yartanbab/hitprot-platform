@@ -67,7 +67,7 @@ public class CalendarManager : DomainService
             {
                 // Yeni kayıt oluştur
                 var externalId = await provider.CreateEventAsync(account, eventData);
-                await _mappingRepository.InsertAsync(new CalendarSyncMapping(task.Id, externalId, account.Id));
+                await _mappingRepository.InsertAsync(new CalendarSyncMapping(task.Id, externalId, account.Id, Clock.Now));
             }
             else 
             {
