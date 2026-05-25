@@ -60,7 +60,7 @@ public class AiTaskGeneratorAppService : ApplicationService, IAiTaskGeneratorApp
             Title = t.Title,
             Description = t.Description,
             SuggestedPriority = (int)t.Priority,
-            SuggestedDueDate = project.StartDate?.AddDays(t.EstimatedHours / 8.0) ?? DateTime.Now.AddDays(7),
+            SuggestedDueDate = project.StartDate?.AddDays(t.EstimatedHours / 8.0) ?? Clock.Now.AddDays(7),
             IsSelected = true,
             SourceSection = "AI Analizi"
         }).ToList();
@@ -90,7 +90,7 @@ public class AiTaskGeneratorAppService : ApplicationService, IAiTaskGeneratorApp
                 projectId: input.ProjectId,
                 parentTaskId: null,
                 description: suggestion.Description,
-                startDate: DateTime.Now,
+                startDate: Clock.Now,
                 dueDate: suggestion.SuggestedDueDate,
                 priority: (TaskPriority)suggestion.SuggestedPriority,
                 tenantId: CurrentTenant.Id

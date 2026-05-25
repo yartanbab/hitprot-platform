@@ -73,7 +73,7 @@ public class CalendarManager : DomainService
             {
                 // Var olanı güncelle
                 await provider.UpdateEventAsync(account, mapping.ExternalEventId, eventData);
-                mapping.LastSyncedAt = DateTime.Now;
+                mapping.LastSyncedAt = Clock.Now;
                 await _mappingRepository.UpdateAsync(mapping);
             }
         }
