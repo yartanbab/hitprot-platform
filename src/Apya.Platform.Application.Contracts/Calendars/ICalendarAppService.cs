@@ -7,18 +7,10 @@ namespace Apya.Platform.Calendars;
 
 public interface ICalendarAppService : IApplicationService
 {
-    // Bağlı hesapları getir
     Task<List<CalendarAccountDto>> GetMyAccountsAsync();
-
-    // Yeni hesap bağla
     Task ConnectAccountAsync(ConnectCalendarInput input);
-
-    // Bağlantıyı kopar
     Task DisconnectAccountAsync(Guid id);
-
-    // Hesap bağlama için Auth URL'ini getir (Redirect için)
     Task<string> GetAuthUrlAsync(CalendarProviderType provider);
-
-    // Zorla senkronizasyon başlat
+    Task ExchangeCodeAndConnectAsync(CalendarProviderType provider, string code, string redirectUri);
     Task ForceSyncAsync(Guid id);
 }

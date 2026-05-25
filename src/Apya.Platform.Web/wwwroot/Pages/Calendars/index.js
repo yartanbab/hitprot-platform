@@ -5,12 +5,11 @@ $(function () {
     refreshAccounts();
 
     function refreshAccounts() {
-        if (new URLSearchParams(window.location.search).get('msg') === 'success') {
-            abp.notify.success('Takvim başarıyla bağlandı!');
-            // URL'i temizleyelim
-            window.history.replaceState({}, document.title, window.location.pathname);
-        }
-        
+        var msg = new URLSearchParams(window.location.search).get('msg');
+        if (msg === 'success') abp.notify.success('Takvim başarıyla bağlandı!');
+        if (msg === 'error')   abp.notify.error('Takvim bağlantısı başarısız oldu. Lütfen tekrar deneyin.');
+        if (msg) window.history.replaceState({}, document.title, window.location.pathname);
+
         calendarService.getMyAccounts().then(function (result) {
             updateUI(result);
         });
