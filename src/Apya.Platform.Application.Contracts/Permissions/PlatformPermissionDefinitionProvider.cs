@@ -102,6 +102,12 @@ public class PlatformPermissionDefinitionProvider : PermissionDefinitionProvider
         // --- TENANT AYAR YETKİLERİ ---
         var tenantSettingsPermission = myGroup.AddPermission(PlatformPermissions.TenantSettings.Default, L("Permission:TenantSettings"));
         tenantSettingsPermission.AddChild(PlatformPermissions.TenantSettings.ManageAi, L("Permission:TenantSettings.ManageAi"));
+
+        // --- HİBE YETKİLERİ ---
+        var grantsPermission = myGroup.AddPermission(PlatformPermissions.Grants.Default, L("Permission:Grants"));
+        grantsPermission.AddChild(PlatformPermissions.Grants.Create, L("Permission:Grants.Create"));
+        grantsPermission.AddChild(PlatformPermissions.Grants.Edit,   L("Permission:Grants.Edit"));
+        grantsPermission.AddChild(PlatformPermissions.Grants.Delete, L("Permission:Grants.Delete"));
     }
 
     private static LocalizableString L(string name)
