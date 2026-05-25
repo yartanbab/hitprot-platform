@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Volo.Abp.AspNetCore.Mvc;
@@ -18,7 +19,16 @@ namespace Apya.Platform.Web.Controllers
         [HttpGet("get/{fileName}")]
         public IActionResult GetFile(string fileName)
         {
-            var path = Path.Combine(_env.WebRootPath, "uploads", fileName);
+            // Path traversal koruması: yalnızca dosya adını al, dizin bileşenlerini at.
+            var safeFileName = Path.GetFileName(fileName);
+            if (string.IsNullOrEmpty(safeFileName))
+                return BadRequest("Geçersiz dosya adı.");
+
+            var path = Path.Combine(_env.WebRootPath, "uploads", safeFileName);
+            var uploadsRoot = Path.GetFullPath(Path.Combine(_env.WebRootPath, "uploads"));
+            var resolvedPath = Path.GetFullPath(path);
+            if (!resolvedPath.StartsWith(uploadsRoot + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase))
+                return BadRequest("Geçersiz dosya adı.");
 
             if (!System.IO.File.Exists(path))
             {
