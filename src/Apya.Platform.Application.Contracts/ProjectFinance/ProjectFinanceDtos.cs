@@ -32,6 +32,7 @@ public class ProjectFinanceSummaryDto
 public class ProjectFinanceTaskLineDto
 {
     public Guid? TaskId { get; set; }
+    public string? TaskName { get; set; }
     public decimal Expense { get; set; }
     public decimal Income { get; set; }
 }

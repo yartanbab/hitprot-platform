@@ -22,6 +22,20 @@ $(function () {
                     data: "invoiceNumber"
                 },
                 {
+                    title: 'Yön',
+                    data: "direction",
+                    render: function (data) {
+                        return data === 1
+                            ? '<span class="badge bg-warning text-dark">Alış</span>'
+                            : '<span class="badge bg-primary">Satış</span>';
+                    }
+                },
+                {
+                    title: 'Müşteri',
+                    data: "customerName",
+                    defaultContent: '—'
+                },
+                {
                     title: 'Proje',
                     data: "projectName"
                 },

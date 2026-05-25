@@ -18,6 +18,7 @@ public class CreateModalModel : AbpPageModel
     public CreateInvoiceViewModel InvoiceInfo { get; set; } = new();
 
     public List<SelectListItem> Projects { get; set; } = new();
+    public List<SelectListItem> Customers { get; set; } = new();
 
     public CreateModalModel(IInvoiceAppService invoiceAppService)
     {
@@ -26,25 +27,33 @@ public class CreateModalModel : AbpPageModel
 
     public async Task OnGetAsync()
     {
-        var projectLookup = await _invoiceAppService.GetProjectLookupAsync();
+        var projectLookup  = await _invoiceAppService.GetProjectLookupAsync();
+        var customerLookup = await _invoiceAppService.GetCustomerLookupAsync();
+
         Projects = projectLookup.Items.Select(x => new SelectListItem(x.Name, x.Id.ToString())).ToList();
+        Customers = customerLookup.Items
+            .Select(x => new SelectListItem(x.Name, x.Id.ToString()))
+            .Prepend(new SelectListItem("-- Müşteri Seç --", ""))
+            .ToList();
     }
 
     public async Task<IActionResult> OnPostAsync()
     {
         var dto = new CreateInvoiceDto
         {
-            ProjectId = InvoiceInfo.ProjectId,
+            ProjectId     = InvoiceInfo.ProjectId,
+            CustomerId    = InvoiceInfo.CustomerId == Guid.Empty ? null : InvoiceInfo.CustomerId,
+            Direction     = InvoiceInfo.Direction,
             InvoiceNumber = InvoiceInfo.InvoiceNumber,
-            InvoiceDate = InvoiceInfo.InvoiceDate,
-            DueDate = InvoiceInfo.DueDate,
-            TaxRate = InvoiceInfo.TaxRate,
-            Currency = InvoiceInfo.Currency,
+            InvoiceDate   = InvoiceInfo.InvoiceDate,
+            DueDate       = InvoiceInfo.DueDate,
+            TaxRate       = InvoiceInfo.TaxRate,
+            Currency      = InvoiceInfo.Currency,
             Items = InvoiceInfo.Items.Select(i => new CreateInvoiceItemDto
             {
                 Description = i.Description,
-                Quantity = i.Quantity,
-                UnitPrice = i.UnitPrice
+                Quantity    = i.Quantity,
+                UnitPrice   = i.UnitPrice
             }).ToList()
         };
 
@@ -55,6 +64,8 @@ public class CreateModalModel : AbpPageModel
     public class CreateInvoiceViewModel
     {
         public Guid ProjectId { get; set; }
+        public Guid? CustomerId { get; set; }
+        public InvoiceDirection Direction { get; set; } = InvoiceDirection.Sales;
         public string InvoiceNumber { get; set; } = null!;
         public DateTime InvoiceDate { get; set; } = DateTime.Now;
         public DateTime DueDate { get; set; } = DateTime.Now.AddDays(15);
