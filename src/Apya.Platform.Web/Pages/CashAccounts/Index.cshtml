@@ -12,21 +12,66 @@
 
 <abp-card>
     <abp-card-header>
-        <abp-row>
-            <abp-column size="_6">
-                <abp-card-title>@ViewBag.PageTitle</abp-card-title>
-            </abp-column>
-            <abp-column size="_6" class="text-end">
-                @if (await AuthorizationService.IsGrantedAsync(PlatformPermissions.CashAccounts.Create))
-                {
-                    <button id="NewCashAccountButton" class="btn btn-primary btn-sm">
-                        <i class="fa fa-plus"></i> Yeni Kasa Ekle
-                    </button>
-                }
-            </abp-column>
-        </abp-row>
+        <abp-card-title><i class="fa fa-cash-register me-2"></i>Kasa Yönetimi</abp-card-title>
     </abp-card-header>
-    <abp-card-body>
-        <abp-table striped-rows="true" id="CashAccountsTable" class="nowrap"></abp-table>
+    <abp-card-body class="p-0">
+        <ul class="nav nav-tabs px-3 pt-2" id="kasaTabs">
+            <li class="nav-item">
+                <a class="nav-link active" id="tab-hesaplar" data-bs-toggle="tab" href="#panel-hesaplar">
+                    <i class="fa fa-wallet me-1"></i> Hesaplar
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" id="tab-hareketler" data-bs-toggle="tab" href="#panel-hareketler">
+                    <i class="fa fa-right-left me-1"></i> Hareketler
+                </a>
+            </li>
+        </ul>
+
+        <div class="tab-content p-3">
+            <!-- HESAPLAR -->
+            <div class="tab-pane fade show active" id="panel-hesaplar">
+                <div class="d-flex justify-content-end mb-2">
+                    @if (await AuthorizationService.IsGrantedAsync(PlatformPermissions.CashAccounts.Create))
+                    {
+                        <button id="NewCashAccountButton" class="btn btn-primary btn-sm">
+                            <i class="fa fa-plus"></i> Yeni Kasa Ekle
+                        </button>
+                    }
+                </div>
+                <abp-table striped-rows="true" id="CashAccountsTable" class="nowrap"></abp-table>
+            </div>
+
+            <!-- HAREKETLER -->
+            <div class="tab-pane fade" id="panel-hareketler">
+                <div class="row align-items-center mb-2 g-2">
+                    <div class="col">
+                        <select id="AccountFilter" class="form-select form-select-sm" style="max-width:280px;">
+                            <option value="">— Tüm kasalar —</option>
+                            @foreach (var a in Model.Accounts)
+                            {
+                                <option value="@a.Value">@a.Text</option>
+                            }
+                        </select>
+                    </div>
+                    @if (await AuthorizationService.IsGrantedAsync(PlatformPermissions.CashMovements.Create))
+                    {
+                        <div class="col-auto">
+                            <button id="NewCashMovementButton" class="btn btn-primary btn-sm">
+                                <i class="fa fa-plus"></i> Yeni Hareket
+                            </button>
+                        </div>
+                    }
+                </div>
+                <div id="BalanceCard" class="alert alert-info d-none mb-2 py-2">
+                    <strong id="BalAccount"></strong> —
+                    Açılış: <span id="BalOpening"></span> |
+                    Giriş: <span class="text-success" id="BalIn"></span> |
+                    Çıkış: <span class="text-danger" id="BalOut"></span> |
+                    <strong>Güncel Bakiye: <span id="BalCurrent"></span></strong>
+                </div>
+                <abp-table striped-rows="true" id="CashMovementsTable" class="nowrap"></abp-table>
+            </div>
+        </div>
     </abp-card-body>
 </abp-card>

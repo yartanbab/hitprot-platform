@@ -53,8 +53,6 @@ public class PlatformMenuContributor : IMenuContributor
             finance.AddItem(new ApplicationMenuItem("Apya.Finance.Customers", l["Menu:Customers"], icon: "fa fa-id-card", url: "/Customers"));
         if (await permission.IsGrantedAsync(PlatformPermissions.CashAccounts.Default))
             finance.AddItem(new ApplicationMenuItem("Apya.Finance.CashAccounts", l["Menu:CashAccounts"], icon: "fa fa-cash-register", url: "/CashAccounts"));
-        if (await permission.IsGrantedAsync(PlatformPermissions.CashMovements.Default))
-            finance.AddItem(new ApplicationMenuItem("Apya.Finance.CashMovements", l["Menu:CashMovements"], icon: "fa fa-right-left", url: "/CashMovements"));
         if (await permission.IsGrantedAsync(PlatformPermissions.ExchangeRates.Default))
             finance.AddItem(new ApplicationMenuItem("Apya.Finance.ExchangeRates", l["Menu:ExchangeRates"], icon: "fa fa-money-bill-transfer", url: "/ExchangeRates"));
         if (await permission.IsGrantedAsync(PlatformPermissions.FxRevaluations.Default)
@@ -66,9 +64,7 @@ public class PlatformMenuContributor : IMenuContributor
             finance.AddItem(new ApplicationMenuItem("Apya.Finance.Incomes", l["Menu:Incomes"], icon: "fa fa-hand-holding-dollar", url: "/Incomes"));
         if (await permission.IsGrantedAsync(PlatformPermissions.Invoices.Default))
             finance.AddItem(new ApplicationMenuItem("Apya.Finance.Invoices", l["Menu:Invoices"], icon: "fa fa-file-invoice-dollar", url: "/Invoices"));
-        if (await permission.IsGrantedAsync(PlatformPermissions.Expenses.Create))
-            finance.AddItem(new ApplicationMenuItem("Apya.Finance.ExpenseCapture", l["Menu:ExpenseCapture"], icon: "fa fa-camera", url: "/Expenses/Capture"));
-        if (await permission.IsGrantedAsync(PlatformPermissions.Reports.TrialBalance)
+if (await permission.IsGrantedAsync(PlatformPermissions.Reports.TrialBalance)
             && await feature.IsEnabledAsync(PlatformFeatures.AdvancedReports))
             finance.AddItem(new ApplicationMenuItem("Apya.Finance.TrialBalance", l["Menu:TrialBalance"], icon: "fa fa-scale-unbalanced", url: "/Reports/TrialBalance"));
         if (await permission.IsGrantedAsync(PlatformPermissions.Customers.Default))
