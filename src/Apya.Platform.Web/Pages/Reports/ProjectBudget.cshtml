@@ -1,0 +1,147 @@
+@page
+@model Apya.Platform.Web.Pages.Reports.ProjectBudgetModel
+@{
+    ViewBag.PageTitle = "Proje Bütçe / K/Z Raporu";
+}
+
+<style>
+    @@media print {
+        .no-print { display: none !important; }
+        .abp-card { border: none !important; box-shadow: none !important; }
+        body { font-size: 12px; }
+    }
+</style>
+
+<abp-card>
+    <abp-card-header>
+        <div class="d-flex justify-content-between align-items-center">
+            <abp-card-title>@ViewBag.PageTitle</abp-card-title>
+            @if (Model.Summary != null)
+            {
+                <button class="btn btn-outline-secondary btn-sm no-print" onclick="window.print()">
+                    <i class="fa fa-print"></i> Yazdır
+                </button>
+            }
+        </div>
+    </abp-card-header>
+    <abp-card-body>
+        <form method="get" class="row g-2 align-items-end mb-3 no-print">
+            <div class="col-auto">
+                <label class="form-label small">Proje</label>
+                <select name="ProjectId" class="form-select form-select-sm" style="min-width:260px;">
+                    <option value="">-- Seçiniz --</option>
+                    @foreach (var p in Model.Projects)
+                    {
+                        if (p.Id == Model.ProjectId)
+                        {
+                            <option value="@p.Id" selected>@p.Name</option>
+                        }
+                        else
+                        {
+                            <option value="@p.Id">@p.Name</option>
+                        }
+                    }
+                </select>
+            </div>
+            <div class="col-auto">
+                <button type="submit" class="btn btn-primary btn-sm">
+                    <i class="fa fa-filter"></i> Getir
+                </button>
+            </div>
+        </form>
+
+        @if (Model.Summary == null)
+        {
+            <p class="text-muted">Lütfen bir proje seçin.</p>
+        }
+        else
+        {
+            var s = Model.Summary;
+            var barColor = s.OverBudget ? "danger" : (s.BudgetUsagePercent >= 80 ? "warning" : "success");
+
+            <h5 class="mb-3">@s.ProjectName</h5>
+
+            <div class="row text-center mb-3">
+                <div class="col-md-3 col-6 mb-2">
+                    <div class="card h-100 py-2">
+                        <div class="text-muted small">Bütçe</div>
+                        <div class="fw-bold fs-5">@s.Budget.ToString("N2") <small>@s.Currency</small></div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-6 mb-2">
+                    <div class="card h-100 py-2">
+                        <div class="text-muted small">Toplam Gider</div>
+                        <div class="fw-bold fs-5 text-danger">@s.TotalExpense.ToString("N2")</div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-6 mb-2">
+                    <div class="card h-100 py-2">
+                        <div class="text-muted small">Toplam Gelir</div>
+                        <div class="fw-bold fs-5 text-success">@s.TotalIncome.ToString("N2")</div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-6 mb-2">
+                    <div class="card h-100 py-2">
+                        <div class="text-muted small">Net (Gelir−Gider)</div>
+                        <div class="fw-bold fs-5 @(s.Net >= 0 ? "text-success" : "text-danger")">@s.Net.ToString("N2")</div>
+                    </div>
+                </div>
+            </div>
+
+            <label class="small text-muted">Bütçe Kullanımı: %@s.BudgetUsagePercent</label>
+            <div class="progress mb-2" style="height:22px;">
+                <div class="progress-bar bg-@barColor" role="progressbar"
+                     style="width:@(Math.Min(s.BudgetUsagePercent, 100))%;">
+                    @s.BudgetUsagePercent%
+                </div>
+            </div>
+
+            <div class="alert alert-@(s.OverBudget ? "danger" : "secondary") py-2 mb-3">
+                @if (s.OverBudget)
+                {
+                    <strong>⚠ Bütçe aşıldı!</strong>
+                    <span> Aşım: @((s.TotalExpense - s.Budget).ToString("N2")) @s.Currency</span>
+                }
+                else
+                {
+                    <span>Kalan harcanabilir bütçe: <strong>@s.BudgetRemaining.ToString("N2") @s.Currency</strong></span>
+                }
+            </div>
+
+            @if (s.TaskBreakdown.Any(t => t.TaskId.HasValue))
+            {
+                <h6>Task Bazlı Kırılım</h6>
+                <table class="table table-sm table-striped table-bordered">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Task</th>
+                            <th class="text-end" style="width:130px;">Gider</th>
+                            <th class="text-end" style="width:130px;">Gelir</th>
+                            <th class="text-end" style="width:130px;">Net</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    @foreach (var t in s.TaskBreakdown.OrderByDescending(x => x.Expense))
+                    {
+                        var net = t.Income - t.Expense;
+                        <tr>
+                            <td>@(t.TaskId.HasValue ? t.TaskId.ToString()![..8] + "…" : "(Proje geneli)")</td>
+                            <td class="text-end text-danger">@t.Expense.ToString("N2")</td>
+                            <td class="text-end text-success">@t.Income.ToString("N2")</td>
+                            <td class="text-end fw-bold @(net >= 0 ? "text-success" : "text-danger")">@net.ToString("N2")</td>
+                        </tr>
+                    }
+                    </tbody>
+                    <tfoot>
+                        <tr class="fw-bold table-secondary">
+                            <td>TOPLAM</td>
+                            <td class="text-end text-danger">@s.TotalExpense.ToString("N2")</td>
+                            <td class="text-end text-success">@s.TotalIncome.ToString("N2")</td>
+                            <td class="text-end @(s.Net >= 0 ? "text-success" : "text-danger")">@s.Net.ToString("N2")</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            }
+        }
+    </abp-card-body>
+</abp-card>

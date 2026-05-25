@@ -71,6 +71,10 @@ public class PlatformMenuContributor : IMenuContributor
         if (await permission.IsGrantedAsync(PlatformPermissions.Reports.TrialBalance)
             && await feature.IsEnabledAsync(PlatformFeatures.AdvancedReports))
             finance.AddItem(new ApplicationMenuItem("Apya.Finance.TrialBalance", l["Menu:TrialBalance"], icon: "fa fa-scale-unbalanced", url: "/Reports/TrialBalance"));
+        if (await permission.IsGrantedAsync(PlatformPermissions.Customers.Default))
+            finance.AddItem(new ApplicationMenuItem("Apya.Finance.CustomerStatement", l["Menu:CustomerStatement"], icon: "fa fa-file-lines", url: "/Reports/CustomerStatement"));
+        if (await permission.IsGrantedAsync(PlatformPermissions.Projects.Default))
+            finance.AddItem(new ApplicationMenuItem("Apya.Finance.ProjectBudget", l["Menu:ProjectBudget"], icon: "fa fa-chart-bar", url: "/Reports/ProjectBudget"));
         if (finance.Items.Count > 0) context.Menu.AddItem(finance);
 
         // İçerik

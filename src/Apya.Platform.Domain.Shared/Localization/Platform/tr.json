@@ -18,6 +18,8 @@
         "Menu:Invoices": "Faturalar & Ödemeler",
         "Menu:ExpenseCapture": "Masraf Yakala",
         "Menu:TrialBalance": "Mizan (Özet)",
+        "Menu:CustomerStatement": "Cari Ekstre",
+        "Menu:ProjectBudget": "Proje Bütçe / K/Z",
         "Menu:Content": "İçerik",
         "Menu:Documents": "Wiki / Belgeler",
         "Menu:DynamicAssets": "Şablonlar & Formlar",
