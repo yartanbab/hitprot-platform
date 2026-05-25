@@ -43,4 +43,22 @@ public class ProjectBudgetModel : AbpPageModel
 
         return Page();
     }
+
+    public virtual async Task<IActionResult> OnGetExcelAsync()
+    {
+        if (!ProjectId.HasValue) return BadRequest();
+        var s = await _financeService.GetSummaryAsync(ProjectId.Value);
+        var bytes = ReportExporter.ProjectBudgetToExcel(s);
+        var fileName = $"Butce_{s.ProjectName.Replace(" ", "_")}.xlsx";
+        return File(bytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
+    }
+
+    public virtual async Task<IActionResult> OnGetPdfAsync()
+    {
+        if (!ProjectId.HasValue) return BadRequest();
+        var s = await _financeService.GetSummaryAsync(ProjectId.Value);
+        var bytes = ReportExporter.ProjectBudgetToPdf(s);
+        var fileName = $"Butce_{s.ProjectName.Replace(" ", "_")}.pdf";
+        return File(bytes, "application/pdf", fileName);
+    }
 }

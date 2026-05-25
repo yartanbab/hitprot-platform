@@ -272,6 +272,9 @@ public class PlatformWebModule : AbpModule
 
     public override void OnApplicationInitialization(ApplicationInitializationContext context)
     {
+        // QuestPDF Community lisansı — gelir <$1M USD için ücretsiz
+        QuestPDF.Settings.License = QuestPDF.Infrastructure.LicenseType.Community;
+
         var app = context.GetApplicationBuilder();
         var env = context.GetEnvironment();
 

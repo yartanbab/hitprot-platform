@@ -47,4 +47,22 @@ public class CustomerStatementModel : AbpPageModel
 
         return Page();
     }
+
+    public virtual async Task<IActionResult> OnGetExcelAsync()
+    {
+        if (!CustomerId.HasValue) return BadRequest();
+        var s = await _ledgerService.GetStatementAsync(CustomerId.Value, FromDate, ToDate);
+        var bytes = ReportExporter.CustomerStatementToExcel(s, FromDate, ToDate);
+        var fileName = $"Ekstre_{s.CustomerName.Replace(" ", "_")}.xlsx";
+        return File(bytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
+    }
+
+    public virtual async Task<IActionResult> OnGetPdfAsync()
+    {
+        if (!CustomerId.HasValue) return BadRequest();
+        var s = await _ledgerService.GetStatementAsync(CustomerId.Value, FromDate, ToDate);
+        var bytes = ReportExporter.CustomerStatementToPdf(s, FromDate, ToDate);
+        var fileName = $"Ekstre_{s.CustomerName.Replace(" ", "_")}.pdf";
+        return File(bytes, "application/pdf", fileName);
+    }
 }

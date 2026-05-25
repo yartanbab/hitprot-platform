@@ -18,9 +18,19 @@
             <abp-card-title>@ViewBag.PageTitle</abp-card-title>
             @if (Model.Summary != null)
             {
-                <button class="btn btn-outline-secondary btn-sm no-print" onclick="window.print()">
-                    <i class="fa fa-print"></i> Yazdır
-                </button>
+                var excelUrl = $"?handler=Excel&ProjectId={Model.ProjectId}";
+                var pdfUrl   = $"?handler=Pdf&ProjectId={Model.ProjectId}";
+                <div class="btn-group no-print">
+                    <a href="@excelUrl" class="btn btn-outline-success btn-sm">
+                        <i class="fa fa-file-excel"></i> Excel
+                    </a>
+                    <a href="@pdfUrl" class="btn btn-outline-danger btn-sm">
+                        <i class="fa fa-file-pdf"></i> PDF
+                    </a>
+                    <button class="btn btn-outline-secondary btn-sm" onclick="window.print()">
+                        <i class="fa fa-print"></i> Yazdır
+                    </button>
+                </div>
             }
         </div>
     </abp-card-header>

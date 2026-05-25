@@ -5,10 +5,30 @@
     var r = Model.Report;
 }
 
+@{
+    var excelUrl = $"?handler=Excel&FromDate={Model.FromDate?.ToString("yyyy-MM-dd")}&ToDate={Model.ToDate?.ToString("yyyy-MM-dd")}";
+    var pdfUrl   = $"?handler=Pdf&FromDate={Model.FromDate?.ToString("yyyy-MM-dd")}&ToDate={Model.ToDate?.ToString("yyyy-MM-dd")}";
+}
+
 <abp-card>
     <abp-card-header>
-        <abp-card-title>@ViewBag.PageTitle</abp-card-title>
-        <small class="text-muted">@r.Disclaimer</small>
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <abp-card-title>@ViewBag.PageTitle</abp-card-title>
+                <small class="text-muted">@r.Disclaimer</small>
+            </div>
+            <div class="btn-group">
+                <a href="@excelUrl" class="btn btn-outline-success btn-sm">
+                    <i class="fa fa-file-excel"></i> Excel
+                </a>
+                <a href="@pdfUrl" class="btn btn-outline-danger btn-sm">
+                    <i class="fa fa-file-pdf"></i> PDF
+                </a>
+                <button class="btn btn-outline-secondary btn-sm" onclick="window.print()">
+                    <i class="fa fa-print"></i> Yazdır
+                </button>
+            </div>
+        </div>
     </abp-card-header>
     <abp-card-body>
         <form method="get" class="row g-2 align-items-end mb-3">
