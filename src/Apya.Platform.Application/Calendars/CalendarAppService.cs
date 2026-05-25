@@ -89,13 +89,16 @@ public class CalendarAppService : ApplicationService, ICalendarAppService
             return $"/Calendars/SimulateAuth?provider={(int)provider}";
         }
 
-        // Örn: Google Auth URL (Parametreler appsettings'ten alınmalı gerçek hayatta)
+        var selfUrl = _configuration["App:SelfUrl"]?.TrimEnd('/')
+            ?? throw new InvalidOperationException("App:SelfUrl yapılandırmada eksik.");
+        var redirectUri = $"{selfUrl}/api/app/calendar/callback";
+
         if (provider == CalendarProviderType.Google)
         {
-            return $"https://accounts.google.com/o/oauth2/v2/auth?client_id={clientId}&response_type=code&scope=https://www.googleapis.com/auth/calendar.events&access_type=offline&redirect_uri=https://localhost:44386/api/app/calendar/callback";
+            return $"https://accounts.google.com/o/oauth2/v2/auth?client_id={clientId}&response_type=code&scope=https://www.googleapis.com/auth/calendar.events&access_type=offline&redirect_uri={Uri.EscapeDataString(redirectUri)}";
         }
-        
-        return $"https://login.microsoftonline.com/common/oauth2/v2.0/authorize?client_id={clientId}&response_type=code&scope=Calendars.ReadWrite&redirect_uri=https://localhost:44386/api/app/calendar/callback";
+
+        return $"https://login.microsoftonline.com/common/oauth2/v2.0/authorize?client_id={clientId}&response_type=code&scope=Calendars.ReadWrite&redirect_uri={Uri.EscapeDataString(redirectUri)}";
     }
 
     public async Task ForceSyncAsync(Guid id)
