@@ -13,34 +13,34 @@ public class Project : FullAuditedAggregateRoot<Guid>, IMultiTenant
 {
     public Guid? TenantId { get; private set; }
 
-    public Guid? GrantId { get; set; } // Boş olabilir
+    public Guid? GrantId { get; private set; } // Boş olabilir
 
     /// <summary>APYA-132: Project'in bağlı olduğu Cari (Müşteri). Eski projelerde boş olabilir.</summary>
-    public Guid? CustomerId { get; set; }
+    public Guid? CustomerId { get; private set; }
 
     /// <summary>APYA-132: Cari kategorisi. Varsayılan Other — Hibe/Etkinlik/Diğer ayrımı için.</summary>
-    public ProjectCategory Category { get; set; } = ProjectCategory.Other;
+    public ProjectCategory Category { get; private set; } = ProjectCategory.Other;
 
-    public string Name { get; set; }
+    public string Name { get; private set; }
 
-    public string Code { get; set; }
+    public string Code { get; private set; }
 
-    public string Description { get; set; }
+    public string Description { get; private set; }
 
-    public string Purpose { get; set; } = null!; // Amacı
-    public string Duration { get; set; } = null!; // Süresi
-    public string TargetAudience { get; set; } = null!; // Hedef Kitlesi
-    public string Activities { get; set; } = null!; // Faaliyetleri
+    public string Purpose { get; private set; } = null!; // Amacı
+    public string Duration { get; private set; } = null!; // Süresi
+    public string TargetAudience { get; private set; } = null!; // Hedef Kitlesi
+    public string Activities { get; private set; } = null!; // Faaliyetleri
 
-    public DateTime? StartDate { get; set; }
-    public DateTime? EndDate { get; set; }
+    public DateTime? StartDate { get; private set; }
+    public DateTime? EndDate { get; private set; }
 
-    public bool IsApproved { get; set; }
+    public bool IsApproved { get; private set; }
 
     /* --- BÜTÇE & KAYNAK YÖNETİMİ --- */
-    public decimal TotalBudget { get; set; } = 0;
-    public decimal HourlyRate { get; set; } = 0; // Saatlik maliyet (opsiyonel)
-    public string Currency { get; set; } = "TRY";
+    public decimal TotalBudget { get; private set; } = 0;
+    public decimal HourlyRate { get; private set; } = 0; // Saatlik maliyet (opsiyonel)
+    public string Currency { get; private set; } = "TRY";
 
     /// <summary>
     /// EF Core için zorunlu parametre-siz constructor.
@@ -87,9 +87,6 @@ public class Project : FullAuditedAggregateRoot<Guid>, IMultiTenant
 
     // ==================== DOMAIN METHODS ====================
 
-    /// <summary>
-    /// Proje adını değiştirir. Boş olamaz.
-    /// </summary>
     public void SetName(string name)
     {
         if (string.IsNullOrWhiteSpace(name))
@@ -98,10 +95,6 @@ public class Project : FullAuditedAggregateRoot<Guid>, IMultiTenant
         Name = name.Trim();
     }
 
-    /// <summary>
-    /// Bütçe bilgilerini domain kurallarıyla günceller.
-    /// Negatif bütçe kabul edilmez.
-    /// </summary>
     public void SetBudgetInfo(decimal totalBudget, decimal hourlyRate, string currency)
     {
         if (totalBudget < 0 || hourlyRate < 0)
@@ -114,9 +107,6 @@ public class Project : FullAuditedAggregateRoot<Guid>, IMultiTenant
         Currency = currency ?? "TRY";
     }
 
-    /// <summary>
-    /// Proje detay alanlarını günceller.
-    /// </summary>
     public void SetProjectDetails(string purpose, string duration, string targetAudience, string activities)
     {
         Purpose = purpose;
@@ -125,9 +115,6 @@ public class Project : FullAuditedAggregateRoot<Guid>, IMultiTenant
         Activities = activities;
     }
 
-    /// <summary>
-    /// Tarih aralığını günceller. Bitiş tarihi başlangıçtan önce olamaz.
-    /// </summary>
     public void SetSchedule(DateTime? startDate, DateTime? endDate)
     {
         if (startDate.HasValue && endDate.HasValue && endDate.Value < startDate.Value)
@@ -138,4 +125,39 @@ public class Project : FullAuditedAggregateRoot<Guid>, IMultiTenant
         StartDate = startDate;
         EndDate = endDate;
     }
+
+    /// <summary>
+    /// Projenin tüm değiştirilebilir alanlarını tek metotta günceller.
+    /// TenantId değiştirilemez — yaşam döngüsü boyunca sabittir.
+    /// </summary>
+    public void Update(
+        string name,
+        string code,
+        string description,
+        Guid? grantId,
+        Guid? customerId,
+        ProjectCategory category,
+        decimal totalBudget,
+        decimal hourlyRate,
+        string currency,
+        string? purpose,
+        string? duration,
+        string? targetAudience,
+        string? activities,
+        DateTime? startDate,
+        DateTime? endDate)
+    {
+        SetName(name);
+        Code = code;
+        Description = description;
+        GrantId = grantId;
+        CustomerId = customerId;
+        Category = category;
+        SetBudgetInfo(totalBudget, hourlyRate, currency);
+        SetProjectDetails(purpose, duration, targetAudience, activities);
+        SetSchedule(startDate, endDate);
+    }
+
+    public void Approve() => IsApproved = true;
+    public void Unapprove() => IsApproved = false;
 }
