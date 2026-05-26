@@ -1,0 +1,11 @@
+<Project>
+  <!--
+    Override AutoMapper transitive version to patch GHSA-rvv3-g6hj-g44x (CVE-2026-32933).
+    Volo.Abp.AutoMapper 10.0.2 ships with AutoMapper 14.0.0; patched version is 15.1.1.
+    AutoMapper 15.x only adds a default MaxDepth limit — no public API removals.
+    ABP shallow DTO/entity mappings are unaffected.
+  -->
+  <ItemGroup>
+    <PackageReference Include="AutoMapper" Version="15.1.1" />
+  </ItemGroup>
+</Project>
