@@ -1,6 +1,8 @@
 using System;
 using System.IO;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging;
 using Microsoft.AspNetCore.Extensions.DependencyInjection;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -293,9 +295,10 @@ public class PlatformWebModule : AbpModule
 
         app.UseCorrelationId();
 
-        // ARCH-039: Temel güvenlik başlıkları — clickjacking, MIME sniff, referrer sızıntısı.
-        // CSP kasıtlı olarak dışarıda; LeptonX teması inline script/style kullandığından
-        // report-only modunda ayrı bir bilet ile ele alınmalı.
+        // ARCH-039 + ARCH-CSP: Güvenlik başlıkları.
+        // CSP report-only: LeptonX inline script/style kullandığından enforce edilmiyor;
+        // ihlaller /csp-violations'a POST edilir → Serilog'a düşer. Birkaç sprint
+        // veri toplandıktan sonra 'unsafe-inline' elimine edilip enforce moduna alınabilir.
         app.Use(async (ctx, next) =>
         {
             ctx.Response.Headers["X-Frame-Options"] = "SAMEORIGIN";
@@ -303,6 +306,18 @@ public class PlatformWebModule : AbpModule
             ctx.Response.Headers["X-XSS-Protection"] = "1; mode=block";
             ctx.Response.Headers["Referrer-Policy"] = "strict-origin-when-cross-origin";
             ctx.Response.Headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()";
+            ctx.Response.Headers["Content-Security-Policy-Report-Only"] =
+                "default-src 'self'; " +
+                "script-src 'self' 'unsafe-inline' 'unsafe-eval'; " +
+                "style-src 'self' 'unsafe-inline' data:; " +
+                "img-src 'self' data: blob:; " +
+                "font-src 'self' data:; " +
+                "connect-src 'self' wss: blob:; " +
+                "worker-src blob:; " +
+                "frame-ancestors 'self'; " +
+                "object-src 'none'; " +
+                "base-uri 'self'; " +
+                "report-uri /csp-violations";
             await next();
         });
 
@@ -344,6 +359,17 @@ public class PlatformWebModule : AbpModule
             endpoints.MapHub<Apya.Platform.Web.Hubs.NotificationHub>("/notification-hub");
             endpoints.MapHub<Apya.Platform.Web.Hubs.TaskHub>("/task-hub");
             endpoints.MapHub<Apya.Platform.Web.Hubs.AiHub>("/ai-hub");
+
+            // CSP ihlal raporları — tarayıcı POST eder, biz Serilog'a yazarız.
+            // AllowAnonymous zorunlu: tarayıcı raporu auth cookie olmadan gönderir.
+            endpoints.MapPost("/csp-violations", async (HttpContext httpCtx) =>
+            {
+                var logger = httpCtx.RequestServices.GetRequiredService<ILogger<PlatformWebModule>>();
+                using var reader = new StreamReader(httpCtx.Request.Body);
+                var body = await reader.ReadToEndAsync();
+                logger.LogWarning("[CSP] İhlal: {Report}", body);
+                return Results.NoContent();
+            }).AllowAnonymous();
         });
     }
 }
