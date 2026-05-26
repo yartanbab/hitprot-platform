@@ -1,0 +1,12 @@
+<Project>
+  <!--
+    Force Scriban to 6.6.0 across all projects.
+    Volo.Abp.TextTemplating.Scriban 10.0.2 ships with Scriban 6.3.0, which has
+    multiple CVEs (GHSA-v66j-x4hw-fv9g, GHSA-wgh7-7m3c-fx25, GHSA-x6m9-38vm-2xhf,
+    GHSA-xcx6-vp38-8hr5, GHSA-xw6w-9jjh-p9cr, etc.).  The ABP nuspec constraint is
+    >= 6.3.0 (open-ended), so overriding to 6.6.0 is binary-compatible.
+  -->
+  <ItemGroup>
+    <PackageReference Include="Scriban" Version="7.2.1" />
+  </ItemGroup>
+</Project>
