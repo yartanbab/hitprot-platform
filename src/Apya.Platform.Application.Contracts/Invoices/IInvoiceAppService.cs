@@ -15,6 +15,7 @@ public interface IInvoiceAppService : IApplicationService
     Task AddPaymentAsync(Guid invoiceId, decimal amount, string method, string reference, Guid? cashAccountId = null);
     Task<List<PaymentDto>> GetPaymentsAsync(Guid invoiceId);
     Task<ListResultDto<ProjectLookupDto>> GetProjectLookupAsync();
+    Task<ListResultDto<CustomerLookupDto>> GetCustomerLookupAsync();
 }
 
 public class PaymentDto : FullAuditedEntityDto<Guid>

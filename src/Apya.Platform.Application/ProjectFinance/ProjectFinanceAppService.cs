@@ -8,6 +8,7 @@ using Apya.Platform.Expenses;
 using Apya.Platform.Incomes;
 using Apya.Platform.Permissions;
 using Apya.Platform.Projects;
+using Apya.Platform.Tasks;
 
 namespace Apya.Platform.ProjectFinance;
 
@@ -17,15 +18,18 @@ public class ProjectFinanceAppService : ApplicationService, IProjectFinanceAppSe
     private readonly IRepository<Project, Guid> _projectRepository;
     private readonly IRepository<Expense, Guid> _expenseRepository;
     private readonly IRepository<IncomeEntry, Guid> _incomeRepository;
+    private readonly IRepository<TaskItem, Guid> _taskRepository;
 
     public ProjectFinanceAppService(
         IRepository<Project, Guid> projectRepository,
         IRepository<Expense, Guid> expenseRepository,
-        IRepository<IncomeEntry, Guid> incomeRepository)
+        IRepository<IncomeEntry, Guid> incomeRepository,
+        IRepository<TaskItem, Guid> taskRepository)
     {
         _projectRepository = projectRepository;
         _expenseRepository = expenseRepository;
         _incomeRepository = incomeRepository;
+        _taskRepository = taskRepository;
     }
 
     public async Task<ProjectFinanceSummaryDto> GetSummaryAsync(Guid projectId)
@@ -48,14 +52,23 @@ public class ProjectFinanceAppService : ApplicationService, IProjectFinanceAppSe
         // Task bazlı kırılım (maliyet boyutu — APYA-143)
         var taskKeys = expenses.Select(e => e.TaskId)
             .Concat(incomes.Select(i => i.TaskId))
-            .Distinct();
+            .Distinct()
+            .ToList();
+
+        var taskIds = taskKeys.Where(tk => tk.HasValue).Select(tk => tk!.Value).ToList();
+        var tasks = taskIds.Any()
+            ? await _taskRepository.GetListAsync(t => taskIds.Contains(t.Id))
+            : new System.Collections.Generic.List<TaskItem>();
+
         foreach (var tk in taskKeys)
         {
+            var taskName = tk.HasValue ? tasks.FirstOrDefault(t => t.Id == tk.Value)?.Title : null;
             dto.TaskBreakdown.Add(new ProjectFinanceTaskLineDto
             {
-                TaskId = tk,
-                Expense = expenses.Where(e => e.TaskId == tk).Sum(e => e.Amount),
-                Income = incomes.Where(i => i.TaskId == tk).Sum(i => i.Amount)
+                TaskId   = tk,
+                TaskName = taskName,
+                Expense  = expenses.Where(e => e.TaskId == tk).Sum(e => e.Amount),
+                Income   = incomes.Where(i => i.TaskId == tk).Sum(i => i.Amount)
             });
         }
 

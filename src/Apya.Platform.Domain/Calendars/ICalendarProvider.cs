@@ -8,17 +8,14 @@ public interface ICalendarProvider
 {
     CalendarProviderType ProviderType { get; }
 
-    // Dış takvime etkinlik ekle
     Task<string> CreateEventAsync(ExternalCalendarAccount account, CalendarEvent eventData);
-
-    // Etkinliği güncelle
     Task UpdateEventAsync(ExternalCalendarAccount account, string externalEventId, CalendarEvent eventData);
-
-    // Etkinliği sil
     Task DeleteEventAsync(ExternalCalendarAccount account, string externalEventId);
-
-    // Belirli bir aralıktaki tüm etkinlikleri getir (Synchronization için)
     Task<List<CalendarEvent>> GetEventsAsync(ExternalCalendarAccount account, DateTime start, DateTime end);
+
+    /// <summary>Access token yenile ve yeni (accessToken, refreshToken, expiresAt) döndür.</summary>
+    Task<(string AccessToken, string RefreshToken, DateTime ExpiresAt)> RefreshTokenAsync(
+        ExternalCalendarAccount account, string clientId, string clientSecret);
 }
 
 public class CalendarEvent

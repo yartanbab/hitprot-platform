@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Authorization;
 using Volo.Abp.Application.Dtos;
 using Volo.Abp.Application.Services;
 using Volo.Abp.Domain.Repositories;
+using Apya.Platform.Customers;
 using Apya.Platform.Invoices.Dtos;
 using Apya.Platform.Projects;
 
@@ -19,6 +20,7 @@ public class InvoiceAppService : ApplicationService, IInvoiceAppService
     private readonly IRepository<InvoiceItem, Guid> _invoiceItemRepository;
     private readonly IRepository<Payment, Guid> _paymentRepository;
     private readonly IRepository<Project, Guid> _projectRepository;
+    private readonly IRepository<Customer, Guid> _customerRepository;
     private readonly InvoiceManager _invoiceManager;
 
     public InvoiceAppService(
@@ -26,12 +28,14 @@ public class InvoiceAppService : ApplicationService, IInvoiceAppService
         IRepository<InvoiceItem, Guid> invoiceItemRepository,
         IRepository<Payment, Guid> paymentRepository,
         IRepository<Project, Guid> projectRepository,
+        IRepository<Customer, Guid> customerRepository,
         InvoiceManager invoiceManager)
     {
         _invoiceRepository = invoiceRepository;
         _invoiceItemRepository = invoiceItemRepository;
         _paymentRepository = paymentRepository;
         _projectRepository = projectRepository;
+        _customerRepository = customerRepository;
         _invoiceManager = invoiceManager;
     }
 
@@ -58,7 +62,10 @@ public class InvoiceAppService : ApplicationService, IInvoiceAppService
         var invoiceIds = items.Select(x => x.Id).ToList();
         var projectIds = items.Select(x => x.ProjectId).Distinct().ToList();
 
+        var customerIds = items.Select(x => x.CustomerId).Where(c => c.HasValue).Select(c => c!.Value).Distinct().ToList();
+
         var projects     = await _projectRepository.GetListAsync(p => projectIds.Contains(p.Id));
+        var customers    = customerIds.Any() ? await _customerRepository.GetListAsync(c => customerIds.Contains(c.Id)) : new List<Customer>();
         var payments     = await _paymentRepository.GetListAsync(p => invoiceIds.Contains(p.InvoiceId));
         var invoiceItems = await _invoiceItemRepository.GetListAsync(i => invoiceIds.Contains(i.InvoiceId));
         var itemsByInvoice = invoiceItems.GroupBy(i => i.InvoiceId).ToDictionary(g => g.Key, g => (IEnumerable<InvoiceItem>)g);
@@ -67,6 +74,7 @@ public class InvoiceAppService : ApplicationService, IInvoiceAppService
         {
             itemsByInvoice.TryGetValue(x.Id, out var lineItems);
             var dto = MapToDto(x, projects.FirstOrDefault(p => p.Id == x.ProjectId), lineItems);
+            dto.CustomerName = x.CustomerId.HasValue ? customers.FirstOrDefault(c => c.Id == x.CustomerId)?.Name : null;
             dto.PaidAmount = payments.Where(p => p.InvoiceId == x.Id).Sum(p => p.Amount);
             return dto;
         }).ToList();
@@ -78,10 +86,12 @@ public class InvoiceAppService : ApplicationService, IInvoiceAppService
     {
         var invoice  = await _invoiceRepository.GetAsync(id);
         var project  = await _projectRepository.FindAsync(invoice.ProjectId);
+        var customer = invoice.CustomerId.HasValue ? await _customerRepository.FindAsync(invoice.CustomerId.Value) : null;
         var payments = await _paymentRepository.GetListAsync(p => p.InvoiceId == id);
         var items    = await _invoiceItemRepository.GetListAsync(i => i.InvoiceId == id);
 
         var dto = MapToDto(invoice, project, items);
+        dto.CustomerName = customer?.Name;
         dto.PaidAmount = payments.Sum(p => p.Amount);
         return dto;
     }
@@ -102,7 +112,8 @@ public class InvoiceAppService : ApplicationService, IInvoiceAppService
             input.Direction,
             input.CustomerId,
             input.TaskId,
-            items);
+            items,
+            input.Notes);
 
         return await GetAsync(invoice.Id);
     }
@@ -139,6 +150,17 @@ public class InvoiceAppService : ApplicationService, IInvoiceAppService
         }).ToList());
     }
 
+    public async Task<ListResultDto<CustomerLookupDto>> GetCustomerLookupAsync()
+    {
+        var q = await _customerRepository.GetQueryableAsync();
+        var customers = await AsyncExecuter.ToListAsync(q.OrderBy(c => c.Name).Take(1000));
+        return new ListResultDto<CustomerLookupDto>(customers.Select(c => new CustomerLookupDto
+        {
+            Id = c.Id,
+            Name = c.Name
+        }).ToList());
+    }
+
     private InvoiceDto MapToDto(Invoice x, Project? project, IEnumerable<InvoiceItem>? lineItems = null)
     {
         return new InvoiceDto
@@ -156,6 +178,7 @@ public class InvoiceAppService : ApplicationService, IInvoiceAppService
             TaxRate = x.TaxRate,
             Currency = x.Currency,
             Status = x.Status,
+            Notes = x.Notes,
             CreationTime = x.CreationTime,
             Items = (lineItems ?? x.Items).Select(i => new InvoiceItemDto
             {

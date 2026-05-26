@@ -63,7 +63,8 @@ public class InvoiceManager : DomainService
         InvoiceDirection direction,
         Guid? customerId,
         Guid? taskId,
-        IReadOnlyList<InvoiceItemDescriptor> items)
+        IReadOnlyList<InvoiceItemDescriptor> items,
+        string? notes = null)
     {
         var invoice = new Invoice(
             GuidGenerator.Create(),
@@ -77,6 +78,8 @@ public class InvoiceManager : DomainService
             direction,
             customerId,
             taskId);
+
+        invoice.SetNotes(notes);
 
         foreach (var item in items)
         {

@@ -25,6 +25,7 @@ namespace Apya.Platform
 
             // Hibe Eşleştirmeleri
             CreateMap<Grant, GrantDto>();
+            CreateMap<CreateUpdateGrantDto, Grant>();
 
             // (BUG-001) Eski ProjectTask eşlemeleri kaldırıldı — Artık yalnızca Tasks.TaskItem kullanılıyor.
 

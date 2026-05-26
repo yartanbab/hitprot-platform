@@ -109,6 +109,8 @@ public class Invoice : FullAuditedAggregateRoot<Guid>, IMultiTenant
         Currency = currency.Trim().ToUpperInvariant();
     }
 
+    public void SetNotes(string? notes) => Notes = notes?.Trim();
+
     private void RecalculateTotal()
         => TotalAmount = Items.Sum(x => x.TotalPrice) * (1 + TaxRate / 100);
 }

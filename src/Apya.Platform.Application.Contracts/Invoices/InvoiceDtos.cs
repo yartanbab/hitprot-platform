@@ -20,6 +20,7 @@ public class InvoiceDto : FullAuditedEntityDto<Guid>
     public decimal TaxRate { get; set; }
     public string Currency { get; set; }
     public InvoiceStatus Status { get; set; }
+    public string? Notes { get; set; }
     public List<InvoiceItemDto> Items { get; set; } = new();
     public decimal PaidAmount { get; set; }
     public decimal Balance => TotalAmount - PaidAmount;
@@ -44,6 +45,7 @@ public class CreateInvoiceDto
     public DateTime DueDate { get; set; }
     public decimal TaxRate { get; set; } = 20;
     public string Currency { get; set; } = "TRY";
+    public string? Notes { get; set; }
     public List<CreateInvoiceItemDto> Items { get; set; } = new();
 }
 
@@ -55,6 +57,12 @@ public class CreateInvoiceItemDto
 }
 
 public class ProjectLookupDto
+{
+    public Guid Id { get; set; }
+    public string Name { get; set; }
+}
+
+public class CustomerLookupDto
 {
     public Guid Id { get; set; }
     public string Name { get; set; }

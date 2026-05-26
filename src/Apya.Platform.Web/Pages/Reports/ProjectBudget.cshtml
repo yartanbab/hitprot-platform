@@ -135,7 +135,7 @@
                     {
                         var net = t.Income - t.Expense;
                         <tr>
-                            <td>@(t.TaskId.HasValue ? t.TaskId.ToString()![..8] + "…" : "(Proje geneli)")</td>
+                            <td>@(t.TaskId.HasValue ? (t.TaskName ?? t.TaskId.ToString()![..8] + "…") : "(Proje geneli)")</td>
                             <td class="text-end text-danger">@t.Expense.ToString("N2")</td>
                             <td class="text-end text-success">@t.Income.ToString("N2")</td>
                             <td class="text-end fw-bold @(net >= 0 ? "text-success" : "text-danger")">@net.ToString("N2")</td>

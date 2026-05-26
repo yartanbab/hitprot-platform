@@ -1,0 +1,47 @@
+@page
+@using Apya.Platform.Permissions
+@using Microsoft.AspNetCore.Authorization
+@inject IAuthorizationService AuthorizationService
+@model Apya.Platform.Web.Pages.Grants.IndexModel
+@{
+    ViewBag.Title = "Hibe Programları";
+}
+
+@section scripts {
+    <abp-script src="/Pages/Grants/Index.js" />
+}
+
+<abp-card>
+    <abp-card-header>
+        <abp-row>
+            <abp-column size-md="_6">
+                <abp-card-title>
+                    <i class="fa fa-award me-2"></i> Hibe Programları
+                </abp-card-title>
+            </abp-column>
+            <abp-column size-md="_6" class="text-end">
+                @if (await AuthorizationService.IsGrantedAsync(PlatformPermissions.Grants.Create))
+                {
+                    <abp-button id="NewGrantButton"
+                                text="Yeni Hibe Ekle"
+                                icon="plus"
+                                button-type="Primary" />
+                }
+            </abp-column>
+        </abp-row>
+    </abp-card-header>
+    <abp-card-body>
+        <abp-table striped-rows="true" id="GrantsTable">
+            <thead>
+                <tr>
+                    <th>İşlemler</th>
+                    <th>Program Adı</th>
+                    <th>Kurum</th>
+                    <th>Açıklama</th>
+                    <th>Maks. Tutar</th>
+                    <th>Min. Uyum Puanı</th>
+                </tr>
+            </thead>
+        </abp-table>
+    </abp-card-body>
+</abp-card>

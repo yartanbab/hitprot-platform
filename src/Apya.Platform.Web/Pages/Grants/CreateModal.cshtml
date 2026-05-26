@@ -1,0 +1,25 @@
+@page
+@model Apya.Platform.Web.Pages.Grants.CreateModalModel
+@using Volo.Abp.AspNetCore.Mvc.UI.Bootstrap.TagHelpers.Modal
+@{
+    Layout = null;
+}
+<abp-dynamic-form abp-model="Grant" asp-page="/Grants/CreateModal">
+    <abp-modal>
+        <abp-modal-header title="Yeni Hibe Programı"></abp-modal-header>
+        <abp-modal-body>
+            <abp-input asp-for="Grant.Name" label="Program Adı" />
+            <abp-input asp-for="Grant.Issuer" label="Kurum (TÜBİTAK, KOSGEB vb.)" />
+            <abp-input asp-for="Grant.Description" type="textarea" label="Açıklama" />
+            <abp-row>
+                <abp-column size="_6">
+                    <abp-input asp-for="Grant.MaxAmount" label="Maksimum Destek Tutarı (₺)" />
+                </abp-column>
+                <abp-column size="_6">
+                    <abp-input asp-for="Grant.MinMatchScore" label="Minimum Uyum Puanı (%)" />
+                </abp-column>
+            </abp-row>
+        </abp-modal-body>
+        <abp-modal-footer buttons="@(AbpModalButtons.Cancel | AbpModalButtons.Save)"></abp-modal-footer>
+    </abp-modal>
+</abp-dynamic-form>
