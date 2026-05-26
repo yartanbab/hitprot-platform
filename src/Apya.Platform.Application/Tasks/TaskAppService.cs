@@ -138,7 +138,8 @@ namespace Apya.Platform.Tasks
                 priority: input.Priority,
                 assigneeId: input.AssigneeId,
                 isPrivate: input.IsPrivate,
-                tenantId: CurrentTenant.Id
+                tenantId: CurrentTenant.Id,
+                now: Clock.Now
             );
 
             // Durum varsayılandan farklıysa set et

@@ -30,8 +30,8 @@ public class CreateModalModel : PlatformPageModel
         Task = new CreateUpdateTaskDto
         {
             ProjectId = ProjectId,
-            StartDate = DateTime.Now,
-            DueDate = DateTime.Now.AddDays(7),
+            StartDate = Clock.Now,
+            DueDate = Clock.Now.AddDays(7),
             Priority = TaskPriority.Medium,
             Status = Apya.Platform.Tasks.TaskStatus.Todo
         };

@@ -51,8 +51,8 @@ public class CreateModalModel : PlatformPageModel
     {
         Project = new CreateProjectDto
         {
-            StartDate = DateTime.Now,
-            EndDate = DateTime.Now.AddMonths(1)
+            StartDate = Clock.Now,
+            EndDate = Clock.Now.AddMonths(1)
         };
 
         if (!CurrentUser.TenantId.HasValue)
