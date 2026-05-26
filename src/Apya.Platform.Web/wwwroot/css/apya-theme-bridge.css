@@ -257,3 +257,51 @@ html, body {
     border-color: var(--apya-accent-500) !important;
     box-shadow: var(--apya-shadow-focus) !important;
 }
+
+/* ============================================================================
+   MODAL BACKDROP & FORM RENK DÜZELTMELERI
+   Dark modda backdrop görünmez kalmasın; input placeholder okunur olsun.
+   ============================================================================ */
+
+/* Bootstrap modal backdrop — her temada belirgin kalsın. */
+.modal-backdrop {
+    background-color: #000;
+}
+.modal-backdrop.show {
+    opacity: 0.55;
+}
+[data-theme="dark"] .modal-backdrop.show {
+    opacity: 0.70;
+}
+
+/* Invoice / Expense / modal form input'ları dark'ta okunur olsun. */
+[data-theme="dark"] .modal .form-control,
+[data-theme="dark"] .modal .form-select {
+    background-color: var(--apya-surface-base) !important;
+    color:            var(--apya-text-primary) !important;
+    border-color:     var(--apya-border-default) !important;
+}
+[data-theme="dark"] .modal .form-control::placeholder {
+    color: var(--apya-text-tertiary) !important;
+}
+
+/* abp-select (Select2) dark uyumu — modal içindeki seçim kutuları. */
+[data-theme="dark"] .modal .select2-selection {
+    background-color: var(--apya-surface-base) !important;
+    border-color:     var(--apya-border-default) !important;
+    color:            var(--apya-text-primary) !important;
+}
+[data-theme="dark"] .modal .select2-selection__rendered {
+    color: var(--apya-text-primary) !important;
+}
+
+/* Masraf Yakala (expense-capture) sayfası — full-screen React island.
+   LeptonX layout içinde yüklendiğinden body/html rengi token'dan gelir;
+   React bileşenleri bg-surface-base / text-text-primary Tailwind sınıflarını
+   kullanır (tailwind.config.js token mapping). Buradaki kural yalnızca
+   Tailwind sınıfları yüklenmeden önce anlık beyaz-ekran önlemek içindir. */
+#apya-expense-capture-root {
+    background-color: var(--apya-surface-app-bg);
+    color:            var(--apya-text-primary);
+    min-height:       100vh;
+}
