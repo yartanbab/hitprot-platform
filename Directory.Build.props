@@ -8,6 +8,7 @@
     AutoMapper: Volo.Abp.AutoMapper 10.0.2 ships AutoMapper 14.0.0 (GHSA-rvv3-g6hj-g44x).
     AutoMapper 15.x only adds a default MaxDepth limit — no public API removals.
     Verified: dotnet build 0 errors, 144/144 tests pass.
+
   -->
   <ItemGroup>
     <PackageReference Include="Scriban" Version="7.2.1" />
