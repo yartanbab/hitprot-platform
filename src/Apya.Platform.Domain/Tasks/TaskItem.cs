@@ -65,14 +65,15 @@ public class TaskItem : FullAuditedAggregateRoot<Guid>, IMultiTenant
         TaskPriority priority = TaskPriority.Medium,
         Guid? assigneeId = null,
         bool isPrivate = false,
-        Guid? tenantId = null) : base(id)
+        Guid? tenantId = null,
+        DateTime? now = null) : base(id)
     {
         TenantId = tenantId;
         SetTitle(title);
         Description = description;
         ProjectId = projectId;
         ParentTaskId = parentTaskId;
-        StartDate = startDate ?? DateTime.Now;
+        StartDate = startDate ?? now ?? throw new ArgumentException("startDate veya now parametrelerinden biri zorunludur.", nameof(startDate));
         DueDate = dueDate;
         Priority = priority;
         AssigneeId = assigneeId;
@@ -118,7 +119,7 @@ public class TaskItem : FullAuditedAggregateRoot<Guid>, IMultiTenant
 
         if (newStatus == TaskStatus.Done && oldStatus != TaskStatus.Done)
         {
-            CompletedDate = now ?? DateTime.Now;
+            CompletedDate = now; // Çağıran Clock.Now geçirmelidir (Domain'de DateTime.Now yasak)
         }
         else if (newStatus != TaskStatus.Done)
         {

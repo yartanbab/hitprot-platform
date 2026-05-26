@@ -13,7 +13,7 @@ namespace Apya.Platform.Tasks
         public string? Description { get; set; }
 
         [Required]
-        public DateTime StartDate { get; set; } = DateTime.Now;
+        public DateTime StartDate { get; set; } = DateTime.Today; // DTO katmanı: IClock inject edilemez, Date-only yeterli
 
         public DateTime? DueDate { get; set; }
 

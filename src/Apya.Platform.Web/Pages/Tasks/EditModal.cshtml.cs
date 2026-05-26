@@ -141,7 +141,7 @@ namespace Apya.Platform.Web.Pages.Tasks
                 ParentTaskId = parentId,
                 Status = Apya.Platform.Tasks.TaskStatus.Todo,
                 Priority = TaskPriority.Medium,
-                StartDate = DateTime.Now
+                StartDate = Clock.Now
             };
 
             await _taskAppService.CreateAsync(subTask);
