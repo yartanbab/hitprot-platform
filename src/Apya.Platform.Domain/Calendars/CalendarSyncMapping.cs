@@ -16,11 +16,12 @@ public class CalendarSyncMapping : FullAuditedEntity<Guid>
 
     public CalendarSyncMapping() { }
 
-    public CalendarSyncMapping(Guid taskId, string externalEventId, Guid accountId, DateTime now)
+    // ARCH-049: Domain entity IClock inject edemez; çağıran (CalendarManager) Clock.Now geçirir.
+    public CalendarSyncMapping(Guid taskId, string externalEventId, Guid accountId, DateTime syncedAt)
     {
         TaskId = taskId;
         ExternalEventId = externalEventId;
         ExternalCalendarAccountId = accountId;
-        LastSyncedAt = now;
+        LastSyncedAt = syncedAt;
     }
 }

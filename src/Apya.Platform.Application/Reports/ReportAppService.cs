@@ -10,6 +10,7 @@ using Apya.Platform.Tasks;
 using Microsoft.Extensions.Logging;
 using Apya.Platform.Projects;
 using Volo.Abp.MultiTenancy;
+using Volo.Abp.TenantManagement;
 
 namespace Apya.Platform.Reports;
 
@@ -20,20 +21,21 @@ public class ReportAppService : ApplicationService, IReportAppService
     private readonly IRepository<TaskItem, Guid> _taskRepository;
     private readonly IRepository<TaskTimeLog, Guid> _timeLogRepository;
     private readonly IRepository<IdentityUser, Guid> _userRepository;
-    private readonly ITenantStore _tenantStore;
+    // ARCH-042: ITenantStore → IRepository<Tenant> — batch lookup yerine N+1 FindAsync çağrısından kaçınmak için
+    private readonly IRepository<Tenant, Guid> _tenantRepository;
 
     public ReportAppService(
         IRepository<Project, Guid> projectRepository,
         IRepository<TaskItem, Guid> taskRepository,
         IRepository<TaskTimeLog, Guid> timeLogRepository,
         IRepository<IdentityUser, Guid> userRepository,
-        ITenantStore tenantStore)
+        IRepository<Tenant, Guid> tenantRepository)
     {
         _projectRepository = projectRepository;
         _taskRepository = taskRepository;
         _timeLogRepository = timeLogRepository;
         _userRepository = userRepository;
-        _tenantStore = tenantStore;
+        _tenantRepository = tenantRepository;
     }
 
     public async Task<DashboardReportDto> GetDashboardStatsAsync()
@@ -65,7 +67,19 @@ public class ReportAppService : ApplicationService, IReportAppService
                     })
                 );
 
-                var now = DateTime.Now;
+                // ARCH-042: Tenant isimlerini tek sorguda toplu al — N+1 FindAsync döngüsü yerine.
+                var tenantIds = projectStats
+                    .Where(s => s.Project.TenantId.HasValue)
+                    .Select(s => s.Project.TenantId!.Value)
+                    .Distinct()
+                    .ToList();
+                var tenantNameMap = tenantIds.Count > 0
+                    ? (await _tenantRepository.GetListAsync(t => tenantIds.Contains(t.Id)))
+                        .ToDictionary(t => t.Id, t => t.Name)
+                    : new Dictionary<Guid, string>();
+
+                // ARCH-043: Clock.Now (IClock) — DateTime.Now yerine ABP zaman soyutlaması
+                var now = Clock.Now;
                 foreach (var stat in projectStats)
                 {
                     var p = stat.Project;
@@ -91,8 +105,8 @@ public class ReportAppService : ApplicationService, IReportAppService
                             ? Math.Min(100, (int)Math.Round(daysPassed / totalDays * 100))
                             : 0;
 
-                        var completionRate = stat.TotalTaskCount > 0 
-                            ? (double)stat.CompletedTaskCount / stat.TotalTaskCount * 100 
+                        var completionRate = stat.TotalTaskCount > 0
+                            ? (double)stat.CompletedTaskCount / stat.TotalTaskCount * 100
                             : 0;
 
                         if (timeUsagePercent > 80 && completionRate < 50)
@@ -122,12 +136,9 @@ public class ReportAppService : ApplicationService, IReportAppService
                         }
                     }
 
-                    var tenantName = "Platform (Host)";
-                    if (p.TenantId.HasValue)
-                    {
-                        var tenant = await _tenantStore.FindAsync(p.TenantId.Value);
-                        tenantName = tenant?.Name ?? "Bilinmeyen";
-                    }
+                    var tenantName = p.TenantId.HasValue
+                        ? tenantNameMap.GetValueOrDefault(p.TenantId.Value, "Bilinmeyen")
+                        : "Platform (Host)";
 
                     result.Projects.Add(new ProjectReportDto
                     {

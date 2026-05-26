@@ -71,7 +71,8 @@ internal static class ReportExporter
         return ms.ToArray();
     }
 
-    public static byte[] TrialBalanceToPdf(TrialBalanceReportDto r, DateTime? from, DateTime? to)
+    // ARCH-047: DateTime.Now kaldırıldı — static class IClock inject edemez; çağıran Clock.Now geçirir.
+    public static byte[] TrialBalanceToPdf(TrialBalanceReportDto r, DateTime? from, DateTime? to, DateTime? now = null)
     {
         var title = "Mizan (Yönetim Özeti)";
         if (from.HasValue || to.HasValue)
@@ -132,7 +133,7 @@ internal static class ReportExporter
                 });
 
                 page.Footer().AlignRight()
-                    .Text($"Oluşturma: {DateTime.Now:dd.MM.yyyy HH:mm}  |  Yönetim özeti — resmi THP mizanı değildir.")
+                    .Text($"Oluşturma: {(now ?? DateTime.UtcNow):dd.MM.yyyy HH:mm}  |  Yönetim özeti — resmi THP mizanı değildir.")
                     .FontSize(8).Italic().FontColor(Colors.Grey.Medium);
             });
         }).GeneratePdf();
@@ -194,7 +195,7 @@ internal static class ReportExporter
         return ms.ToArray();
     }
 
-    public static byte[] CustomerStatementToPdf(CustomerStatementDto s, DateTime? from, DateTime? to)
+    public static byte[] CustomerStatementToPdf(CustomerStatementDto s, DateTime? from, DateTime? to, DateTime? now = null)
     {
         var period = (from.HasValue || to.HasValue)
             ? $"\nDönem: {from?.ToString("dd.MM.yyyy") ?? "..."} – {to?.ToString("dd.MM.yyyy") ?? "..."}"
@@ -263,7 +264,7 @@ internal static class ReportExporter
                 });
 
                 page.Footer().AlignRight()
-                    .Text($"Oluşturma: {DateTime.Now:dd.MM.yyyy HH:mm}")
+                    .Text($"Oluşturma: {(now ?? DateTime.UtcNow):dd.MM.yyyy HH:mm}")
                     .FontSize(8).Italic().FontColor(Colors.Grey.Medium);
             });
         }).GeneratePdf();
@@ -331,7 +332,7 @@ internal static class ReportExporter
         return ms.ToArray();
     }
 
-    public static byte[] ProjectBudgetToPdf(ProjectFinanceSummaryDto s)
+    public static byte[] ProjectBudgetToPdf(ProjectFinanceSummaryDto s, DateTime? now = null)
     {
         var barColor = s.OverBudget ? Colors.Red.Medium : (s.BudgetUsagePercent >= 80 ? Colors.Yellow.Medium : Colors.Green.Medium);
 
@@ -414,7 +415,7 @@ internal static class ReportExporter
                 });
 
                 page.Footer().AlignRight()
-                    .Text($"Oluşturma: {DateTime.Now:dd.MM.yyyy HH:mm}")
+                    .Text($"Oluşturma: {(now ?? DateTime.UtcNow):dd.MM.yyyy HH:mm}")
                     .FontSize(8).Italic().FontColor(Colors.Grey.Medium);
             });
         }).GeneratePdf();
