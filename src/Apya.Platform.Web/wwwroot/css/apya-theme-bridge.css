@@ -14,27 +14,32 @@
    ============================================================================= */
 
 /* ----------------------------------------------------------------------------
-   LIGHT (default) — Bootstrap default'larını koruyoruz, sadece accent
-   bizim brand'imize çekilir. LeptonX brand mavi tonu Apya brand-500 ile uyumlu.
+   LIGHT (default)
    ---------------------------------------------------------------------------- */
 :root {
-    /* Bootstrap brand köprüsü */
-    --bs-primary: var(--apya-brand-500);
-    --bs-primary-rgb: 37, 99, 235;
-    --bs-link-color: var(--apya-brand-600);
-    --bs-link-hover-color: var(--apya-brand-700);
+    /* Bootstrap brand köprüsü — UI primary = accent (indigo) */
+    --bs-primary:     var(--apya-accent-500);
+    --bs-primary-rgb: 79, 70, 229;
+    --bs-link-color:       var(--apya-brand-500);
+    --bs-link-hover-color: var(--apya-brand-600);
 
     --bs-success: var(--apya-positive-500);
     --bs-danger:  var(--apya-negative-500);
     --bs-warning: var(--apya-warning-500);
     --bs-info:    var(--apya-brand-400);
+
+    /* LeptonX accent köprüsü (sidebar aktif bg, topbar vurgu) */
+    --lpx-primary: var(--apya-accent-500);
 }
 
 /* ----------------------------------------------------------------------------
-   DARK — Razor sayfalarının da koyu görünmesi için Bootstrap surface
-   değişkenleri ezilir.
+   DARK — Bootstrap + LeptonX surface değişkenleri token'lara bağlanır.
    ---------------------------------------------------------------------------- */
 [data-theme="dark"] {
+    /* UI primary → indigo accent */
+    --bs-primary:     var(--apya-accent-500);
+    --bs-primary-rgb: 99, 102, 241;
+    --lpx-primary:    var(--apya-accent-500);
     /* Bootstrap surface */
     --bs-body-bg:  var(--apya-surface-base);
     --bs-body-color: var(--apya-text-primary);
@@ -118,4 +123,137 @@
 [data-theme="dark"] .card-header {
     background: var(--apya-surface-raised);
     border-bottom-color: var(--apya-border-subtle);
+}
+
+/* ============================================================================
+   SHELL LAYOUT BRIDGE
+   LeptonX Lite sidebar, topbar ve içerik alanı token'lara bağlanır.
+   Selector'lar LeptonX v5 DOM'una göre yazıldı; major version'da gözden geçir.
+   ============================================================================ */
+
+/* --- Sayfa zemini --- */
+html, body {
+    background-color: var(--apya-surface-app-bg) !important;
+}
+
+/* --- Sidebar --- */
+.lpx-sidebar,
+.lpx-left-sidebar {
+    background: var(--apya-surface-sidebar) !important;
+    border-right: 1px solid var(--apya-border-default) !important;
+    transition: width 240ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Sidebar nav item: temel */
+.lpx-nav-item > a,
+.lpx-menu-item > a {
+    color: var(--apya-text-secondary) !important;
+    border-radius: 8px;
+    transition: background 120ms ease, color 120ms ease;
+}
+
+/* Sidebar nav item: hover */
+.lpx-nav-item > a:hover,
+.lpx-menu-item > a:hover {
+    background: var(--apya-border-subtle) !important;
+    color: var(--apya-text-primary) !important;
+}
+
+/* Sidebar nav item: aktif */
+.lpx-nav-item.active > a,
+.lpx-nav-item > a.active,
+.lpx-menu-item.active > a {
+    background: var(--apya-accent-soft) !important;
+    color: var(--apya-accent-500) !important;
+    font-weight: 600;
+}
+
+/* Grup başlıkları */
+.lpx-nav-category,
+.lpx-menu-group-label {
+    color: var(--apya-text-tertiary) !important;
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+}
+
+/* --- Topbar / Header --- */
+.lpx-header,
+.lpx-topbar {
+    background: var(--apya-surface-header) !important;
+    border-bottom: 1px solid var(--apya-border-default) !important;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+}
+
+/* --- İçerik alanı --- */
+.lpx-content-container,
+.lpx-main-content {
+    background: var(--apya-surface-app-bg) !important;
+}
+
+/* --- Scrollbar (sidebar + içerik) --- */
+.lpx-sidebar ::-webkit-scrollbar,
+.lpx-main-content ::-webkit-scrollbar {
+    width: 10px;
+}
+.lpx-sidebar ::-webkit-scrollbar-thumb,
+.lpx-main-content ::-webkit-scrollbar-thumb {
+    background: var(--apya-border-strong);
+    border-radius: 10px;
+    border: 3px solid transparent;
+    background-clip: padding-box;
+}
+.lpx-sidebar ::-webkit-scrollbar-track,
+.lpx-main-content ::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+/* ============================================================================
+   COMPONENT POLISH
+   Card, badge, tablo — redesign estetik deltası.
+   ============================================================================ */
+
+/* --- Card --- */
+.card {
+    border-color: var(--apya-border-default) !important;
+    box-shadow: var(--apya-shadow-sm) !important;
+    border-radius: 12px !important;
+}
+.card:hover {
+    box-shadow: var(--apya-shadow-md) !important;
+    transition: box-shadow 150ms ease;
+}
+
+/* --- Tablo satır hover --- */
+.table-hover tbody tr {
+    transition: background 120ms ease;
+}
+
+/* --- .badge genel radius düzeltmesi --- */
+.badge {
+    border-radius: 6px !important;
+    font-weight: 550;
+}
+
+/* --- Buton primary → accent token --- */
+.btn-primary {
+    --bs-btn-bg:           var(--apya-accent-500);
+    --bs-btn-border-color: var(--apya-accent-500);
+    --bs-btn-hover-bg:     var(--apya-accent-600);
+    --bs-btn-active-bg:    var(--apya-accent-700);
+}
+
+/* --- Focus ring → accent --- */
+:focus-visible {
+    outline: none;
+    box-shadow: var(--apya-shadow-focus) !important;
+}
+
+/* --- Input border focus → accent --- */
+.form-control:focus,
+.form-select:focus {
+    border-color: var(--apya-accent-500) !important;
+    box-shadow: var(--apya-shadow-focus) !important;
 }
