@@ -11,12 +11,20 @@ export default defineConfig({
     outDir: '../js',
     emptyOutDir: false,
     lib: {
-      entry: 'src/template-builder.jsx',
+      // Her yeni island buraya eklenir; çıktı ayrı bir .js dosyasına gider.
+      entry: {
+        'template-builder': 'src/template-builder.jsx',
+        'customers':        'src/customers.jsx',
+      },
       formats: ['es'],
-      fileName: () => 'template-builder.js'
+      fileName: (_format, entryName) => `${entryName}.js`,
     },
     rollupOptions: {
-      external: [] // bundle everything into the file to avoid unpkg CDNs!
+      external: [], // tümü bundle'a girer — CDN bağımlılığı yok
+      output: {
+        // Shared chunk (React/ReactDOM) → sabit isim; global bundle'a eklenebilir.
+        chunkFileNames: 'vendor.js',
+      }
     }
   }
 })

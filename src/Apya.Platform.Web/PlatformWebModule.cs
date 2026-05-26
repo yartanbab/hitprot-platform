@@ -200,6 +200,7 @@ public class PlatformWebModule : AbpModule
                 bundle =>
                 {
                     bundle.AddFiles("/global.css");
+                    bundle.AddFiles("/css/apya-shell.css");
                 }
             );
 
