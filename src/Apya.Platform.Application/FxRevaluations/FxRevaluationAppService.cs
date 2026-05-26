@@ -71,7 +71,7 @@ public class FxRevaluationAppService : ApplicationService, IFxRevaluationAppServ
                 .Sum(m => m.SignedAmount);
 
             decimal? rate = null;
-            if (!string.Equals(acc.Currency?.Trim(), FxRevaluationCalculator.BaseCurrency, StringComparison.OrdinalIgnoreCase))
+            if (!string.Equals(acc.Currency.Trim(), FxRevaluationCalculator.BaseCurrency, StringComparison.OrdinalIgnoreCase))
             {
                 rate = rates
                     .Where(r => r.FromCurrency == acc.Currency && r.RateDate <= asOf)

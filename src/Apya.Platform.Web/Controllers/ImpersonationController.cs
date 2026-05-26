@@ -41,7 +41,7 @@ public class ImpersonationController : AbpController
             throw new UnauthorizedAccessException("Sadece Host yoneticileri Tenant hesabina gecis yapabilir.");
         }
 
-        var impersonatorUserId = CurrentUser.Id.Value;
+        var impersonatorUserId = CurrentUser.Id!.Value; // Host admin ise Id kesin non-null; TenantId kontrolü üstte yapıldı
         var impersonatorUserName = CurrentUser.UserName;
 
         // Hedef tenant'a geç

@@ -62,7 +62,9 @@ public class JournalEntry : CreationAuditedAggregateRoot<Guid>, IMultiTenant, IA
     /// JournalEntry append-only olduğu için klasik anlamda
     /// "concurrency-on-update" değil; daha çok "row-version" identity'si.
     /// </summary>
-    public virtual Guid ConcurrencyStamp { get; private set; }
+    // ARCH-051: `new` ile parent AggregateRoot<Guid>.ConcurrencyStamp (string) kasıtlı gizleniyor
+    // — JournalEntry append-only aggregate'inde Guid row-version kullanılıyor (farklı tür, farklı anlam).
+    public new virtual Guid ConcurrencyStamp { get; private set; }
 
     /// <summary>
     /// Tenant başına strict-monotonic. <see cref="ILedgerSequenceProvider"/>

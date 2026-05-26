@@ -35,7 +35,7 @@ namespace Apya.Platform
             // 1. TaskItem -> Yeni TaskDto
             // Başına Apya.Platform.Tasks yazarak yenisini kastettiğimizi belirttik.
             CreateMap<Apya.Platform.Tasks.TaskItem, Apya.Platform.Tasks.TaskDto>()
-                .ForMember(dest => dest.AssigneeName, opt => opt.MapFrom(src => src.Assignee.UserName))
+                .ForMember(dest => dest.AssigneeName, opt => opt.MapFrom(src => src.Assignee != null ? src.Assignee.UserName : null))
                 .ForMember(dest => dest.ParentTaskTitle, opt => opt.MapFrom(src => src.ParentTask != null ? src.ParentTask.Title : null));
 
             // 2. CreateUpdateTaskDto -> TaskItem

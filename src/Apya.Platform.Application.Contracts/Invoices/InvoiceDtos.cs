@@ -8,17 +8,17 @@ namespace Apya.Platform.Invoices.Dtos;
 public class InvoiceDto : FullAuditedEntityDto<Guid>
 {
     public Guid ProjectId { get; set; }
-    public string ProjectName { get; set; }
+    public string ProjectName { get; set; } = string.Empty;
     public Guid? CustomerId { get; set; }
     public string? CustomerName { get; set; }
     public InvoiceDirection Direction { get; set; }
     public Guid? TaskId { get; set; }
-    public string InvoiceNumber { get; set; }
+    public string InvoiceNumber { get; set; } = string.Empty;
     public DateTime InvoiceDate { get; set; }
     public DateTime DueDate { get; set; }
     public decimal TotalAmount { get; set; }
     public decimal TaxRate { get; set; }
-    public string Currency { get; set; }
+    public string Currency { get; set; } = "TRY";
     public InvoiceStatus Status { get; set; }
     public string? Notes { get; set; }
     public List<InvoiceItemDto> Items { get; set; } = new();
@@ -28,7 +28,7 @@ public class InvoiceDto : FullAuditedEntityDto<Guid>
 
 public class InvoiceItemDto : EntityDto<Guid>
 {
-    public string Description { get; set; }
+    public string Description { get; set; } = string.Empty;
     public decimal Quantity { get; set; }
     public decimal UnitPrice { get; set; }
     public decimal TotalPrice { get; set; }
@@ -40,7 +40,7 @@ public class CreateInvoiceDto
     public Guid? CustomerId { get; set; }
     public InvoiceDirection Direction { get; set; } = InvoiceDirection.Sales;
     public Guid? TaskId { get; set; }
-    public string InvoiceNumber { get; set; }
+    public string InvoiceNumber { get; set; } = string.Empty;
     public DateTime InvoiceDate { get; set; }
     public DateTime DueDate { get; set; }
     public decimal TaxRate { get; set; } = 20;
@@ -51,7 +51,7 @@ public class CreateInvoiceDto
 
 public class CreateInvoiceItemDto
 {
-    public string Description { get; set; }
+    public string Description { get; set; } = string.Empty;
     public decimal Quantity { get; set; }
     public decimal UnitPrice { get; set; }
 }
@@ -59,11 +59,11 @@ public class CreateInvoiceItemDto
 public class ProjectLookupDto
 {
     public Guid Id { get; set; }
-    public string Name { get; set; }
+    public string Name { get; set; } = string.Empty;
 }
 
 public class CustomerLookupDto
 {
     public Guid Id { get; set; }
-    public string Name { get; set; }
+    public string Name { get; set; } = string.Empty;
 }

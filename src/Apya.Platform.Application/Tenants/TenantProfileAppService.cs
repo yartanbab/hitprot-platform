@@ -38,7 +38,7 @@ public class TenantProfileAppService : PlatformAppService, ITenantProfileAppServ
 
     public async Task<PagedResultDto<TenantProfileDto>> GetListAsync(PagedAndSortedResultRequestDto input)
     {
-        string sorting = input.Sorting;
+        string? sorting = input.Sorting;
         if (string.IsNullOrEmpty(sorting) || !sorting.StartsWith("name", StringComparison.OrdinalIgnoreCase))
         {
             sorting = "Name asc";
@@ -60,12 +60,12 @@ public class TenantProfileAppService : PlatformAppService, ITenantProfileAppServ
                 TenantId = tenant.Id,
                 TenantName = tenant.Name,
                 CompanyType = profile?.CompanyType ?? CompanyType.Company,
-                TaxNumber = profile?.TaxNumber,
-                Address = profile?.Address,
-                LegalRepresentativeName = profile?.LegalRepresentativeName,
-                LegalRepresentativePhone = profile?.LegalRepresentativePhone,
-                OperationalContactName = profile?.OperationalContactName,
-                OperationalContactPhone = profile?.OperationalContactPhone,
+                TaxNumber = profile?.TaxNumber ?? string.Empty,
+                Address = profile?.Address ?? string.Empty,
+                LegalRepresentativeName = profile?.LegalRepresentativeName ?? string.Empty,
+                LegalRepresentativePhone = profile?.LegalRepresentativePhone ?? string.Empty,
+                OperationalContactName = profile?.OperationalContactName ?? string.Empty,
+                OperationalContactPhone = profile?.OperationalContactPhone ?? string.Empty,
                 IsActive = true
             });
         }

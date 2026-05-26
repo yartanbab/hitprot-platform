@@ -21,16 +21,16 @@ public class Project : FullAuditedAggregateRoot<Guid>, IMultiTenant
     /// <summary>APYA-132: Cari kategorisi. Varsayılan Other — Hibe/Etkinlik/Diğer ayrımı için.</summary>
     public ProjectCategory Category { get; private set; } = ProjectCategory.Other;
 
-    public string Name { get; private set; }
+    public string Name { get; private set; } = null!;
 
-    public string Code { get; private set; }
+    public string Code { get; private set; } = null!;
 
-    public string Description { get; private set; }
+    public string Description { get; private set; } = null!;
 
-    public string Purpose { get; private set; } = null!; // Amacı
-    public string Duration { get; private set; } = null!; // Süresi
-    public string TargetAudience { get; private set; } = null!; // Hedef Kitlesi
-    public string Activities { get; private set; } = null!; // Faaliyetleri
+    public string? Purpose { get; private set; } // Amacı — opsiyonel
+    public string? Duration { get; private set; } // Süresi — opsiyonel
+    public string? TargetAudience { get; private set; } // Hedef Kitlesi — opsiyonel
+    public string? Activities { get; private set; } // Faaliyetleri — opsiyonel
 
     public DateTime? StartDate { get; private set; }
     public DateTime? EndDate { get; private set; }
@@ -107,7 +107,7 @@ public class Project : FullAuditedAggregateRoot<Guid>, IMultiTenant
         Currency = currency ?? "TRY";
     }
 
-    public void SetProjectDetails(string purpose, string duration, string targetAudience, string activities)
+    public void SetProjectDetails(string? purpose, string? duration, string? targetAudience, string? activities)
     {
         Purpose = purpose;
         Duration = duration;

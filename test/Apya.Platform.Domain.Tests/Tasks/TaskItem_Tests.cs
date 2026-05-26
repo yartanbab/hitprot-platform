@@ -12,7 +12,7 @@ public class TaskItem_Tests
     public void SetTitle_Should_Throw_Exception_When_Null_Or_Empty()
     {
         // Arrange
-        var task = new TaskItem(Guid.NewGuid(), "Orijinal Başlık");
+        var task = new TaskItem(Guid.NewGuid(), "Orijinal Başlık", now: DateTime.UtcNow);
 
         // Act & Assert
         var ex = Assert.Throws<BusinessException>(() => task.SetTitle("   "));
@@ -23,10 +23,10 @@ public class TaskItem_Tests
     public void ChangeStatus_Should_Set_CompletedDate_When_Done()
     {
         // Arrange
-        var task = new TaskItem(Guid.NewGuid(), "Orijinal Başlık");
+        var task = new TaskItem(Guid.NewGuid(), "Orijinal Başlık", now: DateTime.UtcNow);
 
-        // Act
-        task.ChangeStatus(TaskStatus.Done);
+        // Act — Domain kuralı: now her zaman çağıran tarafından geçirilir (IClock inject edilmez)
+        task.ChangeStatus(TaskStatus.Done, now: DateTime.UtcNow);
 
         // Assert
         task.CompletedDate.ShouldNotBeNull();
@@ -37,11 +37,11 @@ public class TaskItem_Tests
     public void ChangeStatus_Should_Clear_CompletedDate_When_Reverted_From_Done()
     {
         // Arrange
-        var task = new TaskItem(Guid.NewGuid(), "Orijinal Başlık");
-        task.ChangeStatus(TaskStatus.Done); // First it's done
-        
+        var task = new TaskItem(Guid.NewGuid(), "Orijinal Başlık", now: DateTime.UtcNow);
+        task.ChangeStatus(TaskStatus.Done, now: DateTime.UtcNow); // First it's done
+
         // Act
-        task.ChangeStatus(TaskStatus.InProgress); // Reverted
+        task.ChangeStatus(TaskStatus.InProgress); // Reverted — CompletedDate null'a dönmeli
 
         // Assert
         task.CompletedDate.ShouldBeNull();

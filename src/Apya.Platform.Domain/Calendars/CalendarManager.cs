@@ -51,7 +51,7 @@ public class CalendarManager : DomainService
         var eventData = new CalendarEvent
         {
             Title       = task.Title,
-            Description = task.Description,
+            Description = task.Description, // string? — CalendarEvent.Description artık string?
             StartTime   = task.StartDate,
             EndTime     = task.DueDate ?? task.StartDate.AddHours(1)
         };

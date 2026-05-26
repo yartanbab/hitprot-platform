@@ -16,9 +16,9 @@ public class ProjectDto : AuditedEntityDto<Guid>
     /// <summary>APYA-132 — Hibe / Etkinlik / Diğer</summary>
     public ProjectCategory Category { get; set; }
 
-    public string Name { get; set; }
+    public string Name { get; set; } = string.Empty;
 
-    public string Code { get; set; }
+    public string Code { get; set; } = string.Empty;
 
     public string Description { get; set; } = string.Empty;
     public string? Purpose { get; set; }

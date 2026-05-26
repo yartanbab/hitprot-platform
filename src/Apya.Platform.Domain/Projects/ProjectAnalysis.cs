@@ -8,7 +8,7 @@ namespace Apya.Platform.Projects
         public Guid ProjectId { get; set; }
 
         // AI'ın çıkaracağı özet metin
-        public string Summary { get; set; }
+        public string Summary { get; set; } = string.Empty;
 
         // Tespit edilen riskler (Virgülle ayrılmış veya JSON)
         public string Risks { get; set; } = string.Empty;
