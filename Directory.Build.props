@@ -1,0 +1,16 @@
+<Project>
+  <!--
+    Repo-wide NuGet version overrides to patch transitive dependency CVEs.
+
+    Scriban: Volo.Abp.TextTemplating.Scriban 10.0.2 ships Scriban 6.3.0 (10+ CVEs).
+    ABP 10.4.0 already moved to Scriban >= 7.0.0, confirming 7.x is API-compatible.
+
+    AutoMapper: Volo.Abp.AutoMapper 10.0.2 ships AutoMapper 14.0.0 (GHSA-rvv3-g6hj-g44x).
+    AutoMapper 15.x only adds a default MaxDepth limit — no public API removals.
+    Verified: dotnet build 0 errors, 144/144 tests pass.
+  -->
+  <ItemGroup>
+    <PackageReference Include="Scriban" Version="7.2.1" />
+    <PackageReference Include="AutoMapper" Version="15.1.1" />
+  </ItemGroup>
+</Project>
