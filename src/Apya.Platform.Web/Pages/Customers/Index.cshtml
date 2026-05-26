@@ -1,32 +1,10 @@
 @page
-@using Microsoft.AspNetCore.Authorization
-@using Apya.Platform.Permissions
-@inject IAuthorizationService AuthorizationService
 @model Apya.Platform.Web.Pages.Customers.IndexModel
 @{
-    ViewBag.PageTitle = "Cari (Müşteri) Yönetimi";
+    ViewBag.PageTitle = "Cari Yönetimi";
 }
 @section scripts {
-    <abp-script src="/Pages/Customers/Index.js" />
+    <script type="module" src="~/js/customers.js" asp-append-version="true"></script>
 }
 
-<abp-card>
-    <abp-card-header>
-        <abp-row>
-            <abp-column size="_6">
-                <abp-card-title>@ViewBag.PageTitle</abp-card-title>
-            </abp-column>
-            <abp-column size="_6" class="text-end">
-                @if (await AuthorizationService.IsGrantedAsync(PlatformPermissions.Customers.Create))
-                {
-                    <button id="NewCustomerButton" class="btn btn-primary btn-sm">
-                        <i class="fa fa-plus"></i> Yeni Cari Ekle
-                    </button>
-                }
-            </abp-column>
-        </abp-row>
-    </abp-card-header>
-    <abp-card-body>
-        <abp-table striped-rows="true" id="CustomersTable" class="nowrap"></abp-table>
-    </abp-card-body>
-</abp-card>
+<div id="customers-island" style="min-height: 520px;"></div>
