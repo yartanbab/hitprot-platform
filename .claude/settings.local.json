@@ -10,7 +10,32 @@
       "PowerShell(gh --version)",
       "Bash(git push *)",
       "Bash(dotnet ef *)",
-      "Bash(git commit -m ' *)"
+      "Bash(git commit -m ' *)",
+      "Bash(grep -n \"TaskId\\\\|taskId\" src/Apya.Platform.Application.Contracts/Expenses/CreateUpdateExpenseDto.cs)",
+      "Bash(grep -n \"TaskId\\\\|taskId\" src/Apya.Platform.Application.Contracts/Incomes/CreateUpdateIncomeEntryDto.cs)",
+      "Bash(xargs cat)",
+      "Bash(xargs grep -l \"Direction\\\\|CustomerId\\\\|CustomerName\")",
+      "Bash(xargs grep -n \"TaskId\\\\|TaskName\\\\|task\")",
+      "Bash(cat src/Apya.Platform.Web/Pages/CashAccounts/Index.cshtml.cs)",
+      "Bash(cat src/Apya.Platform.Web/Pages/CashMovements/Index.cshtml.cs)",
+      "Bash(dotnet restore *)",
+      "Bash(grep -v \"//.*callback\")",
+      "Bash(xargs grep -l \"AssigneeId\\\\|GetByAssignee\")",
+      "Bash(xargs grep -l \"IRepository.*TaskItem\\\\|TaskItem.*IRepository\")",
+      "Bash(del \"src\\\\Apya.Platform.Domain\\\\Calendars\\\\GoogleCalendarProvider.cs\")",
+      "Bash(del \"src\\\\Apya.Platform.Domain\\\\Calendars\\\\MicrosoftOutlookProvider.cs\")",
+      "Bash(mkdir -p \"E:\\\\Developer\\\\GİT\\\\hitprot-platform\\\\src\\\\Apya.Platform.Application\\\\Calendars\")",
+      "Bash(gh pr create --title 'feat\\(nav+calendar\\): Finans menüsü sadeleştirmesi + Takvim OAuth implementasyonu' --body ' *)",
+      "Bash(cat src/Apya.Platform.Application.Contracts/Invoices/IInvoiceAppService.cs)",
+      "Bash(grep -n \"GetCustomerLookup\\\\|CustomerLookup\\\\|Customer\" src/Apya.Platform.Application.Contracts/Invoices/IInvoiceAppService.cs)",
+      "Bash([ -f \"E:/Developer/GİT/hitprot-platform/$f\" ])",
+      "Bash(gh pr *)",
+      "Bash(Get-ChildItem -Path . -Name -Include \"*Contributor*.cs\" -Force)",
+      "Bash(grep -E \"\\\\.\\(css|scss\\)$\")",
+      "Bash(Remove-Item \"E:\\\\Developer\\\\GİT\\\\hitprot-platform\\\\src\\\\Apya.Platform.Web\\\\wwwroot\\\\js\\\\index-D3r1zIZ2.js\")",
+      "Bash(gh api *)",
+      "Bash(npm run *)",
+      "Bash(dotnet test *)"
     ]
   }
 }
