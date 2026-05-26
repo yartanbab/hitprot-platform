@@ -296,8 +296,8 @@ namespace Apya.Platform.Tasks
                 .WhereIf(input.ProjectId.HasValue, t => t.ProjectId == input.ProjectId)
                 .WhereIf(input.AssigneeId.HasValue, t => t.AssigneeId == input.AssigneeId)
                 .WhereIf(input.Statuses != null && input.Statuses.Any(), t => input.Statuses!.Contains(t.Status))
-                .WhereIf(input.MinDueDate.HasValue, t => t.DueDate >= input.MinDueDate.Value)
-                .WhereIf(input.MaxDueDate.HasValue, t => t.DueDate <= input.MaxDueDate.Value)
+                .WhereIf(input.MinDueDate.HasValue, t => t.DueDate >= input.MinDueDate!.Value)
+                .WhereIf(input.MaxDueDate.HasValue, t => t.DueDate <= input.MaxDueDate!.Value)
                 .Include(t => t.Assignee)
                 .Include(t => t.ParentTask);
         }

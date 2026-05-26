@@ -13,5 +13,5 @@ public class TaskTimeLogDto : EntityDto<Guid>
     public DateTime? EndTime { get; set; }
     
     public long? SecondsSpent { get; set; }
-    public string Note { get; set; }
+    public string? Note { get; set; }
 }

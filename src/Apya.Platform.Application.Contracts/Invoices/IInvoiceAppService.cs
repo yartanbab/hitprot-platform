@@ -23,7 +23,7 @@ public class PaymentDto : FullAuditedEntityDto<Guid>
     public Guid InvoiceId { get; set; }
     public decimal Amount { get; set; }
     public DateTime PaymentDate { get; set; }
-    public string PaymentMethod { get; set; }
-    public string ReferenceNumber { get; set; }
+    public string PaymentMethod { get; set; } = null!;
+    public string? ReferenceNumber { get; set; }
     public Guid? CashAccountId { get; set; }
 }

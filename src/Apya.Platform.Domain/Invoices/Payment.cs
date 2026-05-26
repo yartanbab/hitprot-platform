@@ -10,8 +10,8 @@ public class Payment : FullAuditedEntity<Guid>, IMultiTenant
     public Guid InvoiceId { get; set; }
     public decimal Amount { get; set; }
     public DateTime PaymentDate { get; set; }
-    public string PaymentMethod { get; set; } // Örn: Havale, Kredi Kartı
-    public string ReferenceNumber { get; set; }
+    public string PaymentMethod { get; set; } = null!; // Örn: Havale, Kredi Kartı
+    public string? ReferenceNumber { get; set; }
 
     /// <summary>APYA-136: Tahsilatın girdiği kasa. Seçilirse otomatik CashMovement(In) üretilir.</summary>
     public Guid? CashAccountId { get; set; }

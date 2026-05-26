@@ -6,7 +6,7 @@ namespace Apya.Platform.Reports;
 public class ProjectReportDto
 {
     public Guid ProjectId { get; set; }
-    public string ProjectName { get; set; }
+    public string ProjectName { get; set; } = string.Empty;
     public string ProjectCode { get; set; } = string.Empty;
     public string Currency { get; set; } = "TRY";
     public string CurrencySymbol { get; set; } = "\u20BA";
@@ -40,7 +40,7 @@ public class ProjectReportDto
 
 public class PersonnelEfficiencyDto
 {
-    public string UserName { get; set; }
+    public string UserName { get; set; } = string.Empty;
     public long TotalSeconds { get; set; }
     public double TotalHours => TotalSeconds / 3600.0;
     public int TaskCount { get; set; }

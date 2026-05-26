@@ -58,7 +58,7 @@ public class AiTaskGeneratorAppService : ApplicationService, IAiTaskGeneratorApp
         result.Suggestions = aiTasks.Select(t => new AiTaskSuggestionDto
         {
             Title = t.Title,
-            Description = t.Description,
+            Description = t.Description ?? string.Empty,
             SuggestedPriority = (int)t.Priority,
             SuggestedDueDate = project.StartDate?.AddDays(t.EstimatedHours / 8.0) ?? Clock.Now.AddDays(7),
             IsSelected = true,

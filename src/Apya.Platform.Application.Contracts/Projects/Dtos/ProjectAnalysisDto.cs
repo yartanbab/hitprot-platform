@@ -3,13 +3,13 @@ using Volo.Abp.Application.Dtos;
 
 namespace Apya.Platform.Projects.Dtos
 {
-    // DÝKKAT: Buradaki sýnýf ismi ProjectAnalysisDto olmalý
+    // Dï¿½KKAT: Buradaki sï¿½nï¿½f ismi ProjectAnalysisDto olmalï¿½
     public class ProjectAnalysisDto : EntityDto<Guid>
     {
         public Guid ProjectId { get; set; }
-        public string Summary { get; set; }
-        public string Risks { get; set; }
-        public string SuggestedTasksJson { get; set; }
+        public string Summary { get; set; } = string.Empty;
+        public string Risks { get; set; } = string.Empty;
+        public string SuggestedTasksJson { get; set; } = string.Empty;
         public int SuccessScore { get; set; }
         public DateTime CreationTime { get; set; }
     }

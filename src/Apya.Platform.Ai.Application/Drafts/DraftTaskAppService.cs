@@ -78,7 +78,7 @@ public class DraftTaskAppService : ApplicationService, IDraftTaskAppService
         {
             Id = x.Id,
             Title = x.Title,
-            Description = x.Description,
+            Description = x.Description, // DraftTaskDto.Description artık string?
             Priority = x.Priority,
             EstimatedHours = x.EstimatedHours,
             ImportBatchId = x.ImportBatchId

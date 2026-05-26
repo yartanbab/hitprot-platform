@@ -8,11 +8,11 @@ public class Grant : FullAuditedAggregateRoot<Guid>, IMultiTenant
 {
     public Guid? TenantId { get; set; }
 
-    public string Name { get; set; }
+    public string Name { get; set; } = null!;
 
-    public string Issuer { get; set; }
+    public string Issuer { get; set; } = null!;
 
-    public string Description { get; set; }
+    public string Description { get; set; } = null!;
 
     public decimal? MaxAmount { get; set; } // Tutar alanı
 

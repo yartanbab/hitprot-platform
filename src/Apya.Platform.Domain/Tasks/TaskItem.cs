@@ -102,7 +102,7 @@ public class TaskItem : FullAuditedAggregateRoot<Guid>, IMultiTenant
     /// <summary>
     /// Görev açıklamasını günceller.
     /// </summary>
-    public void SetDescription(string description)
+    public void SetDescription(string? description)
     {
         Description = description;
     }
@@ -180,7 +180,7 @@ public class TaskItem : FullAuditedAggregateRoot<Guid>, IMultiTenant
     /// </summary>
     public Guid? Update(
         string title,
-        string description,
+        string? description,
         DateTime startDate,
         DateTime? dueDate,
         TaskPriority priority,

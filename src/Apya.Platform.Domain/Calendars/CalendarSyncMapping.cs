@@ -9,10 +9,10 @@ namespace Apya.Platform.Calendars;
 public class CalendarSyncMapping : FullAuditedEntity<Guid>
 {
     public Guid TaskId { get; set; }
-    public string ExternalEventId { get; set; }
+    public string ExternalEventId { get; set; } = null!;
     public Guid ExternalCalendarAccountId { get; set; }
     public DateTime LastSyncedAt { get; set; }
-    public string ExternalETag { get; set; }
+    public string? ExternalETag { get; set; }
 
     public CalendarSyncMapping() { }
 

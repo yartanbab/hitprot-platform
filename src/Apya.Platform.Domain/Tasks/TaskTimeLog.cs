@@ -16,11 +16,11 @@ public class TaskTimeLog : FullAuditedEntity<Guid>, IMultiTenant
     // Saniye cinsinden harcanan süre (Kolay hesaplama için)
     public long? SecondsSpent { get; set; }
     
-    public string Note { get; set; }
+    public string? Note { get; set; }
 
     public TaskTimeLog() { }
 
-    public TaskTimeLog(Guid id, Guid taskId, Guid userId, DateTime startTime, string note = null) : base(id)
+    public TaskTimeLog(Guid id, Guid taskId, Guid userId, DateTime startTime, string? note = null) : base(id)
     {
         TaskId = taskId;
         UserId = userId;
