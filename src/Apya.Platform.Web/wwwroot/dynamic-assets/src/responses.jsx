@@ -50,8 +50,11 @@ function ResponsesApp({ formId }) {
   const [selected, setSelected] = useState(null); // detail dto
   const [detailLoading, setDetailLoading] = useState(false);
   const [commentText, setCommentText] = useState('');
+  const [view, setView] = useState('list'); // 'list' | 'table'
 
   const blockMap = useMemo(() => Object.fromEntries(blocks.map((b) => [b.id, b])), [blocks]);
+  // Answerable blocks become spreadsheet columns (layout blocks 16/17 excluded)
+  const columns = useMemo(() => blocks.filter((b) => b.type !== 16 && b.type !== 17), [blocks]);
 
   const loadList = async (status) => {
     let url = `/api/app/response-management?DocumentId=${formId}&MaxResultCount=200&SkipCount=0`;
@@ -118,6 +121,26 @@ function ResponsesApp({ formId }) {
     } catch (e) { notify('error', e?.message); }
   };
 
+  const exportCsv = () => {
+    const headers = ['Tarih', 'Durum', 'Süre (sn)', ...columns.map((c) => c.content)];
+    const dataRows = rows.map((r) => {
+      const ans = parse(r.answers);
+      return [
+        fmtDate(r.creationTime),
+        STATUS[r.status]?.label || '',
+        r.completionSeconds ?? '',
+        ...columns.map((c) => answerToText(ans[c.id])),
+      ];
+    });
+    const csv = [headers, ...dataRows].map((row) => row.map(csvCell).join(',')).join('\r\n');
+    const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `yanitlar-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+  };
+
   if (loading) return <div className="py-16 text-center text-slate-400">Yanıtlar yükleniyor…</div>;
 
   const tags = (j) => parse(j)?.tags || (Array.isArray(parse(j)) ? parse(j) : []);
@@ -132,19 +155,26 @@ function ResponsesApp({ formId }) {
         <StatCard label="Görüntülenme" value={stats?.viewCount ?? 0} />
       </div>
 
-      {/* filter */}
-      <div className="mt-5 flex items-center justify-between">
+      {/* toolbar */}
+      <div className="mt-5 flex flex-wrap items-center justify-between gap-2">
         <h3 className="text-sm font-bold text-slate-600">Yanıtlar ({rows.length})</h3>
-        <select value={statusFilter} onChange={(e) => onFilter(e.target.value)} className="rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-sm">
-          {STATUS_OPTIONS.map((o) => <option key={o.v} value={o.v}>{o.label}</option>)}
-        </select>
+        <div className="flex items-center gap-2">
+          <div className="flex rounded-xl border border-slate-200 bg-white p-0.5">
+            <button onClick={() => setView('list')} className={`rounded-lg px-3 py-1 text-xs font-semibold ${view === 'list' ? 'bg-indigo-600 text-white' : 'text-slate-500'}`}>Liste</button>
+            <button onClick={() => setView('table')} className={`rounded-lg px-3 py-1 text-xs font-semibold ${view === 'table' ? 'bg-indigo-600 text-white' : 'text-slate-500'}`}>Tablo</button>
+          </div>
+          <select value={statusFilter} onChange={(e) => onFilter(e.target.value)} className="rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-sm">
+            {STATUS_OPTIONS.map((o) => <option key={o.v} value={o.v}>{o.label}</option>)}
+          </select>
+          <button onClick={exportCsv} disabled={rows.length === 0} className="rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium hover:bg-slate-50 disabled:opacity-50">⬇ CSV</button>
+        </div>
       </div>
 
       {/* grid */}
-      <div className="mt-3 overflow-hidden rounded-2xl border border-slate-200 bg-white">
+      <div className="mt-3 overflow-x-auto rounded-2xl border border-slate-200 bg-white">
         {rows.length === 0 ? (
           <div className="py-16 text-center text-slate-400">Henüz yanıt yok.</div>
-        ) : (
+        ) : view === 'list' ? (
           <table className="w-full text-sm">
             <thead className="bg-slate-50 text-left text-xs font-semibold uppercase text-slate-400">
               <tr>
@@ -167,6 +197,30 @@ function ResponsesApp({ formId }) {
                   </td>
                 </tr>
               ))}
+            </tbody>
+          </table>
+        ) : (
+          <table className="w-full text-sm">
+            <thead className="bg-slate-50 text-left text-xs font-semibold uppercase text-slate-400">
+              <tr>
+                <th className="whitespace-nowrap px-4 py-3">Tarih</th>
+                {columns.map((c) => <th key={c.id} className="whitespace-nowrap px-4 py-3">{c.content}</th>)}
+                <th className="px-4 py-3">Durum</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {rows.map((r) => {
+                const ans = parse(r.answers);
+                return (
+                  <tr key={r.id} className="cursor-pointer hover:bg-slate-50" onClick={() => openDetail(r.id)}>
+                    <td className="whitespace-nowrap px-4 py-3 text-slate-500">{fmtDate(r.creationTime)}</td>
+                    {columns.map((c) => <td key={c.id} className="px-4 py-3">{renderAnswer(ans[c.id])}</td>)}
+                    <td className="px-4 py-3">
+                      <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${STATUS[r.status]?.cls}`}>{STATUS[r.status]?.label}</span>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         )}
@@ -235,6 +289,16 @@ function ResponsesApp({ formId }) {
   );
 }
 
+function answerToText(v) {
+  if (v == null) return '';
+  if (Array.isArray(v)) return v.join('; ');
+  if (typeof v === 'object') return Object.values(v).filter(Boolean).join(' ');
+  return String(v);
+}
+function csvCell(v) {
+  const s = String(v ?? '');
+  return /[",\r\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+}
 function notify(kind, msg) {
   const abp = window.abp;
   if (abp?.notify && kind === 'success') abp.notify.success(msg);

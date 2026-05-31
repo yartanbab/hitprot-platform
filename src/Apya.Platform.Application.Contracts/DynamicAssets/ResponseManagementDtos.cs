@@ -5,7 +5,7 @@ using Volo.Abp.Application.Dtos;
 
 namespace Apya.Platform.DynamicAssets.Dtos;
 
-/// <summary>Lightweight list row for the responses grid.</summary>
+/// <summary>List row for the responses grid / spreadsheet (includes answers for table view & export).</summary>
 public class ResponseListItemDto : CreationAuditedEntityDto<Guid>
 {
     public Guid DocumentId { get; set; }
@@ -13,6 +13,9 @@ public class ResponseListItemDto : CreationAuditedEntityDto<Guid>
     public ResponseStatus Status { get; set; }
     public int? CompletionSeconds { get; set; }
     public string? TagsJson { get; set; }
+
+    /// <summary>JSON answers keyed by block id (for the spreadsheet view and CSV export).</summary>
+    public string Answers { get; set; } = null!;
 }
 
 /// <summary>Full response detail incl. answers and reviewer comments.</summary>
