@@ -12,6 +12,9 @@ public class PublicDocumentDto
 {
     public string Title { get; set; } = null!;
     public string Slug { get; set; } = null!;
+    public string? Description { get; set; }
+    /// <summary>Theme/branding JSON (colors, font, logo, cover) for public rendering.</summary>
+    public string? ThemeJson { get; set; }
     public List<PublicBlockDto> Blocks { get; set; } = new();
 }
 
@@ -21,6 +24,8 @@ public class PublicDocumentDto
 /// </summary>
 public class PublicBlockDto
 {
+    /// <summary>Block id — used as the answer key on submission.</summary>
+    public Guid Id { get; set; }
     public BlockType Type { get; set; }
     public int Order { get; set; }
     public string Content { get; set; } = null!;
@@ -39,4 +44,7 @@ public class SubmitResponseDto
     /// JSON-formatted answers keyed by block identifiers.
     /// </summary>
     public string Answers { get; set; } = null!;
+
+    /// <summary>How long the respondent took to complete the form, in seconds (optional).</summary>
+    public int? CompletionSeconds { get; set; }
 }

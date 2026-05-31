@@ -203,6 +203,7 @@
     "Platform:Project:CodeAlreadyExists": "This project code is already in use.",
     "Platform:File:UnsupportedExtension": "Unsupported file type. Only PDF, Office, image and archive files are allowed.",
     "Platform:File:SizeExceeded": "File size cannot exceed 25 MB.",
+    "Platform:DynamicAssets:FormNotPublished": "This form is not currently published.",
 
     "Permission:Ai": "AI Features",
     "Permission:Ai.Generation": "AI Generation",

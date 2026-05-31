@@ -80,6 +80,7 @@ public static class PlatformDomainErrorCodes
     public const string ResponseCommentNotFound = "Platform:DynamicAssets:ResponseCommentNotFound";
     public const string FormNotFound = "Platform:DynamicAssets:FormNotFound";
     public const string FormCategoryNameRequired = "Platform:DynamicAssets:FormCategoryNameRequired";
+    public const string FormNotPublished = "Platform:DynamicAssets:FormNotPublished";
 
     // --- AI Modülü ---
     public const string AiProviderUnavailable = "Platform:Ai:ProviderUnavailable";
