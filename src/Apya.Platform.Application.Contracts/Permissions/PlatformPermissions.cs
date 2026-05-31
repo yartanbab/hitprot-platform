@@ -4,6 +4,18 @@ public static class PlatformPermissions
 {
     public const string GroupName = "Platform";
 
+    // İzin grubu adları (UI kategorileri). Permission adlarıyla çakışmaması için
+    // "...Group" sonekli; permission isimleri (GroupName + ".Incomes" vb.) DEĞİŞMEZ.
+    public static class Groups
+    {
+        public const string Work       = GroupName + ".WorkGroup";       // Proje & Görev
+        public const string Grants     = GroupName + ".GrantsGroup";     // Hibe
+        public const string Finance    = GroupName + ".FinanceGroup";    // Finans & Muhasebe
+        public const string Accounting = GroupName + ".AccountingGroup"; // Cari & Kasa
+        public const string Content    = GroupName + ".ContentGroup";    // İçerik & Doküman
+        public const string System     = GroupName + ".SystemGroup";     // Sistem & Entegrasyon
+    }
+
     // --- GELİR YETKİLERİ ---
     public static class Incomes
     {
