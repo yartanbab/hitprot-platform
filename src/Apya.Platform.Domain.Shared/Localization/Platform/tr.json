@@ -106,6 +106,10 @@
         "Permission:DynamicAssets.Create": "Şablon/Form Oluşturma",
         "Permission:DynamicAssets.Edit": "Şablon/Form Düzenleme",
         "Permission:DynamicAssets.Delete": "Şablon/Form Silme",
+        "Permission:DynamicAssets.Publish": "Form Yayınlama",
+        "Permission:DynamicAssets.ViewResponses": "Yanıtları Görüntüleme",
+        "Permission:DynamicAssets.Export": "Dışa Aktarma",
+        "Permission:DynamicAssets.ManageCategories": "Kategori Yönetimi",
 
         "Permission:Notifications": "Bildirimler",
         "Permission:Notifications.MarkRead": "Okundu Olarak İşaretleme",

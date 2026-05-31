@@ -105,6 +105,10 @@
     "Permission:DynamicAssets.Create": "Create Template/Form",
     "Permission:DynamicAssets.Edit": "Edit Template/Form",
     "Permission:DynamicAssets.Delete": "Delete Template/Form",
+    "Permission:DynamicAssets.Publish": "Publish Form",
+    "Permission:DynamicAssets.ViewResponses": "View Responses",
+    "Permission:DynamicAssets.Export": "Export",
+    "Permission:DynamicAssets.ManageCategories": "Manage Categories",
 
     "Permission:Notifications": "Notifications",
     "Permission:Notifications.MarkRead": "Mark as Read",

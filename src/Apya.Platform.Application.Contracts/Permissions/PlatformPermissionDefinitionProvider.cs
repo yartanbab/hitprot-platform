@@ -104,6 +104,10 @@ public class PlatformPermissionDefinitionProvider : PermissionDefinitionProvider
         dynamicAssetsPermission.AddChild(PlatformPermissions.DynamicAssets.Create, L("Permission:DynamicAssets.Create"));
         dynamicAssetsPermission.AddChild(PlatformPermissions.DynamicAssets.Edit, L("Permission:DynamicAssets.Edit"));
         dynamicAssetsPermission.AddChild(PlatformPermissions.DynamicAssets.Delete, L("Permission:DynamicAssets.Delete"));
+        dynamicAssetsPermission.AddChild(PlatformPermissions.DynamicAssets.Publish, L("Permission:DynamicAssets.Publish"));
+        dynamicAssetsPermission.AddChild(PlatformPermissions.DynamicAssets.ViewResponses, L("Permission:DynamicAssets.ViewResponses"));
+        dynamicAssetsPermission.AddChild(PlatformPermissions.DynamicAssets.Export, L("Permission:DynamicAssets.Export"));
+        dynamicAssetsPermission.AddChild(PlatformPermissions.DynamicAssets.ManageCategories, L("Permission:DynamicAssets.ManageCategories"));
 
         // ============================================================
         // SİSTEM & ENTEGRASYON

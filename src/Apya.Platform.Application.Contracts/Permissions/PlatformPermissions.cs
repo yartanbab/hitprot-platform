@@ -148,6 +148,10 @@ public static class PlatformPermissions
         public const string Create = Default + ".Create";
         public const string Edit = Default + ".Edit";
         public const string Delete = Default + ".Delete";
+        public const string Publish = Default + ".Publish";                   // Formu yayınla/arşivle
+        public const string ViewResponses = Default + ".ViewResponses";       // Yanıtları görüntüle/yönet
+        public const string Export = Default + ".Export";                     // Yanıtları dışa aktar
+        public const string ManageCategories = Default + ".ManageCategories"; // Form kategorilerini yönet
     }
 
     // --- TENANT AYAR YETKİLERİ (AI vb.) ---
