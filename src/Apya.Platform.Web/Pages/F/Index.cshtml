@@ -1,0 +1,18 @@
+@page "/f/{slug}"
+@model Apya.Platform.Web.Pages.F.IndexModel
+@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>@Model.Slug</title>
+    <link rel="stylesheet" href="~/js/style.css" asp-append-version="true" />
+</head>
+<body>
+    <div id="public-form-root" data-slug="@Model.Slug"></div>
+    <script type="module" src="~/js/public-form.js" asp-append-version="true"></script>
+</body>
+</html>

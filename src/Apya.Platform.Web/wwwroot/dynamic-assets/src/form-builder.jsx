@@ -178,6 +178,8 @@ function BlockPreview({ block }) {
 function FormBuilder() {
   const initialId = useMemo(() => new URLSearchParams(window.location.search).get('id'), []);
   const [formId, setFormId] = useState(initialId);
+  const [slug, setSlug] = useState('');
+  const [showPublish, setShowPublish] = useState(false);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [blocks, setBlocks] = useState([]);
@@ -193,6 +195,7 @@ function FormBuilder() {
       try {
         const dto = await api.get(`/api/app/form/${initialId}`);
         setTitle(dto.title || '');
+        setSlug(dto.slug || '');
         setDescription(dto.description || '');
         setBlocks(
           (dto.blocks || [])
@@ -277,6 +280,7 @@ function FormBuilder() {
           blocks: buildPayloadBlocks(),
         });
         setFormId(dto.id);
+        setSlug(dto.slug || '');
         const url = new URL(window.location.href);
         url.searchParams.set('id', dto.id);
         window.history.replaceState({}, '', url);
@@ -333,13 +337,23 @@ function FormBuilder() {
       <main className="flex-1 overflow-y-auto p-8">
         <div className="mx-auto flex max-w-2xl items-center justify-between">
           <span className="text-xs font-semibold text-slate-400">{blocks.length} alan</span>
-          <button
-            onClick={save}
-            disabled={saving}
-            className="rounded-xl bg-indigo-600 px-5 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-indigo-700 disabled:opacity-50"
-          >
-            {saving ? 'Kaydediliyor…' : (formId ? 'Kaydet' : 'Oluştur')}
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={save}
+              disabled={saving}
+              className="rounded-xl border border-slate-300 bg-white px-5 py-2.5 text-sm font-bold text-slate-700 shadow-sm transition hover:bg-slate-50 disabled:opacity-50"
+            >
+              {saving ? 'Kaydediliyor…' : (formId ? 'Kaydet' : 'Oluştur')}
+            </button>
+            {formId && (
+              <button
+                onClick={() => setShowPublish(true)}
+                className="rounded-xl bg-indigo-600 px-5 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-indigo-700"
+              >
+                Yayınla
+              </button>
+            )}
+          </div>
         </div>
 
         <div className="mx-auto mt-4 max-w-2xl rounded-2xl border border-slate-200 bg-white p-8">
@@ -469,6 +483,88 @@ function FormBuilder() {
           </div>
         )}
       </aside>
+
+      {showPublish && (
+        <PublishModal formId={formId} slug={slug} onClose={() => setShowPublish(false)} />
+      )}
+    </div>
+  );
+}
+
+/* ============================================================
+ * Publish modal
+ * ============================================================ */
+function PublishModal({ formId, slug, onClose }) {
+  const [slugVal, setSlugVal] = useState(slug || '');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+  const [kvkk, setKvkk] = useState(false);
+  const [captcha, setCaptcha] = useState(false);
+  const [publishing, setPublishing] = useState(false);
+  const [publishedSlug, setPublishedSlug] = useState(null);
+
+  const doPublish = async () => {
+    setPublishing(true);
+    try {
+      const dto = await api.put(`/api/app/form/${formId}/publish`, {
+        slug: slugVal?.trim() || null,
+        publishSettingsJson: JSON.stringify({
+          startDate: startDate || null,
+          endDate: endDate || null,
+          kvkk,
+          captcha,
+        }),
+      });
+      setPublishedSlug(dto.slug || slugVal);
+      notify('success', 'Form yayınlandı.');
+    } catch (e) {
+      notify('error', e?.message || 'Yayınlama başarısız.');
+    } finally {
+      setPublishing(false);
+    }
+  };
+
+  const publicUrl = publishedSlug ? `${window.location.origin}/f/${publishedSlug}` : null;
+  const copyLink = () => { if (publicUrl) navigator.clipboard?.writeText(publicUrl); notify('success', 'Bağlantı kopyalandı.'); };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4" onClick={onClose}>
+      <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="text-lg font-bold text-slate-800">Formu Yayınla</h2>
+          <button onClick={onClose} className="rounded p-1 text-slate-400 hover:bg-slate-100">✕</button>
+        </div>
+
+        {!publicUrl ? (
+          <div className="flex flex-col gap-4">
+            <Field label="Bağlantı adresi (slug)">
+              <input className={inputCls} value={slugVal} onChange={(e) => setSlugVal(e.target.value)} placeholder="musteri-memnuniyet" />
+            </Field>
+            <div className="grid grid-cols-2 gap-3">
+              <Field label="Başlangıç"><input type="date" className={inputCls} value={startDate} onChange={(e) => setStartDate(e.target.value)} /></Field>
+              <Field label="Bitiş"><input type="date" className={inputCls} value={endDate} onChange={(e) => setEndDate(e.target.value)} /></Field>
+            </div>
+            <Toggle label="KVKK onayı iste" checked={kvkk} onChange={setKvkk} />
+            <Toggle label="Captcha doğrulaması" checked={captcha} onChange={setCaptcha} />
+            <button onClick={doPublish} disabled={publishing} className="mt-2 rounded-xl bg-indigo-600 px-5 py-2.5 text-sm font-bold text-white hover:bg-indigo-700 disabled:opacity-50">
+              {publishing ? 'Yayınlanıyor…' : 'Yayınla'}
+            </button>
+          </div>
+        ) : (
+          <div className="flex flex-col gap-4">
+            <div className="rounded-xl bg-emerald-50 p-3 text-sm text-emerald-700">✓ Form yayında! Aşağıdaki bağlantıyı paylaşabilirsiniz.</div>
+            <Field label="Yayın bağlantısı">
+              <div className="flex items-center gap-2">
+                <input readOnly className={inputCls} value={publicUrl} onClick={(e) => e.target.select()} />
+                <button onClick={copyLink} className="shrink-0 rounded-xl border border-slate-200 px-3 py-2 text-sm font-medium hover:bg-slate-50">Kopyala</button>
+              </div>
+            </Field>
+            <a href={publicUrl} target="_blank" rel="noreferrer" className="rounded-xl bg-indigo-600 px-5 py-2.5 text-center text-sm font-bold text-white hover:bg-indigo-700">
+              Formu yeni sekmede aç
+            </a>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
