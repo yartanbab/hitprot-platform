@@ -346,6 +346,14 @@ function FormBuilder() {
               {saving ? 'Kaydediliyor…' : (formId ? 'Kaydet' : 'Oluştur')}
             </button>
             {formId && (
+              <a
+                href={`/DynamicAssets/Responses?formId=${formId}`}
+                className="rounded-xl border border-slate-300 bg-white px-5 py-2.5 text-sm font-bold text-slate-700 shadow-sm transition hover:bg-slate-50"
+              >
+                Yanıtlar
+              </a>
+            )}
+            {formId && (
               <button
                 onClick={() => setShowPublish(true)}
                 className="rounded-xl bg-indigo-600 px-5 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-indigo-700"

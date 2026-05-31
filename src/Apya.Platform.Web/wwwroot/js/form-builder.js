@@ -65,12 +65,12 @@ const l = {
   }
 ], M = Object.fromEntries(
   H.flatMap((n) => n.items.map((r) => [r.type, r.label]))
-), z = () => Math.random().toString(36).slice(2, 10);
+), $ = () => Math.random().toString(36).slice(2, 10);
 function Q(n) {
-  const r = { id: z(), type: n, content: M[n] || "Soru", settings: { required: !1 } };
+  const r = { id: $(), type: n, content: M[n] || "Soru", settings: { required: !1 } };
   return q.has(n) && (r.settings.options = ["Seçenek 1", "Seçenek 2"]), n === l.SectionHeader && (r.content = "Bölüm Başlığı"), n === l.Paragraph && (r.content = "Açıklama metni…"), r;
 }
-const $ = ({ checked: n, onChange: r, label: u }) => /* @__PURE__ */ e.jsxs("label", { className: "flex items-center justify-between gap-3 cursor-pointer select-none", children: [
+const z = ({ checked: n, onChange: r, label: u }) => /* @__PURE__ */ e.jsxs("label", { className: "flex items-center justify-between gap-3 cursor-pointer select-none", children: [
   /* @__PURE__ */ e.jsx("span", { className: "text-sm font-medium text-slate-600", children: u }),
   /* @__PURE__ */ e.jsx(
     "button",
@@ -144,7 +144,7 @@ function X() {
         const t = await P.get(`/api/app/form/${n}`);
         B(t.title || ""), C(t.slug || ""), A(t.description || ""), m(
           (t.blocks || []).sort((a, o) => a.order - o.order).map((a) => ({
-            id: a.id || z(),
+            id: a.id || $(),
             type: a.type,
             content: a.content,
             settings: te(a.settings)
@@ -163,20 +163,20 @@ function X() {
   }, I = (t) => m((a) => a.filter((o) => o.id !== t)), U = (t) => m((a) => {
     const o = a.findIndex((G) => G.id === t);
     if (o < 0) return a;
-    const i = { ...a[o], id: z(), settings: { ...a[o].settings } }, c = [...a];
+    const i = { ...a[o], id: $(), settings: { ...a[o].settings } }, c = [...a];
     return c.splice(o + 1, 0, i), c;
-  }), K = (t, a) => m((o) => {
+  }), R = (t, a) => m((o) => {
     const i = a === "up" ? t - 1 : t + 1;
     if (i < 0 || i >= o.length) return o;
     const c = [...o];
     return [c[t], c[i]] = [c[i], c[t]], c;
-  }), O = (t, a) => m((o) => o.map((i) => i.id === t ? { ...i, ...a } : i)), b = (t, a) => m((o) => o.map((i) => i.id === t ? { ...i, settings: { ...i.settings, ...a } } : i)), _ = (t) => {
+  }), Y = (t, a) => m((o) => o.map((i) => i.id === t ? { ...i, ...a } : i)), b = (t, a) => m((o) => o.map((i) => i.id === t ? { ...i, settings: { ...i.settings, ...a } } : i)), _ = (t) => {
     const a = w.current;
     w.current = null, !(a == null || a === t) && m((o) => {
       const i = [...o], [c] = i.splice(a, 1);
       return i.splice(t, 0, c), i;
     });
-  }, R = () => g.map((t, a) => ({
+  }, K = () => g.map((t, a) => ({
     type: t.type,
     order: a + 1,
     content: t.content || M[t.type] || "Soru",
@@ -192,14 +192,14 @@ function X() {
           categoryId: null,
           themeJson: null,
           blocks: []
-        }), await P.put(`/api/app/form/${r}/blocks`, { blocks: R() }), f("success", "Form kaydedildi.");
+        }), await P.put(`/api/app/form/${r}/blocks`, { blocks: K() }), f("success", "Form kaydedildi.");
       else {
         const t = await P.post("/api/app/form", {
           title: y.trim(),
           description: N.trim() || null,
           categoryId: null,
           themeJson: null,
-          blocks: R()
+          blocks: K()
         });
         u(t.id), C(t.slug || "");
         const a = new URL(window.location.href);
@@ -244,6 +244,14 @@ function X() {
               disabled: k,
               className: "rounded-xl border border-slate-300 bg-white px-5 py-2.5 text-sm font-bold text-slate-700 shadow-sm transition hover:bg-slate-50 disabled:opacity-50",
               children: k ? "Kaydediliyor…" : r ? "Kaydet" : "Oluştur"
+            }
+          ),
+          r && /* @__PURE__ */ e.jsx(
+            "a",
+            {
+              href: `/DynamicAssets/Responses?formId=${r}`,
+              className: "rounded-xl border border-slate-300 bg-white px-5 py-2.5 text-sm font-bold text-slate-700 shadow-sm transition hover:bg-slate-50",
+              children: "Yanıtlar"
             }
           ),
           r && /* @__PURE__ */ e.jsx(
@@ -292,10 +300,10 @@ function X() {
                   /* @__PURE__ */ e.jsx("span", { className: "rounded-full bg-indigo-50 px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wide text-indigo-600", children: M[t.type] || "Alan" }),
                   /* @__PURE__ */ e.jsxs("div", { className: "flex items-center gap-1 opacity-0 transition group-hover:opacity-100", children: [
                     /* @__PURE__ */ e.jsx("button", { onClick: (c) => {
-                      c.stopPropagation(), K(a, "up");
+                      c.stopPropagation(), R(a, "up");
                     }, className: "rounded p-1 text-slate-400 hover:bg-slate-100", title: "Yukarı", children: "▲" }),
                     /* @__PURE__ */ e.jsx("button", { onClick: (c) => {
-                      c.stopPropagation(), K(a, "down");
+                      c.stopPropagation(), R(a, "down");
                     }, className: "rounded p-1 text-slate-400 hover:bg-slate-100", title: "Aşağı", children: "▼" }),
                     /* @__PURE__ */ e.jsx("button", { onClick: (c) => {
                       c.stopPropagation(), U(t.id);
@@ -309,7 +317,7 @@ function X() {
                   "input",
                   {
                     value: t.content,
-                    onChange: (c) => O(t.id, { content: c.target.value }),
+                    onChange: (c) => Y(t.id, { content: c.target.value }),
                     onClick: (c) => c.stopPropagation(),
                     placeholder: "Soru metni…",
                     className: "mb-3 w-full border-none p-0 text-base font-semibold text-slate-800 placeholder-slate-300 focus:outline-none focus:ring-0"
@@ -327,11 +335,11 @@ function X() {
     /* @__PURE__ */ e.jsxs("aside", { className: "w-72 shrink-0 overflow-y-auto border-l border-slate-200 bg-white p-4", children: [
       /* @__PURE__ */ e.jsx("h3", { className: "mb-3 text-xs font-bold uppercase tracking-widest text-indigo-500", children: "Alan Özellikleri" }),
       s ? /* @__PURE__ */ e.jsxs("div", { className: "flex flex-col gap-4", children: [
-        /* @__PURE__ */ e.jsx(h, { label: L.has(s.type) ? "İçerik" : "Soru / Etiket", children: /* @__PURE__ */ e.jsx("input", { className: d, value: s.content, onChange: (t) => O(s.id, { content: t.target.value }) }) }),
+        /* @__PURE__ */ e.jsx(h, { label: L.has(s.type) ? "İçerik" : "Soru / Etiket", children: /* @__PURE__ */ e.jsx("input", { className: d, value: s.content, onChange: (t) => Y(s.id, { content: t.target.value }) }) }),
         !L.has(s.type) && /* @__PURE__ */ e.jsxs(e.Fragment, { children: [
           /* @__PURE__ */ e.jsx(h, { label: "Placeholder", children: /* @__PURE__ */ e.jsx("input", { className: d, value: s.settings.placeholder || "", onChange: (t) => b(s.id, { placeholder: t.target.value }) }) }),
           /* @__PURE__ */ e.jsx(h, { label: "Yardım Metni", children: /* @__PURE__ */ e.jsx("input", { className: d, value: s.settings.helpText || "", onChange: (t) => b(s.id, { helpText: t.target.value }) }) }),
-          /* @__PURE__ */ e.jsx($, { label: "Zorunlu alan", checked: !!s.settings.required, onChange: (t) => b(s.id, { required: t }) })
+          /* @__PURE__ */ e.jsx(z, { label: "Zorunlu alan", checked: !!s.settings.required, onChange: (t) => b(s.id, { required: t }) })
         ] }),
         q.has(s.type) && /* @__PURE__ */ e.jsx(h, { label: "Seçenekler", children: /* @__PURE__ */ e.jsxs("div", { className: "flex flex-col gap-2", children: [
           (s.settings.options || []).map((t, a) => /* @__PURE__ */ e.jsxs("div", { className: "flex items-center gap-1.5", children: [
@@ -416,8 +424,8 @@ function ee({ formId: n, slug: r, onClose: u }) {
         /* @__PURE__ */ e.jsx(h, { label: "Başlangıç", children: /* @__PURE__ */ e.jsx("input", { type: "date", className: d, value: T, onChange: (s) => D(s.target.value) }) }),
         /* @__PURE__ */ e.jsx(h, { label: "Bitiş", children: /* @__PURE__ */ e.jsx("input", { type: "date", className: d, value: y, onChange: (s) => B(s.target.value) }) })
       ] }),
-      /* @__PURE__ */ e.jsx($, { label: "KVKK onayı iste", checked: N, onChange: A }),
-      /* @__PURE__ */ e.jsx($, { label: "Captcha doğrulaması", checked: g, onChange: m }),
+      /* @__PURE__ */ e.jsx(z, { label: "KVKK onayı iste", checked: N, onChange: A }),
+      /* @__PURE__ */ e.jsx(z, { label: "Captcha doğrulaması", checked: g, onChange: m }),
       /* @__PURE__ */ e.jsx("button", { onClick: E, disabled: v, className: "mt-2 rounded-xl bg-indigo-600 px-5 py-2.5 text-sm font-bold text-white hover:bg-indigo-700 disabled:opacity-50", children: v ? "Yayınlanıyor…" : "Yayınla" })
     ] })
   ] }) });
@@ -434,5 +442,5 @@ function f(n, r) {
   const u = window.abp;
   u != null && u.notify && (n === "success" || n === "info") ? u.notify[n === "success" ? "success" : "info"](r) : u != null && u.message ? u.message[n === "error" ? "error" : n === "warn" ? "warn" : "info"](r) : console.log(`[${n}] ${r}`);
 }
-const Y = document.getElementById("dynamic-assets-app-root");
-Y && V(Y).render(/* @__PURE__ */ e.jsx(X, {}));
+const O = document.getElementById("dynamic-assets-app-root");
+O && V(O).render(/* @__PURE__ */ e.jsx(X, {}));

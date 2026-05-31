@@ -1,0 +1,17 @@
+@page "/DynamicAssets/Responses"
+@model Apya.Platform.Web.Pages.DynamicAssets.ResponsesModel
+@{
+    ViewBag.Title = "Form Yanıtları";
+}
+
+<link rel="stylesheet" href="~/js/style.css" asp-append-version="true" />
+
+@Html.AntiForgeryToken()
+
+<div class="card">
+    <div class="card-body">
+        <div id="responses-root" data-form-id="@Model.FormId"></div>
+    </div>
+</div>
+
+<script type="module" src="~/js/responses.js" asp-append-version="true"></script>
