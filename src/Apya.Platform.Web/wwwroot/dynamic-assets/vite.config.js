@@ -14,6 +14,7 @@ export default defineConfig({
       // Her yeni island buraya eklenir; çıktı ayrı bir .js dosyasına gider.
       entry: {
         'template-builder': 'src/template-builder.jsx',
+        'form-builder':     'src/form-builder.jsx',
         'customers':        'src/customers.jsx',
       },
       formats: ['es'],
