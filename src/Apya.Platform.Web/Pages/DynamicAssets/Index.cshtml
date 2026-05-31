@@ -1,24 +1,17 @@
 @page
 @model Apya.Platform.Web.Pages.DynamicAssets.IndexModel
 @{
-    // Menü barını gizlemek veya ABP default layout kurallarını bypass etmek için Layout=null yapmıyoruz, 
-    // ama sayfaya wow efekti katmak için custom kodlar kullanıyoruz.
-    ViewBag.Title = "Dinamik Form Geliştirici";
+    ViewBag.Title = "Formlar";
 }
 
-<!-- Premium Font & Tailwind & React CDN -->
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<!-- Premium Font -->
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<!-- Vite Compiled Assets -->
 <link rel="stylesheet" href="~/js/style.css" asp-append-version="true" />
 
 @Html.AntiForgeryToken()
 
 <div class="card">
     <div class="card-body">
-        <div id="dynamic-assets-app-root"></div>
+        <div id="forms-list-root"></div>
     </div>
 </div>
 
-<script type="module" src="~/js/form-builder.js" asp-append-version="true"></script>
+<script type="module" src="~/js/forms.js" asp-append-version="true"></script>

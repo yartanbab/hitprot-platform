@@ -15,6 +15,7 @@ export default defineConfig({
       entry: {
         'template-builder': 'src/template-builder.jsx',
         'form-builder':     'src/form-builder.jsx',
+        'forms':            'src/forms.jsx',
         'public-form':      'src/public-form.jsx',
         'responses':        'src/responses.jsx',
         'customers':        'src/customers.jsx',

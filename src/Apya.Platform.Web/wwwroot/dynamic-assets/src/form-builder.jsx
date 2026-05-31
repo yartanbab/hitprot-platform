@@ -336,7 +336,10 @@ function FormBuilder() {
       {/* ---------- CENTER: canvas ---------- */}
       <main className="flex-1 overflow-y-auto p-8">
         <div className="mx-auto flex max-w-2xl items-center justify-between">
-          <span className="text-xs font-semibold text-slate-400">{blocks.length} alan</span>
+          <div className="flex items-center gap-3">
+            <a href="/DynamicAssets" className="text-sm font-semibold text-slate-500 hover:text-slate-700">← Formlar</a>
+            <span className="text-xs font-semibold text-slate-400">{blocks.length} alan</span>
+          </div>
           <div className="flex items-center gap-2">
             <button
               onClick={save}

@@ -137,12 +137,12 @@ function W({ block: n }) {
   }
 }
 function X() {
-  const n = x.useMemo(() => new URLSearchParams(window.location.search).get("id"), []), [r, u] = x.useState(n), [p, C] = x.useState(""), [T, D] = x.useState(!1), [y, B] = x.useState(""), [N, A] = x.useState(""), [g, m] = x.useState([]), [v, S] = x.useState(null), [k, F] = x.useState(!1), [E, j] = x.useState(!!n), w = x.useRef(null);
+  const n = x.useMemo(() => new URLSearchParams(window.location.search).get("id"), []), [r, u] = x.useState(n), [p, C] = x.useState(""), [T, D] = x.useState(!1), [y, A] = x.useState(""), [N, B] = x.useState(""), [g, m] = x.useState([]), [v, S] = x.useState(null), [k, F] = x.useState(!1), [E, j] = x.useState(!!n), w = x.useRef(null);
   x.useEffect(() => {
     n && (async () => {
       try {
         const t = await P.get(`/api/app/form/${n}`);
-        B(t.title || ""), C(t.slug || ""), A(t.description || ""), m(
+        A(t.title || ""), C(t.slug || ""), B(t.description || ""), m(
           (t.blocks || []).sort((a, o) => a.order - o.order).map((a) => ({
             id: a.id || $(),
             type: a.type,
@@ -232,9 +232,12 @@ function X() {
     ] }),
     /* @__PURE__ */ e.jsxs("main", { className: "flex-1 overflow-y-auto p-8", children: [
       /* @__PURE__ */ e.jsxs("div", { className: "mx-auto flex max-w-2xl items-center justify-between", children: [
-        /* @__PURE__ */ e.jsxs("span", { className: "text-xs font-semibold text-slate-400", children: [
-          g.length,
-          " alan"
+        /* @__PURE__ */ e.jsxs("div", { className: "flex items-center gap-3", children: [
+          /* @__PURE__ */ e.jsx("a", { href: "/DynamicAssets", className: "text-sm font-semibold text-slate-500 hover:text-slate-700", children: "← Formlar" }),
+          /* @__PURE__ */ e.jsxs("span", { className: "text-xs font-semibold text-slate-400", children: [
+            g.length,
+            " alan"
+          ] })
         ] }),
         /* @__PURE__ */ e.jsxs("div", { className: "flex items-center gap-2", children: [
           /* @__PURE__ */ e.jsx(
@@ -269,7 +272,7 @@ function X() {
           "input",
           {
             value: y,
-            onChange: (t) => B(t.target.value),
+            onChange: (t) => A(t.target.value),
             placeholder: "Form başlığı…",
             className: "w-full border-none p-0 text-3xl font-bold text-slate-900 placeholder-slate-300 focus:outline-none focus:ring-0"
           }
@@ -278,7 +281,7 @@ function X() {
           "input",
           {
             value: N,
-            onChange: (t) => A(t.target.value),
+            onChange: (t) => B(t.target.value),
             placeholder: "Form açıklaması (opsiyonel)…",
             className: "mt-2 w-full border-none p-0 text-sm text-slate-500 placeholder-slate-300 focus:outline-none focus:ring-0"
           }
@@ -384,7 +387,7 @@ function X() {
   ] });
 }
 function ee({ formId: n, slug: r, onClose: u }) {
-  const [p, C] = x.useState(r || ""), [T, D] = x.useState(""), [y, B] = x.useState(""), [N, A] = x.useState(!1), [g, m] = x.useState(!1), [v, S] = x.useState(!1), [k, F] = x.useState(null), E = async () => {
+  const [p, C] = x.useState(r || ""), [T, D] = x.useState(""), [y, A] = x.useState(""), [N, B] = x.useState(!1), [g, m] = x.useState(!1), [v, S] = x.useState(!1), [k, F] = x.useState(null), E = async () => {
     S(!0);
     try {
       const s = await P.post(`/api/app/form/${n}/publish`, {
@@ -422,9 +425,9 @@ function ee({ formId: n, slug: r, onClose: u }) {
       /* @__PURE__ */ e.jsx(h, { label: "Bağlantı adresi (slug)", children: /* @__PURE__ */ e.jsx("input", { className: d, value: p, onChange: (s) => C(s.target.value), placeholder: "musteri-memnuniyet" }) }),
       /* @__PURE__ */ e.jsxs("div", { className: "grid grid-cols-2 gap-3", children: [
         /* @__PURE__ */ e.jsx(h, { label: "Başlangıç", children: /* @__PURE__ */ e.jsx("input", { type: "date", className: d, value: T, onChange: (s) => D(s.target.value) }) }),
-        /* @__PURE__ */ e.jsx(h, { label: "Bitiş", children: /* @__PURE__ */ e.jsx("input", { type: "date", className: d, value: y, onChange: (s) => B(s.target.value) }) })
+        /* @__PURE__ */ e.jsx(h, { label: "Bitiş", children: /* @__PURE__ */ e.jsx("input", { type: "date", className: d, value: y, onChange: (s) => A(s.target.value) }) })
       ] }),
-      /* @__PURE__ */ e.jsx(z, { label: "KVKK onayı iste", checked: N, onChange: A }),
+      /* @__PURE__ */ e.jsx(z, { label: "KVKK onayı iste", checked: N, onChange: B }),
       /* @__PURE__ */ e.jsx(z, { label: "Captcha doğrulaması", checked: g, onChange: m }),
       /* @__PURE__ */ e.jsx("button", { onClick: E, disabled: v, className: "mt-2 rounded-xl bg-indigo-600 px-5 py-2.5 text-sm font-bold text-white hover:bg-indigo-700 disabled:opacity-50", children: v ? "Yayınlanıyor…" : "Yayınla" })
     ] })

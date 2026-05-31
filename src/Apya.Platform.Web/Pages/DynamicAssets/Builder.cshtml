@@ -1,0 +1,17 @@
+@page "/DynamicAssets/Builder"
+@model Apya.Platform.Web.Pages.DynamicAssets.BuilderModel
+@{
+    ViewBag.Title = "Form Tasarımcısı";
+}
+
+<link rel="stylesheet" href="~/js/style.css" asp-append-version="true" />
+
+@Html.AntiForgeryToken()
+
+<div class="card">
+    <div class="card-body">
+        <div id="dynamic-assets-app-root"></div>
+    </div>
+</div>
+
+<script type="module" src="~/js/form-builder.js" asp-append-version="true"></script>
