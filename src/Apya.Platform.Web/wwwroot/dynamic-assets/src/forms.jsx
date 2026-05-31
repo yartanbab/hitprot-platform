@@ -63,7 +63,7 @@ function FormsList() {
           </a>
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {forms.map((f) => (
             <div key={f.id} className="flex flex-col rounded-2xl border border-slate-200 bg-white p-5 transition hover:shadow-md">
               <div className="mb-2 flex items-start justify-between gap-2">
@@ -72,19 +72,19 @@ function FormsList() {
               </div>
               {f.description && <p className="mb-3 line-clamp-2 text-sm text-slate-500">{f.description}</p>}
 
-              <div className="mt-auto flex items-center gap-4 border-t border-slate-100 pt-3 text-xs text-slate-400">
-                <span>📊 {f.responseCount} yanıt</span>
-                <span>👁 {f.viewCount}</span>
-                <span className="ml-auto">{fmtDate(f.creationTime)}</span>
+              <div className="mt-auto flex items-center gap-3 border-t border-slate-100 pt-3 text-xs text-slate-400">
+                <span className="whitespace-nowrap">📊 {f.responseCount} yanıt</span>
+                <span className="whitespace-nowrap">👁 {f.viewCount}</span>
+                <span className="ml-auto whitespace-nowrap">{fmtDate(f.creationTime)}</span>
               </div>
 
               <div className="mt-3 flex items-center gap-1.5">
-                <a href={`/DynamicAssets/Builder?id=${f.id}`} className="flex-1 rounded-lg border border-slate-200 px-3 py-1.5 text-center text-xs font-semibold text-slate-700 hover:bg-slate-50">Düzenle</a>
-                <a href={`/DynamicAssets/Responses?formId=${f.id}`} className="flex-1 rounded-lg border border-slate-200 px-3 py-1.5 text-center text-xs font-semibold text-slate-700 hover:bg-slate-50">Yanıtlar</a>
+                <a href={`/DynamicAssets/Builder?id=${f.id}`} className="min-w-0 flex-1 truncate rounded-lg border border-slate-200 px-3 py-1.5 text-center text-xs font-semibold text-slate-700 hover:bg-slate-50">Düzenle</a>
+                <a href={`/DynamicAssets/Responses?formId=${f.id}`} className="min-w-0 flex-1 truncate rounded-lg border border-slate-200 px-3 py-1.5 text-center text-xs font-semibold text-slate-700 hover:bg-slate-50">Yanıtlar</a>
                 {f.status === 1 && (
-                  <a href={`/f/${f.slug}`} target="_blank" rel="noreferrer" className="rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs hover:bg-slate-50" title="Formu aç">↗</a>
+                  <a href={`/f/${f.slug}`} target="_blank" rel="noreferrer" className="shrink-0 rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs hover:bg-slate-50" title="Formu aç">↗</a>
                 )}
-                <button onClick={() => remove(f)} className="rounded-lg border border-red-200 px-2.5 py-1.5 text-xs text-red-500 hover:bg-red-50" title="Sil">🗑</button>
+                <button onClick={() => remove(f)} className="shrink-0 rounded-lg border border-red-200 px-2.5 py-1.5 text-xs text-red-500 hover:bg-red-50" title="Sil">🗑</button>
               </div>
             </div>
           ))}
