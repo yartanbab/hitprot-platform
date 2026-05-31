@@ -120,6 +120,33 @@ public class FormAppService : PlatformAppService, IFormAppService
         return ObjectMapper.Map<AppDocument, DocumentDto>(document);
     }
 
+    [Authorize(PlatformPermissions.DynamicAssets.Edit)]
+    public async Task<DocumentDto> UpdateBlocksAsync(Guid id, UpdateFormBlocksDto input)
+    {
+        var document = await _documentRepository.GetWithBlocksAsync(id);
+
+        document.ClearBlocks();
+
+        foreach (var blockDto in input.Blocks.OrderBy(b => b.Order))
+        {
+            document.AddBlock(
+                GuidGenerator.Create(),
+                blockDto.Type,
+                blockDto.Order,
+                blockDto.Content,
+                blockDto.Settings,
+                blockDto.AgentContext);
+        }
+
+        await _documentRepository.UpdateAsync(document, autoSave: true);
+
+        _logger.LogInformation(
+            "Form blokları güncellendi. FormId: {FormId}, BlockCount: {BlockCount}",
+            document.Id, input.Blocks.Count);
+
+        return ObjectMapper.Map<AppDocument, DocumentDto>(document);
+    }
+
     [Authorize(PlatformPermissions.DynamicAssets.Delete)]
     public async Task DeleteAsync(Guid id)
     {

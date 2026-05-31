@@ -15,6 +15,7 @@ public interface IFormAppService : IApplicationService
     Task<DocumentDto> GetAsync(Guid id);
     Task<DocumentDto> CreateAsync(CreateUpdateFormDto input);
     Task<DocumentDto> UpdateAsync(Guid id, CreateUpdateFormDto input);
+    Task<DocumentDto> UpdateBlocksAsync(Guid id, UpdateFormBlocksDto input);
     Task DeleteAsync(Guid id);
 
     Task<DocumentDto> PublishAsync(Guid id, PublishFormDto input);

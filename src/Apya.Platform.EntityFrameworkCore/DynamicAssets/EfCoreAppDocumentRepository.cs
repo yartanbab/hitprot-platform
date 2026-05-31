@@ -33,4 +33,22 @@ public class EfCoreAppDocumentRepository
             .Include(d => d.Blocks.OrderBy(b => b.Order))
             .FirstOrDefaultAsync(d => d.Slug == slug, cancellationToken);
     }
+
+    public async Task<AppDocument> GetWithBlocksAsync(
+        Guid id,
+        CancellationToken cancellationToken = default)
+    {
+        var dbContext = await GetDbContextAsync();
+
+        var document = await dbContext.AppDocuments
+            .Include(d => d.Blocks.OrderBy(b => b.Order))
+            .FirstOrDefaultAsync(d => d.Id == id, cancellationToken);
+
+        if (document is null)
+        {
+            throw new Volo.Abp.Domain.Entities.EntityNotFoundException(typeof(AppDocument), id);
+        }
+
+        return document;
+    }
 }

@@ -90,6 +90,16 @@ public class AppDocument : FullAuditedAggregateRoot<Guid>, IMultiTenant
     }
 
     /// <summary>
+    /// Removes all blocks from this document. Used by the builder when
+    /// replacing the full block set in a single save. EF Core orphan-deletes
+    /// the detached blocks (required FK + cascade) on the next SaveChanges.
+    /// </summary>
+    public void ClearBlocks()
+    {
+        _blocks.Clear();
+    }
+
+    /// <summary>
     /// Removes a block from this document.
     /// Throws <see cref="BusinessException"/> if the block is not found.
     /// </summary>

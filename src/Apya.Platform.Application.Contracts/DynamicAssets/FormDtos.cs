@@ -54,6 +54,14 @@ public class CreateUpdateFormDto
 }
 
 /// <summary>
+/// Input DTO for replacing a form's full block set (builder save).
+/// </summary>
+public class UpdateFormBlocksDto
+{
+    public List<CreateBlockDto> Blocks { get; set; } = new();
+}
+
+/// <summary>
 /// Input DTO for publishing a form.
 /// </summary>
 public class PublishFormDto
