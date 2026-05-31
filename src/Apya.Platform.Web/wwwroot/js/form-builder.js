@@ -379,7 +379,7 @@ function ee({ formId: n, slug: r, onClose: u }) {
   const [p, C] = x.useState(r || ""), [T, D] = x.useState(""), [y, B] = x.useState(""), [N, A] = x.useState(!1), [g, m] = x.useState(!1), [v, S] = x.useState(!1), [k, F] = x.useState(null), E = async () => {
     S(!0);
     try {
-      const s = await P.put(`/api/app/form/${n}/publish`, {
+      const s = await P.post(`/api/app/form/${n}/publish`, {
         slug: (p == null ? void 0 : p.trim()) || null,
         publishSettingsJson: JSON.stringify({
           startDate: T || null,

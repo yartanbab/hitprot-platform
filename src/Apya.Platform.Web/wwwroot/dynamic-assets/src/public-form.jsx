@@ -107,7 +107,7 @@ function PublicForm({ slug }) {
   useEffect(() => {
     (async () => {
       try {
-        const dto = await api.get(`/api/app/public-document/by-slug/${encodeURIComponent(slug)}`);
+        const dto = await api.get(`/api/app/public-document/by-slug?slug=${encodeURIComponent(slug)}`);
         setDoc(dto);
         setStatus('ready');
         startedAt.current = Date.now();

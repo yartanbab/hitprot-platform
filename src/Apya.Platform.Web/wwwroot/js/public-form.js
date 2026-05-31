@@ -75,7 +75,7 @@ function E({ slug: n }) {
   p.useEffect(() => {
     (async () => {
       try {
-        const s = await v.get(`/api/app/public-document/by-slug/${encodeURIComponent(n)}`);
+        const s = await v.get(`/api/app/public-document/by-slug?slug=${encodeURIComponent(n)}`);
         b(s), r("ready"), N.current = Date.now();
       } catch (s) {
         m((s == null ? void 0 : s.message) || "Form yüklenemedi."), r("error");

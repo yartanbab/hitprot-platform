@@ -506,7 +506,7 @@ function PublishModal({ formId, slug, onClose }) {
   const doPublish = async () => {
     setPublishing(true);
     try {
-      const dto = await api.put(`/api/app/form/${formId}/publish`, {
+      const dto = await api.post(`/api/app/form/${formId}/publish`, {
         slug: slugVal?.trim() || null,
         publishSettingsJson: JSON.stringify({
           startDate: startDate || null,
