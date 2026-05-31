@@ -20,5 +20,11 @@ public class DynamicAssetsApplicationAutoMapperProfile : Profile
         // Public-facing mappings (Faz 4 — anonymous form rendering)
         CreateMap<AppDocument, PublicDocumentDto>();
         CreateMap<AppBlock, PublicBlockDto>();
+
+        // FormCategory -> FormCategoryDto
+        CreateMap<FormCategory, FormCategoryDto>();
+
+        // AppDocument -> FormListItemDto (lightweight list projection)
+        CreateMap<AppDocument, FormListItemDto>();
     }
 }
