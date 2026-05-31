@@ -26,5 +26,10 @@ public class DynamicAssetsApplicationAutoMapperProfile : Profile
 
         // AppDocument -> FormListItemDto (lightweight list projection)
         CreateMap<AppDocument, FormListItemDto>();
+
+        // Response management
+        CreateMap<AppResponse, ResponseListItemDto>();
+        CreateMap<AppResponse, ResponseDetailDto>();
+        CreateMap<ResponseComment, ResponseCommentDto>();
     }
 }
