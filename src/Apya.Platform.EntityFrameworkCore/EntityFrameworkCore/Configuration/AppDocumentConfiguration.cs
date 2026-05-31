@@ -20,9 +20,27 @@ public class AppDocumentConfiguration : IEntityTypeConfiguration<AppDocument>
             .IsRequired()
             .HasMaxLength(AppDocumentConsts.MaxSlugLength);
 
+        builder.Property(x => x.Status)
+            .IsRequired();
+
+        builder.Property(x => x.Description)
+            .IsRequired(false)
+            .HasMaxLength(AppDocumentConsts.MaxDescriptionLength);
+
+        // JSON columns (Postgres text; promote to jsonb in a follow-up if indexed search is needed)
+        builder.Property(x => x.ThemeJson)
+            .IsRequired(false)
+            .HasColumnType("text");
+
+        builder.Property(x => x.PublishSettingsJson)
+            .IsRequired(false)
+            .HasColumnType("text");
+
         builder.HasIndex(x => x.Slug).IsUnique();
         builder.HasIndex(x => x.ParentTemplateId);
         builder.HasIndex(x => x.IsTemplate);
+        builder.HasIndex(x => new { x.TenantId, x.Status });
+        builder.HasIndex(x => x.CategoryId);
 
         // Blocks — owned collection with FK
         builder.HasMany(x => x.Blocks)
