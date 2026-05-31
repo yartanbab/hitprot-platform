@@ -17,55 +17,37 @@ const BT = {
 const HAS_OPTIONS = new Set([BT.Select, BT.MultiSelect, BT.Dropdown]);
 const LAYOUT_ONLY = new Set([BT.SectionHeader, BT.Paragraph]); // no answer input
 
-/* Palette grouped by category */
-const PALETTE = [
-  {
-    group: 'Metin & Sayı',
-    items: [
-      { type: BT.ShortText, label: 'Kısa Metin', icon: '✏️' },
-      { type: BT.LongText, label: 'Uzun Metin', icon: '📝' },
-      { type: BT.Number, label: 'Sayısal', icon: '🔢' },
-      { type: BT.Email, label: 'E-Posta', icon: '✉️' },
-      { type: BT.Phone, label: 'Telefon', icon: '📞' },
-    ],
-  },
-  {
-    group: 'Seçim',
-    items: [
-      { type: BT.Select, label: 'Tekli Seçim', icon: '🔘' },
-      { type: BT.MultiSelect, label: 'Çoklu Seçim', icon: '☑️' },
-      { type: BT.Dropdown, label: 'Açılır Liste', icon: '⬇️' },
-    ],
-  },
-  {
-    group: 'Tarih & Zaman',
-    items: [
-      { type: BT.DatePicker, label: 'Tarih', icon: '📅' },
-      { type: BT.TimePicker, label: 'Saat', icon: '🕐' },
-    ],
-  },
-  {
-    group: 'Özel',
-    items: [
-      { type: BT.FilePicker, label: 'Dosya Yükleme', icon: '📎' },
-      { type: BT.Rating, label: 'Derecelendirme', icon: '⭐' },
-      { type: BT.Nps, label: 'NPS (0-10)', icon: '📊' },
-      { type: BT.Signature, label: 'İmza', icon: '✍️' },
-      { type: BT.Address, label: 'Adres', icon: '📍' },
-    ],
-  },
-  {
-    group: 'Düzen',
-    items: [
-      { type: BT.SectionHeader, label: 'Bölüm Başlığı', icon: '🏷️' },
-      { type: BT.Paragraph, label: 'Açıklama', icon: '💬' },
-    ],
-  },
+/* Type catalog grouped for the type dropdown */
+const TYPE_GROUPS = [
+  { group: 'Metin & Sayı', items: [
+    { type: BT.ShortText, label: 'Kısa Metin', icon: '✏️' },
+    { type: BT.LongText, label: 'Uzun Metin', icon: '📝' },
+    { type: BT.Number, label: 'Sayısal', icon: '🔢' },
+    { type: BT.Email, label: 'E-Posta', icon: '✉️' },
+    { type: BT.Phone, label: 'Telefon', icon: '📞' },
+  ]},
+  { group: 'Seçim', items: [
+    { type: BT.Select, label: 'Tekli Seçim', icon: '🔘' },
+    { type: BT.MultiSelect, label: 'Çoklu Seçim', icon: '☑️' },
+    { type: BT.Dropdown, label: 'Açılır Liste', icon: '⬇️' },
+  ]},
+  { group: 'Tarih & Zaman', items: [
+    { type: BT.DatePicker, label: 'Tarih', icon: '📅' },
+    { type: BT.TimePicker, label: 'Saat', icon: '🕐' },
+  ]},
+  { group: 'Özel', items: [
+    { type: BT.FilePicker, label: 'Dosya Yükleme', icon: '📎' },
+    { type: BT.Rating, label: 'Derecelendirme', icon: '⭐' },
+    { type: BT.Nps, label: 'NPS (0-10)', icon: '📊' },
+    { type: BT.Signature, label: 'İmza', icon: '✍️' },
+    { type: BT.Address, label: 'Adres', icon: '📍' },
+  ]},
+  { group: 'Düzen', items: [
+    { type: BT.SectionHeader, label: 'Bölüm Başlığı', icon: '🏷️' },
+    { type: BT.Paragraph, label: 'Açıklama', icon: '💬' },
+  ]},
 ];
-
-const LABELS = Object.fromEntries(
-  PALETTE.flatMap((g) => g.items.map((i) => [i.type, i.label])),
-);
+const LABELS = Object.fromEntries(TYPE_GROUPS.flatMap((g) => g.items.map((i) => [i.type, i.label])));
 
 const uid = () => Math.random().toString(36).slice(2, 10);
 
@@ -77,13 +59,15 @@ function defaultBlock(type) {
   return base;
 }
 
-/* ---------- small UI atoms (Tailwind, self-contained) ---------- */
+const inputCls =
+  'w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100';
+
 const Toggle = ({ checked, onChange, label }) => (
-  <label className="flex items-center justify-between gap-3 cursor-pointer select-none">
+  <label className="flex items-center gap-2 cursor-pointer select-none">
     <span className="text-sm font-medium text-slate-600">{label}</span>
     <button
       type="button"
-      onClick={() => onChange(!checked)}
+      onClick={(e) => { e.stopPropagation(); onChange(!checked); }}
       className={`relative h-6 w-11 rounded-full transition-colors ${checked ? 'bg-indigo-600' : 'bg-slate-300'}`}
       aria-pressed={checked}
     >
@@ -92,17 +76,25 @@ const Toggle = ({ checked, onChange, label }) => (
   </label>
 );
 
-const Field = ({ label, children }) => (
-  <div className="flex flex-col gap-1.5">
-    <label className="text-xs font-semibold uppercase tracking-wide text-slate-400">{label}</label>
-    {children}
-  </div>
-);
+/* type dropdown */
+function TypeSelect({ value, onChange }) {
+  return (
+    <select
+      value={value}
+      onClick={(e) => e.stopPropagation()}
+      onChange={(e) => onChange(Number(e.target.value))}
+      className="shrink-0 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 focus:border-indigo-400 focus:outline-none"
+    >
+      {TYPE_GROUPS.map((g) => (
+        <optgroup key={g.group} label={g.group}>
+          {g.items.map((it) => <option key={it.type} value={it.type}>{it.icon} {it.label}</option>)}
+        </optgroup>
+      ))}
+    </select>
+  );
+}
 
-const inputCls =
-  'w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100';
-
-/* ---------- preview renderer for a block (read-only) ---------- */
+/* read-only preview of how the field looks to a respondent */
 function BlockPreview({ block }) {
   const s = block.settings || {};
   switch (block.type) {
@@ -120,32 +112,14 @@ function BlockPreview({ block }) {
       return <input disabled type="time" className={inputCls} />;
     case BT.FilePicker:
       return <div className="rounded-xl border-2 border-dashed border-slate-200 px-3 py-6 text-center text-sm text-slate-400">📎 Dosya seç / sürükle</div>;
-    case BT.Select:
-    case BT.MultiSelect:
-      return (
-        <div className="flex flex-col gap-2">
-          {(s.options || []).map((o, i) => (
-            <label key={i} className="flex items-center gap-2 text-sm text-slate-600">
-              <span className={`inline-block h-4 w-4 border border-slate-300 ${block.type === BT.Select ? 'rounded-full' : 'rounded'}`} />
-              {o}
-            </label>
-          ))}
-        </div>
-      );
     case BT.Dropdown:
-      return (
-        <select disabled className={inputCls}>
-          {(s.options || []).map((o, i) => <option key={i}>{o}</option>)}
-        </select>
-      );
+      return <select disabled className={inputCls}>{(s.options || []).map((o, i) => <option key={i}>{o}</option>)}</select>;
     case BT.Rating:
       return <div className="flex gap-1 text-2xl text-amber-400">{'★★★★★'}</div>;
     case BT.Nps:
       return (
         <div className="flex flex-wrap gap-1">
-          {Array.from({ length: 11 }, (_, i) => (
-            <span key={i} className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 text-xs text-slate-500">{i}</span>
-          ))}
+          {Array.from({ length: 11 }, (_, i) => <span key={i} className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 text-xs text-slate-500">{i}</span>)}
         </div>
       );
     case BT.Signature:
@@ -153,16 +127,9 @@ function BlockPreview({ block }) {
     case BT.Address:
       return (
         <div className="grid grid-cols-2 gap-2">
-          <input disabled className={inputCls} placeholder="Adres satırı" />
-          <input disabled className={inputCls} placeholder="İlçe" />
-          <input disabled className={inputCls} placeholder="İl" />
-          <input disabled className={inputCls} placeholder="Posta kodu" />
+          {['Adres satırı', 'İlçe', 'İl', 'Posta kodu'].map((p) => <input key={p} disabled className={inputCls} placeholder={p} />)}
         </div>
       );
-    case BT.SectionHeader:
-      return <div className="border-b border-slate-200 pb-1 text-lg font-bold text-slate-700">{block.content}</div>;
-    case BT.Paragraph:
-      return <p className="text-sm text-slate-500">{block.content}</p>;
     case BT.TableGrid:
       return <div className="rounded-xl border border-slate-200 p-3 text-sm text-slate-400">▦ Tablo ızgarası</div>;
     case BT.RichText:
@@ -173,7 +140,119 @@ function BlockPreview({ block }) {
 }
 
 /* ============================================================
- * Main builder
+ * Question card — all editing happens inline (Google Forms style)
+ * ============================================================ */
+function QuestionCard({ block, index, selected, onSelect, onPatch, onPatchSettings, onChangeType, onDuplicate, onRemove, onAddAfter, onMove, dragRef }) {
+  const s = block.settings || {};
+  const isLayout = LAYOUT_ONLY.has(block.type);
+
+  return (
+    <div
+      draggable
+      onDragStart={() => (dragRef.current = index)}
+      onDragOver={(e) => e.preventDefault()}
+      onDrop={() => onMove(index)}
+      onClick={() => onSelect(block.id)}
+      className={`group relative rounded-2xl border bg-white p-5 transition ${selected ? 'border-indigo-300 shadow-md ring-1 ring-indigo-100' : 'border-slate-200 hover:border-slate-300'}`}
+    >
+      {/* left accent when selected (Google Forms) */}
+      {selected && <span className="absolute inset-y-0 left-0 w-1 rounded-l-2xl bg-indigo-500" />}
+
+      {/* drag handle */}
+      <div className="absolute -top-2 left-1/2 -translate-x-1/2 cursor-grab text-slate-300 opacity-0 group-hover:opacity-100" title="Sürükle">⠿</div>
+
+      {/* header: question text + type */}
+      <div className="flex items-start gap-3">
+        {isLayout ? (
+          <input
+            value={block.content}
+            onClick={(e) => e.stopPropagation()}
+            onChange={(e) => onPatch(block.id, { content: e.target.value })}
+            placeholder={block.type === BT.SectionHeader ? 'Bölüm başlığı' : 'Açıklama metni'}
+            className={`flex-1 border-none bg-transparent p-0 focus:outline-none focus:ring-0 ${block.type === BT.SectionHeader ? 'text-xl font-bold text-slate-800' : 'text-sm text-slate-500'}`}
+          />
+        ) : (
+          <input
+            value={block.content}
+            onClick={(e) => e.stopPropagation()}
+            onChange={(e) => onPatch(block.id, { content: e.target.value })}
+            placeholder="Soru metni…"
+            className="flex-1 border-b border-transparent bg-transparent p-0 pb-1 text-base font-semibold text-slate-800 placeholder-slate-300 focus:border-indigo-300 focus:outline-none focus:ring-0"
+          />
+        )}
+        {selected && <TypeSelect value={block.type} onChange={(t) => onChangeType(block.id, t)} />}
+        {!selected && <span className="shrink-0 rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-slate-500">{LABELS[block.type]}</span>}
+      </div>
+
+      {/* options editor (selected, choice types) */}
+      {selected && HAS_OPTIONS.has(block.type) && (
+        <div className="mt-4 flex flex-col gap-2">
+          {(s.options || []).map((opt, i) => (
+            <div key={i} className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+              <span className="text-slate-300">{block.type === BT.MultiSelect ? '☐' : '○'}</span>
+              <input
+                className="flex-1 border-b border-slate-100 bg-transparent px-1 py-1 text-sm focus:border-indigo-300 focus:outline-none"
+                value={opt}
+                onChange={(e) => {
+                  const options = [...s.options];
+                  options[i] = e.target.value;
+                  onPatchSettings(block.id, { options });
+                }}
+              />
+              <button className="rounded p-1 text-slate-300 hover:text-red-500" onClick={() => onPatchSettings(block.id, { options: s.options.filter((_, k) => k !== i) })}>✕</button>
+            </div>
+          ))}
+          <button
+            className="self-start text-sm font-medium text-indigo-600 hover:text-indigo-700"
+            onClick={(e) => { e.stopPropagation(); onPatchSettings(block.id, { options: [...(s.options || []), `Seçenek ${(s.options || []).length + 1}`] }); }}
+          >+ Seçenek ekle</button>
+        </div>
+      )}
+
+      {/* preview for non-choice, non-layout */}
+      {!isLayout && !HAS_OPTIONS.has(block.type) && (
+        <div className="mt-4" onClick={(e) => e.stopPropagation()}><BlockPreview block={block} /></div>
+      )}
+
+      {/* inline properties (selected, answerable) */}
+      {selected && !isLayout && (
+        <div className="mt-4 grid grid-cols-1 gap-3 border-t border-slate-100 pt-4 sm:grid-cols-2" onClick={(e) => e.stopPropagation()}>
+          <div>
+            <label className="mb-1 block text-[11px] font-semibold uppercase text-slate-400">Placeholder</label>
+            <input className={inputCls} value={s.placeholder || ''} onChange={(e) => onPatchSettings(block.id, { placeholder: e.target.value })} />
+          </div>
+          <div>
+            <label className="mb-1 block text-[11px] font-semibold uppercase text-slate-400">Yardım Metni</label>
+            <input className={inputCls} value={s.helpText || ''} onChange={(e) => onPatchSettings(block.id, { helpText: e.target.value })} />
+          </div>
+          {(block.type === BT.Number || block.type === BT.Rating) && (
+            <>
+              <div><label className="mb-1 block text-[11px] font-semibold uppercase text-slate-400">Min</label><input type="number" className={inputCls} value={s.min ?? ''} onChange={(e) => onPatchSettings(block.id, { min: e.target.value === '' ? null : Number(e.target.value) })} /></div>
+              <div><label className="mb-1 block text-[11px] font-semibold uppercase text-slate-400">Max</label><input type="number" className={inputCls} value={s.max ?? ''} onChange={(e) => onPatchSettings(block.id, { max: e.target.value === '' ? null : Number(e.target.value) })} /></div>
+            </>
+          )}
+        </div>
+      )}
+
+      {/* action bar (selected) */}
+      {selected && (
+        <div className="mt-4 flex items-center justify-end gap-1 border-t border-slate-100 pt-3" onClick={(e) => e.stopPropagation()}>
+          <button onClick={() => onMove(index - 1, index)} className="rounded-lg p-2 text-slate-400 hover:bg-slate-100" title="Yukarı">▲</button>
+          <button onClick={() => onMove(index + 1, index)} className="rounded-lg p-2 text-slate-400 hover:bg-slate-100" title="Aşağı">▼</button>
+          <button onClick={() => onDuplicate(block.id)} className="rounded-lg p-2 text-slate-400 hover:bg-slate-100" title="Kopyala">⧉</button>
+          <button onClick={() => onRemove(block.id)} className="rounded-lg p-2 text-red-400 hover:bg-red-50" title="Sil">🗑</button>
+          <div className="mx-1 h-6 w-px bg-slate-200" />
+          {!isLayout && <Toggle label="Zorunlu" checked={!!s.required} onChange={(v) => onPatchSettings(block.id, { required: v })} />}
+          <div className="mx-1 h-6 w-px bg-slate-200" />
+          <button onClick={() => onAddAfter(block.id)} className="rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-indigo-700">+ Soru</button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ============================================================
+ * Main builder — single centered column
  * ============================================================ */
 function FormBuilder() {
   const initialId = useMemo(() => new URLSearchParams(window.location.search).get('id'), []);
@@ -188,7 +267,6 @@ function FormBuilder() {
   const [loading, setLoading] = useState(!!initialId);
   const dragIndex = useRef(null);
 
-  /* Load existing form for editing */
   useEffect(() => {
     if (!initialId) return;
     (async () => {
@@ -197,16 +275,9 @@ function FormBuilder() {
         setTitle(dto.title || '');
         setSlug(dto.slug || '');
         setDescription(dto.description || '');
-        setBlocks(
-          (dto.blocks || [])
-            .sort((a, b) => a.order - b.order)
-            .map((b) => ({
-              id: b.id || uid(),
-              type: b.type,
-              content: b.content,
-              settings: safeParse(b.settings),
-            })),
-        );
+        setBlocks((dto.blocks || []).slice().sort((a, b) => a.order - b.order).map((b) => ({
+          id: b.id || uid(), type: b.type, content: b.content, settings: safeParse(b.settings),
+        })));
       } catch (e) {
         notify('error', e?.message || 'Form yüklenemedi.');
       } finally {
@@ -215,70 +286,59 @@ function FormBuilder() {
     })();
   }, [initialId]);
 
-  const selected = blocks.find((b) => b.id === selectedId) || null;
-
-  const addBlock = (type) => {
+  const addBlock = (type = BT.ShortText) => {
     const b = defaultBlock(type);
     setBlocks((prev) => [...prev, b]);
     setSelectedId(b.id);
   };
-  const removeBlock = (id) =>
-    setBlocks((prev) => prev.filter((b) => b.id !== id));
-  const duplicateBlock = (id) =>
+  const addAfter = (id) => {
+    const b = defaultBlock(BT.ShortText);
     setBlocks((prev) => {
-      const i = prev.findIndex((b) => b.id === id);
-      if (i < 0) return prev;
-      const copy = { ...prev[i], id: uid(), settings: { ...prev[i].settings } };
+      const i = prev.findIndex((x) => x.id === id);
       const next = [...prev];
-      next.splice(i + 1, 0, copy);
+      next.splice(i + 1, 0, b);
       return next;
     });
-  const move = (i, dir) =>
-    setBlocks((prev) => {
-      const j = dir === 'up' ? i - 1 : i + 1;
-      if (j < 0 || j >= prev.length) return prev;
-      const next = [...prev];
-      [next[i], next[j]] = [next[j], next[i]];
-      return next;
-    });
-  const patch = (id, partial) =>
-    setBlocks((prev) => prev.map((b) => (b.id === id ? { ...b, ...partial } : b)));
-  const patchSettings = (id, partial) =>
-    setBlocks((prev) => prev.map((b) => (b.id === id ? { ...b, settings: { ...b.settings, ...partial } } : b)));
-
-  /* native drag & drop reorder */
-  const onDrop = (i) => {
-    const from = dragIndex.current;
-    dragIndex.current = null;
-    if (from == null || from === i) return;
-    setBlocks((prev) => {
-      const next = [...prev];
-      const [moved] = next.splice(from, 1);
-      next.splice(i, 0, moved);
-      return next;
-    });
+    setSelectedId(b.id);
   };
+  const removeBlock = (id) => setBlocks((prev) => prev.filter((b) => b.id !== id));
+  const duplicateBlock = (id) => setBlocks((prev) => {
+    const i = prev.findIndex((b) => b.id === id);
+    if (i < 0) return prev;
+    const copy = { ...prev[i], id: uid(), settings: { ...prev[i].settings } };
+    const next = [...prev];
+    next.splice(i + 1, 0, copy);
+    return next;
+  });
+  const patch = (id, partial) => setBlocks((prev) => prev.map((b) => (b.id === id ? { ...b, ...partial } : b)));
+  const patchSettings = (id, partial) => setBlocks((prev) => prev.map((b) => (b.id === id ? { ...b, settings: { ...b.settings, ...partial } } : b)));
+  const changeType = (id, newType) => setBlocks((prev) => prev.map((b) => {
+    if (b.id !== id) return b;
+    const settings = { ...b.settings };
+    if (HAS_OPTIONS.has(newType) && !settings.options) settings.options = ['Seçenek 1', 'Seçenek 2'];
+    return { ...b, type: newType, settings };
+  }));
+  // move element from `from` to `to` (drag) OR swap when called as (target, current)
+  const moveTo = (to, from) => setBlocks((prev) => {
+    const src = from == null ? dragIndex.current : from;
+    dragIndex.current = null;
+    if (src == null || to < 0 || to >= prev.length || src === to) return prev;
+    const next = [...prev];
+    const [m] = next.splice(src, 1);
+    next.splice(to, 0, m);
+    return next;
+  });
 
-  const buildPayloadBlocks = () =>
-    blocks.map((b, idx) => ({
-      type: b.type,
-      order: idx + 1,
-      content: b.content || LABELS[b.type] || 'Soru',
-      settings: JSON.stringify(b.settings || {}),
-    }));
+  const buildPayloadBlocks = () => blocks.map((b, idx) => ({
+    type: b.type, order: idx + 1, content: b.content || LABELS[b.type] || 'Soru', settings: JSON.stringify(b.settings || {}),
+  }));
 
   const save = async () => {
     if (!title.trim()) return notify('warn', 'Lütfen forma bir başlık verin.');
     setSaving(true);
     try {
       if (!formId) {
-        const dto = await api.post('/api/app/form', {
-          title: title.trim(),
-          description: description.trim() || null,
-          categoryId: null,
-          themeJson: null,
-          blocks: buildPayloadBlocks(),
-        });
+        const dto = await api.post('/api/app/form', { title: title.trim(), description: description.trim() || null, categoryId: null, themeJson: null, blocks: buildPayloadBlocks() });
         setFormId(dto.id);
         setSlug(dto.slug || '');
         const url = new URL(window.location.href);
@@ -286,13 +346,7 @@ function FormBuilder() {
         window.history.replaceState({}, '', url);
         notify('success', 'Form oluşturuldu.');
       } else {
-        await api.put(`/api/app/form/${formId}`, {
-          title: title.trim(),
-          description: description.trim() || null,
-          categoryId: null,
-          themeJson: null,
-          blocks: [],
-        });
+        await api.put(`/api/app/form/${formId}`, { title: title.trim(), description: description.trim() || null, categoryId: null, themeJson: null, blocks: [] });
         await api.put(`/api/app/form/${formId}/blocks`, { blocks: buildPayloadBlocks() });
         notify('success', 'Form kaydedildi.');
       }
@@ -303,201 +357,68 @@ function FormBuilder() {
     }
   };
 
-  if (loading) {
-    return <div className="flex h-[60vh] items-center justify-center text-slate-400">Form yükleniyor…</div>;
-  }
+  if (loading) return <div className="flex h-[60vh] items-center justify-center text-slate-400">Form yükleniyor…</div>;
 
   return (
-    <div className="flex h-[calc(100vh-120px)] min-h-[600px] overflow-hidden rounded-2xl border border-slate-200 bg-slate-50 text-slate-800">
-      {/* ---------- LEFT: palette ---------- */}
-      <aside className="w-64 shrink-0 overflow-y-auto border-r border-slate-200 bg-white p-4">
-        <h3 className="mb-3 text-xs font-bold uppercase tracking-widest text-indigo-500">Soru Bileşenleri</h3>
-        <div className="flex flex-col gap-4">
-          {PALETTE.map((g) => (
-            <div key={g.group}>
-              <p className="mb-1.5 text-[11px] font-semibold uppercase text-slate-400">{g.group}</p>
-              <div className="flex flex-col gap-1.5">
-                {g.items.map((it) => (
-                  <button
-                    key={it.type}
-                    onClick={() => addBlock(it.type)}
-                    className="flex items-center gap-2.5 rounded-xl border border-slate-100 bg-slate-50 px-3 py-2 text-left text-sm font-medium text-slate-700 transition hover:border-indigo-200 hover:bg-indigo-50"
-                  >
-                    <span>{it.icon}</span>
-                    {it.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
-      </aside>
-
-      {/* ---------- CENTER: canvas ---------- */}
-      <main className="flex-1 overflow-y-auto p-8">
-        <div className="mx-auto flex max-w-2xl items-center justify-between">
+    <div className="min-h-[calc(100vh-120px)] bg-slate-50 pb-24">
+      {/* top bar */}
+      <div className="sticky top-0 z-20 border-b border-slate-200 bg-white/90 backdrop-blur">
+        <div className="mx-auto flex max-w-2xl items-center justify-between px-4 py-3">
           <div className="flex items-center gap-3">
             <a href="/DynamicAssets" className="text-sm font-semibold text-slate-500 hover:text-slate-700">← Formlar</a>
             <span className="text-xs font-semibold text-slate-400">{blocks.length} alan</span>
           </div>
           <div className="flex items-center gap-2">
-            <button
-              onClick={save}
-              disabled={saving}
-              className="rounded-xl border border-slate-300 bg-white px-5 py-2.5 text-sm font-bold text-slate-700 shadow-sm transition hover:bg-slate-50 disabled:opacity-50"
-            >
+            <button onClick={save} disabled={saving} className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-bold text-slate-700 shadow-sm hover:bg-slate-50 disabled:opacity-50">
               {saving ? 'Kaydediliyor…' : (formId ? 'Kaydet' : 'Oluştur')}
             </button>
-            {formId && (
-              <a
-                href={`/DynamicAssets/Responses?formId=${formId}`}
-                className="rounded-xl border border-slate-300 bg-white px-5 py-2.5 text-sm font-bold text-slate-700 shadow-sm transition hover:bg-slate-50"
-              >
-                Yanıtlar
-              </a>
-            )}
-            {formId && (
-              <button
-                onClick={() => setShowPublish(true)}
-                className="rounded-xl bg-indigo-600 px-5 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-indigo-700"
-              >
-                Yayınla
-              </button>
-            )}
+            {formId && <a href={`/DynamicAssets/Responses?formId=${formId}`} className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-bold text-slate-700 shadow-sm hover:bg-slate-50">Yanıtlar</a>}
+            {formId && <button onClick={() => setShowPublish(true)} className="rounded-xl bg-indigo-600 px-4 py-2 text-sm font-bold text-white shadow-sm hover:bg-indigo-700">Yayınla</button>}
           </div>
         </div>
+      </div>
 
-        <div className="mx-auto mt-4 max-w-2xl rounded-2xl border border-slate-200 bg-white p-8">
-          <input
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            placeholder="Form başlığı…"
-            className="w-full border-none p-0 text-3xl font-bold text-slate-900 placeholder-slate-300 focus:outline-none focus:ring-0"
-          />
-          <input
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            placeholder="Form açıklaması (opsiyonel)…"
-            className="mt-2 w-full border-none p-0 text-sm text-slate-500 placeholder-slate-300 focus:outline-none focus:ring-0"
-          />
-
-          {blocks.length === 0 ? (
-            <div className="mt-8 rounded-2xl border-2 border-dashed border-slate-200 py-16 text-center text-slate-400">
-              Soldan bir bileşen ekleyin
-            </div>
-          ) : (
-            <div className="mt-6 flex flex-col gap-3">
-              {blocks.map((b, i) => {
-                const isSel = b.id === selectedId;
-                return (
-                  <div
-                    key={b.id}
-                    draggable
-                    onDragStart={() => (dragIndex.current = i)}
-                    onDragOver={(e) => e.preventDefault()}
-                    onDrop={() => onDrop(i)}
-                    onClick={() => setSelectedId(b.id)}
-                    className={`group relative cursor-pointer rounded-xl border p-4 transition ${isSel ? 'border-indigo-400 ring-2 ring-indigo-100' : 'border-slate-200 hover:border-slate-300'}`}
-                  >
-                    <div className="mb-2 flex items-center justify-between">
-                      <span className="rounded-full bg-indigo-50 px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wide text-indigo-600">
-                        {LABELS[b.type] || 'Alan'}
-                      </span>
-                      <div className="flex items-center gap-1 opacity-0 transition group-hover:opacity-100">
-                        <button onClick={(e) => { e.stopPropagation(); move(i, 'up'); }} className="rounded p-1 text-slate-400 hover:bg-slate-100" title="Yukarı">▲</button>
-                        <button onClick={(e) => { e.stopPropagation(); move(i, 'down'); }} className="rounded p-1 text-slate-400 hover:bg-slate-100" title="Aşağı">▼</button>
-                        <button onClick={(e) => { e.stopPropagation(); duplicateBlock(b.id); }} className="rounded p-1 text-slate-400 hover:bg-slate-100" title="Kopyala">⧉</button>
-                        <button onClick={(e) => { e.stopPropagation(); removeBlock(b.id); }} className="rounded p-1 text-red-400 hover:bg-red-50" title="Sil">🗑</button>
-                      </div>
-                    </div>
-                    {!LAYOUT_ONLY.has(b.type) && (
-                      <input
-                        value={b.content}
-                        onChange={(e) => patch(b.id, { content: e.target.value })}
-                        onClick={(e) => e.stopPropagation()}
-                        placeholder="Soru metni…"
-                        className="mb-3 w-full border-none p-0 text-base font-semibold text-slate-800 placeholder-slate-300 focus:outline-none focus:ring-0"
-                      />
-                    )}
-                    <BlockPreview block={b} />
-                    {b.settings?.required && <span className="mt-2 inline-block text-xs font-medium text-rose-500">* Zorunlu</span>}
-                  </div>
-                );
-              })}
-            </div>
-          )}
+      {/* center column */}
+      <div className="mx-auto max-w-2xl px-4 py-6">
+        {/* form header */}
+        <div className="relative mb-4 overflow-hidden rounded-2xl border border-slate-200 bg-white p-6">
+          <span className="absolute inset-x-0 top-0 h-1.5 bg-indigo-500" />
+          <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Form başlığı…" className="w-full border-none bg-transparent p-0 text-3xl font-bold text-slate-900 placeholder-slate-300 focus:outline-none focus:ring-0" />
+          <input value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Form açıklaması (opsiyonel)…" className="mt-2 w-full border-none bg-transparent p-0 text-sm text-slate-500 placeholder-slate-300 focus:outline-none focus:ring-0" />
         </div>
-      </main>
 
-      {/* ---------- RIGHT: properties ---------- */}
-      <aside className="w-72 shrink-0 overflow-y-auto border-l border-slate-200 bg-white p-4">
-        <h3 className="mb-3 text-xs font-bold uppercase tracking-widest text-indigo-500">Alan Özellikleri</h3>
-        {!selected ? (
-          <p className="text-sm text-slate-400">Düzenlemek için bir alan seçin.</p>
-        ) : (
-          <div className="flex flex-col gap-4">
-            <Field label={LAYOUT_ONLY.has(selected.type) ? 'İçerik' : 'Soru / Etiket'}>
-              <input className={inputCls} value={selected.content} onChange={(e) => patch(selected.id, { content: e.target.value })} />
-            </Field>
+        {/* questions */}
+        <div className="flex flex-col gap-3">
+          {blocks.map((b, i) => (
+            <QuestionCard
+              key={b.id}
+              block={b}
+              index={i}
+              selected={b.id === selectedId}
+              onSelect={setSelectedId}
+              onPatch={patch}
+              onPatchSettings={patchSettings}
+              onChangeType={changeType}
+              onDuplicate={duplicateBlock}
+              onRemove={removeBlock}
+              onAddAfter={addAfter}
+              onMove={moveTo}
+              dragRef={dragIndex}
+            />
+          ))}
+        </div>
 
-            {!LAYOUT_ONLY.has(selected.type) && (
-              <>
-                <Field label="Placeholder">
-                  <input className={inputCls} value={selected.settings.placeholder || ''} onChange={(e) => patchSettings(selected.id, { placeholder: e.target.value })} />
-                </Field>
-                <Field label="Yardım Metni">
-                  <input className={inputCls} value={selected.settings.helpText || ''} onChange={(e) => patchSettings(selected.id, { helpText: e.target.value })} />
-                </Field>
-                <Toggle label="Zorunlu alan" checked={!!selected.settings.required} onChange={(v) => patchSettings(selected.id, { required: v })} />
-              </>
-            )}
+        {/* add question */}
+        <button onClick={() => addBlock(BT.ShortText)} className="mt-4 flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-slate-300 py-4 text-sm font-bold text-slate-500 transition hover:border-indigo-300 hover:text-indigo-600">
+          + Soru Ekle
+        </button>
 
-            {HAS_OPTIONS.has(selected.type) && (
-              <Field label="Seçenekler">
-                <div className="flex flex-col gap-2">
-                  {(selected.settings.options || []).map((opt, i) => (
-                    <div key={i} className="flex items-center gap-1.5">
-                      <input
-                        className={inputCls}
-                        value={opt}
-                        onChange={(e) => {
-                          const options = [...selected.settings.options];
-                          options[i] = e.target.value;
-                          patchSettings(selected.id, { options });
-                        }}
-                      />
-                      <button
-                        className="rounded p-1.5 text-red-400 hover:bg-red-50"
-                        onClick={() => patchSettings(selected.id, { options: selected.settings.options.filter((_, k) => k !== i) })}
-                        title="Sil"
-                      >✕</button>
-                    </div>
-                  ))}
-                  <button
-                    className="rounded-xl border border-dashed border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-500 hover:border-indigo-300 hover:text-indigo-600"
-                    onClick={() => patchSettings(selected.id, { options: [...(selected.settings.options || []), `Seçenek ${(selected.settings.options || []).length + 1}`] })}
-                  >+ Seçenek ekle</button>
-                </div>
-              </Field>
-            )}
-
-            {(selected.type === BT.Number || selected.type === BT.Rating) && (
-              <div className="grid grid-cols-2 gap-2">
-                <Field label="Min"><input type="number" className={inputCls} value={selected.settings.min ?? ''} onChange={(e) => patchSettings(selected.id, { min: e.target.value === '' ? null : Number(e.target.value) })} /></Field>
-                <Field label="Max"><input type="number" className={inputCls} value={selected.settings.max ?? ''} onChange={(e) => patchSettings(selected.id, { max: e.target.value === '' ? null : Number(e.target.value) })} /></Field>
-              </div>
-            )}
-
-            <button onClick={() => removeBlock(selected.id)} className="mt-2 rounded-xl border border-red-200 px-3 py-2 text-sm font-medium text-red-500 hover:bg-red-50">
-              Alanı sil
-            </button>
-          </div>
+        {blocks.length === 0 && (
+          <p className="mt-3 text-center text-sm text-slate-400">Başlamak için bir soru ekleyin.</p>
         )}
-      </aside>
+      </div>
 
-      {showPublish && (
-        <PublishModal formId={formId} slug={slug} onClose={() => setShowPublish(false)} />
-      )}
+      {showPublish && <PublishModal formId={formId} slug={slug} onClose={() => setShowPublish(false)} />}
     </div>
   );
 }
@@ -519,12 +440,7 @@ function PublishModal({ formId, slug, onClose }) {
     try {
       const dto = await api.post(`/api/app/form/${formId}/publish`, {
         slug: slugVal?.trim() || null,
-        publishSettingsJson: JSON.stringify({
-          startDate: startDate || null,
-          endDate: endDate || null,
-          kvkk,
-          captcha,
-        }),
+        publishSettingsJson: JSON.stringify({ startDate: startDate || null, endDate: endDate || null, kvkk, captcha }),
       });
       setPublishedSlug(dto.slug || slugVal);
       notify('success', 'Form yayınlandı.');
@@ -545,15 +461,15 @@ function PublishModal({ formId, slug, onClose }) {
           <h2 className="text-lg font-bold text-slate-800">Formu Yayınla</h2>
           <button onClick={onClose} className="rounded p-1 text-slate-400 hover:bg-slate-100">✕</button>
         </div>
-
         {!publicUrl ? (
           <div className="flex flex-col gap-4">
-            <Field label="Bağlantı adresi (slug)">
+            <div>
+              <label className="mb-1 block text-[11px] font-semibold uppercase text-slate-400">Bağlantı adresi (slug)</label>
               <input className={inputCls} value={slugVal} onChange={(e) => setSlugVal(e.target.value)} placeholder="musteri-memnuniyet" />
-            </Field>
+            </div>
             <div className="grid grid-cols-2 gap-3">
-              <Field label="Başlangıç"><input type="date" className={inputCls} value={startDate} onChange={(e) => setStartDate(e.target.value)} /></Field>
-              <Field label="Bitiş"><input type="date" className={inputCls} value={endDate} onChange={(e) => setEndDate(e.target.value)} /></Field>
+              <div><label className="mb-1 block text-[11px] font-semibold uppercase text-slate-400">Başlangıç</label><input type="date" className={inputCls} value={startDate} onChange={(e) => setStartDate(e.target.value)} /></div>
+              <div><label className="mb-1 block text-[11px] font-semibold uppercase text-slate-400">Bitiş</label><input type="date" className={inputCls} value={endDate} onChange={(e) => setEndDate(e.target.value)} /></div>
             </div>
             <Toggle label="KVKK onayı iste" checked={kvkk} onChange={setKvkk} />
             <Toggle label="Captcha doğrulaması" checked={captcha} onChange={setCaptcha} />
@@ -564,15 +480,14 @@ function PublishModal({ formId, slug, onClose }) {
         ) : (
           <div className="flex flex-col gap-4">
             <div className="rounded-xl bg-emerald-50 p-3 text-sm text-emerald-700">✓ Form yayında! Aşağıdaki bağlantıyı paylaşabilirsiniz.</div>
-            <Field label="Yayın bağlantısı">
+            <div>
+              <label className="mb-1 block text-[11px] font-semibold uppercase text-slate-400">Yayın bağlantısı</label>
               <div className="flex items-center gap-2">
                 <input readOnly className={inputCls} value={publicUrl} onClick={(e) => e.target.select()} />
                 <button onClick={copyLink} className="shrink-0 rounded-xl border border-slate-200 px-3 py-2 text-sm font-medium hover:bg-slate-50">Kopyala</button>
               </div>
-            </Field>
-            <a href={publicUrl} target="_blank" rel="noreferrer" className="rounded-xl bg-indigo-600 px-5 py-2.5 text-center text-sm font-bold text-white hover:bg-indigo-700">
-              Formu yeni sekmede aç
-            </a>
+            </div>
+            <a href={publicUrl} target="_blank" rel="noreferrer" className="rounded-xl bg-indigo-600 px-5 py-2.5 text-center text-sm font-bold text-white hover:bg-indigo-700">Formu yeni sekmede aç</a>
           </div>
         )}
       </div>
@@ -580,7 +495,6 @@ function PublishModal({ formId, slug, onClose }) {
   );
 }
 
-/* ---------- helpers ---------- */
 function safeParse(json) {
   if (!json) return { required: false };
   try { return typeof json === 'string' ? JSON.parse(json) : json; } catch { return { required: false }; }
