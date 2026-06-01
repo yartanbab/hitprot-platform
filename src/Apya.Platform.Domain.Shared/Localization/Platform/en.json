@@ -30,6 +30,7 @@
     "Menu:AiCenter:Providers": "AI Providers",
     "Menu:AiCenter:Bindings": "Form Bindings",
     "Menu:AiCenter:Evaluations": "AI Evaluations",
+    "Menu:AiCenter:Workflows": "AI Workflows",
 
     "Permission:Ai": "AI",
     "Permission:Ai.Dashboard": "AI Dashboard",

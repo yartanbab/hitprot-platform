@@ -31,6 +31,7 @@
         "Menu:AiCenter:Providers": "AI Sağlayıcılar",
         "Menu:AiCenter:Bindings": "Form Bağlamaları",
         "Menu:AiCenter:Evaluations": "AI Değerlendirmeleri",
+        "Menu:AiCenter:Workflows": "AI İş Akışları",
 
         "Permission:Ai": "Yapay Zeka",
         "Permission:Ai.Dashboard": "AI Gösterge Paneli",
