@@ -7,5 +7,6 @@ public enum NotificationType
     TaskDueSoon         = 3,
     TaskStatusChanged   = 4,
     ProjectMemberAdded  = 5,
-    Mention             = 6
+    Mention             = 6,
+    AiWorkflowTriggered = 7
 }

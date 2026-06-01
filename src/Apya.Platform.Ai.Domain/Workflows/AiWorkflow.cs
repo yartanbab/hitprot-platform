@@ -67,4 +67,11 @@ public class AiWorkflow : FullAuditedAggregateRoot<Guid>, IMultiTenant
     }
 
     public void ClearRules() => _rules.Clear();
+
+    public void RemoveRule(Guid ruleId)
+    {
+        var rule = _rules.FirstOrDefault(r => r.Id == ruleId);
+        if (rule != null)
+            _rules.Remove(rule);
+    }
 }
