@@ -1,0 +1,29 @@
+@page
+@model Apya.Platform.Web.Pages.AiCenter.Providers.EditModalModel
+@using Volo.Abp.AspNetCore.Mvc.UI.Bootstrap.TagHelpers.Modal
+@{
+    Layout = null;
+}
+<abp-dynamic-form abp-model="Config" asp-page="/AiCenter/Providers/EditModal">
+    <abp-modal>
+        <abp-modal-header title="AI Sağlayıcı Düzenle"></abp-modal-header>
+        <abp-modal-body>
+            <abp-input asp-for="Id" />
+            <abp-select asp-for="Config.Provider" asp-items="Model.Providers" label="Sağlayıcı" />
+            <abp-input asp-for="Config.DisplayName" label="Görünen Ad" />
+            <abp-input asp-for="Config.Model" label="Model" />
+            <div class="mb-3">
+                <label class="form-label" for="Config_ApiKey">API Anahtarı</label>
+                <input type="password" name="Config.ApiKey" id="Config_ApiKey" class="form-control"
+                       autocomplete="new-password" placeholder="@(Model.HasApiKey ? "Değiştirmemek için boş bırakın" : "")" />
+                @if (Model.HasApiKey)
+                {
+                    <small class="text-muted">Kayıtlı bir anahtar mevcut; değiştirmek için yeni değer girin.</small>
+                }
+            </div>
+            <abp-input asp-for="Config.IsDefault" label="Varsayılan sağlayıcı yap" />
+            <abp-input asp-for="Config.IsEnabled" label="Aktif" />
+        </abp-modal-body>
+        <abp-modal-footer buttons="@(AbpModalButtons.Cancel | AbpModalButtons.Save)"></abp-modal-footer>
+    </abp-modal>
+</abp-dynamic-form>

@@ -27,6 +27,7 @@
     "Menu:AiCenter": "AI Evaluation Center",
     "Menu:AiCenter:Prompts": "Prompt Library",
     "Menu:AiCenter:PromptCategories": "Prompt Categories",
+    "Menu:AiCenter:Providers": "AI Providers",
 
     "Permission:Ai": "AI",
     "Permission:Ai.Dashboard": "AI Dashboard",

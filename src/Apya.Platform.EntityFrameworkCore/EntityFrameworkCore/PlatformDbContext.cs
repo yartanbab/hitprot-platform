@@ -144,6 +144,9 @@ namespace Apya.Platform.EntityFrameworkCore
         public DbSet<Apya.Platform.Ai.Prompts.Prompt> AiPrompts { get; set; }
         public DbSet<Apya.Platform.Ai.Prompts.PromptVersion> AiPromptVersions { get; set; }
 
+        /* --- AI DEĞERLENDİRME MERKEZİ — PROVIDER YAPILANDIRMASI (S2) --- */
+        public DbSet<Apya.Platform.Ai.Providers.AiProviderConfig> AiProviderConfigs { get; set; }
+
         /* --- DİNAMİK VARLIKLAR (DYNAMIC ASSETS) MODÜLÜ --- */
         public DbSet<AppDocument> AppDocuments { get; set; }
         public DbSet<AppBlock> AppBlocks { get; set; }

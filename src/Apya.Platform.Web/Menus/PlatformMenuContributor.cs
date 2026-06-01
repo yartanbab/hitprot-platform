@@ -98,6 +98,12 @@ if (await permission.IsGrantedAsync(PlatformPermissions.Reports.TrialBalance)
                     "Apya.AiCenter.PromptCategories", l["Menu:AiCenter:PromptCategories"],
                     icon: "fa fa-folder-tree", url: "/AiCenter/PromptCategories"));
             }
+            if (await permission.IsGrantedAsync(AiPermissions.Providers.Default))
+            {
+                aiCenter.AddItem(new ApplicationMenuItem(
+                    "Apya.AiCenter.Providers", l["Menu:AiCenter:Providers"],
+                    icon: "fa fa-plug", url: "/AiCenter/Providers"));
+            }
             if (aiCenter.Items.Count > 0) context.Menu.AddItem(aiCenter);
         }
 

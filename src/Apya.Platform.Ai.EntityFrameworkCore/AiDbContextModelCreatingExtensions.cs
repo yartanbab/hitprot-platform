@@ -4,6 +4,7 @@ using Volo.Abp;
 using Volo.Abp.EntityFrameworkCore.Modeling;
 using Apya.Platform.Ai.Drafts;
 using Apya.Platform.Ai.Prompts;
+using Apya.Platform.Ai.Providers;
 using Apya.Platform.Ai.Tenants;
 
 namespace Apya.Platform.Ai;
@@ -97,6 +98,17 @@ public static class AiDbContextModelCreatingExtensions
             b.Property(x => x.JsonSchema).HasColumnType("text");
             b.Property(x => x.ExpectedOutputSample).HasColumnType("text");
             b.HasIndex(x => new { x.PromptId, x.VersionNo }).IsUnique();
+        });
+
+        // --- AI Değerlendirme Merkezi: Provider yapılandırması (S2) ---
+        builder.Entity<AiProviderConfig>(b =>
+        {
+            b.ToTable(AiPlatformConsts.DbTablePrefix + "ProviderConfigs", AiPlatformConsts.DbSchema);
+            b.ConfigureByConvention();
+            b.Property(x => x.DisplayName).IsRequired().HasMaxLength(ProviderConsts.MaxDisplayNameLength);
+            b.Property(x => x.Model).IsRequired().HasMaxLength(ProviderConsts.MaxModelLength);
+            b.Property(x => x.ApiKey).HasColumnType("text");
+            b.HasIndex(x => new { x.TenantId, x.Provider });
         });
     }
 }
