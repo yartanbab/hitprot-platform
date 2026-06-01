@@ -139,6 +139,11 @@ namespace Apya.Platform.EntityFrameworkCore
         public DbSet<AiDecisionTrace> AiDecisionTraces { get; set; }
         public DbSet<Apya.Platform.Ai.Tenants.TenantAiSettings> TenantAiSettings { get; set; }
 
+        /* --- AI DEĞERLENDİRME MERKEZİ — PROMPT YÖNETİMİ (S1) --- */
+        public DbSet<Apya.Platform.Ai.Prompts.PromptCategory> AiPromptCategories { get; set; }
+        public DbSet<Apya.Platform.Ai.Prompts.Prompt> AiPrompts { get; set; }
+        public DbSet<Apya.Platform.Ai.Prompts.PromptVersion> AiPromptVersions { get; set; }
+
         /* --- DİNAMİK VARLIKLAR (DYNAMIC ASSETS) MODÜLÜ --- */
         public DbSet<AppDocument> AppDocuments { get; set; }
         public DbSet<AppBlock> AppBlocks { get; set; }

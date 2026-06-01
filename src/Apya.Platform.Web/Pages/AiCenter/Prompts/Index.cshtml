@@ -1,0 +1,47 @@
+@page
+@using Apya.Platform.Ai.Permissions
+@using Microsoft.AspNetCore.Authorization
+@inject IAuthorizationService AuthorizationService
+@model Apya.Platform.Web.Pages.AiCenter.Prompts.IndexModel
+@{
+    ViewBag.Title = "Prompt Kütüphanesi";
+}
+
+@section scripts {
+    <abp-script src="/Pages/AiCenter/Prompts/Index.js" />
+}
+
+<abp-card>
+    <abp-card-header>
+        <abp-row>
+            <abp-column size-md="_6">
+                <abp-card-title>
+                    <i class="fa fa-wand-magic-sparkles me-2"></i> Prompt Kütüphanesi
+                </abp-card-title>
+            </abp-column>
+            <abp-column size-md="_6" class="text-end">
+                @if (await AuthorizationService.IsGrantedAsync(AiPermissions.Prompts.Create))
+                {
+                    <abp-button id="NewPromptButton"
+                                text="Yeni Prompt"
+                                icon="plus"
+                                button-type="Primary" />
+                }
+            </abp-column>
+        </abp-row>
+    </abp-card-header>
+    <abp-card-body>
+        <abp-table striped-rows="true" id="PromptsTable">
+            <thead>
+                <tr>
+                    <th>İşlemler</th>
+                    <th>Kod</th>
+                    <th>Ad</th>
+                    <th>Durum</th>
+                    <th>Versiyon</th>
+                    <th>Yayınlı</th>
+                </tr>
+            </thead>
+        </abp-table>
+    </abp-card-body>
+</abp-card>

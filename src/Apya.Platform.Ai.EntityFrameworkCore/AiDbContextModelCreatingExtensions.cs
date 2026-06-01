@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Volo.Abp;
 using Volo.Abp.EntityFrameworkCore.Modeling;
 using Apya.Platform.Ai.Drafts;
+using Apya.Platform.Ai.Prompts;
 using Apya.Platform.Ai.Tenants;
 
 namespace Apya.Platform.Ai;
@@ -61,6 +62,41 @@ public static class AiDbContextModelCreatingExtensions
             b.Property(x => x.PreferredProvider).IsRequired().HasMaxLength(64);
             b.Property(x => x.PreferredModel).IsRequired().HasMaxLength(128);
             b.HasIndex(x => x.TenantId).IsUnique();
+        });
+
+        // --- AI Değerlendirme Merkezi: Prompt yönetimi (S1) ---
+        builder.Entity<PromptCategory>(b =>
+        {
+            b.ToTable(AiPlatformConsts.DbTablePrefix + "PromptCategories", AiPlatformConsts.DbSchema);
+            b.ConfigureByConvention();
+            b.Property(x => x.Name).IsRequired().HasMaxLength(PromptConsts.MaxCategoryNameLength);
+            b.Property(x => x.Code).IsRequired().HasMaxLength(PromptConsts.MaxCategoryCodeLength);
+            b.Property(x => x.Description).HasMaxLength(PromptConsts.MaxDescriptionLength);
+            b.HasIndex(x => new { x.TenantId, x.Code }).IsUnique();
+            b.HasIndex(x => x.ParentId);
+        });
+
+        builder.Entity<Prompt>(b =>
+        {
+            b.ToTable(AiPlatformConsts.DbTablePrefix + "Prompts", AiPlatformConsts.DbSchema);
+            b.ConfigureByConvention();
+            b.Property(x => x.Code).IsRequired().HasMaxLength(PromptConsts.MaxCodeLength);
+            b.Property(x => x.Name).IsRequired().HasMaxLength(PromptConsts.MaxNameLength);
+            b.Property(x => x.Description).HasMaxLength(PromptConsts.MaxDescriptionLength);
+            b.HasMany(x => x.Versions).WithOne().HasForeignKey(v => v.PromptId).IsRequired();
+            b.HasIndex(x => new { x.TenantId, x.Code }).IsUnique();
+            b.HasIndex(x => x.CategoryId);
+        });
+
+        builder.Entity<PromptVersion>(b =>
+        {
+            b.ToTable(AiPlatformConsts.DbTablePrefix + "PromptVersions", AiPlatformConsts.DbSchema);
+            b.ConfigureByConvention();
+            b.Property(x => x.SystemPrompt).HasColumnType("text");
+            b.Property(x => x.UserPromptTemplate).HasColumnType("text");
+            b.Property(x => x.JsonSchema).HasColumnType("text");
+            b.Property(x => x.ExpectedOutputSample).HasColumnType("text");
+            b.HasIndex(x => new { x.PromptId, x.VersionNo }).IsUnique();
         });
     }
 }

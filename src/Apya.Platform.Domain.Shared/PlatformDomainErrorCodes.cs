@@ -83,6 +83,14 @@ public static class PlatformDomainErrorCodes
     public const string AiResponseInvalid = "Platform:Ai:ResponseInvalid";
     public const string AiQuotaExceeded = "Platform:Ai:QuotaExceeded";
 
+    // --- AI Değerlendirme Merkezi (AI Evaluation Center) ---
+    public const string PromptCodeAlreadyExists = "Platform:Ai:PromptCodeAlreadyExists";
+    public const string PromptVersionNotFound = "Platform:Ai:PromptVersionNotFound";
+    public const string PromptNoPublishedVersion = "Platform:Ai:PromptNoPublishedVersion";
+    public const string PromptCategorySelfReference = "Platform:Ai:PromptCategorySelfReference";
+    public const string AiEvaluationResultInvalidSchema = "Platform:Ai:EvaluationResultInvalidSchema";
+    public const string AiProviderNotConfigured = "Platform:Ai:ProviderNotConfigured";
+
     // --- Muhasebe (Accounting) — Hesap (Account) ---
     public const string AccountCodeRequired = "Platform:Accounting:Account:CodeRequired";
     public const string AccountNameRequired = "Platform:Accounting:Account:NameRequired";
