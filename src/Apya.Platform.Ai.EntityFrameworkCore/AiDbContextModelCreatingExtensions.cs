@@ -2,7 +2,9 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Volo.Abp;
 using Volo.Abp.EntityFrameworkCore.Modeling;
+using Apya.Platform.Ai.Bindings;
 using Apya.Platform.Ai.Drafts;
+using Apya.Platform.Ai.Evaluations;
 using Apya.Platform.Ai.Prompts;
 using Apya.Platform.Ai.Providers;
 using Apya.Platform.Ai.Tenants;
@@ -109,6 +111,41 @@ public static class AiDbContextModelCreatingExtensions
             b.Property(x => x.Model).IsRequired().HasMaxLength(ProviderConsts.MaxModelLength);
             b.Property(x => x.ApiKey).HasColumnType("text");
             b.HasIndex(x => new { x.TenantId, x.Provider });
+        });
+
+        // --- AI Değerlendirme Merkezi: Form binding + Değerlendirme pipeline (S3) ---
+        builder.Entity<AiFormBinding>(b =>
+        {
+            b.ToTable(AiPlatformConsts.DbTablePrefix + "FormBindings", AiPlatformConsts.DbSchema);
+            b.ConfigureByConvention();
+            b.HasIndex(x => new { x.DocumentId, x.IsActive });
+            b.HasIndex(x => x.PromptId);
+        });
+
+        builder.Entity<AiEvaluation>(b =>
+        {
+            b.ToTable(AiPlatformConsts.DbTablePrefix + "Evaluations", AiPlatformConsts.DbSchema);
+            b.ConfigureByConvention();
+            b.Property(x => x.ErrorMessage).HasMaxLength(EvaluationConsts.MaxErrorMessageLength);
+            // 1:1 result (optional until the evaluation completes); the FK gets a unique index.
+            b.HasOne(x => x.Result)
+                .WithOne()
+                .HasForeignKey<AiEvaluationResult>(r => r.EvaluationId)
+                .IsRequired(false)
+                .OnDelete(DeleteBehavior.Cascade);
+            b.HasIndex(x => new { x.ResponseId, x.PromptId });
+            b.HasIndex(x => new { x.Status, x.CreationTime });
+            b.HasIndex(x => x.DocumentId);
+        });
+
+        builder.Entity<AiEvaluationResult>(b =>
+        {
+            b.ToTable(AiPlatformConsts.DbTablePrefix + "EvaluationResults", AiPlatformConsts.DbSchema);
+            b.ConfigureByConvention();
+            b.Property(x => x.RawJson).HasColumnType("text");
+            b.Property(x => x.RiskLevel).HasMaxLength(EvaluationConsts.MaxRiskLevelLength);
+            b.Property(x => x.Decision).HasMaxLength(EvaluationConsts.MaxDecisionLength);
+            b.Property(x => x.Summary).HasColumnType("text");
         });
     }
 }

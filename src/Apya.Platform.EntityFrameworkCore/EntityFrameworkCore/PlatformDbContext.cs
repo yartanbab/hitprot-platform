@@ -147,6 +147,11 @@ namespace Apya.Platform.EntityFrameworkCore
         /* --- AI DEĞERLENDİRME MERKEZİ — PROVIDER YAPILANDIRMASI (S2) --- */
         public DbSet<Apya.Platform.Ai.Providers.AiProviderConfig> AiProviderConfigs { get; set; }
 
+        /* --- AI DEĞERLENDİRME MERKEZİ — DEĞERLENDİRME PIPELINE (S3) --- */
+        public DbSet<Apya.Platform.Ai.Bindings.AiFormBinding> AiFormBindings { get; set; }
+        public DbSet<Apya.Platform.Ai.Evaluations.AiEvaluation> AiEvaluations { get; set; }
+        public DbSet<Apya.Platform.Ai.Evaluations.AiEvaluationResult> AiEvaluationResults { get; set; }
+
         /* --- DİNAMİK VARLIKLAR (DYNAMIC ASSETS) MODÜLÜ --- */
         public DbSet<AppDocument> AppDocuments { get; set; }
         public DbSet<AppBlock> AppBlocks { get; set; }
