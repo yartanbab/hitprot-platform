@@ -97,6 +97,9 @@ if (await permission.IsGrantedAsync(PlatformPermissions.Reports.TrialBalance)
                 aiCenter.AddItem(new ApplicationMenuItem(
                     "Apya.AiCenter.PromptCategories", l["Menu:AiCenter:PromptCategories"],
                     icon: "fa fa-folder-tree", url: "/AiCenter/PromptCategories"));
+                aiCenter.AddItem(new ApplicationMenuItem(
+                    "Apya.AiCenter.Bindings", l["Menu:AiCenter:Bindings"],
+                    icon: "fa fa-link", url: "/AiCenter/Bindings"));
             }
             if (await permission.IsGrantedAsync(AiPermissions.Providers.Default))
             {

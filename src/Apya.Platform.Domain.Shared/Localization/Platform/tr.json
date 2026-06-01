@@ -29,6 +29,7 @@
         "Menu:AiCenter:Prompts": "Prompt Kütüphanesi",
         "Menu:AiCenter:PromptCategories": "Prompt Kategorileri",
         "Menu:AiCenter:Providers": "AI Sağlayıcılar",
+        "Menu:AiCenter:Bindings": "Form Bağlamaları",
 
         "Permission:Ai": "Yapay Zeka",
         "Permission:Ai.Dashboard": "AI Gösterge Paneli",
