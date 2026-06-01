@@ -26,6 +26,7 @@
         "Menu:Reports": "Raporlar & Analiz",
         "Menu:AiSettings": "AI Ayarları",
         "Menu:AiCenter": "AI Değerlendirme Merkezi",
+        "Menu:AiCenter:Dashboard": "AI Gösterge Paneli",
         "Menu:AiCenter:Prompts": "Prompt Kütüphanesi",
         "Menu:AiCenter:PromptCategories": "Prompt Kategorileri",
         "Menu:AiCenter:Providers": "AI Sağlayıcılar",

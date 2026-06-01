@@ -89,6 +89,12 @@ if (await permission.IsGrantedAsync(PlatformPermissions.Reports.TrialBalance)
         {
             var aiCenter = new ApplicationMenuItem(
                 "Apya.AiCenter", l["Menu:AiCenter"], icon: "fa fa-robot", order: 6);
+            if (await permission.IsGrantedAsync(AiPermissions.Dashboard.View))
+            {
+                aiCenter.AddItem(new ApplicationMenuItem(
+                    "Apya.AiCenter.Dashboard", l["Menu:AiCenter:Dashboard"],
+                    icon: "fa fa-gauge-high", url: "/AiCenter/Dashboard"));
+            }
             if (await permission.IsGrantedAsync(AiPermissions.Prompts.Default))
             {
                 aiCenter.AddItem(new ApplicationMenuItem(

@@ -22,4 +22,11 @@ public interface IAiEvaluationRepository : IRepository<AiEvaluation, Guid>
         Guid? documentId,
         AiEvaluationStatus? status,
         CancellationToken cancellationToken = default);
+
+    // --- Dashboard aggregates ---
+    Task<Dictionary<AiEvaluationStatus, int>> GetStatusCountsAsync(CancellationToken cancellationToken = default);
+
+    Task<(int Count, double? Average)> GetScoreStatsAsync(CancellationToken cancellationToken = default);
+
+    Task<Dictionary<string, int>> GetRiskDistributionAsync(CancellationToken cancellationToken = default);
 }

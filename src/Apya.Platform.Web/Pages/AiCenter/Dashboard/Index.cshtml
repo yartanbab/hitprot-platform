@@ -1,0 +1,88 @@
+@page
+@using System.Linq
+@model Apya.Platform.Web.Pages.AiCenter.Dashboard.IndexModel
+@{
+    ViewBag.Title = "AI Gösterge Paneli";
+    var d = Model.Data;
+    var total = d.TotalEvaluations == 0 ? 1 : d.TotalEvaluations;
+    var riskMax = d.RiskDistribution.Count == 0 ? 1 : d.RiskDistribution.Max(x => x.Count);
+}
+
+<div class="row g-3 mb-3">
+    <div class="col-md-3">
+        <abp-card><abp-card-body>
+            <div class="text-muted small">Toplam Değerlendirme</div>
+            <div class="fs-2 fw-bold">@d.TotalEvaluations</div>
+        </abp-card-body></abp-card>
+    </div>
+    <div class="col-md-3">
+        <abp-card><abp-card-body>
+            <div class="text-muted small">Ortalama Skor</div>
+            <div class="fs-2 fw-bold">@(d.AverageScore.HasValue ? d.AverageScore.Value.ToString("0.0") : "—")</div>
+            <div class="text-muted small">@d.ScoredCount skorlu sonuç</div>
+        </abp-card-body></abp-card>
+    </div>
+    <div class="col-md-3">
+        <abp-card><abp-card-body>
+            <div class="text-muted small">Tamamlanan / Başarısız</div>
+            <div class="fs-2 fw-bold"><span class="text-success">@d.Completed</span> / <span class="text-danger">@d.Failed</span></div>
+        </abp-card-body></abp-card>
+    </div>
+    <div class="col-md-3">
+        <abp-card><abp-card-body>
+            <div class="text-muted small">Prompt / Sağlayıcı / Aktif İş Akışı</div>
+            <div class="fs-4 fw-bold">@d.PromptCount / @d.ProviderCount / @d.ActiveWorkflowCount</div>
+        </abp-card-body></abp-card>
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-md-6">
+        <abp-card>
+            <abp-card-header><abp-card-title><i class="fa fa-list-check me-2"></i> Durum Dağılımı</abp-card-title></abp-card-header>
+            <abp-card-body>
+                @{
+                    var statuses = new[]
+                    {
+                        ("Tamamlandı", d.Completed, "bg-success"),
+                        ("İşleniyor", d.Processing, "bg-info"),
+                        ("Bekliyor", d.Pending, "bg-warning"),
+                        ("Başarısız", d.Failed, "bg-danger")
+                    };
+                }
+                @foreach (var (label, count, css) in statuses)
+                {
+                    <div class="mb-2">
+                        <div class="d-flex justify-content-between small"><span>@label</span><span>@count</span></div>
+                        <div class="progress" style="height:8px;">
+                            <div class="progress-bar @css" role="progressbar" style="width:@(count * 100 / total)%"></div>
+                        </div>
+                    </div>
+                }
+            </abp-card-body>
+        </abp-card>
+    </div>
+    <div class="col-md-6">
+        <abp-card>
+            <abp-card-header><abp-card-title><i class="fa fa-triangle-exclamation me-2"></i> Risk Dağılımı</abp-card-title></abp-card-header>
+            <abp-card-body>
+                @if (d.RiskDistribution.Count == 0)
+                {
+                    <p class="text-muted">Henüz risk verisi yok.</p>
+                }
+                else
+                {
+                    @foreach (var bucket in d.RiskDistribution)
+                    {
+                        <div class="mb-2">
+                            <div class="d-flex justify-content-between small"><span>@bucket.Label</span><span>@bucket.Count</span></div>
+                            <div class="progress" style="height:8px;">
+                                <div class="progress-bar bg-primary" role="progressbar" style="width:@(bucket.Count * 100 / riskMax)%"></div>
+                            </div>
+                        </div>
+                    }
+                }
+            </abp-card-body>
+        </abp-card>
+    </div>
+</div>

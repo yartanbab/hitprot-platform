@@ -57,4 +57,40 @@ public class EfCoreAiEvaluationRepository
         if (status.HasValue) query = query.Where(e => e.Status == status.Value);
         return query;
     }
+
+    public async Task<Dictionary<AiEvaluationStatus, int>> GetStatusCountsAsync(CancellationToken cancellationToken = default)
+    {
+        var dbContext = await GetDbContextAsync();
+        var grouped = await dbContext.AiEvaluations
+            .GroupBy(e => e.Status)
+            .Select(g => new { Status = g.Key, Count = g.Count() })
+            .ToListAsync(cancellationToken);
+        return grouped.ToDictionary(x => x.Status, x => x.Count);
+    }
+
+    public async Task<(int Count, double? Average)> GetScoreStatsAsync(CancellationToken cancellationToken = default)
+    {
+        var dbContext = await GetDbContextAsync();
+        var scores = dbContext.AiEvaluations
+            .Where(e => e.Result != null && e.Result.Score != null)
+            .Select(e => e.Result!.Score!.Value);
+
+        var count = await scores.CountAsync(cancellationToken);
+        if (count == 0)
+            return (0, null);
+
+        var average = await scores.AverageAsync(cancellationToken);
+        return (count, average);
+    }
+
+    public async Task<Dictionary<string, int>> GetRiskDistributionAsync(CancellationToken cancellationToken = default)
+    {
+        var dbContext = await GetDbContextAsync();
+        var grouped = await dbContext.AiEvaluations
+            .Where(e => e.Result != null && e.Result.RiskLevel != null)
+            .GroupBy(e => e.Result!.RiskLevel!)
+            .Select(g => new { Risk = g.Key, Count = g.Count() })
+            .ToListAsync(cancellationToken);
+        return grouped.ToDictionary(x => x.Risk, x => x.Count);
+    }
 }

@@ -25,6 +25,7 @@
     "Menu:Reports": "Reports & Analytics",
     "Menu:AiSettings": "AI Settings",
     "Menu:AiCenter": "AI Evaluation Center",
+    "Menu:AiCenter:Dashboard": "AI Dashboard",
     "Menu:AiCenter:Prompts": "Prompt Library",
     "Menu:AiCenter:PromptCategories": "Prompt Categories",
     "Menu:AiCenter:Providers": "AI Providers",
