@@ -8,6 +8,7 @@ using Apya.Platform.Ai.Evaluations;
 using Apya.Platform.Ai.Prompts;
 using Apya.Platform.Ai.Providers;
 using Apya.Platform.Ai.Tenants;
+using Apya.Platform.Ai.Workflows;
 
 namespace Apya.Platform.Ai;
 
@@ -146,6 +147,25 @@ public static class AiDbContextModelCreatingExtensions
             b.Property(x => x.RiskLevel).HasMaxLength(EvaluationConsts.MaxRiskLevelLength);
             b.Property(x => x.Decision).HasMaxLength(EvaluationConsts.MaxDecisionLength);
             b.Property(x => x.Summary).HasColumnType("text");
+        });
+
+        // --- AI Değerlendirme Merkezi: Workflow (S4) ---
+        builder.Entity<AiWorkflow>(b =>
+        {
+            b.ToTable(AiPlatformConsts.DbTablePrefix + "Workflows", AiPlatformConsts.DbSchema);
+            b.ConfigureByConvention();
+            b.Property(x => x.Name).IsRequired().HasMaxLength(WorkflowConsts.MaxNameLength);
+            b.HasMany(x => x.Rules).WithOne().HasForeignKey(r => r.WorkflowId).IsRequired();
+            b.HasIndex(x => new { x.IsActive, x.DocumentId, x.PromptId });
+        });
+
+        builder.Entity<AiWorkflowRule>(b =>
+        {
+            b.ToTable(AiPlatformConsts.DbTablePrefix + "WorkflowRules", AiPlatformConsts.DbSchema);
+            b.ConfigureByConvention();
+            b.Property(x => x.JsonPath).IsRequired().HasMaxLength(WorkflowConsts.MaxJsonPathLength);
+            b.Property(x => x.CompareValue).IsRequired().HasMaxLength(WorkflowConsts.MaxCompareValueLength);
+            b.Property(x => x.ActionPayload).HasColumnType("text");
         });
     }
 }

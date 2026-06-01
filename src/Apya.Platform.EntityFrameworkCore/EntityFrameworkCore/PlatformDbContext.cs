@@ -152,6 +152,10 @@ namespace Apya.Platform.EntityFrameworkCore
         public DbSet<Apya.Platform.Ai.Evaluations.AiEvaluation> AiEvaluations { get; set; }
         public DbSet<Apya.Platform.Ai.Evaluations.AiEvaluationResult> AiEvaluationResults { get; set; }
 
+        /* --- AI DEĞERLENDİRME MERKEZİ — WORKFLOW (S4) --- */
+        public DbSet<Apya.Platform.Ai.Workflows.AiWorkflow> AiWorkflows { get; set; }
+        public DbSet<Apya.Platform.Ai.Workflows.AiWorkflowRule> AiWorkflowRules { get; set; }
+
         /* --- DİNAMİK VARLIKLAR (DYNAMIC ASSETS) MODÜLÜ --- */
         public DbSet<AppDocument> AppDocuments { get; set; }
         public DbSet<AppBlock> AppBlocks { get; set; }
