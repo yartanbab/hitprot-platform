@@ -16,6 +16,7 @@ using Apya.Platform.Ai.Context;
 using Apya.Platform.Ai.Cost;
 using Apya.Platform.Ai.Evaluations;
 using Apya.Platform.Ai.Prompts;
+using Apya.Platform.Ai.Security;
 using Apya.Platform.DynamicAssets;
 
 namespace Apya.Platform.Tests.Application.Ai;
@@ -49,7 +50,8 @@ public class AiEvaluationManager_Tests
 
         _sut = new AiEvaluationManager(
             _aiProvider, _aiRequestRepo, _costPolicy,
-            new DeterministicAiContextBuilder(), _promptRepo, _evaluationRepo, _responseRepo);
+            new DeterministicAiContextBuilder(), _promptRepo, _evaluationRepo, _responseRepo,
+            new PromptInjectionSanitizer());
 
         var services = new ServiceCollection();
         services.AddSingleton<IGuidGenerator>(SimpleGuidGenerator.Instance);

@@ -11,6 +11,7 @@ using Volo.Abp.Domain.Services;
 using Apya.Platform.Ai.Context;
 using Apya.Platform.Ai.Cost;
 using Apya.Platform.Ai.Prompts;
+using Apya.Platform.Ai.Security;
 using Apya.Platform.DynamicAssets;
 
 namespace Apya.Platform.Ai.Evaluations;
@@ -36,6 +37,7 @@ public class AiEvaluationManager : DomainService
     private readonly IPromptRepository _promptRepository;
     private readonly IRepository<AiEvaluation, Guid> _evaluationRepository;
     private readonly IRepository<AppResponse, Guid> _responseRepository;
+    private readonly IPromptInjectionSanitizer _promptInjectionSanitizer;
 
     public AiEvaluationManager(
         IAiProvider aiProvider,
@@ -44,7 +46,8 @@ public class AiEvaluationManager : DomainService
         IAiContextBuilder contextBuilder,
         IPromptRepository promptRepository,
         IRepository<AiEvaluation, Guid> evaluationRepository,
-        IRepository<AppResponse, Guid> responseRepository)
+        IRepository<AppResponse, Guid> responseRepository,
+        IPromptInjectionSanitizer promptInjectionSanitizer)
     {
         _aiProvider = aiProvider;
         _aiRequestRepository = aiRequestRepository;
@@ -53,6 +56,7 @@ public class AiEvaluationManager : DomainService
         _promptRepository = promptRepository;
         _evaluationRepository = evaluationRepository;
         _responseRepository = responseRepository;
+        _promptInjectionSanitizer = promptInjectionSanitizer;
     }
 
     /// <summary>Processes a pre-created (Pending) evaluation and returns it with its result populated.</summary>
@@ -69,8 +73,11 @@ public class AiEvaluationManager : DomainService
 
         var response = await _responseRepository.GetAsync(evaluation.ResponseId, cancellationToken: cancellationToken);
 
+        // ROADMAP B-03: untrusted form answers are sanitized before being embedded in the prompt.
+        var sanitizedAnswers = _promptInjectionSanitizer.Sanitize(response.Answers ?? string.Empty);
+
         var context = await _contextBuilder.BuildAsync(
-            new AiContextRequest { PrimaryText = response.Answers ?? string.Empty, TokenBudget = InputContextTokenBudget },
+            new AiContextRequest { PrimaryText = sanitizedAnswers, TokenBudget = InputContextTokenBudget },
             cancellationToken);
 
         var template = version.ToTemplate(prompt.Code);
