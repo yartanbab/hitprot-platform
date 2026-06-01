@@ -101,6 +101,12 @@ if (await permission.IsGrantedAsync(PlatformPermissions.Reports.TrialBalance)
                     "Apya.AiCenter.Bindings", l["Menu:AiCenter:Bindings"],
                     icon: "fa fa-link", url: "/AiCenter/Bindings"));
             }
+            if (await permission.IsGrantedAsync(AiPermissions.Evaluations.Default))
+            {
+                aiCenter.AddItem(new ApplicationMenuItem(
+                    "Apya.AiCenter.Evaluations", l["Menu:AiCenter:Evaluations"],
+                    icon: "fa fa-clipboard-check", url: "/AiCenter/Evaluations"));
+            }
             if (await permission.IsGrantedAsync(AiPermissions.Providers.Default))
             {
                 aiCenter.AddItem(new ApplicationMenuItem(

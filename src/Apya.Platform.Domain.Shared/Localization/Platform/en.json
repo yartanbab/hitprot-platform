@@ -29,6 +29,7 @@
     "Menu:AiCenter:PromptCategories": "Prompt Categories",
     "Menu:AiCenter:Providers": "AI Providers",
     "Menu:AiCenter:Bindings": "Form Bindings",
+    "Menu:AiCenter:Evaluations": "AI Evaluations",
 
     "Permission:Ai": "AI",
     "Permission:Ai.Dashboard": "AI Dashboard",

@@ -19,4 +19,14 @@ public class AiHub : AbpHub
     {
         await Groups.RemoveFromGroupAsync(Context.ConnectionId, $"DraftBatch_{batchId}");
     }
+
+    /// <summary>
+    /// Client joins its tenant's evaluations group to receive live status updates.
+    /// Tenant-scoped so evaluation data is never broadcast across tenants.
+    /// </summary>
+    public Task SubscribeToEvaluationsAsync()
+        => Groups.AddToGroupAsync(Context.ConnectionId, EvaluationsGroup(CurrentTenant.Id));
+
+    public static string EvaluationsGroup(System.Guid? tenantId)
+        => $"AiEvaluations_{(tenantId?.ToString() ?? "host")}";
 }
