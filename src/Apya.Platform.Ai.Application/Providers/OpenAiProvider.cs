@@ -14,9 +14,10 @@ using Volo.Abp.MultiTenancy;
 
 namespace Apya.Platform.Ai.Providers;
 
-// IScopedDependency: one instance per request so ICurrentTenant and IRepository (scoped) can be injected.
-// OpenAIClient (singleton) owns the HTTP connection pool; GetChatClient() creates a lightweight wrapper.
-public class OpenAiProvider : IAiProvider, IScopedDependency
+// INamedAiProvider strategy (Name="openai"); registered explicitly in PlatformAiApplicationModule so
+// AiProviderResolver enumerates it. OpenAIClient (singleton) owns the HTTP connection pool;
+// GetChatClient() creates a lightweight per-call wrapper to pick the tenant's preferred model.
+public class OpenAiProvider : INamedAiProvider
 {
     public string Name => "openai";
 

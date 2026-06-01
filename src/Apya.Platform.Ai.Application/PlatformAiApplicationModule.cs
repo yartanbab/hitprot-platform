@@ -63,5 +63,14 @@ public class PlatformAiApplicationModule : AbpModule
                     BreakDuration = TimeSpan.FromSeconds(60)
                 })
                 .Build());
+
+        // Provider strategy (OCP): each concrete provider is registered as INamedAiProvider so
+        // AiProviderResolver can enumerate them and pick by the tenant's preferred provider name.
+        // AiGateway stays the sole IAiProvider facade (consumed by domain services).
+        context.Services.AddHttpClient();
+        context.Services.AddTransient<INamedAiProvider, OpenAiProvider>();
+        context.Services.AddTransient<INamedAiProvider, ClaudeProvider>();
+        context.Services.AddTransient<INamedAiProvider, GeminiProvider>();
+        context.Services.AddTransient<INamedAiProvider, DeepSeekProvider>();
     }
 }
