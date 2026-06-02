@@ -31,6 +31,27 @@
         </abp-row>
     </abp-card-header>
     <abp-card-body>
+        <abp-row class="mb-3 g-2">
+            <abp-column size-md="_4">
+                <input type="text" id="PromptFilter" class="form-control form-control-sm"
+                       placeholder="Kod veya ada göre ara..." />
+            </abp-column>
+            <abp-column size-md="_4">
+                <select id="CategoryFilter" class="form-select form-select-sm">
+                    @foreach (var c in Model.Categories)
+                    {
+                        <option value="@c.Value">@c.Text</option>
+                    }
+                </select>
+            </abp-column>
+            <abp-column size-md="_4">
+                <select id="StatusFilter" class="form-select form-select-sm">
+                    <option value="">Tüm durumlar</option>
+                    <option value="true">Aktif</option>
+                    <option value="false">Pasif</option>
+                </select>
+            </abp-column>
+        </abp-row>
         <abp-table striped-rows="true" id="PromptsTable">
             <thead>
                 <tr>
