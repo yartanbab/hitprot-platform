@@ -156,6 +156,20 @@ public class PlatformWebModule : AbpModule
                             typeof(Apya.Platform.Incomes.IncomeEntry).IsAssignableFrom(type)
                 )
             );
+
+            // S5b: AI governance — prompt/workflow/provider/binding değişiklikleri "kim, ne zaman,
+            // ne değiştirdi" audit'i (yönetişim). ApiKey şifreli saklandığı için ciphertext audit'lenir.
+            options.EntityHistorySelectors.Add(
+                new Volo.Abp.NamedTypeSelector(
+                    "AiGovernanceEntities",
+                    type => typeof(Apya.Platform.Ai.Prompts.Prompt).IsAssignableFrom(type) ||
+                            typeof(Apya.Platform.Ai.Prompts.PromptVersion).IsAssignableFrom(type) ||
+                            typeof(Apya.Platform.Ai.Workflows.AiWorkflow).IsAssignableFrom(type) ||
+                            typeof(Apya.Platform.Ai.Workflows.AiWorkflowRule).IsAssignableFrom(type) ||
+                            typeof(Apya.Platform.Ai.Providers.AiProviderConfig).IsAssignableFrom(type) ||
+                            typeof(Apya.Platform.Ai.Bindings.AiFormBinding).IsAssignableFrom(type)
+                )
+            );
         });
 
         ConfigureAuthentication(context);

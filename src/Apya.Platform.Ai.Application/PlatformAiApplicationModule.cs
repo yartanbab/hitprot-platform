@@ -28,17 +28,18 @@ public class PlatformAiApplicationModule : AbpModule
             options.AddMaps<PlatformAiApplicationModule>();
         });
 
-        // OpenAIClient singleton owns the HTTP connection pool; OpenAiProvider (scoped) calls
-        // GetChatClient(model) per request to pick the tenant's preferred model at runtime.
-        context.Services.AddSingleton(sp =>
+        // S5b: OpenAIClient owns the HTTP connection pool, wrapped in Lazy so a missing OpenAI:ApiKey
+        // no longer blocks startup (a Claude/Gemini/DeepSeek-only tenant can boot). The key is required
+        // only when OpenAI is actually invoked (OpenAiProvider resolves _lazyClient.Value at call time).
+        context.Services.AddSingleton(sp => new Lazy<OpenAIClient>(() =>
         {
-            var config = sp.GetRequiredService<IConfiguration>();
-            var apiKey = config["OpenAI:ApiKey"];
+            var apiKey = sp.GetRequiredService<IConfiguration>()["OpenAI:ApiKey"];
             if (string.IsNullOrWhiteSpace(apiKey))
-                throw new InvalidOperationException(
-                    "OpenAI:ApiKey yapılandırmada eksik. Uygulama başlatılamaz.");
+                throw new AiProviderException(
+                    PlatformDomainErrorCodes.AiProviderNotConfigured,
+                    "OpenAI API anahtarı yapılandırılmamış. OpenAI sağlayıcısı kullanılamaz.");
             return new OpenAIClient(apiKey);
-        });
+        }));
 
         // ResiliencePipeline registered as singleton so the circuit breaker holds
         // app-wide state. AiGateway (transient) receives it via constructor injection,

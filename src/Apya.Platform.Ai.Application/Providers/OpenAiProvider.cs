@@ -21,20 +21,20 @@ public class OpenAiProvider : INamedAiProvider
 {
     public string Name => "openai";
 
-    private readonly OpenAIClient _openAIClient;
+    private readonly Lazy<OpenAIClient> _lazyClient;
     private readonly IRepository<TenantAiSettings, Guid> _settingsRepository;
     private readonly ICurrentTenant _currentTenant;
     private readonly string _defaultModel;
     private readonly ILogger<OpenAiProvider> _logger;
 
     public OpenAiProvider(
-        OpenAIClient openAIClient,
+        Lazy<OpenAIClient> openAIClient,
         IRepository<TenantAiSettings, Guid> settingsRepository,
         ICurrentTenant currentTenant,
         IConfiguration configuration,
         ILogger<OpenAiProvider> logger)
     {
-        _openAIClient = openAIClient;
+        _lazyClient = openAIClient;
         _settingsRepository = settingsRepository;
         _currentTenant = currentTenant;
         _defaultModel = configuration["OpenAI:Model"] ?? "gpt-4o-mini";
@@ -47,7 +47,7 @@ public class OpenAiProvider : INamedAiProvider
         CancellationToken cancellationToken = default)
     {
         var model = await ResolveModelAsync();
-        var chatClient = _openAIClient.GetChatClient(model);
+        var chatClient = _lazyClient.Value.GetChatClient(model);
 
         var messages = new List<ChatMessage>
         {
