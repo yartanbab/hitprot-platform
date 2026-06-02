@@ -162,6 +162,9 @@
     "Permission:Ai.Drafts.Edit": "Edit AI Drafts",
     "Permission:Ai.Drafts.Approve": "Approve AI Drafts",
     "Menu:AiCenter:UsageLogs": "AI Usage Logs",
-    "Permission:Ai.UsageLogs": "AI Usage Logs"
+    "Permission:Ai.UsageLogs": "AI Usage Logs",
+    "Menu:AiCenter:Reports": "AI Reports",
+    "Permission:Ai.Reports.View": "View AI Reports",
+    "Permission:Ai.Reports.Export": "Export AI Reports"
   }
 }

@@ -131,6 +131,12 @@ if (await permission.IsGrantedAsync(PlatformPermissions.Reports.TrialBalance)
                     "Apya.AiCenter.UsageLogs", l["Menu:AiCenter:UsageLogs"],
                     icon: "fa fa-receipt", url: "/AiCenter/UsageLogs"));
             }
+            if (await permission.IsGrantedAsync(AiPermissions.Reports.View))
+            {
+                aiCenter.AddItem(new ApplicationMenuItem(
+                    "Apya.AiCenter.Reports", l["Menu:AiCenter:Reports"],
+                    icon: "fa fa-file-lines", url: "/AiCenter/Reports"));
+            }
             if (aiCenter.Items.Count > 0) context.Menu.AddItem(aiCenter);
         }
 

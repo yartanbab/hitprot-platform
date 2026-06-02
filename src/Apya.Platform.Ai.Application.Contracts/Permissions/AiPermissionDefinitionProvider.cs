@@ -56,7 +56,9 @@ public class AiPermissionDefinitionProvider : PermissionDefinitionProvider
         var providers = aiGroup.AddPermission(AiPermissions.Providers.Default, L("Permission:Ai.Providers"));
         providers.AddChild(AiPermissions.Providers.Manage, L("Permission:Ai.Providers.Manage"));
 
-        aiGroup.AddPermission(AiPermissions.Reports.View, L("Permission:Ai.Reports"));
+        var reports = aiGroup.AddPermission(AiPermissions.Reports.Default, L("Permission:Ai.Reports"));
+        reports.AddChild(AiPermissions.Reports.View, L("Permission:Ai.Reports.View"));
+        reports.AddChild(AiPermissions.Reports.Export, L("Permission:Ai.Reports.Export"));
 
         aiGroup.AddPermission(AiPermissions.UsageLogs.View, L("Permission:Ai.UsageLogs"));
     }

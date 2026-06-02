@@ -184,6 +184,9 @@
         "Platform:File:UnsupportedExtension": "Desteklenmeyen dosya türü. Yalnızca PDF, Office, resim ve arşiv dosyaları yüklenebilir.",
         "Platform:File:SizeExceeded": "Dosya boyutu 25 MB'ı aşamaz.",
         "Menu:AiCenter:UsageLogs": "AI Kullanım Kayıtları",
-        "Permission:Ai.UsageLogs": "AI Kullanım Kayıtları"
+        "Permission:Ai.UsageLogs": "AI Kullanım Kayıtları",
+        "Menu:AiCenter:Reports": "AI Raporları",
+        "Permission:Ai.Reports.View": "AI Raporlarını Görüntüle",
+        "Permission:Ai.Reports.Export": "AI Raporlarını Dışa Aktar"
     }
 }
