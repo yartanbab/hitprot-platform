@@ -125,6 +125,12 @@ if (await permission.IsGrantedAsync(PlatformPermissions.Reports.TrialBalance)
                     "Apya.AiCenter.Providers", l["Menu:AiCenter:Providers"],
                     icon: "fa fa-plug", url: "/AiCenter/Providers"));
             }
+            if (await permission.IsGrantedAsync(AiPermissions.UsageLogs.View))
+            {
+                aiCenter.AddItem(new ApplicationMenuItem(
+                    "Apya.AiCenter.UsageLogs", l["Menu:AiCenter:UsageLogs"],
+                    icon: "fa fa-receipt", url: "/AiCenter/UsageLogs"));
+            }
             if (aiCenter.Items.Count > 0) context.Menu.AddItem(aiCenter);
         }
 

@@ -57,6 +57,8 @@ public class AiPermissionDefinitionProvider : PermissionDefinitionProvider
         providers.AddChild(AiPermissions.Providers.Manage, L("Permission:Ai.Providers.Manage"));
 
         aiGroup.AddPermission(AiPermissions.Reports.View, L("Permission:Ai.Reports"));
+
+        aiGroup.AddPermission(AiPermissions.UsageLogs.View, L("Permission:Ai.UsageLogs"));
     }
 
     private static LocalizableString L(string name)

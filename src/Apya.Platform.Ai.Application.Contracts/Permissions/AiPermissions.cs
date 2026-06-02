@@ -76,4 +76,10 @@ public static class AiPermissions
         public const string Default = GroupName + ".Reports";
         public const string View = Default + ".View";
     }
+
+    public static class UsageLogs
+    {
+        public const string Default = GroupName + ".UsageLogs";
+        public const string View = Default + ".View";
+    }
 }
