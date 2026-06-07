@@ -5,13 +5,18 @@
     Scriban: Volo.Abp.TextTemplating.Scriban 10.0.2 ships Scriban 6.3.0 (10+ CVEs).
     ABP 10.4.0 already moved to Scriban >= 7.0.0, confirming 7.x is API-compatible.
 
-    AutoMapper: Volo.Abp.AutoMapper 10.0.2 ships AutoMapper 14.0.0 (GHSA-rvv3-g6hj-g44x).
-    AutoMapper 15.x only adds a default MaxDepth limit — no public API removals.
-    Verified: dotnet build 0 errors, 144/144 tests pass.
+    AutoMapper: Volo.Abp.AutoMapper 10.0.2 ships AutoMapper 14.0.0 (GHSA-rvv3-g6hj-g44x / CVE-2026-32933).
+    DO NOT bump to 15.x: AutoMapper 15 changed the MapperConfiguration ctor
+    (removed MapperConfiguration(MapperConfigurationExpression)), which ABP 10.0.2
+    calls — causing MissingMethodException at runtime container resolution so EVERY
+    AutoMapper-backed /api/app/* returns 500. Build + unit tests do NOT catch this;
+    only a live authenticated API call does (verified 2026-06-08 on main a845805).
+    Stay on 14.0.0 until ABP is upgraded to a build compiled against AutoMapper 15.x.
+    Trade-off: CVE-2026-32933 stays open in dev (no 14.x fix exists).
 
   -->
   <ItemGroup>
     <PackageReference Include="Scriban" Version="7.2.1" />
-    <PackageReference Include="AutoMapper" Version="15.1.1" />
+    <PackageReference Include="AutoMapper" Version="14.0.0" />
   </ItemGroup>
 </Project>
