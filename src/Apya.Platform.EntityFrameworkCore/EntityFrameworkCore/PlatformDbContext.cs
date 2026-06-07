@@ -160,6 +160,8 @@ namespace Apya.Platform.EntityFrameworkCore
         public DbSet<AppDocument> AppDocuments { get; set; }
         public DbSet<AppBlock> AppBlocks { get; set; }
         public DbSet<AppResponse> AppResponses { get; set; }
+        public DbSet<FormCategory> FormCategories { get; set; }
+        public DbSet<ResponseComment> ResponseComments { get; set; }
 
         /* --- POLİMORFİK BAĞLANTI (ASSET RELATIONS) MODÜLÜ --- */
         public DbSet<EntityLink> EntityLinks { get; set; }
@@ -538,6 +540,8 @@ namespace Apya.Platform.EntityFrameworkCore
             builder.ApplyConfiguration(new AppDocumentConfiguration());
             builder.ApplyConfiguration(new AppBlockConfiguration());
             builder.ApplyConfiguration(new AppResponseConfiguration());
+            builder.ApplyConfiguration(new FormCategoryConfiguration());
+            builder.ApplyConfiguration(new ResponseCommentConfiguration());
 
             /* --- POLİMORFİK BAĞLANTI (ASSET RELATIONS) YAPILANDIRMASI --- */
             builder.ApplyConfiguration(new EntityLinkConfiguration());

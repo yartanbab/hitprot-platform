@@ -41,14 +41,26 @@ public class ResponseAppService : PlatformAppService, IResponseAppService
             throw new EntityNotFoundException(typeof(AppDocument), input.DocumentSlug);
         }
 
-        // Create a new response entity
+        // Reject submissions to forms that are not currently published.
+        if (document.Status != FormStatus.Published)
+        {
+            throw new BusinessException(PlatformDomainErrorCodes.FormNotPublished);
+        }
+
+        // Create a new response entity (status defaults to Pending)
         var response = new AppResponse(
             GuidGenerator.Create(),
             document.Id,
-            input.Answers
+            input.Answers,
+            respondentId: CurrentUser.Id,
+            completionSeconds: input.CompletionSeconds
         );
 
         await _responseRepository.InsertAsync(response, autoSave: true);
+
+        // Increment the form's response counter (best-effort).
+        document.IncrementResponseCount();
+        await _documentRepository.UpdateAsync(document, autoSave: true);
 
         _logger.LogInformation(
             "Form yanıtı kaydedildi. ResponseId: {ResponseId}, DocumentId: {DocumentId}, Slug: {Slug}",

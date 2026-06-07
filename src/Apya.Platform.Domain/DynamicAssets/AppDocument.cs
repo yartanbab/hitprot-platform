@@ -24,6 +24,26 @@ public class AppDocument : FullAuditedAggregateRoot<Guid>, IMultiTenant
 
     public string Slug { get; private set; } = null!;
 
+    /// <summary>Lifecycle status (Draft/Published/Archived).</summary>
+    public FormStatus Status { get; private set; }
+
+    /// <summary>Optional category for organizing forms.</summary>
+    public Guid? CategoryId { get; private set; }
+
+    public string? Description { get; private set; }
+
+    /// <summary>JSON (JSONB) — theme/branding: colors, font, logo, cover.</summary>
+    public string? ThemeJson { get; private set; }
+
+    /// <summary>JSON (JSONB) — publish settings: domain, password, dates, captcha, KVKK/cookie consent.</summary>
+    public string? PublishSettingsJson { get; private set; }
+
+    public long ViewCount { get; private set; }
+
+    public long ResponseCount { get; private set; }
+
+    public DateTime? PublishedAt { get; private set; }
+
     private readonly List<AppBlock> _blocks = new();
 
     /// <summary>
@@ -67,6 +87,16 @@ public class AppDocument : FullAuditedAggregateRoot<Guid>, IMultiTenant
         var block = new AppBlock(blockId, Id, type, order, content, settings, agentContext);
         _blocks.Add(block);
         return block;
+    }
+
+    /// <summary>
+    /// Removes all blocks from this document. Used by the builder when
+    /// replacing the full block set in a single save. EF Core orphan-deletes
+    /// the detached blocks (required FK + cascade) on the next SaveChanges.
+    /// </summary>
+    public void ClearBlocks()
+    {
+        _blocks.Clear();
     }
 
     /// <summary>
@@ -121,5 +151,63 @@ public class AppDocument : FullAuditedAggregateRoot<Guid>, IMultiTenant
             slug,
             nameof(slug),
             maxLength: AppDocumentConsts.MaxSlugLength);
+    }
+
+    public void SetDescription(string? description)
+    {
+        Description = description is null
+            ? null
+            : Check.Length(description, nameof(description), AppDocumentConsts.MaxDescriptionLength);
+    }
+
+    public void SetCategory(Guid? categoryId)
+    {
+        CategoryId = categoryId;
+    }
+
+    public void SetTheme(string? themeJson)
+    {
+        ThemeJson = themeJson;
+    }
+
+    public void SetPublishSettings(string? publishSettingsJson)
+    {
+        PublishSettingsJson = publishSettingsJson;
+    }
+
+    /// <summary>
+    /// Publishes the form, making it available via its public slug.
+    /// </summary>
+    public void Publish()
+    {
+        Status = FormStatus.Published;
+        PublishedAt = DateTime.UtcNow;
+    }
+
+    /// <summary>
+    /// Archives the form. Archived forms stop accepting responses and are hidden from default lists.
+    /// </summary>
+    public void Archive()
+    {
+        Status = FormStatus.Archived;
+    }
+
+    /// <summary>
+    /// Returns the form to editable Draft state.
+    /// </summary>
+    public void MoveToDraft()
+    {
+        Status = FormStatus.Draft;
+        PublishedAt = null;
+    }
+
+    public void IncrementViewCount()
+    {
+        ViewCount++;
+    }
+
+    public void IncrementResponseCount()
+    {
+        ResponseCount++;
     }
 }

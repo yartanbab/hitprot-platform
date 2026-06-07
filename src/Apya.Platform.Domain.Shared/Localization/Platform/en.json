@@ -54,18 +54,97 @@
     "Permission:Ai.Providers.Manage": "Manage Providers",
     "Permission:Ai.Reports": "AI Reports",
 
-    "Permission:Invoices": "Invoice Management",
+    "Permission:Platform": "Platform Management",
+
+    "Permission:Group:Work": "Projects & Tasks",
+    "Permission:Group:Grants": "Grant Management",
+    "Permission:Group:Finance": "Finance & Accounting",
+    "Permission:Group:Accounting": "Accounts & Cash",
+    "Permission:Group:Content": "Content & Documents",
+    "Permission:Group:System": "System & Integration",
+
+    "Permission:Projects": "Projects",
+    "Permission:Projects.Create": "Create Project",
+    "Permission:Projects.Edit": "Edit Project",
+    "Permission:Projects.Delete": "Delete Project",
+    "Permission:Projects.ViewBudget": "View Budget",
+    "Permission:Projects.ManageTeam": "Manage Team",
+    "Permission:Projects.UseAiFeatures": "Use AI Features",
+
+    "Permission:Tasks": "Tasks",
+    "Permission:Tasks.Create": "Create Task",
+    "Permission:Tasks.Edit": "Edit Task",
+    "Permission:Tasks.Delete": "Delete Task",
+    "Permission:Tasks.Assign": "Assign Task",
+    "Permission:Tasks.ChangeStatus": "Change Status",
+
+    "Permission:Grants": "Grant Programs",
+    "Permission:Grants.Create": "Create Grant",
+    "Permission:Grants.Edit": "Edit Grant",
+    "Permission:Grants.Delete": "Delete Grant",
+
+    "Permission:Incomes": "Income",
+    "Permission:Incomes.Create": "Create Income",
+    "Permission:Incomes.Edit": "Edit Income",
+    "Permission:Incomes.Delete": "Delete Income",
+
+    "Permission:Expenses": "Expenses",
+    "Permission:Expenses.Create": "Create Expense",
+    "Permission:Expenses.Edit": "Edit Expense",
+    "Permission:Expenses.Delete": "Delete Expense",
+
+    "Permission:Invoices": "Invoices",
     "Permission:Invoices.Create": "Create Invoice",
     "Permission:Invoices.Edit": "Edit Invoice",
     "Permission:Invoices.Delete": "Delete Invoice",
 
+    "Permission:ExchangeRates": "Exchange Rates",
+    "Permission:ExchangeRates.Create": "Create Rate",
+    "Permission:ExchangeRates.Edit": "Edit Rate",
+    "Permission:ExchangeRates.Delete": "Delete Rate",
+
+    "Permission:FxRevaluations": "Year-End FX Revaluation",
+    "Permission:FxRevaluations.Run": "Run Revaluation",
+    "Permission:FxRevaluations.Delete": "Delete Revaluation",
+
     "Permission:Reports": "Reports",
     "Permission:Reports.TrialBalance": "Trial Balance Report",
 
-    "Permission:DynamicAssets": "Dynamic Asset Management",
+    "Permission:Customers": "Customers",
+    "Permission:Customers.Create": "Create Customer",
+    "Permission:Customers.Edit": "Edit Customer",
+    "Permission:Customers.Delete": "Delete Customer",
+
+    "Permission:CashAccounts": "Cash Accounts",
+    "Permission:CashAccounts.Create": "Create Cash Account",
+    "Permission:CashAccounts.Edit": "Edit Cash Account",
+    "Permission:CashAccounts.Delete": "Delete Cash Account",
+
+    "Permission:CashMovements": "Cash Movements",
+    "Permission:CashMovements.Create": "Create Movement",
+    "Permission:CashMovements.Edit": "Edit Movement",
+    "Permission:CashMovements.Delete": "Delete Movement",
+
+    "Permission:Documents": "Documents & Wiki",
+    "Permission:Documents.Create": "Create Document",
+    "Permission:Documents.Edit": "Edit Document",
+    "Permission:Documents.Delete": "Delete Document",
+
+    "Permission:DynamicAssets": "Templates & Forms",
     "Permission:DynamicAssets.Create": "Create Template/Form",
     "Permission:DynamicAssets.Edit": "Edit Template/Form",
     "Permission:DynamicAssets.Delete": "Delete Template/Form",
+    "Permission:DynamicAssets.Publish": "Publish Form",
+    "Permission:DynamicAssets.ViewResponses": "View Responses",
+    "Permission:DynamicAssets.Export": "Export",
+    "Permission:DynamicAssets.ManageCategories": "Manage Categories",
+
+    "Permission:Notifications": "Notifications",
+    "Permission:Notifications.MarkRead": "Mark as Read",
+    "Permission:Notifications.Delete": "Delete Notification",
+
+    "Permission:Calendars": "Calendar Integration",
+    "Permission:Calendars.Connect": "Connect Account",
 
     "Permission:TenantSettings": "Tenant Settings",
     "Permission:TenantSettings.ManageAi": "Manage AI Settings",
@@ -153,6 +232,7 @@
     "Platform:Project:CodeAlreadyExists": "This project code is already in use.",
     "Platform:File:UnsupportedExtension": "Unsupported file type. Only PDF, Office, image and archive files are allowed.",
     "Platform:File:SizeExceeded": "File size cannot exceed 25 MB.",
+    "Platform:DynamicAssets:FormNotPublished": "This form is not currently published.",
 
     "Permission:Ai": "AI Features",
     "Permission:Ai.Generation": "AI Generation",
@@ -161,6 +241,8 @@
     "Permission:Ai.Drafts.View": "View AI Drafts",
     "Permission:Ai.Drafts.Edit": "Edit AI Drafts",
     "Permission:Ai.Drafts.Approve": "Approve AI Drafts",
+    "Permission:Ai.TenantSettings": "AI Settings",
+    "Permission:Ai.TenantSettings.Manage": "Manage AI Settings",
     "Menu:AiCenter:UsageLogs": "AI Usage Logs",
     "Permission:Ai.UsageLogs": "AI Usage Logs",
     "Menu:AiCenter:Reports": "AI Reports",

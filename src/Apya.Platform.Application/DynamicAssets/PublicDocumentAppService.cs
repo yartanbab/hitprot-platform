@@ -1,6 +1,7 @@
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Volo.Abp;
+using Volo.Abp.Data;
 using Volo.Abp.Domain.Entities;
 using Apya.Platform.DynamicAssets.Dtos;
 
@@ -28,6 +29,23 @@ public class PublicDocumentAppService : PlatformAppService, IPublicDocumentAppSe
         if (document is null)
         {
             throw new EntityNotFoundException(typeof(AppDocument), slug);
+        }
+
+        // Only published forms are publicly accessible. Drafts/archived are hidden.
+        if (document.Status != FormStatus.Published)
+        {
+            throw new BusinessException(PlatformDomainErrorCodes.FormNotPublished);
+        }
+
+        // Best-effort view counter (analytics). Failure must not block rendering.
+        try
+        {
+            document.IncrementViewCount();
+            await _documentRepository.UpdateAsync(document, autoSave: true);
+        }
+        catch (AbpDbConcurrencyException)
+        {
+            // Concurrent views can collide on the concurrency stamp; ignore.
         }
 
         return ObjectMapper.Map<AppDocument, PublicDocumentDto>(document);

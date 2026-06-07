@@ -13,6 +13,14 @@ public class DocumentDto : FullAuditedEntityDto<Guid>
     public bool IsTemplate { get; set; }
     public Guid? ParentTemplateId { get; set; }
     public string Slug { get; set; } = null!;
+    public FormStatus Status { get; set; }
+    public Guid? CategoryId { get; set; }
+    public string? Description { get; set; }
+    public string? ThemeJson { get; set; }
+    public string? PublishSettingsJson { get; set; }
+    public long ViewCount { get; set; }
+    public long ResponseCount { get; set; }
+    public DateTime? PublishedAt { get; set; }
     public List<BlockDto> Blocks { get; set; } = new();
 }
 

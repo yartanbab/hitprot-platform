@@ -18,4 +18,12 @@ public interface IAppDocumentRepository : IRepository<AppDocument, Guid>
     Task<AppDocument?> GetBySlugWithBlocksAsync(
         string slug,
         CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Retrieves a document including its child blocks (ordered) by id.
+    /// Throws if not found. Used by the builder to replace the block set.
+    /// </summary>
+    Task<AppDocument> GetWithBlocksAsync(
+        Guid id,
+        CancellationToken cancellationToken = default);
 }

@@ -77,6 +77,10 @@ public static class PlatformDomainErrorCodes
     public const string DocumentNotATemplate = "Platform:DynamicAssets:DocumentNotATemplate";
     public const string AiFormGenerationFailed = "Platform:DynamicAssets:AiFormGenerationFailed";
     public const string AiFormParseFailed = "Platform:DynamicAssets:AiFormParseFailed";
+    public const string ResponseCommentNotFound = "Platform:DynamicAssets:ResponseCommentNotFound";
+    public const string FormNotFound = "Platform:DynamicAssets:FormNotFound";
+    public const string FormCategoryNameRequired = "Platform:DynamicAssets:FormCategoryNameRequired";
+    public const string FormNotPublished = "Platform:DynamicAssets:FormNotPublished";
 
     // --- AI Modülü ---
     public const string AiProviderUnavailable = "Platform:Ai:ProviderUnavailable";
