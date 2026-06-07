@@ -4,6 +4,15 @@ $(function () {
     var createModal = new abp.ModalManager(abp.appPath + 'AiCenter/Prompts/CreateModal');
     var editModal = new abp.ModalManager(abp.appPath + 'AiCenter/Prompts/EditModal');
 
+    var getFilterInput = function () {
+        var status = $('#StatusFilter').val();
+        return {
+            filter: $('#PromptFilter').val(),
+            categoryId: $('#CategoryFilter').val() || null,
+            isActive: status === '' ? null : (status === 'true')
+        };
+    };
+
     var dataTable = $('#PromptsTable').DataTable(
         abp.libs.datatables.normalizeConfiguration({
             serverSide: true,
@@ -11,7 +20,7 @@ $(function () {
             order: [[1, 'asc']],
             searching: false,
             scrollX: true,
-            ajax: abp.libs.datatables.createAjax(service.getList),
+            ajax: abp.libs.datatables.createAjax(service.getList, getFilterInput),
             columnDefs: [
                 {
                     title: 'İşlemler',
@@ -88,5 +97,15 @@ $(function () {
     $('#NewPromptButton').click(function (e) {
         e.preventDefault();
         createModal.open();
+    });
+
+    $('#CategoryFilter, #StatusFilter').on('change', function () {
+        dataTable.ajax.reload();
+    });
+
+    var filterDebounce;
+    $('#PromptFilter').on('keyup', function () {
+        clearTimeout(filterDebounce);
+        filterDebounce = setTimeout(function () { dataTable.ajax.reload(); }, 400);
     });
 });

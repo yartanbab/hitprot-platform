@@ -55,6 +55,11 @@
                         </td>
                         <td>@(v.PublishedAt?.ToString("yyyy-MM-dd HH:mm") ?? "—")</td>
                         <td class="text-end">
+                            <button type="button" class="btn btn-sm btn-outline-secondary"
+                                    data-bs-toggle="collapse" data-bs-target="#ver-@v.VersionNo"
+                                    aria-expanded="false" aria-controls="ver-@v.VersionNo">
+                                <i class="fa fa-eye me-1"></i> İçerik
+                            </button>
                             @if (v.Status != PromptVersionStatus.Published
                                 && await AuthorizationService.IsGrantedAsync(AiPermissions.Prompts.Publish))
                             {
@@ -65,6 +70,34 @@
                                     </button>
                                 </form>
                             }
+                        </td>
+                    </tr>
+                    <tr class="collapse" id="ver-@v.VersionNo">
+                        <td colspan="4" class="bg-body-tertiary">
+                            <div class="row g-3 py-2">
+                                <div class="col-md-6">
+                                    <div class="small text-muted mb-1">Sistem Prompt</div>
+                                    <pre class="small border rounded p-2 mb-0" style="white-space:pre-wrap;">@(string.IsNullOrWhiteSpace(v.SystemPrompt) ? "—" : v.SystemPrompt)</pre>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="small text-muted mb-1">Kullanıcı Prompt Şablonu</div>
+                                    <pre class="small border rounded p-2 mb-0" style="white-space:pre-wrap;">@(string.IsNullOrWhiteSpace(v.UserPromptTemplate) ? "—" : v.UserPromptTemplate)</pre>
+                                </div>
+                                @if (!string.IsNullOrWhiteSpace(v.JsonSchema))
+                                {
+                                    <div class="col-md-6">
+                                        <div class="small text-muted mb-1">Beklenen JSON Şeması</div>
+                                        <pre class="small border rounded p-2 mb-0" style="white-space:pre-wrap;">@v.JsonSchema</pre>
+                                    </div>
+                                }
+                                @if (!string.IsNullOrWhiteSpace(v.ExpectedOutputSample))
+                                {
+                                    <div class="col-md-6">
+                                        <div class="small text-muted mb-1">Örnek Çıktı</div>
+                                        <pre class="small border rounded p-2 mb-0" style="white-space:pre-wrap;">@v.ExpectedOutputSample</pre>
+                                    </div>
+                                }
+                            </div>
                         </td>
                     </tr>
                 }

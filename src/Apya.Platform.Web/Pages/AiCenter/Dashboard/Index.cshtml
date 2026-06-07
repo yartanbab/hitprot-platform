@@ -1,11 +1,12 @@
 @page
 @using System.Linq
+@using System.Text.Json
 @model Apya.Platform.Web.Pages.AiCenter.Dashboard.IndexModel
 @{
     ViewBag.Title = "AI Gösterge Paneli";
     var d = Model.Data;
-    var total = d.TotalEvaluations == 0 ? 1 : d.TotalEvaluations;
-    var riskMax = d.RiskDistribution.Count == 0 ? 1 : d.RiskDistribution.Max(x => x.Count);
+    var riskLabels = JsonSerializer.Serialize(d.RiskDistribution.Select(x => x.Label));
+    var riskCounts = JsonSerializer.Serialize(d.RiskDistribution.Select(x => x.Count));
 }
 
 <div class="row g-3 mb-3">
@@ -41,24 +42,7 @@
         <abp-card>
             <abp-card-header><abp-card-title><i class="fa fa-list-check me-2"></i> Durum Dağılımı</abp-card-title></abp-card-header>
             <abp-card-body>
-                @{
-                    var statuses = new[]
-                    {
-                        ("Tamamlandı", d.Completed, "bg-success"),
-                        ("İşleniyor", d.Processing, "bg-info"),
-                        ("Bekliyor", d.Pending, "bg-warning"),
-                        ("Başarısız", d.Failed, "bg-danger")
-                    };
-                }
-                @foreach (var (label, count, css) in statuses)
-                {
-                    <div class="mb-2">
-                        <div class="d-flex justify-content-between small"><span>@label</span><span>@count</span></div>
-                        <div class="progress" style="height:8px;">
-                            <div class="progress-bar @css" role="progressbar" style="width:@(count * 100 / total)%"></div>
-                        </div>
-                    </div>
-                }
+                <canvas id="statusChart" style="max-height:260px;"></canvas>
             </abp-card-body>
         </abp-card>
     </div>
@@ -72,17 +56,46 @@
                 }
                 else
                 {
-                    @foreach (var bucket in d.RiskDistribution)
-                    {
-                        <div class="mb-2">
-                            <div class="d-flex justify-content-between small"><span>@bucket.Label</span><span>@bucket.Count</span></div>
-                            <div class="progress" style="height:8px;">
-                                <div class="progress-bar bg-primary" role="progressbar" style="width:@(bucket.Count * 100 / riskMax)%"></div>
-                            </div>
-                        </div>
-                    }
+                    <canvas id="riskChart" style="max-height:260px;"></canvas>
                 }
             </abp-card-body>
         </abp-card>
     </div>
 </div>
+
+@section scripts {
+    <script src="~/js/chart.umd.min.js"></script>
+    <script>
+        (function () {
+            var s = document.getElementById('statusChart');
+            if (s && window.Chart) {
+                new Chart(s, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Tamamlandı', 'İşleniyor', 'Bekliyor', 'Başarısız'],
+                        datasets: [{
+                            data: [@d.Completed, @d.Processing, @d.Pending, @d.Failed],
+                            backgroundColor: ['#198754', '#0dcaf0', '#ffc107', '#dc3545']
+                        }]
+                    },
+                    options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
+                });
+            }
+            var r = document.getElementById('riskChart');
+            if (r && window.Chart) {
+                new Chart(r, {
+                    type: 'bar',
+                    data: {
+                        labels: @Html.Raw(riskLabels),
+                        datasets: [{ label: 'Sayı', data: @Html.Raw(riskCounts), backgroundColor: '#0d6efd' }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: { legend: { display: false } },
+                        scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
+                    }
+                });
+            }
+        })();
+    </script>
+}
