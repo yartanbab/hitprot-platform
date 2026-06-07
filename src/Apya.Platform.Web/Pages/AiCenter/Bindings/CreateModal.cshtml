@@ -1,0 +1,19 @@
+@page
+@model Apya.Platform.Web.Pages.AiCenter.Bindings.CreateModalModel
+@using Volo.Abp.AspNetCore.Mvc.UI.Bootstrap.TagHelpers.Modal
+@{
+    Layout = null;
+}
+<abp-dynamic-form abp-model="Binding" asp-page="/AiCenter/Bindings/CreateModal">
+    <abp-modal>
+        <abp-modal-header title="Yeni Form Bağlama"></abp-modal-header>
+        <abp-modal-body>
+            <abp-select asp-for="Binding.DocumentId" asp-items="Model.Forms" label="Form" />
+            <abp-select asp-for="Binding.PromptId" asp-items="Model.Prompts" label="Prompt" />
+            <abp-select asp-for="Binding.TriggerMode" asp-items="Model.TriggerModes" label="Tetikleme Modu" />
+            <abp-input asp-for="Binding.Order" label="Sıra" />
+            <abp-input asp-for="Binding.IsActive" label="Aktif" />
+        </abp-modal-body>
+        <abp-modal-footer buttons="@(AbpModalButtons.Cancel | AbpModalButtons.Save)"></abp-modal-footer>
+    </abp-modal>
+</abp-dynamic-form>

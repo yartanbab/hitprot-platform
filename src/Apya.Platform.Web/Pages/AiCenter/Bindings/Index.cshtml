@@ -1,0 +1,44 @@
+@page
+@using Apya.Platform.Ai.Permissions
+@using Microsoft.AspNetCore.Authorization
+@inject IAuthorizationService AuthorizationService
+@model Apya.Platform.Web.Pages.AiCenter.Bindings.IndexModel
+@{
+    ViewBag.Title = "Form Bağlamaları";
+}
+
+@section scripts {
+    <abp-script src="/Pages/AiCenter/Bindings/Index.js" />
+}
+
+<abp-card>
+    <abp-card-header>
+        <abp-row>
+            <abp-column size-md="_7">
+                <abp-card-title><i class="fa fa-link me-2"></i> Form ↔ Prompt Bağlamaları</abp-card-title>
+            </abp-column>
+            <abp-column size-md="_5" class="text-end">
+                @if (await AuthorizationService.IsGrantedAsync(AiPermissions.Prompts.Edit))
+                {
+                    <abp-button id="NewBindingButton" text="Yeni Bağlama" icon="plus" button-type="Primary" />
+                }
+            </abp-column>
+        </abp-row>
+    </abp-card-header>
+    <abp-card-body>
+        <p class="text-muted">
+            Bir form gönderildiğinde, ona bağlı aktif prompt(lar) otomatik olarak çalıştırılır ve sonuçlar Değerlendirmeler'de görünür.
+        </p>
+        <abp-table striped-rows="true" id="AiFormBindingsTable">
+            <thead>
+                <tr>
+                    <th>İşlemler</th>
+                    <th>Form</th>
+                    <th>Prompt</th>
+                    <th>Tetikleme</th>
+                    <th>Durum</th>
+                </tr>
+            </thead>
+        </abp-table>
+    </abp-card-body>
+</abp-card>

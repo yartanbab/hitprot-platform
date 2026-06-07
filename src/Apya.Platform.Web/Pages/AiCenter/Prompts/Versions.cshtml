@@ -1,0 +1,106 @@
+@page
+@using Apya.Platform.Ai.Prompts
+@using Apya.Platform.Ai.Permissions
+@using Microsoft.AspNetCore.Authorization
+@inject IAuthorizationService AuthorizationService
+@model Apya.Platform.Web.Pages.AiCenter.Prompts.VersionsModel
+@{
+    ViewBag.Title = "Prompt Versiyonları";
+}
+
+<abp-card>
+    <abp-card-header>
+        <abp-row>
+            <abp-column size-md="_8">
+                <abp-card-title>
+                    <i class="fa fa-code-branch me-2"></i> @Model.Prompt.Name
+                    <small class="text-muted">(@Model.Prompt.Code)</small>
+                </abp-card-title>
+            </abp-column>
+            <abp-column size-md="_4" class="text-end">
+                <a href="@Url.Page("Index")" class="btn btn-sm btn-outline-secondary">
+                    <i class="fa fa-arrow-left me-1"></i> Prompt Kütüphanesi
+                </a>
+            </abp-column>
+        </abp-row>
+    </abp-card-header>
+    <abp-card-body>
+        <table class="table table-striped align-middle">
+            <thead>
+                <tr>
+                    <th>Versiyon</th>
+                    <th>Durum</th>
+                    <th>Yayın Tarihi</th>
+                    <th class="text-end">İşlem</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var v in Model.Prompt.Versions)
+                {
+                    <tr>
+                        <td><strong>v@(v.VersionNo)</strong></td>
+                        <td>
+                            @switch (v.Status)
+                            {
+                                case PromptVersionStatus.Published:
+                                    <span class="badge bg-success">Yayında</span>
+                                    break;
+                                case PromptVersionStatus.Draft:
+                                    <span class="badge bg-warning text-dark">Taslak</span>
+                                    break;
+                                default:
+                                    <span class="badge bg-secondary">Arşiv</span>
+                                    break;
+                            }
+                        </td>
+                        <td>@(v.PublishedAt?.ToString("yyyy-MM-dd HH:mm") ?? "—")</td>
+                        <td class="text-end">
+                            @if (v.Status != PromptVersionStatus.Published
+                                && await AuthorizationService.IsGrantedAsync(AiPermissions.Prompts.Publish))
+                            {
+                                <form method="post" asp-page-handler="Publish"
+                                      asp-route-id="@Model.Id" asp-route-versionId="@v.Id" class="d-inline">
+                                    <button type="submit" class="btn btn-sm btn-success">
+                                        <i class="fa fa-bullhorn me-1"></i> Yayınla
+                                    </button>
+                                </form>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </abp-card-body>
+</abp-card>
+
+@if (await AuthorizationService.IsGrantedAsync(AiPermissions.Prompts.Edit))
+{
+    <abp-card>
+        <abp-card-header>
+            <abp-card-title><i class="fa fa-plus me-2"></i> Yeni Versiyon Ekle</abp-card-title>
+        </abp-card-header>
+        <abp-card-body>
+            <form method="post" asp-page-handler="AddVersion" asp-route-id="@Model.Id">
+                <div class="mb-3">
+                    <label class="form-label">Sistem Prompt</label>
+                    <textarea asp-for="NewVersion.SystemPrompt" class="form-control" rows="3"></textarea>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Kullanıcı Prompt Şablonu (<code>{{alan_adi}}</code> yer tutucuları)</label>
+                    <textarea asp-for="NewVersion.UserPromptTemplate" class="form-control" rows="3"></textarea>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Beklenen JSON Şeması (opsiyonel)</label>
+                    <textarea asp-for="NewVersion.JsonSchema" class="form-control" rows="3"></textarea>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Örnek Çıktı (opsiyonel)</label>
+                    <textarea asp-for="NewVersion.ExpectedOutputSample" class="form-control" rows="2"></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fa fa-save me-1"></i> Taslak Versiyon Oluştur
+                </button>
+            </form>
+        </abp-card-body>
+    </abp-card>
+}

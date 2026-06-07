@@ -8,20 +8,27 @@ using Volo.Abp.DependencyInjection;
 
 namespace Apya.Platform.Ai.Providers;
 
+/// <summary>
+/// Resilient facade over the concrete <see cref="INamedAiProvider"/> strategies. Domain services
+/// depend on <see cref="IAiProvider"/> and receive this gateway, which resolves the current tenant's
+/// preferred provider and runs the call through the Polly retry + circuit-breaker pipeline.
+/// This is the sole <see cref="IAiProvider"/> registration (concrete providers expose
+/// <see cref="INamedAiProvider"/>), so consumers are never ambiguous.
+/// </summary>
 public class AiGateway : IAiProvider, ITransientDependency
 {
-    public string Name => $"gateway({_inner.Name})";
+    public string Name => "ai-gateway";
 
-    private readonly IAiProvider _inner;
+    private readonly IAiProviderResolver _resolver;
     private readonly ResiliencePipeline<AiCompletionResult> _pipeline;
     private readonly ILogger<AiGateway> _logger;
 
     public AiGateway(
-        OpenAiProvider inner,
+        IAiProviderResolver resolver,
         ResiliencePipeline<AiCompletionResult> pipeline,
         ILogger<AiGateway> logger)
     {
-        _inner = inner;
+        _resolver = resolver;
         _pipeline = pipeline;
         _logger = logger;
     }
@@ -31,10 +38,14 @@ public class AiGateway : IAiProvider, ITransientDependency
         string userMessage,
         CancellationToken cancellationToken = default)
     {
+        // Provider selection runs outside the resilience pipeline: a missing/misconfigured provider
+        // is a configuration error (fail fast), not a transient fault worth retrying.
+        var provider = await _resolver.ResolveForTenantAsync(cancellationToken);
+
         try
         {
             return await _pipeline.ExecuteAsync(
-                async ct => await _inner.CompleteAsync(systemPrompt, userMessage, ct),
+                async ct => await provider.CompleteAsync(systemPrompt, userMessage, ct),
                 cancellationToken);
         }
         catch (BrokenCircuitException ex)

@@ -1,0 +1,23 @@
+@page
+@model Apya.Platform.Web.Pages.AiCenter.Providers.CreateModalModel
+@using Volo.Abp.AspNetCore.Mvc.UI.Bootstrap.TagHelpers.Modal
+@{
+    Layout = null;
+}
+<abp-dynamic-form abp-model="Config" asp-page="/AiCenter/Providers/CreateModal">
+    <abp-modal>
+        <abp-modal-header title="Yeni AI Sağlayıcı"></abp-modal-header>
+        <abp-modal-body>
+            <abp-select asp-for="Config.Provider" asp-items="Model.Providers" label="Sağlayıcı" />
+            <abp-input asp-for="Config.DisplayName" label="Görünen Ad" />
+            <abp-input asp-for="Config.Model" label="Model (örn: gpt-4o-mini, claude-3-5-sonnet, gemini-1.5-pro, deepseek-chat)" />
+            <div class="mb-3">
+                <label class="form-label" for="Config_ApiKey">API Anahtarı</label>
+                <input type="password" name="Config.ApiKey" id="Config_ApiKey" class="form-control" autocomplete="new-password" />
+            </div>
+            <abp-input asp-for="Config.IsDefault" label="Varsayılan sağlayıcı yap" />
+            <abp-input asp-for="Config.IsEnabled" label="Aktif" />
+        </abp-modal-body>
+        <abp-modal-footer buttons="@(AbpModalButtons.Cancel | AbpModalButtons.Save)"></abp-modal-footer>
+    </abp-modal>
+</abp-dynamic-form>

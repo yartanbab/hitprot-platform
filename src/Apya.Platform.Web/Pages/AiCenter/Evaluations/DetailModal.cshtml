@@ -1,0 +1,44 @@
+@page
+@model Apya.Platform.Web.Pages.AiCenter.Evaluations.DetailModalModel
+@using Volo.Abp.AspNetCore.Mvc.UI.Bootstrap.TagHelpers.Modal
+@{
+    Layout = null;
+}
+<abp-modal>
+    <abp-modal-header title="Değerlendirme Detayı"></abp-modal-header>
+    <abp-modal-body>
+        <dl class="row mb-2">
+            <dt class="col-sm-4">Durum</dt>
+            <dd class="col-sm-8">@Model.Evaluation.StatusText</dd>
+            <dt class="col-sm-4">Skor</dt>
+            <dd class="col-sm-8">@(Model.Evaluation.Score?.ToString() ?? "—")</dd>
+            <dt class="col-sm-4">Risk</dt>
+            <dd class="col-sm-8">@(Model.Evaluation.RiskLevel ?? "—")</dd>
+            <dt class="col-sm-4">Karar</dt>
+            <dd class="col-sm-8">@(Model.Evaluation.Decision ?? "—")</dd>
+            <dt class="col-sm-4">Şema Geçerli</dt>
+            <dd class="col-sm-8">
+                @(Model.Evaluation.IsSchemaValid == true ? "Evet" : (Model.Evaluation.IsSchemaValid == false ? "Hayır" : "—"))
+            </dd>
+            <dt class="col-sm-4">Token</dt>
+            <dd class="col-sm-8">@(Model.Evaluation.TokensUsed?.ToString() ?? "—")</dd>
+            <dt class="col-sm-4">Süre (ms)</dt>
+            <dd class="col-sm-8">@(Model.Evaluation.DurationMs?.ToString() ?? "—")</dd>
+        </dl>
+
+        @if (!string.IsNullOrWhiteSpace(Model.Evaluation.Summary))
+        {
+            <p><strong>Özet:</strong> @Model.Evaluation.Summary</p>
+        }
+        @if (!string.IsNullOrWhiteSpace(Model.Evaluation.ErrorMessage))
+        {
+            <div class="alert alert-danger">@Model.Evaluation.ErrorMessage</div>
+        }
+        @if (!string.IsNullOrWhiteSpace(Model.Evaluation.RawJson))
+        {
+            <label class="form-label fw-bold">Ham AI Çıktısı (JSON)</label>
+            <pre class="bg-light p-2 rounded border" style="max-height:300px;overflow:auto;">@Model.Evaluation.RawJson</pre>
+        }
+    </abp-modal-body>
+    <abp-modal-footer buttons="@(AbpModalButtons.Cancel)"></abp-modal-footer>
+</abp-modal>

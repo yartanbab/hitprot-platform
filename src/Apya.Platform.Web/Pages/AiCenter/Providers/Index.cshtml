@@ -1,0 +1,43 @@
+@page
+@using Apya.Platform.Ai.Permissions
+@using Microsoft.AspNetCore.Authorization
+@inject IAuthorizationService AuthorizationService
+@model Apya.Platform.Web.Pages.AiCenter.Providers.IndexModel
+@{
+    ViewBag.Title = "AI Sağlayıcılar";
+}
+
+@section scripts {
+    <abp-script src="/Pages/AiCenter/Providers/Index.js" />
+}
+
+<abp-card>
+    <abp-card-header>
+        <abp-row>
+            <abp-column size-md="_6">
+                <abp-card-title><i class="fa fa-plug me-2"></i> AI Sağlayıcılar</abp-card-title>
+            </abp-column>
+            <abp-column size-md="_6" class="text-end">
+                @if (await AuthorizationService.IsGrantedAsync(AiPermissions.Providers.Manage))
+                {
+                    <abp-button id="NewProviderButton" text="Yeni Sağlayıcı" icon="plus" button-type="Primary" />
+                }
+            </abp-column>
+        </abp-row>
+    </abp-card-header>
+    <abp-card-body>
+        <abp-table striped-rows="true" id="AiProviderConfigsTable">
+            <thead>
+                <tr>
+                    <th>İşlemler</th>
+                    <th>Sağlayıcı</th>
+                    <th>Görünen Ad</th>
+                    <th>Model</th>
+                    <th>API Anahtarı</th>
+                    <th>Varsayılan</th>
+                    <th>Durum</th>
+                </tr>
+            </thead>
+        </abp-table>
+    </abp-card-body>
+</abp-card>

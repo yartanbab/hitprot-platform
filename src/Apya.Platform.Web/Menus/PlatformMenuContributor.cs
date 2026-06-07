@@ -1,4 +1,5 @@
 using System.Threading.Tasks;
+using Apya.Platform.Ai.Permissions;
 using Apya.Platform.Features;
 using Apya.Platform.Localization;
 using Apya.Platform.MultiTenancy;
@@ -82,6 +83,50 @@ if (await permission.IsGrantedAsync(PlatformPermissions.Reports.TrialBalance)
         if (await permission.IsGrantedAsync(PlatformPermissions.DynamicAssets.Default))
             content.AddItem(new ApplicationMenuItem("Apya.Content.DynamicAssets", l["Menu:DynamicAssets"], icon: "fa fa-file-signature", url: "/DynamicAssets"));
         if (content.Items.Count > 0) context.Menu.AddItem(content);
+
+        // AI Değerlendirme Merkezi (AI Evaluation Center) — AiAssist feature + Ai.Prompts yetkisi
+        if (await feature.IsEnabledAsync(PlatformFeatures.AiAssist))
+        {
+            var aiCenter = new ApplicationMenuItem(
+                "Apya.AiCenter", l["Menu:AiCenter"], icon: "fa fa-robot", order: 6);
+            if (await permission.IsGrantedAsync(AiPermissions.Dashboard.View))
+            {
+                aiCenter.AddItem(new ApplicationMenuItem(
+                    "Apya.AiCenter.Dashboard", l["Menu:AiCenter:Dashboard"],
+                    icon: "fa fa-gauge-high", url: "/AiCenter/Dashboard"));
+            }
+            if (await permission.IsGrantedAsync(AiPermissions.Prompts.Default))
+            {
+                aiCenter.AddItem(new ApplicationMenuItem(
+                    "Apya.AiCenter.Prompts", l["Menu:AiCenter:Prompts"],
+                    icon: "fa fa-wand-magic-sparkles", url: "/AiCenter/Prompts"));
+                aiCenter.AddItem(new ApplicationMenuItem(
+                    "Apya.AiCenter.PromptCategories", l["Menu:AiCenter:PromptCategories"],
+                    icon: "fa fa-folder-tree", url: "/AiCenter/PromptCategories"));
+                aiCenter.AddItem(new ApplicationMenuItem(
+                    "Apya.AiCenter.Bindings", l["Menu:AiCenter:Bindings"],
+                    icon: "fa fa-link", url: "/AiCenter/Bindings"));
+            }
+            if (await permission.IsGrantedAsync(AiPermissions.Evaluations.Default))
+            {
+                aiCenter.AddItem(new ApplicationMenuItem(
+                    "Apya.AiCenter.Evaluations", l["Menu:AiCenter:Evaluations"],
+                    icon: "fa fa-clipboard-check", url: "/AiCenter/Evaluations"));
+            }
+            if (await permission.IsGrantedAsync(AiPermissions.Workflows.Default))
+            {
+                aiCenter.AddItem(new ApplicationMenuItem(
+                    "Apya.AiCenter.Workflows", l["Menu:AiCenter:Workflows"],
+                    icon: "fa fa-diagram-project", url: "/AiCenter/Workflows"));
+            }
+            if (await permission.IsGrantedAsync(AiPermissions.Providers.Default))
+            {
+                aiCenter.AddItem(new ApplicationMenuItem(
+                    "Apya.AiCenter.Providers", l["Menu:AiCenter:Providers"],
+                    icon: "fa fa-plug", url: "/AiCenter/Providers"));
+            }
+            if (aiCenter.Items.Count > 0) context.Menu.AddItem(aiCenter);
+        }
 
         if (await permission.IsGrantedAsync(PlatformPermissions.Reports.Default))
         {

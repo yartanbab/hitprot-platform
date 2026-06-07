@@ -2,8 +2,13 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Volo.Abp;
 using Volo.Abp.EntityFrameworkCore.Modeling;
+using Apya.Platform.Ai.Bindings;
 using Apya.Platform.Ai.Drafts;
+using Apya.Platform.Ai.Evaluations;
+using Apya.Platform.Ai.Prompts;
+using Apya.Platform.Ai.Providers;
 using Apya.Platform.Ai.Tenants;
+using Apya.Platform.Ai.Workflows;
 
 namespace Apya.Platform.Ai;
 
@@ -61,6 +66,106 @@ public static class AiDbContextModelCreatingExtensions
             b.Property(x => x.PreferredProvider).IsRequired().HasMaxLength(64);
             b.Property(x => x.PreferredModel).IsRequired().HasMaxLength(128);
             b.HasIndex(x => x.TenantId).IsUnique();
+        });
+
+        // --- AI Değerlendirme Merkezi: Prompt yönetimi (S1) ---
+        builder.Entity<PromptCategory>(b =>
+        {
+            b.ToTable(AiPlatformConsts.DbTablePrefix + "PromptCategories", AiPlatformConsts.DbSchema);
+            b.ConfigureByConvention();
+            b.Property(x => x.Name).IsRequired().HasMaxLength(PromptConsts.MaxCategoryNameLength);
+            b.Property(x => x.Code).IsRequired().HasMaxLength(PromptConsts.MaxCategoryCodeLength);
+            b.Property(x => x.Description).HasMaxLength(PromptConsts.MaxDescriptionLength);
+            b.HasIndex(x => new { x.TenantId, x.Code }).IsUnique();
+            b.HasIndex(x => x.ParentId);
+        });
+
+        builder.Entity<Prompt>(b =>
+        {
+            b.ToTable(AiPlatformConsts.DbTablePrefix + "Prompts", AiPlatformConsts.DbSchema);
+            b.ConfigureByConvention();
+            b.Property(x => x.Code).IsRequired().HasMaxLength(PromptConsts.MaxCodeLength);
+            b.Property(x => x.Name).IsRequired().HasMaxLength(PromptConsts.MaxNameLength);
+            b.Property(x => x.Description).HasMaxLength(PromptConsts.MaxDescriptionLength);
+            b.HasMany(x => x.Versions).WithOne().HasForeignKey(v => v.PromptId).IsRequired();
+            b.HasIndex(x => new { x.TenantId, x.Code }).IsUnique();
+            b.HasIndex(x => x.CategoryId);
+        });
+
+        builder.Entity<PromptVersion>(b =>
+        {
+            b.ToTable(AiPlatformConsts.DbTablePrefix + "PromptVersions", AiPlatformConsts.DbSchema);
+            b.ConfigureByConvention();
+            b.Property(x => x.SystemPrompt).HasColumnType("text");
+            b.Property(x => x.UserPromptTemplate).HasColumnType("text");
+            b.Property(x => x.JsonSchema).HasColumnType("text");
+            b.Property(x => x.ExpectedOutputSample).HasColumnType("text");
+            b.HasIndex(x => new { x.PromptId, x.VersionNo }).IsUnique();
+        });
+
+        // --- AI Değerlendirme Merkezi: Provider yapılandırması (S2) ---
+        builder.Entity<AiProviderConfig>(b =>
+        {
+            b.ToTable(AiPlatformConsts.DbTablePrefix + "ProviderConfigs", AiPlatformConsts.DbSchema);
+            b.ConfigureByConvention();
+            b.Property(x => x.DisplayName).IsRequired().HasMaxLength(ProviderConsts.MaxDisplayNameLength);
+            b.Property(x => x.Model).IsRequired().HasMaxLength(ProviderConsts.MaxModelLength);
+            b.Property(x => x.ApiKey).HasColumnType("text");
+            b.HasIndex(x => new { x.TenantId, x.Provider });
+        });
+
+        // --- AI Değerlendirme Merkezi: Form binding + Değerlendirme pipeline (S3) ---
+        builder.Entity<AiFormBinding>(b =>
+        {
+            b.ToTable(AiPlatformConsts.DbTablePrefix + "FormBindings", AiPlatformConsts.DbSchema);
+            b.ConfigureByConvention();
+            b.HasIndex(x => new { x.DocumentId, x.IsActive });
+            b.HasIndex(x => x.PromptId);
+        });
+
+        builder.Entity<AiEvaluation>(b =>
+        {
+            b.ToTable(AiPlatformConsts.DbTablePrefix + "Evaluations", AiPlatformConsts.DbSchema);
+            b.ConfigureByConvention();
+            b.Property(x => x.ErrorMessage).HasMaxLength(EvaluationConsts.MaxErrorMessageLength);
+            // 1:1 result (optional until the evaluation completes); the FK gets a unique index.
+            b.HasOne(x => x.Result)
+                .WithOne()
+                .HasForeignKey<AiEvaluationResult>(r => r.EvaluationId)
+                .IsRequired(false)
+                .OnDelete(DeleteBehavior.Cascade);
+            b.HasIndex(x => new { x.ResponseId, x.PromptId });
+            b.HasIndex(x => new { x.Status, x.CreationTime });
+            b.HasIndex(x => x.DocumentId);
+        });
+
+        builder.Entity<AiEvaluationResult>(b =>
+        {
+            b.ToTable(AiPlatformConsts.DbTablePrefix + "EvaluationResults", AiPlatformConsts.DbSchema);
+            b.ConfigureByConvention();
+            b.Property(x => x.RawJson).HasColumnType("text");
+            b.Property(x => x.RiskLevel).HasMaxLength(EvaluationConsts.MaxRiskLevelLength);
+            b.Property(x => x.Decision).HasMaxLength(EvaluationConsts.MaxDecisionLength);
+            b.Property(x => x.Summary).HasColumnType("text");
+        });
+
+        // --- AI Değerlendirme Merkezi: Workflow (S4) ---
+        builder.Entity<AiWorkflow>(b =>
+        {
+            b.ToTable(AiPlatformConsts.DbTablePrefix + "Workflows", AiPlatformConsts.DbSchema);
+            b.ConfigureByConvention();
+            b.Property(x => x.Name).IsRequired().HasMaxLength(WorkflowConsts.MaxNameLength);
+            b.HasMany(x => x.Rules).WithOne().HasForeignKey(r => r.WorkflowId).IsRequired();
+            b.HasIndex(x => new { x.IsActive, x.DocumentId, x.PromptId });
+        });
+
+        builder.Entity<AiWorkflowRule>(b =>
+        {
+            b.ToTable(AiPlatformConsts.DbTablePrefix + "WorkflowRules", AiPlatformConsts.DbSchema);
+            b.ConfigureByConvention();
+            b.Property(x => x.JsonPath).IsRequired().HasMaxLength(WorkflowConsts.MaxJsonPathLength);
+            b.Property(x => x.CompareValue).IsRequired().HasMaxLength(WorkflowConsts.MaxCompareValueLength);
+            b.Property(x => x.ActionPayload).HasColumnType("text");
         });
     }
 }

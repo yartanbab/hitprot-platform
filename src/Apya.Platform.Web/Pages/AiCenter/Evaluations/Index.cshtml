@@ -1,0 +1,30 @@
+@page
+@model Apya.Platform.Web.Pages.AiCenter.Evaluations.IndexModel
+@{
+    ViewBag.Title = "AI Değerlendirmeleri";
+}
+
+@section scripts {
+    <abp-script src="/Pages/AiCenter/Evaluations/Index.js" />
+}
+
+<abp-card>
+    <abp-card-header>
+        <abp-card-title><i class="fa fa-clipboard-check me-2"></i> AI Değerlendirmeleri</abp-card-title>
+    </abp-card-header>
+    <abp-card-body>
+        <p class="text-muted">Form gönderimleriyle tetiklenen değerlendirmeler ve sonuçları. Durum canlı güncellenir.</p>
+        <abp-table striped-rows="true" id="AiEvaluationsTable">
+            <thead>
+                <tr>
+                    <th>İşlemler</th>
+                    <th>Tarih</th>
+                    <th>Durum</th>
+                    <th>Skor</th>
+                    <th>Risk</th>
+                    <th>Karar</th>
+                </tr>
+            </thead>
+        </abp-table>
+    </abp-card-body>
+</abp-card>
