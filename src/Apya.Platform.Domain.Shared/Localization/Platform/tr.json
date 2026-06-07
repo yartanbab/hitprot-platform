@@ -25,6 +25,35 @@
         "Menu:DynamicAssets": "Şablonlar & Formlar",
         "Menu:Reports": "Raporlar & Analiz",
         "Menu:AiSettings": "AI Ayarları",
+        "Menu:AiCenter": "AI Değerlendirme Merkezi",
+        "Menu:AiCenter:Dashboard": "AI Gösterge Paneli",
+        "Menu:AiCenter:Prompts": "Prompt Kütüphanesi",
+        "Menu:AiCenter:PromptCategories": "Prompt Kategorileri",
+        "Menu:AiCenter:Providers": "AI Sağlayıcılar",
+        "Menu:AiCenter:Bindings": "Form Bağlamaları",
+        "Menu:AiCenter:Evaluations": "AI Değerlendirmeleri",
+        "Menu:AiCenter:Workflows": "AI İş Akışları",
+
+        "Permission:Ai": "Yapay Zeka",
+        "Permission:Ai.Dashboard": "AI Gösterge Paneli",
+        "Permission:Ai.Prompts": "Prompt Yönetimi",
+        "Permission:Ai.Prompts.View": "Promptları Görüntüleme",
+        "Permission:Ai.Prompts.Create": "Prompt Oluşturma",
+        "Permission:Ai.Prompts.Edit": "Prompt Düzenleme",
+        "Permission:Ai.Prompts.Delete": "Prompt Silme",
+        "Permission:Ai.Prompts.Publish": "Prompt Yayınlama",
+        "Permission:Ai.Evaluations": "AI Değerlendirmeleri",
+        "Permission:Ai.Evaluations.View": "Değerlendirmeleri Görüntüleme",
+        "Permission:Ai.Evaluations.Trigger": "Değerlendirme Tetikleme",
+        "Permission:Ai.Evaluations.Retry": "Değerlendirmeyi Yeniden Çalıştırma",
+        "Permission:Ai.Results": "AI Sonuçları",
+        "Permission:Ai.Results.View": "Sonuçları Görüntüleme",
+        "Permission:Ai.Results.Export": "Sonuçları Dışa Aktarma",
+        "Permission:Ai.Workflows": "AI İş Akışları",
+        "Permission:Ai.Workflows.Manage": "İş Akışı Yönetimi",
+        "Permission:Ai.Providers": "AI Sağlayıcılar",
+        "Permission:Ai.Providers.Manage": "Sağlayıcı Yönetimi",
+        "Permission:Ai.Reports": "AI Raporları",
 
         "Permission:Platform": "Platform Yönetimi",
 
@@ -211,6 +240,11 @@
         "Platform:Project:CodeAlreadyExists": "Bu proje kodu zaten kullanılıyor.",
         "Platform:File:UnsupportedExtension": "Desteklenmeyen dosya türü. Yalnızca PDF, Office, resim ve arşiv dosyaları yüklenebilir.",
         "Platform:File:SizeExceeded": "Dosya boyutu 25 MB'ı aşamaz.",
-        "Platform:DynamicAssets:FormNotPublished": "Bu form şu anda yayında değil."
+        "Platform:DynamicAssets:FormNotPublished": "Bu form şu anda yayında değil.",
+        "Menu:AiCenter:UsageLogs": "AI Kullanım Kayıtları",
+        "Permission:Ai.UsageLogs": "AI Kullanım Kayıtları",
+        "Menu:AiCenter:Reports": "AI Raporları",
+        "Permission:Ai.Reports.View": "AI Raporlarını Görüntüle",
+        "Permission:Ai.Reports.Export": "AI Raporlarını Dışa Aktar"
     }
 }

@@ -30,6 +30,37 @@ public class AiPermissionDefinitionProvider : PermissionDefinitionProvider
         tenantSettings.AddChild(
             AiPermissions.TenantSettings.Manage,
             L("Permission:Ai.TenantSettings.Manage"));
+
+        // --- AI Değerlendirme Merkezi ---
+        aiGroup.AddPermission(AiPermissions.Dashboard.View, L("Permission:Ai.Dashboard"));
+
+        var prompts = aiGroup.AddPermission(AiPermissions.Prompts.Default, L("Permission:Ai.Prompts"));
+        prompts.AddChild(AiPermissions.Prompts.View, L("Permission:Ai.Prompts.View"));
+        prompts.AddChild(AiPermissions.Prompts.Create, L("Permission:Ai.Prompts.Create"));
+        prompts.AddChild(AiPermissions.Prompts.Edit, L("Permission:Ai.Prompts.Edit"));
+        prompts.AddChild(AiPermissions.Prompts.Delete, L("Permission:Ai.Prompts.Delete"));
+        prompts.AddChild(AiPermissions.Prompts.Publish, L("Permission:Ai.Prompts.Publish"));
+
+        var evaluations = aiGroup.AddPermission(AiPermissions.Evaluations.Default, L("Permission:Ai.Evaluations"));
+        evaluations.AddChild(AiPermissions.Evaluations.View, L("Permission:Ai.Evaluations.View"));
+        evaluations.AddChild(AiPermissions.Evaluations.Trigger, L("Permission:Ai.Evaluations.Trigger"));
+        evaluations.AddChild(AiPermissions.Evaluations.Retry, L("Permission:Ai.Evaluations.Retry"));
+
+        var results = aiGroup.AddPermission(AiPermissions.Results.Default, L("Permission:Ai.Results"));
+        results.AddChild(AiPermissions.Results.View, L("Permission:Ai.Results.View"));
+        results.AddChild(AiPermissions.Results.Export, L("Permission:Ai.Results.Export"));
+
+        var workflows = aiGroup.AddPermission(AiPermissions.Workflows.Default, L("Permission:Ai.Workflows"));
+        workflows.AddChild(AiPermissions.Workflows.Manage, L("Permission:Ai.Workflows.Manage"));
+
+        var providers = aiGroup.AddPermission(AiPermissions.Providers.Default, L("Permission:Ai.Providers"));
+        providers.AddChild(AiPermissions.Providers.Manage, L("Permission:Ai.Providers.Manage"));
+
+        var reports = aiGroup.AddPermission(AiPermissions.Reports.Default, L("Permission:Ai.Reports"));
+        reports.AddChild(AiPermissions.Reports.View, L("Permission:Ai.Reports.View"));
+        reports.AddChild(AiPermissions.Reports.Export, L("Permission:Ai.Reports.Export"));
+
+        aiGroup.AddPermission(AiPermissions.UsageLogs.View, L("Permission:Ai.UsageLogs"));
     }
 
     private static LocalizableString L(string name)

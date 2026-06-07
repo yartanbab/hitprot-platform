@@ -430,4 +430,119 @@ internal static class ReportExporter
         CustomerLedgerSource.Opening => "Açılış",
         _ => "Manuel"
     };
+
+    // ─── AI EVALUATION SUMMARY (reuses the same ClosedXML/QuestPDF engine) ─────
+
+    public static byte[] AiSummaryToExcel(Apya.Platform.Ai.Dashboard.AiDashboardDto d)
+    {
+        using var wb = new XLWorkbook();
+        var ws = wb.AddWorksheet("AI Özet");
+
+        ws.Cell(1, 1).Value = "AI Değerlendirme Özeti";
+        ws.Range(1, 1, 1, 2).Merge().Style.Font.Bold = true;
+
+        ws.Cell(3, 1).Value = "Toplam Değerlendirme"; ws.Cell(3, 2).Value = d.TotalEvaluations;
+        ws.Cell(4, 1).Value = "Tamamlandı"; ws.Cell(4, 2).Value = d.Completed;
+        ws.Cell(5, 1).Value = "İşleniyor"; ws.Cell(5, 2).Value = d.Processing;
+        ws.Cell(6, 1).Value = "Bekliyor"; ws.Cell(6, 2).Value = d.Pending;
+        ws.Cell(7, 1).Value = "Başarısız"; ws.Cell(7, 2).Value = d.Failed;
+        ws.Cell(8, 1).Value = "Skorlu Sonuç"; ws.Cell(8, 2).Value = d.ScoredCount;
+        ws.Cell(9, 1).Value = "Ortalama Skor";
+        if (d.AverageScore.HasValue) ws.Cell(9, 2).Value = d.AverageScore.Value;
+        ws.Cell(10, 1).Value = "Prompt Sayısı"; ws.Cell(10, 2).Value = d.PromptCount;
+        ws.Cell(11, 1).Value = "Sağlayıcı Sayısı"; ws.Cell(11, 2).Value = d.ProviderCount;
+        ws.Cell(12, 1).Value = "Aktif İş Akışı"; ws.Cell(12, 2).Value = d.ActiveWorkflowCount;
+
+        for (int r = 3; r <= 12; r++) ws.Cell(r, 1).Style.Font.Bold = true;
+
+        int row = 14;
+        if (d.RiskDistribution.Count > 0)
+        {
+            ws.Cell(row, 1).Value = "Risk Dağılımı";
+            ws.Cell(row, 1).Style.Font.Bold = true;
+            row++;
+            ws.Cell(row, 1).Value = "Seviye"; ws.Cell(row, 2).Value = "Sayı";
+            ws.Cell(row, 1).Style.Font.Bold = true; ws.Cell(row, 2).Style.Font.Bold = true;
+            ws.Cell(row, 1).Style.Fill.BackgroundColor = XLColor.LightGray;
+            ws.Cell(row, 2).Style.Fill.BackgroundColor = XLColor.LightGray;
+            row++;
+            foreach (var b in d.RiskDistribution)
+            {
+                ws.Cell(row, 1).Value = b.Label;
+                ws.Cell(row, 2).Value = b.Count;
+                row++;
+            }
+        }
+
+        ws.Columns().AdjustToContents();
+        using var ms = new MemoryStream();
+        wb.SaveAs(ms);
+        return ms.ToArray();
+    }
+
+    public static byte[] AiSummaryToPdf(Apya.Platform.Ai.Dashboard.AiDashboardDto d, DateTime? now = null)
+    {
+        return Document.Create(container =>
+        {
+            container.Page(page =>
+            {
+                page.Size(PageSizes.A4);
+                page.Margin(1.5f, Unit.Centimetre);
+                page.DefaultTextStyle(t => t.FontSize(10));
+
+                page.Header().Text("AI Değerlendirme Özeti").Bold().FontSize(13);
+
+                page.Content().Column(col =>
+                {
+                    col.Item().Table(table =>
+                    {
+                        table.ColumnsDefinition(c => { c.RelativeColumn(); c.ConstantColumn(120); });
+                        static IContainer InfoCell(IContainer c) => c.Padding(4).BorderBottom(0.5f, Unit.Point);
+                        void Row(string label, string value)
+                        {
+                            table.Cell().Element(InfoCell).Text(label).Bold();
+                            table.Cell().Element(InfoCell).AlignRight().Text(value);
+                        }
+                        Row("Toplam Değerlendirme", d.TotalEvaluations.ToString());
+                        Row("Tamamlandı", d.Completed.ToString());
+                        Row("İşleniyor", d.Processing.ToString());
+                        Row("Bekliyor", d.Pending.ToString());
+                        Row("Başarısız", d.Failed.ToString());
+                        Row("Skorlu Sonuç", d.ScoredCount.ToString());
+                        Row("Ortalama Skor", d.AverageScore.HasValue ? d.AverageScore.Value.ToString("0.0") : "—");
+                        Row("Prompt / Sağlayıcı / Aktif İş Akışı",
+                            $"{d.PromptCount} / {d.ProviderCount} / {d.ActiveWorkflowCount}");
+                    });
+
+                    col.Item().Height(12);
+
+                    if (d.RiskDistribution.Count > 0)
+                    {
+                        col.Item().Text("Risk Dağılımı").Bold().FontSize(11);
+                        col.Item().Height(4);
+                        col.Item().Table(table =>
+                        {
+                            table.ColumnsDefinition(c => { c.RelativeColumn(); c.ConstantColumn(90); });
+                            static IContainer HeaderCell(IContainer c) => c.Background("#e0e0e0").Padding(4);
+                            static IContainer DataCell(IContainer c) => c.BorderBottom(0.5f, Unit.Point).Padding(4);
+                            table.Header(h =>
+                            {
+                                h.Cell().Element(HeaderCell).Text("Seviye").Bold();
+                                h.Cell().Element(HeaderCell).Text("Sayı").Bold();
+                            });
+                            foreach (var b in d.RiskDistribution)
+                            {
+                                table.Cell().Element(DataCell).Text(b.Label);
+                                table.Cell().Element(DataCell).AlignRight().Text(b.Count.ToString());
+                            }
+                        });
+                    }
+                });
+
+                page.Footer().AlignRight()
+                    .Text($"Oluşturma: {(now ?? DateTime.UtcNow):dd.MM.yyyy HH:mm}")
+                    .FontSize(8).Italic().FontColor(Colors.Grey.Medium);
+            });
+        }).GeneratePdf();
+    }
 }

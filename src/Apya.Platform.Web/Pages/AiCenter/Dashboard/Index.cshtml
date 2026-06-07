@@ -1,0 +1,101 @@
+@page
+@using System.Linq
+@using System.Text.Json
+@model Apya.Platform.Web.Pages.AiCenter.Dashboard.IndexModel
+@{
+    ViewBag.Title = "AI Gösterge Paneli";
+    var d = Model.Data;
+    var riskLabels = JsonSerializer.Serialize(d.RiskDistribution.Select(x => x.Label));
+    var riskCounts = JsonSerializer.Serialize(d.RiskDistribution.Select(x => x.Count));
+}
+
+<div class="row g-3 mb-3">
+    <div class="col-md-3">
+        <abp-card><abp-card-body>
+            <div class="text-muted small">Toplam Değerlendirme</div>
+            <div class="fs-2 fw-bold">@d.TotalEvaluations</div>
+        </abp-card-body></abp-card>
+    </div>
+    <div class="col-md-3">
+        <abp-card><abp-card-body>
+            <div class="text-muted small">Ortalama Skor</div>
+            <div class="fs-2 fw-bold">@(d.AverageScore.HasValue ? d.AverageScore.Value.ToString("0.0") : "—")</div>
+            <div class="text-muted small">@d.ScoredCount skorlu sonuç</div>
+        </abp-card-body></abp-card>
+    </div>
+    <div class="col-md-3">
+        <abp-card><abp-card-body>
+            <div class="text-muted small">Tamamlanan / Başarısız</div>
+            <div class="fs-2 fw-bold"><span class="text-success">@d.Completed</span> / <span class="text-danger">@d.Failed</span></div>
+        </abp-card-body></abp-card>
+    </div>
+    <div class="col-md-3">
+        <abp-card><abp-card-body>
+            <div class="text-muted small">Prompt / Sağlayıcı / Aktif İş Akışı</div>
+            <div class="fs-4 fw-bold">@d.PromptCount / @d.ProviderCount / @d.ActiveWorkflowCount</div>
+        </abp-card-body></abp-card>
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-md-6">
+        <abp-card>
+            <abp-card-header><abp-card-title><i class="fa fa-list-check me-2"></i> Durum Dağılımı</abp-card-title></abp-card-header>
+            <abp-card-body>
+                <canvas id="statusChart" style="max-height:260px;"></canvas>
+            </abp-card-body>
+        </abp-card>
+    </div>
+    <div class="col-md-6">
+        <abp-card>
+            <abp-card-header><abp-card-title><i class="fa fa-triangle-exclamation me-2"></i> Risk Dağılımı</abp-card-title></abp-card-header>
+            <abp-card-body>
+                @if (d.RiskDistribution.Count == 0)
+                {
+                    <p class="text-muted">Henüz risk verisi yok.</p>
+                }
+                else
+                {
+                    <canvas id="riskChart" style="max-height:260px;"></canvas>
+                }
+            </abp-card-body>
+        </abp-card>
+    </div>
+</div>
+
+@section scripts {
+    <script src="~/js/chart.umd.min.js"></script>
+    <script>
+        (function () {
+            var s = document.getElementById('statusChart');
+            if (s && window.Chart) {
+                new Chart(s, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Tamamlandı', 'İşleniyor', 'Bekliyor', 'Başarısız'],
+                        datasets: [{
+                            data: [@d.Completed, @d.Processing, @d.Pending, @d.Failed],
+                            backgroundColor: ['#198754', '#0dcaf0', '#ffc107', '#dc3545']
+                        }]
+                    },
+                    options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
+                });
+            }
+            var r = document.getElementById('riskChart');
+            if (r && window.Chart) {
+                new Chart(r, {
+                    type: 'bar',
+                    data: {
+                        labels: @Html.Raw(riskLabels),
+                        datasets: [{ label: 'Sayı', data: @Html.Raw(riskCounts), backgroundColor: '#0d6efd' }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: { legend: { display: false } },
+                        scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
+                    }
+                });
+            }
+        })();
+    </script>
+}

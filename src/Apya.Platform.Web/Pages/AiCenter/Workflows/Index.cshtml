@@ -1,0 +1,42 @@
+@page
+@using Apya.Platform.Ai.Permissions
+@using Microsoft.AspNetCore.Authorization
+@inject IAuthorizationService AuthorizationService
+@model Apya.Platform.Web.Pages.AiCenter.Workflows.IndexModel
+@{
+    ViewBag.Title = "AI İş Akışları";
+}
+
+@section scripts {
+    <abp-script src="/Pages/AiCenter/Workflows/Index.js" />
+}
+
+<abp-card>
+    <abp-card-header>
+        <abp-row>
+            <abp-column size-md="_7">
+                <abp-card-title><i class="fa fa-diagram-project me-2"></i> AI İş Akışları</abp-card-title>
+            </abp-column>
+            <abp-column size-md="_5" class="text-end">
+                @if (await AuthorizationService.IsGrantedAsync(AiPermissions.Workflows.Manage))
+                {
+                    <abp-button id="NewWorkflowButton" text="Yeni İş Akışı" icon="plus" button-type="Primary" />
+                }
+            </abp-column>
+        </abp-row>
+    </abp-card-header>
+    <abp-card-body>
+        <p class="text-muted">Değerlendirme tamamlandığında çalışan kural setleri (koşul → aksiyon). Kuralları düzenlemek için "Kurallar"a tıklayın.</p>
+        <abp-table striped-rows="true" id="AiWorkflowsTable">
+            <thead>
+                <tr>
+                    <th>İşlemler</th>
+                    <th>Ad</th>
+                    <th>Kapsam</th>
+                    <th>Kural</th>
+                    <th>Durum</th>
+                </tr>
+            </thead>
+        </abp-table>
+    </abp-card-body>
+</abp-card>

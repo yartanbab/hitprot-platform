@@ -1,0 +1,44 @@
+@page
+@model Apya.Platform.Web.Pages.AiCenter.UsageLogs.IndexModel
+@{
+    ViewBag.Title = "AI Kullanım Kayıtları";
+}
+
+@section scripts {
+    <abp-script src="/Pages/AiCenter/UsageLogs/Index.js" />
+}
+
+<abp-card>
+    <abp-card-header>
+        <abp-card-title><i class="fa fa-receipt me-2"></i> AI Kullanım Kayıtları</abp-card-title>
+    </abp-card-header>
+    <abp-card-body>
+        <abp-row class="mb-3 g-2">
+            <abp-column size-md="_4">
+                <input type="text" id="ProviderFilter" class="form-control form-control-sm"
+                       placeholder="Sağlayıcı (örn: Claude)..." />
+            </abp-column>
+            <abp-column size-md="_4">
+                <select id="StatusFilter" class="form-select form-select-sm">
+                    <option value="">Tüm durumlar</option>
+                    <option value="0">Bekliyor</option>
+                    <option value="1">İşleniyor</option>
+                    <option value="2">Tamamlandı</option>
+                    <option value="3">Başarısız</option>
+                </select>
+            </abp-column>
+        </abp-row>
+        <abp-table striped-rows="true" id="UsageLogsTable">
+            <thead>
+                <tr>
+                    <th>Tarih</th>
+                    <th>Sağlayıcı</th>
+                    <th>Tür</th>
+                    <th>Durum</th>
+                    <th>Token</th>
+                    <th>Süre (ms)</th>
+                </tr>
+            </thead>
+        </abp-table>
+    </abp-card-body>
+</abp-card>

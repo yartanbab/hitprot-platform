@@ -1,0 +1,95 @@
+@page
+@using Apya.Platform.Ai.Permissions
+@using Microsoft.AspNetCore.Authorization
+@inject IAuthorizationService AuthorizationService
+@model Apya.Platform.Web.Pages.AiCenter.Workflows.RulesModel
+@{
+    ViewBag.Title = "İş Akışı Kuralları";
+}
+
+<abp-card>
+    <abp-card-header>
+        <abp-row>
+            <abp-column size-md="_8">
+                <abp-card-title>
+                    <i class="fa fa-diagram-project me-2"></i> @Model.Workflow.Name
+                    <small class="text-muted">(@(Model.Workflow.IsActive ? "Aktif" : "Pasif"))</small>
+                </abp-card-title>
+            </abp-column>
+            <abp-column size-md="_4" class="text-end">
+                <a href="@Url.Page("Index")" class="btn btn-sm btn-outline-secondary">
+                    <i class="fa fa-arrow-left me-1"></i> İş Akışları
+                </a>
+            </abp-column>
+        </abp-row>
+    </abp-card-header>
+    <abp-card-body>
+        <table class="table table-striped align-middle">
+            <thead>
+                <tr>
+                    <th>#</th><th>Alan</th><th>Operatör</th><th>Değer</th><th>Aksiyon</th><th>Payload</th>
+                    <th class="text-end">İşlem</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var r in Model.Workflow.Rules)
+                {
+                    <tr>
+                        <td>@r.Order</td>
+                        <td><code>@r.JsonPath</code></td>
+                        <td>@r.OperatorText</td>
+                        <td>@r.CompareValue</td>
+                        <td>@r.ActionTypeText</td>
+                        <td>@(r.ActionPayload ?? "—")</td>
+                        <td class="text-end">
+                            @if (await AuthorizationService.IsGrantedAsync(AiPermissions.Workflows.Manage))
+                            {
+                                <form method="post" asp-page-handler="RemoveRule" asp-route-id="@Model.Id" asp-route-ruleId="@r.Id" class="d-inline">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger"><i class="fa fa-trash"></i></button>
+                                </form>
+                            }
+                        </td>
+                    </tr>
+                }
+                @if (Model.Workflow.Rules.Count == 0)
+                {
+                    <tr><td colspan="7" class="text-muted">Henüz kural yok.</td></tr>
+                }
+            </tbody>
+        </table>
+    </abp-card-body>
+</abp-card>
+
+@if (await AuthorizationService.IsGrantedAsync(AiPermissions.Workflows.Manage))
+{
+    <abp-card>
+        <abp-card-header><abp-card-title><i class="fa fa-plus me-2"></i> Yeni Kural</abp-card-title></abp-card-header>
+        <abp-card-body>
+            <form method="post" asp-page-handler="AddRule" asp-route-id="@Model.Id">
+                <abp-row>
+                    <abp-column size-md="_3">
+                        <label class="form-label">Alan (örn: score, riskLevel)</label>
+                        <input asp-for="NewRule.JsonPath" class="form-control" />
+                    </abp-column>
+                    <abp-column size-md="_2">
+                        <label class="form-label">Operatör</label>
+                        <select asp-for="NewRule.Operator" asp-items="Model.Operators" class="form-select"></select>
+                    </abp-column>
+                    <abp-column size-md="_2">
+                        <label class="form-label">Değer</label>
+                        <input asp-for="NewRule.CompareValue" class="form-control" />
+                    </abp-column>
+                    <abp-column size-md="_2">
+                        <label class="form-label">Aksiyon</label>
+                        <select asp-for="NewRule.ActionType" asp-items="Model.ActionTypes" class="form-select"></select>
+                    </abp-column>
+                    <abp-column size-md="_3">
+                        <label class="form-label">Payload <small class="text-muted">(Notify → kullanıcı Id)</small></label>
+                        <input asp-for="NewRule.ActionPayload" class="form-control" />
+                    </abp-column>
+                </abp-row>
+                <button type="submit" class="btn btn-primary mt-3"><i class="fa fa-save me-1"></i> Kural Ekle</button>
+            </form>
+        </abp-card-body>
+    </abp-card>
+}

@@ -139,6 +139,23 @@ namespace Apya.Platform.EntityFrameworkCore
         public DbSet<AiDecisionTrace> AiDecisionTraces { get; set; }
         public DbSet<Apya.Platform.Ai.Tenants.TenantAiSettings> TenantAiSettings { get; set; }
 
+        /* --- AI DEĞERLENDİRME MERKEZİ — PROMPT YÖNETİMİ (S1) --- */
+        public DbSet<Apya.Platform.Ai.Prompts.PromptCategory> AiPromptCategories { get; set; }
+        public DbSet<Apya.Platform.Ai.Prompts.Prompt> AiPrompts { get; set; }
+        public DbSet<Apya.Platform.Ai.Prompts.PromptVersion> AiPromptVersions { get; set; }
+
+        /* --- AI DEĞERLENDİRME MERKEZİ — PROVIDER YAPILANDIRMASI (S2) --- */
+        public DbSet<Apya.Platform.Ai.Providers.AiProviderConfig> AiProviderConfigs { get; set; }
+
+        /* --- AI DEĞERLENDİRME MERKEZİ — DEĞERLENDİRME PIPELINE (S3) --- */
+        public DbSet<Apya.Platform.Ai.Bindings.AiFormBinding> AiFormBindings { get; set; }
+        public DbSet<Apya.Platform.Ai.Evaluations.AiEvaluation> AiEvaluations { get; set; }
+        public DbSet<Apya.Platform.Ai.Evaluations.AiEvaluationResult> AiEvaluationResults { get; set; }
+
+        /* --- AI DEĞERLENDİRME MERKEZİ — WORKFLOW (S4) --- */
+        public DbSet<Apya.Platform.Ai.Workflows.AiWorkflow> AiWorkflows { get; set; }
+        public DbSet<Apya.Platform.Ai.Workflows.AiWorkflowRule> AiWorkflowRules { get; set; }
+
         /* --- DİNAMİK VARLIKLAR (DYNAMIC ASSETS) MODÜLÜ --- */
         public DbSet<AppDocument> AppDocuments { get; set; }
         public DbSet<AppBlock> AppBlocks { get; set; }

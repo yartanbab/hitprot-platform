@@ -1,0 +1,19 @@
+@page
+@model Apya.Platform.Web.Pages.AiCenter.Workflows.CreateModalModel
+@using Volo.Abp.AspNetCore.Mvc.UI.Bootstrap.TagHelpers.Modal
+@{
+    Layout = null;
+}
+<abp-dynamic-form abp-model="Workflow" asp-page="/AiCenter/Workflows/CreateModal">
+    <abp-modal>
+        <abp-modal-header title="Yeni AI İş Akışı"></abp-modal-header>
+        <abp-modal-body>
+            <abp-input asp-for="Workflow.Name" label="Ad" />
+            <abp-select asp-for="Workflow.DocumentId" asp-items="Model.Forms" label="Form Kapsamı (opsiyonel)" />
+            <abp-select asp-for="Workflow.PromptId" asp-items="Model.Prompts" label="Prompt Kapsamı (opsiyonel)" />
+            <abp-input asp-for="Workflow.IsActive" label="Aktif" />
+            <small class="text-muted">Kapsam boş bırakılırsa iş akışı tüm değerlendirmelere uygulanır. Kuralları oluşturduktan sonra "Kurallar" ekranından ekleyin.</small>
+        </abp-modal-body>
+        <abp-modal-footer buttons="@(AbpModalButtons.Cancel | AbpModalButtons.Save)"></abp-modal-footer>
+    </abp-modal>
+</abp-dynamic-form>

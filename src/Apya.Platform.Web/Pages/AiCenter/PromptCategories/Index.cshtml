@@ -1,0 +1,45 @@
+@page
+@using Apya.Platform.Ai.Permissions
+@using Microsoft.AspNetCore.Authorization
+@inject IAuthorizationService AuthorizationService
+@model Apya.Platform.Web.Pages.AiCenter.PromptCategories.IndexModel
+@{
+    ViewBag.Title = "Prompt Kategorileri";
+}
+
+@section scripts {
+    <abp-script src="/Pages/AiCenter/PromptCategories/Index.js" />
+}
+
+<abp-card>
+    <abp-card-header>
+        <abp-row>
+            <abp-column size-md="_6">
+                <abp-card-title>
+                    <i class="fa fa-folder-tree me-2"></i> Prompt Kategorileri
+                </abp-card-title>
+            </abp-column>
+            <abp-column size-md="_6" class="text-end">
+                @if (await AuthorizationService.IsGrantedAsync(AiPermissions.Prompts.Edit))
+                {
+                    <abp-button id="NewPromptCategoryButton"
+                                text="Yeni Kategori"
+                                icon="plus"
+                                button-type="Primary" />
+                }
+            </abp-column>
+        </abp-row>
+    </abp-card-header>
+    <abp-card-body>
+        <abp-table striped-rows="true" id="PromptCategoriesTable">
+            <thead>
+                <tr>
+                    <th>İşlemler</th>
+                    <th>Ad</th>
+                    <th>Kod</th>
+                    <th>Açıklama</th>
+                </tr>
+            </thead>
+        </abp-table>
+    </abp-card-body>
+</abp-card>
