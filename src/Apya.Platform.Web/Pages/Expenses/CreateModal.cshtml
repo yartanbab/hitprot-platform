@@ -8,6 +8,9 @@
     <abp-modal>
         <abp-modal-header title="Yeni Gider"></abp-modal-header>
         <abp-modal-body>
+            @* Görev panelinden açılınca TaskId query'den gelir; POST'ta korunması için gizli alan.
+               Eksikti → gider TaskId'siz oluşuyor, görevin Finans sekmesinde listelenmiyordu. *@
+            <input type="hidden" asp-for="Expense.TaskId" />
             <abp-input asp-for="Expense.Title" label="Başlık" />
             <abp-row>
                 <abp-column size-md="_4">
