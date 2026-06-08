@@ -48,6 +48,8 @@ public class PlatformMenuContributor : IMenuContributor
             work.AddItem(new ApplicationMenuItem("Apya.Work.Tasks", l["Menu:Tasks"], icon: "fa fa-tasks", url: "/Tasks"));
             work.AddItem(new ApplicationMenuItem("Apya.Work.Board", l["Menu:KanbanBoard"], icon: "fa fa-columns", url: "/Board"));
         }
+        if (await permission.IsGrantedAsync(PlatformPermissions.Calendars.Default))
+            work.AddItem(new ApplicationMenuItem("Apya.Work.Calendar", l["Menu:Calendar"], icon: "fa fa-calendar-days", url: "/Calendars"));
         if (work.Items.Count > 0) context.Menu.AddItem(work);
 
         // Finans
