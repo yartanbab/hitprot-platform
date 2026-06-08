@@ -144,15 +144,19 @@ namespace Apya.Platform.Web.Pages.Tasks
                 StartDate = Clock.Now
             };
 
-            await _taskAppService.CreateAsync(subTask);
-            return NoContent();
+            // Yeni alt görevin Id'sini döndür ki istemci, satırı anında çalışır
+            // (düzenle/sil butonlu) render edebilsin — eskiden NoContent dönüp
+            // butonları disabled bırakıyordu, ancak reopen sonrası çalışıyordu.
+            var created = await _taskAppService.CreateAsync(subTask);
+            return new JsonResult(new { id = created.Id, title = created.Title });
         }
 
         public async Task<IActionResult> OnPostAddCommentAsync(Guid taskId, string commentText)
         {
             if (string.IsNullOrWhiteSpace(commentText)) return NoContent();
-            await _taskAppService.AddCommentAsync(taskId, commentText);
-            return NoContent();
+            // Yeni yorumun Id'sini döndür ki istemci, satırı düzenle/sil butonlu çizebilsin.
+            var id = await _taskAppService.AddCommentAsync(taskId, commentText);
+            return new JsonResult(new { id });
         }
 
         public async Task<IActionResult> OnPostUploadFileAsync(Guid taskId, IFormFile file)

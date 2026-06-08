@@ -99,6 +99,8 @@ namespace Apya.Platform.Tasks
                 {
                     var entityComment = task.Comments.FirstOrDefault(x => x.Id == c.Id);
                     c.AuthorName = (entityComment?.CreatorId.HasValue == true && userMap.ContainsKey(entityComment.CreatorId.Value)) ? userMap[entityComment.CreatorId.Value] : "Bilinmeyen Kullanıcı";
+                    c.AuthorId = entityComment?.CreatorId;
+                    c.IsOwn = entityComment?.CreatorId == CurrentUser.Id;
                 }
             }
 
@@ -321,14 +323,14 @@ namespace Apya.Platform.Tasks
         }
 
         // --- 6. YORUM METODLARI ---
-        public async Task AddCommentAsync(Guid taskId, string text)
+        public async Task<Guid> AddCommentAsync(Guid taskId, string text)
         {
             if (string.IsNullOrWhiteSpace(text))
             {
                 throw new Volo.Abp.UserFriendlyException("Yorum içeriği boş olamaz.", "Platform:Task:CommentRequired");
             }
 
-            var comment = await _commentRepository.InsertAsync(new TaskComment(taskId, text.Trim()));
+            var comment = await _commentRepository.InsertAsync(new TaskComment(taskId, text.Trim()), autoSave: true);
 
             // BİLDİRİM: Yorum yapıldı event'ini yayınla
             var task = await Repository.GetAsync(taskId);
@@ -342,6 +344,38 @@ namespace Apya.Platform.Tasks
                 CommenterName = CurrentUser.UserName ?? "Bilinmeyen",
                 CommentText   = text
             });
+
+            return comment.Id;
+        }
+
+        // Yorum düzenleme — yalnızca yorumu yazan kişi.
+        public async Task UpdateCommentAsync(Guid commentId, string text)
+        {
+            if (string.IsNullOrWhiteSpace(text))
+            {
+                throw new Volo.Abp.UserFriendlyException("Yorum içeriği boş olamaz.", "Platform:Task:CommentRequired");
+            }
+
+            var comment = await _commentRepository.GetAsync(commentId);
+            if (comment.CreatorId != CurrentUser.Id)
+            {
+                throw new Volo.Abp.UserFriendlyException("Yalnızca kendi yorumunuzu düzenleyebilirsiniz.");
+            }
+
+            comment.SetText(text);
+            await _commentRepository.UpdateAsync(comment, autoSave: true);
+        }
+
+        // Yorum silme — yalnızca yorumu yazan kişi.
+        public async Task DeleteCommentAsync(Guid commentId)
+        {
+            var comment = await _commentRepository.GetAsync(commentId);
+            if (comment.CreatorId != CurrentUser.Id)
+            {
+                throw new Volo.Abp.UserFriendlyException("Yalnızca kendi yorumunuzu silebilirsiniz.");
+            }
+
+            await _commentRepository.DeleteAsync(comment, autoSave: true);
         }
 
 
@@ -365,6 +399,8 @@ namespace Apya.Platform.Tasks
                 Id = c.Id,
                 Text = c.Text,
                 CreationTime = c.CreationTime,
+                AuthorId = c.CreatorId,
+                IsOwn = c.CreatorId == CurrentUser.Id,
                 AuthorName = (c.CreatorId.HasValue && userDictionary.ContainsKey(c.CreatorId.Value))
                              ? userDictionary[c.CreatorId.Value]
                              : "Bilinmeyen Kullanıcı"
