@@ -5,6 +5,17 @@ $(function () {
     var THEME_KEY = 'apya-theme';
     var $html = $(document.documentElement);
 
+    // Dark mode GEÇİCİ OLARAK kapalı (beyaz buton / görünmez yazı regresyonu).
+    // Açmak için: true yap (+ _ApyaThemeBootstrap.cshtml OS-duyarlı bloğunu geri getir).
+    var DARK_MODE_ENABLED = false;
+
+    if (!DARK_MODE_ENABLED) {
+        applyTheme('light');
+        try { localStorage.setItem(THEME_KEY, 'light'); } catch (e) { /* yok say */ }
+        $('#ThemeToggle').remove(); // toggle gösterme, dark'a geçişe izin verme
+        return;
+    }
+
     // FOUC script zaten html'yi set etmiş olabilir; yoksa localStorage'dan oku.
     var savedTheme = localStorage.getItem(THEME_KEY) || 'light';
     applyTheme(savedTheme);
