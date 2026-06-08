@@ -83,7 +83,10 @@ if (await permission.IsGrantedAsync(PlatformPermissions.Reports.TrialBalance)
         if (await permission.IsGrantedAsync(PlatformPermissions.Documents.Default))
             content.AddItem(new ApplicationMenuItem("Apya.Content.Documents", l["Menu:Documents"], icon: "fa fa-book", url: "/Documents"));
         if (await permission.IsGrantedAsync(PlatformPermissions.DynamicAssets.Default))
+        {
             content.AddItem(new ApplicationMenuItem("Apya.Content.DynamicAssets", l["Menu:DynamicAssets"], icon: "fa fa-file-signature", url: "/DynamicAssets"));
+            content.AddItem(new ApplicationMenuItem("Apya.Content.Webhooks", l["Menu:Webhooks"], icon: "fa fa-bolt", url: "/DynamicAssets/Webhooks"));
+        }
         if (content.Items.Count > 0) context.Menu.AddItem(content);
 
         // AI Değerlendirme Merkezi (AI Evaluation Center) — AiAssist feature + Ai.Prompts yetkisi

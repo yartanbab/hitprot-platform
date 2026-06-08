@@ -1,0 +1,41 @@
+@page
+@using System.Text.Json
+@using Microsoft.AspNetCore.Authorization
+@using Apya.Platform.Permissions
+@inject IAuthorizationService AuthorizationService
+@model Apya.Platform.Web.Pages.DynamicAssets.Webhooks.IndexModel
+@{
+    ViewBag.PageTitle = "Webhook Yönetimi";
+}
+@section scripts {
+    <script>
+        window.webhookFormNames = @Html.Raw(JsonSerializer.Serialize(Model.FormNames));
+    </script>
+    <abp-script src="/Pages/DynamicAssets/Webhooks/Index.js" />
+}
+
+<abp-card>
+    <abp-card-header>
+        <abp-card-title><i class="fa fa-bolt me-2"></i>Webhook Yönetimi</abp-card-title>
+    </abp-card-header>
+    <abp-card-body class="p-0">
+        <div class="p-3">
+            <div class="alert alert-light border d-flex align-items-center mb-3 py-2">
+                <i class="fa fa-circle-info text-primary me-2"></i>
+                <small class="text-muted">
+                    Formlarınıza yanıt geldiğinde belirttiğiniz URL'ye HMAC imzalı bildirim gönderilir.
+                    Teslimatları her abonelik için <strong>Teslimat Kayıtları</strong>'ndan izleyebilirsiniz.
+                </small>
+            </div>
+            <div class="d-flex justify-content-end mb-2">
+                @if (await AuthorizationService.IsGrantedAsync(PlatformPermissions.DynamicAssets.Create))
+                {
+                    <button id="NewWebhookButton" class="btn btn-primary btn-sm">
+                        <i class="fa fa-plus"></i> Yeni Webhook
+                    </button>
+                }
+            </div>
+            <abp-table striped-rows="true" id="WebhookSubscriptionsTable" class="nowrap"></abp-table>
+        </div>
+    </abp-card-body>
+</abp-card>
