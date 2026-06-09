@@ -13,24 +13,9 @@
 
     <abp-modal-body class="p-0 bg-light">
         
-        <!-- ZAMAN TAKİBİ (TIME TRACKING) BANNER
-             GEÇİCİ OLARAK GİZLİ (2026-06-09, kullanıcı isteği: "sonra lazım olursa tekrar gündeme alırız").
-             Tekrar göstermek için aşağıdaki div'den style="display:none;" kaldırılması yeterli. -->
-        <div class="d-flex justify-content-between align-items-center bg-white px-4 py-3 border-bottom shadow-sm" style="display:none;">
-            <div>
-                <span class="badge bg-dark bg-opacity-10 text-dark border border-secondary rounded-pill px-3 py-2 fs-6">
-                    <i class="fa fa-clock text-primary me-2"></i>Zaman Takibi (Kronometre)
-                </span>
-            </div>
-            <div>
-                <button type="button" class="btn btn-outline-danger rounded-pill fw-bold shadow-sm px-4 pulse-animation" id="BtnStopTimer" style="display:none; transition: all 0.3s;">
-                    <i class="fa fa-stop-circle me-1"></i> <span id="TimerElapsed">00:00:00</span>
-                </button>
-                <button type="button" class="btn btn-success rounded-pill fw-bold shadow-sm px-4" id="BtnStartTimer" style="transition: all 0.3s;">
-                    <i class="fa fa-play me-1"></i> Süreyi Başlat
-                </button>
-            </div>
-        </div>
+        @* ZAMAN TAKİBİ (Kronometre / Süreyi Başlat) banner'ı kullanıcı isteğiyle KALDIRILDI (2026-06-09).
+           İlgili timer JS'i (refreshTimerState / BtnStartTimer / BtnStopTimer) DOM'da karşılığı olmadığı
+           için artık inert (no-op). Gerekirse git geçmişinden geri getirilebilir. *@
 
         <ul class="nav nav-tabs nav-justified px-3 pt-3 border-bottom-0 shadow-sm bg-white" id="taskTabs_@Model.Id" role="tablist">
             <li class="nav-item">
@@ -714,8 +699,9 @@
         });
     });
 
-    // INIT
-    setTimeout(refreshTimerState, 300);
+    // INIT — Zaman takibi banner'ı kaldırıldığı için refreshTimerState otomatik çağrısı devre dışı
+    // (gereksiz getActiveTimeLog isteği + dangling interval olmasın). Banner geri gelirse aç:
+    // setTimeout(refreshTimerState, 300);
 
     // === OTOMATİK KAYIT (AUTO-SAVE) MANTIĞI ===
     if (typeof window.taskAutoSaveTimeouts === 'undefined') {
