@@ -419,6 +419,82 @@ $(function () {
         });
     }
 
+    // ── Kanban configure: sütun SIRALA (header'dan sürükle) + BOYUTLANDIR (sağ kenar) ──
+    //    Client-side + localStorage (proje bazında). Kart sürükle-bırak data-status-id'yi
+    //    okuduğu için sütunları yeniden dizmek kart mantığını bozmaz.
+    //    NOT: "yeni sütun ekle/sil" backend (özel kolon entity) gerektirir → Faz 2.
+    function kbKey(suffix) { return 'apya-kanban-' + suffix + '-' + (projectId || 'global'); }
+
+    function applyKanbanLayout() {
+        var board = document.querySelector('.kanban-board');
+        if (!board) return;
+        try {
+            var order = JSON.parse(localStorage.getItem(kbKey('order')) || 'null');
+            if (order && order.length) {
+                order.forEach(function (sid) {
+                    var col = board.querySelector('.kanban-column[data-status-id="' + sid + '"]');
+                    if (col) { board.appendChild(col); } // kayıtlı sıraya göre yeniden diz
+                });
+            }
+        } catch (e) { }
+        board.querySelectorAll('.kanban-column').forEach(function (col) {
+            var w = localStorage.getItem(kbKey('w-' + col.getAttribute('data-status-id')));
+            if (w) { col.style.flexBasis = w + 'px'; }
+        });
+    }
+
+    var kanbanConfigInited = false;
+    function initKanbanConfig() {
+        var board = document.querySelector('.kanban-board');
+        if (!board || kanbanConfigInited || typeof Sortable === 'undefined') { return; }
+        kanbanConfigInited = true;
+
+        applyKanbanLayout();
+
+        // Sütun sıralama — yalnızca header'dan sürükleme
+        new Sortable(board, {
+            draggable: '.kanban-column',
+            handle: '.kanban-header',
+            animation: 150,
+            ghostClass: 'kanban-col-ghost',
+            onEnd: function () {
+                var order = Array.prototype.map.call(
+                    board.querySelectorAll('.kanban-column'),
+                    function (c) { return c.getAttribute('data-status-id'); });
+                try { localStorage.setItem(kbKey('order'), JSON.stringify(order)); } catch (e) { }
+            }
+        });
+
+        // Boyutlandırma — her sütuna sağ kenar handle ekle
+        board.querySelectorAll('.kanban-column').forEach(function (col) {
+            if (col.querySelector('.kanban-resize-handle')) { return; }
+            var handle = document.createElement('div');
+            handle.className = 'kanban-resize-handle';
+            handle.title = 'Sürükleyerek genişliği ayarla';
+            col.appendChild(handle);
+            handle.addEventListener('mousedown', function (e) {
+                e.preventDefault(); e.stopPropagation();
+                var startX = e.clientX;
+                var startW = col.getBoundingClientRect().width;
+                function onMove(ev) {
+                    var w = Math.max(240, Math.min(640, startW + (ev.clientX - startX)));
+                    col.style.flexBasis = w + 'px';
+                }
+                function onUp() {
+                    document.removeEventListener('mousemove', onMove);
+                    document.removeEventListener('mouseup', onUp);
+                    try { localStorage.setItem(kbKey('w-' + col.getAttribute('data-status-id')), Math.round(col.getBoundingClientRect().width)); } catch (e) { }
+                }
+                document.addEventListener('mousemove', onMove);
+                document.addEventListener('mouseup', onUp);
+            });
+        });
+    }
+
+    // Kanban sekmesi gösterildiğinde + ilk yüklemede config'i kur (guard ile tek sefer)
+    $(document).on('shown.bs.tab', '#board-tab, [data-bs-target="#board-view"]', initKanbanConfig);
+    initKanbanConfig();
+
     // APYA-143b: Bütçe-vs-Gerçekleşen modalı
     var budgetModal = new abp.ModalManager(abp.appPath + 'Projects/BudgetSummaryModal');
     $('#btn-budget-summary').click(function (e) {

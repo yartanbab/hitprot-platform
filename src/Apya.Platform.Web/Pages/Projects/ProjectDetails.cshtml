@@ -90,6 +90,17 @@
     .kanban-card[data-priority="4"] { border-left-color: #dc3545; } /* Critical */
     
     .sortable-ghost { opacity: 0.4; }
+
+    /* Kanban configure: sütun sırala (header'dan sürükle) + boyutlandır (sağ kenar) */
+    .kanban-column { position: relative; }
+    .kanban-header { cursor: grab; }
+    .kanban-header:active { cursor: grabbing; }
+    .kanban-col-ghost { opacity: 0.4; }
+    .kanban-resize-handle {
+        position: absolute; top: 0; right: -4px; width: 8px; height: 100%;
+        cursor: col-resize; z-index: 5; border-radius: 4px;
+    }
+    .kanban-resize-handle:hover { background: rgba(99,102,241,0.25); }
 </style>
 
 @* ─── PROJE OPERASYON MERKEZi - Dashboard Header ─── *@
