@@ -32,6 +32,7 @@ public class WebhookSubscriptionAppService : PlatformAppService, IWebhookSubscri
         _logger = logger;
     }
 
+    [Authorize(PlatformPermissions.DynamicAssets.Create)]
     public async Task<WebhookSubscriptionDto> CreateAsync(CreateUpdateWebhookSubscriptionDto input)
     {
         var subscription = new WebhookSubscription(
@@ -51,12 +52,17 @@ public class WebhookSubscriptionAppService : PlatformAppService, IWebhookSubscri
         return ObjectMapper.Map<WebhookSubscription, WebhookSubscriptionDto>(subscription);
     }
 
+    [Authorize(PlatformPermissions.DynamicAssets.Edit)]
     public async Task<WebhookSubscriptionDto> UpdateAsync(Guid id, CreateUpdateWebhookSubscriptionDto input)
     {
         var subscription = await _subscriptionRepository.GetAsync(id);
 
         subscription.SetTargetUrl(input.TargetUrl);
-        subscription.SetSecret(input.Secret);
+
+        // Secret çıktı DTO'sunda dönmediği için düzenleme ekranında boş gelir.
+        // Yalnızca kullanıcı yeniden girdiğinde güncelle; boş bırakılırsa mevcut secret korunur.
+        if (!string.IsNullOrWhiteSpace(input.Secret))
+            subscription.SetSecret(input.Secret);
 
         if (input.IsActive)
             subscription.Activate();
@@ -72,12 +78,14 @@ public class WebhookSubscriptionAppService : PlatformAppService, IWebhookSubscri
         return ObjectMapper.Map<WebhookSubscription, WebhookSubscriptionDto>(subscription);
     }
 
+    [Authorize(PlatformPermissions.DynamicAssets.Default)]
     public async Task<WebhookSubscriptionDto> GetAsync(Guid id)
     {
         var subscription = await _subscriptionRepository.GetAsync(id);
         return ObjectMapper.Map<WebhookSubscription, WebhookSubscriptionDto>(subscription);
     }
 
+    [Authorize(PlatformPermissions.DynamicAssets.Default)]
     public async Task<PagedResultDto<WebhookSubscriptionDto>> GetListAsync(PagedAndSortedResultRequestDto input)
     {
         var totalCount = await _subscriptionRepository.GetCountAsync();
@@ -101,6 +109,7 @@ public class WebhookSubscriptionAppService : PlatformAppService, IWebhookSubscri
         _logger.LogInformation("Webhook aboneliği silindi. SubscriptionId: {SubscriptionId}", id);
     }
 
+    [Authorize(PlatformPermissions.DynamicAssets.Default)]
     public async Task<List<WebhookDeliveryLogDto>> GetDeliveryLogsAsync(Guid subscriptionId)
     {
         var logs = await _deliveryLogRepository.GetListAsync(
