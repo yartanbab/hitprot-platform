@@ -21,4 +21,8 @@ public interface IBoardColumnAppService : IApplicationService
 
     /// <summary>Verilen sıraya göre kolon Order'larını günceller.</summary>
     Task ReorderAsync(Guid projectId, List<Guid> orderedColumnIds);
+
+    /// <summary>Görevi hedef kolona taşır. Sistem kolonu → görevin Status'u değişir (kolon bağı
+    /// temizlenir); özel kolon → görevin BoardColumnId'si set edilir.</summary>
+    Task MoveTaskToColumnAsync(Guid taskId, Guid columnId);
 }

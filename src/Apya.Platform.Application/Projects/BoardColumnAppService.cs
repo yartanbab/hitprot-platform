@@ -94,6 +94,27 @@ public class BoardColumnAppService : PlatformAppService, IBoardColumnAppService
         }
     }
 
+    [Authorize(PlatformPermissions.Tasks.ChangeStatus)]
+    public async Task MoveTaskToColumnAsync(Guid taskId, Guid columnId)
+    {
+        var col = await _columnRepository.GetAsync(columnId);
+        var task = await _taskRepository.GetAsync(taskId);
+
+        if (col.StatusValue.HasValue)
+        {
+            // Sistem kolonu → Status değişir, özel kolon bağı temizlenir.
+            task.ChangeStatus((Apya.Platform.Tasks.TaskStatus)col.StatusValue.Value);
+            task.MoveToColumn(null);
+        }
+        else
+        {
+            // Özel kolon → görevi kolona bağla (Status değişmez).
+            task.MoveToColumn(columnId);
+        }
+
+        await _taskRepository.UpdateAsync(task, autoSave: true);
+    }
+
     private async Task<List<BoardColumn>> SeedDefaultsAsync(Guid projectId)
     {
         // Mevcut 4 sabit kanban kolonu (TaskStatus 1-4). Cancelled(0) board'da gösterilmiyor.
