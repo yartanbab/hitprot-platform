@@ -52,30 +52,19 @@ public class PlatformMenuContributor : IMenuContributor
             work.AddItem(new ApplicationMenuItem("Apya.Work.Calendar", l["Menu:Calendar"], icon: "fa fa-calendar-days", url: "/Calendars"));
         if (work.Items.Count > 0) context.Menu.AddItem(work);
 
-        // Finans
+        // Finans — Faz 1 sadeleştirme: yalnızca günlük işlem + hesap öğeleri kalır.
+        // Raporlar tek "Raporlar" menüsünde toplandı; Döviz Kurları Yönetim'e taşındı.
         var finance = new ApplicationMenuItem("Apya.Finance", l["Menu:Finance"], icon: "fa fa-coins", order: 3);
+        // Para Hareketleri hub'ı (Faz 2): Gelir + Gider + Fatura tek listede toplandı.
+        // Ayrı Giderler/Gelirler/Faturalar menü öğeleri kaldırıldı (sayfalar hub'dan erişilebilir).
+        if (await permission.IsGrantedAsync(PlatformPermissions.Incomes.Default)
+            || await permission.IsGrantedAsync(PlatformPermissions.Expenses.Default)
+            || await permission.IsGrantedAsync(PlatformPermissions.Invoices.Default))
+            finance.AddItem(new ApplicationMenuItem("Apya.Finance.Hub", l["Menu:FinanceHub"], icon: "fa fa-right-left", url: "/Finance"));
         if (await permission.IsGrantedAsync(PlatformPermissions.Customers.Default))
             finance.AddItem(new ApplicationMenuItem("Apya.Finance.Customers", l["Menu:Customers"], icon: "fa fa-id-card", url: "/Customers"));
         if (await permission.IsGrantedAsync(PlatformPermissions.CashAccounts.Default))
             finance.AddItem(new ApplicationMenuItem("Apya.Finance.CashAccounts", l["Menu:CashAccounts"], icon: "fa fa-cash-register", url: "/CashAccounts"));
-        if (await permission.IsGrantedAsync(PlatformPermissions.ExchangeRates.Default))
-            finance.AddItem(new ApplicationMenuItem("Apya.Finance.ExchangeRates", l["Menu:ExchangeRates"], icon: "fa fa-money-bill-transfer", url: "/ExchangeRates"));
-        if (await permission.IsGrantedAsync(PlatformPermissions.FxRevaluations.Default)
-            && await feature.IsEnabledAsync(PlatformFeatures.AdvancedReports))
-            finance.AddItem(new ApplicationMenuItem("Apya.Finance.FxRevaluation", l["Menu:FxRevaluation"], icon: "fa fa-scale-balanced", url: "/FxRevaluations"));
-        if (await permission.IsGrantedAsync(PlatformPermissions.Expenses.Default))
-            finance.AddItem(new ApplicationMenuItem("Apya.Finance.Expenses", l["Menu:Expenses"], icon: "fa fa-receipt", url: "/Expenses"));
-        if (await permission.IsGrantedAsync(PlatformPermissions.Incomes.Default))
-            finance.AddItem(new ApplicationMenuItem("Apya.Finance.Incomes", l["Menu:Incomes"], icon: "fa fa-hand-holding-dollar", url: "/Incomes"));
-        if (await permission.IsGrantedAsync(PlatformPermissions.Invoices.Default))
-            finance.AddItem(new ApplicationMenuItem("Apya.Finance.Invoices", l["Menu:Invoices"], icon: "fa fa-file-invoice-dollar", url: "/Invoices"));
-if (await permission.IsGrantedAsync(PlatformPermissions.Reports.TrialBalance)
-            && await feature.IsEnabledAsync(PlatformFeatures.AdvancedReports))
-            finance.AddItem(new ApplicationMenuItem("Apya.Finance.TrialBalance", l["Menu:TrialBalance"], icon: "fa fa-scale-unbalanced", url: "/Reports/TrialBalance"));
-        if (await permission.IsGrantedAsync(PlatformPermissions.Customers.Default))
-            finance.AddItem(new ApplicationMenuItem("Apya.Finance.CustomerStatement", l["Menu:CustomerStatement"], icon: "fa fa-file-lines", url: "/Reports/CustomerStatement"));
-        if (await permission.IsGrantedAsync(PlatformPermissions.Projects.Default))
-            finance.AddItem(new ApplicationMenuItem("Apya.Finance.ProjectBudget", l["Menu:ProjectBudget"], icon: "fa fa-chart-bar", url: "/Reports/ProjectBudget"));
         if (finance.Items.Count > 0) context.Menu.AddItem(finance);
 
         // İçerik
@@ -145,11 +134,21 @@ if (await permission.IsGrantedAsync(PlatformPermissions.Reports.TrialBalance)
             if (aiCenter.Items.Count > 0) context.Menu.AddItem(aiCenter);
         }
 
+        // Raporlar — tüm rapor/çıktı sayfaları tek menüde toplandı (Finans'tan taşındı; çift menü giderildi).
+        var reports = new ApplicationMenuItem("Apya.Reports", l["Menu:Reports"], icon: "fa fa-chart-pie", order: 5);
         if (await permission.IsGrantedAsync(PlatformPermissions.Reports.Default))
-        {
-            context.Menu.AddItem(new ApplicationMenuItem(
-                "Apya.Reports", l["Menu:Reports"], icon: "fa fa-chart-pie", url: "/Reports", order: 5));
-        }
+            reports.AddItem(new ApplicationMenuItem("Apya.Reports.Overview", l["Menu:Reports"], icon: "fa fa-gauge", url: "/Reports"));
+        if (await permission.IsGrantedAsync(PlatformPermissions.Projects.Default))
+            reports.AddItem(new ApplicationMenuItem("Apya.Reports.ProjectBudget", l["Menu:ProjectBudget"], icon: "fa fa-chart-bar", url: "/Reports/ProjectBudget"));
+        if (await permission.IsGrantedAsync(PlatformPermissions.Customers.Default))
+            reports.AddItem(new ApplicationMenuItem("Apya.Reports.CustomerStatement", l["Menu:CustomerStatement"], icon: "fa fa-file-lines", url: "/Reports/CustomerStatement"));
+        if (await permission.IsGrantedAsync(PlatformPermissions.Reports.TrialBalance)
+            && await feature.IsEnabledAsync(PlatformFeatures.AdvancedReports))
+            reports.AddItem(new ApplicationMenuItem("Apya.Reports.TrialBalance", l["Menu:TrialBalance"], icon: "fa fa-scale-unbalanced", url: "/Reports/TrialBalance"));
+        if (await permission.IsGrantedAsync(PlatformPermissions.FxRevaluations.Default)
+            && await feature.IsEnabledAsync(PlatformFeatures.AdvancedReports))
+            reports.AddItem(new ApplicationMenuItem("Apya.Reports.FxRevaluation", l["Menu:FxRevaluation"], icon: "fa fa-scale-balanced", url: "/FxRevaluations"));
+        if (reports.Items.Count > 0) context.Menu.AddItem(reports);
 
         if (await permission.IsGrantedAsync(PlatformPermissions.TenantSettings.ManageAi)
             && await feature.IsEnabledAsync(PlatformFeatures.AiAssist))
@@ -159,6 +158,15 @@ if (await permission.IsGrantedAsync(PlatformPermissions.Reports.TrialBalance)
                 l["Menu:AiSettings"],
                 icon: "fa fa-robot",
                 url: "/TenantManagement/AiSettings"));
+        }
+
+        // Döviz Kurları: TCMB'den otomatik geldiği ve nadiren elle bakıldığı için
+        // günlük Finans menüsünden çıkarılıp Yönetim (Ayarlar) altına alındı.
+        if (await permission.IsGrantedAsync(PlatformPermissions.ExchangeRates.Default))
+        {
+            administration.AddItem(new ApplicationMenuItem(
+                "Apya.Admin.ExchangeRates", l["Menu:ExchangeRates"],
+                icon: "fa fa-money-bill-transfer", url: "/ExchangeRates"));
         }
 
         if (MultiTenancyConsts.IsEnabled)

@@ -24,6 +24,9 @@ namespace Apya.Platform.Tasks
         public Guid? ProjectId { get; set; }
         public string? ProjectName { get; set; }
 
+        /// <summary>Faz 2: Kullanıcı tanımlı kanban kolonu üyeliği (boşsa Status'a göre render).</summary>
+        public Guid? BoardColumnId { get; set; }
+
         public bool IsPrivate { get; set; }
 
         public List<TaskDto> SubTasks { get; set; } = new List<TaskDto>();

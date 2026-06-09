@@ -118,6 +118,7 @@ namespace Apya.Platform.EntityFrameworkCore
         public DbSet<TaskAttachment> TaskAttachments { get; set; }
         public DbSet<TaskDependency> TaskDependencies { get; set; }
         public DbSet<TaskTimeLog> TaskTimeLogs { get; set; }
+        public DbSet<Apya.Platform.Projects.BoardColumn> BoardColumns { get; set; } // Faz 2: configure edilebilir kanban
         public DbSet<Invoice> Invoices { get; set; }
         public DbSet<InvoiceItem> InvoiceItems { get; set; }
         public DbSet<Payment> Payments { get; set; }
@@ -424,6 +425,16 @@ namespace Apya.Platform.EntityFrameworkCore
                 b.ToTable(PlatformConsts.DbTablePrefix + "TaskComments", PlatformConsts.DbSchema);
                 b.ConfigureByConvention();
                 b.HasIndex(x => x.TaskId); // REV-004
+                b.HasIndex(x => x.ParentCommentId); // Instagram tarzı yanıt sorgusu
+            });
+
+            builder.Entity<Apya.Platform.Projects.BoardColumn>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "BoardColumns", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+                b.Property(x => x.Name).IsRequired().HasMaxLength(64);
+                b.Property(x => x.ColorClass).HasMaxLength(32);
+                b.HasIndex(x => x.ProjectId); // Faz 2: proje bazında kolon sorgusu
             });
 
             builder.Entity<TaskAttachment>(b =>

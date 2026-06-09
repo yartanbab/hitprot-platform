@@ -18,7 +18,10 @@ namespace Apya.Platform.Tasks
         Task<ListResultDto<IdentityUserDto>> GetUsersLookupAsync();
 
         // Yorum Metodları
-        Task AddCommentAsync(Guid taskId, string text);
+        Task<Guid> AddCommentAsync(Guid taskId, string text);
+        Task<Guid> ReplyToCommentAsync(Guid parentCommentId, string text); // Instagram tarzı yanıt
+        Task UpdateCommentAsync(Guid commentId, string text);  // yalnızca yorum sahibi
+        Task DeleteCommentAsync(Guid commentId);               // yalnızca yorum sahibi
         Task<List<TaskCommentDto>> GetCommentsAsync(Guid taskId);
 
         Task AddAttachmentAsync(Guid taskId, string fileName, string storedFileName, long fileSize);

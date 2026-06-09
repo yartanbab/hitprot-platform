@@ -28,6 +28,10 @@ public class TaskItem : FullAuditedAggregateRoot<Guid>, IMultiTenant
     public TaskPriority Priority { get; private set; }
     public Guid? ProjectId { get; private set; }
 
+    /// <summary>Faz 2: Kullanıcı tanımlı kanban kolonundaki görevler için. Boşsa görev Status'a göre render edilir.</summary>
+    public Guid? BoardColumnId { get; private set; }
+    public void MoveToColumn(Guid? boardColumnId) => BoardColumnId = boardColumnId;
+
     // --- Gizlilik ---
     public bool IsPrivate { get; private set; }
 

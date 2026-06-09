@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Apya.Platform.Projects;
 using Apya.Platform.Projects.Dtos;
+using Apya.Platform.ProjectFinance;
 using TaskDto = Apya.Platform.Tasks.TaskDto;
 
 namespace Apya.Platform.Web.Pages.Projects;
@@ -39,10 +40,14 @@ public class ProjectDetailsModel : PlatformPageModel
     public int BudgetPercent { get; set; }
 
     private readonly IProjectAppService _projectAppService;
+    private readonly IProjectFinanceAppService _projectFinanceAppService;
 
-    public ProjectDetailsModel(IProjectAppService projectAppService)
+    public ProjectDetailsModel(
+        IProjectAppService projectAppService,
+        IProjectFinanceAppService projectFinanceAppService)
     {
         _projectAppService = projectAppService;
+        _projectFinanceAppService = projectFinanceAppService;
     }
 
     public async Task OnGetAsync()
@@ -66,7 +71,11 @@ public class ProjectDetailsModel : PlatformPageModel
         TimeHealthColor = detail.TimeHealthColor;
         TimeHealthLabel = detail.TimeHealthLabel;
 
-        BudgetSpent = detail.SpentBudget;
-        BudgetPercent = detail.BudgetPercent;
+        // "Bütçe Tüketimi" widget'ı, Bütçe Durumu modalıyla AYNI kaynaktan beslensin
+        // (tek doğru kaynak = ProjectFinanceAppService). Önceki SpentBudget zaman
+        // loglarından (emek maliyeti) hesaplanıyordu → gerçek gider/kalanı yansıtmıyordu.
+        var finance = await _projectFinanceAppService.GetSummaryAsync(Id);
+        BudgetSpent = finance.TotalExpense;
+        BudgetPercent = finance.BudgetUsagePercent;
     }
 }

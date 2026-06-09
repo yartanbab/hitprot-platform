@@ -319,64 +319,138 @@ $(function () {
         loadKanban();
     });
 
-    function loadKanban() {
-        taskService.getList({ projectId: projectId, maxResultCount: 200 }).then(function(result) {
-            $('.kanban-cards').empty();
-            var counts = { 1: 0, 2: 0, 3: 0, 4: 0 };
-            
-            result.items.forEach(function(task) {
-                var statusId = task.status;
-                var priorityId = task.priority;
-                var assigneeHtml = task.assigneeName ? '<div class="small fw-bold text-muted mt-2"><i class="fa fa-user me-1"></i>' + task.assigneeName + '</div>' : '';
-                
-                var dueHtml = '';
-                var cardBorder = '';
-                if (task.dueDate) {
-                    if (statusId !== 4 && statusId !== 0) { // 4: Tamamlandı, 0: İptal
-                        var dueDiff = moment(task.dueDate).diff(moment(), 'hours');
-                        if (dueDiff < 0) {
-                            cardBorder = 'border-danger border-2 bg-light bg-opacity-50';
-                            dueHtml = '<div class="small text-white bg-danger mt-2 px-2 py-1 rounded fw-bold text-center heartbeat-animation"><i class="fa fa-exclamation-circle me-1"></i>Süresi Geçti (' + moment(task.dueDate).format("DD MMM") + ')</div>';
-                        } else if (dueDiff <= 48) {
-                            cardBorder = 'border-warning border-2';
-                            dueHtml = '<div class="small text-dark bg-warning mt-2 px-2 py-1 rounded fw-bold text-center"><i class="fa fa-clock me-1"></i>Yaklaşıyor (' + moment(task.dueDate).format("DD MMM") + ')</div>';
-                        } else {
-                            dueHtml = '<div class="small text-muted mt-2 px-1"><i class="fa fa-clock me-1"></i>' + moment(task.dueDate).format("DD MMM") + '</div>';
-                        }
-                    } else {
-                        dueHtml = '<div class="small text-success mt-2 px-1"><i class="fa fa-check-circle me-1"></i>' + moment(task.dueDate).format("DD MMM") + '</div>';
-                    }
-                }
+    var boardColumnSvc = apya.platform.projects.boardColumn;
 
-                var parentHtml = task.parentTaskTitle ? '<div class="d-flex align-items-center mb-1 text-primary small"><i class="fa fa-level-up-alt fa-rotate-90 me-1"></i> ' + task.parentTaskTitle + '</div>' : '';
-                var cardHtml = `
-                    <div class="kanban-card shadow-sm ${cardBorder}" data-id="${task.id}" data-priority="${priorityId}">
-                        ${parentHtml}
-                        <div class="fw-bold mb-1 text-dark">${task.title}</div>
-                        ${assigneeHtml}
-                        ${dueHtml}
-                        <div class="text-end mt-2">
-                           <button class="btn btn-sm btn-light py-0 px-2 rounded edit-task-btn" data-id="${task.id}"><i class="fa fa-pencil-alt text-secondary" style="font-size: 0.75rem;"></i></button>
-                        </div>
-                    </div>
-                `;
-                
-                if (statusId === 1) { $('#kanban-todo').append(cardHtml); counts[1]++; }
-                else if (statusId === 2) { $('#kanban-inprogress').append(cardHtml); counts[2]++; }
-                else if (statusId === 3) { $('#kanban-inreview').append(cardHtml); counts[3]++; }
-                else if (statusId === 4) { $('#kanban-done').append(cardHtml); counts[4]++; }
+    function buildKanbanCard(task) {
+        var statusId = task.status;
+        var priorityId = task.priority;
+        var assigneeHtml = task.assigneeName ? '<div class="small fw-bold text-muted mt-2"><i class="fa fa-user me-1"></i>' + task.assigneeName + '</div>' : '';
+        var dueHtml = '';
+        var cardBorder = '';
+        if (task.dueDate) {
+            if (statusId !== 4 && statusId !== 0) { // 4: Tamamlandı, 0: İptal
+                var dueDiff = moment(task.dueDate).diff(moment(), 'hours');
+                if (dueDiff < 0) {
+                    cardBorder = 'border-danger border-2 bg-light bg-opacity-50';
+                    dueHtml = '<div class="small text-white bg-danger mt-2 px-2 py-1 rounded fw-bold text-center heartbeat-animation"><i class="fa fa-exclamation-circle me-1"></i>Süresi Geçti (' + moment(task.dueDate).format("DD MMM") + ')</div>';
+                } else if (dueDiff <= 48) {
+                    cardBorder = 'border-warning border-2';
+                    dueHtml = '<div class="small text-dark bg-warning mt-2 px-2 py-1 rounded fw-bold text-center"><i class="fa fa-clock me-1"></i>Yaklaşıyor (' + moment(task.dueDate).format("DD MMM") + ')</div>';
+                } else {
+                    dueHtml = '<div class="small text-muted mt-2 px-1"><i class="fa fa-clock me-1"></i>' + moment(task.dueDate).format("DD MMM") + '</div>';
+                }
+            } else {
+                dueHtml = '<div class="small text-success mt-2 px-1"><i class="fa fa-check-circle me-1"></i>' + moment(task.dueDate).format("DD MMM") + '</div>';
+            }
+        }
+        var parentHtml = task.parentTaskTitle ? '<div class="d-flex align-items-center mb-1 text-primary small"><i class="fa fa-level-up-alt fa-rotate-90 me-1"></i> ' + task.parentTaskTitle + '</div>' : '';
+        return '' +
+            '<div class="kanban-card shadow-sm ' + cardBorder + '" data-id="' + task.id + '" data-priority="' + priorityId + '">' +
+                parentHtml +
+                '<div class="fw-bold mb-1 text-dark"></div>' +
+                assigneeHtml + dueHtml +
+                '<div class="text-end mt-2">' +
+                   '<button class="btn btn-sm btn-light py-0 px-2 rounded edit-task-btn" data-id="' + task.id + '"><i class="fa fa-pencil-alt text-secondary" style="font-size: 0.75rem;"></i></button>' +
+                '</div>' +
+            '</div>';
+    }
+
+    function renderBoardColumns(cols) {
+        var board = document.querySelector('.kanban-board');
+        if (!board) return;
+        // Önceden eklenen özel kolonları + "kolon ekle" karosunu temizle
+        board.querySelectorAll('.js-custom-col, .js-add-col').forEach(function (n) { n.remove(); });
+        // Sistem kolonlarına DB kolon-id'sini ata (drag → moveTaskToColumn için)
+        cols.forEach(function (c) {
+            if (c.statusValue != null) {
+                var sys = board.querySelector('.kanban-column[data-status-id="' + c.statusValue + '"]');
+                if (sys) sys.setAttribute('data-column-id', c.id);
+            }
+        });
+        // Özel kolonları (statusValue=null) sıraya göre ekle
+        cols.filter(function (c) { return c.statusValue == null; })
+            .sort(function (a, b) { return a.order - b.order; })
+            .forEach(function (c) {
+                var col = document.createElement('div');
+                col.className = 'kanban-column shadow-sm border js-custom-col';
+                col.setAttribute('data-column-id', c.id);
+                col.innerHTML =
+                    '<div class="kanban-header">' +
+                        '<span class="text-' + (c.colorClass || 'primary') + ' js-col-name"><i class="fa fa-circle me-2"></i></span>' +
+                        '<span class="d-flex align-items-center gap-2">' +
+                            '<span class="badge bg-' + (c.colorClass || 'primary') + ' rounded-pill kanban-count">0</span>' +
+                            '<button type="button" class="btn btn-sm btn-link text-secondary p-0 js-col-rename" title="Yeniden adlandır"><i class="fa fa-pen"></i></button>' +
+                            '<button type="button" class="btn btn-sm btn-link text-danger p-0 js-col-delete" title="Kolonu sil"><i class="fa fa-trash"></i></button>' +
+                        '</span>' +
+                    '</div>' +
+                    '<div class="kanban-cards" id="kanban-col-' + c.id + '"></div>';
+                col.querySelector('.js-col-name').appendChild(document.createTextNode(' ' + c.name));
+                board.appendChild(col);
             });
-            
-            // Update counts
-            $('[data-status-id="1"] .kanban-count').text(counts[1]);
-            $('[data-status-id="2"] .kanban-count').text(counts[2]);
-            $('[data-status-id="3"] .kanban-count').text(counts[3]);
-            $('[data-status-id="4"] .kanban-count').text(counts[4]);
-            
-            // Init Sortable hook
-            initSortable();
+        // "+ Kolon Ekle" karosu
+        var add = document.createElement('div');
+        add.className = 'kanban-column shadow-sm border js-add-col d-flex align-items-center justify-content-center text-primary fw-bold';
+        add.style.cursor = 'pointer';
+        add.innerHTML = '<span><i class="fa fa-plus me-2"></i>Kolon Ekle</span>';
+        board.appendChild(add);
+    }
+
+    function loadKanban() {
+        boardColumnSvc.getListByProject(projectId).then(function (cols) {
+            renderBoardColumns(cols);
+            var customIds = {};
+            cols.forEach(function (c) { if (c.statusValue == null) customIds[c.id] = true; });
+            var byStatus = { 1: 'kanban-todo', 2: 'kanban-inprogress', 3: 'kanban-inreview', 4: 'kanban-done' };
+
+            taskService.getList({ projectId: projectId, maxResultCount: 200 }).then(function (result) {
+                document.querySelectorAll('.kanban-cards').forEach(function (n) { n.innerHTML = ''; });
+
+                result.items.forEach(function (task) {
+                    var html = buildKanbanCard(task);
+                    var container = null;
+                    if (task.boardColumnId && customIds[task.boardColumnId]) {
+                        container = document.getElementById('kanban-col-' + task.boardColumnId);
+                    }
+                    if (!container) { container = document.getElementById(byStatus[task.status]); }
+                    if (container) {
+                        container.insertAdjacentHTML('beforeend', html);
+                        // başlığı XSS-güvenli yaz
+                        container.lastElementChild.querySelector('.fw-bold').textContent = task.title;
+                    }
+                });
+
+                // Her kolonun kart sayısını güncelle
+                document.querySelectorAll('.kanban-column').forEach(function (col) {
+                    var badge = col.querySelector('.kanban-count');
+                    if (badge) { badge.textContent = col.querySelectorAll('.kanban-cards .kanban-card').length; }
+                });
+
+                initSortable();
+            });
         });
     }
+
+    // --- Kolon ekle / sil / yeniden adlandır (Faz 2b) ---
+    $(document).on('click', '.js-add-col', function () {
+        var name = window.prompt('Yeni kolon adı:');
+        if (!name || !name.trim()) return;
+        boardColumnSvc.create({ projectId: projectId, name: name.trim(), colorClass: 'primary' })
+            .then(function () { abp.notify.success('Kolon eklendi.'); loadKanban(); });
+    });
+    $(document).on('click', '.js-col-delete', function () {
+        var id = $(this).closest('.kanban-column').data('column-id');
+        abp.message.confirm('Bu kolonu silmek istediğinize emin misiniz? İçindeki görevler durumlarına göre varsayılan kolonlara döner.', 'Kolonu Sil', function (ok) {
+            if (!ok) return;
+            boardColumnSvc.delete(id).then(function () { abp.notify.info('Kolon silindi.'); loadKanban(); });
+        });
+    });
+    $(document).on('click', '.js-col-rename', function () {
+        var $col = $(this).closest('.kanban-column');
+        var id = $col.data('column-id');
+        var name = window.prompt('Kolon adı:', $col.find('.js-col-name').text().trim());
+        if (!name || !name.trim()) return;
+        boardColumnSvc.update(id, { name: name.trim(), colorClass: 'primary' }).then(function () { loadKanban(); });
+    });
 
     $(document).on('click', '.edit-task-btn', function(){
        editModal.open({ id: $(this).data('id') });
@@ -395,21 +469,18 @@ $(function () {
                 animation: 150,
                 ghostClass: 'sortable-ghost',
                 onEnd: function (evt) {
-                    var itemEl = evt.item;  // dragged element
-                    var toCol = evt.to;    // target list
-                    var taskId = $(itemEl).data('id');
-                    var newStatusId = $(toCol).closest('.kanban-column').data('status-id');
-                    
-                    if (evt.from !== evt.to) {
-                        // KANBAN UPDATE
-                        taskService.updateStatus(taskId, newStatusId).then(function() {
-                            abp.notify.success('Görev durumu güncellendi.');
-                            dataTable.ajax.reload(null, false); // DataTable'ı arkada sessizce yenile
-                            
-                            // Re-calculate counts
-                            var colsArr = [1,2,3,4];
-                            colsArr.forEach(function(s) {
-                                $('[data-status-id="'+s+'"] .kanban-count').text($('[data-status-id="'+s+'"] .kanban-cards .kanban-card').length);
+                    var taskId = $(evt.item).data('id');
+                    // Tüm kolonlarda data-column-id var (sistem kolonlarına API'den atandı).
+                    var columnId = $(evt.to).closest('.kanban-column').data('column-id');
+
+                    if (evt.from !== evt.to && columnId) {
+                        // Sistem kolonu → Status değişir; özel kolon → BoardColumnId set edilir (backend ayırt eder).
+                        boardColumnSvc.moveTaskToColumn(taskId, columnId).then(function () {
+                            abp.notify.success('Görev taşındı.');
+                            if (typeof dataTable !== 'undefined' && dataTable) { dataTable.ajax.reload(null, false); }
+                            document.querySelectorAll('.kanban-column').forEach(function (col) {
+                                var b = col.querySelector('.kanban-count');
+                                if (b) { b.textContent = col.querySelectorAll('.kanban-cards .kanban-card').length; }
                             });
                         });
                     }
@@ -418,6 +489,82 @@ $(function () {
             sortables.push(sortable);
         });
     }
+
+    // ── Kanban configure: sütun SIRALA (header'dan sürükle) + BOYUTLANDIR (sağ kenar) ──
+    //    Client-side + localStorage (proje bazında). Kart sürükle-bırak data-status-id'yi
+    //    okuduğu için sütunları yeniden dizmek kart mantığını bozmaz.
+    //    NOT: "yeni sütun ekle/sil" backend (özel kolon entity) gerektirir → Faz 2.
+    function kbKey(suffix) { return 'apya-kanban-' + suffix + '-' + (projectId || 'global'); }
+
+    function applyKanbanLayout() {
+        var board = document.querySelector('.kanban-board');
+        if (!board) return;
+        try {
+            var order = JSON.parse(localStorage.getItem(kbKey('order')) || 'null');
+            if (order && order.length) {
+                order.forEach(function (sid) {
+                    var col = board.querySelector('.kanban-column[data-status-id="' + sid + '"]');
+                    if (col) { board.appendChild(col); } // kayıtlı sıraya göre yeniden diz
+                });
+            }
+        } catch (e) { }
+        board.querySelectorAll('.kanban-column').forEach(function (col) {
+            var w = localStorage.getItem(kbKey('w-' + col.getAttribute('data-status-id')));
+            if (w) { col.style.flexBasis = w + 'px'; }
+        });
+    }
+
+    var kanbanConfigInited = false;
+    function initKanbanConfig() {
+        var board = document.querySelector('.kanban-board');
+        if (!board || kanbanConfigInited || typeof Sortable === 'undefined') { return; }
+        kanbanConfigInited = true;
+
+        applyKanbanLayout();
+
+        // Sütun sıralama — yalnızca header'dan sürükleme
+        new Sortable(board, {
+            draggable: '.kanban-column',
+            handle: '.kanban-header',
+            animation: 150,
+            ghostClass: 'kanban-col-ghost',
+            onEnd: function () {
+                var order = Array.prototype.map.call(
+                    board.querySelectorAll('.kanban-column'),
+                    function (c) { return c.getAttribute('data-status-id'); });
+                try { localStorage.setItem(kbKey('order'), JSON.stringify(order)); } catch (e) { }
+            }
+        });
+
+        // Boyutlandırma — her sütuna sağ kenar handle ekle
+        board.querySelectorAll('.kanban-column').forEach(function (col) {
+            if (col.querySelector('.kanban-resize-handle')) { return; }
+            var handle = document.createElement('div');
+            handle.className = 'kanban-resize-handle';
+            handle.title = 'Sürükleyerek genişliği ayarla';
+            col.appendChild(handle);
+            handle.addEventListener('mousedown', function (e) {
+                e.preventDefault(); e.stopPropagation();
+                var startX = e.clientX;
+                var startW = col.getBoundingClientRect().width;
+                function onMove(ev) {
+                    var w = Math.max(240, Math.min(640, startW + (ev.clientX - startX)));
+                    col.style.flexBasis = w + 'px';
+                }
+                function onUp() {
+                    document.removeEventListener('mousemove', onMove);
+                    document.removeEventListener('mouseup', onUp);
+                    try { localStorage.setItem(kbKey('w-' + col.getAttribute('data-status-id')), Math.round(col.getBoundingClientRect().width)); } catch (e) { }
+                }
+                document.addEventListener('mousemove', onMove);
+                document.addEventListener('mouseup', onUp);
+            });
+        });
+    }
+
+    // Kanban sekmesi gösterildiğinde + ilk yüklemede config'i kur (guard ile tek sefer)
+    $(document).on('shown.bs.tab', '#board-tab, [data-bs-target="#board-view"]', initKanbanConfig);
+    initKanbanConfig();
 
     // APYA-143b: Bütçe-vs-Gerçekleşen modalı
     var budgetModal = new abp.ModalManager(abp.appPath + 'Projects/BudgetSummaryModal');

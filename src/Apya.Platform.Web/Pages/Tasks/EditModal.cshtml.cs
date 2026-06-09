@@ -25,6 +25,8 @@ namespace Apya.Platform.Web.Pages.Tasks
 
         // Null hatalarını önlemek için listeleri burada başlatıyoruz
         public List<SelectListItem> UserList { get; set; } = new();
+        public List<SelectListItem> StatusList { get; set; } = new();   // Durum (Türkçe)
+        public List<SelectListItem> PriorityList { get; set; } = new(); // Öncelik (Türkçe)
         public List<TaskDto> SubTasks { get; set; } = new();
         public List<TaskCommentDto> Comments { get; set; } = new();
         public List<TaskAttachmentDto> Attachments { get; set; } = new();
@@ -68,13 +70,39 @@ namespace Apya.Platform.Web.Pages.Tasks
             };
 
             SubTasks = taskDto.SubTasks?.OrderByDescending(x => x.CreationTime).ToList() ?? new List<TaskDto>();
-            Comments = taskDto.Comments?.OrderByDescending(x => x.CreationTime).ToList() ?? new List<TaskCommentDto>();
+            // Tek seviye thread: kök yorumlar (en yeni üstte) + altlarında yanıtlar (kronolojik).
+            var allComments = taskDto.Comments ?? new List<TaskCommentDto>();
+            var rootComments = allComments.Where(c => c.ParentCommentId == null)
+                                          .OrderByDescending(c => c.CreationTime).ToList();
+            foreach (var root in rootComments)
+            {
+                root.Replies = allComments.Where(r => r.ParentCommentId == root.Id)
+                                          .OrderBy(r => r.CreationTime).ToList();
+            }
+            Comments = rootComments;
             Attachments = taskDto.Attachments?.OrderByDescending(x => x.CreationTime).ToList() ?? new List<TaskAttachmentDto>();
 
             var userLookup = await _taskAppService.GetUsersLookupAsync();
             UserList = userLookup.Items
                 .Select(u => new SelectListItem(u.UserName, u.Id.ToString()))
                 .ToList();
+
+            // Durum & Öncelik dropdown'ları Türkçe (kod tabanı konvansiyonu: metin + int value).
+            StatusList = new List<SelectListItem>
+            {
+                new("Yapılacak",    ((int)Apya.Platform.Tasks.TaskStatus.Todo).ToString(),       Task.Status == Apya.Platform.Tasks.TaskStatus.Todo),
+                new("Devam Ediyor", ((int)Apya.Platform.Tasks.TaskStatus.InProgress).ToString(), Task.Status == Apya.Platform.Tasks.TaskStatus.InProgress),
+                new("Kontrol/Test", ((int)Apya.Platform.Tasks.TaskStatus.InReview).ToString(),   Task.Status == Apya.Platform.Tasks.TaskStatus.InReview),
+                new("Tamamlandı",   ((int)Apya.Platform.Tasks.TaskStatus.Done).ToString(),       Task.Status == Apya.Platform.Tasks.TaskStatus.Done),
+                new("İptal",        ((int)Apya.Platform.Tasks.TaskStatus.Cancelled).ToString(),  Task.Status == Apya.Platform.Tasks.TaskStatus.Cancelled),
+            };
+            PriorityList = new List<SelectListItem>
+            {
+                new("Düşük",  ((int)TaskPriority.Low).ToString(),      Task.Priority == TaskPriority.Low),
+                new("Orta",   ((int)TaskPriority.Medium).ToString(),   Task.Priority == TaskPriority.Medium),
+                new("Yüksek", ((int)TaskPriority.High).ToString(),     Task.Priority == TaskPriority.High),
+                new("Kritik", ((int)TaskPriority.Critical).ToString(), Task.Priority == TaskPriority.Critical),
+            };
 
             if (taskDto.ProjectId.HasValue)
             {
@@ -144,15 +172,26 @@ namespace Apya.Platform.Web.Pages.Tasks
                 StartDate = Clock.Now
             };
 
-            await _taskAppService.CreateAsync(subTask);
-            return NoContent();
+            // Yeni alt görevin Id'sini döndür ki istemci, satırı anında çalışır
+            // (düzenle/sil butonlu) render edebilsin — eskiden NoContent dönüp
+            // butonları disabled bırakıyordu, ancak reopen sonrası çalışıyordu.
+            var created = await _taskAppService.CreateAsync(subTask);
+            return new JsonResult(new { id = created.Id, title = created.Title });
         }
 
         public async Task<IActionResult> OnPostAddCommentAsync(Guid taskId, string commentText)
         {
             if (string.IsNullOrWhiteSpace(commentText)) return NoContent();
-            await _taskAppService.AddCommentAsync(taskId, commentText);
-            return NoContent();
+            // Yeni yorumun Id'sini döndür ki istemci, satırı düzenle/sil butonlu çizebilsin.
+            var id = await _taskAppService.AddCommentAsync(taskId, commentText);
+            return new JsonResult(new { id });
+        }
+
+        public async Task<IActionResult> OnPostReplyCommentAsync(Guid parentCommentId, string commentText)
+        {
+            if (string.IsNullOrWhiteSpace(commentText)) return NoContent();
+            var id = await _taskAppService.ReplyToCommentAsync(parentCommentId, commentText);
+            return new JsonResult(new { id, author = CurrentUser.UserName ?? "Siz" });
         }
 
         public async Task<IActionResult> OnPostUploadFileAsync(Guid taskId, IFormFile file)

@@ -36,14 +36,27 @@
 <script>
     (function () {
         try {
+            /* DARK MODE GEÇİCİ OLARAK DEVRE DIŞI (2026-06-09)
+               OS'i dark olan + tema seçmemiş kullanıcılar varsayılan dark açılıyordu;
+               dark CSS köprüsü butonları tam kapsamadığından "beyaz buton / görünmez
+               yazı" regresyonu (tüm platform). Tüm kontrolcüler (bu FOUC, dark-mode.js,
+               React ThemeProvider) aynı 'apya-theme' anahtarını okur → erkenden 'light'
+               yazıp sabitliyoruz. AÇMAK İÇİN: aşağıdaki OS-duyarlı bloğu geri getir +
+               dark-mode.js -> DARK_MODE_ENABLED = true. */
+            var html = document.documentElement;
+            localStorage.setItem('apya-theme', 'light');
+            html.setAttribute('data-theme', 'light');
+            html.classList.remove('lpx-theme-light', 'lpx-theme-dark', 'lpx-theme-dim');
+            html.classList.add('lpx-theme-light');
+
+            /* --- ESKİ (OS-duyarlı) ÇÖZÜM — dark yeniden açılınca geri getir:
             var stored = localStorage.getItem('apya-theme');
             var prefers = window.matchMedia('(prefers-color-scheme: dark)').matches;
             var resolved = stored === 'dark' || (stored !== 'light' && prefers) ? 'dark' : 'light';
-            var html = document.documentElement;
             html.setAttribute('data-theme', resolved);
-            /* LeptonX class mirror — eski sayfalar (jQuery + .card + .table) da koyu */
             html.classList.remove('lpx-theme-light', 'lpx-theme-dark', 'lpx-theme-dim');
             html.classList.add(resolved === 'dark' ? 'lpx-theme-dark' : 'lpx-theme-light');
+            --- */
         } catch (_) { /* sessizce devam */ }
     })();
 </script>
