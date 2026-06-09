@@ -8,7 +8,7 @@
     ViewBag.Title = Model.Project?.Name;
 
     var totalTasks     = Model.Tasks?.Count ?? 0;
-    var completedTasks = Model.Tasks?.Count(t => (int)t.Status == 3) ?? 0;
+    var completedTasks = Model.Tasks?.Count(t => t.Status == Apya.Platform.Tasks.TaskStatus.Done) ?? 0; // Done=4 (önceki "==3" InReview'i sayıyordu → bug)
     var progressPct    = totalTasks > 0 ? (int)Math.Round((double)completedTasks / totalTasks * 100) : 0;
     var assigneeCount  = Model.Tasks?.Where(t => t.AssigneeId.HasValue).Select(t => t.AssigneeId).Distinct().Count() ?? 0;
     var facepileCount  = Math.Min(assigneeCount, 5);
