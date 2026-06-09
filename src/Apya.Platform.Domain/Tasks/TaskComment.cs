@@ -8,12 +8,16 @@ namespace Apya.Platform.Tasks
         public Guid TaskId { get; set; } // Hangi göreve ait?
         public string Text { get; set; } = null!; // Yorum içeriği
 
+        // Instagram tarzı yanıt: bir yoruma verilen cevap. null ise kök yorum.
+        public Guid? ParentCommentId { get; set; }
+
         // Constructor
         public TaskComment() { }
 
-        public TaskComment(Guid taskId, string text)
+        public TaskComment(Guid taskId, string text, Guid? parentCommentId = null)
         {
             TaskId = taskId;
+            ParentCommentId = parentCommentId;
             SetText(text);
         }
 

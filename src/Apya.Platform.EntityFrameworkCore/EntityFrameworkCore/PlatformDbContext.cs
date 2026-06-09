@@ -424,6 +424,7 @@ namespace Apya.Platform.EntityFrameworkCore
                 b.ToTable(PlatformConsts.DbTablePrefix + "TaskComments", PlatformConsts.DbSchema);
                 b.ConfigureByConvention();
                 b.HasIndex(x => x.TaskId); // REV-004
+                b.HasIndex(x => x.ParentCommentId); // Instagram tarzı yanıt sorgusu
             });
 
             builder.Entity<TaskAttachment>(b =>

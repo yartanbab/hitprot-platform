@@ -168,6 +168,26 @@
                             </div>
                         </div>
                         <p class="mb-1 text-dark comment-text">@comment.Text</p>
+                        <button type="button" class="btn btn-sm btn-link text-secondary p-0 comment-reply-btn"><i class="fa fa-reply me-1"></i>Yanıtla</button>
+                        <div class="comment-replies ms-4 mt-2 ps-2 border-start">
+                            @foreach (var reply in comment.Replies)
+                            {
+                            <div class="list-group-item bg-white border-0 mb-1 rounded-3 comment-item reply-item py-2" data-comment-id="@reply.Id">
+                                <div class="d-flex w-100 justify-content-between mb-1">
+                                    <h6 class="mb-0 fw-bold text-secondary" style="font-size:0.85rem;"><i class="fa fa-reply fa-flip-horizontal me-1"></i> @reply.AuthorName</h6>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <small class="text-muted" style="font-size:0.7rem;">@reply.CreationTime.ToShortDateString() @reply.CreationTime.ToShortTimeString()</small>
+                                        @if (reply.IsOwn)
+                                        {
+                                            <button type="button" class="btn btn-sm btn-link text-secondary p-0 comment-edit-btn" title="Düzenle"><i class="fa fa-pen"></i></button>
+                                            <button type="button" class="btn btn-sm btn-link text-danger p-0 comment-delete-btn" title="Sil"><i class="fa fa-trash"></i></button>
+                                        }
+                                    </div>
+                                </div>
+                                <p class="mb-0 text-dark comment-text" style="font-size:0.9rem;">@reply.Text</p>
+                            </div>
+                            }
+                        </div>
                     </div>
                         }
                     }
@@ -477,6 +497,8 @@
                         '</div>' +
                     '</div>' +
                     '<p class="mb-1 text-dark comment-text"></p>' +
+                    '<button type="button" class="btn btn-sm btn-link text-secondary p-0 comment-reply-btn"><i class="fa fa-reply me-1"></i>Yanıtla</button>' +
+                    '<div class="comment-replies ms-4 mt-2 ps-2 border-start"></div>' +
                 '</div>');
                 $item.find('.comment-text').text(text); // HTML enjeksiyonunu önle
                 $('#CommentList').prepend($item);
@@ -492,8 +514,8 @@
     // --- YORUM DÜZENLE (inline) — yalnızca kendi yorumu (butonlar IsOwn ile render edilir) ---
     $(document).off('click', '.comment-edit-btn').on('click', '.comment-edit-btn', function () {
         var $item = $(this).closest('.comment-item');
-        if ($item.find('.comment-edit-box').length) return; // zaten düzenleniyor
-        var $textEl = $item.find('.comment-text');
+        if ($item.children('.comment-edit-box').length) return; // zaten düzenleniyor
+        var $textEl = $item.children('.comment-text'); // doğrudan çocuk (iç içe yanıt metnini yakalamasın)
         var $box = $('<div class="comment-edit-box mt-1"></div>');
         var $input = $('<input type="text" class="form-control form-control-sm mb-1">').val($textEl.text().trim());
         var $save = $('<button type="button" class="btn btn-sm btn-success me-1"><i class="fa fa-check"></i></button>');
@@ -528,6 +550,60 @@
                 abp.notify.info('Yorum silindi.');
             });
         });
+    });
+
+    // --- YORUMA YANIT (Instagram tarzı, tek seviye) ---
+    function buildReplyRow(id, author, text) {
+        var $r = $('<div class="list-group-item bg-white border-0 mb-1 rounded-3 comment-item reply-item py-2" data-comment-id="' + id + '">' +
+            '<div class="d-flex w-100 justify-content-between mb-1">' +
+                '<h6 class="mb-0 fw-bold text-secondary js-reply-author" style="font-size:0.85rem;"><i class="fa fa-reply fa-flip-horizontal me-1"></i> </h6>' +
+                '<div class="d-flex align-items-center gap-2">' +
+                    '<small class="text-muted" style="font-size:0.7rem;">' + new Date().toLocaleString() + '</small>' +
+                    '<button type="button" class="btn btn-sm btn-link text-secondary p-0 comment-edit-btn" title="Düzenle"><i class="fa fa-pen"></i></button>' +
+                    '<button type="button" class="btn btn-sm btn-link text-danger p-0 comment-delete-btn" title="Sil"><i class="fa fa-trash"></i></button>' +
+                '</div>' +
+            '</div>' +
+            '<p class="mb-0 text-dark comment-text" style="font-size:0.9rem;"></p>' +
+        '</div>');
+        $r.find('.js-reply-author').append(document.createTextNode(author || 'Siz'));
+        $r.children('.comment-text').text(text); // HTML enjeksiyonunu önle
+        return $r;
+    }
+
+    $(document).off('click', '.comment-reply-btn').on('click', '.comment-reply-btn', function () {
+        var $comment = $(this).closest('.comment-item');
+        var $replies = $comment.children('.comment-replies');
+        if ($comment.children('.reply-input-box').length) { $comment.children('.reply-input-box').find('input').trigger('focus'); return; }
+
+        var $box = $('<div class="reply-input-box input-group input-group-sm mt-2 mb-1"></div>');
+        var $input = $('<input type="text" class="form-control form-control-sm" placeholder="Yanıt yaz...">');
+        var $send = $('<button type="button" class="btn btn-primary"><i class="fa fa-paper-plane"></i></button>');
+        $box.append($input).append($send);
+        $replies.before($box);
+        $input.trigger('focus');
+
+        function submitReply() {
+            var text = $input.val();
+            if (!text || !text.trim()) return;
+            var parentId = $comment.data('comment-id');
+            $send.prop('disabled', true);
+            $.ajax({
+                type: 'POST',
+                url: '/Tasks/EditModal?handler=ReplyComment',
+                headers: { 'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val() },
+                data: { parentCommentId: parentId, commentText: text },
+                success: function (result) {
+                    var id = result && result.id ? result.id : '';
+                    var author = result && result.author ? result.author : 'Siz';
+                    $replies.append(buildReplyRow(id, author, text));
+                    $box.remove();
+                    abp.notify.success('Yanıt eklendi!');
+                },
+                error: function () { $send.prop('disabled', false); abp.notify.error('Yanıt eklenemedi!'); }
+            });
+        }
+        $send.on('click', submitReply);
+        $input.on('keypress', function (e) { if (e.which === 13) { e.preventDefault(); submitReply(); } });
     });
 
     $('#BtnUploadFile').click(function () {

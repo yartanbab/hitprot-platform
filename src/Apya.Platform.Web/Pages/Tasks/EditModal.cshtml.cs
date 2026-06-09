@@ -68,7 +68,16 @@ namespace Apya.Platform.Web.Pages.Tasks
             };
 
             SubTasks = taskDto.SubTasks?.OrderByDescending(x => x.CreationTime).ToList() ?? new List<TaskDto>();
-            Comments = taskDto.Comments?.OrderByDescending(x => x.CreationTime).ToList() ?? new List<TaskCommentDto>();
+            // Tek seviye thread: kök yorumlar (en yeni üstte) + altlarında yanıtlar (kronolojik).
+            var allComments = taskDto.Comments ?? new List<TaskCommentDto>();
+            var rootComments = allComments.Where(c => c.ParentCommentId == null)
+                                          .OrderByDescending(c => c.CreationTime).ToList();
+            foreach (var root in rootComments)
+            {
+                root.Replies = allComments.Where(r => r.ParentCommentId == root.Id)
+                                          .OrderBy(r => r.CreationTime).ToList();
+            }
+            Comments = rootComments;
             Attachments = taskDto.Attachments?.OrderByDescending(x => x.CreationTime).ToList() ?? new List<TaskAttachmentDto>();
 
             var userLookup = await _taskAppService.GetUsersLookupAsync();
@@ -157,6 +166,13 @@ namespace Apya.Platform.Web.Pages.Tasks
             // Yeni yorumun Id'sini döndür ki istemci, satırı düzenle/sil butonlu çizebilsin.
             var id = await _taskAppService.AddCommentAsync(taskId, commentText);
             return new JsonResult(new { id });
+        }
+
+        public async Task<IActionResult> OnPostReplyCommentAsync(Guid parentCommentId, string commentText)
+        {
+            if (string.IsNullOrWhiteSpace(commentText)) return NoContent();
+            var id = await _taskAppService.ReplyToCommentAsync(parentCommentId, commentText);
+            return new JsonResult(new { id, author = CurrentUser.UserName ?? "Siz" });
         }
 
         public async Task<IActionResult> OnPostUploadFileAsync(Guid taskId, IFormFile file)

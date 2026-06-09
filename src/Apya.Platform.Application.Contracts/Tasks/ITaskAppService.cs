@@ -19,6 +19,7 @@ namespace Apya.Platform.Tasks
 
         // Yorum Metodları
         Task<Guid> AddCommentAsync(Guid taskId, string text);
+        Task<Guid> ReplyToCommentAsync(Guid parentCommentId, string text); // Instagram tarzı yanıt
         Task UpdateCommentAsync(Guid commentId, string text);  // yalnızca yorum sahibi
         Task DeleteCommentAsync(Guid commentId);               // yalnızca yorum sahibi
         Task<List<TaskCommentDto>> GetCommentsAsync(Guid taskId);

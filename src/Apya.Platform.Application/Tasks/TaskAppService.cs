@@ -348,6 +348,35 @@ namespace Apya.Platform.Tasks
             return comment.Id;
         }
 
+        // Instagram tarzı yanıt: bir yoruma cevap. Tek seviye thread tutarız —
+        // bir yanıta yanıt verilirse kök yoruma bağlanır.
+        public async Task<Guid> ReplyToCommentAsync(Guid parentCommentId, string text)
+        {
+            if (string.IsNullOrWhiteSpace(text))
+            {
+                throw new Volo.Abp.UserFriendlyException("Yorum içeriği boş olamaz.", "Platform:Task:CommentRequired");
+            }
+
+            var parent = await _commentRepository.GetAsync(parentCommentId);
+            var rootId = parent.ParentCommentId ?? parent.Id; // tek seviye: yanıtın yanıtı köke gider
+            var reply = await _commentRepository.InsertAsync(
+                new TaskComment(parent.TaskId, text.Trim(), rootId), autoSave: true);
+
+            var task = await Repository.GetAsync(parent.TaskId);
+            await _localEventBus.PublishAsync(new TaskCommentAddedEto
+            {
+                TaskId        = parent.TaskId,
+                TaskTitle     = task.Title,
+                AssigneeId    = task.AssigneeId,
+                CreatorId     = task.CreatorId,
+                CommentUserId = CurrentUser.Id ?? Guid.Empty,
+                CommenterName = CurrentUser.UserName ?? "Bilinmeyen",
+                CommentText   = text
+            });
+
+            return reply.Id;
+        }
+
         // Yorum düzenleme — yalnızca yorumu yazan kişi.
         public async Task UpdateCommentAsync(Guid commentId, string text)
         {
@@ -394,19 +423,28 @@ namespace Apya.Platform.Tasks
             var users = await userQueryable.Where(u => userIds.Contains(u.Id)).ToListAsync();
             var userDictionary = users.ToDictionary(u => u.Id, u => u.UserName);
 
-            return comments.Select(c => new TaskCommentDto
+            var allDtos = comments.Select(c => new TaskCommentDto
             {
                 Id = c.Id,
                 Text = c.Text,
                 CreationTime = c.CreationTime,
                 AuthorId = c.CreatorId,
+                ParentCommentId = c.ParentCommentId,
                 IsOwn = c.CreatorId == CurrentUser.Id,
                 AuthorName = (c.CreatorId.HasValue && userDictionary.ContainsKey(c.CreatorId.Value))
                              ? userDictionary[c.CreatorId.Value]
                              : "Bilinmeyen Kullanıcı"
-            })
-            .OrderByDescending(x => x.CreationTime)
-            .ToList();
+            }).ToList();
+
+            // Tek seviye thread: kök yorumlar (en yeni üstte) + altlarında yanıtlar (kronolojik).
+            var roots = allDtos.Where(c => c.ParentCommentId == null)
+                               .OrderByDescending(x => x.CreationTime).ToList();
+            foreach (var root in roots)
+            {
+                root.Replies = allDtos.Where(r => r.ParentCommentId == root.Id)
+                                      .OrderBy(r => r.CreationTime).ToList();
+            }
+            return roots;
         }
 
         // --- 7. DOSYA METODLARI ---
