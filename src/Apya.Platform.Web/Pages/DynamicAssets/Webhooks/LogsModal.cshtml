@@ -1,0 +1,58 @@
+@page
+@model Apya.Platform.Web.Pages.DynamicAssets.Webhooks.LogsModalModel
+@using Volo.Abp.AspNetCore.Mvc.UI.Bootstrap.TagHelpers.Modal
+@{
+    Layout = null;
+}
+<abp-modal size="Large">
+    <abp-modal-header title="Teslimat Kayıtları"></abp-modal-header>
+    <abp-modal-body>
+        @if (Model.Logs.Count == 0)
+        {
+            <div class="text-center text-muted py-4">
+                <i class="fa fa-inbox fa-2x mb-2 d-block"></i>
+                Bu abonelik için henüz teslimat kaydı yok.
+            </div>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-sm table-striped align-middle">
+                    <thead>
+                        <tr>
+                            <th>Tarih</th>
+                            <th>Durum</th>
+                            <th>Yanıt Kodu</th>
+                            <th>Deneme</th>
+                            <th>Yanıt Gövdesi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var log in Model.Logs)
+                        {
+                            <tr>
+                                <td>@log.CreationTime.ToString("dd.MM.yyyy HH:mm:ss")</td>
+                                <td>
+                                    @if (log.IsSuccess)
+                                    {
+                                        <span class="badge bg-success">Başarılı</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-danger">Başarısız</span>
+                                    }
+                                </td>
+                                <td><code>@log.ResponseCode</code></td>
+                                <td>@log.TryCount</td>
+                                <td>
+                                    <small class="text-muted">@(string.IsNullOrEmpty(log.ResponseBody) ? "-" : log.ResponseBody)</small>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </abp-modal-body>
+    <abp-modal-footer buttons="@(AbpModalButtons.Close)"></abp-modal-footer>
+</abp-modal>
