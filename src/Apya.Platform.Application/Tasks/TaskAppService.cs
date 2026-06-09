@@ -404,6 +404,17 @@ namespace Apya.Platform.Tasks
                 throw new Volo.Abp.UserFriendlyException("Yalnızca kendi yorumunuzu silebilirsiniz.");
             }
 
+            // Kök yorum siliniyorsa yanıtlarını da sil; aksi halde yanıtlar öksüz kalıp
+            // (ParentCommentId silinmiş köke işaret eder) GetCommentsAsync'te UI'dan kaybolur.
+            if (comment.ParentCommentId == null)
+            {
+                var replies = await _commentRepository.GetListAsync(c => c.ParentCommentId == comment.Id);
+                foreach (var reply in replies)
+                {
+                    await _commentRepository.DeleteAsync(reply);
+                }
+            }
+
             await _commentRepository.DeleteAsync(comment, autoSave: true);
         }
 
