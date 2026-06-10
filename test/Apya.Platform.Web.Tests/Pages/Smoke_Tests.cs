@@ -1,7 +1,15 @@
+using System;
 using System.Net;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Shouldly;
 using Xunit;
+using Apya.Platform.Application.Projects;
+using Apya.Platform.CashAccounts;
+using Apya.Platform.CashMovements;
+using Apya.Platform.Customers;
+using Apya.Platform.Expenses;
+using Apya.Platform.Invoices;
 
 namespace Apya.Platform.Pages;
 
@@ -49,18 +57,21 @@ public class Smoke_Tests : PlatformWebTestBase
         sc.ShouldBeInRange(200, 399, $"{url} beklenenin dışında {sc} döndü");
     }
 
-    // ── API smoke (401 kabul edilir; 500 değil) ────────────────────────────
+    // ── API yetkilendirme (host-bağımsız) ──────────────────────────────────
+    // Test host'u AddAlwaysAllowAuthorization + FakeCurrentPrincipalAccessor
+    // kullandığından HTTP 401 burada hiçbir zaman gözlemlenemez. Bunun yerine
+    // AppService sınıflarının [Authorize] taşıdığı doğrulanır — gerçek host'ta
+    // anonim isteğin 401 almasını sağlayan koşul budur.
     [Theory]
-    [InlineData("/api/app/customer")]
-    [InlineData("/api/app/project")]
-    [InlineData("/api/app/invoice")]
-    [InlineData("/api/app/expense")]
-    [InlineData("/api/app/cash-movement")]
-    [InlineData("/api/app/cash-account")]
-    public async Task Api_Returns401WhenUnauthenticated(string url)
+    [InlineData(typeof(CustomerAppService))]
+    [InlineData(typeof(ProjectAppService))]
+    [InlineData(typeof(InvoiceAppService))]
+    [InlineData(typeof(ExpenseAppService))]
+    [InlineData(typeof(CashMovementAppService))]
+    [InlineData(typeof(CashAccountAppService))]
+    public void AppService_RequiresAuthorization(Type appServiceType)
     {
-        var response = await Client.GetAsync(url);
-        response.StatusCode.ShouldBe(HttpStatusCode.Unauthorized,
-            $"{url} beklenen 401 yerine {(int)response.StatusCode} döndü");
+        appServiceType.IsDefined(typeof(AuthorizeAttribute), inherit: true)
+            .ShouldBeTrue($"{appServiceType.Name} [Authorize] taşımıyor — anonim API erişimi açık kalır");
     }
 }
