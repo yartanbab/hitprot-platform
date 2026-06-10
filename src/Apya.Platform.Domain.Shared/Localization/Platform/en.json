@@ -21,6 +21,8 @@
     "Menu:Invoices": "Invoices & Payments",
     "Menu:ExpenseCapture": "Capture Expense",
     "Menu:TrialBalance": "Trial Balance",
+    "Menu:CustomerStatement": "Customer Statement",
+    "Menu:ProjectBudget": "Project Budget / P&L",
     "Menu:Content": "Content",
     "Menu:Documents": "Wiki / Documents",
     "Menu:DynamicAssets": "Templates & Forms",
