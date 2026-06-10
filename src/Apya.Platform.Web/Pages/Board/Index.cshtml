@@ -22,6 +22,10 @@
             </abp-column>
             <abp-column size="_6" class="text-end">
                 <button id="btn-refresh-board" class="btn btn-outline-secondary btn-sm"><i class="fa fa-sync"></i> Yenile</button>
+                @if (await AuthorizationService.IsGrantedAsync(PlatformPermissions.Tasks.Create))
+                {
+                    <button id="btn-new-task" class="btn btn-primary btn-sm ms-1"><i class="fa fa-plus me-1"></i> Yeni Görev</button>
+                }
             </abp-column>
         </abp-row>
     </abp-card-header>
@@ -33,5 +37,6 @@
 
 @section scripts {
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+    <abp-script src="/js/apya-kanban.js" />
     <abp-script src="/Pages/Board/index.js" />
 }
