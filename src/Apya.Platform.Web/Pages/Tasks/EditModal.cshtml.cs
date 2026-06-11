@@ -29,7 +29,6 @@ namespace Apya.Platform.Web.Pages.Tasks
 
         // Null hatalarını önlemek için listeleri burada başlatıyoruz
         public List<SelectListItem> UserList { get; set; } = new();
-        public List<SelectListItem> StatusList { get; set; } = new();   // Durum (Türkçe)
         public List<SelectListItem> StatusOrColumnList { get; set; } = new(); // Durum + özel kolonlar
         public List<SelectListItem> PriorityList { get; set; } = new(); // Öncelik (Türkçe)
         public List<TaskDto> SubTasks { get; set; } = new();
@@ -143,15 +142,7 @@ namespace Apya.Platform.Web.Pages.Tasks
                 .Select(u => new SelectListItem(u.UserName, u.Id.ToString()))
                 .ToList();
 
-            // Durum & Öncelik dropdown'ları Türkçe (kod tabanı konvansiyonu: metin + int value).
-            StatusList = new List<SelectListItem>
-            {
-                new("Yapılacak",    ((int)Apya.Platform.Tasks.TaskStatus.Todo).ToString(),       Task.Status == Apya.Platform.Tasks.TaskStatus.Todo),
-                new("Devam Ediyor", ((int)Apya.Platform.Tasks.TaskStatus.InProgress).ToString(), Task.Status == Apya.Platform.Tasks.TaskStatus.InProgress),
-                new("Kontrol/Test", ((int)Apya.Platform.Tasks.TaskStatus.InReview).ToString(),   Task.Status == Apya.Platform.Tasks.TaskStatus.InReview),
-                new("Tamamlandı",   ((int)Apya.Platform.Tasks.TaskStatus.Done).ToString(),       Task.Status == Apya.Platform.Tasks.TaskStatus.Done),
-                new("İptal",        ((int)Apya.Platform.Tasks.TaskStatus.Cancelled).ToString(),  Task.Status == Apya.Platform.Tasks.TaskStatus.Cancelled),
-            };
+            // Durum artık birleşik "Durum/Kolon" dropdown'ından geliyor (StatusOrColumnList).
             PriorityList = new List<SelectListItem>
             {
                 new("Düşük",  ((int)TaskPriority.Low).ToString(),      Task.Priority == TaskPriority.Low),

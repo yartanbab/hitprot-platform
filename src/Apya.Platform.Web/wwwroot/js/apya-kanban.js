@@ -339,10 +339,6 @@
 
         // ── Olay bağlamaları (delege; board kapsamında) ──
         var $doc = $(document);
-        function inThisBoard(node) {
-            var b = document.querySelector(boardSel);
-            return b && b.contains(node);
-        }
 
         $doc.on('click', boardSel + ' .js-edit-task', function () {
             if (editModal) { editModal.open({ id: $(this).data('id') }); }
