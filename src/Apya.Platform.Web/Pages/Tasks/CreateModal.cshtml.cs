@@ -84,25 +84,27 @@ public class CreateModalModel : PlatformPageModel
     private async System.Threading.Tasks.Task BuildStatusOrColumnListAsync(Guid? projectId)
     {
         StatusOrColumnList = new List<SelectListItem>();
+
+        // Sistem durumları her zaman (varsayılan seçili: Yapılacak)
+        foreach (var (label, sv) in new[] { ("Yapılacak", 1), ("Sürüyor", 2), ("Testte", 3), ("Tamamlandı", 4) })
+        {
+            StatusOrColumnList.Add(new SelectListItem(label, "s:" + sv, sv == 1));
+        }
+
+        // Projenin özel kolonları (StatusValue=null)
         if (projectId.HasValue)
         {
             try
             {
                 var cols = await _boardColumnAppService.GetListByProjectAsync(projectId.Value);
-                foreach (var c in cols.OrderBy(c => c.Order))
+                foreach (var c in cols.Where(c => !c.StatusValue.HasValue).OrderBy(c => c.Order))
                 {
-                    var val = c.StatusValue.HasValue ? "s:" + c.StatusValue.Value : "c:" + c.Id;
-                    StatusOrColumnList.Add(new SelectListItem(c.Name, val, c.StatusValue == 1));
+                    StatusOrColumnList.Add(new SelectListItem(c.Name, "c:" + c.Id, false));
                 }
-                StatusOrColumnList.Add(new SelectListItem("İptal", "s:0", false));
-                return;
             }
-            catch { /* yetki/erişim yoksa sistem durumlarına düş */ }
+            catch { /* yetki/erişim yoksa yalnızca sistem durumları */ }
         }
 
-        foreach (var (label, sv) in new[] { ("Yapılacak", 1), ("Devam Ediyor", 2), ("Kontrol/Test", 3), ("Tamamlandı", 4), ("İptal", 0) })
-        {
-            StatusOrColumnList.Add(new SelectListItem(label, "s:" + sv, sv == 1));
-        }
+        StatusOrColumnList.Add(new SelectListItem("İptal", "s:0", false));
     }
 }

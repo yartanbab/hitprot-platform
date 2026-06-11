@@ -66,27 +66,28 @@ namespace Apya.Platform.Web.Pages.Tasks
             var selected = boardColumnId.HasValue ? "c:" + boardColumnId.Value : "s:" + (int)status;
             StatusOrColumnList = new List<SelectListItem>();
 
+            // Sistem durumları her zaman (seed durumundan bağımsız, board'la aynı isimler)
+            foreach (var (label, sv) in new[] { ("Yapılacak", 1), ("Sürüyor", 2), ("Testte", 3), ("Tamamlandı", 4) })
+            {
+                StatusOrColumnList.Add(new SelectListItem(label, "s:" + sv, selected == "s:" + sv));
+            }
+
+            // Projenin özel kolonları (StatusValue=null) sıraya göre eklenir
             if (projectId.HasValue)
             {
                 try
                 {
                     var cols = await _boardColumnAppService.GetListByProjectAsync(projectId.Value);
-                    foreach (var c in cols.OrderBy(c => c.Order))
+                    foreach (var c in cols.Where(c => !c.StatusValue.HasValue).OrderBy(c => c.Order))
                     {
-                        var val = c.StatusValue.HasValue ? "s:" + c.StatusValue.Value : "c:" + c.Id;
+                        var val = "c:" + c.Id;
                         StatusOrColumnList.Add(new SelectListItem(c.Name, val, val == selected));
                     }
-                    // Cancelled sistem durumu board kolonu değil → ayrıca ekle
-                    StatusOrColumnList.Add(new SelectListItem("İptal", "s:0", selected == "s:0"));
-                    return;
                 }
-                catch { /* yetki/erişim yoksa sistem durumlarına düş */ }
+                catch { /* yetki/erişim yoksa yalnızca sistem durumları */ }
             }
 
-            foreach (var (label, sv) in new[] { ("Yapılacak", 1), ("Devam Ediyor", 2), ("Kontrol/Test", 3), ("Tamamlandı", 4), ("İptal", 0) })
-            {
-                StatusOrColumnList.Add(new SelectListItem(label, "s:" + sv, selected == "s:" + sv));
-            }
+            StatusOrColumnList.Add(new SelectListItem("İptal", "s:0", selected == "s:0"));
         }
 
         // Form'dan gelen birleşik seçimi Task.Status + Task.BoardColumnId'ye uzlaştırır.
