@@ -73,6 +73,9 @@
                 <abp-card-title>@L["Tasks:BoardTitle"]</abp-card-title>
             </abp-column>
             <abp-column size-md="_6" class="text-end">
+                <select id="tasks-project" class="form-select form-select-sm d-inline-block w-auto me-2 align-middle" title="Proje seçince kanban o projeye scope'lanır (özel kolonlar + Kolon Ekle); liste/gantt da filtrelenir">
+                    <option value="">Tüm Projeler (Genel)</option>
+                </select>
                 <div class="btn-group me-2" role="group">
                     <button type="button" id="btn-view-list" class="btn btn-outline-primary active">
                         <i class="fa fa-list me-1"></i> @L["Tasks:View:List"]

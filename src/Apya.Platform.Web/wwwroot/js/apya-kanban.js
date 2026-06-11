@@ -32,6 +32,8 @@
 
     function create(opts) {
         opts = opts || {};
+        // projectId artık DİNAMİK: setProject(pid) ile değişebilir (global board'larda
+        // proje seçici). Proje seçiliyse o projenin özel kolonları + Kolon Ekle gelir.
         var projectId = opts.projectId || null;
         var boardSel = opts.boardSelector || '.kanban-board';
         var showProject = !!opts.showProjectName;
@@ -39,7 +41,9 @@
         // board'da gizli (2026-06-11). İleride permission ile açmak için:
         //   enableTimer: abp.auth.isGranted('Platform.Tasks.TimeTracking')
         var enableTimer = opts.enableTimer === true;
-        var enableCols = (opts.enableCustomColumns != null) ? !!opts.enableCustomColumns : !!projectId;
+        // Özel kolonlara izin (false ise asla); izin varsa AKTİF projede çalışır.
+        var customColumnsAllowed = opts.enableCustomColumns !== false;
+        function effectiveCols() { return customColumnsAllowed && !!projectId; }
         var editModal = opts.editModal || null;
         var getFilter = typeof opts.getFilter === 'function' ? opts.getFilter : function () { return {}; };
         var onChanged = typeof opts.onChanged === 'function' ? opts.onChanged : function () { };
@@ -198,16 +202,34 @@
             board.appendChild(add);
         }
 
+        // Global moda dönerken (proje seçimi kalkınca) özel kolonları + Kolon Ekle
+        // karosunu DOM'dan temizle ve sistem kolonlarının DB kolon-id'lerini sıfırla
+        // (drag tekrar status ile taşınsın).
+        function clearCustomColumns() {
+            var board = document.querySelector(boardSel);
+            if (!board) { return; }
+            board.querySelectorAll('.js-custom-col, .js-add-col').forEach(function (n) { n.remove(); });
+            board.querySelectorAll('.kanban-column[data-column-id]').forEach(function (c) { c.removeAttribute('data-column-id'); });
+            customIds = {};
+        }
+
         // ── Yükle ──
         function load() {
-            if (enableCols && projectId) {
+            if (effectiveCols()) {
                 colSvc.getListByProject(projectId).then(function (cols) {
                     renderColumns(cols);
                     fetchTasks();
                 });
             } else {
+                clearCustomColumns();
                 fetchTasks();
             }
+        }
+
+        // Aktif projeyi değiştir (global board proje seçici). null → global görünüm.
+        function setProject(pid) {
+            projectId = pid || null;
+            load();
         }
 
         function fetchTasks() {
@@ -378,15 +400,18 @@
             taskSvc.stopTimeTracking($b.data('id')).then(function () { abp.notify.success('Sayaç durduruldu.'); load(); }).always(function () { abp.ui.clearBusy($b); });
         });
 
-        // Özel kolon ekle / sil / yeniden adlandır
-        if (enableCols && projectId) {
+        // Özel kolon ekle / sil / yeniden adlandır — izin varsa bağla; aktif proje
+        // yoksa karo/butonlar zaten DOM'da olmaz (guard çift güvence).
+        if (customColumnsAllowed) {
             $doc.on('click', boardSel + ' .js-add-col', function () {
+                if (!projectId) { return; }
                 var name = window.prompt('Yeni kolon adı:');
                 if (!name || !name.trim()) { return; }
                 colSvc.create({ projectId: projectId, name: name.trim(), colorClass: 'primary' })
                     .then(function () { abp.notify.success('Kolon eklendi.'); load(); });
             });
             $doc.on('click', boardSel + ' .js-col-delete', function () {
+                if (!projectId) { return; }
                 var id = $(this).closest('.kanban-column').data('column-id');
                 abp.message.confirm('Bu kolonu silmek istediğinize emin misiniz? İçindeki görevler durumlarına göre varsayılan kolonlara döner.', 'Kolonu Sil', function (ok) {
                     if (!ok) { return; }
@@ -394,6 +419,7 @@
                 });
             });
             $doc.on('click', boardSel + ' .js-col-rename', function () {
+                if (!projectId) { return; }
                 var $col = $(this).closest('.kanban-column');
                 var id = $col.data('column-id');
                 var name = window.prompt('Kolon adı:', $col.find('.js-col-name').text().trim());
@@ -404,7 +430,12 @@
 
         if (editModal && editModal.onResult) { editModal.onResult(function () { load(); onChanged(); }); }
 
-        return { load: load, reload: load };
+        return {
+            load: load,
+            reload: load,
+            setProject: setProject,
+            getProjectId: function () { return projectId; }
+        };
     }
 
     apya.kanban = { create: create };

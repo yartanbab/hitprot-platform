@@ -21,6 +21,9 @@
                 <abp-card-title><i class="fa fa-columns text-primary me-2"></i> @ViewBag.PageTitle</abp-card-title>
             </abp-column>
             <abp-column size="_6" class="text-end">
+                <select id="board-project" class="form-select form-select-sm d-inline-block w-auto me-1" title="Proje seçince o projenin kolonları + Kolon Ekle gelir">
+                    <option value="">Tüm Projeler (Genel)</option>
+                </select>
                 <button id="btn-refresh-board" class="btn btn-outline-secondary btn-sm"><i class="fa fa-sync"></i> Yenile</button>
                 @if (await AuthorizationService.IsGrantedAsync(PlatformPermissions.Tasks.Create))
                 {

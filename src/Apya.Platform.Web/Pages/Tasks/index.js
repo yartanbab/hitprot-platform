@@ -3,9 +3,13 @@ $(function () {
     var createModal = new abp.ModalManager(abp.appPath + 'Tasks/CreateModal');
     var editModal   = new abp.ModalManager(abp.appPath + 'Tasks/EditModal');
 
+    // Proje seçimi: kanban'ı o projeye scope'lar (özel kolonlar) + liste/gantt'ı filtreler.
+    var selectedProjectId = null;
+
     // Ortak filtre — DataTable, Gantt ve Kanban aynı kaynaktan beslenir.
     function currentFilter() {
         var input = {};
+        if (selectedProjectId) input.projectId = selectedProjectId;
         if ($('#Filter_AssigneeId').val()) input.assigneeId = $('#Filter_AssigneeId').val();
         if ($('#Filter_Status').val()) input.statuses = [parseInt($('#Filter_Status').val())];
         if ($('#Filter_MinDueDate').val()) input.minDueDate = $('#Filter_MinDueDate').val();
@@ -140,7 +144,7 @@ $(function () {
         editModal: editModal,
         showProjectName: true,
         enableTimer: false,         // zaman sayacı her board'da gizli (kullanıcı kararı)
-        enableCustomColumns: false,
+        enableCustomColumns: true,  // proje seçilince o projenin özel kolonları + Kolon Ekle
         getFilter: currentFilter,
         onChanged: function () {
             dataTable.ajax.reload(null, false);
@@ -148,10 +152,24 @@ $(function () {
         }
     });
 
+    // --- Proje seçici: kanban'ı scope'lar + liste/gantt'ı filtreler ---
+    apya.platform.application.projects.project.getList({ maxResultCount: 1000 }).then(function (res) {
+        var $sel = $('#tasks-project');
+        (res.items || []).forEach(function (p) {
+            $sel.append($('<option>').val(p.id).text(p.name + (p.code ? ' (' + p.code + ')' : '')));
+        });
+    });
+    $('#tasks-project').on('change', function () {
+        selectedProjectId = $(this).val() || null;
+        kb.setProject(selectedProjectId);
+        dataTable.ajax.reload();
+        if (!$('#view-gantt').hasClass('d-none')) loadGantt();
+    });
+
     // --- Yeni Görev ---
     $('#NewTaskButton').click(function (e) {
         e.preventDefault();
-        createModal.open();
+        createModal.open(selectedProjectId ? { projectId: selectedProjectId } : {});
     });
 
     // --- Görüntü Modu Geçişi ---
