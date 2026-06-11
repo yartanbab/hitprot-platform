@@ -29,6 +29,7 @@ namespace Apya.Platform.Tasks
         private readonly IRepository<TaskDependency, Guid> _dependencyRepository;
         private readonly IRepository<TaskTimeLog, Guid> _timeLogRepository;
         private readonly IRepository<IdentityUser, Guid> _identityRepository;
+        private readonly IRepository<Apya.Platform.Projects.BoardColumn, Guid> _boardColumnRepository;
         private readonly ILocalEventBus _localEventBus;
 
         public TaskAppService(
@@ -39,16 +40,18 @@ namespace Apya.Platform.Tasks
             IRepository<TaskDependency, Guid> dependencyRepository,
             IRepository<TaskTimeLog, Guid> timeLogRepository,
             IRepository<IdentityUser, Guid> identityRepository,
+            IRepository<Apya.Platform.Projects.BoardColumn, Guid> boardColumnRepository,
             ILocalEventBus localEventBus)
             : base(repository)
         {
-            _userRepository       = userRepository;
-            _commentRepository    = commentRepository;
-            _attachmentRepository = attachmentRepository;
-            _dependencyRepository = dependencyRepository;
-            _timeLogRepository    = timeLogRepository;
-            _identityRepository   = identityRepository;
-            _localEventBus        = localEventBus;
+            _userRepository        = userRepository;
+            _commentRepository     = commentRepository;
+            _attachmentRepository  = attachmentRepository;
+            _dependencyRepository  = dependencyRepository;
+            _timeLogRepository     = timeLogRepository;
+            _identityRepository    = identityRepository;
+            _boardColumnRepository = boardColumnRepository;
+            _localEventBus         = localEventBus;
 
             CreatePolicyName = PlatformPermissions.Tasks.Create;
             UpdatePolicyName = PlatformPermissions.Tasks.Edit;
@@ -123,7 +126,60 @@ namespace Apya.Platform.Tasks
             var dependencies = await _dependencyRepository.GetListAsync(x => x.TaskId == id);
             taskDto.PredecessorIds = dependencies.Select(d => d.PredecessorTaskId).ToList();
 
+            // Özel kanban kolonu adı (liste "Durum" sütunu + modal dropdown)
+            if (task.BoardColumnId.HasValue)
+            {
+                var col = await _boardColumnRepository.FindAsync(task.BoardColumnId.Value);
+                taskDto.BoardColumnName = col?.Name;
+            }
+
             return taskDto;
+        }
+
+        // --- 1b. GET LIST (özel kolon adlarını batch doldurur) ---
+        public override async Task<PagedResultDto<TaskDto>> GetListAsync(GetTasksInput input)
+        {
+            var result = await base.GetListAsync(input);
+            await PopulateBoardColumnNamesAsync(result.Items);
+            return result;
+        }
+
+        // Özel kolondaki görevlere kolon adını tek sorguda iliştirir (liste "Durum" sütunu).
+        private async Task PopulateBoardColumnNamesAsync(System.Collections.Generic.IReadOnlyList<TaskDto> items)
+        {
+            var colIds = items.Where(i => i.BoardColumnId.HasValue)
+                              .Select(i => i.BoardColumnId!.Value).Distinct().ToList();
+            if (colIds.Count == 0) return;
+
+            var cols = await _boardColumnRepository.GetListAsync(c => colIds.Contains(c.Id));
+            var map = cols.ToDictionary(c => c.Id, c => c.Name);
+            foreach (var item in items)
+            {
+                if (item.BoardColumnId.HasValue && map.TryGetValue(item.BoardColumnId.Value, out var name))
+                {
+                    item.BoardColumnName = name;
+                }
+            }
+        }
+
+        // Modal "Durum/Kolon" dropdown'ından gelen kolon seçimini uzlaştırır:
+        // sistem kolonu → Status değişir + kolon bağı temizlenir; özel kolon → kolona bağlanır.
+        private async Task ApplyColumnSelectionAsync(TaskItem task, Guid? boardColumnId)
+        {
+            if (!boardColumnId.HasValue) { task.MoveToColumn(null); return; }
+
+            var col = await _boardColumnRepository.FindAsync(boardColumnId.Value);
+            if (col == null || col.ProjectId != task.ProjectId) { task.MoveToColumn(null); return; } // güvenlik: proje uyuşmazsa yok say
+
+            if (col.StatusValue.HasValue)
+            {
+                task.ChangeStatus((Apya.Platform.Tasks.TaskStatus)col.StatusValue.Value, Clock.Now);
+                task.MoveToColumn(null);
+            }
+            else
+            {
+                task.MoveToColumn(col.Id);
+            }
         }
 
         // --- 2. CREATE (Ekleme) - REV-001: Rich Domain Model ---
@@ -149,6 +205,9 @@ namespace Apya.Platform.Tasks
             {
                 newTask.ChangeStatus(input.Status, Clock.Now);
             }
+
+            // Modal'dan özel kolon seçildiyse uzlaştır (Status/BoardColumnId)
+            await ApplyColumnSelectionAsync(newTask, input.BoardColumnId);
 
             await Repository.InsertAsync(newTask);
 
@@ -215,6 +274,9 @@ namespace Apya.Platform.Tasks
                 input.IsPrivate,
                 Clock.Now
             );
+
+            // Modal'dan özel kolon seçildiyse uzlaştır (Status/BoardColumnId)
+            await ApplyColumnSelectionAsync(task, input.BoardColumnId);
 
             await Repository.UpdateAsync(task);
 

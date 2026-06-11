@@ -47,20 +47,17 @@
             <div class="bg-light p-3 rounded-3 border">
                 <div class="row g-3">
                     <div class="col-md-4">
-                        <label class="form-label fw-semibold text-dark" asp-for="Task.Status">@L["Tasks:Field:Status"]</label>
-                        <select class="form-select shadow-sm" asp-for="Task.Status">
-                            <option value="0">⏳ @L["Tasks:Status:Todo"]</option>
-                            <option value="1">🏃 @L["Tasks:Status:InProgress"]</option>
-                            <option value="2">✅ @L["Tasks:Status:Done"]</option>
-                        </select>
+                        <label class="form-label fw-semibold text-dark" asp-for="StatusOrColumn">@L["Tasks:Field:Status"]</label>
+                        <select class="form-select shadow-sm" asp-for="StatusOrColumn" asp-items="@Model.StatusOrColumnList"></select>
                     </div>
 
                     <div class="col-md-4">
                         <label class="form-label fw-semibold text-dark" asp-for="Task.Priority">@L["Tasks:Field:Priority"]</label>
                         <select class="form-select shadow-sm" asp-for="Task.Priority">
-                            <option value="0">🟢 @L["Tasks:Priority:Low"]</option>
-                            <option value="1" selected>🟡 @L["Tasks:Priority:Medium"]</option>
-                            <option value="2">🔴 @L["Tasks:Priority:High"]</option>
+                            <option value="1">🟢 @L["Tasks:Priority:Low"]</option>
+                            <option value="2" selected>🟡 @L["Tasks:Priority:Medium"]</option>
+                            <option value="3">🔴 @L["Tasks:Priority:High"]</option>
+                            <option value="4">⚫ @L["Tasks:Priority:Critical"]</option>
                         </select>
                     </div>
 

@@ -23,9 +23,14 @@ namespace Apya.Platform.Web.Pages.Tasks
         [BindProperty]
         public CreateUpdateTaskDto Task { get; set; } = new();
 
+        // Birleşik "Durum / Kolon" seçimi — "s:<int>" sistem durumu, "c:<guid>" özel kolon.
+        [BindProperty]
+        public string? StatusOrColumn { get; set; }
+
         // Null hatalarını önlemek için listeleri burada başlatıyoruz
         public List<SelectListItem> UserList { get; set; } = new();
         public List<SelectListItem> StatusList { get; set; } = new();   // Durum (Türkçe)
+        public List<SelectListItem> StatusOrColumnList { get; set; } = new(); // Durum + özel kolonlar
         public List<SelectListItem> PriorityList { get; set; } = new(); // Öncelik (Türkçe)
         public List<TaskDto> SubTasks { get; set; } = new();
         public List<TaskCommentDto> Comments { get; set; } = new();
@@ -38,17 +43,66 @@ namespace Apya.Platform.Web.Pages.Tasks
         private readonly IUploadedFileStorage _fileStorage;
         private readonly IExpenseAppService _expenseAppService;
         private readonly IIncomeEntryAppService _incomeEntryAppService;
+        private readonly Apya.Platform.Projects.IBoardColumnAppService _boardColumnAppService;
 
         public EditModalModel(
             ITaskAppService taskAppService,
             IUploadedFileStorage fileStorage,
             IExpenseAppService expenseAppService,
-            IIncomeEntryAppService incomeEntryAppService)
+            IIncomeEntryAppService incomeEntryAppService,
+            Apya.Platform.Projects.IBoardColumnAppService boardColumnAppService)
         {
             _taskAppService = taskAppService;
             _fileStorage = fileStorage;
             _expenseAppService = expenseAppService;
             _incomeEntryAppService = incomeEntryAppService;
+            _boardColumnAppService = boardColumnAppService;
+        }
+
+        // Birleşik "Durum / Kolon" listesini kurar: proje varsa kanban kolonları
+        // (sistem = s:<status>, özel = c:<guid>) + İptal; yoksa sistem durumları.
+        private async Task BuildStatusOrColumnListAsync(Guid? projectId, Apya.Platform.Tasks.TaskStatus status, Guid? boardColumnId)
+        {
+            var selected = boardColumnId.HasValue ? "c:" + boardColumnId.Value : "s:" + (int)status;
+            StatusOrColumnList = new List<SelectListItem>();
+
+            if (projectId.HasValue)
+            {
+                try
+                {
+                    var cols = await _boardColumnAppService.GetListByProjectAsync(projectId.Value);
+                    foreach (var c in cols.OrderBy(c => c.Order))
+                    {
+                        var val = c.StatusValue.HasValue ? "s:" + c.StatusValue.Value : "c:" + c.Id;
+                        StatusOrColumnList.Add(new SelectListItem(c.Name, val, val == selected));
+                    }
+                    // Cancelled sistem durumu board kolonu değil → ayrıca ekle
+                    StatusOrColumnList.Add(new SelectListItem("İptal", "s:0", selected == "s:0"));
+                    return;
+                }
+                catch { /* yetki/erişim yoksa sistem durumlarına düş */ }
+            }
+
+            foreach (var (label, sv) in new[] { ("Yapılacak", 1), ("Devam Ediyor", 2), ("Kontrol/Test", 3), ("Tamamlandı", 4), ("İptal", 0) })
+            {
+                StatusOrColumnList.Add(new SelectListItem(label, "s:" + sv, selected == "s:" + sv));
+            }
+        }
+
+        // Form'dan gelen birleşik seçimi Task.Status + Task.BoardColumnId'ye uzlaştırır.
+        private void ApplyStatusOrColumn(Apya.Platform.Tasks.TaskStatus currentStatus)
+        {
+            if (string.IsNullOrEmpty(StatusOrColumn)) return;
+            if (StatusOrColumn.StartsWith("c:") && Guid.TryParse(StatusOrColumn.Substring(2), out var colId))
+            {
+                Task.BoardColumnId = colId;
+                Task.Status = currentStatus; // özel kolon Status'u değiştirmez
+            }
+            else if (StatusOrColumn.StartsWith("s:") && int.TryParse(StatusOrColumn.Substring(2), out var sv))
+            {
+                Task.Status = (Apya.Platform.Tasks.TaskStatus)sv;
+                Task.BoardColumnId = null;
+            }
         }
 
         public async Task OnGetAsync()
@@ -63,6 +117,7 @@ namespace Apya.Platform.Web.Pages.Tasks
                 DueDate = taskDto.DueDate,
                 Priority = taskDto.Priority,
                 Status = taskDto.Status,
+                BoardColumnId = taskDto.BoardColumnId,
                 AssigneeId = taskDto.AssigneeId,
                 ProjectId = taskDto.ProjectId ?? Guid.Empty,
                 IsPrivate = taskDto.IsPrivate,
@@ -104,6 +159,9 @@ namespace Apya.Platform.Web.Pages.Tasks
                 new("Kritik", ((int)TaskPriority.Critical).ToString(), Task.Priority == TaskPriority.Critical),
             };
 
+            // Birleşik Durum/Kolon dropdown'ı (özel kanban kolonları dahil)
+            await BuildStatusOrColumnListAsync(taskDto.ProjectId, taskDto.Status, taskDto.BoardColumnId);
+
             if (taskDto.ProjectId.HasValue)
             {
                 var projectTasksResult = await _taskAppService.GetListAsync(new GetTasksInput
@@ -142,12 +200,15 @@ namespace Apya.Platform.Web.Pages.Tasks
                 // Eğer formdan null geldiyse boş stringe çevirerek veritabanını tatmin edelim.
                 if (Task.Description == null) Task.Description = string.Empty;
 
-                // Task.ProjectId eğer formdan 0'lanmış gelirse, veritabanındaki değeri korumaya çalışalım
+                // Mevcut görevi bir kez çek: ProjectId koruması + özel kolon seçilince Status koruması.
+                var current = await _taskAppService.GetAsync(Id);
                 if (!Task.ProjectId.HasValue || Task.ProjectId == Guid.Empty)
                 {
-                    var current = await _taskAppService.GetAsync(Id);
                     Task.ProjectId = current.ProjectId;
                 }
+
+                // Birleşik Durum/Kolon seçimini Task.Status + Task.BoardColumnId'ye uzlaştır
+                ApplyStatusOrColumn(current.Status);
 
                 await _taskAppService.UpdateAsync(Id, Task);
                 return NoContent();
