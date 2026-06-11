@@ -3,6 +3,16 @@ $(function () {
     var createModal = new abp.ModalManager(abp.appPath + 'Tasks/CreateModal');
     var editModal   = new abp.ModalManager(abp.appPath + 'Tasks/EditModal');
 
+    // Ortak filtre — DataTable, Gantt ve Kanban aynı kaynaktan beslenir.
+    function currentFilter() {
+        var input = {};
+        if ($('#Filter_AssigneeId').val()) input.assigneeId = $('#Filter_AssigneeId').val();
+        if ($('#Filter_Status').val()) input.statuses = [parseInt($('#Filter_Status').val())];
+        if ($('#Filter_MinDueDate').val()) input.minDueDate = $('#Filter_MinDueDate').val();
+        if ($('#Filter_MaxDueDate').val()) input.maxDueDate = $('#Filter_MaxDueDate').val();
+        return input;
+    }
+
     // --- DataTable ---
     var dataTable = $('#TasksTable').DataTable(abp.libs.datatables.normalizeConfiguration({
         serverSide: true,
@@ -10,14 +20,7 @@ $(function () {
         order: [[1, 'asc']],
         searching: true,
         scrollX: true,
-        ajax: abp.libs.datatables.createAjax(taskService.getList, function () {
-            var input = {};
-            if ($('#Filter_AssigneeId').val()) input.assigneeId = $('#Filter_AssigneeId').val();
-            if ($('#Filter_Status').val()) input.statuses = [parseInt($('#Filter_Status').val())];
-            if ($('#Filter_MinDueDate').val()) input.minDueDate = $('#Filter_MinDueDate').val();
-            if ($('#Filter_MaxDueDate').val()) input.maxDueDate = $('#Filter_MaxDueDate').val();
-            return input;
-        }),
+        ajax: abp.libs.datatables.createAjax(taskService.getList, currentFilter),
         columnDefs: [
             {
                 title: 'İşlemler',
@@ -61,6 +64,7 @@ $(function () {
                                         taskService.delete(data.record.id).then(function () {
                                             abp.notify.info('Başarıyla silindi.');
                                             dataTable.ajax.reload();
+                                            if (!$('#view-kanban').hasClass('d-none')) kb.load();
                                         });
                                     }
                                 });
@@ -70,7 +74,7 @@ $(function () {
                 }
             },
             {
-                title: 'Başlık', 
+                title: 'Başlık',
                 data: 'title',
                 render: function(data, type, row) {
                     if (row.parentTaskTitle) {
@@ -82,7 +86,11 @@ $(function () {
             {
                 title: 'Durum',
                 data: 'status',
-                render: function (data) {
+                render: function (data, type, row) {
+                    // Özel kolondaysa kolon adını göster (ortak kanban paritesi).
+                    if (row.boardColumnName) {
+                        return '<span class="badge bg-primary">' + row.boardColumnName + '</span>';
+                    }
                     var map = {
                         1: { color: 'secondary',       text: 'Bekliyor'   },
                         2: { color: 'warning text-dark', text: 'Sürüyor'  },
@@ -125,6 +133,21 @@ $(function () {
         ]
     }));
 
+    // --- Kanban (ortak çekirdek: /js/apya-kanban.js) ---
+    // Görevler sayfası çapraz-proje (global) → sistem kolonları + proje adı + timer.
+    var kb = apya.kanban.create({
+        projectId: null,
+        editModal: editModal,
+        showProjectName: true,
+        enableTimer: false,         // zaman sayacı her board'da gizli (kullanıcı kararı)
+        enableCustomColumns: false,
+        getFilter: currentFilter,
+        onChanged: function () {
+            dataTable.ajax.reload(null, false);
+            if (!$('#view-gantt').hasClass('d-none')) loadGantt();
+        }
+    });
+
     // --- Yeni Görev ---
     $('#NewTaskButton').click(function (e) {
         e.preventDefault();
@@ -132,24 +155,14 @@ $(function () {
     });
 
     // --- Görüntü Modu Geçişi ---
-    $('#btn-view-list').click(function() {
-        switchView('list');
-    });
-
-    $('#btn-view-kanban').click(function() {
-        switchView('kanban');
-        loadKanban();
-    });
-
-    $('#btn-view-gantt').click(function() {
-        switchView('gantt');
-        loadGantt();
-    });
+    $('#btn-view-list').click(function() { switchView('list'); });
+    $('#btn-view-kanban').click(function() { switchView('kanban'); kb.load(); });
+    $('#btn-view-gantt').click(function() { switchView('gantt'); loadGantt(); });
 
     function switchView(mode) {
         $('.view-panel').addClass('d-none');
         $('.btn-group .btn').removeClass('active');
-        
+
         if (mode === 'list') {
             $('#view-list').removeClass('d-none');
             $('#btn-view-list').addClass('active');
@@ -166,12 +179,7 @@ $(function () {
     var gantt = null;
 
     function loadGantt() {
-        var params = { maxResultCount: 1000 };
-        if ($('#Filter_AssigneeId').val()) params.assigneeId = $('#Filter_AssigneeId').val();
-        if ($('#Filter_Status').val()) params.statuses = [parseInt($('#Filter_Status').val())];
-        if ($('#Filter_MinDueDate').val()) params.minDueDate = $('#Filter_MinDueDate').val();
-        if ($('#Filter_MaxDueDate').val()) params.maxDueDate = $('#Filter_MaxDueDate').val();
-
+        var params = $.extend({ maxResultCount: 1000 }, currentFilter());
         taskService.getList(params).then(function (result) {
             renderGantt(result.items);
         });
@@ -230,235 +238,39 @@ $(function () {
         });
     }
 
-    // --- Kanban Mantığı ---
-    function loadKanban() {
-        var params = { maxResultCount: 1000 };
-        if ($('#Filter_AssigneeId').val()) params.assigneeId = $('#Filter_AssigneeId').val();
-        if ($('#Filter_Status').val()) params.statuses = [parseInt($('#Filter_Status').val())];
-        if ($('#Filter_MinDueDate').val()) params.minDueDate = $('#Filter_MinDueDate').val();
-        if ($('#Filter_MaxDueDate').val()) params.maxDueDate = $('#Filter_MaxDueDate').val();
-
-        Promise.all([
-            taskService.getList(params),
-            taskService.getActiveTimeLog()
-        ]).then(function (results) {
-            renderKanban(results[0].items, results[1]);
-        });
-    }
-
-    function renderKanban(tasks, activeLog) {
-        $('.kanban-items').empty();
-        var counts = { 1:0, 2:0, 3:0, 4:0 };
-
-        tasks.forEach(function (task) {
-            var isActive = activeLog && activeLog.taskId === task.id;
-            var timerHtml = isActive 
-                ? `<button class="btn btn-sm btn-danger btn-stop-timer p-1 px-2" data-id="${task.id}"><i class="fa fa-pause fa-beat"></i></button>`
-                : `<button class="btn btn-sm btn-outline-success btn-start-timer p-1 px-2" data-id="${task.id}"><i class="fa fa-play"></i></button>`;
-
-            var dueHtml = '';
-            var cardBorder = '';
-            if (task.dueDate) {
-                if (task.status !== 4 && task.status !== 0) { // 4: Tamamlandı, 0: İptal
-                    var dueDiff = moment(task.dueDate).diff(moment(), 'hours');
-                    if (dueDiff < 0) {
-                        cardBorder = 'border-danger border-2 bg-light bg-opacity-50';
-                        dueHtml = '<div class="small text-white bg-danger mt-2 px-2 py-1 rounded fw-bold text-center heartbeat-animation w-100"><i class="fa fa-exclamation-circle me-1"></i>Süresi Geçti</div>';
-                    } else if (dueDiff <= 48) {
-                        cardBorder = 'border-warning border-2';
-                        dueHtml = '<div class="small text-dark bg-warning mt-2 px-2 py-1 rounded fw-bold text-center w-100"><i class="fa fa-clock me-1"></i>Yaklaşıyor</div>';
-                    } else {
-                        dueHtml = '<div class="small text-danger fw-bold"><i class="fa fa-calendar-alt me-1"></i> ' + moment(task.dueDate).format('DD MMM') + '</div>';
-                    }
-                } else {
-                    dueHtml = '<div class="small text-success fw-bold"><i class="fa fa-check-circle me-1"></i> ' + moment(task.dueDate).format('DD MMM') + '</div>';
-                }
-            }
-
-            var cardHtml = `
-                <div class="kanban-card p-3 mb-2 bg-white shadow-sm border priority-${getPriorityClass(task.priority)} ${isActive ? 'timer-active' : ''} ${cardBorder}" 
-                     draggable="true" data-id="${task.id}" id="task-${task.id}">
-                    <div class="d-flex justify-content-between mb-1">
-                        <small class="text-muted border px-1 rounded bg-light" style="font-size: 0.75rem;">
-                            <i class="fa fa-tag me-1"></i>#${task.id.substring(0,4)}
-                            ${task.parentTaskTitle ? `<span class="ms-1 border-start ps-1 text-primary"><i class="fa fa-level-up-alt fa-rotate-90"></i> ${task.parentTaskTitle}</span>` : ''}
-                        </small>
-                        <div class="timer-controls">
-                            ${timerHtml}
-                        </div>
-                    </div>
-                    <div class="fw-bold mb-2 task-title text-truncate" title="${task.title}">${task.title}</div>
-                    <div class="d-flex justify-content-between align-items-center flex-wrap">
-                        <div class="avatar-group small">
-                            <i class="fa fa-user-circle me-1 text-secondary"></i> 
-                            ${task.assigneeName || 'Atanmamış'}
-                        </div>
-                        ${dueHtml}
-                    </div>
-                </div>`;
-            
-            var targetId = '';
-            switch(task.status) {
-                case 1: targetId = '#kanban-todo'; break;
-                case 2: targetId = '#kanban-inprogress'; break;
-                case 3: targetId = '#kanban-test'; break;
-                case 4: targetId = '#kanban-done'; break;
-            }
-            if(targetId) {
-                $(targetId).append(cardHtml);
-                counts[task.status]++;
-            }
-        });
-
-        $('#count-todo').text(counts[1] || 0);
-        $('#count-inprogress').text(counts[2] || 0);
-        $('#count-test').text(counts[3] || 0);
-        $('#count-done').text(counts[4] || 0);
-
-        initKanbanEvents();
-    }
-
-    function initKanbanEvents() {
-        // Kart tıklama (Düzenleme)
-        $('.kanban-card').on('click', function(e) {
-            if (e.target.closest('.btn')) return;
-            var id = $(this).data('id');
-            editModal.open({ id: id });
-        });
-
-        // Zaman Takibi — setBusy ile çift-tıklama korumalı
-        $('.btn-start-timer').on('click', function(e) {
-            e.stopPropagation();
-            var $btn = $(this);
-            if ($btn.prop('disabled')) return;
-            var id = $btn.data('id');
-            $btn.prop('disabled', true);
-            abp.ui.setBusy($btn);
-            taskService.startTimeTracking(id)
-                .then(function() {
-                    abp.notify.success('Sayman başlatıldı.');
-                    loadKanban();
-                })
-                .always(function() {
-                    abp.ui.clearBusy($btn);
-                });
-        });
-
-        $('.btn-stop-timer').on('click', function(e) {
-            e.stopPropagation();
-            var $btn = $(this);
-            if ($btn.prop('disabled')) return;
-            var id = $btn.data('id');
-            $btn.prop('disabled', true);
-            abp.ui.setBusy($btn);
-            taskService.stopTimeTracking(id)
-                .then(function() {
-                    abp.notify.success('Sayman durduruldu.');
-                    loadKanban();
-                })
-                .always(function() {
-                    abp.ui.clearBusy($btn);
-                });
-        });
-
-        // HTML5 Drag & Drop (jQuery .off() ile event çakışmasını engelliyoruz)
-        var $cards = $('.kanban-card');
-        var $columns = $('.col-kanban');
-
-        // Önceki eventleri temizle
-        $cards.off('dragstart dragend');
-        $columns.off('dragover dragleave drop');
-
-        $cards.on('dragstart', function() {
-            $(this).addClass('dragging');
-        });
-        $cards.on('dragend', function() {
-            $(this).removeClass('dragging');
-        });
-
-        $columns.on('dragover', function(e) {
-            e.preventDefault();
-            $(this).find('.kanban-items').addClass('bg-light');
-        });
-
-        $columns.on('dragleave', function() {
-            $(this).find('.kanban-items').removeClass('bg-light');
-        });
-
-        $columns.on('drop', function(e) {
-            e.preventDefault();
-            $(this).find('.kanban-items').removeClass('bg-light');
-
-            var $draggable = $('.dragging');
-            if (!$draggable.length) return;
-
-            const taskId = $draggable.data('id');
-            const newStatus = parseInt($(this).data('status'));
-            const $kanban = $('#kanban-container');
-
-            // UI'da hemen taşıyalım (optimistic)
-            $(this).find('.kanban-items').append($draggable);
-
-            // Drop sırasında tüm kanban'ı block et — race condition önlenir
-            abp.ui.block({ elements: [$kanban[0]] });
-
-            taskService.updateStatus(taskId, newStatus)
-                .then(function() {
-                    abp.notify.success('Durum güncellendi.');
-                    loadKanban();
-                })
-                .catch(function() {
-                    abp.notify.error('Hata oluştu veya bu duruma geçirilemez.');
-                    loadKanban();
-                })
-                .always(function() {
-                    abp.ui.unblock({ elements: [$kanban[0]] });
-                });
-        });
-    }
-
     function getPriorityClass(p) {
         if(p === 0) return 'low';
         if(p === 2) return 'high';
         return 'medium';
     }
 
-    function getPriorityText(p) {
-        if(p === 0) return 'Düşük';
-        if(p === 2) return 'Yüksek';
-        return 'Normal';
-    }
-
-    createModal.onResult(function () { 
-        dataTable.ajax.reload(); 
-        if (!$('#view-kanban').hasClass('d-none')) loadKanban();
+    createModal.onResult(function () {
+        dataTable.ajax.reload();
+        if (!$('#view-kanban').hasClass('d-none')) kb.load();
         if (!$('#view-gantt').hasClass('d-none')) loadGantt();
     });
 
-    editModal.onResult(function () { 
-        dataTable.ajax.reload(null, false); 
-        if (!$('#view-kanban').hasClass('d-none')) loadKanban();
-        if (!$('#view-gantt').hasClass('d-none')) loadGantt();
-    });
+    // editModal.onResult ortak kanban modülünce bağlanır (load + onChanged →
+    // datatable + gantt yenilenir). Burada tekrar bağlamıyoruz.
 
     // Otomatik kayıt event'ini dinle:
     abp.event.on('app.task.updated', function () {
         dataTable.ajax.reload(null, false);
-        if (!$('#view-kanban').hasClass('d-none')) loadKanban();
+        if (!$('#view-kanban').hasClass('d-none')) kb.load();
         if (!$('#view-gantt').hasClass('d-none')) loadGantt();
     });
 
     // --- APYA-25: Filtre Butonları ---
     $('#btn-apply-filters').click(function () {
         dataTable.ajax.reload();
-        if (!$('#view-kanban').hasClass('d-none')) loadKanban();
+        if (!$('#view-kanban').hasClass('d-none')) kb.load();
         if (!$('#view-gantt').hasClass('d-none')) loadGantt();
     });
 
     $('#btn-clear-filters').click(function () {
         $('#TaskFilterForm')[0].reset();
         dataTable.ajax.reload();
-        if (!$('#view-kanban').hasClass('d-none')) loadKanban();
+        if (!$('#view-kanban').hasClass('d-none')) kb.load();
         if (!$('#view-gantt').hasClass('d-none')) loadGantt();
     });
 
@@ -492,4 +304,3 @@ $(function () {
         }, 3000); // 3 saniyede 1 polling (yüklenme durumunu simule eder)
     });
 });
-

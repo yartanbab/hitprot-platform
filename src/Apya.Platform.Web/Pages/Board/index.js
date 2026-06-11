@@ -8,7 +8,7 @@ $(function () {
         projectId: null,            // global → sistem kolonları, status ile taşınır
         editModal: editModal,
         showProjectName: true,      // global board: kartta proje adı göster
-        enableTimer: true,
+        enableTimer: false,         // zaman sayacı her board'da gizli (kullanıcı kararı)
         enableCustomColumns: false  // özel kolonlar projeye ait → global'de yok
     });
 

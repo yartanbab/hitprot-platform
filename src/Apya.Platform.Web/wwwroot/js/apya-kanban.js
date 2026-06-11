@@ -27,14 +27,18 @@
     var SYS = { 1: 'kanban-todo', 2: 'kanban-inprogress', 3: 'kanban-inreview', 4: 'kanban-done' };
 
     function el(tag, cls) { var e = document.createElement(tag); if (cls) { e.className = cls; } return e; }
-    function priorityAttr(p) { return (typeof p === 'number' ? p : 0) + 1; } // enum 0-3 -> css 1-4
+    // TaskPriority enum (Low=1..Critical=4) doğrudan kanban.css [data-priority="1..4"] ile eşleşir.
+    function priorityAttr(p) { return (typeof p === 'number' && p >= 1) ? p : 2; } // varsayılan Medium=2
 
     function create(opts) {
         opts = opts || {};
         var projectId = opts.projectId || null;
         var boardSel = opts.boardSelector || '.kanban-board';
         var showProject = !!opts.showProjectName;
-        var enableTimer = opts.enableTimer !== false;
+        // Timer (zaman sayacı) opt-in ve varsayılan KAPALI. Kullanıcı kararıyla her
+        // board'da gizli (2026-06-11). İleride permission ile açmak için:
+        //   enableTimer: abp.auth.isGranted('Platform.Tasks.TimeTracking')
+        var enableTimer = opts.enableTimer === true;
         var enableCols = (opts.enableCustomColumns != null) ? !!opts.enableCustomColumns : !!projectId;
         var editModal = opts.editModal || null;
         var getFilter = typeof opts.getFilter === 'function' ? opts.getFilter : function () { return {}; };
