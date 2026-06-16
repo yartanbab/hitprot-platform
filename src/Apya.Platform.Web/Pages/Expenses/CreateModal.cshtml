@@ -13,16 +13,15 @@
             <input type="hidden" asp-for="Expense.TaskId" />
             <abp-input asp-for="Expense.Title" label="Başlık" />
             <abp-row>
-                <abp-column size-md="_4">
+                <abp-column size-md="_6">
                     <abp-input asp-for="Expense.Amount" label="Tutar" />
                 </abp-column>
-                <abp-column size-md="_4">
-                    <abp-input asp-for="Expense.Currency" label="Para Birimi" />
-                </abp-column>
-                <abp-column size-md="_4">
+                <abp-column size-md="_6">
                     <abp-input asp-for="Expense.ExpenseDate" type="date" label="Tarih" />
                 </abp-column>
             </abp-row>
+            @* Çoklu döviz gizlendi — tüm işlemler TRY. *@
+            <input type="hidden" asp-for="Expense.Currency" value="TRY" />
             <abp-row>
                 <abp-column size-md="_6">
                     <abp-select asp-for="Expense.Category" asp-items="Model.Categories" label="Kategori" />

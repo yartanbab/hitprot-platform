@@ -59,14 +59,14 @@ $(function () {
                     title: 'Toplam Tutar',
                     data: "totalAmount",
                     render: function (data, type, row) {
-                        return data.toLocaleString() + ' ' + row.currency;
+                        return data.toLocaleString();
                     }
                 },
                 {
                     title: 'Ödenen',
                     data: "paidAmount",
                     render: function (data, type, row) {
-                        return data.toLocaleString() + ' ' + row.currency;
+                        return data.toLocaleString();
                     }
                 },
                 {

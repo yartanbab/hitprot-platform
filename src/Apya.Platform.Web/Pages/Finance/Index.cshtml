@@ -9,7 +9,8 @@
 }
 
 @functions {
-    string Money(decimal v, string cur) => $"{v:N2} {cur}";
+    // Çoklu döviz gizlendi — tutarlar sade (sembolsüz) gösterilir; tüm işlemler TRY.
+    string Money(decimal v, string cur) => $"{v:N2}";
 }
 
 <abp-card>
@@ -42,7 +43,7 @@
                 {
                     <div class="col-12 col-lg-6">
                         <div class="border rounded p-3 h-100">
-                            <div class="text-muted small mb-2 fw-bold">@s.Currency</div>
+                            <div class="text-muted small mb-2 fw-bold">Özet</div>
                             <div class="row text-center">
                                 <div class="col-4">
                                     <div class="text-muted small">Gelir</div>

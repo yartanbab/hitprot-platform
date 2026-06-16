@@ -50,7 +50,7 @@ $(function () {
             {
                 title: 'Tutar', data: 'amount',
                 render: function (d, t, row) {
-                    return Number(d).toLocaleString('tr-TR', { minimumFractionDigits: 2 }) + ' ' + row.currency;
+                    return Number(d).toLocaleString('tr-TR', { minimumFractionDigits: 2 });
                 }
             },
             { title: 'Kasa', data: 'cashAccountName', render: function (d) { return d || '-'; } }

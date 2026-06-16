@@ -147,9 +147,9 @@
                 {
                     <div class="mb-1">
                         <span class="fw-bold text-dark" style="font-size:1rem;">
-                            @Model.CurrencySymbol@Model.BudgetSpent.ToString("N0")
+                            @Model.BudgetSpent.ToString("N0")
                         </span>
-                        <span class="text-muted small"> / @Model.CurrencySymbol@Model.Project?.TotalBudget.ToString("N0")</span>
+                        <span class="text-muted small"> / @Model.Project?.TotalBudget.ToString("N0")</span>
                     </div>
                     <div class="progress shadow-sm mb-1" style="height:6px;border-radius:4px;">
                         <div class="progress-bar @(Model.BudgetPercent > 90 ? "bg-danger" : Model.BudgetPercent > 60 ? "bg-warning" : "bg-success")"

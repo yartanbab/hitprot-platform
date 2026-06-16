@@ -42,14 +42,9 @@
             </abp-row>
             <abp-input asp-for="Project.TargetAudience" label="Hedef Kitlesi" />
             <abp-input asp-for="Project.Activities" label="Faaliyetleri" />
-            <abp-row>
-                <abp-column size="_8">
-                    <abp-input asp-for="Project.TotalBudget" label="Bütçesi (Miktar)" />
-                </abp-column>
-                <abp-column size="_4">
-                    <abp-select asp-for="Project.Currency" asp-items="Model.Currencies" label="Para Birimi" />
-                </abp-column>
-            </abp-row>
+            <abp-input asp-for="Project.TotalBudget" label="Bütçesi (Miktar)" />
+            @* Çoklu döviz gizlendi — proje bütçesi TRY. *@
+            <input type="hidden" asp-for="Project.Currency" value="TRY" />
             <abp-input asp-for="Project.Description" type="textarea" label="Açıklama" />
 
             <div class="mb-3">

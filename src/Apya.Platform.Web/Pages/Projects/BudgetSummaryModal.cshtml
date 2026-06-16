@@ -12,7 +12,7 @@
         <div class="row text-center mb-3">
             <div class="col">
                 <div class="text-muted small">Bütçe</div>
-                <div class="fw-bold fs-5">@s.Budget.ToString("N2") @s.Currency</div>
+                <div class="fw-bold fs-5">@s.Budget.ToString("N2")</div>
             </div>
             <div class="col">
                 <div class="text-muted small">Toplam Gider</div>
@@ -38,11 +38,11 @@
         <div class="alert alert-@(s.OverBudget ? "danger" : "secondary") py-2">
             @if (s.OverBudget)
             {
-                <strong>⚠ Bütçe aşıldı!</strong> <span>Aşım: @((s.TotalExpense - s.Budget).ToString("N2")) @s.Currency</span>
+                <strong>⚠ Bütçe aşıldı!</strong> <span>Aşım: @((s.TotalExpense - s.Budget).ToString("N2"))</span>
             }
             else
             {
-                <span>Kalan harcanabilir bütçe: <strong>@s.BudgetRemaining.ToString("N2") @s.Currency</strong></span>
+                <span>Kalan harcanabilir bütçe: <strong>@s.BudgetRemaining.ToString("N2")</strong></span>
             }
         </div>
 
