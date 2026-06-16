@@ -23,9 +23,13 @@ namespace Apya.Platform.Web.Pages.Tasks
         [BindProperty]
         public CreateUpdateTaskDto Task { get; set; } = new();
 
+        // Birleşik "Durum / Kolon" seçimi — "s:<int>" sistem durumu, "c:<guid>" özel kolon.
+        [BindProperty]
+        public string? StatusOrColumn { get; set; }
+
         // Null hatalarını önlemek için listeleri burada başlatıyoruz
         public List<SelectListItem> UserList { get; set; } = new();
-        public List<SelectListItem> StatusList { get; set; } = new();   // Durum (Türkçe)
+        public List<SelectListItem> StatusOrColumnList { get; set; } = new(); // Durum + özel kolonlar
         public List<SelectListItem> PriorityList { get; set; } = new(); // Öncelik (Türkçe)
         public List<TaskDto> SubTasks { get; set; } = new();
         public List<TaskCommentDto> Comments { get; set; } = new();
@@ -38,17 +42,67 @@ namespace Apya.Platform.Web.Pages.Tasks
         private readonly IUploadedFileStorage _fileStorage;
         private readonly IExpenseAppService _expenseAppService;
         private readonly IIncomeEntryAppService _incomeEntryAppService;
+        private readonly Apya.Platform.Projects.IBoardColumnAppService _boardColumnAppService;
 
         public EditModalModel(
             ITaskAppService taskAppService,
             IUploadedFileStorage fileStorage,
             IExpenseAppService expenseAppService,
-            IIncomeEntryAppService incomeEntryAppService)
+            IIncomeEntryAppService incomeEntryAppService,
+            Apya.Platform.Projects.IBoardColumnAppService boardColumnAppService)
         {
             _taskAppService = taskAppService;
             _fileStorage = fileStorage;
             _expenseAppService = expenseAppService;
             _incomeEntryAppService = incomeEntryAppService;
+            _boardColumnAppService = boardColumnAppService;
+        }
+
+        // Birleşik "Durum / Kolon" listesini kurar: proje varsa kanban kolonları
+        // (sistem = s:<status>, özel = c:<guid>) + İptal; yoksa sistem durumları.
+        private async Task BuildStatusOrColumnListAsync(Guid? projectId, Apya.Platform.Tasks.TaskStatus status, Guid? boardColumnId)
+        {
+            var selected = boardColumnId.HasValue ? "c:" + boardColumnId.Value : "s:" + (int)status;
+            StatusOrColumnList = new List<SelectListItem>();
+
+            // Sistem durumları her zaman (seed durumundan bağımsız, board'la aynı isimler)
+            foreach (var (label, sv) in new[] { ("Yapılacak", 1), ("Sürüyor", 2), ("Testte", 3), ("Tamamlandı", 4) })
+            {
+                StatusOrColumnList.Add(new SelectListItem(label, "s:" + sv, selected == "s:" + sv));
+            }
+
+            // Projenin özel kolonları (StatusValue=null) sıraya göre eklenir
+            if (projectId.HasValue)
+            {
+                try
+                {
+                    var cols = await _boardColumnAppService.GetListByProjectAsync(projectId.Value);
+                    foreach (var c in cols.Where(c => !c.StatusValue.HasValue).OrderBy(c => c.Order))
+                    {
+                        var val = "c:" + c.Id;
+                        StatusOrColumnList.Add(new SelectListItem(c.Name, val, val == selected));
+                    }
+                }
+                catch { /* yetki/erişim yoksa yalnızca sistem durumları */ }
+            }
+
+            StatusOrColumnList.Add(new SelectListItem("İptal", "s:0", selected == "s:0"));
+        }
+
+        // Form'dan gelen birleşik seçimi Task.Status + Task.BoardColumnId'ye uzlaştırır.
+        private void ApplyStatusOrColumn(Apya.Platform.Tasks.TaskStatus currentStatus)
+        {
+            if (string.IsNullOrEmpty(StatusOrColumn)) return;
+            if (StatusOrColumn.StartsWith("c:") && Guid.TryParse(StatusOrColumn.Substring(2), out var colId))
+            {
+                Task.BoardColumnId = colId;
+                Task.Status = currentStatus; // özel kolon Status'u değiştirmez
+            }
+            else if (StatusOrColumn.StartsWith("s:") && int.TryParse(StatusOrColumn.Substring(2), out var sv))
+            {
+                Task.Status = (Apya.Platform.Tasks.TaskStatus)sv;
+                Task.BoardColumnId = null;
+            }
         }
 
         public async Task OnGetAsync()
@@ -63,6 +117,7 @@ namespace Apya.Platform.Web.Pages.Tasks
                 DueDate = taskDto.DueDate,
                 Priority = taskDto.Priority,
                 Status = taskDto.Status,
+                BoardColumnId = taskDto.BoardColumnId,
                 AssigneeId = taskDto.AssigneeId,
                 ProjectId = taskDto.ProjectId ?? Guid.Empty,
                 IsPrivate = taskDto.IsPrivate,
@@ -87,15 +142,7 @@ namespace Apya.Platform.Web.Pages.Tasks
                 .Select(u => new SelectListItem(u.UserName, u.Id.ToString()))
                 .ToList();
 
-            // Durum & Öncelik dropdown'ları Türkçe (kod tabanı konvansiyonu: metin + int value).
-            StatusList = new List<SelectListItem>
-            {
-                new("Yapılacak",    ((int)Apya.Platform.Tasks.TaskStatus.Todo).ToString(),       Task.Status == Apya.Platform.Tasks.TaskStatus.Todo),
-                new("Devam Ediyor", ((int)Apya.Platform.Tasks.TaskStatus.InProgress).ToString(), Task.Status == Apya.Platform.Tasks.TaskStatus.InProgress),
-                new("Kontrol/Test", ((int)Apya.Platform.Tasks.TaskStatus.InReview).ToString(),   Task.Status == Apya.Platform.Tasks.TaskStatus.InReview),
-                new("Tamamlandı",   ((int)Apya.Platform.Tasks.TaskStatus.Done).ToString(),       Task.Status == Apya.Platform.Tasks.TaskStatus.Done),
-                new("İptal",        ((int)Apya.Platform.Tasks.TaskStatus.Cancelled).ToString(),  Task.Status == Apya.Platform.Tasks.TaskStatus.Cancelled),
-            };
+            // Durum artık birleşik "Durum/Kolon" dropdown'ından geliyor (StatusOrColumnList).
             PriorityList = new List<SelectListItem>
             {
                 new("Düşük",  ((int)TaskPriority.Low).ToString(),      Task.Priority == TaskPriority.Low),
@@ -103,6 +150,9 @@ namespace Apya.Platform.Web.Pages.Tasks
                 new("Yüksek", ((int)TaskPriority.High).ToString(),     Task.Priority == TaskPriority.High),
                 new("Kritik", ((int)TaskPriority.Critical).ToString(), Task.Priority == TaskPriority.Critical),
             };
+
+            // Birleşik Durum/Kolon dropdown'ı (özel kanban kolonları dahil)
+            await BuildStatusOrColumnListAsync(taskDto.ProjectId, taskDto.Status, taskDto.BoardColumnId);
 
             if (taskDto.ProjectId.HasValue)
             {
@@ -142,12 +192,15 @@ namespace Apya.Platform.Web.Pages.Tasks
                 // Eğer formdan null geldiyse boş stringe çevirerek veritabanını tatmin edelim.
                 if (Task.Description == null) Task.Description = string.Empty;
 
-                // Task.ProjectId eğer formdan 0'lanmış gelirse, veritabanındaki değeri korumaya çalışalım
+                // Mevcut görevi bir kez çek: ProjectId koruması + özel kolon seçilince Status koruması.
+                var current = await _taskAppService.GetAsync(Id);
                 if (!Task.ProjectId.HasValue || Task.ProjectId == Guid.Empty)
                 {
-                    var current = await _taskAppService.GetAsync(Id);
                     Task.ProjectId = current.ProjectId;
                 }
+
+                // Birleşik Durum/Kolon seçimini Task.Status + Task.BoardColumnId'ye uzlaştır
+                ApplyStatusOrColumn(current.Status);
 
                 await _taskAppService.UpdateAsync(Id, Task);
                 return NoContent();

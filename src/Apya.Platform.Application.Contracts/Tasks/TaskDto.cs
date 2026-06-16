@@ -27,6 +27,9 @@ namespace Apya.Platform.Tasks
         /// <summary>Faz 2: Kullanıcı tanımlı kanban kolonu üyeliği (boşsa Status'a göre render).</summary>
         public Guid? BoardColumnId { get; set; }
 
+        /// <summary>Özel kolondaysa kolon adı (liste "Durum" sütunu + dropdown için). Sistem kolonunda boş.</summary>
+        public string? BoardColumnName { get; set; }
+
         public bool IsPrivate { get; set; }
 
         public List<TaskDto> SubTasks { get; set; } = new List<TaskDto>();

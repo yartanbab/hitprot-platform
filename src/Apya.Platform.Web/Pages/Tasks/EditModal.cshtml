@@ -74,7 +74,7 @@
 
                             <h6 class="text-muted fw-bold mt-4 mb-3"><i class="fa fa-cog me-2"></i>Durum & Atama</h6>
                             <abp-select asp-for="Task.Priority" asp-items="Model.PriorityList" label="Öncelik" />
-                            <abp-select asp-for="Task.Status" asp-items="Model.StatusList" label="Durum" />
+                            <abp-select asp-for="StatusOrColumn" asp-items="Model.StatusOrColumnList" label="Durum / Kolon" />
                             <abp-select asp-for="Task.AssigneeId" asp-items="Model.UserList" label="Sorumlu Kişi" />
 
                             <div class="form-check form-switch mt-4 bg-light p-2 rounded border shadow-sm">
