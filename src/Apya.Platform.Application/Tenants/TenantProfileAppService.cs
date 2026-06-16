@@ -21,19 +21,22 @@ public class TenantProfileAppService : PlatformAppService, ITenantProfileAppServ
     private readonly IRepository<TenantProfile, Guid> _tenantProfileRepository;
     private readonly TenantProfileManager _tenantProfileManager;
     private readonly IDataSeeder _dataSeeder;
+    private readonly IUnitOfWorkManager _unitOfWorkManager;
 
     public TenantProfileAppService(
         ITenantRepository tenantRepository,
         ITenantManager tenantManager,
         IRepository<TenantProfile, Guid> tenantProfileRepository,
         TenantProfileManager tenantProfileManager,
-        IDataSeeder dataSeeder)
+        IDataSeeder dataSeeder,
+        IUnitOfWorkManager unitOfWorkManager)
     {
         _tenantRepository = tenantRepository;
         _tenantManager = tenantManager;
         _tenantProfileRepository = tenantProfileRepository;
         _tenantProfileManager = tenantProfileManager;
         _dataSeeder = dataSeeder;
+        _unitOfWorkManager = unitOfWorkManager;
     }
 
     public async Task<PagedResultDto<TenantProfileDto>> GetListAsync(PagedAndSortedResultRequestDto input)
@@ -74,12 +77,19 @@ public class TenantProfileAppService : PlatformAppService, ITenantProfileAppServ
     }
 
     [Authorize(TenantManagementPermissions.Tenants.Create)]
-    [UnitOfWork]
     public async Task<TenantProfileDto> CreateTenantWithProfileAsync(CreateTenantExtendedDto input)
     {
+        // Tenant oluşturma + seed'i KENDİ requiresNew + transactional UnitOfWork'ünde yürütüyoruz.
+        // Aksi halde işlem dıştaki sayfa UoW'una (AbpUowPageFilter) katılır; seed edilen admin
+        // permission grant'ları hem seed sırasında hem sayfa UoW'unun SaveChanges'inde izlenip
+        // İKİ KEZ INSERT edilir → IX_AbpPermissionGrants_TenantId_Name_ProviderName_ProviderKey
+        // (23505 duplicate) → "Yeni Müşteri" 500. Tek sahip UoW + tek geçiş seed ile grant'lar
+        // tam olarak bir kez yazılır. (Bu yüzden contributor'daki iç içe requiresNew de kaldırıldı.)
+        using var uow = _unitOfWorkManager.Begin(requiresNew: true, isTransactional: true);
+
         var tenant = await _tenantManager.CreateAsync(input.Name);
-        await _tenantRepository.InsertAsync(tenant);
-        
+        await _tenantRepository.InsertAsync(tenant, autoSave: true);
+
         using (CurrentTenant.Change(tenant.Id, tenant.Name))
         {
             await _dataSeeder.SeedAsync(new DataSeedContext(tenant.Id).WithProperty("AdminEmail", input.AdminEmailAddress).WithProperty("AdminPassword", input.AdminPassword));
@@ -101,7 +111,11 @@ public class TenantProfileAppService : PlatformAppService, ITenantProfileAppServ
 
         await _tenantProfileRepository.InsertAsync(profile);
 
-        return ObjectMapper.Map<TenantProfile, TenantProfileDto>(profile);
+        var result = ObjectMapper.Map<TenantProfile, TenantProfileDto>(profile);
+
+        await uow.CompleteAsync();
+
+        return result;
     }
 
     public async Task<TenantProfileDto> GetProfileAsync(Guid tenantId)
