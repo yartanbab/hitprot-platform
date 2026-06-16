@@ -103,8 +103,8 @@
                         <tr>
                             <td class="text-start">@item.Description</td>
                             <td class="text-center">@item.Quantity.ToString("0.##")</td>
-                            <td class="text-end">@item.UnitPrice.ToString("N2") @inv.Currency</td>
-                            <td class="text-end">@item.TotalPrice.ToString("N2") @inv.Currency</td>
+                            <td class="text-end">@item.UnitPrice.ToString("N2")</td>
+                            <td class="text-end">@item.TotalPrice.ToString("N2")</td>
                         </tr>
                     }
                 </tbody>
@@ -114,22 +114,22 @@
                 <div class="totals-section">
                     <div class="totals-row">
                         <span>Ara Toplam:</span>
-                        <span>@subTotal.ToString("N2") @inv.Currency</span>
+                        <span>@subTotal.ToString("N2")</span>
                     </div>
                     <div class="totals-row">
                         <span>KDV (%@inv.TaxRate.ToString("0.##")):</span>
-                        <span>@taxAmount.ToString("N2") @inv.Currency</span>
+                        <span>@taxAmount.ToString("N2")</span>
                     </div>
                     @if (inv.PaidAmount > 0)
                     {
                         <div class="totals-row text-success">
                             <span>Ödenen:</span>
-                            <span>-@inv.PaidAmount.ToString("N2") @inv.Currency</span>
+                            <span>-@inv.PaidAmount.ToString("N2")</span>
                         </div>
                     }
                     <div class="totals-row grand-total">
                         <span>TOPLAM:</span>
-                        <span>@inv.Balance.ToString("N2") @inv.Currency</span>
+                        <span>@inv.Balance.ToString("N2")</span>
                     </div>
                 </div>
             </div>

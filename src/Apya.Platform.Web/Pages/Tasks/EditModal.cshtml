@@ -17,7 +17,7 @@
            İlgili timer JS'i (refreshTimerState / BtnStartTimer / BtnStopTimer) DOM'da karşılığı olmadığı
            için artık inert (no-op). Gerekirse git geçmişinden geri getirilebilir. *@
 
-        <ul class="nav nav-tabs nav-justified px-3 pt-3 border-bottom-0 shadow-sm bg-white" id="taskTabs_@Model.Id" role="tablist">
+        <ul class="nav nav-tabs nav-justified px-4 pt-3 border-bottom-0 shadow-sm bg-white" id="taskTabs_@Model.Id" role="tablist">
             <li class="nav-item">
                 <a class="nav-link active fw-bold text-primary" id="details-tab_@Model.Id" data-bs-toggle="tab" href="#details_@Model.Id" role="tab">
                     <i class="fa fa-info-circle me-1"></i> Genel Bilgiler
@@ -55,7 +55,7 @@
             </li>
         </ul>
 
-        <div class="tab-content p-4 bg-white border-top" id="taskTabsContent_@Model.Id" style="min-height: 450px;">
+        <div class="tab-content px-5 py-4 bg-white border-top" id="taskTabsContent_@Model.Id" style="min-height: 450px;">
             <div class="tab-pane fade show active" id="details_@Model.Id" role="tabpanel">
                     <abp-input asp-for="Id" type="hidden" class="task-id-input" />
                     <abp-input asp-for="Task.ProjectId" type="hidden" />
@@ -267,7 +267,7 @@
                                 <td>@e.ExpenseDate.ToString("dd.MM.yyyy")</td>
                                 <td>@e.Title</td>
                                 <td>@e.Category</td>
-                                <td class="text-end text-danger">@e.Amount.ToString("N2") @e.Currency</td>
+                                <td class="text-end text-danger">@e.Amount.ToString("N2")</td>
                             </tr>
                         }
                         </tbody>
@@ -303,7 +303,7 @@
                                 <td>@i.IncomeDate.ToString("dd.MM.yyyy")</td>
                                 <td>@i.Title</td>
                                 <td>@i.Category</td>
-                                <td class="text-end text-success">@i.Amount.ToString("N2") @i.Currency</td>
+                                <td class="text-end text-success">@i.Amount.ToString("N2")</td>
                             </tr>
                         }
                         </tbody>

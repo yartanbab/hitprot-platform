@@ -75,7 +75,7 @@
                 <div class="col-md-3 col-6 mb-2">
                     <div class="card h-100 py-2">
                         <div class="text-muted small">Bütçe</div>
-                        <div class="fw-bold fs-5">@s.Budget.ToString("N2") <small>@s.Currency</small></div>
+                        <div class="fw-bold fs-5">@s.Budget.ToString("N2")</div>
                     </div>
                 </div>
                 <div class="col-md-3 col-6 mb-2">
@@ -110,11 +110,11 @@
                 @if (s.OverBudget)
                 {
                     <strong>⚠ Bütçe aşıldı!</strong>
-                    <span> Aşım: @((s.TotalExpense - s.Budget).ToString("N2")) @s.Currency</span>
+                    <span> Aşım: @((s.TotalExpense - s.Budget).ToString("N2"))</span>
                 }
                 else
                 {
-                    <span>Kalan harcanabilir bütçe: <strong>@s.BudgetRemaining.ToString("N2") @s.Currency</strong></span>
+                    <span>Kalan harcanabilir bütçe: <strong>@s.BudgetRemaining.ToString("N2")</strong></span>
                 }
             </div>
 

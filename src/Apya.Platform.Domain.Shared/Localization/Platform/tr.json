@@ -248,6 +248,94 @@
         "Permission:Ai.UsageLogs": "AI Kullanım Kayıtları",
         "Menu:AiCenter:Reports": "AI Raporları",
         "Permission:Ai.Reports.View": "AI Raporlarını Görüntüle",
-        "Permission:Ai.Reports.Export": "AI Raporlarını Dışa Aktar"
+        "Permission:Ai.Reports.Export": "AI Raporlarını Dışa Aktar",
+
+        "Platform:Error:TaxNumberAlreadyExists": "Bu vergi numarası başka bir müşteriye ait. Lütfen farklı bir vergi numarası girin (ya da boş bırakın).",
+
+        "Platform:Customer:NameRequired": "Cari adı boş bırakılamaz.",
+        "Platform:Customer:FieldTooLong": "Girilen değer izin verilen karakter sınırını aşıyor.",
+
+        "Platform:CustomerLedger:CustomerRequired": "Cari hareketi için bir cari seçilmelidir.",
+        "Platform:CustomerLedger:AmountInvalid": "Geçersiz tutar. Tutar sıfırdan farklı olmalıdır.",
+
+        "Platform:Income:TitleRequired": "Gelir başlığı boş bırakılamaz.",
+        "Platform:Income:FieldTooLong": "Girilen değer izin verilen karakter sınırını aşıyor.",
+        "Platform:Income:AmountInvalid": "Geçersiz tutar. Gelir tutarı sıfırdan büyük olmalıdır.",
+
+        "Platform:CashAccount:NameRequired": "Kasa adı boş bırakılamaz.",
+        "Platform:CashAccount:FieldTooLong": "Girilen değer izin verilen karakter sınırını aşıyor.",
+        "Platform:CashAccount:CurrencyInvalid": "Geçersiz para birimi. Lütfen geçerli bir para birimi seçin (örn. TRY, USD, EUR).",
+
+        "Platform:ExchangeRate:CurrencyInvalid": "Geçersiz para birimi.",
+        "Platform:ExchangeRate:SameCurrency": "Kaynak ve hedef para birimi aynı olamaz.",
+        "Platform:ExchangeRate:RateInvalid": "Geçersiz kur değeri. Kur sıfırdan büyük olmalıdır.",
+
+        "Platform:CashMovement:AccountRequired": "Kasa hareketi için bir kasa seçilmelidir.",
+        "Platform:CashMovement:AmountInvalid": "Geçersiz tutar. Tutar sıfırdan farklı olmalıdır.",
+
+        "Platform:Expense:TitleRequired": "Gider başlığı boş bırakılamaz.",
+        "Platform:Expense:FieldTooLong": "Girilen değer izin verilen karakter sınırını aşıyor.",
+        "Platform:Expense:AmountInvalid": "Geçersiz tutar. Gider tutarı sıfırdan büyük olmalıdır.",
+        "Platform:Expense:CashAccountRequired": "Gider için bir kasa seçilmelidir.",
+
+        "Platform:Invoice:NumberRequired": "Fatura numarası boş bırakılamaz.",
+        "Platform:Invoice:NotEditable": "Bu fatura artık düzenlenemez (ödeme alınmış veya kapatılmış olabilir).",
+        "Platform:Invoice:TaxRateInvalid": "Geçersiz KDV oranı. Oran 0 ile 100 arasında olmalıdır.",
+        "Platform:Invoice:CurrencyInvalid": "Geçersiz para birimi.",
+
+        "Platform:Payment:ExchangeRateMissing": "Tahsilat tarihi için döviz kuru bulunamadı. Lütfen ilgili kuru tanımlayın.",
+        "Platform:FxRevaluation:RateMissing": "Değerleme tarihi için döviz kuru bulunamadı. Lütfen ilgili kuru tanımlayın.",
+
+        "Platform:Project:NameRequired": "Proje adı boş bırakılamaz.",
+        "Platform:Project:BudgetInvalid": "Geçersiz bütçe. Bütçe negatif olamaz.",
+        "Platform:Project:ScheduleInvalid": "Geçersiz tarih aralığı. Bitiş tarihi başlangıç tarihinden önce olamaz.",
+
+        "Platform:DynamicAssets:SlugAlreadyExists": "Bu kısa ad (slug) zaten kullanımda. Lütfen farklı bir slug girin.",
+        "Platform:DynamicAssets:BlockNotFound": "İlgili içerik bloğu bulunamadı.",
+        "Platform:DynamicAssets:TitleRequired": "Başlık boş bırakılamaz.",
+        "Platform:DynamicAssets:DocumentNotATemplate": "Bu kayıt bir şablon değildir.",
+        "Platform:DynamicAssets:AiFormGenerationFailed": "Yapay zeka geçerli bir form üretemedi. Lütfen tekrar deneyin.",
+        "Platform:DynamicAssets:AiFormParseFailed": "Yapay zeka yanıtı işlenemedi. Lütfen tekrar deneyin.",
+        "Platform:DynamicAssets:ResponseCommentNotFound": "İlgili yanıt yorumu bulunamadı.",
+        "Platform:DynamicAssets:FormNotFound": "Form bulunamadı.",
+        "Platform:DynamicAssets:FormCategoryNameRequired": "Kategori adı boş bırakılamaz.",
+
+        "Platform:Ai:ProviderUnavailable": "Yapay zeka sağlayıcısına şu anda ulaşılamıyor. Lütfen daha sonra tekrar deneyin.",
+        "Platform:Ai:ResponseInvalid": "Yapay zeka geçersiz bir yanıt döndürdü. Lütfen tekrar deneyin.",
+        "Platform:Ai:QuotaExceeded": "Yapay zeka kullanım kotanız doldu.",
+        "Platform:Ai:PromptCodeAlreadyExists": "Bu prompt kodu zaten kullanımda. Lütfen farklı bir kod girin.",
+        "Platform:Ai:PromptVersionNotFound": "Prompt sürümü bulunamadı.",
+        "Platform:Ai:PromptNoPublishedVersion": "Bu prompt'un yayınlanmış bir sürümü yok.",
+        "Platform:Ai:PromptCategorySelfReference": "Bir kategori kendisinin alt kategorisi olamaz.",
+        "Platform:Ai:EvaluationResultInvalidSchema": "Değerlendirme sonucu beklenen şemaya uymuyor.",
+        "Platform:Ai:ProviderNotConfigured": "Yapay zeka sağlayıcısı yapılandırılmamış. Lütfen AI Sağlayıcılar ekranından yapılandırın.",
+
+        "Platform:Task:CommentRequired": "Yorum içeriği boş bırakılamaz.",
+
+        "Platform:Accounting:Account:CodeRequired": "Hesap kodu boş bırakılamaz.",
+        "Platform:Accounting:Account:NameRequired": "Hesap adı boş bırakılamaz.",
+        "Platform:Accounting:Account:Inactive": "Bu hesap pasif durumda; işlem yapılamaz.",
+        "Platform:Accounting:Account:ParentSelfReference": "Bir hesap kendi üst hesabı olamaz.",
+
+        "Platform:Accounting:JournalEntry:RequiresAtLeastTwoLines": "Yevmiye kaydı en az iki satır içermelidir.",
+        "Platform:Accounting:JournalEntry:TooManyLines": "Yevmiye kaydı izin verilen satır sayısını aşıyor.",
+        "Platform:Accounting:JournalEntry:NotBalanced": "Yevmiye kaydı dengeli değil. Borç ve alacak toplamları eşit olmalıdır.",
+        "Platform:Accounting:JournalEntry:CurrencyInconsistent": "Yevmiye satırlarının para birimleri tutarsız.",
+        "Platform:Accounting:JournalEntry:LineAmountMustBePositive": "Satır tutarı sıfırdan büyük olmalıdır.",
+        "Platform:Accounting:JournalEntry:IdempotencyKeyRequired": "İşlem anahtarı (idempotency key) gereklidir.",
+        "Platform:Accounting:JournalEntry:DuplicateIdempotencyKey": "Bu işlem zaten kaydedilmiş (tekrarlanan işlem anahtarı).",
+        "Platform:Accounting:JournalEntry:DescriptionRequired": "Yevmiye açıklaması boş bırakılamaz.",
+        "Platform:Accounting:JournalEntry:PostingDateInvalid": "Geçersiz kayıt tarihi.",
+        "Platform:Accounting:JournalEntry:AccountNotFound": "İlgili hesap bulunamadı.",
+        "Platform:Accounting:JournalEntry:AccountTenantMismatch": "Hesap bu kiracıya ait değil.",
+        "Platform:Accounting:JournalEntry:ReversalTargetMissing": "Ters kayıt için hedef yevmiye kaydı bulunamadı.",
+        "Platform:Accounting:JournalEntry:ReversalAlreadyExists": "Bu kayıt için zaten bir ters kayıt mevcut.",
+        "Platform:Accounting:JournalEntry:ReversalSelfReference": "Bir kayıt kendisinin ters kaydı olamaz.",
+
+        "Platform:Accounting:Money:CurrencyInvalid": "Geçersiz para birimi.",
+        "Platform:Accounting:Money:CurrencyMismatch": "Para birimleri uyuşmuyor; işlemler aynı para biriminde olmalıdır.",
+        "Platform:Accounting:Money:AmountInvalidPrecision": "Tutarın ondalık hassasiyeti geçersiz.",
+
+        "Platform:Accounting:Outbox:InvalidTransition": "Geçersiz durum geçişi."
     }
 }

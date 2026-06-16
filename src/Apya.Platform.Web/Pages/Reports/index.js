@@ -136,7 +136,7 @@ $(function () {
             var usage = p.totalBudget > 0 ? (p.spentBudget / p.totalBudget * 100).toFixed(1) : 0;
             var usageClass = usage > 90 ? 'bg-danger' : (usage > 50 ? 'bg-warning' : 'bg-success');
             var hours = (p.totalSeconds / 3600).toFixed(1);
-            var sym = p.currencySymbol || '\u20BA';
+            var sym = ''; // \u00C7oklu d\u00F6viz gizlendi \u2014 tutarlar sade (sembols\u00FCz); t\u00FCm i\u015Flemler TRY.
             
             // Zaman sagligi trafik isigi
             var healthDot = '';

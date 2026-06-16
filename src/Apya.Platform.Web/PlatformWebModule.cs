@@ -2,6 +2,8 @@ using System;
 using System.IO;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.DataProtection;
+using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.Extensions.Logging;
 using Microsoft.AspNetCore.Extensions.DependencyInjection;
 using Microsoft.AspNetCore.Hosting;
@@ -187,6 +189,19 @@ public class PlatformWebModule : AbpModule
         context.Services.AddHealthChecks();
 
         context.Services.AddMapperlyObjectMapper<PlatformWebModule>();
+
+        ConfigureDataProtection(context);
+    }
+
+    private void ConfigureDataProtection(ServiceConfigurationContext context)
+    {
+        // Data Protection için SABİT application name. Varsayılan "purpose" content-root yoluna
+        // bağlıdır; uygulama farklı bir yoldan çalıştığında (git worktree, farklı deploy dizini)
+        // ya da çok-örnekli (load-balanced) ortamda bir örneğin ürettiği antiforgery/auth
+        // cookie'lerini diğeri çözemez → "The antiforgery token could not be decrypted" / gövdesiz
+        // 400. Sabit isim, anahtar halkası paylaşıldığı sürece tüm örnekler arasında uyumlu kılar.
+        context.Services.AddDataProtection()
+            .SetApplicationName("Apya.Platform");
     }
 
     private void ConfigureAuthentication(ServiceConfigurationContext context)
@@ -231,6 +246,7 @@ public class PlatformWebModule : AbpModule
                     bundle.AddFiles("/Pages/Notifications/notification-bell.js");
                     bundle.AddFiles("/js/dark-mode.js");
                     bundle.AddFiles("/js/ai-hub-client.js");
+                    bundle.AddFiles("/js/ajax-error-detail.js");
                 }
             );
             // ----------------------
@@ -348,6 +364,46 @@ public class PlatformWebModule : AbpModule
         app.UseUnitOfWork();
         app.UseDynamicClaims();
         app.UseAuthorization();
+
+        // ANTIFORGERY REFRESH: abp.ajax / abp.ModalManager, POST'larda antiforgery token'ını
+        // JS-okunur 'XSRF-TOKEN' cookie'sinden okuyup 'RequestVerificationToken' header'ı olarak
+        // gönderir. Bu cookie bayatlarsa (eski instance/DP-purpose, restart, worktree) POST
+        // "The antiforgery token could not be decrypted" ile gövdesiz 400 alır — kullanıcı elle
+        // cookie temizlemeden kurtulamaz. Her HTML GET'inde token'ları yeniden üretip XSRF-TOKEN'ı
+        // tazeleyerek bunu kökten çözüyoruz: GetAndStoreTokens hem .AspNetCore.Antiforgery
+        // cookie'sini hem (aynı request içinde) form-field token'ını set eder; biz de request
+        // token'ını XSRF-TOKEN'a yazarız → header her zaman taze ve eşleşmiş olur.
+        app.Use(async (ctx, next) =>
+        {
+            if (HttpMethods.IsGet(ctx.Request.Method))
+            {
+                var path = ctx.Request.Path.Value ?? string.Empty;
+                // API, swagger, statik asset ve sağlık uçlarını atla — yalnız HTML sayfaları.
+                if (!path.StartsWith("/api", StringComparison.OrdinalIgnoreCase) &&
+                    !path.StartsWith("/swagger", StringComparison.OrdinalIgnoreCase) &&
+                    !path.StartsWith("/health", StringComparison.OrdinalIgnoreCase) &&
+                    !path.StartsWith("/css", StringComparison.OrdinalIgnoreCase) &&
+                    !path.StartsWith("/js", StringComparison.OrdinalIgnoreCase) &&
+                    !path.StartsWith("/libs", StringComparison.OrdinalIgnoreCase) &&
+                    !path.StartsWith("/images", StringComparison.OrdinalIgnoreCase) &&
+                    !path.StartsWith("/icons", StringComparison.OrdinalIgnoreCase))
+                {
+                    var antiforgery = ctx.RequestServices.GetRequiredService<IAntiforgery>();
+                    var tokens = antiforgery.GetAndStoreTokens(ctx);
+                    if (!string.IsNullOrEmpty(tokens.RequestToken))
+                    {
+                        ctx.Response.Cookies.Append("XSRF-TOKEN", tokens.RequestToken, new CookieOptions
+                        {
+                            HttpOnly = false, // abp.jquery JS'ten okuyabilmeli
+                            Path = "/",
+                            SameSite = SameSiteMode.Lax
+                        });
+                    }
+                }
+            }
+
+            await next();
+        });
 
         app.UseSwagger();
         app.UseAbpSwaggerUI(options =>
