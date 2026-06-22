@@ -103,7 +103,8 @@ public class BoardColumnAppService : PlatformAppService, IBoardColumnAppService
         if (col.StatusValue.HasValue)
         {
             // Sistem kolonu → Status değişir, özel kolon bağı temizlenir.
-            task.ChangeStatus((Apya.Platform.Tasks.TaskStatus)col.StatusValue.Value);
+            // Clock.Now ŞART: Done'a taşınınca CompletedDate dolsun (yoksa null kalır).
+            task.ChangeStatus((Apya.Platform.Tasks.TaskStatus)col.StatusValue.Value, Clock.Now);
             task.MoveToColumn(null);
         }
         else
