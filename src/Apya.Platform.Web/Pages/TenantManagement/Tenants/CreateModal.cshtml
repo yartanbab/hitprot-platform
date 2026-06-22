@@ -24,6 +24,8 @@
                     <abp-input asp-for="Tenant.Name" label="Sistem Müşteri Adı (Tenant Name)" />
                     <abp-input asp-for="Tenant.AdminEmailAddress" label="Yönetici E-Posta Adresi" />
                     <abp-input asp-for="Tenant.AdminPassword" label="Yönetici Şifresi" />
+                    <abp-select asp-for="Tenant.PackageCode" label="Paket (Edition)" />
+                    <small class="form-text text-muted">Paket, tenant'ın hangi modüllere ve limitlere sahip olacağını belirler.</small>
                 </div>
                 
                 <div class="tab-pane fade" id="legal" role="tabpanel" aria-labelledby="legal-tab">

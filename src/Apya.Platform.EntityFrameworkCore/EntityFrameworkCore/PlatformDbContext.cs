@@ -225,6 +225,8 @@ namespace Apya.Platform.EntityFrameworkCore
                 b.HasIndex(x => x.TenantId).IsUnique(); // 1:1 relation logic
                 b.Property(x => x.TaxNumber).HasMaxLength(50);
                 b.Property(x => x.CorporateEmail).HasMaxLength(256);
+                // Paket (edition): mevcut profiller migration'da Basic'e düşsün (enum 0 değil).
+                b.Property(x => x.PackageCode).HasDefaultValue(Apya.Platform.Tenants.PackageCode.Basic);
             });
 
             /* --- CARİ (MÜŞTERİ) MODÜLÜ YAPILANDIRMASI --- */
