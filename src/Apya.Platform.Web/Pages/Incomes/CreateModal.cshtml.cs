@@ -28,6 +28,7 @@ public class CreateModalModel : AbpPageModel
     public List<SelectListItem> Projects { get; set; } = new();
     public List<SelectListItem> Customers { get; set; } = new();
     public List<SelectListItem> Categories { get; set; } = new();
+    public string ProjectDatesJson { get; set; } = "{}";
 
     public CreateModalModel(
         IIncomeEntryAppService incomeAppService,
@@ -43,7 +44,7 @@ public class CreateModalModel : AbpPageModel
 
     public virtual async Task<IActionResult> OnGetAsync()
     {
-        (Accounts, Projects, Customers, Categories) =
+        (Accounts, Projects, Customers, Categories, ProjectDatesJson) =
             await IncomeLookups.LoadAsync(_cashAccountAppService, _projectAppService, _customerAppService);
         if (TaskId.HasValue)
             Income.TaskId = TaskId;

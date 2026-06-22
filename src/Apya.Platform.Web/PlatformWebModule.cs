@@ -244,6 +244,7 @@ public class PlatformWebModule : AbpModule
                     // Olu�turdu�umuz dosyay� buraya ekliyoruz
                     bundle.AddFiles("/js/jquery-fix.js");
                     bundle.AddFiles("/js/apya-money.js"); // apya.money.format → "1.000,00 TRY" (tüm sayfalarda)
+                    bundle.AddFiles("/js/apya-finance-modal.js"); // gelir/gider modalı: proje tarih aralığı kontrolü
                     bundle.AddFiles("/Pages/Notifications/notification-bell.js");
                     bundle.AddFiles("/js/dark-mode.js");
                     bundle.AddFiles("/js/ai-hub-client.js");

@@ -31,19 +31,33 @@
                 </abp-column>
             </abp-row>
             <abp-row>
-                <abp-column size-md="_6">
+                <abp-column size-md="_12">
                     <abp-select asp-for="Income.ProjectId" asp-items="Model.Projects" label="Proje (opsiyonel)">
                         <option value="">— Proje yok —</option>
                     </abp-select>
                 </abp-column>
-                <abp-column size-md="_6">
-                    <abp-select asp-for="Income.CustomerId" asp-items="Model.Customers" label="Cari (opsiyonel)">
-                        <option value="">— Cari yok —</option>
-                    </abp-select>
-                </abp-column>
             </abp-row>
+            @* Cari alanı gizlendi (kullanıcı kararı 2026-06-22); mevcut değer korunsun diye gizli alan. *@
+            <input type="hidden" asp-for="Income.CustomerId" />
             <abp-input asp-for="Income.Description" label="Açıklama" />
         </abp-modal-body>
         <abp-modal-footer buttons="@(AbpModalButtons.Cancel | AbpModalButtons.Save)"></abp-modal-footer>
     </abp-modal>
 </form>
+
+@* Proje seçiliyse tarih, projenin başlangıç–bitiş aralığında olmalı (apya-finance-modal.js). *@
+<script type="application/json" id="IncomeEditProjectDates">@Html.Raw(Model.ProjectDatesJson)</script>
+<script>
+    (function () {
+        var dates = {};
+        try { dates = JSON.parse(document.getElementById('IncomeEditProjectDates').textContent || '{}'); } catch (e) { }
+        setTimeout(function () {
+            apya.financeModal.bindProjectDateRange({
+                formSelector: 'form[action$="/Incomes/EditModal"]',
+                projectSelector: '#Income_ProjectId',
+                dateSelector: '#Income_IncomeDate',
+                projectDates: dates
+            });
+        }, 0);
+    })();
+</script>
