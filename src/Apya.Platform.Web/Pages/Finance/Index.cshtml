@@ -9,8 +9,11 @@
 }
 
 @functions {
-    // Çoklu döviz gizlendi — tutarlar sade (sembolsüz) gösterilir; tüm işlemler TRY.
-    string Money(decimal v, string cur) => $"{v:N2}";
+    // Ortak format: "1.000,00 TRY" — sabit tr-TR kültürü (sunucu kültüründen bağımsız).
+    // JS karşılığı: apya.money.format (wwwroot/js/apya-money.js).
+    string Money(decimal v, string cur) =>
+        v.ToString("N2", System.Globalization.CultureInfo.GetCultureInfo("tr-TR"))
+        + " " + (string.IsNullOrWhiteSpace(cur) ? "TRY" : cur);
 }
 
 <abp-card>

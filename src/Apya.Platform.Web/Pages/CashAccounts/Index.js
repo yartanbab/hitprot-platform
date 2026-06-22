@@ -59,7 +59,7 @@ $(function () {
                 title: 'Açılış Bakiyesi',
                 data: 'openingBalance',
                 render: function (d, type, row) {
-                    return Number(d).toLocaleString('tr-TR', { minimumFractionDigits: 2 }) + ' ' + row.currency;
+                    return apya.money.format(d, row.currency);
                 }
             }
         ]
@@ -80,10 +80,6 @@ $(function () {
     var svc = apya.platform.cashMovements.cashMovement;
     var movementsTableInit = false;
     var movementsTable;
-
-    function fmt(n) {
-        return Number(n).toLocaleString('tr-TR', { minimumFractionDigits: 2 });
-    }
 
     function initMovementsTable() {
         if (movementsTableInit) return;
@@ -135,7 +131,7 @@ $(function () {
                             : '<span class="badge bg-danger">Çıkış</span>';
                     }
                 },
-                { title: 'Tutar',    data: 'amount',      render: function (d) { return fmt(d); } },
+                { title: 'Tutar',    data: 'amount',      render: function (d, t, row) { return apya.money.format(d, row.currency); } },
                 { title: 'Açıklama', data: 'description', render: function (d) { return d || '-'; } }
             ]
         }));
@@ -152,10 +148,10 @@ $(function () {
         if (!id) { $card.addClass('d-none'); return; }
         svc.getBalance(id).then(function (b) {
             $('#BalAccount').text(b.cashAccountName);
-            $('#BalOpening').text(fmt(b.openingBalance) + ' ' + b.currency);
-            $('#BalIn').text(fmt(b.totalIn));
-            $('#BalOut').text(fmt(b.totalOut));
-            $('#BalCurrent').text(fmt(b.currentBalance) + ' ' + b.currency);
+            $('#BalOpening').text(apya.money.format(b.openingBalance, b.currency));
+            $('#BalIn').text(apya.money.format(b.totalIn, b.currency));
+            $('#BalOut').text(apya.money.format(b.totalOut, b.currency));
+            $('#BalCurrent').text(apya.money.format(b.currentBalance, b.currency));
             $card.removeClass('d-none');
         });
     }
