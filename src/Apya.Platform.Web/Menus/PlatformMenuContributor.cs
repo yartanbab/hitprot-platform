@@ -55,16 +55,19 @@ public class PlatformMenuContributor : IMenuContributor
         // Finans — Faz 1 sadeleştirme: yalnızca günlük işlem + hesap öğeleri kalır.
         // Raporlar tek "Raporlar" menüsünde toplandı; Döviz Kurları Yönetim'e taşındı.
         var finance = new ApplicationMenuItem("Apya.Finance", l["Menu:Finance"], icon: "fa fa-coins", order: 3);
+        // Sıralama (kullanıcı kararı 2026-06-22): 1) Kasalar  2) Para Hareketleri.
+        if (await permission.IsGrantedAsync(PlatformPermissions.CashAccounts.Default))
+            finance.AddItem(new ApplicationMenuItem("Apya.Finance.CashAccounts", l["Menu:CashAccounts"], icon: "fa fa-cash-register", url: "/CashAccounts", order: 1));
         // Para Hareketleri hub'ı (Faz 2): Gelir + Gider + Fatura tek listede toplandı.
         // Ayrı Giderler/Gelirler/Faturalar menü öğeleri kaldırıldı (sayfalar hub'dan erişilebilir).
         if (await permission.IsGrantedAsync(PlatformPermissions.Incomes.Default)
             || await permission.IsGrantedAsync(PlatformPermissions.Expenses.Default)
             || await permission.IsGrantedAsync(PlatformPermissions.Invoices.Default))
-            finance.AddItem(new ApplicationMenuItem("Apya.Finance.Hub", l["Menu:FinanceHub"], icon: "fa fa-right-left", url: "/Finance"));
-        if (await permission.IsGrantedAsync(PlatformPermissions.Customers.Default))
-            finance.AddItem(new ApplicationMenuItem("Apya.Finance.Customers", l["Menu:Customers"], icon: "fa fa-id-card", url: "/Customers"));
-        if (await permission.IsGrantedAsync(PlatformPermissions.CashAccounts.Default))
-            finance.AddItem(new ApplicationMenuItem("Apya.Finance.CashAccounts", l["Menu:CashAccounts"], icon: "fa fa-cash-register", url: "/CashAccounts"));
+            finance.AddItem(new ApplicationMenuItem("Apya.Finance.Hub", l["Menu:FinanceHub"], icon: "fa fa-right-left", url: "/Finance", order: 2));
+        // Cariler kullanıcı kararıyla menüden gizlendi (2026-06-22). /Customers sayfası korunur;
+        // izinli kullanıcı doğrudan erişebilir. Geri açmak için aşağıyı yorumdan çıkar:
+        // if (await permission.IsGrantedAsync(PlatformPermissions.Customers.Default))
+        //     finance.AddItem(new ApplicationMenuItem("Apya.Finance.Customers", l["Menu:Customers"], icon: "fa fa-id-card", url: "/Customers"));
         if (finance.Items.Count > 0) context.Menu.AddItem(finance);
 
         // İçerik
