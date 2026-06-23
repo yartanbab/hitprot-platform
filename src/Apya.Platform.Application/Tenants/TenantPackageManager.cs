@@ -61,10 +61,14 @@ public class TenantPackageManager : ITransientDependency
         return PackageDefinitions.For(code);
     }
 
-    /// <summary>4 varsayılan paketi (yoksa) registry'den DB'ye tohumlar. Yönetim UI ilk açılışta çağırır.</summary>
+    /// <summary>
+    /// Eksik varsayılan paketleri registry'den DB'ye tohumlar (per-code idempotent → self-healing;
+    /// yeni tier eklenince ya da bir paket silinince de tamamlar). Yönetim UI ilk açılışta çağırır.
+    /// </summary>
     public async Task EnsureDefaultPackagesAsync()
     {
-        if (await _packageRepository.GetCountAsync() > 0) { return; }
+        var existing = await _packageRepository.GetListAsync();
+        var existingCodes = existing.Select(p => p.Code).ToHashSet();
 
         var meta = new (PackageCode code, string name, string desc, int order)[]
         {
@@ -75,6 +79,8 @@ public class TenantPackageManager : ITransientDependency
         };
         foreach (var m in meta)
         {
+            if (existingCodes.Contains(m.code)) { continue; }
+
             var pkg = new PlatformPackage(_guidGenerator.Create(), m.code, m.name, m.desc, m.order);
             foreach (var kv in PackageDefinitions.For(m.code))
             {
