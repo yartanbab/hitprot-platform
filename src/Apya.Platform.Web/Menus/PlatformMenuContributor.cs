@@ -172,6 +172,15 @@ public class PlatformMenuContributor : IMenuContributor
                 icon: "fa fa-money-bill-transfer", url: "/ExchangeRates"));
         }
 
+        // Paket Yönetimi (Edition) — host: paket içeriklerini düzenle.
+        // TenantManagement yetkisi host-side → tenant kullanıcılarında gizli.
+        if (await permission.IsGrantedAsync(Volo.Abp.TenantManagement.TenantManagementPermissions.Tenants.Update))
+        {
+            administration.AddItem(new ApplicationMenuItem(
+                "Apya.Admin.Packages", l["Menu:PackageManagement"],
+                icon: "fa fa-box-open", url: "/PackageManagement"));
+        }
+
         if (MultiTenancyConsts.IsEnabled)
         {
             administration.SetSubItemOrder(TenantManagementMenuNames.GroupName, 1);
