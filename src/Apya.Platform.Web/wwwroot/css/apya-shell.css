@@ -108,12 +108,12 @@ a, button, .btn, .nav-link, .list-group-item {
 
 .modal-header {
     border-bottom: 1px solid var(--apya-border-subtle) !important;
-    padding: 18px 22px !important;
+    padding: var(--apya-space-4) var(--apya-space-5) !important;
 }
 
 .modal-footer {
     border-top: 1px solid var(--apya-border-subtle) !important;
-    padding: 14px 22px !important;
+    padding: var(--apya-space-3) var(--apya-space-5) !important;
 }
 
 /* ----------------------------------------------------------------------------

@@ -96,9 +96,9 @@
                     {
                         var (badgeClass, badgeText) = t.Type switch
                         {
-                            IndexModel.TxType.Income => ("bg-success", "Gelir"),
-                            IndexModel.TxType.Expense => ("bg-danger", "Gider"),
-                            _ => ("bg-primary", "Fatura")
+                            IndexModel.TxType.Income => ("bg-success-subtle text-success-emphasis", "Gelir"),
+                            IndexModel.TxType.Expense => ("bg-danger-subtle text-danger-emphasis", "Gider"),
+                            _ => ("bg-primary-subtle text-primary-emphasis", "Fatura")
                         };
                         <tr data-type="@t.Type">
                             <td class="text-nowrap">@t.Date.ToString("dd.MM.yyyy")</td>
