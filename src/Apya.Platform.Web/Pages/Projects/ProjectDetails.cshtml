@@ -98,7 +98,7 @@
                         <i class="fa fa-robot text-@Model.AiRiskColor fs-5"></i>
                     </div>
                     <div>
-                        <h6 class="text-uppercase text-muted fw-bold mb-0" style="font-size:0.7rem;letter-spacing:1px;">AI Risk</h6>
+                        <h6 class="apya-overline mb-0">AI Risk</h6>
                         <span class="fw-bold fs-5 text-@Model.AiRiskColor">%@Model.AiRiskScore</span>
                     </div>
                 </div>
@@ -109,7 +109,7 @@
 
             @* ── Kalan Süre Countdown + Zaman Sapma ── *@
             <div class="col-md-2 border-start px-3">
-                <h6 class="text-uppercase text-muted fw-bold mb-2" style="font-size:0.7rem;letter-spacing:1px;">
+                <h6 class="apya-overline mb-2">
                     <i class="fa fa-hourglass-half me-1"></i>Kalan Süre
                 </h6>
                 @if (Model.Project?.EndDate.HasValue == true)
@@ -139,7 +139,7 @@
             <div id="btn-budget-summary" data-project-id="@Model.Project?.Id" role="button"
                  class="col-md-2 border-start px-3 budget-consumption-clickable" style="cursor:pointer;"
                  title="Detay için tıkla — Bütçe vs Gerçekleşen">
-                <h6 class="text-uppercase text-muted fw-bold mb-2" style="font-size:0.7rem;letter-spacing:1px;">
+                <h6 class="apya-overline mb-2">
                     <i class="fa fa-wallet me-1"></i>Bütçe Tüketimi
                     <i class="fa fa-up-right-from-square ms-1 text-primary" style="font-size:0.6rem;opacity:0.65;"></i>
                 </h6>
@@ -167,7 +167,7 @@
             <div class="col-md-3 border-start ps-3">
                 @* İlerleme *@
                 <div class="mb-2">
-                    <h6 class="text-uppercase text-muted fw-bold mb-1" style="font-size:0.7rem;letter-spacing:1px;">Proje İlerlemesi</h6>
+                    <h6 class="apya-overline mb-1">Proje İlerlemesi</h6>
                     <div class="d-flex align-items-center gap-2">
                         <span class="fw-bold fs-5 @(progressPct == 100 ? "text-success" : "text-primary")">%@progressPct</span>
                         <div class="progress flex-grow-1 shadow-sm" style="height:6px;border-radius:4px;">
@@ -180,7 +180,7 @@
 
                 @* Ekip Avatarları *@
                 <div>
-                    <h6 class="text-uppercase text-muted fw-bold mb-1" style="font-size:0.7rem;letter-spacing:1px;">Ekip (@assigneeCount)</h6>
+                    <h6 class="apya-overline mb-1">Ekip (@assigneeCount)</h6>
                     <div class="avatar-group">
                         @for (int i = 0; i < facepileCount; i++)
                         {
