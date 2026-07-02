@@ -1,6 +1,8 @@
 @page
 @using System.Linq
 @using System.Text.Json
+@using Apya.Platform.Web.Pages.Shared
+@using Microsoft.AspNetCore.Html
 @model Apya.Platform.Web.Pages.AiCenter.Dashboard.IndexModel
 @{
     ViewBag.Title = "AI Gösterge Paneli";
@@ -9,31 +11,20 @@
     var riskCounts = JsonSerializer.Serialize(d.RiskDistribution.Select(x => x.Count));
 }
 
-<div class="row g-3 mb-3">
+<div class="apya-page">
+
+<div class="row g-3 mb-4">
     <div class="col-md-3">
-        <abp-card><abp-card-body>
-            <div class="text-muted small">Toplam Değerlendirme</div>
-            <div class="fs-2 fw-bold">@d.TotalEvaluations</div>
-        </abp-card-body></abp-card>
+        <partial name="_KpiCard" model='new KpiCardModel { Icon = "fa-clipboard-check", Accent = "primary", Label = "Toplam Değerlendirme", Value = d.TotalEvaluations.ToString() }' />
     </div>
     <div class="col-md-3">
-        <abp-card><abp-card-body>
-            <div class="text-muted small">Ortalama Skor</div>
-            <div class="fs-2 fw-bold">@(d.AverageScore.HasValue ? d.AverageScore.Value.ToString("0.0") : "—")</div>
-            <div class="text-muted small">@d.ScoredCount skorlu sonuç</div>
-        </abp-card-body></abp-card>
+        <partial name="_KpiCard" model='new KpiCardModel { Icon = "fa-star", Accent = "warning", Label = "Ortalama Skor", Value = d.AverageScore.HasValue ? d.AverageScore.Value.ToString("0.0") : "—", SubText = $"{d.ScoredCount} skorlu sonuç" }' />
     </div>
     <div class="col-md-3">
-        <abp-card><abp-card-body>
-            <div class="text-muted small">Tamamlanan / Başarısız</div>
-            <div class="fs-2 fw-bold"><span class="text-success">@d.Completed</span> / <span class="text-danger">@d.Failed</span></div>
-        </abp-card-body></abp-card>
+        <partial name="_KpiCard" model='new KpiCardModel { Icon = "fa-list-check", Accent = "success", Label = "Tamamlanan / Başarısız", ValueHtml = new HtmlString($"<span class=\"text-success\">{d.Completed}</span> / <span class=\"text-danger\">{d.Failed}</span>") }' />
     </div>
     <div class="col-md-3">
-        <abp-card><abp-card-body>
-            <div class="text-muted small">Prompt / Sağlayıcı / Aktif İş Akışı</div>
-            <div class="fs-4 fw-bold">@d.PromptCount / @d.ProviderCount / @d.ActiveWorkflowCount</div>
-        </abp-card-body></abp-card>
+        <partial name="_KpiCard" model='new KpiCardModel { Icon = "fa-diagram-project", Accent = "info", Label = "Prompt / Sağlayıcı / Aktif Akış", Value = $"{d.PromptCount} / {d.ProviderCount} / {d.ActiveWorkflowCount}" }' />
     </div>
 </div>
 
@@ -62,6 +53,8 @@
         </abp-card>
     </div>
 </div>
+
+</div> @* /apya-page *@
 
 @section scripts {
     <script src="~/js/chart.umd.min.js"></script>

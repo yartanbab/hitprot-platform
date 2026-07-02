@@ -11,6 +11,7 @@
     <abp-script src="/Pages/AiCenter/Bindings/Index.js" />
 }
 
+<div class="apya-page">
 <abp-card>
     <abp-card-header>
         <abp-row>
@@ -20,7 +21,7 @@
             <abp-column size-md="_5" class="text-end">
                 @if (await AuthorizationService.IsGrantedAsync(AiPermissions.Prompts.Edit))
                 {
-                    <abp-button id="NewBindingButton" text="Yeni Bağlama" icon="plus" button-type="Primary" />
+                    <abp-button id="NewBindingButton" text="Yeni Bağlama" icon="plus" button-type="Primary" size="Small" />
                 }
             </abp-column>
         </abp-row>
@@ -42,3 +43,4 @@
         </abp-table>
     </abp-card-body>
 </abp-card>
+</div>

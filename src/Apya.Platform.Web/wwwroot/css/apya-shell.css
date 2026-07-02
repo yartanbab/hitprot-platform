@@ -209,3 +209,49 @@ h1, h2, h3, h4, h5, h6 {
     border: 1px solid var(--apya-border-default) !important;
     color: var(--apya-text-primary) !important;
 }
+
+/* ----------------------------------------------------------------------------
+   9) PAGE LAYOUT UTILITIES
+   Üç sayfa şablonu:
+     .apya-page         → liste/dashboard sayfaları (ultra-geniş ekranda tablo
+                           okunabilirliği için 1400px'te ortalanır)
+     .apya-page--narrow → tek kolon "odak" sayfaları (ayarlar, bildirimler,
+                           entegrasyon kartları)
+     (full-bleed sayfalar — kanban, form designer, React dashboard —
+      wrapper KULLANMAZ, içerik alanının tamamına yayılır)
+   ---------------------------------------------------------------------------- */
+.apya-page {
+    max-width: 1400px;
+    margin-inline: auto;
+}
+
+.apya-page--narrow {
+    max-width: 860px;
+    margin-inline: auto;
+}
+
+/* ----------------------------------------------------------------------------
+   10) MICRO COMPONENTS
+   ---------------------------------------------------------------------------- */
+
+/* Overline etiketi — KPI/metrik başlıkları. İnline
+   "text-uppercase fw-bold + font-size:0.7rem" tekrarlarının yerini alır. */
+.apya-overline {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    color: var(--apya-text-tertiary);
+}
+
+/* KPI kartı ikon kutusu — _KpiCard partial'ı kullanır. */
+.kpi-icon-box {
+    width: 50px;
+    height: 50px;
+    border-radius: var(--apya-radius-lg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    flex-shrink: 0;
+}
