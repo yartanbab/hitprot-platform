@@ -1,0 +1,15 @@
+@*
+    Ortak empty-state (tek kaynak) — boş liste/veri durumları.
+    Kullanım:
+      <partial name="_EmptyState" model='new EmptyStateModel { Icon = "fa-comments", Title = "Henüz yorum yapılmamış." }' />
+*@
+@model Apya.Platform.Web.Pages.Shared.EmptyStateModel
+
+<div class="text-center text-muted py-5 @Model.CssClass" id="@Model.Id">
+    <i class="fa @Model.Icon fa-2x d-block mb-3 text-secondary opacity-50"></i>
+    <p class="fw-semibold mb-1">@Model.Title</p>
+    @if (!string.IsNullOrEmpty(Model.Description))
+    {
+        <p class="small mb-0">@Model.Description</p>
+    }
+</div>

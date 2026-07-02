@@ -1,6 +1,7 @@
 @page
 @using Apya.Platform.Ai.Permissions
 @using Microsoft.AspNetCore.Authorization
+@using Apya.Platform.Web.Pages.Shared
 @inject IAuthorizationService AuthorizationService
 @model Apya.Platform.Web.Pages.AiCenter.Reports.IndexModel
 @{
@@ -62,7 +63,7 @@
         }
         else
         {
-            <p class="text-muted">Henüz risk verisi yok.</p>
+            <partial name="_EmptyState" model='new EmptyStateModel { Icon = "fa-triangle-exclamation", Title = "Henüz risk verisi yok.", Description = "Değerlendirmeler tamamlandıkça risk dağılımı burada görünür." }' />
         }
     </abp-card-body>
 </abp-card>
