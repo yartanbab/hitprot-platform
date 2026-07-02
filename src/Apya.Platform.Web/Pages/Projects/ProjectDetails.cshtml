@@ -112,7 +112,22 @@
                 <h6 class="apya-overline mb-2">
                     <i class="fa fa-hourglass-half me-1"></i>Kalan Süre
                 </h6>
-                @if (Model.Project?.EndDate.HasValue == true)
+                @if (Model.TimeNotStarted)
+                {
+                    @* İleri tarihli proje: bitişe değil BAŞLANGICA geri sayım *@
+                    <div class="d-flex align-items-baseline gap-1 mb-1 flex-wrap">
+                        <span class="text-muted small">Başlamasına</span>
+                        <span class="fw-bold fs-4 text-dark">@Model.RemainingDays</span>
+                        <span class="text-muted small">Gün Kaldı</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <small class="text-muted" style="font-size:0.7rem;">Başlangıç: @Model.Project?.StartDate?.ToString("dd.MM.yyyy")</small>
+                        <span class="badge bg-@Model.TimeHealthColor bg-opacity-10 text-@Model.TimeHealthColor rounded-pill" style="font-size:0.65rem;">
+                            @Model.TimeHealthLabel
+                        </span>
+                    </div>
+                }
+                else if (Model.Project?.EndDate.HasValue == true)
                 {
                     <div class="d-flex align-items-baseline gap-1 mb-1">
                         <span class="fw-bold fs-4 text-dark">@Model.RemainingDays</span>

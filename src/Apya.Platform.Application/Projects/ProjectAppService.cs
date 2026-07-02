@@ -257,6 +257,7 @@ public class ProjectAppService :
             dto.TimeUsagePercent = time.timeUsagePercent;
             dto.TimeHealthColor = time.color;
             dto.TimeHealthLabel = time.label;
+            dto.TimeNotStarted = time.notStarted;
 
             dto.SpentBudget = ProjectMetricsCalculator.CalculateBudgetSpent(timeLogs, project.HourlyRate);
             dto.BudgetPercent = ProjectMetricsCalculator.CalculateBudgetPercent(dto.SpentBudget, project.TotalBudget);
