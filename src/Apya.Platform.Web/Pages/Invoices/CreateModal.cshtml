@@ -97,13 +97,16 @@
                         var html = `
                         <div class="row invoice-item mb-2 align-items-end" data-index="\${itemIndex}">
                             <div class="col-md-5">
-                                <input name="InvoiceInfo.Items[\${itemIndex}].Description" class="form-control" required placeholder="Açıklama" />
+                                <label class="form-label">Açıklama</label>
+                                <input name="InvoiceInfo.Items[\${itemIndex}].Description" class="form-control" required />
                             </div>
                             <div class="col-md-3">
+                                <label class="form-label">Miktar</label>
                                 <input name="InvoiceInfo.Items[\${itemIndex}].Quantity" type="number" step="0.01" class="form-control input-qty" value="1" required />
                             </div>
                             <div class="col-md-3">
-                                <input name="InvoiceInfo.Items[\${itemIndex}].UnitPrice" type="number" step="0.01" class="form-control input-price" required placeholder="Birim Fiyat" />
+                                <label class="form-label">Birim Fiyat</label>
+                                <input name="InvoiceInfo.Items[\${itemIndex}].UnitPrice" type="number" step="0.01" class="form-control input-price" required />
                             </div>
                             <div class="col-md-1">
                                 <button type="button" class="btn btn-outline-danger btn-remove-item"><i class="fa fa-trash"></i></button>
