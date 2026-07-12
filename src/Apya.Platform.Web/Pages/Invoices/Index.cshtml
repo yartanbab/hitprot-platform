@@ -7,6 +7,7 @@
 @inject IHtmlLocalizer<Apya.Platform.Localization.PlatformResource> L
 @inject IAuthorizationService AuthorizationService
 
+<div class="apya-page">
 <abp-card>
     <abp-card-header>
         <abp-row>
@@ -19,7 +20,7 @@
                     <abp-button id="NewInvoiceButton"
                                 text="Yeni Fatura Oluştur"
                                 icon="plus"
-                                button-type="Primary" />
+                                button-type="Primary" size="Small" />
                 }
             </abp-column>
         </abp-row>
@@ -28,6 +29,7 @@
         <abp-table striped-rows="true" id="InvoicesTable"></abp-table>
     </abp-card-body>
 </abp-card>
+</div>
 
 @section scripts {
     <abp-script src="/Pages/Invoices/index.js" />

@@ -15,11 +15,15 @@ public class ProjectDetailDto : ProjectDto
     public bool IsInternalProject { get; set; } = true;
     public string CurrencySymbol { get; set; } = "₺";
 
+    /// <summary>Proje başladıysa bitişe, başlamadıysa BAŞLANGICA kalan gün.</summary>
     public int RemainingDays { get; set; }
     public int TotalProjectDays { get; set; }
     public int TimeUsagePercent { get; set; }
     public string TimeHealthColor { get; set; } = "success";
     public string TimeHealthLabel { get; set; } = "Saglam";
+
+    /// <summary>İleri tarihli proje (StartDate gelecekte) — henüz başlamadı.</summary>
+    public bool TimeNotStarted { get; set; }
 
     public int BudgetPercent { get; set; }
 

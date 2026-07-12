@@ -230,6 +230,12 @@ public class PlatformWebModule : AbpModule
                 LeptonXLiteThemeBundles.Styles.Global,
                 bundle =>
                 {
+                    // Apya design token'lar� (--apya-*) — apya-shell ve apya-theme-bridge
+                    // bu de�i�kenleri t�ketir; global y�klenmezse var() de�erleri bo� kal�r.
+                    // Kaynak: React island'la ayn� dosya (tek kaynak, kopya de�il).
+                    bundle.AddFiles("/dynamic-assets/src/styles/tokens.css");
+                    // LeptonX/Bootstrap de�i�kenlerini token'lara ba�layan k�pr�
+                    bundle.AddFiles("/css/apya-theme-bridge.css");
                     bundle.AddFiles("/global.css");
                     bundle.AddFiles("/css/apya-shell.css");
                 }

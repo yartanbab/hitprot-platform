@@ -126,9 +126,15 @@
 }
 
 /* ============================================================================
-   SHELL LAYOUT BRIDGE
+   SHELL LAYOUT BRIDGE — YALNIZ DARK MODE
    LeptonX Lite sidebar, topbar ve içerik alanı token'lara bağlanır.
    Selector'lar LeptonX v5 DOM'una göre yazıldı; major version'da gözden geçir.
+
+   ⚠️ Bu blok [data-theme="dark"] scope'undadır. Light temada LeptonX'in
+   varsayılan shell görünümü (koyu sidebar) geçerlidir — light'ta
+   --apya-surface-sidebar beyaz olduğundan global uygulanırsa menünün
+   bittiği yerden aşağısı beyaz kalıyordu (sidebar iç bloğu kendi koyu
+   zeminini koruyor). Dark mode geri açıldığında bu blok devreye girer.
    ============================================================================ */
 
 /* --- Sayfa zemini --- */
@@ -136,41 +142,41 @@ html, body {
     background-color: var(--apya-surface-app-bg) !important;
 }
 
-/* --- Sidebar --- */
-.lpx-sidebar,
-.lpx-left-sidebar {
+/* --- Sidebar (yalnız dark) --- */
+[data-theme="dark"] .lpx-sidebar,
+[data-theme="dark"] .lpx-left-sidebar {
     background: var(--apya-surface-sidebar) !important;
     border-right: 1px solid var(--apya-border-default) !important;
     transition: width 240ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 /* Sidebar nav item: temel */
-.lpx-nav-item > a,
-.lpx-menu-item > a {
+[data-theme="dark"] .lpx-nav-item > a,
+[data-theme="dark"] .lpx-menu-item > a {
     color: var(--apya-text-secondary) !important;
     border-radius: 8px;
     transition: background 120ms ease, color 120ms ease;
 }
 
 /* Sidebar nav item: hover */
-.lpx-nav-item > a:hover,
-.lpx-menu-item > a:hover {
+[data-theme="dark"] .lpx-nav-item > a:hover,
+[data-theme="dark"] .lpx-menu-item > a:hover {
     background: var(--apya-border-subtle) !important;
     color: var(--apya-text-primary) !important;
 }
 
 /* Sidebar nav item: aktif */
-.lpx-nav-item.active > a,
-.lpx-nav-item > a.active,
-.lpx-menu-item.active > a {
+[data-theme="dark"] .lpx-nav-item.active > a,
+[data-theme="dark"] .lpx-nav-item > a.active,
+[data-theme="dark"] .lpx-menu-item.active > a {
     background: var(--apya-accent-soft) !important;
     color: var(--apya-accent-500) !important;
     font-weight: 600;
 }
 
 /* Grup başlıkları */
-.lpx-nav-category,
-.lpx-menu-group-label {
+[data-theme="dark"] .lpx-nav-category,
+[data-theme="dark"] .lpx-menu-group-label {
     color: var(--apya-text-tertiary) !important;
     font-size: 10.5px;
     font-weight: 700;
@@ -178,18 +184,18 @@ html, body {
     text-transform: uppercase;
 }
 
-/* --- Topbar / Header --- */
-.lpx-header,
-.lpx-topbar {
+/* --- Topbar / Header (yalnız dark) --- */
+[data-theme="dark"] .lpx-header,
+[data-theme="dark"] .lpx-topbar {
     background: var(--apya-surface-header) !important;
     border-bottom: 1px solid var(--apya-border-default) !important;
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
 }
 
-/* --- İçerik alanı --- */
-.lpx-content-container,
-.lpx-main-content {
+/* --- İçerik alanı (yalnız dark) --- */
+[data-theme="dark"] .lpx-content-container,
+[data-theme="dark"] .lpx-main-content {
     background: var(--apya-surface-app-bg) !important;
 }
 

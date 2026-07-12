@@ -35,6 +35,7 @@ public class ProjectDetailsModel : PlatformPageModel
     public int TimeUsagePercent { get; set; }
     public string TimeHealthColor { get; set; } = "success";
     public string TimeHealthLabel { get; set; } = "Saglam";
+    public bool TimeNotStarted { get; set; }
 
     public decimal BudgetSpent { get; set; }
     public int BudgetPercent { get; set; }
@@ -70,6 +71,7 @@ public class ProjectDetailsModel : PlatformPageModel
         TimeUsagePercent = detail.TimeUsagePercent;
         TimeHealthColor = detail.TimeHealthColor;
         TimeHealthLabel = detail.TimeHealthLabel;
+        TimeNotStarted = detail.TimeNotStarted;
 
         // "Bütçe Tüketimi" widget'ı, Bütçe Durumu modalıyla AYNI kaynaktan beslensin
         // (tek doğru kaynak = ProjectFinanceAppService). Önceki SpentBudget zaman

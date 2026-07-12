@@ -48,15 +48,15 @@
     <div class="card-body p-4 position-relative">
 
         @* Geri — kartın üst sağına sabitlendi (kullanıcı isteği) *@
-        <a href="/" class="btn btn-light border btn-sm shadow-sm rounded-pill fw-bold px-3 position-absolute" style="top:1.25rem; right:1.25rem; z-index:3;">
+        <a href="/" class="btn btn-light border btn-sm position-absolute" style="top:1.25rem; right:1.25rem; z-index:3;">
             <i class="fa fa-arrow-left me-1"></i> Geri
         </a>
 
         @* Hızlı kısayollar — masaüstünde gizli (d-md-none); JS handler'ları korunsun diye DOM'da kalır *@
         <div class="btn-group btn-group-sm d-md-none mb-3" role="group">
-            <button class="btn btn-outline-primary rounded-start-pill px-3" title="Hızlı Efor Gir" id="btn-quick-effort"><i class="fa fa-clock"></i></button>
+            <button class="btn btn-outline-primary px-3" title="Hızlı Efor Gir" id="btn-quick-effort"><i class="fa fa-clock"></i></button>
             <button class="btn btn-outline-primary px-3" title="Dosya Yükle" id="btn-quick-upload"><i class="fa fa-upload"></i></button>
-            <button class="btn btn-outline-primary rounded-end-pill px-3" title="Not Ekle" id="btn-quick-note"><i class="fa fa-sticky-note"></i></button>
+            <button class="btn btn-outline-primary px-3" title="Not Ekle" id="btn-quick-note"><i class="fa fa-sticky-note"></i></button>
         </div>
 
         @* Metrikler kart içinde dikey ortalı *@
@@ -78,7 +78,7 @@
                     <span class="badge bg-primary bg-opacity-10 text-primary rounded-pill px-3 py-2" style="font-size: 0.8rem;">
                         <i class="fa fa-tag me-1"></i>@Model.Project?.Code
                     </span>
-                    <button class="btn btn-sm btn-outline-secondary rounded-pill px-2 py-0"
+                    <button class="btn btn-sm btn-outline-secondary px-2 py-0"
                             onclick="navigator.clipboard.writeText('@Model.Project?.Code'); abp.notify.success('Proje kodu kopyalandı!');"
                             title="Proje kodunu kopyala">
                         <i class="fa fa-copy" style="font-size: 0.75rem;"></i>
@@ -98,7 +98,7 @@
                         <i class="fa fa-robot text-@Model.AiRiskColor fs-5"></i>
                     </div>
                     <div>
-                        <h6 class="text-uppercase text-muted fw-bold mb-0" style="font-size:0.7rem;letter-spacing:1px;">AI Risk</h6>
+                        <h6 class="apya-overline mb-0">AI Risk</h6>
                         <span class="fw-bold fs-5 text-@Model.AiRiskColor">%@Model.AiRiskScore</span>
                     </div>
                 </div>
@@ -109,10 +109,25 @@
 
             @* ── Kalan Süre Countdown + Zaman Sapma ── *@
             <div class="col-md-2 border-start px-3">
-                <h6 class="text-uppercase text-muted fw-bold mb-2" style="font-size:0.7rem;letter-spacing:1px;">
+                <h6 class="apya-overline mb-2">
                     <i class="fa fa-hourglass-half me-1"></i>Kalan Süre
                 </h6>
-                @if (Model.Project?.EndDate.HasValue == true)
+                @if (Model.TimeNotStarted)
+                {
+                    @* İleri tarihli proje: bitişe değil BAŞLANGICA geri sayım *@
+                    <div class="d-flex align-items-baseline gap-1 mb-1 flex-wrap">
+                        <span class="text-muted small">Başlamasına</span>
+                        <span class="fw-bold fs-4 text-dark">@Model.RemainingDays</span>
+                        <span class="text-muted small">Gün Kaldı</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <small class="text-muted" style="font-size:0.7rem;">Başlangıç: @Model.Project?.StartDate?.ToString("dd.MM.yyyy")</small>
+                        <span class="badge bg-@Model.TimeHealthColor bg-opacity-10 text-@Model.TimeHealthColor rounded-pill" style="font-size:0.65rem;">
+                            @Model.TimeHealthLabel
+                        </span>
+                    </div>
+                }
+                else if (Model.Project?.EndDate.HasValue == true)
                 {
                     <div class="d-flex align-items-baseline gap-1 mb-1">
                         <span class="fw-bold fs-4 text-dark">@Model.RemainingDays</span>
@@ -124,7 +139,7 @@
                     </div>
                     <div class="d-flex justify-content-between">
                         <small class="text-muted" style="font-size:0.7rem;">Sürenin %@Model.TimeUsagePercent'i</small>
-                        <span class="badge bg-@Model.TimeHealthColor bg-opacity-15 text-@Model.TimeHealthColor rounded-pill" style="font-size:0.65rem;">
+                        <span class="badge bg-@Model.TimeHealthColor bg-opacity-10 text-@Model.TimeHealthColor rounded-pill" style="font-size:0.65rem;">
                             @Model.TimeHealthLabel
                         </span>
                     </div>
@@ -139,7 +154,7 @@
             <div id="btn-budget-summary" data-project-id="@Model.Project?.Id" role="button"
                  class="col-md-2 border-start px-3 budget-consumption-clickable" style="cursor:pointer;"
                  title="Detay için tıkla — Bütçe vs Gerçekleşen">
-                <h6 class="text-uppercase text-muted fw-bold mb-2" style="font-size:0.7rem;letter-spacing:1px;">
+                <h6 class="apya-overline mb-2">
                     <i class="fa fa-wallet me-1"></i>Bütçe Tüketimi
                     <i class="fa fa-up-right-from-square ms-1 text-primary" style="font-size:0.6rem;opacity:0.65;"></i>
                 </h6>
@@ -167,7 +182,7 @@
             <div class="col-md-3 border-start ps-3">
                 @* İlerleme *@
                 <div class="mb-2">
-                    <h6 class="text-uppercase text-muted fw-bold mb-1" style="font-size:0.7rem;letter-spacing:1px;">Proje İlerlemesi</h6>
+                    <h6 class="apya-overline mb-1">Proje İlerlemesi</h6>
                     <div class="d-flex align-items-center gap-2">
                         <span class="fw-bold fs-5 @(progressPct == 100 ? "text-success" : "text-primary")">%@progressPct</span>
                         <div class="progress flex-grow-1 shadow-sm" style="height:6px;border-radius:4px;">
@@ -180,7 +195,7 @@
 
                 @* Ekip Avatarları *@
                 <div>
-                    <h6 class="text-uppercase text-muted fw-bold mb-1" style="font-size:0.7rem;letter-spacing:1px;">Ekip (@assigneeCount)</h6>
+                    <h6 class="apya-overline mb-1">Ekip (@assigneeCount)</h6>
                     <div class="avatar-group">
                         @for (int i = 0; i < facepileCount; i++)
                         {
@@ -225,13 +240,13 @@
                 @if (await AuthorizationService.IsGrantedAsync(PlatformPermissions.Tasks.Create))
                 {
                     <button id="btn-ai-task-generator"
-                            class="btn btn-outline-primary rounded-pill px-4 shadow-sm me-2"
+                            class="btn btn-outline-primary btn-sm me-2"
                             data-project-id="@Model.Id"
                             title="PDF yükle, AI taslak görevlere bölsün, beğendiklerini onayla.">
                         <i class="fa fa-robot me-1"></i> AI ile Görev Oluştur
                     </button>
                     <button id="btn-create-task"
-                            class="btn btn-primary rounded-pill px-4 shadow-sm"
+                            class="btn btn-primary btn-sm"
                             data-project-id="@Model.Id">
                         <i class="fa fa-plus me-1"></i> Yeni Görev Ekle
                     </button>
@@ -290,7 +305,7 @@
 }
 
 @section scripts {
-    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.6/Sortable.min.js"></script>
     <abp-script src="/js/apya-kanban.js" />
     <abp-script src="/Pages/Projects/ProjectDetails.js" />
 }
