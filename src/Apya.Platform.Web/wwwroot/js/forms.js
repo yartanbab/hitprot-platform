@@ -1,5 +1,6 @@
-import { c as b, j as e, r as c } from "./vendor.js";
-import { a as m } from "./vendor2.js";
+import { b, j as e, r as d } from "./react-vendor.js";
+import { a as m } from "./httpClient.js";
+/* empty css      */
 const x = {
   0: { label: "Taslak", cls: "bg-slate-100 text-slate-600" },
   1: { label: "Yayında", cls: "bg-emerald-100 text-emerald-700" },
@@ -12,25 +13,25 @@ const x = {
   }
 };
 function g() {
-  const [t, a] = c.useState([]), [r, i] = c.useState(!0), n = async () => {
+  const [t, a] = d.useState([]), [r, i] = d.useState(!0), n = async () => {
     try {
       const s = await m.get("/api/app/form?MaxResultCount=200&SkipCount=0");
       a(s.items || []);
     } catch (s) {
-      d("error", (s == null ? void 0 : s.message) || "Formlar yüklenemedi.");
+      c("error", (s == null ? void 0 : s.message) || "Formlar yüklenemedi.");
     } finally {
       i(!1);
     }
   };
-  c.useEffect(() => {
+  d.useEffect(() => {
     n();
   }, []);
   const h = async (s) => {
     if (await j(s.title))
       try {
-        await m.delete(`/api/app/form/${s.id}`), a((l) => l.filter((p) => p.id !== s.id)), d("success", "Form silindi.");
+        await m.delete(`/api/app/form/${s.id}`), a((l) => l.filter((p) => p.id !== s.id)), c("success", "Form silindi.");
       } catch (l) {
-        d("error", (l == null ? void 0 : l.message) || "Silme başarısız.");
+        c("error", (l == null ? void 0 : l.message) || "Silme başarısız.");
       }
   };
   return r ? /* @__PURE__ */ e.jsx("div", { className: "py-16 text-center text-slate-400", children: "Formlar yükleniyor…" }) : /* @__PURE__ */ e.jsxs("div", { className: "text-slate-800", children: [
@@ -79,7 +80,7 @@ function g() {
     }) })
   ] });
 }
-function d(t, a) {
+function c(t, a) {
   const r = window.abp;
   r != null && r.notify && t === "success" ? r.notify.success(a) : r != null && r.message ? r.message[t === "error" ? "error" : "info"](a) : console.log(`[${t}] ${a}`);
 }

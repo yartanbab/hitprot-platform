@@ -1,8 +1,9 @@
-import { c as ae, j as e, r as o } from "./vendor.js";
+import { b as ae, j as e, r as o } from "./react-vendor.js";
+/* empty css      */
 const k = {
   money: (a) => new Intl.NumberFormat("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(a || 0) + " ₺",
   int: (a) => new Intl.NumberFormat("tr-TR").format(Math.round(a || 0))
-}, m = (...a) => a.filter(Boolean).join(" "), W = () => {
+}, u = (...a) => a.filter(Boolean).join(" "), W = () => {
   var a, n, t;
   return (t = (n = (a = window == null ? void 0 : window.apya) == null ? void 0 : a.platform) == null ? void 0 : n.customers) == null ? void 0 : t.customer;
 }, P = (a) => {
@@ -47,7 +48,7 @@ function M({ label: a, value: n, icon: t, tone: l = "muted", loading: c, index: 
           /* @__PURE__ */ e.jsx("i", { className: `fa ${t}`, "aria-hidden": "true" }),
           a
         ] }),
-        /* @__PURE__ */ e.jsx("div", { className: m("mt-2 text-xl font-bold tabular-nums", i || "text-[var(--apya-text-primary)]"), children: n })
+        /* @__PURE__ */ e.jsx("div", { className: u("mt-2 text-xl font-bold tabular-nums", i || "text-[var(--apya-text-primary)]"), children: n })
       ]
     }
   );
@@ -58,13 +59,13 @@ function te({ label: a, count: n, active: t, onClick: l }) {
     {
       type: "button",
       onClick: l,
-      className: m(
+      className: u(
         "flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors",
         t ? "bg-[var(--apya-accent-soft)] text-[var(--apya-accent-500)]" : "text-[var(--apya-text-tertiary)] hover:text-[var(--apya-text-secondary)]"
       ),
       children: [
         a,
-        /* @__PURE__ */ e.jsx("span", { className: m(
+        /* @__PURE__ */ e.jsx("span", { className: u(
           "text-[10px] font-semibold px-1.5 py-0.5 rounded-full",
           t ? "bg-[var(--apya-surface-base)] text-[var(--apya-accent-500)]" : "bg-[var(--apya-border-subtle)] text-[var(--apya-text-tertiary)]"
         ), children: n })
@@ -120,7 +121,7 @@ function se({ customer: a, onDelete: n }) {
       {
         type: "button",
         onClick: () => l((s) => !s),
-        className: m(
+        className: u(
           "apya-row-actions w-8 h-8 rounded-lg flex items-center justify-center text-[var(--apya-text-tertiary)]",
           "border transition-colors",
           t ? "bg-[var(--apya-border-subtle)] border-[var(--apya-border-strong)]" : "bg-transparent border-transparent hover:border-[var(--apya-border-default)] hover:bg-[var(--apya-border-subtle)]"
@@ -181,7 +182,7 @@ function ne({ page: a, pageCount: n, pageSize: t, total: l, rangeFrom: c, rangeT
       type: "button",
       disabled: C,
       onClick: h,
-      className: m(
+      className: u(
         "min-w-[30px] h-[30px] px-2 rounded-md text-xs font-semibold flex items-center justify-center transition-colors",
         S && "bg-[var(--apya-accent-500)] text-white",
         !S && !C && "text-[var(--apya-text-secondary)] hover:bg-[var(--apya-border-subtle)]",
@@ -339,14 +340,14 @@ function oe() {
     Aktif: a.filter((r) => r.isActive).length,
     Pasif: a.filter((r) => !r.isActive).length
   }), [a]), O = o.useMemo(() => {
-    const r = a.filter((y) => y.balance > 0).reduce((y, u) => y + u.balance, 0), d = a.filter((y) => y.balance < 0).reduce((y, u) => y + Math.abs(u.balance), 0);
+    const r = a.filter((y) => y.balance > 0).reduce((y, m) => y + m.balance, 0), d = a.filter((y) => y.balance < 0).reduce((y, m) => y + Math.abs(m.balance), 0);
     return { alacak: r, borc: d };
   }, [a]), g = o.useMemo(() => {
     const r = i.trim().toLocaleLowerCase("tr");
-    let d = a.filter((u) => p === "Aktif" && !u.isActive || p === "Pasif" && u.isActive ? !1 : r ? [u.name, u.taxNumber, u.taxOffice, u.email, u.phone].filter(Boolean).some((B) => B.toLocaleLowerCase("tr").includes(r)) : !0);
+    let d = a.filter((m) => p === "Aktif" && !m.isActive || p === "Pasif" && m.isActive ? !1 : r ? [m.name, m.taxNumber, m.taxOffice, m.email, m.phone].filter(Boolean).some((B) => B.toLocaleLowerCase("tr").includes(r)) : !0);
     const y = s.dir === "asc" ? 1 : -1;
-    return d = [...d].sort((u, B) => {
-      const D = u[s.key] ?? "", q = B[s.key] ?? "";
+    return d = [...d].sort((m, B) => {
+      const D = m[s.key] ?? "", q = B[s.key] ?? "";
       return typeof D == "number" ? (D - q) * y : String(D).localeCompare(String(q), "tr") * y;
     }), d;
   }, [a, i, p, s]), H = Math.max(1, Math.ceil(g.length / v)), E = Math.min(C, H), U = g.slice((E - 1) * v, E * v), _ = g.length === 0 ? 0 : (E - 1) * v + 1, J = Math.min(E * v, g.length);
@@ -366,13 +367,13 @@ function oe() {
     } finally {
       T(null);
     }
-  }, K = ({ k: r }) => s.key !== r ? null : /* @__PURE__ */ e.jsx("i", { className: `fa fa-sort-${s.dir === "asc" ? "asc" : "desc"} ms-1`, style: { fontSize: 10 }, "aria-hidden": "true" }), j = ({ label: r, sortKey: d, align: y = "left", width: u }) => /* @__PURE__ */ e.jsx("th", { className: "px-4 h-10 bg-[var(--apya-surface-raised)]", style: { textAlign: y, width: u }, children: /* @__PURE__ */ e.jsxs(
+  }, K = ({ k: r }) => s.key !== r ? null : /* @__PURE__ */ e.jsx("i", { className: `fa fa-sort-${s.dir === "asc" ? "asc" : "desc"} ms-1`, style: { fontSize: 10 }, "aria-hidden": "true" }), j = ({ label: r, sortKey: d, align: y = "left", width: m }) => /* @__PURE__ */ e.jsx("th", { className: "px-4 h-10 bg-[var(--apya-surface-raised)]", style: { textAlign: y, width: m }, children: /* @__PURE__ */ e.jsxs(
     "button",
     {
       type: "button",
       disabled: !d,
       onClick: () => d && V(d),
-      className: m(
+      className: u(
         "inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wide",
         d && "cursor-pointer",
         s.key === d ? "text-[var(--apya-text-primary)]" : "text-[var(--apya-text-tertiary)]"
@@ -527,14 +528,14 @@ function oe() {
 function ce({ c: a, onDelete: n }) {
   const [t, l] = o.useState(!1), c = a.balance > 0 ? "var(--apya-positive-500)" : a.balance < 0 ? "var(--apya-negative-500)" : "var(--apya-text-tertiary)", x = a.balance > 0 ? "Alacak" : a.balance < 0 ? "Borç" : "", i = "px-4 border-b border-[var(--apya-border-subtle)] transition-colors", f = t ? "var(--apya-border-subtle)" : "transparent";
   return /* @__PURE__ */ e.jsxs("tr", { onMouseEnter: () => l(!0), onMouseLeave: () => l(!1), style: { background: f }, children: [
-    /* @__PURE__ */ e.jsx("td", { className: m(i, "py-3"), children: /* @__PURE__ */ e.jsxs("div", { className: "flex items-center gap-3", children: [
+    /* @__PURE__ */ e.jsx("td", { className: u(i, "py-3"), children: /* @__PURE__ */ e.jsxs("div", { className: "flex items-center gap-3", children: [
       /* @__PURE__ */ e.jsx(re, { name: a.name, size: 34 }),
       /* @__PURE__ */ e.jsxs("div", { className: "min-w-0", children: [
         /* @__PURE__ */ e.jsx("div", { className: "text-[13px] font-semibold text-[var(--apya-text-primary)] truncate", children: a.name }),
         a.notes && /* @__PURE__ */ e.jsx("div", { className: "text-[11px] text-[var(--apya-text-tertiary)] truncate max-w-[220px]", children: a.notes })
       ] })
     ] }) }),
-    /* @__PURE__ */ e.jsx("td", { className: m(i, "py-3"), children: /* @__PURE__ */ e.jsxs(
+    /* @__PURE__ */ e.jsx("td", { className: u(i, "py-3"), children: /* @__PURE__ */ e.jsxs(
       "span",
       {
         className: "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold",
@@ -548,9 +549,9 @@ function ce({ c: a, onDelete: n }) {
         ]
       }
     ) }),
-    /* @__PURE__ */ e.jsx("td", { className: m(i, "py-3 text-[12px] text-[var(--apya-text-secondary)] tabular-nums"), children: a.taxNumber || /* @__PURE__ */ e.jsx("span", { className: "text-[var(--apya-text-disabled)]", children: "—" }) }),
-    /* @__PURE__ */ e.jsx("td", { className: m(i, "py-3 text-[12px] text-[var(--apya-text-secondary)]"), children: a.taxOffice || /* @__PURE__ */ e.jsx("span", { className: "text-[var(--apya-text-disabled)]", children: "—" }) }),
-    /* @__PURE__ */ e.jsx("td", { className: m(i, "py-3"), children: /* @__PURE__ */ e.jsxs("div", { className: "flex flex-col gap-1", children: [
+    /* @__PURE__ */ e.jsx("td", { className: u(i, "py-3 text-[12px] text-[var(--apya-text-secondary)] tabular-nums"), children: a.taxNumber || /* @__PURE__ */ e.jsx("span", { className: "text-[var(--apya-text-disabled)]", children: "—" }) }),
+    /* @__PURE__ */ e.jsx("td", { className: u(i, "py-3 text-[12px] text-[var(--apya-text-secondary)]"), children: a.taxOffice || /* @__PURE__ */ e.jsx("span", { className: "text-[var(--apya-text-disabled)]", children: "—" }) }),
+    /* @__PURE__ */ e.jsx("td", { className: u(i, "py-3"), children: /* @__PURE__ */ e.jsxs("div", { className: "flex flex-col gap-1", children: [
       a.phone && /* @__PURE__ */ e.jsxs("a", { href: `tel:${a.phone}`, className: "flex items-center gap-1.5 text-[11.5px] text-[var(--apya-text-secondary)] hover:text-[var(--apya-accent-500)]", children: [
         /* @__PURE__ */ e.jsx("i", { className: "fa fa-phone text-[var(--apya-text-tertiary)]", style: { fontSize: 11, width: 12 } }),
         a.phone
@@ -560,11 +561,11 @@ function ce({ c: a, onDelete: n }) {
         a.email
       ] })
     ] }) }),
-    /* @__PURE__ */ e.jsxs("td", { className: m(i, "py-3 text-right"), children: [
+    /* @__PURE__ */ e.jsxs("td", { className: u(i, "py-3 text-right"), children: [
       /* @__PURE__ */ e.jsx("div", { className: "text-[13px] font-bold tabular-nums", style: { color: c }, children: k.money(a.balance) }),
       x && /* @__PURE__ */ e.jsx("div", { className: "text-[10px] text-[var(--apya-text-tertiary)] mt-0.5", children: x })
     ] }),
-    /* @__PURE__ */ e.jsx("td", { className: m(i, "py-3 pr-3 text-right"), children: /* @__PURE__ */ e.jsx(se, { customer: a, onDelete: n }) })
+    /* @__PURE__ */ e.jsx("td", { className: u(i, "py-3 pr-3 text-right"), children: /* @__PURE__ */ e.jsx(se, { customer: a, onDelete: n }) })
   ] });
 }
 const G = document.getElementById("customers-island");

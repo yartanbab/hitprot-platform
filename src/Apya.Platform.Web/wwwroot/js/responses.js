@@ -1,5 +1,6 @@
-import { c as _, j as e, r as c } from "./vendor.js";
-import { a as u } from "./vendor2.js";
+import { b as _, j as e, r as i } from "./react-vendor.js";
+import { a as u } from "./httpClient.js";
+/* empty css      */
 const h = {
   0: { label: "Bekliyor", cls: "bg-amber-100 text-amber-700" },
   1: { label: "İnceleniyor", cls: "bg-blue-100 text-blue-700" },
@@ -32,13 +33,13 @@ function E(s) {
   return s == null || s === "" ? /* @__PURE__ */ e.jsx("span", { className: "text-slate-300", children: "—" }) : Array.isArray(s) ? s.join(", ") : typeof s == "object" ? Object.values(s).filter(Boolean).join(" ") : String(s);
 }
 function Q({ formId: s }) {
-  const [l, r] = c.useState(null), [j, Y] = c.useState([]), [m, C] = c.useState([]), [F, U] = c.useState(""), [M, J] = c.useState(!0), [i, f] = c.useState(null), [T, $] = c.useState(!1), [N, D] = c.useState(""), [w, R] = c.useState("list"), P = c.useMemo(() => Object.fromEntries(j.map((t) => [t.id, t])), [j]), g = c.useMemo(() => j.filter((t) => t.type !== 16 && t.type !== 17), [j]), O = async (t) => {
+  const [l, r] = i.useState(null), [j, Y] = i.useState([]), [m, C] = i.useState([]), [F, U] = i.useState(""), [M, J] = i.useState(!0), [c, f] = i.useState(null), [T, $] = i.useState(!1), [N, D] = i.useState(""), [w, R] = i.useState("list"), P = i.useMemo(() => Object.fromEntries(j.map((t) => [t.id, t])), [j]), g = i.useMemo(() => j.filter((t) => t.type !== 16 && t.type !== 17), [j]), O = async (t) => {
     let a = `/api/app/response-management?DocumentId=${s}&MaxResultCount=200&SkipCount=0`;
     t !== "" && (a += `&Status=${t}`);
     const n = await u.get(a);
     C(n.items || []);
   };
-  c.useEffect(() => {
+  i.useEffect(() => {
     (async () => {
       try {
         const [t, a] = await Promise.all([
@@ -74,7 +75,7 @@ function Q({ formId: s }) {
     f(t), C((a) => a.map((n) => n.id === t.id ? { ...n, status: t.status, tagsJson: t.tagsJson } : n));
   }, G = async (t) => {
     try {
-      const a = await u.post(`/api/app/response-management/${i.id}/set-status`, { status: Number(t) });
+      const a = await u.post(`/api/app/response-management/${c.id}/set-status`, { status: Number(t) });
       V(a), x("success", "Durum güncellendi.");
     } catch (a) {
       x("error", a == null ? void 0 : a.message);
@@ -82,7 +83,7 @@ function Q({ formId: s }) {
   }, L = async () => {
     if (N.trim())
       try {
-        await u.post(`/api/app/response-management/${i.id}/comment`, { text: N.trim() }), D(""), await v(i.id), x("success", "Yorum eklendi.");
+        await u.post(`/api/app/response-management/${c.id}/comment`, { text: N.trim() }), D(""), await v(c.id), x("success", "Yorum eklendi.");
       } catch (t) {
         x("error", t == null ? void 0 : t.message);
       }
@@ -154,23 +155,23 @@ function Q({ formId: s }) {
         ] }, t.id);
       }) })
     ] }) }),
-    (i || T) && /* @__PURE__ */ e.jsx("div", { className: "fixed inset-0 z-50 flex justify-end bg-slate-900/40", onClick: () => f(null), children: /* @__PURE__ */ e.jsx("div", { className: "h-full w-full max-w-lg overflow-y-auto bg-white p-6 shadow-xl", onClick: (t) => t.stopPropagation(), children: T || !i ? /* @__PURE__ */ e.jsx("div", { className: "py-16 text-center text-slate-400", children: "Yükleniyor…" }) : /* @__PURE__ */ e.jsxs(e.Fragment, { children: [
+    (c || T) && /* @__PURE__ */ e.jsx("div", { className: "fixed inset-0 z-50 flex justify-end bg-slate-900/40", onClick: () => f(null), children: /* @__PURE__ */ e.jsx("div", { className: "h-full w-full max-w-lg overflow-y-auto bg-white p-6 shadow-xl", onClick: (t) => t.stopPropagation(), children: T || !c ? /* @__PURE__ */ e.jsx("div", { className: "py-16 text-center text-slate-400", children: "Yükleniyor…" }) : /* @__PURE__ */ e.jsxs(e.Fragment, { children: [
       /* @__PURE__ */ e.jsxs("div", { className: "mb-4 flex items-center justify-between", children: [
         /* @__PURE__ */ e.jsx("h2", { className: "text-lg font-bold", children: "Yanıt Detayı" }),
         /* @__PURE__ */ e.jsx("button", { onClick: () => f(null), className: "rounded p-1 text-slate-400 hover:bg-slate-100", children: "✕" })
       ] }),
       /* @__PURE__ */ e.jsxs("div", { className: "mb-4 flex items-center gap-2 text-sm text-slate-500", children: [
-        /* @__PURE__ */ e.jsx("span", { children: b(i.creationTime) }),
+        /* @__PURE__ */ e.jsx("span", { children: b(c.creationTime) }),
         "·",
-        /* @__PURE__ */ e.jsx("span", { children: B(i.completionSeconds) })
+        /* @__PURE__ */ e.jsx("span", { children: B(c.completionSeconds) })
       ] }),
       /* @__PURE__ */ e.jsxs("div", { className: "mb-4", children: [
         /* @__PURE__ */ e.jsx("label", { className: "mb-1 block text-xs font-semibold uppercase text-slate-400", children: "Durum" }),
-        /* @__PURE__ */ e.jsx("select", { value: i.status, onChange: (t) => G(t.target.value), className: "w-full rounded-xl border border-slate-200 px-3 py-2 text-sm", children: Object.entries(h).map(([t, a]) => /* @__PURE__ */ e.jsx("option", { value: t, children: a.label }, t)) })
+        /* @__PURE__ */ e.jsx("select", { value: c.status, onChange: (t) => G(t.target.value), className: "w-full rounded-xl border border-slate-200 px-3 py-2 text-sm", children: Object.entries(h).map(([t, a]) => /* @__PURE__ */ e.jsx("option", { value: t, children: a.label }, t)) })
       ] }),
       /* @__PURE__ */ e.jsxs("div", { className: "mb-4", children: [
         /* @__PURE__ */ e.jsx("label", { className: "mb-1 block text-xs font-semibold uppercase text-slate-400", children: "Cevaplar" }),
-        /* @__PURE__ */ e.jsx("div", { className: "flex flex-col gap-3", children: Object.entries(S(i.answers)).map(([t, a]) => {
+        /* @__PURE__ */ e.jsx("div", { className: "flex flex-col gap-3", children: Object.entries(S(c.answers)).map(([t, a]) => {
           var n;
           return /* @__PURE__ */ e.jsxs("div", { className: "rounded-xl border border-slate-100 bg-slate-50 p-3", children: [
             /* @__PURE__ */ e.jsx("p", { className: "text-xs font-semibold text-slate-500", children: ((n = P[t]) == null ? void 0 : n.content) || "Soru" }),
@@ -180,7 +181,7 @@ function Q({ formId: s }) {
       ] }),
       /* @__PURE__ */ e.jsxs("div", { children: [
         /* @__PURE__ */ e.jsx("label", { className: "mb-1 block text-xs font-semibold uppercase text-slate-400", children: "Yorumlar" }),
-        /* @__PURE__ */ e.jsx("div", { className: "flex flex-col gap-2", children: (i.comments || []).map((t) => /* @__PURE__ */ e.jsxs("div", { className: "rounded-xl bg-slate-50 p-2.5 text-sm", children: [
+        /* @__PURE__ */ e.jsx("div", { className: "flex flex-col gap-2", children: (c.comments || []).map((t) => /* @__PURE__ */ e.jsxs("div", { className: "rounded-xl bg-slate-50 p-2.5 text-sm", children: [
           /* @__PURE__ */ e.jsx("p", { className: "text-slate-700", children: t.text }),
           /* @__PURE__ */ e.jsx("p", { className: "mt-0.5 text-[11px] text-slate-400", children: b(t.creationTime) })
         ] }, t.id)) }),

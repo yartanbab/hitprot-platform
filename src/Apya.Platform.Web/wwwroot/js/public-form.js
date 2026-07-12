@@ -1,5 +1,6 @@
-import { c as P, j as e, r as p } from "./vendor.js";
-import { a as v } from "./vendor2.js";
+import { b as P, j as e, r as p } from "./react-vendor.js";
+import { a as v } from "./httpClient.js";
+/* empty css      */
 const l = {
   LongText: 1,
   Select: 2,

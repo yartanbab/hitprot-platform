@@ -1,8 +1,9 @@
-import { r as h, j as t, e as D, d as de } from "./react-vendor.js";
-import { B as k, c as p, S as w, C as ue, a as me, b as xe, d as fe, e as A, Q as g, f as Z, g as B, u as ee, A as he, h as C, i as I, j as G, T as ge, r as pe, k as ye, l as be, m as ve } from "./registerServiceWorker.js";
-import { H as te, a as je, L as we } from "./signalr-vendor.js";
+import { r as h, j as t, d as D, b as de } from "./react-vendor.js";
+import { B as k, c as p, S as w, C as ue, a as me, b as xe, d as fe, e as A, Q as g, f as Z, g as B, u as ee, h as C, i as I, j as G, T as he, r as ge, k as pe, l as ye, m as be } from "./registerServiceWorker.js";
+import { H as te, a as ve, L as je } from "./signalr-vendor.js";
 import { r as W } from "./grid-vendor.js";
-import { u as z, a as $, b as ke } from "./query-vendor.js";
+import { u as z, a as $, b as we } from "./query-vendor.js";
+import { A as ke } from "./httpClient.js";
 /* empty css      */
 const ae = h.createContext({
   connection: null,
@@ -12,7 +13,7 @@ function Ne({ hubUrl: e = "/signalr-hubs/notifications", children: a, enabled: s
   const [n, l] = h.useState(te.Disconnected), r = h.useRef(null);
   h.useEffect(() => {
     if (!s || typeof window > "u") return;
-    const i = new je().withUrl(e, { withCredentials: !0 }).withAutomaticReconnect([0, 2e3, 5e3, 1e4, 3e4]).configureLogging(we.Warning).build();
+    const i = new ve().withUrl(e, { withCredentials: !0 }).withAutomaticReconnect([0, 2e3, 5e3, 1e4, 3e4]).configureLogging(je.Warning).build();
     r.current = i, l(i.state);
     const m = () => l(i.state);
     return i.onreconnecting(m), i.onreconnected(m), i.onclose(m), i.start().then(m).catch((d) => {
@@ -917,7 +918,7 @@ function R({
   conflictMessage: m = "Bu kayıt başka bir kullanıcı tarafından değiştirildi"
 }) {
   const d = $(), x = ee();
-  return ke({
+  return we({
     mutationFn: a,
     onMutate: async (f) => {
       const o = s(f);
@@ -926,7 +927,7 @@ function R({
       return d.setQueryData(e, (b) => n(b, o, f)), { previous: c, target: o };
     },
     onError: (f, o, c) => {
-      (c == null ? void 0 : c.previous) !== void 0 && d.setQueryData(e, c.previous), (f instanceof he ? f.status === 409 : (f == null ? void 0 : f.status) === 409) ? x.warning(m, {
+      (c == null ? void 0 : c.previous) !== void 0 && d.setQueryData(e, c.previous), (f instanceof ke ? f.status === 409 : (f == null ? void 0 : f.status) === 409) ? x.warning(m, {
         description: "Veriyi tazeleyip tekrar deneyebilirsin.",
         action: { label: "Yenile", onClick: () => d.invalidateQueries({ queryKey: e }) }
       }) : x.error(i, {
@@ -1693,7 +1694,7 @@ function Mt({ persona: e, onPersonaChange: a, editMode: s, onEditModeToggle: n, 
           children: s ? "Tamamla" : "Düzenle"
         }
       ),
-      /* @__PURE__ */ t.jsx(ge, {})
+      /* @__PURE__ */ t.jsx(he, {})
     ] })
   ] });
 }
@@ -1792,10 +1793,10 @@ function Pt() {
   ], []);
   return _t(e), It(a), null;
 }
-pe();
+ge();
 const X = document.getElementById("apya-dashboard-root");
 X && de(X).render(
-  /* @__PURE__ */ t.jsx(ye, { children: /* @__PURE__ */ t.jsx(Se, { children: /* @__PURE__ */ t.jsx(be, { children: /* @__PURE__ */ t.jsx(ve, { children: /* @__PURE__ */ t.jsxs(Ne, { children: [
+  /* @__PURE__ */ t.jsx(pe, { children: /* @__PURE__ */ t.jsx(Se, { children: /* @__PURE__ */ t.jsx(ye, { children: /* @__PURE__ */ t.jsx(be, { children: /* @__PURE__ */ t.jsxs(Ne, { children: [
     /* @__PURE__ */ t.jsx(Pt, {}),
     /* @__PURE__ */ t.jsx(Lt, {})
   ] }) }) }) }) })

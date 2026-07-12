@@ -1,5 +1,6 @@
-import { c as Z, j as e, r as x } from "./vendor.js";
-import { a as F } from "./vendor2.js";
+import { b as Z, j as e, r as x } from "./react-vendor.js";
+import { a as F } from "./httpClient.js";
+/* empty css      */
 const a = {
   ShortText: 0,
   LongText: 1,
@@ -59,8 +60,8 @@ const m = "w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm 
     "button",
     {
       type: "button",
-      onClick: (d) => {
-        d.stopPropagation(), l(!t);
+      onClick: (c) => {
+        c.stopPropagation(), l(!t);
       },
       className: `relative h-6 w-11 rounded-full transition-colors ${t ? "bg-indigo-600" : "bg-slate-300"}`,
       "aria-pressed": t,
@@ -76,11 +77,11 @@ function V({ value: t, onChange: l }) {
       onClick: (r) => r.stopPropagation(),
       onChange: (r) => l(Number(r.target.value)),
       className: "shrink-0 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 focus:border-indigo-400 focus:outline-none",
-      children: z.map((r) => /* @__PURE__ */ e.jsx("optgroup", { label: r.group, children: r.items.map((d) => /* @__PURE__ */ e.jsxs("option", { value: d.type, children: [
-        d.icon,
+      children: z.map((r) => /* @__PURE__ */ e.jsx("optgroup", { label: r.group, children: r.items.map((c) => /* @__PURE__ */ e.jsxs("option", { value: c.type, children: [
+        c.icon,
         " ",
-        d.label
-      ] }, d.type)) }, r.group))
+        c.label
+      ] }, c.type)) }, r.group))
     }
   );
 }
@@ -102,11 +103,11 @@ function W({ block: t }) {
     case a.FilePicker:
       return /* @__PURE__ */ e.jsx("div", { className: "rounded-xl border-2 border-dashed border-slate-200 px-3 py-6 text-center text-sm text-slate-400", children: "📎 Dosya seç / sürükle" });
     case a.Dropdown:
-      return /* @__PURE__ */ e.jsx("select", { disabled: !0, className: m, children: (l.options || []).map((r, d) => /* @__PURE__ */ e.jsx("option", { children: r }, d)) });
+      return /* @__PURE__ */ e.jsx("select", { disabled: !0, className: m, children: (l.options || []).map((r, c) => /* @__PURE__ */ e.jsx("option", { children: r }, c)) });
     case a.Rating:
       return /* @__PURE__ */ e.jsx("div", { className: "flex gap-1 text-2xl text-amber-400", children: "★★★★★" });
     case a.Nps:
-      return /* @__PURE__ */ e.jsx("div", { className: "flex flex-wrap gap-1", children: Array.from({ length: 11 }, (r, d) => /* @__PURE__ */ e.jsx("span", { className: "flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 text-xs text-slate-500", children: d }, d)) });
+      return /* @__PURE__ */ e.jsx("div", { className: "flex flex-wrap gap-1", children: Array.from({ length: 11 }, (r, c) => /* @__PURE__ */ e.jsx("span", { className: "flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 text-xs text-slate-500", children: c }, c)) });
     case a.Signature:
       return /* @__PURE__ */ e.jsx("div", { className: "rounded-xl border-2 border-dashed border-slate-200 px-3 py-8 text-center text-sm text-slate-400", children: "✍️ İmza alanı" });
     case a.Address:
@@ -119,8 +120,8 @@ function W({ block: t }) {
       return /* @__PURE__ */ e.jsx("input", { disabled: !0, className: m, placeholder: l.placeholder || "Kısa yanıt…" });
   }
 }
-function X({ block: t, index: l, selected: r, onSelect: d, onPatch: C, onPatchSettings: h, onChangeType: T, onDuplicate: b, onRemove: D, onAddAfter: v, onMove: S, dragRef: f }) {
-  const c = t.settings || {}, y = Q.has(t.type);
+function X({ block: t, index: l, selected: r, onSelect: c, onPatch: C, onPatchSettings: h, onChangeType: T, onDuplicate: b, onRemove: D, onAddAfter: v, onMove: S, dragRef: f }) {
+  const d = t.settings || {}, y = Q.has(t.type);
   return /* @__PURE__ */ e.jsxs(
     "div",
     {
@@ -128,7 +129,7 @@ function X({ block: t, index: l, selected: r, onSelect: d, onPatch: C, onPatchSe
       onDragStart: () => f.current = l,
       onDragOver: (n) => n.preventDefault(),
       onDrop: () => S(l),
-      onClick: () => d(t.id),
+      onClick: () => c(t.id),
       className: `group relative rounded-2xl border bg-white p-5 transition ${r ? "border-indigo-300 shadow-md ring-1 ring-indigo-100" : "border-slate-200 hover:border-slate-300"}`,
       children: [
         r && /* @__PURE__ */ e.jsx("span", { className: "absolute inset-y-0 left-0 w-1 rounded-l-2xl bg-indigo-500" }),
@@ -157,7 +158,7 @@ function X({ block: t, index: l, selected: r, onSelect: d, onPatch: C, onPatchSe
           !r && /* @__PURE__ */ e.jsx("span", { className: "shrink-0 rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-slate-500", children: E[t.type] })
         ] }),
         r && R.has(t.type) && /* @__PURE__ */ e.jsxs("div", { className: "mt-4 flex flex-col gap-2", children: [
-          (c.options || []).map((n, j) => /* @__PURE__ */ e.jsxs("div", { className: "flex items-center gap-2", onClick: (N) => N.stopPropagation(), children: [
+          (d.options || []).map((n, j) => /* @__PURE__ */ e.jsxs("div", { className: "flex items-center gap-2", onClick: (N) => N.stopPropagation(), children: [
             /* @__PURE__ */ e.jsx("span", { className: "text-slate-300", children: t.type === a.MultiSelect ? "☐" : "○" }),
             /* @__PURE__ */ e.jsx(
               "input",
@@ -165,19 +166,19 @@ function X({ block: t, index: l, selected: r, onSelect: d, onPatch: C, onPatchSe
                 className: "flex-1 border-b border-slate-100 bg-transparent px-1 py-1 text-sm focus:border-indigo-300 focus:outline-none",
                 value: n,
                 onChange: (N) => {
-                  const w = [...c.options];
+                  const w = [...d.options];
                   w[j] = N.target.value, h(t.id, { options: w });
                 }
               }
             ),
-            /* @__PURE__ */ e.jsx("button", { className: "rounded p-1 text-slate-300 hover:text-red-500", onClick: () => h(t.id, { options: c.options.filter((N, w) => w !== j) }), children: "✕" })
+            /* @__PURE__ */ e.jsx("button", { className: "rounded p-1 text-slate-300 hover:text-red-500", onClick: () => h(t.id, { options: d.options.filter((N, w) => w !== j) }), children: "✕" })
           ] }, j)),
           /* @__PURE__ */ e.jsx(
             "button",
             {
               className: "self-start text-sm font-medium text-indigo-600 hover:text-indigo-700",
               onClick: (n) => {
-                n.stopPropagation(), h(t.id, { options: [...c.options || [], `Seçenek ${(c.options || []).length + 1}`] });
+                n.stopPropagation(), h(t.id, { options: [...d.options || [], `Seçenek ${(d.options || []).length + 1}`] });
               },
               children: "+ Seçenek ekle"
             }
@@ -187,20 +188,20 @@ function X({ block: t, index: l, selected: r, onSelect: d, onPatch: C, onPatchSe
         r && !y && /* @__PURE__ */ e.jsxs("div", { className: "mt-4 grid grid-cols-1 gap-3 border-t border-slate-100 pt-4 sm:grid-cols-2", onClick: (n) => n.stopPropagation(), children: [
           /* @__PURE__ */ e.jsxs("div", { children: [
             /* @__PURE__ */ e.jsx("label", { className: "mb-1 block text-[11px] font-semibold uppercase text-slate-400", children: "Placeholder" }),
-            /* @__PURE__ */ e.jsx("input", { className: m, value: c.placeholder || "", onChange: (n) => h(t.id, { placeholder: n.target.value }) })
+            /* @__PURE__ */ e.jsx("input", { className: m, value: d.placeholder || "", onChange: (n) => h(t.id, { placeholder: n.target.value }) })
           ] }),
           /* @__PURE__ */ e.jsxs("div", { children: [
             /* @__PURE__ */ e.jsx("label", { className: "mb-1 block text-[11px] font-semibold uppercase text-slate-400", children: "Yardım Metni" }),
-            /* @__PURE__ */ e.jsx("input", { className: m, value: c.helpText || "", onChange: (n) => h(t.id, { helpText: n.target.value }) })
+            /* @__PURE__ */ e.jsx("input", { className: m, value: d.helpText || "", onChange: (n) => h(t.id, { helpText: n.target.value }) })
           ] }),
           (t.type === a.Number || t.type === a.Rating) && /* @__PURE__ */ e.jsxs(e.Fragment, { children: [
             /* @__PURE__ */ e.jsxs("div", { children: [
               /* @__PURE__ */ e.jsx("label", { className: "mb-1 block text-[11px] font-semibold uppercase text-slate-400", children: "Min" }),
-              /* @__PURE__ */ e.jsx("input", { type: "number", className: m, value: c.min ?? "", onChange: (n) => h(t.id, { min: n.target.value === "" ? null : Number(n.target.value) }) })
+              /* @__PURE__ */ e.jsx("input", { type: "number", className: m, value: d.min ?? "", onChange: (n) => h(t.id, { min: n.target.value === "" ? null : Number(n.target.value) }) })
             ] }),
             /* @__PURE__ */ e.jsxs("div", { children: [
               /* @__PURE__ */ e.jsx("label", { className: "mb-1 block text-[11px] font-semibold uppercase text-slate-400", children: "Max" }),
-              /* @__PURE__ */ e.jsx("input", { type: "number", className: m, value: c.max ?? "", onChange: (n) => h(t.id, { max: n.target.value === "" ? null : Number(n.target.value) }) })
+              /* @__PURE__ */ e.jsx("input", { type: "number", className: m, value: d.max ?? "", onChange: (n) => h(t.id, { max: n.target.value === "" ? null : Number(n.target.value) }) })
             ] })
           ] })
         ] }),
@@ -210,7 +211,7 @@ function X({ block: t, index: l, selected: r, onSelect: d, onPatch: C, onPatchSe
           /* @__PURE__ */ e.jsx("button", { onClick: () => b(t.id), className: "rounded-lg p-2 text-slate-400 hover:bg-slate-100", title: "Kopyala", children: "⧉" }),
           /* @__PURE__ */ e.jsx("button", { onClick: () => D(t.id), className: "rounded-lg p-2 text-red-400 hover:bg-red-50", title: "Sil", children: "🗑" }),
           /* @__PURE__ */ e.jsx("div", { className: "mx-1 h-6 w-px bg-slate-200" }),
-          !y && /* @__PURE__ */ e.jsx($, { label: "Zorunlu", checked: !!c.required, onChange: (n) => h(t.id, { required: n }) }),
+          !y && /* @__PURE__ */ e.jsx($, { label: "Zorunlu", checked: !!d.required, onChange: (n) => h(t.id, { required: n }) }),
           /* @__PURE__ */ e.jsx("div", { className: "mx-1 h-6 w-px bg-slate-200" }),
           /* @__PURE__ */ e.jsx("button", { onClick: () => v(t.id), className: "rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-indigo-700", children: "+ Soru" })
         ] })
@@ -219,12 +220,12 @@ function X({ block: t, index: l, selected: r, onSelect: d, onPatch: C, onPatchSe
   );
 }
 function ee() {
-  const t = x.useMemo(() => new URLSearchParams(window.location.search).get("id"), []), [l, r] = x.useState(t), [d, C] = x.useState(""), [h, T] = x.useState(!1), [b, D] = x.useState(""), [v, S] = x.useState(""), [f, c] = x.useState([]), [y, n] = x.useState(null), [j, N] = x.useState(!1), [w, P] = x.useState(!!t), B = x.useRef(null);
+  const t = x.useMemo(() => new URLSearchParams(window.location.search).get("id"), []), [l, r] = x.useState(t), [c, C] = x.useState(""), [h, T] = x.useState(!1), [b, D] = x.useState(""), [v, S] = x.useState(""), [f, d] = x.useState([]), [y, n] = x.useState(null), [j, N] = x.useState(!1), [w, P] = x.useState(!!t), B = x.useRef(null);
   x.useEffect(() => {
     t && (async () => {
       try {
         const s = await F.get(`/api/app/form/${t}`);
-        D(s.title || ""), C(s.slug || ""), S(s.description || ""), c((s.blocks || []).slice().sort((o, i) => o.order - i.order).map((o) => ({
+        D(s.title || ""), C(s.slug || ""), S(s.description || ""), d((s.blocks || []).slice().sort((o, i) => o.order - i.order).map((o) => ({
           id: o.id || L(),
           type: o.type,
           content: o.content,
@@ -239,23 +240,23 @@ function ee() {
   }, [t]);
   const p = (s = a.ShortText) => {
     const o = M(s);
-    c((i) => [...i, o]), n(o.id);
+    d((i) => [...i, o]), n(o.id);
   }, O = (s) => {
     const o = M(a.ShortText);
-    c((i) => {
+    d((i) => {
       const u = i.findIndex((A) => A.id === s), g = [...i];
       return g.splice(u + 1, 0, o), g;
     }), n(o.id);
-  }, K = (s) => c((o) => o.filter((i) => i.id !== s)), H = (s) => c((o) => {
+  }, K = (s) => d((o) => o.filter((i) => i.id !== s)), H = (s) => d((o) => {
     const i = o.findIndex((A) => A.id === s);
     if (i < 0) return o;
     const u = { ...o[i], id: L(), settings: { ...o[i].settings } }, g = [...o];
     return g.splice(i + 1, 0, u), g;
-  }), U = (s, o) => c((i) => i.map((u) => u.id === s ? { ...u, ...o } : u)), J = (s, o) => c((i) => i.map((u) => u.id === s ? { ...u, settings: { ...u.settings, ...o } } : u)), _ = (s, o) => c((i) => i.map((u) => {
+  }), U = (s, o) => d((i) => i.map((u) => u.id === s ? { ...u, ...o } : u)), J = (s, o) => d((i) => i.map((u) => u.id === s ? { ...u, settings: { ...u.settings, ...o } } : u)), _ = (s, o) => d((i) => i.map((u) => {
     if (u.id !== s) return u;
     const g = { ...u.settings };
     return R.has(o) && !g.options && (g.options = ["Seçenek 1", "Seçenek 2"]), { ...u, type: o, settings: g };
-  })), q = (s, o) => c((i) => {
+  })), q = (s, o) => d((i) => {
     const u = o ?? B.current;
     if (B.current = null, u == null || s < 0 || s >= i.length || u === s) return i;
     const g = [...i], [A] = g.splice(u, 1);
@@ -325,18 +326,18 @@ function ee() {
       /* @__PURE__ */ e.jsx("button", { onClick: () => p(a.ShortText), className: "mt-4 flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-slate-300 py-4 text-sm font-bold text-slate-500 transition hover:border-indigo-300 hover:text-indigo-600", children: "+ Soru Ekle" }),
       f.length === 0 && /* @__PURE__ */ e.jsx("p", { className: "mt-3 text-center text-sm text-slate-400", children: "Başlamak için bir soru ekleyin." })
     ] }),
-    h && /* @__PURE__ */ e.jsx(te, { formId: l, slug: d, onClose: () => T(!1) })
+    h && /* @__PURE__ */ e.jsx(te, { formId: l, slug: c, onClose: () => T(!1) })
   ] });
 }
 function te({ formId: t, slug: l, onClose: r }) {
-  const [d, C] = x.useState(l || ""), [h, T] = x.useState(""), [b, D] = x.useState(""), [v, S] = x.useState(!1), [f, c] = x.useState(!1), [y, n] = x.useState(!1), [j, N] = x.useState(null), w = async () => {
+  const [c, C] = x.useState(l || ""), [h, T] = x.useState(""), [b, D] = x.useState(""), [v, S] = x.useState(!1), [f, d] = x.useState(!1), [y, n] = x.useState(!1), [j, N] = x.useState(null), w = async () => {
     n(!0);
     try {
       const p = await F.post(`/api/app/form/${t}/publish`, {
-        slug: (d == null ? void 0 : d.trim()) || null,
+        slug: (c == null ? void 0 : c.trim()) || null,
         publishSettingsJson: JSON.stringify({ startDate: h || null, endDate: b || null, kvkk: v, captcha: f })
       });
-      N(p.slug || d), k("success", "Form yayınlandı.");
+      N(p.slug || c), k("success", "Form yayınlandı.");
     } catch (p) {
       k("error", (p == null ? void 0 : p.message) || "Yayınlama başarısız.");
     } finally {
@@ -364,7 +365,7 @@ function te({ formId: t, slug: l, onClose: r }) {
     ] }) : /* @__PURE__ */ e.jsxs("div", { className: "flex flex-col gap-4", children: [
       /* @__PURE__ */ e.jsxs("div", { children: [
         /* @__PURE__ */ e.jsx("label", { className: "mb-1 block text-[11px] font-semibold uppercase text-slate-400", children: "Bağlantı adresi (slug)" }),
-        /* @__PURE__ */ e.jsx("input", { className: m, value: d, onChange: (p) => C(p.target.value), placeholder: "musteri-memnuniyet" })
+        /* @__PURE__ */ e.jsx("input", { className: m, value: c, onChange: (p) => C(p.target.value), placeholder: "musteri-memnuniyet" })
       ] }),
       /* @__PURE__ */ e.jsxs("div", { className: "grid grid-cols-2 gap-3", children: [
         /* @__PURE__ */ e.jsxs("div", { children: [
@@ -377,7 +378,7 @@ function te({ formId: t, slug: l, onClose: r }) {
         ] })
       ] }),
       /* @__PURE__ */ e.jsx($, { label: "KVKK onayı iste", checked: v, onChange: S }),
-      /* @__PURE__ */ e.jsx($, { label: "Captcha doğrulaması", checked: f, onChange: c }),
+      /* @__PURE__ */ e.jsx($, { label: "Captcha doğrulaması", checked: f, onChange: d }),
       /* @__PURE__ */ e.jsx("button", { onClick: w, disabled: y, className: "mt-2 rounded-xl bg-indigo-600 px-5 py-2.5 text-sm font-bold text-white hover:bg-indigo-700 disabled:opacity-50", children: y ? "Yayınlanıyor…" : "Yayınla" })
     ] })
   ] }) });

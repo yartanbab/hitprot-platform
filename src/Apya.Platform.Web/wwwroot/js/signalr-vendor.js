@@ -133,7 +133,7 @@ class E {
   }
 }
 E.instance = new E();
-const X = "8.0.17";
+const X = "10.0.0";
 class f {
   static isRequired(e, t) {
     if (e == null)
@@ -177,7 +177,7 @@ function K(s) {
   return e.forEach((n) => {
     const o = n < 16 ? "0" : "";
     t += `0x${o}${n.toString(16)} `;
-  }), t.substr(0, t.length - 1);
+  }), t.substring(0, t.length - 1);
 }
 function v(s) {
   return s && typeof ArrayBuffer < "u" && (s instanceof ArrayBuffer || // Sometimes we get an ArrayBuffer that doesn't satisfy instanceof
@@ -186,14 +186,14 @@ function v(s) {
 async function j(s, e, t, n, o, r) {
   const c = {}, [a, l] = k();
   c[a] = l, s.log(i.Trace, `(${e} transport) sending data. ${I(o, r.logMessageContent)}.`);
-  const u = v(o) ? "arraybuffer" : "text", d = await t.post(n, {
+  const u = v(o) ? "arraybuffer" : "text", g = await t.post(n, {
     content: o,
     headers: { ...c, ...r.headers },
     responseType: u,
     timeout: r.timeout,
     withCredentials: r.withCredentials
   });
-  s.log(i.Trace, `(${e} transport) request complete. Response status: ${d.statusCode}.`);
+  s.log(i.Trace, `(${e} transport) request complete. Response status: ${g.statusCode}.`);
 }
 function J(s) {
   return s === void 0 ? new P(i.Information) : s === null ? E.instance : s.log !== void 0 ? s : new P(s);
@@ -566,10 +566,10 @@ class ce {
   }
 }
 const ae = 30 * 1e3, le = 15 * 1e3, he = 1e5;
-var g;
+var d;
 (function(s) {
   s.Disconnected = "Disconnected", s.Connecting = "Connecting", s.Connected = "Connected", s.Disconnecting = "Disconnecting", s.Reconnecting = "Reconnecting";
-})(g || (g = {}));
+})(d || (d = {}));
 class x {
   /** @internal */
   // Using a public static factory method means we can have a private constructor and an _internal_
@@ -582,7 +582,7 @@ class x {
   constructor(e, t, n, o, r, c, a) {
     this._nextKeepAlive = 0, this._freezeEventListener = () => {
       this._logger.log(i.Warning, "The page is being frozen, this will likely lead to the connection being closed and messages being lost. For more information see the docs at https://learn.microsoft.com/aspnet/core/signalr/javascript-client#bsleep");
-    }, f.isRequired(e, "connection"), f.isRequired(t, "logger"), f.isRequired(n, "protocol"), this.serverTimeoutInMilliseconds = r ?? ae, this.keepAliveIntervalInMilliseconds = c ?? le, this._statefulReconnectBufferSize = a ?? he, this._logger = t, this._protocol = n, this.connection = e, this._reconnectPolicy = o, this._handshakeProtocol = new se(), this.connection.onreceive = (l) => this._processIncomingData(l), this.connection.onclose = (l) => this._connectionClosed(l), this._callbacks = {}, this._methods = {}, this._closedCallbacks = [], this._reconnectingCallbacks = [], this._reconnectedCallbacks = [], this._invocationId = 0, this._receivedHandshakeResponse = !1, this._connectionState = g.Disconnected, this._connectionStarted = !1, this._cachedPingMessage = this._protocol.writeMessage({ type: h.Ping });
+    }, f.isRequired(e, "connection"), f.isRequired(t, "logger"), f.isRequired(n, "protocol"), this.serverTimeoutInMilliseconds = r ?? ae, this.keepAliveIntervalInMilliseconds = c ?? le, this._statefulReconnectBufferSize = a ?? he, this._logger = t, this._protocol = n, this.connection = e, this._reconnectPolicy = o, this._handshakeProtocol = new se(), this.connection.onreceive = (l) => this._processIncomingData(l), this.connection.onclose = (l) => this._connectionClosed(l), this._callbacks = {}, this._methods = {}, this._closedCallbacks = [], this._reconnectingCallbacks = [], this._reconnectedCallbacks = [], this._invocationId = 0, this._receivedHandshakeResponse = !1, this._connectionState = d.Disconnected, this._connectionStarted = !1, this._cachedPingMessage = this._protocol.writeMessage({ type: h.Ping });
   }
   /** Indicates the state of the {@link HubConnection} to the server. */
   get state() {
@@ -604,7 +604,7 @@ class x {
    * @param {string} url The url to connect to.
    */
   set baseUrl(e) {
-    if (this._connectionState !== g.Disconnected && this._connectionState !== g.Reconnecting)
+    if (this._connectionState !== d.Disconnected && this._connectionState !== d.Reconnecting)
       throw new Error("The HubConnection must be in the Disconnected or Reconnecting state to change the url.");
     if (!e)
       throw new Error("The HubConnection url must be a valid url.");
@@ -618,13 +618,13 @@ class x {
     return this._startPromise = this._startWithStateTransitions(), this._startPromise;
   }
   async _startWithStateTransitions() {
-    if (this._connectionState !== g.Disconnected)
+    if (this._connectionState !== d.Disconnected)
       return Promise.reject(new Error("Cannot start a HubConnection that is not in the 'Disconnected' state."));
-    this._connectionState = g.Connecting, this._logger.log(i.Debug, "Starting HubConnection.");
+    this._connectionState = d.Connecting, this._logger.log(i.Debug, "Starting HubConnection.");
     try {
-      await this._startInternal(), _.isBrowser && window.document.addEventListener("freeze", this._freezeEventListener), this._connectionState = g.Connected, this._connectionStarted = !0, this._logger.log(i.Debug, "HubConnection connected successfully.");
+      await this._startInternal(), _.isBrowser && window.document.addEventListener("freeze", this._freezeEventListener), this._connectionState = d.Connected, this._connectionStarted = !0, this._logger.log(i.Debug, "HubConnection connected successfully.");
     } catch (e) {
-      return this._connectionState = g.Disconnected, this._logger.log(i.Debug, `HubConnection failed to start successfully because of error '${e}'.`), Promise.reject(e);
+      return this._connectionState = d.Disconnected, this._logger.log(i.Debug, `HubConnection failed to start successfully because of error '${e}'.`), Promise.reject(e);
     }
   }
   async _startInternal() {
@@ -663,12 +663,12 @@ class x {
     }
   }
   _stopInternal(e) {
-    if (this._connectionState === g.Disconnected)
+    if (this._connectionState === d.Disconnected)
       return this._logger.log(i.Debug, `Call to HubConnection.stop(${e}) ignored because it is already in the disconnected state.`), Promise.resolve();
-    if (this._connectionState === g.Disconnecting)
+    if (this._connectionState === d.Disconnecting)
       return this._logger.log(i.Debug, `Call to HttpConnection.stop(${e}) ignored because the connection is already in the disconnecting state.`), this._stopPromise;
     const t = this._connectionState;
-    return this._connectionState = g.Disconnecting, this._logger.log(i.Debug, "Stopping HubConnection."), this._reconnectDelayHandle ? (this._logger.log(i.Debug, "Connection stopped during reconnect delay. Done reconnecting."), clearTimeout(this._reconnectDelayHandle), this._reconnectDelayHandle = void 0, this._completeClose(), Promise.resolve()) : (t === g.Connected && this._sendCloseMessage(), this._cleanupTimeout(), this._cleanupPingTimer(), this._stopDuringStartError = e || new b("The connection was stopped before the hub handshake could complete."), this.connection.stop(e));
+    return this._connectionState = d.Disconnecting, this._logger.log(i.Debug, "Stopping HubConnection."), this._reconnectDelayHandle ? (this._logger.log(i.Debug, "Connection stopped during reconnect delay. Done reconnecting."), clearTimeout(this._reconnectDelayHandle), this._reconnectDelayHandle = void 0, this._completeClose(), Promise.resolve()) : (t === d.Connected && this._sendCloseMessage(), this._cleanupTimeout(), this._cleanupPingTimer(), this._stopDuringStartError = e || new b("The connection was stopped before the hub handshake could complete."), this.connection.stop(e));
   }
   async _sendCloseMessage() {
     try {
@@ -736,14 +736,14 @@ class x {
   invoke(e, ...t) {
     const [n, o] = this._replaceStreamingParams(t), r = this._createInvocation(e, t, !1, o);
     return new Promise((a, l) => {
-      this._callbacks[r.invocationId] = (d, S) => {
+      this._callbacks[r.invocationId] = (g, S) => {
         if (S) {
           l(S);
           return;
-        } else d && (d.type === h.Completion ? d.error ? l(new Error(d.error)) : a(d.result) : l(new Error(`Unexpected message type: ${d.type}`)));
+        } else g && (g.type === h.Completion ? g.error ? l(new Error(g.error)) : a(g.result) : l(new Error(`Unexpected message type: ${g.type}`)));
       };
-      const u = this._sendWithProtocol(r).catch((d) => {
-        l(d), delete this._callbacks[r.invocationId];
+      const u = this._sendWithProtocol(r).catch((g) => {
+        l(g), delete this._callbacks[r.invocationId];
       });
       this._launchStreams(n, u);
     });
@@ -852,16 +852,16 @@ class x {
     this.connection.features.inherentKeepAlive || (this._nextKeepAlive = (/* @__PURE__ */ new Date()).getTime() + this.keepAliveIntervalInMilliseconds, this._cleanupPingTimer());
   }
   _resetTimeoutPeriod() {
-    if ((!this.connection.features || !this.connection.features.inherentKeepAlive) && (this._timeoutHandle = setTimeout(() => this.serverTimeout(), this.serverTimeoutInMilliseconds), this._pingServerHandle === void 0)) {
+    if (!this.connection.features || !this.connection.features.inherentKeepAlive) {
+      this._timeoutHandle = setTimeout(() => this.serverTimeout(), this.serverTimeoutInMilliseconds);
       let e = this._nextKeepAlive - (/* @__PURE__ */ new Date()).getTime();
-      e < 0 && (e = 0), this._pingServerHandle = setTimeout(async () => {
-        if (this._connectionState === g.Connected)
-          try {
-            await this._sendMessage(this._cachedPingMessage);
-          } catch {
-            this._cleanupPingTimer();
-          }
-      }, e);
+      if (e < 0) {
+        this._connectionState === d.Connected && this._trySendPingMessage();
+        return;
+      }
+      this._pingServerHandle === void 0 && (e < 0 && (e = 0), this._pingServerHandle = setTimeout(async () => {
+        this._connectionState === d.Connected && await this._trySendPingMessage();
+      }, e));
     }
   }
   // eslint-disable-next-line @typescript-eslint/naming-convention
@@ -878,19 +878,19 @@ class x {
     let c, a, l;
     for (const u of o)
       try {
-        const d = c;
-        c = await u.apply(this, e.arguments), r && c && d && (this._logger.log(i.Error, `Multiple results provided for '${t}'. Sending error to server.`), l = this._createCompletionMessage(e.invocationId, "Client provided multiple results.", null)), a = void 0;
-      } catch (d) {
-        a = d, this._logger.log(i.Error, `A callback for the method '${t}' threw error '${d}'.`);
+        const g = c;
+        c = await u.apply(this, e.arguments), r && c && g && (this._logger.log(i.Error, `Multiple results provided for '${t}'. Sending error to server.`), l = this._createCompletionMessage(e.invocationId, "Client provided multiple results.", null)), a = void 0;
+      } catch (g) {
+        a = g, this._logger.log(i.Error, `A callback for the method '${t}' threw error '${g}'.`);
       }
     l ? await this._sendWithProtocol(l) : r ? (a ? l = this._createCompletionMessage(e.invocationId, `${a}`, null) : c !== void 0 ? l = this._createCompletionMessage(e.invocationId, null, c) : (this._logger.log(i.Warning, `No result given for '${t}' method and invocation ID '${e.invocationId}'.`), l = this._createCompletionMessage(e.invocationId, "Client didn't provide a result.", null)), await this._sendWithProtocol(l)) : c && this._logger.log(i.Error, `Result given for '${t}' method but server is not expecting a result.`);
   }
   _connectionClosed(e) {
-    this._logger.log(i.Debug, `HubConnection.connectionClosed(${e}) called while in state ${this._connectionState}.`), this._stopDuringStartError = this._stopDuringStartError || e || new b("The underlying connection was closed before the hub handshake could complete."), this._handshakeResolver && this._handshakeResolver(), this._cancelCallbacksWithError(e || new Error("Invocation canceled due to the underlying connection being closed.")), this._cleanupTimeout(), this._cleanupPingTimer(), this._connectionState === g.Disconnecting ? this._completeClose(e) : this._connectionState === g.Connected && this._reconnectPolicy ? this._reconnect(e) : this._connectionState === g.Connected && this._completeClose(e);
+    this._logger.log(i.Debug, `HubConnection.connectionClosed(${e}) called while in state ${this._connectionState}.`), this._stopDuringStartError = this._stopDuringStartError || e || new b("The underlying connection was closed before the hub handshake could complete."), this._handshakeResolver && this._handshakeResolver(), this._cancelCallbacksWithError(e || new Error("Invocation canceled due to the underlying connection being closed.")), this._cleanupTimeout(), this._cleanupPingTimer(), this._connectionState === d.Disconnecting ? this._completeClose(e) : this._connectionState === d.Connected && this._reconnectPolicy ? this._reconnect(e) : this._connectionState === d.Connected && this._completeClose(e);
   }
   _completeClose(e) {
     if (this._connectionStarted) {
-      this._connectionState = g.Disconnected, this._connectionStarted = !1, this._messageBuffer && (this._messageBuffer._dispose(e ?? new Error("Connection closed.")), this._messageBuffer = void 0), _.isBrowser && window.document.removeEventListener("freeze", this._freezeEventListener);
+      this._connectionState = d.Disconnected, this._connectionStarted = !1, this._messageBuffer && (this._messageBuffer._dispose(e ?? new Error("Connection closed.")), this._messageBuffer = void 0), _.isBrowser && window.document.removeEventListener("freeze", this._freezeEventListener);
       try {
         this._closedCallbacks.forEach((t) => t.apply(this, [e]));
       } catch (t) {
@@ -900,31 +900,31 @@ class x {
   }
   async _reconnect(e) {
     const t = Date.now();
-    let n = 0, o = e !== void 0 ? e : new Error("Attempting to reconnect due to a unknown error."), r = this._getNextRetryDelay(n++, 0, o);
+    let n = 0, o = e !== void 0 ? e : new Error("Attempting to reconnect due to a unknown error."), r = this._getNextRetryDelay(n, 0, o);
     if (r === null) {
       this._logger.log(i.Debug, "Connection not reconnecting because the IRetryPolicy returned null on the first reconnect attempt."), this._completeClose(e);
       return;
     }
-    if (this._connectionState = g.Reconnecting, e ? this._logger.log(i.Information, `Connection reconnecting because of error '${e}'.`) : this._logger.log(i.Information, "Connection reconnecting."), this._reconnectingCallbacks.length !== 0) {
+    if (this._connectionState = d.Reconnecting, e ? this._logger.log(i.Information, `Connection reconnecting because of error '${e}'.`) : this._logger.log(i.Information, "Connection reconnecting."), this._reconnectingCallbacks.length !== 0) {
       try {
         this._reconnectingCallbacks.forEach((c) => c.apply(this, [e]));
       } catch (c) {
         this._logger.log(i.Error, `An onreconnecting callback called with error '${e}' threw error '${c}'.`);
       }
-      if (this._connectionState !== g.Reconnecting) {
+      if (this._connectionState !== d.Reconnecting) {
         this._logger.log(i.Debug, "Connection left the reconnecting state in onreconnecting callback. Done reconnecting.");
         return;
       }
     }
     for (; r !== null; ) {
-      if (this._logger.log(i.Information, `Reconnect attempt number ${n} will start in ${r} ms.`), await new Promise((c) => {
+      if (this._logger.log(i.Information, `Reconnect attempt number ${n + 1} will start in ${r} ms.`), await new Promise((c) => {
         this._reconnectDelayHandle = setTimeout(c, r);
-      }), this._reconnectDelayHandle = void 0, this._connectionState !== g.Reconnecting) {
+      }), this._reconnectDelayHandle = void 0, this._connectionState !== d.Reconnecting) {
         this._logger.log(i.Debug, "Connection left the reconnecting state during reconnect delay. Done reconnecting.");
         return;
       }
       try {
-        if (await this._startInternal(), this._connectionState = g.Connected, this._logger.log(i.Information, "HubConnection reconnected successfully."), this._reconnectedCallbacks.length !== 0)
+        if (await this._startInternal(), this._connectionState = d.Connected, this._logger.log(i.Information, "HubConnection reconnected successfully."), this._reconnectedCallbacks.length !== 0)
           try {
             this._reconnectedCallbacks.forEach((c) => c.apply(this, [this.connection.connectionId]));
           } catch (c) {
@@ -932,11 +932,11 @@ class x {
           }
         return;
       } catch (c) {
-        if (this._logger.log(i.Information, `Reconnect attempt failed because of error '${c}'.`), this._connectionState !== g.Reconnecting) {
-          this._logger.log(i.Debug, `Connection moved to the '${this._connectionState}' from the reconnecting state during reconnect attempt. Done reconnecting.`), this._connectionState === g.Disconnecting && this._completeClose();
+        if (this._logger.log(i.Information, `Reconnect attempt failed because of error '${c}'.`), this._connectionState !== d.Reconnecting) {
+          this._logger.log(i.Debug, `Connection moved to the '${this._connectionState}' from the reconnecting state during reconnect attempt. Done reconnecting.`), this._connectionState === d.Disconnecting && this._completeClose();
           return;
         }
-        o = c instanceof Error ? c : new Error(c.toString()), r = this._getNextRetryDelay(n++, Date.now() - t, o);
+        n++, o = c instanceof Error ? c : new Error(c.toString()), r = this._getNextRetryDelay(n, Date.now() - t, o);
       }
     }
     this._logger.log(i.Information, `Reconnect retries have been exhausted after ${Date.now() - t} ms and ${n} failed attempts. Connection disconnecting.`), this._completeClose();
@@ -972,27 +972,27 @@ class x {
   _createInvocation(e, t, n, o) {
     if (n)
       return o.length !== 0 ? {
+        target: e,
         arguments: t,
         streamIds: o,
-        target: e,
         type: h.Invocation
       } : {
-        arguments: t,
         target: e,
+        arguments: t,
         type: h.Invocation
       };
     {
       const r = this._invocationId;
       return this._invocationId++, o.length !== 0 ? {
+        target: e,
         arguments: t,
         invocationId: r.toString(),
         streamIds: o,
-        target: e,
         type: h.Invocation
       } : {
+        target: e,
         arguments: t,
         invocationId: r.toString(),
-        target: e,
         type: h.Invocation
       };
     }
@@ -1032,15 +1032,15 @@ class x {
   _createStreamInvocation(e, t, n) {
     const o = this._invocationId;
     return this._invocationId++, n.length !== 0 ? {
+      target: e,
       arguments: t,
       invocationId: o.toString(),
       streamIds: n,
-      target: e,
       type: h.StreamInvocation
     } : {
+      target: e,
       arguments: t,
       invocationId: o.toString(),
-      target: e,
       type: h.StreamInvocation
     };
   }
@@ -1071,6 +1071,13 @@ class x {
   _createCloseMessage() {
     return { type: h.Close };
   }
+  async _trySendPingMessage() {
+    try {
+      await this._sendMessage(this._cachedPingMessage);
+    } catch {
+      this._cleanupPingTimer();
+    }
+  }
 }
 const ue = [0, 2e3, 1e4, 3e4, null];
 class W {
@@ -1085,7 +1092,7 @@ class y {
 }
 y.Authorization = "Authorization";
 y.Cookie = "Cookie";
-class de extends R {
+class ge extends R {
   constructor(e, t) {
     super(), this._innerClient = e, this._accessTokenFactory = t;
   }
@@ -1110,7 +1117,7 @@ var m;
 (function(s) {
   s[s.Text = 1] = "Text", s[s.Binary = 2] = "Binary";
 })(m || (m = {}));
-let ge = class {
+let de = class {
   constructor() {
     this._isAborted = !1, this.onabort = null;
   }
@@ -1130,7 +1137,7 @@ class B {
     return this._pollAbort.aborted;
   }
   constructor(e, t, n) {
-    this._httpClient = e, this._logger = t, this._pollAbort = new ge(), this._options = n, this._running = !1, this.onreceive = null, this.onclose = null;
+    this._httpClient = e, this._logger = t, this._pollAbort = new de(), this._options = n, this._running = !1, this.onreceive = null, this.onclose = null;
   }
   async connect(e, t) {
     if (f.isRequired(e, "url"), f.isRequired(t, "transferFormat"), f.isIn(t, m, "transferFormat"), this._url = e, this._logger.log(i.Trace, "(LongPolling transport) Connecting."), t === m.Binary && typeof XMLHttpRequest < "u" && typeof new XMLHttpRequest().responseType != "string")
@@ -1211,8 +1218,8 @@ class _e {
       else {
         const a = this._httpClient.getCookieString(e), l = {};
         l.Cookie = a;
-        const [u, d] = k();
-        l[u] = d, c = new this._options.EventSource(e, { withCredentials: this._options.withCredentials, headers: { ...l, ...this._options.headers } });
+        const [u, g] = k();
+        l[u] = g, c = new this._options.EventSource(e, { withCredentials: this._options.withCredentials, headers: { ...l, ...this._options.headers } });
       }
       try {
         c.onmessage = (a) => {
@@ -1257,8 +1264,8 @@ class fe {
       const a = this._httpClient.getCookieString(e);
       let l = !1;
       if (_.isNode || _.isReactNative) {
-        const u = {}, [d, S] = k();
-        u[d] = S, n && (u[y.Authorization] = `Bearer ${n}`), a && (u[y.Cookie] = a), c = new this._webSocketConstructor(e, void 0, {
+        const u = {}, [g, S] = k();
+        u[g] = S, n && (u[y.Authorization] = `Bearer ${n}`), a && (u[y.Cookie] = a), c = new this._webSocketConstructor(e, void 0, {
           headers: { ...u, ...this._headers }
         });
       } else
@@ -1266,22 +1273,22 @@ class fe {
       c || (c = new this._webSocketConstructor(e)), t === m.Binary && (c.binaryType = "arraybuffer"), c.onopen = (u) => {
         this._logger.log(i.Information, `WebSocket connected to ${e}.`), this._webSocket = c, l = !0, o();
       }, c.onerror = (u) => {
-        let d = null;
-        typeof ErrorEvent < "u" && u instanceof ErrorEvent ? d = u.error : d = "There was an error with the transport", this._logger.log(i.Information, `(WebSockets transport) ${d}.`);
+        let g = null;
+        typeof ErrorEvent < "u" && u instanceof ErrorEvent ? g = u.error : g = "There was an error with the transport", this._logger.log(i.Information, `(WebSockets transport) ${g}.`);
       }, c.onmessage = (u) => {
         if (this._logger.log(i.Trace, `(WebSockets transport) data received. ${I(u.data, this._logMessageContent)}.`), this.onreceive)
           try {
             this.onreceive(u.data);
-          } catch (d) {
-            this._close(d);
+          } catch (g) {
+            this._close(g);
             return;
           }
       }, c.onclose = (u) => {
         if (l)
           this._close(u);
         else {
-          let d = null;
-          typeof ErrorEvent < "u" && u instanceof ErrorEvent ? d = u.error : d = "WebSocket failed to connect. The connection could not be found on the server, either the endpoint may not be a SignalR endpoint, the connection ID is not present on the server, or there is a proxy blocking WebSockets. If you have multiple servers check that sticky sessions are enabled.", r(new Error(d));
+          let g = null;
+          typeof ErrorEvent < "u" && u instanceof ErrorEvent ? g = u.error : g = "WebSocket failed to connect. The connection could not be found on the server, either the endpoint may not be a SignalR endpoint, the connection ID is not present on the server, or there is a proxy blocking WebSockets. If you have multiple servers check that sticky sessions are enabled.", r(new Error(g));
         }
       };
     });
@@ -1316,7 +1323,7 @@ class pe {
       const r = typeof __webpack_require__ == "function" ? __non_webpack_require__ : require;
       n = r("ws"), o = r("eventsource");
     }
-    !_.isNode && typeof WebSocket < "u" && !t.WebSocket ? t.WebSocket = WebSocket : _.isNode && !t.WebSocket && n && (t.WebSocket = n), !_.isNode && typeof EventSource < "u" && !t.EventSource ? t.EventSource = EventSource : _.isNode && !t.EventSource && typeof o < "u" && (t.EventSource = o), this._httpClient = new de(t.httpClient || new oe(this._logger), t.accessTokenFactory), this._connectionState = "Disconnected", this._connectionStarted = !1, this._options = t, this.onreceive = null, this.onclose = null;
+    !_.isNode && typeof WebSocket < "u" && !t.WebSocket ? t.WebSocket = WebSocket : _.isNode && !t.WebSocket && n && (t.WebSocket = n), !_.isNode && typeof EventSource < "u" && !t.EventSource ? t.EventSource = EventSource : _.isNode && !t.EventSource && typeof o < "u" && (t.EventSource = o), this._httpClient = new ge(t.httpClient || new oe(this._logger), t.accessTokenFactory), this._connectionState = "Disconnected", this._connectionStarted = !1, this._options = t, this.onreceive = null, this.onclose = null;
   }
   async start(e) {
     if (e = e || m.Binary, f.isIn(e, m, "transferFormat"), this._logger.log(i.Debug, `Starting connection with transfer format '${m[e]}'.`), this._connectionState !== "Disconnected")
@@ -1424,11 +1431,11 @@ class pe {
     const c = [], a = n.availableTransports || [];
     let l = n;
     for (const u of a) {
-      const d = this._resolveTransportOrError(u, t, o, (l == null ? void 0 : l.useStatefulReconnect) === !0);
-      if (d instanceof Error)
-        c.push(`${u.transport} failed:`), c.push(d);
-      else if (this._isITransport(d)) {
-        if (this.transport = d, !l) {
+      const g = this._resolveTransportOrError(u, t, o, (l == null ? void 0 : l.useStatefulReconnect) === !0);
+      if (g instanceof Error)
+        c.push(`${u.transport} failed:`), c.push(g);
+      else if (this._isITransport(g)) {
+        if (this.transport = g, !l) {
           try {
             l = await this._getNegotiationResponse(e);
           } catch (S) {
@@ -1756,7 +1763,7 @@ function ye(s) {
   return s.log !== void 0;
 }
 export {
-  g as H,
+  d as H,
   i as L,
   ke as a
 };
