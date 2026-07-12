@@ -125,6 +125,14 @@
     border-bottom-color: var(--apya-border-subtle);
 }
 
+/* LeptonX .card-title sabit koyu renk kullanıyor (Bootstrap --bs-heading-color
+   köprülü değil) → dark'ta görünmez oluyordu. text-danger/text-warning gibi
+   Bootstrap contextual utility'ler !important olduğundan bu kural onları
+   etkilemez (:not guard ayrıca korur). */
+[data-theme="dark"] .card-title:not([class*="text-"]) {
+    color: var(--apya-text-primary);
+}
+
 /* ----------------------------------------------------------------------------
    SABİT BOOTSTRAP UTILITY OVERRIDE'LARI (yalnız dark) — güvenli sistematik ağ
    Sayfalara/JS'e gömülü sabit .bg-white / .bg-light utility'leri token-farkında
@@ -413,4 +421,60 @@ html, body {
     font-weight: 650;
     letter-spacing: -0.01em;
     color: var(--apya-text-primary);
+}
+
+/* ============================================================================
+   P2 · ORTAK BİLEŞEN: TABLO (Bootstrap + DataTables restyle)
+   DOM/JS'e dokunmaz (server-side sıralama/sayfalama/DataTables aynı kalır) —
+   yalnız görünüm token'lara bağlanır. Kapsam: .table (abp-table, DataTables).
+   Satır yüksekliği density'e uyar: --row-h (compact 36 / cozy 44 / comfortable 56).
+   Parasal/sayısal kolonlar için opt-in: <td class="apya-numeric"> (mono, sağa
+   dayalı, tabular — tanım apya-shell.css'te).
+   ============================================================================ */
+.table thead th {
+    background: var(--apya-surface-raised) !important;
+    color: var(--apya-text-tertiary) !important;
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+    border-bottom: 1px solid var(--apya-border-default) !important;
+    white-space: nowrap;
+}
+.table thead th,
+.table tbody td {
+    height: var(--row-h);
+    padding-top: 0;
+    padding-bottom: 0;
+    vertical-align: middle;
+}
+.table tbody td {
+    font-size: 12.5px;
+    color: var(--apya-text-primary);
+    border-bottom-color: var(--apya-border-subtle) !important;
+}
+.table tbody tr:hover td {
+    background: var(--apya-surface-raised);
+}
+.table.table-striped tbody tr:nth-of-type(odd) td {
+    background: var(--apya-surface-sunken);
+}
+.table.table-striped tbody tr:nth-of-type(odd):hover td {
+    background: var(--apya-surface-raised);
+}
+/* Parasal/sayısal kolon opt-in (bkz. apya-shell.css .apya-numeric) sağa dayalı olsun */
+.table td.apya-numeric,
+.table th.apya-numeric {
+    text-align: right;
+}
+/* DataTables sayfalama/arama kutuları token'a uysun */
+.dataTables_wrapper .dataTables_length select,
+.dataTables_wrapper .dataTables_filter input {
+    background: var(--apya-surface-base) !important;
+    color: var(--apya-text-primary) !important;
+    border-color: var(--apya-border-default) !important;
+}
+.dataTables_wrapper .dataTables_info {
+    color: var(--apya-text-tertiary) !important;
+    font-size: 12px;
 }
