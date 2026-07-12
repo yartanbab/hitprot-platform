@@ -150,6 +150,11 @@
     --apya-radius-2xl: 16px;
     --apya-radius-full: 9999px;
 
+    /* --- 1.7b Density — tablo/liste satır yüksekliği ---
+       <html data-density="compact|cozy|comfortable"> ile geçiş (aşağıda).
+       Varsayılan: cozy (44px). Bileşenler `height: var(--row-h)` kullanır. */
+    --row-h: 44px;
+
     /* --- 1.8 Spacing scale (4px base) --- */
     --apya-space-0:  0;
     --apya-space-1:  4px;
@@ -301,6 +306,15 @@
 [data-theme="dark"] {
     color-scheme: dark;
 }
+
+/* ----------------------------------------------------------------------------
+   DENSITY VARIANTS — <html data-density="compact|cozy|comfortable">
+   Yoğunluk yalnız satır yüksekliğini (--row-h) değiştirir; tipografi/padding
+   token'ları sabit kalır. Varsayılan cozy (attribute yoksa da :root'ta 44px).
+   ---------------------------------------------------------------------------- */
+[data-density="compact"]     { --row-h: 36px; }
+[data-density="cozy"]        { --row-h: 44px; }
+[data-density="comfortable"] { --row-h: 56px; }
 
 /* ----------------------------------------------------------------------------
    3) ACCESSIBILITY — prefers-reduced-motion

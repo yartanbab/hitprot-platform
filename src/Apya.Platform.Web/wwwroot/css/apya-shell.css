@@ -19,7 +19,7 @@
 }
 
 body {
-    font-family: ui-sans-serif, -apple-system, 'Segoe UI', Inter, system-ui, sans-serif;
+    font-family: var(--apya-font-sans);
 }
 
 /* Sayısal değerler (bakiye, tutar, ID) — tabular-nums ile hizalı */

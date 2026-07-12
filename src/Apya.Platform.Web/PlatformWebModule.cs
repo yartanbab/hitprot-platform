@@ -234,6 +234,8 @@ public class PlatformWebModule : AbpModule
                     // Apya design token'lar� (--apya-*) — apya-shell ve apya-theme-bridge
                     // bu de�i�kenleri t�ketir; global y�klenmezse var() de�erleri bo� kal�r.
                     // Kaynak: React island'la ayn� dosya (tek kaynak, kopya de�il).
+                    // Self-hosted fontlar (Inter + JetBrains Mono) — @font-face önce gelsin.
+                    bundle.AddFiles("/css/apya-fonts.css");
                     bundle.AddFiles("/dynamic-assets/src/styles/tokens.css");
                     // LeptonX/Bootstrap de�i�kenlerini token'lara ba�layan k�pr�
                     bundle.AddFiles("/css/apya-theme-bridge.css");

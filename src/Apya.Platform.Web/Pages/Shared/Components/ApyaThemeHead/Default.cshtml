@@ -29,6 +29,11 @@
             html.setAttribute('data-theme', resolved);
             html.classList.remove('lpx-theme-light', 'lpx-theme-dark', 'lpx-theme-dim');
             html.classList.add(resolved === 'dark' ? 'lpx-theme-dark' : 'lpx-theme-light');
+
+            // Yoğunluk (density) — kayıtlı tercih || cozy (varsayılan).
+            var density = 'cozy';
+            try { density = localStorage.getItem('apya-density') || 'cozy'; } catch (e) { }
+            html.setAttribute('data-density', density);
         } catch (e) { /* sessizce devam */ }
     })();
 </script>
