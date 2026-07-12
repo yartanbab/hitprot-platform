@@ -393,7 +393,24 @@ html, body {
     color: inherit !important;
 }
 
-/* --- Header topbar: yükseklik + hizalama --- */
+/* --- Header topbar: 57px + token zemin + alt kenarlık (her iki tema) --- */
+.lpx-topbar {
+    min-height: 57px;
+    background: var(--apya-surface-header) !important;
+    border-bottom: 1px solid var(--apya-border-default) !important;
+}
 .lpx-topbar-content {
     gap: 2px;
+}
+/* Header sol: sayfa başlığı (dark-mode.js breadcrumb alanına doldurur) */
+.lpx-breadcrumb-container {
+    display: flex;
+    align-items: center;
+    padding-left: 6px;
+}
+.lpx-breadcrumb-container .apya-page-title {
+    font-size: 16px;
+    font-weight: 650;
+    letter-spacing: -0.01em;
+    color: var(--apya-text-primary);
 }

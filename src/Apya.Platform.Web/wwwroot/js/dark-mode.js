@@ -17,6 +17,19 @@ $(function () {
     var current = $html.attr('data-theme') === 'dark' ? 'dark' : 'light';
     applyTheme(current);
 
+    // Header sol: sayfa başlığını breadcrumb alanına yaz (hi-fi header).
+    var bc = document.querySelector('.lpx-breadcrumb-container');
+    if (bc) {
+        var pt = (document.title || '').split('|')[0].trim();
+        if (pt) {
+            bc.textContent = '';
+            var sp = document.createElement('span');
+            sp.className = 'apya-page-title';
+            sp.textContent = pt;
+            bc.appendChild(sp);
+        }
+    }
+
     // Toggle header toolbar'ında gelir; yoksa (toolbar'sız layout) fallback floating.
     if ($('#ThemeToggle').length === 0) {
         $('body').append(
