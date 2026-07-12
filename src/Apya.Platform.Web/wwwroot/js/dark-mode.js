@@ -3,44 +3,48 @@ $(function () {
     //   key    → 'apya-theme'  (localStorage SoT)
     //   target → <html>        (data-theme → :root token override cascade eder)
     // data-theme paint ÖNCESİ ApyaThemeHead FOUC'u tarafından çözülür (kayıtlı || OS).
-    // Burada yalnız: lpx/body class senkronu + toggle davranışı.
+    // Toggle butonu header toolbar'ında (ThemeToggle ViewComponent) render edilir.
     var THEME_KEY = 'apya-theme';
     var $html = $(document.documentElement);
 
-    // Auth/account sayfaları tema-nötr LIGHT (FOUC ile aynı kural) → toggle da gösterilmez.
+    // Auth/account sayfaları tema-nötr LIGHT (FOUC ile aynı kural) → toggle yok.
     if (/^\/Account\//i.test(location.pathname)) {
         applyTheme('light');
         return;
     }
 
-    // FOUC'un çözdüğü mevcut temayı baz al (localStorage 'light' default'una DÜŞME —
-    // aksi halde OS-dark kullanıcıda dark→light flash olur).
+    // FOUC'un çözdüğü mevcut temayı baz al (localStorage 'light' default'una DÜŞME).
     var current = $html.attr('data-theme') === 'dark' ? 'dark' : 'light';
     applyTheme(current);
 
-    // Toggle UI — geçici floating buton (header entegrasyonu P1'de).
+    // Toggle header toolbar'ında gelir; yoksa (toolbar'sız layout) fallback floating.
     if ($('#ThemeToggle').length === 0) {
-        var iconClass = current === 'dark' ? 'fa-moon' : 'fa-sun';
-        var $toggle = $('<button type="button" id="ThemeToggle" aria-label="Tema Değiştir" title="Tema Değiştir"><i class="fa ' + iconClass + '"></i></button>');
-        $('body').append($toggle);
+        $('body').append(
+            '<button type="button" id="ThemeToggle" class="apya-theme-toggle apya-theme-toggle--floating" ' +
+            'title="Tema Değiştir" aria-label="Tema Değiştir"><i class="fa fa-sun"></i></button>'
+        );
     }
+    setToggleIcon(current);
 
-    $(document).on('click', '#ThemeToggle', function () {
+    $(document).on('click', '#ThemeToggle', function (e) {
+        e.preventDefault();
         var now = $html.attr('data-theme') === 'dark' ? 'dark' : 'light';
         var next = now === 'dark' ? 'light' : 'dark';
         applyTheme(next);
-        try { localStorage.setItem(THEME_KEY, next); } catch (e) { /* yok say */ }
-
-        var $icon = $(this).find('i');
-        $icon.fadeOut(120, function () {
-            $icon.removeClass('fa-sun fa-moon').addClass(next === 'dark' ? 'fa-moon' : 'fa-sun').fadeIn(120);
-        });
+        try { localStorage.setItem(THEME_KEY, next); } catch (e2) { /* yok say */ }
+        setToggleIcon(next);
 
         // LeptonX kendi theming'ini de senkron tut (dropdown vs.).
         if (window.abp && abp.leptonX && abp.leptonX.theme) {
-            try { abp.leptonX.theme.setTheme(next); } catch (e) { /* yok say */ }
+            try { abp.leptonX.theme.setTheme(next); } catch (e3) { /* yok say */ }
         }
     });
+
+    function setToggleIcon(theme) {
+        $('#ThemeToggle i')
+            .removeClass('fa-sun fa-moon')
+            .addClass(theme === 'dark' ? 'fa-moon' : 'fa-sun');
+    }
 
     function applyTheme(theme) {
         // SoT: <html data-theme="..."> — tokens.css :root override buradan beslenir.

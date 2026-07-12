@@ -286,6 +286,8 @@ public class PlatformWebModule : AbpModule
 
         Configure<AbpToolbarOptions>(options =>
         {
+            // Tema toggle bildirim zilinden ÖNCE → header'da zilin solunda.
+            options.Contributors.Add(new Apya.Platform.Web.Theme.ThemeToggleToolbarContributor());
             options.Contributors.Add(new Apya.Platform.Web.Notifications.NotificationToolbarContributor());
         });
     }

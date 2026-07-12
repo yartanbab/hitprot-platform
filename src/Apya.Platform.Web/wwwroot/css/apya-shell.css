@@ -257,10 +257,28 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 /* ----------------------------------------------------------------------------
-   11) TEMA TOGGLE — geçici floating buton (dark-mode.js body'ye ekler).
-   Header entegrasyonu P1'de; bu yalnız dark QA/erişim için geçici affordance.
+   11) TEMA TOGGLE — header toolbar butonu (ThemeToggle ViewComponent).
+   Fallback: toolbar'sız layout'ta dark-mode.js floating buton ekler.
    ---------------------------------------------------------------------------- */
-#ThemeToggle {
+.apya-theme-toggle {
+    background: transparent;
+    border: none;
+    padding: 0.4rem 0.6rem;
+    color: var(--apya-text-secondary);
+    font-size: 1.15rem;
+    line-height: 1;
+    cursor: pointer;
+    border-radius: var(--apya-radius-md);
+    transition: color var(--apya-motion-base) ease,
+                background var(--apya-motion-base) ease;
+}
+.apya-theme-toggle:hover {
+    color: var(--apya-accent-500);
+    background: var(--apya-surface-sunken);
+}
+
+/* Fallback floating (yalnız header toolbar yoksa). */
+.apya-theme-toggle--floating {
     position: fixed;
     right: 20px;
     bottom: 20px;
@@ -274,16 +292,9 @@ h1, h2, h3, h4, h5, h6 {
     border: 1px solid var(--apya-border-strong);
     border-radius: var(--apya-radius-full);
     background: var(--apya-surface-elevated);
-    color: var(--apya-text-secondary);
     box-shadow: var(--apya-shadow-lg);
-    cursor: pointer;
-    transition: transform var(--apya-motion-fast) ease,
-                color var(--apya-motion-base) ease,
-                border-color var(--apya-motion-base) ease;
 }
-#ThemeToggle:hover {
-    color: var(--apya-accent-500);
+.apya-theme-toggle--floating:hover {
     border-color: var(--apya-accent-500);
     transform: translateY(-1px);
 }
-#ThemeToggle:active { transform: scale(0.96); }

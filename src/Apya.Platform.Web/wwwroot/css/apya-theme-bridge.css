@@ -332,3 +332,68 @@ html, body {
     color:            var(--apya-text-primary);
     min-height:       100vh;
 }
+
+/* ============================================================================
+   P1 · APP SHELL HI-FI — sidebar + header (light + dark, token-driven)
+   Gerçek LeptonX Lite side-menu DOM'una göre (canlı doğrulandı):
+     .lpx-sidebar-container > #lpx-sidebar.lpx-scroll-container > nav.lpx-nav
+       > .lpx-logo-container + ul#desktop-sidebar.lpx-nav-menu
+         > li.outer-menu-item > a.lpx-menu-item-link[.selected]
+           > span.lpx-menu-item-icon > i · span.lpx-menu-item-text · i.lpx-caret
+   Token kullanıldığı için tek kural her iki temada doğru çalışır (light: beyaz
+   sidebar + koyu metin; dark: koyu sidebar + açık metin).
+   ============================================================================ */
+
+/* --- Sidebar zemini: TÜM katmanlara uygula → alt boşluk beyaz/koyu kalmasın.
+   Kritik: ul#desktop-sidebar.lpx-nav-menu kendi koyu zeminini tutuyor (rgb 22,22,22)
+   ve alanı dolduruyor; onu da dahil et. --- */
+.lpx-sidebar-container,
+#lpx-sidebar,
+#lpx-sidebar nav.lpx-nav,
+#lpx-sidebar .lpx-nav-menu,
+#lpx-sidebar .lpx-logo-container,
+#lpx-sidebar .lpx-brand-name {
+    background-color: var(--apya-surface-sidebar) !important;
+}
+.lpx-sidebar-container {
+    border-right: 1px solid var(--apya-border-default);
+}
+
+/* --- Logo alanı --- */
+#lpx-sidebar .lpx-logo-container {
+    border-bottom: 1px solid var(--apya-border-subtle);
+}
+#lpx-sidebar .lpx-brand-name {
+    color: var(--apya-text-primary) !important;
+}
+
+/* --- Nav item (üst düzey + iç menü) --- */
+#lpx-sidebar .lpx-menu-item-link {
+    color: var(--apya-text-secondary) !important;
+    border-radius: var(--apya-radius-lg);
+    margin: 1px 8px;
+    transition: background var(--apya-motion-fast) ease, color var(--apya-motion-fast) ease;
+}
+#lpx-sidebar .lpx-menu-item-link:hover {
+    background: var(--apya-border-subtle) !important;
+    color: var(--apya-text-primary) !important;
+}
+#lpx-sidebar .lpx-menu-item-link.selected {
+    background: var(--apya-accent-soft) !important;
+    color: var(--apya-accent-500) !important;
+    font-weight: 600;
+}
+/* İç menü (submenu) zemini şeffaf — sidebar zeminini kullansın */
+#lpx-sidebar .lpx-inner-menu { background: transparent !important; }
+
+/* İkon + caret rengi link'i takip etsin (LeptonX pembe ikon override'ını ez). */
+#lpx-sidebar .lpx-menu-item-icon,
+#lpx-sidebar .lpx-menu-item-icon i,
+#lpx-sidebar .lpx-caret {
+    color: inherit !important;
+}
+
+/* --- Header topbar: yükseklik + hizalama --- */
+.lpx-topbar-content {
+    gap: 2px;
+}
