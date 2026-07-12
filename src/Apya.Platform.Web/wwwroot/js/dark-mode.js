@@ -1,54 +1,54 @@
 $(function () {
-    // FOUC script ile aynı key ve target kullanılır:
+    // Tema kontrolcüsü — FOUC script (Components/ApyaThemeHead) ile aynı anahtar/hedef:
     //   key    → 'apya-theme'  (localStorage SoT)
-    //   target → document.documentElement (<html>)  → :root CSS değişkenleri doğru cascade eder
+    //   target → <html>        (data-theme → :root token override cascade eder)
+    // data-theme paint ÖNCESİ ApyaThemeHead FOUC'u tarafından çözülür (kayıtlı || OS).
+    // Burada yalnız: lpx/body class senkronu + toggle davranışı.
     var THEME_KEY = 'apya-theme';
     var $html = $(document.documentElement);
 
-    // Dark mode GEÇİCİ OLARAK kapalı (beyaz buton / görünmez yazı regresyonu).
-    // Açmak için: true yap (+ _ApyaThemeBootstrap.cshtml OS-duyarlı bloğunu geri getir).
-    var DARK_MODE_ENABLED = false;
-
-    if (!DARK_MODE_ENABLED) {
+    // Auth/account sayfaları tema-nötr LIGHT (FOUC ile aynı kural) → toggle da gösterilmez.
+    if (/^\/Account\//i.test(location.pathname)) {
         applyTheme('light');
-        try { localStorage.setItem(THEME_KEY, 'light'); } catch (e) { /* yok say */ }
-        $('#ThemeToggle').remove(); // toggle gösterme, dark'a geçişe izin verme
         return;
     }
 
-    // FOUC script zaten html'yi set etmiş olabilir; yoksa localStorage'dan oku.
-    var savedTheme = localStorage.getItem(THEME_KEY) || 'light';
-    applyTheme(savedTheme);
+    // FOUC'un çözdüğü mevcut temayı baz al (localStorage 'light' default'una DÜŞME —
+    // aksi halde OS-dark kullanıcıda dark→light flash olur).
+    var current = $html.attr('data-theme') === 'dark' ? 'dark' : 'light';
+    applyTheme(current);
 
-    // Toggle UI
+    // Toggle UI — geçici floating buton (header entegrasyonu P1'de).
     if ($('#ThemeToggle').length === 0) {
-        var $toggle = $('<div id="ThemeToggle" title="Tema Değiştir"><i class="fa ' + (savedTheme === 'dark' ? 'fa-moon' : 'fa-sun') + '"></i></div>');
+        var iconClass = current === 'dark' ? 'fa-moon' : 'fa-sun';
+        var $toggle = $('<button type="button" id="ThemeToggle" aria-label="Tema Değiştir" title="Tema Değiştir"><i class="fa ' + iconClass + '"></i></button>');
         $('body').append($toggle);
     }
 
     $(document).on('click', '#ThemeToggle', function () {
-        var current = $html.attr('data-theme') === 'dark' ? 'dark' : 'light';
-        var next = current === 'dark' ? 'light' : 'dark';
+        var now = $html.attr('data-theme') === 'dark' ? 'dark' : 'light';
+        var next = now === 'dark' ? 'light' : 'dark';
         applyTheme(next);
-        localStorage.setItem(THEME_KEY, next);
+        try { localStorage.setItem(THEME_KEY, next); } catch (e) { /* yok say */ }
 
         var $icon = $(this).find('i');
-        $icon.fadeOut(150, function () {
-            $icon.removeClass('fa-sun fa-moon').addClass(next === 'dark' ? 'fa-moon' : 'fa-sun').fadeIn(150);
+        $icon.fadeOut(120, function () {
+            $icon.removeClass('fa-sun fa-moon').addClass(next === 'dark' ? 'fa-moon' : 'fa-sun').fadeIn(120);
         });
 
+        // LeptonX kendi theming'ini de senkron tut (dropdown vs.).
         if (window.abp && abp.leptonX && abp.leptonX.theme) {
-            abp.leptonX.theme.setTheme(next);
+            try { abp.leptonX.theme.setTheme(next); } catch (e) { /* yok say */ }
         }
     });
 
     function applyTheme(theme) {
-        // SoT: <html data-theme="..."> — tokens.css :root override buradan beslenir
+        // SoT: <html data-theme="..."> — tokens.css :root override buradan beslenir.
         $html.attr('data-theme', theme);
-        // LeptonX class mirror (dropdown'lar, kendi theming'i için)
+        // LeptonX class mirror (dropdown'lar, kendi theming'i için).
         $html.removeClass('lpx-theme-light lpx-theme-dark lpx-theme-dim');
         $html.addClass(theme === 'dark' ? 'lpx-theme-dark' : 'lpx-theme-light');
-        // Body class — eski DataTable/jQuery widget uyumu
+        // Body class — eski DataTable/jQuery widget uyumu.
         $('body').toggleClass('dark-theme', theme === 'dark');
     }
 });

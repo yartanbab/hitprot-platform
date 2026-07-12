@@ -25,9 +25,9 @@ $(function () {
                 result.items.forEach(function (t) {
                     html += `
                         <a href="/Projects/ProjectDetails/${t.projectId}" class="text-decoration-none">
-                            <div class="card shadow-sm border-danger border-1 h-100" style="width: 250px;">
+                            <div class="card shadow-sm border-danger border-1 h-100" style="width: 250px; background: var(--apya-surface-base);">
                                 <div class="card-body p-2">
-                                    <div class="small fw-bold text-dark text-truncate" title="${t.title}">${t.title}</div>
+                                    <div class="small fw-bold text-truncate" style="color: var(--apya-text-primary);" title="${t.title}">${t.title}</div>
                                     <div class="small text-danger mt-1"><i class="fa fa-exclamation-triangle"></i> Gecikti: ${moment(t.dueDate).fromNow()}</div>
                                 </div>
                             </div>
@@ -51,10 +51,10 @@ $(function () {
                 result.items.forEach(function (t) {
                     html += `
                         <a href="/Projects/ProjectDetails/${t.projectId}" class="text-decoration-none">
-                            <div class="card shadow-sm border-warning border-1 h-100" style="width: 250px;">
+                            <div class="card shadow-sm border-warning border-1 h-100" style="width: 250px; background: var(--apya-surface-base);">
                                 <div class="card-body p-2">
-                                    <div class="small fw-bold text-dark text-truncate" title="${t.title}">${t.title}</div>
-                                    <div class="small text-warning text-dark mt-1"><i class="fa fa-clock"></i> Kalan: ${moment(t.dueDate).fromNow()}</div>
+                                    <div class="small fw-bold text-truncate" style="color: var(--apya-text-primary);" title="${t.title}">${t.title}</div>
+                                    <div class="small text-warning mt-1"><i class="fa fa-clock"></i> Kalan: ${moment(t.dueDate).fromNow()}</div>
                                 </div>
                             </div>
                         </a>

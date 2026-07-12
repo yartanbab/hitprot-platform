@@ -255,3 +255,35 @@ h1, h2, h3, h4, h5, h6 {
     font-size: 1.5rem;
     flex-shrink: 0;
 }
+
+/* ----------------------------------------------------------------------------
+   11) TEMA TOGGLE — geçici floating buton (dark-mode.js body'ye ekler).
+   Header entegrasyonu P1'de; bu yalnız dark QA/erişim için geçici affordance.
+   ---------------------------------------------------------------------------- */
+#ThemeToggle {
+    position: fixed;
+    right: 20px;
+    bottom: 20px;
+    z-index: var(--apya-z-toast, 1080);
+    width: 44px;
+    height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    border: 1px solid var(--apya-border-strong);
+    border-radius: var(--apya-radius-full);
+    background: var(--apya-surface-elevated);
+    color: var(--apya-text-secondary);
+    box-shadow: var(--apya-shadow-lg);
+    cursor: pointer;
+    transition: transform var(--apya-motion-fast) ease,
+                color var(--apya-motion-base) ease,
+                border-color var(--apya-motion-base) ease;
+}
+#ThemeToggle:hover {
+    color: var(--apya-accent-500);
+    border-color: var(--apya-accent-500);
+    transform: translateY(-1px);
+}
+#ThemeToggle:active { transform: scale(0.96); }

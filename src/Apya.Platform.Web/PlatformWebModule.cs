@@ -130,10 +130,11 @@ public class PlatformWebModule : AbpModule
         // ConfigureMenus(context.Services.GetConfiguration()); // This method is not defined in the original code. Assuming it's a placeholder or needs to be added elsewhere.
         // ConfigureErrorPageOptions(); // This method is not defined in the original code. Assuming it's a placeholder or needs to be added elsewhere.
 
-        // Layout Hook for Impersonation Alert
+        // Layout Hook for Impersonation Alert + site-wide tema head (PWA + FOUC)
         Configure<Volo.Abp.Ui.LayoutHooks.AbpLayoutHookOptions>(options =>
         {
             options.Add(Volo.Abp.Ui.LayoutHooks.LayoutHooks.Body.First, typeof(Apya.Platform.Web.Components.ImpersonationAlert.ImpersonationAlertViewComponent));
+            options.Add(Volo.Abp.Ui.LayoutHooks.LayoutHooks.Head.Last, typeof(Apya.Platform.Web.Components.ApyaThemeHead.ApyaThemeHeadViewComponent));
         });
 
         // GAP-012 + ARCH-010: Audit Logging Selectors.

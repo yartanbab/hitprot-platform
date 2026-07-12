@@ -125,6 +125,27 @@
     border-bottom-color: var(--apya-border-subtle);
 }
 
+/* ----------------------------------------------------------------------------
+   SABİT BOOTSTRAP UTILITY OVERRIDE'LARI (yalnız dark) — güvenli sistematik ağ
+   Sayfalara/JS'e gömülü sabit .bg-white / .bg-light utility'leri token-farkında
+   DEĞİL → dark'ta beyaz kutu kalır. Tek yerden token'a çevrilir (whack-a-mole yok).
+   Metin flip'i BİLİNÇLİ olarak yalnız bu beyaz zeminlerin İÇİNDE yapılır; global
+   .text-dark flip'i 'bg-warning text-dark' (sarı badge üstü koyu yazı) gibi
+   idiomatik kombinasyonları bozacağından yapılmaz.
+   ---------------------------------------------------------------------------- */
+[data-theme="dark"] .bg-white {
+    background-color: var(--apya-surface-raised) !important;
+}
+[data-theme="dark"] .bg-light {
+    background-color: var(--apya-surface-sunken) !important;
+}
+[data-theme="dark"] .bg-white .text-dark,
+[data-theme="dark"] .bg-white.text-dark,
+[data-theme="dark"] .bg-light .text-dark,
+[data-theme="dark"] .bg-light.text-dark {
+    color: var(--apya-text-primary) !important;
+}
+
 /* ============================================================================
    SHELL LAYOUT BRIDGE — YALNIZ DARK MODE
    LeptonX Lite sidebar, topbar ve içerik alanı token'lara bağlanır.
