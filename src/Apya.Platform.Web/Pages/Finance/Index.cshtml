@@ -48,15 +48,15 @@
                             <div class="row text-center">
                                 <div class="col-4">
                                     <div class="text-muted small">Gelir</div>
-                                    <div class="fw-bold text-success">@Money(s.Income, s.Currency)</div>
+                                    <div class="fw-bold apya-numeric text-success">@Money(s.Income, s.Currency)</div>
                                 </div>
                                 <div class="col-4">
                                     <div class="text-muted small">Gider</div>
-                                    <div class="fw-bold text-danger">@Money(s.Expense, s.Currency)</div>
+                                    <div class="fw-bold apya-numeric text-danger">@Money(s.Expense, s.Currency)</div>
                                 </div>
                                 <div class="col-4">
                                     <div class="text-muted small">Net</div>
-                                    <div class="fw-bold @(s.Net >= 0 ? "text-success" : "text-danger")">@Money(s.Net, s.Currency)</div>
+                                    <div class="fw-bold apya-numeric @(s.Net >= 0 ? "text-success" : "text-danger")">@Money(s.Net, s.Currency)</div>
                                 </div>
                             </div>
                         </div>
@@ -94,19 +94,19 @@
                     }
                     @foreach (var t in Model.Transactions)
                     {
-                        var (badgeClass, badgeText) = t.Type switch
+                        var (chipTone, badgeText) = t.Type switch
                         {
-                            IndexModel.TxType.Income => ("bg-success-subtle text-success-emphasis", "Gelir"),
-                            IndexModel.TxType.Expense => ("bg-danger-subtle text-danger-emphasis", "Gider"),
-                            _ => ("bg-primary-subtle text-primary-emphasis", "Fatura")
+                            IndexModel.TxType.Income => ("positive", "Gelir"),
+                            IndexModel.TxType.Expense => ("negative", "Gider"),
+                            _ => ("brand", "Fatura")
                         };
                         <tr data-type="@t.Type">
                             <td class="text-nowrap">@t.Date.ToString("dd.MM.yyyy")</td>
-                            <td><span class="badge @badgeClass">@badgeText</span></td>
+                            <td><span class="apya-chip apya-chip-@chipTone">@badgeText</span></td>
                             <td>@t.Title</td>
                             <td>@(t.ProjectName ?? "—")</td>
                             <td>@(t.CustomerName ?? "—")</td>
-                            <td class="text-end fw-bold @(t.IsInflow ? "text-success" : "text-danger")">
+                            <td class="text-end fw-bold apya-numeric @(t.IsInflow ? "text-success" : "text-danger")">
                                 @(t.IsInflow ? "+" : "−")@Money(t.Amount, t.Currency)
                             </td>
                             <td class="text-end"><a href="@t.Url" class="btn btn-sm btn-outline-secondary" title="Aç"><i class="fa fa-arrow-up-right-from-square"></i></a></td>
