@@ -1,7 +1,10 @@
 using System;
 using System.IO;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Localization;
+using Microsoft.AspNetCore.RequestLocalization;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.Extensions.Logging;
@@ -129,6 +132,18 @@ public class PlatformWebModule : AbpModule
         // New configurations from the instruction
         // ConfigureMenus(context.Services.GetConfiguration()); // This method is not defined in the original code. Assuming it's a placeholder or needs to be added elsewhere.
         // ConfigureErrorPageOptions(); // This method is not defined in the original code. Assuming it's a placeholder or needs to be added elsewhere.
+
+        // Türkçe varsayılan dil: culture çerezi/tercihi olmayan ziyaretçilerde uygulama Türkçe açılsın.
+        // Kullanıcı dil seçiciyle yine değiştirebilir (cookie/AcceptLanguage override eder).
+        // ABP'nin varsayılan configurator'ından SONRA eklendiği için DefaultRequestCulture'ı ezer.
+        Configure<AbpRequestLocalizationOptions>(options =>
+        {
+            options.RequestLocalizationOptionConfigurators.Add((serviceProvider, requestLocalizationOptions) =>
+            {
+                requestLocalizationOptions.DefaultRequestCulture = new RequestCulture("tr", "tr");
+                return Task.CompletedTask;
+            });
+        });
 
         // Layout Hook for Impersonation Alert + site-wide tema head (PWA + FOUC)
         Configure<Volo.Abp.Ui.LayoutHooks.AbpLayoutHookOptions>(options =>

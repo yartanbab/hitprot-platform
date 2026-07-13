@@ -43,7 +43,7 @@ public class PlatformDomainSharedModule : AbpModule
         Configure<AbpLocalizationOptions>(options =>
         {
             options.Resources
-                .Add<PlatformResource>("en")
+                .Add<PlatformResource>("tr")
                 .AddBaseTypes(typeof(AbpValidationResource))
                 .AddVirtualJson("/Localization/Platform");
 
