@@ -12,23 +12,23 @@
     .ai-step-indicator .step {
         flex: 1; padding: 0.5rem; text-align: center;
         border-radius: 0.5rem; font-size: 0.85rem; font-weight: 600;
-        background: #f0f0f0; color: #999; transition: all 0.3s;
+        background: var(--apya-surface-sunken); color: var(--apya-text-tertiary); transition: all var(--apya-motion-slow) ease;
     }
-    .ai-step-indicator .step.active { background: linear-gradient(135deg, #4e73df, #6f42c1); color: #fff; }
-    .ai-step-indicator .step.done { background: #d1fae5; color: #059669; }
+    .ai-step-indicator .step.active { background: linear-gradient(135deg, var(--apya-accent-500), var(--apya-ai-500)); color: #fff; }
+    .ai-step-indicator .step.done { background: var(--apya-positive-50); color: var(--apya-positive-700); }
     .suggestion-card {
-        border: 1px solid #e5e7eb; border-radius: 0.75rem; padding: 1rem;
-        margin-bottom: 0.75rem; transition: all 0.2s;
+        border: 1px solid var(--apya-border-default); border-radius: 0.75rem; padding: 1rem;
+        margin-bottom: 0.75rem; transition: all var(--apya-motion-base) ease;
     }
-    .suggestion-card:hover { border-color: #4e73df; box-shadow: 0 2px 8px rgba(78,115,223,0.15); }
-    .suggestion-card.deselected { opacity: 0.5; background: #f9fafb; }
-    .confidence-bar { height: 8px; border-radius: 4px; background: #e5e7eb; overflow: hidden; }
+    .suggestion-card:hover { border-color: var(--apya-accent-500); box-shadow: var(--apya-shadow-focus); }
+    .suggestion-card.deselected { opacity: 0.5; background: var(--apya-surface-sunken); }
+    .confidence-bar { height: 8px; border-radius: 4px; background: var(--apya-border-default); overflow: hidden; }
     .confidence-fill { height: 100%; border-radius: 4px; transition: width 0.5s; }
-    .ai-spinner { display: inline-block; width: 20px; height: 20px; border: 3px solid #e5e7eb;
-        border-top: 3px solid #4e73df; border-radius: 50%; animation: spin 0.8s linear infinite; }
+    .ai-spinner { display: inline-block; width: 20px; height: 20px; border: 3px solid var(--apya-border-default);
+        border-top: 3px solid var(--apya-accent-500); border-radius: 50%; animation: spin 0.8s linear infinite; }
     @@keyframes spin { to { transform: rotate(360deg); } }
     .section-badge { font-size: 0.7rem; padding: 2px 8px; border-radius: 12px;
-        background: #ede9fe; color: #6d28d9; }
+        background: var(--apya-ai-50); color: var(--apya-ai-600); }
 </style>
 
 <form id="AiTaskGeneratorForm">
