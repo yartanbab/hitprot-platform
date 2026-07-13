@@ -48,7 +48,7 @@ function M({ label: a, value: n, icon: t, tone: l = "muted", loading: c, index: 
           /* @__PURE__ */ e.jsx("i", { className: `fa ${t}`, "aria-hidden": "true" }),
           a
         ] }),
-        /* @__PURE__ */ e.jsx("div", { className: u("mt-2 text-xl font-bold tabular-nums", i || "text-[var(--apya-text-primary)]"), children: n })
+        /* @__PURE__ */ e.jsx("div", { className: u("mt-2 text-xl font-bold font-tabular", i || "text-[var(--apya-text-primary)]"), children: n })
       ]
     }
   );
@@ -549,7 +549,7 @@ function ce({ c: a, onDelete: n }) {
         ]
       }
     ) }),
-    /* @__PURE__ */ e.jsx("td", { className: u(i, "py-3 text-[12px] text-[var(--apya-text-secondary)] tabular-nums"), children: a.taxNumber || /* @__PURE__ */ e.jsx("span", { className: "text-[var(--apya-text-disabled)]", children: "—" }) }),
+    /* @__PURE__ */ e.jsx("td", { className: u(i, "py-3 text-[12px] text-[var(--apya-text-secondary)] font-tabular"), children: a.taxNumber || /* @__PURE__ */ e.jsx("span", { className: "text-[var(--apya-text-disabled)]", children: "—" }) }),
     /* @__PURE__ */ e.jsx("td", { className: u(i, "py-3 text-[12px] text-[var(--apya-text-secondary)]"), children: a.taxOffice || /* @__PURE__ */ e.jsx("span", { className: "text-[var(--apya-text-disabled)]", children: "—" }) }),
     /* @__PURE__ */ e.jsx("td", { className: u(i, "py-3"), children: /* @__PURE__ */ e.jsxs("div", { className: "flex flex-col gap-1", children: [
       a.phone && /* @__PURE__ */ e.jsxs("a", { href: `tel:${a.phone}`, className: "flex items-center gap-1.5 text-[11.5px] text-[var(--apya-text-secondary)] hover:text-[var(--apya-accent-500)]", children: [
@@ -562,7 +562,7 @@ function ce({ c: a, onDelete: n }) {
       ] })
     ] }) }),
     /* @__PURE__ */ e.jsxs("td", { className: u(i, "py-3 text-right"), children: [
-      /* @__PURE__ */ e.jsx("div", { className: "text-[13px] font-bold tabular-nums", style: { color: c }, children: k.money(a.balance) }),
+      /* @__PURE__ */ e.jsx("div", { className: "text-[13px] font-bold font-tabular", style: { color: c }, children: k.money(a.balance) }),
       x && /* @__PURE__ */ e.jsx("div", { className: "text-[10px] text-[var(--apya-text-tertiary)] mt-0.5", children: x })
     ] }),
     /* @__PURE__ */ e.jsx("td", { className: u(i, "py-3 pr-3 text-right"), children: /* @__PURE__ */ e.jsx(se, { customer: a, onDelete: n }) })

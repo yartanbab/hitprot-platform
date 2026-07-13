@@ -61,8 +61,8 @@ $(function () {
                     data: 'isActive',
                     render: function (data) {
                         return data
-                            ? '<span class="badge bg-success">Aktif</span>'
-                            : '<span class="badge bg-secondary">Pasif</span>';
+                            ? '<span class="apya-chip apya-chip-positive">Aktif</span>'
+                            : '<span class="apya-chip apya-chip-neutral">Pasif</span>';
                     }
                 }
             ]

@@ -58,7 +58,7 @@ function StatCard({ label, value, icon, tone = 'muted', loading, index = 0 }) {
         <i className={`fa ${icon}`} aria-hidden="true" />
         {label}
       </div>
-      <div className={cn('mt-2 text-xl font-bold tabular-nums', toneClass || 'text-[var(--apya-text-primary)]')}>
+      <div className={cn('mt-2 text-xl font-bold font-tabular', toneClass || 'text-[var(--apya-text-primary)]')}>
         {value}
       </div>
     </div>
@@ -624,7 +624,7 @@ function CustomerRow({ c, onDelete }) {
           {c.isActive ? 'Aktif' : 'Pasif'}
         </span>
       </td>
-      <td className={cn(tdBase, 'py-3 text-[12px] text-[var(--apya-text-secondary)] tabular-nums')}>
+      <td className={cn(tdBase, 'py-3 text-[12px] text-[var(--apya-text-secondary)] font-tabular')}>
         {c.taxNumber || <span className="text-[var(--apya-text-disabled)]">—</span>}
       </td>
       <td className={cn(tdBase, 'py-3 text-[12px] text-[var(--apya-text-secondary)]')}>
@@ -647,7 +647,7 @@ function CustomerRow({ c, onDelete }) {
         </div>
       </td>
       <td className={cn(tdBase, 'py-3 text-right')}>
-        <div className="text-[13px] font-bold tabular-nums" style={{ color: balTone }}>{fmt.money(c.balance)}</div>
+        <div className="text-[13px] font-bold font-tabular" style={{ color: balTone }}>{fmt.money(c.balance)}</div>
         {balLabel && <div className="text-[10px] text-[var(--apya-text-tertiary)] mt-0.5">{balLabel}</div>}
       </td>
       <td className={cn(tdBase, 'py-3 pr-3 text-right')}>
