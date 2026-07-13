@@ -1,6 +1,7 @@
 {
     "culture": "tr",
     "texts": {
+        "AppName": "Apya",
         "Menu:Home": "Ana Sayfa",
         "Menu:Dashboard": "Genel Bakış",
         "Menu:Work": "İş Yönetimi",

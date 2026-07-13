@@ -298,3 +298,21 @@ h1, h2, h3, h4, h5, h6 {
     border-color: var(--apya-accent-500);
     transform: translateY(-1px);
 }
+
+/* ── Apya marka rozeti — prototip "Apya PLATFORM" logosu ──
+   Marka adı (AppName) artık "Apya"; yanına küçük "PLATFORM" hap rozeti eklenir. */
+.lpx-brand-name::after {
+    content: "PLATFORM";
+    display: inline-block;
+    margin-left: 7px;
+    padding: 1px 5px 0;
+    font-size: 8.5px;
+    font-weight: 700;
+    letter-spacing: 0.6px;
+    line-height: 1.5;
+    vertical-align: middle;
+    text-transform: uppercase;
+    border-radius: 5px;
+    color: var(--apya-accent-500, #4F46E5);
+    background: var(--apya-accent-soft, rgba(79, 70, 229, 0.10));
+}
