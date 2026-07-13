@@ -136,12 +136,12 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/frappe-gantt/0.6.1/frappe-gantt.min.css" />
     <style>
         /* Proje stili için Gantt özelleştirmesi */
-        .gantt .bar-label { fill: #fff; font-weight: bold; }
-        .gantt .bar-progress { fill: #007bff; }
-        .gantt .bar { fill: #cbd5e0; }
-        .gantt .priority-high .bar-progress { fill: #dc3545; }
-        .gantt .priority-medium .bar-progress { fill: #ffc107; }
-        .gantt .priority-low .bar-progress { fill: #28a745; }
+        .gantt .bar-label { fill: #fff; font-weight: bold; } /* renkli bar üstü kontrast metni — bilinçli sabit */
+        .gantt .bar-progress { fill: var(--apya-accent-500); }
+        .gantt .bar { fill: var(--apya-border-strong); }
+        .gantt .priority-high .bar-progress { fill: var(--apya-negative-500); }
+        .gantt .priority-medium .bar-progress { fill: var(--apya-warning-500); }
+        .gantt .priority-low .bar-progress { fill: var(--apya-positive-500); }
     </style>
 }
 
@@ -155,7 +155,7 @@
 <style>
     /* Kanban kart/kolon tasarımı artık /css/kanban.css'ten gelir (tek kaynak).
        Burada yalnızca timer + deadline animasyonları kalır. */
-    .timer-active { border-left-color: #dc3545 !important; background-color: #fff8f8 !important; box-shadow: 0 0 10px rgba(220, 53, 69, 0.2) !important; }
+    .timer-active { border-left-color: var(--apya-negative-500) !important; background-color: var(--apya-negative-50) !important; box-shadow: 0 0 10px rgba(220, 53, 69, 0.2) !important; }
     .fa-beat { animation: fa-beat 1.5s infinite linear; }
     @@keyframes fa-beat {
         0% { transform: scale(1); }
