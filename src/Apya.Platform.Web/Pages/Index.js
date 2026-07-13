@@ -108,11 +108,11 @@ $(function () {
                     title: "Durum",
                     data: "status",
                     render: function (data) {
-                        var color = 'secondary';
+                        var tone = 'neutral';
                         var text = 'Taslak';
-                        if (data === 1) { color = 'warning'; text = 'Devam Ediyor'; }
-                        if (data === 2) { color = 'success'; text = 'Tamamlandı'; }
-                        return '<span class="badge bg-' + color + '">' + text + '</span>';
+                        if (data === 1) { tone = 'warning'; text = 'Devam Ediyor'; }
+                        if (data === 2) { tone = 'positive'; text = 'Tamamlandı'; }
+                        return '<span class="apya-chip apya-chip-' + tone + '">' + text + '</span>';
                     }
                 },
                 {
