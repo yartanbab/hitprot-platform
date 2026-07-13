@@ -12,6 +12,18 @@
     var progressPct    = totalTasks > 0 ? (int)Math.Round((double)completedTasks / totalTasks * 100) : 0;
     var assigneeCount  = Model.Tasks?.Where(t => t.AssigneeId.HasValue).Select(t => t.AssigneeId).Distinct().Count() ?? 0;
     var facepileCount  = Math.Min(assigneeCount, 5);
+
+    // Backend Bootstrap renk adı döndürüyor (success/warning/danger/info/secondary) ->
+    // apya-chip tone. Tüm olası değerler ProjectMetricsCalculator'da sabit; exhaustive.
+    string ToApyaChipTone(string bsColor) => bsColor switch
+    {
+        "success" => "positive",
+        "warning" => "warning",
+        "danger"  => "negative",
+        "info"    => "brand",
+        _         => "neutral"
+    };
+    var timeHealthTone = ToApyaChipTone(Model.TimeHealthColor);
 }
 
 <style>
@@ -65,17 +77,17 @@
             @* ── Proje Bilgileri + Tenant Rozeti ── *@
             <div class="col-md-3">
                 @* Tenant Rozeti *@
-                <span class="badge @(Model.IsInternalProject ? "bg-secondary bg-opacity-10 text-secondary" : "bg-info bg-opacity-10 text-info") mb-2 rounded-pill px-3 py-1" style="font-size: 0.75rem;">
+                <span class="apya-chip apya-chip-@(Model.IsInternalProject ? "neutral" : "brand") mb-2" style="font-size: 0.75rem;">
                     <i class="fa @(Model.IsInternalProject ? "fa-home" : "fa-building") me-1"></i>
                     @(Model.IsInternalProject ? "Dahili Proje" : $"Müşteri: {Model.TenantName}")
                 </span>
 
                 @* Proje Adı + Kopyalanabilir Kod *@
-                <h1 class="fw-bold text-dark mb-2" style="font-size: 1.6rem;">
+                <h1 class="fw-bold mb-2" style="font-size: 1.6rem;">
                     <i class="fa fa-rocket text-primary me-2"></i>@Model.Project?.Name
                 </h1>
                 <div class="d-flex align-items-center gap-2 mb-2">
-                    <span class="badge bg-primary bg-opacity-10 text-primary rounded-pill px-3 py-2" style="font-size: 0.8rem;">
+                    <span class="apya-chip apya-chip-brand" style="font-size: 0.8rem; padding: 6px 14px;">
                         <i class="fa fa-tag me-1"></i>@Model.Project?.Code
                     </span>
                     <button class="btn btn-sm btn-outline-secondary px-2 py-0"
@@ -117,12 +129,12 @@
                     @* İleri tarihli proje: bitişe değil BAŞLANGICA geri sayım *@
                     <div class="d-flex align-items-baseline gap-1 mb-1 flex-wrap">
                         <span class="text-muted small">Başlamasına</span>
-                        <span class="fw-bold fs-4 text-dark">@Model.RemainingDays</span>
+                        <span class="fw-bold fs-4">@Model.RemainingDays</span>
                         <span class="text-muted small">Gün Kaldı</span>
                     </div>
                     <div class="d-flex justify-content-between align-items-center">
                         <small class="text-muted" style="font-size:0.7rem;">Başlangıç: @Model.Project?.StartDate?.ToString("dd.MM.yyyy")</small>
-                        <span class="badge bg-@Model.TimeHealthColor bg-opacity-10 text-@Model.TimeHealthColor rounded-pill" style="font-size:0.65rem;">
+                        <span class="apya-chip apya-chip-@timeHealthTone" style="font-size:0.65rem;">
                             @Model.TimeHealthLabel
                         </span>
                     </div>
@@ -130,7 +142,7 @@
                 else if (Model.Project?.EndDate.HasValue == true)
                 {
                     <div class="d-flex align-items-baseline gap-1 mb-1">
-                        <span class="fw-bold fs-4 text-dark">@Model.RemainingDays</span>
+                        <span class="fw-bold fs-4">@Model.RemainingDays</span>
                         <span class="text-muted small">Gün Kaldı</span>
                     </div>
                     <div class="progress shadow-sm mb-1" style="height:6px;border-radius:4px;">
@@ -139,7 +151,7 @@
                     </div>
                     <div class="d-flex justify-content-between">
                         <small class="text-muted" style="font-size:0.7rem;">Sürenin %@Model.TimeUsagePercent'i</small>
-                        <span class="badge bg-@Model.TimeHealthColor bg-opacity-10 text-@Model.TimeHealthColor rounded-pill" style="font-size:0.65rem;">
+                        <span class="apya-chip apya-chip-@timeHealthTone" style="font-size:0.65rem;">
                             @Model.TimeHealthLabel
                         </span>
                     </div>
@@ -161,10 +173,10 @@
                 @if (Model.Project?.TotalBudget > 0)
                 {
                     <div class="mb-1">
-                        <span class="fw-bold text-dark" style="font-size:1rem;">
+                        <span class="fw-bold apya-numeric" style="font-size:1rem;">
                             @Model.BudgetSpent.ToString("N0")
                         </span>
-                        <span class="text-muted small"> / @Model.Project?.TotalBudget.ToString("N0")</span>
+                        <span class="text-muted small apya-numeric"> / @Model.Project?.TotalBudget.ToString("N0")</span>
                     </div>
                     <div class="progress shadow-sm mb-1" style="height:6px;border-radius:4px;">
                         <div class="progress-bar @(Model.BudgetPercent > 90 ? "bg-danger" : Model.BudgetPercent > 60 ? "bg-warning" : "bg-success")"

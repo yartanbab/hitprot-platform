@@ -89,17 +89,17 @@ $(function () {
                     render: function (data, type, row) {
                         // Özel kolondaysa kolon adını göster (ortak kanban paritesi).
                         if (row.boardColumnName) {
-                            return '<span class="badge bg-primary rounded-pill px-3 py-2 shadow-sm border">' + row.boardColumnName + '</span>';
+                            return '<span class="apya-chip apya-chip-brand">' + row.boardColumnName + '</span>';
                         }
                         var map = {
-                            1: { color: 'secondary', text: 'Yapılacak' },
-                            2: { color: 'warning text-dark', text: 'Sürüyor' },
-                            3: { color: 'info', text: 'Testte' },
-                            4: { color: 'success', text: 'Tamamlandı' },
-                            0: { color: 'danger', text: 'İptal' }
+                            1: { tone: 'neutral', text: 'Yapılacak' },
+                            2: { tone: 'warning', text: 'Sürüyor' },
+                            3: { tone: 'brand',   text: 'Testte' },
+                            4: { tone: 'positive', text: 'Tamamlandı' },
+                            0: { tone: 'negative', text: 'İptal' }
                         };
-                        var s = map[data] || { color: 'secondary', text: 'Bilinmiyor' };
-                        return '<span class="badge bg-' + s.color + ' rounded-pill px-3 py-2 shadow-sm border">' + s.text + '</span>';
+                        var s = map[data] || { tone: 'neutral', text: 'Bilinmiyor' };
+                        return '<span class="apya-chip apya-chip-' + s.tone + '">' + s.text + '</span>';
                     }
                 },
                 {
@@ -107,14 +107,13 @@ $(function () {
                     data: 'priority',
                     render: function (data) {
                         var map = {
-                            1: { color: 'success', text: 'Düşük' },
-                            2: { color: 'warning text-dark', text: 'Orta' },
-                            3: { color: 'danger', text: 'Yüksek' },
-                            4: { color: 'dark', text: 'Kritik' }
+                            1: { tone: 'positive', text: 'Düşük' },
+                            2: { tone: 'warning',  text: 'Orta' },
+                            3: { tone: 'negative', text: 'Yüksek' },
+                            4: { tone: 'negative', text: 'Kritik' }
                         };
-                        var p = map[data] || { color: 'secondary', text: 'Bilinmiyor' };
-                        var baseColor = p.color.split(' ')[0];
-                        return '<span class="badge border border-' + baseColor + ' text-' + baseColor + ' rounded-pill bg-white px-2 py-1"><i class="fa fa-circle text-' + baseColor + ' me-1" style="font-size:0.6rem;"></i>' + p.text + '</span>';
+                        var p = map[data] || { tone: 'neutral', text: 'Bilinmiyor' };
+                        return '<span class="apya-chip apya-chip-' + p.tone + '"><i class="fa fa-circle me-1" style="font-size:0.5rem;"></i>' + p.text + '</span>';
                     }
                 },
                 {
@@ -130,9 +129,9 @@ $(function () {
                         if (row.status !== 4 && row.status !== 0) {
                             var dueDiff = moment(data).diff(moment(), 'hours');
                             if (dueDiff < 0) {
-                                return '<span class="badge bg-danger heartbeat-animation px-2 py-1"><i class="fa fa-exclamation-circle me-1"></i>' + moment(data).format('DD MMM YYYY') + '</span>';
+                                return '<span class="apya-chip apya-chip-negative heartbeat-animation"><i class="fa fa-exclamation-circle me-1"></i>' + moment(data).format('DD MMM YYYY') + '</span>';
                             } else if (dueDiff <= 48) {
-                                return '<span class="badge bg-warning text-dark px-2 py-1"><i class="fa fa-clock me-1"></i>' + moment(data).format('DD MMM YYYY') + '</span>';
+                                return '<span class="apya-chip apya-chip-warning"><i class="fa fa-clock me-1"></i>' + moment(data).format('DD MMM YYYY') + '</span>';
                             }
                         }
                         return '<span class="text-muted">' + moment(data).format('DD MMM YYYY') + '</span>';

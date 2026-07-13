@@ -245,7 +245,7 @@
         sugList.innerHTML = '';
         (result.suggestions || []).forEach(function (s, idx) {
             var priorityLabels = { 1: 'Düşük', 2: 'Orta', 3: 'Yüksek', 4: 'Kritik' };
-            var priorityColors = { 1: 'success', 2: 'primary', 3: 'warning', 4: 'danger' };
+            var priorityColors = { 1: 'positive', 2: 'brand', 3: 'warning', 4: 'negative' };
             var dateStr = s.suggestedDueDate ? new Date(s.suggestedDueDate).toLocaleDateString('tr-TR') : '';
 
             sugList.innerHTML += `
@@ -258,7 +258,7 @@
                         <div class="flex-grow-1">
                             <div class="d-flex justify-content-between align-items-start">
                                 <h6 class="fw-bold mb-1" style="font-size:0.9rem;">${s.title}</h6>
-                                <span class="badge bg-${priorityColors[s.suggestedPriority]} bg-opacity-15 text-${priorityColors[s.suggestedPriority]} rounded-pill" style="font-size:0.7rem;">
+                                <span class="apya-chip apya-chip-${priorityColors[s.suggestedPriority]}" style="font-size:0.7rem;">
                                     ${priorityLabels[s.suggestedPriority]}
                                 </span>
                             </div>

@@ -141,11 +141,11 @@ $(function () {
             // Zaman sagligi trafik isigi
             var healthDot = '';
             if (p.timeHealthColor === 'danger') {
-                healthDot = '<span class="badge bg-danger rounded-pill ms-1" style="font-size:0.65rem;">Kritik</span>';
+                healthDot = '<span class="apya-chip apya-chip-negative ms-1" style="font-size:0.65rem;">Kritik</span>';
             } else if (p.timeHealthColor === 'warning') {
-                healthDot = '<span class="badge bg-warning text-dark rounded-pill ms-1" style="font-size:0.65rem;">Dikkat</span>';
+                healthDot = '<span class="apya-chip apya-chip-warning ms-1" style="font-size:0.65rem;">Dikkat</span>';
             } else {
-                healthDot = '<span class="badge bg-success rounded-pill ms-1" style="font-size:0.65rem;">Saglam</span>';
+                healthDot = '<span class="apya-chip apya-chip-positive ms-1" style="font-size:0.65rem;">Saglam</span>';
             }
 
             var remainingText = p.remainingDays > 0 ? `${p.remainingDays} gun` : 'Bitis!';
@@ -183,12 +183,10 @@ $(function () {
             var hours = (p.totalSeconds / 3600).toFixed(1);
             var isOverloaded = p.isOverloaded || false;
             var borderClass = isOverloaded ? 'border-danger' : '';
-            var nameClass = isOverloaded ? 'text-danger' : 'text-dark';
-            var badgeClass = isOverloaded 
-                ? 'bg-danger bg-opacity-10 text-danger border-danger' 
-                : 'bg-primary bg-opacity-10 text-primary border-primary';
-            var overloadBadge = isOverloaded 
-                ? '<span class="badge bg-danger text-white ms-2" style="font-size:0.65rem;">Kapasite Asimi!</span>' 
+            var nameClass = isOverloaded ? 'text-danger' : '';
+            var chipTone = isOverloaded ? 'negative' : 'brand';
+            var overloadBadge = isOverloaded
+                ? '<span class="apya-chip apya-chip-negative ms-2" style="font-size:0.65rem;">Kapasite Asimi!</span>'
                 : '';
 
             list.append(`
@@ -202,7 +200,7 @@ $(function () {
                             <small class="text-muted"><i class="fa fa-tasks me-1"></i>${p.taskCount} Gorevde Calisti</small>
                         </div>
                     </div>
-                    <div class="badge ${badgeClass} border rounded-pill px-3 py-2 fs-6">
+                    <div class="apya-chip apya-chip-${chipTone}" style="font-size:0.85rem;">
                         ${hours} Saat
                     </div>
                 </div>
@@ -227,7 +225,7 @@ $(function () {
             var profit = t.profit || (t.totalBudget - t.totalSpent);
             var roiPercent = t.roiPercent || (t.totalBudget > 0 ? (profit / t.totalBudget * 100) : 0);
             var profitClass = profit >= 0 ? 'text-success' : 'text-danger';
-            var roiClass = roiPercent >= 0 ? 'bg-success' : 'bg-danger';
+            var roiTone = roiPercent >= 0 ? 'positive' : 'negative';
             var hours = (t.totalHours || 0).toFixed(1);
 
             body.append(`
@@ -236,13 +234,13 @@ $(function () {
                         <i class="fa fa-building text-info me-2"></i>${t.tenantName}
                     </td>
                     <td class="text-center">
-                        <span class="badge bg-primary bg-opacity-10 text-primary rounded-pill px-3">${t.projectCount}</span>
+                        <span class="apya-chip apya-chip-brand">${t.projectCount}</span>
                     </td>
                     <td class="text-muted">${t.totalBudget.toLocaleString('tr-TR')} \u20BA</td>
                     <td class="text-dark fw-bold">${t.totalSpent.toLocaleString('tr-TR')} \u20BA</td>
                     <td class="fw-bold ${profitClass}">${profit.toLocaleString('tr-TR')} \u20BA</td>
                     <td class="text-center">
-                        <span class="badge ${roiClass} bg-opacity-15 ${profitClass} rounded-pill px-3 py-1">
+                        <span class="apya-chip apya-chip-${roiTone}">
                             %${roiPercent.toFixed(1)}
                         </span>
                     </td>
