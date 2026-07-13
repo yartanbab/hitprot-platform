@@ -48,8 +48,8 @@ $(function () {
                 data: 'isActive',
                 render: function (data) {
                     return data
-                        ? '<span class="badge bg-success">Aktif</span>'
-                        : '<span class="badge bg-secondary">Pasif</span>';
+                        ? '<span class="apya-chip apya-chip-positive">Aktif</span>'
+                        : '<span class="apya-chip apya-chip-neutral">Pasif</span>';
                 }
             },
             { title: 'Kasa Adı',        data: 'name' },
@@ -131,8 +131,8 @@ $(function () {
                     title: 'Yön', data: 'direction',
                     render: function (d) {
                         return d === 0
-                            ? '<span class="badge bg-success">Giriş</span>'
-                            : '<span class="badge bg-danger">Çıkış</span>';
+                            ? '<span class="apya-chip apya-chip-positive">Giriş</span>'
+                            : '<span class="apya-chip apya-chip-negative">Çıkış</span>';
                     }
                 },
                 { title: 'Tutar',    data: 'amount',      render: function (d) { return fmt(d); } },

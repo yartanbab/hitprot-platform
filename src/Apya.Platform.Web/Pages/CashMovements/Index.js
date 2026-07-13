@@ -50,8 +50,8 @@ $(function () {
                 title: 'Yön', data: 'direction',
                 render: function (d) {
                     return d === 0
-                        ? '<span class="badge bg-success">Giriş</span>'
-                        : '<span class="badge bg-danger">Çıkış</span>';
+                        ? '<span class="apya-chip apya-chip-positive">Giriş</span>'
+                        : '<span class="apya-chip apya-chip-negative">Çıkış</span>';
                 }
             },
             { title: 'Tutar', data: 'amount', render: function (d) { return fmt(d); } },

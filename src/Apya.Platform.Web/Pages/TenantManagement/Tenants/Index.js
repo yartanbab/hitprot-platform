@@ -88,9 +88,9 @@ $(function () {
                 data: "isActive",
                 render: function (data) {
                     if (data) {
-                        return '<span class="badge bg-success"><i class="fa fa-circle"></i> Aktif</span>';
+                        return '<span class="apya-chip apya-chip-positive"><i class="fa fa-circle"></i> Aktif</span>';
                     } else {
-                        return '<span class="badge bg-secondary"><i class="fa fa-circle"></i> Pasif</span>';
+                        return '<span class="apya-chip apya-chip-neutral"><i class="fa fa-circle"></i> Pasif</span>';
                     }
                 }
             },

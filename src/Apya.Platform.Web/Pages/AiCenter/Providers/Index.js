@@ -62,8 +62,8 @@ $(function () {
                     data: 'hasApiKey',
                     render: function (data) {
                         return data
-                            ? '<span class="badge bg-success">Tanımlı</span>'
-                            : '<span class="badge bg-warning text-dark">Eksik</span>';
+                            ? '<span class="apya-chip apya-chip-positive">Tanımlı</span>'
+                            : '<span class="apya-chip apya-chip-warning">Eksik</span>';
                     }
                 },
                 {
@@ -78,8 +78,8 @@ $(function () {
                     data: 'isEnabled',
                     render: function (data) {
                         return data
-                            ? '<span class="badge bg-success">Aktif</span>'
-                            : '<span class="badge bg-secondary">Pasif</span>';
+                            ? '<span class="apya-chip apya-chip-positive">Aktif</span>'
+                            : '<span class="apya-chip apya-chip-neutral">Pasif</span>';
                     }
                 }
             ]

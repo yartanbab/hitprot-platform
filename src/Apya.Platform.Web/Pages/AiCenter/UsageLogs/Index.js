@@ -11,10 +11,10 @@ $(function () {
 
     var statusBadge = function (s) {
         switch (s) {
-            case 0: return '<span class="badge bg-warning text-dark">Bekliyor</span>';
-            case 1: return '<span class="badge bg-info">İşleniyor</span>';
-            case 2: return '<span class="badge bg-success">Tamamlandı</span>';
-            case 3: return '<span class="badge bg-danger">Başarısız</span>';
+            case 0: return '<span class="apya-chip apya-chip-warning">Bekliyor</span>';
+            case 1: return '<span class="apya-chip apya-chip-brand">İşleniyor</span>';
+            case 2: return '<span class="apya-chip apya-chip-positive">Tamamlandı</span>';
+            case 3: return '<span class="apya-chip apya-chip-negative">Başarısız</span>';
             default: return s;
         }
     };

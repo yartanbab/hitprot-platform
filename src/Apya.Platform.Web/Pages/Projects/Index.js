@@ -60,8 +60,8 @@ $(function () {
                     data: 'isApproved',
                     render: function (data) {
                         return data
-                            ? '<span class="badge bg-success">Onaylı</span>'
-                            : '<span class="badge bg-secondary">Taslak</span>';
+                            ? '<span class="apya-chip apya-chip-positive">Onaylı</span>'
+                            : '<span class="apya-chip apya-chip-neutral">Taslak</span>';
                     }
                 },
                 {
