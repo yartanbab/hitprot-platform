@@ -1,13 +1,19 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Volo.Abp.AspNetCore.Mvc.UI.RazorPages;
 using Apya.Platform.CashAccounts;
+using Apya.Platform.Permissions;
 
 namespace Apya.Platform.Web.Pages.CashMovements;
 
+// OnGetAsync, izin gerektiren ICashAccountAppService.GetListAsync'i çağırıyor.
+// Page-level [Authorize] olmadan yetkisiz/anonim istek (dev'de) 500'e düşüyordu;
+// bununla auth middleware'de temiz 302 (login) / 403 döner.
+[Authorize(PlatformPermissions.CashMovements.Default)]
 public class IndexModel : AbpPageModel
 {
     private readonly ICashAccountAppService _cashAccountAppService;
