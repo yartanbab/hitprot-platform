@@ -5,21 +5,17 @@
 }
 
 <style>
-    /* Professional Calendar Page Layout */
-    .calendar-card { border-radius: 12px; border: 1px solid #eee; background: #fff; transition: transform 0.2s, box-shadow 0.2s; padding: 25px; margin-bottom: 25px; display: flex; align-items: center; justify-content: space-between; }
-    .calendar-card:hover { transform: translateY(-3px); box-shadow: 0 10px 25px rgba(0,0,0,0.05); }
-    
+    /* Calendar Integration kartları — token-driven (light+dark). */
+    .calendar-card { border-radius: var(--apya-radius-xl); border: 1px solid var(--apya-border-default); background: var(--apya-surface-base); box-shadow: var(--apya-shadow-sm); transition: transform var(--apya-motion-base) ease, box-shadow var(--apya-motion-base) ease; padding: 25px; margin-bottom: 25px; display: flex; align-items: center; justify-content: space-between; }
+    .calendar-card:hover { transform: translateY(-3px); box-shadow: var(--apya-shadow-md); }
+
     .provider-info { display: flex; align-items: center; }
-    .provider-logo { width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; border-radius: 10px; margin-right: 20px; font-size: 1.5rem; color: #fff; }
-    .logo-google { background: #ea4335; } 
+    .provider-logo { width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; border-radius: var(--apya-radius-lg); margin-right: 20px; font-size: 1.5rem; color: #fff; }
+    .logo-google { background: #ea4335; }
     .logo-outlook { background: #0078d4; }
-    
-    .status-badge { font-size: 0.75rem; padding: 4px 10px; border-radius: 20px; margin-top: 5px; display: inline-block; }
-    .status-linked { background: #e6ffec; color: #008a1d; border: 1px solid #008a1d33; }
-    .status-unlinked { background: #f8f9fa; color: #6c757d; border: 1px solid #dee2e6; }
-    
-    .connected-email { font-size: 0.9rem; color: #6c757d; margin-top: 4px; }
-    .provider-name { font-weight: 700; font-size: 1.15rem; color: #343a40; margin-bottom: 0; }
+
+    .connected-email { font-size: 0.9rem; color: var(--apya-text-secondary); margin-top: 4px; }
+    .provider-name { font-weight: 700; font-size: 1.15rem; color: var(--apya-text-primary); margin-bottom: 0; }
 </style>
 
 <div class="apya-page--narrow py-4">
@@ -41,7 +37,7 @@
                         <div>
                             <h5 class="provider-name">Google Calendar</h5>
                             <div class="status-area">
-                                <span class="status-badge status-unlinked">Bağlı Değil</span>
+                                <span class="apya-chip apya-chip-neutral">Bağlı Değil</span>
                             </div>
                         </div>
                     </div>
@@ -61,7 +57,7 @@
                         <div>
                             <h5 class="provider-name">Microsoft Outlook</h5>
                             <div class="status-area">
-                                <span class="status-badge status-unlinked">Bağlı Değil</span>
+                                <span class="apya-chip apya-chip-neutral">Bağlı Değil</span>
                             </div>
                         </div>
                     </div>
