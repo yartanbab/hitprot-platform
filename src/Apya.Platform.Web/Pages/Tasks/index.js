@@ -93,16 +93,16 @@ $(function () {
                 render: function (data, type, row) {
                     // Özel kolondaysa kolon adını göster (ortak kanban paritesi).
                     if (row.boardColumnName) {
-                        return '<span class="badge bg-primary">' + row.boardColumnName + '</span>';
+                        return '<span class="apya-chip apya-chip-brand">' + row.boardColumnName + '</span>';
                     }
                     var map = {
-                        1: { color: 'secondary',       text: 'Bekliyor'   },
-                        2: { color: 'warning text-dark', text: 'Sürüyor'  },
-                        3: { color: 'info',            text: 'Testte'      },
-                        4: { color: 'success',         text: 'Tamamlandı'  }
+                        1: { tone: 'neutral', text: 'Bekliyor'   },
+                        2: { tone: 'warning', text: 'Sürüyor'  },
+                        3: { tone: 'brand',   text: 'Testte'      },
+                        4: { tone: 'positive', text: 'Tamamlandı'  }
                     };
                     var s = map[data] || map[0];
-                    return '<span class="badge bg-' + s.color + '">' + s.text + '</span>';
+                    return '<span class="apya-chip apya-chip-' + s.tone + '">' + s.text + '</span>';
                 }
             },
             {
@@ -110,12 +110,12 @@ $(function () {
                 data: 'priority',
                 render: function (data) {
                     var map = {
-                        0: { color: 'success',          text: 'Düşük'  },
-                        1: { color: 'warning text-dark', text: 'Normal' },
-                        2: { color: 'danger',           text: 'Yüksek' }
+                        0: { tone: 'positive', text: 'Düşük'  },
+                        1: { tone: 'warning',  text: 'Normal' },
+                        2: { tone: 'negative', text: 'Yüksek' }
                     };
                     var p = map[data] || map[0];
-                    return '<span class="badge bg-' + p.color + '">' + p.text + '</span>';
+                    return '<span class="apya-chip apya-chip-' + p.tone + '">' + p.text + '</span>';
                 }
             },
             {
@@ -126,9 +126,9 @@ $(function () {
                     if (row.status !== 4 && row.status !== 0) {
                         var dueDiff = moment(data).diff(moment(), 'hours');
                         if (dueDiff < 0) {
-                            return '<span class="badge bg-danger heartbeat-animation px-2 py-1"><i class="fa fa-exclamation-circle me-1"></i>' + moment(data).format('DD MMM YYYY') + '</span>';
+                            return '<span class="apya-chip apya-chip-negative heartbeat-animation"><i class="fa fa-exclamation-circle me-1"></i>' + moment(data).format('DD MMM YYYY') + '</span>';
                         } else if (dueDiff <= 48) {
-                            return '<span class="badge bg-warning text-dark px-2 py-1"><i class="fa fa-clock me-1"></i>' + moment(data).format('DD MMM YYYY') + '</span>';
+                            return '<span class="apya-chip apya-chip-warning"><i class="fa fa-clock me-1"></i>' + moment(data).format('DD MMM YYYY') + '</span>';
                         }
                     }
                     return '<span class="text-muted">' + moment(data).format('DD MMM YYYY') + '</span>';

@@ -108,10 +108,10 @@
 
                             <strong class="@(sub.Status == Apya.Platform.Tasks.TaskStatus.Done ? "text-decoration-line-through text-muted" : "")">@sub.Title</strong>
 
-                            <span class="badge bg-secondary-subtle text-secondary-emphasis ms-2">@sub.Status</span>
+                            <span class="apya-chip apya-chip-neutral ms-2">@sub.Status</span>
                             @if(!string.IsNullOrEmpty(sub.AssigneeName))
                                     {
-                            <span class="badge bg-info-subtle text-info-emphasis ms-1"><i class="fa fa-user"></i> @sub.AssigneeName</span>
+                            <span class="apya-chip apya-chip-brand ms-1"><i class="fa fa-user"></i> @sub.AssigneeName</span>
                                     }
                         </div>
                         <div class="btn-group shadow-sm" role="group">
@@ -327,7 +327,7 @@
                         {
                             var predTask = Model.ProjectTasks.FirstOrDefault(t => t.Id == predId);
                             var predTitle = predTask?.Title ?? predId.ToString()[..8] + "…";
-                            <span class="badge bg-primary-subtle text-primary-emphasis p-2 fs-6 pred-badge d-flex align-items-center gap-1" data-pred-id="@predId">
+                            <span class="apya-chip apya-chip-brand p-2 fs-6 pred-badge d-flex align-items-center gap-1" data-pred-id="@predId">
                                 <i class="fa fa-arrow-right me-1"></i> @predTitle
                                 <button type="button" class="btn-close btn-remove-pred ms-1"
                                         data-pred-id="@predId" style="font-size: 0.6em;" aria-label="Kaldır"></button>
@@ -399,7 +399,7 @@
                         '<div>' +
                             '<i class="fa fa-circle-o text-secondary me-2"></i>' +
                             '<strong class="js-subtask-title"></strong>' +
-                            '<span class="badge bg-warning-subtle text-warning-emphasis ms-2">Yeni</span>' +
+                            '<span class="apya-chip apya-chip-warning ms-2">Yeni</span>' +
                         '</div>' +
                         '<div class="btn-group shadow-sm" role="group">' +
                             '<button type="button" class="btn btn-sm btn-light border edit-subtask-btn" data-id="' + newId + '" title="Düzenle"><i class="fa fa-edit text-primary"></i></button>' +
@@ -609,7 +609,7 @@
                 if (result.success) {
                     abp.notify.success('Dosya yüklendi!');
                     $('.no-file-text').remove();
-                    $('#FileList').prepend('<li class="list-group-item d-flex justify-content-between align-items-center bg-light border-info mb-2 rounded-3"><div><i class="fa fa-file-alt text-info fs-4 me-3"></i><a href="/file/get/' + result.storedFileName + '" target="_blank" class="text-decoration-none fw-bold fs-6">' + file.name + '</a><small class="text-muted ms-3">Şimdi yüklendi</small></div><span class="badge bg-success-subtle text-success-emphasis">Yeni</span></li>');
+                    $('#FileList').prepend('<li class="list-group-item d-flex justify-content-between align-items-center bg-light border-info mb-2 rounded-3"><div><i class="fa fa-file-alt text-info fs-4 me-3"></i><a href="/file/get/' + result.storedFileName + '" target="_blank" class="text-decoration-none fw-bold fs-6">' + file.name + '</a><small class="text-muted ms-3">Şimdi yüklendi</small></div><span class="apya-chip apya-chip-positive">Yeni</span></li>');
                     fileInput.value = '';
                 } else {
                     abp.notify.error('Dosya yüklenirken hata oluştu: ' + result.error);
@@ -784,7 +784,7 @@
             var rows = logs.map(function (l) {
                 var dur = l.secondsSpent ? fmtSec(l.secondsSpent) : '—';
                 var start = luxon.DateTime.fromISO(l.startTime).toFormat('dd.MM.yyyy HH:mm');
-                var end   = l.endTime ? luxon.DateTime.fromISO(l.endTime).toFormat('HH:mm') : '<span class="badge bg-success-subtle text-success-emphasis">Aktif</span>';
+                var end   = l.endTime ? luxon.DateTime.fromISO(l.endTime).toFormat('HH:mm') : '<span class="apya-chip apya-chip-positive">Aktif</span>';
                 return '<tr><td>' + start + '</td><td>' + end + '</td><td>' + dur + '</td><td>' + (l.userName || '—') + '</td><td class="text-muted small">' + (l.note || '') + '</td></tr>';
             }).join('');
             $container.html(
@@ -816,7 +816,7 @@
 
         $('#NoPredecessorsMsg_@Model.Id').remove();
         $('#PredecessorBadges_@Model.Id').append(
-            '<span class="badge bg-primary-subtle text-primary-emphasis p-2 fs-6 pred-badge d-flex align-items-center gap-1" data-pred-id="' + predId + '">' +
+            '<span class="apya-chip apya-chip-brand p-2 fs-6 pred-badge d-flex align-items-center gap-1" data-pred-id="' + predId + '">' +
                 '<i class="fa fa-arrow-right me-1"></i> ' + predTitle +
                 '<button type="button" class="btn-close btn-remove-pred ms-1" data-pred-id="' + predId + '" style="font-size:0.6em;" aria-label="Kaldır"></button>' +
             '</span>'
