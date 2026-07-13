@@ -1,6 +1,6 @@
 # Apya Design System — İmplementasyon Referansı
 
-> **Durum:** 2026-07-12 · dal `claude/resdes-6db9c8` (taban: `redesign` = #91/`30a0086`) · P0–P2 tamam, P3 sürüyor.
+> **Durum:** 2026-07-13 · dal `claude/resdes-6db9c8` (taban: `redesign` = #91/`30a0086`) · P0–P2 tamam + canlı doğrulandı; P3 ana ekranlar + proje-geneli badge taraması tamam ama **statik doğrulamalı** (kullanıcı Chrome bağlantısı 2026-07-12 gecesinden beri kopuk — görsel QA bekliyor).
 > **Kaynak spec:** [HANDOFF.md](HANDOFF.md) (Claude Design). Bu doküman spec'in **koddaki karşılığını** anlatır:
 > hangi token nerede tanımlı, hangi katman neyi ezer, yeni bir ekran hi-fi'ye nasıl çekilir.
 
@@ -178,13 +178,15 @@ Bootstrap/LeptonX'i token'lara bağlar; **yalnız renk/görünüm** (layout Lept
 
 | Gap | Not / plan |
 |---|---|
-| Phosphor ikonları | Bilinçli erteleme — app FontAwesome kullanıyor, HANDOFF eşleştirmeye izin veriyor. Gerekirse P3 sonunda değerlendir. |
+| **Görsel QA (P3 sonuçları)** | **En yüksek öncelik.** 2026-07-12 gecesinden beri (kullanıcı Chrome bağlantısı koptu) yapılan tüm P3 chip/mono migrasyonu + Dashboard build-infra fix'i yalnız statik doğrulamalı (build+grep+HTTP smoke). Tarayıcıda gözden geçirilmeli. |
+| `.apya-chip` badge migrasyonu | ✅ TAMAMLANDI — proje genelinde (`Pages/`) solid `badge bg-*` + `-subtle/-emphasis` kalıntısı grep ile sıfırlandı (~35 dosya, P3g). Yeni kod bu deseni bozarsa (Bootstrap badge geri gelirse) migrate et. |
+| Phosphor ikonları | Bilinçli erteleme — app FontAwesome kullanıyor, HANDOFF eşleştirmeye izin veriyor. |
 | Sidebar collapse 248/64px + logo PLATFORM rozeti | P1 cilası, bekliyor. |
-| Density switch UI | Altyapı hazır (`data-density`); kullanıcı switch'i ilk tablo-yoğun P3 ekranıyla. |
-| Drawer (görev detay, apyaSlide) ortak bileşeni | Tasks ekranı P3'ünde çıkarılacak. |
-| chart.js ortak tema helper'ı (dark rebuild dahil) | İlk grafik ekranında (Dashboard/Finans) çıkarılacak. |
-| Razor ekranlarının `bg-{color}` badge→`.apya-chip` migrasyonu | Ekran ekran, ilgili P3 PR'ında. |
-| P3 ekran sırası | Faturalar/Görevler tablosu → master-detail (Cariler/Prompt/Rol/Workflow) → Kanban → Takvim → Finans Hub → kalanlar. |
-| Dashboard kalan cila | Bütçe Sağlığı / Onay Bekleyenler iç detayları (küçük). |
-| SignalR negotiate 405 | **Redesign dışı** ön-var backend bug'ı; ayrı görev flag'lendi. |
-| Mobil (`apya-mobile`, ayrı repo) | Web foundation tamam → framework kararı (RN/Expo vs native vs MAUI) verilince başlar; aynı token sistemi taşınır. |
+| Density switch UI | Altyapı hazır (`data-density`); kullanıcı switch'i ilk tablo-yoğun ekranla. |
+| Drawer (görev detay, apyaSlide) ortak bileşeni | Tasks EditModal zaten chip/tone almış ama gerçek slide-drawer bileşeni çıkarılmadı. |
+| chart.js ortak tema helper'ı (dark rebuild dahil) | Henüz çıkarılmadı; ilk grafik-ağırlıklı ekranda yapılacak. |
+| **Cariler/Prompt/Rol/Workflow gerçek master-detail** | HANDOFF "sol liste+sağ panel" istiyor; mevcut `customers.jsx` düz tablo. Split-panel = mimari değişiklik (seçim state + yeni UI), **görsel QA dönene kadar bilinçli ertelendi.** |
+| `/Calendars` aylık-grid takvimi | Mevcut `/Calendars` = OAuth bağlantı ayarları (#86), HANDOFF'un istediği grid-takvim **hiç yok** — yeni özellik, redesign kapsamı dışı. |
+| Sıradaki P3 ekranları (henüz taranmadı) | Hibeler (Grants), Dokümanlar (Documents), Form Oluşturucu (DynamicAssets/Forms), Ayarlar/TenantManagement/AiSettings — P3g yalnız MEVCUT badge kalıntılarını taradı, bu ekranların kendi layout/kart cilası ayrı iş. |
+| **[Ayrı flag'lenen bug'lar — redesign dışı, task olarak kayıtlı]** | `/Calendars` index.js hiç yok (404, buton işlevsiz) · CashAccounts/CashMovements/Webhooks yetkisiz istekte HTTP 500 (graceful olmalı) · Dashboard SignalR negotiate 405. |
+| Mobil (`apya-mobile`, ayrı repo) | Web foundation tamam → framework kararı verilince başlar; aynı token sistemi taşınır. |
