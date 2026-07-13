@@ -47,6 +47,7 @@ $(function () {
                 {
                     title: 'Maks. Tutar',
                     data: 'maxAmount',
+                    className: 'apya-numeric',
                     render: function (data) {
                         return data != null ? data.toLocaleString() + ' ₺' : '—';
                     }
