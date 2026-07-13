@@ -26,8 +26,8 @@ $(function () {
                     data: "direction",
                     render: function (data) {
                         return data === 1
-                            ? '<span class="badge bg-warning text-dark">Alış</span>'
-                            : '<span class="badge bg-primary">Satış</span>';
+                            ? '<span class="apya-chip apya-chip-warning">Alış</span>'
+                            : '<span class="apya-chip apya-chip-brand">Satış</span>';
                     }
                 },
                 {
@@ -58,6 +58,7 @@ $(function () {
                 {
                     title: 'Toplam Tutar',
                     data: "totalAmount",
+                    className: 'apya-numeric',
                     render: function (data, type, row) {
                         return data.toLocaleString();
                     }
@@ -65,6 +66,7 @@ $(function () {
                 {
                     title: 'Ödenen',
                     data: "paidAmount",
+                    className: 'apya-numeric',
                     render: function (data, type, row) {
                         return data.toLocaleString();
                     }
@@ -74,14 +76,14 @@ $(function () {
                     data: "status",
                     render: function (data) {
                         var map = {
-                            0: { text: 'Taslak', class: 'bg-secondary' },
-                            1: { text: 'Gönderildi', class: 'bg-info' },
-                            2: { text: 'Ödendi', class: 'bg-success' },
-                            3: { text: 'İptal', class: 'bg-danger' },
-                            4: { text: 'Gecikmiş', class: 'bg-dark' }
+                            0: { text: 'Taslak', tone: 'neutral' },
+                            1: { text: 'Gönderildi', tone: 'brand' },
+                            2: { text: 'Ödendi', tone: 'positive' },
+                            3: { text: 'İptal', tone: 'negative' },
+                            4: { text: 'Gecikmiş', tone: 'negative' }
                         };
                         var s = map[data] || map[0];
-                        return `<span class="badge ${s.class}">${s.text}</span>`;
+                        return `<span class="apya-chip apya-chip-${s.tone}">${s.text}</span>`;
                     }
                 },
                 {
