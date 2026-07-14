@@ -1,0 +1,10 @@
+@model Apya.Platform.Web.Components.TenantBadge.TenantBadgeViewModel
+@* FOUC önleme: dark-mode.js sidebar logo altına taşıyana kadar gizli. *@
+<div id="apya-tenant-badge" class="apya-tenant-badge" style="display:none">
+    <span class="apya-tenant-badge-name">@Model.TenantName</span>
+    @if (Model.TenantCount.HasValue)
+    {
+        <span class="apya-tenant-badge-sep">&middot;</span>
+        <span class="apya-tenant-badge-count">@Model.TenantCount tenant</span>
+    }
+</div>

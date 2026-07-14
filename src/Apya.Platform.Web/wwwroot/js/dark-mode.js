@@ -30,6 +30,16 @@ $(function () {
         }
     }
 
+    // Tenant rozeti: Body.First hook'unda gizli render edilir (TenantBadgeViewComponent),
+    // sidebar logo altına taşınıp gösterilir — LeptonX'in derlenmiş sidebar partial'ını
+    // override etmek yerine yukarıdaki breadcrumb-injection ile aynı yaklaşım.
+    var tenantBadge = document.getElementById('apya-tenant-badge');
+    var logoContainer = document.querySelector('#lpx-sidebar .lpx-logo-container');
+    if (tenantBadge && logoContainer) {
+        logoContainer.insertAdjacentElement('afterend', tenantBadge);
+        tenantBadge.style.display = '';
+    }
+
     // Toggle header toolbar'ında gelir; yoksa (toolbar'sız layout) fallback floating.
     if ($('#ThemeToggle').length === 0) {
         $('body').append(

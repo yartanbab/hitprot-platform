@@ -134,6 +134,7 @@ public class PlatformWebModule : AbpModule
         Configure<Volo.Abp.Ui.LayoutHooks.AbpLayoutHookOptions>(options =>
         {
             options.Add(Volo.Abp.Ui.LayoutHooks.LayoutHooks.Body.First, typeof(Apya.Platform.Web.Components.ImpersonationAlert.ImpersonationAlertViewComponent));
+            options.Add(Volo.Abp.Ui.LayoutHooks.LayoutHooks.Body.First, typeof(Apya.Platform.Web.Components.TenantBadge.TenantBadgeViewComponent));
             options.Add(Volo.Abp.Ui.LayoutHooks.LayoutHooks.Head.Last, typeof(Apya.Platform.Web.Components.ApyaThemeHead.ApyaThemeHeadViewComponent));
         });
 
