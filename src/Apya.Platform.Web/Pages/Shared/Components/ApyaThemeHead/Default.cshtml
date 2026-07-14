@@ -34,6 +34,14 @@
             var density = 'cozy';
             try { density = localStorage.getItem('apya-density') || 'cozy'; } catch (e) { }
             html.setAttribute('data-density', density);
+
+            // Sidebar daraltma — anahtar LeptonX'in KENDİSİNİN yazdığı 'lpx:side-menu-state'
+            // ('1' = daraltılmış). Tema tıklamada kaydeder ama yüklemede geri UYGULAMAZ
+            // (Lite gap) → pre-paint burada attribute'la uygulanır; class senkronu
+            // sidebar-toggle.js'te. CSS: apya-theme-bridge.css "SIDEBAR COLLAPSE" bölümü.
+            var side = null;
+            try { side = localStorage.getItem('lpx:side-menu-state'); } catch (e) { }
+            if (side === '1' && !isAuthPage) { html.setAttribute('data-sidebar', 'collapsed'); }
         } catch (e) { /* sessizce devam */ }
     })();
 </script>

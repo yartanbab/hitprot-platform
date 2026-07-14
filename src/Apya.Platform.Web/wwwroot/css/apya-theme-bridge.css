@@ -509,6 +509,130 @@ html, body {
     padding-left: 38px !important;
 }
 
+/* ============================================================================
+   P4 · SIDEBAR COLLAPSE — 72px ikon rayı (LeptonX yerleşik mekanizması + kalıcılık)
+   Tema .menu-collapse-icon tıklamasında #lpx-wrapper'a .hover-trigger verir ve
+   'lpx:side-menu-state' yazar ama sayfa yüklemede geri UYGULAMAZ (Lite gap).
+   SoT: <html data-sidebar="collapsed"> — ApyaThemeHead FOUC'u pre-paint çözer,
+   sidebar-toggle.js class ↔ attribute senkronlar. Aşağıdaki geometri, temanın
+   class-tabanlı kurallarının attribute-anahtarlı KOPYASIDIR: JS yüklenmeden
+   önceki pencerede de rail FOUC'suz çizilsin diye. Hover'da 280px'e overlay
+   genişleme temadan miras (max-width base kuralı). 768–1199px arası tema zaten
+   otomatik rail uygular; o aralığın kozmetiği bölüm sonunda tekrarlanır.
+   ============================================================================ */
+@media (min-width: 1200px) {
+    html[data-sidebar="collapsed"] .lpx-sidebar-container {
+        transition: box-shadow 0.25s;
+    }
+    html[data-sidebar="collapsed"] .lpx-sidebar-container:not(:hover) {
+        min-width: 72px;
+        max-width: 72px;
+        /* Dikey scrollbar (16px) client genişliğini 56'ya düşürüp nav'ı -8px
+           kaydırıyordu → rail'de scroll gizli; hover'da genişleyince geri gelir. */
+        overflow-y: hidden;
+    }
+    html[data-sidebar="collapsed"] .lpx-sidebar-container:not(:hover) .lpx-nav {
+        min-width: 72px;
+    }
+    html[data-sidebar="collapsed"] .lpx-sidebar-container:not(:hover) .lpx-logo-container {
+        width: 72px;
+    }
+    html[data-sidebar="collapsed"] .lpx-sidebar-container:not(:hover) .lpx-brand-logo {
+        background-image: var(--lpx-logo-icon);
+    }
+    html[data-sidebar="collapsed"] .lpx-sidebar-container:not(:hover) .lpx-brand-name,
+    html[data-sidebar="collapsed"] .lpx-sidebar-container:not(:hover) .hidden-in-hover-trigger {
+        display: none;
+    }
+    html[data-sidebar="collapsed"] .lpx-sidebar-container:hover {
+        box-shadow: var(--apya-shadow-lg);
+    }
+    html[data-sidebar="collapsed"] .lpx-content-container {
+        margin-left: 72px;
+    }
+    html[data-sidebar="collapsed"] .lpx-footbar-container {
+        left: 72px;
+    }
+
+    /* Rail kozmetiği: yaprak ikon ortalanır (22px sol padding rail'de taşırıyor;
+       native rail anchor'a sabit width verdiğinden width:auto şart) */
+    html[data-sidebar="collapsed"] .lpx-sidebar-container:not(:hover) #lpx-sidebar a.lpx-menu-item-link {
+        justify-content: center;
+        width: auto !important;
+        margin: 1px 8px !important;
+        padding: 0 !important;
+        min-height: 36px;
+    }
+    /* İkonun metin-boşluğu marjini merkezlemeyi 4px kaydırıyor → sıfırla */
+    html[data-sidebar="collapsed"] .lpx-sidebar-container:not(:hover) #lpx-sidebar a.lpx-menu-item-link .lpx-menu-item-icon {
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+    /* Rail kozmetiği: bölüm başlığı (metni tema gizler) → ince ayraç çizgisi */
+    html[data-sidebar="collapsed"] .lpx-sidebar-container:not(:hover) #lpx-sidebar li.outer-menu-item:has(> ul.lpx-inner-menu) > a.lpx-menu-item-link {
+        width: auto !important;
+        padding: 0 !important;
+        margin: 10px 24px !important;
+        min-height: 0 !important;
+        height: 1px;
+        background: var(--apya-border-default) !important;
+    }
+}
+
+/* 768–1199px: temanın OTOMATİK rail'i için aynı kozmetik (attribute'suz) */
+@media (min-width: 768px) and (max-width: 1199.98px) {
+    .lpx-sidebar-container:not(:hover) {
+        overflow-y: hidden;
+    }
+    .lpx-sidebar-container:not(:hover) #lpx-sidebar a.lpx-menu-item-link {
+        justify-content: center;
+        width: auto !important;
+        margin: 1px 8px !important;
+        padding: 0 !important;
+        min-height: 36px;
+    }
+    .lpx-sidebar-container:not(:hover) #lpx-sidebar a.lpx-menu-item-link .lpx-menu-item-icon {
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+    .lpx-sidebar-container:not(:hover) #lpx-sidebar li.outer-menu-item:has(> ul.lpx-inner-menu) > a.lpx-menu-item-link {
+        width: auto !important;
+        padding: 0 !important;
+        margin: 10px 24px !important;
+        min-height: 0 !important;
+        height: 1px;
+        background: var(--apya-border-default) !important;
+    }
+}
+
+/* --- Daralt/genişlet butonu (temanın .menu-collapse-icon'u): 'bi' ikon fontu
+   yüklenmiyor (glyph görünmezdi) → FontAwesome chevron ile değiştir + hit alanı. --- */
+#lpx-sidebar .menu-collapse-icon {
+    font-family: 'Font Awesome 6 Free';
+    font-weight: 900;
+    font-style: normal;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    border-radius: var(--apya-radius-md);
+    color: var(--apya-text-tertiary);
+    cursor: pointer;
+    transition: color var(--apya-motion-fast) ease, background var(--apya-motion-fast) ease;
+}
+#lpx-sidebar .menu-collapse-icon:hover {
+    color: var(--apya-text-primary);
+    background: var(--apya-border-subtle);
+}
+#lpx-sidebar .menu-collapse-icon::before {
+    content: '\f053'; /* chevron-left → "daralt" */
+}
+html[data-sidebar="collapsed"] #lpx-sidebar .menu-collapse-icon::before {
+    content: '\f054'; /* chevron-right → "genişlet" */
+}
+
 /* --- Header topbar: 57px + token zemin + alt kenarlık (her iki tema) --- */
 .lpx-topbar {
     min-height: 57px;

@@ -270,6 +270,7 @@ public class PlatformWebModule : AbpModule
                     bundle.AddFiles("/js/jquery-fix.js");
                     bundle.AddFiles("/Pages/Notifications/notification-bell.js");
                     bundle.AddFiles("/js/dark-mode.js");
+                    bundle.AddFiles("/js/sidebar-toggle.js");
                     bundle.AddFiles("/js/command-palette.js");
                     bundle.AddFiles("/js/ai-hub-client.js");
                     bundle.AddFiles("/js/ajax-error-detail.js");
