@@ -14,29 +14,38 @@
  *   - Mobile'da 1-col stack, drag/resize KAPALI (küçük ekranda anlamsız).
  */
 
-/* ===== CFO / Finansman persona ===== */
+/* ===== CFO / Finansman persona =====
+ * kpi-strip + income-expense: prototip uyumu (HANDOFF §Dashboard "4 KPI
+ * kartı" + "Gelir/Gider grouped bar") eklendi (P4 hibrit karar — persona
+ * switcher korunur, YALNIZ CFO görünümüne prototip widget'ları eklenir). */
 const cfoLayout = {
     desktop: [
-        { i: 'budget-health',     x: 0, y: 0, w: 6, h: 4, minW: 4, minH: 3 },
-        { i: 'cash-flow',         x: 6, y: 0, w: 6, h: 2, minW: 4, minH: 2 },
-        { i: 'risk-alerts',       x: 6, y: 2, w: 6, h: 4, minW: 4, minH: 3 },
-        { i: 'pending-approvals', x: 0, y: 4, w: 6, h: 4, minW: 4, minH: 3 },
+        { i: 'kpi-strip',         x: 0, y: 0,  w: 12, h: 2, minW: 8, minH: 2, isResizable: false },
+        { i: 'budget-health',     x: 0, y: 2,  w: 6, h: 4, minW: 4, minH: 3 },
+        { i: 'cash-flow',         x: 6, y: 2,  w: 6, h: 2, minW: 4, minH: 2 },
+        { i: 'income-expense',    x: 6, y: 4,  w: 6, h: 2, minW: 4, minH: 2 },
+        { i: 'risk-alerts',       x: 6, y: 6,  w: 6, h: 4, minW: 4, minH: 3 },
+        { i: 'pending-approvals', x: 0, y: 6,  w: 6, h: 4, minW: 4, minH: 3 },
         /* AI inbox tam genişlik altta — sessiz feed, kullanıcı iner görür. */
-        { i: 'ai-suggestions',    x: 0, y: 8, w: 12, h: 4, minW: 6, minH: 3 },
+        { i: 'ai-suggestions',    x: 0, y: 10, w: 12, h: 4, minW: 6, minH: 3 },
     ],
     tablet: [
-        { i: 'budget-health',     x: 0, y: 0,  w: 8, h: 4, minW: 4, minH: 3 },
-        { i: 'cash-flow',         x: 0, y: 4,  w: 8, h: 2, minW: 4, minH: 2 },
-        { i: 'risk-alerts',       x: 0, y: 6,  w: 8, h: 4, minW: 4, minH: 3 },
-        { i: 'pending-approvals', x: 0, y: 10, w: 8, h: 4, minW: 4, minH: 3 },
-        { i: 'ai-suggestions',    x: 0, y: 14, w: 8, h: 4, minW: 4, minH: 3 },
+        { i: 'kpi-strip',         x: 0, y: 0,  w: 8, h: 2, minW: 6, minH: 2, isResizable: false },
+        { i: 'budget-health',     x: 0, y: 2,  w: 8, h: 4, minW: 4, minH: 3 },
+        { i: 'cash-flow',         x: 0, y: 6,  w: 8, h: 2, minW: 4, minH: 2 },
+        { i: 'income-expense',    x: 0, y: 8,  w: 8, h: 2, minW: 4, minH: 2 },
+        { i: 'risk-alerts',       x: 0, y: 10, w: 8, h: 4, minW: 4, minH: 3 },
+        { i: 'pending-approvals', x: 0, y: 14, w: 8, h: 4, minW: 4, minH: 3 },
+        { i: 'ai-suggestions',    x: 0, y: 18, w: 8, h: 4, minW: 4, minH: 3 },
     ],
     mobile: [
-        { i: 'budget-health',     x: 0, y: 0,  w: 1, h: 4, isResizable: false, isDraggable: false },
-        { i: 'cash-flow',         x: 0, y: 4,  w: 1, h: 2, isResizable: false, isDraggable: false },
-        { i: 'risk-alerts',       x: 0, y: 6,  w: 1, h: 4, isResizable: false, isDraggable: false },
-        { i: 'pending-approvals', x: 0, y: 10, w: 1, h: 4, isResizable: false, isDraggable: false },
-        { i: 'ai-suggestions',    x: 0, y: 14, w: 1, h: 4, isResizable: false, isDraggable: false },
+        { i: 'kpi-strip',         x: 0, y: 0,  w: 1, h: 4, isResizable: false, isDraggable: false },
+        { i: 'budget-health',     x: 0, y: 4,  w: 1, h: 4, isResizable: false, isDraggable: false },
+        { i: 'cash-flow',         x: 0, y: 8,  w: 1, h: 2, isResizable: false, isDraggable: false },
+        { i: 'income-expense',    x: 0, y: 10, w: 1, h: 2, isResizable: false, isDraggable: false },
+        { i: 'risk-alerts',       x: 0, y: 12, w: 1, h: 4, isResizable: false, isDraggable: false },
+        { i: 'pending-approvals', x: 0, y: 16, w: 1, h: 4, isResizable: false, isDraggable: false },
+        { i: 'ai-suggestions',    x: 0, y: 20, w: 1, h: 4, isResizable: false, isDraggable: false },
     ],
 };
 

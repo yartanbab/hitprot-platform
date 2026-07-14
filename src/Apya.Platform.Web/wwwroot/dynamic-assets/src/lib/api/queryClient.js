@@ -45,6 +45,8 @@ export const QK = {
     dashboard: {
         budget:    () => ['dashboard', 'budget'],
         cashflow:  () => ['dashboard', 'cashflow'],
+        kpiSummary: () => ['dashboard', 'kpi-summary'],
+        incomeExpense: () => ['dashboard', 'income-expense'],
         approvals: (filter) => filter ? ['dashboard', 'approvals', filter] : ['dashboard', 'approvals'],
         approvalDetail: (id) => ['dashboard', 'approval-detail', id],
         risks:     () => ['dashboard', 'risks'],

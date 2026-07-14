@@ -23,9 +23,11 @@ import { CashFlowWidget } from './widgets/CashFlowWidget';
 import { PendingApprovalsWidget } from './widgets/PendingApprovalsWidget';
 import { RiskAlertsWidget } from './widgets/RiskAlertsWidget';
 import { AISuggestionsWidget } from './widgets/AISuggestionsWidget';
+import { KpiStripWidget } from './widgets/KpiStripWidget';
+import { IncomeExpenseWidget } from './widgets/IncomeExpenseWidget';
 import { ApprovalDetailSheet } from './approvals/ApprovalDetailSheet';
 
-import { Button, ThemeToggle } from '../components/ui';
+import { Button } from '../components/ui';
 import { cn } from '../lib/utils';
 
 const ResponsiveGridLayout = WidthProvider(Responsive);
@@ -49,15 +51,44 @@ const ResponsiveGridLayout = WidthProvider(Responsive);
 const WIDGET_REGISTRY = {
     'budget-health':     BudgetHealthWidget,
     'cash-flow':         CashFlowWidget,
+    'income-expense':    IncomeExpenseWidget,
     'pending-approvals': PendingApprovalsWidget,
     'risk-alerts':       RiskAlertsWidget,
     'ai-suggestions':    AISuggestionsWidget,
+    'kpi-strip':         KpiStripWidget,
 };
 
 function BentoDashboard() {
     const [persona, setPersonaState] = useState(() => readPersonaPreference());
     const [editMode, setEditMode] = useState(false);
     const [approvalSheetId, setApprovalSheetId] = useState(null);
+
+    /* WidthProvider (react-grid-layout) state.width'i hardcoded 1280 default'la
+       başlar, gerçek genişliği yalnız ResizeObserver callback'i ateşlenirse
+       günceller (bkz node_modules/react-grid-layout/build/components/
+       WidthProvider.js). #apya-dashboard-root negatif margin (Index.cshtml) +
+       sidebar layout'u yüzünden gerçek container genişliği (~890px) 1280'den
+       farklı — callback hiç ateşlenmezse grid tüm widget'ları 1280 varsayarak
+       taşırır (pre-existing, KPI/income-expense eklenmeden ÖNCE de izole
+       test ile doğrulandı — redesign dışı bug).
+       Fix: ilk paint sonrası TEK SEFERLİK key değişimiyle grid'i remount et →
+       WidthProvider'ın componentDidMount'ı (dolayısıyla ResizeObserver.observe)
+       yeniden, bu kez layout oturmuşken çalışır.
+       ⚠️ DOĞRULAMA NOTU: Claude Browser (in-app otomasyon) ortamında native
+       `ResizeObserver.observe()` HİÇ callback ateşlemiyor (doğrudan test
+       edildi — 1.5sn timeout, element gerçek/stabil boyuttayken bile), bu
+       yüzden bu fix'in gerçek tarayıcıda çalıştığı doğrulanamadı. Spec'e göre
+       her modern tarayıcıda observe() ilk callback'i senkron-benzeri hemen
+       ateşler; bu muhtemelen otomasyon ortamının kendi sınırlaması, gerçek
+       kullanıcı Chrome'unda muhtemelen bug hiç yaşanmıyordu bile. Fix zararsız
+       (gerçek tarayıcıda ResizeObserver zaten anında doğru ölçüyorsa bu ekstra
+       remount fazladan-ama-zararsız bir pas) — gerçek tarayıcıda görsel
+       doğrulama BEKLİYOR. */
+    const [gridMountKey, setGridMountKey] = useState(0);
+    useEffect(() => {
+        const raf = requestAnimationFrame(() => setGridMountKey(1));
+        return () => cancelAnimationFrame(raf);
+    }, []);
 
     /* Deep-link: /Dashboard?approval=ID → push notification tap'inden gelen
        direkt sheet açılışı. URL param'ı tek seferlik okur, history'yi temiz
@@ -118,6 +149,7 @@ function BentoDashboard() {
 
             <main className="px-4 py-4 mobile:px-2 mobile:py-2">
                 <ResponsiveGridLayout
+                    key={gridMountKey}
                     className={cn('apya-bento', editMode && 'apya-bento--edit')}
                     layouts={layouts}
                     breakpoints={GRID_BREAKPOINTS}
@@ -198,11 +230,10 @@ function DashboardHeader({ persona, onPersonaChange, editMode, onEditModeToggle,
             'flex items-center justify-between gap-4',
             'mobile:px-2 mobile:py-2',
         )}>
+            {/* "Genel Bakış" başlığı KALDIRILDI — LeptonX header'ı (apya-page-title)
+                zaten aynı sayfa başlığını gösteriyordu, çift render (redundant). */}
             <div className="flex flex-col gap-0.5 min-w-0">
-                <h1 className="text-base font-semibold text-text-primary truncate">
-                    Genel Bakış
-                </h1>
-                <p className="text-xs text-text-tertiary truncate mobile:hidden">
+                <p className="text-sm font-medium text-text-secondary truncate mobile:hidden">
                     {PERSONA_LABELS[persona]} görünümü
                 </p>
             </div>
@@ -229,7 +260,9 @@ function DashboardHeader({ persona, onPersonaChange, editMode, onEditModeToggle,
                     {editMode ? 'Tamamla' : 'Düzenle'}
                 </Button>
 
-                <ThemeToggle />
+                {/* Kendi ThemeToggle'ı KALDIRILDI — LeptonX header'ında zaten var
+                    (aynı apya-theme localStorage key + data-theme attribute'unu
+                    paylaşıyorlar, iki buton kafa karıştırıcıydı). */}
             </div>
         </header>
     );
