@@ -12,59 +12,63 @@
 }
 
 <div class="apya-page">
-<abp-card>
-    <abp-card-header>
-        <abp-row>
-            <abp-column size-md="_6">
-                <abp-card-title>
-                    <i class="fa fa-wand-magic-sparkles me-2"></i> Prompt Kütüphanesi
-                </abp-card-title>
-            </abp-column>
-            <abp-column size-md="_6" class="text-end">
-                @if (await AuthorizationService.IsGrantedAsync(AiPermissions.Prompts.Create))
-                {
-                    <abp-button id="NewPromptButton"
-                                text="Yeni Prompt"
-                                icon="plus"
-                                button-type="Primary" size="Small" />
-                }
-            </abp-column>
-        </abp-row>
-    </abp-card-header>
-    <abp-card-body>
-        <abp-row class="mb-3 g-2">
-            <abp-column size-md="_4">
+    @* Başlık satırı *@
+    <div class="d-flex align-items-start justify-content-between flex-wrap gap-2 mb-3">
+        <div>
+            <h1 class="h5 mb-1"><i class="fa fa-wand-magic-sparkles me-2"></i>Prompt Kütüphanesi</h1>
+            <p class="text-muted mb-0" style="font-size:12px">Prompt şablonlarını, versiyonlarını ve yayın durumlarını yönetin</p>
+        </div>
+        @if (await AuthorizationService.IsGrantedAsync(AiPermissions.Prompts.Create))
+        {
+            <abp-button id="NewPromptButton"
+                        text="Yeni Prompt"
+                        icon="plus"
+                        button-type="Primary" size="Small" />
+        }
+    </div>
+
+    @* Master-detail: sol liste + sağ detay (apya-shell.css §13) *@
+    <div class="apya-md" id="PromptsMd">
+        <div class="apya-md-list">
+            <div class="apya-md-toolbar">
                 <input type="text" id="PromptFilter" class="form-control form-control-sm"
                        placeholder="Kod veya ada göre ara..." />
-            </abp-column>
-            <abp-column size-md="_4">
-                <select id="CategoryFilter" class="form-select form-select-sm">
-                    @foreach (var c in Model.Categories)
-                    {
-                        <option value="@c.Value">@c.Text</option>
-                    }
-                </select>
-            </abp-column>
-            <abp-column size-md="_4">
-                <select id="StatusFilter" class="form-select form-select-sm">
-                    <option value="">Tüm durumlar</option>
-                    <option value="true">Aktif</option>
-                    <option value="false">Pasif</option>
-                </select>
-            </abp-column>
-        </abp-row>
-        <abp-table striped-rows="true" id="PromptsTable">
-            <thead>
-                <tr>
-                    <th>İşlemler</th>
-                    <th>Kod</th>
-                    <th>Ad</th>
-                    <th>Durum</th>
-                    <th>Versiyon</th>
-                    <th>Yayınlı</th>
-                </tr>
-            </thead>
-        </abp-table>
-    </abp-card-body>
-</abp-card>
+                <div class="d-flex gap-2">
+                    <select id="CategoryFilter" class="form-select form-select-sm">
+                        @foreach (var c in Model.Categories)
+                        {
+                            <option value="@c.Value">@c.Text</option>
+                        }
+                    </select>
+                    <select id="StatusFilter" class="form-select form-select-sm">
+                        <option value="">Tüm durumlar</option>
+                        <option value="true">Aktif</option>
+                        <option value="false">Pasif</option>
+                    </select>
+                </div>
+            </div>
+            <ul class="apya-md-items" id="PromptsList" role="listbox" aria-label="Prompt listesi"></ul>
+            <div class="apya-md-empty" id="PromptsListEmpty" hidden>
+                <i class="fa fa-inbox" aria-hidden="true"></i>
+                <span id="PromptsListEmptyText">Eşleşen prompt bulunamadı</span>
+            </div>
+            <div class="apya-md-pager">
+                <span id="PromptsPagerInfo">—</span>
+                <span class="d-flex gap-1">
+                    <button type="button" id="PromptsPrev" class="btn btn-sm btn-outline-secondary" aria-label="Önceki sayfa">
+                        <i class="fa fa-chevron-left" aria-hidden="true"></i>
+                    </button>
+                    <button type="button" id="PromptsNext" class="btn btn-sm btn-outline-secondary" aria-label="Sonraki sayfa">
+                        <i class="fa fa-chevron-right" aria-hidden="true"></i>
+                    </button>
+                </span>
+            </div>
+        </div>
+        <div class="apya-md-detail" id="PromptDetail">
+            <div class="apya-md-empty">
+                <i class="fa fa-wand-magic-sparkles" aria-hidden="true"></i>
+                <span>Detaylarını görmek için soldaki listeden bir prompt seçin.</span>
+            </div>
+        </div>
+    </div>
 </div>
