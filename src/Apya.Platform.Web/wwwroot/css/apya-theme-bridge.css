@@ -438,6 +438,55 @@ html, body {
     color: inherit !important;
 }
 
+/* ============================================================================
+   P4 · SIDEBAR — bölüm başlıklı DÜZ liste (prototip birebir)
+   LeptonX'in açılır-kapanır üst-düzey parent'larını (submenu'su olan
+   li.outer-menu-item) tıklanamaz "overline" bölüm başlığına çevirir ve tüm alt
+   menüleri kalıcı açık tutar → GENEL BAKIŞ/İŞ YÖNETİMİ/FİNANS/RAPORLAR/İÇERİK/
+   YÖNETİM düz liste. Yapı ve işlev korunur; yalnız görünüm değişir. LeptonX
+   collapse JS'i alt menüye .collapsed ekleyince display:none oluyordu; onu
+   display:block !important ile eziyoruz. Geometri canlı doğrulandı: başlık metni
+   ile yaprak ikonu aynı x'te (22px) hizalanır; :has() evergreen'de destekli. --- */
+
+/* Alt menüler her zaman açık (LeptonX collapse'ını ez) */
+#lpx-sidebar ul.lpx-inner-menu {
+    display: block !important;
+    height: auto !important;
+    overflow: visible !important;
+}
+
+/* Üst-düzey parent (alt menülü) → tıklanamaz bölüm başlığı (overline) */
+#lpx-sidebar li.outer-menu-item:has(> ul.lpx-inner-menu) > a.lpx-menu-item-link {
+    pointer-events: none;
+    cursor: default;
+    padding: 16px 22px 4px !important;
+    min-height: 0 !important;
+    background: transparent !important;
+    border-radius: 0 !important;
+}
+#lpx-sidebar li.outer-menu-item:has(> ul.lpx-inner-menu) > a.lpx-menu-item-link .lpx-menu-item-text {
+    text-transform: uppercase;
+    font-size: 10.5px !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.5px;
+    color: var(--apya-text-tertiary) !important;
+    opacity: 1 !important;
+}
+/* Bölüm başlığında ikon + caret gizli (prototip: yalnız metin) */
+#lpx-sidebar li.outer-menu-item:has(> ul.lpx-inner-menu) > a.lpx-menu-item-link .lpx-menu-item-icon,
+#lpx-sidebar li.outer-menu-item:has(> ul.lpx-inner-menu) > a.lpx-menu-item-link .dd-icon {
+    display: none !important;
+}
+
+/* Bölüm içi yaprak: ikon, başlık metniyle aynı x'te hizalansın */
+#lpx-sidebar ul.lpx-inner-menu > li.lpx-inner-menu-item > a.lpx-menu-item-link {
+    padding-left: 22px !important;
+}
+/* 2. seviye iç grup (Yönetim → Müşteri/Kimlik yönetimi çocukları) daha içeride */
+#lpx-sidebar ul.lpx-inner-menu ul.lpx-inner-menu > li.lpx-inner-menu-item > a.lpx-menu-item-link {
+    padding-left: 38px !important;
+}
+
 /* --- Header topbar: 57px + token zemin + alt kenarlık (her iki tema) --- */
 .lpx-topbar {
     min-height: 57px;
