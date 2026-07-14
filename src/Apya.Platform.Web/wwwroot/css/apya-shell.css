@@ -316,3 +316,166 @@ h1, h2, h3, h4, h5, h6 {
     color: var(--apya-accent-500, #4F46E5);
     background: var(--apya-accent-soft, rgba(79, 70, 229, 0.10));
 }
+
+/* ----------------------------------------------------------------------------
+   12) KOMUT PALETİ (⌘K) — header tetikleyici + modal (P4)
+   Yalnız menü navigasyonu: veri kaynağı zaten permission-filtered render
+   edilmiş #lpx-sidebar (command-palette.js scrape eder) — backend yok.
+   ---------------------------------------------------------------------------- */
+
+/* Header tetikleyici butonu (CommandPaletteToggle ViewComponent). */
+.apya-command-palette-trigger {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    height: 34px;
+    padding: 0 10px 0 12px;
+    margin: 0 4px;
+    border: 1px solid var(--apya-border-default);
+    border-radius: var(--apya-radius-lg);
+    background: var(--apya-surface-sunken);
+    color: var(--apya-text-tertiary);
+    font-size: 13px;
+    cursor: pointer;
+    transition: border-color var(--apya-motion-base) ease, background var(--apya-motion-base) ease;
+}
+.apya-command-palette-trigger:hover {
+    border-color: var(--apya-border-strong);
+    background: var(--apya-surface-raised);
+    color: var(--apya-text-secondary);
+}
+.apya-command-palette-trigger-kbd {
+    padding: 1px 6px;
+    border: 1px solid var(--apya-border-default);
+    border-radius: var(--apya-radius-sm);
+    background: var(--apya-surface-base);
+    font-family: var(--apya-font-mono);
+    font-size: 10.5px;
+    color: var(--apya-text-tertiary);
+}
+/* Dar viewport'ta yalnız ikon (metin + kısayol rozeti gizlenir). */
+@media (max-width: 900px) {
+    .apya-command-palette-trigger-text,
+    .apya-command-palette-trigger-kbd {
+        display: none;
+    }
+    .apya-command-palette-trigger {
+        padding: 0 9px;
+    }
+}
+
+/* Overlay + panel — JS ile inşa edilir (command-palette.js), `.open` class'ı
+   toggle edilene kadar `display:none`. */
+.apya-command-palette-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: var(--apya-z-modal);
+    background: rgba(17, 24, 39, 0.45);
+    padding-top: 14vh;
+    justify-content: center;
+}
+.apya-command-palette-overlay.open {
+    display: flex;
+}
+[data-theme="dark"] .apya-command-palette-overlay {
+    background: rgba(0, 0, 0, 0.6);
+}
+
+.apya-command-palette {
+    width: 100%;
+    max-width: 560px;
+    max-height: 60vh;
+    margin: 0 16px;
+    display: flex;
+    flex-direction: column;
+    background: var(--apya-surface-elevated);
+    border: 1px solid var(--apya-border-strong);
+    border-radius: var(--apya-radius-xl);
+    box-shadow: var(--apya-shadow-xl);
+    overflow: hidden;
+}
+
+.apya-command-palette-input-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--apya-border-subtle);
+    color: var(--apya-text-tertiary);
+}
+.apya-command-palette-input {
+    flex: 1;
+    border: none;
+    outline: none;
+    background: transparent;
+    font-size: 15px;
+    color: var(--apya-text-primary);
+}
+.apya-command-palette-input-row kbd {
+    padding: 1px 6px;
+    border: 1px solid var(--apya-border-default);
+    border-radius: var(--apya-radius-sm);
+    font-family: var(--apya-font-mono);
+    font-size: 10.5px;
+    color: var(--apya-text-tertiary);
+}
+
+.apya-command-palette-list {
+    list-style: none;
+    margin: 0;
+    padding: 8px;
+    overflow-y: auto;
+}
+.apya-command-palette-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 12px;
+    border-radius: var(--apya-radius-lg);
+    color: var(--apya-text-secondary);
+    font-size: 13.5px;
+    cursor: pointer;
+}
+.apya-command-palette-item i {
+    width: 16px;
+    text-align: center;
+    color: var(--apya-text-tertiary);
+}
+.apya-command-palette-item.active {
+    background: var(--apya-accent-soft);
+    color: var(--apya-accent-500);
+}
+.apya-command-palette-item.active i {
+    color: inherit;
+}
+.apya-command-palette-item-label {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.apya-command-palette-item-section {
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+    color: var(--apya-text-tertiary);
+    flex-shrink: 0;
+}
+.apya-command-palette-item.active .apya-command-palette-item-section {
+    color: inherit;
+    opacity: 0.75;
+}
+
+.apya-command-palette-empty {
+    padding: 24px 18px;
+    text-align: center;
+    color: var(--apya-text-tertiary);
+    font-size: 13px;
+}
+
+/* Palet açıkken arka plan kaydırılmasın. */
+body.apya-command-palette-lock {
+    overflow: hidden;
+}

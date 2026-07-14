@@ -255,6 +255,7 @@ public class PlatformWebModule : AbpModule
                     bundle.AddFiles("/js/jquery-fix.js");
                     bundle.AddFiles("/Pages/Notifications/notification-bell.js");
                     bundle.AddFiles("/js/dark-mode.js");
+                    bundle.AddFiles("/js/command-palette.js");
                     bundle.AddFiles("/js/ai-hub-client.js");
                     bundle.AddFiles("/js/ajax-error-detail.js");
                 }
@@ -287,7 +288,9 @@ public class PlatformWebModule : AbpModule
 
         Configure<AbpToolbarOptions>(options =>
         {
-            // Tema toggle bildirim zilinden ÖNCE → header'da zilin solunda.
+            // Komut paleti tetikleyici EN SOLDA (sayfa başlığına en yakın), sonra
+            // tema toggle, sonra bildirim zili → header ikon kümesi bu sırayla.
+            options.Contributors.Add(new Apya.Platform.Web.Theme.CommandPaletteToggleToolbarContributor());
             options.Contributors.Add(new Apya.Platform.Web.Theme.ThemeToggleToolbarContributor());
             options.Contributors.Add(new Apya.Platform.Web.Notifications.NotificationToolbarContributor());
         });
