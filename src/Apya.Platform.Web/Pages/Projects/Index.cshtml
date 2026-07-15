@@ -8,44 +8,38 @@
 }
 
 @section scripts {
-    @* JavaScript dosyanın yolunu buraya ekliyoruz *@
     <abp-script src="/Pages/Projects/Index.js" />
 }
 
 <div class="apya-page">
-<abp-card>
-    <abp-card-header>
-        <abp-row>
-            <abp-column size-md="_6">
-                <abp-card-title>
-                    <i class="fa fa-rocket me-2"></i> Projeler
-                </abp-card-title>
-            </abp-column>
-            <abp-column size-md="_6" class="text-end">
-                @if (await AuthorizationService.IsGrantedAsync(PlatformPermissions.Projects.Create))
-                {
-                    <abp-button id="NewProjectButton"
-                                text="Yeni Proje Ekle"
-                                icon="plus"
-                                button-type="Primary" size="Small" />
-                }
-            </abp-column>
-        </abp-row>
-    </abp-card-header>
-    <abp-card-body>
-        <abp-table striped-rows="true" id="ProjectsTable">
-            <thead>
-                <tr>
-                    <th>İşlemler</th>
-                    @* Burası JS tarafındaki 'visible' mantığına göre otomatik gizlenip açılacak *@
-                    <th>Müşteri</th>
-                    <th>Proje Adı</th>
-                    <th>Kod</th>
-                    <th>Durum</th>
-                    <th>Oluşturulma Tarihi</th>
-                </tr>
-            </thead>
-        </abp-table>
-    </abp-card-body>
-</abp-card>
+    @* HANDOFF: Projeler = kart ızgarası (repeat(auto-fill, minmax()) grid).
+       Veri/aksiyonlar Index.js'te; tablo yerine .apya-tile kartları render edilir. *@
+    <div class="apya-grid-toolbar">
+        <span class="apya-grid-count" id="ProjectsCount"></span>
+        <div class="ms-auto d-flex align-items-center gap-2">
+            <input type="search" id="ProjectsSearch" class="form-control form-control-sm apya-grid-search"
+                   placeholder="Proje, kod veya müşteri ara…" autocomplete="off" />
+            @if (await AuthorizationService.IsGrantedAsync(PlatformPermissions.Projects.Create))
+            {
+                <abp-button id="NewProjectButton"
+                            text="Yeni Proje Ekle"
+                            icon="plus"
+                            button-type="Primary" size="Small" />
+            }
+        </div>
+    </div>
+
+    <div id="ProjectsGrid" class="apya-tile-grid apya-fade-in" aria-live="polite"></div>
+
+    <div id="ProjectsEmpty" class="apya-tile-grid-empty" style="display:none">
+        <i class="fa fa-rocket" aria-hidden="true"></i>
+        <div class="fw-semibold">Henüz proje yok</div>
+        <div>İlk projenizi ekleyerek görev ve bütçe takibine başlayın.</div>
+    </div>
+
+    <div class="apya-tile-grid-more">
+        <button id="ProjectsLoadMore" class="btn btn-outline-secondary btn-sm" style="display:none">
+            Daha fazla yükle
+        </button>
+    </div>
 </div>
