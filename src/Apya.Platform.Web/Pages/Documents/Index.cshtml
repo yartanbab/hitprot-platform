@@ -25,6 +25,16 @@
     .doc-item .fa { width: 20px; margin-right: 8px; font-size: 1rem; }
     .doc-sub-list { padding-left: 20px; }
 
+    /* Arama alanı — ikon kutusu + input aynı token zemininde (bg-white dark'ta
+       patlıyordu; LeptonX'in form-control zemini de ikonla uyuşmuyordu). Metin/
+       placeholder da token'dan: LeptonX modal-dışı form-control metnini dark'ta
+       çevirmiyor (bilinen sistemik gap). */
+    .wiki-sidebar .input-group-text,
+    .wiki-sidebar .input-group .form-control { background: var(--apya-surface-base); }
+    .wiki-sidebar .input-group .form-control { color: var(--apya-text-primary); }
+    .wiki-sidebar .input-group .form-control::placeholder { color: var(--apya-text-tertiary); }
+
+
     /* Empty State */
     .wiki-empty { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: var(--apya-text-tertiary); text-align: center; }
     .wiki-empty i { font-size: 4rem; color: var(--apya-border-default); margin-bottom: 20px; }
@@ -44,7 +54,7 @@
                 </button>
             </div>
             <div class="input-group input-group-sm">
-                <span class="input-group-text bg-white border-end-0 text-muted"><i class="fa fa-search"></i></span>
+                <span class="input-group-text border-end-0 text-muted"><i class="fa fa-search"></i></span>
                 <input type="text" class="form-control border-start-0" id="TreeSearch" placeholder="Belge ara...">
             </div>
         </div>
@@ -61,14 +71,14 @@
     <div class="wiki-content">
         <!-- View State -->
         <div id="DocViewPanel" style="display:none;" class="h-100 flex-column">
-            <div class="wiki-content-header bg-light bg-opacity-10">
+            <div class="wiki-content-header">
                 <div class="d-flex align-items-center">
                     <span id="CurrentDocIcon" class="me-3 fs-3">📄</span>
                     <h2 id="CurrentDocTitle" class="fw-bold mb-0">Belge Başlığı</h2>
                 </div>
                 <div class="btn-group shadow-sm">
-                    <button id="EditBtn" class="btn bg-white text-primary border"><i class="fa fa-edit me-1"></i> Düzenle</button>
-                    <button id="DeleteBtn" class="btn bg-white text-danger border"><i class="fa fa-trash me-1"></i> Sil</button>
+                    <button id="EditBtn" class="btn btn-light text-primary"><i class="fa fa-edit me-1"></i> Düzenle</button>
+                    <button id="DeleteBtn" class="btn btn-light text-danger"><i class="fa fa-trash me-1"></i> Sil</button>
                 </div>
             </div>
             <div class="wiki-editor-area">
