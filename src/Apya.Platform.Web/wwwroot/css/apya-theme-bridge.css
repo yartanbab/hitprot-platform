@@ -280,6 +280,21 @@ html, body {
     --bs-btn-active-bg:    var(--apya-accent-700);
 }
 
+/* --- Buton light → surface token'ları ---
+   LeptonX --bs-light'ı #bbb yapıyor → btn-light kirli gri kalıyordu (her iki
+   temada). "Sessiz/ikincil" buton niyetine uygun: taban zemin + belirgin hover. */
+.btn-light {
+    --bs-btn-bg:                  var(--apya-surface-base);
+    --bs-btn-color:               var(--apya-text-primary);
+    --bs-btn-border-color:        var(--apya-border-default);
+    --bs-btn-hover-bg:            var(--apya-surface-sunken);
+    --bs-btn-hover-color:         var(--apya-text-primary);
+    --bs-btn-hover-border-color:  var(--apya-border-strong);
+    --bs-btn-active-bg:           var(--apya-surface-sunken);
+    --bs-btn-active-color:        var(--apya-text-primary);
+    --bs-btn-active-border-color: var(--apya-border-strong);
+}
+
 /* --- Buton/input yarıçapı (hi-fi 8–9px) --- */
 .btn,
 .form-control,
