@@ -19,6 +19,7 @@ export default {
         'surface-sunken':  'var(--apya-surface-sunken)',
         'surface-sidebar': 'var(--apya-surface-sidebar)',
         'surface-header':  'var(--apya-surface-header)',
+        'surface-overlay': 'var(--apya-surface-overlay)',
         /* Text */
         'text-primary':    'var(--apya-text-primary)',
         'text-secondary':  'var(--apya-text-secondary)',

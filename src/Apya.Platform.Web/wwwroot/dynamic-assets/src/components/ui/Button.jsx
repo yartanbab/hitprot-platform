@@ -45,7 +45,7 @@ const buttonVariants = cva(
             variant: {
                 primary: cn(
                     'bg-brand-500 text-text-inverse',
-                    'hover:bg-brand-600 active:bg-brand-700',
+                    'hover:bg-brand-600 active:bg-brand-600',
                     'shadow-sm',
                 ),
                 secondary: cn(

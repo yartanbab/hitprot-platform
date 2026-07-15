@@ -228,10 +228,11 @@
    düşer ve contrast korunur. Brand 500 hafif aydınlatılır.
    ---------------------------------------------------------------------------- */
 [data-theme="dark"] {
-    /* Brand: link/finansal renk dark'ta biraz aydınlatılır */
+    /* Brand: link/finansal renk dark'ta biraz aydınlatılır.
+       -700 dark konvansiyonu = parlak METİN tonu (positive/negative/warning ile aynı) */
     --apya-brand-500: #60A5FA;
     --apya-brand-600: #3B82F6;
-    --apya-brand-700: #2563EB;
+    --apya-brand-700: #93C5FD;
 
     /* UI Accent: indigo — dark'ta tam doygunluk (#6366F1) */
     --apya-accent-500: #6366F1;
@@ -257,6 +258,25 @@
 
     --apya-ai-500: #A78BFA;
     --apya-ai-600: #8B5CF6;
+
+    /* Tone tint'leri (-50/-100): light'ta pastel zemin, dark'ta AYNEN bırakılırsa
+       "açık pastel zemin + parlak metin" düşük kontrast üretir (Badge/chip bug'ı).
+       Dark'ta zemin = 500'ün saydam tonu; metin (-700) zaten parlak tanımlı. */
+    --apya-positive-50:  rgba(16, 185, 129, 0.10);
+    --apya-positive-100: rgba(16, 185, 129, 0.16);
+    --apya-negative-50:  rgba(248, 113, 113, 0.10);
+    --apya-negative-100: rgba(248, 113, 113, 0.16);
+    --apya-warning-50:   rgba(251, 191, 36, 0.10);
+    --apya-warning-100:  rgba(251, 191, 36, 0.16);
+    --apya-critical-50:  rgba(248, 113, 113, 0.10);
+    --apya-ai-50:        rgba(167, 139, 250, 0.12);
+    --apya-brand-50:     rgba(96, 165, 250, 0.10);
+    --apya-brand-100:    rgba(96, 165, 250, 0.16);
+
+    /* Neutral chip/utility tonları — dark'ta saydam beyaz + açık metin */
+    --apya-neutral-100:  rgba(255, 255, 255, 0.08);
+    --apya-neutral-200:  rgba(255, 255, 255, 0.14);
+    --apya-neutral-700:  #D4D4D8;
 
     /* Surface — chromatic-neutral (mavi/slate değil, saf koyu gri).
        Hiyerarşi: app-bg < sidebar ≈ base < raised < elevated

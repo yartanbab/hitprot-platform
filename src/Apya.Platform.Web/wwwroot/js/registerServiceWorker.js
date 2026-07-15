@@ -272,7 +272,7 @@ const we = D(
       variant: {
         primary: l(
           "bg-brand-500 text-text-inverse",
-          "hover:bg-brand-600 active:bg-brand-700",
+          "hover:bg-brand-600 active:bg-brand-600",
           "shadow-sm"
         ),
         secondary: l(
