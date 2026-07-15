@@ -16,16 +16,16 @@ $(function () {
     }
 
     function updateUI(accounts) {
-        // Reset all cards to disconnected
-        $('.status-badge').removeClass('status-linked').addClass('status-unlinked').text('Bağlı Değil');
+        // Reset all cards to disconnected (durum rozeti = .apya-chip; ton sınıfıyla döner)
+        $('.status-badge').removeClass('apya-chip-positive').addClass('apya-chip-neutral').text('Bağlı Değil');
         $('.connected-email').remove();
         $('.btn-connect').removeClass('btn-danger').addClass('btn-outline-primary').html('<i class="fa fa-link me-2"></i>Hesap Bağla');
-        
+
         // Apply connected state
         accounts.forEach(function (acc) {
             var $card = acc.provider === 1 ? $('#CardGoogle') : (acc.provider === 2 ? $('#CardOutlook') : null);
             if ($card) {
-                $card.find('.status-badge').removeClass('status-unlinked').addClass('status-linked').text('Bağlandı');
+                $card.find('.status-badge').removeClass('apya-chip-neutral').addClass('apya-chip-positive').text('Bağlandı');
                 $card.find('.status-area').append(`<div class="connected-email small"><i class="fa fa-envelope me-1"></i>${acc.externalEmail}</div>`);
                 
                 var $btn = $card.find('.btn-connect');
