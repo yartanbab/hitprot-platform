@@ -14,29 +14,21 @@
     <abp-style src="/css/kanban.css" />
 }
 
-<abp-card>
-    <abp-card-header>
-        <abp-row>
-            <abp-column size="_6">
-                <abp-card-title><i class="fa fa-columns text-primary me-2"></i> @ViewBag.PageTitle</abp-card-title>
-            </abp-column>
-            <abp-column size="_6" class="text-end">
-                <select id="board-project" class="form-select form-select-sm d-inline-block w-auto me-1" title="Proje seçince o projenin kolonları + Kolon Ekle gelir">
-                    <option value="">Tüm Projeler (Genel)</option>
-                </select>
-                <button id="btn-refresh-board" class="btn btn-outline-secondary btn-sm"><i class="fa fa-sync"></i> Yenile</button>
-                @if (await AuthorizationService.IsGrantedAsync(PlatformPermissions.Tasks.Create))
-                {
-                    <button id="btn-new-task" class="btn btn-primary btn-sm ms-1"><i class="fa fa-plus me-1"></i> Yeni Görev</button>
-                }
-            </abp-column>
-        </abp-row>
-    </abp-card-header>
-    <abp-card-body>
-        @* Merkezi kanban markup'ı (tek kaynak) *@
-        <partial name="_KanbanBoard" />
-    </abp-card-body>
-</abp-card>
+@* Kanban full-bleed çalışır (DESIGN-SYSTEM §10: board wrapper/kart kullanmaz) —
+   üstte hafif araç çubuğu, altında merkezi kanban markup'ı. *@
+<div class="d-flex flex-wrap align-items-center justify-content-end gap-2 mb-2">
+    <select id="board-project" class="form-select form-select-sm w-auto" title="Proje seçince o projenin kolonları + Kolon Ekle gelir">
+        <option value="">Tüm Projeler (Genel)</option>
+    </select>
+    <button id="btn-refresh-board" class="btn btn-outline-secondary btn-sm"><i class="fa fa-sync"></i> Yenile</button>
+    @if (await AuthorizationService.IsGrantedAsync(PlatformPermissions.Tasks.Create))
+    {
+        <button id="btn-new-task" class="btn btn-primary btn-sm"><i class="fa fa-plus me-1"></i> Yeni Görev</button>
+    }
+</div>
+
+@* Merkezi kanban markup'ı (tek kaynak) *@
+<partial name="_KanbanBoard" />
 
 @section scripts {
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.6/Sortable.min.js"></script>

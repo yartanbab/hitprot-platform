@@ -10,8 +10,9 @@
 
 
 @* ─── Gelişmiş Filtreleme Paneli ─── *@
+<div class="apya-page">
 <div class="accordion mb-3" id="taskFiltersAccordion">
-    <div class="accordion-item shadow-sm border-0" style="border-radius:0.75rem;">
+    <div class="accordion-item shadow-sm border-0" style="border-radius:var(--apya-radius-xl);">
         <h2 class="accordion-header" id="headingFilters">
             <button class="accordion-button collapsed fw-bold text-primary"
                     type="button"
@@ -19,7 +20,7 @@
                     data-bs-target="#collapseFilters"
                     aria-expanded="false"
                     aria-controls="collapseFilters"
-                    style="border-radius:0.75rem;">
+                    style="border-radius:var(--apya-radius-xl);">
                 <i class="fa fa-filter me-2"></i> @L["Tasks:AdvancedFilters"]
             </button>
         </h2>
@@ -27,7 +28,7 @@
              class="accordion-collapse collapse"
              aria-labelledby="headingFilters"
              data-bs-parent="#taskFiltersAccordion">
-            <div class="accordion-body bg-light" style="border-radius:0 0 0.75rem 0.75rem;">
+            <div class="accordion-body bg-light" style="border-radius:0 0 var(--apya-radius-xl) var(--apya-radius-xl);">
                 <form id="TaskFilterForm" class="row g-3">
                     <div class="col-md-3">
                         <label for="Filter_AssigneeId" class="form-label fw-bold small text-muted">@L["Tasks:Filter:Assignee"]</label>
@@ -129,6 +130,7 @@
         </div>
     </abp-card-body>
 </abp-card>
+</div>
 
 @section styles {
     @* Merkezi kanban tasarımı (tek kaynak) *@
