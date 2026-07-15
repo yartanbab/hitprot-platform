@@ -50,6 +50,13 @@
     }
     .avatar-circle:first-child { margin-left: 0; }
     .avatar-circle.more { background-color: var(--apya-neutral-500); }
+
+    /* Görünüm tab'ları — utility class jonglörlüğü yerine state-tabanlı token stili.
+       (Eski hali: aktif underline Liste'ye SABİTti, aktif renk LeptonX pembesine/
+       dark'ta görünmez koyuya düşüyordu.) */
+    #projectViewTabs .nav-link { color: var(--apya-text-secondary); background: transparent; }
+    #projectViewTabs .nav-link:hover { color: var(--apya-text-primary); }
+    #projectViewTabs .nav-link.active { color: var(--apya-text-primary); box-shadow: inset 0 -3px 0 var(--apya-accent-500); }
     
     /* Kanban tasarımı merkezi /css/kanban.css dosyasına taşındı (tek kaynak). */
 </style>
@@ -60,6 +67,7 @@
 }
 
 @* ─── PROJE OPERASYON MERKEZi - Dashboard Header ─── *@
+<div class="apya-page">
 <div class="card shadow-sm mb-4 project-dashboard-card">
     <div class="card-body p-4 position-relative">
 
@@ -235,18 +243,18 @@
 
 @* ─── Görev Listesi (View Tabs) ─── *@
 <abp-card class="shadow-sm rounded-4 border-0">
-    <abp-card-header class="bg-white border-bottom-0 pt-4 pb-0">
+    <abp-card-header class="bg-transparent border-bottom-0 pt-4 pb-0">
         <abp-row class="align-items-center">
             <abp-column size="_6">
                 <!-- Tabs -->
                 <ul class="nav nav-tabs border-0" id="projectViewTabs" role="tablist">
                     <li class="nav-item border-0" role="presentation">
-                        <button class="nav-link active fw-bold text-dark border-0 border-bottom border-primary border-3" id="list-tab" data-bs-toggle="tab" data-bs-target="#list-view" type="button" role="tab" aria-controls="list-view" aria-selected="true" style="background:transparent;">
-                            <i class="fa fa-list me-2 text-primary"></i>Liste
+                        <button class="nav-link active fw-bold border-0" id="list-tab" data-bs-toggle="tab" data-bs-target="#list-view" type="button" role="tab" aria-controls="list-view" aria-selected="true">
+                            <i class="fa fa-list me-2"></i>Liste
                         </button>
                     </li>
                     <li class="nav-item border-0 ms-3" role="presentation">
-                        <button class="nav-link fw-bold text-muted border-0" id="board-tab" data-bs-toggle="tab" data-bs-target="#board-view" type="button" role="tab" aria-controls="board-view" aria-selected="false" style="background:transparent;">
+                        <button class="nav-link fw-bold border-0" id="board-tab" data-bs-toggle="tab" data-bs-target="#board-view" type="button" role="tab" aria-controls="board-view" aria-selected="false">
                             <i class="fa fa-columns me-2"></i>Kanban
                         </button>
                     </li>
@@ -299,10 +307,10 @@
             <i class="fa fa-exclamation-triangle fs-5 me-2"></i>
             <h5 class="mb-0 fw-bold" style="letter-spacing:1px;">TEHLİKELİ BÖLGE (DANGER ZONE)</h5>
         </div>
-        <div class="card-body bg-light">
+        <div class="card-body">
             <div class="d-flex justify-content-between align-items-center">
                 <div>
-                    <h6 class="fw-bold text-dark mb-1">Bu Projeyi Sil</h6>
+                    <h6 class="fw-bold mb-1">Bu Projeyi Sil</h6>
                     <p class="text-muted mb-0 small">
                         Dikkat! Bir projeyi sildiğinizde projeye bağlı <strong>tüm görevler, alt görevler ve dosyalar kalıcı olarak silinir.</strong> Bu işlem geri alınamaz.
                     </p>
@@ -319,6 +327,7 @@
         </div>
     </div>
 }
+</div> @* /.apya-page *@
 
 @section scripts {
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.6/Sortable.min.js"></script>

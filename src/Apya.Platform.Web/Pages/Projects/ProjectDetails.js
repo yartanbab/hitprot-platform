@@ -316,16 +316,8 @@ $(function () {
     });
 
     // --- 5. Tabs & Kanban Gösterimi ---
-    $('#list-tab').on('click', function () {
-        $(this).addClass('border-bottom border-primary border-3 text-dark').removeClass('text-muted');
-        $('#board-tab').removeClass('border-bottom border-primary border-3 text-dark').addClass('text-muted');
-    });
-
-    $('#board-tab').on('click', function () {
-        $(this).addClass('border-bottom border-primary border-3 text-dark').removeClass('text-muted');
-        $('#list-tab').removeClass('border-bottom border-primary border-3 text-dark').addClass('text-muted');
-        kb.load();
-    });
+    // Tab görselleri artık .cshtml'deki #projectViewTabs .nav-link.active CSS'inden
+    // gelir (token-tabanlı) — buradaki eski utility-class jonglörlüğü kaldırıldı.
 
     // Kanban sekmesi Bootstrap tab eventiyle de açılabilir → o durumda da yükle.
     $(document).on('shown.bs.tab', '#board-tab, [data-bs-target="#board-view"]', function () { kb.load(); });
