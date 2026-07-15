@@ -4,7 +4,8 @@
 @{
     Layout = null;
 }
-<abp-dynamic-form abp-model="Workflow" asp-page="/AiCenter/Workflows/EditModal">
+@* Düz form (Customers deseni) — abp-dynamic-form çift alan üretiyordu, bkz CreateModal. *@
+<form method="post" action="@Url.Page("/AiCenter/Workflows/EditModal")">
     <abp-modal>
         <abp-modal-header title="AI İş Akışı Düzenle"></abp-modal-header>
         <abp-modal-body>
@@ -16,4 +17,4 @@
         </abp-modal-body>
         <abp-modal-footer buttons="@(AbpModalButtons.Cancel | AbpModalButtons.Save)"></abp-modal-footer>
     </abp-modal>
-</abp-dynamic-form>
+</form>
