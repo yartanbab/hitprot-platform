@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Volo.Abp.Application.Dtos;
 
 namespace Apya.Platform.Projects.Dtos;
@@ -45,6 +46,8 @@ public class ProjectDto : AuditedEntityDto<Guid>
     public string DisplayStatus { get; set; } = "Planlama";
     /// <summary>Projedeki görevlere atanmış benzersiz kullanıcı sayısı (facepile için).</summary>
     public int AssigneeCount { get; set; }
+    /// <summary>İlk birkaç atananın baş harfleri (facepile daireleri için, en fazla 5).</summary>
+    public List<string> AssigneeInitials { get; set; } = new();
     /// <summary>Bitişe kalan gün (StartDate+EndDate ikisi de doluysa); yoksa null.</summary>
     public int? DaysRemaining { get; set; }
 }

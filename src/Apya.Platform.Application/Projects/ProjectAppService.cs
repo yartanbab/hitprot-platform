@@ -336,7 +336,15 @@ public class ProjectAppService :
         var totalTasks = projectTasks.Count;
         var completedTasks = projectTasks.Count(t => t.Status == Apya.Platform.Tasks.TaskStatus.Done);
         dto.ProgressPercent = totalTasks > 0 ? (int)Math.Round((double)completedTasks / totalTasks * 100) : 0;
-        dto.AssigneeCount = projectTasks.Where(t => t.AssigneeId.HasValue).Select(t => t.AssigneeId).Distinct().Count();
+
+        var assignees = projectTasks
+            .Where(t => t.AssigneeId.HasValue)
+            .GroupBy(t => t.AssigneeId!.Value)
+            .Select(g => g.First().AssigneeName)
+            .ToList();
+        dto.AssigneeCount = assignees.Count;
+        dto.AssigneeInitials = assignees.Take(5).Select(ToInitials).ToList();
+
         dto.RiskColor = risk.color;
         dto.DaysRemaining = (dto.StartDate.HasValue && dto.EndDate.HasValue)
             ? Math.Max(0, (int)(dto.EndDate.Value - now).TotalDays)
@@ -345,6 +353,15 @@ public class ProjectAppService :
         dto.DisplayStatus = (totalTasks == 0 || time.notStarted)
             ? "Planlama"
             : risk.color == "danger" ? "Risk" : "Aktif";
+    }
+
+    private static string ToInitials(string? displayName)
+    {
+        if (string.IsNullOrWhiteSpace(displayName)) return "?";
+        var parts = displayName.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        return parts.Length >= 2
+            ? $"{parts[0][0]}{parts[^1][0]}".ToUpperInvariant()
+            : parts[0][..Math.Min(2, parts[0].Length)].ToUpperInvariant();
     }
 
     // --- SUMMARY (Projeler KPI şeridi) ---
