@@ -770,6 +770,59 @@ body.apya-command-palette-lock {
 .apya-tile-progress-label .apya-numeric {
     color: var(--apya-text-secondary);
 }
+/* İki mini-progress'i (bütçe + ilerleme) aynı tile'da düşey istifler */
+.apya-tile-progress-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+/* Görev tamamlanma barı — bütçenin accent tonundan ayrışsın diye positive */
+.apya-mini-progress.is-progress > span { background: var(--apya-positive-500); }
+
+/* Kategori ikon kutusu (tile başlığında) — kpi-icon-box ile aynı desen, tile ölçeğinde */
+.apya-tile-icon-box {
+    flex: none;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--apya-radius-lg);
+    background: var(--apya-accent-soft);
+    color: var(--apya-accent-500);
+    font-size: 13px;
+}
+
+/* Atanan facepile — ProjectDetails.cshtml'deki .avatar-circle'ın tile ölçeğine indirilmiş hali */
+.apya-tile-avatars {
+    display: flex;
+    align-items: center;
+}
+.apya-tile-avatar {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: var(--apya-accent-500);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 9px;
+    font-weight: 700;
+    border: 2px solid var(--apya-surface-base);
+    margin-left: -8px;
+}
+.apya-tile-avatar:first-child { margin-left: 0; }
+.apya-tile-avatar.is-more { background: var(--apya-neutral-500); }
+
+/* Kalan gün rozeti — mevcut .apya-chip tonlarını kullanan kompakt varyant */
+.apya-tile-days-chip {
+    font-size: 10.5px;
+}
+.apya-tile-days-chip i {
+    margin-right: 4px;
+}
+
 /* Izgara boş durumu + "daha fazla" satırı */
 .apya-tile-grid-empty {
     display: flex;
