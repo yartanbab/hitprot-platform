@@ -23,6 +23,9 @@ public class CreateModalModel : PlatformPageModel
     public List<SelectListItem> UserList { get; set; } = new();
     public List<SelectListItem> StatusOrColumnList { get; set; } = new();
 
+    /// <summary>Select2 tags:true widget'ının başlangıç seçenek listesi (mevcut tüm etiketler).</summary>
+    public List<string> AllTagNames { get; set; } = new();
+
     private readonly ITaskAppService _taskAppService;
     private readonly Apya.Platform.Projects.IBoardColumnAppService _boardColumnAppService;
 
@@ -49,6 +52,8 @@ public class CreateModalModel : PlatformPageModel
         UserList = userLookup.Items
             .Select(u => new SelectListItem(u.UserName, u.Id.ToString()))
             .ToList();
+
+        AllTagNames = (await _taskAppService.GetAllTagsAsync()).Select(t => t.Name).ToList();
 
         await BuildStatusOrColumnListAsync(ProjectId);
     }
