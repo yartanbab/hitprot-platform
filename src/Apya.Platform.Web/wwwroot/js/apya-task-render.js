@@ -81,6 +81,7 @@
     }
 
     window.apyaTask = {
+        esc: esc,
         hashTone: hashTone,
         tagChips: tagChips,
         priorityBadge: priorityBadge,

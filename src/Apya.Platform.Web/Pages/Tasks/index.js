@@ -12,6 +12,7 @@ $(function () {
         if (selectedProjectId) input.projectId = selectedProjectId;
         if ($('#Filter_AssigneeId').val()) input.assigneeId = $('#Filter_AssigneeId').val();
         if ($('#Filter_Status').val()) input.statuses = [parseInt($('#Filter_Status').val())];
+        if ($('#Filter_Priority').val()) input.priorities = [parseInt($('#Filter_Priority').val())];
         if ($('#Filter_MinDueDate').val()) input.minDueDate = $('#Filter_MinDueDate').val();
         if ($('#Filter_MaxDueDate').val()) input.maxDueDate = $('#Filter_MaxDueDate').val();
         return input;
@@ -81,10 +82,25 @@ $(function () {
                 title: 'Başlık',
                 data: 'title',
                 render: function(data, type, row) {
+                    var head = '<span class="fw-bold">' + apyaTask.esc(data) + '</span>' + apyaTask.commentCount(row.comments);
                     if (row.parentTaskTitle) {
-                        return '<div class="d-flex flex-column"><span class="fw-bold">' + data + '</span><span class="text-muted small"><i class="fa fa-level-up-alt fa-rotate-90 me-1"></i> ' + row.parentTaskTitle + '</span></div>';
+                        head += '<div class="text-muted small"><i class="fa fa-level-up-alt fa-rotate-90 me-1"></i>' + apyaTask.esc(row.parentTaskTitle) + '</div>';
                     }
-                    return '<span class="fw-bold">' + data + '</span>';
+                    return '<div>' + head + apyaTask.tagChips(row.tags) + '</div>';
+                }
+            },
+            {
+                title: 'Proje',
+                data: 'projectName',
+                render: function (data) {
+                    return data ? '<span class="small">' + apyaTask.esc(data) + '</span>' : '<span class="text-muted small">—</span>';
+                }
+            },
+            {
+                title: 'Atanan',
+                data: 'assigneeName',
+                render: function (data) {
+                    return apyaTask.assigneeAvatar(data);
                 }
             },
             {
@@ -109,29 +125,14 @@ $(function () {
                 title: 'Öncelik',
                 data: 'priority',
                 render: function (data) {
-                    var map = {
-                        0: { tone: 'positive', text: 'Düşük'  },
-                        1: { tone: 'warning',  text: 'Normal' },
-                        2: { tone: 'negative', text: 'Yüksek' }
-                    };
-                    var p = map[data] || map[0];
-                    return '<span class="apya-chip apya-chip-' + p.tone + '">' + p.text + '</span>';
+                    return apyaTask.priorityBadge(data);
                 }
             },
             {
                 title: 'Bitiş Tarihi',
                 data: 'dueDate',
                 render: function (data, type, row) {
-                    if (!data) return '';
-                    if (row.status !== 4 && row.status !== 0) {
-                        var dueDiff = moment(data).diff(moment(), 'hours');
-                        if (dueDiff < 0) {
-                            return '<span class="apya-chip apya-chip-negative heartbeat-animation"><i class="fa fa-exclamation-circle me-1"></i>' + moment(data).format('DD MMM YYYY') + '</span>';
-                        } else if (dueDiff <= 48) {
-                            return '<span class="apya-chip apya-chip-warning"><i class="fa fa-clock me-1"></i>' + moment(data).format('DD MMM YYYY') + '</span>';
-                        }
-                    }
-                    return '<span class="text-muted">' + moment(data).format('DD MMM YYYY') + '</span>';
+                    return apyaTask.dueDateChip(data, row.status);
                 }
             }
         ]
