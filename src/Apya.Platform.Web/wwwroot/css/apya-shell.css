@@ -844,3 +844,57 @@ body.apya-command-palette-lock {
     justify-content: center;
     margin-top: 16px;
 }
+
+/* ----------------------------------------------------------------------------
+   15) GÖREV ETİKET/AVATAR — Görevler tablosu, ProjectDetails görev tab'ı ve
+   Kanban kartları arasında paylaşılan render (wwwroot/js/apya-task-render.js).
+   Renk ataması yok — isimden deterministik hash ile mevcut apya-chip tonlarından
+   (positive/negative/warning/brand/ai/neutral) biri seçilir.
+   ---------------------------------------------------------------------------- */
+.apya-task-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-top: 4px;
+}
+
+/* Öncelik: chip değil, nokta + düz metin (Durum chip'inden görsel olarak ayrışsın) */
+.apya-priority-dot {
+    display: inline-block;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    margin-right: 6px;
+}
+.apya-priority-dot-positive { background: var(--apya-positive-500); }
+.apya-priority-dot-negative { background: var(--apya-negative-500); }
+.apya-priority-dot-warning { background: var(--apya-warning-500); }
+i.apya-priority-dot {
+    /* Kritik önceliğin ikon-nokta varyantı: fa-triangle-exclamation ikonuna renk verir */
+    width: auto; height: auto; border-radius: 0; font-size: 11px; vertical-align: 1px;
+    color: var(--apya-negative-500); background: none;
+}
+.apya-priority-text {
+    font-size: 12.5px;
+    color: var(--apya-text-secondary);
+}
+
+/* Atanan avatarı: isimden hash ile 6 ton, solid arka plan + beyaz baş harf */
+.apya-avatar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    color: #fff;
+    font-size: 10px;
+    font-weight: 700;
+    flex: none;
+}
+.apya-avatar-positive { background: var(--apya-positive-500); }
+.apya-avatar-negative { background: var(--apya-negative-500); }
+.apya-avatar-warning { background: var(--apya-warning-500); }
+.apya-avatar-brand { background: var(--apya-brand-500); }
+.apya-avatar-ai { background: var(--apya-ai-500); }
+.apya-avatar-neutral { background: var(--apya-neutral-500); }
