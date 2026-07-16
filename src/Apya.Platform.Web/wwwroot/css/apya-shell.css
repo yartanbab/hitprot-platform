@@ -104,6 +104,13 @@ a, button, .btn, .nav-link, .list-group-item {
     border-radius: var(--apya-radius-xl) !important;
     border: 1px solid var(--apya-border-default) !important;
     box-shadow: var(--apya-shadow-xl) !important;
+    /* SİSTEMİK BUG FİX (2026-07-16, drawer QA'sında bulundu): apya-theme-bridge.css
+       --bs-modal-bg'yi override ediyor ama LeptonX'in derlenmiş CSS'i muhtemelen daha
+       spesifik/geç sırada .modal-content arkaplanını sabit beyaza zorluyor — TÜM
+       modallar (CreateModal dahil) dark temada beyaz kalıyordu. Üstteki 3 property
+       zaten aynı sebeple !important kullanıyordu, tutarlılık için buraya da eklendi. */
+    background-color: var(--apya-surface-elevated) !important;
+    color: var(--apya-text-primary) !important;
 }
 
 .modal-header {
@@ -965,4 +972,37 @@ i.apya-priority-dot {
     padding: var(--apya-space-3, 12px) var(--apya-space-4, 16px);
     border-top: 1px solid var(--apya-border-subtle);
     background: var(--apya-surface-base);
+}
+
+/* Durum inline pill-switcher (Genel bölümü) — asıl <select> d-none, bunlar onu sürer */
+.apya-status-pill-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+}
+.apya-status-pill {
+    border: 1px solid var(--apya-border-default);
+    background: var(--apya-surface-base);
+    color: var(--apya-text-secondary);
+    border-radius: var(--apya-radius-full);
+    padding: 5px 14px;
+    font-size: 12.5px;
+    font-weight: 600;
+}
+.apya-status-pill.active {
+    background: var(--apya-accent-500);
+    border-color: transparent;
+    color: #fff;
+}
+.apya-status-overflow { font-size: 12.5px; }
+
+/* Meta-grid — Atanan/Son Tarih/Öncelik/Etiketler 2 sütun (drawer dar olduğu için tek sütuna düşer) */
+.apya-meta-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--apya-space-3, 12px) var(--apya-space-4, 16px);
+}
+@media (max-width: 420px) {
+    .apya-meta-grid { grid-template-columns: 1fr; }
 }

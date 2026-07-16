@@ -44,37 +44,73 @@
                     <abp-input asp-for="Id" type="hidden" class="task-id-input" />
                     <abp-input asp-for="Task.ProjectId" type="hidden" />
 
-                    <div class="row">
-                        <div class="col-md-8 border-end pe-4">
-                            <abp-input asp-for="Task.Title" label="Görev Başlığı" class="form-control-lg fw-bold" />
-                            <div class="mt-3">
-                                <abp-input asp-for="Task.Description" type="textarea" label="Açıklama" rows="6" placeholder="Bu görevin detayları nelerdir?" />
-                            </div>
+                    <abp-input asp-for="Task.Title" label="Görev Başlığı" class="form-control-lg fw-bold" />
+
+                    @{
+                        var systemStatusValues = new[] { "s:1", "s:2", "s:3", "s:4" };
+                        var overflowStatusItems = Model.StatusOrColumnList.Where(x => !systemStatusValues.Contains(x.Value)).ToList();
+                    }
+                    <div class="mt-3">
+                        <label class="apya-overline d-block mb-1">Durum</label>
+                        <select asp-for="StatusOrColumn" asp-items="Model.StatusOrColumnList" id="StatusOrColumn_@Model.Id" class="d-none"></select>
+                        <div class="apya-status-pill-row" data-status-select="#StatusOrColumn_@Model.Id">
+                            @foreach (var (label, sv) in new[] { ("Yapılacak", 1), ("Sürüyor", 2), ("Testte", 3), ("Tamamlandı", 4) })
+                            {
+                                var val = "s:" + sv;
+                                var isActive = Model.StatusOrColumnList.FirstOrDefault(x => x.Value == val)?.Selected == true;
+                                <button type="button" class="apya-status-pill@(isActive ? " active" : "")" data-value="@val">@label</button>
+                            }
+                            @if (overflowStatusItems.Any())
+                            {
+                                <select class="form-select form-select-sm d-inline-block w-auto apya-status-overflow" data-status-select="#StatusOrColumn_@Model.Id">
+                                    <option value="">Diğer…</option>
+                                    @foreach (var item in overflowStatusItems)
+                                    {
+                                        <option value="@item.Value" selected="@item.Selected">@item.Text</option>
+                                    }
+                                </select>
+                            }
                         </div>
-                        <div class="col-md-4 ps-4">
-                            <h6 class="text-muted fw-bold mb-3"><i class="fa fa-calendar-alt me-2"></i>Zaman Planı</h6>
-                            <abp-input asp-for="Task.StartDate" type="date" label="Başlangıç" />
-                            <abp-input asp-for="Task.DueDate" type="date" label="Bitiş (Deadline)" />
+                    </div>
 
-                            <h6 class="text-muted fw-bold mt-4 mb-3"><i class="fa fa-cog me-2"></i>Durum & Atama</h6>
-                            <abp-select asp-for="Task.Priority" asp-items="Model.PriorityList" label="Öncelik" />
-                            <abp-select asp-for="StatusOrColumn" asp-items="Model.StatusOrColumnList" label="Durum / Kolon" />
-                            <abp-select asp-for="Task.AssigneeId" asp-items="Model.UserList" label="Sorumlu Kişi" />
-
-                            <label class="form-label fw-semibold mt-3" asp-for="Task.TagNames">Etiketler</label>
+                    <div class="apya-meta-grid mt-3">
+                        <div>
+                            <label class="apya-overline d-block mb-1">Atanan</label>
+                            <select asp-for="Task.AssigneeId" asp-items="Model.UserList" class="form-select"></select>
+                        </div>
+                        <div>
+                            <label class="apya-overline d-block mb-1">Son Tarih</label>
+                            <input asp-for="Task.DueDate" type="date" class="form-control" />
+                        </div>
+                        <div>
+                            <label class="apya-overline d-block mb-1">Öncelik</label>
+                            <select asp-for="Task.Priority" asp-items="Model.PriorityList" class="form-select"></select>
+                        </div>
+                        <div>
+                            <label class="apya-overline d-block mb-1" asp-for="Task.TagNames">Etiketler</label>
                             <select class="form-select" asp-for="Task.TagNames" multiple id="TaskTagsSelectEdit">
                                 @foreach (var tag in Model.AllTagNames)
                                 {
                                     <option value="@tag" selected="@(Model.Task.TagNames.Contains(tag))">@tag</option>
                                 }
                             </select>
+                        </div>
+                    </div>
 
-                            <div class="form-check form-switch mt-4 bg-light p-3 ps-5 rounded border">
+                    <div class="mt-3">
+                        <abp-input asp-for="Task.Description" type="textarea" label="Açıklama" rows="4" placeholder="Bu görevin detayları nelerdir?" />
+                    </div>
+
+                    <div class="row g-2 mt-1 align-items-end">
+                        <div class="col-7">
+                            <abp-input asp-for="Task.StartDate" type="date" label="Başlangıç" />
+                        </div>
+                        <div class="col-5">
+                            <div class="form-check form-switch mb-2">
                                 <input class="form-check-input" type="checkbox" asp-for="Task.IsPrivate">
-                                <label class="form-check-label fw-bold text-danger" asp-for="Task.IsPrivate">
-                                    <i class="fa fa-user-secret me-1"></i> Gizli Görev
+                                <label class="form-check-label fw-bold text-danger small" asp-for="Task.IsPrivate">
+                                    <i class="fa fa-user-secret me-1"></i> Gizli
                                 </label>
-                                <small class="d-block text-muted mt-1">Sadece siz ve sorumlu kişi görebilir. Admin dahil başkası profilinize girdiğinde göremez.</small>
                             </div>
                         </div>
                     </div>

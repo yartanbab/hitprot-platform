@@ -20,4 +20,25 @@ $(function () {
             $target.trigger('apya:lazy:' + lazyKey);
         }
     });
+
+    // Durum inline pill-switcher — gizli <select asp-for="StatusOrColumn"> değerini set edip
+    // change tetikler (autosave dinleyicisi zaten select değişikliklerini yakalıyor).
+    $(document).on('click', '.apya-status-pill', function () {
+        var $pill = $(this);
+        var $row = $pill.closest('.apya-status-pill-row');
+        var $select = $($row.data('status-select'));
+        $row.find('.apya-status-pill').removeClass('active');
+        $row.find('.apya-status-overflow').val('');
+        $pill.addClass('active');
+        $select.val($pill.data('value')).trigger('change');
+    });
+
+    $(document).on('change', '.apya-status-overflow', function () {
+        var $sel = $(this);
+        if (!$sel.val()) return;
+        var $row = $sel.closest('.apya-status-pill-row');
+        var $select = $($row.data('status-select'));
+        $row.find('.apya-status-pill').removeClass('active');
+        $select.val($sel.val()).trigger('change');
+    });
 });
