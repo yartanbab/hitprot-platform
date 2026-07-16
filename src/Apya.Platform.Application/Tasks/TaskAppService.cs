@@ -30,6 +30,8 @@ namespace Apya.Platform.Tasks
         private readonly IRepository<TaskTimeLog, Guid> _timeLogRepository;
         private readonly IRepository<IdentityUser, Guid> _identityRepository;
         private readonly IRepository<Apya.Platform.Projects.BoardColumn, Guid> _boardColumnRepository;
+        private readonly IRepository<Tag, Guid> _tagRepository;
+        private readonly IRepository<TaskTagAssignment, Guid> _taskTagRepository;
         private readonly ILocalEventBus _localEventBus;
 
         public TaskAppService(
@@ -41,6 +43,8 @@ namespace Apya.Platform.Tasks
             IRepository<TaskTimeLog, Guid> timeLogRepository,
             IRepository<IdentityUser, Guid> identityRepository,
             IRepository<Apya.Platform.Projects.BoardColumn, Guid> boardColumnRepository,
+            IRepository<Tag, Guid> tagRepository,
+            IRepository<TaskTagAssignment, Guid> taskTagRepository,
             ILocalEventBus localEventBus)
             : base(repository)
         {
@@ -51,6 +55,8 @@ namespace Apya.Platform.Tasks
             _timeLogRepository     = timeLogRepository;
             _identityRepository    = identityRepository;
             _boardColumnRepository = boardColumnRepository;
+            _tagRepository         = tagRepository;
+            _taskTagRepository     = taskTagRepository;
             _localEventBus         = localEventBus;
 
             CreatePolicyName = PlatformPermissions.Tasks.Create;
@@ -126,6 +132,8 @@ namespace Apya.Platform.Tasks
             var dependencies = await _dependencyRepository.GetListAsync(x => x.TaskId == id);
             taskDto.PredecessorIds = dependencies.Select(d => d.PredecessorTaskId).ToList();
 
+            await PopulateTagsAsync(new List<TaskDto> { taskDto });
+
             // Özel kanban kolonu adı (liste "Durum" sütunu + modal dropdown)
             if (task.BoardColumnId.HasValue)
             {
@@ -141,7 +149,76 @@ namespace Apya.Platform.Tasks
         {
             var result = await base.GetListAsync(input);
             await PopulateBoardColumnNamesAsync(result.Items);
+            await PopulateTagsAsync(result.Items);
             return result;
+        }
+
+        // Görev etiketlerini tek toplu sorguda iliştirir (N+1 yok) — PopulateBoardColumnNamesAsync ile aynı desen.
+        private async Task PopulateTagsAsync(System.Collections.Generic.IReadOnlyList<TaskDto> items)
+        {
+            if (items.Count == 0) return;
+            var taskIds = items.Select(i => i.Id).ToList();
+
+            var assignments = await _taskTagRepository.GetListAsync(x => taskIds.Contains(x.TaskId));
+            if (assignments.Count == 0) return;
+
+            var tagIds = assignments.Select(a => a.TagId).Distinct().ToList();
+            var tags = await _tagRepository.GetListAsync(t => tagIds.Contains(t.Id));
+            var tagMap = tags.ToDictionary(t => t.Id, t => new TagDto { Id = t.Id, Name = t.Name });
+
+            var assignmentsByTask = assignments.GroupBy(a => a.TaskId).ToDictionary(g => g.Key, g => g.ToList());
+            foreach (var item in items)
+            {
+                if (assignmentsByTask.TryGetValue(item.Id, out var taskAssignments))
+                {
+                    item.Tags = taskAssignments
+                        .Where(a => tagMap.ContainsKey(a.TagId))
+                        .Select(a => tagMap[a.TagId])
+                        .ToList();
+                }
+            }
+        }
+
+        // Create/Update ortak: TagNames'i get-or-create edip TaskTagAssignment'ları senkronlar
+        // (PredecessorIds senkronuyla aynı sil-sonra-yeniden-ekle deseni).
+        private async Task<List<TagDto>> SyncTagsAsync(Guid taskId, List<string>? tagNames)
+        {
+            await _taskTagRepository.DeleteDirectAsync(x => x.TaskId == taskId);
+
+            var names = (tagNames ?? new())
+                .Select(n => n?.Trim())
+                .Where(n => !string.IsNullOrEmpty(n))
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList();
+            if (names.Count == 0) return new List<TagDto>();
+
+            // Tenant'ın TÜM etiketleri (küçük bir lookup tablosu) — case-insensitive eşleşme
+            // in-memory yapılmalı, aksi halde Postgres'in case-sensitive '=' karşılaştırması
+            // farklı harf büyüklüğüyle yazılan aynı etiketi kaçırıp yinelenen Tag oluşturur.
+            var existingTags = await _tagRepository.GetListAsync();
+
+            var result = new List<TagDto>();
+            foreach (var name in names)
+            {
+                var tag = existingTags.FirstOrDefault(t => string.Equals(t.Name, name, StringComparison.OrdinalIgnoreCase));
+                if (tag == null)
+                {
+                    tag = new Tag(GuidGenerator.Create(), name!, CurrentTenant.Id);
+                    await _tagRepository.InsertAsync(tag);
+                    existingTags.Add(tag);
+                }
+                await _taskTagRepository.InsertAsync(new TaskTagAssignment(GuidGenerator.Create(), taskId, tag.Id));
+                result.Add(new TagDto { Id = tag.Id, Name = tag.Name });
+            }
+            return result;
+        }
+
+        /// <summary>Select2 tag girişinin başlangıç seçenek listesi için tenant'ın tüm etiketleri.</summary>
+        public async Task<List<TagDto>> GetAllTagsAsync()
+        {
+            var q = await _tagRepository.GetQueryableAsync();
+            var tags = await AsyncExecuter.ToListAsync(q.OrderBy(t => t.Name).Take(1000));
+            return tags.Select(t => new TagDto { Id = t.Id, Name = t.Name }).ToList();
         }
 
         // Özel kolondaki görevlere kolon adını tek sorguda iliştirir (liste "Durum" sütunu).
@@ -233,9 +310,12 @@ namespace Apya.Platform.Tasks
                 });
             }
 
+            var tagDtos = await SyncTagsAsync(newTask.Id, input.TagNames);
+
             // REV-002: Manuel DTO yerine AutoMapper
             var taskDto = ObjectMapper.Map<TaskItem, TaskDto>(newTask);
             taskDto.PredecessorIds = input.PredecessorIds ?? new();
+            taskDto.Tags = tagDtos;
 
             if (input.AssigneeId.HasValue)
             {
@@ -303,9 +383,12 @@ namespace Apya.Platform.Tasks
                 });
             }
 
+            var tagDtos = await SyncTagsAsync(task.Id, input.TagNames);
+
             // REV-002: Manuel DTO yerine AutoMapper
             var taskDto = ObjectMapper.Map<TaskItem, TaskDto>(task);
             taskDto.PredecessorIds = input.PredecessorIds ?? new();
+            taskDto.Tags = tagDtos;
 
             if (task.AssigneeId.HasValue)
             {
@@ -360,8 +443,11 @@ namespace Apya.Platform.Tasks
                 .WhereIf(input.ProjectId.HasValue, t => t.ProjectId == input.ProjectId)
                 .WhereIf(input.AssigneeId.HasValue, t => t.AssigneeId == input.AssigneeId)
                 .WhereIf(input.Statuses != null && input.Statuses.Any(), t => input.Statuses!.Contains(t.Status))
+                .WhereIf(input.Priorities != null && input.Priorities.Any(), t => input.Priorities!.Contains(t.Priority))
                 .WhereIf(input.MinDueDate.HasValue, t => t.DueDate >= input.MinDueDate!.Value)
                 .WhereIf(input.MaxDueDate.HasValue, t => t.DueDate <= input.MaxDueDate!.Value)
+                .WhereIf(!string.IsNullOrWhiteSpace(input.Filter), t =>
+                    t.Title.Contains(input.Filter!) || (t.Description != null && t.Description.Contains(input.Filter!)))
                 .Include(t => t.Assignee)
                 .Include(t => t.ParentTask);
         }

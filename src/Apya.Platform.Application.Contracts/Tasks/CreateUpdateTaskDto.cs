@@ -33,5 +33,8 @@ namespace Apya.Platform.Tasks
         public Guid? ParentTaskId { get; set; }
         public bool IsPrivate { get; set; }
         public System.Collections.Generic.List<Guid> PredecessorIds { get; set; } = new();
+
+        /// <summary>Select2 tags:true widget'ından gelen serbest-metin etiket isimleri (get-or-create).</summary>
+        public System.Collections.Generic.List<string> TagNames { get; set; } = new();
     }
 }
