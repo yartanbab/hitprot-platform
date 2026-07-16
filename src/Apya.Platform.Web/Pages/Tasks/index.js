@@ -257,9 +257,12 @@ $(function () {
         });
     }
 
+    // TaskPriority enum: Low=1, Medium=2, High=3, Critical=4 — önceki hali (0/2/else)
+    // gerçek enum değerleriyle uyuşmuyordu, neredeyse her görev 'medium' gösteriyordu.
     function getPriorityClass(p) {
-        if(p === 0) return 'low';
-        if(p === 2) return 'high';
+        if (p === 1) return 'low';
+        if (p === 3) return 'high';
+        if (p === 4) return 'critical';
         return 'medium';
     }
 
