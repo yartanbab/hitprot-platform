@@ -932,3 +932,37 @@ i.apya-priority-dot {
 .modal.apya-drawer.show .modal-dialog {
     animation: apyaSlide var(--apya-motion-slow) var(--apya-easing-standard) both;
 }
+
+/* Kompakt pill-tab satırı — eski ağır Bootstrap nav-tabs yerine (task-drawer.js yönetir) */
+.apya-pilltab-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding-bottom: var(--apya-space-3, 12px);
+}
+.apya-pilltab-btn {
+    border: 1px solid var(--apya-border-default);
+    background: var(--apya-surface-base);
+    color: var(--apya-text-secondary);
+    border-radius: var(--apya-radius-full);
+    padding: 4px 12px;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1.6;
+    transition: background var(--apya-motion-fast) var(--apya-easing-standard),
+                color var(--apya-motion-fast) var(--apya-easing-standard);
+}
+.apya-pilltab-btn:hover { color: var(--apya-text-primary); background: var(--apya-surface-raised); }
+.apya-pilltab-btn.active {
+    background: var(--apya-accent-soft);
+    border-color: transparent;
+    color: var(--apya-accent-600);
+}
+
+/* Yorum giriş çubuğu — drawer'ın altına sabit (modal-content flex-column'da flex olmayan son çocuk) */
+.apya-drawer-commentbar {
+    flex: none;
+    padding: var(--apya-space-3, 12px) var(--apya-space-4, 16px);
+    border-top: 1px solid var(--apya-border-subtle);
+    background: var(--apya-surface-base);
+}
