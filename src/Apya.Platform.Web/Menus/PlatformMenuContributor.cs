@@ -31,16 +31,15 @@ public class PlatformMenuContributor : IMenuContributor
         var permission = context.ServiceProvider.GetRequiredService<IPermissionChecker>();
         var feature = context.ServiceProvider.GetRequiredService<IFeatureChecker>();
 
-        context.Menu.Items.Insert(0, new ApplicationMenuItem(
-            PlatformMenus.Home, l["Menu:Home"], "~/", icon: "fas fa-home", order: 0));
-
         context.Menu.AddItem(new ApplicationMenuItem(
             "Apya.Dashboard", l["Menu:Dashboard"], icon: "fa fa-chart-line", url: "/Dashboard", order: 1));
 
         // İşler
+        // NOT: eskiden burada ayrı bir "Ana Sayfa" (PlatformMenus.Home, url "~/") öğesi de vardı —
+        // "Projeler" ile aynı (bozuk) "/" URL'sine gidiyordu, hedef tasarımda da yok; kaldırıldı.
         var work = new ApplicationMenuItem("Apya.Work", l["Menu:Work"], icon: "fa fa-briefcase", order: 2);
         if (await permission.IsGrantedAsync(PlatformPermissions.Projects.Default))
-            work.AddItem(new ApplicationMenuItem("Apya.Work.Projects", l["Menu:Projects"], icon: "fa fa-rocket", url: "/"));
+            work.AddItem(new ApplicationMenuItem("Apya.Work.Projects", l["Menu:Projects"], icon: "fa fa-rocket", url: "/Projects"));
         if (await permission.IsGrantedAsync(PlatformPermissions.Grants.Default))
             work.AddItem(new ApplicationMenuItem("Apya.Work.Grants", l["Menu:Grants"], icon: "fa fa-award", url: "/Grants"));
         if (await permission.IsGrantedAsync(PlatformPermissions.Tasks.Default))
