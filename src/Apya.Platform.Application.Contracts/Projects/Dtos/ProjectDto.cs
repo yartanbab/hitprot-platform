@@ -36,4 +36,15 @@ public class ProjectDto : AuditedEntityDto<Guid>
     public decimal HourlyRate { get; set; }
     public string Currency { get; set; } = "TRY";
     public decimal SpentBudget { get; set; }
+
+    /// <summary>Görev tamamlanma yüzdesi (Done / toplam). Görev yoksa 0.</summary>
+    public int ProgressPercent { get; set; }
+    /// <summary>ProjectMetricsCalculator.CalculateAiRisk'in renk sözlüğü: secondary/success/warning/danger.</summary>
+    public string RiskColor { get; set; } = "secondary";
+    /// <summary>Kart üzerinde gösterilen türetilmiş durum: Planlama / Aktif / Risk.</summary>
+    public string DisplayStatus { get; set; } = "Planlama";
+    /// <summary>Projedeki görevlere atanmış benzersiz kullanıcı sayısı (facepile için).</summary>
+    public int AssigneeCount { get; set; }
+    /// <summary>Bitişe kalan gün (StartDate+EndDate ikisi de doluysa); yoksa null.</summary>
+    public int? DaysRemaining { get; set; }
 }

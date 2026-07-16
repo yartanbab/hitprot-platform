@@ -136,22 +136,30 @@ public class ProjectAppService :
 
                 bool canViewBudget = await AuthorizationService.IsGrantedAsync(PlatformPermissions.Projects.ViewBudget);
 
-                List<TaskItem> allTasks = new();
+                // Görev listesi bütçe iznine bakılmaksızın çekilir: ilerleme%/risk/atanan sayısı
+                // görev-bazlı bilgidir, bütçe rakamı değildir (yalnız time-log'dan türeyen SpentBudget bütçeye bağlı).
+                List<TaskItem> allTaskItems = new();
                 List<TaskTimeLog> allLogs = new();
-                if (canViewBudget && items.Any())
+                if (items.Any())
                 {
                     var projectIds = items.Select(x => x.Id).ToList();
-                    allTasks = await _taskRepository.GetListAsync(x => x.ProjectId.HasValue && projectIds.Contains(x.ProjectId.Value));
-                    var allTaskIds = allTasks.Select(x => x.Id).ToList();
-                    allLogs = await _timeLogRepository.GetListAsync(x => allTaskIds.Contains(x.TaskId));
+                    allTaskItems = await _taskRepository.GetListAsync(x => x.ProjectId.HasValue && projectIds.Contains(x.ProjectId.Value));
+                    if (canViewBudget)
+                    {
+                        var allTaskIds = allTaskItems.Select(x => x.Id).ToList();
+                        allLogs = await _timeLogRepository.GetListAsync(x => allTaskIds.Contains(x.TaskId));
+                    }
                 }
+                var allTasks = ObjectMapper.Map<List<TaskItem>, List<Apya.Platform.Tasks.TaskDto>>(allTaskItems);
 
                 var tenantNameMap = await ResolveTenantNamesAsync(dtos);
                 var customerNameMap = await ResolveCustomerNamesAsync(dtos);
+                var now = Clock.Now;
 
                 foreach (var dto in dtos)
                 {
-                    EnrichBudget(dto, allTasks, allLogs, canViewBudget);
+                    EnrichBudget(dto, allTaskItems, allLogs, canViewBudget);
+                    EnrichProgressAndRisk(dto, allTasks.Where(t => t.ProjectId == dto.Id).ToList(), now);
 
                     if (CurrentTenant.Id == null)
                         dto.TenantName = dto.TenantId.HasValue
@@ -313,6 +321,66 @@ public class ProjectAppService :
             dto.HourlyRate = 0;
             dto.SpentBudget = 0;
             dto.Currency = "***";
+        }
+    }
+
+    /// <summary>
+    /// Kart/KPI için görev-bazlı türetilmiş alanlar. IsApproved KULLANILMAZ (hiçbir yerden
+    /// set edilmiyor, fiilen ölü kod) — durum StartDate/görev-tamamlanma/risk skorundan türetilir.
+    /// </summary>
+    private static void EnrichProgressAndRisk(ProjectDto dto, List<Apya.Platform.Tasks.TaskDto> projectTasks, DateTime now)
+    {
+        var time = ProjectMetricsCalculator.CalculateTimeMetrics(dto, projectTasks, now);
+        var risk = ProjectMetricsCalculator.CalculateAiRisk(dto, projectTasks, now);
+
+        var totalTasks = projectTasks.Count;
+        var completedTasks = projectTasks.Count(t => t.Status == Apya.Platform.Tasks.TaskStatus.Done);
+        dto.ProgressPercent = totalTasks > 0 ? (int)Math.Round((double)completedTasks / totalTasks * 100) : 0;
+        dto.AssigneeCount = projectTasks.Where(t => t.AssigneeId.HasValue).Select(t => t.AssigneeId).Distinct().Count();
+        dto.RiskColor = risk.color;
+        dto.DaysRemaining = (dto.StartDate.HasValue && dto.EndDate.HasValue)
+            ? Math.Max(0, (int)(dto.EndDate.Value - now).TotalDays)
+            : null;
+
+        dto.DisplayStatus = (totalTasks == 0 || time.notStarted)
+            ? "Planlama"
+            : risk.color == "danger" ? "Risk" : "Aktif";
+    }
+
+    // --- SUMMARY (Projeler KPI şeridi) ---
+    public async Task<ProjectsSummaryDto> GetProjectsSummaryAsync()
+    {
+        using (CurrentTenant.Id == null ? DataFilter.Disable<IMultiTenant>() : null)
+        {
+            var queryable = await Repository.GetQueryableAsync();
+            var items = await AsyncExecuter.ToListAsync(queryable);
+            var dtos = ObjectMapper.Map<List<Project>, List<ProjectDto>>(items);
+
+            bool canViewBudget = await AuthorizationService.IsGrantedAsync(PlatformPermissions.Projects.ViewBudget);
+
+            List<TaskItem> allTaskItems = new();
+            if (items.Any())
+            {
+                var projectIds = items.Select(x => x.Id).ToList();
+                allTaskItems = await _taskRepository.GetListAsync(x => x.ProjectId.HasValue && projectIds.Contains(x.ProjectId.Value));
+            }
+            var allTasks = ObjectMapper.Map<List<TaskItem>, List<Apya.Platform.Tasks.TaskDto>>(allTaskItems);
+
+            var now = Clock.Now;
+            foreach (var dto in dtos)
+            {
+                EnrichProgressAndRisk(dto, allTasks.Where(t => t.ProjectId == dto.Id).ToList(), now);
+            }
+
+            var summary = new ProjectsSummaryDto
+            {
+                TotalCount = dtos.Count,
+                ActiveCount = dtos.Count(d => d.DisplayStatus != "Planlama"),
+                AtRiskCount = dtos.Count(d => d.DisplayStatus == "Risk"),
+                AverageProgressPercent = dtos.Count > 0 ? (int)Math.Round(dtos.Average(d => d.ProgressPercent)) : 0,
+                TotalBudget = canViewBudget ? dtos.Sum(d => d.TotalBudget) : 0
+            };
+            return summary;
         }
     }
 }
