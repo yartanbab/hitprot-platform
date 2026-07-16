@@ -1006,3 +1006,6 @@ i.apya-priority-dot {
 @media (max-width: 420px) {
     .apya-meta-grid { grid-template-columns: 1fr; }
 }
+
+/* Görev tabloları — "İşlemler" dropdown'ı yerine satıra tıklayınca drawer açılır */
+#TasksTable tbody tr, #ProjectTasksTable tbody tr { cursor: pointer; }

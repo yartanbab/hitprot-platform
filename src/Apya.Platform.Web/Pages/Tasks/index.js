@@ -28,54 +28,17 @@ $(function () {
         ajax: abp.libs.datatables.createAjax(taskService.getList, currentFilter),
         columnDefs: [
             {
-                title: 'İşlemler',
-                rowAction: {
-                    items: [
-                        {
-                            text: 'Düzenle',
-                            visible: function (data) {
-                                return abp.auth.isGranted('Platform.Projects.ManageTeam') ||
-                                       data.record.creatorId  === abp.currentUser.id ||
-                                       data.record.assigneeId === abp.currentUser.id;
-                            },
-                            action: function (data) { editModal.open({ id: data.record.id }); }
-                        },
-                        {
-                            text: 'Sil',
-                            visible: function (data) {
-                                return abp.auth.isGranted('Platform.Projects.ManageTeam') ||
-                                       data.record.creatorId  === abp.currentUser.id ||
-                                       data.record.assigneeId === abp.currentUser.id;
-                            },
-                            action: function (data) {
-                                Swal.fire({
-                                    title: 'Görev Silinecek!',
-                                    text: 'Görevi kalıcı olarak silmek üzeresiniz. Onaylamak için aşağıdaki alana "SİL" yazmalısınız.',
-                                    icon: 'warning',
-                                    input: 'text',
-                                    inputPlaceholder: 'SİL',
-                                    showCancelButton: true,
-                                    confirmButtonText: '<i class="fa fa-trash"></i> Evet, Sil!',
-                                    cancelButtonText: 'İptal',
-                                    confirmButtonColor: '#dc3545',
-                                    preConfirm: function (inputValue) {
-                                        if (inputValue !== 'SİL') {
-                                            Swal.showValidationMessage('Silme işlemini onaylamak için tam olarak "SİL" yazmalısınız.');
-                                        }
-                                        return inputValue;
-                                    }
-                                }).then(function (result) {
-                                    if (result.isConfirmed) {
-                                        taskService.delete(data.record.id).then(function () {
-                                            abp.notify.info('Başarıyla silindi.');
-                                            dataTable.ajax.reload();
-                                            if (!$('#view-kanban').hasClass('d-none')) kb.load();
-                                        });
-                                    }
-                                });
-                            }
-                        }
-                    ]
+                title: '',
+                data: null,
+                orderable: false,
+                className: 'text-end',
+                render: function (data, type, row) {
+                    var canManage = abp.auth.isGranted('Platform.Projects.ManageTeam') ||
+                                     row.creatorId === abp.currentUser.id ||
+                                     row.assigneeId === abp.currentUser.id;
+                    return canManage
+                        ? '<button type="button" class="btn btn-sm btn-light py-0 px-2 rounded js-delete-task" data-id="' + row.id + '" title="Sil"><i class="fa fa-trash text-danger" style="font-size:0.8rem;"></i></button>'
+                        : '';
                 }
             },
             {
@@ -165,6 +128,43 @@ $(function () {
         kb.setProject(selectedProjectId);
         dataTable.ajax.reload();
         if (!$('#view-gantt').hasClass('d-none')) loadGantt();
+    });
+
+    // --- Satıra tıklayınca drawer aç (eski "İşlemler" dropdown'ı kaldırıldı) ---
+    $('#TasksTable tbody').on('click', 'tr', function (e) {
+        if ($(e.target).closest('a, button, .form-check-input').length) return;
+        var rowData = dataTable.row(this).data();
+        if (rowData && rowData.id) { editModal.open({ id: rowData.id }); }
+    });
+
+    $('#TasksTable tbody').on('click', '.js-delete-task', function (e) {
+        e.stopPropagation();
+        var taskId = $(this).data('id');
+        Swal.fire({
+            title: 'Görev Silinecek!',
+            text: 'Görevi kalıcı olarak silmek üzeresiniz. Onaylamak için aşağıdaki alana "SİL" yazmalısınız.',
+            icon: 'warning',
+            input: 'text',
+            inputPlaceholder: 'SİL',
+            showCancelButton: true,
+            confirmButtonText: '<i class="fa fa-trash"></i> Evet, Sil!',
+            cancelButtonText: 'İptal',
+            confirmButtonColor: '#dc3545',
+            preConfirm: function (inputValue) {
+                if (inputValue !== 'SİL') {
+                    Swal.showValidationMessage('Silme işlemini onaylamak için tam olarak "SİL" yazmalısınız.');
+                }
+                return inputValue;
+            }
+        }).then(function (result) {
+            if (result.isConfirmed) {
+                taskService.delete(taskId).then(function () {
+                    abp.notify.info('Başarıyla silindi.');
+                    dataTable.ajax.reload();
+                    if (!$('#view-kanban').hasClass('d-none')) kb.load();
+                });
+            }
+        });
     });
 
     // --- Yeni Görev ---
