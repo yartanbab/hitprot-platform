@@ -132,6 +132,13 @@
             title.textContent = task.title;
             card.appendChild(title);
 
+            // Etiketler — apyaTask.tagChips kendi içinde escape ediyor (güvenli).
+            if (window.apyaTask && task.tags && task.tags.length) {
+                var tagsRow = el('div', 'mb-2');
+                tagsRow.innerHTML = window.apyaTask.tagChips(task.tags);
+                card.appendChild(tagsRow);
+            }
+
             // Alt satır: atanan + bitiş
             var bottom = el('div', 'd-flex justify-content-between align-items-center flex-wrap gap-1');
             var who = el('div', 'small text-muted');
