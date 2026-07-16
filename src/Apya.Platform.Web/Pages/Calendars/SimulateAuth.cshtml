@@ -39,15 +39,23 @@
     <!-- We need the ABP JS proxies here to call the connect service -->
     <script src="/api/abp/api-definition"></script>
     <script>
+        function getCookie(name) {
+            var match = document.cookie.match(new RegExp('(^|; )' + name + '=([^;]*)'));
+            return match ? decodeURIComponent(match[2]) : null;
+        }
+
         $('#SimForm').on('submit', function (e) {
             e.preventDefault();
             var email = $('#Email').val();
             var provider = parseInt(new URLSearchParams(window.location.search).get('provider'));
-            
+
             // Call the real service
             fetch('/api/app/calendar/connect-account', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'RequestVerificationToken': getCookie('XSRF-TOKEN')
+                },
                 body: JSON.stringify({
                     provider: provider,
                     externalEmail: email,
