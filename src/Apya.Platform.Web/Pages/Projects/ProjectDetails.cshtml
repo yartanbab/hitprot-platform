@@ -24,6 +24,17 @@
         _         => "neutral"
     };
     var timeHealthTone = ToApyaChipTone(Model.TimeHealthColor);
+
+    // apya-mini-progress ton sınıfı (bg-danger/warning/success yerine).
+    string ToApyaBarTone(string bsColor) => bsColor switch
+    {
+        "success" => "is-positive",
+        "warning" => "is-warning",
+        "danger"  => "is-negative",
+        _         => ""
+    };
+    var timeHealthBarTone = ToApyaBarTone(Model.TimeHealthColor);
+    var budgetBarTone = Model.BudgetPercent > 90 ? "is-negative" : Model.BudgetPercent > 60 ? "is-warning" : "is-positive";
 }
 
 <style>
@@ -39,17 +50,6 @@
        kart beyaz kalıp içindeki (text-dark kaldırılmış) metinler görünmez
        olurdu. Token'a bağlandı. */
     .project-dashboard-card { border-radius: 1rem; border: none; background: var(--apya-surface-raised); }
-    .avatar-group { display: flex; align-items: center; }
-    .avatar-circle {
-        width: 36px; height: 36px; border-radius: 50%;
-        background-color: var(--apya-accent-500); color: #fff;
-        display: flex; align-items: center; justify-content: center;
-        font-weight: bold; font-size: 0.85rem;
-        border: 2px solid var(--apya-surface-raised); margin-left: -10px;
-        box-shadow: 0 2px 6px rgba(0,0,0,0.15);
-    }
-    .avatar-circle:first-child { margin-left: 0; }
-    .avatar-circle.more { background-color: var(--apya-neutral-500); }
 
     /* Görünüm tab'ları — utility class jonglörlüğü yerine state-tabanlı token stili.
        (Eski hali: aktif underline Liste'ye SABİTti, aktif renk LeptonX pembesine/
@@ -133,9 +133,10 @@
 
             @* ── Kalan Süre Countdown + Zaman Sapma ── *@
             <div class="col-md-2 border-start px-3">
-                <h6 class="apya-overline mb-2">
-                    <i class="fa fa-hourglass-half me-1"></i>Kalan Süre
-                </h6>
+                <div class="d-flex align-items-center gap-2 mb-2">
+                    <span class="apya-tile-icon-box"><i class="fa fa-hourglass-half"></i></span>
+                    <h6 class="apya-overline mb-0">Kalan Süre</h6>
+                </div>
                 @if (Model.TimeNotStarted)
                 {
                     @* İleri tarihli proje: bitişe değil BAŞLANGICA geri sayım *@
@@ -157,10 +158,7 @@
                         <span class="fw-bold fs-4">@Model.RemainingDays</span>
                         <span class="text-muted small">Gün Kaldı</span>
                     </div>
-                    <div class="progress shadow-sm mb-1" style="height:6px;border-radius:4px;">
-                        <div class="progress-bar bg-@Model.TimeHealthColor @(Model.TimeUsagePercent < 100 ? "progress-bar-striped progress-bar-animated" : "")"
-                             style="width:@Model.TimeUsagePercent%"></div>
-                    </div>
+                    <div class="apya-mini-progress @timeHealthBarTone mb-1"><span style="width:@Model.TimeUsagePercent%"></span></div>
                     <div class="d-flex justify-content-between">
                         <small class="text-muted" style="font-size:0.7rem;">Sürenin %@Model.TimeUsagePercent'i</small>
                         <span class="apya-chip apya-chip-@timeHealthTone" style="font-size:0.65rem;">
@@ -178,10 +176,13 @@
             <div id="btn-budget-summary" data-project-id="@Model.Project?.Id" role="button"
                  class="col-md-2 border-start px-3 budget-consumption-clickable" style="cursor:pointer;"
                  title="Detay için tıkla — Bütçe vs Gerçekleşen">
-                <h6 class="apya-overline mb-2">
-                    <i class="fa fa-wallet me-1"></i>Bütçe Tüketimi
-                    <i class="fa fa-up-right-from-square ms-1 text-primary" style="font-size:0.6rem;opacity:0.65;"></i>
-                </h6>
+                <div class="d-flex align-items-center gap-2 mb-2">
+                    <span class="apya-tile-icon-box"><i class="fa fa-wallet"></i></span>
+                    <h6 class="apya-overline mb-0">
+                        Bütçe Tüketimi
+                        <i class="fa fa-up-right-from-square ms-1 text-primary" style="font-size:0.6rem;opacity:0.65;"></i>
+                    </h6>
+                </div>
                 @if (Model.Project?.TotalBudget > 0)
                 {
                     <div class="mb-1">
@@ -190,10 +191,7 @@
                         </span>
                         <span class="text-muted small apya-numeric"> / @Model.Project?.TotalBudget.ToString("N0")</span>
                     </div>
-                    <div class="progress shadow-sm mb-1" style="height:6px;border-radius:4px;">
-                        <div class="progress-bar @(Model.BudgetPercent > 90 ? "bg-danger" : Model.BudgetPercent > 60 ? "bg-warning" : "bg-success")"
-                             style="width:@Model.BudgetPercent%"></div>
-                    </div>
+                    <div class="apya-mini-progress @budgetBarTone mb-1"><span style="width:@Model.BudgetPercent%"></span></div>
                     <small class="text-muted" style="font-size:0.7rem;">%@Model.BudgetPercent kullanıldı</small>
                 }
                 else
@@ -206,13 +204,13 @@
             <div class="col-md-3 border-start ps-3">
                 @* İlerleme *@
                 <div class="mb-2">
-                    <h6 class="apya-overline mb-1">Proje İlerlemesi</h6>
+                    <div class="d-flex align-items-center gap-2 mb-1">
+                        <span class="apya-tile-icon-box"><i class="fa fa-chart-line"></i></span>
+                        <h6 class="apya-overline mb-0">Proje İlerlemesi</h6>
+                    </div>
                     <div class="d-flex align-items-center gap-2">
                         <span class="fw-bold fs-5 @(progressPct == 100 ? "text-success" : "text-primary")">%@progressPct</span>
-                        <div class="progress flex-grow-1 shadow-sm" style="height:6px;border-radius:4px;">
-                            <div class="progress-bar @(progressPct == 100 ? "bg-success" : "bg-primary progress-bar-striped progress-bar-animated")"
-                                 style="width:@progressPct%"></div>
-                        </div>
+                        <div class="apya-mini-progress flex-grow-1 @(progressPct == 100 ? "is-positive" : "")"><span style="width:@progressPct%"></span></div>
                     </div>
                     <small class="text-muted" style="font-size:0.7rem;">@completedTasks / @totalTasks Görev Bitti</small>
                 </div>
@@ -220,14 +218,14 @@
                 @* Ekip Avatarları *@
                 <div>
                     <h6 class="apya-overline mb-1">Ekip (@assigneeCount)</h6>
-                    <div class="avatar-group">
+                    <div class="apya-tile-avatars">
                         @for (int i = 0; i < facepileCount; i++)
                         {
-                            <div class="avatar-circle"><i class="fa fa-user"></i></div>
+                            <span class="apya-tile-avatar"><i class="fa fa-user"></i></span>
                         }
                         @if (assigneeCount > 5)
                         {
-                            <div class="avatar-circle more">+@(assigneeCount - 5)</div>
+                            <span class="apya-tile-avatar is-more">+@(assigneeCount - 5)</span>
                         }
                         @if (facepileCount == 0)
                         {

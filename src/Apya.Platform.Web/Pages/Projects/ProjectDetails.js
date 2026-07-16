@@ -77,11 +77,17 @@ $(function () {
                     title: 'Başlık',
                     data: 'title',
                     render: function (data, type, row) {
+                        var head = '<span class="fw-bold">' + apyaTask.esc(data) + '</span>' + apyaTask.commentCount(row.comments);
                         if (row.parentTaskTitle) {
-                            return '<div class="d-flex flex-column"><span class="fw-bold">' + data + '</span><span class="text-muted small"><i class="fa fa-level-up-alt fa-rotate-90 me-1"></i> ' + row.parentTaskTitle + '</span></div>';
+                            head += '<div class="text-muted small"><i class="fa fa-level-up-alt fa-rotate-90 me-1"></i>' + apyaTask.esc(row.parentTaskTitle) + '</div>';
                         }
-                        return '<span class="fw-bold">' + data + '</span>';
+                        return '<div>' + head + apyaTask.tagChips(row.tags) + '</div>';
                     }
+                },
+                {
+                    title: 'Atanan',
+                    data: 'assigneeName',
+                    render: function (data) { return apyaTask.assigneeAvatar(data); }
                 },
                 {
                     title: 'Durum',
@@ -105,16 +111,7 @@ $(function () {
                 {
                     title: 'Öncelik',
                     data: 'priority',
-                    render: function (data) {
-                        var map = {
-                            1: { tone: 'positive', text: 'Düşük' },
-                            2: { tone: 'warning',  text: 'Orta' },
-                            3: { tone: 'negative', text: 'Yüksek' },
-                            4: { tone: 'negative', text: 'Kritik' }
-                        };
-                        var p = map[data] || { tone: 'neutral', text: 'Bilinmiyor' };
-                        return '<span class="apya-chip apya-chip-' + p.tone + '"><i class="fa fa-circle me-1" style="font-size:0.5rem;"></i>' + p.text + '</span>';
-                    }
+                    render: function (data) { return apyaTask.priorityBadge(data); }
                 },
                 {
                     title: 'Başlangıç Tarihi',
@@ -124,18 +121,7 @@ $(function () {
                 {
                     title: 'Bitiş Tarihi',
                     data: 'dueDate',
-                    render: function (data, type, row) {
-                        if (!data) return '';
-                        if (row.status !== 4 && row.status !== 0) {
-                            var dueDiff = moment(data).diff(moment(), 'hours');
-                            if (dueDiff < 0) {
-                                return '<span class="apya-chip apya-chip-negative heartbeat-animation"><i class="fa fa-exclamation-circle me-1"></i>' + moment(data).format('DD MMM YYYY') + '</span>';
-                            } else if (dueDiff <= 48) {
-                                return '<span class="apya-chip apya-chip-warning"><i class="fa fa-clock me-1"></i>' + moment(data).format('DD MMM YYYY') + '</span>';
-                            }
-                        }
-                        return '<span class="text-muted">' + moment(data).format('DD MMM YYYY') + '</span>';
-                    }
+                    render: function (data, type, row) { return apyaTask.dueDateChip(data, row.status); }
                 }
             ]
         })

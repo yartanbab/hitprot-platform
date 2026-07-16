@@ -759,6 +759,7 @@ body.apya-command-palette-lock {
 }
 .apya-mini-progress.is-warning > span { background: var(--apya-warning-500); }
 .apya-mini-progress.is-negative > span { background: var(--apya-negative-500); }
+.apya-mini-progress.is-positive > span { background: var(--apya-positive-500); }
 .apya-tile-progress-label {
     display: flex;
     justify-content: space-between;
