@@ -899,3 +899,36 @@ i.apya-priority-dot {
 .apya-avatar-brand { background: var(--apya-brand-500); }
 .apya-avatar-ai { background: var(--apya-ai-500); }
 .apya-avatar-neutral { background: var(--apya-neutral-500); }
+
+/* ----------------------------------------------------------------------------
+   16) GÖREV DETAY DRAWER — HANDOFF "sağdan kayan panel (apyaSlide animasyonu)".
+   abp.ModalManager + <abp-modal> altyapısı AYNEN korunuyor (backdrop/ESC/focus-
+   trap/iç-içe-modal z-index'i bedavaya geliyor) — yalnız .modal-dialog'u sağa
+   sabitleyip kaydırma animasyonu ekliyoruz. İlk kullanıcı: Tasks/EditModal.cshtml
+   (.apya-drawer class'ı JS ile ekleniyor, <abp-modal> class geçirmiyor).
+   ---------------------------------------------------------------------------- */
+.modal.apya-drawer .modal-dialog {
+    position: fixed;
+    inset: 0 0 0 auto;
+    margin: 0;
+    width: min(480px, 100vw);
+    max-width: 100vw;
+    transition: none; /* Bootstrap'ın varsayılan merkezi-modal transform geçişini ez */
+}
+.modal.apya-drawer .modal-content {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    border-radius: var(--apya-radius-xl) 0 0 var(--apya-radius-xl) !important; /* §4'teki genel kural !important, ezmek için aynısı gerekiyor */
+}
+.modal.apya-drawer .modal-body {
+    flex: 1 1 auto;
+    overflow-y: auto;
+}
+@keyframes apyaSlide {
+    from { transform: translateX(100%); }
+    to { transform: translateX(0); }
+}
+.modal.apya-drawer.show .modal-dialog {
+    animation: apyaSlide var(--apya-motion-slow) var(--apya-easing-standard) both;
+}

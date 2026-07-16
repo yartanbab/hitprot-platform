@@ -384,6 +384,11 @@
 </form>
 
 <script>
+    // Görev detay drawer'ı — abp.ModalManager/<abp-modal> altyapısı aynen kalıyor,
+    // yalnız .modal'a apya-drawer class'ı eklenip apya-shell.css §16 ile sağdan
+    // kayan panele dönüştürülüyor (<abp-modal> class attribute'u geçirmediği için JS'le).
+    $('#EditTaskForm_@Model.Id').find('.modal').addClass('apya-drawer');
+
     $('#TaskTagsSelectEdit').select2({
         tags: true,
         width: '100%',
@@ -740,7 +745,7 @@
 
             var formData = $form.serialize();
             
-            var $modal = $form.closest('.modal-content');
+            var $modal = $form.find('.modal-content'); // form .modal'ı SARIYOR (çocuğu), closest() yanlış yöne bakardı
             var $titleContainer = $modal.find('.modal-title');
             
             var $status = $('#AutoSaveStatus_' + modalId.replace(/-/g, ''));
@@ -854,7 +859,9 @@
     });
 
     // Modal dışındayken değişiklikleri ebeveyn tablosuna yansıtmak istenir ise:
-    $('#EditTaskForm_@Model.Id').closest('.modal').on('hidden.bs.modal', function () {
+    // (form .modal'ı SARIYOR/çocuğu, closest() değil find() gerekir — .closest('.modal')
+    // hiçbir zaman eşleşmiyordu, bu yüzden kapanışta parent tablo tazeleme hiç ÇALIŞMIYORDU.)
+    $('#EditTaskForm_@Model.Id').find('.modal').on('hidden.bs.modal', function () {
         // Eğer dış dünyada bir abp veritabanı gridi varsa onu tazeleyelim
         if (typeof window.dataTable !== 'undefined') {
             window.dataTable.ajax.reload(null, false);
