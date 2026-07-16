@@ -350,7 +350,7 @@
         }
         @* Yorumlar — mockup'ta HER ZAMAN görünür/sabit, pill-tab'lara dahil değil. *@
         <div class="px-4 py-3 border-top" id="comments_@Model.Id">
-            <h6 class="fw-bold mb-3"><i class="fa fa-comments me-1 text-warning"></i> Yorumlar <span class="text-muted fw-normal">@totalCommentCount</span></h6>
+            <h6 class="fw-bold mb-3"><i class="fa fa-comments me-1 text-warning"></i> Yorumlar <span class="text-muted fw-normal js-comment-count">@totalCommentCount</span></h6>
             <div class="list-group list-group-flush" id="CommentList">
                 @if (Model.Comments != null && Model.Comments.Any())
                 {
@@ -503,11 +503,17 @@
         });
     });
 
+    // Drawer'daki canlı "Yorumlar N" sayacı — ekleme/yanıt/silmede güncellenir.
+    function bumpCommentCount(delta) {
+        var $c = $('.js-comment-count');
+        $c.text((parseInt($c.text(), 10) || 0) + delta);
+    }
+
     $('#BtnAddComment').click(function () {
         var text = $('#NewCommentText').val();
         var taskId = $('.task-id-input').val();
         if (!text) return;
-        
+
         $.ajax({
             type: 'POST',
             url: '/Tasks/EditModal?handler=AddComment',
@@ -515,6 +521,7 @@
             data: { taskId: taskId, commentText: text },
             success: function (result) {
                 abp.notify.success('Yorum gönderildi!');
+                bumpCommentCount(1);
                 var now = new Date().toLocaleString();
                 var newId = result && result.id ? result.id : '';
                 // Yeni yorum her zaman "own" → düzenle/sil butonlu, gerçek data-comment-id ile.
@@ -578,6 +585,7 @@
             if (!confirmed) return;
             apya.platform.tasks.task.deleteComment(id).then(function () {
                 $item.remove();
+                bumpCommentCount(-1);
                 abp.notify.info('Yorum silindi.');
             });
         });
@@ -628,6 +636,7 @@
                     var author = result && result.author ? result.author : 'Siz';
                     $replies.append(buildReplyRow(id, author, text));
                     $box.remove();
+                    bumpCommentCount(1);
                     abp.notify.success('Yanıt eklendi!');
                 },
                 error: function () { $send.prop('disabled', false); abp.notify.error('Yanıt eklenemedi!'); }
