@@ -18,52 +18,32 @@
         <p class="text-muted mb-0" style="font-size:12px">Aktif projeler · bütçe ve ilerleme sağlığı</p>
     </div>
 
-    @* Pages/Index.cshtml'deki (eski kök sayfa) uyarı widget'ları — kaybolmasın diye taşındı. *@
-    <div class="row mb-4" id="DashboardAlertsContainer" style="display: none;">
-        <div class="col-12">
-            <div class="card bg-danger bg-opacity-10 border-danger border-2 shadow-sm">
-                <div class="card-body py-3">
-                    <h5 class="card-title text-danger mb-3 fw-bold">
-                        <i class="fa fa-exclamation-circle fa-beat me-2"></i> Gecikmiş & Acil Görevleriniz Var!
-                    </h5>
-                    <div id="OverdueTasksList" class="d-flex flex-wrap gap-2">
-                        <!-- JS Tarafından Yüklenecek -->
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="row mb-4" id="DashboardUpcomingContainer" style="display: none;">
-        <div class="col-12">
-            <div class="card bg-warning bg-opacity-10 border-warning border-2 shadow-sm">
-                <div class="card-body py-3">
-                    <h5 class="card-title text-warning mb-3 fw-bold">
-                        <i class="fa fa-clock me-2"></i> Yaklaşan Görevler (Son 48 Saat)
-                    </h5>
-                    <div id="UpcomingTasksList" class="d-flex flex-wrap gap-2">
-                        <!-- JS Tarafından Yüklenecek -->
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <div class="row g-3 mb-3">
-        <div class="col-6 col-lg-3">
+        <div class="col-6 col-lg-2">
             <partial name="_KpiCard" model='new Apya.Platform.Web.Pages.Shared.KpiCardModel { Icon = "fa-rocket", Accent = "primary", Label = "Aktif Proje", ValueId = "KpiActiveProjects", Value = "—" }' />
         </div>
         @if (await AuthorizationService.IsGrantedAsync(PlatformPermissions.Projects.ViewBudget))
         {
-            <div class="col-6 col-lg-3">
+            <div class="col-6 col-lg-2">
                 <partial name="_KpiCard" model='new Apya.Platform.Web.Pages.Shared.KpiCardModel { Icon = "fa-sack-dollar", Accent = "success", Label = "Toplam Bütçe", ValueId = "KpiTotalBudget", Value = "—" }' />
             </div>
         }
-        <div class="col-6 col-lg-3">
+        <div class="col-6 col-lg-2">
             <partial name="_KpiCard" model='new Apya.Platform.Web.Pages.Shared.KpiCardModel { Icon = "fa-chart-line", Accent = "info", Label = "Ortalama İlerleme", ValueId = "KpiAvgProgress", Value = "—" }' />
         </div>
-        <div class="col-6 col-lg-3">
+        <div class="col-6 col-lg-2">
             <partial name="_KpiCard" model='new Apya.Platform.Web.Pages.Shared.KpiCardModel { Icon = "fa-triangle-exclamation", Accent = "danger", Label = "Risk Altında", ValueId = "KpiAtRisk", Value = "—" }' />
+        </div>
+        @* Gecikmiş/yaklaşan görev uyarı banner'ları yerine: tıklanabilir KPI kartları + modal (bkz. Index.js loadTaskAlerts). *@
+        <div class="col-6 col-lg-2">
+            <div id="OverdueTasksKpiCard" role="button" tabindex="0" aria-label="Geçmiş görevleri görüntüle" style="cursor:pointer">
+                <partial name="_KpiCard" model='new Apya.Platform.Web.Pages.Shared.KpiCardModel { Icon = "fa-clock-rotate-left", Accent = "danger", Label = "Geçmiş Görevler", ValueId = "KpiOverdueTasks", Value = "—" }' />
+            </div>
+        </div>
+        <div class="col-6 col-lg-2">
+            <div id="UpcomingTasksKpiCard" role="button" tabindex="0" aria-label="Yaklaşan görevleri görüntüle" style="cursor:pointer">
+                <partial name="_KpiCard" model='new Apya.Platform.Web.Pages.Shared.KpiCardModel { Icon = "fa-clock", Accent = "warning", Label = "Yaklaşan Görevler", ValueId = "KpiUpcomingTasks", Value = "—" }' />
+            </div>
         </div>
     </div>
 
@@ -96,5 +76,21 @@
         <button id="ProjectsLoadMore" class="btn btn-outline-secondary btn-sm" style="display:none">
             Daha fazla yükle
         </button>
+    </div>
+</div>
+
+@* Geçmiş/Yaklaşan görev KPI kartlarının açtığı liste modalı — bkz. Index.js loadTaskAlerts/openTaskAlertsModal. *@
+<div class="modal fade" id="TaskAlertsModal" tabindex="-1" aria-labelledby="TaskAlertsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-scrollable modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="TaskAlertsModalLabel">Görevler</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
+            </div>
+            <div class="modal-body">
+                <div id="TaskAlertsModalBody" class="d-flex flex-wrap gap-2"></div>
+                <div id="TaskAlertsModalEmpty" class="text-muted small" style="display:none">Gösterilecek görev yok.</div>
+            </div>
+        </div>
     </div>
 </div>

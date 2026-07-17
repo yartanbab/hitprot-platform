@@ -186,8 +186,34 @@ $(function () {
         });
     }
 
-    // Pages/Index.cshtml'deki (eski kök sayfa) gecikmiş/yaklaşan görev widget'ları — taşındı.
-    function loadDashboardWidgets() {
+    var overdueTasks = [];
+    var upcomingTasks = [];
+
+    function taskAlertCardHtml(t, tone) {
+        var icon = tone === 'danger' ? 'fa-exclamation-triangle' : 'fa-clock';
+        var label = (tone === 'danger' ? 'Gecikti: ' : 'Kalan: ') + moment(t.dueDate).fromNow();
+        return (
+            '<a href="/Projects/ProjectDetails/' + t.projectId + '" class="text-decoration-none">' +
+            '  <div class="card shadow-sm border-' + tone + ' border-1 h-100" style="width: 250px; background: var(--apya-surface-base);">' +
+            '    <div class="card-body p-2">' +
+            '      <div class="small fw-bold text-truncate" style="color: var(--apya-text-primary);" title="' + esc(t.title) + '">' + esc(t.title) + '</div>' +
+            '      <div class="small text-' + tone + ' mt-1"><i class="fa ' + icon + '"></i> ' + label + '</div>' +
+            '    </div>' +
+            '  </div>' +
+            '</a>'
+        );
+    }
+
+    function openTaskAlertsModal(title, taskItems, tone) {
+        $('#TaskAlertsModalLabel').text(title);
+        $('#TaskAlertsModalBody').toggle(taskItems.length > 0)
+            .html(taskItems.map(function (t) { return taskAlertCardHtml(t, tone); }).join(''));
+        $('#TaskAlertsModalEmpty').toggle(taskItems.length === 0);
+        bootstrap.Modal.getOrCreateInstance(document.getElementById('TaskAlertsModal')).show();
+    }
+
+    // Pages/Index.cshtml'deki (eski kök sayfa) gecikmiş/yaklaşan görev banner'ları — artık tıklanabilir KPI kartı + modal.
+    function loadTaskAlerts() {
         var taskService = apya.platform.tasks && apya.platform.tasks.task;
         if (!taskService) { return; }
         var now = moment();
@@ -197,23 +223,8 @@ $(function () {
             statuses: [1, 2, 3],
             maxResultCount: 10
         }).then(function (result) {
-            if (result.items.length > 0) {
-                $('#DashboardAlertsContainer').show();
-                var html = '';
-                result.items.forEach(function (t) {
-                    html += `
-                        <a href="/Projects/ProjectDetails/${t.projectId}" class="text-decoration-none">
-                            <div class="card shadow-sm border-danger border-1 h-100" style="width: 250px; background: var(--apya-surface-base);">
-                                <div class="card-body p-2">
-                                    <div class="small fw-bold text-truncate" style="color: var(--apya-text-primary);" title="${t.title}">${t.title}</div>
-                                    <div class="small text-danger mt-1"><i class="fa fa-exclamation-triangle"></i> Gecikti: ${moment(t.dueDate).fromNow()}</div>
-                                </div>
-                            </div>
-                        </a>
-                    `;
-                });
-                $('#OverdueTasksList').html(html);
-            }
+            overdueTasks = result.items || [];
+            $('#KpiOverdueTasks').text(result.totalCount);
         });
 
         taskService.getList({
@@ -222,25 +233,22 @@ $(function () {
             statuses: [1, 2, 3],
             maxResultCount: 10
         }).then(function (result) {
-            if (result.items.length > 0) {
-                $('#DashboardUpcomingContainer').show();
-                var html = '';
-                result.items.forEach(function (t) {
-                    html += `
-                        <a href="/Projects/ProjectDetails/${t.projectId}" class="text-decoration-none">
-                            <div class="card shadow-sm border-warning border-1 h-100" style="width: 250px; background: var(--apya-surface-base);">
-                                <div class="card-body p-2">
-                                    <div class="small fw-bold text-truncate" style="color: var(--apya-text-primary);" title="${t.title}">${t.title}</div>
-                                    <div class="small text-warning mt-1"><i class="fa fa-clock"></i> Kalan: ${moment(t.dueDate).fromNow()}</div>
-                                </div>
-                            </div>
-                        </a>
-                    `;
-                });
-                $('#UpcomingTasksList').html(html);
-            }
+            upcomingTasks = result.items || [];
+            $('#KpiUpcomingTasks').text(result.totalCount);
         });
     }
+
+    $('#OverdueTasksKpiCard').on('click keydown', function (e) {
+        if (e.type === 'keydown' && e.key !== 'Enter' && e.key !== ' ') { return; }
+        e.preventDefault();
+        openTaskAlertsModal('Geçmiş Görevler', overdueTasks, 'danger');
+    });
+
+    $('#UpcomingTasksKpiCard').on('click keydown', function (e) {
+        if (e.type === 'keydown' && e.key !== 'Enter' && e.key !== ' ') { return; }
+        e.preventDefault();
+        openTaskAlertsModal('Yaklaşan Görevler', upcomingTasks, 'warning');
+    });
 
     $more.on('click', load);
 
@@ -275,5 +283,5 @@ $(function () {
 
     load();
     loadSummary();
-    loadDashboardWidgets();
+    loadTaskAlerts();
 });
