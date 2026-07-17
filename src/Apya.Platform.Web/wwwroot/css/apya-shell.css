@@ -273,6 +273,14 @@ h1, h2, h3, h4, h5, h6 {
     flex-shrink: 0;
 }
 
+/* KPI kartı metin bloğu (etiket+değer) — dar kolonlarda (örn. 6'lı KPI şeridi)
+   flex satırı varsayılan min-width:auto ile uzun değeri (₺1.160.000 gibi)
+   kart sınırının dışına taşırıyordu; .text-truncate ile birlikte kullanılır. */
+.kpi-card-text {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
 /* ----------------------------------------------------------------------------
    11) TEMA TOGGLE — header toolbar butonu (ThemeToggle ViewComponent).
    Fallback: toolbar'sız layout'ta dark-mode.js floating buton ekler.
