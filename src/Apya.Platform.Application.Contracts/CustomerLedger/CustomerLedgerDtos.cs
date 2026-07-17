@@ -16,6 +16,8 @@ public class CustomerStatementLineDto
     public decimal Credit { get; set; }
     /// <summary>O satıra kadarki yürüyen bakiye.</summary>
     public decimal RunningBalance { get; set; }
+    /// <summary>İlişkili fatura/tahsilat belge no'su (varsa) — Invoice.InvoiceNumber / Payment.ReferenceNumber.</summary>
+    public string? DocumentNumber { get; set; }
 }
 
 public class CustomerStatementDto
@@ -26,5 +28,7 @@ public class CustomerStatementDto
     public decimal TotalCredit { get; set; }
     /// <summary>Net bakiye (Σ Borç − Σ Alacak). Pozitif → müşteri borçlu.</summary>
     public decimal Balance { get; set; }
+    /// <summary>Vadesi geçmiş, henüz tam tahsil edilmemiş satış faturası tutarı (bugün itibarıyla).</summary>
+    public decimal OverdueAmount { get; set; }
     public List<CustomerStatementLineDto> Lines { get; set; } = new();
 }
