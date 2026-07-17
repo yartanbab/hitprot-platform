@@ -22,9 +22,12 @@ body {
     font-family: var(--apya-font-sans);
 }
 
-/* Sayısal değerler (bakiye, tutar, ID) — tabular-nums ile hizalı */
+/* Sayısal değerler (bakiye, tutar, ID) — mono + tabular-nums ile hizalı.
+   DESIGN-SYSTEM.md §4/§10 bunu zaten kural olarak tanımlıyor ama font-family
+   hiç set edilmemişti (yalnız tabular-nums/letter-spacing) — eklendi. */
 .apya-numeric,
 .text-numeric {
+    font-family: var(--apya-font-mono);
     font-variant-numeric: tabular-nums;
     font-feature-settings: "tnum";
     letter-spacing: -0.01em;
@@ -289,6 +292,34 @@ h1, h2, h3, h4, h5, h6 {
 .kpi-card-text {
     flex: 1 1 auto;
     min-width: 0;
+/* Kompakt tarih-aralığı pili — iki native date input tek çerçeve içinde.
+   Rapor filtre çubukları için (ör. Cari Ekstre); JS gerekmez, native date picker'ı kullanır. */
+.apya-date-range {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0 10px;
+    height: 34px;
+    background: var(--apya-surface-base);
+    border: 1px solid var(--apya-border-default);
+    border-radius: var(--apya-radius-lg);
+    color: var(--apya-text-tertiary);
+}
+.apya-date-range-input {
+    border: none !important;
+    background: transparent !important;
+    padding: 0 !important;
+    height: auto !important;
+    width: 118px;
+    color: var(--apya-text-primary);
+    font-size: 13px;
+}
+.apya-date-range-input:focus {
+    box-shadow: none !important;
+}
+.apya-date-range-sep {
+    color: var(--apya-text-tertiary);
+    font-size: 12px;
 }
 
 /* ----------------------------------------------------------------------------
