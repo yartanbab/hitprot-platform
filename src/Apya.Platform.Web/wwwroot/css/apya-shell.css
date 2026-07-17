@@ -118,6 +118,16 @@ a, button, .btn, .nav-link, .list-group-item {
     padding: var(--apya-space-4) var(--apya-space-5) !important;
 }
 
+/* SİSTEMİK BUG FİX (2026-07-17, görev-uyarı modalı QA'sında bulundu): LeptonX'in derlenmiş
+   CSS'i ".modal-header h1..h6" başlıklarını sabit rgb(22,22,22) yapıyor (0,2,0 özgüllük,
+   .modal-content'in color !important'ını [0,1,0] eziyor) — TÜM modal başlıkları dark temada
+   neredeyse görünmez kalıyordu. */
+.modal-header h1, .modal-header .h1, .modal-header h2, .modal-header .h2,
+.modal-header h3, .modal-header .h3, .modal-header h4, .modal-header .h4,
+.modal-header h5, .modal-header .h5, .modal-header h6, .modal-header .h6 {
+    color: var(--apya-text-primary) !important;
+}
+
 .modal-footer {
     border-top: 1px solid var(--apya-border-subtle) !important;
     padding: var(--apya-space-3) var(--apya-space-5) !important;
