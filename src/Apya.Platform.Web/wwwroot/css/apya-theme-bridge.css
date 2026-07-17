@@ -261,6 +261,19 @@ html, body {
     transition: box-shadow 150ms ease;
 }
 
+/* SİSTEMİK BUG FİX (2026-07-17, görev-uyarı KPI kartı QA'sında bulundu): LeptonX'in derlenmiş
+   bootstrap-dim.css'i ".card" seçicisinde --bs-card-bg/--bs-card-color'ı YEREL olarak
+   #ffffff/#686b6e'ye sabitliyor (aynı elemente doğrudan tanımlı olduğu için yukarıdaki
+   [data-theme="dark"] bloğundaki --bs-card-bg override'ı miras yoluyla asla ulaşamıyor —
+   .modal-content'teki aynı sınıf bug, farklı selector). var(--bs-card-bg) burada tekrar
+   kullanmak işe yaramaz (aynı gölgelenmiş değeri okur) — Apya token'ı DOĞRUDAN, dark'a
+   scope'lu olarak zorlanıyor. Sonuç: TÜM .card arkaplanları (KPI kartları, CreateModal
+   gövdeleri, Reports vb.) dark temada hep beyaz kalıyordu. */
+[data-theme="dark"] .card {
+    background-color: var(--apya-surface-raised) !important;
+    color: var(--apya-text-primary) !important;
+}
+
 /* --- Tablo satır hover --- */
 .table-hover tbody tr {
     transition: background 120ms ease;
