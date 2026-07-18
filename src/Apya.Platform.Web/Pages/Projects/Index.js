@@ -192,16 +192,18 @@ $(function () {
     function taskAlertCardHtml(t, tone) {
         var icon = tone === 'danger' ? 'fa-exclamation-triangle' : 'fa-clock';
         var label = (tone === 'danger' ? 'Gecikti: ' : 'Kalan: ') + moment(t.dueDate).fromNow();
-        return (
-            '<a href="/Projects/ProjectDetails/' + t.projectId + '" class="text-decoration-none">' +
+        var cardInner = (
             '  <div class="card shadow-sm border-' + tone + ' border-1 h-100" style="width: 250px; background: var(--apya-surface-base);">' +
             '    <div class="card-body p-2">' +
             '      <div class="small fw-bold text-truncate" style="color: var(--apya-text-primary);" title="' + esc(t.title) + '">' + esc(t.title) + '</div>' +
             '      <div class="small text-' + tone + ' mt-1"><i class="fa ' + icon + '"></i> ' + label + '</div>' +
             '    </div>' +
-            '  </div>' +
-            '</a>'
+            '  </div>'
         );
+        // t.projectId projeye bağlı olmayan (bağımsız) görevlerde null olabilir (TaskDto.ProjectId : Guid?) —
+        // o durumda /Projects/ProjectDetails/null'a kırık link yerine tıklanamaz kart göster.
+        if (!t.projectId) { return cardInner; }
+        return '<a href="/Projects/ProjectDetails/' + t.projectId + '" class="text-decoration-none">' + cardInner + '</a>';
     }
 
     function openTaskAlertsModal(title, taskItems, tone) {
