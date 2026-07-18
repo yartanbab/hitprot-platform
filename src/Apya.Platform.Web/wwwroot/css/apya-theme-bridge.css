@@ -519,7 +519,12 @@ html, body {
     font-size: 10.5px !important;
     font-weight: 700 !important;
     letter-spacing: 0.5px;
-    color: var(--apya-text-tertiary) !important;
+    /* tertiary token (#71717A / #9CA3AF) sidebar zemininde ~3.66:1 / ~2.64:1
+       kontrast veriyor, WCAG AA'nın (küçük+kalın metin için 4.5:1) altında
+       kalıp bölüm başlıklarını pratikte okunaksız kılıyordu. secondary token
+       her iki temada da ~7:1+ kontrast veriyor; uppercase+küçük punto+kalın
+       zaten yaprak öğelerden yeterince ayrıştırıyor. */
+    color: var(--apya-text-secondary) !important;
     opacity: 1 !important;
 }
 /* Bölüm başlığında ikon + caret gizli (prototip: yalnız metin) */
