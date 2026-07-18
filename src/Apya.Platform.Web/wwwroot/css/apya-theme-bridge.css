@@ -509,10 +509,15 @@ html, body {
 #lpx-sidebar li.outer-menu-item:has(> ul.lpx-inner-menu) > a.lpx-menu-item-link {
     pointer-events: none;
     cursor: default;
-    padding: 16px 22px 4px !important;
+    padding: 15px 22px 4px !important;
     min-height: 0 !important;
     background: transparent !important;
     border-radius: 0 !important;
+    /* Önceki grubun son öğesiyle arada 1px boşluk kalıyordu; küçük+ince metin
+       (10.5px, secondary renk) kendi başına yeterince ayrışmıyor, komşu
+       ikonlu öğeler arasında "gömülmüş" görünüyordu. İnce bir üst çizgi
+       yeni bölümün başladığını netleştiriyor. */
+    border-top: 1px solid var(--apya-border-subtle);
 }
 #lpx-sidebar li.outer-menu-item:has(> ul.lpx-inner-menu) > a.lpx-menu-item-link .lpx-menu-item-text {
     text-transform: uppercase;
