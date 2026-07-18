@@ -1,13 +1,16 @@
 using System;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Apya.Platform.Documents;
+using Apya.Platform.Permissions;
 using Apya.Platform.Web.Services;
 using Volo.Abp.AspNetCore.Mvc.UI.RazorPages;
 
 namespace Apya.Platform.Web.Pages.Documents;
 
+[Authorize(PlatformPermissions.Documents.Default)]
 public class IndexModel : AbpPageModel
 {
     private readonly IDocumentAppService _documentAppService;

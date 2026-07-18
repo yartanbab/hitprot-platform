@@ -56,8 +56,13 @@ public class DocumentAppService :
         return await MapAttachmentToDtoAsync(attachment);
     }
 
+    [Authorize(PlatformPermissions.Documents.Default)]
     public virtual async Task<List<DocumentAttachmentDto>> GetAttachmentsAsync(Guid documentId)
     {
+        // DocumentAttachment IMultiTenant DEĞİL — sahiplik/tenant sınırı belge
+        // üzerinden doğrulanmalı, yoksa GUID bilen başka tenant ekleri listeleyebilir.
+        await Repository.GetAsync(documentId);
+
         var attachments = await _attachmentRepository.GetListAsync(x => x.DocumentId == documentId);
 
         var userIds = attachments.Select(x => x.CreatorId).Where(id => id.HasValue).Select(id => id!.Value).Distinct().ToList();
@@ -82,7 +87,13 @@ public class DocumentAppService :
     [Authorize(PlatformPermissions.Documents.Delete)]
     public virtual async Task DeleteAttachmentAsync(Guid attachmentId)
     {
-        await _attachmentRepository.DeleteAsync(attachmentId);
+        var attachment = await _attachmentRepository.GetAsync(attachmentId);
+
+        // Ek tenant-filtreli değil; silme ancak ekin bağlı olduğu belge bu tenant'ta
+        // görülebiliyorsa geçerli (aksi halde EntityNotFoundException).
+        await Repository.GetAsync(attachment.DocumentId);
+
+        await _attachmentRepository.DeleteAsync(attachment);
     }
 
     private async Task<DocumentAttachmentDto> MapAttachmentToDtoAsync(DocumentAttachment attachment)
