@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
@@ -39,14 +40,31 @@ public class ResponsesModel : PlatformPageModel
         }
 
         var form = await _formAppService.GetAsync(formId);
-        var responses = await _responseManagementAppService.GetListAsync(new ResponseListFilterDto
-        {
-            DocumentId = formId,
-            Status = status,
-            MaxResultCount = 1000
-        });
 
-        var bytes = Apya.Platform.Web.Pages.Reports.ReportExporter.FormResponsesToExcel(form, responses.Items.ToList());
+        // Tek istek ABP tarafında 1000 kayıtla sınırlı — export'un eksiksiz olması
+        // için TotalCount'a ulaşana dek sayfalanır; aksi halde 1000+ yanıtlı formda
+        // Excel sessizce eksik inerdi.
+        var allResponses = new List<ResponseListItemDto>();
+        const int pageSize = 1000;
+        long totalCount;
+        do
+        {
+            var page = await _responseManagementAppService.GetListAsync(new ResponseListFilterDto
+            {
+                DocumentId = formId,
+                Status = status,
+                SkipCount = allResponses.Count,
+                MaxResultCount = pageSize
+            });
+            totalCount = page.TotalCount;
+            if (page.Items.Count == 0)
+            {
+                break;
+            }
+            allResponses.AddRange(page.Items);
+        } while (allResponses.Count < totalCount);
+
+        var bytes = Apya.Platform.Web.Pages.Reports.ReportExporter.FormResponsesToExcel(form, allResponses);
         return File(
             bytes,
             "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
