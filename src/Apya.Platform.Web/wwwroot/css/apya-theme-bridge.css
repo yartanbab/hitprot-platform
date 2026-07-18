@@ -311,3 +311,31 @@ html, body {
     color:            var(--apya-text-primary);
     min-height:       100vh;
 }
+
+/* ============================================================================
+   ORTAK BİLEŞEN: CHIP/DURUM TONU (opt-in utility)
+   "Chip'ler: durum tone → arka plan color-mix(...12–15%) + koyu metin".
+   Kullanım: <span class="apya-chip apya-chip-positive">Ödendi</span>
+   ============================================================================ */
+.apya-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 10px;
+    border-radius: var(--apya-radius-full);
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 1.6;
+    white-space: nowrap;
+}
+.apya-chip-positive { background: color-mix(in srgb, var(--apya-positive-500) 14%, transparent); color: var(--apya-positive-700); }
+.apya-chip-negative { background: color-mix(in srgb, var(--apya-negative-500) 14%, transparent); color: var(--apya-negative-700); }
+.apya-chip-warning  { background: color-mix(in srgb, var(--apya-warning-500) 14%, transparent); color: var(--apya-warning-700); }
+.apya-chip-brand    { background: color-mix(in srgb, var(--apya-brand-500) 14%, transparent);   color: var(--apya-brand-600); }
+.apya-chip-ai       { background: color-mix(in srgb, var(--apya-ai-500) 14%, transparent);       color: var(--apya-ai-600); }
+.apya-chip-neutral  { background: var(--apya-surface-sunken); color: var(--apya-text-secondary); }
+[data-theme="dark"] .apya-chip-positive { color: var(--apya-positive-500); }
+[data-theme="dark"] .apya-chip-negative { color: var(--apya-negative-500); }
+[data-theme="dark"] .apya-chip-warning  { color: var(--apya-warning-500); }
+[data-theme="dark"] .apya-chip-brand    { color: var(--apya-brand-400); }
+[data-theme="dark"] .apya-chip-ai       { color: var(--apya-ai-500); }

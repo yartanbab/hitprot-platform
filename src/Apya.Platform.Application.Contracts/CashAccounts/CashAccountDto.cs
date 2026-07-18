@@ -11,5 +11,8 @@ public class CashAccountDto : FullAuditedEntityDto<Guid>
     public string Currency { get; set; } = "TRY";
     public decimal OpeningBalance { get; set; }
     public string? Description { get; set; }
+    public string? BankName { get; set; }
+    public string? Branch { get; set; }
+    public string? Iban { get; set; }
     public bool IsActive { get; set; }
 }

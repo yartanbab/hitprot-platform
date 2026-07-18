@@ -32,6 +32,17 @@
                     <abp-input asp-for="CashAccount.OpeningBalance" label="Açılış Bakiyesi" />
                 </abp-column>
             </abp-row>
+            <abp-row>
+                <abp-column size-md="_5">
+                    <abp-input asp-for="CashAccount.BankName" label="Banka Adı" />
+                </abp-column>
+                <abp-column size-md="_3">
+                    <abp-input asp-for="CashAccount.Branch" label="Şube" />
+                </abp-column>
+                <abp-column size-md="_4">
+                    <abp-input asp-for="CashAccount.Iban" label="IBAN" />
+                </abp-column>
+            </abp-row>
             <abp-input asp-for="CashAccount.Description" label="Açıklama" />
             <abp-input asp-for="CashAccount.IsActive" label="Aktif" />
         </abp-modal-body>

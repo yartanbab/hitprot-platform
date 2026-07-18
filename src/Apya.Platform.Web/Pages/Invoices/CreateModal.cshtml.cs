@@ -25,13 +25,14 @@ public class CreateModalModel : AbpPageModel
         _invoiceAppService = invoiceAppService;
     }
 
-    public async Task OnGetAsync()
+    public async Task OnGetAsync(Guid? customerId = null)
     {
         // Tarih varsayılanları nested class'ta Clock inject edilemediğinden burada set edilir
         InvoiceInfo = new CreateInvoiceViewModel
         {
             InvoiceDate = Clock.Now,
-            DueDate = Clock.Now.AddDays(15)
+            DueDate = Clock.Now.AddDays(15),
+            CustomerId = customerId
         };
 
         var projectLookup  = await _invoiceAppService.GetProjectLookupAsync();
