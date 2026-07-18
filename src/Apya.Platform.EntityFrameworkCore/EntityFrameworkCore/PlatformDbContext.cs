@@ -335,7 +335,7 @@ namespace Apya.Platform.EntityFrameworkCore
                 b.HasIndex(x => x.ReferenceId);
             });
 
-            /* --- DÖVİZ KURU MODÜLÜ YAPILANDIRMASI — APYA-137 --- */
+            /* --- KUR MODÜLÜ YAPILANDIRMASI — APYA-137 --- */
             builder.Entity<ExchangeRate>(b =>
             {
                 b.ToTable(PlatformConsts.DbTablePrefix + "ExchangeRates", PlatformConsts.DbSchema);

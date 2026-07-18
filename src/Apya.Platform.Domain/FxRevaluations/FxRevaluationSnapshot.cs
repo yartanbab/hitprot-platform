@@ -8,7 +8,7 @@ using Volo.Abp.MultiTenancy;
 namespace Apya.Platform.FxRevaluations;
 
 /// <summary>
-/// APYA-138: Yıl sonu (veya herhangi bir tarih) döviz kasa değerleme anlık görüntüsü.
+/// APYA-138: Yıl sonu (veya herhangi bir tarih) yabancı para kasa değerleme anlık görüntüsü.
 /// Ardışık snapshot'lar arası fark = kur farkı (UI/AppService karşılaştırır).
 /// JournalEntry posting Faz 7'ye ertelendi (APYA-92 ledger bağımlılığı).
 /// </summary>
