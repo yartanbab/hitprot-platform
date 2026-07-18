@@ -3,6 +3,8 @@ import { createRoot } from 'react-dom/client';
 import { api } from './lib/api/httpClient';
 import './index.css';
 
+const abpAuth = (p) => window?.abp?.auth?.isGranted(p);
+
 /* Response status — mirrors backend ResponseStatus enum */
 const STATUS = {
   0: { label: 'Bekliyor', cls: 'bg-amber-100 text-amber-700' },
@@ -141,6 +143,9 @@ function ResponsesApp({ formId }) {
     URL.revokeObjectURL(a.href);
   };
 
+  const excelHref = `/DynamicAssets/Responses?handler=Excel&formId=${formId}${statusFilter !== '' ? `&status=${statusFilter}` : ''}`;
+  const canExport = abpAuth('Platform.DynamicAssets.Export');
+
   if (loading) return <div className="py-16 text-center text-slate-400">Yanıtlar yükleniyor…</div>;
 
   const tags = (j) => parse(j)?.tags || (Array.isArray(parse(j)) ? parse(j) : []);
@@ -167,6 +172,9 @@ function ResponsesApp({ formId }) {
             {STATUS_OPTIONS.map((o) => <option key={o.v} value={o.v}>{o.label}</option>)}
           </select>
           <button onClick={exportCsv} disabled={rows.length === 0} className="rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium hover:bg-slate-50 disabled:opacity-50">⬇ CSV</button>
+          {canExport && (
+            <a href={excelHref} className="rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium hover:bg-slate-50">⬇ Excel</a>
+          )}
         </div>
       </div>
 
