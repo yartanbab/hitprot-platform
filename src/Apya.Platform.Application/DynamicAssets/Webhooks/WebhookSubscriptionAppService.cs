@@ -116,6 +116,12 @@ public class WebhookSubscriptionAppService : PlatformAppService, IWebhookSubscri
     [Authorize(PlatformPermissions.DynamicAssets.Default)]
     public async Task<List<WebhookDeliveryLogDto>> GetDeliveryLogsAsync(Guid subscriptionId)
     {
+        // WebhookDeliveryLog IMultiTenant DEĞİL — tenant sahipliği subscription
+        // üzerinden doğrulanmalı; aksi halde GUID bilen başka tenant'ın kullanıcısı
+        // payload/response gövdelerini okuyabilir. Cross-tenant istekte GetAsync
+        // tenant filtresi sayesinde EntityNotFound fırlatır.
+        await _subscriptionRepository.GetAsync(subscriptionId);
+
         var logs = await _deliveryLogRepository.GetListAsync(
             l => l.SubscriptionId == subscriptionId
         );

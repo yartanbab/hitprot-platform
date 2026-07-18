@@ -17,7 +17,11 @@ $(function () {
     }
 
     function formName(id) {
-        return formNames[id] || ('<span class="text-muted">' + (id ? escapeHtml(id.substring(0, 8)) + '…' : '-') + '</span>');
+        // Form adı kullanıcı girdisidir — HTML'e ham basılamaz (XSS).
+        if (formNames[id]) {
+            return escapeHtml(formNames[id]);
+        }
+        return '<span class="text-muted">' + (id ? escapeHtml(id.substring(0, 8)) + '…' : '-') + '</span>';
     }
 
     function formatDateTime(value) {
