@@ -15,29 +15,27 @@
 }
 
 <div class="apya-page">
-<abp-card>
-    <abp-card-header>
-        <abp-card-title><i class="fa fa-bolt me-2"></i>Webhook Yönetimi</abp-card-title>
-    </abp-card-header>
-    <abp-card-body class="p-0">
-        <div class="p-3">
-            <div class="alert alert-light border d-flex align-items-center mb-3 py-2">
-                <i class="fa fa-circle-info text-primary me-2"></i>
-                <small class="text-muted">
-                    Formlarınıza yanıt geldiğinde belirttiğiniz URL'ye HMAC imzalı bildirim gönderilir.
-                    Teslimatları her abonelik için <strong>Teslimat Kayıtları</strong>'ndan izleyebilirsiniz.
-                </small>
-            </div>
-            <div class="d-flex justify-content-end mb-2">
-                @if (await AuthorizationService.IsGrantedAsync(PlatformPermissions.DynamicAssets.Create))
-                {
-                    <button id="NewWebhookButton" class="btn btn-primary btn-sm">
-                        <i class="fa fa-plus"></i> Yeni Webhook
-                    </button>
-                }
-            </div>
-            <abp-table striped-rows="true" id="WebhookSubscriptionsTable" class="nowrap"></abp-table>
+    <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4">
+        <div>
+            <div class="apya-overline mb-1">Olay Abonelikleri ve Teslimat Logları</div>
+            <h1 class="h3 fw-bold mb-1">Webhooks</h1>
+            <p class="text-muted mb-0" style="max-width: 640px;">
+                Formlarınıza yanıt geldiğinde belirttiğiniz URL'ye HMAC imzalı bildirim gönderilir.
+                Teslimatları her abonelik için aşağıdan izleyebilir, gerekirse yeniden gönderebilirsiniz.
+            </p>
         </div>
-    </abp-card-body>
-</abp-card>
+        @if (await AuthorizationService.IsGrantedAsync(PlatformPermissions.DynamicAssets.Create))
+        {
+            <button id="NewWebhookButton" class="btn btn-primary flex-shrink-0">
+                <i class="fa fa-plus me-1"></i> Yeni Webhook
+            </button>
+        }
+    </div>
+
+    <div id="WebhookCardsContainer" class="d-flex flex-column gap-3"></div>
+
+    <div id="WebhookEmptyState" class="text-center text-muted py-5 d-none">
+        <i class="fa fa-bolt fa-2x mb-3 d-block opacity-50"></i>
+        Henüz webhook aboneliğiniz yok.
+    </div>
 </div>

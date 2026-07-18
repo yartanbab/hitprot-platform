@@ -231,6 +231,14 @@ html, body {
     box-shadow: var(--apya-shadow-md) !important;
     transition: box-shadow 150ms ease;
 }
+/* LeptonX'in derlenmiş bootstrap-dim.css'i .card'da --bs-card-bg:#fff'i YEREL
+   tanımlıyor — bu, elementin üstünde olduğu için :root'taki dark override'ı
+   miras zincirinden düşürür (.modal-content'teki aynı sınıf bug'la aynı kök
+   neden). background-color/color'ı doğrudan burada zorlamak gerekiyor. */
+[data-theme="dark"] .card {
+    background-color: var(--apya-surface-raised) !important;
+    color: var(--apya-text-primary) !important;
+}
 
 /* --- Tablo satır hover --- */
 .table-hover tbody tr {
