@@ -3,22 +3,32 @@
    -----------------------------------------------------------------------------
    Strateji:
      - App shell precache  : install sırasında kritik route'un statik asset'leri
-     - /js/*  → cache-first (immutable bundle, asp-append-version cache-bust eder)
-     - /css/* → cache-first
-     - /icons/*, /manifest.webmanifest → cache-first
+     - /js/*, /css/*, /icons/*, /manifest.webmanifest → stale-while-revalidate
+       (önbellekteki varsa hemen onu dön, arka planda tazesini çekip önbelleği
+       güncelle — bir sonraki istek güncel gelir)
      - /api/* → network-first (offline fallback yok; ABP error envelope kullanıcıya iletilir)
      - HTML navigations → network-first + offline fallback ('/offline.html' ya da
        cached '/Dashboard')
 
-   Versiyonlama: CACHE_VERSION değişince eski cache'ler activate sırasında temizlenir.
-   asp-append-version query string'ini cache-key'in parçası olarak görür → bundle
-   güncellenince yeni response cache'lenir, eski silinmez (LRU TODO).
+   Neden cache-first DEĞİL: dashboard.js gibi asp-append-version'lı dosyalar
+   URL'sinde ?v= taşır ve düzgün cache-bust eder, ama Vite'ın ürettiği paylaşılan
+   chunk'lar (react-vendor.js, grid-vendor.js, query-vendor.js, signalr-vendor.js,
+   ui-vendor.js, httpClient.js — dashboard.js'in kendi import() graph'ından,
+   manualChunks ile BİLİNÇLİ sabit/hash'siz isimlendirilmiş, bkz vite.config.js)
+   HİÇBİR versiyon query string'i taşımaz. Cache-first altında bu dosyalar ilk
+   önbelleklendiği haliyle KALICI OLARAK kilitlenir — yeni bir build sonrası
+   içerik değişse de URL aynı kaldığı için eski sürüm sonsuza dek sunulur ve
+   React island'ı sessizce boş kalabilir. Stale-while-revalidate bu sınıfı kökten
+   kapatır: en kötü ihtimalle bir sonraki reload günceli getirir.
+
+   Versiyonlama: CACHE_VERSION değişince eski cache'ler activate sırasında temizlenir
+   (mevcut kullanıcıları anında temiz sayfaya döndürmek için deploy'da artırılabilir).
 
    ABP route'ları: /Account/Login gibi guarded sayfalar offline'da çalışmaz —
    service worker auth'a karışmaz, browser session yönetir.
    ============================================================================= */
 
-const CACHE_VERSION = 'v1';
+const CACHE_VERSION = 'v2';
 const CACHE_SHELL   = `apya-shell-${CACHE_VERSION}`;
 const CACHE_ASSETS  = `apya-assets-${CACHE_VERSION}`;
 const CACHE_RUNTIME = `apya-runtime-${CACHE_VERSION}`;
@@ -62,7 +72,7 @@ self.addEventListener('fetch', (event) => {
 
     if (url.pathname.startsWith('/js/') || url.pathname.startsWith('/icons/') ||
         url.pathname === '/manifest.webmanifest' || url.pathname.endsWith('.css')) {
-        event.respondWith(cacheFirst(req, CACHE_ASSETS));
+        event.respondWith(staleWhileRevalidate(event, CACHE_ASSETS));
         return;
     }
 
@@ -77,17 +87,22 @@ self.addEventListener('fetch', (event) => {
     }
 });
 
-async function cacheFirst(req, cacheName) {
+async function staleWhileRevalidate(event, cacheName) {
+    const req = event.request;
     const cache = await caches.open(cacheName);
     const cached = await cache.match(req);
-    if (cached) return cached;
-    try {
-        const fresh = await fetch(req);
-        if (fresh.ok) cache.put(req, fresh.clone());
-        return fresh;
-    } catch (err) {
-        return new Response('Offline', { status: 503, statusText: 'Offline' });
+    const update = fetch(req)
+        .then((fresh) => {
+            if (fresh.ok) cache.put(req, fresh.clone());
+            return fresh;
+        })
+        .catch(() => null);
+    if (cached) {
+        event.waitUntil(update);
+        return cached;
     }
+    const fresh = await update;
+    return fresh || new Response('Offline', { status: 503, statusText: 'Offline' });
 }
 
 async function networkFirst(req, cacheName) {
