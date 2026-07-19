@@ -19,5 +19,14 @@ public class CreateUpdateCashAccountDto
     [StringLength(CashAccountConsts.MaxDescriptionLength)]
     public string? Description { get; set; }
 
+    [StringLength(CashAccountConsts.MaxBankNameLength)]
+    public string? BankName { get; set; }
+
+    [StringLength(CashAccountConsts.MaxBranchLength)]
+    public string? Branch { get; set; }
+
+    [StringLength(CashAccountConsts.MaxIbanLength)]
+    public string? Iban { get; set; }
+
     public bool IsActive { get; set; } = true;
 }

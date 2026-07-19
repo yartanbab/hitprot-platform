@@ -36,6 +36,9 @@ public class EditModalModel : AbpPageModel
         CashAccount.Currency = dto.Currency;
         CashAccount.OpeningBalance = dto.OpeningBalance;
         CashAccount.Description = dto.Description;
+        CashAccount.BankName = dto.BankName;
+        CashAccount.Branch = dto.Branch;
+        CashAccount.Iban = dto.Iban;
         CashAccount.IsActive = dto.IsActive;
 
         LoadLookups();

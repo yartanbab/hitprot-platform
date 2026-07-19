@@ -32,7 +32,7 @@ public static class PlatformDomainErrorCodes
     public const string CashAccountFieldTooLong = "Platform:CashAccount:FieldTooLong";
     public const string CashAccountCurrencyInvalid = "Platform:CashAccount:CurrencyInvalid";
 
-    // --- Döviz Kuru (ExchangeRate) Modülü — APYA-137 ---
+    // --- Kur (ExchangeRate) Modülü — APYA-137 ---
     public const string ExchangeRateCurrencyInvalid = "Platform:ExchangeRate:CurrencyInvalid";
     public const string ExchangeRateSameCurrency = "Platform:ExchangeRate:SameCurrency";
     public const string ExchangeRateInvalid = "Platform:ExchangeRate:RateInvalid";
@@ -40,6 +40,9 @@ public static class PlatformDomainErrorCodes
     // --- Kasa Hareketi (CashMovement) Modülü — APYA-134 ---
     public const string CashMovementAccountRequired = "Platform:CashMovement:AccountRequired";
     public const string CashMovementAmountInvalid = "Platform:CashMovement:AmountInvalid";
+    public const string CashMovementTransferSameAccount = "Platform:CashMovement:TransferSameAccount";
+    public const string CashMovementTransferAccountInactive = "Platform:CashMovement:TransferAccountInactive";
+    public const string CashMovementTransferRateMissing = "Platform:CashMovement:TransferRateMissing";
 
     // --- Gider (Expense) Modülü — APYA-135 ---
     public const string ExpenseTitleRequired = "Platform:Expense:TitleRequired";

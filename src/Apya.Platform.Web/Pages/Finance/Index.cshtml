@@ -1,121 +1,132 @@
 @page
 @using Apya.Platform.Web.Pages.Finance
+@using Apya.Platform.CashAccounts
 @model IndexModel
 @{
-    ViewBag.PageTitle = "Para Hareketleri";
+    ViewBag.PageTitle = "Finans Hub";
 }
 @section scripts {
+    <abp-script src="/js/apya-transfer.js" />
     <abp-script src="/Pages/Finance/Index.js" />
 }
 
 @functions {
-    // Çoklu döviz gizlendi — tutarlar sade (sembolsüz) gösterilir; tüm işlemler TRY.
-    string Money(decimal v, string cur) => $"{v:N2}";
+    string Money(decimal v) => v.ToString("N0");
+    string MoneyC(decimal v, string cur) => v.ToString("N2") + (cur == "TRY" ? " ₺" : " " + cur);
+
+    string TypeIcon(CashAccountType t) => t switch
+    {
+        CashAccountType.Bank => "fa-building-columns",
+        CashAccountType.CreditCard => "fa-credit-card",
+        _ => "fa-wallet"
+    };
+
+    string TypeLabel(CashAccountType t) => t switch
+    {
+        CashAccountType.Bank => "Banka hesabı",
+        CashAccountType.CreditCard => "Kredi kartı",
+        _ => "Nakit kasa"
+    };
+
+    (string bg, string icon) TxVisual(IndexModel.TxType type, bool isInflow) => type switch
+    {
+        IndexModel.TxType.Transfer => ("bg-primary-subtle text-primary", "fa-right-left"),
+        _ when isInflow => ("bg-success-subtle text-success", "fa-arrow-down-long"),
+        _ => ("bg-danger-subtle text-danger", "fa-arrow-up-long")
+    };
 }
 
 <div class="apya-page">
-<abp-card>
-    <abp-card-header>
-        <abp-row>
-            <abp-column size="_6">
-                <abp-card-title><i class="fa fa-coins me-1"></i> @ViewBag.PageTitle</abp-card-title>
-            </abp-column>
-            <abp-column size="_6" class="text-end">
-                <div class="dropdown d-inline-block">
-                    <button class="btn btn-primary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                        <i class="fa fa-plus"></i> Ekle
-                    </button>
-                    <ul class="dropdown-menu dropdown-menu-end">
-                        <li><a class="dropdown-item" href="/Incomes"><i class="fa fa-hand-holding-dollar text-success me-2"></i> Gelir</a></li>
-                        <li><a class="dropdown-item" href="/Expenses"><i class="fa fa-receipt text-danger me-2"></i> Gider</a></li>
-                        <li><a class="dropdown-item" href="/Invoices"><i class="fa fa-file-invoice-dollar text-primary me-2"></i> Fatura</a></li>
-                    </ul>
-                </div>
-            </abp-column>
-        </abp-row>
-    </abp-card-header>
-    <abp-card-body>
+<p class="text-muted mb-3" style="font-size:13px">Hesaplar arası transfer ve son işlemler</p>
+<div class="row g-3">
+    <div class="col-lg-5">
 
-        @* === Özet kartları (para birimi başına) === *@
-        @if (Model.Summaries.Any())
-        {
-            <div class="row g-3 mb-4">
-                @foreach (var s in Model.Summaries)
+        <div class="card mb-3 text-white" style="background: linear-gradient(135deg, var(--apya-accent-500), var(--apya-accent-700));">
+            <div class="card-body">
+                <div class="apya-overline text-white-50">Toplam Bakiye (₺ karşılığı)</div>
+                <h2 class="fw-bold apya-numeric mb-1">₺@Money(Model.TotalBalanceTry)</h2>
+                <div class="small text-white-50">
+                    <i class="fa fa-arrow-trend-up me-1" aria-hidden="true"></i>
+                    @Model.Accounts.Count hesap · @Model.DistinctCurrencyCount para birimi
+                </div>
+            </div>
+        </div>
+
+        <div class="card mb-3">
+            <div class="card-header fw-semibold">Hesaplar</div>
+            @if (!Model.Accounts.Any())
+            {
+                <div class="card-body text-muted text-center py-4" style="font-size:13px">
+                    Henüz kasa/banka hesabı yok. <a href="/CashAccounts">Kasa &amp; Banka</a>'dan ekleyin.
+                </div>
+            }
+            else
+            {
+                <div class="list-group list-group-flush">
+                    @foreach (var a in Model.Accounts)
+                    {
+                        <div class="list-group-item d-flex align-items-center gap-3">
+                            <div class="kpi-icon-box bg-primary bg-opacity-10 text-primary" style="width:38px;height:38px;font-size:1rem;">
+                                <i class="fa @TypeIcon(a.Type)" aria-hidden="true"></i>
+                            </div>
+                            <div class="flex-grow-1 min-w-0">
+                                <div class="fw-semibold text-truncate">
+                                    @a.Name <span class="apya-chip apya-chip-neutral ms-1">@a.Currency</span>
+                                </div>
+                                <div class="small text-muted apya-numeric text-truncate">@(a.Iban ?? TypeLabel(a.Type))</div>
+                            </div>
+                            <div class="text-end apya-numeric fw-bold text-nowrap">@MoneyC(a.Balance, a.Currency)</div>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+
+        <div class="card">
+            <div class="card-header fw-semibold"><i class="fa fa-paper-plane me-1" aria-hidden="true"></i>Hızlı Transfer</div>
+            <div class="card-body" id="ApyaTransferWidget">
+                <div class="text-muted text-center py-3" style="font-size:13px">Hesaplar yükleniyor...</div>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="col-lg-7">
+        <div class="card">
+            <div class="card-header d-flex align-items-center justify-content-between">
+                <div>
+                    <span class="fw-semibold">Son İşlemler</span>
+                    <div class="small text-muted">Tüm hesaplar</div>
+                </div>
+            </div>
+            <div class="list-group list-group-flush">
+                @if (!Model.Transactions.Any())
                 {
-                    <div class="col-12 col-lg-6">
-                        <div class="border rounded p-3 h-100">
-                            <div class="text-muted small mb-2 fw-bold">Özet</div>
-                            <div class="row text-center">
-                                <div class="col-4">
-                                    <div class="text-muted small">Gelir</div>
-                                    <div class="fw-bold apya-numeric text-success">@Money(s.Income, s.Currency)</div>
-                                </div>
-                                <div class="col-4">
-                                    <div class="text-muted small">Gider</div>
-                                    <div class="fw-bold apya-numeric text-danger">@Money(s.Expense, s.Currency)</div>
-                                </div>
-                                <div class="col-4">
-                                    <div class="text-muted small">Net</div>
-                                    <div class="fw-bold apya-numeric @(s.Net >= 0 ? "text-success" : "text-danger")">@Money(s.Net, s.Currency)</div>
-                                </div>
+                    <div class="list-group-item text-muted text-center py-4" style="font-size:13px">Henüz işlem yok.</div>
+                }
+                @foreach (var t in Model.Transactions)
+                {
+                    var (bg, icon) = TxVisual(t.Type, t.IsInflow);
+                    <a href="@t.Url" class="list-group-item list-group-item-action d-flex align-items-center gap-3">
+                        <div class="kpi-icon-box @bg" style="width:38px;height:38px;font-size:0.95rem;">
+                            <i class="fa @icon" aria-hidden="true"></i>
+                        </div>
+                        <div class="flex-grow-1 min-w-0">
+                            <div class="fw-semibold text-truncate">@t.Title</div>
+                            <div class="small text-muted text-truncate">
+                                @(t.CustomerName ?? t.ProjectName ?? "—") · @t.Date.ToString("dd MMM yyyy")
                             </div>
                         </div>
-                    </div>
+                        <div class="text-end flex-shrink-0">
+                            <span class="apya-chip apya-chip-neutral d-block mb-1">@t.CategoryLabel</span>
+                            <div class="apya-numeric fw-bold @(t.IsInflow ? "text-success" : "text-danger")">
+                                @(t.IsInflow ? "▲ +" : "▼ −")@MoneyC(t.Amount, t.Currency)
+                            </div>
+                        </div>
+                    </a>
                 }
             </div>
-        }
-
-        @* === Filtre sekmeleri === *@
-        <div class="btn-group btn-group-sm mb-3" role="group" id="TxFilter">
-            <button type="button" class="btn btn-primary" data-filter="all">Tümü</button>
-            <button type="button" class="btn btn-outline-primary" data-filter="Income">Gelirler</button>
-            <button type="button" class="btn btn-outline-primary" data-filter="Expense">Giderler</button>
-            <button type="button" class="btn btn-outline-primary" data-filter="Invoice">Faturalar</button>
         </div>
-
-        @* === Birleşik hareket listesi === *@
-        <div class="table-responsive">
-            <table class="table table-striped align-middle mb-0" id="TransactionsTable">
-                <thead>
-                    <tr>
-                        <th>Tarih</th>
-                        <th>Tür</th>
-                        <th>Açıklama</th>
-                        <th>Proje</th>
-                        <th>Cari</th>
-                        <th class="text-end">Tutar</th>
-                        <th></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @if (!Model.Transactions.Any())
-                    {
-                        <tr><td colspan="7" class="text-center text-muted py-4">Henüz kayıt yok. Sağ üstten <strong>Ekle</strong> ile gelir, gider veya fatura ekleyin.</td></tr>
-                    }
-                    @foreach (var t in Model.Transactions)
-                    {
-                        var (chipTone, badgeText) = t.Type switch
-                        {
-                            IndexModel.TxType.Income => ("positive", "Gelir"),
-                            IndexModel.TxType.Expense => ("negative", "Gider"),
-                            _ => ("brand", "Fatura")
-                        };
-                        <tr data-type="@t.Type">
-                            <td class="text-nowrap">@t.Date.ToString("dd.MM.yyyy")</td>
-                            <td><span class="apya-chip apya-chip-@chipTone">@badgeText</span></td>
-                            <td>@t.Title</td>
-                            <td>@(t.ProjectName ?? "—")</td>
-                            <td>@(t.CustomerName ?? "—")</td>
-                            <td class="text-end fw-bold apya-numeric @(t.IsInflow ? "text-success" : "text-danger")">
-                                @(t.IsInflow ? "+" : "−")@Money(t.Amount, t.Currency)
-                            </td>
-                            <td class="text-end"><a href="@t.Url" class="btn btn-sm btn-outline-secondary" title="Aç"><i class="fa fa-arrow-up-right-from-square"></i></a></td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
-        </div>
-
-    </abp-card-body>
-</abp-card>
+    </div>
+</div>
 </div>

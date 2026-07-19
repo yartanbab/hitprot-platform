@@ -1,12 +1,16 @@
 /**
  * Customers Island — Apya Design System v3 (master-detail)
  * -----------------------------------------------------------------------
- * HANDOFF "Cariler" ekranı: SOL liste (seçili satır accent-soft + sol
- * kenarlık) + SAĞ detay paneli. <1024px'te tek sütun: liste → seçilince
- * detay (geri butonlu); breakpoint CSS-tabanlı (lg:), ResizeObserver YOK.
+ * "Cariler" ekranı: SOL liste (seçili satır accent-soft + sol kenarlık) +
+ * SAĞ detay paneli. <1024px'te tek sütun: liste → seçilince detay (geri
+ * butonlu); breakpoint CSS-tabanlı (lg:), ResizeObserver YOK.
+ * Sağ panel ek olarak: yaşlandırma barı (açık faturalardan, client-side
+ * hesap) + gömülü hesap ekstresi (ICustomerLedgerAppService.GetStatementAsync).
  *
  * Bağımlılık: React 18 + mevcut style.css (Tailwind + --apya-* tokens).
  * ABP proxy    : window.apya.platform.customers.customer.*
+ *                window.apya.platform.invoices.invoice.* (yaşlandırma)
+ *                window.apya.platform.customerLedger.customerLedger.* (ekstre)
  * ABP modaller : window.abp.ModalManager (CreateModal / EditModal / StatementModal)
  * İkonlar      : Font Awesome 6 (LeptonX'in yüklediği FA — className="fa fa-...")
  *
@@ -28,6 +32,8 @@ const cn = (...c) => c.filter(Boolean).join(' ');
 
 /* ─── ABP bridge (window nesnesine erişim) ───────────────────────────── */
 const abpCustomer  = () => window?.apya?.platform?.customers?.customer;
+const abpInvoice   = () => window?.apya?.platform?.invoices?.invoice;
+const abpLedger    = () => window?.apya?.platform?.customerLedger?.customerLedger;
 const abpAuth      = (p) => window?.abp?.auth?.isGranted(p);
 const abpNotify    = (type, msg) => window?.abp?.notify?.[type]?.(msg);
 const abpAppPath   = () => window?.abp?.appPath ?? '/';
@@ -288,6 +294,155 @@ function MetaField({ icon, label, children, mono = false }) {
   );
 }
 
+/* ─── Yaşlandırma barı — açık (bakiye>0) faturalardan, client-side ─────*/
+const AGING_BUCKETS = [
+  { key: 'b0',  label: '0-30 gün',  color: 'var(--apya-positive-500)', max: 30 },
+  { key: 'b30', label: '31-60 gün', color: '#0EA5E9',                  max: 60 },
+  { key: 'b60', label: '61-90 gün', color: 'var(--apya-warning-500)',  max: 90 },
+  { key: 'b90', label: '90+ gün',   color: 'var(--apya-negative-500)', max: Infinity },
+];
+
+function AgingBar({ customerId }) {
+  const [loading, setLoading] = useState(true);
+  const [buckets, setBuckets] = useState(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    const svc = abpInvoice();
+    if (!svc) { setLoading(false); return; }
+
+    svc.getList({ maxResultCount: 1000, sorting: 'dueDate asc' })
+      .then((result) => {
+        if (cancelled) return;
+        const now = new Date();
+        const b = { b0: 0, b30: 0, b60: 0, b90: 0 };
+        (result.items || []).forEach((inv) => {
+          if (inv.customerId !== customerId) return;
+          const balance = (inv.totalAmount || 0) - (inv.paidAmount || 0);
+          if (balance <= 0.005) return;
+          const days = Math.floor((now - new Date(inv.dueDate)) / 86400000);
+          if (days <= 30) b.b0 += balance;
+          else if (days <= 60) b.b30 += balance;
+          else if (days <= 90) b.b60 += balance;
+          else b.b90 += balance;
+        });
+        setBuckets(b);
+      })
+      .catch(() => { if (!cancelled) setBuckets(null); })
+      .finally(() => { if (!cancelled) setLoading(false); });
+
+    return () => { cancelled = true; };
+  }, [customerId]);
+
+  if (loading) {
+    return (
+      <div>
+        <Skeleton w="35%" h={11} />
+        <Skeleton w="100%" h={8} r={4} style={{ marginTop: 8 }} />
+      </div>
+    );
+  }
+  if (!buckets) return null;
+
+  const total = buckets.b0 + buckets.b30 + buckets.b60 + buckets.b90;
+  if (total <= 0.005) return null;
+
+  return (
+    <div>
+      <div className="text-[10.5px] font-bold uppercase tracking-wide text-[var(--apya-text-tertiary)] mb-1.5">Yaşlandırma</div>
+      <div className="flex h-2 rounded-full overflow-hidden" style={{ background: 'var(--apya-border-subtle)' }}>
+        {AGING_BUCKETS.map((s) => buckets[s.key] > 0 && (
+          <div key={s.key} style={{ width: `${(buckets[s.key] / total) * 100}%`, background: s.color }}
+            title={`${s.label}: ${fmt.money(buckets[s.key])}`} />
+        ))}
+      </div>
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-x-3 gap-y-1.5 mt-2.5">
+        {AGING_BUCKETS.map((s) => (
+          <div key={s.key} className="flex items-center gap-1.5 text-[11px] min-w-0">
+            <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: s.color }} />
+            <span className="text-[var(--apya-text-tertiary)] truncate">{s.label}</span>
+            <span className="font-semibold text-[var(--apya-text-secondary)] font-tabular ms-auto">{fmt.money(buckets[s.key])}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ─── Gömülü hesap ekstresi — son 5 hareket, tam görünüm modale devreder ─*/
+function EmbeddedStatement({ customerId, onViewAll }) {
+  const [loading, setLoading] = useState(true);
+  const [lines, setLines] = useState([]);
+
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    const svc = abpLedger();
+    if (!svc) { setLoading(false); return; }
+
+    svc.getStatement(customerId)
+      .then((result) => { if (!cancelled) setLines((result?.lines || []).slice(-5).reverse()); })
+      .catch(() => { if (!cancelled) setLines([]); })
+      .finally(() => { if (!cancelled) setLoading(false); });
+
+    return () => { cancelled = true; };
+  }, [customerId]);
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-1.5">
+        <div className="text-[10.5px] font-bold uppercase tracking-wide text-[var(--apya-text-tertiary)]">Hesap Ekstresi</div>
+        <button type="button" onClick={onViewAll}
+          className="text-[11px] font-medium text-[var(--apya-accent-500)] hover:underline">
+          Tümünü gör
+        </button>
+      </div>
+      {loading ? (
+        <div className="space-y-1.5">
+          {Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} h={26} r={6} />)}
+        </div>
+      ) : lines.length === 0 ? (
+        <div className="text-[12px] text-[var(--apya-text-tertiary)] py-3 text-center rounded-xl border border-[var(--apya-border-subtle)]">
+          Hareket yok
+        </div>
+      ) : (
+        <div className="rounded-xl border border-[var(--apya-border-subtle)] overflow-hidden overflow-x-auto">
+          <table className="w-full text-[11.5px]" style={{ minWidth: 380 }}>
+            <thead>
+              <tr style={{ background: 'var(--apya-surface-sunken)' }}>
+                <th className="text-left font-semibold px-2.5 py-1.5 text-[var(--apya-text-tertiary)]">Tarih</th>
+                <th className="text-left font-semibold px-2.5 py-1.5 text-[var(--apya-text-tertiary)]">Açıklama</th>
+                <th className="text-right font-semibold px-2.5 py-1.5 text-[var(--apya-text-tertiary)]">Borç/Alacak</th>
+                <th className="text-right font-semibold px-2.5 py-1.5 text-[var(--apya-text-tertiary)]">Bakiye</th>
+              </tr>
+            </thead>
+            <tbody>
+              {lines.map((ln) => (
+                <tr key={ln.id} className="border-t border-[var(--apya-border-subtle)]">
+                  <td className="px-2.5 py-1.5 text-[var(--apya-text-secondary)] whitespace-nowrap">
+                    {new Date(ln.entryDate).toLocaleDateString('tr-TR')}
+                  </td>
+                  <td className="px-2.5 py-1.5 text-[var(--apya-text-primary)] truncate max-w-[160px]">
+                    {ln.description || '—'}
+                  </td>
+                  <td className="px-2.5 py-1.5 text-right font-tabular"
+                    style={{ color: ln.debit > 0 ? 'var(--apya-negative-500)' : 'var(--apya-positive-500)' }}>
+                    {ln.debit > 0 ? fmt.money(ln.debit) : '−' + fmt.money(ln.credit)}
+                  </td>
+                  <td className="px-2.5 py-1.5 text-right font-tabular text-[var(--apya-text-primary)]">
+                    {fmt.money(ln.runningBalance)}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
+}
+
 /* ─── Sağ detay paneli ─────────────────────────────────────────────────*/
 function CustomerDetail({ c, canEdit, canDelete, onBack, onEdit, onStatement, onDelete }) {
   const balTone  = c.balance > 0 ? 'var(--apya-positive-500)' : c.balance < 0 ? 'var(--apya-negative-500)' : 'var(--apya-text-tertiary)';
@@ -307,6 +462,10 @@ function CustomerDetail({ c, canEdit, canDelete, onBack, onEdit, onStatement, on
       {label}
     </button>
   );
+
+  const openNewInvoice = () => {
+    window.location.href = abpAppPath() + 'Invoices?customerId=' + c.id;
+  };
 
   return (
     <div className="apya-fade-in flex flex-col p-5 gap-5 min-w-0" key={c.id}>
@@ -342,6 +501,9 @@ function CustomerDetail({ c, canEdit, canDelete, onBack, onEdit, onStatement, on
         </div>
       </div>
 
+      {/* Yaşlandırma */}
+      <AgingBar customerId={c.id} />
+
       {/* Meta grid */}
       <div className="grid gap-4 sm:grid-cols-2">
         <MetaField icon="fa-hashtag"  label="Vergi / TC No" mono>{c.taxNumber}</MetaField>
@@ -358,6 +520,9 @@ function CustomerDetail({ c, canEdit, canDelete, onBack, onEdit, onStatement, on
         </MetaField>
       </div>
 
+      {/* Gömülü ekstre */}
+      <EmbeddedStatement customerId={c.id} onViewAll={onStatement} />
+
       {/* Notlar */}
       {c.notes && (
         <div>
@@ -367,6 +532,22 @@ function CustomerDetail({ c, canEdit, canDelete, onBack, onEdit, onStatement, on
           </div>
         </div>
       )}
+
+      {/* Alt aksiyonlar */}
+      <div className="flex gap-2 pt-1 border-t border-[var(--apya-border-subtle)] mt-1">
+        <button type="button"
+          onClick={() => abpNotify('info', 'E-posta ile ekstre gönderimi yakında eklenecek.')}
+          className="h-9 px-3.5 rounded-lg border border-[var(--apya-border-default)] text-xs font-medium text-[var(--apya-text-secondary)] flex items-center gap-2 hover:bg-[var(--apya-border-subtle)] transition-colors mt-3">
+          <i className="fa fa-paper-plane" aria-hidden="true" />
+          Ekstre Gönder
+        </button>
+        <button type="button" onClick={openNewInvoice}
+          className="h-9 px-3.5 rounded-lg text-xs font-semibold text-white flex items-center gap-2 transition-colors hover:opacity-90 mt-3"
+          style={{ background: 'var(--apya-accent-500)' }}>
+          <i className="fa fa-plus" aria-hidden="true" />
+          Yeni Fatura
+        </button>
+      </div>
     </div>
   );
 }
@@ -436,6 +617,16 @@ function CustomersIsland() {
     window.addEventListener('customers:refresh', handler);
     return () => window.removeEventListener('customers:refresh', handler);
   }, [load]);
+
+  // URL'de ?selectCustomerId=... varsa (örn. başka sayfadan geldiyse) otomatik seç
+  useEffect(() => {
+    if (loading) return;
+    const params = new URLSearchParams(window.location.search);
+    const wanted = params.get('selectCustomerId');
+    if (wanted && customers.some((c) => c.id === wanted)) {
+      setSelectedId(wanted);
+    }
+  }, [loading, customers]);
 
   const counts = useMemo(() => ({
     all: customers.length,

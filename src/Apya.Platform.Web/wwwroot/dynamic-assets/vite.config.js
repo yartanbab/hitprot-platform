@@ -21,6 +21,7 @@ export default defineConfig({
         'customers':        'src/customers.jsx',
         'dashboard':        'src/dashboard.jsx',
         'expense-capture':  'src/expense-capture.jsx',
+        'documents':        'src/documents.jsx',
       },
       formats: ['es'],
       fileName: (_format, entryName) => `${entryName}.js`,

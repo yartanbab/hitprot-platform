@@ -1,7 +1,4 @@
 using System;
-using System.Net.Http;
-using System.Security.Cryptography;
-using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Polly;
@@ -21,20 +18,20 @@ public class WebhookSenderJob : AsyncBackgroundJob<WebhookSenderJobArgs>, ITrans
 {
     private readonly IRepository<WebhookSubscription, Guid> _subscriptionRepository;
     private readonly IRepository<WebhookDeliveryLog, Guid> _deliveryLogRepository;
-    private readonly IHttpClientFactory _httpClientFactory;
+    private readonly WebhookDeliverySender _deliverySender;
     private readonly IGuidGenerator _guidGenerator;
     private readonly ILogger<WebhookSenderJob> _logger;
 
     public WebhookSenderJob(
         IRepository<WebhookSubscription, Guid> subscriptionRepository,
         IRepository<WebhookDeliveryLog, Guid> deliveryLogRepository,
-        IHttpClientFactory httpClientFactory,
+        WebhookDeliverySender deliverySender,
         IGuidGenerator guidGenerator,
         ILogger<WebhookSenderJob> logger)
     {
         _subscriptionRepository = subscriptionRepository;
         _deliveryLogRepository = deliveryLogRepository;
-        _httpClientFactory = httpClientFactory;
+        _deliverySender = deliverySender;
         _guidGenerator = guidGenerator;
         _logger = logger;
     }
@@ -61,12 +58,10 @@ public class WebhookSenderJob : AsyncBackgroundJob<WebhookSenderJobArgs>, ITrans
             timestamp = DateTime.UtcNow
         });
 
-        // Compute HMAC-SHA256 signature
-        var signature = ComputeHmacSha256(payload, subscription.Secret);
-
         int responseCode = 0;
         string? responseBody = null;
         bool isSuccess = false;
+        long? elapsedMilliseconds = null;
         int tryCount = 1;
 
         // GAP-008: Üstel Geri Çekilme (Exponential Backoff) ile Retry Stratejisi
@@ -88,26 +83,18 @@ public class WebhookSenderJob : AsyncBackgroundJob<WebhookSenderJobArgs>, ITrans
         {
             await retryPolicy.ExecuteAsync(async () =>
             {
-                using var client = _httpClientFactory.CreateClient("WebhookClient");
-                using var request = new HttpRequestMessage(HttpMethod.Post, subscription.TargetUrl);
+                var result = await _deliverySender.SendAsync(subscription.TargetUrl, subscription.Secret, payload);
 
-                request.Content = new StringContent(payload, Encoding.UTF8, "application/json");
-                request.Headers.Add(WebhookConsts.SignatureHeaderName, signature);
-
-                using var httpResponse = await client.SendAsync(request);
-
-                responseCode = (int)httpResponse.StatusCode;
-                responseBody = await httpResponse.Content.ReadAsStringAsync();
-
-                if (responseBody?.Length > WebhookConsts.MaxResponseBodyLength)
-                {
-                    responseBody = responseBody[..WebhookConsts.MaxResponseBodyLength];
-                }
-
-                isSuccess = httpResponse.IsSuccessStatusCode;
+                responseCode = result.ResponseCode;
+                responseBody = result.ResponseBody;
+                isSuccess = result.IsSuccess;
+                elapsedMilliseconds = result.ElapsedMilliseconds;
 
                 // Polly'nin 500 hatalarında da tekrar denemesi için HTTP seviyesi hata fırlatılır
-                httpResponse.EnsureSuccessStatusCode(); 
+                if (!isSuccess)
+                {
+                    throw new InvalidOperationException($"Webhook hedefi {responseCode} döndürdü.");
+                }
             });
 
             _logger.LogInformation(
@@ -131,24 +118,10 @@ public class WebhookSenderJob : AsyncBackgroundJob<WebhookSenderJobArgs>, ITrans
             responseCode,
             responseBody,
             tryCount,
-            isSuccess
+            isSuccess,
+            elapsedMilliseconds
         );
 
         await _deliveryLogRepository.InsertAsync(deliveryLog, autoSave: true);
-    }
-
-    /// <summary>
-    /// Computes an HMAC-SHA256 hash of the payload using the provided secret key.
-    /// The resulting hex string is used as the X-Apya-Signature header value.
-    /// </summary>
-    private static string ComputeHmacSha256(string payload, string secret)
-    {
-        var keyBytes = Encoding.UTF8.GetBytes(secret);
-        var payloadBytes = Encoding.UTF8.GetBytes(payload);
-
-        using var hmac = new HMACSHA256(keyBytes);
-        var hashBytes = hmac.ComputeHash(payloadBytes);
-
-        return Convert.ToHexStringLower(hashBytes);
     }
 }

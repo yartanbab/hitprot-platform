@@ -3,24 +3,26 @@
    -----------------------------------------------------------------------------
    Strateji:
      - App shell precache  : install sırasında kritik route'un statik asset'leri
-     - /js/*, /css/* → stale-while-revalidate (önbellekteki varsa hemen onu dön +
-       arka planda tazesini çekip önbelleği güncelle)
-     - /icons/*, /manifest.webmanifest → cache-first
+     - /js/*, /css/*, /icons/*, /manifest.webmanifest → stale-while-revalidate
+       (önbellekteki varsa hemen onu dön, arka planda tazesini çekip önbelleği
+       güncelle — bir sonraki istek güncel gelir)
      - /api/* → network-first (offline fallback yok; ABP error envelope kullanıcıya iletilir)
      - HTML navigations → network-first + offline fallback ('/offline.html' ya da
        cached '/Dashboard')
 
-   NOT (2026-07-17): /js/* eskiden cache-first'ti. Giriş dosyası (örn. forms.js)
-   asp-append-version ile versiyonlanıyor AMA import ettiği paylaşılan Vite chunk'ları
-   (vendor.js/vendor2.js/react-vendor.js vb., manualChunks ile sabit/hash'siz isimli)
-   HİÇ versiyon query string'i taşımıyor → cache-first altında ilk önbelleklendiği
-   haliyle kalıcı kilitleniyor, yeni build'de içerik değişse de tazelenmiyordu (boş
-   sayfa/beyaz ekran bug'ının kök nedeni). stale-while-revalidate + CACHE_VERSION
-   artışı bunu kalıcı çözer: en kötü ihtimalle bir sonraki reload'da kendini onarır.
+   Neden cache-first DEĞİL: dashboard.js gibi asp-append-version'lı dosyalar
+   URL'sinde ?v= taşır ve düzgün cache-bust eder, ama Vite'ın ürettiği paylaşılan
+   chunk'lar (react-vendor.js, grid-vendor.js, query-vendor.js, signalr-vendor.js,
+   ui-vendor.js, httpClient.js — dashboard.js'in kendi import() graph'ından,
+   manualChunks ile BİLİNÇLİ sabit/hash'siz isimlendirilmiş, bkz vite.config.js)
+   HİÇBİR versiyon query string'i taşımaz. Cache-first altında bu dosyalar ilk
+   önbelleklendiği haliyle KALICI OLARAK kilitlenir — yeni bir build sonrası
+   içerik değişse de URL aynı kaldığı için eski sürüm sonsuza dek sunulur ve
+   React island'ı sessizce boş kalabilir. Stale-while-revalidate bu sınıfı kökten
+   kapatır: en kötü ihtimalle bir sonraki reload günceli getirir.
 
-   Versiyonlama: CACHE_VERSION değişince eski cache'ler activate sırasında temizlenir.
-   asp-append-version query string'ini cache-key'in parçası olarak görür → bundle
-   güncellenince yeni response cache'lenir, eski silinmez (LRU TODO).
+   Versiyonlama: CACHE_VERSION değişince eski cache'ler activate sırasında temizlenir
+   (mevcut kullanıcıları anında temiz sayfaya döndürmek için deploy'da artırılabilir).
 
    ABP route'ları: /Account/Login gibi guarded sayfalar offline'da çalışmaz —
    service worker auth'a karışmaz, browser session yönetir.
@@ -68,12 +70,8 @@ self.addEventListener('fetch', (event) => {
     const url = new URL(req.url);
     if (url.origin !== self.location.origin) return; /* cross-origin'i bypass'la */
 
-    if (url.pathname.startsWith('/icons/') || url.pathname === '/manifest.webmanifest') {
-        event.respondWith(cacheFirst(req, CACHE_ASSETS));
-        return;
-    }
-
-    if (url.pathname.startsWith('/js/') || url.pathname.endsWith('.css')) {
+    if (url.pathname.startsWith('/js/') || url.pathname.startsWith('/icons/') ||
+        url.pathname === '/manifest.webmanifest' || url.pathname.endsWith('.css')) {
         event.respondWith(staleWhileRevalidate(event, CACHE_ASSETS));
         return;
     }
@@ -89,29 +87,20 @@ self.addEventListener('fetch', (event) => {
     }
 });
 
-async function cacheFirst(req, cacheName) {
-    const cache = await caches.open(cacheName);
-    const cached = await cache.match(req);
-    if (cached) return cached;
-    try {
-        const fresh = await fetch(req);
-        if (fresh.ok) cache.put(req, fresh.clone());
-        return fresh;
-    } catch (err) {
-        return new Response('Offline', { status: 503, statusText: 'Offline' });
-    }
-}
-
 async function staleWhileRevalidate(event, cacheName) {
     const req = event.request;
     const cache = await caches.open(cacheName);
     const cached = await cache.match(req);
-    const update = fetch(req).then((fresh) => {
-        if (fresh.ok) cache.put(req, fresh.clone());
-        return fresh;
-    }).catch(() => null);
-    event.waitUntil(update);
-    if (cached) return cached;
+    const update = fetch(req)
+        .then((fresh) => {
+            if (fresh.ok) cache.put(req, fresh.clone());
+            return fresh;
+        })
+        .catch(() => null);
+    if (cached) {
+        event.waitUntil(update);
+        return cached;
+    }
     const fresh = await update;
     return fresh || new Response('Offline', { status: 503, statusText: 'Offline' });
 }

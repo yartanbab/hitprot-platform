@@ -1,0 +1,30 @@
+@page
+@model Apya.Platform.Web.Pages.Documents.EditModalModel
+@using Volo.Abp.AspNetCore.Mvc.UI.Bootstrap.TagHelpers.Modal
+@{
+    Layout = null;
+}
+<form method="post" action="@Url.Page("/Documents/EditModal")">
+    <abp-modal>
+        <abp-modal-header title="Belgeyi Düzenle"></abp-modal-header>
+        <abp-modal-body>
+            <abp-input asp-for="DocumentId" />
+            <input type="hidden" name="Document.ParentDocumentId" value="@Model.Document.ParentDocumentId" />
+            <input type="hidden" name="Document.ProjectId" value="@Model.Document.ProjectId" />
+            <abp-row>
+                <abp-column size-md="_2">
+                    <abp-input asp-for="Document.Icon" label="İkon" placeholder="📄" />
+                </abp-column>
+                <abp-column size-md="_10">
+                    <abp-input asp-for="Document.Title" label="Başlık" />
+                </abp-column>
+            </abp-row>
+            <div class="mb-3">
+                <label class="form-label">İçerik</label>
+                <textarea asp-for="Document.Content" class="form-control" rows="8"></textarea>
+                <span asp-validation-for="Document.Content" class="text-danger"></span>
+            </div>
+        </abp-modal-body>
+        <abp-modal-footer buttons="@(AbpModalButtons.Cancel | AbpModalButtons.Save)"></abp-modal-footer>
+    </abp-modal>
+</form>
