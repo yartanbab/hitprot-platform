@@ -265,6 +265,9 @@ namespace Apya.Platform.EntityFrameworkCore
                 b.Property(x => x.Name).IsRequired().HasMaxLength(CashAccountConsts.MaxNameLength);
                 b.Property(x => x.Currency).IsRequired().HasMaxLength(CashAccountConsts.CurrencyLength);
                 b.Property(x => x.Description).HasMaxLength(CashAccountConsts.MaxDescriptionLength);
+                b.Property(x => x.BankName).HasMaxLength(CashAccountConsts.MaxBankNameLength);
+                b.Property(x => x.Branch).HasMaxLength(CashAccountConsts.MaxBranchLength);
+                b.Property(x => x.Iban).HasMaxLength(CashAccountConsts.MaxIbanLength);
                 b.Property(x => x.OpeningBalance).HasColumnType("decimal(18,2)");
                 b.HasIndex(x => new { x.TenantId, x.Name });
                 b.HasIndex(x => new { x.TenantId, x.Type });

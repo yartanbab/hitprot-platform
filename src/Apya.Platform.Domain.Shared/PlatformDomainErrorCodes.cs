@@ -40,6 +40,9 @@ public static class PlatformDomainErrorCodes
     // --- Kasa Hareketi (CashMovement) Modülü — APYA-134 ---
     public const string CashMovementAccountRequired = "Platform:CashMovement:AccountRequired";
     public const string CashMovementAmountInvalid = "Platform:CashMovement:AmountInvalid";
+    public const string CashMovementTransferSameAccount = "Platform:CashMovement:TransferSameAccount";
+    public const string CashMovementTransferAccountInactive = "Platform:CashMovement:TransferAccountInactive";
+    public const string CashMovementTransferRateMissing = "Platform:CashMovement:TransferRateMissing";
 
     // --- Gider (Expense) Modülü — APYA-135 ---
     public const string ExpenseTitleRequired = "Platform:Expense:TitleRequired";

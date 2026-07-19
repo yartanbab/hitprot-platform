@@ -13,4 +13,7 @@ public interface ICashMovementAppService :
 {
     /// <summary>Bir kasanın güncel bakiye özetini döndürür (açılış + Σgiriş − Σçıkış).</summary>
     Task<CashAccountBalanceDto> GetBalanceAsync(Guid cashAccountId);
+
+    /// <summary>İki kasa arasında transfer yapar (gerekirse kur çevrimiyle) — çift kayıt: Out+In.</summary>
+    Task<CashTransferResultDto> TransferAsync(CreateCashTransferDto input);
 }
