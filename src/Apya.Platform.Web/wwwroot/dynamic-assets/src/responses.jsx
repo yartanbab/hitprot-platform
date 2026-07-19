@@ -1,7 +1,13 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { api } from './lib/api/httpClient';
 import './index.css';
+
+const abpAuth = (p) => window?.abp?.auth?.isGranted(p);
+
+/* BlockType enum — mirrors backend (stable ints); only the chartable ones named here */
+const BT = { Select: 2, MultiSelect: 3, Rating: 12, Nps: 13, Dropdown: 18 };
+const CHARTABLE = new Set([BT.Select, BT.MultiSelect, BT.Rating, BT.Nps, BT.Dropdown]);
 
 /* Response status — mirrors backend ResponseStatus enum */
 const STATUS = {
@@ -55,6 +61,7 @@ function ResponsesApp({ formId }) {
   const blockMap = useMemo(() => Object.fromEntries(blocks.map((b) => [b.id, b])), [blocks]);
   // Answerable blocks become spreadsheet columns (layout blocks 16/17 excluded)
   const columns = useMemo(() => blocks.filter((b) => b.type !== 16 && b.type !== 17), [blocks]);
+  const chartableBlocks = useMemo(() => columns.filter((b) => CHARTABLE.has(b.type)), [columns]);
 
   const loadList = async (status) => {
     let url = `/api/app/response-management?DocumentId=${formId}&MaxResultCount=200&SkipCount=0`;
@@ -141,6 +148,9 @@ function ResponsesApp({ formId }) {
     URL.revokeObjectURL(a.href);
   };
 
+  const excelHref = `/DynamicAssets/Responses?handler=Excel&formId=${formId}${statusFilter !== '' ? `&status=${statusFilter}` : ''}`;
+  const canExport = abpAuth('Platform.DynamicAssets.Export');
+
   if (loading) return <div className="py-16 text-center text-slate-400">Yanıtlar yükleniyor…</div>;
 
   const tags = (j) => parse(j)?.tags || (Array.isArray(parse(j)) ? parse(j) : []);
@@ -162,15 +172,37 @@ function ResponsesApp({ formId }) {
           <div className="flex rounded-xl border border-slate-200 bg-white p-0.5">
             <button onClick={() => setView('list')} className={`rounded-lg px-3 py-1 text-xs font-semibold ${view === 'list' ? 'bg-indigo-600 text-white' : 'text-slate-500'}`}>Liste</button>
             <button onClick={() => setView('table')} className={`rounded-lg px-3 py-1 text-xs font-semibold ${view === 'table' ? 'bg-indigo-600 text-white' : 'text-slate-500'}`}>Tablo</button>
+            <button onClick={() => setView('analytics')} className={`rounded-lg px-3 py-1 text-xs font-semibold ${view === 'analytics' ? 'bg-indigo-600 text-white' : 'text-slate-500'}`}>Analiz</button>
           </div>
           <select value={statusFilter} onChange={(e) => onFilter(e.target.value)} className="rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-sm">
             {STATUS_OPTIONS.map((o) => <option key={o.v} value={o.v}>{o.label}</option>)}
           </select>
           <button onClick={exportCsv} disabled={rows.length === 0} className="rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium hover:bg-slate-50 disabled:opacity-50">⬇ CSV</button>
+          {canExport && (
+            <a href={excelHref} className="rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium hover:bg-slate-50">⬇ Excel</a>
+          )}
         </div>
       </div>
 
-      {/* grid */}
+      {/* analytics */}
+      {view === 'analytics' ? (
+        <div className="mt-3">
+          {chartableBlocks.length === 0 ? (
+            <div className="rounded-2xl border border-slate-200 bg-white py-16 text-center text-slate-400">
+              Grafik gösterilebilecek soru yok (seçmeli veya derecelendirme tipi bir soru gerekir).
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              {chartableBlocks.map((b) => <QuestionChart key={b.id} block={b} rows={rows} />)}
+            </div>
+          )}
+          {columns.length > chartableBlocks.length && (
+            <p className="mt-3 text-xs text-slate-400">
+              {columns.length - chartableBlocks.length} soru grafik için uygun değil (metin, tarih, dosya vb. tipte).
+            </p>
+          )}
+        </div>
+      ) : (
       <div className="mt-3 overflow-x-auto rounded-2xl border border-slate-200 bg-white">
         {rows.length === 0 ? (
           <div className="py-16 text-center text-slate-400">Henüz yanıt yok.</div>
@@ -225,6 +257,7 @@ function ResponsesApp({ formId }) {
           </table>
         )}
       </div>
+      )}
 
       {/* detail drawer */}
       {(selected || detailLoading) && (
@@ -287,6 +320,73 @@ function ResponsesApp({ formId }) {
       )}
     </div>
   );
+}
+
+/* single question's aggregated chart, drawn with the shared Chart.js UMD build
+   (already loaded site-wide for AiCenter reports — see Responses.cshtml) */
+function QuestionChart({ block, rows }) {
+  const canvasRef = useRef(null);
+  const chartRef = useRef(null);
+
+  useEffect(() => {
+    if (!window.Chart || !canvasRef.current) return undefined;
+    const { type, labels, data } = buildChartData(block, rows);
+    chartRef.current = new window.Chart(canvasRef.current, {
+      type,
+      data: { labels, datasets: [{ label: 'Yanıt', data, backgroundColor: ['#6366f1', '#0ea5e9', '#f59e0b', '#10b981', '#ef4444', '#8b5cf6', '#ec4899', '#14b8a6', '#f97316', '#64748b', '#a3e635'] }] },
+      options: {
+        responsive: true,
+        plugins: { legend: { display: type === 'pie', position: 'bottom' } },
+        scales: type === 'bar' ? { y: { beginAtZero: true, ticks: { precision: 0 } } } : undefined,
+      },
+    });
+    return () => chartRef.current?.destroy();
+  }, [block, rows]);
+
+  const answeredCount = rows.filter((r) => {
+    const v = parse(r.answers)[block.id];
+    return v != null && v !== '' && !(Array.isArray(v) && v.length === 0);
+  }).length;
+
+  return (
+    <div className="rounded-2xl border border-slate-200 bg-white p-4">
+      <p className="mb-1 text-sm font-bold text-slate-700">{block.content}</p>
+      <p className="mb-3 text-xs text-slate-400">{answeredCount} yanıt</p>
+      <canvas ref={canvasRef} height="200" />
+    </div>
+  );
+}
+
+function buildChartData(block, rows) {
+  const settings = parse(block.settings);
+  const options = settings.options || [];
+
+  if (block.type === BT.Rating) {
+    const counts = [0, 0, 0, 0, 0];
+    rows.forEach((r) => {
+      const v = Number(parse(r.answers)[block.id]);
+      if (v >= 1 && v <= 5) counts[v - 1]++;
+    });
+    return { type: 'bar', labels: ['1★', '2★', '3★', '4★', '5★'], data: counts };
+  }
+
+  if (block.type === BT.Nps) {
+    const counts = Array(11).fill(0);
+    rows.forEach((r) => {
+      const v = Number(parse(r.answers)[block.id]);
+      if (v >= 0 && v <= 10) counts[v]++;
+    });
+    return { type: 'bar', labels: counts.map((_, i) => String(i)), data: counts };
+  }
+
+  // Select / Dropdown / MultiSelect — option label -> occurrence count
+  const counts = Object.fromEntries(options.map((o) => [o, 0]));
+  rows.forEach((r) => {
+    const v = parse(r.answers)[block.id];
+    if (Array.isArray(v)) v.forEach((o) => { if (o in counts) counts[o]++; });
+    else if (v != null && v in counts) counts[v]++;
+  });
+  return { type: block.type === BT.MultiSelect ? 'bar' : 'pie', labels: options, data: options.map((o) => counts[o]) };
 }
 
 function answerToText(v) {

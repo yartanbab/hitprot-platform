@@ -261,11 +261,17 @@ function FormBuilder() {
   const [showPublish, setShowPublish] = useState(false);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
+  const [categoryId, setCategoryId] = useState(null);
+  const [categories, setCategories] = useState([]);
   const [blocks, setBlocks] = useState([]);
   const [selectedId, setSelectedId] = useState(null);
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(!!initialId);
   const dragIndex = useRef(null);
+
+  useEffect(() => {
+    api.get('/api/app/form-category?MaxResultCount=100').then((res) => setCategories(res.items || [])).catch(() => {});
+  }, []);
 
   useEffect(() => {
     if (!initialId) return;
@@ -275,6 +281,7 @@ function FormBuilder() {
         setTitle(dto.title || '');
         setSlug(dto.slug || '');
         setDescription(dto.description || '');
+        setCategoryId(dto.categoryId || null);
         setBlocks((dto.blocks || []).slice().sort((a, b) => a.order - b.order).map((b) => ({
           id: b.id || uid(), type: b.type, content: b.content, settings: safeParse(b.settings),
         })));
@@ -338,7 +345,7 @@ function FormBuilder() {
     setSaving(true);
     try {
       if (!formId) {
-        const dto = await api.post('/api/app/form', { title: title.trim(), description: description.trim() || null, categoryId: null, themeJson: null, blocks: buildPayloadBlocks() });
+        const dto = await api.post('/api/app/form', { title: title.trim(), description: description.trim() || null, categoryId, themeJson: null, blocks: buildPayloadBlocks() });
         setFormId(dto.id);
         setSlug(dto.slug || '');
         const url = new URL(window.location.href);
@@ -346,7 +353,7 @@ function FormBuilder() {
         window.history.replaceState({}, '', url);
         notify('success', 'Form oluşturuldu.');
       } else {
-        await api.put(`/api/app/form/${formId}`, { title: title.trim(), description: description.trim() || null, categoryId: null, themeJson: null, blocks: [] });
+        await api.put(`/api/app/form/${formId}`, { title: title.trim(), description: description.trim() || null, categoryId, themeJson: null, blocks: [] });
         await api.put(`/api/app/form/${formId}/blocks`, { blocks: buildPayloadBlocks() });
         notify('success', 'Form kaydedildi.');
       }
@@ -385,6 +392,14 @@ function FormBuilder() {
           <span className="absolute inset-x-0 top-0 h-1.5 bg-indigo-500" />
           <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Form başlığı…" className="w-full border-none bg-transparent p-0 text-3xl font-bold text-slate-900 placeholder-slate-300 focus:outline-none focus:ring-0" />
           <input value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Form açıklaması (opsiyonel)…" className="mt-2 w-full border-none bg-transparent p-0 text-sm text-slate-500 placeholder-slate-300 focus:outline-none focus:ring-0" />
+          <select
+            value={categoryId || ''}
+            onChange={(e) => setCategoryId(e.target.value || null)}
+            className="mt-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-600 focus:border-indigo-400 focus:outline-none"
+          >
+            <option value="">Kategorisiz</option>
+            {categories.map((c) => <option key={c.id} value={c.id}>{c.icon ? `${c.icon} ` : ''}{c.name}</option>)}
+          </select>
         </div>
 
         {/* questions */}

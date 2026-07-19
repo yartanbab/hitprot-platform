@@ -11,9 +11,10 @@ using Apya.Platform.Permissions;
 namespace Apya.Platform.DynamicAssets;
 
 /// <summary>
-/// Manages form categories (tenant-scoped). Requires the ManageCategories permission.
+/// Manages form categories (tenant-scoped). Reading requires only form access;
+/// mutating requires the ManageCategories permission.
 /// </summary>
-[Authorize(PlatformPermissions.DynamicAssets.ManageCategories)]
+[Authorize(PlatformPermissions.DynamicAssets.Default)]
 public class FormCategoryAppService : PlatformAppService, IFormCategoryAppService
 {
     private readonly IRepository<FormCategory, Guid> _repository;
@@ -48,6 +49,7 @@ public class FormCategoryAppService : PlatformAppService, IFormCategoryAppServic
             ObjectMapper.Map<List<FormCategory>, List<FormCategoryDto>>(items));
     }
 
+    [Authorize(PlatformPermissions.DynamicAssets.ManageCategories)]
     public async Task<FormCategoryDto> CreateAsync(CreateUpdateFormCategoryDto input)
     {
         var category = new FormCategory(
@@ -62,6 +64,7 @@ public class FormCategoryAppService : PlatformAppService, IFormCategoryAppServic
         return ObjectMapper.Map<FormCategory, FormCategoryDto>(category);
     }
 
+    [Authorize(PlatformPermissions.DynamicAssets.ManageCategories)]
     public async Task<FormCategoryDto> UpdateAsync(Guid id, CreateUpdateFormCategoryDto input)
     {
         var category = await _repository.GetAsync(id);
@@ -76,6 +79,7 @@ public class FormCategoryAppService : PlatformAppService, IFormCategoryAppServic
         return ObjectMapper.Map<FormCategory, FormCategoryDto>(category);
     }
 
+    [Authorize(PlatformPermissions.DynamicAssets.ManageCategories)]
     public async Task DeleteAsync(Guid id)
     {
         await _repository.DeleteAsync(id);
