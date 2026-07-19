@@ -292,6 +292,7 @@ h1, h2, h3, h4, h5, h6 {
 .kpi-card-text {
     flex: 1 1 auto;
     min-width: 0;
+}
 /* Kompakt tarih-aralığı pili — iki native date input tek çerçeve içinde.
    Rapor filtre çubukları için (ör. Cari Ekstre); JS gerekmez, native date picker'ı kullanır. */
 .apya-date-range {
