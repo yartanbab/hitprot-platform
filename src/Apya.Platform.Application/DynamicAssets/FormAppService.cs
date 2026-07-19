@@ -70,7 +70,7 @@ public class FormAppService : PlatformAppService, IFormAppService
 
     public async Task<DocumentDto> GetAsync(Guid id)
     {
-        var document = await _documentRepository.GetAsync(id);
+        var document = await _documentRepository.GetWithBlocksAsync(id);
         return ObjectMapper.Map<AppDocument, DocumentDto>(document);
     }
 

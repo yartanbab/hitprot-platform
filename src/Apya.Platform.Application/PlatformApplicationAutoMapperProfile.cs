@@ -58,7 +58,7 @@ namespace Apya.Platform
             CreateMap<CashAccount, CashAccountDto>();
             CreateMap<CreateUpdateCashAccountDto, CashAccount>();
 
-            // --- DÖVİZ KURU (EXCHANGE RATE) MODÜLÜ — APYA-137 ---
+            // --- KUR (EXCHANGE RATE) MODÜLÜ — APYA-137 ---
             CreateMap<ExchangeRate, ExchangeRateDto>();
             CreateMap<CreateUpdateExchangeRateDto, ExchangeRate>();
 

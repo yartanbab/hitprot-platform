@@ -19,4 +19,18 @@ public interface IWebhookSubscriptionAppService : IApplicationService
     Task<PagedResultDto<WebhookSubscriptionDto>> GetListAsync(PagedAndSortedResultRequestDto input);
     Task DeleteAsync(Guid id);
     Task<List<WebhookDeliveryLogDto>> GetDeliveryLogsAsync(Guid subscriptionId);
+
+    /// <summary>
+    /// Re-sends a previously logged delivery's exact payload as a single, immediate
+    /// attempt (no retry/backoff — this is a deliberate manual action). Appends a new
+    /// delivery log row instead of mutating the original.
+    /// </summary>
+    Task<WebhookDeliveryLogDto> ResendDeliveryAsync(Guid deliveryLogId);
+
+    /// <summary>
+    /// Generates a new random secret for the subscription and returns it in plaintext.
+    /// This is the only moment the secret is ever exposed to the client — it is never
+    /// returned by any other endpoint before or after this call.
+    /// </summary>
+    Task<RegenerateWebhookSecretResultDto> RegenerateSecretAsync(Guid id);
 }

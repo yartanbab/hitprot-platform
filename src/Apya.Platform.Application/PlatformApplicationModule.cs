@@ -29,6 +29,13 @@ public class PlatformApplicationModule : AbpModule
         // senkronu için inject ediyor; kayıt olmadan tüm servis construct edilemiyor (500).
         context.Services.AddHttpClient();
 
+        // Webhook teslimatları: varsayılan 100 sn timeout, ResendDeliveryAsync web isteği
+        // içinde senkron çalıştığı için asılı bir hedef URL kullanıcıyı o kadar bekletir.
+        context.Services.AddHttpClient("WebhookClient", client =>
+        {
+            client.Timeout = System.TimeSpan.FromSeconds(15);
+        });
+
         Configure<AbpAutoMapperOptions>(options =>
         {
             // PROJE İÇİNDEKİ MAPPING PROFİLLERİNİ TARA VE YÜKLE
