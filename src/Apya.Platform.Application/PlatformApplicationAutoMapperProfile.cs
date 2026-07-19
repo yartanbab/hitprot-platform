@@ -48,6 +48,7 @@ namespace Apya.Platform
             // --- WIKI / DOKÜMAN (DOCUMENTS) MODÜLÜ ---
             CreateMap<Apya.Platform.Documents.Document, Apya.Platform.Documents.DocumentDto>();
             CreateMap<Apya.Platform.Documents.CreateUpdateDocumentDto, Apya.Platform.Documents.Document>();
+            CreateMap<Apya.Platform.Documents.DocumentAttachment, Apya.Platform.Documents.DocumentAttachmentDto>();
 
             // --- CARİ (MÜŞTERİ) MODÜLÜ ---
             CreateMap<Customer, CustomerDto>();

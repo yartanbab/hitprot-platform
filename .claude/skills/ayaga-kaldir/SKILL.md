@@ -19,7 +19,7 @@ Bu repoyu yerelde çalıştırmanın **doğrulanmış** yolu. Sırayı atlama �
 Script idempotenttir: Postgres zaten çalışıyorsa / libs zaten kuruluysa o adımı
 atlar, doğrudan Web'i başlatır. Sadece hazırlık için: `./scripts/dev-up.ps1 -NoRun`.
 
-Uygulama: **https://localhost:44386** · Giriş: `admin@admin.com` / `1q2w3E*`
+Uygulama: **https://localhost:44386** · Giriş: `admin` / `1q2w3E*` (kullanıcı adı — e-posta değil; `admin@admin.com` ile giriş reddedilir)
 
 ## Script ne yapıyor (ve neden) — elle yapman gerekirse
 
