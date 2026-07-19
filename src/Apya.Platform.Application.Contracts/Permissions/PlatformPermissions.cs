@@ -51,7 +51,7 @@ public static class PlatformPermissions
         public const string Delete = Default + ".Delete";
     }
 
-    // --- DÖVİZ KURU YETKİLERİ ---
+    // --- KUR YETKİLERİ ---
     public static class ExchangeRates
     {
         public const string Default = GroupName + ".ExchangeRates";
