@@ -132,6 +132,7 @@ namespace Apya.Platform.EntityFrameworkCore
 
         /* --- DOKÜMAN (WIKI) MODÜLÜ --- */
         public DbSet<Apya.Platform.Documents.Document> Documents { get; set; }
+        public DbSet<Apya.Platform.Documents.DocumentAttachment> DocumentAttachments { get; set; }
 
         /* --- AI MODÜLÜ --- */
         public DbSet<DraftBatch> DraftBatches { get; set; }
@@ -338,7 +339,7 @@ namespace Apya.Platform.EntityFrameworkCore
                 b.HasIndex(x => x.ReferenceId);
             });
 
-            /* --- DÖVİZ KURU MODÜLÜ YAPILANDIRMASI — APYA-137 --- */
+            /* --- KUR MODÜLÜ YAPILANDIRMASI — APYA-137 --- */
             builder.Entity<ExchangeRate>(b =>
             {
                 b.ToTable(PlatformConsts.DbTablePrefix + "ExchangeRates", PlatformConsts.DbSchema);
@@ -548,6 +549,13 @@ namespace Apya.Platform.EntityFrameworkCore
 
                 b.HasIndex(x => x.ProjectId);
                 b.HasIndex(x => x.ParentDocumentId);
+            });
+
+            builder.Entity<Apya.Platform.Documents.DocumentAttachment>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "DocumentAttachments", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+                b.HasIndex(x => x.DocumentId);
             });
 
             /* --- DİNAMİK VARLIKLAR (DYNAMIC ASSETS) YAPILANDIRMASI --- */

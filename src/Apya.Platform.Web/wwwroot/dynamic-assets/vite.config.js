@@ -19,6 +19,7 @@ export default defineConfig({
         'public-form':      'src/public-form.jsx',
         'responses':        'src/responses.jsx',
         'customers':        'src/customers.jsx',
+        'documents':        'src/documents.jsx',
       },
       formats: ['es'],
       fileName: (_format, entryName) => `${entryName}.js`,
