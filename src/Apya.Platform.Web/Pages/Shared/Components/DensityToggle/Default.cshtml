@@ -1,0 +1,19 @@
+@*
+    Header yoğunluk değiştirici — LeptonX header toolbar'ında render edilir.
+    Tıklama + ikon/başlık senkronu density-toggle.js (#DensityToggle) tarafından
+    yönetilir. Sunucu yalnız başlangıç etiketlerini basar; JS tercihe göre günceller.
+*@
+@using Microsoft.AspNetCore.Mvc.Localization
+@using Apya.Platform.Localization
+@inject IHtmlLocalizer<PlatformResource> L
+
+<button type="button"
+        id="DensityToggle"
+        class="apya-density-toggle"
+        title="@L["Density:Toggle"]"
+        aria-label="@L["Density:Toggle"]"
+        data-label-compact="@L["Density:Compact"]"
+        data-label-cozy="@L["Density:Cozy"]"
+        data-label-comfortable="@L["Density:Comfortable"]">
+    <i class="fa fa-bars"></i>
+</button>
