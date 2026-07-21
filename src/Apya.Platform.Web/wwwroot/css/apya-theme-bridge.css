@@ -726,8 +726,11 @@ html[data-sidebar="collapsed"] #lpx-sidebar .menu-collapse-icon::before {
 .lpx-topbar-content > #notification-bell-container { order: 95; }
 .lpx-topbar-content > .dropdown:has(> .lpx-user-profile) { order: 100; }
 
-/* Kullanıcı adı yerine baş harf rozeti (dark-mode.js .user-full-name'i değiştirir). */
-.apya-user-avatar {
+/* Kullanıcı adı yerine baş harf rozeti (dark-mode.js .user-full-name'i değiştirir).
+   Bileşik seçici (.apya-avatar.apya-user-avatar) — apya-shell.css'teki genel
+   .apya-avatar 24px kuralıyla aynı özgüllükte olduğundan yükleme sırasına göre
+   ezilebiliyordu. */
+.apya-avatar.apya-user-avatar {
     width: 30px;
     height: 30px;
     font-size: 11.5px;
