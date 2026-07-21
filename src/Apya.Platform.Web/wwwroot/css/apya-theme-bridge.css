@@ -125,6 +125,35 @@
     border-bottom-color: var(--apya-border-subtle);
 }
 
+/* LeptonX .card-title sabit koyu renk kullanıyor (Bootstrap --bs-heading-color
+   köprülü değil) → dark'ta görünmez oluyordu. text-danger/text-warning gibi
+   Bootstrap contextual utility'ler !important olduğundan bu kural onları
+   etkilemez (:not guard ayrıca korur). */
+[data-theme="dark"] .card-title:not([class*="text-"]) {
+    color: var(--apya-text-primary);
+}
+
+/* ----------------------------------------------------------------------------
+   SABİT BOOTSTRAP UTILITY OVERRIDE'LARI (yalnız dark) — güvenli sistematik ağ
+   Sayfalara/JS'e gömülü sabit .bg-white / .bg-light utility'leri token-farkında
+   DEĞİL → dark'ta beyaz kutu kalır. Tek yerden token'a çevrilir (whack-a-mole yok).
+   Metin flip'i BİLİNÇLİ olarak yalnız bu beyaz zeminlerin İÇİNDE yapılır; global
+   .text-dark flip'i 'bg-warning text-dark' (sarı badge üstü koyu yazı) gibi
+   idiomatik kombinasyonları bozacağından yapılmaz.
+   ---------------------------------------------------------------------------- */
+[data-theme="dark"] .bg-white {
+    background-color: var(--apya-surface-raised) !important;
+}
+[data-theme="dark"] .bg-light {
+    background-color: var(--apya-surface-sunken) !important;
+}
+[data-theme="dark"] .bg-white .text-dark,
+[data-theme="dark"] .bg-white.text-dark,
+[data-theme="dark"] .bg-light .text-dark,
+[data-theme="dark"] .bg-light.text-dark {
+    color: var(--apya-text-primary) !important;
+}
+
 /* ============================================================================
    SHELL LAYOUT BRIDGE — YALNIZ DARK MODE
    LeptonX Lite sidebar, topbar ve içerik alanı token'lara bağlanır.
@@ -240,6 +269,19 @@ html, body {
     color: var(--apya-text-primary) !important;
 }
 
+/* SİSTEMİK BUG FİX (2026-07-17, görev-uyarı KPI kartı QA'sında bulundu): LeptonX'in derlenmiş
+   bootstrap-dim.css'i ".card" seçicisinde --bs-card-bg/--bs-card-color'ı YEREL olarak
+   #ffffff/#686b6e'ye sabitliyor (aynı elemente doğrudan tanımlı olduğu için yukarıdaki
+   [data-theme="dark"] bloğundaki --bs-card-bg override'ı miras yoluyla asla ulaşamıyor —
+   .modal-content'teki aynı sınıf bug, farklı selector). var(--bs-card-bg) burada tekrar
+   kullanmak işe yaramaz (aynı gölgelenmiş değeri okur) — Apya token'ı DOĞRUDAN, dark'a
+   scope'lu olarak zorlanıyor. Sonuç: TÜM .card arkaplanları (KPI kartları, CreateModal
+   gövdeleri, Reports vb.) dark temada hep beyaz kalıyordu. */
+[data-theme="dark"] .card {
+    background-color: var(--apya-surface-raised) !important;
+    color: var(--apya-text-primary) !important;
+}
+
 /* --- Tablo satır hover --- */
 .table-hover tbody tr {
     transition: background 120ms ease;
@@ -258,6 +300,58 @@ html, body {
     --bs-btn-hover-bg:     var(--apya-accent-600);
     --bs-btn-active-bg:    var(--apya-accent-700);
 }
+
+/* --- Buton light → surface token'ları ---
+   LeptonX --bs-light'ı #bbb yapıyor → btn-light kirli gri kalıyordu (her iki
+   temada). "Sessiz/ikincil" buton niyetine uygun: taban zemin + belirgin hover. */
+.btn-light {
+    --bs-btn-bg:                  var(--apya-surface-base);
+    --bs-btn-color:               var(--apya-text-primary);
+    --bs-btn-border-color:        var(--apya-border-default);
+    --bs-btn-hover-bg:            var(--apya-surface-sunken);
+    --bs-btn-hover-color:         var(--apya-text-primary);
+    --bs-btn-hover-border-color:  var(--apya-border-strong);
+    --bs-btn-active-bg:           var(--apya-surface-sunken);
+    --bs-btn-active-color:        var(--apya-text-primary);
+    --bs-btn-active-border-color: var(--apya-border-strong);
+}
+
+/* --- Buton/input yarıçapı (hi-fi 8–9px) --- */
+.btn,
+.form-control,
+.form-select {
+    border-radius: var(--apya-radius-lg) !important;
+}
+
+/* ============================================================================
+   P2 · ORTAK BİLEŞEN: CHIP/DURUM TONU (opt-in utility)
+   HANDOFF: "Chip'ler: durum tone → arka plan color-mix(...12–15%) + koyu metin".
+   Ekranlar mevcut bg-{color} badge'lerini bu class'a geçirdikçe (P3) hi-fi
+   görünüme kavuşur; DOM değişikliği gerektirir, o yüzden opt-in.
+   Kullanım: <span class="apya-chip apya-chip-positive">Ödendi</span>
+   ============================================================================ */
+.apya-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 10px;
+    border-radius: var(--apya-radius-full);
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 1.6;
+    white-space: nowrap;
+}
+.apya-chip-positive { background: color-mix(in srgb, var(--apya-positive-500) 14%, transparent); color: var(--apya-positive-700); }
+.apya-chip-negative { background: color-mix(in srgb, var(--apya-negative-500) 14%, transparent); color: var(--apya-negative-700); }
+.apya-chip-warning  { background: color-mix(in srgb, var(--apya-warning-500) 14%, transparent); color: var(--apya-warning-700); }
+.apya-chip-brand    { background: color-mix(in srgb, var(--apya-brand-500) 14%, transparent);   color: var(--apya-brand-600); }
+.apya-chip-ai       { background: color-mix(in srgb, var(--apya-ai-500) 14%, transparent);       color: var(--apya-ai-600); }
+.apya-chip-neutral  { background: var(--apya-surface-sunken); color: var(--apya-text-secondary); }
+[data-theme="dark"] .apya-chip-positive { color: var(--apya-positive-500); }
+[data-theme="dark"] .apya-chip-negative { color: var(--apya-negative-500); }
+[data-theme="dark"] .apya-chip-warning  { color: var(--apya-warning-500); }
+[data-theme="dark"] .apya-chip-brand    { color: var(--apya-brand-400); }
+[data-theme="dark"] .apya-chip-ai       { color: var(--apya-ai-500); }
 
 /* --- Focus ring → accent --- */
 :focus-visible {
@@ -321,29 +415,344 @@ html, body {
 }
 
 /* ============================================================================
-   ORTAK BİLEŞEN: CHIP/DURUM TONU (opt-in utility)
-   "Chip'ler: durum tone → arka plan color-mix(...12–15%) + koyu metin".
-   Kullanım: <span class="apya-chip apya-chip-positive">Ödendi</span>
+   P1 · APP SHELL HI-FI — sidebar + header (light + dark, token-driven)
+   Gerçek LeptonX Lite side-menu DOM'una göre (canlı doğrulandı):
+     .lpx-sidebar-container > #lpx-sidebar.lpx-scroll-container > nav.lpx-nav
+       > .lpx-logo-container + ul#desktop-sidebar.lpx-nav-menu
+         > li.outer-menu-item > a.lpx-menu-item-link[.selected]
+           > span.lpx-menu-item-icon > i · span.lpx-menu-item-text · i.lpx-caret
+   Token kullanıldığı için tek kural her iki temada doğru çalışır (light: beyaz
+   sidebar + koyu metin; dark: koyu sidebar + açık metin).
    ============================================================================ */
-.apya-chip {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    padding: 2px 10px;
-    border-radius: var(--apya-radius-full);
-    font-size: 11px;
+
+/* --- Sidebar zemini: TÜM katmanlara uygula → alt boşluk beyaz/koyu kalmasın.
+   Kritik: ul#desktop-sidebar.lpx-nav-menu kendi koyu zeminini tutuyor (rgb 22,22,22)
+   ve alanı dolduruyor; onu da dahil et. --- */
+.lpx-sidebar-container,
+#lpx-sidebar,
+#lpx-sidebar nav.lpx-nav,
+#lpx-sidebar .lpx-nav-menu,
+#lpx-sidebar .lpx-logo-container,
+#lpx-sidebar .lpx-brand-name {
+    background-color: var(--apya-surface-sidebar) !important;
+}
+.lpx-sidebar-container {
+    border-right: 1px solid var(--apya-border-default);
+}
+
+/* --- Logo alanı --- */
+#lpx-sidebar .lpx-brand-name {
+    color: var(--apya-text-primary) !important;
+}
+
+/* --- Tenant rozeti (bilgilendirici, tıklanamaz — P4) ---
+   TenantBadgeViewComponent + dark-mode.js ile logo'nun hemen altına taşınır.
+   Kenarlık logo'dan buraya kaydırıldı: tek ayraç, logo+rozet birlikte bir blok. --- */
+.apya-tenant-badge {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    padding: 0 22px 14px;
+    border-bottom: 1px solid var(--apya-border-subtle);
+    font-size: 11.5px;
+    line-height: 1.3;
+}
+.apya-tenant-badge-name {
+    color: var(--apya-text-primary);
     font-weight: 600;
-    line-height: 1.6;
+    overflow: hidden;
+    text-overflow: ellipsis;
     white-space: nowrap;
 }
-.apya-chip-positive { background: color-mix(in srgb, var(--apya-positive-500) 14%, transparent); color: var(--apya-positive-700); }
-.apya-chip-negative { background: color-mix(in srgb, var(--apya-negative-500) 14%, transparent); color: var(--apya-negative-700); }
-.apya-chip-warning  { background: color-mix(in srgb, var(--apya-warning-500) 14%, transparent); color: var(--apya-warning-700); }
-.apya-chip-brand    { background: color-mix(in srgb, var(--apya-brand-500) 14%, transparent);   color: var(--apya-brand-600); }
-.apya-chip-ai       { background: color-mix(in srgb, var(--apya-ai-500) 14%, transparent);       color: var(--apya-ai-600); }
-.apya-chip-neutral  { background: var(--apya-surface-sunken); color: var(--apya-text-secondary); }
-[data-theme="dark"] .apya-chip-positive { color: var(--apya-positive-500); }
-[data-theme="dark"] .apya-chip-negative { color: var(--apya-negative-500); }
-[data-theme="dark"] .apya-chip-warning  { color: var(--apya-warning-500); }
-[data-theme="dark"] .apya-chip-brand    { color: var(--apya-brand-400); }
-[data-theme="dark"] .apya-chip-ai       { color: var(--apya-ai-500); }
+.apya-tenant-badge-sep,
+.apya-tenant-badge-count {
+    color: var(--apya-text-tertiary);
+    white-space: nowrap;
+}
+
+/* --- Nav item (üst düzey + iç menü) --- */
+#lpx-sidebar .lpx-menu-item-link {
+    color: var(--apya-text-secondary) !important;
+    border-radius: var(--apya-radius-lg);
+    margin: 1px 8px;
+    transition: background var(--apya-motion-fast) ease, color var(--apya-motion-fast) ease;
+}
+#lpx-sidebar .lpx-menu-item-link:hover {
+    background: var(--apya-border-subtle) !important;
+    color: var(--apya-text-primary) !important;
+}
+#lpx-sidebar .lpx-menu-item-link.selected {
+    background: var(--apya-accent-soft) !important;
+    color: var(--apya-accent-500) !important;
+    font-weight: 600;
+}
+/* İç menü (submenu) zemini şeffaf — sidebar zeminini kullansın */
+#lpx-sidebar .lpx-inner-menu { background: transparent !important; }
+
+/* İkon + caret rengi link'i takip etsin (LeptonX pembe ikon override'ını ez). */
+#lpx-sidebar .lpx-menu-item-icon,
+#lpx-sidebar .lpx-menu-item-icon i,
+#lpx-sidebar .lpx-caret {
+    color: inherit !important;
+}
+
+/* ============================================================================
+   P4 · SIDEBAR — bölüm başlıklı DÜZ liste (prototip birebir)
+   LeptonX'in açılır-kapanır üst-düzey parent'larını (submenu'su olan
+   li.outer-menu-item) tıklanamaz "overline" bölüm başlığına çevirir ve tüm alt
+   menüleri kalıcı açık tutar → GENEL BAKIŞ/İŞ YÖNETİMİ/FİNANS/RAPORLAR/İÇERİK/
+   YÖNETİM düz liste. Yapı ve işlev korunur; yalnız görünüm değişir. LeptonX
+   collapse JS'i alt menüye .collapsed ekleyince display:none oluyordu; onu
+   display:block !important ile eziyoruz. Geometri canlı doğrulandı: başlık metni
+   ile yaprak ikonu aynı x'te (22px) hizalanır; :has() evergreen'de destekli. --- */
+
+/* Alt menüler her zaman açık (LeptonX collapse'ını ez) */
+#lpx-sidebar ul.lpx-inner-menu {
+    display: block !important;
+    height: auto !important;
+    overflow: visible !important;
+}
+
+/* Üst-düzey parent (alt menülü) → tıklanamaz bölüm başlığı (overline) */
+#lpx-sidebar li.outer-menu-item:has(> ul.lpx-inner-menu) > a.lpx-menu-item-link {
+    pointer-events: none;
+    cursor: default;
+    padding: 15px 22px 4px !important;
+    min-height: 0 !important;
+    background: transparent !important;
+    border-radius: 0 !important;
+    /* Önceki grubun son öğesiyle arada 1px boşluk kalıyordu; küçük+ince metin
+       (10.5px, secondary renk) kendi başına yeterince ayrışmıyor, komşu
+       ikonlu öğeler arasında "gömülmüş" görünüyordu. İnce bir üst çizgi
+       yeni bölümün başladığını netleştiriyor. */
+    border-top: 1px solid var(--apya-border-subtle);
+}
+#lpx-sidebar li.outer-menu-item:has(> ul.lpx-inner-menu) > a.lpx-menu-item-link .lpx-menu-item-text {
+    text-transform: uppercase;
+    font-size: 10.5px !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.5px;
+    /* tertiary token (#71717A / #9CA3AF) sidebar zemininde ~3.66:1 / ~2.64:1
+       kontrast veriyor, WCAG AA'nın (küçük+kalın metin için 4.5:1) altında
+       kalıp bölüm başlıklarını pratikte okunaksız kılıyordu. secondary token
+       her iki temada da ~7:1+ kontrast veriyor; uppercase+küçük punto+kalın
+       zaten yaprak öğelerden yeterince ayrıştırıyor. */
+    color: var(--apya-text-secondary) !important;
+    opacity: 1 !important;
+}
+/* Bölüm başlığında ikon + caret gizli (prototip: yalnız metin) */
+#lpx-sidebar li.outer-menu-item:has(> ul.lpx-inner-menu) > a.lpx-menu-item-link .lpx-menu-item-icon,
+#lpx-sidebar li.outer-menu-item:has(> ul.lpx-inner-menu) > a.lpx-menu-item-link .dd-icon {
+    display: none !important;
+}
+
+/* Bölüm içi yaprak: ikon, başlık metniyle aynı x'te hizalansın */
+#lpx-sidebar ul.lpx-inner-menu > li.lpx-inner-menu-item > a.lpx-menu-item-link {
+    padding-left: 22px !important;
+}
+/* 2. seviye iç grup (Yönetim → Müşteri/Kimlik yönetimi çocukları) daha içeride */
+#lpx-sidebar ul.lpx-inner-menu ul.lpx-inner-menu > li.lpx-inner-menu-item > a.lpx-menu-item-link {
+    padding-left: 38px !important;
+}
+
+/* ============================================================================
+   P4 · SIDEBAR COLLAPSE — 72px ikon rayı (LeptonX yerleşik mekanizması + kalıcılık)
+   Tema .menu-collapse-icon tıklamasında #lpx-wrapper'a .hover-trigger verir ve
+   'lpx:side-menu-state' yazar ama sayfa yüklemede geri UYGULAMAZ (Lite gap).
+   SoT: <html data-sidebar="collapsed"> — ApyaThemeHead FOUC'u pre-paint çözer,
+   sidebar-toggle.js class ↔ attribute senkronlar. Aşağıdaki geometri, temanın
+   class-tabanlı kurallarının attribute-anahtarlı KOPYASIDIR: JS yüklenmeden
+   önceki pencerede de rail FOUC'suz çizilsin diye. Hover'da 280px'e overlay
+   genişleme temadan miras (max-width base kuralı). 768–1199px arası tema zaten
+   otomatik rail uygular; o aralığın kozmetiği bölüm sonunda tekrarlanır.
+   ============================================================================ */
+@media (min-width: 1200px) {
+    html[data-sidebar="collapsed"] .lpx-sidebar-container {
+        transition: box-shadow 0.25s;
+    }
+    html[data-sidebar="collapsed"] .lpx-sidebar-container:not(:hover) {
+        min-width: 72px;
+        max-width: 72px;
+        /* Dikey scrollbar (16px) client genişliğini 56'ya düşürüp nav'ı -8px
+           kaydırıyordu → rail'de scroll gizli; hover'da genişleyince geri gelir. */
+        overflow-y: hidden;
+    }
+    html[data-sidebar="collapsed"] .lpx-sidebar-container:not(:hover) .lpx-nav {
+        min-width: 72px;
+    }
+    html[data-sidebar="collapsed"] .lpx-sidebar-container:not(:hover) .lpx-logo-container {
+        width: 72px;
+    }
+    html[data-sidebar="collapsed"] .lpx-sidebar-container:not(:hover) .lpx-brand-logo {
+        background-image: var(--lpx-logo-icon);
+    }
+    html[data-sidebar="collapsed"] .lpx-sidebar-container:not(:hover) .lpx-brand-name,
+    html[data-sidebar="collapsed"] .lpx-sidebar-container:not(:hover) .hidden-in-hover-trigger {
+        display: none;
+    }
+    html[data-sidebar="collapsed"] .lpx-sidebar-container:hover {
+        box-shadow: var(--apya-shadow-lg);
+    }
+    html[data-sidebar="collapsed"] .lpx-content-container {
+        margin-left: 72px;
+    }
+    html[data-sidebar="collapsed"] .lpx-footbar-container {
+        left: 72px;
+    }
+
+    /* Rail kozmetiği: yaprak ikon ortalanır (22px sol padding rail'de taşırıyor;
+       native rail anchor'a sabit width verdiğinden width:auto şart) */
+    html[data-sidebar="collapsed"] .lpx-sidebar-container:not(:hover) #lpx-sidebar a.lpx-menu-item-link {
+        justify-content: center;
+        width: auto !important;
+        margin: 1px 8px !important;
+        padding: 0 !important;
+        min-height: 36px;
+    }
+    /* İkonun metin-boşluğu marjini merkezlemeyi 4px kaydırıyor → sıfırla */
+    html[data-sidebar="collapsed"] .lpx-sidebar-container:not(:hover) #lpx-sidebar a.lpx-menu-item-link .lpx-menu-item-icon {
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+    /* Rail kozmetiği: bölüm başlığı (metni tema gizler) → ince ayraç çizgisi */
+    html[data-sidebar="collapsed"] .lpx-sidebar-container:not(:hover) #lpx-sidebar li.outer-menu-item:has(> ul.lpx-inner-menu) > a.lpx-menu-item-link {
+        width: auto !important;
+        padding: 0 !important;
+        margin: 10px 24px !important;
+        min-height: 0 !important;
+        height: 1px;
+        background: var(--apya-border-default) !important;
+    }
+}
+
+/* 768–1199px: temanın OTOMATİK rail'i için aynı kozmetik (attribute'suz) */
+@media (min-width: 768px) and (max-width: 1199.98px) {
+    .lpx-sidebar-container:not(:hover) {
+        overflow-y: hidden;
+    }
+    .lpx-sidebar-container:not(:hover) #lpx-sidebar a.lpx-menu-item-link {
+        justify-content: center;
+        width: auto !important;
+        margin: 1px 8px !important;
+        padding: 0 !important;
+        min-height: 36px;
+    }
+    .lpx-sidebar-container:not(:hover) #lpx-sidebar a.lpx-menu-item-link .lpx-menu-item-icon {
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+    .lpx-sidebar-container:not(:hover) #lpx-sidebar li.outer-menu-item:has(> ul.lpx-inner-menu) > a.lpx-menu-item-link {
+        width: auto !important;
+        padding: 0 !important;
+        margin: 10px 24px !important;
+        min-height: 0 !important;
+        height: 1px;
+        background: var(--apya-border-default) !important;
+    }
+}
+
+/* --- Daralt/genişlet butonu (temanın .menu-collapse-icon'u): 'bi' ikon fontu
+   yüklenmiyor (glyph görünmezdi) → FontAwesome chevron ile değiştir + hit alanı. --- */
+#lpx-sidebar .menu-collapse-icon {
+    font-family: 'Font Awesome 6 Free';
+    font-weight: 900;
+    font-style: normal;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    border-radius: var(--apya-radius-md);
+    color: var(--apya-text-tertiary);
+    cursor: pointer;
+    transition: color var(--apya-motion-fast) ease, background var(--apya-motion-fast) ease;
+}
+#lpx-sidebar .menu-collapse-icon:hover {
+    color: var(--apya-text-primary);
+    background: var(--apya-border-subtle);
+}
+#lpx-sidebar .menu-collapse-icon::before {
+    content: '\f053'; /* chevron-left → "daralt" */
+}
+html[data-sidebar="collapsed"] #lpx-sidebar .menu-collapse-icon::before {
+    content: '\f054'; /* chevron-right → "genişlet" */
+}
+
+/* --- Header topbar: 57px + token zemin + alt kenarlık (her iki tema) --- */
+.lpx-topbar {
+    min-height: 57px;
+    background: var(--apya-surface-header) !important;
+    border-bottom: 1px solid var(--apya-border-default) !important;
+}
+.lpx-topbar-content {
+    gap: 2px;
+}
+/* Header sol: sayfa başlığı (dark-mode.js breadcrumb alanına doldurur) */
+.lpx-breadcrumb-container {
+    display: flex;
+    align-items: center;
+    padding-left: 6px;
+}
+.lpx-breadcrumb-container .apya-page-title {
+    font-size: 16px;
+    font-weight: 650;
+    letter-spacing: -0.01em;
+    color: var(--apya-text-primary);
+}
+
+/* ============================================================================
+   P2 · ORTAK BİLEŞEN: TABLO (Bootstrap + DataTables restyle)
+   DOM/JS'e dokunmaz (server-side sıralama/sayfalama/DataTables aynı kalır) —
+   yalnız görünüm token'lara bağlanır. Kapsam: .table (abp-table, DataTables).
+   Satır yüksekliği density'e uyar: --row-h (compact 36 / cozy 44 / comfortable 56).
+   Parasal/sayısal kolonlar için opt-in: <td class="apya-numeric"> (mono, sağa
+   dayalı, tabular — tanım apya-shell.css'te).
+   ============================================================================ */
+.table thead th {
+    background: var(--apya-surface-raised) !important;
+    color: var(--apya-text-tertiary) !important;
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+    border-bottom: 1px solid var(--apya-border-default) !important;
+    white-space: nowrap;
+}
+.table thead th,
+.table tbody td {
+    height: var(--row-h);
+    padding-top: 0;
+    padding-bottom: 0;
+    vertical-align: middle;
+}
+.table tbody td {
+    font-size: 12.5px;
+    color: var(--apya-text-primary);
+    border-bottom-color: var(--apya-border-subtle) !important;
+}
+.table tbody tr:hover td {
+    background: var(--apya-surface-raised);
+}
+.table.table-striped tbody tr:nth-of-type(odd) td {
+    background: var(--apya-surface-sunken);
+}
+.table.table-striped tbody tr:nth-of-type(odd):hover td {
+    background: var(--apya-surface-raised);
+}
+/* Parasal/sayısal kolon opt-in (bkz. apya-shell.css .apya-numeric) sağa dayalı olsun */
+.table td.apya-numeric,
+.table th.apya-numeric {
+    text-align: right;
+}
+/* DataTables sayfalama/arama kutuları token'a uysun */
+.dataTables_wrapper .dataTables_length select,
+.dataTables_wrapper .dataTables_filter input {
+    background: var(--apya-surface-base) !important;
+    color: var(--apya-text-primary) !important;
+    border-color: var(--apya-border-default) !important;
+}
+.dataTables_wrapper .dataTables_info {
+    color: var(--apya-text-tertiary) !important;
+    font-size: 12px;
+}

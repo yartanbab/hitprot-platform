@@ -33,5 +33,13 @@ namespace Apya.Platform.Tasks
         public Guid? ParentTaskId { get; set; }
         public bool IsPrivate { get; set; }
         public System.Collections.Generic.List<Guid> PredecessorIds { get; set; } = new();
+
+        /// <summary>
+        /// Select2 tags:true widget'ından gelen serbest-metin etiket isimleri (get-or-create).
+        /// Nullable: non-nullable bırakılırsa (Nullable enable projede aktif) asp-for tag helper'ı
+        /// istemci tarafında otomatik "data-val-required" ekliyor — hiç etiket seçilmeyen HER
+        /// görevde autosave sessizce (jQuery validate engelliyor) tamamen başarısız oluyordu.
+        /// </summary>
+        public System.Collections.Generic.List<string>? TagNames { get; set; } = new();
     }
 }

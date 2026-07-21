@@ -1,0 +1,11 @@
+@model Apya.Platform.Web.Components.TenantBadge.TenantBadgeViewModel
+@* FOUC önleme: dark-mode.js sidebar logo altına taşıyana kadar gizli. *@
+@* hidden-in-hover-trigger: LeptonX rail (daraltılmış sidebar) durumunda tema bu class'ı gizler. *@
+<div id="apya-tenant-badge" class="apya-tenant-badge hidden-in-hover-trigger" style="display:none">
+    <span class="apya-tenant-badge-name">@Model.TenantName</span>
+    @if (Model.TenantCount.HasValue)
+    {
+        <span class="apya-tenant-badge-sep">&middot;</span>
+        <span class="apya-tenant-badge-count">@Model.TenantCount tenant</span>
+    }
+</div>

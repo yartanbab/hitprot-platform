@@ -27,6 +27,10 @@
     var SYS = { 1: 'kanban-todo', 2: 'kanban-inprogress', 3: 'kanban-inreview', 4: 'kanban-done' };
 
     function el(tag, cls) { var e = document.createElement(tag); if (cls) { e.className = cls; } return e; }
+
+    // Özel kolon colorClass (Bootstrap renk adı, kullanıcı seçimi) -> apya-chip tone.
+    var COLOR_TONE = { primary: 'brand', success: 'positive', danger: 'negative', warning: 'warning', info: 'brand', secondary: 'neutral', dark: 'neutral' };
+    function colorTone(colorClass) { return COLOR_TONE[colorClass] || 'brand'; }
     // TaskPriority enum (Low=1..Critical=4) doğrudan kanban.css [data-priority="1..4"] ile eşleşir.
     function priorityAttr(p) { return (typeof p === 'number' && p >= 1) ? p : 2; } // varsayılan Medium=2
 
@@ -121,10 +125,19 @@
             }
             card.appendChild(top);
 
-            // Başlık
-            var title = el('div', 'fw-bold mb-2 text-dark');
+            // Başlık — text-dark KOYMA: .kanban-card kendi bg'sine göre (light/dark)
+            // doğru metin rengini zaten ambient/body'den miras alır; text-dark sabit
+            // koyu renk zorlayıp dark'ta görünmez yapıyordu.
+            var title = el('div', 'fw-bold mb-2');
             title.textContent = task.title;
             card.appendChild(title);
+
+            // Etiketler — apyaTask.tagChips kendi içinde escape ediyor (güvenli).
+            if (window.apyaTask && task.tags && task.tags.length) {
+                var tagsRow = el('div', 'mb-2');
+                tagsRow.innerHTML = window.apyaTask.tagChips(task.tags);
+                card.appendChild(tagsRow);
+            }
 
             // Alt satır: atanan + bitiş
             var bottom = el('div', 'd-flex justify-content-between align-items-center flex-wrap gap-1');
@@ -143,8 +156,8 @@
             } else if (!isDone && task.dueDate) {
                 var due = el('div', 'small');
                 var d2 = moment(task.dueDate).diff(moment(), 'hours');
-                if (d2 < 0) { due.className = 'small text-white bg-danger px-2 py-1 rounded fw-bold heartbeat-animation'; due.innerHTML = '<i class="fa fa-exclamation-circle me-1"></i>Süresi Geçti (' + moment(task.dueDate).format('DD MMM') + ')'; }
-                else if (d2 <= 48) { due.className = 'small text-dark bg-warning px-2 py-1 rounded fw-bold'; due.innerHTML = '<i class="fa fa-clock me-1"></i>Yaklaşıyor (' + moment(task.dueDate).format('DD MMM') + ')'; }
+                if (d2 < 0) { due.className = 'apya-chip apya-chip-negative heartbeat-animation'; due.innerHTML = '<i class="fa fa-exclamation-circle me-1"></i>Süresi Geçti (' + moment(task.dueDate).format('DD MMM') + ')'; }
+                else if (d2 <= 48) { due.className = 'apya-chip apya-chip-warning'; due.innerHTML = '<i class="fa fa-clock me-1"></i>Yaklaşıyor (' + moment(task.dueDate).format('DD MMM') + ')'; }
                 else { due.className = 'small text-muted'; due.innerHTML = '<i class="fa fa-clock me-1"></i>' + moment(task.dueDate).format('DD MMM'); }
                 bottom.appendChild(due);
             }
@@ -188,7 +201,7 @@
                         '<div class="kanban-header">' +
                             '<span class="text-' + (c.colorClass || 'primary') + ' js-col-name"><i class="fa fa-circle me-2"></i></span>' +
                             '<span class="d-flex align-items-center gap-2">' +
-                                '<span class="badge bg-' + (c.colorClass || 'primary') + ' rounded-pill kanban-count">0</span>' +
+                                '<span class="apya-chip apya-chip-' + colorTone(c.colorClass) + ' kanban-count">0</span>' +
                                 '<button type="button" class="btn btn-sm btn-link text-secondary p-0 js-col-rename" title="Yeniden adlandır"><i class="fa fa-pen"></i></button>' +
                                 '<button type="button" class="btn btn-sm btn-link text-danger p-0 js-col-delete" title="Kolonu sil"><i class="fa fa-trash"></i></button>' +
                             '</span>' +

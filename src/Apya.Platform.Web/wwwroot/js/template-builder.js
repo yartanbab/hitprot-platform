@@ -1,11 +1,12 @@
-import { c as j, j as e, r as c } from "./vendor.js";
+import { b as j, j as e, r as c } from "./react-vendor.js";
+/* empty css      */
 const y = () => /* @__PURE__ */ e.jsx("svg", { fill: "none", viewBox: "0 0 24 24", stroke: "currentColor", strokeWidth: "2", className: "w-5 h-5", children: /* @__PURE__ */ e.jsx("path", { strokeLinecap: "round", strokeLinejoin: "round", d: "M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" }) }), k = () => /* @__PURE__ */ e.jsx("svg", { fill: "none", viewBox: "0 0 24 24", stroke: "currentColor", strokeWidth: "2", className: "w-5 h-5", children: /* @__PURE__ */ e.jsx("path", { strokeLinecap: "round", strokeLinejoin: "round", d: "M5 15l7-7 7 7" }) }), N = () => /* @__PURE__ */ e.jsx("svg", { fill: "none", viewBox: "0 0 24 24", stroke: "currentColor", strokeWidth: "2", className: "w-5 h-5", children: /* @__PURE__ */ e.jsx("path", { strokeLinecap: "round", strokeLinejoin: "round", d: "M19 9l-7 7-7-7" }) }), S = () => /* @__PURE__ */ e.jsx("svg", { fill: "none", viewBox: "0 0 24 24", stroke: "currentColor", strokeWidth: "2.5", className: "w-5 h-5", children: /* @__PURE__ */ e.jsx("path", { strokeLinecap: "round", strokeLinejoin: "round", d: "M12 4v16m8-8H4" }) }), C = () => {
-  const [o, u] = c.useState(""), [l, n] = c.useState([]), [i, d] = c.useState(!1), h = [
+  const [o, u] = c.useState(""), [l, n] = c.useState([]), [i, d] = c.useState(!1), m = [
     { type: "TextInput", label: "Metin Kutusu", defaultContent: "Kısa Yanıt" },
     { type: "NumberInput", label: "Sayısal Girdi", defaultContent: "Sayısal Değer" },
     { type: "Select", label: "Açılır Liste", defaultContent: "Lütfen Birini Seçin" },
     { type: "Rating", label: "Derecelendirme", defaultContent: "Memnuniyet Puanı" }
-  ], m = (t, a) => {
+  ], h = (t, a) => {
     const r = {
       id: Math.random().toString(36).substr(2, 9),
       type: t,
@@ -16,7 +17,7 @@ const y = () => /* @__PURE__ */ e.jsx("svg", { fill: "none", viewBox: "0 0 24 24
     n([...l, r]);
   }, b = (t) => {
     n(l.filter((a) => a.id !== t).map((a, r) => ({ ...a, order: r + 1 })));
-  }, x = (t, a) => {
+  }, p = (t, a) => {
     if (a === "up" && t === 0 || a === "down" && t === l.length - 1) return;
     const r = [...l], s = a === "up" ? t - 1 : t + 1;
     [r[t], r[s]] = [r[s], r[t]], n(r.map((v, w) => ({ ...v, order: w + 1 })));
@@ -65,10 +66,10 @@ const y = () => /* @__PURE__ */ e.jsx("svg", { fill: "none", viewBox: "0 0 24 24
         /* @__PURE__ */ e.jsx("h3", { className: "text-xs font-bold text-indigo-500 tracking-widest uppercase mb-1", children: "Araç Kutusu" }),
         /* @__PURE__ */ e.jsx("p", { className: "text-2xl font-extrabold tracking-tight text-slate-900 border-b-2 border-indigo-100 pb-4 inline-block", children: "Yapı Taşları" })
       ] }),
-      /* @__PURE__ */ e.jsx("div", { className: "flex flex-col gap-3", children: h.map((t) => /* @__PURE__ */ e.jsxs(
+      /* @__PURE__ */ e.jsx("div", { className: "flex flex-col gap-3", children: m.map((t) => /* @__PURE__ */ e.jsxs(
         "button",
         {
-          onClick: () => m(t.type, t.defaultContent),
+          onClick: () => h(t.type, t.defaultContent),
           disabled: i,
           className: "group flex items-center gap-4 w-full p-4 bg-white/70 border border-white rounded-[1.25rem] hover:bg-gradient-to-r hover:from-white hover:to-indigo-50/50 hover:border-indigo-100/80 shadow-sm hover:shadow-[0_8px_20px_rgba(99,102,241,0.08)] transition-all duration-300 ease-out hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed",
           children: [
@@ -122,8 +123,8 @@ const y = () => /* @__PURE__ */ e.jsx("svg", { fill: "none", viewBox: "0 0 24 24
           /* @__PURE__ */ e.jsx("p", { className: "text-slate-400 font-semibold text-lg", children: "Mucize yaratmak için sol paneli kullanın." })
         ] }) : /* @__PURE__ */ e.jsx("div", { className: "flex flex-col gap-8", children: l.map((t, a) => /* @__PURE__ */ e.jsxs("div", { className: "group/block relative bg-white border border-slate-100/80 rounded-[2rem] p-10 hover:border-indigo-200 hover:shadow-[0_12px_40px_rgba(99,102,241,0.06)] transition-all duration-400 animate-fade-in hover:-translate-y-1", children: [
           /* @__PURE__ */ e.jsxs("div", { className: "absolute -top-5 -right-5 hidden group-hover/block:flex items-center gap-2 bg-slate-900 border border-slate-800 shadow-2xl rounded-2xl p-2 z-20 animate-fade-in", children: [
-            /* @__PURE__ */ e.jsx("button", { onClick: () => x(a, "up"), className: "p-2.5 hover:bg-slate-800 rounded-xl text-slate-300 hover:text-white transition-colors", title: "Yukarı Taşı", children: /* @__PURE__ */ e.jsx(k, {}) }),
-            /* @__PURE__ */ e.jsx("button", { onClick: () => x(a, "down"), className: "p-2.5 hover:bg-slate-800 rounded-xl text-slate-300 hover:text-white transition-colors", title: "Aşağı Taşı", children: /* @__PURE__ */ e.jsx(N, {}) }),
+            /* @__PURE__ */ e.jsx("button", { onClick: () => p(a, "up"), className: "p-2.5 hover:bg-slate-800 rounded-xl text-slate-300 hover:text-white transition-colors", title: "Yukarı Taşı", children: /* @__PURE__ */ e.jsx(k, {}) }),
+            /* @__PURE__ */ e.jsx("button", { onClick: () => p(a, "down"), className: "p-2.5 hover:bg-slate-800 rounded-xl text-slate-300 hover:text-white transition-colors", title: "Aşağı Taşı", children: /* @__PURE__ */ e.jsx(N, {}) }),
             /* @__PURE__ */ e.jsx("div", { className: "w-px h-6 bg-slate-700 mx-1" }),
             /* @__PURE__ */ e.jsx("button", { onClick: () => b(t.id), className: "p-2.5 hover:bg-red-500/20 rounded-xl text-red-400 hover:text-red-300 transition-colors", title: "Bileşeni Sil", children: /* @__PURE__ */ e.jsx(y, {}) })
           ] }),
@@ -150,5 +151,5 @@ const y = () => /* @__PURE__ */ e.jsx("svg", { fill: "none", viewBox: "0 0 24 24
       ] })
     ] })
   ] });
-}, p = document.getElementById("dynamic-assets-app-root");
-p && j(p).render(/* @__PURE__ */ e.jsx(C, {}));
+}, x = document.getElementById("dynamic-assets-app-root");
+x && j(x).render(/* @__PURE__ */ e.jsx(C, {}));

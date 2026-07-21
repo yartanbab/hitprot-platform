@@ -31,16 +31,15 @@ public class PlatformMenuContributor : IMenuContributor
         var permission = context.ServiceProvider.GetRequiredService<IPermissionChecker>();
         var feature = context.ServiceProvider.GetRequiredService<IFeatureChecker>();
 
-        context.Menu.Items.Insert(0, new ApplicationMenuItem(
-            PlatformMenus.Home, l["Menu:Home"], "~/", icon: "fas fa-home", order: 0));
-
         context.Menu.AddItem(new ApplicationMenuItem(
             "Apya.Dashboard", l["Menu:Dashboard"], icon: "fa fa-chart-line", url: "/Dashboard", order: 1));
 
         // İşler
+        // NOT: eskiden burada ayrı bir "Ana Sayfa" (PlatformMenus.Home, url "~/") öğesi de vardı —
+        // "Projeler" ile aynı (bozuk) "/" URL'sine gidiyordu, hedef tasarımda da yok; kaldırıldı.
         var work = new ApplicationMenuItem("Apya.Work", l["Menu:Work"], icon: "fa fa-briefcase", order: 2);
         if (await permission.IsGrantedAsync(PlatformPermissions.Projects.Default))
-            work.AddItem(new ApplicationMenuItem("Apya.Work.Projects", l["Menu:Projects"], icon: "fa fa-rocket", url: "/"));
+            work.AddItem(new ApplicationMenuItem("Apya.Work.Projects", l["Menu:Projects"], icon: "fa fa-rocket", url: "/Projects"));
         if (await permission.IsGrantedAsync(PlatformPermissions.Grants.Default))
             work.AddItem(new ApplicationMenuItem("Apya.Work.Grants", l["Menu:Grants"], icon: "fa fa-award", url: "/Grants"));
         if (await permission.IsGrantedAsync(PlatformPermissions.Tasks.Default))
@@ -71,7 +70,7 @@ public class PlatformMenuContributor : IMenuContributor
         if (finance.Items.Count > 0) context.Menu.AddItem(finance);
 
         // İçerik
-        var content = new ApplicationMenuItem("Apya.Content", l["Menu:Content"], icon: "fa fa-folder-open", order: 4);
+        var content = new ApplicationMenuItem("Apya.Content", l["Menu:Content"], icon: "fa fa-folder-open", order: 5);
         if (await permission.IsGrantedAsync(PlatformPermissions.Documents.Default))
             content.AddItem(new ApplicationMenuItem("Apya.Content.Documents", l["Menu:Documents"], icon: "fa fa-book", url: "/Documents"));
         if (await permission.IsGrantedAsync(PlatformPermissions.DynamicAssets.Default))
@@ -138,7 +137,7 @@ public class PlatformMenuContributor : IMenuContributor
         }
 
         // Raporlar — tüm rapor/çıktı sayfaları tek menüde toplandı (Finans'tan taşındı; çift menü giderildi).
-        var reports = new ApplicationMenuItem("Apya.Reports", l["Menu:Reports"], icon: "fa fa-chart-pie", order: 5);
+        var reports = new ApplicationMenuItem("Apya.Reports", l["Menu:Reports"], icon: "fa fa-chart-pie", order: 4);
         if (await permission.IsGrantedAsync(PlatformPermissions.Reports.Default))
             reports.AddItem(new ApplicationMenuItem("Apya.Reports.Overview", l["Menu:Reports"], icon: "fa fa-gauge", url: "/Reports"));
         if (await permission.IsGrantedAsync(PlatformPermissions.Projects.Default))

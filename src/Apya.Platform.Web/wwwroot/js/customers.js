@@ -1,4 +1,5 @@
-import { c as de, j as e, r as i } from "./vendor.js";
+import { b as de, j as e, r as i } from "./react-vendor.js";
+/* empty css      */
 const v = {
   money: (a) => new Intl.NumberFormat("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(a || 0) + " ₺",
   int: (a) => new Intl.NumberFormat("tr-TR").format(Math.round(a || 0))

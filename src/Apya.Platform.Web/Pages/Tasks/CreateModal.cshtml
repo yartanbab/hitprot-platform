@@ -68,6 +68,17 @@
                         </select>
                     </div>
                 </div>
+                <div class="row g-3 mt-1">
+                    <div class="col-12">
+                        <label class="form-label fw-semibold text-dark" asp-for="Task.TagNames">Etiketler</label>
+                        <select class="form-select" asp-for="Task.TagNames" multiple id="TaskTagsSelect">
+                            @foreach (var tag in Model.AllTagNames)
+                            {
+                                <option value="@tag">@tag</option>
+                            }
+                        </select>
+                    </div>
+                </div>
             </div>
 
             <div class="mt-4 text-end">
@@ -85,3 +96,12 @@
         <abp-modal-footer buttons="@(AbpModalButtons.Cancel | AbpModalButtons.Save)"></abp-modal-footer>
     </abp-modal>
 </form>
+
+<script>
+    $('#TaskTagsSelect').select2({
+        tags: true,
+        width: '100%',
+        placeholder: 'Etiket ekle veya seç…',
+        dropdownParent: $('#TaskTagsSelect').closest('.modal')
+    });
+</script>

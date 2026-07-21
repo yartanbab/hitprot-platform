@@ -1,4 +1,5 @@
-import { c as ae, j as e, r as o } from "./vendor.js";
+import { b as ae, j as e, r as o } from "./react-vendor.js";
+/* empty css      */
 const w = {
   date: (a) => a ? new Intl.DateTimeFormat("tr-TR", { day: "2-digit", month: "short", year: "numeric" }).format(new Date(a)) : "—",
   size: (a) => !a && a !== 0 ? "—" : a < 1024 ? a + " B" : a < 1024 * 1024 ? (a / 1024).toFixed(0) + " KB" : (a / (1024 * 1024)).toFixed(1) + " MB"

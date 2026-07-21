@@ -1,0 +1,47 @@
+@*
+    Site-wide tema head — LayoutHooks.Head.Last ile her sayfanın <head>'ine enjekte edilir.
+    Token'lar + köprü global stil bundle'ında; burada yalnız PWA head + FOUC engelleme.
+*@
+<link rel="manifest" href="@Url.Content("~/manifest.webmanifest")" />
+<meta name="theme-color" content="#F5F5F5" media="(prefers-color-scheme: light)" />
+<meta name="theme-color" content="#0A0A0B" media="(prefers-color-scheme: dark)" />
+<link rel="icon" type="image/svg+xml" href="@Url.Content("~/icons/apya-icon.svg")" />
+<link rel="apple-touch-icon" href="@Url.Content("~/icons/apya-icon.svg")" />
+
+@*
+    FOUC engelleme — ThemeProvider/dark-mode.js mount olmadan ÖNCE (paint öncesi) çalışır.
+    Çözüm: kayıtlı tercih ('apya-theme') || OS tercihi → <html data-theme> + LeptonX class mirror.
+    Tüm kontrolcüler aynı 'apya-theme' anahtarını okur (bu FOUC, dark-mode.js, React ThemeProvider).
+*@
+<script>
+    (function () {
+        try {
+            var html = document.documentElement;
+            // Auth/account sayfaları (login, register, forgot-password) tema-nötr LIGHT tutulur:
+            // LeptonX account layout redesign kapsamı dışında; dark'ta başlık/kart kontrast bozuluyor.
+            var isAuthPage = /^\/Account\//i.test(location.pathname);
+            var stored = null;
+            try { stored = localStorage.getItem('apya-theme'); } catch (e) { }
+            var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+            var resolved = isAuthPage
+                ? 'light'
+                : ((stored === 'dark' || (stored !== 'light' && prefersDark)) ? 'dark' : 'light');
+            html.setAttribute('data-theme', resolved);
+            html.classList.remove('lpx-theme-light', 'lpx-theme-dark', 'lpx-theme-dim');
+            html.classList.add(resolved === 'dark' ? 'lpx-theme-dark' : 'lpx-theme-light');
+
+            // Yoğunluk (density) — kayıtlı tercih || cozy (varsayılan).
+            var density = 'cozy';
+            try { density = localStorage.getItem('apya-density') || 'cozy'; } catch (e) { }
+            html.setAttribute('data-density', density);
+
+            // Sidebar daraltma — anahtar LeptonX'in KENDİSİNİN yazdığı 'lpx:side-menu-state'
+            // ('1' = daraltılmış). Tema tıklamada kaydeder ama yüklemede geri UYGULAMAZ
+            // (Lite gap) → pre-paint burada attribute'la uygulanır; class senkronu
+            // sidebar-toggle.js'te. CSS: apya-theme-bridge.css "SIDEBAR COLLAPSE" bölümü.
+            var side = null;
+            try { side = localStorage.getItem('lpx:side-menu-state'); } catch (e) { }
+            if (side === '1' && !isAuthPage) { html.setAttribute('data-sidebar', 'collapsed'); }
+        } catch (e) { /* sessizce devam */ }
+    })();
+</script>

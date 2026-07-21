@@ -118,6 +118,8 @@ namespace Apya.Platform.EntityFrameworkCore
         public DbSet<TaskAttachment> TaskAttachments { get; set; }
         public DbSet<TaskDependency> TaskDependencies { get; set; }
         public DbSet<TaskTimeLog> TaskTimeLogs { get; set; }
+        public DbSet<Tag> Tags { get; set; }
+        public DbSet<TaskTagAssignment> TaskTagAssignments { get; set; }
         public DbSet<Apya.Platform.Projects.BoardColumn> BoardColumns { get; set; } // Faz 2: configure edilebilir kanban
         public DbSet<Invoice> Invoices { get; set; }
         public DbSet<InvoiceItem> InvoiceItems { get; set; }
@@ -478,6 +480,21 @@ namespace Apya.Platform.EntityFrameworkCore
                 b.ToTable(PlatformConsts.DbTablePrefix + "TaskDependencies", PlatformConsts.DbSchema);
                 b.ConfigureByConvention();
                 b.HasIndex(x => new { x.TaskId, x.PredecessorTaskId }).IsUnique();
+            });
+
+            builder.Entity<Tag>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "Tags", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+                b.Property(x => x.Name).IsRequired().HasMaxLength(64);
+                b.HasIndex(x => new { x.TenantId, x.Name }); // tenant-bazlı isim araması/get-or-create
+            });
+
+            builder.Entity<TaskTagAssignment>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "TaskTagAssignments", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+                b.HasIndex(x => new { x.TaskId, x.TagId }).IsUnique();
             });
 
             builder.Entity<TaskTimeLog>(b =>

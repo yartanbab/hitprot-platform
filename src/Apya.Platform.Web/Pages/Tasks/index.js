@@ -12,6 +12,7 @@ $(function () {
         if (selectedProjectId) input.projectId = selectedProjectId;
         if ($('#Filter_AssigneeId').val()) input.assigneeId = $('#Filter_AssigneeId').val();
         if ($('#Filter_Status').val()) input.statuses = [parseInt($('#Filter_Status').val())];
+        if ($('#Filter_Priority').val()) input.priorities = [parseInt($('#Filter_Priority').val())];
         if ($('#Filter_MinDueDate').val()) input.minDueDate = $('#Filter_MinDueDate').val();
         if ($('#Filter_MaxDueDate').val()) input.maxDueDate = $('#Filter_MaxDueDate').val();
         return input;
@@ -27,64 +28,42 @@ $(function () {
         ajax: abp.libs.datatables.createAjax(taskService.getList, currentFilter),
         columnDefs: [
             {
-                title: 'İşlemler',
-                rowAction: {
-                    items: [
-                        {
-                            text: 'Düzenle',
-                            visible: function (data) {
-                                return abp.auth.isGranted('Platform.Projects.ManageTeam') ||
-                                       data.record.creatorId  === abp.currentUser.id ||
-                                       data.record.assigneeId === abp.currentUser.id;
-                            },
-                            action: function (data) { editModal.open({ id: data.record.id }); }
-                        },
-                        {
-                            text: 'Sil',
-                            visible: function (data) {
-                                return abp.auth.isGranted('Platform.Projects.ManageTeam') ||
-                                       data.record.creatorId  === abp.currentUser.id ||
-                                       data.record.assigneeId === abp.currentUser.id;
-                            },
-                            action: function (data) {
-                                Swal.fire({
-                                    title: 'Görev Silinecek!',
-                                    text: 'Görevi kalıcı olarak silmek üzeresiniz. Onaylamak için aşağıdaki alana "SİL" yazmalısınız.',
-                                    icon: 'warning',
-                                    input: 'text',
-                                    inputPlaceholder: 'SİL',
-                                    showCancelButton: true,
-                                    confirmButtonText: '<i class="fa fa-trash"></i> Evet, Sil!',
-                                    cancelButtonText: 'İptal',
-                                    confirmButtonColor: '#dc3545',
-                                    preConfirm: function (inputValue) {
-                                        if (inputValue !== 'SİL') {
-                                            Swal.showValidationMessage('Silme işlemini onaylamak için tam olarak "SİL" yazmalısınız.');
-                                        }
-                                        return inputValue;
-                                    }
-                                }).then(function (result) {
-                                    if (result.isConfirmed) {
-                                        taskService.delete(data.record.id).then(function () {
-                                            abp.notify.info('Başarıyla silindi.');
-                                            dataTable.ajax.reload();
-                                            if (!$('#view-kanban').hasClass('d-none')) kb.load();
-                                        });
-                                    }
-                                });
-                            }
-                        }
-                    ]
+                title: '',
+                data: null,
+                orderable: false,
+                className: 'text-end',
+                render: function (data, type, row) {
+                    var canManage = abp.auth.isGranted('Platform.Projects.ManageTeam') ||
+                                     row.creatorId === abp.currentUser.id ||
+                                     row.assigneeId === abp.currentUser.id;
+                    return canManage
+                        ? '<button type="button" class="btn btn-sm btn-light py-0 px-2 rounded js-delete-task" data-id="' + row.id + '" title="Sil"><i class="fa fa-trash text-danger" style="font-size:0.8rem;"></i></button>'
+                        : '';
                 }
             },
             {
                 title: 'Başlık',
                 data: 'title',
                 render: function(data, type, row) {
+                    var head = '<span class="fw-bold">' + apyaTask.esc(data) + '</span>' + apyaTask.commentCount(row.comments);
                     if (row.parentTaskTitle) {
-                        return '<div class="d-flex flex-column"><span class="fw-bold">' + data + '</span><span class="text-muted small"><i class="fa fa-level-up-alt fa-rotate-90 me-1"></i> ' + row.parentTaskTitle + '</span></div>';
+                        head += '<div class="text-muted small"><i class="fa fa-level-up-alt fa-rotate-90 me-1"></i>' + apyaTask.esc(row.parentTaskTitle) + '</div>';
                     }
-                    return '<span class="fw-bold">' + data + '</span>';
+                    return '<div>' + head + apyaTask.tagChips(row.tags) + '</div>';
+                }
+            },
+            {
+                title: 'Proje',
+                data: 'projectName',
+                render: function (data) {
+                    return data ? '<span class="small">' + apyaTask.esc(data) + '</span>' : '<span class="text-muted small">—</span>';
+                }
+            },
+            {
+                title: 'Atanan',
+                data: 'assigneeName',
+                render: function (data) {
+                    return apyaTask.assigneeAvatar(data);
                 }
             },
             {
@@ -93,50 +72,30 @@ $(function () {
                 render: function (data, type, row) {
                     // Özel kolondaysa kolon adını göster (ortak kanban paritesi).
                     if (row.boardColumnName) {
-                        return '<span class="badge bg-primary">' + row.boardColumnName + '</span>';
+                        return '<span class="apya-chip apya-chip-brand">' + row.boardColumnName + '</span>';
                     }
                     var map = {
-                        1: { color: 'secondary',       text: 'Bekliyor'   },
-                        2: { color: 'warning text-dark', text: 'Sürüyor'  },
-                        3: { color: 'info',            text: 'Testte'      },
-                        4: { color: 'success',         text: 'Tamamlandı'  }
+                        1: { tone: 'neutral', text: 'Bekliyor'   },
+                        2: { tone: 'warning', text: 'Sürüyor'  },
+                        3: { tone: 'brand',   text: 'Testte'      },
+                        4: { tone: 'positive', text: 'Tamamlandı'  }
                     };
                     var s = map[data] || map[0];
-                    return '<span class="badge bg-' + s.color + '">' + s.text + '</span>';
+                    return '<span class="apya-chip apya-chip-' + s.tone + '">' + s.text + '</span>';
                 }
             },
             {
                 title: 'Öncelik',
                 data: 'priority',
                 render: function (data) {
-                    var map = {
-                        0: { color: 'success',          text: 'Düşük'  },
-                        1: { color: 'warning text-dark', text: 'Normal' },
-                        2: { color: 'danger',           text: 'Yüksek' }
-                    };
-                    var p = map[data] || map[0];
-                    return '<span class="badge bg-' + p.color + '">' + p.text + '</span>';
+                    return apyaTask.priorityBadge(data);
                 }
             },
             {
                 title: 'Bitiş Tarihi',
                 data: 'dueDate',
                 render: function (data, type, row) {
-                    var isDone = row.status === 4 || row.status === 0;
-                    if (isDone) {
-                        // Tamamlandı/İptal → gerçek tamamlanma günü (yoksa eski deadline'a düş)
-                        var c = row.completedDate || data;
-                        if (!c) return '';
-                        return '<span class="text-success fw-bold"><i class="fa fa-check-circle me-1"></i>' + moment(c).format('DD MMM YYYY') + '</span>';
-                    }
-                    if (!data) return '';
-                    var dueDiff = moment(data).diff(moment(), 'hours');
-                    if (dueDiff < 0) {
-                        return '<span class="badge bg-danger heartbeat-animation px-2 py-1"><i class="fa fa-exclamation-circle me-1"></i>' + moment(data).format('DD MMM YYYY') + '</span>';
-                    } else if (dueDiff <= 48) {
-                        return '<span class="badge bg-warning text-dark px-2 py-1"><i class="fa fa-clock me-1"></i>' + moment(data).format('DD MMM YYYY') + '</span>';
-                    }
-                    return '<span class="text-muted">' + moment(data).format('DD MMM YYYY') + '</span>';
+                    return apyaTask.dueDateChip(data, row.status, row.completedDate);
                 }
             }
         ]
@@ -169,6 +128,43 @@ $(function () {
         kb.setProject(selectedProjectId);
         dataTable.ajax.reload();
         if (!$('#view-gantt').hasClass('d-none')) loadGantt();
+    });
+
+    // --- Satıra tıklayınca drawer aç (eski "İşlemler" dropdown'ı kaldırıldı) ---
+    $('#TasksTable tbody').on('click', 'tr', function (e) {
+        if ($(e.target).closest('a, button, .form-check-input').length) return;
+        var rowData = dataTable.row(this).data();
+        if (rowData && rowData.id) { editModal.open({ id: rowData.id }); }
+    });
+
+    $('#TasksTable tbody').on('click', '.js-delete-task', function (e) {
+        e.stopPropagation();
+        var taskId = $(this).data('id');
+        Swal.fire({
+            title: 'Görev Silinecek!',
+            text: 'Görevi kalıcı olarak silmek üzeresiniz. Onaylamak için aşağıdaki alana "SİL" yazmalısınız.',
+            icon: 'warning',
+            input: 'text',
+            inputPlaceholder: 'SİL',
+            showCancelButton: true,
+            confirmButtonText: '<i class="fa fa-trash"></i> Evet, Sil!',
+            cancelButtonText: 'İptal',
+            confirmButtonColor: '#dc3545',
+            preConfirm: function (inputValue) {
+                if (inputValue !== 'SİL') {
+                    Swal.showValidationMessage('Silme işlemini onaylamak için tam olarak "SİL" yazmalısınız.');
+                }
+                return inputValue;
+            }
+        }).then(function (result) {
+            if (result.isConfirmed) {
+                taskService.delete(taskId).then(function () {
+                    abp.notify.info('Başarıyla silindi.');
+                    dataTable.ajax.reload();
+                    if (!$('#view-kanban').hasClass('d-none')) kb.load();
+                });
+            }
+        });
     });
 
     // --- Yeni Görev ---
@@ -261,9 +257,12 @@ $(function () {
         });
     }
 
+    // TaskPriority enum: Low=1, Medium=2, High=3, Critical=4 — önceki hali (0/2/else)
+    // gerçek enum değerleriyle uyuşmuyordu, neredeyse her görev 'medium' gösteriyordu.
     function getPriorityClass(p) {
-        if(p === 0) return 'low';
-        if(p === 2) return 'high';
+        if (p === 1) return 'low';
+        if (p === 3) return 'high';
+        if (p === 4) return 'critical';
         return 'medium';
     }
 

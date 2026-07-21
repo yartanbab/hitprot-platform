@@ -4,7 +4,9 @@
 @{
     Layout = null;
 }
-<abp-dynamic-form abp-model="Prompt" asp-page="/AiCenter/Prompts/CreateModal">
+@* Düz form (Customers deseni): abp-dynamic-form + elle alanlar çift alan üretip
+   kaydetmeyi kırıyordu — bkz Workflows/CreateModal notu. *@
+<form method="post" action="@Url.Page("/AiCenter/Prompts/CreateModal")">
     <abp-modal size="Large">
         <abp-modal-header title="Yeni Prompt"></abp-modal-header>
         <abp-modal-body>
@@ -28,4 +30,4 @@
         </abp-modal-body>
         <abp-modal-footer buttons="@(AbpModalButtons.Cancel | AbpModalButtons.Save)"></abp-modal-footer>
     </abp-modal>
-</abp-dynamic-form>
+</form>

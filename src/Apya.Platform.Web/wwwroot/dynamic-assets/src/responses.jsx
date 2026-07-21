@@ -11,9 +11,9 @@ const CHARTABLE = new Set([BT.Select, BT.MultiSelect, BT.Rating, BT.Nps, BT.Drop
 
 /* Response status — mirrors backend ResponseStatus enum */
 const STATUS = {
-  0: { label: 'Bekliyor', cls: 'bg-amber-100 text-amber-700' },
-  1: { label: 'İnceleniyor', cls: 'bg-blue-100 text-blue-700' },
-  2: { label: 'İncelendi', cls: 'bg-emerald-100 text-emerald-700' },
+  0: { label: 'Bekliyor', cls: 'bg-warning-100 text-warning-700' },
+  1: { label: 'İnceleniyor', cls: 'bg-brand-100 text-brand-700' },
+  2: { label: 'İncelendi', cls: 'bg-positive-100 text-positive-700' },
 };
 const STATUS_OPTIONS = [
   { v: '', label: 'Tüm durumlar' },
@@ -32,16 +32,16 @@ const fmtDuration = (sec) => {
 
 function StatCard({ label, value, accent }) {
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-4">
-      <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">{label}</p>
-      <p className={`mt-1 text-2xl font-bold ${accent || 'text-slate-800'}`}>{value}</p>
+    <div className="rounded-2xl border border-default bg-surface-raised p-4">
+      <p className="text-xs font-semibold uppercase tracking-wide text-text-tertiary">{label}</p>
+      <p className={`mt-1 text-2xl font-bold ${accent || 'text-text-primary'}`}>{value}</p>
     </div>
   );
 }
 
 /* answer value -> readable string */
 function renderAnswer(val) {
-  if (val == null || val === '') return <span className="text-slate-300">—</span>;
+  if (val == null || val === '') return <span className="text-text-tertiary">—</span>;
   if (Array.isArray(val)) return val.join(', ');
   if (typeof val === 'object') return Object.values(val).filter(Boolean).join(' ');
   return String(val);
@@ -151,35 +151,35 @@ function ResponsesApp({ formId }) {
   const excelHref = `/DynamicAssets/Responses?handler=Excel&formId=${formId}${statusFilter !== '' ? `&status=${statusFilter}` : ''}`;
   const canExport = abpAuth('Platform.DynamicAssets.Export');
 
-  if (loading) return <div className="py-16 text-center text-slate-400">Yanıtlar yükleniyor…</div>;
+  if (loading) return <div className="py-16 text-center text-text-tertiary">Yanıtlar yükleniyor…</div>;
 
   const tags = (j) => parse(j)?.tags || (Array.isArray(parse(j)) ? parse(j) : []);
 
   return (
-    <div className="text-slate-800">
+    <div className="text-text-primary">
       {/* stat cards */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <StatCard label="Toplam Yanıt" value={stats?.responseCount ?? 0} accent="text-indigo-600" />
+        <StatCard label="Toplam Yanıt" value={stats?.responseCount ?? 0} accent="text-accent" />
         <StatCard label="Bugün" value={stats?.todayResponseCount ?? 0} />
-        <StatCard label="Bekleyen" value={stats?.pendingResponseCount ?? 0} accent="text-amber-600" />
+        <StatCard label="Bekleyen" value={stats?.pendingResponseCount ?? 0} accent="text-warning" />
         <StatCard label="Görüntülenme" value={stats?.viewCount ?? 0} />
       </div>
 
       {/* toolbar */}
       <div className="mt-5 flex flex-wrap items-center justify-between gap-2">
-        <h3 className="text-sm font-bold text-slate-600">Yanıtlar ({rows.length})</h3>
+        <h3 className="text-sm font-bold text-text-secondary">Yanıtlar ({rows.length})</h3>
         <div className="flex items-center gap-2">
-          <div className="flex rounded-xl border border-slate-200 bg-white p-0.5">
-            <button onClick={() => setView('list')} className={`rounded-lg px-3 py-1 text-xs font-semibold ${view === 'list' ? 'bg-indigo-600 text-white' : 'text-slate-500'}`}>Liste</button>
-            <button onClick={() => setView('table')} className={`rounded-lg px-3 py-1 text-xs font-semibold ${view === 'table' ? 'bg-indigo-600 text-white' : 'text-slate-500'}`}>Tablo</button>
-            <button onClick={() => setView('analytics')} className={`rounded-lg px-3 py-1 text-xs font-semibold ${view === 'analytics' ? 'bg-indigo-600 text-white' : 'text-slate-500'}`}>Analiz</button>
+          <div className="flex rounded-xl border border-default bg-surface-raised p-0.5">
+            <button onClick={() => setView('list')} className={`rounded-lg px-3 py-1 text-xs font-semibold ${view === 'list' ? 'bg-accent text-white' : 'text-text-secondary'}`}>Liste</button>
+            <button onClick={() => setView('table')} className={`rounded-lg px-3 py-1 text-xs font-semibold ${view === 'table' ? 'bg-accent text-white' : 'text-text-secondary'}`}>Tablo</button>
+            <button onClick={() => setView('analytics')} className={`rounded-lg px-3 py-1 text-xs font-semibold ${view === 'analytics' ? 'bg-accent text-white' : 'text-text-secondary'}`}>Analiz</button>
           </div>
-          <select value={statusFilter} onChange={(e) => onFilter(e.target.value)} className="rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-sm">
+          <select value={statusFilter} onChange={(e) => onFilter(e.target.value)} className="rounded-xl border border-default bg-surface-raised px-3 py-1.5 text-sm">
             {STATUS_OPTIONS.map((o) => <option key={o.v} value={o.v}>{o.label}</option>)}
           </select>
-          <button onClick={exportCsv} disabled={rows.length === 0} className="rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium hover:bg-slate-50 disabled:opacity-50">⬇ CSV</button>
+          <button onClick={exportCsv} disabled={rows.length === 0} className="rounded-xl border border-default bg-surface-raised px-3 py-1.5 text-sm font-medium hover:bg-surface-sunken disabled:opacity-50">⬇ CSV</button>
           {canExport && (
-            <a href={excelHref} className="rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium hover:bg-slate-50">⬇ Excel</a>
+            <a href={excelHref} className="rounded-xl border border-default bg-surface-raised px-3 py-1.5 text-sm font-medium hover:bg-surface-sunken">⬇ Excel</a>
           )}
         </div>
       </div>
@@ -188,7 +188,7 @@ function ResponsesApp({ formId }) {
       {view === 'analytics' ? (
         <div className="mt-3">
           {chartableBlocks.length === 0 ? (
-            <div className="rounded-2xl border border-slate-200 bg-white py-16 text-center text-slate-400">
+            <div className="rounded-2xl border border-default bg-surface-raised py-16 text-center text-text-tertiary">
               Grafik gösterilebilecek soru yok (seçmeli veya derecelendirme tipi bir soru gerekir).
             </div>
           ) : (
@@ -197,18 +197,18 @@ function ResponsesApp({ formId }) {
             </div>
           )}
           {columns.length > chartableBlocks.length && (
-            <p className="mt-3 text-xs text-slate-400">
+            <p className="mt-3 text-xs text-text-tertiary">
               {columns.length - chartableBlocks.length} soru grafik için uygun değil (metin, tarih, dosya vb. tipte).
             </p>
           )}
         </div>
       ) : (
-      <div className="mt-3 overflow-x-auto rounded-2xl border border-slate-200 bg-white">
+      <div className="mt-3 overflow-x-auto rounded-2xl border border-default bg-surface-raised">
         {rows.length === 0 ? (
-          <div className="py-16 text-center text-slate-400">Henüz yanıt yok.</div>
+          <div className="py-16 text-center text-text-tertiary">Henüz yanıt yok.</div>
         ) : view === 'list' ? (
           <table className="w-full text-sm">
-            <thead className="bg-slate-50 text-left text-xs font-semibold uppercase text-slate-400">
+            <thead className="bg-surface-sunken text-left text-xs font-semibold uppercase text-text-tertiary">
               <tr>
                 <th className="px-4 py-3">Tarih</th>
                 <th className="px-4 py-3">Durum</th>
@@ -216,16 +216,16 @@ function ResponsesApp({ formId }) {
                 <th className="px-4 py-3"></th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-subtle">
               {rows.map((r) => (
-                <tr key={r.id} className="hover:bg-slate-50">
+                <tr key={r.id} className="hover:bg-surface-sunken">
                   <td className="px-4 py-3">{fmtDate(r.creationTime)}</td>
                   <td className="px-4 py-3">
                     <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${STATUS[r.status]?.cls}`}>{STATUS[r.status]?.label}</span>
                   </td>
-                  <td className="px-4 py-3 text-slate-500">{fmtDuration(r.completionSeconds)}</td>
+                  <td className="px-4 py-3 text-text-secondary">{fmtDuration(r.completionSeconds)}</td>
                   <td className="px-4 py-3 text-right">
-                    <button onClick={() => openDetail(r.id)} className="rounded-lg border border-slate-200 px-3 py-1 text-xs font-medium hover:bg-slate-50">Detay</button>
+                    <button onClick={() => openDetail(r.id)} className="rounded-lg border border-default px-3 py-1 text-xs font-medium hover:bg-surface-sunken">Detay</button>
                   </td>
                 </tr>
               ))}
@@ -233,19 +233,19 @@ function ResponsesApp({ formId }) {
           </table>
         ) : (
           <table className="w-full text-sm">
-            <thead className="bg-slate-50 text-left text-xs font-semibold uppercase text-slate-400">
+            <thead className="bg-surface-sunken text-left text-xs font-semibold uppercase text-text-tertiary">
               <tr>
                 <th className="whitespace-nowrap px-4 py-3">Tarih</th>
                 {columns.map((c) => <th key={c.id} className="whitespace-nowrap px-4 py-3">{c.content}</th>)}
                 <th className="px-4 py-3">Durum</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-subtle">
               {rows.map((r) => {
                 const ans = parse(r.answers);
                 return (
-                  <tr key={r.id} className="cursor-pointer hover:bg-slate-50" onClick={() => openDetail(r.id)}>
-                    <td className="whitespace-nowrap px-4 py-3 text-slate-500">{fmtDate(r.creationTime)}</td>
+                  <tr key={r.id} className="cursor-pointer hover:bg-surface-sunken" onClick={() => openDetail(r.id)}>
+                    <td className="whitespace-nowrap px-4 py-3 text-text-secondary">{fmtDate(r.creationTime)}</td>
                     {columns.map((c) => <td key={c.id} className="px-4 py-3">{renderAnswer(ans[c.id])}</td>)}
                     <td className="px-4 py-3">
                       <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${STATUS[r.status]?.cls}`}>{STATUS[r.status]?.label}</span>
@@ -261,37 +261,37 @@ function ResponsesApp({ formId }) {
 
       {/* detail drawer */}
       {(selected || detailLoading) && (
-        <div className="fixed inset-0 z-50 flex justify-end bg-slate-900/40" onClick={() => setSelected(null)}>
-          <div className="h-full w-full max-w-lg overflow-y-auto bg-white p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
+        <div className="fixed inset-0 z-50 flex justify-end bg-surface-overlay" onClick={() => setSelected(null)}>
+          <div className="h-full w-full max-w-lg overflow-y-auto bg-surface-raised p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
             {detailLoading || !selected ? (
-              <div className="py-16 text-center text-slate-400">Yükleniyor…</div>
+              <div className="py-16 text-center text-text-tertiary">Yükleniyor…</div>
             ) : (
               <>
                 <div className="mb-4 flex items-center justify-between">
                   <h2 className="text-lg font-bold">Yanıt Detayı</h2>
-                  <button onClick={() => setSelected(null)} className="rounded p-1 text-slate-400 hover:bg-slate-100">✕</button>
+                  <button onClick={() => setSelected(null)} className="rounded p-1 text-text-tertiary hover:bg-surface-sunken">✕</button>
                 </div>
 
-                <div className="mb-4 flex items-center gap-2 text-sm text-slate-500">
+                <div className="mb-4 flex items-center gap-2 text-sm text-text-secondary">
                   <span>{fmtDate(selected.creationTime)}</span>·<span>{fmtDuration(selected.completionSeconds)}</span>
                 </div>
 
                 {/* status */}
                 <div className="mb-4">
-                  <label className="mb-1 block text-xs font-semibold uppercase text-slate-400">Durum</label>
-                  <select value={selected.status} onChange={(e) => setStatus(e.target.value)} className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm">
+                  <label className="mb-1 block text-xs font-semibold uppercase text-text-tertiary">Durum</label>
+                  <select value={selected.status} onChange={(e) => setStatus(e.target.value)} className="w-full rounded-xl border border-default px-3 py-2 text-sm">
                     {Object.entries(STATUS).map(([v, s]) => <option key={v} value={v}>{s.label}</option>)}
                   </select>
                 </div>
 
                 {/* answers */}
                 <div className="mb-4">
-                  <label className="mb-1 block text-xs font-semibold uppercase text-slate-400">Cevaplar</label>
+                  <label className="mb-1 block text-xs font-semibold uppercase text-text-tertiary">Cevaplar</label>
                   <div className="flex flex-col gap-3">
                     {Object.entries(parse(selected.answers)).map(([blockId, val]) => (
-                      <div key={blockId} className="rounded-xl border border-slate-100 bg-slate-50 p-3">
-                        <p className="text-xs font-semibold text-slate-500">{blockMap[blockId]?.content || 'Soru'}</p>
-                        <p className="mt-1 text-sm text-slate-800">{renderAnswer(val)}</p>
+                      <div key={blockId} className="rounded-xl border border-subtle bg-surface-sunken p-3">
+                        <p className="text-xs font-semibold text-text-secondary">{blockMap[blockId]?.content || 'Soru'}</p>
+                        <p className="mt-1 text-sm text-text-primary">{renderAnswer(val)}</p>
                       </div>
                     ))}
                   </div>
@@ -299,18 +299,18 @@ function ResponsesApp({ formId }) {
 
                 {/* comments */}
                 <div>
-                  <label className="mb-1 block text-xs font-semibold uppercase text-slate-400">Yorumlar</label>
+                  <label className="mb-1 block text-xs font-semibold uppercase text-text-tertiary">Yorumlar</label>
                   <div className="flex flex-col gap-2">
                     {(selected.comments || []).map((c) => (
-                      <div key={c.id} className="rounded-xl bg-slate-50 p-2.5 text-sm">
-                        <p className="text-slate-700">{c.text}</p>
-                        <p className="mt-0.5 text-[11px] text-slate-400">{fmtDate(c.creationTime)}</p>
+                      <div key={c.id} className="rounded-xl bg-surface-sunken p-2.5 text-sm">
+                        <p className="text-text-primary">{c.text}</p>
+                        <p className="mt-0.5 text-[11px] text-text-tertiary">{fmtDate(c.creationTime)}</p>
                       </div>
                     ))}
                   </div>
                   <div className="mt-2 flex items-center gap-2">
-                    <input value={commentText} onChange={(e) => setCommentText(e.target.value)} placeholder="Yorum ekle…" className="flex-1 rounded-xl border border-slate-200 px-3 py-2 text-sm" onKeyDown={(e) => e.key === 'Enter' && addComment()} />
-                    <button onClick={addComment} className="rounded-xl bg-indigo-600 px-3 py-2 text-sm font-medium text-white hover:bg-indigo-700">Ekle</button>
+                    <input value={commentText} onChange={(e) => setCommentText(e.target.value)} placeholder="Yorum ekle…" className="flex-1 rounded-xl border border-default px-3 py-2 text-sm" onKeyDown={(e) => e.key === 'Enter' && addComment()} />
+                    <button onClick={addComment} className="rounded-xl bg-accent px-3 py-2 text-sm font-medium text-white hover:bg-accent-600">Ekle</button>
                   </div>
                 </div>
               </>

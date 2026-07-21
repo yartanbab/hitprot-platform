@@ -6,11 +6,13 @@
     Tasarım: /css/kanban.css
 *@
 <div class="kanban-board mt-2">
+    @* Kolon başlığı rengi kanban.css'ten gelir (data-status-id bazlı token) —
+       Bootstrap text-* utility'leri kaldırıldı (dark'ta -emphasis kalıntısı bug sınıfı). *@
     <!-- Yapılacak (Todo=1) -->
     <div class="kanban-column" data-status-id="1">
         <div class="kanban-header">
-            <span class="text-secondary"><i class="fa fa-circle me-2"></i>Yapılacak</span>
-            <span class="badge bg-secondary-subtle text-secondary-emphasis rounded-pill kanban-count">0</span>
+            <span class="kanban-title"><i class="fa fa-circle me-2"></i>Yapılacak</span>
+            <span class="apya-chip apya-chip-neutral kanban-count">0</span>
         </div>
         <div class="kanban-cards" id="kanban-todo"></div>
     </div>
@@ -18,8 +20,8 @@
     <!-- Sürüyor (InProgress=2) -->
     <div class="kanban-column" data-status-id="2">
         <div class="kanban-header">
-            <span class="text-warning-emphasis"><i class="fa fa-circle me-2"></i>Sürüyor</span>
-            <span class="badge bg-warning-subtle text-warning-emphasis rounded-pill kanban-count">0</span>
+            <span class="kanban-title"><i class="fa fa-circle me-2"></i>Sürüyor</span>
+            <span class="apya-chip apya-chip-warning kanban-count">0</span>
         </div>
         <div class="kanban-cards" id="kanban-inprogress"></div>
     </div>
@@ -27,8 +29,8 @@
     <!-- Testte (InReview=3) -->
     <div class="kanban-column" data-status-id="3">
         <div class="kanban-header">
-            <span class="text-info"><i class="fa fa-circle me-2"></i>Testte</span>
-            <span class="badge bg-info-subtle text-info-emphasis rounded-pill kanban-count">0</span>
+            <span class="kanban-title"><i class="fa fa-circle me-2"></i>Testte</span>
+            <span class="apya-chip apya-chip-brand kanban-count">0</span>
         </div>
         <div class="kanban-cards" id="kanban-inreview"></div>
     </div>
@@ -36,8 +38,8 @@
     <!-- Tamamlandı (Done=4) -->
     <div class="kanban-column" data-status-id="4">
         <div class="kanban-header">
-            <span class="text-success"><i class="fa fa-check-circle me-2"></i>Tamamlandı</span>
-            <span class="badge bg-success-subtle text-success-emphasis rounded-pill kanban-count">0</span>
+            <span class="kanban-title"><i class="fa fa-check-circle me-2"></i>Tamamlandı</span>
+            <span class="apya-chip apya-chip-positive kanban-count">0</span>
         </div>
         <div class="kanban-cards" id="kanban-done"></div>
     </div>

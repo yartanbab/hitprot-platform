@@ -11,14 +11,14 @@
         <div class="kpi-icon-box bg-@Model.Accent bg-opacity-10 text-@Model.Accent me-3">
             <i class="fa @Model.Icon"></i>
         </div>
-        <div>
-            <div class="apya-overline mb-1">@Model.Label</div>
-            <h3 class="fw-bold mb-0 apya-numeric" id="@Model.ValueId">
+        <div class="kpi-card-text">
+            <div class="apya-overline mb-1 text-truncate" title="@Model.Label">@Model.Label</div>
+            <h3 class="fw-bold mb-0 apya-numeric text-truncate" id="@Model.ValueId" title="@Model.Value">
                 @if (Model.ValueHtml != null) { @Model.ValueHtml } else { @Model.Value }
             </h3>
             @if (!string.IsNullOrEmpty(Model.SubText))
             {
-                <small class="text-muted">@Model.SubText</small>
+                <small class="text-muted text-truncate d-block">@Model.SubText</small>
             }
         </div>
     </div>

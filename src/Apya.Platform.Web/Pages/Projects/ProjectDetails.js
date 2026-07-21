@@ -23,65 +23,34 @@ $(function () {
             }),
             columnDefs: [
                 {
-                    title: 'İşlemler',
-                    rowAction: {
-                        items: [
-                            {
-                                text: 'Düzenle',
-                                visible: function (data) {
-                                    return abp.auth.isGranted('Platform.Projects.ManageTeam') ||
-                                           data.record.creatorId  === abp.currentUser.id ||
-                                           data.record.assigneeId === abp.currentUser.id;
-                                },
-                                action: function (data) { editModal.open({ id: data.record.id }); }
-                            },
-                            {
-                                text: 'Sil',
-                                visible: function (data) {
-                                    return abp.auth.isGranted('Platform.Projects.ManageTeam') ||
-                                           data.record.creatorId  === abp.currentUser.id ||
-                                           data.record.assigneeId === abp.currentUser.id;
-                                },
-                                action: function (data) {
-                                    Swal.fire({
-                                        title: 'Görev Silinecek!',
-                                        text: 'Görevi kalıcı olarak silmek üzeresiniz. Onaylamak için aşağıdaki alana "SİL" yazmalısınız.',
-                                        icon: 'warning',
-                                        input: 'text',
-                                        inputPlaceholder: 'SİL',
-                                        showCancelButton: true,
-                                        confirmButtonText: '<i class="fa fa-trash"></i> Evet, Sil!',
-                                        cancelButtonText: 'İptal',
-                                        confirmButtonColor: '#dc3545',
-                                        preConfirm: function (inputValue) {
-                                            if (inputValue !== 'SİL') {
-                                                Swal.showValidationMessage('Silme işlemini onaylamak için tam olarak "SİL" yazmalısınız.');
-                                            }
-                                            return inputValue;
-                                        }
-                                    }).then(function (result) {
-                                        if (result.isConfirmed) {
-                                            taskService.delete(data.record.id).then(function () {
-                                                abp.notify.info('Başarıyla silindi.');
-                                                dataTable.ajax.reload();
-                                                if (kb) { kb.load(); }
-                                            });
-                                        }
-                                    });
-                                }
-                            }
-                        ]
+                    title: '',
+                    data: null,
+                    orderable: false,
+                    className: 'text-end',
+                    render: function (data, type, row) {
+                        var canManage = abp.auth.isGranted('Platform.Projects.ManageTeam') ||
+                                         row.creatorId === abp.currentUser.id ||
+                                         row.assigneeId === abp.currentUser.id;
+                        return canManage
+                            ? '<button type="button" class="btn btn-sm btn-light py-0 px-2 rounded js-delete-task" data-id="' + row.id + '" title="Sil"><i class="fa fa-trash text-danger" style="font-size:0.8rem;"></i></button>'
+                            : '';
                     }
                 },
                 {
                     title: 'Başlık',
                     data: 'title',
                     render: function (data, type, row) {
+                        var head = '<span class="fw-bold">' + apyaTask.esc(data) + '</span>' + apyaTask.commentCount(row.comments);
                         if (row.parentTaskTitle) {
-                            return '<div class="d-flex flex-column"><span class="fw-bold">' + data + '</span><span class="text-muted small"><i class="fa fa-level-up-alt fa-rotate-90 me-1"></i> ' + row.parentTaskTitle + '</span></div>';
+                            head += '<div class="text-muted small"><i class="fa fa-level-up-alt fa-rotate-90 me-1"></i>' + apyaTask.esc(row.parentTaskTitle) + '</div>';
                         }
-                        return '<span class="fw-bold">' + data + '</span>';
+                        return '<div>' + head + apyaTask.tagChips(row.tags) + '</div>';
                     }
+                },
+                {
+                    title: 'Atanan',
+                    data: 'assigneeName',
+                    render: function (data) { return apyaTask.assigneeAvatar(data); }
                 },
                 {
                     title: 'Durum',
@@ -89,33 +58,23 @@ $(function () {
                     render: function (data, type, row) {
                         // Özel kolondaysa kolon adını göster (ortak kanban paritesi).
                         if (row.boardColumnName) {
-                            return '<span class="badge bg-primary rounded-pill px-3 py-2 shadow-sm border">' + row.boardColumnName + '</span>';
+                            return '<span class="apya-chip apya-chip-brand">' + row.boardColumnName + '</span>';
                         }
                         var map = {
-                            1: { color: 'secondary', text: 'Yapılacak' },
-                            2: { color: 'warning text-dark', text: 'Sürüyor' },
-                            3: { color: 'info', text: 'Testte' },
-                            4: { color: 'success', text: 'Tamamlandı' },
-                            0: { color: 'danger', text: 'İptal' }
+                            1: { tone: 'neutral', text: 'Yapılacak' },
+                            2: { tone: 'warning', text: 'Sürüyor' },
+                            3: { tone: 'brand',   text: 'Testte' },
+                            4: { tone: 'positive', text: 'Tamamlandı' },
+                            0: { tone: 'negative', text: 'İptal' }
                         };
-                        var s = map[data] || { color: 'secondary', text: 'Bilinmiyor' };
-                        return '<span class="badge bg-' + s.color + ' rounded-pill px-3 py-2 shadow-sm border">' + s.text + '</span>';
+                        var s = map[data] || { tone: 'neutral', text: 'Bilinmiyor' };
+                        return '<span class="apya-chip apya-chip-' + s.tone + '">' + s.text + '</span>';
                     }
                 },
                 {
                     title: 'Öncelik',
                     data: 'priority',
-                    render: function (data) {
-                        var map = {
-                            1: { color: 'success', text: 'Düşük' },
-                            2: { color: 'warning text-dark', text: 'Orta' },
-                            3: { color: 'danger', text: 'Yüksek' },
-                            4: { color: 'dark', text: 'Kritik' }
-                        };
-                        var p = map[data] || { color: 'secondary', text: 'Bilinmiyor' };
-                        var baseColor = p.color.split(' ')[0];
-                        return '<span class="badge border border-' + baseColor + ' text-' + baseColor + ' rounded-pill bg-white px-2 py-1"><i class="fa fa-circle text-' + baseColor + ' me-1" style="font-size:0.6rem;"></i>' + p.text + '</span>';
-                    }
+                    render: function (data) { return apyaTask.priorityBadge(data); }
                 },
                 {
                     title: 'Başlangıç Tarihi',
@@ -125,22 +84,7 @@ $(function () {
                 {
                     title: 'Bitiş Tarihi',
                     data: 'dueDate',
-                    render: function (data, type, row) {
-                        var isDone = row.status === 4 || row.status === 0;
-                        if (isDone) {
-                            var c = row.completedDate || data;
-                            if (!c) return '';
-                            return '<span class="text-success fw-bold"><i class="fa fa-check-circle me-1"></i>' + moment(c).format('DD MMM YYYY') + '</span>';
-                        }
-                        if (!data) return '';
-                        var dueDiff = moment(data).diff(moment(), 'hours');
-                        if (dueDiff < 0) {
-                            return '<span class="badge bg-danger heartbeat-animation px-2 py-1"><i class="fa fa-exclamation-circle me-1"></i>' + moment(data).format('DD MMM YYYY') + '</span>';
-                        } else if (dueDiff <= 48) {
-                            return '<span class="badge bg-warning text-dark px-2 py-1"><i class="fa fa-clock me-1"></i>' + moment(data).format('DD MMM YYYY') + '</span>';
-                        }
-                        return '<span class="text-muted">' + moment(data).format('DD MMM YYYY') + '</span>';
-                    }
+                    render: function (data, type, row) { return apyaTask.dueDateChip(data, row.status, row.completedDate); }
                 }
             ]
         })
@@ -155,6 +99,43 @@ $(function () {
         enableTimer: false,            // zaman sayacı her board'da gizli (kullanıcı kararı)
         enableCustomColumns: true,
         onChanged: function () { if (dataTable) { dataTable.ajax.reload(null, false); } }
+    });
+
+    // --- Satıra tıklayınca drawer aç (eski "İşlemler" dropdown'ı kaldırıldı) ---
+    $('#ProjectTasksTable tbody').on('click', 'tr', function (e) {
+        if ($(e.target).closest('a, button, .form-check-input').length) return;
+        var rowData = dataTable.row(this).data();
+        if (rowData && rowData.id) { editModal.open({ id: rowData.id }); }
+    });
+
+    $('#ProjectTasksTable tbody').on('click', '.js-delete-task', function (e) {
+        e.stopPropagation();
+        var taskId = $(this).data('id');
+        Swal.fire({
+            title: 'Görev Silinecek!',
+            text: 'Görevi kalıcı olarak silmek üzeresiniz. Onaylamak için aşağıdaki alana "SİL" yazmalısınız.',
+            icon: 'warning',
+            input: 'text',
+            inputPlaceholder: 'SİL',
+            showCancelButton: true,
+            confirmButtonText: '<i class="fa fa-trash"></i> Evet, Sil!',
+            cancelButtonText: 'İptal',
+            confirmButtonColor: '#dc3545',
+            preConfirm: function (inputValue) {
+                if (inputValue !== 'SİL') {
+                    Swal.showValidationMessage('Silme işlemini onaylamak için tam olarak "SİL" yazmalısınız.');
+                }
+                return inputValue;
+            }
+        }).then(function (result) {
+            if (result.isConfirmed) {
+                taskService.delete(taskId).then(function () {
+                    abp.notify.info('Başarıyla silindi.');
+                    dataTable.ajax.reload();
+                    if (kb) { kb.load(); }
+                });
+            }
+        });
     });
 
     // --- 2. Yeni Görev Ekle ---
@@ -321,16 +302,8 @@ $(function () {
     });
 
     // --- 5. Tabs & Kanban Gösterimi ---
-    $('#list-tab').on('click', function () {
-        $(this).addClass('border-bottom border-primary border-3 text-dark').removeClass('text-muted');
-        $('#board-tab').removeClass('border-bottom border-primary border-3 text-dark').addClass('text-muted');
-    });
-
-    $('#board-tab').on('click', function () {
-        $(this).addClass('border-bottom border-primary border-3 text-dark').removeClass('text-muted');
-        $('#list-tab').removeClass('border-bottom border-primary border-3 text-dark').addClass('text-muted');
-        kb.load();
-    });
+    // Tab görselleri artık .cshtml'deki #projectViewTabs .nav-link.active CSS'inden
+    // gelir (token-tabanlı) — buradaki eski utility-class jonglörlüğü kaldırıldı.
 
     // Kanban sekmesi Bootstrap tab eventiyle de açılabilir → o durumda da yükle.
     $(document).on('shown.bs.tab', '#board-tab, [data-bs-target="#board-view"]', function () { kb.load(); });

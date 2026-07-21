@@ -151,16 +151,16 @@ internal static class ReportExporter
         var ws = wb.AddWorksheet("Ekstre");
 
         ws.Cell(1, 1).Value = $"Cari Ekstre — {s.CustomerName}";
-        ws.Range(1, 1, 1, 6).Merge().Style.Font.Bold = true;
+        ws.Range(1, 1, 1, 7).Merge().Style.Font.Bold = true;
 
         if (from.HasValue || to.HasValue)
         {
             ws.Cell(2, 1).Value = $"Dönem: {from?.ToString("dd.MM.yyyy") ?? "..."} – {to?.ToString("dd.MM.yyyy") ?? "..."}";
-            ws.Range(2, 1, 2, 6).Merge();
+            ws.Range(2, 1, 2, 7).Merge();
         }
 
         int headerRow = from.HasValue || to.HasValue ? 4 : 3;
-        string[] headers = ["Tarih", "Kaynak", "Açıklama", "Borç", "Alacak", "Bakiye"];
+        string[] headers = ["Tarih", "Belge No", "Kaynak", "Açıklama", "Borç", "Alacak", "Bakiye"];
         for (int i = 0; i < headers.Length; i++)
         {
             ws.Cell(headerRow, i + 1).Value = headers[i];
@@ -172,22 +172,23 @@ internal static class ReportExporter
         foreach (var l in s.Lines)
         {
             ws.Cell(row, 1).Value = l.EntryDate.ToString("dd.MM.yyyy");
-            ws.Cell(row, 2).Value = SourceLabel(l.Source);
-            ws.Cell(row, 3).Value = l.Description ?? "-";
-            ws.Cell(row, 4).Value = l.Debit > 0 ? l.Debit : (decimal?)null;
-            ws.Cell(row, 5).Value = l.Credit > 0 ? l.Credit : (decimal?)null;
-            ws.Cell(row, 6).Value = l.RunningBalance;
-            for (int c = 4; c <= 6; c++)
+            ws.Cell(row, 2).Value = l.DocumentNumber ?? "-";
+            ws.Cell(row, 3).Value = SourceLabel(l.Source);
+            ws.Cell(row, 4).Value = l.Description ?? "-";
+            ws.Cell(row, 5).Value = l.Debit > 0 ? l.Debit : (decimal?)null;
+            ws.Cell(row, 6).Value = l.Credit > 0 ? l.Credit : (decimal?)null;
+            ws.Cell(row, 7).Value = l.RunningBalance;
+            for (int c = 5; c <= 7; c++)
                 ws.Cell(row, c).Style.NumberFormat.Format = "#,##0.00";
             row++;
         }
 
-        ws.Cell(row, 3).Value = "TOPLAM";
-        ws.Cell(row, 3).Style.Font.Bold = true;
-        ws.Cell(row, 4).Value = s.TotalDebit;
-        ws.Cell(row, 5).Value = s.TotalCredit;
-        ws.Cell(row, 6).Value = s.Balance;
-        for (int c = 4; c <= 6; c++)
+        ws.Cell(row, 4).Value = "TOPLAM";
+        ws.Cell(row, 4).Style.Font.Bold = true;
+        ws.Cell(row, 5).Value = s.TotalDebit;
+        ws.Cell(row, 6).Value = s.TotalCredit;
+        ws.Cell(row, 7).Value = s.Balance;
+        for (int c = 5; c <= 7; c++)
         {
             ws.Cell(row, c).Style.NumberFormat.Format = "#,##0.00";
             ws.Cell(row, c).Style.Font.Bold = true;
@@ -229,7 +230,8 @@ internal static class ReportExporter
                     table.ColumnsDefinition(c =>
                     {
                         c.ConstantColumn(75);
-                        c.ConstantColumn(100);
+                        c.ConstantColumn(85);
+                        c.ConstantColumn(90);
                         c.RelativeColumn();
                         c.ConstantColumn(80);
                         c.ConstantColumn(80);
@@ -243,13 +245,14 @@ internal static class ReportExporter
 
                     table.Header(h =>
                     {
-                        foreach (var t in new[] { "Tarih", "Kaynak", "Açıklama", "Borç", "Alacak", "Bakiye" })
+                        foreach (var t in new[] { "Tarih", "Belge No", "Kaynak", "Açıklama", "Borç", "Alacak", "Bakiye" })
                             h.Cell().Element(HeaderCell).Text(t).Bold();
                     });
 
                     foreach (var l in s.Lines)
                     {
                         table.Cell().Element(DataCell).Text(l.EntryDate.ToString("dd.MM.yyyy"));
+                        table.Cell().Element(DataCell).Text(l.DocumentNumber ?? "-");
                         table.Cell().Element(DataCell).Text(SourceLabel(l.Source));
                         table.Cell().Element(DataCell).Text(l.Description ?? "-");
                         table.Cell().Element(DataCell).AlignRight()
@@ -261,7 +264,7 @@ internal static class ReportExporter
                              .FontColor(l.RunningBalance < 0 ? Colors.Green.Medium : l.RunningBalance > 0 ? Colors.Red.Medium : Colors.Black);
                     }
 
-                    table.Cell().ColumnSpan(3).Element(DataCell).Text("TOPLAM").Bold();
+                    table.Cell().ColumnSpan(4).Element(DataCell).Text("TOPLAM").Bold();
                     table.Cell().Element(DataCell).AlignRight().Text(s.TotalDebit.ToString("N2")).Bold();
                     table.Cell().Element(DataCell).AlignRight().Text(s.TotalCredit.ToString("N2")).Bold();
                     table.Cell().Element(DataCell).AlignRight().Text(s.Balance.ToString("N2")).Bold();

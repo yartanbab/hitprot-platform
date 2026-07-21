@@ -1,144 +1,184 @@
 @page
 @model Apya.Platform.Web.Pages.Reports.CustomerStatementModel
 @using Apya.Platform.CustomerLedger
+@using Apya.Platform.Web.Pages.Shared
 @{
     ViewBag.PageTitle = "Cari Ekstre Raporu";
-    string SourceText(CustomerLedgerSource s) => s switch
+
+    string ChipTone(CustomerLedgerSource s) => s switch
     {
-        CustomerLedgerSource.Invoice  => "Satış Faturası",
-        CustomerLedgerSource.Payment  => "Tahsilat",
-        CustomerLedgerSource.Opening  => "Açılış",
-        _                             => "Manuel"
+        CustomerLedgerSource.Invoice => "brand",
+        CustomerLedgerSource.Payment => "positive",
+        _ => "neutral"
     };
+    string ChipLabel(CustomerLedgerSource s) => s switch
+    {
+        CustomerLedgerSource.Invoice => "Fatura",
+        CustomerLedgerSource.Payment => "Tahsilat",
+        CustomerLedgerSource.Opening => "Açılış",
+        _ => "Manuel"
+    };
+    string FormatAmount(decimal amount, string currency)
+    {
+        if (amount <= 0) return "—";
+        var suffix = Model.Currency == "ALL" && currency != "TRY" ? $" {currency}" : "";
+        return $"{amount:N2}{suffix}";
+    }
+    string Qs(string currency) =>
+        $"CustomerId={Model.CustomerId}&FromDate={Model.FromDate?.ToString("yyyy-MM-dd")}&ToDate={Model.ToDate?.ToString("yyyy-MM-dd")}&Currency={currency}";
+
+    var pdfUrl = $"?handler=Pdf&{Qs(Model.Currency)}";
+    var excelUrl = $"?handler=Excel&{Qs(Model.Currency)}";
 }
 
 <style>
     @@media print {
         .no-print { display: none !important; }
-        .abp-card { border: none !important; box-shadow: none !important; }
+        .card { border: none !important; box-shadow: none !important; }
         body { font-size: 12px; }
     }
 </style>
 
-<abp-card>
-    <abp-card-header>
-        <div class="d-flex justify-content-between align-items-center">
-            <abp-card-title>@ViewBag.PageTitle</abp-card-title>
-            @if (Model.Statement != null)
-            {
-                var excelUrl = $"?handler=Excel&CustomerId={Model.CustomerId}&FromDate={Model.FromDate?.ToString("yyyy-MM-dd")}&ToDate={Model.ToDate?.ToString("yyyy-MM-dd")}";
-                var pdfUrl   = $"?handler=Pdf&CustomerId={Model.CustomerId}&FromDate={Model.FromDate?.ToString("yyyy-MM-dd")}&ToDate={Model.ToDate?.ToString("yyyy-MM-dd")}";
-                <div class="btn-group no-print">
-                    <a href="@excelUrl" class="btn btn-outline-success btn-sm">
-                        <i class="fa fa-file-excel"></i> Excel
-                    </a>
-                    <a href="@pdfUrl" class="btn btn-outline-danger btn-sm">
-                        <i class="fa fa-file-pdf"></i> PDF
-                    </a>
-                    <button class="btn btn-outline-secondary btn-sm" onclick="window.print()">
-                        <i class="fa fa-print"></i> Yazdır
-                    </button>
-                </div>
-            }
+<div class="apya-page">
+
+    <form method="get" class="d-flex flex-wrap align-items-center gap-2 mb-4 no-print">
+        <input type="hidden" name="Currency" value="@Model.Currency" />
+
+        <div class="input-group input-group-sm" style="width:auto; min-width:230px;">
+            <span class="input-group-text bg-transparent"><i class="fa fa-building text-muted"></i></span>
+            <select name="CustomerId" class="form-select" onchange="this.form.submit()">
+                <option value="">-- Seçiniz --</option>
+                @foreach (var c in Model.Customers)
+                {
+                    if (c.Id == Model.CustomerId)
+                    {
+                        <option value="@c.Id" selected>@c.Name</option>
+                    }
+                    else
+                    {
+                        <option value="@c.Id">@c.Name</option>
+                    }
+                }
+            </select>
         </div>
-    </abp-card-header>
-    <abp-card-body>
-        <form method="get" class="row g-2 align-items-end mb-3 no-print">
-            <div class="col-auto">
-                <label class="form-label small">Cari</label>
-                <select name="CustomerId" class="form-select form-select-sm" style="min-width:220px;">
-                    <option value="">-- Seçiniz --</option>
-                    @foreach (var c in Model.Customers)
-                    {
-                        if (c.Id == Model.CustomerId)
-                        {
-                            <option value="@c.Id" selected>@c.Name</option>
-                        }
-                        else
-                        {
-                            <option value="@c.Id">@c.Name</option>
-                        }
-                    }
-                </select>
-            </div>
-            <div class="col-auto">
-                <label class="form-label small">Başlangıç</label>
-                <input type="date" name="FromDate" class="form-control form-control-sm"
-                       value="@(Model.FromDate?.ToString("yyyy-MM-dd"))" />
-            </div>
-            <div class="col-auto">
-                <label class="form-label small">Bitiş</label>
-                <input type="date" name="ToDate" class="form-control form-control-sm"
-                       value="@(Model.ToDate?.ToString("yyyy-MM-dd"))" />
-            </div>
-            <div class="col-auto">
-                <button type="submit" class="btn btn-primary btn-sm">
-                    <i class="fa fa-filter"></i> Getir
-                </button>
-            </div>
-        </form>
 
-        @if (Model.Statement == null)
+        <div class="apya-date-range">
+            <i class="fa fa-calendar-days"></i>
+            <input type="date" name="FromDate" class="apya-date-range-input"
+                   value="@(Model.FromDate?.ToString("yyyy-MM-dd"))" onchange="this.form.submit()" />
+            <span class="apya-date-range-sep">–</span>
+            <input type="date" name="ToDate" class="apya-date-range-input"
+                   value="@(Model.ToDate?.ToString("yyyy-MM-dd"))" onchange="this.form.submit()" />
+        </div>
+
+        <div class="btn-group btn-group-sm" role="group">
+            <a href="?@Qs("TRY")" class="btn @(Model.Currency != "ALL" ? "btn-primary" : "btn-outline-primary")">TRY</a>
+            <a href="?@Qs("ALL")" class="btn @(Model.Currency == "ALL" ? "btn-primary" : "btn-outline-primary")">Tümü</a>
+        </div>
+
+        <div class="flex-grow-1"></div>
+
+        @if (Model.Statement != null)
         {
-            <p class="text-muted">Lütfen bir cari seçin.</p>
+            <a href="@pdfUrl" class="btn btn-outline-secondary btn-sm">
+                <i class="fa fa-file-pdf text-danger me-1"></i>PDF
+            </a>
+            <a href="@excelUrl" class="btn btn-outline-secondary btn-sm">
+                <i class="fa fa-file-excel text-success me-1"></i>Excel
+            </a>
+            <button type="button" class="btn btn-outline-secondary btn-sm" onclick="window.print()" title="Yazdır">
+                <i class="fa fa-print"></i>
+            </button>
         }
-        else
-        {
-            var s = Model.Statement;
-            <h5 class="mb-3">@s.CustomerName — Ekstre</h5>
+    </form>
 
-            <div class="alert @(s.Balance > 0 ? "alert-danger" : s.Balance < 0 ? "alert-success" : "alert-secondary") py-2">
-                <strong>Net Bakiye: @s.Balance.ToString("N2") ₺</strong>
-                @if (s.Balance > 0)      { <span> — Müşteri bize borçlu</span> }
-                else if (s.Balance < 0) { <span> — Fazla tahsilat / bizim borcumuz</span> }
-                <span class="float-end">
-                    Toplam Borç: @s.TotalDebit.ToString("N2") &nbsp;|&nbsp;
-                    Toplam Alacak: @s.TotalCredit.ToString("N2")
-                </span>
+    @if (Model.Statement == null)
+    {
+        <div class="card">
+            <partial name="_EmptyState" model='new EmptyStateModel {
+                Icon = "fa-building",
+                Title = "Lütfen bir cari seçin.",
+                Description = "Ekstresini görüntülemek istediğiniz cariyi yukarıdan seçin."
+            }' />
+        </div>
+    }
+    else
+    {
+        var s = Model.Statement;
+
+        <div class="row g-3 mb-4">
+            <div class="col-6 col-lg-3">
+                <partial name="_KpiCard" model='new KpiCardModel {
+                    Icon = "fa-arrow-up", Accent = "primary",
+                    Label = "Toplam Borç", Value = $"{s.TotalDebit:N2}"
+                }' />
             </div>
+            <div class="col-6 col-lg-3">
+                <partial name="_KpiCard" model='new KpiCardModel {
+                    Icon = "fa-arrow-down", Accent = "primary",
+                    Label = "Toplam Alacak", Value = $"{s.TotalCredit:N2}"
+                }' />
+            </div>
+            <div class="col-6 col-lg-3">
+                <partial name="_KpiCard" model='new KpiCardModel {
+                    Icon = "fa-arrow-trend-up", Accent = s.Balance >= 0 ? "success" : "danger",
+                    Label = "Bakiye", Value = $"{s.Balance:N2}"
+                }' />
+            </div>
+            <div class="col-6 col-lg-3">
+                <partial name="_KpiCard" model='new KpiCardModel {
+                    Icon = "fa-circle-info", Accent = s.OverdueAmount > 0 ? "danger" : "secondary",
+                    Label = "Vadesi Geçen", Value = $"{s.OverdueAmount:N2}"
+                }' />
+            </div>
+        </div>
 
-            @if (!s.Lines.Any())
-            {
-                <p class="text-muted">Bu cari için hareket yok.</p>
-            }
-            else
-            {
-                <table class="table table-sm table-striped table-bordered">
-                    <thead class="table-light">
-                        <tr>
-                            <th style="width:110px;">Tarih</th>
-                            <th style="width:130px;">Kaynak</th>
-                            <th>Açıklama</th>
-                            <th class="text-end" style="width:110px;">Borç</th>
-                            <th class="text-end" style="width:110px;">Alacak</th>
-                            <th class="text-end" style="width:120px;">Bakiye</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                    @foreach (var l in s.Lines)
-                    {
-                        <tr>
-                            <td>@l.EntryDate.ToString("dd.MM.yyyy")</td>
-                            <td>@SourceText(l.Source)</td>
-                            <td>@(l.Description ?? "-")</td>
-                            <td class="text-end">@(l.Debit > 0 ? l.Debit.ToString("N2") : "")</td>
-                            <td class="text-end">@(l.Credit > 0 ? l.Credit.ToString("N2") : "")</td>
-                            <td class="text-end fw-bold @(l.RunningBalance < 0 ? "text-success" : l.RunningBalance > 0 ? "text-danger" : "")">
-                                @l.RunningBalance.ToString("N2")
-                            </td>
-                        </tr>
-                    }
-                    </tbody>
-                    <tfoot>
-                        <tr class="fw-bold table-secondary">
-                            <td colspan="3" class="text-end">TOPLAM</td>
-                            <td class="text-end">@s.TotalDebit.ToString("N2")</td>
-                            <td class="text-end">@s.TotalCredit.ToString("N2")</td>
-                            <td class="text-end">@s.Balance.ToString("N2")</td>
-                        </tr>
-                    </tfoot>
-                </table>
-            }
-        }
-    </abp-card-body>
-</abp-card>
+        <div class="card">
+            <div class="card-body p-0">
+                @if (!s.Lines.Any())
+                {
+                    <partial name="_EmptyState" model='new EmptyStateModel {
+                        Icon = "fa-receipt",
+                        Title = "Bu cari için hareket yok.",
+                        Description = "Seçtiğiniz tarih aralığında fatura veya tahsilat bulunmuyor."
+                    }' />
+                }
+                else
+                {
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Tarih</th>
+                                    <th>Belge No</th>
+                                    <th>Tür</th>
+                                    <th>Açıklama</th>
+                                    <th class="text-end">Borç</th>
+                                    <th class="text-end">Alacak</th>
+                                    <th class="text-end">Yürüyen Bakiye</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            @foreach (var l in s.Lines)
+                            {
+                                <tr>
+                                    <td class="text-nowrap">@l.EntryDate.ToString("dd.MM.yyyy")</td>
+                                    <td class="apya-numeric">@(l.DocumentNumber ?? "—")</td>
+                                    <td><span class="apya-chip apya-chip-@ChipTone(l.Source)">@ChipLabel(l.Source)</span></td>
+                                    <td>@(l.Description ?? "-")</td>
+                                    <td class="text-end apya-numeric">@FormatAmount(l.Debit, l.Currency)</td>
+                                    <td class="text-end apya-numeric">@FormatAmount(l.Credit, l.Currency)</td>
+                                    <td class="text-end apya-numeric fw-bold">@l.RunningBalance.ToString("N2")</td>
+                                </tr>
+                            }
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="px-3 py-3 text-muted small border-top">
+                        @s.Lines.Count hareket · @s.CustomerName
+                    </div>
+                }
+            </div>
+        </div>
+    }
+</div>

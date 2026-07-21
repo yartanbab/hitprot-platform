@@ -50,7 +50,7 @@
                     </div>
                     <small class="text-muted">Min Puan: @grant.MinMatchScore | Max Destek: @grant.MaxAmount.ToString("N0") TL</small>
                 </div>
-                <span class="badge bg-success rounded-pill"><i class="fa fa-check"></i> Uygun</span>
+                <span class="apya-chip apya-chip-positive"><i class="fa fa-check"></i> Uygun</span>
             </div>
                     }
         </div>
@@ -84,16 +84,19 @@
 }
 
 <style>
+    /* Token'a bağlandı — sabit beyaz/siyah, P0'ın .modal .form-control dark
+       köprüsünü (apya-theme-bridge.css) eziyordu (sonradan yüklenen local
+       <style>, aynı !important özgüllüğüyle kazanıyordu). */
     .modal-body label {
-        color: #333 !important;
+        color: var(--apya-text-primary) !important;
         font-weight: 600;
         font-size: 0.9rem;
     }
 
     .modal-body input, .modal-body select {
-        background-color: #fff !important;
-        color: #000 !important;
-        border: 1px solid #ced4da !important;
+        background-color: var(--apya-surface-base) !important;
+        color: var(--apya-text-primary) !important;
+        border: 1px solid var(--apya-border-default) !important;
     }
 </style>
 
@@ -146,7 +149,7 @@
                     <label class="form-label text-primary mb-1">Yapay Zeka (1-10)</label>
                     <div class="d-flex align-items-center">
                         <input type="range" id="inp-ai" class="form-range flex-grow-1 me-2" min="1" max="10" value="1" oninput="this.nextElementSibling.value = this.value">
-                        <span class="badge bg-primary">1</span>
+                        <span class="apya-chip apya-chip-brand">1</span>
                     </div>
                 </div>
 
@@ -154,7 +157,7 @@
                     <label class="form-label text-primary mb-1">Teknik Yetkinlik (1-10)</label>
                     <div class="d-flex align-items-center">
                         <input type="range" id="inp-tech" class="form-range flex-grow-1 me-2" min="1" max="10" value="5" oninput="this.nextElementSibling.value = this.value">
-                        <span class="badge bg-primary">5</span>
+                        <span class="apya-chip apya-chip-brand">5</span>
                     </div>
                 </div>
             </div>
