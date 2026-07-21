@@ -9,12 +9,7 @@
 @model IndexModel
 
 
-@* ─── Başlık satırı — AiCenter/Workflows/Index.cshtml ile aynı yerleşik desen. ─── *@
 <div class="apya-page">
-<div class="mb-3">
-    <h1 class="h5 mb-1"><i class="fa fa-list-check me-2"></i>Görevler</h1>
-    <p class="text-muted mb-0" style="font-size:12px">Tüm projelerdeki görevler · tablo görünümü</p>
-</div>
 
 @* ─── Gelişmiş Filtreleme Paneli ─── *@
 <div class="accordion mb-3" id="taskFiltersAccordion">
@@ -85,15 +80,22 @@
 @* ─── Görev Yönetimi ─── *@
 <abp-card>
     <abp-card-header class="border-bottom-0 pb-0">
-        <abp-row>
-            <abp-column size-md="_6">
-                <abp-card-title>@L["Tasks:BoardTitle"]</abp-card-title>
-            </abp-column>
-            <abp-column size-md="_6" class="text-end">
-                <select id="tasks-project" class="form-select form-select-sm d-inline-block w-auto me-2 align-middle" title="Proje seçince kanban o projeye scope'lanır (özel kolonlar + Kolon Ekle); liste/gantt da filtrelenir">
+        <div class="d-flex flex-wrap align-items-center justify-content-between gap-2">
+            <abp-card-title>@L["Tasks:BoardTitle"]</abp-card-title>
+            @* "Ara" kutusu DataTables tarafından #view-list içine üretilir; index.js
+               burada açılan #tasks-search-slot'a taşıyıp ortalar. flex-grow-1 ile başlık ve
+               araç çubuğu arasındaki boşluğu doldurup içeriğini ortalar; taşıdığı .dt-search
+               input'una sabit genişlik veriyoruz (bkz. altta <style>) — yoksa Bootstrap'ın
+               .form-control{width:100%} kuralı slot'u satırın tamamına büyütüp araç çubuğunu
+               alt satıra itiyordu. Proje adı uzun olup dropdown genişleyince (ör. "2026 Ramazan
+               Umresi 1.Grup") satıra sığmayabilir; bu durumda flex-wrap ile aşağı sarar —
+               üst üste binme yerine temiz bir ikinci satır tercih edildi. *@
+            <div id="tasks-search-slot" class="flex-grow-1 d-flex justify-content-center"></div>
+            <div class="d-flex align-items-center flex-wrap gap-2">
+                <select id="tasks-project" class="form-select form-select-sm w-auto" style="min-width:170px" title="Proje seçince kanban o projeye scope'lanır (özel kolonlar + Kolon Ekle); liste/gantt da filtrelenir">
                     <option value="">Tüm Projeler (Genel)</option>
                 </select>
-                <div class="btn-group me-2" role="group">
+                <div class="btn-group" role="group">
                     <button type="button" id="btn-view-list" class="btn btn-outline-primary active">
                         <i class="fa fa-list me-1"></i> @L["Tasks:View:List"]
                     </button>
@@ -113,11 +115,10 @@
                                 text="@L["Tasks:NewButton"].Value"
                                 icon="plus"
                                 button-type="Primary"
-                                size="Small"
-                                class="ms-1" />
+                                size="Small" />
                 }
-            </abp-column>
-        </abp-row>
+            </div>
+        </div>
     </abp-card-header>
     <abp-card-body>
         @* --- LİSTE GÖRÜNÜMÜ --- *@
@@ -180,6 +181,12 @@
     /* Kanban kart/kolon tasarımı artık /css/kanban.css'ten gelir (tek kaynak).
        Burada yalnızca timer + deadline animasyonları kalır. */
     .timer-active { border-left-color: var(--apya-negative-500) !important; background-color: var(--apya-negative-50) !important; box-shadow: 0 0 10px rgba(220, 53, 69, 0.2) !important; }
+
+    /* Görev Panosu başlığındaki "Ara" kutusu (index.js taşır) — sabit genişlik,
+       yoksa Bootstrap'ın .form-control{width:100%} kuralı #tasks-search-slot'u
+       (flex-grow-1) satırın tamamına büyütüp araç çubuğunu alt satıra iterdi. */
+    #tasks-search-slot .dt-search { display: flex; align-items: center; gap: .375rem; margin: 0; }
+    #tasks-search-slot .dt-search input.form-control { width: 180px; }
     .fa-beat { animation: fa-beat 1.5s infinite linear; }
     @@keyframes fa-beat {
         0% { transform: scale(1); }

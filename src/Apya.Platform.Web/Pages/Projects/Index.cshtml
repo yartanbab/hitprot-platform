@@ -18,7 +18,10 @@
         <p class="text-muted mb-0" style="font-size:12px">Aktif projeler · bütçe ve ilerleme sağlığı</p>
     </div>
 
-    <div class="row g-3 mb-3">
+    @* Kompakt KPI şeridi — proje kartları asıl görsel ağırlık olsun diye bu sayfaya
+       özel küçültülmüş rozet stili (bkz. apya-shell.css .apya-kpi-row-compact);
+       paylaşılan _KpiCard/.kpi-icon-box varsayılanı diğer sayfalarda aynen kalır. *@
+    <div class="row g-3 mb-3 apya-kpi-row-compact">
         <div class="col-6 col-md-4">
             <partial name="_KpiCard" model='new Apya.Platform.Web.Pages.Shared.KpiCardModel { Icon = "fa-rocket", Accent = "primary", Label = "Aktif Proje", ValueId = "KpiActiveProjects", Value = "—" }' />
         </div>

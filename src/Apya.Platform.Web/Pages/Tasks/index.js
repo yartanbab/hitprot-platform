@@ -101,6 +101,11 @@ $(function () {
         ]
     }));
 
+    // --- "Ara" kutusunu DataTables'ın ürettiği yerden kart başlığındaki ortak
+    // slot'a taşı (kendi satırını kaplamasın, Görev Panosu satırında ortalansın).
+    // DataTables 2.x .dt-search kullanıyor (eski .dataTables_filter değil). ---
+    $('#TasksTable_wrapper .dt-search').addClass('mb-0').appendTo('#tasks-search-slot');
+
     // --- Kanban (ortak çekirdek: /js/apya-kanban.js) ---
     // Görevler sayfası çapraz-proje (global) → sistem kolonları + proje adı + timer.
     var kb = apya.kanban.create({
@@ -181,6 +186,7 @@ $(function () {
     function switchView(mode) {
         $('.view-panel').addClass('d-none');
         $('.btn-group .btn').removeClass('active');
+        $('#tasks-search-slot').toggleClass('d-none', mode !== 'list');
 
         if (mode === 'list') {
             $('#view-list').removeClass('d-none');
