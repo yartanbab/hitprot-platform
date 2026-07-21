@@ -1,5 +1,7 @@
+using Apya.Platform.Features;
 using Apya.Platform.Localization;
 using Volo.Abp.Authorization.Permissions;
+using Volo.Abp.Features;
 using Volo.Abp.Localization;
 
 namespace Apya.Platform.Permissions;
@@ -34,6 +36,7 @@ public class PlatformPermissionDefinitionProvider : PermissionDefinitionProvider
         var grantsGroup = context.AddGroup(PlatformPermissions.Groups.Grants, L("Permission:Group:Grants"));
 
         var grantsPermission = grantsGroup.AddPermission(PlatformPermissions.Grants.Default, L("Permission:Grants"));
+        grantsPermission.RequireFeatures(PlatformFeatures.Grants);
         grantsPermission.AddChild(PlatformPermissions.Grants.Create, L("Permission:Grants.Create"));
         grantsPermission.AddChild(PlatformPermissions.Grants.Edit,   L("Permission:Grants.Edit"));
         grantsPermission.AddChild(PlatformPermissions.Grants.Delete, L("Permission:Grants.Delete"));
@@ -44,31 +47,40 @@ public class PlatformPermissionDefinitionProvider : PermissionDefinitionProvider
         var financeGroup = context.AddGroup(PlatformPermissions.Groups.Finance, L("Permission:Group:Finance"));
 
         var incomesPermission = financeGroup.AddPermission(PlatformPermissions.Incomes.Default, L("Permission:Incomes"));
+        incomesPermission.RequireFeatures(PlatformFeatures.Finance);
         incomesPermission.AddChild(PlatformPermissions.Incomes.Create, L("Permission:Incomes.Create"));
         incomesPermission.AddChild(PlatformPermissions.Incomes.Edit, L("Permission:Incomes.Edit"));
         incomesPermission.AddChild(PlatformPermissions.Incomes.Delete, L("Permission:Incomes.Delete"));
 
         var expensesPermission = financeGroup.AddPermission(PlatformPermissions.Expenses.Default, L("Permission:Expenses"));
+        expensesPermission.RequireFeatures(PlatformFeatures.Finance);
         expensesPermission.AddChild(PlatformPermissions.Expenses.Create, L("Permission:Expenses.Create"));
         expensesPermission.AddChild(PlatformPermissions.Expenses.Edit, L("Permission:Expenses.Edit"));
         expensesPermission.AddChild(PlatformPermissions.Expenses.Delete, L("Permission:Expenses.Delete"));
 
         var invoicesPermission = financeGroup.AddPermission(PlatformPermissions.Invoices.Default, L("Permission:Invoices"));
+        invoicesPermission.RequireFeatures(PlatformFeatures.Finance);
         invoicesPermission.AddChild(PlatformPermissions.Invoices.Create, L("Permission:Invoices.Create"));
         invoicesPermission.AddChild(PlatformPermissions.Invoices.Edit, L("Permission:Invoices.Edit"));
         invoicesPermission.AddChild(PlatformPermissions.Invoices.Delete, L("Permission:Invoices.Delete"));
 
         var exchangeRatesPermission = financeGroup.AddPermission(PlatformPermissions.ExchangeRates.Default, L("Permission:ExchangeRates"));
+        exchangeRatesPermission.RequireFeatures(PlatformFeatures.Finance);
         exchangeRatesPermission.AddChild(PlatformPermissions.ExchangeRates.Create, L("Permission:ExchangeRates.Create"));
         exchangeRatesPermission.AddChild(PlatformPermissions.ExchangeRates.Edit, L("Permission:ExchangeRates.Edit"));
         exchangeRatesPermission.AddChild(PlatformPermissions.ExchangeRates.Delete, L("Permission:ExchangeRates.Delete"));
 
+        // FX değerleme: gelişmiş finansal rapor → AdvancedReports (menüyle hizalı).
         var fxRevaluationPermission = financeGroup.AddPermission(PlatformPermissions.FxRevaluations.Default, L("Permission:FxRevaluations"));
+        fxRevaluationPermission.RequireFeatures(PlatformFeatures.AdvancedReports);
         fxRevaluationPermission.AddChild(PlatformPermissions.FxRevaluations.Run, L("Permission:FxRevaluations.Run"));
         fxRevaluationPermission.AddChild(PlatformPermissions.FxRevaluations.Delete, L("Permission:FxRevaluations.Delete"));
 
         var reportsPermission = financeGroup.AddPermission(PlatformPermissions.Reports.Default, L("Permission:Reports"));
-        reportsPermission.AddChild(PlatformPermissions.Reports.TrialBalance, L("Permission:Reports.TrialBalance"));
+        reportsPermission.RequireFeatures(PlatformFeatures.Finance);
+        // Mizan: gelişmiş rapor → AdvancedReports (menüyle hizalı).
+        reportsPermission.AddChild(PlatformPermissions.Reports.TrialBalance, L("Permission:Reports.TrialBalance"))
+            .RequireFeatures(PlatformFeatures.AdvancedReports);
 
         // ============================================================
         // CARİ & KASA
@@ -76,16 +88,19 @@ public class PlatformPermissionDefinitionProvider : PermissionDefinitionProvider
         var accountingGroup = context.AddGroup(PlatformPermissions.Groups.Accounting, L("Permission:Group:Accounting"));
 
         var customersPermission = accountingGroup.AddPermission(PlatformPermissions.Customers.Default, L("Permission:Customers"));
+        customersPermission.RequireFeatures(PlatformFeatures.Finance);
         customersPermission.AddChild(PlatformPermissions.Customers.Create, L("Permission:Customers.Create"));
         customersPermission.AddChild(PlatformPermissions.Customers.Edit, L("Permission:Customers.Edit"));
         customersPermission.AddChild(PlatformPermissions.Customers.Delete, L("Permission:Customers.Delete"));
 
         var cashAccountsPermission = accountingGroup.AddPermission(PlatformPermissions.CashAccounts.Default, L("Permission:CashAccounts"));
+        cashAccountsPermission.RequireFeatures(PlatformFeatures.Finance);
         cashAccountsPermission.AddChild(PlatformPermissions.CashAccounts.Create, L("Permission:CashAccounts.Create"));
         cashAccountsPermission.AddChild(PlatformPermissions.CashAccounts.Edit, L("Permission:CashAccounts.Edit"));
         cashAccountsPermission.AddChild(PlatformPermissions.CashAccounts.Delete, L("Permission:CashAccounts.Delete"));
 
         var cashMovementsPermission = accountingGroup.AddPermission(PlatformPermissions.CashMovements.Default, L("Permission:CashMovements"));
+        cashMovementsPermission.RequireFeatures(PlatformFeatures.Finance);
         cashMovementsPermission.AddChild(PlatformPermissions.CashMovements.Create, L("Permission:CashMovements.Create"));
         cashMovementsPermission.AddChild(PlatformPermissions.CashMovements.Edit, L("Permission:CashMovements.Edit"));
         cashMovementsPermission.AddChild(PlatformPermissions.CashMovements.Delete, L("Permission:CashMovements.Delete"));
@@ -96,11 +111,13 @@ public class PlatformPermissionDefinitionProvider : PermissionDefinitionProvider
         var contentGroup = context.AddGroup(PlatformPermissions.Groups.Content, L("Permission:Group:Content"));
 
         var docsPermission = contentGroup.AddPermission(PlatformPermissions.Documents.Default, L("Permission:Documents"));
+        docsPermission.RequireFeatures(PlatformFeatures.Documents);
         docsPermission.AddChild(PlatformPermissions.Documents.Create, L("Permission:Documents.Create"));
         docsPermission.AddChild(PlatformPermissions.Documents.Edit, L("Permission:Documents.Edit"));
         docsPermission.AddChild(PlatformPermissions.Documents.Delete, L("Permission:Documents.Delete"));
 
         var dynamicAssetsPermission = contentGroup.AddPermission(PlatformPermissions.DynamicAssets.Default, L("Permission:DynamicAssets"));
+        dynamicAssetsPermission.RequireFeatures(PlatformFeatures.Forms);
         dynamicAssetsPermission.AddChild(PlatformPermissions.DynamicAssets.Create, L("Permission:DynamicAssets.Create"));
         dynamicAssetsPermission.AddChild(PlatformPermissions.DynamicAssets.Edit, L("Permission:DynamicAssets.Edit"));
         dynamicAssetsPermission.AddChild(PlatformPermissions.DynamicAssets.Delete, L("Permission:DynamicAssets.Delete"));
@@ -119,6 +136,7 @@ public class PlatformPermissionDefinitionProvider : PermissionDefinitionProvider
         notificationsPermission.AddChild(PlatformPermissions.Notifications.Delete, L("Permission:Notifications.Delete"));
 
         var calendarsPermission = systemGroup.AddPermission(PlatformPermissions.Calendars.Default, L("Permission:Calendars"));
+        calendarsPermission.RequireFeatures(PlatformFeatures.Calendar);
         calendarsPermission.AddChild(PlatformPermissions.Calendars.Connect, L("Permission:Calendars.Connect"));
 
         var tenantSettingsPermission = systemGroup.AddPermission(PlatformPermissions.TenantSettings.Default, L("Permission:TenantSettings"));

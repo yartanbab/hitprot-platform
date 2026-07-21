@@ -7,6 +7,7 @@ public class TenantProfileDto : FullAuditedEntityDto<Guid>
 {
     public Guid TenantId { get; set; }
     public string TenantName { get; set; } = string.Empty;
+    public PackageCode PackageCode { get; set; } = PackageCode.Basic;
     public CompanyType CompanyType { get; set; }
     public string TaxNumber { get; set; } = string.Empty;
     public string TaxOffice { get; set; } = string.Empty;

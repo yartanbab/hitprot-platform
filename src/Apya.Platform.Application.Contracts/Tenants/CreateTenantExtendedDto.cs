@@ -17,6 +17,9 @@ public class CreateTenantExtendedDto
     [StringLength(128)]
     public string AdminPassword { get; set; } = string.Empty;
 
+    /// <summary>Tenant'a atanacak satış paketi (Basic/Standard/Premium/Enterprise).</summary>
+    public PackageCode PackageCode { get; set; } = PackageCode.Basic;
+
     public CompanyType CompanyType { get; set; } = CompanyType.Company;
 
     [StringLength(50)]

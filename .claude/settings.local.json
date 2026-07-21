@@ -10,7 +10,14 @@
       "PowerShell(gh --version)",
       "Bash(git push *)",
       "Bash(dotnet ef *)",
-      "Bash(git commit -m ' *)"
+      "Bash(git commit -m ' *)",
+      "PowerShell(& curl.exe -k -s -o NUL -w \"HTTP %{http_code}`n\" https://localhost:44386/Account/Login)",
+      "PowerShell(Get-Process -Name \"Apya.Platform.Web\" -ErrorAction SilentlyContinue)",
+      "PowerShell(Stop-Process -Force -ErrorAction SilentlyContinue)",
+      "PowerShell(Get-NetTCPConnection -LocalPort 5000,44386 -State Listen -ErrorAction SilentlyContinue)",
+      "PowerShell(Get-NetTCPConnection -LocalPort 5000 -State Listen -ErrorAction SilentlyContinue)",
+      "PowerShell(Get-NetTCPConnection -LocalPort 44386 -State Listen -ErrorAction SilentlyContinue)",
+      "Bash(git fetch *)"
     ]
   }
 }

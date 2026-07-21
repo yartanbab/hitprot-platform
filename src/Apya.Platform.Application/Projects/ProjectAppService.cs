@@ -4,9 +4,12 @@ using System.Linq;
 using System.Linq.Dynamic.Core;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
+using Volo.Abp;
 using Volo.Abp.Application.Dtos;
 using Volo.Abp.Application.Services;
 using Volo.Abp.Domain.Repositories;
+using Volo.Abp.Features;
+using Apya.Platform.Features;
 using Apya.Platform.Projects;
 using Apya.Platform.Projects.Dtos;
 using Apya.Platform.Grants;
@@ -38,6 +41,7 @@ public class ProjectAppService :
     private readonly IRepository<Customer, Guid> _customerRepository;
     private readonly ITenantStore _tenantStore;
     private readonly IRepository<Volo.Abp.TenantManagement.Tenant, Guid> _tenantRepository;
+    private readonly IFeatureChecker _featureChecker;
 
     public ProjectAppService(
         IRepository<Project, Guid> repository,
@@ -48,7 +52,8 @@ public class ProjectAppService :
         IRepository<TaskTimeLog, Guid> timeLogRepository,
         IRepository<Customer, Guid> customerRepository,
         ITenantStore tenantStore,
-        IRepository<Volo.Abp.TenantManagement.Tenant, Guid> tenantRepository)
+        IRepository<Volo.Abp.TenantManagement.Tenant, Guid> tenantRepository,
+        IFeatureChecker featureChecker)
         : base(repository)
     {
         _projectManager = projectManager;
@@ -59,11 +64,23 @@ public class ProjectAppService :
         _customerRepository = customerRepository;
         _tenantStore = tenantStore;
         _tenantRepository = tenantRepository;
+        _featureChecker = featureChecker;
     }
 
     // --- CREATE ---
     public override async Task<ProjectDto> CreateAsync(CreateProjectDto input)
     {
+        // Paket kotası: tenant'ın MaxProjects limitini aşması engellenir (host'a uygulanmaz).
+        if (CurrentTenant.Id.HasValue)
+        {
+            var maxProjects = await _featureChecker.GetAsync<int>(PlatformFeatures.MaxProjects);
+            var currentCount = await Repository.GetCountAsync();
+            if (currentCount >= maxProjects)
+            {
+                throw new BusinessException("Platform:Error:MaxProjectsReached").WithData("Max", maxProjects);
+            }
+        }
+
         var overrideTenantId = CurrentTenant.Id == null ? input.TenantId : null;
 
         var project = await _projectManager.CreateAsync(

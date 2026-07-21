@@ -13,14 +13,15 @@ namespace Apya.Platform.Web.Pages.Incomes;
 /// <summary>APYA-142d: Gelir modal'larının ortak dropdown yardımcısı.</summary>
 public static class IncomeLookups
 {
-    public static async Task<(List<SelectListItem> accounts, List<SelectListItem> projects, List<SelectListItem> customers, List<SelectListItem> categories)>
+    public static async Task<(List<SelectListItem> accounts, List<SelectListItem> projects, List<SelectListItem> customers, List<SelectListItem> categories, string projectDatesJson)>
         LoadAsync(ICashAccountAppService cashSvc, IProjectAppService projectSvc, ICustomerAppService customerSvc)
     {
         var accounts = (await cashSvc.GetListAsync(new GetCashAccountsInput { MaxResultCount = 1000, IsActive = true }))
             .Items.Select(a => new SelectListItem($"{a.Name} ({a.Currency})", a.Id.ToString())).ToList();
 
-        var projects = (await projectSvc.GetListAsync(new PagedAndSortedResultRequestDto { MaxResultCount = 1000 }))
-            .Items.Select(p => new SelectListItem(p.Name, p.Id.ToString())).ToList();
+        var projectItems = (await projectSvc.GetListAsync(new PagedAndSortedResultRequestDto { MaxResultCount = 1000 })).Items;
+        var projects = projectItems.Select(p => new SelectListItem(p.Name, p.Id.ToString())).ToList();
+        var projectDatesJson = FinanceLookupShared.BuildProjectDatesJson(projectItems);
 
         var customers = (await customerSvc.GetListAsync(new GetCustomersInput { MaxResultCount = 1000, IsActive = true }))
             .Items.Select(c => new SelectListItem(c.Name, c.Id.ToString())).ToList();
@@ -34,6 +35,6 @@ public static class IncomeLookups
             new("Faiz / Finansal", ((int)IncomeCategory.Financial).ToString())
         };
 
-        return (accounts, projects, customers, categories);
+        return (accounts, projects, customers, categories, projectDatesJson);
     }
 }

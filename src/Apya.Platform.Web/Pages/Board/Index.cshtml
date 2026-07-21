@@ -18,9 +18,9 @@
 @* Kanban full-bleed çalışır (DESIGN-SYSTEM §10: board wrapper/kart kullanmaz) —
    üstte hafif araç çubuğu, altında merkezi kanban markup'ı. *@
 <div class="d-flex flex-wrap align-items-center justify-content-end gap-2 mb-2">
-    <select id="board-project" class="form-select form-select-sm w-auto" title="Proje seçince o projenin kolonları + Kolon Ekle gelir">
-        <option value="">Tüm Projeler (Genel)</option>
-    </select>
+    @* "Tüm Projeler (Genel)" birleşik görünüm kaldırıldı (kullanıcı kararı 2026-06-22);
+       index.js'te doldurulur ve ilk proje otomatik seçilir → board doğrudan bir projeye scope'lu açılır. *@
+    <select id="board-project" class="form-select form-select-sm w-auto" title="Proje seçince o projenin kolonları + Kolon Ekle gelir"></select>
     <button id="btn-refresh-board" class="btn btn-outline-secondary btn-sm"><i class="fa fa-sync"></i> Yenile</button>
     @if (await AuthorizationService.IsGrantedAsync(PlatformPermissions.Tasks.Create))
     {

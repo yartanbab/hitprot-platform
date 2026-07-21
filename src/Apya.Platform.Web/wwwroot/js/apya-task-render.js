@@ -52,14 +52,17 @@
     }
 
     // status: TaskStatus enum (Done=4, Cancelled=0) — bu ikisinde aciliyet vurgusu yapılmaz.
-    function dueDateChip(dueDate, status) {
+    // Done ise BİTİŞ = gerçek tamamlanma günü (completedDate); eski kayıtlarda
+    // completedDate yoksa deadline'a düş.
+    function dueDateChip(dueDate, status, completedDate) {
+        if (status === 4) {
+            var doneDate = completedDate || dueDate;
+            if (!doneDate) return '<span class="text-muted small">—</span>';
+            return '<span class="text-muted small"><i class="fa fa-check-circle me-1"></i>' + moment(doneDate).format('DD MMM YYYY') + '</span>';
+        }
         if (!dueDate) return '<span class="text-muted small">—</span>';
-        var isDone = status === 4;
         var fmt = moment(dueDate).format('DD MMM YYYY');
 
-        if (isDone) {
-            return '<span class="text-muted small"><i class="fa fa-check-circle me-1"></i>' + fmt + '</span>';
-        }
         if (status === 0) {
             return '<span class="text-muted small">' + fmt + '</span>';
         }
