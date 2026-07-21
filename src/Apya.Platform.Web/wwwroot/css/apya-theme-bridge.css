@@ -578,17 +578,17 @@ html, body {
         transition: box-shadow 0.25s;
     }
     html[data-sidebar="collapsed"] .lpx-sidebar-container:not(:hover) {
-        min-width: 72px;
-        max-width: 72px;
+        min-width: var(--apya-sidebar-w-collapsed);
+        max-width: var(--apya-sidebar-w-collapsed);
         /* Dikey scrollbar (16px) client genişliğini 56'ya düşürüp nav'ı -8px
            kaydırıyordu → rail'de scroll gizli; hover'da genişleyince geri gelir. */
         overflow-y: hidden;
     }
     html[data-sidebar="collapsed"] .lpx-sidebar-container:not(:hover) .lpx-nav {
-        min-width: 72px;
+        min-width: var(--apya-sidebar-w-collapsed);
     }
     html[data-sidebar="collapsed"] .lpx-sidebar-container:not(:hover) .lpx-logo-container {
-        width: 72px;
+        width: var(--apya-sidebar-w-collapsed);
     }
     html[data-sidebar="collapsed"] .lpx-sidebar-container:not(:hover) .lpx-brand-logo {
         background-image: var(--lpx-logo-icon);
@@ -601,10 +601,10 @@ html, body {
         box-shadow: var(--apya-shadow-lg);
     }
     html[data-sidebar="collapsed"] .lpx-content-container {
-        margin-left: 72px;
+        margin-left: var(--apya-sidebar-w-collapsed);
     }
     html[data-sidebar="collapsed"] .lpx-footbar-container {
-        left: 72px;
+        left: var(--apya-sidebar-w-collapsed);
     }
 
     /* Rail kozmetiği: yaprak ikon ortalanır (22px sol padding rail'de taşırıyor;
@@ -688,7 +688,7 @@ html[data-sidebar="collapsed"] #lpx-sidebar .menu-collapse-icon::before {
 
 /* --- Header topbar: 57px + token zemin + alt kenarlık (her iki tema) --- */
 .lpx-topbar {
-    min-height: 57px;
+    min-height: var(--apya-header-h);
     background: var(--apya-surface-header) !important;
     border-bottom: 1px solid var(--apya-border-default) !important;
 }
@@ -723,6 +723,7 @@ html[data-sidebar="collapsed"] #lpx-sidebar .menu-collapse-icon::before {
 .lpx-topbar-content > .apya-command-palette-trigger { order: 10; }
 .lpx-topbar-content > .lpx-language-selection { order: 90; }
 .lpx-topbar-content > .apya-theme-toggle { order: 91; }
+.lpx-topbar-content > .apya-density-toggle { order: 92; }
 .lpx-topbar-content > #notification-bell-container { order: 95; }
 .lpx-topbar-content > .dropdown:has(> .lpx-user-profile) { order: 100; }
 
