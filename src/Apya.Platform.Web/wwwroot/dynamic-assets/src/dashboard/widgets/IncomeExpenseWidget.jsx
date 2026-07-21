@@ -3,6 +3,7 @@ import { WidgetShell } from './WidgetShell';
 import { SkeletonChart } from '../../components/ui';
 import { formatMoneyCompact } from '../../lib/utils';
 import { useIncomeExpense } from '../hooks/useIncomeExpense';
+import { t } from '../../lib/i18n';
 
 /**
  * IncomeExpenseWidget — prototip "Gelir/Gider (grouped bar)" (HANDOFF
@@ -19,8 +20,8 @@ function IncomeExpenseWidget() {
 
     return (
         <WidgetShell
-            title="Gelir / Gider"
-            subtitle="Son 6 ay"
+            title={t('Widget:IncomeExpense:Title', 'Gelir / Gider')}
+            subtitle={t('Widget:IncomeExpense:Subtitle', 'Son 6 ay')}
             isLoading={isLoading}
             isError={isError}
             isFetching={isFetching}
@@ -35,7 +36,7 @@ function IncomeExpenseWidget() {
                         {net != null && (
                             <span className="text-lg font-semibold tracking-tight font-tabular">
                                 {formatMoneyCompact(net, data.currency)}
-                                <span className="text-xs font-normal text-text-tertiary ml-1">net</span>
+                                <span className="text-xs font-normal text-text-tertiary ml-1">{t('Common:Net', 'net')}</span>
                             </span>
                         )}
                         <Legend />
@@ -59,11 +60,11 @@ function Legend() {
         <div className="flex items-center gap-3 text-[11px] text-text-secondary flex-none">
             <span className="inline-flex items-center gap-1">
                 <span className="inline-block w-2 h-2 rounded-full" style={{ background: 'var(--apya-positive-500)' }} aria-hidden="true" />
-                Gelir
+                {t('Common:Income', 'Gelir')}
             </span>
             <span className="inline-flex items-center gap-1">
                 <span className="inline-block w-2 h-2 rounded-full" style={{ background: 'var(--apya-negative-500)' }} aria-hidden="true" />
-                Gider
+                {t('Common:Expense', 'Gider')}
             </span>
         </div>
     );

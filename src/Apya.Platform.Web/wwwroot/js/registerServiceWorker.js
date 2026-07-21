@@ -1,57 +1,57 @@
 import { r as f, j as i, d as p } from "./react-vendor.js";
-import { Q as V, c as ee } from "./query-vendor.js";
-import { A as te } from "./httpClient.js";
-import { t as re, c as se, a as D, S as ne, D as ae, b as ie, d as oe, e as le, f as de, g as ce, h as ue, i as fe } from "./ui-vendor.js";
-const _ = "apya-theme", j = "system", L = f.createContext({
-  preference: j,
+import { Q as te, c as re } from "./query-vendor.js";
+import { A as ne } from "./httpClient.js";
+import { t as se, c as ae, a as R, S as ie, D as oe, b as le, d as de, e as ce, f as ue, g as fe, h as me, i as be } from "./ui-vendor.js";
+const Y = "apya-theme", N = "system", W = f.createContext({
+  preference: N,
   resolvedTheme: "light",
   setPreference: () => {
   },
   toggle: () => {
   }
 });
-function me() {
-  if (typeof window > "u") return j;
+function xe() {
+  if (typeof window > "u") return N;
   try {
-    const e = window.localStorage.getItem(_);
+    const e = window.localStorage.getItem(Y);
     if (e === "light" || e === "dark" || e === "system")
       return e;
   } catch {
   }
-  return j;
+  return N;
 }
-function Y() {
+function H() {
   return typeof window > "u" || !window.matchMedia ? !1 : window.matchMedia("(prefers-color-scheme: dark)").matches;
 }
-function S(e) {
-  return e === "dark" ? "dark" : e === "light" ? "light" : Y() ? "dark" : "light";
+function F(e) {
+  return e === "dark" ? "dark" : e === "light" ? "light" : H() ? "dark" : "light";
 }
-function E(e) {
+function D(e) {
   if (typeof document > "u") return;
   const t = document.documentElement;
   t.setAttribute("data-theme", e), e === "dark" ? t.classList.add("dark") : t.classList.remove("dark"), t.classList.remove("lpx-theme-light", "lpx-theme-dark", "lpx-theme-dim"), t.classList.add(e === "dark" ? "lpx-theme-dark" : "lpx-theme-light");
 }
-function ze({ children: e, defaultPreference: t = j }) {
-  const [r, n] = f.useState(() => me() ?? t), [a, s] = f.useState(() => S(r)), d = f.useCallback((c) => {
+function We({ children: e, defaultPreference: t = N }) {
+  const [r, n] = f.useState(() => xe() ?? t), [a, s] = f.useState(() => F(r)), d = f.useCallback((c) => {
     if (c !== "light" && c !== "dark" && c !== "system") return;
     n(c);
     try {
-      window.localStorage.setItem(_, c);
+      window.localStorage.setItem(Y, c);
     } catch {
     }
-    const m = S(c);
-    s(m), E(m);
+    const m = F(c);
+    s(m), D(m);
   }, []);
   f.useEffect(() => {
     if (r !== "system" || typeof window > "u" || !window.matchMedia)
       return;
     const c = window.matchMedia("(prefers-color-scheme: dark)"), m = () => {
-      const b = Y() ? "dark" : "light";
-      s(b), E(b);
+      const b = H() ? "dark" : "light";
+      s(b), D(b);
     };
     return c.addEventListener("change", m), () => c.removeEventListener("change", m);
   }, [r]), f.useEffect(() => {
-    E(S(r));
+    D(F(r));
   }, []);
   const o = f.useCallback(() => {
     const c = ["light", "dark", "system"], m = c.indexOf(r), b = c[(m + 1) % c.length];
@@ -60,23 +60,23 @@ function ze({ children: e, defaultPreference: t = j }) {
     () => ({ preference: r, resolvedTheme: a, setPreference: d, toggle: o }),
     [r, a, d, o]
   );
-  return /* @__PURE__ */ i.jsx(L.Provider, { value: u, children: e });
+  return /* @__PURE__ */ i.jsx(W.Provider, { value: u, children: e });
 }
-function _e() {
-  const e = f.useContext(L);
+function He() {
+  const e = f.useContext(W);
   if (!e)
     throw new Error("useTheme must be used inside a <ThemeProvider>.");
   return e;
 }
-function be() {
-  return new V({
+function pe() {
+  return new te({
     defaultOptions: {
       queries: {
         staleTime: 3e4,
         gcTime: 5 * 6e4,
         refetchOnWindowFocus: !0,
         refetchOnReconnect: !0,
-        retry: (e, t) => t instanceof te && t.status >= 400 && t.status < 500 ? !1 : e < 2
+        retry: (e, t) => t instanceof ne && t.status >= 400 && t.status < 500 ? !1 : e < 2
       },
       mutations: {
         /* Mutation default'ta retry YAPMAZ — duplicate finansal işlem riski. */
@@ -85,7 +85,7 @@ function be() {
     }
   });
 }
-const Le = {
+const Qe = {
   dashboard: {
     budget: () => ["dashboard", "budget"],
     cashflow: () => ["dashboard", "cashflow"],
@@ -97,14 +97,14 @@ const Le = {
     aiSuggestions: (e) => e ? ["dashboard", "ai-suggestions", e] : ["dashboard", "ai-suggestions"]
   }
 };
-function Ye({ children: e }) {
-  const [t] = f.useState(() => be());
-  return /* @__PURE__ */ i.jsx(ee, { client: t, children: e });
+function $e({ children: e }) {
+  const [t] = f.useState(() => pe());
+  return /* @__PURE__ */ i.jsx(re, { client: t, children: e });
 }
 function l(...e) {
-  return re(se(e));
+  return se(ae(e));
 }
-function We(e, t, r = "tr-TR") {
+function qe(e, t, r = "tr-TR") {
   return typeof e != "number" || !Number.isFinite(e) ? "—" : new Intl.NumberFormat(r, {
     style: "currency",
     currency: t,
@@ -113,7 +113,7 @@ function We(e, t, r = "tr-TR") {
     maximumFractionDigits: 2
   }).format(e);
 }
-function Qe(e, t, r = "tr-TR") {
+function Ge(e, t, r = "tr-TR") {
   return typeof e != "number" || !Number.isFinite(e) ? "—" : new Intl.NumberFormat(r, {
     style: "currency",
     currency: t,
@@ -121,7 +121,7 @@ function Qe(e, t, r = "tr-TR") {
     maximumFractionDigits: 1
   }).format(e);
 }
-function He(e, t = "tr-TR") {
+function Ke(e, t = "tr-TR") {
   if (typeof e != "number" || !Number.isFinite(e))
     return { sign: "", symbol: "•", text: "—" };
   const r = Math.abs(e), n = new Intl.NumberFormat(t, {
@@ -130,26 +130,26 @@ function He(e, t = "tr-TR") {
   }).format(r / 100);
   return e > 0 ? { sign: "+", symbol: "▲", text: n } : e < 0 ? { sign: "−", symbol: "▼", text: n } : { sign: "", symbol: "•", text: n };
 }
-const W = f.createContext(null), B = {
+const Q = f.createContext(null), z = {
   info: { ring: "border-default", icon: "text-text-secondary", accent: "bg-brand-500" },
   success: { ring: "border-positive-100", icon: "text-text-positive", accent: "bg-positive-500" },
   warning: { ring: "border-warning-100", icon: "text-text-warning", accent: "bg-warning-500" },
   error: { ring: "border-negative-100", icon: "text-text-negative", accent: "bg-negative-500" }
-}, xe = 4e3, pe = 1e4;
-let ge = 0;
-function $e({ children: e }) {
+}, ge = 4e3, he = 1e4;
+let ve = 0;
+function Je({ children: e }) {
   const [t, r] = f.useState([]), n = f.useRef(/* @__PURE__ */ new Map()), a = f.useCallback((o) => {
     const u = n.current.get(o);
     u && (clearTimeout(u), n.current.delete(o)), r((c) => c.filter((m) => m.id !== o));
   }, []), s = f.useCallback((o) => {
-    const u = ++ge, c = {
+    const u = ++ve, c = {
       id: u,
       type: o.type ?? "info",
       message: o.message ?? "",
       description: o.description,
       action: o.action,
       /* { label, onClick } */
-      duration: o.duration ?? (o.action ? pe : xe)
+      duration: o.duration ?? (o.action ? he : ge)
     };
     if (r((m) => [...m, c]), c.duration > 0) {
       const m = setTimeout(() => a(u), c.duration);
@@ -168,12 +168,12 @@ function $e({ children: e }) {
     warning: (o, u = {}) => s({ ...u, type: "warning", message: o }),
     error: (o, u = {}) => s({ ...u, type: "error", message: o })
   }), [s, a]);
-  return /* @__PURE__ */ i.jsxs(W.Provider, { value: d, children: [
+  return /* @__PURE__ */ i.jsxs(Q.Provider, { value: d, children: [
     e,
-    /* @__PURE__ */ i.jsx(he, { items: t.slice(-3), onDismiss: a })
+    /* @__PURE__ */ i.jsx(we, { items: t.slice(-3), onDismiss: a })
   ] });
 }
-function he({ items: e, onDismiss: t }) {
+function we({ items: e, onDismiss: t }) {
   return e.length === 0 ? null : /* @__PURE__ */ i.jsx(
     "div",
     {
@@ -186,12 +186,12 @@ function he({ items: e, onDismiss: t }) {
         /* viewport tıklamaları geçirir; tek tek toast'lar pointer-auto */
         "max-w-[calc(100vw-2rem)]"
       ),
-      children: e.map((r) => /* @__PURE__ */ i.jsx(ve, { item: r, onDismiss: t }, r.id))
+      children: e.map((r) => /* @__PURE__ */ i.jsx(ye, { item: r, onDismiss: t }, r.id))
     }
   );
 }
-function ve({ item: e, onDismiss: t }) {
-  const r = B[e.type] ?? B.info, n = e.type === "error" ? "assertive" : "polite", a = () => {
+function ye({ item: e, onDismiss: t }) {
+  const r = z[e.type] ?? z.info, n = e.type === "error" ? "assertive" : "polite", a = () => {
     var s, d;
     try {
       (d = (s = e.action) == null ? void 0 : s.onClick) == null || d.call(s);
@@ -251,13 +251,13 @@ function ve({ item: e, onDismiss: t }) {
     }
   );
 }
-function qe() {
-  const e = f.useContext(W);
+function Ze() {
+  const e = f.useContext(Q);
   if (!e)
     throw new Error("useToast must be used within <ToastProvider>.");
   return e;
 }
-const we = D(
+const je = R(
   /* Base — her variant için ortak */
   l(
     "inline-flex items-center justify-center gap-2",
@@ -309,7 +309,7 @@ const we = D(
       size: "md"
     }
   }
-), Ge = p.forwardRef(function({
+), Xe = p.forwardRef(function({
   className: t,
   variant: r,
   size: n,
@@ -321,28 +321,28 @@ const we = D(
   disabled: c,
   children: m,
   type: b = "button",
-  ...k
-}, N) {
-  const I = a ? ne : "button", h = c || s;
+  ...C
+}, T) {
+  const B = a ? ie : "button", h = c || s;
   return /* @__PURE__ */ i.jsxs(
-    I,
+    B,
     {
-      ref: N,
+      ref: T,
       type: a ? void 0 : b,
       disabled: a ? void 0 : h,
       "aria-busy": s || void 0,
       "data-loading": s || void 0,
-      className: l(we({ variant: r, size: n }), t),
-      ...k,
+      className: l(je({ variant: r, size: n }), t),
+      ...C,
       children: [
-        s ? /* @__PURE__ */ i.jsx(ye, {}) : o,
+        s ? /* @__PURE__ */ i.jsx(ke, {}) : o,
         /* @__PURE__ */ i.jsx("span", { className: s ? "opacity-80" : void 0, children: s && d ? d : m }),
         !s && u
       ]
     }
   );
 });
-function ye() {
+function ke() {
   return /* @__PURE__ */ i.jsx(
     "svg",
     {
@@ -358,7 +358,7 @@ function ye() {
     }
   );
 }
-const je = {
+const Ne = {
   default: "bg-surface-raised border border-subtle shadow-sm",
   elevated: "bg-surface-elevated border border-subtle shadow-md",
   flat: "bg-surface-base border border-default shadow-none",
@@ -367,11 +367,11 @@ const je = {
     "hover:shadow-md hover:border-default cursor-pointer",
     "transition-shadow duration-fast ease-standard"
   )
-}, M = {
+}, I = {
   compact: "p-3",
   comfortable: "p-4",
   spacious: "p-6"
-}, w = p.forwardRef(function({ className: t, variant: r = "default", density: n, children: a, ...s }, d) {
+}, y = p.forwardRef(function({ className: t, variant: r = "default", density: n, children: a, ...s }, d) {
   return /* @__PURE__ */ i.jsx(
     "div",
     {
@@ -380,14 +380,14 @@ const je = {
       className: l(
         "rounded-xl overflow-hidden",
         "text-text-primary",
-        je[r],
+        Ne[r],
         t
       ),
       ...s,
       children: a
     }
   );
-}), ke = p.forwardRef(function({ className: t, density: r = "comfortable", children: n, ...a }, s) {
+}), Ce = p.forwardRef(function({ className: t, density: r = "comfortable", children: n, ...a }, s) {
   return /* @__PURE__ */ i.jsx(
     "div",
     {
@@ -395,14 +395,14 @@ const je = {
       className: l(
         "flex flex-col gap-1",
         "border-b border-subtle",
-        M[r],
+        I[r],
         t
       ),
       ...a,
       children: n
     }
   );
-}), Ne = p.forwardRef(function({ className: t, as: r = "h3", children: n, ...a }, s) {
+}), Te = p.forwardRef(function({ className: t, as: r = "h3", children: n, ...a }, s) {
   return /* @__PURE__ */ i.jsx(
     r,
     {
@@ -415,7 +415,7 @@ const je = {
       children: n
     }
   );
-}), Te = p.forwardRef(function({ className: t, children: r, ...n }, a) {
+}), Se = p.forwardRef(function({ className: t, children: r, ...n }, a) {
   return /* @__PURE__ */ i.jsx(
     "p",
     {
@@ -425,17 +425,17 @@ const je = {
       children: r
     }
   );
-}), Ce = p.forwardRef(function({ className: t, density: r = "comfortable", children: n, ...a }, s) {
+}), Ee = p.forwardRef(function({ className: t, density: r = "comfortable", children: n, ...a }, s) {
   return /* @__PURE__ */ i.jsx(
     "div",
     {
       ref: s,
-      className: l(M[r], t),
+      className: l(I[r], t),
       ...a,
       children: n
     }
   );
-}), Se = p.forwardRef(function({ className: t, density: r = "comfortable", children: n, ...a }, s) {
+}), Fe = p.forwardRef(function({ className: t, density: r = "comfortable", children: n, ...a }, s) {
   return /* @__PURE__ */ i.jsx(
     "div",
     {
@@ -443,7 +443,7 @@ const je = {
       className: l(
         "flex items-center justify-end gap-2",
         "border-t border-subtle bg-surface-sunken",
-        M[r],
+        I[r],
         t
       ),
       ...a,
@@ -451,12 +451,12 @@ const je = {
     }
   );
 });
-w.Header = ke;
-w.Title = Ne;
-w.Description = Te;
-w.Body = Ce;
-w.Footer = Se;
-function Ke({ className: e, width: t, height: r, rounded: n = "md", ...a }) {
+y.Header = Ce;
+y.Title = Te;
+y.Description = Se;
+y.Body = Ee;
+y.Footer = Fe;
+function Ue({ className: e, width: t, height: r, rounded: n = "md", ...a }) {
   const s = {};
   return t !== void 0 && (s.width = typeof t == "number" ? `${t}px` : t), r !== void 0 && (s.height = typeof r == "number" ? `${r}px` : r), /* @__PURE__ */ i.jsx(
     "div",
@@ -476,7 +476,7 @@ function Ke({ className: e, width: t, height: r, rounded: n = "md", ...a }) {
     }
   );
 }
-const A = D(
+const P = R(
   l(
     "block w-full bg-surface-base text-text-primary",
     "rounded-md border",
@@ -503,7 +503,7 @@ const A = D(
       tone: "default"
     }
   }
-), Ee = p.forwardRef(function({
+), De = p.forwardRef(function({
   className: t,
   size: r,
   invalid: n,
@@ -519,14 +519,14 @@ const A = D(
       ref: u,
       type: d,
       "aria-invalid": n || void 0,
-      className: l(A({ size: r, tone: c }), t),
+      className: l(P({ size: r, tone: c }), t),
       ...o
     }
   ) : /* @__PURE__ */ i.jsxs(
     "span",
     {
       className: l(
-        A({ size: r, tone: c }),
+        P({ size: r, tone: c }),
         "inline-flex items-center gap-2 px-0",
         "focus-within:shadow-focus focus-within:border-focus",
         t
@@ -553,7 +553,26 @@ const A = D(
       ]
     }
   );
-}), O = {
+});
+let k = null;
+function Me() {
+  var t, r;
+  if (k) return k;
+  const e = (r = (t = window == null ? void 0 : window.abp) == null ? void 0 : t.localization) == null ? void 0 : r.getResource;
+  return typeof e == "function" && (k = e("Platform")), k;
+}
+function w(e, t, ...r) {
+  const n = Me(), a = n ? n(e, ...r) : null;
+  return a != null && a !== e ? a : Re(t ?? e, r);
+}
+function Re(e, t) {
+  return t.length ? String(e).replace(/\{(\d+)\}/g, (r, n) => t[n] ?? r) : e;
+}
+function Ve() {
+  var e, t, r, n;
+  return ((r = (t = (e = window == null ? void 0 : window.abp) == null ? void 0 : e.localization) == null ? void 0 : t.currentCulture) == null ? void 0 : r.name) || ((n = document == null ? void 0 : document.documentElement) == null ? void 0 : n.lang) || "tr-TR";
+}
+const O = {
   TRY: "₺",
   USD: "$",
   EUR: "€",
@@ -561,7 +580,7 @@ const A = D(
   JPY: "¥",
   CHF: "CHF"
 };
-function P(e) {
+function _(e) {
   if (e == null) return null;
   const t = String(e).trim();
   if (t === "" || t === "-") return null;
@@ -571,14 +590,14 @@ function P(e) {
   const s = Number(a);
   return Number.isFinite(s) ? s : null;
 }
-function F(e, t, r) {
+function M(e, t, r) {
   return e == null || !Number.isFinite(e) ? "" : new Intl.NumberFormat(t, {
     minimumFractionDigits: r,
     maximumFractionDigits: r,
     useGrouping: !0
   }).format(e);
 }
-const Je = p.forwardRef(function({
+const et = p.forwardRef(function({
   value: t,
   onValueChange: r,
   currency: n = "TRY",
@@ -591,36 +610,36 @@ const Je = p.forwardRef(function({
   max: c,
   invalid: m,
   size: b,
-  placeholder: k = "0,00",
-  className: N,
-  inputClassName: I,
+  placeholder: C = "0,00",
+  className: T,
+  inputClassName: B,
   ...h
-}, q) {
-  const [T, y] = f.useState(() => F(t, d, o)), C = f.useRef(!1);
+}, K) {
+  const [S, j] = f.useState(() => M(t, d, o)), E = f.useRef(!1);
   p.useEffect(() => {
-    C.current || y(F(t, d, o));
+    E.current || j(M(t, d, o));
   }, [t, d, o]);
-  const G = f.useCallback((x) => {
+  const J = f.useCallback((x) => {
     const g = x.target.value;
-    y(g);
-    const v = P(g);
+    j(g);
+    const v = _(g);
     r == null || r(v);
-  }, [r]), K = f.useCallback((x) => {
-    C.current = !0, t != null && (y(String(t).replace(".", d.startsWith("tr") ? "," : ".")), requestAnimationFrame(() => {
+  }, [r]), Z = f.useCallback((x) => {
+    E.current = !0, t != null && (j(String(t).replace(".", d.startsWith("tr") ? "," : ".")), requestAnimationFrame(() => {
       var g, v;
       return (v = (g = x.target) == null ? void 0 : g.select) == null ? void 0 : v.call(g);
     }));
-  }, [t, d]), J = f.useCallback((x) => {
+  }, [t, d]), X = f.useCallback((x) => {
     var v;
-    C.current = !1;
-    const g = P(T);
-    r == null || r(g), y(F(g, d, o)), (v = h.onBlur) == null || v.call(h, x);
-  }, [T, r, d, o, h]), Z = f.useMemo(() => t == null ? !1 : u != null && t < u || c != null && t > c, [t, u, c]), X = O[n] ?? n, U = a && a.length > 1 && s ? /* @__PURE__ */ i.jsx(
+    E.current = !1;
+    const g = _(S);
+    r == null || r(g), j(M(g, d, o)), (v = h.onBlur) == null || v.call(h, x);
+  }, [S, r, d, o, h]), U = f.useMemo(() => t == null ? !1 : u != null && t < u || c != null && t > c, [t, u, c]), V = O[n] ?? n, ee = a && a.length > 1 && s ? /* @__PURE__ */ i.jsx(
     "select",
     {
       value: n,
       onChange: (x) => s(x.target.value),
-      "aria-label": "Para birimi",
+      "aria-label": w("Common:Currency", "Para birimi"),
       className: l(
         "bg-transparent border-0 outline-none text-sm text-text-secondary",
         "pr-1 -mr-1 cursor-pointer",
@@ -628,26 +647,26 @@ const Je = p.forwardRef(function({
       ),
       children: a.map((x) => /* @__PURE__ */ i.jsx("option", { value: x, children: O[x] ?? x }, x))
     }
-  ) : /* @__PURE__ */ i.jsx("span", { className: "font-medium text-text-secondary", children: X });
+  ) : /* @__PURE__ */ i.jsx("span", { className: "font-medium text-text-secondary", children: V });
   return /* @__PURE__ */ i.jsx(
-    Ee,
+    De,
     {
-      ref: q,
+      ref: K,
       inputMode: "decimal",
       type: "text",
-      value: T,
-      placeholder: k,
-      onChange: G,
-      onFocus: K,
-      onBlur: J,
-      invalid: m || Z,
+      value: S,
+      placeholder: C,
+      onChange: J,
+      onFocus: Z,
+      onBlur: X,
+      invalid: m || U,
       size: b,
-      trailing: U,
-      className: l("font-tabular text-right", N),
+      trailing: ee,
+      className: l("font-tabular text-right", T),
       ...h
     }
   );
-}), Fe = D(
+}), Ie = R(
   l(
     "inline-flex items-center gap-1",
     "font-medium",
@@ -676,7 +695,7 @@ const Je = p.forwardRef(function({
       size: "md"
     }
   }
-), De = {
+), Ae = {
   neutral: "bg-neutral-500",
   brand: "bg-brand-500",
   positive: "bg-positive-500",
@@ -685,36 +704,36 @@ const Je = p.forwardRef(function({
   critical: "bg-critical-500",
   ai: "bg-ai-500"
 };
-function Ze({ variant: e = "neutral", size: t, withDot: r = !1, className: n, children: a, ...s }) {
-  return /* @__PURE__ */ i.jsxs("span", { className: l(Fe({ variant: e, size: t }), n), ...s, children: [
+function tt({ variant: e = "neutral", size: t, withDot: r = !1, className: n, children: a, ...s }) {
+  return /* @__PURE__ */ i.jsxs("span", { className: l(Ie({ variant: e, size: t }), n), ...s, children: [
     r && /* @__PURE__ */ i.jsx(
       "span",
       {
-        className: l("inline-block h-1.5 w-1.5 rounded-full", De[e]),
+        className: l("inline-block h-1.5 w-1.5 rounded-full", Ae[e]),
         "aria-hidden": "true"
       }
     ),
     a
   ] });
 }
-function R({ open: e, onOpenChange: t, children: r }) {
-  return /* @__PURE__ */ i.jsx(ce, { open: e, onOpenChange: t, children: r });
+function A({ open: e, onOpenChange: t, children: r }) {
+  return /* @__PURE__ */ i.jsx(fe, { open: e, onOpenChange: t, children: r });
 }
-const Me = p.forwardRef(function({ side: t, className: r, children: n, title: a, description: s, ...d }, o) {
+const Be = p.forwardRef(function({ side: t, className: r, children: n, title: a, description: s, ...d }, o) {
   const u = t === "bottom" ? "inset-x-0 bottom-0 max-h-[90vh] rounded-t-xl border-t animate-sheet-bottom" : t === "right" ? "inset-y-0 right-0 w-full max-w-md border-l animate-sheet-right" : l(
     "inset-x-0 bottom-0 max-h-[90vh] rounded-t-xl border-t animate-sheet-bottom",
     "tablet:inset-x-auto tablet:inset-y-0 tablet:right-0 tablet:left-auto tablet:bottom-auto",
     "tablet:w-full tablet:max-w-md tablet:max-h-none tablet:rounded-none tablet:border-l tablet:border-t-0",
     "tablet:animate-sheet-right"
   );
-  return /* @__PURE__ */ i.jsxs(ae, { children: [
-    /* @__PURE__ */ i.jsx(ie, { className: l(
+  return /* @__PURE__ */ i.jsxs(oe, { children: [
+    /* @__PURE__ */ i.jsx(le, { className: l(
       "fixed inset-0 z-modal-backdrop",
       "bg-surface-overlay backdrop-blur-sm",
       "animate-overlay-fade"
     ) }),
     /* @__PURE__ */ i.jsxs(
-      oe,
+      de,
       {
         ref: o,
         "aria-describedby": void 0,
@@ -730,30 +749,30 @@ const Me = p.forwardRef(function({ side: t, className: r, children: n, title: a,
         ...d,
         children: [
           /* @__PURE__ */ i.jsx("div", { className: "tablet:hidden flex justify-center pt-2 pb-1", children: /* @__PURE__ */ i.jsx("div", { className: "h-1 w-10 rounded-full bg-neutral-300", "aria-hidden": "true" }) }),
-          a && /* @__PURE__ */ i.jsx(le, { className: "sr-only", children: a }),
-          s && /* @__PURE__ */ i.jsx(de, { className: "sr-only", children: s }),
+          a && /* @__PURE__ */ i.jsx(ce, { className: "sr-only", children: a }),
+          s && /* @__PURE__ */ i.jsx(ue, { className: "sr-only", children: s }),
           n
         ]
       }
     )
   ] });
-}), Re = ue, Ie = fe;
-R.Trigger = Re;
-R.Close = Ie;
-R.Content = Me;
-const z = {
+}), ze = me, Pe = be;
+A.Trigger = ze;
+A.Close = Pe;
+A.Content = Be;
+const L = {
   sm: { dot: "h-1 w-1", gap: "gap-0.5" },
   md: { dot: "h-1.5 w-1.5", gap: "gap-0.5" },
   lg: { dot: "h-2 w-2", gap: "gap-1" }
 };
-function Q(e) {
+function $(e) {
   return typeof e != "number" || !Number.isFinite(e) ? 0 : e > 1 ? Math.max(0, Math.min(100, e)) / 100 : Math.max(0, Math.min(1, e));
 }
-function H(e) {
-  return e >= 0.85 ? { dots: 5, label: "Çok yüksek güven" } : e >= 0.7 ? { dots: 4, label: "Yüksek güven" } : e >= 0.5 ? { dots: 3, label: "Orta güven" } : e >= 0.3 ? { dots: 2, label: "Düşük güven" } : { dots: 1, label: "Çok düşük güven" };
+function q(e) {
+  return e >= 0.85 ? { dots: 5, label: w("Ai:Confidence:VeryHigh", "Çok yüksek güven") } : e >= 0.7 ? { dots: 4, label: w("Ai:Confidence:High", "Yüksek güven") } : e >= 0.5 ? { dots: 3, label: w("Ai:Confidence:Medium", "Orta güven") } : e >= 0.3 ? { dots: 2, label: w("Ai:Confidence:Low", "Düşük güven") } : { dots: 1, label: w("Ai:Confidence:VeryLow", "Çok düşük güven") };
 }
-function $({ score: e, label: t, size: r = "md", showLabel: n = !0, className: a }) {
-  const s = Q(e), d = H(s), o = z[r] ?? z.md, u = t ?? d.label, c = Math.round(s * 100);
+function G({ score: e, label: t, size: r = "md", showLabel: n = !0, className: a }) {
+  const s = $(e), d = q(s), o = L[r] ?? L.md, u = t ?? d.label, c = Math.round(s * 100);
   return /* @__PURE__ */ i.jsxs(
     "span",
     {
@@ -783,9 +802,9 @@ function $({ score: e, label: t, size: r = "md", showLabel: n = !0, className: a
     }
   );
 }
-$.bandFor = H;
-$.normalize = Q;
-function Xe({ onUpdate: e, onReady: t } = {}) {
+G.bandFor = q;
+G.normalize = $;
+function rt({ onUpdate: e, onReady: t } = {}) {
   typeof window > "u" || !("serviceWorker" in navigator) || (window.addEventListener("beforeinstallprompt", (r) => {
     r.preventDefault(), window.__apyaInstallPrompt = r;
   }), window.addEventListener("load", async () => {
@@ -803,26 +822,28 @@ function Xe({ onUpdate: e, onReady: t } = {}) {
   }));
 }
 export {
-  Ge as B,
-  w as C,
-  Ee as I,
-  Je as M,
-  Le as Q,
-  Ke as S,
-  ze as T,
-  ke as a,
-  Ne as b,
+  Xe as B,
+  y as C,
+  De as I,
+  et as M,
+  Qe as Q,
+  Ue as S,
+  We as T,
+  Ce as a,
+  Te as b,
   l as c,
-  Ce as d,
-  Ze as e,
-  He as f,
-  Qe as g,
-  We as h,
-  $ as i,
-  R as j,
-  Ye as k,
+  Ee as d,
+  tt as e,
+  Ve as f,
+  Ke as g,
+  Ge as h,
+  qe as i,
+  G as j,
+  A as k,
   $e as l,
-  _e as m,
-  Xe as r,
-  qe as u
+  Je as m,
+  He as n,
+  rt as r,
+  w as t,
+  Ze as u
 };

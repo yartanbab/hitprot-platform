@@ -2,6 +2,7 @@ import React from 'react';
 import { Card, Skeleton, Badge, Sparkline } from '../../components/ui';
 import { formatMoneyCompact, formatDelta, cn } from '../../lib/utils';
 import { useKpiSummary } from '../hooks/useKpiSummary';
+import { t } from '../../lib/i18n';
 
 /**
  * KpiStripWidget — prototip "tek satır 4 KPI kartı" (HANDOFF §Dashboard):
@@ -29,13 +30,13 @@ function KpiStripWidget() {
         return (
             <Card variant="flat" density="comfortable" className="h-full flex items-center justify-center">
                 <div className="flex items-center gap-3 text-sm">
-                    <Badge variant="negative" withDot>Yüklenemedi</Badge>
+                    <Badge variant="negative" withDot>{t('Common:LoadFailed', 'Yüklenemedi')}</Badge>
                     <button
                         type="button"
                         onClick={() => refetch()}
                         className="text-text-link underline-offset-2 hover:underline focus-visible:outline-none focus-visible:shadow-focus rounded-sm"
                     >
-                        Tekrar dene
+                        {t('Common:Retry', 'Tekrar dene')}
                     </button>
                 </div>
             </Card>

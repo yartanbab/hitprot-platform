@@ -3,6 +3,7 @@ import { WidgetShell } from './WidgetShell';
 import { Badge, SkeletonHeadline } from '../../components/ui';
 import { formatMoneyCompact, formatDelta, cn } from '../../lib/utils';
 import { useBudgetSummary } from '../hooks/useBudgetSummary';
+import { t } from '../../lib/i18n';
 
 /**
  * BudgetHealthWidget — "Bütçem sağlıklı mı?" sorusuna 1 saniyede cevap.
@@ -28,8 +29,8 @@ function BudgetHealthWidget() {
 
     return (
         <WidgetShell
-            title="Bütçe Sağlığı"
-            subtitle="Tüm aktif projeler — bu ay"
+            title={t('Widget:BudgetHealth:Title', 'Bütçe Sağlığı')}
+            subtitle={t('Widget:BudgetHealth:Subtitle', 'Tüm aktif projeler — bu ay')}
             badge={<Badge variant={health.badgeVariant} size="sm" withDot>{health.label}</Badge>}
             isLoading={isLoading}
             isError={isError}
@@ -61,7 +62,7 @@ function BudgetHealthWidget() {
                             )}>
                                 {delta.symbol} {delta.text}
                             </span>
-                            <span className="text-text-tertiary">geçen aya göre</span>
+                            <span className="text-text-tertiary">{t('Common:VsLastMonth', 'geçen aya göre')}</span>
                         </div>
                     )}
 
@@ -98,7 +99,7 @@ function BudgetHealthWidget() {
 function healthForUsage(pct) {
     if (pct >= 90) {
         return {
-            label:        'Kritik',
+            label:        t('Budget:Health:Critical', 'Kritik'),
             badgeVariant: 'critical',
             barVariant:   'critical',
             textVariant:  'text-text-negative',
@@ -106,14 +107,14 @@ function healthForUsage(pct) {
     }
     if (pct >= 70) {
         return {
-            label:        'Dikkat',
+            label:        t('Budget:Health:Warning', 'Dikkat'),
             badgeVariant: 'warning',
             barVariant:   'warning',
             textVariant:  'text-text-warning',
         };
     }
     return {
-        label:        'Sağlıklı',
+        label:        t('Budget:Health:Healthy', 'Sağlıklı'),
         badgeVariant: 'positive',
         barVariant:   'positive',
         textVariant:  'text-text-positive',

@@ -3,6 +3,7 @@ import { WidgetShell } from './WidgetShell';
 import { SkeletonHeadline, SkeletonChart, Sparkline } from '../../components/ui';
 import { formatMoneyCompact, formatDelta, cn } from '../../lib/utils';
 import { useCashFlow } from '../hooks/useCashFlow';
+import { t } from '../../lib/i18n';
 
 /**
  * CashFlowWidget — "Nakit akışım hangi yöne gidiyor?" — 4×1 yatay widget.
@@ -23,8 +24,8 @@ function CashFlowWidget() {
 
     return (
         <WidgetShell
-            title="Nakit Akışı"
-            subtitle="Son 30 gün"
+            title={t('Widget:CashFlow:Title', 'Nakit Akışı')}
+            subtitle={t('Widget:CashFlow:Subtitle', 'Son 30 gün')}
             isLoading={isLoading}
             isError={isError}
             isFetching={isFetching}
@@ -55,7 +56,7 @@ function CashFlowWidget() {
                                 )}>
                                     {delta.symbol} {delta.text}
                                 </span>
-                                <span className="text-text-tertiary">vs önceki dönem</span>
+                                <span className="text-text-tertiary">{t('Common:VsPreviousPeriod', 'vs önceki dönem')}</span>
                             </div>
                         )}
                     </div>

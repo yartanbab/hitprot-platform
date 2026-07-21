@@ -1,5 +1,6 @@
 import React from 'react';
 import { useTheme } from '../../lib/theme/ThemeProvider';
+import { t } from '../../lib/i18n';
 
 /**
  * ThemeToggle
@@ -20,21 +21,25 @@ import { useTheme } from '../../lib/theme/ThemeProvider';
  * surface/border/text token'ları üzerinden.
  */
 
+/* Anahtar + fallback; çözüm render'da (modül seviyesinde t() abp yüklenmeden
+   değerlendirilip fallback'e kilitlenirdi). */
 const LABELS = {
-    light:  'Açık tema (Sıradaki: Koyu)',
-    dark:   'Koyu tema (Sıradaki: Sistem)',
-    system: 'Sistem teması (Sıradaki: Açık)',
+    light:  { key: 'Theme:Light',  fallback: 'Açık tema (Sıradaki: Koyu)' },
+    dark:   { key: 'Theme:Dark',   fallback: 'Koyu tema (Sıradaki: Sistem)' },
+    system: { key: 'Theme:System', fallback: 'Sistem teması (Sıradaki: Açık)' },
 };
 
 export function ThemeToggle({ className = '' }) {
     const { preference, toggle } = useTheme();
+    const meta = LABELS[preference];
+    const label = meta ? t(meta.key, meta.fallback) : t('Theme:Toggle', 'Tema değiştir');
 
     return (
         <button
             type="button"
             onClick={toggle}
-            aria-label={LABELS[preference] ?? 'Tema değiştir'}
-            title={LABELS[preference] ?? 'Tema değiştir'}
+            aria-label={label}
+            title={label}
             className={[
                 'inline-flex items-center justify-center',
                 'h-10 w-10 rounded-md',

@@ -3,6 +3,7 @@ import { WidgetShell } from './WidgetShell';
 import { Badge, Button, SkeletonList, EmptyState } from '../../components/ui';
 import { ConfidenceMeter } from '../../components/ai';
 import { cn } from '../../lib/utils';
+import { t } from '../../lib/i18n';
 import { useRiskAlerts, useDismissRisk, useAcceptRisk } from '../hooks/useRiskAlerts';
 
 /**
@@ -19,10 +20,13 @@ import { useRiskAlerts, useDismissRisk, useAcceptRisk } from '../hooks/useRiskAl
  *   - Severity tiering: critical/actionable/info. Critical en üstte sticky.
  */
 
+/* Etiketler modül seviyesinde t() ile çözülemez — modül import anında bir kez
+   değerlendirilir ve abp henüz yüklenmemişse fallback'e kilitlenirdi. Anahtar
+   burada durur, çözüm render sırasında yapılır. */
 const SEVERITY_META = {
-    critical:   { label: 'Kritik',     variant: 'critical', priority: 0 },
-    actionable: { label: 'Eyleme açık', variant: 'warning',  priority: 1 },
-    info:       { label: 'Bilgi',       variant: 'ai',       priority: 2 },
+    critical:   { labelKey: 'Risk:Severity:Critical',   labelFallback: 'Kritik',      variant: 'critical', priority: 0 },
+    actionable: { labelKey: 'Risk:Severity:Actionable', labelFallback: 'Eyleme açık', variant: 'warning',  priority: 1 },
+    info:       { labelKey: 'Risk:Severity:Info',       labelFallback: 'Bilgi',       variant: 'ai',       priority: 2 },
 };
 
 function RiskAlertsWidget() {
@@ -42,8 +46,8 @@ function RiskAlertsWidget() {
 
     return (
         <WidgetShell
-            title="Risk Uyarıları"
-            subtitle="AI öneri motoru"
+            title={t('Widget:RiskAlerts:Title', 'Risk Uyarıları')}
+            subtitle={t('Widget:RiskAlerts:Subtitle', 'AI öneri motoru')}
             badge={<Badge variant="ai" size="sm" withDot>AI</Badge>}
             isLoading={isLoading}
             isError={isError}
@@ -58,8 +62,8 @@ function RiskAlertsWidget() {
                     compact
                     variant="success"
                     icon={<span className="text-base">✓</span>}
-                    title="Görünen risk yok"
-                    description="AI motoru taramayı tamamladı. Yeni veri geldikçe burada görünecek."
+                    title={t('Widget:RiskAlerts:EmptyTitle', 'Görünen risk yok')}
+                    description={t('Widget:RiskAlerts:EmptyDescription', 'AI motoru taramayı tamamladı. Yeni veri geldikçe burada görünecek.')}
                 />
             )}
         >
@@ -105,7 +109,7 @@ function RiskCard({ risk, onAccept, onDismiss }) {
                 {/* Üst satır: severity + confidence */}
                 <div className="flex items-center justify-between gap-2">
                     <Badge variant={meta.variant} size="sm" withDot>
-                        {meta.label}
+                        {t(meta.labelKey, meta.labelFallback)}
                     </Badge>
                     <ConfidenceMeter score={risk.confidence} label={risk.confidenceLabel} size="md" />
                 </div>
@@ -125,7 +129,9 @@ function RiskCard({ risk, onAccept, onDismiss }) {
                         'focus-visible:outline-none focus-visible:shadow-focus rounded-sm',
                     )}
                 >
-                    {expanded ? 'Açıklamayı gizle' : 'Neden bu öneri?'}
+                    {expanded
+                        ? t('Risk:HideExplanation', 'Açıklamayı gizle')
+                        : t('Risk:WhyThisSuggestion', 'Neden bu öneri?')}
                 </button>
                 {expanded && (
                     <ul className="text-xs text-text-secondary list-disc pl-5 space-y-1">
@@ -143,7 +149,7 @@ function RiskCard({ risk, onAccept, onDismiss }) {
                         onClick={() => handle('dismiss', onDismiss)}
                         isLoading={pending === 'dismiss'}
                     >
-                        Şimdi değil
+                        {t('Common:NotNow', 'Şimdi değil')}
                     </Button>
                     <Button
                         size="sm"
