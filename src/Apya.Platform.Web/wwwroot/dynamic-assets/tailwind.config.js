@@ -4,11 +4,33 @@ export default {
     "../../Pages/**/*.{cshtml,html}",
     "./src/**/*.{js,jsx,ts,tsx}",
   ],
-  darkMode: ['attribute', 'data-theme'],
+  /* v3'te geçerli strateji 'selector' — ['attribute','data-theme'] v4 sözdizimi
+     olduğu için v3.4 hiçbir dark: varyantı ÜRETMİYORDU (sessizce). Şu an kodda
+     dark: kullanımı yok; tema CSS custom property'leriyle geliyor (doğru yaklaşım),
+     ama ilk dark: yazan kişi için tuzaktı. */
+  darkMode: ['selector', '[data-theme="dark"]'],
   theme: {
     extend: {
+      /* mobile: max-width — tüm kullanımlar "mobilde küçült/gizle" anlamında
+         (mobile:hidden, mobile:grid-cols-2, mobile:px-2). Eşik useDeviceMode'un
+         decision→triage sınırıyla (768px) aynı. Tanımsızken 8 sınıf sessizce
+         ölüydü → mobil yerleşim uygulanmıyordu. */
+      screens: {
+        mobile: { max: '767.98px' },
+      },
       fontFamily: {
-        sans: ['"Plus Jakarta Sans"', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        /* Token tek kaynak: 'Plus Jakarta Sans' self-host EDİLMİYOR
+           (apya-fonts.css yalnız Inter + JetBrains Mono barındırıyor), bu yüzden
+           preflight'ın html kuralı sistem fontuna düşüyordu. */
+        sans: 'var(--apya-font-sans)',
+      },
+      /* duration-fast/base/slow: 11 yerde kullanılıyordu ama tanımsızdı →
+         transition-* kısayolunun 150ms varsayılanına düşüyordu (font-tabular
+         ile aynı sınıf hata, bkz. src/index.css). */
+      transitionDuration: {
+        fast: 'var(--apya-motion-fast)',
+        base: 'var(--apya-motion-base)',
+        slow: 'var(--apya-motion-slow)',
       },
       colors: {
         /* Surfaces */
