@@ -3,6 +3,7 @@ using System;
 using Apya.Platform.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Volo.Abp.EntityFrameworkCore;
@@ -12,9 +13,11 @@ using Volo.Abp.EntityFrameworkCore;
 namespace Apya.Platform.Migrations
 {
     [DbContext(typeof(PlatformDbContext))]
-    partial class PlatformDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260623091627_Add_PlatformPackages")]
+    partial class Add_PlatformPackages
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1208,14 +1211,6 @@ namespace Apya.Platform.Migrations
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid");
 
-                    b.Property<string>("BankName")
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
-
-                    b.Property<string>("Branch")
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
-
                     b.Property<string>("ConcurrencyStamp")
                         .IsConcurrencyToken()
                         .IsRequired()
@@ -1252,10 +1247,6 @@ namespace Apya.Platform.Migrations
                         .IsRequired()
                         .HasColumnType("text")
                         .HasColumnName("ExtraProperties");
-
-                    b.Property<string>("Iban")
-                        .HasMaxLength(34)
-                        .HasColumnType("character varying(34)");
 
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean");
@@ -1645,44 +1636,6 @@ namespace Apya.Platform.Migrations
                     b.ToTable("AppDocuments", (string)null);
                 });
 
-            modelBuilder.Entity("Apya.Platform.Documents.DocumentAttachment", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("ContentType")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<DateTime>("CreationTime")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("CreationTime");
-
-                    b.Property<Guid?>("CreatorId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("CreatorId");
-
-                    b.Property<Guid>("DocumentId")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("FileName")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<long>("FileSize")
-                        .HasColumnType("bigint");
-
-                    b.Property<string>("StoredFileName")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("DocumentId");
-
-                    b.ToTable("AppDocumentAttachments", (string)null);
-                });
-
             modelBuilder.Entity("Apya.Platform.DynamicAssets.AppBlock", b =>
                 {
                     b.Property<Guid>("Id")
@@ -2001,9 +1954,6 @@ namespace Apya.Platform.Migrations
                     b.Property<Guid?>("CreatorId")
                         .HasColumnType("uuid")
                         .HasColumnName("CreatorId");
-
-                    b.Property<long?>("ElapsedMilliseconds")
-                        .HasColumnType("bigint");
 
                     b.Property<bool>("IsSuccess")
                         .HasColumnType("boolean");

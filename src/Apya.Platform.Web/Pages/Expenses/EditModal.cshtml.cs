@@ -29,6 +29,7 @@ public class EditModalModel : AbpPageModel
     public List<SelectListItem> Projects { get; set; } = new();
     public List<SelectListItem> Customers { get; set; } = new();
     public List<SelectListItem> Categories { get; set; } = new();
+    public string ProjectDatesJson { get; set; } = "{}";
 
     public EditModalModel(
         IExpenseAppService expenseAppService,
@@ -57,7 +58,7 @@ public class EditModalModel : AbpPageModel
         Expense.CustomerId = dto.CustomerId;
         Expense.Description = dto.Description;
 
-        (Accounts, Projects, Customers, Categories) =
+        (Accounts, Projects, Customers, Categories, ProjectDatesJson) =
             await ExpenseLookups.LoadAsync(_cashAccountAppService, _projectAppService, _customerAppService);
         return Page();
     }

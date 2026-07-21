@@ -47,7 +47,7 @@ $(function () {
             {
                 title: 'Tutar', data: 'amount',
                 render: function (d, t, row) {
-                    return Number(d).toLocaleString('tr-TR', { minimumFractionDigits: 2 });
+                    return apya.money.format(d);
                 }
             },
             { title: 'Kasa', data: 'cashAccountName', render: function (d) { return d || '— (tahsil edilmedi)'; } }

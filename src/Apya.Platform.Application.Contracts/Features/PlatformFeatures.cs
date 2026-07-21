@@ -17,4 +17,32 @@ public static class PlatformFeatures
 
     /// <summary>Mizan, FX değerleme gibi gelişmiş finansal raporlar aktif mi?</summary>
     public const string AdvancedReports = GroupName + ".AdvancedReports";
+
+    // ── Paket (edition) yetenek kapıları ──────────────────────────────────────
+    // Yeni capability feature'ları paket tavanı içindir. HOST'u ve paket atanmamış
+    // eski tenant'ları bozmamak için defaultValue = "true" (paketler düşük tier'larda
+    // KAPATIR). Permission'lar bu feature'lara RequireFeatures ile bağlıdır.
+
+    /// <summary>Hibe (Grant) yönetimi modülü.</summary>
+    public const string Grants = GroupName + ".Grants";
+
+    /// <summary>Finans & muhasebe (gelir/gider/fatura/kasa/cari) modülü.</summary>
+    public const string Finance = GroupName + ".Finance";
+
+    /// <summary>Doküman yönetimi modülü.</summary>
+    public const string Documents = GroupName + ".Documents";
+
+    /// <summary>Form / dinamik varlık (DynamicAssets) modülü.</summary>
+    public const string Forms = GroupName + ".Forms";
+
+    /// <summary>Takvim entegrasyonu (Google/Outlook) modülü.</summary>
+    public const string Calendar = GroupName + ".Calendar";
+
+    // ── Sayısal limitler (paket kotaları) ─────────────────────────────────────
+
+    /// <summary>Tenant'ın oluşturabileceği maksimum kullanıcı sayısı.</summary>
+    public const string MaxUsers = GroupName + ".MaxUsers";
+
+    /// <summary>Tenant'ın oluşturabileceği maksimum proje sayısı.</summary>
+    public const string MaxProjects = GroupName + ".MaxProjects";
 }

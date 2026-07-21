@@ -126,14 +126,18 @@ $(function () {
                     title: 'Bitiş Tarihi',
                     data: 'dueDate',
                     render: function (data, type, row) {
+                        var isDone = row.status === 4 || row.status === 0;
+                        if (isDone) {
+                            var c = row.completedDate || data;
+                            if (!c) return '';
+                            return '<span class="text-success fw-bold"><i class="fa fa-check-circle me-1"></i>' + moment(c).format('DD MMM YYYY') + '</span>';
+                        }
                         if (!data) return '';
-                        if (row.status !== 4 && row.status !== 0) {
-                            var dueDiff = moment(data).diff(moment(), 'hours');
-                            if (dueDiff < 0) {
-                                return '<span class="badge bg-danger heartbeat-animation px-2 py-1"><i class="fa fa-exclamation-circle me-1"></i>' + moment(data).format('DD MMM YYYY') + '</span>';
-                            } else if (dueDiff <= 48) {
-                                return '<span class="badge bg-warning text-dark px-2 py-1"><i class="fa fa-clock me-1"></i>' + moment(data).format('DD MMM YYYY') + '</span>';
-                            }
+                        var dueDiff = moment(data).diff(moment(), 'hours');
+                        if (dueDiff < 0) {
+                            return '<span class="badge bg-danger heartbeat-animation px-2 py-1"><i class="fa fa-exclamation-circle me-1"></i>' + moment(data).format('DD MMM YYYY') + '</span>';
+                        } else if (dueDiff <= 48) {
+                            return '<span class="badge bg-warning text-dark px-2 py-1"><i class="fa fa-clock me-1"></i>' + moment(data).format('DD MMM YYYY') + '</span>';
                         }
                         return '<span class="text-muted">' + moment(data).format('DD MMM YYYY') + '</span>';
                     }

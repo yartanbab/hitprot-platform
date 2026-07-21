@@ -3,6 +3,7 @@ using System;
 using Apya.Platform.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Volo.Abp.EntityFrameworkCore;
@@ -12,9 +13,11 @@ using Volo.Abp.EntityFrameworkCore;
 namespace Apya.Platform.Migrations
 {
     [DbContext(typeof(PlatformDbContext))]
-    partial class PlatformDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260622145414_Add_TenantProfile_PackageCode")]
+    partial class Add_TenantProfile_PackageCode
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1208,14 +1211,6 @@ namespace Apya.Platform.Migrations
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid");
 
-                    b.Property<string>("BankName")
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
-
-                    b.Property<string>("Branch")
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
-
                     b.Property<string>("ConcurrencyStamp")
                         .IsConcurrencyToken()
                         .IsRequired()
@@ -1252,10 +1247,6 @@ namespace Apya.Platform.Migrations
                         .IsRequired()
                         .HasColumnType("text")
                         .HasColumnName("ExtraProperties");
-
-                    b.Property<string>("Iban")
-                        .HasMaxLength(34)
-                        .HasColumnType("character varying(34)");
 
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean");
@@ -1645,44 +1636,6 @@ namespace Apya.Platform.Migrations
                     b.ToTable("AppDocuments", (string)null);
                 });
 
-            modelBuilder.Entity("Apya.Platform.Documents.DocumentAttachment", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("ContentType")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<DateTime>("CreationTime")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("CreationTime");
-
-                    b.Property<Guid?>("CreatorId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("CreatorId");
-
-                    b.Property<Guid>("DocumentId")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("FileName")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<long>("FileSize")
-                        .HasColumnType("bigint");
-
-                    b.Property<string>("StoredFileName")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("DocumentId");
-
-                    b.ToTable("AppDocumentAttachments", (string)null);
-                });
-
             modelBuilder.Entity("Apya.Platform.DynamicAssets.AppBlock", b =>
                 {
                     b.Property<Guid>("Id")
@@ -2001,9 +1954,6 @@ namespace Apya.Platform.Migrations
                     b.Property<Guid?>("CreatorId")
                         .HasColumnType("uuid")
                         .HasColumnName("CreatorId");
-
-                    b.Property<long?>("ElapsedMilliseconds")
-                        .HasColumnType("bigint");
 
                     b.Property<bool>("IsSuccess")
                         .HasColumnType("boolean");
@@ -3425,102 +3375,6 @@ namespace Apya.Platform.Migrations
                     b.HasIndex("TaskId", "UserId");
 
                     b.ToTable("AppTaskTimeLogs", (string)null);
-                });
-
-            modelBuilder.Entity("Apya.Platform.Tenants.PlatformPackage", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .HasColumnType("uuid");
-
-                    b.Property<int>("Code")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("ConcurrencyStamp")
-                        .IsConcurrencyToken()
-                        .IsRequired()
-                        .HasMaxLength(40)
-                        .HasColumnType("character varying(40)")
-                        .HasColumnName("ConcurrencyStamp");
-
-                    b.Property<DateTime>("CreationTime")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("CreationTime");
-
-                    b.Property<Guid?>("CreatorId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("CreatorId");
-
-                    b.Property<Guid?>("DeleterId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("DeleterId");
-
-                    b.Property<DateTime?>("DeletionTime")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("DeletionTime");
-
-                    b.Property<string>("Description")
-                        .HasMaxLength(256)
-                        .HasColumnType("character varying(256)");
-
-                    b.Property<int>("DisplayOrder")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("ExtraProperties")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("ExtraProperties");
-
-                    b.Property<bool>("IsDeleted")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("boolean")
-                        .HasDefaultValue(false)
-                        .HasColumnName("IsDeleted");
-
-                    b.Property<DateTime?>("LastModificationTime")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("LastModificationTime");
-
-                    b.Property<Guid?>("LastModifierId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("LastModifierId");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(64)
-                        .HasColumnType("character varying(64)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("Code")
-                        .IsUnique();
-
-                    b.ToTable("AppPlatformPackages", (string)null);
-                });
-
-            modelBuilder.Entity("Apya.Platform.Tenants.PlatformPackageFeature", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("FeatureName")
-                        .IsRequired()
-                        .HasMaxLength(128)
-                        .HasColumnType("character varying(128)");
-
-                    b.Property<Guid>("PackageId")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("Value")
-                        .IsRequired()
-                        .HasMaxLength(64)
-                        .HasColumnType("character varying(64)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("PackageId", "FeatureName")
-                        .IsUnique();
-
-                    b.ToTable("AppPlatformPackageFeatures", (string)null);
                 });
 
             modelBuilder.Entity("Apya.Platform.Tenants.TenantProfile", b =>
@@ -5550,15 +5404,6 @@ namespace Apya.Platform.Migrations
                     b.Navigation("ParentTask");
                 });
 
-            modelBuilder.Entity("Apya.Platform.Tenants.PlatformPackageFeature", b =>
-                {
-                    b.HasOne("Apya.Platform.Tenants.PlatformPackage", null)
-                        .WithMany("Features")
-                        .HasForeignKey("PackageId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
             modelBuilder.Entity("Volo.Abp.AuditLogging.AuditLogAction", b =>
                 {
                     b.HasOne("Volo.Abp.AuditLogging.AuditLog", null)
@@ -5748,11 +5593,6 @@ namespace Apya.Platform.Migrations
                     b.Navigation("Comments");
 
                     b.Navigation("SubTasks");
-                });
-
-            modelBuilder.Entity("Apya.Platform.Tenants.PlatformPackage", b =>
-                {
-                    b.Navigation("Features");
                 });
 
             modelBuilder.Entity("Volo.Abp.AuditLogging.AuditLog", b =>
