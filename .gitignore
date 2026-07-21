@@ -252,6 +252,7 @@ paket-files/
 *.sln.iml
 
 # Platform
+Logs/logs.txt
 src/Apya.Platform.Web/Logs/*
 src/Apya.Platform.Web.Host/Logs/*
 src/Apya.Platform.AuthServer/Logs/*
