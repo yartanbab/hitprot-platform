@@ -17,6 +17,9 @@ namespace Apya.Platform.Tasks
         // Kullanıcı Listesi
         Task<ListResultDto<IdentityUserDto>> GetUsersLookupAsync();
 
+        /// <summary>Select2 tag girişinin başlangıç seçenek listesi için tenant'ın tüm etiketleri.</summary>
+        Task<List<TagDto>> GetAllTagsAsync();
+
         // Yorum Metodları
         Task<Guid> AddCommentAsync(Guid taskId, string text);
         Task<Guid> ReplyToCommentAsync(Guid parentCommentId, string text); // Instagram tarzı yanıt

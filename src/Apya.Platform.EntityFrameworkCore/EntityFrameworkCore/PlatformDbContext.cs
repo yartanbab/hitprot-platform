@@ -118,6 +118,8 @@ namespace Apya.Platform.EntityFrameworkCore
         public DbSet<TaskAttachment> TaskAttachments { get; set; }
         public DbSet<TaskDependency> TaskDependencies { get; set; }
         public DbSet<TaskTimeLog> TaskTimeLogs { get; set; }
+        public DbSet<Tag> Tags { get; set; }
+        public DbSet<TaskTagAssignment> TaskTagAssignments { get; set; }
         public DbSet<Apya.Platform.Projects.BoardColumn> BoardColumns { get; set; } // Faz 2: configure edilebilir kanban
         public DbSet<Invoice> Invoices { get; set; }
         public DbSet<InvoiceItem> InvoiceItems { get; set; }
@@ -193,6 +195,9 @@ namespace Apya.Platform.EntityFrameworkCore
 
         public DbSet<Apya.Platform.Tenants.TenantProfile> TenantProfiles { get; set; }
 
+        public DbSet<Apya.Platform.Tenants.PlatformPackage> PlatformPackages { get; set; }
+        public DbSet<Apya.Platform.Tenants.PlatformPackageFeature> PlatformPackageFeatures { get; set; }
+
         #endregion
 
         public PlatformDbContext(DbContextOptions<PlatformDbContext> options)
@@ -226,6 +231,27 @@ namespace Apya.Platform.EntityFrameworkCore
                 b.HasIndex(x => x.TenantId).IsUnique(); // 1:1 relation logic
                 b.Property(x => x.TaxNumber).HasMaxLength(50);
                 b.Property(x => x.CorporateEmail).HasMaxLength(256);
+                // Paket (edition): mevcut profiller migration'da Basic'e düşsün (enum 0 değil).
+                b.Property(x => x.PackageCode).HasDefaultValue(Apya.Platform.Tenants.PackageCode.Basic);
+            });
+
+            /* --- PAKET (EDITION) — Faz 2: host-side, düzenlenebilir --- */
+            builder.Entity<Apya.Platform.Tenants.PlatformPackage>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "PlatformPackages", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+                b.Property(x => x.Name).IsRequired().HasMaxLength(64);
+                b.Property(x => x.Description).HasMaxLength(256);
+                b.HasIndex(x => x.Code).IsUnique();
+                b.HasMany(x => x.Features).WithOne().HasForeignKey(f => f.PackageId).IsRequired();
+            });
+            builder.Entity<Apya.Platform.Tenants.PlatformPackageFeature>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "PlatformPackageFeatures", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+                b.Property(x => x.FeatureName).IsRequired().HasMaxLength(128);
+                b.Property(x => x.Value).IsRequired().HasMaxLength(64);
+                b.HasIndex(x => new { x.PackageId, x.FeatureName }).IsUnique();
             });
 
             /* --- CARİ (MÜŞTERİ) MODÜLÜ YAPILANDIRMASI --- */
@@ -454,6 +480,21 @@ namespace Apya.Platform.EntityFrameworkCore
                 b.ToTable(PlatformConsts.DbTablePrefix + "TaskDependencies", PlatformConsts.DbSchema);
                 b.ConfigureByConvention();
                 b.HasIndex(x => new { x.TaskId, x.PredecessorTaskId }).IsUnique();
+            });
+
+            builder.Entity<Tag>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "Tags", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+                b.Property(x => x.Name).IsRequired().HasMaxLength(64);
+                b.HasIndex(x => new { x.TenantId, x.Name }); // tenant-bazlı isim araması/get-or-create
+            });
+
+            builder.Entity<TaskTagAssignment>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "TaskTagAssignments", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+                b.HasIndex(x => new { x.TaskId, x.TagId }).IsUnique();
             });
 
             builder.Entity<TaskTimeLog>(b =>

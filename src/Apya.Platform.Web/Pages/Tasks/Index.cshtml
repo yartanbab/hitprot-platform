@@ -9,9 +9,16 @@
 @model IndexModel
 
 
+@* ─── Başlık satırı — AiCenter/Workflows/Index.cshtml ile aynı yerleşik desen. ─── *@
+<div class="apya-page">
+<div class="mb-3">
+    <h1 class="h5 mb-1"><i class="fa fa-list-check me-2"></i>Görevler</h1>
+    <p class="text-muted mb-0" style="font-size:12px">Tüm projelerdeki görevler · tablo görünümü</p>
+</div>
+
 @* ─── Gelişmiş Filtreleme Paneli ─── *@
 <div class="accordion mb-3" id="taskFiltersAccordion">
-    <div class="accordion-item shadow-sm border-0" style="border-radius:0.75rem;">
+    <div class="accordion-item shadow-sm border-0" style="border-radius:var(--apya-radius-xl);">
         <h2 class="accordion-header" id="headingFilters">
             <button class="accordion-button collapsed fw-bold text-primary"
                     type="button"
@@ -19,7 +26,7 @@
                     data-bs-target="#collapseFilters"
                     aria-expanded="false"
                     aria-controls="collapseFilters"
-                    style="border-radius:0.75rem;">
+                    style="border-radius:var(--apya-radius-xl);">
                 <i class="fa fa-filter me-2"></i> @L["Tasks:AdvancedFilters"]
             </button>
         </h2>
@@ -27,7 +34,7 @@
              class="accordion-collapse collapse"
              aria-labelledby="headingFilters"
              data-bs-parent="#taskFiltersAccordion">
-            <div class="accordion-body bg-light" style="border-radius:0 0 0.75rem 0.75rem;">
+            <div class="accordion-body bg-light" style="border-radius:0 0 var(--apya-radius-xl) var(--apya-radius-xl);">
                 <form id="TaskFilterForm" class="row g-3">
                     <div class="col-md-3">
                         <label for="Filter_AssigneeId" class="form-label fw-bold small text-muted">@L["Tasks:Filter:Assignee"]</label>
@@ -43,6 +50,16 @@
                             <option value="2">@L["Tasks:Status:InProgress"]</option>
                             <option value="3">@L["Tasks:Status:InReview"]</option>
                             <option value="4">@L["Tasks:Status:Done"]</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label for="Filter_Priority" class="form-label fw-bold small text-muted">Öncelik</label>
+                        <select id="Filter_Priority" class="form-select border-0 shadow-sm">
+                            <option value="">@L["Common:All"]</option>
+                            <option value="1">Düşük</option>
+                            <option value="2">Orta</option>
+                            <option value="3">Yüksek</option>
+                            <option value="4">Kritik</option>
                         </select>
                     </div>
                     <div class="col-md-2">
@@ -129,25 +146,32 @@
         </div>
     </abp-card-body>
 </abp-card>
+</div>
 
 @section styles {
     @* Merkezi kanban tasarımı (tek kaynak) *@
     <abp-style src="/css/kanban.css" />
+    @* Görev modallarındaki etiket girişi (Select2 tags:true) — dark uyumu apya-shell.css'te zaten hazır. *@
+    <link rel="stylesheet" href="~/libs/select2/css/select2.min.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/frappe-gantt/0.6.1/frappe-gantt.min.css" />
     <style>
         /* Proje stili için Gantt özelleştirmesi */
-        .gantt .bar-label { fill: #fff; font-weight: bold; }
-        .gantt .bar-progress { fill: #007bff; }
-        .gantt .bar { fill: #cbd5e0; }
-        .gantt .priority-high .bar-progress { fill: #dc3545; }
-        .gantt .priority-medium .bar-progress { fill: #ffc107; }
-        .gantt .priority-low .bar-progress { fill: #28a745; }
+        .gantt .bar-label { fill: #fff; font-weight: bold; } /* renkli bar üstü kontrast metni — bilinçli sabit */
+        .gantt .bar-progress { fill: var(--apya-accent-500); }
+        .gantt .bar { fill: var(--apya-border-strong); }
+        .gantt .priority-critical .bar-progress { fill: var(--apya-negative-600); }
+        .gantt .priority-high .bar-progress { fill: var(--apya-negative-500); }
+        .gantt .priority-medium .bar-progress { fill: var(--apya-warning-500); }
+        .gantt .priority-low .bar-progress { fill: var(--apya-positive-500); }
     </style>
 }
 
 @section scripts {
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.6/Sortable.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/frappe-gantt/0.6.1/frappe-gantt.min.js"></script>
+    <script src="~/libs/select2/js/select2.min.js"></script>
+    <abp-script src="/js/apya-task-render.js" />
+    <abp-script src="/js/task-drawer.js" />
     <abp-script src="/js/apya-kanban.js" />
     <abp-script src="/Pages/Tasks/index.js" />
 }
@@ -155,7 +179,7 @@
 <style>
     /* Kanban kart/kolon tasarımı artık /css/kanban.css'ten gelir (tek kaynak).
        Burada yalnızca timer + deadline animasyonları kalır. */
-    .timer-active { border-left-color: #dc3545 !important; background-color: #fff8f8 !important; box-shadow: 0 0 10px rgba(220, 53, 69, 0.2) !important; }
+    .timer-active { border-left-color: var(--apya-negative-500) !important; background-color: var(--apya-negative-50) !important; box-shadow: 0 0 10px rgba(220, 53, 69, 0.2) !important; }
     .fa-beat { animation: fa-beat 1.5s infinite linear; }
     @@keyframes fa-beat {
         0% { transform: scale(1); }

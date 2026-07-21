@@ -69,8 +69,8 @@ $(function () {
                 title: 'Kaynak',
                 data: 'source',
                 render: function (data) {
-                    var badge = data === 1 ? 'bg-info' : 'bg-secondary';
-                    return '<span class="badge ' + badge + '">' + (sourceNames[data] || '-') + '</span>';
+                    var tone = data === 1 ? 'brand' : 'neutral';
+                    return '<span class="apya-chip apya-chip-' + tone + '">' + (sourceNames[data] || '-') + '</span>';
                 }
             }
         ]

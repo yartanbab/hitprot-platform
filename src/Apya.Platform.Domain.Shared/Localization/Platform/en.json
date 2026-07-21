@@ -1,13 +1,13 @@
 {
   "culture": "en",
   "texts": {
-    "AppName": "Platform",
+    "AppName": "Apya",
     "Menu:Home": "Home",
     "Menu:Dashboard": "Dashboard",
     "Menu:Work": "Work",
     "Menu:Projects": "Projects",
     "Menu:Tasks": "Tasks",
-    "Menu:KanbanBoard": "Kanban Board",
+    "Menu:KanbanBoard": "Kanban",
     "Menu:Calendar": "Calendar",
     "Menu:Finance": "Finance",
     "Menu:FinanceHub": "Cash Flow",
@@ -22,7 +22,7 @@
     "Menu:ExpenseCapture": "Capture Expense",
     "Menu:TrialBalance": "Trial Balance",
     "Menu:CustomerStatement": "Customer Statement",
-    "Menu:ProjectBudget": "Project Budget / P&L",
+    "Menu:ProjectBudget": "Project Budget",
     "Menu:Content": "Content",
     "Menu:Documents": "Documents",
     "Menu:DynamicAssets": "Templates & Forms",
@@ -213,7 +213,7 @@
     "Tasks:Field:Private": "Mark this task as Private",
     "Tasks:Field:PrivateHint": "Private tasks are hidden when someone else (e.g., Admin) accesses your profile.",
 
-    "Menu:Grants": "Grant Programs",
+    "Menu:Grants": "Grants",
     "Notify:Grant:Created": "Grant program created.",
     "Notify:Grant:Updated": "Grant program updated.",
     "Notify:Grant:Deleted": "Grant program deleted.",

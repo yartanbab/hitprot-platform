@@ -24,12 +24,14 @@ public class TaskItem_Tests
     {
         // Arrange
         var task = new TaskItem(Guid.NewGuid(), "Orijinal Başlık", now: DateTime.UtcNow);
+        var completedAt = new DateTime(2026, 6, 22, 10, 0, 0, DateTimeKind.Utc);
 
         // Act — Domain kuralı: now her zaman çağıran tarafından geçirilir (IClock inject edilmez)
-        task.ChangeStatus(TaskStatus.Done, now: DateTime.UtcNow);
+        task.ChangeStatus(TaskStatus.Done, now: completedAt);
 
-        // Assert
-        task.CompletedDate.ShouldNotBeNull();
+        // Assert — geçirilen now CompletedDate'e aynen yansımalı (çağıranlar now geçmek ZORUNDA;
+        // BoardColumnAppService.MoveTaskToColumnAsync bunu atlıyordu → CompletedDate null kalıyordu)
+        task.CompletedDate.ShouldBe(completedAt);
         task.Status.ShouldBe(TaskStatus.Done);
     }
 

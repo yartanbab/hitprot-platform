@@ -1,0 +1,41 @@
+@page
+@model Apya.Platform.Web.Pages.PackageManagement.IndexModel
+@{
+    ViewBag.PageTitle = "Paket Yönetimi";
+}
+@section scripts {
+    <abp-script src="/Pages/PackageManagement/Index.js" />
+}
+
+<abp-card>
+    <abp-card-header>
+        <abp-card-title><i class="fa fa-box-open text-primary me-2"></i> Paket Yönetimi (Edition)</abp-card-title>
+    </abp-card-header>
+    <abp-card-body>
+        <p class="text-muted">
+            Her paketin hangi modülleri açacağını ve limitlerini buradan düzenleyin. Değişiklik;
+            paketin <strong>yeni atandığı</strong> tenant'lara ve <strong>"yeniden uygula"</strong> dediğiniz
+            mevcut tenant'lara yansır.
+        </p>
+        <div class="row g-3" id="PackageCards"></div>
+    </abp-card-body>
+</abp-card>
+
+@* Düzenleme modalı (saf JS; dinamik feature formu) *@
+<div class="modal fade" id="PackageEditModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="PkgEditTitle">Paketi Düzenle</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
+            </div>
+            <div class="modal-body">
+                <div id="PkgFeatureRows"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Vazgeç</button>
+                <button type="button" class="btn btn-primary" id="PkgSaveBtn"><i class="fa fa-check me-1"></i> Kaydet</button>
+            </div>
+        </div>
+    </div>
+</div>

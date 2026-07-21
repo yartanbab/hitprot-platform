@@ -1,14 +1,14 @@
-import React, { useId } from 'react';
+import React from 'react';
 import { WidgetShell } from './WidgetShell';
-import { SkeletonHeadline, SkeletonChart } from '../../components/ui';
+import { SkeletonHeadline, SkeletonChart, Sparkline } from '../../components/ui';
 import { formatMoneyCompact, formatDelta, cn } from '../../lib/utils';
 import { useCashFlow } from '../hooks/useCashFlow';
 
 /**
  * CashFlowWidget — "Nakit akışım hangi yöne gidiyor?" — 4×1 yatay widget.
  *
- * SVG sparkline (chart library bağımlılığı YOK — Visx/Recharts henüz
- * proje'ye girmedi). Inline SVG, 60fps, ~5KB. Tooltip mevcut değil
+ * Sparkline paylaşılan primitive'e taşındı (components/ui/Sparkline) —
+ * KpiStripWidget de aynı görsel dili kullanıyor. Tooltip mevcut değil
  * (deferred — Bento'da hover etkileşimi minimal tutulur, drill için
  * tıklama tercih edilir).
  *
@@ -67,68 +67,6 @@ function CashFlowWidget() {
                 </div>
             )}
         </WidgetShell>
-    );
-}
-
-/**
- * Sparkline — minimal SVG line + area gradient.
- * preserveAspectRatio='none' — container'a göre yatay esner.
- *
- * Gradient için unique ID (useId) çünkü aynı sayfada birden fazla
- * sparkline olursa SVG defs çakışır.
- */
-function Sparkline({ series, variant = 'positive' }) {
-    const uid = useId();
-    const gradientId = `cashflow-grad-${uid.replace(/:/g, '')}`;
-
-    if (!series || series.length < 2) return null;
-
-    const W = 100;
-    const H = 40;
-    const min = Math.min(...series);
-    const max = Math.max(...series);
-    const range = max - min || 1;
-
-    const points = series.map((v, i) => {
-        const x = (i / (series.length - 1)) * W;
-        const y = H - ((v - min) / range) * H;
-        return [x, y];
-    });
-
-    const linePath = points
-        .map(([x, y], i) => `${i === 0 ? 'M' : 'L'} ${x.toFixed(2)} ${y.toFixed(2)}`)
-        .join(' ');
-
-    const areaPath = `${linePath} L ${W} ${H} L 0 ${H} Z`;
-
-    const stroke = variant === 'positive'
-        ? 'var(--apya-positive-500)'
-        : 'var(--apya-negative-500)';
-
-    return (
-        <svg
-            viewBox={`0 0 ${W} ${H}`}
-            preserveAspectRatio="none"
-            className="w-full h-full"
-            aria-hidden="true"
-        >
-            <defs>
-                <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor={stroke} stopOpacity="0.25" />
-                    <stop offset="100%" stopColor={stroke} stopOpacity="0" />
-                </linearGradient>
-            </defs>
-            <path d={areaPath} fill={`url(#${gradientId})`} />
-            <path
-                d={linePath}
-                fill="none"
-                stroke={stroke}
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                vectorEffect="non-scaling-stroke"
-            />
-        </svg>
     );
 }
 

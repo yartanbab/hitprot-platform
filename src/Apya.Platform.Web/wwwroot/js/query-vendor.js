@@ -2,7 +2,7 @@ var Ce = (e) => {
   throw TypeError(e);
 };
 var te = (e, t, s) => t.has(e) || Ce("Cannot " + s);
-var r = (e, t, s) => (te(e, t, "read from private field"), s ? s.call(e) : t.get(e)), c = (e, t, s) => t.has(e) ? Ce("Cannot add the same private member more than once") : t instanceof WeakSet ? t.add(e) : t.set(e, s), o = (e, t, s, i) => (te(e, t, "write to private field"), i ? i.call(e, s) : t.set(e, s), s), f = (e, t, s) => (te(e, t, "access private method"), s);
+var r = (e, t, s) => (te(e, t, "read from private field"), s ? s.call(e) : t.get(e)), c = (e, t, s) => t.has(e) ? Ce("Cannot add the same private member more than once") : t instanceof WeakSet ? t.add(e) : t.set(e, s), o = (e, t, s, i) => (te(e, t, "write to private field"), i ? i.call(e, s) : t.set(e, s), s), y = (e, t, s) => (te(e, t, "access private method"), s);
 var $t = (e, t, s, i) => ({
   set _(n) {
     o(e, t, n, s);
@@ -150,8 +150,8 @@ function Oe(e, t) {
       return !1;
   }
   if (s !== "all") {
-    const p = t.isActive();
-    if (s === "active" && !p || s === "inactive" && p)
+    const m = t.isActive();
+    if (s === "active" && !m || s === "inactive" && m)
       return !1;
   }
   return !(typeof u == "boolean" && t.isStale() !== u || n && n !== t.state.fetchStatus || a && !a(t));
@@ -188,22 +188,22 @@ function Be(e, t, s = 0) {
   if (s > 500) return t;
   const i = Re(e) && Re(t);
   if (!i && !(se(e) && se(t))) return t;
-  const a = (i ? e : Object.keys(e)).length, h = i ? t : Object.keys(t), u = h.length, p = i ? new Array(u) : {};
-  let m = 0;
-  for (let v = 0; v < u; v++) {
-    const y = i ? v : h[v], g = e[y], d = t[y];
-    if (g === d) {
-      p[y] = g, (i ? v < a : cs.call(e, y)) && m++;
+  const a = (i ? e : Object.keys(e)).length, h = i ? t : Object.keys(t), u = h.length, m = i ? new Array(u) : {};
+  let R = 0;
+  for (let p = 0; p < u; p++) {
+    const d = i ? p : h[p], g = e[d], f = t[d];
+    if (g === f) {
+      m[d] = g, (i ? p < a : cs.call(e, d)) && R++;
       continue;
     }
-    if (g === null || d === null || typeof g != "object" || typeof d != "object") {
-      p[y] = d;
+    if (g === null || f === null || typeof g != "object" || typeof f != "object") {
+      m[d] = f;
       continue;
     }
-    const F = Be(g, d, s + 1);
-    p[y] = F, F === g && m++;
+    const E = Be(g, f, s + 1);
+    m[d] = E, E === g && R++;
   }
-  return a === u && m === a ? e : p;
+  return a === u && R === a ? e : m;
 }
 function Xt(e, t) {
   if (!t || Object.keys(e).length !== Object.keys(t).length)
@@ -312,29 +312,29 @@ function ms() {
     const u = e;
     e = [], u.length && n(() => {
       i(() => {
-        u.forEach((p) => {
-          s(p);
+        u.forEach((m) => {
+          s(m);
         });
       });
     });
   };
   return {
     batch: (u) => {
-      let p;
+      let m;
       t++;
       try {
-        p = u();
+        m = u();
       } finally {
         t--, t || h();
       }
-      return p;
+      return m;
     },
     /**
      * All calls to the wrapped function will be batched.
      */
-    batchCalls: (u) => (...p) => {
+    batchCalls: (u) => (...m) => {
       a(() => {
-        u(...p);
+        u(...m);
       });
     },
     schedule: a,
@@ -357,7 +357,7 @@ function ms() {
     }
   };
 }
-var M = ms(), Rt, nt, Ft, je, vs = (je = class extends qt {
+var Q = ms(), Rt, nt, Ft, je, vs = (je = class extends qt {
   constructor() {
     super();
     c(this, Rt, !0);
@@ -405,49 +405,49 @@ var ne = class extends Error {
 };
 function We(e) {
   let t = !1, s = 0, i;
-  const n = re(), a = () => n.status !== "pending", h = (S) => {
+  const n = re(), a = () => n.status !== "pending", h = (b) => {
     var w;
     if (!a()) {
-      const P = new ne(S);
-      g(P), (w = e.onCancel) == null || w.call(e, P);
+      const C = new ne(b);
+      g(C), (w = e.onCancel) == null || w.call(e, C);
     }
   }, u = () => {
     t = !0;
-  }, p = () => {
+  }, m = () => {
     t = !1;
-  }, m = () => me.isFocused() && (e.networkMode === "always" || Yt.isOnline()) && e.canRun(), v = () => Ve(e.networkMode) && e.canRun(), y = (S) => {
-    a() || (i == null || i(), n.resolve(S));
-  }, g = (S) => {
-    a() || (i == null || i(), n.reject(S));
-  }, d = () => new Promise((S) => {
+  }, R = () => me.isFocused() && (e.networkMode === "always" || Yt.isOnline()) && e.canRun(), p = () => Ve(e.networkMode) && e.canRun(), d = (b) => {
+    a() || (i == null || i(), n.resolve(b));
+  }, g = (b) => {
+    a() || (i == null || i(), n.reject(b));
+  }, f = () => new Promise((b) => {
     var w;
-    i = (P) => {
-      (a() || m()) && S(P);
+    i = (C) => {
+      (a() || R()) && b(C);
     }, (w = e.onPause) == null || w.call(e);
   }).then(() => {
-    var S;
-    i = void 0, a() || (S = e.onContinue) == null || S.call(e);
-  }), F = () => {
+    var b;
+    i = void 0, a() || (b = e.onContinue) == null || b.call(e);
+  }), E = () => {
     if (a())
       return;
-    let S;
+    let b;
     const w = s === 0 ? e.initialPromise : void 0;
     try {
-      S = w ?? e.fn();
-    } catch (P) {
-      S = Promise.reject(P);
+      b = w ?? e.fn();
+    } catch (C) {
+      b = Promise.reject(C);
     }
-    Promise.resolve(S).then(y).catch((P) => {
+    Promise.resolve(b).then(d).catch((C) => {
       var K;
       if (a())
         return;
-      const Q = e.retry ?? (kt.isServer() ? 0 : 3), R = e.retryDelay ?? bs, l = typeof R == "function" ? R(s, P) : R, I = Q === !0 || typeof Q == "number" && s < Q || typeof Q == "function" && Q(s, P);
+      const M = e.retry ?? (kt.isServer() ? 0 : 3), P = e.retryDelay ?? bs, l = typeof P == "function" ? P(s, C) : P, I = M === !0 || typeof M == "number" && s < M || typeof M == "function" && M(s, C);
       if (t || !I) {
-        g(P);
+        g(C);
         return;
       }
-      s++, (K = e.onFail) == null || K.call(e, s, P), ls(l).then(() => m() ? void 0 : d()).then(() => {
-        t ? g(P) : F();
+      s++, (K = e.onFail) == null || K.call(e, s, C), ls(l).then(() => R() ? void 0 : f()).then(() => {
+        t ? g(C) : E();
       });
     });
   };
@@ -457,9 +457,9 @@ function We(e) {
     cancel: h,
     continue: () => (i == null || i(), n),
     cancelRetry: u,
-    continueRetry: p,
-    canStart: v,
-    start: () => (v() ? F() : d().then(F), n)
+    continueRetry: m,
+    canStart: p,
+    start: () => (p() ? E() : f().then(E), n)
   };
 }
 var pt, Ue, $e = (Ue = class {
@@ -487,22 +487,22 @@ var pt, Ue, $e = (Ue = class {
 function gs(e) {
   return {
     onFetch: (t, s) => {
-      var v, y, g, d, F;
-      const i = t.options, n = (g = (y = (v = t.fetchOptions) == null ? void 0 : v.meta) == null ? void 0 : y.fetchMore) == null ? void 0 : g.direction, a = ((d = t.state.data) == null ? void 0 : d.pages) || [], h = ((F = t.state.data) == null ? void 0 : F.pageParams) || [];
-      let u = { pages: [], pageParams: [] }, p = 0;
-      const m = async () => {
-        let S = !1;
-        const w = (R) => {
+      var p, d, g, f, E;
+      const i = t.options, n = (g = (d = (p = t.fetchOptions) == null ? void 0 : p.meta) == null ? void 0 : d.fetchMore) == null ? void 0 : g.direction, a = ((f = t.state.data) == null ? void 0 : f.pages) || [], h = ((E = t.state.data) == null ? void 0 : E.pageParams) || [];
+      let u = { pages: [], pageParams: [] }, m = 0;
+      const R = async () => {
+        let b = !1;
+        const w = (P) => {
           ys(
-            R,
+            P,
             () => t.signal,
-            () => S = !0
+            () => b = !0
           );
-        }, P = ze(t.options, t.fetchOptions), Q = async (R, l, I) => {
-          if (S)
+        }, C = ze(t.options, t.fetchOptions), M = async (P, l, I) => {
+          if (b)
             return Promise.reject(t.signal.reason);
-          if (l == null && R.pages.length)
-            return Promise.resolve(R);
+          if (l == null && P.pages.length)
+            return Promise.resolve(P);
           const tt = (() => {
             const et = {
               client: t.client,
@@ -512,34 +512,34 @@ function gs(e) {
               meta: t.options.meta
             };
             return w(et), et;
-          })(), O = await P(tt), { maxPages: T } = t.options, j = I ? fs : ds;
+          })(), O = await C(tt), { maxPages: T } = t.options, j = I ? fs : ds;
           return {
-            pages: j(R.pages, O, T),
-            pageParams: j(R.pageParams, l, T)
+            pages: j(P.pages, O, T),
+            pageParams: j(P.pageParams, l, T)
           };
         };
         if (n && a.length) {
-          const R = n === "backward", l = R ? Ss : Ee, I = {
+          const P = n === "backward", l = P ? Ss : Ee, I = {
             pages: a,
             pageParams: h
           }, K = l(i, I);
-          u = await Q(I, K, R);
+          u = await M(I, K, P);
         } else {
-          const R = e ?? a.length;
+          const P = e ?? a.length;
           do {
-            const l = p === 0 ? h[0] ?? i.initialPageParam : Ee(i, u);
-            if (p > 0 && l == null)
+            const l = m === 0 ? h[0] ?? i.initialPageParam : Ee(i, u);
+            if (m > 0 && l == null)
               break;
-            u = await Q(u, l), p++;
-          } while (p < R);
+            u = await M(u, l), m++;
+          } while (m < P);
         }
         return u;
       };
       t.options.persister ? t.fetchFn = () => {
-        var S, w;
-        return (w = (S = t.options).persister) == null ? void 0 : w.call(
-          S,
-          m,
+        var b, w;
+        return (w = (b = t.options).persister) == null ? void 0 : w.call(
+          b,
+          R,
           {
             client: t.client,
             queryKey: t.queryKey,
@@ -548,7 +548,7 @@ function gs(e) {
           },
           s
         );
-      } : t.fetchFn = m;
+      } : t.fetchFn = R;
     }
   };
 }
@@ -602,7 +602,7 @@ var Et, mt, Mt, N, vt, D, Lt, bt, L, Je, W, qe, ws = (qe = class extends $e {
   }
   setData(t, s) {
     const i = ie(this.state.data, t, this.options);
-    return f(this, L, W).call(this, {
+    return y(this, L, W).call(this, {
       data: i,
       type: "success",
       dataUpdatedAt: s == null ? void 0 : s.updatedAt,
@@ -610,7 +610,7 @@ var Et, mt, Mt, N, vt, D, Lt, bt, L, Je, W, qe, ws = (qe = class extends $e {
     }), i;
   }
   setState(t) {
-    f(this, L, W).call(this, { type: "setState", state: t });
+    y(this, L, W).call(this, { type: "setState", state: t });
   }
   cancel(t) {
     var i, n;
@@ -664,20 +664,20 @@ var Et, mt, Mt, N, vt, D, Lt, bt, L, Je, W, qe, ws = (qe = class extends $e {
     this.observers.includes(t) || (this.observers.push(t), this.clearGcTimeout(), r(this, N).notify({ type: "observerAdded", query: this, observer: t }));
   }
   removeObserver(t) {
-    this.observers.includes(t) && (this.observers = this.observers.filter((s) => s !== t), this.observers.length || (r(this, D) && (r(this, bt) || f(this, L, Je).call(this) ? r(this, D).cancel({ revert: !0 }) : r(this, D).cancelRetry()), this.scheduleGc()), r(this, N).notify({ type: "observerRemoved", query: this, observer: t }));
+    this.observers.includes(t) && (this.observers = this.observers.filter((s) => s !== t), this.observers.length || (r(this, D) && (r(this, bt) || y(this, L, Je).call(this) ? r(this, D).cancel({ revert: !0 }) : r(this, D).cancelRetry()), this.scheduleGc()), r(this, N).notify({ type: "observerRemoved", query: this, observer: t }));
   }
   getObserversCount() {
     return this.observers.length;
   }
   invalidate() {
-    this.state.isInvalidated || f(this, L, W).call(this, { type: "invalidate" });
+    this.state.isInvalidated || y(this, L, W).call(this, { type: "invalidate" });
   }
   async fetch(t, s) {
-    var m, v, y, g, d, F, S, w, P, Q, R;
+    var R, p, d, g, f, E, b, w, C, M, P;
     if (this.state.fetchStatus !== "idle" && // If the promise in the retryer is already rejected, we have to definitely
     // re-start the fetch; there is a chance that the query is still in a
     // pending state when that happens
-    ((m = r(this, D)) == null ? void 0 : m.status()) !== "rejected") {
+    ((R = r(this, D)) == null ? void 0 : R.status()) !== "rejected") {
       if (this.state.data !== void 0 && (s != null && s.cancelRefetch))
         this.cancel({ silent: !0 });
       else if (r(this, D))
@@ -716,10 +716,10 @@ var Et, mt, Mt, N, vt, D, Lt, bt, L, Je, W, qe, ws = (qe = class extends $e {
         fetchFn: a
       };
       return n(l), l;
-    })(), p = r(this, Et) === "infinite" ? gs(
+    })(), m = r(this, Et) === "infinite" ? gs(
       this.options.pages
     ) : this.options.behavior;
-    p == null || p.onFetch(u, this), o(this, Mt, this.state), (this.state.fetchStatus === "idle" || this.state.fetchMeta !== ((v = u.fetchOptions) == null ? void 0 : v.meta)) && f(this, L, W).call(this, { type: "fetch", meta: (y = u.fetchOptions) == null ? void 0 : y.meta }), o(this, D, We({
+    m == null || m.onFetch(u, this), o(this, Mt, this.state), (this.state.fetchStatus === "idle" || this.state.fetchMeta !== ((p = u.fetchOptions) == null ? void 0 : p.meta)) && y(this, L, W).call(this, { type: "fetch", meta: (d = u.fetchOptions) == null ? void 0 : d.meta }), o(this, D, We({
       initialPromise: s == null ? void 0 : s.initialPromise,
       fn: u.fetchFn,
       onCancel: (l) => {
@@ -729,13 +729,13 @@ var Et, mt, Mt, N, vt, D, Lt, bt, L, Je, W, qe, ws = (qe = class extends $e {
         }), i.abort();
       },
       onFail: (l, I) => {
-        f(this, L, W).call(this, { type: "failed", failureCount: l, error: I });
+        y(this, L, W).call(this, { type: "failed", failureCount: l, error: I });
       },
       onPause: () => {
-        f(this, L, W).call(this, { type: "pause" });
+        y(this, L, W).call(this, { type: "pause" });
       },
       onContinue: () => {
-        f(this, L, W).call(this, { type: "continue" });
+        y(this, L, W).call(this, { type: "continue" });
       },
       retry: u.options.retry,
       retryDelay: u.options.retryDelay,
@@ -746,8 +746,8 @@ var Et, mt, Mt, N, vt, D, Lt, bt, L, Je, W, qe, ws = (qe = class extends $e {
       const l = await r(this, D).start();
       if (l === void 0)
         throw new Error(`${this.queryHash} data is undefined`);
-      return this.setData(l), (d = (g = r(this, N).config).onSuccess) == null || d.call(g, l, this), (S = (F = r(this, N).config).onSettled) == null || S.call(
-        F,
+      return this.setData(l), (f = (g = r(this, N).config).onSuccess) == null || f.call(g, l, this), (b = (E = r(this, N).config).onSettled) == null || b.call(
+        E,
         l,
         this.state.error,
         this
@@ -762,15 +762,15 @@ var Et, mt, Mt, N, vt, D, Lt, bt, L, Je, W, qe, ws = (qe = class extends $e {
           return this.state.data;
         }
       }
-      throw f(this, L, W).call(this, {
+      throw y(this, L, W).call(this, {
         type: "error",
         error: l
-      }), (P = (w = r(this, N).config).onError) == null || P.call(
+      }), (C = (w = r(this, N).config).onError) == null || C.call(
         w,
         l,
         this
-      ), (R = (Q = r(this, N).config).onSettled) == null || R.call(
-        Q,
+      ), (P = (M = r(this, N).config).onSettled) == null || P.call(
+        M,
         this.state.data,
         l,
         this
@@ -845,7 +845,7 @@ var Et, mt, Mt, N, vt, D, Lt, bt, L, Je, W, qe, ws = (qe = class extends $e {
         };
     }
   };
-  this.state = s(this.state), M.batch(() => {
+  this.state = s(this.state), Q.batch(() => {
     this.observers.forEach((i) => {
       i.onQueryUpdate();
     }), r(this, N).notify({ query: this, type: "updated", action: t });
@@ -888,12 +888,12 @@ function Qe(e) {
     fetchStatus: "idle"
   };
 }
-var _, b, Ht, U, gt, Qt, $, at, Nt, It, Tt, St, wt, ot, Dt, C, Kt, ae, oe, ue, he, ce, le, de, Xe, Ke, Cs = (Ke = class extends qt {
+var _, v, Ht, U, gt, Qt, $, at, Nt, It, Tt, St, wt, ot, Dt, S, Kt, ae, oe, ue, he, ce, le, de, Xe, Ke, Cs = (Ke = class extends qt {
   constructor(t, s) {
     super();
-    c(this, C);
+    c(this, S);
     c(this, _);
-    c(this, b);
+    c(this, v);
     c(this, Ht);
     c(this, U);
     c(this, gt);
@@ -915,52 +915,52 @@ var _, b, Ht, U, gt, Qt, $, at, Nt, It, Tt, St, wt, ot, Dt, C, Kt, ae, oe, ue, h
     this.refetch = this.refetch.bind(this);
   }
   onSubscribe() {
-    this.listeners.size === 1 && (r(this, b).addObserver(this), Ie(r(this, b), this.options) ? f(this, C, Kt).call(this) : this.updateResult(), f(this, C, he).call(this));
+    this.listeners.size === 1 && (r(this, v).addObserver(this), Ie(r(this, v), this.options) ? y(this, S, Kt).call(this) : this.updateResult(), y(this, S, he).call(this));
   }
   onUnsubscribe() {
     this.hasListeners() || this.destroy();
   }
   shouldFetchOnReconnect() {
     return fe(
-      r(this, b),
+      r(this, v),
       this.options,
       this.options.refetchOnReconnect
     );
   }
   shouldFetchOnWindowFocus() {
     return fe(
-      r(this, b),
+      r(this, v),
       this.options,
       this.options.refetchOnWindowFocus
     );
   }
   destroy() {
-    this.listeners = /* @__PURE__ */ new Set(), f(this, C, ce).call(this), f(this, C, le).call(this), r(this, b).removeObserver(this);
+    this.listeners = /* @__PURE__ */ new Set(), y(this, S, ce).call(this), y(this, S, le).call(this), r(this, v).removeObserver(this);
   }
   setOptions(t) {
-    const s = this.options, i = r(this, b);
-    if (this.options = r(this, _).defaultQueryOptions(t), this.options.enabled !== void 0 && typeof this.options.enabled != "boolean" && typeof this.options.enabled != "function" && typeof H(this.options.enabled, r(this, b)) != "boolean")
+    const s = this.options, i = r(this, v);
+    if (this.options = r(this, _).defaultQueryOptions(t), this.options.enabled !== void 0 && typeof this.options.enabled != "boolean" && typeof this.options.enabled != "function" && typeof H(this.options.enabled, r(this, v)) != "boolean")
       throw new Error(
         "Expected enabled to be a boolean or a callback that returns a boolean"
       );
-    f(this, C, de).call(this), r(this, b).setOptions(this.options), s._defaulted && !Xt(this.options, s) && r(this, _).getQueryCache().notify({
+    y(this, S, de).call(this), r(this, v).setOptions(this.options), s._defaulted && !Xt(this.options, s) && r(this, _).getQueryCache().notify({
       type: "observerOptionsUpdated",
-      query: r(this, b),
+      query: r(this, v),
       observer: this
     });
     const n = this.hasListeners();
     n && Te(
-      r(this, b),
+      r(this, v),
       i,
       this.options,
       s
-    ) && f(this, C, Kt).call(this), this.updateResult(), n && (r(this, b) !== i || H(this.options.enabled, r(this, b)) !== H(s.enabled, r(this, b)) || dt(this.options.staleTime, r(this, b)) !== dt(s.staleTime, r(this, b))) && f(this, C, ae).call(this);
-    const a = f(this, C, oe).call(this);
-    n && (r(this, b) !== i || H(this.options.enabled, r(this, b)) !== H(s.enabled, r(this, b)) || a !== r(this, ot)) && f(this, C, ue).call(this, a);
+    ) && y(this, S, Kt).call(this), this.updateResult(), n && (r(this, v) !== i || H(this.options.enabled, r(this, v)) !== H(s.enabled, r(this, v)) || dt(this.options.staleTime, r(this, v)) !== dt(s.staleTime, r(this, v))) && y(this, S, ae).call(this);
+    const a = y(this, S, oe).call(this);
+    n && (r(this, v) !== i || H(this.options.enabled, r(this, v)) !== H(s.enabled, r(this, v)) || a !== r(this, ot)) && y(this, S, ue).call(this, a);
   }
   getOptimisticResult(t) {
     const s = r(this, _).getQueryCache().build(r(this, _), t), i = this.createResult(s, t);
-    return Ps(this, i) && (o(this, U, i), o(this, Qt, this.options), o(this, gt, r(this, b).state)), i;
+    return Ps(this, i) && (o(this, U, i), o(this, Qt, this.options), o(this, gt, r(this, v).state)), i;
   }
   getCurrentResult() {
     return r(this, U);
@@ -978,7 +978,7 @@ var _, b, Ht, U, gt, Qt, $, at, Nt, It, Tt, St, wt, ot, Dt, C, Kt, ae, oe, ue, h
     r(this, Dt).add(t);
   }
   getCurrentQuery() {
-    return r(this, b);
+    return r(this, v);
   }
   refetch({ ...t } = {}) {
     return this.fetch({
@@ -990,67 +990,67 @@ var _, b, Ht, U, gt, Qt, $, at, Nt, It, Tt, St, wt, ot, Dt, C, Kt, ae, oe, ue, h
     return i.fetch().then(() => this.createResult(i, s));
   }
   fetch(t) {
-    return f(this, C, Kt).call(this, {
+    return y(this, S, Kt).call(this, {
       ...t,
       cancelRefetch: t.cancelRefetch ?? !0
     }).then(() => (this.updateResult(), r(this, U)));
   }
   createResult(t, s) {
     var T;
-    const i = r(this, b), n = this.options, a = r(this, U), h = r(this, gt), u = r(this, Qt), m = t !== i ? t.state : r(this, Ht), { state: v } = t;
-    let y = { ...v }, g = !1, d;
+    const i = r(this, v), n = this.options, a = r(this, U), h = r(this, gt), u = r(this, Qt), R = t !== i ? t.state : r(this, Ht), { state: p } = t;
+    let d = { ...p }, g = !1, f;
     if (s._optimisticResults) {
       const j = this.hasListeners(), et = !j && Ie(t, s), zt = j && Te(t, i, s, n);
-      (et || zt) && (y = {
-        ...y,
-        ...Ze(v.data, t.options)
-      }), s._optimisticResults === "isRestoring" && (y.fetchStatus = "idle");
+      (et || zt) && (d = {
+        ...d,
+        ...Ze(p.data, t.options)
+      }), s._optimisticResults === "isRestoring" && (d.fetchStatus = "idle");
     }
-    let { error: F, errorUpdatedAt: S, status: w } = y;
-    d = y.data;
-    let P = !1;
-    if (s.placeholderData !== void 0 && d === void 0 && w === "pending") {
+    let { error: E, errorUpdatedAt: b, status: w } = d;
+    f = d.data;
+    let C = !1;
+    if (s.placeholderData !== void 0 && f === void 0 && w === "pending") {
       let j;
-      a != null && a.isPlaceholderData && s.placeholderData === (u == null ? void 0 : u.placeholderData) ? (j = a.data, P = !0) : j = typeof s.placeholderData == "function" ? s.placeholderData(
+      a != null && a.isPlaceholderData && s.placeholderData === (u == null ? void 0 : u.placeholderData) ? (j = a.data, C = !0) : j = typeof s.placeholderData == "function" ? s.placeholderData(
         (T = r(this, Tt)) == null ? void 0 : T.state.data,
         r(this, Tt)
-      ) : s.placeholderData, j !== void 0 && (w = "success", d = ie(
+      ) : s.placeholderData, j !== void 0 && (w = "success", f = ie(
         a == null ? void 0 : a.data,
         j,
         s
       ), g = !0);
     }
-    if (s.select && d !== void 0 && !P)
-      if (a && d === (h == null ? void 0 : h.data) && s.select === r(this, Nt))
-        d = r(this, It);
+    if (s.select && f !== void 0 && !C)
+      if (a && f === (h == null ? void 0 : h.data) && s.select === r(this, Nt))
+        f = r(this, It);
       else
         try {
-          o(this, Nt, s.select), d = s.select(d), d = ie(a == null ? void 0 : a.data, d, s), o(this, It, d), o(this, at, null);
+          o(this, Nt, s.select), f = s.select(f), f = ie(a == null ? void 0 : a.data, f, s), o(this, It, f), o(this, at, null);
         } catch (j) {
           o(this, at, j);
         }
-    r(this, at) && (F = r(this, at), d = r(this, It), S = Date.now(), w = "error");
-    const Q = y.fetchStatus === "fetching", R = w === "pending", l = w === "error", I = R && Q, K = d !== void 0, O = {
+    r(this, at) && (E = r(this, at), f = r(this, It), b = Date.now(), w = "error");
+    const M = d.fetchStatus === "fetching", P = w === "pending", l = w === "error", I = P && M, K = f !== void 0, O = {
       status: w,
-      fetchStatus: y.fetchStatus,
-      isPending: R,
+      fetchStatus: d.fetchStatus,
+      isPending: P,
       isSuccess: w === "success",
       isError: l,
       isInitialLoading: I,
       isLoading: I,
-      data: d,
-      dataUpdatedAt: y.dataUpdatedAt,
-      error: F,
-      errorUpdatedAt: S,
-      failureCount: y.fetchFailureCount,
-      failureReason: y.fetchFailureReason,
-      errorUpdateCount: y.errorUpdateCount,
+      data: f,
+      dataUpdatedAt: d.dataUpdatedAt,
+      error: E,
+      errorUpdatedAt: b,
+      failureCount: d.fetchFailureCount,
+      failureReason: d.fetchFailureReason,
+      errorUpdateCount: d.errorUpdateCount,
       isFetched: t.isFetched(),
-      isFetchedAfterMount: y.dataUpdateCount > m.dataUpdateCount || y.errorUpdateCount > m.errorUpdateCount,
-      isFetching: Q,
-      isRefetching: Q && !R,
+      isFetchedAfterMount: d.dataUpdateCount > R.dataUpdateCount || d.errorUpdateCount > R.errorUpdateCount,
+      isFetching: M,
+      isRefetching: M && !P,
       isLoadingError: l && !K,
-      isPaused: y.fetchStatus === "paused",
+      isPaused: d.fetchStatus === "paused",
       isPlaceholderData: g,
       isRefetchError: l && K,
       isStale: Se(t, s),
@@ -1080,8 +1080,8 @@ var _, b, Ht, U, gt, Qt, $, at, Nt, It, Tt, St, wt, ot, Dt, C, Kt, ae, oe, ue, h
     return O;
   }
   updateResult() {
-    const t = r(this, U), s = this.createResult(r(this, b), this.options);
-    if (o(this, gt, r(this, b).state), o(this, Qt, this.options), r(this, gt).data !== void 0 && o(this, Tt, r(this, b)), Xt(s, t))
+    const t = r(this, U), s = this.createResult(r(this, v), this.options);
+    if (o(this, gt, r(this, v).state), o(this, Qt, this.options), r(this, gt).data !== void 0 && o(this, Tt, r(this, v)), Xt(s, t))
       return;
     o(this, U, s);
     const i = () => {
@@ -1094,27 +1094,27 @@ var _, b, Ht, U, gt, Qt, $, at, Nt, It, Tt, St, wt, ot, Dt, C, Kt, ae, oe, ue, h
         a ?? r(this, Dt)
       );
       return this.options.throwOnError && h.add("error"), Object.keys(r(this, U)).some((u) => {
-        const p = u;
-        return r(this, U)[p] !== t[p] && h.has(p);
+        const m = u;
+        return r(this, U)[m] !== t[m] && h.has(m);
       });
     };
-    f(this, C, Xe).call(this, { listeners: i() });
+    y(this, S, Xe).call(this, { listeners: i() });
   }
   onQueryUpdate() {
-    this.updateResult(), this.hasListeners() && f(this, C, he).call(this);
+    this.updateResult(), this.hasListeners() && y(this, S, he).call(this);
   }
-}, _ = new WeakMap(), b = new WeakMap(), Ht = new WeakMap(), U = new WeakMap(), gt = new WeakMap(), Qt = new WeakMap(), $ = new WeakMap(), at = new WeakMap(), Nt = new WeakMap(), It = new WeakMap(), Tt = new WeakMap(), St = new WeakMap(), wt = new WeakMap(), ot = new WeakMap(), Dt = new WeakMap(), C = new WeakSet(), Kt = function(t) {
-  f(this, C, de).call(this);
-  let s = r(this, b).fetch(
+}, _ = new WeakMap(), v = new WeakMap(), Ht = new WeakMap(), U = new WeakMap(), gt = new WeakMap(), Qt = new WeakMap(), $ = new WeakMap(), at = new WeakMap(), Nt = new WeakMap(), It = new WeakMap(), Tt = new WeakMap(), St = new WeakMap(), wt = new WeakMap(), ot = new WeakMap(), Dt = new WeakMap(), S = new WeakSet(), Kt = function(t) {
+  y(this, S, de).call(this);
+  let s = r(this, v).fetch(
     this.options,
     t
   );
   return t != null && t.throwOnError || (s = s.catch(q)), s;
 }, ae = function() {
-  f(this, C, ce).call(this);
+  y(this, S, ce).call(this);
   const t = dt(
     this.options.staleTime,
-    r(this, b)
+    r(this, v)
   );
   if (kt.isServer() || r(this, U).isStale || !ee(t))
     return;
@@ -1123,29 +1123,29 @@ var _, b, Ht, U, gt, Qt, $, at, Nt, It, Tt, St, wt, ot, Dt, C, Kt, ae, oe, ue, h
     r(this, U).isStale || this.updateResult();
   }, i));
 }, oe = function() {
-  return (typeof this.options.refetchInterval == "function" ? this.options.refetchInterval(r(this, b)) : this.options.refetchInterval) ?? !1;
+  return (typeof this.options.refetchInterval == "function" ? this.options.refetchInterval(r(this, v)) : this.options.refetchInterval) ?? !1;
 }, ue = function(t) {
-  f(this, C, le).call(this), o(this, ot, t), !(kt.isServer() || H(this.options.enabled, r(this, b)) === !1 || !ee(r(this, ot)) || r(this, ot) === 0) && o(this, wt, ft.setInterval(() => {
-    (this.options.refetchIntervalInBackground || me.isFocused()) && f(this, C, Kt).call(this);
+  y(this, S, le).call(this), o(this, ot, t), !(kt.isServer() || H(this.options.enabled, r(this, v)) === !1 || !ee(r(this, ot)) || r(this, ot) === 0) && o(this, wt, ft.setInterval(() => {
+    (this.options.refetchIntervalInBackground || me.isFocused()) && y(this, S, Kt).call(this);
   }, r(this, ot)));
 }, he = function() {
-  f(this, C, ae).call(this), f(this, C, ue).call(this, f(this, C, oe).call(this));
+  y(this, S, ae).call(this), y(this, S, ue).call(this, y(this, S, oe).call(this));
 }, ce = function() {
   r(this, St) !== void 0 && (ft.clearTimeout(r(this, St)), o(this, St, void 0));
 }, le = function() {
   r(this, wt) !== void 0 && (ft.clearInterval(r(this, wt)), o(this, wt, void 0));
 }, de = function() {
   const t = r(this, _).getQueryCache().build(r(this, _), this.options);
-  if (t === r(this, b))
+  if (t === r(this, v))
     return;
-  const s = r(this, b);
-  o(this, b, t), o(this, Ht, t.state), this.hasListeners() && (s == null || s.removeObserver(this), t.addObserver(this));
+  const s = r(this, v);
+  o(this, v, t), o(this, Ht, t.state), this.hasListeners() && (s == null || s.removeObserver(this), t.addObserver(this));
 }, Xe = function(t) {
-  M.batch(() => {
+  Q.batch(() => {
     t.listeners && this.listeners.forEach((s) => {
       s(r(this, U));
     }), r(this, _).getQueryCache().notify({
-      query: r(this, b),
+      query: r(this, v),
       type: "observerResultsUpdated"
     });
   });
@@ -1211,9 +1211,9 @@ var Gt, B, A, Ct, z, st, _e, Rs = (_e = class extends $e {
     this.execute(this.state.variables);
   }
   async execute(t) {
-    var h, u, p, m, v, y, g, d, F, S, w, P, Q, R, l, I, K, tt;
+    var h, u, m, R, p, d, g, f, E, b, w, C, M, P, l, I, K, tt;
     const s = () => {
-      f(this, z, st).call(this, { type: "continue" });
+      y(this, z, st).call(this, { type: "continue" });
     }, i = {
       client: r(this, Gt),
       meta: this.options.meta,
@@ -1222,10 +1222,10 @@ var Gt, B, A, Ct, z, st, _e, Rs = (_e = class extends $e {
     o(this, Ct, We({
       fn: () => this.options.mutationFn ? this.options.mutationFn(t, i) : Promise.reject(new Error("No mutationFn found")),
       onFail: (O, T) => {
-        f(this, z, st).call(this, { type: "failed", failureCount: O, error: T });
+        y(this, z, st).call(this, { type: "failed", failureCount: O, error: T });
       },
       onPause: () => {
-        f(this, z, st).call(this, { type: "pause" });
+        y(this, z, st).call(this, { type: "pause" });
       },
       onContinue: s,
       retry: this.options.retry ?? 0,
@@ -1238,7 +1238,7 @@ var Gt, B, A, Ct, z, st, _e, Rs = (_e = class extends $e {
       if (n)
         s();
       else {
-        f(this, z, st).call(this, { type: "pending", variables: t, isPaused: a }), r(this, A).config.onMutate && await r(this, A).config.onMutate(
+        y(this, z, st).call(this, { type: "pending", variables: t, isPaused: a }), r(this, A).config.onMutate && await r(this, A).config.onMutate(
           t,
           this,
           i
@@ -1248,7 +1248,7 @@ var Gt, B, A, Ct, z, st, _e, Rs = (_e = class extends $e {
           t,
           i
         ));
-        T !== this.state.context && f(this, z, st).call(this, {
+        T !== this.state.context && y(this, z, st).call(this, {
           type: "pending",
           context: T,
           variables: t,
@@ -1256,20 +1256,20 @@ var Gt, B, A, Ct, z, st, _e, Rs = (_e = class extends $e {
         });
       }
       const O = await r(this, Ct).start();
-      return await ((m = (p = r(this, A).config).onSuccess) == null ? void 0 : m.call(
-        p,
+      return await ((R = (m = r(this, A).config).onSuccess) == null ? void 0 : R.call(
+        m,
         O,
         t,
         this.state.context,
         this,
         i
-      )), await ((y = (v = this.options).onSuccess) == null ? void 0 : y.call(
-        v,
+      )), await ((d = (p = this.options).onSuccess) == null ? void 0 : d.call(
+        p,
         O,
         t,
         this.state.context,
         i
-      )), await ((d = (g = r(this, A).config).onSettled) == null ? void 0 : d.call(
+      )), await ((f = (g = r(this, A).config).onSettled) == null ? void 0 : f.call(
         g,
         O,
         null,
@@ -1277,17 +1277,17 @@ var Gt, B, A, Ct, z, st, _e, Rs = (_e = class extends $e {
         this.state.context,
         this,
         i
-      )), await ((S = (F = this.options).onSettled) == null ? void 0 : S.call(
-        F,
+      )), await ((b = (E = this.options).onSettled) == null ? void 0 : b.call(
+        E,
         O,
         null,
         t,
         this.state.context,
         i
-      )), f(this, z, st).call(this, { type: "success", data: O }), O;
+      )), y(this, z, st).call(this, { type: "success", data: O }), O;
     } catch (O) {
       try {
-        await ((P = (w = r(this, A).config).onError) == null ? void 0 : P.call(
+        await ((C = (w = r(this, A).config).onError) == null ? void 0 : C.call(
           w,
           O,
           t,
@@ -1299,8 +1299,8 @@ var Gt, B, A, Ct, z, st, _e, Rs = (_e = class extends $e {
         Promise.reject(T);
       }
       try {
-        await ((R = (Q = this.options).onError) == null ? void 0 : R.call(
-          Q,
+        await ((P = (M = this.options).onError) == null ? void 0 : P.call(
+          M,
           O,
           t,
           this.state.context,
@@ -1334,7 +1334,7 @@ var Gt, B, A, Ct, z, st, _e, Rs = (_e = class extends $e {
       } catch (T) {
         Promise.reject(T);
       }
-      throw f(this, z, st).call(this, { type: "error", error: O }), O;
+      throw y(this, z, st).call(this, { type: "error", error: O }), O;
     } finally {
       r(this, A).runNext(this);
     }
@@ -1393,7 +1393,7 @@ var Gt, B, A, Ct, z, st, _e, Rs = (_e = class extends $e {
         };
     }
   };
-  this.state = s(this.state), M.batch(() => {
+  this.state = s(this.state), Q.batch(() => {
     r(this, B).forEach((i) => {
       i.onMutationUpdate(t);
     }), r(this, A).notify({
@@ -1477,7 +1477,7 @@ var J, G, Bt, ke, Fs = (ke = class extends qt {
       return Promise.resolve();
   }
   clear() {
-    M.batch(() => {
+    Q.batch(() => {
       r(this, J).forEach((t) => {
         this.notify({ type: "removed", mutation: t });
       }), r(this, J).clear(), r(this, G).clear();
@@ -1496,7 +1496,7 @@ var J, G, Bt, ke, Fs = (ke = class extends qt {
     return this.getAll().filter((s) => Pe(t, s));
   }
   notify(t) {
-    M.batch(() => {
+    Q.batch(() => {
       this.listeners.forEach((s) => {
         s(t);
       });
@@ -1504,7 +1504,7 @@ var J, G, Bt, ke, Fs = (ke = class extends qt {
   }
   resumePausedMutations() {
     const t = this.getAll().filter((s) => s.state.isPaused);
-    return M.batch(
+    return Q.batch(
       () => Promise.all(
         t.map((s) => s.continue().catch(q))
       )
@@ -1523,7 +1523,7 @@ var Z, ut, k, X, Y, Zt, ye, Le, Es = (Le = class extends qt {
     c(this, ut);
     c(this, k);
     c(this, X);
-    o(this, Z, t), this.setOptions(s), this.bindMethods(), f(this, Y, Zt).call(this);
+    o(this, Z, t), this.setOptions(s), this.bindMethods(), y(this, Y, Zt).call(this);
   }
   bindMethods() {
     this.mutate = this.mutate.bind(this), this.reset = this.reset.bind(this);
@@ -1542,14 +1542,14 @@ var Z, ut, k, X, Y, Zt, ye, Le, Es = (Le = class extends qt {
     this.hasListeners() || (t = r(this, k)) == null || t.removeObserver(this);
   }
   onMutationUpdate(t) {
-    f(this, Y, Zt).call(this), f(this, Y, ye).call(this, t);
+    y(this, Y, Zt).call(this), y(this, Y, ye).call(this, t);
   }
   getCurrentResult() {
     return r(this, ut);
   }
   reset() {
     var t;
-    (t = r(this, k)) == null || t.removeObserver(this), o(this, k, void 0), f(this, Y, Zt).call(this), f(this, Y, ye).call(this);
+    (t = r(this, k)) == null || t.removeObserver(this), o(this, k, void 0), y(this, Y, Zt).call(this), y(this, Y, ye).call(this);
   }
   mutate(t, s) {
     var i;
@@ -1568,10 +1568,10 @@ var Z, ut, k, X, Y, Zt, ye, Le, Es = (Le = class extends qt {
     reset: this.reset
   });
 }, ye = function(t) {
-  M.batch(() => {
-    var s, i, n, a, h, u, p, m;
+  Q.batch(() => {
+    var s, i, n, a, h, u, m, R;
     if (r(this, X) && this.hasListeners()) {
-      const v = r(this, ut).variables, y = r(this, ut).context, g = {
+      const p = r(this, ut).variables, d = r(this, ut).context, g = {
         client: r(this, Z),
         meta: this.options.meta,
         mutationKey: this.options.mutationKey
@@ -1581,53 +1581,53 @@ var Z, ut, k, X, Y, Zt, ye, Le, Es = (Le = class extends qt {
           (i = (s = r(this, X)).onSuccess) == null || i.call(
             s,
             t.data,
-            v,
-            y,
+            p,
+            d,
             g
           );
-        } catch (d) {
-          Promise.reject(d);
+        } catch (f) {
+          Promise.reject(f);
         }
         try {
           (a = (n = r(this, X)).onSettled) == null || a.call(
             n,
             t.data,
             null,
-            v,
-            y,
+            p,
+            d,
             g
           );
-        } catch (d) {
-          Promise.reject(d);
+        } catch (f) {
+          Promise.reject(f);
         }
       } else if ((t == null ? void 0 : t.type) === "error") {
         try {
           (u = (h = r(this, X)).onError) == null || u.call(
             h,
             t.error,
-            v,
-            y,
+            p,
+            d,
             g
           );
-        } catch (d) {
-          Promise.reject(d);
+        } catch (f) {
+          Promise.reject(f);
         }
         try {
-          (m = (p = r(this, X)).onSettled) == null || m.call(
-            p,
+          (R = (m = r(this, X)).onSettled) == null || R.call(
+            m,
             void 0,
             t.error,
-            v,
-            y,
+            p,
+            d,
             g
           );
-        } catch (d) {
-          Promise.reject(d);
+        } catch (f) {
+          Promise.reject(f);
         }
       }
     }
-    this.listeners.forEach((v) => {
-      v(r(this, ut));
+    this.listeners.forEach((p) => {
+      p(r(this, ut));
     });
   });
 }, Le), V, He, Ms = (He = class extends qt {
@@ -1659,7 +1659,7 @@ var Z, ut, k, X, Y, Zt, ye, Le, Es = (Le = class extends qt {
     s && (t.destroy(), s === t && r(this, V).delete(t.queryHash), this.notify({ type: "removed", query: t }));
   }
   clear() {
-    M.batch(() => {
+    Q.batch(() => {
       this.getAll().forEach((t) => {
         this.remove(t);
       });
@@ -1682,29 +1682,29 @@ var Z, ut, k, X, Y, Zt, ye, Le, Es = (Le = class extends qt {
     return Object.keys(t).length > 0 ? s.filter((i) => Oe(t, i)) : s;
   }
   notify(t) {
-    M.batch(() => {
+    Q.batch(() => {
       this.listeners.forEach((s) => {
         s(t);
       });
     });
   }
   onFocus() {
-    M.batch(() => {
+    Q.batch(() => {
       this.getAll().forEach((t) => {
         t.onFocus();
       });
     });
   }
   onOnline() {
-    M.batch(() => {
+    Q.batch(() => {
       this.getAll().forEach((t) => {
         t.onOnline();
       });
     });
   }
-}, V = new WeakMap(), He), E, ht, ct, xt, At, lt, jt, Ut, Ne, Hs = (Ne = class {
+}, V = new WeakMap(), He), F, ht, ct, xt, At, lt, jt, Ut, Ne, Hs = (Ne = class {
   constructor(e = {}) {
-    c(this, E);
+    c(this, F);
     c(this, ht);
     c(this, ct);
     c(this, xt);
@@ -1712,13 +1712,13 @@ var Z, ut, k, X, Y, Zt, ye, Le, Es = (Le = class extends qt {
     c(this, lt);
     c(this, jt);
     c(this, Ut);
-    o(this, E, e.queryCache || new Ms()), o(this, ht, e.mutationCache || new Fs()), o(this, ct, e.defaultOptions || {}), o(this, xt, /* @__PURE__ */ new Map()), o(this, At, /* @__PURE__ */ new Map()), o(this, lt, 0);
+    o(this, F, e.queryCache || new Ms()), o(this, ht, e.mutationCache || new Fs()), o(this, ct, e.defaultOptions || {}), o(this, xt, /* @__PURE__ */ new Map()), o(this, At, /* @__PURE__ */ new Map()), o(this, lt, 0);
   }
   mount() {
     $t(this, lt)._++, r(this, lt) === 1 && (o(this, jt, me.subscribe(async (e) => {
-      e && (await this.resumePausedMutations(), r(this, E).onFocus());
+      e && (await this.resumePausedMutations(), r(this, F).onFocus());
     })), o(this, Ut, Yt.subscribe(async (e) => {
-      e && (await this.resumePausedMutations(), r(this, E).onOnline());
+      e && (await this.resumePausedMutations(), r(this, F).onOnline());
     })));
   }
   unmount() {
@@ -1726,7 +1726,7 @@ var Z, ut, k, X, Y, Zt, ye, Le, Es = (Le = class extends qt {
     $t(this, lt)._--, r(this, lt) === 0 && ((e = r(this, jt)) == null || e.call(this), o(this, jt, void 0), (t = r(this, Ut)) == null || t.call(this), o(this, Ut, void 0));
   }
   isFetching(e) {
-    return r(this, E).findAll({ ...e, fetchStatus: "fetching" }).length;
+    return r(this, F).findAll({ ...e, fetchStatus: "fetching" }).length;
   }
   isMutating(e) {
     return r(this, ht).findAll({ ...e, status: "pending" }).length;
@@ -1741,28 +1741,28 @@ var Z, ut, k, X, Y, Zt, ye, Le, Es = (Le = class extends qt {
   getQueryData(e) {
     var s;
     const t = this.defaultQueryOptions({ queryKey: e });
-    return (s = r(this, E).get(t.queryHash)) == null ? void 0 : s.state.data;
+    return (s = r(this, F).get(t.queryHash)) == null ? void 0 : s.state.data;
   }
   ensureQueryData(e) {
-    const t = this.defaultQueryOptions(e), s = r(this, E).build(this, t), i = s.state.data;
+    const t = this.defaultQueryOptions(e), s = r(this, F).build(this, t), i = s.state.data;
     return i === void 0 ? this.fetchQuery(e) : (e.revalidateIfStale && s.isStaleByTime(dt(t.staleTime, s)) && this.prefetchQuery(t), Promise.resolve(i));
   }
   getQueriesData(e) {
-    return r(this, E).findAll(e).map(({ queryKey: t, state: s }) => {
+    return r(this, F).findAll(e).map(({ queryKey: t, state: s }) => {
       const i = s.data;
       return [t, i];
     });
   }
   setQueryData(e, t, s) {
-    const i = this.defaultQueryOptions({ queryKey: e }), n = r(this, E).get(
+    const i = this.defaultQueryOptions({ queryKey: e }), n = r(this, F).get(
       i.queryHash
     ), a = n == null ? void 0 : n.state.data, h = hs(t, a);
     if (h !== void 0)
-      return r(this, E).build(this, i).setData(h, { ...s, manual: !0 });
+      return r(this, F).build(this, i).setData(h, { ...s, manual: !0 });
   }
   setQueriesData(e, t, s) {
-    return M.batch(
-      () => r(this, E).findAll(e).map(({ queryKey: i }) => [
+    return Q.batch(
+      () => r(this, F).findAll(e).map(({ queryKey: i }) => [
         i,
         this.setQueryData(i, t, s)
       ])
@@ -1771,21 +1771,21 @@ var Z, ut, k, X, Y, Zt, ye, Le, Es = (Le = class extends qt {
   getQueryState(e) {
     var s;
     const t = this.defaultQueryOptions({ queryKey: e });
-    return (s = r(this, E).get(
+    return (s = r(this, F).get(
       t.queryHash
     )) == null ? void 0 : s.state;
   }
   removeQueries(e) {
-    const t = r(this, E);
-    M.batch(() => {
+    const t = r(this, F);
+    Q.batch(() => {
       t.findAll(e).forEach((s) => {
         t.remove(s);
       });
     });
   }
   resetQueries(e, t) {
-    const s = r(this, E);
-    return M.batch(() => (s.findAll(e).forEach((i) => {
+    const s = r(this, F);
+    return Q.batch(() => (s.findAll(e).forEach((i) => {
       i.reset();
     }), this.refetchQueries(
       {
@@ -1796,13 +1796,13 @@ var Z, ut, k, X, Y, Zt, ye, Le, Es = (Le = class extends qt {
     )));
   }
   cancelQueries(e, t = {}) {
-    const s = { revert: !0, ...t }, i = M.batch(
-      () => r(this, E).findAll(e).map((n) => n.cancel(s))
+    const s = { revert: !0, ...t }, i = Q.batch(
+      () => r(this, F).findAll(e).map((n) => n.cancel(s))
     );
     return Promise.all(i).then(q).catch(q);
   }
   invalidateQueries(e, t = {}) {
-    return M.batch(() => (r(this, E).findAll(e).forEach((s) => {
+    return Q.batch(() => (r(this, F).findAll(e).forEach((s) => {
       s.invalidate();
     }), (e == null ? void 0 : e.refetchType) === "none" ? Promise.resolve() : this.refetchQueries(
       {
@@ -1816,8 +1816,8 @@ var Z, ut, k, X, Y, Zt, ye, Le, Es = (Le = class extends qt {
     const s = {
       ...t,
       cancelRefetch: t.cancelRefetch ?? !0
-    }, i = M.batch(
-      () => r(this, E).findAll(e).filter((n) => !n.isDisabled() && !n.isStatic()).map((n) => {
+    }, i = Q.batch(
+      () => r(this, F).findAll(e).filter((n) => !n.isDisabled() && !n.isStatic()).map((n) => {
         let a = n.fetch(void 0, s);
         return s.throwOnError || (a = a.catch(q)), n.state.fetchStatus === "paused" ? Promise.resolve() : a;
       })
@@ -1827,7 +1827,7 @@ var Z, ut, k, X, Y, Zt, ye, Le, Es = (Le = class extends qt {
   fetchQuery(e) {
     const t = this.defaultQueryOptions(e);
     t.retry === void 0 && (t.retry = !1);
-    const s = r(this, E).build(this, t);
+    const s = r(this, F).build(this, t);
     return s.isStaleByTime(
       dt(t.staleTime, s)
     ) ? s.fetch(t) : Promise.resolve(s.state.data);
@@ -1848,7 +1848,7 @@ var Z, ut, k, X, Y, Zt, ye, Le, Es = (Le = class extends qt {
     return Yt.isOnline() ? r(this, ht).resumePausedMutations() : Promise.resolve();
   }
   getQueryCache() {
-    return r(this, E);
+    return r(this, F);
   }
   getMutationCache() {
     return r(this, ht);
@@ -1906,9 +1906,9 @@ var Z, ut, k, X, Y, Zt, ye, Le, Es = (Le = class extends qt {
     };
   }
   clear() {
-    r(this, E).clear(), r(this, ht).clear();
+    r(this, F).clear(), r(this, ht).clear();
   }
-}, E = new WeakMap(), ht = new WeakMap(), ct = new WeakMap(), xt = new WeakMap(), At = new WeakMap(), lt = new WeakMap(), jt = new WeakMap(), Ut = new WeakMap(), Ne), ts = x.createContext(
+}, F = new WeakMap(), ht = new WeakMap(), ct = new WeakMap(), xt = new WeakMap(), At = new WeakMap(), lt = new WeakMap(), jt = new WeakMap(), Ut = new WeakMap(), Ne), ts = x.createContext(
   void 0
 ), es = (e) => {
   const t = x.useContext(ts);
@@ -1959,59 +1959,59 @@ var Ts = x.createContext(Is()), Ds = () => x.useContext(Ts), xs = (e, t, s) => {
   s.clearReset();
 });
 function _s(e, t, s) {
-  var g, d, F, S;
+  var f, E, b, w;
   const i = Qs(), n = Ds(), a = es(), h = a.defaultQueryOptions(e);
-  (d = (g = a.getDefaultOptions().queries) == null ? void 0 : g._experimental_beforeQuery) == null || d.call(
-    g,
+  (E = (f = a.getDefaultOptions().queries) == null ? void 0 : f._experimental_beforeQuery) == null || E.call(
+    f,
     h
   );
-  const u = a.getQueryCache().get(h.queryHash);
-  h._optimisticResults = i ? "isRestoring" : "optimistic", Us(h), xs(h, n, u), As(n);
-  const p = !a.getQueryCache().get(h.queryHash), [m] = x.useState(
+  const u = a.getQueryCache().get(h.queryHash), m = e.subscribed !== !1;
+  h._optimisticResults = i ? "isRestoring" : m ? "optimistic" : void 0, Us(h), xs(h, n, u), As(n);
+  const R = !a.getQueryCache().get(h.queryHash), [p] = x.useState(
     () => new t(
       a,
       h
     )
-  ), v = m.getOptimisticResult(h), y = !i && e.subscribed !== !1;
+  ), d = p.getOptimisticResult(h), g = !i && m;
   if (x.useSyncExternalStore(
     x.useCallback(
-      (w) => {
-        const P = y ? m.subscribe(M.batchCalls(w)) : q;
-        return m.updateResult(), P;
+      (C) => {
+        const M = g ? p.subscribe(Q.batchCalls(C)) : q;
+        return p.updateResult(), M;
       },
-      [m, y]
+      [p, g]
     ),
-    () => m.getCurrentResult(),
-    () => m.getCurrentResult()
+    () => p.getCurrentResult(),
+    () => p.getCurrentResult()
   ), x.useEffect(() => {
-    m.setOptions(h);
-  }, [h, m]), Ks(h, v))
-    throw De(h, m, n);
+    p.setOptions(h);
+  }, [h, p]), Ks(h, d))
+    throw De(h, p, n);
   if (js({
-    result: v,
+    result: d,
     errorResetBoundary: n,
     throwOnError: h.throwOnError,
     query: u,
     suspense: h.suspense
   }))
-    throw v.error;
-  if ((S = (F = a.getDefaultOptions().queries) == null ? void 0 : F._experimental_afterQuery) == null || S.call(
-    F,
+    throw d.error;
+  if ((w = (b = a.getDefaultOptions().queries) == null ? void 0 : b._experimental_afterQuery) == null || w.call(
+    b,
     h,
-    v
-  ), h.experimental_prefetchInRender && !kt.isServer() && qs(v, i)) {
-    const w = p ? (
+    d
+  ), h.experimental_prefetchInRender && !kt.isServer() && qs(d, i)) {
+    const C = R ? (
       // Fetch immediately on render in order to ensure `.promise` is resolved even if the component is unmounted
-      De(h, m, n)
+      De(h, p, n)
     ) : (
       // subscribe to the "cache promise" so that we can finalize the currentThenable once data comes in
       u == null ? void 0 : u.promise
     );
-    w == null || w.catch(q).finally(() => {
-      m.updateResult();
+    C == null || C.catch(q).finally(() => {
+      p.updateResult();
     });
   }
-  return h.notifyOnChangeProps ? v : m.trackResult(v);
+  return h.notifyOnChangeProps ? d : p.trackResult(d);
 }
 function Gs(e, t) {
   return _s(e, Cs);
@@ -2028,7 +2028,7 @@ function Bs(e, t) {
   }, [i, e]);
   const n = x.useSyncExternalStore(
     x.useCallback(
-      (h) => i.subscribe(M.batchCalls(h)),
+      (h) => i.subscribe(Q.batchCalls(h)),
       [i]
     ),
     () => i.getCurrentResult(),

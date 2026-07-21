@@ -39,6 +39,15 @@
 }
 .kanban-header:active { cursor: grabbing; }
 
+/* Kolon başlığı: nötr etiket + durum-renkli nokta ikonu (HANDOFF prototip deseni).
+   Renk yalnız ikonda — metin her temada okunur kalır. */
+.kanban-header .kanban-title { color: var(--apya-text-secondary); }
+.kanban-column[data-status-id="1"] .kanban-title i { color: var(--apya-neutral-500, #6b7280); }
+.kanban-column[data-status-id="2"] .kanban-title i { color: var(--apya-warning-500, #f59e0b); }
+.kanban-column[data-status-id="3"] .kanban-title i { color: var(--apya-brand-500, #2563eb); }
+.kanban-column[data-status-id="4"] .kanban-title i { color: var(--apya-positive-500, #059669); }
+/* Özel (kullanıcı tanımlı) kolonlar rengini JS'teki text-{colorClass} ile taşır (köprülü). */
+
 .kanban-cards {
     flex: 1;
     min-height: 100px;

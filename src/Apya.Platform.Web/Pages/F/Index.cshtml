@@ -9,7 +9,12 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>@Model.Slug</title>
+    @* Layout=null: global stil bundle'ı yok — token tanımları + marka fontu elle yüklenir
+       (style.css yalnız var(--apya-*) tüketir, tanımlamaz). *@
+    <link rel="stylesheet" href="~/css/apya-fonts.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/dynamic-assets/src/styles/tokens.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/js/style.css" asp-append-version="true" />
+    <style>body { margin: 0; font-family: var(--apya-font-sans, system-ui), sans-serif; }</style>
 </head>
 <body>
     @Html.AntiForgeryToken()

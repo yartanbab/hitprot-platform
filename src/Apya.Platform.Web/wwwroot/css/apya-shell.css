@@ -19,12 +19,15 @@
 }
 
 body {
-    font-family: ui-sans-serif, -apple-system, 'Segoe UI', Inter, system-ui, sans-serif;
+    font-family: var(--apya-font-sans);
 }
 
-/* Sayısal değerler (bakiye, tutar, ID) — tabular-nums ile hizalı */
+/* Sayısal değerler (bakiye, tutar, ID) — mono + tabular-nums ile hizalı.
+   DESIGN-SYSTEM.md §4/§10 bunu zaten kural olarak tanımlıyor ama font-family
+   hiç set edilmemişti (yalnız tabular-nums/letter-spacing) — eklendi. */
 .apya-numeric,
 .text-numeric {
+    font-family: var(--apya-font-mono);
     font-variant-numeric: tabular-nums;
     font-feature-settings: "tnum";
     letter-spacing: -0.01em;
@@ -104,11 +107,28 @@ a, button, .btn, .nav-link, .list-group-item {
     border-radius: var(--apya-radius-xl) !important;
     border: 1px solid var(--apya-border-default) !important;
     box-shadow: var(--apya-shadow-xl) !important;
+    /* SİSTEMİK BUG FİX (2026-07-16, drawer QA'sında bulundu): apya-theme-bridge.css
+       --bs-modal-bg'yi override ediyor ama LeptonX'in derlenmiş CSS'i muhtemelen daha
+       spesifik/geç sırada .modal-content arkaplanını sabit beyaza zorluyor — TÜM
+       modallar (CreateModal dahil) dark temada beyaz kalıyordu. Üstteki 3 property
+       zaten aynı sebeple !important kullanıyordu, tutarlılık için buraya da eklendi. */
+    background-color: var(--apya-surface-elevated) !important;
+    color: var(--apya-text-primary) !important;
 }
 
 .modal-header {
     border-bottom: 1px solid var(--apya-border-subtle) !important;
     padding: var(--apya-space-4) var(--apya-space-5) !important;
+}
+
+/* SİSTEMİK BUG FİX (2026-07-17, görev-uyarı modalı QA'sında bulundu): LeptonX'in derlenmiş
+   CSS'i ".modal-header h1..h6" başlıklarını sabit rgb(22,22,22) yapıyor (0,2,0 özgüllük,
+   .modal-content'in color !important'ını [0,1,0] eziyor) — TÜM modal başlıkları dark temada
+   neredeyse görünmez kalıyordu. */
+.modal-header h1, .modal-header .h1, .modal-header h2, .modal-header .h2,
+.modal-header h3, .modal-header .h3, .modal-header h4, .modal-header .h4,
+.modal-header h5, .modal-header .h5, .modal-header h6, .modal-header .h6 {
+    color: var(--apya-text-primary) !important;
 }
 
 .modal-footer {
@@ -266,6 +286,272 @@ h1, h2, h3, h4, h5, h6 {
     flex-shrink: 0;
 }
 
+/* KPI kartı metin bloğu (etiket+değer) — dar kolonlarda (örn. 6'lı KPI şeridi)
+   flex satırı varsayılan min-width:auto ile uzun değeri (₺1.160.000 gibi)
+   kart sınırının dışına taşırıyordu; .text-truncate ile birlikte kullanılır. */
+.kpi-card-text {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+/* Kompakt tarih-aralığı pili — iki native date input tek çerçeve içinde.
+   Rapor filtre çubukları için (ör. Cari Ekstre); JS gerekmez, native date picker'ı kullanır. */
+.apya-date-range {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0 10px;
+    height: 34px;
+    background: var(--apya-surface-base);
+    border: 1px solid var(--apya-border-default);
+    border-radius: var(--apya-radius-lg);
+    color: var(--apya-text-tertiary);
+}
+.apya-date-range-input {
+    border: none !important;
+    background: transparent !important;
+    padding: 0 !important;
+    height: auto !important;
+    width: 118px;
+    color: var(--apya-text-primary);
+    font-size: 13px;
+}
+.apya-date-range-input:focus {
+    box-shadow: none !important;
+}
+.apya-date-range-sep {
+    color: var(--apya-text-tertiary);
+    font-size: 12px;
+}
+
+/* ----------------------------------------------------------------------------
+   11) TEMA TOGGLE — header toolbar butonu (ThemeToggle ViewComponent).
+   Fallback: toolbar'sız layout'ta dark-mode.js floating buton ekler.
+   ---------------------------------------------------------------------------- */
+.apya-theme-toggle {
+    background: transparent;
+    border: none;
+    padding: 0.4rem 0.6rem;
+    color: var(--apya-text-secondary);
+    font-size: 1.15rem;
+    line-height: 1;
+    cursor: pointer;
+    border-radius: var(--apya-radius-md);
+    transition: color var(--apya-motion-base) ease,
+                background var(--apya-motion-base) ease;
+}
+.apya-theme-toggle:hover {
+    color: var(--apya-accent-500);
+    background: var(--apya-surface-sunken);
+}
+
+/* Fallback floating (yalnız header toolbar yoksa). */
+.apya-theme-toggle--floating {
+    position: fixed;
+    right: 20px;
+    bottom: 20px;
+    z-index: var(--apya-z-toast, 1080);
+    width: 44px;
+    height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    border: 1px solid var(--apya-border-strong);
+    border-radius: var(--apya-radius-full);
+    background: var(--apya-surface-elevated);
+    box-shadow: var(--apya-shadow-lg);
+}
+.apya-theme-toggle--floating:hover {
+    border-color: var(--apya-accent-500);
+    transform: translateY(-1px);
+}
+
+/* ── Apya marka rozeti — prototip "Apya PLATFORM" logosu ──
+   Marka adı (AppName) artık "Apya"; yanına küçük "PLATFORM" hap rozeti eklenir. */
+.lpx-brand-name::after {
+    content: "PLATFORM";
+    display: inline-block;
+    margin-left: 7px;
+    padding: 1px 5px 0;
+    font-size: 8.5px;
+    font-weight: 700;
+    letter-spacing: 0.6px;
+    line-height: 1.5;
+    vertical-align: middle;
+    text-transform: uppercase;
+    border-radius: 5px;
+    color: var(--apya-accent-500, #4F46E5);
+    background: var(--apya-accent-soft, rgba(79, 70, 229, 0.10));
+}
+
+/* ----------------------------------------------------------------------------
+   12) KOMUT PALETİ (⌘K) — header tetikleyici + modal (P4)
+   Yalnız menü navigasyonu: veri kaynağı zaten permission-filtered render
+   edilmiş #lpx-sidebar (command-palette.js scrape eder) — backend yok.
+   ---------------------------------------------------------------------------- */
+
+/* Header tetikleyici butonu (CommandPaletteToggle ViewComponent). */
+.apya-command-palette-trigger {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    height: 34px;
+    padding: 0 10px 0 12px;
+    margin: 0 4px;
+    border: 1px solid var(--apya-border-default);
+    border-radius: var(--apya-radius-lg);
+    background: var(--apya-surface-sunken);
+    color: var(--apya-text-tertiary);
+    font-size: 13px;
+    cursor: pointer;
+    transition: border-color var(--apya-motion-base) ease, background var(--apya-motion-base) ease;
+}
+.apya-command-palette-trigger:hover {
+    border-color: var(--apya-border-strong);
+    background: var(--apya-surface-raised);
+    color: var(--apya-text-secondary);
+}
+.apya-command-palette-trigger-kbd {
+    padding: 1px 6px;
+    border: 1px solid var(--apya-border-default);
+    border-radius: var(--apya-radius-sm);
+    background: var(--apya-surface-base);
+    font-family: var(--apya-font-mono);
+    font-size: 10.5px;
+    color: var(--apya-text-tertiary);
+}
+/* Dar viewport'ta yalnız ikon (metin + kısayol rozeti gizlenir). */
+@media (max-width: 900px) {
+    .apya-command-palette-trigger-text,
+    .apya-command-palette-trigger-kbd {
+        display: none;
+    }
+    .apya-command-palette-trigger {
+        padding: 0 9px;
+    }
+}
+
+/* Overlay + panel — JS ile inşa edilir (command-palette.js), `.open` class'ı
+   toggle edilene kadar `display:none`. */
+.apya-command-palette-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: var(--apya-z-modal);
+    background: rgba(17, 24, 39, 0.45);
+    padding-top: 14vh;
+    justify-content: center;
+}
+.apya-command-palette-overlay.open {
+    display: flex;
+}
+[data-theme="dark"] .apya-command-palette-overlay {
+    background: rgba(0, 0, 0, 0.6);
+}
+
+.apya-command-palette {
+    width: 100%;
+    max-width: 560px;
+    max-height: 60vh;
+    margin: 0 16px;
+    display: flex;
+    flex-direction: column;
+    background: var(--apya-surface-elevated);
+    border: 1px solid var(--apya-border-strong);
+    border-radius: var(--apya-radius-xl);
+    box-shadow: var(--apya-shadow-xl);
+    overflow: hidden;
+}
+
+.apya-command-palette-input-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--apya-border-subtle);
+    color: var(--apya-text-tertiary);
+}
+.apya-command-palette-input {
+    flex: 1;
+    border: none;
+    outline: none;
+    background: transparent;
+    font-size: 15px;
+    color: var(--apya-text-primary);
+}
+.apya-command-palette-input-row kbd {
+    padding: 1px 6px;
+    border: 1px solid var(--apya-border-default);
+    border-radius: var(--apya-radius-sm);
+    font-family: var(--apya-font-mono);
+    font-size: 10.5px;
+    color: var(--apya-text-tertiary);
+}
+
+.apya-command-palette-list {
+    list-style: none;
+    margin: 0;
+    padding: 8px;
+    overflow-y: auto;
+}
+.apya-command-palette-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 12px;
+    border-radius: var(--apya-radius-lg);
+    color: var(--apya-text-secondary);
+    font-size: 13.5px;
+    cursor: pointer;
+}
+.apya-command-palette-item i {
+    width: 16px;
+    text-align: center;
+    color: var(--apya-text-tertiary);
+}
+.apya-command-palette-item.active {
+    background: var(--apya-accent-soft);
+    color: var(--apya-accent-500);
+}
+.apya-command-palette-item.active i {
+    color: inherit;
+}
+.apya-command-palette-item-label {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.apya-command-palette-item-section {
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+    color: var(--apya-text-tertiary);
+    flex-shrink: 0;
+}
+.apya-command-palette-item.active .apya-command-palette-item-section {
+    color: inherit;
+    opacity: 0.75;
+}
+
+.apya-command-palette-empty {
+    padding: 24px 18px;
+    text-align: center;
+    color: var(--apya-text-tertiary);
+    font-size: 13px;
+}
+
+/* Palet açıkken arka plan kaydırılmasın. */
+body.apya-command-palette-lock {
+    overflow: hidden;
+}
+
+/* ----------------------------------------------------------------------------
+   13) MASTER-DETAIL — Razor tarafı ortak deseni (HANDOFF: "sol liste + sağ
+   detay paneli"; seçili satır accent-soft + sol kenarlık). İlk kullanıcılar:
+   AiCenter/Prompts, AiCenter/Workflows. React tarafındaki karşılığı
+   customers.jsx (Tailwind ile aynı görsel dil).
 /* ----------------------------------------------------------------------------
    11) MASTER-DETAIL — Razor tarafı ortak deseni ("sol liste + sağ detay
    paneli"; seçili satır accent-soft + sol kenarlık). Kullanıcılar: Faturalar,
@@ -435,6 +721,359 @@ h1, h2, h3, h4, h5, h6 {
     word-break: break-word;
     max-height: 260px;
     overflow: auto;
+}
+
+/* ----------------------------------------------------------------------------
+   14) KART IZGARASI — HANDOFF "kart ızgaraları (Projeler, Tenant'lar,
+   Dokümanlar): repeat(auto-fill, minmax(...)) grid". Tile anatomisi:
+   head (başlık + chip) / meta satırları / opsiyonel mini-progress / foot
+   (tarih + aksiyonlar). İlk kullanıcı: Projects/Index.
+   ---------------------------------------------------------------------------- */
+.apya-grid-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 14px;
+}
+.apya-grid-toolbar .apya-grid-count {
+    font-size: 12px;
+    color: var(--apya-text-tertiary);
+}
+.apya-grid-toolbar .apya-grid-search {
+    max-width: 260px;
+}
+.apya-tile-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(310px, 1fr));
+    gap: 16px;
+}
+.apya-tile {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 16px 18px;
+    border: 1px solid var(--apya-border-default);
+    border-radius: var(--apya-radius-xl);
+    background: var(--apya-surface-base);
+    box-shadow: var(--apya-shadow-sm);
+    transition: box-shadow var(--apya-motion-base) var(--apya-easing-standard),
+                border-color var(--apya-motion-base) var(--apya-easing-standard);
+}
+.apya-tile:hover {
+    box-shadow: var(--apya-shadow-md);
+    border-color: var(--apya-border-strong);
+}
+.apya-tile-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 10px;
+}
+.apya-tile-title {
+    font-size: 14px;
+    font-weight: 650;
+    line-height: 1.3;
+    color: var(--apya-text-primary);
+}
+.apya-tile-title a {
+    color: inherit;
+    text-decoration: none;
+}
+.apya-tile-title a:hover {
+    color: var(--apya-accent-500);
+}
+.apya-tile-sub {
+    font-size: 11.5px;
+    color: var(--apya-text-tertiary);
+    font-family: var(--apya-font-mono);
+    font-variant-numeric: tabular-nums;
+}
+.apya-tile-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 16px;
+    font-size: 11.5px;
+    color: var(--apya-text-secondary);
+}
+.apya-tile-meta i {
+    color: var(--apya-text-tertiary);
+    margin-right: 4px;
+}
+.apya-tile-foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-top: auto;
+    padding-top: 10px;
+    border-top: 1px solid var(--apya-border-subtle);
+    font-size: 11px;
+    color: var(--apya-text-tertiary);
+}
+.apya-tile-actions {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+/* Mini progress — bütçe/kota gibi oran göstergeleri (tile içi) */
+.apya-mini-progress {
+    height: 6px;
+    border-radius: var(--apya-radius-full);
+    background: var(--apya-surface-sunken);
+    overflow: hidden;
+}
+.apya-mini-progress > span {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: var(--apya-accent-500);
+}
+.apya-mini-progress.is-warning > span { background: var(--apya-warning-500); }
+.apya-mini-progress.is-negative > span { background: var(--apya-negative-500); }
+.apya-mini-progress.is-positive > span { background: var(--apya-positive-500); }
+.apya-tile-progress-label {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 4px;
+    font-size: 11px;
+    color: var(--apya-text-tertiary);
+}
+.apya-tile-progress-label .apya-numeric {
+    color: var(--apya-text-secondary);
+}
+/* İki mini-progress'i (bütçe + ilerleme) aynı tile'da düşey istifler */
+.apya-tile-progress-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+/* Görev tamamlanma barı — bütçenin accent tonundan ayrışsın diye positive */
+.apya-mini-progress.is-progress > span { background: var(--apya-positive-500); }
+
+/* Kategori ikon kutusu (tile başlığında) — kpi-icon-box ile aynı desen, tile ölçeğinde */
+.apya-tile-icon-box {
+    flex: none;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--apya-radius-lg);
+    background: var(--apya-accent-soft);
+    color: var(--apya-accent-500);
+    font-size: 13px;
+}
+
+/* Atanan facepile — ProjectDetails.cshtml'deki .avatar-circle'ın tile ölçeğine indirilmiş hali */
+.apya-tile-avatars {
+    display: flex;
+    align-items: center;
+}
+.apya-tile-avatar {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: var(--apya-accent-500);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 9px;
+    font-weight: 700;
+    border: 2px solid var(--apya-surface-base);
+    margin-left: -8px;
+}
+.apya-tile-avatar:first-child { margin-left: 0; }
+.apya-tile-avatar.is-more { background: var(--apya-neutral-500); }
+
+/* Kalan gün rozeti — mevcut .apya-chip tonlarını kullanan kompakt varyant */
+.apya-tile-days-chip {
+    font-size: 10.5px;
+}
+.apya-tile-days-chip i {
+    margin-right: 4px;
+}
+
+/* Izgara boş durumu + "daha fazla" satırı */
+.apya-tile-grid-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    padding: 64px 20px;
+    border: 2px dashed var(--apya-border-default);
+    border-radius: var(--apya-radius-xl);
+    color: var(--apya-text-tertiary);
+    text-align: center;
+}
+.apya-tile-grid-empty i {
+    font-size: 28px;
+    opacity: 0.6;
+}
+.apya-tile-grid-more {
+    display: flex;
+    justify-content: center;
+    margin-top: 16px;
+}
+
+/* ----------------------------------------------------------------------------
+   15) GÖREV ETİKET/AVATAR — Görevler tablosu, ProjectDetails görev tab'ı ve
+   Kanban kartları arasında paylaşılan render (wwwroot/js/apya-task-render.js).
+   Renk ataması yok — isimden deterministik hash ile mevcut apya-chip tonlarından
+   (positive/negative/warning/brand/ai/neutral) biri seçilir.
+   ---------------------------------------------------------------------------- */
+.apya-task-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-top: 4px;
+}
+
+/* Öncelik: chip değil, nokta + düz metin (Durum chip'inden görsel olarak ayrışsın) */
+.apya-priority-dot {
+    display: inline-block;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    margin-right: 6px;
+}
+.apya-priority-dot-positive { background: var(--apya-positive-500); }
+.apya-priority-dot-negative { background: var(--apya-negative-500); }
+.apya-priority-dot-warning { background: var(--apya-warning-500); }
+i.apya-priority-dot {
+    /* Kritik önceliğin ikon-nokta varyantı: fa-triangle-exclamation ikonuna renk verir */
+    width: auto; height: auto; border-radius: 0; font-size: 11px; vertical-align: 1px;
+    color: var(--apya-negative-500); background: none;
+}
+.apya-priority-text {
+    font-size: 12.5px;
+    color: var(--apya-text-secondary);
+}
+
+/* Atanan avatarı: isimden hash ile 6 ton, solid arka plan + beyaz baş harf */
+.apya-avatar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    color: #fff;
+    font-size: 10px;
+    font-weight: 700;
+    flex: none;
+}
+.apya-avatar-positive { background: var(--apya-positive-500); }
+.apya-avatar-negative { background: var(--apya-negative-500); }
+.apya-avatar-warning { background: var(--apya-warning-500); }
+.apya-avatar-brand { background: var(--apya-brand-500); }
+.apya-avatar-ai { background: var(--apya-ai-500); }
+.apya-avatar-neutral { background: var(--apya-neutral-500); }
+
+/* ----------------------------------------------------------------------------
+   16) GÖREV DETAY DRAWER — HANDOFF "sağdan kayan panel (apyaSlide animasyonu)".
+   abp.ModalManager + <abp-modal> altyapısı AYNEN korunuyor (backdrop/ESC/focus-
+   trap/iç-içe-modal z-index'i bedavaya geliyor) — yalnız .modal-dialog'u sağa
+   sabitleyip kaydırma animasyonu ekliyoruz. İlk kullanıcı: Tasks/EditModal.cshtml
+   (.apya-drawer class'ı JS ile ekleniyor, <abp-modal> class geçirmiyor).
+   ---------------------------------------------------------------------------- */
+.modal.apya-drawer .modal-dialog {
+    position: fixed;
+    inset: 0 0 0 auto;
+    margin: 0;
+    width: min(480px, 100vw);
+    max-width: 100vw;
+    transition: none; /* Bootstrap'ın varsayılan merkezi-modal transform geçişini ez */
+}
+.modal.apya-drawer .modal-content {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    border-radius: var(--apya-radius-xl) 0 0 var(--apya-radius-xl) !important; /* §4'teki genel kural !important, ezmek için aynısı gerekiyor */
+}
+.modal.apya-drawer .modal-body {
+    flex: 1 1 auto;
+    overflow-y: auto;
+}
+@keyframes apyaSlide {
+    from { transform: translateX(100%); }
+    to { transform: translateX(0); }
+}
+.modal.apya-drawer.show .modal-dialog {
+    animation: apyaSlide var(--apya-motion-slow) var(--apya-easing-standard) both;
+}
+
+/* Kompakt pill-tab satırı — eski ağır Bootstrap nav-tabs yerine (task-drawer.js yönetir) */
+.apya-pilltab-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding-bottom: var(--apya-space-3, 12px);
+}
+.apya-pilltab-btn {
+    border: 1px solid var(--apya-border-default);
+    background: var(--apya-surface-base);
+    color: var(--apya-text-secondary);
+    border-radius: var(--apya-radius-full);
+    padding: 4px 12px;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1.6;
+    transition: background var(--apya-motion-fast) var(--apya-easing-standard),
+                color var(--apya-motion-fast) var(--apya-easing-standard);
+}
+.apya-pilltab-btn:hover { color: var(--apya-text-primary); background: var(--apya-surface-raised); }
+.apya-pilltab-btn.active {
+    background: var(--apya-accent-soft);
+    border-color: transparent;
+    color: var(--apya-accent-600);
+}
+
+/* Yorum giriş çubuğu — drawer'ın altına sabit (modal-content flex-column'da flex olmayan son çocuk) */
+.apya-drawer-commentbar {
+    flex: none;
+    padding: var(--apya-space-3, 12px) var(--apya-space-4, 16px);
+    border-top: 1px solid var(--apya-border-subtle);
+    background: var(--apya-surface-base);
+}
+
+/* Durum inline pill-switcher (Genel bölümü) — asıl <select> d-none, bunlar onu sürer */
+.apya-status-pill-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+}
+.apya-status-pill {
+    border: 1px solid var(--apya-border-default);
+    background: var(--apya-surface-base);
+    color: var(--apya-text-secondary);
+    border-radius: var(--apya-radius-full);
+    padding: 5px 14px;
+    font-size: 12.5px;
+    font-weight: 600;
+}
+.apya-status-pill.active {
+    background: var(--apya-accent-500);
+    border-color: transparent;
+    color: #fff;
+}
+.apya-status-overflow { font-size: 12.5px; }
+
+/* Meta-grid — Atanan/Son Tarih/Öncelik/Etiketler 2 sütun (drawer dar olduğu için tek sütuna düşer) */
+.apya-meta-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--apya-space-3, 12px) var(--apya-space-4, 16px);
+}
+@media (max-width: 420px) {
+    .apya-meta-grid { grid-template-columns: 1fr; }
+}
+
+/* Görev tabloları — "İşlemler" dropdown'ı yerine satıra tıklayınca drawer açılır */
+#TasksTable tbody tr, #ProjectTasksTable tbody tr { cursor: pointer; }
 /* Chip/etiket — badge'den daha yumuşak, pill şeklinde. Örn. Webhooks kartlarında
    form adı etiketi. Genel/paylaşılan: başka listelerde de kullanılabilir. */
 .apya-chip {

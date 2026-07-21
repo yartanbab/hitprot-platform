@@ -23,6 +23,11 @@ namespace Apya.Platform.Projects
         /// </summary>
         Task<ProjectDetailDto> GetDetailAsync(Guid id);
 
+        /// <summary>
+        /// Projeler listesi KPI şeridi için tüm (sayfalanmamış) proje setinin özetini döner.
+        /// </summary>
+        Task<ProjectsSummaryDto> GetProjectsSummaryAsync();
+
         // --- DOSYA YÖNETİMİ ---
         Task AddAttachmentAsync(Guid projectId, string fileName, string storedFileName, long fileSize);
 

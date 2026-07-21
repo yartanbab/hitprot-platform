@@ -47,6 +47,49 @@ export const fixtures = {
         };
     },
 
+    /* Prototip "4 KPI kartı" şeridi (HANDOFF §Dashboard) — CFO görünümü üstü. */
+    async kpiSummary() {
+        await delay();
+        return [
+            {
+                id: 'cash', icon: 'wallet', label: 'Nakit Pozisyonu',
+                value: 487_300, currency: 'TRY', deltaPct: 12.4,
+                series: [320, 340, 355, 372, 390, 410, 435, 455, 472, 487],
+            },
+            {
+                id: 'revenue', icon: 'trending', label: 'Aylık Gelir',
+                value: 612_400, currency: 'TRY', deltaPct: 6.1,
+                series: [512, 528, 540, 561, 575, 590, 598, 605, 609, 612],
+            },
+            {
+                id: 'expense', icon: 'receipt', label: 'Aylık Gider',
+                value: 398_900, currency: 'TRY', deltaPct: -3.2,
+                series: [420, 415, 408, 412, 405, 402, 400, 399, 397, 399],
+            },
+            {
+                id: 'budget', icon: 'gauge', label: 'Bütçe Kullanımı',
+                value: 0.77, format: 'percent', deltaPct: -8.4,
+                series: [0.62, 0.65, 0.68, 0.70, 0.71, 0.73, 0.75, 0.76, 0.78, 0.77],
+            },
+        ];
+    },
+
+    /* Gelir/Gider grouped-bar (HANDOFF §Dashboard) — CashFlow'un yanında. */
+    async incomeExpense() {
+        await delay();
+        return {
+            currency: 'TRY',
+            months: [
+                { label: 'Şub', income: 512_000, expense: 340_000 },
+                { label: 'Mar', income: 540_000, expense: 365_000 },
+                { label: 'Nis', income: 498_000, expense: 372_000 },
+                { label: 'May', income: 575_000, expense: 388_000 },
+                { label: 'Haz', income: 602_000, expense: 402_000 },
+                { label: 'Tem', income: 612_400, expense: 398_900 },
+            ],
+        };
+    },
+
     async pendingApprovals() {
         await delay();
         return [

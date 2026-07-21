@@ -41,21 +41,38 @@ $(function () {
                         ]
                     }
                 },
-                { title: 'Program Adı', data: 'name' },
+                {
+                    title: 'Program Adı',
+                    data: 'name',
+                    render: function (data) {
+                        return '<span class="fw-semibold">' + $('<div>').text(data || '').html() + '</span>';
+                    }
+                },
                 { title: 'Kurum', data: 'issuer' },
-                { title: 'Açıklama', data: 'description', defaultContent: '—' },
+                {
+                    title: 'Açıklama',
+                    data: 'description',
+                    defaultContent: '—',
+                    render: function (data) {
+                        if (!data) { return '—'; }
+                        var esc = $('<div>').text(data).html();
+                        return '<span class="d-inline-block text-truncate align-middle" style="max-width:320px" title="' + esc + '">' + esc + '</span>';
+                    }
+                },
                 {
                     title: 'Maks. Tutar',
                     data: 'maxAmount',
+                    className: 'apya-numeric',
                     render: function (data) {
-                        return data != null ? data.toLocaleString() + ' ₺' : '—';
+                        return data != null ? data.toLocaleString('tr-TR') + ' ₺' : '—';
                     }
                 },
                 {
                     title: 'Min. Uyum Puanı',
                     data: 'minMatchScore',
                     render: function (data) {
-                        return data > 0 ? '%' + data : '—';
+                        // AI eşleştirme skoru — AI aksan tonu (HANDOFF: AI moru)
+                        return data > 0 ? '<span class="apya-chip apya-chip-ai">%' + data + '</span>' : '—';
                     }
                 }
             ]

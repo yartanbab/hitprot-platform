@@ -19,6 +19,8 @@ export default defineConfig({
         'public-form':      'src/public-form.jsx',
         'responses':        'src/responses.jsx',
         'customers':        'src/customers.jsx',
+        'dashboard':        'src/dashboard.jsx',
+        'expense-capture':  'src/expense-capture.jsx',
         'documents':        'src/documents.jsx',
       },
       formats: ['es'],
@@ -27,8 +29,41 @@ export default defineConfig({
     rollupOptions: {
       external: [], // tümü bundle'a girer — CDN bağımlılığı yok
       output: {
-        // Shared chunk (React/ReactDOM) → sabit isim; global bundle'a eklenebilir.
-        chunkFileNames: 'vendor.js',
+        // [name] DİNAMİK placeholder — manualChunks'ın döndürdüğü isimle eşleşir.
+        // SABİT string ('vendor.js') KULLANMA: birden fazla shared chunk üretilince
+        // (react/query/signalr/grid/ui hepsi ayrı) Rollup çakışan isimlere otomatik
+        // numara ekliyor (vendor2/vendor3) ve chunk'lar arası import graph'ı bozuluyor
+        // ("does not provide an export" runtime crash). Kategori bazlı isimlendirme
+        // bunu kalıcı çözer + her vendor grubu kendi (kararlı) dosya adını korur.
+        chunkFileNames: '[name].js',
+        // React/react-dom + diğer ağır bağımlılıklar kategoriye göre ayrı, sabit
+        // isimli chunk'lara — hem çakışma önlenir hem browser cache'i daha iyi
+        // kullanılır (bir island güncellenince yalnız o island + kendi chunk'ı değişir).
+        manualChunks(id) {
+          if (id.includes('node_modules/react/') ||
+              id.includes('node_modules/react-dom/') ||
+              id.includes('node_modules/scheduler/')) {
+            return 'react-vendor';
+          }
+          if (id.includes('node_modules/react-grid-layout/') ||
+              id.includes('node_modules/react-resizable/') ||
+              id.includes('node_modules/react-draggable/')) {
+            return 'grid-vendor';
+          }
+          if (id.includes('node_modules/@radix-ui/') ||
+              id.includes('node_modules/class-variance-authority/') ||
+              id.includes('node_modules/clsx/') ||
+              id.includes('node_modules/tailwind-merge/')) {
+            return 'ui-vendor';
+          }
+          if (id.includes('node_modules/@tanstack/')) {
+            return 'query-vendor';
+          }
+          if (id.includes('node_modules/@microsoft/signalr/')) {
+            return 'signalr-vendor';
+          }
+          return undefined;
+        },
       }
     }
   }

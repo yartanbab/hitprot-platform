@@ -31,6 +31,7 @@ namespace Apya.Platform.Web.Pages.Tasks
         public List<SelectListItem> UserList { get; set; } = new();
         public List<SelectListItem> StatusOrColumnList { get; set; } = new(); // Durum + özel kolonlar
         public List<SelectListItem> PriorityList { get; set; } = new(); // Öncelik (Türkçe)
+        public List<string> AllTagNames { get; set; } = new(); // Select2 tags:true başlangıç seçenekleri
         public List<TaskDto> SubTasks { get; set; } = new();
         public List<TaskCommentDto> Comments { get; set; } = new();
         public List<TaskAttachmentDto> Attachments { get; set; } = new();
@@ -121,7 +122,8 @@ namespace Apya.Platform.Web.Pages.Tasks
                 AssigneeId = taskDto.AssigneeId,
                 ProjectId = taskDto.ProjectId ?? Guid.Empty,
                 IsPrivate = taskDto.IsPrivate,
-                PredecessorIds = taskDto.PredecessorIds ?? new List<Guid>()
+                PredecessorIds = taskDto.PredecessorIds ?? new List<Guid>(),
+                TagNames = taskDto.Tags?.Select(t => t.Name).ToList() ?? new List<string>()
             };
 
             SubTasks = taskDto.SubTasks?.OrderByDescending(x => x.CreationTime).ToList() ?? new List<TaskDto>();
@@ -141,6 +143,8 @@ namespace Apya.Platform.Web.Pages.Tasks
             UserList = userLookup.Items
                 .Select(u => new SelectListItem(u.UserName, u.Id.ToString()))
                 .ToList();
+
+            AllTagNames = (await _taskAppService.GetAllTagsAsync()).Select(t => t.Name).ToList();
 
             // Durum artık birleşik "Durum/Kolon" dropdown'ından geliyor (StatusOrColumnList).
             PriorityList = new List<SelectListItem>

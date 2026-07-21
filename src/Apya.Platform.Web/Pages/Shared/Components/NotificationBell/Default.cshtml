@@ -33,12 +33,13 @@
 </div>
 
 <style>
-    #notification-bell-container .nav-link { position: relative; font-size: 1.25rem; color: #666; transition: color 0.3s; }
-    #notification-bell-container .nav-link:hover { color: #333; }
-    .notification-item { border-bottom: 1px solid #f0f0f0; transition: background 0.2s; cursor: pointer; }
-    .notification-item:hover { background-color: #f9f9f9; }
-    .notification-item.unread { background-color: #fff9f0; border-left: 3px solid #ffc107; }
+    /* Site-geneli bildirim zili (her sayfa header'ında) — token-driven. */
+    #notification-bell-container .nav-link { position: relative; font-size: 1.25rem; color: var(--apya-text-secondary); transition: color var(--apya-motion-base) ease; }
+    #notification-bell-container .nav-link:hover { color: var(--apya-text-primary); }
+    .notification-item { border-bottom: 1px solid var(--apya-border-subtle); transition: background var(--apya-motion-base) ease; cursor: pointer; }
+    .notification-item:hover { background-color: var(--apya-surface-raised); }
+    .notification-item.unread { background-color: var(--apya-warning-50); border-left: 3px solid var(--apya-warning-500); }
     .notification-text { font-size: 0.85rem; }
-    .notification-time { font-size: 0.75rem; color: #999; }
+    .notification-time { font-size: 0.75rem; color: var(--apya-text-tertiary); }
     #notification-unread-badge { padding: 0.25em 0.4em; font-size: 0.6rem; margin-top: 5px; margin-right: 5px; }
 </style>

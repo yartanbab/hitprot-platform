@@ -57,5 +57,6 @@ const h = {
   delete: (n, t) => o(n, { ...t, method: "DELETE" })
 };
 export {
+  l as A,
   h as a
 };

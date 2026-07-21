@@ -50,6 +50,13 @@ $(function () {
                                 }
                             },
                             {
+                                text: 'Paket Değiştir',
+                                visible: abp.auth.isGranted('AbpTenantManagement.Tenants.Update'),
+                                action: function (data) {
+                                    changePackage(data.record);
+                                }
+                            },
+                            {
                                 text: 'Bağlantı Dizeleri (Connection Strings)',
                                 visible: abp.auth.isGranted('AbpTenantManagement.Tenants.ManageConnectionStrings'),
                                 action: function (data) {
@@ -88,15 +95,23 @@ $(function () {
                 data: "isActive",
                 render: function (data) {
                     if (data) {
-                        return '<span class="badge bg-success"><i class="fa fa-circle"></i> Aktif</span>';
+                        return '<span class="apya-chip apya-chip-positive"><i class="fa fa-circle"></i> Aktif</span>';
                     } else {
-                        return '<span class="badge bg-secondary"><i class="fa fa-circle"></i> Pasif</span>';
+                        return '<span class="apya-chip apya-chip-neutral"><i class="fa fa-circle"></i> Pasif</span>';
                     }
                 }
             },
             {
                 title: 'Müşteri (Tenant) Adı',
                 data: "tenantName"
+            },
+            {
+                title: 'Paket',
+                data: "packageCode",
+                render: function (data) {
+                    var dic = { 1: 'Basic', 2: 'Standard', 3: 'Premium', 4: 'Enterprise' };
+                    return '<span class="badge bg-info text-dark">' + (dic[data] || '-') + '</span>';
+                }
             },
             {
                 title: 'Vergi No',
@@ -153,5 +168,27 @@ $(function () {
     editModal.onResult(function () {
         dataTable.ajax.reload();
     });
+
+    // Faz 2: tenant'a paket ata → feature seti yeniden uygulanır (AssignPackageAsync).
+    function changePackage(record) {
+        Swal.fire({
+            title: 'Paket Değiştir',
+            text: record.tenantName,
+            input: 'select',
+            inputOptions: { 1: 'Basic', 2: 'Standard', 3: 'Premium', 4: 'Enterprise' },
+            inputValue: String(record.packageCode || 1),
+            showCancelButton: true,
+            confirmButtonText: 'Uygula',
+            cancelButtonText: 'İptal'
+        }).then(function (r) {
+            if (!r.isConfirmed) { return; }
+            apya.platform.tenants.tenantProfile
+                .assignPackage(record.tenantId, parseInt(r.value, 10))
+                .then(function () {
+                    abp.notify.success('Paket güncellendi ve tenant\'a uygulandı.');
+                    dataTable.ajax.reload();
+                });
+        });
+    }
 
 });

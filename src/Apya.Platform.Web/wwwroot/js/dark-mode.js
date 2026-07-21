@@ -1,54 +1,81 @@
 $(function () {
-    // FOUC script ile aynı key ve target kullanılır:
+    // Tema kontrolcüsü — FOUC script (Components/ApyaThemeHead) ile aynı anahtar/hedef:
     //   key    → 'apya-theme'  (localStorage SoT)
-    //   target → document.documentElement (<html>)  → :root CSS değişkenleri doğru cascade eder
+    //   target → <html>        (data-theme → :root token override cascade eder)
+    // data-theme paint ÖNCESİ ApyaThemeHead FOUC'u tarafından çözülür (kayıtlı || OS).
+    // Toggle butonu header toolbar'ında (ThemeToggle ViewComponent) render edilir.
     var THEME_KEY = 'apya-theme';
     var $html = $(document.documentElement);
 
-    // Dark mode GEÇİCİ OLARAK kapalı (beyaz buton / görünmez yazı regresyonu).
-    // Açmak için: true yap (+ _ApyaThemeBootstrap.cshtml OS-duyarlı bloğunu geri getir).
-    var DARK_MODE_ENABLED = false;
-
-    if (!DARK_MODE_ENABLED) {
+    // Auth/account sayfaları tema-nötr LIGHT (FOUC ile aynı kural) → toggle yok.
+    if (/^\/Account\//i.test(location.pathname)) {
         applyTheme('light');
-        try { localStorage.setItem(THEME_KEY, 'light'); } catch (e) { /* yok say */ }
-        $('#ThemeToggle').remove(); // toggle gösterme, dark'a geçişe izin verme
         return;
     }
 
-    // FOUC script zaten html'yi set etmiş olabilir; yoksa localStorage'dan oku.
-    var savedTheme = localStorage.getItem(THEME_KEY) || 'light';
-    applyTheme(savedTheme);
+    // FOUC'un çözdüğü mevcut temayı baz al (localStorage 'light' default'una DÜŞME).
+    var current = $html.attr('data-theme') === 'dark' ? 'dark' : 'light';
+    applyTheme(current);
 
-    // Toggle UI
-    if ($('#ThemeToggle').length === 0) {
-        var $toggle = $('<div id="ThemeToggle" title="Tema Değiştir"><i class="fa ' + (savedTheme === 'dark' ? 'fa-moon' : 'fa-sun') + '"></i></div>');
-        $('body').append($toggle);
+    // Header sol: sayfa başlığını breadcrumb alanına yaz (hi-fi header).
+    var bc = document.querySelector('.lpx-breadcrumb-container');
+    if (bc) {
+        var pt = (document.title || '').split('|')[0].trim();
+        if (pt) {
+            bc.textContent = '';
+            var sp = document.createElement('span');
+            sp.className = 'apya-page-title';
+            sp.textContent = pt;
+            bc.appendChild(sp);
+        }
     }
 
-    $(document).on('click', '#ThemeToggle', function () {
-        var current = $html.attr('data-theme') === 'dark' ? 'dark' : 'light';
-        var next = current === 'dark' ? 'light' : 'dark';
+    // Tenant rozeti: Body.First hook'unda gizli render edilir (TenantBadgeViewComponent),
+    // sidebar logo altına taşınıp gösterilir — LeptonX'in derlenmiş sidebar partial'ını
+    // override etmek yerine yukarıdaki breadcrumb-injection ile aynı yaklaşım.
+    var tenantBadge = document.getElementById('apya-tenant-badge');
+    var logoContainer = document.querySelector('#lpx-sidebar .lpx-logo-container');
+    if (tenantBadge && logoContainer) {
+        logoContainer.insertAdjacentElement('afterend', tenantBadge);
+        tenantBadge.style.display = '';
+    }
+
+    // Toggle header toolbar'ında gelir; yoksa (toolbar'sız layout) fallback floating.
+    if ($('#ThemeToggle').length === 0) {
+        $('body').append(
+            '<button type="button" id="ThemeToggle" class="apya-theme-toggle apya-theme-toggle--floating" ' +
+            'title="Tema Değiştir" aria-label="Tema Değiştir"><i class="fa fa-sun"></i></button>'
+        );
+    }
+    setToggleIcon(current);
+
+    $(document).on('click', '#ThemeToggle', function (e) {
+        e.preventDefault();
+        var now = $html.attr('data-theme') === 'dark' ? 'dark' : 'light';
+        var next = now === 'dark' ? 'light' : 'dark';
         applyTheme(next);
-        localStorage.setItem(THEME_KEY, next);
+        try { localStorage.setItem(THEME_KEY, next); } catch (e2) { /* yok say */ }
+        setToggleIcon(next);
 
-        var $icon = $(this).find('i');
-        $icon.fadeOut(150, function () {
-            $icon.removeClass('fa-sun fa-moon').addClass(next === 'dark' ? 'fa-moon' : 'fa-sun').fadeIn(150);
-        });
-
+        // LeptonX kendi theming'ini de senkron tut (dropdown vs.).
         if (window.abp && abp.leptonX && abp.leptonX.theme) {
-            abp.leptonX.theme.setTheme(next);
+            try { abp.leptonX.theme.setTheme(next); } catch (e3) { /* yok say */ }
         }
     });
 
+    function setToggleIcon(theme) {
+        $('#ThemeToggle i')
+            .removeClass('fa-sun fa-moon')
+            .addClass(theme === 'dark' ? 'fa-moon' : 'fa-sun');
+    }
+
     function applyTheme(theme) {
-        // SoT: <html data-theme="..."> — tokens.css :root override buradan beslenir
+        // SoT: <html data-theme="..."> — tokens.css :root override buradan beslenir.
         $html.attr('data-theme', theme);
-        // LeptonX class mirror (dropdown'lar, kendi theming'i için)
+        // LeptonX class mirror (dropdown'lar, kendi theming'i için).
         $html.removeClass('lpx-theme-light lpx-theme-dark lpx-theme-dim');
         $html.addClass(theme === 'dark' ? 'lpx-theme-dark' : 'lpx-theme-light');
-        // Body class — eski DataTable/jQuery widget uyumu
+        // Body class — eski DataTable/jQuery widget uyumu.
         $('body').toggleClass('dark-theme', theme === 'dark');
     }
 });

@@ -46,7 +46,7 @@ const Card = React.forwardRef(function Card(
             ref={ref}
             data-density={density}
             className={cn(
-                'rounded-lg overflow-hidden',
+                'rounded-xl overflow-hidden',
                 'text-text-primary',
                 variantClasses[variant],
                 className,

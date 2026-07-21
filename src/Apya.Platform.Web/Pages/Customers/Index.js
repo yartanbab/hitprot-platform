@@ -53,8 +53,8 @@ $(function () {
                 data: 'isActive',
                 render: function (data) {
                     return data
-                        ? '<span class="badge bg-success">Aktif</span>'
-                        : '<span class="badge bg-secondary">Pasif</span>';
+                        ? '<span class="apya-chip apya-chip-positive">Aktif</span>'
+                        : '<span class="apya-chip apya-chip-neutral">Pasif</span>';
                 }
             },
             {
@@ -66,7 +66,7 @@ $(function () {
                 data: 'balance',
                 render: function (data) {
                     var v = Number(data || 0);
-                    var txt = v.toLocaleString('tr-TR', { minimumFractionDigits: 2 }) + ' ₺';
+                    var txt = apya.money.format(v);
                     if (v > 0) return '<span class="text-danger" title="Müşteri bize borçlu">' + txt + '</span>';
                     if (v < 0) return '<span class="text-success" title="Biz müşteriye borçluyuz / fazla tahsilat">' + txt + '</span>';
                     return '<span class="text-muted">' + txt + '</span>';

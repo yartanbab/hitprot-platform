@@ -3,7 +3,10 @@
 @tailwind utilities;
 
 @layer utilities {
-  /* para/oran değerleri: mono + tabular-nums, sağa dayalı hizalama için. */
+  /* font-tabular: 11 yerde (Dashboard widget'ları, MoneyInput, DataTable,
+     ExpenseForm) kullanılıyor ama Tailwind default'u değil — tanımsızdı,
+     tüm parasal/sayısal değerler sessizce Inter/sans'a düşüyordu. HANDOFF:
+     "para/oran her zaman JetBrains Mono + tabular-nums, sağa dayalı". */
   .font-tabular {
     font-family: var(--apya-font-mono);
     font-variant-numeric: tabular-nums;

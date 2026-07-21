@@ -7,6 +7,11 @@ public class TenantProfile : FullAuditedAggregateRoot<Guid>
 {
     public Guid TenantId { get; protected set; }
 
+    /// <summary>Tenant'a atanmış satış paketi (edition). Feature/permission tavanını belirler.</summary>
+    public PackageCode PackageCode { get; protected set; } = PackageCode.Basic;
+
+    public void SetPackage(PackageCode packageCode) => PackageCode = packageCode;
+
     public CompanyType CompanyType { get; set; }
 
     public string TaxNumber { get; set; } = string.Empty;

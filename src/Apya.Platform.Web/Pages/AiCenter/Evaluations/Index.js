@@ -5,11 +5,11 @@ $(function () {
 
     function statusBadge(text) {
         switch (text) {
-            case 'Completed': return '<span class="badge bg-success">Tamamlandı</span>';
-            case 'Processing': return '<span class="badge bg-info">İşleniyor</span>';
-            case 'Pending': return '<span class="badge bg-warning text-dark">Bekliyor</span>';
-            case 'Failed': return '<span class="badge bg-danger">Başarısız</span>';
-            default: return '<span class="badge bg-secondary">' + (text || '') + '</span>';
+            case 'Completed': return '<span class="apya-chip apya-chip-positive">Tamamlandı</span>';
+            case 'Processing': return '<span class="apya-chip apya-chip-brand">İşleniyor</span>';
+            case 'Pending': return '<span class="apya-chip apya-chip-warning">Bekliyor</span>';
+            case 'Failed': return '<span class="apya-chip apya-chip-negative">Başarısız</span>';
+            default: return '<span class="apya-chip apya-chip-neutral">' + (text || '') + '</span>';
         }
     }
 

@@ -18,72 +18,99 @@
            İlgili timer JS'i (refreshTimerState / BtnStartTimer / BtnStopTimer) DOM'da karşılığı olmadığı
            için artık inert (no-op). Gerekirse git geçmişinden geri getirilebilir. *@
 
-        <ul class="nav nav-tabs px-4 pt-3 border-bottom-0 shadow-sm bg-white" id="taskTabs_@Model.Id" role="tablist">
-            <li class="nav-item">
-                <a class="nav-link active fw-bold text-primary" id="details-tab_@Model.Id" data-bs-toggle="tab" href="#details_@Model.Id" role="tab">
-                    <i class="fa fa-info-circle me-1"></i> Genel Bilgiler
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link fw-bold text-dark" id="subtasks-tab_@Model.Id" data-bs-toggle="tab" href="#subtasks_@Model.Id" role="tab">
-                    <i class="fa fa-check-square text-success me-1"></i> Alt Görevler
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link fw-bold text-dark" id="comments-tab_@Model.Id" data-bs-toggle="tab" href="#comments_@Model.Id" role="tab">
-                    <i class="fa fa-comments text-warning me-1"></i> Yorumlar
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link fw-bold text-dark" id="files-tab_@Model.Id" data-bs-toggle="tab" href="#files_@Model.Id" role="tab">
-                    <i class="fa fa-paperclip text-info me-1"></i> Dosyalar
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link fw-bold text-dark" id="finance-tab_@Model.Id" data-bs-toggle="tab" href="#finance_@Model.Id" role="tab">
-                    <i class="fa fa-coins text-warning me-1"></i> Finans
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link fw-bold text-dark" id="deps-tab_@Model.Id" data-bs-toggle="tab" href="#deps_@Model.Id" role="tab">
-                    <i class="fa fa-link text-primary me-1"></i> Bağımlılıklar
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link fw-bold text-dark" id="timelog-tab_@Model.Id" data-bs-toggle="tab" href="#timelog_@Model.Id" role="tab">
-                    <i class="fa fa-history text-secondary me-1"></i> Zaman Geçmişi
-                </a>
-            </li>
-        </ul>
+        <div class="apya-pilltab-row px-4 pt-3" id="taskTabs_@Model.Id" data-drawer-scope="@Model.Id">
+            <button type="button" class="apya-pilltab-btn active" data-pilltab-target="details_@Model.Id">
+                <i class="fa fa-info-circle me-1"></i> Genel
+            </button>
+            <button type="button" class="apya-pilltab-btn" data-pilltab-target="subtasks_@Model.Id">
+                <i class="fa fa-check-square me-1"></i> Alt Görevler
+            </button>
+            <button type="button" class="apya-pilltab-btn" data-pilltab-target="files_@Model.Id">
+                <i class="fa fa-paperclip me-1"></i> Dosyalar
+            </button>
+            <button type="button" class="apya-pilltab-btn" data-pilltab-target="finance_@Model.Id">
+                <i class="fa fa-coins me-1"></i> Finans
+            </button>
+            <button type="button" class="apya-pilltab-btn" data-pilltab-target="deps_@Model.Id">
+                <i class="fa fa-link me-1"></i> Bağımlılıklar
+            </button>
+            <button type="button" class="apya-pilltab-btn" data-pilltab-target="timelog_@Model.Id" data-lazy="timelog">
+                <i class="fa fa-history me-1"></i> Geçmiş
+            </button>
+        </div>
 
-        <div class="tab-content px-4 py-4 bg-white border-top" id="taskTabsContent_@Model.Id" style="min-height: 450px;">
+        <div class="tab-content px-4 py-3 bg-white border-top" id="taskTabsContent_@Model.Id">
             <div class="tab-pane fade show active" id="details_@Model.Id" role="tabpanel">
                     <abp-input asp-for="Id" type="hidden" class="task-id-input" />
                     <abp-input asp-for="Task.ProjectId" type="hidden" />
 
-                    <div class="row">
-                        <div class="col-md-8 border-end pe-4">
-                            <abp-input asp-for="Task.Title" label="Görev Başlığı" class="form-control-lg fw-bold" />
-                            <div class="mt-3">
-                                <abp-input asp-for="Task.Description" type="textarea" label="Açıklama" rows="6" placeholder="Bu görevin detayları nelerdir?" />
-                            </div>
+                    <abp-input asp-for="Task.Title" label="Görev Başlığı" class="form-control-lg fw-bold" />
+
+                    @{
+                        var systemStatusValues = new[] { "s:1", "s:2", "s:3", "s:4" };
+                        var overflowStatusItems = Model.StatusOrColumnList.Where(x => !systemStatusValues.Contains(x.Value)).ToList();
+                    }
+                    <div class="mt-3">
+                        <label class="apya-overline d-block mb-1">Durum</label>
+                        <select asp-for="StatusOrColumn" asp-items="Model.StatusOrColumnList" id="StatusOrColumn_@Model.Id" class="d-none"></select>
+                        <div class="apya-status-pill-row" data-status-select="#StatusOrColumn_@Model.Id">
+                            @foreach (var (label, sv) in new[] { ("Yapılacak", 1), ("Sürüyor", 2), ("Testte", 3), ("Tamamlandı", 4) })
+                            {
+                                var val = "s:" + sv;
+                                var isActive = Model.StatusOrColumnList.FirstOrDefault(x => x.Value == val)?.Selected == true;
+                                <button type="button" class="apya-status-pill@(isActive ? " active" : "")" data-value="@val">@label</button>
+                            }
+                            @if (overflowStatusItems.Any())
+                            {
+                                <select class="form-select form-select-sm d-inline-block w-auto apya-status-overflow" data-status-select="#StatusOrColumn_@Model.Id">
+                                    <option value="">Diğer…</option>
+                                    @foreach (var item in overflowStatusItems)
+                                    {
+                                        <option value="@item.Value" selected="@item.Selected">@item.Text</option>
+                                    }
+                                </select>
+                            }
                         </div>
-                        <div class="col-md-4 ps-4">
-                            <h6 class="text-muted fw-bold mb-3"><i class="fa fa-calendar-alt me-2"></i>Zaman Planı</h6>
+                    </div>
+
+                    <div class="apya-meta-grid mt-3">
+                        <div>
+                            <label class="apya-overline d-block mb-1">Atanan</label>
+                            <select asp-for="Task.AssigneeId" asp-items="Model.UserList" class="form-select"></select>
+                        </div>
+                        <div>
+                            <label class="apya-overline d-block mb-1">Son Tarih</label>
+                            <input asp-for="Task.DueDate" type="date" class="form-control" />
+                        </div>
+                        <div>
+                            <label class="apya-overline d-block mb-1">Öncelik</label>
+                            <select asp-for="Task.Priority" asp-items="Model.PriorityList" class="form-select"></select>
+                        </div>
+                        <div>
+                            <label class="apya-overline d-block mb-1" asp-for="Task.TagNames">Etiketler</label>
+                            <select class="form-select" asp-for="Task.TagNames" multiple id="TaskTagsSelectEdit">
+                                @foreach (var tag in Model.AllTagNames)
+                                {
+                                    <option value="@tag" selected="@(Model.Task.TagNames.Contains(tag))">@tag</option>
+                                }
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="mt-3">
+                        <abp-input asp-for="Task.Description" type="textarea" label="Açıklama" rows="4" placeholder="Bu görevin detayları nelerdir?" />
+                    </div>
+
+                    <div class="row g-2 mt-1 align-items-end">
+                        <div class="col-7">
                             <abp-input asp-for="Task.StartDate" type="date" label="Başlangıç" />
-                            <abp-input asp-for="Task.DueDate" type="date" label="Bitiş (Deadline)" />
-
-                            <h6 class="text-muted fw-bold mt-4 mb-3"><i class="fa fa-cog me-2"></i>Durum & Atama</h6>
-                            <abp-select asp-for="Task.Priority" asp-items="Model.PriorityList" label="Öncelik" />
-                            <abp-select asp-for="StatusOrColumn" asp-items="Model.StatusOrColumnList" label="Durum / Kolon" />
-                            <abp-select asp-for="Task.AssigneeId" asp-items="Model.UserList" label="Sorumlu Kişi" />
-
-                            <div class="form-check form-switch mt-4 bg-light p-3 ps-5 rounded border">
+                        </div>
+                        <div class="col-5">
+                            <div class="form-check form-switch mb-2">
                                 <input class="form-check-input" type="checkbox" asp-for="Task.IsPrivate">
-                                <label class="form-check-label fw-bold text-danger" asp-for="Task.IsPrivate">
-                                    <i class="fa fa-user-secret me-1"></i> Gizli Görev
+                                <label class="form-check-label fw-bold text-danger small" asp-for="Task.IsPrivate">
+                                    <i class="fa fa-user-secret me-1"></i> Gizli
                                 </label>
-                                <small class="d-block text-muted mt-1">Sadece siz ve sorumlu kişi görebilir. Admin dahil başkası profilinize girdiğinde göremez.</small>
                             </div>
                         </div>
                     </div>
@@ -108,10 +135,10 @@
 
                             <strong class="@(sub.Status == Apya.Platform.Tasks.TaskStatus.Done ? "text-decoration-line-through text-muted" : "")">@sub.Title</strong>
 
-                            <span class="badge bg-secondary-subtle text-secondary-emphasis ms-2">@sub.Status</span>
+                            <span class="apya-chip apya-chip-neutral ms-2">@sub.Status</span>
                             @if(!string.IsNullOrEmpty(sub.AssigneeName))
                                     {
-                            <span class="badge bg-info-subtle text-info-emphasis ms-1"><i class="fa fa-user"></i> @sub.AssigneeName</span>
+                            <span class="apya-chip apya-chip-brand ms-1"><i class="fa fa-user"></i> @sub.AssigneeName</span>
                                     }
                         </div>
                         <div class="btn-group shadow-sm" role="group">
@@ -124,59 +151,6 @@
                     else
                     {
                     <partial name="_EmptyState" model='new EmptyStateModel { Id = "NoSubTasksPlaceholder", Icon = "fa-list-ul", Title = "Henüz alt görev yok.", Description = "Yukarıdaki alandan ilk alt görevi ekleyin." }' />
-                    }
-                </div>
-            </div>
-
-            <div class="tab-pane fade" id="comments_@Model.Id" role="tabpanel">
-                <div class="input-group mb-4 shadow-sm">
-                    <input type="text" id="NewCommentText" class="form-control" placeholder="Bir yorum yaz...">
-                    <button class="btn btn-primary px-4" type="button" id="BtnAddComment"><i class="fa fa-paper-plane me-1"></i> Gönder</button>
-                </div>
-                <div class="list-group list-group-flush" id="CommentList">
-                    @if (Model.Comments != null && Model.Comments.Any())
-                    {
-                    @foreach (var comment in Model.Comments)
-                        {
-                    <div class="list-group-item bg-light border-0 mb-2 rounded-3 comment-item" data-comment-id="@comment.Id">
-                        <div class="d-flex w-100 justify-content-between mb-2">
-                            <h6 class="mb-1 fw-bold text-primary"><i class="fa fa-user-circle me-1"></i> @comment.AuthorName</h6>
-                            <div class="d-flex align-items-center gap-2">
-                                <small class="text-muted"><i class="fa fa-clock me-1"></i> @comment.CreationTime.ToShortDateString() @comment.CreationTime.ToShortTimeString()</small>
-                                @if (comment.IsOwn)
-                                {
-                                    <button type="button" class="btn btn-sm btn-link text-secondary p-0 comment-edit-btn" title="Düzenle"><i class="fa fa-pen"></i></button>
-                                    <button type="button" class="btn btn-sm btn-link text-danger p-0 comment-delete-btn" title="Sil"><i class="fa fa-trash"></i></button>
-                                }
-                            </div>
-                        </div>
-                        <p class="mb-1 text-dark comment-text">@comment.Text</p>
-                        <button type="button" class="btn btn-sm btn-link text-secondary p-0 comment-reply-btn"><i class="fa fa-reply me-1"></i>Yanıtla</button>
-                        <div class="comment-replies ms-4 mt-2 ps-2 border-start">
-                            @foreach (var reply in comment.Replies)
-                            {
-                            <div class="list-group-item bg-white border-0 mb-1 rounded-3 comment-item reply-item py-2" data-comment-id="@reply.Id">
-                                <div class="d-flex w-100 justify-content-between mb-1">
-                                    <h6 class="mb-0 fw-bold text-secondary" style="font-size:0.85rem;"><i class="fa fa-reply fa-flip-horizontal me-1"></i> @reply.AuthorName</h6>
-                                    <div class="d-flex align-items-center gap-2">
-                                        <small class="text-muted" style="font-size:0.7rem;">@reply.CreationTime.ToShortDateString() @reply.CreationTime.ToShortTimeString()</small>
-                                        @if (reply.IsOwn)
-                                        {
-                                            <button type="button" class="btn btn-sm btn-link text-secondary p-0 comment-edit-btn" title="Düzenle"><i class="fa fa-pen"></i></button>
-                                            <button type="button" class="btn btn-sm btn-link text-danger p-0 comment-delete-btn" title="Sil"><i class="fa fa-trash"></i></button>
-                                        }
-                                    </div>
-                                </div>
-                                <p class="mb-0 text-dark comment-text" style="font-size:0.9rem;">@reply.Text</p>
-                            </div>
-                            }
-                        </div>
-                    </div>
-                        }
-                    }
-                    else
-                    {
-                    <partial name="_EmptyState" model='new EmptyStateModel { Icon = "fa-comments", Title = "Henüz yorum yapılmamış.", Description = "İlk yorumu siz yazın." }' />
                     }
                 </div>
             </div>
@@ -327,7 +301,7 @@
                         {
                             var predTask = Model.ProjectTasks.FirstOrDefault(t => t.Id == predId);
                             var predTitle = predTask?.Title ?? predId.ToString()[..8] + "…";
-                            <span class="badge bg-primary-subtle text-primary-emphasis p-2 fs-6 pred-badge d-flex align-items-center gap-1" data-pred-id="@predId">
+                            <span class="apya-chip apya-chip-brand p-2 fs-6 pred-badge d-flex align-items-center gap-1" data-pred-id="@predId">
                                 <i class="fa fa-arrow-right me-1"></i> @predTitle
                                 <button type="button" class="btn-close btn-remove-pred ms-1"
                                         data-pred-id="@predId" style="font-size: 0.6em;" aria-label="Kaldır"></button>
@@ -370,12 +344,86 @@
                 </div>
             </div>
         </div>
+
+        @{
+            var totalCommentCount = (Model.Comments?.Count ?? 0) + (Model.Comments?.Sum(c => c.Replies.Count) ?? 0);
+        }
+        @* Yorumlar — mockup'ta HER ZAMAN görünür/sabit, pill-tab'lara dahil değil. *@
+        <div class="px-4 py-3 border-top" id="comments_@Model.Id">
+            <h6 class="fw-bold mb-3"><i class="fa fa-comments me-1 text-warning"></i> Yorumlar <span class="text-muted fw-normal js-comment-count">@totalCommentCount</span></h6>
+            <div class="list-group list-group-flush" id="CommentList">
+                @if (Model.Comments != null && Model.Comments.Any())
+                {
+                @foreach (var comment in Model.Comments)
+                    {
+                <div class="list-group-item bg-light border-0 mb-2 rounded-3 comment-item" data-comment-id="@comment.Id">
+                    <div class="d-flex w-100 justify-content-between mb-2">
+                        <h6 class="mb-1 fw-bold text-primary"><i class="fa fa-user-circle me-1"></i> @comment.AuthorName</h6>
+                        <div class="d-flex align-items-center gap-2">
+                            <small class="text-muted"><i class="fa fa-clock me-1"></i> @comment.CreationTime.ToShortDateString() @comment.CreationTime.ToShortTimeString()</small>
+                            @if (comment.IsOwn)
+                            {
+                                <button type="button" class="btn btn-sm btn-link text-secondary p-0 comment-edit-btn" title="Düzenle"><i class="fa fa-pen"></i></button>
+                                <button type="button" class="btn btn-sm btn-link text-danger p-0 comment-delete-btn" title="Sil"><i class="fa fa-trash"></i></button>
+                            }
+                        </div>
+                    </div>
+                    <p class="mb-1 text-dark comment-text">@comment.Text</p>
+                    <button type="button" class="btn btn-sm btn-link text-secondary p-0 comment-reply-btn"><i class="fa fa-reply me-1"></i>Yanıtla</button>
+                    <div class="comment-replies ms-4 mt-2 ps-2 border-start">
+                        @foreach (var reply in comment.Replies)
+                        {
+                        <div class="list-group-item bg-white border-0 mb-1 rounded-3 comment-item reply-item py-2" data-comment-id="@reply.Id">
+                            <div class="d-flex w-100 justify-content-between mb-1">
+                                <h6 class="mb-0 fw-bold text-secondary" style="font-size:0.85rem;"><i class="fa fa-reply fa-flip-horizontal me-1"></i> @reply.AuthorName</h6>
+                                <div class="d-flex align-items-center gap-2">
+                                    <small class="text-muted" style="font-size:0.7rem;">@reply.CreationTime.ToShortDateString() @reply.CreationTime.ToShortTimeString()</small>
+                                    @if (reply.IsOwn)
+                                    {
+                                        <button type="button" class="btn btn-sm btn-link text-secondary p-0 comment-edit-btn" title="Düzenle"><i class="fa fa-pen"></i></button>
+                                        <button type="button" class="btn btn-sm btn-link text-danger p-0 comment-delete-btn" title="Sil"><i class="fa fa-trash"></i></button>
+                                    }
+                                </div>
+                            </div>
+                            <p class="mb-0 text-dark comment-text" style="font-size:0.9rem;">@reply.Text</p>
+                        </div>
+                        }
+                    </div>
+                </div>
+                    }
+                }
+                else
+                {
+                <partial name="_EmptyState" model='new EmptyStateModel { Icon = "fa-comments", Title = "Henüz yorum yapılmamış.", Description = "İlk yorumu siz yazın." }' />
+                }
+            </div>
+        </div>
     </abp-modal-body>
+
+    @* Yorum giriş kutusu — drawer'ın altına sabit (modal-content flex-column, flex:1 olmayan bu satır doğal olarak dibe yapışır). *@
+    <div class="apya-drawer-commentbar">
+        <div class="input-group shadow-sm">
+            <input type="text" id="NewCommentText" class="form-control" placeholder="Bir yorum yaz...">
+            <button class="btn btn-primary px-4" type="button" id="BtnAddComment"><i class="fa fa-paper-plane me-1"></i> Gönder</button>
+        </div>
+    </div>
 </abp-modal>
     <!-- Footer kaldırıldı (Auto-save) -->
 </form>
 
 <script>
+    // Görev detay drawer'ı — abp.ModalManager/<abp-modal> altyapısı aynen kalıyor,
+    // yalnız .modal'a apya-drawer class'ı eklenip apya-shell.css §16 ile sağdan
+    // kayan panele dönüştürülüyor (<abp-modal> class attribute'u geçirmediği için JS'le).
+    $('#EditTaskForm_@Model.Id').find('.modal').addClass('apya-drawer');
+
+    $('#TaskTagsSelectEdit').select2({
+        tags: true,
+        width: '100%',
+        placeholder: 'Etiket ekle veya seç…',
+        dropdownParent: $('#TaskTagsSelectEdit').closest('.modal')
+    });
+
     $('#BtnAddSubTask').click(function () {
         var title = $('#NewSubTaskTitle').val();
         var parentId = $('.task-id-input').val();
@@ -399,7 +447,7 @@
                         '<div>' +
                             '<i class="fa fa-circle-o text-secondary me-2"></i>' +
                             '<strong class="js-subtask-title"></strong>' +
-                            '<span class="badge bg-warning-subtle text-warning-emphasis ms-2">Yeni</span>' +
+                            '<span class="apya-chip apya-chip-warning ms-2">Yeni</span>' +
                         '</div>' +
                         '<div class="btn-group shadow-sm" role="group">' +
                             '<button type="button" class="btn btn-sm btn-light border edit-subtask-btn" data-id="' + newId + '" title="Düzenle"><i class="fa fa-edit text-primary"></i></button>' +
@@ -455,11 +503,17 @@
         });
     });
 
+    // Drawer'daki canlı "Yorumlar N" sayacı — ekleme/yanıt/silmede güncellenir.
+    function bumpCommentCount(delta) {
+        var $c = $('.js-comment-count');
+        $c.text((parseInt($c.text(), 10) || 0) + delta);
+    }
+
     $('#BtnAddComment').click(function () {
         var text = $('#NewCommentText').val();
         var taskId = $('.task-id-input').val();
         if (!text) return;
-        
+
         $.ajax({
             type: 'POST',
             url: '/Tasks/EditModal?handler=AddComment',
@@ -467,6 +521,7 @@
             data: { taskId: taskId, commentText: text },
             success: function (result) {
                 abp.notify.success('Yorum gönderildi!');
+                bumpCommentCount(1);
                 var now = new Date().toLocaleString();
                 var newId = result && result.id ? result.id : '';
                 // Yeni yorum her zaman "own" → düzenle/sil butonlu, gerçek data-comment-id ile.
@@ -530,6 +585,7 @@
             if (!confirmed) return;
             apya.platform.tasks.task.deleteComment(id).then(function () {
                 $item.remove();
+                bumpCommentCount(-1);
                 abp.notify.info('Yorum silindi.');
             });
         });
@@ -580,6 +636,7 @@
                     var author = result && result.author ? result.author : 'Siz';
                     $replies.append(buildReplyRow(id, author, text));
                     $box.remove();
+                    bumpCommentCount(1);
                     abp.notify.success('Yanıt eklendi!');
                 },
                 error: function () { $send.prop('disabled', false); abp.notify.error('Yanıt eklenemedi!'); }
@@ -609,7 +666,7 @@
                 if (result.success) {
                     abp.notify.success('Dosya yüklendi!');
                     $('.no-file-text').remove();
-                    $('#FileList').prepend('<li class="list-group-item d-flex justify-content-between align-items-center bg-light border-info mb-2 rounded-3"><div><i class="fa fa-file-alt text-info fs-4 me-3"></i><a href="/file/get/' + result.storedFileName + '" target="_blank" class="text-decoration-none fw-bold fs-6">' + file.name + '</a><small class="text-muted ms-3">Şimdi yüklendi</small></div><span class="badge bg-success-subtle text-success-emphasis">Yeni</span></li>');
+                    $('#FileList').prepend('<li class="list-group-item d-flex justify-content-between align-items-center bg-light border-info mb-2 rounded-3"><div><i class="fa fa-file-alt text-info fs-4 me-3"></i><a href="/file/get/' + result.storedFileName + '" target="_blank" class="text-decoration-none fw-bold fs-6">' + file.name + '</a><small class="text-muted ms-3">Şimdi yüklendi</small></div><span class="apya-chip apya-chip-positive">Yeni</span></li>');
                     fileInput.value = '';
                 } else {
                     abp.notify.error('Dosya yüklenirken hata oluştu: ' + result.error);
@@ -725,7 +782,7 @@
 
             var formData = $form.serialize();
             
-            var $modal = $form.closest('.modal-content');
+            var $modal = $form.find('.modal-content'); // form .modal'ı SARIYOR (çocuğu), closest() yanlış yöne bakardı
             var $titleContainer = $modal.find('.modal-title');
             
             var $status = $('#AutoSaveStatus_' + modalId.replace(/-/g, ''));
@@ -764,9 +821,9 @@
         }, 1000);
     });
 
-    // --- ZAMAN GEÇMİŞİ SEKMESİ ---
+    // --- ZAMAN GEÇMİŞİ SEKMESİ --- (pill-tab'a tıklanınca task-drawer.js'in tetiklediği özel event)
     var timeLogLoaded_@(Model.Id.ToString().Replace("-","")) = false;
-    $('a[href="#timelog_@Model.Id"]').on('shown.bs.tab', function () {
+    $('#timelog_@Model.Id').on('apya:lazy:timelog', function () {
         if (timeLogLoaded_@(Model.Id.ToString().Replace("-",""))) return;
         timeLogLoaded_@(Model.Id.ToString().Replace("-","")) = true;
         var taskId = $('.task-id-input').val();
@@ -784,7 +841,7 @@
             var rows = logs.map(function (l) {
                 var dur = l.secondsSpent ? fmtSec(l.secondsSpent) : '—';
                 var start = luxon.DateTime.fromISO(l.startTime).toFormat('dd.MM.yyyy HH:mm');
-                var end   = l.endTime ? luxon.DateTime.fromISO(l.endTime).toFormat('HH:mm') : '<span class="badge bg-success-subtle text-success-emphasis">Aktif</span>';
+                var end   = l.endTime ? luxon.DateTime.fromISO(l.endTime).toFormat('HH:mm') : '<span class="apya-chip apya-chip-positive">Aktif</span>';
                 return '<tr><td>' + start + '</td><td>' + end + '</td><td>' + dur + '</td><td>' + (l.userName || '—') + '</td><td class="text-muted small">' + (l.note || '') + '</td></tr>';
             }).join('');
             $container.html(
@@ -816,7 +873,7 @@
 
         $('#NoPredecessorsMsg_@Model.Id').remove();
         $('#PredecessorBadges_@Model.Id').append(
-            '<span class="badge bg-primary-subtle text-primary-emphasis p-2 fs-6 pred-badge d-flex align-items-center gap-1" data-pred-id="' + predId + '">' +
+            '<span class="apya-chip apya-chip-brand p-2 fs-6 pred-badge d-flex align-items-center gap-1" data-pred-id="' + predId + '">' +
                 '<i class="fa fa-arrow-right me-1"></i> ' + predTitle +
                 '<button type="button" class="btn-close btn-remove-pred ms-1" data-pred-id="' + predId + '" style="font-size:0.6em;" aria-label="Kaldır"></button>' +
             '</span>'
@@ -839,7 +896,9 @@
     });
 
     // Modal dışındayken değişiklikleri ebeveyn tablosuna yansıtmak istenir ise:
-    $('#EditTaskForm_@Model.Id').closest('.modal').on('hidden.bs.modal', function () {
+    // (form .modal'ı SARIYOR/çocuğu, closest() değil find() gerekir — .closest('.modal')
+    // hiçbir zaman eşleşmiyordu, bu yüzden kapanışta parent tablo tazeleme hiç ÇALIŞMIYORDU.)
+    $('#EditTaskForm_@Model.Id').find('.modal').on('hidden.bs.modal', function () {
         // Eğer dış dünyada bir abp veritabanı gridi varsa onu tazeleyelim
         if (typeof window.dataTable !== 'undefined') {
             window.dataTable.ajax.reload(null, false);

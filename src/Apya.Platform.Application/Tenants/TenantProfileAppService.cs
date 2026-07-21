@@ -20,6 +20,7 @@ public class TenantProfileAppService : PlatformAppService, ITenantProfileAppServ
     private readonly ITenantManager _tenantManager;
     private readonly IRepository<TenantProfile, Guid> _tenantProfileRepository;
     private readonly TenantProfileManager _tenantProfileManager;
+    private readonly TenantPackageManager _tenantPackageManager;
     private readonly IDataSeeder _dataSeeder;
     private readonly IUnitOfWorkManager _unitOfWorkManager;
 
@@ -28,6 +29,7 @@ public class TenantProfileAppService : PlatformAppService, ITenantProfileAppServ
         ITenantManager tenantManager,
         IRepository<TenantProfile, Guid> tenantProfileRepository,
         TenantProfileManager tenantProfileManager,
+        TenantPackageManager tenantPackageManager,
         IDataSeeder dataSeeder,
         IUnitOfWorkManager unitOfWorkManager)
     {
@@ -35,6 +37,7 @@ public class TenantProfileAppService : PlatformAppService, ITenantProfileAppServ
         _tenantManager = tenantManager;
         _tenantProfileRepository = tenantProfileRepository;
         _tenantProfileManager = tenantProfileManager;
+        _tenantPackageManager = tenantPackageManager;
         _dataSeeder = dataSeeder;
         _unitOfWorkManager = unitOfWorkManager;
     }
@@ -62,6 +65,7 @@ public class TenantProfileAppService : PlatformAppService, ITenantProfileAppServ
                 Id = profile?.Id ?? Guid.Empty,
                 TenantId = tenant.Id,
                 TenantName = tenant.Name,
+                PackageCode = profile?.PackageCode ?? PackageCode.Basic,
                 CompanyType = profile?.CompanyType ?? CompanyType.Company,
                 TaxNumber = profile?.TaxNumber ?? string.Empty,
                 Address = profile?.Address ?? string.Empty,
@@ -102,6 +106,7 @@ public class TenantProfileAppService : PlatformAppService, ITenantProfileAppServ
             input.CorporateEmail
         );
 
+        profile.SetPackage(input.PackageCode);
         profile.TaxOffice = input.TaxOffice ?? string.Empty;
         profile.Address = input.Address ?? string.Empty;
         profile.LegalRepresentativeName = input.LegalRepresentativeName ?? string.Empty;
@@ -111,10 +116,35 @@ public class TenantProfileAppService : PlatformAppService, ITenantProfileAppServ
 
         await _tenantProfileRepository.InsertAsync(profile);
 
+        // Paketin feature setini tenant'a uygula → feature'lar permission tavanını belirler.
+        await _tenantPackageManager.ApplyPackageAsync(tenant.Id, input.PackageCode);
+
         var result = ObjectMapper.Map<TenantProfile, TenantProfileDto>(profile);
 
         await uow.CompleteAsync();
 
+        return result;
+    }
+
+    /// <summary>Var olan bir tenant'ın paketini değiştirir ve feature setini yeniden uygular.</summary>
+    [Authorize(TenantManagementPermissions.Tenants.Update)]
+    public async Task<TenantProfileDto> AssignPackageAsync(Guid tenantId, PackageCode packageCode)
+    {
+        using var uow = _unitOfWorkManager.Begin(requiresNew: true, isTransactional: true);
+
+        var profile = await _tenantProfileRepository.FirstOrDefaultAsync(x => x.TenantId == tenantId);
+        if (profile == null)
+        {
+            throw new UserFriendlyException("Bu tenant için profil bulunamadı; önce profil oluşturun.");
+        }
+
+        profile.SetPackage(packageCode);
+        await _tenantProfileRepository.UpdateAsync(profile);
+
+        await _tenantPackageManager.ApplyPackageAsync(tenantId, packageCode);
+
+        var result = ObjectMapper.Map<TenantProfile, TenantProfileDto>(profile);
+        await uow.CompleteAsync();
         return result;
     }
 

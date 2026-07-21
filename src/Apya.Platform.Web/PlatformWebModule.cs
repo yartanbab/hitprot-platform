@@ -1,7 +1,10 @@
 using System;
 using System.IO;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Localization;
+using Microsoft.AspNetCore.RequestLocalization;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.Extensions.Logging;
@@ -130,10 +133,24 @@ public class PlatformWebModule : AbpModule
         // ConfigureMenus(context.Services.GetConfiguration()); // This method is not defined in the original code. Assuming it's a placeholder or needs to be added elsewhere.
         // ConfigureErrorPageOptions(); // This method is not defined in the original code. Assuming it's a placeholder or needs to be added elsewhere.
 
-        // Layout Hook for Impersonation Alert
+        // Türkçe varsayılan dil: culture çerezi/tercihi olmayan ziyaretçilerde uygulama Türkçe açılsın.
+        // Kullanıcı dil seçiciyle yine değiştirebilir (cookie/AcceptLanguage override eder).
+        // ABP'nin varsayılan configurator'ından SONRA eklendiği için DefaultRequestCulture'ı ezer.
+        Configure<AbpRequestLocalizationOptions>(options =>
+        {
+            options.RequestLocalizationOptionConfigurators.Add((serviceProvider, requestLocalizationOptions) =>
+            {
+                requestLocalizationOptions.DefaultRequestCulture = new RequestCulture("tr", "tr");
+                return Task.CompletedTask;
+            });
+        });
+
+        // Layout Hook for Impersonation Alert + site-wide tema head (PWA + FOUC)
         Configure<Volo.Abp.Ui.LayoutHooks.AbpLayoutHookOptions>(options =>
         {
             options.Add(Volo.Abp.Ui.LayoutHooks.LayoutHooks.Body.First, typeof(Apya.Platform.Web.Components.ImpersonationAlert.ImpersonationAlertViewComponent));
+            options.Add(Volo.Abp.Ui.LayoutHooks.LayoutHooks.Body.First, typeof(Apya.Platform.Web.Components.TenantBadge.TenantBadgeViewComponent));
+            options.Add(Volo.Abp.Ui.LayoutHooks.LayoutHooks.Head.Last, typeof(Apya.Platform.Web.Components.ApyaThemeHead.ApyaThemeHeadViewComponent));
         });
 
         // GAP-012 + ARCH-010: Audit Logging Selectors.
@@ -233,6 +250,8 @@ public class PlatformWebModule : AbpModule
                     // Apya design token'lar� (--apya-*) — apya-shell ve apya-theme-bridge
                     // bu de�i�kenleri t�ketir; global y�klenmezse var() de�erleri bo� kal�r.
                     // Kaynak: React island'la ayn� dosya (tek kaynak, kopya de�il).
+                    // Self-hosted fontlar (Inter + JetBrains Mono) — @font-face önce gelsin.
+                    bundle.AddFiles("/css/apya-fonts.css");
                     bundle.AddFiles("/dynamic-assets/src/styles/tokens.css");
                     // LeptonX/Bootstrap de�i�kenlerini token'lara ba�layan k�pr�
                     bundle.AddFiles("/css/apya-theme-bridge.css");
@@ -249,8 +268,12 @@ public class PlatformWebModule : AbpModule
                 {
                     // Olu�turdu�umuz dosyay� buraya ekliyoruz
                     bundle.AddFiles("/js/jquery-fix.js");
+                    bundle.AddFiles("/js/apya-money.js"); // apya.money.format → "1.000,00 TRY" (tüm sayfalarda)
+                    bundle.AddFiles("/js/apya-finance-modal.js"); // gelir/gider modalı: proje tarih aralığı kontrolü
                     bundle.AddFiles("/Pages/Notifications/notification-bell.js");
                     bundle.AddFiles("/js/dark-mode.js");
+                    bundle.AddFiles("/js/sidebar-toggle.js");
+                    bundle.AddFiles("/js/command-palette.js");
                     bundle.AddFiles("/js/ai-hub-client.js");
                     bundle.AddFiles("/js/ajax-error-detail.js");
                 }
@@ -283,6 +306,10 @@ public class PlatformWebModule : AbpModule
 
         Configure<AbpToolbarOptions>(options =>
         {
+            // Komut paleti tetikleyici EN SOLDA (sayfa başlığına en yakın), sonra
+            // tema toggle, sonra bildirim zili → header ikon kümesi bu sırayla.
+            options.Contributors.Add(new Apya.Platform.Web.Theme.CommandPaletteToggleToolbarContributor());
+            options.Contributors.Add(new Apya.Platform.Web.Theme.ThemeToggleToolbarContributor());
             options.Contributors.Add(new Apya.Platform.Web.Notifications.NotificationToolbarContributor());
         });
     }
