@@ -48,6 +48,7 @@ namespace Apya.Platform
             // --- WIKI / DOKÜMAN (DOCUMENTS) MODÜLÜ ---
             CreateMap<Apya.Platform.Documents.Document, Apya.Platform.Documents.DocumentDto>();
             CreateMap<Apya.Platform.Documents.CreateUpdateDocumentDto, Apya.Platform.Documents.Document>();
+            CreateMap<Apya.Platform.Documents.DocumentAttachment, Apya.Platform.Documents.DocumentAttachmentDto>();
 
             // --- CARİ (MÜŞTERİ) MODÜLÜ ---
             CreateMap<Customer, CustomerDto>();
@@ -57,7 +58,7 @@ namespace Apya.Platform
             CreateMap<CashAccount, CashAccountDto>();
             CreateMap<CreateUpdateCashAccountDto, CashAccount>();
 
-            // --- DÖVİZ KURU (EXCHANGE RATE) MODÜLÜ — APYA-137 ---
+            // --- KUR (EXCHANGE RATE) MODÜLÜ — APYA-137 ---
             CreateMap<ExchangeRate, ExchangeRateDto>();
             CreateMap<CreateUpdateExchangeRateDto, ExchangeRate>();
 

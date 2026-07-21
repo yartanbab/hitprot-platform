@@ -6,7 +6,7 @@ using Volo.Abp.MultiTenancy;
 namespace Apya.Platform.ExchangeRates;
 
 /// <summary>
-/// Döviz kuru kaydı (APYA-137). 1 <see cref="FromCurrency"/> = <see cref="Rate"/> <see cref="ToCurrency"/>.
+/// Kur kaydı (APYA-137). 1 <see cref="FromCurrency"/> = <see cref="Rate"/> <see cref="ToCurrency"/>.
 /// APYA-136 (Invoice→CashMovement) ve APYA-138 (yıl sonu değerleme) bu kuru kullanır.
 /// Tenant-scoped — tenant kendi anlaştığı kuru da girebilir; TCMB kaynaklı kayıtlar Source=Tcmb.
 /// </summary>

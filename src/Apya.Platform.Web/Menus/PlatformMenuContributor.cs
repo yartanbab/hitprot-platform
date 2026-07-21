@@ -53,7 +53,7 @@ public class PlatformMenuContributor : IMenuContributor
         if (work.Items.Count > 0) context.Menu.AddItem(work);
 
         // Finans — Faz 1 sadeleştirme: yalnızca günlük işlem + hesap öğeleri kalır.
-        // Raporlar tek "Raporlar" menüsünde toplandı; Döviz Kurları Yönetim'e taşındı.
+        // Raporlar tek "Raporlar" menüsünde toplandı; Kurlar Yönetim'e taşındı.
         var finance = new ApplicationMenuItem("Apya.Finance", l["Menu:Finance"], icon: "fa fa-coins", order: 3);
         // Sıralama (kullanıcı kararı 2026-06-22): 1) Kasalar  2) Para Hareketleri.
         if (await permission.IsGrantedAsync(PlatformPermissions.CashAccounts.Default))
@@ -163,7 +163,7 @@ public class PlatformMenuContributor : IMenuContributor
                 url: "/TenantManagement/AiSettings"));
         }
 
-        // Döviz Kurları: TCMB'den otomatik geldiği ve nadiren elle bakıldığı için
+        // Kurlar: TCMB'den otomatik geldiği ve nadiren elle bakıldığı için
         // günlük Finans menüsünden çıkarılıp Yönetim (Ayarlar) altına alındı.
         if (await permission.IsGrantedAsync(PlatformPermissions.ExchangeRates.Default))
         {

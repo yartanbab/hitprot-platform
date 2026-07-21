@@ -1,7 +1,11 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text.Json;
 using Apya.Platform.CustomerLedger;
+using Apya.Platform.DynamicAssets;
+using Apya.Platform.DynamicAssets.Dtos;
 using Apya.Platform.ProjectFinance;
 using Apya.Platform.Reports;
 using ClosedXML.Excel;
@@ -545,4 +549,90 @@ internal static class ReportExporter
             });
         }).GeneratePdf();
     }
+
+    // ─── DYNAMIC ASSETS: FORM RESPONSES (reuses the same ClosedXML engine) ─────
+
+    public static byte[] FormResponsesToExcel(DocumentDto form, List<ResponseListItemDto> responses)
+    {
+        using var wb = new XLWorkbook();
+        var ws = wb.AddWorksheet(SheetNameFor(form.Title));
+
+        var columns = form.Blocks
+            .Where(b => b.Type != BlockType.SectionHeader && b.Type != BlockType.Paragraph)
+            .OrderBy(b => b.Order)
+            .ToList();
+
+        string[] fixedHeaders = ["Tarih", "Durum", "Süre (sn)"];
+        for (int i = 0; i < fixedHeaders.Length; i++)
+        {
+            ws.Cell(1, i + 1).Value = fixedHeaders[i];
+        }
+        for (int i = 0; i < columns.Count; i++)
+        {
+            ws.Cell(1, fixedHeaders.Length + i + 1).Value = columns[i].Content;
+        }
+        ws.Range(1, 1, 1, fixedHeaders.Length + columns.Count).Style.Font.Bold = true;
+        ws.Range(1, 1, 1, fixedHeaders.Length + columns.Count).Style.Fill.BackgroundColor = XLColor.LightGray;
+
+        int row = 2;
+        foreach (var r in responses)
+        {
+            JsonElement? answers;
+            try { answers = JsonDocument.Parse(string.IsNullOrWhiteSpace(r.Answers) ? "{}" : r.Answers).RootElement; }
+            catch (JsonException) { answers = null; }
+
+            ws.Cell(row, 1).Value = r.CreationTime;
+            ws.Cell(row, 1).Style.DateFormat.Format = "dd.MM.yyyy HH:mm";
+            ws.Cell(row, 2).Value = ResponseStatusLabel(r.Status);
+            if (r.CompletionSeconds.HasValue) ws.Cell(row, 3).Value = r.CompletionSeconds.Value;
+
+            for (int i = 0; i < columns.Count; i++)
+            {
+                ws.Cell(row, fixedHeaders.Length + i + 1).Value = AnswerToText(answers, columns[i].Id);
+            }
+            row++;
+        }
+
+        ws.Columns().AdjustToContents();
+        foreach (var col in ws.ColumnsUsed())
+        {
+            if (col.Width > 50) col.Width = 50;
+        }
+
+        using var ms = new MemoryStream();
+        wb.SaveAs(ms);
+        return ms.ToArray();
+    }
+
+    private static string SheetNameFor(string? title)
+    {
+        var cleaned = new string((title ?? "Yanıtlar").Where(c => !"[]*/\\?:".Contains(c)).ToArray()).Trim();
+        if (cleaned.Length == 0) cleaned = "Yanıtlar";
+        return cleaned.Length > 31 ? cleaned[..31] : cleaned;
+    }
+
+    private static string ResponseStatusLabel(ResponseStatus status) => status switch
+    {
+        ResponseStatus.Pending => "Bekliyor",
+        ResponseStatus.InReview => "İnceleniyor",
+        ResponseStatus.Reviewed => "İncelendi",
+        _ => status.ToString()
+    };
+
+    private static string AnswerToText(JsonElement? answers, Guid blockId)
+    {
+        if (answers is not { ValueKind: JsonValueKind.Object } obj) return "";
+        return obj.TryGetProperty(blockId.ToString(), out var val) ? JsonValueToText(val) : "";
+    }
+
+    private static string JsonValueToText(JsonElement val) => val.ValueKind switch
+    {
+        JsonValueKind.Array => string.Join("; ", val.EnumerateArray().Select(JsonValueToText).Where(s => s.Length > 0)),
+        JsonValueKind.Object => string.Join(" ", val.EnumerateObject().Select(p => JsonValueToText(p.Value)).Where(s => s.Length > 0)),
+        JsonValueKind.String => val.GetString() ?? "",
+        JsonValueKind.True => "true",
+        JsonValueKind.False => "false",
+        JsonValueKind.Number => val.ToString(),
+        _ => ""
+    };
 }

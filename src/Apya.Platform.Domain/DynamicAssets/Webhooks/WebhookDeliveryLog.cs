@@ -33,6 +33,12 @@ public class WebhookDeliveryLog : CreationAuditedEntity<Guid>
 
     public bool IsSuccess { get; private set; }
 
+    /// <summary>
+    /// Wall-clock time the HTTP call took, in milliseconds. Null for deliveries
+    /// logged before this field existed.
+    /// </summary>
+    public long? ElapsedMilliseconds { get; private set; }
+
     protected WebhookDeliveryLog()
     {
     }
@@ -44,7 +50,8 @@ public class WebhookDeliveryLog : CreationAuditedEntity<Guid>
         int responseCode,
         string? responseBody,
         int tryCount,
-        bool isSuccess)
+        bool isSuccess,
+        long? elapsedMilliseconds = null)
         : base(id)
     {
         SubscriptionId = subscriptionId;
@@ -53,5 +60,6 @@ public class WebhookDeliveryLog : CreationAuditedEntity<Guid>
         ResponseBody = responseBody;
         TryCount = tryCount;
         IsSuccess = isSuccess;
+        ElapsedMilliseconds = elapsedMilliseconds;
     }
 }

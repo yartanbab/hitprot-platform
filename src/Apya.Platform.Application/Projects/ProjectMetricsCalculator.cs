@@ -63,15 +63,26 @@ public static class ProjectMetricsCalculator
             $"Kritik Seviye! Gecikmeler ve daralan süre nedeniyle teslimat riski %{score} olarak öngörüldü.");
     }
 
-    public static (int remainingDays, int totalProjectDays, int timeUsagePercent, string color, string label)
+    public static (int remainingDays, int totalProjectDays, int timeUsagePercent, string color, string label, bool notStarted)
         CalculateTimeMetrics(
             ProjectDto project,
             IReadOnlyList<TaskDto> tasks,
             DateTime now)
     {
+        // İleri tarihli proje: kalan gün = BAŞLANGICA kalan gün, süre tüketimi 0.
+        // (Aksi halde daysPassed negatif çıkar ve yüzde/etiket anlamsızlaşır.)
+        if (project.StartDate.HasValue && now < project.StartDate.Value)
+        {
+            var daysUntilStart = (int)Math.Ceiling((project.StartDate.Value - now).TotalDays);
+            var plannedDays = project.EndDate.HasValue
+                ? (int)(project.EndDate.Value - project.StartDate.Value).TotalDays
+                : 0;
+            return (daysUntilStart, plannedDays, 0, "info", "Başlamadı", true);
+        }
+
         if (!project.StartDate.HasValue || !project.EndDate.HasValue)
         {
-            return (0, 0, 0, "success", "Saglam");
+            return (0, 0, 0, "success", "Saglam", false);
         }
 
         var totalProjectDays = (int)(project.EndDate.Value - project.StartDate.Value).TotalDays;
@@ -87,12 +98,12 @@ public static class ProjectMetricsCalculator
         var completionRate = totalTasks > 0 ? (double)completedTasks / totalTasks * 100 : 0;
 
         if (timeUsagePercent > 80 && completionRate < 50)
-            return (remainingDays, totalProjectDays, timeUsagePercent, "danger", "Kritik");
+            return (remainingDays, totalProjectDays, timeUsagePercent, "danger", "Kritik", false);
 
         if (timeUsagePercent > 50 && completionRate < (timeUsagePercent - 20))
-            return (remainingDays, totalProjectDays, timeUsagePercent, "warning", "Dikkat");
+            return (remainingDays, totalProjectDays, timeUsagePercent, "warning", "Dikkat", false);
 
-        return (remainingDays, totalProjectDays, timeUsagePercent, "success", "Saglam");
+        return (remainingDays, totalProjectDays, timeUsagePercent, "success", "Saglam", false);
     }
 
     public static decimal CalculateBudgetSpent(

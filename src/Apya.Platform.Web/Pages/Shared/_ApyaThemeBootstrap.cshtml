@@ -1,18 +1,17 @@
 @*
-    APYA Theme Bootstrap Partial
+    APYA Theme Bootstrap Partial (React island sayfaları için)
     -----------------------------------------------------------------------
-    Her sayfanın <head>'inde olmalı:
+    İçerik:
       - PWA manifest + theme-color meta + icon
       - FOUC engelleme inline script (data-theme + LeptonX class mirror)
-      - apya-theme-bridge.css link (LeptonX/Bootstrap dark mode köprüsü)
-      - apya-tokens.css link (React island'la aynı --apya-* tokens, Razor için)
+      - js/style.css (React island Tailwind utility'leri)
+
+    NOT: Token'lar (tokens.css) ve LeptonX/Bootstrap köprüsü
+    (apya-theme-bridge.css) artık GLOBAL stil bundle'ında
+    (PlatformWebModule.ConfigureBundles) — burada tekrar yüklenmez.
 
     Kullanım:
       <partial name="_ApyaThemeBootstrap" />
-
-    Site-wide adopsiyon: bu partial'ı LeptonX layout override'ında çağır
-    (örn. Pages/Shared/Components/Layouts/_Layout.cshtml içinde @section Head
-    ya da BrandingProvider extension).
 *@
 
 <link rel="manifest" href="~/manifest.webmanifest" />
@@ -21,11 +20,8 @@
 <link rel="icon" type="image/svg+xml" href="~/icons/apya-icon.svg" />
 <link rel="apple-touch-icon" href="~/icons/apya-icon.svg" />
 
-@* Bridge: LeptonX/Bootstrap değişkenleri Apya tokens'a bağlar *@
-<link rel="stylesheet" href="~/css/apya-theme-bridge.css" asp-append-version="true" />
-
-@* React island stylesheet — aynı tokens.css'i içerir, Razor sayfaları da
-   bu sayede --apya-* değişkenlerine erişebilir. *@
+@* React island stylesheet — Tailwind utility'leri (token'ları da içerir;
+   global bundle'la çakışmaz, aynı değerler). *@
 <link rel="stylesheet" href="~/js/style.css" asp-append-version="true" />
 
 @*

@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -28,9 +29,13 @@ public class CreateModalModel : AbpPageModel
         _cashAccountAppService = cashAccountAppService;
     }
 
-    public virtual async Task<IActionResult> OnGetAsync()
+    public virtual async Task<IActionResult> OnGetAsync(Guid? cashAccountId = null)
     {
         await LoadLookupsAsync();
+        if (cashAccountId.HasValue)
+        {
+            Movement.CashAccountId = cashAccountId.Value;
+        }
         return Page();
     }
 

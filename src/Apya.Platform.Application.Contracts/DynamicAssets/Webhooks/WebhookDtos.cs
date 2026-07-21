@@ -37,4 +37,14 @@ public class WebhookDeliveryLogDto : CreationAuditedEntityDto<Guid>
     public string? ResponseBody { get; set; }
     public int TryCount { get; set; }
     public bool IsSuccess { get; set; }
+    public long? ElapsedMilliseconds { get; set; }
+}
+
+/// <summary>
+/// Output DTO for a secret regeneration — carries the new plaintext secret
+/// exactly once. Never persisted or returned again after this response.
+/// </summary>
+public class RegenerateWebhookSecretResultDto
+{
+    public string Secret { get; set; } = null!;
 }

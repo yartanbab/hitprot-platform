@@ -13,7 +13,7 @@
         "Menu:Customers": "Cariler",
         "Menu:CashAccounts": "Kasalar",
         "Menu:CashMovements": "Kasa Hareketleri",
-        "Menu:ExchangeRates": "Döviz Kurları",
+        "Menu:ExchangeRates": "Kurlar",
         "Menu:FxRevaluation": "Yıl Sonu Değerleme",
         "Menu:Expenses": "Giderler",
         "Menu:Incomes": "Gelirler (Hibe/Faturasız)",
@@ -23,7 +23,7 @@
         "Menu:CustomerStatement": "Cari Ekstre",
         "Menu:ProjectBudget": "Proje Bütçe / K/Z",
         "Menu:Content": "İçerik",
-        "Menu:Documents": "Wiki / Belgeler",
+        "Menu:Documents": "Dokümanlar",
         "Menu:DynamicAssets": "Şablonlar & Formlar",
         "Menu:Webhooks": "Webhook'lar",
         "Menu:Reports": "Raporlar & Analiz",
@@ -103,7 +103,7 @@
         "Permission:Invoices.Edit": "Fatura Düzenleme",
         "Permission:Invoices.Delete": "Fatura Silme",
 
-        "Permission:ExchangeRates": "Döviz Kurları",
+        "Permission:ExchangeRates": "Kurlar",
         "Permission:ExchangeRates.Create": "Kur Oluşturma",
         "Permission:ExchangeRates.Edit": "Kur Düzenleme",
         "Permission:ExchangeRates.Delete": "Kur Silme",
@@ -167,7 +167,7 @@
         "Feature:Platform": "Platform Özellikleri",
         "Feature:Platform:AiAssist": "AI Asistan",
         "Feature:Platform:AiAssist:Description": "AI tabanlı görev üretimi, öneriler ve otomasyon özelliklerini bu tenant için aktif eder.",
-        "Feature:Platform:MultiCurrency": "Çoklu Döviz",
+        "Feature:Platform:MultiCurrency": "Çoklu Para Birimi",
         "Feature:Platform:MultiCurrency:Description": "TRY dışındaki para birimleri (USD, EUR) ile işlem desteği. Kapalıysa yalnızca TL kullanılır.",
         "Feature:Platform:AdvancedReports": "Gelişmiş Raporlar",
         "Feature:Platform:AdvancedReports:Description": "Mizan, yıl sonu değerleme ve diğer premium finansal raporlar.",
@@ -282,6 +282,9 @@
 
         "Platform:CashMovement:AccountRequired": "Kasa hareketi için bir kasa seçilmelidir.",
         "Platform:CashMovement:AmountInvalid": "Geçersiz tutar. Tutar sıfırdan farklı olmalıdır.",
+        "Platform:CashMovement:TransferSameAccount": "Gönderen ve alıcı kasa aynı olamaz.",
+        "Platform:CashMovement:TransferAccountInactive": "Pasif bir kasaya/kasadan transfer yapılamaz.",
+        "Platform:CashMovement:TransferRateMissing": "Bu iki para birimi arasında güncel bir döviz kuru bulunamadı. Lütfen Kur Değerleme ekranından ilgili kuru tanımlayın.",
 
         "Platform:Expense:TitleRequired": "Gider başlığı boş bırakılamaz.",
         "Platform:Expense:FieldTooLong": "Girilen değer izin verilen karakter sınırını aşıyor.",
@@ -293,8 +296,8 @@
         "Platform:Invoice:TaxRateInvalid": "Geçersiz KDV oranı. Oran 0 ile 100 arasında olmalıdır.",
         "Platform:Invoice:CurrencyInvalid": "Geçersiz para birimi.",
 
-        "Platform:Payment:ExchangeRateMissing": "Tahsilat tarihi için döviz kuru bulunamadı. Lütfen ilgili kuru tanımlayın.",
-        "Platform:FxRevaluation:RateMissing": "Değerleme tarihi için döviz kuru bulunamadı. Lütfen ilgili kuru tanımlayın.",
+        "Platform:Payment:ExchangeRateMissing": "Tahsilat tarihi için kur bulunamadı. Lütfen ilgili kuru tanımlayın.",
+        "Platform:FxRevaluation:RateMissing": "Değerleme tarihi için kur bulunamadı. Lütfen ilgili kuru tanımlayın.",
 
         "Platform:Project:NameRequired": "Proje adı boş bırakılamaz.",
         "Platform:Project:BudgetInvalid": "Geçersiz bütçe. Bütçe negatif olamaz.",

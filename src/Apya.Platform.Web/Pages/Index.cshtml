@@ -13,6 +13,8 @@
     <abp-script src="/Pages/Index.js" />
 }
 
+<div class="apya-page">
+
 <div class="row mb-4" id="DashboardAlertsContainer" style="display: none;">
     <div class="col-12">
         <div class="card bg-danger bg-opacity-10 border-danger border-2 shadow-sm">
@@ -53,7 +55,7 @@
                 <abp-button id="NewProjectButton"
                             text="Yeni Proje Ekle"
                             icon="plus"
-                            button-type="Primary" />
+                            button-type="Primary" size="Small" />
             </abp-column>
         </abp-row>
     </abp-card-header>
@@ -62,3 +64,5 @@
         <abp-table striped-rows="true" id="ProjectsTable"></abp-table>
     </abp-card-body>
 </abp-card>
+
+</div> @* /apya-page *@

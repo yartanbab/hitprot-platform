@@ -24,6 +24,13 @@ public class CashAccount : FullAuditedAggregateRoot<Guid>, IMultiTenant
 
     public string? Description { get; set; }
 
+    /// <summary>Banka adı (Type=Bank hesaplarda anlamlı; Nakit kasada boş kalır).</summary>
+    public string? BankName { get; set; }
+
+    public string? Branch { get; set; }
+
+    public string? Iban { get; set; }
+
     public bool IsActive { get; set; } = true;
 
     protected CashAccount() { }

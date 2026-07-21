@@ -108,12 +108,12 @@ a, button, .btn, .nav-link, .list-group-item {
 
 .modal-header {
     border-bottom: 1px solid var(--apya-border-subtle) !important;
-    padding: 18px 22px !important;
+    padding: var(--apya-space-4) var(--apya-space-5) !important;
 }
 
 .modal-footer {
     border-top: 1px solid var(--apya-border-subtle) !important;
-    padding: 14px 22px !important;
+    padding: var(--apya-space-3) var(--apya-space-5) !important;
 }
 
 /* ----------------------------------------------------------------------------
@@ -208,4 +208,274 @@ h1, h2, h3, h4, h5, h6 {
     background: var(--apya-surface-elevated) !important;
     border: 1px solid var(--apya-border-default) !important;
     color: var(--apya-text-primary) !important;
+}
+
+/* ----------------------------------------------------------------------------
+   9) PAGE LAYOUT UTILITIES
+   Üç sayfa şablonu:
+     .apya-page         → liste/dashboard sayfaları (ultra-geniş ekranda tablo
+                           okunabilirliği için 1400px'te ortalanır)
+     .apya-page--narrow → tek kolon "odak" sayfaları (ayarlar, bildirimler,
+                           entegrasyon kartları)
+     (full-bleed sayfalar — kanban, form designer, React dashboard —
+      wrapper KULLANMAZ, içerik alanının tamamına yayılır)
+   ---------------------------------------------------------------------------- */
+.apya-page {
+    max-width: 1400px;
+    margin-inline: auto;
+}
+
+.apya-page--narrow {
+    max-width: 860px;
+    margin-inline: auto;
+}
+
+/* ----------------------------------------------------------------------------
+   10) MICRO COMPONENTS
+   ---------------------------------------------------------------------------- */
+
+/* Overline etiketi — KPI/metrik başlıkları. İnline
+   "text-uppercase fw-bold + font-size:0.7rem" tekrarlarının yerini alır. */
+.apya-overline {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    color: var(--apya-text-tertiary);
+}
+
+/* Seçilebilir hesap kartı (Kasa & Banka) — <button class="card apya-account-card">. */
+.apya-account-card {
+    cursor: pointer;
+    transition: border-color var(--apya-motion-fast) ease, box-shadow var(--apya-motion-fast) ease;
+}
+.apya-account-card.selected {
+    border: 1px solid var(--apya-accent-500) !important;
+    box-shadow: 0 0 0 1px var(--apya-accent-500) !important;
+}
+
+/* KPI kartı ikon kutusu — _KpiCard partial'ı kullanır. */
+.kpi-icon-box {
+    width: 50px;
+    height: 50px;
+    border-radius: var(--apya-radius-lg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    flex-shrink: 0;
+}
+
+/* ----------------------------------------------------------------------------
+   11) MASTER-DETAIL — Razor tarafı ortak deseni ("sol liste + sağ detay
+   paneli"; seçili satır accent-soft + sol kenarlık). Kullanıcılar: Faturalar,
+   Kasa & Banka. React tarafındaki karşılığı customers.jsx (Tailwind ile aynı
+   görsel dil).
+   <992px: tek sütun — kök .apya-md'ye JS `has-selection` class'ı verir,
+   liste ↔ detay geçişi buradaki media query ile çözülür.
+   ---------------------------------------------------------------------------- */
+.apya-md {
+    display: grid;
+    border: 1px solid var(--apya-border-default);
+    border-radius: var(--apya-radius-xl);
+    background: var(--apya-surface-raised);
+    box-shadow: var(--apya-shadow-sm);
+    overflow: hidden;
+}
+.apya-md-list {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+@media (min-width: 992px) {
+    .apya-md {
+        grid-template-columns: minmax(300px, 380px) 1fr;
+    }
+    .apya-md-list {
+        border-right: 1px solid var(--apya-border-subtle);
+    }
+}
+.apya-md-toolbar {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 12px;
+    border-bottom: 1px solid var(--apya-border-subtle);
+}
+.apya-md-items {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+.apya-md-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 10px 14px;
+    border: 0;
+    border-left: 2px solid transparent;
+    border-bottom: 1px solid var(--apya-border-subtle);
+    background: transparent;
+    text-align: left;
+    cursor: pointer;
+    transition: background var(--apya-motion-fast) ease;
+}
+.apya-md-item:hover {
+    background: var(--apya-border-subtle);
+}
+.apya-md-item.selected {
+    background: var(--apya-accent-soft);
+    border-left-color: var(--apya-accent-500);
+}
+.apya-md-item.selected .apya-md-item-title {
+    color: var(--apya-accent-500);
+}
+.apya-md-item-body {
+    flex: 1;
+    min-width: 0;
+}
+.apya-md-item-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--apya-text-primary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.apya-md-item-sub {
+    font-size: 11px;
+    color: var(--apya-text-tertiary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.apya-md-item-side {
+    flex-shrink: 0;
+    text-align: right;
+}
+.apya-md-detail {
+    min-width: 0;
+    background: var(--apya-surface-base);
+    padding: 20px;
+}
+.apya-md-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 56px 20px;
+    color: var(--apya-text-tertiary);
+    text-align: center;
+    font-size: 12.5px;
+}
+.apya-md-empty i {
+    font-size: 26px;
+    opacity: 0.6;
+}
+.apya-md-pager {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-top: auto;
+    padding: 10px 12px;
+    border-top: 1px solid var(--apya-border-subtle);
+    font-size: 11px;
+    color: var(--apya-text-tertiary);
+}
+/* Dar ekran: seçim varken liste gizli, yokken detay gizli; geri butonu görünür. */
+.apya-md-back {
+    display: none;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 14px;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--apya-text-secondary);
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+}
+.apya-md-back:hover {
+    color: var(--apya-accent-500);
+}
+@media (max-width: 991.98px) {
+    .apya-md.has-selection .apya-md-list {
+        display: none;
+    }
+    .apya-md:not(.has-selection) .apya-md-detail {
+        display: none;
+    }
+    .apya-md-back {
+        display: inline-flex;
+    }
+}
+/* Detay içi yardımcılar */
+.apya-md-overline {
+    font-size: 10.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    color: var(--apya-text-tertiary);
+}
+.apya-md-pre {
+    margin: 0;
+    padding: 12px 14px;
+    border: 1px solid var(--apya-border-subtle);
+    border-radius: var(--apya-radius-lg);
+    background: var(--apya-surface-sunken);
+    color: var(--apya-text-secondary);
+    font-family: var(--apya-font-mono);
+    font-size: 11.5px;
+    line-height: 1.55;
+    white-space: pre-wrap;
+    word-break: break-word;
+    max-height: 260px;
+    overflow: auto;
+/* Chip/etiket — badge'den daha yumuşak, pill şeklinde. Örn. Webhooks kartlarında
+   form adı etiketi. Genel/paylaşılan: başka listelerde de kullanılabilir. */
+.apya-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 10px;
+    border-radius: var(--apya-radius-full);
+    font-size: var(--apya-text-xs);
+    font-weight: var(--apya-weight-medium);
+    line-height: var(--apya-leading-tight);
+    white-space: nowrap;
+}
+.apya-chip--accent {
+    background: var(--apya-accent-soft);
+    color: var(--apya-accent-500);
+}
+.apya-chip--neutral {
+    background: var(--apya-surface-sunken);
+    color: var(--apya-text-secondary);
+}
+
+/* Durum noktası — aktif/pasif göstergesi (ör. Webhooks kart başlığı). */
+.apya-status-dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: var(--apya-radius-full);
+    flex-shrink: 0;
+}
+.apya-status-dot--active {
+    background: var(--apya-positive-500);
+}
+.apya-status-dot--inactive {
+    background: var(--apya-text-disabled);
+}
+
+/* Aç/kapa chevron — ok ikonunu döndürerek genişlet/daralt durumunu gösterir. */
+.apya-expand-chevron {
+    transition: transform var(--apya-motion-base) var(--apya-easing-standard);
+}
+.apya-expand-chevron.is-open {
+    transform: rotate(180deg);
 }

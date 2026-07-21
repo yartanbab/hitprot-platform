@@ -1,33 +1,48 @@
 @page
 @model Apya.Platform.Web.Pages.Invoices.IndexModel
-@using Apya.Platform.Invoices
 @using Apya.Platform.Permissions
 @using Microsoft.AspNetCore.Authorization
-@using Microsoft.AspNetCore.Mvc.Localization
-@inject IHtmlLocalizer<Apya.Platform.Localization.PlatformResource> L
 @inject IAuthorizationService AuthorizationService
 
-<abp-card>
-    <abp-card-header>
-        <abp-row>
-            <abp-column size-md="_6">
-                <abp-card-title><i class="fa fa-file-invoice-dollar me-2"></i> Faturalar ve Ödemeler</abp-card-title>
-            </abp-column>
-            <abp-column size-md="_6" class="text-end">
-                @if (await AuthorizationService.IsGrantedAsync(PlatformPermissions.Invoices.Create))
-                {
-                    <abp-button id="NewInvoiceButton"
-                                text="Yeni Fatura Oluştur"
-                                icon="plus"
-                                button-type="Primary" />
-                }
-            </abp-column>
-        </abp-row>
-    </abp-card-header>
-    <abp-card-body>
-        <abp-table striped-rows="true" id="InvoicesTable"></abp-table>
-    </abp-card-body>
-</abp-card>
+<div class="apya-page">
+    <div class="d-flex align-items-start justify-content-between flex-wrap gap-2 mb-3">
+        <div>
+            <h1 class="h5 mb-1"><i class="fa fa-file-invoice-dollar me-2" aria-hidden="true"></i>Faturalar</h1>
+            <p class="text-muted mb-0" style="font-size:12px">Satış ve alış faturaları</p>
+        </div>
+        @if (await AuthorizationService.IsGrantedAsync(PlatformPermissions.Invoices.Create))
+        {
+            <abp-button id="NewInvoiceButton" text="Yeni fatura" icon="plus" button-type="Primary" size="Small" />
+        }
+    </div>
+
+    <div class="apya-md" id="InvoicesMd">
+        <div class="apya-md-list">
+            <div class="apya-md-toolbar">
+                <input type="text" id="InvoiceFilter" class="form-control form-control-sm" placeholder="Fatura no, cari ara..." />
+                <div class="d-flex flex-wrap gap-1" id="InvoiceStatusPills">
+                    <button type="button" class="btn btn-sm btn-primary" data-status="">Tümü</button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" data-status="1">Gönderildi</button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" data-status="2">Ödendi</button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" data-status="4">Gecikmiş</button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" data-status="0">Taslak</button>
+                </div>
+            </div>
+            <ul class="apya-md-items" id="InvoicesList" role="listbox" aria-label="Fatura listesi"></ul>
+            <div class="apya-md-empty" id="InvoicesListEmpty" hidden>
+                <i class="fa fa-inbox" aria-hidden="true"></i>
+                <span>Eşleşen fatura bulunamadı</span>
+            </div>
+            <div class="apya-md-pager"><span id="InvoicesPagerInfo">—</span></div>
+        </div>
+        <div class="apya-md-detail" id="InvoiceDetail">
+            <div class="apya-md-empty">
+                <i class="fa fa-file-invoice-dollar" aria-hidden="true"></i>
+                <span>Detaylarını görmek için soldaki listeden bir fatura seçin.</span>
+            </div>
+        </div>
+    </div>
+</div>
 
 @section scripts {
     <abp-script src="/Pages/Invoices/index.js" />

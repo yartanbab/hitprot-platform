@@ -1,8 +1,16 @@
-﻿using System;
+/* =============================================================================
+   APYA GLOBAL — LeptonX marka/logo override'ları
+   Global stil bundle'ına PlatformWebModule.ConfigureBundles ile eklenir.
+   Token'lar (/dynamic-assets/src/styles/tokens.css) ve köprü
+   (/css/apya-theme-bridge.css) aynı bundle'da ayrıca yüklüdür.
+   ============================================================================= */
 
-public class Class1
-{
-	public Class1()
-	{
-	}
+:root .lpx-brand-logo {
+    --lpx-logo: url('/images/logo/leptonx/logo-light.png');
+    --lpx-logo-icon: url('/images/logo/leptonx/logo-light-thumbnail.png');
+}
+
+[data-theme="dark"] .lpx-brand-logo {
+    --lpx-logo: url('/images/logo/leptonx/logo-dark.png');
+    --lpx-logo-icon: url('/images/logo/leptonx/logo-dark-thumbnail.png');
 }

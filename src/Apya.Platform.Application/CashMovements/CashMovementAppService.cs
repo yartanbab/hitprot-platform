@@ -23,13 +23,16 @@ public class CashMovementAppService :
     ICashMovementAppService
 {
     private readonly IRepository<CashAccount, Guid> _cashAccountRepository;
+    private readonly CashTransferManager _cashTransferManager;
 
     public CashMovementAppService(
         IRepository<CashMovement, Guid> repository,
-        IRepository<CashAccount, Guid> cashAccountRepository)
+        IRepository<CashAccount, Guid> cashAccountRepository,
+        CashTransferManager cashTransferManager)
         : base(repository)
     {
         _cashAccountRepository = cashAccountRepository;
+        _cashTransferManager = cashTransferManager;
         GetPolicyName = PlatformPermissions.CashMovements.Default;
         GetListPolicyName = PlatformPermissions.CashMovements.Default;
         CreatePolicyName = PlatformPermissions.CashMovements.Create;
@@ -102,6 +105,25 @@ public class CashMovementAppService :
             TotalIn = totalIn,
             TotalOut = totalOut,
             CurrentBalance = account.OpeningBalance + totalIn - totalOut
+        };
+    }
+
+    [Authorize(PlatformPermissions.CashMovements.Create)]
+    public async Task<CashTransferResultDto> TransferAsync(CreateCashTransferDto input)
+    {
+        var result = await _cashTransferManager.TransferAsync(
+            input.FromCashAccountId,
+            input.ToCashAccountId,
+            input.Amount,
+            input.TransferDate ?? Clock.Now,
+            input.Description);
+
+        return new CashTransferResultDto
+        {
+            OutMovement = ObjectMapper.Map<CashMovement, CashMovementDto>(result.OutMovement),
+            InMovement = ObjectMapper.Map<CashMovement, CashMovementDto>(result.InMovement),
+            ConvertedAmount = result.ConvertedAmount,
+            RateApplied = result.RateApplied
         };
     }
 }

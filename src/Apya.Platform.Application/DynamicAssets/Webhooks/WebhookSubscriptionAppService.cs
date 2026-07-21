@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.Logging;
@@ -20,15 +21,18 @@ public class WebhookSubscriptionAppService : PlatformAppService, IWebhookSubscri
 {
     private readonly IRepository<WebhookSubscription, Guid> _subscriptionRepository;
     private readonly IRepository<WebhookDeliveryLog, Guid> _deliveryLogRepository;
+    private readonly WebhookDeliverySender _deliverySender;
     private readonly ILogger<WebhookSubscriptionAppService> _logger;
 
     public WebhookSubscriptionAppService(
         IRepository<WebhookSubscription, Guid> subscriptionRepository,
         IRepository<WebhookDeliveryLog, Guid> deliveryLogRepository,
+        WebhookDeliverySender deliverySender,
         ILogger<WebhookSubscriptionAppService> logger)
     {
         _subscriptionRepository = subscriptionRepository;
         _deliveryLogRepository = deliveryLogRepository;
+        _deliverySender = deliverySender;
         _logger = logger;
     }
 
@@ -112,6 +116,12 @@ public class WebhookSubscriptionAppService : PlatformAppService, IWebhookSubscri
     [Authorize(PlatformPermissions.DynamicAssets.Default)]
     public async Task<List<WebhookDeliveryLogDto>> GetDeliveryLogsAsync(Guid subscriptionId)
     {
+        // WebhookDeliveryLog IMultiTenant DEĞİL — tenant sahipliği subscription
+        // üzerinden doğrulanmalı; aksi halde GUID bilen başka tenant'ın kullanıcısı
+        // payload/response gövdelerini okuyabilir. Cross-tenant istekte GetAsync
+        // tenant filtresi sayesinde EntityNotFound fırlatır.
+        await _subscriptionRepository.GetAsync(subscriptionId);
+
         var logs = await _deliveryLogRepository.GetListAsync(
             l => l.SubscriptionId == subscriptionId
         );
@@ -119,5 +129,53 @@ public class WebhookSubscriptionAppService : PlatformAppService, IWebhookSubscri
         return ObjectMapper.Map<List<WebhookDeliveryLog>, List<WebhookDeliveryLogDto>>(
             logs.OrderByDescending(l => l.CreationTime).ToList()
         );
+    }
+
+    [Authorize(PlatformPermissions.DynamicAssets.Edit)]
+    public async Task<WebhookDeliveryLogDto> ResendDeliveryAsync(Guid deliveryLogId)
+    {
+        var originalLog = await _deliveryLogRepository.GetAsync(deliveryLogId);
+        var subscription = await _subscriptionRepository.GetAsync(originalLog.SubscriptionId);
+
+        // Manual resend: a single immediate attempt, no retry/backoff — the user is
+        // watching and expects a prompt result, not a job-style multi-attempt wait.
+        var result = await _deliverySender.SendAsync(subscription.TargetUrl, subscription.Secret, originalLog.Payload);
+
+        var newLog = new WebhookDeliveryLog(
+            GuidGenerator.Create(),
+            subscription.Id,
+            originalLog.Payload,
+            result.ResponseCode,
+            result.ResponseBody,
+            tryCount: 1,
+            result.IsSuccess,
+            result.ElapsedMilliseconds
+        );
+
+        await _deliveryLogRepository.InsertAsync(newLog, autoSave: true);
+
+        _logger.LogInformation(
+            "Webhook teslimatı yeniden gönderildi. SubscriptionId: {SubscriptionId}, OriginalLogId: {OriginalLogId}, NewLogId: {NewLogId}, StatusCode: {StatusCode}",
+            subscription.Id, deliveryLogId, newLog.Id, result.ResponseCode);
+
+        return ObjectMapper.Map<WebhookDeliveryLog, WebhookDeliveryLogDto>(newLog);
+    }
+
+    [Authorize(PlatformPermissions.DynamicAssets.Edit)]
+    public async Task<RegenerateWebhookSecretResultDto> RegenerateSecretAsync(Guid id)
+    {
+        var subscription = await _subscriptionRepository.GetAsync(id);
+
+        var newSecret = "wh_secret_" + Convert.ToHexStringLower(RandomNumberGenerator.GetBytes(24));
+        subscription.SetSecret(newSecret);
+
+        await _subscriptionRepository.UpdateAsync(subscription, autoSave: true);
+
+        // Secret değeri kasıtlı olarak loglanmaz — sadece olay kaydedilir.
+        _logger.LogInformation(
+            "Webhook secret'ı yeniden oluşturuldu. SubscriptionId: {SubscriptionId}",
+            subscription.Id);
+
+        return new RegenerateWebhookSecretResultDto { Secret = newSecret };
     }
 }

@@ -8,10 +8,13 @@
 
 @Html.AntiForgeryToken()
 
-<div class="card">
-    <div class="card-body">
-        <div id="responses-root" data-form-id="@Model.FormId"></div>
+<div class="apya-page">
+    <div class="card">
+        <div class="card-body">
+            <div id="responses-root" data-form-id="@Model.FormId"></div>
+        </div>
     </div>
 </div>
 
+<script src="~/js/chart.umd.min.js" asp-append-version="true"></script>
 <script type="module" src="~/js/responses.js" asp-append-version="true"></script>

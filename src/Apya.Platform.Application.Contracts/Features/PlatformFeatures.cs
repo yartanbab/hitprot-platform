@@ -3,7 +3,7 @@ namespace Apya.Platform.Features;
 /// <summary>
 /// Tenant-bazında açılıp kapatılabilen platform özellikleri.
 /// Permission'lardan farkı: feature, tenant'ın "satın aldığı" özellikleri kontrol eder
-/// (örn: AI eklentisi, çoklu döviz desteği). Permission ise kullanıcının yetkisini kontrol eder.
+/// (örn: AI eklentisi, çoklu para birimi desteği). Permission ise kullanıcının yetkisini kontrol eder.
 /// </summary>
 public static class PlatformFeatures
 {
