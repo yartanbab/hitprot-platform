@@ -1,6 +1,7 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import { Input } from './Input';
 import { cn } from '../../lib/utils';
+import { t } from '../../lib/i18n';
 
 /**
  * DateRangePicker — from/to native date input'ları + preset chip'leri.
@@ -28,14 +29,16 @@ import { cn } from '../../lib/utils';
  * yalnızca aria-invalid sinyali verir.
  */
 
+/* Anahtar + fallback; çözüm render'da t() ile (modül seviyesinde t() abp
+   yüklenmeden değerlendirilip fallback'e kilitlenirdi). */
 const PRESET_DEFS = {
-    'this-month':    { label: 'Bu ay',         build: () => monthRange(0) },
-    'last-month':    { label: 'Geçen ay',       build: () => monthRange(-1) },
-    'this-quarter':  { label: 'Bu çeyrek',     build: () => quarterRange(0) },
-    'last-quarter':  { label: 'Geçen çeyrek',  build: () => quarterRange(-1) },
-    'this-fy':       { label: 'Bu mali yıl',   build: () => fiscalYearRange(0) },
-    'last-30d':      { label: 'Son 30 gün',    build: () => rollingDays(30) },
-    'last-90d':      { label: 'Son 90 gün',    build: () => rollingDays(90) },
+    'this-month':    { labelKey: 'DateRange:ThisMonth',   labelFallback: 'Bu ay',        build: () => monthRange(0) },
+    'last-month':    { labelKey: 'DateRange:LastMonth',   labelFallback: 'Geçen ay',     build: () => monthRange(-1) },
+    'this-quarter':  { labelKey: 'DateRange:ThisQuarter', labelFallback: 'Bu çeyrek',    build: () => quarterRange(0) },
+    'last-quarter':  { labelKey: 'DateRange:LastQuarter', labelFallback: 'Geçen çeyrek', build: () => quarterRange(-1) },
+    'this-fy':       { labelKey: 'DateRange:ThisFiscal',  labelFallback: 'Bu mali yıl',  build: () => fiscalYearRange(0) },
+    'last-30d':      { labelKey: 'DateRange:Last30Days',  labelFallback: 'Son 30 gün',   build: () => rollingDays(30) },
+    'last-90d':      { labelKey: 'DateRange:Last90Days',  labelFallback: 'Son 90 gün',   build: () => rollingDays(90) },
 };
 
 const DEFAULT_PRESETS = ['this-month', 'last-month', 'this-quarter', 'last-quarter', 'this-fy', 'last-30d'];
@@ -114,7 +117,7 @@ function DateRangePicker({
     return (
         <div className={cn('flex flex-col gap-2', className)}>
             {/* Preset chip'ler — yatay sıra, dar viewport'ta wrap */}
-            <div role="radiogroup" aria-label="Tarih aralığı önayarları" className="flex flex-wrap gap-1">
+            <div role="radiogroup" aria-label={t('DateRange:Presets', 'Tarih aralığı önayarları')} className="flex flex-wrap gap-1">
                 {presets.map((key) => {
                     const def = PRESET_DEFS[key];
                     if (!def) return null;
@@ -134,7 +137,7 @@ function DateRangePicker({
                                 'focus-visible:outline-none focus-visible:shadow-focus',
                             )}
                         >
-                            {def.label}
+                            {t(def.labelKey, def.labelFallback)}
                         </button>
                     );
                 })}
@@ -144,7 +147,7 @@ function DateRangePicker({
             <div className="flex items-center gap-2">
                 <Input
                     type="date"
-                    aria-label="Başlangıç tarihi"
+                    aria-label={t('DateRange:StartDate', 'Başlangıç tarihi')}
                     value={toInputDate(from)}
                     min={toInputDate(minDate)}
                     max={toInputDate(to ?? maxDate)}
@@ -155,7 +158,7 @@ function DateRangePicker({
                 <span className="text-text-tertiary text-sm" aria-hidden="true">—</span>
                 <Input
                     type="date"
-                    aria-label="Bitiş tarihi"
+                    aria-label={t('DateRange:EndDate', 'Bitiş tarihi')}
                     value={toInputDate(to)}
                     min={toInputDate(from ?? minDate)}
                     max={toInputDate(maxDate)}

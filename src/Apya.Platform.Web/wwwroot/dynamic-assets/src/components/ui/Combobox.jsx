@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 import { Input } from './Input';
 import { cn } from '../../lib/utils';
+import { t } from '../../lib/i18n';
 
 /**
  * Combobox — input + filtrelenebilir dropdown.
@@ -35,12 +36,12 @@ function Combobox({
     options = [],
     value,
     onChange,
-    placeholder = 'Seçim yap',
+    placeholder = t('Common:MakeSelection', 'Seçim yap'),
     onSearch,                  /* opsiyonel — async/server-side filter caller'a */
     size,
     invalid,
     disabled,
-    emptyMessage = 'Eşleşme bulunamadı',
+    emptyMessage = t('Common:NoMatch', 'Eşleşme bulunamadı'),
     className,
     listMaxHeight = 240,
     ...inputProps

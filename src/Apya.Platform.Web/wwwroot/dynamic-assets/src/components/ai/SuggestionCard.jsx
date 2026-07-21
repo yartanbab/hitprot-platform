@@ -2,6 +2,7 @@ import React from 'react';
 import { Badge, Button } from '../ui';
 import { cn } from '../../lib/utils';
 import { ConfidenceMeter } from './ConfidenceMeter';
+import { t } from '../../lib/i18n';
 
 /**
  * SuggestionCard — AI önerisinin standart sunum kontratı.
@@ -37,7 +38,7 @@ function SuggestionCard({
     confidenceLabel,         /* opsiyonel custom label; yoksa otomatik band */
     tone = 'neutral',
     badge,                   /* opsiyonel custom badge; yoksa "AI" rozetı */
-    primaryActionLabel = 'Uygula',
+    primaryActionLabel = t('Common:Apply', 'Uygula'),
     onApply,
     onSnooze,
     onDismiss,
@@ -93,7 +94,9 @@ function SuggestionCard({
                                 'focus-visible:outline-none focus-visible:shadow-focus rounded-sm',
                             )}
                         >
-                            {whyOpen ? 'Açıklamayı gizle' : 'Neden bu öneri?'}
+                            {whyOpen
+                                ? t('Risk:HideExplanation', 'Açıklamayı gizle')
+                                : t('Risk:WhyThisSuggestion', 'Neden bu öneri?')}
                         </button>
                         {whyOpen && (
                             <ul className="text-xs text-text-secondary list-disc pl-5 space-y-1">
@@ -116,7 +119,7 @@ function SuggestionCard({
                             isLoading={pending === 'dismiss'}
                             disabled={isAnyPending && pending !== 'dismiss'}
                         >
-                            İlgisiz
+                            {t('Ai:Irrelevant', 'İlgisiz')}
                         </Button>
                     )}
                     {onSnooze && (
@@ -127,7 +130,7 @@ function SuggestionCard({
                             isLoading={pending === 'snooze'}
                             disabled={isAnyPending && pending !== 'snooze'}
                         >
-                            Sonra
+                            {t('Common:Later', 'Sonra')}
                         </Button>
                     )}
                     {onApply && (

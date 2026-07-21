@@ -346,7 +346,8 @@ h1, h2, h3, h4, h5, h6 {
    11) TEMA TOGGLE — header toolbar butonu (ThemeToggle ViewComponent).
    Fallback: toolbar'sız layout'ta dark-mode.js floating buton ekler.
    ---------------------------------------------------------------------------- */
-.apya-theme-toggle {
+.apya-theme-toggle,
+.apya-density-toggle {
     background: transparent;
     border: none;
     padding: 0.4rem 0.6rem;
@@ -358,7 +359,8 @@ h1, h2, h3, h4, h5, h6 {
     transition: color var(--apya-motion-base) ease,
                 background var(--apya-motion-base) ease;
 }
-.apya-theme-toggle:hover {
+.apya-theme-toggle:hover,
+.apya-density-toggle:hover {
     color: var(--apya-accent-500);
     background: var(--apya-surface-sunken);
 }

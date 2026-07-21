@@ -28,6 +28,7 @@ import { IncomeExpenseWidget } from './widgets/IncomeExpenseWidget';
 import { ApprovalDetailSheet } from './approvals/ApprovalDetailSheet';
 
 import { Button } from '../components/ui';
+import { t } from '../lib/i18n';
 import { cn } from '../lib/utils';
 
 const ResponsiveGridLayout = WidthProvider(Responsive);
@@ -205,14 +206,14 @@ function BentoDashboard() {
                         'flex items-center gap-3',
                     )}
                 >
-                    <span>Düzenleme modu — widget'ları sürükleyip yeniden boyutlandırabilirsin</span>
+                    <span>{t('Dashboard:EditMode:Hint', 'Düzenleme modu — widget\'ları sürükleyip yeniden boyutlandırabilirsin')}</span>
                     <Button
                         variant="ghost"
                         size="sm"
                         className="text-text-inverse hover:bg-white/10"
                         onClick={() => setEditMode(false)}
                     >
-                        Bitir
+                        {t('Common:Finish', 'Bitir')}
                     </Button>
                 </div>
             )}
@@ -234,7 +235,8 @@ function DashboardHeader({ persona, onPersonaChange, editMode, onEditModeToggle,
                 zaten aynı sayfa başlığını gösteriyordu, çift render (redundant). */}
             <div className="flex flex-col gap-0.5 min-w-0">
                 <p className="text-sm font-medium text-text-secondary truncate mobile:hidden">
-                    {PERSONA_LABELS[persona]} görünümü
+                    {t('Dashboard:PersonaView', '{0} görünümü',
+                        t(PERSONA_LABELS[persona].key, PERSONA_LABELS[persona].fallback))}
                 </p>
             </div>
 
@@ -246,9 +248,9 @@ function DashboardHeader({ persona, onPersonaChange, editMode, onEditModeToggle,
                         size="sm"
                         variant="secondary"
                         onClick={onReset}
-                        title="Layout'u persona varsayılanına döndür"
+                        title={t('Dashboard:ResetLayout', 'Layout\'u persona varsayılanına döndür')}
                     >
-                        Sıfırla
+                        {t('Common:Reset', 'Sıfırla')}
                     </Button>
                 ) : null}
 
@@ -257,7 +259,7 @@ function DashboardHeader({ persona, onPersonaChange, editMode, onEditModeToggle,
                     variant={editMode ? 'primary' : 'secondary'}
                     onClick={onEditModeToggle}
                 >
-                    {editMode ? 'Tamamla' : 'Düzenle'}
+                    {editMode ? t('Common:Done', 'Tamamla') : t('Common:Edit', 'Düzenle')}
                 </Button>
 
                 {/* Kendi ThemeToggle'ı KALDIRILDI — LeptonX header'ında zaten var
@@ -271,7 +273,7 @@ function DashboardHeader({ persona, onPersonaChange, editMode, onEditModeToggle,
 function PersonaSelect({ value, onChange }) {
     return (
         <label className="flex items-center gap-2">
-            <span className="sr-only">Persona seç</span>
+            <span className="sr-only">{t('Dashboard:SelectPersona', 'Persona seç')}</span>
             <select
                 value={value}
                 onChange={(e) => onChange(e.target.value)}
@@ -285,7 +287,7 @@ function PersonaSelect({ value, onChange }) {
                 )}
             >
                 {Object.entries(PERSONA_LABELS).map(([key, label]) => (
-                    <option key={key} value={key}>{label}</option>
+                    <option key={key} value={key}>{t(label.key, label.fallback)}</option>
                 ))}
             </select>
         </label>

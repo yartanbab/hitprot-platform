@@ -3,6 +3,7 @@ import { WidgetShell } from './WidgetShell';
 import { Button, Badge, SkeletonList, EmptyState } from '../../components/ui';
 import { formatMoney, cn } from '../../lib/utils';
 import { usePendingApprovals, useApproveItem, useRejectItem } from '../hooks/usePendingApprovals';
+import { t } from '../../lib/i18n';
 
 /**
  * PendingApprovalsWidget — "Bana ne bekliyor?"
@@ -19,10 +20,12 @@ import { usePendingApprovals, useApproveItem, useRejectItem } from '../hooks/use
  * Bento'da 2×2 ya da 3×2 alabilir. Mobile'da tek sütun stack.
  */
 
+/* Anahtar burada, çözüm render'da — modül seviyesinde t() abp yüklenmeden
+   değerlendirilip fallback'e kilitlenirdi (bkz. RiskAlertsWidget SEVERITY_META). */
 const TYPE_LABELS = {
-    invoice:  { label: 'Fatura',   variant: 'brand' },
-    expense:  { label: 'Masraf',   variant: 'neutral' },
-    po:       { label: 'Sipariş',  variant: 'ai' },
+    invoice:  { labelKey: 'Approval:Type:Invoice', labelFallback: 'Fatura',  variant: 'brand' },
+    expense:  { labelKey: 'Approval:Type:Expense', labelFallback: 'Masraf',  variant: 'neutral' },
+    po:       { labelKey: 'Approval:Type:Order',   labelFallback: 'Sipariş', variant: 'ai' },
 };
 
 function PendingApprovalsWidget() {
@@ -36,8 +39,10 @@ function PendingApprovalsWidget() {
 
     return (
         <WidgetShell
-            title="Onay Bekleyenler"
-            subtitle={count > 0 ? `${count} kalem inceleme bekliyor` : undefined}
+            title={t('Widget:PendingApprovals:Title', 'Onay Bekleyenler')}
+            subtitle={count > 0
+                ? t('Widget:PendingApprovals:Subtitle', '{0} kalem inceleme bekliyor', count)
+                : undefined}
             badge={count > 0 && (
                 <Badge variant="warning" size="sm" withDot>
                     {count}
@@ -56,8 +61,8 @@ function PendingApprovalsWidget() {
                     compact
                     variant="success"
                     icon={<span className="text-base">✓</span>}
-                    title="Hepsi tamam"
-                    description="Bugün karar bekleyen kalmadı."
+                    title={t('Widget:PendingApprovals:EmptyTitle', 'Hepsi tamam')}
+                    description={t('Widget:PendingApprovals:EmptyDescription', 'Bugün karar bekleyen kalmadı.')}
                 />
             )}
         >
@@ -100,7 +105,7 @@ function ApprovalRow({ item, onApprove, onReject }) {
             {/* Sol: tip + meta */}
             <div className="flex flex-col gap-1 min-w-0 flex-1">
                 <div className="flex items-center gap-2">
-                    <Badge variant={typeMeta.variant} size="sm">{typeMeta.label}</Badge>
+                    <Badge variant={typeMeta.variant} size="sm">{t(typeMeta.labelKey, typeMeta.labelFallback)}</Badge>
                     <span className="text-xs text-text-tertiary truncate">
                         {item.requester} · {ageLabel}
                     </span>
@@ -120,19 +125,19 @@ function ApprovalRow({ item, onApprove, onReject }) {
                     variant="ghost"
                     onClick={() => handle('reject', onReject)}
                     isLoading={pending === 'reject'}
-                    aria-label={`${item.title} reddet`}
+                    aria-label={t('Approval:RejectItem', '{0} reddet', item.title)}
                     className="text-text-negative hover:bg-negative-50 hover:text-negative-700"
                 >
-                    Reddet
+                    {t('Common:Reject', 'Reddet')}
                 </Button>
                 <Button
                     size="sm"
                     variant="primary"
                     onClick={() => handle('approve', onApprove)}
                     isLoading={pending === 'approve'}
-                    aria-label={`${item.title} onayla`}
+                    aria-label={t('Approval:ApproveItem', '{0} onayla', item.title)}
                 >
-                    Onayla
+                    {t('Common:Approve', 'Onayla')}
                 </Button>
             </div>
         </li>
@@ -140,10 +145,9 @@ function ApprovalRow({ item, onApprove, onReject }) {
 }
 
 function formatAge(hours) {
-    if (hours < 1)  return 'az önce';
-    if (hours < 24) return `${Math.round(hours)} sa önce`;
-    const d = Math.floor(hours / 24);
-    return `${d} gün önce`;
+    if (hours < 1)  return t('Common:Age:JustNow', 'az önce');
+    if (hours < 24) return t('Common:Age:HoursAgo', '{0} sa önce', Math.round(hours));
+    return t('Common:Age:DaysAgo', '{0} gün önce', Math.floor(hours / 24));
 }
 
 export { PendingApprovalsWidget };

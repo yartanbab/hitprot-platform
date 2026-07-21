@@ -1,5 +1,6 @@
 import React from 'react';
 import { cn } from '../../lib/utils';
+import { t } from '../../lib/i18n';
 
 /**
  * ConfidenceMeter — AI önerinin güven seviyesini 5 noktalı meter ile gösterir.
@@ -31,11 +32,11 @@ function normalize(score) {
 }
 
 function bandFor(value) {
-    if (value >= 0.85) return { dots: 5, label: 'Çok yüksek güven' };
-    if (value >= 0.70) return { dots: 4, label: 'Yüksek güven' };
-    if (value >= 0.50) return { dots: 3, label: 'Orta güven' };
-    if (value >= 0.30) return { dots: 2, label: 'Düşük güven' };
-    return { dots: 1, label: 'Çok düşük güven' };
+    if (value >= 0.85) return { dots: 5, label: t('Ai:Confidence:VeryHigh', 'Çok yüksek güven') };
+    if (value >= 0.70) return { dots: 4, label: t('Ai:Confidence:High',     'Yüksek güven') };
+    if (value >= 0.50) return { dots: 3, label: t('Ai:Confidence:Medium',   'Orta güven') };
+    if (value >= 0.30) return { dots: 2, label: t('Ai:Confidence:Low',      'Düşük güven') };
+    return { dots: 1, label: t('Ai:Confidence:VeryLow', 'Çok düşük güven') };
 }
 
 function ConfidenceMeter({ score, label, size = 'md', showLabel = true, className }) {

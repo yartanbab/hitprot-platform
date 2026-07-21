@@ -180,6 +180,16 @@ public class PlatformMenuContributor : IMenuContributor
                 icon: "fa fa-box-open", url: "/PackageManagement"));
         }
 
+        // Tasarım Sistemi (Styleguide) — canlı token referansı. Paket Yönetimi ile
+        // AYNI kapı (host yöneticisi): yeni permission tanımlamamak için bilinçli
+        // tercih, tenant kullanıcılarının menüsünde görünmez.
+        if (await permission.IsGrantedAsync(Volo.Abp.TenantManagement.TenantManagementPermissions.Tenants.Update))
+        {
+            administration.AddItem(new ApplicationMenuItem(
+                "Apya.Admin.DesignSystem", l["Menu:DesignSystem"],
+                icon: "fa fa-palette", url: "/DesignSystem"));
+        }
+
         if (MultiTenancyConsts.IsEnabled)
         {
             administration.SetSubItemOrder(TenantManagementMenuNames.GroupName, 1);

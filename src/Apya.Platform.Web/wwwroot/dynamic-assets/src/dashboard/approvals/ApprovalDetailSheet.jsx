@@ -4,6 +4,7 @@ import { ConfidenceMeter } from '../../components/ai';
 import { useDeviceMode } from '../../lib/device';
 import { formatMoney } from '../../lib/utils';
 import { useApprovalDetail, useApproveItem, useRejectItem } from '../hooks/usePendingApprovals';
+import { t } from '../../lib/i18n';
 
 /**
  * ApprovalDetailSheet — push notification deep-link'in açtığı bottom sheet
@@ -59,8 +60,8 @@ function ApprovalDetailSheet({ approvalId, open, onOpenChange }) {
     return (
         <Sheet open={open} onOpenChange={onOpenChange}>
             <Sheet.Content
-                title="Onay detayı"
-                description="Tek bir kararı bağlamıyla incele ve uygula"
+                title={t('Approval:Detail:Title', 'Onay detayı')}
+                description={t('Approval:Detail:Subtitle', 'Tek bir kararı bağlamıyla incele ve uygula')}
             >
                 <div className="flex flex-col h-full">
                     <header className="px-4 pt-2 pb-3 border-b border-subtle">
@@ -78,7 +79,7 @@ function ApprovalDetailSheet({ approvalId, open, onOpenChange }) {
                         {detail.isError && (
                             <div className="rounded-md border border-negative-100 bg-negative-50 p-3">
                                 <p className="text-sm text-text-negative">
-                                    {detail.error?.message ?? 'Onay yüklenemedi.'}
+                                    {detail.error?.message ?? t('Approval:LoadFailed', 'Onay yüklenemedi.')}
                                 </p>
                             </div>
                         )}
@@ -101,7 +102,7 @@ function ApprovalDetailSheet({ approvalId, open, onOpenChange }) {
                             disabled={!item || isPending}
                             className="text-text-negative hover:bg-negative-50 hover:text-negative-700"
                         >
-                            Reddet
+                            {t('Common:Reject', 'Reddet')}
                         </Button>
                         <HoldButton
                             holdMs={holdMs}
@@ -111,7 +112,9 @@ function ApprovalDetailSheet({ approvalId, open, onOpenChange }) {
                             isLoading={approve.isPending}
                             disabled={!item || isPending}
                         >
-                            {holdMs > 0 ? 'Onaylamak için bas' : 'Onayla'}
+                            {holdMs > 0
+                        ? t('Approval:HoldToApprove', 'Onaylamak için bas')
+                        : t('Common:Approve', 'Onayla')}
                         </HoldButton>
                     </footer>
                 </div>
@@ -126,7 +129,9 @@ function AISection({ ai }) {
         <section className="rounded-md border border-subtle bg-surface-base p-3">
             <div className="flex items-center justify-between gap-2 mb-2">
                 <Badge variant={ai.anomaly ? 'warning' : 'ai'} size="sm" withDot>
-                    {ai.anomaly ? 'AI: anomali işareti var' : 'AI: anomaly yok'}
+                    {ai.anomaly
+                        ? t('Approval:Ai:AnomalyFound', 'AI: anomali işareti var')
+                        : t('Approval:Ai:NoAnomaly', 'AI: anomali yok')}
                 </Badge>
                 <ConfidenceMeter score={ai.confidence} size="md" />
             </div>
@@ -149,17 +154,18 @@ function ContextSection({ context }) {
     return (
         <section className="grid grid-cols-1 gap-2">
             <ContextRow
-                label="Bütçe kalanı"
+                label={t('Approval:Detail:BudgetRemaining', 'Bütçe kalanı')}
                 value={budget && formatMoney(budget.remaining, budget.currency)}
                 hint={budget && `${Math.round(ratio * 100)}% / ${formatMoney(budget.total, budget.currency)}`}
                 variant={ratioVariant}
             />
             <ContextRow
-                label={`${category?.label ?? 'Kategori'} — bu ay`}
+                label={t('Approval:Detail:CategoryThisMonth', '{0} — bu ay',
+                    category?.label ?? t('Common:Category', 'Kategori'))}
                 value={category && formatMoney(category.spentMonth, budget?.currency ?? 'TRY')}
             />
             <ContextRow
-                label="Proje"
+                label={t('Common:Project', 'Proje')}
                 value={project?.name}
                 hint={project?.code}
             />

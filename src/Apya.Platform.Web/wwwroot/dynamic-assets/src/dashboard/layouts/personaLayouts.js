@@ -99,10 +99,12 @@ export const PERSONA_LAYOUTS = {
     field: fieldLayout,
 };
 
+/* Anahtar + Türkçe fallback; çözüm render'da t() ile yapılır (modül seviyesinde
+   t() abp yüklenmeden değerlendirilip fallback'e kilitlenirdi). */
 export const PERSONA_LABELS = {
-    cfo:   'CFO / Finansman',
-    pm:    'Proje Yöneticisi',
-    field: 'Saha Kullanıcısı',
+    cfo:   { key: 'Persona:Cfo',   fallback: 'CFO / Finansman' },
+    pm:    { key: 'Persona:Pm',    fallback: 'Proje Yöneticisi' },
+    field: { key: 'Persona:Field', fallback: 'Saha Kullanıcısı' },
 };
 
 /* react-grid-layout breakpoint config'i — Tailwind ile ALANLA aynı eşik. */

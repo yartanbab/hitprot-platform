@@ -1,6 +1,7 @@
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { Input } from './Input';
 import { cn } from '../../lib/utils';
+import { t } from '../../lib/i18n';
 
 /**
  * MoneyInput — locale-aware para girişi.
@@ -138,7 +139,7 @@ const MoneyInput = React.forwardRef(function MoneyInput(
         <select
             value={currency}
             onChange={(e) => onCurrencyChange(e.target.value)}
-            aria-label="Para birimi"
+            aria-label={t('Common:Currency', 'Para birimi')}
             /* select'in kendi focus halkası bastırılır — wrapper input zaten gösteriyor */
             className={cn(
                 'bg-transparent border-0 outline-none text-sm text-text-secondary',

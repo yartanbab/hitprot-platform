@@ -8,6 +8,7 @@ import {
     useSnoozeSuggestion,
     useDismissSuggestion,
 } from '../hooks/useAISuggestions';
+import { t } from '../../lib/i18n';
 
 /**
  * AISuggestionsWidget — "AI Inbox" Bento görünümü.
@@ -40,8 +41,8 @@ function AISuggestionsWidget() {
 
     return (
         <WidgetShell
-            title="AI önerileri"
-            subtitle="Sessiz inbox — sen bakmak istediğinde"
+            title={t('Widget:AiSuggestions:Title', 'AI önerileri')}
+            subtitle={t('Widget:AiSuggestions:Subtitle', 'Sessiz inbox — sen bakmak istediğinde')}
             badge={<Badge variant="ai" size="sm" withDot>AI</Badge>}
             isLoading={isLoading}
             isError={isError}
@@ -56,8 +57,8 @@ function AISuggestionsWidget() {
                     compact
                     variant="info"
                     icon={<span className="text-base">✦</span>}
-                    title="AI şu an sessiz"
-                    description="Anlamlı bir öneri çıkarsa burada gözükecek. Şimdilik aksiyona gerek yok."
+                    title={t('Widget:AiSuggestions:EmptyTitle', 'AI şu an sessiz')}
+                    description={t('Widget:AiSuggestions:EmptyDescription', 'Anlamlı bir öneri çıkarsa burada gözükecek. Şimdilik aksiyona gerek yok.')}
                 />
             )}
         >

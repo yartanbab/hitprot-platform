@@ -273,6 +273,7 @@ public class PlatformWebModule : AbpModule
                     bundle.AddFiles("/Pages/Notifications/notification-bell.js");
                     bundle.AddFiles("/js/dark-mode.js");
                     bundle.AddFiles("/js/sidebar-toggle.js");
+                    bundle.AddFiles("/js/density-toggle.js");
                     bundle.AddFiles("/js/command-palette.js");
                     bundle.AddFiles("/js/ai-hub-client.js");
                     bundle.AddFiles("/js/ajax-error-detail.js");
@@ -310,6 +311,7 @@ public class PlatformWebModule : AbpModule
             // tema toggle, sonra bildirim zili → header ikon kümesi bu sırayla.
             options.Contributors.Add(new Apya.Platform.Web.Theme.CommandPaletteToggleToolbarContributor());
             options.Contributors.Add(new Apya.Platform.Web.Theme.ThemeToggleToolbarContributor());
+            options.Contributors.Add(new Apya.Platform.Web.Theme.DensityToggleToolbarContributor());
             options.Contributors.Add(new Apya.Platform.Web.Notifications.NotificationToolbarContributor());
         });
     }

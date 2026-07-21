@@ -1,6 +1,7 @@
 import React from 'react';
 import { Card, CardHeader, CardTitle, CardBody, Skeleton, Badge, EmptyState } from '../../components/ui';
 import { cn } from '../../lib/utils';
+import { t, currentLocale } from '../../lib/i18n';
 
 /**
  * WidgetShell — Bento grid içindeki TÜM widget'ların ortak chrome'u.
@@ -120,8 +121,8 @@ function FallbackEmptyState({ message }) {
     return (
         <EmptyState
             compact
-            title={message ?? 'Görüntülenecek veri yok'}
-            description="Yeni veri girildiğinde burada görünecek."
+            title={message ?? t('Common:NoDataToShow', 'Görüntülenecek veri yok')}
+            description={t('Common:NoDataYet', 'Yeni veri girildiğinde burada görünecek.')}
         />
     );
 }
@@ -130,15 +131,15 @@ function ErrorState({ message, onRetry, dataUpdatedAt }) {
     const lastSeen = formatRelative(dataUpdatedAt);
     return (
         <div className="flex flex-col items-center justify-center text-center gap-2 py-4">
-            <Badge variant="negative" withDot>Yüklenemedi</Badge>
+            <Badge variant="negative" withDot>{t('Common:LoadFailed', 'Yüklenemedi')}</Badge>
             <p className="text-sm text-text-secondary max-w-xs">
-                {message || 'Veri alınırken bir hata oluştu.'}
+                {message || t('Common:FetchError', 'Veri alınırken bir hata oluştu.')}
             </p>
             {lastSeen && (
                 /* Son başarılı snapshot — kullanıcı "veri ne kadar eski" bilsin.
                    Critical UX: kullanıcı kararlarını eski veriyle vermesin diye. */
                 <p className="text-xs text-text-tertiary">
-                    Son başarılı güncelleme: {lastSeen}
+                    {t('Common:LastSuccessfulUpdate', 'Son başarılı güncelleme')}: {lastSeen}
                 </p>
             )}
             {onRetry && (
@@ -150,7 +151,7 @@ function ErrorState({ message, onRetry, dataUpdatedAt }) {
                         'focus-visible:outline-none focus-visible:shadow-focus rounded-sm',
                     )}
                 >
-                    Tekrar dene
+                    {t('Common:Retry', 'Tekrar dene')}
                 </button>
             )}
         </div>
@@ -163,27 +164,28 @@ function StaleIndicator() {
     return (
         <span
             className="inline-flex items-center gap-1 text-xs text-text-tertiary"
-            title="Arka planda güncelleniyor"
+            title={t('Common:UpdatingInBackground', 'Arka planda güncelleniyor')}
             aria-live="polite"
         >
             <span
                 className="inline-block h-1.5 w-1.5 rounded-full bg-warning-500 animate-pulse"
                 aria-hidden="true"
             />
-            <span>güncelleniyor</span>
+            <span>{t('Common:Updating', 'güncelleniyor')}</span>
         </span>
     );
 }
 
 /* Relative time — son başarılı veri için "3 dk önce" tarzı kısa biçim.
-   Intl.RelativeTimeFormat tek lokalle kuruluyor; Apya tr-TR varsayılan. */
+   Lokal aktif ABP kültüründen gelir (sabit 'tr-TR' dil değişince biçimi
+   Türkçe bırakıyordu). */
 function formatRelative(when) {
     if (when == null) return null;
     const ts = when instanceof Date ? when.getTime() : Number(when);
     if (!Number.isFinite(ts)) return null;
     const diffSec = Math.round((ts - Date.now()) / 1000);
     const abs = Math.abs(diffSec);
-    const fmt = new Intl.RelativeTimeFormat('tr-TR', { numeric: 'auto' });
+    const fmt = new Intl.RelativeTimeFormat(currentLocale(), { numeric: 'auto' });
     if (abs < 60)    return fmt.format(diffSec, 'second');
     if (abs < 3600)  return fmt.format(Math.round(diffSec / 60), 'minute');
     if (abs < 86400) return fmt.format(Math.round(diffSec / 3600), 'hour');

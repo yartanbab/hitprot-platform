@@ -1,6 +1,7 @@
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { cn } from '../../lib/utils';
+import { t } from '../../lib/i18n';
 
 /**
  * DataTable — virtualize edilmiş, density-aware, sticky-header tablosu.
@@ -191,7 +192,9 @@ function DataTable({
                         <HeaderCell sticky padX={dens.padX} padY={dens.padY}>
                             <input
                                 type="checkbox"
-                                aria-label={allSelected ? 'Tüm seçimi kaldır' : 'Tümünü seç'}
+                                aria-label={allSelected
+                                    ? t('DataTable:DeselectAll', 'Tüm seçimi kaldır')
+                                    : t('DataTable:SelectAll', 'Tümünü seç')}
                                 checked={allSelected}
                                 onChange={handleToggleAll}
                                 className="h-4 w-4 accent-brand-500 cursor-pointer"
@@ -217,7 +220,7 @@ function DataTable({
                 {/* Body */}
                 {isEmpty ? (
                     <div className="p-6 text-center text-sm text-text-tertiary">
-                        {emptyState ?? 'Görüntülenecek kayıt yok.'}
+                        {emptyState ?? t('DataTable:Empty', 'Görüntülenecek kayıt yok.')}
                     </div>
                 ) : shouldVirtualize ? (
                     <div
@@ -344,7 +347,7 @@ function DataRow({
                 <BodyCell sticky padX={dens.padX} padY={dens.padY}>
                     <input
                         type="checkbox"
-                        aria-label="Bu satırı seç"
+                        aria-label={t('DataTable:SelectRow', 'Bu satırı seç')}
                         checked={isSelected}
                         onChange={onToggleSelect}
                         onClick={(e) => e.stopPropagation()}  /* Row onClick'i tetiklemesin */
