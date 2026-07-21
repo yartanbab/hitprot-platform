@@ -14,4 +14,6 @@ public interface ITenantProfileAppService : IApplicationService
     Task<TenantProfileDto> GetProfileAsync(Guid tenantId);
 
     Task<TenantProfileDto> UpdateProfileAsync(Guid tenantId, UpdateTenantProfileDto input);
+
+    Task<TenantProfileDto> AssignPackageAsync(Guid tenantId, PackageCode packageCode);
 }

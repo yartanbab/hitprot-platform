@@ -146,17 +146,19 @@
             who.appendChild(document.createTextNode(task.assigneeName || 'Atanmamış'));
             bottom.appendChild(who);
 
-            if (task.dueDate) {
+            // Done ise BİTİŞ = gerçek tamamlanma günü (completedDate); eski kayıtlarda
+            // completedDate yoksa deadline'a düş. Done değilse deadline (renk/uyarı) göster.
+            var doneDate = isDone ? (task.completedDate || task.dueDate) : null;
+            if (isDone && doneDate) {
+                var doneEl = el('div', 'small text-success fw-bold');
+                doneEl.innerHTML = '<i class="fa fa-check-circle me-1"></i>' + moment(doneDate).format('DD MMM');
+                bottom.appendChild(doneEl);
+            } else if (!isDone && task.dueDate) {
                 var due = el('div', 'small');
-                if (isDone) {
-                    due.className = 'small text-success fw-bold';
-                    due.innerHTML = '<i class="fa fa-check-circle me-1"></i>' + moment(task.dueDate).format('DD MMM');
-                } else {
-                    var d2 = moment(task.dueDate).diff(moment(), 'hours');
-                    if (d2 < 0) { due.className = 'apya-chip apya-chip-negative heartbeat-animation'; due.innerHTML = '<i class="fa fa-exclamation-circle me-1"></i>Süresi Geçti (' + moment(task.dueDate).format('DD MMM') + ')'; }
-                    else if (d2 <= 48) { due.className = 'apya-chip apya-chip-warning'; due.innerHTML = '<i class="fa fa-clock me-1"></i>Yaklaşıyor (' + moment(task.dueDate).format('DD MMM') + ')'; }
-                    else { due.className = 'small text-muted'; due.innerHTML = '<i class="fa fa-clock me-1"></i>' + moment(task.dueDate).format('DD MMM'); }
-                }
+                var d2 = moment(task.dueDate).diff(moment(), 'hours');
+                if (d2 < 0) { due.className = 'apya-chip apya-chip-negative heartbeat-animation'; due.innerHTML = '<i class="fa fa-exclamation-circle me-1"></i>Süresi Geçti (' + moment(task.dueDate).format('DD MMM') + ')'; }
+                else if (d2 <= 48) { due.className = 'apya-chip apya-chip-warning'; due.innerHTML = '<i class="fa fa-clock me-1"></i>Yaklaşıyor (' + moment(task.dueDate).format('DD MMM') + ')'; }
+                else { due.className = 'small text-muted'; due.innerHTML = '<i class="fa fa-clock me-1"></i>' + moment(task.dueDate).format('DD MMM'); }
                 bottom.appendChild(due);
             }
             card.appendChild(bottom);

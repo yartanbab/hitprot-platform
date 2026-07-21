@@ -95,7 +95,7 @@ $(function () {
                 title: 'Bitiş Tarihi',
                 data: 'dueDate',
                 render: function (data, type, row) {
-                    return apyaTask.dueDateChip(data, row.status);
+                    return apyaTask.dueDateChip(data, row.status, row.completedDate);
                 }
             }
         ]
