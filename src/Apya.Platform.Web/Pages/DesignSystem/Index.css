@@ -1,0 +1,125 @@
+/* =============================================================================
+   TASARIM SİSTEMİ (Styleguide) — sayfaya özel yerleşim
+   Bu dosya YENİ TOKEN TANIMLAMAZ ve global stil EZMEZ; yalnız bu sayfadaki
+   swatch/örnek ızgaralarının yerleşimini kurar. Tüm renk/ölçü değerleri
+   --apya-* token'larından canlı okunur.
+   ============================================================================= */
+
+.ds-section {
+    margin-bottom: var(--apya-space-8);
+}
+
+.ds-section-title {
+    font-size: var(--apya-fs-lg);
+    font-weight: var(--apya-weight-semibold);
+    color: var(--apya-text-primary);
+    margin-bottom: var(--apya-space-1);
+}
+
+.ds-section-note {
+    font-size: var(--apya-fs-xs);
+    color: var(--apya-text-tertiary);
+    margin-bottom: var(--apya-space-4);
+}
+
+.ds-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: var(--apya-space-3);
+}
+
+/* --- Renk swatch --- */
+.ds-swatch {
+    border: 1px solid var(--apya-border-default);
+    border-radius: var(--apya-radius-lg);
+    overflow: hidden;
+    background: var(--apya-surface-base);
+}
+
+.ds-swatch-chip {
+    height: 56px;
+}
+
+.ds-swatch-meta {
+    padding: var(--apya-space-2);
+    border-top: 1px solid var(--apya-border-subtle);
+}
+
+.ds-swatch-name {
+    display: block;
+    font-family: var(--apya-font-mono);
+    font-size: 10.5px;
+    color: var(--apya-text-primary);
+    word-break: break-all;
+}
+
+/* Hesaplanan değer JS ile doldurulur (token'ın gerçek karşılığı). */
+.ds-swatch-value {
+    display: block;
+    font-family: var(--apya-font-mono);
+    font-size: 10.5px;
+    color: var(--apya-text-tertiary);
+}
+
+/* --- Tipografi örnekleri --- */
+.ds-type-row {
+    display: flex;
+    align-items: baseline;
+    gap: var(--apya-space-4);
+    padding: var(--apya-space-2) 0;
+    border-bottom: 1px solid var(--apya-border-subtle);
+}
+
+.ds-type-label {
+    flex: 0 0 190px;
+    font-family: var(--apya-font-mono);
+    font-size: 10.5px;
+    color: var(--apya-text-tertiary);
+}
+
+/* --- Yarıçap / gölge kutuları --- */
+.ds-box {
+    height: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--apya-surface-base);
+    border: 1px solid var(--apya-border-default);
+    font-family: var(--apya-font-mono);
+    font-size: 10.5px;
+    color: var(--apya-text-secondary);
+}
+
+.ds-shadow-box {
+    height: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--apya-surface-base);
+    border-radius: var(--apya-radius-xl);
+    font-family: var(--apya-font-mono);
+    font-size: 10.5px;
+    color: var(--apya-text-secondary);
+}
+
+/* --- Boşluk (spacing) --- */
+.ds-space-row {
+    display: flex;
+    align-items: center;
+    gap: var(--apya-space-3);
+    padding: 3px 0;
+}
+
+.ds-space-bar {
+    height: 12px;
+    background: var(--apya-accent-soft);
+    border-left: 2px solid var(--apya-accent-500);
+}
+
+/* --- Örnek grupları --- */
+.ds-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--apya-space-2);
+}

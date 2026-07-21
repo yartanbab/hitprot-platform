@@ -1,0 +1,248 @@
+@page
+@using Microsoft.AspNetCore.Mvc.Localization
+@using Apya.Platform.Localization
+@inject IHtmlLocalizer<PlatformResource> L
+@model Apya.Platform.Web.Pages.DesignSystem.IndexModel
+@{
+    ViewBag.PageTitle = L["Menu:DesignSystem"].Value;
+
+    /* Sayfa boyunca gezilen token listeleri — DEĞER KOPYALANMAZ, yalnız ad
+       tutulur; gerçek değer var(--apya-*) ile canlı okunur. tokens.css'e yeni
+       ton eklenince buraya da eklenmeli (tek yer). */
+    var brand      = new[] { "brand-50", "brand-100", "brand-300", "brand-500", "brand-600", "brand-700" };
+    var accent     = new[] { "accent-50", "accent-100", "accent-300", "accent-500", "accent-600", "accent-700" };
+    var ai         = new[] { "ai-50", "ai-500", "ai-600" };
+    var semantic   = new[] { "positive-500", "positive-700", "negative-500", "negative-700", "warning-500", "warning-700", "critical-500" };
+    var neutral    = new[] { "neutral-50", "neutral-100", "neutral-200", "neutral-300", "neutral-400", "neutral-500", "neutral-600", "neutral-700", "neutral-800", "neutral-900" };
+    var surfaces   = new[] { "surface-app-bg", "surface-sidebar", "surface-base", "surface-raised", "surface-sunken", "surface-elevated" };
+    var texts      = new[] { "text-primary", "text-secondary", "text-tertiary", "text-disabled" };
+    var borders    = new[] { "border-subtle", "border-default", "border-strong", "border-focus" };
+    var radii      = new[] { "radius-xs", "radius-sm", "radius-md", "radius-lg", "radius-xl", "radius-2xl", "radius-full" };
+    var shadows    = new[] { "shadow-sm", "shadow-md", "shadow-lg", "shadow-xl" };
+    var uiScale    = new[] { "fs-xs", "fs-sm", "fs-base", "fs-md", "fs-lg", "fs-xl", "fs-2xl", "fs-3xl" };
+    var spaces     = new[] { "space-1", "space-2", "space-3", "space-4", "space-5", "space-6", "space-8", "space-10", "space-12", "space-16" };
+    var chipTones  = new[] { "positive", "negative", "warning", "brand", "ai", "neutral" };
+}
+
+@section styles {
+    <abp-style src="/Pages/DesignSystem/Index.css" />
+}
+
+<div class="apya-page">
+    <p class="text-muted" style="font-size: var(--apya-fs-sm);">
+        @L["DesignSystem:Intro"]
+    </p>
+
+    @* ---------------- RENKLER ---------------- *@
+    <section class="ds-section">
+        <h2 class="ds-section-title">@L["DesignSystem:Colors"]</h2>
+        <p class="ds-section-note">@L["DesignSystem:Colors:Note"]</p>
+
+        @foreach (var (title, tokens) in new[] {
+            ("Brand", brand), ("Accent (UI)", accent), ("AI", ai),
+            ("Semantic", semantic), ("Neutral", neutral) })
+        {
+            <h3 class="ds-section-note" style="margin-top: var(--apya-space-4);">@title</h3>
+            <div class="ds-grid">
+                @foreach (var t in tokens)
+                {
+                    <div class="ds-swatch">
+                        <div class="ds-swatch-chip" style="background: var(--apya-@t);"></div>
+                        <div class="ds-swatch-meta">
+                            <code class="ds-swatch-name">--apya-@t</code>
+                            <span class="ds-swatch-value" data-ds-token="--apya-@t"></span>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+    </section>
+
+    @* ---------------- YÜZEY / METİN / KENARLIK ---------------- *@
+    <section class="ds-section">
+        <h2 class="ds-section-title">@L["DesignSystem:Surfaces"]</h2>
+        <p class="ds-section-note">@L["DesignSystem:Surfaces:Note"]</p>
+        <div class="ds-grid">
+            @foreach (var t in surfaces)
+            {
+                <div class="ds-swatch">
+                    <div class="ds-swatch-chip" style="background: var(--apya-@t); border-bottom: 1px solid var(--apya-border-default);"></div>
+                    <div class="ds-swatch-meta">
+                        <code class="ds-swatch-name">--apya-@t</code>
+                        <span class="ds-swatch-value" data-ds-token="--apya-@t"></span>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <div class="ds-row" style="margin-top: var(--apya-space-4);">
+            @foreach (var t in texts)
+            {
+                <span style="color: var(--apya-@t); font-size: var(--apya-fs-md); margin-right: var(--apya-space-4);">
+                    @t
+                </span>
+            }
+        </div>
+
+        <div class="ds-row" style="margin-top: var(--apya-space-3);">
+            @foreach (var t in borders)
+            {
+                <div style="padding: var(--apya-space-2) var(--apya-space-3); border: 2px solid var(--apya-@t); border-radius: var(--apya-radius-lg);">
+                    <code style="font-size: 10.5px; color: var(--apya-text-secondary);">--apya-@t</code>
+                </div>
+            }
+        </div>
+    </section>
+
+    @* ---------------- TİPOGRAFİ ---------------- *@
+    <section class="ds-section">
+        <h2 class="ds-section-title">@L["DesignSystem:Typography"]</h2>
+        <p class="ds-section-note">@L["DesignSystem:Typography:Note"]</p>
+
+        @foreach (var t in uiScale)
+        {
+            <div class="ds-type-row">
+                <code class="ds-type-label">--apya-@t</code>
+                <span style="font-size: var(--apya-@t); color: var(--apya-text-primary);">
+                    @L["DesignSystem:Sample"]
+                </span>
+            </div>
+        }
+
+        <div class="ds-type-row">
+            <code class="ds-type-label">KPI (tracking-tight)</code>
+            <span style="font-size: var(--apya-fs-2xl); font-weight: var(--apya-weight-bold); letter-spacing: var(--apya-tracking-tight);">
+                1.284.500,00
+            </span>
+        </div>
+        <div class="ds-type-row">
+            <code class="ds-type-label">.apya-numeric (mono)</code>
+            <span class="apya-numeric" style="font-size: var(--apya-fs-md);">1.284.500,00 TRY</span>
+        </div>
+    </section>
+
+    @* ---------------- YARIÇAP / GÖLGE / BOŞLUK ---------------- *@
+    <section class="ds-section">
+        <h2 class="ds-section-title">@L["DesignSystem:RadiusShadowSpacing"]</h2>
+
+        <h3 class="ds-section-note" style="margin-top: var(--apya-space-3);">Radius</h3>
+        <div class="ds-grid">
+            @foreach (var t in radii)
+            {
+                <div class="ds-box" style="border-radius: var(--apya-@t);">@t.Replace("radius-", "")</div>
+            }
+        </div>
+
+        <h3 class="ds-section-note" style="margin-top: var(--apya-space-5);">Elevation</h3>
+        <div class="ds-grid">
+            @foreach (var t in shadows)
+            {
+                <div class="ds-shadow-box" style="box-shadow: var(--apya-@t);">@t.Replace("shadow-", "")</div>
+            }
+        </div>
+
+        <h3 class="ds-section-note" style="margin-top: var(--apya-space-5);">Spacing</h3>
+        @foreach (var t in spaces)
+        {
+            <div class="ds-space-row">
+                <code class="ds-type-label">--apya-@t</code>
+                <div class="ds-space-bar" style="width: var(--apya-@t);"></div>
+                <span class="ds-swatch-value" data-ds-token="--apya-@t"></span>
+            </div>
+        }
+    </section>
+
+    @* ---------------- BİLEŞENLER ---------------- *@
+    <section class="ds-section">
+        <h2 class="ds-section-title">@L["DesignSystem:Components"]</h2>
+
+        <h3 class="ds-section-note" style="margin-top: var(--apya-space-3);">Chip (.apya-chip)</h3>
+        <div class="ds-row">
+            @foreach (var tone in chipTones)
+            {
+                <span class="apya-chip apya-chip-@tone">@tone</span>
+            }
+        </div>
+
+        <h3 class="ds-section-note" style="margin-top: var(--apya-space-5);">@L["DesignSystem:Buttons"]</h3>
+        <div class="ds-row">
+            <button type="button" class="btn btn-primary">Primary</button>
+            <button type="button" class="btn btn-light">Light</button>
+            <button type="button" class="btn btn-outline-primary">Outline</button>
+            <button type="button" class="btn btn-danger">Danger</button>
+            <button type="button" class="btn btn-primary" disabled>Disabled</button>
+        </div>
+
+        <h3 class="ds-section-note" style="margin-top: var(--apya-space-5);">@L["DesignSystem:FormControls"]</h3>
+        <div class="ds-row">
+            <input type="text" class="form-control" style="max-width: 220px;" placeholder="@L["DesignSystem:Sample"]" />
+            <select class="form-select" style="max-width: 180px;">
+                <option>@L["DesignSystem:Sample"]</option>
+            </select>
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="dsCheck" checked />
+                <label class="form-check-label" for="dsCheck">Checkbox</label>
+            </div>
+        </div>
+
+        <h3 class="ds-section-note" style="margin-top: var(--apya-space-5);">
+            @L["DesignSystem:Table"] — <span data-ds-density></span>
+        </h3>
+        <p class="ds-section-note">@L["DesignSystem:Table:Note"]</p>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>@L["DesignSystem:Sample"]</th>
+                    <th class="apya-numeric">@L["Common:Income"]</th>
+                    <th class="apya-numeric">@L["Common:Expense"]</th>
+                    <th>@L["DesignSystem:Status"]</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Alfa</td>
+                    <td class="apya-numeric">128.400,00</td>
+                    <td class="apya-numeric">74.200,00</td>
+                    <td><span class="apya-chip apya-chip-positive">▲ +12%</span></td>
+                </tr>
+                <tr>
+                    <td>Beta</td>
+                    <td class="apya-numeric">96.150,00</td>
+                    <td class="apya-numeric">110.900,00</td>
+                    <td><span class="apya-chip apya-chip-negative">▼ −8%</span></td>
+                </tr>
+                <tr>
+                    <td>Gama</td>
+                    <td class="apya-numeric">54.000,00</td>
+                    <td class="apya-numeric">54.000,00</td>
+                    <td><span class="apya-chip apya-chip-neutral">—</span></td>
+                </tr>
+            </tbody>
+        </table>
+    </section>
+</div>
+
+@section scripts {
+    <script>
+        // Token'ların HESAPLANAN değerini yaz — sayfa hiçbir değeri sabit
+        // tutmaz, tokens.css tek kaynak. Tema/yoğunluk değişince yeniden okunur.
+        (function () {
+            function refresh() {
+                var cs = getComputedStyle(document.documentElement);
+                document.querySelectorAll('[data-ds-token]').forEach(function (el) {
+                    el.textContent = cs.getPropertyValue(el.getAttribute('data-ds-token')).trim();
+                });
+                var d = document.documentElement.getAttribute('data-density') || 'cozy';
+                var rowH = cs.getPropertyValue('--row-h').trim();
+                document.querySelectorAll('[data-ds-density]').forEach(function (el) {
+                    el.textContent = d + ' · --row-h: ' + rowH;
+                });
+            }
+            refresh();
+            // Tema ve yoğunluk toggle'ları <html> attribute'unu değiştirir.
+            new MutationObserver(refresh).observe(document.documentElement, {
+                attributes: true, attributeFilter: ['data-theme', 'data-density']
+            });
+        })();
+    </script>
+}
