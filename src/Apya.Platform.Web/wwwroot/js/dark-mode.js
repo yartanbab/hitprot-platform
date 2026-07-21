@@ -27,8 +27,51 @@ $(function () {
             sp.className = 'apya-page-title';
             sp.textContent = pt;
             bc.appendChild(sp);
+
+            // Alt satır: tenant adı (host'ta "Host") · ay/yıl — hedef tasarımdaki
+            // "Hitprot A.Ş. · Temmuz 2026" deseni.
+            var subtitleParts = [];
+            if (window.abp && abp.currentTenant) {
+                subtitleParts.push(abp.currentTenant.isAvailable && abp.currentTenant.name ? abp.currentTenant.name : 'Host');
+            }
+            try {
+                subtitleParts.push(new Intl.DateTimeFormat('tr-TR', { month: 'long', year: 'numeric' }).format(new Date()));
+            } catch (e4) { /* Intl yoksa sessiz geç */ }
+            if (subtitleParts.length) {
+                var subSp = document.createElement('span');
+                subSp.className = 'apya-page-subtitle';
+                subSp.textContent = subtitleParts.join(' · ');
+                bc.appendChild(subSp);
+            }
         }
     }
+
+    // Header sağ: kullanıcı adı yerine baş harf rozeti (avatar) — hedef tasarım.
+    // #userDropdown zaten dropdown-toggle; yalnız içindeki metni değiştiriyoruz,
+    // tıklama/menü davranışı dokunulmadan kalır. LeptonX bu öğeyi jQuery ready
+    // sırasında bazen henüz eklemiyor, bazen ready'den SONRA kendi JS'iyle
+    // yeniden render edip üstüne yazıyor (ikisi de canlı gözlendi) → tek seferlik
+    // deneme yerine birkaç saniye boyunca kalıcı MutationObserver ile her
+    // görünüşünde yeniden uygulanıyor.
+    function tryReplaceUserAvatar() {
+        var userNameEl = document.querySelector('.lpx-user-profile .user-full-name');
+        if (!userNameEl) return false;
+        var fullName = (window.abp && abp.currentUser && (abp.currentUser.name || abp.currentUser.userName)) || userNameEl.textContent.trim();
+        var parts = fullName.trim().split(/\s+/).filter(Boolean);
+        var initials = parts.length > 1 ? (parts[0][0] + parts[parts.length - 1][0]) : fullName.slice(0, 2);
+        var avatar = document.createElement('span');
+        avatar.className = 'apya-avatar apya-avatar-brand apya-user-avatar';
+        avatar.textContent = initials.toUpperCase();
+        avatar.title = fullName;
+        userNameEl.replaceWith(avatar);
+        return true;
+    }
+    tryReplaceUserAvatar();
+    var avatarObserver = new MutationObserver(function () {
+        tryReplaceUserAvatar();
+    });
+    avatarObserver.observe(document.body, { childList: true, subtree: true });
+    setTimeout(function () { avatarObserver.disconnect(); }, 5000);
 
     // Tenant rozeti: Body.First hook'unda gizli render edilir (TenantBadgeViewComponent),
     // sidebar logo altına taşınıp gösterilir — LeptonX'in derlenmiş sidebar partial'ını
