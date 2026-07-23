@@ -36,6 +36,11 @@ namespace Apya.Platform
             CreateMap<GrantCall, GrantCallDto>()
                 .ForMember(d => d.GrantName, o => o.Ignore());
 
+            // Hibe Başvurusu (B1) — Period/GrantName AppService'te (filtre-kapalı) doldurulur.
+            CreateMap<GrantApplication, GrantApplicationDto>()
+                .ForMember(d => d.Period, o => o.Ignore())
+                .ForMember(d => d.GrantName, o => o.Ignore());
+
             // (BUG-001) Eski ProjectTask eşlemeleri kaldırıldı — Artık yalnızca Tasks.TaskItem kullanılıyor.
 
 
