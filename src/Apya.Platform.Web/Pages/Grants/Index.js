@@ -1,99 +1,133 @@
 $(function () {
     var grantService = apya.platform.grants.grant;
+    var canEdit = abp.auth.isGranted('Platform.Grants.Edit');
+    var canDelete = abp.auth.isGranted('Platform.Grants.Delete');
 
-    var dataTable = $('#GrantsTable').DataTable(
-        abp.libs.datatables.normalizeConfiguration({
-            serverSide: true,
-            paging: true,
-            order: [[1, 'asc']],
-            searching: false,
-            scrollX: true,
-            ajax: abp.libs.datatables.createAjax(grantService.getList),
-            columnDefs: [
-                {
-                    title: 'İşlemler',
-                    rowAction: {
-                        items: [
-                            {
-                                text: 'Düzenle',
-                                visible: function () {
-                                    return abp.auth.isGranted('Platform.Grants.Edit');
-                                },
-                                action: function (data) {
-                                    editModal.open({ id: data.record.id });
-                                }
-                            },
-                            {
-                                text: 'Sil',
-                                visible: function () {
-                                    return abp.auth.isGranted('Platform.Grants.Delete');
-                                },
-                                confirmMessage: function (data) {
-                                    return '"' + data.record.name + '" hibe programını silmek istiyor musunuz?';
-                                },
-                                action: function (data) {
-                                    grantService.delete(data.record.id).then(function () {
-                                        abp.notify.success('Hibe programı silindi.');
-                                        dataTable.ajax.reload();
-                                    });
-                                }
-                            }
-                        ]
-                    }
-                },
-                {
-                    title: 'Program Adı',
-                    data: 'name',
-                    render: function (data) {
-                        return '<span class="fw-semibold">' + $('<div>').text(data || '').html() + '</span>';
-                    }
-                },
-                { title: 'Kurum', data: 'issuer' },
-                {
-                    title: 'Açıklama',
-                    data: 'description',
-                    defaultContent: '—',
-                    render: function (data) {
-                        if (!data) { return '—'; }
-                        var esc = $('<div>').text(data).html();
-                        return '<span class="d-inline-block text-truncate align-middle" style="max-width:320px" title="' + esc + '">' + esc + '</span>';
-                    }
-                },
-                {
-                    title: 'Maks. Tutar',
-                    data: 'maxAmount',
-                    className: 'apya-numeric',
-                    render: function (data) {
-                        return data != null ? data.toLocaleString('tr-TR') + ' ₺' : '—';
-                    }
-                },
-                {
-                    title: 'Min. Uyum Puanı',
-                    data: 'minMatchScore',
-                    render: function (data) {
-                        // AI eşleştirme skoru — AI aksan tonu (HANDOFF: AI moru)
-                        return data > 0 ? '<span class="apya-chip apya-chip-ai">%' + data + '</span>' : '—';
-                    }
-                }
-            ]
-        })
-    );
+    var $grid = $('#GrantTileGrid');
+    var $empty = $('#GrantTileGridEmpty');
+
+    function esc(text) {
+        return $('<div>').text(text == null ? '' : text).html();
+    }
+
+    function money(value) {
+        return value != null ? Math.round(value).toLocaleString('tr-TR') + ' ₺' : '—';
+    }
+
+    function tileTemplate(g) {
+        var scoreChip = g.minMatchScore > 0
+            ? '<span class="apya-chip apya-chip-ai">%' + g.minMatchScore + ' uyum</span>'
+            : '';
+        var descMeta = g.description
+            ? '<div class="apya-tile-meta"><span><i class="fa fa-align-left"></i>' + esc(g.description) + '</span></div>'
+            : '';
+        var actions =
+            '<div class="apya-tile-actions">' +
+            (canEdit ? '<button type="button" class="btn btn-sm btn-link text-muted apya-edit-btn" title="Düzenle"><i class="fa fa-pen"></i></button>' : '') +
+            (canDelete ? '<button type="button" class="btn btn-sm btn-link text-danger apya-delete-btn" title="Sil"><i class="fa fa-trash"></i></button>' : '') +
+            '</div>';
+
+        var $tile = $(
+            '<div class="apya-tile" data-id="' + g.id + '">' +
+            '  <div class="apya-tile-head">' +
+            '    <div class="d-flex align-items-start gap-2">' +
+            '      <span class="apya-tile-icon-box"><i class="fa fa-award"></i></span>' +
+            '      <div>' +
+            '        <div class="apya-tile-title">' + esc(g.name) + '</div>' +
+            '        <div class="apya-tile-sub">' + esc(g.issuer) + '</div>' +
+            '      </div>' +
+            '    </div>' +
+            '    <div class="d-flex flex-column align-items-end gap-1">' + scoreChip + '</div>' +
+            '  </div>' +
+            descMeta +
+            '  <div class="apya-tile-progress-label">' +
+            '    <span>Maks. Tutar</span>' +
+            '    <span class="apya-numeric fw-semibold">' + money(g.maxAmount) + '</span>' +
+            '  </div>' +
+            '  <div class="apya-tile-foot" style="justify-content:flex-end">' +
+            actions +
+            '  </div>' +
+            '</div>'
+        );
+        $tile.data('grant', g);
+        return $tile;
+    }
+
+    function renderKpis(items) {
+        var total = items.length;
+        var totalAmount = items.reduce(function (sum, g) { return sum + (g.maxAmount || 0); }, 0);
+        var avgScore = total
+            ? items.reduce(function (sum, g) { return sum + (g.minMatchScore || 0); }, 0) / total
+            : 0;
+        var top = items.reduce(function (best, g) {
+            return (!best || (g.maxAmount || 0) > (best.maxAmount || 0)) ? g : best;
+        }, null);
+
+        $('#KpiTotalPrograms').text(total);
+        $('#KpiTotalAmount').text(money(totalAmount));
+        $('#KpiAvgScore').text(total ? ('%' + Math.round(avgScore)) : '—');
+        $('#KpiTopProgram').text(top ? top.name : '—').attr('title', top ? top.name : '');
+    }
+
+    function loadList() {
+        grantService.getList({ maxResultCount: 1000, sorting: 'name asc' }).then(function (result) {
+            $grid.empty();
+            renderKpis(result.items);
+
+            if (!result.items.length) {
+                $grid.addClass('d-none');
+                $empty.removeClass('d-none');
+                return;
+            }
+
+            $grid.removeClass('d-none');
+            $empty.addClass('d-none');
+            result.items.forEach(function (g) { $grid.append(tileTemplate(g)); });
+        });
+    }
 
     var createModal = new abp.ModalManager(abp.appPath + 'Grants/CreateModal');
-    var editModal   = new abp.ModalManager(abp.appPath + 'Grants/EditModal');
+    var editModal = new abp.ModalManager(abp.appPath + 'Grants/EditModal');
 
-    createModal.onResult(function () {
-        dataTable.ajax.reload();
-        abp.notify.success('Hibe programı oluşturuldu.');
+    $grid.on('click', '.apya-edit-btn', function () {
+        var g = $(this).closest('.apya-tile').data('grant');
+        editModal.open({ id: g.id });
     });
 
-    editModal.onResult(function () {
-        dataTable.ajax.reload();
-        abp.notify.success('Hibe programı güncellendi.');
+    $grid.on('click', '.apya-delete-btn', function () {
+        var g = $(this).closest('.apya-tile').data('grant');
+
+        Swal.fire({
+            title: 'Hibe Programı Silinecek',
+            text: '"' + g.name + '" hibe programını silmek istiyor musunuz?',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Evet, Sil',
+            cancelButtonText: 'İptal',
+            confirmButtonColor: '#dc3545'
+        }).then(function (result) {
+            if (!result.isConfirmed) return;
+            grantService.delete(g.id).then(function () {
+                abp.notify.success('Hibe programı silindi.');
+                loadList();
+            });
+        });
     });
 
     $('#NewGrantButton').click(function (e) {
         e.preventDefault();
         createModal.open();
     });
+
+    createModal.onResult(function () {
+        loadList();
+        abp.notify.success('Hibe programı oluşturuldu.');
+    });
+
+    editModal.onResult(function () {
+        loadList();
+        abp.notify.success('Hibe programı güncellendi.');
+    });
+
+    loadList();
 });
