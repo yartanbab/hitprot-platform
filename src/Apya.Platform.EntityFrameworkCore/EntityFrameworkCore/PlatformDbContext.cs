@@ -109,6 +109,8 @@ namespace Apya.Platform.EntityFrameworkCore
         public DbSet<ProjectAnalysis> ProjectAnalyses { get; set; }
         // (BUG-001) ProjectTask, ProjectSubTasks, ProjectTaskComments kaldırıldı.
         public DbSet<Grant> Grants { get; set; }
+        public DbSet<GrantCall> GrantCalls { get; set; }
+        public DbSet<GrantCriteriaTag> GrantCriteriaTags { get; set; }
 
 
         /* --- ESKİ/DİĞER TASK MODÜLÜ TABLOLARI --- */
@@ -405,6 +407,27 @@ namespace Apya.Platform.EntityFrameworkCore
                 b.Property(x => x.Issuer).IsRequired().HasMaxLength(64);
                 b.Property(x => x.MinMatchScore).IsRequired();
                 b.Property(x => x.MaxAmount).IsRequired();
+                b.Property(x => x.EligibleCompanySizes).IsRequired().HasDefaultValue(0);
+            });
+
+            builder.Entity<GrantCall>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "GrantCalls", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+                b.Property(x => x.Period).IsRequired().HasMaxLength(32);
+                b.Property(x => x.Reference).HasMaxLength(64);
+                b.HasOne<Grant>().WithMany(g => g.Calls).HasForeignKey(x => x.GrantId).OnDelete(DeleteBehavior.Cascade);
+                b.HasIndex(x => x.GrantId);
+                b.HasIndex(x => x.Deadline);
+            });
+
+            builder.Entity<GrantCriteriaTag>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "GrantCriteriaTags", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+                b.Property(x => x.Value).IsRequired().HasMaxLength(64);
+                b.HasOne<Grant>().WithMany(g => g.CriteriaTags).HasForeignKey(x => x.GrantId).OnDelete(DeleteBehavior.Cascade);
+                b.HasIndex(x => x.GrantId);
             });
 
             // (BUG-001) ProjectTask, SubTask, ProjectTaskComment konfigürasyonları kaldırıldı.
