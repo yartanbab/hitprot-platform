@@ -111,6 +111,9 @@ namespace Apya.Platform.EntityFrameworkCore
         public DbSet<Grant> Grants { get; set; }
         public DbSet<GrantCall> GrantCalls { get; set; }
         public DbSet<GrantCriteriaTag> GrantCriteriaTags { get; set; }
+        public DbSet<FirmProfile> FirmProfiles { get; set; }
+        public DbSet<FirmProfileTag> FirmProfileTags { get; set; }
+        public DbSet<GrantApplication> GrantApplications { get; set; }
 
 
         /* --- ESKİ/DİĞER TASK MODÜLÜ TABLOLARI --- */
@@ -428,6 +431,32 @@ namespace Apya.Platform.EntityFrameworkCore
                 b.Property(x => x.Value).IsRequired().HasMaxLength(64);
                 b.HasOne<Grant>().WithMany(g => g.CriteriaTags).HasForeignKey(x => x.GrantId).OnDelete(DeleteBehavior.Cascade);
                 b.HasIndex(x => x.GrantId);
+            });
+
+            builder.Entity<FirmProfile>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "FirmProfiles", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+                // Tenant başına tekil profil.
+                b.HasIndex(x => x.TenantId).IsUnique();
+            });
+
+            builder.Entity<FirmProfileTag>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "FirmProfileTags", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+                b.Property(x => x.Value).IsRequired().HasMaxLength(64);
+                b.HasOne<FirmProfile>().WithMany(p => p.Tags).HasForeignKey(x => x.FirmProfileId).OnDelete(DeleteBehavior.Cascade);
+                b.HasIndex(x => x.FirmProfileId);
+            });
+
+            builder.Entity<GrantApplication>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "GrantApplications", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+                b.HasOne<GrantCall>().WithMany().HasForeignKey(x => x.GrantCallId).OnDelete(DeleteBehavior.Cascade);
+                // Aynı tenant + çağrı için tek başvuru.
+                b.HasIndex(x => new { x.TenantId, x.GrantCallId }).IsUnique();
             });
 
             // (BUG-001) ProjectTask, SubTask, ProjectTaskComment konfigürasyonları kaldırıldı.
