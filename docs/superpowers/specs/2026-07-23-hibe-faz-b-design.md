@@ -69,3 +69,30 @@ AutoMapper: yeni DTO↔entity map'leri.
 
 ## 8. Faz B DIŞI (Faz C)
 ApprovedAmount, tahsilat dilimleri, milestone/son-tarih paneli, pipeline aşama ilerletme, tenant dashboard KPI'ları, "Yaklaşan Son Tarihler". AI-bazlı eşleştirme (kural-bazlının üstüne).
+
+---
+
+## GÜNCELLEME (2026-07-23) — kapsam genişletildi + kararlar kilitlendi
+
+Kullanıcı iki büyük yetenek ekledi; ikisi de **aynı eşleştirici çekirdeğin iki yönü**:
+- **Tenant yönü:** bir firma için açık çağrıları skorla → öneri feed (pull).
+- **Host yönü:** bir çağrı için firmaları skorla + filtrele → toplu öneri gönder (push).
+
+### Mimari
+- **`FirmSignals` soyutlaması** (eşleştirici girdisi): elle profil (sektör/bölge/anahtar + ölçek) **+ türetilmiş proje sinyalleri**. `GrantMatchManager.Score(FirmSignals, Grant)` her iki yönde kullanılır. Profil boş olsa bile proje geçmişinden taban sinyal çıkar. **Genişletilebilir tut** — kullanıcı ileride iki tarafa (firma & hibe) yeni karar-parametreleri ekleyeceğini belirtti; skor boyutları eklemeli olmalı.
+- **Proje sinyalleri (kullanıcı: üçü de):** (1) bütçe ölçeği (geçmiş proje bütçeleri ↔ hibe MaxAmount), (2) proje kategorisi (GrantProject/Event/Other), (3) aktif proje sayısı/kapasite. Skora bütçe-uyumu + kategori-uyumu (+ kapasite) boyutları eklenir.
+- **`GrantRecommendation` (kalıcı, yalnız host-push):** tenant + FK GrantCall + Source(Auto/Host) + Note/Reason + Status(New/Seen/Applied/Dismissed) + CreatedBy. Otomatik feed CANLI hesaplanır (kalıcılık yok); host-push kayıt oluşturur. Tenant feed'i ikisini birleştirir ("Platform önerdi" rozeti).
+- **Host hedefleme/gönder:** çağrı seç → firma filtresi (ölçek/sektör/bölge + bütçe aralığı + proje kategorisi + min otomatik-skor; aynı FirmSignals'ı kullanır) → önizle → gönder (GrantRecommendation kayıtları + bildirim).
+- **Bildirim (kullanıcı: in-app + e-posta):** mevcut Notifications alanı (in-app) + ABP `IEmailSender` (e-posta). Gerçek SMTP dağıtım ayarıdır; kod soyutlama üzerinden yazılır, dev'de null/log sender.
+- **İzin (§7 kararı):** profil/öneri/başvuru için **mevcut `Grants.Default` yeniden kullanılır** (yeni permission = DbMigrator seed derdi; Faz A deseni). Host dispatch host-bağlamıyla kapılır.
+
+### Yeniden bölümleme (kullanıcı: B1→B2→B3 sıralı)
+| Alt-faz | İçerik | Migration |
+|---|---|---|
+| **B1** | FirmProfile + `GrantMatchManager` (FirmSignals soyutlaması, **profil-only skor**) + tenant otomatik feed + minimal GrantApplication ("Başvur") + /Grants bağlama-duyarlı | `Add_FirmProfile_And_Application` |
+| **B2** | Eşleştiriciyi proje sinyalleriyle zenginleştir (bütçe/kategori/kapasite) — B1 skoruna additif | (muhtemelen migration yok; salt okuma-agregasyon) |
+| **B3** | `GrantRecommendation` kalıcı + host hedefleme/filtre/önizle/gönder + in-app+e-posta bildirim | `Add_GrantRecommendation` |
+
+Sonra Faz C (pipeline/dilim/dashboard) planlı.
+
+**Bu spec'in §2–§6'sı B1'i tanımlar** (GrantRecommendation/host-dispatch/proje-sinyalleri B2–B3'e taşındı). B1 için ayrı plan: `docs/superpowers/plans/2026-07-23-hibe-faz-b1.md`. B2/B3 kendi spec/planlarını alacak.
