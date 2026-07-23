@@ -1,68 +1,6 @@
 @page
-@using Microsoft.AspNetCore.Authorization
-@using Volo.Abp.AspNetCore.Mvc.UI.Layout
 @using Apya.Platform.Web.Pages
 @model IndexModel
-@inject IAuthorizationService AuthorizationService
 @{
-    ViewBag.Title = "Projelerim";
-    ViewBag.Description = "Tüm projelerinizi buradan yönetebilirsiniz.";
+    // OnGet() "/Projects"e yönlendirir — bu gövde hiç render edilmez.
 }
-
-@section scripts {
-    <abp-script src="/Pages/Index.js" />
-}
-
-<div class="apya-page">
-
-<div class="row mb-4" id="DashboardAlertsContainer" style="display: none;">
-    <div class="col-12">
-        <div class="card bg-danger bg-opacity-10 border-danger border-2 shadow-sm">
-            <div class="card-body py-3">
-                <h5 class="card-title text-danger mb-3 fw-bold">
-                    <i class="fa fa-exclamation-circle fa-beat me-2"></i> Gecikmiş & Acil Görevleriniz Var!
-                </h5>
-                <div id="OverdueTasksList" class="d-flex flex-wrap gap-2">
-                    <!-- JS Tarafından Yüklenecek -->
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<div class="row mb-4" id="DashboardUpcomingContainer" style="display: none;">
-    <div class="col-12">
-        <div class="card bg-warning bg-opacity-10 border-warning border-2 shadow-sm">
-            <div class="card-body py-3">
-                <h5 class="card-title text-warning mb-3 fw-bold">
-                    <i class="fa fa-clock me-2"></i> Yaklaşan Görevler (Son 48 Saat)
-                </h5>
-                <div id="UpcomingTasksList" class="d-flex flex-wrap gap-2">
-                    <!-- JS Tarafından Yüklenecek -->
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<abp-card>
-    <abp-card-header>
-        <abp-row>
-            <abp-column size-md="_6">
-                <abp-card-title>🚀 Projelerim</abp-card-title>
-            </abp-column>
-            <abp-column size-md="_6" class="text-end">
-                <abp-button id="NewProjectButton"
-                            text="Yeni Proje Ekle"
-                            icon="plus"
-                            button-type="Primary" size="Small" />
-            </abp-column>
-        </abp-row>
-    </abp-card-header>
-
-    <abp-card-body>
-        <abp-table striped-rows="true" id="ProjectsTable"></abp-table>
-    </abp-card-body>
-</abp-card>
-
-</div> @* /apya-page *@
