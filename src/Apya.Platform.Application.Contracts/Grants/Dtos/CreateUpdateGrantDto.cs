@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 
 namespace Apya.Platform.Grants.Dtos;
@@ -17,4 +18,9 @@ public class CreateUpdateGrantDto
     public decimal? MaxAmount { get; set; }
 
     public double MinMatchScore { get; set; }
+
+    // Faz A: eşleştirme kriterleri (CompanySize bit-maskesi + sektör/bölge/anahtar kelime).
+    public int EligibleCompanySizes { get; set; }
+
+    public List<GrantCriteriaTagDto> CriteriaTags { get; set; } = new();
 }
