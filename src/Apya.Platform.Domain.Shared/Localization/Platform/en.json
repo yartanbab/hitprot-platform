@@ -235,6 +235,7 @@
     "Platform:Task:DeleteDenied": "You do not have permission to delete this task. Only the creator or assignee can delete it.",
     "Platform:Project:NotFound": "The requested project was not found.",
     "Platform:Project:CodeAlreadyExists": "This project code is already in use.",
+    "Platform:Grant:CallScheduleInvalid": "Invalid date range. The application deadline cannot be earlier than the open date.",
     "Platform:File:UnsupportedExtension": "Unsupported file type. Only PDF, Office, image and archive files are allowed.",
     "Platform:File:SizeExceeded": "File size cannot exceed 25 MB.",
     "Platform:DynamicAssets:FormNotPublished": "This form is not currently published.",

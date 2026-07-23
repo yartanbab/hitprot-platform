@@ -47,6 +47,11 @@ public class GrantAppService :
         return dto;
     }
 
+    // Liste de CallCount + kriterleri taşısın (base list mapping bunları atlar).
+    // Host kataloğu küçük olduğundan program başına sorgu (N+1) kabul edilebilir.
+    protected override Task<GrantDto> MapToGetListOutputDtoAsync(Grant entity)
+        => MapToGetOutputDtoAsync(entity);
+
     public override async Task<GrantDto> CreateAsync(CreateUpdateGrantDto input)
     {
         var dto = await base.CreateAsync(input);
