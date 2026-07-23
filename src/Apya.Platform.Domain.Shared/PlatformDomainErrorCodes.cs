@@ -69,6 +69,9 @@ public static class PlatformDomainErrorCodes
     public const string ProjectBudgetInvalid = "Platform:Project:BudgetInvalid";
     public const string ProjectScheduleInvalid = "Platform:Project:ScheduleInvalid";
 
+    // --- Hibe (Grant) Modülü ---
+    public const string GrantCallScheduleInvalid = "Platform:Grant:CallScheduleInvalid";
+
     // --- Dosya (File) Modülü ---
     public const string FileUnsupportedExtension = "Platform:File:UnsupportedExtension";
     public const string FileSizeExceeded = "Platform:File:SizeExceeded";
