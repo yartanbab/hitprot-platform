@@ -23,9 +23,18 @@ namespace Apya.Platform
             CreateMap<Project, ProjectDto>();
             CreateMap<Project, ProjectDetailDto>().IncludeBase<Project, ProjectDto>();
 
-            // Hibe Eşleştirmeleri
-            CreateMap<Grant, GrantDto>();
-            CreateMap<CreateUpdateGrantDto, Grant>();
+            // Hibe (Grant) — CallCount/CriteriaTags DTO'da elle doldurulur (MapToGetOutputDtoAsync).
+            CreateMap<Grant, GrantDto>()
+                .ForMember(d => d.CallCount, o => o.Ignore())
+                .ForMember(d => d.CriteriaTags, o => o.Ignore());
+            CreateMap<CreateUpdateGrantDto, Grant>()
+                .ForMember(d => d.CriteriaTags, o => o.Ignore())
+                .ForMember(d => d.Calls, o => o.Ignore());
+
+            // Hibe Çağrısı (GrantCall) — GrantName MapToGetOutputDtoAsync'te doldurulur.
+            // (Girdi→entity dönüşümü AppService'te MapToEntityAsync ile yapılır, AutoMapper değil.)
+            CreateMap<GrantCall, GrantCallDto>()
+                .ForMember(d => d.GrantName, o => o.Ignore());
 
             // (BUG-001) Eski ProjectTask eşlemeleri kaldırıldı — Artık yalnızca Tasks.TaskItem kullanılıyor.
 
