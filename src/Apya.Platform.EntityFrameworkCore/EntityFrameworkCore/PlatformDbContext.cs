@@ -114,6 +114,7 @@ namespace Apya.Platform.EntityFrameworkCore
         public DbSet<FirmProfile> FirmProfiles { get; set; }
         public DbSet<FirmProfileTag> FirmProfileTags { get; set; }
         public DbSet<GrantApplication> GrantApplications { get; set; }
+        public DbSet<GrantRecommendation> GrantRecommendations { get; set; }
 
 
         /* --- ESKİ/DİĞER TASK MODÜLÜ TABLOLARI --- */
@@ -456,6 +457,16 @@ namespace Apya.Platform.EntityFrameworkCore
                 b.ConfigureByConvention();
                 b.HasOne<GrantCall>().WithMany().HasForeignKey(x => x.GrantCallId).OnDelete(DeleteBehavior.Cascade);
                 // Aynı tenant + çağrı için tek başvuru.
+                b.HasIndex(x => new { x.TenantId, x.GrantCallId }).IsUnique();
+            });
+
+            builder.Entity<GrantRecommendation>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "GrantRecommendations", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+                b.Property(x => x.Note).HasMaxLength(256);
+                b.HasOne<GrantCall>().WithMany().HasForeignKey(x => x.GrantCallId).OnDelete(DeleteBehavior.Cascade);
+                // Aynı tenant + çağrı için tek (host-push) öneri kaydı — tekrar gönderim idempotent.
                 b.HasIndex(x => new { x.TenantId, x.GrantCallId }).IsUnique();
             });
 
