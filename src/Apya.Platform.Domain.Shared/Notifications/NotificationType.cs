@@ -8,5 +8,6 @@ public enum NotificationType
     TaskStatusChanged   = 4,
     ProjectMemberAdded  = 5,
     Mention             = 6,
-    AiWorkflowTriggered = 7
+    AiWorkflowTriggered = 7,
+    GrantRecommended    = 8
 }
