@@ -9,7 +9,6 @@ using Volo.Abp.Domain.Repositories;
 using Volo.Abp.MultiTenancy;
 using Apya.Platform.Grants.Dtos;
 using Apya.Platform.Permissions;
-using Apya.Platform.Projects;
 
 namespace Apya.Platform.Grants;
 
@@ -27,7 +26,8 @@ public class GrantRecommendationAppService : ApplicationService, IGrantRecommend
     private readonly IRepository<FirmProfile, Guid> _profileRepo;
     private readonly IRepository<FirmProfileTag, Guid> _profileTagRepo;
     private readonly IRepository<GrantApplication, Guid> _appRepo;
-    private readonly IRepository<Project, Guid> _projectRepo;
+    private readonly IRepository<GrantRecommendation, Guid> _hostRecRepo;
+    private readonly FirmSignalsBuilder _signalsBuilder;
     private readonly GrantMatchManager _matcher;
     private readonly IDataFilter<IMultiTenant> _mtFilter;
 
@@ -35,50 +35,35 @@ public class GrantRecommendationAppService : ApplicationService, IGrantRecommend
         IRepository<GrantCall, Guid> callRepo,
         IRepository<Grant, Guid> grantRepo,
         IRepository<GrantCriteriaTag, Guid> criteriaRepo,
-        IRepository<FirmProfile, Guid> profileRepo,
-        IRepository<FirmProfileTag, Guid> profileTagRepo,
         IRepository<GrantApplication, Guid> appRepo,
-        IRepository<Project, Guid> projectRepo,
+        IRepository<GrantRecommendation, Guid> hostRecRepo,
+        FirmSignalsBuilder signalsBuilder,
         GrantMatchManager matcher,
         IDataFilter<IMultiTenant> mtFilter)
     {
         _callRepo = callRepo;
         _grantRepo = grantRepo;
         _criteriaRepo = criteriaRepo;
-        _profileRepo = profileRepo;
-        _profileTagRepo = profileTagRepo;
         _appRepo = appRepo;
-        _projectRepo = projectRepo;
+        _hostRecRepo = hostRecRepo;
+        _signalsBuilder = signalsBuilder;
         _matcher = matcher;
         _mtFilter = mtFilter;
     }
 
     public async Task<List<GrantRecommendationDto>> GetMyRecommendationsAsync()
     {
-        // 1) Firma sinyalleri (tenant-scoped).
-        var signals = new FirmSignals();
-        var profile = await _profileRepo.FirstOrDefaultAsync();
-        if (profile != null)
-        {
-            signals.Size = profile.Size;
-            var ptags = await _profileTagRepo.GetListAsync(t => t.FirmProfileId == profile.Id);
-            signals.Tags = ptags.Select(t => new FirmSignalTag(t.Kind, t.Value)).ToList();
-        }
-
-        // 1b) Proje geçmişi sinyalleri (B2, tenant-scoped — filtre kapatmaya gerek yok).
-        var projects = await _projectRepo.GetListAsync();
-        var budgeted = projects.Where(p => p.TotalBudget > 0).ToList();
-        signals.TypicalProjectBudget = budgeted.Count == 0 ? null : budgeted.Average(p => p.TotalBudget);
-        signals.DominantCategory = projects.Count == 0
-            ? null
-            : projects.GroupBy(p => p.Category)
-                .OrderByDescending(g => g.Count())
-                .ThenBy(g => g.Key)
-                .First().Key;
-        signals.ActiveProjectCount = projects.Count(p => p.EndDate == null || p.EndDate.Value.Date >= DateTime.Now.Date);
+        // 1) Firma sinyalleri (profil + proje geçmişi).
+        var signals = await _signalsBuilder.BuildAsync(CurrentTenant.Id);
 
         // 2) Başvurduğum çağrılar (tenant-scoped).
         var appliedIds = (await _appRepo.GetListAsync()).Select(a => a.GrantCallId).ToHashSet();
+
+        // 2b) Host'un gönderdiği aktif öneriler (B3, tenant-scoped, Dismissed hariç).
+        var hostRecCallIds = (await _hostRecRepo.GetListAsync(
+                r => r.Source == GrantRecommendationSource.Host && r.Status != GrantRecommendationStatus.Dismissed))
+            .Select(r => r.GrantCallId)
+            .ToHashSet();
 
         // 3) Katalog (host TenantId=null → filtreyi kapat).
         var result = new List<GrantRecommendationDto>();
@@ -107,7 +92,8 @@ public class GrantRecommendationAppService : ApplicationService, IGrantRecommend
                     ? lst : (IReadOnlyList<GrantCriteriaTag>)new List<GrantCriteriaTag>();
 
                 var score = _matcher.Score(signals, grant, gtags);
-                if (score < grant.MinMatchScore)
+                var isHostRecommended = hostRecCallIds.Contains(call.Id);
+                if (score < grant.MinMatchScore && !isHostRecommended)
                 {
                     continue;
                 }
@@ -123,7 +109,8 @@ public class GrantRecommendationAppService : ApplicationService, IGrantRecommend
                     DaysRemaining = call.Deadline.HasValue ? (int)(call.Deadline.Value.Date - today).TotalDays : (int?)null,
                     MaxAmount = grant.MaxAmount,
                     Score = score,
-                    AlreadyApplied = appliedIds.Contains(call.Id)
+                    AlreadyApplied = appliedIds.Contains(call.Id),
+                    IsHostRecommended = isHostRecommended
                 });
             }
         }

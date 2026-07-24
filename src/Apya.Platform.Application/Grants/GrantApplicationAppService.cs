@@ -20,17 +20,20 @@ public class GrantApplicationAppService : ApplicationService, IGrantApplicationA
     private readonly IRepository<GrantApplication, Guid> _appRepo;
     private readonly IRepository<GrantCall, Guid> _callRepo;
     private readonly IRepository<Grant, Guid> _grantRepo;
+    private readonly IRepository<GrantRecommendation, Guid> _recRepo;
     private readonly IDataFilter<IMultiTenant> _mtFilter;
 
     public GrantApplicationAppService(
         IRepository<GrantApplication, Guid> appRepo,
         IRepository<GrantCall, Guid> callRepo,
         IRepository<Grant, Guid> grantRepo,
+        IRepository<GrantRecommendation, Guid> recRepo,
         IDataFilter<IMultiTenant> mtFilter)
     {
         _appRepo = appRepo;
         _callRepo = callRepo;
         _grantRepo = grantRepo;
+        _recRepo = recRepo;
         _mtFilter = mtFilter;
     }
 
@@ -55,6 +58,15 @@ public class GrantApplicationAppService : ApplicationService, IGrantApplicationA
 
         var app = new GrantApplication(GuidGenerator.Create(), CurrentTenant.Id, grantCallId);
         await _appRepo.InsertAsync(app, autoSave: true);
+
+        // Host bu çağrıyı bu firmaya göndermişse (B3), başvuruldu olarak işaretle.
+        var rec = await _recRepo.FirstOrDefaultAsync(r => r.GrantCallId == grantCallId);
+        if (rec != null)
+        {
+            rec.MarkApplied();
+            await _recRepo.UpdateAsync(rec, autoSave: true);
+        }
+
         return await ToDtoAsync(app);
     }
 
