@@ -1,13 +1,14 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Apya.Platform.Projects;
 using Volo.Abp.Domain.Services;
 
 namespace Apya.Platform.Grants;
 
 /// <summary>
-/// Kural-bazlı firma↔program uyum skoru (0-100). Genişletilebilir: yeni skor boyutları
-/// (Faz B2 proje sinyalleri) buraya eklenir. Saf hesap, kalıcılık yok.
+/// Kural-bazlı firma↔program uyum skoru (0-100). B2: bütçe-uyumu + kategori-uyumu
+/// boyutları proje geçmişinden eklendi (veri yoksa atlanır). Saf hesap, kalıcılık yok.
 /// </summary>
 public class GrantMatchManager : DomainService
 {
@@ -34,6 +35,19 @@ public class GrantMatchManager : DomainService
                 var matched = grantValues.Count(v => firmValues.Contains(v));
                 dims.Add(grantValues.Count == 0 ? 0 : (double)matched / grantValues.Count);
             }
+
+            // B2: proje geçmişinden ek boyutlar — veri yoksa boyut tamamen atlanır (ceza yok).
+            if (firm.TypicalProjectBudget is > 0 && grant.MaxAmount > 0)
+            {
+                dims.Add(firm.TypicalProjectBudget.Value <= grant.MaxAmount
+                    ? 1.0
+                    : Math.Min(1.0, (double)(grant.MaxAmount / firm.TypicalProjectBudget.Value)));
+            }
+            if (firm.DominantCategory.HasValue)
+            {
+                dims.Add(firm.DominantCategory.Value == ProjectCategory.GrantProject ? 1.0 : 0.5);
+            }
+
             baseScore = dims.Average() * 100.0;
         }
 
