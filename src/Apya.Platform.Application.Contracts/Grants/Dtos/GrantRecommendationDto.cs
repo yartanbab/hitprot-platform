@@ -15,4 +15,7 @@ public class GrantRecommendationDto
     public decimal? MaxAmount { get; set; }
     public int Score { get; set; }
     public bool AlreadyApplied { get; set; }
+
+    /// <summary>Host bu çağrıyı bu firmaya bilinçli olarak gönderdi mi (B3 host-push).</summary>
+    public bool IsHostRecommended { get; set; }
 }
