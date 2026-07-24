@@ -79,6 +79,9 @@ $(function () {
             ? '<span class="apya-chip apya-chip-' + (r.daysRemaining <= 7 ? 'warning' : 'neutral') + '"><i class="fa fa-hourglass-half"></i>' +
               (r.daysRemaining < 0 ? 'Süre doldu' : r.daysRemaining + ' gün kaldı') + '</span>'
             : '';
+        var hostBadge = r.isHostRecommended
+            ? '<span class="apya-chip apya-chip-brand"><i class="fa fa-star me-1"></i>Platform Önerdi</span>'
+            : '';
         var $t = $(
             '<div class="apya-tile" data-call-id="' + r.grantCallId + '">' +
             '  <div class="apya-tile-head">' +
@@ -86,7 +89,7 @@ $(function () {
             '      <span class="apya-tile-icon-box"><i class="fa fa-award"></i></span>' +
             '      <div><div class="apya-tile-title">' + esc(r.grantName) + '</div><div class="apya-tile-sub">' + esc(r.issuer) + ' · ' + esc(r.period) + '</div></div>' +
             '    </div>' +
-            '    <span class="apya-chip apya-chip-ai">%' + r.score + '</span>' +
+            '    <div class="d-flex flex-column align-items-end gap-1">' + hostBadge + '<span class="apya-chip apya-chip-ai">%' + r.score + '</span></div>' +
             '  </div>' +
             '  <div class="apya-tile-progress-label"><span>Maks. Tutar</span><span class="apya-numeric fw-semibold">' + money(r.maxAmount) + '</span></div>' +
             '  <div class="apya-tile-foot">' + days + btn + '</div>' +
