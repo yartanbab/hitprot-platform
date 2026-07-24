@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
@@ -55,11 +56,16 @@ public class FirmProfileAppService : ApplicationService, IFirmProfileAppService
 
         var existing = await _tagRepo.GetListAsync(t => t.FirmProfileId == profile.Id);
         await _tagRepo.DeleteManyAsync(existing);
+
+        var saved = new List<GrantCriteriaTagDto>();
         foreach (var t in input.Tags.Where(x => !string.IsNullOrWhiteSpace(x.Value)))
         {
             await _tagRepo.InsertAsync(new FirmProfileTag(GuidGenerator.Create(), profile.Id, t.Kind, t.Value));
+            saved.Add(new GrantCriteriaTagDto { Kind = t.Kind, Value = t.Value.Trim() });
         }
 
-        return await GetMyProfileAsync();
+        // Dönüş, kaydedilen girdiden kurulur — aynı UoW içinde henüz flush edilmemiş
+        // tag'leri GetMyProfileAsync yeniden okuyamayacağı için (boş dönerdi).
+        return new FirmProfileDto { Size = profile.Size, Tags = saved };
     }
 }
