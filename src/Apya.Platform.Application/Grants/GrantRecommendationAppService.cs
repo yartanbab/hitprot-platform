@@ -9,6 +9,7 @@ using Volo.Abp.Domain.Repositories;
 using Volo.Abp.MultiTenancy;
 using Apya.Platform.Grants.Dtos;
 using Apya.Platform.Permissions;
+using Apya.Platform.Projects;
 
 namespace Apya.Platform.Grants;
 
@@ -26,6 +27,7 @@ public class GrantRecommendationAppService : ApplicationService, IGrantRecommend
     private readonly IRepository<FirmProfile, Guid> _profileRepo;
     private readonly IRepository<FirmProfileTag, Guid> _profileTagRepo;
     private readonly IRepository<GrantApplication, Guid> _appRepo;
+    private readonly IRepository<Project, Guid> _projectRepo;
     private readonly GrantMatchManager _matcher;
     private readonly IDataFilter<IMultiTenant> _mtFilter;
 
@@ -36,6 +38,7 @@ public class GrantRecommendationAppService : ApplicationService, IGrantRecommend
         IRepository<FirmProfile, Guid> profileRepo,
         IRepository<FirmProfileTag, Guid> profileTagRepo,
         IRepository<GrantApplication, Guid> appRepo,
+        IRepository<Project, Guid> projectRepo,
         GrantMatchManager matcher,
         IDataFilter<IMultiTenant> mtFilter)
     {
@@ -45,6 +48,7 @@ public class GrantRecommendationAppService : ApplicationService, IGrantRecommend
         _profileRepo = profileRepo;
         _profileTagRepo = profileTagRepo;
         _appRepo = appRepo;
+        _projectRepo = projectRepo;
         _matcher = matcher;
         _mtFilter = mtFilter;
     }
@@ -60,6 +64,18 @@ public class GrantRecommendationAppService : ApplicationService, IGrantRecommend
             var ptags = await _profileTagRepo.GetListAsync(t => t.FirmProfileId == profile.Id);
             signals.Tags = ptags.Select(t => new FirmSignalTag(t.Kind, t.Value)).ToList();
         }
+
+        // 1b) Proje geçmişi sinyalleri (B2, tenant-scoped — filtre kapatmaya gerek yok).
+        var projects = await _projectRepo.GetListAsync();
+        var budgeted = projects.Where(p => p.TotalBudget > 0).ToList();
+        signals.TypicalProjectBudget = budgeted.Count == 0 ? null : budgeted.Average(p => p.TotalBudget);
+        signals.DominantCategory = projects.Count == 0
+            ? null
+            : projects.GroupBy(p => p.Category)
+                .OrderByDescending(g => g.Count())
+                .ThenBy(g => g.Key)
+                .First().Key;
+        signals.ActiveProjectCount = projects.Count(p => p.EndDate == null || p.EndDate.Value.Date >= DateTime.Now.Date);
 
         // 2) Başvurduğum çağrılar (tenant-scoped).
         var appliedIds = (await _appRepo.GetListAsync()).Select(a => a.GrantCallId).ToHashSet();
