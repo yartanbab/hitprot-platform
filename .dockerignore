@@ -1,0 +1,23 @@
+# Build çıktıları ve bağımlılıklar — imaj içine ASLA girmemeli
+**/bin/
+**/obj/
+**/node_modules/
+**/wwwroot/libs/
+**/Logs/
+**/logs/
+
+# VCS / IDE / ajan
+.git/
+.gitignore
+.vs/
+.idea/
+.claude/
+
+# Sırlar ve deploy dosyaları (build context'e girmesin)
+**/appsettings.secrets.json
+**/*.user
+secrets/
+.env
+docker-compose*.yml
+Dockerfile*
+Caddyfile
