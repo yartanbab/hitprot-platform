@@ -686,6 +686,21 @@ html[data-sidebar="collapsed"] #lpx-sidebar .menu-collapse-icon::before {
     content: '\f054'; /* chevron-right → "genişlet" */
 }
 
+/* --- Tema/Yoğunluk toggle ikon FOUC: sunucu her zaman varsayılan glyph'i basar
+   (fa-sun / fa-bars), gerçek tercih data-theme/data-density attribute'una göre
+   paint ÖNCESİ zaten belli (ApyaThemeHead FOUC script'i). JS ready'i (dark-mode.js/
+   density-toggle.js) beklemeden ::before content override ile doğru glyph — aynı
+   desen #lpx-sidebar .menu-collapse-icon'da yukarıda kullanılıyor. --- */
+html[data-theme="dark"] #ThemeToggle i.fa-sun::before {
+    content: '\f186'; /* moon */
+}
+html[data-density="compact"] #DensityToggle i.fa-bars::before {
+    content: '\f039'; /* align-justify */
+}
+html[data-density="comfortable"] #DensityToggle i.fa-bars::before {
+    content: '\f7a4'; /* grip-lines */
+}
+
 /* --- Header topbar: 57px + token zemin + alt kenarlık (her iki tema) --- */
 .lpx-topbar {
     min-height: var(--apya-header-h);
