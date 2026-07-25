@@ -1,25 +1,13 @@
-﻿using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
-using Volo.Abp.Application.Dtos;
-using Apya.Platform.Projects;
-using Apya.Platform.Projects.Dtos;
+﻿using Microsoft.AspNetCore.Mvc;
 
 namespace Apya.Platform.Web.Pages;
 
+// "/" ile "/Projects" aynı listeyi gösteriyordu (bkz. Menus/PlatformMenuContributor.cs);
+// hedef tasarımda kök ayrı bir sayfa değil, "/Projects"e yönlenir.
 public class IndexModel : PlatformPageModel
 {
-    // Varsayılan değer atandı (new())
-    public PagedResultDto<ProjectDto> ProjectList { get; set; } = new();
-
-    private readonly IProjectAppService _projectAppService;
-
-    public IndexModel(IProjectAppService projectAppService)
+    public IActionResult OnGet()
     {
-        _projectAppService = projectAppService;
-    }
-
-    public void OnGet()
-    {
-        // Sayfa yüklenirken yapılacak işlemler
+        return RedirectToPage("/Projects/Index");
     }
 }

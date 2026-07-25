@@ -1,72 +1,97 @@
 @page
 @model Apya.Platform.Web.Pages.Customers.StatementModalModel
 @using Apya.Platform.CustomerLedger
+@using Apya.Platform.Web.Pages.Shared
 @using Volo.Abp.AspNetCore.Mvc.UI.Bootstrap.TagHelpers.Modal
 @{
     Layout = null;
-    string SourceText(CustomerLedgerSource s) => s switch
+    var s = Model.Statement;
+
+    string ChipTone(CustomerLedgerSource src) => src switch
+    {
+        CustomerLedgerSource.Invoice => "brand",
+        CustomerLedgerSource.Payment => "positive",
+        _ => "neutral"
+    };
+    string ChipLabel(CustomerLedgerSource src) => src switch
     {
         CustomerLedgerSource.Invoice => "Satış Faturası",
         CustomerLedgerSource.Payment => "Tahsilat",
         CustomerLedgerSource.Opening => "Açılış",
         _ => "Manuel"
     };
+    string Amount(decimal v) => v > 0 ? v.ToString("N2") : "—";
+
+    var balanceClass = s.Balance > 0 ? "text-danger" : s.Balance < 0 ? "text-success" : "";
+    var balanceHint = s.Balance > 0 ? "Müşteri bize borçlu"
+        : s.Balance < 0 ? "Fazla tahsilat / bizim borcumuz"
+        : "Bakiye sıfır";
 }
 <abp-modal size="Large">
-    <abp-modal-header title="@($"Cari Ekstre — {Model.Statement.CustomerName}")"></abp-modal-header>
+    <abp-modal-header title="@($"Cari Ekstre — {s.CustomerName}")"></abp-modal-header>
     <abp-modal-body>
-        <div class="alert @(Model.Statement.Balance > 0 ? "alert-danger" : Model.Statement.Balance < 0 ? "alert-success" : "alert-secondary")">
-            <strong>Net Bakiye: @Model.Statement.Balance.ToString("N2") ₺</strong>
-            @if (Model.Statement.Balance > 0)
-            {
-                <span> — Müşteri bize borçlu</span>
-            }
-            else if (Model.Statement.Balance < 0)
-            {
-                <span> — Fazla tahsilat / bizim borcumuz</span>
-            }
-            <span class="float-end">
-                Toplam Borç: @Model.Statement.TotalDebit.ToString("N2") &nbsp;|&nbsp;
-                Toplam Alacak: @Model.Statement.TotalCredit.ToString("N2")
-            </span>
+
+        <div class="row g-3 mb-3">
+            <div class="col-4">
+                <div class="apya-overline text-muted">Toplam Borç</div>
+                <div class="apya-numeric fw-semibold">@s.TotalDebit.ToString("N2")</div>
+            </div>
+            <div class="col-4">
+                <div class="apya-overline text-muted">Toplam Alacak</div>
+                <div class="apya-numeric fw-semibold">@s.TotalCredit.ToString("N2")</div>
+            </div>
+            <div class="col-4">
+                <div class="apya-overline text-muted">Net Bakiye</div>
+                <div class="apya-numeric fw-bold @balanceClass">@s.Balance.ToString("N2") ₺</div>
+                <div class="small text-muted">@balanceHint</div>
+            </div>
         </div>
-        @if (Model.Statement.Lines.Count == 0)
+
+        @if (s.Lines.Count == 0)
         {
-            <p class="text-muted">Bu cari için hareket yok.</p>
+            <partial name="_EmptyState" model='new EmptyStateModel {
+                Icon = "fa-receipt",
+                Title = "Bu cari için hareket yok.",
+                Description = "Seçili dönemde fatura veya tahsilat bulunmuyor."
+            }' />
         }
         else
         {
-            <table class="table table-sm table-striped">
-                <thead>
-                    <tr>
-                        <th>Tarih</th><th>Kaynak</th><th>Açıklama</th>
-                        <th class="text-end">Borç</th>
-                        <th class="text-end">Alacak</th>
-                        <th class="text-end">Bakiye</th>
-                    </tr>
-                </thead>
-                <tbody>
-                @foreach (var l in Model.Statement.Lines)
-                {
-                    <tr>
-                        <td>@l.EntryDate.ToString("dd.MM.yyyy")</td>
-                        <td>@SourceText(l.Source)</td>
-                        <td>@(l.Description ?? "-")</td>
-                        <td class="text-end">@(l.Debit > 0 ? l.Debit.ToString("N2") : "")</td>
-                        <td class="text-end">@(l.Credit > 0 ? l.Credit.ToString("N2") : "")</td>
-                        <td class="text-end fw-bold">@l.RunningBalance.ToString("N2")</td>
-                    </tr>
-                }
-                </tbody>
-                <tfoot>
-                    <tr class="fw-bold">
-                        <td colspan="3" class="text-end">TOPLAM</td>
-                        <td class="text-end">@Model.Statement.TotalDebit.ToString("N2")</td>
-                        <td class="text-end">@Model.Statement.TotalCredit.ToString("N2")</td>
-                        <td class="text-end">@Model.Statement.Balance.ToString("N2")</td>
-                    </tr>
-                </tfoot>
-            </table>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>Tarih</th>
+                            <th>Kaynak</th>
+                            <th>Açıklama</th>
+                            <th class="text-end">Borç</th>
+                            <th class="text-end">Alacak</th>
+                            <th class="text-end">Bakiye</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    @foreach (var l in s.Lines)
+                    {
+                        <tr>
+                            <td class="text-nowrap">@l.EntryDate.ToString("dd.MM.yyyy")</td>
+                            <td><span class="apya-chip apya-chip-@ChipTone(l.Source)">@ChipLabel(l.Source)</span></td>
+                            <td>@(l.Description ?? "—")</td>
+                            <td class="text-end apya-numeric">@Amount(l.Debit)</td>
+                            <td class="text-end apya-numeric">@Amount(l.Credit)</td>
+                            <td class="text-end apya-numeric fw-bold">@l.RunningBalance.ToString("N2")</td>
+                        </tr>
+                    }
+                    </tbody>
+                    <tfoot>
+                        <tr class="fw-bold border-top">
+                            <td colspan="3" class="text-end">TOPLAM</td>
+                            <td class="text-end apya-numeric">@s.TotalDebit.ToString("N2")</td>
+                            <td class="text-end apya-numeric">@s.TotalCredit.ToString("N2")</td>
+                            <td class="text-end apya-numeric">@s.Balance.ToString("N2")</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
         }
     </abp-modal-body>
     <abp-modal-footer buttons="@(AbpModalButtons.Close)"></abp-modal-footer>
