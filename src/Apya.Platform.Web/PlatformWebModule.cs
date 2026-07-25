@@ -149,7 +149,11 @@ public class PlatformWebModule : AbpModule
         Configure<Volo.Abp.Ui.LayoutHooks.AbpLayoutHookOptions>(options =>
         {
             options.Add(Volo.Abp.Ui.LayoutHooks.LayoutHooks.Body.First, typeof(Apya.Platform.Web.Components.ImpersonationAlert.ImpersonationAlertViewComponent));
-            options.Add(Volo.Abp.Ui.LayoutHooks.LayoutHooks.Body.First, typeof(Apya.Platform.Web.Components.TenantBadge.TenantBadgeViewComponent));
+            // Body.Last: sidebar (#lpx-sidebar .lpx-logo-container) bu noktada DOM'da zaten
+            // hazır → bileşenin kendi senkron script'i ilk paint'ten ÖNCE taşıyabiliyor
+            // (bkz. TenantBadge/Default.cshtml). Body.First'te sidebar henüz yok, taşıma
+            // jQuery ready'ye kalıyordu — bu da sidebar'ın anlık aşağı kaymasına sebep oluyordu.
+            options.Add(Volo.Abp.Ui.LayoutHooks.LayoutHooks.Body.Last, typeof(Apya.Platform.Web.Components.TenantBadge.TenantBadgeViewComponent));
             options.Add(Volo.Abp.Ui.LayoutHooks.LayoutHooks.Head.Last, typeof(Apya.Platform.Web.Components.ApyaThemeHead.ApyaThemeHeadViewComponent));
         });
 

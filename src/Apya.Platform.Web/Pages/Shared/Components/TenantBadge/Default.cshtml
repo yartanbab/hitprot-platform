@@ -1,5 +1,5 @@
 @model Apya.Platform.Web.Components.TenantBadge.TenantBadgeViewModel
-@* FOUC önleme: dark-mode.js sidebar logo altına taşıyana kadar gizli. *@
+@* FOUC önleme: aşağıdaki senkron script taşıyıp gösterene kadar gizli. *@
 @* hidden-in-hover-trigger: LeptonX rail (daraltılmış sidebar) durumunda tema bu class'ı gizler. *@
 <div id="apya-tenant-badge" class="apya-tenant-badge hidden-in-hover-trigger" style="display:none">
     <span class="apya-tenant-badge-name">@Model.TenantName</span>
@@ -9,3 +9,17 @@
         <span class="apya-tenant-badge-count">@Model.TenantCount tenant</span>
     }
 </div>
+@* Body.Last hook'unda render edilir → bu satır çalıştığında sidebar (#lpx-sidebar
+   .lpx-logo-container) HTML parse sırasında zaten DOM'a eklenmiş oluyor. jQuery
+   ready/DOMContentLoaded'ı beklemeden, senkron ve ilk paint'ten ÖNCE taşınıp
+   gösterilir → sidebar menüsünün sonradan aşağı kayması (layout shift) önlenir. *@
+<script>
+    (function () {
+        var badge = document.getElementById('apya-tenant-badge');
+        var logoContainer = document.querySelector('#lpx-sidebar .lpx-logo-container');
+        if (badge && logoContainer) {
+            logoContainer.insertAdjacentElement('afterend', badge);
+            badge.style.display = '';
+        }
+    })();
+</script>

@@ -730,6 +730,12 @@ html[data-density="comfortable"] #DensityToggle i.fa-bars::before {
     font-size: 11.5px;
     color: var(--apya-text-tertiary);
 }
+/* dark-mode.js dolduruncaya kadar gizle (ham LeptonX breadcrumb'ının flaşını önler).
+   html.js şartı güvenli geri dönüş: JS hiç çalışmazsa (ApyaThemeHead script'i
+   sınıfı eklemezse) içerik varsayılan görünür kalır. */
+html.js .lpx-breadcrumb-container {
+    visibility: hidden;
+}
 
 /* Sağ grup sıralaması — hedef tasarım: arama başlığa yakın solda, TR/tema/
    bildirim/kullanıcı sağda toplu. LeptonX'in derlenmiş view'larını override
@@ -751,6 +757,11 @@ html[data-density="comfortable"] #DensityToggle i.fa-bars::before {
     height: 30px;
     font-size: 11.5px;
     margin: 0 2px;
+}
+/* Rozete dönüşene kadar ham ad metnini gizle (dark-mode.js tryReplaceUserAvatar).
+   html.js şartı güvenli geri dönüş — bkz. yukarıdaki breadcrumb kuralı. */
+html.js .lpx-user-profile .user-full-name {
+    visibility: hidden;
 }
 
 /* Bildirim rozetini sayı yerine nokta olarak göster (JS sayaç mantığına dokunmaz,
