@@ -93,6 +93,7 @@ public class GrantApplicationHostAppService : ApplicationService, IGrantApplicat
         using (_currentTenant.Change(tenantId))
         {
             var tranche = new GrantDisbursementTranche(GuidGenerator.Create(), tenantId, applicationId, input.SequenceNo, input.Amount, input.DueDate);
+            tranche.Update(input.SequenceNo, input.Amount, input.Status, input.DueDate);
             await _trancheRepo.InsertAsync(tranche, autoSave: true);
             return ObjectMapper.Map<GrantDisbursementTranche, GrantDisbursementTrancheDto>(tranche);
         }
