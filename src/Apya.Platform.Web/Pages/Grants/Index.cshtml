@@ -59,6 +59,15 @@
     }
     .apya-tag-entry:focus { outline: none; }
     .apya-call-row:first-of-type { border-top: 0 !important; }
+
+    /* #GrantModal modal-dialog-scrollable kullanıyor ama header/body/footer bir form etiketi içinde;
+       form flex olmayınca Bootstrap'ın scroll zinciri kırılıyor ve alt kısım (footer dahil) taşıp kesiliyor. */
+    #GrantModal .modal-content > form {
+        display: flex;
+        flex-direction: column;
+        flex: 1 1 auto;
+        min-height: 0;
+    }
 </style>
 
 @if (Model.IsHost)
