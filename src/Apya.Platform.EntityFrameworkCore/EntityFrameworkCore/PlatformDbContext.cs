@@ -115,6 +115,8 @@ namespace Apya.Platform.EntityFrameworkCore
         public DbSet<FirmProfileTag> FirmProfileTags { get; set; }
         public DbSet<GrantApplication> GrantApplications { get; set; }
         public DbSet<GrantRecommendation> GrantRecommendations { get; set; }
+        public DbSet<GrantDisbursementTranche> GrantDisbursementTranches { get; set; }
+        public DbSet<GrantMilestone> GrantMilestones { get; set; }
 
 
         /* --- ESKİ/DİĞER TASK MODÜLÜ TABLOLARI --- */
@@ -458,6 +460,23 @@ namespace Apya.Platform.EntityFrameworkCore
                 b.HasOne<GrantCall>().WithMany().HasForeignKey(x => x.GrantCallId).OnDelete(DeleteBehavior.Cascade);
                 // Aynı tenant + çağrı için tek başvuru.
                 b.HasIndex(x => new { x.TenantId, x.GrantCallId }).IsUnique();
+            });
+
+            builder.Entity<GrantDisbursementTranche>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "GrantDisbursementTranches", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+                b.HasOne<GrantApplication>().WithMany().HasForeignKey(x => x.GrantApplicationId).OnDelete(DeleteBehavior.Cascade);
+                b.HasIndex(x => x.GrantApplicationId);
+            });
+
+            builder.Entity<GrantMilestone>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "GrantMilestones", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+                b.Property(x => x.Title).IsRequired().HasMaxLength(128);
+                b.HasOne<GrantApplication>().WithMany().HasForeignKey(x => x.GrantApplicationId).OnDelete(DeleteBehavior.Cascade);
+                b.HasIndex(x => x.GrantApplicationId);
             });
 
             builder.Entity<GrantRecommendation>(b =>
