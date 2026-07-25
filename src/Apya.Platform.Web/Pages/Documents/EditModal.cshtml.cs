@@ -32,6 +32,7 @@ public class EditModalModel : AbpPageModel
         Document.Icon = dto.Icon;
         Document.ProjectId = dto.ProjectId;
         Document.ParentDocumentId = dto.ParentDocumentId;
+        Document.ExpiryDate = dto.ExpiryDate;
 
         return Page();
     }
