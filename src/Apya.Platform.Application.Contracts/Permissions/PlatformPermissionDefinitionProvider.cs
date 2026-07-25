@@ -115,6 +115,7 @@ public class PlatformPermissionDefinitionProvider : PermissionDefinitionProvider
         docsPermission.AddChild(PlatformPermissions.Documents.Create, L("Permission:Documents.Create"));
         docsPermission.AddChild(PlatformPermissions.Documents.Edit, L("Permission:Documents.Edit"));
         docsPermission.AddChild(PlatformPermissions.Documents.Delete, L("Permission:Documents.Delete"));
+        docsPermission.AddChild(PlatformPermissions.Documents.ViewAccessLog, L("Permission:Documents.ViewAccessLog"));
 
         var dynamicAssetsPermission = contentGroup.AddPermission(PlatformPermissions.DynamicAssets.Default, L("Permission:DynamicAssets"));
         dynamicAssetsPermission.RequireFeatures(PlatformFeatures.Forms);

@@ -135,6 +135,7 @@
         "Permission:Documents.Create": "Doküman Oluşturma",
         "Permission:Documents.Edit": "Doküman Düzenleme",
         "Permission:Documents.Delete": "Doküman Silme",
+        "Permission:Documents.ViewAccessLog": "Erişim Geçmişini Görüntüleme",
 
         "Permission:DynamicAssets": "Şablonlar & Formlar",
         "Permission:DynamicAssets.Create": "Şablon/Form Oluşturma",

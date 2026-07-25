@@ -108,6 +108,7 @@ public static class PlatformPermissions
         public const string Create = Default + ".Create";
         public const string Edit = Default + ".Edit";
         public const string Delete = Default + ".Delete";
+        public const string ViewAccessLog = Default + ".ViewAccessLog";
     }
 
     // --- BİLDİRİM YETKİLERİ ---
