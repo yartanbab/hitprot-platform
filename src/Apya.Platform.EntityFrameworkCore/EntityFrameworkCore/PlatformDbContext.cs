@@ -143,6 +143,7 @@ namespace Apya.Platform.EntityFrameworkCore
         /* --- DOKÜMAN (WIKI) MODÜLÜ --- */
         public DbSet<Apya.Platform.Documents.Document> Documents { get; set; }
         public DbSet<Apya.Platform.Documents.DocumentAttachment> DocumentAttachments { get; set; }
+        public DbSet<Apya.Platform.Documents.DocumentAccessLog> DocumentAccessLogs { get; set; }
 
         /* --- AI MODÜLÜ --- */
         public DbSet<DraftBatch> DraftBatches { get; set; }
@@ -677,6 +678,14 @@ namespace Apya.Platform.EntityFrameworkCore
             builder.Entity<Apya.Platform.Documents.DocumentAttachment>(b =>
             {
                 b.ToTable(PlatformConsts.DbTablePrefix + "DocumentAttachments", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+                b.HasIndex(x => x.DocumentId);
+                b.HasIndex(x => new { x.DocumentId, x.VersionGroupId });
+            });
+
+            builder.Entity<Apya.Platform.Documents.DocumentAccessLog>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "DocumentAccessLogs", PlatformConsts.DbSchema);
                 b.ConfigureByConvention();
                 b.HasIndex(x => x.DocumentId);
             });

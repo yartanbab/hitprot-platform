@@ -17,6 +17,7 @@ using Volo.Abp.SettingManagement;
 using Volo.Abp.TenantManagement;
 using Volo.Abp.BackgroundWorkers;
 using Apya.Platform.Tasks;
+using Apya.Platform.Documents;
 using System.Threading.Tasks;
 
 namespace Apya.Platform;
@@ -74,5 +75,6 @@ public class PlatformDomainModule : AbpModule
     public override void OnApplicationInitialization(ApplicationInitializationContext context)
     {
         context.AddBackgroundWorkerAsync<TaskDeadlineWorker>();
+        context.AddBackgroundWorkerAsync<DocumentExpiryWorker>();
     }
 }

@@ -1,6 +1,8 @@
 using System;
+using System.IO;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Apya.Platform.Documents;
@@ -15,11 +17,13 @@ public class IndexModel : AbpPageModel
 {
     private readonly IDocumentAppService _documentAppService;
     private readonly IUploadedFileStorage _fileStorage;
+    private readonly IWebHostEnvironment _environment;
 
-    public IndexModel(IDocumentAppService documentAppService, IUploadedFileStorage fileStorage)
+    public IndexModel(IDocumentAppService documentAppService, IUploadedFileStorage fileStorage, IWebHostEnvironment environment)
     {
         _documentAppService = documentAppService;
         _fileStorage = fileStorage;
+        _environment = environment;
     }
 
     public void OnGet()
@@ -35,9 +39,9 @@ public class IndexModel : AbpPageModel
         return new JsonResult(attachment);
     }
 
-    public async Task<IActionResult> OnGetAttachmentsAsync(Guid documentId)
+    public async Task<IActionResult> OnGetAttachmentsAsync(Guid documentId, bool includeHistory = false)
     {
-        var attachments = await _documentAppService.GetAttachmentsAsync(documentId);
+        var attachments = await _documentAppService.GetAttachmentsAsync(documentId, includeHistory);
         return new JsonResult(attachments);
     }
 
@@ -45,5 +49,29 @@ public class IndexModel : AbpPageModel
     {
         await _documentAppService.DeleteAttachmentAsync(attachmentId);
         return NoContent();
+    }
+
+    public async Task<IActionResult> OnGetAccessLogAsync(Guid documentId)
+    {
+        var logs = await _documentAppService.GetAccessLogAsync(documentId);
+        return new JsonResult(logs);
+    }
+
+    public async Task<IActionResult> OnGetDownloadAttachmentAsync(Guid attachmentId)
+    {
+        // Tenant/izin doğrulaması + DocumentAccessLog(Downloaded) kaydı AppService içinde yapılır.
+        var download = await _documentAppService.PrepareDownloadAsync(attachmentId);
+
+        // Path traversal koruması: FileController'daki desenle aynı.
+        var uploadsRoot = Path.GetFullPath(Path.Combine(_environment.WebRootPath, "uploads"));
+        var safeFileName = Path.GetFileName(download.StoredFileName);
+        var resolvedPath = Path.GetFullPath(Path.Combine(uploadsRoot, safeFileName));
+        if (string.IsNullOrEmpty(safeFileName) || !resolvedPath.StartsWith(uploadsRoot + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase))
+            return BadRequest("Geçersiz dosya adı.");
+
+        if (!System.IO.File.Exists(resolvedPath))
+            return NotFound();
+
+        return PhysicalFile(resolvedPath, download.ContentType, download.FileName);
     }
 }

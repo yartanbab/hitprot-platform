@@ -17,4 +17,6 @@ public class CreateUpdateDocumentDto
 
     [StringLength(10)]
     public string? Icon { get; set; }
+
+    public DateTime? ExpiryDate { get; set; }
 }

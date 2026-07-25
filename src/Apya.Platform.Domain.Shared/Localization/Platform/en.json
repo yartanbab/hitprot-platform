@@ -134,6 +134,7 @@
     "Permission:Documents.Create": "Create Document",
     "Permission:Documents.Edit": "Edit Document",
     "Permission:Documents.Delete": "Delete Document",
+    "Permission:Documents.ViewAccessLog": "View Access Log",
 
     "Permission:DynamicAssets": "Templates & Forms",
     "Permission:DynamicAssets.Create": "Create Template/Form",

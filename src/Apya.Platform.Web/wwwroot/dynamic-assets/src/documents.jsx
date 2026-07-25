@@ -1,11 +1,14 @@
 /**
- * Documents Island — Apya Design System v2
+ * Documents Island — Apya Design System v3
  * -----------------------------------------------------------------------
- * Bağımlılık: React 18 + mevcut style.css (Tailwind + --apya-* tokens).
+ * Bağımlılık: React 18 + components/ui kit + apya-shell.css paylaşılan desenleri
+ *   (.apya-docs-shell / .apya-tile-grid / .apya-md-detail — bkz. o dosyadaki
+ *   HANDOFF yorumları).
  * ABP proxy    : window.apya.platform.documents.document.* (CRUD: getList/get/create/update/delete)
- * Dosya ekleri : Razor Page handler'ları (/Documents?handler=...) — dynamic proxy'nin
- *                custom metod route kuralları belirsiz olduğundan, TaskAttachment'ın
- *                zaten kullandığı desenle (PageModel → app service, C#-to-C#) aynı yoldan gidiyoruz.
+ * Dosya ekleri, versiyon geçmişi, erişim log'u, indirme:
+ *   Razor Page handler'ları (/Documents?handler=...) — dynamic proxy'nin
+ *   custom metod route kuralları belirsiz olduğundan, TaskAttachment'ın
+ *   zaten kullandığı desenle (PageModel → app service, C#-to-C#) aynı yoldan gidiyoruz.
  * ABP modaller : window.abp.ModalManager (CreateModal / EditModal)
  * İkonlar      : Font Awesome 6 (LeptonX'in yüklediği FA — className="fa fa-...")
  *
@@ -15,19 +18,32 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { createRoot } from 'react-dom/client';
 import './index.css';
+import { Badge, EmptyState, Skeleton, SkeletonList, Button, buttonVariants, Input, Sheet } from './components/ui';
 
 /* ─── Yardımcılar ─────────────────────────────────────────────────────── */
 const fmt = {
   date: (iso) => iso ? new Intl.DateTimeFormat('tr-TR', { day: '2-digit', month: 'short', year: 'numeric' }).format(new Date(iso)) : '—',
+  dateTime: (iso) => iso ? new Intl.DateTimeFormat('tr-TR', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }).format(new Date(iso)) : '—',
   size: (bytes) => {
     if (!bytes && bytes !== 0) return '—';
     if (bytes < 1024) return bytes + ' B';
     if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(0) + ' KB';
     return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
   },
+  daysLeft: (iso) => {
+    if (!iso) return null;
+    const diff = Math.ceil((new Date(iso) - new Date()) / (1000 * 60 * 60 * 24));
+    return diff;
+  },
 };
 
 const cn = (...c) => c.filter(Boolean).join(' ');
+
+const ACCESS_ACTION_LABEL = {
+  1: { text: 'Yüklendi', icon: 'fa-upload', variant: 'brand' },
+  2: { text: 'İndirildi', icon: 'fa-download', variant: 'positive' },
+  3: { text: 'Silindi', icon: 'fa-trash', variant: 'negative' },
+};
 
 /* ─── ABP köprüsü ─────────────────────────────────────────────────────── */
 const abpDocument = () => window?.apya?.platform?.documents?.document;
@@ -42,8 +58,11 @@ function abpAjax(options) {
   });
 }
 
-const getAttachments = (documentId) =>
-  abpAjax({ url: `${abpAppPath()}Documents?handler=Attachments&documentId=${documentId}`, type: 'GET' });
+const getAttachments = (documentId, includeHistory = false) =>
+  abpAjax({ url: `${abpAppPath()}Documents?handler=Attachments&documentId=${documentId}&includeHistory=${includeHistory}`, type: 'GET' });
+
+const getAccessLog = (documentId) =>
+  abpAjax({ url: `${abpAppPath()}Documents?handler=AccessLog&documentId=${documentId}`, type: 'GET' });
 
 const uploadAttachment = (documentId, file) => {
   const formData = new FormData();
@@ -73,9 +92,16 @@ function fileVisual(contentType, fileName) {
   return { icon: 'fa-file', color: '#6B7280' };
 }
 
-/* ─── Skeleton ──────────────────────────────────────────────────────────*/
-function Skeleton({ w = '100%', h = 14, r = 6 }) {
-  return <div aria-hidden="true" className="apya-skeleton" style={{ width: w, height: h, borderRadius: r, flexShrink: 0 }} />;
+/* ─── useIsDesktop — sağ detay panelinin statik kolon mu Sheet mi olacağını belirler ─── */
+function useIsDesktop() {
+  const [isDesktop, setIsDesktop] = useState(() => window.matchMedia('(min-width: 992px)').matches);
+  useEffect(() => {
+    const mq = window.matchMedia('(min-width: 992px)');
+    const handler = (e) => setIsDesktop(e.matches);
+    mq.addEventListener('change', handler);
+    return () => mq.removeEventListener('change', handler);
+  }, []);
+  return isDesktop;
 }
 
 /* ─── Toast ────────────────────────────────────────────────────────────*/
@@ -118,51 +144,45 @@ function ConfirmDialog({ title, message, confirmLabel = 'Evet, Sil', onConfirm, 
           </div>
         </div>
         <div className="flex gap-2 justify-end">
-          <button type="button" onClick={onCancel}
-            className="h-9 px-4 rounded-lg border border-[var(--apya-border-default)] text-xs font-medium text-[var(--apya-text-secondary)] hover:bg-[var(--apya-border-subtle)] transition-colors">
-            Vazgeç
-          </button>
-          <button type="button" onClick={confirm} disabled={busy}
-            className="h-9 px-4 rounded-lg text-xs font-medium text-white transition-colors disabled:opacity-50"
-            style={{ background: 'var(--apya-negative-500)' }}>
-            {busy ? <i className="fa fa-spinner fa-spin me-1" /> : null}{confirmLabel}
-          </button>
+          <Button variant="outline" size="sm" onClick={onCancel}>Vazgeç</Button>
+          <Button variant="destructive" size="sm" isLoading={busy} onClick={confirm}>{confirmLabel}</Button>
         </div>
       </div>
     </div>
   );
 }
 
-/* ─── Sol rail: klasör ağacı ────────────────────────────────────────────*/
-function TreeNode({ node, depth, activeId, expanded, onToggle, onSelect }) {
-  const hasChildren = node.children.length > 0;
+/* ─── Sol rail: klasör ağacı satırı — .apya-md-item stilini yeniden kullanır ──*/
+function TreeRow({ node, depth, activeId, expanded, onToggle, onSelect }) {
+  const hasChildren = node.children && node.children.length > 0;
   const isOpen = expanded.has(node.id);
   return (
     <div>
-      <div
+      <button
+        type="button"
         onClick={() => onSelect(node.id)}
-        className={cn(
-          'flex items-center gap-1.5 h-8 pr-2 rounded-lg cursor-pointer text-[12.5px] transition-colors',
-          activeId === node.id
-            ? 'bg-[var(--apya-accent-soft)] text-[var(--apya-accent-500)] font-semibold'
-            : 'text-[var(--apya-text-secondary)] hover:bg-[var(--apya-border-subtle)]',
-        )}
-        style={{ paddingLeft: 8 + depth * 16 }}
+        className={cn('apya-md-item', activeId === node.id && 'selected')}
+        style={{ paddingLeft: 10 + depth * 16, borderRadius: 8 }}
       >
-        <button
-          type="button"
+        <span
+          role="button"
+          tabIndex={-1}
           onClick={(e) => { e.stopPropagation(); if (hasChildren) onToggle(node.id); }}
-          className="w-4 h-4 flex items-center justify-center flex-shrink-0 text-[var(--apya-text-tertiary)]"
+          className="w-4 h-4 flex items-center justify-center flex-shrink-0"
+          style={{ color: 'var(--apya-text-tertiary)' }}
         >
           {hasChildren && <i className={`fa fa-chevron-${isOpen ? 'down' : 'right'}`} style={{ fontSize: 9 }} />}
-        </button>
+        </span>
         <span className="flex-shrink-0">{node.icon || (hasChildren ? '📁' : '📄')}</span>
-        <span className="truncate">{node.title}</span>
-      </div>
+        <span className="apya-md-item-title" style={{ fontWeight: activeId === node.id ? 700 : 500 }}>{node.title}</span>
+        {typeof node.count === 'number' && (
+          <span className="apya-md-item-side text-[11px]" style={{ color: 'var(--apya-text-tertiary)' }}>{node.count}</span>
+        )}
+      </button>
       {hasChildren && isOpen && (
         <div>
           {node.children.map((c) => (
-            <TreeNode key={c.id} node={c} depth={depth + 1} activeId={activeId} expanded={expanded} onToggle={onToggle} onSelect={onSelect} />
+            <TreeRow key={c.id} node={c} depth={depth + 1} activeId={activeId} expanded={expanded} onToggle={onToggle} onSelect={onSelect} />
           ))}
         </div>
       )}
@@ -170,92 +190,182 @@ function TreeNode({ node, depth, activeId, expanded, onToggle, onSelect }) {
   );
 }
 
-/* ─── Orta alan: grid kartı ─────────────────────────────────────────────*/
-function GridCard({ item, selected, onClick }) {
+/* ─── Orta alan: dosya/klasör kartı — .apya-tile deseni (Projeler ile aynı) ───*/
+function DocTile({ item, selected, onClick }) {
   const isFile = item.kind === 'file';
   const visual = isFile ? fileVisual(item.contentType, item.fileName) : null;
+  const days = isFile ? null : dfmtDaysChip(item.expiryDate);
   return (
-    <button type="button" onClick={onClick}
-      className={cn(
-        'flex flex-col items-start gap-2 p-3.5 rounded-xl border text-left transition-colors w-full',
-        selected ? 'border-[var(--apya-accent-500)] bg-[var(--apya-accent-soft)]' : 'border-[var(--apya-border-default)] bg-[var(--apya-surface-raised)] hover:bg-[var(--apya-border-subtle)]',
-      )}>
-      <div className="w-10 h-10 rounded-lg flex items-center justify-center text-lg"
-        style={{ background: isFile ? `${visual.color}1a` : 'var(--apya-accent-soft)', color: isFile ? visual.color : 'var(--apya-accent-500)' }}>
-        {isFile ? <i className={`fa ${visual.icon}`} /> : <span>{item.icon || (item.hasChildren ? '📁' : '📄')}</span>}
-      </div>
-      <div className="min-w-0 w-full">
-        <div className="text-[12.5px] font-semibold text-[var(--apya-text-primary)] truncate">{isFile ? item.fileName : item.title}</div>
-        <div className="text-[10.5px] text-[var(--apya-text-tertiary)] mt-0.5">
-          {isFile ? fmt.size(item.fileSize) : (item.hasChildren ? 'Klasör' : 'Sayfa')} · {fmt.date(item.creationTime)}
+    <button type="button" onClick={onClick} className="apya-tile" style={{ textAlign: 'left', cursor: 'pointer', ...(selected ? { borderColor: 'var(--apya-accent-500)', background: 'var(--apya-accent-soft)' } : {}) }}>
+      <div className="apya-tile-head">
+        <div className="d-flex align-items-start gap-2">
+          <span className="apya-tile-icon-box" style={isFile ? { background: `${visual.color}1a`, color: visual.color } : undefined}>
+            {isFile ? <i className={`fa ${visual.icon}`} /> : <span>{item.icon || (item.hasChildren ? '📁' : '📄')}</span>}
+          </span>
+          <div>
+            <div className="apya-tile-title">{isFile ? item.fileName : item.title}</div>
+            <div className="apya-tile-sub">{isFile ? fmt.size(item.fileSize) : (item.hasChildren ? 'Klasör' : 'Sayfa')}</div>
+          </div>
         </div>
+        {/* Grid yalnız IsLatest=true ekleri gösterir; versionNumber>1 = daha önce güncellenmiş dosya. */}
+        {isFile && item.versionNumber > 1 && <Badge variant="brand" size="sm">v{item.versionNumber}</Badge>}
+      </div>
+      {days && <div className="apya-tile-foot" style={{ borderTop: 'none', paddingTop: 0 }}>
+        <span className="apya-chip apya-chip-warning apya-tile-days-chip"><i className="fa fa-hourglass-half" />{days}</span>
+      </div>}
+      <div className="apya-tile-foot">
+        <span title="Yükleyen">{isFile ? (item.uploaderName || 'Sistem') : '—'}</span>
+        <span>{fmt.date(item.creationTime)}</span>
       </div>
     </button>
   );
 }
 
-/* ─── Sağ rail: detay paneli ────────────────────────────────────────────*/
-function DetailPanel({ item, onEdit, onDelete, onOpen }) {
+function dfmtDaysChip(expiryDate) {
+  const d = fmt.daysLeft(expiryDate);
+  if (d === null || d < 0) return null;
+  return d === 0 ? 'Bugün son gün' : `${d} gün kaldı`;
+}
+
+/* ─── Sağ: detay paneli içeriği (statik kolon ve Sheet arasında paylaşılır) ───*/
+function DetailContent({ item, onEdit, onDelete, onOpen, canViewLog }) {
+  const [versions, setVersions] = useState(null);
+  const [loadingVersions, setLoadingVersions] = useState(false);
+  const [log, setLog] = useState(null);
+  const [loadingLog, setLoadingLog] = useState(false);
+
+  const isFile = item?.kind === 'file';
+
+  useEffect(() => {
+    setVersions(null);
+    setLog(null);
+    if (!item || !isFile) return;
+
+    setLoadingVersions(true);
+    getAttachments(item.documentId, true)
+      .then((all) => setVersions((all ?? []).filter((a) => a.versionGroupId === item.versionGroupId)))
+      .catch(() => setVersions([]))
+      .finally(() => setLoadingVersions(false));
+
+    if (canViewLog) {
+      setLoadingLog(true);
+      getAccessLog(item.documentId)
+        .then((all) => setLog((all ?? []).filter((l) => l.attachmentId === item.id)))
+        .catch(() => setLog([]))
+        .finally(() => setLoadingLog(false));
+    }
+  }, [item?.id, isFile, canViewLog]);
+
   if (!item) {
     return (
-      <div className="flex flex-col items-center justify-center h-full text-center px-6" style={{ color: 'var(--apya-text-tertiary)' }}>
-        <div className="w-12 h-12 rounded-2xl flex items-center justify-center mb-3" style={{ background: 'var(--apya-border-subtle)' }}>
-          <i className="fa fa-file-lines text-xl" />
-        </div>
-        <div className="text-xs">Bir dosya veya belge seçin</div>
-      </div>
+      <EmptyState
+        icon={<i className="fa fa-file-lines" />}
+        title="Bir dosya veya belge seçin"
+        description="Detayları, versiyon geçmişini ve etkinlik kaydını burada görürsünüz."
+      />
     );
   }
 
-  const isFile = item.kind === 'file';
   const visual = isFile ? fileVisual(item.contentType, item.fileName) : null;
+  const days = !isFile ? dfmtDaysChip(item.expiryDate) : null;
 
   return (
-    <div className="p-5 flex flex-col h-full">
-      <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-2xl mx-auto mb-4"
-        style={{ background: isFile ? `${visual.color}1a` : 'var(--apya-accent-soft)', color: isFile ? visual.color : 'var(--apya-accent-500)' }}>
-        {isFile ? <i className={`fa ${visual.icon}`} /> : <span>{item.icon || '📄'}</span>}
-      </div>
-      <div className="text-sm font-semibold text-[var(--apya-text-primary)] text-center break-words mb-4">
-        {isFile ? item.fileName : item.title}
-      </div>
-
-      <div className="space-y-2.5 text-xs flex-1">
-        <div className="flex justify-between"><span className="text-[var(--apya-text-tertiary)]">Tür</span>
-          <span className="font-semibold text-[var(--apya-text-primary)]">{isFile ? (item.fileName.split('.').pop()?.toUpperCase() || '—') : (item.hasChildren ? 'Klasör' : 'Sayfa')}</span></div>
-        {isFile && <div className="flex justify-between"><span className="text-[var(--apya-text-tertiary)]">Boyut</span>
-          <span className="font-semibold text-[var(--apya-text-primary)]">{fmt.size(item.fileSize)}</span></div>}
-        <div className="flex justify-between"><span className="text-[var(--apya-text-tertiary)]">Yükleyen</span>
-          <span className="font-semibold text-[var(--apya-text-primary)]">{isFile ? (item.uploaderName || 'Sistem') : '—'}</span></div>
-        <div className="flex justify-between"><span className="text-[var(--apya-text-tertiary)]">Tarih</span>
-          <span className="font-semibold text-[var(--apya-text-primary)]">{fmt.date(item.creationTime)}</span></div>
+    <div>
+      <div className="flex items-start gap-3 mb-4">
+        <div className="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl flex-shrink-0"
+          style={{ background: isFile ? `${visual.color}1a` : 'var(--apya-accent-soft)', color: isFile ? visual.color : 'var(--apya-accent-500)' }}>
+          {isFile ? <i className={`fa ${visual.icon}`} /> : <span>{item.icon || '📄'}</span>}
+        </div>
+        <div className="min-w-0">
+          <div className="text-sm font-semibold text-[var(--apya-text-primary)] break-words">{isFile ? item.fileName : item.title}</div>
+          {item.projectName && <div className="text-[11px] mt-0.5" style={{ color: 'var(--apya-text-tertiary)' }}><i className="fa fa-diagram-project me-1" />{item.projectName}</div>}
+          {days && <Badge variant="warning" size="sm" className="mt-1.5"><i className="fa fa-hourglass-half" /> {days}</Badge>}
+        </div>
       </div>
 
-      <div className="flex flex-col gap-2 mt-4">
+      <div className="row g-3 mb-4">
+        <div className="col-6">
+          <div className="apya-md-overline">Tür</div>
+          <div className="text-xs fw-semibold">{isFile ? (item.fileName.split('.').pop()?.toUpperCase() || '—') : (item.hasChildren ? 'Klasör' : 'Sayfa')}</div>
+        </div>
+        {isFile && (
+          <div className="col-6">
+            <div className="apya-md-overline">Boyut</div>
+            <div className="text-xs fw-semibold">{fmt.size(item.fileSize)}</div>
+          </div>
+        )}
+        <div className="col-6">
+          <div className="apya-md-overline">Yükleyen</div>
+          <div className="text-xs fw-semibold">{isFile ? (item.uploaderName || 'Sistem') : '—'}</div>
+        </div>
+        <div className="col-6">
+          <div className="apya-md-overline">Tarih</div>
+          <div className="text-xs fw-semibold">{fmt.date(item.creationTime)}</div>
+        </div>
+      </div>
+
+      <div className="d-flex flex-column gap-2 mb-4">
         {isFile ? (
-          <a href={item.downloadUrl} target="_blank" rel="noreferrer"
-            className="h-9 rounded-lg text-xs font-semibold text-white flex items-center justify-center gap-2 hover:opacity-90 transition-colors"
-            style={{ background: 'var(--apya-accent-500)' }}>
+          <a href={item.downloadUrl} className={buttonVariants({ variant: 'primary' })}>
             <i className="fa fa-download" /> İndir
           </a>
         ) : (
           <>
-            <button type="button" onClick={() => onOpen(item)}
-              className="h-9 rounded-lg text-xs font-semibold text-white flex items-center justify-center gap-2 hover:opacity-90 transition-colors"
-              style={{ background: 'var(--apya-accent-500)' }}>
-              <i className="fa fa-folder-open" /> Aç
-            </button>
-            <button type="button" onClick={() => onEdit(item)}
-              className="h-9 rounded-lg border border-[var(--apya-border-default)] text-xs font-medium text-[var(--apya-text-secondary)] flex items-center justify-center gap-2 hover:bg-[var(--apya-border-subtle)] transition-colors">
-              <i className="fa fa-pencil" /> Düzenle
-            </button>
+            <Button variant="primary" leadingIcon={<i className="fa fa-folder-open" />} onClick={() => onOpen(item)}>Aç</Button>
+            <Button variant="secondary" leadingIcon={<i className="fa fa-pencil" />} onClick={() => onEdit(item)}>Düzenle</Button>
           </>
         )}
-        <button type="button" onClick={() => onDelete(item)}
-          className="h-9 rounded-lg border border-[var(--apya-border-default)] text-xs font-medium text-[var(--apya-negative-500)] flex items-center justify-center gap-2 hover:bg-[var(--apya-border-subtle)] transition-colors">
-          <i className="fa fa-trash" /> Sil
-        </button>
+        <Button variant="outline" leadingIcon={<i className="fa fa-trash text-[var(--apya-negative-500)]" />} onClick={() => onDelete(item)}>Sil</Button>
       </div>
+
+      {isFile && (
+        <div className="mb-4">
+          <div className="apya-md-overline mb-2">Versiyon Geçmişi</div>
+          {loadingVersions ? (
+            <SkeletonList rows={2} />
+          ) : !versions || versions.length <= 1 ? (
+            <div className="text-[11.5px]" style={{ color: 'var(--apya-text-tertiary)' }}>Bu dosyanın başka versiyonu yok.</div>
+          ) : (
+            <div className="d-flex flex-column gap-1.5">
+              {versions.map((v) => (
+                <div key={v.id} className="d-flex align-items-center justify-content-between" style={{ fontSize: 11.5 }}>
+                  <span className="d-flex align-items-center gap-2">
+                    <Badge variant={v.isLatest ? 'brand' : 'neutral'} size="sm">v{v.versionNumber}</Badge>
+                    <span style={{ color: 'var(--apya-text-secondary)' }}>{v.uploaderName || 'Sistem'}</span>
+                  </span>
+                  <span style={{ color: 'var(--apya-text-tertiary)' }}>{fmt.date(v.creationTime)}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {isFile && canViewLog && (
+        <div>
+          <div className="apya-md-overline mb-2">Aktivite</div>
+          {loadingLog ? (
+            <SkeletonList rows={3} />
+          ) : !log || log.length === 0 ? (
+            <div className="text-[11.5px]" style={{ color: 'var(--apya-text-tertiary)' }}>Henüz kayıtlı bir etkinlik yok.</div>
+          ) : (
+            <div className="d-flex flex-column gap-1.5">
+              {log.map((l) => {
+                const meta = ACCESS_ACTION_LABEL[l.action] || { text: '—', icon: 'fa-circle', variant: 'neutral' };
+                return (
+                  <div key={l.id} className="d-flex align-items-center justify-content-between" style={{ fontSize: 11.5 }}>
+                    <span className="d-flex align-items-center gap-2">
+                      <Badge variant={meta.variant} size="sm" withDot>{meta.text}</Badge>
+                      <span style={{ color: 'var(--apya-text-secondary)' }}>{l.actorName}</span>
+                    </span>
+                    <span style={{ color: 'var(--apya-text-tertiary)' }}>{fmt.dateTime(l.creationTime)}</span>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
@@ -267,16 +377,19 @@ function DocumentsIsland() {
   const [loadingTree, setLoadingTree] = useState(true);
   const [loadingFolder, setLoadingFolder] = useState(false);
   const [currentId, setCurrentId]     = useState(null); // null = kök
-  const [expanded, setExpanded]       = useState(new Set());
+  const [selectedGroup, setSelectedGroup] = useState(null); // { type: 'project', projectId } — sanal Projeler dalı
+  const [expanded, setExpanded]       = useState(new Set(['__projects__']));
   const [selected, setSelected]       = useState(null);
-  const [viewMode, setViewMode]       = useState('grid');
+  const [search, setSearch]           = useState('');
   const [dragOver, setDragOver]       = useState(false);
   const [uploading, setUploading]     = useState(false);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [toast, setToast]             = useState(null);
   const fileInputRef = useRef(null);
+  const isDesktop = useIsDesktop();
 
   const flash = useCallback((msg) => setToast(msg), []);
+  const canViewLog = abpAuth('Platform.Documents.ViewAccessLog');
 
   const loadTree = useCallback(async () => {
     setLoadingTree(true);
@@ -295,7 +408,7 @@ function DocumentsIsland() {
     if (!documentId) { setAttachments([]); return; }
     setLoadingFolder(true);
     try {
-      const items = await getAttachments(documentId);
+      const items = await getAttachments(documentId, false);
       setAttachments(items ?? []);
     } catch (e) {
       console.error('[DocumentsIsland] loadAttachments error', e);
@@ -306,7 +419,6 @@ function DocumentsIsland() {
 
   useEffect(() => { loadTree(); }, [loadTree]);
 
-  // Bir belge düzenlendikten sonra allDocs tazelenir; seçili detay panelini de senkron tut.
   useEffect(() => {
     setSelected((prev) => {
       if (!prev || prev.kind !== 'document') return prev;
@@ -317,7 +429,8 @@ function DocumentsIsland() {
   }, [allDocs]);
   useEffect(() => { loadAttachments(currentId); setSelected(null); }, [currentId, loadAttachments]);
 
-  const tree = useMemo(() => {
+  /* Gerçek klasör ağacı (ParentDocumentId hiyerarşisi) */
+  const realTree = useMemo(() => {
     const byParent = new Map();
     allDocs.forEach((d) => {
       const key = d.parentDocumentId || 'root';
@@ -327,6 +440,23 @@ function DocumentsIsland() {
     const build = (parentKey) => (byParent.get(parentKey) || []).map((d) => ({ ...d, children: build(d.id) }));
     return build('root');
   }, [allDocs]);
+
+  /* Sanal "Projeler" dalı — ProjectId'si dolu belgeleri proje adına göre gruplar (DB'de karşılığı yok, sadece render-time) */
+  const projectGroup = useMemo(() => {
+    const withProject = allDocs.filter((d) => d.projectId);
+    if (withProject.length === 0) return null;
+    const byProject = new Map();
+    withProject.forEach((d) => {
+      const key = d.projectId;
+      if (!byProject.has(key)) byProject.set(key, { id: `project-${key}`, title: d.projectName || 'Adsız Proje', icon: '🏗️', projectId: key, children: [], count: 0 });
+      const group = byProject.get(key);
+      group.count += 1;
+      group.children.push({ ...d, children: allDocs.filter((x) => x.parentDocumentId === d.id).map((c) => ({ ...c, children: [] })) });
+    });
+    return { id: '__projects__', title: 'Projeler', icon: '📁', count: withProject.length, children: Array.from(byProject.values()) };
+  }, [allDocs]);
+
+  const sidebarTree = useMemo(() => (projectGroup ? [projectGroup, ...realTree] : realTree), [projectGroup, realTree]);
 
   const breadcrumb = useMemo(() => {
     const path = [];
@@ -346,10 +476,12 @@ function DocumentsIsland() {
       .map((d) => ({ ...d, kind: 'document', hasChildren: allDocs.some((x) => x.parentDocumentId === d.id) })),
     [allDocs, currentId],
   );
-  const gridItems = useMemo(
-    () => [...children, ...attachments.map((a) => ({ ...a, kind: 'file' }))],
-    [children, attachments],
-  );
+  const gridItems = useMemo(() => {
+    const items = [...children, ...attachments.map((a) => ({ ...a, kind: 'file' }))];
+    if (!search.trim()) return items;
+    const q = search.trim().toLowerCase();
+    return items.filter((it) => (it.kind === 'file' ? it.fileName : it.title).toLowerCase().includes(q));
+  }, [children, attachments, search]);
 
   const toggleExpand = (id) => setExpanded((s) => {
     const next = new Set(s);
@@ -358,6 +490,8 @@ function DocumentsIsland() {
   });
 
   const openFolder = (id) => {
+    // Sanal "Projeler"/proje grup düğümlerine tıklamak yalnız açar/kapar, dosya listesi göstermez.
+    if (id === '__projects__' || String(id).startsWith('project-')) { toggleExpand(id); return; }
     setCurrentId(id);
     if (id) setExpanded((s) => new Set(s).add(id));
   };
@@ -368,7 +502,8 @@ function DocumentsIsland() {
     try {
       for (const file of Array.from(files)) {
         const dto = await uploadAttachment(currentId, file);
-        setAttachments((prev) => [dto, ...prev]);
+        // Aynı dosya adıyla eski versiyon varsa (artık IsLatest=false) yerini yeni versiyon alır.
+        setAttachments((prev) => [dto, ...prev.filter((a) => a.fileName !== dto.fileName)]);
       }
       flash('Dosya yüklendi.');
     } catch (e) {
@@ -419,77 +554,60 @@ function DocumentsIsland() {
       onDragLeave={() => setDragOver(false)}
       onDrop={(e) => { e.preventDefault(); setDragOver(false); if (currentId) handleUpload(e.dataTransfer.files); }}>
 
-      {/* Başlık */}
       <div className="flex items-start justify-between flex-wrap gap-4 mb-5">
         <div>
           <h1 className="text-xl font-bold tracking-tight text-[var(--apya-text-primary)] m-0">Dokümanlar</h1>
           <p className="mt-1 text-xs text-[var(--apya-text-tertiary)] m-0">Klasörler ve dosya yönetimi</p>
         </div>
         {canCreate && (
-          <button type="button" onClick={openCreate}
-            className="h-9 px-3.5 rounded-lg text-xs font-semibold text-white flex items-center gap-2 hover:opacity-90 transition-colors"
-            style={{ background: 'var(--apya-accent-500)' }}>
-            <i className="fa fa-plus" /> Yeni Belge
-          </button>
+          <Button variant="primary" leadingIcon={<i className="fa fa-plus" />} onClick={openCreate}>Yeni Belge</Button>
         )}
       </div>
 
-      <div className="grid gap-4" style={{ gridTemplateColumns: '260px 1fr 300px', alignItems: 'start' }}>
+      <div className="apya-docs-shell">
         {/* Sol: klasör ağacı */}
-        <div className="rounded-2xl border border-[var(--apya-border-default)] bg-[var(--apya-surface-raised)] p-2"
-          style={{ boxShadow: 'var(--apya-shadow-sm)', maxHeight: 640, overflowY: 'auto' }}>
-          <div
-            onClick={() => openFolder(null)}
-            className={cn(
-              'flex items-center gap-2 h-8 px-2 rounded-lg cursor-pointer text-[12.5px] font-semibold mb-1 transition-colors',
-              currentId === null ? 'bg-[var(--apya-accent-soft)] text-[var(--apya-accent-500)]' : 'text-[var(--apya-text-secondary)] hover:bg-[var(--apya-border-subtle)]',
-            )}>
-            <i className="fa fa-folder-tree" style={{ fontSize: 12 }} />
-            Tüm Dokümanlar
-          </div>
+        <div className="apya-docs-tree">
+          <button type="button" onClick={() => openFolder(null)}
+            className={cn('apya-md-item', currentId === null && 'selected')} style={{ borderRadius: 8, fontWeight: 700 }}>
+            <i className="fa fa-folder-tree" style={{ fontSize: 12, color: 'var(--apya-text-tertiary)' }} />
+            <span className="apya-md-item-title">Tüm Dokümanlar</span>
+          </button>
           {loadingTree ? (
-            <div className="space-y-2 p-2">{Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} h={20} />)}</div>
-          ) : tree.length === 0 ? (
-            <div className="text-[11px] text-[var(--apya-text-tertiary)] text-center py-6 px-2">Henüz klasör/belge yok.</div>
+            <div className="p-2"><SkeletonList rows={5} /></div>
+          ) : sidebarTree.length === 0 ? (
+            <div className="text-[11px] text-center py-6 px-2" style={{ color: 'var(--apya-text-tertiary)' }}>Henüz klasör/belge yok.</div>
           ) : (
-            tree.map((node) => (
-              <TreeNode key={node.id} node={node} depth={0} activeId={currentId} expanded={expanded} onToggle={toggleExpand} onSelect={openFolder} />
+            sidebarTree.map((node) => (
+              <TreeRow key={node.id} node={node} depth={0} activeId={currentId} expanded={expanded} onToggle={toggleExpand} onSelect={openFolder} />
             ))
           )}
         </div>
 
         {/* Orta: grid */}
-        <div className="rounded-2xl border border-[var(--apya-border-default)] bg-[var(--apya-surface-raised)] overflow-hidden"
-          style={{ boxShadow: 'var(--apya-shadow-sm)', minHeight: 460 }}>
-          {/* Araç çubuğu + breadcrumb */}
-          <div className="flex items-center justify-between flex-wrap gap-2 px-4 py-3 border-b border-[var(--apya-border-subtle)]">
-            <div className="flex items-center gap-1.5 text-xs text-[var(--apya-text-tertiary)] min-w-0">
-              <span className={cn('cursor-pointer hover:text-[var(--apya-text-primary)]', currentId === null && 'text-[var(--apya-text-primary)] font-semibold')} onClick={() => openFolder(null)}>Tüm Dokümanlar</span>
+        <div className="apya-docs-main">
+          <div className="flex items-center justify-between flex-wrap gap-2 px-4 py-3" style={{ borderBottom: '1px solid var(--apya-border-subtle)' }}>
+            <div className="flex items-center gap-1.5 text-xs min-w-0" style={{ color: 'var(--apya-text-tertiary)' }}>
+              <span className={cn('cursor-pointer', currentId === null && 'fw-bold')} style={currentId === null ? { color: 'var(--apya-text-primary)' } : undefined} onClick={() => openFolder(null)}>Tüm Dokümanlar</span>
               {breadcrumb.map((d) => (
                 <span key={d.id} className="flex items-center gap-1.5 min-w-0">
                   <i className="fa fa-chevron-right" style={{ fontSize: 8 }} />
-                  <span className={cn('cursor-pointer hover:text-[var(--apya-text-primary)] truncate', d.id === currentId && 'text-[var(--apya-text-primary)] font-semibold')} onClick={() => openFolder(d.id)}>{d.title}</span>
+                  <span className="cursor-pointer truncate" style={d.id === currentId ? { color: 'var(--apya-text-primary)', fontWeight: 700 } : undefined} onClick={() => openFolder(d.id)}>{d.title}</span>
                 </span>
               ))}
             </div>
-            <div className="flex items-center gap-2">
-              <div className="flex rounded-lg border border-[var(--apya-border-default)] overflow-hidden">
-                <button type="button" onClick={() => setViewMode('grid')} className={cn('w-7 h-7 flex items-center justify-center text-xs', viewMode === 'grid' ? 'bg-[var(--apya-accent-soft)] text-[var(--apya-accent-500)]' : 'text-[var(--apya-text-tertiary)]')}><i className="fa fa-grip" /></button>
-                <button type="button" onClick={() => setViewMode('list')} className={cn('w-7 h-7 flex items-center justify-center text-xs', viewMode === 'list' ? 'bg-[var(--apya-accent-soft)] text-[var(--apya-accent-500)]' : 'text-[var(--apya-text-tertiary)]')}><i className="fa fa-list" /></button>
-              </div>
-              {currentId && (
-                <button type="button" onClick={() => fileInputRef.current?.click()} disabled={uploading}
-                  className="h-8 px-3 rounded-lg text-xs font-semibold text-white flex items-center gap-2 hover:opacity-90 transition-colors disabled:opacity-50"
-                  style={{ background: 'var(--apya-accent-500)' }}>
-                  {uploading ? <i className="fa fa-spinner fa-spin" /> : <i className="fa fa-upload" />} Yükle
-                </button>
-              )}
-              <input ref={fileInputRef} type="file" multiple hidden onChange={(e) => { handleUpload(e.target.files); e.target.value = ''; }} />
-            </div>
+            {currentId && (
+              <Button variant="primary" size="sm" isLoading={uploading} leadingIcon={<i className="fa fa-upload" />} onClick={() => fileInputRef.current?.click()}>Yükle</Button>
+            )}
+            <input ref={fileInputRef} type="file" multiple hidden onChange={(e) => { handleUpload(e.target.files); e.target.value = ''; }} />
           </div>
 
-          {/* İçerik */}
-          <div className="p-4 relative" style={{ minHeight: 380 }}>
+          <div className="p-4 relative">
+            <div className="apya-grid-toolbar">
+              <Input size="sm" className="apya-grid-search" leading={<i className="fa fa-search" style={{ fontSize: 11 }} />}
+                placeholder="Ara veya klasör filtrele" value={search} onChange={(e) => setSearch(e.target.value)} />
+              <span className="apya-grid-count">{gridItems.length} öge</span>
+            </div>
+
             {dragOver && (
               <div className="absolute inset-2 z-10 rounded-xl border-2 border-dashed flex items-center justify-center text-sm font-semibold"
                 style={{ borderColor: 'var(--apya-accent-500)', background: 'var(--apya-accent-soft)', color: 'var(--apya-accent-500)' }}>
@@ -497,28 +615,24 @@ function DocumentsIsland() {
               </div>
             )}
             {!currentId && (
-              <div className="mb-4 rounded-xl border border-dashed border-[var(--apya-border-default)] p-3 text-[11px] text-[var(--apya-text-tertiary)] flex items-center gap-2">
+              <div className="mb-3 rounded-xl border border-dashed p-3 text-[11px] flex items-center gap-2"
+                style={{ borderColor: 'var(--apya-border-default)', color: 'var(--apya-text-tertiary)' }}>
                 <i className="fa fa-circle-info" /> Dosya yükleyebilmek için önce bir klasör/belge açın.
               </div>
             )}
+
             {loadingFolder ? (
-              <div className="grid gap-3" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))' }}>
-                {Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} h={84} r={12} />)}
-              </div>
+              <div className="apya-tile-grid">{Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} height={120} rounded="lg" />)}</div>
             ) : gridItems.length === 0 ? (
-              <div className="flex flex-col items-center gap-3 py-14 text-center">
-                <div className="w-12 h-12 rounded-2xl flex items-center justify-center bg-[var(--apya-border-subtle)] text-[var(--apya-text-tertiary)]">
-                  <i className="fa fa-inbox text-2xl" />
-                </div>
-                <div className="text-sm font-semibold text-[var(--apya-text-primary)]">Burada henüz bir şey yok</div>
-                <div className="text-xs text-[var(--apya-text-tertiary)] max-w-xs">
-                  {currentId ? 'Dosya sürükleyip bırakın ya da "Yükle" butonunu kullanın.' : '"Yeni Belge" ile ilk klasörünüzü oluşturun.'}
-                </div>
-              </div>
+              <EmptyState
+                icon={<i className="fa fa-inbox" />}
+                title="Burada henüz bir şey yok"
+                description={currentId ? 'Dosya sürükleyip bırakın ya da "Yükle" butonunu kullanın.' : '"Yeni Belge" ile ilk klasörünüzü oluşturun.'}
+              />
             ) : (
-              <div className="grid gap-3" style={{ gridTemplateColumns: viewMode === 'grid' ? 'repeat(auto-fill, minmax(140px, 1fr))' : '1fr' }}>
+              <div className="apya-tile-grid">
                 {gridItems.map((item) => (
-                  <GridCard key={`${item.kind}-${item.id}`} item={item} selected={selected?.id === item.id}
+                  <DocTile key={`${item.kind}-${item.id}`} item={item} selected={selected?.id === item.id}
                     onClick={() => setSelected(item)} />
                 ))}
               </div>
@@ -526,11 +640,22 @@ function DocumentsIsland() {
           </div>
         </div>
 
-        {/* Sağ: detay paneli */}
-        <div className="rounded-2xl border border-[var(--apya-border-default)] bg-[var(--apya-surface-raised)]"
-          style={{ boxShadow: 'var(--apya-shadow-sm)', minHeight: 460 }}>
-          <DetailPanel item={selected} onEdit={openEdit} onOpen={(d) => openFolder(d.id)} onDelete={setDeleteTarget} />
-        </div>
+        {/* Sağ: detay paneli — masaüstünde statik kolon, dar ekranda Sheet */}
+        {isDesktop ? (
+          <div className="apya-docs-detail">
+            <div className="apya-md-detail">
+              <DetailContent item={selected} onEdit={openEdit} onOpen={(d) => openFolder(d.id)} onDelete={setDeleteTarget} canViewLog={canViewLog} />
+            </div>
+          </div>
+        ) : (
+          <Sheet open={!!selected} onOpenChange={(open) => { if (!open) setSelected(null); }}>
+            <Sheet.Content title="Belge Detayı">
+              <div className="apya-md-detail" style={{ overflowY: 'auto' }}>
+                <DetailContent item={selected} onEdit={openEdit} onOpen={(d) => { openFolder(d.id); setSelected(null); }} onDelete={setDeleteTarget} canViewLog={canViewLog} />
+              </div>
+            </Sheet.Content>
+          </Sheet>
+        )}
       </div>
 
       {deleteTarget && (

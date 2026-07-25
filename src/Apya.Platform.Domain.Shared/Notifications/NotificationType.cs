@@ -9,5 +9,6 @@ public enum NotificationType
     ProjectMemberAdded  = 5,
     Mention             = 6,
     AiWorkflowTriggered = 7,
-    GrantRecommended    = 8
+    DocumentExpiring    = 8,
+    GrantRecommended    = 9
 }
