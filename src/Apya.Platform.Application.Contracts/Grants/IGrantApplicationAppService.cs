@@ -10,4 +10,5 @@ public interface IGrantApplicationAppService : IApplicationService
 {
     Task<GrantApplicationDto> ApplyAsync(Guid grantCallId);
     Task<List<GrantApplicationDto>> GetMyApplicationsAsync();
+    Task<TenantGrantDashboardDto> GetMyDashboardAsync();
 }
