@@ -246,6 +246,12 @@ public class PlatformWebModule : AbpModule
     {
         Configure<AbpBundlingOptions>(options =>
         {
+            // TD-PERF-001: Development'ta varsayılan (Mode=Auto) bundle/minify YAPMIYOR —
+            // her sayfa geçişinde ~70 ayrı CSS/JS isteği + aşamalı boyanma (menü "küçülüp
+            // büyüyor" hissi) buradan geliyordu. Prod zaten otomatik bundle ediyordu; burada
+            // dev'i de aynı davranışa zorluyoruz. Bedel: CSS/JS dosyası değiştirince tarayıcı
+            // yenilemesi tek başına yetmeyebilir (bundle cache) — gerekirse sunucuyu yeniden başlat.
+            options.Mode = BundlingMode.BundleAndMinify;
             // Stil (CSS) dosyalar� ayar� (Zaten vard�r, dokunmay�n)
             options.StyleBundles.Configure(
                 LeptonXLiteThemeBundles.Styles.Global,
