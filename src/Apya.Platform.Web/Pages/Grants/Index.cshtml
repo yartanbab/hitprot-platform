@@ -73,12 +73,18 @@
                     hedef sektör/ölçek kriterleri firma eşleştirmelerinde kullanılır.
                 </p>
             </div>
-            @if (await AuthorizationService.IsGrantedAsync(PlatformPermissions.Grants.Create))
-            {
-                <button id="NewGrantButton" class="btn btn-primary flex-shrink-0">
-                    <i class="fa fa-plus me-1"></i> Yeni Hibe Ekle
-                </button>
-            }
+            <div class="d-flex gap-2 flex-shrink-0">
+                @if (await AuthorizationService.IsGrantedAsync(PlatformPermissions.Grants.Edit))
+                {
+                    <a href="/Grants/Applications" class="btn btn-outline-secondary"><i class="fa fa-file-signature me-1"></i>Başvurular</a>
+                }
+                @if (await AuthorizationService.IsGrantedAsync(PlatformPermissions.Grants.Create))
+                {
+                    <button id="NewGrantButton" class="btn btn-primary">
+                        <i class="fa fa-plus me-1"></i> Yeni Hibe Ekle
+                    </button>
+                }
+            </div>
         </div>
 
         <div class="row g-3 mb-4">
@@ -305,6 +311,21 @@ else
             </p>
         </div>
 
+        <div class="row g-3 mb-4">
+            <div class="col-6 col-md-3">
+                <partial name="_KpiCard" model='new Apya.Platform.Web.Pages.Shared.KpiCardModel { Icon = "fa-circle-check", Accent = "success", Label = "Onaylanan", ValueId = "KpiOnaylanan", Value = "—" }' />
+            </div>
+            <div class="col-6 col-md-3">
+                <partial name="_KpiCard" model='new Apya.Platform.Web.Pages.Shared.KpiCardModel { Icon = "fa-magnifying-glass-chart", Accent = "warning", Label = "Değerlendirmede", ValueId = "KpiDegerlendirmede", Value = "—" }' />
+            </div>
+            <div class="col-6 col-md-3">
+                <partial name="_KpiCard" model='new Apya.Platform.Web.Pages.Shared.KpiCardModel { Icon = "fa-sack-dollar", Accent = "primary", Label = "Tahsil Edilen", ValueId = "KpiTahsilEdilen", Value = "—" }' />
+            </div>
+            <div class="col-6 col-md-3">
+                <partial name="_KpiCard" model='new Apya.Platform.Web.Pages.Shared.KpiCardModel { Icon = "fa-hourglass-half", Accent = "info", Label = "Bu Ay Son Tarih", ValueId = "KpiBuAySonTarih", Value = "—" }' />
+            </div>
+        </div>
+
         <div class="row g-4">
             @* --- Firma Profili --- *@
             <div class="col-lg-4">
@@ -340,6 +361,10 @@ else
 
             @* --- Öneriler + Başvurular --- *@
             <div class="col-lg-8">
+                <h5 class="fw-bold mb-3"><i class="fa fa-calendar-days me-2"></i>Yaklaşan Son Tarihler</h5>
+                <div id="DeadlinesList" class="d-flex flex-column gap-1 mb-4"></div>
+                <div id="DeadlinesEmpty" class="text-muted small mb-4 d-none">Yaklaşan son tarih yok.</div>
+
                 <h5 class="fw-bold mb-3"><i class="fa fa-wand-magic-sparkles me-2"></i>Önerilen Çağrılar</h5>
                 <div id="RecoGrid" class="apya-tile-grid"></div>
                 <div id="RecoEmpty" class="apya-tile-grid-empty d-none">

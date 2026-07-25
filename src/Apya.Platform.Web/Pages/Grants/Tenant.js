@@ -5,6 +5,7 @@ $(function () {
 
     var stageLabels = { 0: 'Başvuru', 1: 'Değerlendirme', 2: 'Onay', 3: 'Ödeme' };
     var stageTone = { 0: 'neutral', 1: 'warning', 2: 'positive', 3: 'ai' };
+    var trancheStatusLabels = { 0: 'Planlandı', 1: 'Talep Edildi', 2: 'Ödendi' };
 
     function esc(t) { return $('<div>').text(t == null ? '' : t).html(); }
     function money(v) { return v != null ? Math.round(v).toLocaleString('tr-TR') + ' ₺' : '—'; }
@@ -124,12 +125,45 @@ $(function () {
             $('#AppsEmpty').addClass('d-none');
             items.forEach(function (a) {
                 var tone = stageTone[a.stage] || 'neutral';
+                var detail = (a.tranches || []).map(function (t) {
+                    return '<div>#' + t.sequenceNo + ' · ' + money(t.amount) + ' · ' + trancheStatusLabels[t.status] + ' · ' + fmtDate(t.dueDate) + '</div>';
+                }).concat((a.milestones || []).map(function (m) {
+                    return '<div>' + esc(m.title) + ' · ' + (m.isCompleted ? 'Tamamlandı' : 'Bekliyor') + ' · ' + fmtDate(m.dueDate) + '</div>';
+                })).join('');
                 $l.append(
-                    '<div class="card"><div class="card-body py-2 d-flex align-items-center justify-content-between gap-2 flex-wrap">' +
+                    '<div class="card"><div class="card-body py-2">' +
+                    '<div class="d-flex align-items-center justify-content-between gap-2 flex-wrap">' +
                     '<div><span class="fw-semibold">' + esc(a.grantName || '-') + '</span> <span class="text-muted small">' + esc(a.period || '') + '</span></div>' +
-                    '<div class="d-flex align-items-center gap-2"><span class="apya-chip apya-chip-' + tone + '">' + (stageLabels[a.stage] || '') + '</span>' +
+                    '<div class="d-flex align-items-center gap-2">' +
+                    (a.approvedAmount != null ? '<span class="apya-numeric small fw-semibold">' + money(a.approvedAmount) + '</span>' : '') +
+                    '<span class="apya-chip apya-chip-' + tone + '">' + (stageLabels[a.stage] || '') + '</span>' +
                     '<span class="text-muted small">' + fmtDate(a.appliedDate) + '</span></div>' +
+                    '</div>' +
+                    (detail ? '<div class="small text-muted mt-1">' + detail + '</div>' : '') +
                     '</div></div>'
+                );
+            });
+        });
+    }
+
+    // ---------- Dashboard KPI + Yaklaşan Son Tarihler ----------
+    function loadDashboard() {
+        appSvc.getMyDashboard().then(function (d) {
+            $('#KpiOnaylanan').text(d.onaylanan);
+            $('#KpiDegerlendirmede').text(d.degerlendirmede);
+            $('#KpiTahsilEdilen').text(money(d.tahsilEdilen));
+            $('#KpiBuAySonTarih').text(d.buAySonTarih);
+
+            var $dl = $('#DeadlinesList').empty();
+            if (!d.yaklasanSonTarihler.length) { $('#DeadlinesEmpty').removeClass('d-none'); return; }
+            $('#DeadlinesEmpty').addClass('d-none');
+            d.yaklasanSonTarihler.forEach(function (x) {
+                var tone = x.kind === 'Milestone' ? 'neutral' : 'ai';
+                $dl.append(
+                    '<div class="d-flex align-items-center justify-content-between gap-2 small py-1 border-bottom">' +
+                    '<span>' + esc(x.title) + '</span>' +
+                    '<span><span class="apya-chip apya-chip-' + tone + '">' + x.kind + '</span> ' + fmtDate(x.date) + '</span>' +
+                    '</div>'
                 );
             });
         });
@@ -138,4 +172,5 @@ $(function () {
     loadProfile();
     loadRecommendations();
     loadApplications();
+    loadDashboard();
 });
