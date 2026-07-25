@@ -14,7 +14,11 @@ public interface IDocumentAppService :
 {
     Task<DocumentAttachmentDto> AddAttachmentAsync(Guid documentId, string fileName, string storedFileName, string contentType, long fileSize);
 
-    Task<List<DocumentAttachmentDto>> GetAttachmentsAsync(Guid documentId);
+    Task<List<DocumentAttachmentDto>> GetAttachmentsAsync(Guid documentId, bool includeHistory = false);
 
     Task DeleteAttachmentAsync(Guid attachmentId);
+
+    Task<List<DocumentAccessLogDto>> GetAccessLogAsync(Guid documentId);
+
+    Task<DocumentAttachmentDownloadDto> PrepareDownloadAsync(Guid attachmentId);
 }

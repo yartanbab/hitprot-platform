@@ -27,6 +27,13 @@ public class Document : FullAuditedAggregateRoot<Guid>, IMultiTenant
     /// </summary>
     public string? Icon { get; set; }
 
+    /// <summary>
+    /// Belgenin geçerlilik/son tarihi (ör: sözleşme bitişi). Doluysa hatırlatma worker'ı izler.
+    /// </summary>
+    public DateTime? ExpiryDate { get; set; }
+
+    public bool IsExpiryWarningSent { get; set; }
+
     public Document()
     {
     }
@@ -40,5 +47,10 @@ public class Document : FullAuditedAggregateRoot<Guid>, IMultiTenant
         ProjectId = projectId;
         ParentDocumentId = parentDocumentId;
         Icon = icon;
+    }
+
+    public void MarkExpiryWarningSent()
+    {
+        IsExpiryWarningSent = true;
     }
 }

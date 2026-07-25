@@ -3,14 +3,16 @@ using System.Threading.Tasks;
 using Volo.Abp.DependencyInjection;
 using Volo.Abp.EventBus;
 using Apya.Platform.Tasks;
+using Apya.Platform.Documents;
 
 namespace Apya.Platform.Notifications;
 
-public class NotificationDomainEventHandler : 
+public class NotificationDomainEventHandler :
     ILocalEventHandler<TaskAssignedEto>,
     ILocalEventHandler<TaskCommentAddedEto>,
     ILocalEventHandler<TaskStatusChangedEto>,
     ILocalEventHandler<TaskDueSoonEto>,
+    ILocalEventHandler<DocumentExpiringEto>,
     ITransientDependency
 {
     private readonly NotificationManager _notificationManager;
@@ -122,5 +124,18 @@ public class NotificationDomainEventHandler :
                 entityId: eventData.TaskId
             );
         }
+    }
+
+    // --- Belge Son Tarih Uyarısı ---
+    public async Task HandleEventAsync(DocumentExpiringEto eventData)
+    {
+        await _notificationManager.PublishAsync(
+            eventData.CreatorId,
+            "📄 Son Tarihi Yaklaşan Belge",
+            $"\"{eventData.DocumentTitle}\" adlı belgenin son tarihine 7 günden az kaldı!",
+            NotificationType.DocumentExpiring,
+            entityType: "Document",
+            entityId: eventData.DocumentId
+        );
     }
 }
