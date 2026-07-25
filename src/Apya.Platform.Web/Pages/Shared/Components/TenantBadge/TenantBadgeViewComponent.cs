@@ -8,11 +8,11 @@ using Volo.Abp.TenantManagement;
 namespace Apya.Platform.Web.Components.TenantBadge;
 
 /// <summary>
-/// Site-wide sidebar tenant rozeti (LayoutHooks.Body.First ile her sayfaya).
+/// Site-wide sidebar tenant rozeti (LayoutHooks.Body.Last ile her sayfaya).
 /// Bilgilendirici — tıklanamaz, gerçek tenant geçişi yapmaz (P4 kapsam kararı).
-/// Body.First hook'unda gizli render edilir; dark-mode.js sidebar logo altına
-/// taşıyıp gösterir (LeptonX'in derlenmiş sidebar partial'ını override etmek
-/// yerine, mevcut breadcrumb-injection deseniyle aynı yaklaşım).
+/// Body.Last hook'unda gizli render edilir; View'daki senkron script sidebar
+/// DOM'da hazırken (ilk paint'ten önce) logo altına taşıyıp gösterir (LeptonX'in
+/// derlenmiş sidebar partial'ını override etmek yerine bu yaklaşım tercih edildi).
 /// </summary>
 public class TenantBadgeViewComponent : AbpViewComponent
 {

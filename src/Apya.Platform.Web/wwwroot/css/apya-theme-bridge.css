@@ -686,6 +686,21 @@ html[data-sidebar="collapsed"] #lpx-sidebar .menu-collapse-icon::before {
     content: '\f054'; /* chevron-right → "genişlet" */
 }
 
+/* --- Tema/Yoğunluk toggle ikon FOUC: sunucu her zaman varsayılan glyph'i basar
+   (fa-sun / fa-bars), gerçek tercih data-theme/data-density attribute'una göre
+   paint ÖNCESİ zaten belli (ApyaThemeHead FOUC script'i). JS ready'i (dark-mode.js/
+   density-toggle.js) beklemeden ::before content override ile doğru glyph — aynı
+   desen #lpx-sidebar .menu-collapse-icon'da yukarıda kullanılıyor. --- */
+html[data-theme="dark"] #ThemeToggle i.fa-sun::before {
+    content: '\f186'; /* moon */
+}
+html[data-density="compact"] #DensityToggle i.fa-bars::before {
+    content: '\f039'; /* align-justify */
+}
+html[data-density="comfortable"] #DensityToggle i.fa-bars::before {
+    content: '\f7a4'; /* grip-lines */
+}
+
 /* --- Header topbar: 57px + token zemin + alt kenarlık (her iki tema) --- */
 .lpx-topbar {
     min-height: var(--apya-header-h);
@@ -715,6 +730,12 @@ html[data-sidebar="collapsed"] #lpx-sidebar .menu-collapse-icon::before {
     font-size: 11.5px;
     color: var(--apya-text-tertiary);
 }
+/* dark-mode.js dolduruncaya kadar gizle (ham LeptonX breadcrumb'ının flaşını önler).
+   html.js şartı güvenli geri dönüş: JS hiç çalışmazsa (ApyaThemeHead script'i
+   sınıfı eklemezse) içerik varsayılan görünür kalır. */
+html.js .lpx-breadcrumb-container {
+    visibility: hidden;
+}
 
 /* Sağ grup sıralaması — hedef tasarım: arama başlığa yakın solda, TR/tema/
    bildirim/kullanıcı sağda toplu. LeptonX'in derlenmiş view'larını override
@@ -736,6 +757,11 @@ html[data-sidebar="collapsed"] #lpx-sidebar .menu-collapse-icon::before {
     height: 30px;
     font-size: 11.5px;
     margin: 0 2px;
+}
+/* Rozete dönüşene kadar ham ad metnini gizle (dark-mode.js tryReplaceUserAvatar).
+   html.js şartı güvenli geri dönüş — bkz. yukarıdaki breadcrumb kuralı. */
+html.js .lpx-user-profile .user-full-name {
+    visibility: hidden;
 }
 
 /* Bildirim rozetini sayı yerine nokta olarak göster (JS sayaç mantığına dokunmaz,

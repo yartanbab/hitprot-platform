@@ -17,6 +17,9 @@
     (function () {
         try {
             var html = document.documentElement;
+            // JS-var işareti: header'daki ham içerik gizleme kuralları (apya-theme-bridge.css
+            // "html.js" seçicileri) bu sınıf yoksa devre dışı kalır → JS çalışmazsa güvenli geri dönüş.
+            html.classList.add('js');
             // Auth/account sayfaları (login, register, forgot-password) tema-nötr LIGHT tutulur:
             // LeptonX account layout redesign kapsamı dışında; dark'ta başlık/kart kontrast bozuluyor.
             var isAuthPage = /^\/Account\//i.test(location.pathname);

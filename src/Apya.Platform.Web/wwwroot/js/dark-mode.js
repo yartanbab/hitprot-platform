@@ -44,6 +44,9 @@ $(function () {
                 bc.appendChild(subSp);
             }
         }
+        // apya-theme-bridge.css "html.js .lpx-breadcrumb-container" ile gizlenmişti
+        // (ham LeptonX breadcrumb'ı flaşlamasın diye) — pt boş olsa bile burada aç.
+        bc.style.visibility = 'visible';
     }
 
     // Header sağ: kullanıcı adı yerine baş harf rozeti (avatar) — hedef tasarım.
@@ -66,22 +69,26 @@ $(function () {
         userNameEl.replaceWith(avatar);
         return true;
     }
-    tryReplaceUserAvatar();
+    var avatarReplaced = tryReplaceUserAvatar();
     var avatarObserver = new MutationObserver(function () {
-        tryReplaceUserAvatar();
+        if (tryReplaceUserAvatar()) { avatarReplaced = true; }
     });
     avatarObserver.observe(document.body, { childList: true, subtree: true });
-    setTimeout(function () { avatarObserver.disconnect(); }, 5000);
+    setTimeout(function () {
+        avatarObserver.disconnect();
+        // apya-theme-bridge.css "html.js .lpx-user-profile .user-full-name" ile gizlenmişti;
+        // rozete hiç dönüşemediyse (beklenmedik DOM durumu) ham adı görünür yap — kalıcı
+        // gizlenmiş kalmasın diye güvenli geri dönüş.
+        if (!avatarReplaced) {
+            var fallback = document.querySelector('.lpx-user-profile .user-full-name');
+            if (fallback) { fallback.style.visibility = 'visible'; }
+        }
+    }, 5000);
 
-    // Tenant rozeti: Body.First hook'unda gizli render edilir (TenantBadgeViewComponent),
-    // sidebar logo altına taşınıp gösterilir — LeptonX'in derlenmiş sidebar partial'ını
-    // override etmek yerine yukarıdaki breadcrumb-injection ile aynı yaklaşım.
-    var tenantBadge = document.getElementById('apya-tenant-badge');
-    var logoContainer = document.querySelector('#lpx-sidebar .lpx-logo-container');
-    if (tenantBadge && logoContainer) {
-        logoContainer.insertAdjacentElement('afterend', tenantBadge);
-        tenantBadge.style.display = '';
-    }
+    // Tenant rozeti artık burada taşınmıyor — Body.Last'taki kendi senkron script'i
+    // (TenantBadge/Default.cshtml) sidebar DOM'da hazırken, ilk paint'ten ÖNCE taşıyor
+    // (bkz. o dosyadaki yorum). jQuery ready'yi beklemek sidebar'ın anlık sıçramasına
+    // sebep oluyordu.
 
     // Toggle header toolbar'ında gelir; yoksa (toolbar'sız layout) fallback floating.
     if ($('#ThemeToggle').length === 0) {
