@@ -23,9 +23,31 @@ namespace Apya.Platform
             CreateMap<Project, ProjectDto>();
             CreateMap<Project, ProjectDetailDto>().IncludeBase<Project, ProjectDto>();
 
-            // Hibe Eşleştirmeleri
-            CreateMap<Grant, GrantDto>();
-            CreateMap<CreateUpdateGrantDto, Grant>();
+            // Hibe (Grant) — CallCount/CriteriaTags DTO'da elle doldurulur (MapToGetOutputDtoAsync).
+            CreateMap<Grant, GrantDto>()
+                .ForMember(d => d.CallCount, o => o.Ignore())
+                .ForMember(d => d.CriteriaTags, o => o.Ignore());
+            CreateMap<CreateUpdateGrantDto, Grant>()
+                .ForMember(d => d.CriteriaTags, o => o.Ignore())
+                .ForMember(d => d.Calls, o => o.Ignore());
+
+            // Hibe Çağrısı (GrantCall) — GrantName MapToGetOutputDtoAsync'te doldurulur.
+            // (Girdi→entity dönüşümü AppService'te MapToEntityAsync ile yapılır, AutoMapper değil.)
+            CreateMap<GrantCall, GrantCallDto>()
+                .ForMember(d => d.GrantName, o => o.Ignore());
+
+            // Hibe Başvurusu (B1) — Period/GrantName AppService'te (filtre-kapalı) doldurulur.
+            // TenantName/Tranches/Milestones (Faz C) da AppService'te elle doldurulur.
+            CreateMap<GrantApplication, GrantApplicationDto>()
+                .ForMember(d => d.Period, o => o.Ignore())
+                .ForMember(d => d.GrantName, o => o.Ignore())
+                .ForMember(d => d.TenantName, o => o.Ignore())
+                .ForMember(d => d.Tranches, o => o.Ignore())
+                .ForMember(d => d.Milestones, o => o.Ignore());
+
+            // Tahsilat dilimi / milestone (Faz C) — salt okuma map'leri.
+            CreateMap<GrantDisbursementTranche, GrantDisbursementTrancheDto>();
+            CreateMap<GrantMilestone, GrantMilestoneDto>();
 
             // (BUG-001) Eski ProjectTask eşlemeleri kaldırıldı — Artık yalnızca Tasks.TaskItem kullanılıyor.
 

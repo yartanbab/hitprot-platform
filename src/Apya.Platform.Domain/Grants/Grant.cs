@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using Volo.Abp.Domain.Entities.Auditing;
 using Volo.Abp.MultiTenancy;
 
@@ -17,6 +18,11 @@ public class Grant : FullAuditedAggregateRoot<Guid>, IMultiTenant
     public decimal? MaxAmount { get; set; } // Tutar alanı
 
     public double MinMatchScore { get; set; }
+
+    // Faz A: eşleştirme kriterleri (Faz B'de FirmProfile ile örtüşme skoru).
+    public int EligibleCompanySizes { get; set; } // CompanySize bit-maskesi (0 = kısıt yok)
+    public ICollection<GrantCall> Calls { get; set; } = new List<GrantCall>();
+    public ICollection<GrantCriteriaTag> CriteriaTags { get; set; } = new List<GrantCriteriaTag>();
 
     public Grant()
     {

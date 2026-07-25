@@ -109,6 +109,14 @@ namespace Apya.Platform.EntityFrameworkCore
         public DbSet<ProjectAnalysis> ProjectAnalyses { get; set; }
         // (BUG-001) ProjectTask, ProjectSubTasks, ProjectTaskComments kaldırıldı.
         public DbSet<Grant> Grants { get; set; }
+        public DbSet<GrantCall> GrantCalls { get; set; }
+        public DbSet<GrantCriteriaTag> GrantCriteriaTags { get; set; }
+        public DbSet<FirmProfile> FirmProfiles { get; set; }
+        public DbSet<FirmProfileTag> FirmProfileTags { get; set; }
+        public DbSet<GrantApplication> GrantApplications { get; set; }
+        public DbSet<GrantRecommendation> GrantRecommendations { get; set; }
+        public DbSet<GrantDisbursementTranche> GrantDisbursementTranches { get; set; }
+        public DbSet<GrantMilestone> GrantMilestones { get; set; }
 
 
         /* --- ESKİ/DİĞER TASK MODÜLÜ TABLOLARI --- */
@@ -406,6 +414,80 @@ namespace Apya.Platform.EntityFrameworkCore
                 b.Property(x => x.Issuer).IsRequired().HasMaxLength(64);
                 b.Property(x => x.MinMatchScore).IsRequired();
                 b.Property(x => x.MaxAmount).IsRequired();
+                b.Property(x => x.EligibleCompanySizes).IsRequired().HasDefaultValue(0);
+            });
+
+            builder.Entity<GrantCall>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "GrantCalls", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+                b.Property(x => x.Period).IsRequired().HasMaxLength(32);
+                b.Property(x => x.Reference).HasMaxLength(64);
+                b.HasOne<Grant>().WithMany(g => g.Calls).HasForeignKey(x => x.GrantId).OnDelete(DeleteBehavior.Cascade);
+                b.HasIndex(x => x.GrantId);
+                b.HasIndex(x => x.Deadline);
+            });
+
+            builder.Entity<GrantCriteriaTag>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "GrantCriteriaTags", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+                b.Property(x => x.Value).IsRequired().HasMaxLength(64);
+                b.HasOne<Grant>().WithMany(g => g.CriteriaTags).HasForeignKey(x => x.GrantId).OnDelete(DeleteBehavior.Cascade);
+                b.HasIndex(x => x.GrantId);
+            });
+
+            builder.Entity<FirmProfile>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "FirmProfiles", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+                // Tenant başına tekil profil.
+                b.HasIndex(x => x.TenantId).IsUnique();
+            });
+
+            builder.Entity<FirmProfileTag>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "FirmProfileTags", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+                b.Property(x => x.Value).IsRequired().HasMaxLength(64);
+                b.HasOne<FirmProfile>().WithMany(p => p.Tags).HasForeignKey(x => x.FirmProfileId).OnDelete(DeleteBehavior.Cascade);
+                b.HasIndex(x => x.FirmProfileId);
+            });
+
+            builder.Entity<GrantApplication>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "GrantApplications", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+                b.HasOne<GrantCall>().WithMany().HasForeignKey(x => x.GrantCallId).OnDelete(DeleteBehavior.Cascade);
+                // Aynı tenant + çağrı için tek başvuru.
+                b.HasIndex(x => new { x.TenantId, x.GrantCallId }).IsUnique();
+            });
+
+            builder.Entity<GrantDisbursementTranche>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "GrantDisbursementTranches", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+                b.HasOne<GrantApplication>().WithMany().HasForeignKey(x => x.GrantApplicationId).OnDelete(DeleteBehavior.Cascade);
+                b.HasIndex(x => x.GrantApplicationId);
+            });
+
+            builder.Entity<GrantMilestone>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "GrantMilestones", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+                b.Property(x => x.Title).IsRequired().HasMaxLength(128);
+                b.HasOne<GrantApplication>().WithMany().HasForeignKey(x => x.GrantApplicationId).OnDelete(DeleteBehavior.Cascade);
+                b.HasIndex(x => x.GrantApplicationId);
+            });
+
+            builder.Entity<GrantRecommendation>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "GrantRecommendations", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+                b.Property(x => x.Note).HasMaxLength(256);
+                b.HasOne<GrantCall>().WithMany().HasForeignKey(x => x.GrantCallId).OnDelete(DeleteBehavior.Cascade);
+                // Aynı tenant + çağrı için tek (host-push) öneri kaydı — tekrar gönderim idempotent.
+                b.HasIndex(x => new { x.TenantId, x.GrantCallId }).IsUnique();
             });
 
             // (BUG-001) ProjectTask, SubTask, ProjectTaskComment konfigürasyonları kaldırıldı.

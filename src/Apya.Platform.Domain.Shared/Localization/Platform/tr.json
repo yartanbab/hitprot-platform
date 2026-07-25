@@ -304,6 +304,7 @@
         "Platform:Project:NameRequired": "Proje adı boş bırakılamaz.",
         "Platform:Project:BudgetInvalid": "Geçersiz bütçe. Bütçe negatif olamaz.",
         "Platform:Project:ScheduleInvalid": "Geçersiz tarih aralığı. Bitiş tarihi başlangıç tarihinden önce olamaz.",
+        "Platform:Grant:CallScheduleInvalid": "Geçersiz tarih aralığı. Son başvuru tarihi açılış tarihinden önce olamaz.",
 
         "Platform:DynamicAssets:SlugAlreadyExists": "Bu kısa ad (slug) zaten kullanımda. Lütfen farklı bir slug girin.",
         "Platform:DynamicAssets:BlockNotFound": "İlgili içerik bloğu bulunamadı.",

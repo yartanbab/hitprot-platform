@@ -4,46 +4,387 @@
 @inject IAuthorizationService AuthorizationService
 @model Apya.Platform.Web.Pages.Grants.IndexModel
 @{
-    ViewBag.Title = "Hibe Programları";
+    ViewBag.Title = "Hibeler";
 }
 
 @section scripts {
-    <abp-script src="/Pages/Grants/Index.js" />
+    @if (Model.IsHost)
+    {
+        <abp-script src="/Pages/Grants/Index.js" />
+    }
+    else
+    {
+        <abp-script src="/Pages/Grants/Tenant.js" />
+    }
 }
 
-<div class="apya-page">
-<abp-card>
-    <abp-card-header>
-        <abp-row>
-            <abp-column size-md="_6">
-                <abp-card-title>
-                    <i class="fa fa-award me-2"></i> Hibe Programları
-                </abp-card-title>
-            </abp-column>
-            <abp-column size-md="_6" class="text-end">
+<style>
+    /* Etiket girişi (chip input) — hem host program modalı hem tenant profil kartı */
+    .apya-tag-input {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 8px;
+        border: 1px solid var(--apya-border-default, #d0d5dd);
+        border-radius: var(--apya-radius-md, 8px);
+        background: var(--apya-surface-base, #fff);
+    }
+    .apya-tag-input .apya-tag-chips { display: contents; }
+    .apya-tag-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 2px 8px;
+        font-size: 12px;
+        border-radius: 999px;
+        background: var(--apya-accent-soft, rgba(124,58,237,.12));
+        color: var(--apya-accent-500, #6d28d9);
+    }
+    .apya-tag-remove {
+        border: 0;
+        background: transparent;
+        color: inherit;
+        line-height: 1;
+        font-size: 15px;
+        cursor: pointer;
+        padding: 0;
+    }
+    .apya-tag-entry {
+        flex: 1 1 120px;
+        min-width: 120px;
+        border: 0;
+        padding: 2px 0;
+        box-shadow: none !important;
+    }
+    .apya-tag-entry:focus { outline: none; }
+    .apya-call-row:first-of-type { border-top: 0 !important; }
+
+    /* #GrantModal modal-dialog-scrollable kullanıyor ama header/body/footer bir form etiketi içinde;
+       form flex olmayınca Bootstrap'ın scroll zinciri kırılıyor ve alt kısım (footer dahil) taşıp kesiliyor. */
+    #GrantModal .modal-content > form {
+        display: flex;
+        flex-direction: column;
+        flex: 1 1 auto;
+        min-height: 0;
+    }
+</style>
+
+@if (Model.IsHost)
+{
+    <div class="apya-page">
+        <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4">
+            <div>
+                <div class="apya-overline mb-1">Hibe Yönetimi</div>
+                <h1 class="h3 fw-bold mb-1">Hibe Programları</h1>
+                <p class="text-muted mb-0" style="max-width: 640px;">
+                    KOSGEB, TÜBİTAK, AB gibi kurumların destek programlarını ve dönemsel çağrılarını burada tanımlayın;
+                    hedef sektör/ölçek kriterleri firma eşleştirmelerinde kullanılır.
+                </p>
+            </div>
+            <div class="d-flex gap-2 flex-shrink-0">
+                @if (await AuthorizationService.IsGrantedAsync(PlatformPermissions.Grants.Edit))
+                {
+                    <a href="/Grants/Applications" class="btn btn-outline-secondary"><i class="fa fa-file-signature me-1"></i>Başvurular</a>
+                }
                 @if (await AuthorizationService.IsGrantedAsync(PlatformPermissions.Grants.Create))
                 {
-                    <abp-button id="NewGrantButton"
-                                text="Yeni Hibe Ekle"
-                                icon="plus"
-                                button-type="Primary" size="Small" />
+                    <button id="NewGrantButton" class="btn btn-primary">
+                        <i class="fa fa-plus me-1"></i> Yeni Hibe Ekle
+                    </button>
                 }
-            </abp-column>
-        </abp-row>
-    </abp-card-header>
-    <abp-card-body>
-        <abp-table striped-rows="true" id="GrantsTable">
-            <thead>
-                <tr>
-                    <th>İşlemler</th>
-                    <th>Program Adı</th>
-                    <th>Kurum</th>
-                    <th>Açıklama</th>
-                    <th>Maks. Tutar</th>
-                    <th>Min. Uyum Puanı</th>
-                </tr>
-            </thead>
-        </abp-table>
-    </abp-card-body>
-</abp-card>
-</div>
+            </div>
+        </div>
+
+        <div class="row g-3 mb-4">
+            <div class="col-6 col-md-3">
+                <partial name="_KpiCard" model='new Apya.Platform.Web.Pages.Shared.KpiCardModel { Icon = "fa-award", Accent = "primary", Label = "Toplam Program", ValueId = "KpiTotalPrograms", Value = "—" }' />
+            </div>
+            <div class="col-6 col-md-3">
+                <partial name="_KpiCard" model='new Apya.Platform.Web.Pages.Shared.KpiCardModel { Icon = "fa-sack-dollar", Accent = "success", Label = "Toplam Potansiyel Tutar", ValueId = "KpiTotalAmount", Value = "—" }' />
+            </div>
+            <div class="col-6 col-md-3">
+                <partial name="_KpiCard" model='new Apya.Platform.Web.Pages.Shared.KpiCardModel { Icon = "fa-bullseye", Accent = "info", Label = "Ortalama Uyum Puanı", ValueId = "KpiAvgScore", Value = "—" }' />
+            </div>
+            <div class="col-6 col-md-3">
+                <partial name="_KpiCard" model='new Apya.Platform.Web.Pages.Shared.KpiCardModel { Icon = "fa-trophy", Accent = "warning", Label = "En Yüksek Tutarlı Program", ValueId = "KpiTopProgram", Value = "—" }' />
+            </div>
+        </div>
+
+        <div id="GrantTileGrid" class="apya-tile-grid"></div>
+
+        <div id="GrantTileGridEmpty" class="apya-tile-grid-empty d-none">
+            <i class="fa fa-award"></i>
+            <span>Henüz hibe programı eklenmedi.</span>
+        </div>
+    </div>
+
+    @* ---- Program (Grant) modalı ---- *@
+    <div class="modal fade" id="GrantModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-scrollable">
+            <div class="modal-content">
+                <form id="GrantForm">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="GrantModalTitle">Yeni Hibe Programı</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
+                    </div>
+                    <div class="modal-body">
+                        <input type="hidden" id="GrantId" />
+                        <div class="mb-3">
+                            <label class="form-label" for="GrantName">Program Adı</label>
+                            <input type="text" class="form-control" id="GrantName" maxlength="128" required />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label" for="GrantIssuer">Kurum (TÜBİTAK, KOSGEB vb.)</label>
+                            <input type="text" class="form-control" id="GrantIssuer" maxlength="64" required />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label" for="GrantDescription">Açıklama</label>
+                            <textarea class="form-control" id="GrantDescription" rows="2"></textarea>
+                        </div>
+                        <div class="row">
+                            <div class="col-6 mb-3">
+                                <label class="form-label" for="GrantMaxAmount">Maksimum Destek Tutarı (₺)</label>
+                                <input type="number" step="0.01" class="form-control" id="GrantMaxAmount" />
+                            </div>
+                            <div class="col-6 mb-3">
+                                <label class="form-label" for="GrantMinMatchScore">Minimum Uyum Puanı (%)</label>
+                                <input type="number" step="1" min="0" max="100" class="form-control" id="GrantMinMatchScore" />
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Hedef Firma Ölçeği</label>
+                            <div class="d-flex flex-wrap gap-3">
+                                <div class="form-check"><input class="form-check-input apya-size" type="checkbox" value="1" id="szMikro"><label class="form-check-label" for="szMikro">Mikro</label></div>
+                                <div class="form-check"><input class="form-check-input apya-size" type="checkbox" value="2" id="szKucuk"><label class="form-check-label" for="szKucuk">Küçük</label></div>
+                                <div class="form-check"><input class="form-check-input apya-size" type="checkbox" value="4" id="szOrta"><label class="form-check-label" for="szOrta">Orta</label></div>
+                                <div class="form-check"><input class="form-check-input apya-size" type="checkbox" value="8" id="szBuyuk"><label class="form-check-label" for="szBuyuk">Büyük</label></div>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Hedef Sektörler</label>
+                            <div class="apya-tag-input" data-kind="0"><div class="apya-tag-chips"></div><input type="text" class="form-control form-control-sm apya-tag-entry" placeholder="Yazın, Enter'a basın…" /></div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Hedef Bölgeler</label>
+                            <div class="apya-tag-input" data-kind="1"><div class="apya-tag-chips"></div><input type="text" class="form-control form-control-sm apya-tag-entry" placeholder="Yazın, Enter'a basın…" /></div>
+                        </div>
+                        <div class="mb-1">
+                            <label class="form-label">Anahtar Kelimeler</label>
+                            <div class="apya-tag-input" data-kind="2"><div class="apya-tag-chips"></div><input type="text" class="form-control form-control-sm apya-tag-entry" placeholder="Yazın, Enter'a basın…" /></div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Vazgeç</button>
+                        <button type="submit" class="btn btn-primary"><i class="fa fa-save me-1"></i>Kaydet</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    @* ---- Çağrı (GrantCall) modalı ---- *@
+    <div class="modal fade" id="CallModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <form id="CallForm">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="CallModalTitle">Yeni Çağrı</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
+                    </div>
+                    <div class="modal-body">
+                        <input type="hidden" id="CallId" />
+                        <input type="hidden" id="CallGrantId" />
+                        <div class="mb-3">
+                            <label class="form-label" for="CallPeriod">Dönem (örn. 2025/1)</label>
+                            <input type="text" class="form-control" id="CallPeriod" maxlength="32" required />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label" for="CallStatus">Durum</label>
+                            <select class="form-select" id="CallStatus">
+                                <option value="0">Planlandı</option>
+                                <option value="1" selected>Açık</option>
+                                <option value="2">Kapandı</option>
+                            </select>
+                        </div>
+                        <div class="row">
+                            <div class="col-6 mb-3">
+                                <label class="form-label" for="CallOpenDate">Açılış Tarihi</label>
+                                <input type="date" class="form-control" id="CallOpenDate" />
+                            </div>
+                            <div class="col-6 mb-3">
+                                <label class="form-label" for="CallDeadline">Son Başvuru Tarihi</label>
+                                <input type="date" class="form-control" id="CallDeadline" />
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-6 mb-1">
+                                <label class="form-label" for="CallBudget">Bütçe (₺)</label>
+                                <input type="number" step="0.01" class="form-control" id="CallBudget" />
+                            </div>
+                            <div class="col-6 mb-1">
+                                <label class="form-label" for="CallReference">Referans No</label>
+                                <input type="text" class="form-control" id="CallReference" maxlength="64" />
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Vazgeç</button>
+                        <button type="submit" class="btn btn-primary"><i class="fa fa-save me-1"></i>Kaydet</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    @* ---- Firmalara Gönder (host toplu-öneri) modalı ---- *@
+    <div class="modal fade" id="SendRecModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Firmalara Gönder</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="SendRecCallId" />
+                    <div class="row g-2 align-items-end mb-3">
+                        <div class="col-6 col-md-3">
+                            <label class="form-label small">Bütçe Min (₺)</label>
+                            <input type="number" step="0.01" class="form-control form-control-sm" id="SendRecBudgetMin" />
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <label class="form-label small">Bütçe Maks (₺)</label>
+                            <input type="number" step="0.01" class="form-control form-control-sm" id="SendRecBudgetMax" />
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <label class="form-label small">Proje Kategorisi</label>
+                            <select class="form-select form-select-sm" id="SendRecCategory">
+                                <option value="">Farketmez</option>
+                                <option value="0">Diğer</option>
+                                <option value="1">Hibe Projesi</option>
+                                <option value="2">Etkinlik</option>
+                            </select>
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <label class="form-label small">Min. Otomatik Skor (%)</label>
+                            <input type="number" step="1" min="0" max="100" class="form-control form-control-sm" id="SendRecMinScore" value="0" />
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small">Hedef Firma Ölçeği (boş = farketmez)</label>
+                        <div class="d-flex flex-wrap gap-3">
+                            <div class="form-check"><input class="form-check-input apya-rec-size" type="checkbox" value="1" id="recSzMikro"><label class="form-check-label" for="recSzMikro">Mikro</label></div>
+                            <div class="form-check"><input class="form-check-input apya-rec-size" type="checkbox" value="2" id="recSzKucuk"><label class="form-check-label" for="recSzKucuk">Küçük</label></div>
+                            <div class="form-check"><input class="form-check-input apya-rec-size" type="checkbox" value="4" id="recSzOrta"><label class="form-check-label" for="recSzOrta">Orta</label></div>
+                            <div class="form-check"><input class="form-check-input apya-rec-size" type="checkbox" value="8" id="recSzBuyuk"><label class="form-check-label" for="recSzBuyuk">Büyük</label></div>
+                        </div>
+                    </div>
+                    <button type="button" id="SendRecPreviewBtn" class="btn btn-outline-secondary btn-sm mb-3"><i class="fa fa-magnifying-glass me-1"></i>Önizle</button>
+
+                    <div id="SendRecResults" class="d-none">
+                        <div class="table-responsive mb-3">
+                            <table class="table table-sm align-middle">
+                                <thead>
+                                    <tr>
+                                        <th style="width:32px;"><input type="checkbox" id="SendRecSelectAll" checked /></th>
+                                        <th>Firma</th>
+                                        <th>Uyum Skoru</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="SendRecCandidateRows"></tbody>
+                            </table>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small">Not (opsiyonel — bildirim/e-posta metni olarak kullanılır)</label>
+                            <textarea class="form-control" id="SendRecNote" rows="2"></textarea>
+                        </div>
+                    </div>
+                    <div id="SendRecEmpty" class="text-muted small d-none">Filtreye uyan firma bulunamadı.</div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Vazgeç</button>
+                    <button type="button" id="SendRecSendBtn" class="btn btn-primary d-none"><i class="fa fa-paper-plane me-1"></i>Gönder</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+else
+{
+    <div class="apya-page">
+        <div class="mb-4">
+            <div class="apya-overline mb-1">Firma Hibe Merkezi</div>
+            <h1 class="h3 fw-bold mb-1">Hibeler</h1>
+            <p class="text-muted mb-0" style="max-width: 640px;">
+                Firma profilinizi doldurun; profilinize en uygun açık hibe çağrılarını burada görün ve başvurun.
+            </p>
+        </div>
+
+        <div class="row g-3 mb-4">
+            <div class="col-6 col-md-3">
+                <partial name="_KpiCard" model='new Apya.Platform.Web.Pages.Shared.KpiCardModel { Icon = "fa-circle-check", Accent = "success", Label = "Onaylanan", ValueId = "KpiOnaylanan", Value = "—" }' />
+            </div>
+            <div class="col-6 col-md-3">
+                <partial name="_KpiCard" model='new Apya.Platform.Web.Pages.Shared.KpiCardModel { Icon = "fa-magnifying-glass-chart", Accent = "warning", Label = "Değerlendirmede", ValueId = "KpiDegerlendirmede", Value = "—" }' />
+            </div>
+            <div class="col-6 col-md-3">
+                <partial name="_KpiCard" model='new Apya.Platform.Web.Pages.Shared.KpiCardModel { Icon = "fa-sack-dollar", Accent = "primary", Label = "Tahsil Edilen", ValueId = "KpiTahsilEdilen", Value = "—" }' />
+            </div>
+            <div class="col-6 col-md-3">
+                <partial name="_KpiCard" model='new Apya.Platform.Web.Pages.Shared.KpiCardModel { Icon = "fa-hourglass-half", Accent = "info", Label = "Bu Ay Son Tarih", ValueId = "KpiBuAySonTarih", Value = "—" }' />
+            </div>
+        </div>
+
+        <div class="row g-4">
+            @* --- Firma Profili --- *@
+            <div class="col-lg-4">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="fw-bold mb-3"><i class="fa fa-id-card-clip me-2"></i>Firma Profili</h5>
+                        <div class="mb-3">
+                            <label class="form-label" for="ProfileSize">Firma Ölçeği</label>
+                            <select class="form-select" id="ProfileSize">
+                                <option value="">Belirtilmemiş</option>
+                                <option value="1">Mikro</option>
+                                <option value="2">Küçük</option>
+                                <option value="4">Orta</option>
+                                <option value="8">Büyük</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Sektörler</label>
+                            <div class="apya-tag-input" data-kind="0"><div class="apya-tag-chips"></div><input type="text" class="form-control form-control-sm apya-tag-entry" placeholder="Yazın, Enter'a basın…" /></div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Bölgeler</label>
+                            <div class="apya-tag-input" data-kind="1"><div class="apya-tag-chips"></div><input type="text" class="form-control form-control-sm apya-tag-entry" placeholder="Yazın, Enter'a basın…" /></div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Anahtar Kelimeler</label>
+                            <div class="apya-tag-input" data-kind="2"><div class="apya-tag-chips"></div><input type="text" class="form-control form-control-sm apya-tag-entry" placeholder="Yazın, Enter'a basın…" /></div>
+                        </div>
+                        <button id="SaveProfileBtn" class="btn btn-primary w-100"><i class="fa fa-save me-1"></i>Profili Kaydet</button>
+                    </div>
+                </div>
+            </div>
+
+            @* --- Öneriler + Başvurular --- *@
+            <div class="col-lg-8">
+                <h5 class="fw-bold mb-3"><i class="fa fa-calendar-days me-2"></i>Yaklaşan Son Tarihler</h5>
+                <div id="DeadlinesList" class="d-flex flex-column gap-1 mb-4"></div>
+                <div id="DeadlinesEmpty" class="text-muted small mb-4 d-none">Yaklaşan son tarih yok.</div>
+
+                <h5 class="fw-bold mb-3"><i class="fa fa-wand-magic-sparkles me-2"></i>Önerilen Çağrılar</h5>
+                <div id="RecoGrid" class="apya-tile-grid"></div>
+                <div id="RecoEmpty" class="apya-tile-grid-empty d-none">
+                    <i class="fa fa-wand-magic-sparkles"></i>
+                    <span>Profilinize uygun açık çağrı bulunamadı. Profilinizi güncelleyip tekrar deneyin.</span>
+                </div>
+
+                <h5 class="fw-bold mb-3 mt-4"><i class="fa fa-file-signature me-2"></i>Başvurularım</h5>
+                <div id="AppsList" class="d-flex flex-column gap-2"></div>
+                <div id="AppsEmpty" class="text-muted small d-none">Henüz başvurunuz yok.</div>
+            </div>
+        </div>
+    </div>
+}
