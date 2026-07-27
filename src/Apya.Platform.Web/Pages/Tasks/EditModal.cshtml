@@ -37,6 +37,12 @@
             <button type="button" class="apya-pilltab-btn" data-pilltab-target="timelog_@Model.Id" data-lazy="timelog">
                 <i class="fa fa-history me-1"></i> Geçmiş
             </button>
+            @if (Model.CanDelete)
+            {
+                <button type="button" class="btn btn-sm btn-outline-danger ms-auto js-delete-task-btn" title="Görevi Sil">
+                    <i class="fa fa-trash me-1"></i> Sil
+                </button>
+            }
         </div>
 
         <div class="tab-content px-4 py-3 bg-white border-top" id="taskTabsContent_@Model.Id">
@@ -223,7 +229,7 @@
                 }
                 else
                 {
-                    <table class="table table-sm table-striped table-bordered mb-4">
+                    <table class="table table-sm apya-clean-table mb-4">
                         <thead class="table-light">
                             <tr>
                                 <th style="width:100px;">Tarih</th>
@@ -259,7 +265,7 @@
                 }
                 else
                 {
-                    <table class="table table-sm table-striped table-bordered">
+                    <table class="table table-sm apya-clean-table">
                         <thead class="table-light">
                             <tr>
                                 <th style="width:100px;">Tarih</th>
@@ -471,6 +477,36 @@
         var subTaskId = $(this).data('id');
         var subTaskModal = new abp.ModalManager({ viewUrl: abp.appPath + 'Tasks/EditModal' });
         subTaskModal.open({ id: subTaskId });
+    });
+
+    // --- GÖREVİ SİL (eski tablo trash-ikonu buradan taşındı — panel açıkken tek yer) ---
+    $('#EditTaskForm_@Model.Id').find('.js-delete-task-btn').on('click', function () {
+        var taskId = '@Model.Id';
+        Swal.fire({
+            title: 'Görev Silinecek!',
+            text: 'Görevi kalıcı olarak silmek üzeresiniz. Onaylamak için aşağıdaki alana "SİL" yazmalısınız.',
+            icon: 'warning',
+            input: 'text',
+            inputPlaceholder: 'SİL',
+            showCancelButton: true,
+            confirmButtonText: '<i class="fa fa-trash"></i> Evet, Sil!',
+            cancelButtonText: 'İptal',
+            confirmButtonColor: '#dc3545',
+            preConfirm: function (inputValue) {
+                if (inputValue !== 'SİL') {
+                    Swal.showValidationMessage('Silme işlemini onaylamak için tam olarak "SİL" yazmalısınız.');
+                }
+                return inputValue;
+            }
+        }).then(function (result) {
+            if (result.isConfirmed) {
+                apya.platform.tasks.task.delete(taskId).then(function () {
+                    abp.notify.info('Başarıyla silindi.');
+                    $('#EditTaskForm_@Model.Id').find('.modal').modal('hide');
+                    abp.event.trigger('app.task.updated');
+                });
+            }
+        });
     });
 
     $(document).off('click', '.delete-subtask-btn').on('click', '.delete-subtask-btn', function () {
@@ -846,7 +882,7 @@
             }).join('');
             $container.html(
                 '<p class="text-end text-muted small mb-2">Toplam: <strong>' + fmtSec(totalSec) + '</strong></p>' +
-                '<table class="table table-sm table-striped table-bordered">' +
+                '<table class="table table-sm apya-clean-table">' +
                 '<thead class="table-light"><tr><th>Başlangıç</th><th>Bitiş</th><th>Süre</th><th>Kullanıcı</th><th>Not</th></tr></thead>' +
                 '<tbody>' + rows + '</tbody></table>'
             );

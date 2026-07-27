@@ -101,7 +101,7 @@
        sunken  : input field, code block
        overlay : modal/sheet backdrop
        elevated: floating menu, popover */
-    --apya-surface-app-bg:   #F5F5F5;
+    --apya-surface-app-bg:   #FFFFFF;
     --apya-surface-sidebar:  #FFFFFF;
     --apya-surface-base:     #FFFFFF;
     --apya-surface-raised:   #F9FAFB;

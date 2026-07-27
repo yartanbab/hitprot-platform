@@ -4,8 +4,10 @@ using System.Linq;
 using System.Threading.Tasks;
 using Apya.Platform.Expenses;
 using Apya.Platform.Incomes;
+using Apya.Platform.Permissions;
 using Apya.Platform.Tasks;
 using Apya.Platform.Web.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -38,6 +40,10 @@ namespace Apya.Platform.Web.Pages.Tasks
         public List<ExpenseDto> TaskExpenses { get; set; } = new();
         public List<IncomeEntryDto> TaskIncomes { get; set; } = new();
         public List<TaskDto> ProjectTasks { get; set; } = new();
+
+        // Satır tıklayınca açılan panelden silme — tablodaki eski çöp kutusu ile aynı yetki kuralı
+        // (ManageTeam yetkisi VEYA görevin oluşturucusu/atananı).
+        public bool CanDelete { get; set; }
 
         private readonly ITaskAppService _taskAppService;
         private readonly IUploadedFileStorage _fileStorage;
@@ -109,6 +115,10 @@ namespace Apya.Platform.Web.Pages.Tasks
         public async Task OnGetAsync()
         {
             var taskDto = await _taskAppService.GetAsync(Id);
+
+            CanDelete = await AuthorizationService.IsGrantedAsync(PlatformPermissions.Projects.ManageTeam)
+                        || taskDto.CreatorId == CurrentUser.Id
+                        || taskDto.AssigneeId == CurrentUser.Id;
 
             Task = new CreateUpdateTaskDto
             {

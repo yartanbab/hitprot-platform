@@ -175,12 +175,11 @@
     "Common:Clear": "Clear",
 
     "Tasks:BoardTitle": "Task Board",
-    "Tasks:AdvancedFilters": "Advanced Filtering Options",
     "Tasks:Filter:Assignee": "Assignee",
     "Tasks:Filter:Status": "Status",
     "Tasks:Filter:MinDueDate": "Due Date (From)",
     "Tasks:Filter:MaxDueDate": "Due Date (To)",
-    "Tasks:View:List": "List",
+    "Tasks:View:List": "Table",
     "Tasks:View:Kanban": "Kanban",
     "Tasks:View:Gantt": "Gantt",
     "Tasks:NewButton": "New Task",

@@ -43,12 +43,13 @@
         return icon + '<span class="apya-priority-text">' + p.text + '</span>';
     }
 
-    function assigneeAvatar(name) {
+    // avatarOnly=true: isim etiketi olmadan yalnız renkli daire (kompakt tablo kolonları için).
+    function assigneeAvatar(name, avatarOnly) {
         if (!name) return '<span class="text-muted small">—</span>';
         var initials = String(name).trim().split(/\s+/).slice(0, 2).map(function (w) { return w[0]; }).join('').toUpperCase();
         var tone = hashTone(name);
-        return '<span class="apya-avatar apya-avatar-' + tone + '" title="' + esc(name) + '">' + esc(initials) + '</span>' +
-            '<span class="ms-2">' + esc(name) + '</span>';
+        var avatar = '<span class="apya-avatar apya-avatar-' + tone + '" title="' + esc(name) + '">' + esc(initials) + '</span>';
+        return avatarOnly ? avatar : avatar + '<span class="ms-2">' + esc(name) + '</span>';
     }
 
     // status: TaskStatus enum (Done=4, Cancelled=0) — bu ikisinde aciliyet vurgusu yapılmaz.
