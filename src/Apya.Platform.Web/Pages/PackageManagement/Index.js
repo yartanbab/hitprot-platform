@@ -9,7 +9,7 @@ $(function () {
 
     function featBadge(f) {
         if (f.isNumeric) {
-            return '<span class="badge bg-light text-dark border">' + esc(f.displayName) + ': ' + esc(f.value) + '</span>';
+            return '<span class="apya-chip apya-chip-neutral">' + esc(f.displayName) + ': ' + esc(f.value) + '</span>';
         }
         var on = f.value === 'true';
         return '<span class="badge ' + (on ? 'bg-success' : 'bg-light text-muted border') + '">'

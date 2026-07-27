@@ -167,7 +167,7 @@ $(function () {
                         </div>
                     </td>
                     <td>
-                        <span class="badge bg-light text-dark border"><i class="fa fa-clock text-secondary me-1"></i>${hours} sa</span>
+                        <span class="apya-chip apya-chip-neutral"><i class="fa fa-clock text-secondary me-1"></i>${hours} sa</span>
                         ${healthDot}
                         <br><small class="text-muted" style="font-size:0.7rem;"><i class="fa fa-hourglass-half me-1"></i>${remainingText}</small>
                     </td>
@@ -244,7 +244,7 @@ $(function () {
                             %${roiPercent.toFixed(1)}
                         </span>
                     </td>
-                    <td><span class="badge bg-light text-dark border"><i class="fa fa-clock text-secondary me-1"></i>${hours} sa</span></td>
+                    <td><span class="apya-chip apya-chip-neutral"><i class="fa fa-clock text-secondary me-1"></i>${hours} sa</span></td>
                 </tr>
             `);
         });
