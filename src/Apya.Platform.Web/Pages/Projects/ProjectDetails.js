@@ -15,7 +15,7 @@ $(function () {
         abp.libs.datatables.normalizeConfiguration({
             serverSide: true,
             paging: true,
-            order: [[1, 'asc']],
+            order: [[0, 'asc']],
             searching: true,
             scrollX: true,
             ajax: abp.libs.datatables.createAjax(taskService.getList, function () {
