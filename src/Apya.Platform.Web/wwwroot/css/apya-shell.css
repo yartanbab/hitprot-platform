@@ -1178,3 +1178,24 @@ i.apya-priority-dot {
 .apya-docs-detail {
     min-height: 460px;
 }
+
+/* ─── Genel amaçlı temiz tablo — zebra/kalın border yerine ince alt çizgi + hover.
+   striped-rows="true" kaldırılan abp-table'lara eklenir (bkz. Tasks/Index.cshtml). ─── */
+.apya-clean-table > :not(caption) > * > * { border: none; }
+.apya-clean-table thead th {
+    text-transform: uppercase;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .04em;
+    color: var(--apya-text-tertiary);
+    border-bottom: 1px solid var(--apya-border-default) !important;
+    background: transparent !important;
+    padding: 10px 12px;
+}
+.apya-clean-table tbody td {
+    padding: 12px;
+    border-bottom: 1px solid var(--apya-border-subtle) !important;
+    vertical-align: middle;
+    background: transparent !important;
+}
+.apya-clean-table tbody tr:hover td { background: var(--apya-surface-raised) !important; }

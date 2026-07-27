@@ -23,20 +23,6 @@ $(function () {
             }),
             columnDefs: [
                 {
-                    title: '',
-                    data: null,
-                    orderable: false,
-                    className: 'text-end',
-                    render: function (data, type, row) {
-                        var canManage = abp.auth.isGranted('Platform.Projects.ManageTeam') ||
-                                         row.creatorId === abp.currentUser.id ||
-                                         row.assigneeId === abp.currentUser.id;
-                        return canManage
-                            ? '<button type="button" class="btn btn-sm btn-light py-0 px-2 rounded js-delete-task" data-id="' + row.id + '" title="Sil"><i class="fa fa-trash text-danger" style="font-size:0.8rem;"></i></button>'
-                            : '';
-                    }
-                },
-                {
                     title: 'Başlık',
                     data: 'title',
                     render: function (data, type, row) {
@@ -106,36 +92,6 @@ $(function () {
         if ($(e.target).closest('a, button, .form-check-input').length) return;
         var rowData = dataTable.row(this).data();
         if (rowData && rowData.id) { editModal.open({ id: rowData.id }); }
-    });
-
-    $('#ProjectTasksTable tbody').on('click', '.js-delete-task', function (e) {
-        e.stopPropagation();
-        var taskId = $(this).data('id');
-        Swal.fire({
-            title: 'Görev Silinecek!',
-            text: 'Görevi kalıcı olarak silmek üzeresiniz. Onaylamak için aşağıdaki alana "SİL" yazmalısınız.',
-            icon: 'warning',
-            input: 'text',
-            inputPlaceholder: 'SİL',
-            showCancelButton: true,
-            confirmButtonText: '<i class="fa fa-trash"></i> Evet, Sil!',
-            cancelButtonText: 'İptal',
-            confirmButtonColor: '#dc3545',
-            preConfirm: function (inputValue) {
-                if (inputValue !== 'SİL') {
-                    Swal.showValidationMessage('Silme işlemini onaylamak için tam olarak "SİL" yazmalısınız.');
-                }
-                return inputValue;
-            }
-        }).then(function (result) {
-            if (result.isConfirmed) {
-                taskService.delete(taskId).then(function () {
-                    abp.notify.info('Başarıyla silindi.');
-                    dataTable.ajax.reload();
-                    if (kb) { kb.load(); }
-                });
-            }
-        });
     });
 
     // --- 2. Yeni Görev Ekle ---
