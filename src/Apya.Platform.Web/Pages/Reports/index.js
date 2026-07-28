@@ -2,11 +2,22 @@ $(function () {
     var reportService = apya.platform.reports.report;
     var budgetChart = null;
     var efficiencyChart = null;
+    var lastStats = null;
 
     initDashboard();
 
+    // Grafik renkleri token'lardan runtime okunuyor → tema değişince yeniden kur.
+    apyaChart.onThemeChange(function () {
+        if (!lastStats) { return; }
+        if (budgetChart) { budgetChart.destroy(); }
+        if (efficiencyChart) { efficiencyChart.destroy(); }
+        renderBudgetChart(lastStats.projects);
+        renderEfficiencyChart(lastStats.personnel);
+    });
+
     function initDashboard() {
         reportService.getDashboardStats().then(function (result) {
+            lastStats = result;
             
             // Calculate KPIs
             var totalProjects = result.projects.length;
@@ -50,7 +61,10 @@ $(function () {
             return 0;
         });
 
-        budgetChart = new Chart(ctx, {
+        // Renkler tasarım tonlarından: bütçe=nötr referans, harcanan=aksiyon,
+        // tahmin=uyarı (gelecek/riskli). apyaChart geri kalanını (ızgara,
+        // tooltip, punto, bar yarıçapı/kalınlığı) token'lardan doldurur.
+        budgetChart = new Chart(ctx, apyaChart.options({
             type: 'bar',
             data: {
                 labels: labels,
@@ -58,43 +72,26 @@ $(function () {
                     {
                         label: 'Toplam Butce',
                         data: budgets,
-                        backgroundColor: 'rgba(54, 162, 235, 0.2)',
-                        borderColor: 'rgb(54, 162, 235)',
-                        borderWidth: 1,
-                        borderRadius: 4
+                        backgroundColor: apyaChart.alpha(apyaChart.tone('brand'), 0.35)
                     },
                     {
                         label: 'Harcanan',
                         data: spent,
-                        backgroundColor: 'rgba(255, 99, 132, 0.2)',
-                        borderColor: 'rgb(255, 99, 132)',
-                        borderWidth: 1,
-                        borderRadius: 4
+                        backgroundColor: apyaChart.tone('accent')
                     },
                     {
                         label: 'Tahmini Toplam Harcama (Forecast)',
                         data: forecast,
                         type: 'line',
-                        borderColor: 'rgb(255, 159, 64)',
-                        borderWidth: 2,
+                        borderColor: apyaChart.tone('warning'),
                         borderDash: [6, 3],
-                        pointRadius: 4,
-                        pointBackgroundColor: 'rgb(255, 159, 64)',
-                        fill: false,
-                        tension: 0.3
+                        pointRadius: 3,
+                        pointBackgroundColor: apyaChart.tone('warning'),
+                        fill: false
                     }
                 ]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: { legend: { position: 'bottom' } },
-                scales: {
-                    y: { beginAtZero: true, grid: { borderDash: [2, 4] } },
-                    x: { grid: { display: false } }
-                }
             }
-        });
+        }));
     }
 
     function renderEfficiencyChart(personnel) {
@@ -103,30 +100,18 @@ $(function () {
         var labels = personnel.map(p => p.userName);
         var hours = personnel.map(p => parseFloat((p.totalSeconds / 3600).toFixed(1)));
 
-        efficiencyChart = new Chart(ctx.getContext('2d'), {
-            type: 'pie',
+        // doughnut: HANDOFF'un dilim grafiği kalıbı (cutout %72 + 2px spacing);
+        // dilim renkleri apyaChart paletinden sırayla atanır.
+        efficiencyChart = new Chart(ctx.getContext('2d'), apyaChart.options({
+            type: 'doughnut',
             data: {
                 labels: labels,
-                datasets: [{
-                    label: 'Harcanan Saat',
-                    data: hours,
-                    backgroundColor: [
-                        'rgba(54, 162, 235, 0.7)',
-                        'rgba(255, 99, 132, 0.7)',
-                        'rgba(255, 206, 86, 0.7)',
-                        'rgba(75, 192, 192, 0.7)',
-                        'rgba(153, 102, 255, 0.7)',
-                        'rgba(255, 159, 64, 0.7)'
-                    ],
-                    borderWidth: 1
-                }]
+                datasets: [{ label: 'Harcanan Saat', data: hours }]
             },
             options: {
-                responsive: true,
-                maintainAspectRatio: false,
                 plugins: { legend: { position: 'right' } }
             }
-        });
+        }));
     }
 
     function renderProjectTable(projects) {
@@ -134,42 +119,42 @@ $(function () {
         body.empty();
         projects.forEach(p => {
             var usage = p.totalBudget > 0 ? (p.spentBudget / p.totalBudget * 100).toFixed(1) : 0;
-            var usageClass = usage > 90 ? 'bg-danger' : (usage > 50 ? 'bg-warning' : 'bg-success');
+            // Tasarım sistemi ilerleme barı (apya-shell.css §14) — Bootstrap
+            // .progress/.progress-bar yerine; ton sınıfları token'lardan gelir.
+            var usageTone = usage > 90 ? 'is-negative' : (usage > 50 ? 'is-warning' : 'is-positive');
             var hours = (p.totalSeconds / 3600).toFixed(1);
             var sym = ''; // \u00C7oklu d\u00F6viz gizlendi \u2014 tutarlar sade (sembols\u00FCz); t\u00FCm i\u015Flemler TRY.
             
             // Zaman sagligi trafik isigi
             var healthDot = '';
             if (p.timeHealthColor === 'danger') {
-                healthDot = '<span class="apya-chip apya-chip-negative ms-1" style="font-size:0.65rem;">Kritik</span>';
+                healthDot = '<span class="apya-chip apya-chip-negative ms-1">Kritik</span>';
             } else if (p.timeHealthColor === 'warning') {
-                healthDot = '<span class="apya-chip apya-chip-warning ms-1" style="font-size:0.65rem;">Dikkat</span>';
+                healthDot = '<span class="apya-chip apya-chip-warning ms-1">Dikkat</span>';
             } else {
-                healthDot = '<span class="apya-chip apya-chip-positive ms-1" style="font-size:0.65rem;">Saglam</span>';
+                healthDot = '<span class="apya-chip apya-chip-positive ms-1">Saglam</span>';
             }
 
             var remainingText = p.remainingDays > 0 ? `${p.remainingDays} gun` : 'Bitis!';
-            
+
             body.append(`
-                <tr class="bg-white">
-                    <td class="fw-bold text-dark">
+                <tr>
+                    <td class="fw-bold">
                         <i class="fa fa-folder-open text-primary me-2"></i>${p.projectName}
                         <br><small class="text-muted fw-normal">${p.projectCode || ''}</small>
                     </td>
-                    <td class="text-muted">${p.totalBudget.toLocaleString('tr-TR')} ${sym}</td>
-                    <td class="text-dark fw-bold">${p.spentBudget.toLocaleString('tr-TR')} ${sym}</td>
+                    <td class="apya-numeric text-muted">${p.totalBudget.toLocaleString('tr-TR')} ${sym}</td>
+                    <td class="apya-numeric fw-bold">${p.spentBudget.toLocaleString('tr-TR')} ${sym}</td>
                     <td>
-                        <div class="d-flex align-items-center">
-                            <div class="progress shadow-sm w-100 me-2" style="height: 6px;">
-                                <div class="progress-bar ${usageClass}" role="progressbar" style="width: ${usage}%"></div>
-                            </div>
-                            <span class="small fw-bold ${usage > 90 ? 'text-danger' : 'text-muted'}">%${usage}</span>
+                        <div class="d-flex align-items-center gap-2">
+                            <div class="apya-mini-progress ${usageTone} w-100"><span style="width: ${usage}%"></span></div>
+                            <span class="apya-numeric fw-bold ${usage > 90 ? 'text-danger' : 'text-muted'}">%${usage}</span>
                         </div>
                     </td>
                     <td>
-                        <span class="badge bg-light text-dark border"><i class="fa fa-clock text-secondary me-1"></i>${hours} sa</span>
+                        <span class="apya-chip apya-chip-neutral"><i class="fa fa-clock me-1"></i>${hours} sa</span>
                         ${healthDot}
-                        <br><small class="text-muted" style="font-size:0.7rem;"><i class="fa fa-hourglass-half me-1"></i>${remainingText}</small>
+                        <br><small class="text-muted"><i class="fa fa-hourglass-half me-1"></i>${remainingText}</small>
                     </td>
                 </tr>
             `);
@@ -185,14 +170,15 @@ $(function () {
             var borderClass = isOverloaded ? 'border-danger' : '';
             var nameClass = isOverloaded ? 'text-danger' : '';
             var chipTone = isOverloaded ? 'negative' : 'brand';
+            var iconTone = isOverloaded ? 'kpi-icon-box--negative' : 'kpi-icon-box--neutral';
             var overloadBadge = isOverloaded
-                ? '<span class="apya-chip apya-chip-negative ms-2" style="font-size:0.65rem;">Kapasite Asimi!</span>'
+                ? '<span class="apya-chip apya-chip-negative ms-2">Kapasite Asimi!</span>'
                 : '';
 
             list.append(`
                 <div class="list-group-item d-flex justify-content-between align-items-center px-0 py-3 border-bottom ${borderClass}">
                     <div class="d-flex align-items-center">
-                        <div class="kpi-icon-box ${isOverloaded ? 'bg-danger bg-opacity-10 text-danger' : 'bg-light text-secondary'} me-3" style="width:40px;height:40px;border-radius:50%;">
+                        <div class="kpi-icon-box kpi-icon-box--sm ${iconTone} me-3">
                             <i class="fa fa-user"></i>
                         </div>
                         <div>
@@ -200,7 +186,7 @@ $(function () {
                             <small class="text-muted"><i class="fa fa-tasks me-1"></i>${p.taskCount} Gorevde Calisti</small>
                         </div>
                     </div>
-                    <div class="apya-chip apya-chip-${chipTone}" style="font-size:0.85rem;">
+                    <div class="apya-chip apya-chip-${chipTone} apya-numeric">
                         ${hours} Saat
                     </div>
                 </div>
@@ -229,22 +215,22 @@ $(function () {
             var hours = (t.totalHours || 0).toFixed(1);
 
             body.append(`
-                <tr class="bg-white">
-                    <td class="fw-bold text-dark">
+                <tr>
+                    <td class="fw-bold">
                         <i class="fa fa-building text-info me-2"></i>${t.tenantName}
                     </td>
                     <td class="text-center">
                         <span class="apya-chip apya-chip-brand">${t.projectCount}</span>
                     </td>
-                    <td class="text-muted">${t.totalBudget.toLocaleString('tr-TR')} \u20BA</td>
-                    <td class="text-dark fw-bold">${t.totalSpent.toLocaleString('tr-TR')} \u20BA</td>
-                    <td class="fw-bold ${profitClass}">${profit.toLocaleString('tr-TR')} \u20BA</td>
+                    <td class="apya-numeric text-muted">${t.totalBudget.toLocaleString('tr-TR')} \u20BA</td>
+                    <td class="apya-numeric fw-bold">${t.totalSpent.toLocaleString('tr-TR')} \u20BA</td>
+                    <td class="apya-numeric fw-bold ${profitClass}">${profit.toLocaleString('tr-TR')} \u20BA</td>
                     <td class="text-center">
                         <span class="apya-chip apya-chip-${roiTone}">
                             %${roiPercent.toFixed(1)}
                         </span>
                     </td>
-                    <td><span class="badge bg-light text-dark border"><i class="fa fa-clock text-secondary me-1"></i>${hours} sa</span></td>
+                    <td><span class="apya-chip apya-chip-neutral"><i class="fa fa-clock me-1"></i>${hours} sa</span></td>
                 </tr>
             `);
         });

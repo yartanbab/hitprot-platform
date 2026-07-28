@@ -34,9 +34,12 @@
         {
             <div class="alert alert-info">
                 <strong>Aylık Kullanım:</strong> @Model.Current.TokensUsedThisMonth / @Model.Current.MonthlyTokenQuota token (kalan: @Model.Current.RemainingTokens)
-                <div class="progress mt-2" style="height: 20px;">
-                    <div class="progress-bar @(usagePct > 80 ? "bg-danger" : usagePct > 50 ? "bg-warning" : "bg-success")"
-                         role="progressbar" style="width: @usagePct%;">@usagePct%</div>
+                <div class="apya-tile-progress-label mt-2">
+                    <span>Kota kullanımı</span>
+                    <span class="apya-numeric">@usagePct%</span>
+                </div>
+                <div class="apya-mini-progress @(usagePct > 80 ? "is-negative" : usagePct > 50 ? "is-warning" : "is-positive")">
+                    <span style="width: @usagePct%;"></span>
                 </div>
                 <small class="text-muted">Dönem başlangıcı: @Model.Current.QuotaPeriodStart.ToString("yyyy-MM-dd")</small>
             </div>

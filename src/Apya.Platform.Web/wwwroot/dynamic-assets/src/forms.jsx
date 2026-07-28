@@ -11,6 +11,14 @@ const STATUS = {
 const fmtDate = (s) => { try { return new Date(s).toLocaleDateString('tr-TR'); } catch { return s; } };
 const abpAuth = (p) => window?.abp?.auth?.isGranted(p);
 
+/* Kategori rengi KULLANICI VERİSİDİR (renk seçiciyle belirlenir); yalnız
+   varsayılanı tasarım sisteminden okunur — sabit '#94a3b8'/'#4f46e5' yerine.
+   Runtime okuma: token dark temada değişir, yeni kategori rozeti de değişsin. */
+const token = (n, fb) =>
+  (getComputedStyle(document.documentElement).getPropertyValue(n) || '').trim() || fb;
+const FALLBACK_CAT_COLOR = () => token('--apya-neutral-400', '#9CA3AF');
+const DEFAULT_NEW_CAT_COLOR = () => token('--apya-accent-500', '#4F46E5');
+
 function FormsList() {
   const [forms, setForms] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -75,7 +83,7 @@ function FormsList() {
             key={c.id}
             onClick={() => setCategoryFilter(c.id)}
             className={`rounded-full px-3 py-1.5 text-xs font-semibold transition ${categoryFilter === c.id ? 'text-white' : 'text-text-secondary hover:opacity-80'}`}
-            style={categoryFilter === c.id ? { backgroundColor: c.color || '#4f46e5' } : { backgroundColor: `${c.color || '#94a3b8'}20` }}
+            style={categoryFilter === c.id ? { backgroundColor: c.color || DEFAULT_NEW_CAT_COLOR() } : { backgroundColor: `${c.color || FALLBACK_CAT_COLOR()}20` }}
           >{c.icon ? `${c.icon} ` : ''}{c.name}</button>
         ))}
         {canManageCategories && (
@@ -107,7 +115,7 @@ function FormsList() {
                 <span className={`shrink-0 rounded-full px-2.5 py-0.5 text-xs font-semibold ${STATUS[f.status]?.cls}`}>{STATUS[f.status]?.label}</span>
               </div>
               {cat && (
-                <span className="mb-2 inline-flex w-fit items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold" style={{ backgroundColor: `${cat.color || '#94a3b8'}20`, color: cat.color || '#475569' }}>
+                <span className="mb-2 inline-flex w-fit items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold" style={{ backgroundColor: `${cat.color || FALLBACK_CAT_COLOR()}20`, color: cat.color || 'var(--apya-text-secondary)' }}>
                   {cat.icon ? `${cat.icon} ` : ''}{cat.name}
                 </span>
               )}
@@ -146,7 +154,7 @@ function FormsList() {
 
 function CategoryManagerModal({ categories, onClose, onChanged }) {
   const [name, setName] = useState('');
-  const [color, setColor] = useState('#6366f1');
+  const [color, setColor] = useState(DEFAULT_NEW_CAT_COLOR());
   const [busy, setBusy] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [editName, setEditName] = useState('');
@@ -187,37 +195,37 @@ function CategoryManagerModal({ categories, onClose, onChanged }) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4" onClick={onClose}>
-      <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-surface-overlay p-4" onClick={onClose}>
+      <div className="w-full max-w-md rounded-2xl border border-default bg-surface-elevated p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-lg font-bold text-slate-800">Kategoriler</h2>
-          <button onClick={onClose} className="rounded p-1 text-slate-400 hover:bg-slate-100">✕</button>
+          <h2 className="text-lg font-bold text-text-primary">Kategoriler</h2>
+          <button onClick={onClose} className="rounded p-1 text-text-tertiary hover:bg-surface-sunken">✕</button>
         </div>
 
         <div className="flex max-h-64 flex-col gap-2 overflow-y-auto">
-          {categories.length === 0 && <p className="text-sm text-slate-400">Henüz kategori yok.</p>}
+          {categories.length === 0 && <p className="text-sm text-text-tertiary">Henüz kategori yok.</p>}
           {categories.map((c) => (
-            <div key={c.id} className="flex items-center gap-2 rounded-lg border border-slate-100 px-3 py-2">
-              <span className="h-3 w-3 shrink-0 rounded-full" style={{ backgroundColor: c.color || '#94a3b8' }} />
+            <div key={c.id} className="flex items-center gap-2 rounded-lg border border-subtle px-3 py-2">
+              <span className="h-3 w-3 shrink-0 rounded-full" style={{ backgroundColor: c.color || FALLBACK_CAT_COLOR() }} />
               {editingId === c.id ? (
-                <input autoFocus value={editName} onChange={(e) => setEditName(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && rename(c)} className="min-w-0 flex-1 rounded border border-slate-200 px-2 py-1 text-sm" />
+                <input autoFocus value={editName} onChange={(e) => setEditName(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && rename(c)} className="min-w-0 flex-1 rounded border border-default bg-surface-base px-2 py-1 text-sm text-text-primary" />
               ) : (
-                <span className="min-w-0 flex-1 truncate text-sm font-medium text-slate-700">{c.name}</span>
+                <span className="min-w-0 flex-1 truncate text-sm font-medium text-text-secondary">{c.name}</span>
               )}
               {editingId === c.id ? (
-                <button onClick={() => rename(c)} className="shrink-0 text-xs font-semibold text-indigo-600 hover:text-indigo-700">Kaydet</button>
+                <button onClick={() => rename(c)} className="shrink-0 text-xs font-semibold text-accent hover:text-accent-600">Kaydet</button>
               ) : (
-                <button onClick={() => { setEditingId(c.id); setEditName(c.name); }} className="shrink-0 text-xs text-slate-400 hover:text-slate-600">Düzenle</button>
+                <button onClick={() => { setEditingId(c.id); setEditName(c.name); }} className="shrink-0 text-xs text-text-tertiary hover:text-text-primary">Düzenle</button>
               )}
-              <button onClick={() => remove(c)} className="shrink-0 text-xs text-red-400 hover:text-red-600">Sil</button>
+              <button onClick={() => remove(c)} className="shrink-0 text-xs text-negative hover:opacity-80">Sil</button>
             </div>
           ))}
         </div>
 
-        <div className="mt-4 flex items-center gap-2 border-t border-slate-100 pt-4">
-          <input type="color" value={color} onChange={(e) => setColor(e.target.value)} className="h-9 w-9 shrink-0 cursor-pointer rounded border border-slate-200" />
-          <input value={name} onChange={(e) => setName(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && add()} placeholder="Yeni kategori adı…" className="min-w-0 flex-1 rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none" />
-          <button onClick={add} disabled={busy || !name.trim()} className="shrink-0 rounded-lg bg-indigo-600 px-3 py-2 text-sm font-bold text-white hover:bg-indigo-700 disabled:opacity-50">Ekle</button>
+        <div className="mt-4 flex items-center gap-2 border-t border-subtle pt-4">
+          <input type="color" value={color} onChange={(e) => setColor(e.target.value)} className="h-9 w-9 shrink-0 cursor-pointer rounded border border-default" />
+          <input value={name} onChange={(e) => setName(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && add()} placeholder="Yeni kategori adı…" className="min-w-0 flex-1 rounded-lg border border-default bg-surface-base px-3 py-2 text-sm text-text-primary focus:border-border-focus focus:outline-none" />
+          <button onClick={add} disabled={busy || !name.trim()} className="shrink-0 rounded-lg bg-accent px-3 py-2 text-sm font-bold text-white hover:bg-accent-600 disabled:opacity-50">Ekle</button>
         </div>
       </div>
     </div>

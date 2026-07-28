@@ -110,7 +110,7 @@ $(function () {
                 data: "packageCode",
                 render: function (data) {
                     var dic = { 1: 'Basic', 2: 'Standard', 3: 'Premium', 4: 'Enterprise' };
-                    return '<span class="badge bg-info text-dark">' + (dic[data] || '-') + '</span>';
+                    return '<span class="apya-chip apya-chip-brand">' + (dic[data] || '-') + '</span>';
                 }
             },
             {

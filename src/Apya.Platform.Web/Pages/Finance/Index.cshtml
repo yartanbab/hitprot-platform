@@ -28,11 +28,11 @@
         _ => "Nakit kasa"
     };
 
-    (string bg, string icon) TxVisual(IndexModel.TxType type, bool isInflow) => type switch
+    (string tone, string icon) TxVisual(IndexModel.TxType type, bool isInflow) => type switch
     {
-        IndexModel.TxType.Transfer => ("bg-primary-subtle text-primary", "fa-right-left"),
-        _ when isInflow => ("bg-success-subtle text-success", "fa-arrow-down-long"),
-        _ => ("bg-danger-subtle text-danger", "fa-arrow-up-long")
+        IndexModel.TxType.Transfer => ("kpi-icon-box--accent", "fa-right-left"),
+        _ when isInflow => ("kpi-icon-box--positive", "fa-arrow-down-long"),
+        _ => ("kpi-icon-box--negative", "fa-arrow-up-long")
     };
 }
 
@@ -66,7 +66,7 @@
                     @foreach (var a in Model.Accounts)
                     {
                         <div class="list-group-item d-flex align-items-center gap-3">
-                            <div class="kpi-icon-box bg-primary bg-opacity-10 text-primary" style="width:38px;height:38px;font-size:1rem;">
+                            <div class="kpi-icon-box kpi-icon-box--accent kpi-icon-box--sm">
                                 <i class="fa @TypeIcon(a.Type)" aria-hidden="true"></i>
                             </div>
                             <div class="flex-grow-1 min-w-0">
@@ -106,9 +106,9 @@
                 }
                 @foreach (var t in Model.Transactions)
                 {
-                    var (bg, icon) = TxVisual(t.Type, t.IsInflow);
+                    var (tone, icon) = TxVisual(t.Type, t.IsInflow);
                     <a href="@t.Url" class="list-group-item list-group-item-action d-flex align-items-center gap-3">
-                        <div class="kpi-icon-box @bg" style="width:38px;height:38px;font-size:0.95rem;">
+                        <div class="kpi-icon-box kpi-icon-box--sm @tone">
                             <i class="fa @icon" aria-hidden="true"></i>
                         </div>
                         <div class="flex-grow-1 min-w-0">

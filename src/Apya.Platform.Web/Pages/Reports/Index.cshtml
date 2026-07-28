@@ -10,7 +10,7 @@
     <!-- HEADER -->
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
-            <h2 class="fw-bold text-dark mb-0"><i class="fa fa-chart-pie text-primary me-2"></i> Yönetim & Raporlama Paneli</h2>
+            <h2 class="fw-bold mb-0"><i class="fa fa-chart-pie text-primary me-2"></i> Yönetim & Raporlama Paneli</h2>
             <p class="text-muted mt-1 mb-0">Platform genelindeki efor, maliyet ve Ar-Ge metrikleri</p>
         </div>
         <div>
@@ -23,13 +23,13 @@
     <!-- KPI CARDS -->
     <abp-row class="g-3 mb-4">
         <abp-column size-md="_3">
-            <partial name="_KpiCard" model='new KpiCardModel { Icon = "fa-project-diagram", Accent = "primary", Label = "Aktif Projeler", ValueId = "KpiTotalProjects", Value = "0" }' />
+            <partial name="_KpiCard" model='new KpiCardModel { Icon = "fa-project-diagram", Accent = "accent", Label = "Aktif Projeler", ValueId = "KpiTotalProjects", Value = "0" }' />
         </abp-column>
         <abp-column size-md="_3">
-            <partial name="_KpiCard" model='new KpiCardModel { Icon = "fa-clock", Accent = "success", Label = "Toplam Harcanan Efor", ValueId = "KpiTotalHours", Value = "0s" }' />
+            <partial name="_KpiCard" model='new KpiCardModel { Icon = "fa-clock", Accent = "positive", Label = "Toplam Harcanan Efor", ValueId = "KpiTotalHours", Value = "0s" }' />
         </abp-column>
         <abp-column size-md="_3">
-            <partial name="_KpiCard" model='new KpiCardModel { Icon = "fa-wallet", Accent = "danger", Label = "Toplam Bütçe Kullanımı", ValueId = "KpiTotalBudget", Value = "0 ₺" }' />
+            <partial name="_KpiCard" model='new KpiCardModel { Icon = "fa-wallet", Accent = "negative", Label = "Toplam Bütçe Kullanımı", ValueId = "KpiTotalBudget", Value = "0 ₺" }' />
         </abp-column>
         <abp-column size-md="_3">
             <partial name="_KpiCard" model='new KpiCardModel { Icon = "fa-robot", Accent = "warning", Label = "Ar-Ge Uyum Puanı (AI)", Value = "%84", SubText = "(Hibe projelerindeki sapma)" }' />
@@ -40,8 +40,8 @@
     <abp-row class="mb-4">
         <abp-column size-md="_6">
             <div class="card h-100">
-                <div class="card-header bg-white border-0 pt-3 pb-0">
-                    <h5 class="fw-bold mb-0 text-dark">Bütçe ve Finansal Sapma</h5>
+                <div class="card-header border-0 pt-3 pb-0">
+                    <h5 class="fw-bold mb-0">Bütçe ve Finansal Sapma</h5>
                 </div>
                 <div class="card-body" style="position: relative; height: 300px; width: 100%;">
                     <canvas id="budgetChart"></canvas>
@@ -50,8 +50,8 @@
         </abp-column>
         <abp-column size-md="_6">
             <div class="card h-100">
-                <div class="card-header bg-white border-0 pt-3 pb-0">
-                    <h5 class="fw-bold mb-0 text-dark">Personel Bazlı Efor Yükü</h5>
+                <div class="card-header border-0 pt-3 pb-0">
+                    <h5 class="fw-bold mb-0">Personel Bazlı Efor Yükü</h5>
                 </div>
                 <div class="card-body" style="position: relative; height: 300px; width: 100%;">
                     <canvas id="efficiencyChart"></canvas>
@@ -64,16 +64,16 @@
     <abp-row>
         <abp-column size-md="_8">
             <div class="card">
-                <div class="card-header bg-white border-bottom-0 pb-0">
-                    <h5 class="fw-bold mb-0 text-dark">Proje Bazlı Kapsamlı Analiz</h5>
+                <div class="card-header border-bottom-0 pb-0">
+                    <h5 class="fw-bold mb-0">Proje Bazlı Kapsamlı Analiz</h5>
                 </div>
                 <div class="card-body">
                     <abp-table striped-rows="true" class="mb-0 table-hover align-middle border" id="DetailedReportTable">
-                        <thead class="bg-light text-muted">
+                        <thead>
                             <tr>
                                 <th class="border-0">Proje Adı</th>
-                                <th class="border-0">Toplam Bütçe</th>
-                                <th class="border-0">Harcanan</th>
+                                <th class="border-0 apya-numeric">Toplam Bütçe</th>
+                                <th class="border-0 apya-numeric">Harcanan</th>
                                 <th class="border-0 text-center">Bütçe Doluluğu</th>
                                 <th class="border-0">Efor &amp; Durum</th>
                             </tr>
@@ -86,8 +86,8 @@
         </abp-column>
         <abp-column size-md="_4">
             <div class="card h-100">
-                <div class="card-header bg-white border-bottom-0 pb-0">
-                    <h5 class="fw-bold mb-0 text-dark">PDKS / Personel Özeti</h5>
+                <div class="card-header border-bottom-0 pb-0">
+                    <h5 class="fw-bold mb-0">PDKS / Personel Özeti</h5>
                 </div>
                 <div class="card-body">
                     <div id="personnelSummaryList" class="list-group list-group-flush mt-2"></div>
@@ -100,24 +100,24 @@
     <abp-row class="mt-4">
         <abp-column size-md="_12">
             <div class="card">
-                <div class="card-header bg-white border-bottom-0 pb-0 d-flex align-items-center">
-                    <div class="kpi-icon-box bg-info bg-opacity-10 text-info me-3" style="width:40px;height:40px;font-size:1.1rem;">
+                <div class="card-header border-bottom-0 pb-0 d-flex align-items-center">
+                    <div class="kpi-icon-box kpi-icon-box--brand kpi-icon-box--sm me-3">
                         <i class="fa fa-building"></i>
                     </div>
                     <div>
-                        <h5 class="fw-bold mb-0 text-dark">Müşteri ROI Analizi</h5>
+                        <h5 class="fw-bold mb-0">Müşteri ROI Analizi</h5>
                         <small class="text-muted">Tenant bazında kârlılık ve efor karşılaştırması</small>
                     </div>
                 </div>
                 <div class="card-body">
                     <abp-table striped-rows="true" class="mb-0 table-hover align-middle border" id="TenantRoiTable">
-                        <thead class="bg-light text-muted">
+                        <thead>
                             <tr>
                                 <th class="border-0">Müşteri</th>
                                 <th class="border-0 text-center">Proje Sayısı</th>
-                                <th class="border-0">Toplam Bütçe</th>
-                                <th class="border-0">Harcanan</th>
-                                <th class="border-0">Kâr</th>
+                                <th class="border-0 apya-numeric">Toplam Bütçe</th>
+                                <th class="border-0 apya-numeric">Harcanan</th>
+                                <th class="border-0 apya-numeric">Kâr</th>
                                 <th class="border-0 text-center">ROI %</th>
                                 <th class="border-0">Toplam Efor</th>
                             </tr>
@@ -136,5 +136,6 @@
 
 @section scripts {
     <script src="~/js/chart.umd.min.js"></script>
+    <abp-script src="/js/apya-chart-theme.js" />
     <abp-script src="/Pages/Reports/index.js" />
 }
