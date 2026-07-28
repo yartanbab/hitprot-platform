@@ -1333,3 +1333,39 @@ i.apya-priority-dot {
 @media (max-width: 900px) {
     .apya-view-toggle--header { display: none; }
 }
+
+/* ----------------------------------------------------------------------------
+   19) SAYFA BAŞLIK SATIRI — sol: başlık + açıklama, sağ: sayaç/arama/aksiyon.
+   Izgara sayfalarında araç çubuğu ayrı bir satırdaydı (.apya-grid-toolbar);
+   başlıkla aynı satıra alınınca bir satır dikey alan kazanılıyor ve aksiyon
+   göz hizasına çıkıyor. Dar ekranda alt alta sarar.
+   ---------------------------------------------------------------------------- */
+.apya-page-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: var(--apya-space-3);
+}
+.apya-page-head-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin-left: auto;
+}
+.apya-page-head-actions .apya-grid-search {
+    max-width: 260px;
+}
+/* Dar ekran: aksiyon grubu tam genişliğe düşsün, arama esnesin. */
+@media (max-width: 575.98px) {
+    .apya-page-head-actions {
+        width: 100%;
+        margin-left: 0;
+    }
+    .apya-page-head-actions .apya-grid-search {
+        flex: 1 1 auto;
+        max-width: none;
+    }
+}
