@@ -7,9 +7,12 @@
 @inject IHtmlLocalizer<PlatformResource> L
 @using Apya.Platform.Web.Pages.Tasks
 @model IndexModel
+@{
+    ViewBag.Title = "Görevler";
+}
 
 
-<div class="apya-page">
+<div data-page-description="Tüm projelerdeki görevler" class="apya-page">
 
 @* ─── Görev Yönetimi ─── *@
 <abp-card class="apya-tasks-card">
@@ -222,4 +225,3 @@
     }
     .heartbeat-animation { animation: heartbeat 1.5s infinite; }
 </style>
-

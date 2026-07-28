@@ -7,3 +7,18 @@
     <span class="apya-command-palette-trigger-text">Ara veya komut çalıştır</span>
     <span class="apya-command-palette-trigger-kbd">Ctrl K</span>
 </button>
+@* Kısayol rozeti platforma göre: macOS'ta ⌘K, diğerlerinde Ctrl K. Sunucu
+   platformu bilemez → varsayılan Ctrl K basılır, aşağıdaki senkron script
+   ilk paint'ten önce macOS'ta düzeltir. command-palette.js'in tuş dinleyicisi
+   zaten aynı ayrımı yapıyor (isMac ? metaKey : ctrlKey) — burada yalnız
+   ETİKET hizalanıyor, davranış değişmiyor. *@
+<script>
+    (function () {
+        if (!/Mac|iPod|iPhone|iPad/.test(navigator.platform)) { return; }
+        var btn = document.getElementById('ApyaCommandPaletteTrigger');
+        if (!btn) { return; }
+        var kbd = btn.querySelector('.apya-command-palette-trigger-kbd');
+        if (kbd) { kbd.textContent = '⌘K'; }
+        btn.title = 'Ara veya komut çalıştır (⌘K)';
+    })();
+</script>

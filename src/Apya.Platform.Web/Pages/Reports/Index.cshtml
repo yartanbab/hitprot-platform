@@ -4,8 +4,11 @@
 @using Apya.Platform.Web.Pages.Shared
 @using Microsoft.AspNetCore.Mvc.Localization
 @inject IHtmlLocalizer<Apya.Platform.Localization.PlatformResource> L
+@{
+    ViewBag.Title = "Yönetim & Raporlama";
+}
 
-<div id="ReportsContainer" class="apya-page pb-5">
+<div id="ReportsContainer" data-page-description="Efor, maliyet ve Ar-Ge metrikleri" class="apya-page pb-5">
 
     <!-- HEADER -->
     <div class="d-flex justify-content-between align-items-center mb-4">

@@ -3,8 +3,11 @@
 @using Apya.Platform.Permissions
 @using Microsoft.AspNetCore.Authorization
 @inject IAuthorizationService AuthorizationService
+@{
+    ViewBag.Title = "Faturalar";
+}
 
-<div class="apya-page">
+<div data-page-description="Satış ve alış faturaları" class="apya-page">
     <div class="d-flex align-items-start justify-content-between flex-wrap gap-2 mb-3">
         <div>
             <h1 class="h5 mb-1"><i class="fa fa-file-invoice-dollar me-2" aria-hidden="true"></i>Faturalar</h1>

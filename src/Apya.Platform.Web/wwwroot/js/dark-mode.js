@@ -28,21 +28,26 @@ $(function () {
             sp.textContent = pt;
             bc.appendChild(sp);
 
-            // Alt satır: tenant adı (host'ta "Host") · ay/yıl — hedef tasarımdaki
-            // "Hitprot A.Ş. · Temmuz 2026" deseni.
-            var subtitleParts = [];
-            if (window.abp && abp.currentTenant) {
-                subtitleParts.push(abp.currentTenant.isAvailable && abp.currentTenant.name ? abp.currentTenant.name : 'Host');
-            }
-            try {
-                subtitleParts.push(new Intl.DateTimeFormat('tr-TR', { month: 'long', year: 'numeric' }).format(new Date()));
-            } catch (e4) { /* Intl yoksa sessiz geç */ }
-            if (subtitleParts.length) {
-                var subSp = document.createElement('span');
-                subSp.className = 'apya-page-subtitle';
-                subSp.textContent = subtitleParts.join(' · ');
-                bc.appendChild(subSp);
-            }
+            // Alt satır: SAYFA AÇIKLAMASI — hedef tasarımdaki
+            // "Tüm projelerdeki görevler · tablo görünümü" deseni.
+            // Kaynak: sayfa konteynerindeki data-page-description (bkz. .apya-page
+            // sarmalayıcıları). Yeni altyapı yok; öznitelik yoksa satır basılmaz.
+            // Önceki hali "tenant · ay/yıl" idi; tenant artık header'daki kendi
+            // rozetinde görünüyor, tarih bilgi değeri taşımıyordu.
+            var descEl = document.querySelector('[data-page-description]');
+            var desc = descEl ? (descEl.getAttribute('data-page-description') || '').trim() : '';
+            var subSp = document.createElement('span');
+            subSp.className = 'apya-page-subtitle';
+            subSp.textContent = desc;
+            bc.appendChild(subSp);
+
+            // Görünüm modu eki (" · tablo görünümü") — sayfada görünüm seçici varsa
+            // header'a taşıyan kod (apya-header-views.js) buradan güncelliyor.
+            window.apyaHeader = window.apyaHeader || {};
+            window.apyaHeader.setViewLabel = function (label) {
+                subSp.textContent = desc && label ? (desc + ' · ' + label)
+                                  : (label || desc);
+            };
         }
         // apya-theme-bridge.css "html.js .lpx-breadcrumb-container" ile gizlenmişti
         // (ham LeptonX breadcrumb'ı flaşlamasın diye) — pt boş olsa bile burada aç.
