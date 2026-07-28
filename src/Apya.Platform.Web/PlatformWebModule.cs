@@ -285,6 +285,8 @@ public class PlatformWebModule : AbpModule
                     bundle.AddFiles("/js/sidebar-toggle.js");
                     bundle.AddFiles("/js/density-toggle.js");
                     bundle.AddFiles("/js/command-palette.js");
+                    // dark-mode.js'ten SONRA gelmeli: window.apyaHeader.setViewLabel'ı kullanıyor.
+                    bundle.AddFiles("/js/apya-header-views.js");
                     bundle.AddFiles("/js/ai-hub-client.js");
                     bundle.AddFiles("/js/ajax-error-detail.js");
                 }

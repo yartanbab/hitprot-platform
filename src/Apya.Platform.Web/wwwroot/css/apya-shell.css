@@ -1286,3 +1286,50 @@ i.apya-priority-dot {
     padding-right: 12px;
 }
 .apya-clean-table tbody tr:hover td { background: var(--apya-surface-raised) !important; }
+
+/* ----------------------------------------------------------------------------
+   18) GÖRÜNÜM MODU SEGMENTİ — hedef tasarımda header'da, arama pilinin sağında.
+   Sayfa kendi segmentini basar (Tasks/Index.cshtml), apya-header-views.js DOM
+   düğümünü header'a TAŞIR (yeniden üretmez → sayfanın handler'ları korunur).
+   Sayfa içinde de kullanılabilir; `--header` varyantı yalnız ölçüyü küçültür.
+   ---------------------------------------------------------------------------- */
+.apya-view-toggle {
+    display: inline-flex;
+    border: 1px solid var(--apya-border-default);
+    border-radius: var(--apya-radius-full);
+    padding: 3px;
+    background: var(--apya-surface-sunken);
+    gap: 2px;
+}
+.apya-view-toggle .btn {
+    border: none;
+    border-radius: var(--apya-radius-full) !important;
+    background: transparent;
+    color: var(--apya-text-secondary);
+    font-weight: var(--apya-weight-semibold);
+    font-size: 13px;
+    padding: 6px 18px;
+}
+.apya-view-toggle .btn.active {
+    background: var(--apya-surface-base);
+    color: var(--apya-text-primary);
+    box-shadow: var(--apya-shadow-sm);
+}
+.apya-view-toggle .btn:hover:not(.active) {
+    color: var(--apya-text-primary);
+}
+
+/* Header varyantı — metin yerine ikon (JS dönüştürür), kompakt ölçü. */
+.apya-view-toggle--header {
+    margin: 0 4px;
+}
+.apya-view-toggle--header .btn {
+    padding: 4px 12px;
+    font-size: 13px;
+    line-height: 1;
+}
+/* Dar viewport'ta header zaten kalabalık — segment gizlenir; sayfa içindeki
+   işlev kaybolmaz çünkü butonlar hâlâ DOM'da (yalnız görünmez). */
+@media (max-width: 900px) {
+    .apya-view-toggle--header { display: none; }
+}

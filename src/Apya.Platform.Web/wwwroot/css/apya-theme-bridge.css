@@ -955,6 +955,8 @@ html.js .lpx-breadcrumb-container {
    etmek yerine (CommandPalette/ThemeToggle deseninde olduğu gibi) yalnızca
    GÖRSEL sırayı flex order ile değiştiriyoruz; DOM/contributor sırası aynı kalır. */
 .lpx-topbar-content > .apya-command-palette-trigger { order: 10; }
+.lpx-topbar-content > .apya-view-toggle--header { order: 20; }
+.lpx-topbar-content > .apya-tenant-switch { order: 30; }
 .lpx-topbar-content > .lpx-language-selection { order: 90; }
 .lpx-topbar-content > .apya-theme-toggle { order: 91; }
 .lpx-topbar-content > .apya-density-toggle { order: 92; }
