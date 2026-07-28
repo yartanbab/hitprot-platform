@@ -15,16 +15,16 @@
 
 <div class="row g-3 mb-4">
     <div class="col-md-3">
-        <partial name="_KpiCard" model='new KpiCardModel { Icon = "fa-clipboard-check", Accent = "primary", Label = "Toplam Değerlendirme", Value = d.TotalEvaluations.ToString() }' />
+        <partial name="_KpiCard" model='new KpiCardModel { Icon = "fa-clipboard-check", Accent = "accent", Label = "Toplam Değerlendirme", Value = d.TotalEvaluations.ToString() }' />
     </div>
     <div class="col-md-3">
         <partial name="_KpiCard" model='new KpiCardModel { Icon = "fa-star", Accent = "warning", Label = "Ortalama Skor", Value = d.AverageScore.HasValue ? d.AverageScore.Value.ToString("0.0") : "—", SubText = $"{d.ScoredCount} skorlu sonuç" }' />
     </div>
     <div class="col-md-3">
-        <partial name="_KpiCard" model='new KpiCardModel { Icon = "fa-list-check", Accent = "success", Label = "Tamamlanan / Başarısız", ValueHtml = new HtmlString($"<span class=\"text-success\">{d.Completed}</span> / <span class=\"text-danger\">{d.Failed}</span>") }' />
+        <partial name="_KpiCard" model='new KpiCardModel { Icon = "fa-list-check", Accent = "positive", Label = "Tamamlanan / Başarısız", ValueHtml = new HtmlString($"<span class=\"text-success\">{d.Completed}</span> / <span class=\"text-danger\">{d.Failed}</span>") }' />
     </div>
     <div class="col-md-3">
-        <partial name="_KpiCard" model='new KpiCardModel { Icon = "fa-diagram-project", Accent = "info", Label = "Prompt / Sağlayıcı / Aktif Akış", Value = $"{d.PromptCount} / {d.ProviderCount} / {d.ActiveWorkflowCount}" }' />
+        <partial name="_KpiCard" model='new KpiCardModel { Icon = "fa-diagram-project", Accent = "brand", Label = "Prompt / Sağlayıcı / Aktif Akış", Value = $"{d.PromptCount} / {d.ProviderCount} / {d.ActiveWorkflowCount}" }' />
     </div>
 </div>
 
@@ -58,37 +58,54 @@
 
 @section scripts {
     <script src="~/js/chart.umd.min.js"></script>
+    <abp-script src="/js/apya-chart-theme.js" />
     <script>
         (function () {
-            var s = document.getElementById('statusChart');
-            if (s && window.Chart) {
-                new Chart(s, {
-                    type: 'doughnut',
-                    data: {
-                        labels: ['Tamamlandı', 'İşleniyor', 'Bekliyor', 'Başarısız'],
-                        datasets: [{
-                            data: [@d.Completed, @d.Processing, @d.Pending, @d.Failed],
-                            backgroundColor: ['#198754', '#0dcaf0', '#ffc107', '#dc3545']
-                        }]
-                    },
-                    options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
-                });
+            var statusChart = null, riskChart = null;
+
+            function build() {
+                var s = document.getElementById('statusChart');
+                if (s && window.Chart) {
+                    statusChart = new Chart(s, apyaChart.options({
+                        type: 'doughnut',
+                        data: {
+                            labels: ['Tamamlandı', 'İşleniyor', 'Bekliyor', 'Başarısız'],
+                            datasets: [{
+                                data: [@d.Completed, @d.Processing, @d.Pending, @d.Failed],
+                                // Durum renkleri anlamsal: tamam=pozitif, işleniyor=marka,
+                                // bekliyor=uyarı, başarısız=negatif (paletin sırası değil).
+                                backgroundColor: [
+                                    apyaChart.tone('positive'),
+                                    apyaChart.tone('brand'),
+                                    apyaChart.tone('warning'),
+                                    apyaChart.tone('negative')
+                                ]
+                            }]
+                        }
+                    }));
+                }
+                var r = document.getElementById('riskChart');
+                if (r && window.Chart) {
+                    riskChart = new Chart(r, apyaChart.options({
+                        type: 'bar',
+                        data: {
+                            labels: @Html.Raw(riskLabels),
+                            datasets: [{ label: 'Sayı', data: @Html.Raw(riskCounts), backgroundColor: apyaChart.tone('ai') }]
+                        },
+                        options: {
+                            plugins: { legend: { display: false } },
+                            scales: { y: { ticks: { precision: 0 } } }
+                        }
+                    }));
+                }
             }
-            var r = document.getElementById('riskChart');
-            if (r && window.Chart) {
-                new Chart(r, {
-                    type: 'bar',
-                    data: {
-                        labels: @Html.Raw(riskLabels),
-                        datasets: [{ label: 'Sayı', data: @Html.Raw(riskCounts), backgroundColor: '#0d6efd' }]
-                    },
-                    options: {
-                        responsive: true,
-                        plugins: { legend: { display: false } },
-                        scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
-                    }
-                });
-            }
+
+            build();
+            apyaChart.onThemeChange(function () {
+                if (statusChart) { statusChart.destroy(); }
+                if (riskChart) { riskChart.destroy(); }
+                build();
+            });
         })();
     </script>
 }

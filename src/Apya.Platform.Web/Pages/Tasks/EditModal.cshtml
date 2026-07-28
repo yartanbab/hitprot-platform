@@ -12,7 +12,7 @@
 <abp-modal size="ExtraLarge">
     <abp-modal-header title="🚀 Görev Paneli: @Model.Task.Title"></abp-modal-header>
 
-    <abp-modal-body class="p-0 bg-light">
+    <abp-modal-body class="p-0">
         
         @* ZAMAN TAKİBİ (Kronometre / Süreyi Başlat) banner'ı kullanıcı isteğiyle KALDIRILDI (2026-06-09).
            İlgili timer JS'i (refreshTimerState / BtnStartTimer / BtnStopTimer) DOM'da karşılığı olmadığı
@@ -39,7 +39,7 @@
             </button>
         </div>
 
-        <div class="tab-content px-4 py-3 bg-white border-top" id="taskTabsContent_@Model.Id">
+        <div class="tab-content px-4 py-3 border-top" id="taskTabsContent_@Model.Id">
             <div class="tab-pane fade show active" id="details_@Model.Id" role="tabpanel">
                     <abp-input asp-for="Id" type="hidden" class="task-id-input" />
                     <abp-input asp-for="Task.ProjectId" type="hidden" />
@@ -166,7 +166,7 @@
                     {
                     @foreach (var file in Model.Attachments)
                         {
-                    <li class="list-group-item d-flex justify-content-between align-items-center bg-light border-0 mb-2 rounded-3">
+                    <li class="list-group-item apya-comment d-flex justify-content-between align-items-center">
                         <div>
                             <i class="fa fa-file-alt text-info fs-4 me-3"></i>
                             <a href="@file.DownloadUrl" target="_blank" class="text-decoration-none fw-bold fs-6">@file.FileName</a>
@@ -356,7 +356,7 @@
                 {
                 @foreach (var comment in Model.Comments)
                     {
-                <div class="list-group-item bg-light border-0 mb-2 rounded-3 comment-item" data-comment-id="@comment.Id">
+                <div class="list-group-item apya-comment comment-item" data-comment-id="@comment.Id">
                     <div class="d-flex w-100 justify-content-between mb-2">
                         <h6 class="mb-1 fw-bold text-primary"><i class="fa fa-user-circle me-1"></i> @comment.AuthorName</h6>
                         <div class="d-flex align-items-center gap-2">
@@ -368,16 +368,16 @@
                             }
                         </div>
                     </div>
-                    <p class="mb-1 text-dark comment-text">@comment.Text</p>
+                    <p class="mb-1 comment-text">@comment.Text</p>
                     <button type="button" class="btn btn-sm btn-link text-secondary p-0 comment-reply-btn"><i class="fa fa-reply me-1"></i>Yanıtla</button>
                     <div class="comment-replies ms-4 mt-2 ps-2 border-start">
                         @foreach (var reply in comment.Replies)
                         {
-                        <div class="list-group-item bg-white border-0 mb-1 rounded-3 comment-item reply-item py-2" data-comment-id="@reply.Id">
+                        <div class="list-group-item apya-comment apya-comment--reply comment-item reply-item" data-comment-id="@reply.Id">
                             <div class="d-flex w-100 justify-content-between mb-1">
-                                <h6 class="mb-0 fw-bold text-secondary" style="font-size:0.85rem;"><i class="fa fa-reply fa-flip-horizontal me-1"></i> @reply.AuthorName</h6>
+                                <h6 class="mb-0 fw-bold text-secondary"><i class="fa fa-reply fa-flip-horizontal me-1"></i> @reply.AuthorName</h6>
                                 <div class="d-flex align-items-center gap-2">
-                                    <small class="text-muted" style="font-size:0.7rem;">@reply.CreationTime.ToShortDateString() @reply.CreationTime.ToShortTimeString()</small>
+                                    <small class="text-muted">@reply.CreationTime.ToShortDateString() @reply.CreationTime.ToShortTimeString()</small>
                                     @if (reply.IsOwn)
                                     {
                                         <button type="button" class="btn btn-sm btn-link text-secondary p-0 comment-edit-btn" title="Düzenle"><i class="fa fa-pen"></i></button>
@@ -385,7 +385,7 @@
                                     }
                                 </div>
                             </div>
-                            <p class="mb-0 text-dark comment-text" style="font-size:0.9rem;">@reply.Text</p>
+                            <p class="mb-0 comment-text">@reply.Text</p>
                         </div>
                         }
                     </div>
@@ -443,7 +443,7 @@
                 // handler'ları (aşağıda) yeni satırda da çalışır. (disabled YOK.)
                 var newId = result && result.id ? result.id : '';
                 var $row = $(
-                    '<div class="list-group-item list-group-item-action d-flex justify-content-between align-items-center p-3 bg-light border-warning">' +
+                    '<div class="list-group-item list-group-item-action apya-comment d-flex justify-content-between align-items-center">' +
                         '<div>' +
                             '<i class="fa fa-circle-o text-secondary me-2"></i>' +
                             '<strong class="js-subtask-title"></strong>' +
@@ -486,7 +486,7 @@
             showCancelButton: true,
             confirmButtonText: '<i class="fa fa-trash"></i> Evet, Sil!',
             cancelButtonText: 'İptal',
-            confirmButtonColor: '#dc3545',
+            confirmButtonColor: getComputedStyle(document.documentElement).getPropertyValue('--apya-negative-500').trim(),
             preConfirm: function (inputValue) {
                 if (inputValue !== 'SİL') {
                     Swal.showValidationMessage('Silme işlemini onaylamak için tam olarak "SİL" yazmalısınız.');
@@ -525,7 +525,7 @@
                 var now = new Date().toLocaleString();
                 var newId = result && result.id ? result.id : '';
                 // Yeni yorum her zaman "own" → düzenle/sil butonlu, gerçek data-comment-id ile.
-                var $item = $('<div class="list-group-item bg-light border-success mb-2 rounded-3 comment-item" data-comment-id="' + newId + '">' +
+                var $item = $('<div class="list-group-item apya-comment apya-comment--new comment-item" data-comment-id="' + newId + '">' +
                     '<div class="d-flex w-100 justify-content-between mb-2">' +
                         '<h6 class="mb-1 fw-bold text-success"><i class="fa fa-user-circle me-1"></i> Siz (Az önce)</h6>' +
                         '<div class="d-flex align-items-center gap-2">' +
@@ -534,7 +534,7 @@
                             '<button type="button" class="btn btn-sm btn-link text-danger p-0 comment-delete-btn" title="Sil"><i class="fa fa-trash"></i></button>' +
                         '</div>' +
                     '</div>' +
-                    '<p class="mb-1 text-dark comment-text"></p>' +
+                    '<p class="mb-1 comment-text"></p>' +
                     '<button type="button" class="btn btn-sm btn-link text-secondary p-0 comment-reply-btn"><i class="fa fa-reply me-1"></i>Yanıtla</button>' +
                     '<div class="comment-replies ms-4 mt-2 ps-2 border-start"></div>' +
                 '</div>');
@@ -593,16 +593,16 @@
 
     // --- YORUMA YANIT (Instagram tarzı, tek seviye) ---
     function buildReplyRow(id, author, text) {
-        var $r = $('<div class="list-group-item bg-white border-0 mb-1 rounded-3 comment-item reply-item py-2" data-comment-id="' + id + '">' +
+        var $r = $('<div class="list-group-item apya-comment apya-comment--reply comment-item reply-item" data-comment-id="' + id + '">' +
             '<div class="d-flex w-100 justify-content-between mb-1">' +
-                '<h6 class="mb-0 fw-bold text-secondary js-reply-author" style="font-size:0.85rem;"><i class="fa fa-reply fa-flip-horizontal me-1"></i> </h6>' +
+                '<h6 class="mb-0 fw-bold text-secondary js-reply-author"><i class="fa fa-reply fa-flip-horizontal me-1"></i> </h6>' +
                 '<div class="d-flex align-items-center gap-2">' +
-                    '<small class="text-muted" style="font-size:0.7rem;">' + new Date().toLocaleString() + '</small>' +
+                    '<small class="text-muted">' + new Date().toLocaleString() + '</small>' +
                     '<button type="button" class="btn btn-sm btn-link text-secondary p-0 comment-edit-btn" title="Düzenle"><i class="fa fa-pen"></i></button>' +
                     '<button type="button" class="btn btn-sm btn-link text-danger p-0 comment-delete-btn" title="Sil"><i class="fa fa-trash"></i></button>' +
                 '</div>' +
             '</div>' +
-            '<p class="mb-0 text-dark comment-text" style="font-size:0.9rem;"></p>' +
+            '<p class="mb-0 comment-text"></p>' +
         '</div>');
         $r.find('.js-reply-author').append(document.createTextNode(author || 'Siz'));
         $r.children('.comment-text').text(text); // HTML enjeksiyonunu önle
@@ -666,7 +666,7 @@
                 if (result.success) {
                     abp.notify.success('Dosya yüklendi!');
                     $('.no-file-text').remove();
-                    $('#FileList').prepend('<li class="list-group-item d-flex justify-content-between align-items-center bg-light border-info mb-2 rounded-3"><div><i class="fa fa-file-alt text-info fs-4 me-3"></i><a href="/file/get/' + result.storedFileName + '" target="_blank" class="text-decoration-none fw-bold fs-6">' + file.name + '</a><small class="text-muted ms-3">Şimdi yüklendi</small></div><span class="apya-chip apya-chip-positive">Yeni</span></li>');
+                    $('#FileList').prepend('<li class="list-group-item apya-comment d-flex justify-content-between align-items-center"><div><i class="fa fa-file-alt text-info fs-4 me-3"></i><a href="/file/get/' + result.storedFileName + '" target="_blank" class="text-decoration-none fw-bold fs-6">' + file.name + '</a><small class="text-muted ms-3">Şimdi yüklendi</small></div><span class="apya-chip apya-chip-positive">Yeni</span></li>');
                     fileInput.value = '';
                 } else {
                     abp.notify.error('Dosya yüklenirken hata oluştu: ' + result.error);

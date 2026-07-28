@@ -1,14 +1,14 @@
 @*
     Ortak KPI kartı (tek kaynak) — gösterge sayfalarındaki metrik kartları.
     Kullanım:
-      <partial name="_KpiCard" model='new KpiCardModel { Icon = "fa-clock", Accent = "success", Label = "Toplam Efor", ValueId = "KpiTotalHours", Value = "0s" }' />
+      <partial name="_KpiCard" model='new KpiCardModel { Icon = "fa-clock", Accent = "positive", Label = "Toplam Efor", ValueId = "KpiTotalHours", Value = "0s" }' />
     Kart çerçevesi (radius/gölge) apya-theme-bridge'in .card kuralından gelir.
 *@
 @model Apya.Platform.Web.Pages.Shared.KpiCardModel
 
 <div class="card h-100">
     <div class="card-body d-flex align-items-center">
-        <div class="kpi-icon-box bg-@Model.Accent bg-opacity-10 text-@Model.Accent me-3">
+        <div class="kpi-icon-box kpi-icon-box--@Model.Tone me-3">
             <i class="fa @Model.Icon"></i>
         </div>
         <div class="kpi-card-text">

@@ -4,19 +4,19 @@
         <i class="fa fa-bell"></i>
         @if (Model > 0)
         {
-            <span id="notification-unread-badge" class="badge rounded-pill bg-danger border border-light position-absolute top-0 start-100 translate-middle">
+            <span id="notification-unread-badge" class="badge rounded-pill position-absolute top-0 start-100 translate-middle">
                 @(Model > 99 ? "99+" : Model)
             </span>
         }
         else 
         {
-            <span id="notification-unread-badge" class="badge rounded-pill bg-danger border border-light position-absolute top-0 start-100 translate-middle d-none">
+            <span id="notification-unread-badge" class="badge rounded-pill position-absolute top-0 start-100 translate-middle d-none">
                 0
             </span>
         }
     </a>
     <ul id="notification-list" class="dropdown-menu dropdown-menu-end p-0 shadow-lg" aria-labelledby="notificationDropdown" style="min-width: 320px; max-height: 400px; overflow-y: auto;">
-        <li class="p-3 border-bottom bg-light d-flex justify-content-between align-items-center">
+        <li class="p-3 border-bottom apya-notif-panel-bar d-flex justify-content-between align-items-center">
             <h6 class="mb-0">Bildirimler</h6>
             <a href="#" id="mark-all-as-read" class="text-xs text-primary">Tümünü Oku</a>
         </li>
@@ -26,8 +26,8 @@
                 <div class="spinner-border spinner-border-sm text-secondary" role="status"></div>
             </div>
         </li>
-        <li class="p-2 border-top text-center bg-light">
-            <a href="/Notifications" class="text-sm fw-bold text-dark">Tümünü Gör</a>
+        <li class="p-2 border-top text-center apya-notif-panel-bar">
+            <a href="/Notifications" class="text-sm fw-bold">Tümünü Gör</a>
         </li>
     </ul>
 </div>
@@ -41,5 +41,16 @@
     .notification-item.unread { background-color: var(--apya-warning-50); border-left: 3px solid var(--apya-warning-500); }
     .notification-text { font-size: 0.85rem; }
     .notification-time { font-size: 0.75rem; color: var(--apya-text-tertiary); }
-    #notification-unread-badge { padding: 0.25em 0.4em; font-size: 0.6rem; margin-top: 5px; margin-right: 5px; }
+    /* Rozet: `bg-danger border-light` yerine token — apya-theme-bridge nokta
+       boyutuna (8px) indiriyor, kenarlık header zemininden ayırıyor. */
+    #notification-unread-badge {
+        padding: 0.25em 0.4em; font-size: 0.6rem; margin-top: 5px; margin-right: 5px;
+        background-color: var(--apya-negative-500);
+        border: 1px solid var(--apya-surface-header);
+    }
+    /* Panel başlık/alt çubuğu — `bg-light` + `text-dark` yerine token yüzeyi. */
+    .apya-notif-panel-bar { background-color: var(--apya-surface-sunken); }
+    .apya-notif-panel-bar a { color: var(--apya-text-primary); text-decoration: none; }
+    .apya-notif-panel-bar a:hover { color: var(--apya-accent-500); }
+    .apya-notif-panel-bar #mark-all-as-read { color: var(--apya-accent-500); }
 </style>
