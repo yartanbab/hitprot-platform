@@ -572,6 +572,27 @@ html, body {
     box-shadow: var(--apya-shadow-focus) !important;
 }
 
+/* --- Input kenarlığı + placeholder (2026-07-29) ---
+   LeptonX light temada input kenarlığını neredeyse görünmez bir tona
+   çekiyordu → arama kutuları zeminden ayrışmıyor, "tıklanabilir alan" olduğu
+   anlaşılmıyordu (Projeler sayfası aramasında canlı görüldü). Kenarlık
+   token'a bağlandı; dark zaten --bs-form-control-border-color üzerinden
+   köprülüydü, bu kural onunla aynı değeri verir.
+   Placeholder: tarayıcı varsayılan opaklığı tertiary tonu daha da soluklaştırıyordu
+   → opacity sıfırlanıp doğrudan token rengi veriliyor. */
+.form-control,
+.form-select {
+    border-color: var(--apya-border-default);
+}
+.form-control:hover:not(:focus),
+.form-select:hover:not(:focus) {
+    border-color: var(--apya-border-strong);
+}
+.form-control::placeholder {
+    color: var(--apya-text-tertiary);
+    opacity: 1;
+}
+
 /* --- Input border focus → accent --- */
 .form-control:focus,
 .form-select:focus {

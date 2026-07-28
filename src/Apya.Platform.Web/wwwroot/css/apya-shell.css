@@ -1350,22 +1350,61 @@ i.apya-priority-dot {
 }
 .apya-page-head-actions {
     display: flex;
-    flex-wrap: wrap;
     align-items: center;
     gap: 8px;
     margin-left: auto;
+    /* TEK SATIR. Sarma açıkken sayaç+arama bir satıra, buton alt satıra
+       düşüyordu (abp-button blok seviyesinde render ediliyor) → araç çubuğu
+       gereksiz yere iki satır yer kaplıyordu. */
+    flex-wrap: nowrap;
+}
+.apya-page-head-actions .apya-grid-count {
+    white-space: nowrap;
+}
+.apya-page-head-actions .btn {
+    white-space: nowrap;
+    flex-shrink: 0;
 }
 .apya-page-head-actions .apya-grid-search {
-    max-width: 260px;
+    width: 260px;
+    max-width: 100%;
 }
-/* Dar ekran: aksiyon grubu tam genişliğe düşsün, arama esnesin. */
+/* Dar ekran: aksiyon grubu tam genişliğe düşsün, arama esnesin, sarma açılsın. */
 @media (max-width: 575.98px) {
     .apya-page-head-actions {
         width: 100%;
         margin-left: 0;
+        flex-wrap: wrap;
     }
     .apya-page-head-actions .apya-grid-search {
         flex: 1 1 auto;
+        width: auto;
+    }
+}
+
+/* ----------------------------------------------------------------------------
+   20) KPI ŞERİDİ — GENİŞ EKRANDA TEK SATIR (2026-07-29)
+   `col-xl` ile denendi, OLMADI: Bootstrap'ta `.col-xl{flex:1 0 0}` yalnız
+   `flex`i ezer, `col-md-4`'ün `width:33.33%`i kalır; ayrıca flex öğeleri
+   varsayılan `min-width:auto` ile min-content'in altına inemez → 6 kart
+   sığmayıp sonuncusu alt satıra düşüyordu.
+   Grid'de `grid-auto-flow:column` + `minmax(0,1fr)` kart SAYISINDAN bağımsız
+   olarak hepsini tek satıra dizer ve 0'a kadar daralmaya izin verir
+   (Toplam Bütçe kartı yetkiye bağlı olduğu için sayı 5 ya da 6 olabiliyor).
+   ---------------------------------------------------------------------------- */
+@media (min-width: 1200px) {
+    .apya-kpi-row-compact {
+        display: grid;
+        grid-auto-flow: column;
+        grid-auto-columns: minmax(0, 1fr);
+        gap: 12px;
+        margin: 0 0 var(--apya-space-3);
+    }
+    /* .row/.col gutter mekanizması grid'de geçersiz — gap devraldı. */
+    .apya-kpi-row-compact > [class*="col-"] {
+        width: auto;
         max-width: none;
+        min-width: 0;
+        padding: 0;
     }
 }
