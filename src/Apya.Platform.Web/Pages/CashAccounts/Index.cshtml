@@ -24,13 +24,11 @@
     };
 }
 
-<div data-page-description="Kasa, banka ve kredi kartı hesapları" class="apya-page">
-<div class="d-flex align-items-start justify-content-between flex-wrap gap-2 mb-3">
-    <div>
-        <h1 class="h5 mb-1"><i class="fa fa-building-columns me-2" aria-hidden="true"></i>Kasa &amp; Banka</h1>
-        <p class="text-muted mb-0" style="font-size:12px">Hesaplar ve hareketler · çoklu para birimi</p>
-    </div>
-    <div class="d-flex gap-2">
+<div data-page-description="Hesaplar ve hareketler · çoklu para birimi" class="apya-page">
+@* Başlık + açıklama artık app header'da (ViewBag.Title + data-page-description);
+   sayfa içinde tekrarlanmıyor. Burada yalnız sayfa aksiyonları kalır. *@
+<div class="apya-page-head">
+    <div class="apya-page-head-actions">
         @if (await AuthorizationService.IsGrantedAsync(PlatformPermissions.CashAccounts.Create))
         {
             <button id="NewCashAccountButton" class="btn btn-sm btn-outline-secondary">

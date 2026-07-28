@@ -11,17 +11,16 @@
     <abp-script src="/Pages/AiCenter/Workflows/Index.js" />
 }
 
-<div data-page-description="Otomatik AI iş akışları" class="apya-page">
-    @* Başlık satırı *@
-    <div class="d-flex align-items-start justify-content-between flex-wrap gap-2 mb-3">
-        <div>
-            <h1 class="h5 mb-1"><i class="fa fa-diagram-project me-2"></i>AI İş Akışları</h1>
-            <p class="text-muted mb-0" style="font-size:12px">Değerlendirme tamamlandığında çalışan kural setleri (koşul → aksiyon)</p>
+<div data-page-description="Değerlendirme tamamlandığında çalışan kural setleri (koşul → aksiyon)" class="apya-page">
+    @* Başlık + açıklama artık app header'da (ViewBag.Title + data-page-description);
+       sayfa içinde tekrarlanmıyor. Burada yalnız sayfa aksiyonları kalır. *@
+    <div class="apya-page-head">
+        <div class="apya-page-head-actions">
+            @if (await AuthorizationService.IsGrantedAsync(AiPermissions.Workflows.Manage))
+            {
+                <abp-button id="NewWorkflowButton" text="Yeni İş Akışı" icon="plus" button-type="Primary" size="Small" />
+            }
         </div>
-        @if (await AuthorizationService.IsGrantedAsync(AiPermissions.Workflows.Manage))
-        {
-            <abp-button id="NewWorkflowButton" text="Yeni İş Akışı" icon="plus" button-type="Primary" size="Small" />
-        }
     </div>
 
     @* Master-detail: sol liste + sağ detay (apya-shell.css §13) *@
