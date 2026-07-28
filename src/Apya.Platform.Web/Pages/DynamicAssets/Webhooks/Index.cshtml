@@ -14,22 +14,17 @@
     <abp-script src="/Pages/DynamicAssets/Webhooks/Index.js" />
 }
 
-<div data-page-description="Giden webhook abonelikleri" class="apya-page">
-    <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4">
-        <div>
-            <div class="apya-overline mb-1">Olay Abonelikleri ve Teslimat Logları</div>
-            <h1 class="h3 fw-bold mb-1">Webhooks</h1>
-            <p class="text-muted mb-0" style="max-width: 640px;">
-                Formlarınıza yanıt geldiğinde belirttiğiniz URL'ye HMAC imzalı bildirim gönderilir.
-                Teslimatları her abonelik için aşağıdan izleyebilir, gerekirse yeniden gönderebilirsiniz.
-            </p>
-        </div>
+@* Başlık + açıklama app header'da; sayfa içinde tekrarlanmıyor. *@
+<div data-page-description="Olay abonelikleri ve teslimat logları · HMAC imzalı bildirim" class="apya-page">
+    <div class="apya-page-head">
+        <div class="apya-page-head-actions">
         @if (await AuthorizationService.IsGrantedAsync(PlatformPermissions.DynamicAssets.Create))
         {
-            <button id="NewWebhookButton" class="btn btn-primary flex-shrink-0">
+            <button id="NewWebhookButton" class="btn btn-sm btn-primary">
                 <i class="fa fa-plus me-1"></i> Yeni Webhook
             </button>
         }
+        </div>
     </div>
 
     <div id="WebhookCardsContainer" class="d-flex flex-column gap-3"></div>

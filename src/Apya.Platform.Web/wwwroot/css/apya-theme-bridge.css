@@ -1172,3 +1172,19 @@ html.js .lpx-user-profile .user-full-name {
     color: var(--apya-text-tertiary) !important;
     font-size: 12px;
 }
+
+/* ============================================================================
+   İÇERİK ÜST BOŞLUĞU (2026-07-29) — sayfa başlıkları header'a taşındıktan sonra
+   LeptonX'in içerik dolgusu gereğinden fazla kalıyordu: sayfa bileşenleri
+   ekranın aşağısına itiliyor, ilk ekranda az içerik görünüyordu.
+   Tema kuralı (canlı bundle'dan doğrulandı):
+       .lpx-content-container .lpx-content { padding: 1.25em 2em 3em }
+   Yalnız ÜST dolgu kısılıyor; yanlar ve alt temada kalıyor. Mobil (<768px)
+   temanın kendi 3em üst dolgusunu kullanıyor (sabit başlığı temizlemek için) —
+   ona dokunulmuyor.
+   ============================================================================ */
+@media (min-width: 768px) {
+    .lpx-content-container .lpx-content {
+        padding-top: 14px;
+    }
+}

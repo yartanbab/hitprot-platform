@@ -12,17 +12,12 @@
     .apya-app-row:first-of-type { border-top: 0 !important; }
 </style>
 
-<div data-page-description="Tüm müşterilerin hibe başvuruları" class="apya-page">
-    <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4">
-        <div>
-            <div class="apya-overline mb-1">Hibe Yönetimi</div>
-            <h1 class="h3 fw-bold mb-1">Hibe Başvuruları</h1>
-            <p class="text-muted mb-0" style="max-width: 640px;">
-                Tüm firmaların başvurularını buradan izleyin; aşamayı ilerletin, onaylanan tutarı ve
-                tahsilat dilimlerini/milestone'ları yönetin. Firmalar bu bilgileri salt-okunur görür.
-            </p>
+@* Başlık + açıklama app header'da; sayfa içinde tekrarlanmıyor. *@
+<div data-page-description="Tüm firmaların başvuruları; aşama, onaylanan tutar ve tahsilat dilimleri" class="apya-page">
+    <div class="apya-page-head">
+        <div class="apya-page-head-actions">
+            <a href="/Grants" class="btn btn-sm btn-outline-secondary"><i class="fa fa-arrow-left me-1"></i>Programlara Dön</a>
         </div>
-        <a href="/Grants" class="btn btn-outline-secondary flex-shrink-0"><i class="fa fa-arrow-left me-1"></i>Programlara Dön</a>
     </div>
 
     <div id="AppList"></div>
