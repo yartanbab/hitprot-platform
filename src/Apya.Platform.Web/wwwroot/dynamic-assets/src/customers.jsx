@@ -51,7 +51,7 @@ function Skeleton({ w = '100%', h = 14, r = 6 }) {
 
 /* ─── StatCard ─────────────────────────────────────────────────────────*/
 function StatCard({ label, value, icon, tone = 'muted', loading, index = 0 }) {
-  const toneClass = { success: 'text-green-500', danger: 'text-red-500', muted: 'text-[var(--apya-text-tertiary)]' }[tone] ?? '';
+  const toneClass = { success: 'text-positive', danger: 'text-negative', muted: 'text-text-tertiary' }[tone] ?? '';
   if (loading) {
     return (
       <div className="rounded-xl border border-[var(--apya-border-default)] bg-[var(--apya-surface-raised)] p-4"

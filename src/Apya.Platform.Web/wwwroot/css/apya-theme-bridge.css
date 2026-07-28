@@ -33,6 +33,50 @@
     --bs-light:     var(--apya-surface-sunken);
     --bs-light-rgb: 243, 244, 246;
 
+    /* SİSTEMİK FİX (2026-07-28, tasarım denetimi): Bootstrap 5.3'ün RENK
+       UTILITY'leri hex değişkenini DEĞİL `-rgb` üçlüsünü okur:
+         .text-success { color: rgba(var(--bs-success-rgb), var(--bs-text-opacity)) }
+         .bg-danger    { background-color: rgba(var(--bs-danger-rgb), ...) }
+       Yalnız --bs-primary-rgb köprülüydü; success/danger/warning/info
+       Bootstrap'ın kendi paletinde (#198754/#DC3545/#FFC107/#0DCAF0) kalıyordu →
+       ~250 kullanım (text-danger 50, text-success 32, text-warning 17, bg-* 32…)
+       token paletinden sapıyor, dark temada da AA altı kontrast veriyordu.
+       Üçlüler token'ların birebir RGB karşılığıdır; token değişirse burası da
+       güncellenmeli (var() rgba() içinde çalışmadığı için ham yazmak zorunlu —
+       --bs-primary-rgb zaten aynı sebeple ham). */
+    --bs-success-rgb:   5, 150, 105;    /* --apya-positive-500 #059669 */
+    --bs-danger-rgb:  220,  38,  38;    /* --apya-negative-500 #DC2626 */
+    --bs-warning-rgb: 217, 119,   6;    /* --apya-warning-500  #D97706 */
+    --bs-info-rgb:     96, 165, 250;    /* --apya-brand-400    #60A5FA */
+    --bs-secondary-rgb: 107, 114, 128;  /* --apya-neutral-500  #6B7280 */
+
+    /* -subtle / -emphasis (BS 5.3) — token'ların -50/-100/text-* tonları zaten
+       tema-farkında (tokens.css dark'ta rgba tint'e çeviriyor), bu yüzden tek
+       tanım iki temada da doğru; dark bloğunda tekrarlanmaz. */
+    --bs-primary-bg-subtle:   var(--apya-accent-soft);
+    --bs-success-bg-subtle:   var(--apya-positive-50);
+    --bs-danger-bg-subtle:    var(--apya-negative-50);
+    --bs-warning-bg-subtle:   var(--apya-warning-50);
+    --bs-info-bg-subtle:      var(--apya-brand-50);
+    --bs-primary-border-subtle: var(--apya-accent-200);
+    --bs-success-border-subtle: var(--apya-positive-100);
+    --bs-danger-border-subtle:  var(--apya-negative-100);
+    --bs-warning-border-subtle: var(--apya-warning-100);
+    --bs-info-border-subtle:    var(--apya-brand-100);
+    --bs-primary-text-emphasis: var(--apya-accent-600);
+    --bs-success-text-emphasis: var(--apya-text-positive);
+    --bs-danger-text-emphasis:  var(--apya-text-negative);
+    --bs-warning-text-emphasis: var(--apya-text-warning);
+    --bs-info-text-emphasis:    var(--apya-brand-600);
+    /* .alert-light / .alert-secondary bu üçlüyü okur (LeptonX --bs-light'ı
+       #bbb yapıyor → nötr uyarı kutuları kirli gri kalıyordu). */
+    --bs-light-bg-subtle:         var(--apya-surface-sunken);
+    --bs-light-border-subtle:     var(--apya-border-default);
+    --bs-light-text-emphasis:     var(--apya-text-secondary);
+    --bs-secondary-bg-subtle:     var(--apya-surface-sunken);
+    --bs-secondary-border-subtle: var(--apya-border-default);
+    --bs-secondary-text-emphasis: var(--apya-text-secondary);
+
     /* LeptonX accent köprüsü (sidebar aktif bg, topbar vurgu) */
     --lpx-primary: var(--apya-accent-500);
 }
@@ -44,6 +88,11 @@
     /* UI primary → indigo accent */
     --bs-primary:     var(--apya-accent-500);
     --bs-primary-rgb: 99, 102, 241;
+    /* Semantic utility üçlüleri — dark token değerleri (bkz. :root'taki not) */
+    --bs-success-rgb:  16, 185, 129;    /* --apya-positive-500 #10B981 */
+    --bs-danger-rgb:  248, 113, 113;    /* --apya-negative-500 #F87171 */
+    --bs-warning-rgb: 251, 191,  36;    /* --apya-warning-500  #FBBF24 */
+    --bs-info-rgb:     96, 165, 250;    /* --apya-brand-400    #60A5FA (dark'ta değişmez) */
     --lpx-primary:    var(--apya-accent-500);
     --bs-light:     var(--apya-surface-sunken);
     --bs-light-rgb: 7, 7, 8;
@@ -267,15 +316,6 @@ html, body {
     box-shadow: var(--apya-shadow-md) !important;
     transition: box-shadow 150ms ease;
 }
-/* LeptonX'in derlenmiş bootstrap-dim.css'i .card'da --bs-card-bg:#fff'i YEREL
-   tanımlıyor — bu, elementin üstünde olduğu için :root'taki dark override'ı
-   miras zincirinden düşürür (.modal-content'teki aynı sınıf bug'la aynı kök
-   neden). background-color/color'ı doğrudan burada zorlamak gerekiyor. */
-[data-theme="dark"] .card {
-    background-color: var(--apya-surface-raised) !important;
-    color: var(--apya-text-primary) !important;
-}
-
 /* SİSTEMİK BUG FİX (2026-07-17, görev-uyarı KPI kartı QA'sında bulundu): LeptonX'in derlenmiş
    bootstrap-dim.css'i ".card" seçicisinde --bs-card-bg/--bs-card-color'ı YEREL olarak
    #ffffff/#686b6e'ye sabitliyor (aynı elemente doğrudan tanımlı olduğu için yukarıdaki
@@ -293,6 +333,20 @@ html, body {
 .table-hover tbody tr {
     transition: background 120ms ease;
 }
+
+/* ----------------------------------------------------------------------------
+   METİN TONU ≠ DOLGU TONU (2026-07-28, kontrast ölçümünde bulundu)
+   `--bs-{ton}-rgb` köprüsü hem `.bg-*` (dolgu) hem `.text-*` (metin) tarafından
+   okunur ve ikisine de -500'ü verir. -500 DOLGU tonudur: beyaz üstünde
+   `.text-success` 3.46:1, `.text-warning` 2.92:1, `.text-info` 2.33:1 — WCAG AA
+   (4.5:1) altında. tokens.css bunun için ayrı METİN token'ları tanımlıyor
+   (`--apya-text-positive/-negative/-warning` = -700, iki temada da doğru).
+   `.bg-*` -500'de kalır; yalnız metin utility'leri metin tonuna bağlanır.
+   ---------------------------------------------------------------------------- */
+.text-success { color: var(--apya-text-positive) !important; }
+.text-danger  { color: var(--apya-text-negative) !important; }
+.text-warning { color: var(--apya-text-warning)  !important; }
+.text-info    { color: var(--apya-brand-600)     !important; }
 
 /* --- .badge genel radius düzeltmesi --- */
 .badge {
@@ -323,6 +377,96 @@ html, body {
     --bs-btn-active-border-color: var(--apya-border-strong);
 }
 
+/* --- Buton varyantları → token köprüsü (2026-07-28, tasarım denetimi) ---
+   Bootstrap `.btn-{varyant}` sınıfları --bs-btn-bg/-color'ı SABİT HEX ile yazar
+   (var(--bs-success) okumazlar) → yukarıdaki --bs-*-rgb köprüsü bunları
+   KAPSAMAZ, ayrı override gerekir. Envanter: btn-outline-secondary 25,
+   btn-outline-primary 12, btn-outline-danger 5, btn-secondary 4, btn-success 2,
+   btn-outline-success 2, btn-warning 1, btn-danger 1.
+   Metin rengi solid varyantlarda --apya-text-inverse: light'ta beyaz, dark'ta
+   neredeyse siyah → parlaklaşan dark token zeminlerinde kontrast korunur. */
+.btn-outline-primary {
+    --bs-btn-color:              var(--apya-accent-500);
+    --bs-btn-border-color:       var(--apya-accent-500);
+    --bs-btn-hover-bg:           var(--apya-accent-500);
+    --bs-btn-hover-border-color: var(--apya-accent-500);
+    --bs-btn-hover-color:        var(--apya-text-inverse);
+    --bs-btn-active-bg:          var(--apya-accent-600);
+    --bs-btn-active-border-color:var(--apya-accent-600);
+    --bs-btn-active-color:       var(--apya-text-inverse);
+}
+/* İkincil/nötr buton — LeptonX --bs-secondary'yi kirli griye çekiyor.
+   "Sessiz" niyet: taban zemin + net kenarlık, hover'da sunken. */
+.btn-secondary,
+.btn-outline-secondary {
+    --bs-btn-color:               var(--apya-text-secondary);
+    --bs-btn-bg:                  transparent;
+    --bs-btn-border-color:        var(--apya-border-strong);
+    --bs-btn-hover-color:         var(--apya-text-primary);
+    --bs-btn-hover-bg:            var(--apya-surface-sunken);
+    --bs-btn-hover-border-color:  var(--apya-border-strong);
+    --bs-btn-active-color:        var(--apya-text-primary);
+    --bs-btn-active-bg:           var(--apya-surface-sunken);
+    --bs-btn-active-border-color: var(--apya-border-strong);
+    --bs-btn-disabled-color:      var(--apya-text-disabled);
+    --bs-btn-disabled-border-color: var(--apya-border-default);
+}
+.btn-secondary {
+    --bs-btn-bg: var(--apya-surface-base);
+}
+.btn-success {
+    --bs-btn-bg:           var(--apya-positive-600);
+    --bs-btn-border-color: var(--apya-positive-600);
+    --bs-btn-color:        var(--apya-text-inverse);
+    --bs-btn-hover-bg:     var(--apya-positive-700);
+    --bs-btn-hover-border-color: var(--apya-positive-700);
+    --bs-btn-hover-color:  var(--apya-text-inverse);
+    --bs-btn-active-bg:    var(--apya-positive-700);
+    --bs-btn-active-color: var(--apya-text-inverse);
+}
+.btn-danger {
+    --bs-btn-bg:           var(--apya-negative-600);
+    --bs-btn-border-color: var(--apya-negative-600);
+    --bs-btn-color:        var(--apya-text-inverse);
+    --bs-btn-hover-bg:     var(--apya-negative-700);
+    --bs-btn-hover-border-color: var(--apya-negative-700);
+    --bs-btn-hover-color:  var(--apya-text-inverse);
+    --bs-btn-active-bg:    var(--apya-negative-700);
+    --bs-btn-active-color: var(--apya-text-inverse);
+}
+.btn-warning {
+    --bs-btn-bg:           var(--apya-warning-600);
+    --bs-btn-border-color: var(--apya-warning-600);
+    --bs-btn-color:        var(--apya-text-inverse);
+    --bs-btn-hover-bg:     var(--apya-warning-700);
+    --bs-btn-hover-border-color: var(--apya-warning-700);
+    --bs-btn-hover-color:  var(--apya-text-inverse);
+    --bs-btn-active-bg:    var(--apya-warning-700);
+    --bs-btn-active-color: var(--apya-text-inverse);
+}
+.btn-outline-success {
+    --bs-btn-color:              var(--apya-positive-600);
+    --bs-btn-border-color:       var(--apya-positive-500);
+    --bs-btn-hover-bg:           var(--apya-positive-600);
+    --bs-btn-hover-border-color: var(--apya-positive-600);
+    --bs-btn-hover-color:        var(--apya-text-inverse);
+    --bs-btn-active-bg:          var(--apya-positive-700);
+    --bs-btn-active-color:       var(--apya-text-inverse);
+}
+.btn-outline-danger {
+    --bs-btn-color:              var(--apya-negative-600);
+    --bs-btn-border-color:       var(--apya-negative-500);
+    --bs-btn-hover-bg:           var(--apya-negative-600);
+    --bs-btn-hover-border-color: var(--apya-negative-600);
+    --bs-btn-hover-color:        var(--apya-text-inverse);
+    --bs-btn-active-bg:          var(--apya-negative-700);
+    --bs-btn-active-color:       var(--apya-text-inverse);
+}
+/* Dark'ta -600/-700 tonları -500'den KOYU değil AÇIK (tokens.css dark
+   konvansiyonu: -700 = parlak metin tonu) → outline metni -500'e sabitlenir. */
+[data-theme="dark"] .btn-outline-success { --bs-btn-color: var(--apya-positive-500); }
+[data-theme="dark"] .btn-outline-danger  { --bs-btn-color: var(--apya-negative-500); }
+
 /* --- Buton/input yarıçapı (hi-fi 8–9px) --- */
 .btn,
 .form-control,
@@ -351,14 +495,76 @@ html, body {
 .apya-chip-positive { background: color-mix(in srgb, var(--apya-positive-500) 14%, transparent); color: var(--apya-positive-700); }
 .apya-chip-negative { background: color-mix(in srgb, var(--apya-negative-500) 14%, transparent); color: var(--apya-negative-700); }
 .apya-chip-warning  { background: color-mix(in srgb, var(--apya-warning-500) 14%, transparent); color: var(--apya-warning-700); }
-.apya-chip-brand    { background: color-mix(in srgb, var(--apya-brand-500) 14%, transparent);   color: var(--apya-brand-600); }
+/* brand-600 (#1D4ED8) %14 mavi tint üstünde 4.47:1 — 11px/600 chip metni için
+   AA sınırının hemen altında; -700 tonu ~6.5:1 verir (2026-07-28 ölçüm). */
+.apya-chip-brand    { background: color-mix(in srgb, var(--apya-brand-500) 14%, transparent);   color: var(--apya-brand-700); }
 .apya-chip-ai       { background: color-mix(in srgb, var(--apya-ai-500) 14%, transparent);       color: var(--apya-ai-600); }
+.apya-chip-accent   { background: var(--apya-accent-soft);    color: var(--apya-accent-600); }
 .apya-chip-neutral  { background: var(--apya-surface-sunken); color: var(--apya-text-secondary); }
+/* accent-500 (#6366F1) koyu zemin + %13 tint üstünde 3.99:1 → -300 (#A5B4FC)
+   ~8:1. Diğer tonlarda -500 dark'ta zaten parlak, accent'te değil. */
+[data-theme="dark"] .apya-chip-accent   { color: var(--apya-accent-300); }
 [data-theme="dark"] .apya-chip-positive { color: var(--apya-positive-500); }
 [data-theme="dark"] .apya-chip-negative { color: var(--apya-negative-500); }
 [data-theme="dark"] .apya-chip-warning  { color: var(--apya-warning-500); }
 [data-theme="dark"] .apya-chip-brand    { color: var(--apya-brand-400); }
 [data-theme="dark"] .apya-chip-ai       { color: var(--apya-ai-500); }
+
+/* ============================================================================
+   ALERT — LeptonX override'ının geri alınması (2026-07-28, canlı QA'da bulundu)
+   LeptonX'in derlenmiş Global bundle'ı `.alert-{varyant}`ı İKİ KEZ tanımlıyor:
+   ilki Bootstrap'ın `--bs-alert-*` → `--bs-{ton}-bg-subtle` köprüsü (bizim
+   token'larımıza bağlanırdı), ikincisi background/border/color'ı SABİT yazıyor
+   (`rgba(67,138,167,.3)` + `color:#686b6e`, link/ikon `#161616`). İkincisi
+   sonra geldiği için `-bg-subtle` köprümüz alert'lere hiç ulaşmıyordu ve
+   uyarı kutuları HER İKİ TEMADA da aynı kalıyordu — dark'ta neredeyse siyah
+   metin. Aynı özgüllük (0,1,0) + bu dosya LeptonX'ten SONRA yükleniyor →
+   !important gerekmeden geri alınır. Formül .apya-chip ile aynı.
+   ============================================================================ */
+.alert {
+    border-radius: var(--apya-radius-lg);
+    backdrop-filter: none;
+}
+.alert::before { content: none; }
+.alert-info {
+    background: color-mix(in srgb, var(--apya-brand-500) 12%, transparent);
+    border: 1px solid color-mix(in srgb, var(--apya-brand-500) 24%, transparent);
+    color: var(--apya-text-primary);
+}
+.alert-success {
+    background: color-mix(in srgb, var(--apya-positive-500) 12%, transparent);
+    border: 1px solid color-mix(in srgb, var(--apya-positive-500) 24%, transparent);
+    color: var(--apya-text-primary);
+}
+.alert-danger {
+    background: color-mix(in srgb, var(--apya-negative-500) 12%, transparent);
+    border: 1px solid color-mix(in srgb, var(--apya-negative-500) 24%, transparent);
+    color: var(--apya-text-primary);
+}
+.alert-warning {
+    background: color-mix(in srgb, var(--apya-warning-500) 12%, transparent);
+    border: 1px solid color-mix(in srgb, var(--apya-warning-500) 24%, transparent);
+    color: var(--apya-text-primary);
+}
+.alert-secondary,
+.alert-light {
+    background: var(--apya-surface-sunken);
+    border: 1px solid var(--apya-border-default);
+    color: var(--apya-text-secondary);
+}
+/* LeptonX link/ikon rengini #161616'ya sabitliyor → dark'ta görünmez. */
+.alert-info a, .alert-info .bi, .alert-info .fa, .alert-info .icon, .alert-info .alert-link,
+.alert-success a, .alert-success .bi, .alert-success .fa, .alert-success .icon, .alert-success .alert-link,
+.alert-danger a, .alert-danger .bi, .alert-danger .fa, .alert-danger .icon, .alert-danger .alert-link,
+.alert-warning a, .alert-warning .bi, .alert-warning .fa, .alert-warning .icon, .alert-warning .alert-link,
+.alert-secondary a, .alert-secondary .fa, .alert-light a, .alert-light .fa {
+    color: inherit;
+}
+/* İkon tonu varyanta göre — renk yalnız ikonda, metin okunur kalsın. */
+.alert-info .fa    { color: var(--apya-brand-500); }
+.alert-success .fa { color: var(--apya-positive-500); }
+.alert-danger .fa  { color: var(--apya-negative-500); }
+.alert-warning .fa { color: var(--apya-warning-500); }
 
 /* --- Focus ring → accent --- */
 :focus-visible {

@@ -2,10 +2,10 @@
 
 @if (Model.IsImpersonated)
 {
-    <div class="alert alert-warning text-center m-0 border-radius-0 text-dark shadow-sm bg-warning" role="alert" style="border-radius: 0; z-index: 9999; position: relative; font-weight: 500;">
-        <i class="fa fa-user-secret me-2 fw-bold text-danger"></i>
-        <strong class="text-danger">Güvenlik Uyarısı:</strong> Şu an <b class="text-dark">@Model.CurrentTenantName</b> hesabı adına işlem yapıyorsunuz. Yaptığınız tüm işlemler kayıt altına alınmaktadır.
-        
+    <div class="apya-impersonation-bar" role="alert">
+        <i class="fa fa-user-secret me-2 fw-bold"></i>
+        <strong>Güvenlik Uyarısı:</strong> Şu an <b>@Model.CurrentTenantName</b> hesabı adına işlem yapıyorsunuz. Yaptığınız tüm işlemler kayıt altına alınmaktadır.
+
         <form id="ReturnToMyAccountForm" method="post" action="/Account/BackToImpersonator" class="d-inline ms-3">
             @Html.AntiForgeryToken()
             <button type="submit" class="btn btn-sm btn-danger fw-bold shadow-sm">
@@ -13,4 +13,28 @@
             </button>
         </form>
     </div>
+
+    <style>
+        /* Kalıcı uyarı şeridi — HANDOFF "global durumlar: üstte sarı ince banner".
+           Önceki hali `alert-warning + bg-warning + text-dark + text-danger`
+           yığınıydı: text-danger sarı zemin üstünde ~2:1 kontrast veriyordu ve
+           text-dark dark temada bridge'in güvenlik ağının dışında kalıyordu.
+           Şimdi .apya-chip-warning ile aynı formül (soft zemin + tonlu metin),
+           yalnız daha yüksek karışım oranı — banner chip'ten baskın olsun.
+           Vurgu renkle değil kalınlık + ikonla taşınıyor. */
+        .apya-impersonation-bar {
+            position: relative;
+            z-index: var(--apya-z-sticky);
+            margin: 0;
+            padding: var(--apya-space-3) var(--apya-space-4);
+            text-align: center;
+            font-size: 13px;
+            font-weight: var(--apya-weight-medium);
+            background: color-mix(in srgb, var(--apya-warning-500) 20%, var(--apya-surface-base));
+            color: var(--apya-text-warning);
+            border-bottom: 2px solid var(--apya-warning-500);
+        }
+        .apya-impersonation-bar strong,
+        .apya-impersonation-bar b { font-weight: var(--apya-weight-bold); }
+    </style>
 }

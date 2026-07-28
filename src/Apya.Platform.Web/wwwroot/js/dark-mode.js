@@ -127,5 +127,9 @@ $(function () {
         $html.addClass(theme === 'dark' ? 'lpx-theme-dark' : 'lpx-theme-light');
         // Body class — eski DataTable/jQuery widget uyumu.
         $('body').toggleClass('dark-theme', theme === 'dark');
+
+        // Token'ları CSS dışında okuyan tüketiciler (chart.js — HANDOFF: "tema
+        // değişince grafikler yeniden kurulur") için tek bildirim noktası.
+        document.dispatchEvent(new CustomEvent('apya:themechange', { detail: { theme: theme } }));
     }
 });

@@ -38,7 +38,7 @@ $(function () {
         return $(
             '<tr>' +
                 '<td class="text-nowrap">' + formatDateTime(log.creationTime) + '</td>' +
-                '<td><span class="badge ' + (log.isSuccess ? 'bg-success' : 'bg-danger') + '">' + (log.responseCode || '—') + '</span></td>' +
+                '<td><span class="apya-chip apya-numeric ' + (log.isSuccess ? 'apya-chip-positive' : 'apya-chip-negative') + '">' + (log.responseCode || '—') + '</span></td>' +
                 '<td>' + elapsedText(log) + '</td>' +
                 '<td><a href="#" class="apya-resend-link small text-decoration-none" data-log-id="' + log.id + '">' +
                     '<i class="fa fa-rotate-right me-1"></i>Yeniden gönder' +
@@ -77,7 +77,7 @@ $(function () {
                   '</div>' +
                 '</div>' +
                 '<div class="d-flex align-items-center flex-wrap gap-2 mt-2">' +
-                  '<span class="apya-chip apya-chip--accent">' + formName(sub.documentId) + '</span>' +
+                  '<span class="apya-chip apya-chip-accent">' + formName(sub.documentId) + '</span>' +
                 '</div>' +
                 '<div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mt-3 pt-3 border-top">' +
                   '<div class="d-flex align-items-center gap-2 text-muted small">' +

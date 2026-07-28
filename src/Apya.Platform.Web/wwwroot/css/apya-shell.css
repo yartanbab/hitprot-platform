@@ -264,6 +264,48 @@ h1, h2, h3, h4, h5, h6 {
     color: var(--apya-text-tertiary);
 }
 
+/* Form bölüm paneli — modal/form içinde ilişkili alanları gruplayan kutu.
+   Sayfalarda `bg-light p-3 rounded-3 border` olarak tekrarlanıyordu (Tasks
+   Create/Edit, Analysis, Drafts); `bg-light` LeptonX'in --bs-light'ına bağlı
+   olduğu için token'lardan sapıyordu. Başlığı için .apya-form-section-title. */
+.apya-form-section {
+    padding: var(--apya-space-3) var(--apya-space-4);
+    border: 1px solid var(--apya-border-default);
+    border-radius: var(--apya-radius-xl);
+    background: var(--apya-surface-sunken);
+}
+.apya-form-section-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: var(--apya-space-3);
+    font-size: 13px;
+    font-weight: var(--apya-weight-semibold);
+    color: var(--apya-text-secondary);
+}
+.apya-form-section-title i {
+    color: var(--apya-accent-500);
+}
+
+/* Dosya bırakma alanı — kesikli kenarlıklı yükleme kutusu. `border-primary
+   border-dashed bg-white` + inline stil yığını yerine; .apya-tile-grid-empty
+   ile aynı kesikli-kenarlık dilini kullanır. `.is-dragover` sürükleme
+   durumudur (JS toggle eder). */
+.apya-dropzone {
+    padding: var(--apya-space-12) var(--apya-space-5);
+    text-align: center;
+    border: 2px dashed var(--apya-border-strong);
+    border-radius: var(--apya-radius-xl);
+    background: var(--apya-surface-sunken);
+    color: var(--apya-text-secondary);
+    transition: border-color var(--apya-motion-base) ease, background var(--apya-motion-base) ease;
+}
+.apya-dropzone:hover,
+.apya-dropzone.is-dragover {
+    border-color: var(--apya-accent-500);
+    background: var(--apya-accent-soft);
+}
+
 /* Seçilebilir hesap kartı (Kasa & Banka) — <button class="card apya-account-card">. */
 .apya-account-card {
     cursor: pointer;
@@ -284,6 +326,35 @@ h1, h2, h3, h4, h5, h6 {
     justify-content: center;
     font-size: 1.5rem;
     flex-shrink: 0;
+}
+
+/* Ton varyantları (2026-07-28, tasarım denetimi) — önceden Bootstrap
+   `bg-{renk} bg-opacity-10 text-{renk}` üçlüsü kullanılıyordu: renkler
+   Bootstrap paletindendi (token değil) ve dark'ta pastel zemin + doygun metin
+   düşük kontrast veriyordu. Zemin/metin formülü .apya-chip ile aynı (%14
+   color-mix + tonlu metin) — ikon kutusu ile durum chip'i aynı görsel dili
+   konuşsun. */
+.kpi-icon-box--accent   { background: var(--apya-accent-soft); color: var(--apya-accent-500); }
+.kpi-icon-box--positive { background: color-mix(in srgb, var(--apya-positive-500) 14%, transparent); color: var(--apya-positive-700); }
+.kpi-icon-box--negative { background: color-mix(in srgb, var(--apya-negative-500) 14%, transparent); color: var(--apya-negative-700); }
+.kpi-icon-box--warning  { background: color-mix(in srgb, var(--apya-warning-500) 14%, transparent);  color: var(--apya-warning-700); }
+.kpi-icon-box--brand    { background: color-mix(in srgb, var(--apya-brand-500) 14%, transparent);    color: var(--apya-brand-700); }
+.kpi-icon-box--ai       { background: color-mix(in srgb, var(--apya-ai-500) 14%, transparent);       color: var(--apya-ai-600); }
+.kpi-icon-box--neutral  { background: var(--apya-surface-sunken); color: var(--apya-text-secondary); }
+[data-theme="dark"] .kpi-icon-box--positive { color: var(--apya-positive-500); }
+[data-theme="dark"] .kpi-icon-box--negative { color: var(--apya-negative-500); }
+[data-theme="dark"] .kpi-icon-box--warning  { color: var(--apya-warning-500); }
+[data-theme="dark"] .kpi-icon-box--brand    { color: var(--apya-brand-400); }
+[data-theme="dark"] .kpi-icon-box--ai       { color: var(--apya-ai-500); }
+
+/* Küçük boy — kart başlığı/satır içi ikon kutusu. Sayfalarda inline
+   `style="width:36px;height:36px;font-size:0.95rem"` (36/38/40px, üç farklı
+   punto) olarak tekrarlanıyordu; tek ölçüde toplandı. */
+.kpi-icon-box--sm {
+    width: 38px;
+    height: 38px;
+    font-size: 1rem;
+    border-radius: var(--apya-radius-md);
 }
 
 /* Kompakt KPI şeridi (Projeler sayfası) — proje kartları asıl görsel ağırlık
@@ -1052,6 +1123,32 @@ i.apya-priority-dot {
     color: var(--apya-accent-600);
 }
 
+/* Yorum akışı — HANDOFF "yanıtlanabilir yorum akışı". Kartlar önceden
+   `list-group-item bg-light/bg-white border-0 rounded-3` idi: zemin LeptonX'in
+   --bs-light/--bs-white'ına bağlıydı ve yanıt ile üst yorum yalnız beyaz-gri
+   farkıyla ayrışıyordu. Şimdi yüzey hiyerarşisi token'lardan (yorum=sunken,
+   yanıt=base + sol aksan çizgisi). */
+.apya-comment {
+    padding: var(--apya-space-3);
+    margin-bottom: var(--apya-space-2);
+    border: 1px solid var(--apya-border-subtle);
+    border-radius: var(--apya-radius-lg);
+    background: var(--apya-surface-sunken);
+    color: var(--apya-text-primary);
+}
+.apya-comment--reply {
+    margin-bottom: var(--apya-space-1);
+    padding: var(--apya-space-2) var(--apya-space-3);
+    border-left: 2px solid var(--apya-accent-500);
+    background: var(--apya-surface-base);
+    font-size: 12.5px;
+}
+/* Yeni eklenen yorum — kısa süreli pozitif vurgu (JS class'ı kaldırmaz,
+   kalıcı ama sakin bir "sizin eklediğiniz" işareti). */
+.apya-comment--new {
+    border-color: color-mix(in srgb, var(--apya-positive-500) 40%, transparent);
+}
+
 /* Yorum giriş çubuğu — drawer'ın altına sabit (modal-content flex-column'da flex olmayan son çocuk) */
 .apya-drawer-commentbar {
     flex: none;
@@ -1095,27 +1192,12 @@ i.apya-priority-dot {
 
 /* Görev tabloları — "İşlemler" dropdown'ı yerine satıra tıklayınca drawer açılır */
 #TasksTable tbody tr, #ProjectTasksTable tbody tr { cursor: pointer; }
-/* Chip/etiket — badge'den daha yumuşak, pill şeklinde. Örn. Webhooks kartlarında
-   form adı etiketi. Genel/paylaşılan: başka listelerde de kullanılabilir. */
-.apya-chip {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    padding: 2px 10px;
-    border-radius: var(--apya-radius-full);
-    font-size: var(--apya-text-xs);
-    font-weight: var(--apya-weight-medium);
-    line-height: var(--apya-leading-tight);
-    white-space: nowrap;
-}
-.apya-chip--accent {
-    background: var(--apya-accent-soft);
-    color: var(--apya-accent-500);
-}
-.apya-chip--neutral {
-    background: var(--apya-surface-sunken);
-    color: var(--apya-text-secondary);
-}
+/* NOT (2026-07-28, tasarım denetimi): `.apya-chip` burada İKİNCİ kez tanımlıydı
+   (BEM `--accent`/`--neutral` varyantlarıyla). Bu dosya bridge'ten SONRA
+   yüklendiği için kanonik tanımı (11px/600) eziyor, tüm chip'ler 12px/500
+   render oluyordu. Tek kaynak: apya-theme-bridge.css §P2 — ton sınıfları tek
+   tireli (`.apya-chip-accent`, `-positive`, `-negative`, `-warning`, `-brand`,
+   `-ai`, `-neutral`). */
 
 /* Durum noktası — aktif/pasif göstergesi (ör. Webhooks kart başlığı). */
 .apya-status-dot {
@@ -1180,22 +1262,27 @@ i.apya-priority-dot {
 }
 
 /* ─── Genel amaçlı temiz tablo — zebra/kalın border yerine ince alt çizgi + hover.
-   striped-rows="true" kaldırılan abp-table'lara eklenir (bkz. Tasks/Index.cshtml). ─── */
+   striped-rows="true" kaldırılan abp-table'lara eklenir (bkz. Tasks/Index.cshtml).
+
+   KAPSAM (2026-07-28 reconcile'da daraltıldı): bu sınıf YALNIZCA dolgu/kenarlık
+   farkını taşır. Tipografi (uppercase / 10.5px / 700 / tertiary) ve satır
+   yüksekliği paylaşılan `.table` kurallarından gelir (apya-theme-bridge.css §P2).
+   Önceki hali bunları kendi değerleriyle tekrarlıyordu, iki sonuç doğuruyordu:
+     1) tablolar arasında iki ayrı tip ölçeği (11px/.04em ↔ 10.5px/0.4px),
+     2) sabit `padding: 10px/12px` yoğunluk sistemini (`--row-h`, compact 36px)
+        etkisiz bırakıyordu — satırlar compact'ta küçülmüyordu.
+   Yatay dolgu burada kalır; yalnız o "temiz" görünüme ait. ─── */
 .apya-clean-table > :not(caption) > * > * { border: none; }
 .apya-clean-table thead th {
-    text-transform: uppercase;
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: .04em;
-    color: var(--apya-text-tertiary);
     border-bottom: 1px solid var(--apya-border-default) !important;
     background: transparent !important;
-    padding: 10px 12px;
+    padding-left: 12px;
+    padding-right: 12px;
 }
 .apya-clean-table tbody td {
-    padding: 12px;
     border-bottom: 1px solid var(--apya-border-subtle) !important;
-    vertical-align: middle;
     background: transparent !important;
+    padding-left: 12px;
+    padding-right: 12px;
 }
 .apya-clean-table tbody tr:hover td { background: var(--apya-surface-raised) !important; }

@@ -37,7 +37,7 @@
         @if (!string.IsNullOrWhiteSpace(Model.Evaluation.RawJson))
         {
             <label class="form-label fw-bold">Ham AI Çıktısı (JSON)</label>
-            <pre class="bg-light p-2 rounded border" style="max-height:300px;overflow:auto;">@Model.Evaluation.RawJson</pre>
+            <pre class="apya-md-pre" style="max-height:300px;">@Model.Evaluation.RawJson</pre>
         }
     </abp-modal-body>
     <abp-modal-footer buttons="@(AbpModalButtons.Cancel)"></abp-modal-footer>

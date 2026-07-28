@@ -58,6 +58,15 @@
     #projectViewTabs .nav-link:hover { color: var(--apya-text-primary); }
     #projectViewTabs .nav-link.active { color: var(--apya-text-primary); box-shadow: inset 0 -3px 0 var(--apya-accent-500); }
     
+    /* Tehlikeli bölge kart başlığı — .apya-chip-negative ile aynı formül. */
+    .apya-danger-zone-header {
+        background: color-mix(in srgb, var(--apya-negative-500) 14%, transparent) !important;
+        color: var(--apya-negative-700);
+        border-bottom-color: var(--apya-negative-500) !important;
+    }
+    .apya-danger-zone-header h5 { color: inherit; }
+    [data-theme="dark"] .apya-danger-zone-header { color: var(--apya-negative-500); }
+
     /* Kanban tasarımı merkezi /css/kanban.css dosyasına taşındı (tek kaynak). */
 </style>
 
@@ -301,8 +310,11 @@
 @* ─── Danger Zone ─── *@
 @if (await AuthorizationService.IsGrantedAsync("Platform.Projects.ManageTeam") || await AuthorizationService.IsGrantedAsync(PlatformPermissions.Projects.Delete))
 {
+    @* Tehlikeli bölge başlığı: solid bg-danger + text-white yerine chip
+       formülü (soft negatif zemin + tonlu metin) — dark temada da okunur,
+       vurgu ikon + kart kenarlığıyla korunur. *@
     <div class="card mt-5 border-danger shadow-sm">
-        <div class="card-header bg-danger text-white d-flex align-items-center">
+        <div class="card-header apya-danger-zone-header d-flex align-items-center">
             <i class="fa fa-exclamation-triangle fs-5 me-2"></i>
             <h5 class="mb-0 fw-bold" style="letter-spacing:1px;">TEHLİKELİ BÖLGE (DANGER ZONE)</h5>
         </div>

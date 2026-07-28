@@ -19,7 +19,10 @@ $(function() {
 
             result.items.forEach(function(item) {
                 var time = moment(item.creationTime).format('LLL');
-                var unreadClass = item.isRead ? "" : "unread text-dark fw-bold border-start-warning";
+                // `text-dark` kaldırıldı: .unread zemini token'lı (warning-50) ama
+                // metin sabit koyu kalıyordu → dark temada okunmuyordu. Vurgu
+                // zaten .unread'in font-weight'i + sol kenarlığı ile geliyor.
+                var unreadClass = item.isRead ? "" : "unread fw-bold";
                 var itemHtml = `
                     <div class="list-group-item p-3 notif-page-item ${unreadClass}" data-id="${item.id}" data-url="${item.deepLinkUrl || '#'}">
                         <div class="d-flex w-100 justify-content-between align-items-center">

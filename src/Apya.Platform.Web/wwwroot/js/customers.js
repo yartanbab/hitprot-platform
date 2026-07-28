@@ -33,7 +33,7 @@ function S({ w: a = "100%", h: n = 14, r: t = 6 }) {
   );
 }
 function z({ label: a, value: n, icon: t, tone: l = "muted", loading: d, index: c = 0 }) {
-  const s = { success: "text-green-500", danger: "text-red-500", muted: "text-[var(--apya-text-tertiary)]" }[l] ?? "";
+  const s = { success: "text-positive", danger: "text-negative", muted: "text-text-tertiary" }[l] ?? "";
   return d ? /* @__PURE__ */ e.jsxs(
     "div",
     {
