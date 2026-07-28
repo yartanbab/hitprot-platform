@@ -28,6 +28,11 @@
     --bs-warning: var(--apya-warning-500);
     --bs-info:    var(--apya-brand-400);
 
+    /* LeptonX --bs-light'ı #bbb yapıyor → .bg-light kullanan modal/list-group
+       satırları (yorumlar, ek dosyalar, kod blokları) kirli gri kalıyordu. */
+    --bs-light:     var(--apya-surface-sunken);
+    --bs-light-rgb: 243, 244, 246;
+
     /* LeptonX accent köprüsü (sidebar aktif bg, topbar vurgu) */
     --lpx-primary: var(--apya-accent-500);
 }
@@ -40,6 +45,8 @@
     --bs-primary:     var(--apya-accent-500);
     --bs-primary-rgb: 99, 102, 241;
     --lpx-primary:    var(--apya-accent-500);
+    --bs-light:     var(--apya-surface-sunken);
+    --bs-light-rgb: 7, 7, 8;
     /* Bootstrap surface */
     --bs-body-bg:  var(--apya-surface-base);
     --bs-body-color: var(--apya-text-primary);
