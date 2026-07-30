@@ -23,29 +23,29 @@
        paylaşılan _KpiCard/.kpi-icon-box varsayılanı diğer sayfalarda aynen kalır. *@
     <div class="row g-3 mb-3 apya-kpi-row-compact">
         <div class="col-6 col-md-4">
-            <partial name="_KpiCard" model='new Apya.Platform.Web.Pages.Shared.KpiCardModel { Icon = "fa-rocket", Accent = "accent", Label = "Aktif Proje", ValueId = "KpiActiveProjects", Value = "—" }' />
+            <partial name="_KpiCard" model='new Apya.Platform.Web.Pages.Shared.KpiCardModel { Icon = "fa-rocket", Accent = "accent", Label = "Aktif Proje", ValueId = "KpiActiveProjects", Value = "—", Hint = "Görevi girilmiş ve başlangıcı gelmiş projeler. Henüz görevi olmayan ya da başlangıç tarihi gelmemiş projeler Planlama durumunda sayılır, bu sayıya girmez." }' />
         </div>
         @if (await AuthorizationService.IsGrantedAsync(PlatformPermissions.Projects.ViewBudget))
         {
             <div class="col-6 col-md-4">
-                <partial name="_KpiCard" model='new Apya.Platform.Web.Pages.Shared.KpiCardModel { Icon = "fa-sack-dollar", Accent = "positive", Label = "Toplam Bütçe", ValueId = "KpiTotalBudget", Value = "—" }' />
+                <partial name="_KpiCard" model='new Apya.Platform.Web.Pages.Shared.KpiCardModel { Icon = "fa-sack-dollar", Accent = "positive", Label = "Toplam Bütçe", ValueId = "KpiTotalBudget", Value = "—", Hint = "Listelenen tüm projelerin planlanan bütçelerinin toplamı. Harcanan tutar değil, ayrılan bütçedir." }' />
             </div>
         }
         <div class="col-6 col-md-4">
-            <partial name="_KpiCard" model='new Apya.Platform.Web.Pages.Shared.KpiCardModel { Icon = "fa-chart-line", Accent = "brand", Label = "Ortalama İlerleme", ValueId = "KpiAvgProgress", Value = "—" }' />
+            <partial name="_KpiCard" model='new Apya.Platform.Web.Pages.Shared.KpiCardModel { Icon = "fa-chart-line", Accent = "brand", Label = "Ortalama İlerleme", ValueId = "KpiAvgProgress", Value = "—", Hint = "Projelerin tamamlanma yüzdelerinin ortalaması. Her proje için tamamlanan görev sayısı toplam görev sayısına bölünür; bütçe harcaması bu orana girmez." }' />
         </div>
         <div class="col-6 col-md-4">
-            <partial name="_KpiCard" model='new Apya.Platform.Web.Pages.Shared.KpiCardModel { Icon = "fa-triangle-exclamation", Accent = "negative", Label = "Risk Altında", ValueId = "KpiAtRisk", Value = "—" }' />
+            <partial name="_KpiCard" model='new Apya.Platform.Web.Pages.Shared.KpiCardModel { Icon = "fa-triangle-exclamation", Accent = "negative", Label = "Risk Altında", ValueId = "KpiAtRisk", Value = "—", Hint = "Teslimat riski yüksek görülen projeler. Gecikmiş görevler, tamamlanmamış kritik görevler ve planın gerisinde kalan ilerleme puanlanır; 100 üzerinden 60 puanı aşan proje riskli sayılır." }' />
         </div>
         @* Gecikmiş/yaklaşan görev uyarı banner'ları yerine: tıklanabilir KPI kartları + modal (bkz. Index.js loadTaskAlerts). *@
         <div class="col-6 col-md-4">
             <div id="OverdueTasksKpiCard" class="h-100" role="button" tabindex="0" aria-label="Geçmiş görevleri görüntüle" style="cursor:pointer">
-                <partial name="_KpiCard" model='new Apya.Platform.Web.Pages.Shared.KpiCardModel { Icon = "fa-clock-rotate-left", Accent = "negative", Label = "Geçmiş Görevler", ValueId = "KpiOverdueTasks", Value = "—" }' />
+                <partial name="_KpiCard" model='new Apya.Platform.Web.Pages.Shared.KpiCardModel { Icon = "fa-clock-rotate-left", Accent = "negative", Label = "Geçmiş Görevler", ValueId = "KpiOverdueTasks", Value = "—", Hint = "Son tarihi geçtiği hâlde hâlâ tamamlanmamış görevler. Karta tıklayarak listesini açabilirsiniz." }' />
             </div>
         </div>
         <div class="col-6 col-md-4">
             <div id="UpcomingTasksKpiCard" class="h-100" role="button" tabindex="0" aria-label="Yaklaşan görevleri görüntüle" style="cursor:pointer">
-                <partial name="_KpiCard" model='new Apya.Platform.Web.Pages.Shared.KpiCardModel { Icon = "fa-clock", Accent = "warning", Label = "Yaklaşan Görevler", ValueId = "KpiUpcomingTasks", Value = "—" }' />
+                <partial name="_KpiCard" model='new Apya.Platform.Web.Pages.Shared.KpiCardModel { Icon = "fa-clock", Accent = "warning", Label = "Yaklaşan Görevler", ValueId = "KpiUpcomingTasks", Value = "—", Hint = "Önümüzdeki 48 saat içinde son tarihi dolacak, henüz tamamlanmamış görevler. Karta tıklayarak listesini açabilirsiniz." }' />
             </div>
         </div>
     </div>
