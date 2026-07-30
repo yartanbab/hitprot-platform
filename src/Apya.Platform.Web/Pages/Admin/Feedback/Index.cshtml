@@ -1,0 +1,103 @@
+@page
+@model Apya.Platform.Web.Pages.Admin.Feedback.IndexModel
+@{
+    ViewBag.Title = "Geri Bildirimler";
+}
+
+@section scripts {
+    <abp-script src="/Pages/Admin/Feedback/Index.js" />
+}
+
+<div class="apya-page">
+<abp-card>
+    <abp-card-header>
+        <abp-card-title><i class="fa fa-comment-dots me-2"></i> Geri Bildirimler</abp-card-title>
+        <abp-card-header-toolbar>
+            <a href="/Admin/Feedback/Analytics" class="btn btn-outline-secondary btn-sm me-2">
+                <i class="fa fa-chart-pie me-1"></i> Analiz
+            </a>
+            <button type="button" id="btn-export-excel" class="btn btn-outline-secondary btn-sm">
+                <i class="fa fa-file-excel me-1"></i> Excel
+            </button>
+        </abp-card-header-toolbar>
+    </abp-card-header>
+    <abp-card-body>
+        <form id="FeedbackFilterForm" class="row g-2 mb-3">
+            <div class="col-md-2">
+                <select id="Filter_Type" class="form-select form-select-sm">
+                    <option value="">Tüm Türler</option>
+                    <option value="1">Hata Bildirimi</option>
+                    <option value="2">Öneri</option>
+                    <option value="3">Soru</option>
+                    <option value="4">Beğeni</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <select id="Filter_Status" class="form-select form-select-sm">
+                    <option value="">Tüm Durumlar</option>
+                    <option value="1">Yeni</option>
+                    <option value="2">İnceleniyor</option>
+                    <option value="3">Planlandı</option>
+                    <option value="4">Tamamlandı</option>
+                    <option value="5">Reddedildi</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <select id="Filter_Priority" class="form-select form-select-sm">
+                    <option value="">Tüm Öncelikler</option>
+                    <option value="1">Düşük</option>
+                    <option value="2">Normal</option>
+                    <option value="3">Yüksek</option>
+                    <option value="4">Kritik</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <select id="Filter_TenantId" class="form-select form-select-sm">
+                    <option value="">Tüm Tenant'lar</option>
+                    @foreach (var t in Model.Tenants)
+                    {
+                        <option value="@t.Id">@t.Name</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-3">
+                <input id="Filter_Text" type="text" class="form-control form-control-sm" placeholder="Konu veya açıklamada ara..." />
+            </div>
+            <div class="col-md-1 d-flex align-items-center">
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="Filter_OnlyUnanswered" />
+                    <label class="form-check-label text-xs" for="Filter_OnlyUnanswered">Cevapsız</label>
+                </div>
+            </div>
+        </form>
+
+        <div class="d-flex align-items-center gap-2 mb-2" id="BulkActionBar" style="display:none !important;">
+            <span class="text-sm text-muted" id="SelectedCount"></span>
+            <select id="BulkStatusSelect" class="form-select form-select-sm" style="width:auto;">
+                <option value="2">İnceleniyor yap</option>
+                <option value="3">Planlandı yap</option>
+                <option value="4">Tamamlandı yap</option>
+                <option value="5">Reddet</option>
+            </select>
+            <button type="button" id="btn-bulk-apply" class="btn btn-sm btn-primary">Uygula</button>
+        </div>
+
+        <abp-table striped-rows="true" id="FeedbackTable">
+            <thead>
+                <tr>
+                    <th><input type="checkbox" id="SelectAllCheckbox" /></th>
+                    <th>İşlemler</th>
+                    <th>Tarih</th>
+                    <th>Tenant</th>
+                    <th>Tür</th>
+                    <th>Konu</th>
+                    <th>Durum</th>
+                    <th>Öncelik</th>
+                    <th>Puan</th>
+                    <th>Cevap</th>
+                </tr>
+            </thead>
+        </abp-table>
+    </abp-card-body>
+</abp-card>
+</div>

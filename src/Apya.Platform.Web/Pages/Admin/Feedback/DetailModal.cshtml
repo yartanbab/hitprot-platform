@@ -1,0 +1,137 @@
+@page
+@model Apya.Platform.Web.Pages.Admin.Feedback.DetailModalModel
+@using Microsoft.AspNetCore.Authorization
+@using Volo.Abp.AspNetCore.Mvc.UI.Bootstrap.TagHelpers.Modal
+@using Apya.Platform.Feedbacks
+@using Apya.Platform.Permissions
+@inject IAuthorizationService AuthorizationService
+@{
+    Layout = null;
+    var f = Model.Feedback;
+    var canRespond = await AuthorizationService.IsGrantedAsync(PlatformPermissions.Feedbacks.Respond);
+    var canDelete = await AuthorizationService.IsGrantedAsync(PlatformPermissions.Feedbacks.Delete);
+}
+<abp-modal>
+    <abp-modal-header title="@f.Subject"></abp-modal-header>
+    <abp-modal-body>
+        <dl class="row mb-3">
+            <dt class="col-sm-3">Tenant</dt>
+            <dd class="col-sm-9">@(f.TenantName ?? "-")</dd>
+            <dt class="col-sm-3">Gönderen</dt>
+            <dd class="col-sm-9">@(f.SubmittedByUserName ?? "-")</dd>
+            <dt class="col-sm-3">Sayfa</dt>
+            <dd class="col-sm-9">
+                @(f.PageUrl ?? "-") @if (!string.IsNullOrWhiteSpace(f.PageTitle)) { <span class="text-muted">(@f.PageTitle)</span> }
+            </dd>
+            <dt class="col-sm-3">Tarih</dt>
+            <dd class="col-sm-9">@f.CreationTime.ToString("dd.MM.yyyy HH:mm")</dd>
+            <dt class="col-sm-3">Puan</dt>
+            <dd class="col-sm-9">@(f.Rating?.ToString() ?? "—")</dd>
+            <dt class="col-sm-3">Tarayıcı / Ekran</dt>
+            <dd class="col-sm-9 text-sm text-muted">@(f.UserAgent ?? "-") @(f.ScreenResolution is not null ? $"· {f.ScreenResolution}" : "")</dd>
+        </dl>
+
+        <div class="row g-2 mb-3">
+            <div class="col-md-4">
+                <label class="form-label text-xs fw-bold">Durum</label>
+                <select class="form-select form-select-sm detail-status-select" data-id="@f.Id" disabled="@(!canRespond)">
+                    <option value="1" selected="@(f.Status == FeedbackStatus.New)">Yeni</option>
+                    <option value="2" selected="@(f.Status == FeedbackStatus.InReview)">İnceleniyor</option>
+                    <option value="3" selected="@(f.Status == FeedbackStatus.Planned)">Planlandı</option>
+                    <option value="4" selected="@(f.Status == FeedbackStatus.Completed)">Tamamlandı</option>
+                    <option value="5" selected="@(f.Status == FeedbackStatus.Rejected)">Reddedildi</option>
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label text-xs fw-bold">Öncelik</label>
+                <select class="form-select form-select-sm detail-priority-select" data-id="@f.Id" disabled="@(!canRespond)">
+                    <option value="1" selected="@(f.Priority == FeedbackPriority.Low)">Düşük</option>
+                    <option value="2" selected="@(f.Priority == FeedbackPriority.Normal)">Normal</option>
+                    <option value="3" selected="@(f.Priority == FeedbackPriority.High)">Yüksek</option>
+                    <option value="4" selected="@(f.Priority == FeedbackPriority.Critical)">Kritik</option>
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label text-xs fw-bold">Etiketler</label>
+                <input type="text" class="form-control form-control-sm detail-tags-input" data-id="@f.Id"
+                       value="@f.AdminTags" placeholder="virgülle ayır" disabled="@(!canRespond)" />
+            </div>
+        </div>
+
+        <p class="mb-3">@f.Body</p>
+
+        @if (f.HasScreenshot && !string.IsNullOrWhiteSpace(f.ScreenshotFileName))
+        {
+            <div class="mb-3">
+                <label class="form-label text-xs fw-bold d-block">Ekran Görüntüsü</label>
+                <a href="/Admin/Feedback?handler=Screenshot&fileName=@f.ScreenshotFileName" target="_blank">
+                    <img src="/Admin/Feedback?handler=Screenshot&fileName=@f.ScreenshotFileName"
+                         style="max-width:100%;max-height:220px;border:1px solid var(--apya-border-subtle);border-radius:6px;" />
+                </a>
+            </div>
+        }
+
+        @if (Model.Breadcrumb.Count > 0)
+        {
+            <div class="mb-3">
+                <label class="form-label text-xs fw-bold d-block">Davranış İzi</label>
+                <ul class="list-unstyled text-sm mb-0" style="max-height:160px;overflow-y:auto;">
+                    @foreach (var b in Model.Breadcrumb)
+                    {
+                        <li class="mb-1">
+                            <span class="text-muted">@b.Time.ToString("HH:mm:ss")</span>
+                            <span class="apya-chip apya-chip-neutral mx-1">@b.Type</span>
+                            <span>@b.Label</span>
+                        </li>
+                    }
+                </ul>
+            </div>
+        }
+
+        <hr />
+        <h6 class="text-sm fw-bold mb-2">Yorumlar / Cevaplar</h6>
+        <div class="mb-3" style="max-height:200px;overflow-y:auto;">
+            @if (f.Comments.Count == 0)
+            {
+                <p class="text-muted text-sm">Henüz yorum yok.</p>
+            }
+            else
+            {
+                foreach (var c in f.Comments)
+                {
+                    <div class="mb-2 p-2" style="border-left:3px solid @(c.IsInternal ? "var(--apya-warning-500)" : "var(--apya-accent-500)");background:var(--apya-surface-sunken);border-radius:0 6px 6px 0;">
+                        <div class="text-sm">@c.Text</div>
+                        <div class="text-muted text-xs mt-1">
+                            @(c.AuthorName ?? "Ekip") · @c.CreationTime.ToString("dd.MM.yyyy HH:mm")
+                            @if (c.IsInternal)
+                            {
+                                <span class="apya-chip apya-chip-warning ms-1">İç Not</span>
+                            }
+                        </div>
+                    </div>
+                }
+            }
+        </div>
+
+        @if (canRespond)
+        {
+            <textarea class="form-control form-control-sm detail-comment-text mb-2" rows="2" placeholder="Cevap yazın..."></textarea>
+            <div class="d-flex justify-content-between align-items-center">
+                <div class="form-check">
+                    <input class="form-check-input detail-comment-internal" type="checkbox" id="InternalCheck-@f.Id" />
+                    <label class="form-check-label text-xs" for="InternalCheck-@f.Id">Sadece iç not (kullanıcıya görünmez)</label>
+                </div>
+                <button type="button" class="btn btn-sm btn-primary detail-add-comment-btn" data-id="@f.Id">Gönder</button>
+            </div>
+        }
+    </abp-modal-body>
+    <abp-modal-footer>
+        @if (canDelete)
+        {
+            <button type="button" class="btn btn-outline-danger btn-sm me-auto detail-delete-btn" data-id="@f.Id">
+                <i class="fa fa-trash me-1"></i> Sil
+            </button>
+        }
+        <abp-button text="Kapat" button-type="Secondary" data-bs-dismiss="modal"></abp-button>
+    </abp-modal-footer>
+</abp-modal>

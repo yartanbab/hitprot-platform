@@ -1,0 +1,36 @@
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+using Apya.Platform.Feedbacks.Dtos;
+using Volo.Abp.Application.Dtos;
+using Volo.Abp.Application.Services;
+
+namespace Apya.Platform.Feedbacks;
+
+/// <summary>
+/// Host yöneticisi tarafı: tüm tenant'lardan gelen geri bildirim havuzu.
+/// Yalnızca host bağlamında çalışır (CurrentTenant.Id == null).
+/// </summary>
+public interface IFeedbackAdminAppService : IApplicationService
+{
+    Task<PagedResultDto<FeedbackDto>> GetListAsync(GetFeedbackListInput input);
+
+    Task<FeedbackDetailDto> GetAsync(Guid id);
+
+    Task<FeedbackStatsDto> GetStatsAsync();
+
+    Task UpdateStatusAsync(Guid id, UpdateFeedbackStatusDto input);
+
+    Task UpdatePriorityAsync(Guid id, UpdateFeedbackPriorityDto input);
+
+    Task UpdateTagsAsync(Guid id, UpdateFeedbackTagsDto input);
+
+    Task BulkUpdateStatusAsync(BulkUpdateFeedbackStatusDto input);
+
+    Task<FeedbackCommentDto> AddCommentAsync(Guid id, AddFeedbackCommentDto input);
+
+    Task DeleteAsync(Guid id);
+
+    /// <summary>Excel çıktısı Web katmanında üretilir; burada yalnızca ham satırlar döner.</summary>
+    Task<List<FeedbackDto>> GetAllForExportAsync(GetFeedbackListInput input);
+}

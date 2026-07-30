@@ -76,5 +76,6 @@ public class PlatformDomainModule : AbpModule
     {
         context.AddBackgroundWorkerAsync<TaskDeadlineWorker>();
         context.AddBackgroundWorkerAsync<DocumentExpiryWorker>();
+        context.AddBackgroundWorkerAsync<Apya.Platform.Telemetry.TelemetryRetentionWorker>();
     }
 }

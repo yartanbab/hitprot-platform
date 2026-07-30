@@ -190,6 +190,22 @@ public class PlatformMenuContributor : IMenuContributor
                 icon: "fa fa-palette", url: "/DesignSystem"));
         }
 
+        // Geri Bildirimler — host'un tüm tenant'lardan gelen havuzu.
+        if (await permission.IsGrantedAsync(PlatformPermissions.Feedbacks.Default))
+        {
+            administration.AddItem(new ApplicationMenuItem(
+                "Apya.Admin.Feedback", l["Menu:FeedbackAdmin"],
+                icon: "fa fa-comment-dots", url: "/Admin/Feedback"));
+        }
+
+        // Sistem Sağlığı — istemci hataları + audit üzerinden türetilen sunucu metrikleri.
+        if (await permission.IsGrantedAsync(PlatformPermissions.SystemHealth.Default))
+        {
+            administration.AddItem(new ApplicationMenuItem(
+                "Apya.Admin.SystemHealth", l["Menu:SystemHealth"],
+                icon: "fa fa-heart-pulse", url: "/Admin/SystemHealth"));
+        }
+
         if (MultiTenancyConsts.IsEnabled)
         {
             administration.SetSubItemOrder(TenantManagementMenuNames.GroupName, 1);

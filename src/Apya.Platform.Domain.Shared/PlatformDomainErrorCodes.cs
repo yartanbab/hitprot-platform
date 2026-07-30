@@ -130,4 +130,14 @@ public static class PlatformDomainErrorCodes
 
     // --- Muhasebe (Accounting) — Outbox ---
     public const string OutboxMessageInvalidTransition = "Platform:Accounting:Outbox:InvalidTransition";
+
+    // --- Geri Bildirim (Feedback) Modülü ---
+    public const string FeedbackSubjectRequired = "Platform:Feedback:SubjectRequired";
+    public const string FeedbackBodyRequired = "Platform:Feedback:BodyRequired";
+    public const string FeedbackCommentRequired = "Platform:Feedback:CommentRequired";
+    public const string FeedbackRateLimitExceeded = "Platform:Feedback:RateLimitExceeded";
+    public const string FeedbackInvalidStatusTransition = "Platform:Feedback:InvalidStatusTransition";
+
+    // --- Telemetri (Telemetry) Modülü ---
+    public const string TelemetryDisabled = "Platform:Telemetry:Disabled";
 }

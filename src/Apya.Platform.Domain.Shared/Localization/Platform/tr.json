@@ -38,6 +38,26 @@
         "Menu:AiCenter:Bindings": "Form Bağlamaları",
         "Menu:AiCenter:Evaluations": "AI Değerlendirmeleri",
         "Menu:AiCenter:Workflows": "AI İş Akışları",
+        "Menu:MyFeedback": "Geri Bildirimlerim",
+        "Menu:FeedbackAdmin": "Geri Bildirimler",
+        "Menu:SystemHealth": "Sistem Sağlığı",
+
+        "Feedback:OpenLink": "Geri Bildirim",
+        "Feedback:PageContextLink": "Bu sayfa hakkında geri bildirim ver",
+        "Feedback:ModalTitle": "Geri Bildirim Gönder",
+        "Feedback:Type": "Tür",
+        "Feedback:Type.Bug": "Hata Bildirimi",
+        "Feedback:Type.Suggestion": "Öneri",
+        "Feedback:Type.Question": "Soru",
+        "Feedback:Type.Praise": "Beğeni",
+        "Feedback:Subject": "Konu",
+        "Feedback:Body": "Açıklama",
+        "Feedback:Rating": "Memnuniyet (opsiyonel)",
+        "Feedback:Screenshot": "Ekran Görüntüsü (opsiyonel)",
+        "Feedback:Submit": "Gönder",
+        "Feedback:Cancel": "Vazgeç",
+        "Feedback:MyHistory": "Geçmişimi Gör",
+        "Feedback:PrivacyNotice": "Gönderdiğiniz geri bildirim, teşhis amacıyla sayfa bilgisi ve tarayıcı bilgisiyle birlikte kaydedilir.",
 
         "Permission:Ai": "Yapay Zeka",
         "Permission:Ai.Dashboard": "AI Gösterge Paneli",
@@ -155,6 +175,14 @@
 
         "Permission:TenantSettings": "Tenant Ayarları",
         "Permission:TenantSettings.ManageAi": "AI Ayarlarını Yönetme",
+
+        "Permission:Feedbacks": "Geri Bildirimler",
+        "Permission:Feedbacks.Respond": "Durum/Öncelik/Cevap Yönetimi",
+        "Permission:Feedbacks.Delete": "Geri Bildirim Silme",
+        "Permission:Feedbacks.Export": "Excel'e Aktarma",
+
+        "Permission:SystemHealth": "Sistem Sağlığı",
+        "Permission:SystemHealth.Resolve": "İstemci Hatasını Çözüldü İşaretleme",
 
         "Permission:Ai": "Yapay Zeka Özellikleri",
         "Permission:Ai.Generation": "İçerik Üretimi",
@@ -352,6 +380,19 @@
         "Platform:Accounting:Money:AmountInvalidPrecision": "Tutarın ondalık hassasiyeti geçersiz.",
 
         "Platform:Accounting:Outbox:InvalidTransition": "Geçersiz durum geçişi.",
+
+        "Platform:Feedback:SubjectRequired": "Konu boş bırakılamaz.",
+        "Platform:Feedback:BodyRequired": "Açıklama boş bırakılamaz.",
+        "Platform:Feedback:CommentRequired": "Yorum metni boş bırakılamaz.",
+        "Platform:Feedback:RateLimitExceeded": "Kısa sürede çok fazla geri bildirim gönderdiniz. Lütfen birkaç dakika sonra tekrar deneyin.",
+        "Platform:Feedback:InvalidStatusTransition": "Bu durum geçişi geçerli değil.",
+        "Platform:Telemetry:Disabled": "Telemetri şu anda devre dışı.",
+
+        "Setting:Telemetry.Enabled": "İstemci Hata Telemetrisi",
+        "Setting:Telemetry.Enabled.Description": "Kapatıldığında tarayıcıda oluşan hatalar sunucuya raporlanmaz.",
+        "Setting:Telemetry.RetentionDays": "Telemetri Saklama Süresi (gün)",
+        "Setting:Telemetry.RetentionDays.Description": "Denetim günlüğü ve istemci hata kayıtları bu süreden sonra otomatik silinir. Geri bildirimler bu süreden etkilenmez.",
+
         "Common:LoadFailed": "Yüklenemedi",
         "Common:FetchError": "Veri alınırken bir hata oluştu.",
         "Common:Retry": "Tekrar dene",

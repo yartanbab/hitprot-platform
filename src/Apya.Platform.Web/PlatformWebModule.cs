@@ -278,6 +278,10 @@ public class PlatformWebModule : AbpModule
                 {
                     // Olu�turdu�umuz dosyay� buraya ekliyoruz
                     bundle.AddFiles("/js/jquery-fix.js");
+                    // Erken kayıt: window.onerror/unhandledrejection dinleyicileri mümkün olduğunca
+                    // erken bağlansın diye jQuery hemen sonrasında.
+                    bundle.AddFiles("/js/apya-telemetry.js");
+                    bundle.AddFiles("/js/apya-feedback.js");
                     bundle.AddFiles("/js/apya-money.js"); // apya.money.format → "1.000,00 TRY" (tüm sayfalarda)
                     bundle.AddFiles("/js/apya-finance-modal.js"); // gelir/gider modalı: proje tarih aralığı kontrolü
                     bundle.AddFiles("/Pages/Notifications/notification-bell.js");
@@ -323,6 +327,7 @@ public class PlatformWebModule : AbpModule
             options.Contributors.Add(new Apya.Platform.Web.Theme.ThemeToggleToolbarContributor());
             options.Contributors.Add(new Apya.Platform.Web.Theme.DensityToggleToolbarContributor());
             options.Contributors.Add(new Apya.Platform.Web.Notifications.NotificationToolbarContributor());
+            options.Contributors.Add(new Apya.Platform.Web.Feedbacks.FeedbackToolbarContributor());
         });
     }
 

@@ -37,6 +37,26 @@
     "Menu:AiCenter:Bindings": "Form Bindings",
     "Menu:AiCenter:Evaluations": "AI Evaluations",
     "Menu:AiCenter:Workflows": "AI Workflows",
+    "Menu:MyFeedback": "My Feedback",
+    "Menu:FeedbackAdmin": "Feedback",
+    "Menu:SystemHealth": "System Health",
+
+    "Feedback:OpenLink": "Feedback",
+    "Feedback:PageContextLink": "Give feedback about this page",
+    "Feedback:ModalTitle": "Send Feedback",
+    "Feedback:Type": "Type",
+    "Feedback:Type.Bug": "Bug Report",
+    "Feedback:Type.Suggestion": "Suggestion",
+    "Feedback:Type.Question": "Question",
+    "Feedback:Type.Praise": "Praise",
+    "Feedback:Subject": "Subject",
+    "Feedback:Body": "Description",
+    "Feedback:Rating": "Satisfaction (optional)",
+    "Feedback:Screenshot": "Screenshot (optional)",
+    "Feedback:Submit": "Submit",
+    "Feedback:Cancel": "Cancel",
+    "Feedback:MyHistory": "View My History",
+    "Feedback:PrivacyNotice": "Your feedback is saved together with page and browser information for diagnostic purposes.",
 
     "Permission:Ai": "AI",
     "Permission:Ai.Dashboard": "AI Dashboard",
@@ -154,6 +174,14 @@
 
     "Permission:TenantSettings": "Tenant Settings",
     "Permission:TenantSettings.ManageAi": "Manage AI Settings",
+
+    "Permission:Feedbacks": "Feedback",
+    "Permission:Feedbacks.Respond": "Manage Status/Priority/Reply",
+    "Permission:Feedbacks.Delete": "Delete Feedback",
+    "Permission:Feedbacks.Export": "Export to Excel",
+
+    "Permission:SystemHealth": "System Health",
+    "Permission:SystemHealth.Resolve": "Mark Client Error Resolved",
 
     "Feature:Platform": "Platform Features",
     "Feature:Platform:AiAssist": "AI Assistant",

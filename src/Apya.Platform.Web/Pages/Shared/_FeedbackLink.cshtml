@@ -1,0 +1,18 @@
+@using Microsoft.AspNetCore.Mvc.Localization
+@using Apya.Platform.Localization
+@inject IHtmlLocalizer<PlatformResource> L
+@*
+    Modül sayfalarının başlık altına eklenebilen bağlamsal geri bildirim linki.
+    Header'daki global widget (FeedbackWidgetViewComponent) ile AYNI modalı açar —
+    ".apya-feedback-open-link" sınıfı apya-feedback.js'te delege edilmiş click
+    handler'ına bağlı, bu yüzden burada ayrı bir JS gerekmez.
+    Kullanım: sayfa başlığının altına @await Html.PartialAsync("/Pages/Shared/_FeedbackLink.cshtml")
+*@
+<a href="#" class="apya-feedback-open-link apya-feedback-inline-link text-sm">
+    <i class="fa fa-comment-dots me-1"></i>@L["Feedback:PageContextLink"]
+</a>
+
+<style>
+    .apya-feedback-inline-link { color: var(--apya-text-tertiary); text-decoration: underline; }
+    .apya-feedback-inline-link:hover { color: var(--apya-accent-500); }
+</style>

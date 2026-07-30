@@ -1,0 +1,89 @@
+@using Microsoft.AspNetCore.Mvc.Localization
+@using Apya.Platform.Localization
+@inject IHtmlLocalizer<PlatformResource> L
+@*
+    Site-geneli geri bildirim widget'ı (her sayfa header'ında, toolbar contributor ile).
+    Sade altı çizili link + gizli duran gönderim modalı. Tıklama + gönderim mantığı
+    apya-feedback.js'te (#apya-feedback-modal). Bağlam (sayfa URL'si, ekran çözünürlüğü,
+    davranış izi) apya-telemetry.js'ten sessizce okunur — kullanıcı yalnızca
+    tür/konu/açıklama/puan/ekran görüntüsü girer.
+*@
+<a href="#" class="apya-feedback-open-link" title="@L["Feedback:OpenLink"]">@L["Feedback:OpenLink"]</a>
+
+<div class="modal fade" id="apya-feedback-modal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <form autocomplete="off">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="PageUrl" />
+                <div class="modal-header">
+                    <h6 class="modal-title mb-0">@L["Feedback:ModalTitle"]</h6>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="apya-feedback-error alert alert-danger d-none py-2 mb-3"></div>
+
+                    <div class="mb-3">
+                        <label class="form-label">@L["Feedback:Type"]</label>
+                        <select name="Type" class="form-select">
+                            <option value="1">@L["Feedback:Type.Bug"]</option>
+                            <option value="2">@L["Feedback:Type.Suggestion"]</option>
+                            <option value="3">@L["Feedback:Type.Question"]</option>
+                            <option value="4">@L["Feedback:Type.Praise"]</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">@L["Feedback:Subject"]</label>
+                        <input type="text" name="Subject" class="form-control" maxlength="200" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">@L["Feedback:Body"]</label>
+                        <textarea name="Body" class="form-control" rows="4" maxlength="4000"></textarea>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label d-block">@L["Feedback:Rating"]</label>
+                        <span class="apya-feedback-rating">
+                            @for (var i = 1; i <= 5; i++)
+                            {
+                                <i class="fa-regular fa-star" data-value="@i" role="button"></i>
+                            }
+                        </span>
+                    </div>
+
+                    <div class="mb-1">
+                        <label class="form-label">@L["Feedback:Screenshot"]</label>
+                        <input type="file" class="form-control apya-feedback-screenshot-input" accept=".png,.jpg,.jpeg,.gif" />
+                        <small class="apya-feedback-screenshot-name text-muted"></small>
+                    </div>
+
+                    <p class="text-muted apya-feedback-privacy-notice mb-0">@L["Feedback:PrivacyNotice"]</p>
+                </div>
+                <div class="modal-footer justify-content-between">
+                    <a href="/Feedback" class="text-sm">@L["Feedback:MyHistory"]</a>
+                    <div>
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">@L["Feedback:Cancel"]</button>
+                        <button type="button" class="btn btn-primary apya-feedback-submit">@L["Feedback:Submit"]</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Sade altı çizili link — buton görünümü DEĞİL, kullanıcı isteği bu şekildeydi. */
+    .apya-feedback-open-link {
+        color: var(--apya-text-secondary);
+        text-decoration: underline;
+        font-size: 0.85rem;
+        margin-left: 0.5rem;
+        align-self: center;
+        white-space: nowrap;
+    }
+    .apya-feedback-open-link:hover { color: var(--apya-accent-500); }
+    .apya-feedback-rating .fa-star { font-size: 1.25rem; cursor: pointer; margin-right: 0.25rem; color: var(--apya-text-tertiary); }
+    .apya-feedback-privacy-notice { font-size: 0.75rem; }
+</style>
