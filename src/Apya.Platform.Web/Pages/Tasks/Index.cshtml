@@ -11,119 +11,78 @@
 
 <div class="apya-page">
 
-@* ─── Gelişmiş Filtreleme Paneli ─── *@
-<div class="accordion mb-3" id="taskFiltersAccordion">
-    <div class="accordion-item shadow-sm border-0" style="border-radius:var(--apya-radius-xl);">
-        <h2 class="accordion-header" id="headingFilters">
-            <button class="accordion-button collapsed fw-bold text-primary"
-                    type="button"
-                    data-bs-toggle="collapse"
-                    data-bs-target="#collapseFilters"
-                    aria-expanded="false"
-                    aria-controls="collapseFilters"
-                    style="border-radius:var(--apya-radius-xl);">
-                <i class="fa fa-filter me-2"></i> @L["Tasks:AdvancedFilters"]
-            </button>
-        </h2>
-        <div id="collapseFilters"
-             class="accordion-collapse collapse"
-             aria-labelledby="headingFilters"
-             data-bs-parent="#taskFiltersAccordion">
-            <div class="accordion-body" style="background: var(--apya-surface-sunken); border-radius:0 0 var(--apya-radius-xl) var(--apya-radius-xl);">
-                <form id="TaskFilterForm" class="row g-3">
-                    <div class="col-md-3">
-                        <label for="Filter_AssigneeId" class="form-label fw-bold small text-muted">@L["Tasks:Filter:Assignee"]</label>
-                        <select id="Filter_AssigneeId" class="form-select border-0 shadow-sm">
-                            <option value="">@L["Common:Everyone"]</option>
-                        </select>
-                    </div>
-                    <div class="col-md-2">
-                        <label for="Filter_Status" class="form-label fw-bold small text-muted">@L["Tasks:Filter:Status"]</label>
-                        <select id="Filter_Status" class="form-select border-0 shadow-sm">
-                            <option value="">@L["Common:All"]</option>
-                            <option value="1">@L["Tasks:Status:Todo"]</option>
-                            <option value="2">@L["Tasks:Status:InProgress"]</option>
-                            <option value="3">@L["Tasks:Status:InReview"]</option>
-                            <option value="4">@L["Tasks:Status:Done"]</option>
-                        </select>
-                    </div>
-                    <div class="col-md-2">
-                        <label for="Filter_Priority" class="form-label fw-bold small text-muted">Öncelik</label>
-                        <select id="Filter_Priority" class="form-select border-0 shadow-sm">
-                            <option value="">@L["Common:All"]</option>
-                            <option value="1">Düşük</option>
-                            <option value="2">Orta</option>
-                            <option value="3">Yüksek</option>
-                            <option value="4">Kritik</option>
-                        </select>
-                    </div>
-                    <div class="col-md-2">
-                        <label for="Filter_MinDueDate" class="form-label fw-bold small text-muted">@L["Tasks:Filter:MinDueDate"]</label>
-                        <input type="date" id="Filter_MinDueDate" class="form-control border-0 shadow-sm">
-                    </div>
-                    <div class="col-md-2">
-                        <label for="Filter_MaxDueDate" class="form-label fw-bold small text-muted">@L["Tasks:Filter:MaxDueDate"]</label>
-                        <input type="date" id="Filter_MaxDueDate" class="form-control border-0 shadow-sm">
-                    </div>
-                    <div class="col-md-3 d-flex align-items-end gap-2">
-                        <button type="button" id="btn-apply-filters" class="btn btn-primary shadow-sm fw-bold flex-fill">
-                            <i class="fa fa-search me-1"></i> @L["Common:Filter"]
-                        </button>
-                        <button type="button" id="btn-clear-filters" class="btn btn-light shadow-sm fw-bold flex-fill">@L["Common:Clear"]</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-</div>
-
 @* ─── Görev Yönetimi ─── *@
-<abp-card>
-    <abp-card-header class="border-bottom-0 pb-0">
-        <div class="d-flex flex-wrap align-items-center justify-content-between gap-2">
-            <abp-card-title>@L["Tasks:BoardTitle"]</abp-card-title>
-            @* "Ara" kutusu DataTables tarafından #view-list içine üretilir; index.js
-               burada açılan #tasks-search-slot'a taşıyıp ortalar. flex-grow-1 ile başlık ve
-               araç çubuğu arasındaki boşluğu doldurup içeriğini ortalar; taşıdığı .dt-search
-               input'una sabit genişlik veriyoruz (bkz. altta <style>) — yoksa Bootstrap'ın
-               .form-control{width:100%} kuralı slot'u satırın tamamına büyütüp araç çubuğunu
-               alt satıra itiyordu. Proje adı uzun olup dropdown genişleyince (ör. "2026 Ramazan
-               Umresi 1.Grup") satıra sığmayabilir; bu durumda flex-wrap ile aşağı sarar —
-               üst üste binme yerine temiz bir ikinci satır tercih edildi. *@
-            <div id="tasks-search-slot" class="flex-grow-1 d-flex justify-content-center"></div>
-            <div class="d-flex align-items-center flex-wrap gap-2">
-                <select id="tasks-project" class="form-select form-select-sm w-auto" style="min-width:170px" title="Proje seçince kanban o projeye scope'lanır (özel kolonlar + Kolon Ekle); liste/gantt da filtrelenir">
-                    <option value="">Tüm Projeler (Genel)</option>
-                </select>
-                <div class="btn-group" role="group">
-                    <button type="button" id="btn-view-list" class="btn btn-outline-primary active">
-                        <i class="fa fa-list me-1"></i> @L["Tasks:View:List"]
-                    </button>
-                    <button type="button" id="btn-view-kanban" class="btn btn-outline-primary">
-                        <i class="fa fa-columns me-1"></i> @L["Tasks:View:Kanban"]
-                    </button>
-                    <button type="button" id="btn-view-gantt" class="btn btn-outline-primary">
-                        <i class="fa fa-stream me-1"></i> @L["Tasks:View:Gantt"]
-                    </button>
-                </div>
-                @* APYA-122: AI ile Görev Oluştur butonu kaldırıldı.
-                   Generic Tasks sayfasında AI özelliği uygunsuz — proje bağlamı olmadan
-                   anlamlı bir AI üretimi yapılamaz. AI girişi proje detay sayfasından yapılmalı. *@
-                @if (await AuthorizationService.IsGrantedAsync(PlatformPermissions.Tasks.Create))
-                {
-                    <abp-button id="NewTaskButton"
-                                text="@L["Tasks:NewButton"].Value"
-                                icon="plus"
-                                button-type="Primary"
-                                size="Small" />
-                }
+<abp-card class="apya-tasks-card">
+    <abp-card-header class="border-bottom-0 pb-2">
+        <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+            <div class="btn-group apya-view-toggle" role="group">
+                <button type="button" id="btn-view-list" class="btn active">@L["Tasks:View:List"]</button>
+                <button type="button" id="btn-view-kanban" class="btn">@L["Tasks:View:Kanban"]</button>
+                <button type="button" id="btn-view-gantt" class="btn">@L["Tasks:View:Gantt"]</button>
             </div>
+            @* "Ara" kutusu DataTables tarafından #view-list içine üretilir; index.js
+               burada açılan #tasks-search-slot'a taşıyıp ortalar. flex-grow-1 ile araç
+               çubuğu öğeleri arasındaki boşluğu doldurup içeriğini ortalar; taşıdığı
+               .dt-search input'una sabit genişlik veriyoruz (bkz. altta <style>) — yoksa
+               Bootstrap'ın .form-control{width:100%} kuralı slot'u satırın tamamına
+               büyütüp araç çubuğunu alt satıra itiyordu. *@
+            <div id="tasks-search-slot" class="flex-grow-1 d-flex justify-content-center"></div>
+            @* APYA-122: AI ile Görev Oluştur butonu kaldırıldı.
+               Generic Tasks sayfasında AI özelliği uygunsuz — proje bağlamı olmadan
+               anlamlı bir AI üretimi yapılamaz. AI girişi proje detay sayfasından yapılmalı. *@
+            @if (await AuthorizationService.IsGrantedAsync(PlatformPermissions.Tasks.Create))
+            {
+                <abp-button id="NewTaskButton"
+                            text="@L["Tasks:NewButton"].Value"
+                            icon="plus"
+                            button-type="Primary"
+                            size="Small" />
+            }
         </div>
+
+        @* ─── Kompakt filtre pilleri — eski accordion'un yerine (aynı ID'ler/JS kablolaması) ─── *@
+        <form id="TaskFilterForm" class="apya-task-filter-row d-flex flex-wrap align-items-center gap-2">
+            <select id="Filter_Status" class="apya-filter-pill" title="@L["Tasks:Filter:Status"]">
+                <option value="">@L["Tasks:Filter:Status"]</option>
+                <option value="1">@L["Tasks:Status:Todo"]</option>
+                <option value="2">@L["Tasks:Status:InProgress"]</option>
+                <option value="3">@L["Tasks:Status:InReview"]</option>
+                <option value="4">@L["Tasks:Status:Done"]</option>
+            </select>
+            <select id="Filter_AssigneeId" class="apya-filter-pill" title="@L["Tasks:Filter:Assignee"]">
+                <option value="">Atanan</option>
+            </select>
+            <select id="tasks-project" class="apya-filter-pill" title="Proje seçince kanban o projeye scope'lanır (özel kolonlar + Kolon Ekle); liste/gantt da filtrelenir">
+                <option value="">Proje</option>
+            </select>
+            <select id="Filter_Priority" class="apya-filter-pill" title="Öncelik">
+                <option value="">Öncelik</option>
+                <option value="1">Düşük</option>
+                <option value="2">Orta</option>
+                <option value="3">Yüksek</option>
+                <option value="4">Kritik</option>
+            </select>
+            <div class="dropdown">
+                <button type="button" class="apya-filter-pill dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                    Son Tarih
+                </button>
+                <div class="dropdown-menu p-3 shadow-sm" style="min-width:240px;">
+                    <label for="Filter_MinDueDate" class="form-label small fw-bold text-muted">@L["Tasks:Filter:MinDueDate"]</label>
+                    <input type="date" id="Filter_MinDueDate" class="form-control form-control-sm mb-2">
+                    <label for="Filter_MaxDueDate" class="form-label small fw-bold text-muted">@L["Tasks:Filter:MaxDueDate"]</label>
+                    <input type="date" id="Filter_MaxDueDate" class="form-control form-control-sm mb-2">
+                    <button type="button" id="btn-apply-filters" class="btn btn-primary btn-sm w-100">@L["Common:Filter"]</button>
+                </div>
+            </div>
+            <button type="button" id="btn-clear-filters" class="btn btn-link btn-sm text-muted text-decoration-none">
+                <i class="fa fa-rotate-left me-1"></i>@L["Common:Clear"]
+            </button>
+        </form>
     </abp-card-header>
     <abp-card-body>
         @* --- LİSTE GÖRÜNÜMÜ --- *@
         <div id="view-list" class="view-panel">
-            <abp-table striped-rows="true" id="TasksTable"></abp-table>
+            <abp-table class="apya-tasks-table" id="TasksTable"></abp-table>
         </div>
 
         @* --- KANBAN GÖRÜNÜMÜ --- *@
@@ -187,6 +146,69 @@
        (flex-grow-1) satırın tamamına büyütüp araç çubuğunu alt satıra iterdi. */
     #tasks-search-slot .dt-search { display: flex; align-items: center; gap: .375rem; margin: 0; }
     #tasks-search-slot .dt-search input.form-control { width: 180px; }
+
+    /* ─── Tablo/Kanban/Gantt segmented toggle (eski btn-group outline yerine) ─── */
+    .apya-view-toggle {
+        border: 1px solid var(--apya-border-default);
+        border-radius: var(--apya-radius-full);
+        padding: 3px;
+        background: var(--apya-surface-sunken);
+        gap: 2px;
+    }
+    .apya-view-toggle .btn {
+        border: none;
+        border-radius: var(--apya-radius-full) !important;
+        background: transparent;
+        color: var(--apya-text-secondary);
+        font-weight: 600;
+        font-size: 13px;
+        padding: 6px 18px;
+    }
+    .apya-view-toggle .btn.active { background: var(--apya-surface-base); color: var(--apya-text-primary); box-shadow: var(--apya-shadow-sm); }
+    .apya-view-toggle .btn:hover:not(.active) { color: var(--apya-text-primary); }
+
+    /* ─── Filtre pilleri — eski "Gelişmiş Filtreleme" accordion'unun yerine ─── */
+    .apya-filter-pill {
+        border: 1px solid var(--apya-border-default);
+        background: var(--apya-surface-base);
+        color: var(--apya-text-secondary);
+        border-radius: var(--apya-radius-full);
+        padding: 6px 14px;
+        font-size: 13px;
+        font-weight: 600;
+        line-height: 1.4;
+        cursor: pointer;
+    }
+    .apya-filter-pill:hover { background: var(--apya-surface-raised); color: var(--apya-text-primary); }
+    .apya-filter-pill:focus { outline: none; box-shadow: var(--apya-shadow-focus); border-color: var(--apya-border-focus); }
+    select.apya-filter-pill {
+        appearance: none;
+        -webkit-appearance: none;
+        padding-right: 30px;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath fill='%236B7280' d='M1 1l4 4 4-4'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 12px center;
+    }
+
+    /* ─── Görev tablosu — zebra/kalın border yerine ince alt çizgi + hover ─── */
+    .apya-tasks-table > :not(caption) > * > * { border: none; }
+    .apya-tasks-table thead th {
+        text-transform: uppercase;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: .04em;
+        color: var(--apya-text-tertiary);
+        border-bottom: 1px solid var(--apya-border-default) !important;
+        background: transparent !important;
+        padding: 10px 12px;
+    }
+    .apya-tasks-table tbody td {
+        padding: 12px;
+        border-bottom: 1px solid var(--apya-border-subtle) !important;
+        vertical-align: middle;
+        background: transparent !important;
+    }
+    .apya-tasks-table tbody tr:hover td { background: var(--apya-surface-raised) !important; }
     .fa-beat { animation: fa-beat 1.5s infinite linear; }
     @@keyframes fa-beat {
         0% { transform: scale(1); }

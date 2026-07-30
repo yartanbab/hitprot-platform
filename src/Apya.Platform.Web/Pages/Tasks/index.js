@@ -22,27 +22,13 @@ $(function () {
     var dataTable = $('#TasksTable').DataTable(abp.libs.datatables.normalizeConfiguration({
         serverSide: true,
         paging: true,
-        order: [[1, 'asc']],
+        order: [[0, 'asc']],
         searching: true,
         scrollX: true,
         ajax: abp.libs.datatables.createAjax(taskService.getList, currentFilter),
         columnDefs: [
             {
-                title: '',
-                data: null,
-                orderable: false,
-                className: 'text-end',
-                render: function (data, type, row) {
-                    var canManage = abp.auth.isGranted('Platform.Projects.ManageTeam') ||
-                                     row.creatorId === abp.currentUser.id ||
-                                     row.assigneeId === abp.currentUser.id;
-                    return canManage
-                        ? '<button type="button" class="btn btn-sm btn-light py-0 px-2 rounded js-delete-task" data-id="' + row.id + '" title="Sil"><i class="fa fa-trash text-danger" style="font-size:0.8rem;"></i></button>'
-                        : '';
-                }
-            },
-            {
-                title: 'Başlık',
+                title: 'Görev',
                 data: 'title',
                 render: function(data, type, row) {
                     var head = '<span class="fw-bold">' + apyaTask.esc(data) + '</span>' + apyaTask.commentCount(row.comments);
@@ -63,7 +49,7 @@ $(function () {
                 title: 'Atanan',
                 data: 'assigneeName',
                 render: function (data) {
-                    return apyaTask.assigneeAvatar(data);
+                    return apyaTask.assigneeAvatar(data, true);
                 }
             },
             {
@@ -92,7 +78,7 @@ $(function () {
                 }
             },
             {
-                title: 'Bitiş Tarihi',
+                title: 'Son Tarih',
                 data: 'dueDate',
                 render: function (data, type, row) {
                     return apyaTask.dueDateChip(data, row.status, row.completedDate);
@@ -105,6 +91,7 @@ $(function () {
     // slot'a taşı (kendi satırını kaplamasın, Görev Panosu satırında ortalansın).
     // DataTables 2.x .dt-search kullanıyor (eski .dataTables_filter değil). ---
     $('#TasksTable_wrapper .dt-search').addClass('mb-0').appendTo('#tasks-search-slot');
+    $('#tasks-search-slot input.form-control').attr('placeholder', 'Görev ara...');
 
     // --- Kanban (ortak çekirdek: /js/apya-kanban.js) ---
     // Görevler sayfası çapraz-proje (global) → sistem kolonları + proje adı + timer.
@@ -140,36 +127,6 @@ $(function () {
         if ($(e.target).closest('a, button, .form-check-input').length) return;
         var rowData = dataTable.row(this).data();
         if (rowData && rowData.id) { editModal.open({ id: rowData.id }); }
-    });
-
-    $('#TasksTable tbody').on('click', '.js-delete-task', function (e) {
-        e.stopPropagation();
-        var taskId = $(this).data('id');
-        Swal.fire({
-            title: 'Görev Silinecek!',
-            text: 'Görevi kalıcı olarak silmek üzeresiniz. Onaylamak için aşağıdaki alana "SİL" yazmalısınız.',
-            icon: 'warning',
-            input: 'text',
-            inputPlaceholder: 'SİL',
-            showCancelButton: true,
-            confirmButtonText: '<i class="fa fa-trash"></i> Evet, Sil!',
-            cancelButtonText: 'İptal',
-            confirmButtonColor: '#dc3545',
-            preConfirm: function (inputValue) {
-                if (inputValue !== 'SİL') {
-                    Swal.showValidationMessage('Silme işlemini onaylamak için tam olarak "SİL" yazmalısınız.');
-                }
-                return inputValue;
-            }
-        }).then(function (result) {
-            if (result.isConfirmed) {
-                taskService.delete(taskId).then(function () {
-                    abp.notify.info('Başarıyla silindi.');
-                    dataTable.ajax.reload();
-                    if (!$('#view-kanban').hasClass('d-none')) kb.load();
-                });
-            }
-        });
     });
 
     // --- Yeni Görev ---
@@ -289,17 +246,21 @@ $(function () {
     });
 
     // --- APYA-25: Filtre Butonları ---
-    $('#btn-apply-filters').click(function () {
+    function applyFilters() {
         dataTable.ajax.reload();
         if (!$('#view-kanban').hasClass('d-none')) kb.load();
         if (!$('#view-gantt').hasClass('d-none')) loadGantt();
-    });
+    }
+
+    // Durum/Atanan/Öncelik pilleri seçilir seçilmez uygulanır (Son Tarih popover'ı
+    // hâlâ kendi "Uygula" butonuyla — iki tarihi birlikte girip tek seferde tetiklemek için).
+    $('#Filter_Status, #Filter_AssigneeId, #Filter_Priority').on('change', applyFilters);
+    $('#btn-apply-filters').click(applyFilters);
 
     $('#btn-clear-filters').click(function () {
         $('#TaskFilterForm')[0].reset();
-        dataTable.ajax.reload();
-        if (!$('#view-kanban').hasClass('d-none')) kb.load();
-        if (!$('#view-gantt').hasClass('d-none')) loadGantt();
+        $('#tasks-project').trigger('change'); // reset() 'change' tetiklemez → selectedProjectId/kb scope elle temizlenmeli
+        applyFilters();
     });
 
     // --- AI Draft Tasks ---

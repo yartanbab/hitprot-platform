@@ -28,6 +28,11 @@
     --bs-warning: var(--apya-warning-500);
     --bs-info:    var(--apya-brand-400);
 
+    /* LeptonX --bs-light'ı #bbb yapıyor → .bg-light kullanan modal/list-group
+       satırları (yorumlar, ek dosyalar, kod blokları) kirli gri kalıyordu. */
+    --bs-light:     var(--apya-surface-sunken);
+    --bs-light-rgb: 243, 244, 246;
+
     /* SİSTEMİK FİX (2026-07-28, tasarım denetimi): Bootstrap 5.3'ün RENK
        UTILITY'leri hex değişkenini DEĞİL `-rgb` üçlüsünü okur:
          .text-success { color: rgba(var(--bs-success-rgb), var(--bs-text-opacity)) }
@@ -89,6 +94,8 @@
     --bs-warning-rgb: 251, 191,  36;    /* --apya-warning-500  #FBBF24 */
     --bs-info-rgb:     96, 165, 250;    /* --apya-brand-400    #60A5FA (dark'ta değişmez) */
     --lpx-primary:    var(--apya-accent-500);
+    --bs-light:     var(--apya-surface-sunken);
+    --bs-light-rgb: 7, 7, 8;
     /* Bootstrap surface */
     --bs-body-bg:  var(--apya-surface-base);
     --bs-body-color: var(--apya-text-primary);

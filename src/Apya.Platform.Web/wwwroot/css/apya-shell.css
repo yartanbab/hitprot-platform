@@ -1260,3 +1260,29 @@ i.apya-priority-dot {
 .apya-docs-detail {
     min-height: 460px;
 }
+
+/* ─── Genel amaçlı temiz tablo — zebra/kalın border yerine ince alt çizgi + hover.
+   striped-rows="true" kaldırılan abp-table'lara eklenir (bkz. Tasks/Index.cshtml).
+
+   KAPSAM (2026-07-28 reconcile'da daraltıldı): bu sınıf YALNIZCA dolgu/kenarlık
+   farkını taşır. Tipografi (uppercase / 10.5px / 700 / tertiary) ve satır
+   yüksekliği paylaşılan `.table` kurallarından gelir (apya-theme-bridge.css §P2).
+   Önceki hali bunları kendi değerleriyle tekrarlıyordu, iki sonuç doğuruyordu:
+     1) tablolar arasında iki ayrı tip ölçeği (11px/.04em ↔ 10.5px/0.4px),
+     2) sabit `padding: 10px/12px` yoğunluk sistemini (`--row-h`, compact 36px)
+        etkisiz bırakıyordu — satırlar compact'ta küçülmüyordu.
+   Yatay dolgu burada kalır; yalnız o "temiz" görünüme ait. ─── */
+.apya-clean-table > :not(caption) > * > * { border: none; }
+.apya-clean-table thead th {
+    border-bottom: 1px solid var(--apya-border-default) !important;
+    background: transparent !important;
+    padding-left: 12px;
+    padding-right: 12px;
+}
+.apya-clean-table tbody td {
+    border-bottom: 1px solid var(--apya-border-subtle) !important;
+    background: transparent !important;
+    padding-left: 12px;
+    padding-right: 12px;
+}
+.apya-clean-table tbody tr:hover td { background: var(--apya-surface-raised) !important; }
