@@ -327,6 +327,32 @@ html, body {
     transition: background 120ms ease;
 }
 
+/* --- Tooltip (bilgi ipucu kutusu) → token köprüsü ---
+   Bootstrap `--bs-tooltip-*`'ı `.tooltip` seçicisinde YEREL tanımlıyor
+   (--bs-tooltip-bg: var(--bs-emphasis-color)); üstteki :root/[data-theme]
+   bloklarından miras almaz — .card/.modal-content ile aynı gölgeleme deseni,
+   bu yüzden token'lar burada doğrudan .tooltip üzerinde veriliyor.
+   surface/text-inverse iki temada da ters çevrildiği için ayrı dark kuralı
+   gerekmez: light'ta koyu kutu, dark'ta açık kutu.
+   max-width Bootstrap'ta 200px — ipucu metinleri 1-2 cümle olduğu için
+   genişletildi ve sola hizalandı (ortalı çok satır okunmuyordu). */
+.tooltip {
+    --bs-tooltip-bg:        var(--apya-surface-inverse);
+    --bs-tooltip-color:     var(--apya-text-inverse);
+    --bs-tooltip-max-width: 260px;
+    --bs-tooltip-font-size: 12px;
+    --bs-tooltip-border-radius: var(--apya-radius-md);
+    --bs-tooltip-padding-x: var(--apya-space-3);
+    --bs-tooltip-padding-y: var(--apya-space-2);
+    --bs-tooltip-opacity:   1;
+    --bs-tooltip-zindex:    var(--apya-z-tooltip);
+}
+.tooltip .tooltip-inner {
+    text-align: start;
+    line-height: 1.45;
+    box-shadow: var(--apya-shadow-lg);
+}
+
 /* ----------------------------------------------------------------------------
    METİN TONU ≠ DOLGU TONU (2026-07-28, kontrast ölçümünde bulundu)
    `--bs-{ton}-rgb` köprüsü hem `.bg-*` (dolgu) hem `.text-*` (metin) tarafından
