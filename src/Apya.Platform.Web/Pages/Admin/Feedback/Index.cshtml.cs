@@ -1,15 +1,15 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Threading.Tasks;
 using Apya.Platform.Feedbacks;
 using Apya.Platform.Feedbacks.Dtos;
 using Apya.Platform.Permissions;
+using Apya.Platform.Web.Feedbacks;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Apya.Platform.Web.Pages.Reports;
 using Volo.Abp.AspNetCore.Mvc.UI.RazorPages;
+using Volo.Abp.Domain.Entities;
 using Volo.Abp.TenantManagement;
 
 namespace Apya.Platform.Web.Pages.Admin.Feedback;
@@ -23,18 +23,18 @@ public class IndexModel : AbpPageModel
 {
     private readonly IFeedbackAdminAppService _feedbackAdminAppService;
     private readonly ITenantRepository _tenantRepository;
-    private readonly IWebHostEnvironment _environment;
+    private readonly FeedbackFileStorage _fileStorage;
 
     public List<TenantOption> Tenants { get; set; } = new();
 
     public IndexModel(
         IFeedbackAdminAppService feedbackAdminAppService,
         ITenantRepository tenantRepository,
-        IWebHostEnvironment environment)
+        FeedbackFileStorage fileStorage)
     {
         _feedbackAdminAppService = feedbackAdminAppService;
         _tenantRepository = tenantRepository;
-        _environment = environment;
+        _fileStorage = fileStorage;
     }
 
     public async Task OnGetAsync()
@@ -65,36 +65,40 @@ public class IndexModel : AbpPageModel
     }
 
     /// <summary>
-    /// Ekran görüntüsünü sunar. Yol geçişi (path traversal) koruması Documents
-    /// sayfasındaki desenle aynı — dosya adı GUID olduğundan tahmin edilemez,
-    /// ama yine de yalnızca "uploads" klasörü altına çözülmesi zorunlu kılınır.
+    /// Ekran görüntüsünü sunar. Dosyalar wwwroot DIŞINDA (FeedbackFileStorage);
+    /// erişim feedbackId üzerinden AppService'te çözülür — ham dosya adı URL'de taşınmaz.
     /// </summary>
-    public IActionResult OnGetScreenshotAsync(string fileName)
+    public async Task<IActionResult> OnGetScreenshotAsync(Guid feedbackId)
     {
-        var uploadsRoot = Path.GetFullPath(Path.Combine(_environment.WebRootPath, "uploads"));
-        var safeFileName = Path.GetFileName(fileName);
-        var resolvedPath = Path.GetFullPath(Path.Combine(uploadsRoot, safeFileName));
+        return await ServeAsync(() => _feedbackAdminAppService.GetScreenshotFileAsync(feedbackId));
+    }
 
-        if (string.IsNullOrEmpty(safeFileName) || !resolvedPath.StartsWith(uploadsRoot + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase))
+    /// <summary>Ek dosyayı sunar (host).</summary>
+    public async Task<IActionResult> OnGetAttachmentAsync(Guid attachmentId)
+    {
+        return await ServeAsync(() => _feedbackAdminAppService.GetAttachmentFileAsync(attachmentId));
+    }
+
+    private async Task<IActionResult> ServeAsync(Func<Task<FeedbackAttachmentFileDto>> resolver)
+    {
+        FeedbackAttachmentFileDto file;
+        try
         {
-            return BadRequest("Geçersiz dosya adı.");
+            file = await resolver();
         }
-
-        if (!System.IO.File.Exists(resolvedPath))
+        catch (EntityNotFoundException)
         {
             return NotFound();
         }
 
-        var ext = Path.GetExtension(resolvedPath).ToLowerInvariant();
-        var contentType = ext switch
+        var stream = _fileStorage.OpenRead(file.StoredFileName);
+        if (stream is null)
         {
-            ".png" => "image/png",
-            ".jpg" or ".jpeg" => "image/jpeg",
-            ".gif" => "image/gif",
-            _ => "application/octet-stream"
-        };
+            return NotFound();
+        }
 
-        return PhysicalFile(resolvedPath, contentType);
+        var contentType = file.ContentType ?? FeedbackFileStorage.GetContentType(file.StoredFileName);
+        return File(stream, contentType, file.FileName);
     }
 
     public record TenantOption(Guid Id, string Name);

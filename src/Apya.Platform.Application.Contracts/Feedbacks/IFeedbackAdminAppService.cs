@@ -33,4 +33,10 @@ public interface IFeedbackAdminAppService : IApplicationService
 
     /// <summary>Excel çıktısı Web katmanında üretilir; burada yalnızca ham satırlar döner.</summary>
     Task<List<FeedbackDto>> GetAllForExportAsync(GetFeedbackListInput input);
+
+    /// <summary>Herhangi bir kaydın ekini indirme için çözer (host).</summary>
+    Task<FeedbackAttachmentFileDto> GetAttachmentFileAsync(Guid attachmentId);
+
+    /// <summary>Herhangi bir kaydın ekran görüntüsünü indirme için çözer (host).</summary>
+    Task<FeedbackAttachmentFileDto> GetScreenshotFileAsync(Guid feedbackId);
 }

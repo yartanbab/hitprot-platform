@@ -24,6 +24,26 @@ public static class FeedbackConsts
     public const int MinRating = 1;
     public const int MaxRating = 5;
 
+    /// <summary>İnsan-okur takip numarası: "FB-2026-000123".</summary>
+    public const int MaxFeedbackNumberLength = 16;
+
+    // Bağlamsal kodlar — _FeedbackLink / ApyaFeedback.open ile gelir
+    public const int MaxModuleCodeLength    = 64;
+    public const int MaxComponentCodeLength = 128;
+    public const int MaxActionCodeLength    = 128;
+    public const int MaxEntityTypeLength    = 64;
+
+    /// <summary>Türe özel alanlar (beklenen/gerçekleşen sonuç vb.) JSON nesnesi.</summary>
+    public const int MaxDetailsJsonLength = 8000;
+
+    // Zaman çizelgesi (FeedbackActivity)
+    public const int MaxActivityValueLength = 256;
+    public const int MaxActivityNoteLength  = 1024;
+
+    // Ek dosyalar (FeedbackAttachment)
+    public const int MaxContentTypeLength      = 128;
+    public const int MaxAttachmentsPerFeedback = 5;
+
     /// <summary>Spam koruması: bir kullanıcının verilen pencerede açabileceği kayıt sayısı.</summary>
     public const int RateLimitWindowMinutes = 1;
     public const int RateLimitMaxPerWindow  = 3;

@@ -1,3 +1,4 @@
+using System;
 using System.Threading.Tasks;
 using Apya.Platform.Telemetry.Dtos;
 using Volo.Abp.Application.Services;
@@ -12,7 +13,8 @@ public interface ITelemetryAppService : IApplicationService
 {
     /// <summary>
     /// Hatayı kaydeder. Aynı imzalı hata varsa yeni satır açmaz, sayacı artırır.
-    /// Telemetri ayardan kapatılmışsa sessizce hiçbir şey yapmaz.
+    /// Kaydın Id'sini döner — istemci bunu sonraki geri bildirime referans olarak
+    /// iliştirir. Telemetri ayardan kapatılmışsa sessizce null döner.
     /// </summary>
-    Task ReportClientErrorAsync(ReportClientErrorDto input);
+    Task<Guid?> ReportClientErrorAsync(ReportClientErrorDto input);
 }

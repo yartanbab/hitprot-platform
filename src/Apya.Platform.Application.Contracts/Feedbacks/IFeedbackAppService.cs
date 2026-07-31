@@ -19,4 +19,16 @@ public interface IFeedbackAppService : IApplicationService
 
     /// <summary>Kendi kaydının detayı + kullanıcıya görünen cevaplar.</summary>
     Task<FeedbackDetailDto> GetMyAsync(Guid id);
+
+    /// <summary>
+    /// Kendi kaydına ek açıklama yazar. İlk gönderilen metin değişmez (geçmiş korunur);
+    /// kayıt "Ek bilgi bekleniyor" durumundaysa sessizce yeniden incelemeye alınır.
+    /// </summary>
+    Task<FeedbackCommentDto> AddMyCommentAsync(Guid id, AddMyCommentDto input);
+
+    /// <summary>Kendi kaydının ekini indirme için çözer; sahiplik yoksa EntityNotFound.</summary>
+    Task<FeedbackAttachmentFileDto> GetMyAttachmentFileAsync(Guid attachmentId);
+
+    /// <summary>Kendi kaydının ekran görüntüsünü indirme için çözer.</summary>
+    Task<FeedbackAttachmentFileDto> GetMyScreenshotFileAsync(Guid feedbackId);
 }

@@ -98,6 +98,7 @@
 
     /* ─── Hata yakalama + raporlama ─── */
     var reportedFingerprints = {}; // Bu sayfa yüklemesinde aynı hatayı ikinci kez göndermemek için.
+    var lastClientErrorId = null;  // Sunucunun döndürdüğü son hata kaydı referansı.
 
     function truncate(value, maxLength) {
         if (!value) return value;
@@ -119,9 +120,16 @@
             return;
         }
 
-        apya.platform.telemetry.telemetry.reportClientError(dto).catch(function () {
-            // Raporlama başarısız olsa bile kullanıcıya ikinci bir hata göstermeyiz.
-        });
+        apya.platform.telemetry.telemetry.reportClientError(dto)
+            .then(function (errorId) {
+                // Son hata referansı — geri bildirim gönderilirse otomatik iliştirilir.
+                if (errorId) {
+                    lastClientErrorId = errorId;
+                }
+            })
+            .catch(function () {
+                // Raporlama başarısız olsa bile kullanıcıya ikinci bir hata göstermeyiz.
+            });
     }
 
     function reportError(message, stack, source) {
@@ -174,6 +182,9 @@
                 pageTitle: document.title,
                 screenResolution: window.screen ? (window.screen.width + 'x' + window.screen.height) : null
             };
+        },
+        getLastClientErrorId: function () {
+            return lastClientErrorId;
         }
     };
 })();

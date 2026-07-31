@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Apya.Platform.Notifications;
@@ -16,15 +17,24 @@ namespace Apya.Platform.Feedbacks;
 public class FeedbackManager : DomainService
 {
     private readonly IRepository<Feedback, Guid> _feedbackRepository;
+    private readonly IRepository<FeedbackActivity, Guid> _activityRepository;
+    private readonly IRepository<FeedbackAttachment, Guid> _attachmentRepository;
+    private readonly IFeedbackNumberGenerator _numberGenerator;
     private readonly NotificationManager _notificationManager;
     private readonly IClock _clock;
 
     public FeedbackManager(
         IRepository<Feedback, Guid> feedbackRepository,
+        IRepository<FeedbackActivity, Guid> activityRepository,
+        IRepository<FeedbackAttachment, Guid> attachmentRepository,
+        IFeedbackNumberGenerator numberGenerator,
         NotificationManager notificationManager,
         IClock clock)
     {
         _feedbackRepository = feedbackRepository;
+        _activityRepository = activityRepository;
+        _attachmentRepository = attachmentRepository;
+        _numberGenerator = numberGenerator;
         _notificationManager = notificationManager;
         _clock = clock;
     }
@@ -35,7 +45,11 @@ public class FeedbackManager : DomainService
         string body,
         int? rating,
         Guid submitterUserId,
-        FeedbackSubmissionContext context)
+        FeedbackSubmissionContext context,
+        FeedbackPriority? severity = null,
+        string? detailsJson = null,
+        bool isAnonymous = false,
+        bool allowContact = false)
     {
         if (subject.IsNullOrWhiteSpace())
         {
@@ -55,7 +69,20 @@ public class FeedbackManager : DomainService
             type,
             subject.Trim(),
             body.Trim(),
-            rating);
+            rating)
+        {
+            FeedbackNumber    = await _numberGenerator.NextAsync(),
+            Severity          = severity,
+            DetailsJson       = detailsJson,
+            IsAnonymous       = isAnonymous,
+            AllowContact      = allowContact,
+            ModuleCode        = context.ModuleCode,
+            ComponentCode     = context.ComponentCode,
+            ActionCode        = context.ActionCode,
+            RelatedEntityType = context.RelatedEntityType,
+            RelatedEntityId   = context.RelatedEntityId,
+            LastClientErrorId = context.LastClientErrorId
+        };
 
         feedback.SetContext(
             context.PageUrl,
@@ -74,18 +101,23 @@ public class FeedbackManager : DomainService
         // autoSave: Id ve CreatorId'nin bildirim/deep-link için kesinleşmesi gerekiyor.
         await _feedbackRepository.InsertAsync(feedback, autoSave: true);
 
+        await LogActivityAsync(
+            feedback, FeedbackActivityType.Created,
+            newValue: feedback.FeedbackNumber,
+            actorName: context.SubmittedByUserName);
+
         // Gönderim onayı: geri bildirim vermenin karşılık bulduğunu göstermenin en ucuz yolu.
         await NotifySubmitterAsync(
             feedback,
             submitterUserId,
             NotificationType.FeedbackReceived,
             "🙏 Geri bildiriminiz alındı",
-            $"\"{feedback.Subject}\" için teşekkürler. İncelenip size dönülecek.");
+            $"Bildiriminiz {feedback.FeedbackNumber} numarasıyla alındı. Gelişmeleri \"Geri Bildirimlerim\" sayfasından takip edebilirsiniz.");
 
         return feedback;
     }
 
-    public async Task ChangeStatusAsync(Feedback feedback, FeedbackStatus newStatus)
+    public async Task ChangeStatusAsync(Feedback feedback, FeedbackStatus newStatus, string? actorName = null)
     {
         if (feedback.Status == newStatus)
         {
@@ -94,10 +126,24 @@ public class FeedbackManager : DomainService
 
         EnsureValidTransition(feedback.Status, newStatus);
 
+        var oldStatus = feedback.Status;
         feedback.ChangeStatus(newStatus, _clock.Now);
         await _feedbackRepository.UpdateAsync(feedback);
 
-        var message = BuildStatusMessage(feedback, newStatus);
+        await LogActivityAsync(
+            feedback, FeedbackActivityType.StatusChanged,
+            oldValue: oldStatus.ToString(),
+            newValue: newStatus.ToString(),
+            actorName: actorName);
+
+        // Bildirim kirliliği önlemi: iç durum değişse de kullanıcıya GÖRÜNEN durum
+        // aynıysa (ör. InDevelopment→Testing, ikisi de "Geliştiriliyor") bildirim gitmez.
+        if (oldStatus.ToUserStatus() == newStatus.ToUserStatus())
+        {
+            return;
+        }
+
+        var message = BuildStatusMessage(feedback, newStatus.ToUserStatus());
         if (message is not null)
         {
             await NotifySubmitterAsync(
@@ -107,6 +153,83 @@ public class FeedbackManager : DomainService
                 message.Value.Title,
                 message.Value.Body);
         }
+    }
+
+    public async Task AssignAsync(Feedback feedback, Guid? userId, string? userName, string? actorName = null)
+    {
+        if (feedback.AssignedUserId == userId)
+        {
+            return;
+        }
+
+        var oldName = feedback.AssignedUserName;
+        feedback.Assign(userId, userName);
+        await _feedbackRepository.UpdateAsync(feedback);
+
+        await LogActivityAsync(
+            feedback, FeedbackActivityType.Assigned,
+            oldValue: oldName,
+            newValue: feedback.AssignedUserName,
+            actorName: actorName,
+            isInternal: true);
+    }
+
+    public async Task SetPriorityAsync(Feedback feedback, FeedbackPriority priority, string? actorName = null)
+    {
+        if (feedback.Priority == priority)
+        {
+            return;
+        }
+
+        var old = feedback.Priority;
+        feedback.Priority = priority;
+        await _feedbackRepository.UpdateAsync(feedback);
+
+        await LogActivityAsync(
+            feedback, FeedbackActivityType.PriorityChanged,
+            oldValue: old.ToString(),
+            newValue: priority.ToString(),
+            actorName: actorName,
+            isInternal: true);
+    }
+
+    public async Task SetImpactAsync(Feedback feedback, FeedbackImpact? impact, string? actorName = null)
+    {
+        if (feedback.Impact == impact)
+        {
+            return;
+        }
+
+        var old = feedback.Impact;
+        feedback.Impact = impact;
+        await _feedbackRepository.UpdateAsync(feedback);
+
+        await LogActivityAsync(
+            feedback, FeedbackActivityType.ImpactChanged,
+            oldValue: old?.ToString(),
+            newValue: impact?.ToString(),
+            actorName: actorName,
+            isInternal: true);
+    }
+
+    public async Task SetTagsAsync(Feedback feedback, string? tags, string? actorName = null)
+    {
+        var normalized = tags.IsNullOrWhiteSpace() ? null : tags!.Trim();
+        if (feedback.AdminTags == normalized)
+        {
+            return;
+        }
+
+        var old = feedback.AdminTags;
+        feedback.AdminTags = normalized;
+        await _feedbackRepository.UpdateAsync(feedback);
+
+        await LogActivityAsync(
+            feedback, FeedbackActivityType.TagsChanged,
+            oldValue: old,
+            newValue: normalized,
+            actorName: actorName,
+            isInternal: true);
     }
 
     /// <summary>
@@ -141,6 +264,12 @@ public class FeedbackManager : DomainService
 
         await _feedbackRepository.UpdateAsync(feedback);
 
+        await LogActivityAsync(
+            feedback, FeedbackActivityType.CommentAdded,
+            note: Shorten(comment.Text),
+            actorName: authorName,
+            isInternal: isInternal);
+
         if (!isInternal)
         {
             await NotifySubmitterAsync(
@@ -152,6 +281,106 @@ public class FeedbackManager : DomainService
         }
 
         return comment;
+    }
+
+    /// <summary>
+    /// Önceden yüklenmiş dosyaları kayda bağlar (gönderim akışının parçası).
+    /// Sayı sınırı DTO'da doğrulanır; burada yalnızca kayıt + tek activity satırı.
+    /// </summary>
+    public async Task AttachFilesAsync(
+        Feedback feedback,
+        IEnumerable<(string FileName, string StoredFileName, string? ContentType, long SizeBytes)> files,
+        string? actorName = null)
+    {
+        var count = 0;
+        foreach (var file in files)
+        {
+            await _attachmentRepository.InsertAsync(new FeedbackAttachment(
+                GuidGenerator.Create(),
+                feedback.TenantId,
+                feedback.Id,
+                file.FileName,
+                file.StoredFileName,
+                file.ContentType,
+                file.SizeBytes));
+            count++;
+        }
+
+        if (count > 0)
+        {
+            await LogActivityAsync(
+                feedback, FeedbackActivityType.AttachmentAdded,
+                newValue: count.ToString(),
+                actorName: actorName);
+        }
+    }
+
+    /// <summary>
+    /// Kullanıcının kendi kaydına ek açıklaması. Admin cevabından farkı:
+    /// LastRespondedAt'e DOKUNMAZ (o "yönetici cevapladı" göstergesidir) ve kayıt
+    /// "Ek bilgi bekleniyor" durumundaysa sessizce yeniden incelemeye alınır —
+    /// kullanıcı kendi aksiyonu için bildirim ALMAZ.
+    /// </summary>
+    public async Task<FeedbackComment> AddUserCommentAsync(Feedback feedback, string text, string? authorName)
+    {
+        if (text.IsNullOrWhiteSpace())
+        {
+            throw new BusinessException(PlatformDomainErrorCodes.FeedbackCommentRequired);
+        }
+
+        var comment = new FeedbackComment(
+            GuidGenerator.Create(),
+            feedback.TenantId,
+            feedback.Id,
+            text.Trim(),
+            isInternal: false,
+            authorName);
+
+        feedback.Comments.Add(comment);
+
+        if (feedback.Status == FeedbackStatus.NeedsInfo)
+        {
+            var oldStatus = feedback.Status;
+            feedback.ChangeStatus(FeedbackStatus.InReview, _clock.Now);
+
+            await LogActivityAsync(
+                feedback, FeedbackActivityType.StatusChanged,
+                oldValue: oldStatus.ToString(),
+                newValue: FeedbackStatus.InReview.ToString(),
+                note: "Kullanıcı ek bilgi verdi",
+                actorName: authorName);
+        }
+
+        await _feedbackRepository.UpdateAsync(feedback);
+
+        await LogActivityAsync(
+            feedback, FeedbackActivityType.UserCommented,
+            note: Shorten(comment.Text),
+            actorName: authorName);
+
+        return comment;
+    }
+
+    /// <summary>Zaman çizelgesine satır ekler — append-only, silinmez/güncellenmez.</summary>
+    private async Task LogActivityAsync(
+        Feedback feedback,
+        FeedbackActivityType type,
+        string? oldValue = null,
+        string? newValue = null,
+        string? note = null,
+        string? actorName = null,
+        bool isInternal = false)
+    {
+        await _activityRepository.InsertAsync(new FeedbackActivity(
+            GuidGenerator.Create(),
+            feedback.TenantId,
+            feedback.Id,
+            type,
+            oldValue,
+            newValue,
+            note,
+            actorName,
+            isInternal));
     }
 
     /// <summary>Aynı kullanıcının kısa aralıkta çok sayıda kayıt açmasını engeller.</summary>
@@ -174,10 +403,14 @@ public class FeedbackManager : DomainService
     private static void EnsureValidTransition(FeedbackStatus current, FeedbackStatus target)
     {
         // Tek anlamlı kısıt: kapatılmış kayıt doğrudan başka bir kapanışa geçemez,
-        // önce yeniden incelemeye alınır. Diğer ileri geçişler serbest.
-        var isClosed = current is FeedbackStatus.Completed or FeedbackStatus.Rejected;
+        // önce yeniden incelemeye alınır. Açık durumlar arası geçişler serbest.
+        // İstisna: Completed → Released (tamamlanan işin yayına çıkması) doğal akıştır.
+        if (current == FeedbackStatus.Completed && target == FeedbackStatus.Released)
+        {
+            return;
+        }
 
-        if (isClosed && target != FeedbackStatus.InReview)
+        if (!current.IsOpen() && target != FeedbackStatus.InReview)
         {
             throw new BusinessException(PlatformDomainErrorCodes.FeedbackInvalidStatusTransition)
                 .WithData("current", current)
@@ -214,27 +447,39 @@ public class FeedbackManager : DomainService
         }
     }
 
-    private static (string Title, string Body)? BuildStatusMessage(Feedback feedback, FeedbackStatus status)
+    private static (string Title, string Body)? BuildStatusMessage(Feedback feedback, FeedbackUserStatus userStatus)
     {
-        return status switch
+        return userStatus switch
         {
-            FeedbackStatus.InReview => (
+            FeedbackUserStatus.InReview => (
                 "🔍 Geri bildiriminiz inceleniyor",
-                $"\"{feedback.Subject}\" incelemeye alındı."),
+                $"{feedback.FeedbackNumber} — \"{feedback.Subject}\" incelemeye alındı."),
 
-            FeedbackStatus.Planned => (
+            FeedbackUserStatus.NeedsInfo => (
+                "❓ Ek bilginize ihtiyaç var",
+                $"{feedback.FeedbackNumber} — \"{feedback.Subject}\" için sorularımız var. Lütfen \"Geri Bildirimlerim\" sayfasından cevaplayın."),
+
+            FeedbackUserStatus.Planned => (
                 "🗺️ Geri bildiriminiz planlandı",
-                $"\"{feedback.Subject}\" geliştirme planına alındı."),
+                $"{feedback.FeedbackNumber} — \"{feedback.Subject}\" geliştirme planına alındı."),
 
-            FeedbackStatus.Completed => (
-                "✅ Geri bildiriminiz hayata geçti",
-                $"\"{feedback.Subject}\" için bildirdiğiniz konu tamamlandı."),
+            FeedbackUserStatus.InProgress => (
+                "🔧 Geri bildiriminiz geliştiriliyor",
+                $"{feedback.FeedbackNumber} — \"{feedback.Subject}\" üzerinde çalışılıyor."),
 
-            FeedbackStatus.Rejected => (
+            FeedbackUserStatus.Completed => (
+                "✅ Geri bildiriminiz tamamlandı",
+                $"{feedback.FeedbackNumber} — \"{feedback.Subject}\" için bildirdiğiniz konu tamamlandı."),
+
+            FeedbackUserStatus.Released => (
+                "🚀 Geri bildiriminiz yayında",
+                $"{feedback.FeedbackNumber} — \"{feedback.Subject}\" ile ilgili geliştirme yayına alındı."),
+
+            FeedbackUserStatus.Closed => (
                 "ℹ️ Geri bildiriminiz kapatıldı",
-                $"\"{feedback.Subject}\" şimdilik kapsam dışında bırakıldı."),
+                $"{feedback.FeedbackNumber} — \"{feedback.Subject}\" şimdilik kapsam dışında bırakıldı."),
 
-            // New'e geri alma yönetimsel bir düzeltmedir; kullanıcıyı ilgilendirmez.
+            // Received'a geri dönüş yönetimsel düzeltmedir; kullanıcıyı ilgilendirmez.
             _ => null
         };
     }

@@ -6,11 +6,27 @@ namespace Apya.Platform.Feedbacks.Dtos;
 /// <summary>Liste satırı — ağır alanlar (gövde, breadcrumb, stack) burada yok.</summary>
 public class FeedbackDto : EntityDto<Guid>
 {
+    /// <summary>İnsan-okur takip numarası ("FB-2026-000123").</summary>
+    public string FeedbackNumber { get; set; } = string.Empty;
+
     public FeedbackType Type { get; set; }
     public string Subject { get; set; } = string.Empty;
     public FeedbackStatus Status { get; set; }
+
+    /// <summary>Kullanıcı tarafında gösterilen sadeleşmiş durum — user endpoint'leri doldurur.</summary>
+    public FeedbackUserStatus UserStatus { get; set; }
+
     public FeedbackPriority Priority { get; set; }
+    public FeedbackPriority? Severity { get; set; }
+    public FeedbackImpact? Impact { get; set; }
     public int? Rating { get; set; }
+
+    public Guid? AssignedUserId { get; set; }
+    public string? AssignedUserName { get; set; }
+
+    public string? ModuleCode { get; set; }
+    public bool IsAnonymous { get; set; }
+    public bool AllowContact { get; set; }
 
     public string? PageUrl { get; set; }
     public string? PageTitle { get; set; }

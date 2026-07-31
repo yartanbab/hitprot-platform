@@ -1,15 +1,30 @@
 @using Microsoft.AspNetCore.Mvc.Localization
 @using Apya.Platform.Localization
+@model Apya.Platform.Web.Feedbacks.FeedbackLinkContext
 @inject IHtmlLocalizer<PlatformResource> L
 @*
     Modül sayfalarının başlık altına eklenebilen bağlamsal geri bildirim linki.
     Header'daki global widget (FeedbackWidgetViewComponent) ile AYNI modalı açar —
     ".apya-feedback-open-link" sınıfı apya-feedback.js'te delege edilmiş click
-    handler'ına bağlı, bu yüzden burada ayrı bir JS gerekmez.
-    Kullanım: sayfa başlığının altına @await Html.PartialAsync("/Pages/Shared/_FeedbackLink.cshtml")
+    handler'ına bağlı; handler data-feedback-* özniteliklerini bağlam olarak okur.
+
+    Kullanım (bağlamsız, sayfa geneli):
+      @await Html.PartialAsync("/Pages/Shared/_FeedbackLink.cshtml", new FeedbackLinkContext())
+    Kullanım (bağlamlı):
+      @await Html.PartialAsync("/Pages/Shared/_FeedbackLink.cshtml",
+          new FeedbackLinkContext(Module: "Projects", Component: "ProjectList", Action: "Create"))
 *@
-<a href="#" class="apya-feedback-open-link apya-feedback-inline-link text-sm">
-    <i class="fa fa-comment-dots me-1"></i>@L["Feedback:PageContextLink"]
+@{
+    var ctx = Model ?? new Apya.Platform.Web.Feedbacks.FeedbackLinkContext();
+    var label = ctx.SectionLabel ? L["Feedback:SectionContextLink"] : L["Feedback:PageContextLink"];
+}
+<a href="#" class="apya-feedback-open-link apya-feedback-inline-link text-sm"
+   data-feedback-module="@ctx.Module"
+   data-feedback-component="@ctx.Component"
+   data-feedback-action="@ctx.Action"
+   data-feedback-entity-type="@ctx.EntityType"
+   data-feedback-entity-id="@ctx.EntityId">
+    <i class="fa fa-comment-dots me-1"></i>@label
 </a>
 
 <style>

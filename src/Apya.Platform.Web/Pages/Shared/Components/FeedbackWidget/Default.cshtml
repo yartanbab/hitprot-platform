@@ -28,8 +28,13 @@
                         <select name="Type" class="form-select">
                             <option value="1">@L["Feedback:Type.Bug"]</option>
                             <option value="2">@L["Feedback:Type.Suggestion"]</option>
+                            <option value="5">@L["Feedback:Type.UsabilityIssue"]</option>
+                            <option value="6">@L["Feedback:Type.MissingContent"]</option>
+                            <option value="7">@L["Feedback:Type.Performance"]</option>
+                            <option value="8">@L["Feedback:Type.UxDesign"]</option>
                             <option value="3">@L["Feedback:Type.Question"]</option>
                             <option value="4">@L["Feedback:Type.Praise"]</option>
+                            <option value="9">@L["Feedback:Type.Other"]</option>
                         </select>
                     </div>
 
@@ -43,6 +48,57 @@
                         <textarea name="Body" class="form-control" rows="4" maxlength="4000"></textarea>
                     </div>
 
+                    @* Türe özel alanlar — apya-feedback.js seçime göre gösterir, DetailsJson'a paketler. *@
+                    <div class="apya-feedback-details apya-feedback-details-bug d-none">
+                        <div class="mb-3">
+                            <label class="form-label">@L["Feedback:Bug.ExpectedResult"]</label>
+                            <input type="text" data-detail="expected" class="form-control" maxlength="500" />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">@L["Feedback:Bug.ActualResult"]</label>
+                            <input type="text" data-detail="actual" class="form-control" maxlength="500" />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">@L["Feedback:Bug.ReproSteps"]</label>
+                            <textarea data-detail="steps" class="form-control" rows="2" maxlength="1500"></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">@L["Feedback:Bug.Frequency"]</label>
+                            <select data-detail="frequency" class="form-select">
+                                <option value="">—</option>
+                                <option value="always">@L["Feedback:Bug.Frequency.Always"]</option>
+                                <option value="often">@L["Feedback:Bug.Frequency.Often"]</option>
+                                <option value="sometimes">@L["Feedback:Bug.Frequency.Sometimes"]</option>
+                                <option value="once">@L["Feedback:Bug.Frequency.Once"]</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="apya-feedback-details apya-feedback-details-suggestion d-none">
+                        <div class="mb-3">
+                            <label class="form-label">@L["Feedback:Suggestion.Problem"]</label>
+                            <textarea data-detail="problem" class="form-control" rows="2" maxlength="1000"></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">@L["Feedback:Suggestion.Solution"]</label>
+                            <textarea data-detail="solution" class="form-control" rows="2" maxlength="1000"></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">@L["Feedback:Suggestion.Benefit"]</label>
+                            <input type="text" data-detail="benefit" class="form-control" maxlength="500" />
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">@L["Feedback:Severity"]</label>
+                        <select name="Severity" class="form-select">
+                            <option value="">—</option>
+                            <option value="1">@L["Feedback:Severity.Low"]</option>
+                            <option value="2">@L["Feedback:Severity.Normal"]</option>
+                            <option value="3">@L["Feedback:Severity.High"]</option>
+                            <option value="4">@L["Feedback:Severity.Critical"]</option>
+                        </select>
+                    </div>
+
                     <div class="mb-3">
                         <label class="form-label d-block">@L["Feedback:Rating"]</label>
                         <span class="apya-feedback-rating">
@@ -53,13 +109,43 @@
                         </span>
                     </div>
 
-                    <div class="mb-1">
+                    <div class="mb-3">
                         <label class="form-label">@L["Feedback:Screenshot"]</label>
                         <input type="file" class="form-control apya-feedback-screenshot-input" accept=".png,.jpg,.jpeg,.gif" />
                         <small class="apya-feedback-screenshot-name text-muted"></small>
                     </div>
 
+                    <div class="mb-3">
+                        <label class="form-label">@L["Feedback:Attachments"]</label>
+                        <input type="file" class="form-control apya-feedback-attachment-input"
+                               accept=".png,.jpg,.jpeg,.gif,.webp,.pdf,.txt,.log,.csv" multiple />
+                        <ul class="apya-feedback-attachment-list list-unstyled text-sm mt-1 mb-0"></ul>
+                    </div>
+
+                    <div class="form-check mb-1">
+                        <input type="checkbox" class="form-check-input" name="IsAnonymous" id="apya-feedback-anonymous" />
+                        <label class="form-check-label" for="apya-feedback-anonymous">@L["Feedback:IsAnonymous"]</label>
+                    </div>
+                    <div class="form-check mb-3">
+                        <input type="checkbox" class="form-check-input" name="AllowContact" id="apya-feedback-allow-contact" />
+                        <label class="form-check-label" for="apya-feedback-allow-contact">@L["Feedback:AllowContact"]</label>
+                    </div>
+
                     <p class="text-muted apya-feedback-privacy-notice mb-0">@L["Feedback:PrivacyNotice"]</p>
+
+                    @* Gönderim sonrası: form gizlenir, FB numarası burada gösterilir. *@
+                    <div class="apya-feedback-success d-none text-center py-3">
+                        <i class="fa fa-circle-check text-success fa-2x mb-2 d-block"></i>
+                        <p class="mb-1">@L["Feedback:SuccessMessage"]</p>
+                        <p class="mb-2">
+                            <span class="apya-feedback-success-number fw-bold font-monospace"></span>
+                            <button type="button" class="btn btn-sm btn-outline-secondary ms-2 apya-feedback-copy-number"
+                                    title="@L["Feedback:CopyNumber"]" aria-label="@L["Feedback:CopyNumber"]">
+                                <i class="fa fa-copy"></i>
+                            </button>
+                        </p>
+                        <p class="text-muted text-sm mb-0">@L["Feedback:SuccessFollowHint"]</p>
+                    </div>
                 </div>
                 <div class="modal-footer justify-content-between">
                     <a href="/Feedback" class="text-sm">@L["Feedback:MyHistory"]</a>

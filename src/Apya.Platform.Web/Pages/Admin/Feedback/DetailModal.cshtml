@@ -60,14 +60,33 @@
 
         <p class="mb-3">@f.Body</p>
 
-        @if (f.HasScreenshot && !string.IsNullOrWhiteSpace(f.ScreenshotFileName))
+        @if (f.HasScreenshot)
         {
+            @* Dosya adı URL'de taşınmaz; erişim feedbackId ile AppService'te çözülür. *@
             <div class="mb-3">
                 <label class="form-label text-xs fw-bold d-block">Ekran Görüntüsü</label>
-                <a href="/Admin/Feedback?handler=Screenshot&fileName=@f.ScreenshotFileName" target="_blank">
-                    <img src="/Admin/Feedback?handler=Screenshot&fileName=@f.ScreenshotFileName"
+                <a href="/Admin/Feedback?handler=Screenshot&feedbackId=@f.Id" target="_blank">
+                    <img src="/Admin/Feedback?handler=Screenshot&feedbackId=@f.Id"
                          style="max-width:100%;max-height:220px;border:1px solid var(--apya-border-subtle);border-radius:6px;" />
                 </a>
+            </div>
+        }
+
+        @if (f.Attachments.Count > 0)
+        {
+            <div class="mb-3">
+                <label class="form-label text-xs fw-bold d-block">Ek Dosyalar</label>
+                <ul class="list-unstyled text-sm mb-0">
+                    @foreach (var a in f.Attachments)
+                    {
+                        <li>
+                            <a href="/Admin/Feedback?handler=Attachment&attachmentId=@a.Id" target="_blank">
+                                <i class="fa fa-paperclip me-1"></i>@a.FileName
+                            </a>
+                            <span class="text-muted">(@(a.SizeBytes / 1024) KB)</span>
+                        </li>
+                    }
+                </ul>
             </div>
         }
 

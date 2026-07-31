@@ -14,6 +14,9 @@ public class Feedback : FullAuditedAggregateRoot<Guid>, IMultiTenant
 {
     public Guid? TenantId { get; set; }
 
+    /// <summary>İnsan-okur takip numarası ("FB-2026-000123"). Sequence'tan üretilir, değişmez.</summary>
+    public string FeedbackNumber { get; set; } = string.Empty;
+
     /* --- Kullanıcının girdiği --- */
 
     public FeedbackType Type { get; set; }
@@ -22,6 +25,21 @@ public class Feedback : FullAuditedAggregateRoot<Guid>, IMultiTenant
 
     /// <summary>1-5 memnuniyet puanı. Kullanıcı boş bırakabilir.</summary>
     public int? Rating { get; set; }
+
+    /// <summary>Kullanıcının kendi önem değerlendirmesi — yönetici Priority'sinden bağımsız.</summary>
+    public FeedbackPriority? Severity { get; set; }
+
+    /// <summary>
+    /// Türe özel alanlar JSON nesnesi (hata: beklenen/gerçekleşen/adımlar; öneri:
+    /// problem/çözüm/fayda). Sorgulanmaz, yalnızca formda ve panelde gösterilir.
+    /// </summary>
+    public string? DetailsJson { get; set; }
+
+    /// <summary>Kimlik yönetici panelinde gizlenir; DB'de tutulur (kötüye kullanım kontrolü).</summary>
+    public bool IsAnonymous { get; set; }
+
+    /// <summary>Kullanıcı gerekirse kendisiyle iletişime geçilmesine izin verdi mi?</summary>
+    public bool AllowContact { get; set; }
 
     /// <summary>Eklenen ekran görüntüsünün diskte saklanan dosya adı.</summary>
     public string? ScreenshotFileName { get; set; }
@@ -33,6 +51,17 @@ public class Feedback : FullAuditedAggregateRoot<Guid>, IMultiTenant
     public string? UserAgent { get; set; }
     public string? ScreenResolution { get; set; }
     public string? AppVersion { get; set; }
+
+    /* --- Bağlamsal kodlar: _FeedbackLink / ApyaFeedback.open ile gelir --- */
+
+    public string? ModuleCode { get; set; }
+    public string? ComponentCode { get; set; }
+    public string? ActionCode { get; set; }
+    public string? RelatedEntityType { get; set; }
+    public Guid? RelatedEntityId { get; set; }
+
+    /// <summary>Gönderimden hemen önce oluşan istemci hatasının referansı (telemetri bağı).</summary>
+    public Guid? LastClientErrorId { get; set; }
 
     /// <summary>Gönderenin adı — kullanıcı sonradan silinse de kayıt okunabilir kalsın.</summary>
     public string? SubmittedByUserName { get; set; }
@@ -48,6 +77,15 @@ public class Feedback : FullAuditedAggregateRoot<Guid>, IMultiTenant
 
     public FeedbackStatus Status { get; set; }
     public FeedbackPriority Priority { get; set; }
+
+    /// <summary>İş sürecine etki genişliği — Priority'den ayrı eksen.</summary>
+    public FeedbackImpact? Impact { get; set; }
+
+    /// <summary>Atanan yönetici/geliştirici.</summary>
+    public Guid? AssignedUserId { get; set; }
+
+    /// <summary>Atananın adı — listede join'siz gösterim (SubmittedByUserName deseni).</summary>
+    public string? AssignedUserName { get; set; }
 
     /// <summary>Yöneticinin serbest etiketleri, virgülle ayrık.</summary>
     public string? AdminTags { get; set; }
@@ -116,13 +154,20 @@ public class Feedback : FullAuditedAggregateRoot<Guid>, IMultiTenant
     {
         Status = newStatus;
 
-        var isClosed = newStatus is FeedbackStatus.Completed or FeedbackStatus.Rejected;
-        ResolvedAt = isClosed ? now : null;
+        // Açık olmayan her durum bir kapanıştır (Completed/Released/Rejected/Duplicate/...).
+        ResolvedAt = newStatus.IsOpen() ? null : now;
     }
 
     public void MarkResponded(DateTime now)
     {
         LastRespondedAt = now;
+    }
+
+    /// <summary>Atamayı değiştirir; null ile atama kaldırılır.</summary>
+    public void Assign(Guid? userId, string? userName)
+    {
+        AssignedUserId = userId;
+        AssignedUserName = userId is null ? null : userName;
     }
 
     private static int? NormalizeRating(int? rating)

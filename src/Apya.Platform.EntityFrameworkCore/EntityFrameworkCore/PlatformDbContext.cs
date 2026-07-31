@@ -141,6 +141,8 @@ namespace Apya.Platform.EntityFrameworkCore
         /* --- GERİ BİLDİRİM MODÜLÜ --- */
         public DbSet<Feedback> Feedbacks { get; set; }
         public DbSet<FeedbackComment> FeedbackComments { get; set; }
+        public DbSet<FeedbackAttachment> FeedbackAttachments { get; set; }
+        public DbSet<FeedbackActivity> FeedbackActivities { get; set; }
 
         /* --- İSTEMCİ HATA TELEMETRİSİ --- */
         public DbSet<ClientError> ClientErrors { get; set; }
@@ -714,11 +716,22 @@ namespace Apya.Platform.EntityFrameworkCore
             builder.ApplyConfiguration(new WebhookDeliveryLogConfiguration());
 
             /* --- GERİ BİLDİRİM (FEEDBACK) YAPILANDIRMASI --- */
+
+            // FB-2026-000123 numaraları için sayaç (FeedbackNumberGenerator kullanır).
+            // Yalnızca Npgsql: SQLite (test altyapısı) sequence desteklemez, model'e
+            // girerse test DB'si hiç oluşamıyor. Testlerde IFeedbackNumberGenerator
+            // zaten sahte implementasyonla değiştirilmeli.
+            if (Database.ProviderName?.Contains("Npgsql") == true)
+            {
+                builder.HasSequence<long>("AppFeedbackNumberSeq");
+            }
+
             builder.Entity<Feedback>(b =>
             {
                 b.ToTable(PlatformConsts.DbTablePrefix + "Feedbacks", PlatformConsts.DbSchema);
                 b.ConfigureByConvention();
 
+                b.Property(x => x.FeedbackNumber).IsRequired().HasMaxLength(FeedbackConsts.MaxFeedbackNumberLength);
                 b.Property(x => x.Subject).IsRequired().HasMaxLength(FeedbackConsts.MaxSubjectLength);
                 b.Property(x => x.Body).IsRequired().HasMaxLength(FeedbackConsts.MaxBodyLength);
                 b.Property(x => x.PageUrl).HasMaxLength(FeedbackConsts.MaxPageUrlLength);
@@ -730,6 +743,12 @@ namespace Apya.Platform.EntityFrameworkCore
                 b.Property(x => x.ScreenshotFileName).HasMaxLength(FeedbackConsts.MaxFileNameLength);
                 b.Property(x => x.AdminTags).HasMaxLength(FeedbackConsts.MaxTagsLength);
                 b.Property(x => x.BreadcrumbJson).HasMaxLength(FeedbackConsts.MaxBreadcrumbLength);
+                b.Property(x => x.DetailsJson).HasMaxLength(FeedbackConsts.MaxDetailsJsonLength);
+                b.Property(x => x.ModuleCode).HasMaxLength(FeedbackConsts.MaxModuleCodeLength);
+                b.Property(x => x.ComponentCode).HasMaxLength(FeedbackConsts.MaxComponentCodeLength);
+                b.Property(x => x.ActionCode).HasMaxLength(FeedbackConsts.MaxActionCodeLength);
+                b.Property(x => x.RelatedEntityType).HasMaxLength(FeedbackConsts.MaxEntityTypeLength);
+                b.Property(x => x.AssignedUserName).HasMaxLength(FeedbackConsts.MaxUserNameLength);
 
                 b.HasMany(x => x.Comments)
                  .WithOne()
@@ -741,6 +760,46 @@ namespace Apya.Platform.EntityFrameworkCore
                 b.HasIndex(x => x.CreationTime);
                 // Sayfa bazlı ısı haritası: "hangi ekran en çok geri bildirim alıyor"
                 b.HasIndex(x => x.PageUrl);
+                // FB-no ile arama; soft-delete olduğundan filter'lı unique
+                b.HasIndex(x => x.FeedbackNumber).IsUnique().HasFilter("\"IsDeleted\" = false");
+                b.HasIndex(x => x.AssignedUserId);
+                b.HasIndex(x => x.ModuleCode);
+            });
+
+            builder.Entity<FeedbackAttachment>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "FeedbackAttachments", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+
+                b.Property(x => x.FileName).IsRequired().HasMaxLength(FeedbackConsts.MaxFileNameLength);
+                b.Property(x => x.StoredFileName).IsRequired().HasMaxLength(FeedbackConsts.MaxFileNameLength);
+                b.Property(x => x.ContentType).HasMaxLength(FeedbackConsts.MaxContentTypeLength);
+
+                b.HasOne<Feedback>()
+                 .WithMany()
+                 .HasForeignKey(x => x.FeedbackId)
+                 .OnDelete(DeleteBehavior.Cascade);
+
+                b.HasIndex(x => x.FeedbackId);
+            });
+
+            builder.Entity<FeedbackActivity>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "FeedbackActivities", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+
+                b.Property(x => x.OldValue).HasMaxLength(FeedbackConsts.MaxActivityValueLength);
+                b.Property(x => x.NewValue).HasMaxLength(FeedbackConsts.MaxActivityValueLength);
+                b.Property(x => x.Note).HasMaxLength(FeedbackConsts.MaxActivityNoteLength);
+                b.Property(x => x.ActorName).HasMaxLength(FeedbackConsts.MaxUserNameLength);
+
+                b.HasOne<Feedback>()
+                 .WithMany()
+                 .HasForeignKey(x => x.FeedbackId)
+                 .OnDelete(DeleteBehavior.Cascade);
+
+                // Zaman çizelgesi hep (FeedbackId, CreationTime) sırasıyla okunur
+                b.HasIndex(x => new { x.FeedbackId, x.CreationTime });
             });
 
             builder.Entity<FeedbackComment>(b =>

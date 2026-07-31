@@ -34,7 +34,7 @@ public class TelemetryAppService : ApplicationService, ITelemetryAppService
         _clock = clock;
     }
 
-    public async Task ReportClientErrorAsync(ReportClientErrorDto input)
+    public async Task<Guid?> ReportClientErrorAsync(ReportClientErrorDto input)
     {
         // Ayardan kapatılmışsa sessizce çık — istemciye hata dönmemeli, aksi halde
         // hata raporlama denemesi kullanıcıya ikinci bir hata olarak görünür.
@@ -44,12 +44,12 @@ public class TelemetryAppService : ApplicationService, ITelemetryAppService
         // override yazılmamış tenant'larda telemetri sessizce hep kapalı gelir.
         if (!await SettingProvider.GetAsync(PlatformSettings.Telemetry.Enabled, true))
         {
-            return;
+            return null;
         }
 
         if (input.Message.IsNullOrWhiteSpace())
         {
-            return;
+            return null;
         }
 
         var fingerprint = ClientErrorFingerprint.Compute(input.Message, input.StackTrace, input.PageUrl);
@@ -62,7 +62,7 @@ public class TelemetryAppService : ApplicationService, ITelemetryAppService
         {
             existing.RegisterOccurrence(now, userId, input.PageUrl, input.BreadcrumbJson);
             await _clientErrorRepository.UpdateAsync(existing, autoSave: true);
-            return;
+            return existing.Id;
         }
 
         var clientError = new ClientError(
@@ -85,6 +85,7 @@ public class TelemetryAppService : ApplicationService, ITelemetryAppService
         try
         {
             await _clientErrorRepository.InsertAsync(clientError, autoSave: true);
+            return clientError.Id;
         }
         catch (Exception ex)
         {
@@ -98,7 +99,10 @@ public class TelemetryAppService : ApplicationService, ITelemetryAppService
             {
                 raced.RegisterOccurrence(now, userId, input.PageUrl, input.BreadcrumbJson);
                 await _clientErrorRepository.UpdateAsync(raced, autoSave: true);
+                return raced.Id;
             }
+
+            return null;
         }
     }
 

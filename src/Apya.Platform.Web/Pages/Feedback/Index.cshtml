@@ -43,9 +43,22 @@
             <div class="modal-body">
                 <div id="feedback-detail-meta" class="mb-3 text-sm text-muted"></div>
                 <p id="feedback-detail-body" class="mb-4"></p>
+                <div id="feedback-detail-attachments" class="mb-3"></div>
                 <hr />
                 <h6 class="text-sm fw-bold mb-3">Cevaplar</h6>
                 <div id="feedback-detail-comments"></div>
+
+                @* Kullanıcının ek açıklaması — ilk metin değişmez, diyaloğa eklenir. *@
+                <div class="mt-3">
+                    <label class="form-label text-sm fw-bold" for="feedback-detail-comment-input">Ek açıklama yaz</label>
+                    <textarea id="feedback-detail-comment-input" class="form-control form-control-sm" rows="2"
+                              maxlength="4000" placeholder="Sorulara cevabınızı veya ek bilginizi buraya yazın..."></textarea>
+                    <div class="text-end mt-2">
+                        <button id="feedback-detail-comment-send" class="btn btn-sm btn-primary">
+                            <i class="fa fa-paper-plane me-1"></i> Gönder
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
     </div>

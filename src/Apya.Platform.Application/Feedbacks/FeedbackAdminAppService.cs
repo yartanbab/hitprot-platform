@@ -35,6 +35,7 @@ public class FeedbackAdminAppService : ApplicationService, IFeedbackAdminAppServ
     private const int TopPagesCount = 15;
 
     private readonly IRepository<Feedback, Guid> _feedbackRepository;
+    private readonly IRepository<FeedbackAttachment, Guid> _attachmentRepository;
     private readonly FeedbackManager _feedbackManager;
     private readonly ITenantRepository _tenantRepository;
     private readonly IDataFilter<IMultiTenant> _multiTenantFilter;
@@ -42,12 +43,14 @@ public class FeedbackAdminAppService : ApplicationService, IFeedbackAdminAppServ
 
     public FeedbackAdminAppService(
         IRepository<Feedback, Guid> feedbackRepository,
+        IRepository<FeedbackAttachment, Guid> attachmentRepository,
         FeedbackManager feedbackManager,
         ITenantRepository tenantRepository,
         IDataFilter<IMultiTenant> multiTenantFilter,
         IClock clock)
     {
         _feedbackRepository = feedbackRepository;
+        _attachmentRepository = attachmentRepository;
         _feedbackManager = feedbackManager;
         _tenantRepository = tenantRepository;
         _multiTenantFilter = multiTenantFilter;
@@ -97,10 +100,61 @@ public class FeedbackAdminAppService : ApplicationService, IFeedbackAdminAppServ
 
             dto.CommentCount = dto.Comments.Count;
 
+            var attachmentsQuery = (await _attachmentRepository.GetQueryableAsync())
+                .Where(a => a.FeedbackId == feedback.Id)
+                .OrderBy(a => a.CreationTime);
+            var attachments = await AsyncExecuter.ToListAsync(attachmentsQuery);
+            dto.Attachments = attachments
+                .Select(a => ObjectMapper.Map<FeedbackAttachment, FeedbackAttachmentDto>(a))
+                .ToList();
+
             var tenantNames = await GetTenantNamesAsync();
             dto.TenantName = ResolveTenantName(feedback.TenantId, tenantNames);
+            HideIdentityIfAnonymous(dto);
 
             return dto;
+        }
+    }
+
+    public async Task<FeedbackAttachmentFileDto> GetAttachmentFileAsync(Guid attachmentId)
+    {
+        EnsureHostContext();
+
+        using (_multiTenantFilter.Disable())
+        {
+            var attachment = await _attachmentRepository.FindAsync(attachmentId);
+            if (attachment is null)
+            {
+                throw new EntityNotFoundException(typeof(FeedbackAttachment), attachmentId);
+            }
+
+            return new FeedbackAttachmentFileDto
+            {
+                FileName = attachment.FileName,
+                StoredFileName = attachment.StoredFileName,
+                ContentType = attachment.ContentType
+            };
+        }
+    }
+
+    public async Task<FeedbackAttachmentFileDto> GetScreenshotFileAsync(Guid feedbackId)
+    {
+        EnsureHostContext();
+
+        using (_multiTenantFilter.Disable())
+        {
+            var feedback = await _feedbackRepository.FindAsync(feedbackId);
+            if (feedback is null || feedback.ScreenshotFileName.IsNullOrWhiteSpace())
+            {
+                throw new EntityNotFoundException(typeof(Feedback), feedbackId);
+            }
+
+            return new FeedbackAttachmentFileDto
+            {
+                FileName = "ekran-goruntusu" + System.IO.Path.GetExtension(feedback.ScreenshotFileName),
+                StoredFileName = feedback.ScreenshotFileName!,
+                ContentType = null
+            };
         }
     }
 
@@ -137,8 +191,7 @@ public class FeedbackAdminAppService : ApplicationService, IFeedbackAdminAppServ
             {
                 TotalCount = rows.Count,
 
-                OpenCount = rows.Count(r =>
-                    r.Status is FeedbackStatus.New or FeedbackStatus.InReview or FeedbackStatus.Planned),
+                OpenCount = rows.Count(r => r.Status.IsOpen()),
 
                 UnansweredCount = rows.Count(r => r.LastRespondedAt == null),
 
@@ -187,7 +240,7 @@ public class FeedbackAdminAppService : ApplicationService, IFeedbackAdminAppServ
         using (_multiTenantFilter.Disable())
         {
             var feedback = await _feedbackRepository.GetAsync(id);
-            await _feedbackManager.ChangeStatusAsync(feedback, input.Status);
+            await _feedbackManager.ChangeStatusAsync(feedback, input.Status, CurrentUser.UserName);
         }
     }
 
@@ -199,8 +252,7 @@ public class FeedbackAdminAppService : ApplicationService, IFeedbackAdminAppServ
         using (_multiTenantFilter.Disable())
         {
             var feedback = await _feedbackRepository.GetAsync(id);
-            feedback.Priority = input.Priority;
-            await _feedbackRepository.UpdateAsync(feedback);
+            await _feedbackManager.SetPriorityAsync(feedback, input.Priority, CurrentUser.UserName);
         }
     }
 
@@ -212,8 +264,7 @@ public class FeedbackAdminAppService : ApplicationService, IFeedbackAdminAppServ
         using (_multiTenantFilter.Disable())
         {
             var feedback = await _feedbackRepository.GetAsync(id);
-            feedback.AdminTags = input.AdminTags?.Trim();
-            await _feedbackRepository.UpdateAsync(feedback);
+            await _feedbackManager.SetTagsAsync(feedback, input.AdminTags, CurrentUser.UserName);
         }
     }
 
@@ -236,7 +287,7 @@ public class FeedbackAdminAppService : ApplicationService, IFeedbackAdminAppServ
                 // düşmesin; o kayıt atlanır.
                 try
                 {
-                    await _feedbackManager.ChangeStatusAsync(feedback, input.Status);
+                    await _feedbackManager.ChangeStatusAsync(feedback, input.Status, CurrentUser.UserName);
                 }
                 catch (BusinessException)
                 {
@@ -411,7 +462,21 @@ public class FeedbackAdminAppService : ApplicationService, IFeedbackAdminAppServ
         dto.HasScreenshot = !feedback.ScreenshotFileName.IsNullOrWhiteSpace();
         dto.CommentCount = commentCount ?? feedback.Comments.Count;
         dto.TenantName = ResolveTenantName(feedback.TenantId, tenantNames);
+        HideIdentityIfAnonymous(dto);
         return dto;
+    }
+
+    /// <summary>
+    /// UI-anonim: kimlik DB'de durur (kötüye kullanım/rate-limit için) ama yönetici
+    /// panelinde gösterilmez. Kullanıcı formda bu vaadi gördü — burada tutulur.
+    /// </summary>
+    private static void HideIdentityIfAnonymous(FeedbackDto dto)
+    {
+        if (dto.IsAnonymous)
+        {
+            dto.SubmittedByUserName = null;
+            dto.CreatorId = null;
+        }
     }
 
     private static List<FeedbackTrendPointDto> BuildTrend(List<StatsRow> rows, DateTime trendSince)
