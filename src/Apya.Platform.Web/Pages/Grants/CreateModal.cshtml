@@ -16,7 +16,11 @@
                     <abp-input asp-for="Grant.MaxAmount" label="Maksimum Destek Tutarı (₺)" />
                 </abp-column>
                 <abp-column size="_6">
-                    <abp-input asp-for="Grant.MinMatchScore" label="Minimum Uyum Puanı (%)" />
+                    <label class="form-label" for="Grant_MinMatchScore">
+                        Minimum Uyum Puanı (%)
+                        <apya-hint text="Bu puanın altında kalan firmalara program otomatik olarak önerilmez. Host olarak Firmalara Gönder ekranından elle gönderdiğiniz öneriler bu eşiği aşmasa da firmaya ulaşır." />
+                    </label>
+                    <abp-input asp-for="Grant.MinMatchScore" suppress-label="true" />
                 </abp-column>
             </abp-row>
         </abp-modal-body>
