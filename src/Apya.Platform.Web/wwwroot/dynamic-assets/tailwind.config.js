@@ -113,16 +113,19 @@ export default {
         'lg':              'var(--apya-shadow-lg)',
         'xl':              'var(--apya-shadow-xl)',
       },
-      /* Gerçek z-index düzlemi (tokens.css --apya-z-* ile aynı ölçek).
-         Önceki 40/50/60 değerleri Bootstrap'ın 1050/1055'iyle aynı sayfada
-         anlamsızdı: React modalı LeptonX sidebar'ının (~1030) altında kalırdı.
-         modal=1045 bilinçli olarak Bootstrap .modal'ın (1055) ALTINDA:
+      /* tokens.css'teki --apya-z-* ölçeğinin BİREBİR aynısı. Sayı olarak
+         tutuluyor (var() değil) ki test dosyası değerleri karşılaştırabilsin;
+         tailwind.config.test.js tokens.css'i okuyup eşitliği doğruluyor, bu
+         yüzden ikisi sessizce ayrışamaz.
+         modal=1050 bilinçli olarak Bootstrap .modal'ın (1055) ALTINDA:
          görev detayından açılan ABP modalleri (Expenses/CreateModal) üstte
-         görünmeli. backdrop=1042 sidebar/header'ın üstünde. */
+         görünmeli. modal-backdrop=1040 LeptonX kabuğunun (~1030) üstünde. */
       zIndex: {
+        'dropdown':       1000,
         'sticky':         1020,
-        'modal-backdrop': 1042,
-        'modal':          1045,
+        'fixed':          1030,
+        'modal-backdrop': 1040,
+        'modal':          1050,
         'popover':        1060,
         'tooltip':        1070,
         'toast':          1080,
@@ -130,10 +133,10 @@ export default {
       animation: {
         'blob':         'blob 7s infinite',
         'fade-in':      'fadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards',
-        'overlay-fade': 'overlayFade 160ms cubic-bezier(0.16, 1, 0.3, 1) both',
-        'sheet-bottom': 'sheetBottom 220ms cubic-bezier(0.16, 1, 0.3, 1) both',
-        'sheet-right':  'sheetRight 220ms cubic-bezier(0.16, 1, 0.3, 1) both',
-        'dialog-in':    'dialogIn 200ms cubic-bezier(0.16, 1, 0.3, 1) both',
+        'overlay-fade': 'overlayFade var(--apya-motion-fast) cubic-bezier(0.16, 1, 0.3, 1) both',
+        'sheet-bottom': 'sheetBottom var(--apya-motion-slow) cubic-bezier(0.16, 1, 0.3, 1) both',
+        'sheet-right':  'sheetRight var(--apya-motion-slow) cubic-bezier(0.16, 1, 0.3, 1) both',
+        'dialog-in':    'dialogIn var(--apya-motion-slow) cubic-bezier(0.16, 1, 0.3, 1) both',
       },
       keyframes: {
         blob: {
