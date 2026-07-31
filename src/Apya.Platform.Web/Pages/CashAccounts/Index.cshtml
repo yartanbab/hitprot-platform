@@ -72,7 +72,7 @@ else
                 <button type="button" class="card w-100 h-100 text-start border-0 apya-account-card" data-account-id="@a.Id" data-account-name="@a.Name" data-account-currency="@a.Currency">
                     <div class="card-body">
                         <div class="d-flex align-items-center justify-content-between mb-2">
-                            <div class="kpi-icon-box bg-primary bg-opacity-10 text-primary" style="width:36px;height:36px;font-size:0.95rem;">
+                            <div class="kpi-icon-box kpi-icon-box--accent kpi-icon-box--sm">
                                 <i class="fa @TypeIcon(a.Type)" aria-hidden="true"></i>
                             </div>
                             <span class="apya-chip apya-chip-neutral">@a.Currency</span>
@@ -104,7 +104,7 @@ else
                 Hareketleri görmek için yukarıdan bir hesap seçin.
             </div>
             <div class="table-responsive d-none" id="MovementsTableWrap">
-                <table class="table table-sm table-striped align-middle mb-0" id="CashMovementsTable">
+                <table class="table table-sm align-middle mb-0 apya-clean-table" id="CashMovementsTable">
                     <thead>
                         <tr>
                             <th>Tarih</th>

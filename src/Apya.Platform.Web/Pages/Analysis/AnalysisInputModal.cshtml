@@ -23,7 +23,7 @@
         }
         else
         {
-        <div class="text-center p-4 mb-3 rounded border" style="background-color: #f8f9fa;">
+        <div class="text-center p-4 mb-3 rounded border" style="background-color: var(--apya-surface-sunken);">
             <h6 class="text-muted text-uppercase fw-bold">Proje Uygunluk Skoru</h6>
             <div class="display-1 fw-bold text-@scoreColor">
                 @score.ToString("0.0")
@@ -145,7 +145,7 @@
                     </select>
                 </div>
 
-                <div class="p-3 bg-light border rounded mt-2">
+                <div class="apya-form-section mt-2">
                     <label class="form-label text-primary mb-1">Yapay Zeka (1-10)</label>
                     <div class="d-flex align-items-center">
                         <input type="range" id="inp-ai" class="form-range flex-grow-1 me-2" min="1" max="10" value="1" oninput="this.nextElementSibling.value = this.value">
@@ -153,7 +153,7 @@
                     </div>
                 </div>
 
-                <div class="p-3 bg-light border rounded mt-2">
+                <div class="apya-form-section mt-2">
                     <label class="form-label text-primary mb-1">Teknik Yetkinlik (1-10)</label>
                     <div class="d-flex align-items-center">
                         <input type="range" id="inp-tech" class="form-range flex-grow-1 me-2" min="1" max="10" value="5" oninput="this.nextElementSibling.value = this.value">

@@ -9,11 +9,12 @@ $(function () {
 
     function featBadge(f) {
         if (f.isNumeric) {
-            return '<span class="badge bg-light text-dark border">' + esc(f.displayName) + ': ' + esc(f.value) + '</span>';
+            return '<span class="apya-chip apya-chip-neutral">' + esc(f.displayName) + ': '
+                + '<span class="apya-numeric">' + esc(f.value) + '</span></span>';
         }
         var on = f.value === 'true';
-        return '<span class="badge ' + (on ? 'bg-success' : 'bg-light text-muted border') + '">'
-            + '<i class="fa fa-' + (on ? 'check' : 'minus') + ' me-1"></i>' + esc(f.displayName) + '</span>';
+        return '<span class="apya-chip ' + (on ? 'apya-chip-positive' : 'apya-chip-neutral') + '">'
+            + '<i class="fa fa-' + (on ? 'check' : 'minus') + '"></i>' + esc(f.displayName) + '</span>';
     }
 
     function render(packages) {

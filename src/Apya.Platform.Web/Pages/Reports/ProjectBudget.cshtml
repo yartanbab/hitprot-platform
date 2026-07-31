@@ -12,6 +12,7 @@
     }
 </style>
 
+<div class="apya-page">
 <abp-card>
     <abp-card-header>
         <div class="d-flex justify-content-between align-items-center">
@@ -121,8 +122,8 @@
             @if (s.TaskBreakdown.Any(t => t.TaskId.HasValue))
             {
                 <h6>Task Bazlı Kırılım</h6>
-                <table class="table table-sm table-striped table-bordered">
-                    <thead class="table-light">
+                <table class="table table-sm apya-clean-table">
+                    <thead>
                         <tr>
                             <th>Task</th>
                             <th class="text-end" style="width:130px;">Gider</th>
@@ -155,3 +156,4 @@
         }
     </abp-card-body>
 </abp-card>
+</div> @* /.apya-page *@

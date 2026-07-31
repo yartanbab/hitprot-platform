@@ -349,9 +349,9 @@ function QuestionChart({ block, rows }) {
   }).length;
 
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-4">
-      <p className="mb-1 text-sm font-bold text-slate-700">{block.content}</p>
-      <p className="mb-3 text-xs text-slate-400">{answeredCount} yanıt</p>
+    <div className="rounded-2xl border border-default bg-surface-raised p-4">
+      <p className="mb-1 text-sm font-bold text-text-primary">{block.content}</p>
+      <p className="mb-3 text-xs text-text-tertiary">{answeredCount} yanıt</p>
       <canvas ref={canvasRef} height="200" />
     </div>
   );

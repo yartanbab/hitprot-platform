@@ -10,6 +10,7 @@
     var pdfUrl   = $"?handler=Pdf&FromDate={Model.FromDate?.ToString("yyyy-MM-dd")}&ToDate={Model.ToDate?.ToString("yyyy-MM-dd")}";
 }
 
+<div class="apya-page">
 <abp-card>
     <abp-card-header>
         <div class="d-flex justify-content-between align-items-center">
@@ -52,8 +53,8 @@
             </div>
         </form>
 
-        <table class="table table-striped table-bordered">
-            <thead class="table-light">
+        <table class="table apya-clean-table">
+            <thead>
                 <tr>
                     <th style="width:80px;">Kod</th>
                     <th>Hesap Grubu</th>
@@ -70,7 +71,7 @@
                     <td>@l.GroupName</td>
                     <td class="text-end">@l.Debit.ToString("N2")</td>
                     <td class="text-end">@l.Credit.ToString("N2")</td>
-                    <td class="text-end fw-bold @(l.Balance >= 0 ? "text-dark" : "text-danger")">
+                    <td class="text-end fw-bold @(l.Balance >= 0 ? "" : "text-danger")">
                         @l.Balance.ToString("N2")
                     </td>
                 </tr>
@@ -94,3 +95,4 @@
         </div>
     </abp-card-body>
 </abp-card>
+</div> @* /.apya-page *@
