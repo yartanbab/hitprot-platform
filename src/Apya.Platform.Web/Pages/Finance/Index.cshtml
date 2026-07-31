@@ -37,7 +37,11 @@
 }
 
 <div data-page-description="Hesaplar arası transfer ve son işlemler" class="apya-page">
-<p class="text-muted mb-3" style="font-size:13px">Hesaplar arası transfer ve son işlemler</p>
+<p class="text-muted mb-3" style="font-size:13px">
+    Hesaplar arası transfer ve son işlemler ·
+    @await Html.PartialAsync("/Pages/Shared/_FeedbackLink.cshtml",
+        new Apya.Platform.Web.Feedbacks.FeedbackLinkContext(Module: "Finance", Component: "FinanceHub"))
+</p>
 <div class="row g-3">
     <div class="col-lg-5">
 

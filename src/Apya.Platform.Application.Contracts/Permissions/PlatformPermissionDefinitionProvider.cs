@@ -142,6 +142,18 @@ public class PlatformPermissionDefinitionProvider : PermissionDefinitionProvider
 
         var tenantSettingsPermission = systemGroup.AddPermission(PlatformPermissions.TenantSettings.Default, L("Permission:TenantSettings"));
         tenantSettingsPermission.AddChild(PlatformPermissions.TenantSettings.ManageAi, L("Permission:TenantSettings.ManageAi"));
+
+        // Geri bildirim YÖNETİMİ (gönderme izin gerektirmez, bkz. PlatformPermissions.Feedbacks).
+        // Feature'a bağlanmadı: geri bildirim her pakette açık olmalı.
+        var feedbacksPermission = systemGroup.AddPermission(PlatformPermissions.Feedbacks.Default, L("Permission:Feedbacks"));
+        feedbacksPermission.AddChild(PlatformPermissions.Feedbacks.Respond, L("Permission:Feedbacks.Respond"));
+        feedbacksPermission.AddChild(PlatformPermissions.Feedbacks.Assign, L("Permission:Feedbacks.Assign"));
+        feedbacksPermission.AddChild(PlatformPermissions.Feedbacks.Delete, L("Permission:Feedbacks.Delete"));
+        feedbacksPermission.AddChild(PlatformPermissions.Feedbacks.Export, L("Permission:Feedbacks.Export"));
+        feedbacksPermission.AddChild(PlatformPermissions.Feedbacks.ManageSettings, L("Permission:Feedbacks.ManageSettings"));
+
+        var systemHealthPermission = systemGroup.AddPermission(PlatformPermissions.SystemHealth.Default, L("Permission:SystemHealth"));
+        systemHealthPermission.AddChild(PlatformPermissions.SystemHealth.Resolve, L("Permission:SystemHealth.Resolve"));
     }
 
     private static LocalizableString L(string name)

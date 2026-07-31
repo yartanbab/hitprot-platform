@@ -1,0 +1,259 @@
+@page
+@model Apya.Platform.Web.Pages.Admin.Feedback.DetailModalModel
+@using Microsoft.AspNetCore.Authorization
+@using Volo.Abp.AspNetCore.Mvc.UI.Bootstrap.TagHelpers.Modal
+@using Apya.Platform.Feedbacks
+@using Apya.Platform.Permissions
+@using Apya.Platform.Web.Feedbacks
+@inject IAuthorizationService AuthorizationService
+@{
+    Layout = null;
+    var f = Model.Feedback;
+    var canRespond = await AuthorizationService.IsGrantedAsync(PlatformPermissions.Feedbacks.Respond);
+    var canAssign = await AuthorizationService.IsGrantedAsync(PlatformPermissions.Feedbacks.Assign);
+    var canDelete = await AuthorizationService.IsGrantedAsync(PlatformPermissions.Feedbacks.Delete);
+}
+<abp-modal size="Large">
+    <abp-modal-header title="@f.Subject"></abp-modal-header>
+    <abp-modal-body>
+        <ul class="nav nav-tabs mb-3" role="tablist">
+            <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#fb-tab-detail-@f.Id" type="button">Detay</button></li>
+            <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#fb-tab-timeline-@f.Id" type="button">Zaman Çizelgesi <span class="apya-chip apya-chip-neutral ms-1">@Model.Activities.Count</span></button></li>
+        </ul>
+        <div class="tab-content">
+        <div class="tab-pane fade show active" id="fb-tab-detail-@f.Id">
+        <dl class="row mb-3">
+            <dt class="col-sm-3">Numara</dt>
+            <dd class="col-sm-9"><code>@f.FeedbackNumber</code></dd>
+            <dt class="col-sm-3">Tenant</dt>
+            <dd class="col-sm-9">@(f.TenantName ?? "-")</dd>
+            <dt class="col-sm-3">Gönderen</dt>
+            <dd class="col-sm-9">
+                @if (f.IsAnonymous)
+                {
+                    <span class="apya-chip apya-chip-neutral">Anonim</span>
+                    <span class="text-muted text-xs ms-1">(kimlik gizlendi)</span>
+                }
+                else
+                {
+                    @(f.SubmittedByUserName ?? "-")
+                    @if (f.AllowContact)
+                    {
+                        <span class="apya-chip apya-chip-success ms-1" title="Kullanıcı iletişime geçilmesine izin verdi">İletişim OK</span>
+                    }
+                }
+            </dd>
+            <dt class="col-sm-3">Modül / Bileşen</dt>
+            <dd class="col-sm-9 text-sm">
+                @(string.IsNullOrWhiteSpace(f.ModuleCode) ? "-" : f.ModuleCode)
+                @if (!string.IsNullOrWhiteSpace(f.ComponentCode)) { <span class="text-muted">· @f.ComponentCode</span> }
+                @if (!string.IsNullOrWhiteSpace(f.ActionCode)) { <span class="text-muted">· @f.ActionCode</span> }
+            </dd>
+            <dt class="col-sm-3">Sayfa</dt>
+            <dd class="col-sm-9">
+                @(f.PageUrl ?? "-") @if (!string.IsNullOrWhiteSpace(f.PageTitle)) { <span class="text-muted">(@f.PageTitle)</span> }
+            </dd>
+            <dt class="col-sm-3">Tarih</dt>
+            <dd class="col-sm-9">@f.CreationTime.ToString("dd.MM.yyyy HH:mm")</dd>
+            <dt class="col-sm-3">Puan</dt>
+            <dd class="col-sm-9">@(f.Rating?.ToString() ?? "—")</dd>
+            <dt class="col-sm-3">Tarayıcı / Ekran</dt>
+            <dd class="col-sm-9 text-sm text-muted">@(f.UserAgent ?? "-") @(f.ScreenResolution is not null ? $"· {f.ScreenResolution}" : "")</dd>
+        </dl>
+
+        <div class="row g-2 mb-3">
+            <div class="col-md-3">
+                <label class="form-label text-xs fw-bold">Durum <span class="text-muted fw-normal">(iç)</span></label>
+                <select class="form-select form-select-sm detail-status-select" data-id="@f.Id" disabled="@(!canRespond)">
+                    @foreach (var s in Enum.GetValues<FeedbackStatus>())
+                    {
+                        <option value="@((int)s)" selected="@(f.Status == s)">@FeedbackLabels.Status(s)</option>
+                    }
+                </select>
+                <div class="form-text text-xs">Kullanıcı şunu görür: <strong>@FeedbackLabels.UserStatus(f.Status.ToUserStatus())</strong></div>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label text-xs fw-bold">Öncelik</label>
+                <select class="form-select form-select-sm detail-priority-select" data-id="@f.Id" disabled="@(!canRespond)">
+                    @foreach (var p in Enum.GetValues<FeedbackPriority>())
+                    {
+                        <option value="@((int)p)" selected="@(f.Priority == p)">@FeedbackLabels.Priority(p)</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label text-xs fw-bold">Etki</label>
+                <select class="form-select form-select-sm detail-impact-select" data-id="@f.Id" disabled="@(!canRespond)">
+                    <option value="" selected="@(f.Impact == null)">—</option>
+                    @foreach (var i in Enum.GetValues<FeedbackImpact>())
+                    {
+                        <option value="@((int)i)" selected="@(f.Impact == i)">@FeedbackLabels.Impact(i)</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label text-xs fw-bold">Atanan</label>
+                <select class="form-select form-select-sm detail-assign-select" data-id="@f.Id" disabled="@(!canAssign)">
+                    <option value="" selected="@(f.AssignedUserId == null)">— Atanmadı —</option>
+                    @foreach (var u in Model.Assignees)
+                    {
+                        <option value="@u.Id" selected="@(f.AssignedUserId == u.Id)">@(string.IsNullOrWhiteSpace(u.Name) ? u.UserName : u.Name)</option>
+                    }
+                </select>
+            </div>
+            <div class="col-12">
+                <label class="form-label text-xs fw-bold">Etiketler</label>
+                <input type="text" class="form-control form-control-sm detail-tags-input" data-id="@f.Id"
+                       value="@f.AdminTags" placeholder="virgülle ayır" disabled="@(!canRespond)" />
+            </div>
+        </div>
+
+        <p class="mb-3">@f.Body</p>
+
+        @if (Model.Details.Count > 0)
+        {
+            <dl class="row mb-3 text-sm">
+                @foreach (var d in Model.Details)
+                {
+                    <dt class="col-sm-3">@d.Key</dt>
+                    <dd class="col-sm-9" style="white-space:pre-wrap;">@d.Value</dd>
+                }
+            </dl>
+        }
+
+        @if (f.HasScreenshot)
+        {
+            @* Dosya adı URL'de taşınmaz; erişim feedbackId ile AppService'te çözülür. *@
+            <div class="mb-3">
+                <label class="form-label text-xs fw-bold d-block">Ekran Görüntüsü</label>
+                <a href="/Admin/Feedback?handler=Screenshot&feedbackId=@f.Id" target="_blank">
+                    <img src="/Admin/Feedback?handler=Screenshot&feedbackId=@f.Id"
+                         style="max-width:100%;max-height:220px;border:1px solid var(--apya-border-subtle);border-radius:6px;" />
+                </a>
+            </div>
+        }
+
+        @if (f.Attachments.Count > 0)
+        {
+            <div class="mb-3">
+                <label class="form-label text-xs fw-bold d-block">Ek Dosyalar</label>
+                <ul class="list-unstyled text-sm mb-0">
+                    @foreach (var a in f.Attachments)
+                    {
+                        <li>
+                            <a href="/Admin/Feedback?handler=Attachment&attachmentId=@a.Id" target="_blank">
+                                <i class="fa fa-paperclip me-1"></i>@a.FileName
+                            </a>
+                            <span class="text-muted">(@(a.SizeBytes / 1024) KB)</span>
+                        </li>
+                    }
+                </ul>
+            </div>
+        }
+
+        @if (Model.Breadcrumb.Count > 0)
+        {
+            <div class="mb-3">
+                <label class="form-label text-xs fw-bold d-block">Davranış İzi</label>
+                <ul class="list-unstyled text-sm mb-0" style="max-height:160px;overflow-y:auto;">
+                    @foreach (var b in Model.Breadcrumb)
+                    {
+                        <li class="mb-1">
+                            <span class="text-muted">@b.Time.ToString("HH:mm:ss")</span>
+                            <span class="apya-chip apya-chip-neutral mx-1">@b.Type</span>
+                            <span>@b.Label</span>
+                        </li>
+                    }
+                </ul>
+            </div>
+        }
+
+        <hr />
+        <h6 class="text-sm fw-bold mb-2">Yorumlar / Cevaplar</h6>
+        <div class="mb-3" style="max-height:200px;overflow-y:auto;">
+            @if (f.Comments.Count == 0)
+            {
+                <p class="text-muted text-sm">Henüz yorum yok.</p>
+            }
+            else
+            {
+                foreach (var c in f.Comments)
+                {
+                    <div class="mb-2 p-2" style="border-left:3px solid @(c.IsInternal ? "var(--apya-warning-500)" : "var(--apya-accent-500)");background:var(--apya-surface-sunken);border-radius:0 6px 6px 0;">
+                        <div class="text-sm">@c.Text</div>
+                        <div class="text-muted text-xs mt-1">
+                            @(c.AuthorName ?? "Ekip") · @c.CreationTime.ToString("dd.MM.yyyy HH:mm")
+                            @if (c.IsInternal)
+                            {
+                                <span class="apya-chip apya-chip-warning ms-1">İç Not</span>
+                            }
+                        </div>
+                    </div>
+                }
+            }
+        </div>
+
+        @if (canRespond)
+        {
+            <textarea class="form-control form-control-sm detail-comment-text mb-2" rows="2" placeholder="Cevap yazın..."></textarea>
+            <div class="d-flex justify-content-between align-items-center">
+                <div class="form-check">
+                    <input class="form-check-input detail-comment-internal" type="checkbox" id="InternalCheck-@f.Id" />
+                    <label class="form-check-label text-xs" for="InternalCheck-@f.Id">Sadece iç not (kullanıcıya görünmez)</label>
+                </div>
+                <button type="button" class="btn btn-sm btn-primary detail-add-comment-btn" data-id="@f.Id">Gönder</button>
+            </div>
+        }
+        </div>
+
+        <div class="tab-pane fade" id="fb-tab-timeline-@f.Id">
+            @if (Model.Activities.Count == 0)
+            {
+                <p class="text-muted text-sm">Henüz kayıtlı işlem yok.</p>
+            }
+            else
+            {
+                <ul class="list-unstyled mb-0">
+                    @foreach (var a in Model.Activities)
+                    {
+                        <li class="d-flex gap-2 mb-2 pb-2" style="border-bottom:1px solid var(--apya-border-subtle);">
+                            <div class="text-muted text-xs" style="min-width:110px;">@a.CreationTime.ToString("dd.MM.yy HH:mm")</div>
+                            <div class="flex-grow-1">
+                                <div class="text-sm">
+                                    <strong>@FeedbackLabels.Activity(a.Type)</strong>
+                                    @if (!string.IsNullOrWhiteSpace(a.OldValue) || !string.IsNullOrWhiteSpace(a.NewValue))
+                                    {
+                                        <span class="text-muted">
+                                            @(string.IsNullOrWhiteSpace(a.OldValue) ? "—" : a.OldValue)
+                                            <i class="fa fa-arrow-right mx-1 text-xs"></i>
+                                            @(string.IsNullOrWhiteSpace(a.NewValue) ? "—" : a.NewValue)
+                                        </span>
+                                    }
+                                    @if (a.IsInternal)
+                                    {
+                                        <span class="apya-chip apya-chip-warning ms-1">İç</span>
+                                    }
+                                </div>
+                                @if (!string.IsNullOrWhiteSpace(a.Note))
+                                {
+                                    <div class="text-muted text-xs mt-1">@a.Note</div>
+                                }
+                                <div class="text-muted text-xs">@(a.ActorName ?? "Sistem")</div>
+                            </div>
+                        </li>
+                    }
+                </ul>
+            }
+        </div>
+        </div>
+    </abp-modal-body>
+    <abp-modal-footer>
+        @if (canDelete)
+        {
+            <button type="button" class="btn btn-outline-danger btn-sm me-auto detail-delete-btn" data-id="@f.Id">
+                <i class="fa fa-trash me-1"></i> Sil
+            </button>
+        }
+        <abp-button text="Kapat" button-type="Secondary" data-bs-dismiss="modal"></abp-button>
+    </abp-modal-footer>
+</abp-modal>

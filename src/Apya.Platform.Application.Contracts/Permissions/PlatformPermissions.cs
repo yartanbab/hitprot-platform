@@ -162,6 +162,27 @@ public static class PlatformPermissions
         public const string ManageAi = Default + ".ManageAi";
     }
 
+    // --- GERİ BİLDİRİM YÖNETİMİ (host) ---
+    // NOT: Geri bildirim GÖNDERMEK izin gerektirmez — yalnızca [Authorize]. İzne bağlanırsa
+    // yeni tenant'larda kapalı gelir ve kimse geri bildirim veremez; amaç tam tersi.
+    // Buradaki izinler sadece yönetici panelini kapsar.
+    public static class Feedbacks
+    {
+        public const string Default = GroupName + ".Feedbacks"; // paneli görme
+        public const string Respond = Default + ".Respond";     // durum/öncelik/etiket + cevap
+        public const string Assign  = Default + ".Assign";      // kayda sorumlu atama
+        public const string Delete  = Default + ".Delete";
+        public const string Export  = Default + ".Export";
+        public const string ManageSettings = Default + ".ManageSettings"; // ayarlar ekranı
+    }
+
+    // --- SİSTEM SAĞLIĞI / TELEMETRİ (host) ---
+    public static class SystemHealth
+    {
+        public const string Default = GroupName + ".SystemHealth";
+        public const string Resolve = Default + ".Resolve"; // istemci hatasını çözüldü işaretle
+    }
+
     // --- HİBE YETKİLERİ ---
     public static class Grants
     {

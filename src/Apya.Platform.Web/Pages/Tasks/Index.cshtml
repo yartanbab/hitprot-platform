@@ -88,6 +88,10 @@
             <button type="button" id="btn-clear-filters" class="btn btn-link btn-sm text-muted text-decoration-none">
                 <i class="fa fa-rotate-left me-1"></i>@L["Common:Clear"]
             </button>
+            <span class="ms-auto">
+                @await Html.PartialAsync("/Pages/Shared/_FeedbackLink.cshtml",
+                    new Apya.Platform.Web.Feedbacks.FeedbackLinkContext(Module: "Tasks", Component: "TaskList"))
+            </span>
         </form>
     </abp-card-header>
     <abp-card-body>

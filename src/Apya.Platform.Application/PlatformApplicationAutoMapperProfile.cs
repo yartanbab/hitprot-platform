@@ -98,6 +98,20 @@ namespace Apya.Platform
 
             // --- TENANT PROFILE MODÜLÜ ---
             CreateMap<Apya.Platform.Tenants.TenantProfile, Apya.Platform.Tenants.TenantProfileDto>();
+
+            // --- GERİ BİLDİRİM (FEEDBACK) MODÜLÜ ---
+            // HasScreenshot/CommentCount/TenantName/UserStatus AppService'te elle doldurulur (ham entity'de yok).
+            CreateMap<Apya.Platform.Feedbacks.Feedback, Apya.Platform.Feedbacks.Dtos.FeedbackDto>()
+                .ForMember(d => d.TenantName, o => o.Ignore())
+                .ForMember(d => d.HasScreenshot, o => o.Ignore())
+                .ForMember(d => d.CommentCount, o => o.Ignore())
+                .ForMember(d => d.UserStatus, o => o.Ignore());
+            CreateMap<Apya.Platform.Feedbacks.Feedback, Apya.Platform.Feedbacks.Dtos.FeedbackDetailDto>()
+                .IncludeBase<Apya.Platform.Feedbacks.Feedback, Apya.Platform.Feedbacks.Dtos.FeedbackDto>()
+                .ForMember(d => d.Comments, o => o.Ignore());
+            CreateMap<Apya.Platform.Feedbacks.FeedbackComment, Apya.Platform.Feedbacks.Dtos.FeedbackCommentDto>();
+            CreateMap<Apya.Platform.Feedbacks.FeedbackAttachment, Apya.Platform.Feedbacks.Dtos.FeedbackAttachmentDto>();
+            CreateMap<Apya.Platform.Feedbacks.FeedbackActivity, Apya.Platform.Feedbacks.Dtos.FeedbackActivityDto>();
         }
     }
 }

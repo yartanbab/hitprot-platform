@@ -1,0 +1,162 @@
+@page
+@using System.Linq
+@using System.Text.Json
+@using Apya.Platform.Web.Pages.Shared
+@using Apya.Platform.Feedbacks
+@using Apya.Platform.Web.Feedbacks
+@model Apya.Platform.Web.Pages.Admin.Feedback.AnalyticsModel
+@{
+    ViewBag.Title = "Geri Bildirim Analizi";
+    var s = Model.Stats;
+
+    // Etiketler tek kaynaktan (FeedbackLabels) — enum genişlediğinde burası kendiliğinden uyar.
+    var typeLabels = Enum.GetValues<FeedbackType>().ToDictionary(t => (int)t, FeedbackLabels.Type);
+    var statusLabels = Enum.GetValues<FeedbackStatus>().ToDictionary(st => (int)st, FeedbackLabels.Status);
+
+    var typeChartLabels = JsonSerializer.Serialize(s.ByType.Select(x => typeLabels.GetValueOrDefault(x.Key, x.Key.ToString())));
+    var typeChartData = JsonSerializer.Serialize(s.ByType.Select(x => x.Count));
+    var statusChartLabels = JsonSerializer.Serialize(s.ByStatus.Select(x => statusLabels.GetValueOrDefault(x.Key, x.Key.ToString())));
+    var statusChartData = JsonSerializer.Serialize(s.ByStatus.Select(x => x.Count));
+    var trendLabels = JsonSerializer.Serialize(s.Trend.Select(x => x.Date.ToString("dd.MM")));
+    var trendData = JsonSerializer.Serialize(s.Trend.Select(x => x.Count));
+
+    var maxPageCount = s.TopPages.Count > 0 ? s.TopPages.Max(p => p.Count) : 1;
+}
+
+<div class="apya-page">
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h5 class="mb-0"><i class="fa fa-chart-pie me-2"></i> Geri Bildirim Analizi</h5>
+    <a href="/Admin/Feedback" class="btn btn-outline-secondary btn-sm"><i class="fa fa-arrow-left me-1"></i> Listeye Dön</a>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <partial name="_KpiCard" model='new KpiCardModel { Icon = "fa-comment-dots", Accent = "accent", Label = "Toplam (90 gün)", Value = s.TotalCount.ToString() }' />
+    </div>
+    <div class="col-md-3">
+        <partial name="_KpiCard" model='new KpiCardModel { Icon = "fa-hourglass-half", Accent = "warning", Label = "Açık", Value = s.OpenCount.ToString() }' />
+    </div>
+    <div class="col-md-3">
+        <partial name="_KpiCard" model='new KpiCardModel { Icon = "fa-reply", Accent = "negative", Label = "Cevapsız", Value = s.UnansweredCount.ToString() }' />
+    </div>
+    <div class="col-md-3">
+        <partial name="_KpiCard" model='new KpiCardModel { Icon = "fa-star", Accent = "positive", Label = "Ortalama Puan", Value = s.AverageRating.HasValue ? s.AverageRating.Value.ToString("0.0") : "—", SubText = $"{s.RatingCount} puanlama" }' />
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-6">
+        <partial name="_KpiCard" model='new KpiCardModel { Icon = "fa-clock", Accent = "brand", Label = "Ortalama İlk Yanıt", Value = Model.FormatHours(s.AverageFirstResponseHours), SubText = "gönderimden ilk cevaba" }' />
+    </div>
+    <div class="col-md-6">
+        <partial name="_KpiCard" model='new KpiCardModel { Icon = "fa-flag-checkered", Accent = "positive", Label = "Ortalama Çözüm Süresi", Value = Model.FormatHours(s.AverageResolutionHours), SubText = "gönderimden kapanışa" }' />
+    </div>
+</div>
+
+<div class="row g-3 mb-3">
+    <div class="col-md-4">
+        <abp-card>
+            <abp-card-header><abp-card-title>Tür Dağılımı</abp-card-title></abp-card-header>
+            <abp-card-body><canvas id="typeChart" style="max-height:220px;"></canvas></abp-card-body>
+        </abp-card>
+    </div>
+    <div class="col-md-4">
+        <abp-card>
+            <abp-card-header><abp-card-title>Durum Dağılımı</abp-card-title></abp-card-header>
+            <abp-card-body><canvas id="statusChart" style="max-height:220px;"></canvas></abp-card-body>
+        </abp-card>
+    </div>
+    <div class="col-md-4">
+        <abp-card>
+            <abp-card-header><abp-card-title>Son 30 Gün Trendi</abp-card-title></abp-card-header>
+            <abp-card-body><canvas id="trendChart" style="max-height:220px;"></canvas></abp-card-body>
+        </abp-card>
+    </div>
+</div>
+
+<abp-card>
+    <abp-card-header>
+        <abp-card-title><i class="fa fa-fire me-2"></i> Sayfa Bazlı Isı Haritası</abp-card-title>
+    </abp-card-header>
+    <abp-card-body>
+        <p class="text-muted text-sm">En çok geri bildirim alan ekranlar — geliştirme önceliğini doğrudan buradan çıkarabilirsiniz.</p>
+        @if (s.TopPages.Count == 0)
+        {
+            <partial name="_EmptyState" model='new EmptyStateModel { Icon = "fa-fire", Title = "Henüz veri yok.", Description = "Geri bildirim geldikçe sayfa dağılımı burada görünür." }' />
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-sm align-middle mb-0">
+                    <thead>
+                        <tr><th>Sayfa</th><th>Toplam</th><th>Hata</th><th>Ort. Puan</th><th style="width:40%">Yoğunluk</th></tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var p in s.TopPages)
+                        {
+                            var widthPercent = (int)(100.0 * p.Count / maxPageCount);
+                            <tr>
+                                <td><code class="text-sm">@p.PageUrl</code>@if (!string.IsNullOrWhiteSpace(p.PageTitle)) { <div class="text-muted text-xs">@p.PageTitle</div> }</td>
+                                <td>@p.Count</td>
+                                <td>@(p.BugCount > 0 ? p.BugCount.ToString() : "—")</td>
+                                <td>@(p.AverageRating.HasValue ? p.AverageRating.Value.ToString("0.0") : "—")</td>
+                                <td>
+                                    <div style="background:var(--apya-surface-sunken);border-radius:4px;height:10px;overflow:hidden;">
+                                        <div style="background:var(--apya-accent-500);width:@(widthPercent)%;height:100%;"></div>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </abp-card-body>
+</abp-card>
+</div>
+
+@section scripts {
+    <script src="~/js/chart.umd.min.js"></script>
+    <abp-script src="/js/apya-chart-theme.js" />
+    <script>
+        (function () {
+            var typeChart = null, statusChart = null, trendChart = null;
+
+            function build() {
+                var t = document.getElementById('typeChart');
+                if (t && window.Chart) {
+                    typeChart = new Chart(t, apyaChart.options({
+                        type: 'doughnut',
+                        data: { labels: @Html.Raw(typeChartLabels), datasets: [{ data: @Html.Raw(typeChartData) }] }
+                    }));
+                }
+                var st = document.getElementById('statusChart');
+                if (st && window.Chart) {
+                    statusChart = new Chart(st, apyaChart.options({
+                        type: 'doughnut',
+                        data: { labels: @Html.Raw(statusChartLabels), datasets: [{ data: @Html.Raw(statusChartData) }] }
+                    }));
+                }
+                var tr = document.getElementById('trendChart');
+                if (tr && window.Chart) {
+                    trendChart = new Chart(tr, apyaChart.options({
+                        type: 'line',
+                        data: {
+                            labels: @Html.Raw(trendLabels),
+                            datasets: [{ label: 'Geri Bildirim', data: @Html.Raw(trendData), fill: true }]
+                        },
+                        options: { plugins: { legend: { display: false } } }
+                    }));
+                }
+            }
+
+            build();
+            apyaChart.onThemeChange(function () {
+                if (typeChart) typeChart.destroy();
+                if (statusChart) statusChart.destroy();
+                if (trendChart) trendChart.destroy();
+                build();
+            });
+        })();
+    </script>
+}

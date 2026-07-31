@@ -19,6 +19,8 @@
     <div class="apya-page-head">
         <div class="apya-page-head-actions">
             <span class="apya-grid-count" id="ProjectsCount"></span>
+            @await Html.PartialAsync("/Pages/Shared/_FeedbackLink.cshtml",
+                new Apya.Platform.Web.Feedbacks.FeedbackLinkContext(Module: "Projects", Component: "ProjectList"))
             <input type="search" id="ProjectsSearch" class="form-control form-control-sm apya-grid-search"
                    placeholder="Proje, kod veya müşteri ara…" autocomplete="off" />
             @if (await AuthorizationService.IsGrantedAsync(PlatformPermissions.Projects.Create))

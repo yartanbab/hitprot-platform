@@ -1,0 +1,185 @@
+@page
+@using System.Linq
+@using System.Text.Json
+@using Apya.Platform.Web.Pages.Shared
+@model Apya.Platform.Web.Pages.Admin.SystemHealth.IndexModel
+@{
+    ViewBag.Title = "Sistem Sağlığı";
+    var h = Model.Health;
+
+    var trendLabels = JsonSerializer.Serialize(h.ErrorTrend.Select(x => x.Date.ToString("dd.MM")));
+    var trendData = JsonSerializer.Serialize(h.ErrorTrend.Select(x => x.ErrorCount));
+}
+
+<div class="apya-page">
+<h5 class="mb-3"><i class="fa fa-heart-pulse me-2"></i> Sistem Sağlığı — Son @h.WindowDays Gün</h5>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <partial name="_KpiCard" model='new KpiCardModel { Icon = "fa-server", Accent = "accent", Label = "Sunucu İsteği", Value = h.ServerRequestCount.ToString() }' />
+    </div>
+    <div class="col-md-3">
+        <partial name="_KpiCard" model='new KpiCardModel { Icon = "fa-triangle-exclamation", Accent = "negative", Label = "Sunucu Hatası", Value = h.ServerErrorCount.ToString(), SubText = $"%{(h.ServerErrorRate * 100):0.0} oran" }' />
+    </div>
+    <div class="col-md-3">
+        <partial name="_KpiCard" model='new KpiCardModel { Icon = "fa-bug", Accent = "warning", Label = "Çözülmemiş İstemci Hatası", Value = h.UnresolvedClientErrorCount.ToString() }' />
+    </div>
+    <div class="col-md-3">
+        <partial name="_KpiCard" model='new KpiCardModel { Icon = "fa-desktop", Accent = "brand", Label = "İstemci Hata Oluşumu", Value = h.ClientErrorOccurrencesInWindow.ToString() }' />
+    </div>
+</div>
+
+<div class="row g-3 mb-3">
+    <div class="col-md-6">
+        <abp-card>
+            <abp-card-header><abp-card-title>Sunucu Hata Trendi</abp-card-title></abp-card-header>
+            <abp-card-body><canvas id="errorTrendChart" style="max-height:220px;"></canvas></abp-card-body>
+        </abp-card>
+    </div>
+    <div class="col-md-6">
+        <abp-card>
+            <abp-card-header><abp-card-title>Tenant Bazlı Hata Dağılımı</abp-card-title></abp-card-header>
+            <abp-card-body>
+                @if (h.ErrorsByTenant.Count == 0)
+                {
+                    <partial name="_EmptyState" model='new EmptyStateModel { Icon = "fa-thumbs-up", Title = "Hata yok.", Description = "Seçili pencerede sunucu hatası görülmedi." }' />
+                }
+                else
+                {
+                    <table class="table table-sm mb-0">
+                        <thead><tr><th>Tenant</th><th>Hata Sayısı</th></tr></thead>
+                        <tbody>
+                            @foreach (var t in h.ErrorsByTenant)
+                            {
+                                <tr><td>@(t.TenantName ?? "-")</td><td>@t.ErrorCount</td></tr>
+                            }
+                        </tbody>
+                    </table>
+                }
+            </abp-card-body>
+        </abp-card>
+    </div>
+</div>
+
+<div class="row g-3 mb-3">
+    <div class="col-md-6">
+        <abp-card>
+            <abp-card-header><abp-card-title>En Çok Hata Veren Sayfalar</abp-card-title></abp-card-header>
+            <abp-card-body>
+                @if (h.TopFailingPages.Count == 0)
+                {
+                    <partial name="_EmptyState" model='new EmptyStateModel { Icon = "fa-thumbs-up", Title = "Sorunlu sayfa yok." }' />
+                }
+                else
+                {
+                    <table class="table table-sm mb-0">
+                        <thead><tr><th>Sayfa</th><th>Toplam</th><th>Hata</th><th>Oran</th></tr></thead>
+                        <tbody>
+                            @foreach (var p in h.TopFailingPages)
+                            {
+                                <tr>
+                                    <td><code class="text-sm">@p.Url</code></td>
+                                    <td>@p.TotalCount</td>
+                                    <td>@p.ErrorCount</td>
+                                    <td>%@((p.ErrorRate * 100).ToString("0.0"))</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                }
+            </abp-card-body>
+        </abp-card>
+    </div>
+    <div class="col-md-6">
+        <abp-card>
+            <abp-card-header><abp-card-title>En Yavaş Endpoint'ler</abp-card-title></abp-card-header>
+            <abp-card-body>
+                @if (h.SlowestEndpoints.Count == 0)
+                {
+                    <partial name="_EmptyState" model='new EmptyStateModel { Icon = "fa-gauge", Title = "Veri yok." }' />
+                }
+                else
+                {
+                    <table class="table table-sm mb-0">
+                        <thead><tr><th>Endpoint</th><th>Çağrı</th><th>Ort. (ms)</th><th>Maks. (ms)</th></tr></thead>
+                        <tbody>
+                            @foreach (var e in h.SlowestEndpoints)
+                            {
+                                <tr>
+                                    <td><code class="text-sm">@e.Url</code></td>
+                                    <td>@e.CallCount</td>
+                                    <td>@e.AverageDurationMs.ToString("0")</td>
+                                    <td>@e.MaxDurationMs</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                }
+            </abp-card-body>
+        </abp-card>
+    </div>
+</div>
+
+<abp-card>
+    <abp-card-header>
+        <abp-card-title><i class="fa fa-bug me-2"></i> İstemci Hataları</abp-card-title>
+    </abp-card-header>
+    <abp-card-body>
+        <div class="row g-2 mb-3">
+            <div class="col-md-3">
+                <select id="Filter_IsResolved" class="form-select form-select-sm">
+                    <option value="false" selected>Yalnızca Çözülmemiş</option>
+                    <option value="true">Yalnızca Çözülmüş</option>
+                    <option value="">Tümü</option>
+                </select>
+            </div>
+            <div class="col-md-4">
+                <input id="Filter_Text" type="text" class="form-control form-control-sm" placeholder="Mesaj veya sayfada ara..." />
+            </div>
+        </div>
+        <abp-table striped-rows="true" id="ClientErrorsTable">
+            <thead>
+                <tr>
+                    <th>İşlemler</th>
+                    <th>Son Görülme</th>
+                    <th>Kaynak</th>
+                    <th>Mesaj</th>
+                    <th>Sayfa</th>
+                    <th>Tenant</th>
+                    <th>Oluşum</th>
+                    <th>Durum</th>
+                </tr>
+            </thead>
+        </abp-table>
+    </abp-card-body>
+</abp-card>
+</div>
+
+@section scripts {
+    <abp-script src="/Pages/Admin/SystemHealth/Index.js" />
+    <script src="~/js/chart.umd.min.js"></script>
+    <abp-script src="/js/apya-chart-theme.js" />
+    <script>
+        (function () {
+            var trendChart = null;
+            function build() {
+                var el = document.getElementById('errorTrendChart');
+                if (el && window.Chart) {
+                    trendChart = new Chart(el, apyaChart.options({
+                        type: 'line',
+                        data: {
+                            labels: @Html.Raw(trendLabels),
+                            datasets: [{ label: 'Hata', data: @Html.Raw(trendData), fill: true, borderColor: apyaChart.tone('negative') }]
+                        },
+                        options: { plugins: { legend: { display: false } } }
+                    }));
+                }
+            }
+            build();
+            apyaChart.onThemeChange(function () {
+                if (trendChart) trendChart.destroy();
+                build();
+            });
+        })();
+    </script>
+}
