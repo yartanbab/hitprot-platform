@@ -20,7 +20,8 @@
 <div class="d-flex flex-wrap align-items-center justify-content-end gap-2 mb-2">
     @* "Tüm Projeler (Genel)" birleşik görünüm kaldırıldı (kullanıcı kararı 2026-06-22);
        index.js'te doldurulur ve ilk proje otomatik seçilir → board doğrudan bir projeye scope'lu açılır. *@
-    <select id="board-project" class="form-select form-select-sm w-auto" title="Proje seçince o projenin kolonları + Kolon Ekle gelir"></select>
+    <select id="board-project" class="form-select form-select-sm w-auto"></select>
+    <apya-hint placement="bottom" text="Pano her zaman tek bir projeye bağlıdır. Proje seçtiğinizde o projenin kendi kolonları yüklenir ve Kolon Ekle görünür; kolonlar projeye özeldir, diğer projeleri etkilemez." />
     <button id="btn-refresh-board" class="btn btn-outline-secondary btn-sm"><i class="fa fa-sync"></i> Yenile</button>
     @if (await AuthorizationService.IsGrantedAsync(PlatformPermissions.Tasks.Create))
     {

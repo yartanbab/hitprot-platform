@@ -92,9 +92,10 @@
                üst üste binme yerine temiz bir ikinci satır tercih edildi. *@
             <div id="tasks-search-slot" class="flex-grow-1 d-flex justify-content-center"></div>
             <div class="d-flex align-items-center flex-wrap gap-2">
-                <select id="tasks-project" class="form-select form-select-sm w-auto" style="min-width:170px" title="Proje seçince kanban o projeye scope'lanır (özel kolonlar + Kolon Ekle); liste/gantt da filtrelenir">
+                <select id="tasks-project" class="form-select form-select-sm w-auto" style="min-width:170px">
                     <option value="">Tüm Projeler (Genel)</option>
                 </select>
+                <apya-hint placement="bottom" text="Üç görünümü de filtreler. Bir proje seçtiğinizde Kanban o projenin kendi kolonlarına geçer ve Kolon Ekle görünür; Tüm Projeler seçiliyken ortak kolonlar kullanılır." />
                 <div class="btn-group" role="group">
                     <button type="button" id="btn-view-list" class="btn btn-outline-primary active">
                         <i class="fa fa-list me-1"></i> @L["Tasks:View:List"]
