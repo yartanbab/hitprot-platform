@@ -59,7 +59,10 @@
             </div>
 
             <div class="mb-3">
-                <label asp-for="Input.MonthlyTokenQuota" class="form-label">Aylık Token Kotası</label>
+                <label asp-for="Input.MonthlyTokenQuota" class="form-label">
+                    Aylık Token Kotası
+                    <apya-hint text="Bu kiracının bir dönemde harcayabileceği toplam token. Dönem her ayın 1'inde başlar. Kotayı Sıfırla düğmesi yalnız sayacı sıfırlar, buradaki limiti değiştirmez." />
+                </label>
                 <input asp-for="Input.MonthlyTokenQuota" type="number" min="0" class="form-control" />
             </div>
 

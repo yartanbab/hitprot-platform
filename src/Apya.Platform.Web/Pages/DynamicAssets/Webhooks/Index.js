@@ -83,6 +83,7 @@ $(function () {
                   '<div class="d-flex align-items-center gap-2 text-muted small">' +
                     '<i class="fa fa-lock"></i>' +
                     '<span>Gizli anahtar yapılandırıldı</span>' +
+                    apya.hint('Her istek, gövdenin bu anahtarla üretilmiş HMAC-SHA256 imzasını X-Apya-Signature başlığında taşır. Hedef sistem aynı hesabı yaparak isteğin gerçekten sizden geldiğini doğrulayabilir.') +
                     (canEdit ?
                       '<button type="button" class="btn btn-sm btn-outline-secondary py-0 px-2 apya-regenerate-secret">' +
                         '<i class="fa fa-rotate"></i> Yeniden oluştur' +
