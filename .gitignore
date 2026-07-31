@@ -268,3 +268,7 @@ src/Apya.Platform.Web/wwwroot/uploads/*
 
 # Local secrets — must never be committed (contains DB password, API keys vb.)
 **/appsettings.secrets.json
+
+# Docker deploy secrets — .env ve sertifikalar commit'lenmemeli
+.env
+/secrets/

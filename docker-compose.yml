@@ -1,0 +1,98 @@
+# Apya.Platform — tek sunucu (hibrit/self-managed) başlangıç dağıtımı.
+# Sırlar .env dosyasından gelir (.env.example'ı kopyalayıp doldurun).
+#
+#   cp .env.example .env      # sonra .env içindeki tüm CHANGE_ME değerlerini doldurun
+#   # OpenIddict sertifikası üretin (bkz. .env.example başındaki komut) → ./secrets/openiddict.pfx
+#   docker compose build
+#   docker compose up -d
+#
+name: apya-platform
+
+services:
+  # ---- PostgreSQL 17 ----
+  db:
+    image: postgres:17
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  # ---- DB Migrator (tek seferlik: migration + seed, sonra çıkar) ----
+  migrator:
+    build:
+      context: .
+      target: migrator
+    env_file: [.env]
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: "no"
+
+  # ---- Uygulama (ABP / .NET 10 web) ----
+  app:
+    build:
+      context: .
+      target: web
+    env_file: [.env]
+    depends_on:
+      db:
+        condition: service_healthy
+      migrator:
+        condition: service_completed_successfully
+    volumes:
+      # Yüklenen dokümanlar (LocalDiskUploadedFileStorage → wwwroot/uploads)
+      - uploads:/app/wwwroot/uploads
+      # Data Protection anahtar halkası — restart'ta antiforgery/auth cookie'leri bozulmasın.
+      # (Tek instance içindir; çok-instance'a geçince kod tarafında Redis/DB'ye taşınmalı.)
+      - dp_keys:/root/.aspnet/DataProtection-Keys
+      # OpenIddict imzalama/şifreleme sertifikası (production'da zorunlu, salt-okunur)
+      - ./secrets/openiddict.pfx:/app/openiddict.pfx:ro
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health/live"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
+    restart: unless-stopped
+    # Yerel test için (Caddy'siz doğrudan erişim) aşağıyı açın:
+    # ports:
+    #   - "8080:8080"
+
+  # ---- Caddy (reverse proxy + otomatik Let's Encrypt TLS) ----
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    depends_on:
+      app:
+        condition: service_healthy
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+
+  # ---- Redis (başlangıçta GEREKMEZ — tek instance'ta ABP in-memory cache yeter) ----
+  # Yatay ölçeklemeye (2+ app) geçince açın: distributed cache + SignalR backplane.
+  # redis:
+  #   image: redis:7
+  #   restart: unless-stopped
+  #   volumes:
+  #     - redis_data:/data
+
+volumes:
+  pg_data:
+  uploads:
+  dp_keys:
+  caddy_data:
+  caddy_config:
+  # redis_data:

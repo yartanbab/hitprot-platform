@@ -1,0 +1,13 @@
+# Alan adınızı yazın. 80/443 dışa açık ve DNS bu sunucuya bakıyorsa
+# Caddy otomatik Let's Encrypt sertifikası alır ve yeniler.
+# SignalR/WebSocket, reverse_proxy tarafından otomatik desteklenir.
+your-domain.com {
+    encode gzip zstd
+    reverse_proxy app:8080
+}
+
+# --- Yerel test (TLS'siz) ---
+# Yukarıdaki bloğu yorumlayıp bunu açın, App__SelfUrl'i http://localhost yapın:
+# :80 {
+#     reverse_proxy app:8080
+# }
