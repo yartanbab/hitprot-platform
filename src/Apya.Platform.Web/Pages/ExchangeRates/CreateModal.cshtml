@@ -19,7 +19,11 @@
                     <abp-input asp-for="ExchangeRate.Rate" label="Kur (1 kaynak = ? hedef)" />
                 </abp-column>
             </abp-row>
-            <abp-input asp-for="ExchangeRate.RateDate" type="date" label="Kur Tarihi" />
+            <label class="form-label" for="ExchangeRate_RateDate">
+                Kur Tarihi
+                <apya-hint text="Kurun geçerli olduğu gün. Transferler ve ₺ karşılığı toplamlar her zaman EN GÜNCEL tarihli kaydı kullanır; kur değerleme ise değerleme tarihine kadarki en güncel kaydı seçer. Aynı gün ve para birimi çifti için ikinci bir kayıt girmek engellenmez — mükerrer kayıttan kaçının." />
+            </label>
+            <abp-input asp-for="ExchangeRate.RateDate" type="date" suppress-label="true" />
         </abp-modal-body>
         <abp-modal-footer buttons="@(AbpModalButtons.Cancel | AbpModalButtons.Save)"></abp-modal-footer>
     </abp-modal>

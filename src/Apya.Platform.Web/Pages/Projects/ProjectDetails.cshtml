@@ -145,7 +145,10 @@
             <div class="col-md-2 border-start px-3">
                 <div class="d-flex align-items-center gap-2 mb-2">
                     <span class="apya-tile-icon-box"><i class="fa fa-hourglass-half"></i></span>
-                    <h6 class="apya-overline mb-0">Kalan Süre</h6>
+                    <h6 class="apya-overline mb-0 d-flex align-items-center">
+                        Kalan Süre
+                        <apya-hint placement="bottom" text="Bitiş tarihine kalan gün ve tüketilen süre yüzdesi. Yanındaki rozet süreyi ilerlemeyle karşılaştırır: sürenin %80'i geçmiş ve görevlerin yarısı bitmemişse Kritik, süre %50'yi geçmiş ve ilerleme 20 puan geride kalmışsa Dikkat, aksi halde Sağlam." />
+                    </h6>
                 </div>
                 @if (Model.TimeNotStarted)
                 {
@@ -191,6 +194,7 @@
                     <h6 class="apya-overline mb-0">
                         Bütçe Tüketimi
                         <i class="fa fa-up-right-from-square ms-1 text-primary" style="font-size:0.6rem;opacity:0.65;"></i>
+                        <apya-hint placement="bottom" text="Bu projeye bağlanmış GİDER kayıtlarının toplamı — harcanan efor veya personel maliyeti değil. Karta tıklayarak bütçe ile gerçekleşenin karşılaştırmasını açabilirsiniz." />
                     </h6>
                 </div>
                 @if (Model.Project?.TotalBudget > 0)

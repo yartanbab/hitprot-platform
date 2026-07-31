@@ -15,16 +15,16 @@
 
 <div class="row g-3 mb-4">
     <div class="col-md-3">
-        <partial name="_KpiCard" model='new KpiCardModel { Icon = "fa-clipboard-check", Accent = "accent", Label = "Toplam Değerlendirme", Value = d.TotalEvaluations.ToString() }' />
+        <partial name="_KpiCard" model='new KpiCardModel { Icon = "fa-clipboard-check", Accent = "accent", Label = "Toplam Değerlendirme", Value = d.TotalEvaluations.ToString(), Hint = "Şimdiye kadar oluşturulmuş tüm değerlendirme kayıtları — bekleyen, işlenen, tamamlanan ve başarısız olanların tümü dahil." }' />
     </div>
     <div class="col-md-3">
-        <partial name="_KpiCard" model='new KpiCardModel { Icon = "fa-star", Accent = "warning", Label = "Ortalama Skor", Value = d.AverageScore.HasValue ? d.AverageScore.Value.ToString("0.0") : "—", SubText = $"{d.ScoredCount} skorlu sonuç" }' />
+        <partial name="_KpiCard" model='new KpiCardModel { Icon = "fa-star", Accent = "warning", Label = "Ortalama Skor", Value = d.AverageScore.HasValue ? d.AverageScore.Value.ToString("0.0") : "—", SubText = $"{d.ScoredCount} skorlu sonuç", Hint = "Yalnız skor üretebilmiş değerlendirmelerin ortalaması. Skorsuz kalan, bekleyen ve başarısız sonuçlar ortalamayı etkilemez — alttaki sayı kaç sonucun ortalamaya girdiğini gösterir." }' />
     </div>
     <div class="col-md-3">
         <partial name="_KpiCard" model='new KpiCardModel { Icon = "fa-list-check", Accent = "positive", Label = "Tamamlanan / Başarısız", ValueHtml = new HtmlString($"<span class=\"text-success\">{d.Completed}</span> / <span class=\"text-danger\">{d.Failed}</span>") }' />
     </div>
     <div class="col-md-3">
-        <partial name="_KpiCard" model='new KpiCardModel { Icon = "fa-diagram-project", Accent = "brand", Label = "Prompt / Sağlayıcı / Aktif Akış", Value = $"{d.PromptCount} / {d.ProviderCount} / {d.ActiveWorkflowCount}" }' />
+        <partial name="_KpiCard" model='new KpiCardModel { Icon = "fa-diagram-project", Accent = "brand", Label = "Prompt / Sağlayıcı / Aktif Akış", Value = $"{d.PromptCount} / {d.ProviderCount} / {d.ActiveWorkflowCount}", Hint = "Sırasıyla: tanımlı prompt sayısı, tanımlı AI sağlayıcı sayısı ve AKTİF durumdaki iş akışı sayısı. Pasif iş akışları üçüncü sayıya girmez." }' />
     </div>
 </div>
 

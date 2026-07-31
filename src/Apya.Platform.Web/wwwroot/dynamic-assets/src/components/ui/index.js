@@ -20,6 +20,7 @@ export { MoneyInput, parseMoney } from './MoneyInput';
 export { DateRangePicker } from './DateRangePicker';
 export { Combobox } from './Combobox';
 export { Badge, badgeVariants } from './Badge';
+export { Hint } from './Hint';
 export { Sparkline } from './Sparkline';
 export { ThemeToggle } from './ThemeToggle';
 export { Sheet, SheetTrigger, SheetClose, SheetContent } from './Sheet';

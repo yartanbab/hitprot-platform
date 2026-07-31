@@ -39,7 +39,10 @@
                 <div class="modal-body">
                     <input type="hidden" id="StageAppId" />
                     <div class="mb-3">
-                        <label class="form-label" for="StageSelect">Aşama</label>
+                        <label class="form-label" for="StageSelect">
+                            Aşama
+                            <apya-hint text="Başvuru → Değerlendirme → Onay → Ödeme sırasını izler, ama sıra zorunlu değildir: geri alma dahil herhangi bir aşamayı seçebilirsiniz. Aşamayı yalnız host değiştirir, firma kendi başvurusunda salt-okunurdur." />
+                        </label>
                         <select class="form-select" id="StageSelect">
                             <option value="0">Başvuru</option>
                             <option value="1">Değerlendirme</option>
@@ -48,7 +51,10 @@
                         </select>
                     </div>
                     <div class="mb-1">
-                        <label class="form-label" for="StageApprovedAmount">Onaylanan Tutar (₺, opsiyonel)</label>
+                        <label class="form-label" for="StageApprovedAmount">
+                            Onaylanan Tutar (₺, opsiyonel)
+                            <apya-hint text="Boş bırakırsanız daha önce girilmiş tutar korunur, sıfırlanmaz. Yalnız değer yazdığınızda güncellenir." />
+                        </label>
                         <input type="number" step="0.01" class="form-control" id="StageApprovedAmount" />
                     </div>
                 </div>

@@ -10,8 +10,16 @@
         <abp-modal-body>
             <abp-select asp-for="Binding.DocumentId" asp-items="Model.Forms" label="Form" />
             <abp-select asp-for="Binding.PromptId" asp-items="Model.Prompts" label="Prompt" />
-            <abp-select asp-for="Binding.TriggerMode" asp-items="Model.TriggerModes" label="Tetikleme Modu" />
-            <abp-input asp-for="Binding.Order" label="Sıra" />
+            <label class="form-label" for="Binding_TriggerMode">
+                Tetikleme Modu
+                <apya-hint text="OnSubmit: form her doldurulduğunda değerlendirme kendiliğinden çalışır — her gönderim sağlayıcıya istek gider ve maliyet doğurur. Manual: yalnız arayüzden elle başlattığınızda çalışır." />
+            </label>
+            <abp-select asp-for="Binding.TriggerMode" asp-items="Model.TriggerModes" suppress-label="true" />
+            <label class="form-label" for="Binding_Order">
+                Sıra
+                <apya-hint text="Aynı forma birden çok prompt bağlıysa çalıştırma sırasını belirler; küçük sayı önce çalışır. Tek bağlama varsa etkisi yoktur." />
+            </label>
+            <abp-input asp-for="Binding.Order" suppress-label="true" />
             <abp-input asp-for="Binding.IsActive" label="Aktif" />
         </abp-modal-body>
         <abp-modal-footer buttons="@(AbpModalButtons.Cancel | AbpModalButtons.Save)"></abp-modal-footer>

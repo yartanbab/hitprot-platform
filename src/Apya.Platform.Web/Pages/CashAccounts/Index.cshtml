@@ -38,13 +38,17 @@
         <button id="OpenTransferButton" class="btn btn-sm btn-primary">
             <i class="fa fa-right-left me-1" aria-hidden="true"></i>Transfer
         </button>
+        <apya-hint placement="bottom" text="İki hesap arasında para aktarır: kaynak hesaba çıkış, hedef hesaba giriş hareketi olarak tek işlemde yazılır. Para birimleri farklıysa kayıtlı kurla çevrilir; kur bulunamazsa işlem yapılmaz." />
     </div>
 </div>
 
 <div class="card mb-3 text-white" style="background: linear-gradient(135deg, var(--apya-accent-500), var(--apya-accent-700));">
     <div class="card-body d-flex align-items-center justify-content-between flex-wrap gap-2">
         <div>
-            <div class="apya-overline text-white-50">Konsolide Bakiye (₺ karşılığı)</div>
+            <div class="apya-overline text-white-50 d-flex align-items-center">
+                Konsolide Bakiye (₺ karşılığı)
+                <apya-hint placement="bottom" text="Her hesabın bakiyesi, o para birimi için kayıtlı EN GÜNCEL kurla ₺'ye çevrilip toplanır. Kuru hiç girilmemiş bir para birimi toplama 0 olarak katılır — eksik görünüyorsa Kurlar sayfasından kur ekleyin." />
+            </div>
             <h2 class="fw-bold apya-numeric mb-0">₺@Money(Model.TotalBalanceTry)</h2>
         </div>
         <div class="small text-white-50 text-end">

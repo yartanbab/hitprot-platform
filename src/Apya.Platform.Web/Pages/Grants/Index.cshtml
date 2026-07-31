@@ -95,10 +95,10 @@
                 <partial name="_KpiCard" model='new Apya.Platform.Web.Pages.Shared.KpiCardModel { Icon = "fa-award", Accent = "accent", Label = "Toplam Program", ValueId = "KpiTotalPrograms", Value = "—" }' />
             </div>
             <div class="col-6 col-md-3">
-                <partial name="_KpiCard" model='new Apya.Platform.Web.Pages.Shared.KpiCardModel { Icon = "fa-sack-dollar", Accent = "positive", Label = "Toplam Potansiyel Tutar", ValueId = "KpiTotalAmount", Value = "—" }' />
+                <partial name="_KpiCard" model='new Apya.Platform.Web.Pages.Shared.KpiCardModel { Icon = "fa-sack-dollar", Accent = "positive", Label = "Toplam Potansiyel Tutar", ValueId = "KpiTotalAmount", Value = "—", Hint = "Listelenen tüm programların üst limit tutarlarının toplamı. Dağıtılmış ya da taahhüt edilmiş tutar değil, teorik tavandır." }' />
             </div>
             <div class="col-6 col-md-3">
-                <partial name="_KpiCard" model='new Apya.Platform.Web.Pages.Shared.KpiCardModel { Icon = "fa-bullseye", Accent = "brand", Label = "Ortalama Uyum Puanı", ValueId = "KpiAvgScore", Value = "—" }' />
+                <partial name="_KpiCard" model='new Apya.Platform.Web.Pages.Shared.KpiCardModel { Icon = "fa-bullseye", Accent = "brand", Label = "Ortalama Uyum Puanı", ValueId = "KpiAvgScore", Value = "—", Hint = "Programlara tanımladığınız asgari uyum eşiklerinin ortalaması — firmaların gerçek eşleşme puanı değildir. Firmaların puanını görmek için bir çağrıda Firmalara Gönder ekranındaki önizlemeyi kullanın." }' />
             </div>
             <div class="col-6 col-md-3">
                 <partial name="_KpiCard" model='new Apya.Platform.Web.Pages.Shared.KpiCardModel { Icon = "fa-trophy", Accent = "warning", Label = "En Yüksek Tutarlı Program", ValueId = "KpiTopProgram", Value = "—" }' />
@@ -260,7 +260,10 @@
                             </select>
                         </div>
                         <div class="col-6 col-md-3">
-                            <label class="form-label small">Min. Otomatik Skor (%)</label>
+                            <label class="form-label small">
+                                Min. Otomatik Skor (%)
+                                <apya-hint text="Bu puanın altında kalan firmalar önizleme listesine girmez; 0 bırakırsanız eşleşen tüm firmalar listelenir. Yalnız bu gönderime özel bir filtredir — programın kendi eşiğinden bağımsızdır. Buradan gönderilen öneriler firmaya, program eşiğinin altında kalsalar bile ulaşır." />
+                            </label>
                             <input type="number" step="1" min="0" max="100" class="form-control form-control-sm" id="SendRecMinScore" value="0" />
                         </div>
                     </div>

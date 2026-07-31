@@ -293,6 +293,7 @@ public class PlatformWebModule : AbpModule
                     bundle.AddFiles("/js/apya-header-views.js");
                     bundle.AddFiles("/js/ai-hub-client.js");
                     bundle.AddFiles("/js/ajax-error-detail.js");
+                    bundle.AddFiles("/js/apya-hint.js"); // bilgi ipucu (ⓘ) — body'ye delege tooltip init
                 }
             );
             // ----------------------

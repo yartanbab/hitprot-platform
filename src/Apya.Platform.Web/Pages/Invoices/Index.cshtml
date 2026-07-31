@@ -23,12 +23,13 @@
         <div class="apya-md-list">
             <div class="apya-md-toolbar">
                 <input type="text" id="InvoiceFilter" class="form-control form-control-sm" placeholder="Fatura no, cari ara..." />
-                <div class="d-flex flex-wrap gap-1" id="InvoiceStatusPills">
+                <div class="d-flex flex-wrap gap-1 align-items-center" id="InvoiceStatusPills">
                     <button type="button" class="btn btn-sm btn-primary" data-status="">Tümü</button>
                     <button type="button" class="btn btn-sm btn-outline-secondary" data-status="1">Gönderildi</button>
                     <button type="button" class="btn btn-sm btn-outline-secondary" data-status="2">Ödendi</button>
                     <button type="button" class="btn btn-sm btn-outline-secondary" data-status="4">Gecikmiş</button>
                     <button type="button" class="btn btn-sm btn-outline-secondary" data-status="0">Taslak</button>
+                    <apya-hint text="Durum ödemelere göre otomatik belirlenir: kayıt Taslak olarak açılır, ödeme girildikçe Gönderildi, ödenen tutar genel toplamı karşılayınca Ödendi olur." placement="bottom" />
                 </div>
             </div>
             <ul class="apya-md-items" id="InvoicesList" role="listbox" aria-label="Fatura listesi"></ul>

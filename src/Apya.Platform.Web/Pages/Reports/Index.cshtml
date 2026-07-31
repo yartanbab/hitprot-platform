@@ -25,10 +25,10 @@
             <partial name="_KpiCard" model='new KpiCardModel { Icon = "fa-project-diagram", Accent = "accent", Label = "Aktif Projeler", ValueId = "KpiTotalProjects", Value = "0" }' />
         </abp-column>
         <abp-column size-md="_3">
-            <partial name="_KpiCard" model='new KpiCardModel { Icon = "fa-clock", Accent = "positive", Label = "Toplam Harcanan Efor", ValueId = "KpiTotalHours", Value = "0s" }' />
+            <partial name="_KpiCard" model='new KpiCardModel { Icon = "fa-clock", Accent = "positive", Label = "Toplam Harcanan Efor", ValueId = "KpiTotalHours", Value = "0s", Hint = "Listelenen projelerin görevlerine kaydedilen sürelerin toplamı, saat cinsinden. Zaman kaydı girilmemiş görevler bu toplama katkı vermez." }' />
         </abp-column>
         <abp-column size-md="_3">
-            <partial name="_KpiCard" model='new KpiCardModel { Icon = "fa-wallet", Accent = "negative", Label = "Toplam Bütçe Kullanımı", ValueId = "KpiTotalBudget", Value = "0 ₺" }' />
+            <partial name="_KpiCard" model='new KpiCardModel { Icon = "fa-wallet", Accent = "negative", Label = "Toplam Bütçe Kullanımı", ValueId = "KpiTotalBudget", Value = "0 ₺", Hint = "Harcanan tutar / ayrılan bütçe. Her iki değer de listelenen projelerin toplamıdır ve para birimi ayrımı yapılmadan toplanır." }' />
         </abp-column>
         <abp-column size-md="_3">
             <partial name="_KpiCard" model='new KpiCardModel { Icon = "fa-robot", Accent = "warning", Label = "Ar-Ge Uyum Puanı (AI)", Value = "%84", SubText = "(Hibe projelerindeki sapma)" }' />

@@ -413,6 +413,38 @@ h1, h2, h3, h4, h5, h6 {
     font-size: 12px;
 }
 
+/* Bilgi ipucu ikonu (ⓘ) — buton/başlık/alan yanında, üzerine gelince işlevi
+   anlatan küçük kutu açar. İlk kullanıcı için; deneyimli kullanıcıyı rahatsız
+   etmesin diye sönük durur, yalnız hover/focus'ta aksana döner.
+   Markup: <apya-hint text="…" /> TagHelper'ı (Razor) ya da JS tarafında
+   apya.hint('…') (bkz. /js/apya-hint.js). Kutunun kendisi Bootstrap
+   tooltip'idir — teması apya-theme-bridge.css'teki --bs-tooltip-* köprüsünden
+   gelir, konumlandırma Popper'a bırakılır (tablo/kart taşmasına takılmaz). */
+.apya-hint {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+    margin-inline-start: 4px;
+    vertical-align: middle;
+    font-size: 12px;
+    line-height: 1;
+    color: var(--apya-text-tertiary);
+    cursor: help;
+    border-radius: var(--apya-radius-full);
+    transition: color var(--apya-motion-fast) ease, background var(--apya-motion-fast) ease;
+}
+.apya-hint:hover,
+.apya-hint:focus-visible {
+    color: var(--apya-accent-500);
+    background: var(--apya-accent-soft);
+}
+.apya-hint:focus-visible {
+    outline: none;
+    box-shadow: var(--apya-shadow-focus);
+}
+
 /* ----------------------------------------------------------------------------
    11) TEMA TOGGLE — header toolbar butonu (ThemeToggle ViewComponent).
    Fallback: toolbar'sız layout'ta dark-mode.js floating buton ekler.
