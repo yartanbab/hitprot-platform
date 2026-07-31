@@ -14,9 +14,14 @@ export default {
       /* mobile: max-width — tüm kullanımlar "mobilde küçült/gizle" anlamında
          (mobile:hidden, mobile:grid-cols-2, mobile:px-2). Eşik useDeviceMode'un
          decision→triage sınırıyla (768px) aynı. Tanımsızken 8 sınıf sessizce
-         ölüydü → mobil yerleşim uygulanmıyordu. */
+         ölüydü → mobil yerleşim uygulanmıyordu.
+         tablet: min-width — Sheet.jsx/Toast.jsx zaten bu prefix'i kullanıyordu
+         ama tanımsızdı; tüm tablet: varyantları sessizce ölüydü (Sheet her
+         ekranda bottom-sheet render ediyordu). Eşikler useDeviceMode.jsx'in
+         decision→triage sınırıyla (768px) aynı — ikisi senkron kalmalı. */
       screens: {
         mobile: { max: '767.98px' },
+        tablet: '768px',
       },
       fontFamily: {
         /* Token tek kaynak: 'Plus Jakarta Sans' self-host EDİLMİYOR
@@ -108,15 +113,27 @@ export default {
         'lg':              'var(--apya-shadow-lg)',
         'xl':              'var(--apya-shadow-xl)',
       },
+      /* Gerçek z-index düzlemi (tokens.css --apya-z-* ile aynı ölçek).
+         Önceki 40/50/60 değerleri Bootstrap'ın 1050/1055'iyle aynı sayfada
+         anlamsızdı: React modalı LeptonX sidebar'ının (~1030) altında kalırdı.
+         modal=1045 bilinçli olarak Bootstrap .modal'ın (1055) ALTINDA:
+         görev detayından açılan ABP modalleri (Expenses/CreateModal) üstte
+         görünmeli. backdrop=1042 sidebar/header'ın üstünde. */
       zIndex: {
-        'sticky':  40,
-        'overlay': 50,
-        'modal':   60,
-        'toast':   70,
+        'sticky':         1020,
+        'modal-backdrop': 1042,
+        'modal':          1045,
+        'popover':        1060,
+        'tooltip':        1070,
+        'toast':          1080,
       },
       animation: {
-        'blob':    'blob 7s infinite',
-        'fade-in': 'fadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+        'blob':         'blob 7s infinite',
+        'fade-in':      'fadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+        'overlay-fade': 'overlayFade 160ms cubic-bezier(0.16, 1, 0.3, 1) both',
+        'sheet-bottom': 'sheetBottom 220ms cubic-bezier(0.16, 1, 0.3, 1) both',
+        'sheet-right':  'sheetRight 220ms cubic-bezier(0.16, 1, 0.3, 1) both',
+        'dialog-in':    'dialogIn 200ms cubic-bezier(0.16, 1, 0.3, 1) both',
       },
       keyframes: {
         blob: {
@@ -128,6 +145,23 @@ export default {
         fadeIn: {
           '0%':   { opacity: '0', transform: 'translateY(15px)' },
           '100%': { opacity: '1', transform: 'translateY(0)' },
+        },
+        overlayFade: {
+          '0%':   { opacity: '0' },
+          '100%': { opacity: '1' },
+        },
+        sheetBottom: {
+          '0%':   { opacity: '0', transform: 'translateY(100%)' },
+          '100%': { opacity: '1', transform: 'translateY(0)' },
+        },
+        sheetRight: {
+          '0%':   { opacity: '0', transform: 'translateX(100%)' },
+          '100%': { opacity: '1', transform: 'translateX(0)' },
+        },
+        /* Tetikleyiciden büyüyerek gelir — mekânsal süreklilik (HIG modal-motion). */
+        dialogIn: {
+          '0%':   { opacity: '0', transform: 'translate(-50%, -50%) scale(0.96)' },
+          '100%': { opacity: '1', transform: 'translate(-50%, -50%) scale(1)' },
         },
       },
     },
