@@ -24,8 +24,6 @@ namespace Apya.Platform.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
-            modelBuilder.HasSequence("AppFeedbackNumberSeq");
-
             modelBuilder.Entity("Apya.Platform.Ai.AiDecisionTrace", b =>
                 {
                     b.Property<Guid>("Id")

@@ -723,7 +723,11 @@ namespace Apya.Platform.EntityFrameworkCore
             // zaten sahte implementasyonla değiştirilmeli.
             if (Database.ProviderName?.Contains("Npgsql") == true)
             {
-                builder.HasSequence<long>("AppFeedbackNumberSeq");
+                // NOT: Sequence bilinçli olarak EF MODELİNDE TANIMLI DEĞİL.
+                // Yalnızca FeedbackNumberGenerator'daki raw SQL (nextval) kullanıyor;
+                // modele eklenirse SQLite tabanlı testler "SQLite does not support
+                // sequences" ile şema oluşturamıyor. Sequence'ı DB'de oluşturan yer
+                // ExtendFeedbackManagement migration'ındaki CreateSequence çağrısıdır.
             }
 
             builder.Entity<Feedback>(b =>
