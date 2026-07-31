@@ -12,7 +12,19 @@
             <i class="fa @Model.Icon"></i>
         </div>
         <div class="kpi-card-text">
-            <div class="apya-overline mb-1 text-truncate" title="@Model.Label">@Model.Label</div>
+            @* Hint verilince ikon truncate'in DIŞINDA kalmalı — aksi halde uzun
+               etiketlerde etiketle birlikte kırpılıyor. *@
+            @if (string.IsNullOrEmpty(Model.Hint))
+            {
+                <div class="apya-overline mb-1 text-truncate" title="@Model.Label">@Model.Label</div>
+            }
+            else
+            {
+                <div class="apya-overline mb-1 d-flex align-items-center">
+                    <span class="text-truncate" title="@Model.Label">@Model.Label</span>
+                    <apya-hint text="@Model.Hint" />
+                </div>
+            }
             <h3 class="fw-bold mb-0 apya-numeric text-truncate" id="@Model.ValueId" title="@Model.Value">
                 @if (Model.ValueHtml != null) { @Model.ValueHtml } else { @Model.Value }
             </h3>

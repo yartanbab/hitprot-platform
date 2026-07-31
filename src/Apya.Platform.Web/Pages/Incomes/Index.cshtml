@@ -7,7 +7,7 @@
     <abp-script src="/Pages/Incomes/Index.js" />
 }
 
-<div class="apya-page">
+<div data-page-description="Faturasız gelir ve hibe kayıtları" class="apya-page">
 <abp-card>
     <abp-card-header>
         <abp-row>
@@ -19,6 +19,7 @@
                 <button id="NewIncomeButton" class="btn btn-primary btn-sm">
                     <i class="fa fa-plus"></i> Yeni Gelir
                 </button>
+                <apya-hint placement="bottom" text="Fatura kesmediğiniz gelirler için: hibe, bağış, nakit gelir. Kasa seçerseniz o kasaya giriş hareketi otomatik yazılır. DİKKAT: buraya girilen gelir, cari seçseniz bile cari bakiyesini değiştirmez — cari hesabı faturalar, tahsilatlar ve açılış kayıtları işler." />
             </abp-column>
         </abp-row>
     </abp-card-header>

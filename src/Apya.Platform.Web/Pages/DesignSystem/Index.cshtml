@@ -28,7 +28,7 @@
     <abp-style src="/Pages/DesignSystem/Index.css" />
 }
 
-<div class="apya-page">
+<div data-page-description="Token'lar, bileşenler ve kullanım kuralları" class="apya-page">
     <p class="text-muted" style="font-size: var(--apya-fs-sm);">
         @L["DesignSystem:Intro"]
     </p>
@@ -171,6 +171,19 @@
             <button type="button" class="btn btn-outline-primary">Outline</button>
             <button type="button" class="btn btn-danger">Danger</button>
             <button type="button" class="btn btn-primary" disabled>Disabled</button>
+        </div>
+
+        <h3 class="ds-section-note" style="margin-top: var(--apya-space-5);">Bilgi ipucu (.apya-hint)</h3>
+        <p class="ds-section-note">
+            İlk kullanıcıya işlev açıklaması. Razor: <code>&lt;apya-hint text="…" /&gt;</code> ·
+            JS ile render edilen içerikte: <code>apya.hint('…')</code>.
+            Yalnız isminden anlaşılmayan işlevlere konur — apaçık butonlar (örn. "Yeni Ekle") boş kalır.
+        </p>
+        <div class="ds-row">
+            <span>Başlık yanında<apya-hint text="Bu ekranın ne işe yaradığını anlatan kısa açıklama." /></span>
+            <button type="button" class="btn btn-primary btn-sm">Butonun yanında</button>
+            <apya-hint text="Butonun tetiklediği işlemi ve sonucunu anlatır." />
+            <span>Sağa açılan<apya-hint text="Dar kolonlarda placement ile yön verilir." placement="right" /></span>
         </div>
 
         <h3 class="ds-section-note" style="margin-top: var(--apya-space-5);">@L["DesignSystem:FormControls"]</h3>

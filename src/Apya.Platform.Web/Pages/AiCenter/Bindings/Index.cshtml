@@ -11,7 +11,7 @@
     <abp-script src="/Pages/AiCenter/Bindings/Index.js" />
 }
 
-<div class="apya-page">
+<div data-page-description="Form ve prompt eşleştirmeleri" class="apya-page">
 <abp-card>
     <abp-card-header>
         <abp-row>
@@ -36,7 +36,10 @@
                     <th>İşlemler</th>
                     <th>Form</th>
                     <th>Prompt</th>
-                    <th>Tetikleme</th>
+                    <th>
+                        Tetikleme
+                        <apya-hint text="Gönderimde: form her doldurulduğunda değerlendirme kendiliğinden başlar. Manuel: yalnız siz elle çalıştırdığınızda başlar." />
+                    </th>
                     <th>Durum</th>
                 </tr>
             </thead>

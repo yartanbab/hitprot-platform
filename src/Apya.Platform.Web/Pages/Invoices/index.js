@@ -117,17 +117,21 @@ $(function () {
             '  </div>' +
             '  <div class="d-flex gap-1 flex-wrap">' +
             (d.status !== 2 && abp.auth.isGranted('Platform.Invoices.Edit')
-                ? '<button type="button" class="btn btn-sm btn-outline-secondary" id="InvoiceDetailPay"><i class="fa fa-hand-holding-dollar me-1"></i>Ödeme Ekle</button>'
+                ? '<button type="button" class="btn btn-sm btn-outline-secondary" id="InvoiceDetailPay"><i class="fa fa-hand-holding-dollar me-1"></i>Ödeme Ekle</button>' +
+                  apya.hint('Faturaya kısmi ya da tam tahsilat kaydı ekler. Ödenen tutar genel toplamı karşılayınca fatura Ödendi durumuna geçer.', 'bottom')
                 : '') +
             '    <button type="button" class="btn btn-sm btn-outline-secondary" id="InvoiceDetailPrint"><i class="fa fa-print me-1"></i>Yazdır</button>' +
             '    <button type="button" class="btn btn-sm btn-primary" id="InvoiceDetailSend"><i class="fa fa-paper-plane me-1"></i>Gönder</button>' +
+            apya.hint('Faturayı e-posta ile karşı tarafa göndermek için. Bu işlev henüz devrede değil.', 'bottom') +
             '  </div>' +
             '</div>' +
 
             '<div class="row g-3 mb-3">' +
             '  <div class="col-sm-3"><div class="apya-md-overline">Düzenleme</div><div style="font-size:12.5px">' + fmtDate(d.invoiceDate) + '</div></div>' +
             '  <div class="col-sm-3"><div class="apya-md-overline">Vade</div><div style="font-size:12.5px">' + fmtDate(d.dueDate) + '</div></div>' +
-            '  <div class="col-sm-3"><div class="apya-md-overline">Yön</div><div style="font-size:12.5px">' + (isSales ? 'Satış' : 'Alış') + '</div></div>' +
+            '  <div class="col-sm-3"><div class="apya-md-overline">Yön' +
+            apya.hint('Satış = sizin kestiğiniz fatura; cari hesabı borçlandırır, sizin için alacak doğurur. Alış = size kesilen fatura; tedarikçiye borcunuzu oluşturur.') +
+            '</div><div style="font-size:12.5px">' + (isSales ? 'Satış' : 'Alış') + '</div></div>' +
             '  <div class="col-sm-3"><div class="apya-md-overline">Ödenen</div><div class="apya-numeric" style="font-size:12.5px">' + fmt(d.paidAmount) + ' ' + esc(d.currency) + '</div></div>' +
             '</div>' +
 

@@ -8,7 +8,7 @@
     ViewBag.Title = "Prompt Versiyonları";
 }
 
-<div class="apya-page">
+<div data-page-description="Prompt sürüm geçmişi" class="apya-page">
 <abp-card>
     <abp-card-header>
         <abp-row>
@@ -30,7 +30,10 @@
             <thead>
                 <tr>
                     <th>Versiyon</th>
-                    <th>Durum</th>
+                    <th>
+                        Durum
+                        <apya-hint text="Aynı anda yalnız bir versiyon Yayında olabilir. Yeni bir versiyonu yayınladığınızda önceki yayındaki versiyon Arşiv durumuna düşer. Taslaklar hiçbir çalıştırmada kullanılmaz." />
+                    </th>
                     <th>Yayın Tarihi</th>
                     <th class="text-end">İşlem</th>
                 </tr>

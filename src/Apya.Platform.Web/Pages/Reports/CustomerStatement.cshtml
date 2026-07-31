@@ -39,7 +39,7 @@
     }
 </style>
 
-<div class="apya-page">
+<div data-page-description="Cari bazlı borç/alacak hareketleri" class="apya-page">
 
     <form method="get" class="d-flex flex-wrap align-items-center gap-2 mb-4 no-print">
         <input type="hidden" name="Currency" value="@Model.Currency" />
@@ -75,6 +75,7 @@
             <a href="?@Qs("TRY")" class="btn @(Model.Currency != "ALL" ? "btn-primary" : "btn-outline-primary")">TRY</a>
             <a href="?@Qs("ALL")" class="btn @(Model.Currency == "ALL" ? "btn-primary" : "btn-outline-primary")">Tümü</a>
         </div>
+        <apya-hint placement="bottom" text="TRY yalnız ₺ hareketlerini gösterir. Tümü seçildiğinde bütün para birimleri aynı listede toplanır — tutarlar kur çevrimi YAPILMADAN toplandığı için karışık para birimli carilerde toplamlar anlamlı olmaz." />
 
         <div class="flex-grow-1"></div>
 
@@ -110,25 +111,29 @@
             <div class="col-6 col-lg-3">
                 <partial name="_KpiCard" model='new KpiCardModel {
                     Icon = "fa-arrow-up", Accent = "accent",
-                    Label = "Toplam Borç", Value = $"{s.TotalDebit:N2}"
+                    Label = "Toplam Borç", Value = $"{s.TotalDebit:N2}",
+                    Hint = "Cariye tahakkuk eden tutarların toplamı — kestiğiniz satış faturaları ve açılış kayıtları. Artması carinin size olan borcunu artırır."
                 }' />
             </div>
             <div class="col-6 col-lg-3">
                 <partial name="_KpiCard" model='new KpiCardModel {
                     Icon = "fa-arrow-down", Accent = "accent",
-                    Label = "Toplam Alacak", Value = $"{s.TotalCredit:N2}"
+                    Label = "Toplam Alacak", Value = $"{s.TotalCredit:N2}",
+                    Hint = "Cariden yaptığınız tahsilatların toplamı. Borcu kapatan tarafı temsil eder."
                 }' />
             </div>
             <div class="col-6 col-lg-3">
                 <partial name="_KpiCard" model='new KpiCardModel {
                     Icon = "fa-arrow-trend-up", Accent = s.Balance >= 0 ? "success" : "danger",
-                    Label = "Bakiye", Value = $"{s.Balance:N2}"
+                    Label = "Bakiye", Value = $"{s.Balance:N2}",
+                    Hint = "Toplam borç eksi toplam alacak. Artı değer carinin size borçlu olduğunu, eksi değer fazla tahsilat yapıldığını gösterir."
                 }' />
             </div>
             <div class="col-6 col-lg-3">
                 <partial name="_KpiCard" model='new KpiCardModel {
                     Icon = "fa-circle-info", Accent = s.OverdueAmount > 0 ? "danger" : "secondary",
-                    Label = "Vadesi Geçen", Value = $"{s.OverdueAmount:N2}"
+                    Label = "Vadesi Geçen", Value = $"{s.OverdueAmount:N2}",
+                    Hint = "Vade tarihi geçmiş satış faturalarının henüz ödenmemiş kısmı. İptal edilmiş faturalar ve alış faturaları sayılmaz; tarih aralığı filtresinden bağımsız olarak hesaplanır."
                 }' />
             </div>
         </div>

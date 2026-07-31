@@ -36,14 +36,21 @@
     };
 }
 
-<div class="apya-page">
-<p class="text-muted mb-3" style="font-size:13px">Hesaplar arası transfer ve son işlemler</p>
+<div data-page-description="Hesaplar arası transfer ve son işlemler" class="apya-page">
+<p class="text-muted mb-3" style="font-size:13px">
+    Hesaplar arası transfer ve son işlemler ·
+    @await Html.PartialAsync("/Pages/Shared/_FeedbackLink.cshtml",
+        new Apya.Platform.Web.Feedbacks.FeedbackLinkContext(Module: "Finance", Component: "FinanceHub"))
+</p>
 <div class="row g-3">
     <div class="col-lg-5">
 
         <div class="card mb-3 text-white" style="background: linear-gradient(135deg, var(--apya-accent-500), var(--apya-accent-700));">
             <div class="card-body">
-                <div class="apya-overline text-white-50">Toplam Bakiye (₺ karşılığı)</div>
+                <div class="apya-overline text-white-50 d-flex align-items-center">
+                    Toplam Bakiye (₺ karşılığı)
+                    <apya-hint placement="bottom" text="Her hesabın bakiyesi, o para birimi için kayıtlı EN GÜNCEL kurla ₺'ye çevrilip toplanır. Kuru hiç girilmemiş bir para birimi toplama 0 olarak katılır — eksik görünüyorsa Kurlar sayfasından kur ekleyin." />
+                </div>
                 <h2 class="fw-bold apya-numeric mb-1">₺@Money(Model.TotalBalanceTry)</h2>
                 <div class="small text-white-50">
                     <i class="fa fa-arrow-trend-up me-1" aria-hidden="true"></i>

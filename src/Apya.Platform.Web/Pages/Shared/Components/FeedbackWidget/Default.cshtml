@@ -1,0 +1,234 @@
+@using Microsoft.AspNetCore.Mvc.Localization
+@using Apya.Platform.Localization
+@using Apya.Platform.Feedbacks
+@using Apya.Platform.Web.Feedbacks
+@model FeedbackWidgetViewModel
+@inject IHtmlLocalizer<PlatformResource> L
+@*
+    Site-geneli geri bildirim widget'ı (her sayfa header'ında, toolbar contributor ile).
+    Sade altı çizili link + gizli duran gönderim modalı. Tıklama + gönderim mantığı
+    apya-feedback.js'te (#apya-feedback-modal). Bağlam (sayfa URL'si, ekran çözünürlüğü,
+    davranış izi) apya-telemetry.js'ten sessizce okunur — kullanıcı yalnızca
+    tür/konu/açıklama/puan/ekran görüntüsü girer.
+*@
+@if (Model.Placement == "floating")
+{
+    @* Sağ-alt sabit buton: mobilde yalnızca ikon, geniş ekranda ikon+metin. *@
+    <button type="button" class="apya-feedback-open-link apya-feedback-floating"
+            title="@L["Feedback:OpenLink"]" aria-label="@L["Feedback:OpenLink"]">
+        <i class="fa fa-comment-dots" aria-hidden="true"></i>
+        <span class="apya-feedback-floating-text">@L["Feedback:OpenLink"]</span>
+    </button>
+}
+else
+{
+    @* Varsayılan: header'da sade altı çizili link. *@
+    <a href="#" class="apya-feedback-open-link" role="button"
+       title="@L["Feedback:OpenLink"]" aria-label="@L["Feedback:OpenLink"]">@L["Feedback:OpenLink"]</a>
+}
+
+<div class="modal fade" id="apya-feedback-modal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <form autocomplete="off">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="PageUrl" />
+                <div class="modal-header">
+                    <h6 class="modal-title mb-0">@L["Feedback:ModalTitle"]</h6>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="apya-feedback-error alert alert-danger d-none py-2 mb-3"></div>
+
+                    <div class="mb-3">
+                        <label class="form-label">@L["Feedback:Type"]</label>
+                        @* Gösterilecek türler ayardan gelir; kapatılan tür listede çıkmaz. *@
+                        <select name="Type" class="form-select">
+                            @if (Model.IsTypeEnabled(FeedbackType.Bug)) { <option value="1">@L["Feedback:Type.Bug"]</option> }
+                            @if (Model.IsTypeEnabled(FeedbackType.Suggestion)) { <option value="2">@L["Feedback:Type.Suggestion"]</option> }
+                            @if (Model.IsTypeEnabled(FeedbackType.UsabilityIssue)) { <option value="5">@L["Feedback:Type.UsabilityIssue"]</option> }
+                            @if (Model.IsTypeEnabled(FeedbackType.MissingContent)) { <option value="6">@L["Feedback:Type.MissingContent"]</option> }
+                            @if (Model.IsTypeEnabled(FeedbackType.Performance)) { <option value="7">@L["Feedback:Type.Performance"]</option> }
+                            @if (Model.IsTypeEnabled(FeedbackType.UxDesign)) { <option value="8">@L["Feedback:Type.UxDesign"]</option> }
+                            @if (Model.IsTypeEnabled(FeedbackType.Question)) { <option value="3">@L["Feedback:Type.Question"]</option> }
+                            @if (Model.IsTypeEnabled(FeedbackType.Praise)) { <option value="4">@L["Feedback:Type.Praise"]</option> }
+                            @if (Model.IsTypeEnabled(FeedbackType.Other)) { <option value="9">@L["Feedback:Type.Other"]</option> }
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">@L["Feedback:Subject"]</label>
+                        <input type="text" name="Subject" class="form-control" maxlength="200" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">@L["Feedback:Body"]</label>
+                        <textarea name="Body" class="form-control" rows="4" maxlength="4000"></textarea>
+                    </div>
+
+                    @* Türe özel alanlar — apya-feedback.js seçime göre gösterir, DetailsJson'a paketler. *@
+                    <div class="apya-feedback-details apya-feedback-details-bug d-none">
+                        <div class="mb-3">
+                            <label class="form-label">@L["Feedback:Bug.ExpectedResult"]</label>
+                            <input type="text" data-detail="expected" class="form-control" maxlength="500" />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">@L["Feedback:Bug.ActualResult"]</label>
+                            <input type="text" data-detail="actual" class="form-control" maxlength="500" />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">@L["Feedback:Bug.ReproSteps"]</label>
+                            <textarea data-detail="steps" class="form-control" rows="2" maxlength="1500"></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">@L["Feedback:Bug.Frequency"]</label>
+                            <select data-detail="frequency" class="form-select">
+                                <option value="">—</option>
+                                <option value="always">@L["Feedback:Bug.Frequency.Always"]</option>
+                                <option value="often">@L["Feedback:Bug.Frequency.Often"]</option>
+                                <option value="sometimes">@L["Feedback:Bug.Frequency.Sometimes"]</option>
+                                <option value="once">@L["Feedback:Bug.Frequency.Once"]</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="apya-feedback-details apya-feedback-details-suggestion d-none">
+                        <div class="mb-3">
+                            <label class="form-label">@L["Feedback:Suggestion.Problem"]</label>
+                            <textarea data-detail="problem" class="form-control" rows="2" maxlength="1000"></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">@L["Feedback:Suggestion.Solution"]</label>
+                            <textarea data-detail="solution" class="form-control" rows="2" maxlength="1000"></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">@L["Feedback:Suggestion.Benefit"]</label>
+                            <input type="text" data-detail="benefit" class="form-control" maxlength="500" />
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">@L["Feedback:Severity"]</label>
+                        <select name="Severity" class="form-select">
+                            <option value="">—</option>
+                            <option value="1">@L["Feedback:Severity.Low"]</option>
+                            <option value="2">@L["Feedback:Severity.Normal"]</option>
+                            <option value="3">@L["Feedback:Severity.High"]</option>
+                            <option value="4">@L["Feedback:Severity.Critical"]</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label d-block">@L["Feedback:Rating"]</label>
+                        <span class="apya-feedback-rating">
+                            @for (var i = 1; i <= 5; i++)
+                            {
+                                <i class="fa-regular fa-star" data-value="@i" role="button"></i>
+                            }
+                        </span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">@L["Feedback:Screenshot"]</label>
+                        <input type="file" class="form-control apya-feedback-screenshot-input"
+                               accept="@Model.AllowedFileExtensions" data-max-mb="@Model.MaxFileSizeMb" />
+                        <small class="apya-feedback-screenshot-name text-muted"></small>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">@L["Feedback:Attachments"]</label>
+                        @* İzinli uzantı ve boyut sınırı ayardan gelir; sunucu tarafında da doğrulanır. *@
+                        <input type="file" class="form-control apya-feedback-attachment-input"
+                               accept="@Model.AllowedFileExtensions" data-max-mb="@Model.MaxFileSizeMb" multiple />
+                        <small class="text-muted">En fazla @Model.MaxFileSizeMb MB · @Model.AllowedFileExtensions</small>
+                        <ul class="apya-feedback-attachment-list list-unstyled text-sm mt-1 mb-0"></ul>
+                    </div>
+
+                    @if (Model.AllowAnonymous)
+                    {
+                        <div class="form-check mb-1">
+                            <input type="checkbox" class="form-check-input" name="IsAnonymous" id="apya-feedback-anonymous" />
+                            <label class="form-check-label" for="apya-feedback-anonymous">@L["Feedback:IsAnonymous"]</label>
+                        </div>
+                    }
+                    <div class="form-check mb-3">
+                        <input type="checkbox" class="form-check-input" name="AllowContact" id="apya-feedback-allow-contact" />
+                        <label class="form-check-label" for="apya-feedback-allow-contact">@L["Feedback:AllowContact"]</label>
+                    </div>
+
+                    <p class="text-muted apya-feedback-privacy-notice mb-0">@L["Feedback:PrivacyNotice"]</p>
+
+                    @* Gönderim sonrası: form gizlenir, FB numarası burada gösterilir. *@
+                    <div class="apya-feedback-success d-none text-center py-3">
+                        <i class="fa fa-circle-check text-success fa-2x mb-2 d-block"></i>
+                        <p class="mb-1">@L["Feedback:SuccessMessage"]</p>
+                        <p class="mb-2">
+                            <span class="apya-feedback-success-number fw-bold font-monospace"></span>
+                            <button type="button" class="btn btn-sm btn-outline-secondary ms-2 apya-feedback-copy-number"
+                                    title="@L["Feedback:CopyNumber"]" aria-label="@L["Feedback:CopyNumber"]">
+                                <i class="fa fa-copy"></i>
+                            </button>
+                        </p>
+                        <p class="text-muted text-sm mb-0">@L["Feedback:SuccessFollowHint"]</p>
+                    </div>
+                </div>
+                <div class="modal-footer justify-content-between">
+                    <a href="/Feedback" class="text-sm">@L["Feedback:MyHistory"]</a>
+                    <div>
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">@L["Feedback:Cancel"]</button>
+                        <button type="button" class="btn btn-primary apya-feedback-submit">@L["Feedback:Submit"]</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Sade altı çizili link — buton görünümü DEĞİL, kullanıcı isteği bu şekildeydi. */
+    .apya-feedback-open-link {
+        color: var(--apya-text-secondary);
+        text-decoration: underline;
+        font-size: 0.85rem;
+        margin-left: 0.5rem;
+        align-self: center;
+        white-space: nowrap;
+    }
+    .apya-feedback-open-link:hover { color: var(--apya-accent-500); }
+    /* Klavye ile gezinenler için görünür odak halkası (erişilebilirlik). */
+    .apya-feedback-open-link:focus-visible {
+        outline: 2px solid var(--apya-accent-500);
+        outline-offset: 2px;
+        border-radius: 4px;
+    }
+
+    /* Sağ-alt sabit tetikleyici (ayarla seçilir). Bildirim zili / sohbet
+       butonlarıyla çakışmaması için z-index ve konum ölçülü tutuldu. */
+    .apya-feedback-floating {
+        position: fixed;
+        right: 1.25rem;
+        bottom: 1.25rem;
+        z-index: 1030;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.55rem 0.9rem;
+        border: 1px solid var(--apya-border-subtle);
+        border-radius: 999px;
+        background: var(--apya-surface-raised);
+        color: var(--apya-text-secondary);
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.12);
+        text-decoration: none;
+        margin-left: 0;
+    }
+    .apya-feedback-floating:hover {
+        color: var(--apya-accent-500);
+        border-color: var(--apya-accent-500);
+    }
+    @@media (max-width: 576px) {
+        /* Mobilde ekranı kapatmasın: yalnızca ikon. */
+        .apya-feedback-floating-text { display: none; }
+        .apya-feedback-floating { padding: 0.6rem; }
+    }
+    .apya-feedback-rating .fa-star { font-size: 1.25rem; cursor: pointer; margin-right: 0.25rem; color: var(--apya-text-tertiary); }
+    .apya-feedback-privacy-notice { font-size: 0.75rem; }
+</style>

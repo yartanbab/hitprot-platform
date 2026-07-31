@@ -35,6 +35,8 @@ using Apya.Platform.Projects;
 using Apya.Platform.Grants;
 using Apya.Platform.Tasks;
 using Apya.Platform.Notifications;
+using Apya.Platform.Feedbacks;
+using Apya.Platform.Telemetry;
 using Apya.Platform.Calendars;
 using Apya.Platform.Invoices;
 using Apya.Platform.DynamicAssets;
@@ -135,6 +137,15 @@ namespace Apya.Platform.EntityFrameworkCore
 
         /* --- BİLDİRİM MODÜLÜ --- */
         public DbSet<Notification> Notifications { get; set; }
+
+        /* --- GERİ BİLDİRİM MODÜLÜ --- */
+        public DbSet<Feedback> Feedbacks { get; set; }
+        public DbSet<FeedbackComment> FeedbackComments { get; set; }
+        public DbSet<FeedbackAttachment> FeedbackAttachments { get; set; }
+        public DbSet<FeedbackActivity> FeedbackActivities { get; set; }
+
+        /* --- İSTEMCİ HATA TELEMETRİSİ --- */
+        public DbSet<ClientError> ClientErrors { get; set; }
 
         /* --- TAKVİM MODÜLÜ --- */
         public DbSet<ExternalCalendarAccount> ExternalCalendarAccounts { get; set; }
@@ -703,6 +714,132 @@ namespace Apya.Platform.EntityFrameworkCore
             /* --- WEBHOOK (DYNAMIC ASSETS WEBHOOKS) YAPILANDIRMASI --- */
             builder.ApplyConfiguration(new WebhookSubscriptionConfiguration());
             builder.ApplyConfiguration(new WebhookDeliveryLogConfiguration());
+
+            /* --- GERİ BİLDİRİM (FEEDBACK) YAPILANDIRMASI --- */
+
+            // FB-2026-000123 numaraları için sayaç (FeedbackNumberGenerator kullanır).
+            // Yalnızca Npgsql: SQLite (test altyapısı) sequence desteklemez, model'e
+            // girerse test DB'si hiç oluşamıyor. Testlerde IFeedbackNumberGenerator
+            // zaten sahte implementasyonla değiştirilmeli.
+            if (Database.ProviderName?.Contains("Npgsql") == true)
+            {
+                // NOT: Sequence bilinçli olarak EF MODELİNDE TANIMLI DEĞİL.
+                // Yalnızca FeedbackNumberGenerator'daki raw SQL (nextval) kullanıyor;
+                // modele eklenirse SQLite tabanlı testler "SQLite does not support
+                // sequences" ile şema oluşturamıyor. Sequence'ı DB'de oluşturan yer
+                // ExtendFeedbackManagement migration'ındaki CreateSequence çağrısıdır.
+            }
+
+            builder.Entity<Feedback>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "Feedbacks", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+
+                b.Property(x => x.FeedbackNumber).IsRequired().HasMaxLength(FeedbackConsts.MaxFeedbackNumberLength);
+                b.Property(x => x.Subject).IsRequired().HasMaxLength(FeedbackConsts.MaxSubjectLength);
+                b.Property(x => x.Body).IsRequired().HasMaxLength(FeedbackConsts.MaxBodyLength);
+                b.Property(x => x.PageUrl).HasMaxLength(FeedbackConsts.MaxPageUrlLength);
+                b.Property(x => x.PageTitle).HasMaxLength(FeedbackConsts.MaxPageTitleLength);
+                b.Property(x => x.UserAgent).HasMaxLength(FeedbackConsts.MaxUserAgentLength);
+                b.Property(x => x.ScreenResolution).HasMaxLength(FeedbackConsts.MaxScreenSizeLength);
+                b.Property(x => x.AppVersion).HasMaxLength(FeedbackConsts.MaxAppVersionLength);
+                b.Property(x => x.SubmittedByUserName).HasMaxLength(FeedbackConsts.MaxUserNameLength);
+                b.Property(x => x.ScreenshotFileName).HasMaxLength(FeedbackConsts.MaxFileNameLength);
+                b.Property(x => x.AdminTags).HasMaxLength(FeedbackConsts.MaxTagsLength);
+                b.Property(x => x.BreadcrumbJson).HasMaxLength(FeedbackConsts.MaxBreadcrumbLength);
+                b.Property(x => x.DetailsJson).HasMaxLength(FeedbackConsts.MaxDetailsJsonLength);
+                b.Property(x => x.ModuleCode).HasMaxLength(FeedbackConsts.MaxModuleCodeLength);
+                b.Property(x => x.ComponentCode).HasMaxLength(FeedbackConsts.MaxComponentCodeLength);
+                b.Property(x => x.ActionCode).HasMaxLength(FeedbackConsts.MaxActionCodeLength);
+                b.Property(x => x.RelatedEntityType).HasMaxLength(FeedbackConsts.MaxEntityTypeLength);
+                b.Property(x => x.AssignedUserName).HasMaxLength(FeedbackConsts.MaxUserNameLength);
+
+                b.HasMany(x => x.Comments)
+                 .WithOne()
+                 .HasForeignKey(x => x.FeedbackId)
+                 .OnDelete(DeleteBehavior.Cascade);
+
+                // Yönetici panelinin ana filtreleri
+                b.HasIndex(x => new { x.TenantId, x.Status });
+                b.HasIndex(x => x.CreationTime);
+                // Sayfa bazlı ısı haritası: "hangi ekran en çok geri bildirim alıyor"
+                b.HasIndex(x => x.PageUrl);
+                // FB-no ile arama; soft-delete olduğundan filter'lı unique
+                b.HasIndex(x => x.FeedbackNumber).IsUnique().HasFilter("\"IsDeleted\" = false");
+                b.HasIndex(x => x.AssignedUserId);
+                b.HasIndex(x => x.ModuleCode);
+            });
+
+            builder.Entity<FeedbackAttachment>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "FeedbackAttachments", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+
+                b.Property(x => x.FileName).IsRequired().HasMaxLength(FeedbackConsts.MaxFileNameLength);
+                b.Property(x => x.StoredFileName).IsRequired().HasMaxLength(FeedbackConsts.MaxFileNameLength);
+                b.Property(x => x.ContentType).HasMaxLength(FeedbackConsts.MaxContentTypeLength);
+
+                b.HasOne<Feedback>()
+                 .WithMany()
+                 .HasForeignKey(x => x.FeedbackId)
+                 .OnDelete(DeleteBehavior.Cascade);
+
+                b.HasIndex(x => x.FeedbackId);
+            });
+
+            builder.Entity<FeedbackActivity>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "FeedbackActivities", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+
+                b.Property(x => x.OldValue).HasMaxLength(FeedbackConsts.MaxActivityValueLength);
+                b.Property(x => x.NewValue).HasMaxLength(FeedbackConsts.MaxActivityValueLength);
+                b.Property(x => x.Note).HasMaxLength(FeedbackConsts.MaxActivityNoteLength);
+                b.Property(x => x.ActorName).HasMaxLength(FeedbackConsts.MaxUserNameLength);
+
+                b.HasOne<Feedback>()
+                 .WithMany()
+                 .HasForeignKey(x => x.FeedbackId)
+                 .OnDelete(DeleteBehavior.Cascade);
+
+                // Zaman çizelgesi hep (FeedbackId, CreationTime) sırasıyla okunur
+                b.HasIndex(x => new { x.FeedbackId, x.CreationTime });
+            });
+
+            builder.Entity<FeedbackComment>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "FeedbackComments", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+
+                b.Property(x => x.Text).IsRequired().HasMaxLength(FeedbackConsts.MaxCommentLength);
+                b.Property(x => x.AuthorName).HasMaxLength(FeedbackConsts.MaxUserNameLength);
+
+                b.HasIndex(x => x.FeedbackId);
+            });
+
+            /* --- İSTEMCİ HATA TELEMETRİSİ YAPILANDIRMASI --- */
+            builder.Entity<ClientError>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "ClientErrors", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+
+                b.Property(x => x.Fingerprint).IsRequired().HasMaxLength(ClientErrorConsts.FingerprintLength);
+                b.Property(x => x.Message).IsRequired().HasMaxLength(ClientErrorConsts.MaxMessageLength);
+                b.Property(x => x.StackTrace).HasMaxLength(ClientErrorConsts.MaxStackTraceLength);
+                b.Property(x => x.PageUrl).HasMaxLength(ClientErrorConsts.MaxPageUrlLength);
+                b.Property(x => x.UserAgent).HasMaxLength(ClientErrorConsts.MaxUserAgentLength);
+                b.Property(x => x.ScreenResolution).HasMaxLength(ClientErrorConsts.MaxScreenSizeLength);
+                b.Property(x => x.AppVersion).HasMaxLength(ClientErrorConsts.MaxAppVersionLength);
+                b.Property(x => x.BreadcrumbJson).HasMaxLength(ClientErrorConsts.MaxBreadcrumbLength);
+
+                // Tekilleştirme: aynı imzalı hata aynı tenant'ta ikinci satır AÇMAZ.
+                // ClientError soft-delete değil, bu yüzden filtreye gerek yok.
+                b.HasIndex(x => new { x.TenantId, x.Fingerprint }).IsUnique();
+
+                // Panel sıralamaları + saklama worker'ının tarama sorgusu
+                b.HasIndex(x => x.LastSeenAt);
+                b.HasIndex(x => new { x.IsResolved, x.OccurrenceCount });
+            });
         }
     }
 }

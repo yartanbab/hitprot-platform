@@ -11,50 +11,16 @@
     <abp-script src="/Pages/Projects/Index.js" />
 }
 
-<div class="apya-page">
-    @* Başlık satırı — AiCenter/Workflows/Index.cshtml ile aynı yerleşik desen. *@
-    <div class="mb-3">
-        <h1 class="h5 mb-1"><i class="fa fa-rocket me-2"></i>Projeler</h1>
-        <p class="text-muted mb-0" style="font-size:12px">Aktif projeler · bütçe ve ilerleme sağlığı</p>
-    </div>
-
-    @* Kompakt KPI şeridi — proje kartları asıl görsel ağırlık olsun diye bu sayfaya
-       özel küçültülmüş rozet stili (bkz. apya-shell.css .apya-kpi-row-compact);
-       paylaşılan _KpiCard/.kpi-icon-box varsayılanı diğer sayfalarda aynen kalır. *@
-    <div class="row g-3 mb-3 apya-kpi-row-compact">
-        <div class="col-6 col-md-4">
-            <partial name="_KpiCard" model='new Apya.Platform.Web.Pages.Shared.KpiCardModel { Icon = "fa-rocket", Accent = "accent", Label = "Aktif Proje", ValueId = "KpiActiveProjects", Value = "—" }' />
-        </div>
-        @if (await AuthorizationService.IsGrantedAsync(PlatformPermissions.Projects.ViewBudget))
-        {
-            <div class="col-6 col-md-4">
-                <partial name="_KpiCard" model='new Apya.Platform.Web.Pages.Shared.KpiCardModel { Icon = "fa-sack-dollar", Accent = "positive", Label = "Toplam Bütçe", ValueId = "KpiTotalBudget", Value = "—" }' />
-            </div>
-        }
-        <div class="col-6 col-md-4">
-            <partial name="_KpiCard" model='new Apya.Platform.Web.Pages.Shared.KpiCardModel { Icon = "fa-chart-line", Accent = "brand", Label = "Ortalama İlerleme", ValueId = "KpiAvgProgress", Value = "—" }' />
-        </div>
-        <div class="col-6 col-md-4">
-            <partial name="_KpiCard" model='new Apya.Platform.Web.Pages.Shared.KpiCardModel { Icon = "fa-triangle-exclamation", Accent = "negative", Label = "Risk Altında", ValueId = "KpiAtRisk", Value = "—" }' />
-        </div>
-        @* Gecikmiş/yaklaşan görev uyarı banner'ları yerine: tıklanabilir KPI kartları + modal (bkz. Index.js loadTaskAlerts). *@
-        <div class="col-6 col-md-4">
-            <div id="OverdueTasksKpiCard" class="h-100" role="button" tabindex="0" aria-label="Geçmiş görevleri görüntüle" style="cursor:pointer">
-                <partial name="_KpiCard" model='new Apya.Platform.Web.Pages.Shared.KpiCardModel { Icon = "fa-clock-rotate-left", Accent = "negative", Label = "Geçmiş Görevler", ValueId = "KpiOverdueTasks", Value = "—" }' />
-            </div>
-        </div>
-        <div class="col-6 col-md-4">
-            <div id="UpcomingTasksKpiCard" class="h-100" role="button" tabindex="0" aria-label="Yaklaşan görevleri görüntüle" style="cursor:pointer">
-                <partial name="_KpiCard" model='new Apya.Platform.Web.Pages.Shared.KpiCardModel { Icon = "fa-clock", Accent = "warning", Label = "Yaklaşan Görevler", ValueId = "KpiUpcomingTasks", Value = "—" }' />
-            </div>
-        </div>
-    </div>
-
-    @* HANDOFF: Projeler = kart ızgarası (repeat(auto-fill, minmax()) grid).
-       Veri/aksiyonlar Index.js'te; tablo yerine .apya-tile kartları render edilir. *@
-    <div class="apya-grid-toolbar">
-        <span class="apya-grid-count" id="ProjectsCount"></span>
-        <div class="ms-auto d-flex align-items-center gap-2">
+<div data-page-description="Aktif projeler · bütçe ve ilerleme sağlığı" class="apya-page">
+    @* Başlık satırı + ızgara araç çubuğu TEK SATIRDA: sayaç, arama ve "Yeni Proje
+       Ekle" başlığın sağına alındı (önceden KPI şeridinin altında ayrı bir satırdı).
+       Öğe id'leri korundu → Index.js bağlantıları (#ProjectsCount, #ProjectsSearch,
+       #NewProjectButton) aynen çalışıyor. *@
+    <div class="apya-page-head">
+        <div class="apya-page-head-actions">
+            <span class="apya-grid-count" id="ProjectsCount"></span>
+            @await Html.PartialAsync("/Pages/Shared/_FeedbackLink.cshtml",
+                new Apya.Platform.Web.Feedbacks.FeedbackLinkContext(Module: "Projects", Component: "ProjectList"))
             <input type="search" id="ProjectsSearch" class="form-control form-control-sm apya-grid-search"
                    placeholder="Proje, kod veya müşteri ara…" autocomplete="off" />
             @if (await AuthorizationService.IsGrantedAsync(PlatformPermissions.Projects.Create))
@@ -67,6 +33,41 @@
         </div>
     </div>
 
+    @* Kompakt KPI şeridi — proje kartları asıl görsel ağırlık olsun diye bu sayfaya
+       özel küçültülmüş rozet stili (bkz. apya-shell.css .apya-kpi-row-compact);
+       paylaşılan _KpiCard/.kpi-icon-box varsayılanı diğer sayfalarda aynen kalır. *@
+    <div class="row g-3 mb-3 apya-kpi-row-compact">
+        <div class="col-6 col-md-4 col-xl">
+            <partial name="_KpiCard" model='new Apya.Platform.Web.Pages.Shared.KpiCardModel { Icon = "fa-rocket", Accent = "accent", Label = "Aktif Proje", ValueId = "KpiActiveProjects", Value = "—", Hint = "Görevi girilmiş ve başlangıcı gelmiş projeler. Henüz görevi olmayan ya da başlangıç tarihi gelmemiş projeler Planlama durumunda sayılır, bu sayıya girmez." }' />
+        </div>
+        @if (await AuthorizationService.IsGrantedAsync(PlatformPermissions.Projects.ViewBudget))
+        {
+            <div class="col-6 col-md-4 col-xl">
+                <partial name="_KpiCard" model='new Apya.Platform.Web.Pages.Shared.KpiCardModel { Icon = "fa-sack-dollar", Accent = "positive", Label = "Toplam Bütçe", ValueId = "KpiTotalBudget", Value = "—", Hint = "Listelenen tüm projelerin planlanan bütçelerinin toplamı. Harcanan tutar değil, ayrılan bütçedir." }' />
+            </div>
+        }
+        <div class="col-6 col-md-4 col-xl">
+            <partial name="_KpiCard" model='new Apya.Platform.Web.Pages.Shared.KpiCardModel { Icon = "fa-chart-line", Accent = "brand", Label = "Ortalama İlerleme", ValueId = "KpiAvgProgress", Value = "—", Hint = "Projelerin tamamlanma yüzdelerinin ortalaması. Her proje için tamamlanan görev sayısı toplam görev sayısına bölünür; bütçe harcaması bu orana girmez." }' />
+        </div>
+        <div class="col-6 col-md-4 col-xl">
+            <partial name="_KpiCard" model='new Apya.Platform.Web.Pages.Shared.KpiCardModel { Icon = "fa-triangle-exclamation", Accent = "negative", Label = "Risk Altında", ValueId = "KpiAtRisk", Value = "—", Hint = "Teslimat riski yüksek görülen projeler. Gecikmiş görevler, tamamlanmamış kritik görevler ve planın gerisinde kalan ilerleme puanlanır; 100 üzerinden 60 puanı aşan proje riskli sayılır." }' />
+        </div>
+        @* Gecikmiş/yaklaşan görev uyarı banner'ları yerine: tıklanabilir KPI kartları + modal (bkz. Index.js loadTaskAlerts). *@
+        <div class="col-6 col-md-4 col-xl">
+            <div id="OverdueTasksKpiCard" class="h-100" role="button" tabindex="0" aria-label="Geçmiş görevleri görüntüle" style="cursor:pointer">
+                <partial name="_KpiCard" model='new Apya.Platform.Web.Pages.Shared.KpiCardModel { Icon = "fa-clock-rotate-left", Accent = "negative", Label = "Geçmiş Görevler", ValueId = "KpiOverdueTasks", Value = "—", Hint = "Son tarihi geçtiği hâlde hâlâ tamamlanmamış görevler. Karta tıklayarak listesini açabilirsiniz." }' />
+            </div>
+        </div>
+        <div class="col-6 col-md-4 col-xl">
+            <div id="UpcomingTasksKpiCard" class="h-100" role="button" tabindex="0" aria-label="Yaklaşan görevleri görüntüle" style="cursor:pointer">
+                <partial name="_KpiCard" model='new Apya.Platform.Web.Pages.Shared.KpiCardModel { Icon = "fa-clock", Accent = "warning", Label = "Yaklaşan Görevler", ValueId = "KpiUpcomingTasks", Value = "—", Hint = "Önümüzdeki 48 saat içinde son tarihi dolacak, henüz tamamlanmamış görevler. Karta tıklayarak listesini açabilirsiniz." }' />
+            </div>
+        </div>
+    </div>
+
+    @* HANDOFF: Projeler = kart ızgarası (repeat(auto-fill, minmax()) grid).
+       Veri/aksiyonlar Index.js'te; tablo yerine .apya-tile kartları render edilir.
+       Araç çubuğu yukarı, başlık satırına taşındı. *@
     <div id="ProjectsGrid" class="apya-tile-grid apya-fade-in" aria-live="polite"></div>
 
     <div id="ProjectsEmpty" class="apya-tile-grid-empty" style="display:none">

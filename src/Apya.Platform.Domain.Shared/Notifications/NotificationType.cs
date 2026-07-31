@@ -10,5 +10,8 @@ public enum NotificationType
     Mention             = 6,
     AiWorkflowTriggered = 7,
     DocumentExpiring    = 8,
-    GrantRecommended    = 9
+    GrantRecommended    = 9,
+    FeedbackReceived      = 10, // Gönderim onayı — kullanıcıya teşekkür
+    FeedbackResponded     = 11, // Yönetici kullanıcıya görünen cevap yazdı
+    FeedbackStatusChanged = 12  // Geri bildirimin durumu değişti
 }

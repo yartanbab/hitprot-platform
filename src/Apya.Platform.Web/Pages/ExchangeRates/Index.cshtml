@@ -10,7 +10,7 @@
     <abp-script src="/Pages/ExchangeRates/Index.js" />
 }
 
-<div class="apya-page">
+<div data-page-description="Günlük ve manuel döviz kurları" class="apya-page">
 <abp-card>
     <abp-card-header>
         <abp-row>
@@ -23,9 +23,11 @@
                     <button id="SyncTcmbButton" class="btn btn-outline-secondary btn-sm me-2">
                         <i class="fa fa-sync"></i> TCMB'den Güncelle
                     </button>
+                    <apya-hint placement="bottom" text="Merkez Bankası'nın bugünkü kur listesinden yalnız USD, EUR ve GBP için Döviz Satış kurunu çeker ve bugünün tarihiyle kaydeder. Aynı güne ait kayıt varsa üzerine yazılır; diğer para birimlerini elle eklemeniz gerekir." />
                     <button id="NewExchangeRateButton" class="btn btn-primary btn-sm">
                         <i class="fa fa-plus"></i> Yeni Kur Ekle
                     </button>
+                    <apya-hint placement="bottom" text="Elle kur girişi. Anlaştığınız özel kuru buradan ekleyebilirsiniz; transferler ve ₺ karşılığı toplamlar her zaman o para birimi için EN GÜNCEL tarihli kaydı kullanır." />
                 }
             </abp-column>
         </abp-row>

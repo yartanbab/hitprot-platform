@@ -11,7 +11,7 @@
     <abp-script src="/Pages/AiCenter/Providers/Index.js" />
 }
 
-<div class="apya-page">
+<div data-page-description="Model sağlayıcıları ve anahtarları" class="apya-page">
 <abp-card>
     <abp-card-header>
         <abp-row>
@@ -35,7 +35,10 @@
                     <th>Görünen Ad</th>
                     <th>Model</th>
                     <th>API Anahtarı</th>
-                    <th>Varsayılan</th>
+                    <th>
+                        Varsayılan
+                        <apya-hint text="Aynı anda yalnız bir sağlayıcı varsayılan olabilir; birini işaretlediğinizde diğerinin işareti kalkar ve varsayılan listenin başında gösterilir. Çalıştırma sırasında sağlayıcı, istenen sağlayıcı TÜRÜNE ve Durum alanının açık olmasına göre seçilir — bu işaret o seçimi etkilemez." />
+                    </th>
                     <th>Durum</th>
                 </tr>
             </thead>

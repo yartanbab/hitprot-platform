@@ -6,6 +6,8 @@ using System.Text.Json;
 using Apya.Platform.CustomerLedger;
 using Apya.Platform.DynamicAssets;
 using Apya.Platform.DynamicAssets.Dtos;
+using Apya.Platform.Feedbacks;
+using Apya.Platform.Feedbacks.Dtos;
 using Apya.Platform.ProjectFinance;
 using Apya.Platform.Reports;
 using ClosedXML.Excel;
@@ -427,6 +429,71 @@ internal static class ReportExporter
             });
         }).GeneratePdf();
     }
+
+    // ─── GERİ BİLDİRİM (FEEDBACK) — host paneli export'u (aynı ClosedXML motoru) ─
+    public static byte[] FeedbackListToExcel(List<FeedbackDto> items)
+    {
+        using var wb = new XLWorkbook();
+        var ws = wb.AddWorksheet("Geri Bildirimler");
+
+        string[] headers = ["Tarih", "Tenant", "Tür", "Konu", "Durum", "Öncelik", "Puan", "Sayfa", "Cevap Sayısı", "Etiketler"];
+        for (int i = 0; i < headers.Length; i++)
+        {
+            ws.Cell(1, i + 1).Value = headers[i];
+            ws.Cell(1, i + 1).Style.Font.Bold = true;
+            ws.Cell(1, i + 1).Style.Fill.BackgroundColor = XLColor.LightGray;
+        }
+
+        int row = 2;
+        foreach (var f in items)
+        {
+            ws.Cell(row, 1).Value = f.CreationTime;
+            ws.Cell(row, 1).Style.DateFormat.Format = "dd.MM.yyyy HH:mm";
+            ws.Cell(row, 2).Value = f.TenantName ?? "-";
+            ws.Cell(row, 3).Value = FeedbackTypeLabel(f.Type);
+            ws.Cell(row, 4).Value = f.Subject;
+            ws.Cell(row, 5).Value = FeedbackStatusLabel(f.Status);
+            ws.Cell(row, 6).Value = FeedbackPriorityLabel(f.Priority);
+            if (f.Rating.HasValue) ws.Cell(row, 7).Value = f.Rating.Value;
+            ws.Cell(row, 8).Value = f.PageUrl ?? "-";
+            ws.Cell(row, 9).Value = f.CommentCount;
+            ws.Cell(row, 10).Value = f.AdminTags ?? "-";
+            row++;
+        }
+
+        ws.Columns().AdjustToContents();
+        using var ms = new MemoryStream();
+        wb.SaveAs(ms);
+        return ms.ToArray();
+    }
+
+    private static string FeedbackTypeLabel(FeedbackType t) => t switch
+    {
+        FeedbackType.Bug => "Hata",
+        FeedbackType.Suggestion => "Öneri",
+        FeedbackType.Question => "Soru",
+        FeedbackType.Praise => "Beğeni",
+        _ => t.ToString()
+    };
+
+    private static string FeedbackStatusLabel(FeedbackStatus s) => s switch
+    {
+        FeedbackStatus.New => "Yeni",
+        FeedbackStatus.InReview => "İnceleniyor",
+        FeedbackStatus.Planned => "Planlandı",
+        FeedbackStatus.Completed => "Tamamlandı",
+        FeedbackStatus.Rejected => "Reddedildi",
+        _ => s.ToString()
+    };
+
+    private static string FeedbackPriorityLabel(FeedbackPriority p) => p switch
+    {
+        FeedbackPriority.Low => "Düşük",
+        FeedbackPriority.Normal => "Normal",
+        FeedbackPriority.High => "Yüksek",
+        FeedbackPriority.Critical => "Kritik",
+        _ => p.ToString()
+    };
 
     // ─── HELPERS ──────────────────────────────────────────────────────────────
 

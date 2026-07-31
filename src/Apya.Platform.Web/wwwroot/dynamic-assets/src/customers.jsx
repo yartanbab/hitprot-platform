@@ -19,6 +19,7 @@
  */
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { createRoot } from 'react-dom/client';
+import { Hint } from './components/ui/Hint';
 import './index.css';
 
 /* ─── Yardımcılar ─────────────────────────────────────────────────────── */
@@ -50,7 +51,7 @@ function Skeleton({ w = '100%', h = 14, r = 6 }) {
 }
 
 /* ─── StatCard ─────────────────────────────────────────────────────────*/
-function StatCard({ label, value, icon, tone = 'muted', loading, index = 0 }) {
+function StatCard({ label, value, icon, tone = 'muted', loading, index = 0, hint }) {
   const toneClass = { success: 'text-positive', danger: 'text-negative', muted: 'text-text-tertiary' }[tone] ?? '';
   if (loading) {
     return (
@@ -67,6 +68,7 @@ function StatCard({ label, value, icon, tone = 'muted', loading, index = 0 }) {
       <div className="flex items-center gap-2 text-[var(--apya-text-tertiary)] text-xs font-medium">
         <i className={`fa ${icon}`} aria-hidden="true" />
         {label}
+        <Hint text={hint} />
       </div>
       <div className={cn('mt-2 text-xl font-bold font-tabular', toneClass || 'text-[var(--apya-text-primary)]')}>
         {value}
@@ -350,7 +352,10 @@ function AgingBar({ customerId }) {
 
   return (
     <div>
-      <div className="text-[10.5px] font-bold uppercase tracking-wide text-[var(--apya-text-tertiary)] mb-1.5">Yaşlandırma</div>
+      <div className="text-[10.5px] font-bold uppercase tracking-wide text-[var(--apya-text-tertiary)] mb-1.5 flex items-center">
+        Yaşlandırma
+        <Hint text="Ödenmemiş faturaların bekleme süresine göre dağılımı. Gün sayısı vade tarihinden bugüne kadar geçen süredir; vadesi henüz gelmemiş faturalar da 0-30 gün diliminde görünür." />
+      </div>
       <div className="flex h-2 rounded-full overflow-hidden" style={{ background: 'var(--apya-border-subtle)' }}>
         {AGING_BUCKETS.map((s) => buckets[s.key] > 0 && (
           <div key={s.key} style={{ width: `${(buckets[s.key] / total) * 100}%`, background: s.color }}
@@ -488,13 +493,17 @@ function CustomerDetail({ c, canEdit, canDelete, onBack, onEdit, onStatement, on
         <div className="flex gap-1.5 flex-wrap">
           {canEdit && <ActionBtn icon="fa-pencil" label="Düzenle" onClick={onEdit} />}
           <ActionBtn icon="fa-file-text" label="Cari Ekstre" onClick={onStatement} />
+          <Hint className="self-center" text="Carinin tüm hesap hareketlerini (fatura, tahsilat, açılış) tarih sırasıyla listeler; toplam borç, toplam alacak ve net bakiyeyi gösterir." placement="bottom" />
           {canDelete && <ActionBtn icon="fa-trash" label="Sil" onClick={onDelete} danger />}
         </div>
       </div>
 
       {/* Bakiye bloğu */}
       <div className="rounded-xl border border-[var(--apya-border-default)] bg-[var(--apya-surface-sunken)] px-4 py-3.5 flex items-baseline justify-between flex-wrap gap-2">
-        <div className="text-[10.5px] font-bold uppercase tracking-wide text-[var(--apya-text-tertiary)]">Güncel Bakiye</div>
+        <div className="text-[10.5px] font-bold uppercase tracking-wide text-[var(--apya-text-tertiary)] flex items-center">
+          Güncel Bakiye
+          <Hint text="Artı bakiye carinin size olan borcunu (sizin alacağınızı), eksi bakiye sizin ona olan borcunuzu gösterir." />
+        </div>
         <div className="flex items-baseline gap-2">
           <span className="text-[22px] font-bold font-tabular" style={{ color: balTone }}>{fmt.money(c.balance)}</span>
           <span className="text-[11px] font-semibold text-[var(--apya-text-tertiary)]">{balLabel}</span>
@@ -760,8 +769,10 @@ function CustomersIsland() {
       <div className="grid gap-3 mb-4" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))' }}>
         <StatCard loading={loading} index={0} icon="fa-id-card"   label="Toplam Cari"    value={fmt.int(counts.all)}    />
         <StatCard loading={loading} index={1} icon="fa-check-circle" label="Aktif Cari"  value={fmt.int(counts.Aktif)}  />
-        <StatCard loading={loading} index={2} icon="fa-arrow-up"  label="Toplam Alacak"  value={fmt.money(stats.alacak)} tone="success" />
-        <StatCard loading={loading} index={3} icon="fa-arrow-down" label="Toplam Borç"   value={fmt.money(stats.borc)}   tone="danger" />
+        <StatCard loading={loading} index={2} icon="fa-arrow-up"  label="Toplam Alacak"  value={fmt.money(stats.alacak)} tone="success"
+                  hint="Bakiyesi artıda olan carilerin toplamı — sizin tahsil edeceğiniz tutar." />
+        <StatCard loading={loading} index={3} icon="fa-arrow-down" label="Toplam Borç"   value={fmt.money(stats.borc)}   tone="danger"
+                  hint="Bakiyesi eksideki carilerin toplamı — sizin ödeyeceğiniz tutar." />
       </div>
 
       {/* Master-detail kartı: sol liste + sağ detay (HANDOFF deseni) */}

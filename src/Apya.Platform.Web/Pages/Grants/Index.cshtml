@@ -72,17 +72,11 @@
 
 @if (Model.IsHost)
 {
-    <div class="apya-page">
-        <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4">
-            <div>
-                <div class="apya-overline mb-1">Hibe Yönetimi</div>
-                <h1 class="h3 fw-bold mb-1">Hibe Programları</h1>
-                <p class="text-muted mb-0" style="max-width: 640px;">
-                    KOSGEB, TÜBİTAK, AB gibi kurumların destek programlarını ve dönemsel çağrılarını burada tanımlayın;
-                    hedef sektör/ölçek kriterleri firma eşleştirmelerinde kullanılır.
-                </p>
-            </div>
-            <div class="d-flex gap-2 flex-shrink-0">
+    @* Başlık + açıklama app header'da (ViewBag.Title + data-page-description);
+       sayfa içinde tekrarlanmıyor — bkz. apya-shell.css §19. *@
+    <div data-page-description="KOSGEB, TÜBİTAK, AB gibi kurumların destek programları ve dönemsel çağrıları" class="apya-page">
+        <div class="apya-page-head">
+            <div class="apya-page-head-actions">
                 @if (await AuthorizationService.IsGrantedAsync(PlatformPermissions.Grants.Edit))
                 {
                     <a href="/Grants/Applications" class="btn btn-outline-secondary"><i class="fa fa-file-signature me-1"></i>Başvurular</a>
@@ -101,10 +95,10 @@
                 <partial name="_KpiCard" model='new Apya.Platform.Web.Pages.Shared.KpiCardModel { Icon = "fa-award", Accent = "accent", Label = "Toplam Program", ValueId = "KpiTotalPrograms", Value = "—" }' />
             </div>
             <div class="col-6 col-md-3">
-                <partial name="_KpiCard" model='new Apya.Platform.Web.Pages.Shared.KpiCardModel { Icon = "fa-sack-dollar", Accent = "positive", Label = "Toplam Potansiyel Tutar", ValueId = "KpiTotalAmount", Value = "—" }' />
+                <partial name="_KpiCard" model='new Apya.Platform.Web.Pages.Shared.KpiCardModel { Icon = "fa-sack-dollar", Accent = "positive", Label = "Toplam Potansiyel Tutar", ValueId = "KpiTotalAmount", Value = "—", Hint = "Listelenen tüm programların üst limit tutarlarının toplamı. Dağıtılmış ya da taahhüt edilmiş tutar değil, teorik tavandır." }' />
             </div>
             <div class="col-6 col-md-3">
-                <partial name="_KpiCard" model='new Apya.Platform.Web.Pages.Shared.KpiCardModel { Icon = "fa-bullseye", Accent = "brand", Label = "Ortalama Uyum Puanı", ValueId = "KpiAvgScore", Value = "—" }' />
+                <partial name="_KpiCard" model='new Apya.Platform.Web.Pages.Shared.KpiCardModel { Icon = "fa-bullseye", Accent = "brand", Label = "Ortalama Uyum Puanı", ValueId = "KpiAvgScore", Value = "—", Hint = "Programlara tanımladığınız asgari uyum eşiklerinin ortalaması — firmaların gerçek eşleşme puanı değildir. Firmaların puanını görmek için bir çağrıda Firmalara Gönder ekranındaki önizlemeyi kullanın." }' />
             </div>
             <div class="col-6 col-md-3">
                 <partial name="_KpiCard" model='new Apya.Platform.Web.Pages.Shared.KpiCardModel { Icon = "fa-trophy", Accent = "warning", Label = "En Yüksek Tutarlı Program", ValueId = "KpiTopProgram", Value = "—" }' />
@@ -266,7 +260,10 @@
                             </select>
                         </div>
                         <div class="col-6 col-md-3">
-                            <label class="form-label small">Min. Otomatik Skor (%)</label>
+                            <label class="form-label small">
+                                Min. Otomatik Skor (%)
+                                <apya-hint text="Bu puanın altında kalan firmalar önizleme listesine girmez; 0 bırakırsanız eşleşen tüm firmalar listelenir. Yalnız bu gönderime özel bir filtredir — programın kendi eşiğinden bağımsızdır. Buradan gönderilen öneriler firmaya, program eşiğinin altında kalsalar bile ulaşır." />
+                            </label>
                             <input type="number" step="1" min="0" max="100" class="form-control form-control-sm" id="SendRecMinScore" value="0" />
                         </div>
                     </div>
@@ -311,15 +308,8 @@
 }
 else
 {
-    <div class="apya-page">
-        <div class="mb-4">
-            <div class="apya-overline mb-1">Firma Hibe Merkezi</div>
-            <h1 class="h3 fw-bold mb-1">Hibeler</h1>
-            <p class="text-muted mb-0" style="max-width: 640px;">
-                Firma profilinizi doldurun; profilinize en uygun açık hibe çağrılarını burada görün ve başvurun.
-            </p>
-        </div>
-
+    @* Başlık + açıklama app header'da; sayfa içinde tekrarlanmıyor. *@
+    <div data-page-description="Profilinize uygun açık hibe çağrıları ve başvurularınız" class="apya-page">
         <div class="row g-3 mb-4">
             <div class="col-6 col-md-3">
                 <partial name="_KpiCard" model='new Apya.Platform.Web.Pages.Shared.KpiCardModel { Icon = "fa-circle-check", Accent = "positive", Label = "Onaylanan", ValueId = "KpiOnaylanan", Value = "—" }' />

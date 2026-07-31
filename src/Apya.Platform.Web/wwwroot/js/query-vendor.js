@@ -12,7 +12,7 @@ var $t = (e, t, s, i) => ({
   }
 });
 import { r as x, j as is } from "./react-vendor.js";
-var qt = class {
+var Kt = class {
   constructor() {
     this.listeners = /* @__PURE__ */ new Set(), this.subscribe = this.subscribe.bind(this);
   }
@@ -28,7 +28,7 @@ var qt = class {
   }
   onUnsubscribe() {
   }
-}, yt, it, Pt, xe, rs = (xe = class extends qt {
+}, yt, it, Pt, xe, rs = (xe = class extends Kt {
   constructor() {
     super();
     c(this, yt);
@@ -146,7 +146,7 @@ function Oe(e, t) {
     if (i) {
       if (t.queryHash !== ve(h, t.options))
         return !1;
-    } else if (!_t(t.queryKey, h))
+    } else if (!qt(t.queryKey, h))
       return !1;
   }
   if (s !== "all") {
@@ -164,7 +164,7 @@ function Pe(e, t) {
     if (s) {
       if (Ot(t.options.mutationKey) !== Ot(a))
         return !1;
-    } else if (!_t(t.options.mutationKey, a))
+    } else if (!qt(t.options.mutationKey, a))
       return !1;
   }
   return !(i && t.state.status !== i || n && !n(t));
@@ -178,8 +178,25 @@ function Ot(e) {
     (t, s) => se(s) ? Object.keys(s).sort().reduce((i, n) => (i[n] = s[n], i), {}) : s
   );
 }
-function _t(e, t) {
-  return e === t ? !0 : typeof e != typeof t ? !1 : e && t && typeof e == "object" && typeof t == "object" ? Object.keys(t).every((s) => _t(e[s], t[s])) : !1;
+function qt(e, t) {
+  if (e === t)
+    return !0;
+  if (typeof e != typeof t)
+    return !1;
+  if (e && t && typeof e == "object" && typeof t == "object") {
+    if (Array.isArray(e) && Array.isArray(t)) {
+      for (let i = 0; i < t.length; i++)
+        if (!qt(e[i], t[i]))
+          return !1;
+      return !0;
+    }
+    const s = Object.keys(t);
+    for (const i of s)
+      if (!qt(e[i], t[i]))
+        return !1;
+    return !0;
+  }
+  return !1;
 }
 var cs = Object.prototype.hasOwnProperty;
 function Be(e, t, s = 0) {
@@ -357,7 +374,7 @@ function ms() {
     }
   };
 }
-var Q = ms(), Rt, nt, Ft, je, vs = (je = class extends qt {
+var Q = ms(), Rt, nt, Ft, je, vs = (je = class extends Kt {
   constructor() {
     super();
     c(this, Rt, !0);
@@ -888,7 +905,7 @@ function Qe(e) {
     fetchStatus: "idle"
   };
 }
-var _, v, Ht, U, gt, Qt, $, at, Nt, It, Tt, St, wt, ot, Dt, S, Kt, ae, oe, ue, he, ce, le, de, Xe, Ke, Cs = (Ke = class extends qt {
+var _, v, Ht, U, gt, Qt, $, at, Nt, It, Tt, St, wt, ot, Dt, S, _t, ae, oe, ue, he, ce, le, de, Xe, Ke, Cs = (Ke = class extends Kt {
   constructor(t, s) {
     super();
     c(this, S);
@@ -915,7 +932,7 @@ var _, v, Ht, U, gt, Qt, $, at, Nt, It, Tt, St, wt, ot, Dt, S, Kt, ae, oe, ue, h
     this.refetch = this.refetch.bind(this);
   }
   onSubscribe() {
-    this.listeners.size === 1 && (r(this, v).addObserver(this), Ie(r(this, v), this.options) ? y(this, S, Kt).call(this) : this.updateResult(), y(this, S, he).call(this));
+    this.listeners.size === 1 && (r(this, v).addObserver(this), Ie(r(this, v), this.options) ? y(this, S, _t).call(this) : this.updateResult(), y(this, S, he).call(this));
   }
   onUnsubscribe() {
     this.hasListeners() || this.destroy();
@@ -954,7 +971,7 @@ var _, v, Ht, U, gt, Qt, $, at, Nt, It, Tt, St, wt, ot, Dt, S, Kt, ae, oe, ue, h
       i,
       this.options,
       s
-    ) && y(this, S, Kt).call(this), this.updateResult(), n && (r(this, v) !== i || H(this.options.enabled, r(this, v)) !== H(s.enabled, r(this, v)) || dt(this.options.staleTime, r(this, v)) !== dt(s.staleTime, r(this, v))) && y(this, S, ae).call(this);
+    ) && y(this, S, _t).call(this), this.updateResult(), n && (r(this, v) !== i || H(this.options.enabled, r(this, v)) !== H(s.enabled, r(this, v)) || dt(this.options.staleTime, r(this, v)) !== dt(s.staleTime, r(this, v))) && y(this, S, ae).call(this);
     const a = y(this, S, oe).call(this);
     n && (r(this, v) !== i || H(this.options.enabled, r(this, v)) !== H(s.enabled, r(this, v)) || a !== r(this, ot)) && y(this, S, ue).call(this, a);
   }
@@ -990,7 +1007,7 @@ var _, v, Ht, U, gt, Qt, $, at, Nt, It, Tt, St, wt, ot, Dt, S, Kt, ae, oe, ue, h
     return i.fetch().then(() => this.createResult(i, s));
   }
   fetch(t) {
-    return y(this, S, Kt).call(this, {
+    return y(this, S, _t).call(this, {
       ...t,
       cancelRefetch: t.cancelRefetch ?? !0
     }).then(() => (this.updateResult(), r(this, U)));
@@ -1103,7 +1120,7 @@ var _, v, Ht, U, gt, Qt, $, at, Nt, It, Tt, St, wt, ot, Dt, S, Kt, ae, oe, ue, h
   onQueryUpdate() {
     this.updateResult(), this.hasListeners() && y(this, S, he).call(this);
   }
-}, _ = new WeakMap(), v = new WeakMap(), Ht = new WeakMap(), U = new WeakMap(), gt = new WeakMap(), Qt = new WeakMap(), $ = new WeakMap(), at = new WeakMap(), Nt = new WeakMap(), It = new WeakMap(), Tt = new WeakMap(), St = new WeakMap(), wt = new WeakMap(), ot = new WeakMap(), Dt = new WeakMap(), S = new WeakSet(), Kt = function(t) {
+}, _ = new WeakMap(), v = new WeakMap(), Ht = new WeakMap(), U = new WeakMap(), gt = new WeakMap(), Qt = new WeakMap(), $ = new WeakMap(), at = new WeakMap(), Nt = new WeakMap(), It = new WeakMap(), Tt = new WeakMap(), St = new WeakMap(), wt = new WeakMap(), ot = new WeakMap(), Dt = new WeakMap(), S = new WeakSet(), _t = function(t) {
   y(this, S, de).call(this);
   let s = r(this, v).fetch(
     this.options,
@@ -1126,7 +1143,7 @@ var _, v, Ht, U, gt, Qt, $, at, Nt, It, Tt, St, wt, ot, Dt, S, Kt, ae, oe, ue, h
   return (typeof this.options.refetchInterval == "function" ? this.options.refetchInterval(r(this, v)) : this.options.refetchInterval) ?? !1;
 }, ue = function(t) {
   y(this, S, le).call(this), o(this, ot, t), !(kt.isServer() || H(this.options.enabled, r(this, v)) === !1 || !ee(r(this, ot)) || r(this, ot) === 0) && o(this, wt, ft.setInterval(() => {
-    (this.options.refetchIntervalInBackground || me.isFocused()) && y(this, S, Kt).call(this);
+    (this.options.refetchIntervalInBackground || me.isFocused()) && y(this, S, _t).call(this);
   }, r(this, ot)));
 }, he = function() {
   y(this, S, ae).call(this), y(this, S, ue).call(this, y(this, S, oe).call(this));
@@ -1416,7 +1433,7 @@ function Ye() {
     submittedAt: 0
   };
 }
-var J, G, Bt, ke, Fs = (ke = class extends qt {
+var J, G, Bt, ke, Fs = (ke = class extends Kt {
   constructor(t = {}) {
     super();
     c(this, J);
@@ -1515,7 +1532,7 @@ function Jt(e) {
   var t;
   return (t = e.options.scope) == null ? void 0 : t.id;
 }
-var Z, ut, k, X, Y, Zt, ye, Le, Es = (Le = class extends qt {
+var Z, ut, k, X, Y, Zt, ye, Le, Es = (Le = class extends Kt {
   constructor(t, s) {
     super();
     c(this, Y);
@@ -1630,7 +1647,7 @@ var Z, ut, k, X, Y, Zt, ye, Le, Es = (Le = class extends qt {
       p(r(this, ut));
     });
   });
-}, Le), V, He, Ms = (He = class extends qt {
+}, Le), V, He, Ms = (He = class extends Kt {
   constructor(t = {}) {
     super();
     c(this, V);
@@ -1868,7 +1885,7 @@ var Z, ut, k, X, Y, Zt, ye, Le, Es = (Le = class extends qt {
   getQueryDefaults(e) {
     const t = [...r(this, xt).values()], s = {};
     return t.forEach((i) => {
-      _t(e, i.queryKey) && Object.assign(s, i.defaultOptions);
+      qt(e, i.queryKey) && Object.assign(s, i.defaultOptions);
     }), s;
   }
   setMutationDefaults(e, t) {
@@ -1880,7 +1897,7 @@ var Z, ut, k, X, Y, Zt, ye, Le, Es = (Le = class extends qt {
   getMutationDefaults(e) {
     const t = [...r(this, At).values()], s = {};
     return t.forEach((i) => {
-      _t(e, i.mutationKey) && Object.assign(s, i.defaultOptions);
+      qt(e, i.mutationKey) && Object.assign(s, i.defaultOptions);
     }), s;
   }
   defaultQueryOptions(e) {

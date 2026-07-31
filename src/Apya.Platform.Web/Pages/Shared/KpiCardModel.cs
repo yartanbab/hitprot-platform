@@ -45,4 +45,10 @@ public class KpiCardModel
 
     /// <summary>Değerin altındaki küçük açıklama satırı.</summary>
     public string? SubText { get; set; }
+
+    /// <summary>
+    /// Etiketin yanında ⓘ ikonu olarak gösterilecek bilgi ipucu — metriğin nasıl
+    /// hesaplandığını anlatır. Boş bırakılırsa ikon basılmaz.
+    /// </summary>
+    public string? Hint { get; set; }
 }

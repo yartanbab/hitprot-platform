@@ -29,7 +29,11 @@
                     </div>
                 </abp-column>
                 <abp-column size-md="_3">
-                    <abp-input asp-for="CashAccount.OpeningBalance" label="Açılış Bakiyesi" />
+                    <label class="form-label" for="CashAccount_OpeningBalance">
+                        Açılış Bakiyesi
+                        <apya-hint text="Hesabın bu sistemde takibe başladığı andaki mevcut tutarı. Bakiyeye doğrudan eklenir, kasa hareketi olarak listelenmez. Değiştirirseniz geçmiş hareketler aynı kalır ama güncel bakiye kayar." />
+                    </label>
+                    <abp-input asp-for="CashAccount.OpeningBalance" suppress-label="true" />
                 </abp-column>
             </abp-row>
             <abp-row>

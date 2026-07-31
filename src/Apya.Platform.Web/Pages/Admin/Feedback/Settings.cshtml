@@ -1,0 +1,125 @@
+@page
+@using Apya.Platform.Feedbacks
+@using Apya.Platform.Telemetry
+@using Apya.Platform.Web.Feedbacks
+@model Apya.Platform.Web.Pages.Admin.Feedback.SettingsModel
+@{
+    ViewBag.Title = "Geri Bildirim Ayarları";
+    var s = Model.Settings;
+}
+
+<div class="apya-page">
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h5 class="mb-0"><i class="fa fa-sliders me-2" aria-hidden="true"></i> Geri Bildirim Ayarları</h5>
+    <a href="/Admin/Feedback" class="btn btn-outline-secondary btn-sm">
+        <i class="fa fa-arrow-left me-1" aria-hidden="true"></i> Listeye Dön
+    </a>
+</div>
+
+<form method="post">
+    <div class="row g-3">
+        <div class="col-lg-6">
+            <abp-card>
+                <abp-card-header><abp-card-title>Tetikleyici</abp-card-title></abp-card-header>
+                <abp-card-body>
+                    <div class="form-check form-switch mb-3">
+                        <input class="form-check-input" type="checkbox" role="switch"
+                               id="TriggerEnabled" asp-for="Settings.TriggerEnabled" />
+                        <label class="form-check-label" for="TriggerEnabled">
+                            Geri bildirim tetikleyicisi görünsün
+                        </label>
+                        <div class="form-text">Kapatıldığında hiçbir sayfada geri bildirim bağlantısı görünmez.</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label" for="TriggerPlacement">Konum</label>
+                        <select class="form-select" id="TriggerPlacement" asp-for="Settings.TriggerPlacement">
+                            <option value="header" selected="@(s.TriggerPlacement == "header")">Üst çubukta sade bağlantı</option>
+                            <option value="floating" selected="@(s.TriggerPlacement == "floating")">Sağ altta sabit buton</option>
+                        </select>
+                        <div class="form-text">Mobilde sabit buton yalnızca ikon olarak görünür.</div>
+                    </div>
+
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" role="switch"
+                               id="AllowAnonymous" asp-for="Settings.AllowAnonymous" />
+                        <label class="form-check-label" for="AllowAnonymous">Anonim gönderime izin ver</label>
+                        <div class="form-text">
+                            Kimlik yine kaydedilir (kötüye kullanım kontrolü için) ancak yönetici panelinde gizlenir.
+                        </div>
+                    </div>
+                </abp-card-body>
+            </abp-card>
+        </div>
+
+        <div class="col-lg-6">
+            <abp-card>
+                <abp-card-header><abp-card-title>Form</abp-card-title></abp-card-header>
+                <abp-card-body>
+                    <div class="mb-3">
+                        <label class="form-label" for="SelectedTypes">Açık geri bildirim türleri</label>
+                        <select class="form-select" id="SelectedTypes" name="SelectedTypes" multiple size="9"
+                                aria-describedby="TypesHelp">
+                            @foreach (var t in Enum.GetValues<FeedbackType>())
+                            {
+                                <option value="@((int)t)" selected="@(Model.SelectedTypes.Contains((int)t))">
+                                    @FeedbackLabels.Type(t)
+                                </option>
+                            }
+                        </select>
+                        <div class="form-text" id="TypesHelp">
+                            Hiçbiri seçilmezse <strong>tüm türler</strong> açık kabul edilir.
+                        </div>
+                    </div>
+
+                    <div class="row g-2">
+                        <div class="col-sm-5">
+                            <label class="form-label" for="MaxFileSizeMb">Maks. dosya boyutu (MB)</label>
+                            <input type="number" class="form-control" id="MaxFileSizeMb"
+                                   asp-for="Settings.MaxFileSizeMb" min="1" max="50" />
+                        </div>
+                        <div class="col-sm-7">
+                            <label class="form-label" for="AllowedFileExtensions">İzinli uzantılar</label>
+                            <input type="text" class="form-control" id="AllowedFileExtensions"
+                                   asp-for="Settings.AllowedFileExtensions" placeholder=".png,.jpg,.pdf" />
+                        </div>
+                    </div>
+                </abp-card-body>
+            </abp-card>
+        </div>
+
+        <div class="col-lg-6">
+            <abp-card>
+                <abp-card-header><abp-card-title>Telemetri ve Saklama</abp-card-title></abp-card-header>
+                <abp-card-body>
+                    <div class="form-check form-switch mb-3">
+                        <input class="form-check-input" type="checkbox" role="switch"
+                               id="TelemetryEnabled" asp-for="Settings.TelemetryEnabled" />
+                        <label class="form-check-label" for="TelemetryEnabled">İstemci hata telemetrisi toplansın</label>
+                        <div class="form-text">
+                            Kapatıldığında tarayıcı hataları kaydedilmez; Sistem Sağlığı paneli yeni veri almaz.
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="form-label" for="TelemetryRetentionDays">Saklama süresi (gün)</label>
+                        <input type="number" class="form-control" id="TelemetryRetentionDays"
+                               asp-for="Settings.TelemetryRetentionDays"
+                               min="@TelemetryConsts.MinRetentionDays" max="@TelemetryConsts.MaxRetentionDays" />
+                        <div class="form-text">
+                            Audit log ve istemci hata kayıtları bu süreden sonra silinir.
+                            <strong>Geri bildirimler silinmez.</strong>
+                        </div>
+                    </div>
+                </abp-card-body>
+            </abp-card>
+        </div>
+    </div>
+
+    <div class="mt-3">
+        <button type="submit" class="btn btn-primary">
+            <i class="fa fa-save me-1" aria-hidden="true"></i> Kaydet
+        </button>
+    </div>
+</form>
+</div>
