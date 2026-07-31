@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { api } from './lib/api/httpClient';
+import { Hint } from './components/ui/Hint';
 import './index.css';
 
 const abpAuth = (p) => window?.abp?.auth?.isGranted(p);
@@ -178,6 +179,7 @@ function ResponsesApp({ formId }) {
             {STATUS_OPTIONS.map((o) => <option key={o.v} value={o.v}>{o.label}</option>)}
           </select>
           <button onClick={exportCsv} disabled={rows.length === 0} className="rounded-xl border border-default bg-surface-raised px-3 py-1.5 text-sm font-medium hover:bg-surface-sunken disabled:opacity-50">⬇ CSV</button>
+          <Hint placement="bottom" text="CSV dosyası tarayıcıda, ekranda yüklü yanıtlardan üretilir — en fazla 200 kayıt. Tüm yanıtlar için Excel'i kullanın." />
           {canExport && (
             <a href={excelHref} className="rounded-xl border border-default bg-surface-raised px-3 py-1.5 text-sm font-medium hover:bg-surface-sunken">⬇ Excel</a>
           )}

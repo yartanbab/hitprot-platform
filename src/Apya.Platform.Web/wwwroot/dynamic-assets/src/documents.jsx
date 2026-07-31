@@ -18,7 +18,7 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { createRoot } from 'react-dom/client';
 import './index.css';
-import { Badge, EmptyState, Skeleton, SkeletonList, Button, buttonVariants, Input, Sheet } from './components/ui';
+import { Badge, EmptyState, Skeleton, SkeletonList, Button, buttonVariants, Input, Sheet, Hint } from './components/ui';
 
 /* ─── Yardımcılar ─────────────────────────────────────────────────────── */
 const fmt = {
@@ -320,7 +320,10 @@ function DetailContent({ item, onEdit, onDelete, onOpen, canViewLog }) {
 
       {isFile && (
         <div className="mb-4">
-          <div className="apya-md-overline mb-2">Versiyon Geçmişi</div>
+          <div className="apya-md-overline mb-2 d-flex align-items-center">
+            Versiyon Geçmişi
+            <Hint text="Versiyon dosya ADINA göre izlenir: aynı belgeye aynı isimli bir dosyayı yeniden yüklerseniz yeni versiyon olur ve öncekiler geçmişte kalır. Farklı isimle yüklerseniz ayrı bir dosya olarak eklenir." />
+          </div>
           {loadingVersions ? (
             <SkeletonList rows={2} />
           ) : !versions || versions.length <= 1 ? (
@@ -343,7 +346,10 @@ function DetailContent({ item, onEdit, onDelete, onOpen, canViewLog }) {
 
       {isFile && canViewLog && (
         <div>
-          <div className="apya-md-overline mb-2">Aktivite</div>
+          <div className="apya-md-overline mb-2 d-flex align-items-center">
+            Aktivite
+            <Hint text="Bu dosyaya kimin ne zaman dokunduğunun kaydı: yükleme, indirme ve silme işlemleri tutulur. Salt görüntüleme kaydedilmez." />
+          </div>
           {loadingLog ? (
             <SkeletonList rows={3} />
           ) : !log || log.length === 0 ? (

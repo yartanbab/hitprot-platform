@@ -1,19 +1,6 @@
-import { j as e, b as ce, r as l } from "./react-vendor.js";
+import { b as ce, j as e, r as l } from "./react-vendor.js";
+import { H as F } from "./Hint.js";
 /* empty css      */
-function F({ text: a, placement: n = "top", className: t }) {
-  return a ? /* @__PURE__ */ e.jsx(
-    "span",
-    {
-      className: t ? "apya-hint " + t : "apya-hint",
-      "data-bs-toggle": "tooltip",
-      "data-bs-placement": n,
-      "data-bs-title": a,
-      tabIndex: 0,
-      "aria-label": "Bilgi",
-      children: /* @__PURE__ */ e.jsx("i", { className: "fa fa-circle-info", "aria-hidden": "true" })
-    }
-  ) : null;
-}
 const h = {
   money: (a) => new Intl.NumberFormat("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(a || 0) + " ₺",
   int: (a) => new Intl.NumberFormat("tr-TR").format(Math.round(a || 0))
@@ -542,7 +529,7 @@ const Ne = [
   { value: "taxOffice|asc", label: "Vergi dairesi (A→Z)" }
 ];
 function we() {
-  const [a, n] = l.useState([]), [t, i] = l.useState(!0), [d, c] = l.useState(null), [s, x] = l.useState(""), [p, u] = l.useState("all"), [f, b] = l.useState({ key: "name", dir: "asc" }), [v, w] = l.useState(1), [j, J] = l.useState(10), [C, E] = l.useState(null), [D, P] = l.useState(null), [V, _] = l.useState(null), X = l.useRef(null), H = l.useCallback((r) => _(r), []), z = l.useCallback(async () => {
+  const [a, n] = l.useState([]), [t, i] = l.useState(!0), [d, c] = l.useState(null), [s, x] = l.useState(""), [p, u] = l.useState("all"), [f, b] = l.useState({ key: "name", dir: "asc" }), [v, w] = l.useState(1), [j, J] = l.useState(10), [C, E] = l.useState(null), [D, P] = l.useState(null), [H, V] = l.useState(null), X = l.useRef(null), _ = l.useCallback((r) => V(r), []), z = l.useCallback(async () => {
     i(!0), c(null);
     try {
       const r = await Z().getList({
@@ -602,7 +589,7 @@ function we() {
   }, re = () => {
     const r = new window.abp.ModalManager(I() + "Customers/CreateModal");
     r.open(), r.onResult(() => {
-      z(), H("Cari başarıyla oluşturuldu.");
+      z(), _("Cari başarıyla oluşturuldu.");
     });
   }, se = () => {
     if (!N) return;
@@ -612,7 +599,7 @@ function we() {
     N && new window.abp.ModalManager(I() + "Customers/StatementModal").open({ customerId: N.id });
   }, ie = async () => {
     try {
-      await Z().delete(D.id), n((r) => r.filter((o) => o.id !== D.id)), C === D.id && E(null), H(`"${D.name}" silindi.`);
+      await Z().delete(D.id), n((r) => r.filter((o) => o.id !== D.id)), C === D.id && E(null), _(`"${D.name}" silindi.`);
     } catch {
       O("error", "Silme işlemi başarısız oldu.");
     } finally {
@@ -808,7 +795,7 @@ function we() {
       }
     ),
     D && /* @__PURE__ */ e.jsx(ye, { customer: D, onConfirm: ie, onCancel: () => P(null) }),
-    V && /* @__PURE__ */ e.jsx(be, { message: V, onDone: () => _(null) })
+    H && /* @__PURE__ */ e.jsx(be, { message: H, onDone: () => V(null) })
   ] });
 }
 const W = document.getElementById("customers-island");
