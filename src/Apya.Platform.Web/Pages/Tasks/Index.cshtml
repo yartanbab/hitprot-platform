@@ -7,18 +7,29 @@
 @inject IHtmlLocalizer<PlatformResource> L
 @using Apya.Platform.Web.Pages.Tasks
 @model IndexModel
+@{
+    ViewBag.Title = "Görevler";
+}
 
 
-<div class="apya-page">
+<div data-page-description="Tüm projelerdeki görevler" class="apya-page">
 
 @* ─── Görev Yönetimi ─── *@
 <abp-card class="apya-tasks-card">
     <abp-card-header class="border-bottom-0 pb-2">
         <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
-            <div class="btn-group apya-view-toggle" role="group">
-                <button type="button" id="btn-view-list" class="btn active">@L["Tasks:View:List"]</button>
-                <button type="button" id="btn-view-kanban" class="btn">@L["Tasks:View:Kanban"]</button>
-                <button type="button" id="btn-view-gantt" class="btn">@L["Tasks:View:Gantt"]</button>
+            @* data-header-views: apya-header-views.js bu segmenti header'a taşır
+               (hedef tasarım). data-icon = header'daki ikon, data-view-label =
+               alt başlığa yazılan ek (" · tablo görünümü"). Taşıma yalnız DOM
+               konumunu değiştirir; buradaki id'lere bağlı index.js handler'ları
+               aynen çalışmaya devam eder. *@
+            <div class="btn-group apya-view-toggle" role="group" data-header-views>
+                <button type="button" id="btn-view-list" class="btn active"
+                        data-icon="fa-list" data-view-label="tablo görünümü">@L["Tasks:View:List"]</button>
+                <button type="button" id="btn-view-kanban" class="btn"
+                        data-icon="fa-table-columns" data-view-label="pano görünümü">@L["Tasks:View:Kanban"]</button>
+                <button type="button" id="btn-view-gantt" class="btn"
+                        data-icon="fa-bars-staggered" data-view-label="zaman çizelgesi">@L["Tasks:View:Gantt"]</button>
             </div>
             @* "Ara" kutusu DataTables tarafından #view-list içine üretilir; index.js
                burada açılan #tasks-search-slot'a taşıyıp ortalar. flex-grow-1 ile araç
@@ -147,25 +158,8 @@
     #tasks-search-slot .dt-search { display: flex; align-items: center; gap: .375rem; margin: 0; }
     #tasks-search-slot .dt-search input.form-control { width: 180px; }
 
-    /* ─── Tablo/Kanban/Gantt segmented toggle (eski btn-group outline yerine) ─── */
-    .apya-view-toggle {
-        border: 1px solid var(--apya-border-default);
-        border-radius: var(--apya-radius-full);
-        padding: 3px;
-        background: var(--apya-surface-sunken);
-        gap: 2px;
-    }
-    .apya-view-toggle .btn {
-        border: none;
-        border-radius: var(--apya-radius-full) !important;
-        background: transparent;
-        color: var(--apya-text-secondary);
-        font-weight: 600;
-        font-size: 13px;
-        padding: 6px 18px;
-    }
-    .apya-view-toggle .btn.active { background: var(--apya-surface-base); color: var(--apya-text-primary); box-shadow: var(--apya-shadow-sm); }
-    .apya-view-toggle .btn:hover:not(.active) { color: var(--apya-text-primary); }
+    /* .apya-view-toggle artık paylaşılan bileşen — apya-shell.css §18.
+       (Segment header'a taşındığı için stili de tek kaynakta olmalı.) */
 
     /* ─── Filtre pilleri — eski "Gelişmiş Filtreleme" accordion'unun yerine ─── */
     .apya-filter-pill {
@@ -222,4 +216,3 @@
     }
     .heartbeat-animation { animation: heartbeat 1.5s infinite; }
 </style>
-

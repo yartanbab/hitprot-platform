@@ -572,6 +572,27 @@ html, body {
     box-shadow: var(--apya-shadow-focus) !important;
 }
 
+/* --- Input kenarlığı + placeholder (2026-07-29) ---
+   LeptonX light temada input kenarlığını neredeyse görünmez bir tona
+   çekiyordu → arama kutuları zeminden ayrışmıyor, "tıklanabilir alan" olduğu
+   anlaşılmıyordu (Projeler sayfası aramasında canlı görüldü). Kenarlık
+   token'a bağlandı; dark zaten --bs-form-control-border-color üzerinden
+   köprülüydü, bu kural onunla aynı değeri verir.
+   Placeholder: tarayıcı varsayılan opaklığı tertiary tonu daha da soluklaştırıyordu
+   → opacity sıfırlanıp doğrudan token rengi veriliyor. */
+.form-control,
+.form-select {
+    border-color: var(--apya-border-default);
+}
+.form-control:hover:not(:focus),
+.form-select:hover:not(:focus) {
+    border-color: var(--apya-border-strong);
+}
+.form-control::placeholder {
+    color: var(--apya-text-tertiary);
+    opacity: 1;
+}
+
 /* --- Input border focus → accent --- */
 .form-control:focus,
 .form-select:focus {
@@ -658,29 +679,126 @@ html, body {
     color: var(--apya-text-primary) !important;
 }
 
-/* --- Tenant rozeti (bilgilendirici, tıklanamaz — P4) ---
-   TenantBadgeViewComponent + dark-mode.js ile logo'nun hemen altına taşınır.
-   Kenarlık logo'dan buraya kaydırıldı: tek ayraç, logo+rozet birlikte bir blok. --- */
-.apya-tenant-badge {
-    display: flex;
-    align-items: baseline;
-    gap: 6px;
-    padding: 0 22px 14px;
-    border-bottom: 1px solid var(--apya-border-subtle);
-    font-size: 11.5px;
-    line-height: 1.3;
+/* --- Müşteri (tenant) pili — header (2026-07-28, hedef tasarım) ---
+   Önceki hali sidebar'da logo altında duran, tıklanamaz bir rozetti; hedef
+   tasarımda header'da "Host ⌄" pili. Yetkisizde caret/dropdown yok (bkz.
+   TenantBadgeViewComponent güvenlik notu). --- */
+.apya-tenant-switch {
+    display: inline-flex;
+    align-items: center;
+    margin: 0 2px;
 }
-.apya-tenant-badge-name {
+.apya-tenant-switch-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 34px;
+    padding: 0 10px;
+    border: 1px solid var(--apya-border-default);
+    border-radius: var(--apya-radius-lg);
+    background: var(--apya-surface-base);
+    color: var(--apya-text-secondary);
+    font-size: 12.5px;
+    font-weight: var(--apya-weight-semibold);
+    cursor: pointer;
+    transition: border-color var(--apya-motion-base) ease,
+                background var(--apya-motion-base) ease,
+                color var(--apya-motion-base) ease;
+}
+.apya-tenant-switch-btn:hover {
+    border-color: var(--apya-border-strong);
+    background: var(--apya-surface-sunken);
     color: var(--apya-text-primary);
-    font-weight: 600;
+}
+/* Tıklanamaz varyant (yetkisiz kullanıcı) — imleç ve hover yok. */
+.apya-tenant-switch-btn--static {
+    cursor: default;
+}
+.apya-tenant-switch-btn--static:hover {
+    border-color: var(--apya-border-default);
+    background: var(--apya-surface-base);
+    color: var(--apya-text-secondary);
+}
+.apya-tenant-switch-btn > .fa-flask {
+    color: var(--apya-text-tertiary);
+    font-size: 11px;
+}
+.apya-tenant-switch-name {
+    max-width: 140px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
 }
-.apya-tenant-badge-sep,
-.apya-tenant-badge-count {
+.apya-tenant-switch-caret {
+    font-size: 9px;
     color: var(--apya-text-tertiary);
+}
+.apya-tenant-switch-menu {
+    min-width: 240px;
+    max-height: 60vh;
+    overflow-y: auto;
+    padding: 6px;
+    border: 1px solid var(--apya-border-strong);
+    border-radius: var(--apya-radius-xl);
+    box-shadow: var(--apya-shadow-lg);
+}
+.apya-tenant-switch-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 6px 10px 8px;
+    border-bottom: 1px solid var(--apya-border-subtle);
+    margin-bottom: 4px;
+}
+.apya-tenant-switch-count {
+    font-size: 11px;
+    color: var(--apya-text-tertiary);
+}
+/* Menü öğeleri <form> içinde <button> — Bootstrap'ın .dropdown-item'ı buton
+   üzerinde de çalışır, yalnız tam genişlik + hizalama veriyoruz. */
+.apya-tenant-switch-menu form {
+    margin: 0;
+}
+.apya-tenant-switch-menu .dropdown-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    width: 100%;
+    border: 0;
+    border-radius: var(--apya-radius-lg);
+    background: transparent;
+    font-size: 13px;
+    text-align: left;
+}
+.apya-tenant-switch-menu .dropdown-item.active,
+.apya-tenant-switch-menu .dropdown-item.active:hover {
+    background: var(--apya-accent-soft);
+    color: var(--apya-accent-600);
+    opacity: 1;
+}
+[data-theme="dark"] .apya-tenant-switch-menu .dropdown-item.active {
+    color: var(--apya-accent-300);
+}
+.apya-tenant-switch-item-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
     white-space: nowrap;
+}
+.apya-tenant-switch-back {
+    color: var(--apya-text-warning);
+    font-weight: var(--apya-weight-semibold);
+}
+/* Dar viewport: yalnız ikon (tenant adı gizlenir) — header taşmasın. */
+@media (max-width: 900px) {
+    .apya-tenant-switch-name,
+    .apya-tenant-switch-caret {
+        display: none;
+    }
+    .apya-tenant-switch-btn {
+        padding: 0 9px;
+    }
 }
 
 /* --- Nav item (üst düzey + iç menü) --- */
@@ -955,6 +1073,8 @@ html.js .lpx-breadcrumb-container {
    etmek yerine (CommandPalette/ThemeToggle deseninde olduğu gibi) yalnızca
    GÖRSEL sırayı flex order ile değiştiriyoruz; DOM/contributor sırası aynı kalır. */
 .lpx-topbar-content > .apya-command-palette-trigger { order: 10; }
+.lpx-topbar-content > .apya-view-toggle--header { order: 20; }
+.lpx-topbar-content > .apya-tenant-switch { order: 30; }
 .lpx-topbar-content > .lpx-language-selection { order: 90; }
 .lpx-topbar-content > .apya-theme-toggle { order: 91; }
 .lpx-topbar-content > .apya-density-toggle { order: 92; }
@@ -975,6 +1095,35 @@ html.js .lpx-breadcrumb-container {
    html.js şartı güvenli geri dönüş — bkz. yukarıdaki breadcrumb kuralı. */
 html.js .lpx-user-profile .user-full-name {
     visibility: hidden;
+}
+
+/* ── Header rötuşları (2026-07-28, hedef tasarım görselinden) ──
+   Hedef header sağ grubu: arama pili · görünüm segmenti · tenant pili · TR ·
+   tema · bildirim · avatar. Aşağıdakiler DOM'a dokunmaz, yalnız LeptonX'in
+   getirdiği fazla süsü kaldırır — hiçbir işlev kaybolmaz. ── */
+
+/* Dil seçici: globe ikonu kaldırılır, düz "TR" metni kalır. */
+.lpx-topbar-content .lpx-language-selection .dropdown-toggle > i,
+.lpx-topbar-content .lpx-language-selection .dropdown-toggle > .bi,
+.lpx-topbar-content .lpx-language-selection .dropdown-toggle > svg {
+    display: none;
+}
+.lpx-topbar-content .lpx-language-selection .dropdown-toggle {
+    font-size: 12.5px;
+    font-weight: var(--apya-weight-semibold);
+    color: var(--apya-text-secondary);
+    padding: 0.35rem 0.55rem;
+    border-radius: var(--apya-radius-md);
+}
+.lpx-topbar-content .lpx-language-selection .dropdown-toggle:hover {
+    color: var(--apya-text-primary);
+    background: var(--apya-surface-sunken);
+}
+/* Bootstrap dropdown caret'i (::after üçgeni) — avatarın ve dil seçicinin
+   yanında görsel gürültü; hedef tasarımda yok. Menü davranışı değişmez. */
+.lpx-topbar-content .lpx-language-selection .dropdown-toggle::after,
+.lpx-topbar-content .dropdown > .dropdown-toggle::after {
+    display: none;
 }
 
 /* Bildirim rozetini sayı yerine nokta olarak göster (JS sayaç mantığına dokunmaz,
@@ -1043,4 +1192,20 @@ html.js .lpx-user-profile .user-full-name {
 .dataTables_wrapper .dataTables_info {
     color: var(--apya-text-tertiary) !important;
     font-size: 12px;
+}
+
+/* ============================================================================
+   İÇERİK ÜST BOŞLUĞU (2026-07-29) — sayfa başlıkları header'a taşındıktan sonra
+   LeptonX'in içerik dolgusu gereğinden fazla kalıyordu: sayfa bileşenleri
+   ekranın aşağısına itiliyor, ilk ekranda az içerik görünüyordu.
+   Tema kuralı (canlı bundle'dan doğrulandı):
+       .lpx-content-container .lpx-content { padding: 1.25em 2em 3em }
+   Yalnız ÜST dolgu kısılıyor; yanlar ve alt temada kalıyor. Mobil (<768px)
+   temanın kendi 3em üst dolgusunu kullanıyor (sabit başlığı temizlemek için) —
+   ona dokunulmuyor.
+   ============================================================================ */
+@media (min-width: 768px) {
+    .lpx-content-container .lpx-content {
+        padding-top: 14px;
+    }
 }

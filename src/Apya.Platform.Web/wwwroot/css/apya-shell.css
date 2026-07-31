@@ -1286,3 +1286,125 @@ i.apya-priority-dot {
     padding-right: 12px;
 }
 .apya-clean-table tbody tr:hover td { background: var(--apya-surface-raised) !important; }
+
+/* ----------------------------------------------------------------------------
+   18) GÖRÜNÜM MODU SEGMENTİ — hedef tasarımda header'da, arama pilinin sağında.
+   Sayfa kendi segmentini basar (Tasks/Index.cshtml), apya-header-views.js DOM
+   düğümünü header'a TAŞIR (yeniden üretmez → sayfanın handler'ları korunur).
+   Sayfa içinde de kullanılabilir; `--header` varyantı yalnız ölçüyü küçültür.
+   ---------------------------------------------------------------------------- */
+.apya-view-toggle {
+    display: inline-flex;
+    border: 1px solid var(--apya-border-default);
+    border-radius: var(--apya-radius-full);
+    padding: 3px;
+    background: var(--apya-surface-sunken);
+    gap: 2px;
+}
+.apya-view-toggle .btn {
+    border: none;
+    border-radius: var(--apya-radius-full) !important;
+    background: transparent;
+    color: var(--apya-text-secondary);
+    font-weight: var(--apya-weight-semibold);
+    font-size: 13px;
+    padding: 6px 18px;
+}
+.apya-view-toggle .btn.active {
+    background: var(--apya-surface-base);
+    color: var(--apya-text-primary);
+    box-shadow: var(--apya-shadow-sm);
+}
+.apya-view-toggle .btn:hover:not(.active) {
+    color: var(--apya-text-primary);
+}
+
+/* Header varyantı — metin yerine ikon (JS dönüştürür), kompakt ölçü. */
+.apya-view-toggle--header {
+    margin: 0 4px;
+}
+.apya-view-toggle--header .btn {
+    padding: 4px 12px;
+    font-size: 13px;
+    line-height: 1;
+}
+/* Dar viewport'ta header zaten kalabalık — segment gizlenir; sayfa içindeki
+   işlev kaybolmaz çünkü butonlar hâlâ DOM'da (yalnız görünmez). */
+@media (max-width: 900px) {
+    .apya-view-toggle--header { display: none; }
+}
+
+/* ----------------------------------------------------------------------------
+   19) SAYFA BAŞLIK SATIRI — sol: başlık + açıklama, sağ: sayaç/arama/aksiyon.
+   Izgara sayfalarında araç çubuğu ayrı bir satırdaydı (.apya-grid-toolbar);
+   başlıkla aynı satıra alınınca bir satır dikey alan kazanılıyor ve aksiyon
+   göz hizasına çıkıyor. Dar ekranda alt alta sarar.
+   ---------------------------------------------------------------------------- */
+.apya-page-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: var(--apya-space-3);
+}
+.apya-page-head-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-left: auto;
+    /* TEK SATIR. Sarma açıkken sayaç+arama bir satıra, buton alt satıra
+       düşüyordu (abp-button blok seviyesinde render ediliyor) → araç çubuğu
+       gereksiz yere iki satır yer kaplıyordu. */
+    flex-wrap: nowrap;
+}
+.apya-page-head-actions .apya-grid-count {
+    white-space: nowrap;
+}
+.apya-page-head-actions .btn {
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+.apya-page-head-actions .apya-grid-search {
+    width: 260px;
+    max-width: 100%;
+}
+/* Dar ekran: aksiyon grubu tam genişliğe düşsün, arama esnesin, sarma açılsın. */
+@media (max-width: 575.98px) {
+    .apya-page-head-actions {
+        width: 100%;
+        margin-left: 0;
+        flex-wrap: wrap;
+    }
+    .apya-page-head-actions .apya-grid-search {
+        flex: 1 1 auto;
+        width: auto;
+    }
+}
+
+/* ----------------------------------------------------------------------------
+   20) KPI ŞERİDİ — GENİŞ EKRANDA TEK SATIR (2026-07-29)
+   `col-xl` ile denendi, OLMADI: Bootstrap'ta `.col-xl{flex:1 0 0}` yalnız
+   `flex`i ezer, `col-md-4`'ün `width:33.33%`i kalır; ayrıca flex öğeleri
+   varsayılan `min-width:auto` ile min-content'in altına inemez → 6 kart
+   sığmayıp sonuncusu alt satıra düşüyordu.
+   Grid'de `grid-auto-flow:column` + `minmax(0,1fr)` kart SAYISINDAN bağımsız
+   olarak hepsini tek satıra dizer ve 0'a kadar daralmaya izin verir
+   (Toplam Bütçe kartı yetkiye bağlı olduğu için sayı 5 ya da 6 olabiliyor).
+   ---------------------------------------------------------------------------- */
+@media (min-width: 1200px) {
+    .apya-kpi-row-compact {
+        display: grid;
+        grid-auto-flow: column;
+        grid-auto-columns: minmax(0, 1fr);
+        gap: 12px;
+        margin: 0 0 var(--apya-space-3);
+    }
+    /* .row/.col gutter mekanizması grid'de geçersiz — gap devraldı. */
+    .apya-kpi-row-compact > [class*="col-"] {
+        width: auto;
+        max-width: none;
+        min-width: 0;
+        padding: 0;
+    }
+}
