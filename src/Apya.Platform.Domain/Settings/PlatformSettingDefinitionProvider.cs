@@ -34,6 +34,45 @@ public class PlatformSettingDefinitionProvider : SettingDefinitionProvider
                 description: L("Setting:Telemetry.RetentionDays.Description"))
                 .WithProviders(GlobalSettingValueProvider.ProviderName)
         );
+
+        // --- Geri bildirim modülü --- (hepsi host seviyesinde)
+        context.Add(
+            new SettingDefinition(
+                PlatformSettings.Feedback.TriggerEnabled,
+                defaultValue: PlatformSettingDefaults.FeedbackTriggerEnabled.ToString().ToLowerInvariant(),
+                displayName: L("Setting:Feedback.TriggerEnabled"))
+                .WithProviders(GlobalSettingValueProvider.ProviderName),
+
+            new SettingDefinition(
+                PlatformSettings.Feedback.TriggerPlacement,
+                defaultValue: PlatformSettingDefaults.FeedbackTriggerPlacement,
+                displayName: L("Setting:Feedback.TriggerPlacement"))
+                .WithProviders(GlobalSettingValueProvider.ProviderName),
+
+            new SettingDefinition(
+                PlatformSettings.Feedback.EnabledTypes,
+                defaultValue: "",
+                displayName: L("Setting:Feedback.EnabledTypes"))
+                .WithProviders(GlobalSettingValueProvider.ProviderName),
+
+            new SettingDefinition(
+                PlatformSettings.Feedback.MaxFileSizeMb,
+                defaultValue: PlatformSettingDefaults.FeedbackMaxFileSizeMb.ToString(),
+                displayName: L("Setting:Feedback.MaxFileSizeMb"))
+                .WithProviders(GlobalSettingValueProvider.ProviderName),
+
+            new SettingDefinition(
+                PlatformSettings.Feedback.AllowedFileExtensions,
+                defaultValue: PlatformSettingDefaults.FeedbackAllowedExtensions,
+                displayName: L("Setting:Feedback.AllowedFileExtensions"))
+                .WithProviders(GlobalSettingValueProvider.ProviderName),
+
+            new SettingDefinition(
+                PlatformSettings.Feedback.AllowAnonymous,
+                defaultValue: PlatformSettingDefaults.FeedbackAllowAnonymous.ToString().ToLowerInvariant(),
+                displayName: L("Setting:Feedback.AllowAnonymous"))
+                .WithProviders(GlobalSettingValueProvider.ProviderName)
+        );
     }
 
     private static LocalizableString L(string name)

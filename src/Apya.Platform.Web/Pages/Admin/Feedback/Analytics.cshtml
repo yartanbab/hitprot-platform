@@ -2,13 +2,16 @@
 @using System.Linq
 @using System.Text.Json
 @using Apya.Platform.Web.Pages.Shared
+@using Apya.Platform.Feedbacks
+@using Apya.Platform.Web.Feedbacks
 @model Apya.Platform.Web.Pages.Admin.Feedback.AnalyticsModel
 @{
     ViewBag.Title = "Geri Bildirim Analizi";
     var s = Model.Stats;
 
-    var typeLabels = new Dictionary<int, string> { { 1, "Hata" }, { 2, "Öneri" }, { 3, "Soru" }, { 4, "Beğeni" } };
-    var statusLabels = new Dictionary<int, string> { { 1, "Yeni" }, { 2, "İnceleniyor" }, { 3, "Planlandı" }, { 4, "Tamamlandı" }, { 5, "Reddedildi" } };
+    // Etiketler tek kaynaktan (FeedbackLabels) — enum genişlediğinde burası kendiliğinden uyar.
+    var typeLabels = Enum.GetValues<FeedbackType>().ToDictionary(t => (int)t, FeedbackLabels.Type);
+    var statusLabels = Enum.GetValues<FeedbackStatus>().ToDictionary(st => (int)st, FeedbackLabels.Status);
 
     var typeChartLabels = JsonSerializer.Serialize(s.ByType.Select(x => typeLabels.GetValueOrDefault(x.Key, x.Key.ToString())));
     var typeChartData = JsonSerializer.Serialize(s.ByType.Select(x => x.Count));
@@ -38,6 +41,15 @@
     </div>
     <div class="col-md-3">
         <partial name="_KpiCard" model='new KpiCardModel { Icon = "fa-star", Accent = "positive", Label = "Ortalama Puan", Value = s.AverageRating.HasValue ? s.AverageRating.Value.ToString("0.0") : "—", SubText = $"{s.RatingCount} puanlama" }' />
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-6">
+        <partial name="_KpiCard" model='new KpiCardModel { Icon = "fa-clock", Accent = "brand", Label = "Ortalama İlk Yanıt", Value = Model.FormatHours(s.AverageFirstResponseHours), SubText = "gönderimden ilk cevaba" }' />
+    </div>
+    <div class="col-md-6">
+        <partial name="_KpiCard" model='new KpiCardModel { Icon = "fa-flag-checkered", Accent = "positive", Label = "Ortalama Çözüm Süresi", Value = Model.FormatHours(s.AverageResolutionHours), SubText = "gönderimden kapanışa" }' />
     </div>
 </div>
 

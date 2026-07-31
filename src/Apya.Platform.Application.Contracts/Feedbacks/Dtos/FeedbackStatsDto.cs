@@ -17,6 +17,12 @@ public class FeedbackStatsDto
     public double? AverageRating { get; set; }
     public int RatingCount { get; set; }
 
+    /// <summary>Gönderim → ilk kullanıcıya görünen cevap arası ortalama (saat). Cevaplanmış kayıtlar üzerinden.</summary>
+    public double? AverageFirstResponseHours { get; set; }
+
+    /// <summary>Gönderim → kapanış arası ortalama (saat). Kapanmış kayıtlar üzerinden.</summary>
+    public double? AverageResolutionHours { get; set; }
+
     public List<FeedbackCountByKeyDto> ByType { get; set; } = new();
     public List<FeedbackCountByKeyDto> ByStatus { get; set; } = new();
 

@@ -1,5 +1,7 @@
 @page
 @model Apya.Platform.Web.Pages.Admin.Feedback.IndexModel
+@using Apya.Platform.Feedbacks
+@using Apya.Platform.Web.Feedbacks
 @{
     ViewBag.Title = "Geri Bildirimler";
 }
@@ -24,35 +26,34 @@
     <abp-card-body>
         <form id="FeedbackFilterForm" class="row g-2 mb-3">
             <div class="col-md-2">
-                <select id="Filter_Type" class="form-select form-select-sm">
+                <select id="Filter_Type" class="form-select form-select-sm" aria-label="Tür filtresi">
                     <option value="">Tüm Türler</option>
-                    <option value="1">Hata Bildirimi</option>
-                    <option value="2">Öneri</option>
-                    <option value="3">Soru</option>
-                    <option value="4">Beğeni</option>
+                    @foreach (var t in Enum.GetValues<FeedbackType>())
+                    {
+                        <option value="@((int)t)">@FeedbackLabels.Type(t)</option>
+                    }
                 </select>
             </div>
             <div class="col-md-2">
-                <select id="Filter_Status" class="form-select form-select-sm">
+                <select id="Filter_Status" class="form-select form-select-sm" aria-label="Durum filtresi">
                     <option value="">Tüm Durumlar</option>
-                    <option value="1">Yeni</option>
-                    <option value="2">İnceleniyor</option>
-                    <option value="3">Planlandı</option>
-                    <option value="4">Tamamlandı</option>
-                    <option value="5">Reddedildi</option>
+                    @foreach (var s in Enum.GetValues<FeedbackStatus>())
+                    {
+                        <option value="@((int)s)">@FeedbackLabels.Status(s)</option>
+                    }
                 </select>
             </div>
             <div class="col-md-2">
-                <select id="Filter_Priority" class="form-select form-select-sm">
+                <select id="Filter_Priority" class="form-select form-select-sm" aria-label="Öncelik filtresi">
                     <option value="">Tüm Öncelikler</option>
-                    <option value="1">Düşük</option>
-                    <option value="2">Normal</option>
-                    <option value="3">Yüksek</option>
-                    <option value="4">Kritik</option>
+                    @foreach (var p in Enum.GetValues<FeedbackPriority>())
+                    {
+                        <option value="@((int)p)">@FeedbackLabels.Priority(p)</option>
+                    }
                 </select>
             </div>
             <div class="col-md-2">
-                <select id="Filter_TenantId" class="form-select form-select-sm">
+                <select id="Filter_TenantId" class="form-select form-select-sm" aria-label="Tenant filtresi">
                     <option value="">Tüm Tenant'lar</option>
                     @foreach (var t in Model.Tenants)
                     {
@@ -60,24 +61,48 @@
                     }
                 </select>
             </div>
-            <div class="col-md-3">
-                <input id="Filter_Text" type="text" class="form-control form-control-sm" placeholder="Konu veya açıklamada ara..." />
+            <div class="col-md-2">
+                <select id="Filter_AssignedUserId" class="form-select form-select-sm" aria-label="Atanan filtresi">
+                    <option value="">Tüm Atamalar</option>
+                    <option value="none">— Atanmamış —</option>
+                    @foreach (var u in Model.Assignees)
+                    {
+                        <option value="@u.Id">@(string.IsNullOrWhiteSpace(u.Name) ? u.UserName : u.Name)</option>
+                    }
+                </select>
             </div>
-            <div class="col-md-1 d-flex align-items-center">
+            <div class="col-md-2">
+                <select id="Filter_ModuleCode" class="form-select form-select-sm" aria-label="Modül filtresi">
+                    <option value="">Tüm Modüller</option>
+                    @foreach (var m in Model.Modules)
+                    {
+                        <option value="@m">@m</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-4">
+                <input id="Filter_Text" type="text" class="form-control form-control-sm"
+                       placeholder="Konu, açıklama veya FB-numarası ara..." aria-label="Metin araması" />
+            </div>
+            <div class="col-md-4 d-flex align-items-center gap-3">
                 <div class="form-check">
                     <input class="form-check-input" type="checkbox" id="Filter_OnlyUnanswered" />
                     <label class="form-check-label text-xs" for="Filter_OnlyUnanswered">Cevapsız</label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="Filter_OnlyWithAttachment" />
+                    <label class="form-check-label text-xs" for="Filter_OnlyWithAttachment">Eki olanlar</label>
                 </div>
             </div>
         </form>
 
         <div class="d-flex align-items-center gap-2 mb-2" id="BulkActionBar" style="display:none !important;">
             <span class="text-sm text-muted" id="SelectedCount"></span>
-            <select id="BulkStatusSelect" class="form-select form-select-sm" style="width:auto;">
-                <option value="2">İnceleniyor yap</option>
-                <option value="3">Planlandı yap</option>
-                <option value="4">Tamamlandı yap</option>
-                <option value="5">Reddet</option>
+            <select id="BulkStatusSelect" class="form-select form-select-sm" style="width:auto;" aria-label="Toplu durum">
+                @foreach (var s in Enum.GetValues<FeedbackStatus>())
+                {
+                    <option value="@((int)s)" selected="@(s == FeedbackStatus.InReview)">@FeedbackLabels.Status(s) yap</option>
+                }
             </select>
             <button type="button" id="btn-bulk-apply" class="btn btn-sm btn-primary">Uygula</button>
         </div>
@@ -85,14 +110,17 @@
         <abp-table striped-rows="true" id="FeedbackTable">
             <thead>
                 <tr>
-                    <th><input type="checkbox" id="SelectAllCheckbox" /></th>
+                    <th><input type="checkbox" id="SelectAllCheckbox" aria-label="Tümünü seç" /></th>
                     <th>İşlemler</th>
+                    <th>No</th>
                     <th>Tarih</th>
                     <th>Tenant</th>
                     <th>Tür</th>
                     <th>Konu</th>
+                    <th>Modül</th>
                     <th>Durum</th>
                     <th>Öncelik</th>
+                    <th>Atanan</th>
                     <th>Puan</th>
                     <th>Cevap</th>
                 </tr>

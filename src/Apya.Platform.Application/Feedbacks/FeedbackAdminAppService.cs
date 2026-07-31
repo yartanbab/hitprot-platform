@@ -13,6 +13,7 @@ using Volo.Abp.Authorization;
 using Volo.Abp.Data;
 using Volo.Abp.Domain.Entities;
 using Volo.Abp.Domain.Repositories;
+using Volo.Abp.Identity;
 using Volo.Abp.MultiTenancy;
 using Volo.Abp.TenantManagement;
 using Volo.Abp.Timing;
@@ -36,25 +37,115 @@ public class FeedbackAdminAppService : ApplicationService, IFeedbackAdminAppServ
 
     private readonly IRepository<Feedback, Guid> _feedbackRepository;
     private readonly IRepository<FeedbackAttachment, Guid> _attachmentRepository;
+    private readonly IRepository<FeedbackActivity, Guid> _activityRepository;
     private readonly FeedbackManager _feedbackManager;
     private readonly ITenantRepository _tenantRepository;
+    private readonly IIdentityUserRepository _userRepository;
     private readonly IDataFilter<IMultiTenant> _multiTenantFilter;
     private readonly IClock _clock;
 
     public FeedbackAdminAppService(
         IRepository<Feedback, Guid> feedbackRepository,
         IRepository<FeedbackAttachment, Guid> attachmentRepository,
+        IRepository<FeedbackActivity, Guid> activityRepository,
         FeedbackManager feedbackManager,
         ITenantRepository tenantRepository,
+        IIdentityUserRepository userRepository,
         IDataFilter<IMultiTenant> multiTenantFilter,
         IClock clock)
     {
         _feedbackRepository = feedbackRepository;
         _attachmentRepository = attachmentRepository;
+        _activityRepository = activityRepository;
         _feedbackManager = feedbackManager;
         _tenantRepository = tenantRepository;
+        _userRepository = userRepository;
         _multiTenantFilter = multiTenantFilter;
         _clock = clock;
+    }
+
+    [Authorize(PlatformPermissions.Feedbacks.Respond)]
+    public async Task UpdateImpactAsync(Guid id, UpdateFeedbackImpactDto input)
+    {
+        EnsureHostContext();
+
+        using (_multiTenantFilter.Disable())
+        {
+            var feedback = await _feedbackRepository.GetAsync(id);
+            await _feedbackManager.SetImpactAsync(feedback, input.Impact, CurrentUser.UserName);
+        }
+    }
+
+    [Authorize(PlatformPermissions.Feedbacks.Assign)]
+    public async Task AssignAsync(Guid id, AssignFeedbackDto input)
+    {
+        EnsureHostContext();
+
+        string? userName = null;
+        if (input.UserId.HasValue)
+        {
+            // Atanan host tarafındaki bir yönetici olmalı; tenant kullanıcısı atanamaz.
+            var user = await _userRepository.FindAsync(input.UserId.Value);
+            if (user is null || user.TenantId != null)
+            {
+                throw new EntityNotFoundException(typeof(Volo.Abp.Identity.IdentityUser), input.UserId.Value);
+            }
+
+            userName = user.UserName;
+        }
+
+        using (_multiTenantFilter.Disable())
+        {
+            var feedback = await _feedbackRepository.GetAsync(id);
+            await _feedbackManager.AssignAsync(feedback, input.UserId, userName, CurrentUser.UserName);
+        }
+    }
+
+    public async Task<List<FeedbackAssigneeDto>> GetAssigneesAsync()
+    {
+        EnsureHostContext();
+
+        // Host bağlamındaki kullanıcılar (tenant kullanıcıları atanamaz).
+        var users = await _userRepository.GetListAsync(sorting: nameof(Volo.Abp.Identity.IdentityUser.UserName), maxResultCount: 200);
+
+        return users
+            .Where(u => u.TenantId == null)
+            .Select(u => new FeedbackAssigneeDto { Id = u.Id, UserName = u.UserName, Name = u.Name })
+            .ToList();
+    }
+
+    public async Task<List<string>> GetModuleCodesAsync()
+    {
+        EnsureHostContext();
+
+        using (_multiTenantFilter.Disable())
+        {
+            var query = (await _feedbackRepository.GetQueryableAsync())
+                .Where(f => f.ModuleCode != null && f.ModuleCode != "")
+                .Select(f => f.ModuleCode!)
+                .Distinct()
+                .OrderBy(m => m);
+
+            return await AsyncExecuter.ToListAsync(query);
+        }
+    }
+
+    public async Task<List<FeedbackActivityDto>> GetActivitiesAsync(Guid id)
+    {
+        EnsureHostContext();
+
+        using (_multiTenantFilter.Disable())
+        {
+            var query = (await _activityRepository.GetQueryableAsync())
+                .Where(a => a.FeedbackId == id)
+                .OrderBy(a => a.CreationTime);
+
+            var items = await AsyncExecuter.ToListAsync(query);
+
+            return items
+                .Select(a => ObjectMapper.Map<FeedbackActivity, FeedbackActivityDto>(a))
+                .ToList();
+        }
     }
 
     public async Task<PagedResultDto<FeedbackDto>> GetListAsync(GetFeedbackListInput input)
@@ -181,11 +272,17 @@ public class FeedbackAdminAppService : ApplicationService, IFeedbackAdminAppServ
                          PageUrl = f.PageUrl,
                          PageTitle = f.PageTitle,
                          CreationTime = f.CreationTime,
-                         LastRespondedAt = f.LastRespondedAt
+                         LastRespondedAt = f.LastRespondedAt,
+                         ResolvedAt = f.ResolvedAt
                      }));
 
             var ratings = rows.Where(r => r.Rating.HasValue).Select(r => r.Rating!.Value).ToList();
             var trendSince = _clock.Now.Date.AddDays(-TrendWindowDays + 1);
+
+            // Süre metrikleri yalnızca ilgili aşamayı geçmiş kayıtlar üzerinden hesaplanır;
+            // henüz cevaplanmamış/kapanmamış kayıtlar ortalamayı aşağı çekmemeli.
+            var responded = rows.Where(r => r.LastRespondedAt.HasValue).ToList();
+            var resolved  = rows.Where(r => r.ResolvedAt.HasValue).ToList();
 
             return new FeedbackStatsDto
             {
@@ -197,6 +294,14 @@ public class FeedbackAdminAppService : ApplicationService, IFeedbackAdminAppServ
 
                 AverageRating = ratings.Count > 0 ? Math.Round(ratings.Average(), 2) : null,
                 RatingCount = ratings.Count,
+
+                AverageFirstResponseHours = responded.Count > 0
+                    ? Math.Round(responded.Average(r => (r.LastRespondedAt!.Value - r.CreationTime).TotalHours), 1)
+                    : null,
+
+                AverageResolutionHours = resolved.Count > 0
+                    ? Math.Round(resolved.Average(r => (r.ResolvedAt!.Value - r.CreationTime).TotalHours), 1)
+                    : null,
 
                 ByType = rows
                     .GroupBy(r => (int)r.Type)
@@ -370,10 +475,36 @@ public class FeedbackAdminAppService : ApplicationService, IFeedbackAdminAppServ
             query = query.Where(f => f.TenantId == input.TenantId.Value);
         }
 
+        if (input.Impact.HasValue)
+        {
+            query = query.Where(f => f.Impact == input.Impact.Value);
+        }
+
+        if (input.AssignedUserId.HasValue)
+        {
+            query = query.Where(f => f.AssignedUserId == input.AssignedUserId.Value);
+        }
+        else if (input.OnlyUnassigned == true)
+        {
+            query = query.Where(f => f.AssignedUserId == null);
+        }
+
+        if (!input.ModuleCode.IsNullOrWhiteSpace())
+        {
+            query = query.Where(f => f.ModuleCode == input.ModuleCode);
+        }
+
+        if (input.OnlyWithAttachment == true)
+        {
+            query = query.Where(f => f.ScreenshotFileName != null);
+        }
+
         if (!input.Filter.IsNullOrWhiteSpace())
         {
             var term = input.Filter!.Trim();
-            query = query.Where(f => f.Subject.Contains(term) || f.Body.Contains(term));
+            // FB-no ile birebir arama da desteklenir (kullanıcı numarayı yapıştırır).
+            query = query.Where(f =>
+                f.Subject.Contains(term) || f.Body.Contains(term) || f.FeedbackNumber == term);
         }
 
         if (input.MinRating.HasValue)
@@ -518,5 +649,6 @@ public class FeedbackAdminAppService : ApplicationService, IFeedbackAdminAppServ
         public string? PageTitle { get; set; }
         public DateTime CreationTime { get; set; }
         public DateTime? LastRespondedAt { get; set; }
+        public DateTime? ResolvedAt { get; set; }
     }
 }

@@ -170,8 +170,10 @@ public static class PlatformPermissions
     {
         public const string Default = GroupName + ".Feedbacks"; // paneli görme
         public const string Respond = Default + ".Respond";     // durum/öncelik/etiket + cevap
+        public const string Assign  = Default + ".Assign";      // kayda sorumlu atama
         public const string Delete  = Default + ".Delete";
         public const string Export  = Default + ".Export";
+        public const string ManageSettings = Default + ".ManageSettings"; // ayarlar ekranı
     }
 
     // --- SİSTEM SAĞLIĞI / TELEMETRİ (host) ---

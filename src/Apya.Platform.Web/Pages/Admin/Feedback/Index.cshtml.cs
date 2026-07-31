@@ -27,6 +27,11 @@ public class IndexModel : AbpPageModel
 
     public List<TenantOption> Tenants { get; set; } = new();
 
+    public List<FeedbackAssigneeDto> Assignees { get; set; } = new();
+
+    /// <summary>Filtre listesi için kullanımdaki modül kodları.</summary>
+    public List<string> Modules { get; set; } = new();
+
     public IndexModel(
         IFeedbackAdminAppService feedbackAdminAppService,
         ITenantRepository tenantRepository,
@@ -41,11 +46,14 @@ public class IndexModel : AbpPageModel
     {
         var tenants = await _tenantRepository.GetListAsync();
         Tenants = tenants.ConvertAll(t => new TenantOption(t.Id, t.Name));
+        Assignees = await _feedbackAdminAppService.GetAssigneesAsync();
+        Modules = await _feedbackAdminAppService.GetModuleCodesAsync();
     }
 
     public async Task<IActionResult> OnGetExcelAsync(
         FeedbackType? type, FeedbackStatus? status, FeedbackPriority? priority,
-        Guid? tenantId, string? filter, bool? onlyUnanswered)
+        Guid? tenantId, string? filter, bool? onlyUnanswered,
+        Guid? assignedUserId, bool? onlyUnassigned, string? moduleCode, bool? onlyWithAttachment)
     {
         // MaxResultCount kasıtlı olarak set edilmiyor: GetAllForExportAsync onu kullanmıyor,
         // kendi içindeki MaxExportRows (10.000) sınırını uyguluyor. int.MaxValue geçmek
@@ -57,7 +65,11 @@ public class IndexModel : AbpPageModel
             Priority = priority,
             TenantId = tenantId,
             Filter = filter,
-            OnlyUnanswered = onlyUnanswered
+            OnlyUnanswered = onlyUnanswered,
+            AssignedUserId = assignedUserId,
+            OnlyUnassigned = onlyUnassigned,
+            ModuleCode = moduleCode,
+            OnlyWithAttachment = onlyWithAttachment
         });
 
         var bytes = ReportExporter.FeedbackListToExcel(items);

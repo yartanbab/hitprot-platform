@@ -2,9 +2,22 @@ $(function () {
     var service = apya.platform.feedbacks.feedbackAdmin;
     var detailModal = new abp.ModalManager(abp.appPath + 'Admin/Feedback/DetailModal');
 
-    var TYPE_LABELS = { 1: 'Hata', 2: 'Öneri', 3: 'Soru', 4: 'Beğeni' };
-    var STATUS_LABELS = { 1: 'Yeni', 2: 'İnceleniyor', 3: 'Planlandı', 4: 'Tamamlandı', 5: 'Reddedildi' };
-    var STATUS_CHIPS = { 1: 'apya-chip-neutral', 2: 'apya-chip-brand', 3: 'apya-chip-accent', 4: 'apya-chip-positive', 5: 'apya-chip-negative' };
+    var TYPE_LABELS = {
+        1: 'Hata', 2: 'Öneri', 3: 'Soru', 4: 'Beğeni', 5: 'Kullanım zorluğu',
+        6: 'Eksik içerik', 7: 'Performans', 8: 'Tasarım / UX', 9: 'Diğer'
+    };
+    var STATUS_LABELS = {
+        1: 'Yeni', 2: 'İnceleniyor', 3: 'Planlandı', 4: 'Tamamlandı', 5: 'Reddedildi',
+        6: 'Ek bilgi bekleniyor', 7: 'Geliştirmede', 8: 'Testte', 9: 'Yayınlandı',
+        10: 'Mükerrer', 11: 'Kapsam dışı', 12: 'Arşivlendi'
+    };
+    // Renk TEK BAŞINA anlam taşımaz — her rozette metin de var (erişilebilirlik).
+    var STATUS_CHIPS = {
+        1: 'apya-chip-accent', 2: 'apya-chip-brand', 3: 'apya-chip-brand',
+        4: 'apya-chip-positive', 5: 'apya-chip-negative', 6: 'apya-chip-warning',
+        7: 'apya-chip-brand', 8: 'apya-chip-brand', 9: 'apya-chip-positive',
+        10: 'apya-chip-neutral', 11: 'apya-chip-neutral', 12: 'apya-chip-neutral'
+    };
     var PRIORITY_LABELS = { 1: 'Düşük', 2: 'Normal', 3: 'Yüksek', 4: 'Kritik' };
 
     var selectedIds = {};
@@ -14,13 +27,20 @@ $(function () {
         var status = $('#Filter_Status').val();
         var priority = $('#Filter_Priority').val();
         var tenantId = $('#Filter_TenantId').val();
+        var assigned = $('#Filter_AssignedUserId').val();
+        var moduleCode = $('#Filter_ModuleCode').val();
         return {
             type: type === '' ? null : parseInt(type, 10),
             status: status === '' ? null : parseInt(status, 10),
             priority: priority === '' ? null : parseInt(priority, 10),
             tenantId: tenantId === '' ? null : tenantId,
+            // "none" özel değeri: hiç kimseye atanmamış kayıtlar.
+            assignedUserId: (assigned === '' || assigned === 'none') ? null : assigned,
+            onlyUnassigned: assigned === 'none' ? true : null,
+            moduleCode: moduleCode === '' ? null : moduleCode,
             filter: $('#Filter_Text').val() || null,
-            onlyUnanswered: $('#Filter_OnlyUnanswered').is(':checked') ? true : null
+            onlyUnanswered: $('#Filter_OnlyUnanswered').is(':checked') ? true : null,
+            onlyWithAttachment: $('#Filter_OnlyWithAttachment').is(':checked') ? true : null
         };
     }
 
@@ -38,7 +58,7 @@ $(function () {
         abp.libs.datatables.normalizeConfiguration({
             serverSide: true,
             paging: true,
-            order: [[2, 'desc']],
+            order: [[3, 'desc']],
             searching: false,
             scrollX: true,
             ajax: abp.libs.datatables.createAjax(service.getList, getFilterInput),
@@ -64,13 +84,25 @@ $(function () {
                     }
                 },
                 {
+                    title: 'No', data: 'feedbackNumber',
+                    render: function (n) { return n ? '<code class="text-xs">' + n + '</code>' : '—'; }
+                },
+                {
                     title: 'Tarih',
                     data: 'creationTime',
                     render: function (d) { return d ? d.substring(0, 16).replace('T', ' ') : ''; }
                 },
                 { title: 'Tenant', data: 'tenantName', defaultContent: '-' },
                 { title: 'Tür', data: 'type', render: function (t) { return TYPE_LABELS[t] || t; } },
-                { title: 'Konu', data: 'subject' },
+                {
+                    title: 'Konu', data: 'subject',
+                    render: function (s, type, row) {
+                        // Anonim kayıtlarda gönderen adı gösterilmez.
+                        var badge = row.isAnonymous ? ' <span class="apya-chip apya-chip-neutral">Anonim</span>' : '';
+                        return $('<div>').text(s || '').html() + badge;
+                    }
+                },
+                { title: 'Modül', data: 'moduleCode', defaultContent: '—' },
                 {
                     title: 'Durum', data: 'status',
                     render: function (s) {
@@ -78,6 +110,10 @@ $(function () {
                     }
                 },
                 { title: 'Öncelik', data: 'priority', render: function (p) { return PRIORITY_LABELS[p] || p; } },
+                {
+                    title: 'Atanan', data: 'assignedUserName',
+                    render: function (n) { return n ? $('<div>').text(n).html() : '<span class="text-muted">—</span>'; }
+                },
                 { title: 'Puan', data: 'rating', defaultContent: '—' },
                 { title: 'Cevap', data: 'commentCount' }
             ]
@@ -145,6 +181,24 @@ $(function () {
         var priority = parseInt($(this).val(), 10);
         service.updatePriority(id, { priority: priority }).then(function () {
             abp.notify.success('Öncelik güncellendi.');
+            dataTable.ajax.reload(null, false);
+        });
+    });
+
+    $(document).on('change', '.detail-impact-select', function () {
+        var id = $(this).data('id');
+        var raw = $(this).val();
+        service.updateImpact(id, { impact: raw === '' ? null : parseInt(raw, 10) }).then(function () {
+            abp.notify.success('Etki güncellendi.');
+            dataTable.ajax.reload(null, false);
+        });
+    });
+
+    $(document).on('change', '.detail-assign-select', function () {
+        var id = $(this).data('id');
+        var raw = $(this).val();
+        service.assign(id, { userId: raw === '' ? null : raw }).then(function () {
+            abp.notify.success(raw === '' ? 'Atama kaldırıldı.' : 'Kayıt atandı.');
             dataTable.ajax.reload(null, false);
         });
     });

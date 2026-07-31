@@ -27,6 +27,19 @@ public interface IFeedbackAdminAppService : IApplicationService
 
     Task BulkUpdateStatusAsync(BulkUpdateFeedbackStatusDto input);
 
+    Task UpdateImpactAsync(Guid id, UpdateFeedbackImpactDto input);
+
+    Task AssignAsync(Guid id, AssignFeedbackDto input);
+
+    /// <summary>Atama açılır listesi — host tarafındaki yönetici kullanıcıları.</summary>
+    Task<List<FeedbackAssigneeDto>> GetAssigneesAsync();
+
+    /// <summary>Kaydın zaman çizelgesi (eskiden yeniye).</summary>
+    Task<List<FeedbackActivityDto>> GetActivitiesAsync(Guid id);
+
+    /// <summary>Filtre açılır listesi için kullanımdaki modül kodları.</summary>
+    Task<List<string>> GetModuleCodesAsync();
+
     Task<FeedbackCommentDto> AddCommentAsync(Guid id, AddFeedbackCommentDto input);
 
     Task DeleteAsync(Guid id);

@@ -23,4 +23,22 @@ public class AnalyticsModel : AbpPageModel
     {
         Stats = await _feedbackAdminAppService.GetStatsAsync();
     }
+
+    /// <summary>Saat cinsinden süreyi okunur biçime çevirir (36,5 → "1,5 gün").</summary>
+    public string FormatHours(double? hours)
+    {
+        if (hours is null)
+        {
+            return "—";
+        }
+
+        if (hours < 1)
+        {
+            return $"{hours.Value * 60:0} dk";
+        }
+
+        return hours < 48
+            ? $"{hours.Value:0.#} saat"
+            : $"{hours.Value / 24:0.#} gün";
+    }
 }

@@ -111,6 +111,7 @@ namespace Apya.Platform
                 .ForMember(d => d.Comments, o => o.Ignore());
             CreateMap<Apya.Platform.Feedbacks.FeedbackComment, Apya.Platform.Feedbacks.Dtos.FeedbackCommentDto>();
             CreateMap<Apya.Platform.Feedbacks.FeedbackAttachment, Apya.Platform.Feedbacks.Dtos.FeedbackAttachmentDto>();
+            CreateMap<Apya.Platform.Feedbacks.FeedbackActivity, Apya.Platform.Feedbacks.Dtos.FeedbackActivityDto>();
         }
     }
 }

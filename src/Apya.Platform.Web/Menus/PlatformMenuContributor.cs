@@ -198,6 +198,14 @@ public class PlatformMenuContributor : IMenuContributor
                 icon: "fa fa-comment-dots", url: "/Admin/Feedback"));
         }
 
+        // Geri bildirim yapılandırması — ayrı izin (ManageSettings).
+        if (await permission.IsGrantedAsync(PlatformPermissions.Feedbacks.ManageSettings))
+        {
+            administration.AddItem(new ApplicationMenuItem(
+                "Apya.Admin.FeedbackSettings", l["Menu:FeedbackSettings"],
+                icon: "fa fa-sliders", url: "/Admin/Feedback/Settings"));
+        }
+
         // Sistem Sağlığı — istemci hataları + audit üzerinden türetilen sunucu metrikleri.
         if (await permission.IsGrantedAsync(PlatformPermissions.SystemHealth.Default))
         {

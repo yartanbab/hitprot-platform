@@ -40,6 +40,7 @@
         "Menu:AiCenter:Workflows": "AI İş Akışları",
         "Menu:MyFeedback": "Geri Bildirimlerim",
         "Menu:FeedbackAdmin": "Geri Bildirimler",
+        "Menu:FeedbackSettings": "Geri Bildirim Ayarları",
         "Menu:SystemHealth": "Sistem Sağlığı",
 
         "Feedback:OpenLink": "Geri Bildirim",
@@ -231,6 +232,8 @@
         "Permission:Feedbacks.Respond": "Durum/Öncelik/Cevap Yönetimi",
         "Permission:Feedbacks.Delete": "Geri Bildirim Silme",
         "Permission:Feedbacks.Export": "Excel'e Aktarma",
+        "Permission:Feedbacks.Assign": "Sorumlu Atama",
+        "Permission:Feedbacks.ManageSettings": "Ayarları Yönetme",
 
         "Permission:SystemHealth": "Sistem Sağlığı",
         "Permission:SystemHealth.Resolve": "İstemci Hatasını Çözüldü İşaretleme",
@@ -441,6 +444,12 @@
 
         "Setting:Telemetry.Enabled": "İstemci Hata Telemetrisi",
         "Setting:Telemetry.Enabled.Description": "Kapatıldığında tarayıcıda oluşan hatalar sunucuya raporlanmaz.",
+        "Setting:Feedback.TriggerEnabled": "Geri Bildirim Tetikleyicisi",
+        "Setting:Feedback.TriggerPlacement": "Tetikleyici Konumu",
+        "Setting:Feedback.EnabledTypes": "Açık Geri Bildirim Türleri",
+        "Setting:Feedback.MaxFileSizeMb": "Maksimum Dosya Boyutu (MB)",
+        "Setting:Feedback.AllowedFileExtensions": "İzinli Dosya Uzantıları",
+        "Setting:Feedback.AllowAnonymous": "Anonim Gönderime İzin Ver",
         "Setting:Telemetry.RetentionDays": "Telemetri Saklama Süresi (gün)",
         "Setting:Telemetry.RetentionDays.Description": "Denetim günlüğü ve istemci hata kayıtları bu süreden sonra otomatik silinir. Geri bildirimler bu süreden etkilenmez.",
 

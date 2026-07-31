@@ -39,6 +39,7 @@
     "Menu:AiCenter:Workflows": "AI Workflows",
     "Menu:MyFeedback": "My Feedback",
     "Menu:FeedbackAdmin": "Feedback",
+    "Menu:FeedbackSettings": "Feedback Settings",
     "Menu:SystemHealth": "System Health",
 
     "Feedback:OpenLink": "Feedback",
@@ -230,6 +231,14 @@
     "Permission:Feedbacks.Respond": "Manage Status/Priority/Reply",
     "Permission:Feedbacks.Delete": "Delete Feedback",
     "Permission:Feedbacks.Export": "Export to Excel",
+    "Permission:Feedbacks.Assign": "Assign Owner",
+    "Permission:Feedbacks.ManageSettings": "Manage Settings",
+    "Setting:Feedback.TriggerEnabled": "Feedback Trigger",
+    "Setting:Feedback.TriggerPlacement": "Trigger Placement",
+    "Setting:Feedback.EnabledTypes": "Enabled Feedback Types",
+    "Setting:Feedback.MaxFileSizeMb": "Maximum File Size (MB)",
+    "Setting:Feedback.AllowedFileExtensions": "Allowed File Extensions",
+    "Setting:Feedback.AllowAnonymous": "Allow Anonymous Submission",
 
     "Permission:SystemHealth": "System Health",
     "Permission:SystemHealth.Resolve": "Mark Client Error Resolved",

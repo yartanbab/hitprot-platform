@@ -24,4 +24,18 @@ public class GetFeedbackListInput : PagedAndSortedResultRequestDto
 
     /// <summary>Belirli bir ekranın geri bildirimleri — ısı haritasından tıklanınca.</summary>
     public string? PageUrl { get; set; }
+
+    public FeedbackImpact? Impact { get; set; }
+
+    /// <summary>Belirli bir kişiye atanmışlar.</summary>
+    public Guid? AssignedUserId { get; set; }
+
+    /// <summary>true → hiç kimseye atanmamışlar (Assigned filtresiyle birlikte kullanılmaz).</summary>
+    public bool? OnlyUnassigned { get; set; }
+
+    /// <summary>Bağlamsal link'ten gelen modül kodu.</summary>
+    public string? ModuleCode { get; set; }
+
+    /// <summary>true → yalnızca eki olanlar.</summary>
+    public bool? OnlyWithAttachment { get; set; }
 }

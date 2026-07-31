@@ -32,6 +32,17 @@ public class BulkUpdateFeedbackStatusDto
     public FeedbackStatus Status { get; set; }
 }
 
+public class UpdateFeedbackImpactDto
+{
+    public FeedbackImpact? Impact { get; set; }
+}
+
+/// <summary>Atama; <c>UserId</c> null ise atama kaldırılır.</summary>
+public class AssignFeedbackDto
+{
+    public Guid? UserId { get; set; }
+}
+
 public class AddFeedbackCommentDto
 {
     [Required]
