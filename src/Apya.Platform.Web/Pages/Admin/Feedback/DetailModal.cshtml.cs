@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Apya.Platform.Feedbacks;
 using Apya.Platform.Feedbacks.Dtos;
 using Apya.Platform.Permissions;
+using Apya.Platform.Web.Telemetry;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Volo.Abp.AspNetCore.Mvc.UI.RazorPages;
@@ -39,7 +40,7 @@ public class DetailModalModel : AbpPageModel
     public async Task OnGetAsync()
     {
         Feedback = await _feedbackAdminAppService.GetAsync(Id);
-        Breadcrumb = ParseBreadcrumb(Feedback.BreadcrumbJson);
+        Breadcrumb = BreadcrumbParser.Parse(Feedback.BreadcrumbJson);
         Details = ParseDetails(Feedback.DetailsJson);
         Activities = await _feedbackAdminAppService.GetActivitiesAsync(Id);
         Assignees = await _feedbackAdminAppService.GetAssigneesAsync();
@@ -90,36 +91,4 @@ public class DetailModalModel : AbpPageModel
         _             => key
     };
 
-    private static List<BreadcrumbEvent> ParseBreadcrumb(string? json)
-    {
-        var result = new List<BreadcrumbEvent>();
-        if (string.IsNullOrWhiteSpace(json))
-        {
-            return result;
-        }
-
-        try
-        {
-            using var doc = JsonDocument.Parse(json);
-            foreach (var item in doc.RootElement.EnumerateArray())
-            {
-                var t = item.TryGetProperty("t", out var tProp) ? tProp.GetInt64() : 0;
-                var y = item.TryGetProperty("y", out var yProp) ? yProp.GetString() : null;
-                var l = item.TryGetProperty("l", out var lProp) ? lProp.GetString() : null;
-
-                result.Add(new BreadcrumbEvent(
-                    DateTimeOffset.FromUnixTimeMilliseconds(t).LocalDateTime,
-                    y ?? "?",
-                    l ?? ""));
-            }
-        }
-        catch (JsonException)
-        {
-            // Bozuk/eksik JSON sessizce boş liste döner — teşhis verisi opsiyoneldir.
-        }
-
-        return result;
-    }
-
-    public record BreadcrumbEvent(DateTime Time, string Type, string Label);
 }

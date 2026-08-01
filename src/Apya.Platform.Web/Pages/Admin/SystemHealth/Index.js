@@ -3,10 +3,30 @@ $(function () {
 
     var SOURCE_LABELS = { 1: 'JS Hatası', 2: 'Promise Reddi', 3: 'AJAX Hatası' };
 
+    var windowDays = parseInt($('#SystemHealthContext').data('window-days'), 10) || 7;
+
+    // Tek bir istemci hatasının teşhis detayı (stack trace, davranış izi, ortam).
+    var clientErrorDetailModal = new abp.ModalManager({
+        viewUrl: '/Admin/SystemHealth/ClientErrorDetailModal'
+    });
+
+    // Bir URL'in pencere içindeki tek tek sunucu hataları (exception metni dahil).
+    var serverErrorDetailModal = new abp.ModalManager({
+        viewUrl: '/Admin/SystemHealth/ServerErrorDetailModal'
+    });
+
     function getFilterInput() {
         var isResolved = $('#Filter_IsResolved').val();
+        var source = $('#Filter_Source').val();
+        var tenant = $('#Filter_Tenant').val();
+
         return {
             isResolved: isResolved === '' ? null : (isResolved === 'true'),
+            source: source === '' ? null : parseInt(source, 10),
+            // "host" sentinel'i ayrı bayrağa çevrilir: Guid? tek başına
+            // "filtre yok" ile "host" ayrımını yapamıyor (bkz. GetClientErrorListInput).
+            hostOnly: tenant === 'host',
+            tenantId: (tenant === '' || tenant === 'host') ? null : tenant,
             filter: $('#Filter_Text').val() || null
         };
     }
@@ -25,6 +45,12 @@ $(function () {
                     orderable: false,
                     rowAction: {
                         items: [
+                            {
+                                text: 'Detay',
+                                action: function (data) {
+                                    clientErrorDetailModal.open({ id: data.record.id });
+                                }
+                            },
                             {
                                 text: 'Çözüldü İşaretle',
                                 visible: function (record) { return !record.isResolved; },
@@ -71,11 +97,40 @@ $(function () {
         })
     );
 
-    $('#Filter_IsResolved').on('change', function () { dataTable.ajax.reload(); });
+    // Detayda durum değiştirilirse tablo da tazelensin.
+    clientErrorDetailModal.onOpen(function () {
+        clientErrorDetailModal.getModal().find('.client-error-toggle-resolved').on('click', function () {
+            var $btn = $(this);
+            var next = $btn.data('resolved') !== true && $btn.data('resolved') !== 'true';
+            service.setClientErrorResolved($btn.data('id'), next).then(function () {
+                abp.notify.success(next ? 'Çözüldü olarak işaretlendi.' : 'Yeniden açıldı.');
+                clientErrorDetailModal.close();
+                dataTable.ajax.reload(null, false);
+            });
+        });
+    });
+
+    $('#Filter_IsResolved, #Filter_Source, #Filter_Tenant').on('change', function () {
+        dataTable.ajax.reload();
+    });
 
     var textDebounce;
     $('#Filter_Text').on('keyup', function () {
         clearTimeout(textDebounce);
         textDebounce = setTimeout(function () { dataTable.ajax.reload(); }, 400);
+    });
+
+    // Kaynak kırılım kartı → tabloyu o kaynağa filtrele (bağlantı zaten #client-errors'a kaydırıyor).
+    $('.apya-source-tile').on('click', function () {
+        $('#Filter_Source').val(String($(this).data('source')));
+        dataTable.ajax.reload();
+    });
+
+    // "En Çok Hata Veren Sayfalar" satırı → o adresin sunucu hataları.
+    $('.apya-failing-page-row').on('click', function () {
+        serverErrorDetailModal.open({
+            url: $(this).data('url'),
+            windowDays: windowDays
+        });
     });
 });

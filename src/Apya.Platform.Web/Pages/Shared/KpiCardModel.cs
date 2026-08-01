@@ -51,4 +51,16 @@ public class KpiCardModel
     /// hesaplandığını anlatır. Boş bırakılırsa ikon basılmaz.
     /// </summary>
     public string? Hint { get; set; }
+
+    /// <summary>
+    /// Doluysa kart tıklanabilir olur (kart kökü &lt;a&gt; olarak basılır) — metriğin
+    /// kaynağı olan listeye/bölüme götürmek için. Boşsa kart düz kutu kalır.
+    /// </summary>
+    public string? Href { get; set; }
+
+    /// <summary>
+    /// <c>Href</c> verildiğinde bağlantının erişilebilir açıklaması — "tıklayınca ne olur".
+    /// Boşsa <c>Label</c> kullanılır.
+    /// </summary>
+    public string? HrefTitle { get; set; }
 }

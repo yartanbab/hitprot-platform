@@ -4,8 +4,20 @@
       <partial name="_KpiCard" model='new KpiCardModel { Icon = "fa-clock", Accent = "positive", Label = "Toplam Efor", ValueId = "KpiTotalHours", Value = "0s" }' />
     Kart çerçevesi (radius/gölge) apya-theme-bridge'in .card kuralından gelir.
 *@
+@using System.Text.Encodings.Web
 @model Apya.Platform.Web.Pages.Shared.KpiCardModel
-
+@{
+    // Href verilmişse kart bir bağlantıyla sarılır — metrikten kaynağı olan
+    // listeye gitmek için. Verilmemişse çıktı eskisiyle birebir aynı kalır.
+    // Sarmalayıcı Html.Raw ile basılır: Razor'ın HTML ayrıştırıcısı @if içinde
+    // dengesiz etiket kabul etmiyor.
+    var enc = HtmlEncoder.Default;
+    var linkOpen = string.IsNullOrEmpty(Model.Href)
+        ? null
+        : Html.Raw($"<a class=\"apya-kpi-card-link\" href=\"{enc.Encode(Model.Href)}\" " +
+                   $"title=\"{enc.Encode(Model.HrefTitle ?? Model.Label)}\">");
+}
+@linkOpen
 <div class="card h-100">
     <div class="card-body d-flex align-items-center">
         <div class="kpi-icon-box kpi-icon-box--@Model.Tone me-3">
@@ -33,5 +45,10 @@
                 <small class="text-muted text-truncate d-block">@Model.SubText</small>
             }
         </div>
+        @if (linkOpen != null)
+        {
+            <i class="fa fa-chevron-right ms-auto ps-2 apya-kpi-card-chevron" aria-hidden="true"></i>
+        }
     </div>
 </div>
+@if (linkOpen != null) { @Html.Raw("</a>") }

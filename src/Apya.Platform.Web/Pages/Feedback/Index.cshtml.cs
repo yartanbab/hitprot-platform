@@ -1,4 +1,6 @@
 using System;
+using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using Apya.Platform.Feedbacks;
 using Apya.Platform.Web.Feedbacks;
@@ -23,13 +25,16 @@ public class IndexModel : AbpPageModel
 {
     private readonly FeedbackFileStorage _fileStorage;
     private readonly IFeedbackAppService _feedbackAppService;
+    private readonly IFeedbackSettingsAppService _settingsAppService;
 
     public IndexModel(
         FeedbackFileStorage fileStorage,
-        IFeedbackAppService feedbackAppService)
+        IFeedbackAppService feedbackAppService,
+        IFeedbackSettingsAppService settingsAppService)
     {
         _fileStorage = fileStorage;
         _feedbackAppService = feedbackAppService;
+        _settingsAppService = settingsAppService;
     }
 
     public void OnGet()
@@ -38,9 +43,10 @@ public class IndexModel : AbpPageModel
 
     public async Task<IActionResult> OnPostUploadScreenshotAsync(IFormFile file)
     {
-        if (file == null || file.Length == 0)
+        var rejection = await ValidateAgainstSettingsAsync(file);
+        if (rejection is not null)
         {
-            return BadRequest("Geçersiz veya boş dosya.");
+            return BadRequest(rejection);
         }
 
         var storedFileName = await _fileStorage.StoreAsync(file);
@@ -50,9 +56,10 @@ public class IndexModel : AbpPageModel
     /// <summary>Ek dosya yükleme — gönderimden önce çağrılır, dönen ad DTO'da beyan edilir.</summary>
     public async Task<IActionResult> OnPostUploadAttachmentAsync(IFormFile file)
     {
-        if (file == null || file.Length == 0)
+        var rejection = await ValidateAgainstSettingsAsync(file);
+        if (rejection is not null)
         {
-            return BadRequest("Geçersiz veya boş dosya.");
+            return BadRequest(rejection);
         }
 
         var storedFileName = await _fileStorage.StoreAsync(file);
@@ -63,6 +70,44 @@ public class IndexModel : AbpPageModel
             contentType = file.ContentType,
             sizeBytes = file.Length
         });
+    }
+
+    /// <summary>
+    /// Yöneticinin ayarladığı boyut/uzantı politikasını uygular. FeedbackFileStorage'daki
+    /// sabit sınır güvenlik tabanıdır (her koşulda geçerli); ayar ondan daha DAR olabilir
+    /// ve daha önce hiçbir yerde uygulanmıyordu — arayüz "en fazla 5 MB" derken sunucu
+    /// 10 MB'ı kabul ediyordu. Reddetme sebebi metin olarak döner; istemci bunu kullanıcıya
+    /// gösterir (bkz. apya-feedback.js/extractFailureReason).
+    /// </summary>
+    private async Task<string?> ValidateAgainstSettingsAsync(IFormFile? file)
+    {
+        if (file == null || file.Length == 0)
+        {
+            return "Geçersiz veya boş dosya.";
+        }
+
+        var settings = await _settingsAppService.GetAsync();
+
+        var maxBytes = (long)settings.MaxFileSizeMb * 1024 * 1024;
+        if (settings.MaxFileSizeMb > 0 && file.Length > maxBytes)
+        {
+            return $"Dosya çok büyük ({file.Length / 1024d / 1024d:0.#} MB). " +
+                   $"En fazla {settings.MaxFileSizeMb} MB yükleyebilirsiniz.";
+        }
+
+        // Ayar zaten ".png,.jpg" biçiminde normalize edilmiş kaydedilir
+        // (FeedbackSettingsAppService.NormalizeExtensions).
+        var allowed = settings.AllowedFileExtensions
+            .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+        var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
+        if (allowed.Length > 0 && !allowed.Contains(extension, StringComparer.OrdinalIgnoreCase))
+        {
+            return $"\"{extension}\" uzantısı kabul edilmiyor. " +
+                   $"İzin verilen türler: {settings.AllowedFileExtensions}";
+        }
+
+        return null;
     }
 
     /// <summary>Kendi kaydının ekran görüntüsü — sahiplik AppService'te doğrulanır.</summary>
