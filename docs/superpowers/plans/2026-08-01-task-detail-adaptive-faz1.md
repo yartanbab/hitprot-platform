@@ -15,7 +15,9 @@
 - Ham renk/px yazma yasak. Renk `var(--apya-*)` veya `tailwind.config.js`'te token'a bağlanmış utility; boşluk `var(--apya-space-*)`; yarıçap `var(--apya-radius-*)`; süre `var(--apya-motion-*)`.
 - Kullanıcıya dönen tüm metinler Türkçe. Yeni Razor metinleri `src/Apya.Platform.Domain.Shared/Localization/Platform/tr.json`'a; React island metinleri bileşen içinde Türkçe sabit (mevcut island'ların deseni).
 - Migration YOK. Bu fazda hiçbir entity/DbContext değişikliği yapılmaz.
-- Yeni NuGet paketi YOK. Yeni npm paketi yalnız şu 4 devDependency: `vitest`, `@testing-library/react`, `@testing-library/jest-dom`, `jsdom`.
+- Yeni NuGet paketi YOK. Yeni npm paketi yalnız şu 5 devDependency: `vitest`, `@testing-library/react`, `@testing-library/jest-dom`, `@testing-library/user-event`, `jsdom` (ilk dördü Task 1'de, `user-event` Task 3'te). Runtime (`dependencies`) bağımlılığı eklenmez.
+- Süre değerleri `var(--apya-motion-fast|base|slow)`; sabit ms yazılmaz. Tasarım sistemi tavanı 200ms — üstüne çıkılmaz.
+- `tailwind.config.js`'teki `zIndex` ölçeği `src/styles/tokens.css`'teki `--apya-z-*` ile **birebir aynı** olmak zorundadır; `tailwind.config.test.js` bunu icra eden bir drift guard testi barındırır.
 - `src/Apya.Platform.Web/Pages/Tasks/EditModal.cshtml` ve `wwwroot/js/task-drawer.js` bu fazda **silinmez** (Faz 9'da kaldırılacak).
 - `src/Apya.Platform.Web/wwwroot/js/apya-kanban.js` bu fazda **değiştirilmez**. Adaptör sözleşmesi buna göre tasarlanmıştır.
 - Yeni modal **varsayılan kapalıdır** (`apya.taskDetail.v2` bayrağı). Bayrak kapalıyken uygulama bugünküyle birebir aynı davranır. Faz 2 bayrağı varsayılan açar, Faz 9 bayrağı tamamen kaldırır.
