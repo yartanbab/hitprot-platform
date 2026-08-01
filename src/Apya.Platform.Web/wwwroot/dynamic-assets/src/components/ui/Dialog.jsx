@@ -52,7 +52,7 @@ const DialogContent = React.forwardRef(function DialogContent(
                 className={cn(
                     'fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-modal',
                     'bg-surface-base text-text-primary',
-                    'border border-default rounded-xl shadow-xl',
+                    'border border-default rounded-[var(--apya-radius-xl)] shadow-xl',
                     'flex flex-col overflow-hidden',
                     'focus-visible:outline-none',
                     'animate-dialog-in',
