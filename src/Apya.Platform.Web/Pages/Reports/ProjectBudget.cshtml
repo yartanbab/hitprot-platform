@@ -81,13 +81,19 @@
                 </div>
                 <div class="col-md-3 col-6 mb-2">
                     <div class="card h-100 py-2">
-                        <div class="text-muted small">Toplam Gider</div>
+                        <div class="text-muted small">
+                            Toplam Gider
+                            <apya-hint text="Yalnız bu projeye bağlı Gider kayıtlarının toplamı — kasa transferi veya başka hareket türü sayılmaz." />
+                        </div>
                         <div class="fw-bold fs-5 text-danger">@s.TotalExpense.ToString("N2")</div>
                     </div>
                 </div>
                 <div class="col-md-3 col-6 mb-2">
                     <div class="card h-100 py-2">
-                        <div class="text-muted small">Toplam Gelir</div>
+                        <div class="text-muted small">
+                            Toplam Gelir
+                            <apya-hint text="Yalnız bu projeye bağlı, faturasız Gelir kayıtlarının toplamı. Bu projeye kesilen SATIŞ FATURALARININ tutarı buraya girmez — fatura geliri bu raporda hiç görünmez." />
+                        </div>
                         <div class="fw-bold fs-5 text-success">@s.TotalIncome.ToString("N2")</div>
                     </div>
                 </div>
@@ -99,7 +105,10 @@
                 </div>
             </div>
 
-            <label class="small text-muted">Bütçe Kullanımı: %@s.BudgetUsagePercent</label>
+            <label class="small text-muted">
+                Bütçe Kullanımı: %@s.BudgetUsagePercent
+                <apya-hint text="Toplam Gider / Bütçe oranı. Gelir bu orana girmez — bütçenin ne kadarının harcandığını gösterir, kâr/zarar durumunu değil." />
+            </label>
             <div class="progress mb-2" style="height:22px;">
                 <div class="progress-bar bg-@barColor" role="progressbar"
                      style="width:@(Math.Min(s.BudgetUsagePercent, 100))%;">

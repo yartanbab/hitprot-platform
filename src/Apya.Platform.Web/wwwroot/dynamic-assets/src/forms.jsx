@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { api } from './lib/api/httpClient';
+import { Hint } from './components/ui/Hint';
 import './index.css';
 
 const STATUS = {
@@ -133,7 +134,8 @@ function FormsList() {
                 {f.status === 1 && (
                   <a href={`/f/${f.slug}`} target="_blank" rel="noreferrer" className="shrink-0 rounded-lg border border-default px-2.5 py-1.5 text-xs hover:bg-surface-sunken" title="Formu aç">↗</a>
                 )}
-                <button onClick={() => remove(f)} className="shrink-0 rounded-lg border border-negative-100 px-2.5 py-1.5 text-xs text-negative-500 hover:bg-negative-50" title="Sil">🗑</button>
+                <button onClick={() => remove(f)} className="shrink-0 rounded-lg border border-negative-100 px-2.5 py-1.5 text-xs text-negative-500 hover:bg-negative-50">🗑</button>
+                <Hint placement="left" text="Formu siler ama mevcut yanıtları SİLMEZ — yanıtlar veritabanında kalır, sahipsiz kalır ve bir daha hiçbir ekrandan erişilemez." />
               </div>
             </div>
             );
