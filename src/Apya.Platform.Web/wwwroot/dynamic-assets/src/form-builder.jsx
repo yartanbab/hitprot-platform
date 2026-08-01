@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { api } from './lib/api/httpClient';
+import { Hint } from './components/ui/Hint';
 import './index.css';
 
 /* ============================================================
@@ -488,6 +489,10 @@ function PublishModal({ formId, slug, onClose }) {
             </div>
             <Toggle label="KVKK onayı iste" checked={kvkk} onChange={setKvkk} />
             <Toggle label="Captcha doğrulaması" checked={captcha} onChange={setCaptcha} />
+            <div className="-mt-2 flex items-start gap-1 text-[11px] text-text-tertiary">
+              <Hint text="Bu dört ayar (Başlangıç, Bitiş, KVKK onayı, Captcha) şu an yalnız kaydediliyor — hiçbiri gerçekten UYGULANMIYOR. Form, bitiş tarihi geçse de herkese açık kalır; KVKK kutucuğu ve captcha genel formda görünmez." />
+              <span>Yukarıdaki 4 ayar henüz devrede değil</span>
+            </div>
             <button onClick={doPublish} disabled={publishing} className="mt-2 rounded-xl bg-accent px-5 py-2.5 text-sm font-bold text-white hover:bg-accent-600 disabled:opacity-50">
               {publishing ? 'Yayınlanıyor…' : 'Yayınla'}
             </button>

@@ -16,16 +16,16 @@
 
 <div class="row g-3 mb-4">
     <div class="col-md-3">
-        <partial name="_KpiCard" model='new KpiCardModel { Icon = "fa-server", Accent = "accent", Label = "Sunucu İsteği", Value = h.ServerRequestCount.ToString() }' />
+        <partial name="_KpiCard" model='new KpiCardModel { Icon = "fa-server", Accent = "accent", Label = "Sunucu İsteği", Value = h.ServerRequestCount.ToString(), Hint = "Audit log kayıtlarından sayılır; tek sorguda en fazla 200.000 satır taranır. Pencerede bundan fazla istek varsa aşan kısım sessizce dışarıda kalır ve bu karttaki tüm metrikler (hata oranı, en yavaş endpoint dahil) yalnız en yeni 200.000 satırı yansıtır." }' />
     </div>
     <div class="col-md-3">
         <partial name="_KpiCard" model='new KpiCardModel { Icon = "fa-triangle-exclamation", Accent = "negative", Label = "Sunucu Hatası", Value = h.ServerErrorCount.ToString(), SubText = $"%{(h.ServerErrorRate * 100):0.0} oran" }' />
     </div>
     <div class="col-md-3">
-        <partial name="_KpiCard" model='new KpiCardModel { Icon = "fa-bug", Accent = "warning", Label = "Çözülmemiş İstemci Hatası", Value = h.UnresolvedClientErrorCount.ToString() }' />
+        <partial name="_KpiCard" model='new KpiCardModel { Icon = "fa-bug", Accent = "warning", Label = "Çözülmemiş İstemci Hatası", Value = h.UnresolvedClientErrorCount.ToString(), Hint = "TÜM ZAMANLARIN toplamı — seçili gün penceresiyle sınırlı DEĞİL. Çözüldü işaretlenmemiş her benzersiz hata (fingerprint) sayılır, ne zaman görüldüğüne bakılmaz." }' />
     </div>
     <div class="col-md-3">
-        <partial name="_KpiCard" model='new KpiCardModel { Icon = "fa-desktop", Accent = "brand", Label = "İstemci Hata Oluşumu", Value = h.ClientErrorOccurrencesInWindow.ToString() }' />
+        <partial name="_KpiCard" model='new KpiCardModel { Icon = "fa-desktop", Accent = "brand", Label = "İstemci Hata Oluşumu", Value = h.ClientErrorOccurrencesInWindow.ToString(), Hint = "Son görülme tarihi seçili pencere içinde kalan hataların, o hata için kaydedilmiş TOPLAM oluşum sayısının toplamı — yaklaşık bir değerdir, tam geçmiş tutulmaz. Üstteki Çözülmemiş kartıyla karıştırmayın: o tüm zamanları kapsar, bu yalnız pencereyi." }' />
     </div>
 </div>
 
