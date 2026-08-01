@@ -86,6 +86,8 @@ public class SystemHealthAppService : ApplicationService, ISystemHealthAppServic
 
             var unresolvedClientErrors = await CountUnresolvedClientErrorsAsync();
             var clientErrorOccurrences = await SumClientErrorOccurrencesAsync(since);
+            var clientErrorsBySource = await GetClientErrorsBySourceAsync(since);
+            var tenantOptions = await GetTenantOptionsAsync();
 
             return new SystemHealthDto
             {
@@ -139,8 +141,44 @@ public class SystemHealthAppService : ApplicationService, ISystemHealthAppServic
                     })
                     .OrderByDescending(t => t.ErrorCount)
                     .Take(TopTenantsCount)
-                    .ToList()
+                    .ToList(),
+
+                ClientErrorsBySource = clientErrorsBySource,
+                TenantOptions = tenantOptions
             };
+        }
+    }
+
+    public async Task<List<ServerErrorDetailDto>> GetServerErrorsAsync(GetServerErrorListInput input)
+    {
+        EnsureHostContext();
+
+        var days = input.WindowDays <= 0 ? 7 : input.WindowDays;
+        var take = Math.Clamp(input.MaxResultCount, 1, 200);
+        var since = Clock.Now.AddDays(-days);
+
+        using (_multiTenantFilter.Disable())
+        {
+            var query = (await _auditLogRepository.GetQueryableAsync())
+                .Where(a => a.ExecutionTime >= since && a.Url == input.Url)
+                .Where(a => (a.Exceptions != null && a.Exceptions != "")
+                            || (a.HttpStatusCode != null && a.HttpStatusCode >= 500));
+
+            return await AsyncExecuter.ToListAsync(
+                query.OrderByDescending(a => a.ExecutionTime)
+                     .Take(take)
+                     .Select(a => new ServerErrorDetailDto
+                     {
+                         ExecutionTime = a.ExecutionTime,
+                         ExecutionDuration = a.ExecutionDuration,
+                         HttpStatusCode = a.HttpStatusCode,
+                         HttpMethod = a.HttpMethod,
+                         UserName = a.UserName,
+                         TenantName = a.TenantId == null ? "Host" : a.TenantName,
+                         ClientIpAddress = a.ClientIpAddress,
+                         BrowserInfo = a.BrowserInfo,
+                         Exceptions = a.Exceptions
+                     }));
         }
     }
 
@@ -162,7 +200,11 @@ public class SystemHealthAppService : ApplicationService, ISystemHealthAppServic
                 query = query.Where(e => e.Source == input.Source.Value);
             }
 
-            if (input.TenantId.HasValue)
+            if (input.HostOnly)
+            {
+                query = query.Where(e => e.TenantId == null);
+            }
+            else if (input.TenantId.HasValue)
             {
                 query = query.Where(e => e.TenantId == input.TenantId.Value);
             }
@@ -245,6 +287,49 @@ public class SystemHealthAppService : ApplicationService, ISystemHealthAppServic
         var query = (await _clientErrorRepository.GetQueryableAsync()).Where(e => e.LastSeenAt >= since);
         var counts = await AsyncExecuter.ToListAsync(query.Select(e => e.OccurrenceCount));
         return counts.Sum();
+    }
+
+    /// <summary>
+    /// Kaynak kırılımı (JS / Promise / AJAX). "Hangi tür hata baskın" sorusunu
+    /// cevaplar; pencere ölçütü SumClientErrorOccurrencesAsync ile aynıdır
+    /// (son görülme pencere içinde).
+    /// </summary>
+    private async Task<List<HealthSourceStatDto>> GetClientErrorsBySourceAsync(DateTime since)
+    {
+        var query = (await _clientErrorRepository.GetQueryableAsync())
+            .Where(e => e.LastSeenAt >= since);
+
+        var rows = await AsyncExecuter.ToListAsync(
+            query.Select(e => new { e.Source, e.OccurrenceCount, e.IsResolved }));
+
+        return rows
+            .GroupBy(r => r.Source)
+            .Select(g => new HealthSourceStatDto
+            {
+                Source = g.Key,
+                ErrorCount = g.Count(),
+                OccurrenceCount = g.Sum(x => x.OccurrenceCount),
+                UnresolvedCount = g.Count(x => !x.IsResolved)
+            })
+            .OrderByDescending(s => s.OccurrenceCount)
+            .ToList();
+    }
+
+    /// <summary>Filtre açılır listesi — hata üretmemiş tenant da seçilebilmeli.</summary>
+    private async Task<List<HealthTenantOptionDto>> GetTenantOptionsAsync()
+    {
+        var tenants = await _tenantRepository.GetListAsync();
+
+        var options = new List<HealthTenantOptionDto>
+        {
+            new() { TenantId = null, Name = "Host" }
+        };
+
+        options.AddRange(tenants
+            .OrderBy(t => t.Name)
+            .Select(t => new HealthTenantOptionDto { TenantId = t.Id, Name = t.Name }));
+
+        return options;
     }
 
     private async Task<Dictionary<Guid, string>> GetTenantNamesAsync()
