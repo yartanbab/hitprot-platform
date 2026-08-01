@@ -227,6 +227,17 @@ else
 </div>
 
 <style>
+    /* #apya-feedback-modal modal-dialog-scrollable kullanıyor ama header/body/footer bir form
+       etiketi içinde (antiforgery token için); form flex olmayınca Bootstrap'ın scroll zinciri
+       kırılıyor, body küçülmüyor ve footer (Gönder butonu dahil) taşıp kırpılıyordu.
+       Aynı düzeltme Grants/Index.cshtml'de #GrantModal için de var. */
+    #apya-feedback-modal .modal-content > form {
+        display: flex;
+        flex-direction: column;
+        flex: 1 1 auto;
+        min-height: 0;
+    }
+
     /* Sade altı çizili link — buton görünümü DEĞİL, kullanıcı isteği bu şekildeydi. */
     .apya-feedback-open-link {
         color: var(--apya-text-secondary);
