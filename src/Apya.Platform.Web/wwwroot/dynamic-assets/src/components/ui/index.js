@@ -24,3 +24,4 @@ export { Hint } from './Hint';
 export { Sparkline } from './Sparkline';
 export { ThemeToggle } from './ThemeToggle';
 export { Sheet, SheetTrigger, SheetClose, SheetContent } from './Sheet';
+export { Dialog, DialogContent, DialogClose } from './Dialog';
