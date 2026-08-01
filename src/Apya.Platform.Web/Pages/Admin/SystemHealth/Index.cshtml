@@ -2,30 +2,44 @@
 @using System.Linq
 @using System.Text.Json
 @using Apya.Platform.Web.Pages.Shared
+@using Apya.Platform.Web.Pages.Admin.SystemHealth
 @model Apya.Platform.Web.Pages.Admin.SystemHealth.IndexModel
 @{
     ViewBag.Title = "Sistem Sağlığı";
     var h = Model.Health;
+    var days = Model.WindowDays;
 
     var trendLabels = JsonSerializer.Serialize(h.ErrorTrend.Select(x => x.Date.ToString("dd.MM")));
     var trendData = JsonSerializer.Serialize(h.ErrorTrend.Select(x => x.ErrorCount));
 }
 
 <div class="apya-page">
-<h5 class="mb-3"><i class="fa fa-heart-pulse me-2"></i> Sistem Sağlığı — Son @h.WindowDays Gün</h5>
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+    <h5 class="mb-0"><i class="fa fa-heart-pulse me-2"></i> Sistem Sağlığı — Son @days Gün</h5>
 
+    @* Pencere seçici — servis zaten windowDays alıyordu, sayfa 7'ye sabitliyordu. *@
+    <div class="btn-group btn-group-sm" role="group" aria-label="Zaman penceresi">
+        @foreach (var w in IndexModel.AllowedWindows)
+        {
+            <a class="btn @(w == days ? "btn-primary" : "btn-outline-secondary")"
+               asp-route-windowDays="@w" asp-route-clientFilter="@Model.ClientFilter">@w gün</a>
+        }
+    </div>
+</div>
+
+@* KPI kartları tıklanabilir: her metrik kendisini üreten bölüme götürür. *@
 <div class="row g-3 mb-4">
     <div class="col-md-3">
-        <partial name="_KpiCard" model='new KpiCardModel { Icon = "fa-server", Accent = "accent", Label = "Sunucu İsteği", Value = h.ServerRequestCount.ToString() }' />
+        <partial name="_KpiCard" model='new KpiCardModel { Icon = "fa-server", Accent = "accent", Label = "Sunucu İsteği", Value = h.ServerRequestCount.ToString(), Href = $"?windowDays={days}#slowest-endpoints", HrefTitle = "En yavaş endpoint listesine git", Hint = "Audit log kayıtlarından sayılır; tek sorguda en fazla 200.000 satır taranır. Pencerede bundan fazla istek varsa aşan kısım sessizce dışarıda kalır ve bu karttaki tüm metrikler (hata oranı, en yavaş endpoint dahil) yalnız en yeni 200.000 satırı yansıtır." }' />
     </div>
     <div class="col-md-3">
-        <partial name="_KpiCard" model='new KpiCardModel { Icon = "fa-triangle-exclamation", Accent = "negative", Label = "Sunucu Hatası", Value = h.ServerErrorCount.ToString(), SubText = $"%{(h.ServerErrorRate * 100):0.0} oran" }' />
+        <partial name="_KpiCard" model='new KpiCardModel { Icon = "fa-triangle-exclamation", Accent = "negative", Label = "Sunucu Hatası", Value = h.ServerErrorCount.ToString(), SubText = $"%{(h.ServerErrorRate * 100):0.0} oran", Href = $"?windowDays={days}#failing-pages", HrefTitle = "En çok hata veren sayfalara git" }' />
     </div>
     <div class="col-md-3">
-        <partial name="_KpiCard" model='new KpiCardModel { Icon = "fa-bug", Accent = "warning", Label = "Çözülmemiş İstemci Hatası", Value = h.UnresolvedClientErrorCount.ToString() }' />
+        <partial name="_KpiCard" model='new KpiCardModel { Icon = "fa-bug", Accent = "warning", Label = "Çözülmemiş İstemci Hatası", Value = h.UnresolvedClientErrorCount.ToString(), Href = $"?windowDays={days}&clientFilter=unresolved#client-errors", HrefTitle = "Çözülmemiş istemci hatalarını listele", Hint = "TÜM ZAMANLARIN toplamı — seçili gün penceresiyle sınırlı DEĞİL. Çözüldü işaretlenmemiş her benzersiz hata (fingerprint) sayılır, ne zaman görüldüğüne bakılmaz." }' />
     </div>
     <div class="col-md-3">
-        <partial name="_KpiCard" model='new KpiCardModel { Icon = "fa-desktop", Accent = "brand", Label = "İstemci Hata Oluşumu", Value = h.ClientErrorOccurrencesInWindow.ToString() }' />
+        <partial name="_KpiCard" model='new KpiCardModel { Icon = "fa-desktop", Accent = "brand", Label = "İstemci Hata Oluşumu", Value = h.ClientErrorOccurrencesInWindow.ToString(), Href = $"?windowDays={days}&clientFilter=all#client-errors", HrefTitle = "Tüm istemci hatalarını listele", Hint = "Son görülme tarihi seçili pencere içinde kalan hataların, o hata için kaydedilmiş TOPLAM oluşum sayısının toplamı — yaklaşık bir değerdir, tam geçmiş tutulmaz. Üstteki Çözülmemiş kartıyla karıştırmayın: o tüm zamanları kapsar, bu yalnız pencereyi." }' />
     </div>
 </div>
 
@@ -61,10 +75,60 @@
     </div>
 </div>
 
+@* İstemci hatalarının kategori kırılımı — "hangi tür hata baskın" sorusunu cevaplar. *@
+<abp-card class="mb-3">
+    <abp-card-header>
+        <abp-card-title>
+            İstemci Hatası Kaynak Kırılımı
+            <apya-hint text="Son görülme tarihi seçili pencere içinde kalan hatalar kaynağa göre gruplanır. Karta tıklayınca aşağıdaki tablo o kaynağa filtrelenir." />
+        </abp-card-title>
+    </abp-card-header>
+    <abp-card-body>
+        @if (h.ClientErrorsBySource.Count == 0)
+        {
+            <partial name="_EmptyState" model='new EmptyStateModel { Icon = "fa-thumbs-up", Title = "İstemci hatası yok.", Description = "Seçili pencerede tarayıcı tarafında hata raporlanmadı." }' />
+        }
+        else
+        {
+            <div class="row g-2">
+                @foreach (var s in h.ClientErrorsBySource)
+                {
+                    <div class="col-md-4">
+                        @* Tıklayınca aşağıdaki tabloyu bu kaynağa filtreler (Index.js). *@
+                        <a href="#client-errors" class="apya-source-tile" data-source="@((int)s.Source)">
+                            <div class="apya-overline mb-1">@IndexModel.SourceLabel(s.Source)</div>
+                            <div class="d-flex align-items-baseline gap-2">
+                                <span class="h4 fw-bold mb-0 apya-numeric">@s.OccurrenceCount</span>
+                                <span class="text-muted text-sm">oluşum</span>
+                            </div>
+                            <div class="text-sm text-muted mt-1">
+                                @s.ErrorCount benzersiz ·
+                                @if (s.UnresolvedCount > 0)
+                                {
+                                    <span class="apya-chip apya-chip-negative">@s.UnresolvedCount açık</span>
+                                }
+                                else
+                                {
+                                    <span class="apya-chip apya-chip-positive">tümü çözüldü</span>
+                                }
+                            </div>
+                        </a>
+                    </div>
+                }
+            </div>
+        }
+    </abp-card-body>
+</abp-card>
+
 <div class="row g-3 mb-3">
     <div class="col-md-6">
-        <abp-card>
-            <abp-card-header><abp-card-title>En Çok Hata Veren Sayfalar</abp-card-title></abp-card-header>
+        <abp-card id="failing-pages">
+            <abp-card-header>
+                <abp-card-title>
+                    En Çok Hata Veren Sayfalar
+                    <apya-hint text="Satıra tıklayınca o adresin pencere içindeki tek tek sunucu hataları (exception metni dahil) açılır." />
+                </abp-card-title>
+            </abp-card-header>
             <abp-card-body>
                 @if (h.TopFailingPages.Count == 0)
                 {
@@ -72,12 +136,13 @@
                 }
                 else
                 {
-                    <table class="table table-sm mb-0">
+                    <table class="table table-sm table-hover mb-0">
                         <thead><tr><th>Sayfa</th><th>Toplam</th><th>Hata</th><th>Oran</th></tr></thead>
                         <tbody>
                             @foreach (var p in h.TopFailingPages)
                             {
-                                <tr>
+                                <tr class="apya-failing-page-row" data-url="@p.Url" role="button"
+                                    title="Hata kayıtlarını gör">
                                     <td><code class="text-sm">@p.Url</code></td>
                                     <td>@p.TotalCount</td>
                                     <td>@p.ErrorCount</td>
@@ -91,7 +156,7 @@
         </abp-card>
     </div>
     <div class="col-md-6">
-        <abp-card>
+        <abp-card id="slowest-endpoints">
             <abp-card-header><abp-card-title>En Yavaş Endpoint'ler</abp-card-title></abp-card-header>
             <abp-card-body>
                 @if (h.SlowestEndpoints.Count == 0)
@@ -120,20 +185,42 @@
     </div>
 </div>
 
-<abp-card>
+<abp-card id="client-errors">
     <abp-card-header>
         <abp-card-title><i class="fa fa-bug me-2"></i> İstemci Hataları</abp-card-title>
     </abp-card-header>
     <abp-card-body>
         <div class="row g-2 mb-3">
             <div class="col-md-3">
+                <label class="form-label text-xs fw-bold mb-1" for="Filter_IsResolved">Durum</label>
                 <select id="Filter_IsResolved" class="form-select form-select-sm">
-                    <option value="false" selected>Yalnızca Çözülmemiş</option>
-                    <option value="true">Yalnızca Çözülmüş</option>
-                    <option value="">Tümü</option>
+                    <option value="false" selected="@(Model.ResolvedSelectValue == "false")">Yalnızca Çözülmemiş</option>
+                    <option value="true" selected="@(Model.ResolvedSelectValue == "true")">Yalnızca Çözülmüş</option>
+                    <option value="" selected="@(Model.ResolvedSelectValue == "")">Tümü</option>
+                </select>
+            </div>
+            @* Kaynak ve tenant filtreleri backend'de zaten destekleniyordu, arayüzde yoktu. *@
+            <div class="col-md-2">
+                <label class="form-label text-xs fw-bold mb-1" for="Filter_Source">Kaynak</label>
+                <select id="Filter_Source" class="form-select form-select-sm">
+                    <option value="">Tüm kaynaklar</option>
+                    <option value="1">JS Hatası</option>
+                    <option value="2">Promise Reddi</option>
+                    <option value="3">AJAX Hatası</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label text-xs fw-bold mb-1" for="Filter_Tenant">Tenant</label>
+                <select id="Filter_Tenant" class="form-select form-select-sm">
+                    <option value="">Tüm tenant'lar</option>
+                    @foreach (var t in h.TenantOptions)
+                    {
+                        <option value="@(t.TenantId?.ToString() ?? "host")">@t.Name</option>
+                    }
                 </select>
             </div>
             <div class="col-md-4">
+                <label class="form-label text-xs fw-bold mb-1" for="Filter_Text">Ara</label>
                 <input id="Filter_Text" type="text" class="form-control form-control-sm" placeholder="Mesaj veya sayfada ara..." />
             </div>
         </div>
@@ -156,6 +243,8 @@
 </div>
 
 @section scripts {
+    @* Sunucu hatası detayı seçili pencereyi kullanır — JS bunu buradan okur. *@
+    <div id="SystemHealthContext" data-window-days="@days" class="d-none"></div>
     <abp-script src="/Pages/Admin/SystemHealth/Index.js" />
     <script src="~/js/chart.umd.min.js"></script>
     <abp-script src="/js/apya-chart-theme.js" />

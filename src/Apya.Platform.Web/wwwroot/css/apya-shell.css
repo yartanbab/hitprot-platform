@@ -383,6 +383,57 @@ h1, h2, h3, h4, h5, h6 {
     flex: 1 1 auto;
     min-width: 0;
 }
+
+/* Tıklanabilir KPI kartı (_KpiCard'a Href verilince). Metrikten onu üreten
+   listeye gitmeyi mümkün kılar; tıklanabilirlik chevron + hover ile belli olur. */
+.apya-kpi-card-link {
+    display: block;
+    height: 100%;
+    text-decoration: none;
+    color: inherit;
+}
+.apya-kpi-card-link:hover {
+    color: inherit;
+    text-decoration: none;
+}
+.apya-kpi-card-link:hover .card {
+    border-color: var(--apya-accent-500);
+}
+.apya-kpi-card-link:focus-visible {
+    outline: 2px solid var(--apya-accent-500);
+    outline-offset: 2px;
+    border-radius: 10px;
+}
+.apya-kpi-card-chevron {
+    color: var(--apya-text-tertiary);
+    font-size: 0.75rem;
+}
+.apya-kpi-card-link:hover .apya-kpi-card-chevron { color: var(--apya-accent-500); }
+
+/* Kırılım kutucuğu (Sistem Sağlığı → kaynak dağılımı). Tıklanınca ilgili
+   listeyi filtreler; KPI kartından daha küçük, kart içinde yaşar. */
+.apya-source-tile {
+    display: block;
+    height: 100%;
+    padding: 0.75rem 0.9rem;
+    border: 1px solid var(--apya-border-subtle);
+    border-radius: 10px;
+    background: var(--apya-surface-sunken);
+    color: inherit;
+    text-decoration: none;
+}
+.apya-source-tile:hover {
+    color: inherit;
+    text-decoration: none;
+    border-color: var(--apya-accent-500);
+}
+.apya-source-tile:focus-visible {
+    outline: 2px solid var(--apya-accent-500);
+    outline-offset: 2px;
+}
+
+/* Tıklanabilir hata satırı — detay modalını açar. */
+.apya-failing-page-row { cursor: pointer; }
 /* Kompakt tarih-aralığı pili — iki native date input tek çerçeve içinde.
    Rapor filtre çubukları için (ör. Cari Ekstre); JS gerekmez, native date picker'ı kullanır. */
 .apya-date-range {

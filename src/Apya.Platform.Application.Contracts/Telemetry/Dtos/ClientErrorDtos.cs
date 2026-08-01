@@ -66,6 +66,12 @@ public class GetClientErrorListInput : PagedAndSortedResultRequestDto
     public ClientErrorSource? Source { get; set; }
     public Guid? TenantId { get; set; }
 
+    /// <summary>
+    /// true ise yalnızca host kayıtları (TenantId = null). Ayrı bayrak gerekli:
+    /// <see cref="TenantId"/> tek başına "filtre yok" ile "host" ayrımını yapamaz.
+    /// </summary>
+    public bool HostOnly { get; set; }
+
     /// <summary>Hata mesajı veya sayfa yolunda geçen metin.</summary>
     public string? Filter { get; set; }
 }

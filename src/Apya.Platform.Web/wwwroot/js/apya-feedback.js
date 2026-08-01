@@ -13,12 +13,14 @@
     var TYPE_SUGGESTION = 2;
     var MAX_ATTACHMENTS = 5;
     var DRAFT_KEY = 'apyaFeedbackDraft';
+    var LAST_STEP = 2;
 
     var $modal = null;
     var $form = null;
     var selectedRating = null;
     var pendingScreenshotFileName = null;
     var pendingAttachments = []; // [{fileName, storedFileName, contentType, sizeBytes}]
+    var currentStep = 1;
 
     // ApyaFeedback.open({module, component, action, entityType, entityId}) ile gelen
     // bağlam; modal kapanana kadar geçerli. Global link bağlamsız açar.
@@ -33,25 +35,76 @@
         $form.find('.apya-feedback-rating .fa-star').removeClass('fa-solid text-warning').addClass('fa-regular');
         $form.find('.apya-feedback-screenshot-name').text('');
         $form.find('.apya-feedback-attachment-list').empty();
-        $form.find('.apya-feedback-error').addClass('d-none').text('');
-        // Success panelinden form görünümüne dön.
+        clearError();
+        // Başarı panelinden form görünümüne dön; görünürlüğü goToStep yönetir.
         $form.find('.apya-feedback-success').addClass('d-none');
-        $form.find('.modal-body > :not(.apya-feedback-success)').removeClass('d-none');
-        $form.find('.apya-feedback-submit').removeClass('d-none');
+        $form.find('.apya-feedback-stepper').removeClass('d-none');
         syncDetailSections();
+        goToStep(1);
+    }
+
+    /* --- Adım gezinmesi -------------------------------------------------- */
+
+    // Aynı anda tek adım görünür; footer buton takımı da adıma bağlıdır.
+    function goToStep(step) {
+        currentStep = step;
+
+        $form.find('.apya-feedback-step').addClass('d-none');
+        $form.find('.apya-feedback-step[data-step="' + step + '"]').removeClass('d-none');
+
+        $form.find('.apya-feedback-stepper-item').each(function () {
+            var itemStep = parseInt($(this).data('step'), 10);
+            $(this).toggleClass('is-active', itemStep === step)
+                   .toggleClass('is-done', itemStep < step);
+        });
+
+        $form.find('.apya-feedback-back').toggleClass('d-none', step === 1);
+        $form.find('.apya-feedback-next').toggleClass('d-none', step === LAST_STEP);
+        $form.find('.apya-feedback-submit').toggleClass('d-none', step !== LAST_STEP);
+
+        $modal.find('.modal-body').scrollTop(0);
+    }
+
+    // 1. adımdaki zorunlu alanlar — hem "İleri"de hem gönderimde kullanılır.
+    function validateCoreFields() {
+        var subject = $form.find('[name=Subject]').val();
+        var body = $form.find('[name=Body]').val();
+
+        if (!subject || !subject.trim()) {
+            return 'Konu alanı boş bırakılamaz.';
+        }
+        if (!body || !body.trim()) {
+            return 'Açıklama alanı boş bırakılamaz.';
+        }
+        return null;
     }
 
     /* --- Taslak koruması: yanlışlıkla kapatmada metin kaybolmasın --- */
 
+    // Türe özel alanların TAMAMI (görünmeyenler dahil) — taslakta tür değiştirip
+    // geri dönen kullanıcı yazdıklarını kaybetmesin.
+    function collectDetailValues() {
+        var values = {};
+        $form.find('[data-detail]').each(function () {
+            var value = $(this).val();
+            if (value && value.trim()) {
+                values[$(this).data('detail')] = value;
+            }
+        });
+        return values;
+    }
+
     function saveDraft() {
         try {
+            var details = collectDetailValues();
             var draft = {
                 type: $form.find('[name=Type]').val(),
                 subject: $form.find('[name=Subject]').val(),
                 body: $form.find('[name=Body]').val(),
-                severity: $form.find('[name=Severity]').val()
+                severity: $form.find('[name=Severity]').val(),
+                details: details
             };
-            if (!draft.subject && !draft.body) {
+            if (!draft.subject && !draft.body && Object.keys(details).length === 0) {
                 localStorage.removeItem(DRAFT_KEY);
                 return;
             }
@@ -68,6 +121,11 @@
             if (draft.subject) $form.find('[name=Subject]').val(draft.subject);
             if (draft.body) $form.find('[name=Body]').val(draft.body);
             if (draft.severity) $form.find('[name=Severity]').val(draft.severity);
+            if (draft.details) {
+                Object.keys(draft.details).forEach(function (key) {
+                    $form.find('[data-detail="' + key + '"]').val(draft.details[key]);
+                });
+            }
         } catch (e) { /* bozuk taslak yok sayılır */ }
     }
 
@@ -125,6 +183,43 @@
         });
     }
 
+    // Ayardan gelen boyut/uzantı sınırını yükleme ÖNCESİ uygular (sunucu ayrıca
+    // doğrular). Uygunsa null, değilse kullanıcıya gösterilecek sebep döner.
+    function validateFile($input, file) {
+        var maxMb = parseFloat($input.data('max-mb'));
+        if (maxMb > 0 && file.size > maxMb * 1024 * 1024) {
+            return file.name + ': dosya çok büyük (' + (file.size / 1024 / 1024).toFixed(1) +
+                   ' MB). En fazla ' + maxMb + ' MB yükleyebilirsiniz.';
+        }
+
+        var accept = ($input.attr('accept') || '').toLowerCase();
+        if (accept) {
+            var dot = file.name.lastIndexOf('.');
+            var ext = dot >= 0 ? file.name.substring(dot).toLowerCase() : '';
+            var allowed = accept.split(',').map(function (e) { return e.trim(); })
+                                .filter(function (e) { return e.length > 0; });
+            if (allowed.indexOf(ext) === -1) {
+                return file.name + ': "' + ext + '" uzantısı kabul edilmiyor. İzin verilenler: ' + allowed.join(', ');
+            }
+        }
+
+        return null;
+    }
+
+    // Sunucunun reddetme sebebini çıkarır: düz metin (BadRequest) veya ABP hata
+    // zarfı (BusinessException) olabilir. HTML hata sayfası gelirse yok sayılır.
+    function extractFailureReason(xhr) {
+        if (!xhr) return '';
+        if (xhr.responseJSON && xhr.responseJSON.error && xhr.responseJSON.error.message) {
+            return xhr.responseJSON.error.message;
+        }
+        var text = xhr.responseText;
+        if (typeof text === 'string' && text.length > 0 && text.charAt(0) !== '<') {
+            return text;
+        }
+        return '';
+    }
+
     function uploadFile(handler, file, callback) {
         var formData = new FormData();
         formData.append('file', file);
@@ -138,8 +233,11 @@
             headers: { RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val() }
         }).done(function (result) {
             callback(result || null);
-        }).fail(function () {
-            abp.notify.error('Dosya yüklenemedi: ' + file.name);
+        }).fail(function (xhr) {
+            // Sebebi göster — "Dosya yüklenemedi" tek başına kullanıcıya neyi
+            // düzeltmesi gerektiğini söylemiyordu.
+            var reason = extractFailureReason(xhr);
+            abp.notify.error(reason ? file.name + ': ' + reason : 'Dosya yüklenemedi: ' + file.name);
             callback(null);
         });
     }
@@ -163,18 +261,18 @@
     }
 
     function submit() {
+        var problem = validateCoreFields();
+        if (problem) {
+            // Eksik alan 1. adımda — kullanıcıyı sorunun olduğu yere geri götür.
+            goToStep(1);
+            showError(problem);
+            return;
+        }
+
+        clearError();
+
         var subject = $form.find('[name=Subject]').val();
         var body = $form.find('[name=Body]').val();
-
-        if (!subject || !subject.trim()) {
-            showError('Konu alanı boş bırakılamaz.');
-            return;
-        }
-        if (!body || !body.trim()) {
-            showError('Açıklama alanı boş bırakılamaz.');
-            return;
-        }
-
         var severity = $form.find('[name=Severity]').val();
 
         var dto = {
@@ -223,35 +321,88 @@
             });
     }
 
-    /// Form alanlarını gizleyip FB numaralı teşekkür panelini gösterir.
+    /// Adımları gizleyip FB numaralı teşekkür panelini gösterir.
     function showSuccess(feedbackNumber) {
-        $form.find('.modal-body > :not(.apya-feedback-success)').addClass('d-none');
-        $form.find('.apya-feedback-submit').addClass('d-none');
+        $form.find('.apya-feedback-stepper, .apya-feedback-step').addClass('d-none');
+        clearError();
+        $form.find('.apya-feedback-back, .apya-feedback-next, .apya-feedback-submit').addClass('d-none');
         $form.find('.apya-feedback-success-number').text(feedbackNumber || '');
         $form.find('.apya-feedback-success').removeClass('d-none');
     }
 
     function showError(message) {
-        $form.find('.apya-feedback-error').removeClass('d-none').text(message);
+        var $error = $form.find('.apya-feedback-error').removeClass('d-none').text(message);
+        // Form uzun olabildiği için hata kutusu görünür alanın dışında kalıyor,
+        // kullanıcı gönderimin neden başarısız olduğunu göremiyordu.
+        $error[0].scrollIntoView({ block: 'nearest' });
+    }
+
+    function clearError() {
+        $form.find('.apya-feedback-error').addClass('d-none').text('');
     }
 
     $(function () {
         $modal = $('#apya-feedback-modal');
         if ($modal.length === 0) return; // Yalnızca oturum açık kullanıcıda render edilir.
 
+        // Modal, header toolbar'ı içinde render ediliyor (FeedbackToolbarContributor).
+        // .lpx-topbar-container (position:sticky, z-index:101) yeni bir yığın bağlamı
+        // açtığı için modalın z-index:1055'i o bağlamın İÇİNDE kalıyor; body'ye eklenen
+        // .modal-backdrop (z-index:1050) ise kök bağlamda. Kök bağlamda 1050 > 101
+        // olduğundan backdrop tüm modalın üstüne boyanıyor → modal kararıyor ve
+        // tıklamalar modala değil backdrop'a gidiyordu. Düğümü body'ye almak modalı
+        // kök yığın bağlamına taşır. (Alternatif olan "topbar z-index'ini yükselt"
+        // yanlıştır: header o zaman sitedeki DİĞER modalların üstünde kalır.)
+        if ($modal.parent()[0] !== document.body) {
+            $modal.appendTo(document.body);
+        }
+
         $form = $modal.find('form');
 
         $form.find('[name=Type]').on('change', syncDetailSections);
         syncDetailSections();
+        goToStep(1);
+
+        $modal.find('.apya-feedback-next').on('click', function () {
+            var problem = validateCoreFields();
+            if (problem) {
+                showError(problem);
+                return;
+            }
+            clearError();
+            goToStep(currentStep + 1);
+        });
+
+        $modal.find('.apya-feedback-back').on('click', function () {
+            clearError();
+            goToStep(currentStep - 1);
+        });
 
         $modal.find('.apya-feedback-rating .fa-star').on('click', function () {
             setRating($(this).data('value'));
+        });
+
+        // Yıldızlar klavyeyle de seçilebilmeli (erişilebilirlik).
+        $modal.find('.apya-feedback-rating .fa-star').on('keydown', function (e) {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                setRating($(this).data('value'));
+            }
         });
 
         $modal.find('.apya-feedback-screenshot-input').on('change', function (e) {
             var file = e.target.files && e.target.files[0];
             if (!file) return;
             var $name = $form.find('.apya-feedback-screenshot-name');
+
+            var invalid = validateFile($(this), file);
+            if (invalid) {
+                abp.notify.error(invalid);
+                e.target.value = '';
+                $name.text('');
+                return;
+            }
+
             $name.text('Yükleniyor...');
             uploadFile('UploadScreenshot', file, function (result) {
                 pendingScreenshotFileName = result && result.storedFileName;
@@ -260,6 +411,7 @@
         });
 
         $modal.find('.apya-feedback-attachment-input').on('change', function (e) {
+            var $input = $(this);
             var files = Array.prototype.slice.call(e.target.files || []);
             e.target.value = ''; // aynı dosya tekrar seçilebilsin
             files.forEach(function (file) {
@@ -267,6 +419,13 @@
                     abp.notify.warn('En fazla ' + MAX_ATTACHMENTS + ' dosya eklenebilir.');
                     return;
                 }
+
+                var invalid = validateFile($input, file);
+                if (invalid) {
+                    abp.notify.error(invalid);
+                    return;
+                }
+
                 uploadFile('UploadAttachment', file, function (result) {
                     if (result && result.storedFileName) {
                         pendingAttachments.push({
@@ -282,7 +441,7 @@
         });
 
         // Taslak: yazarken kaydet (input başına debounce'a gerek yok, alan az).
-        $form.on('input change', '[name=Subject], [name=Body], [name=Type], [name=Severity]', saveDraft);
+        $form.on('input change', '[name=Subject], [name=Body], [name=Type], [name=Severity], [data-detail]', saveDraft);
 
         $modal.find('.apya-feedback-copy-number').on('click', function () {
             var number = $form.find('.apya-feedback-success-number').text();

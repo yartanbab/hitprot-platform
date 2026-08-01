@@ -1,0 +1,70 @@
+@page
+@model Apya.Platform.Web.Pages.Admin.SystemHealth.ServerErrorDetailModalModel
+@using Volo.Abp.AspNetCore.Mvc.UI.Bootstrap.TagHelpers.Modal
+@using Apya.Platform.Web.Pages.Shared
+@{
+    Layout = null;
+}
+<abp-modal size="Large">
+    <abp-modal-header title="Sunucu Hataları"></abp-modal-header>
+    <abp-modal-body>
+        <p class="text-sm mb-3">
+            <code>@Model.Url</code>
+            <span class="text-muted">· son @Model.WindowDays gün</span>
+        </p>
+
+        @if (Model.Errors.Count == 0)
+        {
+            <partial name="_EmptyState" model='new EmptyStateModel { Icon = "fa-thumbs-up", Title = "Kayıt bulunamadı.", Description = "Bu adres için seçili pencerede audit log hatası yok." }' />
+        }
+        else
+        {
+            @* En yeni üstte; her satır tek bir isteğin teşhis kaydı. *@
+            <div class="accordion" id="ServerErrorAccordion">
+                @for (var i = 0; i < Model.Errors.Count; i++)
+                {
+                    var err = Model.Errors[i];
+                    var itemId = $"server-error-{i}";
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed py-2" type="button"
+                                    data-bs-toggle="collapse" data-bs-target="#@itemId">
+                                <span class="d-flex flex-wrap gap-2 align-items-center text-sm">
+                                    <span class="apya-chip apya-chip-negative">@(err.HttpStatusCode?.ToString() ?? "HATA")</span>
+                                    <span class="font-monospace">@err.ExecutionTime.ToString("dd.MM.yyyy HH:mm:ss")</span>
+                                    <span class="text-muted">@(err.HttpMethod ?? "-")</span>
+                                    <span class="text-muted">@(err.UserName ?? "anonim")</span>
+                                    <span class="text-muted">@(err.TenantName ?? "-")</span>
+                                    <span class="text-muted">@err.ExecutionDuration ms</span>
+                                </span>
+                            </button>
+                        </h2>
+                        <div id="@itemId" class="accordion-collapse collapse" data-bs-parent="#ServerErrorAccordion">
+                            <div class="accordion-body">
+                                <dl class="row text-sm mb-2">
+                                    <dt class="col-sm-3">IP</dt>
+                                    <dd class="col-sm-9 text-muted">@(err.ClientIpAddress ?? "-")</dd>
+                                    <dt class="col-sm-3">Tarayıcı</dt>
+                                    <dd class="col-sm-9 text-muted" style="word-break:break-word;">@(err.BrowserInfo ?? "-")</dd>
+                                </dl>
+                                @if (string.IsNullOrWhiteSpace(err.Exceptions))
+                                {
+                                    <p class="text-muted text-sm mb-0">
+                                        Exception metni yok — istek 5xx döndü ama audit log'a exception yazılmamış.
+                                    </p>
+                                }
+                                else
+                                {
+                                    <pre class="text-xs mb-0 p-2" style="max-height:280px;overflow:auto;background:var(--apya-surface-sunken);border-radius:6px;">@err.Exceptions</pre>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+    </abp-modal-body>
+    <abp-modal-footer>
+        <abp-button text="Kapat" button-type="Secondary" data-bs-dismiss="modal"></abp-button>
+    </abp-modal-footer>
+</abp-modal>
