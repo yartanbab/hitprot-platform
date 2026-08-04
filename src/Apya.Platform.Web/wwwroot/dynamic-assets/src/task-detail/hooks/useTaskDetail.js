@@ -20,7 +20,9 @@ export function useTaskDetail(taskId) {
         queryFn: () => fetchTask(taskId),
         enabled: Boolean(taskId),
         staleTime: 30_000,
-        retry: 1,
+        /* retry:1 önceden ~1s backoff'la hata state'ini geciktiriyordu (izin/tenant
+           hatalarında retry hiçbir şeyi düzeltmez, yalnız kullanıcıyı bekletir). */
+        retry: false,
     });
 }
 

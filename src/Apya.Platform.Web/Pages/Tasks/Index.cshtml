@@ -11,6 +11,8 @@
     ViewBag.Title = "Görevler";
 }
 
+@* Tailwind island stylesheet (js/style.css) — bu partial olmadan görev detay modalı stilsiz kalır. *@
+<partial name="_ApyaThemeBootstrap" />
 
 <div data-page-description="Tüm projelerdeki görevler" class="apya-page">
 
@@ -141,6 +143,8 @@
         .gantt .priority-low .bar-progress { fill: var(--apya-positive-500); }
     </style>
 }
+
+<partial name="_TaskDetailIsland" />
 
 @section scripts {
     <script src="~/libs/sortablejs/Sortable.min.js"></script>

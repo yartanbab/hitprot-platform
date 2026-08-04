@@ -1,7 +1,9 @@
 $(function () {
     var taskService = apya.platform.tasks.task;
     var createModal = new abp.ModalManager({ viewUrl: abp.appPath + 'Tasks/CreateModal' });
-    var editModal   = new abp.ModalManager({ viewUrl: abp.appPath + 'Tasks/EditModal' });
+    var editModal   = (window.apya && apya.taskDetailV2Enabled)
+        ? apya.taskDetail
+        : new abp.ModalManager({ viewUrl: abp.appPath + 'Tasks/EditModal' });
 
     // Proje Id'sini sayfadan alıyoruz (buton attribute veya URL)
     var projectId = $('#btn-create-task').data('project-id');

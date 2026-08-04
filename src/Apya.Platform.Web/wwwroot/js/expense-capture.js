@@ -1,6 +1,7 @@
 import { r as l, j as e, d as Y, b as Z } from "./react-vendor.js";
-import { I as F, c as R, t as U, u as ee, B as A, S as B, j as K, e as te, M as ae, i as W, T as ne } from "./Sheet.js";
-import { u as H, C as re, r as se, a as oe, T as ie } from "./registerServiceWorker.js";
+import { I as F, c as R, t as U, u as ee, B as A, S as B, j as K, e as te, M as ae, i as W, T as ne } from "./Dialog.js";
+import { a as re } from "./QueryProvider.js";
+import { u as H, C as se, r as oe, T as ie } from "./registerServiceWorker.js";
 import { b as V } from "./query-vendor.js";
 /* empty css      */
 function le(t, n) {
@@ -583,7 +584,7 @@ function L({ label: t, required: n, confidence: a, children: c }) {
         t,
         n && /* @__PURE__ */ e.jsx("span", { className: "text-text-negative ml-0.5", children: "*" })
       ] }),
-      o && /* @__PURE__ */ e.jsx(re, { score: a, showLabel: !1, size: "sm" })
+      o && /* @__PURE__ */ e.jsx(se, { score: a, showLabel: !1, size: "sm" })
     ] }),
     c,
     i && /* @__PURE__ */ e.jsx("span", { className: "text-xs text-text-warning", children: "AI bu alandan emin değil — doğrula." })
@@ -710,8 +711,8 @@ function Ee() {
     )
   ] });
 }
-se();
+oe();
 const G = document.getElementById("apya-expense-capture-root");
 G && Z(G).render(
-  /* @__PURE__ */ e.jsx(ne, { children: /* @__PURE__ */ e.jsx(oe, { children: /* @__PURE__ */ e.jsx(ie, { children: /* @__PURE__ */ e.jsx(Ee, {}) }) }) })
+  /* @__PURE__ */ e.jsx(ne, { children: /* @__PURE__ */ e.jsx(re, { children: /* @__PURE__ */ e.jsx(ie, { children: /* @__PURE__ */ e.jsx(Ee, {}) }) }) })
 );

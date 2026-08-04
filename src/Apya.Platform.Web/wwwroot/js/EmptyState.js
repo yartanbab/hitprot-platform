@@ -1,5 +1,5 @@
 import { j as e } from "./react-vendor.js";
-import { S as t, c as i } from "./Sheet.js";
+import { S as t, c as i } from "./Dialog.js";
 function f({ className: s, withDelta: a = !0, withBar: r = !1 }) {
   return /* @__PURE__ */ e.jsxs("div", { className: i("flex flex-col gap-3 h-full", s), "aria-busy": "true", children: [
     /* @__PURE__ */ e.jsxs("div", { className: "flex items-baseline gap-2", children: [

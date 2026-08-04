@@ -1,7 +1,8 @@
 import { r as g, j as t, d as L, b as he } from "./react-vendor.js";
-import { B as A, c as v, C as _, a as pe, b as fe, d as ge, t as l, e as N, S as E, f as ye, g as O, h as T, i as P, j as V, T as be } from "./Sheet.js";
-import { Q as b, u as ae, C as F, r as ve, a as je, T as we } from "./registerServiceWorker.js";
-import { H as ne, a as ke, L as Ae } from "./signalr-vendor.js";
+import { B as A, c as v, C as _, a as pe, b as fe, d as ge, t as l, e as N, S as E, f as ye, g as O, h as T, i as P, j as V, T as be } from "./Dialog.js";
+import { Q as b, a as ve } from "./QueryProvider.js";
+import { H as ae, a as je, L as we } from "./signalr-vendor.js";
+import { u as ne, C as F, r as ke, T as Ae } from "./registerServiceWorker.js";
 import { r as Q } from "./grid-vendor.js";
 import { E as B, S as $, a as se, b as q } from "./EmptyState.js";
 import { u as C, a as Y, b as Ne } from "./query-vendor.js";
@@ -9,13 +10,13 @@ import { A as Se } from "./httpClient.js";
 /* empty css      */
 const ie = g.createContext({
   connection: null,
-  state: ne.Disconnected
+  state: ae.Disconnected
 });
 function Re({ hubUrl: e = "/signalr-hubs/notifications", children: a, enabled: n = !0 }) {
-  const [s, r] = g.useState(ne.Disconnected), o = g.useRef(null);
+  const [s, r] = g.useState(ae.Disconnected), o = g.useRef(null);
   g.useEffect(() => {
     if (!n || typeof window > "u") return;
-    const i = new ke().withUrl(e, { withCredentials: !0 }).withAutomaticReconnect([0, 2e3, 5e3, 1e4, 3e4]).configureLogging(Ae.Warning).build();
+    const i = new je().withUrl(e, { withCredentials: !0 }).withAutomaticReconnect([0, 2e3, 5e3, 1e4, 3e4]).configureLogging(we.Warning).build();
     o.current = i, r(i.state);
     const u = () => r(i.state);
     return i.onreconnecting(u), i.onreconnected(u), i.onclose(u), i.start().then(u).catch((c) => {
@@ -884,7 +885,7 @@ function D({
   errorMessage: i = "İşlem başarısız oldu",
   conflictMessage: u = "Bu kayıt başka bir kullanıcı tarafından değiştirildi"
 }) {
-  const c = Y(), x = ae();
+  const c = Y(), x = ne();
   return Ne({
     mutationFn: a,
     onMutate: async (m) => {
@@ -1868,7 +1869,7 @@ function Ut(e) {
   }, [a, n, s]);
 }
 function Vt(e) {
-  const { connection: a, state: n } = re(), s = Y(), r = ae();
+  const { connection: a, state: n } = re(), s = Y(), r = ne();
   g.useEffect(() => {
     if (!a || !(e != null && e.length)) return;
     const o = e.map(([d, i]) => {
@@ -1922,10 +1923,10 @@ function Qt() {
   ], []);
   return Ut(e), Vt(a), null;
 }
-ve();
+ke();
 const te = document.getElementById("apya-dashboard-root");
 te && he(te).render(
-  /* @__PURE__ */ t.jsx(be, { children: /* @__PURE__ */ t.jsx(Ee, { children: /* @__PURE__ */ t.jsx(je, { children: /* @__PURE__ */ t.jsx(we, { children: /* @__PURE__ */ t.jsxs(Re, { children: [
+  /* @__PURE__ */ t.jsx(be, { children: /* @__PURE__ */ t.jsx(Ee, { children: /* @__PURE__ */ t.jsx(ve, { children: /* @__PURE__ */ t.jsx(Ae, { children: /* @__PURE__ */ t.jsxs(Re, { children: [
     /* @__PURE__ */ t.jsx(Qt, {}),
     /* @__PURE__ */ t.jsx($t, {})
   ] }) }) }) }) })
