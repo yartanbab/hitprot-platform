@@ -182,13 +182,22 @@ namespace Apya.Platform.Web.Pages.Tasks
                     .ToList();
             }
 
-            var expensePage = await _expenseAppService.GetListAsync(
-                new GetExpensesInput { TaskId = Id, MaxResultCount = 500 });
-            TaskExpenses = expensePage.Items.OrderByDescending(x => x.ExpenseDate).ToList();
+            // Finans sekmesi izne bağlı: ExpenseAppService/IncomeEntryAppService
+            // [Authorize] taşıyor. Koşulsuz çağırınca Expenses/Incomes izni OLMAYAN
+            // kullanıcıda tüm görev detayı 403 ile ölüyordu.
+            if (await AuthorizationService.IsGrantedAsync(PlatformPermissions.Expenses.Default))
+            {
+                var expensePage = await _expenseAppService.GetListAsync(
+                    new GetExpensesInput { TaskId = Id, MaxResultCount = 500 });
+                TaskExpenses = expensePage.Items.OrderByDescending(x => x.ExpenseDate).ToList();
+            }
 
-            var incomePage = await _incomeEntryAppService.GetListAsync(
-                new GetIncomeEntriesInput { TaskId = Id, MaxResultCount = 500 });
-            TaskIncomes = incomePage.Items.OrderByDescending(x => x.IncomeDate).ToList();
+            if (await AuthorizationService.IsGrantedAsync(PlatformPermissions.Incomes.Default))
+            {
+                var incomePage = await _incomeEntryAppService.GetListAsync(
+                    new GetIncomeEntriesInput { TaskId = Id, MaxResultCount = 500 });
+                TaskIncomes = incomePage.Items.OrderByDescending(x => x.IncomeDate).ToList();
+            }
         }
 
         public async Task<IActionResult> OnPostAsync()
