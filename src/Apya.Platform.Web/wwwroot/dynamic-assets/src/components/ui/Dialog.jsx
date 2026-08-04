@@ -47,32 +47,44 @@ const DialogContent = React.forwardRef(function DialogContent(
                     'animate-overlay-fade',
                 )}
             />
-            <RadixDialog.Content
-                ref={ref}
-                className={cn(
-                    'fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-modal',
-                    'bg-surface-base text-text-primary',
-                    'border border-default rounded-[var(--apya-radius-xl)] shadow-xl',
-                    'flex flex-col overflow-hidden',
-                    'focus-visible:outline-none',
-                    'animate-dialog-in',
-                    sizeClass,
-                    /* Mobil: tam ekran, köşesiz, safe-area. Modal içi footer'ın
-                       iOS home indicator'ın altında kalmaması için padding. */
-                    'mobile:w-screen mobile:h-[100dvh] mobile:max-w-none',
-                    'mobile:left-0 mobile:top-0 mobile:translate-x-0 mobile:translate-y-0',
-                    'mobile:rounded-none mobile:border-0',
-                    'mobile:pb-[env(safe-area-inset-bottom)]',
-                    className,
-                )}
-                {...props}
-            >
-                <RadixDialog.Title className="sr-only">{title}</RadixDialog.Title>
-                {description
-                    ? <RadixDialog.Description className="sr-only">{description}</RadixDialog.Description>
-                    : null}
-                {children}
-            </RadixDialog.Content>
+            {/* Ortalama flexbox ile yapılır, transform ile DEĞİL: transform hem
+                konumlama (translate -50%) hem giriş animasyonu (dialogIn scale)
+                için kullanılırsa ikisi çakışıyordu — animasyon transform'u BASTAN
+                YAZIYOR, "both" fill-mode kalıcı olduğu için modal mobilde
+                ekran dışında sabit kalıyordu. Wrapper pointer-events-none:
+                backdrop tıklaması Overlay'e düşsün ki Radix'in onInteractOutside'ı
+                (dirty-guard bunun üstünden kapanıyor) çalışmaya devam etsin. */}
+            <div className="fixed inset-0 z-modal flex items-center justify-center pointer-events-none">
+                <RadixDialog.Content
+                    ref={ref}
+                    className={cn(
+                        /* relative: AlertShell (silme/kaydetmeden-çık onayı) "absolute
+                           inset-0" ile bu paneli kaplıyor; positioning context olmazsa
+                           en yakın "fixed" ata olan yukarıdaki wrapper'a atlar ve tüm
+                           viewport'u kaplar. */
+                        'relative pointer-events-auto',
+                        'bg-surface-base text-text-primary',
+                        'border border-default rounded-[var(--apya-radius-xl)] shadow-xl',
+                        'flex flex-col overflow-hidden',
+                        'focus-visible:outline-none',
+                        'animate-dialog-in',
+                        sizeClass,
+                        /* Mobil: tam ekran, köşesiz, safe-area. Modal içi footer'ın
+                           iOS home indicator'ın altında kalmaması için padding. */
+                        'mobile:w-screen mobile:h-[100dvh] mobile:max-w-none',
+                        'mobile:rounded-none mobile:border-0',
+                        'mobile:pb-[env(safe-area-inset-bottom)]',
+                        className,
+                    )}
+                    {...props}
+                >
+                    <RadixDialog.Title className="sr-only">{title}</RadixDialog.Title>
+                    {description
+                        ? <RadixDialog.Description className="sr-only">{description}</RadixDialog.Description>
+                        : null}
+                    {children}
+                </RadixDialog.Content>
+            </div>
         </RadixDialog.Portal>
     );
 });

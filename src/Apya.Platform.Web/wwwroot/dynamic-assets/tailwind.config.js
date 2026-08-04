@@ -161,10 +161,13 @@ export default {
           '0%':   { opacity: '0', transform: 'translateX(100%)' },
           '100%': { opacity: '1', transform: 'translateX(0)' },
         },
-        /* Tetikleyiciden büyüyerek gelir — mekânsal süreklilik (HIG modal-motion). */
+        /* Tetikleyiciden büyüyerek gelir — mekânsal süreklilik (HIG modal-motion).
+           SADECE scale/opacity: konumlama artık flexbox'ta (Dialog.jsx wrapper),
+           transform burada translate(-50%,-50%) taşırsa "both" fill-mode kalıcı
+           kalıp flexbox'un uyguladığı konumu override ediyordu. */
         dialogIn: {
-          '0%':   { opacity: '0', transform: 'translate(-50%, -50%) scale(0.96)' },
-          '100%': { opacity: '1', transform: 'translate(-50%, -50%) scale(1)' },
+          '0%':   { opacity: '0', transform: 'scale(0.96)' },
+          '100%': { opacity: '1', transform: 'scale(1)' },
         },
       },
     },

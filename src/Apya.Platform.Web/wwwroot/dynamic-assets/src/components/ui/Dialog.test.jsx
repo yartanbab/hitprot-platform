@@ -57,4 +57,49 @@ describe('Dialog', () => {
         await userEvent.click(overlay);
         expect(onOpenChange).not.toHaveBeenCalledWith(false);
     });
+
+    // dialogIn keyframe konumlamayı transform(-50%,-50%) ile yapiyordu; giris
+    // animasyonuyla ayni property'yi paylasinca animasyon "both" fill-mode ile
+    // kalici olarak kazaniyor ve modal mobilde ekran disinda sabitleniyordu.
+    // Fix: konum artik flexbox wrapper'da, transform sadece scale/opacity icin.
+    it('konumlama artik transform/translate degil, flexbox wrapper ile yapiliyor', () => {
+        renderDialog();
+        const content = screen.getByRole('dialog');
+        // Eski transform-tabanli merkezleme siniflari kalmamali.
+        expect(content.className).not.toContain('left-1/2');
+        expect(content.className).not.toContain('top-1/2');
+        expect(content.className).not.toContain('-translate-x-1/2');
+        expect(content.className).not.toContain('-translate-y-1/2');
+        expect(content.className).not.toContain('mobile:left-0');
+        expect(content.className).not.toContain('mobile:top-0');
+        expect(content.className).not.toContain('mobile:translate-x-0');
+        expect(content.className).not.toContain('mobile:translate-y-0');
+    });
+
+    // pointer-events cifti: wrapper "none" olmazsa backdrop tiklamasi wrapper'a
+    // takilir ve Radix'in outside-click algisi (dirty-guard bunun uzerinden
+    // kapaniyor) bozulur. Content "auto" olmazsa pointer-events:none INHERIT
+    // eder ve modal icindeki HICBIR tiklama calismaz (sessiz regresyon).
+    it('sarmalayici pointer-events-none, icerik pointer-events-auto tasir', () => {
+        renderDialog();
+        const content = screen.getByRole('dialog');
+        const wrapper = content.parentElement;
+        expect(wrapper.className).toContain('pointer-events-none');
+        expect(wrapper.className).toContain('fixed');
+        expect(wrapper.className).toContain('inset-0');
+        expect(content.className).toContain('pointer-events-auto');
+    });
+
+    it('icerik icindeki bir buton tiklanabilir kalir (pointer-events zinciri kirilmamis)', async () => {
+        const onClick = vi.fn();
+        render(
+            <Dialog open onOpenChange={() => {}}>
+                <DialogContent title="Görev Detayı">
+                    <button type="button" onClick={onClick}>Kaydet</button>
+                </DialogContent>
+            </Dialog>,
+        );
+        await userEvent.click(screen.getByRole('button', { name: 'Kaydet' }));
+        expect(onClick).toHaveBeenCalledTimes(1);
+    });
 });
