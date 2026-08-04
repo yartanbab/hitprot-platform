@@ -153,6 +153,16 @@ namespace Apya.Platform.Tasks
             return result;
         }
 
+        // Yorum/dosya entity'leri IMultiTenant DEĞİL (TaskComment: FullAuditedEntity,
+        // TaskAttachment: CreationAuditedEntity) → üzerlerinde global tenant filtresi
+        // YOK. TaskId ile doğrudan sorgulamak çapraz-tenant okuma açığı yaratıyordu.
+        // TaskItem IMultiTenant olduğu için Repository.GetAsync filtreli çalışır:
+        // başka tenant'ın görevi EntityNotFoundException verir.
+        private async Task EnsureTaskInCurrentTenantAsync(Guid taskId)
+        {
+            await Repository.GetAsync(taskId);
+        }
+
         // Görev etiketlerini tek toplu sorguda iliştirir (N+1 yok) — PopulateBoardColumnNamesAsync ile aynı desen.
         private async Task PopulateTagsAsync(System.Collections.Generic.IReadOnlyList<TaskDto> items)
         {
@@ -569,6 +579,8 @@ namespace Apya.Platform.Tasks
 
         public async Task<List<TaskCommentDto>> GetCommentsAsync(Guid taskId)
         {
+            await EnsureTaskInCurrentTenantAsync(taskId);
+
             var comments = await _commentRepository.GetListAsync(x => x.TaskId == taskId);
 
             var userIds = comments
@@ -609,6 +621,8 @@ namespace Apya.Platform.Tasks
         // --- 7. DOSYA METODLARI ---
         public async Task AddAttachmentAsync(Guid taskId, string fileName, string storedFileName, long fileSize)
         {
+            await EnsureTaskInCurrentTenantAsync(taskId);
+
             await _attachmentRepository.InsertAsync(new TaskAttachment
             {
                 TaskId = taskId,
@@ -621,6 +635,8 @@ namespace Apya.Platform.Tasks
 
         public async Task<List<TaskAttachmentDto>> GetAttachmentsAsync(Guid taskId)
         {
+            await EnsureTaskInCurrentTenantAsync(taskId);
+
             var attachments = await _attachmentRepository.GetListAsync(x => x.TaskId == taskId);
 
             var userIds = attachments.Select(x => x.CreatorId).Where(id => id.HasValue).Select(id => id!.Value).Distinct().ToList();

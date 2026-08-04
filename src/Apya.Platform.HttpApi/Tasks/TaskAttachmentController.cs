@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -10,6 +11,7 @@ using Apya.Platform.Tasks;
 
 namespace Apya.Platform.Web.Controllers // Or Apya.Platform.HttpApi.Controllers ? Assuming Apya.Platform.HttpApi namespace
 {
+    [Authorize] // Projede global fallback authorization policy YOK → açıkça gerekli.
     [Route("api/tasks/attachments")]
     public class TaskAttachmentController : AbpController
     {

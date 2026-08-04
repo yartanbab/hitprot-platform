@@ -1,11 +1,13 @@
 ﻿using System;
 using System.IO;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Volo.Abp.AspNetCore.Mvc;
 
 namespace Apya.Platform.Web.Controllers
 {
+    [Authorize] // Yüklenen dosyalar kimlik doğrulamasız indirilebiliyordu.
     [Route("file")]
     public class FileController : AbpController
     {
