@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeAll, beforeEach } from 'vitest';
+import { act } from '@testing-library/react';
 import { taskDetailStore } from './task-detail/taskDetailStore';
 
 /**
@@ -20,7 +21,7 @@ beforeAll(async () => {
     document.body.innerHTML = '<div id="task-detail-island"></div>';
     window.apya = window.apya || {};
     window.abp = window.abp || { auth: { isGranted: () => true }, notify: { info: vi.fn(), error: vi.fn() } };
-    await import('./task-detail.jsx');
+    await act(async () => { await import('./task-detail.jsx'); });
 });
 
 beforeEach(() => {
