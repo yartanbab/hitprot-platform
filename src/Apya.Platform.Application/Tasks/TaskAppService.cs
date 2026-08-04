@@ -488,6 +488,8 @@ namespace Apya.Platform.Tasks
                 throw new Volo.Abp.UserFriendlyException("Yorum içeriği boş olamaz.", "Platform:Task:CommentRequired");
             }
 
+            await EnsureTaskInCurrentTenantAsync(taskId);
+
             var comment = await _commentRepository.InsertAsync(new TaskComment(taskId, text.Trim()), autoSave: true);
 
             // BİLDİRİM: Yorum yapıldı event'ini yayınla
@@ -516,6 +518,8 @@ namespace Apya.Platform.Tasks
             }
 
             var parent = await _commentRepository.GetAsync(parentCommentId);
+            await EnsureTaskInCurrentTenantAsync(parent.TaskId);
+
             var rootId = parent.ParentCommentId ?? parent.Id; // tek seviye: yanıtın yanıtı köke gider
             var reply = await _commentRepository.InsertAsync(
                 new TaskComment(parent.TaskId, text.Trim(), rootId), autoSave: true);
@@ -544,6 +548,7 @@ namespace Apya.Platform.Tasks
             }
 
             var comment = await _commentRepository.GetAsync(commentId);
+            await EnsureTaskInCurrentTenantAsync(comment.TaskId);
             if (comment.CreatorId != CurrentUser.Id)
             {
                 throw new Volo.Abp.UserFriendlyException("Yalnızca kendi yorumunuzu düzenleyebilirsiniz.");
@@ -557,6 +562,7 @@ namespace Apya.Platform.Tasks
         public async Task DeleteCommentAsync(Guid commentId)
         {
             var comment = await _commentRepository.GetAsync(commentId);
+            await EnsureTaskInCurrentTenantAsync(comment.TaskId);
             if (comment.CreatorId != CurrentUser.Id)
             {
                 throw new Volo.Abp.UserFriendlyException("Yalnızca kendi yorumunuzu silebilirsiniz.");
