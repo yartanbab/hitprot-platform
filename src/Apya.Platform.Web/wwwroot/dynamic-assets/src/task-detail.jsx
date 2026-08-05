@@ -40,19 +40,19 @@ function TaskDetailIsland() {
 }
 
 /**
- * FAZ 1 BAYRAK: yeni modal varsayılan DEĞİL.
- * Gerekçe — Faz 1'de henüz düzenlenebilir alan yok (Genel sekmesi Faz 2'de).
- * Varsayılan yapılırsa kullanıcılar görev düzenleme yeteneğini kaybeder.
- * Bayrak Faz 2'de varsayılan açık olur, Faz 9'da tamamen kaldırılır.
+ * FAZ 2 BAYRAK: yeni modal artık VARSAYILAN AÇIK — Genel sekmesi çalışır durumda.
+ * Faz 9'da bayrak tamamen kaldırılacak.
  *
- * Açma yolları:
- *   - Kalıcı : localStorage.setItem('apya.taskDetail.v2', '1')
- *   - Tek seferlik: sayfaya ?taskui=v2 ekle
+ * Kapatma yolları (geri alma):
+ *   - Kalıcı : localStorage.setItem('apya.taskDetail.v2', '0')
+ *   - Tek seferlik: sayfaya ?taskui=v1 ekle
  */
 function isV2Enabled() {
     try {
-        if (new URLSearchParams(window.location.search).get('taskui') === 'v2') return true;
-        return window.localStorage.getItem('apya.taskDetail.v2') === '1';
+        const param = new URLSearchParams(window.location.search).get('taskui');
+        if (param === 'v2') return true;
+        if (param === 'v1') return false;
+        return window.localStorage.getItem('apya.taskDetail.v2') !== '0';
     } catch (_) {
         return false; /* localStorage kapalı (gizli mod / policy) → eski drawer */
     }
