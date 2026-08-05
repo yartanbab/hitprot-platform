@@ -41,8 +41,10 @@ namespace Apya.Platform.Web.Controllers // Or Apya.Platform.HttpApi.Controllers 
             if (!allowedExtensions.Contains(ext))
                 return BadRequest(new { error = "Bu dosya uzantısına izin verilmiyor." });
 
-            var webRoot = _env.WebRootPath ?? Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
-            var uploadsPath = Path.Combine(webRoot, "uploads");
+            // wwwroot DIŞINA yaz — LocalDiskUploadedFileStorage.GetRootFolder() ile aynı kök (App_Data/uploads).
+            // wwwroot altındaki dosyalar static file middleware üzerinden [Authorize]'lı FileController
+            // atlanarak oturumsuz servis edilebiliyordu (bkz. 928d6eb).
+            var uploadsPath = Path.Combine(_env.ContentRootPath, "App_Data", "uploads");
             if (!Directory.Exists(uploadsPath))
             {
                 Directory.CreateDirectory(uploadsPath);
