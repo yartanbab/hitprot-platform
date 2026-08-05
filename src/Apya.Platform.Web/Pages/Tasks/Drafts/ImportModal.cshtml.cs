@@ -2,7 +2,7 @@ using System;
 using System.ComponentModel.DataAnnotations;
 using System.IO;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Hosting;
+using Apya.Platform.Storage;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Volo.Abp.AspNetCore.Mvc.UI.RazorPages;
@@ -19,14 +19,14 @@ public class ImportModalModel : AbpPageModel
     public ImportPdfViewModel PdfInput { get; set; } = null!;
 
     private readonly IDraftTaskAppService _draftTaskAppService;
-    private readonly IWebHostEnvironment _env;
+    private readonly IUploadedFileRootFolderProvider _rootFolderProvider;
 
     public ImportModalModel(
         IDraftTaskAppService draftTaskAppService,
-        IWebHostEnvironment env)
+        IUploadedFileRootFolderProvider rootFolderProvider)
     {
         _draftTaskAppService = draftTaskAppService;
-        _env = env;
+        _rootFolderProvider = rootFolderProvider;
     }
 
     public void OnGet()
@@ -46,10 +46,7 @@ public class ImportModalModel : AbpPageModel
         await PdfInput.File.CopyToAsync(memoryStream);
         var fileBytes = memoryStream.ToArray();
 
-        // wwwroot DIŞINA yaz — LocalDiskUploadedFileStorage.GetRootFolder() ile aynı kök (App_Data/uploads).
-        // wwwroot altındaki dosyalar static file middleware üzerinden oturumsuz servis edilebiliyordu.
-        var uploadsDir = Path.Combine(_env.ContentRootPath, "App_Data", "uploads");
-        Directory.CreateDirectory(uploadsDir);
+        var uploadsDir = _rootFolderProvider.GetRootFolder();
 
         var storedFileName = $"{Guid.NewGuid()}_{PdfInput.File.FileName}";
         var storedFilePath = Path.Combine(uploadsDir, storedFileName);

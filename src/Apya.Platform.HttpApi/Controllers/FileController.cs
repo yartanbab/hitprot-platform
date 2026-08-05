@@ -1,7 +1,7 @@
 ﻿using System;
 using System.IO;
+using Apya.Platform.Storage;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Volo.Abp.AspNetCore.Mvc;
 
@@ -11,25 +11,18 @@ namespace Apya.Platform.Web.Controllers
     [Route("file")]
     public class FileController : AbpController
     {
-        private readonly IWebHostEnvironment _env;
+        private readonly IUploadedFileRootFolderProvider _rootFolderProvider;
 
-        public FileController(IWebHostEnvironment env)
+        public FileController(IUploadedFileRootFolderProvider rootFolderProvider)
         {
-            _env = env;
+            _rootFolderProvider = rootFolderProvider;
         }
 
         [HttpGet("get/{fileName}")]
         public IActionResult GetFile(string fileName)
         {
-            // Path traversal koruması: yalnızca dosya adını al, dizin bileşenlerini at.
-            var safeFileName = Path.GetFileName(fileName);
-            if (string.IsNullOrEmpty(safeFileName))
-                return BadRequest("Geçersiz dosya adı.");
-
-            var path = Path.Combine(_env.ContentRootPath, "App_Data", "uploads", safeFileName);
-            var uploadsRoot = Path.GetFullPath(Path.Combine(_env.ContentRootPath, "App_Data", "uploads"));
-            var resolvedPath = Path.GetFullPath(path);
-            if (!resolvedPath.StartsWith(uploadsRoot + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase))
+            var path = _rootFolderProvider.ResolveSafePath(fileName);
+            if (path == null)
                 return BadRequest("Geçersiz dosya adı.");
 
             if (!System.IO.File.Exists(path))

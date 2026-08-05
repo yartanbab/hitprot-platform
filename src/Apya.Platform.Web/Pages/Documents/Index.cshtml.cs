@@ -1,8 +1,8 @@
 using System;
 using System.IO;
 using System.Threading.Tasks;
+using Apya.Platform.Storage;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Apya.Platform.Documents;
@@ -17,13 +17,13 @@ public class IndexModel : AbpPageModel
 {
     private readonly IDocumentAppService _documentAppService;
     private readonly IUploadedFileStorage _fileStorage;
-    private readonly IWebHostEnvironment _environment;
+    private readonly IUploadedFileRootFolderProvider _rootFolderProvider;
 
-    public IndexModel(IDocumentAppService documentAppService, IUploadedFileStorage fileStorage, IWebHostEnvironment environment)
+    public IndexModel(IDocumentAppService documentAppService, IUploadedFileStorage fileStorage, IUploadedFileRootFolderProvider rootFolderProvider)
     {
         _documentAppService = documentAppService;
         _fileStorage = fileStorage;
-        _environment = environment;
+        _rootFolderProvider = rootFolderProvider;
     }
 
     public void OnGet()
@@ -62,13 +62,8 @@ public class IndexModel : AbpPageModel
         // Tenant/izin doğrulaması + DocumentAccessLog(Downloaded) kaydı AppService içinde yapılır.
         var download = await _documentAppService.PrepareDownloadAsync(attachmentId);
 
-        // Path traversal koruması: FileController'daki desenle aynı.
-        // Kök klasör LocalDiskUploadedFileStorage.GetRootFolder() ile birebir aynı olmalı (App_Data/uploads),
-        // aksi halde StoreAsync'in yazdığı yer ile burası uyuşmaz ve indirme 404 verir.
-        var uploadsRoot = Path.GetFullPath(Path.Combine(_environment.ContentRootPath, "App_Data", "uploads"));
-        var safeFileName = Path.GetFileName(download.StoredFileName);
-        var resolvedPath = Path.GetFullPath(Path.Combine(uploadsRoot, safeFileName));
-        if (string.IsNullOrEmpty(safeFileName) || !resolvedPath.StartsWith(uploadsRoot + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase))
+        var resolvedPath = _rootFolderProvider.ResolveSafePath(download.StoredFileName);
+        if (resolvedPath == null)
             return BadRequest("Geçersiz dosya adı.");
 
         if (!System.IO.File.Exists(resolvedPath))
