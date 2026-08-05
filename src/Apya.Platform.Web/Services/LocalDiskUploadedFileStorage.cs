@@ -41,7 +41,7 @@ public class LocalDiskUploadedFileStorage : IUploadedFileStorage, ITransientDepe
         if (file.Length > MaxFileSize)
             throw new BusinessException(PlatformDomainErrorCodes.FileSizeExceeded);
 
-        var uploadsFolder = Path.Combine(_environment.WebRootPath, "uploads");
+        var uploadsFolder = GetRootFolder();
         if (!Directory.Exists(uploadsFolder))
             Directory.CreateDirectory(uploadsFolder);
 
@@ -54,5 +54,13 @@ public class LocalDiskUploadedFileStorage : IUploadedFileStorage, ITransientDepe
         }
 
         return storedFileName;
+    }
+
+    private string GetRootFolder()
+    {
+        // ContentRootPath (proje kökü) altında, wwwroot DIŞINDA — FeedbackFileStorage ile aynı desen:
+        // wwwroot altındaki her şey Development modunda static file middleware tarafından
+        // [Authorize]'lı FileController atlanarak oturumsuz servis edilebiliyordu.
+        return Path.Combine(_environment.ContentRootPath, "App_Data", "uploads");
     }
 }

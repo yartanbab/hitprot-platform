@@ -26,8 +26,8 @@ namespace Apya.Platform.Web.Controllers
             if (string.IsNullOrEmpty(safeFileName))
                 return BadRequest("Geçersiz dosya adı.");
 
-            var path = Path.Combine(_env.WebRootPath, "uploads", safeFileName);
-            var uploadsRoot = Path.GetFullPath(Path.Combine(_env.WebRootPath, "uploads"));
+            var path = Path.Combine(_env.ContentRootPath, "App_Data", "uploads", safeFileName);
+            var uploadsRoot = Path.GetFullPath(Path.Combine(_env.ContentRootPath, "App_Data", "uploads"));
             var resolvedPath = Path.GetFullPath(path);
             if (!resolvedPath.StartsWith(uploadsRoot + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase))
                 return BadRequest("Geçersiz dosya adı.");
