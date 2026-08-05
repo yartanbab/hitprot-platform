@@ -95,7 +95,9 @@ public class CreateModalModel : PlatformPageModel
         // 2. Dosya yukleme (Attachment)
         if (UploadFile != null && UploadFile.Length > 0)
         {
-            var uploadsFolder = Path.Combine(_environment.WebRootPath, "uploads");
+            // wwwroot DIŞINA yaz — LocalDiskUploadedFileStorage.GetRootFolder() ile aynı kök (App_Data/uploads).
+            // wwwroot altındaki dosyalar static file middleware üzerinden oturumsuz servis edilebiliyordu.
+            var uploadsFolder = Path.Combine(_environment.ContentRootPath, "App_Data", "uploads");
             if (!Directory.Exists(uploadsFolder)) 
                 Directory.CreateDirectory(uploadsFolder);
 
