@@ -1,6 +1,6 @@
 import { b as je, j as e, r as l } from "./react-vendor.js";
 /* empty css      */
-import { B as k, I as ve, S as ge, j as ae, e as L, k as Ne } from "./Sheet.js";
+import { B as k, I as ve, S as ge, j as ae, e as L, k as Ne } from "./Dialog.js";
 import { b as T, E as ie } from "./EmptyState.js";
 import { H as se } from "./Hint.js";
 const b = {

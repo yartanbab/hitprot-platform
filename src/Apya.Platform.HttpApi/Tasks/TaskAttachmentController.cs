@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -10,6 +11,7 @@ using Apya.Platform.Tasks;
 
 namespace Apya.Platform.Web.Controllers // Or Apya.Platform.HttpApi.Controllers ? Assuming Apya.Platform.HttpApi namespace
 {
+    [Authorize] // Projede global fallback authorization policy YOK → açıkça gerekli.
     [Route("api/tasks/attachments")]
     public class TaskAttachmentController : AbpController
     {
@@ -39,8 +41,10 @@ namespace Apya.Platform.Web.Controllers // Or Apya.Platform.HttpApi.Controllers 
             if (!allowedExtensions.Contains(ext))
                 return BadRequest(new { error = "Bu dosya uzantısına izin verilmiyor." });
 
-            var webRoot = _env.WebRootPath ?? Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
-            var uploadsPath = Path.Combine(webRoot, "uploads");
+            // wwwroot DIŞINA yaz — LocalDiskUploadedFileStorage.GetRootFolder() ile aynı kök (App_Data/uploads).
+            // wwwroot altındaki dosyalar static file middleware üzerinden [Authorize]'lı FileController
+            // atlanarak oturumsuz servis edilebiliyordu (bkz. 928d6eb).
+            var uploadsPath = Path.Combine(_env.ContentRootPath, "App_Data", "uploads");
             if (!Directory.Exists(uploadsPath))
             {
                 Directory.CreateDirectory(uploadsPath);

@@ -28,7 +28,7 @@
    service worker auth'a karışmaz, browser session yönetir.
    ============================================================================= */
 
-const CACHE_VERSION = 'v3';
+const CACHE_VERSION = 'v4';
 const CACHE_SHELL   = `apya-shell-${CACHE_VERSION}`;
 const CACHE_ASSETS  = `apya-assets-${CACHE_VERSION}`;
 const CACHE_RUNTIME = `apya-runtime-${CACHE_VERSION}`;

@@ -9,6 +9,9 @@
     ViewBag.PageTitle = "Kanban Board";
 }
 
+@* Tailwind island stylesheet (js/style.css) — bu partial olmadan görev detay modalı stilsiz kalır. *@
+<partial name="_ApyaThemeBootstrap" />
+
 @section styles {
     @* Merkezi kanban tasarımı (tek kaynak) *@
     <abp-style src="/css/kanban.css" />
@@ -31,6 +34,8 @@
 
 @* Merkezi kanban markup'ı (tek kaynak) *@
 <partial name="_KanbanBoard" />
+
+<partial name="_TaskDetailIsland" />
 
 @section scripts {
     <script src="~/libs/sortablejs/Sortable.min.js"></script>

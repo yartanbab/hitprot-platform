@@ -27,7 +27,7 @@ public class UploadPdfInput
     public Guid? ProjectId { get; set; }
 
     /// <summary>
-    /// Web katmanı tarafından wwwroot/uploads altına kaydedilen benzersiz dosya adı.
+    /// Web katmanı tarafından App_Data/uploads altına kaydedilen benzersiz dosya adı.
     /// </summary>
     public string StoredFileName { get; set; } = string.Empty;
 

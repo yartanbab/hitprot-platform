@@ -14,9 +14,14 @@ export default {
       /* mobile: max-width — tüm kullanımlar "mobilde küçült/gizle" anlamında
          (mobile:hidden, mobile:grid-cols-2, mobile:px-2). Eşik useDeviceMode'un
          decision→triage sınırıyla (768px) aynı. Tanımsızken 8 sınıf sessizce
-         ölüydü → mobil yerleşim uygulanmıyordu. */
+         ölüydü → mobil yerleşim uygulanmıyordu.
+         tablet: min-width — Sheet.jsx/Toast.jsx zaten bu prefix'i kullanıyordu
+         ama tanımsızdı; tüm tablet: varyantları sessizce ölüydü (Sheet her
+         ekranda bottom-sheet render ediyordu). Eşikler useDeviceMode.jsx'in
+         decision→triage sınırıyla (768px) aynı — ikisi senkron kalmalı. */
       screens: {
         mobile: { max: '767.98px' },
+        tablet: '768px',
       },
       fontFamily: {
         /* Token tek kaynak: 'Plus Jakarta Sans' self-host EDİLMİYOR
@@ -108,15 +113,30 @@ export default {
         'lg':              'var(--apya-shadow-lg)',
         'xl':              'var(--apya-shadow-xl)',
       },
+      /* tokens.css'teki --apya-z-* ölçeğinin BİREBİR aynısı. Sayı olarak
+         tutuluyor (var() değil) ki test dosyası değerleri karşılaştırabilsin;
+         tailwind.config.test.js tokens.css'i okuyup eşitliği doğruluyor, bu
+         yüzden ikisi sessizce ayrışamaz.
+         modal=1050 bilinçli olarak Bootstrap .modal'ın (1055) ALTINDA:
+         görev detayından açılan ABP modalleri (Expenses/CreateModal) üstte
+         görünmeli. modal-backdrop=1040 LeptonX kabuğunun (~1030) üstünde. */
       zIndex: {
-        'sticky':  40,
-        'overlay': 50,
-        'modal':   60,
-        'toast':   70,
+        'dropdown':       1000,
+        'sticky':         1020,
+        'fixed':          1030,
+        'modal-backdrop': 1040,
+        'modal':          1050,
+        'popover':        1060,
+        'tooltip':        1070,
+        'toast':          1080,
       },
       animation: {
-        'blob':    'blob 7s infinite',
-        'fade-in': 'fadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+        'blob':         'blob 7s infinite',
+        'fade-in':      'fadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+        'overlay-fade': 'overlayFade var(--apya-motion-fast) cubic-bezier(0.16, 1, 0.3, 1) both',
+        'sheet-bottom': 'sheetBottom var(--apya-motion-slow) cubic-bezier(0.16, 1, 0.3, 1) both',
+        'sheet-right':  'sheetRight var(--apya-motion-slow) cubic-bezier(0.16, 1, 0.3, 1) both',
+        'dialog-in':    'dialogIn var(--apya-motion-slow) cubic-bezier(0.16, 1, 0.3, 1) both',
       },
       keyframes: {
         blob: {
@@ -128,6 +148,26 @@ export default {
         fadeIn: {
           '0%':   { opacity: '0', transform: 'translateY(15px)' },
           '100%': { opacity: '1', transform: 'translateY(0)' },
+        },
+        overlayFade: {
+          '0%':   { opacity: '0' },
+          '100%': { opacity: '1' },
+        },
+        sheetBottom: {
+          '0%':   { opacity: '0', transform: 'translateY(100%)' },
+          '100%': { opacity: '1', transform: 'translateY(0)' },
+        },
+        sheetRight: {
+          '0%':   { opacity: '0', transform: 'translateX(100%)' },
+          '100%': { opacity: '1', transform: 'translateX(0)' },
+        },
+        /* Tetikleyiciden büyüyerek gelir — mekânsal süreklilik (HIG modal-motion).
+           SADECE scale/opacity: konumlama artık flexbox'ta (Dialog.jsx wrapper),
+           transform burada translate(-50%,-50%) taşırsa "both" fill-mode kalıcı
+           kalıp flexbox'un uyguladığı konumu override ediyordu. */
+        dialogIn: {
+          '0%':   { opacity: '0', transform: 'scale(0.96)' },
+          '100%': { opacity: '1', transform: 'scale(1)' },
         },
       },
     },

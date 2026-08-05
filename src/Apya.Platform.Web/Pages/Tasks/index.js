@@ -1,7 +1,12 @@
 $(function () {
     var taskService = apya.platform.tasks.task;
     var createModal = new abp.ModalManager(abp.appPath + 'Tasks/CreateModal');
-    var editModal   = new abp.ModalManager(abp.appPath + 'Tasks/EditModal');
+    // Görev detayı: bayrak açıksa React island'ı (window.apya.taskDetail), değilse
+    // eski Razor drawer'ı. İkisi de .open()/.onResult() sözleşmesini karşılar →
+    // apya-kanban.js her iki durumda da değişmeden çalışır.
+    var editModal   = (window.apya && apya.taskDetailV2Enabled)
+        ? apya.taskDetail
+        : new abp.ModalManager(abp.appPath + 'Tasks/EditModal');
 
     // Proje seçimi: kanban'ı o projeye scope'lar (özel kolonlar) + liste/gantt'ı filtreler.
     var selectedProjectId = null;

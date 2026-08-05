@@ -70,6 +70,9 @@
     /* Kanban tasarımı merkezi /css/kanban.css dosyasına taşındı (tek kaynak). */
 </style>
 
+@* Tailwind island stylesheet (js/style.css) — bu partial olmadan görev detay modalı stilsiz kalır. *@
+<partial name="_ApyaThemeBootstrap" />
+
 @section styles {
     @* Merkezi kanban tasarımı (tek kaynak) *@
     <abp-style src="/css/kanban.css" />
@@ -343,6 +346,8 @@
     </div>
 }
 </div> @* /.apya-page *@
+
+<partial name="_TaskDetailIsland" />
 
 @section scripts {
     <script src="~/libs/sortablejs/Sortable.min.js"></script>

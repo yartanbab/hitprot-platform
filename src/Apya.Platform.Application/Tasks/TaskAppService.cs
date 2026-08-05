@@ -78,21 +78,7 @@ namespace Apya.Platform.Tasks
             if (task == null) throw new Volo.Abp.Domain.Entities.EntityNotFoundException(typeof(TaskItem), id);
 
             // Kapsamlı Rol ve Gizlilik Kontrolü (APYA-22)
-            bool isImpersonated = CurrentUser.FindClaim(Volo.Abp.Security.Claims.AbpClaimTypes.ImpersonatorUserId) != null;
-            bool canManageTeam = await AuthorizationService.IsGrantedAsync(PlatformPermissions.Projects.ManageTeam);
-
-            if (task.IsPrivate)
-            {
-                if (isImpersonated)
-                {
-                    throw new Volo.Abp.BusinessException(PlatformDomainErrorCodes.TaskViewImpersonationDenied);
-                }
-                
-                if (!canManageTeam && task.CreatorId != CurrentUser.Id && task.AssigneeId != CurrentUser.Id)
-                {
-                    throw new Volo.Abp.BusinessException(PlatformDomainErrorCodes.TaskViewPrivateDenied);
-                }
-            }
+            await EnsureTaskPrivacyAllowedAsync(task);
 
             var taskDto = ObjectMapper.Map<TaskItem, TaskDto>(task);
             if (task.Assignee != null) taskDto.AssigneeName = task.Assignee.UserName;
@@ -151,6 +137,41 @@ namespace Apya.Platform.Tasks
             await PopulateBoardColumnNamesAsync(result.Items);
             await PopulateTagsAsync(result.Items);
             return result;
+        }
+
+        // Kapsamlı Rol ve Gizlilik Kontrolü (APYA-22) — GetAsync ile paylaşılan tek kopya.
+        // Gizli bir görev; oluşturan, atanan veya Projects.ManageTeam yetkisi olmayan
+        // kullanıcıya kapalıdır. Impersonation ile açılan oturumlar hiçbir gizli görevi göremez.
+        private async Task EnsureTaskPrivacyAllowedAsync(TaskItem task)
+        {
+            bool isImpersonated = CurrentUser.FindClaim(Volo.Abp.Security.Claims.AbpClaimTypes.ImpersonatorUserId) != null;
+            bool canManageTeam = await AuthorizationService.IsGrantedAsync(PlatformPermissions.Projects.ManageTeam);
+
+            if (task.IsPrivate)
+            {
+                if (isImpersonated)
+                {
+                    throw new Volo.Abp.BusinessException(PlatformDomainErrorCodes.TaskViewImpersonationDenied);
+                }
+
+                if (!canManageTeam && task.CreatorId != CurrentUser.Id && task.AssigneeId != CurrentUser.Id)
+                {
+                    throw new Volo.Abp.BusinessException(PlatformDomainErrorCodes.TaskViewPrivateDenied);
+                }
+            }
+        }
+
+        // Yorum/dosya entity'leri IMultiTenant DEĞİL (TaskComment: FullAuditedEntity,
+        // TaskAttachment: CreationAuditedEntity) → üzerlerinde global tenant filtresi
+        // YOK. TaskId ile doğrudan sorgulamak çapraz-tenant okuma açığı yaratıyordu.
+        // TaskItem IMultiTenant olduğu için Repository.GetAsync filtreli çalışır:
+        // başka tenant'ın görevi EntityNotFoundException verir. Ayrıca GetAsync'teki APYA-22
+        // gizlilik kuralını da uygular — aksi halde aynı tenant'taki bir kullanıcı, göremediği
+        // gizli bir görevin yorum/dosya uçlarını doğrudan taskId ile çağırıp erişebilirdi.
+        private async Task EnsureTaskAccessAllowedAsync(Guid taskId)
+        {
+            var task = await Repository.GetAsync(taskId);
+            await EnsureTaskPrivacyAllowedAsync(task);
         }
 
         // Görev etiketlerini tek toplu sorguda iliştirir (N+1 yok) — PopulateBoardColumnNamesAsync ile aynı desen.
@@ -478,6 +499,8 @@ namespace Apya.Platform.Tasks
                 throw new Volo.Abp.UserFriendlyException("Yorum içeriği boş olamaz.", "Platform:Task:CommentRequired");
             }
 
+            await EnsureTaskAccessAllowedAsync(taskId);
+
             var comment = await _commentRepository.InsertAsync(new TaskComment(taskId, text.Trim()), autoSave: true);
 
             // BİLDİRİM: Yorum yapıldı event'ini yayınla
@@ -506,6 +529,8 @@ namespace Apya.Platform.Tasks
             }
 
             var parent = await _commentRepository.GetAsync(parentCommentId);
+            await EnsureTaskAccessAllowedAsync(parent.TaskId);
+
             var rootId = parent.ParentCommentId ?? parent.Id; // tek seviye: yanıtın yanıtı köke gider
             var reply = await _commentRepository.InsertAsync(
                 new TaskComment(parent.TaskId, text.Trim(), rootId), autoSave: true);
@@ -534,6 +559,7 @@ namespace Apya.Platform.Tasks
             }
 
             var comment = await _commentRepository.GetAsync(commentId);
+            await EnsureTaskAccessAllowedAsync(comment.TaskId);
             if (comment.CreatorId != CurrentUser.Id)
             {
                 throw new Volo.Abp.UserFriendlyException("Yalnızca kendi yorumunuzu düzenleyebilirsiniz.");
@@ -547,6 +573,7 @@ namespace Apya.Platform.Tasks
         public async Task DeleteCommentAsync(Guid commentId)
         {
             var comment = await _commentRepository.GetAsync(commentId);
+            await EnsureTaskAccessAllowedAsync(comment.TaskId);
             if (comment.CreatorId != CurrentUser.Id)
             {
                 throw new Volo.Abp.UserFriendlyException("Yalnızca kendi yorumunuzu silebilirsiniz.");
@@ -569,6 +596,8 @@ namespace Apya.Platform.Tasks
 
         public async Task<List<TaskCommentDto>> GetCommentsAsync(Guid taskId)
         {
+            await EnsureTaskAccessAllowedAsync(taskId);
+
             var comments = await _commentRepository.GetListAsync(x => x.TaskId == taskId);
 
             var userIds = comments
@@ -609,6 +638,8 @@ namespace Apya.Platform.Tasks
         // --- 7. DOSYA METODLARI ---
         public async Task AddAttachmentAsync(Guid taskId, string fileName, string storedFileName, long fileSize)
         {
+            await EnsureTaskAccessAllowedAsync(taskId);
+
             await _attachmentRepository.InsertAsync(new TaskAttachment
             {
                 TaskId = taskId,
@@ -621,6 +652,8 @@ namespace Apya.Platform.Tasks
 
         public async Task<List<TaskAttachmentDto>> GetAttachmentsAsync(Guid taskId)
         {
+            await EnsureTaskAccessAllowedAsync(taskId);
+
             var attachments = await _attachmentRepository.GetListAsync(x => x.TaskId == taskId);
 
             var userIds = attachments.Select(x => x.CreatorId).Where(id => id.HasValue).Select(id => id!.Value).Distinct().ToList();
