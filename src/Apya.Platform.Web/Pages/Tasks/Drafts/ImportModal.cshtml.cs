@@ -46,7 +46,9 @@ public class ImportModalModel : AbpPageModel
         await PdfInput.File.CopyToAsync(memoryStream);
         var fileBytes = memoryStream.ToArray();
 
-        var uploadsDir = Path.Combine(_env.WebRootPath, "uploads");
+        // wwwroot DIŞINA yaz — LocalDiskUploadedFileStorage.GetRootFolder() ile aynı kök (App_Data/uploads).
+        // wwwroot altındaki dosyalar static file middleware üzerinden oturumsuz servis edilebiliyordu.
+        var uploadsDir = Path.Combine(_env.ContentRootPath, "App_Data", "uploads");
         Directory.CreateDirectory(uploadsDir);
 
         var storedFileName = $"{Guid.NewGuid()}_{PdfInput.File.FileName}";
