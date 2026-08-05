@@ -1,21 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Badge } from '../../components/ui';
 import { AccessBadge } from './AccessBadge';
-
-const STATUS = {
-    0: { text: 'İptal',      variant: 'neutral'  },
-    1: { text: 'Yapılacak',  variant: 'neutral'  },
-    2: { text: 'Sürüyor',    variant: 'warning'  },
-    3: { text: 'Testte',     variant: 'brand'    },
-    4: { text: 'Tamamlandı', variant: 'positive' },
-};
-
-const PRIORITY = {
-    1: { text: 'Düşük',  variant: 'positive' },
-    2: { text: 'Orta',   variant: 'neutral'  },
-    3: { text: 'Yüksek', variant: 'warning'  },
-    4: { text: 'Kritik', variant: 'negative' },
-};
+import { STATUS, PRIORITY } from '../statusMaps';
 
 export function TaskDetailHeader({
     task, canDelete, onClose, onDelete, onToggleFullscreen, fullscreen = false,
