@@ -5,8 +5,8 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Hosting;
 using System.IO;
+using Apya.Platform.Storage;
 using Volo.Abp.TenantManagement;
 using Volo.Abp.Application.Dtos;
 using Apya.Platform.Projects;
@@ -33,18 +33,18 @@ public class CreateModalModel : PlatformPageModel
     private readonly IProjectAppService _projectAppService;
     private readonly ITenantAppService _tenantAppService;
     private readonly ICustomerAppService _customerAppService;
-    private readonly IWebHostEnvironment _environment;
+    private readonly IUploadedFileRootFolderProvider _rootFolderProvider;
 
     public CreateModalModel(
         IProjectAppService projectAppService,
         ITenantAppService tenantAppService,
         ICustomerAppService customerAppService,
-        IWebHostEnvironment environment)
+        IUploadedFileRootFolderProvider rootFolderProvider)
     {
         _projectAppService = projectAppService;
         _tenantAppService = tenantAppService;
         _customerAppService = customerAppService;
-        _environment = environment;
+        _rootFolderProvider = rootFolderProvider;
     }
 
     public async Task OnGetAsync()
@@ -95,11 +95,7 @@ public class CreateModalModel : PlatformPageModel
         // 2. Dosya yukleme (Attachment)
         if (UploadFile != null && UploadFile.Length > 0)
         {
-            // wwwroot DIŞINA yaz — LocalDiskUploadedFileStorage.GetRootFolder() ile aynı kök (App_Data/uploads).
-            // wwwroot altındaki dosyalar static file middleware üzerinden oturumsuz servis edilebiliyordu.
-            var uploadsFolder = Path.Combine(_environment.ContentRootPath, "App_Data", "uploads");
-            if (!Directory.Exists(uploadsFolder)) 
-                Directory.CreateDirectory(uploadsFolder);
+            var uploadsFolder = _rootFolderProvider.GetRootFolder();
 
             var storedFileName = Guid.NewGuid().ToString() + Path.GetExtension(UploadFile.FileName);
             var filePath = Path.Combine(uploadsFolder, storedFileName);

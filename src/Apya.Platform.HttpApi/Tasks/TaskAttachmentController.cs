@@ -2,8 +2,8 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using Apya.Platform.Storage;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Volo.Abp.AspNetCore.Mvc;
@@ -16,12 +16,12 @@ namespace Apya.Platform.Web.Controllers // Or Apya.Platform.HttpApi.Controllers 
     public class TaskAttachmentController : AbpController
     {
         private readonly ITaskAppService _taskAppService;
-        private readonly IWebHostEnvironment _env;
+        private readonly IUploadedFileRootFolderProvider _rootFolderProvider;
 
-        public TaskAttachmentController(ITaskAppService taskAppService, IWebHostEnvironment env)
+        public TaskAttachmentController(ITaskAppService taskAppService, IUploadedFileRootFolderProvider rootFolderProvider)
         {
             _taskAppService = taskAppService;
-            _env = env;
+            _rootFolderProvider = rootFolderProvider;
         }
 
         [HttpPost("upload/{taskId}")]
@@ -41,14 +41,7 @@ namespace Apya.Platform.Web.Controllers // Or Apya.Platform.HttpApi.Controllers 
             if (!allowedExtensions.Contains(ext))
                 return BadRequest(new { error = "Bu dosya uzantısına izin verilmiyor." });
 
-            // wwwroot DIŞINA yaz — LocalDiskUploadedFileStorage.GetRootFolder() ile aynı kök (App_Data/uploads).
-            // wwwroot altındaki dosyalar static file middleware üzerinden [Authorize]'lı FileController
-            // atlanarak oturumsuz servis edilebiliyordu (bkz. 928d6eb).
-            var uploadsPath = Path.Combine(_env.ContentRootPath, "App_Data", "uploads");
-            if (!Directory.Exists(uploadsPath))
-            {
-                Directory.CreateDirectory(uploadsPath);
-            }
+            var uploadsPath = _rootFolderProvider.GetRootFolder();
 
             var storedFileName = $"{Guid.NewGuid()}{ext}";
             var filePath = Path.Combine(uploadsPath, storedFileName);

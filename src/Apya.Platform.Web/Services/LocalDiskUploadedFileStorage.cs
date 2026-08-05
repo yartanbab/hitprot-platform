@@ -3,7 +3,7 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Apya.Platform;
-using Microsoft.AspNetCore.Hosting;
+using Apya.Platform.Storage;
 using Microsoft.AspNetCore.Http;
 using Volo.Abp;
 using Volo.Abp.DependencyInjection;
@@ -22,11 +22,11 @@ public class LocalDiskUploadedFileStorage : IUploadedFileStorage, ITransientDepe
 
     private const long MaxFileSize = 25 * 1024 * 1024; // 25 MB
 
-    private readonly IWebHostEnvironment _environment;
+    private readonly IUploadedFileRootFolderProvider _rootFolderProvider;
 
-    public LocalDiskUploadedFileStorage(IWebHostEnvironment environment)
+    public LocalDiskUploadedFileStorage(IUploadedFileRootFolderProvider rootFolderProvider)
     {
-        _environment = environment;
+        _rootFolderProvider = rootFolderProvider;
     }
 
     public async Task<string> StoreAsync(IFormFile file)
@@ -41,9 +41,7 @@ public class LocalDiskUploadedFileStorage : IUploadedFileStorage, ITransientDepe
         if (file.Length > MaxFileSize)
             throw new BusinessException(PlatformDomainErrorCodes.FileSizeExceeded);
 
-        var uploadsFolder = GetRootFolder();
-        if (!Directory.Exists(uploadsFolder))
-            Directory.CreateDirectory(uploadsFolder);
+        var uploadsFolder = _rootFolderProvider.GetRootFolder();
 
         var storedFileName = Guid.NewGuid().ToString() + ext;
         var filePath = Path.Combine(uploadsFolder, storedFileName);
@@ -54,13 +52,5 @@ public class LocalDiskUploadedFileStorage : IUploadedFileStorage, ITransientDepe
         }
 
         return storedFileName;
-    }
-
-    private string GetRootFolder()
-    {
-        // ContentRootPath (proje kökü) altında, wwwroot DIŞINDA — FeedbackFileStorage ile aynı desen:
-        // wwwroot altındaki her şey Development modunda static file middleware tarafından
-        // [Authorize]'lı FileController atlanarak oturumsuz servis edilebiliyordu.
-        return Path.Combine(_environment.ContentRootPath, "App_Data", "uploads");
     }
 }
