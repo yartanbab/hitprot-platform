@@ -63,7 +63,9 @@ public class IndexModel : AbpPageModel
         var download = await _documentAppService.PrepareDownloadAsync(attachmentId);
 
         // Path traversal koruması: FileController'daki desenle aynı.
-        var uploadsRoot = Path.GetFullPath(Path.Combine(_environment.WebRootPath, "uploads"));
+        // Kök klasör LocalDiskUploadedFileStorage.GetRootFolder() ile birebir aynı olmalı (App_Data/uploads),
+        // aksi halde StoreAsync'in yazdığı yer ile burası uyuşmaz ve indirme 404 verir.
+        var uploadsRoot = Path.GetFullPath(Path.Combine(_environment.ContentRootPath, "App_Data", "uploads"));
         var safeFileName = Path.GetFileName(download.StoredFileName);
         var resolvedPath = Path.GetFullPath(Path.Combine(uploadsRoot, safeFileName));
         if (string.IsNullOrEmpty(safeFileName) || !resolvedPath.StartsWith(uploadsRoot + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase))
