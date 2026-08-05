@@ -20,15 +20,29 @@ function toFormValues(task) {
 }
 
 /**
- * Görev "Genel" sekmesi form state'i. `task` değişmez kabul edilir (aynı
- * taskId için TaskDetailRoot yeniden mount olur, bkz task-detail.jsx) —
- * bu yüzden başlangıç değerleri yalnız mount'ta hesaplanır, prop değişiminde
- * elle senkron kurulmaz.
+ * Görev "Genel" sekmesi form state'i. İlk render'da `task` her zaman `undefined`'dır
+ * (TanStack Query hiç senkron çözülmez) — bu yüzden values, task yüklenince (veya
+ * farklı bir taskId'ye geçilince) render sırasında gerçek verilerle senkronlanır
+ * (bkz. `lastTaskId` kontrolü). Aynı task için sonraki render'larda values kullanıcı
+ * girdisini korur, task referansı değişse bile (ör. save sonrası refetch) — id aynı
+ * kaldığı sürece kullanıcının o anki düzenlemesi ezilmez.
  */
 export function useTaskForm(task) {
+    const [lastTaskId, setLastTaskId] = useState(task?.id);
     const initial = useMemo(() => toFormValues(task), [task]);
     const [values, setValues] = useState(initial);
     const [errors, setErrors] = useState({});
+
+    /* task yüklenmeden önce (undefined) render başlar; TanStack Query hiçbir zaman
+       senkron çözülmez, bu yüzden ilk render'da her zaman task=undefined olur. Görev
+       verisi gelince (veya farklı bir taskId'ye geçilince) formu render SIRASINDA
+       gerçek değerlerle senkronla — React'in resmi "prop değişince state ayarla"
+       deseni. useEffect ile yapılırsa kullanıcı bir an için boş/eski değerleri görür. */
+    if (task?.id !== lastTaskId) {
+        setLastTaskId(task?.id);
+        setValues(initial);
+        setErrors({});
+    }
 
     const setField = useCallback((name, value) => {
         setValues((v) => ({ ...v, [name]: value }));

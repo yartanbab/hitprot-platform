@@ -87,4 +87,32 @@ describe('useTaskForm', () => {
         expect(result.current.values.title).toBe('Otel Konaklama Anlaşması');
         expect(result.current.isDirty).toBe(false);
     });
+
+    it('task once undefined sonra rerender ile gelince gercek verilerle senkronlanir ve dirty olmaz', () => {
+        const { result, rerender } = renderHook(({ task }) => useTaskForm(task), {
+            initialProps: { task: undefined },
+        });
+        expect(result.current.values.title).toBe('');
+        expect(result.current.isDirty).toBe(false);
+
+        rerender({ task: TASK });
+
+        expect(result.current.values.title).toBe('Otel Konaklama Anlaşması');
+        expect(result.current.values.status).toBe(4);
+        expect(result.current.isDirty).toBe(false);
+    });
+
+    it('ayni taskId icin tekrar render olunca kullanicinin girdigi deger korunur', () => {
+        const { result, rerender } = renderHook(({ task }) => useTaskForm(task), {
+            initialProps: { task: TASK },
+        });
+        act(() => result.current.setField('title', 'Kullanici degistirdi'));
+        expect(result.current.isDirty).toBe(true);
+
+        // Ayni id, farkli obje referansi (ör. bir refetch) - values ezilmemeli.
+        rerender({ task: { ...TASK } });
+
+        expect(result.current.values.title).toBe('Kullanici degistirdi');
+        expect(result.current.isDirty).toBe(true);
+    });
 });
