@@ -86,6 +86,29 @@ describe('TaskGeneralForm', () => {
         expect(onFieldChange).toHaveBeenCalledWith('tagNames', ['Konaklama', 'Anlaşma', 'Yeni']);
     });
 
+    it('yeni etiket yazıp virgüle basınca onFieldChange(tagNames, [...+yeni]) çağrılır', async () => {
+        const { onFieldChange } = setup();
+        const tagInput = screen.getByPlaceholderText('Etiket yazıp Enter\'a basın');
+        await userEvent.type(tagInput, 'Yeni,');
+        expect(onFieldChange).toHaveBeenCalledWith('tagNames', ['Konaklama', 'Anlaşma', 'Yeni']);
+    });
+
+    it('boş etiket alanında Backspace basınca son etiket çıkarılır', async () => {
+        const { onFieldChange } = setup();
+        const tagInput = screen.getByPlaceholderText('Etiket yazıp Enter\'a basın');
+        await userEvent.click(tagInput);
+        await userEvent.keyboard('{Backspace}');
+        expect(onFieldChange).toHaveBeenCalledWith('tagNames', ['Konaklama']);
+    });
+
+    it('var olan etiket yazıp Enter\'a basınca tekrar eklenmez', async () => {
+        const { onFieldChange } = setup();
+        const tagInput = screen.getByPlaceholderText('Etiket yazıp Enter\'a basın');
+        onFieldChange.mockClear();
+        await userEvent.type(tagInput, 'Konaklama{Enter}');
+        expect(onFieldChange).not.toHaveBeenCalled();
+    });
+
     it('etiket chip\'indeki kaldır butonuna basınca o etiket olmadan liste döner', async () => {
         const { onFieldChange } = setup();
         await userEvent.click(screen.getByLabelText('Konaklama etiketini kaldır'));
