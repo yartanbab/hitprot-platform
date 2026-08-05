@@ -1,10 +1,14 @@
 using System;
+using System.Collections.Generic;
+using System.Security.Claims;
 using System.Threading.Tasks;
 using Apya.Platform.Tasks;
 using Shouldly;
+using Volo.Abp;
 using Volo.Abp.Domain.Entities;
 using Volo.Abp.Domain.Repositories;
 using Volo.Abp.MultiTenancy;
+using Volo.Abp.Security.Claims;
 using Xunit;
 
 namespace Apya.Platform.EntityFrameworkCore.Tasks;
@@ -23,6 +27,7 @@ public class TaskAppService_Tenant_Tests : PlatformEntityFrameworkCoreTestBase
     private readonly IRepository<TaskItem, Guid> _taskRepository;
     private readonly IRepository<TaskComment, Guid> _commentRepository;
     private readonly ICurrentTenant _currentTenant;
+    private readonly ICurrentPrincipalAccessor _currentPrincipalAccessor;
 
     public TaskAppService_Tenant_Tests()
     {
@@ -30,6 +35,7 @@ public class TaskAppService_Tenant_Tests : PlatformEntityFrameworkCoreTestBase
         _taskRepository = GetRequiredService<IRepository<TaskItem, Guid>>();
         _commentRepository = GetRequiredService<IRepository<TaskComment, Guid>>();
         _currentTenant = GetRequiredService<ICurrentTenant>();
+        _currentPrincipalAccessor = GetRequiredService<ICurrentPrincipalAccessor>();
     }
 
     private async Task<Guid> CreateTaskInTenantAsync(Guid tenantId)
@@ -160,5 +166,81 @@ public class TaskAppService_Tenant_Tests : PlatformEntityFrameworkCoreTestBase
 
         await Should.ThrowAsync<EntityNotFoundException>(
             async () => await _taskAppService.DeleteCommentAsync(commentId));
+    }
+
+    // Gizli görevde impersonation ile erişim testleri (APYA-22, EnsureTaskPrivacyAllowedAsync).
+    //
+    // NOT: Görev tarifi "ManageTeam yetkisi yok, oluşturan/atanan değil" senaryosunu istiyordu,
+    // ancak bu test host'unda kanıtlanamaz: PlatformTestBaseModule.AddAlwaysAllowAuthorization()
+    // IAuthorizationService'i, her izin adı için (var olmayan/rastgele bir izin adı dahil) her
+    // zaman true dönen bir uygulamayla DEĞİŞTİRİYOR — bir diagnostik testle doğrulandı
+    // (authorizationService.IsGrantedAsync("Bu.Izin.Hicbir.Yerde.Tanimli.Degil") == true).
+    // Yani canManageTeam bu host'ta asla false olamaz; "ManageTeam yok" dalı test edilemez
+    // hale geliyor. Bunu çözmek AddAlwaysAllowAuthorization'ı bu test sınıfı için DI'da
+    // override eden yeni bir test modülü/host gerektirir — kapsam dışı, kırılgan bir çözüm
+    // olurdu (bkz. görev talimatı).
+    //
+    // Bunun yerine EnsureTaskPrivacyAllowedAsync'in İKİNCİ, ManageTeam'den BAĞIMSIZ dalı
+    // (impersonation) test ediliyor: task.IsPrivate + isImpersonated true ise ManageTeam/
+    // creator/assignee kontrolüne hiç bakılmadan BusinessException fırlatılır. Bu, düzeltmenin
+    // kapattığı asıl regresyonu da kanıtlıyor: eskiden yalnızca GetAsync impersonation'ı
+    // reddediyordu, yorum/dosya uçları (taskId üzerinden doğrudan çağrılınca) reddetmiyordu.
+    private async Task<Guid> CreateGizliTaskInCurrentTenantAsync()
+    {
+        var task = new TaskItem(
+            Guid.NewGuid(), "Gizli görev",
+            tenantId: _currentTenant.Id, isPrivate: true, now: DateTime.Now);
+        await _taskRepository.InsertAsync(task, autoSave: true);
+        return task.Id;
+    }
+
+    private static ClaimsPrincipal BuildImpersonatedPrincipal()
+    {
+        return new ClaimsPrincipal(new ClaimsIdentity(new List<Claim>
+        {
+            new Claim(AbpClaimTypes.UserId, Guid.NewGuid().ToString()),
+            new Claim(AbpClaimTypes.UserName, "impersonated-user"),
+            new Claim(AbpClaimTypes.ImpersonatorUserId, Guid.NewGuid().ToString())
+        }));
+    }
+
+    // Yanlış-yeşil koruması: tohumlanan görev gerçekten gizli olarak var oluyor mu?
+    // Bu geçmezse aşağıdaki iki test BusinessException'ı yanlış sebepten alıyor olabilir.
+    [Fact]
+    public async Task CreateGizliTaskInCurrentTenantAsync_gorev_gercekten_gizli_olarak_var_olur()
+    {
+        var taskId = await CreateGizliTaskInCurrentTenantAsync();
+
+        var task = await _taskRepository.GetAsync(taskId);
+        task.ShouldNotBeNull();
+        task.IsPrivate.ShouldBeTrue();
+    }
+
+    [Fact]
+    public async Task GetCommentsAsync_gizli_gorevde_impersonation_erisimi_reddeder()
+    {
+        var taskId = await CreateGizliTaskInCurrentTenantAsync();
+
+        using (_currentPrincipalAccessor.Change(BuildImpersonatedPrincipal()))
+        {
+            var ex = await Should.ThrowAsync<BusinessException>(
+                async () => await _taskAppService.GetCommentsAsync(taskId));
+
+            ex.Code.ShouldBe(PlatformDomainErrorCodes.TaskViewImpersonationDenied);
+        }
+    }
+
+    [Fact]
+    public async Task AddAttachmentAsync_gizli_gorevde_impersonation_erisimi_reddeder()
+    {
+        var taskId = await CreateGizliTaskInCurrentTenantAsync();
+
+        using (_currentPrincipalAccessor.Change(BuildImpersonatedPrincipal()))
+        {
+            var ex = await Should.ThrowAsync<BusinessException>(
+                async () => await _taskAppService.AddAttachmentAsync(taskId, "a.pdf", "stored.pdf", 10));
+
+            ex.Code.ShouldBe(PlatformDomainErrorCodes.TaskViewImpersonationDenied);
+        }
     }
 }
