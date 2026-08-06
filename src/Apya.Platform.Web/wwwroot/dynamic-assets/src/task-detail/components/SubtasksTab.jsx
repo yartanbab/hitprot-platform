@@ -20,6 +20,7 @@ export function SubtasksTab({ taskId, task, onOpenSubtask }) {
                 title,
                 startDate: new Date().toISOString().slice(0, 10),
                 parentTaskId: taskId,
+                projectId: task?.projectId,
             }));
             setDraft('');
             await invalidateParent();
