@@ -40,12 +40,14 @@ function TaskDetailIsland() {
 }
 
 /**
- * FAZ 1 BAYRAK: yeni modal varsayılan DEĞİL.
- * Gerekçe — Faz 1'de henüz düzenlenebilir alan yok (Genel sekmesi Faz 2'de).
- * Varsayılan yapılırsa kullanıcılar görev düzenleme yeteneğini kaybeder.
- * Bayrak Faz 2'de varsayılan açık olur, Faz 9'da tamamen kaldırılır.
+ * FAZ 2 BAYRAK: hâlâ VARSAYILAN KAPALI — bilinçli karar (whole-branch review, 2026-08-05).
+ * Genel sekmesi artık çalışıyor ama eski `EditModal.cshtml` drawer'ında olup V2'de henüz
+ * olmayan sekmeler var: Alt Görevler, Dosyalar, Finans, Bağımlılıklar, Zaman Takibi,
+ * Yorumlar — bunlar Faz 3/4/6/7/8'de gelecek. Varsayılanı şimdi açmak tüm kullanıcılar
+ * için bu özellikleri kaybettirir. Faz 4 (Alt Görevler + Dosyalar) bitince yeniden
+ * değerlendirilecek.
  *
- * Açma yolları:
+ * Açma yolları (opt-in, değişmedi):
  *   - Kalıcı : localStorage.setItem('apya.taskDetail.v2', '1')
  *   - Tek seferlik: sayfaya ?taskui=v2 ekle
  */

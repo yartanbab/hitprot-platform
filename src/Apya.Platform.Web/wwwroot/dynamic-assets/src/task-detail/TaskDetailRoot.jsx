@@ -1,10 +1,16 @@
 import React, { useState, useCallback } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { ModalShell } from './shells/ModalShell';
 import { TaskDetailHeader } from './components/TaskDetailHeader';
 import { TaskDetailFooter } from './components/TaskDetailFooter';
+import { TaskGeneralForm } from './components/TaskGeneralForm';
+import { TaskDetailsPanel } from './components/TaskDetailsPanel';
 import { useTaskDetail, isGranted } from './hooks/useTaskDetail';
 import { useDirtyGuard } from './hooks/useDirtyGuard';
 import { useTaskUrlSync, clearTaskUrl } from './hooks/useTaskUrlSync';
+import { useTaskForm } from './hooks/useTaskForm';
+import { useAssigneeOptions } from './hooks/useAssigneeOptions';
+import { taskDetailStore } from './taskDetailStore';
 import { Skeleton, Button } from '../components/ui';
 
 const FULLSCREEN_KEY = 'apya.taskDetail.fullscreen';
@@ -17,9 +23,13 @@ const FULLSCREEN_KEY = 'apya.taskDetail.fullscreen';
 export function TaskDetailRoot({ taskId, presentation = 'modal', onClose }) {
     const { data: task, isLoading, isError, refetch } = useTaskDetail(taskId);
     const guard = useDirtyGuard();
+    const form = useTaskForm(task);
+    const assignees = useAssigneeOptions();
+    const queryClient = useQueryClient();
     const [fullscreen, setFullscreen] = useState(
         () => window.localStorage?.getItem(FULLSCREEN_KEY) === '1',
     );
+    const [isSaving, setIsSaving] = useState(false);
 
     const closeNow = useCallback(() => {
         clearTaskUrl();
@@ -27,6 +37,12 @@ export function TaskDetailRoot({ taskId, presentation = 'modal', onClose }) {
     }, [onClose]);
 
     useTaskUrlSync(taskId, closeNow);
+
+    /* Formun dirty durumu tek gerçek kaynak; guard'ı buna senkron tutuyoruz.
+       guard.markDirty/markClean useCallback([])'la sabit, effect deps'e girmesi zararsız. */
+    React.useEffect(() => {
+        if (form.isDirty) guard.markDirty(); else guard.markClean();
+    }); // eslint-disable-line react-hooks/exhaustive-deps
 
     const requestClose = useCallback(() => guard.requestClose(closeNow), [guard, closeNow]);
 
@@ -42,9 +58,6 @@ export function TaskDetailRoot({ taskId, presentation = 'modal', onClose }) {
     const [deleteOpen, setDeleteOpen] = useState(false);
     const [deleting, setDeleting] = useState(false);
 
-    /* SİLME Faz 1'de ÇALIŞIR olmak zorunda: bugün drawer'da çalışıyor, bayrak
-       açıldığında kaybolursa fonksiyonel regresyon olur. Kaydetme aksine Faz 2'ye
-       kalabilir çünkü Faz 1'de düzenlenebilir alan hiç yok (Kaydet hep disabled). */
     const handleDelete = useCallback(async () => {
         setDeleting(true);
         try {
@@ -59,6 +72,39 @@ export function TaskDetailRoot({ taskId, presentation = 'modal', onClose }) {
             setDeleting(false);
         }
     }, [taskId, guard, closeNow]);
+
+    /** Kaydeder; başarılıysa true döner (çağıran taraf kapatıp kapatmayacağına kendi karar verir). */
+    const doSave = useCallback(async () => {
+        if (!form.validate()) return false;
+        setIsSaving(true);
+        try {
+            await Promise.resolve(
+                window.apya.platform.tasks.task.update(taskId, form.toUpdateDto()),
+            );
+            await queryClient.invalidateQueries({ queryKey: ['task-detail', taskId] });
+            /* Modal açık kalabilir (yalnız Kaydet, kapatma yok) — bu yüzden liste/kanban
+               tazelemesi burada tetiklenir, yalnız closeNow'a bağlı kalınmaz. "Kaydet ve
+               çık" akışında closeNow'un kendi onClose zinciri de emitResult çağırır; bu
+               çift-tetikleme zararsızdır (liste bir kez daha yenilenir), engellemek için
+               ekstra state tutmaya değmez. */
+            taskDetailStore.emitResult();
+            window?.abp?.notify?.success?.('Kaydedildi.');
+            return true;
+        } catch (err) {
+            window?.abp?.notify?.error?.(err?.message || 'Kaydedilemedi.');
+            return false;
+        } finally {
+            setIsSaving(false);
+        }
+    }, [taskId, form, guard, queryClient]);
+
+    const handleSaveClick = useCallback(() => { doSave(); }, [doSave]);
+
+    const handleUnsavedSaveAndClose = useCallback(async () => {
+        const doClose = guard.resolvePendingClose('save');
+        const ok = await doSave();
+        if (ok) doClose?.();
+    }, [guard, doSave]);
 
     const body = isLoading
         ? (
@@ -77,9 +123,20 @@ export function TaskDetailRoot({ taskId, presentation = 'modal', onClose }) {
                 </div>
             )
             : (
-                <p className="text-text-tertiary">
-                    Genel sekmesi Faz 2&apos;de eklenecek.
-                </p>
+                <div className="grid gap-[var(--apya-space-5)] tablet:grid-cols-[2fr_1fr]">
+                    <TaskGeneralForm
+                        values={form.values}
+                        errors={form.errors}
+                        onFieldChange={form.setField}
+                        assigneeOptions={assignees.options}
+                        isLoadingAssignees={assignees.isLoading}
+                    />
+                    <TaskDetailsPanel
+                        task={task}
+                        creatorName={assignees.nameById.get(task.creatorId)}
+                        lastModifierName={assignees.nameById.get(task.lastModifierId)}
+                    />
+                </div>
             );
 
     /* presentation: Faz 1'de tek geçerli değer 'modal'; Faz 5'te 'page' eklenecek
@@ -111,20 +168,19 @@ export function TaskDetailRoot({ taskId, presentation = 'modal', onClose }) {
                 <TaskDetailFooter
                     lastSavedAt={task?.lastModificationTime}
                     isDirty={guard.isDirty}
-                    isSaving={false}
+                    isSaving={isSaving}
                     onCancel={requestClose}
-                    /* onSave BİLEREK geçilmiyor: Faz 1'de düzenlenebilir alan yok,
-                       isDirty hiç true olmuyor, Kaydet hep disabled → handler asla
-                       çalışmaz. No-op fonksiyon yerine hiç geçmemek daha dürüst.
-                       Gerçek kaydetme Faz 2'de bağlanacak. */
+                    onSave={handleSaveClick}
                 />
             )}
         >
             {body}
             {guard.pendingClose && (
                 <UnsavedChangesDialog
+                    isSaving={isSaving}
                     onStay={() => guard.resolvePendingClose('stay')}
                     onDiscard={() => guard.resolvePendingClose('discard')}
+                    onSaveAndClose={handleUnsavedSaveAndClose}
                 />
             )}
             {deleteOpen && (
@@ -197,7 +253,7 @@ function AlertShell({ label, title, description, children, actions }) {
     );
 }
 
-function UnsavedChangesDialog({ onStay, onDiscard }) {
+function UnsavedChangesDialog({ isSaving, onStay, onDiscard, onSaveAndClose }) {
     return (
         <AlertShell
             label="Kaydedilmemiş değişiklikler"
@@ -205,8 +261,11 @@ function UnsavedChangesDialog({ onStay, onDiscard }) {
             description="Çıkarsanız yaptığınız değişiklikler kaybolur."
             actions={(
                 <>
-                    <Button variant="secondary" onClick={onStay}>Düzenlemeye devam et</Button>
-                    <Button variant="destructive" onClick={onDiscard}>Değişiklikleri iptal et</Button>
+                    <Button variant="secondary" onClick={onStay} disabled={isSaving}>Düzenlemeye devam et</Button>
+                    <Button variant="destructive" onClick={onDiscard} disabled={isSaving}>Değişiklikleri iptal et</Button>
+                    <Button variant="primary" onClick={onSaveAndClose} isLoading={isSaving} loadingText="Kaydediliyor…">
+                        Kaydet ve çık
+                    </Button>
                 </>
             )}
         />
