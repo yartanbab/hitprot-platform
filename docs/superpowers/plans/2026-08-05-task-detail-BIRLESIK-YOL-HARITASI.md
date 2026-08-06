@@ -38,7 +38,7 @@ Kullanıcının 13 fazlı spec'i ile orijinal 9 fazlı planın karşılıklı ha
 | FAZ 0 — Analiz/karar | — | — | ✅ **Bitti** (2026-08-05, `sunum-mimarisi-analiz.md`) |
 | FAZ 1 — Ortak shell, presentation mode, dirty state, permission | Faz 1 | **F1** | ✅ **~%85 bitti** (PR #116) |
 | FAZ 2 — Responsive modal, focus trap, fullscreen, URL senkronu | Faz 1 | **F1** | ✅ **~%90 bitti** (PR #116) |
-| FAZ 4 — Genel sekmesi, form UX, Kaydet | Faz 2 | **F2** | ⬅️ **SIRADAKİ** |
+| FAZ 4 — Genel sekmesi, form UX, Kaydet | Faz 2 | **F2** | ✅ **Bitti** (2026-08-06, yerel, henüz push/PR yok) |
 | FAZ 5 — Navbar, feature registry, "+" menüsü | Faz 3 | **F3** | Planlı |
 | FAZ 6 — Alt görevler, dosyalar, kontrol listesi | Faz 4 | **F4** | Planlı |
 | FAZ 3 — Embedded sayfa + routing | Faz 5 | **F5** | Planlı (**sırası değişti**, bkz §3) |
@@ -93,16 +93,26 @@ iskeleti) · `useTaskDetail` (TanStack Query) · `useDirtyGuard` · `useTaskUrlS
 (`?task=<guid>` + pushState + popstate + deep-link) · `taskDetailStore` · Silme akışı
 (izin kontrolü + "SİL" yazarak onay) · 8 test dosyası.
 
-### ⬅️ F2 — Genel sekmesi ve gerçek Kaydet akışı (SIRADAKİ)
+### ✅ F2 — Genel sekmesi ve gerçek Kaydet akışı (BİTTİ, 2026-08-06)
 
 Detay plan: [`2026-08-05-task-detail-faz2-genel-sekmesi.md`](2026-08-05-task-detail-faz2-genel-sekmesi.md)
+(analiz) + [`2026-08-05-task-detail-faz2-implementation.md`](2026-08-05-task-detail-faz2-implementation.md)
+(kod-tam uygulama planı, subagent-driven-development ile çalıştırıldı).
 
 Sol ana alan (başlık, durum, öncelik, atanan, tarihler, etiketler, açıklama) + sağ salt-okunur
 detay paneli (oluşturan/oluşturulma, güncelleyen/güncelleme, proje) · form state + dirty diff ·
-elle validation · **gerçek Kaydet** (`task.update()` + cache invalidation + `emitResult()`) ·
-"Kaydet ve çık" üçüncü seçeneği · **bayrak varsayılan AÇIK olur.**
+elle validation (başlık + **StartDate zorunlu** — whole-branch review'da eklendi) · **gerçek
+Kaydet** (`task.update()` + cache invalidation + `emitResult()`) · "Kaydet ve çık" üçüncü
+seçeneği. Backend değişikliği: sıfır (`UpdateAsync` mevcut tüm alanları kapsadı).
 
-Backend değişikliği: muhtemelen sıfır (`UpdateAsync` zaten tüm alanları kapsıyor).
+**Bayrak kararı değişti: varsayılan yine KAPALI kaldı** (whole-branch review sonrası) — eski
+drawer'da olup V2'de henüz olmayan 6 sekme (Alt Görevler/Dosyalar/Finans/Bağımlılıklar/Zaman
+Takibi/Yorumlar) yüzünden varsayılanı açmak fonksiyonel kayıp olurdu. Faz 4 bitince yeniden
+değerlendirilecek. Detaylı ders ve whole-branch review'ın yakaladığı 4 kritik/önemli bulgu
+(derlenmiş bundle'ın commit'lenmemiş olması dahil) için [[project-task-detail-modal]] hafıza
+kaydına bak.
+
+Commit aralığı: `1f63555..c74b82a` (main'e göre henüz push/PR/merge yok).
 
 ### F3 — Modüler navbar + feature registry + "+" menüsü
 
