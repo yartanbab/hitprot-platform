@@ -32,6 +32,7 @@ namespace Apya.Platform.Tasks
         private readonly IRepository<Apya.Platform.Projects.BoardColumn, Guid> _boardColumnRepository;
         private readonly IRepository<Tag, Guid> _tagRepository;
         private readonly IRepository<TaskTagAssignment, Guid> _taskTagRepository;
+        private readonly IRepository<TaskFeatureAssignment, Guid> _featureAssignmentRepository;
         private readonly ILocalEventBus _localEventBus;
 
         public TaskAppService(
@@ -45,6 +46,7 @@ namespace Apya.Platform.Tasks
             IRepository<Apya.Platform.Projects.BoardColumn, Guid> boardColumnRepository,
             IRepository<Tag, Guid> tagRepository,
             IRepository<TaskTagAssignment, Guid> taskTagRepository,
+            IRepository<TaskFeatureAssignment, Guid> featureAssignmentRepository,
             ILocalEventBus localEventBus)
             : base(repository)
         {
@@ -57,6 +59,7 @@ namespace Apya.Platform.Tasks
             _boardColumnRepository = boardColumnRepository;
             _tagRepository         = tagRepository;
             _taskTagRepository     = taskTagRepository;
+            _featureAssignmentRepository = featureAssignmentRepository;
             _localEventBus         = localEventBus;
 
             CreatePolicyName = PlatformPermissions.Tasks.Create;
@@ -670,6 +673,43 @@ namespace Apya.Platform.Tasks
                 DownloadUrl = "/file/get/" + x.StoredFileName,
                 UploaderName = (x.CreatorId.HasValue && userDict.ContainsKey(x.CreatorId.Value)) ? userDict[x.CreatorId.Value] : "Sistem"
             }).ToList();
+        }
+
+        // --- 8. FEATURE REGISTRY METODLARI (Faz 3) ---
+        public async Task<List<string>> GetFeatureAssignmentsAsync(Guid taskId)
+        {
+            await EnsureTaskAccessAllowedAsync(taskId);
+
+            var assignments = await _featureAssignmentRepository.GetListAsync(x => x.TaskId == taskId);
+            return assignments.Select(x => x.FeatureCode).ToList();
+        }
+
+        public async Task AddFeatureAsync(Guid taskId, string featureCode)
+        {
+            await EnsureTaskAccessAllowedAsync(taskId);
+
+            var existing = await _featureAssignmentRepository.FirstOrDefaultAsync(
+                x => x.TaskId == taskId && x.FeatureCode == featureCode);
+            if (existing != null)
+            {
+                return; // idempotent — aynı feature'ı iki kez eklemek hata vermemeli
+            }
+
+            await _featureAssignmentRepository.InsertAsync(
+                new TaskFeatureAssignment(GuidGenerator.Create(), taskId, featureCode),
+                autoSave: true);
+        }
+
+        public async Task RemoveFeatureAsync(Guid taskId, string featureCode)
+        {
+            await EnsureTaskAccessAllowedAsync(taskId);
+
+            var assignment = await _featureAssignmentRepository.FirstOrDefaultAsync(
+                x => x.TaskId == taskId && x.FeatureCode == featureCode);
+            if (assignment != null)
+            {
+                await _featureAssignmentRepository.DeleteAsync(assignment, autoSave: true);
+            }
         }
 
         public async Task UpdateStatusAsync(Guid id, Apya.Platform.Tasks.TaskStatus status)
