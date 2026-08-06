@@ -675,6 +675,14 @@ namespace Apya.Platform.Tasks
             }).ToList();
         }
 
+        public async Task DeleteAttachmentAsync(Guid attachmentId)
+        {
+            var attachment = await _attachmentRepository.GetAsync(attachmentId);
+            await EnsureTaskAccessAllowedAsync(attachment.TaskId);
+
+            await _attachmentRepository.DeleteAsync(attachment, autoSave: true);
+        }
+
         // --- 8. FEATURE REGISTRY METODLARI (Faz 3) ---
         public async Task<List<string>> GetFeatureAssignmentsAsync(Guid taskId)
         {

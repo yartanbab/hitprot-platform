@@ -29,6 +29,7 @@ namespace Apya.Platform.Tasks
 
         Task AddAttachmentAsync(Guid taskId, string fileName, string storedFileName, long fileSize);
         Task<List<TaskAttachmentDto>> GetAttachmentsAsync(Guid taskId);
+        Task DeleteAttachmentAsync(Guid attachmentId);
         Task UpdateStatusAsync(Guid id, Apya.Platform.Tasks.TaskStatus status);
 
         // Feature Registry (Faz 3)
