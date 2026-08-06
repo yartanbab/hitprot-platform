@@ -55,6 +55,13 @@ describe('useTaskForm', () => {
         expect(result.current.errors.title).toBeTruthy();
     });
 
+    it('baslangic tarihi bossa validate false doner ve hata mesaji uretir', () => {
+        const { result } = renderHook(() => useTaskForm(TASK));
+        act(() => result.current.setField('startDate', ''));
+        act(() => { expect(result.current.validate()).toBe(false); });
+        expect(result.current.errors.startDate).toBeTruthy();
+    });
+
     it('bitiş tarihi başlangıçtan önceyse validate false döner', () => {
         const { result } = renderHook(() => useTaskForm(TASK));
         act(() => result.current.setField('dueDate', '2026-01-01'));

@@ -42,7 +42,7 @@ export function TaskDetailRoot({ taskId, presentation = 'modal', onClose }) {
        guard.markDirty/markClean useCallback([])'la sabit, effect deps'e girmesi zararsız. */
     React.useEffect(() => {
         if (form.isDirty) guard.markDirty(); else guard.markClean();
-    }, [form.isDirty]); // eslint-disable-line react-hooks/exhaustive-deps
+    }); // eslint-disable-line react-hooks/exhaustive-deps
 
     const requestClose = useCallback(() => guard.requestClose(closeNow), [guard, closeNow]);
 
@@ -82,7 +82,6 @@ export function TaskDetailRoot({ taskId, presentation = 'modal', onClose }) {
                 window.apya.platform.tasks.task.update(taskId, form.toUpdateDto()),
             );
             await queryClient.invalidateQueries({ queryKey: ['task-detail', taskId] });
-            guard.markClean();
             /* Modal açık kalabilir (yalnız Kaydet, kapatma yok) — bu yüzden liste/kanban
                tazelemesi burada tetiklenir, yalnız closeNow'a bağlı kalınmaz. "Kaydet ve
                çık" akışında closeNow'un kendi onClose zinciri de emitResult çağırır; bu

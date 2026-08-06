@@ -89,6 +89,16 @@ describe('TaskDetailRoot', () => {
     });
 
     it('Kaydete basinca update cagrilir, cache invalidate olur, dirty temizlenir', async () => {
+        // Sunucu kullanicinin gonderdigi degeri AYNEN geri dondurur (trim/canonicalization
+        // yok) - bu, dirty-guard'in gercekten form.isDirty'yi izledigini kanitlayan
+        // "eslesen" senaryo. Trim-uyusmazligi senaryosu bir sonraki testte.
+        let getCallCount = 0;
+        window.apya.platform.tasks.task.get = vi.fn(() => {
+            getCallCount += 1;
+            return Promise.resolve(getCallCount === 1
+                ? TASK
+                : { ...TASK, title: 'Otel Konaklama Anlaşması ek' });
+        });
         wrap(<TaskDetailRoot taskId={TASK.id} presentation="modal" onClose={() => {}} />);
         await screen.findByText('Otel Konaklama Anlaşması');
         await userEvent.type(screen.getByLabelText('Başlık'), ' ek');
@@ -99,6 +109,29 @@ describe('TaskDetailRoot', () => {
             expect.objectContaining({ title: 'Otel Konaklama Anlaşması ek' }),
         ));
         await waitFor(() => expect(screen.getByRole('button', { name: 'Kaydet' })).toBeDisabled());
+    });
+
+    it('kayit sonrasi sunucu degeri istemciden farkliysa (trim) Kaydet aktif kalir, kapatinca uyarir', async () => {
+        // Sunucu title'i trim'liyor: kullanicinin gonderdigi 'Otel Konaklama Anlaşması ek '
+        // (sondaki bosluk) yerine backend'den 'Otel Konaklama Anlaşması ek' (trim'li) donuyor.
+        let getCallCount = 0;
+        window.apya.platform.tasks.task.get = vi.fn(() => {
+            getCallCount += 1;
+            return Promise.resolve(getCallCount === 1
+                ? TASK
+                : { ...TASK, title: 'Otel Konaklama Anlaşması ek' });
+        });
+        const onClose = vi.fn();
+        wrap(<TaskDetailRoot taskId={TASK.id} presentation="modal" onClose={onClose} />);
+        await screen.findByText('Otel Konaklama Anlaşması');
+
+        await userEvent.type(screen.getByLabelText('Başlık'), ' ek ');
+        await userEvent.click(screen.getByRole('button', { name: 'Kaydet' }));
+
+        await waitFor(() => expect(window.apya.platform.tasks.task.update).toHaveBeenCalled());
+        // Sunucu deger (trim'li) ile istemci deger (sondaki boslukla) hala farkli oldugu icin
+        // Kaydet aktif kalmali, guard 'temiz' YALANI soylememeli.
+        await waitFor(() => expect(screen.getByRole('button', { name: 'Kaydet' })).toBeEnabled());
     });
 
     it('kayit hatasinda girilen deger form\'da kalir', async () => {

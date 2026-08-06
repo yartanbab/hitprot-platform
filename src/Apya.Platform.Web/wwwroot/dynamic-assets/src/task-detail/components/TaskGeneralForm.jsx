@@ -119,12 +119,13 @@ export function TaskGeneralForm({
             </Field>
 
             <div className="grid grid-cols-2 gap-[var(--apya-space-4)]">
-                <Field label="Başlangıç Tarihi" htmlFor="task-start">
+                <Field label="Başlangıç Tarihi" htmlFor="task-start" error={errors.startDate}>
                     <Input
                         id="task-start"
                         type="date"
                         value={values.startDate}
                         onChange={(e) => onFieldChange('startDate', e.target.value)}
+                        invalid={Boolean(errors.startDate)}
                     />
                 </Field>
                 <Field label="Son Tarih" htmlFor="task-due" error={errors.dueDate}>

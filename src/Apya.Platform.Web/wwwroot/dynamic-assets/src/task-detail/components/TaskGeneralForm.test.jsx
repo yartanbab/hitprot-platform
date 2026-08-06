@@ -120,6 +120,11 @@ describe('TaskGeneralForm', () => {
         expect(screen.getByText('Başlık zorunlu.')).toBeInTheDocument();
     });
 
+    it('baslangic tarihi hatasi verilirse alan altinda gosterilir', () => {
+        setup({ errors: { startDate: 'Başlangıç tarihi zorunlu.' } });
+        expect(screen.getByText('Başlangıç tarihi zorunlu.')).toBeInTheDocument();
+    });
+
     it('atanan listesi yüklenirken combobox disabled olur', () => {
         setup({ isLoadingAssignees: true });
         expect(screen.getByLabelText('Atanan')).toBeDisabled();

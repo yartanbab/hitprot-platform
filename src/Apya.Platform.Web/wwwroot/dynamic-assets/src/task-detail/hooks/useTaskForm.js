@@ -56,6 +56,7 @@ export function useTaskForm(task) {
     const validate = useCallback(() => {
         const next = {};
         if (!values.title.trim()) next.title = 'Başlık zorunlu.';
+        if (!values.startDate) next.startDate = 'Başlangıç tarihi zorunlu.';
         if (values.dueDate && values.startDate && values.dueDate < values.startDate) {
             next.dueDate = 'Bitiş tarihi başlangıçtan önce olamaz.';
         }
