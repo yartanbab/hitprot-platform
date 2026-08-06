@@ -31,6 +31,11 @@ namespace Apya.Platform.Tasks
         Task<List<TaskAttachmentDto>> GetAttachmentsAsync(Guid taskId);
         Task UpdateStatusAsync(Guid id, Apya.Platform.Tasks.TaskStatus status);
 
+        // Feature Registry (Faz 3)
+        Task<List<string>> GetFeatureAssignmentsAsync(Guid taskId);
+        Task AddFeatureAsync(Guid taskId, string featureCode);
+        Task RemoveFeatureAsync(Guid taskId, string featureCode);
+
         // Zaman Takibi
         Task StartTimeTrackingAsync(Guid taskId);
         Task StopTimeTrackingAsync(Guid taskId);
