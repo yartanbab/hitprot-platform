@@ -37,6 +37,12 @@ namespace Apya.Platform.Tasks
         Task AddFeatureAsync(Guid taskId, string featureCode);
         Task RemoveFeatureAsync(Guid taskId, string featureCode);
 
+        // Kontrol Listesi (Faz 4)
+        Task<List<TaskChecklistItemDto>> GetChecklistItemsAsync(Guid taskId);
+        Task<Guid> AddChecklistItemAsync(Guid taskId, string text);
+        Task ToggleChecklistItemAsync(Guid itemId);
+        Task DeleteChecklistItemAsync(Guid itemId);
+
         // Zaman Takibi
         Task StartTimeTrackingAsync(Guid taskId);
         Task StopTimeTrackingAsync(Guid taskId);

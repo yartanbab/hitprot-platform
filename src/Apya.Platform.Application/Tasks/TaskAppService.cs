@@ -33,6 +33,7 @@ namespace Apya.Platform.Tasks
         private readonly IRepository<Tag, Guid> _tagRepository;
         private readonly IRepository<TaskTagAssignment, Guid> _taskTagRepository;
         private readonly IRepository<TaskFeatureAssignment, Guid> _featureAssignmentRepository;
+        private readonly IRepository<TaskChecklistItem, Guid> _checklistRepository;
         private readonly ILocalEventBus _localEventBus;
 
         public TaskAppService(
@@ -47,6 +48,7 @@ namespace Apya.Platform.Tasks
             IRepository<Tag, Guid> tagRepository,
             IRepository<TaskTagAssignment, Guid> taskTagRepository,
             IRepository<TaskFeatureAssignment, Guid> featureAssignmentRepository,
+            IRepository<TaskChecklistItem, Guid> checklistRepository,
             ILocalEventBus localEventBus)
             : base(repository)
         {
@@ -60,6 +62,7 @@ namespace Apya.Platform.Tasks
             _tagRepository         = tagRepository;
             _taskTagRepository     = taskTagRepository;
             _featureAssignmentRepository = featureAssignmentRepository;
+            _checklistRepository   = checklistRepository;
             _localEventBus         = localEventBus;
 
             CreatePolicyName = PlatformPermissions.Tasks.Create;
@@ -730,6 +733,58 @@ namespace Apya.Platform.Tasks
             {
                 await _featureAssignmentRepository.DeleteAsync(assignment, autoSave: true);
             }
+        }
+
+        public async Task<List<TaskChecklistItemDto>> GetChecklistItemsAsync(Guid taskId)
+        {
+            await EnsureTaskAccessAllowedAsync(taskId);
+
+            var items = await _checklistRepository.GetListAsync(x => x.TaskId == taskId);
+            return items
+                .OrderBy(x => x.CreationTime)
+                .Select(x => new TaskChecklistItemDto
+                {
+                    Id = x.Id,
+                    CreationTime = x.CreationTime,
+                    Text = x.Text,
+                    IsDone = x.IsDone,
+                })
+                .ToList();
+        }
+
+        public async Task<Guid> AddChecklistItemAsync(Guid taskId, string text)
+        {
+            await EnsureTaskAccessAllowedAsync(taskId);
+
+            if (string.IsNullOrWhiteSpace(text))
+            {
+                throw new Volo.Abp.UserFriendlyException("Kontrol listesi maddesi boş olamaz.");
+            }
+
+            var item = await _checklistRepository.InsertAsync(new TaskChecklistItem
+            {
+                TaskId = taskId,
+                Text = text.Trim(),
+            }, autoSave: true);
+
+            return item.Id;
+        }
+
+        public async Task ToggleChecklistItemAsync(Guid itemId)
+        {
+            var item = await _checklistRepository.GetAsync(itemId);
+            await EnsureTaskAccessAllowedAsync(item.TaskId);
+
+            item.IsDone = !item.IsDone;
+            await _checklistRepository.UpdateAsync(item, autoSave: true);
+        }
+
+        public async Task DeleteChecklistItemAsync(Guid itemId)
+        {
+            var item = await _checklistRepository.GetAsync(itemId);
+            await EnsureTaskAccessAllowedAsync(item.TaskId);
+
+            await _checklistRepository.DeleteAsync(item, autoSave: true);
         }
 
         public async Task UpdateStatusAsync(Guid id, Apya.Platform.Tasks.TaskStatus status)

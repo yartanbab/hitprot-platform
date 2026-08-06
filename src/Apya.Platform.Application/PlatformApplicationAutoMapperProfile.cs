@@ -66,6 +66,7 @@ namespace Apya.Platform
             // 3. Comments and Attachments
             CreateMap<Apya.Platform.Tasks.TaskComment, Apya.Platform.Tasks.TaskCommentDto>();
             CreateMap<Apya.Platform.Tasks.TaskAttachment, Apya.Platform.Tasks.TaskAttachmentDto>();
+            CreateMap<Apya.Platform.Tasks.TaskChecklistItem, Apya.Platform.Tasks.TaskChecklistItemDto>();
 
             // --- WIKI / DOKÜMAN (DOCUMENTS) MODÜLÜ ---
             CreateMap<Apya.Platform.Documents.Document, Apya.Platform.Documents.DocumentDto>();
