@@ -1,15 +1,19 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useMemo, Suspense } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { ModalShell } from './shells/ModalShell';
 import { TaskDetailHeader } from './components/TaskDetailHeader';
 import { TaskDetailFooter } from './components/TaskDetailFooter';
 import { TaskGeneralForm } from './components/TaskGeneralForm';
 import { TaskDetailsPanel } from './components/TaskDetailsPanel';
+import { TaskFeatureNavbar } from './components/TaskFeatureNavbar';
+import { FeaturePicker } from './components/FeaturePicker';
 import { useTaskDetail, isGranted } from './hooks/useTaskDetail';
 import { useDirtyGuard } from './hooks/useDirtyGuard';
 import { useTaskUrlSync, clearTaskUrl } from './hooks/useTaskUrlSync';
 import { useTaskForm } from './hooks/useTaskForm';
 import { useAssigneeOptions } from './hooks/useAssigneeOptions';
+import { useTaskFeatures } from './hooks/useTaskFeatures';
+import { getVisibleTabs, getPickerEntries } from './TaskFeatureRegistry';
 import { taskDetailStore } from './taskDetailStore';
 import { Skeleton, Button } from '../components/ui';
 
@@ -25,6 +29,21 @@ export function TaskDetailRoot({ taskId, presentation = 'modal', onClose }) {
     const guard = useDirtyGuard();
     const form = useTaskForm(task);
     const assignees = useAssigneeOptions();
+    const features = useTaskFeatures(taskId);
+    const [activeCode, setActiveCode] = useState('general');
+    const [pickerOpen, setPickerOpen] = useState(false);
+    const visibleTabs = useMemo(
+        () => getVisibleTabs(features.assignedCodes),
+        [features.assignedCodes],
+    );
+    const pickerEntries = useMemo(
+        () => getPickerEntries(features.assignedCodes),
+        [features.assignedCodes],
+    );
+    const activeFeature = visibleTabs.find((t) => t.code === activeCode);
+    // JSX renders lowercase tag names as literal DOM elements, so a dynamic
+    // component reference must be bound to a capitalized variable first.
+    const ActiveFeatureComponent = activeFeature?.component;
     const queryClient = useQueryClient();
     const [fullscreen, setFullscreen] = useState(
         () => window.localStorage?.getItem(FULLSCREEN_KEY) === '1',
@@ -106,6 +125,17 @@ export function TaskDetailRoot({ taskId, presentation = 'modal', onClose }) {
         if (ok) doClose?.();
     }, [guard, doSave]);
 
+    const handleAddFeature = useCallback(async (code) => {
+        await features.addFeature(code);
+        setActiveCode(code);
+        setPickerOpen(false);
+    }, [features]);
+
+    const handleRemoveFeature = useCallback(async (code) => {
+        await features.removeFeature(code);
+        setActiveCode((current) => (current === code ? 'general' : current));
+    }, [features]);
+
     const body = isLoading
         ? (
             <div aria-label="Görev yükleniyor" aria-busy="true" className="space-y-3">
@@ -123,19 +153,50 @@ export function TaskDetailRoot({ taskId, presentation = 'modal', onClose }) {
                 </div>
             )
             : (
-                <div className="grid gap-[var(--apya-space-5)] tablet:grid-cols-[2fr_1fr]">
-                    <TaskGeneralForm
-                        values={form.values}
-                        errors={form.errors}
-                        onFieldChange={form.setField}
-                        assigneeOptions={assignees.options}
-                        isLoadingAssignees={assignees.isLoading}
-                    />
-                    <TaskDetailsPanel
-                        task={task}
-                        creatorName={assignees.nameById.get(task.creatorId)}
-                        lastModifierName={assignees.nameById.get(task.lastModifierId)}
-                    />
+                <div className="flex min-h-0 flex-col gap-[var(--apya-space-4)]">
+                    <div className="relative">
+                        <TaskFeatureNavbar
+                            tabs={visibleTabs}
+                            activeCode={activeCode}
+                            onSelect={setActiveCode}
+                            onOpenPicker={() => setPickerOpen((v) => !v)}
+                            pickerOpen={pickerOpen}
+                        />
+                        {pickerOpen && (
+                            <FeaturePicker
+                                entries={pickerEntries}
+                                busyCode={features.isMutating ? features.mutatingCode : null}
+                                onAdd={handleAddFeature}
+                                onRemove={handleRemoveFeature}
+                                onClose={() => setPickerOpen(false)}
+                            />
+                        )}
+                    </div>
+                    <div
+                        role="tabpanel"
+                        id={`task-tabpanel-${activeCode}`}
+                        aria-labelledby={`task-tab-${activeCode}`}
+                        className="grid gap-[var(--apya-space-5)] tablet:grid-cols-[2fr_1fr]"
+                    >
+                        {activeCode === 'general' ? (
+                            <TaskGeneralForm
+                                values={form.values}
+                                errors={form.errors}
+                                onFieldChange={form.setField}
+                                assigneeOptions={assignees.options}
+                                isLoadingAssignees={assignees.isLoading}
+                            />
+                        ) : (
+                            <Suspense fallback={<Skeleton className="h-24 w-full" />}>
+                                {ActiveFeatureComponent && <ActiveFeatureComponent taskId={taskId} task={task} />}
+                            </Suspense>
+                        )}
+                        <TaskDetailsPanel
+                            task={task}
+                            creatorName={assignees.nameById.get(task.creatorId)}
+                            lastModifierName={assignees.nameById.get(task.lastModifierId)}
+                        />
+                    </div>
                 </div>
             );
 
