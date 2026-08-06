@@ -6,14 +6,13 @@ import { getVisibleTabs, getPickerEntries } from './TaskFeatureRegistry';
 import { isGranted } from './hooks/useTaskDetail';
 
 describe('getVisibleTabs', () => {
-    it('hicbir sey atanmamisken sadece Genel gorunur', () => {
+    it('hicbir sey atanmamisken sadece implemented core sekmeler gorunur (Genel + Alt Gorevler)', () => {
         const tabs = getVisibleTabs([]);
-        expect(tabs.map((t) => t.code)).toEqual(['general']);
+        expect(tabs.map((t) => t.code)).toEqual(['general', 'subtasks']);
     });
 
-    it('implemented olmayan core (Alt Gorevler/Dosyalar) navbarda hic gorunmez', () => {
+    it('implemented olmayan core (Dosyalar) navbarda hic gorunmez', () => {
         const tabs = getVisibleTabs([]);
-        expect(tabs.some((t) => t.code === 'subtasks')).toBe(false);
         expect(tabs.some((t) => t.code === 'files')).toBe(false);
     });
 

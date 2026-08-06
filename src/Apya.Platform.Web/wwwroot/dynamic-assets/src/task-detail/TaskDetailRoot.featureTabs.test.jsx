@@ -215,4 +215,24 @@ describe('TaskDetailRoot — feature registry mekanizması (fixture ile)', () =>
         expect(screen.queryByRole('tab', { name: /Demo Özellik/ })).not.toBeInTheDocument();
         expect(screen.getByLabelText('Başlık')).toBeInTheDocument();
     });
+
+    it('alt gorev basligina tiklayinca ayni modalda o gorevin GENEL sekmesine gecer ve breadcrumb gorunur', async () => {
+        const parent = { ...TASK, id: 'parent-1', title: 'Kök Görev', subTasks: [{ id: 'sub-1', title: 'Alt Görev', status: 0 }] };
+        const sub = { ...TASK, id: 'sub-1', title: 'Alt Görev', subTasks: [] };
+        window.apya.platform.tasks.task.get = vi.fn((id) => Promise.resolve(id === 'parent-1' ? parent : sub));
+        window.apya.platform.tasks.task.getFeatureAssignments = vi.fn(() => Promise.resolve([]));
+
+        wrap(<TaskDetailRoot taskId="parent-1" presentation="modal" onClose={() => {}} />);
+        await screen.findByText('Kök Görev');
+
+        await userEvent.click(await screen.findByRole('tab', { name: /alt görevler/i }));
+        await userEvent.click(await screen.findByText('Alt Görev'));
+
+        await waitFor(() => expect(window.apya.platform.tasks.task.get).toHaveBeenCalledWith('sub-1'));
+        expect(screen.getByRole('tab', { name: /genel/i })).toHaveAttribute('aria-selected', 'true');
+        expect(screen.getByRole('navigation', { name: /görev gezinme yolu/i })).toHaveTextContent('Kök Görev');
+
+        await userEvent.click(screen.getByText('Kök Görev'));
+        await waitFor(() => expect(window.apya.platform.tasks.task.get).toHaveBeenCalledWith('parent-1'));
+    });
 });
