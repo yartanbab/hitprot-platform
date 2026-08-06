@@ -688,6 +688,12 @@ namespace Apya.Platform.Tasks
         {
             await EnsureTaskAccessAllowedAsync(taskId);
 
+            if (string.IsNullOrWhiteSpace(featureCode) || featureCode.Length > 64)
+            {
+                throw new Volo.Abp.UserFriendlyException("Geçersiz feature kodu.");
+            }
+            featureCode = featureCode.Trim();
+
             var existing = await _featureAssignmentRepository.FirstOrDefaultAsync(
                 x => x.TaskId == taskId && x.FeatureCode == featureCode);
             if (existing != null)
@@ -703,6 +709,12 @@ namespace Apya.Platform.Tasks
         public async Task RemoveFeatureAsync(Guid taskId, string featureCode)
         {
             await EnsureTaskAccessAllowedAsync(taskId);
+
+            if (string.IsNullOrWhiteSpace(featureCode) || featureCode.Length > 64)
+            {
+                throw new Volo.Abp.UserFriendlyException("Geçersiz feature kodu.");
+            }
+            featureCode = featureCode.Trim();
 
             var assignment = await _featureAssignmentRepository.FirstOrDefaultAsync(
                 x => x.TaskId == taskId && x.FeatureCode == featureCode);

@@ -79,6 +79,36 @@ public class TaskAppService_FeatureAssignment_Tests : PlatformEntityFrameworkCor
     }
 
     [Fact]
+    public async Task AddFeatureAsync_bos_veya_bosluk_feature_kodu_hata_verir()
+    {
+        var taskId = await CreateTaskInCurrentTenantAsync();
+
+        await Should.ThrowAsync<UserFriendlyException>(
+            async () => await _taskAppService.AddFeatureAsync(taskId, "   "));
+    }
+
+    [Fact]
+    public async Task AddFeatureAsync_64_karakterden_uzun_feature_kodu_hata_verir()
+    {
+        var taskId = await CreateTaskInCurrentTenantAsync();
+        var tooLong = new string('a', 65);
+
+        await Should.ThrowAsync<UserFriendlyException>(
+            async () => await _taskAppService.AddFeatureAsync(taskId, tooLong));
+    }
+
+    [Fact]
+    public async Task AddFeatureAsync_bastaki_sondaki_bosluklari_kirpar()
+    {
+        var taskId = await CreateTaskInCurrentTenantAsync();
+
+        await _taskAppService.AddFeatureAsync(taskId, "  finance  ");
+        var result = await _taskAppService.GetFeatureAssignmentsAsync(taskId);
+
+        result.ShouldBe(new[] { "finance" });
+    }
+
+    [Fact]
     public async Task RemoveFeatureAsync_eklenmis_feature_kaldirilinca_listede_gorunmez()
     {
         var taskId = await CreateTaskInCurrentTenantAsync();
@@ -97,6 +127,15 @@ public class TaskAppService_FeatureAssignment_Tests : PlatformEntityFrameworkCor
 
         await Should.NotThrowAsync(async () =>
             await _taskAppService.RemoveFeatureAsync(taskId, "hic-eklenmemis-feature"));
+    }
+
+    [Fact]
+    public async Task RemoveFeatureAsync_bos_feature_kodu_hata_verir()
+    {
+        var taskId = await CreateTaskInCurrentTenantAsync();
+
+        await Should.ThrowAsync<UserFriendlyException>(
+            async () => await _taskAppService.RemoveFeatureAsync(taskId, ""));
     }
 
     [Fact]
