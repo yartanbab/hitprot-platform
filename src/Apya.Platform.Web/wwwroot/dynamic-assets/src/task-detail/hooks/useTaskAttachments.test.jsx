@@ -66,4 +66,19 @@ describe('useTaskAttachments', () => {
         expect(window.apya.platform.tasks.task.deleteAttachment).toHaveBeenCalledWith('att-1');
         await waitFor(() => expect(result.current.attachments).toHaveLength(0));
     });
+
+    it('basarisiz upload (success:false) hata firlatir', async () => {
+        global.fetch = vi.fn(() => Promise.resolve({
+            ok: true,
+            status: 200,
+            headers: { get: () => 'application/json' },
+            json: () => Promise.resolve({ success: false, error: 'Dosya cok buyuk.' }),
+        }));
+
+        const { result } = renderHook(() => useTaskAttachments(TASK_ID), { wrapper });
+        await waitFor(() => expect(result.current.attachments).toHaveLength(1));
+
+        const file = new File(['x'], 'buyuk.pdf', { type: 'application/pdf' });
+        await expect(result.current.upload(file)).rejects.toThrow('Dosya cok buyuk.');
+    });
 });
