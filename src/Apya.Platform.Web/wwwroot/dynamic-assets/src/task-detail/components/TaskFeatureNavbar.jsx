@@ -52,7 +52,7 @@ export function TaskFeatureNavbar({ tabs, activeCode, onSelect, onOpenPicker, pi
                             role="tab"
                             id={`task-tab-${tab.code}`}
                             aria-selected={active}
-                            aria-controls={`task-tabpanel-${tab.code}`}
+                            aria-controls="task-feature-tabpanel"
                             tabIndex={active ? 0 : -1}
                             onClick={() => onSelect(tab.code)}
                             onKeyDown={(e) => onKeyDown(e, index)}

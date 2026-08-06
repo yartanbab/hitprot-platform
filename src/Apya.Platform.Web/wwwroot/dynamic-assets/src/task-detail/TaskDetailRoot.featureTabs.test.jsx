@@ -126,4 +126,93 @@ describe('TaskDetailRoot — feature registry mekanizması (fixture ile)', () =>
         expect(window.apya.platform.tasks.task.removeFeature).toHaveBeenCalledWith(TASK.id, 'demo');
         await waitFor(() => expect(screen.getByRole('tab', { name: /Genel/ })).toHaveAttribute('aria-selected', 'true'));
     });
+
+    it('"+" butonuna acikken tekrar tiklamak picker\'i kapatir (yeniden acmaz)', async () => {
+        // Regresyon testi: panelRef eskiden yalnizca FeaturePicker'in KENDI div'indeydi,
+        // "+" butonunu kapsamiyordu. Acikken "+"ya basmak mousedown'da onClose'u
+        // tetikleyip click'te tekrar aciyordu (picker hic kapanmiyor gibi davraniyordu).
+        // Bu bug SADECE "+" butonu ve panel gercek DOM kardesleriyken ortaya cikar,
+        // bu yuzden burada gercek TaskDetailRoot agaci uzerinden test ediliyor.
+        wrap(<TaskDetailRoot taskId={TASK.id} presentation="modal" onClose={() => {}} />);
+        await screen.findByText('Demo Görevi');
+
+        const plusButton = screen.getByRole('button', { name: 'Özellik ekle' });
+        await userEvent.click(plusButton);
+        expect(screen.getByRole('dialog', { name: 'Özellik ekle' })).toBeInTheDocument();
+
+        await userEvent.click(plusButton);
+        expect(screen.queryByRole('dialog', { name: 'Özellik ekle' })).not.toBeInTheDocument();
+    });
+
+    it('disari tiklama picker\'i kapatir', async () => {
+        wrap(<TaskDetailRoot taskId={TASK.id} presentation="modal" onClose={() => {}} />);
+        await screen.findByText('Demo Görevi');
+
+        await userEvent.click(screen.getByRole('button', { name: 'Özellik ekle' }));
+        expect(screen.getByRole('dialog', { name: 'Özellik ekle' })).toBeInTheDocument();
+
+        await userEvent.click(screen.getByText('Demo Görevi'));
+        expect(screen.queryByRole('dialog', { name: 'Özellik ekle' })).not.toBeInTheDocument();
+    });
+
+    it('Escape picker acikken kapatir', async () => {
+        wrap(<TaskDetailRoot taskId={TASK.id} presentation="modal" onClose={() => {}} />);
+        await screen.findByText('Demo Görevi');
+
+        await userEvent.click(screen.getByRole('button', { name: 'Özellik ekle' }));
+        expect(screen.getByRole('dialog', { name: 'Özellik ekle' })).toBeInTheDocument();
+
+        await userEvent.keyboard('{Escape}');
+        expect(screen.queryByRole('dialog', { name: 'Özellik ekle' })).not.toBeInTheDocument();
+    });
+
+    it('addFeature reddedilirse abp.notify.error cagirilir, sekme eklenmez, picker acik kalir', async () => {
+        window.apya.platform.tasks.task.addFeature = vi.fn(() => Promise.reject(new Error('sunucu hatasi')));
+        wrap(<TaskDetailRoot taskId={TASK.id} presentation="modal" onClose={() => {}} />);
+        await screen.findByText('Demo Görevi');
+
+        await userEvent.click(screen.getByRole('button', { name: 'Özellik ekle' }));
+        await userEvent.click(screen.getByRole('button', { name: 'Ekle' }));
+
+        await waitFor(() => expect(window.abp.notify.error).toHaveBeenCalled());
+        expect(screen.queryByRole('tab', { name: /Demo Özellik/ })).not.toBeInTheDocument();
+        // Basarisiz eklemede picker kapatilmaz — yalniz basari yolunda kapanir.
+        expect(screen.getByRole('dialog', { name: 'Özellik ekle' })).toBeInTheDocument();
+    });
+
+    it('removeFeature reddedilirse abp.notify.error cagirilir, sekme kaldirilmaz', async () => {
+        window.apya.platform.tasks.task.getFeatureAssignments = vi.fn(() => Promise.resolve(['demo']));
+        window.apya.platform.tasks.task.removeFeature = vi.fn(() => Promise.reject(new Error('sunucu hatasi')));
+        wrap(<TaskDetailRoot taskId={TASK.id} presentation="modal" onClose={() => {}} />);
+        await screen.findByText('Demo Görevi');
+
+        await userEvent.click(screen.getByRole('button', { name: 'Özellik ekle' }));
+        await userEvent.click(screen.getByRole('button', { name: 'Kaldır' }));
+
+        await waitFor(() => expect(window.abp.notify.error).toHaveBeenCalled());
+        expect(screen.getByRole('tab', { name: /Demo Özellik/ })).toBeInTheDocument();
+    });
+
+    it('activeCode gosterilen sekmeler disinda kalirsa (baska oturumda kaldirilmis) Genel\'e duser', async () => {
+        // handleRemoveFeature'in kendi 'activeCode === code ? general' donusunden
+        // FARKLI bir yol: burada bu component'in mutasyonundan GECMEDEN, react-query
+        // cache'i disaridan guncelleniyor — refetchOnWindowFocus'un baska bir
+        // sekmede/oturumda yapilan degisiklikten sonra ureteceği durumu simule eder.
+        window.apya.platform.tasks.task.getFeatureAssignments = vi.fn(() => Promise.resolve(['demo']));
+        const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+        render(
+            <QueryClientProvider client={qc}>
+                <TaskDetailRoot taskId={TASK.id} presentation="modal" onClose={() => {}} />
+            </QueryClientProvider>,
+        );
+        await screen.findByText('Demo Görevi');
+        await userEvent.click(await screen.findByRole('tab', { name: /Demo Özellik/ }));
+        await screen.findByText(`Demo özellik içeriği — görev ${TASK.id}`);
+
+        qc.setQueryData(['task-features', TASK.id], []);
+
+        await waitFor(() => expect(screen.getByRole('tab', { name: /Genel/ })).toHaveAttribute('aria-selected', 'true'));
+        expect(screen.queryByRole('tab', { name: /Demo Özellik/ })).not.toBeInTheDocument();
+        expect(screen.getByLabelText('Başlık')).toBeInTheDocument();
+    });
 });

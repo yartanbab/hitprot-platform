@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Input } from '../../components/ui';
 
 const CATEGORY_LABELS = {
@@ -7,26 +7,15 @@ const CATEGORY_LABELS = {
 };
 
 /**
- * "+" picker popover'ı — TaskDetailHeader'ın "⋯" menüsüyle AYNI kapanma deseni
- * (ref + document mousedown/keydown listener'ları). Odağı tetikleyici butona
- * geri döndürmüyor — "⋯" menüsü de döndürmüyor, aynı desene uyuyoruz.
+ * "+" picker popover'ı — dışa-tıklama/Escape kapatma mantığı BURADA DEĞİL:
+ * TaskDetailRoot'taki ortak `<div className="relative">` sarmalayıcı, hem "+"
+ * tetikleyici butonu hem bu paneli TEK bir ref altında tutup kapatıyor
+ * (TaskDetailHeader'ın "⋯" menüsüyle aynı desen). Ref sadece panelin kendisinde
+ * olsaydı, "+" butonuna basmak mousedown'da onClose'u tetikleyip click'te
+ * tekrar açardı — popover hiç kapanmıyormuş gibi davranırdı.
  */
-export function FeaturePicker({ entries, onAdd, onRemove, busyCode, onClose }) {
+export function FeaturePicker({ entries, onAdd, onRemove, busyCode }) {
     const [query, setQuery] = useState('');
-    const panelRef = useRef(null);
-
-    useEffect(() => {
-        const onDocClick = (e) => {
-            if (panelRef.current && !panelRef.current.contains(e.target)) onClose();
-        };
-        const onEsc = (e) => { if (e.key === 'Escape') onClose(); };
-        document.addEventListener('mousedown', onDocClick);
-        document.addEventListener('keydown', onEsc);
-        return () => {
-            document.removeEventListener('mousedown', onDocClick);
-            document.removeEventListener('keydown', onEsc);
-        };
-    }, [onClose]);
 
     const grouped = useMemo(() => {
         const q = query.trim().toLocaleLowerCase('tr-TR');
@@ -44,7 +33,6 @@ export function FeaturePicker({ entries, onAdd, onRemove, busyCode, onClose }) {
 
     return (
         <div
-            ref={panelRef}
             role="dialog"
             aria-label="Özellik ekle"
             className="absolute right-0 top-full z-popover mt-1 w-72 rounded-[var(--apya-radius-lg)] border border-default bg-surface-elevated p-2 shadow-xl"
