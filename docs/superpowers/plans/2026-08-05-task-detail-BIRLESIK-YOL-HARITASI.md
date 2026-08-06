@@ -39,7 +39,7 @@ Kullanıcının 13 fazlı spec'i ile orijinal 9 fazlı planın karşılıklı ha
 | FAZ 1 — Ortak shell, presentation mode, dirty state, permission | Faz 1 | **F1** | ✅ **~%85 bitti** (PR #116) |
 | FAZ 2 — Responsive modal, focus trap, fullscreen, URL senkronu | Faz 1 | **F1** | ✅ **~%90 bitti** (PR #116) |
 | FAZ 4 — Genel sekmesi, form UX, Kaydet | Faz 2 | **F2** | ✅ **Bitti** (2026-08-06, yerel, henüz push/PR yok) |
-| FAZ 5 — Navbar, feature registry, "+" menüsü | Faz 3 | **F3** | 🔶 **Backend bitti** (2026-08-06), frontend planı sırada |
+| FAZ 5 — Navbar, feature registry, "+" menüsü | Faz 3 | **F3** | ✅ **Bitti** (2026-08-06, yerel, henüz push/PR yok) |
 | FAZ 6 — Alt görevler, dosyalar, kontrol listesi | Faz 4 | **F4** | Planlı |
 | FAZ 3 — Embedded sayfa + routing | Faz 5 | **F5** | Planlı (**sırası değişti**, bkz §3) |
 | FAZ 7 — Güncellemeler/yorumlar/realtime | Faz 6 | **F6** | Planlı |
@@ -135,8 +135,16 @@ permission yok). 3 yeni `ITaskAppService` metodu: `GetFeatureAssignmentsAsync`/`
 sırasına göre göstermeli, response sırasına güvenmemeli. `dotnet test` 226/226, migration yerel
 dev Postgres'e uygulandı.
 
-**Sırada: F3 frontend planı** (navbar + registry + "+" picker + `TaskDetailRoot` entegrasyonu)
-— ayrı bir plan dosyası olarak yazılacak, backend'in kesinleşmiş metot imzalarına göre.
+**✅ Frontend de bitti (2026-08-06)** — detay plan:
+[`2026-08-06-task-detail-faz3-frontend-navbar-registry.md`](2026-08-06-task-detail-faz3-frontend-navbar-registry.md).
+Kapsam kararı (kullanıcı onaylı): saf altyapı — navbar bugün yalnız `Genel` sekmesini gösterir
+(Alt Görevler/Dosyalar core ama `implemented:false`, F4'e kadar navbar'da hiç görünmez), "+"
+picker tüm gelecek non-core özellikleri "Yakında" rozetiyle listeler ama hiçbiri eklenemez;
+add/remove backend çağrısı + `React.lazy` render yolu yalnız test-only bir fixture entry ile
+kanıtlandı. `Genel` registry'nin generic `component` sözleşmesinin DIŞINDA kaldı (kendi form
+state'ini `useTaskForm`'dan alır). 4 task + final whole-branch review + 1 fix turu,
+subagent-driven-development ile. `npm test` 143/143, `dotnet build` 0 Hata. Final review
+verdict: "Ready to merge: Yes".
 
 ### F4 — Alt Görevler + Dosyalar + Kontrol Listesi
 

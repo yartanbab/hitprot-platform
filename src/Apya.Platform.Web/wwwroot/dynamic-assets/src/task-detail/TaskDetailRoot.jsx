@@ -1,15 +1,19 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useMemo, Suspense } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { ModalShell } from './shells/ModalShell';
 import { TaskDetailHeader } from './components/TaskDetailHeader';
 import { TaskDetailFooter } from './components/TaskDetailFooter';
 import { TaskGeneralForm } from './components/TaskGeneralForm';
 import { TaskDetailsPanel } from './components/TaskDetailsPanel';
+import { TaskFeatureNavbar } from './components/TaskFeatureNavbar';
+import { FeaturePicker } from './components/FeaturePicker';
 import { useTaskDetail, isGranted } from './hooks/useTaskDetail';
 import { useDirtyGuard } from './hooks/useDirtyGuard';
 import { useTaskUrlSync, clearTaskUrl } from './hooks/useTaskUrlSync';
 import { useTaskForm } from './hooks/useTaskForm';
 import { useAssigneeOptions } from './hooks/useAssigneeOptions';
+import { useTaskFeatures } from './hooks/useTaskFeatures';
+import { getVisibleTabs, getPickerEntries } from './TaskFeatureRegistry';
 import { taskDetailStore } from './taskDetailStore';
 import { Skeleton, Button } from '../components/ui';
 
@@ -25,6 +29,31 @@ export function TaskDetailRoot({ taskId, presentation = 'modal', onClose }) {
     const guard = useDirtyGuard();
     const form = useTaskForm(task);
     const assignees = useAssigneeOptions();
+    const features = useTaskFeatures(taskId);
+    const [activeCode, setActiveCode] = useState('general');
+    const [pickerOpen, setPickerOpen] = useState(false);
+    const pickerRef = React.useRef(null);
+    const visibleTabs = useMemo(
+        () => getVisibleTabs(features.assignedCodes),
+        [features.assignedCodes],
+    );
+    const pickerEntries = useMemo(
+        () => getPickerEntries(features.assignedCodes),
+        [features.assignedCodes],
+    );
+    /* activeCode baska bir oturumda kaldirilmis bir ozelligi gosteriyor olabilir
+       (refetchOnWindowFocus sonrasi assignedCodes degisip visibleTabs kuculur) —
+       boyle durumda visibleTabs[0]'a (daima 'general', core+implemented) don;
+       asagidaki effect activeCode state'ini de ayni degere senkronlar ki navbar'da
+       da 'general' aria-selected=true gorunsun, bos panel + secili sekme yok
+       durumu olusmasin. */
+    const activeFeature = visibleTabs.find((t) => t.code === activeCode) ?? visibleTabs[0];
+    React.useEffect(() => {
+        if (activeFeature.code !== activeCode) setActiveCode(activeFeature.code);
+    }, [activeFeature, activeCode]);
+    // JSX renders lowercase tag names as literal DOM elements, so a dynamic
+    // component reference must be bound to a capitalized variable first.
+    const ActiveFeatureComponent = activeFeature?.component;
     const queryClient = useQueryClient();
     const [fullscreen, setFullscreen] = useState(
         () => window.localStorage?.getItem(FULLSCREEN_KEY) === '1',
@@ -106,6 +135,43 @@ export function TaskDetailRoot({ taskId, presentation = 'modal', onClose }) {
         if (ok) doClose?.();
     }, [guard, doSave]);
 
+    const handleAddFeature = useCallback(async (code) => {
+        try {
+            await features.addFeature(code);
+            setActiveCode(code);
+            setPickerOpen(false);
+        } catch (err) {
+            window?.abp?.notify?.error?.(err?.message || 'Özellik eklenemedi.');
+        }
+    }, [features]);
+
+    const handleRemoveFeature = useCallback(async (code) => {
+        try {
+            await features.removeFeature(code);
+            setActiveCode((current) => (current === code ? 'general' : current));
+        } catch (err) {
+            window?.abp?.notify?.error?.(err?.message || 'Özellik kaldırılamadı.');
+        }
+    }, [features]);
+
+    /* "+" tetikleyicisi ile popover paneli TEK bir ref altinda — TaskDetailHeader'daki
+       "⋯" menusuyle AYNI desen (menuRef hem butonu hem menuyu kapsar). Aksi halde
+       "+" butonuna basmak mousedown'da onClose'u tetikleyip click'te tekrar acar
+       (popover hic kapanmiyormus gibi davranir). */
+    React.useEffect(() => {
+        if (!pickerOpen) return undefined;
+        const onDocClick = (e) => {
+            if (pickerRef.current && !pickerRef.current.contains(e.target)) setPickerOpen(false);
+        };
+        const onEsc = (e) => { if (e.key === 'Escape') setPickerOpen(false); };
+        document.addEventListener('mousedown', onDocClick);
+        document.addEventListener('keydown', onEsc);
+        return () => {
+            document.removeEventListener('mousedown', onDocClick);
+            document.removeEventListener('keydown', onEsc);
+        };
+    }, [pickerOpen]);
+
     const body = isLoading
         ? (
             <div aria-label="Görev yükleniyor" aria-busy="true" className="space-y-3">
@@ -123,19 +189,49 @@ export function TaskDetailRoot({ taskId, presentation = 'modal', onClose }) {
                 </div>
             )
             : (
-                <div className="grid gap-[var(--apya-space-5)] tablet:grid-cols-[2fr_1fr]">
-                    <TaskGeneralForm
-                        values={form.values}
-                        errors={form.errors}
-                        onFieldChange={form.setField}
-                        assigneeOptions={assignees.options}
-                        isLoadingAssignees={assignees.isLoading}
-                    />
-                    <TaskDetailsPanel
-                        task={task}
-                        creatorName={assignees.nameById.get(task.creatorId)}
-                        lastModifierName={assignees.nameById.get(task.lastModifierId)}
-                    />
+                <div className="flex min-h-0 flex-col gap-[var(--apya-space-4)]">
+                    <div className="relative" ref={pickerRef}>
+                        <TaskFeatureNavbar
+                            tabs={visibleTabs}
+                            activeCode={activeFeature.code}
+                            onSelect={(code) => { setActiveCode(code); setPickerOpen(false); }}
+                            onOpenPicker={() => setPickerOpen((v) => !v)}
+                            pickerOpen={pickerOpen}
+                        />
+                        {pickerOpen && (
+                            <FeaturePicker
+                                entries={pickerEntries}
+                                busyCode={features.isMutating ? features.mutatingCode : null}
+                                onAdd={handleAddFeature}
+                                onRemove={handleRemoveFeature}
+                            />
+                        )}
+                    </div>
+                    <div
+                        role="tabpanel"
+                        id="task-feature-tabpanel"
+                        aria-labelledby={`task-tab-${activeFeature.code}`}
+                        className="grid gap-[var(--apya-space-5)] tablet:grid-cols-[2fr_1fr]"
+                    >
+                        {activeFeature.code === 'general' ? (
+                            <TaskGeneralForm
+                                values={form.values}
+                                errors={form.errors}
+                                onFieldChange={form.setField}
+                                assigneeOptions={assignees.options}
+                                isLoadingAssignees={assignees.isLoading}
+                            />
+                        ) : (
+                            <Suspense fallback={<Skeleton className="h-24 w-full" />}>
+                                {ActiveFeatureComponent && <ActiveFeatureComponent taskId={taskId} task={task} />}
+                            </Suspense>
+                        )}
+                        <TaskDetailsPanel
+                            task={task}
+                            creatorName={assignees.nameById.get(task.creatorId)}
+                            lastModifierName={assignees.nameById.get(task.lastModifierId)}
+                        />
+                    </div>
                 </div>
             );
 
