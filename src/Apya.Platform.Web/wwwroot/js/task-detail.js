@@ -77,19 +77,19 @@ function Fe({
   const [m, l] = o.useState(!1), d = o.useRef(null);
   o.useEffect(() => {
     if (!m) return;
-    const g = (b) => {
-      d.current && !d.current.contains(b.target) && l(!1);
-    }, v = (b) => {
-      b.key === "Escape" && l(!1);
+    const b = (g) => {
+      d.current && !d.current.contains(g.target) && l(!1);
+    }, v = (g) => {
+      g.key === "Escape" && l(!1);
     };
-    return document.addEventListener("mousedown", g), document.addEventListener("keydown", v), () => {
-      document.removeEventListener("mousedown", g), document.removeEventListener("keydown", v);
+    return document.addEventListener("mousedown", b), document.addEventListener("keydown", v), () => {
+      document.removeEventListener("mousedown", b), document.removeEventListener("keydown", v);
     };
   }, [m]);
   const c = U[e == null ? void 0 : e.status] ?? U[1], u = q[e == null ? void 0 : e.priority] ?? q[2], h = () => {
-    var v, b, w, T;
-    const g = `${window.location.origin}/Tasks/Detail/${e.id}`;
-    (v = navigator.clipboard) == null || v.writeText(g), (T = (w = (b = window == null ? void 0 : window.abp) == null ? void 0 : b.notify) == null ? void 0 : w.info) == null || T.call(w, "Bağlantı kopyalandı."), l(!1);
+    var v, g, w, T;
+    const b = `${window.location.origin}/Tasks/Detail/${e.id}`;
+    (v = navigator.clipboard) == null || v.writeText(b), (T = (w = (g = window == null ? void 0 : window.abp) == null ? void 0 : g.notify) == null ? void 0 : w.info) == null || T.call(w, "Bağlantı kopyalandı."), l(!1);
   };
   return /* @__PURE__ */ t.jsx("header", { className: "flex-none border-b border-subtle px-[var(--apya-space-5)] py-[var(--apya-space-4)]", children: /* @__PURE__ */ t.jsxs("div", { className: "flex items-start justify-between gap-[var(--apya-space-4)]", children: [
     /* @__PURE__ */ t.jsxs("div", { className: "min-w-0", children: [
@@ -123,7 +123,7 @@ function Fe({
             "aria-label": "Görev işlemleri",
             "aria-haspopup": "menu",
             "aria-expanded": m,
-            onClick: () => l((g) => !g),
+            onClick: () => l((b) => !b),
             className: "grid h-9 w-9 place-items-center rounded-[var(--apya-radius-md)] text-text-secondary hover:bg-surface-raised hover:text-text-primary focus-visible:outline-none focus-visible:shadow-focus",
             children: /* @__PURE__ */ t.jsx("i", { className: "fa fa-ellipsis", "aria-hidden": "true" })
           }
@@ -584,8 +584,8 @@ function He(e) {
 function Je(e) {
   const [r, a] = o.useState(e == null ? void 0 : e.id), s = o.useMemo(() => He(e), [e]), [i, n] = o.useState(s), [m, l] = o.useState({});
   (e == null ? void 0 : e.id) !== r && (a(e == null ? void 0 : e.id), n(s), l({}));
-  const d = o.useCallback((v, b) => {
-    n((w) => ({ ...w, [v]: b }));
+  const d = o.useCallback((v, g) => {
+    n((w) => ({ ...w, [v]: g }));
   }, []), c = o.useMemo(
     () => JSON.stringify(i) !== JSON.stringify(s),
     [i, s]
@@ -606,10 +606,10 @@ function Je(e) {
     isPrivate: !!(e != null && e.isPrivate),
     predecessorIds: (e == null ? void 0 : e.predecessorIds) ?? [],
     tagNames: i.tagNames
-  }), [i, e]), g = o.useCallback(() => {
+  }), [i, e]), b = o.useCallback(() => {
     n(s), l({});
   }, [s]);
-  return { values: i, setField: d, isDirty: c, errors: m, validate: u, toUpdateDto: h, reset: g };
+  return { values: i, setField: d, isDirty: c, errors: m, validate: u, toUpdateDto: h, reset: b };
 }
 function ae(e) {
   return [e.name, e.surname].filter(Boolean).join(" ") || e.userName;
@@ -811,7 +811,7 @@ function se() {
 function st(e) {
   return typeof e == "string" && e ? e : e && typeof e == "object" && typeof e.id == "string" && e.id ? e.id : null;
 }
-const k = {
+const N = {
   open(e) {
     const r = st(e);
     !r || r === E || (E = r, se());
@@ -838,17 +838,17 @@ const k = {
   }
 }, re = "apya.taskDetail.fullscreen";
 function rt({ taskId: e, presentation: r = "modal", onClose: a }) {
-  const { data: s, isLoading: i, isError: n, refetch: m } = qe(e), l = Ye(), d = Je(s), c = We(), u = et(e), [h, g] = o.useState("general"), [v, b] = o.useState(!1), w = B.useRef(null), T = o.useMemo(
+  const { data: s, isLoading: i, isError: n, refetch: m } = qe(e), l = Ye(), d = Je(s), c = We(), u = et(e), [h, b] = o.useState("general"), [v, g] = o.useState(!1), w = B.useRef(null), T = o.useMemo(
     () => tt(u.assignedCodes),
     [u.assignedCodes]
   ), ue = o.useMemo(
     () => at(u.assignedCodes),
     [u.assignedCodes]
-  ), N = T.find((p) => p.code === h) ?? T[0];
+  ), k = T.find((p) => p.code === h) ?? T[0];
   B.useEffect(() => {
-    N.code !== h && g(N.code);
-  }, [N, h]);
-  const V = N == null ? void 0 : N.component, Q = ie(), [H, me] = o.useState(
+    k.code !== h && b(k.code);
+  }, [k, h]);
+  const V = k == null ? void 0 : k.component, Q = ie(), [H, me] = o.useState(
     () => {
       var p;
       return ((p = window.localStorage) == null ? void 0 : p.getItem(re)) === "1";
@@ -882,7 +882,7 @@ function rt({ taskId: e, presentation: r = "modal", onClose: a }) {
     try {
       return await Promise.resolve(
         window.apya.platform.tasks.task.update(e, d.toUpdateDto())
-      ), await Q.invalidateQueries({ queryKey: ["task-detail", e] }), k.emitResult(), (x = (f = (p = window == null ? void 0 : window.abp) == null ? void 0 : p.notify) == null ? void 0 : f.success) == null || x.call(f, "Kaydedildi."), !0;
+      ), await Q.invalidateQueries({ queryKey: ["task-detail", e] }), N.emitResult(), (x = (f = (p = window == null ? void 0 : window.abp) == null ? void 0 : p.notify) == null ? void 0 : f.success) == null || x.call(f, "Kaydedildi."), !0;
     } catch (S) {
       return (L = (y = (j = window == null ? void 0 : window.abp) == null ? void 0 : j.notify) == null ? void 0 : y.error) == null || L.call(y, (S == null ? void 0 : S.message) || "Kaydedilemedi."), !1;
     } finally {
@@ -896,14 +896,14 @@ function rt({ taskId: e, presentation: r = "modal", onClose: a }) {
   }, [l, R]), be = o.useCallback(async (p) => {
     var f, x, j;
     try {
-      await u.addFeature(p), g(p), b(!1);
+      await u.addFeature(p), b(p), g(!1);
     } catch (y) {
       (j = (x = (f = window == null ? void 0 : window.abp) == null ? void 0 : f.notify) == null ? void 0 : x.error) == null || j.call(x, (y == null ? void 0 : y.message) || "Özellik eklenemedi.");
     }
   }, [u]), je = o.useCallback(async (p) => {
     var f, x, j;
     try {
-      await u.removeFeature(p), g((y) => y === p ? "general" : y);
+      await u.removeFeature(p), b((y) => y === p ? "general" : y);
     } catch (y) {
       (j = (x = (f = window == null ? void 0 : window.abp) == null ? void 0 : f.notify) == null ? void 0 : x.error) == null || j.call(x, (y == null ? void 0 : y.message) || "Özellik kaldırılamadı.");
     }
@@ -911,9 +911,9 @@ function rt({ taskId: e, presentation: r = "modal", onClose: a }) {
   B.useEffect(() => {
     if (!v) return;
     const p = (x) => {
-      w.current && !w.current.contains(x.target) && b(!1);
+      w.current && !w.current.contains(x.target) && g(!1);
     }, f = (x) => {
-      x.key === "Escape" && b(!1);
+      x.key === "Escape" && g(!1);
     };
     return document.addEventListener("mousedown", p), document.addEventListener("keydown", f), () => {
       document.removeEventListener("mousedown", p), document.removeEventListener("keydown", f);
@@ -933,9 +933,11 @@ function rt({ taskId: e, presentation: r = "modal", onClose: a }) {
         Ge,
         {
           tabs: T,
-          activeCode: h,
-          onSelect: g,
-          onOpenPicker: () => b((p) => !p),
+          activeCode: k.code,
+          onSelect: (p) => {
+            b(p), g(!1);
+          },
+          onOpenPicker: () => g((p) => !p),
           pickerOpen: v
         }
       ),
@@ -954,10 +956,10 @@ function rt({ taskId: e, presentation: r = "modal", onClose: a }) {
       {
         role: "tabpanel",
         id: "task-feature-tabpanel",
-        "aria-labelledby": `task-tab-${N.code}`,
+        "aria-labelledby": `task-tab-${k.code}`,
         className: "grid gap-[var(--apya-space-5)] tablet:grid-cols-[2fr_1fr]",
         children: [
-          N.code === "general" ? /* @__PURE__ */ t.jsx(
+          k.code === "general" ? /* @__PURE__ */ t.jsx(
             Be,
             {
               values: d.values,
@@ -1109,8 +1111,8 @@ function it({ isSaving: e, onStay: r, onDiscard: a, onSaveAndClose: s }) {
 }
 function lt() {
   const e = o.useSyncExternalStore(
-    k.subscribe,
-    k.getSnapshot,
+    N.subscribe,
+    N.getSnapshot,
     () => null
   );
   return e ? /* @__PURE__ */ t.jsx(Ne, { children: /* @__PURE__ */ t.jsx(
@@ -1119,7 +1121,7 @@ function lt() {
       taskId: e,
       presentation: "modal",
       onClose: () => {
-        k.close(), k.emitResult();
+        N.close(), N.emitResult();
       }
     }
   ) }) : null;
@@ -1133,10 +1135,10 @@ function ot() {
 }
 const ne = document.getElementById("task-detail-island");
 if (ne && (window.apya = window.apya || {}, window.apya.taskDetailV2Enabled = ot(), window.apya.taskDetail = {
-  open: (e) => k.open(e),
-  close: () => k.close(),
-  onResult: (e) => k.onResult(e)
+  open: (e) => N.open(e),
+  close: () => N.close(),
+  onResult: (e) => N.onResult(e)
 }, ke(ne).render(/* @__PURE__ */ t.jsx(lt, {})), window.apya.taskDetailV2Enabled)) {
   const e = oe();
-  e && k.open(e);
+  e && N.open(e);
 }

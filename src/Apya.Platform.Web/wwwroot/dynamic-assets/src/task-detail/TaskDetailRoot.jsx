@@ -193,8 +193,8 @@ export function TaskDetailRoot({ taskId, presentation = 'modal', onClose }) {
                     <div className="relative" ref={pickerRef}>
                         <TaskFeatureNavbar
                             tabs={visibleTabs}
-                            activeCode={activeCode}
-                            onSelect={setActiveCode}
+                            activeCode={activeFeature.code}
+                            onSelect={(code) => { setActiveCode(code); setPickerOpen(false); }}
                             onOpenPicker={() => setPickerOpen((v) => !v)}
                             pickerOpen={pickerOpen}
                         />
