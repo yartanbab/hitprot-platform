@@ -40,19 +40,21 @@ function TaskDetailIsland() {
 }
 
 /**
- * FAZ 2 BAYRAK: yeni modal artık VARSAYILAN AÇIK — Genel sekmesi çalışır durumda.
- * Faz 9'da bayrak tamamen kaldırılacak.
+ * FAZ 2 BAYRAK: hâlâ VARSAYILAN KAPALI — bilinçli karar (whole-branch review, 2026-08-05).
+ * Genel sekmesi artık çalışıyor ama eski `EditModal.cshtml` drawer'ında olup V2'de henüz
+ * olmayan sekmeler var: Alt Görevler, Dosyalar, Finans, Bağımlılıklar, Zaman Takibi,
+ * Yorumlar — bunlar Faz 3/4/6/7/8'de gelecek. Varsayılanı şimdi açmak tüm kullanıcılar
+ * için bu özellikleri kaybettirir. Faz 4 (Alt Görevler + Dosyalar) bitince yeniden
+ * değerlendirilecek.
  *
- * Kapatma yolları (geri alma):
- *   - Kalıcı : localStorage.setItem('apya.taskDetail.v2', '0')
- *   - Tek seferlik: sayfaya ?taskui=v1 ekle
+ * Açma yolları (opt-in, değişmedi):
+ *   - Kalıcı : localStorage.setItem('apya.taskDetail.v2', '1')
+ *   - Tek seferlik: sayfaya ?taskui=v2 ekle
  */
 function isV2Enabled() {
     try {
-        const param = new URLSearchParams(window.location.search).get('taskui');
-        if (param === 'v2') return true;
-        if (param === 'v1') return false;
-        return window.localStorage.getItem('apya.taskDetail.v2') !== '0';
+        if (new URLSearchParams(window.location.search).get('taskui') === 'v2') return true;
+        return window.localStorage.getItem('apya.taskDetail.v2') === '1';
     } catch (_) {
         return false; /* localStorage kapalı (gizli mod / policy) → eski drawer */
     }
