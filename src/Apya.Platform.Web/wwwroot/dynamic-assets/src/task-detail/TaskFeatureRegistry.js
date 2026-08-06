@@ -1,5 +1,6 @@
 import { isGranted } from './hooks/useTaskDetail';
 import { SubtasksTab } from './components/SubtasksTab';
+import { FilesTab } from './components/FilesTab';
 
 /**
  * Görev detayının sekme/özellik kayıt defteri. Faz 4+ yeni bir non-core özellik
@@ -31,7 +32,7 @@ export const TASK_FEATURE_REGISTRY = [
     {
         code: 'files', title: 'Dosyalar', icon: 'fa-paperclip',
         category: 'gorev', isCore: true, order: 2, permission: null,
-        implemented: false, component: null,
+        implemented: true, component: FilesTab,
     },
     {
         code: 'checklist', title: 'Kontrol Listesi', icon: 'fa-square-check',
