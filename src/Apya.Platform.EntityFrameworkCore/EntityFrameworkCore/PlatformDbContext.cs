@@ -131,6 +131,7 @@ namespace Apya.Platform.EntityFrameworkCore
         public DbSet<Tag> Tags { get; set; }
         public DbSet<TaskTagAssignment> TaskTagAssignments { get; set; }
         public DbSet<TaskFeatureAssignment> TaskFeatureAssignments { get; set; }
+        public DbSet<TaskChecklistItem> TaskChecklistItems { get; set; }
         public DbSet<Apya.Platform.Projects.BoardColumn> BoardColumns { get; set; } // Faz 2: configure edilebilir kanban
         public DbSet<Invoice> Invoices { get; set; }
         public DbSet<InvoiceItem> InvoiceItems { get; set; }
@@ -598,6 +599,14 @@ namespace Apya.Platform.EntityFrameworkCore
                 b.ConfigureByConvention();
                 b.Property(x => x.FeatureCode).IsRequired().HasMaxLength(64);
                 b.HasIndex(x => new { x.TaskId, x.FeatureCode }).IsUnique();
+            });
+
+            builder.Entity<TaskChecklistItem>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "TaskChecklistItems", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+                b.Property(x => x.Text).IsRequired().HasMaxLength(500);
+                b.HasIndex(x => x.TaskId);
             });
 
             builder.Entity<TaskTimeLog>(b =>
