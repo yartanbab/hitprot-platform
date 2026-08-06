@@ -53,4 +53,28 @@ describe('ChecklistTab', () => {
         fireEvent.click(screen.getByRole('button', { name: 'İlk madde maddesini sil' }));
         await waitFor(() => expect(window.apya.platform.tasks.task.deleteChecklistItem).toHaveBeenCalledWith('item-1'));
     });
+
+    it('addChecklistItem reddedilirse abp.notify.error cagirir, draft temizlenmez', async () => {
+        window.apya.platform.tasks.task.addChecklistItem = vi.fn(() => Promise.reject(new Error('Sunucu hatasi.')));
+        window.abp = { notify: { error: vi.fn() } };
+        renderWithClient(<ChecklistTab taskId="t-1" task={{ id: 't-1' }} />);
+        await screen.findByText('İlk madde');
+
+        fireEvent.change(screen.getByPlaceholderText('Yeni madde'), { target: { value: 'Basarisiz madde' } });
+        fireEvent.click(screen.getByRole('button', { name: /ekle/i }));
+
+        await waitFor(() => expect(window.abp.notify.error).toHaveBeenCalledWith('Sunucu hatasi.'));
+        expect(screen.getByPlaceholderText('Yeni madde')).toHaveValue('Basarisiz madde');
+    });
+
+    it('toggleChecklistItem reddedilirse abp.notify.error cagirir', async () => {
+        window.apya.platform.tasks.task.toggleChecklistItem = vi.fn(() => Promise.reject(new Error('Sunucu hatasi.')));
+        window.abp = { notify: { error: vi.fn() } };
+        renderWithClient(<ChecklistTab taskId="t-1" task={{ id: 't-1' }} />);
+        await screen.findByText('İlk madde');
+
+        fireEvent.click(screen.getByRole('checkbox'));
+
+        await waitFor(() => expect(window.abp.notify.error).toHaveBeenCalledWith('Sunucu hatasi.'));
+    });
 });

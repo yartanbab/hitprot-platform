@@ -53,6 +53,16 @@ public class TaskAppService_Checklist_Tests : PlatformEntityFrameworkCoreTestBas
     }
 
     [Fact]
+    public async Task AddChecklistItemAsync_500_karakterden_uzun_metin_hata_verir()
+    {
+        var taskId = await CreateTaskInCurrentTenantAsync();
+        var tooLong = new string('a', 501);
+
+        await Should.ThrowAsync<UserFriendlyException>(
+            async () => await _taskAppService.AddChecklistItemAsync(taskId, tooLong));
+    }
+
+    [Fact]
     public async Task ToggleChecklistItemAsync_IsDone_u_ters_cevirir()
     {
         var taskId = await CreateTaskInCurrentTenantAsync();

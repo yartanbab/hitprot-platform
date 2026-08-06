@@ -26,7 +26,14 @@ async function uploadAttachment(taskId, file) {
         headers,
         body: formData,
     });
-    const result = await response.json();
+
+    let result = null;
+    try {
+        result = await response.json();
+    } catch (_) {
+        // JSON olmayan yanıt (antiforgery reddi, oturum sonu, 500 hata sayfası) — result null kalır.
+    }
+
     if (!response.ok || result?.success === false) {
         throw new Error(result?.error || 'Dosya yüklenemedi.');
     }

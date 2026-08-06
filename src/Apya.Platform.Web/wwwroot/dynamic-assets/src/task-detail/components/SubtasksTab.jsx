@@ -6,6 +6,7 @@ import { STATUS } from '../statusMaps';
 export function SubtasksTab({ taskId, task, onOpenSubtask }) {
     const [draft, setDraft] = useState('');
     const [busy, setBusy] = useState(false);
+    const [confirmingId, setConfirmingId] = useState(null);
     const queryClient = useQueryClient();
     const subtasks = task?.subTasks ?? [];
 
@@ -37,6 +38,8 @@ export function SubtasksTab({ taskId, task, onOpenSubtask }) {
             await invalidateParent();
         } catch (err) {
             window?.abp?.notify?.error?.(err?.message || 'Alt görev silinemedi.');
+        } finally {
+            setConfirmingId(null);
         }
     };
 
@@ -69,10 +72,22 @@ export function SubtasksTab({ taskId, task, onOpenSubtask }) {
                                 {sub.title}
                             </button>
                             <div className="flex items-center gap-2">
-                                <Badge variant="neutral">{STATUS[sub.status]?.text ?? sub.status}</Badge>
-                                <Button variant="ghost" onClick={() => deleteSubtask(sub.id)} aria-label={`${sub.title} alt görevini sil`}>
-                                    Sil
-                                </Button>
+                                <Badge variant={STATUS[sub.status]?.variant ?? 'neutral'}>{STATUS[sub.status]?.text ?? sub.status}</Badge>
+                                {confirmingId === sub.id ? (
+                                    <>
+                                        <span className="text-xs text-text-tertiary">Emin misiniz?</span>
+                                        <Button variant="destructive" onClick={() => deleteSubtask(sub.id)}>
+                                            Evet, sil
+                                        </Button>
+                                        <Button variant="ghost" onClick={() => setConfirmingId(null)}>
+                                            Vazgeç
+                                        </Button>
+                                    </>
+                                ) : (
+                                    <Button variant="ghost" onClick={() => setConfirmingId(sub.id)} aria-label={`${sub.title} alt görevini sil`}>
+                                        Sil
+                                    </Button>
+                                )}
                             </div>
                         </li>
                     ))}

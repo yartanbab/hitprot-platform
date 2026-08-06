@@ -81,4 +81,19 @@ describe('useTaskAttachments', () => {
         const file = new File(['x'], 'buyuk.pdf', { type: 'application/pdf' });
         await expect(result.current.upload(file)).rejects.toThrow('Dosya cok buyuk.');
     });
+
+    it('JSON olmayan hata yaniti (antiforgery reddi/500 sayfasi) genel mesajla hata firlatir', async () => {
+        global.fetch = vi.fn(() => Promise.resolve({
+            ok: false,
+            status: 400,
+            headers: { get: () => 'text/html' },
+            json: () => Promise.reject(new SyntaxError('Unexpected token < in JSON')),
+        }));
+
+        const { result } = renderHook(() => useTaskAttachments(TASK_ID), { wrapper });
+        await waitFor(() => expect(result.current.attachments).toHaveLength(1));
+
+        const file = new File(['x'], 'yeni.pdf', { type: 'application/pdf' });
+        await expect(result.current.upload(file)).rejects.toThrow('Dosya yüklenemedi.');
+    });
 });

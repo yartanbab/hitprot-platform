@@ -9,8 +9,28 @@ export function ChecklistTab({ taskId }) {
     const onAdd = async () => {
         const text = draft.trim();
         if (!text) return;
-        await addItem(text);
-        setDraft('');
+        try {
+            await addItem(text);
+            setDraft('');
+        } catch (err) {
+            window?.abp?.notify?.error?.(err?.message || 'Madde eklenemedi.');
+        }
+    };
+
+    const onToggle = async (itemId) => {
+        try {
+            await toggleItem(itemId);
+        } catch (err) {
+            window?.abp?.notify?.error?.(err?.message || 'Madde güncellenemedi.');
+        }
+    };
+
+    const onRemove = async (itemId, text) => {
+        try {
+            await removeItem(itemId);
+        } catch (err) {
+            window?.abp?.notify?.error?.(err?.message || `${text} silinemedi.`);
+        }
     };
 
     return (
@@ -35,13 +55,13 @@ export function ChecklistTab({ taskId }) {
                                 <input
                                     type="checkbox"
                                     checked={item.isDone}
-                                    onChange={() => toggleItem(item.id)}
+                                    onChange={() => onToggle(item.id)}
                                 />
                                 <span className={item.isDone ? 'text-text-tertiary line-through' : 'text-text-primary'}>
                                     {item.text}
                                 </span>
                             </label>
-                            <Button variant="ghost" onClick={() => removeItem(item.id)} aria-label={`${item.text} maddesini sil`}>
+                            <Button variant="ghost" onClick={() => onRemove(item.id, item.text)} aria-label={`${item.text} maddesini sil`}>
                                 Sil
                             </Button>
                         </li>

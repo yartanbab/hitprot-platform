@@ -88,7 +88,21 @@ namespace Apya.Platform.Tasks
 
             var taskDto = ObjectMapper.Map<TaskItem, TaskDto>(task);
             if (task.Assignee != null) taskDto.AssigneeName = task.Assignee.UserName;
-            
+
+            // Üst görev görünür olsa da alt görevler KENDİ gizlilik kuralına tabi (APYA-22) —
+            // aksi halde gizli bir alt görevin başlığı, onu görme yetkisi olmayan bir
+            // kullanıcıya (aynı paylaşılan üst görevi görebilen biri) sızardı.
+            if (taskDto.SubTasks != null && taskDto.SubTasks.Count > 0)
+            {
+                bool subIsImpersonated = CurrentUser.FindClaim(Volo.Abp.Security.Claims.AbpClaimTypes.ImpersonatorUserId) != null;
+                bool subCanManageTeam = await AuthorizationService.IsGrantedAsync(PlatformPermissions.Projects.ManageTeam);
+                var visibleSubtaskIds = task.SubTasks
+                    .Where(sub => IsTaskVisible(sub, subIsImpersonated, subCanManageTeam))
+                    .Select(sub => sub.Id)
+                    .ToHashSet();
+                taskDto.SubTasks = taskDto.SubTasks.Where(s => visibleSubtaskIds.Contains(s.Id)).ToList();
+            }
+
             // Populate usernames for comments
             if (taskDto.Comments != null && taskDto.Comments.Any())
             {
@@ -145,6 +159,16 @@ namespace Apya.Platform.Tasks
             return result;
         }
 
+        // Bir görevin bu kullanıcıya gizlilik kuralına göre görünür olup olmadığı —
+        // hem EnsureTaskPrivacyAllowedAsync'in fırlatma kararı hem de GetAsync'in
+        // alt görev listesi filtresi (Faz 4) BUNU kullanır, kural tek yerde yaşar.
+        private bool IsTaskVisible(TaskItem task, bool isImpersonated, bool canManageTeam)
+        {
+            if (!task.IsPrivate) return true;
+            if (isImpersonated) return false;
+            return canManageTeam || task.CreatorId == CurrentUser.Id || task.AssigneeId == CurrentUser.Id;
+        }
+
         // Kapsamlı Rol ve Gizlilik Kontrolü (APYA-22) — GetAsync ile paylaşılan tek kopya.
         // Gizli bir görev; oluşturan, atanan veya Projects.ManageTeam yetkisi olmayan
         // kullanıcıya kapalıdır. Impersonation ile açılan oturumlar hiçbir gizli görevi göremez.
@@ -153,17 +177,14 @@ namespace Apya.Platform.Tasks
             bool isImpersonated = CurrentUser.FindClaim(Volo.Abp.Security.Claims.AbpClaimTypes.ImpersonatorUserId) != null;
             bool canManageTeam = await AuthorizationService.IsGrantedAsync(PlatformPermissions.Projects.ManageTeam);
 
-            if (task.IsPrivate)
+            if (!IsTaskVisible(task, isImpersonated, canManageTeam))
             {
                 if (isImpersonated)
                 {
                     throw new Volo.Abp.BusinessException(PlatformDomainErrorCodes.TaskViewImpersonationDenied);
                 }
 
-                if (!canManageTeam && task.CreatorId != CurrentUser.Id && task.AssigneeId != CurrentUser.Id)
-                {
-                    throw new Volo.Abp.BusinessException(PlatformDomainErrorCodes.TaskViewPrivateDenied);
-                }
+                throw new Volo.Abp.BusinessException(PlatformDomainErrorCodes.TaskViewPrivateDenied);
             }
         }
 
@@ -760,11 +781,16 @@ namespace Apya.Platform.Tasks
             {
                 throw new Volo.Abp.UserFriendlyException("Kontrol listesi maddesi boş olamaz.");
             }
+            text = text.Trim();
+            if (text.Length > 500)
+            {
+                throw new Volo.Abp.UserFriendlyException("Kontrol listesi maddesi 500 karakterden uzun olamaz.");
+            }
 
             var item = await _checklistRepository.InsertAsync(new TaskChecklistItem
             {
                 TaskId = taskId,
-                Text = text.Trim(),
+                Text = text,
             }, autoSave: true);
 
             return item.Id;
