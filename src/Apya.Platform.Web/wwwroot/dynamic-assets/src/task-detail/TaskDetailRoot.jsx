@@ -7,6 +7,7 @@ import { TaskGeneralForm } from './components/TaskGeneralForm';
 import { TaskDetailsPanel } from './components/TaskDetailsPanel';
 import { TaskFeatureNavbar } from './components/TaskFeatureNavbar';
 import { FeaturePicker } from './components/FeaturePicker';
+import { TaskBreadcrumb } from './components/TaskBreadcrumb';
 import { useTaskDetail, isGranted } from './hooks/useTaskDetail';
 import { useDirtyGuard } from './hooks/useDirtyGuard';
 import { useTaskUrlSync, clearTaskUrl } from './hooks/useTaskUrlSync';
@@ -25,11 +26,13 @@ const FULLSCREEN_KEY = 'apya.taskDetail.fullscreen';
  * içerik componentleri (Faz 2+) her iki modda da AYNI kalır.
  */
 export function TaskDetailRoot({ taskId, presentation = 'modal', onClose }) {
-    const { data: task, isLoading, isError, refetch } = useTaskDetail(taskId);
+    const [currentTaskId, setCurrentTaskId] = useState(taskId);
+    const [breadcrumbTrail, setBreadcrumbTrail] = useState([]); // [{id, title}]
+    const { data: task, isLoading, isError, refetch } = useTaskDetail(currentTaskId);
     const guard = useDirtyGuard();
     const form = useTaskForm(task);
     const assignees = useAssigneeOptions();
-    const features = useTaskFeatures(taskId);
+    const features = useTaskFeatures(currentTaskId);
     const [activeCode, setActiveCode] = useState('general');
     const [pickerOpen, setPickerOpen] = useState(false);
     const pickerRef = React.useRef(null);
@@ -90,7 +93,7 @@ export function TaskDetailRoot({ taskId, presentation = 'modal', onClose }) {
     const handleDelete = useCallback(async () => {
         setDeleting(true);
         try {
-            await Promise.resolve(window.apya.platform.tasks.task.delete(taskId));
+            await Promise.resolve(window.apya.platform.tasks.task.delete(currentTaskId));
             window?.abp?.notify?.info?.('Başarıyla silindi.');
             setDeleteOpen(false);
             guard.markClean();
@@ -100,7 +103,7 @@ export function TaskDetailRoot({ taskId, presentation = 'modal', onClose }) {
         } finally {
             setDeleting(false);
         }
-    }, [taskId, guard, closeNow]);
+    }, [currentTaskId, guard, closeNow]);
 
     /** Kaydeder; başarılıysa true döner (çağıran taraf kapatıp kapatmayacağına kendi karar verir). */
     const doSave = useCallback(async () => {
@@ -108,9 +111,9 @@ export function TaskDetailRoot({ taskId, presentation = 'modal', onClose }) {
         setIsSaving(true);
         try {
             await Promise.resolve(
-                window.apya.platform.tasks.task.update(taskId, form.toUpdateDto()),
+                window.apya.platform.tasks.task.update(currentTaskId, form.toUpdateDto()),
             );
-            await queryClient.invalidateQueries({ queryKey: ['task-detail', taskId] });
+            await queryClient.invalidateQueries({ queryKey: ['task-detail', currentTaskId] });
             /* Modal açık kalabilir (yalnız Kaydet, kapatma yok) — bu yüzden liste/kanban
                tazelemesi burada tetiklenir, yalnız closeNow'a bağlı kalınmaz. "Kaydet ve
                çık" akışında closeNow'un kendi onClose zinciri de emitResult çağırır; bu
@@ -125,7 +128,7 @@ export function TaskDetailRoot({ taskId, presentation = 'modal', onClose }) {
         } finally {
             setIsSaving(false);
         }
-    }, [taskId, form, guard, queryClient]);
+    }, [currentTaskId, form, guard, queryClient]);
 
     const handleSaveClick = useCallback(() => { doSave(); }, [doSave]);
 
@@ -134,6 +137,30 @@ export function TaskDetailRoot({ taskId, presentation = 'modal', onClose }) {
         const ok = await doSave();
         if (ok) doClose?.();
     }, [guard, doSave]);
+
+    /* guard.requestClose'un generic "kapatma" parametresini burada kapatma DIŞINDA
+       bir aksiyon (context-switch) için reuse ediyoruz — dirty'yken aynı "Kaydedilmemiş
+       değişiklikler" dialog'u açılır, temizken direkt geçer. */
+    const switchToTask = useCallback((nextId, nextTitle) => {
+        guard.requestClose(() => {
+            setBreadcrumbTrail((trail) => [...trail, { id: currentTaskId, title: task?.title ?? '' }]);
+            setCurrentTaskId(nextId);
+            setActiveCode('general');
+            guard.markClean();
+        });
+    }, [guard, currentTaskId, task]);
+
+    const navigateBreadcrumb = useCallback((targetId) => {
+        guard.requestClose(() => {
+            setBreadcrumbTrail((trail) => {
+                const idx = trail.findIndex((c) => c.id === targetId);
+                return idx === -1 ? trail : trail.slice(0, idx);
+            });
+            setCurrentTaskId(targetId);
+            setActiveCode('general');
+            guard.markClean();
+        });
+    }, [guard]);
 
     const handleAddFeature = useCallback(async (code) => {
         try {
@@ -190,6 +217,11 @@ export function TaskDetailRoot({ taskId, presentation = 'modal', onClose }) {
             )
             : (
                 <div className="flex min-h-0 flex-col gap-[var(--apya-space-4)]">
+                    <TaskBreadcrumb
+                        trail={breadcrumbTrail}
+                        current={{ id: currentTaskId, title: task?.title ?? '' }}
+                        onNavigate={navigateBreadcrumb}
+                    />
                     <div className="relative" ref={pickerRef}>
                         <TaskFeatureNavbar
                             tabs={visibleTabs}
@@ -223,7 +255,13 @@ export function TaskDetailRoot({ taskId, presentation = 'modal', onClose }) {
                             />
                         ) : (
                             <Suspense fallback={<Skeleton className="h-24 w-full" />}>
-                                {ActiveFeatureComponent && <ActiveFeatureComponent taskId={taskId} task={task} />}
+                                {ActiveFeatureComponent && (
+                                    <ActiveFeatureComponent
+                                        taskId={currentTaskId}
+                                        task={task}
+                                        onOpenSubtask={switchToTask}
+                                    />
+                                )}
                             </Suspense>
                         )}
                         <TaskDetailsPanel

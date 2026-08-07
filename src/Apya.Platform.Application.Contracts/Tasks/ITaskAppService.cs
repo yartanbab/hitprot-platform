@@ -29,12 +29,19 @@ namespace Apya.Platform.Tasks
 
         Task AddAttachmentAsync(Guid taskId, string fileName, string storedFileName, long fileSize);
         Task<List<TaskAttachmentDto>> GetAttachmentsAsync(Guid taskId);
+        Task DeleteAttachmentAsync(Guid attachmentId);
         Task UpdateStatusAsync(Guid id, Apya.Platform.Tasks.TaskStatus status);
 
         // Feature Registry (Faz 3)
         Task<List<string>> GetFeatureAssignmentsAsync(Guid taskId);
         Task AddFeatureAsync(Guid taskId, string featureCode);
         Task RemoveFeatureAsync(Guid taskId, string featureCode);
+
+        // Kontrol Listesi (Faz 4)
+        Task<List<TaskChecklistItemDto>> GetChecklistItemsAsync(Guid taskId);
+        Task<Guid> AddChecklistItemAsync(Guid taskId, string text);
+        Task ToggleChecklistItemAsync(Guid itemId);
+        Task DeleteChecklistItemAsync(Guid itemId);
 
         // Zaman Takibi
         Task StartTimeTrackingAsync(Guid taskId);

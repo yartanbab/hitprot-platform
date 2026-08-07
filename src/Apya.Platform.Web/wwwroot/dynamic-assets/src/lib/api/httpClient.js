@@ -24,7 +24,7 @@ class ApiError extends Error {
     }
 }
 
-function readAntiForgeryToken() {
+export function readAntiForgeryToken() {
     if (typeof document === 'undefined') return null;
     const meta = document.querySelector('meta[name="__RequestVerificationToken"]');
     if (meta) return meta.getAttribute('content');

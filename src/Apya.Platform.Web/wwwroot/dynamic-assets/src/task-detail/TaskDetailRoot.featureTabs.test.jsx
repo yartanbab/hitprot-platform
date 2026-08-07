@@ -1,6 +1,6 @@
 import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
@@ -97,7 +97,8 @@ describe('TaskDetailRoot — feature registry mekanizması (fixture ile)', () =>
         expect(screen.getByText('Demo Özellik')).toBeInTheDocument();
 
         window.apya.platform.tasks.task.getFeatureAssignments = vi.fn(() => Promise.resolve(['demo']));
-        await userEvent.click(screen.getByRole('button', { name: 'Ekle' }));
+        const demoRow = screen.getByText('Demo Özellik').closest('div');
+        await userEvent.click(within(demoRow).getByRole('button', { name: 'Ekle' }));
 
         expect(window.apya.platform.tasks.task.addFeature).toHaveBeenCalledWith(TASK.id, 'demo');
         await waitFor(() => expect(screen.getByRole('tab', { name: /Demo Özellik/ })).toBeInTheDocument());
@@ -172,7 +173,8 @@ describe('TaskDetailRoot — feature registry mekanizması (fixture ile)', () =>
         await screen.findByText('Demo Görevi');
 
         await userEvent.click(screen.getByRole('button', { name: 'Özellik ekle' }));
-        await userEvent.click(screen.getByRole('button', { name: 'Ekle' }));
+        const demoRow = screen.getByText('Demo Özellik').closest('div');
+        await userEvent.click(within(demoRow).getByRole('button', { name: 'Ekle' }));
 
         await waitFor(() => expect(window.abp.notify.error).toHaveBeenCalled());
         expect(screen.queryByRole('tab', { name: /Demo Özellik/ })).not.toBeInTheDocument();
@@ -214,5 +216,25 @@ describe('TaskDetailRoot — feature registry mekanizması (fixture ile)', () =>
         await waitFor(() => expect(screen.getByRole('tab', { name: /Genel/ })).toHaveAttribute('aria-selected', 'true'));
         expect(screen.queryByRole('tab', { name: /Demo Özellik/ })).not.toBeInTheDocument();
         expect(screen.getByLabelText('Başlık')).toBeInTheDocument();
+    });
+
+    it('alt gorev basligina tiklayinca ayni modalda o gorevin GENEL sekmesine gecer ve breadcrumb gorunur', async () => {
+        const parent = { ...TASK, id: 'parent-1', title: 'Kök Görev', subTasks: [{ id: 'sub-1', title: 'Alt Görev', status: 0 }] };
+        const sub = { ...TASK, id: 'sub-1', title: 'Alt Görev', subTasks: [] };
+        window.apya.platform.tasks.task.get = vi.fn((id) => Promise.resolve(id === 'parent-1' ? parent : sub));
+        window.apya.platform.tasks.task.getFeatureAssignments = vi.fn(() => Promise.resolve([]));
+
+        wrap(<TaskDetailRoot taskId="parent-1" presentation="modal" onClose={() => {}} />);
+        await screen.findByText('Kök Görev');
+
+        await userEvent.click(await screen.findByRole('tab', { name: /alt görevler/i }));
+        await userEvent.click(await screen.findByText('Alt Görev'));
+
+        await waitFor(() => expect(window.apya.platform.tasks.task.get).toHaveBeenCalledWith('sub-1'));
+        expect(screen.getByRole('tab', { name: /genel/i })).toHaveAttribute('aria-selected', 'true');
+        expect(screen.getByRole('navigation', { name: /görev gezinme yolu/i })).toHaveTextContent('Kök Görev');
+
+        await userEvent.click(screen.getByText('Kök Görev'));
+        await waitFor(() => expect(window.apya.platform.tasks.task.get).toHaveBeenCalledWith('parent-1'));
     });
 });

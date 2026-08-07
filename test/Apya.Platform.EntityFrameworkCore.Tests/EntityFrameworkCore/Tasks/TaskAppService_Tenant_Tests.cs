@@ -243,4 +243,44 @@ public class TaskAppService_Tenant_Tests : PlatformEntityFrameworkCoreTestBase
             ex.Code.ShouldBe(PlatformDomainErrorCodes.TaskViewImpersonationDenied);
         }
     }
+
+    // Faz 4 whole-branch review bulgusu: üst görev görünür olsa da GetAsync'in döndürdüğü
+    // SubTasks listesi, her alt görevin KENDİ gizlilik kuralına göre filtrelenmeli — aksi
+    // halde gizli bir alt görevin başlığı, üst görevi görebilen ama alt görevi göremeyen bir
+    // kullanıcıya sızar. Yalnızca impersonation dalı test edilebilir (bkz. yukarıdaki NOT —
+    // bu host'ta canManageTeam her zaman true).
+    [Fact]
+    public async Task GetAsync_gizli_alt_gorev_impersonation_oturumunda_SubTasks_listesinden_gizlenir()
+    {
+        var parent = new TaskItem(Guid.NewGuid(), "Paylaşılan üst görev", tenantId: _currentTenant.Id, now: DateTime.Now);
+        await _taskRepository.InsertAsync(parent, autoSave: true);
+
+        var subtask = new TaskItem(
+            Guid.NewGuid(), "Gizli alt görev", parentTaskId: parent.Id,
+            isPrivate: true, tenantId: _currentTenant.Id, now: DateTime.Now);
+        await _taskRepository.InsertAsync(subtask, autoSave: true);
+
+        using (_currentPrincipalAccessor.Change(BuildImpersonatedPrincipal()))
+        {
+            var result = await _taskAppService.GetAsync(parent.Id);
+            result.SubTasks.ShouldBeEmpty();
+        }
+    }
+
+    // Yanlış-yeşil koruması: filtre her gizli alt görevi körü körüne gizlemiyor, yalnızca
+    // GÖRÜNÜR OLMAYANLARI. Normal (impersonation olmayan) oturumda aynı alt görev listede kalır.
+    [Fact]
+    public async Task GetAsync_gizli_alt_gorev_normal_oturumda_SubTasks_listesinde_gorunur()
+    {
+        var parent = new TaskItem(Guid.NewGuid(), "Paylaşılan üst görev 2", tenantId: _currentTenant.Id, now: DateTime.Now);
+        await _taskRepository.InsertAsync(parent, autoSave: true);
+
+        var subtask = new TaskItem(
+            Guid.NewGuid(), "Gizli alt görev 2", parentTaskId: parent.Id,
+            isPrivate: true, tenantId: _currentTenant.Id, now: DateTime.Now);
+        await _taskRepository.InsertAsync(subtask, autoSave: true);
+
+        var result = await _taskAppService.GetAsync(parent.Id);
+        result.SubTasks.ShouldContain(s => s.Id == subtask.Id);
+    }
 }
