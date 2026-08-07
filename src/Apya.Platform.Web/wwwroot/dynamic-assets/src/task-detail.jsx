@@ -13,6 +13,7 @@ import { useSyncExternalStore } from 'react';
 import './index.css';
 import { QueryProvider } from './lib/api/QueryProvider';
 import { TaskDetailRoot } from './task-detail/TaskDetailRoot';
+import { TaskDetailRootV3 } from './task-detail/v3/TaskDetailRootV3';
 import { taskDetailStore } from './task-detail/taskDetailStore';
 import { readTaskIdFromUrl } from './task-detail/hooks/useTaskUrlSync';
 
@@ -24,6 +25,21 @@ function TaskDetailIsland() {
     );
 
     if (!taskId) return null;
+
+    if (window.apya?.taskDetailV3Enabled) {
+        return (
+            <QueryProvider>
+                <TaskDetailRootV3
+                    taskId={taskId}
+                    presentation="modal"
+                    onClose={() => {
+                        taskDetailStore.close();
+                        taskDetailStore.emitResult();
+                    }}
+                />
+            </QueryProvider>
+        );
+    }
 
     return (
         <QueryProvider>
@@ -62,11 +78,24 @@ function isV2Enabled() {
     }
 }
 
+function isV3Enabled() {
+    try {
+        if (new URLSearchParams(window.location.search).get('taskui') === 'v3') return true;
+        if (new URLSearchParams(window.location.search).get('taskui') === 'v2') return false;
+        if (new URLSearchParams(window.location.search).get('taskui') === 'v1') return false;
+        const enabled = window.localStorage.getItem('apya.taskDetail.v3') === '1';
+        return enabled || true; /* V3 şimdilik varsayılan yapıyoruz! */
+    } catch (_) {
+        return true;
+    }
+}
+
 /* ─── Mount ─────────────────────────────────────────────────────────── */
 const container = document.getElementById('task-detail-island');
 if (container) {
     window.apya = window.apya || {};
-    window.apya.taskDetailV2Enabled = isV2Enabled();
+    window.apya.taskDetailV3Enabled = isV3Enabled();
+    window.apya.taskDetailV2Enabled = isV2Enabled() && !window.apya.taskDetailV3Enabled;
     window.apya.taskDetail = {
         open: (arg) => taskDetailStore.open(arg),
         close: () => taskDetailStore.close(),
@@ -77,25 +106,39 @@ if (container) {
 
     /* Derin bağlantı: /Tasks?task=<guid> ile gelindiyse doğrudan aç.
        Bayrak kapalıyken açma — eski drawer bu parametreyi bilmiyor. */
-    if (window.apya.taskDetailV2Enabled) {
+    if (window.apya.taskDetailV2Enabled || window.apya.taskDetailV3Enabled) {
         const deepLinkId = readTaskIdFromUrl();
         if (deepLinkId) taskDetailStore.open(deepLinkId);
     }
 }
 
 function TaskDetailPageIsland({ taskId }) {
+    const handleClose = () => {
+        if (window.history.length > 1) {
+            window.history.back();
+        } else {
+            window.location.href = '/Tasks';
+        }
+    };
+
+    if (window.apya?.taskDetailV3Enabled) {
+        return (
+            <QueryProvider>
+                <TaskDetailRootV3
+                    taskId={taskId}
+                    presentation="page"
+                    onClose={handleClose}
+                />
+            </QueryProvider>
+        );
+    }
+
     return (
         <QueryProvider>
             <TaskDetailRoot
                 taskId={taskId}
                 presentation="page"
-                onClose={() => {
-                    if (window.history.length > 1) {
-                        window.history.back();
-                    } else {
-                        window.location.href = '/Tasks';
-                    }
-                }}
+                onClose={handleClose}
             />
         </QueryProvider>
     );
