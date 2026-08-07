@@ -17,6 +17,18 @@ public class PlatformSettingDefinitionProvider : SettingDefinitionProvider
             defaultLanguage.DefaultValue = "tr";
         }
 
+        // --- Kullanıcı arayüz tercihleri ---
+        // Kullanıcıya özel: .WithProviders() ile KISITLANMAZ ki User provider zincirde
+        // kalsın (SetForCurrentUserAsync buraya yazar). Böylece DefaultValueSettingValueProvider
+        // de zincirde kalır ve "v2" varsayılanı sorunsuz döner.
+        context.Add(
+            new SettingDefinition(
+                PlatformSettings.TaskDetail.Ui,
+                defaultValue: PlatformSettingDefaults.TaskDetailUi,
+                displayName: L("Setting:TaskDetail.Ui"),
+                description: L("Setting:TaskDetail.Ui.Description"))
+        );
+
         // --- Telemetri ---
         // Global (host) ayarları: tenant'lar değiştiremez.
         context.Add(

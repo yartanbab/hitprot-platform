@@ -22,6 +22,23 @@ public class PlatformMenuContributor : IMenuContributor
         {
             await ConfigureMainMenuAsync(context);
         }
+        else if (context.Menu.Name == StandardMenus.User)
+        {
+            ConfigureUserMenu(context);
+        }
+    }
+
+    // Sağ üst avatar menüsüne kişisel "Genel Ayarlar" linki. Yalnız oturumlu kullanıcı
+    // bu menüyü görür → ayrı izin gerekmez.
+    private void ConfigureUserMenu(MenuConfigurationContext context)
+    {
+        var l = context.GetLocalizer<PlatformResource>();
+        context.Menu.AddItem(new ApplicationMenuItem(
+            "Apya.Account.Settings",
+            l["Menu:GeneralSettings"],
+            icon: "fa fa-sliders",
+            url: "/Settings",
+            order: 100));
     }
 
     private async Task ConfigureMainMenuAsync(MenuConfigurationContext context)

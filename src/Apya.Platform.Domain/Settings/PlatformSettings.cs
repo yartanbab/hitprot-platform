@@ -7,6 +7,18 @@ public static class PlatformSettings
     //Add your own setting names here. Example:
     //public const string MySetting1 = Prefix + ".MySetting1";
 
+    /// <summary>
+    /// Kullanıcıya özel arayüz tercihleri — host değil, her kullanıcı kendisi için ayarlar.
+    /// </summary>
+    public static class TaskDetail
+    {
+        /// <summary>
+        /// Görev detayının hangi arayüzle açılacağı: "v2" (yeni ortalanmış modal, varsayılan)
+        /// veya "v1" (eski sağdan panel/drawer). Kullanıcı seviyesinde saklanır.
+        /// </summary>
+        public const string Ui = Prefix + ".TaskDetail.Ui";
+    }
+
     public static class Telemetry
     {
         /// <summary>
@@ -53,6 +65,9 @@ public static class PlatformSettings
 /// <summary>Ayarların kod içinde tekrarlanmaması için varsayılanlar tek yerde.</summary>
 public static class PlatformSettingDefaults
 {
+    /// <summary>Görev detay arayüzü varsayılanı: yeni modal (V2).</summary>
+    public const string TaskDetailUi            = "v2";
+
     public const bool   TelemetryEnabled          = true;
     public const int    TelemetryRetentionDays    = 90;
 

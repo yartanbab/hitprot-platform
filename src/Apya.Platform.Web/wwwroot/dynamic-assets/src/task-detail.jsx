@@ -40,31 +40,28 @@ function TaskDetailIsland() {
 }
 
 /**
- * FAZ 2 BAYRAK: hâlâ VARSAYILAN KAPALI — bilinçli karar (whole-branch review, 2026-08-05).
- * Genel sekmesi artık çalışıyor ama eski `EditModal.cshtml` drawer'ında olup V2'de henüz
- * olmayan sekmeler var: Alt Görevler, Dosyalar, Finans, Bağımlılıklar, Zaman Takibi,
- * Yorumlar — bunlar Faz 3/4/6/7/8'de gelecek. Varsayılanı şimdi açmak tüm kullanıcılar
- * için bu özellikleri kaybettirir. Faz 4 (Alt Görevler + Dosyalar) bitince yeniden
- * değerlendirilecek.
+ * Görev detay arayüzü artık KULLANICI TERCİHİ ile seçilir (varsayılan: yeni modal = v2).
+ * Tercih sunucuda ABP kullanıcı ayarı (`Platform.TaskDetail.Ui`) olarak saklanır ve
+ * `_TaskDetailIsland.cshtml` mount div'ine `data-taskui` olarak yazar. Kullanıcı bunu
+ * "Genel Ayarlar" (/Settings) sayfasından değiştirir.
  *
- * Açma yolları (opt-in, değişmedi):
- *   - Kalıcı : localStorage.setItem('apya.taskDetail.v2', '1')
- *   - Tek seferlik: sayfaya ?taskui=v2 ekle
+ * QA/geçici override (kaydı değiştirmeden): sayfaya ?taskui=v2 veya ?taskui=v1 ekle.
  */
-function isV2Enabled() {
+function isV2Enabled(container) {
     try {
-        if (new URLSearchParams(window.location.search).get('taskui') === 'v2') return true;
-        return window.localStorage.getItem('apya.taskDetail.v2') === '1';
-    } catch (_) {
-        return false; /* localStorage kapalı (gizli mod / policy) → eski drawer */
-    }
+        const param = new URLSearchParams(window.location.search).get('taskui');
+        if (param === 'v2') return true;
+        if (param === 'v1') return false;
+    } catch (_) { /* URL okunamadı → kullanıcı tercihine düş */ }
+    // Sunucuda çözülen kullanıcı tercihi: tanımsız/'v2' → yeni modal, yalnız 'v1' → eski drawer.
+    return container?.dataset?.taskui !== 'v1';
 }
 
 /* ─── Mount ─────────────────────────────────────────────────────────── */
 const container = document.getElementById('task-detail-island');
 if (container) {
     window.apya = window.apya || {};
-    window.apya.taskDetailV2Enabled = isV2Enabled();
+    window.apya.taskDetailV2Enabled = isV2Enabled(container);
     window.apya.taskDetail = {
         open: (arg) => taskDetailStore.open(arg),
         close: () => taskDetailStore.close(),
