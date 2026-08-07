@@ -1,6 +1,7 @@
 import React, { useState, useCallback, useMemo, Suspense } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { ModalShell } from './shells/ModalShell';
+import { PageShell } from './shells/PageShell';
 import { TaskDetailHeader } from './components/TaskDetailHeader';
 import { TaskDetailFooter } from './components/TaskDetailFooter';
 import { TaskGeneralForm } from './components/TaskGeneralForm';
@@ -273,12 +274,10 @@ export function TaskDetailRoot({ taskId, presentation = 'modal', onClose }) {
                 </div>
             );
 
-    /* presentation: Faz 1'de tek geçerli değer 'modal'; Faz 5'te 'page' eklenecek
-       ve ModalShell yerine PageShell seçilecek. Prop şimdi duruyor çünkü çağıran
-       taraflar (island + Faz 5'in Razor sayfası) bu sözleşmeye göre yazılıyor.
-       Bilinmeyen değer için savunma kodu YOK — çağıran iç kod, dış girdi değil. */
+    const Shell = presentation === 'page' ? PageShell : ModalShell;
+
     return (
-        <ModalShell
+        <Shell
             open
             fullscreen={fullscreen}
             onRequestClose={requestClose}
@@ -325,7 +324,7 @@ export function TaskDetailRoot({ taskId, presentation = 'modal', onClose }) {
                     onConfirm={handleDelete}
                 />
             )}
-        </ModalShell>
+        </Shell>
     );
 }
 
