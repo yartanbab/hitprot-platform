@@ -54,9 +54,11 @@ function TaskDetailIsland() {
 function isV2Enabled() {
     try {
         if (new URLSearchParams(window.location.search).get('taskui') === 'v2') return true;
-        return window.localStorage.getItem('apya.taskDetail.v2') === '1';
+        if (new URLSearchParams(window.location.search).get('taskui') === 'v1') return false;
+        const disabled = window.localStorage.getItem('apya.taskDetail.v2') === '0';
+        return !disabled; /* FAZ 10: V2 varsayılan olarak AKTİF */
     } catch (_) {
-        return false; /* localStorage kapalı (gizli mod / policy) → eski drawer */
+        return true;
     }
 }
 
@@ -80,3 +82,30 @@ if (container) {
         if (deepLinkId) taskDetailStore.open(deepLinkId);
     }
 }
+
+function TaskDetailPageIsland({ taskId }) {
+    return (
+        <QueryProvider>
+            <TaskDetailRoot
+                taskId={taskId}
+                presentation="page"
+                onClose={() => {
+                    if (window.history.length > 1) {
+                        window.history.back();
+                    } else {
+                        window.location.href = '/Tasks';
+                    }
+                }}
+            />
+        </QueryProvider>
+    );
+}
+
+const pageContainer = document.getElementById('task-detail-page-island');
+if (pageContainer) {
+    const pageTaskId = pageContainer.getAttribute('data-task-id');
+    if (pageTaskId) {
+        createRoot(pageContainer).render(<TaskDetailPageIsland taskId={pageTaskId} />);
+    }
+}
+
