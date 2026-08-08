@@ -10,6 +10,8 @@ using Volo.Abp.Domain.Repositories;
 using Volo.Abp.EventBus.Local;
 using Volo.Abp.Identity;
 using Apya.Platform.Permissions;
+using Apya.Platform.Expenses;
+using Apya.Platform.Incomes;
 
 namespace Apya.Platform.Tasks
 {
@@ -35,6 +37,8 @@ namespace Apya.Platform.Tasks
         private readonly IRepository<TaskFeatureAssignment, Guid> _featureAssignmentRepository;
         private readonly IRepository<TaskChecklistItem, Guid> _checklistRepository;
         private readonly IRepository<TaskFavorite, Guid> _favoriteRepository;
+        private readonly IRepository<Expense, Guid> _expenseRepository;
+        private readonly IRepository<IncomeEntry, Guid> _incomeRepository;
         private readonly ILocalEventBus _localEventBus;
 
         public TaskAppService(
@@ -51,6 +55,8 @@ namespace Apya.Platform.Tasks
             IRepository<TaskFeatureAssignment, Guid> featureAssignmentRepository,
             IRepository<TaskChecklistItem, Guid> checklistRepository,
             IRepository<TaskFavorite, Guid> favoriteRepository,
+            IRepository<Expense, Guid> expenseRepository,
+            IRepository<IncomeEntry, Guid> incomeRepository,
             ILocalEventBus localEventBus)
             : base(repository)
         {
@@ -66,6 +72,8 @@ namespace Apya.Platform.Tasks
             _featureAssignmentRepository = featureAssignmentRepository;
             _checklistRepository   = checklistRepository;
             _favoriteRepository    = favoriteRepository;
+            _expenseRepository     = expenseRepository;
+            _incomeRepository      = incomeRepository;
             _localEventBus         = localEventBus;
 
             CreatePolicyName = PlatformPermissions.Tasks.Create;
@@ -148,6 +156,22 @@ namespace Apya.Platform.Tasks
             if (favUserId != null)
             {
                 taskDto.IsFavorite = await _favoriteRepository.FindAsync(f => f.TaskId == id && f.UserId == favUserId.Value) != null;
+            }
+
+            // Göreve bağlı finans — izinle gate'lenir (finansal veri sızıntısını önler)
+            if (await AuthorizationService.IsGrantedAsync(PlatformPermissions.Expenses.Default))
+            {
+                var taskExpenses = await _expenseRepository.GetListAsync(e => e.TaskId == id);
+                taskDto.Expenses = taskExpenses
+                    .Select(e => new TaskFinanceLineDto { Id = e.Id, Title = e.Title, Amount = e.Amount, Currency = e.Currency, Date = e.ExpenseDate })
+                    .ToList();
+            }
+            if (await AuthorizationService.IsGrantedAsync(PlatformPermissions.Incomes.Default))
+            {
+                var taskIncomes = await _incomeRepository.GetListAsync(i => i.TaskId == id);
+                taskDto.Incomes = taskIncomes
+                    .Select(i => new TaskFinanceLineDto { Id = i.Id, Title = i.Title, Amount = i.Amount, Currency = i.Currency, Date = i.IncomeDate })
+                    .ToList();
             }
 
             // Özel kanban kolonu adı (liste "Durum" sütunu + modal dropdown)

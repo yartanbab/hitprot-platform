@@ -35,6 +35,11 @@ namespace Apya.Platform.Tasks
         /// <summary>Mevcut kullanıcının bu görevi favorilediği mi (TaskFavorite join'inden hesaplanır).</summary>
         public bool IsFavorite { get; set; }
 
+        /// <summary>Göreve bağlı giderler (yalnızca Expenses izni olan kullanıcıya doldurulur).</summary>
+        public List<TaskFinanceLineDto> Expenses { get; set; } = new List<TaskFinanceLineDto>();
+        /// <summary>Göreve bağlı gelirler (yalnızca Incomes izni olan kullanıcıya doldurulur).</summary>
+        public List<TaskFinanceLineDto> Incomes { get; set; } = new List<TaskFinanceLineDto>();
+
         public List<TaskDto> SubTasks { get; set; } = new List<TaskDto>();
         public List<TaskCommentDto> Comments { get; set; } = new List<TaskCommentDto>();
         public List<TaskAttachmentDto> Attachments { get; set; } = new List<TaskAttachmentDto>();
