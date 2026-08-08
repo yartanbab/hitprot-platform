@@ -1,22 +1,23 @@
 $(function () {
     var taskService = apya.platform.tasks.task;
     var createModal = new abp.ModalManager(abp.appPath + 'Tasks/CreateModal');
-    // Görev detayı: bayrak açıksa React island'ı (window.apya.taskDetail), değilse
-    // eski Razor drawer'ı. İkisi de .open()/.onResult() sözleşmesini karşılar →
-    // apya-kanban.js her iki durumda da değişmeden çalışır.
+    // editModal: apya.taskDetail kuyruk köprüsü sayesinde her zaman hazır.
+    // Tıklama anında ES module henüz yüklenmemiş olsa bile ID kuyruğa alınır
+    // ve module yüklenince otomatik açılır.
     var _oldModal = new abp.ModalManager(abp.appPath + 'Tasks/EditModal');
     var editModal = {
         open: function (arg) {
-            if (window.apya && (window.apya.taskDetailV2Enabled || window.apya.taskDetailV3Enabled || window.apya.taskDetail)) {
-                (window.apya?.taskDetail || _oldModal).open(arg);
+            // window.apya.taskDetail her zaman var (kuyruk köprüsü garanti eder)
+            if (window.apya && window.apya.taskDetail) {
+                window.apya.taskDetail.open(arg);
             } else {
                 _oldModal.open(arg);
             }
         },
         onResult: function (fn) {
             _oldModal.onResult(fn);
-            if (window.apya && window.apya.taskDetail) {
-                window.apya.taskDetail.onResult?.(fn);
+            if (window.apya && window.apya.taskDetail && window.apya.taskDetail.onResult) {
+                window.apya.taskDetail.onResult(fn);
             }
         }
     };
@@ -143,16 +144,11 @@ $(function () {
     // --- Satıra tıklayınca görev detay modalını aç ---
     $(document).on('click', '#TasksTable tbody tr', function (e) {
         if ($(e.target).closest('a, button, .form-check-input, input, select, .dropdown').length) return;
-        var row = dataTable ? dataTable.row($(this).closest('tr')) : null;
+        var $tr = $(this).closest('tr');
+        var row = dataTable ? dataTable.row($tr) : null;
         var rowData = row ? row.data() : null;
-        var id = rowData ? rowData.id : $(this).attr('data-id');
-        if (id) {
-            if (window.apya && window.apya.taskDetail) {
-                window.apya.taskDetail.open(id);
-            } else {
-                editModal.open({ id: id });
-            }
-        }
+        var id = (rowData && rowData.id) ? rowData.id : $tr.attr('data-id');
+        if (id) { editModal.open(id); }
     });
 
     // --- Yeni Görev ---

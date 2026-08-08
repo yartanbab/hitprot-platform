@@ -4,16 +4,16 @@ $(function () {
     var _oldEditModal = new abp.ModalManager({ viewUrl: abp.appPath + 'Tasks/EditModal' });
     var editModal = {
         open: function (arg) {
-            if (window.apya && (window.apya.taskDetailV2Enabled || window.apya.taskDetailV3Enabled || window.apya.taskDetail)) {
-                (window.apya?.taskDetail || _oldEditModal).open(arg);
+            if (window.apya && window.apya.taskDetail) {
+                window.apya.taskDetail.open(arg);
             } else {
                 _oldEditModal.open(arg);
             }
         },
         onResult: function (fn) {
             _oldEditModal.onResult(fn);
-            if (window.apya && window.apya.taskDetail) {
-                window.apya.taskDetail.onResult?.(fn);
+            if (window.apya && window.apya.taskDetail && window.apya.taskDetail.onResult) {
+                window.apya.taskDetail.onResult(fn);
             }
         }
     };

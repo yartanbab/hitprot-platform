@@ -24,12 +24,11 @@ function normalizeId(arg) {
 export const taskDetailStore = {
     open(arg) {
         const id = normalizeId(arg);
-        if (!id || id === currentTaskId) return;
+        if (!id) return;
         currentTaskId = id;
         emit();
     },
     close() {
-        if (currentTaskId === null) return;
         currentTaskId = null;
         emit();
     },

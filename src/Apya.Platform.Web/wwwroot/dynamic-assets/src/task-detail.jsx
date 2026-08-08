@@ -96,13 +96,22 @@ function isV3Enabled() {
 window.apya = window.apya || {};
 window.apya.taskDetailV3Enabled = isV3Enabled();
 window.apya.taskDetailV2Enabled = isV2Enabled() && !window.apya.taskDetailV3Enabled;
-window.apya.taskDetail = {
-    open: (arg) => {
-        taskDetailStore.open(arg);
-    },
+
+// Gerçek API nesnesi
+const taskDetailApi = {
+    open: (arg) => { taskDetailStore.open(arg); },
     close: () => taskDetailStore.close(),
     onResult: (fn) => taskDetailStore.onResult(fn),
 };
+
+// Eğer _TaskDetailIsland'daki kuyruk köprüsü kurulduysa — gerçek API ile değiştir
+// ve kuyruktaki bekleyen ID'yi hemen aç
+if (typeof window.apya._taskDetailFlush === 'function') {
+    window.apya._taskDetailFlush(taskDetailApi);
+} else {
+    // Köprü yoksa (sayfa başka yapıda) doğrudan bağla
+    window.apya.taskDetail = taskDetailApi;
+}
 
 function mountIsland() {
     let container = document.getElementById('task-detail-island');

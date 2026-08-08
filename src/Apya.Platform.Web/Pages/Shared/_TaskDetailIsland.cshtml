@@ -1,4 +1,40 @@
 @* Görev detay modalı — Tasks/Board/ProjectDetails sayfalarının ortak mount noktası.
    Island açılana kadar hiçbir şey render etmez (taskDetailStore boşken null döner). *@
 <div id="task-detail-island"></div>
+
+@* Kuyruk köprüsü: jQuery script'leri (index.js vb.) ES module yüklenmeden önce
+   window.apya.taskDetail.open(id) çağırırsa bu fonksiyon ID'yi kuyruğa alır.
+   Module yüklenince window.apya.taskDetail gerçek store'u referanslar ve kuyruk
+   boşaltılır. *@
+<script>
+    (function () {
+        window.apya = window.apya || {};
+        if (window.apya.taskDetail) return; // zaten yüklendiyse dokunma
+
+        var _pendingId = null;
+        // Geçici placeholder: tıklama anında module henüz yüklenmediyse ID'yi sakla
+        window.apya.taskDetail = {
+            open: function (arg) {
+                var id = typeof arg === 'string' ? arg : (arg && arg.id ? arg.id : null);
+                if (!id) return;
+                _pendingId = id;
+                // Module yüklendiyse hemen tetikle
+                if (window.apya._taskDetailReady) {
+                    window.apya._taskDetailReady(id);
+                }
+            },
+            close: function () { },
+            onResult: function () { }
+        };
+        // Module yüklenince bu fonksiyonu çağırır; kuyrukta bekleyen varsa açar
+        window.apya._taskDetailFlush = function (openFn) {
+            window.apya.taskDetail = openFn; // gerçek store bağlandı
+            window.apya._taskDetailReady = function (id) { openFn.open(id); };
+            if (_pendingId) {
+                openFn.open(_pendingId);
+                _pendingId = null;
+            }
+        };
+    })();
+</script>
 <script type="module" src="~/js/task-detail.js" asp-append-version="true"></script>
