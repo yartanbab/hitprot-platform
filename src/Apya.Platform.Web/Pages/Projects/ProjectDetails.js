@@ -1,8 +1,14 @@
 $(function () {
     var taskService = apya.platform.tasks.task;
-    var createModal = new abp.ModalManager({ viewUrl: abp.appPath + 'Tasks/CreateModal' });
-    var editModal   = (window.apya && apya.taskDetailV2Enabled)
-        ? apya.taskDetail
+    var _oldEditModal = new abp.ModalManager({ viewUrl: abp.appPath + 'Tasks/EditModal' });
+    var editModal = (window.apya && (apya.taskDetailV2Enabled || apya.taskDetailV3Enabled || apya.taskDetail))
+        ? {
+            open: function (arg) { (window.apya?.taskDetail || _oldEditModal).open(arg); },
+            onResult: function (fn) {
+                _oldEditModal.onResult(fn);
+                window.apya?.taskDetail?.onResult?.(fn);
+            }
+        }
         : new abp.ModalManager({ viewUrl: abp.appPath + 'Tasks/EditModal' });
 
     // Proje Id'sini sayfadan alıyoruz (buton attribute veya URL)

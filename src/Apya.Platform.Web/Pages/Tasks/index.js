@@ -5,26 +5,15 @@ $(function () {
     // eski Razor drawer'ı. İkisi de .open()/.onResult() sözleşmesini karşılar →
     // apya-kanban.js her iki durumda da değişmeden çalışır.
     var _oldModal = new abp.ModalManager(abp.appPath + 'Tasks/EditModal');
-    var editModal = {
-        open: function (arg) {
-            if (window.apya && (window.apya.taskDetailV3Enabled || window.apya.taskDetailV2Enabled) && window.apya.taskDetail) {
-                window.apya.taskDetail.open(arg);
-            } else {
-                _oldModal.open(arg);
+    var editModal = (window.apya && (apya.taskDetailV2Enabled || apya.taskDetailV3Enabled || apya.taskDetail))
+        ? {
+            open: function (arg) { (window.apya?.taskDetail || _oldModal).open(arg); },
+            onResult: function (fn) {
+                _oldModal.onResult(fn);
+                window.apya?.taskDetail?.onResult?.(fn);
             }
-        },
-        onResult: function (fn) {
-            _oldModal.onResult(fn);
-            // apya.taskDetail.onResult, task-detail mount edildiğinde kanban vb. yerlerde dinamik olarak çağrılamaz, 
-            // ama taskDetailStore global olduğu için onResult ekleyebiliriz:
-            var checkInterval = setInterval(function() {
-                if (window.apya && window.apya.taskDetail) {
-                    window.apya.taskDetail.onResult(fn);
-                    clearInterval(checkInterval);
-                }
-            }, 500);
         }
-    };
+        : new abp.ModalManager(abp.appPath + 'Tasks/EditModal');
 
     // Proje seçimi: kanban'ı o projeye scope'lar (özel kolonlar) + liste/gantt'ı filtreler.
     var selectedProjectId = null;
