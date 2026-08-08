@@ -32,6 +32,9 @@ namespace Apya.Platform.Tasks
 
         public bool IsPrivate { get; set; }
 
+        /// <summary>Mevcut kullanıcının bu görevi favorilediği mi (TaskFavorite join'inden hesaplanır).</summary>
+        public bool IsFavorite { get; set; }
+
         public List<TaskDto> SubTasks { get; set; } = new List<TaskDto>();
         public List<TaskCommentDto> Comments { get; set; } = new List<TaskCommentDto>();
         public List<TaskAttachmentDto> Attachments { get; set; } = new List<TaskAttachmentDto>();

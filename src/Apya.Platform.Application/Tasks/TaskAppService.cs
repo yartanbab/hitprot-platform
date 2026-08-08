@@ -34,6 +34,7 @@ namespace Apya.Platform.Tasks
         private readonly IRepository<TaskTagAssignment, Guid> _taskTagRepository;
         private readonly IRepository<TaskFeatureAssignment, Guid> _featureAssignmentRepository;
         private readonly IRepository<TaskChecklistItem, Guid> _checklistRepository;
+        private readonly IRepository<TaskFavorite, Guid> _favoriteRepository;
         private readonly ILocalEventBus _localEventBus;
 
         public TaskAppService(
@@ -49,6 +50,7 @@ namespace Apya.Platform.Tasks
             IRepository<TaskTagAssignment, Guid> taskTagRepository,
             IRepository<TaskFeatureAssignment, Guid> featureAssignmentRepository,
             IRepository<TaskChecklistItem, Guid> checklistRepository,
+            IRepository<TaskFavorite, Guid> favoriteRepository,
             ILocalEventBus localEventBus)
             : base(repository)
         {
@@ -63,6 +65,7 @@ namespace Apya.Platform.Tasks
             _taskTagRepository     = taskTagRepository;
             _featureAssignmentRepository = featureAssignmentRepository;
             _checklistRepository   = checklistRepository;
+            _favoriteRepository    = favoriteRepository;
             _localEventBus         = localEventBus;
 
             CreatePolicyName = PlatformPermissions.Tasks.Create;
@@ -140,6 +143,13 @@ namespace Apya.Platform.Tasks
 
             await PopulateTagsAsync(new List<TaskDto> { taskDto });
 
+            // Mevcut kullanıcının favorisi mi (TaskFavorite join)
+            var favUserId = CurrentUser.Id;
+            if (favUserId != null)
+            {
+                taskDto.IsFavorite = await _favoriteRepository.FindAsync(f => f.TaskId == id && f.UserId == favUserId.Value) != null;
+            }
+
             // Özel kanban kolonu adı (liste "Durum" sütunu + modal dropdown)
             if (task.BoardColumnId.HasValue)
             {
@@ -156,6 +166,7 @@ namespace Apya.Platform.Tasks
             var result = await base.GetListAsync(input);
             await PopulateBoardColumnNamesAsync(result.Items);
             await PopulateTagsAsync(result.Items);
+            await PopulateFavoritesAsync(result.Items);
             return result;
         }
 
@@ -225,6 +236,41 @@ namespace Apya.Platform.Tasks
                         .ToList();
                 }
             }
+        }
+
+        // Mevcut kullanıcının favorilerini tek toplu sorguda iliştirir (N+1 yok) — PopulateTagsAsync ile aynı desen.
+        private async Task PopulateFavoritesAsync(System.Collections.Generic.IReadOnlyList<TaskDto> items)
+        {
+            if (items.Count == 0) return;
+            var userId = CurrentUser.Id;
+            if (userId == null) return;
+
+            var taskIds = items.Select(i => i.Id).ToList();
+            var favorites = await _favoriteRepository.GetListAsync(f => f.UserId == userId.Value && taskIds.Contains(f.TaskId));
+            if (favorites.Count == 0) return;
+
+            var favSet = favorites.Select(f => f.TaskId).ToHashSet();
+            foreach (var item in items)
+            {
+                item.IsFavorite = favSet.Contains(item.Id);
+            }
+        }
+
+        // Mevcut kullanıcı için görev favorisini aç/kapat (TaskTagAssignment ile aynı bare-join deseni).
+        public async Task<bool> ToggleFavoriteAsync(Guid taskId)
+        {
+            await EnsureTaskAccessAllowedAsync(taskId);
+            var userId = CurrentUser.Id!.Value; // [Authorize] → null değil
+
+            var existing = await _favoriteRepository.FindAsync(f => f.TaskId == taskId && f.UserId == userId);
+            if (existing != null)
+            {
+                await _favoriteRepository.DeleteAsync(existing, autoSave: true);
+                return false;
+            }
+
+            await _favoriteRepository.InsertAsync(new TaskFavorite(GuidGenerator.Create(), taskId, userId), autoSave: true);
+            return true;
         }
 
         // Create/Update ortak: TagNames'i get-or-create edip TaskTagAssignment'ları senkronlar

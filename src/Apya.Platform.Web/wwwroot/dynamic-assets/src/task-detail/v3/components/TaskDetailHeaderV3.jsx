@@ -29,6 +29,7 @@ export function TaskDetailHeaderV3({
     const [currentStatusId, setCurrentStatusId] = useState(task.status ?? 1);
     const [currentPriorityId, setCurrentPriorityId] = useState(task.priority ?? 2);
     const [isPrivate, setIsPrivate] = useState(Boolean(task.isPrivate));
+    const [isFavorite, setIsFavorite] = useState(Boolean(task.isFavorite));
 
     const statusObj = STATUS_LIST.find(s => s.id === currentStatusId) || STATUS_LIST[0];
     const priorityObj = PRIORITY_LIST.find(p => p.id === currentPriorityId) || PRIORITY_LIST[1];
@@ -46,6 +47,17 @@ export function TaskDetailHeaderV3({
         const url = `${window.location.origin}/Tasks?task=${task.id || ''}`;
         navigator.clipboard?.writeText(url);
         window?.abp?.notify?.success?.('Görev bağlantısı panoya kopyalandı!');
+    };
+
+    const handleToggleFavorite = async () => {
+        const next = !isFavorite;
+        setIsFavorite(next); // optimistik
+        try {
+            await Promise.resolve(window?.apya?.platform?.tasks?.task?.toggleFavorite?.(task.id));
+        } catch (err) {
+            setIsFavorite(!next); // geri al
+            window?.abp?.notify?.error?.(err?.message || 'Favori güncellenemedi.');
+        }
     };
 
     return (
@@ -154,7 +166,7 @@ export function TaskDetailHeaderV3({
                         </Popover.Root>
                     </div>
                     
-                    {/* Başlık */}
+                    {/* Başlık & Favori */}
                     <div className="flex items-center gap-3 mt-1">
                         <h1
                             contentEditable
@@ -164,6 +176,19 @@ export function TaskDetailHeaderV3({
                         >
                             {task.title || 'Başlıksız görev'}
                         </h1>
+
+                        <button
+                            type="button"
+                            onClick={handleToggleFavorite}
+                            className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition-all ${
+                                isFavorite
+                                    ? 'text-amber-500 bg-amber-50 dark:bg-amber-950/30'
+                                    : 'text-text-tertiary hover:bg-surface-hover hover:text-amber-500'
+                            }`}
+                            title={isFavorite ? 'Favorilerden çıkar' : 'Favorilere ekle'}
+                        >
+                            <i className={`fa-${isFavorite ? 'solid' : 'regular'} fa-star text-lg`} />
+                        </button>
                     </div>
                 </div>
 

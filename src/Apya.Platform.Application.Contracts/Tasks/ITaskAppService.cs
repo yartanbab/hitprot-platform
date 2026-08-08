@@ -27,6 +27,9 @@ namespace Apya.Platform.Tasks
         Task DeleteCommentAsync(Guid commentId);               // yalnızca yorum sahibi
         Task<List<TaskCommentDto>> GetCommentsAsync(Guid taskId);
 
+        /// <summary>Mevcut kullanıcı için görev favorisini aç/kapat; yeni durumu döner (true=favori).</summary>
+        Task<bool> ToggleFavoriteAsync(Guid taskId);
+
         Task AddAttachmentAsync(Guid taskId, string fileName, string storedFileName, long fileSize);
         Task<List<TaskAttachmentDto>> GetAttachmentsAsync(Guid taskId);
         Task DeleteAttachmentAsync(Guid attachmentId);
