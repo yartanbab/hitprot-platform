@@ -28,6 +28,7 @@ export function TaskDetailHeaderV3({
     const [copiedCode, setCopiedCode] = useState(false);
     const [currentStatusId, setCurrentStatusId] = useState(task.status ?? 1);
     const [currentPriorityId, setCurrentPriorityId] = useState(task.priority ?? 2);
+    const [isPrivate, setIsPrivate] = useState(Boolean(task.isPrivate));
 
     const statusObj = STATUS_LIST.find(s => s.id === currentStatusId) || STATUS_LIST[0];
     const priorityObj = PRIORITY_LIST.find(p => p.id === currentPriorityId) || PRIORITY_LIST[1];
@@ -168,7 +169,10 @@ export function TaskDetailHeaderV3({
 
                 {/* Sağ: Gizlilik Popover'ı, Tam Ekran & Kapat */}
                 <div className="flex items-center gap-2 shrink-0">
-                    <TaskPrivacyDialogV3 />
+                    <TaskPrivacyDialogV3
+                        isPrivate={isPrivate}
+                        onChange={(v) => { setIsPrivate(v); onFieldChange('isPrivate', v); }}
+                    />
 
                     <div className="h-5 w-px bg-subtle mx-1" />
 
