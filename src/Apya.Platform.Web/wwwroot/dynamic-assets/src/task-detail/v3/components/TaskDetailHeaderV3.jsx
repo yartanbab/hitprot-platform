@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Button, Badge } from '../../../components/ui';
+import { TaskPrivacyDialogV3 } from './TaskPrivacyDialogV3';
 
 export function TaskDetailHeaderV3({
     task,
@@ -68,11 +69,7 @@ export function TaskDetailHeaderV3({
 
                 {/* Right: Access Badge & Actions */}
                 <div className="flex items-center gap-[var(--apya-space-3)]">
-                    <div className="flex items-center gap-2 px-3 py-1.5 rounded-[var(--apya-radius-full)] bg-surface-base border border-subtle text-[13px] font-medium text-text-secondary cursor-pointer hover:bg-surface-hover hover:border-default transition-all shadow-sm">
-                        <i className="fa-solid fa-lock text-[11px]" />
-                        Sınırlı erişim
-                        <i className="fa-solid fa-chevron-down text-[10px] ml-1" />
-                    </div>
+                    <TaskPrivacyDialogV3 />
 
                     <div className="h-6 w-px bg-subtle mx-1" />
 

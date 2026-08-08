@@ -6,6 +6,8 @@ import { TaskMetadataGridV3 } from './components/TaskMetadataGridV3';
 import { TaskFeatureNavbarV3 } from './components/TaskFeatureNavbarV3';
 import { TaskSidePanelV3 } from './components/TaskSidePanelV3';
 import { TaskGeneralTabV3 } from './components/TaskGeneralTabV3';
+import { TaskDetailFooterV3 } from './components/TaskDetailFooterV3';
+import { ActivityTabV3 } from './components/ActivityTabV3';
 import { FeaturePickerV3 } from './components/FeaturePickerV3';
 import { getVisibleTabs } from '../TaskFeatureRegistry';
 import { useTaskDetail, isGranted } from '../hooks/useTaskDetail';
@@ -150,6 +152,8 @@ export function TaskDetailRootV3({
                                 <TaskSidePanelV3 task={task} />
                             </div>
                         </div>
+                    ) : activeTabCode === 'history' || activeTabCode === 'activity' ? (
+                        <ActivityTabV3 />
                     ) : (
                         <Suspense fallback={<Skeleton className="h-48 w-full" />}>
                             {activeTabDef?.component ? (
@@ -168,6 +172,15 @@ export function TaskDetailRootV3({
                     )}
                 </div>
             </div>
+
+            {/* V3 Footer with Save/Cancel */}
+            <TaskDetailFooterV3
+                lastSavedAt={task?.lastModificationTime}
+                isDirty={guard.isDirty}
+                isSaving={isSaving}
+                onCancel={requestClose}
+                onSave={doSave}
+            />
         </div>
     );
 
