@@ -133,21 +133,26 @@ export function TaskDetailRootV3({
     ) : (
         <div className="flex flex-col min-h-0 bg-surface-base">
             {/* V3 Header */}
-            <TaskDetailHeaderV3 
-                task={task} 
-                onClose={requestClose} 
+            <TaskDetailHeaderV3
+                task={task}
+                onClose={requestClose}
                 isFullscreen={fullscreen}
                 onToggleFullscreen={toggleFullscreen}
                 presentation={presentation}
                 onFieldChange={form.setField}
+                statusValue={form.values.status}
+                priorityValue={form.values.priority}
             />
 
             <div className="overflow-y-auto max-h-[85vh] custom-scrollbar">
                 {/* 4-Kolon Metadata Grid */}
-                <TaskMetadataGridV3 
-                    task={task} 
+                <TaskMetadataGridV3
+                    task={task}
                     assigneeOptions={assignees.options}
                     onFieldChange={form.setField}
+                    statusValue={form.values.status}
+                    priorityValue={form.values.priority}
+                    assigneeValue={form.values.assigneeId}
                 />
 
                 {/* Sekmeler & Özellik Ekleme Barı */}

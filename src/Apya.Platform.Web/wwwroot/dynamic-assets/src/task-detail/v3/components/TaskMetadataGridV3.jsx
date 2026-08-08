@@ -29,11 +29,17 @@ function MetadataCell({ label, children }) {
     );
 }
 
-export function TaskMetadataGridV3({ 
-    task = {}, 
-    assigneeOptions = [], 
-    onFieldChange = () => {} 
+export function TaskMetadataGridV3({
+    task = {},
+    assigneeOptions = [],
+    onFieldChange = () => {},
+    statusValue,
+    priorityValue,
+    assigneeValue
 }) {
+    // Controlled değerler (header ile tek kaynak = form). Kaydet ile persist edilir.
+    const currentStatus = statusValue ?? task.status ?? 1;
+    const currentPriority = priorityValue ?? task.priority ?? 2;
     // Etiketler: TagDto listesi ({ name }) → serbest-metin isim dizisi. Form sözleşmesi
     // `tagNames` (List<string>) bekler; onFieldChange bu anahtarla gönderilmeli.
     const [tags, setTags] = useState(
@@ -44,9 +50,8 @@ export function TaskMetadataGridV3({
     const [newTagInput, setNewTagInput] = useState('');
     const [isAddingTag, setIsAddingTag] = useState(false);
 
-    // Sorumlu: seçim anında ekranın hemen güncellenmesi için yerel state; kalıcılık
-    // form `assigneeId` üzerinden (onFieldChange) sağlanır.
-    const [assigneeId, setAssigneeId] = useState(task.assigneeId ?? null);
+    // Sorumlu: controlled (form assigneeId). Seçim anında form güncellenir, Kaydet ile persist.
+    const assigneeId = assigneeValue ?? task.assigneeId ?? null;
 
     const handleAddTag = (e) => {
         if (e.key === 'Enter' || e.type === 'blur') {
@@ -68,7 +73,6 @@ export function TaskMetadataGridV3({
     };
 
     const handleSelectAssignee = (id) => {
-        setAssigneeId(id);
         onFieldChange('assigneeId', id);
     };
 
@@ -168,34 +172,82 @@ export function TaskMetadataGridV3({
                     </label>
                 </MetadataCell>
 
-                {/* 4. Öncelik (gerçek task.priority) */}
+                {/* 4. Öncelik (tıklanır dropdown — form.priority) */}
                 <MetadataCell label="Öncelik">
-                    {(() => {
-                        const p = PRIORITY_META[task.priority] || PRIORITY_META[2];
-                        return (
-                            <div className="flex items-center gap-2 text-[13px] font-medium">
-                                <span className={`flex items-center gap-1.5 px-2.5 py-0.5 rounded-md font-semibold ${p.cls}`}>
-                                    <i className={`fa-solid ${p.icon} text-xs`} />
-                                    <span>{p.label}</span>
-                                </span>
-                            </div>
-                        );
-                    })()}
+                    <Popover.Root>
+                        <Popover.Trigger asChild>
+                            <button type="button" className="flex items-center rounded-md cursor-pointer hover:opacity-90 transition-all focus-visible:outline-none focus-visible:shadow-focus">
+                                {(() => {
+                                    const p = PRIORITY_META[currentPriority] || PRIORITY_META[2];
+                                    return (
+                                        <span className={`flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-[13px] font-semibold ${p.cls}`}>
+                                            <i className={`fa-solid ${p.icon} text-xs`} />
+                                            <span>{p.label}</span>
+                                            <i className="fa-solid fa-chevron-down text-[9px] opacity-70 ml-0.5" />
+                                        </span>
+                                    );
+                                })()}
+                            </button>
+                        </Popover.Trigger>
+                        <Popover.Portal>
+                            <Popover.Content sideOffset={6} align="start" className="z-50 w-40 rounded-xl border border-subtle bg-surface-base p-1.5 shadow-float animate-in fade-in-50 zoom-in-95">
+                                <div className="text-[10px] font-bold text-text-tertiary uppercase tracking-wider px-2 py-1">Öncelik Seç</div>
+                                <div className="flex flex-col gap-0.5">
+                                    {[1, 2, 3, 4].map((id) => {
+                                        const p = PRIORITY_META[id];
+                                        const active = currentPriority === id;
+                                        return (
+                                            <button key={id} type="button" onClick={() => onFieldChange('priority', id)}
+                                                className={`flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-[12px] font-medium text-left transition-colors ${active ? 'bg-primary-subtle text-primary font-bold' : 'text-text-primary hover:bg-surface-hover'}`}>
+                                                <i className={`fa-solid ${p.icon} text-xs`} />
+                                                <span className="flex-1">{p.label}</span>
+                                                {active && <i className="fa-solid fa-check text-xs text-primary" />}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            </Popover.Content>
+                        </Popover.Portal>
+                    </Popover.Root>
                 </MetadataCell>
 
-                {/* 5. Durum (gerçek task.status) */}
+                {/* 5. Durum (tıklanır dropdown — form.status) */}
                 <MetadataCell label="Durum">
-                    {(() => {
-                        const s = STATUS_META[task.status] || STATUS_META[1];
-                        return (
-                            <div className="flex items-center gap-2 text-[13px] font-medium">
-                                <span className={`flex items-center gap-1.5 px-2.5 py-0.5 rounded-md font-semibold ${s.cls}`}>
-                                    <i className={`fa-solid ${s.icon} text-xs`} />
-                                    <span>{s.label}</span>
-                                </span>
-                            </div>
-                        );
-                    })()}
+                    <Popover.Root>
+                        <Popover.Trigger asChild>
+                            <button type="button" className="flex items-center rounded-md cursor-pointer hover:opacity-90 transition-all focus-visible:outline-none focus-visible:shadow-focus">
+                                {(() => {
+                                    const s = STATUS_META[currentStatus] || STATUS_META[1];
+                                    return (
+                                        <span className={`flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-[13px] font-semibold ${s.cls}`}>
+                                            <i className={`fa-solid ${s.icon} text-xs`} />
+                                            <span>{s.label}</span>
+                                            <i className="fa-solid fa-chevron-down text-[9px] opacity-70 ml-0.5" />
+                                        </span>
+                                    );
+                                })()}
+                            </button>
+                        </Popover.Trigger>
+                        <Popover.Portal>
+                            <Popover.Content sideOffset={6} align="start" className="z-50 w-44 rounded-xl border border-subtle bg-surface-base p-1.5 shadow-float animate-in fade-in-50 zoom-in-95">
+                                <div className="text-[10px] font-bold text-text-tertiary uppercase tracking-wider px-2 py-1">Durumu Değiştir</div>
+                                <div className="flex flex-col gap-0.5">
+                                    {[1, 2, 3, 4].map((id) => {
+                                        const s = STATUS_META[id];
+                                        const active = currentStatus === id;
+                                        return (
+                                            <button key={id} type="button" onClick={() => onFieldChange('status', id)}
+                                                className={`flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-[12px] font-medium text-left transition-colors ${active ? 'bg-primary-subtle text-primary font-bold' : 'text-text-primary hover:bg-surface-hover'}`}>
+                                                <i className={`fa-solid ${s.icon} text-xs`} />
+                                                <span className="flex-1">{s.label}</span>
+                                                {active && <i className="fa-solid fa-check text-xs text-primary" />}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            </Popover.Content>
+                        </Popover.Portal>
+                    </Popover.Root>
                 </MetadataCell>
 
                 {/* 6. Etiketler */}
@@ -242,11 +294,11 @@ export function TaskMetadataGridV3({
                     </div>
                 </MetadataCell>
 
-                {/* 7. Proje */}
+                {/* 7. Proje (salt-okunur — proje değiştirme ayrı backend lookup gerektirir) */}
                 <MetadataCell label="Proje">
-                    <div className="flex items-center gap-2 cursor-pointer hover:bg-surface-hover px-2 py-1 -ml-2 rounded-lg transition-colors w-max group">
-                        <i className="fa-regular fa-folder-open text-text-tertiary group-hover:text-primary transition-colors text-sm" />
-                        <span className="font-medium text-text-primary group-hover:text-primary transition-colors text-[13px] truncate max-w-[140px]">
+                    <div className="flex items-center gap-2">
+                        <i className="fa-regular fa-folder-open text-text-tertiary text-sm" />
+                        <span className="font-medium text-text-primary text-[13px] truncate max-w-[140px]">
                             {task.projectName || 'Projesiz'}
                         </span>
                     </div>

@@ -23,13 +23,17 @@ export function TaskDetailHeaderV3({
     onToggleFullscreen,
     isFullscreen,
     presentation = 'modal',
-    onFieldChange = () => {}
+    onFieldChange = () => {},
+    statusValue,
+    priorityValue
 }) {
     const [copiedCode, setCopiedCode] = useState(false);
-    const [currentStatusId, setCurrentStatusId] = useState(task.status ?? 1);
-    const [currentPriorityId, setCurrentPriorityId] = useState(task.priority ?? 2);
     const [isPrivate, setIsPrivate] = useState(Boolean(task.isPrivate));
     const [isFavorite, setIsFavorite] = useState(Boolean(task.isFavorite));
+
+    // Controlled: tek kaynak form değeri (metadata Durum/Öncelik ile senkron kalır)
+    const currentStatusId = statusValue ?? task.status ?? 1;
+    const currentPriorityId = priorityValue ?? task.priority ?? 2;
 
     const statusObj = STATUS_LIST.find(s => s.id === currentStatusId) || STATUS_LIST[0];
     const priorityObj = PRIORITY_LIST.find(p => p.id === currentPriorityId) || PRIORITY_LIST[1];
@@ -105,10 +109,7 @@ export function TaskDetailHeaderV3({
                                             <button
                                                 key={st.id}
                                                 type="button"
-                                                onClick={() => {
-                                                    setCurrentStatusId(st.id);
-                                                    onFieldChange('status', st.id);
-                                                }}
+                                                onClick={() => onFieldChange('status', st.id)}
                                                 className={`flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-[12px] font-medium text-left transition-colors ${
                                                     currentStatusId === st.id ? 'bg-primary-subtle text-primary font-bold' : 'text-text-primary hover:bg-surface-hover'
                                                 }`}
@@ -147,10 +148,7 @@ export function TaskDetailHeaderV3({
                                             <button
                                                 key={pr.id}
                                                 type="button"
-                                                onClick={() => {
-                                                    setCurrentPriorityId(pr.id);
-                                                    onFieldChange('priority', pr.id);
-                                                }}
+                                                onClick={() => onFieldChange('priority', pr.id)}
                                                 className={`flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-[12px] font-medium text-left transition-colors ${
                                                     currentPriorityId === pr.id ? 'bg-primary-subtle text-primary font-bold' : 'text-text-primary hover:bg-surface-hover'
                                                 }`}
