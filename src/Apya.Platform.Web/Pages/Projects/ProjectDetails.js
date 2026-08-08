@@ -104,13 +104,19 @@ $(function () {
         onChanged: function () { if (dataTable) { dataTable.ajax.reload(null, false); } }
     });
 
-    // --- Satıra tıklayınca drawer aç (eski "İşlemler" dropdown'ı kaldırıldı) ---
-    $('#ProjectTasksTable tbody').on('click', 'tr', function (e) {
-        if ($(e.target).closest('a, button, .form-check-input, input, select').length) return;
-        var row = dataTable.row($(this).closest('tr'));
+    // --- Satıra tıklayınca görev detay modalını aç ---
+    $(document).on('click', '#ProjectTasksTable tbody tr', function (e) {
+        if ($(e.target).closest('a, button, .form-check-input, input, select, .dropdown').length) return;
+        var row = dataTable ? dataTable.row($(this).closest('tr')) : null;
         var rowData = row ? row.data() : null;
         var id = rowData ? rowData.id : $(this).attr('data-id');
-        if (id) { editModal.open({ id: id }); }
+        if (id) {
+            if (window.apya && window.apya.taskDetail) {
+                window.apya.taskDetail.open(id);
+            } else {
+                editModal.open({ id: id });
+            }
+        }
     });
 
     // --- 2. Yeni Görev Ekle ---
