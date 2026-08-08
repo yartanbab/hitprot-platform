@@ -1,15 +1,21 @@
 $(function () {
     var taskService = apya.platform.tasks.task;
     var _oldEditModal = new abp.ModalManager({ viewUrl: abp.appPath + 'Tasks/EditModal' });
-    var editModal = (window.apya && (apya.taskDetailV2Enabled || apya.taskDetailV3Enabled || apya.taskDetail))
-        ? {
-            open: function (arg) { (window.apya?.taskDetail || _oldEditModal).open(arg); },
-            onResult: function (fn) {
-                _oldEditModal.onResult(fn);
-                window.apya?.taskDetail?.onResult?.(fn);
+    var editModal = {
+        open: function (arg) {
+            if (window.apya && (window.apya.taskDetailV2Enabled || window.apya.taskDetailV3Enabled || window.apya.taskDetail)) {
+                (window.apya?.taskDetail || _oldEditModal).open(arg);
+            } else {
+                _oldEditModal.open(arg);
+            }
+        },
+        onResult: function (fn) {
+            _oldEditModal.onResult(fn);
+            if (window.apya && window.apya.taskDetail) {
+                window.apya.taskDetail.onResult?.(fn);
             }
         }
-        : new abp.ModalManager({ viewUrl: abp.appPath + 'Tasks/EditModal' });
+    };
 
     // Proje Id'sini sayfadan alıyoruz (buton attribute veya URL)
     var projectId = $('#btn-create-task').data('project-id');

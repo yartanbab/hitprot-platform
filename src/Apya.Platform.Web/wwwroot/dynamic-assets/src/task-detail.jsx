@@ -30,6 +30,7 @@ function TaskDetailIsland() {
         return (
             <QueryProvider>
                 <TaskDetailRootV3
+                    key={taskId}
                     taskId={taskId}
                     presentation="modal"
                     onClose={() => {
@@ -44,6 +45,7 @@ function TaskDetailIsland() {
     return (
         <QueryProvider>
             <TaskDetailRoot
+                key={taskId}
                 taskId={taskId}
                 presentation="modal"
                 onClose={() => {

@@ -5,15 +5,21 @@ $(function () {
     // eski Razor drawer'ı. İkisi de .open()/.onResult() sözleşmesini karşılar →
     // apya-kanban.js her iki durumda da değişmeden çalışır.
     var _oldModal = new abp.ModalManager(abp.appPath + 'Tasks/EditModal');
-    var editModal = (window.apya && (apya.taskDetailV2Enabled || apya.taskDetailV3Enabled || apya.taskDetail))
-        ? {
-            open: function (arg) { (window.apya?.taskDetail || _oldModal).open(arg); },
-            onResult: function (fn) {
-                _oldModal.onResult(fn);
-                window.apya?.taskDetail?.onResult?.(fn);
+    var editModal = {
+        open: function (arg) {
+            if (window.apya && (window.apya.taskDetailV2Enabled || window.apya.taskDetailV3Enabled || window.apya.taskDetail)) {
+                (window.apya?.taskDetail || _oldModal).open(arg);
+            } else {
+                _oldModal.open(arg);
+            }
+        },
+        onResult: function (fn) {
+            _oldModal.onResult(fn);
+            if (window.apya && window.apya.taskDetail) {
+                window.apya.taskDetail.onResult?.(fn);
             }
         }
-        : new abp.ModalManager(abp.appPath + 'Tasks/EditModal');
+    };
 
     // Proje seçimi: kanban'ı o projeye scope'lar (özel kolonlar) + liste/gantt'ı filtreler.
     var selectedProjectId = null;
