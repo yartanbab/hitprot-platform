@@ -39,6 +39,7 @@ namespace Apya.Platform.Tasks
         private readonly IRepository<TaskFavorite, Guid> _favoriteRepository;
         private readonly IRepository<Expense, Guid> _expenseRepository;
         private readonly IRepository<IncomeEntry, Guid> _incomeRepository;
+        private readonly IRepository<Apya.Platform.Projects.Project, Guid> _projectLookupRepository;
         private readonly ILocalEventBus _localEventBus;
 
         public TaskAppService(
@@ -57,6 +58,7 @@ namespace Apya.Platform.Tasks
             IRepository<TaskFavorite, Guid> favoriteRepository,
             IRepository<Expense, Guid> expenseRepository,
             IRepository<IncomeEntry, Guid> incomeRepository,
+            IRepository<Apya.Platform.Projects.Project, Guid> projectLookupRepository,
             ILocalEventBus localEventBus)
             : base(repository)
         {
@@ -74,6 +76,7 @@ namespace Apya.Platform.Tasks
             _favoriteRepository    = favoriteRepository;
             _expenseRepository     = expenseRepository;
             _incomeRepository      = incomeRepository;
+            _projectLookupRepository = projectLookupRepository;
             _localEventBus         = localEventBus;
 
             CreatePolicyName = PlatformPermissions.Tasks.Create;
@@ -303,6 +306,16 @@ namespace Apya.Platform.Tasks
             return true;
         }
 
+        // Görev "Proje" seçici — tenant'ın projeleri (IMultiTenant → GetListAsync tenant'a göre filtreler).
+        public async Task<List<ProjectLookupDto>> GetProjectsLookupAsync()
+        {
+            var projects = await _projectLookupRepository.GetListAsync();
+            return projects
+                .OrderBy(p => p.Name)
+                .Select(p => new ProjectLookupDto { Id = p.Id, Name = p.Name })
+                .ToList();
+        }
+
         // Create/Update ortak: TagNames'i get-or-create edip TaskTagAssignment'ları senkronlar
         // (PredecessorIds senkronuyla aynı sil-sonra-yeniden-ekle deseni).
         private async Task<List<TagDto>> SyncTagsAsync(Guid taskId, List<string>? tagNames)
@@ -479,8 +492,17 @@ namespace Apya.Platform.Tasks
                 Clock.Now
             );
 
-            // Modal'dan özel kolon seçildiyse uzlaştır (Status/BoardColumnId)
-            await ApplyColumnSelectionAsync(task, input.BoardColumnId);
+            // Proje değişimi (task.Update projeyi kapsamaz). Board kolonu proje-kapsamlı
+            // olduğundan MoveToProject proje değişince kolonu temizler.
+            var projectChanged = task.ProjectId != input.ProjectId;
+            task.MoveToProject(input.ProjectId);
+
+            // Özel kolon seçimi yalnız proje DEĞİŞMEDİYSE uzlaştırılır — proje değiştiyse
+            // gelen boardColumnId eski projeye ait (bayat), uygulanmamalı.
+            if (!projectChanged)
+            {
+                await ApplyColumnSelectionAsync(task, input.BoardColumnId);
+            }
 
             await Repository.UpdateAsync(task);
 

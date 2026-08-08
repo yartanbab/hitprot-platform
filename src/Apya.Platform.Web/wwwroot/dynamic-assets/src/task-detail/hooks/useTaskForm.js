@@ -2,7 +2,7 @@ import { useState, useCallback, useMemo } from 'react';
 
 const EMPTY_VALUES = {
     title: '', description: '', startDate: '', dueDate: '',
-    status: 1, priority: 2, assigneeId: null, tagNames: [], isPrivate: false,
+    status: 1, priority: 2, assigneeId: null, tagNames: [], isPrivate: false, projectId: null,
 };
 
 function toFormValues(task) {
@@ -17,6 +17,7 @@ function toFormValues(task) {
         assigneeId: task.assigneeId ?? null,
         tagNames: (task.tags ?? []).map((t) => t.name),
         isPrivate: Boolean(task.isPrivate),
+        projectId: task.projectId ?? null,
     };
 }
 
@@ -74,7 +75,7 @@ export function useTaskForm(task) {
         priority: values.priority,
         assigneeId: values.assigneeId,
         boardColumnId: task?.boardColumnId ?? null,
-        projectId: task?.projectId ?? null,
+        projectId: values.projectId ?? null,
         parentTaskId: task?.parentTaskId ?? null,
         isPrivate: Boolean(values.isPrivate),
         predecessorIds: task?.predecessorIds ?? [],

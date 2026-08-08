@@ -14,6 +14,7 @@ import { useDirtyGuard } from '../hooks/useDirtyGuard';
 import { useTaskUrlSync, clearTaskUrl } from '../hooks/useTaskUrlSync';
 import { useTaskForm } from '../hooks/useTaskForm';
 import { useAssigneeOptions } from '../hooks/useAssigneeOptions';
+import { useProjectOptions } from '../hooks/useProjectOptions';
 import { useTaskFeatures } from '../hooks/useTaskFeatures';
 import { taskDetailStore } from '../taskDetailStore';
 
@@ -31,6 +32,7 @@ export function TaskDetailRootV3({
     const guard = useDirtyGuard();
     const form = useTaskForm(task);
     const assignees = useAssigneeOptions();
+    const projects = useProjectOptions();
     const features = useTaskFeatures(currentTaskId);
 
     const [activeTabCode, setActiveTabCode] = useState('general');
@@ -149,10 +151,12 @@ export function TaskDetailRootV3({
                 <TaskMetadataGridV3
                     task={task}
                     assigneeOptions={assignees.options}
+                    projectOptions={projects.options}
                     onFieldChange={form.setField}
                     statusValue={form.values.status}
                     priorityValue={form.values.priority}
                     assigneeValue={form.values.assigneeId}
+                    projectValue={form.values.projectId}
                 />
 
                 {/* Sekmeler & Özellik Ekleme Barı */}

@@ -32,14 +32,19 @@ function MetadataCell({ label, children }) {
 export function TaskMetadataGridV3({
     task = {},
     assigneeOptions = [],
+    projectOptions = [],
     onFieldChange = () => {},
     statusValue,
     priorityValue,
-    assigneeValue
+    assigneeValue,
+    projectValue
 }) {
     // Controlled değerler (header ile tek kaynak = form). Kaydet ile persist edilir.
     const currentStatus = statusValue ?? task.status ?? 1;
     const currentPriority = priorityValue ?? task.priority ?? 2;
+    const projectId = projectValue ?? task.projectId ?? null;
+    const selectedProject = projectOptions.find((o) => o.value === projectId);
+    const projectName = selectedProject?.label || task.projectName || 'Projesiz';
     // Etiketler: TagDto listesi ({ name }) → serbest-metin isim dizisi. Form sözleşmesi
     // `tagNames` (List<string>) bekler; onFieldChange bu anahtarla gönderilmeli.
     const [tags, setTags] = useState(
@@ -294,14 +299,39 @@ export function TaskMetadataGridV3({
                     </div>
                 </MetadataCell>
 
-                {/* 7. Proje (salt-okunur — proje değiştirme ayrı backend lookup gerektirir) */}
+                {/* 7. Proje (tıklanır dropdown — form.projectId) */}
                 <MetadataCell label="Proje">
-                    <div className="flex items-center gap-2">
-                        <i className="fa-regular fa-folder-open text-text-tertiary text-sm" />
-                        <span className="font-medium text-text-primary text-[13px] truncate max-w-[140px]">
-                            {task.projectName || 'Projesiz'}
-                        </span>
-                    </div>
+                    <Popover.Root>
+                        <Popover.Trigger asChild>
+                            <button type="button" className="flex items-center gap-2 cursor-pointer hover:bg-surface-hover px-2 py-1 -ml-2 rounded-lg transition-colors w-max group focus-visible:outline-none focus-visible:shadow-focus">
+                                <i className="fa-regular fa-folder-open text-text-tertiary group-hover:text-primary transition-colors text-sm" />
+                                <span className="font-medium text-text-primary group-hover:text-primary transition-colors text-[13px] truncate max-w-[140px]">{projectName}</span>
+                                <i className="fa-solid fa-chevron-down text-[9px] text-text-tertiary ml-0.5 opacity-0 group-hover:opacity-100 transition-opacity" />
+                            </button>
+                        </Popover.Trigger>
+                        <Popover.Portal>
+                            <Popover.Content sideOffset={6} align="start" className="z-50 w-56 rounded-xl border border-subtle bg-surface-base p-2 shadow-float animate-in fade-in-50 zoom-in-95">
+                                <div className="text-[11px] font-bold text-text-tertiary uppercase tracking-wider px-2 py-1 mb-1">Proje Seç</div>
+                                <div className="flex flex-col gap-1 max-h-56 overflow-y-auto custom-scrollbar">
+                                    <button type="button" onClick={() => onFieldChange('projectId', null)}
+                                        className={`flex items-center gap-2.5 px-2 py-1.5 rounded-lg text-[13px] text-left transition-colors ${!projectId ? 'bg-primary-subtle text-primary font-semibold' : 'text-text-primary hover:bg-surface-hover'}`}>
+                                        <span className="flex h-5 w-5 items-center justify-center rounded-md bg-surface-sunken text-text-tertiary"><i className="fa-solid fa-ban text-[9px]" /></span>
+                                        <span>Projesiz</span>
+                                    </button>
+                                    {projectOptions.length === 0 && (
+                                        <div className="px-2 py-1.5 text-[12px] text-text-tertiary">Proje listesi yükleniyor…</div>
+                                    )}
+                                    {projectOptions.map((opt) => (
+                                        <button key={opt.value} type="button" onClick={() => onFieldChange('projectId', opt.value)}
+                                            className={`flex items-center gap-2.5 px-2 py-1.5 rounded-lg text-[13px] text-left transition-colors ${projectId === opt.value ? 'bg-primary-subtle text-primary font-semibold' : 'text-text-primary hover:bg-surface-hover'}`}>
+                                            <span className="flex h-5 w-5 items-center justify-center rounded-md bg-surface-sunken text-text-secondary"><i className="fa-regular fa-folder text-[9px]" /></span>
+                                            <span className="truncate">{opt.label}</span>
+                                        </button>
+                                    ))}
+                                </div>
+                            </Popover.Content>
+                        </Popover.Portal>
+                    </Popover.Root>
                 </MetadataCell>
 
             </div>

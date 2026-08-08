@@ -32,6 +32,15 @@ public class TaskItem : FullAuditedAggregateRoot<Guid>, IMultiTenant
     public Guid? BoardColumnId { get; private set; }
     public void MoveToColumn(Guid? boardColumnId) => BoardColumnId = boardColumnId;
 
+    /// <summary>Görevi başka projeye taşır. Board kolonu proje-kapsamlı olduğundan proje
+    /// değişince kolon üyeliği düşürülür (görev yeni projede Status'a göre sistem kolonunda görünür).</summary>
+    public void MoveToProject(Guid? projectId)
+    {
+        if (ProjectId == projectId) return;
+        ProjectId = projectId;
+        BoardColumnId = null;
+    }
+
     // --- Gizlilik ---
     public bool IsPrivate { get; private set; }
 
