@@ -5,8 +5,9 @@ import { ChecklistTab } from './components/ChecklistTab';
 import { CommentsTab } from './components/CommentsTab';
 import { ActivityTab } from './components/ActivityTab';
 import { HistoryTab } from './components/HistoryTab';
+import { FinanceTab } from './components/FinanceTab';
 import { GanttTabV3 } from './v3/features/GanttTabV3';
-import { DependenciesTabV3, FinanceTabV3 } from './v3/features/DependenciesAndFinanceTabV3';
+import { DependenciesTabV3 } from './v3/features/DependenciesAndFinanceTabV3';
 import { 
     RisksTabV3, 
     ApprovalsTabV3, 
@@ -56,7 +57,7 @@ export const TASK_FEATURE_REGISTRY = [
     {
         code: 'finance', title: 'Finans', icon: 'fa-coins',
         category: 'finans', isCore: false, order: 13, permission: null,
-        implemented: true, component: FinanceTabV3,
+        implemented: true, component: FinanceTab,
     },
     {
         code: 'history', title: 'Geçmiş', icon: 'fa-clock-rotate-left',

@@ -25,15 +25,18 @@ function DetailRowUser({ label, name, avatar }) {
     );
 }
 
-export function TaskSidePanelV3({ task = {}, onDelete = () => {} }) {
-    const [showMore, setShowMore] = useState(false);
+export function TaskSidePanelV3({ task = {}, onDelete = () => {}, nameById }) {
     const [isCloning, setIsCloning] = useState(false);
     const [isArchiving, setIsArchiving] = useState(false);
     const queryClient = useQueryClient();
 
+    const resolveName = (name, id) => name || (id && nameById?.get?.(id)) || 'Bilinmiyor';
+    const creatorName = resolveName(task.creatorName, task.creatorId);
+    const modifierName = task.lastModificationTime ? resolveName(task.lastModifierName, task.lastModifierId) : '—';
+
     const fmt = (iso) => (iso
         ? new Intl.DateTimeFormat('tr-TR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }).format(new Date(iso))
-        : '25.06.2026 14:30');
+        : '—');
 
     // 1. Bağlantıyı kopyala
     const handleCopyLink = () => {
@@ -99,39 +102,19 @@ export function TaskSidePanelV3({ task = {}, onDelete = () => {} }) {
             <div className="rounded-2xl border border-subtle bg-surface-base p-5 shadow-xs flex flex-col">
                 <h3 className="text-[14px] font-bold text-text-primary mb-2">Detaylar</h3>
                 <div className="flex flex-col divide-y divide-subtle/50">
-                    <DetailRowUser 
-                        label="Oluşturan" 
-                        name={task.creatorName || "Yakup B."} 
-                        avatar={`https://ui-avatars.com/api/?name=${encodeURIComponent(task.creatorName || "Yakup B.")}&background=6366f1&color=fff&size=64`} 
+                    <DetailRowUser
+                        label="Oluşturan"
+                        name={creatorName}
+                        avatar={`https://ui-avatars.com/api/?name=${encodeURIComponent(creatorName)}&background=6366f1&color=fff&size=64`}
                     />
                     <DetailRow label="Oluşturma Tarihi" value={fmt(task.creationTime)} />
-                    <DetailRowUser 
-                        label="Güncelleyen" 
-                        name={task.lastModifierName || "Yakup B."} 
-                        avatar={`https://ui-avatars.com/api/?name=${encodeURIComponent(task.lastModifierName || "Yakup B.")}&background=6366f1&color=fff&size=64`} 
+                    <DetailRowUser
+                        label="Güncelleyen"
+                        name={modifierName}
+                        avatar={`https://ui-avatars.com/api/?name=${encodeURIComponent(modifierName)}&background=6366f1&color=fff&size=64`}
                     />
                     <DetailRow label="Son Güncelleme" value={fmt(task.lastModificationTime)} />
-                    <DetailRow label="Oluşturma Paneli" value="25.06.2026 14:30" />
-                    <DetailRow label="Tahmini Süre" value="15 gün" />
-                    <DetailRow label="Gerçekleşen Süre" value="12 gün" />
-
-                    {showMore && (
-                        <div className="flex flex-col divide-y divide-subtle/50 animate-in fade-in-50">
-                            <DetailRow label="Özel Alanlar" value="Vize, Otel" />
-                            <DetailRow label="Kategori" value="Operasyon" />
-                            <DetailRow label="SLA Seviyesi" value="Standart (48s)" />
-                        </div>
-                    )}
                 </div>
-                
-                <button 
-                    type="button" 
-                    onClick={() => setShowMore(!showMore)}
-                    className="mt-3 text-[13px] font-semibold text-primary hover:text-primary-hover flex items-center justify-center gap-1.5 transition-colors py-1 rounded-lg hover:bg-primary-subtle"
-                >
-                    <span>{showMore ? 'Daha az alan göster' : 'Daha fazla alan göster'}</span>
-                    <i className={`fa-solid fa-chevron-down text-[10px] transition-transform ${showMore ? 'rotate-180' : ''}`} />
-                </button>
             </div>
 
             {/* 2. Hızlı İşlemler Kartı */}

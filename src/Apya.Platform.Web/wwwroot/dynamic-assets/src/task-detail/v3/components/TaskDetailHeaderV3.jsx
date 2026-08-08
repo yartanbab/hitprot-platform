@@ -25,13 +25,12 @@ export function TaskDetailHeaderV3({
     presentation = 'modal',
     onFieldChange = () => {}
 }) {
-    const [isFavorite, setIsFavorite] = useState(false);
     const [copiedCode, setCopiedCode] = useState(false);
-    const [currentStatusId, setCurrentStatusId] = useState(task.status || 4);
-    const [currentPriorityId, setCurrentPriorityId] = useState(task.priority || 4);
+    const [currentStatusId, setCurrentStatusId] = useState(task.status ?? 1);
+    const [currentPriorityId, setCurrentPriorityId] = useState(task.priority ?? 2);
 
-    const statusObj = STATUS_LIST.find(s => s.id === currentStatusId) || STATUS_LIST[3];
-    const priorityObj = PRIORITY_LIST.find(p => p.id === currentPriorityId) || PRIORITY_LIST[3];
+    const statusObj = STATUS_LIST.find(s => s.id === currentStatusId) || STATUS_LIST[0];
+    const priorityObj = PRIORITY_LIST.find(p => p.id === currentPriorityId) || PRIORITY_LIST[1];
 
     const taskCode = task.code || (task.id ? `#OTL-${task.id.substring(0, 4).toUpperCase()}` : '#OTL-2507');
 
@@ -40,6 +39,12 @@ export function TaskDetailHeaderV3({
         setCopiedCode(true);
         window?.abp?.notify?.success?.(`${taskCode} panoya kopyalandı.`);
         setTimeout(() => setCopiedCode(false), 2000);
+    };
+
+    const handleCopyLink = () => {
+        const url = `${window.location.origin}/Tasks?task=${task.id || ''}`;
+        navigator.clipboard?.writeText(url);
+        window?.abp?.notify?.success?.('Görev bağlantısı panoya kopyalandı!');
     };
 
     return (
@@ -148,29 +153,16 @@ export function TaskDetailHeaderV3({
                         </Popover.Root>
                     </div>
                     
-                    {/* Başlık & Favori Yıldızı */}
-                    <div className="flex items-center gap-3 mt-1 group">
-                        <h1 
+                    {/* Başlık */}
+                    <div className="flex items-center gap-3 mt-1">
+                        <h1
                             contentEditable
                             suppressContentEditableWarning
                             onBlur={(e) => onFieldChange('title', e.currentTarget.textContent)}
                             className="text-[23px] font-bold tracking-tight text-text-primary hover:text-primary transition-colors focus:outline-none focus:bg-surface-sunken/40 px-1.5 py-0.5 -mx-1.5 rounded-lg cursor-text leading-tight truncate"
                         >
-                            {task.title || 'Otel Konaklama Anlaşması'}
+                            {task.title || 'Başlıksız görev'}
                         </h1>
-
-                        <button
-                            type="button"
-                            onClick={() => setIsFavorite(!isFavorite)}
-                            className={`flex h-8 w-8 items-center justify-center rounded-lg transition-all ${
-                                isFavorite 
-                                    ? 'text-amber-500 bg-amber-50 dark:bg-amber-950/30 scale-110' 
-                                    : 'text-text-tertiary hover:bg-surface-hover hover:text-amber-500'
-                            }`}
-                            title={isFavorite ? 'Favorilerden çıkar' : 'Favorilere ekle'}
-                        >
-                            <i className={`fa-${isFavorite ? 'solid' : 'regular'} fa-star text-lg transition-transform`} />
-                        </button>
                     </div>
                 </div>
 
@@ -208,9 +200,9 @@ export function TaskDetailHeaderV3({
                                     align="end"
                                     className="z-50 w-48 rounded-xl border border-subtle bg-surface-base p-1.5 shadow-float animate-in fade-in-50 zoom-in-95"
                                 >
-                                    <button 
-                                        type="button" 
-                                        onClick={handleCopyCode}
+                                    <button
+                                        type="button"
+                                        onClick={handleCopyLink}
                                         className="flex items-center gap-2.5 w-full px-2.5 py-2 rounded-lg text-[13px] text-text-secondary hover:text-text-primary hover:bg-surface-hover transition-colors text-left"
                                     >
                                         <i className="fa-solid fa-link text-xs text-text-tertiary" />

@@ -2,6 +2,22 @@ import React, { useState } from 'react';
 import * as Popover from '@radix-ui/react-popover';
 import { Badge } from '../../../components/ui';
 
+// TaskStatus: Cancelled=0, Todo=1, InProgress=2, InReview=3, Done=4
+const STATUS_META = {
+    0: { label: 'İptal', cls: 'text-text-secondary bg-neutral-subtle', icon: 'fa-ban' },
+    1: { label: 'Bekliyor', cls: 'text-text-secondary bg-neutral-subtle', icon: 'fa-clock' },
+    2: { label: 'Sürüyor', cls: 'text-warning bg-warning-subtle', icon: 'fa-spinner' },
+    3: { label: 'Testte', cls: 'text-primary bg-primary-subtle', icon: 'fa-flask' },
+    4: { label: 'Tamamlandı', cls: 'text-success bg-success-subtle', icon: 'fa-circle-check' },
+};
+// TaskPriority: Low=1, Medium=2, High=3, Critical=4
+const PRIORITY_META = {
+    1: { label: 'Düşük', cls: 'text-text-secondary bg-surface-sunken', icon: 'fa-arrow-down' },
+    2: { label: 'Orta', cls: 'text-warning bg-warning-subtle', icon: 'fa-minus' },
+    3: { label: 'Yüksek', cls: 'text-negative bg-negative-subtle', icon: 'fa-arrow-up' },
+    4: { label: 'Kritik', cls: 'text-negative bg-negative-subtle', icon: 'fa-flag' },
+};
+
 function MetadataCell({ label, children }) {
     return (
         <div className="flex flex-col gap-1.5 min-w-0">
@@ -18,13 +34,19 @@ export function TaskMetadataGridV3({
     assigneeOptions = [], 
     onFieldChange = () => {} 
 }) {
+    // Etiketler: TagDto listesi ({ name }) → serbest-metin isim dizisi. Form sözleşmesi
+    // `tagNames` (List<string>) bekler; onFieldChange bu anahtarla gönderilmeli.
     const [tags, setTags] = useState(
-        Array.isArray(task.tags) && task.tags.length > 0 
-            ? task.tags 
-            : ['Konaklama', 'Anlaşma']
+        Array.isArray(task.tags)
+            ? task.tags.map((t) => (typeof t === 'string' ? t : t?.name)).filter(Boolean)
+            : []
     );
     const [newTagInput, setNewTagInput] = useState('');
     const [isAddingTag, setIsAddingTag] = useState(false);
+
+    // Sorumlu: seçim anında ekranın hemen güncellenmesi için yerel state; kalıcılık
+    // form `assigneeId` üzerinden (onFieldChange) sağlanır.
+    const [assigneeId, setAssigneeId] = useState(task.assigneeId ?? null);
 
     const handleAddTag = (e) => {
         if (e.key === 'Enter' || e.type === 'blur') {
@@ -32,7 +54,7 @@ export function TaskMetadataGridV3({
             if (trimmed && !tags.includes(trimmed)) {
                 const nextTags = [...tags, trimmed];
                 setTags(nextTags);
-                onFieldChange('tags', nextTags);
+                onFieldChange('tagNames', nextTags);
             }
             setNewTagInput('');
             setIsAddingTag(false);
@@ -42,7 +64,12 @@ export function TaskMetadataGridV3({
     const handleRemoveTag = (tagToRemove) => {
         const nextTags = tags.filter(t => t !== tagToRemove);
         setTags(nextTags);
-        onFieldChange('tags', nextTags);
+        onFieldChange('tagNames', nextTags);
+    };
+
+    const handleSelectAssignee = (id) => {
+        setAssigneeId(id);
+        onFieldChange('assigneeId', id);
     };
 
     // Formatted Dates
@@ -52,7 +79,8 @@ export function TaskMetadataGridV3({
         return isNaN(date.getTime()) ? d : date.toISOString().split('T')[0];
     };
 
-    const assigneeName = task.assigneeName || 'Yakup B.';
+    const selectedOption = assigneeOptions.find((o) => o.value === assigneeId);
+    const assigneeName = selectedOption?.label || task.assigneeName || 'Atanmamış';
     const assigneeAvatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(assigneeName)}&background=6366f1&color=fff&size=64`;
 
     return (
@@ -80,17 +108,32 @@ export function TaskMetadataGridV3({
                             >
                                 <div className="text-[11px] font-bold text-text-tertiary uppercase tracking-wider px-2 py-1 mb-1">Kişi Ata</div>
                                 <div className="flex flex-col gap-1 max-h-48 overflow-y-auto custom-scrollbar">
-                                    {['Yakup B.', 'Elif A.', 'Mehmet K.', 'Ayşe D.'].map(user => (
+                                    <button
+                                        type="button"
+                                        onClick={() => handleSelectAssignee(null)}
+                                        className={`flex items-center gap-2.5 px-2 py-1.5 rounded-lg text-[13px] text-left transition-colors ${
+                                            !assigneeId ? 'bg-primary-subtle text-primary font-semibold' : 'text-text-primary hover:bg-surface-hover'
+                                        }`}
+                                    >
+                                        <span className="flex h-5 w-5 items-center justify-center rounded-full bg-surface-sunken text-text-tertiary">
+                                            <i className="fa-solid fa-user-slash text-[9px]" />
+                                        </span>
+                                        <span>Atanmamış</span>
+                                    </button>
+                                    {assigneeOptions.length === 0 && (
+                                        <div className="px-2 py-1.5 text-[12px] text-text-tertiary">Kullanıcı listesi yükleniyor…</div>
+                                    )}
+                                    {assigneeOptions.map((opt) => (
                                         <button
-                                            key={user}
+                                            key={opt.value}
                                             type="button"
-                                            onClick={() => onFieldChange('assigneeName', user)}
+                                            onClick={() => handleSelectAssignee(opt.value)}
                                             className={`flex items-center gap-2.5 px-2 py-1.5 rounded-lg text-[13px] text-left transition-colors ${
-                                                assigneeName === user ? 'bg-primary-subtle text-primary font-semibold' : 'text-text-primary hover:bg-surface-hover'
+                                                assigneeId === opt.value ? 'bg-primary-subtle text-primary font-semibold' : 'text-text-primary hover:bg-surface-hover'
                                             }`}
                                         >
-                                            <img src={`https://ui-avatars.com/api/?name=${encodeURIComponent(user)}&background=6366f1&color=fff&size=64`} alt={user} className="h-5 w-5 rounded-full" />
-                                            <span>{user}</span>
+                                            <img src={`https://ui-avatars.com/api/?name=${encodeURIComponent(opt.label)}&background=6366f1&color=fff&size=64`} alt={opt.label} className="h-5 w-5 rounded-full" />
+                                            <span>{opt.label}</span>
                                         </button>
                                     ))}
                                 </div>
@@ -125,24 +168,34 @@ export function TaskMetadataGridV3({
                     </label>
                 </MetadataCell>
 
-                {/* 4. Öncelik */}
+                {/* 4. Öncelik (gerçek task.priority) */}
                 <MetadataCell label="Öncelik">
-                    <div className="flex items-center gap-2 text-[13px] font-medium">
-                        <span className="flex items-center gap-1.5 text-negative bg-negative-subtle px-2.5 py-0.5 rounded-md font-semibold">
-                            <i className="fa-solid fa-flag text-xs" />
-                            <span>Kritik</span>
-                        </span>
-                    </div>
+                    {(() => {
+                        const p = PRIORITY_META[task.priority] || PRIORITY_META[2];
+                        return (
+                            <div className="flex items-center gap-2 text-[13px] font-medium">
+                                <span className={`flex items-center gap-1.5 px-2.5 py-0.5 rounded-md font-semibold ${p.cls}`}>
+                                    <i className={`fa-solid ${p.icon} text-xs`} />
+                                    <span>{p.label}</span>
+                                </span>
+                            </div>
+                        );
+                    })()}
                 </MetadataCell>
 
-                {/* 5. Durum */}
+                {/* 5. Durum (gerçek task.status) */}
                 <MetadataCell label="Durum">
-                    <div className="flex items-center gap-2 text-[13px] font-medium">
-                        <span className="flex items-center gap-1.5 text-success bg-success-subtle px-2.5 py-0.5 rounded-md font-semibold">
-                            <i className="fa-regular fa-circle-check text-xs" />
-                            <span>Tamamlandı</span>
-                        </span>
-                    </div>
+                    {(() => {
+                        const s = STATUS_META[task.status] || STATUS_META[1];
+                        return (
+                            <div className="flex items-center gap-2 text-[13px] font-medium">
+                                <span className={`flex items-center gap-1.5 px-2.5 py-0.5 rounded-md font-semibold ${s.cls}`}>
+                                    <i className={`fa-solid ${s.icon} text-xs`} />
+                                    <span>{s.label}</span>
+                                </span>
+                            </div>
+                        );
+                    })()}
                 </MetadataCell>
 
                 {/* 6. Etiketler */}
@@ -194,17 +247,7 @@ export function TaskMetadataGridV3({
                     <div className="flex items-center gap-2 cursor-pointer hover:bg-surface-hover px-2 py-1 -ml-2 rounded-lg transition-colors w-max group">
                         <i className="fa-regular fa-folder-open text-text-tertiary group-hover:text-primary transition-colors text-sm" />
                         <span className="font-medium text-text-primary group-hover:text-primary transition-colors text-[13px] truncate max-w-[140px]">
-                            {task.projectName || 'Otel Projesi'}
-                        </span>
-                    </div>
-                </MetadataCell>
-
-                {/* 8. Maliyet Merkezi */}
-                <MetadataCell label="Maliyet Merkezi">
-                    <div className="flex items-center gap-2 cursor-pointer hover:bg-surface-hover px-2 py-1 -ml-2 rounded-lg transition-colors w-max group">
-                        <i className="fa-solid fa-bullseye text-text-tertiary group-hover:text-primary transition-colors text-sm" />
-                        <span className="font-medium text-text-primary group-hover:text-primary transition-colors text-[13px]">
-                            Merkez
+                            {task.projectName || 'Projesiz'}
                         </span>
                     </div>
                 </MetadataCell>

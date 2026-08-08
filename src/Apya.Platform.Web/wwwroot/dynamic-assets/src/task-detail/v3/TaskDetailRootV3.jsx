@@ -7,7 +7,6 @@ import { TaskFeatureNavbarV3 } from './components/TaskFeatureNavbarV3';
 import { TaskSidePanelV3 } from './components/TaskSidePanelV3';
 import { TaskGeneralTabV3 } from './components/TaskGeneralTabV3';
 import { TaskDetailFooterV3 } from './components/TaskDetailFooterV3';
-import { ActivityTabV3 } from './components/ActivityTabV3';
 import { FeaturePickerV3 } from './components/FeaturePickerV3';
 import { getVisibleTabs, TASK_FEATURE_REGISTRY } from '../TaskFeatureRegistry';
 import { useTaskDetail, isGranted } from '../hooks/useTaskDetail';
@@ -50,7 +49,14 @@ export function TaskDetailRootV3({
         if (form.isDirty) guard.markDirty(); else guard.markClean();
     });
 
-    const requestClose = useCallback(() => guard.requestClose(onClose), [guard, onClose]);
+    /* Koşulsuz kapatma: URL'den ?task= parametresini temizler ve island onClose zincirini
+       (store.close + emitResult) tetikler. Sil sonrası ve dirty-guard onayından sonra çağrılır. */
+    const closeNow = useCallback(() => {
+        clearTaskUrl();
+        onClose?.();
+    }, [onClose]);
+
+    const requestClose = useCallback(() => guard.requestClose(closeNow), [guard, closeNow]);
 
     const toggleFullscreen = useCallback(() => {
         setFullscreen((prev) => {
@@ -169,14 +175,13 @@ export function TaskDetailRootV3({
                             
                             {/* Sağ Kolon: Detaylar & Hızlı İşlemler */}
                             <div className="w-full shrink-0">
-                                <TaskSidePanelV3 
-                                    task={task} 
+                                <TaskSidePanelV3
+                                    task={task}
                                     onDelete={handleDelete}
+                                    nameById={assignees.nameById}
                                 />
                             </div>
                         </div>
-                    ) : activeTabCode === 'history' || activeTabCode === 'activity' ? (
-                        <ActivityTabV3 />
                     ) : (
                         <Suspense fallback={<Skeleton className="h-48 w-full" />}>
                             {activeTabDef?.component ? (

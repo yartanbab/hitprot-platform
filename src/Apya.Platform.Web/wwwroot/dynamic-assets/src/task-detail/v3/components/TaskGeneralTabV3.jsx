@@ -75,15 +75,7 @@ export function TaskGeneralTabV3({ task = {}, onFieldChange = () => {} }) {
     const [isAddingChecklist, setIsAddingChecklist] = useState(false);
     const [busyChecklist, setBusyChecklist] = useState(false);
 
-    // Fallback if no backend items yet
-    const checklistItems = checklistHook.items && checklistHook.items.length > 0
-        ? checklistHook.items
-        : [
-            { id: 'mock-1', text: 'Otel listesi oluşturuldu', isDone: true },
-            { id: 'mock-2', text: 'Fiyat teklifleri alındı', isDone: true },
-            { id: 'mock-3', text: 'Sözleşme taslağı hazırlandı', isDone: true },
-            { id: 'mock-4', text: 'Sözleşme imzalandı', isDone: true }
-        ];
+    const checklistItems = checklistHook.items ?? [];
 
     const completedCount = checklistItems.filter(c => c.isDone || c.done).length;
 
@@ -143,16 +135,9 @@ export function TaskGeneralTabV3({ task = {}, onFieldChange = () => {} }) {
     const [replyingToId, setReplyingToId] = useState(null);
     const [replyText, setReplyText] = useState('');
 
-    const commentsList = backendComments.length > 0 
-        ? backendComments 
-        : (task.comments && task.comments.length > 0 ? task.comments : [
-            {
-                id: 'mock-c1',
-                creatorName: 'Elif A.',
-                creationTime: '2026-07-10T09:30:00Z',
-                text: '@Yakup B. Sözleşme dosyası güncellendi, kontrol eder misiniz?'
-            }
-        ]);
+    const commentsList = backendComments.length > 0
+        ? backendComments
+        : (task.comments ?? []);
 
     const handleSendComment = async (e) => {
         e.preventDefault();
