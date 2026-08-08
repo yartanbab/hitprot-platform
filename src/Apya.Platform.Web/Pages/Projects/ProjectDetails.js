@@ -35,6 +35,9 @@ $(function () {
             ajax: abp.libs.datatables.createAjax(taskService.getList, function () {
                 return { projectId: projectId };
             }),
+            createdRow: function (row, data) {
+                $(row).attr('data-id', data.id).css('cursor', 'pointer');
+            },
             columnDefs: [
                 {
                     title: 'Başlık',
@@ -103,9 +106,11 @@ $(function () {
 
     // --- Satıra tıklayınca drawer aç (eski "İşlemler" dropdown'ı kaldırıldı) ---
     $('#ProjectTasksTable tbody').on('click', 'tr', function (e) {
-        if ($(e.target).closest('a, button, .form-check-input').length) return;
-        var rowData = dataTable.row(this).data();
-        if (rowData && rowData.id) { editModal.open({ id: rowData.id }); }
+        if ($(e.target).closest('a, button, .form-check-input, input, select').length) return;
+        var row = dataTable.row($(this).closest('tr'));
+        var rowData = row ? row.data() : null;
+        var id = rowData ? rowData.id : $(this).attr('data-id');
+        if (id) { editModal.open({ id: id }); }
     });
 
     // --- 2. Yeni Görev Ekle ---
