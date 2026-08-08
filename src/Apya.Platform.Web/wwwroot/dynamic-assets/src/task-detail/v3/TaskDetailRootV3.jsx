@@ -152,12 +152,13 @@ export function TaskDetailRootV3({
 
                 {/* Sekmeler & Özellik Ekleme Barı */}
                 <div className="border-b border-subtle px-6 bg-surface-base">
-                    <TaskFeatureNavbarV3 
-                        activeTab={activeTabCode} 
+                    <TaskFeatureNavbarV3
+                        activeTab={activeTabCode}
                         onTabChange={setActiveTabCode}
-                        visibleTabs={visibleTabs} 
+                        visibleTabs={visibleTabs}
                         assignedCodes={features.assignedCodes}
                         onAddFeature={handleAddFeature}
+                        task={task}
                     />
                 </div>
 

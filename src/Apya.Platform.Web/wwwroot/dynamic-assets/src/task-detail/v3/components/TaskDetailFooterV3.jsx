@@ -16,7 +16,7 @@ export function TaskDetailFooterV3({
             hour: '2-digit', 
             minute: '2-digit' 
         }).format(new Date(lastSavedAt))
-        : '10.07.2026 09:45';
+        : '—';
 
     return (
         <footer className="flex items-center justify-between border-t border-subtle bg-surface-base px-6 py-4 mt-auto">

@@ -6,14 +6,17 @@ export function TaskFeatureNavbarV3({
     onTabChange = () => {},
     visibleTabs = [],
     assignedCodes = [],
-    onAddFeature = () => {}
+    onAddFeature = () => {},
+    task = {}
 }) {
-    // Dynamic counts based on mockup
+    // Gerçek sayaçlar (task DTO'sundan); 0 ise rozet gösterilmez
     const getCountForTab = (code) => {
-        if (code === 'subtasks') return 4;
-        if (code === 'files') return 8;
-        if (code === 'dependencies') return 2;
-        return null;
+        let n = 0;
+        if (code === 'subtasks') n = task.subTasks?.length ?? 0;
+        else if (code === 'files') n = task.attachments?.length ?? 0;
+        else if (code === 'dependencies') n = task.predecessorIds?.length ?? 0;
+        else if (code === 'comments') n = task.comments?.length ?? 0;
+        return n > 0 ? n : null;
     };
 
     return (

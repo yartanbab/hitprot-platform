@@ -98,7 +98,13 @@ namespace Apya.Platform.Tasks
             await EnsureTaskPrivacyAllowedAsync(task);
 
             var taskDto = ObjectMapper.Map<TaskItem, TaskDto>(task);
-            if (task.Assignee != null) taskDto.AssigneeName = task.Assignee.UserName;
+            if (task.Assignee != null)
+            {
+                // Sorumlu adını atama seçicisiyle (name+surname) tutarlı göster; boşsa kullanıcı adına düş
+                var assigneeFull = string.Join(" ", new[] { task.Assignee.Name, task.Assignee.Surname }
+                    .Where(s => !string.IsNullOrWhiteSpace(s)));
+                taskDto.AssigneeName = string.IsNullOrWhiteSpace(assigneeFull) ? task.Assignee.UserName : assigneeFull;
+            }
 
             // Üst görev görünür olsa da alt görevler KENDİ gizlilik kuralına tabi (APYA-22) —
             // aksi halde gizli bir alt görevin başlığı, onu görme yetkisi olmayan bir
