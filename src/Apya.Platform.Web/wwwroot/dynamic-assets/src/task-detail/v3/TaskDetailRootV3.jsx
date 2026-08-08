@@ -145,18 +145,14 @@ export function TaskDetailRootV3({
                 />
 
                 {/* Sekmeler & Özellik Ekleme Barı */}
-                <div className="flex items-center justify-between border-b border-subtle px-6 bg-surface-base">
+                <div className="border-b border-subtle px-6 bg-surface-base">
                     <TaskFeatureNavbarV3 
                         activeTab={activeTabCode} 
                         onTabChange={setActiveTabCode}
                         visibleTabs={visibleTabs} 
+                        assignedCodes={features.assignedCodes}
+                        onAddFeature={handleAddFeature}
                     />
-                    <div className="py-2">
-                        <FeaturePickerV3 
-                            assignedCodes={features.assignedCodes} 
-                            onAddFeature={handleAddFeature}
-                        />
-                    </div>
                 </div>
 
                 {/* Ana İçerik Alanı */}
