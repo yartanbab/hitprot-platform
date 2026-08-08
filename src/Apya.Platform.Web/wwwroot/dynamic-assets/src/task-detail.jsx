@@ -92,26 +92,41 @@ function isV3Enabled() {
     }
 }
 
-/* ─── Mount ─────────────────────────────────────────────────────────── */
-const container = document.getElementById('task-detail-island');
-if (container) {
-    window.apya = window.apya || {};
-    window.apya.taskDetailV3Enabled = isV3Enabled();
-    window.apya.taskDetailV2Enabled = isV2Enabled() && !window.apya.taskDetailV3Enabled;
-    window.apya.taskDetail = {
-        open: (arg) => taskDetailStore.open(arg),
-        close: () => taskDetailStore.close(),
-        onResult: (fn) => taskDetailStore.onResult(fn),
-    };
+/* ─── Global API & Auto-Mount ────────────────────────────────────────── */
+window.apya = window.apya || {};
+window.apya.taskDetailV3Enabled = isV3Enabled();
+window.apya.taskDetailV2Enabled = isV2Enabled() && !window.apya.taskDetailV3Enabled;
+window.apya.taskDetail = {
+    open: (arg) => {
+        taskDetailStore.open(arg);
+    },
+    close: () => taskDetailStore.close(),
+    onResult: (fn) => taskDetailStore.onResult(fn),
+};
 
-    createRoot(container).render(<TaskDetailIsland />);
+function mountIsland() {
+    let container = document.getElementById('task-detail-island');
+    if (!container) {
+        container = document.createElement('div');
+        container.id = 'task-detail-island';
+        document.body.appendChild(container);
+    }
+    if (!container._reactRoot) {
+        container._reactRoot = createRoot(container);
+        container._reactRoot.render(<TaskDetailIsland />);
+    }
 
-    /* Derin bağlantı: /Tasks?task=<guid> ile gelindiyse doğrudan aç.
-       Bayrak kapalıyken açma — eski drawer bu parametreyi bilmiyor. */
+    /* Derin bağlantı: /Tasks?task=<guid> ile gelindiyse doğrudan aç. */
     if (window.apya.taskDetailV2Enabled || window.apya.taskDetailV3Enabled) {
         const deepLinkId = readTaskIdFromUrl();
         if (deepLinkId) taskDetailStore.open(deepLinkId);
     }
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', mountIsland);
+} else {
+    mountIsland();
 }
 
 function TaskDetailPageIsland({ taskId }) {
