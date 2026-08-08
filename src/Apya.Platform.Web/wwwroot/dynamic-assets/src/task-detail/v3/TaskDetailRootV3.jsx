@@ -124,7 +124,11 @@ export function TaskDetailRootV3({
 
             <div className="overflow-y-auto max-h-[85vh] custom-scrollbar">
                 {/* 4-Kolon Metadata Grid */}
-                <TaskMetadataGridV3 task={task} />
+                <TaskMetadataGridV3 
+                    task={task} 
+                    assigneeOptions={assignees.options}
+                    onFieldChange={form.setField}
+                />
 
                 {/* Sekmeler & Özellik Ekleme Barı */}
                 <div className="flex items-center justify-between border-b border-subtle px-6 bg-surface-base">
@@ -144,12 +148,18 @@ export function TaskDetailRootV3({
                         <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6 items-start">
                             {/* Sol Kolon: Zengin Açıklama, Kontrol Listesi, Yorumlar */}
                             <div className="min-w-0 space-y-6">
-                                <TaskGeneralTabV3 task={task} />
+                                <TaskGeneralTabV3 
+                                    task={task} 
+                                    onFieldChange={form.setField}
+                                />
                             </div>
                             
                             {/* Sağ Kolon: Detaylar & Hızlı İşlemler */}
                             <div className="w-full shrink-0">
-                                <TaskSidePanelV3 task={task} />
+                                <TaskSidePanelV3 
+                                    task={task} 
+                                    onDelete={handleDelete}
+                                />
                             </div>
                         </div>
                     ) : activeTabCode === 'history' || activeTabCode === 'activity' ? (
