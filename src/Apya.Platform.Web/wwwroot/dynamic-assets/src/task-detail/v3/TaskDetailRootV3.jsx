@@ -99,6 +99,16 @@ export function TaskDetailRootV3({
         }
     }, [currentTaskId, guard, closeNow]);
 
+    const handleAddFeature = useCallback(async (code) => {
+        try {
+            await features.addFeature(code);
+            setActiveTabCode(code);
+            window?.abp?.notify?.success?.('Özellik başarıyla eklendi.');
+        } catch (err) {
+            window?.abp?.notify?.error?.(err?.message || 'Özellik eklenemedi.');
+        }
+    }, [features]);
+
     const content = isLoading ? (
         <div className="p-8 space-y-4">
             <Skeleton className="h-8 w-1/3" />
@@ -120,6 +130,7 @@ export function TaskDetailRootV3({
                 isFullscreen={fullscreen}
                 onToggleFullscreen={toggleFullscreen}
                 presentation={presentation}
+                onFieldChange={form.setField}
             />
 
             <div className="overflow-y-auto max-h-[85vh] custom-scrollbar">
@@ -138,7 +149,10 @@ export function TaskDetailRootV3({
                         visibleTabs={visibleTabs} 
                     />
                     <div className="py-2">
-                        <FeaturePickerV3 assignedCodes={features.assignedCodes} />
+                        <FeaturePickerV3 
+                            assignedCodes={features.assignedCodes} 
+                            onAddFeature={handleAddFeature}
+                        />
                     </div>
                 </div>
 

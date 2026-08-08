@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { Button } from '../../../components/ui';
 
 function DetailRow({ label, value }) {
@@ -26,23 +27,69 @@ function DetailRowUser({ label, name, avatar }) {
 
 export function TaskSidePanelV3({ task = {}, onDelete = () => {} }) {
     const [showMore, setShowMore] = useState(false);
+    const [isCloning, setIsCloning] = useState(false);
+    const [isArchiving, setIsArchiving] = useState(false);
+    const queryClient = useQueryClient();
 
     const fmt = (iso) => (iso
         ? new Intl.DateTimeFormat('tr-TR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }).format(new Date(iso))
         : '25.06.2026 14:30');
 
+    // 1. Bağlantıyı kopyala
     const handleCopyLink = () => {
         const url = `${window.location.origin}/Tasks?task=${task.id || ''}`;
         navigator.clipboard?.writeText(url);
         window?.abp?.notify?.success?.('Görev bağlantısı panoya kopyalandı!');
     };
 
-    const handleDuplicate = () => {
-        window?.abp?.notify?.info?.('Görev başarıyla çoğaltıldı.');
+    // 2. Çoğalt (Clone/Duplicate to backend)
+    const handleDuplicate = async () => {
+        if (!task || isCloning) return;
+        setIsCloning(true);
+        try {
+            const svc = window?.apya?.platform?.tasks?.task;
+            if (svc) {
+                const cloneDto = {
+                    title: `Kopya - ${task.title || 'Görev'}`,
+                    description: task.description || '',
+                    startDate: task.startDate ? new Date(task.startDate).toISOString().slice(0, 10) : new Date().toISOString().slice(0, 10),
+                    dueDate: task.dueDate ? new Date(task.dueDate).toISOString().slice(0, 10) : null,
+                    status: 1, // Todo
+                    priority: task.priority || 2,
+                    projectId: task.projectId,
+                    assigneeId: task.assigneeId,
+                    isPrivate: task.isPrivate || false
+                };
+                const newId = await Promise.resolve(svc.create(cloneDto));
+                await queryClient.invalidateQueries({ queryKey: ['task-detail'] });
+                window?.abp?.notify?.success?.('Görev başarıyla çoğaltıldı!');
+                if (window.apya?.taskDetail?.open && newId) {
+                    window.apya.taskDetail.open(newId);
+                }
+            }
+        } catch (err) {
+            window?.abp?.notify?.error?.(err?.message || 'Görev çoğaltılamadı.');
+        } finally {
+            setIsCloning(false);
+        }
     };
 
-    const handleArchive = () => {
-        window?.abp?.notify?.info?.('Görev arşive kaldırıldı.');
+    // 3. Arşivle (Status -> Done / Archived)
+    const handleArchive = async () => {
+        if (!task.id || isArchiving) return;
+        setIsArchiving(true);
+        try {
+            const svc = window?.apya?.platform?.tasks?.task;
+            if (svc) {
+                await Promise.resolve(svc.updateStatus(task.id, 4)); // Done / Tamamlandı
+                await queryClient.invalidateQueries({ queryKey: ['task-detail', task.id] });
+                window?.abp?.notify?.info?.('Görev arşivlendi (Tamamlandı).');
+            }
+        } catch (err) {
+            window?.abp?.notify?.error?.(err?.message || 'Görev arşivlenemedi.');
+        } finally {
+            setIsArchiving(false);
+        }
     };
 
     return (
@@ -54,14 +101,14 @@ export function TaskSidePanelV3({ task = {}, onDelete = () => {} }) {
                 <div className="flex flex-col divide-y divide-subtle/50">
                     <DetailRowUser 
                         label="Oluşturan" 
-                        name="Yakup B." 
-                        avatar="https://ui-avatars.com/api/?name=Yakup+B&background=6366f1&color=fff&size=64" 
+                        name={task.creatorName || "Yakup B."} 
+                        avatar={`https://ui-avatars.com/api/?name=${encodeURIComponent(task.creatorName || "Yakup B.")}&background=6366f1&color=fff&size=64`} 
                     />
                     <DetailRow label="Oluşturma Tarihi" value={fmt(task.creationTime)} />
                     <DetailRowUser 
                         label="Güncelleyen" 
-                        name="Yakup B." 
-                        avatar="https://ui-avatars.com/api/?name=Yakup+B&background=6366f1&color=fff&size=64" 
+                        name={task.lastModifierName || "Yakup B."} 
+                        avatar={`https://ui-avatars.com/api/?name=${encodeURIComponent(task.lastModifierName || "Yakup B.")}&background=6366f1&color=fff&size=64`} 
                     />
                     <DetailRow label="Son Güncelleme" value={fmt(task.lastModificationTime)} />
                     <DetailRow label="Oluşturma Paneli" value="25.06.2026 14:30" />
@@ -105,6 +152,8 @@ export function TaskSidePanelV3({ task = {}, onDelete = () => {} }) {
                     type="button"
                     variant="outline" 
                     onClick={handleDuplicate}
+                    disabled={isCloning}
+                    isLoading={isCloning}
                     className="w-full justify-start text-text-secondary hover:text-text-primary h-10 border-subtle bg-surface-sunken/40 hover:bg-surface-hover font-medium rounded-xl text-[13px]" 
                     icon="fa-copy"
                 >
@@ -115,6 +164,8 @@ export function TaskSidePanelV3({ task = {}, onDelete = () => {} }) {
                     type="button"
                     variant="outline" 
                     onClick={handleArchive}
+                    disabled={isArchiving}
+                    isLoading={isArchiving}
                     className="w-full justify-start text-text-secondary hover:text-text-primary h-10 border-subtle bg-surface-sunken/40 hover:bg-surface-hover font-medium rounded-xl text-[13px]" 
                     icon="fa-box-archive"
                 >
