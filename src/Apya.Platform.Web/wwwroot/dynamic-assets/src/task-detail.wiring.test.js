@@ -8,12 +8,11 @@ import path from 'node:path';
  * jQuery IIFE'leri — bu repoda vitest/jsdom altında ÇALIŞTIRILAMAZ (DataTables,
  * Select2, SortableJS, frappe-gantt bağımlılıkları + gerçek DOM elemanları
  * gerektiriyor). Bayrağın GERÇEK DAVRANIŞI (kapalıyken eski drawer, açıkken
- * merkezi modal) yalnız canlı tarayıcıda doğrulanabilir — bkz. task-8-report.md
- * "Manuel doğrulama" bölümü.
+ * merkezi modal) yalnız canlı tarayıcıda doğrulanabilir.
  *
- * Bu dosya bunun YERİNE geçmez; yalnız kaynak metninde koşulun VAR OLDUĞUNU
- * sabitler — birisi ileride "geçici olarak" satırı `new abp.ModalManager(...)`'a
- * geri alıp commit ederse bu test kırılır.
+ * Kuyruk köprüsü mimarisinde (v3+) bayrak artık _TaskDetailIsland.cshtml'deki
+ * inline script'te tanımlanır. Sayfa script'leri yalnızca window.apya.taskDetail
+ * nesnesini kullanır (köprü her zaman hazır).
  */
 const dynamicAssetsSrc = path.dirname(fileURLToPath(import.meta.url));
 const pagesDir = path.resolve(dynamicAssetsSrc, '../../../Pages');
@@ -24,12 +23,13 @@ const FILES = [
     { path: path.join(pagesDir, 'Projects', 'ProjectDetails.js'), fallback: "abp.ModalManager({ viewUrl: abp.appPath + 'Tasks/EditModal' })" },
 ];
 
-describe('Görev sayfaları — editModal bayrakla seçiliyor (kaynak metni pin)', () => {
-    it.each(FILES)('$path — bayrak açıkken apya.taskDetail, kapalıyken eski ModalManager', ({ path: filePath, fallback }) => {
+describe('Görev sayfaları — editModal kuyruk köprüsüyle seçiliyor (kaynak metni pin)', () => {
+    it.each(FILES)('$path — apya.taskDetail var ise kullanır, yoksa eski ModalManager', ({ path: filePath, fallback }) => {
         const src = readFileSync(filePath, 'utf8');
 
-        expect(src).toMatch(/apya\.taskDetailV2Enabled/);
+        // Kuyruk köprüsü paterni: apya.taskDetail kontrolü olmalı
         expect(src).toContain('apya.taskDetail');
+        // Eski modal fallback hâlâ durmalı
         expect(src).toContain(fallback);
     });
 });

@@ -1,9 +1,21 @@
 $(function () {
     var taskService = apya.platform.tasks.task;
-    var createModal = new abp.ModalManager({ viewUrl: abp.appPath + 'Tasks/CreateModal' });
-    var editModal   = (window.apya && apya.taskDetailV2Enabled)
-        ? apya.taskDetail
-        : new abp.ModalManager({ viewUrl: abp.appPath + 'Tasks/EditModal' });
+    var _oldEditModal = new abp.ModalManager({ viewUrl: abp.appPath + 'Tasks/EditModal' });
+    var editModal = {
+        open: function (arg) {
+            if (window.apya && window.apya.taskDetail) {
+                window.apya.taskDetail.open(arg);
+            } else {
+                _oldEditModal.open(arg);
+            }
+        },
+        onResult: function (fn) {
+            _oldEditModal.onResult(fn);
+            if (window.apya && window.apya.taskDetail && window.apya.taskDetail.onResult) {
+                window.apya.taskDetail.onResult(fn);
+            }
+        }
+    };
 
     // Proje Id'sini sayfadan alıyoruz (buton attribute veya URL)
     var projectId = $('#btn-create-task').data('project-id');
@@ -23,6 +35,9 @@ $(function () {
             ajax: abp.libs.datatables.createAjax(taskService.getList, function () {
                 return { projectId: projectId };
             }),
+            createdRow: function (row, data) {
+                $(row).attr('data-id', data.id).css('cursor', 'pointer');
+            },
             columnDefs: [
                 {
                     title: 'Başlık',
@@ -89,11 +104,14 @@ $(function () {
         onChanged: function () { if (dataTable) { dataTable.ajax.reload(null, false); } }
     });
 
-    // --- Satıra tıklayınca drawer aç (eski "İşlemler" dropdown'ı kaldırıldı) ---
-    $('#ProjectTasksTable tbody').on('click', 'tr', function (e) {
-        if ($(e.target).closest('a, button, .form-check-input').length) return;
-        var rowData = dataTable.row(this).data();
-        if (rowData && rowData.id) { editModal.open({ id: rowData.id }); }
+    // --- Satıra tıklayınca görev detay modalını aç ---
+    $(document).on('click', '#ProjectTasksTable tbody tr', function (e) {
+        if ($(e.target).closest('a, button, .form-check-input, input, select, .dropdown').length) return;
+        var $tr = $(this).closest('tr');
+        var row = dataTable ? dataTable.row($tr) : null;
+        var rowData = row ? row.data() : null;
+        var id = (rowData && rowData.id) ? rowData.id : $tr.attr('data-id');
+        if (id) { editModal.open(id); }
     });
 
     // --- 2. Yeni Görev Ekle ---

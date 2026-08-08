@@ -4326,6 +4326,25 @@ namespace Apya.Platform.Migrations
                     b.ToTable("AppTaskDependencies", (string)null);
                 });
 
+            modelBuilder.Entity("Apya.Platform.Tasks.TaskFavorite", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("TaskId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId", "TaskId")
+                        .IsUnique();
+
+                    b.ToTable("AppTaskFavorites", (string)null);
+                });
+
             modelBuilder.Entity("Apya.Platform.Tasks.TaskFeatureAssignment", b =>
                 {
                     b.Property<Guid>("Id")

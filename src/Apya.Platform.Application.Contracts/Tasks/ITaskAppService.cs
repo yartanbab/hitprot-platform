@@ -17,6 +17,9 @@ namespace Apya.Platform.Tasks
         // Kullanıcı Listesi
         Task<ListResultDto<IdentityUserDto>> GetUsersLookupAsync();
 
+        /// <summary>Görev "Proje" seçici için tenant'ın projeleri (id + ad).</summary>
+        Task<List<ProjectLookupDto>> GetProjectsLookupAsync();
+
         /// <summary>Select2 tag girişinin başlangıç seçenek listesi için tenant'ın tüm etiketleri.</summary>
         Task<List<TagDto>> GetAllTagsAsync();
 
@@ -26,6 +29,9 @@ namespace Apya.Platform.Tasks
         Task UpdateCommentAsync(Guid commentId, string text);  // yalnızca yorum sahibi
         Task DeleteCommentAsync(Guid commentId);               // yalnızca yorum sahibi
         Task<List<TaskCommentDto>> GetCommentsAsync(Guid taskId);
+
+        /// <summary>Mevcut kullanıcı için görev favorisini aç/kapat; yeni durumu döner (true=favori).</summary>
+        Task<bool> ToggleFavoriteAsync(Guid taskId);
 
         Task AddAttachmentAsync(Guid taskId, string fileName, string storedFileName, long fileSize);
         Task<List<TaskAttachmentDto>> GetAttachmentsAsync(Guid taskId);
