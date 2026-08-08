@@ -9,7 +9,7 @@ import { TaskGeneralTabV3 } from './components/TaskGeneralTabV3';
 import { TaskDetailFooterV3 } from './components/TaskDetailFooterV3';
 import { ActivityTabV3 } from './components/ActivityTabV3';
 import { FeaturePickerV3 } from './components/FeaturePickerV3';
-import { getVisibleTabs } from '../TaskFeatureRegistry';
+import { getVisibleTabs, TASK_FEATURE_REGISTRY } from '../TaskFeatureRegistry';
 import { useTaskDetail, isGranted } from '../hooks/useTaskDetail';
 import { useDirtyGuard } from '../hooks/useDirtyGuard';
 import { useTaskUrlSync, clearTaskUrl } from '../hooks/useTaskUrlSync';
@@ -35,28 +35,31 @@ export function TaskDetailRootV3({
     const features = useTaskFeatures(currentTaskId);
 
     const [activeTabCode, setActiveTabCode] = useState('general');
-    const [fullscreen, setFullscreen] = useState(
-        () => window.localStorage?.getItem(FULLSCREEN_KEY) === '1'
-    );
     const [isSaving, setIsSaving] = useState(false);
+    const [fullscreen, setFullscreen] = useState(() => {
+        try {
+            return localStorage.getItem(FULLSCREEN_KEY) === 'true';
+        } catch {
+            return false;
+        }
+    });
 
-    const closeNow = useCallback(() => {
-        clearTaskUrl();
-        onClose?.();
-    }, [onClose]);
-
-    useTaskUrlSync(taskId, closeNow);
+    useTaskUrlSync(currentTaskId);
 
     React.useEffect(() => {
         if (form.isDirty) guard.markDirty(); else guard.markClean();
     });
 
-    const requestClose = useCallback(() => guard.requestClose(closeNow), [guard, closeNow]);
+    const requestClose = useCallback(() => guard.requestClose(onClose), [guard, onClose]);
 
     const toggleFullscreen = useCallback(() => {
-        setFullscreen((v) => {
-            const next = !v;
-            window.localStorage?.setItem(FULLSCREEN_KEY, next ? '1' : '0');
+        setFullscreen((prev) => {
+            const next = !prev;
+            try {
+                localStorage.setItem(FULLSCREEN_KEY, String(next));
+            } catch {
+                /* quota / disabled */
+            }
             return next;
         });
     }, []);
@@ -66,7 +69,7 @@ export function TaskDetailRootV3({
         [features.assignedCodes]
     );
 
-    const activeTabDef = visibleTabs.find(t => t.code === activeTabCode) || visibleTabs[0];
+    const activeTabDef = TASK_FEATURE_REGISTRY.find(t => t.code === activeTabCode) || visibleTabs.find(t => t.code === activeTabCode) || visibleTabs[0];
 
     const doSave = useCallback(async () => {
         if (!form.validate()) return false;
