@@ -3327,7 +3327,7 @@ namespace Apya.Platform.Migrations
                 table: "AppFeedbacks",
                 column: "FeedbackNumber",
                 unique: true,
-                filter: "\"IsDeleted\" = false");
+                filter: "[IsDeleted] = 0");
 
             migrationBuilder.CreateIndex(
                 name: "IX_AppFeedbacks_ModuleCode",
@@ -3501,7 +3501,7 @@ namespace Apya.Platform.Migrations
                 table: "AppPayments",
                 columns: new[] { "TenantId", "InvoiceId", "ReferenceNumber" },
                 unique: true,
-                filter: "\"ReferenceNumber\" <> ''");
+                filter: "[ReferenceNumber] <> ''");
 
             migrationBuilder.CreateIndex(
                 name: "IX_AppPlatformPackageFeatures_PackageId_FeatureName",

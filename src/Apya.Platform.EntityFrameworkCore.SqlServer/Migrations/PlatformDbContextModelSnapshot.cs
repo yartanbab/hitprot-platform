@@ -2523,7 +2523,7 @@ namespace Apya.Platform.Migrations
 
                     b.HasIndex("FeedbackNumber")
                         .IsUnique()
-                        .HasFilter("\"IsDeleted\" = false");
+                        .HasFilter("[IsDeleted] = 0");
 
                     b.HasIndex("ModuleCode");
 
@@ -3748,7 +3748,7 @@ namespace Apya.Platform.Migrations
 
                     b.HasIndex("TenantId", "InvoiceId", "ReferenceNumber")
                         .IsUnique()
-                        .HasFilter("\"ReferenceNumber\" <> ''");
+                        .HasFilter("[ReferenceNumber] <> ''");
 
                     b.ToTable("AppPayments", (string)null);
                 });

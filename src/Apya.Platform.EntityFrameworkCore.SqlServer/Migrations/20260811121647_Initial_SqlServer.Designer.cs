@@ -13,8 +13,8 @@ using Volo.Abp.EntityFrameworkCore;
 namespace Apya.Platform.Migrations
 {
     [DbContext(typeof(PlatformDbContext))]
-    [Migration("20260811114838_Add_FeedbackNumberSequence")]
-    partial class Add_FeedbackNumberSequence
+    [Migration("20260811121647_Initial_SqlServer")]
+    partial class Initial_SqlServer
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -2526,7 +2526,7 @@ namespace Apya.Platform.Migrations
 
                     b.HasIndex("FeedbackNumber")
                         .IsUnique()
-                        .HasFilter("\"IsDeleted\" = false");
+                        .HasFilter("[IsDeleted] = 0");
 
                     b.HasIndex("ModuleCode");
 
@@ -3751,7 +3751,7 @@ namespace Apya.Platform.Migrations
 
                     b.HasIndex("TenantId", "InvoiceId", "ReferenceNumber")
                         .IsUnique()
-                        .HasFilter("\"ReferenceNumber\" <> ''");
+                        .HasFilter("[ReferenceNumber] <> ''");
 
                     b.ToTable("AppPayments", (string)null);
                 });
