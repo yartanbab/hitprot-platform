@@ -866,6 +866,23 @@ namespace Apya.Platform.EntityFrameworkCore
                 b.HasIndex(x => x.LastSeenAt);
                 b.HasIndex(x => new { x.IsResolved, x.OccurrenceCount });
             });
+
+            // 'text' tipi PostgreSQL'de doğaldır; SQL Server'da kullanımdan kalkmıştır.
+            // Postgres modeline (ve snapshot'ına) dokunmadan, YALNIZCA SQL Server modeli
+            // inşa edilirken tüm 'text' kolonlarını 'nvarchar(max)'a çeviririz.
+            if (Database.ProviderName == "Microsoft.EntityFrameworkCore.SqlServer")
+            {
+                foreach (var entityType in builder.Model.GetEntityTypes())
+                {
+                    foreach (var property in entityType.GetProperties())
+                    {
+                        if (string.Equals(property.GetColumnType(), "text", System.StringComparison.OrdinalIgnoreCase))
+                        {
+                            property.SetColumnType("nvarchar(max)");
+                        }
+                    }
+                }
+            }
         }
     }
 }

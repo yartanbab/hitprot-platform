@@ -6,6 +6,7 @@
     <Project Path="src/Apya.Platform.Domain.Shared/Apya.Platform.Domain.Shared.csproj" />
     <Project Path="src/Apya.Platform.Domain/Apya.Platform.Domain.csproj" />
     <Project Path="src/Apya.Platform.EntityFrameworkCore/Apya.Platform.EntityFrameworkCore.csproj" />
+    <Project Path="src/Apya.Platform.EntityFrameworkCore.SqlServer/Apya.Platform.EntityFrameworkCore.SqlServer.csproj" />
     <Project Path="src/Apya.Platform.HttpApi.Client/Apya.Platform.HttpApi.Client.csproj" />
     <Project Path="src/Apya.Platform.HttpApi/Apya.Platform.HttpApi.csproj" />
     <Project Path="src/Apya.Platform.Web/Apya.Platform.Web.csproj" />
