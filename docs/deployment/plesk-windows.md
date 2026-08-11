@@ -65,8 +65,26 @@ dotnet publish src/Apya.Platform.DbMigrator -c Release -r win-x64 --self-contain
    ```
 2. `publish/` içeriğini ZIP'le, Plesk → **Dosyalar** → `httpdocs` altına yükle ve çıkart.
    `web.config` **site kökünde** olmalı (alt klasörde değil).
-3. `httpdocs/appsettings.secrets.json` içindeki `<...>` alanlarını 1. adımdaki
-   MSSQL bilgileriyle doldur. Bu dosya git'e **girmez**; sırlar yalnızca sunucuda durur.
+3. `httpdocs/appsettings.secrets.json` dosyasını **sunucuda oluştur** ve doldur.
+   Bu dosya bilinçli olarak yayın paketine dahil edilmez (`CopyToPublishDirectory=Never`);
+   aksi halde publish alan kişinin yerel dev sırları sunucuya taşınırdı. Git'e de girmez.
+
+   ```json
+   {
+     "ConnectionStrings": {
+       "SqlServer": "Server=<SUNUCU>;Database=<DB>;User Id=<KULLANICI>;Password=<PAROLA>;TrustServerCertificate=True;Encrypt=False"
+     },
+     "OpenIddict": {
+       "CertificatePassword": "<pfx parolası>",
+       "Applications": { "Platform_Web": { "ClientSecret": "<client secret>" } }
+     },
+     "StringEncryption": { "DefaultPassPhrase": "<şifreleme anahtarı>" },
+     "OpenAI": { "ApiKey": "" }
+   }
+   ```
+
+   > `StringEncryption:DefaultPassPhrase` **bir kez** belirlenir; sonradan değiştirilirse
+   > onunla şifrelenmiş mevcut veriler okunamaz hale gelir.
 
 **Yazılabilir olması gereken klasörler** (Plesk site kullanıcısına yazma izni):
 `App_Data/uploads`, `App_Data/feedback-uploads`, `App_Data/DataProtection-Keys`, `Logs`.

@@ -31,6 +31,14 @@
     </None>
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- Yerel geliştirici sırları yayın paketine ASLA girmemeli: aksi halde publish alan
+         herkes kendi bağlantı dizisini/anahtarlarını sunucuya taşır ve production
+         yapılandırmasını sessizce ezer. Dosya sunucuda elle oluşturulur (bkz.
+         docs/deployment/plesk-windows.md). Yerel çalıştırmada output'a kopyalanmaya devam eder. -->
+    <Content Update="appsettings.secrets.json" CopyToPublishDirectory="Never" />
+  </ItemGroup>
+
   <ItemGroup Condition="Exists('./openiddict.pfx')">
     <None Remove="openiddict.pfx" />
     <EmbeddedResource Include="openiddict.pfx">
