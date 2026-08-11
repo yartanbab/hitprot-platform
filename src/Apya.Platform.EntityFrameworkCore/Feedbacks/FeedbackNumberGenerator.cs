@@ -33,8 +33,16 @@ public class FeedbackNumberGenerator : IFeedbackNumberGenerator, ITransientDepen
     {
         var dbContext = await _dbContextProvider.GetDbContextAsync();
 
+        // Sequence çekme sözdizimi sağlayıcıya göre değişir:
+        //   PostgreSQL → nextval('"AppFeedbackNumberSeq"')
+        //   SQL Server → NEXT VALUE FOR [AppFeedbackNumberSeq]
+        var isSqlServer = dbContext.Database.ProviderName?.Contains("SqlServer") == true;
+        var sql = isSqlServer
+            ? $"SELECT NEXT VALUE FOR [{SequenceName}] AS [Value]"
+            : $"SELECT nextval('\"{SequenceName}\"') AS \"Value\"";
+
         var next = await dbContext.Database
-            .SqlQueryRaw<long>($"SELECT nextval('\"{SequenceName}\"') AS \"Value\"")
+            .SqlQueryRaw<long>(sql)
             .SingleAsync();
 
         return $"FB-{_clock.Now.Year}-{next:D6}";
