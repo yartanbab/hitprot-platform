@@ -1,5 +1,6 @@
 using System;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Configuration;
 using Volo.Abp.Data;
 using Volo.Abp.DependencyInjection;
 using Volo.Abp.Domain.Repositories;
@@ -17,19 +18,34 @@ public class PlatformTestDataSeedContributor : IDataSeedContributor, ITransientD
     // ProviderKey (23505) ihlaline → "Yeni Müşteri" 500 hatasına yol açıyordu. Bu yüzden
     // izin-seed kaldırıldı; bu contributor yalnızca örnek Hibe (Grant) verisini ekler.
 
+    /// <summary>
+    /// Örnek verinin seed edilmesi için açıkça <c>true</c> yapılması gereken ayar.
+    /// Varsayılan KAPALI: DbMigrator production veritabanına karşı çalıştırıldığında
+    /// demo hibelerin gerçek veriye karışmaması için fail-safe davranış.
+    /// </summary>
+    public const string SeedDemoDataConfigKey = "App:SeedDemoData";
+
     private readonly IRepository<Grant, Guid> _grantRepository;
     private readonly IGuidGenerator _guidGenerator;
+    private readonly IConfiguration _configuration;
 
     public PlatformTestDataSeedContributor(
         IRepository<Grant, Guid> grantRepository,
-        IGuidGenerator guidGenerator)
+        IGuidGenerator guidGenerator,
+        IConfiguration configuration)
     {
         _grantRepository = grantRepository;
         _guidGenerator = guidGenerator;
+        _configuration = configuration;
     }
 
     public async Task SeedAsync(DataSeedContext context)
     {
+        if (!_configuration.GetValue<bool>(SeedDemoDataConfigKey))
+        {
+            return;
+        }
+
         // Örnek Hibe (Grant) verileri — yalnızca hiç kayıt yoksa ekle (idempotent).
         if (await _grantRepository.GetCountAsync() <= 0)
         {
