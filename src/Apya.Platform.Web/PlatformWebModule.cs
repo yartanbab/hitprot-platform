@@ -465,6 +465,7 @@ public class PlatformWebModule : AbpModule
                         ctx.Response.Cookies.Append("XSRF-TOKEN", tokens.RequestToken, new CookieOptions
                         {
                             HttpOnly = false, // abp.jquery JS'ten okuyabilmeli
+                            Secure = true,    // Yalnız HTTPS üzerinden gönderilsin.
                             Path = "/",
                             SameSite = SameSiteMode.Lax
                         });
