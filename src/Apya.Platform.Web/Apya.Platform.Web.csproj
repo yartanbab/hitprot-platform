@@ -59,6 +59,8 @@
     <ProjectReference Include="..\Apya.Platform.Application\Apya.Platform.Application.csproj" />
     <ProjectReference Include="..\Apya.Platform.HttpApi\Apya.Platform.HttpApi.csproj" />
     <ProjectReference Include="..\Apya.Platform.EntityFrameworkCore\Apya.Platform.EntityFrameworkCore.csproj" />
+    <!-- SQL Server migration assembly'si: runtime'da bin'de bulunsun (Database:Provider=SqlServer). -->
+    <ProjectReference Include="..\Apya.Platform.EntityFrameworkCore.SqlServer\Apya.Platform.EntityFrameworkCore.SqlServer.csproj" />
     <ProjectReference Include="..\Apya.Platform.Ai.Application\Apya.Platform.Ai.Application.csproj" />
     <ProjectReference Include="..\Apya.Platform.Ai.HttpApi\Apya.Platform.Ai.HttpApi.csproj" />
     <ProjectReference Include="..\Apya.Platform.Ai.EntityFrameworkCore\Apya.Platform.Ai.EntityFrameworkCore.csproj" />

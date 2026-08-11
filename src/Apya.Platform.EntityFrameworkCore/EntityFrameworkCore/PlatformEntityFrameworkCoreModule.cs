@@ -1,12 +1,15 @@
 ﻿using System;
 using Apya.Platform;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Volo.Abp.AuditLogging;
 using Volo.Abp.AuditLogging.EntityFrameworkCore;
 using Volo.Abp.BackgroundJobs;
 using Volo.Abp.BackgroundJobs.EntityFrameworkCore;
+using Volo.Abp.Data;
 using Volo.Abp.EntityFrameworkCore;
 using Volo.Abp.EntityFrameworkCore.PostgreSql;
+using Volo.Abp.EntityFrameworkCore.SqlServer;
 using Volo.Abp.FeatureManagement;
 using Volo.Abp.FeatureManagement.EntityFrameworkCore;
 using Volo.Abp.Identity;
@@ -26,6 +29,7 @@ namespace Apya.Platform.EntityFrameworkCore;
 [DependsOn(
     typeof(PlatformDomainModule),
     typeof(AbpEntityFrameworkCorePostgreSqlModule),
+    typeof(AbpEntityFrameworkCoreSqlServerModule),
     typeof(AbpIdentityEntityFrameworkCoreModule),
     typeof(AbpPermissionManagementEntityFrameworkCoreModule),
     typeof(AbpSettingManagementEntityFrameworkCoreModule),
@@ -45,8 +49,27 @@ public class PlatformEntityFrameworkCoreModule : AbpModule
         AppContext.SetSwitch("Npgsql.DisableDateTimeInfinityConversions", true);
     }
 
+    // SQL Server migration'larının bulunduğu ayrı assembly.
+    // Bkz. Apya.Platform.EntityFrameworkCore.SqlServer projesi.
+    private const string SqlServerMigrationsAssembly = "Apya.Platform.EntityFrameworkCore.SqlServer";
+
     public override void ConfigureServices(ServiceConfigurationContext context)
     {
+        var configuration = context.Services.GetConfiguration();
+        var provider = DatabaseProviderResolver.Resolve(configuration);
+
+        // Seçilen provider'ın bağlantı dizisini ABP'nin "Default" bağlantısı olarak ata.
+        // İki bağlantı dizisi (ConnectionStrings:PostgreSql / :SqlServer) yan yana durur;
+        // Database:Provider bayrağı hangisinin aktif olduğunu belirler.
+        var connectionString = DatabaseProviderResolver.ResolveConnectionString(configuration, provider);
+        if (!string.IsNullOrWhiteSpace(connectionString))
+        {
+            Configure<AbpDbConnectionOptions>(options =>
+            {
+                options.ConnectionStrings.Default = connectionString;
+            });
+        }
+
         // NOT: ABP modüllerinin DbContext'lerini PlatformDbContext'e yönlendirme
         // [ReplaceDbContext(typeof(...))] attribute'larıyla PlatformDbContext üzerinde yapılıyor.
         // options.ReplaceDbContext<T>() interface implementation gerektirir; attribute gerektirmez.
@@ -57,7 +80,14 @@ public class PlatformEntityFrameworkCoreModule : AbpModule
 
         Configure<AbpDbContextOptions>(options =>
         {
-            options.UseNpgsql();
+            if (provider == DatabaseProvider.SqlServer)
+            {
+                options.UseSqlServer(b => b.MigrationsAssembly(SqlServerMigrationsAssembly));
+            }
+            else
+            {
+                options.UseNpgsql();
+            }
         });
     }
 }

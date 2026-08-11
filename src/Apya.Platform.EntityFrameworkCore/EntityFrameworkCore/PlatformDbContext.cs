@@ -233,6 +233,9 @@ namespace Apya.Platform.EntityFrameworkCore
         {
             base.OnModelCreating(builder);
 
+            // Provider-özel SQL parçaları için (filtered index WHERE, kolon tipi remap).
+            var isSqlServer = Database.ProviderName == "Microsoft.EntityFrameworkCore.SqlServer";
+
             /* Include modules to your migration db context */
             builder.ConfigurePermissionManagement();
             builder.ConfigureSettingManagement();
@@ -652,7 +655,7 @@ namespace Apya.Platform.EntityFrameworkCore
                 // partial unique (boş ref = manuel giriş, idempotency beklenmez).
                 b.HasIndex(x => new { x.TenantId, x.InvoiceId, x.ReferenceNumber })
                     .IsUnique()
-                    .HasFilter("\"ReferenceNumber\" <> ''");
+                    .HasFilter(isSqlServer ? "[ReferenceNumber] <> ''" : "\"ReferenceNumber\" <> ''");
             });
 
             /* --- BİLDİRİM MODÜLÜ YAPILANDIRMASI --- */
@@ -791,7 +794,7 @@ namespace Apya.Platform.EntityFrameworkCore
                 // Sayfa bazlı ısı haritası: "hangi ekran en çok geri bildirim alıyor"
                 b.HasIndex(x => x.PageUrl);
                 // FB-no ile arama; soft-delete olduğundan filter'lı unique
-                b.HasIndex(x => x.FeedbackNumber).IsUnique().HasFilter("\"IsDeleted\" = false");
+                b.HasIndex(x => x.FeedbackNumber).IsUnique().HasFilter(isSqlServer ? "[IsDeleted] = 0" : "\"IsDeleted\" = false");
                 b.HasIndex(x => x.AssignedUserId);
                 b.HasIndex(x => x.ModuleCode);
             });
@@ -866,6 +869,23 @@ namespace Apya.Platform.EntityFrameworkCore
                 b.HasIndex(x => x.LastSeenAt);
                 b.HasIndex(x => new { x.IsResolved, x.OccurrenceCount });
             });
+
+            // 'text' tipi PostgreSQL'de doğaldır; SQL Server'da kullanımdan kalkmıştır.
+            // Postgres modeline (ve snapshot'ına) dokunmadan, YALNIZCA SQL Server modeli
+            // inşa edilirken tüm 'text' kolonlarını 'nvarchar(max)'a çeviririz.
+            if (isSqlServer)
+            {
+                foreach (var entityType in builder.Model.GetEntityTypes())
+                {
+                    foreach (var property in entityType.GetProperties())
+                    {
+                        if (string.Equals(property.GetColumnType(), "text", System.StringComparison.OrdinalIgnoreCase))
+                        {
+                            property.SetColumnType("nvarchar(max)");
+                        }
+                    }
+                }
+            }
         }
     }
 }
