@@ -1,263 +1,317 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import * as Popover from '@radix-ui/react-popover';
-import { Button, Badge } from '../../../components/ui';
 import { TaskPrivacyDialogV3 } from './TaskPrivacyDialogV3';
+import {
+    STATUS_META, PRIORITY_META,
+    SELECTABLE_STATUSES, SELECTABLE_PRIORITIES,
+    statusOf, priorityOf,
+} from '../taskMetaV3';
 
-const STATUS_LIST = [
-    { id: 1, label: 'Bekliyor', color: 'bg-neutral-subtle text-text-secondary border-subtle', dot: 'bg-gray-400' },
-    { id: 2, label: 'Sürüyor', color: 'bg-warning-subtle text-warning border-warning/20', dot: 'bg-warning' },
-    { id: 3, label: 'Testte', color: 'bg-primary-subtle text-primary border-primary/20', dot: 'bg-primary' },
-    { id: 4, label: 'Tamamlandı', color: 'bg-success-subtle text-success border-success/20', dot: 'bg-success' }
+const POPOVER_CLS =
+    'z-popover rounded-[13px] border border-default bg-surface-elevated p-1.5 shadow-float animate-fade-in-fast';
+
+const MENU_ROW_CLS =
+    'flex items-center gap-[11px] w-full px-[9px] py-2 rounded-[9px] text-[12.5px] font-medium text-left cursor-pointer hover:bg-surface-hover';
+
+const SHORTCUTS = [
+    { what: 'Kaydet', key: 'Ctrl S' },
+    { what: 'Yorum gönder', key: 'Ctrl ↵' },
+    { what: 'Kapat / iptal', key: 'Esc' },
+    { what: 'Bağlantı kopyala', key: '⌘ L' },
 ];
 
-const PRIORITY_LIST = [
-    { id: 1, label: 'Düşük', color: 'text-text-secondary bg-surface-sunken', icon: 'fa-arrow-down' },
-    { id: 2, label: 'Orta', color: 'text-warning bg-warning-subtle', icon: 'fa-minus' },
-    { id: 3, label: 'Yüksek', color: 'text-negative bg-negative-subtle', icon: 'fa-arrow-up' },
-    { id: 4, label: 'Kritik', color: 'text-negative bg-negative-subtle font-bold', icon: 'fa-flag' }
-];
+/** Seçim satırı — Popover.Close ile sarılır ki tıklamadan sonra menü kapansın.
+ *  Açık kalan popover'lar üst üste binip sonraki tıklamaları yutuyordu. */
+function PopoverItem({ children }) {
+    return <Popover.Close asChild>{children}</Popover.Close>;
+}
+
+function Kbd({ children }) {
+    return (
+        <kbd className="inline-flex items-center h-[19px] px-1.5 rounded-[5px] border border-default border-b-2 bg-neutral-subtle font-mono text-[10px] font-semibold text-text-secondary">
+            {children}
+        </kbd>
+    );
+}
 
 export function TaskDetailHeaderV3({
     task = {},
-    onClose,
-    onToggleFullscreen,
-    isFullscreen,
     presentation = 'modal',
+    onClose,
+    isFullscreen,
+    onToggleFullscreen,
     onFieldChange = () => {},
     statusValue,
-    priorityValue
+    priorityValue,
+    titleValue,
+    isPrivateValue,
+    isFavorite,
+    onToggleFavorite,
+    isWatched,
+    onToggleWatch,
+    onDuplicate,
+    onArchive,
+    onDelete,
+    onOpenTransfer,
+    onSaveAsTemplate,
+    onConvertToSubtask,
+    onExportPdf,
 }) {
-    const [copiedCode, setCopiedCode] = useState(false);
-    const [isPrivate, setIsPrivate] = useState(Boolean(task.isPrivate));
-    const [isFavorite, setIsFavorite] = useState(Boolean(task.isFavorite));
+    const [copied, setCopied] = useState(false);
+    const [menuOpen, setMenuOpen] = useState(false);
+    const titleRef = useRef(null);
 
-    // Controlled: tek kaynak form değeri (metadata Durum/Öncelik ile senkron kalır)
-    const currentStatusId = statusValue ?? task.status ?? 1;
-    const currentPriorityId = priorityValue ?? task.priority ?? 2;
+    const status = statusOf(statusValue ?? task.status);
+    const priority = priorityOf(priorityValue ?? task.priority);
+    const code = task.code || 'GRV-—';
 
-    const statusObj = STATUS_LIST.find(s => s.id === currentStatusId) || STATUS_LIST[0];
-    const priorityObj = PRIORITY_LIST.find(p => p.id === currentPriorityId) || PRIORITY_LIST[1];
-
-    const taskCode = task.code || (task.id ? `#OTL-${task.id.substring(0, 4).toUpperCase()}` : '#OTL-2507');
-
-    const handleCopyCode = () => {
-        navigator.clipboard?.writeText(taskCode);
-        setCopiedCode(true);
-        window?.abp?.notify?.success?.(`${taskCode} panoya kopyalandı.`);
-        setTimeout(() => setCopiedCode(false), 2000);
+    const copyCode = () => {
+        navigator.clipboard?.writeText(code);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 1800);
     };
 
-    const handleCopyLink = () => {
-        const url = `${window.location.origin}/Tasks?task=${task.id || ''}`;
-        navigator.clipboard?.writeText(url);
-        window?.abp?.notify?.success?.('Görev bağlantısı panoya kopyalandı!');
+    const copyLink = () => {
+        navigator.clipboard?.writeText(`${window.location.origin}/Tasks?task=${task.id || ''}`);
+        window?.abp?.notify?.success?.('Görev bağlantısı panoya kopyalandı.');
     };
 
-    const handleToggleFavorite = async () => {
-        const next = !isFavorite;
-        setIsFavorite(next); // optimistik
-        try {
-            await Promise.resolve(window?.apya?.platform?.tasks?.task?.toggleFavorite?.(task.id));
-        } catch (err) {
-            setIsFavorite(!next); // geri al
-            window?.abp?.notify?.error?.(err?.message || 'Favori güncellenemedi.');
-        }
-    };
+    /* Menü eylemleri — her satır önce menüyü kapatır, sonra işi yapar. */
+    const run = (fn) => () => { setMenuOpen(false); fn?.(); };
+
+    const menuItems = [
+        { label: 'Bağlantıyı kopyala', icon: 'fa-link', kbd: '⌘L', onClick: run(copyLink) },
+        { label: 'Çoğalt', icon: 'fa-copy', kbd: '⌘D', onClick: run(onDuplicate) },
+        { label: 'Başka projeye kopyala', icon: 'fa-clone', onClick: run(() => onOpenTransfer?.('copy')) },
+        { label: 'Şablon olarak kaydet', icon: 'fa-bookmark', onClick: run(onSaveAsTemplate) },
+        { label: 'Taşı (başka proje)', icon: 'fa-right-left', separator: true, onClick: run(() => onOpenTransfer?.('move')) },
+        { label: 'Alt göreve dönüştür', icon: 'fa-diagram-project', onClick: run(onConvertToSubtask) },
+        { label: isWatched ? 'Takibi bırak' : 'Takip et', icon: 'fa-eye', onClick: run(onToggleWatch) },
+        { label: 'Arşivle', icon: 'fa-box-archive', separator: true, onClick: run(onArchive) },
+        { label: 'Yazdır', icon: 'fa-print', kbd: '⌘P', onClick: run(() => window.print()) },
+        { label: 'PDF olarak dışa aktar', icon: 'fa-file-pdf', onClick: run(onExportPdf) },
+        { label: 'Sil', icon: 'fa-trash-can', kbd: '⌫', separator: true, danger: true, onClick: run(onDelete) },
+    ];
 
     return (
-        <header className="flex flex-col gap-3.5 border-b border-subtle/80 bg-surface-base px-6 py-5">
+        <header className="px-6 pt-[18px] pb-4 border-b border-subtle bg-surface-base">
             <div className="flex items-start justify-between gap-4">
-                
-                {/* Sol: Görev Kodu, Rozetler & Başlık */}
-                <div className="flex flex-col gap-2 min-w-0 flex-1">
-                    
-                    {/* Üst Sıra Rozetler */}
-                    <div className="flex items-center gap-2.5 flex-wrap">
-                        {/* Kod Rozeti */}
+
+                {/* ---- Sol: rozetler + başlık ---- */}
+                <div className="flex flex-col gap-[9px] min-w-0 flex-1">
+                    <div className="flex items-center gap-2 flex-wrap">
                         <button
                             type="button"
-                            onClick={handleCopyCode}
-                            title="Kodu Kopyala"
-                            className="group flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-primary-subtle/60 border border-primary/20 text-primary font-mono text-[11px] font-bold tracking-wider hover:bg-primary-subtle hover:border-primary/40 transition-all shadow-xs"
+                            onClick={copyCode}
+                            title="Kodu kopyala"
+                            className="flex items-center gap-1.5 h-[26px] px-[9px] rounded-[7px] border border-primary bg-primary-subtle text-primary font-mono text-[11px] font-bold tracking-[.04em] cursor-pointer"
                         >
-                            <i className="fa-solid fa-hashtag text-[10px]" />
-                            <span>{taskCode.replace('#', '')}</span>
-                            <i className={`fa-solid ${copiedCode ? 'fa-check text-success' : 'fa-copy opacity-50 group-hover:opacity-100'} text-[10px] ml-0.5 transition-all`} />
+                            <i className="fa-solid fa-hashtag text-[9px] opacity-70" />
+                            <span>{code}</span>
+                            <i className={`${copied ? 'fa-solid fa-check' : 'fa-regular fa-copy'} text-[9px] opacity-60`} />
                         </button>
-                        
-                        {/* Durum Dropdown Popover */}
+
+                        {/* Durum */}
                         <Popover.Root>
                             <Popover.Trigger asChild>
                                 <button
                                     type="button"
-                                    className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[12px] font-semibold border transition-all cursor-pointer shadow-xs hover:opacity-90 ${statusObj.color}`}
+                                    className={`flex items-center gap-[7px] h-[26px] px-2.5 rounded-[7px] border border-default text-[12px] font-semibold cursor-pointer ${status.bg} ${status.fg}`}
                                 >
-                                    <span className={`h-2 w-2 rounded-full ${statusObj.dot} animate-pulse`} />
-                                    <span>{statusObj.label}</span>
-                                    <i className="fa-solid fa-chevron-down text-[9px] opacity-70 ml-0.5" />
+                                    <span className="h-[7px] w-[7px] rounded-full bg-current animate-pulse" />
+                                    <span>{status.label}</span>
+                                    <i className="fa-solid fa-chevron-down text-[8px] opacity-60" />
                                 </button>
                             </Popover.Trigger>
                             <Popover.Portal>
-                                <Popover.Content
-                                    sideOffset={4}
-                                    align="start"
-                                    className="z-50 w-44 rounded-xl border border-subtle bg-surface-base p-1.5 shadow-float animate-in fade-in-50 zoom-in-95"
-                                >
-                                    <div className="text-[10px] font-bold text-text-tertiary uppercase tracking-wider px-2 py-1">Durumu Değiştir</div>
-                                    <div className="flex flex-col gap-0.5">
-                                        {STATUS_LIST.map(st => (
-                                            <button
-                                                key={st.id}
-                                                type="button"
-                                                onClick={() => onFieldChange('status', st.id)}
-                                                className={`flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-[12px] font-medium text-left transition-colors ${
-                                                    currentStatusId === st.id ? 'bg-primary-subtle text-primary font-bold' : 'text-text-primary hover:bg-surface-hover'
-                                                }`}
-                                            >
-                                                <span className={`h-2 w-2 rounded-full ${st.dot}`} />
-                                                <span className="flex-1">{st.label}</span>
-                                                {currentStatusId === st.id && <i className="fa-solid fa-check text-xs text-primary" />}
-                                            </button>
-                                        ))}
+                                <Popover.Content sideOffset={6} align="start" className={`${POPOVER_CLS} w-[196px]`}>
+                                    <div className="px-[9px] pt-[5px] pb-[7px] text-[10px] font-bold uppercase tracking-[.08em] text-text-tertiary">
+                                        Durumu değiştir
                                     </div>
+                                    {SELECTABLE_STATUSES.map((id) => {
+                                        const meta = STATUS_META[id];
+                                        const active = (statusValue ?? task.status) === id;
+                                        return (
+                                            <PopoverItem key={id}>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => onFieldChange('status', id)}
+                                                    className={`flex items-center gap-[9px] w-full px-[9px] py-[7px] rounded-[9px] text-[12.5px] font-semibold text-left cursor-pointer ${
+                                                        active ? 'bg-primary-subtle text-primary' : 'text-text-primary hover:bg-surface-hover'
+                                                    }`}
+                                                >
+                                                    <span className={`h-2 w-2 rounded-full ${meta.dot}`} />
+                                                    <span className="flex-1">{meta.label}</span>
+                                                    {active && <i className="fa-solid fa-check text-[10px]" />}
+                                                </button>
+                                            </PopoverItem>
+                                        );
+                                    })}
                                 </Popover.Content>
                             </Popover.Portal>
                         </Popover.Root>
 
-                        {/* Öncelik Dropdown Popover */}
+                        {/* Öncelik */}
                         <Popover.Root>
                             <Popover.Trigger asChild>
                                 <button
                                     type="button"
-                                    className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[12px] font-semibold border border-subtle transition-all cursor-pointer shadow-xs hover:bg-surface-hover ${priorityObj.color}`}
+                                    className={`flex items-center gap-[7px] h-[26px] px-2.5 rounded-[7px] border border-default text-[12px] font-semibold cursor-pointer ${priority.bg} ${priority.fg}`}
                                 >
-                                    <i className={`fa-solid ${priorityObj.icon} text-[11px]`} />
-                                    <span>{priorityObj.label}</span>
-                                    <i className="fa-solid fa-chevron-down text-[9px] opacity-70 ml-0.5" />
+                                    <i className={`fa-solid ${priority.icon} text-[10px]`} />
+                                    <span>{priority.label}</span>
+                                    <i className="fa-solid fa-chevron-down text-[8px] opacity-60" />
                                 </button>
                             </Popover.Trigger>
                             <Popover.Portal>
-                                <Popover.Content
-                                    sideOffset={4}
-                                    align="start"
-                                    className="z-50 w-40 rounded-xl border border-subtle bg-surface-base p-1.5 shadow-float animate-in fade-in-50 zoom-in-95"
-                                >
-                                    <div className="text-[10px] font-bold text-text-tertiary uppercase tracking-wider px-2 py-1">Öncelik Seç</div>
-                                    <div className="flex flex-col gap-0.5">
-                                        {PRIORITY_LIST.map(pr => (
-                                            <button
-                                                key={pr.id}
-                                                type="button"
-                                                onClick={() => onFieldChange('priority', pr.id)}
-                                                className={`flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-[12px] font-medium text-left transition-colors ${
-                                                    currentPriorityId === pr.id ? 'bg-primary-subtle text-primary font-bold' : 'text-text-primary hover:bg-surface-hover'
-                                                }`}
-                                            >
-                                                <i className={`fa-solid ${pr.icon} text-xs`} />
-                                                <span className="flex-1">{pr.label}</span>
-                                                {currentPriorityId === pr.id && <i className="fa-solid fa-check text-xs text-primary" />}
-                                            </button>
-                                        ))}
+                                <Popover.Content sideOffset={6} align="start" className={`${POPOVER_CLS} w-[184px]`}>
+                                    <div className="px-[9px] pt-[5px] pb-[7px] text-[10px] font-bold uppercase tracking-[.08em] text-text-tertiary">
+                                        Öncelik seç
                                     </div>
+                                    {SELECTABLE_PRIORITIES.map((id) => {
+                                        const meta = PRIORITY_META[id];
+                                        const active = (priorityValue ?? task.priority) === id;
+                                        return (
+                                            <PopoverItem key={id}>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => onFieldChange('priority', id)}
+                                                    className={`flex items-center gap-[9px] w-full px-[9px] py-[7px] rounded-[9px] text-[12.5px] font-semibold text-left cursor-pointer ${
+                                                        active ? 'bg-primary-subtle text-primary' : 'text-text-primary hover:bg-surface-hover'
+                                                    }`}
+                                                >
+                                                    <i className={`fa-solid ${meta.icon} text-[11px] w-[13px]`} />
+                                                    <span className="flex-1">{meta.label}</span>
+                                                    {active && <i className="fa-solid fa-check text-[10px]" />}
+                                                </button>
+                                            </PopoverItem>
+                                        );
+                                    })}
                                 </Popover.Content>
                             </Popover.Portal>
                         </Popover.Root>
+
+                        {isWatched && (
+                            <span className="flex items-center gap-1.5 h-[26px] px-2.5 rounded-[7px] border border-subtle bg-neutral-subtle text-text-secondary text-[11.5px] font-semibold">
+                                <i className="fa-regular fa-eye text-[10px]" />
+                                Takip ediliyor
+                            </span>
+                        )}
                     </div>
-                    
-                    {/* Başlık & Favori */}
-                    <div className="flex items-center gap-3 mt-1">
-                        <h1
+
+                    <div className="flex items-center gap-2 min-w-0">
+                        {/* contentEditable + onInput yerine onBlur: her tuş vuruşunda form
+                            state'i güncellenirse React yeniden render eder ve caret metnin
+                            başına atlar. Değer yalnız odak çıkışında forma yazılır; bu yüzden
+                            initial content'i React değil DOM tutar (suppressContentEditableWarning). */}
+                        <div
+                            ref={titleRef}
                             contentEditable
                             suppressContentEditableWarning
-                            onBlur={(e) => onFieldChange('title', e.currentTarget.textContent)}
-                            className="text-[23px] font-bold tracking-tight text-text-primary hover:text-primary transition-colors focus:outline-none focus:bg-surface-sunken/40 px-1.5 py-0.5 -mx-1.5 rounded-lg cursor-text leading-tight truncate"
+                            spellCheck={false}
+                            onBlur={(e) => onFieldChange('title', e.currentTarget.textContent.trim())}
+                            className="text-[24px] lt-560:text-[20px] font-extrabold tracking-[-.025em] leading-[1.2] text-text-primary px-2 -ml-2 py-[3px] rounded-[9px] border border-transparent cursor-text min-w-[60px] hover:bg-neutral-subtle hover:border-subtle focus:bg-neutral-subtle focus:border-focus focus:shadow-focus focus:outline-none"
                         >
-                            {task.title || 'Başlıksız görev'}
-                        </h1>
+                            {titleValue ?? task.title ?? 'Başlıksız görev'}
+                        </div>
 
                         <button
                             type="button"
-                            onClick={handleToggleFavorite}
-                            className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition-all ${
-                                isFavorite
-                                    ? 'text-amber-500 bg-amber-50 dark:bg-amber-950/30'
-                                    : 'text-text-tertiary hover:bg-surface-hover hover:text-amber-500'
-                            }`}
+                            onClick={onToggleFavorite}
                             title={isFavorite ? 'Favorilerden çıkar' : 'Favorilere ekle'}
+                            className={`flex items-center justify-center h-8 w-8 shrink-0 rounded-[9px] cursor-pointer ${
+                                isFavorite ? 'bg-warning-subtle text-warning' : 'text-text-tertiary hover:bg-surface-hover'
+                            }`}
                         >
-                            <i className={`fa-${isFavorite ? 'solid' : 'regular'} fa-star text-lg`} />
+                            <i className={`fa-${isFavorite ? 'solid' : 'regular'} fa-star text-[15px]`} />
                         </button>
                     </div>
                 </div>
 
-                {/* Sağ: Gizlilik Popover'ı, Tam Ekran & Kapat */}
-                <div className="flex items-center gap-2 shrink-0">
-                    <TaskPrivacyDialogV3
-                        isPrivate={isPrivate}
-                        onChange={(v) => { setIsPrivate(v); onFieldChange('isPrivate', v); }}
-                    />
-
-                    <div className="h-5 w-px bg-subtle mx-1" />
-
-                    <div className="flex items-center gap-1">
-                        {presentation === 'modal' && (
-                            <button
-                                type="button"
-                                onClick={onToggleFullscreen}
-                                title={isFullscreen ? 'Küçült' : 'Tam Ekran'}
-                                className="flex h-8 w-8 items-center justify-center rounded-lg text-text-tertiary hover:bg-surface-hover hover:text-text-primary transition-colors"
-                            >
-                                <i className={`fa-solid ${isFullscreen ? 'fa-compress' : 'fa-expand'} text-xs`} />
-                            </button>
-                        )}
-
-                        <Popover.Root>
-                            <Popover.Trigger asChild>
-                                <button
-                                    type="button"
-                                    title="Diğer Seçenekler"
-                                    className="flex h-8 w-8 items-center justify-center rounded-lg text-text-tertiary hover:bg-surface-hover hover:text-text-primary transition-colors"
-                                >
-                                    <i className="fa-solid fa-ellipsis text-sm" />
-                                </button>
-                            </Popover.Trigger>
-                            <Popover.Portal>
-                                <Popover.Content
-                                    sideOffset={4}
-                                    align="end"
-                                    className="z-50 w-48 rounded-xl border border-subtle bg-surface-base p-1.5 shadow-float animate-in fade-in-50 zoom-in-95"
-                                >
-                                    <button
-                                        type="button"
-                                        onClick={handleCopyLink}
-                                        className="flex items-center gap-2.5 w-full px-2.5 py-2 rounded-lg text-[13px] text-text-secondary hover:text-text-primary hover:bg-surface-hover transition-colors text-left"
-                                    >
-                                        <i className="fa-solid fa-link text-xs text-text-tertiary" />
-                                        <span>Bağlantıyı Kopyala</span>
-                                    </button>
-                                    <button 
-                                        type="button" 
-                                        onClick={() => window.print()}
-                                        className="flex items-center gap-2.5 w-full px-2.5 py-2 rounded-lg text-[13px] text-text-secondary hover:text-text-primary hover:bg-surface-hover transition-colors text-left"
-                                    >
-                                        <i className="fa-solid fa-print text-xs text-text-tertiary" />
-                                        <span>Yazdır</span>
-                                    </button>
-                                </Popover.Content>
-                            </Popover.Portal>
-                        </Popover.Root>
-
-                        {presentation === 'modal' && (
-                            <button
-                                type="button"
-                                onClick={onClose}
-                                title="Kapat (Esc)"
-                                className="flex h-8 w-8 items-center justify-center rounded-lg text-text-tertiary hover:bg-negative-subtle hover:text-negative transition-colors ml-1"
-                            >
-                                <i className="fa-solid fa-xmark text-sm" />
-                            </button>
-                        )}
+                {/* ---- Sağ: gizlilik · tam ekran · ⋯ · kapat ---- */}
+                <div className="flex items-center gap-1.5 shrink-0">
+                    <div className="lt-860:hidden">
+                        <TaskPrivacyDialogV3
+                            isPrivate={isPrivateValue ?? Boolean(task.isPrivate)}
+                            onChange={(v) => onFieldChange('isPrivate', v)}
+                        />
                     </div>
+
+                    <div className="h-5 w-px bg-border-default mx-1" />
+
+                    {presentation === 'modal' && (
+                        <button
+                            type="button"
+                            onClick={onToggleFullscreen}
+                            title={isFullscreen ? 'Küçült' : 'Tam ekran'}
+                            className={`flex items-center justify-center h-8 w-8 rounded-[9px] cursor-pointer ${
+                                isFullscreen ? 'bg-primary-subtle text-primary' : 'text-text-tertiary hover:bg-surface-hover hover:text-text-primary'
+                            }`}
+                        >
+                            <i className={`fa-solid ${isFullscreen ? 'fa-compress' : 'fa-expand'} text-[12px]`} />
+                        </button>
+                    )}
+
+                    <Popover.Root open={menuOpen} onOpenChange={setMenuOpen}>
+                        <Popover.Trigger asChild>
+                            <button
+                                type="button"
+                                title="Diğer seçenekler"
+                                className={`flex items-center justify-center h-8 w-8 rounded-[9px] cursor-pointer ${
+                                    menuOpen ? 'bg-surface-hover text-text-primary' : 'text-text-tertiary hover:bg-surface-hover hover:text-text-primary'
+                                }`}
+                            >
+                                <i className="fa-solid fa-ellipsis text-sm" />
+                            </button>
+                        </Popover.Trigger>
+                        <Popover.Portal>
+                            <Popover.Content sideOffset={6} align="end" className={`${POPOVER_CLS} w-[244px]`}>
+                                {menuItems.map((item) => (
+                                    <button
+                                        key={item.label}
+                                        type="button"
+                                        onClick={item.onClick}
+                                        className={[
+                                            MENU_ROW_CLS,
+                                            item.danger ? 'text-negative' : 'text-text-secondary',
+                                            item.separator ? 'border-t border-subtle mt-[5px]' : '',
+                                        ].join(' ')}
+                                    >
+                                        <i className={`fa-solid ${item.icon} text-[11px] w-[14px] opacity-75`} />
+                                        <span className="flex-1">{item.label}</span>
+                                        {item.kbd && <span className="font-mono text-[10px] text-text-tertiary">{item.kbd}</span>}
+                                    </button>
+                                ))}
+
+                                {/* Kısayollar — sağ panelden buraya taşındı (tasarım kararı) */}
+                                <div className="mt-1.5 pt-[9px] px-[9px] pb-[7px] border-t border-subtle">
+                                    <div className="flex items-center gap-2 mb-[7px]">
+                                        <i className="fa-solid fa-keyboard text-[11px] text-text-tertiary" />
+                                        <span className="text-[10px] font-extrabold uppercase tracking-[.09em] text-text-tertiary">
+                                            Kısayollar
+                                        </span>
+                                    </div>
+                                    {SHORTCUTS.map((s) => (
+                                        <div key={s.what} className="flex items-center justify-between gap-2.5 py-1">
+                                            <span className="text-[11.5px] text-text-secondary">{s.what}</span>
+                                            <Kbd>{s.key}</Kbd>
+                                        </div>
+                                    ))}
+                                </div>
+                            </Popover.Content>
+                        </Popover.Portal>
+                    </Popover.Root>
+
+                    {presentation === 'modal' && (
+                        <button
+                            type="button"
+                            onClick={onClose}
+                            title="Kapat (Esc)"
+                            className="flex items-center justify-center h-8 w-8 ml-0.5 rounded-[9px] text-text-tertiary hover:bg-negative-subtle hover:text-negative cursor-pointer"
+                        >
+                            <i className="fa-solid fa-xmark text-sm" />
+                        </button>
+                    )}
                 </div>
             </div>
         </header>

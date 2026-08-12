@@ -4409,6 +4409,10 @@ namespace Apya.Platform.Migrations
                     b.Property<DateTime?>("DueDate")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<decimal?>("EstimatedHours")
+                        .HasPrecision(9, 2)
+                        .HasColumnType("numeric(9,2)");
+
                     b.Property<string>("ExtraProperties")
                         .IsRequired()
                         .HasColumnType("text")
@@ -4434,6 +4438,9 @@ namespace Apya.Platform.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("LastModifierId");
 
+                    b.Property<int>("Number")
+                        .HasColumnType("integer");
+
                     b.Property<Guid?>("ParentTaskId")
                         .HasColumnType("uuid");
 
@@ -4443,11 +4450,19 @@ namespace Apya.Platform.Migrations
                     b.Property<Guid?>("ProjectId")
                         .HasColumnType("uuid");
 
+                    b.Property<string>("Sprint")
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
                     b.Property<DateTime>("StartDate")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<int>("Status")
                         .HasColumnType("integer");
+
+                    b.Property<string>("TaskType")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
 
                     b.Property<Guid?>("TenantId")
                         .HasColumnType("uuid")
@@ -4466,6 +4481,8 @@ namespace Apya.Platform.Migrations
                     b.HasIndex("ProjectId");
 
                     b.HasIndex("Status", "AssigneeId");
+
+                    b.HasIndex("TenantId", "Number");
 
                     b.ToTable("AppTasks", (string)null);
                 });
@@ -4551,6 +4568,27 @@ namespace Apya.Platform.Migrations
                     b.HasIndex("TaskId", "UserId");
 
                     b.ToTable("AppTaskTimeLogs", (string)null);
+                });
+
+            modelBuilder.Entity("Apya.Platform.Tasks.TaskWatcher", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("TaskId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TaskId");
+
+                    b.HasIndex("UserId", "TaskId")
+                        .IsUnique();
+
+                    b.ToTable("AppTaskWatchers", (string)null);
                 });
 
             modelBuilder.Entity("Apya.Platform.Telemetry.ClientError", b =>
