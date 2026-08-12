@@ -41,9 +41,18 @@ const GROUPS = [
  * NOT: `checklist` ve `comments` için repoda backend'e bağlı çalışan bileşenler VAR;
  * içerikleri Genel sekmesinde zaten sunulduğu için ayrı sekme olarak burada
  * kapatıldılar. Yeniden açmak = bu diziden kodu çıkarmak.
+ *
+ * FAZ 10-B (2026-08-12): `approvals`, `ai` ve `automations` da buraya eklendi.
+ * Bu üçü SABİT UYDURMA içerik basıyordu — sahte bir onay kaydı (gerçek isim +
+ * tarih ile), sözleşmeye dair sahte bir AI önerisi ve "Aktif" işaretli sahte bir
+ * otomasyon kuralı. Kullanıcı bunlara bakıp onay alındığını ya da bir otomasyonun
+ * çalıştığını sanabilirdi. Arkalarında onay akışı / LLM / kural motoru OLMADIĞI
+ * için doğru davranış, uydurmayı cilalamak değil dürüst boş durumu göstermek.
+ * Gerçek backend geldiğinde: kodu bu diziden çıkar + registry'de component'i bağla.
  */
 export const UNBUILT_CODES = new Set([
     'checklist', 'risks', 'dashboard', 'comments', 'emails', 'history', 'gallery', 'custom-fields',
+    'approvals', 'ai', 'automations',
 ]);
 
 export const isUnbuilt = (code) => UNBUILT_CODES.has(code);
