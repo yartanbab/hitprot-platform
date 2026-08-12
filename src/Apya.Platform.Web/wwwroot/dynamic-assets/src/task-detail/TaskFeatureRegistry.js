@@ -8,14 +8,10 @@ import { HistoryTab } from './components/HistoryTab';
 import { FinanceTab } from './components/FinanceTab';
 import { GanttTabV3 } from './v3/features/GanttTabV3';
 import { DependenciesTabV3 } from './v3/features/DependenciesAndFinanceTabV3';
-import {
-    RisksTabV3,
-    TimeTrackingTabV3,
-    CustomFieldsTabV3,
-    EmailsTabV3,
-    GalleryTabV3,
-    DashboardTabV3
-} from './v3/features/OtherFeaturesTabV3';
+// Not: dosyada artık yalnız TimeTrackingTabV3 var — diğer "OtherFeatures*"
+// bileşenleri Faz 10-B'de silindi (hepsi uydurma içerik basıyordu ve kodları
+// UNBUILT_CODES'ta olduğu için zaten render edilmiyordu).
+import { TimeTrackingTabV3 } from './v3/features/OtherFeaturesTabV3';
 
 /**
  * Görev detayının 17 özelliklik sekme/özellik kayıt defteri (V3).
@@ -74,7 +70,7 @@ export const TASK_FEATURE_REGISTRY = [
     {
         code: 'risks', title: 'Riskler', icon: 'fa-triangle-exclamation',
         category: 'gorev', isCore: false, order: 21, permission: null,
-        implemented: true, component: RisksTabV3,
+        implemented: true, component: null,
     },
     {
         // component yok: onay akışı backend'i gelene kadar "yapım aşamasında" boş
@@ -91,7 +87,7 @@ export const TASK_FEATURE_REGISTRY = [
     {
         code: 'dashboard', title: 'Gösterge Paneli', icon: 'fa-chart-pie',
         category: 'gorev', isCore: false, order: 24, permission: null,
-        implemented: true, component: DashboardTabV3,
+        implemented: true, component: null,
     },
     {
         code: 'ai', title: 'Yapay Zeka', icon: 'fa-sparkles',
@@ -102,7 +98,7 @@ export const TASK_FEATURE_REGISTRY = [
     {
         code: 'custom-fields', title: 'Özel Alanlar', icon: 'fa-square-plus',
         category: 'ileri', isCore: false, order: 31, permission: null,
-        implemented: true, component: CustomFieldsTabV3,
+        implemented: true, component: null,
     },
     {
         code: 'automations', title: 'Otomasyonlar', icon: 'fa-wand-magic-sparkles',
@@ -113,12 +109,12 @@ export const TASK_FEATURE_REGISTRY = [
     {
         code: 'emails', title: 'E-postalar', icon: 'fa-envelope',
         category: 'iletisim', isCore: false, order: 33, permission: null,
-        implemented: true, component: EmailsTabV3,
+        implemented: true, component: null,
     },
     {
         code: 'gallery', title: 'Dosya Galerisi', icon: 'fa-image',
         category: 'finans', isCore: false, order: 34, permission: null,
-        implemented: true, component: GalleryTabV3,
+        implemented: true, component: null,
     },
 ];
 
