@@ -30,6 +30,35 @@ $(function () {
         }
     }).observe(wrapper, { attributes: true, attributeFilter: ['class'] });
 
+    // Dikey scrollbar telafisi. .lpx-sidebar-container 280px ve overflow-y:auto;
+    // scrollbar çıkınca iç genişlik 264px'e düşüyor ama .lpx-nav'ın min-width'i
+    // 280px'te kalıyor → menü satırlarının sağ 16px'i kırpılıyor (kullanıcıya göre
+    // bazı yapılandırmalarda yatay kaydırma çubuğu olarak görünüyor). Temanın CSS'inde
+    // telafi HAZIR (.lpx-has-scrollbar → nav 265px, nav-menu max 265px) ama sınıfı
+    // ekleyen JS Lite paketinde YOK (5.0.1 bundle'ında hiç geçmiyor) — Lite gap.
+    var sidebar = document.getElementById('lpx-sidebar');
+    var scrollHost = document.querySelector('.lpx-sidebar-container');
+    if (sidebar && scrollHost) {
+        // Ölçüt "taşıyor mu" DEĞİL, "scrollbar gerçekten yer kaplıyor mu". Daraltılmış
+        // rayda overflow-y:hidden olduğu için yer kaplamaz ve sınıf eklenmez — eklenseydi
+        // temanın 265px'lik nav kuralı (ID'li seçici) 72px'lik ray kuralımızı ezerdi.
+        // Overlay scrollbar'lı ortamlarda da oluk 0'dır, telafi gerekmez.
+        // Kenarlık düşülmeli: kapsayıcının 1px sağ kenarlığı da offset/client farkına giriyor.
+        var syncScrollbarClass = function () {
+            var cs = getComputedStyle(scrollHost);
+            var borders = (parseFloat(cs.borderLeftWidth) || 0) + (parseFloat(cs.borderRightWidth) || 0);
+            var gutter = scrollHost.offsetWidth - scrollHost.clientWidth - borders;
+            sidebar.classList.toggle('lpx-has-scrollbar', gutter > 0);
+        };
+        syncScrollbarClass();
+        window.addEventListener('resize', syncScrollbarClass);
+        // nav'ı gözle: hem menü yüksekliği (scrollbar çıkar/kaybolur) hem ray genişliği
+        // değişimi buradan görünür. toggle idempotent olduğu için geri besleme yok.
+        if (window.ResizeObserver) {
+            new ResizeObserver(syncScrollbarClass).observe(sidebar.querySelector('nav.lpx-nav') || sidebar);
+        }
+    }
+
     // Erişilebilirlik: temanın butonu düz bir <i> — role/klavye/etiket ekle.
     var btn = document.querySelector('.menu-collapse-icon');
     if (btn) {

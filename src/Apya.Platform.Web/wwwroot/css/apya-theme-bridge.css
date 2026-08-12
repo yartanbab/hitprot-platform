@@ -832,6 +832,11 @@ html, body {
     color: var(--apya-text-secondary) !important;
     border-radius: var(--apya-radius-lg);
     margin: 1px 8px;
+    /* Tema anchor'a `width: 100%` veriyor; yukarıdaki 8px'lik yan marjlar buna
+       EKLENİYOR → her satır kapsayıcıdan 16px taşıyor ve sidebar yatay kayıyordu
+       (canlı ölçüm: scrollWidth 280 / clientWidth 264). `auto` ile anchor kalan
+       genişliğe oturur. Daraltılmış ray bölümünde aynı düzeltme zaten var. */
+    width: auto;
     transition: background var(--apya-motion-fast) ease, color var(--apya-motion-fast) ease;
 }
 #lpx-sidebar .lpx-menu-item-link:hover {
@@ -1068,6 +1073,14 @@ html, body {
     background: var(--apya-border-subtle);
 }
 #lpx-sidebar .menu-collapse-icon::before {
+    /* Düğüm `<i class="lpx-icon bi bi-filter-left menu-collapse-icon">` — bootstrap-icons
+       CSS'i `[class^="bi-"]::before` kuralında font-family'yi `!important` ile bastırıyor.
+       Yukarıdaki ELEMENT kuralı ::before'a geçmediği için glyph bootstrap-icons fontunda
+       aranıyordu; \f053 o fontun aralığında (U+F101+) olmadığından hiç çizilmiyor, düğme
+       boş kare olarak görünüyordu (canlı ölçüm: ::before fontFamily = "bootstrap-icons").
+       Pseudo-element kuralında !important şart — bkz. dosya başındaki İKON FONT YIĞINI notu. */
+    font-family: var(--apya-font-icon) !important;
+    font-weight: 900 !important;
     content: '\f053'; /* chevron-left → "daralt" */
 }
 html[data-sidebar="collapsed"] #lpx-sidebar .menu-collapse-icon::before {
