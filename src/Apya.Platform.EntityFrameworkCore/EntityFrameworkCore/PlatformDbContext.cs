@@ -134,6 +134,10 @@ namespace Apya.Platform.EntityFrameworkCore
         public DbSet<TaskChecklistItem> TaskChecklistItems { get; set; }
         public DbSet<TaskFavorite> TaskFavorites { get; set; }
         public DbSet<TaskWatcher> TaskWatchers { get; set; }
+        public DbSet<TaskTemplate> TaskTemplates { get; set; }
+        public DbSet<TaskTemplateItem> TaskTemplateItems { get; set; }
+        public DbSet<TaskTemplateFeature> TaskTemplateFeatures { get; set; }
+        public DbSet<TaskTemplateTag> TaskTemplateTags { get; set; }
         public DbSet<Apya.Platform.Projects.BoardColumn> BoardColumns { get; set; } // Faz 2: configure edilebilir kanban
         public DbSet<Invoice> Invoices { get; set; }
         public DbSet<InvoiceItem> InvoiceItems { get; set; }
@@ -622,6 +626,49 @@ namespace Apya.Platform.EntityFrameworkCore
                 b.ToTable(PlatformConsts.DbTablePrefix + "TaskFavorites", PlatformConsts.DbSchema);
                 b.ConfigureByConvention();
                 b.HasIndex(x => new { x.UserId, x.TaskId }).IsUnique();
+            });
+
+            // ── Görev şablonları ──
+            builder.Entity<TaskTemplate>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "TaskTemplates", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+                b.Property(x => x.Name).IsRequired().HasMaxLength(TaskTemplateConsts.MaxNameLength);
+                b.Property(x => x.Description).HasMaxLength(TaskTemplateConsts.MaxDescriptionLength);
+                b.Property(x => x.TaskTitle).IsRequired().HasMaxLength(TaskTemplateConsts.MaxTitleLength);
+                b.Property(x => x.TaskType).HasMaxLength(TaskTemplateConsts.MaxTaskTypeLength);
+                // Aynı tenant'ta aynı adlı iki şablon kafa karıştırır; UNIQUE DEĞİL çünkü
+                // TenantId NULL (host) satırları bileşik index'te tekrar edebilir — bkz.
+                // (TenantId, Number) kararı. Yalnız listeleme/arama için index.
+                b.HasIndex(x => new { x.TenantId, x.Name });
+
+                b.HasMany(x => x.Items).WithOne().HasForeignKey(x => x.TaskTemplateId).OnDelete(DeleteBehavior.Cascade);
+                b.HasMany(x => x.Features).WithOne().HasForeignKey(x => x.TaskTemplateId).OnDelete(DeleteBehavior.Cascade);
+                b.HasMany(x => x.Tags).WithOne().HasForeignKey(x => x.TaskTemplateId).OnDelete(DeleteBehavior.Cascade);
+            });
+
+            builder.Entity<TaskTemplateItem>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "TaskTemplateItems", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+                b.Property(x => x.Title).IsRequired().HasMaxLength(TaskTemplateConsts.MaxTitleLength);
+                b.HasIndex(x => new { x.TaskTemplateId, x.Order });
+            });
+
+            builder.Entity<TaskTemplateFeature>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "TaskTemplateFeatures", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+                b.Property(x => x.FeatureCode).IsRequired().HasMaxLength(TaskTemplateConsts.MaxFeatureCodeLength);
+                b.HasIndex(x => new { x.TaskTemplateId, x.FeatureCode }).IsUnique();
+            });
+
+            builder.Entity<TaskTemplateTag>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "TaskTemplateTags", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+                b.Property(x => x.TagName).IsRequired().HasMaxLength(TaskTemplateConsts.MaxTagNameLength);
+                b.HasIndex(x => new { x.TaskTemplateId, x.TagName }).IsUnique();
             });
 
             builder.Entity<TaskWatcher>(b =>
