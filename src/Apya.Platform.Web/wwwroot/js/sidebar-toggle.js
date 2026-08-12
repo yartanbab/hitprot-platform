@@ -9,6 +9,26 @@ $(function () {
         return;
     }
 
+    // --- 2. seviye menü grupları varsayılan KAPALI ---
+    // Yönetim altındaki açılır gruplar (Kiracı Yönetimi, Kimlik yönetimi, Platform,
+    // Geri Bildirim). LeptonX aktif sayfanın grubunu AÇIK render ediyor; kullanıcı
+    // tercihi hepsinin kapalı gelmesi, tıklayınca açılması. Yalnız başlangıç
+    // durumunu değiştiriyoruz — temanın toggle handler'ına dokunulmuyor, bu yüzden
+    // açma/kapama ve caret yönü (bi-chevron-up/down) kendi akışında çalışmaya devam eder.
+    // Seçici doğal olarak 2. seviyeyi hedefler: 1. seviye listeler li.outer-menu-item
+    // çocuğudur ve zaten kalıcı açık bölüm başlıklarıdır (apya-theme-bridge.css).
+    document.querySelectorAll('li.lpx-inner-menu-item > ul.lpx-inner-menu').forEach(function (ul) {
+        if (ul.classList.contains('collapsed')) {
+            return;
+        }
+        ul.classList.add('collapsed');
+        var caret = ul.parentElement.querySelector(':scope > a .lpx-caret');
+        if (caret) {
+            caret.classList.remove('bi-chevron-up');
+            caret.classList.add('bi-chevron-down');
+        }
+    });
+
     var html = document.documentElement;
     var wrapper = document.getElementById('lpx-wrapper');
     if (!wrapper) {
