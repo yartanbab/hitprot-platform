@@ -1,0 +1,56 @@
+@page "/Settings"
+@model Apya.Platform.Web.Pages.Settings.IndexModel
+@inject Microsoft.Extensions.Localization.IStringLocalizer<Apya.Platform.Localization.PlatformResource> L
+@{
+    ViewBag.Title = L["Settings:Title"].Value;
+}
+
+<div data-page-description="@L["Settings:PageDescription"]" class="apya-page--narrow">
+<abp-card>
+    <abp-card-header>
+        <abp-card-title>@L["Settings:Title"]</abp-card-title>
+    </abp-card-header>
+    <abp-card-body>
+        @if (TempData["Saved"] != null)
+        {
+            <div class="alert alert-success" role="status">@L["Settings:Saved"]</div>
+        }
+
+        <form method="post">
+            <fieldset class="mb-3">
+                <legend class="form-label mb-1">@L["Settings:TaskDetailUi.Label"]</legend>
+                <div class="form-text mb-2">@L["Settings:TaskDetailUi.Help"]</div>
+
+                <div class="form-check mb-2">
+                    <input class="form-check-input" type="radio" name="TaskDetailUi" id="taskui-v3"
+                           value="v3" checked="@(Model.TaskDetailUi != "v1" && Model.TaskDetailUi != "v2")" />
+                    <label class="form-check-label" for="taskui-v3">
+                        <strong>@L["Settings:TaskDetailUi.V3"]</strong>
+                        <div class="text-muted small">@L["Settings:TaskDetailUi.V3.Desc"]</div>
+                    </label>
+                </div>
+
+                <div class="form-check mb-2">
+                    <input class="form-check-input" type="radio" name="TaskDetailUi" id="taskui-v2"
+                           value="v2" checked="@(Model.TaskDetailUi == "v2")" />
+                    <label class="form-check-label" for="taskui-v2">
+                        <strong>@L["Settings:TaskDetailUi.V2"]</strong>
+                        <div class="text-muted small">@L["Settings:TaskDetailUi.V2.Desc"]</div>
+                    </label>
+                </div>
+
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" name="TaskDetailUi" id="taskui-v1"
+                           value="v1" checked="@(Model.TaskDetailUi == "v1")" />
+                    <label class="form-check-label" for="taskui-v1">
+                        <strong>@L["Settings:TaskDetailUi.V1"]</strong>
+                        <div class="text-muted small">@L["Settings:TaskDetailUi.V1.Desc"]</div>
+                    </label>
+                </div>
+            </fieldset>
+
+            <button type="submit" class="btn btn-primary">@L["Settings:Save"]</button>
+        </form>
+    </abp-card-body>
+</abp-card>
+</div>
