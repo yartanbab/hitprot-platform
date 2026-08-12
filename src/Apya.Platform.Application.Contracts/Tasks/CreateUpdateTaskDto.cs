@@ -32,6 +32,16 @@ namespace Apya.Platform.Tasks
         public Guid? AssigneeId { get; set; }
         public Guid? ParentTaskId { get; set; }
         public bool IsPrivate { get; set; }
+
+        // --- Planlama (görev detayı) ---
+        [Range(0, 9999.99, ErrorMessage = "Tahmini süre 0 ile 9999,99 saat arasında olmalıdır.")]
+        public decimal? EstimatedHours { get; set; }
+
+        [StringLength(64)]
+        public string? TaskType { get; set; }
+
+        [StringLength(32)]
+        public string? Sprint { get; set; }
         public System.Collections.Generic.List<Guid> PredecessorIds { get; set; } = new();
 
         /// <summary>

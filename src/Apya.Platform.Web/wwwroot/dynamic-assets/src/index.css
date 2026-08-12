@@ -13,3 +13,66 @@
     font-feature-settings: "tnum";
   }
 }
+
+/* ---------------------------------------------------------------------------
+   Görev detayı WYSIWYG editörü (RichTextEditorV3).
+   Bu kurallar Tailwind ile ifade EDİLEMEZ: content:attr(), :empty ve
+   contentEditable'ın ürettiği (sınıf verilemeyen) alt elemanlar.
+   Kapsam .apya-rte-surface ile sınırlı — sayfanın kalanına sızmaz.
+--------------------------------------------------------------------------- */
+@layer components {
+  .apya-rte-surface[data-ph]:empty::before {
+    content: attr(data-ph);
+    color: var(--apya-text-tertiary);
+    pointer-events: none;
+  }
+
+  .apya-rte-surface p       { margin: 0 0 10px; }
+  .apya-rte-surface p:last-child { margin-bottom: 0; }
+  .apya-rte-surface h3      { margin: 0 0 8px; font-size: 16px; font-weight: 700; letter-spacing: -.01em; }
+  .apya-rte-surface ul,
+  .apya-rte-surface ol      { margin: 0 0 10px; padding-left: 20px; }
+  .apya-rte-surface li      { margin: 2px 0; }
+  .apya-rte-surface a       { color: var(--apya-accent-500); text-decoration: underline; }
+
+  .apya-rte-surface blockquote {
+    margin: 0 0 10px;
+    padding: 6px 0 6px 12px;
+    border-left: 3px solid var(--apya-border-strong);
+    color: var(--apya-text-secondary);
+  }
+
+  .apya-rte-surface pre {
+    margin: 0 0 10px;
+    padding: 12px;
+    border-radius: 10px;
+    background: var(--apya-surface-sunken);
+    font-family: var(--apya-font-mono);
+    font-size: 12.5px;
+    white-space: pre-wrap;
+  }
+
+  .apya-rte-table { width: 100%; border-collapse: collapse; margin: 10px 0; font-size: 12.5px; }
+  .apya-rte-table th,
+  .apya-rte-table td { border: 1px solid var(--apya-border-default); padding: 7px; text-align: left; }
+  .apya-rte-table th { background: var(--apya-surface-sunken); font-weight: 700; }
+
+  .apya-rte-imgph {
+    margin: 10px 0;
+    padding: 26px;
+    border: 1px dashed var(--apya-border-strong);
+    border-radius: 10px;
+    text-align: center;
+    font-family: var(--apya-font-mono);
+    font-size: 11px;
+    color: var(--apya-text-tertiary);
+  }
+
+  .apya-rte-mention {
+    padding: 1px 6px;
+    border-radius: 5px;
+    background: var(--apya-accent-soft);
+    color: var(--apya-accent-500);
+    font-weight: 600;
+  }
+}

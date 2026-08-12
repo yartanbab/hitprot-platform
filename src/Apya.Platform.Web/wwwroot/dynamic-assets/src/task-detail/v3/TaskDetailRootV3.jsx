@@ -1,18 +1,25 @@
-import React, { useState, useCallback, useMemo, Suspense } from 'react';
+import React, { useCallback, useEffect, useMemo, useState, Suspense } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { Dialog, DialogContent, Skeleton, Button } from '../../components/ui';
 import { TaskDetailHeaderV3 } from './components/TaskDetailHeaderV3';
 import { TaskMetadataGridV3 } from './components/TaskMetadataGridV3';
 import { TaskFeatureNavbarV3 } from './components/TaskFeatureNavbarV3';
+import { TaskFeatureRailV3 } from './components/TaskFeatureRailV3';
 import { TaskSidePanelV3 } from './components/TaskSidePanelV3';
 import { TaskGeneralTabV3 } from './components/TaskGeneralTabV3';
 import { TaskDetailFooterV3 } from './components/TaskDetailFooterV3';
+import { TaskUnbuiltTabV3 } from './components/TaskUnbuiltTabV3';
 import { FeaturePickerV3 } from './components/FeaturePickerV3';
+import { TaskTransferDialogV3 } from './components/TaskTransferDialogV3';
+import { SubtaskSheetV3 } from './components/SubtaskSheetV3';
 import { getVisibleTabs, TASK_FEATURE_REGISTRY } from '../TaskFeatureRegistry';
-import { useTaskDetail, isGranted } from '../hooks/useTaskDetail';
+import { isUnbuilt } from './featureCatalogV3';
+import { useTabOrder } from './hooks/useTabOrder';
+import { useTaskDetail } from '../hooks/useTaskDetail';
 import { useDirtyGuard } from '../hooks/useDirtyGuard';
 import { useTaskUrlSync, clearTaskUrl } from '../hooks/useTaskUrlSync';
 import { useTaskForm } from '../hooks/useTaskForm';
+import { useTaskChecklist } from '../hooks/useTaskChecklist';
 import { useAssigneeOptions } from '../hooks/useAssigneeOptions';
 import { useProjectOptions } from '../hooks/useProjectOptions';
 import { useTaskFeatures } from '../hooks/useTaskFeatures';
@@ -20,12 +27,23 @@ import { taskDetailStore } from '../taskDetailStore';
 
 const FULLSCREEN_KEY = 'apya.taskDetail.fullscreen';
 
-export function TaskDetailRootV3({ 
-    taskId, 
-    presentation = 'modal',
-    onClose, 
-    switchToTask 
-}) {
+const notify = {
+    ok:   (m) => window?.abp?.notify?.success?.(m),
+    info: (m) => window?.abp?.notify?.info?.(m),
+    err:  (m) => window?.abp?.notify?.error?.(m),
+};
+
+/** Proje adından kod türetir (CreateProjectDto.Code zorunlu). */
+function projectCodeFrom(name) {
+    const slug = name
+        .toLocaleUpperCase('tr-TR')
+        .replace(/[^A-Z0-9]+/g, '-')
+        .replace(/^-|-$/g, '')
+        .slice(0, 40);
+    return slug || `PRJ-${Date.now().toString().slice(-6)}`;
+}
+
+export function TaskDetailRootV3({ taskId, presentation = 'modal', onClose, switchToTask }) {
     const [currentTaskId, setCurrentTaskId] = useState(taskId);
     const { data: task, isLoading, isError, refetch } = useTaskDetail(currentTaskId);
     const queryClient = useQueryClient();
@@ -34,93 +52,277 @@ export function TaskDetailRootV3({
     const assignees = useAssigneeOptions();
     const projects = useProjectOptions();
     const features = useTaskFeatures(currentTaskId);
+    const checklist = useTaskChecklist(currentTaskId);
 
     const [activeTabCode, setActiveTabCode] = useState('general');
     const [isSaving, setIsSaving] = useState(false);
+    const [justSaved, setJustSaved] = useState(false);
+    const [pickerOpen, setPickerOpen] = useState(false);
+    const [transfer, setTransfer] = useState(null);   // { mode } | null
+    const [openSubtaskId, setOpenSubtaskId] = useState(null);
+    const [isFavorite, setIsFavorite] = useState(false);
+    const [isWatched, setIsWatched] = useState(false);
     const [fullscreen, setFullscreen] = useState(() => {
-        try {
-            return localStorage.getItem(FULLSCREEN_KEY) === 'true';
-        } catch {
-            return false;
-        }
+        try { return localStorage.getItem(FULLSCREEN_KEY) === 'true'; } catch { return false; }
     });
 
     useTaskUrlSync(currentTaskId);
 
-    React.useEffect(() => {
+    /* Sunucudan gelen favori/takip durumunu bir kez yerel state'e al — düğmeler
+       optimistik çalışıyor, her refetch'te kullanıcının tıklaması geri alınmasın. */
+    const [syncedTaskId, setSyncedTaskId] = useState(null);
+    if (task?.id && task.id !== syncedTaskId) {
+        setSyncedTaskId(task.id);
+        setIsFavorite(Boolean(task.isFavorite));
+        setIsWatched(Boolean(task.isWatched));
+    }
+
+    useEffect(() => {
         if (form.isDirty) guard.markDirty(); else guard.markClean();
     });
 
-    /* Koşulsuz kapatma: URL'den ?task= parametresini temizler ve island onClose zincirini
-       (store.close + emitResult) tetikler. Sil sonrası ve dirty-guard onayından sonra çağrılır. */
-    const closeNow = useCallback(() => {
-        clearTaskUrl();
-        onClose?.();
-    }, [onClose]);
-
+    const closeNow = useCallback(() => { clearTaskUrl(); onClose?.(); }, [onClose]);
     const requestClose = useCallback(() => guard.requestClose(closeNow), [guard, closeNow]);
 
     const toggleFullscreen = useCallback(() => {
         setFullscreen((prev) => {
             const next = !prev;
-            try {
-                localStorage.setItem(FULLSCREEN_KEY, String(next));
-            } catch {
-                /* quota / disabled */
-            }
+            try { localStorage.setItem(FULLSCREEN_KEY, String(next)); } catch { /* quota */ }
             return next;
         });
     }, []);
 
+    /* ─── Sekmeler ─── */
     const visibleTabs = useMemo(
         () => getVisibleTabs(features.assignedCodes),
-        [features.assignedCodes]
+        [features.assignedCodes],
     );
+    const tabOrder = useTabOrder(visibleTabs);
 
-    const activeTabDef = TASK_FEATURE_REGISTRY.find(t => t.code === activeTabCode) || visibleTabs.find(t => t.code === activeTabCode) || visibleTabs[0];
+    const counts = useMemo(() => ({
+        subtasks:     task?.subTasks?.length ?? 0,
+        files:        task?.attachments?.length ?? 0,
+        dependencies: task?.predecessorIds?.length ?? 0,
+        comments:     task?.comments?.length ?? 0,
+        checklist:    checklist.items?.length ?? 0,
+    }), [task, checklist.items]);
 
+    const activeTabDef = TASK_FEATURE_REGISTRY.find((t) => t.code === activeTabCode);
+
+    /* ─── İlerleme (kontrol listesi tamamlanma oranı) ─── */
+    const clItems = checklist.items ?? [];
+    const clDone = clItems.filter((c) => c.isDone).length;
+    const progressPercent = clItems.length ? Math.round((clDone / clItems.length) * 100) : 0;
+
+    /* ─── Kaydet ─── */
     const doSave = useCallback(async () => {
-        if (!form.validate()) return false;
+        if (!form.validate()) {
+            notify.err('Zorunlu alanları kontrol edin.');
+            return false;
+        }
         setIsSaving(true);
         try {
-            await Promise.resolve(
-                window.apya.platform.tasks.task.update(currentTaskId, form.toUpdateDto())
-            );
+            await Promise.resolve(window.apya.platform.tasks.task.update(currentTaskId, form.toUpdateDto()));
             await queryClient.invalidateQueries({ queryKey: ['task-detail', currentTaskId] });
             taskDetailStore.emitResult();
-            window?.abp?.notify?.success?.('Görev başarıyla güncellendi.');
+            setJustSaved(true);
+            setTimeout(() => setJustSaved(false), 2000);
+            notify.ok('Görev başarıyla güncellendi.');
             return true;
         } catch (err) {
-            window?.abp?.notify?.error?.(err?.message || 'Kaydedilemedi.');
+            notify.err(err?.message || 'Kaydedilemedi.');
             return false;
         } finally {
             setIsSaving(false);
         }
     }, [currentTaskId, form, queryClient]);
 
-    const handleDelete = useCallback(async () => {
-        if (!window.confirm('Bu görevi silmek istediğinize emin misiniz?')) return;
+    /* ─── Klavye: Ctrl/⌘+S kaydeder, Esc katman katman kapatır ─── */
+    useEffect(() => {
+        const onKey = (e) => {
+            if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') {
+                e.preventDefault();
+                if (form.isDirty && !isSaving) doSave();
+                return;
+            }
+            if (e.key !== 'Escape') return;
+            /* Sıra: önce üstteki overlay. Alt görev paneli kendi Esc'ini dinliyor,
+               modalın Esc'ini Radix yönetiyor — burada yalnız aradaki iki katman. */
+            if (transfer) { e.stopPropagation(); setTransfer(null); return; }
+            if (pickerOpen) { e.stopPropagation(); setPickerOpen(false); }
+        };
+        window.addEventListener('keydown', onKey);
+        return () => window.removeEventListener('keydown', onKey);
+    }, [doSave, form.isDirty, isSaving, transfer, pickerOpen]);
+
+    /* ─── ⋯ menüsü eylemleri ─── */
+    const svc = () => window?.apya?.platform?.tasks?.task;
+
+    const handleToggleFavorite = async () => {
+        const next = !isFavorite;
+        setIsFavorite(next);
         try {
-            await Promise.resolve(window.apya.platform.tasks.task.delete(currentTaskId));
-            window?.abp?.notify?.info?.('Görev silindi.');
+            await Promise.resolve(svc()?.toggleFavorite(currentTaskId));
+        } catch (err) {
+            setIsFavorite(!next);
+            notify.err(err?.message || 'Favori güncellenemedi.');
+        }
+    };
+
+    const handleToggleWatch = async () => {
+        const next = !isWatched;
+        setIsWatched(next);
+        try {
+            await Promise.resolve(svc()?.toggleWatch(currentTaskId));
+            notify.info(next ? 'Görev takip ediliyor.' : 'Takip bırakıldı.');
+        } catch (err) {
+            setIsWatched(!next);
+            notify.err(err?.message || 'Takip durumu güncellenemedi.');
+        }
+    };
+
+    const handleDuplicate = async () => {
+        try {
+            const result = await Promise.resolve(svc()?.transfer(currentTaskId, {
+                mode: 2, // Copy
+                targetProjectIds: task?.projectId ? [task.projectId] : [],
+                include: { subtasks: true, checklist: true, comments: false, files: true, keepAssignee: true, keepLinks: true, shiftDates: false },
+            }));
+            await queryClient.invalidateQueries({ queryKey: ['task-detail'] });
+            notify.ok('Görev çoğaltıldı.');
+            const newId = result?.createdTaskIds?.[0];
+            if (newId) setCurrentTaskId(newId);
+        } catch (err) {
+            notify.err(err?.message || 'Görev çoğaltılamadı.');
+        }
+    };
+
+    const handleArchive = async () => {
+        try {
+            await Promise.resolve(svc()?.updateStatus(currentTaskId, 4));
+            await queryClient.invalidateQueries({ queryKey: ['task-detail', currentTaskId] });
+            notify.info('Görev arşivlendi (Tamamlandı).');
+        } catch (err) {
+            notify.err(err?.message || 'Görev arşivlenemedi.');
+        }
+    };
+
+    const handleDelete = async () => {
+        if (!window.confirm('Bu görev ve tüm alt görevleri kalıcı olarak silinecek. Devam edilsin mi?')) return;
+        try {
+            await Promise.resolve(svc()?.delete(currentTaskId));
+            notify.info('Görev silindi.');
             guard.markClean();
             closeNow();
         } catch (err) {
-            window?.abp?.notify?.error?.(err?.message || 'Görev silinemedi.');
+            notify.err(err?.message || 'Görev silinemedi.');
         }
-    }, [currentTaskId, guard, closeNow]);
+    };
 
-    const handleAddFeature = useCallback(async (code) => {
+    /* ─── Özellik ekleme / kaldırma ─── */
+    const handleAddFeature = async (code) => {
         try {
             await features.addFeature(code);
             setActiveTabCode(code);
-            window?.abp?.notify?.success?.('Özellik başarıyla eklendi.');
+            notify.ok('Özellik başarıyla eklendi.');
         } catch (err) {
-            window?.abp?.notify?.error?.(err?.message || 'Özellik eklenemedi.');
+            notify.err(err?.message || 'Özellik eklenemedi.');
         }
-    }, [features]);
+    };
 
-    const content = isLoading ? (
+    const handleRemoveFeature = async (code) => {
+        try {
+            await features.removeFeature(code);
+            setActiveTabCode('general');
+            notify.info('Özellik görevden kaldırıldı.');
+        } catch (err) {
+            notify.err(err?.message || 'Özellik kaldırılamadı.');
+        }
+    };
+
+    /* ─── Transfer ─── */
+    const handleCreateProject = async (name) => {
+        /* DİKKAT: ProjectAppService'in namespace'i `Apya.Platform.Application.Projects`
+           (araya "Application" giriyor), bu yüzden ABP proxy'si
+           `apya.platform.application.projects.project` altında — `tasks.task` deseniyle
+           simetrik DEĞİL. İkinci yol, namespace ileride düzeltilirse diye yedek. */
+        const projectSvc = window?.apya?.platform?.application?.projects?.project
+            ?? window?.apya?.platform?.projects?.project;
+        if (!projectSvc?.create) throw new Error('Proje servisi yüklenmedi.');
+        const created = await Promise.resolve(projectSvc.create({
+            name, code: projectCodeFrom(name), currency: 'TRY',
+        }));
+        await queryClient.invalidateQueries({ queryKey: ['task-detail', 'projects-lookup'] });
+        notify.ok(`“${name}” projesi oluşturuldu.`);
+        return created?.id ?? created;
+    };
+
+    const handleTransferConfirm = async ({ mode, targetProjectIds, include }) => {
+        try {
+            const result = await Promise.resolve(svc()?.transfer(currentTaskId, {
+                mode: mode === 'move' ? 1 : 2,
+                targetProjectIds,
+                include,
+            }));
+            await queryClient.invalidateQueries({ queryKey: ['task-detail', currentTaskId] });
+            const names = targetProjectIds
+                .map((id) => projects.options.find((p) => p.value === id)?.label)
+                .filter(Boolean);
+            const copies = result?.createdTaskIds?.length ?? 0;
+            notify.ok(mode === 'move'
+                ? (copies
+                    ? `“${names[0]}” projesine taşındı, ${copies} projeye kopyalandı.`
+                    : `Görev “${names[0]}” projesine taşındı.`)
+                : (copies > 1 ? `${copies} projeye kopyalandı.` : `Kopya “${names[0]}” projesinde oluşturuldu.`));
+            setTransfer(null);
+        } catch (err) {
+            notify.err(err?.message || 'Transfer tamamlanamadı.');
+        }
+    };
+
+    /* ─── İçerik ─── */
+    const isGeneral = activeTabCode === 'general';
+
+    const tabContent = isGeneral ? (
+        <div className="grid grid-cols-[minmax(0,1fr)_330px] lt-1080:grid-cols-[minmax(0,1fr)] gap-5 items-start">
+            <TaskGeneralTabV3
+                task={task}
+                onFieldChange={form.setField}
+                descriptionValue={form.values.description}
+                checklist={checklist}
+                currentUserName={window?.abp?.currentUser?.name || window?.abp?.currentUser?.userName || 'Ben'}
+            />
+            <div className="w-full lt-1080:grid lt-1080:grid-cols-[repeat(auto-fit,minmax(280px,1fr))] lt-1080:gap-3.5">
+                <TaskSidePanelV3 task={task} nameById={assignees.nameById} />
+            </div>
+        </div>
+    ) : isUnbuilt(activeTabCode) ? (
+        <TaskUnbuiltTabV3
+            code={activeTabCode}
+            onRemoveFeature={handleRemoveFeature}
+            onOpenPicker={() => setPickerOpen(true)}
+            canRemove={!activeTabDef?.isCore}
+        />
+    ) : (
+        <Suspense fallback={<Skeleton className="h-48 w-full" />}>
+            {activeTabDef?.component ? (
+                <activeTabDef.component
+                    taskId={currentTaskId}
+                    task={task}
+                    onOpenSubtask={setOpenSubtaskId}
+                />
+            ) : (
+                <TaskUnbuiltTabV3
+                    code={activeTabCode}
+                    onRemoveFeature={handleRemoveFeature}
+                    onOpenPicker={() => setPickerOpen(true)}
+                    canRemove={!activeTabDef?.isCore}
+                />
+            )}
+        </Suspense>
+    );
+
+    const body = isLoading ? (
         <div className="p-8 space-y-4">
             <Skeleton className="h-8 w-1/3" />
             <Skeleton className="h-20 w-full" />
@@ -133,117 +335,176 @@ export function TaskDetailRootV3({
             <Button variant="ghost" onClick={() => refetch()}>Tekrar Dene</Button>
         </div>
     ) : (
-        <div className="flex flex-col min-h-0 bg-surface-base">
-            {/* V3 Header */}
+        <div className="flex flex-col flex-1 min-h-0 bg-surface-base">
             <TaskDetailHeaderV3
                 task={task}
+                presentation={presentation}
                 onClose={requestClose}
                 isFullscreen={fullscreen}
                 onToggleFullscreen={toggleFullscreen}
-                presentation={presentation}
                 onFieldChange={form.setField}
                 statusValue={form.values.status}
                 priorityValue={form.values.priority}
+                titleValue={task?.title}
+                isPrivateValue={form.values.isPrivate}
+                isFavorite={isFavorite}
+                onToggleFavorite={handleToggleFavorite}
+                isWatched={isWatched}
+                onToggleWatch={handleToggleWatch}
+                onDuplicate={handleDuplicate}
+                onArchive={handleArchive}
+                onDelete={handleDelete}
+                onOpenTransfer={(mode) => setTransfer({ mode })}
+                onSaveAsTemplate={() => notify.info('Şablon olarak kaydetme yakında.')}
+                onConvertToSubtask={() => notify.info('Alt göreve dönüştürme yakında.')}
+                onExportPdf={() => notify.info('PDF dışa aktarma yakında.')}
             />
 
-            <div className="overflow-y-auto max-h-[85vh] custom-scrollbar">
-                {/* 4-Kolon Metadata Grid */}
+            <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar">
                 <TaskMetadataGridV3
                     task={task}
                     assigneeOptions={assignees.options}
                     projectOptions={projects.options}
                     onFieldChange={form.setField}
                     statusValue={form.values.status}
-                    priorityValue={form.values.priority}
                     assigneeValue={form.values.assigneeId}
                     projectValue={form.values.projectId}
+                    dueDateValue={form.values.dueDate}
+                    startDateValue={form.values.startDate}
+                    tagsValue={form.values.tagNames}
+                    progressPercent={progressPercent}
+                    progressNote={`${clDone}/${clItems.length} madde`}
+                    onOpenTransfer={(mode) => setTransfer({ mode })}
                 />
 
-                {/* Sekmeler & Özellik Ekleme Barı */}
-                <div className="border-b border-subtle px-6 bg-surface-base">
-                    <TaskFeatureNavbarV3
-                        activeTab={activeTabCode}
-                        onTabChange={setActiveTabCode}
-                        visibleTabs={visibleTabs}
-                        assignedCodes={features.assignedCodes}
-                        onAddFeature={handleAddFeature}
-                        task={task}
-                    />
-                </div>
-
-                {/* Ana İçerik Alanı */}
-                <div className="p-6">
-                    {activeTabCode === 'general' ? (
-                        <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6 items-start">
-                            {/* Sol Kolon: Zengin Açıklama, Kontrol Listesi, Yorumlar */}
-                            <div className="min-w-0 space-y-6">
-                                <TaskGeneralTabV3 
-                                    task={task} 
-                                    onFieldChange={form.setField}
-                                />
-                            </div>
-                            
-                            {/* Sağ Kolon: Detaylar & Hızlı İşlemler */}
-                            <div className="w-full shrink-0">
-                                <TaskSidePanelV3
-                                    task={task}
-                                    onDelete={handleDelete}
-                                    nameById={assignees.nameById}
-                                />
-                            </div>
-                        </div>
-                    ) : (
-                        <Suspense fallback={<Skeleton className="h-48 w-full" />}>
-                            {activeTabDef?.component ? (
-                                <activeTabDef.component 
-                                    taskId={currentTaskId} 
-                                    task={task} 
-                                    onOpenSubtask={switchToTask} 
-                                />
-                            ) : (
-                                <div className="text-center py-12 text-text-tertiary border border-dashed border-subtle rounded-xl">
-                                    <i className="fa-solid fa-person-digging text-4xl mb-4 opacity-50" />
-                                    <p>Bu sekme yapım aşamasında.</p>
-                                </div>
-                            )}
-                        </Suspense>
+                <div className="flex items-stretch min-w-0">
+                    {presentation === 'page' && (
+                        <TaskFeatureRailV3
+                            activeTab={activeTabCode}
+                            onTabChange={setActiveTabCode}
+                            orderedTabs={tabOrder.orderedTabs}
+                            draggingCode={tabOrder.draggingCode}
+                            onDragStart={tabOrder.handleDragStart}
+                            onDragEnd={tabOrder.handleDragEnd}
+                            onReorderTo={tabOrder.reorderTo}
+                            onReorderDrop={() => notify.info('Sekme sırası güncellendi.')}
+                            onOpenPicker={() => setPickerOpen(true)}
+                            counts={counts}
+                        />
                     )}
+
+                    <div className="flex flex-col min-w-0 flex-1">
+                        {/* Tam sayfada üst çubuk gizlenir, yerini sol ray alır — ama
+                            ≤860px'te ray gizlendiği için çubuk geri gelir. */}
+                        <div className={presentation === 'page' ? 'gte-861:hidden' : ''}>
+                            <TaskFeatureNavbarV3
+                                activeTab={activeTabCode}
+                                onTabChange={setActiveTabCode}
+                                orderedTabs={tabOrder.orderedTabs}
+                                draggingCode={tabOrder.draggingCode}
+                                onDragStart={tabOrder.handleDragStart}
+                                onDragEnd={tabOrder.handleDragEnd}
+                                onReorderTo={tabOrder.reorderTo}
+                                onReorderDrop={() => notify.info('Sekme sırası güncellendi.')}
+                                onOpenPicker={() => setPickerOpen(true)}
+                                counts={counts}
+                                isDirty={form.isDirty}
+                            />
+                        </div>
+
+                        <div className="flex-1 min-h-[420px] px-6 py-[22px] lt-860:px-4 bg-surface-raised">
+                            {tabContent}
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            {/* V3 Footer with Save/Cancel */}
             <TaskDetailFooterV3
                 lastSavedAt={task?.lastModificationTime}
-                isDirty={guard.isDirty}
+                isDirty={form.isDirty}
                 isSaving={isSaving}
+                justSaved={justSaved}
                 onCancel={requestClose}
                 onSave={doSave}
             />
         </div>
     );
 
+    const overlays = (
+        <>
+            <FeaturePickerV3
+                open={pickerOpen}
+                onClose={() => setPickerOpen(false)}
+                assignedCodes={features.assignedCodes}
+                onAddFeature={handleAddFeature}
+                onGoToTab={setActiveTabCode}
+            />
+            <TaskTransferDialogV3
+                open={Boolean(transfer)}
+                mode={transfer?.mode ?? 'move'}
+                onClose={() => setTransfer(null)}
+                onConfirm={handleTransferConfirm}
+                projectOptions={projects.options}
+                currentProjectId={form.values.projectId}
+                counts={counts}
+                onCreateProject={handleCreateProject}
+            />
+            {openSubtaskId && (
+                <SubtaskSheetV3
+                    subtaskId={openSubtaskId}
+                    parentCode={task?.code}
+                    onClose={() => setOpenSubtaskId(null)}
+                    onOpenFull={(id) => { setOpenSubtaskId(null); (switchToTask ?? setCurrentTaskId)(id); }}
+                    onDeleted={() => queryClient.invalidateQueries({ queryKey: ['task-detail', currentTaskId] })}
+                    currentUserName={window?.abp?.currentUser?.name || window?.abp?.currentUser?.userName || 'Ben'}
+                />
+            )}
+        </>
+    );
+
     if (presentation === 'page') {
         return (
-            <div className="w-full max-w-6xl mx-auto my-6 rounded-2xl border border-subtle bg-surface-base shadow-sm overflow-hidden">
-                {content}
-            </div>
+            <>
+                <div className="flex flex-col w-full min-h-[calc(100vh-54px)] border-y border-subtle bg-surface-base">
+                    {body}
+                </div>
+                {overlays}
+            </>
         );
     }
 
     return (
-        <Dialog
-            open={true}
-            onOpenChange={(next) => { if (!next) requestClose(); }}
-        >
-            <DialogContent
-                title={task?.title ? `Görev Detayı: ${task.title}` : 'Görev Detayı'}
-                fullscreen={fullscreen}
-                className="max-w-6xl p-0 overflow-hidden rounded-2xl border border-subtle shadow-2xl bg-surface-base"
-                onInteractOutside={(e) => { e.preventDefault(); requestClose(); }}
-                onEscapeKeyDown={(e) => { e.preventDefault(); requestClose(); }}
-            >
-                {content}
-            </DialogContent>
-        </Dialog>
+        <>
+            <Dialog open onOpenChange={(next) => { if (!next) requestClose(); }}>
+                <DialogContent
+                    title={task?.title ? `Görev Detayı: ${task.title}` : 'Görev Detayı'}
+                    fullscreen={fullscreen}
+                    className={fullscreen
+                        ? 'p-0 rounded-xl border border-default shadow-xl'
+                        : 'w-[min(96vw,1180px)] max-w-none p-0 rounded-[18px] border border-default shadow-xl'}
+                    /* Özellik seçici / transfer diyaloğu / alt görev paneli createPortal ile
+                       body'ye basılıyor; Radix'in dismissable-layer yığınında olmadıkları için
+                       içlerindeki HER tıklama "dışarı tıklama" sayılıp ana modalı kapatıyordu
+                       (alt görev panelinde "Tamam"a basmak görev detayını kapatıyordu).
+                       Üstte açık bir katman varsa dışarı tıklama yok sayılır. */
+                    onInteractOutside={(e) => {
+                        e.preventDefault();
+                        if (pickerOpen || transfer || openSubtaskId) return;
+                        if (e.target?.closest?.('[data-apya-overlay]')) return;
+                        requestClose();
+                    }}
+                    onEscapeKeyDown={(e) => {
+                        /* Üstte açık bir katman varsa modal kapanmasın — o katman
+                           kendi Esc'ini zaten işliyor. */
+                        if (pickerOpen || transfer || openSubtaskId) { e.preventDefault(); return; }
+                        e.preventDefault();
+                        requestClose();
+                    }}
+                >
+                    {body}
+                </DialogContent>
+            </Dialog>
+            {overlays}
+        </>
     );
 }

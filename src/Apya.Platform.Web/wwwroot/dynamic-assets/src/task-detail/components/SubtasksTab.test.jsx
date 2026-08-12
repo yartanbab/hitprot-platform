@@ -7,8 +7,9 @@ import { SubtasksTab } from './SubtasksTab';
 const TASK = {
     id: 'parent-1',
     subTasks: [
-        { id: 'sub-1', title: 'İlk alt görev', status: 0 },
-        { id: 'sub-2', title: 'İkinci alt görev', status: 2 },
+        { id: 'sub-1', title: 'İlk alt görev', status: 0, code: 'GRV-11' },
+        { id: 'sub-2', title: 'İkinci alt görev', status: 2, code: 'GRV-12' },
+        { id: 'sub-3', title: 'Üçüncü alt görev', status: 4, code: 'GRV-13' },
     ],
 };
 
@@ -26,8 +27,9 @@ beforeEach(() => {
         platform: {
             tasks: {
                 task: {
-                    create: vi.fn(() => Promise.resolve('sub-3')),
+                    create: vi.fn(() => Promise.resolve('sub-9')),
                     delete: vi.fn(() => Promise.resolve()),
+                    updateStatus: vi.fn(() => Promise.resolve()),
                 },
             },
         },
@@ -66,25 +68,30 @@ describe('SubtasksTab', () => {
         expect(dto.parentTaskId).toBe('parent-1');
     });
 
-    it('sil butonuna basinca hemen delete cagirmaz, once onay ister', () => {
-        renderWithQueryClient(<SubtasksTab taskId="parent-1" task={TASK} onOpenSubtask={vi.fn()} />);
-        fireEvent.click(screen.getAllByRole('button', { name: /sil/i })[0]);
-        expect(window.apya.platform.tasks.task.delete).not.toHaveBeenCalled();
-        expect(screen.getByText('Emin misiniz?')).toBeInTheDocument();
+    /* V4: alt görev SİLME bu sekmeden kaldırıldı, alt görev paneline taşındı
+       (tasarım satırı: checkbox · kod · başlık · durum · tarih · avatar · ›).
+       Onaylı silme akışı artık SubtaskSheetV3'te; buradaki 3 eski test yerine
+       tasarımın yeni davranış kuralları test ediliyor. */
+
+    it('satirin herhangi bir yerine tiklayinca alt gorev paneli acilir', () => {
+        const onOpenSubtask = vi.fn();
+        renderWithQueryClient(<SubtasksTab taskId="parent-1" task={TASK} onOpenSubtask={onOpenSubtask} />);
+        // başlık değil, satırın kendisi (kod hücresi üzerinden)
+        fireEvent.click(screen.getByText('GRV-11'));
+        expect(onOpenSubtask).toHaveBeenCalledWith('sub-1', 'İlk alt görev');
     });
 
-    it('onay sonrasi Evet, sil ile delete cagirir', async () => {
-        renderWithQueryClient(<SubtasksTab taskId="parent-1" task={TASK} onOpenSubtask={vi.fn()} />);
-        fireEvent.click(screen.getAllByRole('button', { name: /sil/i })[0]);
-        fireEvent.click(screen.getByRole('button', { name: 'Evet, sil' }));
-        await waitFor(() => expect(window.apya.platform.tasks.task.delete).toHaveBeenCalledWith('sub-1'));
+    it('checkbox tiklamasi paneli ACMAZ, sadece durumu degistirir', async () => {
+        const onOpenSubtask = vi.fn();
+        renderWithQueryClient(<SubtasksTab taskId="parent-1" task={TASK} onOpenSubtask={onOpenSubtask} />);
+        fireEvent.click(screen.getByRole('button', { name: /İlk alt görev tamamlandı işaretle/i }));
+        await waitFor(() => expect(window.apya.platform.tasks.task.updateStatus).toHaveBeenCalledWith('sub-1', 4));
+        expect(onOpenSubtask).not.toHaveBeenCalled();
     });
 
-    it('Vazgec ile onay iptal edilir, delete cagrilmaz', () => {
+    it('tamamlanmis alt gorevin checkboxi geri Bekliyor yapar', async () => {
         renderWithQueryClient(<SubtasksTab taskId="parent-1" task={TASK} onOpenSubtask={vi.fn()} />);
-        fireEvent.click(screen.getAllByRole('button', { name: /sil/i })[0]);
-        fireEvent.click(screen.getByRole('button', { name: 'Vazgeç' }));
-        expect(window.apya.platform.tasks.task.delete).not.toHaveBeenCalled();
-        expect(screen.queryByText('Emin misiniz?')).not.toBeInTheDocument();
+        fireEvent.click(screen.getByRole('button', { name: /Üçüncü alt görev tamamlandı işaretle/i }));
+        await waitFor(() => expect(window.apya.platform.tasks.task.updateStatus).toHaveBeenCalledWith('sub-3', 1));
     });
 });
