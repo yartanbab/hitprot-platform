@@ -37,6 +37,7 @@ using Volo.Abp.Autofac;
 using Volo.Abp.Mapperly;
 using Volo.Abp.FeatureManagement;
 using Volo.Abp.Identity.Web;
+using Volo.Abp.AspNetCore.Mvc.UI.MultiTenancy.Localization;
 using Volo.Abp.Localization;
 using Volo.Abp.Modularity;
 using Volo.Abp.PermissionManagement.Web;
@@ -199,6 +200,7 @@ public class PlatformWebModule : AbpModule
         ConfigureUrls(configuration);
         ConfigureBundles(context);
         ConfigureVirtualFileSystem(hostingEnvironment);
+        ConfigureMultiTenancyLocalization();
         ConfigureNavigationServices();
         ConfigureAutoApiControllers();
         ConfigureSwaggerServices(context.Services);
@@ -325,6 +327,19 @@ public class PlatformWebModule : AbpModule
                 options.FileSets.ReplaceEmbeddedByPhysical<PlatformWebModule>(hostingEnvironment.ContentRootPath);
             });
         }
+    }
+
+    // Kiracı seçici ("MÜŞTERİ / Seçili değil / değiştir") ABP'nin AYRI bir kaynağından gelir;
+    // Domain.Shared'daki AbpTenantManagementResource override'ı buraya ulaşmaz. JSON dosyası
+    // Domain.Shared'ın sanal dosya sisteminde. Bkz. PlatformDomainSharedModule.
+    private void ConfigureMultiTenancyLocalization()
+    {
+        Configure<AbpLocalizationOptions>(options =>
+        {
+            options.Resources
+                .Get<AbpUiMultiTenancyResource>()
+                .AddVirtualJson("/Localization/MultiTenancyUi");
+        });
     }
 
     private void ConfigureNavigationServices()
