@@ -4506,6 +4506,156 @@ namespace Apya.Platform.Migrations
                     b.ToTable("AppTaskTagAssignments", (string)null);
                 });
 
+            modelBuilder.Entity("Apya.Platform.Tasks.TaskTemplate", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ConcurrencyStamp")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)")
+                        .HasColumnName("ConcurrencyStamp");
+
+                    b.Property<DateTime>("CreationTime")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("CreationTime");
+
+                    b.Property<Guid?>("CreatorId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("CreatorId");
+
+                    b.Property<Guid?>("DeleterId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("DeleterId");
+
+                    b.Property<DateTime?>("DeletionTime")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("DeletionTime");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)");
+
+                    b.Property<decimal?>("EstimatedHours")
+                        .HasColumnType("numeric");
+
+                    b.Property<string>("ExtraProperties")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("ExtraProperties");
+
+                    b.Property<bool>("IsDeleted")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("IsDeleted");
+
+                    b.Property<DateTime?>("LastModificationTime")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("LastModificationTime");
+
+                    b.Property<Guid?>("LastModifierId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("LastModifierId");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.Property<int>("Priority")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("TaskDescription")
+                        .HasColumnType("text");
+
+                    b.Property<string>("TaskTitle")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<string>("TaskType")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<Guid?>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("TenantId");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TenantId", "Name");
+
+                    b.ToTable("AppTaskTemplates", (string)null);
+                });
+
+            modelBuilder.Entity("Apya.Platform.Tasks.TaskTemplateFeature", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("FeatureCode")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<Guid>("TaskTemplateId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TaskTemplateId", "FeatureCode")
+                        .IsUnique();
+
+                    b.ToTable("AppTaskTemplateFeatures", (string)null);
+                });
+
+            modelBuilder.Entity("Apya.Platform.Tasks.TaskTemplateItem", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Order")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("TaskTemplateId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TaskTemplateId", "Order");
+
+                    b.ToTable("AppTaskTemplateItems", (string)null);
+                });
+
+            modelBuilder.Entity("Apya.Platform.Tasks.TaskTemplateTag", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("TagName")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<Guid>("TaskTemplateId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TaskTemplateId", "TagName")
+                        .IsUnique();
+
+                    b.ToTable("AppTaskTemplateTags", (string)null);
+                });
+
             modelBuilder.Entity("Apya.Platform.Tasks.TaskTimeLog", b =>
                 {
                     b.Property<Guid>("Id")
@@ -6908,6 +7058,33 @@ namespace Apya.Platform.Migrations
                     b.Navigation("ParentTask");
                 });
 
+            modelBuilder.Entity("Apya.Platform.Tasks.TaskTemplateFeature", b =>
+                {
+                    b.HasOne("Apya.Platform.Tasks.TaskTemplate", null)
+                        .WithMany("Features")
+                        .HasForeignKey("TaskTemplateId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Apya.Platform.Tasks.TaskTemplateItem", b =>
+                {
+                    b.HasOne("Apya.Platform.Tasks.TaskTemplate", null)
+                        .WithMany("Items")
+                        .HasForeignKey("TaskTemplateId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Apya.Platform.Tasks.TaskTemplateTag", b =>
+                {
+                    b.HasOne("Apya.Platform.Tasks.TaskTemplate", null)
+                        .WithMany("Tags")
+                        .HasForeignKey("TaskTemplateId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("Apya.Platform.Tenants.PlatformPackageFeature", b =>
                 {
                     b.HasOne("Apya.Platform.Tenants.PlatformPackage", null)
@@ -7123,6 +7300,15 @@ namespace Apya.Platform.Migrations
                     b.Navigation("Comments");
 
                     b.Navigation("SubTasks");
+                });
+
+            modelBuilder.Entity("Apya.Platform.Tasks.TaskTemplate", b =>
+                {
+                    b.Navigation("Features");
+
+                    b.Navigation("Items");
+
+                    b.Navigation("Tags");
                 });
 
             modelBuilder.Entity("Apya.Platform.Tenants.PlatformPackage", b =>
