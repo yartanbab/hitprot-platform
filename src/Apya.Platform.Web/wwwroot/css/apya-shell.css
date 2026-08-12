@@ -303,10 +303,14 @@ h1, h2, h3, h4, h5, h6 {
     flex: 1 1 auto;
     min-height: 0;
 }
-/* Yalnız SON kart uzar → çok kartlı sayfalarda üsttekiler doğal yükseklikte kalır. */
+/* Yalnız SON kart uzar → çok kartlı sayfalarda üsttekiler doğal yükseklikte kalır.
+   mb-3 sıfırlanır: alt boşluk yalnız .lpx-content dolgusundan gelsin ki dört
+   yandaki boşluk eşit (28px) olsun — aksi halde altta 28+24=52px oluyordu.
+   !important şart: Bootstrap'in mb-3 utility'si de !important taşıyor. */
 .apya-page > .card:last-of-type {
     flex: 1 1 auto;
     min-height: 0;
+    margin-bottom: 0 !important;
 }
 .apya-page > .card:last-of-type > .card-body {
     display: flex;

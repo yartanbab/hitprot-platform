@@ -1524,17 +1524,31 @@ html.js .lpx-user-profile .user-full-name {
 }
 
 /* ============================================================================
-   İÇERİK ÜST BOŞLUĞU (2026-07-29) — sayfa başlıkları header'a taşındıktan sonra
-   LeptonX'in içerik dolgusu gereğinden fazla kalıyordu: sayfa bileşenleri
-   ekranın aşağısına itiliyor, ilk ekranda az içerik görünüyordu.
-   Tema kuralı (canlı bundle'dan doğrulandı):
+   İÇERİK BOŞLUĞU (2026-07-29, 2026-08-12'de EŞİTLENDİ) — sayfa başlıkları
+   header'a taşındıktan sonra LeptonX'in içerik dolgusu hem fazla hem asimetrikti.
+   Tema kuralı (canlı bundle'dan doğrulandı, 1em = 14px):
        .lpx-content-container .lpx-content { padding: 1.25em 2em 3em }
-   Yalnız ÜST dolgu kısılıyor; yanlar ve alt temada kalıyor. Mobil (<768px)
-   temanın kendi 3em üst dolgusunu kullanıyor (sabit başlığı temizlemek için) —
-   ona dokunulmuyor.
+   → üst 14px (bizim eski override'ımız), yanlar 28px, alt 42px; kartın kendi
+   mb-3'ü ile birlikte altta 66px'lik asimetrik boşluk oluşuyordu.
+   Artık dört yanda da 2em (28px). Yan dolgu değişmediği için header'daki sayfa
+   başlığının 28px hizası da korunur. Mobil (<768px) temanın kendi 3em üst
+   dolgusunu kullanıyor (sabit başlığı temizlemek için) — ona dokunulmuyor.
    ============================================================================ */
 @media (min-width: 768px) {
     .lpx-content-container .lpx-content {
-        padding-top: 14px;
+        padding: 2em;
     }
+}
+
+/* Tema .lpx-content'e min-height: calc(100vh - 64px) veriyor; bizim header'ımız
+   57px + 1px kenarlık = 58px olduğundan içerik viewport'un 6px yukarısında
+   bitiyor, alt boşluk diğerlerinden 6px fazla çıkıyordu. Konteyneri flex kolon
+   yapıp kalan yüksekliği içeriğe veriyoruz → header yüksekliği değişse de hesap
+   kendiliğinden doğru kalır (konteynerin yalnız 2 çocuğu var: sticky topbar + içerik). */
+.lpx-content-container {
+    display: flex;
+    flex-direction: column;
+}
+.lpx-content-container > .lpx-content {
+    flex: 1 1 auto;
 }
