@@ -273,16 +273,64 @@ h1, h2, h3, h4, h5, h6 {
 /* ----------------------------------------------------------------------------
    9) PAGE LAYOUT UTILITIES
    Üç sayfa şablonu:
-     .apya-page         → liste/dashboard sayfaları (ultra-geniş ekranda tablo
-                           okunabilirliği için 1400px'te ortalanır)
+     .apya-page         → liste/dashboard sayfaları (içerik alanının tamamını
+                           kullanır + dikeyde dibe kadar uzar)
      .apya-page--narrow → tek kolon "odak" sayfaları (ayarlar, bildirimler,
                            entegrasyon kartları)
      (full-bleed sayfalar — kanban, form designer, React dashboard —
       wrapper KULLANMAZ, içerik alanının tamamına yayılır)
    ---------------------------------------------------------------------------- */
 .apya-page {
-    max-width: 1400px;
-    margin-inline: auto;
+    /* Eskiden max-width:1400px + margin-inline:auto ile ortalanıyordu; 1920px
+       ekranda yanlarda 92px×2 ölü alan bırakıyordu (kullanıcı kararı 2026-08-12:
+       tam genişlik). Odak sayfaları .apya-page--narrow ile 860px'te ortalı kalır. */
+    max-width: none;
+}
+
+/* --- Dikey doldurma: son kart içerik alanının dibine kadar uzar ---
+   .lpx-content viewport'u zaten dolduruyordu ama içindeki kart doğal
+   yüksekliğinde kalıp altta gri ölü alan bırakıyordu (1920×1080'de ~385px).
+   Çözüm: içerik kolonundan DataTables kaydırma gövdesine kadar kesintisiz flex
+   zinciri. Her halkada min-height:0 ŞART — flex öğesinin varsayılan
+   min-height:auto değeri esnemeyi kilitler ve zincir sessizce kopar. */
+.lpx-content:has(> .apya-page) {
+    display: flex;
+    flex-direction: column;
+}
+.lpx-content:has(> .apya-page) > .apya-page {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
+}
+/* Yalnız SON kart uzar → çok kartlı sayfalarda üsttekiler doğal yükseklikte kalır.
+   mb-3 sıfırlanır: alt boşluk yalnız .lpx-content dolgusundan gelsin ki dört
+   yandaki boşluk eşit (28px) olsun — aksi halde altta 28+24=52px oluyordu.
+   !important şart: Bootstrap'in mb-3 utility'si de !important taşıyor. */
+.apya-page > .card:last-of-type {
+    flex: 1 1 auto;
+    min-height: 0;
+    margin-bottom: 0 !important;
+}
+.apya-page > .card:last-of-type > .card-body {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
+}
+/* Kart içi tablo zinciri: görünüm paneli → DataTables kabı → kaydırma alanı.
+   Gizli görünümler (.d-none: kanban/zaman çizelgesi sekmeleri) dışarıda kalır. */
+.apya-page .card-body > .view-panel:not(.d-none),
+.apya-page .view-panel > .dt-container,
+.apya-page .dt-container > .dt-scroll {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
+}
+/* Kaydırma gövdesi büyür; sayfalama satırı (.dataTable_footer) kartın dibinde kalır. */
+.apya-page .dt-scroll > .dt-scroll-body {
+    flex: 1 1 auto;
 }
 
 .apya-page--narrow {
@@ -556,7 +604,8 @@ h1, h2, h3, h4, h5, h6 {
    Fallback: toolbar'sız layout'ta dark-mode.js floating buton ekler.
    ---------------------------------------------------------------------------- */
 .apya-theme-toggle,
-.apya-density-toggle {
+.apya-density-toggle,
+.apya-sidebar-mode-toggle {
     background: transparent;
     border: none;
     padding: 0.4rem 0.6rem;
@@ -569,9 +618,29 @@ h1, h2, h3, h4, h5, h6 {
                 background var(--apya-motion-base) ease;
 }
 .apya-theme-toggle:hover,
-.apya-density-toggle:hover {
+.apya-density-toggle:hover,
+.apya-sidebar-mode-toggle:hover {
     color: var(--apya-accent-500);
     background: var(--apya-surface-sunken);
+}
+
+/* Kenar çubuğu modu menüsü — aktif moddaki onay işareti yalnız o satırda. */
+.apya-sidebar-mode-menu .dropdown-item {
+    display: flex;
+    align-items: center;
+}
+.apya-sidebar-mode-menu .apya-sidebar-mode-check {
+    visibility: hidden;
+    color: var(--apya-accent-500);
+}
+.apya-sidebar-mode-menu .dropdown-item.active .apya-sidebar-mode-check {
+    visibility: visible;
+}
+/* Aktif satır zeminini Bootstrap accent'ine boyamasın — onay işareti yeterli. */
+.apya-sidebar-mode-menu .dropdown-item.active {
+    background: transparent;
+    color: inherit;
+    font-weight: 600;
 }
 
 /* Fallback floating (yalnız header toolbar yoksa). */

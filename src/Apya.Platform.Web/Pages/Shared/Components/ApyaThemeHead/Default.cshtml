@@ -38,13 +38,24 @@
             try { density = localStorage.getItem('apya-density') || 'cozy'; } catch (e) { }
             html.setAttribute('data-density', density);
 
-            // Sidebar daraltma — anahtar LeptonX'in KENDİSİNİN yazdığı 'lpx:side-menu-state'
-            // ('1' = daraltılmış). Tema tıklamada kaydeder ama yüklemede geri UYGULAMAZ
-            // (Lite gap) → pre-paint burada attribute'la uygulanır; class senkronu
-            // sidebar-toggle.js'te. CSS: apya-theme-bridge.css "SIDEBAR COLLAPSE" bölümü.
-            var side = null;
-            try { side = localStorage.getItem('lpx:side-menu-state'); } catch (e) { }
-            if (side === '1' && !isAuthPage) { html.setAttribute('data-sidebar', 'collapsed'); }
+            // Kenar çubuğu modu — sabit (yok) / dinamik (collapsed) / kapalı (hidden).
+            // Kayıtlı tercih kendi anahtarımızda ('apya-sidebar-mode'); geriye dönük
+            // uyum için LeptonX'in kendi yazdığı 'lpx:side-menu-state' ('1'=ray)
+            // yedek olarak okunur. Tema bu durumu yüklemede geri UYGULAMAZ (Lite gap)
+            // → pre-paint burada attribute'la uygulanır; class senkronu ve mod
+            // seçicisi sidebar-toggle.js'te. CSS: apya-theme-bridge.css
+            // "SIDEBAR COLLAPSE" bölümü.
+            if (!isAuthPage) {
+                var mode = null;
+                try { mode = localStorage.getItem('apya-sidebar-mode'); } catch (e) { }
+                if (!mode) {
+                    var side = null;
+                    try { side = localStorage.getItem('lpx:side-menu-state'); } catch (e) { }
+                    mode = (side === '1') ? 'dynamic' : 'pinned';
+                }
+                if (mode === 'dynamic') { html.setAttribute('data-sidebar', 'collapsed'); }
+                else if (mode === 'hidden') { html.setAttribute('data-sidebar', 'hidden'); }
+            }
         } catch (e) { /* sessizce devam */ }
     })();
 </script>

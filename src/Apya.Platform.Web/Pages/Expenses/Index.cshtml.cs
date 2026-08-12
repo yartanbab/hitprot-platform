@@ -1,9 +1,12 @@
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Volo.Abp.AspNetCore.Mvc.UI.RazorPages;
+using Microsoft.AspNetCore.Authorization;
+using Apya.Platform.Permissions;
 
 namespace Apya.Platform.Web.Pages.Expenses;
 
+[Authorize(PlatformPermissions.Expenses.Default)]
 public class IndexModel : AbpPageModel
 {
     public virtual Task<IActionResult> OnGetAsync()

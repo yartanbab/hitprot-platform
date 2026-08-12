@@ -10,6 +10,7 @@ using Volo.Abp.OpenIddict;
 using Volo.Abp.PermissionManagement;
 using Volo.Abp.SettingManagement;
 using Volo.Abp.TenantManagement;
+using Volo.Abp.TenantManagement.Localization;
 using Volo.Abp.Validation.Localization;
 using Volo.Abp.VirtualFileSystem;
 
@@ -48,6 +49,13 @@ public class PlatformDomainSharedModule : AbpModule
                 .AddVirtualJson("/Localization/Platform");
 
             options.DefaultResourceType = typeof(PlatformResource);
+
+            // ABP'nin TR çevirisinde kiracı = "Müşteri" ("Müşteri yönetimi", "Müşteriler");
+            // platformda "Müşteri/Cari" ayrı bir domain (Customers) olduğu için karışıyordu.
+            // Sonradan eklenen contributor öncekini ezer → yalnızca aşağıdaki anahtarlar değişir.
+            options.Resources
+                .Get<AbpTenantManagementResource>()
+                .AddVirtualJson("/Localization/TenantManagement");
         });
 
         Configure<AbpExceptionLocalizationOptions>(options =>
