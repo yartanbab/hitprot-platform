@@ -23,7 +23,7 @@ const n = {
   } catch {
     return {};
   }
-}, x = "w-full rounded-xl border border-default bg-surface-raised px-3 py-2.5 text-sm text-text-primary placeholder:text-text-tertiary focus:border-focus focus:outline-none focus:ring-2 focus:ring-accent-soft";
+}, x = "w-full rounded-xl border border-default bg-surface-raised px-3 py-2.5 text-base text-text-primary placeholder:text-text-tertiary focus:border-focus focus:outline-none focus:ring-2 focus:ring-accent-soft";
 function D({ block: l, value: r, onChange: y }) {
   const o = f(l.settings), c = (t) => y(l.id, t);
   switch (l.type) {
@@ -57,9 +57,9 @@ function D({ block: l, value: r, onChange: y }) {
       ] }, m)) });
     }
     case n.Rating:
-      return /* @__PURE__ */ e.jsx("div", { className: "flex gap-1", children: [1, 2, 3, 4, 5].map((t) => /* @__PURE__ */ e.jsx("button", { type: "button", onClick: () => c(t), className: `text-3xl ${(r || 0) >= t ? "text-warning" : "text-text-tertiary"}`, children: "★" }, t)) });
+      return /* @__PURE__ */ e.jsx("div", { className: "flex gap-1", children: [1, 2, 3, 4, 5].map((t) => /* @__PURE__ */ e.jsx("button", { type: "button", onClick: () => c(t), className: `flex h-11 w-11 items-center justify-center text-3xl ${(r || 0) >= t ? "text-warning" : "text-text-tertiary"}`, children: "★" }, t)) });
     case n.Nps:
-      return /* @__PURE__ */ e.jsx("div", { className: "flex flex-wrap gap-1.5", children: Array.from({ length: 11 }, (t, a) => /* @__PURE__ */ e.jsx("button", { type: "button", onClick: () => c(a), className: `h-9 w-9 rounded-lg border text-sm font-medium ${r === a ? "border-focus bg-accent text-white" : "border-default text-text-secondary"}`, children: a }, a)) });
+      return /* @__PURE__ */ e.jsx("div", { className: "flex flex-wrap gap-1.5", children: Array.from({ length: 11 }, (t, a) => /* @__PURE__ */ e.jsx("button", { type: "button", onClick: () => c(a), className: `h-11 w-11 rounded-lg border text-sm font-medium ${r === a ? "border-focus bg-accent text-white" : "border-default text-text-secondary"}`, children: a }, a)) });
     case n.Address:
       return /* @__PURE__ */ e.jsx("div", { className: "grid grid-cols-1 gap-2 sm:grid-cols-2", children: ["line", "district", "city", "zip"].map((t, a) => /* @__PURE__ */ e.jsx("input", { className: x, placeholder: ["Adres", "İlçe", "İl", "Posta kodu"][a], value: (r || {})[t] || "", onChange: (i) => c({ ...r || {}, [t]: i.target.value }) }, t)) });
     case n.FilePicker:

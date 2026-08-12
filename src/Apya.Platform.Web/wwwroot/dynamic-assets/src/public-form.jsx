@@ -14,8 +14,11 @@ const LAYOUT_ONLY = new Set([BT.SectionHeader, BT.Paragraph]);
 
 const parse = (j) => { try { return typeof j === 'string' ? JSON.parse(j) : (j || {}); } catch { return {}; } };
 
+/* text-base (16px), text-sm (14px) DEĞİL: misafir kullanıcı bu formu iOS Safari'de
+   dolduruyor, 16px altı input odaklanınca sayfayı otomatik büyütüyordu
+   (2026-08 tasarım denetimi — herkese açık form standardı en yüksek olmalı). */
 const fieldCls =
-  'w-full rounded-xl border border-default bg-surface-raised px-3 py-2.5 text-sm text-text-primary placeholder:text-text-tertiary focus:border-focus focus:outline-none focus:ring-2 focus:ring-accent-soft';
+  'w-full rounded-xl border border-default bg-surface-raised px-3 py-2.5 text-base text-text-primary placeholder:text-text-tertiary focus:border-focus focus:outline-none focus:ring-2 focus:ring-accent-soft';
 
 /* one answerable field */
 function Field({ block, value, onChange }) {
@@ -70,7 +73,7 @@ function Field({ block, value, onChange }) {
       return (
         <div className="flex gap-1">
           {[1, 2, 3, 4, 5].map((n) => (
-            <button type="button" key={n} onClick={() => set(n)} className={`text-3xl ${(value || 0) >= n ? 'text-warning' : 'text-text-tertiary'}`}>★</button>
+            <button type="button" key={n} onClick={() => set(n)} className={`flex h-11 w-11 items-center justify-center text-3xl ${(value || 0) >= n ? 'text-warning' : 'text-text-tertiary'}`}>★</button>
           ))}
         </div>
       );
@@ -78,7 +81,7 @@ function Field({ block, value, onChange }) {
       return (
         <div className="flex flex-wrap gap-1.5">
           {Array.from({ length: 11 }, (_, i) => (
-            <button type="button" key={i} onClick={() => set(i)} className={`h-9 w-9 rounded-lg border text-sm font-medium ${value === i ? 'border-focus bg-accent text-white' : 'border-default text-text-secondary'}`}>{i}</button>
+            <button type="button" key={i} onClick={() => set(i)} className={`h-11 w-11 rounded-lg border text-sm font-medium ${value === i ? 'border-focus bg-accent text-white' : 'border-default text-text-secondary'}`}>{i}</button>
           ))}
         </div>
       );

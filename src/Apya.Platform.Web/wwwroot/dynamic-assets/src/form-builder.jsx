@@ -160,7 +160,7 @@ function QuestionCard({ block, index, selected, onSelect, onPatch, onPatchSettin
       {selected && <span className="absolute inset-y-0 left-0 w-1 rounded-l-2xl bg-accent" />}
 
       {/* drag handle */}
-      <div className="absolute -top-2 left-1/2 -translate-x-1/2 cursor-grab text-text-tertiary opacity-0 group-hover:opacity-100" title="Sürükle">⠿</div>
+      <div className={`absolute -top-2 left-1/2 -translate-x-1/2 cursor-grab text-text-tertiary transition-opacity ${selected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`} title="Sürükle">⠿</div>
 
       {/* header: question text + type */}
       <div className="flex items-start gap-3">
@@ -371,7 +371,7 @@ function FormBuilder() {
     <div className="min-h-[calc(100vh-120px)] bg-surface-sunken pb-24">
       {/* top bar */}
       <div className="sticky top-0 z-20 border-b border-default bg-surface-raised">
-        <div className="mx-auto flex max-w-2xl items-center justify-between px-4 py-3">
+        <div className="mx-auto flex max-w-2xl flex-wrap items-center justify-between gap-2 px-4 py-3">
           <div className="flex items-center gap-3">
             <a href="/DynamicAssets" className="text-sm font-semibold text-text-secondary hover:text-text-primary">← Formlar</a>
             <span className="text-xs font-semibold text-text-tertiary">{blocks.length} alan</span>
