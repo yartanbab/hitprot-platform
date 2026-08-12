@@ -133,6 +133,42 @@ $(function () {
         });
     }
 
+    // Dikey scrollbar telafisi. .lpx-sidebar-container 280px ve overflow-y:auto;
+    // scrollbar çıkınca iç genişlik 264px'e düşüyor ama .lpx-nav'ın min-width'i
+    // 280px'te kalıyor → menü satırlarının sağ 16px'i kırpılıyor (kullanıcıya göre
+    // bazı yapılandırmalarda yatay kaydırma çubuğu olarak görünüyor). Temanın CSS'inde
+    // telafi HAZIR (.lpx-has-scrollbar → nav 265px, nav-menu max 265px) ama sınıfı
+    // ekleyen JS Lite paketinde YOK (5.0.1 bundle'ında hiç geçmiyor) — Lite gap.
+    var sidebar = document.getElementById('lpx-sidebar');
+    if (sidebar) {
+        // Kaydırmayı hangi elemanın yaptığı sabit DEĞİL: bir dönem .lpx-sidebar-container
+        // (overflow-y:auto), kenar çubuğu modu çalışmasından sonra #lpx-sidebar. İkisini de
+        // ölç, biri bile oluk açıyorsa telafiyi uygula — böylece kaydırmanın yeri değişse de
+        // bozulmaz.
+        var hosts = [sidebar, document.querySelector('.lpx-sidebar-container')].filter(Boolean);
+        // Ölçüt "taşıyor mu" DEĞİL, "scrollbar gerçekten yer kaplıyor mu". Daraltılmış
+        // rayda overflow gizli olduğu için oluk 0'dır ve sınıf eklenmez. Overlay
+        // scrollbar'lı ortamlarda da oluk 0'dır, telafi gerekmez.
+        // Kenarlık düşülmeli: kapsayıcının 1px sağ kenarlığı da offset/client farkına giriyor.
+        var gutterOf = function (el) {
+            var cs = getComputedStyle(el);
+            return el.offsetWidth - el.clientWidth
+                - (parseFloat(cs.borderLeftWidth) || 0) - (parseFloat(cs.borderRightWidth) || 0);
+        };
+        var syncScrollbarClass = function () {
+            sidebar.classList.toggle('lpx-has-scrollbar', hosts.some(function (el) {
+                return gutterOf(el) > 0;
+            }));
+        };
+        syncScrollbarClass();
+        window.addEventListener('resize', syncScrollbarClass);
+        // nav'ı gözle: hem menü yüksekliği (scrollbar çıkar/kaybolur) hem ray genişliği
+        // değişimi buradan görünür. toggle idempotent olduğu için geri besleme yok.
+        if (window.ResizeObserver) {
+            new ResizeObserver(syncScrollbarClass).observe(sidebar.querySelector('nav.lpx-nav') || sidebar);
+        }
+    }
+
     // Erişilebilirlik: temanın butonu düz bir <i> — role/klavye/etiket ekle.
     var btn = document.querySelector('.menu-collapse-icon');
     if (btn) {
