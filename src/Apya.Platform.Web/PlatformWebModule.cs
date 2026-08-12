@@ -356,6 +356,7 @@ public class PlatformWebModule : AbpModule
             options.Contributors.Add(new Apya.Platform.Web.Theme.CommandPaletteToggleToolbarContributor());
             options.Contributors.Add(new Apya.Platform.Web.Theme.ThemeToggleToolbarContributor());
             options.Contributors.Add(new Apya.Platform.Web.Theme.DensityToggleToolbarContributor());
+            options.Contributors.Add(new Apya.Platform.Web.Theme.SidebarModeToolbarContributor());
             options.Contributors.Add(new Apya.Platform.Web.Notifications.NotificationToolbarContributor());
             options.Contributors.Add(new Apya.Platform.Web.Feedbacks.FeedbackToolbarContributor());
         });

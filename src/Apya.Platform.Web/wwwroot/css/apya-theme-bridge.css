@@ -949,6 +949,23 @@ html, body {
    genişleme temadan miras (max-width base kuralı). 768–1199px arası tema zaten
    otomatik rail uygular; o aralığın kozmetiği bölüm sonunda tekrarlanır.
    ============================================================================ */
+/* --- KAPALI mod (data-sidebar="hidden") ---
+   Kenar çubuğu tamamen gizlenir, içerik tüm genişliği kullanır. Geri açmanın
+   TEK yolu header'daki mod seçicisidir (temanın kendi düğmesi sidebar'ın içinde
+   ve burada erişilemez) — bkz. SidebarModeViewComponent. Bilinçli olarak hover
+   ile açılmaz: kullanıcı kararı 2026-08-12 ("yalnız header düğmesiyle"). */
+@media (min-width: 768px) {
+    html[data-sidebar="hidden"] .lpx-sidebar-container {
+        display: none;
+    }
+    html[data-sidebar="hidden"] .lpx-content-container {
+        margin-left: 0;
+    }
+    html[data-sidebar="hidden"] .lpx-footbar-container {
+        left: 0;
+    }
+}
+
 @media (min-width: 1200px) {
     html[data-sidebar="collapsed"] .lpx-sidebar-container {
         transition: box-shadow 0.25s;
@@ -1407,6 +1424,7 @@ html.js .lpx-breadcrumb-container {
 .lpx-topbar-content > .lpx-language-selection { order: 90; }
 .lpx-topbar-content > .apya-theme-toggle { order: 91; }
 .lpx-topbar-content > .apya-density-toggle { order: 92; }
+.lpx-topbar-content > .apya-sidebar-mode { order: 93; }
 .lpx-topbar-content > #notification-bell-container { order: 95; }
 .lpx-topbar-content > .dropdown:has(> .lpx-user-profile) { order: 100; }
 
@@ -1551,4 +1569,11 @@ html.js .lpx-user-profile .user-full-name {
 }
 .lpx-content-container > .lpx-content {
     flex: 1 1 auto;
+    /* Temada .lpx-content'in yan marjinleri auto. Blok yerleşimde bu 0 hesaplanıyordu,
+       ama konteyner flex olunca auto marjinler çapraz eksendeki boş alanı YUTUYOR ve
+       içerik daralıyor (align-items:stretch auto marjin varsa devre dışı kalır).
+       Sabit modda konteyner zaten içerik genişliğindeydi, o yüzden görünmüyordu;
+       sidebar daraltılınca/gizlenince içerik genişlemiyordu. max-width tanımlı
+       olmadığı için marjini sıfırlamak blok-yerleşim davranışını birebir geri verir. */
+    margin-inline: 0;
 }

@@ -604,7 +604,8 @@ h1, h2, h3, h4, h5, h6 {
    Fallback: toolbar'sız layout'ta dark-mode.js floating buton ekler.
    ---------------------------------------------------------------------------- */
 .apya-theme-toggle,
-.apya-density-toggle {
+.apya-density-toggle,
+.apya-sidebar-mode-toggle {
     background: transparent;
     border: none;
     padding: 0.4rem 0.6rem;
@@ -617,9 +618,29 @@ h1, h2, h3, h4, h5, h6 {
                 background var(--apya-motion-base) ease;
 }
 .apya-theme-toggle:hover,
-.apya-density-toggle:hover {
+.apya-density-toggle:hover,
+.apya-sidebar-mode-toggle:hover {
     color: var(--apya-accent-500);
     background: var(--apya-surface-sunken);
+}
+
+/* Kenar çubuğu modu menüsü — aktif moddaki onay işareti yalnız o satırda. */
+.apya-sidebar-mode-menu .dropdown-item {
+    display: flex;
+    align-items: center;
+}
+.apya-sidebar-mode-menu .apya-sidebar-mode-check {
+    visibility: hidden;
+    color: var(--apya-accent-500);
+}
+.apya-sidebar-mode-menu .dropdown-item.active .apya-sidebar-mode-check {
+    visibility: visible;
+}
+/* Aktif satır zeminini Bootstrap accent'ine boyamasın — onay işareti yeterli. */
+.apya-sidebar-mode-menu .dropdown-item.active {
+    background: transparent;
+    color: inherit;
+    font-weight: 600;
 }
 
 /* Fallback floating (yalnız header toolbar yoksa). */
