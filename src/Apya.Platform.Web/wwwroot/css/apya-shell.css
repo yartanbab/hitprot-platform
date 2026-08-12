@@ -1624,3 +1624,590 @@ i.apya-priority-dot {
         padding: 0;
     }
 }
+
+/* ----------------------------------------------------------------------------
+   21) PROJE KONSOLU — Proje Detay ekranı (Pages/Projects/ProjectDetails)
+   Handoff "Proje Detay — operasyon konsolu", 1. adım (iskelet):
+   60px yapışkan özet şeridi + tam yükseklik görev alanı.
+   Sayfa scroll'u yok; scroll yalnız liste gövdesinde — §9'daki
+   .apya-page → .dt-container → .dt-scroll-body zinciri devralır.
+   ---------------------------------------------------------------------------- */
+
+/* Konsol kendi dikey zincirini kurar. §9'un "son kart esner"
+   (.apya-page > .card:last-of-type) kuralı burada geçersiz: esneyen kart HER
+   ZAMAN .apya-console-main'dir, sayfanın son kartı değil. İki seçici de aynı
+   specificity'de (0,3,0); dosyada daha sonra geldiği için bu blok kazanır. */
+/* Şerit kırılımları VIEWPORT'a değil KENDİ genişliğine göre kurulur: LeptonX
+   kenar çubuğu 280px (daraltılmışsa 72px) yediği için 1366px ekranda kap yalnız
+   ~1185px oluyordu; viewport tabanlı @media hiç tetiklenmiyor, şerit taşıyordu.
+   Kullanıcı kenar çubuğunu daraltabildiği için sabit bir viewport eşiği de
+   doğru cevabı veremez — kırılımlar aşağıda @container ile tanımlı. */
+/* Açık yükseklik ŞART (handoff: `calc(100vh − 57px − dolgu)`). §9'un flex
+   zincirinin tavanı yok: `.lpx-content` içerikle büyüyor, dolayısıyla
+   `flex:1 1 auto` yalnız BOŞ alanı paylaştırır, taşmayı engellemez — kanban
+   board'u (kanban.css `min-height:400px` + içerik) konsolu 1060px'e çıkarıp
+   sayfayı kaydırıyordu. 56px = .lpx-content üst+alt dolgusu (28+28, canlı ölçüm). */
+.apya-page.apya-project-console {
+    gap: var(--apya-space-3);
+    height: calc(100vh - var(--apya-header-h) - 56px);
+    container-type: inline-size;
+}
+.apya-page.apya-project-console > .card { flex: none; min-height: auto; }
+.apya-page.apya-project-console > .apya-console-main {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    margin-bottom: 0;
+    border-radius: var(--apya-radius-xl);
+}
+
+/* --- Özet şeridi (60px) --- */
+/* NOT — `position: sticky` DENENDİ, GERİ ALINDI: LeptonX topbar'ı
+   `position: static` (kendisi de kaydırılıp gidiyor), bu yüzden top:0'a
+   yapışan şerit topbar'ın üzerine biniyordu. Handoff'un "metrikler scroll'da
+   kaybolmasın" gereksinimi burada YAPISAL olarak karşılanıyor: konsol tam
+   olarak görünür alan yüksekliğinde, sayfa hiç kaydırılmıyor (Tehlikeli Bölge
+   kartı 2. adımda kalkınca dikey scroll tamamen bitiyor). Yapışkanlık,
+   topbar'ın z-index'ini kurcalamayı gerektirdiği için eklenmedi. */
+.apya-console-rail {
+    flex: none;
+    box-sizing: border-box;
+    /* height değil min-height: sığmadığında şerit KIRPMAK yerine ikinci satıra
+       taşsın (sessiz kırpma, 5. bar + facepile'ı görünmez yapıyordu). */
+    min-height: 60px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--apya-space-2);
+    padding: 0 var(--apya-space-3);
+    background: var(--apya-surface-base);
+    border: 1px solid var(--apya-border-default);
+    border-radius: var(--apya-radius-xl);
+    box-shadow: var(--apya-shadow-sm);
+}
+.apya-console-sep {
+    flex: none;
+    width: 1px;
+    height: 30px;
+    background: var(--apya-border-subtle);
+}
+
+/* Proje kimliği — ad + kod chip'i + tenant chip'i. Açıklama şeride SIĞMAZ,
+   ⓘ ipucuna taşındı (handoff kararı). */
+.apya-console-identity {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 3px;
+    /* 0 verilirse barlar kimliği ezip proje adını tek harfe indiriyor. */
+    min-width: 170px;
+}
+.apya-console-identity > div { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.apya-console-name {
+    margin: 0;
+    font-size: 15px;
+    font-weight: var(--apya-weight-bold);
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+    color: var(--apya-text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.apya-console-rocket { flex: none; color: var(--apya-accent-500); font-size: 12px; }
+/* Şerit ölçeğinde chip — genel .apya-chip 12px, 60px'e iki chip sığmıyor. */
+.apya-console-rail .apya-chip { font-size: 11px; padding: 2px 10px; }
+.apya-console-rail .apya-console-tenant-chip { font-size: 10px; padding: 1px 8px; }
+.apya-console-copy {
+    flex: none;
+    width: 20px;
+    height: 20px;
+    display: grid;
+    place-items: center;
+    border: none;
+    border-radius: var(--apya-radius-md);
+    background: transparent;
+    color: var(--apya-text-tertiary);
+    font-size: 10px;
+    cursor: pointer;
+}
+.apya-console-copy:hover { background: var(--apya-surface-sunken); color: var(--apya-text-secondary); }
+.apya-console-copy:focus-visible { outline: none; box-shadow: var(--apya-shadow-focus); }
+
+/* --- Metrik barları --- */
+.apya-console-bars {
+    flex: 1 1 auto;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: var(--apya-space-1);
+}
+.apya-console-bar {
+    position: relative;
+    box-sizing: border-box;
+    flex: 0 1 auto;
+    min-width: 104px;
+    max-width: 132px;
+    min-height: 44px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 3px;
+    padding: 6px var(--apya-space-2);
+    border: none;
+    border-radius: var(--apya-radius-lg);
+    background: transparent;
+    text-align: left;
+    cursor: pointer;
+    transition: background var(--apya-motion-fast) var(--apya-easing-standard);
+}
+.apya-console-bar:hover { background: var(--apya-surface-sunken); }
+.apya-console-bar:focus-visible { outline: none; box-shadow: var(--apya-shadow-focus); }
+.apya-console-bar:disabled { cursor: default; opacity: 0.65; }
+.apya-console-bar:disabled:hover { background: transparent; }
+/* Filtre üretmiş bar: accent-soft zemin + üstte 2px accent çizgi (3. adım). */
+.apya-console-bar[aria-pressed="true"] { background: var(--apya-accent-soft); }
+.apya-console-bar[aria-pressed="true"]::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    border-radius: var(--apya-radius-full);
+    background: var(--apya-accent-500);
+}
+.apya-console-bar-head { display: flex; align-items: center; justify-content: space-between; gap: 6px; }
+.apya-console-bar-label {
+    font-size: 9.5px;
+    font-weight: var(--apya-weight-bold);
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    color: var(--apya-text-tertiary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.apya-console-bar-chevron { flex: none; font-size: 9px; font-weight: var(--apya-weight-semibold); color: var(--apya-text-tertiary); }
+.apya-console-bar-value { display: flex; align-items: baseline; gap: 4px; min-width: 0; }
+.apya-console-bar-value > strong {
+    font-size: 13px;
+    font-weight: var(--apya-weight-semibold);
+    color: var(--apya-text-primary);
+}
+.apya-console-bar-value > strong.is-negative { color: var(--apya-text-negative); }
+.apya-console-bar-value > strong.is-warning { color: var(--apya-text-warning); }
+.apya-console-bar-value > small {
+    font-size: 9.5px;
+    color: var(--apya-text-secondary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.apya-console-bar .apya-mini-progress { height: 5px; }
+
+/* --- Ekip facepile --- */
+.apya-console-team {
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px var(--apya-space-2);
+    min-height: 44px;
+    border: none;
+    border-radius: var(--apya-radius-lg);
+    background: transparent;
+    cursor: pointer;
+    transition: background var(--apya-motion-fast) var(--apya-easing-standard);
+}
+.apya-console-team:hover { background: var(--apya-surface-sunken); }
+.apya-console-team:focus-visible { outline: none; box-shadow: var(--apya-shadow-focus); }
+.apya-console-team-label {
+    font-size: 9.5px;
+    font-weight: var(--apya-weight-bold);
+    letter-spacing: 0.5px;
+    color: var(--apya-text-tertiary);
+    white-space: nowrap;
+}
+/* .apya-avatar (24px) şerit ölçeğine iner + üst üste biner. */
+.apya-console-facepile { display: flex; align-items: center; }
+.apya-console-facepile .apya-avatar {
+    width: 22px;
+    height: 22px;
+    font-size: 9px;
+    border: 2px solid var(--apya-surface-base);
+    margin-left: -8px;
+}
+.apya-console-facepile .apya-avatar:first-child { margin-left: 0; }
+
+/* --- Şerit aksiyonları --- */
+.apya-console-actions { flex: none; display: flex; align-items: center; gap: var(--apya-space-2); }
+.apya-console-rail .btn {
+    height: var(--apya-control-h-sm);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0 12px;
+    font-size: 12px;
+    font-weight: var(--apya-weight-semibold);
+    border-radius: var(--apya-radius-lg);
+    white-space: nowrap;
+}
+.apya-console-rail .apya-console-back { height: 30px; padding: 0 10px; font-weight: var(--apya-weight-medium); }
+.apya-console-search {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    height: var(--apya-control-h-sm);
+    padding: 0 10px;
+    border: 1px solid var(--apya-border-default);
+    border-radius: var(--apya-radius-lg);
+    background: var(--apya-surface-base);
+}
+.apya-console-search:focus-within { border-color: var(--apya-border-focus); box-shadow: var(--apya-shadow-focus); }
+.apya-console-search > i { flex: none; color: var(--apya-text-tertiary); font-size: 11px; }
+.apya-console-search > input {
+    width: 120px;
+    border: none;
+    outline: none;
+    background: transparent;
+    font-size: 12.5px;
+    color: var(--apya-text-primary);
+}
+
+/* --- ⋯ Proje menüsü --- */
+.apya-console-kebab {
+    flex: none;
+    width: var(--apya-control-h-sm);
+    height: var(--apya-control-h-sm);
+    display: grid;
+    place-items: center;
+    border: 1px solid var(--apya-border-default);
+    border-radius: var(--apya-radius-lg);
+    background: var(--apya-surface-base);
+    color: var(--apya-text-secondary);
+    font-size: 13px;
+    cursor: pointer;
+    transition: background var(--apya-motion-fast) var(--apya-easing-standard);
+}
+.apya-console-kebab:hover { background: var(--apya-surface-sunken); color: var(--apya-text-primary); }
+.apya-console-kebab:focus-visible { outline: none; box-shadow: var(--apya-shadow-focus); }
+.apya-console-kebab[aria-expanded="true"] {
+    border-color: var(--apya-accent-500);
+    background: var(--apya-accent-soft);
+    color: var(--apya-accent-600);
+}
+[data-theme="dark"] .apya-console-kebab[aria-expanded="true"] { color: var(--apya-accent-300); }
+
+/* Bootstrap .dropdown-menu üzerine biner: kendi dolgusunu sıfırlar, bölüm
+   başlıklı panel düzenine geçer. */
+.apya-console-menu.dropdown-menu {
+    width: 262px;
+    padding: 0;
+    overflow: hidden;
+    border: 1px solid var(--apya-border-default);
+    border-radius: var(--apya-radius-lg);
+    background: var(--apya-surface-elevated);
+    box-shadow: var(--apya-shadow-lg);
+}
+.apya-console-menu-head {
+    padding: 8px 12px 6px;
+    font-size: 9.5px;
+    font-weight: var(--apya-weight-bold);
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    color: var(--apya-text-tertiary);
+}
+.apya-console-menu-head.is-divided { border-top: 1px solid var(--apya-border-subtle); }
+.apya-console-menu-item {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 9px 12px;
+    border: none;
+    background: transparent;
+    text-align: left;
+    font-size: 13px;
+    color: var(--apya-text-primary);
+    cursor: pointer;
+}
+.apya-console-menu-item:hover { background: var(--apya-surface-sunken); }
+.apya-console-menu-item:focus-visible { outline: none; box-shadow: inset 0 0 0 2px var(--apya-border-focus); }
+.apya-console-menu-icon {
+    flex: none;
+    width: 14px;
+    font-size: 11px;
+    color: var(--apya-text-secondary);
+}
+.apya-console-menu-trailing {
+    margin-left: auto;
+    font-size: 11px;
+    color: var(--apya-text-tertiary);
+}
+/* Silme öğesi — ayrılmış negatif bölüm (handoff: menünün en altında, çizgiyle) */
+.apya-console-menu-item.is-danger {
+    margin-top: 4px;
+    padding: 10px 12px;
+    border-top: 1px solid color-mix(in srgb, var(--apya-negative-500) 25%, transparent);
+    background: color-mix(in srgb, var(--apya-negative-500) 5%, transparent);
+    color: var(--apya-text-negative);
+    font-weight: var(--apya-weight-semibold);
+}
+.apya-console-menu-item.is-danger:hover { background: color-mix(in srgb, var(--apya-negative-500) 12%, transparent); }
+.apya-console-menu-item.is-danger .apya-console-menu-icon { color: inherit; }
+
+/* Yoğunluk segmenti — uygulama geneli ayarı değiştirir (window.apya.density). */
+.apya-console-menu-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 12px;
+    font-size: 12.5px;
+    color: var(--apya-text-secondary);
+}
+.apya-console-menu-row > span:first-child { flex: 1; }
+.apya-console-density { display: inline-flex; gap: 4px; }
+.apya-console-density > button {
+    width: 26px;
+    height: 24px;
+    border: 1px solid var(--apya-border-default);
+    border-radius: var(--apya-radius-md);
+    background: var(--apya-surface-base);
+    color: var(--apya-text-secondary);
+    font-size: 11px;
+    font-weight: var(--apya-weight-semibold);
+    cursor: pointer;
+}
+.apya-console-density > button:hover { background: var(--apya-surface-sunken); }
+.apya-console-density > button:focus-visible { outline: none; box-shadow: var(--apya-shadow-focus); }
+.apya-console-density > button.active {
+    border-color: var(--apya-accent-500);
+    background: var(--apya-accent-soft);
+    color: var(--apya-accent-600);
+}
+[data-theme="dark"] .apya-console-density > button.active { color: var(--apya-accent-300); }
+
+/* --- Görev alanı: sekmeler + görünüm panelleri --- */
+.apya-console-tabs {
+    flex: none;
+    box-sizing: border-box;
+    height: 46px;
+    display: flex;
+    align-items: center;
+    padding: 0 var(--apya-space-3);
+    border-bottom: 1px solid var(--apya-border-subtle);
+}
+.apya-console-tab {
+    height: 100%;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0 14px;
+    border: none;
+    background: transparent;
+    font-size: 13px;
+    font-weight: var(--apya-weight-medium);
+    color: var(--apya-text-secondary);
+    cursor: pointer;
+}
+.apya-console-tab:hover { color: var(--apya-text-primary); }
+.apya-console-tab.active {
+    font-weight: var(--apya-weight-bold);
+    color: var(--apya-text-primary);
+    box-shadow: inset 0 -3px 0 var(--apya-accent-500);
+}
+.apya-console-tab:focus-visible { outline: none; box-shadow: var(--apya-shadow-focus); }
+.apya-console-count {
+    margin-left: auto;
+    font-size: 11.5px;
+    color: var(--apya-text-tertiary);
+}
+/* --- Filtre çubuğu (42px) ---
+   Şerit barlarıyla AYNI state'i gösterir; chip'ler yalnız o state'in görünümü. */
+.apya-console-filters {
+    flex: none;
+    box-sizing: border-box;
+    min-height: 42px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 7px;
+    padding: 0 var(--apya-space-3);
+    border-bottom: 1px solid var(--apya-border-subtle);
+    background: var(--apya-surface-raised);
+}
+.apya-console-filter-label {
+    font-size: 9.5px;
+    font-weight: var(--apya-weight-bold);
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    color: var(--apya-text-tertiary);
+}
+.apya-filter-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    height: 26px;
+    padding: 0 10px;
+    border: 1px solid var(--apya-border-default);
+    border-radius: var(--apya-radius-full);
+    background: var(--apya-surface-base);
+    color: var(--apya-text-secondary);
+    font-size: 11.5px;
+    font-weight: var(--apya-weight-semibold);
+    white-space: nowrap;
+    cursor: pointer;
+}
+.apya-filter-chip > i { font-size: 8px; opacity: 0.7; }
+.apya-filter-chip:hover { background: var(--apya-surface-sunken); color: var(--apya-text-primary); }
+.apya-filter-chip:focus-visible { outline: none; box-shadow: var(--apya-shadow-focus); }
+/* Etkin filtre: hem dropdown chip'i (.is-active) hem toggle chip'i (aria-pressed) */
+.apya-filter-chip.is-active,
+.apya-filter-chip[aria-pressed="true"] {
+    border-color: var(--apya-accent-500);
+    background: var(--apya-accent-soft);
+    color: var(--apya-accent-600);
+}
+[data-theme="dark"] .apya-filter-chip.is-active,
+[data-theme="dark"] .apya-filter-chip[aria-pressed="true"] { color: var(--apya-accent-300); }
+.apya-console-filter-clear {
+    height: 26px;
+    padding: 0 8px;
+    border: none;
+    background: transparent;
+    color: var(--apya-text-link);
+    font-size: 11.5px;
+    font-weight: var(--apya-weight-semibold);
+    text-decoration: underline;
+    cursor: pointer;
+}
+.apya-console-filter-clear:focus-visible { outline: none; box-shadow: var(--apya-shadow-focus); }
+
+/* Facepile avatarları filtre düğmesine dönüştü — buton sıfırlaması + seçili halka */
+.apya-console-facepile .apya-avatar {
+    padding: 0;
+    cursor: pointer;
+}
+.apya-console-facepile button.apya-avatar[aria-pressed="true"] {
+    border-color: var(--apya-accent-500);
+    box-shadow: 0 0 0 2px var(--apya-accent-500);
+}
+.apya-console-facepile button.apya-avatar:focus-visible { outline: none; box-shadow: var(--apya-shadow-focus); }
+
+/* --- Durum halleri: yükleniyor / boş / filtre-boş / 403 --- */
+.apya-console-views > .view-panel { position: relative; }
+/* İskelet satırlar tablo başlığının ALTINDAN başlar (44px thead payı). */
+.apya-console-skeleton {
+    position: absolute;
+    inset: 44px 0 0 0;
+    z-index: 3;
+    padding: 0 12px;
+    background: var(--apya-surface-base);
+    overflow: hidden;
+}
+.apya-console-skeleton-row {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    height: var(--row-h);
+    border-bottom: 1px solid var(--apya-border-subtle);
+}
+.apya-console-skeleton-row > .apya-skeleton { height: 10px; border-radius: var(--apya-radius-sm); }
+
+.apya-console-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    padding: 44px 20px;
+    text-align: center;
+}
+.apya-console-state > strong { font-size: 15.5px; font-weight: var(--apya-weight-semibold); color: var(--apya-text-primary); }
+.apya-console-state > p {
+    margin: 0;
+    max-width: 52ch;
+    font-size: 13px;
+    line-height: var(--apya-leading-snug);
+    color: var(--apya-text-secondary);
+}
+.apya-console-state-icon {
+    width: 56px;
+    height: 56px;
+    display: grid;
+    place-items: center;
+    border-radius: var(--apya-radius-xl);
+    background: var(--apya-accent-soft);
+    color: var(--apya-accent-500);
+    font-size: 20px;
+}
+.apya-console-state-icon.is-muted { background: var(--apya-surface-sunken); color: var(--apya-text-secondary); }
+.apya-console-state-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
+/* 403 paneli tablo yerine geçer → kalan alanı doldurup dikey ortalanır. */
+.apya-console-state.is-denied { flex: 1 1 auto; justify-content: center; }
+
+/* §9'daki .card-body > .view-panel zincirinin konsol karşılığı — konsolda
+   .card-body yok, görünümler doğrudan bu kapta. */
+.apya-console-views { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
+.apya-console-views > .view-panel:not(.d-none) {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+/* DataTables konsol içinde. §9 zinciri `.dt-scroll-body`'ye `flex:1 1 auto`
+   veriyor ama `min-height:0` vermiyor; alan içerikten KISA olduğunda (konsolun
+   yüksekliği sabit) flex öğesinin varsayılan `min-height:auto`'su küçülmeyi
+   kilitliyordu:
+     · gövde kabından 87px taşıp sayfalama satırının üstüne biniyordu,
+     · sıkışan `.dt-scroll-head` 0px'e eziliyor, KOLON BAŞLIKLARI kayboluyordu.
+   Kapsam yalnız konsol — §9'un diğer sayfalardaki davranışı değişmez.
+   Seçici neden bu kadar uzun: kaskatta `.dt-scroll-body`'nin min-height'ini
+   (0,3,0) specificity'siyle belirleyen başka bir bildirim var ve bizimkinden
+   sonra geliyor — canlıda ölçüldü: (0,2,0) ve (0,3,0) kaybediyor, (0,4,0)
+   kazanıyor. `!important` yerine specificity ile çözüldü (bkz. apya-redesign
+   skill'i, "!important yazma; specificity sorununu çöz"). */
+.apya-console-views .dt-scroll-head { flex: none; }
+.apya-page .apya-console-views .dt-scroll > .dt-scroll-body { min-height: 0; }
+
+/* Kanban konsol içinde: board kalan yüksekliğe oturur, kaydırma kolonun kart
+   alanında olur. kanban.css'teki `min-height:400px` + içerik boyu kart alanını
+   1052px'e çıkarıp konsolu taşırıyordu. Kapsam YALNIZ konsol — /Board ve
+   /Tasks sayfalarındaki board davranışı değişmez. */
+.apya-console-views > #view-kanban { overflow: hidden; padding: var(--apya-space-3); }
+.apya-console-views .kanban-board { flex: 1 1 auto; min-height: 0; padding-bottom: 0; }
+.apya-console-views .kanban-column { min-height: 0; }
+.apya-console-views .kanban-cards { min-height: 0; overflow-y: auto; }
+
+/* --- Kırılımlar (tam responsive geçişi 10. adımda) ---
+   Eşik neden 1460px: tek satır düzeninin gerçek minimumu ≈ Geri 80 + kimlik 170
+   + 5×104 bar + facepile ~155 + aksiyonlar ~475 + ayraç/boşluklar ≈ 1450px.
+   Handoff bunu 1200px yazıyor çünkü prototipte kenar çubuğu yok; uygulamada
+   1366px ekranda kap 1185px, 1920px ekranda 1608px. */
+@container (max-width: 1460px) {
+    /* Kimlik + aksiyonlar üstte, barlar altta (handoff <1200px kuralı). */
+    .apya-console-rail { padding: var(--apya-space-2) var(--apya-space-3); }
+    .apya-console-bars { order: 3; flex: 1 0 100%; }
+    /* Alt satırın tamamına eşit dağıl — 104px'e sıkışınca "KALAN SÜRE"
+       etiketi "KALAN S…"e düşüyordu. */
+    .apya-console-bar { flex: 1 1 0; }
+    .apya-console-actions { margin-left: auto; }
+}
+@container (max-width: 760px) {
+    .apya-console-bars { flex-wrap: nowrap; overflow-x: auto; }
+    .apya-console-bar { flex: 0 0 104px; }
+    /* Aksiyon kümesi tek satırda ~525px istiyor; 400px kapta şerit yatay
+       taşıyordu (canlı ölçüm). `flex:none` iken genişliği max-content olduğu
+       için `flex-wrap` TEK BAŞINA yetmiyor — önce tam satıra alınmalı. */
+    .apya-console-actions { flex: 1 1 100%; flex-wrap: wrap; min-width: 0; }
+    .apya-console-search { flex: 1 1 140px; min-width: 0; }
+    .apya-console-search > input { width: 100%; min-width: 0; }
+}
+/* Dar ekranda tam yükseklik kilidi kalkar — mobilde doğal akış ve sayfa
+   kaydırması beklenen davranış (mobil düzenin tamamı 10. adımda). */
+@media (max-width: 767.98px) {
+    .apya-page.apya-project-console { height: auto; }
+}

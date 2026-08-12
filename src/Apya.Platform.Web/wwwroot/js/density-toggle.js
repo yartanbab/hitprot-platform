@@ -18,9 +18,6 @@ $(function () {
 
     var html = document.documentElement;
     var btn = document.getElementById('DensityToggle');
-    if (!btn) {
-        return;
-    }
 
     function current() {
         var d = html.getAttribute('data-density');
@@ -28,6 +25,7 @@ $(function () {
     }
 
     function render(density) {
+        if (!btn) { return; } // topbar düğmesi olmayan sayfa — yalnız API kullanılıyor
         var icon = btn.querySelector('i');
         if (icon) {
             icon.className = 'fa ' + ICONS[density];
@@ -41,16 +39,27 @@ $(function () {
     }
 
     function apply(density) {
+        if (ORDER.indexOf(density) < 0) { return; }
         html.setAttribute('data-density', density);
         try { localStorage.setItem(KEY, density); } catch (e) { /* yok say */ }
         render(density);
+        // Topbar dışındaki yüzeyler (Proje konsolu ⋯ menüsündeki S/N/G segmenti)
+        // kendi aktif durumlarını buradan senkronlar.
+        document.dispatchEvent(new CustomEvent('apya:density-changed', { detail: density }));
     }
+
+    // Paylaşılan API — yoğunluğu değiştiren başka bir yüzey bu mantığı KOPYALAMAZ
+    // (SoT tek yerde kalsın: attribute + localStorage + event).
+    window.apya = window.apya || {};
+    window.apya.density = { current: current, set: apply, order: ORDER };
 
     // Başlangıç: FOUC script'inin bastığı değeri ikona/etikete yansıt.
     render(current());
 
-    btn.addEventListener('click', function () {
-        var next = ORDER[(ORDER.indexOf(current()) + 1) % ORDER.length];
-        apply(next);
-    });
+    if (btn) {
+        btn.addEventListener('click', function () {
+            var next = ORDER[(ORDER.indexOf(current()) + 1) % ORDER.length];
+            apply(next);
+        });
+    }
 });

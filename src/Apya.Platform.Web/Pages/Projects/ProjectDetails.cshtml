@@ -10,8 +10,42 @@
     var totalTasks     = Model.Tasks?.Count ?? 0;
     var completedTasks = Model.Tasks?.Count(t => t.Status == Apya.Platform.Tasks.TaskStatus.Done) ?? 0; // Done=4 (önceki "==3" InReview'i sayıyordu → bug)
     var progressPct    = totalTasks > 0 ? (int)Math.Round((double)completedTasks / totalTasks * 100) : 0;
-    var assigneeCount  = Model.Tasks?.Where(t => t.AssigneeId.HasValue).Select(t => t.AssigneeId).Distinct().Count() ?? 0;
-    var facepileCount  = Math.Min(assigneeCount, 5);
+
+    // Gecikmiş / 7 gün içinde — şerit barlarının kaynağı. İptal (0) ve Tamamlandı (4)
+    // aciliyet saymaz (apya-task-render.js dueDateChip ile aynı kural).
+    var today = DateTime.Today;
+    bool IsOpen(Apya.Platform.Tasks.TaskDto t) =>
+        t.Status != Apya.Platform.Tasks.TaskStatus.Done &&
+        t.Status != Apya.Platform.Tasks.TaskStatus.Cancelled;
+
+    var overdueCount = Model.Tasks?.Count(t => IsOpen(t) && t.DueDate.HasValue && t.DueDate.Value.Date < today) ?? 0;
+    var due7Count    = Model.Tasks?.Count(t => IsOpen(t) && t.DueDate.HasValue
+                                              && t.DueDate.Value.Date >= today
+                                              && t.DueDate.Value.Date <= today.AddDays(7)) ?? 0;
+
+    // Ekip = görev atamalarından türer (ProjectMember tablosu yok).
+    var assignees = (Model.Tasks ?? new List<Apya.Platform.Tasks.TaskDto>())
+        .Where(t => t.AssigneeId.HasValue && !string.IsNullOrWhiteSpace(t.AssigneeName))
+        .GroupBy(t => t.AssigneeId!.Value)
+        .Select(g => new { Id = g.Key, Name = g.First().AssigneeName! })
+        .OrderBy(a => a.Name)
+        .ToList();
+
+    // apya-task-render.js'teki initials + hashTone ile BİREBİR aynı sonucu üretir
+    // (aynı kişi listede ve şeritte aynı rengi/harfi alsın). JS toUpperCase()
+    // locale-invariant çalıştığı için burada da ToUpperInvariant kullanılır.
+    string Initials(string name)
+    {
+        var parts = name.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        return string.Concat(parts.Take(2).Select(p => char.ToUpperInvariant(p[0])));
+    }
+    string HashTone(string name)
+    {
+        var tones = new[] { "positive", "negative", "warning", "brand", "ai", "neutral" };
+        var h = 0;
+        foreach (var c in name) { unchecked { h = h * 31 + c; } }
+        return tones[(int)(Math.Abs((long)h) % tones.Length)];
+    }
 
     // Backend Bootstrap renk adı döndürüyor (success/warning/danger/info/secondary) ->
     // apya-chip tone. Tüm olası değerler ProjectMetricsCalculator'da sabit; exhaustive.
@@ -35,6 +69,12 @@
     };
     var timeHealthBarTone = ToApyaBarTone(Model.TimeHealthColor);
     var budgetBarTone = Model.BudgetPercent > 90 ? "is-negative" : Model.BudgetPercent > 60 ? "is-warning" : "is-positive";
+    var hasBudget = Model.Project?.TotalBudget > 0;
+    var hasDates  = Model.TimeNotStarted || Model.Project?.EndDate.HasValue == true;
+
+    // 403 hâli sunucuda karara bağlanır: yetki yoksa DataTables hiç kurulmaz
+    // (başarısız ajax + global hata modalı yerine ekranda kilit paneli).
+    var canViewTasks = await AuthorizationService.IsGrantedAsync(PlatformPermissions.Tasks.Default);
 }
 
 <style>
@@ -45,42 +85,12 @@
     }
     .heartbeat-animation { animation: heartbeat 1.5s infinite; }
 
-    /* ÖNEMLİ: bu kart .card kullanır (sistemik dark bridge zemini çeviriyor) ama
-       bu class kendi background'ını EZİYORDU (sabit beyaz gradient) — dark'ta
-       kart beyaz kalıp içindeki (text-dark kaldırılmış) metinler görünmez
-       olurdu. Token'a bağlandı. */
-    .project-dashboard-card { border-radius: 1rem; border: none; background: var(--apya-surface-raised); }
+    /* Konsol tasarımı apya-shell.css §21'de (tek kaynak).
+       Kanban tasarımı /css/kanban.css'te (tek kaynak). */
 
-    /* Metrik blokları masaüstünde yan yana `border-start` ile ayrılıyor;
-       <md'de dikey istife düşünce başıboş bir dikey çizgi kalıyordu
-       (2026-08 tasarım denetimi) — dikey istifte üst çizgi daha anlamlı. */
-    @@media (max-width: 767.98px) {
-        .apya-pd-metric-col {
-            border-left: 0 !important;
-            border-top: 1px solid var(--apya-border-subtle);
-            padding-left: 0 !important;
-            padding-top: 12px;
-            margin-top: 12px;
-        }
-    }
-
-    /* Görünüm tab'ları — utility class jonglörlüğü yerine state-tabanlı token stili.
-       (Eski hali: aktif underline Liste'ye SABİTti, aktif renk LeptonX pembesine/
-       dark'ta görünmez koyuya düşüyordu.) */
-    #projectViewTabs .nav-link { color: var(--apya-text-secondary); background: transparent; }
-    #projectViewTabs .nav-link:hover { color: var(--apya-text-primary); }
-    #projectViewTabs .nav-link.active { color: var(--apya-text-primary); box-shadow: inset 0 -3px 0 var(--apya-accent-500); }
-    
-    /* Tehlikeli bölge kart başlığı — .apya-chip-negative ile aynı formül. */
-    .apya-danger-zone-header {
-        background: color-mix(in srgb, var(--apya-negative-500) 14%, transparent) !important;
-        color: var(--apya-negative-700);
-        border-bottom-color: var(--apya-negative-500) !important;
-    }
-    .apya-danger-zone-header h5 { color: inherit; }
-    [data-theme="dark"] .apya-danger-zone-header { color: var(--apya-negative-500); }
-
-    /* Kanban tasarımı merkezi /css/kanban.css dosyasına taşındı (tek kaynak). */
+    /* DataTables'ın kendi arama kutusu gizlenir — arama şeritteki pile taşındı
+       (#console-search → dataTable.search()). */
+    .apya-project-console .dt-search { display: none; }
 </style>
 
 @* Tailwind island stylesheet (js/style.css) — bu partial olmadan görev detay modalı stilsiz kalır. *@
@@ -92,272 +102,374 @@
     <link rel="stylesheet" href="~/libs/select2/css/select2.min.css" />
 }
 
-@* ─── PROJE OPERASYON MERKEZi - Dashboard Header ─── *@
-<div data-page-description="Proje operasyon merkezi" class="apya-page">
-<div class="card shadow-sm mb-4 project-dashboard-card">
-    <div class="card-body p-4 position-relative">
+<div data-page-description="Proje operasyon merkezi" class="apya-page apya-project-console">
 
-        @* Geri — kartın üst sağına sabitlendi (kullanıcı isteği) *@
-        <a href="/" class="btn btn-light border btn-sm position-absolute" style="top:1.25rem; right:1.25rem; z-index:3;">
-            <i class="fa fa-arrow-left me-1"></i> Geri
-        </a>
+@* ─── ÖZET ŞERİDİ (60px, yapışkan) ─── *@
+<div class="apya-console-rail">
 
-        @* Hızlı kısayollar — masaüstünde gizli (d-md-none); JS handler'ları korunsun diye DOM'da kalır *@
-        <div class="btn-group btn-group-sm d-md-none mb-3" role="group">
-            <button class="btn btn-outline-primary px-3" title="Hızlı Efor Gir" id="btn-quick-effort"><i class="fa fa-clock"></i></button>
-            <button class="btn btn-outline-primary px-3" title="Dosya Yükle" id="btn-quick-upload"><i class="fa fa-upload"></i></button>
-            <button class="btn btn-outline-primary px-3" title="Not Ekle" id="btn-quick-note"><i class="fa fa-sticky-note"></i></button>
+    <a href="/" class="btn btn-outline-secondary apya-console-back">
+        <i class="fa fa-arrow-left" aria-hidden="true"></i> Geri
+    </a>
+    <span class="apya-console-sep" aria-hidden="true"></span>
+
+    @* ── Proje kimliği ── *@
+    <div class="apya-console-identity">
+        <div>
+            <i class="fa fa-rocket apya-console-rocket" aria-hidden="true"></i>
+            <h1 class="apya-console-name">@Model.Project?.Name</h1>
+            <span class="apya-chip apya-chip-brand">
+                <i class="fa fa-tag me-1" aria-hidden="true"></i>@Model.Project?.Code
+            </span>
+            <button type="button" class="apya-console-copy" data-copy-code="@Model.Project?.Code"
+                    aria-label="Proje kodunu kopyala" title="Proje kodunu kopyala">
+                <i class="fa fa-copy" aria-hidden="true"></i>
+            </button>
+        </div>
+        <div>
+            <span class="apya-chip apya-console-tenant-chip apya-chip-@(Model.IsInternalProject ? "neutral" : "brand")">
+                <i class="fa @(Model.IsInternalProject ? "fa-house" : "fa-building") me-1" aria-hidden="true"></i>
+                @(Model.IsInternalProject ? "Dahili Proje" : $"Müşteri: {Model.TenantName}")
+            </span>
+            @* Açıklama 60px şeride iki satır sığmadığı için ⓘ ipucuna taşındı. *@
+            @if (!string.IsNullOrWhiteSpace(Model.Project?.Description))
+            {
+                <apya-hint placement="bottom" text="@Model.Project.Description" />
+            }
+        </div>
+    </div>
+    <span class="apya-console-sep" aria-hidden="true"></span>
+
+    @* ── Metrik barları ──
+       Bütçe barı bugünkü davranışını korur (#btn-budget-summary → modal).
+       İlerleme / Gecikmiş / 7 Gün barları filtre üretmeye 3. adımda bağlanır. *@
+    <div class="apya-console-bars">
+
+        @* Kalan Süre *@
+        <button type="button" class="apya-console-bar" id="bar-time"
+                title="@(hasDates ? $"Zaman sağlığı: {Model.TimeHealthLabel}" : "Proje tarihleri belirlenmemiş")"
+                disabled="@(!hasDates)">
+            <span class="apya-console-bar-head">
+                <span class="apya-console-bar-label"><i class="fa fa-hourglass-half me-1" aria-hidden="true"></i>Kalan Süre</span>
+                <span class="apya-console-bar-chevron" aria-hidden="true">&rsaquo;</span>
+            </span>
+            @if (hasDates)
+            {
+                <span class="apya-console-bar-value">
+                    <strong class="apya-numeric">@Model.RemainingDays</strong>
+                    <small>@(Model.TimeNotStarted ? "gün · başlangıca" : $"gün · %{Model.TimeUsagePercent}")</small>
+                </span>
+                <span class="apya-mini-progress @timeHealthBarTone"><span style="width:@(Model.TimeNotStarted ? 0 : Model.TimeUsagePercent)%"></span></span>
+            }
+            else
+            {
+                <span class="apya-console-bar-value"><small>Tarih belirlenmemiş</small></span>
+            }
+        </button>
+
+        @* Bütçe — mevcut "Bütçe vs Gerçekleşen" modalını açar *@
+        <button type="button" class="apya-console-bar" id="btn-budget-summary"
+                data-project-id="@Model.Project?.Id"
+                title="@(hasBudget ? "Bütçe vs Gerçekleşen" : "Bütçe tanımlı değil")"
+                disabled="@(!hasBudget)">
+            <span class="apya-console-bar-head">
+                <span class="apya-console-bar-label"><i class="fa fa-wallet me-1" aria-hidden="true"></i>Bütçe</span>
+                <span class="apya-console-bar-chevron" aria-hidden="true">&rsaquo;</span>
+            </span>
+            @if (hasBudget)
+            {
+                <span class="apya-console-bar-value">
+                    <strong class="apya-numeric">@Model.BudgetSpent.ToString("N0")</strong>
+                    <small class="apya-numeric">/ @Model.Project?.TotalBudget.ToString("N0")</small>
+                </span>
+                <span class="apya-mini-progress @budgetBarTone"><span style="width:@Model.BudgetPercent%"></span></span>
+            }
+            else
+            {
+                <span class="apya-console-bar-value"><small>Bütçe tanımsız</small></span>
+            }
+        </button>
+
+        @* İlerleme *@
+        <button type="button" class="apya-console-bar" id="bar-progress" aria-pressed="false" title="Tamamlanmamış görevleri filtrele">
+            <span class="apya-console-bar-head">
+                <span class="apya-console-bar-label"><i class="fa fa-chart-line me-1" aria-hidden="true"></i>İlerleme</span>
+                <span class="apya-console-bar-chevron" aria-hidden="true">&rsaquo;</span>
+            </span>
+            <span class="apya-console-bar-value">
+                <strong class="apya-numeric">%@progressPct</strong>
+                <small class="apya-numeric">· @completedTasks/@totalTasks</small>
+            </span>
+            <span class="apya-mini-progress @(progressPct == 100 ? "is-positive" : "is-progress")"><span style="width:@progressPct%"></span></span>
+        </button>
+
+        @* Gecikmiş *@
+        <button type="button" class="apya-console-bar" id="bar-overdue" aria-pressed="false" title="Gecikmiş görevleri filtrele">
+            <span class="apya-console-bar-head">
+                <span class="apya-console-bar-label"><i class="fa fa-triangle-exclamation me-1" aria-hidden="true"></i>Gecikmiş</span>
+                <span class="apya-console-bar-chevron" aria-hidden="true">&rsaquo;</span>
+            </span>
+            <span class="apya-console-bar-value">
+                <strong class="apya-numeric is-negative">@overdueCount</strong>
+                <small>görev</small>
+            </span>
+            <span class="apya-mini-progress is-negative"><span style="width:@(totalTasks > 0 ? overdueCount * 100 / totalTasks : 0)%"></span></span>
+        </button>
+
+        @* 7 Gün İçinde *@
+        <button type="button" class="apya-console-bar" id="bar-due7" aria-pressed="false" title="7 gün içinde bitmesi gerekenler">
+            <span class="apya-console-bar-head">
+                <span class="apya-console-bar-label"><i class="fa fa-calendar-day me-1" aria-hidden="true"></i>7 Gün İçinde</span>
+                <span class="apya-console-bar-chevron" aria-hidden="true">&rsaquo;</span>
+            </span>
+            <span class="apya-console-bar-value">
+                <strong class="apya-numeric is-warning">@due7Count</strong>
+                <small>görev</small>
+            </span>
+            <span class="apya-mini-progress is-warning"><span style="width:@(totalTasks > 0 ? due7Count * 100 / totalTasks : 0)%"></span></span>
+        </button>
+
+        @* Ekip — avatara tıklamak o kişinin görevlerini filtreler.
+           Ekip Yönetimi paneli ProjectMember backend'i olmadığı için kapsam dışı. *@
+        <div class="apya-console-team">
+            <span class="apya-console-facepile">
+                @foreach (var a in assignees.Take(5))
+                {
+                    <button type="button" class="apya-avatar apya-avatar-@HashTone(a.Name)"
+                            data-assignee-id="@a.Id" aria-pressed="false"
+                            title="@a.Name — görevlerini filtrele">@Initials(a.Name)</button>
+                }
+                @if (assignees.Count > 5)
+                {
+                    <span class="apya-avatar apya-avatar-neutral" title="@(assignees.Count - 5) kişi daha">+@(assignees.Count - 5)</span>
+                }
+            </span>
+            <span class="apya-console-team-label">
+                @(assignees.Count == 0 ? "EKİP YOK" : $"EKİP ({assignees.Count})")
+            </span>
         </div>
 
-        @* Metrikler kart içinde dikey ortalı *@
-        <div class="row align-items-center gy-3">
+    </div>
 
-            @* ── Proje Bilgileri + Tenant Rozeti ── *@
-            <div class="col-md-3">
-                @* Tenant Rozeti *@
-                <span class="apya-chip apya-chip-@(Model.IsInternalProject ? "neutral" : "brand") mb-2" style="font-size: 0.75rem;">
-                    <i class="fa @(Model.IsInternalProject ? "fa-home" : "fa-building") me-1"></i>
-                    @(Model.IsInternalProject ? "Dahili Proje" : $"Müşteri: {Model.TenantName}")
-                </span>
+    @* ── Şerit aksiyonları ── *@
+    <div class="apya-console-actions">
+        <div class="apya-console-search">
+            <i class="fa fa-magnifying-glass" aria-hidden="true"></i>
+            <input type="search" id="console-search" placeholder="Görev ara" aria-label="Görev ara" />
+        </div>
+        @if (await AuthorizationService.IsGrantedAsync(PlatformPermissions.Tasks.Create))
+        {
+            <button id="btn-ai-task-generator"
+                    class="btn btn-outline-primary"
+                    data-project-id="@Model.Id"
+                    title="PDF yükle, AI taslak görevlere bölsün, beğendiklerini onayla.">
+                <i class="fa fa-robot" aria-hidden="true"></i> AI ile Görev Oluştur
+            </button>
+            <button id="btn-create-task"
+                    class="btn btn-primary"
+                    data-project-id="@Model.Id">
+                <i class="fa fa-plus" aria-hidden="true"></i> Yeni Görev Ekle
+            </button>
+        }
 
-                @* Proje Adı + Kopyalanabilir Kod *@
-                <h1 class="fw-bold mb-2" style="font-size: 1.6rem;">
-                    <i class="fa fa-rocket text-primary me-2"></i>@Model.Project?.Name
-                </h1>
-                <div class="d-flex align-items-center gap-2 mb-2">
-                    <span class="apya-chip apya-chip-brand" style="font-size: 0.8rem; padding: 6px 14px;">
-                        <i class="fa fa-tag me-1"></i>@Model.Project?.Code
-                    </span>
-                    <button class="btn btn-sm btn-outline-secondary px-2 py-0"
-                            onclick="navigator.clipboard.writeText('@Model.Project?.Code'); abp.notify.success('Proje kodu kopyalandı!');"
-                            title="Proje kodunu kopyala">
-                        <i class="fa fa-copy" style="font-size: 0.75rem;"></i>
+        @* ── ⋯ Proje menüsü ──
+           Bootstrap dropdown: dışarı tıklama / Esc / odak yönetimi hazır gelir.
+           auto-close="outside": Yoğunluk segmentine basınca menü kapanmasın. *@
+        <div class="dropdown">
+            <button type="button" class="apya-console-kebab" id="btn-project-menu"
+                    data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false"
+                    aria-label="Proje menüsü" title="Proje menüsü">
+                <i class="fa fa-ellipsis" aria-hidden="true"></i>
+            </button>
+            <div class="dropdown-menu dropdown-menu-end apya-console-menu" aria-labelledby="btn-project-menu">
+
+                <div class="apya-console-menu-head">Proje</div>
+                @if (hasBudget)
+                {
+                    <button type="button" class="apya-console-menu-item" id="menu-budget-summary"
+                            data-project-id="@Model.Project?.Id">
+                        <span class="apya-console-menu-icon"><i class="fa fa-wallet" aria-hidden="true"></i></span>
+                        Bütçe vs gerçekleşen
                     </button>
-                    @* "Bütçe Durumu" butonu kaldırıldı — artık aşağıdaki "Bütçe Tüketimi"
-                       widget'ına tıklayınca aynı modal açılıyor. *@
-                </div>
-                <p class="text-muted mb-0 small" style="display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">
-                    @Model.Project?.Description
-                </p>
-            </div>
-
-            @* ── AI Risk Öngörüsü — GEÇİCİ GİZLİ (kullanıcı isteği 2026-06-09): geri getirmek için "d-none" kaldır ── *@
-            <div class="col-md-2 border-start px-3 d-none apya-pd-metric-col">
-                <div class="d-flex align-items-center mb-2">
-                    <div class="bg-@Model.AiRiskColor bg-opacity-10 p-2 rounded-circle me-2 border border-@Model.AiRiskColor shadow-sm d-flex align-items-center justify-content-center" style="width:40px;height:40px;">
-                        <i class="fa fa-robot text-@Model.AiRiskColor fs-5"></i>
-                    </div>
-                    <div>
-                        <h6 class="apya-overline mb-0">AI Risk</h6>
-                        <span class="fw-bold fs-5 text-@Model.AiRiskColor">%@Model.AiRiskScore</span>
-                    </div>
-                </div>
-                <p class="text-muted mb-0 lh-sm" style="font-size:0.75rem;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;">
-                    @Model.AiRiskMessage
-                </p>
-            </div>
-
-            @* ── Kalan Süre Countdown + Zaman Sapma ── *@
-            <div class="col-md-2 border-start px-3 apya-pd-metric-col">
-                <div class="d-flex align-items-center gap-2 mb-2">
-                    <span class="apya-tile-icon-box"><i class="fa fa-hourglass-half"></i></span>
-                    <h6 class="apya-overline mb-0 d-flex align-items-center">
-                        Kalan Süre
-                        <apya-hint placement="bottom" text="Bitiş tarihine kalan gün ve tüketilen süre yüzdesi. Yanındaki rozet süreyi ilerlemeyle karşılaştırır: sürenin %80'i geçmiş ve görevlerin yarısı bitmemişse Kritik, süre %50'yi geçmiş ve ilerleme 20 puan geride kalmışsa Dikkat, aksi halde Sağlam." />
-                    </h6>
-                </div>
-                @if (Model.TimeNotStarted)
-                {
-                    @* İleri tarihli proje: bitişe değil BAŞLANGICA geri sayım *@
-                    <div class="d-flex align-items-baseline gap-1 mb-1 flex-wrap">
-                        <span class="text-muted small">Başlamasına</span>
-                        <span class="fw-bold fs-4">@Model.RemainingDays</span>
-                        <span class="text-muted small">Gün Kaldı</span>
-                    </div>
-                    <div class="d-flex justify-content-between align-items-center">
-                        <small class="text-muted" style="font-size:0.7rem;">Başlangıç: @Model.Project?.StartDate?.ToString("dd.MM.yyyy")</small>
-                        <span class="apya-chip apya-chip-@timeHealthTone" style="font-size:0.65rem;">
-                            @Model.TimeHealthLabel
-                        </span>
-                    </div>
                 }
-                else if (Model.Project?.EndDate.HasValue == true)
+                <button type="button" class="apya-console-menu-item" data-copy-code="@Model.Project?.Code">
+                    <span class="apya-console-menu-icon"><i class="fa fa-copy" aria-hidden="true"></i></span>
+                    Proje kodunu kopyala
+                    <span class="apya-console-menu-trailing apya-numeric">@Model.Project?.Code</span>
+                </button>
+
+                <div class="apya-console-menu-head is-divided">Görünüm</div>
+                <div class="apya-console-menu-row">
+                    <span>Yoğunluk</span>
+                    <span class="apya-console-density" role="group" aria-label="Satır yoğunluğu">
+                        <button type="button" data-density-set="compact" title="Sıkı">S</button>
+                        <button type="button" data-density-set="cozy" title="Normal">N</button>
+                        <button type="button" data-density-set="comfortable" title="Geniş">G</button>
+                    </span>
+                </div>
+
+                @* Silme: ayrılmış negatif bölüm. id + data-* attribute'ları Danger Zone
+                   kartındakiyle AYNEN aynı — mevcut SweetAlert akışı değişmedi. *@
+                @if (await AuthorizationService.IsGrantedAsync("Platform.Projects.ManageTeam") || await AuthorizationService.IsGrantedAsync(PlatformPermissions.Projects.Delete))
                 {
-                    <div class="d-flex align-items-baseline gap-1 mb-1">
-                        <span class="fw-bold fs-4">@Model.RemainingDays</span>
-                        <span class="text-muted small">Gün Kaldı</span>
-                    </div>
-                    <div class="apya-mini-progress @timeHealthBarTone mb-1"><span style="width:@Model.TimeUsagePercent%"></span></div>
-                    <div class="d-flex justify-content-between">
-                        <small class="text-muted" style="font-size:0.7rem;">Sürenin %@Model.TimeUsagePercent'i</small>
-                        <span class="apya-chip apya-chip-@timeHealthTone" style="font-size:0.65rem;">
-                            @Model.TimeHealthLabel
-                        </span>
-                    </div>
-                }
-                else
-                {
-                    <span class="text-muted small">Tarih belirlenmemiş</span>
+                    <button type="button" class="apya-console-menu-item is-danger"
+                            id="btn-delete-project"
+                            data-project-id="@Model.Id"
+                            data-project-code="@Model.Project?.Code">
+                        <span class="apya-console-menu-icon"><i class="fa fa-trash" aria-hidden="true"></i></span>
+                        Projeyi sil…
+                    </button>
                 }
             </div>
-
-            @* ── Bütçe Tüketimi (tıklanabilir → Bütçe vs Gerçekleşen modalı) ── *@
-            <div id="btn-budget-summary" data-project-id="@Model.Project?.Id" role="button"
-                 class="col-md-2 border-start px-3 budget-consumption-clickable apya-pd-metric-col" style="cursor:pointer;"
-                 title="Detay için tıkla — Bütçe vs Gerçekleşen">
-                <div class="d-flex align-items-center gap-2 mb-2">
-                    <span class="apya-tile-icon-box"><i class="fa fa-wallet"></i></span>
-                    <h6 class="apya-overline mb-0">
-                        Bütçe Tüketimi
-                        <i class="fa fa-up-right-from-square ms-1 text-primary" style="font-size:0.6rem;opacity:0.65;"></i>
-                        <apya-hint placement="bottom" text="Bu projeye bağlanmış GİDER kayıtlarının toplamı — harcanan efor veya personel maliyeti değil. Karta tıklayarak bütçe ile gerçekleşenin karşılaştırmasını açabilirsiniz." />
-                    </h6>
-                </div>
-                @if (Model.Project?.TotalBudget > 0)
-                {
-                    <div class="mb-1">
-                        <span class="fw-bold apya-numeric" style="font-size:1rem;">
-                            @Model.BudgetSpent.ToString("N0")
-                        </span>
-                        <span class="text-muted small apya-numeric"> / @Model.Project?.TotalBudget.ToString("N0")</span>
-                    </div>
-                    <div class="apya-mini-progress @budgetBarTone mb-1"><span style="width:@Model.BudgetPercent%"></span></div>
-                    <small class="text-muted" style="font-size:0.7rem;">%@Model.BudgetPercent kullanıldı</small>
-                }
-                else
-                {
-                    <span class="text-muted small">Bütçe tanımsız</span>
-                }
-            </div>
-
-            @* ── İlerleme + Ekip ── *@
-            <div class="col-md-3 border-start ps-3 apya-pd-metric-col">
-                @* İlerleme *@
-                <div class="mb-2">
-                    <div class="d-flex align-items-center gap-2 mb-1">
-                        <span class="apya-tile-icon-box"><i class="fa fa-chart-line"></i></span>
-                        <h6 class="apya-overline mb-0">Proje İlerlemesi</h6>
-                    </div>
-                    <div class="d-flex align-items-center gap-2">
-                        <span class="fw-bold fs-5 @(progressPct == 100 ? "text-success" : "text-primary")">%@progressPct</span>
-                        <div class="apya-mini-progress flex-grow-1 @(progressPct == 100 ? "is-positive" : "")"><span style="width:@progressPct%"></span></div>
-                    </div>
-                    <small class="text-muted" style="font-size:0.7rem;">@completedTasks / @totalTasks Görev Bitti</small>
-                </div>
-
-                @* Ekip Avatarları *@
-                <div>
-                    <h6 class="apya-overline mb-1">Ekip (@assigneeCount)</h6>
-                    <div class="apya-tile-avatars">
-                        @for (int i = 0; i < facepileCount; i++)
-                        {
-                            <span class="apya-tile-avatar"><i class="fa fa-user"></i></span>
-                        }
-                        @if (assigneeCount > 5)
-                        {
-                            <span class="apya-tile-avatar is-more">+@(assigneeCount - 5)</span>
-                        }
-                        @if (facepileCount == 0)
-                        {
-                            <span class="text-muted small">Henüz atanan yok</span>
-                        }
-                    </div>
-                </div>
-            </div>
-
         </div>
     </div>
 </div>
 
-@* ─── Görev Listesi (View Tabs) ─── *@
-<abp-card class="shadow-sm rounded-4 border-0">
-    <abp-card-header class="bg-transparent border-bottom-0 pt-4 pb-0">
-        <abp-row class="align-items-center">
-            <abp-column size-md="_6">
-                <!-- Tabs -->
-                <ul class="nav nav-tabs border-0" id="projectViewTabs" role="tablist">
-                    <li class="nav-item border-0" role="presentation">
-                        <button class="nav-link active fw-bold border-0" id="list-tab" data-bs-toggle="tab" data-bs-target="#list-view" type="button" role="tab" aria-controls="list-view" aria-selected="true">
-                            <i class="fa fa-list me-2"></i>Liste
-                        </button>
-                    </li>
-                    <li class="nav-item border-0 ms-3" role="presentation">
-                        <button class="nav-link fw-bold border-0" id="board-tab" data-bs-toggle="tab" data-bs-target="#board-view" type="button" role="tab" aria-controls="board-view" aria-selected="false">
-                            <i class="fa fa-columns me-2"></i>Kanban
-                        </button>
-                    </li>
-                </ul>
-            </abp-column>
-            <abp-column size-md="_6" class="text-end">
-                @if (await AuthorizationService.IsGrantedAsync(PlatformPermissions.Tasks.Create))
+@* ─── GÖREV ALANI (kalan yüksekliğin tamamı) ─── *@
+<div class="card apya-console-main">
+
+    <div class="apya-console-tabs" role="tablist">
+        <button type="button" class="apya-console-tab active" id="btn-view-list"
+                role="tab" aria-selected="true" aria-controls="view-list">
+            <i class="fa fa-list" aria-hidden="true"></i>Liste
+        </button>
+        <button type="button" class="apya-console-tab" id="btn-view-kanban"
+                role="tab" aria-selected="false" aria-controls="view-kanban">
+            <i class="fa fa-table-columns" aria-hidden="true"></i>Kanban
+        </button>
+        <span class="apya-console-count apya-numeric" id="console-task-count">@totalTasks görev</span>
+    </div>
+
+    @* ─── Filtre çubuğu (42px) ───
+       Şerit barları ve buradaki chip'ler AYNI state'i okur/yazar
+       (ProjectDetails.js → filterState). İki ayrı filtre mekanizması yok. *@
+    <div class="apya-console-filters" id="console-filters">
+        <span class="apya-console-filter-label">Filtre</span>
+
+        <div class="dropdown">
+            <button type="button" class="apya-filter-chip" id="chip-status"
+                    data-bs-toggle="dropdown" aria-expanded="false">
+                <span data-chip-text>Durum: tümü</span><i class="fa fa-chevron-down" aria-hidden="true"></i>
+            </button>
+            <div class="dropdown-menu apya-console-menu">
+                <button type="button" class="apya-console-menu-item" data-filter="status" data-value="">Tümü</button>
+                <button type="button" class="apya-console-menu-item" data-filter="status" data-value="1">Yapılacak</button>
+                <button type="button" class="apya-console-menu-item" data-filter="status" data-value="2">Sürüyor</button>
+                <button type="button" class="apya-console-menu-item" data-filter="status" data-value="3">Testte</button>
+                <button type="button" class="apya-console-menu-item" data-filter="status" data-value="4">Tamamlandı</button>
+                <button type="button" class="apya-console-menu-item" data-filter="status" data-value="0">İptal</button>
+            </div>
+        </div>
+
+        <div class="dropdown">
+            <button type="button" class="apya-filter-chip" id="chip-assignee"
+                    data-bs-toggle="dropdown" aria-expanded="false">
+                <span data-chip-text>Atanan: tümü</span><i class="fa fa-chevron-down" aria-hidden="true"></i>
+            </button>
+            <div class="dropdown-menu apya-console-menu">
+                <button type="button" class="apya-console-menu-item" data-filter="assignee" data-value="">Tümü</button>
+                @foreach (var a in assignees)
                 {
-                    <button id="btn-ai-task-generator"
-                            class="btn btn-outline-primary btn-sm me-2"
-                            data-project-id="@Model.Id"
-                            title="PDF yükle, AI taslak görevlere bölsün, beğendiklerini onayla.">
-                        <i class="fa fa-robot me-1"></i> AI ile Görev Oluştur
-                    </button>
-                    <button id="btn-create-task"
-                            class="btn btn-primary btn-sm"
-                            data-project-id="@Model.Id">
-                        <i class="fa fa-plus me-1"></i> Yeni Görev Ekle
+                    <button type="button" class="apya-console-menu-item" data-filter="assignee" data-value="@a.Id" data-label="@a.Name">
+                        <span class="apya-avatar apya-avatar-@HashTone(a.Name)">@Initials(a.Name)</span>@a.Name
                     </button>
                 }
-            </abp-column>
-        </abp-row>
-    </abp-card-header>
+            </div>
+        </div>
 
-    <abp-card-body class="pt-3">
-        <div class="tab-content" id="projectViewTabsContent">
-            
-            @* --- LİSTE GÖRÜNÜMÜ --- *@
-            <div class="tab-pane fade show active" id="list-view" role="tabpanel" aria-labelledby="list-tab">
-                <div class="table-responsive mt-2">
-                    <abp-table class="apya-clean-table" id="ProjectTasksTable"></abp-table>
+        <div class="dropdown">
+            <button type="button" class="apya-filter-chip" id="chip-priority"
+                    data-bs-toggle="dropdown" aria-expanded="false">
+                <span data-chip-text>Öncelik: tümü</span><i class="fa fa-chevron-down" aria-hidden="true"></i>
+            </button>
+            <div class="dropdown-menu apya-console-menu">
+                <button type="button" class="apya-console-menu-item" data-filter="priority" data-value="">Tümü</button>
+                <button type="button" class="apya-console-menu-item" data-filter="priority" data-value="1">Düşük</button>
+                <button type="button" class="apya-console-menu-item" data-filter="priority" data-value="2">Orta</button>
+                <button type="button" class="apya-console-menu-item" data-filter="priority" data-value="3">Yüksek</button>
+                <button type="button" class="apya-console-menu-item" data-filter="priority" data-value="4">Kritik</button>
+            </div>
+        </div>
+
+        <button type="button" class="apya-filter-chip" id="chip-overdue" aria-pressed="false">Gecikmiş</button>
+        <button type="button" class="apya-filter-chip" id="chip-mine" aria-pressed="false">Bana atanan</button>
+        <button type="button" class="apya-console-filter-clear d-none" id="btn-clear-filters">Filtreleri temizle</button>
+    </div>
+
+    <div class="apya-console-views">
+
+        @* --- LİSTE GÖRÜNÜMÜ --- *@
+        <div id="view-list" class="view-panel" role="tabpanel" aria-labelledby="btn-view-list">
+            @if (canViewTasks)
+            {
+                <abp-table class="apya-clean-table" id="ProjectTasksTable"></abp-table>
+
+                @* Yükleniyor — spinner değil, tablo hizasında iskelet satırlar. *@
+                <div class="apya-console-skeleton d-none" id="state-loading" aria-hidden="true">
+                    @for (var i = 0; i < 8; i++)
+                    {
+                        <div class="apya-console-skeleton-row">
+                            <span class="apya-skeleton" style="width:38%"></span>
+                            <span class="apya-skeleton" style="width:12%"></span>
+                            <span class="apya-skeleton" style="width:10%"></span>
+                            <span class="apya-skeleton" style="width:10%"></span>
+                            <span class="apya-skeleton" style="width:12%"></span>
+                        </div>
+                    }
                 </div>
-            </div>
 
-            @* --- KANBAN BOARD GÖRÜNÜMÜ --- *@
-            <div class="tab-pane fade" id="board-view" role="tabpanel" aria-labelledby="board-tab">
-                @* Merkezi kanban markup'ı (tek kaynak) *@
-                <partial name="_KanbanBoard" />
-            </div>
-
-        </div>
-    </abp-card-body>
-</abp-card>
-
-@* ─── Danger Zone ─── *@
-@if (await AuthorizationService.IsGrantedAsync("Platform.Projects.ManageTeam") || await AuthorizationService.IsGrantedAsync(PlatformPermissions.Projects.Delete))
-{
-    @* Tehlikeli bölge başlığı: solid bg-danger + text-white yerine chip
-       formülü (soft negatif zemin + tonlu metin) — dark temada da okunur,
-       vurgu ikon + kart kenarlığıyla korunur. *@
-    <div class="card mt-5 border-danger shadow-sm">
-        <div class="card-header apya-danger-zone-header d-flex align-items-center">
-            <i class="fa fa-exclamation-triangle fs-5 me-2"></i>
-            <h5 class="mb-0 fw-bold" style="letter-spacing:1px;">TEHLİKELİ BÖLGE (DANGER ZONE)</h5>
-        </div>
-        <div class="card-body">
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <h6 class="fw-bold mb-1">Bu Projeyi Sil</h6>
-                    <p class="text-muted mb-0 small">
-                        Dikkat! Bir projeyi sildiğinizde projeye bağlı <strong>tüm görevler, alt görevler ve dosyalar kalıcı olarak silinir.</strong> Bu işlem geri alınamaz.
+                @* Boş hâller — DataTables'ın boş hücresine JS ile basılır. *@
+                <template id="tpl-state-empty">
+                    <div class="apya-console-state">
+                        <span class="apya-console-state-icon"><i class="fa fa-list-check" aria-hidden="true"></i></span>
+                        <strong>Bu projede henüz görev yok</strong>
+                        <p>İlk görevi elle ekleyin ya da bir dokümandan AI ile üretin.</p>
+                        <span class="apya-console-state-actions">
+                            <button type="button" class="btn btn-primary btn-sm" data-state-action="create">
+                                <i class="fa fa-plus me-1" aria-hidden="true"></i>Yeni Görev Ekle
+                            </button>
+                            <button type="button" class="btn btn-outline-primary btn-sm" data-state-action="ai">
+                                <i class="fa fa-robot me-1" aria-hidden="true"></i>AI ile Görev Oluştur
+                            </button>
+                        </span>
+                    </div>
+                </template>
+                <template id="tpl-state-nomatch">
+                    <div class="apya-console-state">
+                        <span class="apya-console-state-icon"><i class="fa fa-filter" aria-hidden="true"></i></span>
+                        <strong>Filtreye uyan görev yok</strong>
+                        <span class="apya-console-state-actions">
+                            <button type="button" class="btn btn-outline-secondary btn-sm" data-state-action="clear">Filtreleri temizle</button>
+                        </span>
+                    </div>
+                </template>
+            }
+            else
+            {
+                @* 403 — proje özeti görünür kalır, yalnız liste kilitlenir. *@
+                <div class="apya-console-state is-denied">
+                    <span class="apya-console-state-icon is-muted"><i class="fa fa-lock" aria-hidden="true"></i></span>
+                    <strong>Bu projenin görevlerini görme yetkiniz yok</strong>
+                    <p>
+                        Proje özeti görünür kalır; görev listesi
+                        <code class="apya-numeric">@PlatformPermissions.Tasks.Default</code> izni gerektirir.
+                        Proje yöneticisi bu izni verebilir.
                     </p>
                 </div>
-                <div class="ms-4">
-                    <button class="btn btn-outline-danger fw-bold shadow-sm"
-                            id="btn-delete-project"
-                            data-project-id="@Model.Id"
-                            data-project-code="@Model.Project?.Code">
-                        <i class="fa fa-trash me-2"></i>Projeyi Sil
-                    </button>
-                </div>
-            </div>
+            }
         </div>
+
+        @* --- KANBAN GÖRÜNÜMÜ --- *@
+        <div id="view-kanban" class="view-panel d-none" role="tabpanel" aria-labelledby="btn-view-kanban">
+            @* Merkezi kanban markup'ı (tek kaynak) *@
+            <partial name="_KanbanBoard" />
+        </div>
+
     </div>
-}
+</div>
+
+@* Tehlikeli Bölge kartı kaldırıldı — silme, ⋯ menüsünün ayrılmış negatif
+   bölümüne taşındı (handoff 2. adım). Onay akışı (SweetAlert + proje kodunu
+   elle yazdırma) ve izin kontrolü değişmedi. *@
 </div> @* /.apya-page *@
 
 <partial name="_TaskDetailIsland" />
