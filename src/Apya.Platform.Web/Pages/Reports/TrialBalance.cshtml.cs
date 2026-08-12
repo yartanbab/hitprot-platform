@@ -3,9 +3,12 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Volo.Abp.AspNetCore.Mvc.UI.RazorPages;
 using Apya.Platform.Reports;
+using Microsoft.AspNetCore.Authorization;
+using Apya.Platform.Permissions;
 
 namespace Apya.Platform.Web.Pages.Reports;
 
+[Authorize(PlatformPermissions.Reports.TrialBalance)]
 public class TrialBalanceModel : AbpPageModel
 {
     private readonly ITrialBalanceAppService _trialBalanceAppService;

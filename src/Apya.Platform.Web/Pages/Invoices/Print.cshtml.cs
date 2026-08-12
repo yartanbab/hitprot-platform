@@ -4,9 +4,12 @@ using Microsoft.AspNetCore.Mvc;
 using Volo.Abp.AspNetCore.Mvc.UI.RazorPages;
 using Apya.Platform.Invoices;
 using Apya.Platform.Invoices.Dtos;
+using Microsoft.AspNetCore.Authorization;
+using Apya.Platform.Permissions;
 
 namespace Apya.Platform.Web.Pages.Invoices;
 
+[Authorize(PlatformPermissions.Invoices.Default)]
 public class PrintModel : AbpPageModel
 {
     private readonly IInvoiceAppService _invoiceAppService;
