@@ -37,6 +37,8 @@ namespace Apya.Platform.Tasks
         private readonly IRepository<TaskFeatureAssignment, Guid> _featureAssignmentRepository;
         private readonly IRepository<TaskChecklistItem, Guid> _checklistRepository;
         private readonly IRepository<TaskFavorite, Guid> _favoriteRepository;
+        private readonly IRepository<TaskWatcher, Guid> _watcherRepository;
+        private readonly TaskManager _taskManager;
         private readonly IRepository<Expense, Guid> _expenseRepository;
         private readonly IRepository<IncomeEntry, Guid> _incomeRepository;
         private readonly IRepository<Apya.Platform.Projects.Project, Guid> _projectLookupRepository;
@@ -56,6 +58,8 @@ namespace Apya.Platform.Tasks
             IRepository<TaskFeatureAssignment, Guid> featureAssignmentRepository,
             IRepository<TaskChecklistItem, Guid> checklistRepository,
             IRepository<TaskFavorite, Guid> favoriteRepository,
+            IRepository<TaskWatcher, Guid> watcherRepository,
+            TaskManager taskManager,
             IRepository<Expense, Guid> expenseRepository,
             IRepository<IncomeEntry, Guid> incomeRepository,
             IRepository<Apya.Platform.Projects.Project, Guid> projectLookupRepository,
@@ -74,6 +78,8 @@ namespace Apya.Platform.Tasks
             _featureAssignmentRepository = featureAssignmentRepository;
             _checklistRepository   = checklistRepository;
             _favoriteRepository    = favoriteRepository;
+            _watcherRepository     = watcherRepository;
+            _taskManager           = taskManager;
             _expenseRepository     = expenseRepository;
             _incomeRepository      = incomeRepository;
             _projectLookupRepository = projectLookupRepository;
@@ -160,12 +166,21 @@ namespace Apya.Platform.Tasks
 
             await PopulateTagsAsync(new List<TaskDto> { taskDto });
 
-            // Mevcut kullanıcının favorisi mi (TaskFavorite join)
+            // Mevcut kullanıcının favorisi / takibi mi (TaskFavorite + TaskWatcher join)
             var favUserId = CurrentUser.Id;
             if (favUserId != null)
             {
                 taskDto.IsFavorite = await _favoriteRepository.FindAsync(f => f.TaskId == id && f.UserId == favUserId.Value) != null;
+                taskDto.IsWatched = await _watcherRepository.FindAsync(w => w.TaskId == id && w.UserId == favUserId.Value) != null;
             }
+
+            // Harcanan süre: kapanmış zaman kayıtlarının toplamı (detay ekranındaki
+            // "Harcanan / tahmin" hücresi ve tahmin kullanım çubuğu bunu kullanır).
+            var logs = await _timeLogRepository.GetListAsync(l => l.TaskId == id);
+            var totalSeconds = logs
+                .Where(l => l.EndTime.HasValue)
+                .Sum(l => l.SecondsSpent ?? (long)(l.EndTime!.Value - l.StartTime).TotalSeconds);
+            taskDto.SpentHours = Math.Round(totalSeconds / 3600m, 2);
 
             // Göreve bağlı finans — izinle gate'lenir (finansal veri sızıntısını önler)
             if (await AuthorizationService.IsGrantedAsync(PlatformPermissions.Expenses.Default))
@@ -306,6 +321,61 @@ namespace Apya.Platform.Tasks
             return true;
         }
 
+        // Mevcut kullanıcı için görev takibini aç/kapat (ToggleFavoriteAsync ile aynı desen).
+        public async Task<bool> ToggleWatchAsync(Guid taskId)
+        {
+            await EnsureTaskAccessAllowedAsync(taskId);
+            var userId = CurrentUser.Id!.Value; // [Authorize] → null değil
+
+            var existing = await _watcherRepository.FindAsync(w => w.TaskId == taskId && w.UserId == userId);
+            if (existing != null)
+            {
+                await _watcherRepository.DeleteAsync(existing, autoSave: true);
+                return false;
+            }
+
+            await _watcherRepository.InsertAsync(new TaskWatcher(GuidGenerator.Create(), taskId, userId), autoSave: true);
+            return true;
+        }
+
+        /// <summary>Görevi bir veya birden çok projeye taşır/kopyalar. Yetki kontrolü
+        /// UpdateAsync ile aynı kuralı uygular; asıl iş TaskManager'da.</summary>
+        public async Task<Dtos.TransferTaskResultDto> TransferAsync(Guid id, Dtos.TransferTaskDto input)
+        {
+            await CheckUpdatePolicyAsync();
+
+            var task = await Repository.GetAsync(id);
+            await EnsureTaskPrivacyAllowedAsync(task);
+
+            if (task.CreatorId != CurrentUser.Id && task.AssigneeId != CurrentUser.Id)
+            {
+                if (!await AuthorizationService.IsGrantedAsync(PlatformPermissions.Projects.ManageTeam))
+                {
+                    throw new Volo.Abp.BusinessException(PlatformDomainErrorCodes.TaskUpdateDenied);
+                }
+            }
+
+            var options = new TaskTransferOptions
+            {
+                Subtasks     = input.Include.Subtasks,
+                Checklist    = input.Include.Checklist,
+                Comments     = input.Include.Comments,
+                Files        = input.Include.Files,
+                KeepAssignee = input.Include.KeepAssignee,
+                KeepLinks    = input.Include.KeepLinks,
+                ShiftDates   = input.Include.ShiftDates,
+            };
+
+            var createdIds = await _taskManager.TransferAsync(
+                task, input.TargetProjectIds, input.Mode, options, Clock.Now);
+
+            return new Dtos.TransferTaskResultDto
+            {
+                MovedToProjectId = input.Mode == TaskTransferMode.Move ? task.ProjectId : null,
+                CreatedTaskIds = createdIds,
+            };
+        }
+
         // Görev "Proje" seçici — tenant'ın projeleri (IMultiTenant → GetListAsync tenant'a göre filtreler).
         public async Task<List<ProjectLookupDto>> GetProjectsLookupAsync()
         {
@@ -414,6 +484,10 @@ namespace Apya.Platform.Tasks
                 now: Clock.Now
             );
 
+            // Kullanıcıya gösterilen kodun (GRV-N) kaynağı — tenant içinde artan sıra.
+            newTask.AssignNumber(await _taskManager.GetNextNumberAsync());
+            newTask.SetPlanningInfo(input.EstimatedHours, input.TaskType, input.Sprint);
+
             // Durum varsayılandan farklıysa set et
             if (input.Status != Apya.Platform.Tasks.TaskStatus.Todo)
             {
@@ -491,6 +565,8 @@ namespace Apya.Platform.Tasks
                 input.IsPrivate,
                 Clock.Now
             );
+
+            task.SetPlanningInfo(input.EstimatedHours, input.TaskType, input.Sprint);
 
             // Proje değişimi (task.Update projeyi kapsamaz). Board kolonu proje-kapsamlı
             // olduğundan MoveToProject proje değişince kolonu temizler.

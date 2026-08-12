@@ -13,8 +13,19 @@ namespace Apya.Platform.Tasks;
 public class TaskItem : FullAuditedAggregateRoot<Guid>, IMultiTenant
 {
     public Guid? TenantId { get; private set; }
+
+    /// <summary>Tenant içinde artan görev sırası; kullanıcıya "GRV-17" gibi gösterilen kodun
+    /// sayısal kaynağı. DB sequence YERİNE TaskManager'da MAX+1 ile atanır — çift provider'da
+    /// (Postgres/MSSQL) sequence taşıması güvenilir değil. 0 = henüz atanmamış.</summary>
+    public int Number { get; private set; }
+
     public string Title { get; private set; } = null!;
     public string? Description { get; private set; }
+
+    // --- Planlama (görev detayı "Detaylar" kartı + tahmin çubuğu) ---
+    public decimal? EstimatedHours { get; private set; }
+    public string? TaskType { get; private set; }
+    public string? Sprint { get; private set; }
 
     // --- Zamanlama ---
     public DateTime StartDate { get; private set; }
@@ -186,6 +197,28 @@ public class TaskItem : FullAuditedAggregateRoot<Guid>, IMultiTenant
     public void SetPrivacy(bool isPrivate)
     {
         IsPrivate = isPrivate;
+    }
+
+    /// <summary>Tenant-içi görev sırasını atar. Yalnızca bir kez — kod kullanıcıya
+    /// gösterildiği ve dış sistemlere kopyalandığı için sonradan değişmemeli.</summary>
+    public void AssignNumber(int number)
+    {
+        if (Number != 0) return;
+        if (number <= 0)
+            throw new ArgumentOutOfRangeException(nameof(number), "Görev sırası 1'den küçük olamaz.");
+        Number = number;
+    }
+
+    /// <summary>Planlama alanları (tahmini süre, görev tipi, sprint).</summary>
+    public void SetPlanningInfo(decimal? estimatedHours, string? taskType, string? sprint)
+    {
+        if (estimatedHours is < 0)
+            throw new Volo.Abp.BusinessException(PlatformDomainErrorCodes.TaskEstimateNegative)
+                .WithData("EstimatedHours", estimatedHours);
+
+        EstimatedHours = estimatedHours;
+        TaskType = string.IsNullOrWhiteSpace(taskType) ? null : taskType.Trim();
+        Sprint = string.IsNullOrWhiteSpace(sprint) ? null : sprint.Trim();
     }
 
     /// <summary>

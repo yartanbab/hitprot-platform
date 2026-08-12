@@ -133,6 +133,11 @@ namespace Apya.Platform.EntityFrameworkCore
         public DbSet<TaskFeatureAssignment> TaskFeatureAssignments { get; set; }
         public DbSet<TaskChecklistItem> TaskChecklistItems { get; set; }
         public DbSet<TaskFavorite> TaskFavorites { get; set; }
+        public DbSet<TaskWatcher> TaskWatchers { get; set; }
+        public DbSet<TaskTemplate> TaskTemplates { get; set; }
+        public DbSet<TaskTemplateItem> TaskTemplateItems { get; set; }
+        public DbSet<TaskTemplateFeature> TaskTemplateFeatures { get; set; }
+        public DbSet<TaskTemplateTag> TaskTemplateTags { get; set; }
         public DbSet<Apya.Platform.Projects.BoardColumn> BoardColumns { get; set; } // Faz 2: configure edilebilir kanban
         public DbSet<Invoice> Invoices { get; set; }
         public DbSet<InvoiceItem> InvoiceItems { get; set; }
@@ -544,10 +549,21 @@ namespace Apya.Platform.EntityFrameworkCore
                  .HasForeignKey(a => a.TaskId)
                  .IsRequired();
 
+                b.Property(x => x.TaskType).HasMaxLength(64);
+                b.Property(x => x.Sprint).HasMaxLength(32);
+                b.Property(x => x.EstimatedHours).HasPrecision(9, 2);
+
                 // REV-004: Performans indeksleri
                 b.HasIndex(x => x.ProjectId);
                 b.HasIndex(x => x.ParentTaskId);
                 b.HasIndex(x => new { x.Status, x.AssigneeId });
+
+                /* Görev kodu (GRV-N) tenant içinde tekil. UNIQUE DEĞİL bilinçli olarak:
+                   soft-delete'li görevler tabloda kalıyor ve numaraları serbest bırakılmıyor,
+                   ama host bağlamında TenantId null olan satırlar da var — unique index
+                   çok-kiracılı geçmiş veride kırılgan olur. MAX+1 ataması TaskManager'da
+                   tek yerde yapılıyor; index yalnız o sorgunun (MAX) hızı için. */
+                b.HasIndex(x => new { x.TenantId, x.Number });
             });
 
             builder.Entity<Apya.Platform.Tasks.TaskComment>(b =>
@@ -610,6 +626,57 @@ namespace Apya.Platform.EntityFrameworkCore
                 b.ToTable(PlatformConsts.DbTablePrefix + "TaskFavorites", PlatformConsts.DbSchema);
                 b.ConfigureByConvention();
                 b.HasIndex(x => new { x.UserId, x.TaskId }).IsUnique();
+            });
+
+            // ── Görev şablonları ──
+            builder.Entity<TaskTemplate>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "TaskTemplates", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+                b.Property(x => x.Name).IsRequired().HasMaxLength(TaskTemplateConsts.MaxNameLength);
+                b.Property(x => x.Description).HasMaxLength(TaskTemplateConsts.MaxDescriptionLength);
+                b.Property(x => x.TaskTitle).IsRequired().HasMaxLength(TaskTemplateConsts.MaxTitleLength);
+                b.Property(x => x.TaskType).HasMaxLength(TaskTemplateConsts.MaxTaskTypeLength);
+                // Aynı tenant'ta aynı adlı iki şablon kafa karıştırır; UNIQUE DEĞİL çünkü
+                // TenantId NULL (host) satırları bileşik index'te tekrar edebilir — bkz.
+                // (TenantId, Number) kararı. Yalnız listeleme/arama için index.
+                b.HasIndex(x => new { x.TenantId, x.Name });
+
+                b.HasMany(x => x.Items).WithOne().HasForeignKey(x => x.TaskTemplateId).OnDelete(DeleteBehavior.Cascade);
+                b.HasMany(x => x.Features).WithOne().HasForeignKey(x => x.TaskTemplateId).OnDelete(DeleteBehavior.Cascade);
+                b.HasMany(x => x.Tags).WithOne().HasForeignKey(x => x.TaskTemplateId).OnDelete(DeleteBehavior.Cascade);
+            });
+
+            builder.Entity<TaskTemplateItem>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "TaskTemplateItems", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+                b.Property(x => x.Title).IsRequired().HasMaxLength(TaskTemplateConsts.MaxTitleLength);
+                b.HasIndex(x => new { x.TaskTemplateId, x.Order });
+            });
+
+            builder.Entity<TaskTemplateFeature>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "TaskTemplateFeatures", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+                b.Property(x => x.FeatureCode).IsRequired().HasMaxLength(TaskTemplateConsts.MaxFeatureCodeLength);
+                b.HasIndex(x => new { x.TaskTemplateId, x.FeatureCode }).IsUnique();
+            });
+
+            builder.Entity<TaskTemplateTag>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "TaskTemplateTags", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+                b.Property(x => x.TagName).IsRequired().HasMaxLength(TaskTemplateConsts.MaxTagNameLength);
+                b.HasIndex(x => new { x.TaskTemplateId, x.TagName }).IsUnique();
+            });
+
+            builder.Entity<TaskWatcher>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "TaskWatchers", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+                b.HasIndex(x => new { x.UserId, x.TaskId }).IsUnique();
+                b.HasIndex(x => x.TaskId);
             });
 
             builder.Entity<TaskChecklistItem>(b =>

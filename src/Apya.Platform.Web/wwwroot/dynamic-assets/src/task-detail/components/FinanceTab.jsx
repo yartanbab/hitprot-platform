@@ -1,4 +1,5 @@
 import React from 'react';
+import { TAB_CARD, TabCardHeader, TabEmptyState, RowBadge, fmtShortDate } from '../v3/tabPrimitives';
 
 function fmtMoney(amount, currency) {
     const cur = currency || 'TRY';
@@ -9,28 +10,40 @@ function fmtMoney(amount, currency) {
     }
 }
 
-function fmtDate(d) {
-    if (!d) return '';
-    const dt = new Date(d);
-    return isNaN(dt.getTime()) ? '' : new Intl.DateTimeFormat('tr-TR', { day: '2-digit', month: '2-digit', year: 'numeric' }).format(dt);
+function KpiCard({ label, value, tone, note }) {
+    return (
+        <div className="flex flex-col gap-1.5 p-4 rounded-[14px] border border-subtle bg-surface-base shadow-xs">
+            <span className="text-[10.5px] font-bold uppercase tracking-[.07em] text-text-tertiary">{label}</span>
+            <span className={`font-mono text-[22px] font-bold tracking-[-.02em] ${tone}`} style={{ fontVariantNumeric: 'tabular-nums' }}>
+                {value}
+            </span>
+            {note && <span className="text-[11.5px] text-text-tertiary">{note}</span>}
+        </div>
+    );
 }
 
-/** Görev finansı — göreve etiketlenmiş gerçek gider/gelirler (backend'de izinle gate'lenir).
- *  Para birimine göre gruplar; çapraz-kur toplama yapmaz. */
+/**
+ * Finans sekmesi (V4 tasarım dili).
+ *
+ * TASARIMDAN BİLİNÇLİ SAPMA: prototip "Bütçe / Harcanan / Kalan" KPI'ları
+ * gösteriyor, ama görevde bütçe alanı YOK — veri gider/gelir kayıtlarından
+ * geliyor. Prototipin görsel formu (3 KPI kartı + rozetli satır listesi)
+ * korunup etiketler gerçek anlamlarıyla bırakıldı; uydurma bir "bütçe"
+ * gösterilmedi. Para birimine göre gruplar, çapraz-kur toplamaz.
+ */
 export function FinanceTab({ task }) {
     const expenses = task?.expenses || [];
     const incomes = task?.incomes || [];
 
     if (expenses.length === 0 && incomes.length === 0) {
         return (
-            <div className="rounded-2xl border border-subtle bg-surface-base p-6 shadow-xs">
-                <div className="flex items-center gap-2.5 border-b border-subtle pb-4 mb-4">
-                    <i className="fa-solid fa-coins text-success text-base" />
-                    <h3 className="text-[15px] font-bold text-text-primary">Görev Finansı</h3>
-                </div>
-                <p className="text-[13px] text-text-tertiary py-2">
-                    Bu göreve bağlı gider/gelir kaydı yok (veya finansal verileri görüntüleme yetkiniz bulunmuyor).
-                </p>
+            <div className={TAB_CARD}>
+                <TabCardHeader title="Görev Finansı" />
+                <TabEmptyState
+                    icon="fa-coins"
+                    title="Kayıt yok"
+                    description="Bu göreve bağlı gider/gelir kaydı yok (veya finansal verileri görüntüleme yetkiniz bulunmuyor)."
+                />
             </div>
         );
     }
@@ -48,49 +61,50 @@ export function FinanceTab({ task }) {
     ].sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
 
     return (
-        <div className="rounded-2xl border border-subtle bg-surface-base p-6 shadow-xs flex flex-col gap-5">
-            <div className="flex items-center gap-2.5 border-b border-subtle pb-4">
-                <i className="fa-solid fa-coins text-success text-base" />
-                <h3 className="text-[15px] font-bold text-text-primary">Görev Finansı</h3>
-            </div>
-
+        <div className="flex flex-col gap-4">
             {perCurrency.map(({ cur, inc, exp, net }) => (
-                <div key={cur} className="grid grid-cols-3 gap-3">
-                    <div className="rounded-xl border border-subtle p-3 bg-surface-sunken/40">
-                        <p className="text-xs text-text-tertiary">Toplam Gelir ({cur})</p>
-                        <p className="text-base font-semibold text-success">{fmtMoney(inc, cur)}</p>
-                    </div>
-                    <div className="rounded-xl border border-subtle p-3 bg-surface-sunken/40">
-                        <p className="text-xs text-text-tertiary">Toplam Gider ({cur})</p>
-                        <p className="text-base font-semibold text-negative">{fmtMoney(exp, cur)}</p>
-                    </div>
-                    <div className="rounded-xl border border-subtle p-3 bg-surface-sunken/40">
-                        <p className="text-xs text-text-tertiary">Net Bakiye ({cur})</p>
-                        <p className={`text-base font-semibold ${net >= 0 ? 'text-success' : 'text-negative'}`}>{fmtMoney(net, cur)}</p>
-                    </div>
+                <div key={cur} className="grid grid-cols-[repeat(auto-fit,minmax(190px,1fr))] gap-3">
+                    <KpiCard label={`Toplam Gelir (${cur})`} value={fmtMoney(inc, cur)} tone="text-success" note="göreve etiketli gelirler" />
+                    <KpiCard label={`Toplam Gider (${cur})`} value={fmtMoney(exp, cur)} tone="text-warning" note="göreve etiketli giderler" />
+                    <KpiCard
+                        label={`Net Bakiye (${cur})`}
+                        value={fmtMoney(net, cur)}
+                        tone={net >= 0 ? 'text-success' : 'text-negative'}
+                        note={net >= 0 ? 'gelir gideri karşılıyor' : 'gider gelirden fazla'}
+                    />
                 </div>
             ))}
 
-            <div className="flex flex-col divide-y divide-subtle/50 rounded-xl border border-subtle overflow-hidden">
+            <div className={TAB_CARD}>
+                <TabCardHeader title="Finans kalemleri" />
                 {lines.map((l) => (
-                    <div key={`${l.kind}-${l.id}`} className="flex items-center justify-between px-3.5 py-2.5 bg-surface-base">
-                        <div className="flex items-center gap-2.5 min-w-0">
-                            <span className={`flex h-6 w-6 items-center justify-center rounded-full text-[10px] ${l.kind === 'income' ? 'text-success bg-success-subtle' : 'text-negative bg-negative-subtle'}`}>
-                                <i className={`fa-solid ${l.kind === 'income' ? 'fa-plus' : 'fa-minus'}`} />
-                            </span>
-                            <div className="flex flex-col min-w-0">
-                                <span className="text-[13px] font-medium text-text-primary truncate">{l.title || (l.kind === 'income' ? 'Gelir' : 'Gider')}</span>
-                                <span className="text-[11px] text-text-tertiary">{fmtDate(l.date)}</span>
-                            </div>
-                        </div>
-                        <span className={`text-[13px] font-semibold shrink-0 ${l.kind === 'income' ? 'text-success' : 'text-negative'}`}>
+                    <div
+                        key={`${l.kind}-${l.id}`}
+                        className="flex items-center gap-3.5 px-4 py-3 border-t border-subtle first:border-t-0 hover:bg-surface-raised"
+                    >
+                        <span className="flex shrink-0 items-center justify-center h-7 w-7 rounded-lg bg-neutral-subtle text-text-secondary">
+                            <i className={`fa-solid ${l.kind === 'income' ? 'fa-arrow-down' : 'fa-arrow-up'} text-[11px]`} />
+                        </span>
+                        <span className="flex-1 min-w-0 truncate text-[12.5px] font-semibold text-text-primary">
+                            {l.title || (l.kind === 'income' ? 'Gelir' : 'Gider')}
+                        </span>
+                        <span className="shrink-0 font-mono text-[11px] text-text-tertiary lt-860:hidden">{fmtShortDate(l.date)}</span>
+                        {l.kind === 'income'
+                            ? <RowBadge bg="bg-success-subtle" fg="text-success">Gelir</RowBadge>
+                            : <RowBadge bg="bg-warning-subtle" fg="text-warning">Gider</RowBadge>}
+                        <span
+                            className={`shrink-0 font-mono text-[12.5px] font-bold ${l.kind === 'income' ? 'text-success' : 'text-text-primary'}`}
+                            style={{ fontVariantNumeric: 'tabular-nums' }}
+                        >
                             {l.kind === 'income' ? '+' : '−'}{fmtMoney(l.amount, l.currency)}
                         </span>
                     </div>
                 ))}
             </div>
 
-            <p className="text-[11px] text-text-tertiary">Kayıtlar Finans modülünden yönetilir; buraya göreve etiketlenmiş gider/gelirler yansır.</p>
+            <p className="m-0 text-[11px] text-text-tertiary">
+                Kayıtlar Finans modülünden yönetilir; buraya göreve etiketlenmiş gider/gelirler yansır.
+            </p>
         </div>
     );
 }

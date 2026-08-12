@@ -1,28 +1,42 @@
 import React from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { statusOf } from '../taskMetaV3';
+import { TAB_CARD, RowBadge, TabEmptyState } from '../tabPrimitives';
 
-const STATUS_BADGE = {
-    0: { label: 'İptal', cls: 'text-text-secondary bg-neutral-subtle' },
-    1: { label: 'Bekliyor', cls: 'text-text-secondary bg-neutral-subtle' },
-    2: { label: 'Sürüyor', cls: 'text-warning bg-warning-subtle' },
-    3: { label: 'Testte', cls: 'text-primary bg-primary-subtle' },
-    4: { label: 'Tamamlandı', cls: 'text-success bg-success-subtle' },
-};
+function GroupCard({ icon, iconTone, title, note, children }) {
+    return (
+        <div className={TAB_CARD}>
+            <div className="flex items-center gap-2.5 px-4 py-3.5 border-b border-subtle">
+                <i className={`fa-solid ${icon} text-[12px] ${iconTone}`} />
+                <span className="text-[13px] font-bold text-text-primary">{title}</span>
+                <span className="text-[11.5px] text-text-tertiary">{note}</span>
+            </div>
+            {children}
+        </div>
+    );
+}
 
-/** Bağımlılıklar — görevin gerçek `predecessorIds`'i (öncül görevler) başlıklarıyla listelenir.
- *  Her öncül için TaskDto `get(id)` ile çekilir. Öncül ekleme/çıkarma Faz 2 (görev seçici gerekir). */
+/**
+ * Bağımlılıklar sekmesi (V4 tasarım dili) — iki grup kartı.
+ *
+ * VERİ SINIRI: `TaskDto` yalnız `predecessorIds` taşır. "Ardıl görevler" için
+ * ters yönlü sorgu (bu görevi öncül gösteren görevler) gerekiyor ve karşılığı
+ * olan bir uç nokta YOK — o kart bilinçli olarak boş durumla render edilir,
+ * uydurma satır gösterilmez.
+ */
 export function DependenciesTabV3({ task = {} }) {
-    const onOpen = (id) => window?.apya?.taskDetail?.open?.(id);
+    const queryClient = useQueryClient();
     const ids = task.predecessorIds || [];
+    const svc = () => window?.apya?.platform?.tasks?.task;
 
     const { data: predecessors = [], isLoading } = useQuery({
         queryKey: ['task-predecessors', task.id, ids],
         queryFn: async () => {
-            const svc = window?.apya?.platform?.tasks?.task;
-            if (!svc) return [];
+            const s = svc();
+            if (!s) return [];
             return Promise.all(
                 ids.map((id) =>
-                    Promise.resolve(svc.get(id)).catch(() => ({ id, title: '(erişilemeyen görev)', status: null }))
+                    Promise.resolve(s.get(id)).catch(() => ({ id, title: '(erişilemeyen görev)', status: null, code: '—' }))
                 )
             );
         },
@@ -31,69 +45,92 @@ export function DependenciesTabV3({ task = {} }) {
         retry: false,
     });
 
-    return (
-        <div className="flex flex-col gap-6 rounded-2xl border border-subtle bg-surface-base p-6 shadow-xs">
-            <div className="flex items-center gap-2.5 border-b border-subtle pb-4">
-                <i className="fa-solid fa-link text-primary text-base" />
-                <h3 className="text-[15px] font-bold text-text-primary">Öncül Görevler (Bağımlılıklar)</h3>
-            </div>
+    /** Bağlantıyı kaldır — görevi kalan öncüllerle günceller (anında persist eder). */
+    const unlink = async (predecessorId) => {
+        try {
+            await Promise.resolve(svc().update(task.id, {
+                title: task.title,
+                description: task.description ?? null,
+                startDate: (task.startDate ?? '').slice(0, 10),
+                dueDate: task.dueDate ? task.dueDate.slice(0, 10) : null,
+                status: task.status,
+                priority: task.priority,
+                assigneeId: task.assigneeId ?? null,
+                boardColumnId: task.boardColumnId ?? null,
+                projectId: task.projectId ?? null,
+                parentTaskId: task.parentTaskId ?? null,
+                isPrivate: Boolean(task.isPrivate),
+                predecessorIds: ids.filter((x) => x !== predecessorId),
+                tagNames: (task.tags ?? []).map((t) => t.name),
+                estimatedHours: task.estimatedHours ?? null,
+                taskType: task.taskType ?? null,
+                sprint: task.sprint ?? null,
+            }));
+            await queryClient.invalidateQueries({ queryKey: ['task-detail', task.id] });
+            window?.abp?.notify?.info?.('Bağlantı kaldırıldı.');
+        } catch (err) {
+            window?.abp?.notify?.error?.(err?.message || 'Bağlantı kaldırılamadı.');
+        }
+    };
 
-            {ids.length === 0 ? (
-                <p className="text-[13px] text-text-tertiary py-2">Bu görevin tanımlı bir öncül bağımlılığı yok.</p>
-            ) : isLoading ? (
-                <p className="text-[13px] text-text-tertiary py-2">Yükleniyor…</p>
-            ) : (
-                <div className="flex flex-col divide-y divide-subtle/50">
-                    {predecessors.map((d) => {
-                        const badge = STATUS_BADGE[d.status] || null;
+    const openTask = (id) => window?.apya?.taskDetail?.open?.(id);
+
+    return (
+        <div className="flex flex-col gap-4">
+            <GroupCard
+                icon="fa-arrow-left-long"
+                iconTone="text-warning"
+                title="Öncül görevler"
+                note="bu görev başlamadan tamamlanmalı"
+            >
+                {ids.length === 0 ? (
+                    <TabEmptyState icon="fa-link" title="Öncül bağımlılık yok" description="Bu görevin tanımlı bir öncül bağımlılığı yok." />
+                ) : isLoading ? (
+                    <p className="m-0 px-4 py-5 text-[12.5px] text-text-tertiary">Yükleniyor…</p>
+                ) : (
+                    predecessors.map((d) => {
+                        const st = d.status == null ? null : statusOf(d.status);
                         return (
-                            <button
+                            <div
                                 key={d.id}
-                                type="button"
-                                onClick={() => onOpen(d.id)}
-                                className="flex items-center justify-between py-3.5 hover:bg-surface-hover/50 px-2 rounded-lg transition-colors text-left"
+                                className="flex items-center gap-3.5 px-4 py-3 border-t border-subtle first:border-t-0 hover:bg-surface-raised"
                             >
-                                <div className="flex items-center gap-3 min-w-0">
-                                    <i className="fa-solid fa-diagram-predecessor text-text-tertiary text-xs shrink-0" />
-                                    <span className="text-[13px] font-semibold text-text-primary truncate">{d.title || 'Başlıksız görev'}</span>
-                                </div>
-                                {badge && (
-                                    <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-md shrink-0 ${badge.cls}`}>{badge.label}</span>
-                                )}
-                            </button>
+                                <span className="shrink-0 font-mono text-[10.5px] font-bold text-text-tertiary">{d.code || '—'}</span>
+                                <button
+                                    type="button"
+                                    onClick={() => openTask(d.id)}
+                                    className="flex-1 min-w-0 truncate text-left text-[12.5px] font-semibold text-text-primary hover:text-primary cursor-pointer"
+                                >
+                                    {d.title || 'Başlıksız görev'}
+                                </button>
+                                {st && <RowBadge bg={st.bg} fg={st.fg}>{st.label}</RowBadge>}
+                                <button
+                                    type="button"
+                                    title="Bağlantıyı kaldır"
+                                    aria-label={`${d.title} bağlantısını kaldır`}
+                                    onClick={() => unlink(d.id)}
+                                    className="flex shrink-0 items-center justify-center h-[26px] w-[26px] rounded-[7px] text-text-tertiary hover:bg-negative-subtle hover:text-negative cursor-pointer"
+                                >
+                                    <i className="fa-solid fa-link-slash text-[10px]" />
+                                </button>
+                            </div>
                         );
-                    })}
-                </div>
-            )}
-        </div>
-    );
-}
+                    })
+                )}
+            </GroupCard>
 
-export function FinanceTabV3({ taskId, task }) {
-    return (
-        <div className="flex flex-col gap-6 rounded-2xl border border-subtle bg-surface-base p-6 shadow-xs">
-            <div className="flex items-center justify-between border-b border-subtle pb-4">
-                <div className="flex items-center gap-2.5">
-                    <i className="fa-solid fa-coins text-success text-base" />
-                    <h3 className="text-[15px] font-bold text-text-primary">Görev Bütçesi & Maliyet Analizi</h3>
-                </div>
-                <span className="text-xs font-mono font-bold bg-success-subtle text-success px-2.5 py-1 rounded-lg">Bütçe Sağlıklı</span>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div className="p-4 rounded-xl bg-surface-sunken/40 border border-subtle flex flex-col gap-1">
-                    <span className="text-xs font-bold text-text-tertiary uppercase tracking-wider">Tahsis Edilen Bütçe</span>
-                    <span className="text-2xl font-bold text-text-primary">₺ 120.000</span>
-                </div>
-                <div className="p-4 rounded-xl bg-surface-sunken/40 border border-subtle flex flex-col gap-1">
-                    <span className="text-xs font-bold text-text-tertiary uppercase tracking-wider">Harcanan Tutar</span>
-                    <span className="text-2xl font-bold text-primary">₺ 84.500</span>
-                </div>
-                <div className="p-4 rounded-xl bg-surface-sunken/40 border border-subtle flex flex-col gap-1">
-                    <span className="text-xs font-bold text-text-tertiary uppercase tracking-wider">Kalan Bütçe</span>
-                    <span className="text-2xl font-bold text-success">₺ 35.500</span>
-                </div>
-            </div>
+            <GroupCard
+                icon="fa-arrow-right-long"
+                iconTone="text-primary"
+                title="Ardıl görevler"
+                note="bu görev bitince başlar"
+            >
+                <TabEmptyState
+                    icon="fa-diagram-project"
+                    title="Ardıl görev listesi henüz yok"
+                    description="Bu görevi öncül olarak gösteren görevleri bulmak ters yönlü bir sorgu gerektiriyor; karşılığı olan bir uç nokta henüz tanımlı değil."
+                />
+            </GroupCard>
         </div>
     );
 }

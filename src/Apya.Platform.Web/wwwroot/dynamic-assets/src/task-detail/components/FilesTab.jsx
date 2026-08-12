@@ -1,17 +1,17 @@
-import React, { useRef } from 'react';
-import { Button } from '../../components/ui';
+import React, { useRef, useState } from 'react';
 import { useTaskAttachments } from '../hooks/useTaskAttachments';
+import { fileKindOf, fmtSize } from '../v3/tabPrimitives';
 
-function formatSize(bytes) {
-    return `${Math.round(bytes / 1024)} KB`;
-}
-
+/**
+ * Dosyalar sekmesi (V4 tasarım dili) — sürükle-bırak alanı + kart ızgarası.
+ * Yükleme yolu değişmedi (`useTaskAttachments` → raw multipart endpoint).
+ */
 export function FilesTab({ taskId }) {
     const { attachments, upload, remove, isUploading } = useTaskAttachments(taskId);
     const inputRef = useRef(null);
+    const [dragging, setDragging] = useState(false);
 
-    const onFileChosen = async (e) => {
-        const file = e.target.files?.[0];
+    const uploadFile = async (file) => {
         if (!file) return;
         try {
             await upload(file);
@@ -32,30 +32,85 @@ export function FilesTab({ taskId }) {
     };
 
     return (
-        <div className="space-y-[var(--apya-space-4)]">
-            <div className="flex items-center gap-2">
-                <input ref={inputRef} type="file" onChange={onFileChosen} className="text-sm" disabled={isUploading} />
-                {isUploading && <span className="text-sm text-text-tertiary">Yükleniyor…</span>}
+        <div className="flex flex-col gap-3.5">
+            <input
+                ref={inputRef}
+                type="file"
+                className="hidden"
+                onChange={(e) => uploadFile(e.target.files?.[0])}
+                disabled={isUploading}
+            />
+
+            <div
+                role="button"
+                tabIndex={0}
+                onClick={() => inputRef.current?.click()}
+                onKeyDown={(e) => { if (e.key === 'Enter') inputRef.current?.click(); }}
+                onDragOver={(e) => { e.preventDefault(); if (!dragging) setDragging(true); }}
+                onDragLeave={() => setDragging(false)}
+                onDrop={(e) => { e.preventDefault(); setDragging(false); uploadFile(e.dataTransfer?.files?.[0]); }}
+                className={`flex flex-col items-center justify-center gap-2.5 p-[34px] rounded-2xl border-2 border-dashed cursor-pointer transition-colors duration-fast ${
+                    dragging ? 'border-focus bg-primary-subtle' : 'border-strong bg-surface-base'
+                }`}
+            >
+                <i className={`fa-solid ${isUploading ? 'fa-circle-notch fa-spin' : 'fa-cloud-arrow-up'} text-[26px] ${dragging ? 'text-primary' : 'text-text-tertiary'}`} />
+                <span className="text-[13.5px] font-bold text-text-primary">
+                    {isUploading ? 'Yükleniyor…' : dragging ? 'Bırakın, yükleyelim' : 'Dosyaları buraya sürükleyin veya tıklayın'}
+                </span>
+                <span className="text-[12px] text-text-tertiary">PNG, PDF, DOCX · max 25MB</span>
             </div>
 
             {attachments.length === 0 ? (
-                <p className="text-sm text-text-tertiary">Henüz dosya yüklenmemiş.</p>
+                <p className="m-0 text-[12.5px] text-text-tertiary">Henüz dosya yüklenmemiş.</p>
             ) : (
-                <ul className="divide-y divide-border-default">
-                    {attachments.map((att) => (
-                        <li key={att.id} className="flex items-center justify-between py-2">
-                            <div>
-                                <a href={att.downloadUrl} target="_blank" rel="noreferrer" className="text-sm font-medium text-text-primary hover:underline">
-                                    {att.fileName}
-                                </a>
-                                <p className="text-xs text-text-tertiary">{formatSize(att.fileSize)} — {att.uploaderName}</p>
+                <div className="grid grid-cols-[repeat(auto-fill,minmax(210px,1fr))] gap-3">
+                    {attachments.map((att) => {
+                        const kind = fileKindOf(att.fileName);
+                        return (
+                            <div
+                                key={att.id}
+                                className="flex flex-col gap-2.5 p-3.5 rounded-[14px] border border-subtle bg-surface-base shadow-xs hover:border-focus hover:shadow-md"
+                            >
+                                <div className="flex items-center gap-2.5">
+                                    <span className={`flex shrink-0 items-center justify-center h-[38px] w-[38px] rounded-[10px] ${kind.bg} ${kind.fg}`}>
+                                        <i className={`fa-solid ${kind.icon} text-[15px]`} />
+                                    </span>
+                                    <div className="min-w-0 flex-1">
+                                        <div className="truncate text-[12.5px] font-bold text-text-primary" title={att.fileName}>
+                                            {att.fileName}
+                                        </div>
+                                        <div className="font-mono text-[11px] text-text-tertiary">{fmtSize(att.fileSize)}</div>
+                                    </div>
+                                </div>
+
+                                <div className="flex items-center justify-between gap-2 pt-2.5 border-t border-subtle">
+                                    <span className="truncate text-[11px] text-text-tertiary">{att.uploaderName}</span>
+                                    <div className="flex gap-1 shrink-0">
+                                        <a
+                                            href={att.downloadUrl}
+                                            target="_blank"
+                                            rel="noreferrer"
+                                            title="İndir"
+                                            aria-label={`${att.fileName} dosyasini indir`}
+                                            className="flex items-center justify-center h-[26px] w-[26px] rounded-[7px] text-text-tertiary hover:bg-primary-subtle hover:text-primary"
+                                        >
+                                            <i className="fa-solid fa-download text-[11px]" />
+                                        </a>
+                                        <button
+                                            type="button"
+                                            title="Sil"
+                                            aria-label={`${att.fileName} dosyasini sil`}
+                                            onClick={() => onDelete(att.id, att.fileName)}
+                                            className="flex items-center justify-center h-[26px] w-[26px] rounded-[7px] text-text-tertiary hover:bg-negative-subtle hover:text-negative cursor-pointer"
+                                        >
+                                            <i className="fa-regular fa-trash-can text-[11px]" />
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
-                            <Button variant="ghost" onClick={() => onDelete(att.id, att.fileName)} aria-label={`${att.fileName} dosyasini sil`}>
-                                Sil
-                            </Button>
-                        </li>
-                    ))}
-                </ul>
+                        );
+                    })}
+                </div>
             )}
         </div>
     );

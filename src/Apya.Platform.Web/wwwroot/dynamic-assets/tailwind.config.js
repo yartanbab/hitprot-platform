@@ -19,9 +19,19 @@ export default {
          ama tanımsızdı; tüm tablet: varyantları sessizce ölüydü (Sheet her
          ekranda bottom-sheet render ediyordu). Eşikler useDeviceMode.jsx'in
          decision→triage sınırıyla (768px) aynı — ikisi senkron kalmalı. */
+      /* DİKKAT: burada NESNE biçimli ({max:...}) bir screen bulunduğu sürece Tailwind
+         KEYFİ `min-[…]` / `max-[…]` varyantlarını TAMAMEN kapatır ("The min-* and max-*
+         variants are not supported with a screens configuration containing objects").
+         Uyarı build'de görünür ama sınıflar sessizce üretilmez. Bu yüzden görev
+         detayının kırılımları keyfi değil, ADLI screen olarak tanımlanır. */
       screens: {
         mobile: { max: '767.98px' },
         tablet: '768px',
+        /* Görev detayı V4 duyarlılık tablosu (handoff §Duyarlılık) */
+        'lt-1080': { max: '1080px' }, // Genel tek kolon; Detaylar ızgaraya döner
+        'lt-860':  { max: '860px' },  // metadata 4→2, sol ray gizlenir, padding 24→16
+        'lt-560':  { max: '560px' },  // metadata 2→1, footer "Son kayıt" gizlenir, başlık 24→20
+        'gte-861': '861px',           // sol ray görünürken üst sekme çubuğu gizlenir
       },
       fontFamily: {
         /* Token tek kaynak: 'Plus Jakarta Sans' self-host EDİLMİYOR
@@ -47,6 +57,7 @@ export default {
         'surface-sidebar': 'var(--apya-surface-sidebar)',
         'surface-header':  'var(--apya-surface-header)',
         'surface-overlay': 'var(--apya-surface-overlay)',
+        'surface-hover':   'var(--apya-surface-hover)',
         /* Text */
         'text-primary':    'var(--apya-text-primary)',
         'text-secondary':  'var(--apya-text-secondary)',
@@ -68,6 +79,28 @@ export default {
         'positive':        'var(--apya-positive-500)',
         'negative':        'var(--apya-negative-500)',
         'warning':         'var(--apya-warning-500)',
+
+        /* Görev detayı V3/V4'ün fiilen kullandığı ama tanımsız olan aile.
+           Hepsi mevcut --apya-* token'ına köprü; YENİ RENK ÜRETİLMEZ.
+           Tanımsızken bg-primary/text-primary/shadow-xs vb. hiçbir kural
+           üretmiyordu → V3'ün rozet, sekme ve popover renkleri sessizce yoktu.
+           'primary-subtle' accent-50'ye DEĞİL accent-soft'a bağlanır:
+           accent-50 (#EEF2FF) koyu temada override EDİLMİYOR, accent-soft ise
+           iki temada da doğru (bkz. tokens.css §1.2). */
+        'primary':         'var(--apya-accent-500)',
+        'primary-hover':   'var(--apya-accent-600)',
+        'primary-subtle':  'var(--apya-accent-soft)',
+        'success':         'var(--apya-positive-500)',
+        'success-subtle':  'var(--apya-positive-50)',
+        'warning-subtle':  'var(--apya-warning-50)',
+        'negative-subtle': 'var(--apya-negative-50)',
+        'ai-subtle':       'var(--apya-ai-50)',
+        /* nötr rozet zemini (prototipteki --sSunk) */
+        'neutral-subtle':  'var(--apya-surface-sunken)',
+        /* bg-subtle / divide-subtle / stroke-subtle için — border-subtle rengi */
+        'subtle':          'var(--apya-border-subtle)',
+        'neutral-300':     'var(--apya-neutral-300)',
+        'neutral-400':     'var(--apya-neutral-400)',
 
         /* Badge.jsx tone skalaları — tokens.css'te tanımlı, Tailwind'e
            köprülenmemişti (bg-brand-50 vb. sessizce transparent render
@@ -108,6 +141,11 @@ export default {
       },
       boxShadow: {
         'focus':           'var(--apya-shadow-focus)',
+        /* tokens.css'te xs yok; prototipteki --shXs ile --shSm pratikte aynı
+           (0 1px 2px rgba(17,24,39,.05/.06)) → sm'e köprülenir. float = popover
+           yüksekliği = lg. İkisi de V3'te kullanılıyordu ama tanımsızdı. */
+        'xs':              'var(--apya-shadow-sm)',
+        'float':           'var(--apya-shadow-lg)',
         'sm':              'var(--apya-shadow-sm)',
         'md':              'var(--apya-shadow-md)',
         'lg':              'var(--apya-shadow-lg)',
@@ -137,6 +175,12 @@ export default {
         'sheet-bottom': 'sheetBottom var(--apya-motion-slow) cubic-bezier(0.16, 1, 0.3, 1) both',
         'sheet-right':  'sheetRight var(--apya-motion-slow) cubic-bezier(0.16, 1, 0.3, 1) both',
         'dialog-in':    'dialogIn var(--apya-motion-slow) cubic-bezier(0.16, 1, 0.3, 1) both',
+        /* Görev detayı: "+" düğmesinin hover'da açılan etiketi ve satır-içi
+           yanıt formu (prototipteki omFade). */
+        'fade-in-fast': 'overlayFade 160ms ease both',
+        /* Alt görev paneli sağdan girer (prototipteki omSheet): sheet-right'tan
+           farkı — %100 değil 28px kayar, panel zaten ekrandayken "yerine oturur". */
+        'sheet-nudge':  'sheetNudge var(--apya-motion-slow) cubic-bezier(0.16, 1, 0.3, 1) both',
       },
       keyframes: {
         blob: {
@@ -159,6 +203,10 @@ export default {
         },
         sheetRight: {
           '0%':   { opacity: '0', transform: 'translateX(100%)' },
+          '100%': { opacity: '1', transform: 'translateX(0)' },
+        },
+        sheetNudge: {
+          '0%':   { opacity: '0', transform: 'translateX(28px)' },
           '100%': { opacity: '1', transform: 'translateX(0)' },
         },
         /* Tetikleyiciden büyüyerek gelir — mekânsal süreklilik (HIG modal-motion).

@@ -33,6 +33,12 @@ namespace Apya.Platform.Tasks
         /// <summary>Mevcut kullanıcı için görev favorisini aç/kapat; yeni durumu döner (true=favori).</summary>
         Task<bool> ToggleFavoriteAsync(Guid taskId);
 
+        /// <summary>Mevcut kullanıcı için görev takibini aç/kapat; yeni durumu döner (true=takipte).</summary>
+        Task<bool> ToggleWatchAsync(Guid taskId);
+
+        /// <summary>Görevi bir veya birden çok projeye taşır/kopyalar (görev detayı transfer diyaloğu).</summary>
+        Task<Dtos.TransferTaskResultDto> TransferAsync(Guid id, Dtos.TransferTaskDto input);
+
         Task AddAttachmentAsync(Guid taskId, string fileName, string storedFileName, long fileSize);
         Task<List<TaskAttachmentDto>> GetAttachmentsAsync(Guid taskId);
         Task DeleteAttachmentAsync(Guid attachmentId);

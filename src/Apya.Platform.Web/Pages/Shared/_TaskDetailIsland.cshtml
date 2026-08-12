@@ -1,6 +1,12 @@
 @* Görev detay modalı — Tasks/Board/ProjectDetails sayfalarının ortak mount noktası.
-   Island açılana kadar hiçbir şey render etmez (taskDetailStore boşken null döner). *@
-<div id="task-detail-island"></div>
+   Island açılana kadar hiçbir şey render etmez (taskDetailStore boşken null döner).
+   data-taskui: kullanıcının "Genel Ayarlar"da seçtiği arayüz tercihi, sunucuda çözülür
+   ("v2" = yeni modal varsayılan, "v1" = eski drawer). task-detail.jsx bunu okur. *@
+@inject Volo.Abp.Settings.ISettingProvider SettingProvider
+@{
+    var taskUi = await SettingProvider.GetOrNullAsync(Apya.Platform.Settings.PlatformSettings.TaskDetail.Ui) ?? "v2";
+}
+<div id="task-detail-island" data-taskui="@taskUi"></div>
 
 @* Kuyruk köprüsü: jQuery script'leri (index.js vb.) ES module yüklenmeden önce
    window.apya.taskDetail.open(id) çağırırsa bu fonksiyon ID'yi kuyruğa alır.

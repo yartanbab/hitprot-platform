@@ -58,38 +58,31 @@ function TaskDetailIsland() {
 }
 
 /**
- * FAZ 2 BAYRAK: hâlâ VARSAYILAN KAPALI — bilinçli karar (whole-branch review, 2026-08-05).
- * Genel sekmesi artık çalışıyor ama eski `EditModal.cshtml` drawer'ında olup V2'de henüz
- * olmayan sekmeler var: Alt Görevler, Dosyalar, Finans, Bağımlılıklar, Zaman Takibi,
- * Yorumlar — bunlar Faz 3/4/6/7/8'de gelecek. Varsayılanı şimdi açmak tüm kullanıcılar
- * için bu özellikleri kaybettirir. Faz 4 (Alt Görevler + Dosyalar) bitince yeniden
- * değerlendirilecek.
+ * Görev detay arayüzü KULLANICI TERCİHİ ile seçilir; tercih sunucuda ABP kullanıcı
+ * ayarı (`Platform.TaskDetail.Ui`) olarak saklanır ve "Genel Ayarlar" (/Settings)
+ * sayfasından değiştirilir.
  *
- * Açma yolları (opt-in, değişmedi):
- *   - Kalıcı : localStorage.setItem('apya.taskDetail.v2', '1')
- *   - Tek seferlik: sayfaya ?taskui=v2 ekle
+ * Etkin arayüz TEK yerden çözülür: sunucuda hesaplanan kullanıcı tercihi
+ * (`Platform.TaskDetail.Ui` → `_TaskDetailIsland.cshtml`'in `data-taskui` özniteliği).
+ * `?taskui=v1|v2|v3` yalnız QA içindir, kaydı değiştirmeden geçici olarak ezer.
+ * Tanımsız/tanınmayan değer → 'v3' (PlatformSettingDefaults.TaskDetailUi ile aynı).
  */
-function isV2Enabled() {
+function resolveTaskUi() {
     try {
-        if (new URLSearchParams(window.location.search).get('taskui') === 'v2') return true;
-        if (new URLSearchParams(window.location.search).get('taskui') === 'v1') return false;
-        const disabled = window.localStorage.getItem('apya.taskDetail.v2') === '0';
-        return !disabled; /* FAZ 10: V2 varsayılan olarak AKTİF */
-    } catch (_) {
-        return true;
-    }
+        const param = new URLSearchParams(window.location.search).get('taskui');
+        if (param === 'v1' || param === 'v2' || param === 'v3') return param;
+    } catch (_) { /* URL okunamadı → kullanıcı tercihine düş */ }
+    const container = document.getElementById('task-detail-island');
+    const pref = container?.dataset?.taskui;
+    return (pref === 'v1' || pref === 'v2') ? pref : 'v3';
+}
+
+function isV2Enabled() {
+    return resolveTaskUi() === 'v2';
 }
 
 function isV3Enabled() {
-    try {
-        if (new URLSearchParams(window.location.search).get('taskui') === 'v3') return true;
-        if (new URLSearchParams(window.location.search).get('taskui') === 'v2') return false;
-        if (new URLSearchParams(window.location.search).get('taskui') === 'v1') return false;
-        const enabled = window.localStorage.getItem('apya.taskDetail.v3') === '1';
-        return enabled || true; /* V3 şimdilik varsayılan yapıyoruz! */
-    } catch (_) {
-        return true;
-    }
+    return resolveTaskUi() === 'v3';
 }
 
 /* ─── Global API & Auto-Mount ────────────────────────────────────────── */

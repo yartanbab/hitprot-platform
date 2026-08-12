@@ -1,32 +1,53 @@
 import React, { useState } from 'react';
 import * as Popover from '@radix-ui/react-popover';
-import { Badge } from '../../../components/ui';
+import {
+    STATUS_META, SELECTABLE_STATUSES, statusOf,
+    initialsOf, avatarColorOf, dueUrgency,
+} from '../taskMetaV3';
 
-// TaskStatus: Cancelled=0, Todo=1, InProgress=2, InReview=3, Done=4
-const STATUS_META = {
-    0: { label: 'İptal', cls: 'text-text-secondary bg-neutral-subtle', icon: 'fa-ban' },
-    1: { label: 'Bekliyor', cls: 'text-text-secondary bg-neutral-subtle', icon: 'fa-clock' },
-    2: { label: 'Sürüyor', cls: 'text-warning bg-warning-subtle', icon: 'fa-spinner' },
-    3: { label: 'Testte', cls: 'text-primary bg-primary-subtle', icon: 'fa-flask' },
-    4: { label: 'Tamamlandı', cls: 'text-success bg-success-subtle', icon: 'fa-circle-check' },
-};
-// TaskPriority: Low=1, Medium=2, High=3, Critical=4
-const PRIORITY_META = {
-    1: { label: 'Düşük', cls: 'text-text-secondary bg-surface-sunken', icon: 'fa-arrow-down' },
-    2: { label: 'Orta', cls: 'text-warning bg-warning-subtle', icon: 'fa-minus' },
-    3: { label: 'Yüksek', cls: 'text-negative bg-negative-subtle', icon: 'fa-arrow-up' },
-    4: { label: 'Kritik', cls: 'text-negative bg-negative-subtle', icon: 'fa-flag' },
-};
+const POPOVER_CLS =
+    'z-popover rounded-[14px] border border-default bg-surface-elevated p-2 shadow-float animate-fade-in-fast';
 
-function MetadataCell({ label, children }) {
+const SEARCH_INPUT_CLS =
+    'w-full h-[34px] pl-[31px] pr-3 rounded-[9px] border border-default bg-neutral-subtle text-text-primary text-[12.5px] focus:border-focus focus:bg-surface-base focus:shadow-focus focus:outline-none';
+
+/** Seçim yapan her satır Popover.Close ile sarılır — aksi halde popover açık kalır
+ *  ve ikinci bir popover açıldığında ikisi üst üste binip tıklamaları yutar.
+ *  (Prototipte karşılığı: her `pick` fonksiyonunda `pop: null`.) */
+function PopoverItem({ children }) {
+    return <Popover.Close asChild>{children}</Popover.Close>;
+}
+
+function Cell({ label, children }) {
     return (
-        <div className="flex flex-col gap-1.5 min-w-0">
-            <span className="text-[11px] font-bold text-text-tertiary uppercase tracking-wider select-none">{label}</span>
-            <div className="flex items-center text-[13px] text-text-primary h-8 min-w-0">
-                {children}
-            </div>
+        <div className="flex flex-col gap-[7px] min-w-0">
+            <span className="text-[10.5px] font-bold uppercase tracking-[.08em] text-text-tertiary select-none">
+                {label}
+            </span>
+            {children}
         </div>
     );
+}
+
+function Avatar({ name, size = 26 }) {
+    return (
+        <span
+            className="flex shrink-0 items-center justify-center rounded-full text-white font-bold"
+            style={{ height: size, width: size, background: avatarColorOf(name), fontSize: size * 0.38 }}
+        >
+            {initialsOf(name)}
+        </span>
+    );
+}
+
+/** "3s 30dk" — ondalık saat gösterimi B2B'de okunmuyor. */
+function formatHours(hours) {
+    if (hours == null) return '—';
+    const total = Math.max(0, Math.round(Number(hours) * 60));
+    const h = Math.floor(total / 60);
+    const m = total % 60;
+    if (!h) return `${m}dk`;
+    return m ? `${h}s ${m}dk` : `${h}s`;
 }
 
 export function TaskMetadataGridV3({
@@ -35,304 +56,343 @@ export function TaskMetadataGridV3({
     projectOptions = [],
     onFieldChange = () => {},
     statusValue,
-    priorityValue,
     assigneeValue,
-    projectValue
+    projectValue,
+    dueDateValue,
+    startDateValue,
+    tagsValue = [],
+    progressPercent = 0,
+    progressNote = '',
+    onOpenTransfer,
 }) {
-    // Controlled değerler (header ile tek kaynak = form). Kaydet ile persist edilir.
-    const currentStatus = statusValue ?? task.status ?? 1;
-    const currentPriority = priorityValue ?? task.priority ?? 2;
-    const projectId = projectValue ?? task.projectId ?? null;
-    const selectedProject = projectOptions.find((o) => o.value === projectId);
-    const projectName = selectedProject?.label || task.projectName || 'Projesiz';
-    // Etiketler: TagDto listesi ({ name }) → serbest-metin isim dizisi. Form sözleşmesi
-    // `tagNames` (List<string>) bekler; onFieldChange bu anahtarla gönderilmeli.
-    const [tags, setTags] = useState(
-        Array.isArray(task.tags)
-            ? task.tags.map((t) => (typeof t === 'string' ? t : t?.name)).filter(Boolean)
-            : []
-    );
-    const [newTagInput, setNewTagInput] = useState('');
-    const [isAddingTag, setIsAddingTag] = useState(false);
+    const [assigneeQuery, setAssigneeQuery] = useState('');
+    const [projectQuery, setProjectQuery] = useState('');
+    const [tagDraft, setTagDraft] = useState('');
+    const [addingTag, setAddingTag] = useState(false);
 
-    // Sorumlu: controlled (form assigneeId). Seçim anında form güncellenir, Kaydet ile persist.
+    const status = statusOf(statusValue ?? task.status);
     const assigneeId = assigneeValue ?? task.assigneeId ?? null;
+    const projectId = projectValue ?? task.projectId ?? null;
 
-    const handleAddTag = (e) => {
-        if (e.key === 'Enter' || e.type === 'blur') {
-            const trimmed = newTagInput.trim();
-            if (trimmed && !tags.includes(trimmed)) {
-                const nextTags = [...tags, trimmed];
-                setTags(nextTags);
-                onFieldChange('tagNames', nextTags);
-            }
-            setNewTagInput('');
-            setIsAddingTag(false);
-        }
+    const assigneeName =
+        assigneeOptions.find((o) => o.value === assigneeId)?.label || task.assigneeName || 'Atanmamış';
+    const projectName =
+        projectOptions.find((o) => o.value === projectId)?.label || task.projectName || 'Projesiz';
+
+    const due = dueUrgency(dueDateValue ?? task.dueDate);
+
+    const filteredAssignees = assigneeOptions.filter(
+        (o) => !assigneeQuery || o.label.toLowerCase().includes(assigneeQuery.toLowerCase()));
+    const filteredProjects = projectOptions.filter(
+        (o) => !projectQuery || o.label.toLowerCase().includes(projectQuery.toLowerCase()));
+
+    const commitTag = () => {
+        const value = tagDraft.trim();
+        if (value && !tagsValue.includes(value)) onFieldChange('tagNames', [...tagsValue, value]);
+        setTagDraft('');
+        setAddingTag(false);
     };
-
-    const handleRemoveTag = (tagToRemove) => {
-        const nextTags = tags.filter(t => t !== tagToRemove);
-        setTags(nextTags);
-        onFieldChange('tagNames', nextTags);
-    };
-
-    const handleSelectAssignee = (id) => {
-        onFieldChange('assigneeId', id);
-    };
-
-    // Formatted Dates
-    const fmtDate = (d) => {
-        if (!d) return '—';
-        const date = new Date(d);
-        return isNaN(date.getTime()) ? d : date.toISOString().split('T')[0];
-    };
-
-    const selectedOption = assigneeOptions.find((o) => o.value === assigneeId);
-    const assigneeName = selectedOption?.label || task.assigneeName || 'Atanmamış';
-    const assigneeAvatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(assigneeName)}&background=6366f1&color=fff&size=64`;
 
     return (
-        <div className="px-[var(--apya-space-6)] py-[var(--apya-space-5)] bg-surface-base border-b border-subtle">
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-y-[var(--apya-space-5)] gap-x-[var(--apya-space-6)]">
-                
-                {/* 1. Sorumlu */}
-                <MetadataCell label="Sorumlu">
+        <div className="px-6 lt-860:px-4 py-[18px] border-b border-subtle bg-surface-base">
+            <div className="grid grid-cols-4 lt-860:grid-cols-2 lt-560:grid-cols-1 gap-y-5 gap-x-6">
+
+                {/* 1 — Sorumlu */}
+                <Cell label="Sorumlu">
                     <Popover.Root>
                         <Popover.Trigger asChild>
                             <button
                                 type="button"
-                                className="flex items-center gap-2 cursor-pointer hover:bg-surface-hover px-2 py-1 -ml-2 rounded-lg transition-colors w-max group focus-visible:outline-none focus-visible:shadow-focus"
+                                className="flex items-center gap-[9px] max-w-full px-[9px] -ml-[9px] py-[5px] rounded-[9px] border border-transparent hover:bg-neutral-subtle hover:border-subtle cursor-pointer"
                             >
-                                <img src={assigneeAvatar} alt={assigneeName} className="h-6 w-6 rounded-full border border-subtle shrink-0 object-cover" />
-                                <span className="font-medium text-text-primary text-[13px] group-hover:text-primary transition-colors">{assigneeName}</span>
-                                <i className="fa-solid fa-chevron-down text-[9px] text-text-tertiary ml-0.5 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                <Avatar name={assigneeId ? assigneeName : null} />
+                                <span className="text-[13px] font-semibold text-text-primary truncate">{assigneeName}</span>
+                                <i className="fa-solid fa-chevron-down text-[8px] text-text-tertiary" />
                             </button>
                         </Popover.Trigger>
                         <Popover.Portal>
-                            <Popover.Content
-                                sideOffset={6}
-                                align="start"
-                                className="z-50 w-56 rounded-xl border border-subtle bg-surface-base p-2 shadow-float animate-in fade-in-50 zoom-in-95"
-                            >
-                                <div className="text-[11px] font-bold text-text-tertiary uppercase tracking-wider px-2 py-1 mb-1">Kişi Ata</div>
-                                <div className="flex flex-col gap-1 max-h-48 overflow-y-auto custom-scrollbar">
-                                    <button
-                                        type="button"
-                                        onClick={() => handleSelectAssignee(null)}
-                                        className={`flex items-center gap-2.5 px-2 py-1.5 rounded-lg text-[13px] text-left transition-colors ${
-                                            !assigneeId ? 'bg-primary-subtle text-primary font-semibold' : 'text-text-primary hover:bg-surface-hover'
-                                        }`}
-                                    >
-                                        <span className="flex h-5 w-5 items-center justify-center rounded-full bg-surface-sunken text-text-tertiary">
-                                            <i className="fa-solid fa-user-slash text-[9px]" />
-                                        </span>
-                                        <span>Atanmamış</span>
-                                    </button>
+                            <Popover.Content sideOffset={6} align="start" className={`${POPOVER_CLS} w-[264px]`}>
+                                <div className="relative mb-[7px]">
+                                    <i className="fa-solid fa-magnifying-glass absolute left-[11px] top-1/2 -translate-y-1/2 text-[11px] text-text-tertiary" />
+                                    <input
+                                        autoFocus
+                                        type="text"
+                                        value={assigneeQuery}
+                                        onChange={(e) => setAssigneeQuery(e.target.value)}
+                                        placeholder="Kişi ara…"
+                                        className={SEARCH_INPUT_CLS}
+                                    />
+                                </div>
+                                <div className="flex flex-col gap-0.5 max-h-[230px] overflow-y-auto custom-scrollbar">
+                                    <PopoverItem>
+                                        <button
+                                            type="button"
+                                            onClick={() => onFieldChange('assigneeId', null)}
+                                            className={`flex items-center gap-2.5 w-full px-2 py-[7px] rounded-[9px] text-[12.5px] text-left cursor-pointer ${
+                                                !assigneeId ? 'bg-primary-subtle text-primary font-semibold' : 'text-text-primary hover:bg-surface-hover'
+                                            }`}
+                                        >
+                                            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-neutral-subtle text-text-tertiary">
+                                                <i className="fa-solid fa-user-slash text-[9px]" />
+                                            </span>
+                                            <span>Atanmamış</span>
+                                        </button>
+                                    </PopoverItem>
                                     {assigneeOptions.length === 0 && (
                                         <div className="px-2 py-1.5 text-[12px] text-text-tertiary">Kullanıcı listesi yükleniyor…</div>
                                     )}
-                                    {assigneeOptions.map((opt) => (
-                                        <button
-                                            key={opt.value}
-                                            type="button"
-                                            onClick={() => handleSelectAssignee(opt.value)}
-                                            className={`flex items-center gap-2.5 px-2 py-1.5 rounded-lg text-[13px] text-left transition-colors ${
-                                                assigneeId === opt.value ? 'bg-primary-subtle text-primary font-semibold' : 'text-text-primary hover:bg-surface-hover'
-                                            }`}
-                                        >
-                                            <img src={`https://ui-avatars.com/api/?name=${encodeURIComponent(opt.label)}&background=6366f1&color=fff&size=64`} alt={opt.label} className="h-5 w-5 rounded-full" />
-                                            <span>{opt.label}</span>
-                                        </button>
+                                    {filteredAssignees.map((opt) => (
+                                        <PopoverItem key={opt.value}>
+                                            <button
+                                                type="button"
+                                                onClick={() => onFieldChange('assigneeId', opt.value)}
+                                                className={`flex items-center gap-2.5 w-full px-2 py-[7px] rounded-[9px] text-left cursor-pointer ${
+                                                    assigneeId === opt.value ? 'bg-primary-subtle' : 'hover:bg-surface-hover'
+                                                }`}
+                                            >
+                                                <Avatar name={opt.label} size={24} />
+                                                <span className="flex-1 text-[12.5px] font-semibold text-text-primary truncate">{opt.label}</span>
+                                                {assigneeId === opt.value && <i className="fa-solid fa-check text-[10px] text-primary" />}
+                                            </button>
+                                        </PopoverItem>
                                     ))}
                                 </div>
                             </Popover.Content>
                         </Popover.Portal>
                     </Popover.Root>
-                </MetadataCell>
+                </Cell>
 
-                {/* 2. Son Tarih */}
-                <MetadataCell label="Son Tarih">
-                    <label className="flex items-center gap-2 cursor-pointer hover:bg-surface-hover px-2 py-1 -ml-2 rounded-lg transition-colors group relative">
-                        <i className="fa-regular fa-calendar text-text-tertiary group-hover:text-primary transition-colors text-sm" />
+                {/* 2 — Son tarih (+ aciliyet) */}
+                <Cell label="Son tarih">
+                    <label className="flex items-center gap-[9px] px-[9px] -ml-[9px] py-[5px] rounded-[9px] border border-transparent hover:bg-neutral-subtle hover:border-subtle cursor-pointer">
+                        <i className={`fa-regular fa-calendar text-[13px] ${due.tone}`} />
                         <input
                             type="date"
-                            value={fmtDate(task.dueDate)}
+                            value={(dueDateValue ?? task.dueDate ?? '').slice(0, 10)}
                             onChange={(e) => onFieldChange('dueDate', e.target.value)}
-                            className="bg-transparent text-text-primary text-[13px] font-medium focus:outline-none cursor-pointer"
+                            className="bg-transparent border-0 p-0 text-text-primary text-[13px] font-semibold cursor-pointer focus:outline-none"
                         />
                     </label>
-                </MetadataCell>
+                    {due.hint && <span className={`-mt-0.5 text-[10.5px] font-semibold ${due.tone}`}>{due.hint}</span>}
+                </Cell>
 
-                {/* 3. Başlangıç Tarihi */}
-                <MetadataCell label="Başlangıç">
-                    <label className="flex items-center gap-2 cursor-pointer hover:bg-surface-hover px-2 py-1 -ml-2 rounded-lg transition-colors group relative">
-                        <i className="fa-regular fa-calendar text-text-tertiary group-hover:text-primary transition-colors text-sm" />
+                {/* 3 — Başlangıç */}
+                <Cell label="Başlangıç">
+                    <label className="flex items-center gap-[9px] px-[9px] -ml-[9px] py-[5px] rounded-[9px] border border-transparent hover:bg-neutral-subtle hover:border-subtle cursor-pointer">
+                        <i className="fa-regular fa-calendar text-[13px] text-text-tertiary" />
                         <input
                             type="date"
-                            value={fmtDate(task.startDate)}
+                            value={(startDateValue ?? task.startDate ?? '').slice(0, 10)}
                             onChange={(e) => onFieldChange('startDate', e.target.value)}
-                            className="bg-transparent text-text-primary text-[13px] font-medium focus:outline-none cursor-pointer"
+                            className="bg-transparent border-0 p-0 text-text-primary text-[13px] font-semibold cursor-pointer focus:outline-none"
                         />
                     </label>
-                </MetadataCell>
+                </Cell>
 
-                {/* 4. Öncelik (tıklanır dropdown — form.priority) */}
-                <MetadataCell label="Öncelik">
-                    <Popover.Root>
-                        <Popover.Trigger asChild>
-                            <button type="button" className="flex items-center rounded-md cursor-pointer hover:opacity-90 transition-all focus-visible:outline-none focus-visible:shadow-focus">
-                                {(() => {
-                                    const p = PRIORITY_META[currentPriority] || PRIORITY_META[2];
-                                    return (
-                                        <span className={`flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-[13px] font-semibold ${p.cls}`}>
-                                            <i className={`fa-solid ${p.icon} text-xs`} />
-                                            <span>{p.label}</span>
-                                            <i className="fa-solid fa-chevron-down text-[9px] opacity-70 ml-0.5" />
-                                        </span>
-                                    );
-                                })()}
-                            </button>
-                        </Popover.Trigger>
-                        <Popover.Portal>
-                            <Popover.Content sideOffset={6} align="start" className="z-50 w-40 rounded-xl border border-subtle bg-surface-base p-1.5 shadow-float animate-in fade-in-50 zoom-in-95">
-                                <div className="text-[10px] font-bold text-text-tertiary uppercase tracking-wider px-2 py-1">Öncelik Seç</div>
-                                <div className="flex flex-col gap-0.5">
-                                    {[1, 2, 3, 4].map((id) => {
-                                        const p = PRIORITY_META[id];
-                                        const active = currentPriority === id;
+                {/* 4 — İlerleme (kontrol listesi tamamlanma oranı) */}
+                <Cell label="İlerleme">
+                    <div className="flex flex-col gap-1.5 pt-[5px]">
+                        <div className="flex items-baseline justify-between">
+                            <span className="font-mono text-[15px] font-extrabold tracking-[-.02em] text-text-primary">
+                                %{progressPercent}
+                            </span>
+                            <span className="text-[11px] font-medium text-text-tertiary">{progressNote}</span>
+                        </div>
+                        <div className="h-1.5 rounded-full bg-neutral-subtle overflow-hidden">
+                            <div
+                                className="h-full rounded-full bg-primary transition-[width] duration-300 ease-[cubic-bezier(.16,1,.3,1)]"
+                                style={{ width: `${progressPercent}%` }}
+                            />
+                        </div>
+                    </div>
+                </Cell>
+
+                {/* 5 — Durum */}
+                <Cell label="Durum">
+                    <div className="flex items-center h-8">
+                        <Popover.Root>
+                            <Popover.Trigger asChild>
+                                <button
+                                    type="button"
+                                    className={`flex items-center gap-[7px] h-[26px] px-2.5 rounded-[7px] text-[12.5px] font-bold cursor-pointer ${status.bg} ${status.fg}`}
+                                >
+                                    <i className={`fa-solid ${status.icon} text-[11px]`} />
+                                    <span>{status.label}</span>
+                                    <i className="fa-solid fa-chevron-down text-[8px] opacity-60" />
+                                </button>
+                            </Popover.Trigger>
+                            <Popover.Portal>
+                                <Popover.Content sideOffset={6} align="start" className={`${POPOVER_CLS} w-[196px]`}>
+                                    <div className="px-[9px] pt-[5px] pb-[7px] text-[10px] font-bold uppercase tracking-[.08em] text-text-tertiary">
+                                        Durumu değiştir
+                                    </div>
+                                    {SELECTABLE_STATUSES.map((id) => {
+                                        const meta = STATUS_META[id];
+                                        const active = (statusValue ?? task.status) === id;
                                         return (
-                                            <button key={id} type="button" onClick={() => onFieldChange('priority', id)}
-                                                className={`flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-[12px] font-medium text-left transition-colors ${active ? 'bg-primary-subtle text-primary font-bold' : 'text-text-primary hover:bg-surface-hover'}`}>
-                                                <i className={`fa-solid ${p.icon} text-xs`} />
-                                                <span className="flex-1">{p.label}</span>
-                                                {active && <i className="fa-solid fa-check text-xs text-primary" />}
-                                            </button>
+                                            <PopoverItem key={id}>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => onFieldChange('status', id)}
+                                                    className={`flex items-center gap-[9px] w-full px-[9px] py-[7px] rounded-[9px] text-[12.5px] font-semibold text-left cursor-pointer ${
+                                                        active ? 'bg-primary-subtle text-primary' : 'text-text-primary hover:bg-surface-hover'
+                                                    }`}
+                                                >
+                                                    <span className={`h-2 w-2 rounded-full ${meta.dot}`} />
+                                                    <span className="flex-1">{meta.label}</span>
+                                                    {active && <i className="fa-solid fa-check text-[10px]" />}
+                                                </button>
+                                            </PopoverItem>
                                         );
                                     })}
-                                </div>
-                            </Popover.Content>
-                        </Popover.Portal>
-                    </Popover.Root>
-                </MetadataCell>
+                                </Popover.Content>
+                            </Popover.Portal>
+                        </Popover.Root>
+                    </div>
+                </Cell>
 
-                {/* 5. Durum (tıklanır dropdown — form.status) */}
-                <MetadataCell label="Durum">
-                    <Popover.Root>
-                        <Popover.Trigger asChild>
-                            <button type="button" className="flex items-center rounded-md cursor-pointer hover:opacity-90 transition-all focus-visible:outline-none focus-visible:shadow-focus">
-                                {(() => {
-                                    const s = STATUS_META[currentStatus] || STATUS_META[1];
-                                    return (
-                                        <span className={`flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-[13px] font-semibold ${s.cls}`}>
-                                            <i className={`fa-solid ${s.icon} text-xs`} />
-                                            <span>{s.label}</span>
-                                            <i className="fa-solid fa-chevron-down text-[9px] opacity-70 ml-0.5" />
-                                        </span>
-                                    );
-                                })()}
-                            </button>
-                        </Popover.Trigger>
-                        <Popover.Portal>
-                            <Popover.Content sideOffset={6} align="start" className="z-50 w-44 rounded-xl border border-subtle bg-surface-base p-1.5 shadow-float animate-in fade-in-50 zoom-in-95">
-                                <div className="text-[10px] font-bold text-text-tertiary uppercase tracking-wider px-2 py-1">Durumu Değiştir</div>
-                                <div className="flex flex-col gap-0.5">
-                                    {[1, 2, 3, 4].map((id) => {
-                                        const s = STATUS_META[id];
-                                        const active = currentStatus === id;
-                                        return (
-                                            <button key={id} type="button" onClick={() => onFieldChange('status', id)}
-                                                className={`flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-[12px] font-medium text-left transition-colors ${active ? 'bg-primary-subtle text-primary font-bold' : 'text-text-primary hover:bg-surface-hover'}`}>
-                                                <i className={`fa-solid ${s.icon} text-xs`} />
-                                                <span className="flex-1">{s.label}</span>
-                                                {active && <i className="fa-solid fa-check text-xs text-primary" />}
-                                            </button>
-                                        );
-                                    })}
-                                </div>
-                            </Popover.Content>
-                        </Popover.Portal>
-                    </Popover.Root>
-                </MetadataCell>
-
-                {/* 6. Etiketler */}
-                <MetadataCell label="Etiketler">
-                    <div className="flex items-center gap-1.5 flex-wrap">
-                        {tags.map((tag) => (
-                            <span 
-                                key={tag} 
-                                className="group inline-flex items-center gap-1 bg-primary-subtle text-primary text-[11px] font-semibold px-2 py-0.5 rounded-md transition-colors"
+                {/* 6 — Etiketler */}
+                <Cell label="Etiketler">
+                    <div className="flex items-center gap-1.5 flex-wrap min-h-8">
+                        {tagsValue.map((tag) => (
+                            <span
+                                key={tag}
+                                className="inline-flex items-center gap-1.5 h-6 px-2 rounded-[7px] border border-primary bg-primary-subtle text-primary text-[11.5px] font-bold"
                             >
                                 <span>{tag}</span>
-                                <button 
-                                    type="button" 
-                                    onClick={() => handleRemoveTag(tag)}
-                                    className="opacity-0 group-hover:opacity-100 hover:text-negative transition-opacity ml-0.5"
+                                <button
+                                    type="button"
                                     aria-label="Etiketi kaldır"
+                                    onClick={() => onFieldChange('tagNames', tagsValue.filter((t) => t !== tag))}
+                                    className="flex items-center p-0 border-0 bg-transparent text-current opacity-55 hover:opacity-100 hover:text-negative cursor-pointer"
                                 >
                                     <i className="fa-solid fa-xmark text-[9px]" />
                                 </button>
                             </span>
                         ))}
 
-                        {isAddingTag ? (
+                        {addingTag ? (
                             <input
                                 autoFocus
                                 type="text"
-                                value={newTagInput}
-                                onChange={(e) => setNewTagInput(e.target.value)}
-                                onKeyDown={handleAddTag}
-                                onBlur={handleAddTag}
-                                placeholder="Etiket..."
-                                className="h-6 w-16 px-1.5 text-[11px] rounded border border-primary bg-surface-base focus:outline-none"
+                                value={tagDraft}
+                                onChange={(e) => setTagDraft(e.target.value)}
+                                onBlur={commitTag}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter') commitTag();
+                                    if (e.key === 'Escape') { setTagDraft(''); setAddingTag(false); }
+                                }}
+                                placeholder="Etiket…"
+                                className="h-6 w-24 px-2 rounded-[7px] border border-focus bg-surface-base text-text-primary text-[11.5px] shadow-focus focus:outline-none"
                             />
                         ) : (
-                            <button 
-                                type="button" 
-                                onClick={() => setIsAddingTag(true)}
-                                className="flex items-center justify-center h-5 w-5 rounded-full bg-surface-sunken border border-subtle text-text-tertiary hover:bg-surface-hover hover:text-text-primary hover:border-primary transition-all"
+                            <button
+                                type="button"
                                 aria-label="Yeni etiket ekle"
+                                onClick={() => setAddingTag(true)}
+                                className="flex items-center gap-1.5 h-6 px-[9px] rounded-[7px] border border-dashed border-strong bg-transparent text-text-tertiary text-[11.5px] font-semibold hover:border-focus hover:text-primary hover:bg-primary-subtle cursor-pointer"
                             >
                                 <i className="fa-solid fa-plus text-[9px]" />
+                                Etiket
                             </button>
                         )}
                     </div>
-                </MetadataCell>
+                </Cell>
 
-                {/* 7. Proje (tıklanır dropdown — form.projectId) */}
-                <MetadataCell label="Proje">
+                {/* 7 — Proje (+ taşı / kopyala) */}
+                <Cell label="Proje">
                     <Popover.Root>
                         <Popover.Trigger asChild>
-                            <button type="button" className="flex items-center gap-2 cursor-pointer hover:bg-surface-hover px-2 py-1 -ml-2 rounded-lg transition-colors w-max group focus-visible:outline-none focus-visible:shadow-focus">
-                                <i className="fa-regular fa-folder-open text-text-tertiary group-hover:text-primary transition-colors text-sm" />
-                                <span className="font-medium text-text-primary group-hover:text-primary transition-colors text-[13px] truncate max-w-[140px]">{projectName}</span>
-                                <i className="fa-solid fa-chevron-down text-[9px] text-text-tertiary ml-0.5 opacity-0 group-hover:opacity-100 transition-opacity" />
+                            <button
+                                type="button"
+                                className="flex items-center gap-[9px] max-w-full px-[9px] -ml-[9px] py-[5px] rounded-[9px] border border-transparent hover:bg-neutral-subtle hover:border-subtle cursor-pointer"
+                            >
+                                <i className="fa-regular fa-folder-open text-[13px] text-text-tertiary" />
+                                <span className="text-[13px] font-semibold text-text-primary truncate">{projectName}</span>
+                                <i className="fa-solid fa-chevron-down text-[8px] text-text-tertiary" />
                             </button>
                         </Popover.Trigger>
                         <Popover.Portal>
-                            <Popover.Content sideOffset={6} align="start" className="z-50 w-56 rounded-xl border border-subtle bg-surface-base p-2 shadow-float animate-in fade-in-50 zoom-in-95">
-                                <div className="text-[11px] font-bold text-text-tertiary uppercase tracking-wider px-2 py-1 mb-1">Proje Seç</div>
-                                <div className="flex flex-col gap-1 max-h-56 overflow-y-auto custom-scrollbar">
-                                    <button type="button" onClick={() => onFieldChange('projectId', null)}
-                                        className={`flex items-center gap-2.5 px-2 py-1.5 rounded-lg text-[13px] text-left transition-colors ${!projectId ? 'bg-primary-subtle text-primary font-semibold' : 'text-text-primary hover:bg-surface-hover'}`}>
-                                        <span className="flex h-5 w-5 items-center justify-center rounded-md bg-surface-sunken text-text-tertiary"><i className="fa-solid fa-ban text-[9px]" /></span>
-                                        <span>Projesiz</span>
-                                    </button>
-                                    {projectOptions.length === 0 && (
-                                        <div className="px-2 py-1.5 text-[12px] text-text-tertiary">Proje listesi yükleniyor…</div>
-                                    )}
-                                    {projectOptions.map((opt) => (
-                                        <button key={opt.value} type="button" onClick={() => onFieldChange('projectId', opt.value)}
-                                            className={`flex items-center gap-2.5 px-2 py-1.5 rounded-lg text-[13px] text-left transition-colors ${projectId === opt.value ? 'bg-primary-subtle text-primary font-semibold' : 'text-text-primary hover:bg-surface-hover'}`}>
-                                            <span className="flex h-5 w-5 items-center justify-center rounded-md bg-surface-sunken text-text-secondary"><i className="fa-regular fa-folder text-[9px]" /></span>
-                                            <span className="truncate">{opt.label}</span>
+                            <Popover.Content sideOffset={6} align="start" className={`${POPOVER_CLS} w-[250px]`}>
+                                <div className="relative mb-[7px]">
+                                    <i className="fa-solid fa-magnifying-glass absolute left-[11px] top-1/2 -translate-y-1/2 text-[11px] text-text-tertiary" />
+                                    <input
+                                        autoFocus
+                                        type="text"
+                                        value={projectQuery}
+                                        onChange={(e) => setProjectQuery(e.target.value)}
+                                        placeholder="Proje ara…"
+                                        className={SEARCH_INPUT_CLS}
+                                    />
+                                </div>
+                                <div className="flex flex-col gap-0.5 max-h-[210px] overflow-y-auto custom-scrollbar">
+                                    <PopoverItem>
+                                        <button
+                                            type="button"
+                                            onClick={() => onFieldChange('projectId', null)}
+                                            className={`flex items-center gap-2.5 w-full px-2 py-[7px] rounded-[9px] text-[12.5px] font-semibold text-left cursor-pointer ${
+                                                !projectId ? 'bg-primary-subtle text-primary' : 'text-text-primary hover:bg-surface-hover'
+                                            }`}
+                                        >
+                                            <span className="h-[9px] w-[9px] shrink-0 rounded-[3px] bg-neutral-400" />
+                                            <span className="flex-1">Projesiz</span>
                                         </button>
+                                    </PopoverItem>
+                                    {filteredProjects.map((opt) => (
+                                        <PopoverItem key={opt.value}>
+                                            <button
+                                                type="button"
+                                                onClick={() => onFieldChange('projectId', opt.value)}
+                                                className={`flex items-center gap-2.5 w-full px-2 py-[7px] rounded-[9px] text-[12.5px] font-semibold text-left cursor-pointer ${
+                                                    projectId === opt.value ? 'bg-primary-subtle text-primary' : 'text-text-primary hover:bg-surface-hover'
+                                                }`}
+                                            >
+                                                <span className="h-[9px] w-[9px] shrink-0 rounded-[3px] bg-primary" />
+                                                <span className="flex-1 truncate">{opt.label}</span>
+                                                {projectId === opt.value && <i className="fa-solid fa-check text-[10px] text-primary" />}
+                                            </button>
+                                        </PopoverItem>
                                     ))}
+                                </div>
+                                <div className="flex flex-col gap-0.5 mt-[7px] pt-[7px] border-t border-subtle">
+                                    <PopoverItem>
+                                        <button
+                                            type="button"
+                                            onClick={() => onOpenTransfer?.('move')}
+                                            className="flex items-center gap-2.5 w-full px-2 py-[7px] rounded-[9px] text-[12.5px] font-semibold text-left text-text-secondary hover:bg-surface-hover hover:text-primary cursor-pointer"
+                                        >
+                                            <i className="fa-solid fa-right-left text-[11px] w-[14px] opacity-70" />
+                                            <span className="flex-1">Başka projeye taşı…</span>
+                                        </button>
+                                    </PopoverItem>
+                                    <PopoverItem>
+                                        <button
+                                            type="button"
+                                            onClick={() => onOpenTransfer?.('copy')}
+                                            className="flex items-center gap-2.5 w-full px-2 py-[7px] rounded-[9px] text-[12.5px] font-semibold text-left text-text-secondary hover:bg-surface-hover hover:text-primary cursor-pointer"
+                                        >
+                                            <i className="fa-solid fa-clone text-[11px] w-[14px] opacity-70" />
+                                            <span className="flex-1">Başka projeye kopyala…</span>
+                                        </button>
+                                    </PopoverItem>
                                 </div>
                             </Popover.Content>
                         </Popover.Portal>
                     </Popover.Root>
-                </MetadataCell>
+                </Cell>
+
+                {/* 8 — Harcanan / tahmin */}
+                <Cell label="Harcanan / tahmin">
+                    <div className="flex items-center gap-[9px] h-8">
+                        <i className="fa-regular fa-clock text-[13px] text-text-tertiary" />
+                        <span className="font-mono text-[13px] font-bold text-text-primary">
+                            {formatHours(task.spentHours ?? 0)}
+                        </span>
+                        <span className="text-[12px] text-text-tertiary">
+                            / {task.estimatedHours != null ? formatHours(task.estimatedHours) : '—'}
+                        </span>
+                    </div>
+                </Cell>
 
             </div>
         </div>
