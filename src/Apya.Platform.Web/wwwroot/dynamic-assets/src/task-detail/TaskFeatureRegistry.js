@@ -8,16 +8,13 @@ import { HistoryTab } from './components/HistoryTab';
 import { FinanceTab } from './components/FinanceTab';
 import { GanttTabV3 } from './v3/features/GanttTabV3';
 import { DependenciesTabV3 } from './v3/features/DependenciesAndFinanceTabV3';
-import { 
-    RisksTabV3, 
-    ApprovalsTabV3, 
-    TimeTrackingTabV3, 
-    AiTabV3, 
-    CustomFieldsTabV3, 
-    AutomationsTabV3, 
-    EmailsTabV3, 
-    GalleryTabV3, 
-    DashboardTabV3 
+import {
+    RisksTabV3,
+    TimeTrackingTabV3,
+    CustomFieldsTabV3,
+    EmailsTabV3,
+    GalleryTabV3,
+    DashboardTabV3
 } from './v3/features/OtherFeaturesTabV3';
 
 /**
@@ -80,9 +77,11 @@ export const TASK_FEATURE_REGISTRY = [
         implemented: true, component: RisksTabV3,
     },
     {
+        // component yok: onay akışı backend'i gelene kadar "yapım aşamasında" boş
+        // durumu gösterilir (featureCatalogV3 UNBUILT_CODES).
         code: 'approvals', title: 'Onaylar', icon: 'fa-stamp',
         category: 'gorev', isCore: false, order: 22, permission: null,
-        implemented: true, component: ApprovalsTabV3,
+        implemented: true, component: null,
     },
     {
         code: 'time-tracking', title: 'Zaman Takibi', icon: 'fa-stopwatch',
@@ -97,7 +96,8 @@ export const TASK_FEATURE_REGISTRY = [
     {
         code: 'ai', title: 'Yapay Zeka', icon: 'fa-sparkles',
         category: 'ileri', isCore: false, order: 30, permission: null,
-        implemented: true, component: AiTabV3,
+        // component yok: LLM entegrasyonu gelene kadar boş durum (UNBUILT_CODES).
+        implemented: true, component: null,
     },
     {
         code: 'custom-fields', title: 'Özel Alanlar', icon: 'fa-square-plus',
@@ -107,7 +107,8 @@ export const TASK_FEATURE_REGISTRY = [
     {
         code: 'automations', title: 'Otomasyonlar', icon: 'fa-wand-magic-sparkles',
         category: 'ileri', isCore: false, order: 32, permission: null,
-        implemented: true, component: AutomationsTabV3,
+        // component yok: kural motoru gelene kadar boş durum (UNBUILT_CODES).
+        implemented: true, component: null,
     },
     {
         code: 'emails', title: 'E-postalar', icon: 'fa-envelope',

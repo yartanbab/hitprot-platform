@@ -25,30 +25,9 @@ export function RisksTabV3() {
     );
 }
 
-// 2. Onaylar Tab
-export function ApprovalsTabV3() {
-    return (
-        <div className="flex flex-col gap-6 rounded-2xl border border-subtle bg-surface-base p-6 shadow-xs">
-            <div className="flex items-center justify-between border-b border-subtle pb-4">
-                <div className="flex items-center gap-2.5">
-                    <i className="fa-solid fa-stamp text-primary text-base" />
-                    <h3 className="text-[15px] font-bold text-text-primary">Onay Süreçleri & İmza Akışı</h3>
-                </div>
-                <Button size="sm" variant="primary" icon="fa-check">Onay İste</Button>
-            </div>
-            <div className="flex items-center justify-between p-3.5 rounded-xl bg-success-subtle/30 border border-success/30">
-                <div className="flex items-center gap-3">
-                    <i className="fa-solid fa-circle-check text-success text-lg" />
-                    <div className="flex flex-col">
-                        <span className="text-[13px] font-bold text-text-primary">Operasyon Direktörlüğü Onayı</span>
-                        <span className="text-xs text-text-tertiary">Yakup B. tarafından 10.07.2026'da onaylandı.</span>
-                    </div>
-                </div>
-                <span className="text-xs font-bold text-success">Onaylandı</span>
-            </div>
-        </div>
-    );
-}
+// FAZ 10-B: ApprovalsTabV3 kaldırıldı — sabit uydurma bir onay kaydı basıyordu
+// ("… tarafından 10.07.2026'da onaylandı"). Onay akışı backend'i yok; sekme artık
+// TaskUnbuiltTabV3 boş durumunu gösteriyor (bkz. featureCatalogV3 UNBUILT_CODES).
 
 // 3. Zaman Takibi Tab (gerçek backend: start/stop/getTimeLogs)
 // fmtClock/fmtDuration artık tabPrimitives'ten geliyor (diğer sekmelerle ortak).
@@ -178,26 +157,9 @@ export function TimeTrackingTabV3({ taskId, task = {} }) {
     );
 }
 
-// 4. Yapay Zeka Tab
-export function AiTabV3() {
-    return (
-        <div className="flex flex-col gap-6 rounded-2xl border border-subtle bg-surface-base p-6 shadow-xs">
-            <div className="flex items-center justify-between border-b border-subtle pb-4">
-                <div className="flex items-center gap-2.5">
-                    <i className="fa-solid fa-sparkles text-indigo-600 text-base" />
-                    <h3 className="text-[15px] font-bold text-text-primary">Apya AI Asistan & Analiz</h3>
-                </div>
-                <Button size="sm" variant="primary" icon="fa-wand-magic-sparkles">Görevi Analiz Et</Button>
-            </div>
-            <div className="p-4 rounded-xl bg-indigo-50/50 dark:bg-indigo-950/20 border border-indigo-200 dark:border-indigo-800 flex flex-col gap-2">
-                <span className="text-[13px] font-bold text-indigo-900 dark:text-indigo-200">AI Önerisi:</span>
-                <p className="text-[13px] text-indigo-700 dark:text-indigo-300 leading-relaxed">
-                    Sözleşme taslağı incelendiğinde ödeme takviminin 15 gün vadeli olduğu tespit edildi. Finans ekibine bildirim gönderilmesi tavsiye edilir.
-                </p>
-            </div>
-        </div>
-    );
-}
+// FAZ 10-B: AiTabV3 kaldırıldı — sabit uydurma bir "AI önerisi" basıyordu
+// (sözleşme/ödeme takvimi metni). Bu görev için LLM çağrısı yok; sekme artık
+// TaskUnbuiltTabV3 boş durumunu gösteriyor.
 
 // 5. Özel Alanlar Tab
 export function CustomFieldsTabV3() {
@@ -224,24 +186,9 @@ export function CustomFieldsTabV3() {
     );
 }
 
-// 6. Otomasyonlar Tab
-export function AutomationsTabV3() {
-    return (
-        <div className="flex flex-col gap-6 rounded-2xl border border-subtle bg-surface-base p-6 shadow-xs">
-            <div className="flex items-center justify-between border-b border-subtle pb-4">
-                <div className="flex items-center gap-2.5">
-                    <i className="fa-solid fa-wand-magic-sparkles text-indigo-600 text-base" />
-                    <h3 className="text-[15px] font-bold text-text-primary">Görev Otomasyonları</h3>
-                </div>
-                <Button size="sm" variant="outline" icon="fa-plus">Kural Ekle</Button>
-            </div>
-            <div className="p-3.5 rounded-xl border border-subtle bg-surface-sunken/40 flex items-center justify-between">
-                <span className="text-[13px] font-medium text-text-primary">Görev 'Tamamlandı' olunca ilgili faturayı otomatik oluştur.</span>
-                <span className="text-xs font-bold text-success bg-success-subtle px-2 py-0.5 rounded">Aktif</span>
-            </div>
-        </div>
-    );
-}
+// FAZ 10-B: AutomationsTabV3 kaldırıldı — "Aktif" rozetli sabit uydurma bir kural
+// basıyordu ("Görev 'Tamamlandı' olunca ilgili faturayı otomatik oluştur"), oysa
+// böyle bir kural motoru YOK. Sekme artık TaskUnbuiltTabV3 boş durumunu gösteriyor.
 
 // 7. E-postalar Tab
 export function EmailsTabV3() {
