@@ -164,12 +164,12 @@
             card.appendChild(bottom);
 
             // Aksiyonlar: düzenle + sil
-            var actions = el('div', 'text-end mt-2 d-flex justify-content-end gap-1');
+            var actions = el('div', 'apya-touch-actions text-end mt-2 d-flex justify-content-end gap-1');
             if (canEdit(task)) {
-                actions.innerHTML += '<button class="btn btn-sm btn-light py-0 px-2 rounded js-edit-task" data-id="' + task.id + '" title="Düzenle"><i class="fa fa-pencil-alt text-secondary" style="font-size:0.75rem;"></i></button>';
+                actions.innerHTML += '<button class="btn btn-sm btn-light py-0 px-2 rounded js-edit-task" data-id="' + task.id + '" title="Düzenle" aria-label="Görevi düzenle"><i class="fa fa-pencil-alt text-secondary" style="font-size:0.75rem;"></i></button>';
             }
             if (canDelete(task)) {
-                actions.innerHTML += '<button class="btn btn-sm btn-light py-0 px-2 rounded js-delete-task" data-id="' + task.id + '" title="Sil"><i class="fa fa-trash text-danger" style="font-size:0.75rem;"></i></button>';
+                actions.innerHTML += '<button class="btn btn-sm btn-light py-0 px-2 rounded js-delete-task" data-id="' + task.id + '" title="Sil" aria-label="Görevi sil"><i class="fa fa-trash text-danger" style="font-size:0.75rem;"></i></button>';
             }
             if (actions.childNodes.length) { card.appendChild(actions); }
             return card;
@@ -200,10 +200,10 @@
                     col.innerHTML =
                         '<div class="kanban-header">' +
                             '<span class="text-' + (c.colorClass || 'primary') + ' js-col-name"><i class="fa fa-circle me-2"></i></span>' +
-                            '<span class="d-flex align-items-center gap-2">' +
+                            '<span class="d-flex align-items-center gap-2 apya-touch-actions">' +
                                 '<span class="apya-chip apya-chip-' + colorTone(c.colorClass) + ' kanban-count">0</span>' +
-                                '<button type="button" class="btn btn-sm btn-link text-secondary p-0 js-col-rename" title="Yeniden adlandır"><i class="fa fa-pen"></i></button>' +
-                                '<button type="button" class="btn btn-sm btn-link text-danger p-0 js-col-delete" title="Kolonu sil"><i class="fa fa-trash"></i></button>' +
+                                '<button type="button" class="btn btn-sm btn-link text-secondary p-0 js-col-rename" title="Yeniden adlandır" aria-label="Kolonu yeniden adlandır"><i class="fa fa-pen"></i></button>' +
+                                '<button type="button" class="btn btn-sm btn-link text-danger p-0 js-col-delete" title="Kolonu sil" aria-label="Kolonu sil"><i class="fa fa-trash"></i></button>' +
                             '</span>' +
                         '</div>' +
                         '<div class="kanban-cards" id="kanban-col-' + c.id + '"></div>';
@@ -287,6 +287,13 @@
                     group: 'apya-kanban-cards',
                     animation: 150,
                     ghostClass: 'sortable-ghost',
+                    // Dokunmatikte board yatay overflow-x:auto ile kaydırılıyor;
+                    // gecikme'siz sürükleme bir kartın üstünden yana kaydırma
+                    // hareketini anında "drag" sanıyordu (2026-08 tasarım denetimi).
+                    // delayOnTouchOnly: true → fare kullanıcıları etkilenmez.
+                    delay: 150,
+                    delayOnTouchOnly: true,
+                    touchStartThreshold: 5,
                     onEnd: function (evt) {
                         if (evt.from === evt.to) { return; }
                         var taskId = $(evt.item).data('id');

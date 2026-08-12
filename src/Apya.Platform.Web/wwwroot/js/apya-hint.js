@@ -29,7 +29,12 @@
             // container:body → kart/tablo gibi overflow:hidden kapsayıcılarda kırpılmaz.
             container: 'body',
             // html:false (varsayılan) korunur — ipucu metni her zaman düz metin.
-            trigger: 'hover focus'
+            // 'click' eklendi (2026-08 tasarım denetimi): işaretçi gerçek <button>
+            // değil, iOS Safari'de link/buton-dışı elemanlarda dokunuş her zaman
+            // hover/focus sentezlemiyor — yalnız hover/focus'a bağlıyken finans
+            // modallarındaki ⓘ ipuçları iPhone'da hiç açılmayabiliyordu. click
+            // event'i dokunuşta güvenilir ateşlenir, ikinci dokunuş kapatır.
+            trigger: 'hover focus click'
         });
     }
 
