@@ -322,7 +322,7 @@ function ye({
   onSubmit: i,
   isSubmitting: o
 }) {
-  var E, O, R, D, A, I, z, F;
+  var E, O, R, D, A, z, I, F;
   const [s, c] = d.useState(() => Y(n)), [r, x] = d.useState(!1), v = d.useRef(null);
   d.useEffect(() => {
     c(Y(n));
@@ -369,7 +369,7 @@ function ye({
           currency: s.currency,
           currencies: ge,
           onCurrencyChange: (u) => c((l) => ({ ...l, currency: u })),
-          size: "md",
+          size: "lg",
           invalid: ((O = m.amount) == null ? void 0 : O.confidence) < j,
           required: !0,
           min: 0.01
@@ -381,6 +381,7 @@ function ye({
           ref: k === "date" ? v : void 0,
           type: "date",
           required: !0,
+          size: "lg",
           value: s.date,
           onChange: g("date"),
           invalid: ((D = m.date) == null ? void 0 : D.confidence) < j
@@ -392,13 +393,14 @@ function ye({
           ref: k === "vendor" ? v : void 0,
           type: "text",
           required: !0,
+          size: "lg",
           value: s.vendor,
           onChange: g("vendor"),
-          invalid: ((I = m.vendor) == null ? void 0 : I.confidence) < j,
+          invalid: ((z = m.vendor) == null ? void 0 : z.confidence) < j,
           placeholder: "örn. Migros A.Ş."
         }
       ) }),
-      /* @__PURE__ */ e.jsx(y, { label: "Kategori", confidence: (z = m.category) == null ? void 0 : z.confidence, children: /* @__PURE__ */ e.jsx(
+      /* @__PURE__ */ e.jsx(y, { label: "Kategori", confidence: (I = m.category) == null ? void 0 : I.confidence, children: /* @__PURE__ */ e.jsx(
         se,
         {
           options: ve,

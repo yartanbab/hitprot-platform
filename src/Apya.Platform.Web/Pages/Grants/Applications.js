@@ -18,16 +18,16 @@ $(function () {
     function trancheRow(a, t) {
         return '<div class="d-flex align-items-center justify-content-between gap-2 py-1 border-top small" data-tranche-id="' + t.id + '">' +
             '<span>#' + t.sequenceNo + ' · ' + money(t.amount) + ' · <span class="apya-chip apya-chip-neutral">' + trancheStatusLabels[t.status] + '</span> · ' + fmtDate(t.dueDate) + '</span>' +
-            '<span><button type="button" class="btn btn-sm btn-link apya-tranche-edit" title="Düzenle"><i class="fa fa-pen"></i></button>' +
-            '<button type="button" class="btn btn-sm btn-link text-danger apya-tranche-del" title="Sil"><i class="fa fa-trash"></i></button></span>' +
+            '<span class="apya-touch-actions"><button type="button" class="btn btn-sm btn-link apya-tranche-edit" title="Düzenle" aria-label="Dilimi düzenle"><i class="fa fa-pen"></i></button>' +
+            '<button type="button" class="btn btn-sm btn-link text-danger apya-tranche-del" title="Sil" aria-label="Dilimi sil"><i class="fa fa-trash"></i></button></span>' +
             '</div>';
     }
     function milestoneRow(a, m) {
         var tone = m.isCompleted ? 'positive' : 'neutral';
         return '<div class="d-flex align-items-center justify-content-between gap-2 py-1 border-top small" data-milestone-id="' + m.id + '">' +
             '<span>' + esc(m.title) + ' · <span class="apya-chip apya-chip-' + tone + '">' + (m.isCompleted ? 'Tamamlandı' : 'Bekliyor') + '</span> · ' + fmtDate(m.dueDate) + '</span>' +
-            '<span><button type="button" class="btn btn-sm btn-link apya-milestone-edit" title="Düzenle"><i class="fa fa-pen"></i></button>' +
-            '<button type="button" class="btn btn-sm btn-link text-danger apya-milestone-del" title="Sil"><i class="fa fa-trash"></i></button></span>' +
+            '<span class="apya-touch-actions"><button type="button" class="btn btn-sm btn-link apya-milestone-edit" title="Düzenle" aria-label="Kilometre taşını düzenle"><i class="fa fa-pen"></i></button>' +
+            '<button type="button" class="btn btn-sm btn-link text-danger apya-milestone-del" title="Sil" aria-label="Kilometre taşını sil"><i class="fa fa-trash"></i></button></span>' +
             '</div>';
     }
 

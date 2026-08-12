@@ -103,7 +103,7 @@ $(function () {
             '<div class="apya-tile-actions">' +
             '  <a class="btn btn-sm btn-outline-secondary" href="' + detailUrl + '"><i class="fa fa-list-check me-1"></i>Detay / Görevler</a>' +
             (canDelete
-                ? '  <button type="button" class="btn btn-sm btn-outline-danger js-delete-project" data-id="' + p.id + '" data-name="' + esc(p.name) + '" title="Sil"><i class="fa fa-trash"></i></button>'
+                ? '  <button type="button" class="btn btn-sm btn-outline-danger js-delete-project" data-id="' + p.id + '" data-name="' + esc(p.name) + '" title="Sil" aria-label="Projeyi sil"><i class="fa fa-trash"></i></button>'
                 : '') +
             '</div>';
 

@@ -989,8 +989,13 @@ html, body {
     }
 }
 
-/* 768–1199px: temanın OTOMATİK rail'i için aynı kozmetik (attribute'suz) */
-@media (min-width: 768px) and (max-width: 1199.98px) {
+/* 768–1199px: temanın OTOMATİK rail'i için aynı kozmetik (attribute'suz) —
+   yalnız GERÇEK fare hover'ı olan cihazlarda. Bu kozmetik ":not(:hover)"a
+   bağlı; dokunmatik tabletlerde hover hiç tetiklenmediği için sidebar kalıcı
+   olarak ikon-rail'de kilitli kalıp etiketler hiç görünmüyordu (2026-08
+   tasarım denetimi). Aşağıdaki ikinci blok dokunmatik'te sidebar'ı zorla
+   genişletilmiş tutar — bkz. "SIDEBAR — DOKUNMATİK GENİŞLETME". */
+@media (min-width: 768px) and (max-width: 1199.98px) and (hover: hover) {
     .lpx-sidebar-container:not(:hover) {
         overflow-y: hidden;
     }
@@ -1015,10 +1020,36 @@ html, body {
     }
 }
 
+/* SIDEBAR — DOKUNMATİK GENİŞLETME (768–1199px, pointer:coarse):
+   Temanın kendi (paket-içi) CSS'i bu aralıkta sidebar'ı otomatik ikon-rail'e
+   daraltıyor ve yalnız ":hover" ile genişletiyor. Dokunmatik cihazda hover
+   olmadığı için kullanıcı etiketleri asla göremiyordu. 280px, temanın hover'da
+   genişlettiği doğal genişlik (yukarıdaki P4 SIDEBAR COLLAPSE bölümü yorumu). */
+@media (min-width: 768px) and (max-width: 1199.98px) and (pointer: coarse) {
+    .lpx-sidebar-container {
+        min-width: 280px !important;
+        max-width: 280px !important;
+        overflow-y: auto !important;
+    }
+}
+
+/* --- İKON FONT YIĞINI (tek kaynak) ---
+   Bir 'bi' (Bootstrap Icons) elemanını FontAwesome glyph'iyle değiştirirken
+   font-family'yi ELLE yazmak sürüm kırılgan: proje FA7'ye yükseltildiğinde
+   sabit yazılmış 'Font Awesome 6 Free' hiçbir @font-face ile eşleşmez ve glyph
+   SESSİZCE kaybolur (2026-08 canlı QA'da masaüstü daraltma ikonunun ve mobil
+   hamburger'in bu yüzden görünmediği bulundu). Yığın hâlinde tanımlanır ki
+   sonraki FA yükseltmesi de kırmasın.
+   ⚠️ document.fonts.check() bu hatayı YAKALAMAZ — uydurma font adına bile true
+   döner. Doğrulama: bilinen-çalışan bir .fa ikonuyla genişlik karşılaştır. --- */
+:root {
+    --apya-font-icon: 'Font Awesome 7 Free', 'Font Awesome 6 Free', 'Font Awesome 5 Free', FontAwesome;
+}
+
 /* --- Daralt/genişlet butonu (temanın .menu-collapse-icon'u): 'bi' ikon fontu
    yüklenmiyor (glyph görünmezdi) → FontAwesome chevron ile değiştir + hit alanı. --- */
 #lpx-sidebar .menu-collapse-icon {
-    font-family: 'Font Awesome 6 Free';
+    font-family: var(--apya-font-icon);
     font-weight: 900;
     font-style: normal;
     font-size: 12px;
@@ -1051,11 +1082,238 @@ html[data-sidebar="collapsed"] #lpx-sidebar .menu-collapse-icon::before {
 html[data-theme="dark"] #ThemeToggle i.fa-sun::before {
     content: '\f186'; /* moon */
 }
-html[data-density="compact"] #DensityToggle i.fa-bars::before {
+html[data-density="compact"] #DensityToggle i.fa-table-cells::before {
     content: '\f039'; /* align-justify */
 }
-html[data-density="comfortable"] #DensityToggle i.fa-bars::before {
+html[data-density="comfortable"] #DensityToggle i.fa-table-cells::before {
     content: '\f7a4'; /* grip-lines */
+}
+
+/* ============================================================================
+   MOBİL NAVİGASYON (<768px) — LeptonX .lpx-mobile-navbar üstüne kurulu
+   ----------------------------------------------------------------------------
+   Temanın kendi mobil davranışı üç noktada standart dışıydı (2026-08 tasarım
+   denetimi + kullanıcı geri bildirimi):
+     1) Hamburger ikonu SAĞDA duruyordu. Material "Top App Bar" ve Apple HIG
+        navigasyon ikonunu bar'ın BAŞINDA (LTR'de sol) konumlandırır — kullanıcı
+        başparmağı ve okuma yönü oraya gider.
+     2) Menü açılınca sayfa içeriğini AŞAĞI İTİYORDU (akışa giren blok). Beklenen
+        desen: içeriğin ÜSTÜNE soldan kayan drawer + karartma (backdrop).
+     3) Kapatma affordance'ı yoktu (modal-escape kuralı): backdrop tıklaması,
+        Esc tuşu ve açık bir kapat düğmesi gerekiyor.
+   Geometri/backdrop/odak yönetimi sidebar-toggle.js'te; burası yalnız görünüm.
+   ============================================================================ */
+
+/* --- 1) İkon glyph'leri: 'bi' (Bootstrap Icons) fontu bu projede yüklenmiyor,
+   FontAwesome ile değiştiriliyor. font-family ::before'a DOĞRUDAN ve !important
+   ile yazılmalı — bootstrap-icons.css kendi '[class^="bi-"]::before' kuralını
+   !important ile veriyor, üst elemana yazılan bunu ezemiyor. --- */
+.lpx-mobile-navbar i.bi-list::before {
+    font-family: var(--apya-font-icon) !important;
+    font-weight: 900 !important;
+    content: '\f0c9' !important; /* bars → menüyü aç/kapat */
+}
+.lpx-mobile-navbar i.bi-person::before {
+    font-family: var(--apya-font-icon) !important;
+    font-weight: 900 !important;
+    content: '\f007' !important; /* user → hesap menüsü */
+}
+
+/* --- 2) Header yerleşimi: hamburger solda, logo ortada, hesap sağda --- */
+.lpx-mobile-navbar {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+}
+/* JS düğümü zaten ilk çocuk yapıyor; order JS gecikirse de sırayı garantiler. */
+.lpx-mobile-navbar > i.lpx-toggle[data-lpx-toggle="mobile-navbar"] {
+    order: -1;
+    flex: none;
+    margin-inline-start: 6px;
+}
+.lpx-mobile-navbar .lpx-logo-container {
+    flex: 1 1 auto;
+    min-width: 0;
+    position: relative;
+    z-index: 1;
+}
+/* Logo bağlantısının içindeki .lpx-brand-name mutlak konumlu ve 282px geniş
+   (58→340px); hesap ikonu 301→345px'te duruyor, yani ~39px ÖRTÜŞÜYOR. Görsel
+   olarak fark edilmiyordu çünkü örtüşen kısım saydam — ama isabet testinde
+   üstte kalıyordu: hesap ikonunun MERKEZİNE dokunmak menüyü açmak yerine
+   ana sayfaya gidiyordu (2026-08-12 canlı QA'da elementFromPoint ile bulundu;
+   temadan gelen mevcut bir hata, bu turda oluşmadı). */
+.lpx-mobile-navbar .user-menu {
+    flex: none;
+    position: relative;
+    z-index: 2;
+}
+/* Dokunma hedefi 44×44 (ux: touch-target). Tema 36×54px veriyordu. */
+.lpx-mobile-navbar i.lpx-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    font-size: 19px;
+    line-height: 1;
+    border-radius: var(--apya-radius-md);
+    cursor: pointer;
+    transition: background var(--apya-motion-fast) ease, color var(--apya-motion-fast) ease;
+}
+.lpx-mobile-navbar i.lpx-toggle:active {
+    background: color-mix(in srgb, currentColor 16%, transparent);
+}
+.lpx-mobile-navbar i.lpx-toggle:focus-visible {
+    outline: 2px solid var(--apya-accent-500);
+    outline-offset: 2px;
+}
+
+/* --- 3) Menü = soldan kayan drawer (içeriği itmez, üstüne gelir) ---
+   Tema açılışta .d-none'ı kaldırıyor. display:none geçiş animasyonunu
+   imkânsız kılar → id özgüllüğüyle (1-0-0 > 0-1-0) display'i geri açıp
+   kapalı durumu transform+visibility ile ifade ediyoruz. */
+#mobile-navbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: min(300px, 84vw);
+    z-index: var(--apya-z-modal, 1050);
+    display: block !important;
+    transform: translateX(-100%);
+    visibility: hidden;
+    transition: transform 240ms var(--apya-easing-standard, cubic-bezier(.4,0,.2,1)),
+                visibility 240ms var(--apya-easing-standard, cubic-bezier(.4,0,.2,1));
+    background: var(--apya-surface-sidebar) !important;
+    border-right: 1px solid var(--apya-border-default);
+    box-shadow: var(--apya-shadow-xl);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 16px);
+}
+#mobile-navbar:not(.d-none) {
+    transform: translateX(0);
+    visibility: visible;
+}
+
+/* Drawer başlığı (JS ekler) — marka + kapat düğmesi (modal-escape). */
+.apya-drawer-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: calc(env(safe-area-inset-top, 0px) + 12px) 12px 12px 20px;
+    border-bottom: 1px solid var(--apya-border-subtle);
+    margin-bottom: 6px;
+}
+.apya-drawer-head-title {
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+    color: var(--apya-text-tertiary);
+}
+.apya-drawer-close {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    flex: none;
+    border: 0;
+    border-radius: var(--apya-radius-md);
+    background: transparent;
+    color: var(--apya-text-secondary);
+    font-size: 17px;
+    cursor: pointer;
+}
+.apya-drawer-close:active { background: var(--apya-border-subtle); }
+.apya-drawer-close:focus-visible {
+    outline: 2px solid var(--apya-accent-500);
+    outline-offset: 2px;
+}
+
+/* Backdrop — drawer'ın hemen altında, karartma + dışa tıklayarak kapatma. */
+.apya-mobile-nav-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: calc(var(--apya-z-modal, 1050) - 1);
+    background: rgba(0, 0, 0, 0.45);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 240ms ease, visibility 240ms ease;
+}
+.apya-mobile-nav-backdrop.is-open {
+    opacity: 1;
+    visibility: visible;
+}
+/* Drawer açıkken arka plan kaymasın. */
+body.apya-mobile-nav-open {
+    overflow: hidden;
+}
+
+/* Drawer içi menü öğeleri — masaüstü sidebar ile aynı görsel dil + 44px hedef.
+   (Masaüstü kuralları #lpx-sidebar'a bağlı; mobil DOM ayrı: #mobile-sidebar.) */
+#mobile-sidebar a.lpx-menu-item-link {
+    display: flex;
+    align-items: center;
+    min-height: 44px;
+    margin: 1px 8px;
+    border-radius: var(--apya-radius-lg);
+    color: var(--apya-text-secondary) !important;
+}
+#mobile-sidebar a.lpx-menu-item-link:hover,
+#mobile-sidebar a.lpx-menu-item-link:active {
+    background: var(--apya-border-subtle) !important;
+    color: var(--apya-text-primary) !important;
+}
+#mobile-sidebar a.lpx-menu-item-link.selected {
+    background: var(--apya-accent-soft) !important;
+    color: var(--apya-accent-500) !important;
+    font-weight: 600;
+}
+#mobile-sidebar .lpx-menu-item-icon,
+#mobile-sidebar .lpx-menu-item-icon i,
+#mobile-sidebar .lpx-caret {
+    color: inherit !important;
+}
+#mobile-sidebar .lpx-inner-menu {
+    background: transparent !important;
+}
+
+/* --- 4) Hesap menüsü: sağ üstten açılan panel (yine içeriği itmez) --- */
+#mobile-user-menu-group {
+    position: fixed;
+    top: calc(var(--apya-mobile-header-h, 72px) + 4px);
+    right: 8px;
+    left: auto;
+    width: min(300px, calc(100vw - 16px));
+    max-height: calc(100vh - var(--apya-mobile-header-h, 72px) - 24px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    z-index: var(--apya-z-modal, 1050);
+    padding: 6px;
+    background: var(--apya-surface-elevated);
+    border: 1px solid var(--apya-border-strong);
+    border-radius: var(--apya-radius-xl);
+    box-shadow: var(--apya-shadow-xl);
+}
+#mobile-user-menu-group .lpx-language-selection,
+#mobile-user-menu-group .lpx-user-profile,
+#mobile-user-menu-group .action {
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border-radius: var(--apya-radius-lg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    #mobile-navbar,
+    .apya-mobile-nav-backdrop {
+        transition-duration: 1ms;
+    }
 }
 
 /* --- Header topbar: 57px + token zemin + alt kenarlık (her iki tema) --- */

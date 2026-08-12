@@ -196,22 +196,22 @@
             }
             <div class="tab-pane fade" id="finance_@Model.Id" role="tabpanel">
                 <div class="row text-center mb-4">
-                    <div class="col-4">
+                    <div class="col-12 col-sm-4 mb-2 mb-sm-0">
                         <div class="card py-2 border-danger">
                             <div class="text-muted small">Toplam Gider</div>
-                            <div class="fw-bold fs-5 text-danger">@totalExpense.ToString("N2")</div>
+                            <div class="fw-bold fs-5 apya-numeric text-danger">@totalExpense.ToString("N2")</div>
                         </div>
                     </div>
-                    <div class="col-4">
+                    <div class="col-12 col-sm-4 mb-2 mb-sm-0">
                         <div class="card py-2 border-success">
                             <div class="text-muted small">Toplam Gelir</div>
-                            <div class="fw-bold fs-5 text-success">@totalIncome.ToString("N2")</div>
+                            <div class="fw-bold fs-5 apya-numeric text-success">@totalIncome.ToString("N2")</div>
                         </div>
                     </div>
-                    <div class="col-4">
+                    <div class="col-12 col-sm-4">
                         <div class="card py-2">
                             <div class="text-muted small">Net</div>
-                            <div class="fw-bold fs-5 @(netFinance >= 0 ? "text-success" : "text-danger")">@netFinance.ToString("N2")</div>
+                            <div class="fw-bold fs-5 apya-numeric @(netFinance >= 0 ? "text-success" : "text-danger")">@netFinance.ToString("N2")</div>
                         </div>
                     </div>
                 </div>
@@ -229,13 +229,14 @@
                 }
                 else
                 {
+                    <div class="table-responsive">
                     <table class="table table-sm apya-clean-table mb-4">
                         <thead>
                             <tr>
-                                <th style="width:100px;">Tarih</th>
+                                <th>Tarih</th>
                                 <th>Başlık</th>
-                                <th style="width:90px;">Kategori</th>
-                                <th class="text-end" style="width:100px;">Tutar</th>
+                                <th>Kategori</th>
+                                <th class="text-end apya-numeric">Tutar</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -245,11 +246,12 @@
                                 <td>@e.ExpenseDate.ToString("dd.MM.yyyy")</td>
                                 <td>@e.Title</td>
                                 <td>@e.Category</td>
-                                <td class="text-end text-danger">@e.Amount.ToString("N2")</td>
+                                <td class="text-end apya-numeric text-danger">@e.Amount.ToString("N2")</td>
                             </tr>
                         }
                         </tbody>
                     </table>
+                    </div>
                 }
 
                 <div class="d-flex justify-content-between align-items-center mb-2">
@@ -265,13 +267,14 @@
                 }
                 else
                 {
+                    <div class="table-responsive">
                     <table class="table table-sm apya-clean-table">
                         <thead>
                             <tr>
-                                <th style="width:100px;">Tarih</th>
+                                <th>Tarih</th>
                                 <th>Başlık</th>
-                                <th style="width:90px;">Kategori</th>
-                                <th class="text-end" style="width:100px;">Tutar</th>
+                                <th>Kategori</th>
+                                <th class="text-end apya-numeric">Tutar</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -281,11 +284,12 @@
                                 <td>@i.IncomeDate.ToString("dd.MM.yyyy")</td>
                                 <td>@i.Title</td>
                                 <td>@i.Category</td>
-                                <td class="text-end text-success">@i.Amount.ToString("N2")</td>
+                                <td class="text-end apya-numeric text-success">@i.Amount.ToString("N2")</td>
                             </tr>
                         }
                         </tbody>
                     </table>
+                    </div>
                 }
             </div>
 
@@ -882,9 +886,9 @@
             }).join('');
             $container.html(
                 '<p class="text-end text-muted small mb-2">Toplam: <strong>' + fmtSec(totalSec) + '</strong></p>' +
-                '<table class="table table-sm apya-clean-table">' +
+                '<div class="table-responsive"><table class="table table-sm apya-clean-table">' +
                 '<thead><tr><th>Başlangıç</th><th>Bitiş</th><th>Süre</th><th>Kullanıcı</th><th>Not</th></tr></thead>' +
-                '<tbody>' + rows + '</tbody></table>'
+                '<tbody>' + rows + '</tbody></table></div>'
             );
         }).catch(function () {
             $('#TimeLogList_@Model.Id').html('<p class="text-danger">Zaman kayıtları yüklenemedi.</p>');

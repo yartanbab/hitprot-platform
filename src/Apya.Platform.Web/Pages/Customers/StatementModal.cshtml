@@ -32,15 +32,15 @@
     <abp-modal-body>
 
         <div class="row g-3 mb-3">
-            <div class="col-4">
+            <div class="col-6 col-sm-4">
                 <div class="apya-overline text-muted">Toplam Borç</div>
                 <div class="apya-numeric fw-semibold">@s.TotalDebit.ToString("N2")</div>
             </div>
-            <div class="col-4">
+            <div class="col-6 col-sm-4">
                 <div class="apya-overline text-muted">Toplam Alacak</div>
                 <div class="apya-numeric fw-semibold">@s.TotalCredit.ToString("N2")</div>
             </div>
-            <div class="col-4">
+            <div class="col-12 col-sm-4">
                 <div class="apya-overline text-muted">Net Bakiye</div>
                 <div class="apya-numeric fw-bold @balanceClass">@s.Balance.ToString("N2") ₺</div>
                 <div class="small text-muted">@balanceHint</div>

@@ -28,6 +28,21 @@
     .apya-cal-pill.is-done { text-decoration: line-through; opacity: .65; }
     .apya-cal-more { border: 0; background: none; padding: 0 7px; font-size: 10.5px; font-weight: 600; color: var(--apya-accent-500); text-align: left; cursor: pointer; }
 
+    /* Mobil: ay grid'i 7 sütuna sıkışınca pill'ler ~50px hücrede 10.5px'te
+       hem okunaksız hem dokunma hedefi olarak yetersizdi (2026-08 tasarım
+       denetimi) — tek yol görev/faturaya gitmek olduğu için önem taşıyor. */
+    @@media (max-width: 575.98px) {
+        .apya-cal-day { min-height: 78px; padding: 4px; gap: 4px; }
+        .apya-cal-pill { font-size: 11.5px; padding: 4px 6px; line-height: 1.4; }
+        .apya-cal-dow { padding: 6px 4px; font-size: 9.5px; }
+    }
+    /* Ay gezinme okları — dokunmatikte 40px altı hit alanı (2026-08 tasarım
+       denetimi). btn-group bitişik olduğu için genişleme komşu butona taşmaz,
+       yalnızca grup büyür. */
+    @@media (pointer: coarse) {
+        #cal-prev, #cal-today, #cal-next { min-height: 40px; }
+    }
+
     /* fixed: grid'in overflow:hidden'ından etkilenmesin (alt satır pop-over'ları kırpılmasın) */
     .apya-cal-popover { position: fixed; z-index: var(--apya-z-popover, 1030); width: 280px; background: var(--apya-surface-elevated, var(--apya-surface-base)); border: 1px solid var(--apya-border-default); border-radius: var(--apya-radius-xl); box-shadow: var(--apya-shadow-lg); padding: 12px; }
     .apya-cal-popover-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; font-size: 12.5px; font-weight: 650; color: var(--apya-text-primary); }

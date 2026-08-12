@@ -10,19 +10,20 @@
         <p>
             <strong>Tarih:</strong> @Model.Snapshot.AsOfDate.ToString("dd.MM.yyyy")
             &nbsp;|&nbsp; <strong>Toplam TL:</strong>
-            @Model.Snapshot.TotalTryValue.ToString("N2") ₺
+            <span class="apya-numeric">@Model.Snapshot.TotalTryValue.ToString("N2") ₺</span>
         </p>
         @if (!string.IsNullOrWhiteSpace(Model.Snapshot.Notes))
         {
             <p class="text-muted">@Model.Snapshot.Notes</p>
         }
+        <div class="table-responsive">
         <table class="table table-sm apya-clean-table">
             <thead>
                 <tr>
                     <th>Kasa</th><th>Birim</th>
-                    <th class="text-end">Bakiye</th>
-                    <th class="text-end">Kur</th>
-                    <th class="text-end">TL Karşılığı</th>
+                    <th class="text-end apya-numeric">Bakiye</th>
+                    <th class="text-end apya-numeric">Kur</th>
+                    <th class="text-end apya-numeric">TL Karşılığı</th>
                 </tr>
             </thead>
             <tbody>
@@ -31,19 +32,20 @@
                 <tr>
                     <td>@l.CashAccountName</td>
                     <td>@l.Currency</td>
-                    <td class="text-end">@l.Balance.ToString("N2")</td>
-                    <td class="text-end">@(l.Rate.HasValue ? l.Rate.Value.ToString("N4") : "-")</td>
-                    <td class="text-end">@l.TryValue.ToString("N2")</td>
+                    <td class="text-end apya-numeric">@l.Balance.ToString("N2")</td>
+                    <td class="text-end apya-numeric">@(l.Rate.HasValue ? l.Rate.Value.ToString("N4") : "-")</td>
+                    <td class="text-end apya-numeric">@l.TryValue.ToString("N2")</td>
                 </tr>
             }
             </tbody>
             <tfoot>
                 <tr class="fw-bold">
                     <td colspan="4" class="text-end">TOPLAM</td>
-                    <td class="text-end">@Model.Snapshot.TotalTryValue.ToString("N2") ₺</td>
+                    <td class="text-end apya-numeric">@Model.Snapshot.TotalTryValue.ToString("N2") ₺</td>
                 </tr>
             </tfoot>
         </table>
+        </div>
     </abp-modal-body>
     <abp-modal-footer buttons="@(AbpModalButtons.Close)"></abp-modal-footer>
 </abp-modal>

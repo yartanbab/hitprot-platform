@@ -555,7 +555,7 @@ function DocumentsIsland() {
   const canCreate = abpAuth('Platform.Documents.Create');
 
   return (
-    <div className="apya-fade-in px-7 py-7 max-w-[1560px] mx-auto"
+    <div className="apya-fade-in px-4 py-4 sm:px-7 sm:py-7 max-w-[1560px] mx-auto"
       onDragOver={(e) => { if (currentId) { e.preventDefault(); setDragOver(true); } }}
       onDragLeave={() => setDragOver(false)}
       onDrop={(e) => { e.preventDefault(); setDragOver(false); if (currentId) handleUpload(e.dataTransfer.files); }}>

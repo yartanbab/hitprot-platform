@@ -56,14 +56,15 @@
             </div>
         </form>
 
+        <div class="table-responsive">
         <table class="table apya-clean-table">
             <thead>
                 <tr>
                     <th style="width:80px;">Kod</th>
                     <th>Hesap Grubu</th>
-                    <th class="text-end">Borç</th>
-                    <th class="text-end">Alacak</th>
-                    <th class="text-end">Bakiye</th>
+                    <th class="text-end apya-numeric">Borç</th>
+                    <th class="text-end apya-numeric">Alacak</th>
+                    <th class="text-end apya-numeric">Bakiye</th>
                 </tr>
             </thead>
             <tbody>
@@ -72,9 +73,9 @@
                 <tr>
                     <td><code>@l.GroupCode</code></td>
                     <td>@l.GroupName</td>
-                    <td class="text-end">@l.Debit.ToString("N2")</td>
-                    <td class="text-end">@l.Credit.ToString("N2")</td>
-                    <td class="text-end fw-bold @(l.Balance >= 0 ? "" : "text-danger")">
+                    <td class="text-end apya-numeric">@l.Debit.ToString("N2")</td>
+                    <td class="text-end apya-numeric">@l.Credit.ToString("N2")</td>
+                    <td class="text-end apya-numeric fw-bold @(l.Balance >= 0 ? "" : "text-danger")">
                         @l.Balance.ToString("N2")
                     </td>
                 </tr>
@@ -83,12 +84,13 @@
             <tfoot>
                 <tr class="fw-bold table-secondary">
                     <td colspan="2" class="text-end">TOPLAM</td>
-                    <td class="text-end">@r.TotalDebit.ToString("N2")</td>
-                    <td class="text-end">@r.TotalCredit.ToString("N2")</td>
-                    <td class="text-end">@((r.TotalDebit - r.TotalCredit).ToString("N2"))</td>
+                    <td class="text-end apya-numeric">@r.TotalDebit.ToString("N2")</td>
+                    <td class="text-end apya-numeric">@r.TotalCredit.ToString("N2")</td>
+                    <td class="text-end apya-numeric">@((r.TotalDebit - r.TotalCredit).ToString("N2"))</td>
                 </tr>
             </tfoot>
         </table>
+        </div>
 
         <div class="alert alert-info py-2 mb-0">
             <i class="fa fa-info-circle me-1"></i>

@@ -42,6 +42,7 @@ $(function () {
             },
             {
                 title: 'Toplam TL Değeri', data: 'totalTryValue',
+                className: 'text-end apya-numeric',
                 render: function (d) { return Number(d).toLocaleString('tr-TR', { minimumFractionDigits: 2 }) + ' ₺'; }
             },
             { title: 'Not', data: 'notes', render: function (d) { return d || '-'; } },

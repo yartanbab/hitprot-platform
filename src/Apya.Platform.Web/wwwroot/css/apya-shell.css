@@ -86,6 +86,46 @@ body {
 .apya-row-actions { opacity: 0.45; transition: opacity var(--apya-motion-fast) ease; }
 tr:hover .apya-row-actions,
 .list-group-item:hover .apya-row-actions { opacity: 1; }
+/* Dokunmatikte ":hover" hiç tetiklenmez — satır aksiyonları kalıcı soluk kalırdı
+   (2026-08 tasarım denetimi, tüm tablolarda tekrarlayan bulgu). */
+@media (pointer: coarse) {
+    .apya-row-actions { opacity: 1; }
+    /* Aynı denetim: satır aksiyon ikonları (Düzenle/Sil vb.) çoğu yerde
+       btn-sm + p-0/py-0 ile ~16-24px hit alanına iniyordu — 40-44px eşiğinin
+       altında (sistemik bulgu, tek tek her sayfada tekrarlanan bir örüntü).
+       .btn-group içindekilere UYGULANMAZ: bitişik butonlarda büyüyen hit
+       alanları çakışıp yanlış butona basılmasına yol açar. */
+    /* .apya-row-actions bazı yerlerde SARMALAYICI (satır aksiyon grubu), bazı
+       yerlerde (CashAccounts/Index.js) doğrudan BUTONUN kendi class'ı — ikisi
+       de yakalanmalı. */
+    .apya-row-actions .btn:not(.btn-group .btn),
+    .btn.apya-row-actions:not(.btn-group .btn),
+    .apya-tile-actions .btn:not(.btn-group .btn),
+    .apya-touch-actions .btn:not(.btn-group .btn) {
+        min-width: 40px;
+        min-height: 40px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+    /* Aynı denetim: 16px altı form kontrolleri iOS Safari'de odaklanınca
+       sayfayı otomatik büyütüyordu (form-control-sm, .apya-date-range-input,
+       React Input size=sm/md — hepsi 13-14px). Tek kural, tek tek dosya
+       düzeltmek yerine tüm projeyi kapsar. Select2/DataTables arama kutusu
+       gibi 3.taraf bileşenler de bu genel seçicilere yakalanır — kasıtlı. */
+    /* React bileşenleri (customers.jsx arama kutusu vb.) çoğu zaman `type`
+       attribute'u hiç basmıyor (JSX'te belirtilmemiş) — CSS öznitelik seçicisi
+       [type="text"] o durumda eşleşmez. :not() dışlama listesiyle metin-benzeri
+       TÜM input'ları (type'sız dahil) yakala, font-size'ın anlamsız olduğu
+       türleri (checkbox/radio/range/dosya/renk/gizli/buton) hariç tut. */
+    .form-control,
+    .form-select,
+    input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]):not([type="color"]):not([type="hidden"]):not([type="button"]):not([type="submit"]):not([type="reset"]),
+    textarea,
+    select {
+        font-size: max(16px, 1em) !important;
+    }
+}
 
 /* ----------------------------------------------------------------------------
    3) GLOBAL TRANSITION DEFAULTS
@@ -494,6 +534,21 @@ h1, h2, h3, h4, h5, h6 {
 .apya-hint:focus-visible {
     outline: none;
     box-shadow: var(--apya-shadow-focus);
+}
+
+/* ----------------------------------------------------------------------------
+   10b) HESAP KARTI (Giriş/Kayıt/Şifre sıfırlama) — MOBİL PADDING DÜZELTMESİ
+   Canlı 375×812 ölçüm (2026-08 tasarım denetimi): .card-body.p-5'in gerçek
+   padding'i 72px (proje spacer ölçeğinde — standart Bootstrap 48px değil).
+   319px genişliğindeki kartta bu, içerik alanını ~175px'e düşürüyor VE dikey
+   72+72=144px fazladan yükseklik "Giriş yap" butonunu katlanın (812px) altına
+   itiyordu. Selector ABP Account modülünün kendi imzası (.shadow-sm.rounded);
+   uygulamanın geri kalanı .apya-* sınıflarını kullandığı için çakışma riski yok.
+   ---------------------------------------------------------------------------- */
+@media (max-width: 575.98px) {
+    .card.shadow-sm.rounded .card-body.p-5 {
+        padding: 20px 22px !important;
+    }
 }
 
 /* ----------------------------------------------------------------------------
@@ -923,6 +978,13 @@ body.apya-command-palette-lock {
     grid-template-columns: repeat(auto-fill, minmax(330px, 1fr));
     gap: 18px;
 }
+/* 330px sabit sütun alt sınırı, LeptonX içerik dolgusu düşüldükten sonra
+   dar ekranlarda (~311px kullanılabilir alan) grid'i viewport'tan taşırıyordu
+   (Projects/Grants/Documents üçü de bu sınıfı paylaşır — 2026-08 tasarım
+   denetimi, Documents'ta somut olarak ölçüldü). */
+@media (max-width: 575.98px) {
+    .apya-tile-grid { grid-template-columns: 1fr; }
+}
 .apya-tile {
     display: flex;
     flex-direction: column;
@@ -1336,6 +1398,14 @@ i.apya-priority-dot {
     max-height: 640px;
     overflow-y: auto;
 }
+/* <992px'te 3 panel tek sütuna düşüyor (yukarıdaki .apya-docs-shell) — 640px'lik
+   ağaç, 812px'lik bir telefon ekranının çoğunu kaplayıp dosya grid'ine
+   ulaşmadan önce uzun bir kaydırma zorunlu kılıyordu (2026-08 tasarım denetimi). */
+@media (max-width: 991.98px) {
+    .apya-docs-tree {
+        max-height: 220px;
+    }
+}
 .apya-docs-main {
     overflow: hidden;
     min-height: 460px;
@@ -1411,12 +1481,6 @@ i.apya-priority-dot {
     font-size: 13px;
     line-height: 1;
 }
-/* Dar viewport'ta header zaten kalabalık — segment gizlenir; sayfa içindeki
-   işlev kaybolmaz çünkü butonlar hâlâ DOM'da (yalnız görünmez). */
-@media (max-width: 900px) {
-    .apya-view-toggle--header { display: none; }
-}
-
 /* ----------------------------------------------------------------------------
    19) SAYFA BAŞLIK SATIRI — sol: başlık + açıklama, sağ: sayaç/arama/aksiyon.
    Izgara sayfalarında araç çubuğu ayrı bir satırdaydı (.apya-grid-toolbar);

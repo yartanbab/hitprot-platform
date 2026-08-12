@@ -22,6 +22,12 @@
         var toggle = document.querySelector('[data-header-views]');
         if (!toggle) { return; }
 
+        // <900px'te .lpx-topbar-content zaten display:none (LeptonX mobil davranışı) —
+        // segmenti oraya TAŞIRSAK sayfada hiç erişilemez kalırdı (2026-08 tasarım
+        // denetimi: "Kanban/Gantt'a geçmenin mobilde hiçbir yolu yok"). Dar ekranda
+        // segment sayfadaki orijinal yerinde kalır ve kullanılabilir durumda kalır.
+        if (!window.matchMedia('(min-width: 901px)').matches) { return; }
+
         var bar = document.querySelector('.lpx-topbar-content');
         if (!bar) { return; }   // toolbar'sız layout — segment sayfada kalsın
 

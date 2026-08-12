@@ -10,7 +10,7 @@
     <abp-script src="/Pages/Admin/Feedback/Index.js" />
 }
 
-<div class="apya-page">
+<div data-page-description="Kullanıcılardan gelen geri bildirimler" class="apya-page">
 <abp-card>
     <abp-card-header>
         <abp-card-title><i class="fa fa-comment-dots me-2"></i> Geri Bildirimler</abp-card-title>
@@ -96,7 +96,7 @@
             </div>
         </form>
 
-        <div class="d-flex align-items-center gap-2 mb-2" id="BulkActionBar" style="display:none !important;">
+        <div class="d-flex flex-wrap align-items-center gap-2 mb-2" id="BulkActionBar" style="display:none !important;">
             <span class="text-sm text-muted" id="SelectedCount"></span>
             <select id="BulkStatusSelect" class="form-select form-select-sm" style="width:auto;" aria-label="Toplu durum">
                 @foreach (var s in Enum.GetValues<FeedbackStatus>())

@@ -31,10 +31,10 @@ $(function () {
             var canDelete = abp.auth.isGranted('Platform.CashMovements.Delete') && m.source === 0;
             var actions = '';
             if (canEdit) {
-                actions += '<button type="button" class="btn btn-sm btn-link p-0 me-2 apya-row-actions" data-action="edit" data-id="' + m.id + '"><i class="fa fa-pencil"></i></button>';
+                actions += '<button type="button" class="btn btn-sm btn-link p-0 me-2 apya-row-actions" data-action="edit" data-id="' + m.id + '" title="Düzenle" aria-label="Hareketi düzenle"><i class="fa fa-pencil"></i></button>';
             }
             if (canDelete) {
-                actions += '<button type="button" class="btn btn-sm btn-link p-0 text-danger apya-row-actions" data-action="delete" data-id="' + m.id + '"><i class="fa fa-trash"></i></button>';
+                actions += '<button type="button" class="btn btn-sm btn-link p-0 text-danger apya-row-actions" data-action="delete" data-id="' + m.id + '" title="Sil" aria-label="Hareketi sil"><i class="fa fa-trash"></i></button>';
             }
             var $tr = $(
                 '<tr>' +

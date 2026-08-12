@@ -83,12 +83,12 @@
                         <label class="form-label">Birim Fiyat</label>
                         <input name="InvoiceInfo.Items[0].UnitPrice" type="number" step="0.01" class="form-control input-price" required />
                     </div>
-                    <div class="col-md-1">
-                        <button type="button" class="btn btn-outline-danger btn-remove-item"><i class="fa fa-trash"></i></button>
+                    <div class="col-md-1 text-end">
+                        <button type="button" class="btn btn-outline-danger btn-remove-item" aria-label="Kalemi sil" title="Kalemi sil"><i class="fa fa-trash"></i></button>
                     </div>
                 </div>
             </div>
-            
+
             <!-- JavaScript for Items -->
             <script>
                 $(function () {
@@ -108,8 +108,8 @@
                                 <label class="form-label">Birim Fiyat</label>
                                 <input name="InvoiceInfo.Items[\${itemIndex}].UnitPrice" type="number" step="0.01" class="form-control input-price" required />
                             </div>
-                            <div class="col-md-1">
-                                <button type="button" class="btn btn-outline-danger btn-remove-item"><i class="fa fa-trash"></i></button>
+                            <div class="col-md-1 text-end">
+                                <button type="button" class="btn btn-outline-danger btn-remove-item" aria-label="Kalemi sil" title="Kalemi sil"><i class="fa fa-trash"></i></button>
                             </div>
                         </div>`;
                         $('#InvoiceItemsContainer').append(html);

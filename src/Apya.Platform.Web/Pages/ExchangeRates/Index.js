@@ -61,6 +61,7 @@ $(function () {
             {
                 title: 'Kur',
                 data: 'rate',
+                className: 'text-end apya-numeric',
                 render: function (data) {
                     return Number(data).toLocaleString('tr-TR', { minimumFractionDigits: 4 });
                 }

@@ -31,7 +31,7 @@ $(function() {
                         </div>
                         <p class="mb-1 text-muted small">${item.body}</p>
                         <div class="d-flex justify-content-end mt-2">
-                             <button class="btn btn-sm btn-link text-danger delete-notif" data-id="${item.id}"><i class="fa fa-trash"></i></button>
+                             <button class="btn btn-sm btn-link text-danger delete-notif apya-row-actions" data-id="${item.id}" title="Sil" aria-label="Bildirimi sil"><i class="fa fa-trash"></i></button>
                         </div>
                     </div>`;
                 $list.append(itemHtml);

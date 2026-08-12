@@ -30,6 +30,7 @@
         </abp-row>
     </abp-card-header>
     <abp-card-body>
+        <div class="table-responsive">
         <table class="table apya-clean-table align-middle">
             <tbody>
                 <tr><th style="width:40%">Toplam Değerlendirme</th><td>@d.TotalEvaluations</td></tr>
@@ -47,10 +48,12 @@
                 <tr><th>Prompt / Sağlayıcı / Aktif İş Akışı</th><td>@d.PromptCount / @d.ProviderCount / @d.ActiveWorkflowCount</td></tr>
             </tbody>
         </table>
+        </div>
 
         @if (d.RiskDistribution.Count > 0)
         {
             <h6 class="mt-3">Risk Dağılımı</h6>
+            <div class="table-responsive">
             <table class="table table-sm w-auto">
                 <thead><tr><th>Seviye</th><th class="text-end">Sayı</th></tr></thead>
                 <tbody>
@@ -60,6 +63,7 @@
                     }
                 </tbody>
             </table>
+            </div>
         }
         else
         {

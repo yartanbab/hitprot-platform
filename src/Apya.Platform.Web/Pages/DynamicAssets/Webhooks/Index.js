@@ -85,13 +85,13 @@ $(function () {
                     '<span>Gizli anahtar yapılandırıldı</span>' +
                     apya.hint('Her istek, gövdenin bu anahtarla üretilmiş HMAC-SHA256 imzasını X-Apya-Signature başlığında taşır. Hedef sistem aynı hesabı yaparak isteğin gerçekten sizden geldiğini doğrulayabilir.') +
                     (canEdit ?
-                      '<button type="button" class="btn btn-sm btn-outline-secondary py-0 px-2 apya-regenerate-secret">' +
+                      '<button type="button" class="btn btn-sm btn-outline-secondary px-2 apya-regenerate-secret">' +
                         '<i class="fa fa-rotate"></i> Yeniden oluştur' +
                       '</button>' : '') +
                   '</div>' +
                   '<div class="apya-row-actions d-flex align-items-center gap-1">' +
-                    (canEdit ? '<button type="button" class="btn btn-sm btn-link text-muted apya-edit-btn" title="Düzenle"><i class="fa fa-pen"></i></button>' : '') +
-                    (canDelete ? '<button type="button" class="btn btn-sm btn-link text-danger apya-delete-btn" title="Sil"><i class="fa fa-trash"></i></button>' : '') +
+                    (canEdit ? '<button type="button" class="btn btn-sm btn-link text-muted apya-edit-btn" title="Düzenle" aria-label="Düzenle"><i class="fa fa-pen"></i></button>' : '') +
+                    (canDelete ? '<button type="button" class="btn btn-sm btn-link text-danger apya-delete-btn" title="Sil" aria-label="Sil"><i class="fa fa-trash"></i></button>' : '') +
                   '</div>' +
                 '</div>' +
                 '<div class="mt-2">' +
