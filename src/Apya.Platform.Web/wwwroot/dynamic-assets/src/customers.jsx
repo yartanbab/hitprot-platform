@@ -144,7 +144,7 @@ function ListPagination({ page, pageCount, pageSize, total, rangeFrom, rangeTo, 
       onClick={onClick}
       aria-label={ariaLabel}
       className={cn(
-        'min-w-[30px] h-[30px] px-2 rounded-md text-xs font-semibold flex items-center justify-center transition-colors',
+        'min-w-[40px] h-[40px] px-2 rounded-md text-xs font-semibold flex items-center justify-center transition-colors',
         !disabled && 'text-[var(--apya-text-secondary)] hover:bg-[var(--apya-border-subtle)]',
         disabled && 'text-[var(--apya-text-disabled)] cursor-default opacity-40',
       )}
@@ -233,7 +233,7 @@ function Toast({ message, onDone }) {
     return () => clearTimeout(id);
   }, [onDone]);
   return (
-    <div className="apya-pop-in fixed bottom-5 right-5 z-[95] flex items-center gap-2.5 px-4 py-3 rounded-xl border"
+    <div className="apya-pop-in fixed bottom-5 right-5 left-5 sm:left-auto z-[95] flex items-center gap-2.5 px-4 py-3 rounded-xl border max-w-[calc(100vw-2.5rem)] sm:max-w-sm"
       style={{ background: 'var(--apya-surface-elevated)', borderColor: 'var(--apya-border-strong)', boxShadow: 'var(--apya-shadow-lg)' }}
       role="status">
       <div className="w-5 h-5 rounded-md flex items-center justify-center flex-shrink-0"
@@ -457,7 +457,7 @@ function CustomerDetail({ c, canEdit, canDelete, onBack, onEdit, onStatement, on
       type="button"
       onClick={onClick}
       className={cn(
-        'h-8 px-3 rounded-lg border text-xs font-medium flex items-center gap-1.5 transition-colors',
+        'h-10 px-3 rounded-lg border text-xs font-medium flex items-center gap-1.5 transition-colors',
         danger
           ? 'border-transparent text-[var(--apya-negative-500)] hover:bg-[rgba(248,113,113,.1)]'
           : 'border-[var(--apya-border-default)] text-[var(--apya-text-secondary)] hover:bg-[var(--apya-border-subtle)]',
@@ -546,12 +546,12 @@ function CustomerDetail({ c, canEdit, canDelete, onBack, onEdit, onStatement, on
       <div className="flex gap-2 pt-1 border-t border-[var(--apya-border-subtle)] mt-1">
         <button type="button"
           onClick={() => abpNotify('info', 'E-posta ile ekstre gönderimi yakında eklenecek.')}
-          className="h-9 px-3.5 rounded-lg border border-[var(--apya-border-default)] text-xs font-medium text-[var(--apya-text-secondary)] flex items-center gap-2 hover:bg-[var(--apya-border-subtle)] transition-colors mt-3">
+          className="h-10 px-3.5 rounded-lg border border-[var(--apya-border-default)] text-xs font-medium text-[var(--apya-text-secondary)] flex items-center gap-2 hover:bg-[var(--apya-border-subtle)] transition-colors mt-3">
           <i className="fa fa-paper-plane" aria-hidden="true" />
           Ekstre Gönder
         </button>
         <button type="button" onClick={openNewInvoice}
-          className="h-9 px-3.5 rounded-lg text-xs font-semibold text-white flex items-center gap-2 transition-colors hover:opacity-90 mt-3"
+          className="h-10 px-3.5 rounded-lg text-xs font-semibold text-white flex items-center gap-2 transition-colors hover:opacity-90 mt-3"
           style={{ background: 'var(--apya-accent-500)' }}>
           <i className="fa fa-plus" aria-hidden="true" />
           Yeni Fatura
@@ -798,7 +798,7 @@ function CustomersIsland() {
               />
               {query && (
                 <button type="button" onClick={() => setQuery('')} aria-label="Temizle"
-                  className="absolute right-2 top-1/2 -translate-y-1/2 text-[var(--apya-text-tertiary)] hover:text-[var(--apya-text-primary)]">
+                  className="absolute right-0 top-1/2 h-9 w-9 -translate-y-1/2 flex items-center justify-center text-[var(--apya-text-tertiary)] hover:text-[var(--apya-text-primary)]">
                   <i className="fa fa-times" style={{ fontSize: 12 }} />
                 </button>
               )}

@@ -400,7 +400,7 @@ function Be() {
   return /* @__PURE__ */ e.jsxs(
     "div",
     {
-      className: "apya-fade-in px-7 py-7 max-w-[1560px] mx-auto",
+      className: "apya-fade-in px-4 py-4 sm:px-7 sm:py-7 max-w-[1560px] mx-auto",
       onDragOver: (s) => {
         c && (s.preventDefault(), $(!0));
       },

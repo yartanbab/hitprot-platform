@@ -111,7 +111,7 @@ export function ExpenseFormSheet({
                                 currency={form.currency}
                                 currencies={CURRENCIES}
                                 onCurrencyChange={(c) => setForm((s) => ({ ...s, currency: c }))}
-                                size="md"
+                                size="lg"
                                 invalid={fieldConfidence.amount?.confidence < LOW_CONFIDENCE_THRESHOLD}
                                 required
                                 min={0.01}
@@ -123,6 +123,7 @@ export function ExpenseFormSheet({
                                 ref={firstLowConf === 'date' ? firstLowConfFieldRef : undefined}
                                 type="date"
                                 required
+                                size="lg"
                                 value={form.date}
                                 onChange={update('date')}
                                 invalid={fieldConfidence.date?.confidence < LOW_CONFIDENCE_THRESHOLD}
@@ -134,6 +135,7 @@ export function ExpenseFormSheet({
                                 ref={firstLowConf === 'vendor' ? firstLowConfFieldRef : undefined}
                                 type="text"
                                 required
+                                size="lg"
                                 value={form.vendor}
                                 onChange={update('vendor')}
                                 invalid={fieldConfidence.vendor?.confidence < LOW_CONFIDENCE_THRESHOLD}

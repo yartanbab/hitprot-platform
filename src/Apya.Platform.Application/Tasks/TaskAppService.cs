@@ -10,6 +10,8 @@ using Volo.Abp.Domain.Repositories;
 using Volo.Abp.EventBus.Local;
 using Volo.Abp.Identity;
 using Apya.Platform.Permissions;
+using Apya.Platform.Expenses;
+using Apya.Platform.Incomes;
 
 namespace Apya.Platform.Tasks
 {
@@ -34,6 +36,10 @@ namespace Apya.Platform.Tasks
         private readonly IRepository<TaskTagAssignment, Guid> _taskTagRepository;
         private readonly IRepository<TaskFeatureAssignment, Guid> _featureAssignmentRepository;
         private readonly IRepository<TaskChecklistItem, Guid> _checklistRepository;
+        private readonly IRepository<TaskFavorite, Guid> _favoriteRepository;
+        private readonly IRepository<Expense, Guid> _expenseRepository;
+        private readonly IRepository<IncomeEntry, Guid> _incomeRepository;
+        private readonly IRepository<Apya.Platform.Projects.Project, Guid> _projectLookupRepository;
         private readonly ILocalEventBus _localEventBus;
 
         public TaskAppService(
@@ -49,6 +55,10 @@ namespace Apya.Platform.Tasks
             IRepository<TaskTagAssignment, Guid> taskTagRepository,
             IRepository<TaskFeatureAssignment, Guid> featureAssignmentRepository,
             IRepository<TaskChecklistItem, Guid> checklistRepository,
+            IRepository<TaskFavorite, Guid> favoriteRepository,
+            IRepository<Expense, Guid> expenseRepository,
+            IRepository<IncomeEntry, Guid> incomeRepository,
+            IRepository<Apya.Platform.Projects.Project, Guid> projectLookupRepository,
             ILocalEventBus localEventBus)
             : base(repository)
         {
@@ -63,6 +73,10 @@ namespace Apya.Platform.Tasks
             _taskTagRepository     = taskTagRepository;
             _featureAssignmentRepository = featureAssignmentRepository;
             _checklistRepository   = checklistRepository;
+            _favoriteRepository    = favoriteRepository;
+            _expenseRepository     = expenseRepository;
+            _incomeRepository      = incomeRepository;
+            _projectLookupRepository = projectLookupRepository;
             _localEventBus         = localEventBus;
 
             CreatePolicyName = PlatformPermissions.Tasks.Create;
@@ -87,7 +101,13 @@ namespace Apya.Platform.Tasks
             await EnsureTaskPrivacyAllowedAsync(task);
 
             var taskDto = ObjectMapper.Map<TaskItem, TaskDto>(task);
-            if (task.Assignee != null) taskDto.AssigneeName = task.Assignee.UserName;
+            if (task.Assignee != null)
+            {
+                // Sorumlu adını atama seçicisiyle (name+surname) tutarlı göster; boşsa kullanıcı adına düş
+                var assigneeFull = string.Join(" ", new[] { task.Assignee.Name, task.Assignee.Surname }
+                    .Where(s => !string.IsNullOrWhiteSpace(s)));
+                taskDto.AssigneeName = string.IsNullOrWhiteSpace(assigneeFull) ? task.Assignee.UserName : assigneeFull;
+            }
 
             // Üst görev görünür olsa da alt görevler KENDİ gizlilik kuralına tabi (APYA-22) —
             // aksi halde gizli bir alt görevin başlığı, onu görme yetkisi olmayan bir
@@ -140,6 +160,29 @@ namespace Apya.Platform.Tasks
 
             await PopulateTagsAsync(new List<TaskDto> { taskDto });
 
+            // Mevcut kullanıcının favorisi mi (TaskFavorite join)
+            var favUserId = CurrentUser.Id;
+            if (favUserId != null)
+            {
+                taskDto.IsFavorite = await _favoriteRepository.FindAsync(f => f.TaskId == id && f.UserId == favUserId.Value) != null;
+            }
+
+            // Göreve bağlı finans — izinle gate'lenir (finansal veri sızıntısını önler)
+            if (await AuthorizationService.IsGrantedAsync(PlatformPermissions.Expenses.Default))
+            {
+                var taskExpenses = await _expenseRepository.GetListAsync(e => e.TaskId == id);
+                taskDto.Expenses = taskExpenses
+                    .Select(e => new TaskFinanceLineDto { Id = e.Id, Title = e.Title, Amount = e.Amount, Currency = e.Currency, Date = e.ExpenseDate })
+                    .ToList();
+            }
+            if (await AuthorizationService.IsGrantedAsync(PlatformPermissions.Incomes.Default))
+            {
+                var taskIncomes = await _incomeRepository.GetListAsync(i => i.TaskId == id);
+                taskDto.Incomes = taskIncomes
+                    .Select(i => new TaskFinanceLineDto { Id = i.Id, Title = i.Title, Amount = i.Amount, Currency = i.Currency, Date = i.IncomeDate })
+                    .ToList();
+            }
+
             // Özel kanban kolonu adı (liste "Durum" sütunu + modal dropdown)
             if (task.BoardColumnId.HasValue)
             {
@@ -156,6 +199,7 @@ namespace Apya.Platform.Tasks
             var result = await base.GetListAsync(input);
             await PopulateBoardColumnNamesAsync(result.Items);
             await PopulateTagsAsync(result.Items);
+            await PopulateFavoritesAsync(result.Items);
             return result;
         }
 
@@ -225,6 +269,51 @@ namespace Apya.Platform.Tasks
                         .ToList();
                 }
             }
+        }
+
+        // Mevcut kullanıcının favorilerini tek toplu sorguda iliştirir (N+1 yok) — PopulateTagsAsync ile aynı desen.
+        private async Task PopulateFavoritesAsync(System.Collections.Generic.IReadOnlyList<TaskDto> items)
+        {
+            if (items.Count == 0) return;
+            var userId = CurrentUser.Id;
+            if (userId == null) return;
+
+            var taskIds = items.Select(i => i.Id).ToList();
+            var favorites = await _favoriteRepository.GetListAsync(f => f.UserId == userId.Value && taskIds.Contains(f.TaskId));
+            if (favorites.Count == 0) return;
+
+            var favSet = favorites.Select(f => f.TaskId).ToHashSet();
+            foreach (var item in items)
+            {
+                item.IsFavorite = favSet.Contains(item.Id);
+            }
+        }
+
+        // Mevcut kullanıcı için görev favorisini aç/kapat (TaskTagAssignment ile aynı bare-join deseni).
+        public async Task<bool> ToggleFavoriteAsync(Guid taskId)
+        {
+            await EnsureTaskAccessAllowedAsync(taskId);
+            var userId = CurrentUser.Id!.Value; // [Authorize] → null değil
+
+            var existing = await _favoriteRepository.FindAsync(f => f.TaskId == taskId && f.UserId == userId);
+            if (existing != null)
+            {
+                await _favoriteRepository.DeleteAsync(existing, autoSave: true);
+                return false;
+            }
+
+            await _favoriteRepository.InsertAsync(new TaskFavorite(GuidGenerator.Create(), taskId, userId), autoSave: true);
+            return true;
+        }
+
+        // Görev "Proje" seçici — tenant'ın projeleri (IMultiTenant → GetListAsync tenant'a göre filtreler).
+        public async Task<List<ProjectLookupDto>> GetProjectsLookupAsync()
+        {
+            var projects = await _projectLookupRepository.GetListAsync();
+            return projects
+                .OrderBy(p => p.Name)
+                .Select(p => new ProjectLookupDto { Id = p.Id, Name = p.Name })
+                .ToList();
         }
 
         // Create/Update ortak: TagNames'i get-or-create edip TaskTagAssignment'ları senkronlar
@@ -403,8 +492,17 @@ namespace Apya.Platform.Tasks
                 Clock.Now
             );
 
-            // Modal'dan özel kolon seçildiyse uzlaştır (Status/BoardColumnId)
-            await ApplyColumnSelectionAsync(task, input.BoardColumnId);
+            // Proje değişimi (task.Update projeyi kapsamaz). Board kolonu proje-kapsamlı
+            // olduğundan MoveToProject proje değişince kolonu temizler.
+            var projectChanged = task.ProjectId != input.ProjectId;
+            task.MoveToProject(input.ProjectId);
+
+            // Özel kolon seçimi yalnız proje DEĞİŞMEDİYSE uzlaştırılır — proje değiştiyse
+            // gelen boardColumnId eski projeye ait (bayat), uygulanmamalı.
+            if (!projectChanged)
+            {
+                await ApplyColumnSelectionAsync(task, input.BoardColumnId);
+            }
 
             await Repository.UpdateAsync(task);
 

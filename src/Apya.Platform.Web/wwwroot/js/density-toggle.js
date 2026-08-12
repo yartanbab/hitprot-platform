@@ -8,8 +8,11 @@ $(function () {
     var KEY = 'apya-density';
     var ORDER = ['compact', 'cozy', 'comfortable'];
     var ICONS = {
+        // 'cozy' eskiden fa-bars kullanıyordu — mobil hamburger menü ikonuyla
+        // aynı glyph, kavramsal çakışma riski taşıyordu (2026-08 tasarım
+        // denetimi). fa-table-cells (izgara) navigasyon ikonlarından net ayrışır.
         compact:     'fa-align-justify',
-        cozy:        'fa-bars',
+        cozy:        'fa-table-cells',
         comfortable: 'fa-grip-lines'
     };
 

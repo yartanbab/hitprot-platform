@@ -6,6 +6,8 @@ using Apya.Platform.Projects;
 using Apya.Platform.Projects.Dtos;
 using Apya.Platform.ProjectFinance;
 using TaskDto = Apya.Platform.Tasks.TaskDto;
+using Microsoft.AspNetCore.Authorization;
+using Apya.Platform.Permissions;
 
 namespace Apya.Platform.Web.Pages.Projects;
 
@@ -14,6 +16,7 @@ namespace Apya.Platform.Web.Pages.Projects;
 /// Bu PageModel artık yalnızca DTO bağlar — business logic yok.
 /// View ile geriye dönük uyum için scalar shim property'leri korunuyor.
 /// </summary>
+[Authorize(PlatformPermissions.Projects.Default)]
 public class ProjectDetailsModel : PlatformPageModel
 {
     [BindProperty(SupportsGet = true)]

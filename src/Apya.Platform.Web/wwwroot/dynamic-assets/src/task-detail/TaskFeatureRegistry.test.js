@@ -14,8 +14,8 @@ describe('getVisibleTabs', () => {
     it('implemented olmayan bir non-core atanmis olsa bile gorunmez', () => {
         // Bugun icin gercekci degil (picker bunu asla addable gostermez) ama
         // fonksiyon veri-guvenli olmali: assignedCodes tek gercek kaynagi degil.
-        const tabs = getVisibleTabs(['finance']);
-        expect(tabs.some((t) => t.code === 'finance')).toBe(false);
+        const tabs = getVisibleTabs(['non_existent_feature']);
+        expect(tabs.some((t) => t.code === 'non_existent_feature')).toBe(false);
     });
 });
 

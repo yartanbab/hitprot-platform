@@ -37,6 +37,7 @@ using Volo.Abp.Autofac;
 using Volo.Abp.Mapperly;
 using Volo.Abp.FeatureManagement;
 using Volo.Abp.Identity.Web;
+using Volo.Abp.AspNetCore.Mvc.UI.MultiTenancy.Localization;
 using Volo.Abp.Localization;
 using Volo.Abp.Modularity;
 using Volo.Abp.PermissionManagement.Web;
@@ -199,6 +200,7 @@ public class PlatformWebModule : AbpModule
         ConfigureUrls(configuration);
         ConfigureBundles(context);
         ConfigureVirtualFileSystem(hostingEnvironment);
+        ConfigureMultiTenancyLocalization();
         ConfigureNavigationServices();
         ConfigureAutoApiControllers();
         ConfigureSwaggerServices(context.Services);
@@ -221,8 +223,20 @@ public class PlatformWebModule : AbpModule
         // ya da çok-örnekli (load-balanced) ortamda bir örneğin ürettiği antiforgery/auth
         // cookie'lerini diğeri çözemez → "The antiforgery token could not be decrypted" / gövdesiz
         // 400. Sabit isim, anahtar halkası paylaşıldığı sürece tüm örnekler arasında uyumlu kılar.
+        //
+        // Anahtar halkası uygulama dizininde KALICI tutulur. Varsayılan konum kullanıcı
+        // profilidir; IIS/Plesk'te app pool profili yüklenmediğinde ASP.NET Core belleğe
+        // düşer → her app pool recycle'ında anahtarlar yenilenir, tüm oturumlar düşer ve
+        // antiforgery doğrulaması 400 verir. App_Data web kökü dışındadır, dışarıdan okunamaz.
+        var keysFolder = Path.Combine(
+            context.Services.GetHostingEnvironment().ContentRootPath,
+            "App_Data",
+            "DataProtection-Keys");
+        Directory.CreateDirectory(keysFolder);
+
         context.Services.AddDataProtection()
-            .SetApplicationName("Apya.Platform");
+            .SetApplicationName("Apya.Platform")
+            .PersistKeysToFileSystem(new DirectoryInfo(keysFolder));
     }
 
     private void ConfigureAuthentication(ServiceConfigurationContext context)
@@ -315,6 +329,19 @@ public class PlatformWebModule : AbpModule
         }
     }
 
+    // Kiracı seçici ("MÜŞTERİ / Seçili değil / değiştir") ABP'nin AYRI bir kaynağından gelir;
+    // Domain.Shared'daki AbpTenantManagementResource override'ı buraya ulaşmaz. JSON dosyası
+    // Domain.Shared'ın sanal dosya sisteminde. Bkz. PlatformDomainSharedModule.
+    private void ConfigureMultiTenancyLocalization()
+    {
+        Configure<AbpLocalizationOptions>(options =>
+        {
+            options.Resources
+                .Get<AbpUiMultiTenancyResource>()
+                .AddVirtualJson("/Localization/MultiTenancyUi");
+        });
+    }
+
     private void ConfigureNavigationServices()
     {
         Configure<AbpNavigationOptions>(options =>
@@ -329,6 +356,7 @@ public class PlatformWebModule : AbpModule
             options.Contributors.Add(new Apya.Platform.Web.Theme.CommandPaletteToggleToolbarContributor());
             options.Contributors.Add(new Apya.Platform.Web.Theme.ThemeToggleToolbarContributor());
             options.Contributors.Add(new Apya.Platform.Web.Theme.DensityToggleToolbarContributor());
+            options.Contributors.Add(new Apya.Platform.Web.Theme.SidebarModeToolbarContributor());
             options.Contributors.Add(new Apya.Platform.Web.Notifications.NotificationToolbarContributor());
             options.Contributors.Add(new Apya.Platform.Web.Feedbacks.FeedbackToolbarContributor());
         });
@@ -374,6 +402,11 @@ public class PlatformWebModule : AbpModule
         if (!env.IsDevelopment())
         {
             app.UseErrorPage();
+
+            // HSTS: yalnızca HTTPS isteklerinde başlık eklenir, bu yüzden SSL kurulmadan
+            // önce de güvenle açık kalabilir. HTTP→HTTPS yönlendirmesi uygulamada DEĞİL,
+            // Plesk/IIS seviyesinde yapılır (reverse proxy arkasında döngü riski olmasın).
+            app.UseHsts();
         }
 
         app.UseCorrelationId();
@@ -448,6 +481,7 @@ public class PlatformWebModule : AbpModule
                         ctx.Response.Cookies.Append("XSRF-TOKEN", tokens.RequestToken, new CookieOptions
                         {
                             HttpOnly = false, // abp.jquery JS'ten okuyabilmeli
+                            Secure = true,    // Yalnız HTTPS üzerinden gönderilsin.
                             Path = "/",
                             SameSite = SameSiteMode.Lax
                         });
@@ -458,11 +492,16 @@ public class PlatformWebModule : AbpModule
             await next();
         });
 
-        app.UseSwagger();
-        app.UseAbpSwaggerUI(options =>
+        // Swagger yalnızca Development'ta: production'da tüm API yüzeyini (endpoint,
+        // parametre, DTO şeması) kimliksiz ziyaretçiye açmamak için kapalı.
+        if (env.IsDevelopment())
         {
-            options.SwaggerEndpoint("/swagger/v1/swagger.json", "Platform API");
-        });
+            app.UseSwagger();
+            app.UseAbpSwaggerUI(options =>
+            {
+                options.SwaggerEndpoint("/swagger/v1/swagger.json", "Platform API");
+            });
+        }
 
         app.UseAuditing();
         app.UseAbpSerilogEnrichers();

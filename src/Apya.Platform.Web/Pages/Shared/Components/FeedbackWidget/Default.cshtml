@@ -336,7 +336,9 @@ else
     }
     .apya-feedback-stepper-item.is-done .apya-feedback-stepper-num::after {
         content: "\f00c";
-        font-family: "Font Awesome 6 Free", "Font Awesome 5 Free";
+        /* Sürüm yığını tek kaynaktan (apya-theme-bridge.css) — proje FA7'ye
+           yükseltilince sabit "FA 6" adı sessizce eşleşmiyordu. */
+        font-family: var(--apya-font-icon);
         font-weight: 900;
         font-size: 0.62rem;
     }

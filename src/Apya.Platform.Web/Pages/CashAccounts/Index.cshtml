@@ -2,6 +2,7 @@
 @using Microsoft.AspNetCore.Authorization
 @using Apya.Platform.Permissions
 @using Apya.Platform.CashAccounts
+@using Apya.Platform.Web.Pages.Shared
 @inject IAuthorizationService AuthorizationService
 @model Apya.Platform.Web.Pages.CashAccounts.IndexModel
 @{
@@ -60,8 +61,8 @@
 @if (!Model.Accounts.Any())
 {
     <div class="card">
-        <div class="card-body text-muted text-center py-5">
-            Henüz kasa/banka hesabı yok. Yukarıdan <strong>Yeni Kasa Ekle</strong> ile başlayın.
+        <div class="card-body">
+            <partial name="_EmptyState" model='new EmptyStateModel { Icon = "fa-cash-register", Title = "Henüz kasa/banka hesabı yok.", Description = "Yukarıdan \"Yeni Kasa Ekle\" ile başlayın." }' />
         </div>
     </div>
 }
@@ -81,7 +82,7 @@ else
                         </div>
                         <div class="fw-semibold text-truncate">@(a.BankName ?? a.Name)</div>
                         <div class="small text-muted text-truncate">@(a.Iban ?? a.Branch ?? a.Name)</div>
-                        <div class="apya-numeric fw-bold mt-2">@MoneyC(a.Balance, a.Currency)</div>
+                        <div class="apya-numeric fw-bold mt-2 text-truncate" title="@MoneyC(a.Balance, a.Currency)">@MoneyC(a.Balance, a.Currency)</div>
                     </div>
                 </button>
             </div>

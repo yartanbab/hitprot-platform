@@ -46,6 +46,7 @@ $(function () {
             { title: 'Kategori', data: 'category', render: function (d) { return categoryNames[d] || '-'; } },
             {
                 title: 'Tutar', data: 'amount',
+                className: 'text-end apya-numeric',
                 render: function (d, t, row) {
                     return apya.money.format(d);
                 }

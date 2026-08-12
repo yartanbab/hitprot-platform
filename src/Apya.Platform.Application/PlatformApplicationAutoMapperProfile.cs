@@ -58,7 +58,8 @@ namespace Apya.Platform
             // Başına Apya.Platform.Tasks yazarak yenisini kastettiğimizi belirttik.
             CreateMap<Apya.Platform.Tasks.TaskItem, Apya.Platform.Tasks.TaskDto>()
                 .ForMember(dest => dest.AssigneeName, opt => opt.MapFrom(src => src.Assignee != null ? src.Assignee.UserName : null))
-                .ForMember(dest => dest.ParentTaskTitle, opt => opt.MapFrom(src => src.ParentTask != null ? src.ParentTask.Title : null));
+                .ForMember(dest => dest.ParentTaskTitle, opt => opt.MapFrom(src => src.ParentTask != null ? src.ParentTask.Title : null))
+                .ForMember(dest => dest.IsFavorite, opt => opt.Ignore()); // TaskFavorite join'inden AppService'te doldurulur
 
             // 2. CreateUpdateTaskDto -> TaskItem
             CreateMap<Apya.Platform.Tasks.CreateUpdateTaskDto, Apya.Platform.Tasks.TaskItem>();

@@ -1,9 +1,22 @@
 $(function () {
     // Global kanban (tüm projelerdeki kullanıcı görevleri). Ortak çekirdek:
     // /js/apya-kanban.js — kart/drag/timer/sil/düzenle tek kaynak.
-    var editModal = (window.apya && apya.taskDetailV2Enabled)
-        ? apya.taskDetail
-        : new abp.ModalManager({ viewUrl: abp.appPath + 'Tasks/EditModal' });
+    var _oldEditModal = new abp.ModalManager({ viewUrl: abp.appPath + 'Tasks/EditModal' });
+    var editModal = {
+        open: function (arg) {
+            if (window.apya && window.apya.taskDetail) {
+                window.apya.taskDetail.open(arg);
+            } else {
+                _oldEditModal.open(arg);
+            }
+        },
+        onResult: function (fn) {
+            _oldEditModal.onResult(fn);
+            if (window.apya && window.apya.taskDetail && window.apya.taskDetail.onResult) {
+                window.apya.taskDetail.onResult(fn);
+            }
+        }
+    };
     var createModal = new abp.ModalManager({ viewUrl: abp.appPath + 'Tasks/CreateModal' });
 
     var kb = apya.kanban.create({

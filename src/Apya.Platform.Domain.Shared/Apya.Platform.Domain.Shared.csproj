@@ -23,6 +23,10 @@
   <ItemGroup>
     <EmbeddedResource Include="Localization\Platform\*.json" />
     <Content Remove="Localization\Platform\*.json" />
+    <EmbeddedResource Include="Localization\TenantManagement\*.json" />
+    <Content Remove="Localization\TenantManagement\*.json" />
+    <EmbeddedResource Include="Localization\MultiTenancyUi\*.json" />
+    <Content Remove="Localization\MultiTenancyUi\*.json" />
   </ItemGroup>
 
   <ItemGroup>

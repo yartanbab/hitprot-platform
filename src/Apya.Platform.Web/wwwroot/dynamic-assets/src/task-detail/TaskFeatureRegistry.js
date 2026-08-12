@@ -2,22 +2,26 @@ import { isGranted } from './hooks/useTaskDetail';
 import { SubtasksTab } from './components/SubtasksTab';
 import { FilesTab } from './components/FilesTab';
 import { ChecklistTab } from './components/ChecklistTab';
+import { CommentsTab } from './components/CommentsTab';
+import { ActivityTab } from './components/ActivityTab';
+import { HistoryTab } from './components/HistoryTab';
+import { FinanceTab } from './components/FinanceTab';
+import { GanttTabV3 } from './v3/features/GanttTabV3';
+import { DependenciesTabV3 } from './v3/features/DependenciesAndFinanceTabV3';
+import { 
+    RisksTabV3, 
+    ApprovalsTabV3, 
+    TimeTrackingTabV3, 
+    AiTabV3, 
+    CustomFieldsTabV3, 
+    AutomationsTabV3, 
+    EmailsTabV3, 
+    GalleryTabV3, 
+    DashboardTabV3 
+} from './v3/features/OtherFeaturesTabV3';
 
 /**
- * Görev detayının sekme/özellik kayıt defteri. Faz 4+ yeni bir non-core özellik
- * eklediğinde tek değişiklik burada bir entry eklemek/`component`'ı doldurmak
- * olmalı — TaskFeatureNavbar, FeaturePicker, TaskDetailRoot bu listeyi okur,
- * kendileri değişmez.
- *
- * component: null → henüz inşa edilmedi ("Yakında" rozeti). isCore: true → "+"
- * picker'da hiç listelenmez, navbar'da implemented olduğu an daima görünür
- * (kaldırılamaz). `general` entry'sinin component'i YOK — TaskDetailRoot onu
- * özel olarak, useTaskForm'un sahip olduğu form state'iyle render eder; her
- * gelecek entry ise kendi kendine yeten bir component olacak ({ taskId, task }
- * dışında dışarıdan prop almayacak).
- *
- * Roadmap'in `availabilityRule`/`badgeResolver` alanları burada YOK: hiçbir
- * entry henüz bunları üretmiyor/tüketmiyor — ilk gerçek ihtiyaçta eklenecek.
+ * Görev detayının 17 özelliklik sekme/özellik kayıt defteri (V3).
  */
 export const TASK_FEATURE_REGISTRY = [
     {
@@ -41,50 +45,84 @@ export const TASK_FEATURE_REGISTRY = [
         implemented: true, component: ChecklistTab,
     },
     {
-        code: 'comments', title: 'Yorumlar', icon: 'fa-comments',
-        category: 'iletisim', isCore: false, order: 20, permission: null,
-        implemented: false, component: null,
+        code: 'gantt', title: 'Gantt', icon: 'fa-bars-staggered',
+        category: 'gorev', isCore: false, order: 11, permission: null,
+        implemented: true, component: GanttTabV3,
     },
     {
-        code: 'activity', title: 'Aktiviteler', icon: 'fa-timeline',
-        category: 'gecmis', isCore: false, order: 30, permission: null,
-        implemented: false, component: null,
-    },
-    {
-        code: 'history', title: 'Geçmiş', icon: 'fa-clock-rotate-left',
-        category: 'gecmis', isCore: false, order: 31, permission: null,
-        implemented: false, component: null,
+        code: 'dependencies', title: 'Bağımlılıklar', icon: 'fa-link',
+        category: 'gorev', isCore: false, order: 12, permission: null,
+        implemented: true, component: DependenciesTabV3,
     },
     {
         code: 'finance', title: 'Finans', icon: 'fa-coins',
-        category: 'finans', isCore: false, order: 40, permission: null,
-        implemented: false, component: null,
+        category: 'finans', isCore: false, order: 13, permission: null,
+        implemented: true, component: FinanceTab,
     },
     {
-        code: 'dependencies', title: 'Bağımlılıklar', icon: 'fa-diagram-project',
-        category: 'ileri', isCore: false, order: 50, permission: null,
-        implemented: false, component: null,
+        code: 'history', title: 'Geçmiş', icon: 'fa-clock-rotate-left',
+        category: 'gecmis', isCore: false, order: 14, permission: null,
+        implemented: true, component: HistoryTab,
+    },
+    {
+        code: 'activity', title: 'Aktiviteler', icon: 'fa-timeline',
+        category: 'gecmis', isCore: false, order: 15, permission: null,
+        implemented: true, component: ActivityTab,
+    },
+    {
+        code: 'comments', title: 'Yorumlar', icon: 'fa-comments',
+        category: 'iletisim', isCore: false, order: 20, permission: null,
+        implemented: true, component: CommentsTab,
     },
     {
         code: 'risks', title: 'Riskler', icon: 'fa-triangle-exclamation',
-        category: 'ileri', isCore: false, order: 51, permission: null,
-        implemented: false, component: null,
+        category: 'gorev', isCore: false, order: 21, permission: null,
+        implemented: true, component: RisksTabV3,
     },
     {
         code: 'approvals', title: 'Onaylar', icon: 'fa-stamp',
-        category: 'ileri', isCore: false, order: 52, permission: null,
-        implemented: false, component: null,
+        category: 'gorev', isCore: false, order: 22, permission: null,
+        implemented: true, component: ApprovalsTabV3,
     },
     {
         code: 'time-tracking', title: 'Zaman Takibi', icon: 'fa-stopwatch',
-        category: 'ileri', isCore: false, order: 53, permission: null,
-        implemented: false, component: null,
+        category: 'gorev', isCore: false, order: 23, permission: null,
+        implemented: true, component: TimeTrackingTabV3,
+    },
+    {
+        code: 'dashboard', title: 'Gösterge Paneli', icon: 'fa-chart-pie',
+        category: 'gorev', isCore: false, order: 24, permission: null,
+        implemented: true, component: DashboardTabV3,
+    },
+    {
+        code: 'ai', title: 'Yapay Zeka', icon: 'fa-sparkles',
+        category: 'ileri', isCore: false, order: 30, permission: null,
+        implemented: true, component: AiTabV3,
+    },
+    {
+        code: 'custom-fields', title: 'Özel Alanlar', icon: 'fa-square-plus',
+        category: 'ileri', isCore: false, order: 31, permission: null,
+        implemented: true, component: CustomFieldsTabV3,
+    },
+    {
+        code: 'automations', title: 'Otomasyonlar', icon: 'fa-wand-magic-sparkles',
+        category: 'ileri', isCore: false, order: 32, permission: null,
+        implemented: true, component: AutomationsTabV3,
+    },
+    {
+        code: 'emails', title: 'E-postalar', icon: 'fa-envelope',
+        category: 'iletisim', isCore: false, order: 33, permission: null,
+        implemented: true, component: EmailsTabV3,
+    },
+    {
+        code: 'gallery', title: 'Dosya Galerisi', icon: 'fa-image',
+        category: 'finans', isCore: false, order: 34, permission: null,
+        implemented: true, component: GalleryTabV3,
     },
 ];
 
 /** Navbar'da GÖRÜNECEK sekmeler: implemented olan core'lar + implemented olan
- *  atanmış non-core'lar. Sırasız gelen assignedCodes'a güvenmiyoruz, `order`'a
- *  göre sıralıyoruz (backend'in kendi notu: liste sırasız döner). */
+ *  atanmış non-core'lar. */
 export function getVisibleTabs(assignedCodes = []) {
     const assigned = new Set(assignedCodes);
     return TASK_FEATURE_REGISTRY
@@ -92,8 +130,7 @@ export function getVisibleTabs(assignedCodes = []) {
         .sort((a, b) => a.order - b.order);
 }
 
-/** "+" picker'da listelenecek non-core entry'ler — izin filtresi uygulanmış,
- *  atanmışlık bilgisi eklenmiş. isCore entry'ler burada HİÇ görünmez. */
+/** "+" picker'da listelenecek non-core entry'ler. */
 export function getPickerEntries(assignedCodes = []) {
     const assigned = new Set(assignedCodes);
     return TASK_FEATURE_REGISTRY

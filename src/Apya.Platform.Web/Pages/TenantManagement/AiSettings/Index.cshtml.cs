@@ -5,9 +5,12 @@ using Microsoft.AspNetCore.Mvc;
 using Volo.Abp.AspNetCore.Mvc.UI.RazorPages;
 using Volo.Abp.TenantManagement;
 using Apya.Platform.Ai.Tenants;
+using Microsoft.AspNetCore.Authorization;
+using Apya.Platform.Permissions;
 
 namespace Apya.Platform.Web.Pages.TenantManagement.AiSettings;
 
+[Authorize(PlatformPermissions.TenantSettings.ManageAi)]
 public class IndexModel : AbpPageModel
 {
     [BindProperty(SupportsGet = true)]

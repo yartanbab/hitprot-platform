@@ -1,0 +1,36 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <Import Project="..\..\common.props" />
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <RootNamespace>Apya.Platform</RootNamespace>
+  </PropertyGroup>
+
+  <!--
+    Yalnızca SQL Server migration'larını barındıran ince assembly.
+    Postgres migration'ları ana EntityFrameworkCore projesinde kalır; iki provider'ın
+    ModelSnapshot'ı aynı assembly'de olamayacağı için SQL Server ayrı projededir.
+    Bu proje SADECE Database:Provider=SqlServer iken kullanılır (MigrationsAssembly).
+  -->
+  <ItemGroup>
+    <ProjectReference Include="..\Apya.Platform.EntityFrameworkCore\Apya.Platform.EntityFrameworkCore.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Volo.Abp.EntityFrameworkCore.SqlServer" Version="10.0.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="10.0.0">
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <!-- CVE override: EF.Tools → Build.Tasks.Core → System.Security.Cryptography.Xml 9.0.0
+         (GHSA-37gx-xxp4-5rgx, GHSA-w3x6-4m5h-cxqf). PrivateAssets=all: dev-time only. -->
+    <PackageReference Include="System.Security.Cryptography.Xml" Version="9.0.16">
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+  </ItemGroup>
+
+</Project>

@@ -700,6 +700,28 @@ html, body {
     border-right: 1px solid var(--apya-border-default);
 }
 
+/* Menüde YATAY kaydırma çubuğu asla çıkmasın. Genişlik telafisi sidebar-toggle.js'teki
+   `.lpx-has-scrollbar` senkronunda yapılıyor; bu kural son emniyet: temanın sabit 265px'i
+   kapsayıcının 1px kenarlığını hesaba katmadığı için 1px artık kalıyor ve `overflow-x:auto`
+   bunun için bile çubuk çiziyor. Kırpılan 1px'te içerik yok (menü satırları 7–257 arasında). */
+#lpx-sidebar {
+    overflow-x: hidden;
+}
+
+/* --- Kaydırma konteyner yerine NAV'da ---
+   Dikey scrollbar .lpx-sidebar-container'daydı: şerit konteyner'ın SAĞ kenarında
+   tepeden dibe uzanıyor, logo kutusu ise position:fixed + sabit 280px olduğu için
+   (LeptonX kuralı) şeridin üstüne biniyordu. #lpx-sidebar zaten logo'nun ALTINDAN
+   başlıyor (y = logo yüksekliği); scroll'u ona taşıyınca şerit de logo'nun altında
+   kalır, örtüşme biter. Aynı yaklaşım collapsed rail'de zaten kullanılıyor
+   (bkz. aşağıdaki html[data-sidebar="collapsed"] bloğu). */
+.lpx-sidebar-container {
+    overflow-y: hidden;
+}
+#lpx-sidebar {
+    overflow-y: auto;
+}
+
 /* --- Logo alanı --- */
 #lpx-sidebar .lpx-brand-name {
     color: var(--apya-text-primary) !important;
@@ -832,6 +854,11 @@ html, body {
     color: var(--apya-text-secondary) !important;
     border-radius: var(--apya-radius-lg);
     margin: 1px 8px;
+    /* Tema anchor'a `width: 100%` veriyor; yukarıdaki 8px'lik yan marjlar buna
+       EKLENİYOR → her satır kapsayıcıdan 16px taşıyor ve sidebar yatay kayıyordu
+       (canlı ölçüm: scrollWidth 280 / clientWidth 264). `auto` ile anchor kalan
+       genişliğe oturur. Daraltılmış ray bölümünde aynı düzeltme zaten var. */
+    width: auto;
     transition: background var(--apya-motion-fast) ease, color var(--apya-motion-fast) ease;
 }
 #lpx-sidebar .lpx-menu-item-link:hover {
@@ -863,8 +890,13 @@ html, body {
    display:block !important ile eziyoruz. Geometri canlı doğrulandı: başlık metni
    ile yaprak ikonu aynı x'te (22px) hizalanır; :has() evergreen'de destekli. --- */
 
-/* Alt menüler her zaman açık (LeptonX collapse'ını ez) */
-#lpx-sidebar ul.lpx-inner-menu {
+/* Alt menüler her zaman açık (LeptonX collapse'ını ez).
+   YALNIZ BİRİNCİ SEVİYE (li.outer-menu-item > ul): üst-düzey parent bölüm
+   başlığına dönüştüğü için listesi kalıcı açık olmalı. Seçici eskiden tüm
+   iç menüleri kapsıyordu → Yönetim altındaki gerçek açılır gruplar (Kiracı
+   Yönetimi, Kimlik yönetimi, Platform, Geri Bildirim) da kilitleniyor,
+   caret'e tıklamak hiçbir şey yapmıyordu. */
+#lpx-sidebar li.outer-menu-item > ul.lpx-inner-menu {
     display: block !important;
     height: auto !important;
     overflow: visible !important;
@@ -930,6 +962,23 @@ html, body {
    genişleme temadan miras (max-width base kuralı). 768–1199px arası tema zaten
    otomatik rail uygular; o aralığın kozmetiği bölüm sonunda tekrarlanır.
    ============================================================================ */
+/* --- KAPALI mod (data-sidebar="hidden") ---
+   Kenar çubuğu tamamen gizlenir, içerik tüm genişliği kullanır. Geri açmanın
+   TEK yolu header'daki mod seçicisidir (temanın kendi düğmesi sidebar'ın içinde
+   ve burada erişilemez) — bkz. SidebarModeViewComponent. Bilinçli olarak hover
+   ile açılmaz: kullanıcı kararı 2026-08-12 ("yalnız header düğmesiyle"). */
+@media (min-width: 768px) {
+    html[data-sidebar="hidden"] .lpx-sidebar-container {
+        display: none;
+    }
+    html[data-sidebar="hidden"] .lpx-content-container {
+        margin-left: 0;
+    }
+    html[data-sidebar="hidden"] .lpx-footbar-container {
+        left: 0;
+    }
+}
+
 @media (min-width: 1200px) {
     html[data-sidebar="collapsed"] .lpx-sidebar-container {
         transition: box-shadow 0.25s;
@@ -939,6 +988,11 @@ html, body {
         max-width: var(--apya-sidebar-w-collapsed);
         /* Dikey scrollbar (16px) client genişliğini 56'ya düşürüp nav'ı -8px
            kaydırıyordu → rail'de scroll gizli; hover'da genişleyince geri gelir. */
+        overflow-y: hidden;
+    }
+    /* Scroll artık #lpx-sidebar'da (bkz. "Kaydırma konteyner yerine NAV'da") —
+       rail'de gizleme kuralı oraya da uygulanmalı, yoksa dar rail'de şerit çıkar. */
+    html[data-sidebar="collapsed"] .lpx-sidebar-container:not(:hover) #lpx-sidebar {
         overflow-y: hidden;
     }
     html[data-sidebar="collapsed"] .lpx-sidebar-container:not(:hover) .lpx-nav {
@@ -989,8 +1043,13 @@ html, body {
     }
 }
 
-/* 768–1199px: temanın OTOMATİK rail'i için aynı kozmetik (attribute'suz) */
-@media (min-width: 768px) and (max-width: 1199.98px) {
+/* 768–1199px: temanın OTOMATİK rail'i için aynı kozmetik (attribute'suz) —
+   yalnız GERÇEK fare hover'ı olan cihazlarda. Bu kozmetik ":not(:hover)"a
+   bağlı; dokunmatik tabletlerde hover hiç tetiklenmediği için sidebar kalıcı
+   olarak ikon-rail'de kilitli kalıp etiketler hiç görünmüyordu (2026-08
+   tasarım denetimi). Aşağıdaki ikinci blok dokunmatik'te sidebar'ı zorla
+   genişletilmiş tutar — bkz. "SIDEBAR — DOKUNMATİK GENİŞLETME". */
+@media (min-width: 768px) and (max-width: 1199.98px) and (hover: hover) {
     .lpx-sidebar-container:not(:hover) {
         overflow-y: hidden;
     }
@@ -1015,10 +1074,36 @@ html, body {
     }
 }
 
+/* SIDEBAR — DOKUNMATİK GENİŞLETME (768–1199px, pointer:coarse):
+   Temanın kendi (paket-içi) CSS'i bu aralıkta sidebar'ı otomatik ikon-rail'e
+   daraltıyor ve yalnız ":hover" ile genişletiyor. Dokunmatik cihazda hover
+   olmadığı için kullanıcı etiketleri asla göremiyordu. 280px, temanın hover'da
+   genişlettiği doğal genişlik (yukarıdaki P4 SIDEBAR COLLAPSE bölümü yorumu). */
+@media (min-width: 768px) and (max-width: 1199.98px) and (pointer: coarse) {
+    .lpx-sidebar-container {
+        min-width: 280px !important;
+        max-width: 280px !important;
+        overflow-y: auto !important;
+    }
+}
+
+/* --- İKON FONT YIĞINI (tek kaynak) ---
+   Bir 'bi' (Bootstrap Icons) elemanını FontAwesome glyph'iyle değiştirirken
+   font-family'yi ELLE yazmak sürüm kırılgan: proje FA7'ye yükseltildiğinde
+   sabit yazılmış 'Font Awesome 6 Free' hiçbir @font-face ile eşleşmez ve glyph
+   SESSİZCE kaybolur (2026-08 canlı QA'da masaüstü daraltma ikonunun ve mobil
+   hamburger'in bu yüzden görünmediği bulundu). Yığın hâlinde tanımlanır ki
+   sonraki FA yükseltmesi de kırmasın.
+   ⚠️ document.fonts.check() bu hatayı YAKALAMAZ — uydurma font adına bile true
+   döner. Doğrulama: bilinen-çalışan bir .fa ikonuyla genişlik karşılaştır. --- */
+:root {
+    --apya-font-icon: 'Font Awesome 7 Free', 'Font Awesome 6 Free', 'Font Awesome 5 Free', FontAwesome;
+}
+
 /* --- Daralt/genişlet butonu (temanın .menu-collapse-icon'u): 'bi' ikon fontu
    yüklenmiyor (glyph görünmezdi) → FontAwesome chevron ile değiştir + hit alanı. --- */
 #lpx-sidebar .menu-collapse-icon {
-    font-family: 'Font Awesome 6 Free';
+    font-family: var(--apya-font-icon);
     font-weight: 900;
     font-style: normal;
     font-size: 12px;
@@ -1037,10 +1122,31 @@ html, body {
     background: var(--apya-border-subtle);
 }
 #lpx-sidebar .menu-collapse-icon::before {
+    /* Düğüm `<i class="lpx-icon bi bi-filter-left menu-collapse-icon">` — bootstrap-icons
+       CSS'i `[class^="bi-"]::before` kuralında font-family'yi `!important` ile bastırıyor.
+       Yukarıdaki ELEMENT kuralı ::before'a geçmediği için glyph bootstrap-icons fontunda
+       aranıyordu; \f053 o fontun aralığında (U+F101+) olmadığından hiç çizilmiyor, düğme
+       boş kare olarak görünüyordu (canlı ölçüm: ::before fontFamily = "bootstrap-icons").
+       Pseudo-element kuralında !important şart — bkz. dosya başındaki İKON FONT YIĞINI notu. */
+    font-family: var(--apya-font-icon) !important;
+    font-weight: 900 !important;
     content: '\f053'; /* chevron-left → "daralt" */
 }
 html[data-sidebar="collapsed"] #lpx-sidebar .menu-collapse-icon::before {
     content: '\f054'; /* chevron-right → "genişlet" */
+}
+/* Rayda düğme gizli; hover'da sidebar 280px'e açılınca görünür (LeptonX full davranışı).
+   Düğüm `hidden-in-hover-trigger` sınıfı taşıyor ama o kuralların hiçbiri ID içermiyor,
+   bu yüzden yukarıdaki `#lpx-sidebar .menu-collapse-icon { display: flex }` kuralını
+   ezemiyorlar → düğme 72px'lik rayın dışında, x=235'te içeriğin üzerinde asılı kalıyordu.
+   Glyph görünmezken fark edilmiyordu; ikon düzeltilince ortaya çıktı. */
+html[data-sidebar="collapsed"] .lpx-sidebar-container:not(:hover) #lpx-sidebar .menu-collapse-icon {
+    display: none;
+}
+@media (min-width: 768px) and (max-width: 1199.98px) and (hover: hover) {
+    .lpx-sidebar-container:not(:hover) #lpx-sidebar .menu-collapse-icon {
+        display: none;
+    }
 }
 
 /* --- Tema/Yoğunluk toggle ikon FOUC: sunucu her zaman varsayılan glyph'i basar
@@ -1051,11 +1157,238 @@ html[data-sidebar="collapsed"] #lpx-sidebar .menu-collapse-icon::before {
 html[data-theme="dark"] #ThemeToggle i.fa-sun::before {
     content: '\f186'; /* moon */
 }
-html[data-density="compact"] #DensityToggle i.fa-bars::before {
+html[data-density="compact"] #DensityToggle i.fa-table-cells::before {
     content: '\f039'; /* align-justify */
 }
-html[data-density="comfortable"] #DensityToggle i.fa-bars::before {
+html[data-density="comfortable"] #DensityToggle i.fa-table-cells::before {
     content: '\f7a4'; /* grip-lines */
+}
+
+/* ============================================================================
+   MOBİL NAVİGASYON (<768px) — LeptonX .lpx-mobile-navbar üstüne kurulu
+   ----------------------------------------------------------------------------
+   Temanın kendi mobil davranışı üç noktada standart dışıydı (2026-08 tasarım
+   denetimi + kullanıcı geri bildirimi):
+     1) Hamburger ikonu SAĞDA duruyordu. Material "Top App Bar" ve Apple HIG
+        navigasyon ikonunu bar'ın BAŞINDA (LTR'de sol) konumlandırır — kullanıcı
+        başparmağı ve okuma yönü oraya gider.
+     2) Menü açılınca sayfa içeriğini AŞAĞI İTİYORDU (akışa giren blok). Beklenen
+        desen: içeriğin ÜSTÜNE soldan kayan drawer + karartma (backdrop).
+     3) Kapatma affordance'ı yoktu (modal-escape kuralı): backdrop tıklaması,
+        Esc tuşu ve açık bir kapat düğmesi gerekiyor.
+   Geometri/backdrop/odak yönetimi sidebar-toggle.js'te; burası yalnız görünüm.
+   ============================================================================ */
+
+/* --- 1) İkon glyph'leri: 'bi' (Bootstrap Icons) fontu bu projede yüklenmiyor,
+   FontAwesome ile değiştiriliyor. font-family ::before'a DOĞRUDAN ve !important
+   ile yazılmalı — bootstrap-icons.css kendi '[class^="bi-"]::before' kuralını
+   !important ile veriyor, üst elemana yazılan bunu ezemiyor. --- */
+.lpx-mobile-navbar i.bi-list::before {
+    font-family: var(--apya-font-icon) !important;
+    font-weight: 900 !important;
+    content: '\f0c9' !important; /* bars → menüyü aç/kapat */
+}
+.lpx-mobile-navbar i.bi-person::before {
+    font-family: var(--apya-font-icon) !important;
+    font-weight: 900 !important;
+    content: '\f007' !important; /* user → hesap menüsü */
+}
+
+/* --- 2) Header yerleşimi: hamburger solda, logo ortada, hesap sağda --- */
+.lpx-mobile-navbar {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+}
+/* JS düğümü zaten ilk çocuk yapıyor; order JS gecikirse de sırayı garantiler. */
+.lpx-mobile-navbar > i.lpx-toggle[data-lpx-toggle="mobile-navbar"] {
+    order: -1;
+    flex: none;
+    margin-inline-start: 6px;
+}
+.lpx-mobile-navbar .lpx-logo-container {
+    flex: 1 1 auto;
+    min-width: 0;
+    position: relative;
+    z-index: 1;
+}
+/* Logo bağlantısının içindeki .lpx-brand-name mutlak konumlu ve 282px geniş
+   (58→340px); hesap ikonu 301→345px'te duruyor, yani ~39px ÖRTÜŞÜYOR. Görsel
+   olarak fark edilmiyordu çünkü örtüşen kısım saydam — ama isabet testinde
+   üstte kalıyordu: hesap ikonunun MERKEZİNE dokunmak menüyü açmak yerine
+   ana sayfaya gidiyordu (2026-08-12 canlı QA'da elementFromPoint ile bulundu;
+   temadan gelen mevcut bir hata, bu turda oluşmadı). */
+.lpx-mobile-navbar .user-menu {
+    flex: none;
+    position: relative;
+    z-index: 2;
+}
+/* Dokunma hedefi 44×44 (ux: touch-target). Tema 36×54px veriyordu. */
+.lpx-mobile-navbar i.lpx-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    font-size: 19px;
+    line-height: 1;
+    border-radius: var(--apya-radius-md);
+    cursor: pointer;
+    transition: background var(--apya-motion-fast) ease, color var(--apya-motion-fast) ease;
+}
+.lpx-mobile-navbar i.lpx-toggle:active {
+    background: color-mix(in srgb, currentColor 16%, transparent);
+}
+.lpx-mobile-navbar i.lpx-toggle:focus-visible {
+    outline: 2px solid var(--apya-accent-500);
+    outline-offset: 2px;
+}
+
+/* --- 3) Menü = soldan kayan drawer (içeriği itmez, üstüne gelir) ---
+   Tema açılışta .d-none'ı kaldırıyor. display:none geçiş animasyonunu
+   imkânsız kılar → id özgüllüğüyle (1-0-0 > 0-1-0) display'i geri açıp
+   kapalı durumu transform+visibility ile ifade ediyoruz. */
+#mobile-navbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: min(300px, 84vw);
+    z-index: var(--apya-z-modal, 1050);
+    display: block !important;
+    transform: translateX(-100%);
+    visibility: hidden;
+    transition: transform 240ms var(--apya-easing-standard, cubic-bezier(.4,0,.2,1)),
+                visibility 240ms var(--apya-easing-standard, cubic-bezier(.4,0,.2,1));
+    background: var(--apya-surface-sidebar) !important;
+    border-right: 1px solid var(--apya-border-default);
+    box-shadow: var(--apya-shadow-xl);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 16px);
+}
+#mobile-navbar:not(.d-none) {
+    transform: translateX(0);
+    visibility: visible;
+}
+
+/* Drawer başlığı (JS ekler) — marka + kapat düğmesi (modal-escape). */
+.apya-drawer-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: calc(env(safe-area-inset-top, 0px) + 12px) 12px 12px 20px;
+    border-bottom: 1px solid var(--apya-border-subtle);
+    margin-bottom: 6px;
+}
+.apya-drawer-head-title {
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+    color: var(--apya-text-tertiary);
+}
+.apya-drawer-close {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    flex: none;
+    border: 0;
+    border-radius: var(--apya-radius-md);
+    background: transparent;
+    color: var(--apya-text-secondary);
+    font-size: 17px;
+    cursor: pointer;
+}
+.apya-drawer-close:active { background: var(--apya-border-subtle); }
+.apya-drawer-close:focus-visible {
+    outline: 2px solid var(--apya-accent-500);
+    outline-offset: 2px;
+}
+
+/* Backdrop — drawer'ın hemen altında, karartma + dışa tıklayarak kapatma. */
+.apya-mobile-nav-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: calc(var(--apya-z-modal, 1050) - 1);
+    background: rgba(0, 0, 0, 0.45);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 240ms ease, visibility 240ms ease;
+}
+.apya-mobile-nav-backdrop.is-open {
+    opacity: 1;
+    visibility: visible;
+}
+/* Drawer açıkken arka plan kaymasın. */
+body.apya-mobile-nav-open {
+    overflow: hidden;
+}
+
+/* Drawer içi menü öğeleri — masaüstü sidebar ile aynı görsel dil + 44px hedef.
+   (Masaüstü kuralları #lpx-sidebar'a bağlı; mobil DOM ayrı: #mobile-sidebar.) */
+#mobile-sidebar a.lpx-menu-item-link {
+    display: flex;
+    align-items: center;
+    min-height: 44px;
+    margin: 1px 8px;
+    border-radius: var(--apya-radius-lg);
+    color: var(--apya-text-secondary) !important;
+}
+#mobile-sidebar a.lpx-menu-item-link:hover,
+#mobile-sidebar a.lpx-menu-item-link:active {
+    background: var(--apya-border-subtle) !important;
+    color: var(--apya-text-primary) !important;
+}
+#mobile-sidebar a.lpx-menu-item-link.selected {
+    background: var(--apya-accent-soft) !important;
+    color: var(--apya-accent-500) !important;
+    font-weight: 600;
+}
+#mobile-sidebar .lpx-menu-item-icon,
+#mobile-sidebar .lpx-menu-item-icon i,
+#mobile-sidebar .lpx-caret {
+    color: inherit !important;
+}
+#mobile-sidebar .lpx-inner-menu {
+    background: transparent !important;
+}
+
+/* --- 4) Hesap menüsü: sağ üstten açılan panel (yine içeriği itmez) --- */
+#mobile-user-menu-group {
+    position: fixed;
+    top: calc(var(--apya-mobile-header-h, 72px) + 4px);
+    right: 8px;
+    left: auto;
+    width: min(300px, calc(100vw - 16px));
+    max-height: calc(100vh - var(--apya-mobile-header-h, 72px) - 24px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    z-index: var(--apya-z-modal, 1050);
+    padding: 6px;
+    background: var(--apya-surface-elevated);
+    border: 1px solid var(--apya-border-strong);
+    border-radius: var(--apya-radius-xl);
+    box-shadow: var(--apya-shadow-xl);
+}
+#mobile-user-menu-group .lpx-language-selection,
+#mobile-user-menu-group .lpx-user-profile,
+#mobile-user-menu-group .action {
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border-radius: var(--apya-radius-lg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    #mobile-navbar,
+    .apya-mobile-nav-backdrop {
+        transition-duration: 1ms;
+    }
 }
 
 /* --- Header topbar: 57px + token zemin + alt kenarlık (her iki tema) --- */
@@ -1063,6 +1396,13 @@ html[data-density="comfortable"] #DensityToggle i.fa-bars::before {
     min-height: var(--apya-header-h);
     background: var(--apya-surface-header) !important;
     border-bottom: 1px solid var(--apya-border-default) !important;
+    /* LeptonX ".lpx-topbar-container .lpx-topbar"a 1em üst yuvarlaklık + dört
+       yandan 1px açık gri çerçeve veriyor: header içerikten kopuk bir "kart"
+       gibi duruyordu. Hedef: düz, çerçevesiz, yalnız alt kenarlıklı bant. */
+    border-top: 0 !important;
+    border-left: 0 !important;
+    border-right: 0 !important;
+    border-radius: 0 !important;
 }
 .lpx-topbar-content {
     gap: 2px;
@@ -1074,9 +1414,23 @@ html[data-density="comfortable"] #DensityToggle i.fa-bars::before {
     flex-direction: column;
     align-items: flex-start;
     justify-content: center;
-    padding-left: 6px;
+    /* LeptonX height:30px veriyor → 57px'lik header'da başlık yukarı yapışıp
+       üstten taşıyordu. Header yüksekliğini doldur ki justify-content:center
+       gerçekten dikey ortalasın. */
+    height: var(--apya-header-h);
+    /* 6px içerik alanına göre çok sola dayalıydı; .lpx-content'in 28px yatay
+       dolgusuyla hizala → başlık, altındaki sayfa içeriğiyle aynı x'te başlar. */
+    padding-left: 28px;
     line-height: 1.3;
 }
+/* İçerik üstündeki LeptonX toolbar satırı: sayfa başlığını (h1.lpx-main-title)
+   dark-mode.js header'a taşıdığı için geriye boş bir 24px şerit kalıyordu.
+   KOŞULLU gizleme — içinde gerçek bir aksiyon varsa (ABP PageToolbar butonları)
+   satır görünür kalır, yalnız tamamen boşken alan iade edilir. */
+.lpx-content > .lpx-content-toolbar:not(:has(button, a, input, select, .btn, .dropdown)) {
+    display: none;
+}
+
 .lpx-breadcrumb-container .apya-page-title {
     font-size: 16px;
     font-weight: 650;
@@ -1104,6 +1458,7 @@ html.js .lpx-breadcrumb-container {
 .lpx-topbar-content > .lpx-language-selection { order: 90; }
 .lpx-topbar-content > .apya-theme-toggle { order: 91; }
 .lpx-topbar-content > .apya-density-toggle { order: 92; }
+.lpx-topbar-content > .apya-sidebar-mode { order: 93; }
 .lpx-topbar-content > #notification-bell-container { order: 95; }
 .lpx-topbar-content > .dropdown:has(> .lpx-user-profile) { order: 100; }
 
@@ -1221,17 +1576,38 @@ html.js .lpx-user-profile .user-full-name {
 }
 
 /* ============================================================================
-   İÇERİK ÜST BOŞLUĞU (2026-07-29) — sayfa başlıkları header'a taşındıktan sonra
-   LeptonX'in içerik dolgusu gereğinden fazla kalıyordu: sayfa bileşenleri
-   ekranın aşağısına itiliyor, ilk ekranda az içerik görünüyordu.
-   Tema kuralı (canlı bundle'dan doğrulandı):
+   İÇERİK BOŞLUĞU (2026-07-29, 2026-08-12'de EŞİTLENDİ) — sayfa başlıkları
+   header'a taşındıktan sonra LeptonX'in içerik dolgusu hem fazla hem asimetrikti.
+   Tema kuralı (canlı bundle'dan doğrulandı, 1em = 14px):
        .lpx-content-container .lpx-content { padding: 1.25em 2em 3em }
-   Yalnız ÜST dolgu kısılıyor; yanlar ve alt temada kalıyor. Mobil (<768px)
-   temanın kendi 3em üst dolgusunu kullanıyor (sabit başlığı temizlemek için) —
-   ona dokunulmuyor.
+   → üst 14px (bizim eski override'ımız), yanlar 28px, alt 42px; kartın kendi
+   mb-3'ü ile birlikte altta 66px'lik asimetrik boşluk oluşuyordu.
+   Artık dört yanda da 2em (28px). Yan dolgu değişmediği için header'daki sayfa
+   başlığının 28px hizası da korunur. Mobil (<768px) temanın kendi 3em üst
+   dolgusunu kullanıyor (sabit başlığı temizlemek için) — ona dokunulmuyor.
    ============================================================================ */
 @media (min-width: 768px) {
     .lpx-content-container .lpx-content {
-        padding-top: 14px;
+        padding: 2em;
     }
+}
+
+/* Tema .lpx-content'e min-height: calc(100vh - 64px) veriyor; bizim header'ımız
+   57px + 1px kenarlık = 58px olduğundan içerik viewport'un 6px yukarısında
+   bitiyor, alt boşluk diğerlerinden 6px fazla çıkıyordu. Konteyneri flex kolon
+   yapıp kalan yüksekliği içeriğe veriyoruz → header yüksekliği değişse de hesap
+   kendiliğinden doğru kalır (konteynerin yalnız 2 çocuğu var: sticky topbar + içerik). */
+.lpx-content-container {
+    display: flex;
+    flex-direction: column;
+}
+.lpx-content-container > .lpx-content {
+    flex: 1 1 auto;
+    /* Temada .lpx-content'in yan marjinleri auto. Blok yerleşimde bu 0 hesaplanıyordu,
+       ama konteyner flex olunca auto marjinler çapraz eksendeki boş alanı YUTUYOR ve
+       içerik daralıyor (align-items:stretch auto marjin varsa devre dışı kalır).
+       Sabit modda konteyner zaten içerik genişliğindeydi, o yüzden görünmüyordu;
+       sidebar daraltılınca/gizlenince içerik genişlemiyordu. max-width tanımlı
+       olmadığı için marjini sıfırlamak blok-yerleşim davranışını birebir geri verir. */
+    margin-inline: 0;
 }

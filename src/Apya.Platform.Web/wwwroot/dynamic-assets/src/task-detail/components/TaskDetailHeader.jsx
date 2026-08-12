@@ -26,6 +26,13 @@ export function TaskDetailHeader({
     const status = STATUS[task?.status] ?? STATUS[1];
     const priority = PRIORITY[task?.priority] ?? PRIORITY[2];
 
+    const openInNewTab = () => {
+        if (task?.id) {
+            window.open(`/Tasks/Detail/${task.id}`, '_blank');
+        }
+        setMenuOpen(false);
+    };
+
     const copyLink = () => {
         const url = `${window.location.origin}/Tasks/Detail/${task.id}`;
         navigator.clipboard?.writeText(url);
@@ -77,6 +84,10 @@ export function TaskDetailHeader({
                                 role="menu"
                                 className="absolute right-0 z-popover mt-1 w-56 rounded-[var(--apya-radius-lg)] border border-default bg-surface-elevated py-1 shadow-xl"
                             >
+                                <button type="button" role="menuitem" onClick={openInNewTab}
+                                    className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-text-primary hover:bg-surface-raised">
+                                    <i className="fa fa-arrow-up-right-from-square w-4 text-text-tertiary" aria-hidden="true" />Yeni sekmede aç
+                                </button>
                                 <button type="button" role="menuitem" onClick={copyLink}
                                     className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-text-primary hover:bg-surface-raised">
                                     <i className="fa fa-link w-4 text-text-tertiary" aria-hidden="true" />Bağlantıyı kopyala
