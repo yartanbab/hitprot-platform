@@ -16,4 +16,13 @@
         Done = 4,        // Tamamlandı
         Cancelled = 0    // İptal
     }
+
+    /// <summary>Görevin projeler arası aktarım kipi (görev detayı transfer diyaloğu).</summary>
+    public enum TaskTransferMode
+    {
+        /// <summary>Görev ilk hedefe TAŞINIR; kalan hedeflere kopya çıkarılır.</summary>
+        Move = 1,
+        /// <summary>Görev yerinde kalır; her hedefte bir kopya oluşturulur.</summary>
+        Copy = 2
+    }
 }

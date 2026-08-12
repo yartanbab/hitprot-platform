@@ -6,8 +6,26 @@ namespace Apya.Platform.Tasks
 {
     public class TaskDto : AuditedEntityDto<Guid>
     {
+        /// <summary>Tenant içi artan görev sırası (entity'den).</summary>
+        public int Number { get; set; }
+
+        /// <summary>Kullanıcıya gösterilen görev kodu — "GRV-17". Number'dan türetilir,
+        /// DB'de saklanmaz.</summary>
+        public string Code => Number > 0 ? $"GRV-{Number}" : "GRV-—";
+
         public string Title { get; set; } = string.Empty;
         public string Description { get; set; } = string.Empty;
+
+        // --- Planlama ---
+        public decimal? EstimatedHours { get; set; }
+        public string? TaskType { get; set; }
+        public string? Sprint { get; set; }
+
+        /// <summary>Toplam kayıtlı süre (saat) — TaskTimeLog'lardan hesaplanır.</summary>
+        public decimal SpentHours { get; set; }
+
+        /// <summary>Mevcut kullanıcı bu görevi takip ediyor mu (TaskWatcher join'inden).</summary>
+        public bool IsWatched { get; set; }
 
         public DateTime StartDate { get; set; }
         public DateTime? DueDate { get; set; }

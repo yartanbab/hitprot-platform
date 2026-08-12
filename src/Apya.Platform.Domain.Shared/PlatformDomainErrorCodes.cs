@@ -13,6 +13,9 @@ public static class PlatformDomainErrorCodes
     public const string TaskViewImpersonationDenied = "Platform:Task:ViewImpersonationDenied";
     public const string TaskUpdateDenied = "Platform:Task:UpdateDenied";
     public const string TaskDeleteDenied = "Platform:Task:DeleteDenied";
+    public const string TaskEstimateNegative = "Platform:Task:EstimateNegative";
+    public const string TaskTransferNoTarget = "Platform:Task:TransferNoTarget";
+    public const string TaskTransferSameProject = "Platform:Task:TransferSameProject";
 
     // --- Cari (Customer) Modülü ---
     public const string CustomerNameRequired = "Platform:Customer:NameRequired";

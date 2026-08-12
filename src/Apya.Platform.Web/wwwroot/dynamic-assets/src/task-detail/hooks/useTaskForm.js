@@ -3,6 +3,7 @@ import { useState, useCallback, useMemo } from 'react';
 const EMPTY_VALUES = {
     title: '', description: '', startDate: '', dueDate: '',
     status: 1, priority: 2, assigneeId: null, tagNames: [], isPrivate: false, projectId: null,
+    estimatedHours: null, taskType: '', sprint: '',
 };
 
 function toFormValues(task) {
@@ -18,6 +19,9 @@ function toFormValues(task) {
         tagNames: (task.tags ?? []).map((t) => t.name),
         isPrivate: Boolean(task.isPrivate),
         projectId: task.projectId ?? null,
+        estimatedHours: task.estimatedHours ?? null,
+        taskType: task.taskType ?? '',
+        sprint: task.sprint ?? '',
     };
 }
 
@@ -80,6 +84,9 @@ export function useTaskForm(task) {
         isPrivate: Boolean(values.isPrivate),
         predecessorIds: task?.predecessorIds ?? [],
         tagNames: values.tagNames,
+        estimatedHours: values.estimatedHours,
+        taskType: values.taskType || null,
+        sprint: values.sprint || null,
     }), [values, task]);
 
     const reset = useCallback(() => {

@@ -1,62 +1,84 @@
 import React from 'react';
+import { fmtDateTime } from '../v3/tabPrimitives';
 
+/**
+ * Aktiviteler sekmesi (V4 tasarım dili) — dikey zaman çizelgesi.
+ *
+ * VERİ SINIRI: ayrı bir olay/denetim tablosu yok; satırlar görevin audit
+ * alanlarından (oluşturma/güncelleme/ek sayısı) TÜRETİLİR. Gerçek bir olay
+ * akışı için backend'de audit log gerekir.
+ */
 export function ActivityTab({ task }) {
     const activities = [];
 
     if (task?.creationTime) {
         activities.push({
             id: 'created',
-            type: 'create',
             icon: 'fa-plus',
-            title: 'Görev oluşturuldu',
-            user: task.creatorUserName || task.creatorName || 'Sistem / Kullanıcı',
-            time: new Date(task.creationTime).toLocaleString('tr-TR'),
+            bg: 'bg-success-subtle',
+            fg: 'text-success',
+            actor: task.creatorUserName || task.creatorName || 'Sistem / Kullanıcı',
+            event: 'görevi oluşturdu',
+            time: fmtDateTime(task.creationTime),
         });
     }
 
     if (task?.lastModificationTime) {
         activities.push({
             id: 'modified',
-            type: 'update',
             icon: 'fa-pen',
-            title: 'Görev güncellendi',
-            user: task.lastModifierUserName || task.lastModifierName || 'Kullanıcı',
-            time: new Date(task.lastModificationTime).toLocaleString('tr-TR'),
+            bg: 'bg-warning-subtle',
+            fg: 'text-warning',
+            actor: task.lastModifierUserName || task.lastModifierName || 'Kullanıcı',
+            event: 'görevi güncelledi',
+            time: fmtDateTime(task.lastModificationTime),
         });
     }
 
-    if (task?.attachments && task.attachments.length > 0) {
+    if (task?.attachments?.length) {
         activities.push({
             id: 'files',
-            type: 'file',
             icon: 'fa-paperclip',
-            title: `${task.attachments.length} dosya eki mevcut`,
-            user: 'Sistem',
+            bg: 'bg-primary-subtle',
+            fg: 'text-primary',
+            actor: 'Sistem',
+            event: `${task.attachments.length} dosya eki mevcut`,
             time: '',
         });
     }
 
     return (
-        <div className="space-y-3">
-            <h4 className="text-sm font-semibold text-text-primary">Aktivite Zaman Çizelgesi</h4>
+        <div className="flex flex-col gap-3.5">
+            <h4 className="m-0 text-[14px] font-bold text-text-primary">Aktivite Zaman Çizelgesi</h4>
+
             {activities.length === 0 ? (
-                <div className="py-8 text-center text-sm text-text-tertiary">
-                    Aktivite kaydı bulunamadı.
+                <div className="rounded-2xl border border-subtle bg-surface-base p-5 shadow-xs">
+                    <p className="m-0 text-[12.5px] text-text-tertiary">Aktivite kaydı bulunamadı.</p>
                 </div>
             ) : (
-                <div className="relative pl-6 space-y-4 before:absolute before:left-2 before:top-2 before:bottom-2 before:w-0.5 before:bg-border-subtle">
-                    {activities.map((act) => (
-                        <div key={act.id} className="relative flex items-start justify-between gap-3 text-xs">
-                            <span className="absolute -left-6 flex h-4 w-4 items-center justify-center rounded-full bg-surface-raised text-text-tertiary">
-                                <i className={`fa ${act.icon} text-[10px]`} aria-hidden="true" />
-                            </span>
-                            <div>
-                                <p className="font-medium text-text-primary">{act.title}</p>
-                                {act.user && <span className="text-text-tertiary">Yapan: {act.user}</span>}
+                <div className="rounded-2xl border border-subtle bg-surface-base p-5 shadow-xs">
+                    {activities.map((act, i) => {
+                        const isLast = i === activities.length - 1;
+                        return (
+                            <div key={act.id} className={`flex items-start gap-3.5 ${isLast ? '' : 'pb-[18px]'}`}>
+                                <div className="flex flex-col items-center shrink-0 self-stretch">
+                                    <span className={`flex shrink-0 items-center justify-center h-7 w-7 rounded-full ${act.bg} ${act.fg}`}>
+                                        <i className={`fa-solid ${act.icon} text-[11px]`} />
+                                    </span>
+                                    {!isLast && <span className="flex-1 w-0.5 mt-1.5 rounded-sm bg-subtle" />}
+                                </div>
+
+                                <div className="flex-1 min-w-0 pt-1">
+                                    <div className="text-[12.5px] leading-[1.55] text-text-secondary">
+                                        <strong className="font-bold text-text-primary">{act.actor}</strong> {act.event}
+                                    </div>
+                                    {act.time && (
+                                        <div className="mt-[3px] font-mono text-[10.5px] text-text-tertiary">{act.time}</div>
+                                    )}
+                                </div>
                             </div>
-                            {act.time && <span className="text-text-tertiary whitespace-nowrap">{act.time}</span>}
-                        </div>
-                    ))}
+                        );
+                    })}
                 </div>
             )}
         </div>

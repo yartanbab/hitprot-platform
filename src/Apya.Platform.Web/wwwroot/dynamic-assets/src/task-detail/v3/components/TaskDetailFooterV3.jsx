@@ -1,61 +1,59 @@
 import React from 'react';
-import { Button } from '../../../components/ui';
 
 export function TaskDetailFooterV3({
     lastSavedAt,
     isDirty,
     isSaving,
+    justSaved,
     onCancel,
-    onSave
+    onSave,
 }) {
-    const formattedDate = lastSavedAt
-        ? new Intl.DateTimeFormat('tr-TR', { 
-            day: '2-digit', 
-            month: '2-digit', 
-            year: 'numeric', 
-            hour: '2-digit', 
-            minute: '2-digit' 
+    const formatted = lastSavedAt
+        ? new Intl.DateTimeFormat('tr-TR', {
+            day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit',
         }).format(new Date(lastSavedAt))
         : '—';
 
+    const saveIcon = isSaving ? 'fa-solid fa-circle-notch fa-spin'
+        : justSaved ? 'fa-solid fa-check'
+        : 'fa-regular fa-floppy-disk';
+    const saveLabel = isSaving ? 'Kaydediliyor…' : justSaved ? 'Kaydedildi' : 'Kaydet';
+    const canSave = isDirty && !isSaving;
+
     return (
-        <footer className="flex items-center justify-between border-t border-subtle bg-surface-base px-6 py-4 mt-auto">
-            {/* Left: Last Saved indicator */}
-            <div className="flex items-center gap-2 text-xs text-text-tertiary">
-                <i className="fa-regular fa-clock" />
-                <span>Son kayıt: <strong className="font-medium text-text-secondary">{formattedDate}</strong></span>
+        <footer className="flex items-center justify-between gap-4 px-6 lt-860:px-4 py-3.5 border-t border-subtle bg-surface-base">
+            <div className="flex items-center gap-3.5 min-w-0 lt-560:hidden">
+                <span className="flex items-center gap-[7px] text-[11.5px] text-text-tertiary">
+                    <i className="fa-regular fa-clock text-[11px]" />
+                    Son kayıt: <strong className="font-semibold text-text-secondary">{formatted}</strong>
+                </span>
                 {isDirty && (
-                    <span className="flex items-center gap-1.5 text-warning font-medium ml-2">
-                        <span className="h-2 w-2 rounded-full bg-warning animate-pulse" />
+                    <span className="flex items-center gap-[7px] text-[11.5px] font-semibold text-warning">
+                        <span className="h-[7px] w-[7px] rounded-full bg-warning animate-pulse" />
                         Kaydedilmemiş değişiklikler var
                     </span>
                 )}
             </div>
 
-            {/* Right: Actions */}
-            <div className="flex items-center gap-3">
-                <Button
+            <div className="flex items-center gap-2.5 shrink-0">
+                <button
                     type="button"
-                    variant="ghost"
-                    size="sm"
                     onClick={onCancel}
-                    className="text-text-secondary hover:bg-surface-hover px-4"
+                    className="h-9 px-4 rounded-[10px] border border-default bg-surface-base text-text-secondary text-[13px] font-semibold hover:bg-surface-hover hover:text-text-primary cursor-pointer"
                 >
                     Vazgeç
-                </Button>
-                
-                <Button
+                </button>
+                <button
                     type="button"
-                    variant="primary"
-                    size="sm"
                     onClick={onSave}
-                    disabled={!isDirty || isSaving}
-                    isLoading={isSaving}
-                    loadingText="Kaydediliyor…"
-                    className="bg-primary hover:bg-primary-hover text-white px-6 font-medium shadow-sm transition-all rounded-lg"
+                    disabled={!canSave}
+                    className={`flex items-center gap-2 h-9 px-[22px] rounded-[10px] text-white text-[13px] font-bold shadow-sm ${
+                        canSave ? 'bg-primary hover:bg-primary-hover cursor-pointer' : 'bg-border-strong cursor-not-allowed'
+                    }`}
                 >
-                    Kaydet
-                </Button>
+                    <i className={`${saveIcon} text-[11px]`} />
+                    {saveLabel}
+                </button>
             </div>
         </footer>
     );
