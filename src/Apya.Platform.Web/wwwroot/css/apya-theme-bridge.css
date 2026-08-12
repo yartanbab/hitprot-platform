@@ -700,6 +700,14 @@ html, body {
     border-right: 1px solid var(--apya-border-default);
 }
 
+/* Menüde YATAY kaydırma çubuğu asla çıkmasın. Genişlik telafisi sidebar-toggle.js'teki
+   `.lpx-has-scrollbar` senkronunda yapılıyor; bu kural son emniyet: temanın sabit 265px'i
+   kapsayıcının 1px kenarlığını hesaba katmadığı için 1px artık kalıyor ve `overflow-x:auto`
+   bunun için bile çubuk çiziyor. Kırpılan 1px'te içerik yok (menü satırları 7–257 arasında). */
+#lpx-sidebar {
+    overflow-x: hidden;
+}
+
 /* --- Kaydırma konteyner yerine NAV'da ---
    Dikey scrollbar .lpx-sidebar-container'daydı: şerit konteyner'ın SAĞ kenarında
    tepeden dibe uzanıyor, logo kutusu ise position:fixed + sabit 280px olduğu için
@@ -1126,6 +1134,19 @@ html, body {
 }
 html[data-sidebar="collapsed"] #lpx-sidebar .menu-collapse-icon::before {
     content: '\f054'; /* chevron-right → "genişlet" */
+}
+/* Rayda düğme gizli; hover'da sidebar 280px'e açılınca görünür (LeptonX full davranışı).
+   Düğüm `hidden-in-hover-trigger` sınıfı taşıyor ama o kuralların hiçbiri ID içermiyor,
+   bu yüzden yukarıdaki `#lpx-sidebar .menu-collapse-icon { display: flex }` kuralını
+   ezemiyorlar → düğme 72px'lik rayın dışında, x=235'te içeriğin üzerinde asılı kalıyordu.
+   Glyph görünmezken fark edilmiyordu; ikon düzeltilince ortaya çıktı. */
+html[data-sidebar="collapsed"] .lpx-sidebar-container:not(:hover) #lpx-sidebar .menu-collapse-icon {
+    display: none;
+}
+@media (min-width: 768px) and (max-width: 1199.98px) and (hover: hover) {
+    .lpx-sidebar-container:not(:hover) #lpx-sidebar .menu-collapse-icon {
+        display: none;
+    }
 }
 
 /* --- Tema/Yoğunluk toggle ikon FOUC: sunucu her zaman varsayılan glyph'i basar

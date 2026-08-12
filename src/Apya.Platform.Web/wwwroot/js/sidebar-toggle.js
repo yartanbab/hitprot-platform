@@ -140,18 +140,25 @@ $(function () {
     // telafi HAZIR (.lpx-has-scrollbar → nav 265px, nav-menu max 265px) ama sınıfı
     // ekleyen JS Lite paketinde YOK (5.0.1 bundle'ında hiç geçmiyor) — Lite gap.
     var sidebar = document.getElementById('lpx-sidebar');
-    var scrollHost = document.querySelector('.lpx-sidebar-container');
-    if (sidebar && scrollHost) {
+    if (sidebar) {
+        // Kaydırmayı hangi elemanın yaptığı sabit DEĞİL: bir dönem .lpx-sidebar-container
+        // (overflow-y:auto), kenar çubuğu modu çalışmasından sonra #lpx-sidebar. İkisini de
+        // ölç, biri bile oluk açıyorsa telafiyi uygula — böylece kaydırmanın yeri değişse de
+        // bozulmaz.
+        var hosts = [sidebar, document.querySelector('.lpx-sidebar-container')].filter(Boolean);
         // Ölçüt "taşıyor mu" DEĞİL, "scrollbar gerçekten yer kaplıyor mu". Daraltılmış
-        // rayda overflow-y:hidden olduğu için yer kaplamaz ve sınıf eklenmez — eklenseydi
-        // temanın 265px'lik nav kuralı (ID'li seçici) 72px'lik ray kuralımızı ezerdi.
-        // Overlay scrollbar'lı ortamlarda da oluk 0'dır, telafi gerekmez.
+        // rayda overflow gizli olduğu için oluk 0'dır ve sınıf eklenmez. Overlay
+        // scrollbar'lı ortamlarda da oluk 0'dır, telafi gerekmez.
         // Kenarlık düşülmeli: kapsayıcının 1px sağ kenarlığı da offset/client farkına giriyor.
+        var gutterOf = function (el) {
+            var cs = getComputedStyle(el);
+            return el.offsetWidth - el.clientWidth
+                - (parseFloat(cs.borderLeftWidth) || 0) - (parseFloat(cs.borderRightWidth) || 0);
+        };
         var syncScrollbarClass = function () {
-            var cs = getComputedStyle(scrollHost);
-            var borders = (parseFloat(cs.borderLeftWidth) || 0) + (parseFloat(cs.borderRightWidth) || 0);
-            var gutter = scrollHost.offsetWidth - scrollHost.clientWidth - borders;
-            sidebar.classList.toggle('lpx-has-scrollbar', gutter > 0);
+            sidebar.classList.toggle('lpx-has-scrollbar', hosts.some(function (el) {
+                return gutterOf(el) > 0;
+            }));
         };
         syncScrollbarClass();
         window.addEventListener('resize', syncScrollbarClass);
