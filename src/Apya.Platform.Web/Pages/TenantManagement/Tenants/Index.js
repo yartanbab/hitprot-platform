@@ -13,6 +13,7 @@ $(function () {
         paging: true,
         searching: false,
         autoWidth: false,
+        scrollX: true,
         scrollCollapse: true,
         order: [[1, "asc"]],
         ajax: abp.libs.datatables.createAjax(apya.platform.tenants.tenantProfile.getList),

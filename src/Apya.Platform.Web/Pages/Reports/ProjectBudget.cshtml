@@ -131,13 +131,14 @@
             @if (s.TaskBreakdown.Any(t => t.TaskId.HasValue))
             {
                 <h6>Task Bazlı Kırılım</h6>
+                <div class="table-responsive">
                 <table class="table table-sm apya-clean-table">
                     <thead>
                         <tr>
                             <th>Task</th>
-                            <th class="text-end" style="width:130px;">Gider</th>
-                            <th class="text-end" style="width:130px;">Gelir</th>
-                            <th class="text-end" style="width:130px;">Net</th>
+                            <th class="text-end apya-numeric">Gider</th>
+                            <th class="text-end apya-numeric">Gelir</th>
+                            <th class="text-end apya-numeric">Net</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -146,21 +147,22 @@
                         var net = t.Income - t.Expense;
                         <tr>
                             <td>@(t.TaskId.HasValue ? (t.TaskName ?? t.TaskId.ToString()![..8] + "…") : "(Proje geneli)")</td>
-                            <td class="text-end text-danger">@t.Expense.ToString("N2")</td>
-                            <td class="text-end text-success">@t.Income.ToString("N2")</td>
-                            <td class="text-end fw-bold @(net >= 0 ? "text-success" : "text-danger")">@net.ToString("N2")</td>
+                            <td class="text-end apya-numeric text-danger">@t.Expense.ToString("N2")</td>
+                            <td class="text-end apya-numeric text-success">@t.Income.ToString("N2")</td>
+                            <td class="text-end apya-numeric fw-bold @(net >= 0 ? "text-success" : "text-danger")">@net.ToString("N2")</td>
                         </tr>
                     }
                     </tbody>
                     <tfoot>
                         <tr class="fw-bold table-secondary">
                             <td>TOPLAM</td>
-                            <td class="text-end text-danger">@s.TotalExpense.ToString("N2")</td>
-                            <td class="text-end text-success">@s.TotalIncome.ToString("N2")</td>
-                            <td class="text-end @(s.Net >= 0 ? "text-success" : "text-danger")">@s.Net.ToString("N2")</td>
+                            <td class="text-end apya-numeric text-danger">@s.TotalExpense.ToString("N2")</td>
+                            <td class="text-end apya-numeric text-success">@s.TotalIncome.ToString("N2")</td>
+                            <td class="text-end apya-numeric @(s.Net >= 0 ? "text-success" : "text-danger")">@s.Net.ToString("N2")</td>
                         </tr>
                     </tfoot>
                 </table>
+                </div>
             }
         }
     </abp-card-body>

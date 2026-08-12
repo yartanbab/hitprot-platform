@@ -25,6 +25,7 @@
         </abp-row>
     </abp-card-header>
     <abp-card-body>
+        <div class="table-responsive">
         <table class="table apya-clean-table align-middle">
             <thead>
                 <tr>
@@ -46,7 +47,7 @@
                             @if (await AuthorizationService.IsGrantedAsync(AiPermissions.Workflows.Manage))
                             {
                                 <form method="post" asp-page-handler="RemoveRule" asp-route-id="@Model.Id" asp-route-ruleId="@r.Id" class="d-inline">
-                                    <button type="submit" class="btn btn-sm btn-outline-danger"><i class="fa fa-trash"></i></button>
+                                    <button type="submit" class="btn btn-sm btn-outline-danger" aria-label="Kuralı sil" title="Kuralı sil"><i class="fa fa-trash"></i></button>
                                 </form>
                             }
                         </td>
@@ -58,6 +59,7 @@
                 }
             </tbody>
         </table>
+        </div>
     </abp-card-body>
 </abp-card>
 

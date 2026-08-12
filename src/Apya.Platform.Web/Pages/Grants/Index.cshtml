@@ -1,6 +1,7 @@
 @page
 @using Apya.Platform.Permissions
 @using Microsoft.AspNetCore.Authorization
+@using Apya.Platform.Web.Pages.Shared
 @inject IAuthorizationService AuthorizationService
 @model Apya.Platform.Web.Pages.Grants.IndexModel
 @{
@@ -107,9 +108,8 @@
 
         <div id="GrantTileGrid" class="apya-tile-grid"></div>
 
-        <div id="GrantTileGridEmpty" class="apya-tile-grid-empty d-none">
-            <i class="fa fa-award"></i>
-            <span>Henüz hibe programı eklenmedi.</span>
+        <div id="GrantTileGridEmpty" class="d-none">
+            <partial name="_EmptyState" model='new EmptyStateModel { Icon = "fa-award", Title = "Henüz hibe programı eklenmedi." }' />
         </div>
     </div>
 
@@ -366,9 +366,8 @@ else
 
                 <h5 class="fw-bold mb-3"><i class="fa fa-wand-magic-sparkles me-2"></i>Önerilen Çağrılar</h5>
                 <div id="RecoGrid" class="apya-tile-grid"></div>
-                <div id="RecoEmpty" class="apya-tile-grid-empty d-none">
-                    <i class="fa fa-wand-magic-sparkles"></i>
-                    <span>Profilinize uygun açık çağrı bulunamadı. Profilinizi güncelleyip tekrar deneyin.</span>
+                <div id="RecoEmpty" class="d-none">
+                    <partial name="_EmptyState" model='new EmptyStateModel { Icon = "fa-wand-magic-sparkles", Title = "Profilinize uygun açık çağrı bulunamadı.", Description = "Profilinizi güncelleyip tekrar deneyin." }' />
                 </div>
 
                 <h5 class="fw-bold mb-3 mt-4"><i class="fa fa-file-signature me-2"></i>Başvurularım</h5>
