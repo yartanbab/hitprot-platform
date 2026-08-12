@@ -430,6 +430,152 @@ internal static class ReportExporter
         }).GeneratePdf();
     }
 
+    // ─── GÖREV DETAYI — "⋯ → PDF olarak dışa aktar" (aynı QuestPDF motoru) ──────
+    private static string TaskStatusLabel(Apya.Platform.Tasks.TaskStatus s) => s switch
+    {
+        Apya.Platform.Tasks.TaskStatus.Todo => "Yapılacak",
+        Apya.Platform.Tasks.TaskStatus.InProgress => "Devam Ediyor",
+        Apya.Platform.Tasks.TaskStatus.InReview => "Kontrol/Test",
+        Apya.Platform.Tasks.TaskStatus.Done => "Tamamlandı",
+        Apya.Platform.Tasks.TaskStatus.Cancelled => "İptal",
+        _ => "—"
+    };
+
+    private static string TaskPriorityLabel(Apya.Platform.Tasks.TaskPriority p) => p switch
+    {
+        Apya.Platform.Tasks.TaskPriority.Low => "Düşük",
+        Apya.Platform.Tasks.TaskPriority.Medium => "Orta",
+        Apya.Platform.Tasks.TaskPriority.High => "Yüksek",
+        Apya.Platform.Tasks.TaskPriority.Critical => "Kritik",
+        _ => "—"
+    };
+
+    private static string D(DateTime? d) => d.HasValue ? d.Value.ToString("dd.MM.yyyy") : "—";
+
+    /// <summary>
+    /// Tek bir görevin yazdırılabilir özeti. Yalnızca DTO'da GERÇEKTEN dolu olan
+    /// bölümler basılır (alt görev/yorum/ek yoksa o başlık hiç çıkmaz) — boş tablo
+    /// göstermek yerine sessiz kalır. Finans satırları DTO'ya zaten izne göre
+    /// dolduruluyor (bkz. TaskDto.Expenses/Incomes), burada ek filtre yok.
+    /// </summary>
+    public static byte[] TaskDetailToPdf(Apya.Platform.Tasks.TaskDto t, DateTime? now = null)
+    {
+        return Document.Create(container =>
+        {
+            container.Page(page =>
+            {
+                page.Size(PageSizes.A4);
+                page.Margin(1.5f, Unit.Centimetre);
+                page.DefaultTextStyle(x => x.FontSize(10));
+
+                page.Header().Column(h =>
+                {
+                    h.Item().Text($"{t.Code} — {t.Title}").Bold().FontSize(14);
+                    if (!string.IsNullOrWhiteSpace(t.ProjectName))
+                    {
+                        h.Item().Text(t.ProjectName).FontSize(9).FontColor(Colors.Grey.Darken1);
+                    }
+                });
+
+                page.Content().PaddingVertical(10).Column(col =>
+                {
+                    col.Spacing(12);
+
+                    // Künye tablosu — iki sütun etiket/değer
+                    col.Item().Table(table =>
+                    {
+                        table.ColumnsDefinition(c => { c.ConstantColumn(120); c.RelativeColumn(); });
+                        static IContainer Cell(IContainer c) => c.PaddingVertical(3).BorderBottom(0.5f, Unit.Point).BorderColor(Colors.Grey.Lighten2);
+
+                        void Row(string label, string value)
+                        {
+                            table.Cell().Element(Cell).Text(label).FontColor(Colors.Grey.Darken1);
+                            table.Cell().Element(Cell).Text(string.IsNullOrWhiteSpace(value) ? "—" : value);
+                        }
+
+                        Row("Durum", TaskStatusLabel(t.Status));
+                        Row("Öncelik", TaskPriorityLabel(t.Priority));
+                        Row("Sorumlu", t.AssigneeName ?? "—");
+                        Row("Başlangıç", D(t.StartDate));
+                        Row("Son tarih", D(t.DueDate));
+                        if (t.CompletedDate.HasValue) Row("Tamamlanma", D(t.CompletedDate));
+                        if (t.EstimatedHours.HasValue || t.SpentHours > 0)
+                        {
+                            Row("Süre", $"{t.SpentHours:0.##} sa harcandı" +
+                                        (t.EstimatedHours.HasValue ? $" / {t.EstimatedHours.Value:0.##} sa tahmin" : ""));
+                        }
+                        if (!string.IsNullOrWhiteSpace(t.TaskType)) Row("Tür", t.TaskType!);
+                        if (!string.IsNullOrWhiteSpace(t.Sprint)) Row("Sprint", t.Sprint!);
+                        if (!string.IsNullOrWhiteSpace(t.ParentTaskTitle)) Row("Üst görev", t.ParentTaskTitle!);
+                        if (t.Tags.Count > 0) Row("Etiketler", string.Join(", ", t.Tags.Select(x => x.Name)));
+                    });
+
+                    if (!string.IsNullOrWhiteSpace(t.Description))
+                    {
+                        col.Item().Column(d =>
+                        {
+                            d.Item().Text("Açıklama").Bold().FontSize(11);
+                            d.Item().PaddingTop(3).Text(t.Description);
+                        });
+                    }
+
+                    if (t.SubTasks.Count > 0)
+                    {
+                        col.Item().Column(s =>
+                        {
+                            s.Item().Text($"Alt Görevler ({t.SubTasks.Count(x => x.Status == Apya.Platform.Tasks.TaskStatus.Done)}/{t.SubTasks.Count})")
+                                .Bold().FontSize(11);
+                            s.Item().PaddingTop(3).Table(tbl =>
+                            {
+                                tbl.ColumnsDefinition(c => { c.ConstantColumn(70); c.RelativeColumn(); c.ConstantColumn(90); });
+                                static IContainer Cell(IContainer c) => c.PaddingVertical(2).BorderBottom(0.5f, Unit.Point).BorderColor(Colors.Grey.Lighten3);
+                                foreach (var st in t.SubTasks)
+                                {
+                                    tbl.Cell().Element(Cell).Text(st.Code).FontSize(9).FontColor(Colors.Grey.Darken1);
+                                    tbl.Cell().Element(Cell).Text(st.Title).FontSize(9);
+                                    tbl.Cell().Element(Cell).AlignRight().Text(TaskStatusLabel(st.Status)).FontSize(9);
+                                }
+                            });
+                        });
+                    }
+
+                    if (t.Attachments.Count > 0)
+                    {
+                        col.Item().Column(a =>
+                        {
+                            a.Item().Text($"Ekler ({t.Attachments.Count})").Bold().FontSize(11);
+                            foreach (var att in t.Attachments)
+                            {
+                                a.Item().PaddingTop(2).Text($"• {att.FileName}").FontSize(9);
+                            }
+                        });
+                    }
+
+                    if (t.Comments.Count > 0)
+                    {
+                        col.Item().Column(c =>
+                        {
+                            c.Item().Text($"Yorumlar ({t.Comments.Count})").Bold().FontSize(11);
+                            foreach (var cm in t.Comments)
+                            {
+                                c.Item().PaddingTop(4).Column(one =>
+                                {
+                                    one.Item().Text($"{cm.AuthorName} · {cm.CreationTime:dd.MM.yyyy HH:mm}")
+                                        .FontSize(8).FontColor(Colors.Grey.Darken1);
+                                    one.Item().Text(cm.Text).FontSize(9);
+                                });
+                            }
+                        });
+                    }
+                });
+
+                page.Footer().AlignRight()
+                    .Text($"Oluşturma: {(now ?? DateTime.UtcNow):dd.MM.yyyy HH:mm}")
+                    .FontSize(8).Italic().FontColor(Colors.Grey.Medium);
+            });
+        }).GeneratePdf();
+    }
+
     // ─── GERİ BİLDİRİM (FEEDBACK) — host paneli export'u (aynı ClosedXML motoru) ─
     public static byte[] FeedbackListToExcel(List<FeedbackDto> items)
     {

@@ -169,6 +169,22 @@ export function TaskDetailRootV3({ taskId, presentation = 'modal', onClose, swit
         }
     };
 
+    /**
+     * PDF olarak dışa aktar — sunucu QuestPDF ile üretir (ReportExporter.TaskDetailToPdf),
+     * handler: /Tasks/Detail/{id}?handler=Pdf. İndirme XHR ile DEĞİL, gizli bir <a>
+     * ile tetikleniyor: dosyayı belleğe almadan tarayıcının kendi indirme akışını
+     * kullanır ve oturum çerezi doğal olarak gider.
+     */
+    const handleExportPdf = () => {
+        if (!currentTaskId) return;
+        const a = document.createElement('a');
+        a.href = `/Tasks/Detail/${currentTaskId}?handler=Pdf`;
+        a.rel = 'noopener';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+    };
+
     const handleToggleWatch = async () => {
         const next = !isWatched;
         setIsWatched(next);
@@ -357,7 +373,7 @@ export function TaskDetailRootV3({ taskId, presentation = 'modal', onClose, swit
                 onOpenTransfer={(mode) => setTransfer({ mode })}
                 onSaveAsTemplate={() => notify.info('Şablon olarak kaydetme yakında.')}
                 onConvertToSubtask={() => notify.info('Alt göreve dönüştürme yakında.')}
-                onExportPdf={() => notify.info('PDF dışa aktarma yakında.')}
+                onExportPdf={handleExportPdf}
             />
 
             <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar">

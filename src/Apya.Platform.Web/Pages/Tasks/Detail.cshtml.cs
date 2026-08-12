@@ -43,5 +43,26 @@ namespace Apya.Platform.Web.Pages.Tasks
                 return RedirectToPage("/Tasks/Index");
             }
         }
+
+        /// <summary>
+        /// "⋯ → PDF olarak dışa aktar" — görev detayının yazdırılabilir özeti.
+        /// Sayfa zaten [Authorize(Tasks.Default)] taşıyor; ayrıca GetAsync kendi
+        /// yetki/tenant kontrolünü yapıyor, burada ek kontrol yok.
+        /// URL: /Tasks/Detail/{id}?handler=Pdf
+        /// </summary>
+        public async Task<IActionResult> OnGetPdfAsync(Guid id)
+        {
+            if (id == Guid.Empty)
+            {
+                return NotFound();
+            }
+
+            var task = await _taskAppService.GetAsync(id);
+            var bytes = Reports.ReportExporter.TaskDetailToPdf(task, Clock.Now);
+
+            // Dosya adı görev koduna dayanır (GRV-17.pdf); kod yoksa id'ye düşer.
+            var name = task.Number > 0 ? task.Code : id.ToString("N")[..8];
+            return File(bytes, "application/pdf", $"{name}.pdf");
+        }
     }
 }
