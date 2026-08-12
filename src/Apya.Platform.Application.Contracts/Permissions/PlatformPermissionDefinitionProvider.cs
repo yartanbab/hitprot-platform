@@ -70,9 +70,10 @@ public class PlatformPermissionDefinitionProvider : PermissionDefinitionProvider
         exchangeRatesPermission.AddChild(PlatformPermissions.ExchangeRates.Edit, L("Permission:ExchangeRates.Edit"));
         exchangeRatesPermission.AddChild(PlatformPermissions.ExchangeRates.Delete, L("Permission:ExchangeRates.Delete"));
 
-        // FX değerleme: gelişmiş finansal rapor → AdvancedReports (menüyle hizalı).
+        // FX değerleme: finans modülünün gelişmiş raporu → Finance + AdvancedReports ikisi de şart.
+        // (Yalnız AdvancedReports'a bağlıyken, Finance kapalı bir pakette de görünüyordu.)
         var fxRevaluationPermission = financeGroup.AddPermission(PlatformPermissions.FxRevaluations.Default, L("Permission:FxRevaluations"));
-        fxRevaluationPermission.RequireFeatures(PlatformFeatures.AdvancedReports);
+        fxRevaluationPermission.RequireFeatures(PlatformFeatures.Finance, PlatformFeatures.AdvancedReports);
         fxRevaluationPermission.AddChild(PlatformPermissions.FxRevaluations.Run, L("Permission:FxRevaluations.Run"));
         fxRevaluationPermission.AddChild(PlatformPermissions.FxRevaluations.Delete, L("Permission:FxRevaluations.Delete"));
 

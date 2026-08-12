@@ -1,0 +1,44 @@
+@*
+    Header kenar çubuğu modu seçici — LeptonX header toolbar'ında render edilir.
+    Açma/seçim/ikon senkronu sidebar-toggle.js (#SidebarModeToggle) tarafından
+    yönetilir; sunucu yalnız başlangıç işaretini basar, JS tercihe göre günceller.
+    Metinler i18n'den geliyor, JS'e gömülmüyor.
+*@
+@using Microsoft.AspNetCore.Mvc.Localization
+@using Apya.Platform.Localization
+@inject IHtmlLocalizer<PlatformResource> L
+
+<div class="dropdown apya-sidebar-mode">
+    <button type="button"
+            id="SidebarModeToggle"
+            class="apya-sidebar-mode-toggle"
+            data-bs-toggle="dropdown"
+            aria-expanded="false"
+            title="@L["Sidebar:Mode"]"
+            aria-label="@L["Sidebar:Mode"]"
+            data-label-pinned="@L["Sidebar:Mode:Pinned"]"
+            data-label-dynamic="@L["Sidebar:Mode:Dynamic"]"
+            data-label-hidden="@L["Sidebar:Mode:Hidden"]">
+        <i class="fa fa-table-columns"></i>
+    </button>
+    <ul class="dropdown-menu dropdown-menu-end apya-sidebar-mode-menu">
+        <li>
+            <button type="button" class="dropdown-item" data-sidebar-mode="pinned">
+                <i class="fa fa-thumbtack me-2"></i>@L["Sidebar:Mode:Pinned"]
+                <i class="fa fa-check ms-auto apya-sidebar-mode-check"></i>
+            </button>
+        </li>
+        <li>
+            <button type="button" class="dropdown-item" data-sidebar-mode="dynamic">
+                <i class="fa fa-arrows-left-right-to-line me-2"></i>@L["Sidebar:Mode:Dynamic"]
+                <i class="fa fa-check ms-auto apya-sidebar-mode-check"></i>
+            </button>
+        </li>
+        <li>
+            <button type="button" class="dropdown-item" data-sidebar-mode="hidden">
+                <i class="fa fa-eye-slash me-2"></i>@L["Sidebar:Mode:Hidden"]
+                <i class="fa fa-check ms-auto apya-sidebar-mode-check"></i>
+            </button>
+        </li>
+    </ul>
+</div>

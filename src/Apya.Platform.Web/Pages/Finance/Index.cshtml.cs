@@ -12,6 +12,7 @@ using Apya.Platform.Web.Pages.Shared;
 using Volo.Abp.Application.Dtos;
 using Volo.Abp.Authorization;
 using Volo.Abp.AspNetCore.Mvc.UI.RazorPages;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Apya.Platform.Web.Pages.Finance;
 
@@ -21,6 +22,7 @@ namespace Apya.Platform.Web.Pages.Finance;
 /// (sunucu-render, salt-okunur). Her kaynak kendi app service'i üzerinden
 /// çekilir (yetki/tenant filtresi korunur); yetkisi olmayan kaynak sessizce atlanır.
 /// </summary>
+[Authorize]
 public class IndexModel : AbpPageModel
 {
     private const int MaxPerSource = 100;
