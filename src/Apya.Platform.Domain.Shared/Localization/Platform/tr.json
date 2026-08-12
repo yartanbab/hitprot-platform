@@ -518,7 +518,7 @@
         "Dashboard:PersonaView": "{0} görünümü",
         "Dashboard:SelectPersona": "Persona seç",
         "Dashboard:EditMode:Hint": "Düzenleme modu — widget'ları sürükleyip yeniden boyutlandırabilirsin",
-        "Dashboard:ResetLayout": "Layout'u persona varsayılanına döndür",
+        "Dashboard:ResetLayout": "Yerleşimi persona varsayılanına döndür",
         "Persona:Cfo": "CFO / Finansman",
         "Persona:Pm": "Proje Yöneticisi",
         "Persona:Field": "Saha Kullanıcısı",

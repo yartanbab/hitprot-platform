@@ -111,6 +111,54 @@ dotnet publish src/Apya.Platform.DbMigrator -c Release -r win-x64 --self-contain
 
 ---
 
+## 6. Kod güncelleme (incremental yayın)
+
+İlk kurulumdan sonraki her kod değişikliğinde tüm paketi yeniden yüklemek gerekmez;
+self-contained paketin büyük kısmı (.NET runtime dosyaları) kod değişmedikçe aynıdır.
+
+1. **Yerelde tam publish al** (`dotnet publish` her zaman tüm çıktı klasörünü üretir,
+   ama içeride sadece değişen dosyaları yeniden derler):
+
+   ```bash
+   dotnet publish src/Apya.Platform.Web -c Release -r win-x64 --self-contained true -o ./publish
+   ```
+
+2. **FileZilla ile sadece değişen dosyaları yükle**
+   - `Görünüm → Dizin Karşılaştırması` (`Ctrl+Shift+C`) → "Değişiklik tarihine göre" seç,
+     yerel `publish/` ile sunucudaki `httpdocs/`'u karşılaştır; işaretli (değişen/yeni)
+     dosyaları seçip yükle.
+   - `Sunucu → Dosya Adı Filtreleri` ile şu yolları karşılaştırmadan **hariç tut** —
+     aksi halde sunucuya özel bu dosyalar "yerelde yok" görünüp yanlışlıkla
+     silinir/üzerine yazılır:
+     ```
+     appsettings.secrets.json
+     openiddict.pfx
+     App_Data/uploads/*
+     App_Data/DataProtection-Keys/*
+     Logs/*
+     ```
+   - Karşılaştırma çift yönlüdür (sunucuda olup yerelde olmayanları da gösterir) —
+     yalnızca yükleme yap, silme işlemi yapma.
+
+3. **Razor view (`.cshtml`) değişikliği de DLL swap gerektirir.**
+   Runtime compilation kapalı olduğu için görünümler `Apya.Platform.Web.dll` içine
+   derlenir; sadece `.cshtml` dosyasını değiştirip yüklemek yeterli değildir.
+
+4. **Dosya kilidi hatası alırsan (DLL kullanımda):**
+   Site köküne boş bir `App_offline.htm` yükle (ANCM uygulamayı düşürür), dosyaları
+   at, sonra `App_offline.htm`'i sil.
+
+> **Doğrulanmış (2026-08-12):** Aynı çıktı klasörüne iki kez `dotnet publish` çalıştırılıp
+> (aralarında tek satırlık bir localization değişikliğiyle) 1680 dosyalık çıktı karşılaştırıldı.
+> Sadece **3 dosya** değişti: değişen projenin `.dll`+`.pdb`'si ve `web.config`.
+> Önemli: **"boyuta göre" karşılaştırma yeterli değil** — embedded resource içeren bir DLL,
+> içerik değişse bile aynı boyutta kalabilir (bu testte öyle oldu). **Her zaman "değişiklik
+> tarihine göre" kullan.** `web.config` içerik değişmese de her publish'te dokunulur
+> (tarihi güncellenir) — bu zararsız bir "gereksiz yükleme"dir, atlanabilir ama atlamak
+> gerekmez.
+
+---
+
 ## Sorun giderme
 
 **Site açılmıyor / 500.30, 500.19:**
