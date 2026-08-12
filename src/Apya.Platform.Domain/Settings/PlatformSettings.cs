@@ -13,8 +13,10 @@ public static class PlatformSettings
     public static class TaskDetail
     {
         /// <summary>
-        /// Görev detayının hangi arayüzle açılacağı: "v2" (yeni ortalanmış modal, varsayılan)
-        /// veya "v1" (eski sağdan panel/drawer). Kullanıcı seviyesinde saklanır.
+        /// Görev detayının hangi arayüzle açılacağı. Kullanıcı seviyesinde saklanır.
+        ///   "v3" → en yeni ekran (VARSAYILAN): özellik sekmeleri, sağ panel, tam sayfa modu
+        ///   "v2" → ortalanmış modal (Genel / Alt Görevler / Dosyalar)
+        ///   "v1" → eski sağdan açılan panel (drawer)
         /// </summary>
         public const string Ui = Prefix + ".TaskDetail.Ui";
     }
@@ -65,8 +67,11 @@ public static class PlatformSettings
 /// <summary>Ayarların kod içinde tekrarlanmaması için varsayılanlar tek yerde.</summary>
 public static class PlatformSettingDefaults
 {
-    /// <summary>Görev detay arayüzü varsayılanı: yeni modal (V2).</summary>
-    public const string TaskDetailUi            = "v2";
+    /// <summary>Görev detay arayüzü varsayılanı: en yeni ekran (V3).</summary>
+    public const string TaskDetailUi            = "v3";
+
+    /// <summary>Geçerli görev detay arayüzü değerleri — form manipülasyonuna karşı beyaz liste.</summary>
+    public static readonly string[] TaskDetailUiValues = { "v1", "v2", "v3" };
 
     public const bool   TelemetryEnabled          = true;
     public const int    TelemetryRetentionDays    = 90;

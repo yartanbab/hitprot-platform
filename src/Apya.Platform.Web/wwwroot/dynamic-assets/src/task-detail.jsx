@@ -58,36 +58,31 @@ function TaskDetailIsland() {
 }
 
 /**
- * Görev detay arayüzü artık KULLANICI TERCİHİ ile seçilir (varsayılan: yeni modal = v2).
- * Tercih sunucuda ABP kullanıcı ayarı (`Platform.TaskDetail.Ui`) olarak saklanır ve
- * `_TaskDetailIsland.cshtml` mount div'ine `data-taskui` olarak yazar. Kullanıcı bunu
- * "Genel Ayarlar" (/Settings) sayfasından değiştirir.
+ * Görev detay arayüzü KULLANICI TERCİHİ ile seçilir; tercih sunucuda ABP kullanıcı
+ * ayarı (`Platform.TaskDetail.Ui`) olarak saklanır ve "Genel Ayarlar" (/Settings)
+ * sayfasından değiştirilir.
  *
- * QA/geçici override (kaydı değiştirmeden): sayfaya ?taskui=v2 veya ?taskui=v1 ekle.
+ * Etkin arayüz TEK yerden çözülür: sunucuda hesaplanan kullanıcı tercihi
+ * (`Platform.TaskDetail.Ui` → `_TaskDetailIsland.cshtml`'in `data-taskui` özniteliği).
+ * `?taskui=v1|v2|v3` yalnız QA içindir, kaydı değiştirmeden geçici olarak ezer.
+ * Tanımsız/tanınmayan değer → 'v3' (PlatformSettingDefaults.TaskDetailUi ile aynı).
  */
-function isV2Enabled() {
+function resolveTaskUi() {
     try {
         const param = new URLSearchParams(window.location.search).get('taskui');
-        if (param === 'v2') return true;
-        if (param === 'v1') return false;
+        if (param === 'v1' || param === 'v2' || param === 'v3') return param;
     } catch (_) { /* URL okunamadı → kullanıcı tercihine düş */ }
-    // Sunucuda çözülen kullanıcı tercihi (data-taskui): tanımsız/'v2' → yeni modal,
-    // yalnız 'v1' → eski drawer. localStorage tabanlı eski yolun yerini bu aldı.
-    // Container'ı burada okuyoruz ki main'deki çağrı yeri (argümansız) değişmesin.
     const container = document.getElementById('task-detail-island');
-    return container?.dataset?.taskui !== 'v1';
+    const pref = container?.dataset?.taskui;
+    return (pref === 'v1' || pref === 'v2') ? pref : 'v3';
+}
+
+function isV2Enabled() {
+    return resolveTaskUi() === 'v2';
 }
 
 function isV3Enabled() {
-    try {
-        if (new URLSearchParams(window.location.search).get('taskui') === 'v3') return true;
-        if (new URLSearchParams(window.location.search).get('taskui') === 'v2') return false;
-        if (new URLSearchParams(window.location.search).get('taskui') === 'v1') return false;
-        const enabled = window.localStorage.getItem('apya.taskDetail.v3') === '1';
-        return enabled || true; /* V3 şimdilik varsayılan yapıyoruz! */
-    } catch (_) {
-        return true;
-    }
+    return resolveTaskUi() === 'v3';
 }
 
 /* ─── Global API & Auto-Mount ────────────────────────────────────────── */

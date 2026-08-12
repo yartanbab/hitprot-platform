@@ -26,15 +26,17 @@ public class IndexModel : AbpPageModel
 
     public async Task OnGetAsync()
     {
-        // fallback: true → kullanıcı henüz seçmediyse tanımlı varsayılana ("v2") iner.
+        // fallback: true → kullanıcı henüz seçmediyse tanımlı varsayılana ("v3") iner.
         TaskDetailUi = await _settingManager.GetOrNullForCurrentUserAsync(PlatformSettings.TaskDetail.Ui)
                        ?? PlatformSettingDefaults.TaskDetailUi;
     }
 
     public async Task<IActionResult> OnPostAsync()
     {
-        // Yalnız iki geçerli değer; dışındaki her şey varsayılana çekilir (form manipülasyonuna karşı).
-        var value = TaskDetailUi == "v1" ? "v1" : "v2";
+        // Beyaz liste dışındaki her şey varsayılana çekilir (form manipülasyonuna karşı).
+        var value = System.Array.IndexOf(PlatformSettingDefaults.TaskDetailUiValues, TaskDetailUi) >= 0
+            ? TaskDetailUi
+            : PlatformSettingDefaults.TaskDetailUi;
         await _settingManager.SetForCurrentUserAsync(PlatformSettings.TaskDetail.Ui, value);
         TempData["Saved"] = true;
         return RedirectToPage();
