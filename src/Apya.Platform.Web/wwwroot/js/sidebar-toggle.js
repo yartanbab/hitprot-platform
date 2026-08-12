@@ -9,26 +9,129 @@ $(function () {
         return;
     }
 
+    // --- 2. seviye menü grupları varsayılan KAPALI ---
+    // Yönetim altındaki açılır gruplar (Kiracı Yönetimi, Kimlik yönetimi, Platform,
+    // Geri Bildirim). LeptonX aktif sayfanın grubunu AÇIK render ediyor; kullanıcı
+    // tercihi hepsinin kapalı gelmesi, tıklayınca açılması. Yalnız başlangıç
+    // durumunu değiştiriyoruz — temanın toggle handler'ına dokunulmuyor, bu yüzden
+    // açma/kapama ve caret yönü (bi-chevron-up/down) kendi akışında çalışmaya devam eder.
+    // Seçici doğal olarak 2. seviyeyi hedefler: 1. seviye listeler li.outer-menu-item
+    // çocuğudur ve zaten kalıcı açık bölüm başlıklarıdır (apya-theme-bridge.css).
+    document.querySelectorAll('li.lpx-inner-menu-item > ul.lpx-inner-menu').forEach(function (ul) {
+        if (ul.classList.contains('collapsed')) {
+            return;
+        }
+        ul.classList.add('collapsed');
+        var caret = ul.parentElement.querySelector(':scope > a .lpx-caret');
+        if (caret) {
+            caret.classList.remove('bi-chevron-up');
+            caret.classList.add('bi-chevron-down');
+        }
+    });
+
     var html = document.documentElement;
     var wrapper = document.getElementById('lpx-wrapper');
     if (!wrapper) {
         return;
     }
 
-    // FOUC'un çözdüğü durumu temanın class'ına yansıt (native logo/hover kuralları da işlesin).
-    if (html.getAttribute('data-sidebar') === 'collapsed') {
-        wrapper.classList.add('hover-trigger');
+    // --- Kenar çubuğu modu: sabit / dinamik / kapalı ---
+    // SoT <html data-sidebar>: (yok)=pinned · collapsed=dynamic · hidden=hidden.
+    //   pinned  → 280px, içerik yanında (tema varsayılanı)
+    //   dynamic → 72px ray; fare üzerine gelince 280px'e İÇERİĞİN ÜSTÜNE açılır
+    //             (içeriğin margin-left'i ray genişliğinde sabit kalır), çekilince kapanır
+    //   hidden  → tamamen gizli, içerik tüm genişliği kullanır
+    // Kalıcılık kendi anahtarımızda ('apya-sidebar-mode'); LeptonX'in
+    // 'lpx:side-menu-state' anahtarı da senkron tutuluyor ki temanın kendi
+    // davranışı bizimkiyle çelişmesin. Pre-paint: ApyaThemeHead FOUC script'i.
+    var MODE_KEY = 'apya-sidebar-mode';
+    var MODES = ['pinned', 'dynamic', 'hidden'];
+    var MODE_ICONS = {
+        pinned:  'fa-table-columns',
+        dynamic: 'fa-arrows-left-right-to-line',
+        hidden:  'fa-eye-slash'
+    };
+    // Temanın kendi düğmesini izleyen observer. applyMode sırasında DISCONNECT
+    // edilir: bir "syncing" bayrağı YETMEZ, çünkü MutationObserver geri çağrısı
+    // mikro-görevdir ve bayrak senkron blokta temizlendikten SONRA çalışır —
+    // kendi yazdığımız class'ı geri okuyup modu ezerdi ("Kapalı" seçilince
+    // anında "Sabit"e dönüyordu). disconnect() bekleyen kayıtları da atar.
+    var classObserver = null;
+
+    function currentMode() {
+        var attr = html.getAttribute('data-sidebar');
+        if (attr === 'collapsed') { return 'dynamic'; }
+        if (attr === 'hidden') { return 'hidden'; }
+        return 'pinned';
     }
 
-    // Tema butonu class'ı değiştirdiğinde attribute'u aynala — iki CSS yolu tek durumdan beslensin.
-    // (localStorage'ı tema kendi tıklama handler'ında zaten güncelliyor, tekrar yazmıyoruz.)
-    new MutationObserver(function () {
-        if (wrapper.classList.contains('hover-trigger')) {
+    function renderMode(mode) {
+        var toggle = document.getElementById('SidebarModeToggle');
+        if (!toggle) { return; }
+        var icon = toggle.querySelector('i');
+        if (icon) { icon.className = 'fa ' + MODE_ICONS[mode]; }
+        // Etiketler view'dan data-label-* ile geliyor (i18n; JS'e metin gömülmez).
+        var label = toggle.getAttribute('data-label-' + mode);
+        if (label) {
+            toggle.setAttribute('title', label);
+            toggle.setAttribute('aria-label', label);
+        }
+        var menu = toggle.parentElement.querySelector('.apya-sidebar-mode-menu');
+        if (menu) {
+            menu.querySelectorAll('[data-sidebar-mode]').forEach(function (item) {
+                item.classList.toggle('active', item.getAttribute('data-sidebar-mode') === mode);
+            });
+        }
+    }
+
+    function applyMode(mode, persist) {
+        if (MODES.indexOf(mode) < 0) { mode = 'pinned'; }
+        if (classObserver) { classObserver.disconnect(); }
+        if (mode === 'dynamic') {
             html.setAttribute('data-sidebar', 'collapsed');
+            wrapper.classList.add('hover-trigger');
+        } else if (mode === 'hidden') {
+            html.setAttribute('data-sidebar', 'hidden');
+            // hover-trigger KALKMALI: aksi halde tema ray kozmetiğini uygulamaya
+            // devam eder ve gizli sidebar hover'da tekrar belirir.
+            wrapper.classList.remove('hover-trigger');
         } else {
             html.removeAttribute('data-sidebar');
+            wrapper.classList.remove('hover-trigger');
         }
-    }).observe(wrapper, { attributes: true, attributeFilter: ['class'] });
+        if (classObserver) {
+            classObserver.observe(wrapper, { attributes: true, attributeFilter: ['class'] });
+        }
+
+        if (persist !== false) {
+            try {
+                localStorage.setItem(MODE_KEY, mode);
+                // Temanın kendi anahtarı da tutarlı kalsın (ray durumu).
+                localStorage.setItem('lpx:side-menu-state', mode === 'dynamic' ? '1' : '0');
+            } catch (e) { /* yok say */ }
+        }
+        renderMode(mode);
+    }
+
+    // Temanın KENDİ düğmesi (.menu-collapse-icon) class'ı değiştirirse modu ondan türet
+    // → sidebar içindeki düğme ile header seçicisi aynı durumu paylaşır.
+    classObserver = new MutationObserver(function () {
+        applyMode(wrapper.classList.contains('hover-trigger') ? 'dynamic' : 'pinned');
+    });
+
+    // FOUC'un çözdüğü durumu temanın class'ına yansıt (native logo/hover kuralları da
+    // işlesin). applyMode observer'ı kendi bağlar, bu yüzden ayrıca observe çağrılmaz.
+    applyMode(currentMode(), false);
+
+    // Header seçicisi — dropdown öğeleri.
+    var modeMenu = document.querySelector('.apya-sidebar-mode-menu');
+    if (modeMenu) {
+        modeMenu.addEventListener('click', function (e) {
+            var item = e.target.closest('[data-sidebar-mode]');
+            if (!item) { return; }
+            applyMode(item.getAttribute('data-sidebar-mode'));
+        });
+    }
 
     // Erişilebilirlik: temanın butonu düz bir <i> — role/klavye/etiket ekle.
     var btn = document.querySelector('.menu-collapse-icon');

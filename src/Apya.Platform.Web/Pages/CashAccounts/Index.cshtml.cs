@@ -8,9 +8,12 @@ using Apya.Platform.CashMovements;
 using Apya.Platform.ExchangeRates;
 using Apya.Platform.Web.Pages.Shared;
 using Volo.Abp.AspNetCore.Mvc.UI.RazorPages;
+using Microsoft.AspNetCore.Authorization;
+using Apya.Platform.Permissions;
 
 namespace Apya.Platform.Web.Pages.CashAccounts;
 
+[Authorize(PlatformPermissions.CashAccounts.Default)]
 public class IndexModel : AbpPageModel
 {
     private readonly ICashAccountAppService _cashAccountAppService;

@@ -1,8 +1,11 @@
 using Apya.Platform.Web.Pages;
 using Volo.Abp.MultiTenancy;
+using Microsoft.AspNetCore.Authorization;
+using Apya.Platform.Permissions;
 
 namespace Apya.Platform.Web.Pages.Grants;
 
+[Authorize(PlatformPermissions.Grants.Default)]
 public class IndexModel : PlatformPageModel
 {
     private readonly ICurrentTenant _currentTenant;

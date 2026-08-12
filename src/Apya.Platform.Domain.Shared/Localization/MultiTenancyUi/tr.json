@@ -1,0 +1,10 @@
+{
+  "culture": "tr",
+  "texts": {
+    "Tenant": "Kiracı",
+    "SwitchTenant": "Kiracı değiştir",
+    "SwitchTenantHint": "Host tarafına geçmek için isim alanını boş bırakın.",
+    "GivenTenantIsNotExist": "İstenilen kiracı bulunamadı: {0}",
+    "GivenTenantIsNotAvailable": "İstenilen kiracı bulunamadı: {0}"
+  }
+}

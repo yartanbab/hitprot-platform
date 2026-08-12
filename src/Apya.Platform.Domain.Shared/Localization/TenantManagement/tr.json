@@ -1,0 +1,13 @@
+{
+  "culture": "tr",
+  "texts": {
+    "Menu:TenantManagement": "Kiracı Yönetimi",
+    "Permission:TenantManagement": "Kiracı Yönetimi",
+    "Tenants": "Kiracılar",
+    "NewTenant": "Yeni kiracı",
+    "TenantName": "Kiracı adı",
+    "DisplayName:TenantName": "Kiracı Adı",
+    "TenantDeletionConfirmationMessage": "'{0}' isimli kiracı silinecektir. Onaylıyor musunuz?",
+    "Volo.Abp.TenantManagement:DuplicateTenantName": "Kiracı ismi zaten mevcut: {Name}"
+  }
+}
