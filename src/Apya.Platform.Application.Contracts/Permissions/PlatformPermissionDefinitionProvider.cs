@@ -153,6 +153,9 @@ public class PlatformPermissionDefinitionProvider : PermissionDefinitionProvider
         feedbacksPermission.AddChild(PlatformPermissions.Feedbacks.Export, L("Permission:Feedbacks.Export"));
         feedbacksPermission.AddChild(PlatformPermissions.Feedbacks.ManageSettings, L("Permission:Feedbacks.ManageSettings"));
 
+        // Giriş ekranı yapılandırması — host seviyesinde tek izin, alt izni yok.
+        systemGroup.AddPermission(PlatformPermissions.LoginScreen.Default, L("Permission:LoginScreen"));
+
         var systemHealthPermission = systemGroup.AddPermission(PlatformPermissions.SystemHealth.Default, L("Permission:SystemHealth"));
         systemHealthPermission.AddChild(PlatformPermissions.SystemHealth.Resolve, L("Permission:SystemHealth.Resolve"));
     }

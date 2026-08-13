@@ -1,0 +1,19 @@
+@model string
+@* Harici giriş sağlayıcısının işareti. Tanınmayan şema için ikon çizilmez —
+   düğmede yalnız sağlayıcının adı kalır. *@
+@{
+    var scheme = (Model ?? string.Empty).ToLowerInvariant();
+}
+@if (scheme.Contains("google"))
+{
+    <span style="font-weight:700;font-size:15px;color:#4285F4" aria-hidden="true">G</span>
+}
+else if (scheme.Contains("microsoft"))
+{
+    <span style="display:grid;grid-template-columns:6px 6px;grid-template-rows:6px 6px;gap:2px" aria-hidden="true">
+        <span style="background:#F25022"></span>
+        <span style="background:#7FBA00"></span>
+        <span style="background:#00A4EF"></span>
+        <span style="background:#FFB900"></span>
+    </span>
+}

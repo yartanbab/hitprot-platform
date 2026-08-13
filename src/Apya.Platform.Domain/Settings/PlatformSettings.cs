@@ -38,6 +38,28 @@ public static class PlatformSettings
     }
 
     /// <summary>
+    /// Giriş ekranı ayarları — host (Global) seviyesinde, oturumsuz da okunur.
+    /// KRİTİK: .WithProviders(Global) DefaultValueSettingValueProvider'ı zincirden
+    /// çıkarır, bu yüzden okurken GetAsync&lt;T&gt;'ye AÇIK varsayılan geçilmeli.
+    /// </summary>
+    public static class Account
+    {
+        /// <summary>
+        /// Giriş ekranında kiracı (müşteri) seçici gösterilsin mi? Kapalıyken kutu hiç
+        /// render edilmez; kiracı kullanıcıları yalnız host yöneticisinin
+        /// impersonate akışıyla erişilir.
+        /// </summary>
+        public const string ShowTenantSwitch = Prefix + ".Account.ShowTenantSwitch";
+
+        /// <summary>
+        /// Giriş ekranında Google / Microsoft düğmeleri gösterilsin mi? Altyapı
+        /// hazırlanana kadar kapalı; açıldığında ABP'nin yapılandırılmış harici
+        /// sağlayıcıları listelenir.
+        /// </summary>
+        public const string ShowSocialLogin = Prefix + ".Account.ShowSocialLogin";
+    }
+
+    /// <summary>
     /// Geri bildirim modülü ayarları — hepsi host (Global) seviyesinde.
     /// KRİTİK: .WithProviders(Global) DefaultValueSettingValueProvider'ı zincirden
     /// çıkarır, bu yüzden okurken GetAsync&lt;T&gt;'ye AÇIK varsayılan geçilmeli.
@@ -72,6 +94,12 @@ public static class PlatformSettingDefaults
 
     /// <summary>Geçerli görev detay arayüzü değerleri — form manipülasyonuna karşı beyaz liste.</summary>
     public static readonly string[] TaskDetailUiValues = { "v1", "v2", "v3" };
+
+    /// <summary>Giriş ekranı kiracı seçicisi varsayılanı: KAPALI (yalnız kullanıcı girişi).</summary>
+    public const bool   AccountShowTenantSwitch   = false;
+
+    /// <summary>Google/Microsoft düğmeleri varsayılanı: KAPALI (sağlayıcı altyapısı yok).</summary>
+    public const bool   AccountShowSocialLogin    = false;
 
     public const bool   TelemetryEnabled          = true;
     public const int    TelemetryRetentionDays    = 90;

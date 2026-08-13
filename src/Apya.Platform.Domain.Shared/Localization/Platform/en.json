@@ -48,6 +48,7 @@
     "Menu:FeedbackAdmin": "Feedback",
     "Menu:FeedbackSettings": "Feedback Settings",
     "Menu:SystemHealth": "System Health",
+    "Menu:LoginScreen": "Login Screen",
     "Menu:GeneralSettings": "General Settings",
 
     "Setting:TaskDetail.Ui": "Task Detail View",
@@ -276,6 +277,12 @@
     "Setting:Feedback.MaxFileSizeMb": "Maximum File Size (MB)",
     "Setting:Feedback.AllowedFileExtensions": "Allowed File Extensions",
     "Setting:Feedback.AllowAnonymous": "Allow Anonymous Submission",
+    "Setting:Account.ShowTenantSwitch": "Tenant Selector on Login Screen",
+    "Setting:Account.ShowTenantSwitch.Description": "When off, the login screen asks only for user name and password; users that belong to a tenant cannot sign in with their own accounts.",
+    "Setting:Account.ShowSocialLogin": "Social Login on Login Screen",
+    "Setting:Account.ShowSocialLogin.Description": "Shows the Google / Microsoft buttons. They stay hidden if no provider is configured, even when this is on.",
+
+    "Permission:LoginScreen": "Login Screen Settings",
 
     "Permission:SystemHealth": "System Health",
     "Permission:SystemHealth.Resolve": "Mark Client Error Resolved",

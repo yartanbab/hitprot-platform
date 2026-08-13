@@ -47,6 +47,25 @@ public class PlatformSettingDefinitionProvider : SettingDefinitionProvider
                 .WithProviders(GlobalSettingValueProvider.ProviderName)
         );
 
+        // --- Giriş ekranı --- (host seviyesinde)
+        // isVisibleToClients: giriş sayfası oturumsuz render edilir; ayar Global
+        // provider'dan anonim de okunabilir.
+        context.Add(
+            new SettingDefinition(
+                PlatformSettings.Account.ShowTenantSwitch,
+                defaultValue: PlatformSettingDefaults.AccountShowTenantSwitch.ToString().ToLowerInvariant(),
+                displayName: L("Setting:Account.ShowTenantSwitch"),
+                description: L("Setting:Account.ShowTenantSwitch.Description"))
+                .WithProviders(GlobalSettingValueProvider.ProviderName),
+
+            new SettingDefinition(
+                PlatformSettings.Account.ShowSocialLogin,
+                defaultValue: PlatformSettingDefaults.AccountShowSocialLogin.ToString().ToLowerInvariant(),
+                displayName: L("Setting:Account.ShowSocialLogin"),
+                description: L("Setting:Account.ShowSocialLogin.Description"))
+                .WithProviders(GlobalSettingValueProvider.ProviderName)
+        );
+
         // --- Geri bildirim modülü --- (hepsi host seviyesinde)
         context.Add(
             new SettingDefinition(

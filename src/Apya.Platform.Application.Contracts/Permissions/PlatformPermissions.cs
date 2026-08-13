@@ -176,6 +176,15 @@ public static class PlatformPermissions
         public const string ManageSettings = Default + ".ManageSettings"; // ayarlar ekranı
     }
 
+    // --- GİRİŞ EKRANI (host) ---
+    // Giriş ekranı yapılandırması: kiracı seçici ve sosyal giriş düğmelerinin görünürlüğü.
+    // Ayarları OKUMAK izin gerektirmez — giriş sayfası oturumsuz render edilir; yalnız
+    // yazmak bu izne bağlıdır.
+    public static class LoginScreen
+    {
+        public const string Default = GroupName + ".LoginScreen";
+    }
+
     // --- SİSTEM SAĞLIĞI / TELEMETRİ (host) ---
     public static class SystemHealth
     {
