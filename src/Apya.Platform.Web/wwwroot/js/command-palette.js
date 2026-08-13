@@ -8,6 +8,7 @@ $(function () {
     }
 
     var overlay, panel, input, list, emptyEl;
+    var lastTrigger = null; // paleti açan öğe — kapanışta odak buraya döner
     var items = [];
     var filtered = [];
     var activeIndex = -1;
@@ -225,6 +226,15 @@ $(function () {
             close();
             return;
         }
+        // FOCUS TRAP: panel `aria-modal="true"` ilan ediyor, o hâlde odak
+        // dışarı KAÇMAMALI (denetimde kaçıyordu). Listbox örüntüsünde seçim
+        // ok tuşlarıyla yapılır ve panelde input dışında odaklanabilir öğe
+        // yoktur → Tab yutulur, odak inputta kalır.
+        if (e.key === 'Tab') {
+            e.preventDefault();
+            input.focus();
+            return;
+        }
         if (e.key === 'ArrowDown') {
             e.preventDefault();
             if (filtered.length) {
@@ -250,6 +260,10 @@ $(function () {
     }
 
     function open() {
+        // Açan öğeyi ŞİMDİ yakala: buildDom/focus sonrası activeElement artık
+        // paletin input'u olur.
+        var active = document.activeElement;
+        lastTrigger = (active && active !== document.body) ? active : null;
         if (!overlay) {
             buildDom();
         }
@@ -275,6 +289,12 @@ $(function () {
         }
         overlay.classList.remove('open');
         document.body.classList.remove('apya-command-palette-lock');
+        // Odak, paleti açan öğeye döner — klavye kullanıcısı sayfanın başına
+        // savrulmaz. Öğe DOM'dan kalkmışsa sessizce atlanır.
+        if (lastTrigger && document.contains(lastTrigger)) {
+            lastTrigger.focus();
+        }
+        lastTrigger = null;
     }
 
     document.addEventListener('keydown', function (e) {

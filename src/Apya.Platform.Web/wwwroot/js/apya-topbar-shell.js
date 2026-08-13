@@ -171,17 +171,32 @@ $(function () {
             recentsBtn.setAttribute('aria-expanded', 'true');
             recentsBtn.classList.add('is-open');
             document.addEventListener('click', onDocClick);
-            document.addEventListener('keydown', onEsc);
+            document.addEventListener('keydown', onMenuKey);
+            // Odak menüye girer — "+ Yeni" / yardım menüleriyle aynı davranış.
+            // (Denetimde bu iki menü farklı davranıyordu: aynı örüntü, tek kural.)
+            var first = menu.querySelector('.apya-topbar-menu-row');
+            if (first) { first.focus(); }
         });
         function closeMenu() {
             menu.hidden = true;
             recentsBtn.setAttribute('aria-expanded', 'false');
             recentsBtn.classList.remove('is-open');
             document.removeEventListener('click', onDocClick);
-            document.removeEventListener('keydown', onEsc);
+            document.removeEventListener('keydown', onMenuKey);
         }
         function onDocClick(e) { if (!menu.contains(e.target)) { closeMenu(); } }
-        function onEsc(e) { if (e.key === 'Escape') { closeMenu(); recentsBtn.focus(); } }
+        function onMenuKey(e) {
+            if (e.key === 'Escape') { closeMenu(); recentsBtn.focus(); return; }
+            if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') { return; }
+            e.preventDefault();
+            var rows = [].slice.call(menu.querySelectorAll('.apya-topbar-menu-row'));
+            if (!rows.length) { return; }
+            var i = rows.indexOf(document.activeElement);
+            var next = e.key === 'ArrowDown' ? i + 1 : i - 1;
+            if (next < 0) { next = rows.length - 1; }
+            if (next >= rows.length) { next = 0; }
+            rows[next].focus();
+        }
 
         // --- breadcrumb ---
         var crumb = document.createElement('div');
