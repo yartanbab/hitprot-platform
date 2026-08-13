@@ -84,6 +84,59 @@
         return '<span class="text-muted small ms-2" title="Yorum sayısı"><i class="fa fa-comment me-1"></i>' + n + '</span>';
     }
 
+    // --- Alt görev hiyerarşisi (Görevler listesi) ---------------------------
+    // TaskStatus enum: Cancelled=0, Todo=1, InProgress=2, InReview=3, Done=4.
+    var STATUS_MAP = {
+        0: { tone: 'negative', text: 'İptal' },
+        1: { tone: 'neutral', text: 'Bekliyor' },
+        2: { tone: 'warning', text: 'Sürüyor' },
+        3: { tone: 'brand', text: 'Testte' },
+        4: { tone: 'positive', text: 'Tamamlandı' }
+    };
+
+    function statusChip(status, boardColumnName) {
+        // Özel kolondaysa kolon adını göster (kanban paritesi).
+        if (boardColumnName) return '<span class="apya-chip apya-chip-brand">' + esc(boardColumnName) + '</span>';
+        var s = STATUS_MAP[status] || STATUS_MAP[1];
+        return '<span class="apya-chip apya-chip-' + s.tone + '">' + s.text + '</span>';
+    }
+
+    // Aç/kapa chevron'u. Alt görevi olmayan satırda AYNI genişlikte boş bir yer
+    // tutucu döner — aksi halde başlıklar satırdan satıra kayar.
+    function subtaskToggle(row) {
+        if (!row || !row.subTaskCount) {
+            return '<span class="apya-subtask-toggle is-empty" aria-hidden="true"></span>';
+        }
+        return '<button type="button" class="apya-subtask-toggle" data-subtask-toggle="' + row.id + '"' +
+            ' aria-expanded="false" aria-label="Alt görevleri göster">' +
+            '<i class="fa fa-chevron-right"></i></button>';
+    }
+
+    // "2/5" rozeti — tamamlanan / toplam alt görev.
+    function subtaskCountBadge(row) {
+        if (!row || !row.subTaskCount) return '';
+        return '<span class="apya-subtask-count" title="Tamamlanan / toplam alt görev">' +
+            row.completedSubTaskCount + '/' + row.subTaskCount + '</span>';
+    }
+
+    // Chevron açılınca DataTables child satırına basılan alt görev listesi.
+    // Üst tablonun kolonlarına HİZALANMAZ: child hücre tek bir colspan'dir ve
+    // kolon genişlikleri scrollX ile dinamiktir — kendi flex düzeni vardır.
+    function subtaskRows(subtasks) {
+        if (!subtasks || !subtasks.length) {
+            return '<div class="apya-subtask-panel"><p class="apya-subtask-empty">Alt görev bulunamadı.</p></div>';
+        }
+        return '<div class="apya-subtask-panel">' + subtasks.map(function (s) {
+            return '<div class="apya-subtask-row" data-subtask-id="' + s.id + '" role="button" tabindex="0">' +
+                '<span class="apya-subtask-code">' + esc(s.code) + '</span>' +
+                '<span class="apya-subtask-title' + (s.status === 4 ? ' is-done' : '') + '">' + esc(s.title) + '</span>' +
+                statusChip(s.status, s.boardColumnName) +
+                '<span class="apya-subtask-due">' + dueDateChip(s.dueDate, s.status, s.completedDate) + '</span>' +
+                assigneeAvatar(s.assigneeName, true) +
+                '</div>';
+        }).join('') + '</div>';
+    }
+
     window.apyaTask = {
         esc: esc,
         hashTone: hashTone,
@@ -91,6 +144,10 @@
         priorityBadge: priorityBadge,
         assigneeAvatar: assigneeAvatar,
         dueDateChip: dueDateChip,
-        commentCount: commentCount
+        commentCount: commentCount,
+        statusChip: statusChip,
+        subtaskToggle: subtaskToggle,
+        subtaskCountBadge: subtaskCountBadge,
+        subtaskRows: subtaskRows
     };
 })(window);

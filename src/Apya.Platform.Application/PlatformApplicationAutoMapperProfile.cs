@@ -59,7 +59,11 @@ namespace Apya.Platform
             CreateMap<Apya.Platform.Tasks.TaskItem, Apya.Platform.Tasks.TaskDto>()
                 .ForMember(dest => dest.AssigneeName, opt => opt.MapFrom(src => src.Assignee != null ? src.Assignee.UserName : null))
                 .ForMember(dest => dest.ParentTaskTitle, opt => opt.MapFrom(src => src.ParentTask != null ? src.ParentTask.Title : null))
-                .ForMember(dest => dest.IsFavorite, opt => opt.Ignore()); // TaskFavorite join'inden AppService'te doldurulur
+                .ForMember(dest => dest.IsFavorite, opt => opt.Ignore()) // TaskFavorite join'inden AppService'te doldurulur
+                // Alt görev sayaçları gizlilik (APYA-22) süzgecinden geçmek zorunda,
+                // bu yüzden navigasyondan otomatik türetilmez; AppService doldurur.
+                .ForMember(dest => dest.SubTaskCount, opt => opt.Ignore())
+                .ForMember(dest => dest.CompletedSubTaskCount, opt => opt.Ignore());
 
             // 2. CreateUpdateTaskDto -> TaskItem
             CreateMap<Apya.Platform.Tasks.CreateUpdateTaskDto, Apya.Platform.Tasks.TaskItem>();
