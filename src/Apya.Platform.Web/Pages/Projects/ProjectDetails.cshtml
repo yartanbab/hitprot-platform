@@ -1,8 +1,11 @@
 @page "{id:Guid}"
 @using Apya.Platform.Permissions
+@using Apya.Platform.Localization
 @using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Mvc.Localization
 @using Volo.Abp.AspNetCore.Mvc.UI.Bootstrap.TagHelpers.Modal
 @inject IAuthorizationService AuthorizationService
+@inject IHtmlLocalizer<PlatformResource> L
 @model Apya.Platform.Web.Pages.Projects.ProjectDetailsModel
 @{
     ViewBag.Title = Model.Project?.Name;
@@ -425,16 +428,16 @@
     <div class="apya-console-tabs" role="tablist">
         <button type="button" class="apya-console-tab active" id="btn-view-list"
                 role="tab" aria-selected="true" aria-controls="view-list">
-            <i class="fa fa-list" aria-hidden="true"></i>Liste
+            <i class="fa fa-list" aria-hidden="true"></i>@L["Tasks:View:List"]
         </button>
         <button type="button" class="apya-console-tab" id="btn-view-kanban"
                 role="tab" aria-selected="false" aria-controls="view-kanban">
-            <i class="fa fa-table-columns" aria-hidden="true"></i>Kanban
+            <i class="fa fa-table-columns" aria-hidden="true"></i>@L["Tasks:View:Kanban"]
         </button>
         <button type="button" class="apya-console-tab" id="btn-view-gantt"
                 role="tab" aria-selected="false" aria-controls="view-gantt"
                 title="Başlangıç-bitiş tarihlerinden türeyen zaman çizelgesi">
-            <i class="fa fa-clock" aria-hidden="true"></i>Zaman Çizelgesi
+            <i class="fa fa-clock" aria-hidden="true"></i>@L["Tasks:View:Gantt"]
         </button>
         <span class="apya-console-count apya-numeric" id="console-task-count">@totalTasks görev</span>
     </div>
