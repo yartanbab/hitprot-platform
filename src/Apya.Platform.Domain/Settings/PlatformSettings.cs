@@ -21,6 +21,22 @@ public static class PlatformSettings
         public const string Ui = Prefix + ".TaskDetail.Ui";
     }
 
+    /// <summary>
+    /// Uygulama kabuğu (sol menü + üst bar) tercihleri — kullanıcı seviyesinde.
+    /// Yerleşim durumları (bölüm katlama, ray modu) localStorage'da yeterli;
+    /// burada YALNIZ cihazlar arası taşınması gerekenler tutulur.
+    /// </summary>
+    public static class Shell
+    {
+        /// <summary>
+        /// Kenar çubuğunda sabitlenen menü öğelerinin adları — virgülle ayrık
+        /// (örn. "Apya.Finance.CashAccounts,Apya.Reports.Overview"). Menü ADI
+        /// saklanır, etiketi değil: dil değişince veya etiket güncellenince
+        /// sabitlemeler kaybolmasın.
+        /// </summary>
+        public const string Pins = Prefix + ".Shell.Pins";
+    }
+
     public static class Telemetry
     {
         /// <summary>
@@ -94,6 +110,16 @@ public static class PlatformSettingDefaults
 
     /// <summary>Geçerli görev detay arayüzü değerleri — form manipülasyonuna karşı beyaz liste.</summary>
     public static readonly string[] TaskDetailUiValues = { "v1", "v2", "v3" };
+
+    /// <summary>
+    /// Sabitlenen menü öğeleri varsayılanı — handoff'un "varsayılan: Kasa & Banka,
+    /// Özet Raporlar, Başvurular" listesi. Kullanıcı iğneye ilk kez dokunduğunda
+    /// kendi listesi yazılır ve bu varsayılan devreden çıkar.
+    /// </summary>
+    public const string ShellPins = "Apya.Finance.CashAccounts,Apya.Reports.Overview,Apya.Grants.Applications";
+
+    /// <summary>Sabitlenebilir en fazla öğe — liste kenar çubuğunu boğmasın.</summary>
+    public const int ShellPinsMax = 12;
 
     /// <summary>Giriş ekranı kiracı seçicisi varsayılanı: KAPALI (yalnız kullanıcı girişi).</summary>
     public const bool   AccountShowTenantSwitch   = false;
