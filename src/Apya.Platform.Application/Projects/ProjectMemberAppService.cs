@@ -149,6 +149,86 @@ public class ProjectMemberAppService : PlatformAppService, IProjectMemberAppServ
         await _memberRepository.DeleteAsync(member, autoSave: true);
     }
 
+    /// <summary>
+    /// Tek seferlik geçiş: ProjectMember 8. adımda geldiği için eski projelerin
+    /// ekibi boş görünüyor. Bu işlem ekibi mevcut görev atamalarından türetir.
+    ///
+    /// DbMigrator seed'i olarak YAZILMADI: `ApyaPlatformDbMigrationService`
+    /// tenant'ları dolaşmıyor, `_dataSeeder.SeedAsync()`i host bağlamında tek
+    /// sefer çağırıyor — multi-tenant filtresi yüzünden tenant verisi görünmez,
+    /// seeder sessizce hiçbir şey yapmazdı. Kullanıcı tetiklemesi ayrıca doğru
+    /// tenant bağlamını ve anında geri bildirimi bedavaya getiriyor.
+    /// </summary>
+    public async Task<int> GetBackfillCandidateCountAsync(Guid projectId)
+    {
+        var (candidates, _, _) = await ResolveBackfillAsync(projectId);
+        return candidates.Count;
+    }
+
+    [Authorize(PlatformPermissions.Projects.ManageTeam)]
+    public async Task<ProjectMemberBackfillResultDto> BackfillFromAssigneesAsync(Guid projectId)
+    {
+        var (candidates, alreadyMember, previouslyRemoved) = await ResolveBackfillAsync(projectId);
+
+        foreach (var userId in candidates)
+        {
+            await _memberRepository.InsertAsync(
+                new ProjectMember(GuidGenerator.Create(), projectId, userId,
+                                  ProjectMemberRole.Member, CurrentTenant.Id));
+        }
+
+        return new ProjectMemberBackfillResultDto
+        {
+            Added = candidates.Count,
+            SkippedAlreadyMember = alreadyMember,
+            SkippedPreviouslyRemoved = previouslyRemoved
+        };
+    }
+
+    /// <summary>
+    /// Backfill'in kimi ekleyeceğini hesaplar. Sayım ve uygulama AYNI kaynaktan
+    /// gelsin diye ortak: iki ayrı yerde yazılsa şerit "3 kişi" deyip işlem 1
+    /// kişi ekleyebilirdi.
+    /// </summary>
+    private async Task<(List<Guid> Candidates, int AlreadyMember, int PreviouslyRemoved)>
+        ResolveBackfillAsync(Guid projectId)
+    {
+        // Durumu ne olursa olsun TÜM atamalar sayılır: tamamlanmış görevi olan
+        // da bu projede çalışmıştır.
+        var tasks = await _taskRepository.GetListAsync(t => t.ProjectId == projectId && t.AssigneeId.HasValue);
+        var assigneeIds = tasks.Select(t => t.AssigneeId!.Value).Distinct().ToList();
+        if (assigneeIds.Count == 0)
+        {
+            return (new List<Guid>(), 0, 0);
+        }
+
+        // Soft-delete filtresi KAPALI okunur: ekipten çıkarılmış kişinin satırı
+        // duruyor ve o kişi BİLEREK çıkarılmış demektir — backfill onu geri
+        // getirmemeli. Filtre açık okunsaydı "kayıt yok" sanılıp yeniden
+        // eklenirdi (ayrıca tekil indeks INSERT'i reddederdi).
+        List<ProjectMember> allRows;
+        using (_dataFilter.Disable<ISoftDelete>())
+        {
+            allRows = await _memberRepository.GetListAsync(m => m.ProjectId == projectId);
+        }
+
+        var live = allRows.Where(m => !m.IsDeleted).Select(m => m.UserId).ToHashSet();
+        var removed = allRows.Where(m => m.IsDeleted).Select(m => m.UserId).ToHashSet();
+
+        var candidates = new List<Guid>();
+        var alreadyMember = 0;
+        var previouslyRemoved = 0;
+
+        foreach (var userId in assigneeIds)
+        {
+            if (live.Contains(userId)) { alreadyMember++; }
+            else if (removed.Contains(userId)) { previouslyRemoved++; }
+            else { candidates.Add(userId); }
+        }
+
+        return (candidates, alreadyMember, previouslyRemoved);
+    }
+
     private static string RoleText(ProjectMemberRole role) => role switch
     {
         ProjectMemberRole.Lead => "Sorumlu",

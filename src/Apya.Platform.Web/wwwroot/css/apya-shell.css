@@ -1855,6 +1855,22 @@ i.apya-priority-dot {
 }
 .apya-team-role-select { width: auto; min-width: 92px; }
 
+/* Tek seferlik geçiş şeridi — iş bitince JS gizler, kalıcı bir UI değil. */
+.apya-team-backfill {
+    display: flex;
+    align-items: center;
+    gap: var(--apya-space-2);
+    padding: var(--apya-space-2);
+    margin-bottom: var(--apya-space-2);
+    border: 1px solid var(--apya-border-default);
+    border-radius: var(--apya-radius-lg);
+    background: var(--apya-surface-sunken);
+    font-size: 12px;
+    color: var(--apya-text-secondary);
+}
+.apya-team-backfill > span { flex: 1 1 auto; }
+.apya-team-backfill .btn { flex: none; white-space: nowrap; }
+
 .apya-team-list { display: flex; flex-direction: column; }
 .apya-team-row {
     display: grid;

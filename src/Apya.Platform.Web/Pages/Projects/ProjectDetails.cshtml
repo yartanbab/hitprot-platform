@@ -656,6 +656,20 @@
                             <i class="fa fa-plus" aria-hidden="true"></i> Ekle
                         </button>
                     </div>
+
+                    @* Tek seferlik geçiş — ekip 8. adımdan önce görev
+                       atamalarından türüyordu, eski projeler boş görünüyor.
+                       Yalnız ATANMIŞ GÖREVİ OLUP ekipte olmayan kişi varsa
+                       gösterilir; işi bitince kendiliğinden kaybolur. *@
+                    <div class="apya-team-backfill d-none" id="team-backfill">
+                        <span>
+                            Bu projede görev atanmış ama ekipte olmayan kişiler var.
+                            <strong id="team-backfill-count">0</strong> kişi eklenebilir.
+                        </span>
+                        <button type="button" class="btn btn-outline-primary btn-sm" id="team-backfill-btn">
+                            <i class="fa fa-user-plus" aria-hidden="true"></i> Ekibe ekle
+                        </button>
+                    </div>
                 }
 
                 <div id="team-list" class="apya-team-list" aria-live="polite"></div>
