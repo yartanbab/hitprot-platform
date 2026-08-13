@@ -1,0 +1,158 @@
+@using System.Globalization
+@using System.Linq
+@using Apya.Platform.Accounts
+@using Volo.Abp.AspNetCore.Mvc.UI.Alerts
+@using Volo.Abp.AspNetCore.Mvc.UI.Theme.LeptonXLite.Bundling
+@using Volo.Abp.Localization
+@using Volo.Abp.MultiTenancy
+@using Volo.Abp.Ui.Branding
+@inject IBrandingProvider BrandingProvider
+@inject ILanguageProvider LanguageProvider
+@inject IAlertManager AlertManager
+@inject ICurrentTenant CurrentTenant
+@inject ILoginScreenSettingsAppService LoginScreenSettings
+@{
+    Layout = null;
+
+    // Kiracı seçici ve sosyal giriş, host seviyesindeki ABP Setting'lerinden gelir
+    // (bkz. /Admin/LoginScreen). Sayfa oturumsuz render edildiği için okuma anonimdir.
+    var loginScreen = await LoginScreenSettings.GetAsync();
+
+    var languages = (await LanguageProvider.GetLanguagesAsync()).ToList();
+    var currentUiCulture = CultureInfo.CurrentUICulture.Name;
+    var currentLanguage = languages.FirstOrDefault(l => l.CultureName == currentUiCulture)
+                          ?? languages.FirstOrDefault(l => currentUiCulture.StartsWith(l.CultureName));
+    var returnUrl = Context.Request.Path + Context.Request.QueryString;
+    var languageSwitchUrl = Url.Content("~/Abp/Languages/Switch");
+    var rtl = CultureHelper.IsRtl ? "rtl" : string.Empty;
+}
+<!DOCTYPE html>
+<html lang="@CultureInfo.CurrentCulture.Name" dir="@rtl">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>@(ViewBag.Title == null ? BrandingProvider.AppName : ViewBag.Title + " · " + BrandingProvider.AppName)</title>
+
+    @* Global demet: tokens.css (--apya-*), bootstrap ve abp.js buradan gelir.
+       apya-account.css yalnız bu düzende yüklenir — uygulama kabuğuna sızmaz. *@
+    <abp-style-bundle name="@LeptonXLiteThemeBundles.Styles.Global" />
+    <abp-style src="/css/apya-account.css" />
+
+    @await RenderSectionAsync("styles", false)
+</head>
+<body class="abp-account-layout apya-auth-body @rtl">
+
+<div class="apya-auth">
+    <div class="apya-auth__glow apya-auth__glow--top" aria-hidden="true"></div>
+    <div class="apya-auth__glow apya-auth__glow--bottom" aria-hidden="true"></div>
+
+    @* Sol tanıtım sütunu — <992px'te gizlenir, kart tek başına ortalanır. *@
+    <section class="apya-auth__hero">
+        <div class="apya-auth__brand">
+            <svg class="apya-auth__mark" width="34" height="34" viewBox="0 0 48 48" role="img"
+                 aria-label="@BrandingProvider.AppName">
+                <g style="mix-blend-mode:multiply">
+                    <polygon points="24,2 33,24 24,20 15,24" fill="#4338CA"></polygon>
+                    <polygon points="46,24 24,33 28,24 24,15" fill="#4F46E5"></polygon>
+                    <polygon points="24,46 15,24 24,28 33,24" fill="#5B54E8"></polygon>
+                    <polygon points="2,24 24,15 20,24 24,33" fill="#6D5FEC"></polygon>
+                </g>
+                <polygon points="24,19 29,24 24,29 19,24" fill="#F5F5F5"></polygon>
+            </svg>
+            <span class="apya-auth__wordmark">@BrandingProvider.AppName</span>
+            <span class="apya-auth__badge">PLATFORM</span>
+        </div>
+
+        <div>
+            <h1 class="apya-auth__headline">Akıllı Proje Yönetim Asistanı</h1>
+            <ul class="apya-auth__stats">
+                <li><span class="apya-auth__stat-value">1.240</span><span class="apya-auth__stat-label">aktif proje</span></li>
+                <li><span class="apya-auth__stat-value">%99,9</span><span class="apya-auth__stat-label">çalışma süresi</span></li>
+                <li><span class="apya-auth__stat-value">KVKK</span><span class="apya-auth__stat-label">uyumlu altyapı</span></li>
+            </ul>
+        </div>
+
+        <p class="apya-auth__legal">© @DateTime.Now.Year @BrandingProvider.AppName · Pargetto</p>
+    </section>
+
+    <main class="apya-auth__panel">
+        <div class="apya-auth__card">
+            <div class="apya-auth__card-head">
+                <h2 class="apya-auth__title">@ViewBag.Title</h2>
+
+                @if (currentLanguage != null && languages.Count > 1)
+                {
+                    <div class="dropdown apya-auth__lang">
+                        <button class="apya-auth__lang-btn" type="button" data-bs-toggle="dropdown"
+                                aria-expanded="false" aria-label="Dil seçimi">
+                            @currentLanguage.TwoLetterISOLanguageName.ToUpperInvariant()
+                            <span class="apya-auth__lang-caret" aria-hidden="true">▼</span>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            @foreach (var language in languages)
+                            {
+                                <li>
+                                    <a class="dropdown-item @(language.CultureName == currentLanguage.CultureName ? "active" : "")"
+                                       href="@($"{languageSwitchUrl}?culture={language.CultureName}&uiCulture={language.UiCultureName}&returnUrl={Uri.EscapeDataString(returnUrl)}")">
+                                        @language.DisplayName
+                                    </a>
+                                </li>
+                            }
+                        </ul>
+                    </div>
+                }
+            </div>
+
+            @* Kiracı seçici — yalnız host ayarı açıkken. #AbpTenantSwitchLink id'si ABP'nin
+               tenant-switch.js'i tarafından bağlanır, DEĞİŞTİRME. *@
+            @if (loginScreen.ShowTenantSwitch)
+            {
+                <div class="apya-auth__tenant">
+                    <div>
+                        <span class="apya-auth__tenant-label">Müşteri</span>
+                        <span class="apya-auth__tenant-name">
+                            @(CurrentTenant.Id == null ? "Seçili değil" : (CurrentTenant.Name ?? CurrentTenant.Id.Value.ToString()))
+                        </span>
+                    </div>
+                    <a id="AbpTenantSwitchLink" href="javascript:;" class="apya-auth__tenant-switch">değiştir</a>
+                </div>
+            }
+
+            @foreach (var alert in AlertManager.Alerts)
+            {
+                <div class="alert alert-@alert.Type.ToString().ToLowerInvariant() apya-auth__alert" role="alert">
+                    @if (!string.IsNullOrWhiteSpace(alert.Title))
+                    {
+                        <strong>@alert.Title</strong>
+                    }
+                    @alert.Text
+                </div>
+            }
+
+            @RenderBody()
+        </div>
+    </main>
+</div>
+
+<abp-script-bundle name="@LeptonXLiteThemeBundles.Scripts.Global" />
+<script src="~/Abp/ApplicationLocalizationScript?cultureName=@CultureInfo.CurrentUICulture.Name"></script>
+<script src="~/Abp/ApplicationConfigurationScript"></script>
+<script src="~/Abp/ServiceProxyScript"></script>
+
+@* Şifre görünürlüğü — jQuery beklemeden, her şifre alanı için tek delege. *@
+<script>
+    document.addEventListener('click', function (e) {
+        var btn = e.target.closest('[data-apya-reveal]');
+        if (!btn) { return; }
+        var input = btn.parentElement.querySelector('input');
+        if (!input) { return; }
+        var revealing = input.getAttribute('type') === 'password';
+        input.setAttribute('type', revealing ? 'text' : 'password');
+        btn.setAttribute('aria-pressed', revealing ? 'true' : 'false');
+        btn.classList.toggle('is-revealed', revealing);
+    });
+</script>
+
+@await RenderSectionAsync("scripts", false)
+</body>
+</html>

@@ -1,0 +1,512 @@
+/* =============================================================================
+   Giriş / hesap ekranları — "2a" tasarımı (dev tipografi + cam kart, açık tema).
+   Yalnız Pages/Account/_ApyaAccountLayout.cshtml tarafından yüklenir; global
+   demete EKLENMEZ, uygulama kabuğunu etkilemez.
+
+   Renkler tokens.css'ten (--apya-*) gelir. Tasarım açık tema için çizildi:
+   bu düzen tema anahtarını çalıştırmaz, bu yüzden dark override'ı yoktur.
+   ========================================================================== */
+
+.apya-auth-body {
+    margin: 0;
+    background: var(--apya-surface-app-bg, #F5F5F5);
+    color: var(--apya-text-primary, #111827);
+    font-family: var(--apya-font-sans, 'Inter', system-ui, sans-serif);
+}
+
+.apya-auth {
+    position: relative;
+    min-height: 100vh;
+    min-height: 100dvh;
+    display: grid;
+    grid-template-columns: 1fr 470px;
+    overflow: hidden;
+}
+
+/* --- Arka plan ışıkları ---------------------------------------------------- */
+.apya-auth__glow {
+    position: absolute;
+    border-radius: var(--apya-radius-full, 9999px);
+    filter: blur(70px);
+    pointer-events: none;
+}
+
+.apya-auth__glow--top {
+    top: -280px;
+    left: -180px;
+    width: 900px;
+    height: 900px;
+    background: radial-gradient(circle, rgba(79, 70, 229, .16), transparent 62%);
+}
+
+.apya-auth__glow--bottom {
+    bottom: -240px;
+    right: -120px;
+    width: 620px;
+    height: 620px;
+    background: radial-gradient(circle, rgba(124, 58, 237, .10), transparent 64%);
+}
+
+/* --- Sol tanıtım sütunu ---------------------------------------------------- */
+.apya-auth__hero {
+    position: relative;
+    padding: 52px 56px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 32px;
+}
+
+.apya-auth__brand {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+}
+
+.apya-auth__mark {
+    display: block;
+    flex: none;
+}
+
+.apya-auth__wordmark {
+    font-size: 23px;
+    font-weight: 700;
+    letter-spacing: -.035em;
+    color: var(--apya-text-primary, #111827);
+}
+
+.apya-auth__badge {
+    align-self: center;
+    padding: 3px 6px;
+    border-radius: var(--apya-radius-sm, 4px);
+    background: var(--apya-accent-soft, rgba(79, 70, 229, .10));
+    color: var(--apya-accent-500, #4F46E5);
+    font-family: var(--apya-font-mono, 'JetBrains Mono', ui-monospace, monospace);
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: .1em;
+}
+
+.apya-auth__headline {
+    margin: 0;
+    max-width: 9em;
+    font-size: 72px;
+    line-height: .95;
+    font-weight: 800;
+    letter-spacing: -.04em;
+    color: var(--apya-text-primary, #111827);
+    text-wrap: balance;
+}
+
+.apya-auth__stats {
+    margin: 30px 0 0;
+    padding: 0;
+    list-style: none;
+    display: flex;
+    gap: 34px;
+}
+
+.apya-auth__stats li {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.apya-auth__stats li + li {
+    padding-left: 34px;
+    border-left: 1px solid var(--apya-border-default, #E5E7EB);
+}
+
+.apya-auth__stat-value {
+    font-family: var(--apya-font-mono, 'JetBrains Mono', ui-monospace, monospace);
+    font-size: 22px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    color: var(--apya-text-primary, #111827);
+}
+
+.apya-auth__stat-label {
+    font-size: 11.5px;
+    color: var(--apya-text-tertiary, #9CA3AF);
+}
+
+.apya-auth__legal {
+    margin: 0;
+    font-size: 12px;
+    color: var(--apya-text-tertiary, #9CA3AF);
+}
+
+/* --- Sağ panel + cam kart -------------------------------------------------- */
+.apya-auth__panel {
+    position: relative;
+    display: flex;
+    align-items: center;
+    padding: 40px 40px 40px 0;
+}
+
+.apya-auth__card {
+    width: 100%;
+    padding: 38px 40px 40px;
+    box-sizing: border-box;
+    border: 1px solid rgba(255, 255, 255, .9);
+    border-radius: var(--apya-radius-2xl, 16px);
+    background: rgba(255, 255, 255, .72);
+    backdrop-filter: blur(28px);
+    box-shadow: 0 20px 25px -5px rgba(17, 24, 39, .12), 0 8px 10px -6px rgba(17, 24, 39, .05);
+}
+
+.apya-auth__card-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.apya-auth__title {
+    margin: 0;
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: -.02em;
+    color: var(--apya-text-primary, #111827);
+}
+
+/* Dil seçici pili */
+.apya-auth__lang-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    height: 28px;
+    padding: 0 10px;
+    border: 1px solid var(--apya-border-default, #E5E7EB);
+    border-radius: var(--apya-radius-full, 9999px);
+    background: var(--apya-surface-base, #fff);
+    font-family: var(--apya-font-mono, 'JetBrains Mono', ui-monospace, monospace);
+    font-size: 10.5px;
+    font-weight: 600;
+    color: var(--apya-text-secondary, #4B5563);
+    cursor: pointer;
+}
+
+.apya-auth__lang-btn:hover {
+    border-color: var(--apya-border-strong, #D1D5DB);
+}
+
+.apya-auth__lang-caret {
+    font-size: 8px;
+    color: var(--apya-text-tertiary, #9CA3AF);
+}
+
+/* --- Kiracı (müşteri) seçici — yalnız host ayarı açıkken ------------------- */
+.apya-auth__tenant {
+    margin-top: 20px;
+    padding: 12px 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    border: 1px solid var(--apya-border-default, #E5E7EB);
+    border-radius: var(--apya-radius-lg, 8px);
+    background: var(--apya-surface-base, #fff);
+}
+
+.apya-auth__tenant-label {
+    display: block;
+    font-size: 10.5px;
+    font-weight: 600;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--apya-text-tertiary, #9CA3AF);
+}
+
+.apya-auth__tenant-name {
+    display: block;
+    margin-top: 2px;
+    font-size: 13.5px;
+    font-weight: 700;
+    color: var(--apya-text-primary, #111827);
+}
+
+.apya-auth__tenant-switch {
+    flex: none;
+    height: 32px;
+    display: inline-flex;
+    align-items: center;
+    padding: 0 14px;
+    border: 1px solid var(--apya-accent-500, #4F46E5);
+    border-radius: var(--apya-radius-lg, 8px);
+    font-size: 12.5px;
+    color: var(--apya-accent-500, #4F46E5);
+    text-decoration: none;
+}
+
+.apya-auth__tenant-switch:hover {
+    background: var(--apya-accent-soft, rgba(79, 70, 229, .10));
+    color: var(--apya-accent-600, #4338CA);
+}
+
+/* --- Sosyal giriş ---------------------------------------------------------- */
+.apya-auth__social {
+    margin-top: 24px;
+    display: flex;
+    gap: 10px;
+}
+
+.apya-auth__social-btn {
+    flex: 1;
+    height: 42px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    border: 1px solid var(--apya-border-default, #E5E7EB);
+    border-radius: var(--apya-radius-lg, 8px);
+    background: var(--apya-surface-base, #fff);
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--apya-text-primary, #374151);
+    cursor: pointer;
+}
+
+.apya-auth__social-btn:hover {
+    background: var(--apya-surface-hover, #F9FAFB);
+    border-color: var(--apya-border-strong, #D1D5DB);
+}
+
+.apya-auth__divider {
+    margin-top: 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 11px;
+    color: var(--apya-text-tertiary, #9CA3AF);
+}
+
+.apya-auth__divider::before,
+.apya-auth__divider::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: var(--apya-border-default, #E5E7EB);
+}
+
+/* --- Form ------------------------------------------------------------------ */
+.apya-auth__field {
+    margin-top: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+}
+
+.apya-auth__field + .apya-auth__field {
+    margin-top: 16px;
+}
+
+.apya-auth__field-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.apya-auth__label {
+    font-size: 12.5px;
+    font-weight: 500;
+    color: var(--apya-text-primary, #374151);
+}
+
+.apya-auth__input {
+    width: 100%;
+    height: 44px;
+    padding: 0 14px;
+    box-sizing: border-box;
+    border: 1px solid var(--apya-border-default, #E5E7EB);
+    border-radius: var(--apya-radius-lg, 8px);
+    background: var(--apya-surface-base, #fff);
+    font-size: 14px;
+    color: var(--apya-text-primary, #111827);
+    outline: none;
+}
+
+.apya-auth__input:focus {
+    border-color: var(--apya-accent-500, #4F46E5);
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, .25);
+}
+
+.apya-auth__input-group {
+    position: relative;
+    display: flex;
+}
+
+.apya-auth__input-group .apya-auth__input {
+    padding-right: 44px;
+}
+
+.apya-auth__reveal {
+    position: absolute;
+    right: 4px;
+    top: 4px;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 0;
+    border-radius: var(--apya-radius-md, 6px);
+    background: transparent;
+    color: var(--apya-text-secondary, #6B7280);
+    cursor: pointer;
+}
+
+.apya-auth__reveal:hover {
+    background: var(--apya-surface-sunken, #F3F4F6);
+}
+
+.apya-auth__reveal .apya-auth__reveal-slash {
+    display: none;
+}
+
+.apya-auth__reveal.is-revealed .apya-auth__reveal-slash {
+    display: block;
+}
+
+.apya-auth__row {
+    margin-top: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.apya-auth__check {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    margin: 0;
+    font-size: 13px;
+    color: var(--apya-text-primary, #374151);
+    cursor: pointer;
+}
+
+.apya-auth__check input {
+    width: 16px;
+    height: 16px;
+    margin: 0;
+    accent-color: var(--apya-accent-500, #4F46E5);
+    cursor: pointer;
+}
+
+.apya-auth__link {
+    font-size: 12px;
+    color: var(--apya-accent-500, #4F46E5);
+    text-decoration: none;
+}
+
+.apya-auth__link:hover {
+    color: var(--apya-accent-600, #4338CA);
+    text-decoration: underline;
+}
+
+.apya-auth__muted {
+    font-size: 12px;
+    color: var(--apya-text-secondary, #6B7280);
+}
+
+.apya-auth__hint {
+    margin: 20px 0 0;
+    font-size: 13px;
+    line-height: 1.6;
+    color: var(--apya-text-secondary, #4B5563);
+}
+
+.apya-auth__submit {
+    margin-top: 22px;
+    width: 100%;
+    height: 46px;
+    border: 0;
+    border-radius: var(--apya-radius-lg, 8px);
+    background: var(--apya-accent-500, #4F46E5);
+    color: #fff;
+    font-size: 14.5px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 150ms cubic-bezier(.16, 1, .3, 1);
+}
+
+.apya-auth__submit:hover {
+    background: var(--apya-accent-600, #4338CA);
+}
+
+.apya-auth__submit--secondary {
+    background: var(--apya-surface-base, #fff);
+    border: 1px solid var(--apya-border-default, #E5E7EB);
+    color: var(--apya-text-primary, #111827);
+}
+
+.apya-auth__submit--secondary:hover {
+    background: var(--apya-surface-hover, #F3F4F6);
+}
+
+/* Doğrulama / uyarı mesajları */
+.apya-auth__alert {
+    margin-top: 20px;
+    margin-bottom: 0;
+    font-size: 13px;
+}
+
+.apya-auth__error {
+    display: block;
+    font-size: 12px;
+    color: var(--apya-text-negative, #991B1B);
+}
+
+.apya-auth__summary:empty {
+    display: none;
+}
+
+.apya-auth__summary ul {
+    margin: 0;
+    padding-left: 18px;
+}
+
+/* --- Duyarlılık ------------------------------------------------------------ */
+@media (max-width: 991.98px) {
+    .apya-auth {
+        grid-template-columns: 1fr;
+        place-items: center;
+    }
+
+    /* Tanıtım sütunu dar ekranda kartı aşağı iter; kart tek başına ortalanır. */
+    .apya-auth__hero {
+        display: none;
+    }
+
+    .apya-auth__panel {
+        width: 100%;
+        max-width: 470px;
+        padding: 32px 20px;
+    }
+}
+
+@media (max-width: 575.98px) {
+    .apya-auth__card {
+        padding: 28px 22px 30px;
+        border-radius: var(--apya-radius-xl, 12px);
+    }
+}
+
+/* 1200px altında dev başlık taşmasın */
+@media (max-width: 1199.98px) and (min-width: 992px) {
+    .apya-auth__headline {
+        font-size: 52px;
+    }
+
+    .apya-auth__hero {
+        padding: 40px 36px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .apya-auth__submit {
+        transition: none;
+    }
+}

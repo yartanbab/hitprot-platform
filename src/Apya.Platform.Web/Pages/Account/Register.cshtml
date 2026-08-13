@@ -1,0 +1,83 @@
+@page
+@using System.Linq
+@using Microsoft.AspNetCore.Mvc.Localization
+@using Apya.Platform.Accounts
+@using Volo.Abp.Account.Localization
+@model Volo.Abp.Account.Web.Pages.Account.RegisterModel
+@inject IHtmlLocalizer<AccountResource> L
+@inject ILoginScreenSettingsAppService LoginScreenSettings
+@{
+    Layout = "~/Pages/Account/_ApyaAccountLayout.cshtml";
+    ViewBag.Title = L["Register"].Value;
+
+    var loginScreen = await LoginScreenSettings.GetAsync();
+    var showSocial = loginScreen.ShowSocialLogin
+                     && !Model.IsExternalLogin
+                     && Model.VisibleExternalProviders.Any();
+    var showLocalFields = Model.EnableLocalRegister || Model.IsExternalLogin;
+}
+
+@if (showSocial)
+{
+    <form class="apya-auth__social" method="post" asp-page="./Login" asp-page-handler="ExternalLogin"
+          asp-route-returnUrl="@Model.ReturnUrl" asp-route-returnUrlHash="@Model.ReturnUrlHash">
+        @foreach (var provider in Model.VisibleExternalProviders)
+        {
+            <button type="submit" class="apya-auth__social-btn" name="provider"
+                    value="@provider.AuthenticationScheme"
+                    title="@L["RegisterUsingYourProviderAccount", provider.DisplayName]">
+                <partial name="_SocialProviderIcon" model="provider.AuthenticationScheme" />
+                @provider.DisplayName
+            </button>
+        }
+    </form>
+
+    @if (showLocalFields)
+    {
+        <div class="apya-auth__divider">veya e-posta ile</div>
+    }
+}
+
+@if (showLocalFields)
+{
+    <form method="post">
+        <div asp-validation-summary="ModelOnly" class="apya-auth__summary apya-auth__error"></div>
+
+        <div class="apya-auth__field">
+            <label class="apya-auth__label" asp-for="Input.UserName"></label>
+            <input class="apya-auth__input" asp-for="Input.UserName" autocomplete="username" autofocus />
+            <span class="apya-auth__error" asp-validation-for="Input.UserName"></span>
+        </div>
+
+        <div class="apya-auth__field">
+            <label class="apya-auth__label" asp-for="Input.EmailAddress"></label>
+            <input class="apya-auth__input" asp-for="Input.EmailAddress" type="email" autocomplete="email" />
+            <span class="apya-auth__error" asp-validation-for="Input.EmailAddress"></span>
+        </div>
+
+        @if (!Model.IsExternalLogin && Model.EnableLocalRegister)
+        {
+            <div class="apya-auth__field">
+                <label class="apya-auth__label" asp-for="Input.Password"></label>
+                <div class="apya-auth__input-group">
+                    <input class="apya-auth__input" type="password" asp-for="Input.Password" autocomplete="new-password" />
+                    <button class="apya-auth__reveal" type="button" data-apya-reveal aria-pressed="false"
+                            aria-label="Şifreyi göster / gizle">
+                        <partial name="_RevealIcon" />
+                    </button>
+                </div>
+                <span class="apya-auth__error" asp-validation-for="Input.Password"></span>
+            </div>
+        }
+
+        <button class="apya-auth__submit" type="submit">@L["Register"]</button>
+    </form>
+}
+
+<div class="apya-auth__row">
+    <span class="apya-auth__muted">
+        @L["AlreadyRegistered"]
+        <a class="apya-auth__link"
+           href="@Url.Page("./Login", new { returnUrl = Model.ReturnUrl, returnUrlHash = Model.ReturnUrlHash })">@L["Login"]</a>
+    </span>
+</div>
