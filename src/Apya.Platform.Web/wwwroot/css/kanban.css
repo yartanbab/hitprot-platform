@@ -73,8 +73,121 @@
 .kanban-card[data-priority="3"] { border-left-color: #fd7e14; }                            /* High (turuncu — token seti yok) */
 .kanban-card[data-priority="4"] { border-left-color: var(--apya-negative-500, #dc3545); }  /* Critical */
 
-.sortable-ghost { opacity: 0.4; }
+/* Sürükleme yer tutucusu (handoff): kartın soluk kopyası yerine, bırakılacak
+   yeri gösteren kesik çizgili accent bir hedef. */
+.sortable-ghost {
+    position: relative;
+    min-height: 52px;
+    border: 1.5px dashed var(--apya-accent-500) !important;
+    border-radius: var(--apya-radius-lg);
+    background: var(--apya-accent-soft) !important;
+    box-shadow: none !important;
+}
+.sortable-ghost > * { visibility: hidden; }
+.sortable-ghost::after {
+    content: "buraya bırak";
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--apya-accent-600);
+    font-size: 11.5px;
+    font-weight: 600;
+}
+[data-theme="dark"] .sortable-ghost::after { color: var(--apya-accent-300); }
 .kanban-col-ghost { opacity: 0.4; }
+
+/* Kolon ⋯ menüsü (özel kolonlarda: yeniden adlandır / renk / sil) */
+.kanban-col-menu {
+    width: 24px;
+    height: 24px;
+    display: grid;
+    place-items: center;
+    border: none;
+    border-radius: var(--apya-radius-md);
+    background: transparent;
+    color: var(--apya-text-tertiary);
+    font-size: 12px;
+    cursor: pointer;
+}
+.kanban-col-menu:hover { background: var(--apya-surface-base); color: var(--apya-text-primary); }
+.kanban-col-menu:focus-visible { outline: none; box-shadow: var(--apya-shadow-focus); }
+.kanban-col-colors { display: flex; flex-wrap: wrap; gap: 4px; padding: 4px 12px 8px; }
+
+/* WIP rozeti — "n / limit"; aşımda negatif tona geçer (sert kısıt değil, sinyal) */
+.kanban-wip {
+    padding: 1px 7px;
+    border-radius: var(--apya-radius-full);
+    background: var(--apya-surface-sunken);
+    color: var(--apya-text-tertiary);
+    font-size: 10px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+.kanban-wip.is-over {
+    background: color-mix(in srgb, var(--apya-negative-500) 14%, transparent);
+    color: var(--apya-text-negative);
+}
+.kanban-col-wip-row { display: flex; gap: 6px; padding: 4px 12px 8px; }
+.kanban-col-wip-row > input {
+    flex: 1 1 auto;
+    min-width: 0;
+    height: 28px;
+    padding: 0 8px;
+    border: 1px solid var(--apya-border-default);
+    border-radius: var(--apya-radius-md);
+    background: var(--apya-surface-base);
+    color: var(--apya-text-primary);
+    font-size: 12px;
+}
+.kanban-col-wip-row > input:focus { outline: none; border-color: var(--apya-border-focus); box-shadow: var(--apya-shadow-focus); }
+.kanban-col-wip-save {
+    flex: none;
+    height: 28px;
+    padding: 0 10px;
+    border: 1px solid var(--apya-accent-500);
+    border-radius: var(--apya-radius-md);
+    background: var(--apya-accent-500);
+    color: #fff;
+    font-size: 11.5px;
+    font-weight: 600;
+    cursor: pointer;
+}
+.kanban-col-swatch {
+    width: 24px;
+    height: 24px;
+    display: grid;
+    place-items: center;
+    border: 1px solid transparent;
+    border-radius: var(--apya-radius-md);
+    background: transparent;
+    font-size: 12px;
+    cursor: pointer;
+}
+.kanban-col-swatch:hover { background: var(--apya-surface-sunken); }
+.kanban-col-swatch:focus-visible { outline: none; box-shadow: var(--apya-shadow-focus); }
+.kanban-col-swatch[aria-pressed="true"] { border-color: var(--apya-border-strong); background: var(--apya-surface-sunken); }
+
+/* "Kolon ekle" hayalet kolonu — dar, kesik çizgili (handoff) */
+.kanban-column.kanban-add-col {
+    flex: 0 0 158px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    border: 1.5px dashed var(--apya-border-strong);
+    background: transparent;
+    box-shadow: none;
+    color: var(--apya-text-secondary);
+    cursor: pointer;
+    text-align: center;
+}
+.kanban-column.kanban-add-col:hover { border-color: var(--apya-accent-500); color: var(--apya-accent-600); }
+[data-theme="dark"] .kanban-column.kanban-add-col:hover { color: var(--apya-accent-300); }
+.kanban-add-col-title { font-size: 11.5px; font-weight: 600; }
+.kanban-add-col-sub { font-size: 10px; line-height: 1.4; color: var(--apya-text-tertiary); padding: 0 8px; }
 
 /* Sütun yeniden boyutlandırma tutamağı (sağ kenar) */
 .kanban-resize-handle {
