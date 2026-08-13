@@ -2,12 +2,13 @@
 
 namespace Apya.Platform.Web.Pages;
 
-// "/" ile "/Projects" aynı listeyi gösteriyordu (bkz. Menus/PlatformMenuContributor.cs);
-// hedef tasarımda kök ayrı bir sayfa değil, "/Projects"e yönlenir.
+// Kök ayrı bir sayfa değil, "/Dashboard"a yönlenir. Dashboard [Authorize] olduğu için
+// oturumsuz ziyaretçi çerçevenin challenge'ı ile "/Account/Login?ReturnUrl=%2FDashboard"a
+// düşer; giriş sonrası yine Dashboard'a döner. (Eskiden "/Projects"e yönleniyordu.)
 public class IndexModel : PlatformPageModel
 {
     public IActionResult OnGet()
     {
-        return RedirectToPage("/Projects/Index");
+        return RedirectToPage("/Dashboard/Index");
     }
 }
