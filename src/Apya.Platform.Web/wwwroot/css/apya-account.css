@@ -14,13 +14,25 @@
     font-family: var(--apya-font-sans, 'Inter', system-ui, sans-serif);
 }
 
+/* Kompozisyon tasarımın 1120px artboard'una SABİTLENİR ve ortalanır; yalnız arka
+   plan tam genişlikte akar. Sınır olmadan `1fr` sütunu geniş ekranda uzayıp
+   tanıtım sütununu sola, kartı sağa yapıştırıyor ve ortada koca boşluk bırakıyordu
+   (1920'de 746px ölçüldü). Kenar sütunları artan yeri paylaşır, içerik 650+470'te kalır. */
 .apya-auth {
     position: relative;
     min-height: 100vh;
     min-height: 100dvh;
     display: grid;
-    grid-template-columns: 1fr 470px;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 650px) 470px minmax(0, 1fr);
     overflow: hidden;
+}
+
+.apya-auth__hero {
+    grid-column: 2;
+}
+
+.apya-auth__panel {
+    grid-column: 3;
 }
 
 /* --- Arka plan ışıkları ---------------------------------------------------- */
@@ -480,7 +492,10 @@
         display: none;
     }
 
+    /* grid-column SIFIRLANMALI: tek sütuna düşerken `grid-column: 3` örtük
+       sütun yaratıp düzeni bozar. */
     .apya-auth__panel {
+        grid-column: auto;
         width: 100%;
         max-width: 470px;
         padding: 32px 20px;
@@ -494,12 +509,10 @@
     }
 }
 
-/* 1200px altında dev başlık taşmasın */
-@media (max-width: 1199.98px) and (min-width: 992px) {
-    .apya-auth__headline {
-        font-size: 52px;
-    }
-
+/* 1120 altında kenar sütunları sıfırlanır ve tanıtım sütunu 650'nin altına iner;
+   başlığa yer açmak için iç boşluk daraltılır. Punto DÜŞÜRÜLMEZ — tasarımın 72px'i
+   bu genişlikte de sığıyor (en uzun kelime "Asistanı" ~320px, kalan yer ~450px). */
+@media (max-width: 1119.98px) and (min-width: 992px) {
     .apya-auth__hero {
         padding: 40px 36px;
     }
