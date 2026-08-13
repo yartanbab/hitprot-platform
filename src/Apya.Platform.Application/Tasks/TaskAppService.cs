@@ -437,6 +437,47 @@ namespace Apya.Platform.Tasks
                 .ToList();
         }
 
+        // Liste şeridindeki sayaç barları. Barlar aynı zamanda filtre düğmesi olduğu
+        // için sayılar, bara basınca listede çıkacak adetle AYNI olmalı — eşikler bu
+        // yüzden istemcideki tanımı birebir yansıtır (açık = Todo/InProgress/InReview,
+        // gecikmiş = dün 23:59:59 ve öncesi, 7 gün = bugün 00:00 → +7g 23:59:59).
+        public async Task<TaskListSummaryDto> GetSummaryAsync(GetTasksInput input)
+        {
+            // Chip filtreleri BİLEREK uygulanmaz; barlar kapsam sayaçlarıdır.
+            // Yalnız proje kapsamı + tenant/gizlilik süzgeci geçerli.
+            var queryable = await Repository.GetQueryableAsync();
+            var scoped = await ApplyPrivacyFilterAsync(queryable);
+            scoped = scoped.WhereIf(input.ProjectId.HasValue, t => t.ProjectId == input.ProjectId);
+
+            var openStatuses = new[]
+            {
+                Apya.Platform.Tasks.TaskStatus.Todo,
+                Apya.Platform.Tasks.TaskStatus.InProgress,
+                Apya.Platform.Tasks.TaskStatus.InReview
+            };
+
+            var todayStart = Clock.Now.Date;
+            var overdueBound = todayStart.AddSeconds(-1);      // dün 23:59:59
+            var due7Bound = todayStart.AddDays(8).AddSeconds(-1); // +7 gün 23:59:59
+            var userId = CurrentUser.Id;
+
+            var open = scoped.Where(t => openStatuses.Contains(t.Status));
+
+            return new TaskListSummaryDto
+            {
+                Total = await AsyncExecuter.CountAsync(scoped),
+                Done = await AsyncExecuter.CountAsync(
+                    scoped.Where(t => t.Status == Apya.Platform.Tasks.TaskStatus.Done)),
+                Overdue = await AsyncExecuter.CountAsync(
+                    open.Where(t => t.DueDate != null && t.DueDate <= overdueBound)),
+                DueIn7Days = await AsyncExecuter.CountAsync(
+                    open.Where(t => t.DueDate != null && t.DueDate >= todayStart && t.DueDate <= due7Bound)),
+                AssignedToMe = userId == null
+                    ? 0
+                    : await AsyncExecuter.CountAsync(open.Where(t => t.AssigneeId == userId.Value))
+            };
+        }
+
         // Create/Update ortak: TagNames'i get-or-create edip TaskTagAssignment'ları senkronlar
         // (PredecessorIds senkronuyla aynı sil-sonra-yeniden-ekle deseni).
         private async Task<List<TagDto>> SyncTagsAsync(Guid taskId, List<string>? tagNames)

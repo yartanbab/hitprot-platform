@@ -20,6 +20,10 @@ namespace Apya.Platform.Tasks
         /// <summary>Görev "Proje" seçici için tenant'ın projeleri (id + ad).</summary>
         Task<List<ProjectLookupDto>> GetProjectsLookupAsync();
 
+        /// <summary>Liste şeridindeki sayaç barları. Girdinin kapsamını (proje vb.)
+        /// kullanır; RootOnly yok sayılır (alt görevler de sayılır).</summary>
+        Task<TaskListSummaryDto> GetSummaryAsync(GetTasksInput input);
+
         /// <summary>Select2 tag girişinin başlangıç seçenek listesi için tenant'ın tüm etiketleri.</summary>
         Task<List<TagDto>> GetAllTagsAsync();
 
