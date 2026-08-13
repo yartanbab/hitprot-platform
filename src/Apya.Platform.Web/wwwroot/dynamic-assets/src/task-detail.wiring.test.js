@@ -6,7 +6,7 @@ import path from 'node:path';
 /**
  * Pages/Tasks/index.js, Pages/Board/index.js, Pages/Projects/ProjectDetails.js
  * jQuery IIFE'leri — bu repoda vitest/jsdom altında ÇALIŞTIRILAMAZ (DataTables,
- * Select2, SortableJS, frappe-gantt bağımlılıkları + gerçek DOM elemanları
+ * Select2, SortableJS bağımlılıkları + gerçek DOM elemanları
  * gerektiriyor). Bayrağın GERÇEK DAVRANIŞI (kapalıyken eski drawer, açıkken
  * merkezi modal) yalnız canlı tarayıcıda doğrulanabilir.
  *
