@@ -708,6 +708,145 @@ $(function () {
         writeStateToUrl();
     }
 
+    // ================================================================
+    // EKİP YÖNETİMİ DRAWER (8. adım)
+    // Üyelik YALNIZ kayıttır: burada yapılan hiçbir şey görev atamasını,
+    // görünürlüğü veya yetkileri değiştirmez (bkz. ProjectMember sınıf notu).
+    // ================================================================
+    var memberService = apya.platform.projects.projectMember;
+    var $teamDrawer = $('#team-drawer');
+
+    if ($teamDrawer.length) {
+        var teamProjectId = $teamDrawer.data('project-id');
+        // Razor `true`/`false` string basıyor — jQuery bunu boolean'a çeviriyor,
+        // yine de açıkça karşılaştır (attribute yoksa undefined gelir).
+        var canManageTeam = $teamDrawer.data('can-manage') === true || $teamDrawer.data('can-manage') === 'true';
+        var teamModal = new bootstrap.Modal($teamDrawer[0]);
+
+        var ROLE_TEXT = { 1: 'Sorumlu', 2: 'Üye', 3: 'İzleyici' };
+        var teamChanged = false;
+
+        function renderMembers(list) {
+            var $list = $('#team-list').empty();
+            if (!list.length) {
+                $list.append(
+                    '<div class="apya-console-state">' +
+                    '<span class="apya-console-state-icon"><i class="fa fa-users"></i></span>' +
+                    '<strong>Bu projede henüz ekip üyesi yok</strong>' +
+                    (canManageTeam ? '<p>Yukarıdan kullanıcı seçip ekleyin.</p>' : '') +
+                    '</div>');
+                return;
+            }
+
+            list.forEach(function (m) {
+                var $row = $('<div class="apya-team-row"></div>');
+                // Baş harf/ton kuralı tek yerde kalsın diye paylaşılan üretici
+                // kullanılıyor (apyaTask.initials dışa aktarılmıyor), ama o İKİ
+                // eleman döndürüyor: avatar + `.ms-2` isim span'i. Buradaki ad
+                // kendi sütununda (.apya-team-name) basıldığı için YALNIZ avatar
+                // alınır — ikisi de eklenince satır 6 çocuk oluyor, 5 kolonluk
+                // ızgarada çıkar butonu alt satıra kayıyordu (ölçüldü).
+                $row.append($(apyaTask.assigneeAvatar(m.displayName)).first());
+
+                var meta = '<span class="apya-team-name">' + apyaTask.esc(m.displayName) + '</span>';
+                if (m.userName) { meta += '<span class="apya-team-sub">@' + apyaTask.esc(m.userName) + '</span>'; }
+                $row.append('<span class="apya-team-ident">' + meta + '</span>');
+
+                // Açık görev sayısı — üyenin yükünü drawer'dan çıkmadan göster.
+                $row.append(m.openTaskCount > 0
+                    ? '<span class="apya-chip apya-chip-neutral" title="Açık görev">' + m.openTaskCount + '</span>'
+                    : '<span></span>');
+
+                if (canManageTeam) {
+                    var $sel = $('<select class="form-select form-select-sm apya-team-role-select" aria-label="Rol"></select>');
+                    [2, 1, 3].forEach(function (v) {
+                        $sel.append($('<option></option>').attr('value', v).text(ROLE_TEXT[v]));
+                    });
+                    $sel.val(String(m.role));
+                    $sel.on('change', function () {
+                        memberService.updateRole(m.id, { role: parseInt($(this).val(), 10) })
+                            .then(function () {
+                                teamChanged = true;
+                                abp.notify.success('Rol güncellendi.');
+                                loadMembers();
+                            });
+                    });
+                    $row.append($sel);
+
+                    var $del = $('<button type="button" class="apya-console-row-action" title="Ekipten çıkar" aria-label="Ekipten çıkar"><i class="fa fa-user-minus"></i></button>');
+                    $del.on('click', function () {
+                        Swal.fire({
+                            title: m.displayName + ' ekipten çıkarılacak',
+                            // Görevler kasten boşa çıkarılmıyor — sunucu tarafıyla aynı karar.
+                            text: 'Kişiye atanmış görevler olduğu gibi kalır.',
+                            icon: 'warning',
+                            showCancelButton: true,
+                            confirmButtonText: 'Evet, çıkar',
+                            cancelButtonText: 'Vazgeç'
+                        }).then(function (r) {
+                            if (!r.isConfirmed) { return; }
+                            memberService.remove(m.id).then(function () {
+                                teamChanged = true;
+                                abp.notify.success('Üye ekipten çıkarıldı.');
+                                loadMembers();
+                            });
+                        });
+                    });
+                    $row.append($del);
+                } else {
+                    $row.append('<span class="apya-team-role-static">' + apyaTask.esc(m.roleText) + '</span>');
+                }
+
+                $list.append($row);
+            });
+        }
+
+        function loadMembers() {
+            return memberService.getListByProject(teamProjectId).then(function (list) {
+                renderMembers(list || []);
+                if (canManageTeam) { loadAssignable(); }
+            });
+        }
+
+        function loadAssignable() {
+            return memberService.getAssignableUsers(teamProjectId).then(function (users) {
+                var $sel = $('#team-add-user').empty().append('<option value="">Kullanıcı seçin…</option>');
+                (users || []).forEach(function (u) {
+                    $sel.append($('<option></option>').attr('value', u.id).text(u.displayName));
+                });
+            });
+        }
+
+        $('#team-add-btn').click(function () {
+            var userId = $('#team-add-user').val();
+            if (!userId) { abp.notify.warn('Önce bir kullanıcı seçin.'); return; }
+            memberService.add({
+                projectId: teamProjectId,
+                userId: userId,
+                role: parseInt($('#team-add-role').val(), 10)
+            }).then(function () {
+                teamChanged = true;
+                abp.notify.success('Üye eklendi.');
+                $('#team-add-user').val('');
+                loadMembers();
+            });
+        });
+
+        $('#btn-team-drawer, #menu-team-drawer').click(function () {
+            loadMembers();
+            teamModal.show();
+        });
+
+        // Drawer kapanınca şeritteki facepile bayat kalmasın. Tam reload gerekiyor:
+        // facepile Razor'da sunucu tarafında basılıyor, JS'te kaynağı yok.
+        // Bayrak yalnız GERÇEKTEN başarılı bir yazma olunca kalkar (setTeamChanged
+        // başarı callback'lerinden çağrılır) — tıklamayı dinlemek, iptal edilen
+        // silme onayında veya hata dönen istekte de sayfayı yeniletirdi.
+        $teamDrawer.on('hidden.bs.modal', function () {
+            if (teamChanged) { window.location.reload(); }
+        });
+    }
+
     $('#btn-view-list').click(function () { switchView('list'); });
     $('#btn-view-kanban').click(function () { switchView('kanban'); });
     $('#btn-view-gantt').click(function () { switchView('gantt'); });
