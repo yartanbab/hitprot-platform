@@ -22,4 +22,18 @@ public interface IProjectMemberAppService : IApplicationService
     Task<ProjectMemberDto> UpdateRoleAsync(Guid id, UpdateProjectMemberRoleDto input);
 
     Task RemoveAsync(Guid id);
+
+    /// <summary>
+    /// Backfill ile ekibe eklenecek kişi sayısı. Drawer'daki geçiş şeridini
+    /// göstermek/gizlemek için kullanılır — 0 ise şerit hiç çıkmaz.
+    /// SUNUCUDAN sorulur çünkü sayfanın Razor tarafındaki görev listesi
+    /// (`GetDetailAsync` → AutoMapper) `AssigneeName`i doldurmuyor.
+    /// </summary>
+    Task<int> GetBackfillCandidateCountAsync(Guid projectId);
+
+    /// <summary>
+    /// Projedeki görev atananlarını ekibe üye olarak ekler (tek seferlik geçiş
+    /// aracı). Daha önce ekipten çıkarılmış kişileri GERİ GETİRMEZ.
+    /// </summary>
+    Task<ProjectMemberBackfillResultDto> BackfillFromAssigneesAsync(Guid projectId);
 }

@@ -804,7 +804,7 @@ $(function () {
         function loadMembers() {
             return memberService.getListByProject(teamProjectId).then(function (list) {
                 renderMembers(list || []);
-                if (canManageTeam) { loadAssignable(); }
+                if (canManageTeam) { loadAssignable(); refreshBackfillBanner(); }
             });
         }
 
@@ -829,6 +829,45 @@ $(function () {
                 abp.notify.success('Üye eklendi.');
                 $('#team-add-user').val('');
                 loadMembers();
+            });
+        });
+
+        // --- Tek seferlik geçiş: görev atananlarını ekibe ekle ---
+        // Sayı SUNUCUDAN sorulur, sayfadaki görev listesinden hesaplanmaz:
+        // `GetDetailAsync` görevleri AutoMapper ile map'liyor ve `AssigneeName`
+        // Identity araması gerektiren türetilmiş bir alan olduğu için null
+        // kalıyor → Razor tarafındaki atanan listesi HER ZAMAN boş (ölçüldü).
+        // Sunucu ayrıca "daha önce çıkarılmış" olanları da eliyor, yani sayı
+        // tahmin değil kesin.
+        function refreshBackfillBanner() {
+            if (!canManageTeam) { return; }
+            return memberService.getBackfillCandidateCount(teamProjectId).then(function (n) {
+                $('#team-backfill-count').text(n);
+                $('#team-backfill').toggleClass('d-none', !(n > 0));
+            });
+        }
+
+        $('#team-backfill-btn').click(function () {
+            var $btn = $(this).prop('disabled', true);
+            memberService.backfillFromAssignees(teamProjectId).then(function (r) {
+                teamChanged = true;
+
+                var parcalar = [];
+                if (r.added) { parcalar.push(r.added + ' kişi ekibe eklendi'); }
+                if (r.skippedAlreadyMember) { parcalar.push(r.skippedAlreadyMember + ' kişi zaten ekipteydi'); }
+                if (r.skippedPreviouslyRemoved) {
+                    parcalar.push(r.skippedPreviouslyRemoved + ' kişi daha önce ekipten çıkarıldığı için atlandı');
+                }
+                if (!parcalar.length) { parcalar.push('Eklenecek kimse bulunamadı'); }
+
+                // Atlanan varsa "başarı" demek yanıltıcı — uyarı tonu kullanılır.
+                var ton = r.skippedPreviouslyRemoved > 0 ? 'warn' : 'success';
+                abp.notify[ton](parcalar.join(', ') + '.');
+
+                $btn.prop('disabled', false);
+                loadMembers();       // içinde refreshBackfillBanner de çağrılır
+            }).catch(function () {
+                $btn.prop('disabled', false); // hata: tekrar denenebilsin
             });
         });
 
