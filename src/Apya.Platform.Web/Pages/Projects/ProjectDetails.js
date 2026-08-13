@@ -211,7 +211,10 @@ $(function () {
                 data: 'id',
                 orderable: false,
                 width: '34px',
-                className: 'apya-console-check-cell',
+                // apya-c-* sınıfları: mobil kart düzeni (apya-shell.css §21)
+                // hücreleri bunlarla hedefler — nth-child güvenilmez, seçim
+                // kolonu yetkiye göre var/yok ve 3 kolon gizlenebiliyor.
+                className: 'apya-console-check-cell apya-c-check',
                 render: function (data) {
                     return '<input type="checkbox" class="apya-row-check" data-task-id="' + data + '" aria-label="Görevi seç">';
                 }
@@ -220,6 +223,7 @@ $(function () {
         return cols.concat([
                 {
                     title: 'Başlık',
+                    className: 'apya-c-title',
                     width: '26%',
                     data: 'title',
                     render: function (data, type, row) {
@@ -232,12 +236,14 @@ $(function () {
                 },
                 {
                     title: 'Atanan',
+                    className: 'apya-c-assignee',
                     width: '12%',
                     data: 'assigneeName',
                     render: function (data) { return apyaTask.assigneeAvatar(data); }
                 },
                 {
                     title: 'Durum',
+                    className: 'apya-c-status',
                     width: '12%',
                     data: 'status',
                     render: function (data, type, row) {
@@ -258,6 +264,7 @@ $(function () {
                 },
                 {
                     title: 'Öncelik',
+                    className: 'apya-c-priority',
                     width: '10%',
                     data: 'priority',
                     render: function (data) { return apyaTask.priorityBadge(data); }
@@ -269,6 +276,7 @@ $(function () {
                     // (ApplySorting entity kolonu bekler, sunucuda patlar).
                     title: 'Efor',
                     name: 'effort',
+                    className: 'apya-c-effort',
                     width: '12%',
                     data: 'spentHours',
                     orderable: false,
@@ -295,6 +303,7 @@ $(function () {
                 {
                     title: 'Başlangıç',
                     name: 'start',
+                    className: 'apya-c-start',
                     width: '12%',
                     data: 'startDate',
                     render: function (data) { return data ? moment(data).format('L') : ''; }
@@ -302,6 +311,7 @@ $(function () {
                 {
                     title: 'Bitiş',
                     name: 'due',
+                    className: 'apya-c-due',
                     width: '16%',
                     data: 'dueDate',
                     render: function (data, type, row) {
@@ -505,7 +515,9 @@ $(function () {
     });
 
     // --- 2. Yeni Görev Ekle ---
-    $('#btn-create-task').click(function (e) {
+    // Mobil FAB (#btn-create-task-fab) aynı girişi kullanır — ikinci bir
+    // "yeni görev" yolu değil, dar ekranda şeritteki butonun yerini alır.
+    $('#btn-create-task, #btn-create-task-fab').click(function (e) {
         e.preventDefault();
         createModal.open({ projectId: projectId });
     });
@@ -776,8 +788,28 @@ $(function () {
     function writeColPrefs(prefs) {
         try { localStorage.setItem(COLS_KEY, JSON.stringify(prefs)); } catch (e) { /* yok say */ }
     }
-    function applyColPrefs(prefs) {
+    // Dar kapta Efor + Başlangıç OTOMATİK düşer (handoff <1200px kuralı).
+    // Eşik viewport'a değil KABA göre: LeptonX kenar çubuğu viewport'u yiyor
+    // (§21 başındaki not) — 1366px ekranda kap ~1185px. 1020px ≈ handoff'un
+    // 1200px viewport'unun kenar çubuğu düşülmüş karşılığı.
+    // Kullanıcının localStorage tercihi EZİLMEZ: yalnız görüntülenen hâl
+    // daraltılır, kap genişleyince kayıtlı tercih geri gelir.
+    var COLS_NARROW_W = 1020;
+    var colsNarrow = false;
+    var AUTO_DROP_COLS = ['effort', 'start'];
+
+    function effectiveColPrefs() {
+        if (!colsNarrow) { return colPrefs; }
+        var out = {};
+        TOGGLEABLE_COLS.forEach(function (c) {
+            out[c] = AUTO_DROP_COLS.indexOf(c) === -1 ? colPrefs[c] : false;
+        });
+        return out;
+    }
+
+    function applyColPrefs() {
         if (!dataTable) { return; }
+        var prefs = effectiveColPrefs();
         TOGGLEABLE_COLS.forEach(function (c) {
             // name seçicisi kullanılıyor: seçim kolonu yetkiye göre var/yok
             // olduğu için sabit indeks güvenilmez.
@@ -785,19 +817,35 @@ $(function () {
         });
         dataTable.columns.adjust();
         $('[data-col-toggle]').each(function () {
-            $(this).attr('aria-pressed', String(prefs[$(this).data('col-toggle')]));
+            var col = $(this).data('col-toggle');
+            var auto = colsNarrow && AUTO_DROP_COLS.indexOf(col) !== -1;
+            $(this).attr('aria-pressed', String(prefs[col]))
+                   .prop('disabled', auto)
+                   .attr('title', auto ? 'Ekran dar olduğu için otomatik gizlendi' : null);
         });
     }
 
     var colPrefs = readColPrefs();
-    applyColPrefs(colPrefs); // kayıtlı tercihi ilk çizimden önce uygula
+    applyColPrefs(); // kayıtlı tercihi ilk çizimden önce uygula
 
     $('[data-col-toggle]').click(function () {
         var col = $(this).data('col-toggle');
         colPrefs[col] = !colPrefs[col];
         writeColPrefs(colPrefs);
-        applyColPrefs(colPrefs);
+        applyColPrefs();
     });
+
+    // Kabı izle — viewport değil (kenar çubuğu daraltılabiliyor, sabit bir
+    // viewport eşiği doğru cevabı veremez).
+    var consoleEl = document.querySelector('.apya-project-console');
+    if (consoleEl && window.ResizeObserver) {
+        new ResizeObserver(function (entries) {
+            var next = entries[0].contentRect.width < COLS_NARROW_W;
+            if (next === colsNarrow) { return; }
+            colsNarrow = next;
+            applyColPrefs();
+        }).observe(consoleEl);
+    }
 
     // ================================================================
     // KAYDEDİLMİŞ GÖRÜNÜMLER — localStorage `apya.project.views`
