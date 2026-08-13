@@ -39,6 +39,16 @@ namespace Apya.Platform.Tasks
         public Guid? ParentTaskId { get; set; }
         public string? ParentTaskTitle { get; set; }
 
+        /// <summary>Bu görevin alt görev sayısı — liste satırındaki aç/kapa chevron'u
+        /// ve "2/5" rozeti bunu kullanır. Kullanıcının göremediği gizli alt görevler
+        /// (APYA-22) sayılmaz, aksi halde varlıkları chevron üzerinden sızardı.
+        /// YALNIZ GetList doldurur; GetAsync alt görevleri <see cref="SubTasks"/> ile
+        /// zaten tam döndürdüğü için orada 0 kalır.</summary>
+        public int SubTaskCount { get; set; }
+
+        /// <summary>Tamamlanmış alt görev sayısı — rozetin payı ("2/5" içindeki 2).</summary>
+        public int CompletedSubTaskCount { get; set; }
+
         public Guid? ProjectId { get; set; }
         public string? ProjectName { get; set; }
 

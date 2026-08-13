@@ -19,4 +19,13 @@ public class GetTasksInput : PagedAndSortedResultRequestDto
 
     /// <summary>Serbest-metin arama (Title/Description üzerinde).</summary>
     public string? Filter { get; set; }
+
+    /// <summary>Yalnız kök görevler (alt görevi olmayanlar listede satır açmaz).
+    /// Görev listesi hiyerarşik kipteyken bunu gönderir; sayfalama kök görevler
+    /// üzerinden yürür, alt görevler chevron ile ayrıca istenir.</summary>
+    public bool RootOnly { get; set; }
+
+    /// <summary>Belirli bir üst görevin alt görevleri — chevron açıldığında
+    /// tembel yükleme için. RootOnly ile birlikte kullanılmaz.</summary>
+    public Guid? ParentTaskId { get; set; }
 }

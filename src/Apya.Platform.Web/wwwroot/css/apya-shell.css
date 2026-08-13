@@ -1278,6 +1278,98 @@ i.apya-priority-dot {
 .apya-avatar-ai { background: var(--apya-ai-500); }
 .apya-avatar-neutral { background: var(--apya-neutral-500); }
 
+/* --- Alt görev hiyerarşisi (Görevler listesi) ---
+   Üst görev satırı chevron ile açılır, alt görevleri DataTables child satırında
+   listelenir. Filtre/arama aktifken liste düz kipe döner ve chevron basılmaz. */
+.apya-task-title-cell {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+}
+.apya-task-title-main { min-width: 0; }
+
+.apya-subtask-toggle {
+    flex: none;
+    width: 22px;
+    height: 22px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 1px;
+    padding: 0;
+    border: 0;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--apya-text-secondary);
+    font-size: 11px;
+    cursor: pointer;
+}
+.apya-subtask-toggle:hover {
+    background: var(--apya-surface-raised);
+    color: var(--apya-text-primary);
+}
+.apya-subtask-toggle > i { transition: transform .15s ease; }
+.apya-subtask-toggle[aria-expanded="true"] > i.fa-chevron-right { transform: rotate(90deg); }
+/* Alt görevi olmayan satırın yer tutucusu — başlıklar hizada kalsın */
+.apya-subtask-toggle.is-empty {
+    background: none;
+    cursor: default;
+    pointer-events: none;
+}
+
+/* Tamamlanan/toplam rozeti — başlığın yanında, tabular rakamlarla */
+.apya-subtask-count {
+    display: inline-block;
+    margin-left: 6px;
+    padding: 0 6px;
+    border-radius: 999px;
+    background: var(--apya-surface-raised);
+    color: var(--apya-text-secondary);
+    font-size: 11px;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+}
+
+/* Child satır içeriği — chevron genişliği kadar girintili */
+.apya-subtask-panel { padding: 4px 0 4px 30px; }
+.apya-subtask-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 7px 10px;
+    border-radius: 8px;
+    cursor: pointer;
+}
+.apya-subtask-row:hover { background: var(--apya-surface-raised); }
+.apya-subtask-code {
+    flex: none;
+    font-family: var(--apya-font-mono);
+    font-size: 10.5px;
+    font-weight: 700;
+    color: var(--apya-text-secondary);
+}
+.apya-subtask-title {
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--apya-text-primary);
+}
+.apya-subtask-title.is-done {
+    text-decoration: line-through;
+    color: var(--apya-text-secondary);
+}
+.apya-subtask-due { flex: none; }
+.apya-subtask-empty {
+    margin: 0;
+    padding: 6px 10px;
+    font-size: 12.5px;
+    color: var(--apya-text-secondary);
+}
+
 /* ----------------------------------------------------------------------------
    16) GÖREV DETAY DRAWER — HANDOFF "sağdan kayan panel (apyaSlide animasyonu)".
    abp.ModalManager + <abp-modal> altyapısı AYNEN korunuyor (backdrop/ESC/focus-

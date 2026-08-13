@@ -37,6 +37,33 @@ $(function () {
         return input;
     }
 
+    // --- Alt görev hiyerarşisi ---------------------------------------------
+    // Liste normalde HİYERARŞİK: yalnız kök görevler sayfalanır, alt görevler
+    // chevron ile açılır. Filtre veya arama aktifken DÜZ kipe döner — aksi halde
+    // filtreye uyan bir alt görev, üstü uymadığı için listeden tamamen düşerdi.
+    // Proje seçimi bir kapsam (scope), filtre değil → hiyerarşiyi bozmaz.
+    var expanded = {};      // parentId -> true (kullanıcı niyeti; her draw sonrası geri açılır)
+    var subtaskCache = {};  // parentId -> alt görev dizisi (yalnız hızlandırma)
+
+    function hasActiveFilter() {
+        return !!($('#Filter_AssigneeId').val() ||
+                  $('#Filter_Status').val() ||
+                  $('#Filter_Priority').val() ||
+                  $('#Filter_MinDueDate').val() ||
+                  $('#Filter_MaxDueDate').val() ||
+                  (dataTable && dataTable.search()));
+    }
+
+    function isHierarchical() { return !hasActiveFilter(); }
+
+    // Yalnız DataTable bu sarmalayıcıyı kullanır; kanban ve gantt currentFilter'ı
+    // doğrudan kullanmayı sürdürür — orada alt görevler gizlenmemeli.
+    function listFilter() {
+        var input = currentFilter();
+        if (isHierarchical()) input.rootOnly = true;
+        return input;
+    }
+
     // --- DataTable ---
     var dataTable = $('#TasksTable').DataTable(abp.libs.datatables.normalizeConfiguration({
         serverSide: true,
@@ -44,17 +71,23 @@ $(function () {
         order: [[0, 'asc']],
         searching: true,
         scrollX: true,
-        ajax: abp.libs.datatables.createAjax(taskService.getList, currentFilter),
+        ajax: abp.libs.datatables.createAjax(taskService.getList, listFilter),
         columnDefs: [
             {
                 title: 'Görev',
                 data: 'title',
                 render: function(data, type, row) {
-                    var head = '<span class="fw-bold">' + apyaTask.esc(data) + '</span>' + apyaTask.commentCount(row.comments);
-                    if (row.parentTaskTitle) {
+                    var head = '<span class="fw-bold">' + apyaTask.esc(data) + '</span>' +
+                        apyaTask.commentCount(row.comments) + apyaTask.subtaskCountBadge(row);
+                    // Üst görev bağlamı yalnız DÜZ kipte gerekli — hiyerarşik kipte
+                    // alt görev zaten üstünün altında duruyor.
+                    if (!isHierarchical() && row.parentTaskTitle) {
                         head += '<div class="text-muted small"><i class="fa fa-level-up-alt fa-rotate-90 me-1"></i>' + apyaTask.esc(row.parentTaskTitle) + '</div>';
                     }
-                    return '<div>' + head + apyaTask.tagChips(row.tags) + '</div>';
+                    return '<div class="apya-task-title-cell">' +
+                        (isHierarchical() ? apyaTask.subtaskToggle(row) : '') +
+                        '<div class="apya-task-title-main">' + head + apyaTask.tagChips(row.tags) + '</div>' +
+                        '</div>';
                 }
             },
             {
@@ -122,6 +155,7 @@ $(function () {
         enableCustomColumns: true,  // proje seçilince o projenin özel kolonları + Kolon Ekle
         getFilter: currentFilter,
         onChanged: function () {
+            subtaskCache = {}; // kanban'da taşınan kart bir alt görev olabilir
             dataTable.ajax.reload(null, false);
             if (!$('#view-gantt').hasClass('d-none')) loadGantt();
         }
@@ -149,6 +183,82 @@ $(function () {
         var rowData = row ? row.data() : null;
         var id = (rowData && rowData.id) ? rowData.id : $tr.attr('data-id');
         if (id) { editModal.open(id); }
+    });
+
+    // --- Alt görev aç/kapa -------------------------------------------------
+    // Chevron bir <button>, üstteki satır tıklaması onu zaten atlıyor; yine de
+    // stopPropagation ile niyet açık bırakılıyor.
+    $(document).on('click', '#TasksTable tbody [data-subtask-toggle]', function (e) {
+        e.stopPropagation();
+        var $btn = $(this);
+        var id = $btn.attr('data-subtask-toggle');
+        var row = dataTable.row($btn.closest('tr'));
+        if (!row || !row.data()) return;
+
+        if (row.child.isShown()) {
+            row.child.hide();
+            delete expanded[id];
+            $btn.attr('aria-expanded', 'false').attr('aria-label', 'Alt görevleri göster');
+            return;
+        }
+        expanded[id] = true;
+        renderSubtasks(row, id);
+    });
+
+    // Alt görev satırına tıklayınca o alt görevin detayı açılır.
+    $(document).on('click', '#TasksTable tbody .apya-subtask-row', function (e) {
+        e.stopPropagation();
+        var id = $(this).attr('data-subtask-id');
+        if (id) { editModal.open(id); }
+    });
+    $(document).on('keydown', '#TasksTable tbody .apya-subtask-row', function (e) {
+        if (e.key !== 'Enter' && e.key !== ' ') return;
+        e.preventDefault();
+        e.stopPropagation();
+        var id = $(this).attr('data-subtask-id');
+        if (id) { editModal.open(id); }
+    });
+
+    // Alt görevleri child satıra basar; veri cache'te yoksa önce çeker.
+    function renderSubtasks(rowApi, id) {
+        var $btn = $(rowApi.node()).find('[data-subtask-toggle]');
+        $btn.attr('aria-expanded', 'true').attr('aria-label', 'Alt görevleri gizle');
+
+        if (subtaskCache[id]) {
+            rowApi.child(apyaTask.subtaskRows(subtaskCache[id])).show();
+            return;
+        }
+
+        var $icon = $btn.find('i');
+        $icon.attr('class', 'fa fa-spinner fa-spin');
+        taskService.getList({ parentTaskId: id, maxResultCount: 100, sorting: 'Number' }).then(
+            function (res) {
+                $icon.attr('class', 'fa fa-chevron-right');
+                subtaskCache[id] = res.items || [];
+                if (!expanded[id]) return; // yükleme biterken kullanıcı kapattıysa açma
+                rowApi.child(apyaTask.subtaskRows(subtaskCache[id])).show();
+            },
+            function () {
+                $icon.attr('class', 'fa fa-chevron-right');
+                delete expanded[id];
+                $btn.attr('aria-expanded', 'false').attr('aria-label', 'Alt görevleri göster');
+                abp.notify.error('Alt görevler yüklenemedi.');
+            }
+        );
+    }
+
+    // Child satırlar her draw'da kaybolur — açık bırakılanlar geri açılır.
+    // Sayfada olmayan satırlar atlanır; expanded korunduğu için geri dönünce açılırlar.
+    dataTable.on('draw', function () {
+        // Düz kipte chevron basılmaz; açık kayıtlar korunur ama child satır
+        // AÇILMAZ — aksi halde tetikleyicisi olmayan bir panel asılı kalırdı.
+        if (!isHierarchical()) return;
+        var ids = Object.keys(expanded);
+        if (!ids.length) return;
+        dataTable.rows().every(function () {
+            var d = this.data();
+            if (d && expanded[d.id]) { renderSubtasks(this, d.id); }
+        });
     });
 
     // --- Yeni Görev ---
@@ -252,6 +362,7 @@ $(function () {
     }
 
     createModal.onResult(function () {
+        subtaskCache = {}; // yeni görev bir alt görev olabilir → cache bayat
         dataTable.ajax.reload();
         if (!$('#view-kanban').hasClass('d-none')) kb.load();
         if (!$('#view-gantt').hasClass('d-none')) loadGantt();
@@ -262,6 +373,7 @@ $(function () {
 
     // Otomatik kayıt event'ini dinle:
     abp.event.on('app.task.updated', function () {
+        subtaskCache = {}; // başlık/durum/atanan değişmiş olabilir → yeniden çekilsin
         dataTable.ajax.reload(null, false);
         if (!$('#view-kanban').hasClass('d-none')) kb.load();
         if (!$('#view-gantt').hasClass('d-none')) loadGantt();

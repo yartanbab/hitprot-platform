@@ -215,6 +215,7 @@ namespace Apya.Platform.Tasks
             await PopulateBoardColumnNamesAsync(result.Items);
             await PopulateTagsAsync(result.Items);
             await PopulateFavoritesAsync(result.Items);
+            await PopulateSubTaskCountsAsync(result.Items);
             return result;
         }
 
@@ -301,6 +302,56 @@ namespace Apya.Platform.Tasks
             foreach (var item in items)
             {
                 item.IsFavorite = favSet.Contains(item.Id);
+            }
+        }
+
+        // APYA-22 gizlilik süzgeci — liste sorgusu ve alt görev sayaçları AYNI kuralı
+        // paylaşmak zorunda. Ayrışırlarsa sayaç, kullanıcının göremediği gizli bir alt
+        // görevin varlığını chevron/rozet üzerinden ele verir.
+        private async Task<IQueryable<TaskItem>> ApplyPrivacyFilterAsync(IQueryable<TaskItem> query)
+        {
+            bool isImpersonated = CurrentUser.FindClaim(Volo.Abp.Security.Claims.AbpClaimTypes.ImpersonatorUserId) != null;
+            bool canManageTeam = await AuthorizationService.IsGrantedAsync(PlatformPermissions.Projects.ManageTeam);
+            var currentUserId = CurrentUser.Id;
+
+            // 1. Impersonated ise (örn. Admin) diğer tenantın "gizli" verilerini ASLA göremez.
+            // 2. Normal kullanıcı gizli görevi yalnız kendisi açtıysa, kendisine atandıysa VEYA yöneticiyse görür.
+            return query.Where(t =>
+                !t.IsPrivate ||
+                (!isImpersonated && (canManageTeam || t.CreatorId == currentUserId || t.AssigneeId == currentUserId))
+            );
+        }
+
+        // Alt görev sayaçlarını tek toplu GroupBy sorgusuyla iliştirir (N+1 yok) —
+        // PopulateTagsAsync ile aynı desen. Liste satırındaki aç/kapa chevron'u ve
+        // "2/5" rozeti bunu kullanır.
+        private async Task PopulateSubTaskCountsAsync(System.Collections.Generic.IReadOnlyList<TaskDto> items)
+        {
+            if (items.Count == 0) return;
+            var taskIds = items.Select(i => i.Id).ToList();
+
+            var queryable = await Repository.GetQueryableAsync();
+            var subtasks = await ApplyPrivacyFilterAsync(
+                queryable.Where(t => t.ParentTaskId != null && taskIds.Contains(t.ParentTaskId!.Value)));
+
+            var counts = await AsyncExecuter.ToListAsync(
+                subtasks
+                    .GroupBy(t => t.ParentTaskId!.Value)
+                    .Select(g => new
+                    {
+                        ParentId = g.Key,
+                        Total = g.Count(),
+                        Done = g.Count(x => x.Status == Apya.Platform.Tasks.TaskStatus.Done)
+                    }));
+
+            var map = counts.ToDictionary(c => c.ParentId);
+            foreach (var item in items)
+            {
+                if (map.TryGetValue(item.Id, out var c))
+                {
+                    item.SubTaskCount = c.Total;
+                    item.CompletedSubTaskCount = c.Done;
+                }
             }
         }
 
@@ -649,19 +700,15 @@ namespace Apya.Platform.Tasks
         {
             var query = await base.CreateFilteredQueryAsync(input);
 
-            // Gelişmiş Gizlilik Filtresi (APYA-22)
-            bool isImpersonated = CurrentUser.FindClaim(Volo.Abp.Security.Claims.AbpClaimTypes.ImpersonatorUserId) != null;
-            bool canManageTeam = await AuthorizationService.IsGrantedAsync(PlatformPermissions.Projects.ManageTeam);
-            var currentUserId = CurrentUser.Id;
-
-            // 1. Eğer impersonated ise (örn. Admin), diğer tenantın "gizli" verilerini ASLA göremez.
-            // 2. Normal kullanıcıysa; gizli görevleri sadece kendisi açtıysa, kendisine atandıysa VEYA yöneticiyse görebilir.
-            query = query.Where(t => 
-                !t.IsPrivate || 
-                (!isImpersonated && (canManageTeam || t.CreatorId == currentUserId || t.AssigneeId == currentUserId))
-            );
+            // Gelişmiş Gizlilik Filtresi (APYA-22) — alt görev sayaçlarıyla paylaşılan tek kopya.
+            query = await ApplyPrivacyFilterAsync(query);
 
             return query
+                // Hiyerarşik liste kipi: sayfalama kök görevler üzerinden yürür, alt görevler
+                // chevron açılınca ParentTaskId ile ayrıca istenir. Filtre/arama aktifken
+                // istemci RootOnly göndermez → eşleşen alt görev listeden düşmez.
+                .WhereIf(input.RootOnly, t => t.ParentTaskId == null)
+                .WhereIf(input.ParentTaskId.HasValue, t => t.ParentTaskId == input.ParentTaskId)
                 .WhereIf(input.ProjectId.HasValue, t => t.ProjectId == input.ProjectId)
                 .WhereIf(input.AssigneeId.HasValue, t => t.AssigneeId == input.AssigneeId)
                 .WhereIf(input.Statuses != null && input.Statuses.Any(), t => input.Statuses!.Contains(t.Status))
