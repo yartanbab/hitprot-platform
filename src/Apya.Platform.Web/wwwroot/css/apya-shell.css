@@ -3515,3 +3515,22 @@ i.apya-priority-dot {
 @media (max-width: 767.98px) {
     .apya-topbar-nav { display: none; }
 }
+
+/* --- Kiracı menüsü araması (apya-topbar-shell.js) ---
+   Liste 5'ten kısaysa JS kutuyu hiç basmaz; aşağısı yalnız uzun listede geçerli. */
+.apya-tenant-search {
+    padding: 4px 8px 6px;
+}
+.apya-tenant-search input {
+    height: 32px;
+    font-size: var(--apya-fs-sm);
+}
+.apya-tenant-search input:focus {
+    box-shadow: var(--apya-shadow-focus);
+    border-color: var(--apya-border-focus);
+}
+.apya-tenant-search-empty {
+    padding: 8px 12px;
+    font-size: var(--apya-fs-sm);
+    color: var(--apya-text-tertiary);
+}

@@ -281,6 +281,71 @@ $(function () {
         apply();
     }
 
+    // -------------------------------------------------------------------------
+    // Kiracı menüsüne arama
+    // Handoff: "300 kiracıda bu menü işlemez". Liste SUNUCUDA zaten sınırlı
+    // (TenantBadgeViewModel.HasMore + "Tümünü gör" bağlantısı); buradaki arama
+    // YÜKLENMİŞ listeyi filtreler. Sınır aşıldığında doğru çıkış zaten menünün
+    // dibindeki "Tümünü gör" — arama onu gizlemez.
+    // -------------------------------------------------------------------------
+    function setupTenantSearch() {
+        var root = document.getElementById('apya-tenant-switch');
+        var menu = root && root.querySelector('.apya-tenant-switch-menu');
+        if (!menu) { return; }
+
+        var rows = Array.prototype.filter.call(
+            menu.querySelectorAll('li'),
+            function (li) { return li.querySelector('.apya-tenant-switch-item-name'); });
+        // 5'in altında arama kutusu gürültü — kullanıcı zaten hepsini görüyor.
+        if (rows.length < 5) { return; }
+
+        var wrap = document.createElement('li');
+        wrap.className = 'apya-tenant-search';
+        var input = document.createElement('input');
+        input.type = 'search';
+        input.className = 'form-control form-control-sm';
+        input.placeholder = 'Müşteri ara…';
+        input.setAttribute('aria-label', 'Müşteri ara');
+        wrap.appendChild(input);
+
+        var empty = document.createElement('li');
+        empty.className = 'apya-tenant-search-empty';
+        empty.textContent = 'Eşleşen müşteri yok';
+        empty.hidden = true;
+
+        var head = menu.querySelector('.apya-tenant-switch-head');
+        if (head && head.nextSibling) { menu.insertBefore(wrap, head.nextSibling); }
+        else { menu.insertBefore(wrap, menu.firstChild); }
+        if (rows.length) { rows[rows.length - 1].after(empty); }
+
+        input.addEventListener('input', function () {
+            var q = input.value.trim().toLocaleLowerCase('tr');
+            var shown = 0;
+            rows.forEach(function (li) {
+                var name = (li.querySelector('.apya-tenant-switch-item-name').textContent || '')
+                    .toLocaleLowerCase('tr');
+                var hit = !q || name.indexOf(q) !== -1;
+                li.hidden = !hit;
+                if (hit) { shown++; }
+            });
+            empty.hidden = shown !== 0;
+        });
+
+        // Bootstrap dropdown'ı yazarken kapatmasın / ok tuşlarını kaçırmasın.
+        input.addEventListener('click', function (e) { e.stopPropagation(); });
+        input.addEventListener('keydown', function (e) {
+            e.stopPropagation();
+            if (e.key === 'Escape') { input.value = ''; input.dispatchEvent(new Event('input')); }
+        });
+
+        // Açılınca odak aramaya — asıl kazanç bu (fare ile listede gezmek yerine yaz).
+        root.addEventListener('shown.bs.dropdown', function () {
+            input.value = '';
+            input.dispatchEvent(new Event('input'));
+            input.focus();
+        });
+    }
+
     function setupNarrow() {
         var apply = function () { bar.classList.toggle('is-narrow', window.innerWidth < NARROW); };
         window.addEventListener('resize', apply);
@@ -288,6 +353,6 @@ $(function () {
     }
 
     (window.apyaShellState || Promise.resolve(null))
-        .then(function (state) { build(state); setupScrollShadow(); setupNarrow(); })
-        .catch(function () { build(null); setupScrollShadow(); setupNarrow(); });
+        .then(function (state) { build(state); setupScrollShadow(); setupNarrow(); setupTenantSearch(); })
+        .catch(function () { build(null); setupScrollShadow(); setupNarrow(); setupTenantSearch(); });
 });
