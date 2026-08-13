@@ -75,6 +75,13 @@
     // 403 hâli sunucuda karara bağlanır: yetki yoksa DataTables hiç kurulmaz
     // (başarısız ajax + global hata modalı yerine ekranda kilit paneli).
     var canViewTasks = await AuthorizationService.IsGrantedAsync(PlatformPermissions.Tasks.Default);
+
+    // Toplu işlem + satır aksiyonları izne bağlı; JS bunları kök elemandan okur.
+    var canChangeStatus = await AuthorizationService.IsGrantedAsync(PlatformPermissions.Tasks.ChangeStatus);
+    var canDeleteTasks  = await AuthorizationService.IsGrantedAsync(PlatformPermissions.Tasks.Delete);
+    var canBulk = canChangeStatus || canDeleteTasks;
+    // Gantt'ta bar sürükleyip tarih kaydetmek görev düzenleme yetkisi ister.
+    var canEditTasks = await AuthorizationService.IsGrantedAsync(PlatformPermissions.Tasks.Edit);
 }
 
 <style>
@@ -102,7 +109,11 @@
     <link rel="stylesheet" href="~/libs/select2/css/select2.min.css" />
 }
 
-<div data-page-description="Proje operasyon merkezi" class="apya-page apya-project-console">
+<div data-page-description="Proje operasyon merkezi" class="apya-page apya-project-console"
+     data-can-change-status="@canChangeStatus.ToString().ToLowerInvariant()"
+     data-can-delete-tasks="@canDeleteTasks.ToString().ToLowerInvariant()"
+     data-can-bulk="@canBulk.ToString().ToLowerInvariant()"
+     data-can-edit-tasks="@canEditTasks.ToString().ToLowerInvariant()">
 
 @* ─── ÖZET ŞERİDİ (60px, yapışkan) ─── *@
 <div class="apya-console-rail">
@@ -145,26 +156,67 @@
     <div class="apya-console-bars">
 
         @* Kalan Süre *@
-        <button type="button" class="apya-console-bar" id="bar-time"
-                title="@(hasDates ? $"Zaman sağlığı: {Model.TimeHealthLabel}" : "Proje tarihleri belirlenmemiş")"
-                disabled="@(!hasDates)">
-            <span class="apya-console-bar-head">
-                <span class="apya-console-bar-label"><i class="fa fa-hourglass-half me-1" aria-hidden="true"></i>Kalan Süre</span>
-                <span class="apya-console-bar-chevron" aria-hidden="true">&rsaquo;</span>
-            </span>
+        <div class="dropdown">
+            <button type="button" class="apya-console-bar" id="bar-time"
+                    @(hasDates ? "data-bs-toggle=dropdown" : "") aria-expanded="false"
+                    title="@(hasDates ? "Zaman durumu detayı" : "Proje tarihleri belirlenmemiş")"
+                    disabled="@(!hasDates)">
+                <span class="apya-console-bar-head">
+                    <span class="apya-console-bar-label"><i class="fa fa-hourglass-half me-1" aria-hidden="true"></i>Kalan Süre</span>
+                    <span class="apya-console-bar-chevron" aria-hidden="true">&rsaquo;</span>
+                </span>
+                @if (hasDates)
+                {
+                    <span class="apya-console-bar-value">
+                        <strong class="apya-numeric">@Model.RemainingDays</strong>
+                        <small>@(Model.TimeNotStarted ? "gün · başlangıca" : $"gün · %{Model.TimeUsagePercent}")</small>
+                    </span>
+                    <span class="apya-mini-progress @timeHealthBarTone"><span style="width:@(Model.TimeNotStarted ? 0 : Model.TimeUsagePercent)%"></span></span>
+                }
+                else
+                {
+                    <span class="apya-console-bar-value"><small>Tarih belirlenmemiş</small></span>
+                }
+            </button>
             @if (hasDates)
             {
-                <span class="apya-console-bar-value">
-                    <strong class="apya-numeric">@Model.RemainingDays</strong>
-                    <small>@(Model.TimeNotStarted ? "gün · başlangıca" : $"gün · %{Model.TimeUsagePercent}")</small>
-                </span>
-                <span class="apya-mini-progress @timeHealthBarTone"><span style="width:@(Model.TimeNotStarted ? 0 : Model.TimeUsagePercent)%"></span></span>
+                @* Zaman durumu popover'ı — handoff: bar tıklaması detayı açar.
+                   "Tarihleri düzenle" butonu YOK: repoda proje düzenleme ekranı yok. *@
+                <div class="dropdown-menu apya-console-popover" aria-labelledby="bar-time">
+                    <div class="apya-console-popover-head">
+                        <span class="apya-console-state-icon is-sm"><i class="fa fa-hourglass-half" aria-hidden="true"></i></span>
+                        <strong>Zaman durumu</strong>
+                        <span class="apya-chip apya-chip-@timeHealthTone">@Model.TimeHealthLabel</span>
+                    </div>
+                    <div class="apya-console-popover-grid">
+                        <div>
+                            <span class="apya-console-popover-label">Başlangıç</span>
+                            <span class="apya-numeric">@(Model.Project?.StartDate?.ToString("dd.MM.yyyy") ?? "—")</span>
+                        </div>
+                        <div>
+                            <span class="apya-console-popover-label">Bitiş</span>
+                            <span class="apya-numeric">@(Model.Project?.EndDate?.ToString("dd.MM.yyyy") ?? "—")</span>
+                        </div>
+                        <div>
+                            <span class="apya-console-popover-label">Geçen</span>
+                            <span class="apya-numeric">
+                                @(Model.TimeNotStarted ? "başlamadı" : $"{Math.Max(0, Model.TotalProjectDays - Model.RemainingDays)} gün (%{Model.TimeUsagePercent})")
+                            </span>
+                        </div>
+                        <div>
+                            <span class="apya-console-popover-label">@(Model.TimeNotStarted ? "Başlamasına" : "Kalan")</span>
+                            <span class="apya-numeric">@Model.RemainingDays gün</span>
+                        </div>
+                    </div>
+                    <p class="apya-console-popover-note">
+                        Sürenin %@Model.TimeUsagePercent'i geçti, görevlerin %@progressPct'i bitti.
+                        Rozet bu ikisini karşılaştırır: süre %80'i geçip görevlerin yarısı bitmemişse
+                        <strong>Kritik</strong>, süre %50'yi geçip ilerleme 20 puan geride kalırsa
+                        <strong>Dikkat</strong>, aksi halde <strong>Sağlam</strong>.
+                    </p>
+                </div>
             }
-            else
-            {
-                <span class="apya-console-bar-value"><small>Tarih belirlenmemiş</small></span>
-            }
-        </button>
+        </div>
 
         @* Bütçe — mevcut "Bütçe vs Gerçekleşen" modalını açar *@
         <button type="button" class="apya-console-bar" id="btn-budget-summary"
@@ -306,6 +358,33 @@
                         <button type="button" data-density-set="comfortable" title="Geniş">G</button>
                     </span>
                 </div>
+                @* Kolon seçici — handoff ayrı bir panel çiziyor; burada ⋯ menüsünün
+                   içinde satır olarak duruyor (Yoğunluk satırıyla aynı desen,
+                   ikinci bir katman açmaya değmiyor). Seçim localStorage'da. *@
+                <div class="apya-console-menu-row is-stacked">
+                    <span>Kolonlar</span>
+                    <span class="apya-console-colpicker" role="group" aria-label="Görünür kolonlar">
+                        <button type="button" data-col-toggle="effort" aria-pressed="true">Efor</button>
+                        <button type="button" data-col-toggle="start" aria-pressed="true">Başlangıç</button>
+                        <button type="button" data-col-toggle="due" aria-pressed="true">Bitiş</button>
+                    </span>
+                    <span class="apya-console-menu-hint">Başlık, Atanan, Durum ve Öncelik sabittir.</span>
+                </div>
+
+                <button type="button" class="apya-console-menu-item" id="menu-shortcuts">
+                    <span class="apya-console-menu-icon"><i class="fa fa-keyboard" aria-hidden="true"></i></span>
+                    Klavye kısayolları
+                    <span class="apya-console-menu-trailing apya-numeric">?</span>
+                </button>
+
+                @* Kaydedilmiş görünümler — filtre + görünüm + arama önayarı.
+                   v1 backend'siz: localStorage'da proje başına saklanır. *@
+                <div class="apya-console-menu-head is-divided">Kaydedilmiş görünümler</div>
+                <div id="saved-views-list"></div>
+                <button type="button" class="apya-console-menu-item" id="btn-save-view">
+                    <span class="apya-console-menu-icon"><i class="fa fa-bookmark" aria-hidden="true"></i></span>
+                    Mevcut filtreyi kaydet
+                </button>
 
                 @* Silme: ayrılmış negatif bölüm. id + data-* attribute'ları Danger Zone
                    kartındakiyle AYNEN aynı — mevcut SweetAlert akışı değişmedi. *@
@@ -335,6 +414,11 @@
         <button type="button" class="apya-console-tab" id="btn-view-kanban"
                 role="tab" aria-selected="false" aria-controls="view-kanban">
             <i class="fa fa-table-columns" aria-hidden="true"></i>Kanban
+        </button>
+        <button type="button" class="apya-console-tab" id="btn-view-gantt"
+                role="tab" aria-selected="false" aria-controls="view-gantt"
+                title="Başlangıç-bitiş tarihlerinden türeyen zaman çizelgesi">
+            <i class="fa fa-clock" aria-hidden="true"></i>Zaman Çizelgesi
         </button>
         <span class="apya-console-count apya-numeric" id="console-task-count">@totalTasks görev</span>
     </div>
@@ -464,13 +548,95 @@
             <partial name="_KanbanBoard" />
         </div>
 
+        @* --- ZAMAN ÇİZELGESİ (GANTT) ---
+             Sayfaya özel bileşen (Pages/Projects/ProjectGantt.js). /Tasks ve
+             /Board'daki frappe-gantt'a dokunmaz. İçerik tamamen JS ile basılır. *@
+        <div id="view-gantt" class="view-panel d-none" role="tabpanel" aria-labelledby="btn-view-gantt"></div>
+
     </div>
 </div>
+
+@* ─── Toplu işlem çubuğu — seçim varken konsolun altında yüzer ───
+   Ata / Tarihi ötele YOK: ikisi de tam DTO ile UpdateAsync gerektiriyor,
+   kısmi güncelleme (patch) uç noktası repoda yok. Durum değiştir ve Sil
+   mevcut UpdateStatusAsync / DeleteAsync ile gerçek işlem yapar. *@
+@if (canViewTasks && canBulk)
+{
+    <div class="apya-console-bulkbar d-none" id="bulk-bar" role="region" aria-label="Toplu işlem">
+        <span class="apya-console-bulkbar-count" id="bulk-count">0 görev seçili</span>
+        <span class="apya-console-bulkbar-sep" aria-hidden="true"></span>
+
+        @if (canChangeStatus)
+        {
+            <div class="dropdown dropup">
+                <button type="button" class="apya-console-bulkbar-btn" data-bs-toggle="dropdown" aria-expanded="false">
+                    Durum değiştir <i class="fa fa-chevron-up ms-1" aria-hidden="true"></i>
+                </button>
+                <div class="dropdown-menu apya-console-menu">
+                    <button type="button" class="apya-console-menu-item" data-bulk-status="1">Yapılacak</button>
+                    <button type="button" class="apya-console-menu-item" data-bulk-status="2">Sürüyor</button>
+                    <button type="button" class="apya-console-menu-item" data-bulk-status="3">Testte</button>
+                    <button type="button" class="apya-console-menu-item" data-bulk-status="4">Tamamlandı</button>
+                </div>
+            </div>
+        }
+        @if (canDeleteTasks)
+        {
+            <button type="button" class="apya-console-bulkbar-btn is-danger" id="bulk-delete">Sil</button>
+        }
+        <button type="button" class="apya-console-bulkbar-close" id="bulk-clear" aria-label="Seçimi temizle">
+            <i class="fa fa-xmark" aria-hidden="true"></i>
+        </button>
+    </div>
+}
 
 @* Tehlikeli Bölge kartı kaldırıldı — silme, ⋯ menüsünün ayrılmış negatif
    bölümüne taşındı (handoff 2. adım). Onay akışı (SweetAlert + proje kodunu
    elle yazdırma) ve izin kontrolü değişmedi. *@
 </div> @* /.apya-page *@
+
+@* ─── Klavye kısayolları penceresi (⋯ menüsü veya "?" tuşu) ─── *@
+<div class="modal fade" id="shortcuts-modal" tabindex="-1" aria-labelledby="shortcuts-title" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content apya-console-shortcuts">
+            <div class="modal-header">
+                <span class="apya-console-state-icon is-sm"><i class="fa fa-keyboard" aria-hidden="true"></i></span>
+                <h5 class="modal-title ms-2" id="shortcuts-title">Klavye kısayolları</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
+            </div>
+            <div class="modal-body">
+                <div class="apya-console-shortcuts-grid">
+                    <div>
+                        <span class="apya-console-popover-label">Liste</span>
+                        <div class="apya-console-shortcut"><kbd>j</kbd><kbd>k</kbd><span>Satırlar arasında gez</span></div>
+                        <div class="apya-console-shortcut"><kbd>↵</kbd><span>Görev detayını aç</span></div>
+                        @if (canBulk)
+                        {
+                            <div class="apya-console-shortcut"><kbd>x</kbd><span>Satırı seç (toplu işlem)</span></div>
+                        }
+                        @if (canChangeStatus)
+                        {
+                            <div class="apya-console-shortcut"><kbd>1</kbd>–<kbd>4</kbd><span>Odaklı görevin durumunu değiştir</span></div>
+                        }
+                        <div class="apya-console-shortcut"><kbd>/</kbd><span>Arama alanına odaklan</span></div>
+                    </div>
+                    <div>
+                        <span class="apya-console-popover-label">Görünüm &amp; genel</span>
+                        <div class="apya-console-shortcut"><kbd>g</kbd> <kbd>l</kbd><span>Liste görünümü</span></div>
+                        <div class="apya-console-shortcut"><kbd>g</kbd> <kbd>k</kbd><span>Kanban görünümü</span></div>
+                        <div class="apya-console-shortcut"><kbd>n</kbd><span>Yeni görev</span></div>
+                        <div class="apya-console-shortcut"><kbd>?</kbd><span>Bu pencere</span></div>
+                        <div class="apya-console-shortcut"><kbd>Esc</kbd><span>Panel / pencereyi kapat</span></div>
+                    </div>
+                </div>
+                <p class="apya-console-popover-note mt-3">
+                    Kısayollar bir metin alanına yazarken veya bir pencere açıkken devre dışıdır.
+                    Odak sırası: Geri → proje kimliği → metrik barları → arama → aksiyonlar → ⋯ → sekmeler → filtre çubuğu → tablo.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
 
 <partial name="_TaskDetailIsland" />
 
@@ -480,5 +646,6 @@
     <abp-script src="/js/apya-task-render.js" />
     <abp-script src="/js/task-drawer.js" />
     <abp-script src="/js/apya-kanban.js" />
+    <abp-script src="/Pages/Projects/ProjectGantt.js" />
     <abp-script src="/Pages/Projects/ProjectDetails.js" />
 }
