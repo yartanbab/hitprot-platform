@@ -1,9 +1,12 @@
 /*
- * Proje konsolu — Zaman Çizelgesi (Gantt).
- * Handoff "Proje Detay — operasyon konsolu" 7. adım.
+ * Zaman Çizelgesi (Gantt) — PAYLAŞILAN bileşen.
+ * Handoff "Proje Detay — operasyon konsolu" 7. adımında doğdu, sonra Görevler
+ * sayfasına da açıldı (orada frappe-gantt'ın yerini aldı).
  *
- * Sayfaya özel: /Board ve /Tasks'taki frappe-gantt'a DOKUNMAZ (o ayrı bir
- * bileşen). Kanban modülüyle aynı sözleşme: apya.projectGantt.create(opts).
+ * Kullananlar: Pages/Projects/ProjectDetails.js (tek proje) ve
+ * Pages/Tasks/index.js (tüm projeler). Kanban modülüyle aynı sözleşme:
+ * apya.projectGantt.create(opts). Kapsamı çağıran `getFilter` belirler —
+ * bileşende sabit projectId YOKTUR.
  *
  * Veri: TaskDto.startDate / dueDate / status / assigneeName / parentTaskId /
  * predecessorIds. BASELINE ÇİZİLMEZ — backend'de baselineStart/End alanı yok.
@@ -133,9 +136,9 @@
             if (state.group === 'none') { return [{ title: null, rows: sortRows(state.tasks) }]; }
             var map = {};
             state.tasks.forEach(function (t) {
-                var k = state.group === 'assignee'
-                    ? (t.assigneeName || 'Atanmamış')
-                    : (STATUS_NAMES[t.status] || 'Bilinmiyor');
+                var k = state.group === 'assignee' ? (t.assigneeName || 'Atanmamış')
+                      : state.group === 'project'  ? (t.projectName || 'Projesiz')
+                      : (STATUS_NAMES[t.status] || 'Bilinmiyor');
                 (map[k] = map[k] || []).push(t);
             });
             return Object.keys(map).sort().map(function (k) {
@@ -258,7 +261,9 @@
                 }).join('') +
                 '<span class="apya-gantt-sep"></span>' +
                 '<span class="apya-console-filter-label">Grupla</span>' +
-                [['none', 'Yok'], ['assignee', 'Atanan'], ['status', 'Durum']].map(function (g) {
+                // "Proje" çapraz-proje sayfada anlamlı; proje konsolunda tek proje
+                // olduğu için etkisiz kalır (tek şerit) ama zararsız.
+                [['none', 'Yok'], ['project', 'Proje'], ['assignee', 'Atanan'], ['status', 'Durum']].map(function (g) {
                     return '<button type="button" class="apya-gantt-seg" data-group="' + g[0] + '" aria-pressed="' +
                         (state.group === g[0]) + '">' + g[1] + '</button>';
                 }).join('') +

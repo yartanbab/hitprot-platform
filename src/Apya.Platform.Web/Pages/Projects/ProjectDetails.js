@@ -494,7 +494,7 @@ $(function () {
         onChanged: function () { if (dataTable) { dataTable.ajax.reload(null, false); } }
     });
 
-    // --- Zaman Çizelgesi (Pages/Projects/ProjectGantt.js) ---
+    // --- Zaman Çizelgesi (paylaşılan bileşen: /js/apya-gantt.js) ---
     // Aynı filtre state'ini kullanır; tarih sürükleme yalnız Tasks.Edit ile.
     var gantt = apya.projectGantt.create({
         mount: '#view-gantt',
