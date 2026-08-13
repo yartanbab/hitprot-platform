@@ -14,16 +14,17 @@
     font-family: var(--apya-font-sans, 'Inter', system-ui, sans-serif);
 }
 
-/* Kompozisyon tasarımın 1120px artboard'una SABİTLENİR ve ortalanır; yalnız arka
-   plan tam genişlikte akar. Sınır olmadan `1fr` sütunu geniş ekranda uzayıp
-   tanıtım sütununu sola, kartı sağa yapıştırıyor ve ortada koca boşluk bırakıyordu
-   (1920'de 746px ölçüldü). Kenar sütunları artan yeri paylaşır, içerik 650+470'te kalır. */
+/* Kompozisyon sabit genişlikte ve ortalı; yalnız arka plan tam genişlikte akar.
+   Sınır olmadan `1fr` sütunu geniş ekranda uzayıp tanıtım sütununu sola, kartı sağa
+   yapıştırıyor ve ortada koca boşluk bırakıyordu (1920'de 746px ölçülmüştü).
+   Kenar sütunları artan yeri paylaşır, içerik 760+560 = 1320'de kalır — tasarımın
+   1120 artboard'undan bilerek geniş: yazı ile form arasına nefes payı istendi. */
 .apya-auth {
     position: relative;
     min-height: 100vh;
     min-height: 100dvh;
     display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 650px) 470px minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr) minmax(0, 760px) 560px minmax(0, 1fr);
     overflow: hidden;
 }
 
@@ -99,10 +100,13 @@
     letter-spacing: .1em;
 }
 
+/* max-width satır kırılımını belirler: 7.5em (80px'te 600px) "Yönetim Asistanı"yı
+   tek satıra sığdırmaz → tasarımdaki 3 satırlık ritim korunur. Sütun 760'a
+   genişleyince 9em'de 2 satıra düşüyordu. */
 .apya-auth__headline {
     margin: 0;
-    max-width: 9em;
-    font-size: 72px;
+    max-width: 7.5em;
+    font-size: 80px;
     line-height: .95;
     font-weight: 800;
     letter-spacing: -.04em;
@@ -131,14 +135,14 @@
 
 .apya-auth__stat-value {
     font-family: var(--apya-font-mono, 'JetBrains Mono', ui-monospace, monospace);
-    font-size: 22px;
+    font-size: 24px;
     font-weight: 700;
     font-variant-numeric: tabular-nums;
     color: var(--apya-text-primary, #111827);
 }
 
 .apya-auth__stat-label {
-    font-size: 11.5px;
+    font-size: 12.5px;
     color: var(--apya-text-tertiary, #9CA3AF);
 }
 
@@ -149,16 +153,18 @@
 }
 
 /* --- Sağ panel + cam kart -------------------------------------------------- */
+/* Sol iç boşluk (48) tanıtım sütununun sağ iç boşluğuyla (56) toplanıp yazı ile
+   kart arasındaki nefes payını verir. */
 .apya-auth__panel {
     position: relative;
     display: flex;
     align-items: center;
-    padding: 40px 40px 40px 0;
+    padding: 40px 40px 40px 48px;
 }
 
 .apya-auth__card {
     width: 100%;
-    padding: 38px 40px 40px;
+    padding: 42px 44px 44px;
     box-sizing: border-box;
     border: 1px solid rgba(255, 255, 255, .9);
     border-radius: var(--apya-radius-2xl, 16px);
@@ -176,7 +182,7 @@
 
 .apya-auth__title {
     margin: 0;
-    font-size: 22px;
+    font-size: 24px;
     font-weight: 700;
     letter-spacing: -.02em;
     color: var(--apya-text-primary, #111827);
@@ -321,20 +327,20 @@
 }
 
 .apya-auth__label {
-    font-size: 12.5px;
+    font-size: 13.5px;
     font-weight: 500;
     color: var(--apya-text-primary, #374151);
 }
 
 .apya-auth__input {
     width: 100%;
-    height: 44px;
-    padding: 0 14px;
+    height: 48px;
+    padding: 0 16px;
     box-sizing: border-box;
     border: 1px solid var(--apya-border-default, #E5E7EB);
     border-radius: var(--apya-radius-lg, 8px);
     background: var(--apya-surface-base, #fff);
-    font-size: 14px;
+    font-size: 15px;
     color: var(--apya-text-primary, #111827);
     outline: none;
 }
@@ -355,8 +361,8 @@
 
 .apya-auth__reveal {
     position: absolute;
-    right: 4px;
-    top: 4px;
+    right: 6px;
+    top: 6px;
     width: 36px;
     height: 36px;
     display: flex;
@@ -431,14 +437,14 @@
 }
 
 .apya-auth__submit {
-    margin-top: 22px;
+    margin-top: 24px;
     width: 100%;
-    height: 46px;
+    height: 50px;
     border: 0;
     border-radius: var(--apya-radius-lg, 8px);
     background: var(--apya-accent-500, #4F46E5);
     color: #fff;
-    font-size: 14.5px;
+    font-size: 15.5px;
     font-weight: 700;
     cursor: pointer;
     transition: background 150ms cubic-bezier(.16, 1, .3, 1);
@@ -512,7 +518,15 @@
 /* 1120 altında kenar sütunları sıfırlanır ve tanıtım sütunu 650'nin altına iner;
    başlığa yer açmak için iç boşluk daraltılır. Punto DÜŞÜRÜLMEZ — tasarımın 72px'i
    bu genişlikte de sığıyor (en uzun kelime "Asistanı" ~320px, kalan yer ~450px). */
-@media (max-width: 1119.98px) and (min-width: 992px) {
+/* 1320 altında kenar sütunları sıfırlanır ve tanıtım sütunu 760'ın altına iner
+   (992'de 432'ye kadar). Bu bantta 80px başlık taşardı — punto ve iç boşluk
+   kısılıyor. Kompozisyon genişliğinin kendisi bu kurala GİRMEMELİ, yoksa tam
+   1320'de satır kırılımı zıplar. */
+@media (max-width: 1319.98px) and (min-width: 992px) {
+    .apya-auth__headline {
+        font-size: 64px;
+    }
+
     .apya-auth__hero {
         padding: 40px 36px;
     }
