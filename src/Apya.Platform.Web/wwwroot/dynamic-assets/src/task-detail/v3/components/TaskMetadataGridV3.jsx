@@ -5,8 +5,10 @@ import {
     initialsOf, avatarColorOf, dueUrgency,
 } from '../taskMetaV3';
 
+/* pointer-events-auto: bkz. TaskDetailHeaderV3 — modal içinde portal edilen
+   popover'a Radix `auto` vermiyor, tıklamalar arkaya geçiyor. */
 const POPOVER_CLS =
-    'z-popover rounded-[14px] border border-default bg-surface-elevated p-2 shadow-float animate-fade-in-fast';
+    'z-popover pointer-events-auto rounded-[14px] border border-default bg-surface-elevated p-2 shadow-float animate-fade-in-fast';
 
 const SEARCH_INPUT_CLS =
     'w-full h-[34px] pl-[31px] pr-3 rounded-[9px] border border-default bg-neutral-subtle text-text-primary text-[12.5px] focus:border-focus focus:bg-surface-base focus:shadow-focus focus:outline-none';

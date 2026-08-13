@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { createPortal } from 'react-dom';
+import { OverlayLayerV3 } from './OverlayLayerV3';
 
 /**
  * Projeler arası taşıma / kopyalama diyaloğu.
@@ -129,10 +129,11 @@ export function TaskTransferDialogV3({
             active ? 'bg-surface-base text-primary shadow-xs' : 'bg-transparent text-text-tertiary'
         }`;
 
-    return createPortal(
+    return (
+        <OverlayLayerV3 open={open} onClose={onClose} label={isMove ? 'Başka projeye taşı' : 'Başka projelere kopyala'}>
         <div
             data-apya-overlay
-            className="fixed inset-0 z-modal flex items-center justify-center p-6 bg-surface-overlay backdrop-blur-sm animate-fade-in-fast"
+            className="absolute inset-0 flex items-center justify-center p-6 bg-surface-overlay backdrop-blur-sm animate-fade-in-fast"
             onClick={onClose}
             role="presentation"
         >
@@ -325,7 +326,7 @@ export function TaskTransferDialogV3({
                     </div>
                 </div>
             </div>
-        </div>,
-        document.body,
+        </div>
+        </OverlayLayerV3>
     );
 }

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { createPortal } from 'react-dom';
 import { catalogGroups, TOTAL_FEATURE_COUNT } from '../featureCatalogV3';
+import { OverlayLayerV3 } from './OverlayLayerV3';
 
 /**
  * Özellik ekleme modalı. Tetikleyicisi burada DEĞİL: "+" düğmesi sekme çubuğunun
@@ -38,10 +38,11 @@ export function FeaturePickerV3({
         onClose?.();
     };
 
-    return createPortal(
+    return (
+        <OverlayLayerV3 open={open} onClose={onClose} label="Özellik ekle">
         <div
             data-apya-overlay
-            className="fixed inset-0 z-modal flex items-center justify-center p-6 bg-surface-overlay backdrop-blur-sm animate-fade-in-fast"
+            className="absolute inset-0 flex items-center justify-center p-6 bg-surface-overlay backdrop-blur-sm animate-fade-in-fast"
             onClick={onClose}
             role="presentation"
         >
@@ -149,7 +150,7 @@ export function FeaturePickerV3({
                     </button>
                 </div>
             </div>
-        </div>,
-        document.body,
+        </div>
+        </OverlayLayerV3>
     );
 }

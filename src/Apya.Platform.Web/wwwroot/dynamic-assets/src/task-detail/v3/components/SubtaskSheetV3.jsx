@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { createPortal } from 'react-dom';
+import { OverlayLayerV3 } from './OverlayLayerV3';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTaskDetail } from '../../hooks/useTaskDetail';
 import { useTaskChecklist } from '../../hooks/useTaskChecklist';
@@ -203,11 +203,11 @@ export function SubtaskSheetV3({
 
     const iconBtn = 'flex items-center justify-center h-[30px] w-[30px] rounded-lg text-text-tertiary cursor-pointer';
 
-    return createPortal(
-        <>
+    return (
+        <OverlayLayerV3 open onClose={onClose} label={`${sub.code} alt görev detayı`}>
             <div
                 data-apya-overlay
-                className="fixed inset-0 z-modal-backdrop bg-surface-overlay animate-fade-in-fast"
+                className="absolute inset-0 bg-surface-overlay animate-fade-in-fast"
                 onClick={onClose}
                 role="presentation"
             />
@@ -520,7 +520,6 @@ export function SubtaskSheetV3({
                     </button>
                 </div>
             </aside>
-        </>,
-        document.body,
+        </OverlayLayerV3>
     );
 }
