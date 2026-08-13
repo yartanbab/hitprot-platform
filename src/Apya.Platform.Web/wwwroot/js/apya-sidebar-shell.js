@@ -456,7 +456,13 @@ $(function () {
     // Tek istek, iki tüketici: üst bar (apya-topbar-shell.js) aynı promise'i
     // kullanır — kabuk verisi sayfa başına BİR kez çekilir.
     window.apyaShellState = fetch('/api/app/shell/state', { credentials: 'same-origin' })
-        .then(function (r) { return r.ok ? r.json() : null; });
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (data) {
+            // Çözülmüş hâli de yayınla: komut paleti senkron çalışıyor
+            // (açılışta promise beklemez), oradan okuyor.
+            window.apyaShellStateValue = data;
+            return data;
+        });
 
     window.apyaShellState
         .then(function (data) {

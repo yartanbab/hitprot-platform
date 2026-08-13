@@ -24,6 +24,11 @@ $(function () {
             if (!href || href === '#') {
                 return;
             }
+            // SABİTLENENLER bölümü asıl satırların KOPYASI (apya-sidebar-shell.js
+            // üretiyor) — atlanmazsa sabitlenen her sayfa palette iki kez çıkar.
+            if (a.closest('.apya-pinned-section')) {
+                return;
+            }
             var textEl = a.querySelector('.lpx-menu-item-text');
             var label = ((textEl ? textEl.textContent : a.textContent) || '').trim();
             if (!label) {
@@ -59,8 +64,12 @@ $(function () {
             '    <input type="text" class="apya-command-palette-input" placeholder="Ara veya komut çalıştır..." autocomplete="off" spellcheck="false" />' +
             '    <kbd>Esc</kbd>' +
             '  </div>' +
-            '  <ul class="apya-command-palette-list"></ul>' +
+            '  <ul class="apya-command-palette-list" role="listbox"></ul>' +
             '  <div class="apya-command-palette-empty" hidden>Sonuç bulunamadı</div>' +
+            '  <div class="apya-command-palette-foot">' +
+            '    <span class="apya-command-palette-hints">↑↓ gez · ↵ seç · esc kapat</span>' +
+            '    <span class="apya-command-palette-env"></span>' +
+            '  </div>' +
             '</div>';
         document.body.appendChild(overlay);
         panel = overlay.querySelector('.apya-command-palette');
@@ -79,41 +88,136 @@ $(function () {
         input.addEventListener('keydown', onKeydown);
     }
 
-    function render(query) {
-        var q = (query || '').toLocaleLowerCase('tr-TR').trim();
-        filtered = !q ? items : items.filter(function (it) {
+    // Sayfanın KENDİ arama alanı — ortak konsol modülünün sözleşmesi
+    // (Görevler/Proje konsolları bu sınıfı kullanıyor). Yoksa "bu sayfada ara"
+    // bölümü hiç basılmaz: olmayan bir yeteneği vaat etmeyiz.
+    function pageSearchInput() {
+        return document.querySelector('.apya-console-search input');
+    }
+
+    // "+ Yeni" menüsüyle AYNI kaynak: kabuk durumundaki oluşturma yetkileri.
+    // Yetkisi olmayana satır gösterip 403 aldırmayız.
+    function createEntries() {
+        var can = (window.apyaShellStateValue && window.apyaShellStateValue.can) || null;
+        if (!can) { return []; }
+        var all = [
+            { label: 'Yeni görev', url: '/Tasks/CreateModal', allowed: can.createTask },
+            { label: 'Yeni proje', url: '/Projects/CreateModal', allowed: can.createProject },
+            { label: 'Yeni hibe çağrısı', url: '/Grants/CreateModal', allowed: can.createGrant }
+        ];
+        return all.filter(function (a) { return a.allowed; }).map(function (a) {
+            return { kind: 'create', label: a.label, url: a.url, icon: 'fa fa-plus', section: '' };
+        });
+    }
+
+    function buildEntries(q) {
+        var entries = [];
+
+        // 1) BU SAYFADA ARA — yalnız sorgu varken ve sayfanın arama alanı varken.
+        if (q && pageSearchInput()) {
+            entries.push({
+                kind: 'page', label: '"' + q + '" — bu sayfada ara',
+                icon: 'fa fa-magnifying-glass', section: 'Enter', group: 'BU SAYFADA ARA'
+            });
+        }
+
+        // 2) GİT — menüden toplanan sayfalar
+        var navs = (!q ? items : items.filter(function (it) {
             return it.label.toLocaleLowerCase('tr-TR').indexOf(q) !== -1 ||
                 (it.section && it.section.toLocaleLowerCase('tr-TR').indexOf(q) !== -1);
+        })).map(function (it) {
+            return { kind: 'nav', label: it.label, href: it.href, icon: it.icon, section: it.section, group: 'GİT' };
         });
+        entries = entries.concat(navs);
+
+        // 3) OLUŞTUR
+        var creates = createEntries().filter(function (c) {
+            return !q || c.label.toLocaleLowerCase('tr-TR').indexOf(q) !== -1;
+        });
+        creates.forEach(function (c) { c.group = 'OLUŞTUR'; });
+        return entries.concat(creates);
+    }
+
+    function render(query) {
+        var raw = (query || '').trim();
+        var q = raw.toLocaleLowerCase('tr-TR');
+        filtered = buildEntries(q);
+        // Sorgu metnini "bu sayfada ara" satırında ham hâliyle göstermek için
+        // yeniden kur (buildEntries küçük harfli q ile filtreliyor).
+        if (raw && pageSearchInput() && filtered.length && filtered[0].kind === 'page') {
+            filtered[0].label = '"' + raw + '" — bu sayfada ara';
+            filtered[0].query = raw;
+        }
+
         list.innerHTML = '';
         emptyEl.hidden = filtered.length > 0;
+
+        var lastGroup = null;
         filtered.forEach(function (it, idx) {
+            if (it.group && it.group !== lastGroup) {
+                var head = document.createElement('li');
+                head.className = 'apya-command-palette-group';
+                head.setAttribute('aria-hidden', 'true');
+                head.textContent = it.group;
+                list.appendChild(head);
+                lastGroup = it.group;
+            }
             var li = document.createElement('li');
-            li.className = 'apya-command-palette-item' + (idx === 0 ? ' active' : '');
+            li.className = 'apya-command-palette-item apya-cp-' + it.kind + (idx === 0 ? ' active' : '');
+            li.id = 'apya-cp-item-' + idx;
+            li.setAttribute('role', 'option');
+            li.setAttribute('aria-selected', idx === 0 ? 'true' : 'false');
             li.innerHTML =
                 '<i class="' + it.icon + '" aria-hidden="true"></i>' +
                 '<span class="apya-command-palette-item-label">' + escapeHtml(it.label) + '</span>' +
                 (it.section ? '<span class="apya-command-palette-item-section">' + escapeHtml(it.section) + '</span>' : '');
-            li.addEventListener('mousemove', function () {
-                setActive(idx);
-            });
-            li.addEventListener('click', function () {
-                navigate(it.href);
-            });
+            li.addEventListener('mousemove', function () { setActive(idx); });
+            li.addEventListener('click', function () { run(it); });
             list.appendChild(li);
         });
         activeIndex = filtered.length > 0 ? 0 : -1;
+        syncActiveDescendant();
+    }
+
+    function syncActiveDescendant() {
+        if (activeIndex >= 0) { input.setAttribute('aria-activedescendant', 'apya-cp-item-' + activeIndex); }
+        else { input.removeAttribute('aria-activedescendant'); }
+    }
+
+    // Tek çalıştırma noktası — klavye ve fare aynı yoldan geçer.
+    function run(entry) {
+        if (!entry) { return; }
+        if (entry.kind === 'nav') { navigate(entry.href); return; }
+        if (entry.kind === 'create') {
+            close();
+            if (window.abp && abp.ModalManager) { new abp.ModalManager(entry.url).open(); }
+            else { location.href = entry.url; }
+            return;
+        }
+        if (entry.kind === 'page') {
+            // Sorguyu sayfanın kendi aramasına uygula ve paleti kapat.
+            var el = pageSearchInput();
+            close();
+            if (el) {
+                el.value = entry.query || '';
+                el.dispatchEvent(new Event('input', { bubbles: true }));
+                el.focus();
+            }
+        }
     }
 
     function setActive(idx) {
         var els = list.querySelectorAll('.apya-command-palette-item');
         els.forEach(function (el, i) {
             el.classList.toggle('active', i === idx);
+            el.setAttribute('aria-selected', i === idx ? 'true' : 'false');
         });
         activeIndex = idx;
         if (els[idx]) {
+            // Seçili satır görünür alana kaydırılır — uzun listede kaybolmasın.
             els[idx].scrollIntoView({ block: 'nearest' });
         }
+        syncActiveDescendant();
     }
 
     function onKeydown(e) {
@@ -137,10 +241,7 @@ $(function () {
         }
         if (e.key === 'Enter') {
             e.preventDefault();
-            var target = filtered[activeIndex];
-            if (target) {
-                navigate(target.href);
-            }
+            run(filtered[activeIndex]);
         }
     }
 
@@ -153,6 +254,12 @@ $(function () {
             buildDom();
         }
         items = collectItems();
+        // Ortam etiketi — PROD'da BASILMAZ (kabuk genelindeki kural: dikkat
+        // yalnız riskli ortamda harcanır).
+        var envEl = overlay.querySelector('.apya-command-palette-env');
+        var env = (window.apyaShellStateValue && window.apyaShellStateValue.health &&
+                   window.apyaShellStateValue.health.environment) || '';
+        envEl.textContent = (env && !/^prod/i.test(env)) ? (env.toUpperCase() + ' ortamı') : '';
         input.value = '';
         render('');
         overlay.classList.add('open');

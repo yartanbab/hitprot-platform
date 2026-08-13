@@ -3732,3 +3732,48 @@ i.apya-priority-dot {
 @media (max-width: 767.98px) {
     .apya-shell-new, .apya-shell-help { display: none; }
 }
+
+/* --- Komut paleti: bölüm başlıkları, tür ayrımı, alt çubuk (Faz 4) --- */
+.apya-command-palette-group {
+    padding: 10px 12px 4px;
+    font-size: 10.5px;
+    font-weight: var(--apya-weight-bold);
+    letter-spacing: .06em;
+    color: var(--apya-text-tertiary);
+    list-style: none;
+}
+/* "Bu sayfada ara" satırı vurgulu — sorgunun asıl hedefi çoğu zaman bu. */
+.apya-command-palette-item.apya-cp-page {
+    background: var(--apya-accent-50);
+}
+.apya-command-palette-item.apya-cp-page i { color: var(--apya-accent-600); }
+.apya-command-palette-item.apya-cp-page.active { background: var(--apya-accent-100); }
+.apya-command-palette-item.apya-cp-create i { color: var(--apya-accent-600); }
+
+.apya-command-palette-foot {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 9px 14px;
+    border-top: 1px solid var(--apya-border-subtle);
+    background: var(--apya-surface-raised);
+    border-radius: 0 0 var(--apya-radius-xl) var(--apya-radius-xl);
+}
+.apya-command-palette-hints {
+    flex: 1;
+    min-width: 0;
+    font-size: var(--apya-fs-xs);
+    color: var(--apya-text-tertiary);
+}
+/* Boşken hiç yer kaplamasın (PROD'da metin basılmıyor). */
+.apya-command-palette-env:empty { display: none; }
+.apya-command-palette-env {
+    flex: 0 0 auto;
+    padding: 2px 7px;
+    border-radius: var(--apya-radius-sm);
+    background: var(--apya-warning-100);
+    color: var(--apya-text-warning);
+    font-size: 10.5px;
+    font-weight: var(--apya-weight-bold);
+    letter-spacing: .04em;
+}
