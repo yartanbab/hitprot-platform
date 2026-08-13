@@ -45,6 +45,19 @@ $(function () {
         return !!document.querySelector('.apya-command-palette-overlay.open, .apya-shell-dialog:not([hidden]), .modal.show');
     }
 
+    // SAYFA KENDİ KISAYOL SİSTEMİNİ KURDUYSA KABUK ÇEKİLİR.
+    // Görev/proje konsolları (apya-task-console.js `bindShortcuts`) `#shortcuts-modal`
+    // basıyor ve tek harfleri sahipleniyor: `g l` liste, `g k` kanban, `n` yeni
+    // görev, `/` sayfa aramasına odaklan, `j/k/x/1-4` satır işlemleri.
+    // Kabuk da `g/p/h` ve `/` bağlarsa ÇAKIŞIR: ölçüldü — `g` basınca kabuk
+    // "Yeni Görev" modalını açıyor ve konsolun `g l` dizisi hiç tamamlanamıyor,
+    // `/` de sayfa araması yerine paleti açıyor. Yani sayfanın kendi kısayol
+    // penceresinde YAZAN şeyler çalışmaz hâle geliyordu.
+    // Daha ÖZGÜL olan kazanır: sayfa. ⌘K ve Alt ←/→ çakışmıyor, onlar kalır.
+    function pageOwnsShortcuts() {
+        return !!document.querySelector('#shortcuts-modal');
+    }
+
     function openModal(url) {
         if (window.abp && abp.ModalManager) { new abp.ModalManager(url).open(); }
         else { location.href = url; }
@@ -222,27 +235,33 @@ $(function () {
     // Kısayol penceresi — liste yukarıdaki BAĞLANMIŞ tuşlardan üretilir.
     // =========================================================================
     var dialog = null;
+    // Liste BAĞLAMA GÖRE üretilir: sayfa tek harfleri sahiplenmişse kabuk
+    // onları bağlamıyor demektir, o hâlde LİSTELEMEZ de. Aksi hâlde pencere
+    // "hepsi şu an çalışıyor" derken çalışmayan satır gösterirdi.
     function shortcutGroups() {
-        var creates = createActions().map(function (a) {
-            return [a.key.toUpperCase(), 'Yeni ' + a.label.toLocaleLowerCase('tr')];
-        });
+        var sayfaSahip = pageOwnsShortcuts();
+        var paletRows = [
+            [modLabel() + 'K', 'aç / kapat'],
+            ['↑ ↓', 'gez'],
+            ['↵', 'çalıştır']
+        ];
+        if (!sayfaSahip) { paletRows.push(['/', 'paleti aç']); }
+
         var groups = [
-            ['KOMUT PALETİ', [
-                [modLabel() + 'K', 'aç / kapat'],
-                ['↑ ↓', 'gez'],
-                ['↵', 'çalıştır'],
-                ['/', 'paleti aç']
-            ]],
+            ['KOMUT PALETİ', paletRows],
             ['GEZİNME', [
                 ['Alt ←', 'önceki ekran'],
                 ['Alt →', 'sonraki ekran']
             ]],
-            ['YARDIM', [
-                ['?', 'bu pencere'],
-                ['Esc', 'kapat']
-            ]]
+            ['YARDIM', sayfaSahip ? [['Esc', 'kapat']] : [['?', 'bu pencere'], ['Esc', 'kapat']]]
         ];
-        if (creates.length) { groups.splice(2, 0, ['OLUŞTUR', creates]); }
+
+        if (!sayfaSahip) {
+            var creates = createActions().map(function (a) {
+                return [a.key.toUpperCase(), 'Yeni ' + a.label.toLocaleLowerCase('tr')];
+            });
+            if (creates.length) { groups.splice(2, 0, ['OLUŞTUR', creates]); }
+        }
         return groups;
     }
 
@@ -301,6 +320,11 @@ $(function () {
     document.addEventListener('keydown', function (e) {
         if (e.ctrlKey || e.metaKey || e.altKey) { return; }
         if (isTyping(e.target)) { return; }
+
+        // Sayfa kendi kısayollarını sahipleniyorsa kabuk hiçbirine dokunmaz —
+        // `?` de dahil, çünkü orada sayfanın kendi (daha ayrıntılı) penceresi
+        // açılmalı. Kabuk penceresine yardım menüsünden hâlâ ulaşılabilir.
+        if (pageOwnsShortcuts()) { return; }
 
         if (e.key === '?') { e.preventDefault(); openShortcuts(); return; }
         if (e.key === '/') { e.preventDefault(); openPalette(); return; }
