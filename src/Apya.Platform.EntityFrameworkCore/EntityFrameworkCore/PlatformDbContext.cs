@@ -139,6 +139,7 @@ namespace Apya.Platform.EntityFrameworkCore
         public DbSet<TaskTemplateFeature> TaskTemplateFeatures { get; set; }
         public DbSet<TaskTemplateTag> TaskTemplateTags { get; set; }
         public DbSet<Apya.Platform.Projects.BoardColumn> BoardColumns { get; set; } // Faz 2: configure edilebilir kanban
+        public DbSet<Apya.Platform.Projects.ProjectMember> ProjectMembers { get; set; } // Konsol 8. adım: ekip yönetimi
         public DbSet<Invoice> Invoices { get; set; }
         public DbSet<InvoiceItem> InvoiceItems { get; set; }
         public DbSet<Payment> Payments { get; set; }
@@ -581,6 +582,16 @@ namespace Apya.Platform.EntityFrameworkCore
                 b.Property(x => x.Name).IsRequired().HasMaxLength(64);
                 b.Property(x => x.ColorClass).HasMaxLength(32);
                 b.HasIndex(x => x.ProjectId); // Faz 2: proje bazında kolon sorgusu
+            });
+
+            builder.Entity<Apya.Platform.Projects.ProjectMember>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "ProjectMembers", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+                // Aynı kullanıcı bir projeye iki kez eklenemez. IsDeleted filtreli DEĞİL:
+                // ABP soft-delete kullandığı için silinmiş bir üyeyi yeniden eklemek
+                // ihlal yaratırdı — AppService silinmiş kaydı yeniden canlandırıyor.
+                b.HasIndex(x => new { x.ProjectId, x.UserId }).IsUnique();
             });
 
             builder.Entity<TaskAttachment>(b =>

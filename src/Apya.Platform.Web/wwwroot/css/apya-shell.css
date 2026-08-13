@@ -1824,13 +1824,67 @@ i.apya-priority-dot {
 }
 .apya-console-team:hover { background: var(--apya-surface-sunken); }
 .apya-console-team:focus-visible { outline: none; box-shadow: var(--apya-shadow-focus); }
+/* 8. adım: <span> iken <button> oldu (Ekip Yönetimi drawer'ını açar) —
+   tarayıcının buton varsayılanları sıfırlanmalı, görünüm aynı kalsın. */
 .apya-console-team-label {
+    padding: 2px 4px;
+    border: none;
+    background: transparent;
     font-size: 9.5px;
     font-weight: var(--apya-weight-bold);
     letter-spacing: 0.5px;
     color: var(--apya-text-tertiary);
     white-space: nowrap;
+    cursor: pointer;
+    border-radius: var(--apya-radius-md);
 }
+.apya-console-team-label:hover { color: var(--apya-text-secondary); background: var(--apya-surface-sunken); }
+.apya-console-team-label:focus-visible { outline: none; box-shadow: var(--apya-shadow-focus); }
+
+/* --- Ekip Yönetimi drawer (8. adım) — §16 .apya-drawer kabuğunun içeriği --- */
+.apya-team-add {
+    display: grid;
+    /* Kullanıcı seçici esner, rol ve buton kendi boyunda kalır — 480px drawer'da
+       üçü tek satıra sığar. */
+    grid-template-columns: 1fr auto auto;
+    gap: var(--apya-space-2);
+    align-items: center;
+    padding-bottom: var(--apya-space-3);
+    margin-bottom: var(--apya-space-2);
+    border-bottom: 1px solid var(--apya-border-subtle);
+}
+.apya-team-role-select { width: auto; min-width: 92px; }
+
+.apya-team-list { display: flex; flex-direction: column; }
+.apya-team-row {
+    display: grid;
+    grid-template-columns: auto 1fr auto auto auto;
+    align-items: center;
+    gap: var(--apya-space-2);
+    padding: var(--apya-space-2) 0;
+    border-bottom: 1px solid var(--apya-border-subtle);
+}
+.apya-team-row:last-child { border-bottom: none; }
+.apya-team-ident { display: flex; flex-direction: column; min-width: 0; }
+.apya-team-name {
+    font-size: 13px;
+    font-weight: var(--apya-weight-semibold);
+    color: var(--apya-text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+/* text-TERTIARY DEĞİL: 11px'te beyaz zeminde 2.54:1 ölçüldü (WCAG AA 4.5'in
+   çok altı), koyuda 3.59:1. Secondary ile 7.56 / 6.77. */
+.apya-team-sub {
+    font-size: 11px;
+    color: var(--apya-text-secondary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+/* ManageTeam yetkisi yokken rol salt-okunur metin olur. */
+.apya-team-role-static { font-size: 11.5px; color: var(--apya-text-secondary); white-space: nowrap; }
 /* .apya-avatar (24px) şerit ölçeğine iner + üst üste biner. */
 .apya-console-facepile { display: flex; align-items: center; }
 .apya-console-facepile .apya-avatar {

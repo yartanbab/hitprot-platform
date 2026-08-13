@@ -23,7 +23,13 @@
                                               && t.DueDate.Value.Date >= today
                                               && t.DueDate.Value.Date <= today.AddDays(7)) ?? 0;
 
-    // Ekip = görev atamalarından türer (ProjectMember tablosu yok).
+    // Ekip = ProjectMember kayıtları (8. adım). Şerit facepile'ı bunu gösterir;
+    // henüz görevi olmayan üye de görünür.
+    var team = Model.Members;
+
+    // `assignees` FİLTRE açılırlarında KALIR, ekip listesine dönüştürülmez: üyelik
+    // görev atamasını kısıtlamıyor, dolayısıyla ekipte olmayan birine atanmış
+    // görevler olabilir — filtreyi üyelerle sınırlamak onları erişilmez yapardı.
     var assignees = (Model.Tasks ?? new List<Apya.Platform.Tasks.TaskDto>())
         .Where(t => t.AssigneeId.HasValue && !string.IsNullOrWhiteSpace(t.AssigneeName))
         .GroupBy(t => t.AssigneeId!.Value)
@@ -280,24 +286,26 @@
             <span class="apya-mini-progress is-warning"><span style="width:@(totalTasks > 0 ? due7Count * 100 / totalTasks : 0)%"></span></span>
         </button>
 
-        @* Ekip — avatara tıklamak o kişinin görevlerini filtreler.
-           Ekip Yönetimi paneli ProjectMember backend'i olmadığı için kapsam dışı. *@
+        @* Ekip — avatara tıklamak o kişinin görevlerini filtreler (üyenin hiç görevi
+           yoksa liste boşalır, bu beklenen). Etikete tıklamak Ekip Yönetimi
+           drawer'ını açar. *@
         <div class="apya-console-team">
             <span class="apya-console-facepile">
-                @foreach (var a in assignees.Take(5))
+                @foreach (var m in team.Take(5))
                 {
-                    <button type="button" class="apya-avatar apya-avatar-@HashTone(a.Name)"
-                            data-assignee-id="@a.Id" aria-pressed="false"
-                            title="@a.Name — görevlerini filtrele">@Initials(a.Name)</button>
+                    <button type="button" class="apya-avatar apya-avatar-@HashTone(m.DisplayName)"
+                            data-assignee-id="@m.UserId" aria-pressed="false"
+                            title="@m.DisplayName — @m.RoleText — görevlerini filtrele">@Initials(m.DisplayName)</button>
                 }
-                @if (assignees.Count > 5)
+                @if (team.Count > 5)
                 {
-                    <span class="apya-avatar apya-avatar-neutral" title="@(assignees.Count - 5) kişi daha">+@(assignees.Count - 5)</span>
+                    <span class="apya-avatar apya-avatar-neutral" title="@(team.Count - 5) kişi daha">+@(team.Count - 5)</span>
                 }
             </span>
-            <span class="apya-console-team-label">
-                @(assignees.Count == 0 ? "EKİP YOK" : $"EKİP ({assignees.Count})")
-            </span>
+            <button type="button" class="apya-console-team-label" id="btn-team-drawer"
+                    title="Ekip Yönetimi">
+                @(team.Count == 0 ? "EKİP YOK" : $"EKİP ({team.Count})")
+            </button>
         </div>
 
     </div>
@@ -375,6 +383,14 @@
                     <span class="apya-console-menu-icon"><i class="fa fa-keyboard" aria-hidden="true"></i></span>
                     Klavye kısayolları
                     <span class="apya-console-menu-trailing apya-numeric">?</span>
+                </button>
+
+                @* Ekip Yönetimi (8. adım). Yalnız okuma yetkisi yetiyor — drawer
+                   içindeki ekle/çıkar/rol aksiyonları ManageTeam ile gizlenir. *@
+                <button type="button" class="apya-console-menu-item" id="menu-team-drawer">
+                    <span class="apya-console-menu-icon"><i class="fa fa-users" aria-hidden="true"></i></span>
+                    Ekip Yönetimi
+                    <span class="apya-console-menu-trailing apya-numeric">@Model.Members.Count</span>
                 </button>
 
                 @* Kaydedilmiş görünümler — filtre + görünüm + arama önayarı.
@@ -607,6 +623,52 @@
         <i class="fa fa-plus" aria-hidden="true"></i>
     </button>
 }
+
+@* ─── EKİP YÖNETİMİ DRAWER (8. adım) ───
+   §16'daki `.apya-drawer` deseni: Bootstrap modal + sağdan kayma. Backdrop, ESC,
+   focus-trap ve iç-içe modal z-index'i oradan bedava geliyor.
+   İçerik JS ile basılır (ProjectDetails.js) — üye listesi canlı değişiyor. *@
+<div class="modal fade apya-drawer" id="team-drawer" tabindex="-1"
+     aria-labelledby="team-drawer-title" aria-hidden="true"
+     data-project-id="@Model.Id"
+     data-can-manage="@((await AuthorizationService.IsGrantedAsync(PlatformPermissions.Projects.ManageTeam)).ToString().ToLowerInvariant())">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="team-drawer-title">
+                    <i class="fa fa-users me-2" aria-hidden="true"></i>Ekip Yönetimi
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
+            </div>
+            <div class="modal-body">
+                @if (await AuthorizationService.IsGrantedAsync(PlatformPermissions.Projects.ManageTeam))
+                {
+                    <div class="apya-team-add">
+                        <select class="form-select form-select-sm" id="team-add-user" aria-label="Eklenecek kullanıcı">
+                            <option value="">Kullanıcı seçin…</option>
+                        </select>
+                        <select class="form-select form-select-sm apya-team-role-select" id="team-add-role" aria-label="Rol">
+                            <option value="2" selected>Üye</option>
+                            <option value="1">Sorumlu</option>
+                            <option value="3">İzleyici</option>
+                        </select>
+                        <button type="button" class="btn btn-primary btn-sm" id="team-add-btn">
+                            <i class="fa fa-plus" aria-hidden="true"></i> Ekle
+                        </button>
+                    </div>
+                }
+
+                <div id="team-list" class="apya-team-list" aria-live="polite"></div>
+
+                <p class="apya-console-popover-note mt-3">
+                    Üyelik yalnız ekibi kaydeder: görev ataması, görev görünürlüğü ve
+                    yetkiler bundan etkilenmez. Ekipte olmayan bir kullanıcıya da görev
+                    atanabilir.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
 
 @* ─── Klavye kısayolları penceresi (⋯ menüsü veya "?" tuşu) ─── *@
 <div class="modal fade" id="shortcuts-modal" tabindex="-1" aria-labelledby="shortcuts-title" aria-hidden="true">

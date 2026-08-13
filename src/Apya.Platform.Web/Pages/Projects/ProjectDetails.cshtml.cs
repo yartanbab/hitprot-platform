@@ -43,15 +43,21 @@ public class ProjectDetailsModel : PlatformPageModel
     public decimal BudgetSpent { get; set; }
     public int BudgetPercent { get; set; }
 
+    /// <summary>Konsol 8. adım: proje ekibi. Şeritteki facepile artık bunu gösterir.</summary>
+    public List<ProjectMemberDto> Members { get; set; } = new();
+
     private readonly IProjectAppService _projectAppService;
     private readonly IProjectFinanceAppService _projectFinanceAppService;
+    private readonly IProjectMemberAppService _projectMemberAppService;
 
     public ProjectDetailsModel(
         IProjectAppService projectAppService,
-        IProjectFinanceAppService projectFinanceAppService)
+        IProjectFinanceAppService projectFinanceAppService,
+        IProjectMemberAppService projectMemberAppService)
     {
         _projectAppService = projectAppService;
         _projectFinanceAppService = projectFinanceAppService;
+        _projectMemberAppService = projectMemberAppService;
     }
 
     public async Task OnGetAsync()
@@ -82,5 +88,7 @@ public class ProjectDetailsModel : PlatformPageModel
         var finance = await _projectFinanceAppService.GetSummaryAsync(Id);
         BudgetSpent = finance.TotalExpense;
         BudgetPercent = finance.BudgetUsagePercent;
+
+        Members = await _projectMemberAppService.GetListByProjectAsync(Id);
     }
 }
