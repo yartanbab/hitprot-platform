@@ -3534,3 +3534,201 @@ i.apya-priority-dot {
     font-size: var(--apya-fs-sm);
     color: var(--apya-text-tertiary);
 }
+
+/* ============================================================================
+   KABUK — "+ Yeni" · yardım menüsü · kısayol penceresi (apya-shell-actions.js)
+   ============================================================================ */
+
+/* Üst bardaki sıra: flex `order` ile (theme-bridge'teki mevcut düzenle uyumlu). */
+.lpx-topbar-content > .apya-shell-new  { order: 40; }
+.lpx-topbar-content > .apya-shell-help { order: 94; }
+
+.apya-shell-new,
+.apya-shell-help { position: relative; display: inline-flex; }
+
+/* --- "+ Yeni" düğmesi: tek birincil eylem, aksan zemin --- */
+.apya-shell-new-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border: none;
+    border-radius: var(--apya-radius-lg);
+    background: var(--apya-accent-500);
+    color: var(--apya-text-inverse);
+    box-shadow: var(--apya-shadow-sm);
+    cursor: pointer;
+}
+.apya-shell-new-btn:hover { filter: brightness(0.93); }
+.apya-shell-new-btn:focus-visible { outline: none; box-shadow: var(--apya-shadow-focus); }
+
+/* --- yardım düğmesi: nötr --- */
+.apya-shell-help-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    border: none;
+    border-radius: var(--apya-radius-lg);
+    background: transparent;
+    color: var(--apya-text-secondary);
+    cursor: pointer;
+}
+.apya-shell-help-btn:hover { background: var(--apya-surface-hover); color: var(--apya-text-primary); }
+.apya-shell-help-btn:focus-visible { outline: none; box-shadow: var(--apya-shadow-focus); }
+.apya-shell-new-btn.is-open,
+.apya-shell-help-btn.is-open { background: var(--apya-surface-hover); }
+.apya-shell-new-btn.is-open { background: var(--apya-accent-600); }
+
+/* --- ortak açılır menü --- */
+.apya-shell-menu {
+    position: absolute;
+    top: 42px;
+    right: 0;
+    z-index: var(--apya-z-dropdown);
+    min-width: 230px;
+    padding: 6px;
+    border: 1px solid var(--apya-border-default);
+    border-radius: var(--apya-radius-xl);
+    background: var(--apya-surface-elevated);
+    box-shadow: var(--apya-shadow-lg);
+    animation: apyaPopIn var(--apya-motion-base) var(--apya-easing-standard);
+}
+.apya-shell-help-menu { min-width: 240px; }
+@media (prefers-reduced-motion: reduce) {
+    .apya-shell-menu { animation: none; }
+}
+.apya-shell-menu-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    height: 38px;
+    padding: 0 8px;
+    border: none;
+    border-radius: var(--apya-radius-lg);
+    background: transparent;
+    color: var(--apya-text-primary);
+    font-size: var(--apya-fs-base);
+    text-align: left;
+    cursor: pointer;
+}
+.apya-shell-menu-row > span { flex: 1; min-width: 0; }
+.apya-shell-menu-row:hover { background: var(--apya-surface-hover); }
+.apya-shell-menu-row:focus-visible { outline: none; box-shadow: var(--apya-shadow-focus); }
+.apya-shell-menu-sep {
+    height: 1px;
+    margin: 6px 4px;
+    background: var(--apya-border-subtle);
+}
+.apya-shell-menu-status {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 8px 6px;
+    font-size: var(--apya-fs-xs);
+    color: var(--apya-text-tertiary);
+}
+
+/* --- tuş rozeti --- */
+.apya-shell-kbd {
+    flex: 0 0 auto;
+    padding: 3px 7px;
+    border: 1px solid var(--apya-border-default);
+    border-radius: var(--apya-radius-sm);
+    background: var(--apya-surface-raised);
+    color: var(--apya-text-secondary);
+    font-family: var(--apya-font-mono);
+    font-size: 11px;
+    font-weight: var(--apya-weight-semibold);
+    line-height: 1;
+}
+
+/* --- kısayol penceresi --- */
+.apya-shell-dialog {
+    position: fixed;
+    inset: 0;
+    z-index: var(--apya-z-modal);
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 96px 24px 24px;
+    background: rgba(17, 24, 39, .40);
+}
+.apya-shell-dialog[hidden] { display: none; }
+.apya-shell-dialog-panel {
+    width: 620px;
+    max-width: 100%;
+    max-height: calc(100vh - 140px);
+    overflow-y: auto;
+    border-radius: var(--apya-radius-xl);
+    background: var(--apya-surface-elevated);
+    box-shadow: var(--apya-shadow-xl);
+    animation: apyaPopIn var(--apya-motion-base) var(--apya-easing-standard);
+}
+@media (prefers-reduced-motion: reduce) {
+    .apya-shell-dialog-panel { animation: none; }
+}
+.apya-shell-dialog-head {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 16px 20px 12px;
+    border-bottom: 1px solid var(--apya-border-subtle);
+}
+.apya-shell-dialog-title {
+    font-size: 14.5px;
+    font-weight: var(--apya-weight-semibold);
+    color: var(--apya-text-primary);
+}
+.apya-shell-dialog-sub {
+    margin-top: 2px;
+    font-size: 11.5px;
+    color: var(--apya-text-tertiary);
+}
+.apya-shell-dialog-close {
+    margin-left: auto;
+    width: 30px;
+    height: 30px;
+    border: none;
+    border-radius: var(--apya-radius-md);
+    background: transparent;
+    color: var(--apya-text-secondary);
+    cursor: pointer;
+}
+.apya-shell-dialog-close:hover { background: var(--apya-surface-hover); color: var(--apya-text-primary); }
+.apya-shell-dialog-close:focus-visible { outline: none; box-shadow: var(--apya-shadow-focus); }
+/* İki kolon — grup sayısı tek olsa da düzen bozulmaz. */
+.apya-shell-dialog-body {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0 28px;
+    padding: 16px 20px 20px;
+}
+@media (max-width: 575.98px) {
+    .apya-shell-dialog-body { grid-template-columns: minmax(0, 1fr); }
+    .apya-shell-dialog { padding-top: 48px; }
+}
+.apya-shell-dialog-grouphead {
+    padding: 10px 0 4px;
+    font-size: 10.5px;
+    font-weight: var(--apya-weight-bold);
+    letter-spacing: .06em;
+    color: var(--apya-text-tertiary);
+}
+.apya-shell-dialog-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    height: 30px;
+    font-size: var(--apya-fs-sm);
+    color: var(--apya-text-secondary);
+}
+.apya-shell-dialog-row > span { flex: 1; min-width: 0; }
+
+/* Dar üst barda yardım düğmesi kalır, "+ Yeni" kalır — ikisi de ikon zaten. */
+@media (max-width: 767.98px) {
+    .apya-shell-new, .apya-shell-help { display: none; }
+}

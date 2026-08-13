@@ -21,6 +21,21 @@ public class ShellStateDto
 
     /// <summary>Kenar çubuğu dibindeki durum satırı.</summary>
     public ShellHealthDto Health { get; set; } = new();
+
+    /// <summary>Üst bardaki "+ Yeni" menüsünün hangi satırları basacağı.</summary>
+    public ShellCanDto Can { get; set; } = new();
+}
+
+/// <summary>
+/// Oluşturma yetkileri — "+ Yeni" menüsü yalnız gerçekten yapılabilecek işleri
+/// listeler. Yetkisi olmayana satır GÖSTERİLİP 403 aldırmak, hiç göstermemekten
+/// daha kötü: kullanıcı işin mümkün olduğunu sanır.
+/// </summary>
+public class ShellCanDto
+{
+    public bool CreateTask { get; set; }
+    public bool CreateProject { get; set; }
+    public bool CreateGrant { get; set; }
 }
 
 public class ShellBadgesDto

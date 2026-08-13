@@ -308,6 +308,10 @@ public class PlatformWebModule : AbpModule
                     // apya-sidebar-shell.js'ten SONRA: paylaşılan
                     // window.apyaShellState promise'ini o kuruyor.
                     bundle.AddFiles("/js/apya-topbar-shell.js");
+                    // Sıra serbest: paleti açarken #ApyaCommandPaletteTrigger'a
+                    // tıklanıyor ve command-palette.js onu DELEGE dinleyiciyle
+                    // yakalıyor → bu dosya ondan önce yüklense de çalışır.
+                    bundle.AddFiles("/js/apya-shell-actions.js");
                     bundle.AddFiles("/js/density-toggle.js");
                     bundle.AddFiles("/js/command-palette.js");
                     // dark-mode.js'ten SONRA gelmeli: window.apyaHeader.setViewLabel'ı kullanıyor.

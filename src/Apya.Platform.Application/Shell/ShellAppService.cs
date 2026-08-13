@@ -66,7 +66,18 @@ public class ShellAppService : PlatformAppService, IShellAppService
             Pins = await GetPinsAsync(),
             Badges = await GetBadgesAsync(),
             Projects = await GetProjectsAsync(),
-            Health = GetHealth(_hostEnvironment.EnvironmentName)
+            Health = GetHealth(_hostEnvironment.EnvironmentName),
+            Can = await GetCanAsync()
+        };
+    }
+
+    private async Task<ShellCanDto> GetCanAsync()
+    {
+        return new ShellCanDto
+        {
+            CreateTask = await IsGrantedAsync(PlatformPermissions.Tasks.Create),
+            CreateProject = await IsGrantedAsync(PlatformPermissions.Projects.Create),
+            CreateGrant = await IsGrantedAsync(PlatformPermissions.Grants.Create)
         };
     }
 
