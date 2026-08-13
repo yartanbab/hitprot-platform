@@ -284,6 +284,221 @@
         $cell.empty().append(tpl.content.cloneNode(true));
     }
 
+    // --- Kaydedilmiş görünümler ---------------------------------------------
+    // Filtre + görünüm + arama önayarı. Backend YOK, localStorage'da durur.
+    // `scope` verilirse kayıtlar o anahtarın altında gruplanır (konsolda proje
+    // başına — atanan filtresi proje-özgü olduğu için tek ortak liste yanlış
+    // sonuç verirdi). scope null ise düz liste (Görevler sayfası: proje yok).
+    function createSavedViews(opts) {
+        var scoped = opts.scope !== null && opts.scope !== undefined;
+
+        function read() {
+            try {
+                var raw = JSON.parse(localStorage.getItem(opts.storageKey) || (scoped ? '{}' : '[]'));
+                if (!scoped) { return Array.isArray(raw) ? raw : []; }
+                return Array.isArray(raw[opts.scope]) ? raw[opts.scope] : [];
+            } catch (e) { return []; }
+        }
+
+        function write(list) {
+            try {
+                if (!scoped) { localStorage.setItem(opts.storageKey, JSON.stringify(list)); return; }
+                var all = JSON.parse(localStorage.getItem(opts.storageKey) || '{}');
+                all[opts.scope] = list;
+                localStorage.setItem(opts.storageKey, JSON.stringify(all));
+            } catch (e) { /* özel kip — yoksay */ }
+        }
+
+        function render() {
+            var list = read();
+            var $wrap = $(opts.list).empty();
+            if (!list.length) {
+                $wrap.append('<div class="apya-console-menu-hint px-3 pb-2">Henüz kayıtlı görünüm yok.</div>');
+                return;
+            }
+            list.forEach(function (v, i) {
+                var $row = $(
+                    '<div class="apya-console-saved-view">' +
+                    '  <button type="button" class="apya-console-saved-view-apply">' +
+                    '    <span class="apya-console-saved-view-name"></span>' +
+                    '    <span class="apya-console-saved-view-meta"></span>' +
+                    '  </button>' +
+                    '  <button type="button" class="apya-console-saved-view-del" aria-label="Görünümü sil" title="Sil">' +
+                    '    <i class="fa fa-xmark"></i></button>' +
+                    '</div>');
+                $row.find('.apya-console-saved-view-name').text(v.name);
+                $row.find('.apya-console-saved-view-meta').text(opts.summarize(v.state));
+                $row.find('.apya-console-saved-view-apply').click(function () { opts.onApply(v); });
+                $row.find('.apya-console-saved-view-del').click(function (e) {
+                    e.stopPropagation();
+                    var next = read();
+                    next.splice(i, 1);
+                    write(next);
+                    render();
+                });
+                $wrap.append($row);
+            });
+        }
+
+        $(opts.saveButton).click(function () {
+            Swal.fire({
+                title: 'Görünümü kaydet',
+                input: 'text',
+                inputPlaceholder: 'Örn. Bana atanan gecikmişler',
+                showCancelButton: true,
+                confirmButtonText: 'Kaydet',
+                cancelButtonText: 'Vazgeç',
+                preConfirm: function (name) {
+                    if (!name || !name.trim()) { Swal.showValidationMessage('Bir ad girin.'); }
+                    return name;
+                }
+            }).then(function (result) {
+                if (!result.isConfirmed) { return; }
+                var snap = opts.getSnapshot();
+                var list = read();
+                list.push({ name: result.value.trim(), state: snap.state, view: snap.view, q: snap.q });
+                write(list);
+                render();
+                abp.notify.success('Görünüm kaydedildi.');
+            });
+        });
+
+        render();
+        return { render: render };
+    }
+
+    // --- Klavye kısayolları --------------------------------------------------
+    // Kural: bir metin alanına yazarken veya herhangi bir pencere/menü açıkken
+    // HİÇBİR kısayol tetiklenmez — görev detay island'ı (React) ve SweetAlert
+    // kendi tuşlarını kullanıyor.
+    function bindShortcuts(opts) {
+        var modalEl = opts.modal || '#shortcuts-modal';
+        var instance = null;
+
+        function getModal() {
+            var el = document.querySelector(modalEl);
+            if (!el) { return null; }
+            if (!instance) { instance = new bootstrap.Modal(el); }
+            return instance;
+        }
+
+        if (opts.menuButton) {
+            $(opts.menuButton).click(function () {
+                var m = getModal();
+                if (m) { m.show(); }
+            });
+        }
+
+        function typingInField(el) {
+            if (!el) { return false; }
+            var tag = (el.tagName || '').toLowerCase();
+            return tag === 'input' || tag === 'textarea' || tag === 'select' || el.isContentEditable;
+        }
+
+        function overlayOpen() {
+            return !!document.querySelector('.modal.show, .swal2-container, [role="dialog"]') ||
+                   document.body.classList.contains('swal2-shown');
+        }
+
+        // Odaklı satır — j/k ile gezilir, ↵/x/1-4 bunun üzerinde çalışır.
+        var focusedIndex = -1;
+        function rowEls() { return $(opts.table + ' tbody tr[data-id]').get(); }
+
+        function renderFocusedRow() {
+            var rows = rowEls();
+            $(opts.table + ' tbody tr').removeClass('is-focused');
+            if (focusedIndex < 0 || focusedIndex >= rows.length) { return null; }
+            var el = rows[focusedIndex];
+            el.classList.add('is-focused');
+            if (el.scrollIntoView) { el.scrollIntoView({ block: 'nearest' }); }
+            return el;
+        }
+
+        function moveFocus(delta) {
+            var rows = rowEls();
+            if (!rows.length) { return; }
+            focusedIndex = focusedIndex < 0
+                ? (delta > 0 ? 0 : rows.length - 1)
+                : Math.min(rows.length - 1, Math.max(0, focusedIndex + delta));
+            renderFocusedRow();
+        }
+
+        function focusedTaskId() {
+            var el = rowEls()[focusedIndex];
+            return el ? el.getAttribute('data-id') : null;
+        }
+
+        // "g" ön ekli iki tuşlu diziler (g l / g k) için kısa süreli bekleme.
+        var awaitingG = false;
+        var gTimer = null;
+
+        $(document).on('keydown', function (e) {
+            if (e.ctrlKey || e.altKey || e.metaKey) { return; }
+            if (typingInField(e.target)) { return; }
+
+            // Esc yalnız kısayol penceresini kapatır; diğer pencereleri Bootstrap
+            // ve React kendi yönetiyor, araya girmiyoruz.
+            if (e.key === 'Escape') {
+                var el = document.querySelector(modalEl);
+                if (el && el.classList.contains('show') && instance) { instance.hide(); }
+                return;
+            }
+            if (overlayOpen()) { return; }
+
+            if (awaitingG) {
+                awaitingG = false;
+                clearTimeout(gTimer);
+                if (e.key === 'l') { e.preventDefault(); opts.switchView('list'); return; }
+                if (e.key === 'k') { e.preventDefault(); opts.switchView('kanban'); return; }
+            }
+            if (e.key === 'g') {
+                awaitingG = true;
+                gTimer = setTimeout(function () { awaitingG = false; }, 800);
+                return;
+            }
+
+            switch (e.key) {
+                case '?':
+                    e.preventDefault();
+                    var m = getModal();
+                    if (m) { m.show(); }
+                    return;
+                case '/':
+                    e.preventDefault();
+                    $(opts.searchInput).focus();
+                    return;
+                case 'n':
+                    if ($(opts.newButton).length) { e.preventDefault(); $(opts.newButton).trigger('click'); }
+                    return;
+            }
+
+            // Buradan sonrası liste görünümüne özgü
+            if (opts.getView() !== 'list') { return; }
+
+            if (e.key === 'j' || e.key === 'ArrowDown') { e.preventDefault(); moveFocus(1); return; }
+            if (e.key === 'k' || e.key === 'ArrowUp')   { e.preventDefault(); moveFocus(-1); return; }
+
+            var id = focusedTaskId();
+            if (!id) { return; }
+
+            if (e.key === 'Enter') { e.preventDefault(); opts.openTask(id); return; }
+
+            if (e.key === 'x' && opts.canBulk) {
+                e.preventDefault();
+                var $cb = $(opts.table + ' tbody tr[data-id="' + id + '"] .apya-row-check');
+                $cb.prop('checked', !$cb.prop('checked')).trigger('change');
+                return;
+            }
+
+            if (opts.canChangeStatus && ['1', '2', '3', '4'].indexOf(e.key) > -1) {
+                e.preventDefault();
+                opts.onStatusKey(id, parseInt(e.key, 10));
+            }
+        });
+
+        return { renderFocusedRow: renderFocusedRow };
+    }
+
     apya.taskConsole = {
         createState: createState,
         bindDropdownChip: bindDropdownChip,
@@ -292,6 +507,8 @@
         bindDensitySegment: bindDensitySegment,
         createColumnPrefs: createColumnPrefs,
         renderEmptyState: renderEmptyState,
+        createSavedViews: createSavedViews,
+        bindShortcuts: bindShortcuts,
         runSequential: runSequential
     };
 })(window, jQuery);

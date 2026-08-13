@@ -205,6 +205,11 @@ $(function () {
         order: [[canBulk ? 1 : 0, 'asc']],
         searching: true,
         ajax: abp.libs.datatables.createAjax(taskService.getList, listFilter),
+        // Satıra data-id — klavye kısayolları (j/k gezinme, ↵, x, 1-4) satırları
+        // bununla buluyor. Konsolda da aynı desen var.
+        createdRow: function (row, data) {
+            $(row).attr('data-id', data.id);
+        },
         columnDefs: buildColumns()
     }));
 
@@ -692,6 +697,73 @@ $(function () {
 
     createModal.onResult(function () { reloadAll(); });
     abp.event.on('app.task.updated', function () { reloadAll(); });
+
+    // ─── Kaydedilmiş görünümler ────────────────────────────────────────────
+    // Konsolda proje başına saklanır (atanan filtresi proje-özgü); burada
+    // proje YOK — tüm projelerin görevleri listeleniyor — o yüzden düz liste.
+    function viewSummary(s) {
+        var parts = [];
+        if (s.status) { parts.push(STATUS_LABELS[s.status]); }
+        if (s.priority) { parts.push(PRIORITY_LABELS[s.priority]); }
+        if (s.project) { parts.push(projectLabel()); }
+        if (s.mine) { parts.push('bana atanan'); }
+        else if (s.assignee) { parts.push($('[data-filter="assignee"][data-value="' + s.assignee + '"]').data('label') || 'kişi'); }
+        if (s.overdue) { parts.push('gecikmiş'); }
+        if (s.due7) { parts.push('7 gün'); }
+        if (s.open) { parts.push('tamamlanmamış'); }
+        return parts.length ? parts.join(' · ') : 'filtresiz';
+    }
+
+    console_.createSavedViews({
+        storageKey: 'apya.tasks.views',
+        scope: null,               // düz liste
+        list: '#saved-views-list',
+        saveButton: '#btn-save-view',
+        summarize: viewSummary,
+        getSnapshot: function () {
+            return {
+                state: $.extend({}, state.values),
+                view: currentView,
+                q: dataTable ? dataTable.search() : ''
+            };
+        },
+        onApply: function (v) {
+            // Yerinde sıfırla + kayıtlı değerleri aynı nesneye yaz (modülün
+            // state nesnesini yeniden atamak senkron bağını koparır).
+            state.reset();
+            $.extend(state.values, v.state);
+            currentView = v.view === 'kanban' ? 'kanban' : (v.view === 'gantt' ? 'gantt' : 'list');
+            if (dataTable) { dataTable.search(v.q || ''); }
+            $('#console-search').val(v.q || '');
+            kb.setProject(state.get('project') || null);
+            switchView(currentView);
+            applyFilters();
+            loadSummary();
+        }
+    });
+
+    // ─── Klavye kısayolları ────────────────────────────────────────────────
+    var shortcuts = console_.bindShortcuts({
+        table: '#TasksTable',
+        modal: '#shortcuts-modal',
+        menuButton: '#menu-shortcuts',
+        searchInput: '#console-search',
+        newButton: '#NewTaskButton',
+        canBulk: canBulk,
+        canChangeStatus: canChangeStatus,
+        getView: function () { return currentView; },
+        switchView: switchView,
+        openTask: function (id) { editModal.open(id); },
+        onStatusKey: function (id, status) {
+            taskService.updateStatus(id, status).then(function () {
+                abp.notify.success('Görev durumu güncellendi.');
+                reloadAll();
+            });
+        }
+    });
+
+    // Yeniden çizimde odak satırı kaybolmasın.
+    dataTable.on('draw', shortcuts.renderFocusedRow);
 
     // ─── AI taslak inceleme (batch sonrası event-driven) ───────────────────
     // APYA-122: tetikleyici buton bu sayfada YOK; yalnız modal açılışı korunuyor.

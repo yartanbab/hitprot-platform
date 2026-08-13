@@ -926,22 +926,6 @@ $(function () {
     // Backend yok (handoff v1). Proje başına saklanır: atanan filtresi
     // proje-özgü olduğu için tek ortak liste yanlış sonuç verirdi.
     // ================================================================
-    var VIEWS_KEY = 'apya.project.views';
-
-    function readViews() {
-        try {
-            var all = JSON.parse(localStorage.getItem(VIEWS_KEY) || '{}');
-            return Array.isArray(all[projectId]) ? all[projectId] : [];
-        } catch (e) { return []; }
-    }
-    function writeViews(list) {
-        try {
-            var all = JSON.parse(localStorage.getItem(VIEWS_KEY) || '{}');
-            all[projectId] = list;
-            localStorage.setItem(VIEWS_KEY, JSON.stringify(all));
-        } catch (e) { /* yok say */ }
-    }
-
     function viewSummary(s) {
         var parts = [];
         if (s.status) { parts.push(STATUS_LABELS[s.status]); }
@@ -954,195 +938,48 @@ $(function () {
         return parts.length ? parts.join(' · ') : 'filtresiz';
     }
 
-    function renderSavedViews() {
-        var list = readViews();
-        var $wrap = $('#saved-views-list').empty();
-        if (!list.length) {
-            $wrap.append('<div class="apya-console-menu-hint px-3 pb-2">Henüz kayıtlı görünüm yok.</div>');
-            return;
-        }
-        list.forEach(function (v, i) {
-            var $row = $(
-                '<div class="apya-console-saved-view">' +
-                '  <button type="button" class="apya-console-saved-view-apply">' +
-                '    <span class="apya-console-saved-view-name"></span>' +
-                '    <span class="apya-console-saved-view-meta"></span>' +
-                '  </button>' +
-                '  <button type="button" class="apya-console-saved-view-del" aria-label="Görünümü sil" title="Sil">' +
-                '    <i class="fa fa-xmark"></i></button>' +
-                '</div>');
-            $row.find('.apya-console-saved-view-name').text(v.name);
-            $row.find('.apya-console-saved-view-meta').text(viewSummary(v.state));
-            $row.find('.apya-console-saved-view-apply').click(function () {
-                // Önce yerinde sıfırla, sonra kayıtlı değerleri AYNI nesneye yaz —
-                // yeniden atamak filterState takma adını modülün state'inden koparırdı.
-                state.reset();
-                $.extend(filterState, v.state);
-                currentView = v.view === 'kanban' ? 'kanban' : 'list';
-                if (dataTable) { dataTable.search(v.q || ''); }
-                $('#console-search').val(v.q || '');
-                switchView(currentView);
-                applyFilters();
-            });
-            $row.find('.apya-console-saved-view-del').click(function (e) {
-                e.stopPropagation();
-                var next = readViews();
-                next.splice(i, 1);
-                writeViews(next);
-                renderSavedViews();
-            });
-            $wrap.append($row);
-        });
-    }
-
-    $('#btn-save-view').click(function () {
-        Swal.fire({
-            title: 'Görünümü kaydet',
-            input: 'text',
-            inputPlaceholder: 'Örn. Bana atanan gecikmişler',
-            showCancelButton: true,
-            confirmButtonText: 'Kaydet',
-            cancelButtonText: 'Vazgeç',
-            preConfirm: function (name) {
-                if (!name || !name.trim()) { Swal.showValidationMessage('Bir ad girin.'); }
-                return name;
-            }
-        }).then(function (result) {
-            if (!result.isConfirmed) { return; }
-            var list = readViews();
-            list.push({
-                name: result.value.trim(),
+    console_.createSavedViews({
+        storageKey: 'apya.project.views',
+        scope: projectId,          // proje başına: atanan filtresi proje-özgü
+        list: '#saved-views-list',
+        saveButton: '#btn-save-view',
+        summarize: viewSummary,
+        getSnapshot: function () {
+            return {
                 state: $.extend({}, filterState),
                 view: currentView,
                 q: dataTable ? dataTable.search() : ''
-            });
-            writeViews(list);
-            renderSavedViews();
-            abp.notify.success('Görünüm kaydedildi.');
-        });
+            };
+        },
+        onApply: function (v) {
+            // Önce yerinde sıfırla, sonra kayıtlı değerleri AYNI nesneye yaz —
+            // yeniden atamak filterState takma adını modülün state'inden koparırdı.
+            state.reset();
+            $.extend(filterState, v.state);
+            currentView = v.view === 'kanban' ? 'kanban' : 'list';
+            if (dataTable) { dataTable.search(v.q || ''); }
+            $('#console-search').val(v.q || '');
+            switchView(currentView);
+            applyFilters();
+        }
     });
 
-    renderSavedViews();
-
     // ================================================================
-    // KLAVYE KISAYOLLARI
-    // Kural: bir metin alanına yazarken veya herhangi bir pencere/menü
-    // açıkken HİÇBİR kısayol tetiklenmez — görev detay island'ı (React)
-    // ve SweetAlert kendi tuşlarını kullanıyor.
+    // KLAVYE KISAYOLLARI — ortak modül (/js/apya-task-console.js)
     // ================================================================
-    var shortcutsModal = null;
-    function getShortcutsModal() {
-        var el = document.getElementById('shortcuts-modal');
-        if (!el) { return null; }
-        if (!shortcutsModal) { shortcutsModal = new bootstrap.Modal(el); }
-        return shortcutsModal;
-    }
-    $('#menu-shortcuts').click(function () {
-        var m = getShortcutsModal();
-        if (m) { m.show(); }
-    });
-
-    function typingInField(el) {
-        if (!el) { return false; }
-        var tag = (el.tagName || '').toLowerCase();
-        return tag === 'input' || tag === 'textarea' || tag === 'select' || el.isContentEditable;
-    }
-    function overlayOpen() {
-        return !!document.querySelector('.modal.show, .swal2-container, [role="dialog"]') ||
-               document.body.classList.contains('swal2-shown');
-    }
-
-    // Odaklı satır — j/k ile gezilir, ↵/x/1-4 bunun üzerinde çalışır.
-    var focusedIndex = -1;
-    function rowEls() { return $('#ProjectTasksTable tbody tr[data-id]').get(); }
-    function renderFocusedRow() {
-        var rows = rowEls();
-        $('#ProjectTasksTable tbody tr').removeClass('is-focused');
-        if (focusedIndex < 0 || focusedIndex >= rows.length) { return null; }
-        var el = rows[focusedIndex];
-        el.classList.add('is-focused');
-        if (el.scrollIntoView) { el.scrollIntoView({ block: 'nearest' }); }
-        return el;
-    }
-    function moveFocus(delta) {
-        var rows = rowEls();
-        if (!rows.length) { return; }
-        focusedIndex = focusedIndex < 0
-            ? (delta > 0 ? 0 : rows.length - 1)
-            : Math.min(rows.length - 1, Math.max(0, focusedIndex + delta));
-        renderFocusedRow();
-    }
-    function focusedTaskId() {
-        var el = rowEls()[focusedIndex];
-        return el ? el.getAttribute('data-id') : null;
-    }
-
-    // "g" ön ekli iki tuşlu diziler (g l / g k) için kısa süreli bekleme.
-    var awaitingG = false;
-    var gTimer = null;
-
-    $(document).on('keydown', function (e) {
-        if (e.ctrlKey || e.altKey || e.metaKey) { return; }
-        if (typingInField(e.target)) { return; }
-
-        // Esc yalnız kısayol penceresini kapatır; diğer pencereleri Bootstrap
-        // ve React kendi yönetiyor, araya girmiyoruz.
-        if (e.key === 'Escape') {
-            var el = document.getElementById('shortcuts-modal');
-            if (el && el.classList.contains('show') && shortcutsModal) { shortcutsModal.hide(); }
-            return;
-        }
-        if (overlayOpen()) { return; }
-
-        // g + l / g + k
-        if (awaitingG) {
-            awaitingG = false;
-            clearTimeout(gTimer);
-            if (e.key === 'l') { e.preventDefault(); switchView('list'); return; }
-            if (e.key === 'k') { e.preventDefault(); switchView('kanban'); return; }
-        }
-        if (e.key === 'g') {
-            awaitingG = true;
-            gTimer = setTimeout(function () { awaitingG = false; }, 800);
-            return;
-        }
-
-        switch (e.key) {
-            case '?':
-                e.preventDefault();
-                var m = getShortcutsModal();
-                if (m) { m.show(); }
-                return;
-            case '/':
-                e.preventDefault();
-                $('#console-search').focus();
-                return;
-            case 'n':
-                if ($('#btn-create-task').length) { e.preventDefault(); $('#btn-create-task').trigger('click'); }
-                return;
-        }
-
-        // Buradan sonrası liste görünümüne özgü
-        if (currentView !== 'list') { return; }
-
-        if (e.key === 'j' || e.key === 'ArrowDown') { e.preventDefault(); moveFocus(1); return; }
-        if (e.key === 'k' || e.key === 'ArrowUp')   { e.preventDefault(); moveFocus(-1); return; }
-
-        var id = focusedTaskId();
-        if (!id) { return; }
-
-        if (e.key === 'Enter') { e.preventDefault(); editModal.open(id); return; }
-
-        if (e.key === 'x' && canBulk) {
-            e.preventDefault();
-            var $cb = $('#ProjectTasksTable tbody tr[data-id="' + id + '"] .apya-row-check');
-            $cb.prop('checked', !$cb.prop('checked')).trigger('change');
-            return;
-        }
-
-        if (canChangeStatus && ['1', '2', '3', '4'].indexOf(e.key) > -1) {
-            e.preventDefault();
-            taskService.updateStatus(id, parseInt(e.key, 10)).then(function () {
+    var shortcuts = console_.bindShortcuts({
+        table: '#ProjectTasksTable',
+        modal: '#shortcuts-modal',
+        menuButton: '#menu-shortcuts',
+        searchInput: '#console-search',
+        newButton: '#btn-create-task',
+        canBulk: canBulk,
+        canChangeStatus: canChangeStatus,
+        getView: function () { return currentView; },
+        switchView: switchView,
+        openTask: function (id) { editModal.open(id); },
+        onStatusKey: function (id, status) {
+            taskService.updateStatus(id, status).then(function () {
                 abp.notify.success('Görev durumu güncellendi.');
                 reloadAll(false);
             });
@@ -1150,7 +987,7 @@ $(function () {
     });
 
     // Yeniden çizimde odak satırı kaybolmasın.
-    if (dataTable) { dataTable.on('draw', renderFocusedRow); }
+    if (dataTable) { dataTable.on('draw', shortcuts.renderFocusedRow); }
 
     // --- APYA-143b: Bütçe-vs-Gerçekleşen modalı ---
     // İki giriş noktası: şeritteki Bütçe barı ve ⋯ menüsündeki öğe.
