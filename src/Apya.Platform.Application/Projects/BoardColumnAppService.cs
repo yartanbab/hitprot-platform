@@ -54,7 +54,7 @@ public class BoardColumnAppService : PlatformAppService, IBoardColumnAppService
     public async Task<BoardColumnDto> UpdateAsync(Guid id, UpdateBoardColumnDto input)
     {
         var col = await _columnRepository.GetAsync(id);
-        col.Update(input.Name, input.ColorClass);
+        col.Update(input.Name, input.ColorClass, input.WipLimit);
         await _columnRepository.UpdateAsync(col, autoSave: true);
         return ToDto(col);
     }
@@ -148,6 +148,7 @@ public class BoardColumnAppService : PlatformAppService, IBoardColumnAppService
         ColorClass = c.ColorClass,
         Order = c.Order,
         StatusValue = c.StatusValue,
-        IsSystem = c.IsSystem
+        IsSystem = c.IsSystem,
+        WipLimit = c.WipLimit
     };
 }

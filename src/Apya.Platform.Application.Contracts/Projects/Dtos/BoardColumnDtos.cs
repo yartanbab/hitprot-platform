@@ -13,6 +13,9 @@ public class BoardColumnDto : EntityDto<Guid>
     public int Order { get; set; }
     public int? StatusValue { get; set; } // sistem kolonu → TaskStatus int; özel kolon → null
     public bool IsSystem { get; set; }
+
+    /// <summary>WIP limiti; null = limit yok. Aşım engellenmez, board'da rozetle uyarılır.</summary>
+    public int? WipLimit { get; set; }
 }
 
 public class CreateBoardColumnDto
@@ -36,4 +39,8 @@ public class UpdateBoardColumnDto
 
     [StringLength(32)]
     public string ColorClass { get; set; } = "secondary";
+
+    /// <summary>null veya 0 → limit yok.</summary>
+    [Range(0, 999)]
+    public int? WipLimit { get; set; }
 }

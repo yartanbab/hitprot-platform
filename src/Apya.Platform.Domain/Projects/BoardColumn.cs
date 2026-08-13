@@ -25,6 +25,13 @@ public class BoardColumn : FullAuditedAggregateRoot<Guid>, IMultiTenant
     /// <summary>Varsayılan kolon (silinemez/yeniden adlandırılamaz değil ama korunur).</summary>
     public bool IsSystem { get; private set; }
 
+    /// <summary>
+    /// WIP (work-in-progress) limiti: kolonda aynı anda bulunması önerilen azami görev
+    /// sayısı. null = limit yok. Aşım ENGELLENMEZ, board'da yalnız uyarı rozeti çıkar —
+    /// kanban pratiğinde WIP limiti sert kısıt değil, sinyaldir.
+    /// </summary>
+    public int? WipLimit { get; private set; }
+
     protected BoardColumn() { }
 
     public BoardColumn(
@@ -53,9 +60,22 @@ public class BoardColumn : FullAuditedAggregateRoot<Guid>, IMultiTenant
 
     public void SetOrder(int order) => Order = order;
 
-    public void Update(string name, string colorClass)
+    /// <summary>WIP limiti. null veya 0 → limit yok. Negatif değer kabul edilmez.</summary>
+    public void SetWipLimit(int? wipLimit)
+    {
+        if (wipLimit.HasValue && wipLimit.Value < 0)
+        {
+            throw new BusinessException("Apya:BoardColumn:InvalidWipLimit")
+                .WithData("Value", wipLimit.Value);
+        }
+
+        WipLimit = (wipLimit.HasValue && wipLimit.Value > 0) ? wipLimit : null;
+    }
+
+    public void Update(string name, string colorClass, int? wipLimit = null)
     {
         SetName(name);
         SetColor(colorClass);
+        SetWipLimit(wipLimit);
     }
 }
