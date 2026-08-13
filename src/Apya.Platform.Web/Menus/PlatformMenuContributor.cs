@@ -2,15 +2,11 @@ using System.Threading.Tasks;
 using Apya.Platform.Ai.Permissions;
 using Apya.Platform.Features;
 using Apya.Platform.Localization;
-using Apya.Platform.MultiTenancy;
 using Apya.Platform.Permissions;
 using Microsoft.Extensions.DependencyInjection;
 using Volo.Abp.Authorization.Permissions;
 using Volo.Abp.Features;
-using Volo.Abp.Identity.Web.Navigation;
 using Volo.Abp.MultiTenancy;
-using Volo.Abp.SettingManagement.Web.Navigation;
-using Volo.Abp.TenantManagement.Web.Navigation;
 using Volo.Abp.UI.Navigation;
 
 namespace Apya.Platform.Web.Menus;
@@ -44,7 +40,6 @@ public class PlatformMenuContributor : IMenuContributor
 
     private async Task ConfigureMainMenuAsync(MenuConfigurationContext context)
     {
-        var administration = context.Menu.GetAdministration();
         var l = context.GetLocalizer<PlatformResource>();
         var permission = context.ServiceProvider.GetRequiredService<IPermissionChecker>();
         var feature = context.ServiceProvider.GetRequiredService<IFeatureChecker>();
@@ -56,16 +51,29 @@ public class PlatformMenuContributor : IMenuContributor
         // İşler
         // NOT: eskiden burada ayrı bir "Ana Sayfa" (PlatformMenus.Home, url "~/") öğesi de vardı —
         // "Projeler" ile aynı (bozuk) "/" URL'sine gidiyordu, hedef tasarımda da yok; kaldırıldı.
+        //
+        // Kabuk handoff'u (2026-08-13): bölüm iki maddeye iner — "Projeler" yaprak kalır,
+        // görünüm ekranları "Panolar" alt grubunda toplanır. Panolar proje bağımsız
+        // kapsayıcı görünümlerdir (tüm projelerdeki görevler), bu yüzden Projeler'in
+        // altında değil kardeşi olarak durur.
         var work = new ApplicationMenuItem("Apya.Work", l["Menu:Work"], icon: "fa fa-briefcase", order: 2);
         if (await permission.IsGrantedAsync(PlatformPermissions.Projects.Default))
-            work.AddItem(new ApplicationMenuItem("Apya.Work.Projects", l["Menu:Projects"], icon: "fa fa-rocket", url: "/Projects"));
+            work.AddItem(new ApplicationMenuItem("Apya.Work.Projects", l["Menu:Projects"], icon: "fa fa-rocket", url: "/Projects", order: 1));
+
+        // Handoff'un Panolar listesinde Gantt ve Zaman Çizelgesi de var; ikisinin de
+        // bağımsız sayfası YOK (Gantt yalnız proje detay konsolunun içinde yaşıyor).
+        // Olmayan ekrana menü girişi açmıyoruz — handoff'un "yalnız çalışan şeyi listele"
+        // kuralı kısayol penceresi için konmuş, aynı kural menüde de geçerli.
+        var boards = new ApplicationMenuItem("Apya.Work.Boards", l["Menu:Boards"], icon: "fa fa-table-columns", order: 2);
         if (await permission.IsGrantedAsync(PlatformPermissions.Tasks.Default))
         {
-            work.AddItem(new ApplicationMenuItem("Apya.Work.Tasks", l["Menu:Tasks"], icon: "fa fa-tasks", url: "/Tasks"));
-            work.AddItem(new ApplicationMenuItem("Apya.Work.Board", l["Menu:KanbanBoard"], icon: "fa fa-columns", url: "/Board"));
+            boards.AddItem(new ApplicationMenuItem("Apya.Work.Tasks", l["Menu:Tasks"], icon: "fa fa-tasks", url: "/Tasks"));
+            boards.AddItem(new ApplicationMenuItem("Apya.Work.Board", l["Menu:KanbanBoard"], icon: "fa fa-columns", url: "/Board"));
         }
         if (await permission.IsGrantedAsync(PlatformPermissions.Calendars.Default))
-            work.AddItem(new ApplicationMenuItem("Apya.Work.Calendar", l["Menu:Calendar"], icon: "fa fa-calendar-days", url: "/Calendars"));
+            boards.AddItem(new ApplicationMenuItem("Apya.Work.Calendar", l["Menu:Calendar"], icon: "fa fa-calendar-days", url: "/Calendars"));
+        if (boards.Items.Count > 0) work.AddItem(boards);
+
         if (work.Items.Count > 0) context.Menu.AddItem(work);
 
         // Hibe Yönetimi — kendi izin grubu (Groups.Grants) ve kendi feature'ı (Features.Grants)
@@ -79,7 +87,9 @@ public class PlatformMenuContributor : IMenuContributor
         if (grants.Items.Count > 0) context.Menu.AddItem(grants);
 
         // Finans — Faz 1 sadeleştirme: yalnızca günlük işlem + hesap öğeleri kalır.
-        // Raporlar tek "Raporlar" menüsünde toplandı; Kurlar Yönetim'e taşındı.
+        // Raporlar tek "Raporlar" menüsünde toplandı. Kurlar bir dönem Yönetim'e
+        // taşınmıştı; kabuk handoff'u (2026-08-13) onu Finans'a geri aldı — kur bir
+        // finans verisi, yönetim ayarı değil.
         var finance = new ApplicationMenuItem("Apya.Finance", l["Menu:Finance"], icon: "fa fa-coins", order: 4);
         // Sıralama (kullanıcı kararı 2026-06-22): 1) Kasalar  2) Para Hareketleri.
         if (await permission.IsGrantedAsync(PlatformPermissions.CashAccounts.Default))
@@ -90,6 +100,8 @@ public class PlatformMenuContributor : IMenuContributor
             || await permission.IsGrantedAsync(PlatformPermissions.Expenses.Default)
             || await permission.IsGrantedAsync(PlatformPermissions.Invoices.Default))
             finance.AddItem(new ApplicationMenuItem("Apya.Finance.Hub", l["Menu:FinanceHub"], icon: "fa fa-right-left", url: "/Finance", order: 2));
+        if (await permission.IsGrantedAsync(PlatformPermissions.ExchangeRates.Default))
+            finance.AddItem(new ApplicationMenuItem("Apya.Finance.ExchangeRates", l["Menu:ExchangeRates"], icon: "fa fa-money-bill-transfer", url: "/ExchangeRates", order: 3));
         // Cariler kullanıcı kararıyla menüden gizlendi (2026-06-22). /Customers sayfası korunur;
         // izinli kullanıcı doğrudan erişebilir. Geri açmak için aşağıyı yorumdan çıkar:
         // if (await permission.IsGrantedAsync(PlatformPermissions.Customers.Default))
@@ -100,11 +112,10 @@ public class PlatformMenuContributor : IMenuContributor
         var content = new ApplicationMenuItem("Apya.Content", l["Menu:Content"], icon: "fa fa-folder-open", order: 6);
         if (await permission.IsGrantedAsync(PlatformPermissions.Documents.Default))
             content.AddItem(new ApplicationMenuItem("Apya.Content.Documents", l["Menu:Documents"], icon: "fa fa-book", url: "/Documents"));
+        // Webhook'lar buradan PLATFORM bölümüne taşındı (kabuk handoff'u): entegrasyon
+        // yüzeyi, içerik değil.
         if (await permission.IsGrantedAsync(PlatformPermissions.DynamicAssets.Default))
-        {
             content.AddItem(new ApplicationMenuItem("Apya.Content.DynamicAssets", l["Menu:DynamicAssets"], icon: "fa fa-file-signature", url: "/DynamicAssets"));
-            content.AddItem(new ApplicationMenuItem("Apya.Content.Webhooks", l["Menu:Webhooks"], icon: "fa fa-bolt", url: "/DynamicAssets/Webhooks"));
-        }
         if (content.Items.Count > 0) context.Menu.AddItem(content);
 
         // AI Değerlendirme Merkezi (AI Evaluation Center) — AiAssist feature + Ai.Prompts yetkisi
@@ -188,76 +199,47 @@ public class PlatformMenuContributor : IMenuContributor
             reports.AddItem(new ApplicationMenuItem("Apya.Reports.FxRevaluation", l["Menu:FxRevaluation"], icon: "fa fa-scale-balanced", url: "/FxRevaluations"));
         if (reports.Items.Count > 0) context.Menu.AddItem(reports);
 
-        // ── Yönetim bölümü ────────────────────────────────────────────────────
-        // Düz 9 öğelik listeydi; ilgili öğeler açılır alt gruplara toplandı.
-        // Sıra: Kiracılar(1) · Kimlik(2) · Ayarlar(3) · Kurlar(4) · Platform(5)
-        //       · Geri Bildirim(6) · Sistem Sağlığı(7)
-
-        // Kurlar: TCMB'den otomatik geldiği ve nadiren elle bakıldığı için
-        // günlük Finans menüsünden çıkarılıp Yönetim (Ayarlar) altına alındı.
-        if (await permission.IsGrantedAsync(PlatformPermissions.ExchangeRates.Default))
-        {
-            administration.AddItem(new ApplicationMenuItem(
-                "Apya.Admin.ExchangeRates", l["Menu:ExchangeRates"],
-                icon: "fa fa-money-bill-transfer", url: "/ExchangeRates", order: 4));
-        }
-
-        // Platform (host) — Paket Yönetimi + Tasarım Sistemi. İkisi de aynı kapıyı
-        // (TenantManagement.Tenants.Update) kullanır: yeni permission tanımlamamak için
-        // bilinçli tercih, tenant kullanıcılarının menüsünde görünmez.
-        var platformGroup = new ApplicationMenuItem(
-            "Apya.Admin.Platform", l["Menu:Admin:Platform"], icon: "fa fa-cubes", order: 5);
-        if (await permission.IsGrantedAsync(Volo.Abp.TenantManagement.TenantManagementPermissions.Tenants.Update))
-        {
-            platformGroup.AddItem(new ApplicationMenuItem(
-                "Apya.Admin.Packages", l["Menu:PackageManagement"],
-                icon: "fa fa-box-open", url: "/PackageManagement"));
-            platformGroup.AddItem(new ApplicationMenuItem(
-                "Apya.Admin.DesignSystem", l["Menu:DesignSystem"],
-                icon: "fa fa-palette", url: "/DesignSystem"));
-        }
-        if (platformGroup.Items.Count > 0) administration.AddItem(platformGroup);
-
-        // Geri Bildirim — host'un tüm tenant'lardan gelen havuzu + yapılandırması.
-        var feedbackGroup = new ApplicationMenuItem(
-            "Apya.Admin.FeedbackGroup", l["Menu:Feedback:Group"], icon: "fa fa-comment-dots", order: 6);
-        if (await permission.IsGrantedAsync(PlatformPermissions.Feedbacks.Default))
-        {
-            feedbackGroup.AddItem(new ApplicationMenuItem(
-                "Apya.Admin.Feedback", l["Menu:FeedbackAdmin"],
-                icon: "fa fa-inbox", url: "/Admin/Feedback"));
-        }
-        // Yapılandırma — ayrı izin (ManageSettings).
-        if (await permission.IsGrantedAsync(PlatformPermissions.Feedbacks.ManageSettings))
-        {
-            feedbackGroup.AddItem(new ApplicationMenuItem(
-                "Apya.Admin.FeedbackSettings", l["Menu:FeedbackSettings"],
-                icon: "fa fa-sliders", url: "/Admin/Feedback/Settings"));
-        }
-        if (feedbackGroup.Items.Count > 0) administration.AddItem(feedbackGroup);
-
-        // Sistem Sağlığı — istemci hataları + audit üzerinden türetilen sunucu metrikleri.
+        // Platform — entegrasyon ve işletim yüzeyi. Günlük iş değil ama yönetim
+        // ayarı da değil: kullanıcı buraya "çalışıyor mu / neden tetiklenmedi"
+        // sorusuyla gelir, bu yüzden kenar çubuğunda kalır, Ayarlar'a inmez.
+        var platform = new ApplicationMenuItem("Apya.Platform", l["Menu:Platform"], icon: "fa fa-cubes", order: 8);
+        if (await permission.IsGrantedAsync(PlatformPermissions.DynamicAssets.Default))
+            platform.AddItem(new ApplicationMenuItem("Apya.Platform.Webhooks", l["Menu:Webhooks"], icon: "fa fa-bolt", url: "/DynamicAssets/Webhooks"));
         if (await permission.IsGrantedAsync(PlatformPermissions.SystemHealth.Default))
+            platform.AddItem(new ApplicationMenuItem("Apya.Platform.SystemHealth", l["Menu:SystemHealth"], icon: "fa fa-heart-pulse", url: "/Admin/SystemHealth"));
+        if (platform.Items.Count > 0) context.Menu.AddItem(platform);
+
+        // ── YÖNETİM bölümü kaldırıldı ─────────────────────────────────────────
+        // Kabuk handoff'u (2026-08-13): 7 maddelik YÖNETİM bölümü günlük işi
+        // boğuyordu. Hepsi tek "Ayarlar" girişine indi; hedefler /Settings
+        // sayfasındaki izin-filtreli bağlantı listesinden açılır (sekme YOK,
+        // ABP modül sayfaları kendi route'larında durmaya devam eder).
+        //   Kurlar        → FİNANS
+        //   Sistem Sağlığı → PLATFORM
+        //   Kiracı · Kimlik · Ayar Yönetimi · Paket · Tasarım Sistemi ·
+        //   Geri Bildirim · Giriş Ekranı → /Settings
+        //
+        // TenantManagement/Identity/SettingManagement öğelerini bu gruba KENDİ
+        // contributor'ları ekliyor ve onlar bizden ÖNCE çalışıyor (bu yüzden
+        // eskiden SetSubItemOrder ile sıralayabiliyorduk). Grubu burada düşürmek
+        // hepsini birden düşürür.
+        //
+        // GetAdministration() DEĞİL GetMenuItemOrNull(): ilki öğe yoksa
+        // AbpException fırlatıyor ve grup kaldırıldıktan sonra bir daha geri
+        // gelmiyor (menü nesnesi her istekte sıfırdan kurulmuyor). Fırlatan
+        // sürümle 8 sayfa render'ı 500 veriyordu — test paketi yakaladı.
+        var administration = context.Menu.GetMenuItemOrNull(
+            DefaultMenuNames.Application.Main.Administration);
+        if (administration != null)
         {
-            administration.AddItem(new ApplicationMenuItem(
-                "Apya.Admin.SystemHealth", l["Menu:SystemHealth"],
-                icon: "fa fa-heart-pulse", url: "/Admin/SystemHealth", order: 7));
+            context.Menu.Items.Remove(administration);
         }
 
-        // Giriş ekranı yapılandırması — kiracı seçici / sosyal giriş görünürlüğü.
-        if (await permission.IsGrantedAsync(PlatformPermissions.LoginScreen.Default))
-        {
-            administration.AddItem(new ApplicationMenuItem(
-                "Apya.Admin.LoginScreen", l["Menu:LoginScreen"],
-                icon: "fa fa-right-to-bracket", url: "/Admin/LoginScreen", order: 8));
-        }
-
-        if (MultiTenancyConsts.IsEnabled)
-        {
-            administration.SetSubItemOrder(TenantManagementMenuNames.GroupName, 1);
-        }
-
-        administration.SetSubItemOrder(IdentityMenuNames.GroupName, 2);
-        administration.SetSubItemOrder(SettingManagementMenuNames.GroupName, 3);
+        // Ayarlar — kenar çubuğunun dibindeki tek giriş. Kişisel tercihler her
+        // oturumlu kullanıcıya açık olduğu için izin kapısı YOK; yönetim
+        // bağlantıları sayfanın kendi içinde izinle filtrelenir.
+        context.Menu.AddItem(new ApplicationMenuItem(
+            "Apya.Settings", l["Menu:Settings"],
+            icon: "fa fa-gear", url: "/Settings", order: 99));
     }
 }
