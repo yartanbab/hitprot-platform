@@ -586,11 +586,9 @@ $(function () {
     });
 
     // ─── Yoğunluk + kolon seçici ───────────────────────────────────────────
-    var density = console_.createDensity({
-        root: '.apya-console-main',
-        storageKey: 'apya.tasks.density'
-    });
-    density.apply();
+    // Yoğunluk UYGULAMA GENELİ ayardır — topbar düğmesiyle aynı değeri yazar.
+    // (Önceden sayfaya özel bir kopyaydı; ikisi birbirini görmüyordu.)
+    console_.bindDensitySegment();
 
     var colPrefs = console_.createColumnPrefs({
         storageKey: 'apya.tasks.columns',

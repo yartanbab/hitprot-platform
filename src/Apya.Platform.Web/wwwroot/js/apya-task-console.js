@@ -125,6 +125,10 @@
             $(opts.table + ' tbody .apya-row-check[data-task-id]').each(function () {
                 this.checked = !!selected[$(this).data('task-id')];
             });
+            // Seçili satır vurgusu — onay kutusu tek başına yeterince görünür değil.
+            $(opts.table + ' tbody tr').each(function () {
+                $(this).toggleClass('is-selected', !!selected[$(this).attr('data-id')]);
+            });
             var $page = $(opts.table + ' tbody .apya-row-check[data-task-id]');
             var pageIds = $page.map(function () { return String($(this).data('task-id')); }).get();
             var allOn = pageIds.length > 0 && pageIds.every(function (id) { return !!selected[id]; });
@@ -163,31 +167,31 @@
     }
 
     // --- Satır yoğunluğu ----------------------------------------------------
-    function createDensity(opts) {
-        var KEY = opts.storageKey;
-        var VALUES = ['compact', 'cozy', 'comfortable'];
-
-        function read() {
-            var v = null;
-            try { v = localStorage.getItem(KEY); } catch (e) { v = null; }
-            return VALUES.indexOf(v) >= 0 ? v : 'cozy';
-        }
-
-        function apply(value) {
-            $(opts.root).attr('data-density', value);
+    // ⋯ menüsündeki S/N/G segmentini UYGULAMA GENELİ yoğunluk ayarına bağlar.
+    // Tek doğruluk kaynağı /js/density-toggle.js: <html data-density> +
+    // localStorage('apya-density') + 'apya:density-changed' olayı; topbar'daki
+    // düğme de aynı değeri yazar. Burada SADECE segmentin aktif durumu senkronlanır.
+    //
+    // NOT: Bu daha önce sayfaya özel bir kopyaydı (kendi localStorage anahtarı +
+    // kart üzerine data-density). Sonuç: topbar ile sayfa birbirini görmüyordu.
+    // Sayfa-yerel yoğunluk YANLIŞ soyutlamaydı — bilerek kaldırıldı.
+    function bindDensitySegment() {
+        function sync() {
+            var d = (window.apya && window.apya.density) ? window.apya.density.current() : 'cozy';
             $('[data-density-set]').each(function () {
-                $(this).attr('aria-pressed', String($(this).data('density-set') === value));
+                var on = $(this).data('density-set') === d;
+                $(this).toggleClass('active', on).attr('aria-pressed', String(on));
             });
         }
 
         $(document).on('click', '[data-density-set]', function () {
-            var v = String($(this).data('density-set'));
-            try { localStorage.setItem(KEY, v); } catch (e) { /* özel kip — yoksay */ }
-            apply(v);
-            if (opts.onChange) { opts.onChange(v); }
+            if (window.apya && window.apya.density) {
+                window.apya.density.set($(this).data('density-set'));
+            }
         });
 
-        return { apply: function () { apply(read()); }, value: read };
+        document.addEventListener('apya:density-changed', sync);
+        sync();
     }
 
     // --- Kolon seçici -------------------------------------------------------
@@ -285,7 +289,7 @@
         bindDropdownChip: bindDropdownChip,
         bindToggleChip: bindToggleChip,
         createBulkSelection: createBulkSelection,
-        createDensity: createDensity,
+        bindDensitySegment: bindDensitySegment,
         createColumnPrefs: createColumnPrefs,
         renderEmptyState: renderEmptyState,
         runSequential: runSequential
