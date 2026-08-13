@@ -216,6 +216,7 @@ namespace Apya.Platform.Tasks
             await PopulateTagsAsync(result.Items);
             await PopulateFavoritesAsync(result.Items);
             await PopulateSubTaskCountsAsync(result.Items);
+            await PopulateProjectNamesAsync(result.Items);
             return result;
         }
 
@@ -302,6 +303,32 @@ namespace Apya.Platform.Tasks
             foreach (var item in items)
             {
                 item.IsFavorite = favSet.Contains(item.Id);
+            }
+        }
+
+        // Proje adlarını tek toplu sorguda iliştirir — PopulateBoardColumnNamesAsync ile aynı desen.
+        // TaskItem'da Project NAVİGASYONU YOK (yalnız ProjectId) ve TaskDto.ProjectName için
+        // AutoMapper eşlemesi de yoktu → alan bugüne kadar HER ZAMAN null dönüyordu: görev
+        // listesindeki "Proje" kolonu hep "—" gösteriyor, çapraz-proje kanban'daki
+        // showProjectName ise sessizce ölüydü. Include mümkün olmadığı için batch lookup.
+        private async Task PopulateProjectNamesAsync(System.Collections.Generic.IReadOnlyList<TaskDto> items)
+        {
+            if (items.Count == 0) return;
+
+            var projectIds = items.Where(i => i.ProjectId.HasValue)
+                                  .Select(i => i.ProjectId!.Value).Distinct().ToList();
+            if (projectIds.Count == 0) return;
+
+            // IMultiTenant → repository tenant'a göre zaten süzer.
+            var projects = await _projectLookupRepository.GetListAsync(p => projectIds.Contains(p.Id));
+            var map = projects.ToDictionary(p => p.Id, p => p.Name);
+
+            foreach (var item in items)
+            {
+                if (item.ProjectId.HasValue && map.TryGetValue(item.ProjectId.Value, out var name))
+                {
+                    item.ProjectName = name;
+                }
             }
         }
 

@@ -29,6 +29,7 @@ $(function () {
     var $root = $('.apya-task-console');
     var canChangeStatus = $root.data('can-change-status') === true;
     var canDeleteTasks = $root.data('can-delete-tasks') === true;
+    var canEditTasks = $root.data('can-edit-tasks') === true;
     var canBulk = $root.data('can-bulk') === true;
 
     var OPEN_STATUSES = [1, 2, 3]; // Todo/InProgress/InReview — Done(4) ve Cancelled(0) hariç
@@ -645,6 +646,11 @@ $(function () {
     $('#btn-view-kanban').click(function () { switchView('kanban'); kb.load(); });
     $('#btn-view-gantt').click(function () { switchView('gantt'); loadGantt(); });
 
+    // Kaydedilmemiş Gantt sürüklemesi varken sayfadan ayrılma uyarısı (konsoldaki gibi).
+    $(window).on('beforeunload', function () {
+        if (gantt && gantt.hasPending()) { return 'Kaydedilmemiş tarih değişiklikleriniz var.'; }
+    });
+
     function switchView(mode) {
         currentView = mode;
         $('.view-panel').addClass('d-none');
@@ -659,63 +665,23 @@ $(function () {
         state.writeUrl({ view: mode === 'list' ? '' : mode });
     }
 
-    // ─── Gantt ─────────────────────────────────────────────────────────────
-    var gantt = null;
+    // ─── Zaman Çizelgesi (paylaşılan bileşen: /js/apya-gantt.js) ───────────
+    // Proje konsoluyla AYNI bileşen; kapsamı getFilter belirler. frappe-gantt
+    // kaldırıldı — hiyerarşi, çeyrek zoom, gruplama, kritik yol ve kapasite
+    // uyarısı onda yoktu.
+    var gantt = apya.projectGantt.create({
+        mount: '#view-gantt',
+        getFilter: buildInput,
+        editModal: editModal,
+        canEdit: canEditTasks,
+        onSaved: function () {
+            subtaskCache = {};
+            dataTable.ajax.reload(null, false);
+            loadSummary();
+        }
+    });
 
-    function loadGantt() {
-        var params = $.extend({ maxResultCount: 1000 }, buildInput());
-        taskService.getList(params).then(function (result) { renderGantt(result.items); });
-    }
-
-    function renderGantt(tasks) {
-        if (!tasks.length) { $('#gantt-svg').empty(); return; }
-
-        var ganttTasks = tasks.map(function (task) {
-            return {
-                id: task.id,
-                name: task.title,
-                start: moment(task.startDate).format('YYYY-MM-DD'),
-                end: moment(task.dueDate || moment(task.startDate).add(1, 'days')).format('YYYY-MM-DD'),
-                progress: task.status === 4 ? 100 : (task.status === 1 ? 0 : 50),
-                dependencies: (task.predecessorIds || []).join(','),
-                custom_class: 'priority-' + getPriorityClass(task.priority)
-            };
-        });
-
-        gantt = new Gantt("#gantt-svg", ganttTasks, {
-            on_click: function (task) { editModal.open({ id: task.id }); },
-            on_date_change: function (task, start, end) {
-                taskService.get(task.id).then(function (original) {
-                    taskService.update(task.id, {
-                        title: original.title,
-                        description: original.description,
-                        startDate: start,
-                        dueDate: end,
-                        status: original.status,
-                        priority: original.priority,
-                        projectId: original.projectId,
-                        assigneeId: original.assigneeId,
-                        predecessorIds: original.predecessorIds
-                    }).then(function () { abp.notify.success('Tarih güncellendi.'); });
-                });
-            },
-            language: 'tr'
-        });
-
-        $('.gantt-change-view').off('click').on('click', function () {
-            gantt.change_view_mode($(this).data('view'));
-            $('.gantt-change-view').removeClass('active');
-            $(this).addClass('active');
-        });
-    }
-
-    // TaskPriority enum: Low=1, Medium=2, High=3, Critical=4
-    function getPriorityClass(p) {
-        if (p === 1) { return 'low'; }
-        if (p === 3) { return 'high'; }
-        if (p === 4) { return 'critical'; }
-        return 'medium';
-    }
+    function loadGantt() { gantt.load(); }
 
     // ─── Yenileme ──────────────────────────────────────────────────────────
     function reloadAll() {

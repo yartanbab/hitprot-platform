@@ -2484,7 +2484,7 @@ i.apya-priority-dot {
 }
 
 /* ----------------------------------------------------------------------------
-   ZAMAN ÇİZELGESİ (GANTT) — Pages/Projects/ProjectGantt.js
+   ZAMAN ÇİZELGESİ (GANTT) — wwwroot/js/apya-gantt.js (Görevler + Proje konsolu)
    Etiket kolonu 330px, satır 36px (handoff ölçüleri). Yatay kaydırma bu
    bileşenin İÇİNDE olur — zaman ekseni doğası gereği geniştir; listedeki
    "yatay scroll yok" kuralı buraya uygulanmaz.
