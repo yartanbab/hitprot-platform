@@ -2719,8 +2719,178 @@ i.apya-priority-dot {
     .apya-console-search { flex: 1 1 140px; min-width: 0; }
     .apya-console-search > input { width: 100%; min-width: 0; }
 }
-/* Dar ekranda tam yükseklik kilidi kalkar — mobilde doğal akış ve sayfa
-   kaydırması beklenen davranış (mobil düzenin tamamı 10. adımda). */
+
+/* ═══ 10. ADIM — MOBİL / RESPONSIVE ═══════════════════════════════════════
+   Kırılımlar ve NEDEN İKİ FARKLI BİRİM kullanıldığı:
+
+     kap  1020px → Efor + Başlangıç kolonları düşer   (JS: ProjectDetails.js)
+     kap   760px → liste kart listesine döner
+     view  768px → alt sekme barı + FAB + dokunma hedefleri 44px
+
+   İÇERİĞİN SIĞMASIYLA ilgili kurallar KABI ölçer (§21 başındaki kenar çubuğu
+   notu: viewport yanıltıyor). CİHAZLA ilgili olanlar viewport ölçer: parmak
+   boyutu ve ekranın alt kenarı kabın genişliğinden bağımsızdır.
+
+   NOT — `container-type: inline-size` fixed konumlandırmayı ETKİLEMİYOR:
+   kap, fixed konumlu torunlar için containing block olmuyor (Chrome'da
+   ölçüldü). Alt bar ve FAB kabın içinden de viewport'a oturur; bir ara
+   sürümde şeridi body'ye taşıyan JS yazılmıştı, ölçüm sonrası kaldırıldı.
+   -------------------------------------------------------------------------- */
+
+/* Kap daraldığında kolon seçici düğmesi otomatik gizlenen kolonu "elle
+   açılabilir" göstermesin (JS `disabled` veriyor, buradaki yalnız görünüm). */
+.apya-console-colpicker button:disabled { opacity: 0.45; cursor: not-allowed; }
+
+/* FAB — varsayılan gizli, yalnız dar viewport'ta açılır. */
+.apya-console-fab { display: none; }
+
+@container (max-width: 760px) {
+    /* --- Liste → kart listesi ---
+       DataTables klon-başlık mimarisi: görünür başlıklar `.dt-scroll-head`te,
+       veriler `.dt-scroll-body`de (§21 DataTables notu). Kart düzeninde başlık
+       şeridi anlamsız — gizlenir. §21'in yatay scroll için koyduğu
+       `table-layout: fixed` + yüzde genişlikler de burada geri alınır. */
+    .apya-console-views .dt-scroll-head { display: none; }
+    .apya-console-views .dt-scroll-body { overflow-x: hidden; }
+
+    /* Tablo kutusunun KENDİSİ bloklaşmalı. `tr`ye `display:flex` verip
+       `table`/`tbody`yi tablo düzeninde bırakmak YETMİYOR: satır genişliğini
+       hâlâ tablo algoritması belirliyor, başlık 683px kapta 122px'e sıkışıp
+       gövde 750px'e taşıyordu (canlı ölçüm). Gövde tablosunun kendi `thead`i
+       yalnız kolon genişliği eşitlemek için var, kartta işlevsiz. */
+    .apya-console-views .dt-scroll-body > table { display: block; width: 100% !important; }
+    .apya-console-views .dt-scroll-body > table > thead { display: none; }
+    .apya-console-views .dt-scroll-body > table > tbody { display: block; width: 100%; }
+
+    /* Kart ızgarası — AÇIK YERLEŞİM, akış değil. Flex sarması hücre
+       genişliklerine bağlı: seçim kolonu yetkiye göre var/yok olduğu için
+       aynı kural iki kullanıcıda farklı satırlara düşüyordu (onay kutusu tek
+       başına bir satıra iniyordu, ölçüldü). Izgarada satır/kolon sabit.
+         [☐] Başlık..........................
+             [AV] [Durum] [Öncelik] [Bitiş]     */
+    .apya-console-views .dt-scroll-body > table > tbody > tr {
+        display: grid;
+        grid-template-columns: auto 1fr auto auto auto;
+        align-items: center;
+        gap: 6px 8px;
+        width: 100%;
+        box-sizing: border-box;
+        padding: 10px 12px;
+        border-bottom: 1px solid var(--apya-border-subtle);
+    }
+    .apya-console-views .dt-scroll-body > table > tbody > tr > td {
+        border: none !important;
+        padding: 0 !important;
+        white-space: normal;
+    }
+    .apya-console-views td.apya-c-check    { grid-column: 1; grid-row: 1 / span 2; }
+    .apya-console-views td.apya-c-title    { grid-column: 2 / -1; grid-row: 1; min-width: 0; }
+    .apya-console-views td.apya-c-assignee { grid-column: 2; grid-row: 2; justify-self: start; }
+    .apya-console-views td.apya-c-status   { grid-column: 3; grid-row: 2; }
+    .apya-console-views td.apya-c-priority { grid-column: 4; grid-row: 2; }
+    .apya-console-views td.apya-c-due      { grid-column: 5; grid-row: 2; }
+    /* Toplu işlem yetkisi yoksa seçim kolonu HİÇ basılmaz; 1. iz 0 genişlikte
+       kalıp yalnız gap kadar (8px) sol boşluk bırakır — kabul edilebilir,
+       ızgarayı ikiye bölmeye değmez. */
+
+    /* "Kayıt yok" / boş hâl hücresi ızgaraya girmemeli, tam satırı kaplar. */
+    .apya-console-views td.dt-empty { grid-column: 1 / -1 !important; grid-row: 1; }
+}
+
 @media (max-width: 767.98px) {
-    .apya-page.apya-project-console { height: auto; }
+    /* --- Dokunma hedefleri ≥44px (handoff kabul kriteri) ---
+       440px'te ölçülen ihlaller: Geri 30 · kod kopyala 20 · AI/Yeni Görev/⋯ 32.
+       KAP DEĞİL VIEWPORT ölçülüyor: parmak boyutu cihaz özelliği, kabın
+       genişliğiyle ilgisi yok. Kap sorgusu kullanılsaydı kenar çubuğu açık
+       1000px'lik bir masaüstü penceresinde (kap ~700px) fare kullanan
+       kullanıcı 44px'lik butonlar görürdü. */
+    .apya-console-rail .btn,
+    .apya-console-rail .apya-console-back { height: 44px; padding: 0 14px; }
+    .apya-console-kebab { width: 44px; height: 44px; }
+    .apya-console-search { height: 44px; }
+    .apya-filter-chip { min-height: 40px; }
+    /* Kod kopyala 20px KALIR — 44px'e büyütmek 11px'lik kod chip'inin yanında
+       orantısız duruyor. Görsel boyut korunup hit alanı büyütülüyor
+       (20 + 2×12 = 44). Komşu chip tıklanabilir değil, çakışma yok. */
+    .apya-console-copy { position: relative; }
+    .apya-console-copy::after { content: ''; position: absolute; inset: -12px; }
+
+    /* Şeritteki "Yeni Görev Ekle" mobilde FAB'a devrediyor — tek birincil
+       aksiyon kalsın (AI butonu kalır, o ikincil ve ayrı bir akış).
+       FAB ile AYNI SORGUDA olmak ZORUNDA: biri kap biri viewport ölçseydi
+       kenar çubuğu açık ~1000px pencerede (kap ~700px) şerit butonu gizlenip
+       FAB da açılmaz, birincil aksiyon tamamen kaybolurdu. */
+    .apya-console-actions #btn-create-task { display: none; }
+
+    /* Tam yükseklik kilidi kalkar — mobilde doğal akış ve sayfa kaydırması
+       beklenen davranış. Alt bar + FAB son satırı örtmesin diye dip boşluk. */
+    .apya-page.apya-project-console { height: auto; padding-bottom: 74px; }
+
+    /* --- Alt sekme barı ---
+       Aynı `.apya-console-tabs` düğümü yerinde kalır, yalnız konumu değişir.
+       ÖLÇÜLDÜ: şerit `.apya-console-main` (overflow:hidden) içindeyken de
+       `position: fixed` VIEWPORT'a oturuyor (top 929/bottom 988, innerHeight
+       987), kırpılmıyor ve `elementFromPoint` barı döndürüyor — yani en üstte.
+       `.apya-project-console` `container-type: inline-size` taşısa da kap
+       fixed için containing block OLMUYOR (Chrome; test kutusu kabın içinde de
+       dışında da (988,0)'a düştü, kap kutusu (960,308) olmasına rağmen).
+       Bu yüzden düğümü body'ye taşıyan JS kaldırıldı — gereksizdi. */
+    .apya-console-tabs {
+        position: fixed;
+        inset: auto 0 0 0;
+        z-index: 1035;
+        height: auto;
+        padding: 0;
+        margin: 0;
+        background: var(--apya-surface-base);
+        border-top: 1px solid var(--apya-border-default);
+        border-bottom: none;
+        box-shadow: var(--apya-shadow-lg);
+        padding-bottom: env(safe-area-inset-bottom);
+    }
+    .apya-console-tabs .apya-console-tab {
+        flex: 1 1 0;
+        flex-direction: column;
+        justify-content: center;
+        gap: 3px;
+        min-width: 0;
+        height: 58px;
+        padding: 0 4px;
+        font-size: 11px;
+        line-height: 1.1;
+        text-align: center;
+    }
+    .apya-console-tabs .apya-console-tab i { font-size: 16px; }
+    /* Aktif çizgi ALTTAN ÜSTE alınır: altta ekran kenarına denk gelip
+       görünmüyordu. */
+    .apya-console-tabs .apya-console-tab.active {
+        box-shadow: inset 0 3px 0 var(--apya-accent-500);
+        color: var(--apya-accent-600);
+    }
+    [data-theme="dark"] .apya-console-tabs .apya-console-tab.active {
+        color: var(--apya-accent-300);
+    }
+    /* Görev sayacı alt barda yer kaplıyor, sekme etiketlerini sıkıştırıyor. */
+    .apya-console-tabs .apya-console-count { display: none; }
+
+    /* --- FAB (56px, sağ alt) --- */
+    .apya-console-fab {
+        position: fixed;
+        right: 16px;
+        bottom: calc(58px + 16px + env(safe-area-inset-bottom));
+        z-index: 1034;
+        width: 56px;
+        height: 56px;
+        display: grid;
+        place-items: center;
+        border: none;
+        border-radius: var(--apya-radius-full);
+        background: var(--apya-accent-500);
+        color: var(--apya-text-inverse);
+        font-size: 20px;
+        box-shadow: var(--apya-shadow-lg);
+        cursor: pointer;
+    }
+    .apya-console-fab:active { background: var(--apya-accent-600); }
+    .apya-console-fab:focus-visible { outline: none; box-shadow: var(--apya-shadow-focus); }
 }

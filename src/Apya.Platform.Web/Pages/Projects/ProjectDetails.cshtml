@@ -595,6 +595,19 @@
    elle yazdırma) ve izin kontrolü değişmedi. *@
 </div> @* /.apya-page *@
 
+@* ─── Mobil birincil aksiyon (FAB, 56px) — handoff <768px kuralı ───
+   Sayfa gövdesinin floating aksiyonu olduğu için konsol kartının dışında;
+   konsolun içinde de çalışırdı (ölçüldü: `container-type: inline-size` kabı
+   fixed için containing block yapmıyor), ama yeri burası daha doğru.
+   Şeritteki "Yeni Görev Ekle" mobilde gizlenir — tek birincil aksiyon kalır. *@
+@if (await AuthorizationService.IsGrantedAsync(PlatformPermissions.Tasks.Create))
+{
+    <button type="button" class="apya-console-fab" id="btn-create-task-fab"
+            data-project-id="@Model.Id" aria-label="Yeni görev ekle" title="Yeni görev ekle">
+        <i class="fa fa-plus" aria-hidden="true"></i>
+    </button>
+}
+
 @* ─── Klavye kısayolları penceresi (⋯ menüsü veya "?" tuşu) ─── *@
 <div class="modal fade" id="shortcuts-modal" tabindex="-1" aria-labelledby="shortcuts-title" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-lg">
