@@ -241,11 +241,6 @@ datatables.net@2.3.6, datatables.net@^2.3.4:
   dependencies:
     jquery ">=1.7"
 
-frappe-gantt@^0.6.1:
-  version "0.6.1"
-  resolved "https://registry.yarnpkg.com/frappe-gantt/-/frappe-gantt-0.6.1.tgz#57ae0b5f024101fc7cd5ba92f605de97dba9c9a1"
-  integrity sha512-1cSU9vLbwypjzaxnCfnEE03Xr3HlAV2S8dRtjxw62o+amkx1A8bBIFd2jp84mcDdTCM77Ij4LzZBslAKZB8oMg==
-
 jquery-form@^4.3.0:
   version "4.3.0"
   resolved "https://registry.yarnpkg.com/jquery-form/-/jquery-form-4.3.0.tgz#7d3961c314a1f2d15298f4af1d3943f54f4149c6"

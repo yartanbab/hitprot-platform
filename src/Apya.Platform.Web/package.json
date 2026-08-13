@@ -5,7 +5,6 @@
   "dependencies": {
     "@abp/aspnetcore.mvc.ui.theme.leptonxlite": "~5.0.2",
     "chart.js": "^4.4.1",
-    "sortablejs": "^1.15.6",
-    "frappe-gantt": "^0.6.1"
+    "sortablejs": "^1.15.6"
   }
 }
