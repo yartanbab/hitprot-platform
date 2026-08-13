@@ -28,9 +28,35 @@
 
     function el(tag, cls) { var e = document.createElement(tag); if (cls) { e.className = cls; } return e; }
 
+    // Ad sorma — window.prompt yerine repo deseni (SweetAlert). prompt tarayıcıyı
+    // kilitliyor, mobilde kırpılıyor ve tema dışı görünüyordu.
+    function askName(title, current, done) {
+        Swal.fire({
+            title: title,
+            input: 'text',
+            inputValue: current || '',
+            showCancelButton: true,
+            confirmButtonText: 'Kaydet',
+            cancelButtonText: 'Vazgeç',
+            preConfirm: function (v) {
+                if (!v || !v.trim()) { Swal.showValidationMessage('Bir ad girin.'); }
+                return v;
+            }
+        }).then(function (r) { if (r.isConfirmed) { done(r.value.trim()); } });
+    }
+
     // Özel kolon colorClass (Bootstrap renk adı, kullanıcı seçimi) -> apya-chip tone.
     var COLOR_TONE = { primary: 'brand', success: 'positive', danger: 'negative', warning: 'warning', info: 'brand', secondary: 'neutral', dark: 'neutral' };
     function colorTone(colorClass) { return COLOR_TONE[colorClass] || 'brand'; }
+    // Kolon ⋯ menüsündeki renk seçenekleri (BoardColumn.ColorClass değerleri).
+    var COLOR_CHOICES = ['primary', 'success', 'warning', 'danger', 'info', 'secondary'];
+    function colorSwatches(current) {
+        return COLOR_CHOICES.map(function (c) {
+            return '<button type="button" class="kanban-col-swatch text-' + c + ' js-col-color" data-color="' + c +
+                '" aria-pressed="' + (c === (current || 'primary')) + '" title="' + c + '" aria-label="Renk: ' + c + '">' +
+                '<i class="fa fa-circle"></i></button>';
+        }).join('');
+    }
     // TaskPriority enum (Low=1..Critical=4) doğrudan kanban.css [data-priority="1..4"] ile eşleşir.
     function priorityAttr(p) { return (typeof p === 'number' && p >= 1) ? p : 2; } // varsayılan Medium=2
 
@@ -197,23 +223,46 @@
                     var col = el('div', 'kanban-column shadow-sm border js-custom-col');
                     col.setAttribute('data-column-id', c.id);
                     col.setAttribute('data-column-id-custom', c.id);
+                    // Mevcut renk DOM'da taşınır: UpdateBoardColumnDto ad VE rengi
+                    // BİRLİKTE ister; biri okunmadan gönderilirse diğeri sıfırlanır
+                    // (eski kod yeniden adlandırmada rengi hep 'primary' yapıyordu).
+                    col.setAttribute('data-column-color', c.colorClass || 'primary');
+                    if (c.wipLimit) { col.setAttribute('data-wip-limit', c.wipLimit); }
                     col.innerHTML =
                         '<div class="kanban-header">' +
                             '<span class="text-' + (c.colorClass || 'primary') + ' js-col-name"><i class="fa fa-circle me-2"></i></span>' +
                             '<span class="d-flex align-items-center gap-2 apya-touch-actions">' +
                                 '<span class="apya-chip apya-chip-' + colorTone(c.colorClass) + ' kanban-count">0</span>' +
-                                '<button type="button" class="btn btn-sm btn-link text-secondary p-0 js-col-rename" title="Yeniden adlandır" aria-label="Kolonu yeniden adlandır"><i class="fa fa-pen"></i></button>' +
-                                '<button type="button" class="btn btn-sm btn-link text-danger p-0 js-col-delete" title="Kolonu sil" aria-label="Kolonu sil"><i class="fa fa-trash"></i></button>' +
+                                '<span class="kanban-wip' + (c.wipLimit ? '' : ' d-none') + '" title="WIP limiti"></span>' +
+                                '<span class="dropdown">' +
+                                    '<button type="button" class="kanban-col-menu" data-bs-toggle="dropdown" aria-expanded="false" title="Kolon ayarları" aria-label="Kolon ayarları"><i class="fa fa-ellipsis"></i></button>' +
+                                    '<div class="dropdown-menu dropdown-menu-end apya-console-menu">' +
+                                        '<button type="button" class="apya-console-menu-item js-col-rename">' +
+                                            '<span class="apya-console-menu-icon"><i class="fa fa-pen"></i></span>Yeniden adlandır</button>' +
+                                        '<div class="apya-console-menu-head is-divided">Renk</div>' +
+                                        '<div class="kanban-col-colors">' + colorSwatches(c.colorClass) + '</div>' +
+                                        '<div class="apya-console-menu-head is-divided">WIP limiti</div>' +
+                                        '<div class="kanban-col-wip-row">' +
+                                            '<input type="number" min="0" max="999" class="js-col-wip" ' +
+                                                'value="' + (c.wipLimit || '') + '" placeholder="limit yok" ' +
+                                                'aria-label="WIP limiti" />' +
+                                            '<button type="button" class="kanban-col-wip-save js-col-wip-save">Kaydet</button>' +
+                                        '</div>' +
+                                        '<button type="button" class="apya-console-menu-item is-danger js-col-delete">' +
+                                            '<span class="apya-console-menu-icon"><i class="fa fa-trash"></i></span>Kolonu sil</button>' +
+                                    '</div>' +
+                                '</span>' +
                             '</span>' +
                         '</div>' +
                         '<div class="kanban-cards" id="kanban-col-' + c.id + '"></div>';
                     col.querySelector('.js-col-name').appendChild(document.createTextNode(' ' + c.name));
                     board.appendChild(col);
                 });
-            // "+ Kolon Ekle" karosu
-            var add = el('div', 'kanban-column shadow-sm border js-add-col d-flex align-items-center justify-content-center text-primary fw-bold');
-            add.style.cursor = 'pointer';
-            add.innerHTML = '<span><i class="fa fa-plus me-2"></i>Kolon Ekle</span>';
+            // "Kolon ekle" hayalet kolonu (handoff: kesik çizgili, dar)
+            var add = el('div', 'kanban-column js-add-col kanban-add-col');
+            add.innerHTML = '<i class="fa fa-plus"></i>' +
+                '<span class="kanban-add-col-title">Kolon ekle</span>' +
+                '<span class="kanban-add-col-sub">özel kolon · durum eşlemesi</span>';
             board.appendChild(add);
         }
 
@@ -273,8 +322,22 @@
 
         function updateCounts() {
             document.querySelectorAll(boardSel + ' .kanban-column').forEach(function (col) {
+                var n = col.querySelectorAll('.kanban-cards .kanban-card').length;
                 var b = col.querySelector('.kanban-count');
-                if (b) { b.textContent = col.querySelectorAll('.kanban-cards .kanban-card').length; }
+                if (b) { b.textContent = n; }
+
+                // WIP rozeti: "n / limit". Aşımda negatif tona geçer — limit sert
+                // kısıt değil, uyarı sinyalidir (bkz. BoardColumn.WipLimit).
+                var wipEl = col.querySelector('.kanban-wip');
+                if (!wipEl) { return; }
+                var limit = parseInt(col.getAttribute('data-wip-limit'), 10);
+                if (!limit) {
+                    wipEl.classList.add('d-none');
+                    return;
+                }
+                wipEl.classList.remove('d-none');
+                wipEl.textContent = n + ' / ' + limit;
+                wipEl.classList.toggle('is-over', n > limit);
             });
         }
 
@@ -422,15 +485,29 @@
             taskSvc.stopTimeTracking($b.data('id')).then(function () { abp.notify.success('Sayaç durduruldu.'); load(); }).always(function () { abp.ui.clearBusy($b); });
         });
 
+        // UpdateBoardColumnDto ad + renk + WIP'i BİRLİKTE ister: yalnız birini
+        // gönderirsen diğerleri sıfırlanır. Bu yüzden her güncelleme mevcut
+        // değerleri DOM'dan okuyup yalnız değişeni ezer (tek giriş noktası).
+        function saveColumn($col, patch) {
+            if (!projectId) { return; }
+            var current = {
+                name: $col.find('.js-col-name').text().trim(),
+                colorClass: $col.data('column-color') || 'primary',
+                wipLimit: parseInt($col.attr('data-wip-limit'), 10) || null
+            };
+            colSvc.update($col.data('column-id'), $.extend(current, patch))
+                .then(function () { load(); });
+        }
+
         // Özel kolon ekle / sil / yeniden adlandır — izin varsa bağla; aktif proje
         // yoksa karo/butonlar zaten DOM'da olmaz (guard çift güvence).
         if (customColumnsAllowed) {
             $doc.on('click', boardSel + ' .js-add-col', function () {
                 if (!projectId) { return; }
-                var name = window.prompt('Yeni kolon adı:');
-                if (!name || !name.trim()) { return; }
-                colSvc.create({ projectId: projectId, name: name.trim(), colorClass: 'primary' })
-                    .then(function () { abp.notify.success('Kolon eklendi.'); load(); });
+                askName('Yeni kolon', '', function (name) {
+                    colSvc.create({ projectId: projectId, name: name, colorClass: 'primary' })
+                        .then(function () { abp.notify.success('Kolon eklendi.'); load(); });
+                });
             });
             $doc.on('click', boardSel + ' .js-col-delete', function () {
                 if (!projectId) { return; }
@@ -444,9 +521,24 @@
                 if (!projectId) { return; }
                 var $col = $(this).closest('.kanban-column');
                 var id = $col.data('column-id');
-                var name = window.prompt('Kolon adı:', $col.find('.js-col-name').text().trim());
-                if (!name || !name.trim()) { return; }
-                colSvc.update(id, { name: name.trim(), colorClass: 'primary' }).then(function () { load(); });
+                askName('Kolon adı', $col.find('.js-col-name').text().trim(), function (name) {
+                    saveColumn($col, { name: name });
+                });
+            });
+
+            $doc.on('click', boardSel + ' .js-col-color', function () {
+                saveColumn($(this).closest('.kanban-column'), { colorClass: $(this).data('color') });
+            });
+
+            $doc.on('click', boardSel + ' .js-col-wip-save', function () {
+                var $col = $(this).closest('.kanban-column');
+                var raw = $col.find('.js-col-wip').val();
+                var limit = raw === '' ? null : parseInt(raw, 10);
+                if (limit !== null && (isNaN(limit) || limit < 0)) {
+                    abp.notify.warn('WIP limiti 0 veya daha büyük bir sayı olmalı.');
+                    return;
+                }
+                saveColumn($col, { wipLimit: limit });
             });
         }
 

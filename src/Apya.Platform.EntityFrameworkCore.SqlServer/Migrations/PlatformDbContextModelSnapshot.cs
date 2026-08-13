@@ -3915,6 +3915,9 @@ namespace Apya.Platform.Migrations
                         .HasColumnType("uniqueidentifier")
                         .HasColumnName("TenantId");
 
+                    b.Property<int?>("WipLimit")
+                        .HasColumnType("int");
+
                     b.HasKey("Id");
 
                     b.HasIndex("ProjectId");
