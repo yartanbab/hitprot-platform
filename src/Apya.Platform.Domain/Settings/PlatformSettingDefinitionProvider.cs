@@ -29,6 +29,17 @@ public class PlatformSettingDefinitionProvider : SettingDefinitionProvider
                 description: L("Setting:TaskDetail.Ui.Description"))
         );
 
+        // Sabitlenen menü öğeleri — TaskDetail.Ui ile aynı ray: .WithProviders()
+        // ile KISITLANMAZ ki User provider zincirde kalsın (SetForCurrentUserAsync
+        // buraya yazar) ve varsayılan da zincirden dönebilsin.
+        context.Add(
+            new SettingDefinition(
+                PlatformSettings.Shell.Pins,
+                defaultValue: PlatformSettingDefaults.ShellPins,
+                displayName: L("Setting:Shell.Pins"),
+                description: L("Setting:Shell.Pins.Description"))
+        );
+
         // --- Telemetri ---
         // Global (host) ayarları: tenant'lar değiştiremez.
         context.Add(
