@@ -48,39 +48,24 @@ $(function () {
     var STATUS_LABELS   = { '': 'tümü', '0': 'İptal', '1': 'Yapılacak', '2': 'Sürüyor', '3': 'Testte', '4': 'Tamamlandı' };
     var PRIORITY_LABELS = { '': 'tümü', '1': 'Düşük', '2': 'Orta', '3': 'Yüksek', '4': 'Kritik' };
 
-    var filterState = { status: '', assignee: '', priority: '', overdue: false, due7: false, mine: false, open: false };
+    // Filtre state'i + URL senkronu ortak modülde (/js/apya-task-console.js).
+    // `filterState` modülün İÇ nesnesine takma ad: mevcut filterState.x okuma/
+    // yazmaları aynen çalışır, senkron mantığı tek kopya olur.
+    var console_ = apya.taskConsole;
+    var state = console_.createState({
+        status: '', assignee: '', priority: '', overdue: false, due7: false, mine: false, open: false
+    });
+    var filterState = state.values;
     var currentView = 'list';
 
-    function emptyState() {
-        return { status: '', assignee: '', priority: '', overdue: false, due7: false, mine: false, open: false };
-    }
-
     function readStateFromUrl() {
-        var p = new URLSearchParams(window.location.search);
-        filterState.status   = p.get('status') || '';
-        filterState.assignee = p.get('assignee') || '';
-        filterState.priority = p.get('priority') || '';
-        filterState.overdue  = p.get('overdue') === '1';
-        filterState.due7     = p.get('due7') === '1';
-        filterState.mine     = p.get('mine') === '1';
-        filterState.open     = p.get('open') === '1';
-        currentView = p.get('view') === 'board' ? 'kanban' : 'list';
+        state.readUrl();
+        currentView = new URLSearchParams(window.location.search).get('view') === 'board' ? 'kanban' : 'list';
     }
 
     function writeStateToUrl() {
-        // Mevcut arama dizesinden başlanır → görev derin bağlantısı (?task=...) korunur.
-        var p = new URLSearchParams(window.location.search);
-        function set(k, v) { if (v) { p.set(k, v); } else { p.delete(k); } }
-        set('status', filterState.status);
-        set('assignee', filterState.assignee);
-        set('priority', filterState.priority);
-        set('overdue', filterState.overdue ? '1' : '');
-        set('due7', filterState.due7 ? '1' : '');
-        set('mine', filterState.mine ? '1' : '');
-        set('open', filterState.open ? '1' : '');
-        set('view', currentView === 'kanban' ? 'board' : '');
-        var qs = p.toString();
-        history.replaceState(null, '', window.location.pathname + (qs ? '?' + qs : ''));
+        // 'view' bu sayfada 'board' olarak yazılır (eski derin bağlantılar bozulmasın).
+        state.writeUrl({ view: currentView === 'kanban' ? 'board' : '' });
     }
 
     // 6 → "6", 6.5 → "6,5" (ondalık yalnız gerekiyorsa, TR ayracıyla)
@@ -128,10 +113,7 @@ $(function () {
         return input;
     }
 
-    function hasActiveFilters() {
-        return !!(filterState.status || filterState.assignee || filterState.priority ||
-                  filterState.overdue || filterState.due7 || filterState.mine || filterState.open);
-    }
+    function hasActiveFilters() { return state.hasActive(); }
 
     function assigneeLabel() {
         if (filterState.mine) { return 'ben'; }
@@ -362,77 +344,38 @@ $(function () {
     // grid'iyle aynı hizada kalır, ayrı bir overlay hizalaması gerekmez.
     // "Hiç görev yok" ile "filtreye uyan yok" ayrı metinler (handoff).
     function renderEmptyState() {
-        var $cell = $('#ProjectTasksTable tbody td.dt-empty');
-        if (!$cell.length) { return; }
-        var filtered = hasActiveFilters() || !!(dataTable && dataTable.search());
-        $cell.html($(filtered ? '#tpl-state-nomatch' : '#tpl-state-empty').html());
+        console_.renderEmptyState({
+            table: '#ProjectTasksTable',
+            hasFilters: hasActiveFilters() || !!(dataTable && dataTable.search()),
+            emptyTemplate: 'tpl-state-empty',
+            nomatchTemplate: 'tpl-state-nomatch'
+        });
     }
 
     // ================================================================
-    // TOPLU SEÇİM + TOPLU İŞLEM
+    // TOPLU SEÇİM + TOPLU İŞLEM  (ortak modül)
     // Backend'de BulkUpdateAsync yok → istekler SIRAYLA gönderilir
     // (paralel göndermek sahte eşzamanlılık hatası üretebiliyor).
     // ================================================================
-    var selectedIds = [];
-
-    function renderBulkBar() {
-        var n = selectedIds.length;
-        $('#bulk-bar').toggleClass('d-none', n === 0);
-        $('#bulk-count').text(n + ' görev seçili');
-        // Satır vurgusu + "tümünü seç" kutusunun durumu
-        $('#ProjectTasksTable tbody tr').each(function () {
-            $(this).toggleClass('is-selected', selectedIds.indexOf($(this).attr('data-id')) > -1);
-        });
-        var pageIds = $('#ProjectTasksTable tbody .apya-row-check[data-task-id]').map(function () {
-            return String($(this).data('task-id'));
-        }).get();
-        var allOnPage = pageIds.length > 0 && pageIds.every(function (id) { return selectedIds.indexOf(id) > -1; });
-        $('#check-all').prop('checked', allOnPage);
-    }
-
-    function syncRowChecks() {
-        $('#ProjectTasksTable tbody .apya-row-check[data-task-id]').each(function () {
-            $(this).prop('checked', selectedIds.indexOf(String($(this).data('task-id'))) > -1);
-        });
-        renderBulkBar();
-    }
-
-    function clearSelection() {
-        selectedIds = [];
-        syncRowChecks();
-    }
-
-    $(document).on('change', '#ProjectTasksTable tbody .apya-row-check', function () {
-        var id = String($(this).data('task-id'));
-        var i = selectedIds.indexOf(id);
-        if (this.checked && i === -1) { selectedIds.push(id); }
-        else if (!this.checked && i > -1) { selectedIds.splice(i, 1); }
-        renderBulkBar();
+    var bulk = console_.createBulkSelection({
+        table: '#ProjectTasksTable',
+        checkAll: '#check-all',
+        bar: '#bulk-bar',
+        count: '#bulk-count'
     });
 
-    $(document).on('change', '#check-all', function () {
-        var on = this.checked;
-        $('#ProjectTasksTable tbody .apya-row-check[data-task-id]').each(function () {
-            var id = String($(this).data('task-id'));
-            var i = selectedIds.indexOf(id);
-            if (on && i === -1) { selectedIds.push(id); }
-            else if (!on && i > -1) { selectedIds.splice(i, 1); }
-        });
-        syncRowChecks();
-    });
+    // Mevcut çağrı noktaları korunsun diye ince sarmalayıcılar.
+    function renderBulkBar() { bulk.render(); }
+    function syncRowChecks() { bulk.syncRowChecks(); }
+    function clearSelection() { bulk.clear(); }
 
     $('#bulk-clear').click(clearSelection);
 
-    // İstekleri sırayla çalıştırır; biri patlarsa zinciri kesip hatayı yükseltir.
-    function runSequential(ids, fn) {
-        return ids.reduce(function (chain, id) {
-            return chain.then(function () { return fn(id); });
-        }, Promise.resolve());
-    }
+    var runSequential = console_.runSequential;
 
     $('[data-bulk-status]').click(function () {
         var status = parseInt($(this).data('bulk-status'), 10);
-        var ids = selectedIds.slice();
+        var ids = bulk.ids();
         if (!ids.length) { return; }
         runSequential(ids, function (id) { return taskService.updateStatus(id, status); })
             .then(function () {
@@ -443,7 +386,7 @@ $(function () {
     });
 
     $('#bulk-delete').click(function () {
-        var ids = selectedIds.slice();
+        var ids = bulk.ids();
         if (!ids.length) { return; }
         Swal.fire({
             title: ids.length + ' görev silinecek',
@@ -938,7 +881,7 @@ $(function () {
     });
 
     $('#btn-clear-filters').click(function () {
-        filterState = emptyState();
+        state.reset();   // YERİNDE sıfırlar — filterState takma adı aynı nesneyi işaret etmeyi sürdürür
         if (dataTable) { dataTable.search(''); }
         $('#console-search').val('');
         applyFilters();
@@ -952,78 +895,31 @@ $(function () {
     // KOLON SEÇİCİ — localStorage `apya.project.columns`
     // Başlık/Atanan/Durum/Öncelik sabit; yalnız Efor/Başlangıç/Bitiş kapanır.
     // ================================================================
-    var COLS_KEY = 'apya.project.columns';
-    var TOGGLEABLE_COLS = ['effort', 'start', 'due'];
-
-    function readColPrefs() {
-        try {
-            var raw = JSON.parse(localStorage.getItem(COLS_KEY) || '{}');
-            var out = {};
-            TOGGLEABLE_COLS.forEach(function (c) { out[c] = raw[c] !== false; }); // varsayılan açık
-            return out;
-        } catch (e) { return { effort: true, start: true, due: true }; }
-    }
-    function writeColPrefs(prefs) {
-        try { localStorage.setItem(COLS_KEY, JSON.stringify(prefs)); } catch (e) { /* yok say */ }
-    }
     // Dar kapta Efor + Başlangıç OTOMATİK düşer (handoff <1200px kuralı).
     // Eşik viewport'a değil KABA göre: LeptonX kenar çubuğu viewport'u yiyor
     // (§21 başındaki not) — 1366px ekranda kap ~1185px. 1020px ≈ handoff'un
     // 1200px viewport'unun kenar çubuğu düşülmüş karşılığı.
     // Kullanıcının localStorage tercihi EZİLMEZ: yalnız görüntülenen hâl
     // daraltılır, kap genişleyince kayıtlı tercih geri gelir.
-    var COLS_NARROW_W = 1020;
-    var colsNarrow = false;
-    var AUTO_DROP_COLS = ['effort', 'start'];
-
-    function effectiveColPrefs() {
-        if (!colsNarrow) { return colPrefs; }
-        var out = {};
-        TOGGLEABLE_COLS.forEach(function (c) {
-            out[c] = AUTO_DROP_COLS.indexOf(c) === -1 ? colPrefs[c] : false;
-        });
-        return out;
-    }
-
-    function applyColPrefs() {
-        if (!dataTable) { return; }
-        var prefs = effectiveColPrefs();
-        TOGGLEABLE_COLS.forEach(function (c) {
+    var colPrefs = console_.createColumnPrefs({
+        storageKey: 'apya.project.columns',
+        codes: ['effort', 'start', 'due'],
+        autoDrop: ['effort', 'start'],
+        narrowWidth: 1020,
+        observe: '.apya-project-console',
+        onApply: function (prefs) {
+            if (!dataTable) { return; }
             // name seçicisi kullanılıyor: seçim kolonu yetkiye göre var/yok
             // olduğu için sabit indeks güvenilmez.
-            dataTable.column(c + ':name').visible(prefs[c], false);
-        });
-        dataTable.columns.adjust();
-        $('[data-col-toggle]').each(function () {
-            var col = $(this).data('col-toggle');
-            var auto = colsNarrow && AUTO_DROP_COLS.indexOf(col) !== -1;
-            $(this).attr('aria-pressed', String(prefs[col]))
-                   .prop('disabled', auto)
-                   .attr('title', auto ? 'Ekran dar olduğu için otomatik gizlendi' : null);
-        });
-    }
-
-    var colPrefs = readColPrefs();
-    applyColPrefs(); // kayıtlı tercihi ilk çizimden önce uygula
-
-    $('[data-col-toggle]').click(function () {
-        var col = $(this).data('col-toggle');
-        colPrefs[col] = !colPrefs[col];
-        writeColPrefs(colPrefs);
-        applyColPrefs();
+            Object.keys(prefs).forEach(function (c) {
+                dataTable.column(c + ':name').visible(prefs[c], false);
+            });
+            dataTable.columns.adjust();
+        }
     });
 
-    // Kabı izle — viewport değil (kenar çubuğu daraltılabiliyor, sabit bir
-    // viewport eşiği doğru cevabı veremez).
-    var consoleEl = document.querySelector('.apya-project-console');
-    if (consoleEl && window.ResizeObserver) {
-        new ResizeObserver(function (entries) {
-            var next = entries[0].contentRect.width < COLS_NARROW_W;
-            if (next === colsNarrow) { return; }
-            colsNarrow = next;
-            applyColPrefs();
-        }).observe(consoleEl);
-    }
+    function applyColPrefs() { colPrefs.apply(); }
+    applyColPrefs(); // kayıtlı tercihi ilk çizimden önce uygula
 
     // ================================================================
     // KAYDEDİLMİŞ GÖRÜNÜMLER — localStorage `apya.project.views`
@@ -1078,7 +974,10 @@ $(function () {
             $row.find('.apya-console-saved-view-name').text(v.name);
             $row.find('.apya-console-saved-view-meta').text(viewSummary(v.state));
             $row.find('.apya-console-saved-view-apply').click(function () {
-                filterState = $.extend(emptyState(), v.state);
+                // Önce yerinde sıfırla, sonra kayıtlı değerleri AYNI nesneye yaz —
+                // yeniden atamak filterState takma adını modülün state'inden koparırdı.
+                state.reset();
+                $.extend(filterState, v.state);
                 currentView = v.view === 'kanban' ? 'kanban' : 'list';
                 if (dataTable) { dataTable.search(v.q || ''); }
                 $('#console-search').val(v.q || '');
@@ -1273,18 +1172,6 @@ $(function () {
     // --- 7. ⋯ menüsü → Yoğunluk ---
     // Mantık /js/density-toggle.js'te (tek kaynak: attribute + localStorage);
     // burada yalnız segmentin aktif durumu senkronlanır. Uygulama geneli ayardır,
-    // topbar'daki düğmeyle aynı değeri yazar.
-    function syncDensityButtons() {
-        var d = (window.apya && window.apya.density) ? window.apya.density.current() : 'cozy';
-        $('[data-density-set]').each(function () {
-            $(this).toggleClass('active', $(this).data('density-set') === d);
-        });
-    }
-    $('[data-density-set]').click(function () {
-        if (window.apya && window.apya.density) {
-            window.apya.density.set($(this).data('density-set'));
-        }
-    });
-    document.addEventListener('apya:density-changed', syncDensityButtons);
-    syncDensityButtons();
+    // topbar'daki düğmeyle aynı değeri yazar. Bağlama ortak modülde.
+    console_.bindDensitySegment();
 });
