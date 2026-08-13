@@ -1,13 +1,16 @@
+// Görevler konsolu — Proje Detay konsolunun tasarım/etkileşim dili tüm projelere
+// uyarlanmış hâli. Jenerik parçalar /js/apya-task-console.js'te; burada yalnız
+// bu sayfaya özel olan var: proje filtresi + PROJE kolonu, alt görev hiyerarşisi,
+// kanban/gantt bağlantısı ve AI taslak akışı.
 $(function () {
     var taskService = apya.platform.tasks.task;
+    var console_ = apya.taskConsole;
+
     var createModal = new abp.ModalManager(abp.appPath + 'Tasks/CreateModal');
     // editModal: apya.taskDetail kuyruk köprüsü sayesinde her zaman hazır.
-    // Tıklama anında ES module henüz yüklenmemiş olsa bile ID kuyruğa alınır
-    // ve module yüklenince otomatik açılır.
     var _oldModal = new abp.ModalManager(abp.appPath + 'Tasks/EditModal');
     var editModal = {
         open: function (arg) {
-            // window.apya.taskDetail her zaman var (kuyruk köprüsü garanti eder)
             if (window.apya && window.apya.taskDetail) {
                 window.apya.taskDetail.open(arg);
             } else {
@@ -22,65 +25,214 @@ $(function () {
         }
     };
 
-    // Proje seçimi: kanban'ı o projeye scope'lar (özel kolonlar) + liste/gantt'ı filtreler.
-    var selectedProjectId = null;
+    // Yetkiler sunucuda karara bağlanıp kök elemana yazılıyor (bkz. Index.cshtml).
+    var $root = $('.apya-task-console');
+    var canChangeStatus = $root.data('can-change-status') === true;
+    var canDeleteTasks = $root.data('can-delete-tasks') === true;
+    var canBulk = $root.data('can-bulk') === true;
 
-    // Ortak filtre — DataTable, Gantt ve Kanban aynı kaynaktan beslenir.
-    function currentFilter() {
+    var OPEN_STATUSES = [1, 2, 3]; // Todo/InProgress/InReview — Done(4) ve Cancelled(0) hariç
+    var CURRENT_USER_ID = (abp.currentUser && abp.currentUser.id) || '';
+
+    var STATUS_LABELS = { '': 'tümü', '0': 'İptal', '1': 'Yapılacak', '2': 'Sürüyor', '3': 'Testte', '4': 'Tamamlandı' };
+    var PRIORITY_LABELS = { '': 'tümü', '1': 'Düşük', '2': 'Orta', '3': 'Yüksek', '4': 'Kritik' };
+
+    // ─── Filtre state'i ────────────────────────────────────────────────────
+    // Şerit barları ve chip'ler AYNI state'i okur/yazar — iki ayrı mekanizma yok.
+    var state = console_.createState({
+        status: '', assignee: '', project: '', priority: '',
+        minDue: '', maxDue: '',
+        overdue: false, due7: false, mine: false, open: false
+    });
+    state.readUrl();
+
+    var currentView = 'list';
+
+    // Gün sınırı: dueDate saat taşıyabildiği için gün SONU kullanılır.
+    function dayBound(offsetDays, endOfDay) {
+        var m = moment().startOf('day').add(offsetDays, 'days');
+        if (endOfDay) { m.endOf('day'); }
+        return m.format('YYYY-MM-DDTHH:mm:ss');
+    }
+
+    function fmtHours(n) {
+        return Number(n).toLocaleString('tr-TR', { maximumFractionDigits: 1 });
+    }
+
+    // state → GetTasksInput. DataTable, Kanban ve Gantt hepsi bunu kullanır.
+    // NOT: dizi alanları ABP proxy'sine DİZİ olarak verilmeli.
+    function buildInput() {
         var input = {};
-        if (selectedProjectId) input.projectId = selectedProjectId;
-        if ($('#Filter_AssigneeId').val()) input.assigneeId = $('#Filter_AssigneeId').val();
-        if ($('#Filter_Status').val()) input.statuses = [parseInt($('#Filter_Status').val())];
-        if ($('#Filter_Priority').val()) input.priorities = [parseInt($('#Filter_Priority').val())];
-        if ($('#Filter_MinDueDate').val()) input.minDueDate = $('#Filter_MinDueDate').val();
-        if ($('#Filter_MaxDueDate').val()) input.maxDueDate = $('#Filter_MaxDueDate').val();
+
+        if (state.get('project')) { input.projectId = state.get('project'); }
+
+        if (state.get('status') !== '') {
+            input.statuses = [parseInt(state.get('status'), 10)];
+        } else if (state.get('open') || state.get('overdue') || state.get('due7')) {
+            // "Tamamlanmamış" ve tarih barları yalnız AÇIK görevleri kapsar
+            input.statuses = OPEN_STATUSES.slice();
+        }
+
+        // Backend'de tek AssigneeId alanı var → "Bana atanan" ile kişi seçimi
+        // birbirini dışlar.
+        var assigneeId = state.get('mine') ? CURRENT_USER_ID : state.get('assignee');
+        if (assigneeId) { input.assigneeId = assigneeId; }
+
+        if (state.get('priority') !== '') { input.priorities = [parseInt(state.get('priority'), 10)]; }
+
+        // Bar tarih aralıkları, elle girilen aralığın ÖNÜNDE gelir (bara basmak
+        // açık bir niyettir; iki aralık birleşseydi sonuç boş çıkardı).
+        if (state.get('overdue')) {
+            input.maxDueDate = dayBound(-1, true);
+        } else if (state.get('due7')) {
+            input.minDueDate = dayBound(0, false);
+            input.maxDueDate = dayBound(7, true);
+        } else {
+            if (state.get('minDue')) { input.minDueDate = state.get('minDue'); }
+            if (state.get('maxDue')) { input.maxDueDate = state.get('maxDue'); }
+        }
         return input;
     }
 
-    // --- Alt görev hiyerarşisi ---------------------------------------------
-    // Liste normalde HİYERARŞİK: yalnız kök görevler sayfalanır, alt görevler
-    // chevron ile açılır. Filtre veya arama aktifken DÜZ kipe döner — aksi halde
-    // filtreye uyan bir alt görev, üstü uymadığı için listeden tamamen düşerdi.
-    // Proje seçimi bir kapsam (scope), filtre değil → hiyerarşiyi bozmaz.
-    var expanded = {};      // parentId -> true (kullanıcı niyeti; her draw sonrası geri açılır)
-    var subtaskCache = {};  // parentId -> alt görev dizisi (yalnız hızlandırma)
+    // ─── Alt görev hiyerarşisi ─────────────────────────────────────────────
+    // Liste normalde HİYERARŞİK: yalnız kök görevler sayfalanır. Filtre veya
+    // arama aktifken DÜZ kipe döner — aksi halde filtreye uyan bir alt görev,
+    // üstü uymadığı için listeden tamamen düşerdi. Proje seçimi bir kapsam
+    // (scope), filtre değil → hiyerarşiyi bozmaz.
+    var expanded = {};
+    var subtaskCache = {};
 
     function hasActiveFilter() {
-        return !!($('#Filter_AssigneeId').val() ||
-                  $('#Filter_Status').val() ||
-                  $('#Filter_Priority').val() ||
-                  $('#Filter_MinDueDate').val() ||
-                  $('#Filter_MaxDueDate').val() ||
+        // Proje HARİÇ: kapsam sayılır, hiyerarşiyi bozmaz.
+        return !!(state.get('status') || state.get('assignee') || state.get('priority') ||
+                  state.get('minDue') || state.get('maxDue') ||
+                  state.get('overdue') || state.get('due7') || state.get('mine') || state.get('open') ||
                   (dataTable && dataTable.search()));
     }
 
     function isHierarchical() { return !hasActiveFilter(); }
 
-    // Yalnız DataTable bu sarmalayıcıyı kullanır; kanban ve gantt currentFilter'ı
-    // doğrudan kullanmayı sürdürür — orada alt görevler gizlenmemeli.
     function listFilter() {
-        var input = currentFilter();
-        if (isHierarchical()) input.rootOnly = true;
+        var input = buildInput();
+        if (isHierarchical()) { input.rootOnly = true; }
         return input;
     }
 
-    // --- DataTable ---
+    // ─── Filtre arayüzü ────────────────────────────────────────────────────
+    function assigneeLabel() {
+        if (state.get('mine')) { return 'ben'; }
+        if (!state.get('assignee')) { return 'tümü'; }
+        var label = $('[data-filter="assignee"][data-value="' + state.get('assignee') + '"]').data('label');
+        return label || 'seçili';
+    }
+
+    function projectLabel() {
+        if (!state.get('project')) { return 'tümü'; }
+        var label = $('[data-filter="project"][data-value="' + state.get('project') + '"]').data('label');
+        return label || 'seçili';
+    }
+
+    function dateRangeLabel() {
+        var min = state.get('minDue'), max = state.get('maxDue');
+        if (!min && !max) { return 'tümü'; }
+        if (min && max) { return moment(min).format('DD MMM') + ' – ' + moment(max).format('DD MMM'); }
+        return min ? moment(min).format('DD MMM') + ' sonrası' : moment(max).format('DD MMM') + ' öncesi';
+    }
+
+    function renderFilterUi() {
+        $('#chip-status [data-chip-text]').text('Durum: ' + STATUS_LABELS[state.get('status')]);
+        $('#chip-priority [data-chip-text]').text('Öncelik: ' + PRIORITY_LABELS[state.get('priority')]);
+        $('#chip-assignee [data-chip-text]').text('Atanan: ' + assigneeLabel());
+        $('#chip-project [data-chip-text]').text('Proje: ' + projectLabel());
+        $('#chip-daterange [data-chip-text]').text('Son Tarih: ' + dateRangeLabel());
+
+        $('#chip-status').toggleClass('is-active', state.get('status') !== '');
+        $('#chip-priority').toggleClass('is-active', state.get('priority') !== '');
+        $('#chip-assignee').toggleClass('is-active', state.get('mine') || state.get('assignee') !== '');
+        $('#chip-project').toggleClass('is-active', state.get('project') !== '');
+        $('#chip-daterange').toggleClass('is-active', !!(state.get('minDue') || state.get('maxDue')));
+
+        $('#chip-overdue').attr('aria-pressed', String(state.get('overdue')));
+        $('#chip-mine').attr('aria-pressed', String(state.get('mine')));
+        $('#bar-progress').attr('aria-pressed', String(state.get('open')));
+        $('#bar-overdue').attr('aria-pressed', String(state.get('overdue')));
+        $('#bar-due7').attr('aria-pressed', String(state.get('due7')));
+        $('#bar-mine').attr('aria-pressed', String(state.get('mine')));
+
+        $('#btn-clear-filters').toggleClass('d-none', !state.hasActive());
+    }
+
+    function applyFilters(resetSubtasks) {
+        if (resetSubtasks !== false) { subtaskCache = {}; }
+        renderFilterUi();
+        state.writeUrl({ view: currentView === 'list' ? '' : currentView });
+        if (dataTable) { dataTable.ajax.reload(); }
+        if (kb && currentView === 'kanban') { kb.load(); }
+        if (currentView === 'gantt') { loadGantt(); }
+    }
+
+    // ─── Şerit sayaçları ───────────────────────────────────────────────────
+    // Barlar kapsam sayaçlarıdır: yalnız proje kapsamını izler, chip
+    // filtrelerinden etkilenmez (sunucu tarafı da böyle davranır).
+    function loadSummary() {
+        var scope = {};
+        if (state.get('project')) { scope.projectId = state.get('project'); }
+
+        taskService.getSummary(scope).then(function (s) {
+            var pct = s.total > 0 ? Math.round(s.done * 100 / s.total) : 0;
+            $('#sum-progress-pct').text('%' + pct);
+            $('#sum-progress-ratio').text('· ' + s.done + '/' + s.total);
+            $('#sum-progress-bar').toggleClass('is-positive', pct === 100)
+                                  .toggleClass('is-progress', pct !== 100)
+                                  .find('span').css('width', pct + '%');
+
+            $('#sum-overdue').text(s.overdue);
+            $('#sum-overdue-bar').find('span').css('width', (s.total > 0 ? s.overdue * 100 / s.total : 0) + '%');
+
+            $('#sum-due7').text(s.dueIn7Days);
+            $('#sum-due7-bar').find('span').css('width', (s.total > 0 ? s.dueIn7Days * 100 / s.total : 0) + '%');
+
+            $('#sum-mine').text(s.assignedToMe);
+            $('#sum-mine-bar').find('span').css('width', (s.total > 0 ? s.assignedToMe * 100 / s.total : 0) + '%');
+        });
+    }
+
+    // ─── DataTable ─────────────────────────────────────────────────────────
     var dataTable = $('#TasksTable').DataTable(abp.libs.datatables.normalizeConfiguration({
         serverSide: true,
         paging: true,
-        order: [[0, 'asc']],
+        order: [[canBulk ? 1 : 0, 'asc']],
         searching: true,
-        scrollX: true,
         ajax: abp.libs.datatables.createAjax(taskService.getList, listFilter),
-        columnDefs: [
+        columnDefs: buildColumns()
+    }));
+
+    function buildColumns() {
+        var cols = [];
+        if (canBulk) {
+            cols.push({
+                title: '<input type="checkbox" class="apya-row-check" id="check-all" aria-label="Sayfadaki görevleri seç">',
+                data: 'id',
+                orderable: false,
+                width: '34px',
+                // apya-c-* sınıfları: mobil kart düzeni (apya-shell.css §21) hücreleri
+                // bunlarla hedefler — nth-child güvenilmez, kolonlar gizlenebiliyor.
+                className: 'apya-console-check-cell apya-c-check',
+                render: function (data) {
+                    return '<input type="checkbox" class="apya-row-check" data-task-id="' + data + '" aria-label="Görevi seç">';
+                }
+            });
+        }
+        return cols.concat([
             {
-                title: 'Görev',
+                title: 'Başlık',
+                className: 'apya-c-title',
+                width: '26%',
                 data: 'title',
-                render: function(data, type, row) {
+                render: function (data, type, row) {
                     var head = '<span class="fw-bold">' + apyaTask.esc(data) + '</span>' +
                         apyaTask.commentCount(row.comments) + apyaTask.subtaskCountBadge(row);
-                    // Üst görev bağlamı yalnız DÜZ kipte gerekli — hiyerarşik kipte
-                    // alt görev zaten üstünün altında duruyor.
+                    // Üst görev bağlamı yalnız DÜZ kipte gerekli.
                     if (!isHierarchical() && row.parentTaskTitle) {
                         head += '<div class="text-muted small"><i class="fa fa-level-up-alt fa-rotate-90 me-1"></i>' + apyaTask.esc(row.parentTaskTitle) + '</div>';
                     }
@@ -91,109 +243,140 @@ $(function () {
                 }
             },
             {
+                // Konsolda yok — burada TÜM projeler listelendiği için sabit.
                 title: 'Proje',
+                name: 'project',
+                className: 'apya-c-project',
+                width: '12%',
                 data: 'projectName',
                 render: function (data) {
-                    return data ? '<span class="small">' + apyaTask.esc(data) + '</span>' : '<span class="text-muted small">—</span>';
+                    return data ? '<span class="small">' + apyaTask.esc(data) + '</span>'
+                                : '<span class="text-muted small">—</span>';
                 }
             },
             {
                 title: 'Atanan',
+                className: 'apya-c-assignee',
+                width: '10%',
                 data: 'assigneeName',
-                render: function (data) {
-                    return apyaTask.assigneeAvatar(data, true);
-                }
+                render: function (data) { return apyaTask.assigneeAvatar(data, true); }
             },
             {
                 title: 'Durum',
+                className: 'apya-c-status',
+                width: '10%',
                 data: 'status',
-                render: function (data, type, row) {
-                    // Özel kolondaysa kolon adını göster (ortak kanban paritesi).
-                    if (row.boardColumnName) {
-                        return '<span class="apya-chip apya-chip-brand">' + row.boardColumnName + '</span>';
-                    }
-                    var map = {
-                        1: { tone: 'neutral', text: 'Bekliyor'   },
-                        2: { tone: 'warning', text: 'Sürüyor'  },
-                        3: { tone: 'brand',   text: 'Testte'      },
-                        4: { tone: 'positive', text: 'Tamamlandı'  }
-                    };
-                    var s = map[data] || map[0];
-                    return '<span class="apya-chip apya-chip-' + s.tone + '">' + s.text + '</span>';
-                }
+                render: function (data, type, row) { return apyaTask.statusChip(data, row.boardColumnName); }
             },
             {
                 title: 'Öncelik',
+                className: 'apya-c-priority',
+                width: '9%',
                 data: 'priority',
-                render: function (data) {
-                    return apyaTask.priorityBadge(data);
+                render: function (data) { return apyaTask.priorityBadge(data); }
+            },
+            {
+                // SpentHours türetilmiş alan → SIRALANAMAZ (ApplySorting entity kolonu bekler).
+                title: 'Efor',
+                name: 'effort',
+                className: 'apya-c-effort',
+                width: '11%',
+                data: 'spentHours',
+                orderable: false,
+                render: function (data, type, row) {
+                    var spent = Number(row.spentHours || 0);
+                    var est = (row.estimatedHours === null || row.estimatedHours === undefined)
+                        ? null : Number(row.estimatedHours);
+                    if (!spent && est === null) { return '<span class="text-muted small">—</span>'; }
+
+                    var text = est === null ? fmtHours(spent) + 's'
+                                            : fmtHours(spent) + 's / ' + fmtHours(est) + 's';
+                    var over = est !== null && spent > est;
+                    var html = '<span class="apya-console-effort' + (over ? ' is-over' : '') + '">' +
+                               '<span class="apya-numeric">' + text + '</span>';
+                    if (est !== null && est > 0) {
+                        var pct = Math.min(100, Math.round(spent / est * 100));
+                        html += '<span class="apya-mini-progress ' + (over ? 'is-negative' : 'is-progress') + '">' +
+                                '<span style="width:' + pct + '%"></span></span>';
+                    }
+                    return html + '</span>';
                 }
             },
             {
-                title: 'Son Tarih',
+                title: 'Başlangıç',
+                name: 'start',
+                className: 'apya-c-start',
+                width: '10%',
+                data: 'startDate',
+                render: function (data) { return data ? moment(data).format('L') : ''; }
+            },
+            {
+                title: 'Bitiş',
+                name: 'due',
+                className: 'apya-c-due',
+                width: '12%',
                 data: 'dueDate',
                 render: function (data, type, row) {
-                    return apyaTask.dueDateChip(data, row.status, row.completedDate);
+                    var chip = apyaTask.dueDateChip(data, row.status, row.completedDate);
+                    // Satır üstüne gelince hızlı aksiyon. Yalnız "Tamamla" var:
+                    // Ata/Tarih tam DTO ile UpdateAsync gerektiriyor.
+                    var closed = row.status === 4 || row.status === 0;
+                    if (!canChangeStatus || closed) { return chip; }
+                    return '<span class="apya-console-due">' + chip +
+                        '<span class="apya-row-actions apya-console-row-actions">' +
+                        '<button type="button" class="apya-console-row-action" data-complete-id="' + row.id +
+                        '" title="Tamamla" aria-label="Görevi tamamla"><i class="fa fa-check"></i></button>' +
+                        '</span></span>';
                 }
             }
-        ]
-    }));
+        ]);
+    }
 
-    // --- "Ara" kutusunu DataTables'ın ürettiği yerden kart başlığındaki ortak
-    // slot'a taşı (kendi satırını kaplamasın, Görev Panosu satırında ortalansın).
-    // DataTables 2.x .dt-search kullanıyor (eski .dataTables_filter değil). ---
-    $('#TasksTable_wrapper .dt-search').addClass('mb-0').appendTo('#tasks-search-slot');
-    $('#tasks-search-slot input.form-control').attr('placeholder', 'Görev ara...');
-
-    // --- Kanban (ortak çekirdek: /js/apya-kanban.js) ---
-    // Görevler sayfası çapraz-proje (global) → sistem kolonları + proje adı + timer.
-    var kb = apya.kanban.create({
-        projectId: null,
-        editModal: editModal,
-        showProjectName: true,
-        enableTimer: false,         // zaman sayacı her board'da gizli (kullanıcı kararı)
-        enableCustomColumns: true,  // proje seçilince o projenin özel kolonları + Kolon Ekle
-        getFilter: currentFilter,
-        onChanged: function () {
-            subtaskCache = {}; // kanban'da taşınan kart bir alt görev olabilir
-            dataTable.ajax.reload(null, false);
-            if (!$('#view-gantt').hasClass('d-none')) loadGantt();
-        }
+    // Yükleniyor: spinner değil, tablo hizasında iskelet satırlar. İlk yüklemede
+    // ve her filtre değişiminde tabloyu iskeletle değiştirir.
+    dataTable.on('preXhr', function () {
+        $('#state-loading').removeClass('d-none');
+        $('#TasksTable_wrapper').addClass('d-none');
+    });
+    dataTable.on('xhr', function () {
+        $('#state-loading').addClass('d-none');
+        $('#TasksTable_wrapper').removeClass('d-none');
     });
 
-    // --- Proje seçici: kanban'ı scope'lar + liste/gantt'ı filtreler ---
-    apya.platform.application.projects.project.getList({ maxResultCount: 1000 }).then(function (res) {
-        var $sel = $('#tasks-project');
-        (res.items || []).forEach(function (p) {
-            $sel.append($('<option>').val(p.id).text(p.name + (p.code ? ' (' + p.code + ')' : '')));
+    // Sekme sayacı + boş hâl + seçim senkronu
+    dataTable.on('draw', function () {
+        var info = dataTable.page.info();
+        $('#console-task-count').text(
+            info.recordsDisplay === info.recordsTotal
+                ? info.recordsTotal + ' görev'
+                : info.recordsDisplay + ' / ' + info.recordsTotal + ' görev');
+
+        // "Hiç görev yok" ile "filtreye uyan yok" ayrı metinler.
+        console_.renderEmptyState({
+            table: '#TasksTable',
+            hasFilters: state.hasActive() || !!dataTable.search(),
+            emptyTemplate: 'tpl-state-empty',
+            nomatchTemplate: 'tpl-state-nomatch'
+        });
+
+        if (bulk) { bulk.syncRowChecks(); }
+
+        // Açık alt görev satırlarını geri aç (child satırlar her draw'da kaybolur).
+        if (!isHierarchical()) { return; }
+        if (!Object.keys(expanded).length) { return; }
+        dataTable.rows().every(function () {
+            var d = this.data();
+            if (d && expanded[d.id]) { renderSubtasks(this, d.id); }
         });
     });
-    $('#tasks-project').on('change', function () {
-        selectedProjectId = $(this).val() || null;
-        kb.setProject(selectedProjectId);
-        dataTable.ajax.reload();
-        if (!$('#view-gantt').hasClass('d-none')) loadGantt();
-    });
 
-    // --- Satıra tıklayınca görev detay modalını aç ---
-    $(document).on('click', '#TasksTable tbody tr', function (e) {
-        if ($(e.target).closest('a, button, .form-check-input, input, select, .dropdown').length) return;
-        var $tr = $(this).closest('tr');
-        var row = dataTable ? dataTable.row($tr) : null;
-        var rowData = row ? row.data() : null;
-        var id = (rowData && rowData.id) ? rowData.id : $tr.attr('data-id');
-        if (id) { editModal.open(id); }
-    });
-
-    // --- Alt görev aç/kapa -------------------------------------------------
-    // Chevron bir <button>, üstteki satır tıklaması onu zaten atlıyor; yine de
-    // stopPropagation ile niyet açık bırakılıyor.
+    // ─── Alt görev aç/kapa ─────────────────────────────────────────────────
     $(document).on('click', '#TasksTable tbody [data-subtask-toggle]', function (e) {
         e.stopPropagation();
         var $btn = $(this);
         var id = $btn.attr('data-subtask-toggle');
         var row = dataTable.row($btn.closest('tr'));
-        if (!row || !row.data()) return;
+        if (!row || !row.data()) { return; }
 
         if (row.child.isShown()) {
             row.child.hide();
@@ -205,21 +388,19 @@ $(function () {
         renderSubtasks(row, id);
     });
 
-    // Alt görev satırına tıklayınca o alt görevin detayı açılır.
     $(document).on('click', '#TasksTable tbody .apya-subtask-row', function (e) {
         e.stopPropagation();
         var id = $(this).attr('data-subtask-id');
         if (id) { editModal.open(id); }
     });
     $(document).on('keydown', '#TasksTable tbody .apya-subtask-row', function (e) {
-        if (e.key !== 'Enter' && e.key !== ' ') return;
+        if (e.key !== 'Enter' && e.key !== ' ') { return; }
         e.preventDefault();
         e.stopPropagation();
         var id = $(this).attr('data-subtask-id');
         if (id) { editModal.open(id); }
     });
 
-    // Alt görevleri child satıra basar; veri cache'te yoksa önce çeker.
     function renderSubtasks(rowApi, id) {
         var $btn = $(rowApi.node()).find('[data-subtask-toggle]');
         $btn.attr('aria-expanded', 'true').attr('aria-label', 'Alt görevleri gizle');
@@ -235,7 +416,7 @@ $(function () {
             function (res) {
                 $icon.attr('class', 'fa fa-chevron-right');
                 subtaskCache[id] = res.items || [];
-                if (!expanded[id]) return; // yükleme biterken kullanıcı kapattıysa açma
+                if (!expanded[id]) { return; }
                 rowApi.child(apyaTask.subtaskRows(subtaskCache[id])).show();
             },
             function () {
@@ -247,63 +428,247 @@ $(function () {
         );
     }
 
-    // Child satırlar her draw'da kaybolur — açık bırakılanlar geri açılır.
-    // Sayfada olmayan satırlar atlanır; expanded korunduğu için geri dönünce açılırlar.
-    dataTable.on('draw', function () {
-        // Düz kipte chevron basılmaz; açık kayıtlar korunur ama child satır
-        // AÇILMAZ — aksi halde tetikleyicisi olmayan bir panel asılı kalırdı.
-        if (!isHierarchical()) return;
-        var ids = Object.keys(expanded);
-        if (!ids.length) return;
-        dataTable.rows().every(function () {
-            var d = this.data();
-            if (d && expanded[d.id]) { renderSubtasks(this, d.id); }
+    // ─── Şerit araması → DataTables ────────────────────────────────────────
+    var searchTimer = null;
+    $('#console-search').on('input', function () {
+        var term = this.value;
+        clearTimeout(searchTimer);
+        searchTimer = setTimeout(function () {
+            subtaskCache = {};
+            dataTable.search(term).draw();
+            renderFilterUi();
+        }, 300);
+    });
+
+    // ─── Chip + bar kablolaması ────────────────────────────────────────────
+    $(document).on('click', '[data-filter]', function () {
+        var key = String($(this).data('filter'));
+        var value = String($(this).data('value') || '');
+        if (key === 'assignee' && value) { state.set('mine', false); }
+        state.set(key === 'assignee' ? 'assignee' : key, value);
+        applyFilters();
+        if (key === 'project') { loadSummary(); kb.setProject(value || null); }
+    });
+
+    $('#chip-overdue, #bar-overdue').on('click', function () {
+        var next = !state.get('overdue');
+        state.set('overdue', next);
+        if (next) { state.set('due7', false); } // iki tarih barı birbirini dışlar
+        applyFilters();
+    });
+
+    $('#bar-due7').on('click', function () {
+        var next = !state.get('due7');
+        state.set('due7', next);
+        if (next) { state.set('overdue', false); }
+        applyFilters();
+    });
+
+    $('#chip-mine, #bar-mine').on('click', function () {
+        var next = !state.get('mine');
+        state.set('mine', next);
+        if (next) { state.set('assignee', ''); }
+        applyFilters();
+    });
+
+    $('#bar-progress').on('click', function () {
+        state.set('open', !state.get('open'));
+        applyFilters();
+    });
+
+    $('#btn-apply-daterange').on('click', function () {
+        state.set('minDue', $('#Filter_MinDueDate').val() || '');
+        state.set('maxDue', $('#Filter_MaxDueDate').val() || '');
+        if (state.get('minDue') || state.get('maxDue')) {
+            state.set('overdue', false).set('due7', false); // bar aralıkları elle aralığı eziyordu
+        }
+        applyFilters();
+        $('#chip-daterange').dropdown('hide');
+    });
+
+    $('#btn-clear-filters').on('click', function () { clearAllFilters(); });
+    $(document).on('click', '[data-state-action="clear"]', function () { clearAllFilters(); });
+    $(document).on('click', '[data-state-action="create"]', function () { createModal.open({}); });
+
+    function clearAllFilters() {
+        state.reset();
+        $('#Filter_MinDueDate').val('');
+        $('#Filter_MaxDueDate').val('');
+        $('#console-search').val('');
+        if (dataTable) { dataTable.search(''); }
+        kb.setProject(null);
+        applyFilters();
+        loadSummary();
+    }
+
+    // ─── Lookup'lar: Atanan + Proje chip menüleri ──────────────────────────
+    taskService.getUsersLookup().then(function (res) {
+        var $menu = $('#chip-assignee-menu');
+        (res.items || []).forEach(function (u) {
+            var name = u.userName;
+            $menu.append(
+                $('<button type="button" class="apya-console-menu-item">')
+                    .attr('data-filter', 'assignee').attr('data-value', u.id).attr('data-label', name)
+                    .append($('<span class="apya-avatar apya-avatar-' + apyaTask.hashTone(name) + '">')
+                        .text(String(name).trim().slice(0, 2).toUpperCase()))
+                    .append(document.createTextNode(name))
+            );
+        });
+        renderFilterUi();
+    });
+
+    apya.platform.application.projects.project.getList({ maxResultCount: 1000 }).then(function (res) {
+        var $menu = $('#chip-project-menu');
+        (res.items || []).forEach(function (p) {
+            var label = p.name + (p.code ? ' (' + p.code + ')' : '');
+            $menu.append(
+                $('<button type="button" class="apya-console-menu-item">')
+                    .attr('data-filter', 'project').attr('data-value', p.id).attr('data-label', label)
+                    .text(label)
+            );
+        });
+        renderFilterUi();
+    });
+
+    // ─── Toplu seçim ───────────────────────────────────────────────────────
+    var bulk = !canBulk ? null : console_.createBulkSelection({
+        table: '#TasksTable',
+        checkAll: '#check-all',
+        bar: '#bulk-bar',
+        count: '#bulk-count'
+    });
+
+    if (bulk) {
+        $('#bulk-clear').on('click', function () { bulk.clear(); });
+
+        $(document).on('click', '[data-bulk-status]', function () {
+            var status = parseInt($(this).data('bulk-status'), 10);
+            var ids = bulk.ids();
+            if (!ids.length) { return; }
+            console_.runSequential(ids, function (id) {
+                return Promise.resolve(taskService.updateStatus(id, status));
+            }).then(function () {
+                abp.notify.success(ids.length + ' görevin durumu güncellendi.');
+                bulk.clear();
+                reloadAll();
+            });
+        });
+
+        $('#bulk-delete').on('click', function () {
+            var ids = bulk.ids();
+            if (!ids.length) { return; }
+            abp.message.confirm(
+                'Seçili görevler kalıcı olarak silinecek.',
+                ids.length + ' görev silinecek',
+                function (confirmed) {
+                    if (!confirmed) { return; }
+                    console_.runSequential(ids, function (id) {
+                        return Promise.resolve(taskService.delete(id));
+                    }).then(function () {
+                        abp.notify.success(ids.length + ' görev silindi.');
+                        bulk.clear();
+                        reloadAll();
+                    });
+                }
+            );
+        });
+    }
+
+    // Satır hover hızlı aksiyon: Tamamla
+    $(document).on('click', '[data-complete-id]', function (e) {
+        e.stopPropagation();
+        var id = $(this).data('complete-id');
+        taskService.updateStatus(id, 4).then(function () {
+            abp.notify.success('Görev tamamlandı.');
+            reloadAll();
         });
     });
 
-    // --- Yeni Görev ---
-    $('#NewTaskButton').click(function (e) {
-        e.preventDefault();
-        createModal.open(selectedProjectId ? { projectId: selectedProjectId } : {});
+    // ─── Yoğunluk + kolon seçici ───────────────────────────────────────────
+    var density = console_.createDensity({
+        root: '.apya-console-main',
+        storageKey: 'apya.tasks.density'
+    });
+    density.apply();
+
+    var colPrefs = console_.createColumnPrefs({
+        storageKey: 'apya.tasks.columns',
+        codes: ['project', 'effort', 'start', 'due'],
+        // Mobil kart ızgarasında yalnız Başlık/Atanan/Durum/Öncelik/Bitiş'in
+        // hücresi var; kalanlar dar kapta otomatik düşer.
+        autoDrop: ['project', 'effort', 'start'],
+        observe: '.apya-task-console',
+        onApply: function (prefs) {
+            if (!dataTable) { return; }
+            Object.keys(prefs).forEach(function (code) {
+                dataTable.column(code + ':name').visible(prefs[code], false);
+            });
+            dataTable.columns.adjust();
+        }
+    });
+    colPrefs.apply();
+
+    // ─── Kanban (ortak çekirdek) ───────────────────────────────────────────
+    var kb = apya.kanban.create({
+        projectId: state.get('project') || null,
+        editModal: editModal,
+        showProjectName: true,
+        enableTimer: false,
+        enableCustomColumns: true,
+        getFilter: buildInput,
+        onChanged: function () {
+            subtaskCache = {};
+            dataTable.ajax.reload(null, false);
+            loadSummary();
+            if (currentView === 'gantt') { loadGantt(); }
+        }
     });
 
-    // --- Görüntü Modu Geçişi ---
-    $('#btn-view-list').click(function() { switchView('list'); });
-    $('#btn-view-kanban').click(function() { switchView('kanban'); kb.load(); });
-    $('#btn-view-gantt').click(function() { switchView('gantt'); loadGantt(); });
+    // ─── Satıra tıklayınca görev detayı ────────────────────────────────────
+    $(document).on('click', '#TasksTable tbody tr', function (e) {
+        if ($(e.target).closest('a, button, .form-check-input, input, select, .dropdown').length) { return; }
+        var $tr = $(this).closest('tr');
+        var row = dataTable ? dataTable.row($tr) : null;
+        var rowData = row ? row.data() : null;
+        var id = (rowData && rowData.id) ? rowData.id : $tr.attr('data-id');
+        if (id) { editModal.open(id); }
+    });
+
+    // ─── Yeni Görev ────────────────────────────────────────────────────────
+    $('#NewTaskButton').click(function (e) {
+        e.preventDefault();
+        createModal.open(state.get('project') ? { projectId: state.get('project') } : {});
+    });
+
+    // ─── Görünüm sekmeleri ─────────────────────────────────────────────────
+    $('#btn-view-list').click(function () { switchView('list'); });
+    $('#btn-view-kanban').click(function () { switchView('kanban'); kb.load(); });
+    $('#btn-view-gantt').click(function () { switchView('gantt'); loadGantt(); });
 
     function switchView(mode) {
+        currentView = mode;
         $('.view-panel').addClass('d-none');
-        $('.btn-group .btn').removeClass('active');
-        $('#tasks-search-slot').toggleClass('d-none', mode !== 'list');
+        $('.apya-console-tab').removeClass('active').attr('aria-selected', 'false');
 
-        if (mode === 'list') {
-            $('#view-list').removeClass('d-none');
-            $('#btn-view-list').addClass('active');
-        } else if (mode === 'kanban') {
-            $('#view-kanban').removeClass('d-none');
-            $('#btn-view-kanban').addClass('active');
-        } else {
-            $('#view-gantt').removeClass('d-none');
-            $('#btn-view-gantt').addClass('active');
-        }
+        var id = mode === 'list' ? '#view-list' : (mode === 'kanban' ? '#view-kanban' : '#view-gantt');
+        var btn = mode === 'list' ? '#btn-view-list' : (mode === 'kanban' ? '#btn-view-kanban' : '#btn-view-gantt');
+        $(id).removeClass('d-none');
+        $(btn).addClass('active').attr('aria-selected', 'true');
+
+        // Filtre çubuğu her görünümde geçerli; yalnız kolon seçici listeye özel.
+        state.writeUrl({ view: mode === 'list' ? '' : mode });
     }
 
-    // --- Gantt Mantığı ---
+    // ─── Gantt ─────────────────────────────────────────────────────────────
     var gantt = null;
 
     function loadGantt() {
-        var params = $.extend({ maxResultCount: 1000 }, currentFilter());
-        taskService.getList(params).then(function (result) {
-            renderGantt(result.items);
-        });
+        var params = $.extend({ maxResultCount: 1000 }, buildInput());
+        taskService.getList(params).then(function (result) { renderGantt(result.items); });
     }
 
     function renderGantt(tasks) {
-        if (!tasks.length) {
-            $('#gantt-svg').empty();
-            return;
-        }
+        if (!tasks.length) { $('#gantt-svg').empty(); return; }
 
         var ganttTasks = tasks.map(function (task) {
             return {
@@ -318,13 +683,10 @@ $(function () {
         });
 
         gantt = new Gantt("#gantt-svg", ganttTasks, {
-            on_click: function (task) {
-                editModal.open({ id: task.id });
-            },
-            on_date_change: function(task, start, end) {
-                // Sürükle bırak ile tarih güncelleme
-                taskService.get(task.id).then(function(original) {
-                    var input = {
+            on_click: function (task) { editModal.open({ id: task.id }); },
+            on_date_change: function (task, start, end) {
+                taskService.get(task.id).then(function (original) {
+                    taskService.update(task.id, {
                         title: original.title,
                         description: original.description,
                         startDate: start,
@@ -334,96 +696,65 @@ $(function () {
                         projectId: original.projectId,
                         assigneeId: original.assigneeId,
                         predecessorIds: original.predecessorIds
-                    };
-                    taskService.update(task.id, input).then(function() {
-                        abp.notify.success('Tarih güncellendi.');
-                    });
+                    }).then(function () { abp.notify.success('Tarih güncellendi.'); });
                 });
             },
             language: 'tr'
         });
 
-        // View Mode Change
-        $('.gantt-change-view').on('click', function() {
-            var view = $(this).data('view');
-            gantt.change_view_mode(view);
+        $('.gantt-change-view').off('click').on('click', function () {
+            gantt.change_view_mode($(this).data('view'));
             $('.gantt-change-view').removeClass('active');
             $(this).addClass('active');
         });
     }
 
-    // TaskPriority enum: Low=1, Medium=2, High=3, Critical=4 — önceki hali (0/2/else)
-    // gerçek enum değerleriyle uyuşmuyordu, neredeyse her görev 'medium' gösteriyordu.
+    // TaskPriority enum: Low=1, Medium=2, High=3, Critical=4
     function getPriorityClass(p) {
-        if (p === 1) return 'low';
-        if (p === 3) return 'high';
-        if (p === 4) return 'critical';
+        if (p === 1) { return 'low'; }
+        if (p === 3) { return 'high'; }
+        if (p === 4) { return 'critical'; }
         return 'medium';
     }
 
-    createModal.onResult(function () {
-        subtaskCache = {}; // yeni görev bir alt görev olabilir → cache bayat
-        dataTable.ajax.reload();
-        if (!$('#view-kanban').hasClass('d-none')) kb.load();
-        if (!$('#view-gantt').hasClass('d-none')) loadGantt();
-    });
-
-    // editModal.onResult ortak kanban modülünce bağlanır (load + onChanged →
-    // datatable + gantt yenilenir). Burada tekrar bağlamıyoruz.
-
-    // Otomatik kayıt event'ini dinle:
-    abp.event.on('app.task.updated', function () {
-        subtaskCache = {}; // başlık/durum/atanan değişmiş olabilir → yeniden çekilsin
+    // ─── Yenileme ──────────────────────────────────────────────────────────
+    function reloadAll() {
+        subtaskCache = {};
         dataTable.ajax.reload(null, false);
-        if (!$('#view-kanban').hasClass('d-none')) kb.load();
-        if (!$('#view-gantt').hasClass('d-none')) loadGantt();
-    });
-
-    // --- APYA-25: Filtre Butonları ---
-    function applyFilters() {
-        dataTable.ajax.reload();
-        if (!$('#view-kanban').hasClass('d-none')) kb.load();
-        if (!$('#view-gantt').hasClass('d-none')) loadGantt();
+        loadSummary();
+        if (currentView === 'kanban') { kb.load(); }
+        if (currentView === 'gantt') { loadGantt(); }
     }
 
-    // Durum/Atanan/Öncelik pilleri seçilir seçilmez uygulanır (Son Tarih popover'ı
-    // hâlâ kendi "Uygula" butonuyla — iki tarihi birlikte girip tek seferde tetiklemek için).
-    $('#Filter_Status, #Filter_AssigneeId, #Filter_Priority').on('change', applyFilters);
-    $('#btn-apply-filters').click(applyFilters);
+    createModal.onResult(function () { reloadAll(); });
+    abp.event.on('app.task.updated', function () { reloadAll(); });
 
-    $('#btn-clear-filters').click(function () {
-        $('#TaskFilterForm')[0].reset();
-        $('#tasks-project').trigger('change'); // reset() 'change' tetiklemez → selectedProjectId/kb scope elle temizlenmeli
-        applyFilters();
-    });
-
-    // --- AI Draft Tasks ---
-    // APYA-122: BtnImportAI generic Tasks sayfasından kaldırıldı.
-    // Review modalı hâlâ batch sonrası açılıyor (event-driven) — yalnızca tetikleyici buton taşındı.
+    // ─── AI taslak inceleme (batch sonrası event-driven) ───────────────────
+    // APYA-122: tetikleyici buton bu sayfada YOK; yalnız modal açılışı korunuyor.
     var reviewModal = new abp.ModalManager(abp.appPath + 'Tasks/Drafts/ReviewModal');
 
-    $(document).on('ai.drafts.batchStarted', function(e, batchId) {
+    $(document).on('ai.drafts.batchStarted', function (e, batchId) {
         var checkLimit = 0;
-        var checkInterval = setInterval(function() {
+        var checkInterval = setInterval(function () {
             checkLimit++;
-            if (checkLimit > 20) { // Max 1 dakika beklet
+            if (checkLimit > 20) {
                 clearInterval(checkInterval);
                 abp.notify.error("İşlem zaman aşımına uğradı veya beklenen veri gelmedi.");
                 return;
             }
-
-            abp.ajax({
-                type: 'GET',
-                url: '/api/app/draft-task/pending-drafts/' + batchId,
-                cache: false
-            }).done(function(result) {
-                if (result && result.length > 0) {
-                    clearInterval(checkInterval);
-                    setTimeout(function() {
-                        reviewModal.open({ BatchId: batchId });
-                    }, 500); // Modalların çakışmaması için yarım saniye gecikme
-                }
-            });
-        }, 3000); // 3 saniyede 1 polling (yüklenme durumunu simule eder)
+            abp.ajax({ type: 'GET', url: '/api/app/draft-task/pending-drafts/' + batchId, cache: false })
+                .done(function (result) {
+                    if (result && result.length > 0) {
+                        clearInterval(checkInterval);
+                        setTimeout(function () { reviewModal.open({ BatchId: batchId }); }, 500);
+                    }
+                });
+        }, 3000);
     });
+
+    // ─── İlk render ────────────────────────────────────────────────────────
+    renderFilterUi();
+    loadSummary();
+    $('#Filter_MinDueDate').val(state.get('minDue'));
+    $('#Filter_MaxDueDate').val(state.get('maxDue'));
 });

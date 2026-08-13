@@ -9,108 +9,305 @@
 @model IndexModel
 @{
     ViewBag.Title = "Görevler";
+
+    // Toplu işlem + satır aksiyonları izne bağlı; JS bunları kök elemandan okur
+    // (ProjectDetails konsoluyla aynı desen).
+    var canChangeStatus = await AuthorizationService.IsGrantedAsync(PlatformPermissions.Tasks.ChangeStatus);
+    var canDeleteTasks = await AuthorizationService.IsGrantedAsync(PlatformPermissions.Tasks.Delete);
+    var canBulk = canChangeStatus || canDeleteTasks;
+    var canCreate = await AuthorizationService.IsGrantedAsync(PlatformPermissions.Tasks.Create);
 }
 
 @* Tailwind island stylesheet (js/style.css) — bu partial olmadan görev detay modalı stilsiz kalır. *@
 <partial name="_ApyaThemeBootstrap" />
 
-<div data-page-description="Tüm projelerdeki görevler" class="apya-page">
+@* Proje Detay konsolunun tasarım dili buraya uyarlandı. Fark: burası TÜM
+   projelerin görevleri — proje kimliği/bütçe/ekip yerine proje FİLTRESİ ve
+   PROJE kolonu var. Şerit barları çapraz-proje sayaçlarıdır (GetSummaryAsync). *@
+<div data-page-description="Tüm projelerdeki görevler"
+     class="apya-page apya-task-console"
+     data-can-change-status="@canChangeStatus.ToString().ToLowerInvariant()"
+     data-can-delete-tasks="@canDeleteTasks.ToString().ToLowerInvariant()"
+     data-can-bulk="@canBulk.ToString().ToLowerInvariant()">
 
-@* ─── Görev Yönetimi ─── *@
-<abp-card class="apya-tasks-card">
-    <abp-card-header class="border-bottom-0 pb-2">
-        <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
-            @* data-header-views: apya-header-views.js bu segmenti header'a taşır
-               (hedef tasarım). data-icon = header'daki ikon, data-view-label =
-               alt başlığa yazılan ek (" · tablo görünümü"). Taşıma yalnız DOM
-               konumunu değiştirir; buradaki id'lere bağlı index.js handler'ları
-               aynen çalışmaya devam eder. *@
-            <div class="btn-group apya-view-toggle" role="group" data-header-views>
-                <button type="button" id="btn-view-list" class="btn active"
-                        data-icon="fa-list" data-view-label="tablo görünümü">@L["Tasks:View:List"]</button>
-                <button type="button" id="btn-view-kanban" class="btn"
-                        data-icon="fa-table-columns" data-view-label="pano görünümü">@L["Tasks:View:Kanban"]</button>
-                <button type="button" id="btn-view-gantt" class="btn"
-                        data-icon="fa-bars-staggered" data-view-label="zaman çizelgesi">@L["Tasks:View:Gantt"]</button>
-            </div>
-            @* "Ara" kutusu DataTables tarafından #view-list içine üretilir; index.js
-               burada açılan #tasks-search-slot'a taşıyıp ortalar. flex-grow-1 ile araç
-               çubuğu öğeleri arasındaki boşluğu doldurup içeriğini ortalar; taşıdığı
-               .dt-search input'una sabit genişlik veriyoruz (bkz. altta <style>) — yoksa
-               Bootstrap'ın .form-control{width:100%} kuralı slot'u satırın tamamına
-               büyütüp araç çubuğunu alt satıra itiyordu. *@
-            <div id="tasks-search-slot" class="flex-grow-1 d-flex justify-content-center"></div>
-            @* APYA-122: AI ile Görev Oluştur butonu kaldırıldı.
-               Generic Tasks sayfasında AI özelliği uygunsuz — proje bağlamı olmadan
-               anlamlı bir AI üretimi yapılamaz. AI girişi proje detay sayfasından yapılmalı. *@
-            @if (await AuthorizationService.IsGrantedAsync(PlatformPermissions.Tasks.Create))
-            {
-                <abp-button id="NewTaskButton"
-                            text="@L["Tasks:NewButton"].Value"
-                            icon="plus"
-                            button-type="Primary"
-                            size="Small" />
-            }
+@* ─── ÜST ŞERİT ─── *@
+<div class="apya-console-rail">
+
+    <div class="apya-console-identity">
+        <div class="d-flex align-items-center gap-2">
+            <i class="fa fa-list-check apya-console-rocket" aria-hidden="true"></i>
+            <h1 class="apya-console-name">Görevler</h1>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+            <span class="apya-chip apya-chip-neutral">Tüm projeler</span>
+        </div>
+    </div>
+
+    <span class="apya-console-sep" aria-hidden="true"></span>
+
+    @* Sayaç barları — hepsi aynı zamanda filtre düğmesi. Değerleri
+       GetSummaryAsync doldurur (index.js). Barlar ve alttaki chip'ler AYNI
+       state'i okur/yazar; iki ayrı filtre mekanizması yok. *@
+    <div class="apya-console-bars">
+
+        <button type="button" class="apya-console-bar" id="bar-progress" aria-pressed="false"
+                title="Tamamlanmamış görevleri filtrele">
+            <span class="apya-console-bar-head">
+                <span class="apya-console-bar-label"><i class="fa fa-chart-line me-1" aria-hidden="true"></i>İlerleme</span>
+                <span class="apya-console-bar-chevron" aria-hidden="true">&rsaquo;</span>
+            </span>
+            <span class="apya-console-bar-value">
+                <strong class="apya-numeric" id="sum-progress-pct">—</strong>
+                <small class="apya-numeric" id="sum-progress-ratio"></small>
+            </span>
+            <span class="apya-mini-progress is-progress" id="sum-progress-bar"><span style="width:0%"></span></span>
+        </button>
+
+        <button type="button" class="apya-console-bar" id="bar-overdue" aria-pressed="false"
+                title="Gecikmiş görevleri filtrele">
+            <span class="apya-console-bar-head">
+                <span class="apya-console-bar-label"><i class="fa fa-triangle-exclamation me-1" aria-hidden="true"></i>Gecikmiş</span>
+                <span class="apya-console-bar-chevron" aria-hidden="true">&rsaquo;</span>
+            </span>
+            <span class="apya-console-bar-value">
+                <strong class="apya-numeric is-negative" id="sum-overdue">—</strong>
+                <small>görev</small>
+            </span>
+            <span class="apya-mini-progress is-negative" id="sum-overdue-bar"><span style="width:0%"></span></span>
+        </button>
+
+        <button type="button" class="apya-console-bar" id="bar-due7" aria-pressed="false"
+                title="7 gün içinde bitmesi gerekenler">
+            <span class="apya-console-bar-head">
+                <span class="apya-console-bar-label"><i class="fa fa-calendar-day me-1" aria-hidden="true"></i>7 Gün İçinde</span>
+                <span class="apya-console-bar-chevron" aria-hidden="true">&rsaquo;</span>
+            </span>
+            <span class="apya-console-bar-value">
+                <strong class="apya-numeric is-warning" id="sum-due7">—</strong>
+                <small>görev</small>
+            </span>
+            <span class="apya-mini-progress is-warning" id="sum-due7-bar"><span style="width:0%"></span></span>
+        </button>
+
+        <button type="button" class="apya-console-bar" id="bar-mine" aria-pressed="false"
+                title="Bana atanmış açık görevler">
+            <span class="apya-console-bar-head">
+                <span class="apya-console-bar-label"><i class="fa fa-user-check me-1" aria-hidden="true"></i>Bana Atanan</span>
+                <span class="apya-console-bar-chevron" aria-hidden="true">&rsaquo;</span>
+            </span>
+            <span class="apya-console-bar-value">
+                <strong class="apya-numeric" id="sum-mine">—</strong>
+                <small>görev</small>
+            </span>
+            <span class="apya-mini-progress is-progress" id="sum-mine-bar"><span style="width:0%"></span></span>
+        </button>
+
+    </div>
+
+    <div class="apya-console-actions">
+        <div class="apya-console-search">
+            <i class="fa fa-magnifying-glass" aria-hidden="true"></i>
+            <input type="search" id="console-search" placeholder="Görev ara" aria-label="Görev ara" />
         </div>
 
-        @* ─── Kompakt filtre pilleri — eski accordion'un yerine (aynı ID'ler/JS kablolaması) ─── *@
-        <form id="TaskFilterForm" class="apya-task-filter-row d-flex flex-wrap align-items-center gap-2">
-            <select id="Filter_Status" class="apya-filter-pill" title="@L["Tasks:Filter:Status"]">
-                <option value="">@L["Tasks:Filter:Status"]</option>
-                <option value="1">@L["Tasks:Status:Todo"]</option>
-                <option value="2">@L["Tasks:Status:InProgress"]</option>
-                <option value="3">@L["Tasks:Status:InReview"]</option>
-                <option value="4">@L["Tasks:Status:Done"]</option>
-            </select>
-            <select id="Filter_AssigneeId" class="apya-filter-pill" title="@L["Tasks:Filter:Assignee"]">
-                <option value="">Atanan</option>
-            </select>
-            <select id="tasks-project" class="apya-filter-pill" title="Proje seçince kanban o projeye scope'lanır (özel kolonlar + Kolon Ekle); liste/gantt da filtrelenir">
-                <option value="">Proje</option>
-            </select>
-            <apya-hint placement="bottom" text="Üç görünümü de filtreler. Bir proje seçtiğinizde Kanban o projenin kendi kolonlarına geçer ve Kolon Ekle görünür; Tüm Projeler seçiliyken ortak kolonlar kullanılır." />
-            <select id="Filter_Priority" class="apya-filter-pill" title="Öncelik">
-                <option value="">Öncelik</option>
-                <option value="1">Düşük</option>
-                <option value="2">Orta</option>
-                <option value="3">Yüksek</option>
-                <option value="4">Kritik</option>
-            </select>
-            <div class="dropdown">
-                <button type="button" class="apya-filter-pill dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
-                    Son Tarih
-                </button>
-                <div class="dropdown-menu p-3 shadow-sm" style="min-width:240px;">
-                    <label for="Filter_MinDueDate" class="form-label small fw-bold text-muted">@L["Tasks:Filter:MinDueDate"]</label>
-                    <input type="date" id="Filter_MinDueDate" class="form-control form-control-sm mb-2">
-                    <label for="Filter_MaxDueDate" class="form-label small fw-bold text-muted">@L["Tasks:Filter:MaxDueDate"]</label>
-                    <input type="date" id="Filter_MaxDueDate" class="form-control form-control-sm mb-2">
-                    <button type="button" id="btn-apply-filters" class="btn btn-primary btn-sm w-100">@L["Common:Filter"]</button>
+        @if (canCreate)
+        {
+            @* APYA-122: AI ile Görev Oluştur burada YOK — proje bağlamı olmadan
+               anlamlı üretim yapılamıyor, AI girişi proje detayında. *@
+            <button id="NewTaskButton" type="button" class="btn btn-primary btn-sm">
+                <i class="fa fa-plus me-1" aria-hidden="true"></i>@L["Tasks:NewButton"]
+            </button>
+        }
+
+        <div class="dropdown">
+            <button type="button" class="apya-console-kebab" id="btn-tasks-menu"
+                    data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false"
+                    aria-label="Görev menüsü" title="Görev menüsü">
+                <i class="fa fa-ellipsis" aria-hidden="true"></i>
+            </button>
+            <div class="dropdown-menu dropdown-menu-end apya-console-menu" aria-labelledby="btn-tasks-menu">
+
+                <div class="apya-console-menu-head">Görünüm</div>
+                <div class="apya-console-menu-row">
+                    <span>Yoğunluk</span>
+                    <span class="apya-console-density" role="group" aria-label="Satır yoğunluğu">
+                        <button type="button" data-density-set="compact" title="Sıkı">S</button>
+                        <button type="button" data-density-set="cozy" title="Normal">N</button>
+                        <button type="button" data-density-set="comfortable" title="Geniş">G</button>
+                    </span>
+                </div>
+                <div class="apya-console-menu-row is-stacked">
+                    <span>Kolonlar</span>
+                    <span class="apya-console-colpicker" role="group" aria-label="Görünür kolonlar">
+                        <button type="button" data-col-toggle="project" aria-pressed="true">Proje</button>
+                        <button type="button" data-col-toggle="effort" aria-pressed="true">Efor</button>
+                        <button type="button" data-col-toggle="start" aria-pressed="true">Başlangıç</button>
+                        <button type="button" data-col-toggle="due" aria-pressed="true">Bitiş</button>
+                    </span>
+                    <span class="apya-console-menu-hint">Başlık, Atanan, Durum ve Öncelik sabittir.</span>
+                </div>
+
+                <div class="apya-console-menu-head is-divided">Geri bildirim</div>
+                <div class="apya-console-menu-row">
+                    @await Html.PartialAsync("/Pages/Shared/_FeedbackLink.cshtml",
+                        new Apya.Platform.Web.Feedbacks.FeedbackLinkContext(Module: "Tasks", Component: "TaskList"))
                 </div>
             </div>
-            <button type="button" id="btn-clear-filters" class="btn btn-link btn-sm text-muted text-decoration-none">
-                <i class="fa fa-rotate-left me-1"></i>@L["Common:Clear"]
+        </div>
+    </div>
+</div>
+
+@* ─── GÖREV ALANI ─── *@
+<div class="card apya-console-main">
+
+    <div class="apya-console-tabs" role="tablist">
+        <button type="button" class="apya-console-tab active" id="btn-view-list"
+                role="tab" aria-selected="true" aria-controls="view-list">
+            <i class="fa fa-list" aria-hidden="true"></i>@L["Tasks:View:List"]
+        </button>
+        <button type="button" class="apya-console-tab" id="btn-view-kanban"
+                role="tab" aria-selected="false" aria-controls="view-kanban">
+            <i class="fa fa-table-columns" aria-hidden="true"></i>@L["Tasks:View:Kanban"]
+        </button>
+        <button type="button" class="apya-console-tab" id="btn-view-gantt"
+                role="tab" aria-selected="false" aria-controls="view-gantt"
+                title="Başlangıç-bitiş tarihlerinden türeyen zaman çizelgesi">
+            <i class="fa fa-clock" aria-hidden="true"></i>@L["Tasks:View:Gantt"]
+        </button>
+        <span class="apya-console-count apya-numeric" id="console-task-count"></span>
+    </div>
+
+    @* ─── Filtre çubuğu ─── *@
+    <div class="apya-console-filters" id="console-filters">
+        <span class="apya-console-filter-label">Filtre</span>
+
+        <div class="dropdown">
+            <button type="button" class="apya-filter-chip" id="chip-status"
+                    data-bs-toggle="dropdown" aria-expanded="false">
+                <span data-chip-text>Durum: tümü</span><i class="fa fa-chevron-down" aria-hidden="true"></i>
             </button>
-            <span class="ms-auto">
-                @await Html.PartialAsync("/Pages/Shared/_FeedbackLink.cshtml",
-                    new Apya.Platform.Web.Feedbacks.FeedbackLinkContext(Module: "Tasks", Component: "TaskList"))
-            </span>
-        </form>
-    </abp-card-header>
-    <abp-card-body>
+            <div class="dropdown-menu apya-console-menu">
+                <button type="button" class="apya-console-menu-item" data-filter="status" data-value="">Tümü</button>
+                <button type="button" class="apya-console-menu-item" data-filter="status" data-value="1">@L["Tasks:Status:Todo"]</button>
+                <button type="button" class="apya-console-menu-item" data-filter="status" data-value="2">@L["Tasks:Status:InProgress"]</button>
+                <button type="button" class="apya-console-menu-item" data-filter="status" data-value="3">@L["Tasks:Status:InReview"]</button>
+                <button type="button" class="apya-console-menu-item" data-filter="status" data-value="4">@L["Tasks:Status:Done"]</button>
+                <button type="button" class="apya-console-menu-item" data-filter="status" data-value="0">İptal</button>
+            </div>
+        </div>
+
+        @* Atanan ve Proje listeleri JS ile doldurulur (lookup uçları) — konsolda
+           bunlar PageModel'den geliyor, burada tenant'ın tamamı söz konusu. *@
+        <div class="dropdown">
+            <button type="button" class="apya-filter-chip" id="chip-assignee"
+                    data-bs-toggle="dropdown" aria-expanded="false">
+                <span data-chip-text>Atanan: tümü</span><i class="fa fa-chevron-down" aria-hidden="true"></i>
+            </button>
+            <div class="dropdown-menu apya-console-menu" id="chip-assignee-menu">
+                <button type="button" class="apya-console-menu-item" data-filter="assignee" data-value="">Tümü</button>
+            </div>
+        </div>
+
+        <div class="dropdown">
+            <button type="button" class="apya-filter-chip" id="chip-project"
+                    data-bs-toggle="dropdown" aria-expanded="false">
+                <span data-chip-text>Proje: tümü</span><i class="fa fa-chevron-down" aria-hidden="true"></i>
+            </button>
+            <div class="dropdown-menu apya-console-menu" id="chip-project-menu">
+                <button type="button" class="apya-console-menu-item" data-filter="project" data-value="">Tümü</button>
+            </div>
+        </div>
+        <apya-hint placement="bottom" text="Üç görünümü de filtreler. Bir proje seçtiğinizde Kanban o projenin kendi kolonlarına geçer ve Kolon Ekle görünür; Tüm Projeler seçiliyken ortak kolonlar kullanılır." />
+
+        <div class="dropdown">
+            <button type="button" class="apya-filter-chip" id="chip-priority"
+                    data-bs-toggle="dropdown" aria-expanded="false">
+                <span data-chip-text>Öncelik: tümü</span><i class="fa fa-chevron-down" aria-hidden="true"></i>
+            </button>
+            <div class="dropdown-menu apya-console-menu">
+                <button type="button" class="apya-console-menu-item" data-filter="priority" data-value="">Tümü</button>
+                <button type="button" class="apya-console-menu-item" data-filter="priority" data-value="1">Düşük</button>
+                <button type="button" class="apya-console-menu-item" data-filter="priority" data-value="2">Orta</button>
+                <button type="button" class="apya-console-menu-item" data-filter="priority" data-value="3">Yüksek</button>
+                <button type="button" class="apya-console-menu-item" data-filter="priority" data-value="4">Kritik</button>
+            </div>
+        </div>
+
+        @* Tarih aralığı konsolda yok ama burada mevcut bir yetenek — kaldırmak
+           gerileme olurdu, chip biçimine taşındı. *@
+        <div class="dropdown">
+            <button type="button" class="apya-filter-chip" id="chip-daterange"
+                    data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
+                <span data-chip-text>Son Tarih: tümü</span><i class="fa fa-chevron-down" aria-hidden="true"></i>
+            </button>
+            <div class="dropdown-menu apya-console-menu p-3" style="min-width:240px;">
+                <label for="Filter_MinDueDate" class="form-label small fw-bold text-muted">@L["Tasks:Filter:MinDueDate"]</label>
+                <input type="date" id="Filter_MinDueDate" class="form-control form-control-sm mb-2">
+                <label for="Filter_MaxDueDate" class="form-label small fw-bold text-muted">@L["Tasks:Filter:MaxDueDate"]</label>
+                <input type="date" id="Filter_MaxDueDate" class="form-control form-control-sm mb-2">
+                <button type="button" id="btn-apply-daterange" class="btn btn-primary btn-sm w-100">@L["Common:Filter"]</button>
+            </div>
+        </div>
+
+        <button type="button" class="apya-filter-chip" id="chip-overdue" aria-pressed="false">Gecikmiş</button>
+        <button type="button" class="apya-filter-chip" id="chip-mine" aria-pressed="false">Bana atanan</button>
+        <button type="button" class="apya-console-filter-clear d-none" id="btn-clear-filters">Filtreleri temizle</button>
+    </div>
+
+    <div class="apya-console-views">
+
         @* --- LİSTE GÖRÜNÜMÜ --- *@
-        <div id="view-list" class="view-panel">
-            <abp-table class="apya-tasks-table" id="TasksTable"></abp-table>
+        <div id="view-list" class="view-panel" role="tabpanel" aria-labelledby="btn-view-list">
+            <abp-table class="apya-clean-table" id="TasksTable"></abp-table>
+
+            @* Yükleniyor — spinner değil, tablo hizasında iskelet satırlar. *@
+            <div class="apya-console-skeleton d-none" id="state-loading" aria-hidden="true">
+                @for (var i = 0; i < 8; i++)
+                {
+                    <div class="apya-console-skeleton-row">
+                        <span class="apya-skeleton" style="width:34%"></span>
+                        <span class="apya-skeleton" style="width:14%"></span>
+                        <span class="apya-skeleton" style="width:12%"></span>
+                        <span class="apya-skeleton" style="width:10%"></span>
+                        <span class="apya-skeleton" style="width:12%"></span>
+                    </div>
+                }
+            </div>
+
+            @* Boş hâller — DataTables'ın boş hücresine JS ile basılır. *@
+            <template id="tpl-state-empty">
+                <div class="apya-console-state">
+                    <span class="apya-console-state-icon"><i class="fa fa-list-check" aria-hidden="true"></i></span>
+                    <strong>Henüz görev yok</strong>
+                    <p>İlk görevi ekleyerek başlayın.</p>
+                    @if (canCreate)
+                    {
+                        <span class="apya-console-state-actions">
+                            <button type="button" class="btn btn-primary btn-sm" data-state-action="create">
+                                <i class="fa fa-plus me-1" aria-hidden="true"></i>@L["Tasks:NewButton"]
+                            </button>
+                        </span>
+                    }
+                </div>
+            </template>
+            <template id="tpl-state-nomatch">
+                <div class="apya-console-state">
+                    <span class="apya-console-state-icon"><i class="fa fa-filter" aria-hidden="true"></i></span>
+                    <strong>Filtreye uyan görev yok</strong>
+                    <span class="apya-console-state-actions">
+                        <button type="button" class="btn btn-outline-secondary btn-sm" data-state-action="clear">Filtreleri temizle</button>
+                    </span>
+                </div>
+            </template>
         </div>
 
         @* --- KANBAN GÖRÜNÜMÜ --- *@
-        <div id="view-kanban" class="view-panel d-none">
-            @* Merkezi kanban markup'ı (tek kaynak) — ortak çekirdek /js/apya-kanban.js doldurur. *@
+        <div id="view-kanban" class="view-panel d-none" role="tabpanel" aria-labelledby="btn-view-kanban">
             <partial name="_KanbanBoard" />
         </div>
 
-        @* --- GANTT GÖRÜNÜMÜ --- *@
-        <div id="view-gantt" class="view-panel d-none">
+        @* --- ZAMAN ÇİZELGESİ (frappe-gantt) --- *@
+        <div id="view-gantt" class="view-panel d-none" role="tabpanel" aria-labelledby="btn-view-gantt">
             <div class="gantt-controls mb-3 text-center">
                 <div class="btn-group btn-group-sm">
                     <button type="button" class="btn btn-light border gantt-change-view" data-view="Day">@L["Tasks:Gantt:Day"]</button>
@@ -122,9 +319,43 @@
                 <svg id="gantt-svg"></svg>
             </div>
         </div>
-    </abp-card-body>
-</abp-card>
+
+    </div>
 </div>
+
+@* ─── Toplu işlem çubuğu ───
+   Ata / Tarihi ötele YOK: ikisi de tam DTO ile UpdateAsync gerektiriyor,
+   kısmi güncelleme uç noktası repoda yok (konsoldaki kararla aynı). *@
+@if (canBulk)
+{
+    <div class="apya-console-bulkbar d-none" id="bulk-bar" role="region" aria-label="Toplu işlem">
+        <span class="apya-console-bulkbar-count" id="bulk-count">0 görev seçili</span>
+        <span class="apya-console-bulkbar-sep" aria-hidden="true"></span>
+
+        @if (canChangeStatus)
+        {
+            <div class="dropdown dropup">
+                <button type="button" class="apya-console-bulkbar-btn" data-bs-toggle="dropdown" aria-expanded="false">
+                    Durum değiştir <i class="fa fa-chevron-up ms-1" aria-hidden="true"></i>
+                </button>
+                <div class="dropdown-menu apya-console-menu">
+                    <button type="button" class="apya-console-menu-item" data-bulk-status="1">Yapılacak</button>
+                    <button type="button" class="apya-console-menu-item" data-bulk-status="2">Sürüyor</button>
+                    <button type="button" class="apya-console-menu-item" data-bulk-status="3">Testte</button>
+                    <button type="button" class="apya-console-menu-item" data-bulk-status="4">Tamamlandı</button>
+                </div>
+            </div>
+        }
+        @if (canDeleteTasks)
+        {
+            <button type="button" class="apya-console-bulkbar-btn is-danger" id="bulk-delete">Sil</button>
+        }
+        <button type="button" class="apya-console-bulkbar-close" id="bulk-clear" aria-label="Seçimi temizle">
+            <i class="fa fa-xmark" aria-hidden="true"></i>
+        </button>
+    </div>
+}
+</div> @* /.apya-page *@
 
 @section styles {
     @* Merkezi kanban tasarımı (tek kaynak) *@
@@ -151,68 +382,17 @@
     <script src="~/libs/frappe-gantt/frappe-gantt.min.js"></script>
     <script src="~/libs/select2/js/select2.min.js"></script>
     <abp-script src="/js/apya-task-render.js" />
+    <abp-script src="/js/apya-task-console.js" />
     <abp-script src="/js/task-drawer.js" />
     <abp-script src="/js/apya-kanban.js" />
     <abp-script src="/Pages/Tasks/index.js" />
 }
 
 <style>
-    /* Kanban kart/kolon tasarımı artık /css/kanban.css'ten gelir (tek kaynak).
+    /* Kanban kart/kolon tasarımı /css/kanban.css'ten gelir (tek kaynak).
        Burada yalnızca timer + deadline animasyonları kalır. */
     .timer-active { border-left-color: var(--apya-negative-500) !important; background-color: var(--apya-negative-50) !important; box-shadow: 0 0 10px rgba(220, 53, 69, 0.2) !important; }
 
-    /* Görev Panosu başlığındaki "Ara" kutusu (index.js taşır) — sabit genişlik,
-       yoksa Bootstrap'ın .form-control{width:100%} kuralı #tasks-search-slot'u
-       (flex-grow-1) satırın tamamına büyütüp araç çubuğunu alt satıra iterdi. */
-    #tasks-search-slot .dt-search { display: flex; align-items: center; gap: .375rem; margin: 0; }
-    #tasks-search-slot .dt-search input.form-control { width: 180px; }
-
-    /* .apya-view-toggle artık paylaşılan bileşen — apya-shell.css §18.
-       (Segment header'a taşındığı için stili de tek kaynakta olmalı.) */
-
-    /* ─── Filtre pilleri — eski "Gelişmiş Filtreleme" accordion'unun yerine ─── */
-    .apya-filter-pill {
-        border: 1px solid var(--apya-border-default);
-        background: var(--apya-surface-base);
-        color: var(--apya-text-secondary);
-        border-radius: var(--apya-radius-full);
-        padding: 6px 14px;
-        font-size: 13px;
-        font-weight: 600;
-        line-height: 1.4;
-        cursor: pointer;
-    }
-    .apya-filter-pill:hover { background: var(--apya-surface-raised); color: var(--apya-text-primary); }
-    .apya-filter-pill:focus { outline: none; box-shadow: var(--apya-shadow-focus); border-color: var(--apya-border-focus); }
-    select.apya-filter-pill {
-        appearance: none;
-        -webkit-appearance: none;
-        padding-right: 30px;
-        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath fill='%236B7280' d='M1 1l4 4 4-4'/%3E%3C/svg%3E");
-        background-repeat: no-repeat;
-        background-position: right 12px center;
-    }
-
-    /* ─── Görev tablosu — zebra/kalın border yerine ince alt çizgi + hover ─── */
-    .apya-tasks-table > :not(caption) > * > * { border: none; }
-    .apya-tasks-table thead th {
-        text-transform: uppercase;
-        font-size: 11px;
-        font-weight: 700;
-        letter-spacing: .04em;
-        color: var(--apya-text-tertiary);
-        border-bottom: 1px solid var(--apya-border-default) !important;
-        background: transparent !important;
-        padding: 10px 12px;
-    }
-    .apya-tasks-table tbody td {
-        padding: 12px;
-        border-bottom: 1px solid var(--apya-border-subtle) !important;
-        vertical-align: middle;
-        background: transparent !important;
-    }
-    .apya-tasks-table tbody tr { cursor: pointer; transition: background 0.15s ease; }
-    .apya-tasks-table tbody tr:hover td { background: var(--apya-surface-raised) !important; }
     .fa-beat { animation: fa-beat 1.5s infinite linear; }
     @@keyframes fa-beat {
         0% { transform: scale(1); }
@@ -225,4 +405,9 @@
         100% { transform: scale(1); }
     }
     .heartbeat-animation { animation: heartbeat 1.5s infinite; }
+
+    /* Konsol tasarımı apya-shell.css §21'de (tek kaynak).
+       DataTables'ın kendi arama kutusu gizlenir — arama şeritteki pile taşındı
+       (#console-search → dataTable.search()). */
+    .apya-task-console .dt-search { display: none; }
 </style>
