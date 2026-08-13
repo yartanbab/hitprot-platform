@@ -7,8 +7,12 @@ import {
     statusOf, priorityOf,
 } from '../taskMetaV3';
 
+/* pointer-events-auto ŞART: içerik body'ye portal ediliyor. Görev detayı modal
+   olarak açıldığında Radix Dialog `body { pointer-events: none }` yazıyor ve
+   non-modal popover katmanına `auto`yu geri vermiyor — menü açık görünüp
+   tıklamaları arkasındaki öğeye geçiriyordu. */
 const POPOVER_CLS =
-    'z-popover rounded-[13px] border border-default bg-surface-elevated p-1.5 shadow-float animate-fade-in-fast';
+    'z-popover pointer-events-auto rounded-[13px] border border-default bg-surface-elevated p-1.5 shadow-float animate-fade-in-fast';
 
 const MENU_ROW_CLS =
     'flex items-center gap-[11px] w-full px-[9px] py-2 rounded-[9px] text-[12.5px] font-medium text-left cursor-pointer hover:bg-surface-hover';
