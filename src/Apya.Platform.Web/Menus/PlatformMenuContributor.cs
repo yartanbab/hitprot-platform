@@ -244,6 +244,14 @@ public class PlatformMenuContributor : IMenuContributor
                 icon: "fa fa-heart-pulse", url: "/Admin/SystemHealth", order: 7));
         }
 
+        // Giriş ekranı yapılandırması — kiracı seçici / sosyal giriş görünürlüğü.
+        if (await permission.IsGrantedAsync(PlatformPermissions.LoginScreen.Default))
+        {
+            administration.AddItem(new ApplicationMenuItem(
+                "Apya.Admin.LoginScreen", l["Menu:LoginScreen"],
+                icon: "fa fa-right-to-bracket", url: "/Admin/LoginScreen", order: 8));
+        }
+
         if (MultiTenancyConsts.IsEnabled)
         {
             administration.SetSubItemOrder(TenantManagementMenuNames.GroupName, 1);

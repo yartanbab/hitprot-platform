@@ -48,6 +48,7 @@
         "Menu:FeedbackAdmin": "Geri Bildirimler",
         "Menu:FeedbackSettings": "Geri Bildirim Ayarları",
         "Menu:SystemHealth": "Sistem Sağlığı",
+        "Menu:LoginScreen": "Giriş Ekranı",
         "Menu:GeneralSettings": "Genel Ayarlar",
 
         "Feedback:OpenLink": "Geri Bildirim",
@@ -255,6 +256,8 @@
         "Permission:Feedbacks.Export": "Excel'e Aktarma",
         "Permission:Feedbacks.Assign": "Sorumlu Atama",
         "Permission:Feedbacks.ManageSettings": "Ayarları Yönetme",
+
+        "Permission:LoginScreen": "Giriş Ekranı Ayarları",
 
         "Permission:SystemHealth": "Sistem Sağlığı",
         "Permission:SystemHealth.Resolve": "İstemci Hatasını Çözüldü İşaretleme",
@@ -480,6 +483,10 @@
         "Settings:TaskDetailUi.V2.Desc": "Ortalanmış modal; Genel, Alt Görevler ve Dosyalar sekmeleri.",
         "Settings:TaskDetailUi.V1": "Eski panel",
         "Settings:TaskDetailUi.V1.Desc": "Sağdan açılan panel; Finans, Bağımlılıklar, Geçmiş ve yorumlar dahil.",
+        "Setting:Account.ShowTenantSwitch": "Giriş Ekranında Kiracı Seçici",
+        "Setting:Account.ShowTenantSwitch.Description": "Kapalıyken giriş ekranında yalnızca kullanıcı adı ve şifre istenir; kiracıya bağlı kullanıcılar kendi hesaplarıyla giriş yapamaz.",
+        "Setting:Account.ShowSocialLogin": "Giriş Ekranında Sosyal Giriş",
+        "Setting:Account.ShowSocialLogin.Description": "Google / Microsoft düğmelerini gösterir. Tanımlı sağlayıcı yoksa açık olsa bile görünmez.",
         "Setting:Telemetry.Enabled": "İstemci Hata Telemetrisi",
         "Setting:Telemetry.Enabled.Description": "Kapatıldığında tarayıcıda oluşan hatalar sunucuya raporlanmaz.",
         "Setting:Feedback.TriggerEnabled": "Geri Bildirim Tetikleyicisi",
