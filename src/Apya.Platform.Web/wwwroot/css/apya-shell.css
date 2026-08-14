@@ -3777,3 +3777,165 @@ i.apya-priority-dot {
     font-weight: var(--apya-weight-bold);
     letter-spacing: .04em;
 }
+
+/* ============================================================================
+   KABUK — GÖRSEL RÖTUŞ (tasarım karşılaştırması, 2026-08-14)
+   ----------------------------------------------------------------------------
+   Uygulanan hâl ile hedef tasarım yan yana konunca çıkan farklar. Kök sebepler
+   tek tek not düşüldü ki sonraki tur aynı yeri yeniden keşfetmesin.
+   ============================================================================ */
+
+/* --- 1) Kiracı pili: baş harf kutusu + ortam çipi ---
+   Tasarımda pil "koyu kare baş harf | ad | ortam çipi | ⌄" dizilimi. Eskiden
+   matara ikonu vardı ve ortam çipi barın başka bir yerindeydi; ikisi ayrı
+   duruca "hangi kiracının hangi ortamındayım" iki ayrı okuma gerektiriyordu. */
+.apya-tenant-switch-btn {
+    height: 36px;
+    gap: 8px;
+    padding: 0 8px 0 8px;
+    border-radius: var(--apya-radius-lg);
+}
+.apya-tenant-switch-initial {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    border-radius: var(--apya-radius-md);
+    background: var(--apya-surface-inverse);
+    color: var(--apya-text-inverse);
+    font-size: 9.5px;
+    font-weight: var(--apya-weight-bold);
+    line-height: 1;
+}
+.apya-tenant-switch-name {
+    font-size: var(--apya-fs-base);
+    font-weight: var(--apya-weight-semibold);
+    letter-spacing: -0.01em;
+}
+/* Çip pilin İÇİNDE: kendi dış boşluğunu bırakmasın. */
+.apya-tenant-switch-btn .apya-topbar-envchip { margin: 0; }
+
+/* --- 2) Arama: barın esneyen ORTA alanı ---
+   Tasarımda arama ortada ve geniş (max 440px); uygulamada sağ kümeye sıkışıp
+   küçük bir düğme gibi duruyordu. `.lpx-topbar-content` sağ küme olduğu için
+   aramaya `margin-inline:auto` verilerek orta banda oturtulur. */
+.lpx-topbar-content { flex: 1 1 auto; min-width: 0; }
+.lpx-topbar-content > .apya-command-palette-trigger {
+    flex: 1 1 auto;
+    min-width: 0;
+    max-width: 440px;
+    height: 36px;
+    margin-inline: auto;
+    border-radius: var(--apya-radius-lg);
+    background: var(--apya-surface-raised);
+}
+.apya-command-palette-trigger:hover {
+    background: var(--apya-surface-base);
+    border-color: var(--apya-border-strong);
+}
+/* Rozet tasarımda beyaz zeminli küçük kutu. */
+.apya-command-palette-trigger kbd,
+.apya-command-palette-trigger .apya-kbd {
+    background: var(--apya-surface-base);
+    border: 1px solid var(--apya-border-default);
+    border-radius: var(--apya-radius-sm);
+    color: var(--apya-text-tertiary);
+    font-size: 10.5px;
+    font-weight: var(--apya-weight-semibold);
+    padding: 2px 5px;
+}
+
+/* --- 3) Sağ küme sıkılaştırma ---
+   Öğeler 2px aralıkla dağınık duruyordu; tasarımda 6px'lik tek bir küme. */
+.lpx-topbar-content { gap: 6px; }
+.lpx-topbar-content > .lpx-language-selection,
+.lpx-topbar-content > .apya-theme-toggle,
+.lpx-topbar-content > .apya-density-toggle,
+.lpx-topbar-content > .apya-sidebar-mode {
+    /* Bu dördü tasarımda avatar menüsüne taşınmış durumda. Menü henüz
+       kurulmadığı için GİZLENMİYOR (işlev kaybı olurdu); yalnız görsel
+       ağırlıkları düşürülüyor ki asıl eylemler (arama, +, bildirim) öne çıksın. */
+    opacity: .65;
+}
+.lpx-topbar-content > .lpx-language-selection:hover,
+.lpx-topbar-content > .apya-theme-toggle:hover,
+.lpx-topbar-content > .apya-density-toggle:hover,
+.lpx-topbar-content > .apya-sidebar-mode:hover {
+    opacity: 1;
+}
+/* Kiracı pili tasarımda EN SOLDA (breadcrumb'dan önce) — sağ kümede değil. */
+.lpx-topbar-content > .apya-tenant-switch { order: 5; margin-right: auto; }
+
+/* --- 4) Sol menü dip bloğu ---
+   Ekran görüntüsünde "Kiracı · Kimlik · Platform · Geri bildirim" iki satıra
+   kırılıyor ve durum satırıyla üst üste biniyordu. Tasarımda tek satır,
+   taşarsa kırpılır. */
+.apya-shell-foot-hint {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: 10px;
+    letter-spacing: -0.01em;
+}
+.apya-shell-status { padding-top: 10px; }
+.apya-shell-status-text {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.apya-shell-status-version { flex: 0 0 auto; padding-left: 6px; }
+
+/* --- 5) Sabitleme iğnesi: tasarımdaki dolu indigo hâl ---
+   Uygulamada sabitlenmiş iğne ince bir ok gibi duruyordu; tasarımda dolu,
+   belirgin bir raptiye. */
+#lpx-sidebar .apya-shell-pin.is-pinned svg {
+    fill: currentColor;
+    stroke-width: 1.4;
+}
+#lpx-sidebar .apya-shell-pin.is-pinned { opacity: 1; }
+
+/* --- 6) Bölüm başlığı ile ilk satır arası nefes ---
+   Tasarımda başlık ile ilk madde arasında 6px var; uygulamada bitişikti. */
+#lpx-sidebar li.outer-menu-item:has(> ul.lpx-inner-menu) > a.lpx-menu-item-link {
+    padding-bottom: 6px !important;
+}
+
+/* --- 7) Bar düzeni: [kiracı+gezinme+breadcrumb] | [arama] | [sağ küme] ---
+   Arama artık `.lpx-topbar`ın doğrudan çocuğu (apya-topbar-shell.js taşıyor),
+   bu yüzden hizalama kuralları da orada. Yan kümeler esnemez, orta alan esner
+   → arama gerçekten barın ortasında durur. */
+.lpx-topbar > .apya-command-palette-trigger {
+    flex: 1 1 auto;
+    min-width: 0;
+    max-width: 440px;
+    height: 36px;
+    margin-inline: auto;
+    border-radius: var(--apya-radius-lg);
+    background: var(--apya-surface-raised);
+}
+.lpx-topbar > .lpx-breadcrumb-container,
+.lpx-topbar > .lpx-topbar-content {
+    flex: 0 1 auto;
+}
+/* Sağ küme artık esnemediği için içindeki auto-marj gereksiz. */
+.lpx-topbar-content > .apya-tenant-switch { margin-right: 0; }
+
+/* Kiracı pili sol gruba taşındı — grubun kendi hizasına uysun. */
+.apya-topbar-nav > #apya-tenant-switch { flex: 0 0 auto; margin-right: 4px; }
+
+/* --- 8) Tekrar eden "Geri Bildirim" linki ---
+   Handoff: eski barda iki kez geçen bu link YARDIM MENÜSÜNE toplandı. Menü
+   artık kurulu ve "Bu sayfa hakkında geri bildirim" satırını taşıyor, dolayısıyla
+   barda ayrıca durması gereksiz tekrar. İşlev kaybı YOK — aynı akış menüden
+   açılıyor (apya-shell-actions.js o satırı bu linke delege ediyor, bu yüzden
+   düğüm DOM'da kalmalı, yalnız görünmez olmalı). */
+.lpx-topbar-content > .apya-feedback-open-link {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    pointer-events: none;
+}
