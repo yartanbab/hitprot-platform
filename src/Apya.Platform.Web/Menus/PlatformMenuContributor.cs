@@ -203,6 +203,10 @@ public class PlatformMenuContributor : IMenuContributor
         // ayarı da değil: kullanıcı buraya "çalışıyor mu / neden tetiklenmedi"
         // sorusuyla gelir, bu yüzden kenar çubuğunda kalır, Ayarlar'a inmez.
         var platform = new ApplicationMenuItem("Apya.Platform", l["Menu:Platform"], icon: "fa fa-cubes", order: 8);
+        // Bildirim merkezine bugüne kadar yalnızca zil panelindeki "Tümünü gör"
+        // bağlantısından ulaşılabiliyordu; geçmişi arayan kullanıcı menüde bulamıyordu.
+        if (await permission.IsGrantedAsync(PlatformPermissions.Notifications.Default))
+            platform.AddItem(new ApplicationMenuItem("Apya.Platform.Notifications", l["Menu:Notifications"], icon: "fa fa-bell", url: "/Notifications"));
         if (await permission.IsGrantedAsync(PlatformPermissions.DynamicAssets.Default))
             platform.AddItem(new ApplicationMenuItem("Apya.Platform.Webhooks", l["Menu:Webhooks"], icon: "fa fa-bolt", url: "/DynamicAssets/Webhooks"));
         if (await permission.IsGrantedAsync(PlatformPermissions.SystemHealth.Default))

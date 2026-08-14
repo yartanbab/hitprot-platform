@@ -4,42 +4,137 @@
     ViewData["Title"] = "Bildirimlerim";
 }
 
-<div data-page-description="Tüm bildirimlerin geçmişi" class="apya-page--narrow py-4">
-    <div class="row">
-        <div class="col-12">
-            <div class="card shadow-sm">
-                <div class="card-header d-flex justify-content-between align-items-center py-3">
-                    <h5 class="mb-0 fw-bold"><i class="fa fa-bell me-2 text-primary"></i> Bildirimlerim</h5>
+<div data-page-description="Tüm bildirimlerin geçmişi" class="apya-page py-4">
+    <div class="apya-notif-center">
+
+        @* Sol: kategori ağacı. Dar ekranda üstte yatay şeride dönüşür. *@
+        <aside class="apya-notif-sidebar">
+            <div class="card">
+                <nav id="notif-categories" class="apya-notif-cats" aria-label="Bildirim kategorileri">
+                    @* JS ile doldurulur — sayaçlar GetSummary'den gelir *@
+                </nav>
+            </div>
+        </aside>
+
+        <section class="apya-notif-main">
+            <div class="card">
+                <div class="card-header d-flex flex-wrap gap-2 justify-content-between align-items-center py-3">
+                    <div class="d-flex flex-wrap gap-2 align-items-center">
+                        <div class="input-group input-group-sm apya-notif-search">
+                            <span class="input-group-text"><i class="fa fa-search"></i></span>
+                            <input type="search" id="notif-search" class="form-control"
+                                   placeholder="Bildirimlerde ara" aria-label="Bildirimlerde ara">
+                        </div>
+
+                        <select id="notif-read-filter" class="form-select form-select-sm w-auto" aria-label="Okunma durumu">
+                            <option value="">Tümü</option>
+                            <option value="false" selected>Okunmamış</option>
+                            <option value="true">Okunmuş</option>
+                        </select>
+
+                        <select id="notif-severity-filter" class="form-select form-select-sm w-auto" aria-label="Önem düzeyi">
+                            <option value="">Her önem</option>
+                            <option value="3">Yüksek ve üzeri</option>
+                            <option value="4">Yalnız kritik</option>
+                        </select>
+
+                        <select id="notif-sort" class="form-select form-select-sm w-auto" aria-label="Sıralama">
+                            <option value="0">En yeni</option>
+                            <option value="1">Önce önemli</option>
+                        </select>
+                    </div>
+
                     <div class="d-flex gap-2">
                         <button id="btn-mark-all-page" class="btn btn-sm btn-outline-primary">
-                            <i class="fa fa-check-double me-1"></i> Tümünü Okundu Yap
+                            <i class="fa fa-check-double me-1"></i> Tümünü okundu yap
+                        </button>
+                        <button id="btn-clear-read" class="btn btn-sm btn-outline-secondary">
+                            <i class="fa fa-broom me-1"></i> Okunmuşları temizle
                         </button>
                     </div>
                 </div>
+
                 <div class="card-body p-0">
-                    <div id="notifications-full-list" class="list-group list-group-flush">
-                        @* Dinamik olarak doldurulacak *@
+                    <div id="notifications-full-list">
                         <div class="text-center p-5">
                             <div class="spinner-border text-primary" role="status"></div>
                             <p class="mt-2 text-muted">Bildirimler yükleniyor...</p>
                         </div>
                     </div>
                 </div>
+
                 <div class="card-footer text-center py-3">
                     <button id="load-more-btn" class="btn btn-sm btn-light d-none">
-                        <i class="fa fa-chevron-down me-1"></i> Daha Fazla Göster
+                        <i class="fa fa-chevron-down me-1"></i> Daha fazla göster
                     </button>
                     <p id="no-more-notif" class="text-muted text-sm d-none mb-0">Tüm bildirimler gösterildi.</p>
                 </div>
             </div>
-        </div>
+        </section>
     </div>
 </div>
 
 <style>
-    .notif-page-item { transition: all 0.2s; border-left: 4px solid transparent; }
-    .notif-page-item.unread { background-color: var(--apya-warning-50); border-left-color: var(--apya-warning-500); font-weight: 500; }
+    /* Kategori ağacı + liste: geniş ekranda iki kolon, dar ekranda tek kolon
+       (kategoriler yatay kaydırmalı şerit olur). */
+    .apya-notif-center { display: grid; grid-template-columns: 240px minmax(0, 1fr); gap: 1.25rem; }
+    @@media (max-width: 991.98px) {
+        .apya-notif-center { grid-template-columns: minmax(0, 1fr); }
+        .apya-notif-cats { display: flex; overflow-x: auto; }
+        .apya-notif-cats .apya-notif-cat { white-space: nowrap; border-left: none !important;
+            border-bottom: 3px solid transparent; }
+        .apya-notif-cats .apya-notif-cat.active { border-bottom-color: var(--apya-accent-500); }
+    }
+
+    .apya-notif-cats { padding: 0.375rem; }
+    .apya-notif-cat { display: flex; align-items: center; gap: 0.5rem; width: 100%;
+        padding: 0.5rem 0.625rem; border: none; background: none; border-left: 3px solid transparent;
+        color: var(--apya-text-secondary); font-size: 0.875rem; text-align: start;
+        border-radius: var(--apya-radius-sm, 0.375rem);
+        transition: background var(--apya-motion-base) ease, color var(--apya-motion-base) ease; }
+    .apya-notif-cat:hover { background-color: var(--apya-surface-raised); color: var(--apya-text-primary); }
+    .apya-notif-cat.active { background-color: var(--apya-surface-sunken); color: var(--apya-text-primary);
+        font-weight: 600; border-left-color: var(--apya-accent-500); }
+    .apya-notif-cat .apya-cat-count { margin-inline-start: auto; font-size: 0.6875rem; font-weight: 600;
+        padding: 0.05rem 0.4rem; border-radius: 999px;
+        background-color: var(--apya-accent-600); color: #fff; }
+
+    .apya-notif-search { width: 15rem; max-width: 100%; }
+
+    /* Liste satırı — zil panelindeki dille aynı: ikon, önem şeridi, grup sayacı. */
+    .notif-page-item { display: flex; gap: 0.75rem; padding: 0.875rem 1rem; cursor: pointer;
+        border-bottom: 1px solid var(--apya-border-subtle);
+        border-left: 4px solid transparent;
+        transition: background var(--apya-motion-base) ease; }
     .notif-page-item:hover { background-color: var(--apya-surface-raised); }
+    .notif-page-item.unread { background-color: var(--apya-surface-sunken); }
+    .notif-page-item.sev-critical { border-left-color: var(--apya-negative-500); }
+    .notif-page-item.sev-high     { border-left-color: var(--apya-warning-500); }
+
+    .notif-page-item .apya-notif-icon { flex: 0 0 auto; width: 2rem; height: 2rem; border-radius: 50%;
+        display: grid; place-items: center; font-size: 0.8125rem;
+        background-color: var(--apya-surface-raised); color: var(--apya-text-secondary); }
+    .notif-page-item.sev-critical .apya-notif-icon { color: var(--apya-negative-500); }
+    .notif-page-item.sev-high     .apya-notif-icon { color: var(--apya-warning-500); }
+
+    .notif-page-item .apya-notif-body { flex: 1 1 auto; min-width: 0; }
+    .notif-page-item .apya-notif-head { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+    .notif-page-item .apya-notif-head strong { font-size: 0.9375rem; color: var(--apya-text-primary); }
+    .notif-page-item .notification-text { font-size: 0.875rem; color: var(--apya-text-secondary); margin-top: 0.125rem; }
+    /* Zaman damgası --apya-text-tertiary ile 12px'te 2.31:1 kontrast veriyordu
+       (AA eşiği 4.5:1). Görsel hiyerarşi punto farkıyla zaten kuruluyor. */
+    .notif-page-item .notification-time { font-size: 0.75rem; color: var(--apya-text-secondary); margin-top: 0.25rem; }
+    .notif-page-item .apya-notif-count { font-size: 0.6875rem; font-weight: 600;
+        padding: 0.05rem 0.4rem; border-radius: 999px;
+        background-color: var(--apya-accent-600); color: #fff; }
+
+    .apya-notif-actions { flex: 0 0 auto; opacity: 0; transition: opacity var(--apya-motion-base) ease; }
+    .notif-page-item:hover .apya-notif-actions,
+    .notif-page-item:focus-within .apya-notif-actions { opacity: 1; }
+    /* Dokunmatikte hover yok — eylemler hep görünsün. */
+    @@media (hover: none) { .apya-notif-actions { opacity: 1; } }
+
+    .apya-notif-empty { padding: 3rem 1rem; text-align: center; color: var(--apya-text-secondary); }
 </style>
 
 @section scripts {

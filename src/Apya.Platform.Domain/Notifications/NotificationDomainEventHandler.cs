@@ -1,7 +1,9 @@
 using System;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Localization;
 using Volo.Abp.DependencyInjection;
 using Volo.Abp.EventBus;
+using Apya.Platform.Localization;
 using Apya.Platform.Tasks;
 using Apya.Platform.Documents;
 
@@ -16,10 +18,14 @@ public class NotificationDomainEventHandler :
     ITransientDependency
 {
     private readonly NotificationManager _notificationManager;
+    private readonly IStringLocalizer<PlatformResource> _l;
 
-    public NotificationDomainEventHandler(NotificationManager notificationManager)
+    public NotificationDomainEventHandler(
+        NotificationManager notificationManager,
+        IStringLocalizer<PlatformResource> l)
     {
         _notificationManager = notificationManager;
+        _l = l;
     }
 
     public async Task HandleEventAsync(TaskAssignedEto eventData)
@@ -29,8 +35,8 @@ public class NotificationDomainEventHandler :
 
         await _notificationManager.PublishAsync(
             eventData.AssigneeId,
-            "📋 Yeni Görev",
-            $"\"{eventData.TaskTitle}\" size atandı.",
+            _l["Notification:TaskAssigned:Title"],
+            _l["Notification:TaskAssigned:Body", eventData.TaskTitle],
             NotificationType.TaskAssigned,
             entityType: "Task",
             entityId: eventData.TaskId
@@ -41,15 +47,20 @@ public class NotificationDomainEventHandler :
     public async Task HandleEventAsync(TaskCommentAddedEto eventData)
     {
         // Alıcıları (Yorumu yapan hariç) bul ve veritabanına kaydet
+        var title = _l["Notification:TaskComment:Title"];
+        var body  = _l["Notification:TaskComment:Body", eventData.CommenterName, eventData.CommentText];
+
         if (eventData.AssigneeId.HasValue && eventData.AssigneeId != eventData.CommentUserId)
         {
             await _notificationManager.PublishAsync(
                 eventData.AssigneeId.Value,
-                "💬 Görev Yorumu",
-                $"{eventData.CommenterName}: {eventData.CommentText}",
+                title,
+                body,
                 NotificationType.TaskCommentAdded,
                 entityType: "Task",
-                entityId: eventData.TaskId
+                entityId: eventData.TaskId,
+                actorUserId: eventData.CommentUserId,
+                actorName: eventData.CommenterName
             );
         }
 
@@ -57,11 +68,13 @@ public class NotificationDomainEventHandler :
         {
             await _notificationManager.PublishAsync(
                 eventData.CreatorId.Value,
-                "💬 Görev Yorumu",
-                $"{eventData.CommenterName}: {eventData.CommentText}",
+                title,
+                body,
                 NotificationType.TaskCommentAdded,
                 entityType: "Task",
-                entityId: eventData.TaskId
+                entityId: eventData.TaskId,
+                actorUserId: eventData.CommentUserId,
+                actorName: eventData.CommenterName
             );
         }
     }
@@ -70,18 +83,18 @@ public class NotificationDomainEventHandler :
     public async Task HandleEventAsync(TaskStatusChangedEto eventData)
     {
         string statusText = eventData.NewStatus switch {
-            Tasks.TaskStatus.Todo => "Bekliyor",
-            Tasks.TaskStatus.InProgress => "Sürüyor",
-            Tasks.TaskStatus.InReview => "İncelemede",
-            Tasks.TaskStatus.Done => "Tamamlandı",
-            _ => "Güncellendi"
+            Tasks.TaskStatus.Todo       => _l["Tasks:Status:Todo"],
+            Tasks.TaskStatus.InProgress => _l["Tasks:Status:InProgress"],
+            Tasks.TaskStatus.InReview   => _l["Tasks:Status:InReview"],
+            Tasks.TaskStatus.Done       => _l["Tasks:Status:Done"],
+            _                           => _l["Notification:TaskStatus:Generic"]
         };
 
-        var title = "🔄 Durum Güncellemesi";
-        var body = $"\"{eventData.TaskTitle}\" görevi {eventData.ChangedByName} tarafından {statusText} olarak işaretlendi.";
+        var title = _l["Notification:TaskStatus:Title"];
+        var body  = _l["Notification:TaskStatus:Body", eventData.TaskTitle, eventData.ChangedByName, statusText];
 
         // Atanan kişiye bildir (Değiştiren o değilse)
-        if (eventData.AssigneeId.HasValue && eventData.AssigneeId != eventData.ModifierUserId) 
+        if (eventData.AssigneeId.HasValue && eventData.AssigneeId != eventData.ModifierUserId)
         {
              await _notificationManager.PublishAsync(
                 eventData.AssigneeId.Value,
@@ -89,7 +102,9 @@ public class NotificationDomainEventHandler :
                 body,
                 NotificationType.TaskStatusChanged,
                 entityType: "Task",
-                entityId: eventData.TaskId
+                entityId: eventData.TaskId,
+                actorUserId: eventData.ModifierUserId,
+                actorName: eventData.ChangedByName
             );
         }
 
@@ -104,7 +119,9 @@ public class NotificationDomainEventHandler :
                 body,
                 NotificationType.TaskStatusChanged,
                 entityType: "Task",
-                entityId: eventData.TaskId
+                entityId: eventData.TaskId,
+                actorUserId: eventData.ModifierUserId,
+                actorName: eventData.ChangedByName
             );
         }
     }
@@ -117,8 +134,8 @@ public class NotificationDomainEventHandler :
         {
             await _notificationManager.PublishAsync(
                 eventData.AssigneeId,
-                "🚨 Süresi Yaklaşan Görev",
-                $"\"{eventData.TaskTitle}\" adlı görevin bitiş süresine 48 saatten az kaldı!",
+                _l["Notification:TaskDueSoon:Title"],
+                _l["Notification:TaskDueSoon:Body", eventData.TaskTitle],
                 NotificationType.TaskDueSoon,
                 entityType: "Task",
                 entityId: eventData.TaskId
@@ -131,8 +148,8 @@ public class NotificationDomainEventHandler :
     {
         await _notificationManager.PublishAsync(
             eventData.CreatorId,
-            "📄 Son Tarihi Yaklaşan Belge",
-            $"\"{eventData.DocumentTitle}\" adlı belgenin son tarihine 7 günden az kaldı!",
+            _l["Notification:DocumentExpiring:Title"],
+            _l["Notification:DocumentExpiring:Body", eventData.DocumentTitle],
             NotificationType.DocumentExpiring,
             entityType: "Document",
             entityId: eventData.DocumentId
