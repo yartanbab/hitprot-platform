@@ -114,9 +114,10 @@ public static class PlatformPermissions
     // --- BİLDİRİM YETKİLERİ ---
     public static class Notifications
     {
-        public const string Default  = GroupName + ".Notifications";
-        public const string MarkRead = Default + ".MarkRead";
-        public const string Delete   = Default + ".Delete";
+        // Yalnızca görüntüleme izni var: bildirimi okumak/silmek kullanıcının kendi
+        // kaydı üzerinde yaptığı iştir, ayrı izne bağlanmaz. (MarkRead/Delete alt
+        // izinleri tanımlıydı ama hiçbir yerde kullanılmıyordu.)
+        public const string Default = GroupName + ".Notifications";
     }
 
     // --- TAKVİM YETKİLERİ ---

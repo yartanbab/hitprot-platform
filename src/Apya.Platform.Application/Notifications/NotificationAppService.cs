@@ -41,17 +41,57 @@ public class NotificationAppService : ApplicationService, INotificationAppServic
         if (input.IsRead.HasValue)
             query = query.Where(n => n.IsRead == input.IsRead.Value);
 
+        if (input.Category.HasValue)
+            query = query.Where(n => n.Category == input.Category.Value);
+
+        if (input.MinSeverity.HasValue)
+            query = query.Where(n => n.Severity >= input.MinSeverity.Value);
+
+        if (!input.Filter.IsNullOrWhiteSpace())
+            query = query.Where(n => n.Title.Contains(input.Filter!) || n.Body.Contains(input.Filter!));
+
         var total = await AsyncExecuter.CountAsync(query);
 
         // Sıralama LastOccurredAt üzerinden: gruplanan bir bildirim yeni olay
         // aldığında listede yukarı taşınır, yoksa gruplama görünmez kalırdı.
+        var ordered = input.Sort == NotificationSortMode.Importance
+            ? query.OrderByDescending(n => n.Severity).ThenByDescending(n => n.LastOccurredAt)
+            : query.OrderByDescending(n => n.LastOccurredAt);
+
         var items = await AsyncExecuter.ToListAsync(
-            query.OrderByDescending(n => n.LastOccurredAt)
-                 .Skip(input.SkipCount)
-                 .Take(input.MaxResultCount));
+            ordered.Skip(input.SkipCount).Take(input.MaxResultCount));
 
         var dtos = items.Select(MapToDto).ToList();
         return new PagedResultDto<NotificationDto>(total, dtos);
+    }
+
+    // ─── Özet: rozet + "Önemli" sayacı + kategori ağacı ───────────────────────
+    public async Task<NotificationSummaryDto> GetSummaryAsync()
+    {
+        var userId = CurrentUser.GetId();
+        var query  = (await _notificationRepository.GetQueryableAsync())
+            .Where(n => n.UserId == userId && !n.IsRead);
+
+        var perCategory = await AsyncExecuter.ToListAsync(
+            query.GroupBy(n => n.Category)
+                 .Select(g => new { Category = g.Key, Count = g.Count() }));
+
+        var important = await AsyncExecuter.CountAsync(
+            query.Where(n => n.Severity >= NotificationSeverity.High));
+
+        return new NotificationSummaryDto
+        {
+            TotalUnread     = perCategory.Sum(c => c.Count),
+            ImportantUnread = important,
+            Categories      = perCategory
+                .Select(c => new NotificationCategoryCountDto
+                {
+                    Category    = c.Category,
+                    UnreadCount = c.Count
+                })
+                .OrderBy(c => c.Category)
+                .ToList()
+        };
     }
 
     // ─── Okunmamış sayısı ──────────────────────────────────────────────────────
@@ -92,6 +132,41 @@ public class NotificationAppService : ApplicationService, INotificationAppServic
 
         await _notificationRepository.UpdateManyAsync(unread);
         await PublishCountChangedAsync(userId);
+    }
+
+    // ─── Bir kategoriyi okundu yap ────────────────────────────────────────────
+    public async Task MarkCategoryAsReadAsync(NotificationCategory category)
+    {
+        var userId = CurrentUser.GetId();
+        var query  = await _notificationRepository.GetQueryableAsync();
+
+        var unread = await AsyncExecuter.ToListAsync(
+            query.Where(n => n.UserId == userId && !n.IsRead && n.Category == category));
+
+        if (unread.Count == 0)
+            return;
+
+        foreach (var n in unread)
+            n.MarkAsRead();
+
+        await _notificationRepository.UpdateManyAsync(unread);
+        await PublishCountChangedAsync(userId);
+    }
+
+    // ─── Okunmuşları temizle ──────────────────────────────────────────────────
+    public async Task<int> DeleteReadAsync()
+    {
+        var userId = CurrentUser.GetId();
+        var query  = await _notificationRepository.GetQueryableAsync();
+
+        var read = await AsyncExecuter.ToListAsync(
+            query.Where(n => n.UserId == userId && n.IsRead));
+
+        if (read.Count == 0)
+            return 0;
+
+        await _notificationRepository.DeleteManyAsync(read);
+        return read.Count;
     }
 
     // ─── Sil ──────────────────────────────────────────────────────────────────

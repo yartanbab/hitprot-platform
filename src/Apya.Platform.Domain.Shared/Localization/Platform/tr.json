@@ -248,8 +248,6 @@
         "Permission:DynamicAssets.ManageCategories": "Kategori Yönetimi",
 
         "Permission:Notifications": "Bildirimler",
-        "Permission:Notifications.MarkRead": "Okundu Olarak İşaretleme",
-        "Permission:Notifications.Delete": "Bildirim Silme",
 
         "Permission:Calendars": "Takvim Entegrasyonu",
         "Permission:Calendars.Connect": "Hesap Bağlama",

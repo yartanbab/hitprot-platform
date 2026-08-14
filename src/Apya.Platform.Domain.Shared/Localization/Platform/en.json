@@ -276,8 +276,6 @@
     "Permission:DynamicAssets.ManageCategories": "Manage Categories",
 
     "Permission:Notifications": "Notifications",
-    "Permission:Notifications.MarkRead": "Mark as Read",
-    "Permission:Notifications.Delete": "Delete Notification",
 
     "Permission:Calendars": "Calendar Integration",
     "Permission:Calendars.Connect": "Connect Account",
