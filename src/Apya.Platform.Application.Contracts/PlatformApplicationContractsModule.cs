@@ -1,5 +1,7 @@
-﻿using Volo.Abp.Account;
+﻿using Apya.Platform.Features;
+using Volo.Abp.Account;
 using Volo.Abp.FeatureManagement;
+using Volo.Abp.Features;
 using Volo.Abp.Identity;
 using Volo.Abp.Modularity;
 using Volo.Abp.ObjectExtending;
@@ -24,5 +26,15 @@ public class PlatformApplicationContractsModule : AbpModule
     public override void PreConfigureServices(ServiceConfigurationContext context)
     {
         PlatformDtoExtensions.Configure();
+    }
+
+    public override void ConfigureServices(ServiceConfigurationContext context)
+    {
+        // EN SONA eklenir: feature değer zinciri ters sırayla sorulur, yani host sağlayıcısı
+        // tenant/edition/default'tan ÖNCE söz alır. Bkz. HostFeatureValueProvider.
+        Configure<AbpFeatureOptions>(options =>
+        {
+            options.ValueProviders.Add<HostFeatureValueProvider>();
+        });
     }
 }

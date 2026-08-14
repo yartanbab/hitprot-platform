@@ -340,7 +340,9 @@ $(function () {
             item.className = 'lpx-inner-menu-item';
             var a = document.createElement('a');
             a.className = 'lpx-menu-item-link lpx-menu-item';
-            a.href = '/Projects/ProjectDetails?id=' + encodeURIComponent(p.id);
+            // Sayfa rotası `@page "{id:Guid}"` — id YOL parçası, sorgu dizesi değil.
+            // `?id=` biçimi rotayla eşleşmiyor ve 404 dönüyordu.
+            a.href = '/Projects/ProjectDetails/' + encodeURIComponent(p.id);
             a.innerHTML =
                 '<span class="apya-shell-dot" style="background:' + projectColor(p.name) + '"></span>' +
                 '<span class="lpx-menu-item-text">' + escapeHtml(p.name) + '</span>' +

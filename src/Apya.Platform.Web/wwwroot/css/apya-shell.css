@@ -4184,3 +4184,107 @@ i.apya-priority-dot {
     padding: 0;
     border-radius: 0;
 }
+/* ============================================================================
+   KAYITLI GÖRÜNÜM ÇİPİ + KULLANICI EKLE
+   ============================================================================ */
+.apya-view-chip { position: relative; display: inline-flex; align-items: center; gap: 6px; flex: 0 0 auto; }
+.apya-view-chip-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 30px;
+    padding: 0 8px 0 11px;
+    border: 1px solid var(--apya-border-default);
+    border-radius: var(--apya-radius-full);
+    background: var(--apya-surface-raised);
+    color: var(--apya-text-primary);
+    font-size: var(--apya-fs-sm);
+    cursor: pointer;
+    white-space: nowrap;
+}
+.apya-view-chip-btn:hover { border-color: var(--apya-border-strong); }
+.apya-view-chip-btn:focus-visible { outline: none; box-shadow: var(--apya-shadow-focus); }
+.apya-view-chip-btn.is-open { background: var(--apya-surface-hover); }
+.apya-view-chip-dot {
+    width: 6px; height: 6px; flex: 0 0 6px;
+    border-radius: var(--apya-radius-full);
+    background: var(--apya-accent-500);
+}
+.apya-view-chip-caret { font-size: 11px; color: var(--apya-text-tertiary); }
+/* Kirli hâl: amber zemin + "kaydedilmemiş" + Kaydet düğmesi (handoff). */
+.apya-view-chip.is-dirty .apya-view-chip-btn {
+    background: var(--apya-warning-50);
+    border-color: var(--apya-warning-100);
+}
+.apya-view-chip.is-dirty .apya-view-chip-dot { background: var(--apya-warning-600); }
+.apya-view-chip-dirty { font-size: 11.5px; font-weight: var(--apya-weight-semibold); color: var(--apya-warning-600); }
+.apya-view-chip-save {
+    height: 30px;
+    padding: 0 10px;
+    border: 1px solid var(--apya-accent-200);
+    border-radius: var(--apya-radius-full);
+    background: var(--apya-accent-50);
+    color: var(--apya-accent-600);
+    font-size: var(--apya-fs-sm);
+    font-weight: var(--apya-weight-semibold);
+    cursor: pointer;
+    white-space: nowrap;
+}
+.apya-view-chip-save:hover { background: var(--apya-accent-100); }
+.apya-view-chip-save:focus-visible { outline: none; box-shadow: var(--apya-shadow-focus); }
+
+.apya-view-chip-menu {
+    position: absolute;
+    top: 36px; left: 0;
+    z-index: var(--apya-z-dropdown);
+    width: 258px;
+    padding: 6px;
+    border: 1px solid var(--apya-border-default);
+    border-radius: var(--apya-radius-xl);
+    background: var(--apya-surface-elevated);
+    box-shadow: var(--apya-shadow-lg);
+    animation: apyaPopIn var(--apya-motion-base) var(--apya-easing-standard);
+}
+@media (prefers-reduced-motion: reduce) { .apya-view-chip-menu { animation: none; } }
+.apya-view-chip-head {
+    padding: 6px 8px 4px;
+    font-size: 10.5px; font-weight: var(--apya-weight-bold);
+    letter-spacing: .06em; color: var(--apya-text-tertiary);
+}
+.apya-view-chip-row {
+    display: flex; align-items: center; gap: 8px;
+    width: 100%; height: 34px; padding: 0 8px;
+    border: none; border-radius: var(--apya-radius-lg);
+    background: transparent; color: var(--apya-text-primary);
+    font-size: var(--apya-fs-base); text-align: left; cursor: pointer;
+}
+.apya-view-chip-row > span:first-child { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.apya-view-chip-row:hover { background: var(--apya-surface-hover); }
+.apya-view-chip-row:focus-visible { outline: none; box-shadow: var(--apya-shadow-focus); }
+.apya-view-chip-row.is-active { font-weight: var(--apya-weight-semibold); background: var(--apya-surface-hover); }
+/* Sil: satır hover'ına kadar görünmez — .apya-row-actions örüntüsü. */
+.apya-view-chip-del { flex: 0 0 auto; opacity: 0; color: var(--apya-text-tertiary); font-size: 12px; padding: 0 2px; }
+.apya-view-chip-row:hover .apya-view-chip-del { opacity: .55; }
+.apya-view-chip-del:hover { opacity: 1 !important; color: var(--apya-text-negative); }
+@media (pointer: coarse) { .apya-view-chip-del { opacity: .55; } }
+.apya-view-chip-empty { padding: 8px; font-size: var(--apya-fs-sm); color: var(--apya-text-tertiary); line-height: 1.4; }
+.apya-view-chip-sep { height: 1px; margin: 6px 4px; background: var(--apya-border-subtle); }
+.apya-view-chip-clear { color: var(--apya-text-secondary); }
+
+/* --- Kullanıcı Ekle --- */
+.apya-shell-invite {
+    order: 35;
+    display: inline-flex; align-items: center; gap: 7px;
+    height: 36px; padding: 0 12px;
+    border: 1px solid var(--apya-border-default);
+    border-radius: var(--apya-radius-lg);
+    background: var(--apya-surface-base);
+    color: var(--apya-text-secondary);
+    font-size: var(--apya-fs-sm);
+    cursor: pointer; white-space: nowrap;
+}
+.apya-shell-invite:hover { background: var(--apya-surface-hover); color: var(--apya-text-primary); }
+.apya-shell-invite:focus-visible { outline: none; box-shadow: var(--apya-shadow-focus); }
+/* Dar ekranda etiket düşer, ikon kalır (handoff). */
+.lpx-topbar.is-narrow .apya-shell-invite-label { display: none; }
+.lpx-topbar.is-narrow .apya-shell-invite { padding: 0 9px; }

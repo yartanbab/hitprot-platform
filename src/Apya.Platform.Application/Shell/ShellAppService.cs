@@ -14,6 +14,8 @@ using Apya.Platform.Shell.Dtos;
 using Apya.Platform.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.Hosting;
+using System.Text.Json;
+using Volo.Abp.Identity;
 // System.Threading.Tasks.TaskStatus ile çakışıyor — domain enum'u kastediliyor.
 using TaskStatus = Apya.Platform.Tasks.TaskStatus;
 using Volo.Abp.Domain.Repositories;
@@ -67,7 +69,8 @@ public class ShellAppService : PlatformAppService, IShellAppService
             Badges = await GetBadgesAsync(),
             Projects = await GetProjectsAsync(),
             Health = GetHealth(_hostEnvironment.EnvironmentName),
-            Can = await GetCanAsync()
+            Can = await GetCanAsync(),
+            SavedViews = await GetSavedViewsAsync()
         };
     }
 
@@ -77,8 +80,76 @@ public class ShellAppService : PlatformAppService, IShellAppService
         {
             CreateTask = await IsGrantedAsync(PlatformPermissions.Tasks.Create),
             CreateProject = await IsGrantedAsync(PlatformPermissions.Projects.Create),
-            CreateGrant = await IsGrantedAsync(PlatformPermissions.Grants.Create)
+            CreateGrant = await IsGrantedAsync(PlatformPermissions.Grants.Create),
+            CreateUser = await IsGrantedAsync(IdentityPermissions.Users.Create)
         };
+    }
+
+    public async Task<List<ShellSavedViewDto>> SetSavedViewsAsync(List<ShellSavedViewDto> views)
+    {
+        var cleaned = (views ?? new List<ShellSavedViewDto>())
+            .Where(v => v != null && !string.IsNullOrWhiteSpace(v.Name) && !string.IsNullOrWhiteSpace(v.Screen))
+            .Select(v => new ShellSavedViewDto
+            {
+                Name = Clip(v.Name, PlatformSettingDefaults.ShellSavedViewNameMax),
+                Screen = NormalizeScreen(v.Screen),
+                Query = Clip((v.Query ?? string.Empty).TrimStart('?'), PlatformSettingDefaults.ShellSavedViewQueryMax)
+            })
+            .Where(v => v.Screen.Length > 0)
+            .Take(PlatformSettingDefaults.ShellSavedViewsMax)
+            .ToList();
+
+        await _settingManager.SetForCurrentUserAsync(
+            PlatformSettings.Shell.SavedViews, JsonSerializer.Serialize(cleaned));
+
+        return cleaned;
+    }
+
+    private async Task<List<ShellSavedViewDto>> GetSavedViewsAsync()
+    {
+        var raw = await _settingManager.GetOrNullForCurrentUserAsync(PlatformSettings.Shell.SavedViews);
+        if (string.IsNullOrWhiteSpace(raw))
+        {
+            return new List<ShellSavedViewDto>();
+        }
+
+        try
+        {
+            return JsonSerializer.Deserialize<List<ShellSavedViewDto>>(raw) ?? new List<ShellSavedViewDto>();
+        }
+        catch (JsonException)
+        {
+            // Bozuk değer kabuğu çökertmesin — kullanıcı yeni görünüm
+            // kaydettiğinde değer zaten üzerine yazılır.
+            return new List<ShellSavedViewDto>();
+        }
+    }
+
+    private static string Clip(string value, int max)
+    {
+        value = (value ?? string.Empty).Trim();
+        return value.Length <= max ? value : value.Substring(0, max);
+    }
+
+    /// <summary>
+    /// Yalnız site içi YOL bırakır ("/Tasks"). Manipüle edilmiş bir istek,
+    /// başka bir origin'e yönlendiren "görünüm" bırakamasın diye şema/host
+    /// taşıyan ve protokol-göreli ("//site") değerler elenir.
+    /// </summary>
+    private static string NormalizeScreen(string screen)
+    {
+        screen = (screen ?? string.Empty).Trim();
+        if (screen.Length == 0) { return string.Empty; }
+
+        if (Uri.TryCreate(screen, UriKind.Absolute, out var abs))
+        {
+            screen = abs.AbsolutePath;
+        }
+        if (!screen.StartsWith('/') || screen.StartsWith("//"))
+        {
+            return string.Empty;
+        }
+        return Clip(screen, 200);
     }
 
     public async Task<List<string>> SetPinsAsync(List<string> pins)

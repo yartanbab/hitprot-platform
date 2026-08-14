@@ -58,7 +58,6 @@
     "Menu:SystemHealth": "System Health",
     "Menu:LoginScreen": "Login Screen",
     "Menu:GeneralSettings": "General Settings",
-
     "Setting:Shell.Pins": "Pinned Menu Items",
     "Setting:Shell.Pins.Description": "Menu items kept at the top of the sidebar. Per user, carried across devices.",
     "Setting:TaskDetail.Ui": "Task Detail View",
@@ -86,7 +85,6 @@
     "Settings:Admin.LoginScreen.Desc": "Tenant switcher and social login visibility on the login screen.",
     "Settings:TaskDetailUi.V1": "Old panel",
     "Settings:TaskDetailUi.V1.Desc": "Right-side panel; includes Finance, Dependencies, History and comments.",
-
     "Feedback:OpenLink": "Feedback",
     "Feedback:PageContextLink": "Give feedback about this page",
     "Feedback:SectionContextLink": "Give feedback about this section",
@@ -168,8 +166,7 @@
     "Feedback:Status.Duplicate": "Duplicate",
     "Feedback:Status.OutOfScope": "Out of Scope",
     "Feedback:Status.Archived": "Archived",
-
-    "Permission:Ai": "AI",
+    "Permission:Ai": "AI Features",
     "Permission:Ai.Dashboard": "AI Dashboard",
     "Permission:Ai.Prompts": "Prompt Management",
     "Permission:Ai.Prompts.View": "View Prompts",
@@ -189,16 +186,13 @@
     "Permission:Ai.Providers": "AI Providers",
     "Permission:Ai.Providers.Manage": "Manage Providers",
     "Permission:Ai.Reports": "AI Reports",
-
     "Permission:Platform": "Platform Management",
-
     "Permission:Group:Work": "Projects & Tasks",
     "Permission:Group:Grants": "Grant Management",
     "Permission:Group:Finance": "Finance & Accounting",
     "Permission:Group:Accounting": "Accounts & Cash",
     "Permission:Group:Content": "Content & Documents",
     "Permission:Group:System": "System & Integration",
-
     "Permission:Projects": "Projects",
     "Permission:Projects.Create": "Create Project",
     "Permission:Projects.Edit": "Edit Project",
@@ -206,67 +200,54 @@
     "Permission:Projects.ViewBudget": "View Budget",
     "Permission:Projects.ManageTeam": "Manage Team",
     "Permission:Projects.UseAiFeatures": "Use AI Features",
-
     "Permission:Tasks": "Tasks",
     "Permission:Tasks.Create": "Create Task",
     "Permission:Tasks.Edit": "Edit Task",
     "Permission:Tasks.Delete": "Delete Task",
     "Permission:Tasks.Assign": "Assign Task",
     "Permission:Tasks.ChangeStatus": "Change Status",
-
     "Permission:Grants": "Grant Programs",
     "Permission:Grants.Create": "Create Grant",
     "Permission:Grants.Edit": "Edit Grant",
     "Permission:Grants.Delete": "Delete Grant",
-
     "Permission:Incomes": "Income",
     "Permission:Incomes.Create": "Create Income",
     "Permission:Incomes.Edit": "Edit Income",
     "Permission:Incomes.Delete": "Delete Income",
-
     "Permission:Expenses": "Expenses",
     "Permission:Expenses.Create": "Create Expense",
     "Permission:Expenses.Edit": "Edit Expense",
     "Permission:Expenses.Delete": "Delete Expense",
-
     "Permission:Invoices": "Invoices",
     "Permission:Invoices.Create": "Create Invoice",
     "Permission:Invoices.Edit": "Edit Invoice",
     "Permission:Invoices.Delete": "Delete Invoice",
-
     "Permission:ExchangeRates": "Exchange Rates",
     "Permission:ExchangeRates.Create": "Create Rate",
     "Permission:ExchangeRates.Edit": "Edit Rate",
     "Permission:ExchangeRates.Delete": "Delete Rate",
-
     "Permission:FxRevaluations": "Year-End FX Revaluation",
     "Permission:FxRevaluations.Run": "Run Revaluation",
     "Permission:FxRevaluations.Delete": "Delete Revaluation",
-
     "Permission:Reports": "Reports",
     "Permission:Reports.TrialBalance": "Trial Balance Report",
-
     "Permission:Customers": "Customers",
     "Permission:Customers.Create": "Create Customer",
     "Permission:Customers.Edit": "Edit Customer",
     "Permission:Customers.Delete": "Delete Customer",
-
     "Permission:CashAccounts": "Cash Accounts",
     "Permission:CashAccounts.Create": "Create Cash Account",
     "Permission:CashAccounts.Edit": "Edit Cash Account",
     "Permission:CashAccounts.Delete": "Delete Cash Account",
-
     "Permission:CashMovements": "Cash Movements",
     "Permission:CashMovements.Create": "Create Movement",
     "Permission:CashMovements.Edit": "Edit Movement",
     "Permission:CashMovements.Delete": "Delete Movement",
-
     "Permission:Documents": "Documents & Wiki",
     "Permission:Documents.Create": "Create Document",
     "Permission:Documents.Edit": "Edit Document",
     "Permission:Documents.Delete": "Delete Document",
     "Permission:Documents.ViewAccessLog": "View Access Log",
-
     "Permission:DynamicAssets": "Templates & Forms",
     "Permission:DynamicAssets.Create": "Create Template/Form",
     "Permission:DynamicAssets.Edit": "Edit Template/Form",
@@ -275,15 +256,11 @@
     "Permission:DynamicAssets.ViewResponses": "View Responses",
     "Permission:DynamicAssets.Export": "Export",
     "Permission:DynamicAssets.ManageCategories": "Manage Categories",
-
     "Permission:Notifications": "Notifications",
-
     "Permission:Calendars": "Calendar Integration",
     "Permission:Calendars.Connect": "Connect Account",
-
     "Permission:TenantSettings": "Tenant Settings",
     "Permission:TenantSettings.ManageAi": "Manage AI Settings",
-
     "Permission:Feedbacks": "Feedback",
     "Permission:Feedbacks.Respond": "Manage Status/Priority/Reply",
     "Permission:Feedbacks.Delete": "Delete Feedback",
@@ -300,12 +277,9 @@
     "Setting:Account.ShowTenantSwitch.Description": "When off, the login screen asks only for user name and password; users that belong to a tenant cannot sign in with their own accounts.",
     "Setting:Account.ShowSocialLogin": "Social Login on Login Screen",
     "Setting:Account.ShowSocialLogin.Description": "Shows the Google / Microsoft buttons. They stay hidden if no provider is configured, even when this is on.",
-
     "Permission:LoginScreen": "Login Screen Settings",
-
     "Permission:SystemHealth": "System Health",
     "Permission:SystemHealth.Resolve": "Mark Client Error Resolved",
-
     "Feature:Platform": "Platform Features",
     "Feature:Platform:AiAssist": "AI Assistant",
     "Feature:Platform:AiAssist:Description": "Enables AI-powered task generation, suggestions and automation features for this tenant.",
@@ -313,18 +287,15 @@
     "Feature:Platform:MultiCurrency:Description": "Support for non-TRY currencies (USD, EUR). When disabled, only TRY is allowed.",
     "Feature:Platform:AdvancedReports": "Advanced Reports",
     "Feature:Platform:AdvancedReports:Description": "Trial balance, year-end FX revaluation and other premium financial reports.",
-
     "Connection:Reconnecting": "Connection temporarily lost. Reconnecting...",
     "Connection:Reconnected": "Connection restored.",
     "Connection:Lost": "Connection to server lost. Please refresh the page.",
     "Connection:Title": "Connection",
     "Connection:ErrorTitle": "Connection Error",
-
     "Common:All": "All",
     "Common:Everyone": "Everyone",
     "Common:Filter": "Filter",
     "Common:Clear": "Clear",
-
     "Tasks:BoardTitle": "Task Board",
     "Tasks:Filter:Assignee": "Assignee",
     "Tasks:Filter:Status": "Status",
@@ -419,7 +390,6 @@
     "Tasks:Field:Unassigned": "-- Unassigned --",
     "Tasks:Field:Private": "Mark this task as Private",
     "Tasks:Field:PrivateHint": "Private tasks are hidden when someone else (e.g., Admin) accesses your profile.",
-
     "Menu:Grants": "Grants",
     "Notify:Grant:Created": "Grant program created.",
     "Notify:Grant:Updated": "Grant program updated.",
@@ -431,10 +401,8 @@
     "Notify:Invoice:ItemRequired": "At least one invoice item is required.",
     "DataTable:Invoice:Empty": "No invoices yet. Use the button at the top right to create one.",
     "DataTable:Invoice:Loading": "Loading invoices...",
-
     "Welcome": "Welcome",
     "LongWelcomeMessage": "Welcome to the application. This is a startup project based on the ABP framework. For more information, visit abp.io.",
-
     "Platform:Task:TitleRequired": "Task title cannot be empty.",
     "Platform:Task:ViewPrivateDenied": "You do not have permission to view this private task. Only the creator and assignee can view it.",
     "Platform:Task:ViewImpersonationDenied": "You cannot view this private task while using impersonation.",
@@ -449,8 +417,6 @@
     "Platform:File:UnsupportedExtension": "Unsupported file type. Only PDF, Office, image and archive files are allowed.",
     "Platform:File:SizeExceeded": "File size cannot exceed 25 MB.",
     "Platform:DynamicAssets:FormNotPublished": "This form is not currently published.",
-
-    "Permission:Ai": "AI Features",
     "Permission:Ai.Generation": "AI Generation",
     "Permission:Ai.Generation.Request": "Request AI Generation",
     "Permission:Ai.Drafts": "AI Drafts",
@@ -733,6 +699,8 @@
     "DesignSystem:Table": "Table",
     "DesignSystem:Table:Note": "Row height is bound to density via --row-h; try the density toggle in the header.",
     "DesignSystem:Status": "Status",
-    "DesignSystem:Sample": "Sample text"
+    "DesignSystem:Sample": "Sample text",
+    "Setting:Shell.SavedViews": "Saved Views",
+    "Setting:Shell.SavedViews.Description": "Named filter combinations per screen. Per user, carried across devices."
   }
 }
