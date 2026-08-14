@@ -1,7 +1,10 @@
 using System;
 using System.IO;
+using System.IO.Compression;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.RequestLocalization;
@@ -198,6 +201,7 @@ public class PlatformWebModule : AbpModule
 
         ConfigureAuthentication(context);
         ConfigureUrls(configuration);
+        ConfigureResponseCompression(context);
         ConfigureBundles(context);
         ConfigureVirtualFileSystem(hostingEnvironment);
         ConfigureMultiTenancyLocalization();
@@ -214,6 +218,29 @@ public class PlatformWebModule : AbpModule
         context.Services.AddMapperlyObjectMapper<PlatformWebModule>();
 
         ConfigureDataProtection(context);
+    }
+
+    private void ConfigureResponseCompression(ServiceConfigurationContext context)
+    {
+        // TD-PERF-002: Plesk'te OutOfProcess (IIS ters vekil) çalıştığımız için IIS'in
+        // dinamik sıkıştırması yanıtlara uygulanmıyor — HTML/JSON sıkıştırmasız gidiyordu.
+        // Uygulama içi Brotli/Gzip bunu sunucudan bağımsız garantiler.
+        // EnableForHttps + BREACH: antiforgery token her HTML GET'inde yenilendiği için
+        // (aşağıdaki XSRF-TOKEN middleware'i) sabit-secret varsayımı bozulur, pratik risk düşük.
+        context.Services.AddResponseCompression(options =>
+        {
+            options.EnableForHttps = true;
+            options.Providers.Add<BrotliCompressionProvider>();
+            options.Providers.Add<GzipCompressionProvider>();
+            options.MimeTypes = ResponseCompressionDefaults.MimeTypes.Concat(new[]
+            {
+                "image/svg+xml"
+            });
+        });
+
+        // Paylaşımlı hosting'de CPU bütçesi dar — en hızlı seviye yeterli kazanç sağlar.
+        context.Services.Configure<BrotliCompressionProviderOptions>(o => o.Level = CompressionLevel.Fastest);
+        context.Services.Configure<GzipCompressionProviderOptions>(o => o.Level = CompressionLevel.Fastest);
     }
 
     private void ConfigureDataProtection(ServiceConfigurationContext context)
@@ -409,6 +436,10 @@ public class PlatformWebModule : AbpModule
             app.UseDeveloperExceptionPage();
         }
 
+        // Yanıt gövdesini saran middleware'lerin en dışında olmalı ki sonraki tüm
+        // dinamik çıktılar (HTML, JSON) sıkıştırılsın.
+        app.UseResponseCompression();
+
         app.UseAbpRequestLocalization();
 
         if (!env.IsDevelopment())
@@ -458,6 +489,10 @@ public class PlatformWebModule : AbpModule
         {
             app.UseMultiTenancy();
         }
+
+        // UseMultiTenancy'den SONRA: tenant AsyncLocal scope'u ancak bu noktadan içeride
+        // aktif kalır — daha dışarı konursa log anında CurrentTenant.Id hep null görünür.
+        app.UseMiddleware<Middleware.SlowRequestLoggingMiddleware>();
 
         app.UseUnitOfWork();
         app.UseDynamicClaims();
