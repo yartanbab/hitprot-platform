@@ -793,6 +793,23 @@ html, body {
     border-radius: var(--apya-radius-xl);
     box-shadow: var(--apya-shadow-lg);
 }
+
+/* Bardan açılan menüler kenar çubuğunun ALTINDA kalıyordu (2026-08-14, ölçüldü).
+   Kök sebep: `.lpx-topbar-container` sticky + z-index:101 ile KENDİ yığın
+   bağlamını açar, menünün z-index:1000'i yalnız o bağlamın içinde anlamlıdır.
+   `.lpx-sidebar-container` ise KÖK bağlamda fixed + z-index:1000 → karşılaştırma
+   1000 > 101 olur ve kenar çubuğu menünün üstüne boyanır. Ölçüm: menü kenar
+   çubuğu sütununa taştığında elementFromPoint → div.lpx-logo-container.
+
+   Bar yalnız KENDİ menüsü açıkken yükselir, kapanınca 101'e döner — kalıcı bump
+   yok. 1002 sınırı bilinçli: `.modal-backdrop` (1050) ve mobil çekmecenin (1049)
+   ALTINDA kalır; aksi hâlde header sitedeki tüm modalların üstünde kalırdı
+   (bkz. apya-feedback.js'deki aynı tuzak). Masaüstünde bar (x≥250) ile kenar
+   çubuğu (x<250) yatayda örtüşmediği için yükseltme kenar çubuğunu kırpmaz. */
+.lpx-topbar-container:has(.dropdown-menu.show) {
+    z-index: 1002;
+}
+
 .apya-tenant-switch-head {
     display: flex;
     align-items: center;
@@ -828,6 +845,26 @@ html, body {
     background: var(--apya-accent-soft);
     color: var(--apya-accent-600);
     opacity: 1;
+}
+/* Koyu temada açılır panellerin zemini BEYAZ kalıyordu (2026-08-14, ölçüldü:
+   .dropdown-menu background-color = rgb(255,255,255)). Yukarıdaki
+   `--bs-dropdown-bg` eşlemesi yetmiyor, çünkü LeptonX panelin zeminini
+   doğrudan `.dropdown-menu` üzerinde kuruyor ve değişkeni hiç okumuyor.
+   Sonuç: bizim bastığımız satırlar (--apya-text-primary → rgb(244,244,245))
+   beyaz zeminde görünmez oluyordu. Temanın kendi satırları koyu gri kaldığı
+   için hata yalnız avatar menüsündeki "Dil / Tema / Yoğunluk / Kenar çubuğu"
+   etiketlerinde fark ediliyordu. */
+[data-theme="dark"] .dropdown-menu {
+    background-color: var(--apya-surface-elevated);
+    border-color: var(--apya-border-subtle);
+    color: var(--apya-text-primary);
+}
+[data-theme="dark"] .dropdown-menu .dropdown-item,
+[data-theme="dark"] .dropdown-menu a {
+    color: var(--apya-text-secondary);
+}
+[data-theme="dark"] .dropdown-divider {
+    border-top-color: var(--apya-border-subtle);
 }
 [data-theme="dark"] .apya-tenant-switch-menu .dropdown-item.active {
     color: var(--apya-accent-300);
