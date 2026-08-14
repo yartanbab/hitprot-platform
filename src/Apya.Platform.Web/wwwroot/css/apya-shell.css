@@ -3939,3 +3939,52 @@ i.apya-priority-dot {
     clip-path: inset(50%);
     pointer-events: none;
 }
+
+/* ============================================================================
+   RAY MODU (72px) — JS ile üretilen parçalar da daralmalı
+   ----------------------------------------------------------------------------
+   ÖLÇÜM (gerçek ray durumu: html[data-sidebar=collapsed] + #lpx-wrapper.hover-trigger):
+   kap 72px olmasına rağmen nav 226px ve x=-77.7 çıkıyordu; görünür kalan 4
+   etiketin DÖRDÜ DE apya-sidebar-shell.js'in ürettiği SABİTLENENLER bölümündendi
+   ("Sabitlenenler" 178px, "Özet Raporlar/Kurlar/Kasa & Banka" 154px).
+
+   Kök sebep: tema kendi menü öğelerinin etiketini rayda gizliyor ama bunu
+   kendi render'ına eklediği sınıflarla yapıyor; sonradan JS ile eklenen
+   düğümler o kuralların kapsamına girmiyor ve nav'ı içerikleriyle şişiriyorlar.
+
+   Sabitlenenler bölümü rayda TAMAMEN gizlenir: zaten asıl satırların kopyası,
+   72px'te aynı ikonları iki kez göstermek karışıklık olurdu.
+   ============================================================================ */
+@media (min-width: 1200px) {
+    html[data-sidebar="collapsed"] .lpx-sidebar-container:not(:hover) .apya-pinned-section {
+        display: none !important;
+    }
+    /* Dip bloktaki "Ayarlar" etiketi de tema kapsamı dışında (nav menüsünün
+       DIŞINA taşındı) → rayda ikon kalır, metin gider. */
+    html[data-sidebar="collapsed"] .lpx-sidebar-container:not(:hover) .apya-shell-foot-item .lpx-menu-item-text {
+        display: none !important;
+    }
+    /* SON EMNİYET: ileride eklenecek bir düğüm yine taşırmasın diye nav rayda
+       sert sınırlanır. `:not(:hover)` şart — hover'da 250px'e açılması gerekiyor. */
+    html[data-sidebar="collapsed"] .lpx-sidebar-container:not(:hover) .lpx-nav,
+    html[data-sidebar="collapsed"] .lpx-sidebar-container:not(:hover) .lpx-nav-menu {
+        max-width: var(--apya-sidebar-w-collapsed) !important;
+        overflow-x: hidden;
+    }
+}
+
+/* ============================================================================
+   PROJE ALT LİSTESİ — renk noktası dikey hizası
+   ----------------------------------------------------------------------------
+   Satırın `align-items` değeri `normal` (=stretch) ölçüldü; 7px'lik nokta
+   satırın ÜSTÜNE yapışıyor, metinle aynı hizada durmuyordu. Tema yaprak
+   satırlarında ortalamayı başka yoldan sağladığı için bu alt liste açıkta
+   kalmış. Hizalama satırda AÇIKÇA kurulur.
+   ============================================================================ */
+#lpx-sidebar .apya-shell-subnav > li > a.lpx-menu-item-link {
+    display: flex;
+    align-items: center;
+}
+#lpx-sidebar .apya-shell-dot {
+    align-self: center;
+}
