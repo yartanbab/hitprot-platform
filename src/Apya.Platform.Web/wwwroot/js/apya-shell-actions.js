@@ -331,31 +331,38 @@ $(function () {
         var menu = dropdown && dropdown.querySelector('.dropdown-menu');
         if (!menu) { return; }
 
-        var selectors = [
-            '.lpx-language-selection',
-            '.apya-theme-toggle',
-            '.apya-density-toggle',
-            '.apya-sidebar-mode'
-        ];
-        var found = selectors
-            .map(function (s) { return content.querySelector(':scope > ' + s); })
-            .filter(Boolean);
-        if (!found.length) { return; }
+        // ETİKET ŞART: üst barda ikon tek başına yeterliydi (kompakt araç
+        // çubuğu + tooltip), ama menü içinde satırın ne yaptığı yazıyla
+        // anlaşılmalı — dört ikon alt alta dizilince hiçbiri okunmuyordu.
+        // Handoff da avatar menüsünü "Dil (sağda Türkçe) · Tema (sağda Açık)"
+        // diye tarif ediyor: solda etiket, sağda denetim/değer.
+        var entries = [
+            ['.lpx-language-selection', 'Dil'],
+            ['.apya-theme-toggle', 'Tema'],
+            ['.apya-density-toggle', 'Yoğunluk'],
+            ['.apya-sidebar-mode', 'Kenar çubuğu']
+        ].map(function (e) { return { el: content.querySelector(':scope > ' + e[0]), label: e[1] }; })
+         .filter(function (e) { return !!e.el; });
+        if (!entries.length) { return; }
 
         var section = document.createElement('div');
         section.className = 'apya-avatar-menu-section';
         var head = document.createElement('div');
         head.className = 'apya-avatar-menu-head';
         head.textContent = 'GÖRÜNÜM';
-        var row = document.createElement('div');
-        row.className = 'apya-avatar-menu-row';
-
-        // Taşınan düğümlerin kendi aria-label/title'ı zaten var; üzerine
-        // ikinci bir etiket basmıyoruz.
-        found.forEach(function (el) { row.appendChild(el); });
-
         section.appendChild(head);
-        section.appendChild(row);
+
+        entries.forEach(function (e) {
+            var item = document.createElement('div');
+            item.className = 'apya-avatar-menu-item';
+            var label = document.createElement('span');
+            label.className = 'apya-avatar-menu-label';
+            label.textContent = e.label;
+            item.appendChild(label);
+            item.appendChild(e.el);
+            section.appendChild(item);
+        });
+
         menu.appendChild(section);
 
         // Menü içindeki tıklama dropdown'ı kapatmasın.
