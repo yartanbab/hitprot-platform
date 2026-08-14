@@ -5078,6 +5078,27 @@ namespace Apya.Platform.Migrations
                     b.ToTable("AppPlatformPackageFeatures", (string)null);
                 });
 
+            modelBuilder.Entity("Apya.Platform.Tenants.PlatformPackagePermission", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("PackageId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("PermissionName")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PackageId", "PermissionName")
+                        .IsUnique();
+
+                    b.ToTable("AppPlatformPackagePermissions", (string)null);
+                });
+
             modelBuilder.Entity("Apya.Platform.Tenants.TenantProfile", b =>
                 {
                     b.Property<Guid>("Id")
@@ -7235,6 +7256,15 @@ namespace Apya.Platform.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("Apya.Platform.Tenants.PlatformPackagePermission", b =>
+                {
+                    b.HasOne("Apya.Platform.Tenants.PlatformPackage", null)
+                        .WithMany("Permissions")
+                        .HasForeignKey("PackageId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("Volo.Abp.AuditLogging.AuditLogAction", b =>
                 {
                     b.HasOne("Volo.Abp.AuditLogging.AuditLog", null)
@@ -7455,6 +7485,8 @@ namespace Apya.Platform.Migrations
             modelBuilder.Entity("Apya.Platform.Tenants.PlatformPackage", b =>
                 {
                     b.Navigation("Features");
+
+                    b.Navigation("Permissions");
                 });
 
             modelBuilder.Entity("Volo.Abp.AuditLogging.AuditLog", b =>

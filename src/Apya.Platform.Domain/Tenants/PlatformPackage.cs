@@ -21,9 +21,13 @@ public class PlatformPackage : FullAuditedAggregateRoot<Guid>
 
     public ICollection<PlatformPackageFeature> Features { get; private set; }
 
+    /// <summary>Paketin izin tavanı. Boş liste = tavan tanımlanmamış (kısıt uygulanmaz).</summary>
+    public ICollection<PlatformPackagePermission> Permissions { get; private set; }
+
     protected PlatformPackage()
     {
         Features = new List<PlatformPackageFeature>();
+        Permissions = new List<PlatformPackagePermission>();
     }
 
     public PlatformPackage(Guid id, PackageCode code, string name, string? description, int displayOrder)
@@ -34,6 +38,7 @@ public class PlatformPackage : FullAuditedAggregateRoot<Guid>
         Description = description;
         DisplayOrder = displayOrder;
         Features = new List<PlatformPackageFeature>();
+        Permissions = new List<PlatformPackagePermission>();
     }
 
     public void Update(string name, string? description, int displayOrder)
@@ -59,4 +64,20 @@ public class PlatformPackage : FullAuditedAggregateRoot<Guid>
 
     public IReadOnlyDictionary<string, string> ToFeatureValues()
         => Features.ToDictionary(f => f.FeatureName, f => f.Value);
+
+    /// <summary>
+    /// İzin tavanını verilen listeyle DEĞİŞTİRİR (eksiltme dahil). Id'ler dışarıdan gelir;
+    /// kayıtlar soft-delete DEĞİL, çıkarılan izin satırı gerçekten silinir.
+    /// </summary>
+    public void ReplacePermissions(IEnumerable<(Guid Id, string Name)> permissions)
+    {
+        Permissions.Clear();
+        foreach (var (id, name) in permissions)
+        {
+            Permissions.Add(new PlatformPackagePermission(id, Id, name));
+        }
+    }
+
+    public IReadOnlyList<string> ToPermissionNames()
+        => Permissions.Select(p => p.PermissionName).ToList();
 }

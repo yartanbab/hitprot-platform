@@ -47,5 +47,12 @@ public class PlatformApplicationModule : AbpModule
         {
             options.ValueProviders.Add<Apya.Platform.Permissions.AiAttributePermissionValueProvider>();
         });
+
+        // Paket izin tavanı: TÜM izin tanımlarına uygulanır (host muaf).
+        // Bkz. Apya.Platform.Tenants.PackagePermissionStateChecker.
+        Configure<Volo.Abp.SimpleStateChecking.AbpSimpleStateCheckerOptions<Volo.Abp.Authorization.Permissions.PermissionDefinition>>(options =>
+        {
+            options.GlobalStateCheckers.Add<Apya.Platform.Tenants.PackagePermissionStateChecker>();
+        });
     }
 }

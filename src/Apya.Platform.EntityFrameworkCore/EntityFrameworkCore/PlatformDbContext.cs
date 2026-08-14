@@ -229,6 +229,7 @@ namespace Apya.Platform.EntityFrameworkCore
 
         public DbSet<Apya.Platform.Tenants.PlatformPackage> PlatformPackages { get; set; }
         public DbSet<Apya.Platform.Tenants.PlatformPackageFeature> PlatformPackageFeatures { get; set; }
+        public DbSet<Apya.Platform.Tenants.PlatformPackagePermission> PlatformPackagePermissions { get; set; }
 
         #endregion
 
@@ -279,6 +280,7 @@ namespace Apya.Platform.EntityFrameworkCore
                 b.Property(x => x.Description).HasMaxLength(256);
                 b.HasIndex(x => x.Code).IsUnique();
                 b.HasMany(x => x.Features).WithOne().HasForeignKey(f => f.PackageId).IsRequired();
+                b.HasMany(x => x.Permissions).WithOne().HasForeignKey(p => p.PackageId).IsRequired();
             });
             builder.Entity<Apya.Platform.Tenants.PlatformPackageFeature>(b =>
             {
@@ -287,6 +289,15 @@ namespace Apya.Platform.EntityFrameworkCore
                 b.Property(x => x.FeatureName).IsRequired().HasMaxLength(128);
                 b.Property(x => x.Value).IsRequired().HasMaxLength(64);
                 b.HasIndex(x => new { x.PackageId, x.FeatureName }).IsUnique();
+            });
+            builder.Entity<Apya.Platform.Tenants.PlatformPackagePermission>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "PlatformPackagePermissions", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+                b.Property(x => x.PermissionName).IsRequired().HasMaxLength(128);
+                // Soft-delete YOK (Entity<Guid>) → filtresiz tekil indeks güvenli:
+                // çıkarılan izin satırı gerçekten silinir, tekrar eklenebilir.
+                b.HasIndex(x => new { x.PackageId, x.PermissionName }).IsUnique();
             });
 
             /* --- CARİ (MÜŞTERİ) MODÜLÜ YAPILANDIRMASI --- */

@@ -3,8 +3,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.Extensions.Localization;
 using Volo.Abp;
+using Volo.Abp.Authorization.Permissions;
 using Volo.Abp.Domain.Repositories;
+using Volo.Abp.Localization;
+using Volo.Abp.MultiTenancy;
 using Volo.Abp.TenantManagement;
 
 namespace Apya.Platform.Tenants;
@@ -19,15 +23,24 @@ public class PackageAppService : PlatformAppService, IPackageAppService
     private readonly IRepository<PlatformPackage, Guid> _packageRepository;
     private readonly IRepository<TenantProfile, Guid> _tenantProfileRepository;
     private readonly TenantPackageManager _packageManager;
+    private readonly IPermissionDefinitionManager _permissionDefinitionManager;
+    private readonly IStringLocalizerFactory _stringLocalizerFactory;
+    private readonly PackageCeilingStore _ceilingStore;
 
     public PackageAppService(
         IRepository<PlatformPackage, Guid> packageRepository,
         IRepository<TenantProfile, Guid> tenantProfileRepository,
-        TenantPackageManager packageManager)
+        TenantPackageManager packageManager,
+        IPermissionDefinitionManager permissionDefinitionManager,
+        IStringLocalizerFactory stringLocalizerFactory,
+        PackageCeilingStore ceilingStore)
     {
         _packageRepository = packageRepository;
         _tenantProfileRepository = tenantProfileRepository;
         _packageManager = packageManager;
+        _permissionDefinitionManager = permissionDefinitionManager;
+        _stringLocalizerFactory = stringLocalizerFactory;
+        _ceilingStore = ceilingStore;
     }
 
     public async Task<List<PackageDto>> GetListAsync()
@@ -65,6 +78,93 @@ public class PackageAppService : PlatformAppService, IPackageAppService
         await _packageRepository.UpdateAsync(pkg, autoSave: true);
     }
 
+    public async Task<PackagePermissionTreeDto> GetPermissionsAsync(PackageCode code)
+    {
+        await _packageManager.EnsureDefaultPackagesAsync();
+
+        var pkg = await GetEntityWithPermissionsAsync(code);
+        var included = pkg.ToPermissionNames().ToHashSet(StringComparer.Ordinal);
+
+        var dto = new PackagePermissionTreeDto { Code = pkg.Code, Name = pkg.Name };
+
+        // Ağaç, state checker'lardan GEÇMEDEN okunur: host paketi düzenlerken tüm izinleri
+        // görmelidir — hangilerinin kapalı olacağına burada karar veriyor.
+        foreach (var group in await _permissionDefinitionManager.GetGroupsAsync())
+        {
+            var groupDto = new PackagePermissionGroupDto
+            {
+                Name = group.Name,
+                DisplayName = group.DisplayName.Localize(_stringLocalizerFactory)
+            };
+
+            foreach (var permission in group.Permissions)
+            {
+                AddNode(groupDto.Permissions, permission, parentName: null, depth: 0, included);
+            }
+
+            if (groupDto.Permissions.Count > 0)
+            {
+                dto.Groups.Add(groupDto);
+            }
+        }
+
+        return dto;
+    }
+
+    private void AddNode(
+        List<PackagePermissionNodeDto> target,
+        PermissionDefinition permission,
+        string? parentName,
+        int depth,
+        HashSet<string> included)
+    {
+        // Host'a özel izinler paket tavanının konusu değil (tenant'a zaten görünmezler).
+        if (!permission.MultiTenancySide.HasFlag(MultiTenancySides.Tenant))
+        {
+            return;
+        }
+
+        target.Add(new PackagePermissionNodeDto
+        {
+            Name = permission.Name,
+            DisplayName = permission.DisplayName.Localize(_stringLocalizerFactory),
+            ParentName = parentName,
+            Depth = depth,
+            IsIncluded = included.Contains(permission.Name)
+        });
+
+        foreach (var child in permission.Children)
+        {
+            AddNode(target, child, permission.Name, depth + 1, included);
+        }
+    }
+
+    public async Task UpdatePermissionsAsync(UpdatePackagePermissionsDto input)
+    {
+        var pkg = await GetEntityWithPermissionsAsync(input.Code);
+
+        // Yalnız gerçekten tanımlı tenant izinleri yazılır: silinmiş/yanlış yazılmış ad
+        // tavanda ölü satır olarak kalmasın.
+        var known = (await _packageManager.GetTenantPermissionNamesAsync()).ToHashSet(StringComparer.Ordinal);
+        var selected = input.PermissionNames
+            .Where(known.Contains)
+            .Distinct(StringComparer.Ordinal)
+            .ToList();
+
+        pkg.ReplacePermissions(selected.Select(name => (GuidGenerator.Create(), name)));
+
+        // Modül feature'ları seçimden TÜRETİLİR: host "Ai.Prompts"u işaretleyip AiAssist'i
+        // açmayı unutursa izin verilmiş ama modül kapalı kalırdı (menü gizli, RequireFeatures
+        // izni düşürür). Feature ile izin listesi böylece çelişemez.
+        foreach (var kv in PackageFeatureGates.DeriveFeatureValues(selected))
+        {
+            pkg.SetFeature(GuidGenerator.Create(), kv.Key, kv.Value);
+        }
+
+        await _packageRepository.UpdateAsync(pkg, autoSave: true);
+        await _ceilingStore.InvalidatePackageAsync(input.Code);
+    }
+
     public async Task<int> ReapplyToTenantsAsync(PackageCode code)
     {
         var profiles = await _tenantProfileRepository.GetListAsync(p => p.PackageCode == code);
@@ -73,6 +173,19 @@ public class PackageAppService : PlatformAppService, IPackageAppService
             await _packageManager.ApplyPackageAsync(profile.TenantId, code);
         }
         return profiles.Count;
+    }
+
+    /// <summary>Feature'lar da yüklenir: izin kaydı feature değerlerini türetip ÜZERİNE yazar
+    /// (koleksiyon yüklü değilse SetFeature mevcut satırı göremez ve tekil indeksi ihlal eder).</summary>
+    private async Task<PlatformPackage> GetEntityWithPermissionsAsync(PackageCode code)
+    {
+        var queryable = await _packageRepository.WithDetailsAsync(p => p.Features, p => p.Permissions);
+        var pkg = await AsyncExecuter.FirstOrDefaultAsync(queryable.Where(p => p.Code == code));
+        if (pkg == null)
+        {
+            throw new UserFriendlyException($"Paket bulunamadı: {code}");
+        }
+        return pkg;
     }
 
     private async Task<PlatformPackage> GetEntityAsync(PackageCode code)

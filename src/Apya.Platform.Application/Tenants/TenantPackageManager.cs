@@ -2,12 +2,14 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Volo.Abp.Authorization.Permissions;
 using Volo.Abp.DependencyInjection;
 using Volo.Abp.Domain.Repositories;
 using Volo.Abp.Features;
 using Volo.Abp.FeatureManagement;
 using Volo.Abp.Guids;
 using Volo.Abp.Linq;
+using Volo.Abp.MultiTenancy;
 
 namespace Apya.Platform.Tenants;
 
@@ -23,17 +25,23 @@ public class TenantPackageManager : ITransientDependency
     private readonly IRepository<PlatformPackage, Guid> _packageRepository;
     private readonly IGuidGenerator _guidGenerator;
     private readonly IAsyncQueryableExecuter _asyncExecuter;
+    private readonly IPermissionDefinitionManager _permissionDefinitionManager;
+    private readonly PackageCeilingStore _ceilingStore;
 
     public TenantPackageManager(
         IFeatureManager featureManager,
         IRepository<PlatformPackage, Guid> packageRepository,
         IGuidGenerator guidGenerator,
-        IAsyncQueryableExecuter asyncExecuter)
+        IAsyncQueryableExecuter asyncExecuter,
+        IPermissionDefinitionManager permissionDefinitionManager,
+        PackageCeilingStore ceilingStore)
     {
         _featureManager = featureManager;
         _packageRepository = packageRepository;
         _guidGenerator = guidGenerator;
         _asyncExecuter = asyncExecuter;
+        _permissionDefinitionManager = permissionDefinitionManager;
+        _ceilingStore = ceilingStore;
     }
 
     public async Task ApplyPackageAsync(Guid tenantId, PackageCode packageCode)
@@ -47,6 +55,23 @@ public class TenantPackageManager : ITransientDependency
                 TenantFeatureValueProvider.ProviderName,
                 tenantId.ToString());
         }
+
+        // Tenant'ın paketi değişmiş olabilir: izin tavanı önbelleği bayat kalmasın.
+        await _ceilingStore.InvalidateTenantAsync(tenantId);
+    }
+
+    /// <summary>
+    /// Tenant tarafında tanımlı TÜM izin adları — paket izin tavanının evreni.
+    /// Host'a özel izinler (MultiTenancySides.Host) dışarıda kalır: onlar zaten tenant'a
+    /// görünmez, listeye yazmak yalnız gürültü olur.
+    /// </summary>
+    public async Task<List<string>> GetTenantPermissionNamesAsync()
+    {
+        var definitions = await _permissionDefinitionManager.GetPermissionsAsync();
+        return definitions
+            .Where(d => d.MultiTenancySide.HasFlag(MultiTenancySides.Tenant))
+            .Select(d => d.Name)
+            .ToList();
     }
 
     /// <summary>Paketin feature setini DB'den okur; DB'de tanım yoksa kod registry'sine düşer.</summary>
@@ -67,8 +92,11 @@ public class TenantPackageManager : ITransientDependency
     /// </summary>
     public async Task EnsureDefaultPackagesAsync()
     {
-        var existing = await _packageRepository.GetListAsync();
+        var queryable = await _packageRepository.WithDetailsAsync(p => p.Permissions);
+        var existing = await _asyncExecuter.ToListAsync(queryable);
         var existingCodes = existing.Select(p => p.Code).ToHashSet();
+
+        var allPermissions = await GetTenantPermissionNamesAsync();
 
         var meta = new (PackageCode code, string name, string desc, int order)[]
         {
@@ -86,7 +114,25 @@ public class TenantPackageManager : ITransientDependency
             {
                 pkg.SetFeature(_guidGenerator.Create(), kv.Key, kv.Value);
             }
+            pkg.ReplacePermissions(DefaultPermissionsFor(m.code, allPermissions));
             await _packageRepository.InsertAsync(pkg, autoSave: true);
         }
+
+        // İzin tavanı bu özellikten ÖNCE var olan paketlere sonradan eklendi: listesi boş
+        // kalan paket "tavan yok" demektir ve kısıt hiç işlemez. Boş olanları tohumla
+        // (per-paket idempotent → self-healing, EnsureDefaultPackagesAsync'in mevcut ilkesi).
+        foreach (var pkg in existing.Where(p => !p.Permissions.Any()))
+        {
+            pkg.ReplacePermissions(DefaultPermissionsFor(pkg.Code, allPermissions));
+            await _packageRepository.UpdateAsync(pkg, autoSave: true);
+            await _ceilingStore.InvalidatePackageAsync(pkg.Code);
+        }
     }
+
+    private IEnumerable<(Guid Id, string Name)> DefaultPermissionsFor(
+        PackageCode code,
+        IEnumerable<string> allPermissionNames)
+        => allPermissionNames
+            .Where(name => PackagePermissionDefaults.IsIncluded(code, name))
+            .Select(name => (_guidGenerator.Create(), name));
 }
