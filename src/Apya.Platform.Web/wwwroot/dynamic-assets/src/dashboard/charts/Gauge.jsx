@@ -24,15 +24,19 @@ function Gauge({ ratio = 0, size = 58, ariaLabel }) {
             aria-label={ariaLabel ?? `${Math.round(clamped * 100)}%`}
         >
             <circle cx="50" cy="50" r={RADIUS} fill="none" stroke="var(--apya-surface-sunken)" strokeWidth="12" />
-            <circle
-                cx="50" cy="50" r={RADIUS}
-                fill="none"
-                stroke={stroke}
-                strokeWidth="12"
-                strokeDasharray={`${filled} ${CIRCUMFERENCE - filled}`}
-                strokeLinecap="round"
-                transform="rotate(-90 50 50)"
-            />
+            {/* Oran 0 iken yay HİÇ çizilmez: strokeLinecap="round" sıfır uzunlukta
+                bile iki yuvarlak uç bırakıyor ve boş halkada nokta gibi görünüyor. */}
+            {filled > 0 && (
+                <circle
+                    cx="50" cy="50" r={RADIUS}
+                    fill="none"
+                    stroke={stroke}
+                    strokeWidth="12"
+                    strokeDasharray={`${filled} ${CIRCUMFERENCE - filled}`}
+                    strokeLinecap="round"
+                    transform="rotate(-90 50 50)"
+                />
+            )}
         </svg>
     );
 }

@@ -100,7 +100,11 @@ function Tile({ label, value, pill, pillTone = 'neutral', caption, tone = 'neutr
             className={cn(
                 'rounded-card shadow-card bg-surface-base border border-default',
                 'flex flex-col gap-[7px] overflow-hidden',
-                spark ? 'pt-3.5 px-4 pb-0' : 'p-4',
+                /* Üst ve yan padding TÜM kutucuklarda aynı; yalnız alt padding
+                   grafikli kutucukta sıfırlanır ki sparkline kenara yapışsın.
+                   Farklı üst padding vermek şeritteki başlıkları kaydırıyordu. */
+                'pt-4 px-4',
+                spark ? 'pb-0' : 'pb-4',
             )}
         >
             <div className="flex items-center justify-between gap-2">

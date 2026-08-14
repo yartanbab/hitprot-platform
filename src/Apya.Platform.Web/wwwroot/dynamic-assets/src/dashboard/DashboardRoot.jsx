@@ -11,6 +11,7 @@ import {
     readViewPreference, writeViewPreference,
 } from './layouts/viewPresets';
 import { useDashboardLayout, useSaveLayout, useResetLayout } from './hooks/useDashboardLayout';
+import { CHART_TYPE_NUMBER_TREND } from './hooks/enums';
 
 import { Button } from '../components/ui';
 import { cn } from '../lib/utils';
@@ -89,7 +90,9 @@ function DashboardRoot() {
                 const existing = source.find((c) => c.cardKey === item.i);
                 return {
                     cardKey: item.i,
-                    chartType: existing?.chartType ?? 'NumberTrend',
+                    /* Enum SAYI olarak gidip gelir; string göndermek
+                       deserialization hatası verir (JsonStringEnumConverter yok). */
+                    chartType: existing?.chartType ?? CHART_TYPE_NUMBER_TREND,
                     x: item.x, y: item.y, w: item.w, h: item.h,
                 };
             });
@@ -116,7 +119,7 @@ function DashboardRoot() {
         const nextY = source.reduce((max, c) => Math.max(max, c.y + c.h), 0);
         setDraftCards([
             ...source,
-            { cardKey, chartType: 'NumberTrend', x: 0, y: nextY, w: meta.w, h: meta.h },
+            { cardKey, chartType: CHART_TYPE_NUMBER_TREND, x: 0, y: nextY, w: meta.w, h: meta.h },
         ]);
         setCatalogOpen(false);
         setEditMode(true);

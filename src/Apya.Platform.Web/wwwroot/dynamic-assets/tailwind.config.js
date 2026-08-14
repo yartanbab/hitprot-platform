@@ -38,6 +38,10 @@ export default {
            (apya-fonts.css yalnız Inter + JetBrains Mono barındırıyor), bu yüzden
            preflight'ın html kuralı sistem fontuna düşüyordu. */
         sans: 'var(--apya-font-sans)',
+        /* mono köprülenmemişti → font-mono, Tailwind'in kendi varsayılan
+           yığınına düşüyor ve JetBrains Mono hiç kullanılmıyordu. Dashboard'da
+           tüm sayılar mono olduğu için fark doğrudan göze çarpıyor. */
+        mono: 'var(--apya-font-mono)',
       },
       /* duration-fast/base/slow: 11 yerde kullanılıyordu ama tanımsızdı →
          transition-* kısayolunun 150ms varsayılanına düşüyordu (font-tabular

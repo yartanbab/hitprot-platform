@@ -1,6 +1,10 @@
 import { useQuery } from '@tanstack/react-query';
 import { api } from '../../lib/api/httpClient';
 import { QK } from '../../lib/api/queryClient';
+import {
+    normalizeDeliveries, normalizeProjectHealth,
+    normalizeBlockedTasks, normalizeStatistics,
+} from './enums';
 
 /**
  * Dashboard okuma hook'ları — hepsi /api/dashboard/* uçlarından beslenir.
@@ -38,6 +42,7 @@ export function useDeliveries(filter) {
     return useQuery({
         queryKey: QK.dashboard.deliveries(filter),
         queryFn: () => get('deliveries', filter),
+        select: normalizeDeliveries,
         staleTime: STALE_DEFAULT,
     });
 }
@@ -46,6 +51,7 @@ export function useProjectHealth(filter) {
     return useQuery({
         queryKey: QK.dashboard.projectHealth(filter),
         queryFn: () => get('project-health', filter),
+        select: normalizeProjectHealth,
         staleTime: STALE_DEFAULT,
     });
 }
@@ -62,6 +68,7 @@ export function useBlockedTasks() {
     return useQuery({
         queryKey: QK.dashboard.blockedTasks(),
         queryFn: () => get('blocked-tasks'),
+        select: normalizeBlockedTasks,
         staleTime: STALE_DEFAULT,
     });
 }
@@ -70,6 +77,7 @@ export function useStatistics(filter) {
     return useQuery({
         queryKey: QK.dashboard.statistics(filter),
         queryFn: () => get('statistics', filter),
+        select: normalizeStatistics,
         staleTime: STALE_DEFAULT,
     });
 }

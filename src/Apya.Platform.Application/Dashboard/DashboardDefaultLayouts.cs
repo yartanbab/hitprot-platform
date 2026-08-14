@@ -24,39 +24,39 @@ public static class DashboardDefaultLayouts
     {
         [ProjectManagement] = new()
         {
-            Card("summary-strip",     DashboardChartType.NumberTrend, 0, 0, 12, 2),
-            Card("deliveries",        DashboardChartType.RankBar,     0, 2,  8, 6),
-            Card("project-health",    DashboardChartType.Bullet,      8, 2,  4, 6),
-            Card("approvals",         DashboardChartType.RankBar,     0, 8,  4, 5),
-            Card("blockers",          DashboardChartType.RankBar,     4, 8,  4, 5),
-            Card("ai-suggestions",    DashboardChartType.NumberTrend, 8, 8,  4, 5),
-            Card("income-expense",    DashboardChartType.GroupedBar,  0, 13, 4, 5),
-            Card("delivery-heatmap",  DashboardChartType.Heatmap,     4, 13, 4, 5),
-            Card("project-phases",    DashboardChartType.MiniGantt,   8, 13, 4, 5),
-            Card("statistics-band",   DashboardChartType.NumberTrend, 0, 18, 12, 5)
+            Card("summary-strip",     DashboardChartType.NumberTrend, 0, 0, 12, 3),
+            Card("deliveries",        DashboardChartType.RankBar,     0, 3,  8, 6),
+            Card("project-health",    DashboardChartType.Bullet,      8, 3,  4, 6),
+            Card("approvals",         DashboardChartType.RankBar,     0, 9,  4, 5),
+            Card("blockers",          DashboardChartType.RankBar,     4, 9,  4, 5),
+            Card("ai-suggestions",    DashboardChartType.NumberTrend, 8, 9,  4, 5),
+            Card("income-expense",    DashboardChartType.GroupedBar,  0, 14, 4, 5),
+            Card("delivery-heatmap",  DashboardChartType.Heatmap,     4, 14, 4, 5),
+            Card("project-phases",    DashboardChartType.MiniGantt,   8, 14, 4, 5),
+            Card("statistics-band",   DashboardChartType.NumberTrend, 0, 19, 12, 5)
         },
         [Finance] = new()
         {
-            Card("summary-strip",     DashboardChartType.NumberTrend, 0, 0, 12, 2),
-            Card("income-expense",    DashboardChartType.GroupedBar,  0, 2,  8, 6),
-            Card("approvals",         DashboardChartType.RankBar,     8, 2,  4, 6),
-            Card("project-health",    DashboardChartType.Bullet,      0, 8,  6, 5),
-            Card("statistics-band",   DashboardChartType.NumberTrend, 6, 8,  6, 5)
+            Card("summary-strip",     DashboardChartType.NumberTrend, 0, 0, 12, 3),
+            Card("income-expense",    DashboardChartType.GroupedBar,  0, 3,  8, 6),
+            Card("approvals",         DashboardChartType.RankBar,     8, 3,  4, 6),
+            Card("project-health",    DashboardChartType.Bullet,      0, 9,  6, 5),
+            Card("statistics-band",   DashboardChartType.NumberTrend, 6, 9,  6, 5)
         },
         [Today] = new()
         {
-            Card("summary-strip",     DashboardChartType.NumberTrend, 0, 0, 12, 2),
-            Card("deliveries",        DashboardChartType.RankBar,     0, 2,  8, 7),
-            Card("blockers",          DashboardChartType.RankBar,     8, 2,  4, 7),
-            Card("approvals",         DashboardChartType.RankBar,     0, 9,  6, 5),
-            Card("ai-suggestions",    DashboardChartType.NumberTrend, 6, 9,  6, 5)
+            Card("summary-strip",     DashboardChartType.NumberTrend, 0, 0, 12, 3),
+            Card("deliveries",        DashboardChartType.RankBar,     0, 3,  8, 7),
+            Card("blockers",          DashboardChartType.RankBar,     8, 3,  4, 7),
+            Card("approvals",         DashboardChartType.RankBar,     0, 10, 6, 5),
+            Card("ai-suggestions",    DashboardChartType.NumberTrend, 6, 10, 6, 5)
         },
         [Grants] = new()
         {
-            Card("summary-strip",     DashboardChartType.NumberTrend, 0, 0, 12, 2),
-            Card("delivery-heatmap",  DashboardChartType.Heatmap,     0, 2,  6, 6),
-            Card("deliveries",        DashboardChartType.RankBar,     6, 2,  6, 6),
-            Card("statistics-band",   DashboardChartType.NumberTrend, 0, 8, 12, 5)
+            Card("summary-strip",     DashboardChartType.NumberTrend, 0, 0, 12, 3),
+            Card("deliveries",        DashboardChartType.RankBar,     0, 3,  7, 6),
+            Card("delivery-heatmap",  DashboardChartType.Heatmap,     7, 3,  5, 6),
+            Card("statistics-band",   DashboardChartType.NumberTrend, 0, 9, 12, 5)
         }
     };
 
