@@ -72,7 +72,13 @@ function StatisticsBand({ filter, editMode }) {
             isStale={query.isStale}
             dataUpdatedAt={query.dataUpdatedAt}
         >
-            <div className="grid grid-cols-6 gap-3 lt-1080:grid-cols-3 mobile:grid-cols-2">
+            {/* Kolon sayısı KARTIN kendi genişliğinden çıkar (auto-fill), viewport'tan
+                değil: bu kart yarım genişlikte de kullanılıyor (Finans görünümü) ve
+                `grid-cols-6` orada kutucukları 43px'e eziyordu — etiketler okunmuyordu.
+                154px = en uzun etiket (126px) + kutucuk dolgusu (28px); tasarımın
+                6 / 3 / 1 kırılımlarını 1088 / 534 / 311px kart genişliklerinde
+                kendiliğinden veriyor. */}
+            <div className="grid gap-3" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(154px, 1fr))' }}>
                 {visible.map((stat) => <StatTile key={stat.key} stat={stat} />)}
             </div>
         </CardShell>

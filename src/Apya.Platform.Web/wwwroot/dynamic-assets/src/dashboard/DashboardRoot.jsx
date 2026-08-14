@@ -1,5 +1,5 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Responsive, WidthProvider } from 'react-grid-layout';
+import React, { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { Responsive } from 'react-grid-layout';
 import 'react-grid-layout/css/styles.css';
 import 'react-resizable/css/styles.css';
 
@@ -8,6 +8,7 @@ import { CardCatalog } from './catalog/CardCatalog';
 import {
     CARD_REGISTRY, VIEWS, DEFAULT_VIEW,
     GRID_BREAKPOINTS, GRID_COLS, GRID_ROW_HEIGHT, GRID_MARGIN,
+    tierFromWidth, fullWidthCardWidth, stripLayoutFor, packRows,
     readViewPreference, writeViewPreference,
 } from './layouts/viewPresets';
 import { useDashboardLayout, useSaveLayout, useResetLayout } from './hooks/useDashboardLayout';
@@ -16,8 +17,6 @@ import { CHART_TYPE_NUMBER_TREND } from './hooks/enums';
 import { Button } from '../components/ui';
 import { cn } from '../lib/utils';
 import { t } from '../lib/i18n';
-
-const ResponsiveGridLayout = WidthProvider(Responsive);
 
 const RANGES = [
     ['Month',   'Dashboard:Range:Month',   'Bu ay'],
@@ -47,33 +46,53 @@ function DashboardRoot() {
     /* Sunucudan gelen düzen; düzenleme modunda taslak varsa o geçerli. */
     const cards = draftCards ?? layoutQuery.data?.cards ?? [];
 
-    /* WidthProvider state.width'i sabit 1280 ile başlatır ve gerçek genişliği
-       yalnız ResizeObserver callback'i ateşlenirse günceller (bkz node_modules/
-       react-grid-layout/build/components/WidthProvider.js). #apya-dashboard-root
-       negatif margin + sidebar layout'u yüzünden gerçek genişlik 1280'den farklı;
-       callback hiç ateşlenmezse grid tüm kartları 1280 varsayarak taşırır.
-       Fix: ilk paint sonrası TEK SEFERLİK key değişimiyle grid'i remount et →
-       WidthProvider'ın componentDidMount'ı (dolayısıyla ResizeObserver.observe)
-       yeniden, bu kez layout oturmuşken çalışır. */
-    const [gridMountKey, setGridMountKey] = useState(0);
-    useEffect(() => {
-        const raf = requestAnimationFrame(() => setGridMountKey(1));
-        return () => cancelAnimationFrame(raf);
+    /* TEK ÖLÇÜM KAYNAĞI.
+       `WidthProvider` KULLANILMIYOR: state.width'i sabit 1280 ile başlatıyor ve
+       gerçek genişliği yalnız kendi ResizeObserver'ı ateşlenirse düzeltiyordu.
+       Kabı burada bir kez ölçüyoruz ve aynı sayı üç yeri birden besliyor:
+       RGL'in piksel matematiğini (`width`), kırılım/kolon seçimini ve özet
+       şeridinin kutucuk düzeni + yüksekliğini. Böylece "ızgara kaba göre,
+       kart içi viewport'a göre karar veriyor" çelişkisi ortadan kalkıyor. */
+    const gridHostRef = useRef(null);
+    const [gridWidth, setGridWidth] = useState(null);
+
+    useLayoutEffect(() => {
+        const host = gridHostRef.current;
+        if (!host) return undefined;
+
+        const measure = () => setGridWidth(host.clientWidth);
+        measure();
+
+        const observer = new ResizeObserver(measure);
+        observer.observe(host);
+        return () => observer.disconnect();
     }, []);
 
+    const tier = gridWidth == null ? null : tierFromWidth(gridWidth);
+    const strip = useMemo(
+        () => stripLayoutFor(gridWidth == null ? 0 : fullWidthCardWidth(gridWidth)),
+        [gridWidth],
+    );
+
     const layouts = useMemo(() => {
-        const desktop = cards.map(toGridItem);
+        /* Özet şeridi tam genişlikte olduğu için yüksekliği kutucuk satır
+           sayısını takip etmeli — sabit h=2 çok satırlı dizilimde içeriği kırpar. */
+        const desktop = cards.map((card) => toGridItem(card, strip.h));
         return {
             desktop,
-            /* Tablet: 8 kolon — genişlikler kırpılır, sıra korunur. */
-            tablet: desktop.map((item) => ({ ...item, w: Math.min(item.w, 8) })),
-            /* Mobil tek kolon: tasarım sırası y'ye göre. */
-            mobile: desktop
-                .slice()
-                .sort((a, b) => a.y - b.y || a.x - b.x)
-                .map((item, index) => ({ ...item, x: 0, y: index, w: 1 })),
+            tablet: packRows(
+                /* Tablette kart ya tam (6) ya yarım (3) genişlik alır: şeritler ve
+                   masaüstünde 2/3'ten geniş duran kartlar tam, kalanı yarım. */
+                desktop.map((item) => ({
+                    ...item,
+                    w: (CARD_REGISTRY[item.i]?.band || item.w >= 8) ? GRID_COLS.tablet : GRID_COLS.tablet / 2,
+                    minW: undefined,
+                })),
+                GRID_COLS.tablet,
+            ),
+            mobile: packRows(desktop.map((item) => ({ ...item, w: 1, minW: undefined })), GRID_COLS.mobile),
         };
-    }, [cards]);
+    }, [cards, strip.h]);
 
     const handleViewChange = useCallback((next) => {
         setViewKey(next);
@@ -84,6 +103,9 @@ function DashboardRoot() {
 
     const handleLayoutChange = useCallback((currentLayout) => {
         if (!editMode) return; /* Düzenleme kapalıyken sürükleme zaten yok */
+        /* Tablet/mobil düzenleri 12 kolonluk düzenden TÜRETİLİR (packRows).
+           O koordinatları kaydetmek masaüstü düzenini bozardı. */
+        if (tier !== 'desktop') return;
         setDraftCards((previous) => {
             const source = previous ?? cards;
             return currentLayout.map((item) => {
@@ -97,7 +119,11 @@ function DashboardRoot() {
                 };
             });
         });
-    }, [editMode, cards]);
+    }, [editMode, cards, tier]);
+
+    /* Düzen yalnız masaüstü kırılımında anlamlı — dar ekranda kartlar zaten
+       türetilmiş tek/çift kolona diziliyor, sürüklemenin kaydedilecek karşılığı yok. */
+    const canEdit = tier === 'desktop';
 
     const handleSave = useCallback(() => {
         saveLayout.mutate(
@@ -138,6 +164,7 @@ function DashboardRoot() {
                 range={range}
                 onRangeChange={setRange}
                 editMode={editMode}
+                canEdit={canEdit}
                 onToggleEdit={() => setEditMode((v) => !v)}
                 onOpenCatalog={() => setCatalogOpen(true)}
             />
@@ -155,8 +182,11 @@ function DashboardRoot() {
                   kart ↔ kart 10px (GRID_MARGIN) — başlık mesafesinden DAHA DAR,
                   böylece kartlar tek blok gibi okunur, başlık ayrışır. */}
             <main className="px-4 pt-4 pb-4 mobile:px-3">
-                <ResponsiveGridLayout
-                    key={gridMountKey}
+                {/* Ölçüm kabı — RGL'e verilen `width` bu düğümden okunur. */}
+                <div ref={gridHostRef}>
+                {gridWidth != null && (
+                <Responsive
+                    width={gridWidth}
                     className={cn('apya-dashboard-grid', editMode && 'apya-dashboard-grid--edit')}
                     layouts={layouts}
                     breakpoints={GRID_BREAKPOINTS}
@@ -176,7 +206,11 @@ function DashboardRoot() {
                         const Card = meta.component;
                         return (
                             <div key={card.cardKey} className="relative">
-                                <Card filter={filter} editMode={editMode} />
+                                <Card
+                                    filter={filter}
+                                    editMode={editMode}
+                                    {...(card.cardKey === 'summary-strip' ? { template: strip.template } : null)}
+                                />
                                 {editMode && (
                                     <button
                                         type="button"
@@ -195,11 +229,14 @@ function DashboardRoot() {
                             </div>
                         );
                     })}
-                </ResponsiveGridLayout>
+                </Responsive>
+                )}
+                </div>
 
                 {/* Izgara ile alt şerit arası da kart↔kart boşluğuyla aynı (20px). */}
                 <FooterStrip
                     isDefault={layoutQuery.data?.isDefault !== false}
+                    canEdit={canEdit}
                     onReset={handleReset}
                     onOpenCatalog={() => setCatalogOpen(true)}
                     isResetting={resetLayout.isPending}
@@ -216,7 +253,7 @@ function DashboardRoot() {
     );
 }
 
-function PageHeader({ viewKey, onViewChange, range, onRangeChange, editMode, onToggleEdit, onOpenCatalog }) {
+function PageHeader({ viewKey, onViewChange, range, onRangeChange, editMode, canEdit, onToggleEdit, onOpenCatalog }) {
     const activeView = VIEWS.find((v) => v.key === viewKey) ?? VIEWS[0];
 
     return (
@@ -254,12 +291,16 @@ function PageHeader({ viewKey, onViewChange, range, onRangeChange, editMode, onT
 
             <div className="flex items-center gap-2 flex-none mobile:flex-wrap">
                 <RangeSelect value={range} onChange={onRangeChange} />
-                <Button size="sm" variant="secondary" onClick={onOpenCatalog}>
-                    {t('Dashboard:AddCard', '+ Kart ekle')}
-                </Button>
-                <Button size="sm" variant="primary" onClick={onToggleEdit}>
-                    {editMode ? t('Common:Done', 'Bitir') : t('Common:Edit', 'Düzenle')}
-                </Button>
+                {canEdit && (
+                    <>
+                        <Button size="sm" variant="secondary" onClick={onOpenCatalog}>
+                            {t('Dashboard:AddCard', '+ Kart ekle')}
+                        </Button>
+                        <Button size="sm" variant="primary" onClick={onToggleEdit}>
+                            {editMode ? t('Common:Done', 'Bitir') : t('Common:Edit', 'Düzenle')}
+                        </Button>
+                    </>
+                )}
             </div>
         </header>
     );
@@ -312,7 +353,7 @@ function EditToolbar({ onSave, isSaving }) {
     );
 }
 
-function FooterStrip({ isDefault, onReset, onOpenCatalog, isResetting }) {
+function FooterStrip({ isDefault, canEdit, onReset, onOpenCatalog, isResetting }) {
     return (
         <div className="flex items-center justify-between gap-3 mt-5 px-4 py-3 rounded-card border border-dashed border-default bg-surface-base mobile:flex-col mobile:items-stretch">
             <span className="text-[12.5px] text-text-secondary">
@@ -326,21 +367,27 @@ function FooterStrip({ isDefault, onReset, onOpenCatalog, isResetting }) {
                         {t('Dashboard:Footer:Reset', 'Varsayılana dön')}
                     </Button>
                 )}
-                <Button size="sm" variant="primary" onClick={onOpenCatalog}>
-                    {t('Dashboard:AddCard', '+ Kart ekle')}
-                </Button>
+                {canEdit && (
+                    <Button size="sm" variant="primary" onClick={onOpenCatalog}>
+                        {t('Dashboard:AddCard', '+ Kart ekle')}
+                    </Button>
+                )}
             </div>
         </div>
     );
 }
 
-function toGridItem(card) {
+function toGridItem(card, stripHeight) {
     const meta = CARD_REGISTRY[card.cardKey];
+    /* Şeridin yüksekliği kullanıcıdan değil ölçümden gelir: kayıtlı düzendeki
+       h bayat kalabilir (kutucuk satır sayısı ekran genişliğiyle değişiyor). */
+    const isStrip = card.cardKey === 'summary-strip';
     return {
         i: card.cardKey,
-        x: card.x, y: card.y, w: card.w, h: card.h,
+        x: card.x, y: card.y, w: card.w,
+        h: isStrip ? stripHeight : card.h,
         minW: meta?.minW ?? 2,
-        minH: meta?.minH ?? 2,
+        minH: isStrip ? stripHeight : (meta?.minH ?? 2),
     };
 }
 

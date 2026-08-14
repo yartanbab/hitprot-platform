@@ -11,12 +11,18 @@ import { Skeleton } from '../../components/ui';
  * Yetkisi olmayan alanlar sunucudan NULL gelir; o kutucuk "yetki gerekli"
  * durumuna düşer. Frontend hiçbir değeri kendi kararıyla gizlemez.
  */
-function StatStripCard({ filter }) {
+function StatStripCard({ filter, template }) {
     const { data, isLoading, isError, refetch } = useSummary(filter);
+
+    /* Kolon şablonu DashboardRoot'tan gelir: şeridin ÖLÇÜLEN genişliğinden
+       türetilir (bkz stripLayoutFor). Buradaki `lt-1080:`/`mobile:` gibi viewport
+       medya sorguları KULLANILMAZ — ızgara kaba, kart içi viewport'a bakınca
+       ikisi çakışıyordu (kenar çubuğu 327px'lik sabit farkı yaratıyor). */
+    const gridStyle = { gridTemplateColumns: template ?? 'repeat(4, minmax(0, 2fr)) minmax(0, 3fr)' };
 
     if (isLoading) {
         return (
-            <div className="h-full grid grid-cols-5 gap-5 lt-1080:grid-cols-3 mobile:grid-cols-2 mobile:h-auto">
+            <div className="h-full grid gap-5" style={gridStyle}>
                 {Array.from({ length: 5 }, (_, i) => (
                     <div key={i} className="rounded-card shadow-card bg-surface-base border border-default p-4">
                         <Skeleton height={14} className="w-2/3 mb-2" />
@@ -45,13 +51,12 @@ function StatStripCard({ filter }) {
            bırakılırsa kutu içerikten kısa kalınca taşıp alttaki satıra biniyor,
            uzun kalınca da altta ölü boşluk bırakıyordu — ikisini de gördük.
            Ek alt padding YOK: tüm boşluklar tek kaynaktan, GRID_MARGIN'den gelir.
-
            Kutucuk arası da aynı 20px (gap-5) — ızgaradaki kart aralarıyla birebir.
 
-           lt-1080 ve mobile ikisi de max-width → Tailwind bunları azalan sırada
-           yazar, dar ekranda mobile kazanır. `tablet:` KULLANILMAZ: o min-width'tir,
-           1440'ta da tetiklenirdi. */
-        <div className="h-full grid grid-cols-5 gap-5 lt-1080:grid-cols-3 mobile:grid-cols-2 mobile:h-auto">
+           Kutu yüksekliği de kolon sayısını takip eder (stripLayoutFor → h), yani
+           çok satırlı dizilimde kutu büyür; sabit h=2 bırakılınca satırlar 148px'lik
+           kutuya sıkışıp `overflow-hidden` altyazıları kesiyordu. */
+        <div className="h-full grid gap-5" style={gridStyle}>
             <Tile
                 label={t('Dashboard:Summary:DueThisPeriod', 'Bu dönem teslim')}
                 value={data.dueThisPeriod}
