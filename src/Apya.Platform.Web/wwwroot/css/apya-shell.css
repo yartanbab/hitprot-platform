@@ -4096,3 +4096,35 @@ i.apya-priority-dot {
 #lpx-sidebar .apya-shell-subnav > li > a.lpx-menu-item-link {
     gap: 9px;
 }
+
+/* ============================================================================
+   RAY MODU — KENDİ KURALLARIMIN YAN ETKİSİNİ GERİ AL
+   ----------------------------------------------------------------------------
+   Ölçüm (ray, hover yok): nav-menu x=-82 w=72 → 72px'lik ray TAMAMEN ekran
+   dışında kalıyor, ikonlar x=-64'te görünmez oluyordu ("iconlar gitti").
+   Logo kutusu da 250px kalıp beyaz zeminiyle içeriğin üstüne taşıyordu.
+
+   İki kök sebep, ikisi de bu dosyadaki önceki kurallarım:
+   1) Faz 0'daki `.lpx-has-scrollbar` telafisi nav'ı GENİŞLETİP SOLA KAYDIRIYOR
+      (pinned modda doğru davranış). Rayda genişliği `max-width` ile kırpınca
+      kaydırma olduğu gibi kaldı → içerik ekranın soluna savruldu.
+   2) Logo genişliğini `!important` ile token'a bağlamıştım; o kural temanın
+      ray kuralından daha özgül olduğu için rayda da 250px uyguluyordu.
+
+   Rayda scrollbar telafisi ZATEN gereksiz (tema o modda dikey scroll'u
+   kapatıyor) → hem genişlik hem kaydırma sıfırlanır. Seçicilere `#lpx-wrapper`
+   şart: rakip kurallar ID taşıyor, ID'siz seçici kaybeder.
+   ============================================================================ */
+@media (min-width: 1200px) {
+    #lpx-wrapper html[data-sidebar="collapsed"] .lpx-sidebar-container:not(:hover) .lpx-nav,
+    html[data-sidebar="collapsed"] #lpx-wrapper .lpx-sidebar-container:not(:hover) .lpx-nav,
+    html[data-sidebar="collapsed"] #lpx-wrapper .lpx-sidebar-container:not(:hover) .lpx-nav-menu {
+        min-width: var(--apya-sidebar-w-collapsed) !important;
+        max-width: var(--apya-sidebar-w-collapsed) !important;
+        margin-left: 0 !important;
+        transform: none !important;
+    }
+    html[data-sidebar="collapsed"] #lpx-wrapper .lpx-sidebar-container:not(:hover) .lpx-logo-container {
+        width: var(--apya-sidebar-w-collapsed) !important;
+    }
+}
