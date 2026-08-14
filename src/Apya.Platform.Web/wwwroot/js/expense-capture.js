@@ -1,17 +1,17 @@
-import { j as e, r as d, d as M, b as J } from "./react-vendor.js";
-import { u as Q, t as P, B as C, c as _, S, j as T, e as X, M as Z, I as N, i as L, T as ee } from "./Dialog.js";
-import { a as te } from "./QueryProvider.js";
-import { u as G, C as ne, r as ae, T as re } from "./registerServiceWorker.js";
-import { C as se } from "./Combobox.js";
-import { b as q } from "./query-vendor.js";
+import { j as e, r as d, d as E, b as ee } from "./react-vendor.js";
+import { u as te, t as y, B as N, c as S, S as M, d as T, g as ne, M as ae, I as L, b as O, T as re } from "./Dialog.js";
+import { a as se } from "./QueryProvider.js";
+import { u as V, r as oe, T as ie } from "./registerServiceWorker.js";
+import { C as le } from "./Combobox.js";
+import { b as $ } from "./query-vendor.js";
 /* empty css      */
-const oe = {
+const ce = {
   light: { key: "Theme:Light", fallback: "Açık tema (Sıradaki: Koyu)" },
   dark: { key: "Theme:Dark", fallback: "Koyu tema (Sıradaki: Sistem)" },
   system: { key: "Theme:System", fallback: "Sistem teması (Sıradaki: Açık)" }
 };
-function ie({ className: t = "" }) {
-  const { preference: a, toggle: n } = Q(), i = oe[a], o = i ? P(i.key, i.fallback) : P("Theme:Toggle", "Tema değiştir");
+function de({ className: t = "" }) {
+  const { preference: a, toggle: n } = te(), i = ce[a], o = i ? y(i.key, i.fallback) : y("Theme:Toggle", "Tema değiştir");
   return /* @__PURE__ */ e.jsxs(
     "button",
     {
@@ -30,14 +30,14 @@ function ie({ className: t = "" }) {
         t
       ].join(" "),
       children: [
-        a === "light" && /* @__PURE__ */ e.jsx(le, {}),
-        a === "dark" && /* @__PURE__ */ e.jsx(ce, {}),
-        a === "system" && /* @__PURE__ */ e.jsx(de, {})
+        a === "light" && /* @__PURE__ */ e.jsx(ue, {}),
+        a === "dark" && /* @__PURE__ */ e.jsx(me, {}),
+        a === "system" && /* @__PURE__ */ e.jsx(xe, {})
       ]
     }
   );
 }
-function le() {
+function ue() {
   return /* @__PURE__ */ e.jsxs(
     "svg",
     {
@@ -58,7 +58,7 @@ function le() {
     }
   );
 }
-function ce() {
+function me() {
   return /* @__PURE__ */ e.jsx(
     "svg",
     {
@@ -76,7 +76,7 @@ function ce() {
     }
   );
 }
-function de() {
+function xe() {
   return /* @__PURE__ */ e.jsxs(
     "svg",
     {
@@ -97,11 +97,11 @@ function de() {
     }
   );
 }
-function ue({ onFile: t }) {
-  const a = d.useRef(null), [n, i] = M.useState(!1), o = G(), s = d.useCallback(() => {
+function fe({ onFile: t }) {
+  const a = d.useRef(null), [n, i] = E.useState(!1), o = V(), s = d.useCallback(() => {
     var r;
     return (r = a.current) == null ? void 0 : r.click();
-  }, []), c = d.useCallback((r) => {
+  }, []), l = d.useCallback((r) => {
     if (r) {
       if (!r.type.startsWith("image/")) {
         o.error("Resim dosyası gerekli", {
@@ -133,10 +133,10 @@ function ue({ onFile: t }) {
       },
       onDragLeave: () => i(!1),
       onDrop: (r) => {
-        var x;
-        r.preventDefault(), i(!1), c((x = r.dataTransfer.files) == null ? void 0 : x[0]);
+        var u;
+        r.preventDefault(), i(!1), l((u = r.dataTransfer.files) == null ? void 0 : u[0]);
       },
-      className: _(
+      className: S(
         "flex flex-col items-center justify-center gap-4",
         "border-2 border-dashed rounded-xl p-8",
         "min-h-[60vh] mobile:min-h-[50vh]",
@@ -146,13 +146,13 @@ function ue({ onFile: t }) {
         n ? "border-brand-500 bg-brand-50" : "border-default bg-surface-raised hover:border-strong"
       ),
       children: [
-        /* @__PURE__ */ e.jsx(me, {}),
+        /* @__PURE__ */ e.jsx(he, {}),
         /* @__PURE__ */ e.jsxs("div", { className: "text-center max-w-xs pointer-events-none", children: [
           /* @__PURE__ */ e.jsx("p", { className: "text-base font-semibold text-text-primary", children: "Faturayı çek" }),
           /* @__PURE__ */ e.jsx("p", { className: "text-sm text-text-secondary mt-1", children: "Mobilde direkt kamera açılır. Masaüstünde dosya sürükle ya da tıkla. AI tutarı, tarihi ve tedarikçiyi otomatik okur." })
         ] }),
         /* @__PURE__ */ e.jsx(
-          C,
+          N,
           {
             size: "lg",
             variant: "primary",
@@ -172,8 +172,8 @@ function ue({ onFile: t }) {
             capture: "environment",
             className: "sr-only",
             onChange: (r) => {
-              var x;
-              return c((x = r.target.files) == null ? void 0 : x[0]);
+              var u;
+              return l((u = r.target.files) == null ? void 0 : u[0]);
             }
           }
         )
@@ -181,7 +181,7 @@ function ue({ onFile: t }) {
     }
   );
 }
-function me() {
+function he() {
   return /* @__PURE__ */ e.jsxs(
     "svg",
     {
@@ -202,14 +202,14 @@ function me() {
     }
   );
 }
-const xe = [
+const ge = [
   "Görüntü temizleniyor...",
   "Metin tanınıyor (OCR)...",
   "Alanlar çıkartılıyor..."
 ];
-function fe({ previewUrl: t }) {
-  const [a, n] = M.useState(0);
-  return M.useEffect(() => {
+function be({ previewUrl: t }) {
+  const [a, n] = E.useState(0);
+  return E.useEffect(() => {
     const i = setTimeout(() => n(1), 350), o = setTimeout(() => n(2), 800);
     return () => {
       clearTimeout(i), clearTimeout(o);
@@ -223,20 +223,20 @@ function fe({ previewUrl: t }) {
         className: "max-h-48 rounded-md border border-default object-contain"
       }
     ),
-    /* @__PURE__ */ e.jsx("div", { className: "w-full max-w-xs flex flex-col gap-2", children: xe.map((i, o) => /* @__PURE__ */ e.jsxs("div", { className: "flex items-center gap-2 text-sm", children: [
-      o < a && /* @__PURE__ */ e.jsx(he, {}),
-      o === a && /* @__PURE__ */ e.jsx(be, {}),
-      o > a && /* @__PURE__ */ e.jsx(pe, {}),
+    /* @__PURE__ */ e.jsx("div", { className: "w-full max-w-xs flex flex-col gap-2", children: ge.map((i, o) => /* @__PURE__ */ e.jsxs("div", { className: "flex items-center gap-2 text-sm", children: [
+      o < a && /* @__PURE__ */ e.jsx(pe, {}),
+      o === a && /* @__PURE__ */ e.jsx(ve, {}),
+      o > a && /* @__PURE__ */ e.jsx(ye, {}),
       /* @__PURE__ */ e.jsx("span", { className: o <= a ? "text-text-primary" : "text-text-tertiary", children: i })
     ] }, o)) }),
     /* @__PURE__ */ e.jsxs("div", { className: "w-full max-w-xs flex flex-col gap-2 mt-2", children: [
-      /* @__PURE__ */ e.jsx(S, { height: 12 }),
-      /* @__PURE__ */ e.jsx(S, { height: 12, className: "w-3/4" }),
-      /* @__PURE__ */ e.jsx(S, { height: 12, className: "w-1/2" })
+      /* @__PURE__ */ e.jsx(M, { height: 12 }),
+      /* @__PURE__ */ e.jsx(M, { height: 12, className: "w-3/4" }),
+      /* @__PURE__ */ e.jsx(M, { height: 12, className: "w-1/2" })
     ] })
   ] });
 }
-const he = () => /* @__PURE__ */ e.jsx(
+const pe = () => /* @__PURE__ */ e.jsx(
   "svg",
   {
     width: "16",
@@ -250,7 +250,7 @@ const he = () => /* @__PURE__ */ e.jsx(
     className: "text-positive-500 flex-none",
     children: /* @__PURE__ */ e.jsx("path", { d: "M20 6 9 17l-5-5" })
   }
-), be = () => /* @__PURE__ */ e.jsx(
+), ve = () => /* @__PURE__ */ e.jsx(
   "svg",
   {
     className: "animate-spin text-brand-500 flex-none",
@@ -262,30 +262,74 @@ const he = () => /* @__PURE__ */ e.jsx(
     strokeWidth: "2",
     children: /* @__PURE__ */ e.jsx("path", { d: "M21 12a9 9 0 1 1-6.219-8.56", strokeLinecap: "round" })
   }
-), pe = () => /* @__PURE__ */ e.jsx("span", { className: "inline-block h-1.5 w-1.5 rounded-full bg-neutral-300 mx-[2px] flex-none", "aria-hidden": "true" }), B = (t) => new Promise((a) => setTimeout(a, t)), K = [
+), ye = () => /* @__PURE__ */ e.jsx("span", { className: "inline-block h-1.5 w-1.5 rounded-full bg-neutral-300 mx-[2px] flex-none", "aria-hidden": "true" }), K = {
+  sm: { dot: "h-1 w-1", gap: "gap-0.5" },
+  md: { dot: "h-1.5 w-1.5", gap: "gap-0.5" },
+  lg: { dot: "h-2 w-2", gap: "gap-1" }
+};
+function q(t) {
+  return typeof t != "number" || !Number.isFinite(t) ? 0 : t > 1 ? Math.max(0, Math.min(100, t)) / 100 : Math.max(0, Math.min(1, t));
+}
+function J(t) {
+  return t >= 0.85 ? { dots: 5, label: y("Ai:Confidence:VeryHigh", "Çok yüksek güven") } : t >= 0.7 ? { dots: 4, label: y("Ai:Confidence:High", "Yüksek güven") } : t >= 0.5 ? { dots: 3, label: y("Ai:Confidence:Medium", "Orta güven") } : t >= 0.3 ? { dots: 2, label: y("Ai:Confidence:Low", "Düşük güven") } : { dots: 1, label: y("Ai:Confidence:VeryLow", "Çok düşük güven") };
+}
+function A({ score: t, label: a, size: n = "md", showLabel: i = !0, className: o }) {
+  const s = q(t), l = J(s), r = K[n] ?? K.md, u = a ?? l.label, b = Math.round(s * 100);
+  return /* @__PURE__ */ e.jsxs(
+    "span",
+    {
+      className: S("inline-flex items-center gap-1 text-xs text-text-tertiary", o),
+      title: `${l.label} (%${b})`,
+      children: [
+        /* @__PURE__ */ e.jsx("span", { className: S("inline-flex items-center", r.gap), "aria-hidden": "true", children: Array.from({ length: 5 }, (m, p) => /* @__PURE__ */ e.jsx(
+          "span",
+          {
+            className: S(
+              "inline-block rounded-full",
+              r.dot,
+              p < l.dots ? "bg-ai-500" : "bg-neutral-200"
+            )
+          },
+          p
+        )) }),
+        i && /* @__PURE__ */ e.jsx("span", { "aria-hidden": "true", children: u }),
+        /* @__PURE__ */ e.jsxs("span", { className: "sr-only", children: [
+          "Güven düzeyi: ",
+          l.label,
+          " (%",
+          b,
+          ")"
+        ] })
+      ]
+    }
+  );
+}
+A.bandFor = J;
+A.normalize = q;
+const W = (t) => new Promise((a) => setTimeout(a, t)), _ = [
   { vendor: "Migros A.Ş.", category: "Ofis Sarfiyat" },
   { vendor: "BSH Ev Aletleri", category: "Donanım" },
   { vendor: "Türk Telekom", category: "Internet/Telekom" },
   { vendor: "JetBrains s.r.o.", category: "Yazılım Lisansı" },
   { vendor: "Lufthansa", category: "Seyahat" }
 ];
-function w(t, a) {
+function C(t, a) {
   const n = (a * 9301 + 49297) % 233280 / 233280;
   return Math.min(0.99, Math.max(0.4, t + (n - 0.5) * 0.2));
 }
-const H = {
+const Q = {
   async ocr(t) {
     var o;
-    await B(900 + Math.random() * 600);
-    const a = t.size + (((o = t.name) == null ? void 0 : o.length) || 0), n = K[a % K.length], i = Math.round((50 + a % 5e5 / 100) * 100) / 100;
+    await W(900 + Math.random() * 600);
+    const a = t.size + (((o = t.name) == null ? void 0 : o.length) || 0), n = _[a % _.length], i = Math.round((50 + a % 5e5 / 100) * 100) / 100;
     return {
-      confidence: w(0.8, a),
+      confidence: C(0.8, a),
       fields: {
-        amount: { value: i, confidence: w(0.92, a + 1) },
+        amount: { value: i, confidence: C(0.92, a + 1) },
         currency: { value: "TRY", confidence: 0.99 },
-        date: { value: (/* @__PURE__ */ new Date()).toISOString().slice(0, 10), confidence: w(0.86, a + 2) },
-        vendor: { value: n.vendor, confidence: w(0.65, a + 3) },
-        category: { value: n.category, confidence: w(0.58, a + 4) },
+        date: { value: (/* @__PURE__ */ new Date()).toISOString().slice(0, 10), confidence: C(0.86, a + 2) },
+        vendor: { value: n.vendor, confidence: C(0.65, a + 3) },
+        category: { value: n.category, confidence: C(0.58, a + 4) },
         taxRate: { value: 20, confidence: 0.95 }
       },
       rawText: `${n.vendor}
@@ -294,7 +338,7 @@ KDV %20`
     };
   },
   async submit(t) {
-    if (await B(600), !(t != null && t.amount) || t.amount <= 0) {
+    if (await W(600), !(t != null && t.amount) || t.amount <= 0) {
       const a = new Error("Tutar geçersiz.");
       throw a.status = 400, a;
     }
@@ -305,7 +349,7 @@ KDV %20`
       createdAt: (/* @__PURE__ */ new Date()).toISOString()
     };
   }
-}, j = 0.7, ve = [
+}, w = 0.7, je = [
   { value: "Ofis Sarfiyat", label: "Ofis Sarfiyat" },
   { value: "Donanım", label: "Donanım" },
   { value: "Yazılım Lisansı", label: "Yazılım Lisansı" },
@@ -314,99 +358,99 @@ KDV %20`
   { value: "Yemek", label: "Yemek" },
   { value: "Kırtasiye", label: "Kırtasiye" },
   { value: "Diğer", label: "Diğer" }
-], ge = ["TRY", "USD", "EUR"];
-function ye({
+], ke = ["TRY", "USD", "EUR"];
+function we({
   open: t,
   onOpenChange: a,
   ocrResult: n,
   onSubmit: i,
   isSubmitting: o
 }) {
-  var E, O, R, D, A, z, I, F;
-  const [s, c] = d.useState(() => Y(n)), [r, x] = d.useState(!1), v = d.useRef(null);
+  var D, R, z, I, F, U, P, B;
+  const [s, l] = d.useState(() => G(n)), [r, u] = d.useState(!1), b = d.useRef(null);
   d.useEffect(() => {
-    c(Y(n));
+    l(G(n));
   }, [n]), d.useEffect(() => {
     if (!t || !(n != null && n.fields)) return;
-    const u = setTimeout(() => {
-      var l, p;
-      return (p = (l = v.current) == null ? void 0 : l.focus) == null ? void 0 : p.call(l);
+    const x = setTimeout(() => {
+      var c, v;
+      return (v = (c = b.current) == null ? void 0 : c.focus) == null ? void 0 : v.call(c);
     }, 80);
-    return () => clearTimeout(u);
+    return () => clearTimeout(x);
   }, [t, n]);
   const m = d.useMemo(
     () => (n == null ? void 0 : n.fields) ?? {},
     [n]
-  ), k = d.useMemo(() => {
-    var l;
-    const u = ["vendor", "category", "date", "amount"];
-    for (const p of u) {
-      const U = (l = m[p]) == null ? void 0 : l.confidence;
-      if (U != null && U < j) return p;
+  ), p = d.useMemo(() => {
+    var c;
+    const x = ["vendor", "category", "date", "amount"];
+    for (const v of x) {
+      const Y = (c = m[v]) == null ? void 0 : c.confidence;
+      if (Y != null && Y < w) return v;
     }
     return null;
-  }, [m]), g = (u) => (l) => c((p) => ({ ...p, [u]: l != null && l.target ? l.target.value : l })), f = async (u) => {
-    if (u.preventDefault(), o) return;
-    const l = {
+  }, [m]), j = (x) => (c) => l((v) => ({ ...v, [x]: c != null && c.target ? c.target.value : c })), f = async (x) => {
+    if (x.preventDefault(), o) return;
+    const c = {
       ...s,
       amount: typeof s.amount == "number" ? s.amount : parseFloat(s.amount),
       taxRate: typeof s.taxRate == "number" ? s.taxRate : parseFloat(s.taxRate)
     };
-    await i(l);
-  }, h = (n == null ? void 0 : n.confidence) ?? 0, V = h >= 0.85 ? "Yüksek güven" : h >= 0.65 ? "Orta güven" : "Düşük güven — kontrol edin", $ = h >= 0.85 ? "positive" : h >= 0.65 ? "warning" : "critical";
+    await i(c);
+  }, h = (n == null ? void 0 : n.confidence) ?? 0, Z = h >= 0.85 ? "Yüksek güven" : h >= 0.65 ? "Orta güven" : "Düşük güven — kontrol edin", X = h >= 0.85 ? "positive" : h >= 0.65 ? "warning" : "critical";
   return /* @__PURE__ */ e.jsx(T, { open: t, onOpenChange: a, children: /* @__PURE__ */ e.jsx(T.Content, { title: "Masraf detayları", description: "AI tarafından okunan tutarları doğrulayın ve gönderin", children: /* @__PURE__ */ e.jsxs("form", { onSubmit: f, className: "flex flex-col h-full", children: [
     /* @__PURE__ */ e.jsxs("header", { className: "px-4 pt-2 pb-3 border-b border-subtle flex items-center justify-between", children: [
       /* @__PURE__ */ e.jsx("h2", { className: "text-lg font-semibold", children: "Masraf Detayları" }),
-      /* @__PURE__ */ e.jsx(X, { variant: $, size: "sm", withDot: !0, children: V })
+      /* @__PURE__ */ e.jsx(ne, { variant: X, size: "sm", withDot: !0, children: Z })
     ] }),
     /* @__PURE__ */ e.jsxs("div", { className: "flex-1 overflow-y-auto px-4 py-4 flex flex-col gap-4", children: [
-      /* @__PURE__ */ e.jsx(y, { label: "Tutar", required: !0, confidence: (E = m.amount) == null ? void 0 : E.confidence, children: /* @__PURE__ */ e.jsx(
-        Z,
+      /* @__PURE__ */ e.jsx(k, { label: "Tutar", required: !0, confidence: (D = m.amount) == null ? void 0 : D.confidence, children: /* @__PURE__ */ e.jsx(
+        ae,
         {
-          ref: k === "amount" ? v : void 0,
+          ref: p === "amount" ? b : void 0,
           value: s.amount,
-          onValueChange: (u) => c((l) => ({ ...l, amount: u ?? "" })),
+          onValueChange: (x) => l((c) => ({ ...c, amount: x ?? "" })),
           currency: s.currency,
-          currencies: ge,
-          onCurrencyChange: (u) => c((l) => ({ ...l, currency: u })),
+          currencies: ke,
+          onCurrencyChange: (x) => l((c) => ({ ...c, currency: x })),
           size: "lg",
-          invalid: ((O = m.amount) == null ? void 0 : O.confidence) < j,
+          invalid: ((R = m.amount) == null ? void 0 : R.confidence) < w,
           required: !0,
           min: 0.01
         }
       ) }),
-      /* @__PURE__ */ e.jsx(y, { label: "Tarih", required: !0, confidence: (R = m.date) == null ? void 0 : R.confidence, children: /* @__PURE__ */ e.jsx(
-        N,
+      /* @__PURE__ */ e.jsx(k, { label: "Tarih", required: !0, confidence: (z = m.date) == null ? void 0 : z.confidence, children: /* @__PURE__ */ e.jsx(
+        L,
         {
-          ref: k === "date" ? v : void 0,
+          ref: p === "date" ? b : void 0,
           type: "date",
           required: !0,
           size: "lg",
           value: s.date,
-          onChange: g("date"),
-          invalid: ((D = m.date) == null ? void 0 : D.confidence) < j
+          onChange: j("date"),
+          invalid: ((I = m.date) == null ? void 0 : I.confidence) < w
         }
       ) }),
-      /* @__PURE__ */ e.jsx(y, { label: "Tedarikçi", required: !0, confidence: (A = m.vendor) == null ? void 0 : A.confidence, children: /* @__PURE__ */ e.jsx(
-        N,
+      /* @__PURE__ */ e.jsx(k, { label: "Tedarikçi", required: !0, confidence: (F = m.vendor) == null ? void 0 : F.confidence, children: /* @__PURE__ */ e.jsx(
+        L,
         {
-          ref: k === "vendor" ? v : void 0,
+          ref: p === "vendor" ? b : void 0,
           type: "text",
           required: !0,
           size: "lg",
           value: s.vendor,
-          onChange: g("vendor"),
-          invalid: ((z = m.vendor) == null ? void 0 : z.confidence) < j,
+          onChange: j("vendor"),
+          invalid: ((U = m.vendor) == null ? void 0 : U.confidence) < w,
           placeholder: "örn. Migros A.Ş."
         }
       ) }),
-      /* @__PURE__ */ e.jsx(y, { label: "Kategori", confidence: (I = m.category) == null ? void 0 : I.confidence, children: /* @__PURE__ */ e.jsx(
-        se,
+      /* @__PURE__ */ e.jsx(k, { label: "Kategori", confidence: (P = m.category) == null ? void 0 : P.confidence, children: /* @__PURE__ */ e.jsx(
+        le,
         {
-          options: ve,
+          options: je,
           value: s.category,
-          onChange: (u) => c((l) => ({ ...l, category: u })),
-          invalid: ((F = m.category) == null ? void 0 : F.confidence) < j,
+          onChange: (x) => l((c) => ({ ...c, category: x })),
+          invalid: ((B = m.category) == null ? void 0 : B.confidence) < w,
           placeholder: "Kategori seç"
         }
       ) }),
@@ -414,29 +458,29 @@ function ye({
         "button",
         {
           type: "button",
-          onClick: () => x((u) => !u),
+          onClick: () => u((x) => !x),
           className: "self-start text-sm text-text-link hover:underline focus-visible:outline-none focus-visible:shadow-focus rounded-sm",
           children: r ? "Daha az alan" : "Daha fazla alan"
         }
       ),
       r && /* @__PURE__ */ e.jsxs(e.Fragment, { children: [
-        /* @__PURE__ */ e.jsx(y, { label: "KDV Oranı (%)", children: /* @__PURE__ */ e.jsx(
-          N,
+        /* @__PURE__ */ e.jsx(k, { label: "KDV Oranı (%)", children: /* @__PURE__ */ e.jsx(
+          L,
           {
             type: "number",
             step: "0.1",
             value: s.taxRate,
-            onChange: g("taxRate"),
+            onChange: j("taxRate"),
             className: "font-tabular"
           }
         ) }),
-        /* @__PURE__ */ e.jsx(y, { label: "Not", children: /* @__PURE__ */ e.jsx(
+        /* @__PURE__ */ e.jsx(k, { label: "Not", children: /* @__PURE__ */ e.jsx(
           "textarea",
           {
             rows: 2,
             value: s.note,
-            onChange: g("note"),
-            className: _(
+            onChange: j("note"),
+            className: S(
               "block w-full rounded-md border border-default bg-surface-base text-text-primary",
               "px-3 py-2 text-sm resize-none",
               "focus-visible:outline-none focus-visible:shadow-focus focus-visible:border-focus",
@@ -450,12 +494,12 @@ function ye({
       /* @__PURE__ */ e.jsxs("span", { className: "text-sm text-text-tertiary", children: [
         "Toplam:",
         " ",
-        /* @__PURE__ */ e.jsx("span", { className: "font-tabular font-semibold text-text-primary", children: typeof s.amount == "number" && s.amount > 0 ? L(s.amount, s.currency) : "—" })
+        /* @__PURE__ */ e.jsx("span", { className: "font-tabular font-semibold text-text-primary", children: typeof s.amount == "number" && s.amount > 0 ? O(s.amount, s.currency) : "—" })
       ] }),
       /* @__PURE__ */ e.jsxs("div", { className: "flex gap-2", children: [
-        /* @__PURE__ */ e.jsx(T.Close, { asChild: !0, children: /* @__PURE__ */ e.jsx(C, { type: "button", variant: "ghost", size: "md", children: "İptal" }) }),
+        /* @__PURE__ */ e.jsx(T.Close, { asChild: !0, children: /* @__PURE__ */ e.jsx(N, { type: "button", variant: "ghost", size: "md", children: "İptal" }) }),
         /* @__PURE__ */ e.jsx(
-          C,
+          N,
           {
             type: "submit",
             variant: "primary",
@@ -469,51 +513,51 @@ function ye({
     ] })
   ] }) }) });
 }
-function y({ label: t, required: a, confidence: n, children: i }) {
-  const o = n != null && n < 0.95, s = n != null && n < j;
+function k({ label: t, required: a, confidence: n, children: i }) {
+  const o = n != null && n < 0.95, s = n != null && n < w;
   return /* @__PURE__ */ e.jsxs("label", { className: "flex flex-col gap-1.5", children: [
     /* @__PURE__ */ e.jsxs("span", { className: "flex items-center justify-between gap-2", children: [
       /* @__PURE__ */ e.jsxs("span", { className: "text-sm font-medium text-text-secondary", children: [
         t,
         a && /* @__PURE__ */ e.jsx("span", { className: "text-text-negative ml-0.5", children: "*" })
       ] }),
-      o && /* @__PURE__ */ e.jsx(ne, { score: n, showLabel: !1, size: "sm" })
+      o && /* @__PURE__ */ e.jsx(A, { score: n, showLabel: !1, size: "sm" })
     ] }),
     i,
     s && /* @__PURE__ */ e.jsx("span", { className: "text-xs text-text-warning", children: "AI bu alandan emin değil — doğrula." })
   ] });
 }
-function Y(t) {
-  var n, i, o, s, c, r;
+function G(t) {
+  var n, i, o, s, l, r;
   const a = (t == null ? void 0 : t.fields) ?? {};
   return {
     amount: ((n = a.amount) == null ? void 0 : n.value) ?? "",
     currency: ((i = a.currency) == null ? void 0 : i.value) ?? "TRY",
     date: ((o = a.date) == null ? void 0 : o.value) ?? (/* @__PURE__ */ new Date()).toISOString().slice(0, 10),
     vendor: ((s = a.vendor) == null ? void 0 : s.value) ?? "",
-    category: ((c = a.category) == null ? void 0 : c.value) ?? "",
+    category: ((l = a.category) == null ? void 0 : l.value) ?? "",
     taxRate: ((r = a.taxRate) == null ? void 0 : r.value) ?? 20,
     note: ""
   };
 }
-function je({ result: t, onAddAnother: a, onClose: n }) {
+function Ce({ result: t, onAddAnother: a, onClose: n }) {
   return /* @__PURE__ */ e.jsxs("div", { className: "flex flex-col items-center justify-center gap-4 py-12 px-6 text-center", children: [
-    /* @__PURE__ */ e.jsx(ke, {}),
+    /* @__PURE__ */ e.jsx(Se, {}),
     /* @__PURE__ */ e.jsxs("div", { children: [
       /* @__PURE__ */ e.jsx("h2", { className: "text-xl font-semibold text-text-primary", children: "Masraf gönderildi" }),
       /* @__PURE__ */ e.jsxs("p", { className: "text-sm text-text-secondary mt-1", children: [
-        (t == null ? void 0 : t.amount) && L(t.amount, t.currency || "TRY"),
+        (t == null ? void 0 : t.amount) && O(t.amount, t.currency || "TRY"),
         (t == null ? void 0 : t.vendor) && ` · ${t.vendor}`
       ] }),
       /* @__PURE__ */ e.jsx("p", { className: "text-xs text-text-tertiary mt-1", children: "Onaya gitti. Bildirim ile durumu takip edebilirsin." })
     ] }),
     /* @__PURE__ */ e.jsxs("div", { className: "flex flex-col gap-2 w-full max-w-xs", children: [
-      /* @__PURE__ */ e.jsx(C, { variant: "primary", size: "lg", onClick: a, children: "Bir tane daha çek" }),
-      /* @__PURE__ */ e.jsx(C, { variant: "ghost", size: "md", onClick: n, children: "Bitir" })
+      /* @__PURE__ */ e.jsx(N, { variant: "primary", size: "lg", onClick: a, children: "Bir tane daha çek" }),
+      /* @__PURE__ */ e.jsx(N, { variant: "ghost", size: "md", onClick: n, children: "Bitir" })
     ] })
   ] });
 }
-const ke = () => /* @__PURE__ */ e.jsxs(
+const Se = () => /* @__PURE__ */ e.jsxs(
   "svg",
   {
     width: "64",
@@ -532,80 +576,80 @@ const ke = () => /* @__PURE__ */ e.jsxs(
     ]
   }
 );
-function we() {
-  return q({
-    mutationFn: (t) => H.ocr(t)
+function Ne() {
+  return $({
+    mutationFn: (t) => Q.ocr(t)
   });
 }
-function Ce() {
-  return q({
-    mutationFn: (t) => H.submit(t),
+function Me() {
+  return $({
+    mutationFn: (t) => Q.submit(t),
     retry: !1
     /* Finansal işlem — duplicate önlenir */
   });
 }
-const b = { CAPTURE: "capture", OCR: "ocr", FORM: "form", SUCCESS: "success" }, Se = 1500;
-function Te() {
-  const [t, a] = d.useState(b.CAPTURE), [n, i] = d.useState(null), [o, s] = d.useState(null), c = we(), r = Ce(), x = G(), v = d.useCallback(async (f) => {
-    n && URL.revokeObjectURL(n), i(URL.createObjectURL(f)), a(b.OCR);
+const g = { CAPTURE: "capture", OCR: "ocr", FORM: "form", SUCCESS: "success" }, Te = 1500;
+function Le() {
+  const [t, a] = d.useState(g.CAPTURE), [n, i] = d.useState(null), [o, s] = d.useState(null), l = Ne(), r = Me(), u = V(), b = d.useCallback(async (f) => {
+    n && URL.revokeObjectURL(n), i(URL.createObjectURL(f)), a(g.OCR);
     try {
-      await c.mutateAsync(f), a(b.FORM);
+      await l.mutateAsync(f), a(g.FORM);
     } catch {
-      x.warning("Otomatik okuma başarısız", {
+      u.warning("Otomatik okuma başarısız", {
         description: "Alanları manuel girebilirsin."
-      }), a(b.FORM);
+      }), a(g.FORM);
     }
-  }, [n, c, x]), m = d.useCallback(() => {
-    n && URL.revokeObjectURL(n), i(null), s(null), c.reset(), r.reset(), a(b.CAPTURE);
-  }, [n, c, r]), k = d.useCallback(async (f) => {
+  }, [n, l, u]), m = d.useCallback(() => {
+    n && URL.revokeObjectURL(n), i(null), s(null), l.reset(), r.reset(), a(g.CAPTURE);
+  }, [n, l, r]), p = d.useCallback(async (f) => {
     try {
       const h = await r.mutateAsync(f);
-      s(h), a(b.SUCCESS), x.success("Masraf kaydedildi", {
-        description: `${L(f.amount, f.currency)} — ${f.vendor || "Kayıt"}`
+      s(h), a(g.SUCCESS), u.success("Masraf kaydedildi", {
+        description: `${O(f.amount, f.currency)} — ${f.vendor || "Kayıt"}`
       }), setTimeout(() => {
         m();
-      }, Se);
+      }, Te);
     } catch (h) {
-      x.error("Kayıt başarısız", {
+      u.error("Kayıt başarısız", {
         description: (h == null ? void 0 : h.message) ?? "Tekrar deneyebilirsin."
       });
     }
-  }, [r, x, m]), g = d.useCallback(() => {
+  }, [r, u, m]), j = d.useCallback(() => {
     n && URL.revokeObjectURL(n), window.location.href = "/Dashboard";
   }, [n]);
   return /* @__PURE__ */ e.jsxs("div", { className: "min-h-screen bg-surface-base text-text-primary", children: [
     /* @__PURE__ */ e.jsxs("header", { className: "sticky top-0 z-sticky bg-surface-raised/95 backdrop-blur-sm border-b border-default px-4 py-3 flex items-center justify-between", children: [
       /* @__PURE__ */ e.jsx("h1", { className: "text-base font-semibold", children: "Masraf Yakala" }),
-      /* @__PURE__ */ e.jsx(ie, {})
+      /* @__PURE__ */ e.jsx(de, {})
     ] }),
     /* @__PURE__ */ e.jsxs("main", { className: "max-w-2xl mx-auto p-4", children: [
-      t === b.CAPTURE && /* @__PURE__ */ e.jsx(ue, { onFile: v }),
-      t === b.OCR && /* @__PURE__ */ e.jsx(fe, { previewUrl: n }),
-      t === b.SUCCESS && /* @__PURE__ */ e.jsx(
-        je,
+      t === g.CAPTURE && /* @__PURE__ */ e.jsx(fe, { onFile: b }),
+      t === g.OCR && /* @__PURE__ */ e.jsx(be, { previewUrl: n }),
+      t === g.SUCCESS && /* @__PURE__ */ e.jsx(
+        Ce,
         {
           result: o,
           onAddAnother: m,
-          onClose: g
+          onClose: j
         }
       )
     ] }),
     /* @__PURE__ */ e.jsx(
-      ye,
+      we,
       {
-        open: t === b.FORM,
+        open: t === g.FORM,
         onOpenChange: (f) => {
-          f || a(b.CAPTURE);
+          f || a(g.CAPTURE);
         },
-        ocrResult: c.data,
-        onSubmit: k,
+        ocrResult: l.data,
+        onSubmit: p,
         isSubmitting: r.isPending
       }
     )
   ] });
 }
-ae();
-const W = document.getElementById("apya-expense-capture-root");
-W && J(W).render(
-  /* @__PURE__ */ e.jsx(ee, { children: /* @__PURE__ */ e.jsx(te, { children: /* @__PURE__ */ e.jsx(re, { children: /* @__PURE__ */ e.jsx(Te, {}) }) }) })
+oe();
+const H = document.getElementById("apya-expense-capture-root");
+H && ee(H).render(
+  /* @__PURE__ */ e.jsx(re, { children: /* @__PURE__ */ e.jsx(se, { children: /* @__PURE__ */ e.jsx(ie, { children: /* @__PURE__ */ e.jsx(Le, {}) }) }) })
 );

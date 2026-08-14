@@ -2,7 +2,7 @@ import { j as e, r as u, d as Ae, b as Ht } from "./react-vendor.js";
 /* empty css      */
 import { a as Ue } from "./QueryProvider.js";
 import { u as ie, a as le, b as xe } from "./query-vendor.js";
-import { D as Vt, l as Qt, e as st, B as ae, I as De, S as fe } from "./Dialog.js";
+import { D as Vt, i as Qt, g as st, B as ae, I as De, S as fe } from "./Dialog.js";
 import { C as ka } from "./Combobox.js";
 import { r as Ca } from "./httpClient.js";
 import { R as be, T as he, P as ge, C as ye, A as Ta, a as Zt, D as Da, b as Sa, c as $a, d as Ea } from "./ui-vendor.js";

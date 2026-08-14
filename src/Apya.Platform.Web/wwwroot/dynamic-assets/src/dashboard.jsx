@@ -5,7 +5,7 @@ import { QueryProvider } from './lib/api/QueryProvider';
 import { SignalRProvider } from './lib/realtime/SignalRProvider';
 import { DeviceModeProvider } from './lib/device';
 import { ToastProvider } from './lib/feedback';
-import { BentoDashboard } from './dashboard/BentoDashboard';
+import { DashboardRoot } from './dashboard/DashboardRoot';
 import { DashboardRealtimeBridge } from './dashboard/DashboardRealtimeBridge';
 import { registerServiceWorker } from './lib/pwa/registerServiceWorker';
 import './index.css';
@@ -27,7 +27,7 @@ registerServiceWorker();
  *                         (invalidation + conflict toast'ı için)
  *
  * DashboardRealtimeBridge — null render eden bridge component;
- * mapping'leri tek yerde tutar, BentoDashboard'ı kirletmez.
+ * mapping'leri tek yerde tutar, DashboardRoot'u kirletmez.
  */
 
 const rootElement = document.getElementById('apya-dashboard-root');
@@ -40,7 +40,7 @@ if (rootElement) {
                     <ToastProvider>
                         <SignalRProvider>
                             <DashboardRealtimeBridge />
-                            <BentoDashboard />
+                            <DashboardRoot />
                         </SignalRProvider>
                     </ToastProvider>
                 </QueryProvider>

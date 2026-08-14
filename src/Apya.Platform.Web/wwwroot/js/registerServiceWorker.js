@@ -1,80 +1,80 @@
-import { r as f, d as j, j as r } from "./react-vendor.js";
-import { c as u, t as m } from "./Dialog.js";
-const b = f.createContext(null), p = {
+import { r as l, d as p, j as s } from "./react-vendor.js";
+import { c as x } from "./Dialog.js";
+const g = l.createContext(null), m = {
   info: { ring: "border-default", icon: "text-text-secondary", accent: "bg-brand-500" },
   success: { ring: "border-positive-100", icon: "text-text-positive", accent: "bg-positive-500" },
   warning: { ring: "border-warning-100", icon: "text-text-warning", accent: "bg-warning-500" },
   error: { ring: "border-negative-100", icon: "text-text-negative", accent: "bg-negative-500" }
-}, k = 4e3, N = 1e4;
-let T = 0;
-function S({ children: e }) {
-  const [s, t] = f.useState([]), a = f.useRef(/* @__PURE__ */ new Map()), c = f.useCallback((n) => {
-    const i = a.current.get(n);
-    i && (clearTimeout(i), a.current.delete(n)), t((d) => d.filter((x) => x.id !== n));
-  }, []), o = f.useCallback((n) => {
-    const i = ++T, d = {
-      id: i,
-      type: n.type ?? "info",
-      message: n.message ?? "",
-      description: n.description,
-      action: n.action,
+}, v = 4e3, w = 1e4;
+let h = 0;
+function E({ children: e }) {
+  const [i, t] = l.useState([]), a = l.useRef(/* @__PURE__ */ new Map()), c = l.useCallback((r) => {
+    const n = a.current.get(r);
+    n && (clearTimeout(n), a.current.delete(r)), t((u) => u.filter((d) => d.id !== r));
+  }, []), o = l.useCallback((r) => {
+    const n = ++h, u = {
+      id: n,
+      type: r.type ?? "info",
+      message: r.message ?? "",
+      description: r.description,
+      action: r.action,
       /* { label, onClick } */
-      duration: n.duration ?? (n.action ? N : k)
+      duration: r.duration ?? (r.action ? w : v)
     };
-    if (t((x) => [...x, d]), d.duration > 0) {
-      const x = setTimeout(() => c(i), d.duration);
-      a.current.set(i, x);
+    if (t((d) => [...d, u]), u.duration > 0) {
+      const d = setTimeout(() => c(n), u.duration);
+      a.current.set(n, d);
     }
-    return i;
+    return n;
   }, [c]);
-  f.useEffect(() => () => {
+  l.useEffect(() => () => {
     a.current.forEach(clearTimeout), a.current.clear();
   }, []);
-  const l = j.useMemo(() => ({
+  const f = p.useMemo(() => ({
     show: o,
     dismiss: c,
-    info: (n, i = {}) => o({ ...i, type: "info", message: n }),
-    success: (n, i = {}) => o({ ...i, type: "success", message: n }),
-    warning: (n, i = {}) => o({ ...i, type: "warning", message: n }),
-    error: (n, i = {}) => o({ ...i, type: "error", message: n })
+    info: (r, n = {}) => o({ ...n, type: "info", message: r }),
+    success: (r, n = {}) => o({ ...n, type: "success", message: r }),
+    warning: (r, n = {}) => o({ ...n, type: "warning", message: r }),
+    error: (r, n = {}) => o({ ...n, type: "error", message: r })
   }), [o, c]);
-  return /* @__PURE__ */ r.jsxs(b.Provider, { value: l, children: [
+  return /* @__PURE__ */ s.jsxs(g.Provider, { value: f, children: [
     e,
-    /* @__PURE__ */ r.jsx(C, { items: s.slice(-3), onDismiss: c })
+    /* @__PURE__ */ s.jsx(b, { items: i.slice(-3), onDismiss: c })
   ] });
 }
-function C({ items: e, onDismiss: s }) {
-  return e.length === 0 ? null : /* @__PURE__ */ r.jsx(
+function b({ items: e, onDismiss: i }) {
+  return e.length === 0 ? null : /* @__PURE__ */ s.jsx(
     "div",
     {
       role: "region",
       "aria-label": "Bildirimler",
-      className: u(
+      className: x(
         "fixed bottom-4 right-4 z-toast",
         "flex flex-col-reverse gap-2",
         "pointer-events-none",
         /* viewport tıklamaları geçirir; tek tek toast'lar pointer-auto */
         "max-w-[calc(100vw-2rem)]"
       ),
-      children: e.map((t) => /* @__PURE__ */ r.jsx(E, { item: t, onDismiss: s }, t.id))
+      children: e.map((t) => /* @__PURE__ */ s.jsx(j, { item: t, onDismiss: i }, t.id))
     }
   );
 }
-function E({ item: e, onDismiss: s }) {
-  const t = p[e.type] ?? p.info, a = e.type === "error" ? "assertive" : "polite", c = () => {
-    var o, l;
+function j({ item: e, onDismiss: i }) {
+  const t = m[e.type] ?? m.info, a = e.type === "error" ? "assertive" : "polite", c = () => {
+    var o, f;
     try {
-      (l = (o = e.action) == null ? void 0 : o.onClick) == null || l.call(o);
+      (f = (o = e.action) == null ? void 0 : o.onClick) == null || f.call(o);
     } finally {
-      s(e.id);
+      i(e.id);
     }
   };
-  return /* @__PURE__ */ r.jsxs(
+  return /* @__PURE__ */ s.jsxs(
     "div",
     {
       role: e.type === "error" ? "alert" : "status",
       "aria-live": a,
-      className: u(
+      className: x(
         "pointer-events-auto",
         "flex items-stretch gap-0",
         "min-w-[280px] max-w-[420px]",
@@ -83,18 +83,18 @@ function E({ item: e, onDismiss: s }) {
         t.ring
       ),
       children: [
-        /* @__PURE__ */ r.jsx("span", { className: u("w-1 flex-none rounded-l-md", t.accent), "aria-hidden": "true" }),
-        /* @__PURE__ */ r.jsxs("div", { className: "flex-1 min-w-0 px-3 py-2.5 flex items-start gap-2", children: [
-          /* @__PURE__ */ r.jsxs("div", { className: "flex-1 min-w-0 flex flex-col gap-0.5", children: [
-            /* @__PURE__ */ r.jsx("p", { className: "text-sm font-medium text-text-primary truncate", children: e.message }),
-            e.description && /* @__PURE__ */ r.jsx("p", { className: "text-xs text-text-tertiary line-clamp-2", children: e.description })
+        /* @__PURE__ */ s.jsx("span", { className: x("w-1 flex-none rounded-l-md", t.accent), "aria-hidden": "true" }),
+        /* @__PURE__ */ s.jsxs("div", { className: "flex-1 min-w-0 px-3 py-2.5 flex items-start gap-2", children: [
+          /* @__PURE__ */ s.jsxs("div", { className: "flex-1 min-w-0 flex flex-col gap-0.5", children: [
+            /* @__PURE__ */ s.jsx("p", { className: "text-sm font-medium text-text-primary truncate", children: e.message }),
+            e.description && /* @__PURE__ */ s.jsx("p", { className: "text-xs text-text-tertiary line-clamp-2", children: e.description })
           ] }),
-          e.action && /* @__PURE__ */ r.jsx(
+          e.action && /* @__PURE__ */ s.jsx(
             "button",
             {
               type: "button",
               onClick: c,
-              className: u(
+              className: x(
                 "flex-none text-sm font-medium text-text-link",
                 "hover:underline underline-offset-2",
                 "focus-visible:outline-none focus-visible:shadow-focus rounded-sm"
@@ -102,18 +102,18 @@ function E({ item: e, onDismiss: s }) {
               children: e.action.label
             }
           ),
-          /* @__PURE__ */ r.jsx(
+          /* @__PURE__ */ s.jsx(
             "button",
             {
               type: "button",
-              onClick: () => s(e.id),
+              onClick: () => i(e.id),
               "aria-label": "Bildirimi kapat",
-              className: u(
+              className: x(
                 "flex-none text-text-tertiary hover:text-text-primary",
                 "focus-visible:outline-none focus-visible:shadow-focus rounded-sm",
                 "h-5 w-5 inline-flex items-center justify-center"
               ),
-              children: /* @__PURE__ */ r.jsx("span", { "aria-hidden": "true", children: "×" })
+              children: /* @__PURE__ */ s.jsx("span", { "aria-hidden": "true", children: "×" })
             }
           )
         ] })
@@ -121,57 +121,13 @@ function E({ item: e, onDismiss: s }) {
     }
   );
 }
-function L() {
-  const e = f.useContext(b);
+function N() {
+  const e = l.useContext(g);
   if (!e)
     throw new Error("useToast must be used within <ToastProvider>.");
   return e;
 }
-const h = {
-  sm: { dot: "h-1 w-1", gap: "gap-0.5" },
-  md: { dot: "h-1.5 w-1.5", gap: "gap-0.5" },
-  lg: { dot: "h-2 w-2", gap: "gap-1" }
-};
-function v(e) {
-  return typeof e != "number" || !Number.isFinite(e) ? 0 : e > 1 ? Math.max(0, Math.min(100, e)) / 100 : Math.max(0, Math.min(1, e));
-}
-function w(e) {
-  return e >= 0.85 ? { dots: 5, label: m("Ai:Confidence:VeryHigh", "Çok yüksek güven") } : e >= 0.7 ? { dots: 4, label: m("Ai:Confidence:High", "Yüksek güven") } : e >= 0.5 ? { dots: 3, label: m("Ai:Confidence:Medium", "Orta güven") } : e >= 0.3 ? { dots: 2, label: m("Ai:Confidence:Low", "Düşük güven") } : { dots: 1, label: m("Ai:Confidence:VeryLow", "Çok düşük güven") };
-}
-function y({ score: e, label: s, size: t = "md", showLabel: a = !0, className: c }) {
-  const o = v(e), l = w(o), n = h[t] ?? h.md, i = s ?? l.label, d = Math.round(o * 100);
-  return /* @__PURE__ */ r.jsxs(
-    "span",
-    {
-      className: u("inline-flex items-center gap-1 text-xs text-text-tertiary", c),
-      title: `${l.label} (%${d})`,
-      children: [
-        /* @__PURE__ */ r.jsx("span", { className: u("inline-flex items-center", n.gap), "aria-hidden": "true", children: Array.from({ length: 5 }, (x, g) => /* @__PURE__ */ r.jsx(
-          "span",
-          {
-            className: u(
-              "inline-block rounded-full",
-              n.dot,
-              g < l.dots ? "bg-ai-500" : "bg-neutral-200"
-            )
-          },
-          g
-        )) }),
-        a && /* @__PURE__ */ r.jsx("span", { "aria-hidden": "true", children: i }),
-        /* @__PURE__ */ r.jsxs("span", { className: "sr-only", children: [
-          "Güven düzeyi: ",
-          l.label,
-          " (%",
-          d,
-          ")"
-        ] })
-      ]
-    }
-  );
-}
-y.bandFor = w;
-y.normalize = v;
-function I({ onUpdate: e, onReady: s } = {}) {
+function k({ onUpdate: e, onReady: i } = {}) {
   typeof window > "u" || !("serviceWorker" in navigator) || (window.addEventListener("beforeinstallprompt", (t) => {
     t.preventDefault(), window.__apyaInstallPrompt = t;
   }), window.addEventListener("load", async () => {
@@ -180,17 +136,16 @@ function I({ onUpdate: e, onReady: s } = {}) {
       t.waiting && (e == null || e(t)), t.addEventListener("updatefound", () => {
         const a = t.installing;
         a && a.addEventListener("statechange", () => {
-          a.state === "installed" && navigator.serviceWorker.controller ? e == null || e(t) : a.state === "activated" && (s == null || s(t));
+          a.state === "installed" && navigator.serviceWorker.controller ? e == null || e(t) : a.state === "activated" && (i == null || i(t));
         });
-      }), s == null || s(t);
+      }), i == null || i(t);
     } catch (t) {
       console.warn("[SW] register failed:", t == null ? void 0 : t.message);
     }
   }));
 }
 export {
-  y as C,
-  S as T,
-  I as r,
-  L as u
+  E as T,
+  k as r,
+  N as u
 };
