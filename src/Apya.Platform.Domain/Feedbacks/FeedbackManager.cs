@@ -111,7 +111,7 @@ public class FeedbackManager : DomainService
             feedback,
             submitterUserId,
             NotificationType.FeedbackReceived,
-            "🙏 Geri bildiriminiz alındı",
+            "Geri bildiriminiz alındı",
             $"Bildiriminiz {feedback.FeedbackNumber} numarasıyla alındı. Gelişmeleri \"Geri Bildirimlerim\" sayfasından takip edebilirsiniz.");
 
         return feedback;
@@ -276,7 +276,7 @@ public class FeedbackManager : DomainService
                 feedback,
                 feedback.CreatorId,
                 NotificationType.FeedbackResponded,
-                "💬 Geri bildiriminize cevap geldi",
+                "Geri bildiriminize cevap geldi",
                 $"\"{feedback.Subject}\": {Shorten(comment.Text)}");
         }
 
@@ -452,7 +452,7 @@ public class FeedbackManager : DomainService
         return userStatus switch
         {
             FeedbackUserStatus.InReview => (
-                "🔍 Geri bildiriminiz inceleniyor",
+                "Geri bildiriminiz inceleniyor",
                 $"{feedback.FeedbackNumber} — \"{feedback.Subject}\" incelemeye alındı."),
 
             FeedbackUserStatus.NeedsInfo => (
@@ -460,23 +460,23 @@ public class FeedbackManager : DomainService
                 $"{feedback.FeedbackNumber} — \"{feedback.Subject}\" için sorularımız var. Lütfen \"Geri Bildirimlerim\" sayfasından cevaplayın."),
 
             FeedbackUserStatus.Planned => (
-                "🗺️ Geri bildiriminiz planlandı",
+                "Geri bildiriminiz planlandı",
                 $"{feedback.FeedbackNumber} — \"{feedback.Subject}\" geliştirme planına alındı."),
 
             FeedbackUserStatus.InProgress => (
-                "🔧 Geri bildiriminiz geliştiriliyor",
+                "Geri bildiriminiz geliştiriliyor",
                 $"{feedback.FeedbackNumber} — \"{feedback.Subject}\" üzerinde çalışılıyor."),
 
             FeedbackUserStatus.Completed => (
-                "✅ Geri bildiriminiz tamamlandı",
+                "Geri bildiriminiz tamamlandı",
                 $"{feedback.FeedbackNumber} — \"{feedback.Subject}\" için bildirdiğiniz konu tamamlandı."),
 
             FeedbackUserStatus.Released => (
-                "🚀 Geri bildiriminiz yayında",
+                "Geri bildiriminiz yayında",
                 $"{feedback.FeedbackNumber} — \"{feedback.Subject}\" ile ilgili geliştirme yayına alındı."),
 
             FeedbackUserStatus.Closed => (
-                "ℹ️ Geri bildiriminiz kapatıldı",
+                "Geri bildiriminiz kapatıldı",
                 $"{feedback.FeedbackNumber} — \"{feedback.Subject}\" şimdilik kapsam dışında bırakıldı."),
 
             // Received'a geri dönüş yönetimsel düzeltmedir; kullanıcıyı ilgilendirmez.

@@ -146,6 +146,7 @@ namespace Apya.Platform.EntityFrameworkCore
 
         /* --- BİLDİRİM MODÜLÜ --- */
         public DbSet<Notification> Notifications { get; set; }
+        public DbSet<NotificationPreference> NotificationPreferences { get; set; }
 
         /* --- GERİ BİLDİRİM MODÜLÜ --- */
         public DbSet<Feedback> Feedbacks { get; set; }
@@ -758,9 +759,23 @@ namespace Apya.Platform.EntityFrameworkCore
                 b.Property(x => x.Title).IsRequired().HasMaxLength(NotificationConsts.MaxTitleLength);
                 b.Property(x => x.Body).HasMaxLength(NotificationConsts.MaxBodyLength);
                 b.Property(x => x.EntityType).HasMaxLength(NotificationConsts.MaxEntityType);
+                b.Property(x => x.GroupKey).HasMaxLength(NotificationConsts.MaxGroupKey);
+                b.Property(x => x.ActorName).HasMaxLength(NotificationConsts.MaxActorName);
                 // Performans için index
                 b.HasIndex(x => new { x.UserId, x.IsRead });
                 b.HasIndex(x => x.CreationTime);
+                // Kategori sekmeleri ve önem sıralaması bu index üzerinden okunur
+                b.HasIndex(x => new { x.UserId, x.Category, x.IsRead });
+                // Gruplama: aynı kayda ait okunmamış bildirimin aranması
+                b.HasIndex(x => new { x.UserId, x.GroupKey, x.IsRead });
+            });
+
+            builder.Entity<NotificationPreference>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "NotificationPreferences", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+                // Kullanıcı başına kategori başına tek satır; her bildirimde okunuyor
+                b.HasIndex(x => new { x.UserId, x.Category }).IsUnique();
             });
 
             /* --- TAKVİM MODÜLÜ YAPILANDIRMASI --- */

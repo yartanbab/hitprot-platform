@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Volo.Abp.Application.Dtos;
 using Volo.Abp.Application.Services;
@@ -13,11 +14,26 @@ public interface INotificationAppService : IApplicationService
     /// <summary>Okunmamış bildirim sayısını döner (navbar badge için).</summary>
     Task<int> GetUnreadCountAsync();
 
+    /// <summary>Rozet, "Önemli" bölümü ve kategori ağacı için tek çağrılık özet.</summary>
+    Task<NotificationSummaryDto> GetSummaryAsync();
+
     /// <summary>Belirtilen bildirimi okundu olarak işaretler.</summary>
     Task MarkAsReadAsync(Guid id);
 
     /// <summary>Tüm okunmamış bildirimleri okundu yapar.</summary>
     Task MarkAllAsReadAsync();
+
+    /// <summary>Yalnızca verilen kategorideki okunmamışları okundu yapar.</summary>
+    Task MarkCategoryAsReadAsync(NotificationCategory category);
+
+    /// <summary>Okunmuş bildirimleri toplu siler ("Okunmuşları temizle").</summary>
+    Task<int> DeleteReadAsync();
+
+    /// <summary>Tüm kategoriler için etkin kanal tercihleri (kayıt yoksa varsayılan).</summary>
+    Task<List<NotificationPreferenceDto>> GetPreferencesAsync();
+
+    /// <summary>Bir kategorinin kanal tercihini kaydeder.</summary>
+    Task UpdatePreferenceAsync(UpdateNotificationPreferenceInput input);
 
     /// <summary>Bildirimi siler (soft delete).</summary>
     Task DeleteAsync(Guid id);

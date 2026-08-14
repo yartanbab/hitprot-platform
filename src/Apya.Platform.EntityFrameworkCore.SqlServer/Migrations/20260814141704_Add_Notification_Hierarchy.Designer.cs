@@ -4,6 +4,7 @@ using Apya.Platform.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Volo.Abp.EntityFrameworkCore;
 
@@ -12,9 +13,11 @@ using Volo.Abp.EntityFrameworkCore;
 namespace Apya.Platform.Migrations
 {
     [DbContext(typeof(PlatformDbContext))]
-    partial class PlatformDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260814141704_Add_Notification_Hierarchy")]
+    partial class Add_Notification_Hierarchy
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -3927,65 +3930,6 @@ namespace Apya.Platform.Migrations
                     b.ToTable("AppNotifications", (string)null);
                 });
 
-            modelBuilder.Entity("Apya.Platform.Notifications.NotificationPreference", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<int>("Category")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("CreationTime")
-                        .HasColumnType("datetime2")
-                        .HasColumnName("CreationTime");
-
-                    b.Property<Guid?>("CreatorId")
-                        .HasColumnType("uniqueidentifier")
-                        .HasColumnName("CreatorId");
-
-                    b.Property<Guid?>("DeleterId")
-                        .HasColumnType("uniqueidentifier")
-                        .HasColumnName("DeleterId");
-
-                    b.Property<DateTime?>("DeletionTime")
-                        .HasColumnType("datetime2")
-                        .HasColumnName("DeletionTime");
-
-                    b.Property<bool>("Email")
-                        .HasColumnType("bit");
-
-                    b.Property<bool>("InApp")
-                        .HasColumnType("bit");
-
-                    b.Property<bool>("IsDeleted")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bit")
-                        .HasDefaultValue(false)
-                        .HasColumnName("IsDeleted");
-
-                    b.Property<DateTime?>("LastModificationTime")
-                        .HasColumnType("datetime2")
-                        .HasColumnName("LastModificationTime");
-
-                    b.Property<Guid?>("LastModifierId")
-                        .HasColumnType("uniqueidentifier")
-                        .HasColumnName("LastModifierId");
-
-                    b.Property<Guid?>("TenantId")
-                        .HasColumnType("uniqueidentifier")
-                        .HasColumnName("TenantId");
-
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("UserId", "Category")
-                        .IsUnique();
-
-                    b.ToTable("AppNotificationPreferences", (string)null);
-                });
-
             modelBuilder.Entity("Apya.Platform.Projects.BoardColumn", b =>
                 {
                     b.Property<Guid>("Id")
@@ -5162,27 +5106,6 @@ namespace Apya.Platform.Migrations
                         .IsUnique();
 
                     b.ToTable("AppPlatformPackageFeatures", (string)null);
-                });
-
-            modelBuilder.Entity("Apya.Platform.Tenants.PlatformPackagePermission", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid>("PackageId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("PermissionName")
-                        .IsRequired()
-                        .HasMaxLength(128)
-                        .HasColumnType("nvarchar(128)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("PackageId", "PermissionName")
-                        .IsUnique();
-
-                    b.ToTable("AppPlatformPackagePermissions", (string)null);
                 });
 
             modelBuilder.Entity("Apya.Platform.Tenants.TenantProfile", b =>
@@ -7342,15 +7265,6 @@ namespace Apya.Platform.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("Apya.Platform.Tenants.PlatformPackagePermission", b =>
-                {
-                    b.HasOne("Apya.Platform.Tenants.PlatformPackage", null)
-                        .WithMany("Permissions")
-                        .HasForeignKey("PackageId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
             modelBuilder.Entity("Volo.Abp.AuditLogging.AuditLogAction", b =>
                 {
                     b.HasOne("Volo.Abp.AuditLogging.AuditLog", null)
@@ -7571,8 +7485,6 @@ namespace Apya.Platform.Migrations
             modelBuilder.Entity("Apya.Platform.Tenants.PlatformPackage", b =>
                 {
                     b.Navigation("Features");
-
-                    b.Navigation("Permissions");
                 });
 
             modelBuilder.Entity("Volo.Abp.AuditLogging.AuditLog", b =>

@@ -133,9 +133,7 @@ public class PlatformPermissionDefinitionProvider : PermissionDefinitionProvider
         // ============================================================
         var systemGroup = context.AddGroup(PlatformPermissions.Groups.System, L("Permission:Group:System"));
 
-        var notificationsPermission = systemGroup.AddPermission(PlatformPermissions.Notifications.Default, L("Permission:Notifications"));
-        notificationsPermission.AddChild(PlatformPermissions.Notifications.MarkRead, L("Permission:Notifications.MarkRead"));
-        notificationsPermission.AddChild(PlatformPermissions.Notifications.Delete, L("Permission:Notifications.Delete"));
+        systemGroup.AddPermission(PlatformPermissions.Notifications.Default, L("Permission:Notifications"));
 
         var calendarsPermission = systemGroup.AddPermission(PlatformPermissions.Calendars.Default, L("Permission:Calendars"));
         calendarsPermission.RequireFeatures(PlatformFeatures.Calendar);
