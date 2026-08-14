@@ -19,4 +19,11 @@ public interface IShellAppService : IApplicationService
     /// Sunucuda saklanır ki cihazlar arası taşınsın.
     /// </summary>
     Task<List<string>> SetPinsAsync(List<string> pins);
+
+    /// <summary>
+    /// Kayıtlı görünümleri topluca değiştirir — ekleme, yeniden adlandırma ve
+    /// silme aynı çağrıdan geçer (istemci tam listeyi gönderir). Sunucuda
+    /// saklanır ki cihazlar arası taşınsın.
+    /// </summary>
+    Task<List<ShellSavedViewDto>> SetSavedViewsAsync(List<ShellSavedViewDto> views);
 }

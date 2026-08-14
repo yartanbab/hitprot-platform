@@ -123,6 +123,30 @@ $(function () {
     }
 
     // =========================================================================
+    // "Kullanıcı Ekle"
+    // Handoff'ta bu düğme "Davet et" diye geçiyor; projede davet akışı
+    // (e-posta + token) YOK, düğme ABP Identity'nin kullanıcı oluşturma
+    // modalını açıyor. Etiket gerçekte yapılan işi söyler — "Davet et" deyip
+    // kullanıcı oluşturmak yanlış söz olurdu (kullanıcı kararı 2026-08-14).
+    // Yetkisi olmayanda DOM'da hiç bulunmaz (gizlenmez).
+    // =========================================================================
+    function buildInviteButton() {
+        if (!state || !state.can || !state.can.createUser) { return; }
+
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'apya-shell-invite';
+        btn.innerHTML = svg('<path d="M13 15.5v-1a3 3 0 00-3-3H6a3 3 0 00-3 3v1"></path>' +
+                            '<circle cx="8" cy="6.5" r="2.5"></circle>' +
+                            '<path d="M15 6.5v4M17 8.5h-4"></path>', 15, 1.7) +
+                        '<span class="apya-shell-invite-label">Kullanıcı Ekle</span>';
+        btn.title = 'Kullanıcı Ekle';
+        btn.setAttribute('aria-label', 'Kullanıcı Ekle');
+        btn.addEventListener('click', function () { openModal('/Identity/Users/CreateModal'); });
+        content.appendChild(btn);
+    }
+
+    // =========================================================================
     // Yardım
     // =========================================================================
     function buildHelpMenu() {
@@ -397,6 +421,6 @@ $(function () {
     });
 
     (window.apyaShellState || Promise.resolve(null))
-        .then(function (s) { state = s; buildNewMenu(); buildHelpMenu(); buildAvatarMenu(); })
+        .then(function (s) { state = s; buildInviteButton(); buildNewMenu(); buildHelpMenu(); buildAvatarMenu(); })
         .catch(function () { buildHelpMenu(); buildAvatarMenu(); });
 });

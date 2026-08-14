@@ -35,6 +35,17 @@ public static class PlatformSettings
         /// sabitlemeler kaybolmasın.
         /// </summary>
         public const string Pins = Prefix + ".Shell.Pins";
+
+        /// <summary>
+        /// Kullanıcının kayıtlı görünümleri — JSON dizi:
+        /// <c>[{"n":"Geciken işler","s":"/Tasks","q":"gecikmis=1"}]</c>
+        /// Bir görünüm, ekranın FİLTRE URL'İNİN adlandırılmış anlık görüntüsüdür.
+        /// Konsol filtrelerini zaten URL'e yazıp açılışta oradan okuduğu için
+        /// ayrı bir şema (tablo) gerekmez ve modüle kuplaj oluşmaz.
+        /// Ayar değeri sınırlı uzunlukta → adet ve ad uzunluğu kısıtlanır
+        /// (bkz. PlatformSettingDefaults.ShellSavedViews*).
+        /// </summary>
+        public const string SavedViews = Prefix + ".Shell.SavedViews";
     }
 
     public static class Telemetry
@@ -120,6 +131,18 @@ public static class PlatformSettingDefaults
 
     /// <summary>Sabitlenebilir en fazla öğe — liste kenar çubuğunu boğmasın.</summary>
     public const int ShellPinsMax = 12;
+
+    /// <summary>Kayıtlı görünüm varsayılanı: boş liste — hazır görünüm uydurmuyoruz.</summary>
+    public const string ShellSavedViews = "[]";
+
+    /// <summary>En fazla kayıtlı görünüm — ayar değeri sınırlı uzunlukta.</summary>
+    public const int ShellSavedViewsMax = 12;
+
+    /// <summary>Görünüm adı üst sınırı — hem UI hem ayar boyutu için.</summary>
+    public const int ShellSavedViewNameMax = 40;
+
+    /// <summary>Saklanan filtre sorgusu üst sınırı (karakter).</summary>
+    public const int ShellSavedViewQueryMax = 400;
 
     /// <summary>Giriş ekranı kiracı seçicisi varsayılanı: KAPALI (yalnız kullanıcı girişi).</summary>
     public const bool   AccountShowTenantSwitch   = false;

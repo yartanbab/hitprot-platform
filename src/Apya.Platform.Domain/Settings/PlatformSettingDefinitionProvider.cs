@@ -40,6 +40,15 @@ public class PlatformSettingDefinitionProvider : SettingDefinitionProvider
                 description: L("Setting:Shell.Pins.Description"))
         );
 
+        // Kayıtlı görünümler — Pins ile aynı ray (kullanıcı seviyesi, JSON değer).
+        context.Add(
+            new SettingDefinition(
+                PlatformSettings.Shell.SavedViews,
+                defaultValue: PlatformSettingDefaults.ShellSavedViews,
+                displayName: L("Setting:Shell.SavedViews"),
+                description: L("Setting:Shell.SavedViews.Description"))
+        );
+
         // --- Telemetri ---
         // Global (host) ayarları: tenant'lar değiştiremez.
         context.Add(
