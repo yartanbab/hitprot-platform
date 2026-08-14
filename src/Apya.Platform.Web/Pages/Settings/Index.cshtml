@@ -49,6 +49,29 @@
                 </div>
             </fieldset>
 
+            <fieldset class="mb-3">
+                <legend class="form-label mb-1">@L["Settings:ProjectsView.Label"]</legend>
+                <div class="form-text mb-2">@L["Settings:ProjectsView.Help"]</div>
+
+                <div class="form-check mb-2">
+                    <input class="form-check-input" type="radio" name="ProjectsDefaultView" id="projview-card"
+                           value="card" checked="@(Model.ProjectsDefaultView != "list")" />
+                    <label class="form-check-label" for="projview-card">
+                        <strong>@L["Settings:ProjectsView.Card"]</strong>
+                        <div class="text-muted small">@L["Settings:ProjectsView.Card.Desc"]</div>
+                    </label>
+                </div>
+
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" name="ProjectsDefaultView" id="projview-list"
+                           value="list" checked="@(Model.ProjectsDefaultView == "list")" />
+                    <label class="form-check-label" for="projview-list">
+                        <strong>@L["Settings:ProjectsView.List"]</strong>
+                        <div class="text-muted small">@L["Settings:ProjectsView.List.Desc"]</div>
+                    </label>
+                </div>
+            </fieldset>
+
             <button type="submit" class="btn btn-primary">@L["Settings:Save"]</button>
         </form>
     </abp-card-body>

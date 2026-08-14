@@ -22,6 +22,21 @@ public static class PlatformSettings
     }
 
     /// <summary>
+    /// Projeler listesi tercihleri — kullanıcı seviyesinde, TaskDetail.Ui ile aynı ray.
+    /// </summary>
+    public static class Projects
+    {
+        /// <summary>
+        /// Projeler ekranının açılış görünümü. Kullanıcı seviyesinde saklanır.
+        ///   "card" → kart ızgarası (VARSAYILAN)
+        ///   "list" → yoğun liste
+        /// Araç çubuğundaki liste ⇄ kart anahtarı bunu o cihazda ezer (localStorage);
+        /// buradaki değer localStorage boşken geçerli olan varsayılandır.
+        /// </summary>
+        public const string DefaultView = Prefix + ".Projects.DefaultView";
+    }
+
+    /// <summary>
     /// Uygulama kabuğu (sol menü + üst bar) tercihleri — kullanıcı seviyesinde.
     /// Yerleşim durumları (bölüm katlama, ray modu) localStorage'da yeterli;
     /// burada YALNIZ cihazlar arası taşınması gerekenler tutulur.
@@ -121,6 +136,12 @@ public static class PlatformSettingDefaults
 
     /// <summary>Geçerli görev detay arayüzü değerleri — form manipülasyonuna karşı beyaz liste.</summary>
     public static readonly string[] TaskDetailUiValues = { "v1", "v2", "v3" };
+
+    /// <summary>Projeler ekranı varsayılan görünümü: kart ızgarası.</summary>
+    public const string ProjectsDefaultView = "card";
+
+    /// <summary>Geçerli Projeler görünüm değerleri — form manipülasyonuna karşı beyaz liste.</summary>
+    public static readonly string[] ProjectsDefaultViewValues = { "card", "list" };
 
     /// <summary>
     /// Sabitlenen menü öğeleri varsayılanı — handoff'un "varsayılan: Kasa & Banka,

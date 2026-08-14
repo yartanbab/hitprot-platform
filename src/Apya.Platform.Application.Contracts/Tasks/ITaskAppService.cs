@@ -48,6 +48,15 @@ namespace Apya.Platform.Tasks
         Task DeleteAttachmentAsync(Guid attachmentId);
         Task UpdateStatusAsync(Guid id, Apya.Platform.Tasks.TaskStatus status);
 
+        /// <summary>
+        /// Görevin son tarihini <paramref name="days"/> gün ileri alır ("Ötele").
+        /// Son tarihi olmayan görev bugünden itibaren tarihlenir. Yalnız DueDate'e
+        /// dokunur — tam DTO ile UpdateAsync round-trip'i etiket/bağımlılık/planlama
+        /// alanlarını riske atacağı için ayrı metot (UpdateStatusAsync ile aynı desen).
+        /// Güncellenen görevi döner ki istemci yeni tarihi tekrar sormadan gösterebilsin.
+        /// </summary>
+        Task<TaskDto> DeferAsync(Guid id, int days);
+
         // Feature Registry (Faz 3)
         Task<List<string>> GetFeatureAssignmentsAsync(Guid taskId);
         Task AddFeatureAsync(Guid taskId, string featureCode);
