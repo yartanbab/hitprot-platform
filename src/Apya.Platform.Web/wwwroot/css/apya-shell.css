@@ -4128,3 +4128,43 @@ i.apya-priority-dot {
         width: var(--apya-sidebar-w-collapsed) !important;
     }
 }
+
+/* ============================================================================
+   RAY MODU — MARKA İŞARETİ
+   ----------------------------------------------------------------------------
+   Rayda marka metni (.lpx-brand-name "Apya PLATFORM") gizleniyor; projede
+   görsel bir logo dosyası olmadığı için (marka bir WORDMARK) üst 72px'lik
+   alan bomboş kalıyordu. LeptonX'in `--lpx-logo-icon` yolu da bir resim
+   bekliyor, bizde yok.
+
+   Çözüm: kompakt "A" işareti — kiracı pilindeki baş harf kutusuyla AYNI
+   görsel dil (kare, yuvarlatılmış, tek harf), yalnız aksan renginde.
+   Salt CSS: markup ya da resim varlığı eklemeye gerek yok.
+   ============================================================================ */
+@media (min-width: 1200px) {
+    html[data-sidebar="collapsed"] #lpx-wrapper .lpx-sidebar-container:not(:hover) .lpx-logo-container {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    html[data-sidebar="collapsed"] #lpx-wrapper .lpx-sidebar-container:not(:hover) .lpx-logo-container::after {
+        content: "A";
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 32px;
+        height: 32px;
+        border-radius: var(--apya-radius-lg);
+        background: var(--apya-accent-500);
+        color: var(--apya-text-inverse);
+        font-family: var(--apya-font-sans);
+        font-size: 15px;
+        font-weight: var(--apya-weight-bold);
+        letter-spacing: -0.03em;
+        line-height: 1;
+    }
+    /* Daralt/genişlet düğmesi rayda zaten gizli; işaret ortada tek başına dursun. */
+    html[data-sidebar="collapsed"] #lpx-wrapper .lpx-sidebar-container:not(:hover) .lpx-logo-container > * {
+        display: none !important;
+    }
+}
