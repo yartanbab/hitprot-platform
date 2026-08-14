@@ -69,4 +69,9 @@ public class ProjectDto : AuditedEntityDto<Guid>
     /// <summary>Tamamlanmamış görevler arasındaki en yakın son tarih; yoksa null.
     /// Gecikme olmayan kartta "sonraki 20.09" metnini besler.</summary>
     public DateTime? NextDueDate { get; set; }
+
+    /// <summary>Projede mevcut kullanıcıya atanmış en az bir görev var mı?
+    /// Projeler listesindeki "Saha görünümü" (yalnız bana atananlar) kapsamı bunu
+    /// kullanır; oturumsuz/atamasız durumda false.</summary>
+    public bool IsAssignedToMe { get; set; }
 }

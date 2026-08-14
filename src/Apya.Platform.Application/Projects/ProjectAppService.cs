@@ -176,7 +176,7 @@ public class ProjectAppService :
                 foreach (var dto in dtos)
                 {
                     EnrichBudget(dto, allTaskItems, allLogs, canViewBudget);
-                    EnrichProgressAndRisk(dto, allTasks.Where(t => t.ProjectId == dto.Id).ToList(), now);
+                    EnrichProgressAndRisk(dto, allTasks.Where(t => t.ProjectId == dto.Id).ToList(), now, CurrentUser.Id);
 
                     if (CurrentTenant.Id == null)
                         dto.TenantName = dto.TenantId.HasValue
@@ -345,7 +345,7 @@ public class ProjectAppService :
     /// Kart/KPI için görev-bazlı türetilmiş alanlar. IsApproved KULLANILMAZ (hiçbir yerden
     /// set edilmiyor, fiilen ölü kod) — durum StartDate/görev-tamamlanma/risk skorundan türetilir.
     /// </summary>
-    private static void EnrichProgressAndRisk(ProjectDto dto, List<Apya.Platform.Tasks.TaskDto> projectTasks, DateTime now)
+    private static void EnrichProgressAndRisk(ProjectDto dto, List<Apya.Platform.Tasks.TaskDto> projectTasks, DateTime now, Guid? currentUserId = null)
     {
         var time = ProjectMetricsCalculator.CalculateTimeMetrics(dto, projectTasks, now);
         var risk = ProjectMetricsCalculator.CalculateAiRisk(dto, projectTasks, now);
@@ -381,6 +381,8 @@ public class ProjectAppService :
             .ToList();
         dto.AssigneeCount = assignees.Count;
         dto.AssigneeInitials = assignees.Take(5).Select(ToInitials).ToList();
+        dto.IsAssignedToMe = currentUserId.HasValue
+                             && projectTasks.Any(t => t.AssigneeId == currentUserId.Value);
 
         dto.RiskColor = risk.color;
         // KIRPMA YOK: süresi geçmiş proje negatif döner. Projeler listesinin risk
