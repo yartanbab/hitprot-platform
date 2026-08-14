@@ -16,7 +16,7 @@ function StatStripCard({ filter }) {
 
     if (isLoading) {
         return (
-            <div className="grid grid-cols-5 gap-2.5 mobile:grid-cols-2">
+            <div className="h-full pb-2.5 grid grid-cols-5 gap-2.5 lt-1080:grid-cols-3 mobile:grid-cols-2 mobile:h-auto">
                 {Array.from({ length: 5 }, (_, i) => (
                     <div key={i} className="rounded-card shadow-card bg-surface-base border border-default p-4">
                         <Skeleton height={14} className="w-2/3 mb-2" />
@@ -41,10 +41,16 @@ function StatStripCard({ filter }) {
     }
 
     return (
-        /* lt-1080 ve mobile ikisi de max-width → Tailwind bunları azalan sırada
+        /* Kutucuklar ızgara kutusunu TAM doldurur (h-full): doğal yüksekliğe
+           bırakılırsa kutu içerikten kısa kalınca taşıp alttaki satıra biniyor,
+           uzun kalınca da altta ölü boşluk bırakıyordu — ikisini de gördük.
+           Alttaki satırla arasındaki mesafe artık yalnız pb-2.5 (10px) +
+           GRID_MARGIN (10px) = 20px, yani diğer kart aralarının iki katı.
+
+           lt-1080 ve mobile ikisi de max-width → Tailwind bunları azalan sırada
            yazar, dar ekranda mobile kazanır. `tablet:` KULLANILMAZ: o min-width'tir,
            1440'ta da tetiklenirdi. */
-        <div className="grid grid-cols-5 gap-2.5 lt-1080:grid-cols-3 mobile:grid-cols-2">
+        <div className="h-full pb-2.5 grid grid-cols-5 gap-2.5 lt-1080:grid-cols-3 mobile:grid-cols-2 mobile:h-auto">
             <Tile
                 label={t('Dashboard:Summary:DueThisPeriod', 'Bu dönem teslim')}
                 value={data.dueThisPeriod}
@@ -151,9 +157,11 @@ function Tile({ label, value, pill, pillTone = 'neutral', caption, tone = 'neutr
                 </>
             )}
 
-            {/* Taşan sparkline: kartın yatay padding'ini iptal edip alt kenara yapışır. */}
+            {/* Taşan sparkline: kartın yatay padding'ini iptal edip alt kenara yapışır.
+                mt-auto ŞART — kutucuk içerikten uzun olduğunda grafik ortada asılı
+                kalmasın, her zaman alt kenarı kucaklasın. */}
             {spark && spark.length > 1 && (
-                <div className="h-9 mt-1 -mx-4">
+                <div className="h-9 mt-auto -mx-4">
                     <AreaSpark values={spark} ariaLabel={t('Dashboard:Summary:DueTrend', 'Teslim dağılımı')} />
                 </div>
             )}

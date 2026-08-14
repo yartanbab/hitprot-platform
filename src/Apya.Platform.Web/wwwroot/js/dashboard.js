@@ -528,17 +528,23 @@ function Nt(t) {
 }
 function wt({ filter: t }) {
   const { data: a, isLoading: n, isError: r, refetch: o } = bt(t);
-  return n ? /* @__PURE__ */ e.jsx("div", { className: "grid grid-cols-5 gap-2.5 mobile:grid-cols-2", children: Array.from({ length: 5 }, (c, l) => /* @__PURE__ */ e.jsxs("div", { className: "rounded-card shadow-card bg-surface-base border border-default p-4", children: [
+  return n ? /* @__PURE__ */ e.jsx("div", { className: "h-full pb-2.5 grid grid-cols-5 gap-2.5 lt-1080:grid-cols-3 mobile:grid-cols-2 mobile:h-auto", children: Array.from({ length: 5 }, (c, l) => /* @__PURE__ */ e.jsxs("div", { className: "rounded-card shadow-card bg-surface-base border border-default p-4", children: [
     /* @__PURE__ */ e.jsx(C, { height: 14, className: "w-2/3 mb-2" }),
     /* @__PURE__ */ e.jsx(C, { height: 28, className: "w-1/2" })
   ] }, l)) }) : r || !a ? /* @__PURE__ */ e.jsxs("div", { className: "rounded-card shadow-card bg-surface-base border border-default p-4 flex items-center justify-between gap-3", children: [
     /* @__PURE__ */ e.jsx("span", { className: "text-[12.5px] text-text-secondary", children: s("Dashboard:Summary:Error", "Özet yüklenemedi.") }),
     /* @__PURE__ */ e.jsx("button", { type: "button", onClick: () => o(), className: "text-[12.5px] text-text-link hover:underline", children: s("Common:Retry", "Tekrar dene") })
   ] }) : (
-    /* lt-1080 ve mobile ikisi de max-width → Tailwind bunları azalan sırada
-       yazar, dar ekranda mobile kazanır. `tablet:` KULLANILMAZ: o min-width'tir,
-       1440'ta da tetiklenirdi. */
-    /* @__PURE__ */ e.jsxs("div", { className: "grid grid-cols-5 gap-2.5 lt-1080:grid-cols-3 mobile:grid-cols-2", children: [
+    /* Kutucuklar ızgara kutusunu TAM doldurur (h-full): doğal yüksekliğe
+               bırakılırsa kutu içerikten kısa kalınca taşıp alttaki satıra biniyor,
+               uzun kalınca da altta ölü boşluk bırakıyordu — ikisini de gördük.
+               Alttaki satırla arasındaki mesafe artık yalnız pb-2.5 (10px) +
+               GRID_MARGIN (10px) = 20px, yani diğer kart aralarının iki katı.
+    
+               lt-1080 ve mobile ikisi de max-width → Tailwind bunları azalan sırada
+               yazar, dar ekranda mobile kazanır. `tablet:` KULLANILMAZ: o min-width'tir,
+               1440'ta da tetiklenirdi. */
+    /* @__PURE__ */ e.jsxs("div", { className: "h-full pb-2.5 grid grid-cols-5 gap-2.5 lt-1080:grid-cols-3 mobile:grid-cols-2 mobile:h-auto", children: [
       /* @__PURE__ */ e.jsx(
         K,
         {
@@ -631,7 +637,7 @@ function K({ label: t, value: a, pill: n, pillTone: r = "neutral", caption: o, t
           ] }),
           o && /* @__PURE__ */ e.jsx("span", { className: "text-[11.5px] text-text-tertiary truncate", children: o })
         ] }),
-        d && d.length > 1 && /* @__PURE__ */ e.jsx("div", { className: "h-9 mt-1 -mx-4", children: /* @__PURE__ */ e.jsx(Xe, { values: d, ariaLabel: s("Dashboard:Summary:DueTrend", "Teslim dağılımı") }) })
+        d && d.length > 1 && /* @__PURE__ */ e.jsx("div", { className: "h-9 mt-auto -mx-4", children: /* @__PURE__ */ e.jsx(Xe, { values: d, ariaLabel: s("Dashboard:Summary:DueTrend", "Teslim dağılımı") }) })
       ]
     }
   );
