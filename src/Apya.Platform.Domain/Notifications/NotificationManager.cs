@@ -22,6 +22,8 @@ public class NotificationManager : DomainService
 
     /// <summary>
     /// Bildirimi hem veritabanına kaydeder hem de anlık SignalR bildirimi için event fırlatır.
+    /// Kategori, aciliyet ve gruplama davranışı <see cref="NotificationTypeRegistry"/>'den gelir;
+    /// <paramref name="severity"/> verilirse türün varsayılanını ezer.
     /// </summary>
     public async Task PublishAsync(
         Guid userId,
@@ -29,9 +31,30 @@ public class NotificationManager : DomainService
         string body,
         NotificationType type,
         string? entityType = null,
-        Guid? entityId = null)
+        Guid? entityId = null,
+        NotificationSeverity? severity = null,
+        Guid? actorUserId = null,
+        string? actorName = null)
     {
-        // 1. Veritabanına kaydet
+        var groupKey = NotificationTypeRegistry.BuildGroupKey(type, entityType, entityId);
+
+        // 1. Aynı kayda ait okunmamış bildirim varsa yeni satır açma — sayacı artır.
+        //    (Bir göreve gelen her yorum ayrı satır olduğunda liste hızla okunamaz hale geliyordu.)
+        if (groupKey != null)
+        {
+            var existing = await _notificationRepository.FirstOrDefaultAsync(
+                n => n.UserId == userId && !n.IsRead && n.GroupKey == groupKey);
+
+            if (existing != null)
+            {
+                existing.Repeat(title, body, actorUserId, actorName);
+                await _notificationRepository.UpdateAsync(existing);
+                await PublishCreatedEventAsync(userId, title, body, entityType, entityId, type);
+                return;
+            }
+        }
+
+        // 2. Yeni bildirim
         var notification = new Notification(
             GuidGenerator.Create(),
             CurrentTenant.Id,
@@ -40,23 +63,32 @@ public class NotificationManager : DomainService
             title,
             body,
             entityType,
-            entityId
+            entityId,
+            severity,
+            groupKey,
+            actorUserId,
+            actorName
         );
 
         await _notificationRepository.InsertAsync(notification);
 
-        // 2. SignalR event fırlat (Web katmanı dinleyecek)
-        await _localEventBus.PublishAsync(new NotificationCreatedEto
-        {
-            TenantId = CurrentTenant.Id,
-            UserId = userId,
-            Title = title,
-            Body = body,
-            EntityType = entityType,
-            EntityId = entityId,
-            Type = type
-        });
+        await PublishCreatedEventAsync(userId, title, body, entityType, entityId, type);
     }
+
+    // SignalR event fırlat (Web katmanı dinleyecek)
+    private Task PublishCreatedEventAsync(
+        Guid userId, string title, string body,
+        string? entityType, Guid? entityId, NotificationType type)
+        => _localEventBus.PublishAsync(new NotificationCreatedEto
+        {
+            TenantId   = CurrentTenant.Id,
+            UserId     = userId,
+            Title      = title,
+            Body       = body,
+            EntityType = entityType,
+            EntityId   = entityId,
+            Type       = type
+        });
 }
 
 public class NotificationCreatedEto

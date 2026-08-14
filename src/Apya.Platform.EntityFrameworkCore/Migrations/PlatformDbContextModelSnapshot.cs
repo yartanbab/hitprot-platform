@@ -3809,10 +3809,20 @@ namespace Apya.Platform.Migrations
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid");
 
+                    b.Property<string>("ActorName")
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.Property<Guid?>("ActorUserId")
+                        .HasColumnType("uuid");
+
                     b.Property<string>("Body")
                         .IsRequired()
                         .HasMaxLength(1024)
                         .HasColumnType("character varying(1024)");
+
+                    b.Property<int>("Category")
+                        .HasColumnType("integer");
 
                     b.Property<string>("ConcurrencyStamp")
                         .IsConcurrencyToken()
@@ -3849,6 +3859,10 @@ namespace Apya.Platform.Migrations
                         .HasColumnType("text")
                         .HasColumnName("ExtraProperties");
 
+                    b.Property<string>("GroupKey")
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
                     b.Property<bool>("IsDeleted")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("boolean")
@@ -3866,8 +3880,17 @@ namespace Apya.Platform.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("LastModifierId");
 
+                    b.Property<DateTime>("LastOccurredAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("OccurrenceCount")
+                        .HasColumnType("integer");
+
                     b.Property<DateTime?>("ReadAt")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("Severity")
+                        .HasColumnType("integer");
 
                     b.Property<Guid?>("TenantId")
                         .HasColumnType("uuid")
@@ -3889,6 +3912,10 @@ namespace Apya.Platform.Migrations
                     b.HasIndex("CreationTime");
 
                     b.HasIndex("UserId", "IsRead");
+
+                    b.HasIndex("UserId", "Category", "IsRead");
+
+                    b.HasIndex("UserId", "GroupKey", "IsRead");
 
                     b.ToTable("AppNotifications", (string)null);
                 });

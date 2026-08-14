@@ -43,8 +43,10 @@ public class NotificationAppService : ApplicationService, INotificationAppServic
 
         var total = await AsyncExecuter.CountAsync(query);
 
+        // Sıralama LastOccurredAt üzerinden: gruplanan bir bildirim yeni olay
+        // aldığında listede yukarı taşınır, yoksa gruplama görünmez kalırdı.
         var items = await AsyncExecuter.ToListAsync(
-            query.OrderByDescending(n => n.CreationTime)
+            query.OrderByDescending(n => n.LastOccurredAt)
                  .Skip(input.SkipCount)
                  .Take(input.MaxResultCount));
 
@@ -118,37 +120,24 @@ public class NotificationAppService : ApplicationService, INotificationAppServic
             TenantId = CurrentTenant.Id,
             UserId   = userId
         });
+    // İkon ve derin link türün kaydından gelir — bkz. NotificationTypeRegistry.
     private static NotificationDto MapToDto(Notification n) => new()
     {
-        Id           = n.Id,
-        Type         = n.Type,
-        Title        = n.Title,
-        Body         = n.Body,
-        EntityType   = n.EntityType,
-        EntityId     = n.EntityId,
-        IsRead       = n.IsRead,
-        ReadAt       = n.ReadAt,
-        CreationTime = n.CreationTime,
-        DeepLinkUrl  = BuildDeepLink(n.EntityType, n.EntityId)
+        Id              = n.Id,
+        Type            = n.Type,
+        Category        = n.Category,
+        Severity        = n.Severity,
+        Title           = n.Title,
+        Body            = n.Body,
+        EntityType      = n.EntityType,
+        EntityId        = n.EntityId,
+        IsRead          = n.IsRead,
+        ReadAt          = n.ReadAt,
+        CreationTime    = n.CreationTime,
+        LastOccurredAt  = n.LastOccurredAt,
+        OccurrenceCount = n.OccurrenceCount,
+        ActorName       = n.ActorName,
+        Icon            = NotificationTypeRegistry.Get(n.Type).Icon,
+        DeepLinkUrl     = NotificationTypeRegistry.BuildDeepLink(n.Type, n.EntityId)
     };
-
-    // Bildirime tıklandığında gidilecek adres. "Task" daha önce /Tasks/EditModal'a
-    // işaret ediyordu; o sayfa Layout = null olduğu için tam sayfa gidildiğinde
-    // menüsüz, çıplak bir form açılıyordu.
-    private static string? BuildDeepLink(string? entityType, Guid? entityId)
-    {
-        if (entityId == null) return null;
-        return entityType switch
-        {
-            "Task"         => $"/Tasks/Detail/{entityId}",
-            "Project"      => $"/Projects/ProjectDetails/{entityId}",
-            // Aşağıdakilerin hedef sayfası henüz tekil kayda odaklanmayı
-            // desteklemiyor — şimdilik ilgili listeye götürüyoruz.
-            "Document"     => "/Documents",
-            "Feedback"     => "/Feedback",
-            "GrantCall"    => "/Grants",
-            "AiEvaluation" => "/AiCenter/Evaluations",
-            _              => null
-        };
-    }
 }
