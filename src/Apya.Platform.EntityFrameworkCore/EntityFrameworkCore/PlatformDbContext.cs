@@ -156,6 +156,9 @@ namespace Apya.Platform.EntityFrameworkCore
         /* --- İSTEMCİ HATA TELEMETRİSİ --- */
         public DbSet<ClientError> ClientErrors { get; set; }
 
+        /* --- DASHBOARD --- */
+        public DbSet<Apya.Platform.Dashboard.DashboardLayout> DashboardLayouts { get; set; }
+
         /* --- TAKVİM MODÜLÜ --- */
         public DbSet<ExternalCalendarAccount> ExternalCalendarAccounts { get; set; }
         public DbSet<CalendarSyncMapping> CalendarSyncMappings { get; set; }
@@ -946,6 +949,21 @@ namespace Apya.Platform.EntityFrameworkCore
                 // Panel sıralamaları + saklama worker'ının tarama sorgusu
                 b.HasIndex(x => x.LastSeenAt);
                 b.HasIndex(x => new { x.IsResolved, x.OccurrenceCount });
+            });
+
+            builder.Entity<Apya.Platform.Dashboard.DashboardLayout>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "DashboardLayouts", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+
+                b.Property(x => x.ViewKey).IsRequired()
+                    .HasMaxLength(Apya.Platform.Dashboard.DashboardConsts.MaxViewKeyLength);
+                b.Property(x => x.CardsJson).IsRequired()
+                    .HasMaxLength(Apya.Platform.Dashboard.DashboardConsts.MaxCardsJsonLength);
+
+                // Kullanıcı başına görünüm başına tek düzen. DashboardLayout soft-delete
+                // DEĞİL (bkz entity notu) → filtresiz tekil indeks güvenli.
+                b.HasIndex(x => new { x.UserId, x.ViewKey }).IsUnique();
             });
 
             // 'text' tipi PostgreSQL'de doğaldır; SQL Server'da kullanımdan kalkmıştır.

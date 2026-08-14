@@ -143,4 +143,7 @@ public static class PlatformDomainErrorCodes
 
     // --- Telemetri (Telemetry) Modülü ---
     public const string TelemetryDisabled = "Platform:Telemetry:Disabled";
+
+    // --- Dashboard ---
+    public const string DashboardLayoutTooLarge = "Platform:Dashboard:LayoutTooLarge";
 }
