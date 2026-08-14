@@ -74,6 +74,35 @@
 
             <button type="submit" class="btn btn-primary">@L["Settings:Save"]</button>
         </form>
+
+        @*
+            Mobil gezinme — sunucuya GİTMEZ, bu yüzden yukarıdaki formun DIŞINDA.
+            Kenar çubuğu modu ile aynı desen: kaynak <html data-mobile-shell>,
+            kalıcılık localStorage 'apya-mobile-shell', uygulama sidebar-toggle.js
+            (seçim anında yazılır, "Kaydet" gerekmez).
+        *@
+        <fieldset class="mt-4" id="MobileShellChooser">
+            <legend class="form-label mb-1">@L["Settings:MobileShell.Label"]</legend>
+            <div class="form-text mb-2">@L["Settings:MobileShell.Help"]</div>
+
+            <div class="form-check mb-2">
+                <input class="form-check-input" type="radio" name="MobileShell" id="mshell-drawer"
+                       value="drawer" data-mobile-shell="drawer" />
+                <label class="form-check-label" for="mshell-drawer">
+                    <strong>@L["Settings:MobileShell.Drawer"]</strong>
+                    <div class="text-muted small">@L["Settings:MobileShell.Drawer.Desc"]</div>
+                </label>
+            </div>
+
+            <div class="form-check">
+                <input class="form-check-input" type="radio" name="MobileShell" id="mshell-tabs"
+                       value="tabs" data-mobile-shell="tabs" />
+                <label class="form-check-label" for="mshell-tabs">
+                    <strong>@L["Settings:MobileShell.Tabs"]</strong>
+                    <div class="text-muted small">@L["Settings:MobileShell.Tabs.Desc"]</div>
+                </label>
+            </div>
+        </fieldset>
     </abp-card-body>
 </abp-card>
 

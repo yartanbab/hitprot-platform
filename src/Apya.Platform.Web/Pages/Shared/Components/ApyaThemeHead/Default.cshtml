@@ -1,3 +1,6 @@
+@using Microsoft.Extensions.Localization
+@using Apya.Platform.Localization
+@inject IStringLocalizer<PlatformResource> L
 @*
     Site-wide tema head — LayoutHooks.Head.Last ile her sayfanın <head>'ine enjekte edilir.
     Token'lar + köprü global stil bundle'ında; burada yalnız PWA head + FOUC engelleme.
@@ -55,7 +58,47 @@
                 }
                 if (mode === 'dynamic') { html.setAttribute('data-sidebar', 'collapsed'); }
                 else if (mode === 'hidden') { html.setAttribute('data-sidebar', 'hidden'); }
+
+                // Mobil kabuk varyantı — çekmece (varsayılan) / alt sekme.
+                // Kenar çubuğu modunun birebir ikizi: SoT <html data-mobile-shell>,
+                // kalıcılık 'apya-mobile-shell', uygulama sidebar-toggle.js'te.
+                // Attribute paint ÖNCESİ yazılır ki iki varyant arası geçiş
+                // sayfa yenilemede yanıp sönmesin (CSS ikisini de bu attribute ile ayırır).
+                var shell = null;
+                try { shell = localStorage.getItem('apya-mobile-shell'); } catch (e) { }
+                html.setAttribute('data-mobile-shell', shell === 'tabs' ? 'tabs' : 'drawer');
             }
         } catch (e) { /* sessizce devam */ }
     })();
+</script>
+
+@*
+    Mobil kabuğun metinleri — sidebar-toggle.js bu bloğu okur, JS'e metin gömülmez
+    (SidebarModeToggle'daki data-label-* deseninin çok anahtarlı karşılığı; mobil
+    barda bizim bir view'umuz olmadığı için etiketler head'e JSON olarak iner).
+    "Short.*" anahtarları alt sekme etiketleridir: anahtar = menü öğesinin adı,
+    karşılığı yoksa JS menüdeki tam adı kullanır.
+*@
+<script type="application/json" id="ApyaMobileShellL10n">
+    @Html.Raw(System.Text.Json.JsonSerializer.Serialize(new System.Collections.Generic.Dictionary<string, string>
+    {
+        ["menu"] = L["MobileShell:Menu"].Value,
+        ["close"] = L["MobileShell:Close"].Value,
+        ["open"] = L["MobileShell:Open"].Value,
+        ["back"] = L["MobileShell:Back"].Value,
+        ["groupDaily"] = L["MobileShell:GroupDaily"].Value,
+        ["groupOther"] = L["MobileShell:GroupOther"].Value,
+        ["more"] = L["MobileShell:More"].Value,
+        ["search"] = L["MobileShell:Search"].Value,
+        ["notifications"] = L["MobileShell:Notifications"].Value,
+        ["account"] = L["MobileShell:Account"].Value,
+        ["themeDark"] = L["MobileShell:ThemeDark"].Value,
+        ["themeLight"] = L["MobileShell:ThemeLight"].Value,
+        ["settings"] = L["MobileShell:Settings"].Value,
+        ["logout"] = L["MobileShell:Logout"].Value,
+        ["short.Apya.Dashboard"] = L["MobileShell:Short.Apya.Dashboard"].Value,
+        ["short.Apya.Work"] = L["MobileShell:Short.Apya.Work"].Value,
+        ["short.Apya.Finance"] = L["MobileShell:Short.Apya.Finance"].Value,
+        ["short.Apya.Reports"] = L["MobileShell:Short.Apya.Reports"].Value
+    }))
 </script>
