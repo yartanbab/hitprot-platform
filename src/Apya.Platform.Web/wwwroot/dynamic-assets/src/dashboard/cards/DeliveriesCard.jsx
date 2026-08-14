@@ -107,16 +107,20 @@ function DeliveryRow({ item }) {
             <a
                 href={`/Tasks?taskId=${item.taskId}`}
                 className={cn(
-                    'flex items-center gap-3 p-2.5 rounded-[10px]',
+                    /* `flex-wrap` + başlığa taban genişlik: rozet/proje/tarih/avatar
+                       hepsi flex-none olduğu için dar kartta başlık 0'a eziliyordu
+                       (ölçüldü: 311px kartta başlığa 4px kalıyor). Taban genişlik
+                       sığmayınca yan bilgiler alt satıra sarar. `mobile:` yetmez —
+                       o viewport sorgusu, kart dar olması ekranın dar olması demek değil. */
+                    'flex flex-wrap items-center gap-3 p-2.5 rounded-[10px]',
                     'bg-surface-base border border-subtle',
                     'hover:bg-surface-hover hover:border-default transition-colors duration-fast',
                     'focus-visible:outline-none focus-visible:shadow-focus',
-                    'mobile:flex-wrap',
                 )}
             >
                 <span className={cn('w-1.5 h-1.5 rounded-full flex-none', STATE_DOT[item.state] ?? STATE_DOT.Upcoming)} aria-hidden="true" />
 
-                <span className="flex-1 min-w-0 text-[13.5px] font-medium text-text-primary truncate">
+                <span className="flex-1 min-w-[140px] text-[13.5px] font-medium text-text-primary truncate">
                     {item.title}
                 </span>
 

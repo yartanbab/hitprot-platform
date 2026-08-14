@@ -1,22 +1,22 @@
-import { r as x, j as e, d as fe, b as Se } from "./react-vendor.js";
-import { c as p, t as s, S as C, a as Te, f as U, b as se, d as Ee, e as Ce, I as Ae, B as R, T as Re } from "./Dialog.js";
-import { Q as k, a as Le } from "./QueryProvider.js";
-import { H as be, a as Me, L as Ie } from "./signalr-vendor.js";
-import { u as He, r as Pe, T as Be } from "./registerServiceWorker.js";
-import { r as re } from "./grid-vendor.js";
-import { E as N } from "./EmptyState.js";
-import { u as w, a as q, b as ge } from "./query-vendor.js";
-import { a as $ } from "./httpClient.js";
+import { r as x, j as e, d as ye, b as Me } from "./react-vendor.js";
+import { c as p, t as r, S as A, a as Ie, f as z, b as oe, d as He, e as Pe, I as Be, B as L, T as Fe } from "./Dialog.js";
+import { Q as k, a as Ke } from "./QueryProvider.js";
+import { H as ve, a as We, L as Oe } from "./signalr-vendor.js";
+import { u as Ue, r as Ge, T as _e } from "./registerServiceWorker.js";
+import { r as qe } from "./grid-vendor.js";
+import { E as w } from "./EmptyState.js";
+import { u as S, a as Y, b as je } from "./query-vendor.js";
+import { a as X } from "./httpClient.js";
 /* empty css      */
-const ye = x.createContext({
+const ke = x.createContext({
   connection: null,
-  state: be.Disconnected
+  state: ve.Disconnected
 });
-function Ke({ hubUrl: t = "/signalr-hubs/notifications", children: a, enabled: n = !0 }) {
-  const [r, o] = x.useState(be.Disconnected), c = x.useRef(null);
+function $e({ hubUrl: t = "/signalr-hubs/notifications", children: n, enabled: a = !0 }) {
+  const [s, o] = x.useState(ve.Disconnected), c = x.useRef(null);
   x.useEffect(() => {
-    if (!n || typeof window > "u") return;
-    const i = new Me().withUrl(t, { withCredentials: !0 }).withAutomaticReconnect([0, 2e3, 5e3, 1e4, 3e4]).configureLogging(Ie.Warning).build();
+    if (!a || typeof window > "u") return;
+    const i = new We().withUrl(t, { withCredentials: !0 }).withAutomaticReconnect([0, 2e3, 5e3, 1e4, 3e4]).configureLogging(Oe.Warning).build();
     c.current = i, o(i.state);
     const d = () => o(i.state);
     return i.onreconnecting(d), i.onreconnected(d), i.onclose(d), i.start().then(d).catch((u) => {
@@ -25,44 +25,44 @@ function Ke({ hubUrl: t = "/signalr-hubs/notifications", children: a, enabled: n
       i.stop().catch(() => {
       }), c.current = null;
     };
-  }, [t, n]);
+  }, [t, a]);
   const l = x.useMemo(() => ({
     get connection() {
       return c.current;
     },
-    state: r
-  }), [r]);
-  return /* @__PURE__ */ e.jsx(ye.Provider, { value: l, children: a });
+    state: s
+  }), [s]);
+  return /* @__PURE__ */ e.jsx(ke.Provider, { value: l, children: n });
 }
-function ve() {
-  return x.useContext(ye);
+function De() {
+  return x.useContext(ke);
 }
-const F = {
+const q = {
   triage: "(min-width: 768px)",
   analysis: "(min-width: 1280px)",
   command: "(min-width: 1920px)"
 };
-function Fe() {
-  return typeof window > "u" || !window.matchMedia ? "analysis" : window.matchMedia(F.command).matches ? "command" : window.matchMedia(F.analysis).matches ? "analysis" : window.matchMedia(F.triage).matches ? "triage" : "decision";
+function ze() {
+  return typeof window > "u" || !window.matchMedia ? "analysis" : window.matchMedia(q.command).matches ? "command" : window.matchMedia(q.analysis).matches ? "analysis" : window.matchMedia(q.triage).matches ? "triage" : "decision";
 }
-const Oe = x.createContext(null);
-function Ue({ children: t, override: a }) {
-  const n = x.useCallback((c) => {
+const Ve = x.createContext(null);
+function Qe({ children: t, override: n }) {
+  const a = x.useCallback((c) => {
     if (typeof window > "u" || !window.matchMedia) return () => {
     };
-    const l = Object.values(F).map((i) => window.matchMedia(i));
+    const l = Object.values(q).map((i) => window.matchMedia(i));
     return l.forEach((i) => i.addEventListener("change", c)), () => l.forEach((i) => i.removeEventListener("change", c));
-  }, []), r = x.useSyncExternalStore(n, Fe, () => "analysis"), o = a ?? r;
+  }, []), s = x.useSyncExternalStore(a, ze, () => "analysis"), o = n ?? s;
   return x.useEffect(() => {
     typeof document > "u" || (document.documentElement.dataset.deviceMode = o);
-  }, [o]), /* @__PURE__ */ e.jsx(Oe.Provider, { value: o, children: t });
+  }, [o]), /* @__PURE__ */ e.jsx(Ve.Provider, { value: o, children: t });
 }
-const je = "apya-card-drag-handle";
+const Ne = "apya-card-drag-handle";
 function D({
   title: t,
-  subtitle: a,
-  badge: n,
-  actions: r,
+  subtitle: n,
+  badge: a,
+  actions: s,
   footer: o,
   accent: c,
   /* 'negative' | 'warning' — kritik kartların üst şeridi */
@@ -73,16 +73,16 @@ function D({
   onRetry: f,
   isEmpty: g = !1,
   emptyState: j,
-  skeleton: E,
+  skeleton: C,
   isFetching: y = !1,
-  isStale: V = !1,
-  dataUpdatedAt: Q,
-  bleed: M = !1,
-  className: Y,
-  bodyClassName: X,
-  children: Z
+  isStale: U = !1,
+  dataUpdatedAt: N,
+  bleed: I = !1,
+  className: H,
+  bodyClassName: P,
+  children: J
 }) {
-  const J = !i && !d && V && y;
+  const ee = !i && !d && U && y;
   return /* @__PURE__ */ e.jsxs(
     "section",
     {
@@ -90,7 +90,7 @@ function D({
         "h-full flex flex-col overflow-hidden",
         "rounded-card shadow-card",
         "bg-surface-base border border-default",
-        Y
+        H
       ),
       children: [
         c && /* @__PURE__ */ e.jsx(
@@ -116,7 +116,7 @@ function D({
                   "span",
                   {
                     className: p(
-                      je,
+                      Ne,
                       "text-accent-soft text-xs tracking-[-2px] cursor-grab active:cursor-grabbing select-none flex-none"
                     ),
                     "aria-hidden": "true",
@@ -126,20 +126,20 @@ function D({
                 /* @__PURE__ */ e.jsxs("div", { className: "flex flex-col gap-0.5 min-w-0", children: [
                   /* @__PURE__ */ e.jsxs("div", { className: "flex items-center gap-2 min-w-0", children: [
                     /* @__PURE__ */ e.jsx("h2", { className: "text-[13.5px] font-semibold tracking-[-0.01em] truncate text-text-primary", children: t }),
-                    n,
-                    J && /* @__PURE__ */ e.jsx(qe, {})
+                    a,
+                    ee && /* @__PURE__ */ e.jsx(Je, {})
                   ] }),
-                  a && /* @__PURE__ */ e.jsx("p", { className: "text-[11.5px] text-text-tertiary truncate", children: a })
+                  n && /* @__PURE__ */ e.jsx("p", { className: "text-[11.5px] text-text-tertiary truncate", children: n })
                 ] })
               ] }),
-              r && /* Aksiyonlara basmak kartı sürüklemesin. */
+              s && /* Aksiyonlara basmak kartı sürüklemesin. */
               /* @__PURE__ */ e.jsx(
                 "div",
                 {
                   className: "flex items-center gap-2.5 flex-none",
-                  onMouseDown: (I) => I.stopPropagation(),
-                  onTouchStart: (I) => I.stopPropagation(),
-                  children: r
+                  onMouseDown: (B) => B.stopPropagation(),
+                  onTouchStart: (B) => B.stopPropagation(),
+                  children: s
                 }
               )
             ]
@@ -149,16 +149,22 @@ function D({
           "div",
           {
             className: p(
-              "flex-1 min-h-0 pt-3",
-              M ? "pb-0" : "px-[18px] pb-[18px]",
-              M && "px-[18px]",
-              X
+              /* Kart yüksekliği ızgaradan SABİT gelir, içerik ise değişken:
+                 kayıt sayısı, kart genişliği (satırlar sarar) ve kullanıcının
+                 verdiği boyut hepsi etkiliyor. Kaydırma olmadan `overflow-hidden`
+                 fazlalığı sessizce kesiyordu — kullanıcının "alt açıklamalar
+                 kesiliyor" dediği davranış. Kart kendi gerekçesiyle
+                 `bodyClassName="overflow-visible"` diyerek vazgeçebilir. */
+              "flex-1 min-h-0 pt-3 overflow-y-auto",
+              I ? "pb-0" : "px-[18px] pb-[18px]",
+              I && "px-[18px]",
+              P
             ),
             children: [
-              d && /* @__PURE__ */ e.jsx(_e, { message: u, onRetry: f, dataUpdatedAt: Q }),
-              !d && i && (E ?? /* @__PURE__ */ e.jsx(We, {})),
-              !d && !i && g && (j ?? /* @__PURE__ */ e.jsx(Ge, {})),
-              !d && !i && !g && Z
+              d && /* @__PURE__ */ e.jsx(Ze, { message: u, onRetry: f, dataUpdatedAt: N }),
+              !d && i && (C ?? /* @__PURE__ */ e.jsx(Ye, {})),
+              !d && !i && g && (j ?? /* @__PURE__ */ e.jsx(Xe, {})),
+              !d && !i && !g && J
             ]
           }
         ),
@@ -167,68 +173,68 @@ function D({
     }
   );
 }
-function We() {
+function Ye() {
   return /* @__PURE__ */ e.jsxs("div", { className: "flex flex-col gap-3", "aria-busy": "true", children: [
-    /* @__PURE__ */ e.jsx(C, { height: 28, className: "w-1/3" }),
-    /* @__PURE__ */ e.jsx(C, { height: 14 }),
-    /* @__PURE__ */ e.jsx(C, { height: 14, className: "w-5/6" }),
-    /* @__PURE__ */ e.jsx(C, { height: 14, className: "w-3/4" })
+    /* @__PURE__ */ e.jsx(A, { height: 28, className: "w-1/3" }),
+    /* @__PURE__ */ e.jsx(A, { height: 14 }),
+    /* @__PURE__ */ e.jsx(A, { height: 14, className: "w-5/6" }),
+    /* @__PURE__ */ e.jsx(A, { height: 14, className: "w-3/4" })
   ] });
 }
-function Ge() {
+function Xe() {
   return /* @__PURE__ */ e.jsx(
-    N,
+    w,
     {
       compact: !0,
-      title: s("Common:NoDataToShow", "Görüntülenecek veri yok"),
-      description: s("Common:NoDataYet", "Yeni veri girildiğinde burada görünecek.")
+      title: r("Common:NoDataToShow", "Görüntülenecek veri yok"),
+      description: r("Common:NoDataYet", "Yeni veri girildiğinde burada görünecek.")
     }
   );
 }
-function _e({ message: t, onRetry: a, dataUpdatedAt: n }) {
-  const r = $e(n);
+function Ze({ message: t, onRetry: n, dataUpdatedAt: a }) {
+  const s = et(a);
   return /* @__PURE__ */ e.jsxs("div", { className: "flex flex-col items-center justify-center text-center gap-2 py-4", children: [
-    /* @__PURE__ */ e.jsx("p", { className: "text-[12.5px] text-text-secondary max-w-xs", children: t || s("Common:FetchError", "Veri alınırken bir hata oluştu.") }),
-    r && /* @__PURE__ */ e.jsxs("p", { className: "text-[11px] text-text-tertiary", children: [
-      s("Common:LastSuccessfulUpdate", "Son başarılı güncelleme"),
+    /* @__PURE__ */ e.jsx("p", { className: "text-[12.5px] text-text-secondary max-w-xs", children: t || r("Common:FetchError", "Veri alınırken bir hata oluştu.") }),
+    s && /* @__PURE__ */ e.jsxs("p", { className: "text-[11px] text-text-tertiary", children: [
+      r("Common:LastSuccessfulUpdate", "Son başarılı güncelleme"),
       ": ",
-      r
+      s
     ] }),
-    a && /* @__PURE__ */ e.jsx(
+    n && /* @__PURE__ */ e.jsx(
       "button",
       {
         type: "button",
-        onClick: a,
+        onClick: n,
         className: "text-[12.5px] text-text-link underline-offset-2 hover:underline focus-visible:outline-none focus-visible:shadow-focus rounded-sm",
-        children: s("Common:Retry", "Tekrar dene")
+        children: r("Common:Retry", "Tekrar dene")
       }
     )
   ] });
 }
-function qe() {
+function Je() {
   return /* @__PURE__ */ e.jsxs(
     "span",
     {
       className: "inline-flex items-center gap-1 text-[11px] text-text-tertiary flex-none",
-      title: s("Common:UpdatingInBackground", "Arka planda güncelleniyor"),
+      title: r("Common:UpdatingInBackground", "Arka planda güncelleniyor"),
       "aria-live": "polite",
       children: [
         /* @__PURE__ */ e.jsx("span", { className: "inline-block h-1.5 w-1.5 rounded-full bg-warning-500 animate-pulse", "aria-hidden": "true" }),
-        /* @__PURE__ */ e.jsx("span", { children: s("Common:Updating", "güncelleniyor") })
+        /* @__PURE__ */ e.jsx("span", { children: r("Common:Updating", "güncelleniyor") })
       ]
     }
   );
 }
-function $e(t) {
+function et(t) {
   if (t == null) return null;
-  const a = t instanceof Date ? t.getTime() : Number(t);
-  if (!Number.isFinite(a)) return null;
-  const n = Math.round((a - Date.now()) / 1e3), r = Math.abs(n), o = new Intl.RelativeTimeFormat(Te(), { numeric: "auto" });
-  return r < 60 ? o.format(n, "second") : r < 3600 ? o.format(Math.round(n / 60), "minute") : r < 86400 ? o.format(Math.round(n / 3600), "hour") : o.format(Math.round(n / 86400), "day");
+  const n = t instanceof Date ? t.getTime() : Number(t);
+  if (!Number.isFinite(n)) return null;
+  const a = Math.round((n - Date.now()) / 1e3), s = Math.abs(a), o = new Intl.RelativeTimeFormat(Ie(), { numeric: "auto" });
+  return s < 60 ? o.format(a, "second") : s < 3600 ? o.format(Math.round(a / 60), "minute") : s < 86400 ? o.format(Math.round(a / 3600), "hour") : o.format(Math.round(a / 86400), "day");
 }
-D.DRAG_HANDLE_CLASS = je;
-function ze({ trend: t, children: a }) {
-  const n = t === "Up" ? "▲" : t === "Down" ? "▼" : "•";
+D.DRAG_HANDLE_CLASS = Ne;
+function tt({ trend: t, children: n }) {
+  const a = t === "Up" ? "▲" : t === "Down" ? "▼" : "•";
   return /* @__PURE__ */ e.jsxs(
     "span",
     {
@@ -237,58 +243,58 @@ function ze({ trend: t, children: a }) {
         t === "Up" ? "text-positive-600" : t === "Down" ? "text-negative-600" : "text-text-tertiary"
       ),
       children: [
-        n,
+        a,
         " ",
-        a
+        n
       ]
     }
   );
 }
-const W = 100, A = 40;
-function Ve(t, a = A, n = 2) {
-  const r = Math.max(...t, 0);
-  if (r <= 0) return t.map(() => a - n);
-  const o = a - n * 2;
-  return t.map((c) => n + o - c / r * o);
+const V = 100, R = 40;
+function at(t, n = R, a = 2) {
+  const s = Math.max(...t, 0);
+  if (s <= 0) return t.map(() => n - a);
+  const o = n - a * 2;
+  return t.map((c) => a + o - c / s * o);
 }
-function Qe(t, a = W) {
-  if (t <= 1) return [a / 2];
-  const n = a / (t - 1);
-  return Array.from({ length: t }, (r, o) => o * n);
+function nt(t, n = V) {
+  if (t <= 1) return [n / 2];
+  const a = n / (t - 1);
+  return Array.from({ length: t }, (s, o) => o * a);
 }
-function ke(t, a) {
-  return t.length ? t.map((n, r) => `${r === 0 ? "M" : "L"} ${G(n)} ${G(a[r])}`).join(" ") : "";
+function we(t, n) {
+  return t.length ? t.map((a, s) => `${s === 0 ? "M" : "L"} ${Q(a)} ${Q(n[s])}`).join(" ") : "";
 }
-function Ye(t, a, n = A) {
-  return t.length ? `${ke(t, a)} L ${G(t[t.length - 1])} ${n} L ${G(t[0])} ${n} Z` : "";
+function st(t, n, a = R) {
+  return t.length ? `${we(t, n)} L ${Q(t[t.length - 1])} ${a} L ${Q(t[0])} ${a} Z` : "";
 }
-function G(t) {
+function Q(t) {
   return Math.round(t * 100) / 100;
 }
-function Xe({ values: t = [], color: a = "var(--apya-brand-500)", ariaLabel: n }) {
-  const r = x.useId().replace(/:/g, "");
+function rt({ values: t = [], color: n = "var(--apya-brand-500)", ariaLabel: a }) {
+  const s = x.useId().replace(/:/g, "");
   if (t.length < 2) return null;
-  const o = Qe(t.length), c = Ve(t);
+  const o = nt(t.length), c = at(t);
   return /* @__PURE__ */ e.jsxs(
     "svg",
     {
-      viewBox: `0 0 ${W} ${A}`,
+      viewBox: `0 0 ${V} ${R}`,
       preserveAspectRatio: "none",
       className: "block w-full h-full",
-      role: n ? "img" : "presentation",
-      "aria-label": n,
+      role: a ? "img" : "presentation",
+      "aria-label": a,
       children: [
-        /* @__PURE__ */ e.jsx("defs", { children: /* @__PURE__ */ e.jsxs("linearGradient", { id: r, x1: "0", y1: "0", x2: "0", y2: "1", children: [
-          /* @__PURE__ */ e.jsx("stop", { offset: "0%", stopColor: a, stopOpacity: "0.16" }),
-          /* @__PURE__ */ e.jsx("stop", { offset: "100%", stopColor: a, stopOpacity: "0" })
+        /* @__PURE__ */ e.jsx("defs", { children: /* @__PURE__ */ e.jsxs("linearGradient", { id: s, x1: "0", y1: "0", x2: "0", y2: "1", children: [
+          /* @__PURE__ */ e.jsx("stop", { offset: "0%", stopColor: n, stopOpacity: "0.16" }),
+          /* @__PURE__ */ e.jsx("stop", { offset: "100%", stopColor: n, stopOpacity: "0" })
         ] }) }),
-        /* @__PURE__ */ e.jsx("path", { d: Ye(o, c), fill: `url(#${r})` }),
+        /* @__PURE__ */ e.jsx("path", { d: st(o, c), fill: `url(#${s})` }),
         /* @__PURE__ */ e.jsx(
           "path",
           {
-            d: ke(o, c),
+            d: we(o, c),
             fill: "none",
-            stroke: a,
+            stroke: n,
             strokeWidth: "1.75",
             vectorEffect: "non-scaling-stroke"
           }
@@ -297,31 +303,31 @@ function Xe({ values: t = [], color: a = "var(--apya-brand-500)", ariaLabel: n }
     }
   );
 }
-const Ze = ["var(--apya-positive-500)", "color-mix(in srgb, var(--apya-negative-500) 45%, transparent)"];
-function Je({ groups: t = [], colors: a = Ze, ariaLabel: n }) {
+const it = ["var(--apya-positive-500)", "color-mix(in srgb, var(--apya-negative-500) 45%, transparent)"];
+function ot({ groups: t = [], colors: n = it, ariaLabel: a }) {
   if (!t.length) return null;
-  const r = Math.max(...t.flatMap((i) => i.values), 0), o = W / t.length, c = Math.min(4.5, o * 0.62 / 2), l = c * 0.22;
+  const s = Math.max(...t.flatMap((i) => i.values), 0), o = V / t.length, c = Math.min(4.5, o * 0.62 / 2), l = c * 0.22;
   return /* @__PURE__ */ e.jsx(
     "svg",
     {
-      viewBox: `0 0 ${W} ${A}`,
+      viewBox: `0 0 ${V} ${R}`,
       preserveAspectRatio: "none",
       className: "block w-full h-full",
-      role: n ? "img" : "presentation",
-      "aria-label": n,
+      role: a ? "img" : "presentation",
+      "aria-label": a,
       children: t.map((i, d) => {
         const u = i.values.length * c + (i.values.length - 1) * l, f = d * o + (o - u) / 2;
         return i.values.map((g, j) => {
-          const E = r > 0 ? g / r * (A - 2) : 0;
+          const C = s > 0 ? g / s * (R - 2) : 0;
           return /* @__PURE__ */ e.jsx(
             "rect",
             {
               x: f + j * (c + l),
-              y: A - E,
+              y: R - C,
               width: c,
-              height: E,
+              height: C,
               rx: "0.8",
-              fill: a[j % a.length]
+              fill: n[j % n.length]
             },
             `${d}-${j}`
           );
@@ -330,29 +336,29 @@ function Je({ groups: t = [], colors: a = Ze, ariaLabel: n }) {
     }
   );
 }
-const ee = 34, ie = 2 * Math.PI * ee;
-function et({ ratio: t = 0, size: a = 58, ariaLabel: n }) {
-  const r = Math.max(0, Math.min(t, 1)), o = r * ie, c = r >= 0.9 ? "var(--apya-negative-500)" : r >= 0.7 ? "var(--apya-warning-500)" : "var(--apya-positive-500)";
+const te = 34, le = 2 * Math.PI * te;
+function lt({ ratio: t = 0, size: n = 58, ariaLabel: a }) {
+  const s = Math.max(0, Math.min(t, 1)), o = s * le, c = s >= 0.9 ? "var(--apya-negative-500)" : s >= 0.7 ? "var(--apya-warning-500)" : "var(--apya-positive-500)";
   return /* @__PURE__ */ e.jsxs(
     "svg",
     {
       viewBox: "0 0 100 100",
-      style: { width: a, height: a },
+      style: { width: n, height: n },
       className: "flex-none",
       role: "img",
-      "aria-label": n ?? `${Math.round(r * 100)}%`,
+      "aria-label": a ?? `${Math.round(s * 100)}%`,
       children: [
-        /* @__PURE__ */ e.jsx("circle", { cx: "50", cy: "50", r: ee, fill: "none", stroke: "var(--apya-surface-sunken)", strokeWidth: "12" }),
+        /* @__PURE__ */ e.jsx("circle", { cx: "50", cy: "50", r: te, fill: "none", stroke: "var(--apya-surface-sunken)", strokeWidth: "12" }),
         o > 0 && /* @__PURE__ */ e.jsx(
           "circle",
           {
             cx: "50",
             cy: "50",
-            r: ee,
+            r: te,
             fill: "none",
             stroke: c,
             strokeWidth: "12",
-            strokeDasharray: `${o} ${ie - o}`,
+            strokeDasharray: `${o} ${le - o}`,
             strokeLinecap: "round",
             transform: "rotate(-90 50 50)"
           }
@@ -361,7 +367,7 @@ function et({ ratio: t = 0, size: a = 58, ariaLabel: n }) {
     }
   );
 }
-const tt = [
+const ct = [
   "bg-surface-sunken",
   /* 0 teslim */
   "bg-brand-200",
@@ -369,51 +375,51 @@ const tt = [
   "bg-brand-500",
   "bg-brand-600"
 ];
-function at(t, a) {
-  return t <= 0 ? 0 : a <= 1 ? 2 : Math.min(4, 1 + Math.round((t - 1) / a * 3));
+function dt(t, n) {
+  return t <= 0 ? 0 : n <= 1 ? 2 : Math.min(4, 1 + Math.round((t - 1) / n * 3));
 }
-function nt({ cells: t = [], weekdayLabels: a = !0 }) {
+function ut({ cells: t = [], weekdayLabels: n = !0 }) {
   if (!t.length) return null;
-  const n = Math.max(...t.map((o) => o.count), 0), r = [];
-  for (let o = 0; o < t.length; o += 7) r.push(t.slice(o, o + 7));
+  const a = Math.max(...t.map((o) => o.count), 0), s = [];
+  for (let o = 0; o < t.length; o += 7) s.push(t.slice(o, o + 7));
   return /* @__PURE__ */ e.jsxs("div", { className: "flex flex-col gap-1", children: [
-    r.map((o, c) => /* @__PURE__ */ e.jsx("div", { className: "flex gap-1", children: o.map((l) => /* @__PURE__ */ e.jsx(
+    s.map((o, c) => /* @__PURE__ */ e.jsx("div", { className: "flex gap-1", children: o.map((l) => /* @__PURE__ */ e.jsx(
       "span",
       {
-        title: st(l),
+        title: xt(l),
         className: p(
           "flex-1 h-[15px] rounded",
           /* Hibe günü kademeden çıkar, sarı boyanır. Tasarımdaki
              #FCD34D için token yok → warning-500 yarı saydam
              (yeni renk üretmemek için). */
-          l.isGrantDeadline ? "bg-warning-500/55" : tt[at(l.count, n)]
+          l.isGrantDeadline ? "bg-warning-500/55" : ct[dt(l.count, a)]
         )
       },
       l.date
     )) }, c)),
-    a && /* @__PURE__ */ e.jsx("div", { className: "flex justify-between font-mono text-[9.5px] text-text-tertiary pt-0.5", children: [
-      s("Common:Day:Mon", "Pzt"),
-      s("Common:Day:Tue", "Sal"),
-      s("Common:Day:Wed", "Çar"),
-      s("Common:Day:Thu", "Per"),
-      s("Common:Day:Fri", "Cum"),
-      s("Common:Day:Sat", "Cmt"),
-      s("Common:Day:Sun", "Paz")
+    n && /* @__PURE__ */ e.jsx("div", { className: "flex justify-between font-mono text-[9.5px] text-text-tertiary pt-0.5", children: [
+      r("Common:Day:Mon", "Pzt"),
+      r("Common:Day:Tue", "Sal"),
+      r("Common:Day:Wed", "Çar"),
+      r("Common:Day:Thu", "Per"),
+      r("Common:Day:Fri", "Cum"),
+      r("Common:Day:Sat", "Cmt"),
+      r("Common:Day:Sun", "Paz")
     ].map((o) => /* @__PURE__ */ e.jsx("span", { children: o }, o)) })
   ] });
 }
-function st(t) {
-  const a = new Date(t.date).toLocaleDateString(), n = s("Dashboard:Heatmap:CellCount", "{0} teslim", t.count);
-  return t.isGrantDeadline ? `${a} — ${n} · ${s("Dashboard:Heatmap:GrantDeadline", "hibe son tarihi")}` : `${a} — ${n}`;
+function xt(t) {
+  const n = new Date(t.date).toLocaleDateString(), a = r("Dashboard:Heatmap:CellCount", "{0} teslim", t.count);
+  return t.isGrantDeadline ? `${n} — ${a} · ${r("Dashboard:Heatmap:GrantDeadline", "hibe son tarihi")}` : `${n} — ${a}`;
 }
-function rt({ ratio: t = 0, tone: a = "positive", ariaLabel: n }) {
-  const r = Math.max(0, Math.min(t, 1)), o = Math.round(r * 100), c = a === "negative" ? "var(--apya-negative-500)" : a === "warning" ? "var(--apya-warning-500)" : "var(--apya-positive-500)";
+function mt({ ratio: t = 0, tone: n = "positive", ariaLabel: a }) {
+  const s = Math.max(0, Math.min(t, 1)), o = Math.round(s * 100), c = n === "negative" ? "var(--apya-negative-500)" : n === "warning" ? "var(--apya-warning-500)" : "var(--apya-positive-500)";
   return /* @__PURE__ */ e.jsxs(
     "div",
     {
       className: "flex gap-1",
       role: "img",
-      "aria-label": n ?? `%${o}`,
+      "aria-label": a ?? `%${o}`,
       children: [
         /* @__PURE__ */ e.jsx("span", { className: "h-[5px] rounded-full", style: { flex: o, background: c } }),
         o < 100 && /* @__PURE__ */ e.jsx(
@@ -427,180 +433,179 @@ function rt({ ratio: t = 0, tone: a = "positive", ariaLabel: n }) {
     }
   );
 }
-const it = ["Upcoming", "OnTrack", "InReview", "Overdue"], ot = ["ThisWeek", "NextWeek", "EndOfMonth", "Later"], lt = ["Healthy", "Attention", "Risky"], ct = ["WaitingReview", "Dependency", "Unassigned"], dt = ["Flat", "Up", "Down"], ut = ["Work", "Finance", "Grants", "Communication", "System"];
-function L(t, a, n) {
-  return typeof a == "string" ? a : t[a] ?? n;
+const ht = ["Upcoming", "OnTrack", "InReview", "Overdue"], pt = ["ThisWeek", "NextWeek", "EndOfMonth", "Later"], ft = ["Healthy", "Attention", "Risky"], bt = ["WaitingReview", "Dependency", "Unassigned"], gt = ["Flat", "Up", "Down"], yt = ["Work", "Finance", "Grants", "Communication", "System"];
+function M(t, n, a) {
+  return typeof n == "string" ? n : t[n] ?? a;
 }
-function xt(t) {
-  return (t ?? []).map((a) => ({
-    ...a,
-    state: L(it, a.state, "Upcoming"),
-    groupKey: L(ot, a.groupKey, "Later")
+function vt(t) {
+  return (t ?? []).map((n) => ({
+    ...n,
+    state: M(ht, n.state, "Upcoming"),
+    groupKey: M(pt, n.groupKey, "Later")
   }));
 }
-function mt(t) {
-  return (t ?? []).map((a) => ({
-    ...a,
-    state: L(lt, a.state, "Healthy")
+function jt(t) {
+  return (t ?? []).map((n) => ({
+    ...n,
+    state: M(ft, n.state, "Healthy")
   }));
 }
-function ht(t) {
-  return (t ?? []).map((a) => ({
-    ...a,
-    blockReason: L(ct, a.blockReason, "Dependency")
+function kt(t) {
+  return (t ?? []).map((n) => ({
+    ...n,
+    blockReason: M(bt, n.blockReason, "Dependency")
   }));
 }
-function pt(t) {
-  return (t ?? []).map((a) => ({
-    ...a,
-    group: L(ut, a.group, "Work"),
-    trend: L(dt, a.trend, "Flat")
+function Dt(t) {
+  return (t ?? []).map((n) => ({
+    ...n,
+    group: M(yt, n.group, "Work"),
+    trend: M(gt, n.trend, "Flat")
   }));
 }
-const oe = 0, P = 6e4, te = 3e4;
-function ft({ range: t, projectId: a } = {}) {
-  const n = new URLSearchParams();
-  t && n.set("range", t), a && n.set("projectId", a);
-  const r = n.toString();
-  return r ? `?${r}` : "";
+const ce = 0, O = 6e4, ne = 3e4;
+function Nt({ range: t, projectId: n } = {}) {
+  const a = new URLSearchParams();
+  t && a.set("range", t), n && a.set("projectId", n);
+  const s = a.toString();
+  return s ? `?${s}` : "";
 }
-const T = (t, a) => $.get(`/api/dashboard/${t}${ft(a)}`);
-function bt(t) {
-  return w({
+const E = (t, n) => X.get(`/api/dashboard/${t}${Nt(n)}`);
+function wt(t) {
+  return S({
     queryKey: k.dashboard.summary(t),
-    queryFn: () => T("summary", t),
-    staleTime: te
+    queryFn: () => E("summary", t),
+    staleTime: ne
     /* bütçe alanları içeriyor */
   });
 }
-function gt(t) {
-  return w({
+function St(t) {
+  return S({
     queryKey: k.dashboard.deliveries(t),
-    queryFn: () => T("deliveries", t),
-    select: xt,
-    staleTime: P
+    queryFn: () => E("deliveries", t),
+    select: vt,
+    staleTime: O
   });
 }
-function yt(t) {
-  return w({
+function Tt(t) {
+  return S({
     queryKey: k.dashboard.projectHealth(t),
-    queryFn: () => T("project-health", t),
-    select: mt,
-    staleTime: P
+    queryFn: () => E("project-health", t),
+    select: jt,
+    staleTime: O
   });
 }
-function vt() {
-  return w({
+function Et() {
+  return S({
     queryKey: k.dashboard.approvals(),
-    queryFn: () => T("pending-approvals"),
-    staleTime: te
+    queryFn: () => E("pending-approvals"),
+    staleTime: ne
   });
 }
-function jt() {
-  return w({
+function Ct() {
+  return S({
     queryKey: k.dashboard.blockedTasks(),
-    queryFn: () => T("blocked-tasks"),
-    select: ht,
-    staleTime: P
+    queryFn: () => E("blocked-tasks"),
+    select: kt,
+    staleTime: O
   });
 }
-function kt(t) {
-  return w({
+function At(t) {
+  return S({
     queryKey: k.dashboard.statistics(t),
-    queryFn: () => T("statistics", t),
-    select: pt,
-    staleTime: P
+    queryFn: () => E("statistics", t),
+    select: Dt,
+    staleTime: O
   });
 }
-function Dt(t) {
-  return w({
+function Rt(t) {
+  return S({
     queryKey: k.dashboard.incomeExpense(t),
-    queryFn: () => T("income-expense", t),
-    staleTime: te
+    queryFn: () => E("income-expense", t),
+    staleTime: ne
   });
 }
-function Nt(t) {
-  return w({
+function Lt(t) {
+  return S({
     queryKey: k.dashboard.deliveryHeatmap(t),
-    queryFn: () => T("delivery-heatmap", t),
-    staleTime: P
+    queryFn: () => E("delivery-heatmap", t),
+    staleTime: O
   });
 }
-function wt({ filter: t }) {
-  const { data: a, isLoading: n, isError: r, refetch: o } = bt(t);
-  return n ? /* @__PURE__ */ e.jsx("div", { className: "h-full grid grid-cols-5 gap-5 lt-1080:grid-cols-3 mobile:grid-cols-2 mobile:h-auto", children: Array.from({ length: 5 }, (c, l) => /* @__PURE__ */ e.jsxs("div", { className: "rounded-card shadow-card bg-surface-base border border-default p-4", children: [
-    /* @__PURE__ */ e.jsx(C, { height: 14, className: "w-2/3 mb-2" }),
-    /* @__PURE__ */ e.jsx(C, { height: 28, className: "w-1/2" })
-  ] }, l)) }) : r || !a ? /* @__PURE__ */ e.jsxs("div", { className: "rounded-card shadow-card bg-surface-base border border-default p-4 flex items-center justify-between gap-3", children: [
-    /* @__PURE__ */ e.jsx("span", { className: "text-[12.5px] text-text-secondary", children: s("Dashboard:Summary:Error", "Özet yüklenemedi.") }),
-    /* @__PURE__ */ e.jsx("button", { type: "button", onClick: () => o(), className: "text-[12.5px] text-text-link hover:underline", children: s("Common:Retry", "Tekrar dene") })
+function Mt({ filter: t, template: n }) {
+  const { data: a, isLoading: s, isError: o, refetch: c } = wt(t), l = { gridTemplateColumns: n ?? "repeat(4, minmax(0, 2fr)) minmax(0, 3fr)" };
+  return s ? /* @__PURE__ */ e.jsx("div", { className: "h-full grid gap-5", style: l, children: Array.from({ length: 5 }, (i, d) => /* @__PURE__ */ e.jsxs("div", { className: "rounded-card shadow-card bg-surface-base border border-default p-4", children: [
+    /* @__PURE__ */ e.jsx(A, { height: 14, className: "w-2/3 mb-2" }),
+    /* @__PURE__ */ e.jsx(A, { height: 28, className: "w-1/2" })
+  ] }, d)) }) : o || !a ? /* @__PURE__ */ e.jsxs("div", { className: "rounded-card shadow-card bg-surface-base border border-default p-4 flex items-center justify-between gap-3", children: [
+    /* @__PURE__ */ e.jsx("span", { className: "text-[12.5px] text-text-secondary", children: r("Dashboard:Summary:Error", "Özet yüklenemedi.") }),
+    /* @__PURE__ */ e.jsx("button", { type: "button", onClick: () => c(), className: "text-[12.5px] text-text-link hover:underline", children: r("Common:Retry", "Tekrar dene") })
   ] }) : (
     /* Kutucuklar ızgara kutusunu TAM doldurur (h-full): doğal yüksekliğe
                bırakılırsa kutu içerikten kısa kalınca taşıp alttaki satıra biniyor,
                uzun kalınca da altta ölü boşluk bırakıyordu — ikisini de gördük.
                Ek alt padding YOK: tüm boşluklar tek kaynaktan, GRID_MARGIN'den gelir.
-    
                Kutucuk arası da aynı 20px (gap-5) — ızgaradaki kart aralarıyla birebir.
     
-               lt-1080 ve mobile ikisi de max-width → Tailwind bunları azalan sırada
-               yazar, dar ekranda mobile kazanır. `tablet:` KULLANILMAZ: o min-width'tir,
-               1440'ta da tetiklenirdi. */
-    /* @__PURE__ */ e.jsxs("div", { className: "h-full grid grid-cols-5 gap-5 lt-1080:grid-cols-3 mobile:grid-cols-2 mobile:h-auto", children: [
+               Kutu yüksekliği de kolon sayısını takip eder (stripLayoutFor → h), yani
+               çok satırlı dizilimde kutu büyür; sabit h=2 bırakılınca satırlar 148px'lik
+               kutuya sıkışıp `overflow-hidden` altyazıları kesiyordu. */
+    /* @__PURE__ */ e.jsxs("div", { className: "h-full grid gap-5", style: l, children: [
       /* @__PURE__ */ e.jsx(
-        K,
+        _,
         {
-          label: s("Dashboard:Summary:DueThisPeriod", "Bu dönem teslim"),
+          label: r("Dashboard:Summary:DueThisPeriod", "Bu dönem teslim"),
           value: a.dueThisPeriod,
-          pill: s("Dashboard:Summary:DueThisWeek", "{0} bu hafta", a.dueThisWeek),
-          icon: /* @__PURE__ */ e.jsx(Tt, {}),
+          pill: r("Dashboard:Summary:DueThisWeek", "{0} bu hafta", a.dueThisWeek),
+          icon: /* @__PURE__ */ e.jsx(Ht, {}),
           iconTone: "brand",
           spark: a.dueTrend
         }
       ),
       /* @__PURE__ */ e.jsx(
-        K,
+        _,
         {
-          label: s("Dashboard:Summary:Overdue", "Gecikmiş"),
+          label: r("Dashboard:Summary:Overdue", "Gecikmiş"),
           value: a.overdue,
           tone: "negative",
-          pill: a.oldestOverdueDays != null ? s("Dashboard:Summary:OldestOverdue", "en eski {0} g", a.oldestOverdueDays) : null,
+          pill: a.oldestOverdueDays != null ? r("Dashboard:Summary:OldestOverdue", "en eski {0} g", a.oldestOverdueDays) : null,
           pillTone: "negative",
-          icon: /* @__PURE__ */ e.jsx(Et, {}),
+          icon: /* @__PURE__ */ e.jsx(Pt, {}),
           iconTone: "negative",
-          caption: s("Dashboard:Summary:OverdueProjects", "{0} projede", a.overdueProjectCount)
+          caption: r("Dashboard:Summary:OverdueProjects", "{0} projede", a.overdueProjectCount)
         }
       ),
       /* @__PURE__ */ e.jsx(
-        K,
+        _,
         {
-          label: s("Dashboard:Summary:Blocked", "Tıkanan iş"),
+          label: r("Dashboard:Summary:Blocked", "Tıkanan iş"),
           value: a.blocked,
           tone: "warning",
-          pill: s("Dashboard:Summary:BlockedAvg", "ort. {0} g", a.blockedAvgIdleDays),
+          pill: r("Dashboard:Summary:BlockedAvg", "ort. {0} g", a.blockedAvgIdleDays),
           pillTone: "warning",
-          icon: /* @__PURE__ */ e.jsx(Ct, {}),
+          icon: /* @__PURE__ */ e.jsx(Bt, {}),
           iconTone: "warning",
-          caption: s("Dashboard:Summary:BlockedReasons", "onay · bilgi · bağımlılık")
+          caption: r("Dashboard:Summary:BlockedReasons", "onay · bilgi · bağımlılık")
         }
       ),
       /* @__PURE__ */ e.jsx(
-        K,
+        _,
         {
-          label: s("Dashboard:Summary:PendingApprovals", "Bende onay"),
+          label: r("Dashboard:Summary:PendingApprovals", "Bende onay"),
           value: a.pendingApprovals,
           locked: a.pendingApprovals == null,
           lockedPermission: "Platform.Invoices",
-          pill: a.pendingApprovalAmount != null ? U(a.pendingApprovalAmount, a.currency) : null,
-          icon: /* @__PURE__ */ e.jsx(At, {}),
+          pill: a.pendingApprovalAmount != null ? z(a.pendingApprovalAmount, a.currency) : null,
+          icon: /* @__PURE__ */ e.jsx(Ft, {}),
           iconTone: "brand",
-          caption: a.pendingApprovalAvgAgeHours != null ? s("Dashboard:Summary:AvgWait", "ortalama bekleme {0} sa", a.pendingApprovalAvgAgeHours) : null
+          caption: a.pendingApprovalAvgAgeHours != null ? r("Dashboard:Summary:AvgWait", "ortalama bekleme {0} sa", a.pendingApprovalAvgAgeHours) : null
         }
       ),
-      /* @__PURE__ */ e.jsx(St, { data: a })
+      /* @__PURE__ */ e.jsx(It, { data: a })
     ] })
   );
 }
-function K({ label: t, value: a, pill: n, pillTone: r = "neutral", caption: o, tone: c = "neutral", icon: l, iconTone: i = "brand", spark: d, locked: u, lockedPermission: f }) {
+function _({ label: t, value: n, pill: a, pillTone: s = "neutral", caption: o, tone: c = "neutral", icon: l, iconTone: i = "brand", spark: d, locked: u, lockedPermission: f }) {
   return /* @__PURE__ */ e.jsxs(
     "div",
     {
@@ -623,32 +628,32 @@ function K({ label: t, value: a, pill: n, pillTone: r = "neutral", caption: o, t
         ] }),
         u ? /* @__PURE__ */ e.jsxs(e.Fragment, { children: [
           /* @__PURE__ */ e.jsx("span", { className: "font-mono text-[28px] font-semibold leading-none tracking-[-0.03em] text-text-tertiary", children: "— —" }),
-          /* @__PURE__ */ e.jsx("span", { className: "text-[11.5px] text-text-tertiary", children: s("Dashboard:Stat:Locked", "yetki gerekli") }),
+          /* @__PURE__ */ e.jsx("span", { className: "text-[11.5px] text-text-tertiary", children: r("Dashboard:Stat:Locked", "yetki gerekli") }),
           /* @__PURE__ */ e.jsx("span", { className: "font-mono text-[9px] text-text-tertiary", children: f })
         ] }) : /* @__PURE__ */ e.jsxs(e.Fragment, { children: [
           /* @__PURE__ */ e.jsxs("div", { className: "flex items-baseline gap-2 flex-wrap", children: [
             /* @__PURE__ */ e.jsx("span", { className: p(
               "font-mono text-[28px] font-semibold leading-none tracking-[-0.03em] tabular-nums",
               c === "negative" ? "text-negative-500" : c === "warning" ? "text-warning-600" : "text-text-primary"
-            ), children: a }),
-            n && /* @__PURE__ */ e.jsx("span", { className: p(
+            ), children: n }),
+            a && /* @__PURE__ */ e.jsx("span", { className: p(
               "font-mono text-[11px] font-semibold px-[7px] py-0.5 rounded-full tabular-nums",
-              r === "negative" ? "bg-negative-50 text-negative-700" : r === "warning" ? "bg-warning-50 text-warning-700" : "bg-surface-sunken text-text-secondary"
-            ), children: n })
+              s === "negative" ? "bg-negative-50 text-negative-700" : s === "warning" ? "bg-warning-50 text-warning-700" : "bg-surface-sunken text-text-secondary"
+            ), children: a })
           ] }),
           o && /* @__PURE__ */ e.jsx("span", { className: "text-[11.5px] text-text-tertiary truncate", children: o })
         ] }),
-        d && d.length > 1 && /* @__PURE__ */ e.jsx("div", { className: "h-9 mt-auto -mx-4", children: /* @__PURE__ */ e.jsx(Xe, { values: d, ariaLabel: s("Dashboard:Summary:DueTrend", "Teslim dağılımı") }) })
+        d && d.length > 1 && /* @__PURE__ */ e.jsx("div", { className: "h-9 mt-auto -mx-4", children: /* @__PURE__ */ e.jsx(rt, { values: d, ariaLabel: r("Dashboard:Summary:DueTrend", "Teslim dağılımı") }) })
       ]
     }
   );
 }
-function St({ data: t }) {
-  const a = t.budgetUsedRatio == null && t.budgetTotal == null;
+function It({ data: t }) {
+  const n = t.budgetUsedRatio == null && t.budgetTotal == null;
   return /* @__PURE__ */ e.jsxs("div", { className: "rounded-card shadow-card bg-surface-base border border-default p-4 flex items-center justify-between gap-2.5", children: [
     /* @__PURE__ */ e.jsxs("div", { className: "flex flex-col gap-[7px] min-w-0", children: [
-      /* @__PURE__ */ e.jsx("span", { className: "text-[12.5px] font-medium text-text-secondary truncate", children: s("Dashboard:Summary:BudgetUsage", "Bütçe kullanımı") }),
-      a ? /* @__PURE__ */ e.jsxs(e.Fragment, { children: [
+      /* @__PURE__ */ e.jsx("span", { className: "text-[12.5px] font-medium text-text-secondary truncate", children: r("Dashboard:Summary:BudgetUsage", "Bütçe kullanımı") }),
+      n ? /* @__PURE__ */ e.jsxs(e.Fragment, { children: [
         /* @__PURE__ */ e.jsx("span", { className: "font-mono text-[28px] font-semibold leading-none tracking-[-0.03em] text-text-tertiary", children: "— —" }),
         /* @__PURE__ */ e.jsx("span", { className: "font-mono text-[9px] text-text-tertiary", children: "Platform.Projects.ViewBudget" })
       ] }) : /* @__PURE__ */ e.jsxs(e.Fragment, { children: [
@@ -657,104 +662,108 @@ function St({ data: t }) {
           Math.round((t.budgetUsedRatio ?? 0) * 100)
         ] }),
         /* @__PURE__ */ e.jsxs("span", { className: "text-[11.5px] text-text-tertiary truncate", children: [
-          U(t.budgetSpent, t.currency),
+          z(t.budgetSpent, t.currency),
           " / ",
-          U(t.budgetTotal, t.currency)
+          z(t.budgetTotal, t.currency)
         ] })
       ] })
     ] }),
-    !a && /* @__PURE__ */ e.jsx(et, { ratio: t.budgetUsedRatio ?? 0 })
+    !n && /* @__PURE__ */ e.jsx(lt, { ratio: t.budgetUsedRatio ?? 0 })
   ] });
 }
-const z = { width: 13, height: 13, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2, strokeLinecap: "round" }, Tt = () => /* @__PURE__ */ e.jsxs("svg", { ...z, children: [
+const Z = { width: 13, height: 13, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2, strokeLinecap: "round" }, Ht = () => /* @__PURE__ */ e.jsxs("svg", { ...Z, children: [
   /* @__PURE__ */ e.jsx("path", { d: "M8 2v3M16 2v3M4 9h16" }),
   /* @__PURE__ */ e.jsx("rect", { x: "4", y: "5", width: "16", height: "16", rx: "2" })
-] }), Et = () => /* @__PURE__ */ e.jsxs("svg", { ...z, children: [
+] }), Pt = () => /* @__PURE__ */ e.jsxs("svg", { ...Z, children: [
   /* @__PURE__ */ e.jsx("circle", { cx: "12", cy: "12", r: "9" }),
   /* @__PURE__ */ e.jsx("path", { d: "M12 8v5" }),
   /* @__PURE__ */ e.jsx("path", { d: "M12 16.5v.01" })
-] }), Ct = () => /* @__PURE__ */ e.jsxs("svg", { ...z, children: [
+] }), Bt = () => /* @__PURE__ */ e.jsxs("svg", { ...Z, children: [
   /* @__PURE__ */ e.jsx("circle", { cx: "12", cy: "12", r: "9" }),
   /* @__PURE__ */ e.jsx("path", { d: "M5.6 5.6l12.8 12.8" })
-] }), At = () => /* @__PURE__ */ e.jsx("svg", { ...z, children: /* @__PURE__ */ e.jsx("path", { d: "M20 6L9 17l-5-5" }) }), le = ["ThisWeek", "NextWeek", "EndOfMonth", "Later"], ce = {
+] }), Ft = () => /* @__PURE__ */ e.jsx("svg", { ...Z, children: /* @__PURE__ */ e.jsx("path", { d: "M20 6L9 17l-5-5" }) }), de = ["ThisWeek", "NextWeek", "EndOfMonth", "Later"], ue = {
   ThisWeek: ["Dashboard:Deliveries:ThisWeek", "Bu hafta"],
   NextWeek: ["Dashboard:Deliveries:NextWeek", "Gelecek hafta"],
   EndOfMonth: ["Dashboard:Deliveries:EndOfMonth", "Ay sonu"],
   Later: ["Dashboard:Deliveries:Later", "Sonrası"]
 };
-function Rt({ filter: t, editMode: a }) {
-  const n = gt(t), r = n.data ?? [], o = x.useMemo(() => {
-    const l = new Map(le.map((i) => [i, []]));
-    for (const i of r)
+function Kt({ filter: t, editMode: n }) {
+  const a = St(t), s = a.data ?? [], o = x.useMemo(() => {
+    const l = new Map(de.map((i) => [i, []]));
+    for (const i of s)
       (l.get(i.groupKey) ?? l.get("Later")).push(i);
-    return le.map((i) => ({ key: i, items: l.get(i) ?? [] })).filter((i) => i.items.length > 0);
-  }, [r]), c = r.filter((l) => l.state === "Overdue").length;
+    return de.map((i) => ({ key: i, items: l.get(i) ?? [] })).filter((i) => i.items.length > 0);
+  }, [s]), c = s.filter((l) => l.state === "Overdue").length;
   return /* @__PURE__ */ e.jsx(
     D,
     {
-      editMode: a,
-      title: s("Dashboard:Deliveries:Title", "Bu ay teslim edilecekler"),
-      subtitle: s("Dashboard:Deliveries:Subtitle", "{0} iş · {1} gecikmiş", r.length, c),
-      actions: /* @__PURE__ */ e.jsx("a", { href: "/Tasks", className: "text-[12.5px] font-medium text-text-link hover:underline", children: s("Dashboard:Deliveries:AllTasks", "Görev listesi →") }),
-      isLoading: n.isLoading,
-      isError: n.isError,
-      onRetry: n.refetch,
-      isEmpty: r.length === 0,
-      isFetching: n.isFetching,
-      isStale: n.isStale,
-      dataUpdatedAt: n.dataUpdatedAt,
+      editMode: n,
+      title: r("Dashboard:Deliveries:Title", "Bu ay teslim edilecekler"),
+      subtitle: r("Dashboard:Deliveries:Subtitle", "{0} iş · {1} gecikmiş", s.length, c),
+      actions: /* @__PURE__ */ e.jsx("a", { href: "/Tasks", className: "text-[12.5px] font-medium text-text-link hover:underline", children: r("Dashboard:Deliveries:AllTasks", "Görev listesi →") }),
+      isLoading: a.isLoading,
+      isError: a.isError,
+      onRetry: a.refetch,
+      isEmpty: s.length === 0,
+      isFetching: a.isFetching,
+      isStale: a.isStale,
+      dataUpdatedAt: a.dataUpdatedAt,
       emptyState: /* @__PURE__ */ e.jsx(
-        N,
+        w,
         {
           compact: !0,
-          title: s("Dashboard:Deliveries:EmptyTitle", "Bu dönem teslim yok"),
-          description: s("Dashboard:Deliveries:EmptyDescription", "Son tarihi bu döneme düşen açık iş bulunmuyor."),
-          action: /* @__PURE__ */ e.jsx("a", { href: "/Tasks", className: "text-[12.5px] font-medium text-text-link hover:underline", children: s("Dashboard:Deliveries:AllTasks", "Görev listesi →") })
+          title: r("Dashboard:Deliveries:EmptyTitle", "Bu dönem teslim yok"),
+          description: r("Dashboard:Deliveries:EmptyDescription", "Son tarihi bu döneme düşen açık iş bulunmuyor."),
+          action: /* @__PURE__ */ e.jsx("a", { href: "/Tasks", className: "text-[12.5px] font-medium text-text-link hover:underline", children: r("Dashboard:Deliveries:AllTasks", "Görev listesi →") })
         }
       ),
-      children: /* @__PURE__ */ e.jsx("div", { className: "flex flex-col gap-2.5", children: o.map((l) => /* @__PURE__ */ e.jsxs(fe.Fragment, { children: [
-        /* @__PURE__ */ e.jsx(Lt, { groupKey: l.key, count: l.items.length }),
-        /* @__PURE__ */ e.jsx("ul", { className: "flex flex-col gap-[3px]", children: l.items.map((i) => /* @__PURE__ */ e.jsx(Mt, { item: i }, i.taskId)) })
+      children: /* @__PURE__ */ e.jsx("div", { className: "flex flex-col gap-2.5", children: o.map((l) => /* @__PURE__ */ e.jsxs(ye.Fragment, { children: [
+        /* @__PURE__ */ e.jsx(Wt, { groupKey: l.key, count: l.items.length }),
+        /* @__PURE__ */ e.jsx("ul", { className: "flex flex-col gap-[3px]", children: l.items.map((i) => /* @__PURE__ */ e.jsx(Ot, { item: i }, i.taskId)) })
       ] }, l.key)) })
     }
   );
 }
-function Lt({ groupKey: t, count: a }) {
-  const [n, r] = ce[t] ?? ce.Later;
+function Wt({ groupKey: t, count: n }) {
+  const [a, s] = ue[t] ?? ue.Later;
   return /* @__PURE__ */ e.jsxs("div", { className: "flex items-center gap-2.5", children: [
-    /* @__PURE__ */ e.jsx("span", { className: "text-[11px] font-semibold uppercase tracking-[0.04em] text-text-tertiary", children: s(n, r) }),
-    /* @__PURE__ */ e.jsx("span", { className: "font-mono text-[10.5px] text-text-tertiary tabular-nums", children: a }),
+    /* @__PURE__ */ e.jsx("span", { className: "text-[11px] font-semibold uppercase tracking-[0.04em] text-text-tertiary", children: r(a, s) }),
+    /* @__PURE__ */ e.jsx("span", { className: "font-mono text-[10.5px] text-text-tertiary tabular-nums", children: n }),
     /* @__PURE__ */ e.jsx("span", { className: "flex-1 h-px bg-subtle" })
   ] });
 }
-const de = {
+const xe = {
   Overdue: "bg-negative-500",
   InReview: "bg-warning-500",
   OnTrack: "bg-positive-500",
   Upcoming: "bg-neutral-300"
 };
-function Mt({ item: t }) {
+function Ot({ item: t }) {
   return /* @__PURE__ */ e.jsx("li", { children: /* @__PURE__ */ e.jsxs(
     "a",
     {
       href: `/Tasks?taskId=${t.taskId}`,
       className: p(
-        "flex items-center gap-3 p-2.5 rounded-[10px]",
+        /* `flex-wrap` + başlığa taban genişlik: rozet/proje/tarih/avatar
+           hepsi flex-none olduğu için dar kartta başlık 0'a eziliyordu
+           (ölçüldü: 311px kartta başlığa 4px kalıyor). Taban genişlik
+           sığmayınca yan bilgiler alt satıra sarar. `mobile:` yetmez —
+           o viewport sorgusu, kart dar olması ekranın dar olması demek değil. */
+        "flex flex-wrap items-center gap-3 p-2.5 rounded-[10px]",
         "bg-surface-base border border-subtle",
         "hover:bg-surface-hover hover:border-default transition-colors duration-fast",
-        "focus-visible:outline-none focus-visible:shadow-focus",
-        "mobile:flex-wrap"
+        "focus-visible:outline-none focus-visible:shadow-focus"
       ),
       children: [
-        /* @__PURE__ */ e.jsx("span", { className: p("w-1.5 h-1.5 rounded-full flex-none", de[t.state] ?? de.Upcoming), "aria-hidden": "true" }),
-        /* @__PURE__ */ e.jsx("span", { className: "flex-1 min-w-0 text-[13.5px] font-medium text-text-primary truncate", children: t.title }),
-        t.state === "Overdue" && t.overdueDays != null && /* @__PURE__ */ e.jsx("span", { className: "text-[11px] font-semibold px-2 py-0.5 rounded-full bg-negative-50 text-negative-700 flex-none", children: s("Dashboard:Deliveries:OverdueDays", "{0} gün gecikmiş", t.overdueDays) }),
-        t.state === "InReview" && /* @__PURE__ */ e.jsx("span", { className: "text-[11px] font-semibold px-2 py-0.5 rounded-full bg-warning-50 text-warning-700 flex-none", children: s("Dashboard:Deliveries:InReview", "kontrolde") }),
+        /* @__PURE__ */ e.jsx("span", { className: p("w-1.5 h-1.5 rounded-full flex-none", xe[t.state] ?? xe.Upcoming), "aria-hidden": "true" }),
+        /* @__PURE__ */ e.jsx("span", { className: "flex-1 min-w-[140px] text-[13.5px] font-medium text-text-primary truncate", children: t.title }),
+        t.state === "Overdue" && t.overdueDays != null && /* @__PURE__ */ e.jsx("span", { className: "text-[11px] font-semibold px-2 py-0.5 rounded-full bg-negative-50 text-negative-700 flex-none", children: r("Dashboard:Deliveries:OverdueDays", "{0} gün gecikmiş", t.overdueDays) }),
+        t.state === "InReview" && /* @__PURE__ */ e.jsx("span", { className: "text-[11px] font-semibold px-2 py-0.5 rounded-full bg-warning-50 text-warning-700 flex-none", children: r("Dashboard:Deliveries:InReview", "kontrolde") }),
         t.projectName && /* @__PURE__ */ e.jsx("span", { className: "text-[11px] text-text-secondary px-2 py-0.5 rounded-full bg-surface-sunken flex-none truncate max-w-[140px]", children: t.projectName }),
         /* @__PURE__ */ e.jsx("span", { className: p(
           "font-mono text-[11.5px] w-[50px] text-right flex-none tabular-nums",
           t.state === "Overdue" ? "text-negative-500" : "text-text-secondary"
-        ), children: It(t.dueDate) }),
+        ), children: Ut(t.dueDate) }),
         t.assigneeInitials && /* @__PURE__ */ e.jsx(
           "span",
           {
@@ -767,42 +776,42 @@ function Mt({ item: t }) {
     }
   ) });
 }
-function It(t) {
-  const a = new Date(t);
-  return Number.isNaN(a.getTime()) ? "" : a.toLocaleDateString(void 0, { day: "numeric", month: "short" });
+function Ut(t) {
+  const n = new Date(t);
+  return Number.isNaN(n.getTime()) ? "" : n.toLocaleDateString(void 0, { day: "numeric", month: "short" });
 }
-const ue = 4, xe = {
+const me = 4, he = {
   Healthy: ["bg-positive-50 text-positive-700", "Dashboard:Health:Healthy", "Sağlıklı"],
   Attention: ["bg-warning-50 text-warning-700", "Dashboard:Health:Attention", "Dikkat"],
   Risky: ["bg-negative-50 text-negative-700", "Dashboard:Health:Risky", "Riskli"]
-}, Ht = { Healthy: "positive", Attention: "warning", Risky: "negative" };
-function Pt({ filter: t, editMode: a }) {
-  const n = yt(t), r = n.data ?? [], o = r.slice(0, ue), c = r.slice(ue);
+}, Gt = { Healthy: "positive", Attention: "warning", Risky: "negative" };
+function _t({ filter: t, editMode: n }) {
+  const a = Tt(t), s = a.data ?? [], o = s.slice(0, me), c = s.slice(me);
   return /* @__PURE__ */ e.jsx(
     D,
     {
-      editMode: a,
-      title: s("Dashboard:Health:Title", "Proje sağlığı"),
-      subtitle: s("Dashboard:Health:Subtitle", "{0} aktif proje", r.length),
-      isLoading: n.isLoading,
-      isError: n.isError,
-      onRetry: n.refetch,
-      isEmpty: r.length === 0,
-      isFetching: n.isFetching,
-      isStale: n.isStale,
-      dataUpdatedAt: n.dataUpdatedAt,
+      editMode: n,
+      title: r("Dashboard:Health:Title", "Proje sağlığı"),
+      subtitle: r("Dashboard:Health:Subtitle", "{0} aktif proje", s.length),
+      isLoading: a.isLoading,
+      isError: a.isError,
+      onRetry: a.refetch,
+      isEmpty: s.length === 0,
+      isFetching: a.isFetching,
+      isStale: a.isStale,
+      dataUpdatedAt: a.dataUpdatedAt,
       emptyState: /* @__PURE__ */ e.jsx(
-        N,
+        w,
         {
           compact: !0,
-          title: s("Dashboard:Health:EmptyTitle", "Henüz proje yok"),
-          description: s("Dashboard:Health:EmptyDescription", "Proje oluşturunca sağlık göstergeleri burada belirir."),
-          action: /* @__PURE__ */ e.jsx("a", { href: "/Projects", className: "text-[12.5px] font-medium text-text-link hover:underline", children: s("Dashboard:Health:OpenProjects", "Projeleri aç →") })
+          title: r("Dashboard:Health:EmptyTitle", "Henüz proje yok"),
+          description: r("Dashboard:Health:EmptyDescription", "Proje oluşturunca sağlık göstergeleri burada belirir."),
+          action: /* @__PURE__ */ e.jsx("a", { href: "/Projects", className: "text-[12.5px] font-medium text-text-link hover:underline", children: r("Dashboard:Health:OpenProjects", "Projeleri aç →") })
         }
       ),
       footer: c.length > 0 && /* @__PURE__ */ e.jsxs("div", { className: "flex items-center justify-between gap-2", children: [
         /* @__PURE__ */ e.jsx("span", { className: "text-xs text-text-tertiary truncate", children: c.map((l) => l.name).join(" · ") }),
-        /* @__PURE__ */ e.jsx("a", { href: "/Projects", className: "text-xs text-text-link hover:underline flex-none", children: s("Dashboard:Health:More", "+{0} proje →", c.length) })
+        /* @__PURE__ */ e.jsx("a", { href: "/Projects", className: "text-xs text-text-link hover:underline flex-none", children: r("Dashboard:Health:More", "+{0} proje →", c.length) })
       ] }),
       children: /* @__PURE__ */ e.jsx("ul", { className: "flex flex-col", children: o.map((l, i) => /* @__PURE__ */ e.jsxs("li", { className: "flex flex-col gap-[7px]", children: [
         i > 0 && /* @__PURE__ */ e.jsx("span", { className: "h-px bg-subtle my-2.5" }),
@@ -815,77 +824,79 @@ function Pt({ filter: t, editMode: a }) {
               children: l.name
             }
           ),
-          /* @__PURE__ */ e.jsx(Bt, { state: l.state })
+          /* @__PURE__ */ e.jsx(qt, { state: l.state })
         ] }),
         /* @__PURE__ */ e.jsx(
-          rt,
+          mt,
           {
             ratio: l.budgetRatio ?? l.timeRatio ?? 0,
-            tone: Ht[l.state] ?? "positive",
-            ariaLabel: s("Dashboard:Health:BarLabel", "{0} ilerleme", l.name)
+            tone: Gt[l.state] ?? "positive",
+            ariaLabel: r("Dashboard:Health:BarLabel", "{0} ilerleme", l.name)
           }
         ),
-        /* @__PURE__ */ e.jsx(Kt, { project: l })
+        /* @__PURE__ */ e.jsx($t, { project: l })
       ] }, l.projectId)) })
     }
   );
 }
-function Bt({ state: t }) {
-  const [a, n, r] = xe[t] ?? xe.Healthy;
-  return /* @__PURE__ */ e.jsx("span", { className: p("text-[11px] font-semibold px-2 py-0.5 rounded-full flex-none", a), children: s(n, r) });
+function qt({ state: t }) {
+  const [n, a, s] = he[t] ?? he.Healthy;
+  return /* @__PURE__ */ e.jsx("span", { className: p("text-[11px] font-semibold px-2 py-0.5 rounded-full flex-none", n), children: r(a, s) });
 }
-function Kt({ project: t }) {
-  const a = [];
-  return t.daysRemaining != null && a.push(s("Dashboard:Health:DaysLeft", "{0} gün", t.daysRemaining)), t.budgetRatio != null && a.push(s("Dashboard:Health:BudgetPercent", "%{0} bütçe", Math.round(t.budgetRatio * 100))), a.push(s("Dashboard:Health:Tasks", "{0}/{1} görev", t.tasksDone, t.tasksTotal)), /* @__PURE__ */ e.jsx("div", { className: "flex items-center gap-2.5 font-mono text-[11px] text-text-secondary tabular-nums", children: a.map((n, r) => /* @__PURE__ */ e.jsxs(fe.Fragment, { children: [
-    r > 0 && /* @__PURE__ */ e.jsx("span", { className: "text-border-default", "aria-hidden": "true", children: "|" }),
-    /* @__PURE__ */ e.jsx("span", { children: n })
-  ] }, n)) });
+function $t({ project: t }) {
+  const n = [];
+  return t.daysRemaining != null && n.push(r("Dashboard:Health:DaysLeft", "{0} gün", t.daysRemaining)), t.budgetRatio != null && n.push(r("Dashboard:Health:BudgetPercent", "%{0} bütçe", Math.round(t.budgetRatio * 100))), n.push(r("Dashboard:Health:Tasks", "{0}/{1} görev", t.tasksDone, t.tasksTotal)), /* @__PURE__ */ e.jsx("div", { className: "flex items-center gap-2.5 font-mono text-[11px] text-text-secondary tabular-nums", children: n.map((a, s) => /* @__PURE__ */ e.jsxs(ye.Fragment, { children: [
+    s > 0 && /* @__PURE__ */ e.jsx("span", { className: "text-border-default", "aria-hidden": "true", children: "|" }),
+    /* @__PURE__ */ e.jsx("span", { children: a })
+  ] }, a)) });
 }
-function Ft({ editMode: t }) {
+function zt({ editMode: t }) {
   var l;
-  const a = vt(), n = a.data ?? [], r = n.reduce((i, d) => i + (d.amount ?? 0), 0), o = n.length ? Math.round(n.reduce((i, d) => i + d.ageHours, 0) / n.length) : 0, c = ((l = n[0]) == null ? void 0 : l.currency) ?? "TRY";
+  const n = Et(), a = n.data ?? [], s = a.reduce((i, d) => i + (d.amount ?? 0), 0), o = a.length ? Math.round(a.reduce((i, d) => i + d.ageHours, 0) / a.length) : 0, c = ((l = a[0]) == null ? void 0 : l.currency) ?? "TRY";
   return /* @__PURE__ */ e.jsx(
     D,
     {
       editMode: t,
-      title: s("Dashboard:Approvals:Title", "Bende bekleyen kararlar"),
-      badge: n.length > 0 && /* @__PURE__ */ e.jsx("span", { className: "font-mono text-[11px] font-semibold px-[7px] py-0.5 rounded-full bg-warning-50 text-warning-700 tabular-nums flex-none", children: n.length }),
-      isLoading: a.isLoading,
-      isError: a.isError,
-      onRetry: a.refetch,
-      isEmpty: n.length === 0,
-      isFetching: a.isFetching,
-      isStale: a.isStale,
-      dataUpdatedAt: a.dataUpdatedAt,
+      title: r("Dashboard:Approvals:Title", "Bende bekleyen kararlar"),
+      badge: a.length > 0 && /* @__PURE__ */ e.jsx("span", { className: "font-mono text-[11px] font-semibold px-[7px] py-0.5 rounded-full bg-warning-50 text-warning-700 tabular-nums flex-none", children: a.length }),
+      isLoading: n.isLoading,
+      isError: n.isError,
+      onRetry: n.refetch,
+      isEmpty: a.length === 0,
+      isFetching: n.isFetching,
+      isStale: n.isStale,
+      dataUpdatedAt: n.dataUpdatedAt,
       emptyState: /* @__PURE__ */ e.jsx(
-        N,
+        w,
         {
           compact: !0,
-          title: s("Dashboard:Approvals:EmptyTitle", "Karar bekleyen yok"),
-          description: s("Dashboard:Approvals:EmptyDescription", "Taslak durumdaki fatura bulunmuyor."),
-          action: /* @__PURE__ */ e.jsx("a", { href: "/Invoices", className: "text-[12.5px] font-medium text-text-link hover:underline", children: s("Dashboard:Approvals:OpenInvoices", "Faturaları aç →") })
+          title: r("Dashboard:Approvals:EmptyTitle", "Karar bekleyen yok"),
+          description: r("Dashboard:Approvals:EmptyDescription", "Taslak durumdaki fatura bulunmuyor."),
+          action: /* @__PURE__ */ e.jsx("a", { href: "/Invoices", className: "text-[12.5px] font-medium text-text-link hover:underline", children: r("Dashboard:Approvals:OpenInvoices", "Faturaları aç →") })
         }
       ),
-      footer: n.length > 0 && /* @__PURE__ */ e.jsxs("div", { className: "flex items-center justify-between gap-2", children: [
-        /* @__PURE__ */ e.jsx("span", { className: "text-[11.5px] text-text-tertiary truncate", children: s("Dashboard:Approvals:Total", "Toplam {0} · ort. bekleme {1} sa", se(r, c), o) }),
-        /* @__PURE__ */ e.jsx("a", { href: "/Invoices", className: "text-[12.5px] font-medium text-text-link hover:underline flex-none", children: s("Dashboard:Approvals:Queue", "Onay kuyruğu →") })
+      footer: a.length > 0 && /* Satır başlıkları serbest metin olduğu için kırpılabilir, ama bu
+      özet SABİT biçimli — dar kartta kırpmak yerine alt satıra sarsın. */
+      /* @__PURE__ */ e.jsxs("div", { className: "flex items-center justify-between gap-2 flex-wrap", children: [
+        /* @__PURE__ */ e.jsx("span", { className: "text-[11.5px] text-text-tertiary", children: r("Dashboard:Approvals:Total", "Toplam {0} · ort. bekleme {1} sa", oe(s, c), o) }),
+        /* @__PURE__ */ e.jsx("a", { href: "/Invoices", className: "text-[12.5px] font-medium text-text-link hover:underline flex-none", children: r("Dashboard:Approvals:Queue", "Onay kuyruğu →") })
       ] }),
-      children: /* @__PURE__ */ e.jsx("ul", { className: "flex flex-col", children: n.slice(0, 4).map((i, d) => /* @__PURE__ */ e.jsxs(
+      children: /* @__PURE__ */ e.jsx("ul", { className: "flex flex-col", children: a.slice(0, 4).map((i, d) => /* @__PURE__ */ e.jsxs(
         "li",
         {
-          className: "flex items-center gap-2.5 py-2 border-b border-subtle last:border-b-0",
+          className: "flex flex-wrap items-center gap-2.5 py-2 border-b border-subtle last:border-b-0",
           children: [
-            /* @__PURE__ */ e.jsxs("span", { className: "flex-1 min-w-0 flex flex-col gap-0.5", children: [
+            /* @__PURE__ */ e.jsxs("span", { className: "flex-1 min-w-[150px] flex flex-col gap-0.5", children: [
               /* @__PURE__ */ e.jsx("span", { className: "text-[12.5px] font-medium text-text-primary truncate", children: i.title }),
-              /* @__PURE__ */ e.jsx("span", { className: "text-[11px] text-text-tertiary truncate", children: s("Dashboard:Approvals:Meta", "Fatura · {0} · {1} sa", i.requesterName || "—", i.ageHours) })
+              /* @__PURE__ */ e.jsx("span", { className: "text-[11px] text-text-tertiary truncate", children: r("Dashboard:Approvals:Meta", "Fatura · {0} · {1} sa", i.requesterName || "—", i.ageHours) })
             ] }),
-            /* @__PURE__ */ e.jsx("span", { className: "font-mono text-xs font-semibold text-text-primary tabular-nums flex-none", children: se(i.amount, i.currency) }),
+            /* @__PURE__ */ e.jsx("span", { className: "font-mono text-xs font-semibold text-text-primary tabular-nums flex-none", children: oe(i.amount, i.currency) }),
             /* @__PURE__ */ e.jsx(
               "a",
               {
                 href: i.targetUrl,
                 className: "text-xs font-medium text-text-link hover:underline flex-none",
-                children: s("Dashboard:Approvals:Review", "İncele →")
+                children: r("Dashboard:Approvals:Review", "İncele →")
               }
             )
           ]
@@ -895,216 +906,216 @@ function Ft({ editMode: t }) {
     }
   );
 }
-const me = {
+const pe = {
   WaitingReview: ["bg-warning-50 text-warning-700", "Dashboard:Blockers:WaitingReview", "Kontrolde"],
   Dependency: ["bg-surface-sunken text-text-secondary", "Dashboard:Blockers:Dependency", "Bağımlı"],
   Unassigned: ["bg-negative-50 text-negative-700", "Dashboard:Blockers:Unassigned", "Atanmamış"]
 };
-function Ot({ editMode: t }) {
-  const a = jt(), n = a.data ?? [];
+function Vt({ editMode: t }) {
+  const n = Ct(), a = n.data ?? [];
   return /* @__PURE__ */ e.jsx(
     D,
     {
       editMode: t,
-      accent: n.length > 0 ? "negative" : void 0,
-      title: s("Dashboard:Blockers:Title", "Tıkanan işler & risk"),
-      badge: n.length > 0 && /* @__PURE__ */ e.jsx("span", { className: "font-mono text-[11px] font-semibold px-[7px] py-0.5 rounded-full bg-negative-50 text-negative-700 tabular-nums flex-none", children: n.length }),
-      isLoading: a.isLoading,
-      isError: a.isError,
-      onRetry: a.refetch,
-      isEmpty: n.length === 0,
-      isFetching: a.isFetching,
-      isStale: a.isStale,
-      dataUpdatedAt: a.dataUpdatedAt,
+      accent: a.length > 0 ? "negative" : void 0,
+      title: r("Dashboard:Blockers:Title", "Tıkanan işler & risk"),
+      badge: a.length > 0 && /* @__PURE__ */ e.jsx("span", { className: "font-mono text-[11px] font-semibold px-[7px] py-0.5 rounded-full bg-negative-50 text-negative-700 tabular-nums flex-none", children: a.length }),
+      isLoading: n.isLoading,
+      isError: n.isError,
+      onRetry: n.refetch,
+      isEmpty: a.length === 0,
+      isFetching: n.isFetching,
+      isStale: n.isStale,
+      dataUpdatedAt: n.dataUpdatedAt,
       emptyState: /* @__PURE__ */ e.jsx(
-        N,
+        w,
         {
           compact: !0,
-          title: s("Dashboard:Blockers:EmptyTitle", "Tıkanan iş yok"),
-          description: s("Dashboard:Blockers:EmptyDescription", "Açık işlerin hepsi son günlerde hareket görmüş.")
+          title: r("Dashboard:Blockers:EmptyTitle", "Tıkanan iş yok"),
+          description: r("Dashboard:Blockers:EmptyDescription", "Açık işlerin hepsi son günlerde hareket görmüş.")
         }
       ),
-      children: /* @__PURE__ */ e.jsx("ul", { className: "flex flex-col gap-3", children: n.slice(0, 3).map((r, o) => /* @__PURE__ */ e.jsxs("li", { className: "flex flex-col gap-1", children: [
+      children: /* @__PURE__ */ e.jsx("ul", { className: "flex flex-col gap-3", children: a.slice(0, 3).map((s, o) => /* @__PURE__ */ e.jsxs("li", { className: "flex flex-col gap-1", children: [
         o > 0 && /* @__PURE__ */ e.jsx("span", { className: "h-px bg-subtle mb-2" }),
         /* @__PURE__ */ e.jsxs("div", { className: "flex items-center gap-2", children: [
-          /* @__PURE__ */ e.jsx(Ut, { reason: r.blockReason }),
-          /* @__PURE__ */ e.jsx("span", { className: "font-mono text-[10.5px] text-text-tertiary truncate", children: s("Dashboard:Blockers:Meta", "{0} · {1} gündür hareketsiz", r.code, r.idleDays) })
+          /* @__PURE__ */ e.jsx(Qt, { reason: s.blockReason }),
+          /* @__PURE__ */ e.jsx("span", { className: "font-mono text-[10.5px] text-text-tertiary truncate", children: r("Dashboard:Blockers:Meta", "{0} · {1} gündür hareketsiz", s.code, s.idleDays) })
         ] }),
         /* @__PURE__ */ e.jsxs("span", { className: "text-[12.5px] font-medium text-text-primary leading-[1.4]", children: [
-          r.title,
-          r.dependentCount > 0 && /* @__PURE__ */ e.jsxs("span", { className: "text-text-tertiary font-normal", children: [
+          s.title,
+          s.dependentCount > 0 && /* @__PURE__ */ e.jsxs("span", { className: "text-text-tertiary font-normal", children: [
             " — ",
-            s("Dashboard:Blockers:Dependents", "{0} bağımlı görev bekliyor", r.dependentCount)
+            r("Dashboard:Blockers:Dependents", "{0} bağımlı görev bekliyor", s.dependentCount)
           ] })
         ] }),
         /* @__PURE__ */ e.jsx(
           "a",
           {
-            href: `/Tasks?taskId=${r.taskId}`,
+            href: `/Tasks?taskId=${s.taskId}`,
             className: "text-xs font-medium text-text-link hover:underline self-start",
-            children: s("Dashboard:Blockers:OpenTask", "Görevi aç →")
+            children: r("Dashboard:Blockers:OpenTask", "Görevi aç →")
           }
         )
-      ] }, r.taskId)) })
+      ] }, s.taskId)) })
     }
   );
 }
-function Ut({ reason: t }) {
-  const [a, n, r] = me[t] ?? me.Dependency;
-  return /* @__PURE__ */ e.jsx("span", { className: p("text-[11px] font-semibold px-2 py-0.5 rounded-full flex-none", a), children: s(n, r) });
+function Qt({ reason: t }) {
+  const [n, a, s] = pe[t] ?? pe.Dependency;
+  return /* @__PURE__ */ e.jsx("span", { className: p("text-[11px] font-semibold px-2 py-0.5 rounded-full flex-none", n), children: r(a, s) });
 }
-function Wt({ editMode: t }) {
+function Yt({ editMode: t }) {
   return /* @__PURE__ */ e.jsx(
     D,
     {
       editMode: t,
-      title: s("Dashboard:Ai:Title", "AI önerileri"),
-      subtitle: s("Dashboard:Ai:Subtitle", "sessiz inbox"),
+      title: r("Dashboard:Ai:Title", "AI önerileri"),
+      subtitle: r("Dashboard:Ai:Subtitle", "sessiz inbox"),
       isEmpty: !0,
       emptyState: /* @__PURE__ */ e.jsx(
-        N,
+        w,
         {
           compact: !0,
-          title: s("Dashboard:Ai:EmptyTitle", "AI şu an sessiz"),
-          description: s("Dashboard:Ai:EmptyDescription", "Anlamlı bir öneri çıktığında burada görünecek."),
-          action: /* @__PURE__ */ e.jsx("a", { href: "/Ai/Dashboard", className: "text-[12.5px] font-medium text-text-link hover:underline", children: s("Dashboard:Ai:OpenCenter", "AI Merkezi →") })
+          title: r("Dashboard:Ai:EmptyTitle", "AI şu an sessiz"),
+          description: r("Dashboard:Ai:EmptyDescription", "Anlamlı bir öneri çıktığında burada görünecek."),
+          action: /* @__PURE__ */ e.jsx("a", { href: "/Ai/Dashboard", className: "text-[12.5px] font-medium text-text-link hover:underline", children: r("Dashboard:Ai:OpenCenter", "AI Merkezi →") })
         }
       )
     }
   );
 }
-function Gt({ filter: t, editMode: a }) {
-  const n = Dt(t), r = n.data, o = (r == null ? void 0 : r.points) ?? [], c = o.some((i) => i.income > 0 || i.expense > 0), l = (r == null ? void 0 : r.currency) ?? "TRY";
+function Xt({ filter: t, editMode: n }) {
+  const a = Rt(t), s = a.data, o = (s == null ? void 0 : s.points) ?? [], c = o.some((i) => i.income > 0 || i.expense > 0), l = (s == null ? void 0 : s.currency) ?? "TRY";
   return /* @__PURE__ */ e.jsxs(
     D,
     {
-      editMode: a,
+      editMode: n,
       bleed: !0,
-      title: s("Dashboard:IncomeExpense:Title", "Gelir / gider"),
-      subtitle: s("Dashboard:IncomeExpense:Subtitle", "Son 6 ay"),
+      title: r("Dashboard:IncomeExpense:Title", "Gelir / gider"),
+      subtitle: r("Dashboard:IncomeExpense:Subtitle", "Son 6 ay"),
       actions: /* @__PURE__ */ e.jsxs("div", { className: "flex items-center gap-2.5 text-[11px] text-text-secondary", children: [
         /* @__PURE__ */ e.jsxs("span", { className: "inline-flex items-center gap-1.5", children: [
           /* @__PURE__ */ e.jsx("span", { className: "w-2 h-2 rounded-full bg-positive-500" }),
-          s("Dashboard:IncomeExpense:Income", "Gelir")
+          r("Dashboard:IncomeExpense:Income", "Gelir")
         ] }),
         /* @__PURE__ */ e.jsxs("span", { className: "inline-flex items-center gap-1.5", children: [
           /* @__PURE__ */ e.jsx("span", { className: "w-2 h-2 rounded-full bg-negative-500/45" }),
-          s("Dashboard:IncomeExpense:Expense", "Gider")
+          r("Dashboard:IncomeExpense:Expense", "Gider")
         ] })
       ] }),
-      isLoading: n.isLoading,
-      isError: n.isError,
-      onRetry: n.refetch,
+      isLoading: a.isLoading,
+      isError: a.isError,
+      onRetry: a.refetch,
       isEmpty: !c,
-      isFetching: n.isFetching,
-      isStale: n.isStale,
-      dataUpdatedAt: n.dataUpdatedAt,
+      isFetching: a.isFetching,
+      isStale: a.isStale,
+      dataUpdatedAt: a.dataUpdatedAt,
       emptyState: /* @__PURE__ */ e.jsx(
-        N,
+        w,
         {
           compact: !0,
-          title: s("Dashboard:IncomeExpense:EmptyTitle", "Kayıtlı hareket yok"),
-          description: s("Dashboard:IncomeExpense:EmptyDescription", "Son 6 ayda gelir veya gider kaydı bulunmuyor.")
+          title: r("Dashboard:IncomeExpense:EmptyTitle", "Kayıtlı hareket yok"),
+          description: r("Dashboard:IncomeExpense:EmptyDescription", "Son 6 ayda gelir veya gider kaydı bulunmuyor.")
         }
       ),
       bodyClassName: "flex flex-col gap-2.5",
       children: [
         /* @__PURE__ */ e.jsxs("div", { className: "flex items-baseline gap-2 flex-wrap", children: [
-          /* @__PURE__ */ e.jsx("span", { className: "font-mono text-2xl font-semibold leading-none tracking-[-0.03em] text-text-primary tabular-nums", children: U((r == null ? void 0 : r.net) ?? 0, l) }),
-          /* @__PURE__ */ e.jsx("span", { className: "text-[11.5px] text-text-tertiary", children: s("Dashboard:IncomeExpense:Net", "net") })
+          /* @__PURE__ */ e.jsx("span", { className: "font-mono text-2xl font-semibold leading-none tracking-[-0.03em] text-text-primary tabular-nums", children: z((s == null ? void 0 : s.net) ?? 0, l) }),
+          /* @__PURE__ */ e.jsx("span", { className: "text-[11.5px] text-text-tertiary", children: r("Dashboard:IncomeExpense:Net", "net") })
         ] }),
         /* @__PURE__ */ e.jsx("div", { className: "h-[82px] -mx-[18px] mt-auto", children: /* @__PURE__ */ e.jsx(
-          Je,
+          ot,
           {
             groups: o.map((i) => ({ values: [i.income, i.expense] })),
-            ariaLabel: s("Dashboard:IncomeExpense:ChartLabel", "Aylık gelir ve gider")
+            ariaLabel: r("Dashboard:IncomeExpense:ChartLabel", "Aylık gelir ve gider")
           }
         ) })
       ]
     }
   );
 }
-function _t({ filter: t, editMode: a }) {
-  const n = Nt(t), r = n.data ?? [], o = r.some((l) => l.count > 0), c = r.reduce(
+function Zt({ filter: t, editMode: n }) {
+  const a = Lt(t), s = a.data ?? [], o = s.some((l) => l.count > 0), c = s.reduce(
     (l, i) => i.count > ((l == null ? void 0 : l.count) ?? 0) ? i : l,
     null
   );
   return /* @__PURE__ */ e.jsxs(
     D,
     {
-      editMode: a,
-      title: s("Dashboard:Heatmap:Title", "Teslim yoğunluğu"),
-      subtitle: s("Dashboard:Heatmap:Subtitle", "Önümüzdeki 4 hafta · hafta × gün"),
-      isLoading: n.isLoading,
-      isError: n.isError,
-      onRetry: n.refetch,
-      isEmpty: r.length === 0,
-      isFetching: n.isFetching,
-      isStale: n.isStale,
-      dataUpdatedAt: n.dataUpdatedAt,
+      editMode: n,
+      title: r("Dashboard:Heatmap:Title", "Teslim yoğunluğu"),
+      subtitle: r("Dashboard:Heatmap:Subtitle", "Önümüzdeki 4 hafta · hafta × gün"),
+      isLoading: a.isLoading,
+      isError: a.isError,
+      onRetry: a.refetch,
+      isEmpty: s.length === 0,
+      isFetching: a.isFetching,
+      isStale: a.isStale,
+      dataUpdatedAt: a.dataUpdatedAt,
       emptyState: /* @__PURE__ */ e.jsx(
-        N,
+        w,
         {
           compact: !0,
-          title: s("Dashboard:Heatmap:EmptyTitle", "Planlı teslim yok"),
-          description: s("Dashboard:Heatmap:EmptyDescription", "Önümüzdeki 4 haftada son tarihi olan iş bulunmuyor.")
+          title: r("Dashboard:Heatmap:EmptyTitle", "Planlı teslim yok"),
+          description: r("Dashboard:Heatmap:EmptyDescription", "Önümüzdeki 4 haftada son tarihi olan iş bulunmuyor.")
         }
       ),
       bodyClassName: "flex flex-col gap-3",
       children: [
-        /* @__PURE__ */ e.jsx(nt, { cells: r }),
-        /* @__PURE__ */ e.jsx("span", { className: "text-[11.5px] text-text-tertiary", children: o && c ? s(
+        /* @__PURE__ */ e.jsx(ut, { cells: s }),
+        /* @__PURE__ */ e.jsx("span", { className: "text-[11.5px] text-text-tertiary", children: o && c ? r(
           "Dashboard:Heatmap:Busiest",
           "En yoğun gün {0} ({1} teslim) · sarı: hibe son tarihi",
           new Date(c.date).toLocaleDateString(void 0, { day: "numeric", month: "short" }),
           c.count
-        ) : s("Dashboard:Heatmap:NoneScheduled", "Bu pencerede teslim planlanmamış · sarı: hibe son tarihi") })
+        ) : r("Dashboard:Heatmap:NoneScheduled", "Bu pencerede teslim planlanmamış · sarı: hibe son tarihi") })
       ]
     }
   );
 }
-function qt({ editMode: t }) {
+function Jt({ editMode: t }) {
   return /* @__PURE__ */ e.jsx(
     D,
     {
       editMode: t,
-      title: s("Dashboard:Phases:Title", "Proje fazları"),
-      subtitle: s("Dashboard:Phases:Subtitle", "mini gantt"),
+      title: r("Dashboard:Phases:Title", "Proje fazları"),
+      subtitle: r("Dashboard:Phases:Subtitle", "mini gantt"),
       isEmpty: !0,
       emptyState: /* @__PURE__ */ e.jsx(
-        N,
+        w,
         {
           compact: !0,
-          title: s("Dashboard:Phases:EmptyTitle", "Faz tanımlı değil"),
-          description: s("Dashboard:Phases:EmptyDescription", "Projelere faz tanımlandığında zaman çizelgesi burada görünecek."),
-          action: /* @__PURE__ */ e.jsx("a", { href: "/Projects", className: "text-[12.5px] font-medium text-text-link hover:underline", children: s("Dashboard:Phases:OpenProjects", "Projeleri aç →") })
+          title: r("Dashboard:Phases:EmptyTitle", "Faz tanımlı değil"),
+          description: r("Dashboard:Phases:EmptyDescription", "Projelere faz tanımlandığında zaman çizelgesi burada görünecek."),
+          action: /* @__PURE__ */ e.jsx("a", { href: "/Projects", className: "text-[12.5px] font-medium text-text-link hover:underline", children: r("Dashboard:Phases:OpenProjects", "Projeleri aç →") })
         }
       )
     }
   );
 }
-const $t = [
+const ea = [
   ["Work", "Dashboard:StatTab:Work", "İş & teslim"],
   ["Finance", "Dashboard:StatTab:Finance", "Finans"],
   ["Grants", "Dashboard:StatTab:Grants", "Hibe"],
   ["Communication", "Dashboard:StatTab:Communication", "İletişim"],
   ["System", "Dashboard:StatTab:System", "Sistem"]
 ];
-function zt({ filter: t, editMode: a }) {
-  const n = kt(t), r = n.data ?? [], [o, c] = x.useState("Work"), l = x.useMemo(
-    () => $t.filter(([u]) => r.some((f) => f.group === u)),
-    [r]
-  ), i = r.filter((u) => u.group === o), d = r.filter((u) => u.locked).length;
+function ta({ filter: t, editMode: n }) {
+  const a = At(t), s = a.data ?? [], [o, c] = x.useState("Work"), l = x.useMemo(
+    () => ea.filter(([u]) => s.some((f) => f.group === u)),
+    [s]
+  ), i = s.filter((u) => u.group === o), d = s.filter((u) => u.locked).length;
   return /* @__PURE__ */ e.jsx(
     D,
     {
-      editMode: a,
-      title: s("Dashboard:Statistics:Title", "İstatistikler"),
-      subtitle: r.length > 0 ? s(
+      editMode: n,
+      title: r("Dashboard:Statistics:Title", "İstatistikler"),
+      subtitle: s.length > 0 ? r(
         "Dashboard:Statistics:Subtitle",
         "{0} istatistikten {1}'i yetkinde · {2}'si kilitli",
-        r.length,
-        r.length - d,
+        s.length,
+        s.length - d,
         d
       ) : void 0,
       actions: /* @__PURE__ */ e.jsx("div", { className: "flex items-center gap-1.5 flex-wrap justify-end", children: l.map(([u, f, g]) => /* @__PURE__ */ e.jsx(
@@ -1118,90 +1129,112 @@ function zt({ filter: t, editMode: a }) {
             "focus-visible:outline-none focus-visible:shadow-focus",
             o === u ? "bg-text-primary text-surface-base font-semibold" : "bg-surface-sunken text-text-secondary font-medium hover:text-text-primary"
           ),
-          children: s(f, g)
+          children: r(f, g)
         },
         u
       )) }),
-      isLoading: n.isLoading,
-      isError: n.isError,
-      onRetry: n.refetch,
-      isEmpty: r.length === 0,
-      isFetching: n.isFetching,
-      isStale: n.isStale,
-      dataUpdatedAt: n.dataUpdatedAt,
-      children: /* @__PURE__ */ e.jsx("div", { className: "grid grid-cols-6 gap-3 lt-1080:grid-cols-3 mobile:grid-cols-2", children: i.map((u) => /* @__PURE__ */ e.jsx(Vt, { stat: u }, u.key)) })
+      isLoading: a.isLoading,
+      isError: a.isError,
+      onRetry: a.refetch,
+      isEmpty: s.length === 0,
+      isFetching: a.isFetching,
+      isStale: a.isStale,
+      dataUpdatedAt: a.dataUpdatedAt,
+      children: /* @__PURE__ */ e.jsx("div", { className: "grid gap-3", style: { gridTemplateColumns: "repeat(auto-fill, minmax(154px, 1fr))" }, children: i.map((u) => /* @__PURE__ */ e.jsx(aa, { stat: u }, u.key)) })
     }
   );
 }
-function Vt({ stat: t }) {
+function aa({ stat: t }) {
   return t.locked ? /* @__PURE__ */ e.jsxs("div", { className: "p-[12px_14px] border border-dashed border-default rounded-xl bg-surface-base flex flex-col gap-1.5", children: [
     /* @__PURE__ */ e.jsx("span", { className: "text-[11.5px] text-text-tertiary truncate", children: t.label }),
     /* @__PURE__ */ e.jsx("span", { className: "font-mono text-xl font-semibold leading-none tracking-[-0.03em] text-text-tertiary", children: "— —" }),
-    /* @__PURE__ */ e.jsx("span", { className: "text-[10.5px] text-text-tertiary", children: s("Dashboard:Stat:Locked", "yetki gerekli") }),
+    /* @__PURE__ */ e.jsx("span", { className: "text-[10.5px] text-text-tertiary", children: r("Dashboard:Stat:Locked", "yetki gerekli") }),
     /* @__PURE__ */ e.jsx("span", { className: "font-mono text-[9px] text-text-tertiary truncate", children: t.requiredPermission })
   ] }) : /* @__PURE__ */ e.jsxs("div", { className: "p-[12px_14px] border border-subtle rounded-xl bg-surface-base flex flex-col gap-1.5", children: [
     /* @__PURE__ */ e.jsx("span", { className: "text-[11.5px] text-text-secondary truncate", children: t.label }),
     /* @__PURE__ */ e.jsx("span", { className: "font-mono text-xl font-semibold leading-none tracking-[-0.03em] text-text-primary tabular-nums", children: t.formatted || "—" }),
-    t.deltaFormatted ? /* @__PURE__ */ e.jsx(ze, { trend: t.trend, children: t.deltaFormatted }) : /* @__PURE__ */ e.jsx("span", { className: "font-mono text-[10.5px] text-text-tertiary", children: s("Dashboard:Stat:Flat", "• sabit") }),
+    t.deltaFormatted ? /* @__PURE__ */ e.jsx(tt, { trend: t.trend, children: t.deltaFormatted }) : /* @__PURE__ */ e.jsx("span", { className: "font-mono text-[10.5px] text-text-tertiary", children: r("Dashboard:Stat:Flat", "• sabit") }),
     /* @__PURE__ */ e.jsx("span", { className: "font-mono text-[9px] text-text-tertiary truncate", children: t.requiredPermission })
   ] });
 }
-const O = [
+const $ = [
   { key: "project-management", labelKey: "Dashboard:View:ProjectManagement", fallback: "Proje Yönetimi" },
   { key: "finance", labelKey: "Dashboard:View:Finance", fallback: "Finans" },
   { key: "today", labelKey: "Dashboard:View:Today", fallback: "Bugün" },
   { key: "grants", labelKey: "Dashboard:View:Grants", fallback: "Hibe takibi" }
-], he = "project-management", _ = {
+], fe = "project-management", W = {
   /* h=2 (138px): kutucuk içeriği ~122px. h=3 verilince ızgara kutusu
      içerikten ~75px yüksek kalıyor ve altındaki satırla arasında ölü boşluk
      oluşuyordu. minH de 2 olmalı — aksi halde RGL yüksekliği 3'e zorlar. */
-  "summary-strip": { component: wt, titleKey: "Dashboard:Card:SummaryStrip", fallback: "Sayısal özet", w: 12, h: 2, minW: 6, minH: 2 },
-  deliveries: { component: Rt, titleKey: "Dashboard:Deliveries:Title", fallback: "Bu ay teslim edilecekler", w: 7, h: 8, minW: 4, minH: 5 },
-  "project-health": { component: Pt, titleKey: "Dashboard:Health:Title", fallback: "Proje sağlığı", w: 5, h: 8, minW: 3, minH: 5 },
-  approvals: { component: Ft, titleKey: "Dashboard:Approvals:Title", fallback: "Bende bekleyen kararlar", w: 4, h: 6, minW: 3, minH: 4 },
-  blockers: { component: Ot, titleKey: "Dashboard:Blockers:Title", fallback: "Tıkanan işler & risk", w: 4, h: 6, minW: 3, minH: 4 },
-  "ai-suggestions": { component: Wt, titleKey: "Dashboard:Ai:Title", fallback: "AI önerileri", w: 4, h: 6, minW: 3, minH: 3 },
-  "income-expense": { component: Gt, titleKey: "Dashboard:IncomeExpense:Title", fallback: "Gelir / gider", w: 4, h: 6, minW: 3, minH: 4 },
-  "delivery-heatmap": { component: _t, titleKey: "Dashboard:Heatmap:Title", fallback: "Teslim yoğunluğu", w: 4, h: 6, minW: 3, minH: 4 },
-  "project-phases": { component: qt, titleKey: "Dashboard:Phases:Title", fallback: "Proje fazları", w: 4, h: 6, minW: 3, minH: 4 },
-  "statistics-band": { component: zt, titleKey: "Dashboard:Statistics:Title", fallback: "İstatistikler", w: 12, h: 6, minW: 6, minH: 4 }
-}, Qt = { desktop: 1200, tablet: 768, mobile: 0 }, Yt = { desktop: 12, tablet: 8, mobile: 1 }, Xt = 64, Zt = [20, 20], De = "apya-dashboard-view";
-function Jt() {
+  /* `band`: kart yatay bir şerittir — dar kırılımlarda yarım genişliğe
+     düşürülmez, hep tam satır kaplar (içeriği kolonlara yayılıyor). */
+  "summary-strip": { component: Mt, titleKey: "Dashboard:Card:SummaryStrip", fallback: "Sayısal özet", w: 12, h: 2, minW: 6, minH: 2, band: !0 },
+  deliveries: { component: Kt, titleKey: "Dashboard:Deliveries:Title", fallback: "Bu ay teslim edilecekler", w: 7, h: 8, minW: 4, minH: 5 },
+  "project-health": { component: _t, titleKey: "Dashboard:Health:Title", fallback: "Proje sağlığı", w: 5, h: 8, minW: 3, minH: 5 },
+  approvals: { component: zt, titleKey: "Dashboard:Approvals:Title", fallback: "Bende bekleyen kararlar", w: 4, h: 6, minW: 3, minH: 4 },
+  blockers: { component: Vt, titleKey: "Dashboard:Blockers:Title", fallback: "Tıkanan işler & risk", w: 4, h: 6, minW: 3, minH: 4 },
+  "ai-suggestions": { component: Yt, titleKey: "Dashboard:Ai:Title", fallback: "AI önerileri", w: 4, h: 6, minW: 3, minH: 3 },
+  "income-expense": { component: Xt, titleKey: "Dashboard:IncomeExpense:Title", fallback: "Gelir / gider", w: 4, h: 6, minW: 3, minH: 4 },
+  "delivery-heatmap": { component: Zt, titleKey: "Dashboard:Heatmap:Title", fallback: "Teslim yoğunluğu", w: 4, h: 6, minW: 3, minH: 4 },
+  "project-phases": { component: Jt, titleKey: "Dashboard:Phases:Title", fallback: "Proje fazları", w: 4, h: 6, minW: 3, minH: 4 },
+  "statistics-band": { component: ta, titleKey: "Dashboard:Statistics:Title", fallback: "İstatistikler", w: 12, h: 6, minW: 6, minH: 4, band: !0 }
+}, ae = { desktop: 920, tablet: 560, mobile: 0 }, K = { desktop: 12, tablet: 6, mobile: 1 }, na = 64, Se = [20, 20];
+function sa(t) {
+  return t >= ae.desktop ? "desktop" : t >= ae.tablet ? "tablet" : "mobile";
+}
+function ra(t) {
+  return Math.max(0, t - Se[0] * 2);
+}
+function ia(t) {
+  return t >= 1015 ? { template: "repeat(4, minmax(0, 2fr)) minmax(0, 3fr)", h: 2 } : t >= 694 ? { template: "repeat(3, minmax(0, 1fr))", h: 4 } : t >= 456 ? { template: "repeat(2, minmax(0, 1fr))", h: 6 } : { template: "minmax(0, 1fr)", h: 10 };
+}
+function be(t, n) {
+  let a = 0, s = 0;
+  const o = [...t].sort((l, i) => l.y - i.y || l.x - i.x).map((l) => {
+    const i = Math.min(l.w, n);
+    a + i > n && (a = 0, s += 1);
+    const d = { ...l, w: i, x: a, y: s };
+    return a += i, a >= n && (a = 0, s += 1), d;
+  }), c = /* @__PURE__ */ new Map();
+  return o.forEach((l) => c.set(l.y, Math.max(c.get(l.y) ?? 0, l.h))), o.map((l) => ({ ...l, h: c.get(l.y) }));
+}
+const Te = "apya-dashboard-view";
+function oa() {
   try {
-    const t = window.localStorage.getItem(De);
-    return O.some((a) => a.key === t) ? t : he;
+    const t = window.localStorage.getItem(Te);
+    return $.some((n) => n.key === t) ? t : fe;
   } catch {
-    return he;
+    return fe;
   }
 }
-function ea(t) {
+function la(t) {
   try {
-    window.localStorage.setItem(De, t);
+    window.localStorage.setItem(Te, t);
   } catch {
   }
 }
-function ta({ open: t, onOpenChange: a, presentCardKeys: n = [], onAdd: r }) {
+function ca({ open: t, onOpenChange: n, presentCardKeys: a = [], onAdd: s }) {
   const [o, c] = x.useState(""), l = x.useMemo(() => {
     const i = o.trim().toLocaleLowerCase();
-    return Object.entries(_).map(([d, u]) => ({ key: d, meta: u, label: s(u.titleKey, u.fallback) })).filter((d) => !i || d.label.toLocaleLowerCase().includes(i));
+    return Object.entries(W).map(([d, u]) => ({ key: d, meta: u, label: r(u.titleKey, u.fallback) })).filter((d) => !i || d.label.toLocaleLowerCase().includes(i));
   }, [o]);
-  return /* @__PURE__ */ e.jsx(Ee, { open: t, onOpenChange: a, children: /* @__PURE__ */ e.jsx(Ce, { side: "right", className: "w-[380px] mobile:w-full", children: /* @__PURE__ */ e.jsxs("div", { className: "flex flex-col gap-4 p-5 h-full", children: [
+  return /* @__PURE__ */ e.jsx(He, { open: t, onOpenChange: n, children: /* @__PURE__ */ e.jsx(Pe, { side: "right", className: "w-[380px] mobile:w-full", children: /* @__PURE__ */ e.jsxs("div", { className: "flex flex-col gap-4 p-5 h-full", children: [
     /* @__PURE__ */ e.jsxs("div", { className: "flex flex-col gap-1", children: [
-      /* @__PURE__ */ e.jsx("h2", { className: "text-base font-semibold text-text-primary", children: s("Dashboard:Catalog:Title", "Kart ekle") }),
-      /* @__PURE__ */ e.jsx("p", { className: "text-[12.5px] text-text-tertiary", children: s("Dashboard:Catalog:Subtitle", "Eklediğin kart görünümün altına yerleşir; sürükleyip boyutlandırabilirsin.") })
+      /* @__PURE__ */ e.jsx("h2", { className: "text-base font-semibold text-text-primary", children: r("Dashboard:Catalog:Title", "Kart ekle") }),
+      /* @__PURE__ */ e.jsx("p", { className: "text-[12.5px] text-text-tertiary", children: r("Dashboard:Catalog:Subtitle", "Eklediğin kart görünümün altına yerleşir; sürükleyip boyutlandırabilirsin.") })
     ] }),
     /* @__PURE__ */ e.jsx(
-      Ae,
+      Be,
       {
         value: o,
         onChange: (i) => c(i.target.value),
-        placeholder: s("Dashboard:Catalog:Search", "Kart ara…"),
-        "aria-label": s("Dashboard:Catalog:Search", "Kart ara…")
+        placeholder: r("Dashboard:Catalog:Search", "Kart ara…"),
+        "aria-label": r("Dashboard:Catalog:Search", "Kart ara…")
       }
     ),
     /* @__PURE__ */ e.jsxs("ul", { className: "flex flex-col gap-2 overflow-auto flex-1", children: [
       l.map(({ key: i, meta: d, label: u }) => {
-        const f = n.includes(i);
+        const f = a.includes(i);
         return /* @__PURE__ */ e.jsxs(
           "li",
           {
@@ -1219,14 +1252,14 @@ function ta({ open: t, onOpenChange: a, presentCardKeys: n = [], onAdd: r }) {
                 ] })
               ] }),
               /* @__PURE__ */ e.jsx(
-                R,
+                L,
                 {
                   size: "sm",
                   variant: f ? "ghost" : "secondary",
                   disabled: f,
-                  onClick: () => r(i),
+                  onClick: () => s(i),
                   className: "flex-none",
-                  children: f ? s("Dashboard:Catalog:Added", "Ekli") : s("Dashboard:Catalog:Add", "Ekle")
+                  children: f ? r("Dashboard:Catalog:Added", "Ekli") : r("Dashboard:Catalog:Add", "Ekle")
                 }
               )
             ]
@@ -1234,149 +1267,175 @@ function ta({ open: t, onOpenChange: a, presentCardKeys: n = [], onAdd: r }) {
           i
         );
       }),
-      l.length === 0 && /* @__PURE__ */ e.jsx("li", { className: "text-[12.5px] text-text-tertiary py-4 text-center", children: s("Dashboard:Catalog:NoMatch", "Eşleşen kart yok.") })
+      l.length === 0 && /* @__PURE__ */ e.jsx("li", { className: "text-[12.5px] text-text-tertiary py-4 text-center", children: r("Dashboard:Catalog:NoMatch", "Eşleşen kart yok.") })
     ] })
   ] }) }) });
 }
-function aa(t) {
-  return w({
+function da(t) {
+  return S({
     queryKey: k.dashboard.layout(t),
-    queryFn: () => $.get(`/api/dashboard/layout?viewKey=${encodeURIComponent(t)}`),
+    queryFn: () => X.get(`/api/dashboard/layout?viewKey=${encodeURIComponent(t)}`),
     /* Düzen kullanıcıdan başkası değiştiremez → uzun taze kalır. */
     staleTime: 5 * 6e4,
     enabled: !!t
   });
 }
-function na() {
-  const t = q();
-  return ge({
-    mutationFn: ({ viewKey: a, cards: n }) => $.put("/api/dashboard/layout", { viewKey: a, cards: n }),
-    onSuccess: (a, { viewKey: n }) => {
-      t.invalidateQueries({ queryKey: k.dashboard.layout(n) });
+function ua() {
+  const t = Y();
+  return je({
+    mutationFn: ({ viewKey: n, cards: a }) => X.put("/api/dashboard/layout", { viewKey: n, cards: a }),
+    onSuccess: (n, { viewKey: a }) => {
+      t.invalidateQueries({ queryKey: k.dashboard.layout(a) });
     }
   });
 }
-function sa() {
-  const t = q();
-  return ge({
-    mutationFn: (a) => $.delete(`/api/dashboard/layout?viewKey=${encodeURIComponent(a)}`),
-    onSuccess: (a, n) => {
-      t.invalidateQueries({ queryKey: k.dashboard.layout(n) });
+function xa() {
+  const t = Y();
+  return je({
+    mutationFn: (n) => X.delete(`/api/dashboard/layout?viewKey=${encodeURIComponent(n)}`),
+    onSuccess: (n, a) => {
+      t.invalidateQueries({ queryKey: k.dashboard.layout(a) });
     }
   });
 }
-const ra = re.WidthProvider(re.Responsive), Ne = [
+const Ee = [
   ["Month", "Dashboard:Range:Month", "Bu ay"],
   ["Week", "Dashboard:Range:Week", "Bu hafta"],
   ["Quarter", "Dashboard:Range:Quarter", "Bu çeyrek"]
 ];
-function ia() {
-  var ae, ne;
-  const [t, a] = x.useState(() => Jt()), [n, r] = x.useState(() => xa()), [o, c] = x.useState(!1), [l, i] = x.useState(!1), [d, u] = x.useState(null), f = aa(t), g = na(), j = sa(), E = x.useMemo(() => ({ range: n }), [n]), y = d ?? ((ae = f.data) == null ? void 0 : ae.cards) ?? [], [V, Q] = x.useState(0);
-  x.useEffect(() => {
-    const m = requestAnimationFrame(() => Q(1));
-    return () => cancelAnimationFrame(m);
+function ma() {
+  var re, ie;
+  const [t, n] = x.useState(() => oa()), [a, s] = x.useState(() => ya()), [o, c] = x.useState(!1), [l, i] = x.useState(!1), [d, u] = x.useState(null), f = da(t), g = ua(), j = xa(), C = x.useMemo(() => ({ range: a }), [a]), y = d ?? ((re = f.data) == null ? void 0 : re.cards) ?? [], U = x.useRef(null), [N, I] = x.useState(null);
+  x.useLayoutEffect(() => {
+    const m = U.current;
+    if (!m) return;
+    const b = () => I(m.clientWidth);
+    b();
+    const v = new ResizeObserver(b);
+    return v.observe(m), () => v.disconnect();
   }, []);
-  const M = x.useMemo(() => {
-    const m = y.map(ua);
+  const H = N == null ? null : sa(N), P = x.useMemo(
+    () => ia(N == null ? 0 : ra(N)),
+    [N]
+  ), J = x.useMemo(() => {
+    const m = y.map((b) => ga(b, P.h));
     return {
       desktop: m,
-      /* Tablet: 8 kolon — genişlikler kırpılır, sıra korunur. */
-      tablet: m.map((b) => ({ ...b, w: Math.min(b.w, 8) })),
-      /* Mobil tek kolon: tasarım sırası y'ye göre. */
-      mobile: m.slice().sort((b, v) => b.y - v.y || b.x - v.x).map((b, v) => ({ ...b, x: 0, y: v, w: 1 }))
+      tablet: be(
+        /* Tablette kart ya tam (6) ya yarım (3) genişlik alır: şeritler ve
+           masaüstünde 2/3'ten geniş duran kartlar tam, kalanı yarım. */
+        m.map((b) => {
+          var v;
+          return {
+            ...b,
+            w: (v = W[b.i]) != null && v.band || b.w >= 8 ? K.tablet : K.tablet / 2,
+            minW: void 0
+          };
+        }),
+        K.tablet
+      ),
+      mobile: be(m.map((b) => ({ ...b, w: 1, minW: void 0 })), K.mobile)
     };
-  }, [y]), Y = x.useCallback((m) => {
-    a(m), ea(m), u(null), c(!1);
-  }, []), X = x.useCallback((m) => {
-    o && u((b) => {
+  }, [y, P.h]), ee = x.useCallback((m) => {
+    n(m), la(m), u(null), c(!1);
+  }, []), B = x.useCallback((m) => {
+    o && H === "desktop" && u((b) => {
       const v = b ?? y;
-      return m.map((S) => {
-        const H = v.find((B) => B.cardKey === S.i);
+      return m.map((T) => {
+        const F = v.find((G) => G.cardKey === T.i);
         return {
-          cardKey: S.i,
+          cardKey: T.i,
           /* Enum SAYI olarak gidip gelir; string göndermek
              deserialization hatası verir (JsonStringEnumConverter yok). */
-          chartType: (H == null ? void 0 : H.chartType) ?? oe,
-          x: S.x,
-          y: S.y,
-          w: S.w,
-          h: S.h
+          chartType: (F == null ? void 0 : F.chartType) ?? ce,
+          x: T.x,
+          y: T.y,
+          w: T.w,
+          h: T.h
         };
       });
     });
-  }, [o, y]), Z = x.useCallback(() => {
+  }, [o, y, H]), se = H === "desktop", Ce = x.useCallback(() => {
     g.mutate(
       { viewKey: t, cards: d ?? y },
       { onSuccess: () => {
         u(null), c(!1);
       } }
     );
-  }, [g, t, d, y]), J = x.useCallback(() => {
+  }, [g, t, d, y]), Ae = x.useCallback(() => {
     j.mutate(t, {
       onSuccess: () => {
         u(null), c(!1);
       }
     });
-  }, [j, t]), I = x.useCallback((m) => {
-    const b = _[m];
+  }, [j, t]), Re = x.useCallback((m) => {
+    const b = W[m];
     if (!b) return;
-    const v = d ?? y, S = v.reduce((H, B) => Math.max(H, B.y + B.h), 0);
+    const v = d ?? y, T = v.reduce((F, G) => Math.max(F, G.y + G.h), 0);
     u([
       ...v,
-      { cardKey: m, chartType: oe, x: 0, y: S, w: b.w, h: b.h }
+      { cardKey: m, chartType: ce, x: 0, y: T, w: b.w, h: b.h }
     ]), i(!1), c(!0);
-  }, [d, y]), we = x.useCallback((m) => {
+  }, [d, y]), Le = x.useCallback((m) => {
     u((d ?? y).filter((v) => v.cardKey !== m));
   }, [d, y]);
   return /* @__PURE__ */ e.jsxs("div", { className: "min-h-screen bg-surface-app-bg", children: [
     /* @__PURE__ */ e.jsx(
-      oa,
+      ha,
       {
         viewKey: t,
-        onViewChange: Y,
-        range: n,
-        onRangeChange: r,
+        onViewChange: ee,
+        range: a,
+        onRangeChange: s,
         editMode: o,
+        canEdit: se,
         onToggleEdit: () => c((m) => !m),
         onOpenCatalog: () => i(!0)
       }
     ),
     o && /* @__PURE__ */ e.jsx(
-      ca,
+      fa,
       {
-        onSave: Z,
+        onSave: Ce,
         isSaving: g.isPending
       }
     ),
     /* @__PURE__ */ e.jsxs("main", { className: "px-4 pt-4 pb-4 mobile:px-3", children: [
-      /* @__PURE__ */ e.jsx(
-        ra,
+      /* @__PURE__ */ e.jsx("div", { ref: U, children: N != null && /* @__PURE__ */ e.jsx(
+        qe.Responsive,
         {
+          width: N,
           className: p("apya-dashboard-grid", o && "apya-dashboard-grid--edit"),
-          layouts: M,
-          breakpoints: Qt,
-          cols: Yt,
-          rowHeight: Xt,
-          margin: Zt,
+          layouts: J,
+          breakpoints: ae,
+          cols: K,
+          rowHeight: na,
+          margin: Se,
           isDraggable: o,
           isResizable: o,
           draggableHandle: `.${D.DRAG_HANDLE_CLASS}`,
-          onLayoutChange: X,
+          onLayoutChange: B,
           compactType: "vertical",
           preventCollision: !1,
           children: y.map((m) => {
-            const b = _[m.cardKey];
+            const b = W[m.cardKey];
             if (!b) return /* @__PURE__ */ e.jsx("div", {}, m.cardKey);
             const v = b.component;
             return /* @__PURE__ */ e.jsxs("div", { className: "relative", children: [
-              /* @__PURE__ */ e.jsx(v, { filter: E, editMode: o }),
+              /* @__PURE__ */ e.jsx(
+                v,
+                {
+                  filter: C,
+                  editMode: o,
+                  ...m.cardKey === "summary-strip" ? { template: P.template } : null
+                }
+              ),
               o && /* @__PURE__ */ e.jsx(
                 "button",
                 {
                   type: "button",
-                  onClick: () => we(m.cardKey),
-                  "aria-label": s("Dashboard:RemoveCard", "Kartı kaldır"),
+                  onClick: () => Le(m.cardKey),
+                  "aria-label": r("Dashboard:RemoveCard", "Kartı kaldır"),
                   className: p(
                     "absolute top-2 right-2 z-10 w-6 h-6 rounded-lg",
                     "bg-surface-base border border-default text-text-secondary",
@@ -1388,157 +1447,159 @@ function ia() {
               )
             ] }, m.cardKey);
           })
-        },
-        V
-      ),
+        }
+      ) }),
       /* @__PURE__ */ e.jsx(
-        da,
+        ba,
         {
-          isDefault: ((ne = f.data) == null ? void 0 : ne.isDefault) !== !1,
-          onReset: J,
+          isDefault: ((ie = f.data) == null ? void 0 : ie.isDefault) !== !1,
+          canEdit: se,
+          onReset: Ae,
           onOpenCatalog: () => i(!0),
           isResetting: j.isPending
         }
       )
     ] }),
     /* @__PURE__ */ e.jsx(
-      ta,
+      ca,
       {
         open: l,
         onOpenChange: i,
         presentCardKeys: y.map((m) => m.cardKey),
-        onAdd: I
+        onAdd: Re
       }
     )
   ] });
 }
-function oa({ viewKey: t, onViewChange: a, range: n, onRangeChange: r, editMode: o, onToggleEdit: c, onOpenCatalog: l }) {
-  const i = O.find((d) => d.key === t) ?? O[0];
+function ha({ viewKey: t, onViewChange: n, range: a, onRangeChange: s, editMode: o, canEdit: c, onToggleEdit: l, onOpenCatalog: i }) {
+  const d = $.find((u) => u.key === t) ?? $[0];
   return /* @__PURE__ */ e.jsxs("header", { className: "px-4 pt-4 pb-3 bg-surface-base border-b border-default flex items-end justify-between gap-5 mobile:px-3 mobile:flex-col mobile:items-stretch mobile:gap-3", children: [
     /* @__PURE__ */ e.jsxs("div", { className: "flex flex-col gap-2.5 min-w-0", children: [
       /* @__PURE__ */ e.jsxs("div", { className: "flex items-center gap-2.5", children: [
-        /* @__PURE__ */ e.jsx("h1", { className: "text-[22px] font-semibold tracking-[-0.025em] text-text-primary m-0", children: s("Dashboard:Title", "Genel Bakış") }),
-        /* @__PURE__ */ e.jsx("span", { className: "inline-flex items-center h-[22px] px-[9px] rounded-full bg-accent-soft text-accent-600 text-[11.5px] font-semibold flex-none", children: s(i.labelKey, i.fallback) })
+        /* @__PURE__ */ e.jsx("h1", { className: "text-[22px] font-semibold tracking-[-0.025em] text-text-primary m-0", children: r("Dashboard:Title", "Genel Bakış") }),
+        /* @__PURE__ */ e.jsx("span", { className: "inline-flex items-center h-[22px] px-[9px] rounded-full bg-accent-soft text-accent-600 text-[11.5px] font-semibold flex-none", children: r(d.labelKey, d.fallback) })
       ] }),
-      /* @__PURE__ */ e.jsx("nav", { className: "flex items-center gap-1 flex-wrap", "aria-label": s("Dashboard:Views", "Görünümler"), children: O.map((d) => /* @__PURE__ */ e.jsx(
+      /* @__PURE__ */ e.jsx("nav", { className: "flex items-center gap-1 flex-wrap", "aria-label": r("Dashboard:Views", "Görünümler"), children: $.map((u) => /* @__PURE__ */ e.jsx(
         "button",
         {
           type: "button",
-          onClick: () => a(d.key),
-          "aria-current": d.key === t ? "page" : void 0,
+          onClick: () => n(u.key),
+          "aria-current": u.key === t ? "page" : void 0,
           className: p(
             "inline-flex items-center h-[30px] px-3 rounded-[9px] text-[12.5px] transition-colors duration-fast",
             "focus-visible:outline-none focus-visible:shadow-focus",
-            d.key === t ? "bg-text-primary text-surface-base font-semibold" : "text-text-secondary font-medium hover:bg-surface-sunken hover:text-text-primary"
+            u.key === t ? "bg-text-primary text-surface-base font-semibold" : "text-text-secondary font-medium hover:bg-surface-sunken hover:text-text-primary"
           ),
-          children: s(d.labelKey, d.fallback)
+          children: r(u.labelKey, u.fallback)
         },
-        d.key
+        u.key
       )) })
     ] }),
     /* @__PURE__ */ e.jsxs("div", { className: "flex items-center gap-2 flex-none mobile:flex-wrap", children: [
-      /* @__PURE__ */ e.jsx(la, { value: n, onChange: r }),
-      /* @__PURE__ */ e.jsx(R, { size: "sm", variant: "secondary", onClick: l, children: s("Dashboard:AddCard", "+ Kart ekle") }),
-      /* @__PURE__ */ e.jsx(R, { size: "sm", variant: "primary", onClick: c, children: o ? s("Common:Done", "Bitir") : s("Common:Edit", "Düzenle") })
+      /* @__PURE__ */ e.jsx(pa, { value: a, onChange: s }),
+      c && /* @__PURE__ */ e.jsxs(e.Fragment, { children: [
+        /* @__PURE__ */ e.jsx(L, { size: "sm", variant: "secondary", onClick: i, children: r("Dashboard:AddCard", "+ Kart ekle") }),
+        /* @__PURE__ */ e.jsx(L, { size: "sm", variant: "primary", onClick: l, children: o ? r("Common:Done", "Bitir") : r("Common:Edit", "Düzenle") })
+      ] })
     ] })
   ] });
 }
-function la({ value: t, onChange: a }) {
+function pa({ value: t, onChange: n }) {
   return /* @__PURE__ */ e.jsxs("label", { className: "inline-flex items-center", children: [
-    /* @__PURE__ */ e.jsx("span", { className: "sr-only", children: s("Dashboard:SelectRange", "Zaman aralığı seç") }),
+    /* @__PURE__ */ e.jsx("span", { className: "sr-only", children: r("Dashboard:SelectRange", "Zaman aralığı seç") }),
     /* @__PURE__ */ e.jsx(
       "select",
       {
         value: t,
-        onChange: (n) => {
-          a(n.target.value), ma(n.target.value);
+        onChange: (a) => {
+          n(a.target.value), va(a.target.value);
         },
         className: p(
           "h-8 px-3 rounded-[9px] text-[12.5px] font-medium",
           "bg-surface-sunken text-text-secondary border-0",
           "focus-visible:outline-none focus-visible:shadow-focus"
         ),
-        children: Ne.map(([n, r, o]) => /* @__PURE__ */ e.jsx("option", { value: n, children: s(r, o) }, n))
+        children: Ee.map(([a, s, o]) => /* @__PURE__ */ e.jsx("option", { value: a, children: r(s, o) }, a))
       }
     )
   ] });
 }
-function ca({ onSave: t, isSaving: a }) {
+function fa({ onSave: t, isSaving: n }) {
   return /* @__PURE__ */ e.jsxs("div", { className: "flex items-center justify-between gap-3 px-6 py-2.5 bg-accent-soft border-b border-default mobile:px-3 mobile:flex-wrap", children: [
     /* @__PURE__ */ e.jsxs("div", { className: "flex items-center gap-2 flex-wrap", children: [
-      /* @__PURE__ */ e.jsx("span", { className: "inline-flex items-center h-[26px] px-2.5 rounded-lg bg-accent text-white text-[11.5px] font-semibold", children: s("Dashboard:EditMode", "Düzenleme modu") }),
-      /* @__PURE__ */ e.jsx("span", { className: "inline-flex items-center h-[26px] px-2.5 rounded-lg bg-surface-base border border-default text-accent-600 text-[11.5px]", children: s("Dashboard:EditMode:Snap", "Yapış: 12 kolon · 64px satır") })
+      /* @__PURE__ */ e.jsx("span", { className: "inline-flex items-center h-[26px] px-2.5 rounded-lg bg-accent text-white text-[11.5px] font-semibold", children: r("Dashboard:EditMode", "Düzenleme modu") }),
+      /* @__PURE__ */ e.jsx("span", { className: "inline-flex items-center h-[26px] px-2.5 rounded-lg bg-surface-base border border-default text-accent-600 text-[11.5px]", children: r("Dashboard:EditMode:Snap", "Yapış: 12 kolon · 64px satır") })
     ] }),
     /* @__PURE__ */ e.jsxs("div", { className: "flex items-center gap-3.5", children: [
-      /* @__PURE__ */ e.jsx("span", { className: "font-mono text-[11px] text-accent-600 mobile:hidden", children: s("Dashboard:EditMode:Hint", "Kartı başlıktaki ⠿ tutamağından sürükle") }),
-      /* @__PURE__ */ e.jsx(R, { size: "sm", variant: "primary", onClick: t, disabled: a, children: s("Dashboard:EditMode:Save", "Düzeni kaydet") })
+      /* @__PURE__ */ e.jsx("span", { className: "font-mono text-[11px] text-accent-600 mobile:hidden", children: r("Dashboard:EditMode:Hint", "Kartı başlıktaki ⠿ tutamağından sürükle") }),
+      /* @__PURE__ */ e.jsx(L, { size: "sm", variant: "primary", onClick: t, disabled: n, children: r("Dashboard:EditMode:Save", "Düzeni kaydet") })
     ] })
   ] });
 }
-function da({ isDefault: t, onReset: a, onOpenCatalog: n, isResetting: r }) {
+function ba({ isDefault: t, canEdit: n, onReset: a, onOpenCatalog: s, isResetting: o }) {
   return /* @__PURE__ */ e.jsxs("div", { className: "flex items-center justify-between gap-3 mt-5 px-4 py-3 rounded-card border border-dashed border-default bg-surface-base mobile:flex-col mobile:items-stretch", children: [
-    /* @__PURE__ */ e.jsx("span", { className: "text-[12.5px] text-text-secondary", children: t ? s("Dashboard:Footer:DefaultLayout", "Bu görünüm rol varsayılanından geldi — kart ekleyip çıkarabilir, sürükleyip boyutlandırabilirsin.") : s("Dashboard:Footer:CustomLayout", "Bu görünümü sen düzenledin. Dilediğin an varsayılana dönebilirsin.") }),
+    /* @__PURE__ */ e.jsx("span", { className: "text-[12.5px] text-text-secondary", children: t ? r("Dashboard:Footer:DefaultLayout", "Bu görünüm rol varsayılanından geldi — kart ekleyip çıkarabilir, sürükleyip boyutlandırabilirsin.") : r("Dashboard:Footer:CustomLayout", "Bu görünümü sen düzenledin. Dilediğin an varsayılana dönebilirsin.") }),
     /* @__PURE__ */ e.jsxs("div", { className: "flex items-center gap-2 flex-none", children: [
-      !t && /* @__PURE__ */ e.jsx(R, { size: "sm", variant: "secondary", onClick: a, disabled: r, children: s("Dashboard:Footer:Reset", "Varsayılana dön") }),
-      /* @__PURE__ */ e.jsx(R, { size: "sm", variant: "primary", onClick: n, children: s("Dashboard:AddCard", "+ Kart ekle") })
+      !t && /* @__PURE__ */ e.jsx(L, { size: "sm", variant: "secondary", onClick: a, disabled: o, children: r("Dashboard:Footer:Reset", "Varsayılana dön") }),
+      n && /* @__PURE__ */ e.jsx(L, { size: "sm", variant: "primary", onClick: s, children: r("Dashboard:AddCard", "+ Kart ekle") })
     ] })
   ] });
 }
-function ua(t) {
-  const a = _[t.cardKey];
+function ga(t, n) {
+  const a = W[t.cardKey], s = t.cardKey === "summary-strip";
   return {
     i: t.cardKey,
     x: t.x,
     y: t.y,
     w: t.w,
-    h: t.h,
+    h: s ? n : t.h,
     minW: (a == null ? void 0 : a.minW) ?? 2,
-    minH: (a == null ? void 0 : a.minH) ?? 2
+    minH: s ? n : (a == null ? void 0 : a.minH) ?? 2
   };
 }
-function xa() {
+function ya() {
   try {
     const t = new URLSearchParams(window.location.search).get("range");
-    return Ne.some(([a]) => a === t) ? t : "Month";
+    return Ee.some(([n]) => n === t) ? t : "Month";
   } catch {
     return "Month";
   }
 }
-function ma(t) {
+function va(t) {
   try {
-    const a = new URLSearchParams(window.location.search);
-    a.set("range", t), window.history.replaceState(null, "", `${window.location.pathname}?${a}`);
+    const n = new URLSearchParams(window.location.search);
+    n.set("range", t), window.history.replaceState(null, "", `${window.location.pathname}?${n}`);
   } catch {
   }
 }
-function ha(t) {
-  const { connection: a, state: n } = ve(), r = q();
+function ja(t) {
+  const { connection: n, state: a } = De(), s = Y();
   x.useEffect(() => {
-    if (!a || !(t != null && t.length)) return;
+    if (!n || !(t != null && t.length)) return;
     const o = t.map(([c, l]) => {
       const i = () => {
         l.forEach((d) => {
-          r.invalidateQueries({ queryKey: d });
+          s.invalidateQueries({ queryKey: d });
         });
       };
-      return a.on(c, i), [c, i];
+      return n.on(c, i), [c, i];
     });
     return () => {
       o.forEach(([c, l]) => {
-        a.off(c, l);
+        n.off(c, l);
       });
     };
-  }, [a, n, r]);
+  }, [n, a, s]);
 }
-function pa(t) {
-  const { connection: a, state: n } = ve(), r = q(), o = He();
+function ka(t) {
+  const { connection: n, state: a } = De(), s = Y(), o = Ue();
   x.useEffect(() => {
-    if (!a || !(t != null && t.length)) return;
+    if (!n || !(t != null && t.length)) return;
     const c = t.map(([l, i]) => {
       const d = (u) => {
         var f;
         (f = i.queryKeys) == null || f.forEach(
-          (g) => r.invalidateQueries({ queryKey: g })
+          (g) => s.invalidateQueries({ queryKey: g })
         ), o.warning(i.message ?? "Bu kayıtta çakışma oldu", {
           description: i.description ?? (u == null ? void 0 : u.message),
           action: {
@@ -1546,21 +1607,21 @@ function pa(t) {
             onClick: () => {
               var g;
               (g = i.queryKeys) == null || g.forEach(
-                (j) => r.invalidateQueries({ queryKey: j })
+                (j) => s.invalidateQueries({ queryKey: j })
               );
             }
           }
         });
       };
-      return a.on(l, d), [l, d];
+      return n.on(l, d), [l, d];
     });
     return () => {
-      c.forEach(([l, i]) => a.off(l, i));
+      c.forEach(([l, i]) => n.off(l, i));
     };
-  }, [a, n, r]);
+  }, [n, a, s]);
 }
 const h = (t) => ["dashboard", t];
-function fa() {
+function Da() {
   const t = x.useMemo(() => [
     /* Görev durumu değişti → teslimler, tıkananlar, özet, ısı takvimi, istatistik */
     ["TaskStatusChanged", [
@@ -1581,20 +1642,20 @@ function fa() {
     ["JournalEntryPosted", [h("income-expense"), h("statistics")]],
     /* Hibe belgesi son tarihi → ısı takviminin sarı günleri */
     ["GrantDocumentDue", [h("delivery-heatmap"), h("statistics")]]
-  ], []), a = x.useMemo(() => [
+  ], []), n = x.useMemo(() => [
     ["BudgetConflict", {
       queryKeys: [h("summary"), h("project-health")],
       message: "Bütçe kaydında çakışma",
       description: "Aynı bütçeyi başka bir kullanıcı güncelledi."
     }]
   ], []);
-  return ha(t), pa(a), null;
+  return ja(t), ka(n), null;
 }
-Pe();
-const pe = document.getElementById("apya-dashboard-root");
-pe && Se(pe).render(
-  /* @__PURE__ */ e.jsx(Re, { children: /* @__PURE__ */ e.jsx(Ue, { children: /* @__PURE__ */ e.jsx(Le, { children: /* @__PURE__ */ e.jsx(Be, { children: /* @__PURE__ */ e.jsxs(Ke, { children: [
-    /* @__PURE__ */ e.jsx(fa, {}),
-    /* @__PURE__ */ e.jsx(ia, {})
+Ge();
+const ge = document.getElementById("apya-dashboard-root");
+ge && Me(ge).render(
+  /* @__PURE__ */ e.jsx(Fe, { children: /* @__PURE__ */ e.jsx(Qe, { children: /* @__PURE__ */ e.jsx(Ke, { children: /* @__PURE__ */ e.jsx(_e, { children: /* @__PURE__ */ e.jsxs($e, { children: [
+    /* @__PURE__ */ e.jsx(Da, {}),
+    /* @__PURE__ */ e.jsx(ma, {})
   ] }) }) }) }) })
 );

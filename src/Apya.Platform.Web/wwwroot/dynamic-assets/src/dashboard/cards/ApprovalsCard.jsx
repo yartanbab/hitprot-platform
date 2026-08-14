@@ -50,8 +50,10 @@ function ApprovalsCard({ editMode }) {
                 />
             }
             footer={items.length > 0 && (
-                <div className="flex items-center justify-between gap-2">
-                    <span className="text-[11.5px] text-text-tertiary truncate">
+                /* Satır başlıkları serbest metin olduğu için kırpılabilir, ama bu
+                   özet SABİT biçimli — dar kartta kırpmak yerine alt satıra sarsın. */
+                <div className="flex items-center justify-between gap-2 flex-wrap">
+                    <span className="text-[11.5px] text-text-tertiary">
                         {t('Dashboard:Approvals:Total', 'Toplam {0} · ort. bekleme {1} sa', formatMoney(total, currency), avgAge)}
                     </span>
                     <a href="/Invoices" className="text-[12.5px] font-medium text-text-link hover:underline flex-none">
@@ -64,9 +66,11 @@ function ApprovalsCard({ editMode }) {
                 {items.slice(0, 4).map((item, index) => (
                     <li
                         key={item.id}
-                        className="flex items-center gap-2.5 py-2 border-b border-subtle last:border-b-0"
+                        /* Tutar ve "İncele" flex-none — dar kartta metin sütunu
+                           127px'e eziliyordu (ölçüldü). Taban genişlik + sarma. */
+                        className="flex flex-wrap items-center gap-2.5 py-2 border-b border-subtle last:border-b-0"
                     >
-                        <span className="flex-1 min-w-0 flex flex-col gap-0.5">
+                        <span className="flex-1 min-w-[150px] flex flex-col gap-0.5">
                             <span className="text-[12.5px] font-medium text-text-primary truncate">
                                 {item.title}
                             </span>

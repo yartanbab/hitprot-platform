@@ -108,7 +108,13 @@ function CardShell({
 
             <div
                 className={cn(
-                    'flex-1 min-h-0 pt-3',
+                    /* Kart yüksekliği ızgaradan SABİT gelir, içerik ise değişken:
+                       kayıt sayısı, kart genişliği (satırlar sarar) ve kullanıcının
+                       verdiği boyut hepsi etkiliyor. Kaydırma olmadan `overflow-hidden`
+                       fazlalığı sessizce kesiyordu — kullanıcının "alt açıklamalar
+                       kesiliyor" dediği davranış. Kart kendi gerekçesiyle
+                       `bodyClassName="overflow-visible"` diyerek vazgeçebilir. */
+                    'flex-1 min-h-0 pt-3 overflow-y-auto',
                     bleed ? 'pb-0' : 'px-[18px] pb-[18px]',
                     bleed && 'px-[18px]',
                     bodyClassName,
