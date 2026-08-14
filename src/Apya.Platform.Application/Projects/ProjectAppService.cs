@@ -176,7 +176,7 @@ public class ProjectAppService :
                 foreach (var dto in dtos)
                 {
                     EnrichBudget(dto, allTaskItems, allLogs, canViewBudget);
-                    EnrichProgressAndRisk(dto, allTasks.Where(t => t.ProjectId == dto.Id).ToList(), now);
+                    EnrichProgressAndRisk(dto, allTasks.Where(t => t.ProjectId == dto.Id).ToList(), now, CurrentUser.Id);
 
                     if (CurrentTenant.Id == null)
                         dto.TenantName = dto.TenantId.HasValue
@@ -345,7 +345,7 @@ public class ProjectAppService :
     /// Kart/KPI için görev-bazlı türetilmiş alanlar. IsApproved KULLANILMAZ (hiçbir yerden
     /// set edilmiyor, fiilen ölü kod) — durum StartDate/görev-tamamlanma/risk skorundan türetilir.
     /// </summary>
-    private static void EnrichProgressAndRisk(ProjectDto dto, List<Apya.Platform.Tasks.TaskDto> projectTasks, DateTime now)
+    private static void EnrichProgressAndRisk(ProjectDto dto, List<Apya.Platform.Tasks.TaskDto> projectTasks, DateTime now, Guid? currentUserId = null)
     {
         var time = ProjectMetricsCalculator.CalculateTimeMetrics(dto, projectTasks, now);
         var risk = ProjectMetricsCalculator.CalculateAiRisk(dto, projectTasks, now);
@@ -353,6 +353,26 @@ public class ProjectAppService :
         var totalTasks = projectTasks.Count;
         var completedTasks = projectTasks.Count(t => t.Status == Apya.Platform.Tasks.TaskStatus.Done);
         dto.ProgressPercent = totalTasks > 0 ? (int)Math.Round((double)completedTasks / totalTasks * 100) : 0;
+        dto.TaskCount = totalTasks;
+        dto.CompletedTaskCount = completedTasks;
+
+        // Gecikme/son tarih metrikleri — Projeler listesindeki risk kenarı, gecikme
+        // rozeti ve "sonraki <tarih>" metni tek yerden beslensin diye burada türetilir.
+        // İptal edilen görev ne gecikir ne de sıradaki son tarihi belirler.
+        var openTasks = projectTasks
+            .Where(t => t.Status != Apya.Platform.Tasks.TaskStatus.Done
+                     && t.Status != Apya.Platform.Tasks.TaskStatus.Cancelled)
+            .ToList();
+        var overdue = openTasks.Where(t => t.DueDate.HasValue && t.DueDate.Value < now).ToList();
+        dto.OverdueTaskCount = overdue.Count;
+        dto.OldestOverdueDays = overdue.Count > 0
+            ? (int)(now.Date - overdue.Min(t => t.DueDate!.Value).Date).TotalDays
+            : null;
+        dto.NextDueDate = openTasks
+            .Where(t => t.DueDate.HasValue && t.DueDate.Value >= now)
+            .Select(t => t.DueDate)
+            .DefaultIfEmpty(null)
+            .Min();
 
         var assignees = projectTasks
             .Where(t => t.AssigneeId.HasValue)
@@ -361,10 +381,15 @@ public class ProjectAppService :
             .ToList();
         dto.AssigneeCount = assignees.Count;
         dto.AssigneeInitials = assignees.Take(5).Select(ToInitials).ToList();
+        dto.IsAssignedToMe = currentUserId.HasValue
+                             && projectTasks.Any(t => t.AssigneeId == currentUserId.Value);
 
         dto.RiskColor = risk.color;
+        // KIRPMA YOK: süresi geçmiş proje negatif döner. Projeler listesinin risk
+        // kuralı "daysLeft < 0 → yüksek risk" bu işarete dayanıyor; Math.Max(0, …)
+        // ile kırpıldığında geçmiş bitiş tarihi "bugün bitiyor"dan ayırt edilemiyordu.
         dto.DaysRemaining = (dto.StartDate.HasValue && dto.EndDate.HasValue)
-            ? Math.Max(0, (int)(dto.EndDate.Value - now).TotalDays)
+            ? (int)Math.Floor((dto.EndDate.Value.Date - now.Date).TotalDays)
             : null;
 
         dto.DisplayStatus = (totalTasks == 0 || time.notStarted)

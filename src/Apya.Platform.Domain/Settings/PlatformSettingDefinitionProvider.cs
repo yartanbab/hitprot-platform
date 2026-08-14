@@ -29,6 +29,15 @@ public class PlatformSettingDefinitionProvider : SettingDefinitionProvider
                 description: L("Setting:TaskDetail.Ui.Description"))
         );
 
+        // Projeler ekranı açılış görünümü — TaskDetail.Ui ile aynı ray (kullanıcı seviyesi).
+        context.Add(
+            new SettingDefinition(
+                PlatformSettings.Projects.DefaultView,
+                defaultValue: PlatformSettingDefaults.ProjectsDefaultView,
+                displayName: L("Setting:Projects.DefaultView"),
+                description: L("Setting:Projects.DefaultView.Description"))
+        );
+
         // Sabitlenen menü öğeleri — TaskDetail.Ui ile aynı ray: .WithProviders()
         // ile KISITLANMAZ ki User provider zincirde kalsın (SetForCurrentUserAsync
         // buraya yazar) ve varsayılan da zincirden dönebilsin.

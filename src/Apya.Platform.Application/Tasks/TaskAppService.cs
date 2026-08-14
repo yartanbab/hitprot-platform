@@ -1125,6 +1125,27 @@ namespace Apya.Platform.Tasks
             });
         }
 
+        /// <summary>
+        /// "Ötele" — son tarihi <paramref name="days"/> gün ileri alır. Son tarihi
+        /// olmayan görevde bugün başlangıç kabul edilir. StartDate'e dokunulmaz;
+        /// yalnız yeni son tarih başlangıcın gerisinde kalırsa başlangıç da kayar
+        /// (aksi halde başlangıcı bitişinden sonra olan geçersiz görev oluşurdu).
+        /// </summary>
+        public async Task<TaskDto> DeferAsync(Guid id, int days)
+        {
+            var task = await Repository.GetAsync(id);
+            await EnsureTaskPrivacyAllowedAsync(task);
+
+            var basis = task.DueDate ?? Clock.Now;
+            var newDue = basis.AddDays(days);
+            var newStart = newDue < task.StartDate ? newDue : task.StartDate;
+
+            task.UpdateSchedule(newStart, newDue);
+            await Repository.UpdateAsync(task);
+
+            return ObjectMapper.Map<TaskItem, TaskDto>(task);
+        }
+
         // --- ZAMAN TAKİBİ ---
         public async Task StartTimeTrackingAsync(Guid taskId)
         {

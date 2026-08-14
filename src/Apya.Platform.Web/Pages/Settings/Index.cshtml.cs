@@ -29,6 +29,10 @@ public class IndexModel : AbpPageModel
     [BindProperty]
     public string TaskDetailUi { get; set; } = PlatformSettingDefaults.TaskDetailUi;
 
+    /// <summary>Projeler ekranının açılış görünümü ("card" | "list").</summary>
+    [BindProperty]
+    public string ProjectsDefaultView { get; set; } = PlatformSettingDefaults.ProjectsDefaultView;
+
     /// <summary>Kullanıcının erişebildiği yönetim hedefleri (boşsa bölüm hiç basılmaz).</summary>
     public List<AdminLink> AdminLinks { get; } = new();
 
@@ -48,6 +52,9 @@ public class IndexModel : AbpPageModel
         // fallback: true → kullanıcı henüz seçmediyse tanımlı varsayılana ("v3") iner.
         TaskDetailUi = await _settingManager.GetOrNullForCurrentUserAsync(PlatformSettings.TaskDetail.Ui)
                        ?? PlatformSettingDefaults.TaskDetailUi;
+
+        ProjectsDefaultView = await _settingManager.GetOrNullForCurrentUserAsync(PlatformSettings.Projects.DefaultView)
+                              ?? PlatformSettingDefaults.ProjectsDefaultView;
 
         await LoadAdminLinksAsync();
     }
@@ -110,6 +117,12 @@ public class IndexModel : AbpPageModel
             ? TaskDetailUi
             : PlatformSettingDefaults.TaskDetailUi;
         await _settingManager.SetForCurrentUserAsync(PlatformSettings.TaskDetail.Ui, value);
+
+        var projectsView = System.Array.IndexOf(PlatformSettingDefaults.ProjectsDefaultViewValues, ProjectsDefaultView) >= 0
+            ? ProjectsDefaultView
+            : PlatformSettingDefaults.ProjectsDefaultView;
+        await _settingManager.SetForCurrentUserAsync(PlatformSettings.Projects.DefaultView, projectsView);
+
         TempData["Saved"] = true;
         return RedirectToPage();
     }
