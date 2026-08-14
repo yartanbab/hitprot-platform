@@ -3056,3 +3056,724 @@ i.apya-priority-dot {
     .apya-console-fab:active { background: var(--apya-accent-600); }
     .apya-console-fab:focus-visible { outline: none; box-shadow: var(--apya-shadow-focus); }
 }
+
+/* ============================================================================
+   AYARLAR HUB'I — yönetim hedefleri bağlantı listesi (/Settings)
+   ----------------------------------------------------------------------------
+   Kabuk handoff'u (2026-08-13) kenar çubuğundaki 7 maddelik YÖNETİM bölümünü
+   kaldırdı; hedefler buraya indi. Kart ızgarası DEĞİL düz liste: hedefler
+   birbirinin alternatifi değil, farklı işler — göz tek kolonda daha hızlı tarar.
+   ============================================================================ */
+.apya-settings-links {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+.apya-settings-link {
+    display: flex;
+    align-items: center;
+    gap: var(--apya-space-3);
+    padding: var(--apya-space-2) var(--apya-space-3);
+    border-radius: var(--apya-radius-lg);
+    color: var(--apya-text-primary);
+    text-decoration: none;
+}
+.apya-settings-link:hover {
+    background: var(--apya-surface-hover);
+    color: var(--apya-text-primary);
+    text-decoration: none;
+}
+.apya-settings-link:focus-visible {
+    outline: none;
+    box-shadow: var(--apya-shadow-focus);
+}
+.apya-settings-link-text {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-width: 0;
+}
+.apya-settings-link-title {
+    font-size: var(--apya-fs-base);
+    font-weight: var(--apya-weight-semibold);
+}
+.apya-settings-link-desc {
+    font-size: var(--apya-fs-sm);
+    color: var(--apya-text-secondary);
+    line-height: var(--apya-leading-snug);
+}
+/* Chevron yalnız yön belirtir; hover'da hedefe doğru 2px kayar. */
+.apya-settings-link-chevron {
+    flex: 0 0 auto;
+    font-size: var(--apya-fs-xs);
+    color: var(--apya-text-tertiary);
+    transition: transform var(--apya-motion-fast) var(--apya-easing-standard);
+}
+.apya-settings-link:hover .apya-settings-link-chevron {
+    transform: translateX(2px);
+}
+
+/* ============================================================================
+   KABUK — SOL MENÜ ZENGİNLEŞTİRMELERİ (apya-sidebar-shell.js)
+   ----------------------------------------------------------------------------
+   Temanın menü markup'ı korunur; buradaki kurallar JS'in eklediği düğümleri
+   biçimlendirir. Ray modunda (data-sidebar="collapsed", hover yokken) hepsi
+   gizlenir — bölüm sonundaki bloğa bak.
+   ============================================================================ */
+
+/* --- Bölüm katlama --- */
+#lpx-sidebar .apya-shell-section-chevron {
+    display: inline-flex;
+    align-items: center;
+    margin-right: 4px;
+    color: var(--apya-text-tertiary);
+    transition: transform var(--apya-motion-base) var(--apya-easing-standard);
+}
+#lpx-sidebar .apya-shell-section--collapsed .apya-shell-section-chevron {
+    transform: rotate(-90deg);
+}
+/* Katlanınca liste gizlenir; DOM'da kalır ama display:none olduğu için
+   odak sırasına da girmez (görünmeyen satıra tab'lamak erişilebilirlik hatası).
+
+   ÖZGÜLLÜK NOTU: theme-bridge'te `#lpx-sidebar li.outer-menu-item > ul.lpx-inner-menu`
+   → `display:block !important` var (bölüm listeleri kalıcı açık kalsın diye).
+   Seçici (1,2,2); `li.outer-menu-item` YAZILMAZSA buradaki kural (1,2,1) kalır
+   ve KAYBEDER — sınıf ve aria doğru güncellenir ama görsel olarak hiçbir şey
+   gizlenmez (ölçüldü: katlanmış FİNANS'ta Kasa & Banka hâlâ görünüyordu). */
+#lpx-sidebar li.outer-menu-item.apya-shell-section--collapsed > ul.lpx-inner-menu {
+    display: none !important;
+}
+#lpx-sidebar .apya-shell-section > a.lpx-menu-item-link:hover .lpx-menu-item-text {
+    color: var(--apya-text-primary) !important;
+}
+#lpx-sidebar .apya-shell-section > a.lpx-menu-item-link:focus-visible {
+    outline: none;
+    box-shadow: var(--apya-shadow-focus);
+    border-radius: var(--apya-radius-sm);
+}
+
+/* --- Sabitleme iğnesi ---
+   `.apya-row-actions` ile AYNI örüntü (handoff bunu açıkça istiyor): hover'a
+   kadar görünmez, satır hover'ında yarı saydam, kendi hover'ında tam opak.
+   Dokunmatikte hover hiç tetiklenmediği için kalıcı yarı saydam. */
+#lpx-sidebar .apya-shell-pin {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    margin-right: -4px;
+    padding: 0;
+    border: none;
+    border-radius: var(--apya-radius-sm);
+    background: transparent;
+    color: var(--apya-text-tertiary);
+    opacity: 0;
+    cursor: pointer;
+    transition: opacity var(--apya-motion-fast) var(--apya-easing-standard);
+}
+#lpx-sidebar a.lpx-menu-item-link:hover .apya-shell-pin { opacity: .45; }
+#lpx-sidebar .apya-shell-pin:hover {
+    opacity: 1;
+    background: var(--apya-surface-hover);
+    color: var(--apya-text-secondary);
+}
+#lpx-sidebar .apya-shell-pin:focus-visible {
+    opacity: 1;
+    outline: none;
+    box-shadow: var(--apya-shadow-focus);
+}
+/* Sabitlenmiş: her zaman görünür + aksan rengi + dolu ikon */
+#lpx-sidebar .apya-shell-pin.is-pinned {
+    opacity: 1;
+    color: var(--apya-accent-500);
+}
+#lpx-sidebar .apya-shell-pin.is-pinned svg { fill: currentColor; }
+@media (pointer: coarse) {
+    #lpx-sidebar .apya-shell-pin { opacity: .45; }
+}
+/* Sabitlenenler bölümündeki kopyalarda iğne yok (asıl satırdan yönetilir). */
+#lpx-sidebar .apya-pinned-section .apya-shell-pin { display: none; }
+
+/* --- Satır içi düğmeler (Projeler: + ve chevron) --- */
+#lpx-sidebar .apya-shell-rowbtn {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    padding: 0;
+    border: none;
+    border-radius: var(--apya-radius-sm);
+    background: transparent;
+    color: var(--apya-text-tertiary);
+    cursor: pointer;
+}
+#lpx-sidebar .apya-shell-rowbtn:hover {
+    background: var(--apya-surface-hover);
+    color: var(--apya-text-primary);
+}
+#lpx-sidebar .apya-shell-rowbtn:focus-visible {
+    outline: none;
+    box-shadow: var(--apya-shadow-focus);
+}
+#lpx-sidebar .apya-shell-subtoggle {
+    margin-right: -4px;
+    transition: transform var(--apya-motion-base) var(--apya-easing-standard);
+    transform: rotate(-90deg);
+}
+#lpx-sidebar .apya-shell-sub--open > a .apya-shell-subtoggle { transform: none; }
+
+/* --- Proje alt listesi --- */
+#lpx-sidebar .apya-shell-subnav { display: none !important; }
+#lpx-sidebar .apya-shell-sub--open > .apya-shell-subnav { display: block !important; }
+#lpx-sidebar .apya-shell-dot {
+    flex: 0 0 7px;
+    width: 7px;
+    height: 7px;
+    border-radius: var(--apya-radius-xs);
+}
+#lpx-sidebar .apya-shell-dot--empty { background: transparent; }
+#lpx-sidebar .apya-shell-count {
+    margin-left: auto;
+    font-size: var(--apya-fs-xs);
+    color: var(--apya-text-tertiary);
+}
+#lpx-sidebar .apya-shell-subnav-all .lpx-menu-item-text { color: var(--apya-text-tertiary) !important; }
+
+/* --- Rozetler --- */
+#lpx-sidebar .apya-shell-badge {
+    flex: 0 0 auto;
+    min-width: 18px;
+    height: 18px;
+    margin-left: auto;
+    padding: 0 5px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--apya-radius-full);
+    font-size: 10.5px;
+    font-weight: var(--apya-weight-bold);
+    line-height: 1;
+}
+#lpx-sidebar .apya-shell-badge--warning {
+    background: var(--apya-warning-100);
+    color: var(--apya-text-warning);
+}
+#lpx-sidebar .apya-shell-badge--negative {
+    background: color-mix(in srgb, var(--apya-negative-500) 14%, transparent);
+    color: var(--apya-text-negative);
+}
+/* Geciken: rozet DEĞİL düz sayı — "bekleyen iş"ten görsel olarak ayrışsın. */
+#lpx-sidebar .apya-shell-badge--plain {
+    background: transparent;
+    padding: 0;
+    min-width: 0;
+    font-size: var(--apya-fs-xs);
+    font-weight: var(--apya-weight-semibold);
+    color: var(--apya-text-negative);
+}
+/* Rozet varken iğne sağa yapışmasın: ikisi de auto-marj isterse çakışır. */
+#lpx-sidebar a.lpx-menu-item-link:has(.apya-shell-badge) .apya-shell-pin { margin-left: 6px; }
+
+/* --- Dip blok --- */
+/* Nav'ın kendisi flex kolon olmalı ki `margin-top:auto` bloğu dibe itsin. */
+#lpx-sidebar .lpx-nav {
+    display: flex;
+    flex-direction: column;
+    min-height: 100%;
+}
+#lpx-sidebar .lpx-nav > ul.lpx-nav-menu { flex: 0 0 auto; }
+.lpx-nav .apya-shell-foot {
+    margin-top: auto;
+    padding: 8px 12px 10px;
+    border-top: 1px solid var(--apya-border-subtle);
+    background: var(--apya-surface-sidebar);
+}
+.apya-shell-foot-item > a.lpx-menu-item-link {
+    flex-wrap: wrap;
+    height: auto !important;
+    min-height: 0 !important;
+    padding-top: 6px !important;
+    padding-bottom: 6px !important;
+}
+.apya-shell-foot-hint {
+    flex: 1 0 100%;
+    padding-left: 28px;
+    font-size: 10.5px;
+    line-height: 1.35;
+    color: var(--apya-text-tertiary);
+}
+.apya-shell-status {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 10px 0;
+}
+.apya-shell-status-dot {
+    flex: 0 0 7px;
+    width: 7px;
+    height: 7px;
+    border-radius: var(--apya-radius-full);
+    background: var(--apya-positive-500);
+}
+.apya-shell-status-dot.is-down { background: var(--apya-negative-500); }
+.apya-shell-status-text {
+    font-size: var(--apya-fs-xs);
+    color: var(--apya-text-tertiary);
+}
+.apya-shell-status-version {
+    margin-left: auto;
+    font-size: var(--apya-fs-xs);
+    color: var(--apya-text-disabled);
+}
+
+/* --- Ray modu: etiket taşıyan her şey gizlenir ---
+   72px'lik rayda rozet/iğne/alt liste sığmaz ve taşar; aktiflik göstergesi
+   rayda zaten temanın aktif satır zemini. */
+@media (min-width: 1200px) {
+    html[data-sidebar="collapsed"] .lpx-sidebar-container:not(:hover) #lpx-sidebar .apya-shell-pin,
+    html[data-sidebar="collapsed"] .lpx-sidebar-container:not(:hover) #lpx-sidebar .apya-shell-rowbtn,
+    html[data-sidebar="collapsed"] .lpx-sidebar-container:not(:hover) #lpx-sidebar .apya-shell-badge,
+    html[data-sidebar="collapsed"] .lpx-sidebar-container:not(:hover) #lpx-sidebar .apya-shell-subnav,
+    html[data-sidebar="collapsed"] .lpx-sidebar-container:not(:hover) #lpx-sidebar .apya-shell-section-chevron,
+    html[data-sidebar="collapsed"] .lpx-sidebar-container:not(:hover) .apya-shell-foot-hint,
+    html[data-sidebar="collapsed"] .lpx-sidebar-container:not(:hover) .apya-shell-status {
+        display: none !important;
+    }
+}
+
+/* ============================================================================
+   KABUK — ÜST BAR GEZİNME BAĞLAMI (apya-topbar-shell.js)
+   ----------------------------------------------------------------------------
+   Temanın boş `nav.lpx-breadcrumb-container`'ına kurulur. Sağ kümedeki mevcut
+   ViewComponent'lere (komut paleti, tema, yoğunluk, bildirim, kiracı) dokunmaz.
+   ============================================================================ */
+/* DİKKAT: `.lpx-breadcrumb-container` ZATEN Apya'nın iki satırlı sayfa
+   başlığını taşıyor (.apya-page-title üstte, .apya-page-subtitle altta) ve
+   kolon olarak diziliyor. Kaba `display:flex` (yön vermeden) yazmak o dizilimi
+   satıra çevirip üst barı bozuyordu — kabın düzenine DOKUNULMAZ.
+   Breadcrumb, .apya-page-title'ın YERİNE geçer (JS onu gizler); alt başlık
+   altında kalır, böylece sayfa açıklaması kaybolmaz. */
+.apya-topbar-nav {
+    display: flex;
+    align-items: center;
+    gap: var(--apya-space-3);
+    min-width: 0;
+    padding-left: 2px;
+}
+
+/* --- geri / ileri / son bakılanlar --- */
+.apya-topbar-histgroup {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 1px;
+    flex: 0 0 auto;
+}
+.apya-topbar-iconbtn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    border: none;
+    border-radius: var(--apya-radius-md);
+    background: transparent;
+    color: var(--apya-text-secondary);
+    cursor: pointer;
+}
+.apya-topbar-iconbtn:hover:not(:disabled) {
+    background: var(--apya-surface-hover);
+    color: var(--apya-text-primary);
+}
+.apya-topbar-iconbtn:disabled {
+    color: var(--apya-border-default);
+    cursor: default;
+}
+.apya-topbar-iconbtn:focus-visible { outline: none; box-shadow: var(--apya-shadow-focus); }
+.apya-topbar-iconbtn.is-open { background: var(--apya-surface-hover); }
+
+/* --- açılır menü (son bakılanlar) --- */
+.apya-topbar-menu {
+    position: absolute;
+    top: 34px;
+    left: 0;
+    z-index: var(--apya-z-dropdown);
+    width: 250px;
+    padding: 6px;
+    border: 1px solid var(--apya-border-default);
+    border-radius: var(--apya-radius-xl);
+    background: var(--apya-surface-elevated);
+    box-shadow: var(--apya-shadow-lg);
+    /* Dosyanın başındaki MEVCUT apyaPopIn kullanılır — burada yeniden
+       tanımlamak onu global olarak ezer ve `.apya-pop-in` kullanan diğer
+       yerlerin animasyon yönünü sessizce değiştirirdi. */
+    animation: apyaPopIn var(--apya-motion-base) var(--apya-easing-standard);
+}
+@media (prefers-reduced-motion: reduce) {
+    .apya-topbar-menu { animation: none; }
+}
+.apya-topbar-menu-head {
+    padding: 6px 8px 4px;
+    font-size: 10.5px;
+    font-weight: var(--apya-weight-bold);
+    letter-spacing: .06em;
+    color: var(--apya-text-tertiary);
+}
+.apya-topbar-menu-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    height: 34px;
+    padding: 0 8px;
+    border-radius: var(--apya-radius-lg);
+    color: var(--apya-text-primary);
+    font-size: var(--apya-fs-base);
+    text-decoration: none;
+}
+.apya-topbar-menu-row > span:first-child {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.apya-topbar-menu-row:hover { background: var(--apya-surface-hover); color: var(--apya-text-primary); text-decoration: none; }
+.apya-topbar-menu-row.is-active { font-weight: var(--apya-weight-semibold); }
+.apya-topbar-menu-row:focus-visible { outline: none; box-shadow: var(--apya-shadow-focus); }
+.apya-topbar-menu-meta { flex: 0 0 auto; font-size: 10.5px; color: var(--apya-text-disabled); }
+.apya-topbar-menu-empty { padding: 8px; font-size: var(--apya-fs-sm); color: var(--apya-text-tertiary); }
+
+/* --- breadcrumb --- */
+.apya-topbar-crumb {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    min-width: 0;
+}
+.apya-topbar-crumb-parent {
+    flex: 0 0 auto;
+    font-size: var(--apya-fs-base);
+    color: var(--apya-text-tertiary);
+}
+.apya-topbar-crumb-sep { display: inline-flex; color: var(--apya-border-strong); }
+.apya-topbar-crumb-page {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: var(--apya-fs-base);
+    font-weight: var(--apya-weight-semibold);
+    color: var(--apya-text-primary);
+}
+
+/* --- ortam çipi ---
+   PROD'da JS bu düğümü HİÇ basmaz (handoff: dikkat yalnız riskli ortamda). */
+.apya-topbar-envchip {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    height: 18px;
+    padding: 0 6px;
+    border-radius: var(--apya-radius-sm);
+    background: var(--apya-warning-100);
+    color: var(--apya-text-warning);
+    font-size: 9.5px;
+    font-weight: var(--apya-weight-bold);
+    letter-spacing: .05em;
+}
+.apya-topbar-envchip.is-staging {
+    background: var(--apya-accent-50);
+    color: var(--apya-accent-600);
+}
+
+/* --- kaydırma gölgesi --- */
+.lpx-topbar {
+    transition: box-shadow var(--apya-motion-base) ease;
+}
+.lpx-topbar.is-scrolled {
+    box-shadow: 0 1px 3px 0 rgba(17, 24, 39, .08);
+}
+
+/* --- dar ekran (<1320px) ---
+   Breadcrumb'ın üst seviyesi ve saat düğmesi düşer; sayfa adı ve oklar kalır. */
+.lpx-topbar.is-narrow .apya-topbar-crumb-parent,
+.lpx-topbar.is-narrow .apya-topbar-crumb-sep,
+.lpx-topbar.is-narrow .apya-topbar-recents-btn {
+    display: none;
+}
+
+/* Mobilde üst bar zaten hamburger + logo düzenine geçiyor (theme-bridge);
+   gezinme bloğu orada yer kaplamasın. */
+@media (max-width: 767.98px) {
+    .apya-topbar-nav { display: none; }
+}
+
+/* --- Kiracı menüsü araması (apya-topbar-shell.js) ---
+   Liste 5'ten kısaysa JS kutuyu hiç basmaz; aşağısı yalnız uzun listede geçerli. */
+.apya-tenant-search {
+    padding: 4px 8px 6px;
+}
+.apya-tenant-search input {
+    height: 32px;
+    font-size: var(--apya-fs-sm);
+}
+.apya-tenant-search input:focus {
+    box-shadow: var(--apya-shadow-focus);
+    border-color: var(--apya-border-focus);
+}
+.apya-tenant-search-empty {
+    padding: 8px 12px;
+    font-size: var(--apya-fs-sm);
+    color: var(--apya-text-tertiary);
+}
+
+/* ============================================================================
+   KABUK — "+ Yeni" · yardım menüsü · kısayol penceresi (apya-shell-actions.js)
+   ============================================================================ */
+
+/* Üst bardaki sıra: flex `order` ile (theme-bridge'teki mevcut düzenle uyumlu). */
+.lpx-topbar-content > .apya-shell-new  { order: 40; }
+.lpx-topbar-content > .apya-shell-help { order: 94; }
+
+.apya-shell-new,
+.apya-shell-help { position: relative; display: inline-flex; }
+
+/* --- "+ Yeni" düğmesi: tek birincil eylem, aksan zemin --- */
+.apya-shell-new-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border: none;
+    border-radius: var(--apya-radius-lg);
+    background: var(--apya-accent-500);
+    color: var(--apya-text-inverse);
+    box-shadow: var(--apya-shadow-sm);
+    cursor: pointer;
+}
+.apya-shell-new-btn:hover { filter: brightness(0.93); }
+.apya-shell-new-btn:focus-visible { outline: none; box-shadow: var(--apya-shadow-focus); }
+
+/* --- yardım düğmesi: nötr --- */
+.apya-shell-help-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    border: none;
+    border-radius: var(--apya-radius-lg);
+    background: transparent;
+    color: var(--apya-text-secondary);
+    cursor: pointer;
+}
+.apya-shell-help-btn:hover { background: var(--apya-surface-hover); color: var(--apya-text-primary); }
+.apya-shell-help-btn:focus-visible { outline: none; box-shadow: var(--apya-shadow-focus); }
+.apya-shell-new-btn.is-open,
+.apya-shell-help-btn.is-open { background: var(--apya-surface-hover); }
+.apya-shell-new-btn.is-open { background: var(--apya-accent-600); }
+
+/* --- ortak açılır menü --- */
+.apya-shell-menu {
+    position: absolute;
+    top: 42px;
+    right: 0;
+    z-index: var(--apya-z-dropdown);
+    min-width: 230px;
+    padding: 6px;
+    border: 1px solid var(--apya-border-default);
+    border-radius: var(--apya-radius-xl);
+    background: var(--apya-surface-elevated);
+    box-shadow: var(--apya-shadow-lg);
+    animation: apyaPopIn var(--apya-motion-base) var(--apya-easing-standard);
+}
+.apya-shell-help-menu { min-width: 240px; }
+@media (prefers-reduced-motion: reduce) {
+    .apya-shell-menu { animation: none; }
+}
+.apya-shell-menu-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    height: 38px;
+    padding: 0 8px;
+    border: none;
+    border-radius: var(--apya-radius-lg);
+    background: transparent;
+    color: var(--apya-text-primary);
+    font-size: var(--apya-fs-base);
+    text-align: left;
+    cursor: pointer;
+}
+.apya-shell-menu-row > span { flex: 1; min-width: 0; }
+.apya-shell-menu-row:hover { background: var(--apya-surface-hover); }
+.apya-shell-menu-row:focus-visible { outline: none; box-shadow: var(--apya-shadow-focus); }
+.apya-shell-menu-sep {
+    height: 1px;
+    margin: 6px 4px;
+    background: var(--apya-border-subtle);
+}
+.apya-shell-menu-status {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 8px 6px;
+    font-size: var(--apya-fs-xs);
+    color: var(--apya-text-tertiary);
+}
+
+/* --- tuş rozeti --- */
+.apya-shell-kbd {
+    flex: 0 0 auto;
+    padding: 3px 7px;
+    border: 1px solid var(--apya-border-default);
+    border-radius: var(--apya-radius-sm);
+    background: var(--apya-surface-raised);
+    color: var(--apya-text-secondary);
+    font-family: var(--apya-font-mono);
+    font-size: 11px;
+    font-weight: var(--apya-weight-semibold);
+    line-height: 1;
+}
+
+/* --- kısayol penceresi --- */
+.apya-shell-dialog {
+    position: fixed;
+    inset: 0;
+    z-index: var(--apya-z-modal);
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 96px 24px 24px;
+    background: rgba(17, 24, 39, .40);
+}
+.apya-shell-dialog[hidden] { display: none; }
+.apya-shell-dialog-panel {
+    width: 620px;
+    max-width: 100%;
+    max-height: calc(100vh - 140px);
+    overflow-y: auto;
+    border-radius: var(--apya-radius-xl);
+    background: var(--apya-surface-elevated);
+    box-shadow: var(--apya-shadow-xl);
+    animation: apyaPopIn var(--apya-motion-base) var(--apya-easing-standard);
+}
+@media (prefers-reduced-motion: reduce) {
+    .apya-shell-dialog-panel { animation: none; }
+}
+.apya-shell-dialog-head {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 16px 20px 12px;
+    border-bottom: 1px solid var(--apya-border-subtle);
+}
+.apya-shell-dialog-title {
+    font-size: 14.5px;
+    font-weight: var(--apya-weight-semibold);
+    color: var(--apya-text-primary);
+}
+.apya-shell-dialog-sub {
+    margin-top: 2px;
+    font-size: 11.5px;
+    color: var(--apya-text-tertiary);
+}
+.apya-shell-dialog-close {
+    margin-left: auto;
+    width: 30px;
+    height: 30px;
+    border: none;
+    border-radius: var(--apya-radius-md);
+    background: transparent;
+    color: var(--apya-text-secondary);
+    cursor: pointer;
+}
+.apya-shell-dialog-close:hover { background: var(--apya-surface-hover); color: var(--apya-text-primary); }
+.apya-shell-dialog-close:focus-visible { outline: none; box-shadow: var(--apya-shadow-focus); }
+/* İki kolon — grup sayısı tek olsa da düzen bozulmaz. */
+.apya-shell-dialog-body {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0 28px;
+    padding: 16px 20px 20px;
+}
+@media (max-width: 575.98px) {
+    .apya-shell-dialog-body { grid-template-columns: minmax(0, 1fr); }
+    .apya-shell-dialog { padding-top: 48px; }
+}
+.apya-shell-dialog-grouphead {
+    padding: 10px 0 4px;
+    font-size: 10.5px;
+    font-weight: var(--apya-weight-bold);
+    letter-spacing: .06em;
+    color: var(--apya-text-tertiary);
+}
+.apya-shell-dialog-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    height: 30px;
+    font-size: var(--apya-fs-sm);
+    color: var(--apya-text-secondary);
+}
+.apya-shell-dialog-row > span { flex: 1; min-width: 0; }
+
+/* Dar üst barda yardım düğmesi kalır, "+ Yeni" kalır — ikisi de ikon zaten. */
+@media (max-width: 767.98px) {
+    .apya-shell-new, .apya-shell-help { display: none; }
+}
+
+/* --- Komut paleti: bölüm başlıkları, tür ayrımı, alt çubuk (Faz 4) --- */
+.apya-command-palette-group {
+    padding: 10px 12px 4px;
+    font-size: 10.5px;
+    font-weight: var(--apya-weight-bold);
+    letter-spacing: .06em;
+    color: var(--apya-text-tertiary);
+    list-style: none;
+}
+/* "Bu sayfada ara" satırı vurgulu — sorgunun asıl hedefi çoğu zaman bu. */
+.apya-command-palette-item.apya-cp-page {
+    background: var(--apya-accent-50);
+}
+.apya-command-palette-item.apya-cp-page i { color: var(--apya-accent-600); }
+.apya-command-palette-item.apya-cp-page.active { background: var(--apya-accent-100); }
+.apya-command-palette-item.apya-cp-create i { color: var(--apya-accent-600); }
+
+.apya-command-palette-foot {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 9px 14px;
+    border-top: 1px solid var(--apya-border-subtle);
+    background: var(--apya-surface-raised);
+    border-radius: 0 0 var(--apya-radius-xl) var(--apya-radius-xl);
+}
+.apya-command-palette-hints {
+    flex: 1;
+    min-width: 0;
+    font-size: var(--apya-fs-xs);
+    color: var(--apya-text-tertiary);
+}
+/* Boşken hiç yer kaplamasın (PROD'da metin basılmıyor). */
+.apya-command-palette-env:empty { display: none; }
+.apya-command-palette-env {
+    flex: 0 0 auto;
+    padding: 2px 7px;
+    border-radius: var(--apya-radius-sm);
+    background: var(--apya-warning-100);
+    color: var(--apya-text-warning);
+    font-size: 10.5px;
+    font-weight: var(--apya-weight-bold);
+    letter-spacing: .04em;
+}

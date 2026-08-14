@@ -301,6 +301,17 @@ public class PlatformWebModule : AbpModule
                     bundle.AddFiles("/Pages/Notifications/notification-bell.js");
                     bundle.AddFiles("/js/dark-mode.js");
                     bundle.AddFiles("/js/sidebar-toggle.js");
+                    // sidebar-toggle.js'ten SONRA: o, 2. seviye grupları kapatıp
+                    // menü DOM'unu son hâline getiriyor; kabuk zenginleştirmeleri
+                    // (iğne/rozet/alt liste) o hâlin üstüne biner.
+                    bundle.AddFiles("/js/apya-sidebar-shell.js");
+                    // apya-sidebar-shell.js'ten SONRA: paylaşılan
+                    // window.apyaShellState promise'ini o kuruyor.
+                    bundle.AddFiles("/js/apya-topbar-shell.js");
+                    // Sıra serbest: paleti açarken #ApyaCommandPaletteTrigger'a
+                    // tıklanıyor ve command-palette.js onu DELEGE dinleyiciyle
+                    // yakalıyor → bu dosya ondan önce yüklense de çalışır.
+                    bundle.AddFiles("/js/apya-shell-actions.js");
                     bundle.AddFiles("/js/density-toggle.js");
                     bundle.AddFiles("/js/command-palette.js");
                     // dark-mode.js'ten SONRA gelmeli: window.apyaHeader.setViewLabel'ı kullanıyor.

@@ -902,10 +902,12 @@ html, body {
     overflow: visible !important;
 }
 
-/* Üst-düzey parent (alt menülü) → tıklanamaz bölüm başlığı (overline) */
+/* Üst-düzey parent (alt menülü) → bölüm başlığı (overline).
+   `pointer-events:none` İDİ (başlık gezinmesin diye); kabuk handoff'u başlığı
+   katlanabilir yaptığı için tıklanabilir olmalı — gezinmeyi artık JS'teki
+   preventDefault engelliyor (apya-sidebar-shell.js). */
 #lpx-sidebar li.outer-menu-item:has(> ul.lpx-inner-menu) > a.lpx-menu-item-link {
-    pointer-events: none;
-    cursor: default;
+    cursor: pointer;
     padding: 15px 22px 4px !important;
     min-height: 0 !important;
     background: transparent !important;
@@ -949,6 +951,87 @@ html, body {
 /* 2. seviye iç grup (Yönetim → Müşteri/Kimlik yönetimi çocukları) daha içeride */
 #lpx-sidebar ul.lpx-inner-menu ul.lpx-inner-menu > li.lpx-inner-menu-item > a.lpx-menu-item-link {
     padding-left: 38px !important;
+}
+
+/* ============================================================================
+   KABUK GEOMETRİSİ — --apya-sidebar-w 280→250px, --apya-header-h 57→64px
+   ----------------------------------------------------------------------------
+   Kabuk handoff'u (design_handoff_app_shell) bu iki ölçüyü bilinçli olarak
+   değiştiriyor: menü 250px, üst bar 64px (marka satırı üst barla aynı hizada).
+
+   Değerler tokens.css'te DEĞİL burada override edilir: tokens.css React
+   island'la paylaşılan tek kaynak ve orada 280/57 "LeptonX'in canlı geometrisi"
+   olarak not düşülmüş. Bridge katmanı zaten LeptonX ↔ token eşlemesinin yeri.
+
+   --apya-header-h ZATEN canlı: aşağıdaki `.lpx-topbar { min-height }` kuralı onu
+   okuyor, değeri değiştirmek yetiyor. --apya-sidebar-w ise BELGESEL bir token'dı
+   — LeptonX genişliği 10 ayrı kuralda sabit 280px yazıyor ve hiçbiri token
+   okumuyordu. Aşağıdaki blok o kuralları token'a bağlar; artık tek değer tüm
+   geometriyi sürer (ray genişliği --apya-sidebar-w-collapsed'ta zaten bağlıydı).
+   ============================================================================ */
+:root {
+    --apya-sidebar-w: 250px;
+    --apya-header-h:   64px;
+}
+
+/* Kap + logo satırı. Logo kuralının `!important`'ı temanın
+   `.lpx-has-scrollbar .lpx-logo-container{width:280px!important}` kuralını
+   yenmek için zorunlu — aynı özgüllükte önce o geliyor. */
+.lpx-sidebar-container {
+    min-width: var(--apya-sidebar-w);
+    max-width: var(--apya-sidebar-w);
+}
+.lpx-sidebar .lpx-logo-container,
+#lpx-wrapper .lpx-sidebar.lpx-scroll-container.lpx-has-scrollbar .lpx-logo-container {
+    width: var(--apya-sidebar-w) !important;
+}
+
+/* Nav gövdesi — hover'da açılan ray da aynı genişliğe gelsin (üç kural da
+   temada min-width:280px yazıyor). */
+.lpx-sidebar-container .lpx-sidebar .lpx-nav,
+.lpx-sidebar-container:hover .lpx-sidebar .lpx-nav,
+.hover-trigger .lpx-sidebar-container:hover .lpx-sidebar .lpx-nav {
+    min-width: var(--apya-sidebar-w);
+}
+.lpx-sidebar-container .lpx-sidebar .lpx-nav .lpx-nav-menu {
+    max-width: var(--apya-sidebar-w);
+}
+
+/* Dikey scrollbar telafisi — temanın `.lpx-has-scrollbar` kuralları da 280'e
+   göre SABİT hesaplanmış (265 = 280−15 oluk, 235 = 280−45 düğme payı). Yalnız
+   kap 250'ye inince nav 265'te kalıyor ve satırların SOL 15px'i kırpılıyordu
+   (ölçüldü: nav left −15.5px, "Genel Bakış" satırı x=−7.5'ten başlıyor, daralt
+   düğmesi scrollbar'ın üstüne biniyor). Aynı aritmetik token üzerinden kurulur. */
+#lpx-wrapper .lpx-sidebar.lpx-scroll-container.lpx-has-scrollbar .lpx-nav {
+    min-width: calc(var(--apya-sidebar-w) - 15px);
+}
+#lpx-wrapper .lpx-sidebar.lpx-scroll-container.lpx-has-scrollbar .lpx-nav-menu {
+    max-width: calc(var(--apya-sidebar-w) - 15px);
+}
+/* Daralt düğmesi — temada İKİ kural var: scrollbar'lı hâl (yukarıdaki blokla
+   aynı `#lpx-wrapper …has-scrollbar` zinciri) ve medya sorgusuz temel kural.
+   İkisi de 235px (=280−45). Yalnız scrollbar'lısını ezmek, menü kısaldığında
+   (`.lpx-has-scrollbar` düşer) düğmeyi 250px'lik kenar çubuğunun sağ kenarına
+   taşırdı — Faz 1'de menü kısalacağı için bu hâl gerçekten oluşacak. */
+.lpx-sidebar .lpx-logo-container .menu-collapse-icon,
+#lpx-wrapper .lpx-sidebar.lpx-scroll-container.lpx-has-scrollbar .lpx-logo-container .menu-collapse-icon {
+    left: calc(var(--apya-sidebar-w) - 45px);
+}
+
+/* İçerik kayması — tema bunu yalnız ≥1200px'te 280'e itiyor; altındaki aralıkta
+   zaten ray geometrisi geçerli (bkz. SIDEBAR COLLAPSE). */
+@media (min-width: 1200px) {
+    .lpx-content-container {
+        margin-left: var(--apya-sidebar-w);
+    }
+}
+
+/* Dip çubuk — temada HEM medya sorgusuz temel kuralda HEM ≥1200px'te 280px
+   yazıyor. Yalnız medya sorgulusunu ezmek 1200px altında 280px bırakırdı;
+   temel kural da bağlanır. (Eleman LeptonX Lite'ta çoğu sayfada render
+   edilmiyor — bu yüzden ölçümle değil kural taramasıyla yakalandı.) */
+.lpx-footbar-container {
+    left: var(--apya-sidebar-w);
 }
 
 /* ============================================================================
@@ -1077,12 +1160,12 @@ html, body {
 /* SIDEBAR — DOKUNMATİK GENİŞLETME (768–1199px, pointer:coarse):
    Temanın kendi (paket-içi) CSS'i bu aralıkta sidebar'ı otomatik ikon-rail'e
    daraltıyor ve yalnız ":hover" ile genişletiyor. Dokunmatik cihazda hover
-   olmadığı için kullanıcı etiketleri asla göremiyordu. 280px, temanın hover'da
-   genişlettiği doğal genişlik (yukarıdaki P4 SIDEBAR COLLAPSE bölümü yorumu). */
+   olmadığı için kullanıcı etiketleri asla göremiyordu. Açık genişlik artık
+   token'dan gelir (bkz. KABUK GEOMETRİSİ bölümü). */
 @media (min-width: 768px) and (max-width: 1199.98px) and (pointer: coarse) {
     .lpx-sidebar-container {
-        min-width: 280px !important;
-        max-width: 280px !important;
+        min-width: var(--apya-sidebar-w) !important;
+        max-width: var(--apya-sidebar-w) !important;
         overflow-y: auto !important;
     }
 }
