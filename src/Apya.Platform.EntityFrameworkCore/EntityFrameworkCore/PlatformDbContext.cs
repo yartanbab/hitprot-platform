@@ -146,6 +146,7 @@ namespace Apya.Platform.EntityFrameworkCore
 
         /* --- BİLDİRİM MODÜLÜ --- */
         public DbSet<Notification> Notifications { get; set; }
+        public DbSet<NotificationPreference> NotificationPreferences { get; set; }
 
         /* --- GERİ BİLDİRİM MODÜLÜ --- */
         public DbSet<Feedback> Feedbacks { get; set; }
@@ -756,6 +757,14 @@ namespace Apya.Platform.EntityFrameworkCore
                 b.HasIndex(x => new { x.UserId, x.Category, x.IsRead });
                 // Gruplama: aynı kayda ait okunmamış bildirimin aranması
                 b.HasIndex(x => new { x.UserId, x.GroupKey, x.IsRead });
+            });
+
+            builder.Entity<NotificationPreference>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "NotificationPreferences", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+                // Kullanıcı başına kategori başına tek satır; her bildirimde okunuyor
+                b.HasIndex(x => new { x.UserId, x.Category }).IsUnique();
             });
 
             /* --- TAKVİM MODÜLÜ YAPILANDIRMASI --- */

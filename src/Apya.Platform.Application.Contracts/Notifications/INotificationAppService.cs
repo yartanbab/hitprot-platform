@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Volo.Abp.Application.Dtos;
 using Volo.Abp.Application.Services;
@@ -27,6 +28,12 @@ public interface INotificationAppService : IApplicationService
 
     /// <summary>Okunmuş bildirimleri toplu siler ("Okunmuşları temizle").</summary>
     Task<int> DeleteReadAsync();
+
+    /// <summary>Tüm kategoriler için etkin kanal tercihleri (kayıt yoksa varsayılan).</summary>
+    Task<List<NotificationPreferenceDto>> GetPreferencesAsync();
+
+    /// <summary>Bir kategorinin kanal tercihini kaydeder.</summary>
+    Task UpdatePreferenceAsync(UpdateNotificationPreferenceInput input);
 
     /// <summary>Bildirimi siler (soft delete).</summary>
     Task DeleteAsync(Guid id);

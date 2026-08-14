@@ -17,13 +17,16 @@ namespace Apya.Platform.Notifications;
 public class NotificationAppService : ApplicationService, INotificationAppService
 {
     private readonly IRepository<Notification, Guid> _notificationRepository;
+    private readonly IRepository<NotificationPreference, Guid> _preferenceRepository;
     private readonly ILocalEventBus _localEventBus;
 
     public NotificationAppService(
         IRepository<Notification, Guid> notificationRepository,
+        IRepository<NotificationPreference, Guid> preferenceRepository,
         ILocalEventBus localEventBus)
     {
         _notificationRepository = notificationRepository;
+        _preferenceRepository = preferenceRepository;
         _localEventBus = localEventBus;
     }
 
@@ -180,6 +183,46 @@ public class NotificationAppService : ApplicationService, INotificationAppServic
 
         await _notificationRepository.DeleteAsync(notification);
         await PublishCountChangedAsync(userId);
+    }
+
+    // ─── Kanal tercihleri ─────────────────────────────────────────────────────
+    public async Task<List<NotificationPreferenceDto>> GetPreferencesAsync()
+    {
+        var userId = CurrentUser.GetId();
+        var stored = await _preferenceRepository.GetListAsync(p => p.UserId == userId);
+
+        // Her kategori için satır döner: kaydı olmayan kategoriler varsayılanla
+        // gelir, böylece istemci eksik satırla uğraşmaz.
+        return Enum.GetValues<NotificationCategory>()
+            .Select(category =>
+            {
+                var pref = stored.FirstOrDefault(p => p.Category == category);
+                return new NotificationPreferenceDto
+                {
+                    Category = category,
+                    InApp    = pref?.InApp ?? NotificationPreferenceDefaults.InApp,
+                    Email    = pref?.Email ?? NotificationPreferenceDefaults.Email
+                };
+            })
+            .ToList();
+    }
+
+    public async Task UpdatePreferenceAsync(UpdateNotificationPreferenceInput input)
+    {
+        var userId = CurrentUser.GetId();
+        var existing = await _preferenceRepository.FirstOrDefaultAsync(
+            p => p.UserId == userId && p.Category == input.Category);
+
+        if (existing == null)
+        {
+            await _preferenceRepository.InsertAsync(new NotificationPreference(
+                GuidGenerator.Create(), CurrentTenant.Id, userId,
+                input.Category, input.InApp, input.Email));
+            return;
+        }
+
+        existing.Set(input.InApp, input.Email);
+        await _preferenceRepository.UpdateAsync(existing);
     }
 
     // ─── Yardımcı ─────────────────────────────────────────────────────────────

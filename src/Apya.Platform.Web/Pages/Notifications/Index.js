@@ -235,6 +235,52 @@ $(function () {
         });
     });
 
+    // ── Kanal tercihleri ──────────────────────────────────────────────────────
+
+    var CATEGORY_KEY = {};
+    CATEGORIES.forEach(function (c) { if (c.value !== null) CATEGORY_KEY[c.value] = c.key; });
+
+    function renderPreferences(items) {
+        var $body = $('#notif-pref-body').empty();
+
+        items.forEach(function (p) {
+            var key = CATEGORY_KEY[p.category];
+            if (!key) return; // kaydı olmayan kategori — tabloda yeri yok
+
+            var $row = $('<tr></tr>').attr('data-category', p.category);
+            $row.append($('<td></td>').text(l('Notification:Category:' + key)));
+
+            ['inApp', 'email'].forEach(function (channel) {
+                var id = 'pref-' + channel + '-' + p.category;
+                var $cell = $('<td class="text-center"></td>');
+                $cell.append($('<input type="checkbox" class="form-check-input notif-pref-toggle">')
+                    .attr({ id: id, 'data-channel': channel })
+                    .prop('checked', !!p[channel]));
+                $row.append($cell);
+            });
+
+            $body.append($row);
+        });
+    }
+
+    $('#notif-pref-modal').on('show.bs.modal', function () {
+        notificationService.getPreferences().then(renderPreferences);
+    });
+
+    $('#notif-pref-modal').on('change', '.notif-pref-toggle', function () {
+        var $row = $(this).closest('tr');
+        var category = parseInt($row.attr('data-category'), 10);
+        var inApp = $row.find('[data-channel="inApp"]').prop('checked');
+        var email = $row.find('[data-channel="email"]').prop('checked');
+
+        notificationService.updatePreference({ category: category, inApp: inApp, email: email })
+            .then(function () { abp.notify.success('Tercih kaydedildi.'); })
+            .catch(function () {
+                // Sunucu reddettiyse kutuyu geri al — ekran gerçeği yansıtsın.
+                $(this).prop('checked', !$(this).prop('checked'));
+            }.bind(this));
+    });
+
     $list.on('click', '.delete-notif', function () {
         var id = $(this).data('id');
         abp.message.confirm('Bildirim silinsin mi?', function (confirmed) {

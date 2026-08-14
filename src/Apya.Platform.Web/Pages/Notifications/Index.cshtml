@@ -51,6 +51,10 @@
                         <button id="btn-clear-read" class="btn btn-sm btn-outline-secondary">
                             <i class="fa fa-broom me-1"></i> Okunmuşları temizle
                         </button>
+                        <button id="btn-preferences" class="btn btn-sm btn-outline-secondary"
+                                data-bs-toggle="modal" data-bs-target="#notif-pref-modal">
+                            <i class="fa fa-sliders me-1"></i> Tercihler
+                        </button>
                     </div>
                 </div>
 
@@ -71,6 +75,39 @@
                 </div>
             </div>
         </section>
+    </div>
+</div>
+
+@* Kanal tercihleri — kategori × kanal ızgarası *@
+<div class="modal fade" id="notif-pref-modal" tabindex="-1" aria-labelledby="notif-pref-title" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="notif-pref-title">Bildirim tercihleri</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-sm text-muted">
+                    Uygulama içi kapatılan kategoride bildirim hiç üretilmez.
+                    E-posta açık olan kategorilerde kritik bildirimler anında,
+                    diğerleri günlük özet olarak gönderilir.
+                </p>
+                <table class="table table-sm align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th scope="Column">Kategori</th>
+                            <th scope="Column" class="text-center">Uygulama içi</th>
+                            <th scope="Column" class="text-center">E-posta</th>
+                        </tr>
+                    </thead>
+                    <tbody id="notif-pref-body">
+                        <tr><td colspan="3" class="text-center py-3">
+                            <div class="spinner-border spinner-border-sm" role="status"></div>
+                        </td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </div>
 </div>
 
