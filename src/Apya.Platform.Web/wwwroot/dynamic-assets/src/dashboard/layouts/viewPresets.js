@@ -28,7 +28,10 @@ export const DEFAULT_VIEW = 'project-management';
  * `w`/`h`: kart kataloğundan eklenirken kullanılan varsayılan boyut.
  */
 export const CARD_REGISTRY = {
-    'summary-strip':    { component: StatStripCard,      titleKey: 'Dashboard:Card:SummaryStrip',   fallback: 'Sayısal özet',       w: 12, h: 3, minW: 6, minH: 3 },
+    /* h=2 (138px): kutucuk içeriği ~122px. h=3 verilince ızgara kutusu
+       içerikten ~75px yüksek kalıyor ve altındaki satırla arasında ölü boşluk
+       oluşuyordu. minH de 2 olmalı — aksi halde RGL yüksekliği 3'e zorlar. */
+    'summary-strip':    { component: StatStripCard,      titleKey: 'Dashboard:Card:SummaryStrip',   fallback: 'Sayısal özet',       w: 12, h: 2, minW: 6, minH: 2 },
     'deliveries':       { component: DeliveriesCard,     titleKey: 'Dashboard:Deliveries:Title',    fallback: 'Bu ay teslim edilecekler', w: 7, h: 8, minW: 4, minH: 5 },
     'project-health':   { component: ProjectHealthCard,  titleKey: 'Dashboard:Health:Title',        fallback: 'Proje sağlığı',      w: 5,  h: 8, minW: 3, minH: 5 },
     'approvals':        { component: ApprovalsCard,      titleKey: 'Dashboard:Approvals:Title',     fallback: 'Bende bekleyen kararlar', w: 4, h: 6, minW: 3, minH: 4 },
