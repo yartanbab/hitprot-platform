@@ -2882,6 +2882,10 @@ i.apya-priority-dot {
    şerit 60px'ten 124px'e çıkıp barlar alt satıra inerdi (A/B ölçüldü) —
    istenmeyen bir görünüm değişikliği. Proje konsolu kendi kabını koşulsuz
    tanımlamaya devam eder, oradaki davranış değişmez. */
+@media (max-width: 767.98px) {
+    .apya-page.apya-task-console { container-type: inline-size; }
+}
+
 @container (max-width: 1460px) {
     /* Kimlik + aksiyonlar üstte, barlar altta (handoff <1200px kuralı). */
     .apya-console-rail { padding: var(--apya-space-2) var(--apya-space-3); }
