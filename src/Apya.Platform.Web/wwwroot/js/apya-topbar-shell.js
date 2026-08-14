@@ -218,13 +218,17 @@ $(function () {
 
         // --- ortam çipi ---
         // Handoff kuralı: PROD nötr, çip HİÇ gösterilmez.
+        // KONUM: kiracı pilinin İÇİNE, adın hemen sağına — tasarımda
+        // "H | Host | TEST | ⌄" tek bir okuma: hangi kiracının hangi ortamı.
+        // Pil yoksa breadcrumb'ın yanına düşer (bilgi kaybolmasın).
         var env = (state && state.health && state.health.environment) || '';
         if (env && !/^prod/i.test(env)) {
             var chip = document.createElement('span');
             chip.className = 'apya-topbar-envchip' + (/^stag/i.test(env) ? ' is-staging' : '');
             chip.textContent = /^dev/i.test(env) ? 'DEV' : env.toUpperCase();
             chip.title = env + ' ortamı';
-            wrap.appendChild(chip);
+            var tenantName = document.querySelector('#apya-tenant-switch .apya-tenant-switch-name');
+            if (tenantName) { tenantName.after(chip); } else { wrap.appendChild(chip); }
         }
 
         // Breadcrumb, mevcut `.apya-page-title`ın YERİNE geçer: ikisi de aynı
@@ -234,6 +238,25 @@ $(function () {
         var oldTitle = host.querySelector('.apya-page-title');
         if (oldTitle) { oldTitle.hidden = true; }
         host.insertBefore(wrap, host.firstChild);
+
+        // --- Kiracı pili EN SOLA ---
+        // ViewComponent onu sağ kümeye (`.lpx-topbar-content`) bırakıyor; tasarımda
+        // barın en solunda, gezinme oklarından ÖNCE duruyor. Ölçüldü: sağ kümede
+        // x=612'de kalıyordu. Düğüm taşınır (yeniden üretilmez) ki Bootstrap
+        // dropdown'ı ve ImpersonateTenant formları çalışmaya devam etsin.
+        var tenant = document.getElementById('apya-tenant-switch');
+        if (tenant) { wrap.insertBefore(tenant, wrap.firstChild); }
+
+        // --- Arama barın ORTASINA ---
+        // Sağ kümenin içindeyken orta banda oturmuyordu (x=1634, barın ortası
+        // ~1220). `.lpx-topbar`ın DOĞRUDAN çocuğu yapılınca iki yan küme
+        // arasında gerçekten ortalanır. Delege tıklama dinleyicisi kullandığı
+        // için taşımak handler'ı bozmaz.
+        var search = document.querySelector('.apya-command-palette-trigger');
+        var content = document.querySelector('.lpx-topbar-content');
+        if (search && content && content.parentElement) {
+            content.parentElement.insertBefore(search, content);
+        }
 
         function renderRecents(el) {
             var s = readHistory();

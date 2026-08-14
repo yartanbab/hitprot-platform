@@ -315,6 +315,68 @@ $(function () {
     }
 
     // =========================================================================
+    // Avatar menüsü — bardaki tekil düğmeleri toplar
+    // Tasarımda dil/tema/yoğunluk/kenar-çubuğu ayrı ikon olarak barda DURMUYOR;
+    // avatar menüsünün içindeler. Düğümler LeptonX'in MEVCUT kullanıcı
+    // dropdown'ına TAŞINIR — yeniden üretilmez, böylece her birinin kendi
+    // handler'ı, ViewComponent durumu ve kalıcılık anahtarı olduğu gibi çalışır.
+    // =========================================================================
+    function buildAvatarMenu() {
+        // DİKKAT: `document.querySelector('.lpx-user-profile')` MOBİL navbar'ın
+        // kopyasını döndürüyor (0 boyutlu, .lpx-mobile-navbar-container içinde).
+        // Aynı tuzak `.lpx-logo-container`da da vardı — tema aynı sınıfı iki kez
+        // basıyor. Arama ÜST BARA kısıtlanır.
+        var profile = content.querySelector('.lpx-user-profile');
+        var dropdown = profile && profile.closest('.dropdown');
+        var menu = dropdown && dropdown.querySelector('.dropdown-menu');
+        if (!menu) { return; }
+
+        // ETİKET ŞART: üst barda ikon tek başına yeterliydi (kompakt araç
+        // çubuğu + tooltip), ama menü içinde satırın ne yaptığı yazıyla
+        // anlaşılmalı — dört ikon alt alta dizilince hiçbiri okunmuyordu.
+        // Handoff da avatar menüsünü "Dil (sağda Türkçe) · Tema (sağda Açık)"
+        // diye tarif ediyor: solda etiket, sağda denetim/değer.
+        var entries = [
+            ['.lpx-language-selection', 'Dil'],
+            ['.apya-theme-toggle', 'Tema'],
+            ['.apya-density-toggle', 'Yoğunluk'],
+            ['.apya-sidebar-mode', 'Kenar çubuğu']
+        ].map(function (e) { return { el: content.querySelector(':scope > ' + e[0]), label: e[1] }; })
+         .filter(function (e) { return !!e.el; });
+        if (!entries.length) { return; }
+
+        var section = document.createElement('div');
+        section.className = 'apya-avatar-menu-section';
+        var head = document.createElement('div');
+        head.className = 'apya-avatar-menu-head';
+        head.textContent = 'GÖRÜNÜM';
+        section.appendChild(head);
+
+        entries.forEach(function (e) {
+            var item = document.createElement('div');
+            item.className = 'apya-avatar-menu-item';
+            var label = document.createElement('span');
+            label.className = 'apya-avatar-menu-label';
+            label.textContent = e.label;
+            item.appendChild(label);
+            item.appendChild(e.el);
+            section.appendChild(item);
+        });
+
+        menu.appendChild(section);
+
+        // Menü içindeki tıklama dropdown'ı kapatmasın.
+        // `stopPropagation` KULLANILMAZ: taşınan denetimlerin bir kısmı
+        // DELEGE dinleyici (document seviyesinde) kullanıyor ve propagation'ı
+        // kesmek onları da öldürüyor — ölçüldü: tema düğmesi menü içinden
+        // basıldığında hiç çalışmıyordu (light → light).
+        // Bootstrap'in kendi mekanizması hem menüyü açık tutar hem olayı
+        // document'e ulaştırır.
+        var toggle = dropdown.querySelector('[data-bs-toggle="dropdown"]') || profile;
+        toggle.setAttribute('data-bs-auto-close', 'outside');
+    }
+
+    // =========================================================================
     // Global kısayollar
     // =========================================================================
     document.addEventListener('keydown', function (e) {
@@ -335,6 +397,6 @@ $(function () {
     });
 
     (window.apyaShellState || Promise.resolve(null))
-        .then(function (s) { state = s; buildNewMenu(); buildHelpMenu(); })
-        .catch(function () { buildHelpMenu(); });
+        .then(function (s) { state = s; buildNewMenu(); buildHelpMenu(); buildAvatarMenu(); })
+        .catch(function () { buildHelpMenu(); buildAvatarMenu(); });
 });

@@ -269,7 +269,10 @@ html, body {
     text-transform: uppercase;
 }
 
-/* --- Topbar / Header (yalnız dark) --- */
+/* --- Topbar / Header (yalnız dark) ---
+   Dark'ta yarı saydam + blur KORUNUR (koyu zeminde istenen etki bu); ışık
+   temasındaki opak kural aşağıda, "Header topbar" bölümünde. */
+[data-theme="dark"] .lpx-topbar-container,
 [data-theme="dark"] .lpx-header,
 [data-theme="dark"] .lpx-topbar {
     background: var(--apya-surface-header) !important;
@@ -1474,10 +1477,17 @@ body.apya-mobile-nav-open {
     }
 }
 
-/* --- Header topbar: 57px + token zemin + alt kenarlık (her iki tema) --- */
+/* --- Header topbar: token zemin + alt kenarlık (her iki tema) ---
+   ZEMİN NOTU: eskiden `--apya-surface-header` (rgba(255,255,255,.85)) idi.
+   Yarı saydam olduğu için ALTINDAKİ LeptonX kabı (`.lpx-topbar-container`,
+   tema #f5f5f7 veriyor) görünüyordu ve bar beyaz değil GRİ çıkıyordu —
+   tasarımda bar saf beyaz. Kap da zemine boyanır, üstü opak yapılır. */
+.lpx-topbar-container {
+    background: var(--apya-surface-base) !important;
+}
 .lpx-topbar {
     min-height: var(--apya-header-h);
-    background: var(--apya-surface-header) !important;
+    background: var(--apya-surface-base) !important;
     border-bottom: 1px solid var(--apya-border-default) !important;
     /* LeptonX ".lpx-topbar-container .lpx-topbar"a 1em üst yuvarlaklık + dört
        yandan 1px açık gri çerçeve veriyor: header içerikten kopuk bir "kart"

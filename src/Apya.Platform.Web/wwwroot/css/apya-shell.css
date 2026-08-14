@@ -3777,3 +3777,394 @@ i.apya-priority-dot {
     font-weight: var(--apya-weight-bold);
     letter-spacing: .04em;
 }
+
+/* ============================================================================
+   KABUK — GÖRSEL RÖTUŞ (tasarım karşılaştırması, 2026-08-14)
+   ----------------------------------------------------------------------------
+   Uygulanan hâl ile hedef tasarım yan yana konunca çıkan farklar. Kök sebepler
+   tek tek not düşüldü ki sonraki tur aynı yeri yeniden keşfetmesin.
+   ============================================================================ */
+
+/* --- 1) Kiracı pili: baş harf kutusu + ortam çipi ---
+   Tasarımda pil "koyu kare baş harf | ad | ortam çipi | ⌄" dizilimi. Eskiden
+   matara ikonu vardı ve ortam çipi barın başka bir yerindeydi; ikisi ayrı
+   duruca "hangi kiracının hangi ortamındayım" iki ayrı okuma gerektiriyordu. */
+.apya-tenant-switch-btn {
+    height: 36px;
+    gap: 8px;
+    padding: 0 8px 0 8px;
+    border-radius: var(--apya-radius-lg);
+}
+.apya-tenant-switch-initial {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    border-radius: var(--apya-radius-md);
+    background: var(--apya-surface-inverse);
+    color: var(--apya-text-inverse);
+    font-size: 9.5px;
+    font-weight: var(--apya-weight-bold);
+    line-height: 1;
+}
+.apya-tenant-switch-name {
+    font-size: var(--apya-fs-base);
+    font-weight: var(--apya-weight-semibold);
+    letter-spacing: -0.01em;
+}
+/* Çip pilin İÇİNDE: kendi dış boşluğunu bırakmasın. */
+.apya-tenant-switch-btn .apya-topbar-envchip { margin: 0; }
+
+/* --- 2) Arama: barın esneyen ORTA alanı ---
+   Tasarımda arama ortada ve geniş (max 440px); uygulamada sağ kümeye sıkışıp
+   küçük bir düğme gibi duruyordu. `.lpx-topbar-content` sağ küme olduğu için
+   aramaya `margin-inline:auto` verilerek orta banda oturtulur. */
+.lpx-topbar-content { flex: 1 1 auto; min-width: 0; }
+.lpx-topbar-content > .apya-command-palette-trigger {
+    flex: 1 1 auto;
+    min-width: 0;
+    max-width: 440px;
+    height: 36px;
+    margin-inline: auto;
+    border-radius: var(--apya-radius-lg);
+    background: var(--apya-surface-raised);
+}
+.apya-command-palette-trigger:hover {
+    background: var(--apya-surface-base);
+    border-color: var(--apya-border-strong);
+}
+/* Rozet tasarımda beyaz zeminli küçük kutu. */
+.apya-command-palette-trigger kbd,
+.apya-command-palette-trigger .apya-kbd {
+    background: var(--apya-surface-base);
+    border: 1px solid var(--apya-border-default);
+    border-radius: var(--apya-radius-sm);
+    color: var(--apya-text-tertiary);
+    font-size: 10.5px;
+    font-weight: var(--apya-weight-semibold);
+    padding: 2px 5px;
+}
+
+/* --- 3) Sağ küme sıkılaştırma ---
+   Öğeler 2px aralıkla dağınık duruyordu; tasarımda 6px'lik tek bir küme. */
+.lpx-topbar-content { gap: 6px; }
+.lpx-topbar-content > .lpx-language-selection,
+.lpx-topbar-content > .apya-theme-toggle,
+.lpx-topbar-content > .apya-density-toggle,
+.lpx-topbar-content > .apya-sidebar-mode {
+    /* Bu dördü tasarımda avatar menüsüne taşınmış durumda. Menü henüz
+       kurulmadığı için GİZLENMİYOR (işlev kaybı olurdu); yalnız görsel
+       ağırlıkları düşürülüyor ki asıl eylemler (arama, +, bildirim) öne çıksın. */
+    opacity: .65;
+}
+.lpx-topbar-content > .lpx-language-selection:hover,
+.lpx-topbar-content > .apya-theme-toggle:hover,
+.lpx-topbar-content > .apya-density-toggle:hover,
+.lpx-topbar-content > .apya-sidebar-mode:hover {
+    opacity: 1;
+}
+/* Kiracı pili tasarımda EN SOLDA (breadcrumb'dan önce) — sağ kümede değil. */
+.lpx-topbar-content > .apya-tenant-switch { order: 5; margin-right: auto; }
+
+/* --- 4) Sol menü dip bloğu ---
+   Ekran görüntüsünde "Kiracı · Kimlik · Platform · Geri bildirim" iki satıra
+   kırılıyor ve durum satırıyla üst üste biniyordu. Tasarımda tek satır,
+   taşarsa kırpılır. */
+.apya-shell-foot-hint {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: 10px;
+    letter-spacing: -0.01em;
+}
+.apya-shell-status { padding-top: 10px; }
+.apya-shell-status-text {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.apya-shell-status-version { flex: 0 0 auto; padding-left: 6px; }
+
+/* --- 5) Sabitleme iğnesi: tasarımdaki dolu indigo hâl ---
+   Uygulamada sabitlenmiş iğne ince bir ok gibi duruyordu; tasarımda dolu,
+   belirgin bir raptiye. */
+#lpx-sidebar .apya-shell-pin.is-pinned svg {
+    fill: currentColor;
+    stroke-width: 1.4;
+}
+#lpx-sidebar .apya-shell-pin.is-pinned { opacity: 1; }
+
+/* --- 6) Bölüm başlığı ile ilk satır arası nefes ---
+   Tasarımda başlık ile ilk madde arasında 6px var; uygulamada bitişikti. */
+#lpx-sidebar li.outer-menu-item:has(> ul.lpx-inner-menu) > a.lpx-menu-item-link {
+    padding-bottom: 6px !important;
+}
+
+/* --- 7) Bar düzeni: [kiracı+gezinme+breadcrumb] | [arama] | [sağ küme] ---
+   Arama artık `.lpx-topbar`ın doğrudan çocuğu (apya-topbar-shell.js taşıyor),
+   bu yüzden hizalama kuralları da orada. Yan kümeler esnemez, orta alan esner
+   → arama gerçekten barın ortasında durur. */
+.lpx-topbar > .apya-command-palette-trigger {
+    flex: 1 1 auto;
+    min-width: 0;
+    max-width: 440px;
+    height: 36px;
+    margin-inline: auto;
+    border-radius: var(--apya-radius-lg);
+    background: var(--apya-surface-raised);
+}
+.lpx-topbar > .lpx-breadcrumb-container,
+.lpx-topbar > .lpx-topbar-content {
+    flex: 0 1 auto;
+}
+/* Sağ küme artık esnemediği için içindeki auto-marj gereksiz. */
+.lpx-topbar-content > .apya-tenant-switch { margin-right: 0; }
+
+/* Kiracı pili sol gruba taşındı — grubun kendi hizasına uysun. */
+.apya-topbar-nav > #apya-tenant-switch { flex: 0 0 auto; margin-right: 4px; }
+
+
+/* ============================================================================
+   RAY MODU (72px) — JS ile üretilen parçalar da daralmalı
+   ----------------------------------------------------------------------------
+   ÖLÇÜM (gerçek ray durumu: html[data-sidebar=collapsed] + #lpx-wrapper.hover-trigger):
+   kap 72px olmasına rağmen nav 226px ve x=-77.7 çıkıyordu; görünür kalan 4
+   etiketin DÖRDÜ DE apya-sidebar-shell.js'in ürettiği SABİTLENENLER bölümündendi
+   ("Sabitlenenler" 178px, "Özet Raporlar/Kurlar/Kasa & Banka" 154px).
+
+   Kök sebep: tema kendi menü öğelerinin etiketini rayda gizliyor ama bunu
+   kendi render'ına eklediği sınıflarla yapıyor; sonradan JS ile eklenen
+   düğümler o kuralların kapsamına girmiyor ve nav'ı içerikleriyle şişiriyorlar.
+
+   Sabitlenenler bölümü rayda TAMAMEN gizlenir: zaten asıl satırların kopyası,
+   72px'te aynı ikonları iki kez göstermek karışıklık olurdu.
+   ============================================================================ */
+@media (min-width: 1200px) {
+    html[data-sidebar="collapsed"] .lpx-sidebar-container:not(:hover) .apya-pinned-section {
+        display: none !important;
+    }
+    /* Dip bloktaki "Ayarlar" etiketi de tema kapsamı dışında (nav menüsünün
+       DIŞINA taşındı) → rayda ikon kalır, metin gider. */
+    html[data-sidebar="collapsed"] .lpx-sidebar-container:not(:hover) .apya-shell-foot-item .lpx-menu-item-text {
+        display: none !important;
+    }
+    /* SON EMNİYET: ileride eklenecek bir düğüm yine taşırmasın diye nav rayda
+       sert sınırlanır. `:not(:hover)` şart — hover'da 250px'e açılması gerekiyor. */
+    html[data-sidebar="collapsed"] .lpx-sidebar-container:not(:hover) .lpx-nav,
+    html[data-sidebar="collapsed"] .lpx-sidebar-container:not(:hover) .lpx-nav-menu {
+        max-width: var(--apya-sidebar-w-collapsed) !important;
+        overflow-x: hidden;
+    }
+}
+
+/* ============================================================================
+   PROJE ALT LİSTESİ — renk noktası dikey hizası
+   ----------------------------------------------------------------------------
+   Satırın `align-items` değeri `normal` (=stretch) ölçüldü; 7px'lik nokta
+   satırın ÜSTÜNE yapışıyor, metinle aynı hizada durmuyordu. Tema yaprak
+   satırlarında ortalamayı başka yoldan sağladığı için bu alt liste açıkta
+   kalmış. Hizalama satırda AÇIKÇA kurulur.
+   ============================================================================ */
+#lpx-sidebar .apya-shell-subnav > li > a.lpx-menu-item-link {
+    display: flex;
+    align-items: center;
+}
+#lpx-sidebar .apya-shell-dot {
+    align-self: center;
+}
+
+/* ============================================================================
+   ÜST BAR — DİKEY ORTALAMA
+   ----------------------------------------------------------------------------
+   Bar 64px ama içerik üste yapışıyordu: `.lpx-breadcrumb-container` kolon
+   dizilimli ve içinde iki satır var (breadcrumb + sayfa alt başlığı); satırlar
+   üstten başlayınca sağdaki tek satırlık öğelerle (arama, ikonlar) aynı optik
+   hizada durmuyordu. Bar ve her iki yan küme açıkça ortalanır.
+   ============================================================================ */
+.lpx-topbar {
+    align-items: center;
+}
+.lpx-topbar > .lpx-breadcrumb-container,
+.lpx-topbar > .lpx-topbar-content {
+    align-items: center;
+    align-self: center;
+}
+/* Sol küme: breadcrumb satırı + alt başlık dikey ortada bir blok olarak dursun. */
+.lpx-topbar > .lpx-breadcrumb-container {
+    justify-content: center;
+    height: auto;
+    min-height: var(--apya-header-h);
+    padding-block: 6px;
+}
+/* Alt başlık breadcrumb'ın ALTINDA, onunla sola hizalı — kiracı pilinin
+   altına kaymasın diye sol grubun tamamı kolon değil, gezinme satırı ayrı. */
+.apya-topbar-nav { align-items: center; }
+.lpx-breadcrumb-container .apya-page-subtitle {
+    padding-left: 2px;
+    line-height: 1.3;
+}
+/* Sağ kümedeki her öğe dikey ortada (LeptonX bazılarına baseline veriyor). */
+.lpx-topbar-content > * { align-self: center; }
+
+/* Geri bildirim linki barda KALIR (kullanıcı isteği) — yalnız sağ kümenin
+   görsel diliyle uyumlu hâle getirilir: yardım/bildirim ikonlarıyla aynı
+   yükseklik ve nötr renk, altçizgi yok. */
+.lpx-topbar-content > .apya-feedback-open-link {
+    display: inline-flex;
+    align-items: center;
+    height: 34px;
+    padding: 0 10px;
+    border-radius: var(--apya-radius-lg);
+    color: var(--apya-text-secondary);
+    font-size: var(--apya-fs-sm);
+    text-decoration: none;
+    white-space: nowrap;
+}
+.lpx-topbar-content > .apya-feedback-open-link:hover {
+    background: var(--apya-surface-hover);
+    color: var(--apya-text-primary);
+    text-decoration: none;
+}
+
+/* ============================================================================
+   AVATAR MENÜSÜ — bardaki tekil düğmeler buraya toplanır
+   ----------------------------------------------------------------------------
+   Tasarımda dil/tema/yoğunluk/kenar-çubuğu ayrı ikon olarak barda DURMUYOR;
+   avatar menüsünün içindeler. Düğümler LeptonX'in mevcut kullanıcı
+   dropdown'ına TAŞINIR (yeniden üretilmez) → kendi handler'ları ve
+   ViewComponent durumları korunur.
+   ============================================================================ */
+.apya-avatar-menu-section {
+    padding: 6px 8px 4px;
+    border-top: 1px solid var(--apya-border-subtle);
+    margin-top: 4px;
+}
+.apya-avatar-menu-head {
+    padding: 2px 4px 6px;
+    font-size: 10.5px;
+    font-weight: var(--apya-weight-bold);
+    letter-spacing: .06em;
+    color: var(--apya-text-tertiary);
+}
+
+
+/* Sol grubun dikey hizası: üst barda sayfa ALT BAŞLIĞI ("Tüm projelerdeki
+   görevler") ikinci satır açıyor, bu yüzden breadcrumb satırı barın ortasının
+   ~8px üstünde kalıyordu (ölçüldü: sol grup 24.5, sağ küme 32).
+   Alt başlık zaten sayfa içeriğinde konsol başlığında tekrar ediyor ve hedef
+   tasarımın üst barında hiç yok → barda gizlenir, sol grup tek satıra iner ve
+   sağ kümeyle aynı hizaya gelir. Sayfa içindeki kopyası korunur. */
+.lpx-topbar .lpx-breadcrumb-container .apya-page-subtitle {
+    display: none;
+}
+.lpx-topbar > .lpx-breadcrumb-container {
+    padding-block: 0;
+}
+/* Menü satırı: solda ETİKET, sağda denetim. Dört ikonu etiketsiz alt alta
+   dizmek okunmuyordu (kullanıcı geri bildirimi) — menü satırı, araç çubuğu
+   düğmesi değil; ne yaptığı yazıyla anlaşılmalı. */
+.apya-avatar-menu-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 36px;
+    padding: 2px 4px;
+    border-radius: var(--apya-radius-lg);
+}
+.apya-avatar-menu-item:hover { background: var(--apya-surface-hover); }
+.apya-avatar-menu-label {
+    flex: 1;
+    min-width: 0;
+    font-size: var(--apya-fs-base);
+    color: var(--apya-text-primary);
+    white-space: nowrap;
+}
+/* Taşınan denetim satırın sağ ucunda, kendi boşluklarını bırakmadan. */
+.apya-avatar-menu-item > *:not(.apya-avatar-menu-label) {
+    flex: 0 0 auto;
+    margin: 0 !important;
+}
+/* Kullanıcı menüsü tasarımda 250px; etiketli satırlar 164px'e sıkışıyordu. */
+.lpx-topbar-content .dropdown-menu:has(.apya-avatar-menu-section) {
+    min-width: 250px;
+}
+/* Renk noktası ile ad bitişikti (ölçüm: nokta 46–53, metin 53 → 0px boşluk).
+   Satıra `display:flex` verirken temanın kendi `gap`'i devreden çıkmış;
+   handoff alt madde aralığını 9px veriyor, açıkça kurulur. */
+#lpx-sidebar .apya-shell-subnav > li > a.lpx-menu-item-link {
+    gap: 9px;
+}
+
+/* ============================================================================
+   RAY MODU — KENDİ KURALLARIMIN YAN ETKİSİNİ GERİ AL
+   ----------------------------------------------------------------------------
+   Ölçüm (ray, hover yok): nav-menu x=-82 w=72 → 72px'lik ray TAMAMEN ekran
+   dışında kalıyor, ikonlar x=-64'te görünmez oluyordu ("iconlar gitti").
+   Logo kutusu da 250px kalıp beyaz zeminiyle içeriğin üstüne taşıyordu.
+
+   İki kök sebep, ikisi de bu dosyadaki önceki kurallarım:
+   1) Faz 0'daki `.lpx-has-scrollbar` telafisi nav'ı GENİŞLETİP SOLA KAYDIRIYOR
+      (pinned modda doğru davranış). Rayda genişliği `max-width` ile kırpınca
+      kaydırma olduğu gibi kaldı → içerik ekranın soluna savruldu.
+   2) Logo genişliğini `!important` ile token'a bağlamıştım; o kural temanın
+      ray kuralından daha özgül olduğu için rayda da 250px uyguluyordu.
+
+   Rayda scrollbar telafisi ZATEN gereksiz (tema o modda dikey scroll'u
+   kapatıyor) → hem genişlik hem kaydırma sıfırlanır. Seçicilere `#lpx-wrapper`
+   şart: rakip kurallar ID taşıyor, ID'siz seçici kaybeder.
+   ============================================================================ */
+@media (min-width: 1200px) {
+    #lpx-wrapper html[data-sidebar="collapsed"] .lpx-sidebar-container:not(:hover) .lpx-nav,
+    html[data-sidebar="collapsed"] #lpx-wrapper .lpx-sidebar-container:not(:hover) .lpx-nav,
+    html[data-sidebar="collapsed"] #lpx-wrapper .lpx-sidebar-container:not(:hover) .lpx-nav-menu {
+        min-width: var(--apya-sidebar-w-collapsed) !important;
+        max-width: var(--apya-sidebar-w-collapsed) !important;
+        margin-left: 0 !important;
+        transform: none !important;
+    }
+    html[data-sidebar="collapsed"] #lpx-wrapper .lpx-sidebar-container:not(:hover) .lpx-logo-container {
+        width: var(--apya-sidebar-w-collapsed) !important;
+    }
+}
+
+/* ============================================================================
+   RAY MODU — MARKA İŞARETİ
+   ----------------------------------------------------------------------------
+   Rayda marka metni (.lpx-brand-name "Apya PLATFORM") gizleniyor; projede
+   görsel bir logo dosyası olmadığı için (marka bir WORDMARK) üst 72px'lik
+   alan bomboş kalıyordu. LeptonX'in `--lpx-logo-icon` yolu da bir resim
+   bekliyor, bizde yok.
+
+   Çözüm: kompakt "A" işareti — kiracı pilindeki baş harf kutusuyla AYNI
+   görsel dil (kare, yuvarlatılmış, tek harf), yalnız aksan renginde.
+   Salt CSS: markup ya da resim varlığı eklemeye gerek yok.
+   ============================================================================ */
+@media (min-width: 1200px) {
+    html[data-sidebar="collapsed"] #lpx-wrapper .lpx-sidebar-container:not(:hover) .lpx-logo-container {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    html[data-sidebar="collapsed"] #lpx-wrapper .lpx-sidebar-container:not(:hover) .lpx-logo-container::after {
+        content: "A";
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 32px;
+        height: 32px;
+        border-radius: var(--apya-radius-lg);
+        background: var(--apya-accent-500);
+        color: var(--apya-text-inverse);
+        font-family: var(--apya-font-sans);
+        font-size: 15px;
+        font-weight: var(--apya-weight-bold);
+        letter-spacing: -0.03em;
+        line-height: 1;
+    }
+    /* Daralt/genişlet düğmesi rayda zaten gizli; işaret ortada tek başına dursun. */
+    html[data-sidebar="collapsed"] #lpx-wrapper .lpx-sidebar-container:not(:hover) .lpx-logo-container > * {
+        display: none !important;
+    }
+}
