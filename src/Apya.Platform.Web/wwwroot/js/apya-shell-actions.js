@@ -315,6 +315,61 @@ $(function () {
     }
 
     // =========================================================================
+    // Avatar menüsü — bardaki tekil düğmeleri toplar
+    // Tasarımda dil/tema/yoğunluk/kenar-çubuğu ayrı ikon olarak barda DURMUYOR;
+    // avatar menüsünün içindeler. Düğümler LeptonX'in MEVCUT kullanıcı
+    // dropdown'ına TAŞINIR — yeniden üretilmez, böylece her birinin kendi
+    // handler'ı, ViewComponent durumu ve kalıcılık anahtarı olduğu gibi çalışır.
+    // =========================================================================
+    function buildAvatarMenu() {
+        // DİKKAT: `document.querySelector('.lpx-user-profile')` MOBİL navbar'ın
+        // kopyasını döndürüyor (0 boyutlu, .lpx-mobile-navbar-container içinde).
+        // Aynı tuzak `.lpx-logo-container`da da vardı — tema aynı sınıfı iki kez
+        // basıyor. Arama ÜST BARA kısıtlanır.
+        var profile = content.querySelector('.lpx-user-profile');
+        var dropdown = profile && profile.closest('.dropdown');
+        var menu = dropdown && dropdown.querySelector('.dropdown-menu');
+        if (!menu) { return; }
+
+        var selectors = [
+            '.lpx-language-selection',
+            '.apya-theme-toggle',
+            '.apya-density-toggle',
+            '.apya-sidebar-mode'
+        ];
+        var found = selectors
+            .map(function (s) { return content.querySelector(':scope > ' + s); })
+            .filter(Boolean);
+        if (!found.length) { return; }
+
+        var section = document.createElement('div');
+        section.className = 'apya-avatar-menu-section';
+        var head = document.createElement('div');
+        head.className = 'apya-avatar-menu-head';
+        head.textContent = 'GÖRÜNÜM';
+        var row = document.createElement('div');
+        row.className = 'apya-avatar-menu-row';
+
+        // Taşınan düğümlerin kendi aria-label/title'ı zaten var; üzerine
+        // ikinci bir etiket basmıyoruz.
+        found.forEach(function (el) { row.appendChild(el); });
+
+        section.appendChild(head);
+        section.appendChild(row);
+        menu.appendChild(section);
+
+        // Menü içindeki tıklama dropdown'ı kapatmasın.
+        // `stopPropagation` KULLANILMAZ: taşınan denetimlerin bir kısmı
+        // DELEGE dinleyici (document seviyesinde) kullanıyor ve propagation'ı
+        // kesmek onları da öldürüyor — ölçüldü: tema düğmesi menü içinden
+        // basıldığında hiç çalışmıyordu (light → light).
+        // Bootstrap'in kendi mekanizması hem menüyü açık tutar hem olayı
+        // document'e ulaştırır.
+        var toggle = dropdown.querySelector('[data-bs-toggle="dropdown"]') || profile;
+        toggle.setAttribute('data-bs-auto-close', 'outside');
+    }
+
+    // =========================================================================
     // Global kısayollar
     // =========================================================================
     document.addEventListener('keydown', function (e) {
@@ -335,6 +390,6 @@ $(function () {
     });
 
     (window.apyaShellState || Promise.resolve(null))
-        .then(function (s) { state = s; buildNewMenu(); buildHelpMenu(); })
-        .catch(function () { buildHelpMenu(); });
+        .then(function (s) { state = s; buildNewMenu(); buildHelpMenu(); buildAvatarMenu(); })
+        .catch(function () { buildHelpMenu(); buildAvatarMenu(); });
 });

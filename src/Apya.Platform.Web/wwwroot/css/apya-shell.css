@@ -3925,20 +3925,6 @@ i.apya-priority-dot {
 /* Kiracı pili sol gruba taşındı — grubun kendi hizasına uysun. */
 .apya-topbar-nav > #apya-tenant-switch { flex: 0 0 auto; margin-right: 4px; }
 
-/* --- 8) Tekrar eden "Geri Bildirim" linki ---
-   Handoff: eski barda iki kez geçen bu link YARDIM MENÜSÜNE toplandı. Menü
-   artık kurulu ve "Bu sayfa hakkında geri bildirim" satırını taşıyor, dolayısıyla
-   barda ayrıca durması gereksiz tekrar. İşlev kaybı YOK — aynı akış menüden
-   açılıyor (apya-shell-actions.js o satırı bu linke delege ediyor, bu yüzden
-   düğüm DOM'da kalmalı, yalnız görünmez olmalı). */
-.lpx-topbar-content > .apya-feedback-open-link {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    overflow: hidden;
-    clip-path: inset(50%);
-    pointer-events: none;
-}
 
 /* ============================================================================
    RAY MODU (72px) — JS ile üretilen parçalar da daralmalı
@@ -3987,4 +3973,99 @@ i.apya-priority-dot {
 }
 #lpx-sidebar .apya-shell-dot {
     align-self: center;
+}
+
+/* ============================================================================
+   ÜST BAR — DİKEY ORTALAMA
+   ----------------------------------------------------------------------------
+   Bar 64px ama içerik üste yapışıyordu: `.lpx-breadcrumb-container` kolon
+   dizilimli ve içinde iki satır var (breadcrumb + sayfa alt başlığı); satırlar
+   üstten başlayınca sağdaki tek satırlık öğelerle (arama, ikonlar) aynı optik
+   hizada durmuyordu. Bar ve her iki yan küme açıkça ortalanır.
+   ============================================================================ */
+.lpx-topbar {
+    align-items: center;
+}
+.lpx-topbar > .lpx-breadcrumb-container,
+.lpx-topbar > .lpx-topbar-content {
+    align-items: center;
+    align-self: center;
+}
+/* Sol küme: breadcrumb satırı + alt başlık dikey ortada bir blok olarak dursun. */
+.lpx-topbar > .lpx-breadcrumb-container {
+    justify-content: center;
+    height: auto;
+    min-height: var(--apya-header-h);
+    padding-block: 6px;
+}
+/* Alt başlık breadcrumb'ın ALTINDA, onunla sola hizalı — kiracı pilinin
+   altına kaymasın diye sol grubun tamamı kolon değil, gezinme satırı ayrı. */
+.apya-topbar-nav { align-items: center; }
+.lpx-breadcrumb-container .apya-page-subtitle {
+    padding-left: 2px;
+    line-height: 1.3;
+}
+/* Sağ kümedeki her öğe dikey ortada (LeptonX bazılarına baseline veriyor). */
+.lpx-topbar-content > * { align-self: center; }
+
+/* Geri bildirim linki barda KALIR (kullanıcı isteği) — yalnız sağ kümenin
+   görsel diliyle uyumlu hâle getirilir: yardım/bildirim ikonlarıyla aynı
+   yükseklik ve nötr renk, altçizgi yok. */
+.lpx-topbar-content > .apya-feedback-open-link {
+    display: inline-flex;
+    align-items: center;
+    height: 34px;
+    padding: 0 10px;
+    border-radius: var(--apya-radius-lg);
+    color: var(--apya-text-secondary);
+    font-size: var(--apya-fs-sm);
+    text-decoration: none;
+    white-space: nowrap;
+}
+.lpx-topbar-content > .apya-feedback-open-link:hover {
+    background: var(--apya-surface-hover);
+    color: var(--apya-text-primary);
+    text-decoration: none;
+}
+
+/* ============================================================================
+   AVATAR MENÜSÜ — bardaki tekil düğmeler buraya toplanır
+   ----------------------------------------------------------------------------
+   Tasarımda dil/tema/yoğunluk/kenar-çubuğu ayrı ikon olarak barda DURMUYOR;
+   avatar menüsünün içindeler. Düğümler LeptonX'in mevcut kullanıcı
+   dropdown'ına TAŞINIR (yeniden üretilmez) → kendi handler'ları ve
+   ViewComponent durumları korunur.
+   ============================================================================ */
+.apya-avatar-menu-section {
+    padding: 6px 8px 4px;
+    border-top: 1px solid var(--apya-border-subtle);
+    margin-top: 4px;
+}
+.apya-avatar-menu-head {
+    padding: 2px 4px 6px;
+    font-size: 10.5px;
+    font-weight: var(--apya-weight-bold);
+    letter-spacing: .06em;
+    color: var(--apya-text-tertiary);
+}
+.apya-avatar-menu-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+/* Taşınan denetimler menü içinde satır olarak dursun. */
+.apya-avatar-menu-row > * { margin: 0 !important; }
+
+/* Sol grubun dikey hizası: üst barda sayfa ALT BAŞLIĞI ("Tüm projelerdeki
+   görevler") ikinci satır açıyor, bu yüzden breadcrumb satırı barın ortasının
+   ~8px üstünde kalıyordu (ölçüldü: sol grup 24.5, sağ küme 32).
+   Alt başlık zaten sayfa içeriğinde konsol başlığında tekrar ediyor ve hedef
+   tasarımın üst barında hiç yok → barda gizlenir, sol grup tek satıra iner ve
+   sağ kümeyle aynı hizaya gelir. Sayfa içindeki kopyası korunur. */
+.lpx-topbar .lpx-breadcrumb-container .apya-page-subtitle {
+    display: none;
+}
+.lpx-topbar > .lpx-breadcrumb-container {
+    padding-block: 0;
 }
