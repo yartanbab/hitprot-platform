@@ -1,99 +1,239 @@
 @page
 @using Apya.Platform.Permissions
+@using Apya.Platform.Settings
 @using Microsoft.AspNetCore.Authorization
 @using Apya.Platform.Web.Pages.Shared
 @inject IAuthorizationService AuthorizationService
+@inject Volo.Abp.Settings.ISettingProvider SettingProvider
 @model Apya.Platform.Web.Pages.Projects.IndexModel
 @{
     ViewBag.Title = "Projeler";
+
+    var canViewBudget = await AuthorizationService.IsGrantedAsync(PlatformPermissions.Projects.ViewBudget);
+    var canCreate = await AuthorizationService.IsGrantedAsync(PlatformPermissions.Projects.Create);
+    var canDelete = await AuthorizationService.IsGrantedAsync(PlatformPermissions.Projects.Delete);
+
+    // Açılış görünümü: Ayarlar ekranındaki kullanıcı tercihi (varsayılan "card").
+    // Araç çubuğundaki anahtar bunu o cihazda localStorage ile ezer — JS karar verir.
+    var defaultView = await SettingProvider.GetOrNullAsync(PlatformSettings.Projects.DefaultView)
+                      ?? PlatformSettingDefaults.ProjectsDefaultView;
+
+    // Rol bazlı açılış ön ayarı. Ayrı bir rol tablosu okumak yerine izinlerden
+    // türetilir: sistemdeki rol ADLARINA bağlanmak kırılgan olurdu (kiracı kendi
+    // rollerini adlandırıyor), izinler ise sabit. Yalnız İLK ziyarette geçerli;
+    // sonrası localStorage'dan gelir.
+    var rolePreset = canDelete ? "admin" : (canCreate ? "pm" : "field");
 }
 
 @section scripts {
     <abp-script src="/Pages/Projects/Index.js" />
 }
 
-<div data-page-description="Aktif projeler · bütçe ve ilerleme sağlığı" class="apya-page">
-    @* Kompakt KPI şeridi — proje kartları asıl görsel ağırlık olsun diye bu sayfaya
-       özel küçültülmüş rozet stili (bkz. apya-shell.css .apya-kpi-row-compact);
-       paylaşılan _KpiCard/.kpi-icon-box varsayılanı diğer sayfalarda aynen kalır. *@
-    <div class="row g-3 mb-3 apya-kpi-row-compact">
-        <div class="col-6 col-md-4 col-xl">
-            <partial name="_KpiCard" model='new Apya.Platform.Web.Pages.Shared.KpiCardModel { Icon = "fa-rocket", Accent = "accent", Label = "Aktif Proje", ValueId = "KpiActiveProjects", Value = "—", Hint = "Görevi girilmiş ve başlangıcı gelmiş projeler. Henüz görevi olmayan ya da başlangıç tarihi gelmemiş projeler Planlama durumunda sayılır, bu sayıya girmez." }' />
+@*
+    HANDOFF: Projeler konsolu — KPI şeridi · araç çubuğu · filtre çipleri ·
+    (yoğun liste | kart ızgarası) · görev paneli. Tasarım "Projeler Redesign"
+    kanvasının 3a/3b prototipleri. Stil tek kaynak: apya-shell.css §22.
+    LeptonX kabuğuna (kenar çubuğu/üst bar) DOKUNULMAZ; burası yalnız
+    .lpx-content gövdesi.
+
+    Veri/filtre/sıralama/risk mantığının tamamı Index.js'te tek modülde.
+    Sunucudan gelen bayraklar data-* ile aktarılır ki JS'te ikinci bir
+    yetki varsayımı oluşmasın.
+*@
+<div data-page-description="Aktif projeler · bütçe ve ilerleme sağlığı"
+     class="apya-page apya-proj-console"
+     id="ProjectsConsole"
+     data-can-view-budget="@canViewBudget.ToString().ToLowerInvariant()"
+     data-can-create="@canCreate.ToString().ToLowerInvariant()"
+     data-can-delete="@canDelete.ToString().ToLowerInvariant()"
+     data-default-view="@defaultView"
+     data-role-preset="@rolePreset">
+
+    @* --- KPI şeridi: 6 bölmeli tek satır. Risk / Geçmiş / Yaklaşan hücreleri
+         sırasıyla risk · overdue · week filtresini sürer; aktif filtre hücrede
+         belli olur (bkz. §22.1 .is-active). --- *@
+    <div class="apya-proj-kpis" id="ProjectsKpis" aria-label="Proje özeti">
+        <div class="apya-proj-kpi is-mobile-hidden">
+            <span class="kpi-icon-box kpi-icon-box--xs kpi-icon-box--accent" aria-hidden="true"><i class="fa fa-rocket"></i></span>
+            <div class="apya-proj-kpi-text">
+                <div class="apya-overline">Aktif proje</div>
+                <div class="apya-proj-kpi-value apya-numeric" id="KpiActiveProjects">—</div>
+            </div>
         </div>
-        @if (await AuthorizationService.IsGrantedAsync(PlatformPermissions.Projects.ViewBudget))
+
+        @if (canViewBudget)
         {
-            <div class="col-6 col-md-4 col-xl">
-                <partial name="_KpiCard" model='new Apya.Platform.Web.Pages.Shared.KpiCardModel { Icon = "fa-sack-dollar", Accent = "positive", Label = "Toplam Bütçe", ValueId = "KpiTotalBudget", Value = "—", Hint = "Listelenen tüm projelerin planlanan bütçelerinin toplamı. Harcanan tutar değil, ayrılan bütçedir." }' />
+            <div class="apya-proj-kpi is-wide is-mobile-hidden">
+                <span class="kpi-icon-box kpi-icon-box--xs kpi-icon-box--positive" aria-hidden="true"><i class="fa fa-sack-dollar"></i></span>
+                <div class="apya-proj-kpi-text">
+                    <div class="apya-overline">Toplam bütçe</div>
+                    <div class="apya-proj-kpi-value apya-numeric" id="KpiTotalBudget">—</div>
+                </div>
             </div>
         }
-        <div class="col-6 col-md-4 col-xl">
-            <partial name="_KpiCard" model='new Apya.Platform.Web.Pages.Shared.KpiCardModel { Icon = "fa-chart-line", Accent = "brand", Label = "Ortalama İlerleme", ValueId = "KpiAvgProgress", Value = "—", Hint = "Projelerin tamamlanma yüzdelerinin ortalaması. Her proje için tamamlanan görev sayısı toplam görev sayısına bölünür; bütçe harcaması bu orana girmez." }' />
-        </div>
-        <div class="col-6 col-md-4 col-xl">
-            <partial name="_KpiCard" model='new Apya.Platform.Web.Pages.Shared.KpiCardModel { Icon = "fa-triangle-exclamation", Accent = "negative", Label = "Risk Altında", ValueId = "KpiAtRisk", Value = "—", Hint = "Teslimat riski yüksek görülen projeler. Gecikmiş görevler, tamamlanmamış kritik görevler ve planın gerisinde kalan ilerleme puanlanır; 100 üzerinden 60 puanı aşan proje riskli sayılır." }' />
-        </div>
-        @* Gecikmiş/yaklaşan görev uyarı banner'ları yerine: tıklanabilir KPI kartları + modal (bkz. Index.js loadTaskAlerts). *@
-        <div class="col-6 col-md-4 col-xl">
-            <div id="OverdueTasksKpiCard" class="h-100" role="button" tabindex="0" aria-label="Geçmiş görevleri görüntüle" style="cursor:pointer">
-                <partial name="_KpiCard" model='new Apya.Platform.Web.Pages.Shared.KpiCardModel { Icon = "fa-clock-rotate-left", Accent = "negative", Label = "Geçmiş Görevler", ValueId = "KpiOverdueTasks", Value = "—", Hint = "Son tarihi geçtiği hâlde hâlâ tamamlanmamış görevler. Karta tıklayarak listesini açabilirsiniz." }' />
+
+        @* Risk hücresi: hafif kırmızı zeminli, "risk" filtresini sürer. *@
+        <button type="button" class="apya-proj-kpi is-risk is-clickable" data-kpi-filter="risk"
+                aria-pressed="false" title="Riskli projeleri filtrele">
+            <span class="kpi-icon-box kpi-icon-box--xs kpi-icon-box--negative" aria-hidden="true"><i class="fa fa-triangle-exclamation"></i></span>
+            <div class="apya-proj-kpi-text">
+                <div class="apya-overline">Risk altında</div>
+                <div class="apya-proj-kpi-value apya-numeric" id="KpiAtRisk">—</div>
             </div>
-        </div>
-        <div class="col-6 col-md-4 col-xl">
-            <div id="UpcomingTasksKpiCard" class="h-100" role="button" tabindex="0" aria-label="Yaklaşan görevleri görüntüle" style="cursor:pointer">
-                <partial name="_KpiCard" model='new Apya.Platform.Web.Pages.Shared.KpiCardModel { Icon = "fa-clock", Accent = "warning", Label = "Yaklaşan Görevler", ValueId = "KpiUpcomingTasks", Value = "—", Hint = "Önümüzdeki 48 saat içinde son tarihi dolacak, henüz tamamlanmamış görevler. Karta tıklayarak listesini açabilirsiniz." }' />
+            <i class="fa fa-filter apya-proj-kpi-hint" aria-hidden="true"></i>
+        </button>
+
+        <button type="button" class="apya-proj-kpi is-clickable" data-kpi-filter="overdue"
+                aria-pressed="false" title="Gecikmiş görevi olan projeleri filtrele">
+            <span class="kpi-icon-box kpi-icon-box--xs kpi-icon-box--negative" aria-hidden="true"><i class="fa fa-clock-rotate-left"></i></span>
+            <div class="apya-proj-kpi-text">
+                <div class="apya-overline">Geçmiş görev</div>
+                <div class="apya-proj-kpi-value apya-numeric" id="KpiOverdueTasks">—</div>
+            </div>
+            <i class="fa fa-filter apya-proj-kpi-hint" aria-hidden="true"></i>
+        </button>
+
+        <button type="button" class="apya-proj-kpi is-clickable" data-kpi-filter="week"
+                aria-pressed="false" title="Bu hafta biten projeleri filtrele">
+            <span class="kpi-icon-box kpi-icon-box--xs kpi-icon-box--warning" aria-hidden="true"><i class="fa fa-clock"></i></span>
+            <div class="apya-proj-kpi-text">
+                <div class="apya-overline">Yaklaşan görev</div>
+                <div class="apya-proj-kpi-value apya-numeric" id="KpiUpcomingTasks">—</div>
+            </div>
+            <i class="fa fa-filter apya-proj-kpi-hint" aria-hidden="true"></i>
+        </button>
+
+        <div class="apya-proj-kpi is-mobile-hidden">
+            <span class="kpi-icon-box kpi-icon-box--xs kpi-icon-box--brand" aria-hidden="true"><i class="fa fa-chart-line"></i></span>
+            <div class="apya-proj-kpi-text">
+                <div class="apya-overline">Ortalama ilerleme</div>
+                <div class="apya-proj-kpi-value apya-numeric" id="KpiAvgProgress">—</div>
             </div>
         </div>
     </div>
 
-    @* Izgara araç çubuğu: sayaç, geri bildirim, arama ve "Yeni Proje Ekle" — KPI
-       şeridi ile kart ızgarasının ARASINDA. KPI şeridi sayfanın özeti olduğu için
-       en üstte durur; araç çubuğu ise altındaki ızgaraya ait olduğundan ona bitişik
-       konumlanır. Öğe id'leri korundu → Index.js bağlantıları (#ProjectsCount,
-       #ProjectsSearch, #NewProjectButton) aynen çalışıyor. *@
-    <div class="apya-page-head">
-        <div class="apya-page-head-actions">
-            <span class="apya-grid-count" id="ProjectsCount"></span>
+    @* --- Araç çubuğu (tek satır) --- *@
+    <div class="apya-proj-toolbar">
+        <div class="apya-proj-seg apya-proj-toolbar-desktop" role="group" aria-label="Yoğunluk">
+            <button type="button" class="apya-proj-seg-btn" data-density="cozy">Ferah</button>
+            <button type="button" class="apya-proj-seg-btn" data-density="tight">Sıkı</button>
+        </div>
+
+        @* Rol rozeti aynı zamanda kapsam anahtarı: "Saha" ön ayarında yalnız
+           kullanıcıya atanmış görevi olan projeler listelenir. Gizli filtre
+           bırakmamak için tıklanabilir ve durumu rozette yazılı. *@
+        <button type="button" class="apya-chip apya-chip-accent apya-proj-role-chip apya-proj-toolbar-desktop"
+                id="ProjectsRoleChip" aria-pressed="false">
+            <i class="fa fa-user-gear" aria-hidden="true"></i><span id="ProjectsRoleChipText">—</span>
+        </button>
+
+        <div class="apya-proj-toolbar-end">
+            <span class="apya-proj-count" id="ProjectsCount" aria-live="polite"></span>
+
             @await Html.PartialAsync("/Pages/Shared/_FeedbackLink.cshtml",
                 new Apya.Platform.Web.Feedbacks.FeedbackLinkContext(Module: "Projects", Component: "ProjectList"))
-            <input type="search" id="ProjectsSearch" class="form-control form-control-sm apya-grid-search"
-                   placeholder="Proje, kod veya müşteri ara…" autocomplete="off" />
-            @if (await AuthorizationService.IsGrantedAsync(PlatformPermissions.Projects.Create))
+
+            <div class="apya-proj-search">
+                <i class="fa fa-magnifying-glass" aria-hidden="true"></i>
+                <input type="search" id="ProjectsSearch" placeholder="Proje, kod veya müşteri ara…"
+                       autocomplete="off" aria-label="Proje ara" />
+                <button type="button" class="apya-proj-search-clear" id="ProjectsSearchClear"
+                        aria-label="Aramayı temizle" hidden><i class="fa fa-xmark"></i></button>
+            </div>
+
+            <select class="apya-proj-sort" id="ProjectsSort" aria-label="Sıralama">
+                <option value="urgency">Aciliyet</option>
+                <option value="name">Ad</option>
+                <option value="budget">Bütçe</option>
+                <option value="progress">İlerleme</option>
+            </select>
+
+            <div class="apya-proj-seg apya-proj-toolbar-desktop" role="group" aria-label="Görünüm">
+                <button type="button" class="apya-proj-seg-btn is-icon" data-view="list"
+                        aria-label="Liste görünümü" title="Liste görünümü"><i class="fa fa-list"></i></button>
+                <button type="button" class="apya-proj-seg-btn is-icon" data-view="card"
+                        aria-label="Kart görünümü" title="Kart görünümü"><i class="fa fa-table-cells-large"></i></button>
+            </div>
+
+            @if (canCreate)
             {
-                <abp-button id="NewProjectButton"
-                            text="Yeni Proje Ekle"
-                            icon="plus"
+                <abp-button id="NewProjectButton" text="Yeni Proje Ekle" icon="plus"
                             button-type="Primary" size="Small" />
             }
         </div>
     </div>
 
-    @* HANDOFF: Projeler = kart ızgarası (repeat(auto-fill, minmax()) grid).
-       Veri/aksiyonlar Index.js'te; tablo yerine .apya-tile kartları render edilir. *@
-    <div id="ProjectsGrid" class="apya-tile-grid apya-fade-in" aria-live="polite"></div>
+    @* --- Filtre çipleri: canlı sayılar JS'ten; aktif çip koyu zemin.
+         "Filtreleri temizle" yalnız aktif filtre/arama varken görünür. --- *@
+    <div class="apya-proj-filters" id="ProjectsFilters" role="group" aria-label="Hızlı filtreler"></div>
 
-    <div id="ProjectsEmpty" style="display:none">
-        <partial name="_EmptyState" model='new EmptyStateModel { Icon = "fa-rocket", Title = "Henüz proje yok", Description = "İlk projenizi ekleyerek görev ve bütçe takibine başlayın." }' />
+    @* --- Yoğun liste --- *@
+    <div class="apya-proj-list" id="ProjectsList" hidden>
+        <div class="apya-proj-list-head" role="row">
+            <span></span>
+            <button type="button" class="apya-proj-col-sort" data-sort-col="name">Proje <i class="fa fa-arrow-down-short-wide"></i></button>
+            <span class="apya-proj-col-client">Müşteri</span>
+            <button type="button" class="apya-proj-col-sort apya-proj-col-duration" data-sort-col="urgency">Süre <i class="fa fa-arrow-down-short-wide"></i></button>
+            <button type="button" class="apya-proj-col-sort apya-proj-col-budget" data-sort-col="budget">Bütçe <i class="fa fa-arrow-down-short-wide"></i></button>
+            <button type="button" class="apya-proj-col-sort" data-sort-col="progress">İlerleme <i class="fa fa-arrow-down-short-wide"></i></button>
+            <span>Gecikmiş görev</span>
+            <span class="apya-proj-col-team">Ekip</span>
+            <span></span>
+        </div>
+        <div id="ProjectsListBody"></div>
+    </div>
+
+    @* --- Kart ızgarası (varsayılan görünüm) --- *@
+    <div id="ProjectsGrid" class="apya-tile-grid apya-fade-in" aria-live="polite" hidden></div>
+
+    @* --- Tek proje: liste yerine odak kartı (bkz. Index.js renderFocus) --- *@
+    <div id="ProjectsFocus" hidden></div>
+
+    @* --- Filtre sonucu yok --- *@
+    <div class="apya-proj-noresult" id="ProjectsNoResult" hidden>
+        <span class="kpi-icon-box kpi-icon-box--neutral" aria-hidden="true"><i class="fa fa-magnifying-glass"></i></span>
+        <div class="apya-proj-noresult-title">Bu filtreyle proje yok</div>
+        <div class="apya-proj-noresult-desc" id="ProjectsNoResultHint"></div>
+        <button type="button" class="btn btn-sm btn-outline-secondary mt-2" id="ProjectsNoResultClear">
+            <i class="fa fa-rotate-left me-1"></i>Filtreleri temizle
+        </button>
+    </div>
+
+    @* --- Hiç proje yok: boş durum + şablon kartları --- *@
+    <div id="ProjectsEmpty" hidden>
+        <partial name="_EmptyState" model='new EmptyStateModel { Icon = "fa-rocket", Title = "Henüz proje yok", Description = "İlk projenizi ekleyin; bütçe, görev ve gecikme takibi bu ekranda kendiliğinden oluşur." }' />
+        @if (canCreate)
+        {
+            <div class="d-flex justify-content-center gap-2">
+                <button type="button" class="btn btn-primary btn-sm" data-new-project>
+                    <i class="fa fa-plus me-1"></i>Yeni Proje Ekle
+                </button>
+                <button type="button" class="btn btn-outline-secondary btn-sm" data-new-project data-template="grant">
+                    <i class="fa fa-file-import me-1"></i>Hibe şablonundan başla
+                </button>
+            </div>
+            <div class="apya-proj-templates">
+                <button type="button" class="apya-proj-template" data-new-project data-template="grant">
+                    <div class="apya-overline">Hibe projesi</div>
+                    <div class="apya-proj-template-desc">Bütçe kalemleri ve rapor takvimi hazır gelir</div>
+                </button>
+                <button type="button" class="apya-proj-template" data-new-project data-template="event">
+                    <div class="apya-overline">Etkinlik</div>
+                    <div class="apya-proj-template-desc">Geri sayım ve tedarikçi görevleriyle</div>
+                </button>
+                <button type="button" class="apya-proj-template" data-new-project>
+                    <div class="apya-overline">Boş proje</div>
+                    <div class="apya-proj-template-desc">Sadece ad, kod ve tarih aralığı</div>
+                </button>
+            </div>
+        }
     </div>
 
     <div class="apya-tile-grid-more">
-        <button id="ProjectsLoadMore" class="btn btn-outline-secondary btn-sm" style="display:none">
-            Daha fazla yükle
-        </button>
+        <button id="ProjectsLoadMore" class="btn btn-outline-secondary btn-sm" hidden>Daha fazla yükle</button>
     </div>
 </div>
 
-@* Geçmiş/Yaklaşan görev KPI kartlarının açtığı liste modalı — bkz. Index.js loadTaskAlerts/openTaskAlertsModal. *@
-<div class="modal fade" id="TaskAlertsModal" tabindex="-1" aria-labelledby="TaskAlertsModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-scrollable modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="TaskAlertsModalLabel">Görevler</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
-            </div>
-            <div class="modal-body">
-                <div id="TaskAlertsModalBody" class="d-flex flex-wrap gap-2"></div>
-                <div id="TaskAlertsModalEmpty" class="text-muted small" style="display:none">Gösterilecek görev yok.</div>
-            </div>
-        </div>
-    </div>
-</div>
+@* Görev paneli (slide-over) — satır/karttan açılır, içeriği Index.js basar.
+   Bootstrap modal DEĞİL: backdrop/ESC/dış-tık yönetimi panelin kendisinde. *@
+<div id="ProjectsDrawerRoot"></div>
