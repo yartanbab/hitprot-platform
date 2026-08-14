@@ -198,50 +198,57 @@ $(function () {
 });
 
 $(function () {
-    // Mobil header: arama + bildirim erişimi. .lpx-topbar-content (masaüstü
-    // toolbar — arama/bildirim/tema/yoğunluk hepsi orada) LeptonX'in kendi
-    // CSS'i tarafından mobilde display:none yapılıyor; ayrı DOM ağacı olan
-    // mobil navbar'ın hiçbir karşılığı yok (canlı 375px testte doğrulandı).
-    // Mevcut #ApyaCommandPaletteTrigger'ı programatik tıklayarak tetikliyoruz —
-    // command-palette.js dinleyicisi document'e delege, görünürlükten bağımsız
-    // çalışır (bkz. command-palette.js son satırı).
+    // ── MOBİL KABUK VARYANTI: çekmece / alt sekme ────────────────────────────
+    // Kenar çubuğu modunun (yukarıdaki applyMode/renderMode) birebir ikizi:
+    //   SoT        <html data-mobile-shell="drawer|tabs">
+    //   kalıcılık  localStorage 'apya-mobile-shell'
+    //   pre-paint  ApyaThemeHead FOUC script'i (apya-theme / apya-density /
+    //              apya-sidebar-mode ile aynı blok) → varyant değişimi sayfa
+    //              yenilemede yanıp sönmez
+    //   seçici UI  Pages/Settings/Index.cshtml (#MobileShellChooser)
+    // Görünüm farkı tamamen CSS'te (apya-theme-bridge.css "MOBİL NAVİGASYON").
     if (/^\/Account\//i.test(location.pathname)) {
         return;
     }
 
-    var group = document.getElementById('mobile-user-menu-group');
-    if (!group) {
-        return;
+    var htmlEl = document.documentElement;
+    var SHELL_KEY = 'apya-mobile-shell';
+    var SHELLS = ['drawer', 'tabs'];
+
+    function currentShell() {
+        return htmlEl.getAttribute('data-mobile-shell') === 'tabs' ? 'tabs' : 'drawer';
     }
 
-    function addRow(tag, cls, iconClass, label, onActivate) {
-        var el = document.createElement(tag);
-        el.className = cls;
-        el.setAttribute('role', 'button');
-        el.setAttribute('tabindex', '0');
-        el.innerHTML = '<i class="lpx-icon ' + iconClass + '" aria-hidden="true"></i><span>' + label + '</span>';
-        if (onActivate) {
-            el.addEventListener('click', onActivate);
-            el.addEventListener('keydown', function (e) {
-                if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault();
-                    onActivate();
-                }
-            });
-        }
-        group.insertBefore(el, group.firstChild);
-        return el;
+    function renderShell(shell) {
+        var chooser = document.getElementById('MobileShellChooser');
+        if (!chooser) { return; }
+        chooser.querySelectorAll('[data-mobile-shell]').forEach(function (input) {
+            input.checked = input.getAttribute('data-mobile-shell') === shell;
+        });
     }
 
-    var notifRow = addRow('a', 'lpx-language-selection', 'fa fa-bell', 'Bildirimler');
-    notifRow.setAttribute('href', '/Notifications');
-
-    addRow('div', 'lpx-language-selection btn-toggle', 'fa fa-magnifying-glass', 'Ara', function () {
-        var trigger = document.getElementById('ApyaCommandPaletteTrigger');
-        if (trigger) {
-            trigger.click();
+    function applyShell(shell, persist) {
+        if (SHELLS.indexOf(shell) < 0) { shell = 'drawer'; }
+        htmlEl.setAttribute('data-mobile-shell', shell);
+        if (persist !== false) {
+            try { localStorage.setItem(SHELL_KEY, shell); } catch (e) { /* yok say */ }
         }
-    });
+        renderShell(shell);
+        // Bar yüksekliği varyanta göre değişiyor (54 ↔ 48px) — mobil kabuk
+        // bloğu bunu dinleyip --apya-mobile-header-h'i yeniden ÖLÇER.
+        window.dispatchEvent(new CustomEvent('apya:mobile-shell'));
+    }
+
+    // FOUC'un çözdüğü durumu seçiciye yansıt (yeniden yazma, kalıcılık zaten var).
+    applyShell(currentShell(), false);
+
+    var chooser = document.getElementById('MobileShellChooser');
+    if (chooser) {
+        chooser.addEventListener('change', function (e) {
+            var input = e.target.closest('[data-mobile-shell]');
+            if (input) { applyShell(input.getAttribute('data-mobile-shell')); }
+        });
+    }
 });
 
 $(function () {
@@ -266,14 +273,109 @@ $(function () {
     }
 
     var toggle = navbar.querySelector('[data-lpx-toggle="mobile-navbar"]');
+    var personToggle = navbar.querySelector('[data-lpx-toggle="mobile-user-menu-group"]');
+    var group = document.getElementById('mobile-user-menu-group');
 
-    // 1) Hamburger'i bar'ın BAŞINA taşı (Material Top App Bar / Apple HIG).
-    //    Düğüm taşınır, yeniden üretilmez → temanın dinleyicisi korunur.
+    // --- Metinler: head'deki JSON bloğundan (ApyaThemeHead). JS'e metin gömülmez;
+    //     SidebarModeToggle'daki data-label-* deseninin çok anahtarlı karşılığı
+    //     (mobil barda bizim bir view'umuz yok, etiketler head'e iner). ---
+    var T = {};
+    try {
+        var l10nEl = document.getElementById('ApyaMobileShellL10n');
+        if (l10nEl) { T = JSON.parse(l10nEl.textContent) || {}; }
+    } catch (e) { /* boş sözlük — etiketler görünmez ama kabuk çalışır */ }
+    function t(key) { return T[key] || ''; }
+
+    // =========================================================================
+    // MENÜ OKUMA — command-palette.js'in deseni: menü SUNUCUDA izin filtreli
+    // render ediliyor, sekmeler/gruplar sabit YAZILMAZ, DOM'dan türetilir.
+    // Öğenin sunucu anahtarı: yaprakta <a id="MenuItem_Apya_Dashboard">,
+    // grupta iç <ul id="MenuItem_Apya_Finance"> (canlı DOM'da doğrulandı —
+    // grup <a>'sında id yok, o yüzden ikisine de bakılır).
+    // =========================================================================
+    function menuKey(li) {
+        var el = li.querySelector(':scope > a[id^="MenuItem_"], :scope > ul[id^="MenuItem_"]');
+        return el ? el.id.replace(/^MenuItem_/, '').replace(/_/g, '.') : '';
+    }
+
+    function itemInfo(li) {
+        var a = li.querySelector(':scope > a');
+        var textEl = a && a.querySelector('.lpx-menu-item-text');
+        var iconEl = a && a.querySelector('.lpx-menu-item-icon i');
+        return {
+            li: li,
+            key: menuKey(li),
+            label: textEl ? textEl.textContent.trim() : ((a && a.textContent) || '').trim(),
+            icon: iconEl ? iconEl.className.replace(/\blpx-icon\b/, '').trim() : 'fa fa-file',
+            href: (a && a.getAttribute('href')) || '',
+            sub: li.querySelector(':scope > ul.lpx-inner-menu')
+        };
+    }
+
+    function topLevelItems() {
+        var root = document.getElementById('mobile-sidebar');
+        if (!root) { return []; }
+        return Array.prototype.filter.call(root.children, function (li) {
+            return li.tagName === 'LI' && !li.classList.contains('apya-mshell-grouphead');
+        }).map(itemInfo);
+    }
+
+    // "GÜNLÜK" dörtlüsü (= alt sekmeler): önce küratörlü sıra — tasarımın günlük
+    // dört hedefi. İzin yüzünden biri yoksa yerine kalan üst düzey öğelerden
+    // DOM sırasına göre doldurulur; hiç doldurulamazsa sekme sayısı 5'in altına
+    // düşer (grid esnek, bkz. CSS).
+    var DAILY_KEYS = ['Apya.Dashboard', 'Apya.Work', 'Apya.Finance', 'Apya.Reports'];
+    var DAILY_MAX = 4;
+
+    function splitItems() {
+        var items = topLevelItems();
+        var daily = [];
+        DAILY_KEYS.forEach(function (key) {
+            items.forEach(function (i) {
+                if (i.key === key && daily.indexOf(i) < 0) { daily.push(i); }
+            });
+        });
+        items.forEach(function (i) {
+            if (daily.length < DAILY_MAX && daily.indexOf(i) < 0) { daily.push(i); }
+        });
+        return {
+            daily: daily,
+            other: items.filter(function (i) { return daily.indexOf(i) < 0; })
+        };
+    }
+
+    // Aktif hedef: öğenin KENDİ href'i ya da altındaki herhangi bir href, en uzun
+    // önek kazanır (apyaActiveMenuInfo ile aynı eşleşme kuralı).
+    function matchLength(info) {
+        var path = location.pathname.replace(/\/+$/, '').toLowerCase() || '/';
+        var hrefs = [];
+        if (info.href) { hrefs.push(info.href); }
+        if (info.sub) {
+            info.sub.querySelectorAll('a[href]').forEach(function (a) {
+                hrefs.push(a.getAttribute('href'));
+            });
+        }
+        var best = -1;
+        hrefs.forEach(function (h) {
+            h = (h || '').split('?')[0].replace(/\/+$/, '').toLowerCase();
+            if (!h || h === '#') { return; }
+            if ((path === h || path.indexOf(h + '/') === 0) && h.length > best) { best = h.length; }
+        });
+        return best;
+    }
+
+    // =========================================================================
+    // 1) ÜST BAR — hamburger · "A" işareti · sayfa adı · arama · bildirim · avatar
+    //    Marka işareti salt CSS (ray modundaki işaretle aynı dil); burada yalnız
+    //    düğüm sırası, sayfa adı ve yeni aksiyon düğmeleri kuruluyor.
+    // =========================================================================
     if (toggle) {
+        // Hamburger bar'ın BAŞINA (Material Top App Bar / Apple HIG). Düğüm
+        // taşınır, yeniden üretilmez → temanın dinleyicisi korunur.
         navbar.insertBefore(toggle, navbar.firstChild);
         toggle.setAttribute('role', 'button');
         toggle.setAttribute('tabindex', '0');
-        toggle.setAttribute('aria-label', 'Menüyü aç');
+        toggle.setAttribute('aria-label', t('open'));
         toggle.setAttribute('aria-controls', 'mobile-navbar');
         toggle.setAttribute('aria-expanded', 'false');
         toggle.addEventListener('keydown', function (e) {
@@ -284,11 +386,54 @@ $(function () {
         });
     }
 
-    var personToggle = navbar.querySelector('[data-lpx-toggle="mobile-user-menu-group"]');
+    // Sayfa adı — YENİ veri kaynağı açılmaz: masaüstü breadcrumb'ı ile aynı
+    // fonksiyon (apya-topbar-shell.js → window.apyaActiveMenuInfo).
+    var titleEl = document.createElement('span');
+    titleEl.className = 'apya-mshell-title';
+    var info = (typeof window.apyaActiveMenuInfo === 'function') ? window.apyaActiveMenuInfo() : null;
+    titleEl.textContent = info ? info.page : (document.title || '').split('|')[0].trim();
+    var logoContainer = navbar.querySelector('.lpx-logo-container');
+    if (logoContainer) { logoContainer.after(titleEl); }
+
+    function iconButton(cls, iconClass, label) {
+        var b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'apya-mshell-btn ' + cls;
+        b.innerHTML = '<i class="' + iconClass + '" aria-hidden="true"></i>';
+        b.title = label;
+        b.setAttribute('aria-label', label);
+        return b;
+    }
+
+    // Arama: mevcut #ApyaCommandPaletteTrigger programatik tıklanır —
+    // command-palette.js dinleyicisi document'e delege, görünürlükten
+    // bağımsız çalışır (bkz. command-palette.js son satırı).
+    var searchBtn = iconButton('apya-mshell-search', 'fa fa-magnifying-glass', t('search'));
+    searchBtn.addEventListener('click', function () {
+        var trigger = document.getElementById('ApyaCommandPaletteTrigger');
+        if (trigger) { trigger.click(); }
+    });
+
+    // Bildirim: sayaç kaynağı notification-bell.js'in beslediği rozet — ikinci
+    // bir istek açılmaz, aynı düğüm gözlenir.
+    var bellLink = document.createElement('a');
+    bellLink.className = 'apya-mshell-btn apya-mshell-bell';
+    bellLink.href = '/Notifications';
+    bellLink.title = t('notifications');
+    bellLink.setAttribute('aria-label', t('notifications'));
+    bellLink.innerHTML = '<i class="fa-regular fa-bell" aria-hidden="true"></i>' +
+                         '<span class="apya-mshell-dot" hidden></span>';
+
+    var userMenu = navbar.querySelector('.user-menu');
+    if (userMenu) {
+        navbar.insertBefore(searchBtn, userMenu);
+        navbar.insertBefore(bellLink, userMenu);
+    }
+
     if (personToggle) {
         personToggle.setAttribute('role', 'button');
         personToggle.setAttribute('tabindex', '0');
-        personToggle.setAttribute('aria-label', 'Hesap menüsü');
+        personToggle.setAttribute('aria-label', t('account'));
         personToggle.addEventListener('keydown', function (e) {
             if (e.key === 'Enter' || e.key === ' ') {
                 e.preventDefault();
@@ -297,33 +442,420 @@ $(function () {
         });
     }
 
-    // Header yüksekliğini CSS'e bildir (hesap paneli buna göre konumlanır).
-    document.documentElement.style.setProperty(
-        '--apya-mobile-header-h', Math.round(navbar.getBoundingClientRect().height) + 'px');
+    // Kullanıcı kimliği — dark-mode.js'teki baş harf kuralının aynısı.
+    var currentUser = (window.abp && window.abp.currentUser) || {};
+    var fullName = currentUser.name || currentUser.userName || '';
+    var initials = '';
+    if (fullName) {
+        var parts = fullName.trim().split(/\s+/);
+        initials = (parts.length > 1 ? (parts[0][0] + parts[parts.length - 1][0]) : fullName.slice(0, 2))
+            .toLocaleUpperCase('tr');
+    }
+    // Avatar: temanın <i> düğümü KORUNUR (aç/kapa ona bağlı), yalnız glyph
+    // yerine baş harfler basılır (glyph'i CSS söndürür).
+    if (personToggle && initials) {
+        personToggle.classList.add('apya-mshell-avatar');
+        personToggle.textContent = initials;
+    }
 
-    // 2) Drawer başlığı + kapat düğmesi (modal-escape kuralı).
+    // Bar yüksekliği TEK KAYNAK: barı ölç, CSS'e bildir (hesap sheet'i ve
+    // çekmece konumu buna bağlı). Varyant değişiminde bar 54 ↔ 48px olduğu için
+    // yeniden ölçülür — konum elle hesaplanmaz.
+    function measureBar() {
+        var h = Math.round(navbar.getBoundingClientRect().height);
+        if (h > 0) {
+            document.documentElement.style.setProperty('--apya-mobile-header-h', h + 'px');
+        }
+    }
+    measureBar();
+    window.addEventListener('resize', measureBar);
+    // Varyant değişiminde bar 54 ↔ 48px oluyor. Olayı dinleyip requestAnimationFrame
+    // ile ölçmek YETMEDİ: rAF yeni düzenden bir adım geriden okuyordu (ölçüldü —
+    // bar 54'e çıkmışken değişkene 48 yazılıyordu). Barın KENDİSİ gözlenir; ölçüm
+    // düzen yerleştikten sonra, tek kaynaktan gelir. measureBar yalnız <html>'e
+    // özel değişken yazar, barın yüksekliğini etkilemez → geri besleme yok.
+    if (window.ResizeObserver) {
+        new ResizeObserver(measureBar).observe(navbar);
+    } else {
+        window.addEventListener('apya:mobile-shell', function () {
+            window.requestAnimationFrame(measureBar);
+        });
+    }
+
+    // =========================================================================
+    // 2) ÇEKMECE — tam ekran, iki gruplu (GÜNLÜK / DİĞER) + 2. seviye panel
+    // =========================================================================
+    // Başlık: "A" işareti (CSS) + MENÜ + kapat düğmesi (modal-escape kuralı).
     if (!drawer.querySelector('.apya-drawer-head')) {
         var head = document.createElement('div');
         head.className = 'apya-drawer-head';
-        head.innerHTML = '<span class="apya-drawer-head-title">Menü</span>';
+        head.innerHTML = '<span class="apya-drawer-brand" aria-hidden="true"></span>' +
+                         '<span class="apya-drawer-head-title">' + t('menu') + '</span>';
         var closeBtn = document.createElement('button');
         closeBtn.type = 'button';
         closeBtn.className = 'apya-drawer-close';
-        closeBtn.setAttribute('aria-label', 'Menüyü kapat');
+        closeBtn.setAttribute('aria-label', t('close'));
         closeBtn.innerHTML = '<i class="fa fa-xmark" aria-hidden="true"></i>';
         closeBtn.addEventListener('click', close);
         head.appendChild(closeBtn);
         drawer.insertBefore(head, drawer.firstChild);
     }
 
-    // 3) Backdrop.
+    // --- Gruplama: başlık satırları eklenir ve li'ler AYNI ul içinde sıralanır.
+    //     Yeniden ebeveynleme YOK → temanın dinleyicileri ve DOM sözleşmesi
+    //     (ul#mobile-sidebar > li.outer-menu-item) bozulmaz.
+    function groupHead(root, kind, label) {
+        var existing = root.querySelector(':scope > .apya-mshell-grouphead[data-kind="' + kind + '"]');
+        if (existing) { return existing; }
+        var li = document.createElement('li');
+        li.className = 'apya-mshell-grouphead';
+        li.setAttribute('data-kind', kind);
+        li.setAttribute('aria-hidden', 'true');
+        li.textContent = label;
+        return li;
+    }
+
+    var split = { daily: [], other: [] };
+    function buildDrawerGroups() {
+        var root = document.getElementById('mobile-sidebar');
+        if (!root) { return; }
+        split = splitItems();
+        var hDaily = groupHead(root, 'daily', t('groupDaily'));
+        var hOther = groupHead(root, 'other', t('groupOther'));
+        root.appendChild(hDaily);
+        split.daily.forEach(function (i) {
+            i.li.classList.add('apya-mshell-daily');
+            root.appendChild(i.li);
+        });
+        if (split.other.length) {
+            root.appendChild(hOther);
+            split.other.forEach(function (i) {
+                i.li.classList.remove('apya-mshell-daily');
+                root.appendChild(i.li);
+            });
+        } else if (hOther.parentElement) {
+            hOther.remove();
+        }
+    }
+    buildDrawerGroups();
+
+    // --- 2. seviye panel: grup satırları akordeon AÇMAZ (bugün açılan akordeon
+    //     listeyi 20 satıra çıkarıyor), aynı çekmecenin içinde yatay kayan ikinci
+    //     bir panel açılır. Bu bir aç/kapa makinesi DEĞİL — çekmecenin İÇ
+    //     görünümü; açık/kapalı hâlâ temanın .d-none'ı.
+    var panel = document.createElement('div');
+    panel.className = 'apya-mshell-panel';
+    panel.innerHTML =
+        '<div class="apya-mshell-panel-head">' +
+        '  <button type="button" class="apya-mshell-back">' +
+        '    <i class="fa fa-chevron-left" aria-hidden="true"></i><span></span>' +
+        '  </button>' +
+        '</div>' +
+        '<div class="apya-mshell-panel-body"></div>';
+    drawer.appendChild(panel);
+    var panelBody = panel.querySelector('.apya-mshell-panel-body');
+    var backBtn = panel.querySelector('.apya-mshell-back');
+    backBtn.querySelector('span').textContent = t('back');
+    backBtn.addEventListener('click', closePanel);
+
+    function rowLink(child) {
+        var a = document.createElement('a');
+        a.className = 'apya-mshell-panel-row';
+        a.href = child.href;
+        a.innerHTML = '<i class="' + child.icon + '" aria-hidden="true"></i><span></span>';
+        a.querySelector('span').textContent = child.label;
+        if (matchLength(child) >= 0) { a.classList.add('is-active'); }
+        return a;
+    }
+
+    // Menü en fazla 3 seviye (İş Yönetimi › Panolar › Görevler): 3. seviye ayrı
+    // bir ekran açmaz, başlık altında düz liste olarak görünür.
+    function renderPanelInto(ul) {
+        Array.prototype.forEach.call(ul.children, function (li) {
+            if (li.tagName !== 'LI') { return; }
+            var child = itemInfo(li);
+            if (child.sub) {
+                var section = document.createElement('div');
+                section.className = 'apya-mshell-panel-section';
+                section.textContent = child.label;
+                panelBody.appendChild(section);
+                renderPanelInto(child.sub);
+            } else if (child.href) {
+                panelBody.appendChild(rowLink(child));
+            }
+        });
+    }
+
+    // DİKKAT: sınıf yazımları KOŞULA bağlı. classList.add/remove, sınıf zaten
+    // (yok)var olsa bile class attribute'unu yeniden yazar ve bu bir
+    // MutationRecord kuyruklar — aşağıdaki sync() çekmecenin class'ını gözlediği
+    // için koşulsuz yazım sonsuz döngü yapar (canlıda renderer'ı kilitledi).
+    function openPanel(item) {
+        if (!item || !item.sub) { return; }
+        panelBody.innerHTML = '';
+        renderPanelInto(item.sub);
+        backBtn.querySelector('span').textContent = item.label;
+        if (!drawer.classList.contains('apya-mshell-in-panel')) {
+            drawer.classList.add('apya-mshell-in-panel');
+        }
+        var first = panelBody.querySelector('.apya-mshell-panel-row');
+        if (first) { first.focus(); }
+    }
+
+    function closePanel() {
+        if (drawer.classList.contains('apya-mshell-in-panel')) {
+            drawer.classList.remove('apya-mshell-in-panel');
+        }
+    }
+
+    // Temanın akordeon dinleyicisi YAKALAMA fazında durdurulur: kendi
+    // dinleyicimizi anchor'a eklemek yetmez (tema da aynı düğüme bağlı),
+    // ancak ÜST düğümde capture ile stopPropagation hedefin kendi
+    // dinleyicilerini de engeller.
+    drawer.addEventListener('click', function (e) {
+        if (window.innerWidth >= 768) { return; }
+        var a = e.target.closest('a.lpx-menu-item-link');
+        if (!a || a.closest('.apya-mshell-panel')) { return; }
+        var li = a.parentElement;
+        if (!li || li.parentElement !== document.getElementById('mobile-sidebar')) { return; }
+        var item = itemInfo(li);
+        if (!item.sub) { return; }   // yaprak: normal gezinme
+        e.preventDefault();
+        e.stopPropagation();
+        openPanel(item);
+    }, true);
+
+    // =========================================================================
+    // 3) HESAP PANELİ → ALT SHEET (kimlik başlığı + gerçek aksiyonlar)
+    //    Aç/kapa yine temanın .d-none'ı; burada yalnız içerik ve sıra kuruluyor.
+    //    Mevcut satırlar (Genel Ayarlar / Hesabım / Çıkış) YENİDEN ÜRETİLMEZ,
+    //    kendi menülerinden TAŞINIR → href/antiforgery davranışları korunur.
+    // =========================================================================
+    var bellDot = bellLink.querySelector('.apya-mshell-dot');
+    var countPill = null;
+
+    function sheetRow(tag, cls, iconClass, label) {
+        var el = document.createElement(tag);
+        el.className = 'apya-mshell-row ' + cls;
+        el.innerHTML = '<i class="' + iconClass + '" aria-hidden="true"></i>' +
+                       '<span class="apya-mshell-row-label"></span>';
+        el.querySelector('.apya-mshell-row-label').textContent = label;
+        return el;
+    }
+
+    function activateOnKey(el, fn) {
+        el.setAttribute('role', 'button');
+        el.setAttribute('tabindex', '0');
+        el.addEventListener('click', fn);
+        el.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                fn();
+            }
+        });
+    }
+
+    function buildSheet() {
+        if (!group || group.querySelector('.apya-mshell-sheet-head')) { return; }
+
+        // --- Kimlik başlığı: avatar + ad + e-posta + kiracı pili.
+        //     Kaynak abp.currentUser ve mevcut kiracı pili — yeni istek yok.
+        var headEl = document.createElement('div');
+        headEl.className = 'apya-mshell-sheet-head';
+        var tenantEl = document.querySelector('#apya-tenant-switch .apya-tenant-switch-name');
+        var tenantName = tenantEl ? tenantEl.textContent.trim() : '';
+        headEl.innerHTML =
+            '<span class="apya-mshell-sheet-avatar"></span>' +
+            '<span class="apya-mshell-sheet-id">' +
+            '  <span class="apya-mshell-sheet-name"></span>' +
+            '  <span class="apya-mshell-sheet-mail"></span>' +
+            '</span>' +
+            (tenantName ? '<span class="apya-mshell-sheet-tenant"></span>' : '');
+        headEl.querySelector('.apya-mshell-sheet-avatar').textContent = initials;
+        headEl.querySelector('.apya-mshell-sheet-name').textContent = fullName;
+        headEl.querySelector('.apya-mshell-sheet-mail').textContent = currentUser.email || '';
+        if (tenantName) { headEl.querySelector('.apya-mshell-sheet-tenant').textContent = tenantName; }
+        group.insertBefore(headEl, group.firstChild);
+
+        // --- Bildirimler (sağda sayaç pili).
+        var notifRow = sheetRow('a', 'apya-mshell-row--notif', 'fa-regular fa-bell', t('notifications'));
+        notifRow.setAttribute('href', '/Notifications');
+        countPill = document.createElement('span');
+        countPill.className = 'apya-mshell-count';
+        countPill.hidden = true;
+        notifRow.appendChild(countPill);
+
+        // --- Ara veya komut çalıştır (⌘K).
+        var searchRow = sheetRow('div', 'apya-mshell-row--search', 'fa fa-magnifying-glass', t('search'));
+        var kbd = document.createElement('kbd');
+        kbd.className = 'apya-mshell-kbd';
+        kbd.textContent = '⌘K';
+        searchRow.appendChild(kbd);
+        activateOnKey(searchRow, function () {
+            var trigger = document.getElementById('ApyaCommandPaletteTrigger');
+            if (trigger) { trigger.click(); }
+        });
+
+        // --- Tema anahtarı: İKİNCİ KAYNAK AÇILMAZ. Mevcut #ThemeToggle
+        //     programatik tıklanır (dark-mode.js delege dinliyor), böylece
+        //     'apya-theme' anahtarını yine o yazar.
+        var themeRow = sheetRow('div', 'apya-mshell-row--theme', 'fa fa-moon', '');
+        var themeSwitch = document.createElement('span');
+        themeSwitch.className = 'apya-mshell-switch';
+        themeRow.appendChild(themeSwitch);
+        function renderTheme() {
+            var dark = document.documentElement.getAttribute('data-theme') === 'dark';
+            themeRow.querySelector('.apya-mshell-row-label').textContent = dark ? t('themeDark') : t('themeLight');
+            themeRow.querySelector('i').className = dark ? 'fa fa-moon' : 'fa fa-sun';
+            themeSwitch.classList.toggle('is-on', dark);
+            themeRow.setAttribute('aria-pressed', dark ? 'true' : 'false');
+        }
+        renderTheme();
+        new MutationObserver(renderTheme).observe(document.documentElement,
+            { attributes: true, attributeFilter: ['data-theme'] });
+        activateOnKey(themeRow, function () {
+            var themeToggle = document.getElementById('ThemeToggle');
+            if (themeToggle) { themeToggle.click(); }
+        });
+
+        // --- Mevcut hesap bağlantıları: kendi (gizli) menülerinden taşınır.
+        //     Silmiyoruz — dil seçici de dahil hiçbir işlev kaybolmasın.
+        var settingsLink = group.querySelector('#MenuItem_Apya_Account_Settings');
+        var manageLink = group.querySelector('#MenuItem_Account_Manage');
+        var logoutLink = group.querySelector('#MenuItem_Account_Logout');
+        var langToggle = group.querySelector('.lpx-language-selection.lpx-toggle');
+        var langMenu = langToggle ? langToggle.nextElementSibling : null;
+
+        [settingsLink, manageLink, logoutLink].forEach(function (a) {
+            if (a) { a.classList.add('apya-mshell-row'); }
+        });
+        if (settingsLink && !settingsLink.querySelector('i')) {
+            settingsLink.insertAdjacentHTML('afterbegin', '<i class="fa fa-gear" aria-hidden="true"></i>');
+        }
+        if (manageLink && !manageLink.querySelector('i')) {
+            manageLink.insertAdjacentHTML('afterbegin', '<i class="fa fa-user" aria-hidden="true"></i>');
+        }
+        if (logoutLink) {
+            logoutLink.classList.add('apya-mshell-row--logout');
+            if (!logoutLink.querySelector('i')) {
+                logoutLink.insertAdjacentHTML('afterbegin',
+                    '<i class="fa fa-arrow-right-from-bracket" aria-hidden="true"></i>');
+            }
+        }
+        if (langToggle) { langToggle.classList.add('apya-mshell-row', 'apya-mshell-row--lang'); }
+
+        [notifRow, searchRow, themeRow, settingsLink, manageLink, langToggle, langMenu, logoutLink]
+            .forEach(function (el) { if (el) { group.appendChild(el); } });
+    }
+    buildSheet();
+
+    // Okunmamış sayacı: notification-bell.js'in beslediği rozet gözlenir
+    // (bar noktası ve sheet pili aynı kaynaktan).
+    function syncUnread() {
+        var badge = document.getElementById('notification-unread-badge');
+        var text = (badge && !badge.classList.contains('d-none'))
+            ? (badge.textContent || '').trim() : '';
+        var has = !!text && text !== '0';
+        if (bellDot) { bellDot.hidden = !has; }
+        if (countPill) {
+            countPill.hidden = !has;
+            countPill.textContent = text;
+        }
+    }
+    var badgeEl = document.getElementById('notification-unread-badge');
+    if (badgeEl) {
+        new MutationObserver(syncUnread).observe(badgeEl,
+            { attributes: true, childList: true, characterData: true, subtree: true });
+    }
+    syncUnread();
+
+    // =========================================================================
+    // 4) ALT SEKME ÇUBUĞU (varyant B) — DOM her iki varyantta kurulur,
+    //    görünürlüğüne CSS (html[data-mobile-shell]) karar verir.
+    // =========================================================================
+    function buildTabs() {
+        if (document.querySelector('.apya-mshell-tabs')) { return; }
+        var tabs = document.createElement('nav');
+        tabs.className = 'apya-mshell-tabs';
+        tabs.setAttribute('aria-label', t('menu'));
+
+        var best = -1, bestEl = null;
+        split.daily.forEach(function (item) {
+            var isLeaf = !!item.href && !item.sub;
+            var el = document.createElement(isLeaf ? 'a' : 'button');
+            el.className = 'apya-mshell-tab';
+            // Kısa etiket anahtarı yoksa menüdeki tam ad kullanılır.
+            var label = t('short.' + item.key) || item.label;
+            el.innerHTML = '<i class="' + item.icon + '" aria-hidden="true"></i>' +
+                           '<span class="apya-mshell-tab-label"></span>';
+            el.querySelector('.apya-mshell-tab-label').textContent = label;
+            el.title = item.label;
+            if (isLeaf) {
+                el.href = item.href;
+            } else {
+                el.type = 'button';
+                el.addEventListener('click', function () {
+                    // Çekmece temanın kendi toggle'ı ile açılır (paralel state yok),
+                    // panel içeriği önceden hazırlanır.
+                    openPanel(item);
+                    if (!isOpen() && toggle) { toggle.click(); }
+                });
+            }
+            var len = matchLength(item);
+            if (len > best) { best = len; bestEl = el; }
+            tabs.appendChild(el);
+        });
+
+        // "Daha": gizli hamburger'e programatik tıklama → aynı tam ekran menü.
+        var moreBtn = document.createElement('button');
+        moreBtn.type = 'button';
+        moreBtn.className = 'apya-mshell-tab apya-mshell-tab--more';
+        moreBtn.innerHTML = '<i class="fa fa-ellipsis" aria-hidden="true"></i>' +
+                            '<span class="apya-mshell-tab-label"></span>';
+        moreBtn.querySelector('.apya-mshell-tab-label').textContent = t('more');
+        moreBtn.addEventListener('click', function () {
+            closePanel();
+            if (!isOpen() && toggle) { toggle.click(); }
+        });
+        tabs.appendChild(moreBtn);
+
+        if (bestEl) {
+            bestEl.classList.add('is-active');
+            bestEl.setAttribute('aria-current', 'page');
+        }
+        document.body.appendChild(tabs);
+
+        // Çubuk yüksekliği de TEK KAYNAK (bar ile aynı kural): içeriğin dip
+        // boşluğu ve sayfaların kendi alt şeritleri (Görevler konsolu) bu
+        // değişkene dayanır — elle 65px yazılmaz.
+        var measureTabs = function () {
+            var h = Math.round(tabs.getBoundingClientRect().height);
+            if (h > 0) {
+                document.documentElement.style.setProperty('--apya-mobile-tabs-h', h + 'px');
+            }
+        };
+        measureTabs();
+        window.addEventListener('resize', measureTabs);
+        if (window.ResizeObserver) { new ResizeObserver(measureTabs).observe(tabs); }
+    }
+
+    // =========================================================================
+    // 5) AÇIK/KAPALI YAN ETKİLERİ — backdrop, gövde kilidi, aria, odak, Esc
+    //    (mevcut desen korunur: temanın .d-none'ı GÖZLENİR, yönetilmez)
+    // =========================================================================
     var backdrop = document.createElement('div');
     backdrop.className = 'apya-mobile-nav-backdrop';
-    backdrop.addEventListener('click', close);
+    backdrop.addEventListener('click', function () {
+        if (isOpen()) { close(); }
+        if (isSheetOpen()) { closeSheet(); }
+    });
     document.body.appendChild(backdrop);
 
     function isOpen() {
         return !drawer.classList.contains('d-none');
+    }
+    function isSheetOpen() {
+        return !!group && !group.classList.contains('d-none');
     }
 
     function close() {
@@ -334,21 +866,42 @@ $(function () {
             drawer.classList.add('d-none');
         }
     }
+    function closeSheet() {
+        if (isSheetOpen() && personToggle) {
+            personToggle.click();
+        } else if (group) {
+            group.classList.add('d-none');
+        }
+    }
 
-    // 4) Açık/kapalı durumunun yan etkileri: backdrop, gövde kilidi, aria, odak.
     var lastFocus = null;
+    var wasOpen = false;
+    var wasSheetOpen = false;
     function sync() {
         var open = isOpen();
-        backdrop.classList.toggle('is-open', open);
-        document.body.classList.toggle('apya-mobile-nav-open', open);
+        var sheetOpen = isSheetOpen();
+        backdrop.classList.toggle('is-open', open || sheetOpen);
+        document.body.classList.toggle('apya-mobile-nav-open', open || sheetOpen);
         if (toggle) {
             toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
-            toggle.setAttribute('aria-label', open ? 'Menüyü kapat' : 'Menüyü aç');
+            toggle.setAttribute('aria-label', open ? t('close') : t('open'));
         }
-        if (open) {
-            lastFocus = document.activeElement;
-            var first = drawer.querySelector('.apya-drawer-close');
-            if (first) { first.focus(); }
+        if (personToggle) {
+            personToggle.setAttribute('aria-expanded', sheetOpen ? 'true' : 'false');
+        }
+        // Odak ve panel sıfırlama yalnız GEÇİŞTE: gözlenen düğümün class'ı
+        // panel açılıp kapanırken de değişiyor, her tetiklemede odak alınsaydı
+        // 2. seviye panele geçildiği anda odak kapat düğmesine kaçardı.
+        if (open === wasOpen && sheetOpen === wasSheetOpen) { return; }
+        wasOpen = open;
+        wasSheetOpen = sheetOpen;
+        if (!open) { closePanel(); }
+        if (open || sheetOpen) {
+            if (!lastFocus) { lastFocus = document.activeElement; }
+            var first = open
+                ? drawer.querySelector('.apya-drawer-close')
+                : group.querySelector('.apya-mshell-row');
+            if (first && first.focus) { first.focus(); }
         } else if (lastFocus && typeof lastFocus.focus === 'function') {
             lastFocus.focus();
             lastFocus = null;
@@ -356,19 +909,24 @@ $(function () {
     }
 
     new MutationObserver(sync).observe(drawer, { attributes: true, attributeFilter: ['class'] });
+    if (group) {
+        new MutationObserver(sync).observe(group, { attributes: true, attributeFilter: ['class'] });
+    }
+    buildTabs();
     sync();
 
-    // 5) Esc ile kapat.
+    // Esc ile kapat (panel açıksa önce panel kapanır — geri adımı).
     document.addEventListener('keydown', function (e) {
-        if (e.key === 'Escape' && isOpen()) {
-            close();
-        }
+        if (e.key !== 'Escape') { return; }
+        if (drawer.classList.contains('apya-mshell-in-panel')) { closePanel(); return; }
+        if (isOpen()) { close(); return; }
+        if (isSheetOpen()) { closeSheet(); }
     });
 
-    // 6) Masaüstüne genişletilirse açık kalan drawer'ı temizle.
+    // Masaüstüne genişletilirse açık kalan çekmece/sheet temizlenir.
     window.addEventListener('resize', function () {
-        if (window.innerWidth >= 768 && isOpen()) {
-            close();
-        }
+        if (window.innerWidth < 768) { return; }
+        if (isOpen()) { close(); }
+        if (isSheetOpen()) { closeSheet(); }
     });
 });

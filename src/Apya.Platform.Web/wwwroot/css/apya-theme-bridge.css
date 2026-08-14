@@ -1316,99 +1316,243 @@ html[data-density="comfortable"] #DensityToggle i.fa-table-cells::before {
     font-weight: 900 !important;
     content: '\f007' !important; /* user → hesap menüsü */
 }
+/* Avatar baş harflerle basıldığında (sidebar-toggle.js) glyph söner. */
+.lpx-mobile-navbar i.bi-person.apya-mshell-avatar::before {
+    content: none !important;
+}
 
-/* --- 2) Header yerleşimi: hamburger solda, logo ortada, hesap sağda --- */
+/* --- 2) Üst bar: hamburger · "A" işareti · sayfa adı · arama · bildirim · avatar
+   Bar zemini İÇERİK zemini ile aynı ton; ayrım yalnız 1px alt kenarlık
+   (eskiden bar --apya-surface-base ile ayrı tondaydı ve "ağır" duruyordu).
+   Yükseklik varyanta göre: çekmece 54px, alt sekme 48px. Tek kaynak burasıdır;
+   sidebar-toggle.js barı ÖLÇÜP --apya-mobile-header-h'e yazar. --- */
 .lpx-mobile-navbar {
     display: flex;
     align-items: center;
-    gap: 2px;
+    gap: 4px;
+    height: 54px;
+    padding: 0 10px;
+    background: var(--apya-surface-app-bg) !important;
+    border-bottom: 1px solid var(--apya-border-default);
+}
+html[data-mobile-shell="tabs"] .lpx-mobile-navbar {
+    height: 48px;
+    /* 36px kutu + 2×4px isabet taşması = 44 → boşluk 8 olmalı ki hedefler
+       bitişik dursun, ÇAKIŞMASIN (6px'te 2px örtüşüyordu, ölçüldü). */
+    gap: 8px;
+    padding: 0 12px;
 }
 /* JS düğümü zaten ilk çocuk yapıyor; order JS gecikirse de sırayı garantiler. */
 .lpx-mobile-navbar > i.lpx-toggle[data-lpx-toggle="mobile-navbar"] {
     order: -1;
     flex: none;
-    margin-inline-start: 6px;
+    color: var(--apya-text-primary);
 }
+/* Alt sekme varyantında hamburger KALKAR — ana hedefler alt çubukta,
+   kalanı "Daha" sekmesinde (o da bu düğmeyi programatik tıklar). */
+html[data-mobile-shell="tabs"] .lpx-mobile-navbar > i.lpx-toggle[data-lpx-toggle="mobile-navbar"] {
+    display: none;
+}
+/* Marka: wordmark yerine 26px "A" kutusu — ray modundaki işaretle aynı dil,
+   salt CSS (görsel varlık yok). Mobilde ~150px yiyen "Apya PLATFORM" bloğu
+   yerine sayfa adına yer açar. */
 .lpx-mobile-navbar .lpx-logo-container {
-    flex: 1 1 auto;
+    flex: none;
     min-width: 0;
     position: relative;
     z-index: 1;
+    /* Tema kaba 20px dolgu veriyor → kutu 66×66 oluyor ve 54px'lik barı
+       6px taşırıyordu (375px'te ölçüldü). İşaretin kendi ölçüsü kalsın. */
+    display: flex;
+    align-items: center;
+    padding: 0;
+    margin-left: 2px;
+}
+.lpx-mobile-navbar .lpx-brand-name,
+.lpx-mobile-navbar .lpx-brand-logo {
+    display: none !important;
+}
+.lpx-mobile-navbar .lpx-logo-container > a {
+    display: inline-flex;
+    align-items: center;
+}
+.lpx-mobile-navbar .lpx-logo-container > a::after,
+.apya-drawer-brand {
+    content: "A";
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    flex: none;
+    border-radius: 7px;
+    background: var(--apya-accent-500);
+    color: var(--apya-text-inverse);
+    font-family: var(--apya-font-sans);
+    font-size: 14px;
+    font-weight: var(--apya-weight-bold);
+    letter-spacing: -0.03em;
+    line-height: 1;
+}
+html[data-mobile-shell="tabs"] .lpx-mobile-navbar .lpx-logo-container > a::after {
+    width: 24px;
+    height: 24px;
+    font-size: 13px;
+}
+/* Sayfa adı — barın sahibi. Kaynak masaüstü breadcrumb'ı ile aynı
+   (apya-topbar-shell.js → window.apyaActiveMenuInfo). */
+.apya-mshell-title {
+    flex: 1 1 auto;
+    min-width: 0;
+    margin-left: 6px;
+    font-size: 15px;
+    font-weight: var(--apya-weight-semibold);
+    letter-spacing: -0.01em;
+    color: var(--apya-text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+html[data-mobile-shell="tabs"] .apya-mshell-title {
+    margin-left: 4px;
 }
 /* Logo bağlantısının içindeki .lpx-brand-name mutlak konumlu ve 282px geniş
    (58→340px); hesap ikonu 301→345px'te duruyor, yani ~39px ÖRTÜŞÜYOR. Görsel
    olarak fark edilmiyordu çünkü örtüşen kısım saydam — ama isabet testinde
    üstte kalıyordu: hesap ikonunun MERKEZİNE dokunmak menüyü açmak yerine
-   ana sayfaya gidiyordu (2026-08-12 canlı QA'da elementFromPoint ile bulundu;
-   temadan gelen mevcut bir hata, bu turda oluşmadı). */
+   ana sayfaya gidiyordu (2026-08-12 canlı QA'da elementFromPoint ile bulundu).
+   Wordmark artık mobilde hiç basılmıyor; z-index sırası yine de korunur. */
 .lpx-mobile-navbar .user-menu {
+    /* 28px'lik avatarın kendi ≥44px isabet alanı olsun diye yuva 44px; avatar
+       ortalanır. Yuvayı büyütmek komşu düğmenin hedefini çalmaz, çünkü flex
+       öğeleri üst üste binmez — sayfa adı 14px kısalır, o kadar. */
     flex: none;
+    width: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     position: relative;
     z-index: 2;
 }
-/* Dokunma hedefi 44×44 (ux: touch-target). Tema 36×54px veriyordu. */
-.lpx-mobile-navbar i.lpx-toggle {
+/* Görsel kutu tasarımdaki gibi 40×40 (alt sekmede 36), ama DOKUNMA HEDEFİ
+   ≥44px: kutuyu büyütmek yerine görünmez bir ::after ile isabet alanı taşar.
+   Barın 4px'lik boşluğu tam olarak bu taşmayı karşılar → hedefler bitişik olur,
+   ÇAKIŞMAZ (375px'te ölçüldü). */
+.lpx-mobile-navbar i.lpx-toggle,
+.apya-mshell-btn {
+    position: relative;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 44px;
-    height: 44px;
-    font-size: 19px;
+    width: 40px;
+    height: 40px;
+    flex: none;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    font-size: 17px;
     line-height: 1;
-    border-radius: var(--apya-radius-md);
+    border-radius: 10px;
+    color: var(--apya-text-tertiary);
+    text-decoration: none;
     cursor: pointer;
     transition: background var(--apya-motion-fast) ease, color var(--apya-motion-fast) ease;
 }
-.lpx-mobile-navbar i.lpx-toggle:active {
+html[data-mobile-shell="tabs"] .apya-mshell-btn {
+    width: 36px;
+    height: 36px;
+}
+.lpx-mobile-navbar i.lpx-toggle::after,
+.apya-mshell-btn::after {
+    content: "";
+    position: absolute;
+    inset: -2px;               /* 40 + 2×2 = 44 */
+}
+html[data-mobile-shell="tabs"] .apya-mshell-btn::after {
+    inset: -4px;               /* 36 + 2×4 = 44 */
+}
+.apya-mshell-search { font-size: 16px; }
+.lpx-mobile-navbar i.lpx-toggle:active,
+.apya-mshell-btn:active {
     background: color-mix(in srgb, currentColor 16%, transparent);
 }
-.lpx-mobile-navbar i.lpx-toggle:focus-visible {
+.lpx-mobile-navbar i.lpx-toggle:focus-visible,
+.apya-mshell-btn:focus-visible {
     outline: 2px solid var(--apya-accent-500);
     outline-offset: 2px;
 }
+/* Okunmamış bildirim noktası — halka rengi BAR zemini ki nokta "kesilmiş"
+   görünmesin (tasarım: 6px nokta + 2px bar zemini halkası). */
+.apya-mshell-bell { position: relative; }
+.apya-mshell-dot {
+    position: absolute;
+    top: 9px;
+    right: 10px;
+    width: 6px;
+    height: 6px;
+    border-radius: var(--apya-radius-full);
+    background: var(--apya-negative-500);
+    box-shadow: 0 0 0 2px var(--apya-surface-app-bg);
+}
+/* Avatar: 28px daire + baş harfler (glyph söndürüldü, bkz. 1. blok). */
+.lpx-mobile-navbar i.lpx-toggle.apya-mshell-avatar {
+    width: 28px;
+    height: 28px;
+    border-radius: var(--apya-radius-full);
+    background: var(--apya-accent-soft);
+    color: var(--apya-accent-500);
+    font-family: var(--apya-font-sans);
+    font-size: 11px;
+    font-weight: var(--apya-weight-semibold);
+    font-style: normal;
+}
+/* 28 + 2×8 = 44; 44px'lik yuvanın içinde kalır, komşuyla çakışmaz. */
+.lpx-mobile-navbar i.lpx-toggle.apya-mshell-avatar::after {
+    inset: -8px;
+}
 
-/* --- 3) Menü = soldan kayan drawer (içeriği itmez, üstüne gelir) ---
+/* --- 3) Menü = TAM EKRAN, soldan kayan panel (içeriği itmez, üstüne gelir) ---
    Tema açılışta .d-none'ı kaldırıyor. display:none geçiş animasyonunu
    imkânsız kılar → id özgüllüğüyle (1-0-0 > 0-1-0) display'i geri açıp
-   kapalı durumu transform+visibility ile ifade ediyoruz. */
+   kapalı durumu transform+visibility ile ifade ediyoruz.
+   300px'lik çekmece uzun etiketleri ("AI Değerlendirme Merkezi") kırpıyordu;
+   tam ekranda hepsi tek satıra sığar. */
 #mobile-navbar {
     position: fixed;
-    top: 0;
-    left: 0;
-    bottom: 0;
-    width: min(300px, 84vw);
+    inset: 0;
     z-index: var(--apya-z-modal, 1050);
-    display: block !important;
+    display: flex !important;
+    flex-direction: column;
+    overflow: hidden;
     transform: translateX(-100%);
     visibility: hidden;
     transition: transform 240ms var(--apya-easing-standard, cubic-bezier(.4,0,.2,1)),
                 visibility 240ms var(--apya-easing-standard, cubic-bezier(.4,0,.2,1));
-    background: var(--apya-surface-sidebar) !important;
-    border-right: 1px solid var(--apya-border-default);
+    background: var(--apya-surface-app-bg) !important;
     box-shadow: var(--apya-shadow-xl);
-    overflow-y: auto;
     overscroll-behavior: contain;
-    padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 16px);
 }
 #mobile-navbar:not(.d-none) {
     transform: translateX(0);
     visibility: visible;
 }
 
-/* Drawer başlığı (JS ekler) — marka + kapat düğmesi (modal-escape). */
+/* Drawer başlığı (JS ekler) — "A" işareti + MENÜ + kapat (modal-escape). */
 .apya-drawer-head {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    gap: 8px;
-    padding: calc(env(safe-area-inset-top, 0px) + 12px) 12px 12px 20px;
-    border-bottom: 1px solid var(--apya-border-subtle);
-    margin-bottom: 6px;
+    gap: 10px;
+    flex: none;
+    height: calc(env(safe-area-inset-top, 0px) + 54px);
+    padding: env(safe-area-inset-top, 0px) 12px 0;
+    border-bottom: 1px solid var(--apya-border-default);
 }
 .apya-drawer-head-title {
-    font-size: 13px;
-    font-weight: 700;
-    letter-spacing: 0.4px;
+    flex: 1 1 auto;
+    font-family: var(--apya-font-mono);
+    font-size: 12px;
+    font-weight: var(--apya-weight-medium);
+    letter-spacing: 0.06em;
     text-transform: uppercase;
     color: var(--apya-text-tertiary);
 }
@@ -1420,16 +1564,112 @@ html[data-density="comfortable"] #DensityToggle i.fa-table-cells::before {
     height: 40px;
     flex: none;
     border: 0;
-    border-radius: var(--apya-radius-md);
+    border-radius: 10px;
     background: transparent;
-    color: var(--apya-text-secondary);
-    font-size: 17px;
+    color: var(--apya-text-primary);
+    font-size: 20px;
     cursor: pointer;
 }
 .apya-drawer-close:active { background: var(--apya-border-subtle); }
 .apya-drawer-close:focus-visible {
     outline: 2px solid var(--apya-accent-500);
     outline-offset: 2px;
+}
+
+/* Menü gövdesi ve 2. seviye panel aynı ray üzerinde yan yana durur; grup
+   satırına basılınca ray sola kayar (ayrı ekran). Akordeon AÇILMAZ. */
+#mobile-navbar > #mobile-sidebar,
+.apya-mshell-panel {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: 18px 16px calc(env(safe-area-inset-bottom, 0px) + 22px);
+    transition: transform 240ms var(--apya-easing-standard, cubic-bezier(.4,0,.2,1));
+}
+.apya-mshell-panel {
+    position: absolute;
+    inset: calc(env(safe-area-inset-top, 0px) + 55px) 0 0 0;
+    display: flex;
+    flex-direction: column;
+    padding: 0;
+    background: var(--apya-surface-app-bg);
+    transform: translateX(100%);
+    visibility: hidden;
+}
+#mobile-navbar.apya-mshell-in-panel > #mobile-sidebar {
+    transform: translateX(-30%);
+}
+#mobile-navbar.apya-mshell-in-panel .apya-mshell-panel {
+    transform: translateX(0);
+    visibility: visible;
+}
+.apya-mshell-panel-head {
+    flex: none;
+    padding: 10px 8px 2px;
+}
+.apya-mshell-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 44px;
+    padding: 0 10px;
+    border: 0;
+    border-radius: 10px;
+    background: transparent;
+    color: var(--apya-text-primary);
+    font-size: 15px;
+    font-weight: var(--apya-weight-semibold);
+    cursor: pointer;
+}
+.apya-mshell-back i { font-size: 14px; color: var(--apya-text-tertiary); }
+.apya-mshell-back:focus-visible {
+    outline: 2px solid var(--apya-accent-500);
+    outline-offset: 2px;
+}
+.apya-mshell-panel-body {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: 4px 16px calc(env(safe-area-inset-bottom, 0px) + 22px);
+}
+.apya-mshell-panel-section {
+    margin: 14px 4px 8px;
+    font-family: var(--apya-font-mono);
+    font-size: 10.5px;
+    font-weight: var(--apya-weight-medium);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--apya-text-tertiary);
+}
+.apya-mshell-panel-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    min-height: 48px;
+    padding: 0 12px;
+    border-radius: 12px;
+    color: var(--apya-text-secondary);
+    font-size: 15px;
+    text-decoration: none;
+}
+.apya-mshell-panel-row i {
+    width: 20px;
+    font-size: 18px;
+    text-align: center;
+    color: var(--apya-text-tertiary);
+}
+.apya-mshell-panel-row.is-active {
+    background: var(--apya-accent-soft);
+    color: var(--apya-accent-500);
+    font-weight: var(--apya-weight-semibold);
+}
+.apya-mshell-panel-row.is-active i { color: inherit; }
+.apya-mshell-panel-row:active { background: var(--apya-border-subtle); }
+.apya-mshell-panel-row:focus-visible {
+    outline: 2px solid var(--apya-accent-500);
+    outline-offset: -2px;
 }
 
 /* Backdrop — drawer'ın hemen altında, karartma + dışa tıklayarak kapatma. */
@@ -1451,64 +1691,350 @@ body.apya-mobile-nav-open {
     overflow: hidden;
 }
 
-/* Drawer içi menü öğeleri — masaüstü sidebar ile aynı görsel dil + 44px hedef.
-   (Masaüstü kuralları #lpx-sidebar'a bağlı; mobil DOM ayrı: #mobile-sidebar.) */
+/* Drawer içi menü — iki grup: GÜNLÜK (dört günlük hedef, büyük tipo) ve
+   DİĞER (kalanı, daha küçük ve soluk). Grup başlıkları sidebar-toggle.js'in
+   eklediği <li> satırlarıdır; li'ler AYNI ul içinde sıralanır (yeniden
+   ebeveynleme yok → temanın dinleyicileri korunur). */
+.apya-mshell-grouphead {
+    margin: 0 4px 10px;
+    font-family: var(--apya-font-mono);
+    font-size: 10.5px;
+    font-weight: var(--apya-weight-medium);
+    letter-spacing: 0.1em;
+    color: var(--apya-text-tertiary);
+    list-style: none;
+}
+.apya-mshell-grouphead[data-kind="other"] { margin-top: 22px; }
+
+/* 2. seviye artık AYRI EKRAN (apya-mshell-panel) — akordeon listesi hiç
+   açılmasın; bugün açılınca liste 20 satıra çıkıyordu. */
+#mobile-navbar #mobile-sidebar .lpx-inner-menu {
+    display: none !important;
+}
 #mobile-sidebar a.lpx-menu-item-link {
     display: flex;
     align-items: center;
-    min-height: 44px;
-    margin: 1px 8px;
-    border-radius: var(--apya-radius-lg);
+    gap: 14px;
+    min-height: 46px;
+    margin: 2px 0;
+    padding: 0 12px;
+    border-radius: 12px;
+    font-size: 15px;
+    font-weight: var(--apya-weight-regular);
     color: var(--apya-text-secondary) !important;
+}
+/* GÜNLÜK grubu: daha büyük dokunma hedefi ve tipografi. */
+#mobile-sidebar .apya-mshell-daily > a.lpx-menu-item-link {
+    min-height: 52px;
+    font-size: 17px;
+    font-weight: var(--apya-weight-medium);
+    letter-spacing: -0.01em;
+    color: var(--apya-text-primary) !important;
 }
 #mobile-sidebar a.lpx-menu-item-link:hover,
 #mobile-sidebar a.lpx-menu-item-link:active {
     background: var(--apya-border-subtle) !important;
-    color: var(--apya-text-primary) !important;
 }
 #mobile-sidebar a.lpx-menu-item-link.selected {
     background: var(--apya-accent-soft) !important;
     color: var(--apya-accent-500) !important;
-    font-weight: 600;
+    font-weight: var(--apya-weight-semibold);
 }
-#mobile-sidebar .lpx-menu-item-icon,
-#mobile-sidebar .lpx-menu-item-icon i,
+#mobile-sidebar .lpx-menu-item-icon {
+    flex: none;
+    width: 20px;
+    text-align: center;
+}
+#mobile-sidebar .lpx-menu-item-icon i {
+    font-size: 20px;
+    color: var(--apya-text-tertiary) !important;
+}
+#mobile-sidebar .apya-mshell-daily .lpx-menu-item-icon i { font-size: 22px; }
+#mobile-sidebar a.lpx-menu-item-link.selected .lpx-menu-item-icon i { color: inherit !important; }
+#mobile-sidebar .lpx-menu-item-text { flex: 1 1 auto; }
+/* Caret: aşağı chevron değil SAĞA — alt seviye aynı ekranda açılmıyor,
+   ayrı ekran olarak geliyor. Glyph doğrudan ::before'a yazılmalı
+   (bootstrap-icons kendi kuralını !important ile veriyor). */
 #mobile-sidebar .lpx-caret {
-    color: inherit !important;
+    flex: none;
+    font-size: 14px;
+    color: var(--apya-text-tertiary) !important;
 }
-#mobile-sidebar .lpx-inner-menu {
-    background: transparent !important;
+#mobile-sidebar .lpx-caret::before {
+    font-family: var(--apya-font-icon) !important;
+    font-weight: 900 !important;
+    content: '\f054' !important; /* chevron-right */
 }
 
-/* --- 4) Hesap menüsü: sağ üstten açılan panel (yine içeriği itmez) --- */
+/* --- 4) Hesap menüsü → ALT SHEET: kimlik başlığı + gerçek aksiyonlar.
+   Eskiden sağ üstten sarkan 300px'lik kutuydu; içi tek satır + ~96px boşluktu
+   ve panelin ne olduğu yazmıyordu. Artık başparmak menzilinde, kim/hangi
+   kiracı bilgisiyle açılır. Aç/kapa yine temanın .d-none'ı. --- */
 #mobile-user-menu-group {
     position: fixed;
-    top: calc(var(--apya-mobile-header-h, 72px) + 4px);
-    right: 8px;
-    left: auto;
-    width: min(300px, calc(100vw - 16px));
-    max-height: calc(100vh - var(--apya-mobile-header-h, 72px) - 24px);
+    inset: auto 0 0 0;
+    width: 100%;
+    max-height: calc(100vh - var(--apya-mobile-header-h, 54px) - 24px);
     overflow-y: auto;
     overscroll-behavior: contain;
     z-index: var(--apya-z-modal, 1050);
-    padding: 6px;
+    display: block !important;
+    padding: 10px 8px calc(env(safe-area-inset-bottom, 0px) + 18px);
     background: var(--apya-surface-elevated);
-    border: 1px solid var(--apya-border-strong);
-    border-radius: var(--apya-radius-xl);
+    border-top: 1px solid var(--apya-border-strong);
+    border-radius: var(--apya-radius-2xl) var(--apya-radius-2xl) 0 0;
     box-shadow: var(--apya-shadow-xl);
+    transform: translateY(100%);
+    visibility: hidden;
+    transition: transform 240ms var(--apya-easing-standard, cubic-bezier(.4,0,.2,1)),
+                visibility 240ms var(--apya-easing-standard, cubic-bezier(.4,0,.2,1));
 }
-#mobile-user-menu-group .lpx-language-selection,
-#mobile-user-menu-group .lpx-user-profile,
-#mobile-user-menu-group .action {
-    min-height: 44px;
+#mobile-user-menu-group:not(.d-none) {
+    transform: translateY(0);
+    visibility: visible;
+}
+/* Tutamak (tasarım: 36×4). */
+#mobile-user-menu-group::before {
+    content: "";
+    display: block;
+    width: 36px;
+    height: 4px;
+    margin: 0 auto 12px;
+    border-radius: var(--apya-radius-full);
+    background: var(--apya-border-strong);
+}
+/* Kimlik başlığı */
+.apya-mshell-sheet-head {
     display: flex;
     align-items: center;
-    gap: 10px;
-    border-radius: var(--apya-radius-lg);
+    gap: 12px;
+    padding: 4px 12px 14px;
+    border-bottom: 1px solid var(--apya-border-subtle);
+    margin-bottom: 8px;
+}
+.apya-mshell-sheet-avatar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    flex: none;
+    border-radius: var(--apya-radius-full);
+    background: var(--apya-accent-500);
+    color: var(--apya-text-inverse);
+    font-size: 14px;
+    font-weight: var(--apya-weight-semibold);
+}
+.apya-mshell-sheet-id {
+    flex: 1 1 auto;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+}
+.apya-mshell-sheet-name {
+    font-size: 14px;
+    font-weight: var(--apya-weight-semibold);
+    color: var(--apya-text-primary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.apya-mshell-sheet-mail {
+    font-size: 11.5px;
+    color: var(--apya-text-tertiary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.apya-mshell-sheet-tenant {
+    flex: none;
+    display: inline-flex;
+    align-items: center;
+    height: 24px;
+    padding: 0 8px;
+    border-radius: var(--apya-radius-full);
+    background: var(--apya-surface-sunken);
+    color: var(--apya-text-secondary);
+    font-size: 10.5px;
+    font-weight: var(--apya-weight-semibold);
+}
+/* Satırlar — hem JS'in ürettikleri hem temadan TAŞINAN bağlantılar (Genel
+   Ayarlar / Hesabım / Çıkış) aynı sınıfı taşır. `a` kuralı şart: "Bildirimler"
+   satırı tema link stilinden mavi + altı çizili geliyordu. */
+#mobile-user-menu-group .apya-mshell-row,
+#mobile-user-menu-group .lpx-language-selection,
+#mobile-user-menu-group .action {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-height: 46px;
+    padding: 0 12px;
+    border-radius: 10px;
+    font-size: 14.5px;
+    color: var(--apya-text-primary);
+    text-decoration: none;
+    cursor: pointer;
+}
+#mobile-user-menu-group a {
+    color: inherit;
+    text-decoration: none;
+}
+#mobile-user-menu-group .apya-mshell-row > i {
+    flex: none;
+    width: 20px;
+    font-size: 18px;
+    text-align: center;
+    color: var(--apya-text-secondary);
+}
+#mobile-user-menu-group .apya-mshell-row-label { flex: 1 1 auto; }
+#mobile-user-menu-group .apya-mshell-row:active,
+#mobile-user-menu-group .action:active {
+    background: var(--apya-surface-sunken);
+}
+#mobile-user-menu-group .apya-mshell-row:focus-visible {
+    outline: 2px solid var(--apya-accent-500);
+    outline-offset: -2px;
+}
+.apya-mshell-row--logout,
+.apya-mshell-row--logout > i { color: var(--apya-negative-500) !important; }
+/* Sayaç pili + ⌘K ipucu */
+.apya-mshell-count {
+    flex: none;
+    min-width: 20px;
+    height: 20px;
+    padding: 0 6px;
+    border-radius: var(--apya-radius-full);
+    background: var(--apya-negative-500);
+    color: var(--apya-text-inverse);
+    font-size: 10.5px;
+    font-weight: var(--apya-weight-bold);
+    line-height: 20px;
+    text-align: center;
+}
+.apya-mshell-kbd {
+    flex: none;
+    font-family: var(--apya-font-mono);
+    font-size: 10.5px;
+    color: var(--apya-text-tertiary);
+    background: none;
+    border: 0;
+    padding: 0;
+}
+/* Tema anahtarı (38×22) */
+.apya-mshell-switch {
+    position: relative;
+    flex: none;
+    width: 38px;
+    height: 22px;
+    border-radius: var(--apya-radius-full);
+    background: var(--apya-border-strong);
+    transition: background var(--apya-motion-base) ease;
+}
+.apya-mshell-switch::after {
+    content: "";
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 18px;
+    height: 18px;
+    border-radius: var(--apya-radius-full);
+    background: var(--apya-surface-base);
+    box-shadow: var(--apya-shadow-sm);
+    transition: transform var(--apya-motion-base) var(--apya-easing-standard, ease);
+}
+.apya-mshell-switch.is-on { background: var(--apya-accent-500); }
+.apya-mshell-switch.is-on::after { transform: translateX(16px); }
+/* Avatar toggle'ı sheet'in İÇİNDE gereksiz: kimlik başlığı zaten avatarı
+   gösteriyor ve altındaki menü boşaldı (satırları yukarı taşındı). */
+#mobile-user-menu-group .lpx-user-profile { display: none; }
+#mobile-user-menu-group .action-group-menu:not(.d-none) {
+    display: flex;
+    flex-direction: column;
+    padding-left: 32px;
+}
+#mobile-user-menu-group .divider {
+    height: 1px;
+    background: var(--apya-border-subtle);
+    margin: 6px 12px;
+}
+
+/* --- 5) ALT SEKME ÇUBUĞU (yalnız varyant B) ---
+   Sekmeler sabit yazılmaz: sidebar-toggle.js server-render menüden türetir,
+   izin yüzünden sayı 5'in altına düşebilir → grid esner. */
+/* Çubuk body'ye basılıyor (temanın mobil kabının DIŞINDA) → masaüstünde
+   kendiliğinden gizlenmez, medya sorgusu ŞART. */
+.apya-mshell-tabs { display: none; }
+@media (max-width: 767.98px) {
+    html[data-mobile-shell="tabs"] .apya-mshell-tabs {
+        position: fixed;
+        inset: auto 0 0 0;
+        /* Sayfaların KENDİ sabit alt şeritlerinin (Görevler konsolu, z 1035)
+           üstünde; backdrop'ın (1049) ve çekmecenin (1050) altında. */
+        z-index: calc(var(--apya-z-modal, 1050) - 10);
+        display: grid;
+        /* Sekme sayısı kadar EŞİT kolon. `repeat(auto-fit, minmax(0,1fr))`
+           alt sınırı 0 olduğu için satırı yüzlerce 0px kolonla dolduruyordu
+           (ölçüldü); auto-flow yalnız var olan çocuklar kadar kolon üretir,
+           yetkisi olmayan kullanıcıda sayı 5'in altına düşünce de doğru esner. */
+        grid-auto-flow: column;
+        grid-auto-columns: 1fr;
+        padding: 6px 4px calc(env(safe-area-inset-bottom, 0px) + 10px);
+        background: var(--apya-surface-sidebar);
+        border-top: 1px solid var(--apya-border-default);
+    }
+}
+.apya-mshell-tab {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    min-height: 48px;
+    padding: 6px 2px;
+    border: 0;
+    background: transparent;
+    color: var(--apya-text-tertiary);
+    font-weight: var(--apya-weight-regular);
+    text-decoration: none;
+    cursor: pointer;
+}
+.apya-mshell-tab i { font-size: 19px; }
+.apya-mshell-tab-label {
+    font-size: 10px;
+    line-height: 1;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.apya-mshell-tab.is-active {
+    color: var(--apya-accent-500);
+    font-weight: var(--apya-weight-semibold);
+}
+.apya-mshell-tab:focus-visible {
+    outline: 2px solid var(--apya-accent-500);
+    outline-offset: -2px;
+}
+/* İçeriğin son satırı çubuğun altında kalmasın. Yükseklik ÖLÇÜLÜR
+   (sidebar-toggle.js → --apya-mobile-tabs-h), elle yazılmaz. */
+@media (max-width: 767.98px) {
+    html[data-mobile-shell="tabs"] .lpx-content-container .lpx-content {
+        padding-bottom: calc(var(--apya-mobile-tabs-h, 65px) + 12px);
+    }
+    /* Sayfanın KENDİ sabit alt şeridi varsa (Görevler konsolu) alt sekme
+       çubuğunun üstüne çıkar — iki bar üst üste binmesin. */
+    html[data-mobile-shell="tabs"] .apya-console-tabs {
+        bottom: var(--apya-mobile-tabs-h, 65px);
+    }
 }
 
 @media (prefers-reduced-motion: reduce) {
     #mobile-navbar,
+    #mobile-navbar > #mobile-sidebar,
+    #mobile-user-menu-group,
+    .apya-mshell-panel,
+    .apya-mshell-switch,
+    .apya-mshell-switch::after,
     .apya-mobile-nav-backdrop {
         transition-duration: 1ms;
     }

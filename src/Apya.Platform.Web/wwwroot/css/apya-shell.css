@@ -682,6 +682,11 @@ h1, h2, h3, h4, h5, h6 {
     color: var(--apya-accent-500, #4F46E5);
     background: var(--apya-accent-soft, rgba(79, 70, 229, 0.10));
 }
+/* Mobilde marka 26px "A" kutusuna iniyor (apya-theme-bridge.css "MOBİL
+   NAVİGASYON"); rozet orada yer kaplamasın. Masaüstü wordmark'ı dokunulmaz. */
+@media (max-width: 767.98px) {
+    .lpx-brand-name::after { content: none; }
+}
 
 /* ----------------------------------------------------------------------------
    12) KOMUT PALETİ (⌘K) — header tetikleyici + modal (P4)
@@ -2862,6 +2867,25 @@ i.apya-priority-dot {
    + 5×104 bar + facepile ~155 + aksiyonlar ~475 + ayraç/boşluklar ≈ 1450px.
    Handoff bunu 1200px yazıyor çünkü prototipte kenar çubuğu yok; uygulamada
    1366px ekranda kap 1185px, 1920px ekranda 1608px. */
+/* --- Görevler konsolu: kap MOBİLDE tanımlanır ---------------------------
+   Aşağıdaki üç `@container` bloğu (şerit kırılımları + liste→kart düzeni)
+   `container-type: inline-size` taşıyan bir ata ister. Bu yalnız
+   `.apya-page.apya-project-console`'da tanımlı; **`.apya-task-console`'da
+   yoktu, dolayısıyla /Tasks'ta bu katmanın tamamı ÖLÜYDÜ.**
+   Sonucu 375px'te ölçüldü: sayaç barları sarmıyor/kaymıyor (şerit 428px içerik,
+   318px kutu) ve tablo satırı kart olmuyor → sayfa 82px yatay taşıyordu; taşma
+   ICB'yi genişlettiği için sayfadaki TÜM `position:fixed` alt barlar da
+   375 yerine 457px'e uzuyordu.
+
+   Kap YALNIZ mobil aralıkta tanımlanır: masaüstünde açılsaydı 1366px ekranda
+   kap 1119px olduğu için `@container (max-width: 1460px)` da tetiklenir ve
+   şerit 60px'ten 124px'e çıkıp barlar alt satıra inerdi (A/B ölçüldü) —
+   istenmeyen bir görünüm değişikliği. Proje konsolu kendi kabını koşulsuz
+   tanımlamaya devam eder, oradaki davranış değişmez. */
+@media (max-width: 767.98px) {
+    .apya-page.apya-task-console { container-type: inline-size; }
+}
+
 @container (max-width: 1460px) {
     /* Kimlik + aksiyonlar üstte, barlar altta (handoff <1200px kuralı). */
     .apya-console-rail { padding: var(--apya-space-2) var(--apya-space-3); }

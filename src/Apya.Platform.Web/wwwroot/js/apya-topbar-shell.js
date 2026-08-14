@@ -15,6 +15,46 @@
    server-render edildiği için ayrı bir "sayfa başlığı" kaynağı uydurmaya gerek
    yok — command-palette.js de aynı yaklaşımı kullanıyor.
    ============================================================================= */
+// -----------------------------------------------------------------------------
+// Aktif menü öğesinden breadcrumb: [bölüm] › [sayfa]
+// Masaüstü üst barı ve MOBİL kabuk (sidebar-toggle.js) aynı kaynaktan beslensin
+// diye ready DIŞINDA, parse anında dışa verilir: sidebar-toggle.js bundle'da
+// ÖNCE geliyor, ready içinde tanımlansaydı göremezdi. Fonksiyon yalnız
+// ÇAĞRILDIĞINDA DOM'a bakar, bu yüzden erken tanımlanması sorun değil.
+// -----------------------------------------------------------------------------
+window.apyaActiveMenuInfo = function activeMenuInfo() {
+    var path = location.pathname.replace(/\/+$/, '').toLowerCase() || '/';
+    var anchors = document.querySelectorAll('#lpx-sidebar a.lpx-menu-item-link[href]');
+    var best = null, bestLen = -1;
+
+    anchors.forEach(function (a) {
+        if (a.closest('.apya-pinned-section')) { return; } // kopya, asıl satır dursun
+        var href = (a.getAttribute('href') || '').split('?')[0].replace(/\/+$/, '').toLowerCase();
+        if (!href || href === '#') { return; }
+        // En UZUN eşleşen önek kazanır: /Reports ve /Reports/ProjectBudget
+        // birlikte varken doğru olan sayfa seçilsin.
+        if (path === href || path.indexOf(href + '/') === 0) {
+            if (href.length > bestLen) { best = a; bestLen = href.length; }
+        }
+    });
+    if (!best) { return null; }
+
+    var pageText = best.querySelector('.lpx-menu-item-text');
+    var page = pageText ? pageText.textContent.trim() : (best.textContent || '').trim();
+
+    // Bölüm = en dıştaki li.outer-menu-item'ın başlığı
+    var outer = best.closest('li.outer-menu-item');
+    var section = '';
+    if (outer) {
+        var head = outer.querySelector(':scope > a.lpx-menu-item-link');
+        if (head && head !== best) {
+            var t = head.querySelector('.lpx-menu-item-text');
+            section = t ? t.textContent.trim() : '';
+        }
+    }
+    return { page: page, section: section };
+};
+
 $(function () {
     'use strict';
 
@@ -41,42 +81,6 @@ $(function () {
         return String(s).replace(/[&<>"']/g, function (c) {
             return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
         });
-    }
-
-    // -------------------------------------------------------------------------
-    // Aktif menü öğesinden breadcrumb: [bölüm] › [sayfa]
-    // -------------------------------------------------------------------------
-    function activeMenuInfo() {
-        var path = location.pathname.replace(/\/+$/, '').toLowerCase() || '/';
-        var anchors = document.querySelectorAll('#lpx-sidebar a.lpx-menu-item-link[href]');
-        var best = null, bestLen = -1;
-
-        anchors.forEach(function (a) {
-            if (a.closest('.apya-pinned-section')) { return; } // kopya, asıl satır dursun
-            var href = (a.getAttribute('href') || '').split('?')[0].replace(/\/+$/, '').toLowerCase();
-            if (!href || href === '#') { return; }
-            // En UZUN eşleşen önek kazanır: /Reports ve /Reports/ProjectBudget
-            // birlikte varken doğru olan sayfa seçilsin.
-            if (path === href || path.indexOf(href + '/') === 0) {
-                if (href.length > bestLen) { best = a; bestLen = href.length; }
-            }
-        });
-        if (!best) { return null; }
-
-        var pageText = best.querySelector('.lpx-menu-item-text');
-        var page = pageText ? pageText.textContent.trim() : (best.textContent || '').trim();
-
-        // Bölüm = en dıştaki li.outer-menu-item'ın başlığı
-        var outer = best.closest('li.outer-menu-item');
-        var section = '';
-        if (outer) {
-            var head = outer.querySelector(':scope > a.lpx-menu-item-link');
-            if (head && head !== best) {
-                var t = head.querySelector('.lpx-menu-item-text');
-                section = t ? t.textContent.trim() : '';
-            }
-        }
-        return { page: page, section: section };
     }
 
     // -------------------------------------------------------------------------
@@ -124,7 +128,7 @@ $(function () {
 
     // -------------------------------------------------------------------------
     function build(state) {
-        var info = activeMenuInfo();
+        var info = window.apyaActiveMenuInfo();
         var pageLabel = info ? info.page : (document.title || '').split('|')[0].trim();
         var h = recordVisit(pageLabel);
 
