@@ -149,7 +149,12 @@ function DashboardRoot() {
                 />
             )}
 
-            <main className="px-6 pt-5 pb-6 mobile:px-3">
+            {/* Boşluk hiyerarşisi (kullanıcı kararı):
+                  sol/üst kenar 16px — kartlar sol raya yakın dursun
+                  başlık → ilk kart 16px
+                  kart ↔ kart 10px (GRID_MARGIN) — başlık mesafesinden DAHA DAR,
+                  böylece kartlar tek blok gibi okunur, başlık ayrışır. */}
+            <main className="px-4 pt-4 pb-4 mobile:px-3">
                 <ResponsiveGridLayout
                     key={gridMountKey}
                     className={cn('apya-dashboard-grid', editMode && 'apya-dashboard-grid--edit')}
@@ -192,6 +197,7 @@ function DashboardRoot() {
                     })}
                 </ResponsiveGridLayout>
 
+                {/* Izgara ile alt şerit arası da kart↔kart boşluğuyla aynı (10px). */}
                 <FooterStrip
                     isDefault={layoutQuery.data?.isDefault !== false}
                     onReset={handleReset}
@@ -214,7 +220,7 @@ function PageHeader({ viewKey, onViewChange, range, onRangeChange, editMode, onT
     const activeView = VIEWS.find((v) => v.key === viewKey) ?? VIEWS[0];
 
     return (
-        <header className="px-6 pt-[18px] pb-4 bg-surface-base border-b border-default flex items-end justify-between gap-5 mobile:px-3 mobile:flex-col mobile:items-stretch mobile:gap-3">
+        <header className="px-4 pt-4 pb-3 bg-surface-base border-b border-default flex items-end justify-between gap-5 mobile:px-3 mobile:flex-col mobile:items-stretch mobile:gap-3">
             <div className="flex flex-col gap-2.5 min-w-0">
                 <div className="flex items-center gap-2.5">
                     <h1 className="text-[22px] font-semibold tracking-[-0.025em] text-text-primary m-0">
@@ -308,7 +314,7 @@ function EditToolbar({ onSave, isSaving }) {
 
 function FooterStrip({ isDefault, onReset, onOpenCatalog, isResetting }) {
     return (
-        <div className="flex items-center justify-between gap-3 mt-3.5 px-4 py-3 rounded-card border border-dashed border-default bg-surface-base mobile:flex-col mobile:items-stretch">
+        <div className="flex items-center justify-between gap-3 mt-2.5 px-4 py-3 rounded-card border border-dashed border-default bg-surface-base mobile:flex-col mobile:items-stretch">
             <span className="text-[12.5px] text-text-secondary">
                 {isDefault
                     ? t('Dashboard:Footer:DefaultLayout', 'Bu görünüm rol varsayılanından geldi — kart ekleyip çıkarabilir, sürükleyip boyutlandırabilirsin.')

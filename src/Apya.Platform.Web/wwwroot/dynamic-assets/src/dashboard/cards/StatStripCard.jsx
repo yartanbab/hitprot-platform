@@ -16,7 +16,7 @@ function StatStripCard({ filter }) {
 
     if (isLoading) {
         return (
-            <div className="grid grid-cols-5 gap-3.5 mobile:grid-cols-2">
+            <div className="grid grid-cols-5 gap-2.5 mobile:grid-cols-2">
                 {Array.from({ length: 5 }, (_, i) => (
                     <div key={i} className="rounded-card shadow-card bg-surface-base border border-default p-4">
                         <Skeleton height={14} className="w-2/3 mb-2" />
@@ -44,7 +44,7 @@ function StatStripCard({ filter }) {
         /* lt-1080 ve mobile ikisi de max-width → Tailwind bunları azalan sırada
            yazar, dar ekranda mobile kazanır. `tablet:` KULLANILMAZ: o min-width'tir,
            1440'ta da tetiklenirdi. */
-        <div className="grid grid-cols-5 gap-3.5 lt-1080:grid-cols-3 mobile:grid-cols-2">
+        <div className="grid grid-cols-5 gap-2.5 lt-1080:grid-cols-3 mobile:grid-cols-2">
             <Tile
                 label={t('Dashboard:Summary:DueThisPeriod', 'Bu dönem teslim')}
                 value={data.dueThisPeriod}

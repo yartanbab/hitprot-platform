@@ -528,7 +528,7 @@ function Nt(t) {
 }
 function wt({ filter: t }) {
   const { data: a, isLoading: n, isError: r, refetch: o } = bt(t);
-  return n ? /* @__PURE__ */ e.jsx("div", { className: "grid grid-cols-5 gap-3.5 mobile:grid-cols-2", children: Array.from({ length: 5 }, (c, l) => /* @__PURE__ */ e.jsxs("div", { className: "rounded-card shadow-card bg-surface-base border border-default p-4", children: [
+  return n ? /* @__PURE__ */ e.jsx("div", { className: "grid grid-cols-5 gap-2.5 mobile:grid-cols-2", children: Array.from({ length: 5 }, (c, l) => /* @__PURE__ */ e.jsxs("div", { className: "rounded-card shadow-card bg-surface-base border border-default p-4", children: [
     /* @__PURE__ */ e.jsx(C, { height: 14, className: "w-2/3 mb-2" }),
     /* @__PURE__ */ e.jsx(C, { height: 28, className: "w-1/2" })
   ] }, l)) }) : r || !a ? /* @__PURE__ */ e.jsxs("div", { className: "rounded-card shadow-card bg-surface-base border border-default p-4 flex items-center justify-between gap-3", children: [
@@ -538,7 +538,7 @@ function wt({ filter: t }) {
     /* lt-1080 ve mobile ikisi de max-width → Tailwind bunları azalan sırada
        yazar, dar ekranda mobile kazanır. `tablet:` KULLANILMAZ: o min-width'tir,
        1440'ta da tetiklenirdi. */
-    /* @__PURE__ */ e.jsxs("div", { className: "grid grid-cols-5 gap-3.5 lt-1080:grid-cols-3 mobile:grid-cols-2", children: [
+    /* @__PURE__ */ e.jsxs("div", { className: "grid grid-cols-5 gap-2.5 lt-1080:grid-cols-3 mobile:grid-cols-2", children: [
       /* @__PURE__ */ e.jsx(
         K,
         {
@@ -1155,7 +1155,7 @@ const O = [
   "delivery-heatmap": { component: _t, titleKey: "Dashboard:Heatmap:Title", fallback: "Teslim yoğunluğu", w: 4, h: 6, minW: 3, minH: 4 },
   "project-phases": { component: qt, titleKey: "Dashboard:Phases:Title", fallback: "Proje fazları", w: 4, h: 6, minW: 3, minH: 4 },
   "statistics-band": { component: zt, titleKey: "Dashboard:Statistics:Title", fallback: "İstatistikler", w: 12, h: 6, minW: 6, minH: 4 }
-}, Qt = { desktop: 1200, tablet: 768, mobile: 0 }, Yt = { desktop: 12, tablet: 8, mobile: 1 }, Xt = 64, Zt = [12, 12], De = "apya-dashboard-view";
+}, Qt = { desktop: 1200, tablet: 768, mobile: 0 }, Yt = { desktop: 12, tablet: 8, mobile: 1 }, Xt = 64, Zt = [10, 10], De = "apya-dashboard-view";
 function Jt() {
   try {
     const t = window.localStorage.getItem(De);
@@ -1339,7 +1339,7 @@ function ia() {
         isSaving: g.isPending
       }
     ),
-    /* @__PURE__ */ e.jsxs("main", { className: "px-6 pt-5 pb-6 mobile:px-3", children: [
+    /* @__PURE__ */ e.jsxs("main", { className: "px-4 pt-4 pb-4 mobile:px-3", children: [
       /* @__PURE__ */ e.jsx(
         ra,
         {
@@ -1404,7 +1404,7 @@ function ia() {
 }
 function oa({ viewKey: t, onViewChange: a, range: n, onRangeChange: r, editMode: o, onToggleEdit: c, onOpenCatalog: l }) {
   const i = O.find((d) => d.key === t) ?? O[0];
-  return /* @__PURE__ */ e.jsxs("header", { className: "px-6 pt-[18px] pb-4 bg-surface-base border-b border-default flex items-end justify-between gap-5 mobile:px-3 mobile:flex-col mobile:items-stretch mobile:gap-3", children: [
+  return /* @__PURE__ */ e.jsxs("header", { className: "px-4 pt-4 pb-3 bg-surface-base border-b border-default flex items-end justify-between gap-5 mobile:px-3 mobile:flex-col mobile:items-stretch mobile:gap-3", children: [
     /* @__PURE__ */ e.jsxs("div", { className: "flex flex-col gap-2.5 min-w-0", children: [
       /* @__PURE__ */ e.jsxs("div", { className: "flex items-center gap-2.5", children: [
         /* @__PURE__ */ e.jsx("h1", { className: "text-[22px] font-semibold tracking-[-0.025em] text-text-primary m-0", children: s("Dashboard:Title", "Genel Bakış") }),
@@ -1466,7 +1466,7 @@ function ca({ onSave: t, isSaving: a }) {
   ] });
 }
 function da({ isDefault: t, onReset: a, onOpenCatalog: n, isResetting: r }) {
-  return /* @__PURE__ */ e.jsxs("div", { className: "flex items-center justify-between gap-3 mt-3.5 px-4 py-3 rounded-card border border-dashed border-default bg-surface-base mobile:flex-col mobile:items-stretch", children: [
+  return /* @__PURE__ */ e.jsxs("div", { className: "flex items-center justify-between gap-3 mt-2.5 px-4 py-3 rounded-card border border-dashed border-default bg-surface-base mobile:flex-col mobile:items-stretch", children: [
     /* @__PURE__ */ e.jsx("span", { className: "text-[12.5px] text-text-secondary", children: t ? s("Dashboard:Footer:DefaultLayout", "Bu görünüm rol varsayılanından geldi — kart ekleyip çıkarabilir, sürükleyip boyutlandırabilirsin.") : s("Dashboard:Footer:CustomLayout", "Bu görünümü sen düzenledin. Dilediğin an varsayılana dönebilirsin.") }),
     /* @__PURE__ */ e.jsxs("div", { className: "flex items-center gap-2 flex-none", children: [
       !t && /* @__PURE__ */ e.jsx(R, { size: "sm", variant: "secondary", onClick: a, disabled: r, children: s("Dashboard:Footer:Reset", "Varsayılana dön") }),

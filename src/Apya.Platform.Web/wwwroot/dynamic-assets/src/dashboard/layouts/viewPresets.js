@@ -46,7 +46,9 @@ export const CARD_REGISTRY = {
 export const GRID_BREAKPOINTS = { desktop: 1200, tablet: 768, mobile: 0 };
 export const GRID_COLS = { desktop: 12, tablet: 8, mobile: 1 };
 export const GRID_ROW_HEIGHT = 64;
-export const GRID_MARGIN = [12, 12];
+/* Kart ↔ kart boşluğu, başlık → kart boşluğundan (16px) bilinçli olarak DAHA DAR:
+   kartlar tek bir blok gibi okunsun, sayfa başlığı onlardan ayrışsın. */
+export const GRID_MARGIN = [10, 10];
 
 const VIEW_STORAGE_KEY = 'apya-dashboard-view';
 
