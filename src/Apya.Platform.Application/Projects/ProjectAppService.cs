@@ -353,6 +353,26 @@ public class ProjectAppService :
         var totalTasks = projectTasks.Count;
         var completedTasks = projectTasks.Count(t => t.Status == Apya.Platform.Tasks.TaskStatus.Done);
         dto.ProgressPercent = totalTasks > 0 ? (int)Math.Round((double)completedTasks / totalTasks * 100) : 0;
+        dto.TaskCount = totalTasks;
+        dto.CompletedTaskCount = completedTasks;
+
+        // Gecikme/son tarih metrikleri — Projeler listesindeki risk kenarı, gecikme
+        // rozeti ve "sonraki <tarih>" metni tek yerden beslensin diye burada türetilir.
+        // İptal edilen görev ne gecikir ne de sıradaki son tarihi belirler.
+        var openTasks = projectTasks
+            .Where(t => t.Status != Apya.Platform.Tasks.TaskStatus.Done
+                     && t.Status != Apya.Platform.Tasks.TaskStatus.Cancelled)
+            .ToList();
+        var overdue = openTasks.Where(t => t.DueDate.HasValue && t.DueDate.Value < now).ToList();
+        dto.OverdueTaskCount = overdue.Count;
+        dto.OldestOverdueDays = overdue.Count > 0
+            ? (int)(now.Date - overdue.Min(t => t.DueDate!.Value).Date).TotalDays
+            : null;
+        dto.NextDueDate = openTasks
+            .Where(t => t.DueDate.HasValue && t.DueDate.Value >= now)
+            .Select(t => t.DueDate)
+            .DefaultIfEmpty(null)
+            .Min();
 
         var assignees = projectTasks
             .Where(t => t.AssigneeId.HasValue)
@@ -363,8 +383,11 @@ public class ProjectAppService :
         dto.AssigneeInitials = assignees.Take(5).Select(ToInitials).ToList();
 
         dto.RiskColor = risk.color;
+        // KIRPMA YOK: süresi geçmiş proje negatif döner. Projeler listesinin risk
+        // kuralı "daysLeft < 0 → yüksek risk" bu işarete dayanıyor; Math.Max(0, …)
+        // ile kırpıldığında geçmiş bitiş tarihi "bugün bitiyor"dan ayırt edilemiyordu.
         dto.DaysRemaining = (dto.StartDate.HasValue && dto.EndDate.HasValue)
-            ? Math.Max(0, (int)(dto.EndDate.Value - now).TotalDays)
+            ? (int)Math.Floor((dto.EndDate.Value.Date - now.Date).TotalDays)
             : null;
 
         dto.DisplayStatus = (totalTasks == 0 || time.notStarted)

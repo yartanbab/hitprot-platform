@@ -48,6 +48,25 @@ public class ProjectDto : AuditedEntityDto<Guid>
     public int AssigneeCount { get; set; }
     /// <summary>İlk birkaç atananın baş harfleri (facepile daireleri için, en fazla 5).</summary>
     public List<string> AssigneeInitials { get; set; } = new();
-    /// <summary>Bitişe kalan gün (StartDate+EndDate ikisi de doluysa); yoksa null.</summary>
+    /// <summary>Bitişe kalan gün (StartDate+EndDate ikisi de doluysa); yoksa null.
+    /// NEGATİF OLABİLİR — süresi geçmiş proje "-3" döner. Projeler listesindeki risk
+    /// kuralı (daysLeft &lt; 0 → yüksek risk) bu işarete dayanır, sıfıra kırpılmaz.</summary>
     public int? DaysRemaining { get; set; }
+
+    /// <summary>Projedeki toplam görev sayısı — ilerleme etiketindeki payda ("31/76").</summary>
+    public int TaskCount { get; set; }
+
+    /// <summary>Tamamlanmış (Done) görev sayısı — ilerleme etiketindeki pay.</summary>
+    public int CompletedTaskCount { get; set; }
+
+    /// <summary>Son tarihi geçtiği hâlde tamamlanmamış görev sayısı. Risk kuralının
+    /// ve liste/kart gecikme rozetinin girdisi.</summary>
+    public int OverdueTaskCount { get; set; }
+
+    /// <summary>En eski gecikmiş görevin kaç gündür geciktiği; gecikme yoksa null.</summary>
+    public int? OldestOverdueDays { get; set; }
+
+    /// <summary>Tamamlanmamış görevler arasındaki en yakın son tarih; yoksa null.
+    /// Gecikme olmayan kartta "sonraki 20.09" metnini besler.</summary>
+    public DateTime? NextDueDate { get; set; }
 }
