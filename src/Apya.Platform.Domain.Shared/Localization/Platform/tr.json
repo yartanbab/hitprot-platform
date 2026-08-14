@@ -57,7 +57,6 @@
         "Menu:SystemHealth": "Sistem Sağlığı",
         "Menu:LoginScreen": "Giriş Ekranı",
         "Menu:GeneralSettings": "Genel Ayarlar",
-
         "Feedback:OpenLink": "Geri Bildirim",
         "Feedback:PageContextLink": "Bu sayfa hakkında geri bildirim ver",
         "Feedback:SectionContextLink": "Bu bölümle ilgili geri bildirim ver",
@@ -139,8 +138,7 @@
         "Feedback:Status.Duplicate": "Mükerrer",
         "Feedback:Status.OutOfScope": "Kapsam Dışı",
         "Feedback:Status.Archived": "Arşivlendi",
-
-        "Permission:Ai": "Yapay Zeka",
+        "Permission:Ai": "Yapay Zeka Özellikleri",
         "Permission:Ai.Dashboard": "AI Gösterge Paneli",
         "Permission:Ai.Prompts": "Prompt Yönetimi",
         "Permission:Ai.Prompts.View": "Promptları Görüntüleme",
@@ -160,16 +158,13 @@
         "Permission:Ai.Providers": "AI Sağlayıcılar",
         "Permission:Ai.Providers.Manage": "Sağlayıcı Yönetimi",
         "Permission:Ai.Reports": "AI Raporları",
-
         "Permission:Platform": "Platform Yönetimi",
-
         "Permission:Group:Work": "Proje & Görev Yönetimi",
         "Permission:Group:Grants": "Hibe Yönetimi",
         "Permission:Group:Finance": "Finans & Muhasebe",
         "Permission:Group:Accounting": "Cari & Kasa",
         "Permission:Group:Content": "İçerik & Doküman",
         "Permission:Group:System": "Sistem & Entegrasyon",
-
         "Permission:Projects": "Projeler",
         "Permission:Projects.Create": "Proje Oluşturma",
         "Permission:Projects.Edit": "Proje Düzenleme",
@@ -177,67 +172,54 @@
         "Permission:Projects.ViewBudget": "Bütçe Görüntüleme",
         "Permission:Projects.ManageTeam": "Ekip Yönetimi",
         "Permission:Projects.UseAiFeatures": "AI Özelliklerini Kullanma",
-
         "Permission:Tasks": "Görevler",
         "Permission:Tasks.Create": "Görev Oluşturma",
         "Permission:Tasks.Edit": "Görev Düzenleme",
         "Permission:Tasks.Delete": "Görev Silme",
         "Permission:Tasks.Assign": "Görev Atama",
         "Permission:Tasks.ChangeStatus": "Durum Değiştirme",
-
         "Permission:Grants": "Hibe Programları",
         "Permission:Grants.Create": "Hibe Oluşturma",
         "Permission:Grants.Edit": "Hibe Düzenleme",
         "Permission:Grants.Delete": "Hibe Silme",
-
         "Permission:Incomes": "Gelirler",
         "Permission:Incomes.Create": "Gelir Oluşturma",
         "Permission:Incomes.Edit": "Gelir Düzenleme",
         "Permission:Incomes.Delete": "Gelir Silme",
-
         "Permission:Expenses": "Giderler",
         "Permission:Expenses.Create": "Gider Oluşturma",
         "Permission:Expenses.Edit": "Gider Düzenleme",
         "Permission:Expenses.Delete": "Gider Silme",
-
         "Permission:Invoices": "Faturalar",
         "Permission:Invoices.Create": "Fatura Oluşturma",
         "Permission:Invoices.Edit": "Fatura Düzenleme",
         "Permission:Invoices.Delete": "Fatura Silme",
-
         "Permission:ExchangeRates": "Kurlar",
         "Permission:ExchangeRates.Create": "Kur Oluşturma",
         "Permission:ExchangeRates.Edit": "Kur Düzenleme",
         "Permission:ExchangeRates.Delete": "Kur Silme",
-
         "Permission:FxRevaluations": "Yıl Sonu Değerleme",
         "Permission:FxRevaluations.Run": "Değerleme Çalıştırma",
         "Permission:FxRevaluations.Delete": "Değerleme Silme",
-
         "Permission:Reports": "Raporlar",
         "Permission:Reports.TrialBalance": "Mizan Raporu",
-
         "Permission:Customers": "Cariler",
         "Permission:Customers.Create": "Cari Oluşturma",
         "Permission:Customers.Edit": "Cari Düzenleme",
         "Permission:Customers.Delete": "Cari Silme",
-
         "Permission:CashAccounts": "Kasalar",
         "Permission:CashAccounts.Create": "Kasa Oluşturma",
         "Permission:CashAccounts.Edit": "Kasa Düzenleme",
         "Permission:CashAccounts.Delete": "Kasa Silme",
-
         "Permission:CashMovements": "Kasa Hareketleri",
         "Permission:CashMovements.Create": "Hareket Oluşturma",
         "Permission:CashMovements.Edit": "Hareket Düzenleme",
         "Permission:CashMovements.Delete": "Hareket Silme",
-
         "Permission:Documents": "Doküman & Wiki",
         "Permission:Documents.Create": "Doküman Oluşturma",
         "Permission:Documents.Edit": "Doküman Düzenleme",
         "Permission:Documents.Delete": "Doküman Silme",
         "Permission:Documents.ViewAccessLog": "Erişim Geçmişini Görüntüleme",
-
         "Permission:DynamicAssets": "Şablonlar & Formlar",
         "Permission:DynamicAssets.Create": "Şablon/Form Oluşturma",
         "Permission:DynamicAssets.Edit": "Şablon/Form Düzenleme",
@@ -246,30 +228,22 @@
         "Permission:DynamicAssets.ViewResponses": "Yanıtları Görüntüleme",
         "Permission:DynamicAssets.Export": "Dışa Aktarma",
         "Permission:DynamicAssets.ManageCategories": "Kategori Yönetimi",
-
         "Permission:Notifications": "Bildirimler",
         "Permission:Notifications.MarkRead": "Okundu Olarak İşaretleme",
         "Permission:Notifications.Delete": "Bildirim Silme",
-
         "Permission:Calendars": "Takvim Entegrasyonu",
         "Permission:Calendars.Connect": "Hesap Bağlama",
-
         "Permission:TenantSettings": "Tenant Ayarları",
         "Permission:TenantSettings.ManageAi": "AI Ayarlarını Yönetme",
-
         "Permission:Feedbacks": "Geri Bildirimler",
         "Permission:Feedbacks.Respond": "Durum/Öncelik/Cevap Yönetimi",
         "Permission:Feedbacks.Delete": "Geri Bildirim Silme",
         "Permission:Feedbacks.Export": "Excel'e Aktarma",
         "Permission:Feedbacks.Assign": "Sorumlu Atama",
         "Permission:Feedbacks.ManageSettings": "Ayarları Yönetme",
-
         "Permission:LoginScreen": "Giriş Ekranı Ayarları",
-
         "Permission:SystemHealth": "Sistem Sağlığı",
         "Permission:SystemHealth.Resolve": "İstemci Hatasını Çözüldü İşaretleme",
-
-        "Permission:Ai": "Yapay Zeka Özellikleri",
         "Permission:Ai.Generation": "İçerik Üretimi",
         "Permission:Ai.Generation.Request": "Üretim Talebi",
         "Permission:Ai.Drafts": "AI Taslakları",
@@ -278,7 +252,6 @@
         "Permission:Ai.Drafts.Approve": "Taslak Onaylama",
         "Permission:Ai.TenantSettings": "AI Ayarları",
         "Permission:Ai.TenantSettings.Manage": "AI Ayarlarını Yönetme",
-
         "Feature:Platform": "Platform Özellikleri",
         "Feature:Platform:AiAssist": "AI Asistan",
         "Feature:Platform:AiAssist:Description": "AI tabanlı görev üretimi, öneriler ve otomasyon özelliklerini bu tenant için aktif eder.",
@@ -295,18 +268,15 @@
         "Feature:Platform:MaxProjects": "Maksimum Proje Sayısı",
         "Platform:Error:MaxProjectsReached": "Paket sınırınıza ulaştınız: en fazla {Max} proje oluşturabilirsiniz. Daha fazlası için paketinizi yükseltin.",
         "Platform:Error:MaxUsersReached": "Paket sınırınıza ulaştınız: en fazla {Max} kullanıcı oluşturabilirsiniz. Daha fazlası için paketinizi yükseltin.",
-
         "Connection:Reconnecting": "Bağlantı geçici olarak kesildi, yeniden bağlanıyor...",
         "Connection:Reconnected": "Bağlantı geri sağlandı.",
         "Connection:Lost": "Sunucu bağlantısı koptu. Lütfen sayfayı yenileyin.",
         "Connection:Title": "Bağlantı",
         "Connection:ErrorTitle": "Bağlantı Hatası",
-
         "Common:All": "Tümü",
         "Common:Everyone": "Herkes",
         "Common:Filter": "Filtrele",
         "Common:Clear": "Temizle",
-
         "Tasks:BoardTitle": "Görev Panosu",
         "Tasks:Filter:Assignee": "Sorumlu Kişi",
         "Tasks:Filter:Status": "Durum",
@@ -378,7 +348,6 @@
         "Tasks:Field:Unassigned": "-- Atanmadı --",
         "Tasks:Field:Private": "Bu görevi Gizli (Private) işaretle",
         "Tasks:Field:PrivateHint": "Gizli görevler, profilinize başkası (Admin vb.) girdiğinde görünmez.",
-
         "Menu:Grants": "Hibeler",
         "Notify:Grant:Created": "Hibe programı oluşturuldu.",
         "Notify:Grant:Updated": "Hibe programı güncellendi.",
@@ -390,7 +359,6 @@
         "Notify:Invoice:ItemRequired": "En az bir fatura kalemi gereklidir.",
         "DataTable:Invoice:Empty": "Henüz fatura yok. Yeni bir fatura oluşturmak için sağ üstteki butonu kullanın.",
         "DataTable:Invoice:Loading": "Faturalar yükleniyor...",
-
         "Platform:Task:TitleRequired": "Görev başlığı boş bırakılamaz.",
         "Platform:Task:ViewPrivateDenied": "Bu gizli görevi görüntüleme yetkiniz yok. Görevi yalnızca oluşturanlar ve atananlar görebilir.",
         "Platform:Task:ViewImpersonationDenied": "Bu gizli görevi destek yetkisiyle (Impersonation) görüntüleyemezsiniz.",
@@ -409,51 +377,39 @@
         "Menu:AiCenter:Reports": "AI Raporları",
         "Permission:Ai.Reports.View": "AI Raporlarını Görüntüle",
         "Permission:Ai.Reports.Export": "AI Raporlarını Dışa Aktar",
-
         "Platform:Error:TaxNumberAlreadyExists": "Bu vergi numarası başka bir müşteriye ait. Lütfen farklı bir vergi numarası girin (ya da boş bırakın).",
-
         "Platform:Customer:NameRequired": "Cari adı boş bırakılamaz.",
         "Platform:Customer:FieldTooLong": "Girilen değer izin verilen karakter sınırını aşıyor.",
-
         "Platform:CustomerLedger:CustomerRequired": "Cari hareketi için bir cari seçilmelidir.",
         "Platform:CustomerLedger:AmountInvalid": "Geçersiz tutar. Tutar sıfırdan farklı olmalıdır.",
-
         "Platform:Income:TitleRequired": "Gelir başlığı boş bırakılamaz.",
         "Platform:Income:FieldTooLong": "Girilen değer izin verilen karakter sınırını aşıyor.",
         "Platform:Income:AmountInvalid": "Geçersiz tutar. Gelir tutarı sıfırdan büyük olmalıdır.",
-
         "Platform:CashAccount:NameRequired": "Kasa adı boş bırakılamaz.",
         "Platform:CashAccount:FieldTooLong": "Girilen değer izin verilen karakter sınırını aşıyor.",
         "Platform:CashAccount:CurrencyInvalid": "Geçersiz para birimi. Lütfen geçerli bir para birimi seçin (örn. TRY, USD, EUR).",
-
         "Platform:ExchangeRate:CurrencyInvalid": "Geçersiz para birimi.",
         "Platform:ExchangeRate:SameCurrency": "Kaynak ve hedef para birimi aynı olamaz.",
         "Platform:ExchangeRate:RateInvalid": "Geçersiz kur değeri. Kur sıfırdan büyük olmalıdır.",
-
         "Platform:CashMovement:AccountRequired": "Kasa hareketi için bir kasa seçilmelidir.",
         "Platform:CashMovement:AmountInvalid": "Geçersiz tutar. Tutar sıfırdan farklı olmalıdır.",
         "Platform:CashMovement:TransferSameAccount": "Gönderen ve alıcı kasa aynı olamaz.",
         "Platform:CashMovement:TransferAccountInactive": "Pasif bir kasaya/kasadan transfer yapılamaz.",
         "Platform:CashMovement:TransferRateMissing": "Bu iki para birimi arasında güncel bir döviz kuru bulunamadı. Lütfen Kur Değerleme ekranından ilgili kuru tanımlayın.",
-
         "Platform:Expense:TitleRequired": "Gider başlığı boş bırakılamaz.",
         "Platform:Expense:FieldTooLong": "Girilen değer izin verilen karakter sınırını aşıyor.",
         "Platform:Expense:AmountInvalid": "Geçersiz tutar. Gider tutarı sıfırdan büyük olmalıdır.",
         "Platform:Expense:CashAccountRequired": "Gider için bir kasa seçilmelidir.",
-
         "Platform:Invoice:NumberRequired": "Fatura numarası boş bırakılamaz.",
         "Platform:Invoice:NotEditable": "Bu fatura artık düzenlenemez (ödeme alınmış veya kapatılmış olabilir).",
         "Platform:Invoice:TaxRateInvalid": "Geçersiz KDV oranı. Oran 0 ile 100 arasında olmalıdır.",
         "Platform:Invoice:CurrencyInvalid": "Geçersiz para birimi.",
-
         "Platform:Payment:ExchangeRateMissing": "Tahsilat tarihi için kur bulunamadı. Lütfen ilgili kuru tanımlayın.",
         "Platform:FxRevaluation:RateMissing": "Değerleme tarihi için kur bulunamadı. Lütfen ilgili kuru tanımlayın.",
-
         "Platform:Project:NameRequired": "Proje adı boş bırakılamaz.",
         "Platform:Project:BudgetInvalid": "Geçersiz bütçe. Bütçe negatif olamaz.",
         "Platform:Project:ScheduleInvalid": "Geçersiz tarih aralığı. Bitiş tarihi başlangıç tarihinden önce olamaz.",
         "Platform:Grant:CallScheduleInvalid": "Geçersiz tarih aralığı. Son başvuru tarihi açılış tarihinden önce olamaz.",
-
         "Platform:DynamicAssets:SlugAlreadyExists": "Bu kısa ad (slug) zaten kullanımda. Lütfen farklı bir slug girin.",
         "Platform:DynamicAssets:BlockNotFound": "İlgili içerik bloğu bulunamadı.",
         "Platform:DynamicAssets:TitleRequired": "Başlık boş bırakılamaz.",
@@ -463,7 +419,6 @@
         "Platform:DynamicAssets:ResponseCommentNotFound": "İlgili yanıt yorumu bulunamadı.",
         "Platform:DynamicAssets:FormNotFound": "Form bulunamadı.",
         "Platform:DynamicAssets:FormCategoryNameRequired": "Kategori adı boş bırakılamaz.",
-
         "Platform:Ai:ProviderUnavailable": "Yapay zeka sağlayıcısına şu anda ulaşılamıyor. Lütfen daha sonra tekrar deneyin.",
         "Platform:Ai:ResponseInvalid": "Yapay zeka geçersiz bir yanıt döndürdü. Lütfen tekrar deneyin.",
         "Platform:Ai:QuotaExceeded": "Yapay zeka kullanım kotanız doldu.",
@@ -473,14 +428,11 @@
         "Platform:Ai:PromptCategorySelfReference": "Bir kategori kendisinin alt kategorisi olamaz.",
         "Platform:Ai:EvaluationResultInvalidSchema": "Değerlendirme sonucu beklenen şemaya uymuyor.",
         "Platform:Ai:ProviderNotConfigured": "Yapay zeka sağlayıcısı yapılandırılmamış. Lütfen AI Sağlayıcılar ekranından yapılandırın.",
-
         "Platform:Task:CommentRequired": "Yorum içeriği boş bırakılamaz.",
-
         "Platform:Accounting:Account:CodeRequired": "Hesap kodu boş bırakılamaz.",
         "Platform:Accounting:Account:NameRequired": "Hesap adı boş bırakılamaz.",
         "Platform:Accounting:Account:Inactive": "Bu hesap pasif durumda; işlem yapılamaz.",
         "Platform:Accounting:Account:ParentSelfReference": "Bir hesap kendi üst hesabı olamaz.",
-
         "Platform:Accounting:JournalEntry:RequiresAtLeastTwoLines": "Yevmiye kaydı en az iki satır içermelidir.",
         "Platform:Accounting:JournalEntry:TooManyLines": "Yevmiye kaydı izin verilen satır sayısını aşıyor.",
         "Platform:Accounting:JournalEntry:NotBalanced": "Yevmiye kaydı dengeli değil. Borç ve alacak toplamları eşit olmalıdır.",
@@ -495,20 +447,16 @@
         "Platform:Accounting:JournalEntry:ReversalTargetMissing": "Ters kayıt için hedef yevmiye kaydı bulunamadı.",
         "Platform:Accounting:JournalEntry:ReversalAlreadyExists": "Bu kayıt için zaten bir ters kayıt mevcut.",
         "Platform:Accounting:JournalEntry:ReversalSelfReference": "Bir kayıt kendisinin ters kaydı olamaz.",
-
         "Platform:Accounting:Money:CurrencyInvalid": "Geçersiz para birimi.",
         "Platform:Accounting:Money:CurrencyMismatch": "Para birimleri uyuşmuyor; işlemler aynı para biriminde olmalıdır.",
         "Platform:Accounting:Money:AmountInvalidPrecision": "Tutarın ondalık hassasiyeti geçersiz.",
-
         "Platform:Accounting:Outbox:InvalidTransition": "Geçersiz durum geçişi.",
-
         "Platform:Feedback:SubjectRequired": "Konu boş bırakılamaz.",
         "Platform:Feedback:BodyRequired": "Açıklama boş bırakılamaz.",
         "Platform:Feedback:CommentRequired": "Yorum metni boş bırakılamaz.",
         "Platform:Feedback:RateLimitExceeded": "Kısa sürede çok fazla geri bildirim gönderdiniz. Lütfen birkaç dakika sonra tekrar deneyin.",
         "Platform:Feedback:InvalidStatusTransition": "Bu durum geçişi geçerli değil.",
         "Platform:Telemetry:Disabled": "Telemetri şu anda devre dışı.",
-
         "Setting:Shell.Pins": "Sabitlenen Menü Öğeleri",
         "Setting:Shell.Pins.Description": "Kenar çubuğunun en üstünde sabit duran menü öğeleri. Kullanıcıya özeldir, cihazlar arasında taşınır.",
         "Setting:TaskDetail.Ui": "Görev Detay Görünümü",
@@ -550,7 +498,6 @@
         "Setting:Feedback.AllowAnonymous": "Anonim Gönderime İzin Ver",
         "Setting:Telemetry.RetentionDays": "Telemetri Saklama Süresi (gün)",
         "Setting:Telemetry.RetentionDays.Description": "Denetim günlüğü ve istemci hata kayıtları bu süreden sonra otomatik silinir. Geri bildirimler bu süreden etkilenmez.",
-
         "Common:LoadFailed": "Yüklenemedi",
         "Common:FetchError": "Veri alınırken bir hata oluştu.",
         "Common:Retry": "Tekrar dene",
@@ -817,6 +764,8 @@
         "DesignSystem:Table": "Tablo",
         "DesignSystem:Table:Note": "Satır yüksekliği --row-h ile yoğunluğa bağlıdır; header'daki yoğunluk düğmesini deneyin.",
         "DesignSystem:Status": "Durum",
-        "DesignSystem:Sample": "Örnek metin"
+        "DesignSystem:Sample": "Örnek metin",
+        "Setting:Shell.SavedViews": "Kayıtlı Görünümler",
+        "Setting:Shell.SavedViews.Description": "Ekranların filtre kombinasyonlarını adlandırıp kaydeder. Kullanıcıya özeldir, cihazlar arasında taşınır."
     }
 }

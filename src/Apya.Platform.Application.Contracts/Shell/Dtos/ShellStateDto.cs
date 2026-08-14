@@ -24,6 +24,27 @@ public class ShellStateDto
 
     /// <summary>Üst bardaki "+ Yeni" menüsünün hangi satırları basacağı.</summary>
     public ShellCanDto Can { get; set; } = new();
+
+    /// <summary>Kullanıcının kayıtlı görünümleri (üst bardaki görünüm çipi).</summary>
+    public List<ShellSavedViewDto> SavedViews { get; set; } = new();
+}
+
+/// <summary>
+/// Kayıtlı görünüm — bir ekranın FİLTRE URL'İNİN adlandırılmış anlık görüntüsü.
+/// Konsol filtreleri zaten URL'e yazıldığı ve açılışta oradan okunduğu için ayrı
+/// bir şema (tablo) gerekmiyor: uygulamak = o sorguyla ekrana gitmek, "kirli"
+/// olmak = mevcut sorgunun kayıtlı olandan farklı olması.
+/// </summary>
+public class ShellSavedViewDto
+{
+    /// <summary>Kullanıcının verdiği ad.</summary>
+    public string Name { get; set; } = string.Empty;
+
+    /// <summary>Ait olduğu ekranın yolu (örn. "/Tasks") — çip yalnız orada çıkar.</summary>
+    public string Screen { get; set; } = string.Empty;
+
+    /// <summary>Filtre sorgusu, "?" olmadan (örn. "gecikmis=1&amp;durum=2").</summary>
+    public string Query { get; set; } = string.Empty;
 }
 
 /// <summary>
@@ -36,6 +57,14 @@ public class ShellCanDto
     public bool CreateTask { get; set; }
     public bool CreateProject { get; set; }
     public bool CreateGrant { get; set; }
+
+    /// <summary>
+    /// Üst bardaki "Kullanıcı Ekle" düğmesi. Handoff'ta bu düğme "Davet et"
+    /// diye geçiyor ama projede davet akışı (e-posta + token) YOK; düğme ABP
+    /// Identity'nin kullanıcı oluşturma modalını açıyor, o yüzden etiketi de
+    /// gerçekte yaptığı işi söylüyor (kullanıcı kararı 2026-08-14).
+    /// </summary>
+    public bool CreateUser { get; set; }
 }
 
 public class ShellBadgesDto
