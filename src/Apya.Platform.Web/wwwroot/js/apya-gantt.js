@@ -16,13 +16,22 @@
 
     var apya = window.apya = window.apya || {};
 
+    // Metinler tr.json/en.json'da (CLAUDE.md kuralı). Repoda yerleşik desen:
+    // abp.localization.getResource('Platform') — Invoices/Projects sayfaları ve
+    // notification-bell.js de bunu kullanıyor. Parametreli anahtarlar {0}/{1} alır.
+    var l = (typeof abp !== 'undefined' && abp.localization)
+        ? abp.localization.getResource('Platform')
+        : function (k) { return k; };
+
     var LABEL_W = 330;   // etiket kolonu (handoff ölçüsü)
     var ROW_H = 36;
+    // label: fonksiyon — kaynak, modül yüklenirken değil ÇİZİM anında okunur
+    // (dil değişimi sonrası yeniden çizimde doğru metin gelsin).
     var ZOOMS = {
-        gun:    { pxPerDay: 34, step: 1,  label: 'Gün' },
-        hafta:  { pxPerDay: 11, step: 7,  label: 'Hafta' },
-        ay:     { pxPerDay: 3.6, step: 7, label: 'Ay' },
-        ceyrek: { pxPerDay: 1.5, step: 30, label: 'Çeyrek' }
+        gun:    { pxPerDay: 34, step: 1,  label: function () { return l('Tasks:Timeline:Zoom:Day'); } },
+        hafta:  { pxPerDay: 11, step: 7,  label: function () { return l('Tasks:Timeline:Zoom:Week'); } },
+        ay:     { pxPerDay: 3.6, step: 7, label: function () { return l('Tasks:Timeline:Zoom:Month'); } },
+        ceyrek: { pxPerDay: 1.5, step: 30, label: function () { return l('Tasks:Timeline:Zoom:Quarter'); } }
     };
     var CAPACITY_THRESHOLD = 5; // eş zamanlı aktif görev (handoff)
 
@@ -131,14 +140,18 @@
         }
 
         // ---------- gruplama ----------
-        var STATUS_NAMES = { 0: 'İptal', 1: 'Yapılacak', 2: 'Sürüyor', 3: 'Testte', 4: 'Tamamlandı' };
+        // Durum adları zaten Tasks:Status:* anahtarlarında — yenisini uydurmuyoruz.
+        var STATUS_NAMES = {
+            0: l('Tasks:Status:Cancelled'), 1: l('Tasks:Status:Todo'), 2: l('Tasks:Status:InProgress'),
+            3: l('Tasks:Status:InReview'), 4: l('Tasks:Status:Done')
+        };
         function lanes() {
             if (state.group === 'none') { return [{ title: null, rows: sortRows(state.tasks) }]; }
             var map = {};
             state.tasks.forEach(function (t) {
-                var k = state.group === 'assignee' ? (t.assigneeName || 'Atanmamış')
-                      : state.group === 'project'  ? (t.projectName || 'Projesiz')
-                      : (STATUS_NAMES[t.status] || 'Bilinmiyor');
+                var k = state.group === 'assignee' ? (t.assigneeName || l('Tasks:Timeline:Unassigned'))
+                      : state.group === 'project'  ? (t.projectName || l('Tasks:Timeline:NoProject'))
+                      : (STATUS_NAMES[t.status] || l('Tasks:Timeline:UnknownStatus'));
                 (map[k] = map[k] || []).push(t);
             });
             return Object.keys(map).sort().map(function (k) {
@@ -203,7 +216,7 @@
                 cur = cur.clone().startOf('quarter');
                 while (cur.isSameOrBefore(w.to)) {
                     var nq = cur.clone().add(1, 'quarter');
-                    out.push({ x: xOf(w, cur), w: nq.diff(cur, 'days') * pxPerDay(), label: cur.format('YYYY') + ' Ç' + cur.quarter() });
+                    out.push({ x: xOf(w, cur), w: nq.diff(cur, 'days') * pxPerDay(), label: cur.format('YYYY') + ' ' + l('Tasks:Timeline:QuarterPrefix') + cur.quarter() });
                     cur = nq;
                 }
             }
@@ -217,7 +230,7 @@
             var people = {};
             state.tasks.forEach(function (t) {
                 if (isClosed(t)) { return; }
-                var name = t.assigneeName || 'Atanmamış';
+                var name = t.assigneeName || l('Tasks:Timeline:Unassigned');
                 var arr = people[name] = people[name] || new Array(total).fill(0);
                 var s = Math.max(0, Math.floor(taskStart(t).diff(w.from, 'days') / buckets));
                 var e = Math.min(total - 1, Math.floor(taskEnd(t).diff(w.from, 'days') / buckets));
@@ -234,11 +247,11 @@
 
         function render() {
             if (state.loading) {
-                $mount.html('<div class="apya-gantt-empty">Zaman çizelgesi yükleniyor…</div>');
+                $mount.html('<div class="apya-gantt-empty">' + l('Tasks:Timeline:Loading') + '</div>');
                 return;
             }
             if (!state.tasks.length) {
-                $mount.html('<div class="apya-gantt-empty">Bu filtrede zaman çizelgesine çizilecek görev yok.</div>');
+                $mount.html('<div class="apya-gantt-empty">' + l('Tasks:Timeline:NoTasks') + '</div>');
                 return;
             }
 
@@ -254,51 +267,51 @@
 
             // araç çubuğu
             html += '<div class="apya-gantt-toolbar">' +
-                '<span class="apya-console-filter-label">Zoom</span>' +
+                '<span class="apya-console-filter-label">' + l('Tasks:Timeline:Zoom') + '</span>' +
                 Object.keys(ZOOMS).map(function (z) {
                     return '<button type="button" class="apya-gantt-seg" data-zoom="' + z + '" aria-pressed="' +
-                        (state.zoom === z) + '">' + ZOOMS[z].label + '</button>';
+                        (state.zoom === z) + '">' + ZOOMS[z].label() + '</button>';
                 }).join('') +
                 '<span class="apya-gantt-sep"></span>' +
-                '<span class="apya-console-filter-label">Grupla</span>' +
+                '<span class="apya-console-filter-label">' + l('Tasks:Timeline:Group') + '</span>' +
                 // "Proje" çapraz-proje sayfada anlamlı; proje konsolunda tek proje
                 // olduğu için etkisiz kalır (tek şerit) ama zararsız.
-                [['none', 'Yok'], ['project', 'Proje'], ['assignee', 'Atanan'], ['status', 'Durum']].map(function (g) {
+                [['none', l('Tasks:Timeline:Group:None')], ['project', l('Tasks:Timeline:Group:Project')], ['assignee', l('Tasks:Timeline:Group:Assignee')], ['status', l('Tasks:Timeline:Group:Status')]].map(function (g) {
                     return '<button type="button" class="apya-gantt-seg" data-group="' + g[0] + '" aria-pressed="' +
                         (state.group === g[0]) + '">' + g[1] + '</button>';
                 }).join('') +
                 '<span class="apya-gantt-sep"></span>' +
                 '<button type="button" class="apya-gantt-seg" data-toggle="critical" aria-pressed="' + state.critical + '">' +
-                '<i class="fa fa-diagram-project me-1"></i>Kritik yol</button>' +
+                '<i class="fa fa-diagram-project me-1"></i>' + l('Tasks:Timeline:CriticalPath') + '</button>' +
                 '<button type="button" class="apya-gantt-seg" data-toggle="capacity" aria-pressed="' + state.capacity + '">' +
-                '<i class="fa fa-chart-simple me-1"></i>Kapasite</button>' +
+                '<i class="fa fa-chart-simple me-1"></i>' + l('Tasks:Timeline:Capacity') + '</button>' +
                 '<span class="apya-gantt-spacer"></span>' +
                 '<span class="apya-gantt-hint">' +
-                (canEdit ? 'Barı sürükle: tarihi ötele · sağ kenar: süreyi uzat' : 'Salt görüntüleme') +
+                (canEdit ? l('Tasks:Timeline:DragHint') : l('Tasks:Timeline:ReadOnly')) +
                 '</span></div>';
 
             // kaydedilmemiş değişiklik şeridi
             if (pendCount) {
                 html += '<div class="apya-gantt-pending"><div class="apya-gantt-pending-head">' +
                     '<i class="fa fa-clock-rotate-left"></i>' +
-                    '<strong>' + pendCount + ' görevde kaydedilmemiş tarih değişikliği</strong>' +
+                    '<strong>' + l('Tasks:Timeline:PendingCount', pendCount) + '</strong>' +
                     '<span class="apya-gantt-spacer"></span>' +
-                    '<button type="button" class="apya-gantt-btn" data-act="discard">Vazgeç</button>' +
-                    '<button type="button" class="apya-gantt-btn is-primary" data-act="save">Kaydet</button>' +
+                    '<button type="button" class="apya-gantt-btn" data-act="discard">' + l('Tasks:Timeline:Discard') + '</button>' +
+                    '<button type="button" class="apya-gantt-btn is-primary" data-act="save">' + l('Tasks:Timeline:Save') + '</button>' +
                     '</div>' + pendingList() + warnings() + '</div>';
             }
 
             html += '<div class="apya-gantt-scroll"><div class="apya-gantt-inner" style="width:' + (LABEL_W + cw) + 'px">';
 
             // eksen
-            html += '<div class="apya-gantt-axis"><div class="apya-gantt-axis-label">Görev / Alt görev</div>' +
+            html += '<div class="apya-gantt-axis"><div class="apya-gantt-axis-label">' + l('Tasks:Timeline:AxisLabel') + '</div>' +
                 '<div class="apya-gantt-axis-ticks" style="width:' + cw + 'px">';
             tks.forEach(function (t) {
                 html += '<div class="apya-gantt-tick' + (t.weekend ? ' is-weekend' : '') +
                     '" style="left:' + t.x + 'px;width:' + t.w + 'px">' + esc(t.label) + '</div>';
             });
             if (state.zoom !== 'gun') {
-                html += '<span class="apya-gantt-todaylabel" style="left:' + todayX + 'px">BUGÜN</span>';
+                html += '<span class="apya-gantt-todaylabel" style="left:' + todayX + 'px">' + l('Tasks:Timeline:Today') + '</span>';
             }
             html += '</div></div>';
 
@@ -308,7 +321,7 @@
                 if (lane.title) {
                     var over = lane.rows.filter(function (t) { return !isClosed(t); }).length;
                     html += '<div class="apya-gantt-lane"><span>' + esc(lane.title) + '</span>' +
-                        '<span class="apya-gantt-lane-meta">' + lane.rows.length + ' görev · ' + over + ' açık</span></div>';
+                        '<span class="apya-gantt-lane-meta">' + l('Tasks:Timeline:LaneMeta', lane.rows.length, over) + '</span></div>';
                 }
                 lane.rows.forEach(function (t) {
                     html += rowHtml(t, w, cw, crit, todayX, tks);
@@ -379,7 +392,7 @@
                 var p = byId[t.parentTaskId];
                 if (taskStart(t).isBefore(taskStart(p)) || taskEnd(t).isAfter(taskEnd(p))) {
                     out.push('<span class="apya-gantt-warn"><i class="fa fa-triangle-exclamation"></i>' +
-                        esc(t.title) + ' üst görevin aralığını aşıyor</span>');
+                        l('Tasks:Timeline:OverflowWarning', esc(t.title)) + '</span>');
                 }
             });
             return out.join('');
@@ -389,13 +402,13 @@
             var rows = capacityRows(w);
             if (!rows.length) { return ''; }
             var h = '<div class="apya-gantt-capacity"><div class="apya-gantt-capacity-head">' +
-                '<span class="apya-console-filter-label">Kapasite · eş zamanlı aktif görev · eşik ' + CAPACITY_THRESHOLD + '</span></div>';
+                '<span class="apya-console-filter-label">' + l('Tasks:Timeline:CapacityHead', CAPACITY_THRESHOLD) + '</span></div>';
             rows.forEach(function (r) {
                 h += '<div class="apya-gantt-capacity-row"><span class="apya-gantt-capacity-name">' + esc(r.name) + '</span>' +
                     '<span class="apya-gantt-capacity-cells">' +
                     r.cells.map(function (c) {
                         var lvl = c === 0 ? 0 : (c <= 2 ? 1 : (c <= 4 ? 2 : 3));
-                        return '<span class="apya-gantt-cap-cell lvl-' + lvl + '" title="' + c + ' görev"></span>';
+                        return '<span class="apya-gantt-cap-cell lvl-' + lvl + '" title="' + l('Tasks:Timeline:CapacityCell', c) + '"></span>';
                     }).join('') + '</span>' +
                     '<span class="apya-gantt-cap-peak' + (r.peak >= CAPACITY_THRESHOLD ? ' is-over' : '') + '">' +
                     r.peak + ' / ' + CAPACITY_THRESHOLD + '</span></div>';
@@ -405,13 +418,13 @@
 
         function legendHtml() {
             return '<div class="apya-gantt-legend">' +
-                '<span><i class="apya-gantt-key is-accent"></i>Süren (dolgu = geçen süre)</span>' +
-                '<span><i class="apya-gantt-key is-positive"></i>Tamamlandı</span>' +
-                '<span><i class="apya-gantt-key is-negative"></i>Gecikmiş</span>' +
-                '<span><i class="apya-gantt-key is-sub"></i>Alt görev</span>' +
-                '<span><i class="apya-gantt-key is-today"></i>Bugün · ' + moment().format('DD.MM.YYYY') + '</span>' +
+                '<span><i class="apya-gantt-key is-accent"></i>' + l('Tasks:Timeline:Legend:Active') + '</span>' +
+                '<span><i class="apya-gantt-key is-positive"></i>' + l('Tasks:Timeline:Legend:Done') + '</span>' +
+                '<span><i class="apya-gantt-key is-negative"></i>' + l('Tasks:Timeline:Legend:Overdue') + '</span>' +
+                '<span><i class="apya-gantt-key is-sub"></i>' + l('Tasks:Timeline:Legend:Subtask') + '</span>' +
+                '<span><i class="apya-gantt-key is-today"></i>' + l('Tasks:Timeline:Legend:Today', moment().format('DD.MM.YYYY')) + '</span>' +
                 '<span class="apya-gantt-spacer"></span>' +
-                '<span class="apya-gantt-hint">Baseline ve sapma rozeti çizilmiyor — backend alanı yok.</span>' +
+                '<span class="apya-gantt-hint">' + l('Tasks:Timeline:Legend:NoBaseline') + '</span>' +
                 '</div>';
         }
 
@@ -526,7 +539,7 @@
                     return taskSvc.update(id, toUpdateDto(t, state.pending[id]));
                 });
             }, Promise.resolve()).then(function () {
-                abp.notify.success(ids.length + ' görevin tarihi güncellendi.');
+                abp.notify.success(l('Tasks:Timeline:DatesUpdated', ids.length));
                 state.pending = {};
                 onSaved();
                 load();
