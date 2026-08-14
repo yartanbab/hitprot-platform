@@ -4,10 +4,10 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Volo.Abp;
-using Microsoft.EntityFrameworkCore;
 using Volo.Abp.Application.Dtos;
 using Volo.Abp.Application.Services;
 using Volo.Abp.Domain.Repositories;
+using Volo.Abp.EventBus.Local;
 using Volo.Abp.MultiTenancy;
 using Volo.Abp.Users;
 
@@ -17,47 +17,39 @@ namespace Apya.Platform.Notifications;
 public class NotificationAppService : ApplicationService, INotificationAppService
 {
     private readonly IRepository<Notification, Guid> _notificationRepository;
-    private readonly Volo.Abp.Data.IDataFilter<Volo.Abp.MultiTenancy.IMultiTenant> _multiTenantFilter;
+    private readonly ILocalEventBus _localEventBus;
 
     public NotificationAppService(
         IRepository<Notification, Guid> notificationRepository,
-        Volo.Abp.Data.IDataFilter<Volo.Abp.MultiTenancy.IMultiTenant> multiTenantFilter)
+        ILocalEventBus localEventBus)
     {
         _notificationRepository = notificationRepository;
-        _multiTenantFilter = multiTenantFilter;
+        _localEventBus = localEventBus;
     }
 
     // ─── Benim bildirimlerimi getir ────────────────────────────────────────────
+    // Bildirim kişiseldir: host hesabı dahil herkes yalnızca kendi kayıtlarını görür.
+    // (Host için tenant filtresi kapatılıyordu → başka tenant kullanıcılarının
+    //  bildirimleri listeleniyor, ama rozet/MarkAsRead kendi UserId'sine bakıyordu.)
     public async Task<PagedResultDto<NotificationDto>> GetMyNotificationsAsync(GetNotificationsInput input)
     {
         var userId = CurrentUser.GetId();
 
-        // KRİTİK: Eğer Host (Root) hesabındaysak, tüm tenantların bildirimlerini görebilmeliyiz.
-        using (CurrentTenant.Id == null ? _multiTenantFilter.Disable() : null)
-        {
-            var query = (await _notificationRepository.GetQueryableAsync());
-            
-            // Eğer root değilse sadece kendine ait olanları görsün.
-            // Ama kullanıcı "Tüm tenant hareketlerini gör" dediği için burada bir yetki kontrolü de yapalım.
-            if (CurrentTenant.Id != null) 
-            {
-                query = query.Where(n => n.UserId == userId);
-            }
+        var query = (await _notificationRepository.GetQueryableAsync())
+            .Where(n => n.UserId == userId);
 
-            if (input.IsRead.HasValue)
-                query = query.Where(n => n.IsRead == input.IsRead.Value);
+        if (input.IsRead.HasValue)
+            query = query.Where(n => n.IsRead == input.IsRead.Value);
 
-            var total = await query.CountAsync();
+        var total = await AsyncExecuter.CountAsync(query);
 
-            var items = await query
-                .OrderByDescending(n => n.CreationTime)
-                .Skip(input.SkipCount)
-                .Take(input.MaxResultCount)
-                .ToListAsync();
+        var items = await AsyncExecuter.ToListAsync(
+            query.OrderByDescending(n => n.CreationTime)
+                 .Skip(input.SkipCount)
+                 .Take(input.MaxResultCount));
 
-            var dtos = items.Select(MapToDto).ToList();
-            return new PagedResultDto<NotificationDto>(total, dtos);
-        }
+        var dtos = items.Select(MapToDto).ToList();
+        return new PagedResultDto<NotificationDto>(total, dtos);
     }
 
     // ─── Okunmamış sayısı ──────────────────────────────────────────────────────
@@ -80,6 +72,7 @@ public class NotificationAppService : ApplicationService, INotificationAppServic
 
         notification.MarkAsRead();
         await _notificationRepository.UpdateAsync(notification);
+        await PublishCountChangedAsync(userId);
     }
 
     // ─── Tümünü okundu yap ────────────────────────────────────────────────────
@@ -96,6 +89,7 @@ public class NotificationAppService : ApplicationService, INotificationAppServic
             n.MarkAsRead();
 
         await _notificationRepository.UpdateManyAsync(unread);
+        await PublishCountChangedAsync(userId);
     }
 
     // ─── Sil ──────────────────────────────────────────────────────────────────
@@ -108,9 +102,22 @@ public class NotificationAppService : ApplicationService, INotificationAppServic
             throw new UserFriendlyException("Bu bildirimi silme yetkiniz yok.");
 
         await _notificationRepository.DeleteAsync(notification);
+        await PublishCountChangedAsync(userId);
     }
 
     // ─── Yardımcı ─────────────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Okunmamış sayısı değişti — kullanıcının açık tüm sekmeleri rozeti tazelesin.
+    /// (Rozet daha önce yalnızca JS tarafında +1/-1 ile takip ediliyordu; ikinci
+    ///  sekme, başka cihaz veya bildirim geçmişi sayfası ile sapıyordu.)
+    /// </summary>
+    private Task PublishCountChangedAsync(Guid userId)
+        => _localEventBus.PublishAsync(new NotificationCountChangedEto
+        {
+            TenantId = CurrentTenant.Id,
+            UserId   = userId
+        });
     private static NotificationDto MapToDto(Notification n) => new()
     {
         Id           = n.Id,
@@ -125,14 +132,23 @@ public class NotificationAppService : ApplicationService, INotificationAppServic
         DeepLinkUrl  = BuildDeepLink(n.EntityType, n.EntityId)
     };
 
+    // Bildirime tıklandığında gidilecek adres. "Task" daha önce /Tasks/EditModal'a
+    // işaret ediyordu; o sayfa Layout = null olduğu için tam sayfa gidildiğinde
+    // menüsüz, çıplak bir form açılıyordu.
     private static string? BuildDeepLink(string? entityType, Guid? entityId)
     {
         if (entityId == null) return null;
         return entityType switch
         {
-            "Task"    => $"/Tasks/EditModal?id={entityId}",
-            "Project" => $"/Projects/ProjectDetails/{entityId}",
-            _         => null
+            "Task"         => $"/Tasks/Detail/{entityId}",
+            "Project"      => $"/Projects/ProjectDetails/{entityId}",
+            // Aşağıdakilerin hedef sayfası henüz tekil kayda odaklanmayı
+            // desteklemiyor — şimdilik ilgili listeye götürüyoruz.
+            "Document"     => "/Documents",
+            "Feedback"     => "/Feedback",
+            "GrantCall"    => "/Grants",
+            "AiEvaluation" => "/AiCenter/Evaluations",
+            _              => null
         };
     }
 }

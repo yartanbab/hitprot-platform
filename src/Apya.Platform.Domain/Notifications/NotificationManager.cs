@@ -69,3 +69,13 @@ public class NotificationCreatedEto
     public Guid? EntityId { get; set; }
     public NotificationType Type { get; set; }
 }
+
+/// <summary>
+/// Okunmamış bildirim sayısı değiştiğinde (okundu işaretlendi / silindi) yayınlanır.
+/// Kullanıcının açık tüm oturumlarındaki zil rozetini eşitlemek için kullanılır.
+/// </summary>
+public class NotificationCountChangedEto
+{
+    public Guid? TenantId { get; set; }
+    public Guid UserId { get; set; }
+}

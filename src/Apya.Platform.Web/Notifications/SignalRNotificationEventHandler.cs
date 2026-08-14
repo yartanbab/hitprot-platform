@@ -12,8 +12,9 @@ namespace Apya.Platform.Web.Notifications;
 /// <summary>
 /// Web katmanındaki bu handler, domain event'leri dinleyip SignalR üzerinden anlık yayın yapar.
 /// </summary>
-public class SignalRNotificationEventHandler : 
+public class SignalRNotificationEventHandler :
     ILocalEventHandler<NotificationCreatedEto>,
+    ILocalEventHandler<NotificationCountChangedEto>,
     ITransientDependency
 {
     private readonly IHubContext<NotificationHub> _hubContext;
@@ -34,5 +35,12 @@ public class SignalRNotificationEventHandler :
                 entityId = eventData.EntityId,
                 type = (int)eventData.Type
             });
+    }
+
+    /// <summary>Okundu/silindi → kullanıcının tüm açık sekmeleri rozeti tazelesin.</summary>
+    public async Task HandleEventAsync(NotificationCountChangedEto eventData)
+    {
+        await _hubContext.Clients.User(eventData.UserId.ToString())
+            .SendAsync("NotificationCountChanged");
     }
 }

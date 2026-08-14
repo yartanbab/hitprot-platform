@@ -20,8 +20,16 @@
                 .build();
 
             connection.on("ReceiveNotification", function(notificationDto) {
-                updateBadge(1);
+                refreshBadge();
                 abp.notify.info(notificationDto.title, "Yeni Bildirim");
+                if (isListOpen) {
+                    fetchNotifications();
+                }
+            });
+
+            // Bildirim okundu/silindi — bu kullanıcının diğer sekmeleri de eşitlensin.
+            connection.on("NotificationCountChanged", function() {
+                refreshBadge();
                 if (isListOpen) {
                     fetchNotifications();
                 }
@@ -67,7 +75,7 @@
                         window.location.href = url;
                     } else {
                         fetchNotifications();
-                        updateBadge(-1);
+                        refreshBadge();
                     }
                 });
             }
@@ -78,7 +86,7 @@
             var service = getService();
             if (service) {
                 service.markAllAsRead().then(function() {
-                    $badge.addClass('d-none').text('0');
+                    setBadge(0);
                     fetchNotifications();
                     abp.notify.success("Tüm bildirimler okundu işaretlendi.");
                 });
@@ -87,14 +95,22 @@
     }
 
     // --- Badge Güncelleme ---
-    function updateBadge(diff) {
-        var current = parseInt($badge.text()) || 0;
-        var newVal = current + diff;
-        if (newVal <= 0) {
+    // Rozet her zaman sunucudaki gerçek sayıyı gösterir. (Önceden yerel +1/-1
+    // aritmetiğiyle takip ediliyordu; ikinci sekme veya başka cihazda sapıyordu.)
+    function setBadge(count) {
+        if (!count || count <= 0) {
             $badge.addClass('d-none').text('0');
         } else {
-            $badge.removeClass('d-none').text(newVal > 99 ? '99+' : newVal);
+            $badge.removeClass('d-none').text(count > 99 ? '99+' : count);
         }
+    }
+
+    function refreshBadge() {
+        var service = getService();
+        if (!service) return;
+        service.getUnreadCount()
+            .then(setBadge)
+            .catch(function(err) { console.error('[NotificationBell] sayaç alınamadı', err); });
     }
 
     // --- Bildirimleri Getir ---
