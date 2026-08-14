@@ -197,7 +197,7 @@ function DashboardRoot() {
                     })}
                 </ResponsiveGridLayout>
 
-                {/* Izgara ile alt şerit arası da kart↔kart boşluğuyla aynı (10px). */}
+                {/* Izgara ile alt şerit arası da kart↔kart boşluğuyla aynı (20px). */}
                 <FooterStrip
                     isDefault={layoutQuery.data?.isDefault !== false}
                     onReset={handleReset}
@@ -314,7 +314,7 @@ function EditToolbar({ onSave, isSaving }) {
 
 function FooterStrip({ isDefault, onReset, onOpenCatalog, isResetting }) {
     return (
-        <div className="flex items-center justify-between gap-3 mt-2.5 px-4 py-3 rounded-card border border-dashed border-default bg-surface-base mobile:flex-col mobile:items-stretch">
+        <div className="flex items-center justify-between gap-3 mt-5 px-4 py-3 rounded-card border border-dashed border-default bg-surface-base mobile:flex-col mobile:items-stretch">
             <span className="text-[12.5px] text-text-secondary">
                 {isDefault
                     ? t('Dashboard:Footer:DefaultLayout', 'Bu görünüm rol varsayılanından geldi — kart ekleyip çıkarabilir, sürükleyip boyutlandırabilirsin.')

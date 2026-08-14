@@ -16,7 +16,7 @@ function StatStripCard({ filter }) {
 
     if (isLoading) {
         return (
-            <div className="h-full pb-2.5 grid grid-cols-5 gap-2.5 lt-1080:grid-cols-3 mobile:grid-cols-2 mobile:h-auto">
+            <div className="h-full grid grid-cols-5 gap-5 lt-1080:grid-cols-3 mobile:grid-cols-2 mobile:h-auto">
                 {Array.from({ length: 5 }, (_, i) => (
                     <div key={i} className="rounded-card shadow-card bg-surface-base border border-default p-4">
                         <Skeleton height={14} className="w-2/3 mb-2" />
@@ -44,13 +44,14 @@ function StatStripCard({ filter }) {
         /* Kutucuklar ızgara kutusunu TAM doldurur (h-full): doğal yüksekliğe
            bırakılırsa kutu içerikten kısa kalınca taşıp alttaki satıra biniyor,
            uzun kalınca da altta ölü boşluk bırakıyordu — ikisini de gördük.
-           Alttaki satırla arasındaki mesafe artık yalnız pb-2.5 (10px) +
-           GRID_MARGIN (10px) = 20px, yani diğer kart aralarının iki katı.
+           Ek alt padding YOK: tüm boşluklar tek kaynaktan, GRID_MARGIN'den gelir.
+
+           Kutucuk arası da aynı 20px (gap-5) — ızgaradaki kart aralarıyla birebir.
 
            lt-1080 ve mobile ikisi de max-width → Tailwind bunları azalan sırada
            yazar, dar ekranda mobile kazanır. `tablet:` KULLANILMAZ: o min-width'tir,
            1440'ta da tetiklenirdi. */
-        <div className="h-full pb-2.5 grid grid-cols-5 gap-2.5 lt-1080:grid-cols-3 mobile:grid-cols-2 mobile:h-auto">
+        <div className="h-full grid grid-cols-5 gap-5 lt-1080:grid-cols-3 mobile:grid-cols-2 mobile:h-auto">
             <Tile
                 label={t('Dashboard:Summary:DueThisPeriod', 'Bu dönem teslim')}
                 value={data.dueThisPeriod}

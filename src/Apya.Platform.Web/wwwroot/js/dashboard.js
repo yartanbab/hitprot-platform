@@ -528,7 +528,7 @@ function Nt(t) {
 }
 function wt({ filter: t }) {
   const { data: a, isLoading: n, isError: r, refetch: o } = bt(t);
-  return n ? /* @__PURE__ */ e.jsx("div", { className: "h-full pb-2.5 grid grid-cols-5 gap-2.5 lt-1080:grid-cols-3 mobile:grid-cols-2 mobile:h-auto", children: Array.from({ length: 5 }, (c, l) => /* @__PURE__ */ e.jsxs("div", { className: "rounded-card shadow-card bg-surface-base border border-default p-4", children: [
+  return n ? /* @__PURE__ */ e.jsx("div", { className: "h-full grid grid-cols-5 gap-5 lt-1080:grid-cols-3 mobile:grid-cols-2 mobile:h-auto", children: Array.from({ length: 5 }, (c, l) => /* @__PURE__ */ e.jsxs("div", { className: "rounded-card shadow-card bg-surface-base border border-default p-4", children: [
     /* @__PURE__ */ e.jsx(C, { height: 14, className: "w-2/3 mb-2" }),
     /* @__PURE__ */ e.jsx(C, { height: 28, className: "w-1/2" })
   ] }, l)) }) : r || !a ? /* @__PURE__ */ e.jsxs("div", { className: "rounded-card shadow-card bg-surface-base border border-default p-4 flex items-center justify-between gap-3", children: [
@@ -538,13 +538,14 @@ function wt({ filter: t }) {
     /* Kutucuklar ızgara kutusunu TAM doldurur (h-full): doğal yüksekliğe
                bırakılırsa kutu içerikten kısa kalınca taşıp alttaki satıra biniyor,
                uzun kalınca da altta ölü boşluk bırakıyordu — ikisini de gördük.
-               Alttaki satırla arasındaki mesafe artık yalnız pb-2.5 (10px) +
-               GRID_MARGIN (10px) = 20px, yani diğer kart aralarının iki katı.
+               Ek alt padding YOK: tüm boşluklar tek kaynaktan, GRID_MARGIN'den gelir.
+    
+               Kutucuk arası da aynı 20px (gap-5) — ızgaradaki kart aralarıyla birebir.
     
                lt-1080 ve mobile ikisi de max-width → Tailwind bunları azalan sırada
                yazar, dar ekranda mobile kazanır. `tablet:` KULLANILMAZ: o min-width'tir,
                1440'ta da tetiklenirdi. */
-    /* @__PURE__ */ e.jsxs("div", { className: "h-full pb-2.5 grid grid-cols-5 gap-2.5 lt-1080:grid-cols-3 mobile:grid-cols-2 mobile:h-auto", children: [
+    /* @__PURE__ */ e.jsxs("div", { className: "h-full grid grid-cols-5 gap-5 lt-1080:grid-cols-3 mobile:grid-cols-2 mobile:h-auto", children: [
       /* @__PURE__ */ e.jsx(
         K,
         {
@@ -1164,7 +1165,7 @@ const O = [
   "delivery-heatmap": { component: _t, titleKey: "Dashboard:Heatmap:Title", fallback: "Teslim yoğunluğu", w: 4, h: 6, minW: 3, minH: 4 },
   "project-phases": { component: qt, titleKey: "Dashboard:Phases:Title", fallback: "Proje fazları", w: 4, h: 6, minW: 3, minH: 4 },
   "statistics-band": { component: zt, titleKey: "Dashboard:Statistics:Title", fallback: "İstatistikler", w: 12, h: 6, minW: 6, minH: 4 }
-}, Qt = { desktop: 1200, tablet: 768, mobile: 0 }, Yt = { desktop: 12, tablet: 8, mobile: 1 }, Xt = 64, Zt = [10, 10], De = "apya-dashboard-view";
+}, Qt = { desktop: 1200, tablet: 768, mobile: 0 }, Yt = { desktop: 12, tablet: 8, mobile: 1 }, Xt = 64, Zt = [20, 20], De = "apya-dashboard-view";
 function Jt() {
   try {
     const t = window.localStorage.getItem(De);
@@ -1475,7 +1476,7 @@ function ca({ onSave: t, isSaving: a }) {
   ] });
 }
 function da({ isDefault: t, onReset: a, onOpenCatalog: n, isResetting: r }) {
-  return /* @__PURE__ */ e.jsxs("div", { className: "flex items-center justify-between gap-3 mt-2.5 px-4 py-3 rounded-card border border-dashed border-default bg-surface-base mobile:flex-col mobile:items-stretch", children: [
+  return /* @__PURE__ */ e.jsxs("div", { className: "flex items-center justify-between gap-3 mt-5 px-4 py-3 rounded-card border border-dashed border-default bg-surface-base mobile:flex-col mobile:items-stretch", children: [
     /* @__PURE__ */ e.jsx("span", { className: "text-[12.5px] text-text-secondary", children: t ? s("Dashboard:Footer:DefaultLayout", "Bu görünüm rol varsayılanından geldi — kart ekleyip çıkarabilir, sürükleyip boyutlandırabilirsin.") : s("Dashboard:Footer:CustomLayout", "Bu görünümü sen düzenledin. Dilediğin an varsayılana dönebilirsin.") }),
     /* @__PURE__ */ e.jsxs("div", { className: "flex items-center gap-2 flex-none", children: [
       !t && /* @__PURE__ */ e.jsx(R, { size: "sm", variant: "secondary", onClick: a, disabled: r, children: s("Dashboard:Footer:Reset", "Varsayılana dön") }),
