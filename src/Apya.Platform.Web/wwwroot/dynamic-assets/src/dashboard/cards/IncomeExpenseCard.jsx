@@ -13,6 +13,14 @@ function IncomeExpenseCard({ filter, editMode }) {
     const points = data?.points ?? [];
     const hasValues = points.some((p) => p.income > 0 || p.expense > 0);
 
+    /* DİKKAT: JSX children EAGER değerlendirilir — CardShell'in isLoading/isEmpty
+       kapısı aşağıdaki ifadelerin ÇALIŞMASINI engellemez, yalnız render'ını
+       engeller. Yükleme sırasında data undefined olduğu için para birimi burada
+       mutlaka varsayılana düşmeli; aksi halde Intl.NumberFormat
+       "Currency code is required with currency style" ile patlar ve tüm island
+       çöker (beyaz ekran). */
+    const currency = data?.currency ?? 'TRY';
+
     return (
         <CardShell
             editMode={editMode}
@@ -49,7 +57,7 @@ function IncomeExpenseCard({ filter, editMode }) {
         >
             <div className="flex items-baseline gap-2 flex-wrap">
                 <span className="font-mono text-2xl font-semibold leading-none tracking-[-0.03em] text-text-primary tabular-nums">
-                    {formatMoneyCompact(data?.net ?? 0, data?.currency)}
+                    {formatMoneyCompact(data?.net ?? 0, currency)}
                 </span>
                 <span className="text-[11.5px] text-text-tertiary">
                     {t('Dashboard:IncomeExpense:Net', 'net')}
