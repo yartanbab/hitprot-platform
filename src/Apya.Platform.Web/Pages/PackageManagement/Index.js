@@ -120,14 +120,22 @@ $(function () {
     function permRow(p) {
         // Girinti ağaç derinliğinden gelir; alt izin üst iznine bağlıdır.
         var indent = p.depth * 1.5;
-        return '<div class="form-check js-perm-row" data-name="' + esc(p.name) + '"'
+        // Host yönetimi izinleri KİLİTLİ: tenant'ta hiç geçerli olmadıkları için pakete
+        // eklenemezler. Gizlemek yerine sebebiyle gösteriliyor — büsbütün yok olunca
+        // "eksik mi kaldı?" izlenimi veriyorlardı.
+        var lockedNote = p.isHostOnly
+            ? ' <span class="badge bg-light text-muted border fw-normal ms-1">host yönetimi — pakete eklenemez</span>'
+            : '';
+
+        return '<div class="form-check js-perm-row' + (p.isHostOnly ? ' text-muted' : '') + '"'
+            + ' data-name="' + esc(p.name) + '"'
             + ' data-parent="' + esc(p.parentName || '') + '"'
             + ' data-text="' + esc((p.displayName + ' ' + p.name).toLowerCase()) + '"'
             + ' style="margin-left:' + indent + 'rem">'
             + '<input class="form-check-input js-perm" type="checkbox" id="perm_' + esc(p.name) + '"'
-            + (p.isIncluded ? ' checked' : '') + '>'
+            + (p.isIncluded ? ' checked' : '') + (p.isHostOnly ? ' disabled' : '') + '>'
             + '<label class="form-check-label" for="perm_' + esc(p.name) + '">' + esc(p.displayName)
-            + '</label></div>';
+            + lockedNote + '</label></div>';
     }
 
     function renderPermissions(tree) {
@@ -144,14 +152,20 @@ $(function () {
         updateCount();
     }
 
+    // Kilitli (host yönetimi) satırlar hiçbir toplu işleme, sayaca ve kayda girmez:
+    // seçilebilir olanların tek kaynağı bu seçici.
+    function selectable($scope) {
+        return ($scope || $('#PkgPermGroups')).find('.js-perm:not(:disabled)');
+    }
+
     function updateCount() {
-        var total = $('#PkgPermGroups .js-perm').length;
-        var on = $('#PkgPermGroups .js-perm:checked').length;
+        var total = selectable().length;
+        var on = selectable().filter(':checked').length;
         $('#PkgPermCount').text(on + ' / ' + total + ' izin seçili');
     }
 
     function setChecked($row, checked) {
-        $row.find('.js-perm').prop('checked', checked);
+        $row.find('.js-perm:not(:disabled)').prop('checked', checked);
     }
 
     // Üst izin kapanınca altları da kapanır; alt izin açılınca üstleri açılır —
@@ -201,18 +215,19 @@ $(function () {
 
     $(document).on('click', '.js-perm-group-toggle', function () {
         var $group = $(this).closest('.js-perm-group');
-        var allOn = $group.find('.js-perm').length === $group.find('.js-perm:checked').length;
-        $group.find('.js-perm').prop('checked', !allOn);
+        var $boxes = selectable($group);
+        var allOn = $boxes.length === $boxes.filter(':checked').length;
+        $boxes.prop('checked', !allOn);
         updateCount();
     });
 
     $('#PkgPermSelectAll').on('click', function () {
-        $('#PkgPermGroups .js-perm').prop('checked', true);
+        selectable().prop('checked', true);
         updateCount();
     });
 
     $('#PkgPermClearAll').on('click', function () {
-        $('#PkgPermGroups .js-perm').prop('checked', false);
+        selectable().prop('checked', false);
         updateCount();
     });
 
@@ -234,7 +249,7 @@ $(function () {
 
     $('#PkgPermSaveBtn').on('click', function () {
         if (currentPermCode === null) { return; }
-        var names = $('#PkgPermGroups .js-perm:checked').map(function () {
+        var names = selectable().filter(':checked').map(function () {
             return String($(this).closest('.js-perm-row').data('name'));
         }).get();
 

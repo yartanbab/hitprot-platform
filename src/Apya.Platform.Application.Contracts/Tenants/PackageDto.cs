@@ -68,6 +68,13 @@ public class PackagePermissionNodeDto
 
     /// <summary>İzin bu pakete dahil mi?</summary>
     public bool IsIncluded { get; set; }
+
+    /// <summary>
+    /// Host yönetimi izni (ABP'de MultiTenancySide = Host): pakete EKLENEMEZ, çünkü
+    /// tenant'ın yetki ekranında zaten hiç listelenmez. Ağaçta kilitli gösterilir —
+    /// listeden tamamen çıkarınca "eksik mi kaldı?" izlenimi veriyordu.
+    /// </summary>
+    public bool IsHostOnly { get; set; }
 }
 
 public class UpdatePackagePermissionsDto

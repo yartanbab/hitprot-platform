@@ -123,11 +123,11 @@ public class PackageAppService : PlatformAppService, IPackageAppService
         int depth,
         HashSet<string> included)
     {
-        // Host'a özel izinler paket tavanının konusu değil (tenant'a zaten görünmezler).
-        if (!permission.MultiTenancySide.HasFlag(MultiTenancySides.Tenant))
-        {
-            return;
-        }
+        // Host'a özel izinler (kiracı yönetimi, host feature yönetimi) pakete EKLENEMEZ:
+        // tenant'ın yetki ekranında zaten listelenmezler, işaretlemek ölü kutu olurdu.
+        // Yine de ağaçta KİLİTLİ gösterilirler — büsbütün gizlemek "eksik mi kaldı?"
+        // sorusunu doğuruyordu. Kaydetme tarafı bunları ayrıca eler (UpdatePermissionsAsync).
+        var isHostOnly = !permission.MultiTenancySide.HasFlag(MultiTenancySides.Tenant);
 
         target.Add(new PackagePermissionNodeDto
         {
@@ -135,7 +135,8 @@ public class PackageAppService : PlatformAppService, IPackageAppService
             DisplayName = permission.DisplayName.Localize(_stringLocalizerFactory),
             ParentName = parentName,
             Depth = depth,
-            IsIncluded = included.Contains(permission.Name)
+            IsIncluded = !isHostOnly && included.Contains(permission.Name),
+            IsHostOnly = isHostOnly
         });
 
         foreach (var child in permission.Children)

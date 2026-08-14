@@ -10,6 +10,7 @@ using Volo.Abp.Authorization.Permissions;
 using Volo.Abp.Domain.Repositories;
 using Volo.Abp.MultiTenancy;
 using Volo.Abp.SimpleStateChecking;
+using Volo.Abp.TenantManagement;
 using Xunit;
 
 namespace Apya.Platform.EntityFrameworkCore.Tenants;
@@ -82,9 +83,64 @@ public class PackagePermissionCeiling_Tests : PlatformEntityFrameworkCoreTestBas
             basicNodes[PlatformPermissions.Projects.Default].ShouldBeTrue();
             basicNodes[PlatformPermissions.Tasks.Create].ShouldBeTrue();
 
-            // Enterprise: tam ağaç.
+            // Enterprise: tam ağaç — kilitli (host yönetimi) izinler hariç, onlar hiçbir
+            // pakete giremez.
             var enterprise = await _packageAppService.GetPermissionsAsync(PackageCode.Enterprise);
-            enterprise.Groups.SelectMany(g => g.Permissions).ShouldAllBe(p => p.IsIncluded);
+            enterprise.Groups.SelectMany(g => g.Permissions)
+                .Where(p => !p.IsHostOnly)
+                .ShouldAllBe(p => p.IsIncluded);
+        });
+    }
+
+    [Fact]
+    public async Task Host_Only_Permissions_Should_Be_Listed_As_Locked()
+    {
+        await WithUnitOfWorkAsync(async () =>
+        {
+            await _packageManager.EnsureDefaultPackagesAsync();
+
+            var tree = await _packageAppService.GetPermissionsAsync(PackageCode.Enterprise);
+            var nodes = tree.Groups.SelectMany(g => g.Permissions).ToList();
+
+            // Kiracı yönetimi izinleri ağaçta GÖRÜNÜR (yoklar sanılmasın) ama kilitlidir.
+            var tenantManagement = nodes.SingleOrDefault(p => p.Name == TenantManagementPermissions.Tenants.Default);
+            tenantManagement.ShouldNotBeNull();
+            tenantManagement!.IsHostOnly.ShouldBeTrue();
+            tenantManagement.IsIncluded.ShouldBeFalse();
+
+            // Tenant tarafı izinler kilitli değil.
+            nodes.Single(p => p.Name == PlatformPermissions.Projects.Default).IsHostOnly.ShouldBeFalse();
+        });
+    }
+
+    [Fact]
+    public async Task Saving_Should_Ignore_Host_Only_Permissions_Even_If_Sent()
+    {
+        await WithUnitOfWorkAsync(async () =>
+        {
+            await _packageManager.EnsureDefaultPackagesAsync();
+
+            // İstemci kilidi aşsa (ya da API doğrudan çağrılsa) bile sunucu elemeli.
+            await _packageAppService.UpdatePermissionsAsync(new UpdatePackagePermissionsDto
+            {
+                Code = PackageCode.Enterprise,
+                PermissionNames = new List<string>
+                {
+                    PlatformPermissions.Projects.Default,
+                    TenantManagementPermissions.Tenants.Default,
+                    TenantManagementPermissions.Tenants.Delete
+                }
+            });
+        });
+
+        await WithUnitOfWorkAsync(async () =>
+        {
+            var tree = await _packageAppService.GetPermissionsAsync(PackageCode.Enterprise);
+            var included = tree.Groups.SelectMany(g => g.Permissions).Where(p => p.IsIncluded).Select(p => p.Name).ToList();
+
+            included.ShouldContain(PlatformPermissions.Projects.Default);
+            included.ShouldNotContain(TenantManagementPermissions.Tenants.Default);
+            included.ShouldNotContain(TenantManagementPermissions.Tenants.Delete);
         });
     }
 
