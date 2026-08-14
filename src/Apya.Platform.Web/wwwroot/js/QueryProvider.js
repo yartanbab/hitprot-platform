@@ -1,15 +1,15 @@
-import { r, j as e } from "./react-vendor.js";
-import { Q as t, c as o } from "./query-vendor.js";
+import { r as s, j as t } from "./react-vendor.js";
+import { Q as r, c as o } from "./query-vendor.js";
 import { A as i } from "./httpClient.js";
-function n() {
-  return new t({
+function d() {
+  return new r({
     defaultOptions: {
       queries: {
         staleTime: 3e4,
         gcTime: 5 * 6e4,
         refetchOnWindowFocus: !0,
         refetchOnReconnect: !0,
-        retry: (a, s) => s instanceof i && s.status >= 400 && s.status < 500 ? !1 : a < 2
+        retry: (e, a) => a instanceof i && a.status >= 400 && a.status < 500 ? !1 : e < 2
       },
       mutations: {
         /* Mutation default'ta retry YAPMAZ — duplicate finansal işlem riski. */
@@ -18,23 +18,27 @@ function n() {
     }
   });
 }
-const c = {
+const l = {
   dashboard: {
-    budget: () => ["dashboard", "budget"],
-    cashflow: () => ["dashboard", "cashflow"],
-    kpiSummary: () => ["dashboard", "kpi-summary"],
-    incomeExpense: () => ["dashboard", "income-expense"],
-    approvals: (a) => a ? ["dashboard", "approvals", a] : ["dashboard", "approvals"],
-    approvalDetail: (a) => ["dashboard", "approval-detail", a],
-    risks: () => ["dashboard", "risks"],
-    aiSuggestions: (a) => a ? ["dashboard", "ai-suggestions", a] : ["dashboard", "ai-suggestions"]
+    /* Desen: ['dashboard', <bölüm>, { range, projectId }] — filtre değişince
+       yeni key, eski veri cache'te kalır (sekme geçişi anında). */
+    summary: (e) => ["dashboard", "summary", e],
+    deliveries: (e) => ["dashboard", "deliveries", e],
+    projectHealth: (e) => ["dashboard", "project-health", e],
+    approvals: () => ["dashboard", "pending-approvals"],
+    blockedTasks: () => ["dashboard", "blocked-tasks"],
+    statistics: (e) => ["dashboard", "statistics", e],
+    incomeExpense: (e) => ["dashboard", "income-expense", e],
+    deliveryHeatmap: (e) => ["dashboard", "delivery-heatmap", e],
+    layout: (e) => ["dashboard", "layout", e],
+    aiSuggestions: (e) => e ? ["dashboard", "ai-suggestions", e] : ["dashboard", "ai-suggestions"]
   }
 };
-function l({ children: a }) {
-  const [s] = r.useState(() => n());
-  return /* @__PURE__ */ e.jsx(o, { client: s, children: a });
+function p({ children: e }) {
+  const [a] = s.useState(() => d());
+  return /* @__PURE__ */ t.jsx(o, { client: a, children: e });
 }
 export {
-  c as Q,
-  l as a
+  l as Q,
+  p as a
 };

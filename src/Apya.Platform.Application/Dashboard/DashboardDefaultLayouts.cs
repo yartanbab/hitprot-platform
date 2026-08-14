@@ -54,8 +54,8 @@ public static class DashboardDefaultLayouts
         [Grants] = new()
         {
             Card("summary-strip",     DashboardChartType.NumberTrend, 0, 0, 12, 2),
-            Card("delivery-heatmap",  DashboardChartType.Heatmap,     0, 2,  6, 6),
-            Card("deliveries",        DashboardChartType.RankBar,     6, 2,  6, 6),
+            Card("deliveries",        DashboardChartType.RankBar,     0, 2,  7, 6),
+            Card("delivery-heatmap",  DashboardChartType.Heatmap,     7, 2,  5, 6),
             Card("statistics-band",   DashboardChartType.NumberTrend, 0, 8, 12, 5)
         }
     };

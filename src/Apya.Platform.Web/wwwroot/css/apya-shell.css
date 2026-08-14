@@ -4168,3 +4168,19 @@ i.apya-priority-dot {
         display: none !important;
     }
 }
+
+/* ----------------------------------------------------------------------------
+   DASHBOARD REACT ISLAND — TAM KANAMALI
+   ----------------------------------------------------------------------------
+   /Dashboard, LeptonX içerik alanının tamamını kullanır: sayfa başlığı üst bara,
+   kartlar sol raya YAPIŞIR. `.lpx-content` dört yandan 28px dolgu veriyor;
+   eskiden Index.cshtml'de `margin:-1.5rem -1rem` ile kısmen kaçırılıyordu ama
+   değerler tutmadığı için üstte ve solda boşluk kalıyordu.
+
+   Negatif margin yerine dolgunun KENDİSİ iptal edilir — tahmin yok, taşma yok.
+   Tüm iç boşlukları React tarafı (DashboardRoot) yönetir.
+   :has() ile yalnız bu sayfada geçerli; diğer sayfaların dolgusu değişmez. */
+.lpx-content:has(> #apya-dashboard-root) {
+    padding: 0;
+    border-radius: 0;
+}

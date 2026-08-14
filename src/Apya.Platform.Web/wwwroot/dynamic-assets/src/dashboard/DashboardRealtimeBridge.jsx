@@ -4,37 +4,41 @@ import { useSignalRInvalidation } from '../lib/realtime/useSignalRInvalidation';
 import { useConflictListener } from '../lib/realtime/useConflictListener';
 
 /**
- * Dashboard SignalR → cache invalidation + conflict toast köprüsü.
+ * Dashboard SignalR → cache invalidation köprüsü.
  *
- * İki farklı kanal:
- *   1) invalidation: "veri değişti, sessizce tazele" (refetchOnInvalidate)
- *   2) conflict:     "senin yapmaya çalıştığın işlem başkası tarafından yapıldı"
- *      → kullanıcıya warning toast + "Yenile" CTA + arka planda invalidate
+ * Bölüm key'leri filtre taşıdığı için (['dashboard','summary',{range,projectId}])
+ * PREFIX ile invalidate edilir: aktif olmayan aralıkların cache'i de bayatlasın,
+ * kullanıcı sekme değiştirince taze veri gelsin.
  */
+const prefix = (section) => ['dashboard', section];
+
 export function DashboardRealtimeBridge() {
     const invalidations = useMemo(() => ([
-        ['JournalEntryPosted', [QK.dashboard.budget(), QK.dashboard.cashflow()]],
-        ['ApprovalDecided',    [QK.dashboard.approvals(), QK.dashboard.budget(), QK.dashboard.cashflow()]],
-        ['RiskDetected',       [QK.dashboard.risks()]],
-        ['RiskDismissed',      [QK.dashboard.risks()]],
-        ['AISuggestionPosted', [QK.dashboard.aiSuggestions()]],
+        /* Görev durumu değişti → teslimler, tıkananlar, özet, ısı takvimi, istatistik */
+        ['TaskStatusChanged', [
+            prefix('summary'), prefix('deliveries'), prefix('blocked-tasks'),
+            prefix('delivery-heatmap'), prefix('statistics'), prefix('project-health'),
+        ]],
+        /* Atama değişti → tıkanma sebebi "atanmamış" olabilir */
+        ['TaskAssigned', [prefix('blocked-tasks'), prefix('deliveries')]],
+
+        /* Onay kuyruğu (taslak fatura) hareketi */
+        ['ApprovalCreated',  [prefix('pending-approvals'), prefix('summary'), prefix('statistics')]],
+        ['ApprovalResolved', [prefix('pending-approvals'), prefix('summary'), prefix('statistics')]],
+
+        /* Bütçe / muhasebe hareketi → bütçe oranları ve finans istatistikleri */
+        ['BudgetUpdated',      [prefix('summary'), prefix('project-health'), prefix('statistics')]],
+        ['JournalEntryPosted', [prefix('income-expense'), prefix('statistics')]],
+
+        /* Hibe belgesi son tarihi → ısı takviminin sarı günleri */
+        ['GrantDocumentDue', [prefix('delivery-heatmap'), prefix('statistics')]],
     ]), []);
 
     const conflicts = useMemo(() => ([
-        ['ApprovalConflict', {
-            queryKeys: [QK.dashboard.approvals(), QK.dashboard.budget(), QK.dashboard.cashflow()],
-            message: 'Onay kaydında çakışma',
-            description: 'Bu kayıt başka bir kullanıcı tarafından işlendi.',
-        }],
         ['BudgetConflict', {
-            queryKeys: [QK.dashboard.budget()],
+            queryKeys: [prefix('summary'), prefix('project-health')],
             message: 'Bütçe kaydında çakışma',
             description: 'Aynı bütçeyi başka bir kullanıcı güncelledi.',
-        }],
-        ['SuggestionConflict', {
-            queryKeys: [QK.dashboard.aiSuggestions()],
-            message: 'AI önerisinde çakışma',
-            description: 'Bu öneri başka bir kullanıcı tarafından uygulanmış.',
         }],
     ]), []);
 

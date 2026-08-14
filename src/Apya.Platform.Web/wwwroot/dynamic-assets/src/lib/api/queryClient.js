@@ -43,13 +43,17 @@ export function createApyaQueryClient() {
  */
 export const QK = {
     dashboard: {
-        budget:    () => ['dashboard', 'budget'],
-        cashflow:  () => ['dashboard', 'cashflow'],
-        kpiSummary: () => ['dashboard', 'kpi-summary'],
-        incomeExpense: () => ['dashboard', 'income-expense'],
-        approvals: (filter) => filter ? ['dashboard', 'approvals', filter] : ['dashboard', 'approvals'],
-        approvalDetail: (id) => ['dashboard', 'approval-detail', id],
-        risks:     () => ['dashboard', 'risks'],
+        /* Desen: ['dashboard', <bölüm>, { range, projectId }] — filtre değişince
+           yeni key, eski veri cache'te kalır (sekme geçişi anında). */
+        summary:        (f) => ['dashboard', 'summary', f],
+        deliveries:     (f) => ['dashboard', 'deliveries', f],
+        projectHealth:  (f) => ['dashboard', 'project-health', f],
+        approvals:      () => ['dashboard', 'pending-approvals'],
+        blockedTasks:   () => ['dashboard', 'blocked-tasks'],
+        statistics:     (f) => ['dashboard', 'statistics', f],
+        incomeExpense:  (f) => ['dashboard', 'income-expense', f],
+        deliveryHeatmap:(f) => ['dashboard', 'delivery-heatmap', f],
+        layout:         (viewKey) => ['dashboard', 'layout', viewKey],
         aiSuggestions: (scope) => scope ? ['dashboard', 'ai-suggestions', scope] : ['dashboard', 'ai-suggestions'],
     },
 };
