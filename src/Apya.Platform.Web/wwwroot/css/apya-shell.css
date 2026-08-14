@@ -4647,7 +4647,15 @@ i.apya-priority-dot {
     overflow: hidden;
     text-overflow: ellipsis;
 }
-.apya-proj-range { font-size: 11.5px; color: var(--apya-text-secondary); }
+/* Tarih aralığı DAR kolonda sarmamalı: sardığında satır sıkı kipte 48px yerine
+   52px oluyordu ve iki satırlık tarih okunmuyordu. Kırpılan tam metin title'da. */
+.apya-proj-range {
+    font-size: 11.5px;
+    color: var(--apya-text-secondary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
 .apya-proj-days { font-size: 11px; color: var(--apya-text-tertiary); }
 .apya-proj-days.is-warning { color: var(--apya-text-warning); font-weight: var(--apya-weight-semibold); }
 .apya-proj-days.is-negative { color: var(--apya-text-negative); font-weight: var(--apya-weight-semibold); }
@@ -5177,8 +5185,8 @@ i.apya-priority-dot {
     .apya-proj-filters::-webkit-scrollbar { display: none; }
     .apya-proj-filter {
         flex: none;
-        min-height: 32px;
-        padding: 6px 12px;
+        min-height: 44px;   /* dokunma hedefi */
+        padding: 6px 14px;
         font-size: var(--apya-fs-sm);
     }
 
