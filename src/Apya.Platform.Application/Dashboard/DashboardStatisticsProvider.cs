@@ -22,9 +22,11 @@ using Apya.Platform.Projects;
 using Apya.Platform.Tasks;
 using Apya.Platform.Telemetry;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Options;
 using Volo.Abp.Authorization.Permissions;
+using Volo.Abp.Caching;
 using Volo.Abp.DependencyInjection;
 using Volo.Abp.Domain.Repositories;
 using Volo.Abp.Features;
@@ -79,6 +81,8 @@ public class DashboardStatisticsProvider : ITransientDependency
     private readonly IStringLocalizer<PlatformResource> _l;
     private readonly IClock _clock;
     private readonly DashboardOptions _options;
+    private readonly IDistributedCache<DashboardStatCacheItem> _statCache;
+    private readonly PlatformPerformanceOptions _performanceOptions;
 
     public DashboardStatisticsProvider(
         IRepository<TaskItem, Guid> taskRepo,
@@ -105,7 +109,9 @@ public class DashboardStatisticsProvider : ITransientDependency
         IAsyncQueryableExecuter executer,
         IStringLocalizer<PlatformResource> l,
         IClock clock,
-        IOptions<DashboardOptions> options)
+        IOptions<DashboardOptions> options,
+        IDistributedCache<DashboardStatCacheItem> statCache,
+        IOptions<PlatformPerformanceOptions> performanceOptions)
     {
         _taskRepo = taskRepo;
         _commentRepo = commentRepo;
@@ -132,6 +138,8 @@ public class DashboardStatisticsProvider : ITransientDependency
         _l = l;
         _clock = clock;
         _options = options.Value;
+        _statCache = statCache;
+        _performanceOptions = performanceOptions.Value;
     }
 
     /// <summary>Bir istatistiğin cari ve önceki dönem değeri. Karşılaştırma yoksa Previous null.</summary>
@@ -189,12 +197,46 @@ public class DashboardStatisticsProvider : ITransientDependency
                 continue;
             }
 
-            var value = await def.Compute(period, projectId);
+            // İzin kontrolü YUKARIDA, cache'ten önce: yetkisiz kullanıcı cache'e hiç bakmaz,
+            // kilit sözleşmesi bozulmaz.
+            var value = await ComputeWithCacheAsync(def, input.Range, period, projectId);
             Fill(dto, value, def.Unit);
             result.Add(dto);
         }
 
         return result;
+    }
+
+    /// <summary>
+    /// Stat hesabını TTL'li cache ile sarar. Değerler tenant-genelidir (CurrentUser'a
+    /// bağlı stat yok) ve ABP cache anahtarı tenant'a göre otomatik öneklenir →
+    /// aynı kiracının kullanıcıları arasında paylaşım güvenlidir. Geçersiz kılma
+    /// bilinçli olarak yalnız TTL: KPI birkaç dakika bayat kalabilir, 17+ entity'ye
+    /// event handler yazmak gereksiz karmaşıklık olurdu.
+    /// </summary>
+    private async Task<StatValue> ComputeWithCacheAsync(
+        StatDef def, DashboardDateRange range, DashboardPeriod period, Guid? projectId)
+    {
+        var ttlSeconds = _performanceOptions.DashboardCacheSeconds;
+        if (ttlSeconds <= 0)
+        {
+            return await def.Compute(period, projectId);
+        }
+
+        var key = $"dash:{def.Key}:{range}:{projectId?.ToString("N") ?? "all"}";
+        var cached = await _statCache.GetOrAddAsync(
+            key,
+            async () =>
+            {
+                var value = await def.Compute(period, projectId);
+                return new DashboardStatCacheItem { Current = value.Current, Previous = value.Previous };
+            },
+            () => new DistributedCacheEntryOptions
+            {
+                AbsoluteExpirationRelativeToNow = TimeSpan.FromSeconds(ttlSeconds)
+            });
+
+        return new StatValue(cached!.Current, cached.Previous);
     }
 
     private static void Fill(DashboardStatDto dto, StatValue value, StatUnit unit)
