@@ -4288,3 +4288,930 @@ i.apya-priority-dot {
 /* Dar ekranda etiket düşer, ikon kalır (handoff). */
 .lpx-topbar.is-narrow .apya-shell-invite-label { display: none; }
 .lpx-topbar.is-narrow .apya-shell-invite { padding: 0 9px; }
+
+/* ============================================================================
+   22) PROJELER KONSOLU â€” Pages/Projects/Index
+   ----------------------------------------------------------------------------
+   TasarÄ±m kaynaÄŸÄ±: "Projeler Redesign" kanvasÄ± (1a yoÄŸun liste + 2b kart
+   Ä±zgarasÄ± + 2a/3b mobil). Tek veri, iki gÃ¶rÃ¼nÃ¼m; hangisiyle aÃ§Ä±lacaÄŸÄ±
+   Platform.Projects.DefaultView ayarÄ±ndan, o cihazdaki geÃ§ici seÃ§im
+   localStorage'dan (apya.projects.view) gelir.
+
+   KRÄ°TÄ°K â€” kÄ±rÄ±lÄ±mlar KAP geniÅŸliÄŸine bakar, viewport'a DEÄÄ°L: iÃ§erik alanÄ±nÄ±n
+   geniÅŸliÄŸi kenar Ã§ubuÄŸunun durumuna gÃ¶re 280/72/0 px deÄŸiÅŸir, yani 1520px
+   viewport'ta liste yalnÄ±z ~1184px alan bulur. Dashboard'da aynÄ± hata
+   (viewport'a bakan kÄ±rÄ±lÄ±m) 327px sapma Ã¼retmiÅŸti â€” burada tek kaynak
+   `container-type: inline-size` ve @container sorgularÄ±.
+
+   Renk/Ã¶lÃ§Ã¼ tamamÄ± --apya-* token'Ä±; sabit hex YOK. YoÄŸunluk (ferah/sÄ±kÄ±)
+   yalnÄ±z --apya-proj-row-h ve kart dolgusunu deÄŸiÅŸtirir, tipografi sabit kalÄ±r.
+   ---------------------------------------------------------------------------- */
+.apya-proj-console {
+    container-type: inline-size;
+    container-name: projconsole;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+
+    /* Ferah (varsayÄ±lan) */
+    --apya-proj-row-h: 60px;
+    --apya-proj-card-pad-y: 18px;
+    --apya-proj-card-pad-x: 20px;
+    --apya-proj-card-gap: 12px;
+}
+.apya-proj-console.is-tight {
+    --apya-proj-row-h: 48px;
+    --apya-proj-card-pad-y: 13px;
+    --apya-proj-card-pad-x: 15px;
+    --apya-proj-card-gap: 9px;
+}
+
+/* --- 22.1 KPI ÅERÄ°DÄ° â€” altÄ± hÃ¼creli tek satÄ±r, bÃ¶lmeli --------------------- */
+.apya-proj-kpis {
+    display: flex;
+    background: var(--apya-surface-base);
+    border: 1px solid var(--apya-border-default);
+    border-radius: var(--apya-radius-xl);
+    box-shadow: var(--apya-shadow-sm);
+    overflow: hidden;
+}
+.apya-proj-kpi {
+    flex: 1 1 0;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    border: 0;
+    border-left: 1px solid var(--apya-border-subtle);
+    background: transparent;
+    text-align: start;
+    color: inherit;
+}
+.apya-proj-kpi:first-child { border-left: 0; }
+/* BÃ¼tÃ§e hÃ¼cresi bÃ¼yÃ¼k tutarlarÄ± kÄ±rpmadan taÅŸÄ±sÄ±n diye pay alÄ±r. */
+.apya-proj-kpi.is-wide { flex: 1.15 1 0; }
+.apya-proj-kpi.is-clickable { cursor: pointer; }
+.apya-proj-kpi.is-clickable:hover { background: var(--apya-surface-hover); }
+.apya-proj-kpi.is-clickable:focus-visible {
+    outline: none;
+    box-shadow: inset var(--apya-shadow-focus);
+}
+/* Risk hÃ¼cresi hafif kÄ±rmÄ±zÄ± zeminli â€” rozet deÄŸil, hÃ¼crenin kendisi tonlanÄ±r. */
+.apya-proj-kpi.is-risk { background: color-mix(in srgb, var(--apya-negative-500) 4%, transparent); }
+.apya-proj-kpi.is-risk.is-clickable:hover { background: color-mix(in srgb, var(--apya-negative-500) 9%, transparent); }
+/* Bu hÃ¼crenin sÃ¼rdÃ¼ÄŸÃ¼ filtre aÃ§Ä±kken â€” Ã§ipteki aktiflikle aynÄ± anlam. */
+.apya-proj-kpi.is-active {
+    background: var(--apya-accent-soft);
+    box-shadow: inset 0 -2px 0 0 var(--apya-accent-500);
+}
+.apya-proj-kpi.is-active.is-clickable:hover { background: var(--apya-accent-soft); }
+
+.apya-proj-kpi-text { min-width: 0; }
+.apya-proj-kpi .apya-overline {
+    font-size: 10px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-bottom: 1px;
+}
+.apya-proj-kpi-value {
+    font-size: 17px;
+    font-weight: var(--apya-weight-bold);
+    line-height: 1.2;
+    color: var(--apya-text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.apya-proj-kpi.is-risk .apya-proj-kpi-value { color: var(--apya-text-negative); }
+/* TÄ±klanabilirlik ipucu â€” hÃ¼cre Ã¼stÃ¼nde belirir, aktifken sabit kalÄ±r. */
+.apya-proj-kpi-hint {
+    margin-left: auto;
+    font-size: 10px;
+    color: var(--apya-text-disabled);
+    opacity: 0;
+    transition: opacity var(--apya-motion-fast) var(--apya-easing-standard);
+}
+.apya-proj-kpi.is-clickable:hover .apya-proj-kpi-hint,
+.apya-proj-kpi.is-active .apya-proj-kpi-hint { opacity: 1; }
+.apya-proj-kpi.is-active .apya-proj-kpi-hint { color: var(--apya-accent-500); }
+
+/* 28px ikon kutusu â€” .kpi-icon-box ailesinin ÅŸerit Ã¶lÃ§eÄŸi (--sm 38px'ten kÃ¼Ã§Ã¼k). */
+.kpi-icon-box--xs {
+    width: 28px;
+    height: 28px;
+    font-size: 0.8rem;
+    border-radius: var(--apya-radius-md);
+}
+
+/* --- 22.2 ARAÃ‡ Ã‡UBUÄU ------------------------------------------------------ */
+.apya-proj-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+.apya-proj-toolbar-end {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-left: auto;
+}
+
+/* Segment anahtarÄ± â€” yoÄŸunluk (Ferah/SÄ±kÄ±) ve gÃ¶rÃ¼nÃ¼m (liste/kart) aynÄ± desen. */
+.apya-proj-seg {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    padding: 2px;
+    background: var(--apya-surface-sunken);
+    border-radius: var(--apya-radius-lg);
+}
+.apya-proj-seg-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    min-height: 25px;
+    padding: 4px 12px;
+    border: 0;
+    border-radius: var(--apya-radius-md);
+    background: transparent;
+    color: var(--apya-text-secondary);
+    font-size: var(--apya-fs-sm);
+    font-weight: var(--apya-weight-semibold);
+    white-space: nowrap;
+}
+.apya-proj-seg-btn:hover { color: var(--apya-text-primary); }
+.apya-proj-seg-btn.is-active {
+    background: var(--apya-surface-base);
+    color: var(--apya-text-primary);
+    box-shadow: var(--apya-shadow-sm);
+}
+.apya-proj-seg-btn:focus-visible { outline: none; box-shadow: var(--apya-shadow-focus); }
+.apya-proj-seg-btn.is-icon { padding: 4px 9px; }
+/* Kap daraldÄ±ÄŸÄ±nda liste gÃ¶rÃ¼nÃ¼mÃ¼ kullanÄ±lamaz (kolonlar sÄ±ÄŸmÄ±yor) â€” anahtar
+   gÃ¶rÃ¼nÃ¼r kalÄ±r ama neden pasif olduÄŸu ipucu metninde yazar. */
+.apya-proj-seg-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.apya-proj-count {
+    font-size: var(--apya-fs-sm);
+    color: var(--apya-text-tertiary);
+    white-space: nowrap;
+}
+
+/* Arama â€” ikon + alan + temizle X'i tek kutuda. */
+.apya-proj-search {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    width: 250px;
+    height: var(--apya-control-h-sm);
+    padding: 0 8px;
+    border: 1px solid var(--apya-border-default);
+    border-radius: var(--apya-radius-lg);
+    background: var(--apya-surface-base);
+}
+.apya-proj-search:focus-within {
+    border-color: var(--apya-border-focus);
+    box-shadow: var(--apya-shadow-focus);
+}
+.apya-proj-search > i { font-size: 11px; color: var(--apya-text-tertiary); }
+.apya-proj-search input {
+    flex: 1 1 auto;
+    min-width: 0;
+    border: 0;
+    outline: 0;
+    background: transparent;
+    font-size: var(--apya-fs-base);
+    color: var(--apya-text-primary);
+}
+.apya-proj-search input::placeholder { color: var(--apya-text-tertiary); }
+.apya-proj-search-clear {
+    flex: none;
+    border: 0;
+    padding: 2px 4px;
+    background: transparent;
+    color: var(--apya-text-tertiary);
+    font-size: 11px;
+    line-height: 1;
+}
+.apya-proj-search-clear:hover { color: var(--apya-text-primary); }
+.apya-proj-search-clear[hidden] { display: none; }
+
+/* SÄ±ralama â€” native select, ÅŸerit Ã¶lÃ§eÄŸinde. */
+.apya-proj-sort {
+    height: var(--apya-control-h-sm);
+    padding: 0 10px;
+    border: 1px solid var(--apya-border-strong);
+    border-radius: var(--apya-radius-lg);
+    background-color: var(--apya-surface-base);
+    color: var(--apya-text-secondary);
+    font-size: var(--apya-fs-base);
+}
+.apya-proj-sort:focus-visible { outline: none; box-shadow: var(--apya-shadow-focus); }
+
+/* --- 22.3 FÄ°LTRE Ã‡Ä°PLERÄ° --------------------------------------------------- */
+.apya-proj-filters {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+.apya-proj-filter {
+    border: 1px solid var(--apya-border-default);
+    background: var(--apya-surface-base);
+    color: var(--apya-text-secondary);
+    padding: 4px 11px;
+    font-size: 11.5px;
+}
+.apya-proj-filter:hover { border-color: var(--apya-border-strong); color: var(--apya-text-primary); }
+.apya-proj-filter:focus-visible { outline: none; box-shadow: var(--apya-shadow-focus); }
+.apya-proj-filter.is-risk { color: var(--apya-text-negative); }
+.apya-proj-filter.is-active {
+    background: var(--apya-surface-inverse);
+    border-color: var(--apya-surface-inverse);
+    color: var(--apya-text-inverse);
+}
+.apya-proj-filter-count { opacity: 0.55; font-variant-numeric: tabular-nums; }
+.apya-proj-filter-clear {
+    margin-left: 6px;
+    border: 0;
+    background: transparent;
+    padding: 0;
+    font-size: var(--apya-fs-sm);
+    color: var(--apya-text-tertiary);
+    text-decoration: underline;
+}
+.apya-proj-filter-clear:hover { color: var(--apya-text-primary); }
+.apya-proj-filter-clear[hidden] { display: none; }
+
+/* --- 22.4 RÄ°SK KENARI â€” liste satÄ±rÄ±, kart ve mobil ortak ------------------ */
+.apya-proj-edge {
+    display: block;
+    align-self: stretch;
+    width: 3px;
+    background: var(--apya-border-default);
+}
+.apya-proj-edge.is-high { background: var(--apya-negative-500); }
+.apya-proj-edge.is-med  { background: var(--apya-warning-500); }
+
+/* --- 22.5 YOÄUN LÄ°STE ------------------------------------------------------ */
+.apya-proj-list {
+    background: var(--apya-surface-base);
+    border: 1px solid var(--apya-border-default);
+    border-radius: var(--apya-radius-xl);
+    box-shadow: var(--apya-shadow-sm);
+    overflow: hidden;
+}
+.apya-proj-list-head,
+.apya-proj-row {
+    display: grid;
+    grid-template-columns: 3px 300px 150px 150px 190px 150px 118px 96px 116px;
+    align-items: center;
+    gap: 14px;
+    padding-right: 16px;
+}
+.apya-proj-list-head {
+    padding-block: 8px;
+    background: var(--apya-surface-raised);
+    border-bottom: 1px solid var(--apya-border-default);
+}
+.apya-proj-list-head > span,
+.apya-proj-col-sort {
+    font-size: 10px;
+    font-weight: var(--apya-weight-bold);
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    color: var(--apya-text-tertiary);
+}
+.apya-proj-col-sort {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    border: 0;
+    padding: 0;
+    background: transparent;
+    justify-self: start;
+}
+.apya-proj-col-sort:hover { color: var(--apya-text-primary); }
+.apya-proj-col-sort:focus-visible { outline: none; box-shadow: var(--apya-shadow-focus); }
+.apya-proj-col-sort i { font-size: 9px; opacity: 0; }
+.apya-proj-col-sort.is-sorted { color: var(--apya-text-primary); }
+.apya-proj-col-sort.is-sorted i { opacity: 1; }
+
+.apya-proj-row {
+    min-height: var(--apya-proj-row-h);
+    border-bottom: 1px solid var(--apya-border-subtle);
+    cursor: pointer;
+    transition: background var(--apya-motion-fast) var(--apya-easing-standard);
+}
+.apya-proj-row:last-child { border-bottom: 0; }
+.apya-proj-row:hover { background: var(--apya-surface-hover); }
+.apya-proj-row:focus-visible {
+    outline: none;
+    box-shadow: inset var(--apya-shadow-focus);
+}
+.apya-proj-row.is-open { background: var(--apya-accent-soft); }
+
+.apya-proj-cell { min-width: 0; }
+.apya-proj-name-cell {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+}
+.apya-proj-name {
+    font-size: 13.5px;
+    font-weight: var(--apya-weight-semibold);
+    color: var(--apya-text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.apya-proj-name-sub {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+}
+.apya-proj-code {
+    font-size: 11px;
+    color: var(--apya-text-tertiary);
+}
+.apya-proj-client {
+    font-size: var(--apya-fs-sm);
+    color: var(--apya-text-secondary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.apya-proj-range { font-size: 11.5px; color: var(--apya-text-secondary); }
+.apya-proj-days { font-size: 11px; color: var(--apya-text-tertiary); }
+.apya-proj-days.is-warning { color: var(--apya-text-warning); font-weight: var(--apya-weight-semibold); }
+.apya-proj-days.is-negative { color: var(--apya-text-negative); font-weight: var(--apya-weight-semibold); }
+
+/* Bar Ã¼stÃ¼ sayÄ± Ã§ifti â€” sol pay, saÄŸ payda (bÃ¼tÃ§e ve ilerleme aynÄ± desen). */
+.apya-proj-bar-label {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 4px;
+    font-size: 11px;
+    color: var(--apya-text-secondary);
+}
+.apya-proj-bar-label > :last-child { color: var(--apya-text-tertiary); }
+.apya-proj-row .apya-mini-progress { height: 6px; }
+
+.apya-proj-overdue-pill { font-size: 10.5px; }
+.apya-proj-team { display: flex; align-items: center; }
+.apya-proj-row-actions {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 4px;
+}
+
+/* --- 22.6 KART IZGARASI ---------------------------------------------------- */
+/* .apya-tile-grid'i (repeat(auto-fill, minmax(330px,1fr))) aynen kullanÄ±r;
+   kart .apya-tile'Ä±n risk kenarlÄ± ve yoÄŸunluÄŸa duyarlÄ± varyantÄ±dÄ±r. */
+.apya-proj-card {
+    position: relative;
+    gap: var(--apya-proj-card-gap);
+    padding: var(--apya-proj-card-pad-y) var(--apya-proj-card-pad-x);
+    padding-left: calc(var(--apya-proj-card-pad-x) + 3px);
+    overflow: hidden;
+    cursor: pointer;
+}
+/* Kenar kartÄ±n tamamÄ± boyunca â€” .apya-tile'Ä±n border-radius'u kÄ±rpar. */
+.apya-proj-card > .apya-proj-edge {
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 3px;
+}
+.apya-proj-card:focus-visible {
+    outline: none;
+    box-shadow: var(--apya-shadow-focus);
+    border-color: var(--apya-border-focus);
+}
+.apya-proj-card-head {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+}
+.apya-proj-card-title {
+    font-size: 15px;
+    font-weight: var(--apya-weight-bold);
+    line-height: 1.35;
+    color: var(--apya-text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.apya-proj-card-sub {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    color: var(--apya-text-tertiary);
+    min-width: 0;
+}
+.apya-proj-card-sub > .apya-proj-client { font-size: inherit; color: inherit; }
+.apya-proj-chips {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    flex-wrap: wrap;
+}
+.apya-proj-card-foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-top: auto;
+    padding-top: 11px;
+    border-top: 1px solid var(--apya-border-subtle);
+}
+.apya-proj-card-actions { display: flex; align-items: center; gap: 4px; }
+
+/* Gecikme kutusu â€” gecikme varsa kÄ±rmÄ±zÄ±, yoksa yeÅŸil "GecikmiÅŸ gÃ¶rev yok". */
+.apya-proj-overdue-box {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    padding: 8px 10px;
+    border: 0;
+    border-radius: var(--apya-radius-lg);
+    background: color-mix(in srgb, var(--apya-negative-500) 6%, transparent);
+    color: var(--apya-text-negative);
+    font-size: 11.5px;
+    font-weight: var(--apya-weight-semibold);
+    text-align: start;
+}
+.apya-proj-overdue-box.is-clear {
+    background: color-mix(in srgb, var(--apya-positive-500) 6%, transparent);
+    color: var(--apya-text-positive);
+}
+.apya-proj-overdue-box:focus-visible { outline: none; box-shadow: var(--apya-shadow-focus); }
+.apya-proj-overdue-meta {
+    margin-left: auto;
+    font-weight: var(--apya-weight-regular);
+    color: var(--apya-text-tertiary);
+}
+.apya-proj-no-team { font-size: 11px; color: var(--apya-text-tertiary); }
+
+/* "Yeni proje" dashed kartÄ± â€” Ä±zgaranÄ±n son hÃ¼cresi. */
+.apya-proj-new-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 220px;
+    padding: 18px 20px;
+    border: 1px dashed var(--apya-border-strong);
+    border-radius: var(--apya-radius-xl);
+    background: var(--apya-surface-raised);
+    color: inherit;
+}
+.apya-proj-new-card:hover { border-color: var(--apya-accent-500); }
+.apya-proj-new-card:focus-visible { outline: none; box-shadow: var(--apya-shadow-focus); }
+.apya-proj-new-card-title {
+    font-size: 13.5px;
+    font-weight: var(--apya-weight-semibold);
+    color: var(--apya-text-primary);
+}
+.apya-proj-new-card-desc {
+    font-size: var(--apya-fs-sm);
+    line-height: 1.5;
+    color: var(--apya-text-tertiary);
+    text-align: center;
+    max-width: 190px;
+    text-wrap: pretty;
+}
+
+/* --- 22.7 GÃ–REV PANELÄ° (slide-over, 460px) --------------------------------- */
+/* Â§16'daki .apya-drawer <abp-modal> iÃ§indir; buradaki panel Bootstrap modal'Ä±
+   kullanmaz (satÄ±r/karttan doÄŸrudan aÃ§Ä±lÄ±yor, ModalManager devrede deÄŸil),
+   bu yÃ¼zden kendi backdrop + ESC + dÄ±ÅŸ-tÄ±k yÃ¶netimi Index.js'te. */
+.apya-proj-drawer-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: var(--apya-z-modal-backdrop);
+    background: var(--apya-surface-overlay);
+    animation: apyaFadeIn var(--apya-motion-fast) var(--apya-easing-standard) both;
+}
+.apya-proj-drawer {
+    position: fixed;
+    inset: 0 0 0 auto;
+    z-index: var(--apya-z-modal);
+    width: min(460px, 100vw);
+    display: flex;
+    flex-direction: column;
+    background: var(--apya-surface-base);
+    border-left: 1px solid var(--apya-border-default);
+    box-shadow: var(--apya-shadow-lg);
+    animation: apyaSlide var(--apya-motion-slow) var(--apya-easing-standard) both;
+}
+.apya-proj-drawer-head {
+    flex: none;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 18px 20px;
+    border-bottom: 1px solid var(--apya-border-default);
+}
+.apya-proj-drawer-title {
+    font-size: var(--apya-fs-lg);
+    font-weight: var(--apya-weight-bold);
+    color: var(--apya-text-primary);
+}
+.apya-proj-drawer-sub {
+    font-size: 11.5px;
+    color: var(--apya-text-tertiary);
+}
+.apya-proj-drawer-close {
+    flex: none;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 0;
+    border-radius: var(--apya-radius-lg);
+    background: transparent;
+    color: var(--apya-text-secondary);
+}
+.apya-proj-drawer-close:hover { background: var(--apya-surface-hover); color: var(--apya-text-primary); }
+.apya-proj-drawer-close:focus-visible { outline: none; box-shadow: var(--apya-shadow-focus); }
+
+.apya-proj-drawer-body {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 16px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+/* BÃ¼tÃ§e + ilerleme kartlarÄ± */
+.apya-proj-stat-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+.apya-proj-stat {
+    padding: 12px 13px;
+    border: 1px solid var(--apya-border-default);
+    border-radius: var(--apya-radius-lg);
+}
+.apya-proj-stat .apya-overline { font-size: 9.5px; margin-bottom: 6px; }
+.apya-proj-stat-value {
+    font-size: 15px;
+    font-weight: var(--apya-weight-bold);
+    color: var(--apya-text-primary);
+}
+.apya-proj-stat-sub {
+    font-size: 11px;
+    color: var(--apya-text-tertiary);
+    margin-bottom: 6px;
+}
+.apya-proj-stat .apya-mini-progress { height: 6px; }
+
+/* BÃ¶lÃ¼m baÅŸlÄ±ÄŸÄ±: ETÄ°KET Â· sayÄ± Â· ince Ã§izgi */
+.apya-proj-section-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.apya-proj-section-head .apya-overline { font-size: 10.5px; letter-spacing: 0.06em; }
+.apya-proj-section-head-rule {
+    flex: 1 1 auto;
+    height: 1px;
+    background: var(--apya-border-default);
+}
+
+.apya-proj-task-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.apya-proj-task {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 10px 11px;
+    border: 1px solid var(--apya-border-default);
+    border-radius: var(--apya-radius-lg);
+    background: var(--apya-surface-base);
+}
+.apya-proj-task.is-done { opacity: 0.62; }
+.apya-proj-task-title {
+    font-size: var(--apya-fs-base);
+    font-weight: var(--apya-weight-medium);
+    color: var(--apya-text-primary);
+    line-height: 1.35;
+}
+.apya-proj-task.is-done .apya-proj-task-title { text-decoration: line-through; }
+.apya-proj-task-due { font-size: 11px; color: var(--apya-text-tertiary); }
+.apya-proj-task-due.is-overdue { color: var(--apya-text-negative); font-weight: var(--apya-weight-semibold); }
+.apya-proj-task-due.is-soon { color: var(--apya-text-warning); font-weight: var(--apya-weight-semibold); }
+
+/* Tamamla kutusu â€” native checkbox yerine eriÅŸilebilir dÃ¼ÄŸme (aria-pressed). */
+.apya-proj-check {
+    flex: none;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    border: 1.5px solid var(--apya-border-strong);
+    border-radius: var(--apya-radius-md);
+    background: var(--apya-surface-base);
+    color: transparent;
+    font-size: 10px;
+}
+.apya-proj-check:hover { border-color: var(--apya-positive-500); }
+.apya-proj-check:focus-visible { outline: none; box-shadow: var(--apya-shadow-focus); }
+.apya-proj-check[aria-pressed="true"] {
+    background: var(--apya-positive-500);
+    border-color: var(--apya-positive-500);
+    color: var(--apya-text-inverse);
+}
+[data-theme="dark"] .apya-proj-check[aria-pressed="true"] { color: var(--apya-surface-app-bg); }
+
+.apya-proj-defer {
+    flex: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 9px;
+    border: 1px solid var(--apya-border-strong);
+    border-radius: var(--apya-radius-lg);
+    background: var(--apya-surface-base);
+    color: var(--apya-text-secondary);
+    font-size: 11.5px;
+    white-space: nowrap;
+}
+.apya-proj-defer:hover { color: var(--apya-text-primary); border-color: var(--apya-border-focus); }
+.apya-proj-defer:focus-visible { outline: none; box-shadow: var(--apya-shadow-focus); }
+.apya-proj-defer:disabled { opacity: 0.5; cursor: progress; }
+
+.apya-proj-drawer-foot {
+    flex: none;
+    display: flex;
+    gap: 8px;
+    padding: 14px 20px;
+    border-top: 1px solid var(--apya-border-default);
+}
+.apya-proj-drawer-foot > .btn:first-child { flex: 1 1 0; }
+
+/* --- 22.8 BOÅ / AZ VERÄ° DURUMLARI ----------------------------------------- */
+/* Tek proje â€” liste yerine odak kartÄ± + "3 adÄ±m kaldÄ±" kutusu. */
+.apya-proj-focus {
+    background: var(--apya-surface-base);
+    border: 1px solid var(--apya-border-default);
+    border-radius: var(--apya-radius-xl);
+    box-shadow: var(--apya-shadow-sm);
+    padding: 20px 22px;
+    padding-left: calc(22px + 3px);
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+.apya-proj-focus > .apya-proj-edge { position: absolute; inset: 0 auto 0 0; width: 3px; }
+.apya-proj-focus-head {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+}
+.apya-proj-focus-title {
+    font-size: 17px;
+    font-weight: var(--apya-weight-bold);
+    color: var(--apya-text-primary);
+}
+.apya-proj-steps {
+    padding: 14px 16px;
+    border: 1px dashed var(--apya-border-strong);
+    border-radius: var(--apya-radius-lg);
+    background: var(--apya-surface-raised);
+}
+.apya-proj-steps-title {
+    font-size: var(--apya-fs-sm);
+    font-weight: var(--apya-weight-semibold);
+    color: var(--apya-text-primary);
+    margin-bottom: 8px;
+}
+.apya-proj-steps ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    font-size: var(--apya-fs-sm);
+    color: var(--apya-text-secondary);
+}
+.apya-proj-steps i { color: var(--apya-accent-500); margin-right: 8px; font-size: 11px; }
+
+/* HiÃ§ proje yok â€” _EmptyState'in altÄ±na ÅŸablon kartlarÄ±. */
+.apya-proj-templates {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 10px;
+    margin-top: 16px;
+}
+.apya-proj-template {
+    padding: 14px;
+    border: 1px solid var(--apya-border-default);
+    border-radius: var(--apya-radius-lg);
+    background: var(--apya-surface-raised);
+    text-align: start;
+    color: inherit;
+}
+.apya-proj-template:hover { border-color: var(--apya-accent-500); }
+.apya-proj-template:focus-visible { outline: none; box-shadow: var(--apya-shadow-focus); }
+.apya-proj-template .apya-overline { margin-bottom: 6px; }
+.apya-proj-template-desc {
+    font-size: var(--apya-fs-sm);
+    line-height: 1.5;
+    color: var(--apya-text-secondary);
+}
+
+/* Filtre sonucu yok */
+.apya-proj-noresult {
+    background: var(--apya-surface-base);
+    border: 1px solid var(--apya-border-default);
+    border-radius: var(--apya-radius-xl);
+    padding: 44px 32px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    text-align: center;
+}
+.apya-proj-noresult-title {
+    margin-top: 4px;
+    font-size: var(--apya-fs-lg);
+    font-weight: var(--apya-weight-semibold);
+    color: var(--apya-text-primary);
+}
+.apya-proj-noresult-desc {
+    font-size: var(--apya-fs-base);
+    line-height: 1.6;
+    color: var(--apya-text-tertiary);
+    max-width: 340px;
+    text-wrap: pretty;
+}
+
+/* --- 22.9 KAP KIRILIMLARI â€” kolonlar sÄ±ÄŸmadÄ±kÃ§a saÄŸdan dÃ¼ÅŸer --------------- */
+/* Her kÄ±rÄ±lÄ±mda grid ÅŸablonu ile o kolonun display:none'Ä± BÄ°RLÄ°KTE yazÄ±lÄ±r:
+   ayrÄ±lÄ±rlarsa gizlenmeyen hÃ¼cre bir sonraki satÄ±ra taÅŸar ve satÄ±r ikiye bÃ¶ler. */
+@container projconsole (max-width: 1385px) {
+    .apya-proj-list-head,
+    .apya-proj-row {
+        grid-template-columns: 3px minmax(200px, 1fr) 130px 128px 168px 138px 108px 84px 108px;
+        gap: 12px;
+    }
+}
+@container projconsole (max-width: 1150px) {
+    .apya-proj-list-head,
+    .apya-proj-row {
+        grid-template-columns: 3px minmax(190px, 1fr) 126px 164px 136px 106px 82px 104px;
+    }
+    .apya-proj-col-client { display: none; }
+}
+@container projconsole (max-width: 980px) {
+    .apya-proj-list-head,
+    .apya-proj-row {
+        grid-template-columns: 3px minmax(180px, 1fr) 160px 132px 104px 100px;
+    }
+    .apya-proj-col-team { display: none; }
+    .apya-proj-col-duration { display: none; }
+}
+@container projconsole (max-width: 820px) {
+    .apya-proj-list-head,
+    .apya-proj-row {
+        grid-template-columns: 3px minmax(160px, 1fr) 128px 100px 96px;
+    }
+    .apya-proj-col-budget { display: none; }
+}
+
+/* Åerit: altÄ± hÃ¼cre tek satÄ±ra sÄ±ÄŸmayÄ±nca ikiye sarar (kÄ±rpma yerine sarma). */
+@container projconsole (max-width: 1080px) {
+    .apya-proj-kpis { flex-wrap: wrap; }
+    .apya-proj-kpi { flex: 1 1 33%; min-width: 160px; border-top: 1px solid var(--apya-border-subtle); }
+    .apya-proj-kpi:nth-child(-n+3) { border-top: 0; }
+}
+@container projconsole (max-width: 620px) {
+    .apya-proj-kpi { flex: 1 1 50%; }
+    .apya-proj-kpi:nth-child(-n+2) { border-top: 0; }
+    .apya-proj-kpi:nth-child(3) { border-top: 1px solid var(--apya-border-subtle); }
+}
+
+/* --- 22.10 MOBÄ°L (â‰¤768px) -------------------------------------------------- */
+/* Mobilde gÃ¶rÃ¼nÃ¼m anahtarÄ± devre dÄ±ÅŸÄ±: her zaman tek kolon kart (spec md.7).
+   Kart yÄ±ÄŸÄ±nÄ± `flex:none` ile ezilmez; kaydÄ±rma sayfanÄ±n kendisinde kalÄ±r. */
+@media (max-width: 768px) {
+    .apya-proj-console { gap: 10px; }
+
+    /* Arama + Ã§ipler yapÄ±ÅŸkan: uzun listede filtreye dÃ¶nmek iÃ§in yukarÄ±
+       kaydÄ±rmak gerekmesin. .lpx-content'in kendi kaydÄ±rmasÄ± altÄ±nda Ã§alÄ±ÅŸÄ±r. */
+    .apya-proj-sticky {
+        position: sticky;
+        top: 0;
+        z-index: var(--apya-z-sticky);
+        margin-inline: calc(var(--apya-space-4) * -1);
+        padding: var(--apya-space-2) var(--apya-space-4);
+        background: var(--apya-surface-app-bg);
+        border-bottom: 1px solid var(--apya-border-default);
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+    .apya-proj-search { width: 100%; height: var(--apya-control-h-lg); }
+
+    /* Åerit mobilde Ã¼Ã§ yatay kutu â€” bÃ¶lmeli tek kart yerine ayrÄ±k kutucuklar. */
+    .apya-proj-kpis {
+        border: 0;
+        background: transparent;
+        box-shadow: none;
+        border-radius: 0;
+        gap: 8px;
+        flex-wrap: nowrap;
+        overflow: hidden;
+    }
+    .apya-proj-kpi {
+        flex: 1 1 0 !important;
+        min-width: 0 !important;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 2px;
+        min-height: 44px;
+        padding: 9px 11px;
+        border: 1px solid var(--apya-border-default) !important;
+        border-radius: var(--apya-radius-lg);
+        background: var(--apya-surface-base);
+    }
+    .apya-proj-kpi.is-risk { background: color-mix(in srgb, var(--apya-negative-500) 6%, transparent); }
+    /* Mobilde ikon ve ipucu dÃ¼ÅŸer â€” 390px'de Ã¼Ã§ kutuya sadece etiket+deÄŸer sÄ±ÄŸar. */
+    .apya-proj-kpi .kpi-icon-box,
+    .apya-proj-kpi-hint { display: none; }
+    .apya-proj-kpi .apya-overline { font-size: 9.5px; }
+    .apya-proj-kpi-value { font-size: 18px; }
+    /* Åeritte mobilde yalnÄ±z ilk Ã¼Ã§ hÃ¼cre: Risk, GecikmiÅŸ, Ortalama. */
+    .apya-proj-kpi.is-mobile-hidden { display: none; }
+
+    /* Ã‡ipler tek satÄ±rda yatay kaydÄ±rÄ±r â€” sarÄ±p Ã¼Ã§ satÄ±r olmasÄ±n. */
+    .apya-proj-filters {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        scrollbar-width: none;
+        padding-bottom: 2px;
+    }
+    .apya-proj-filters::-webkit-scrollbar { display: none; }
+    .apya-proj-filter {
+        flex: none;
+        min-height: 32px;
+        padding: 6px 12px;
+        font-size: var(--apya-fs-sm);
+    }
+
+    /* AraÃ§ Ã§ubuÄŸu: yoÄŸunluk/gÃ¶rÃ¼nÃ¼m anahtarlarÄ± ve rol rozeti gizlenir. */
+    .apya-proj-toolbar-desktop { display: none; }
+    .apya-proj-toolbar { gap: 8px; }
+    .apya-proj-toolbar-end { margin-left: 0; width: 100%; }
+    .apya-proj-sort { flex: 1 1 auto; height: var(--apya-control-h-lg); }
+
+    /* Liste gÃ¶rÃ¼nÃ¼mÃ¼ mobilde hiÃ§ basÄ±lmaz (JS kart moduna dÃ¼ÅŸer); yine de
+       CSS tarafÄ±nda da gizlenir ki eski bir localStorage deÄŸeri ekranÄ± bozmasÄ±n. */
+    .apya-proj-list { display: none; }
+
+    .apya-tile-grid { gap: 10px; }
+    .apya-proj-card { flex: none; }
+
+    /* Dokunma hedefleri 44px */
+    .apya-proj-card-actions .btn,
+    .apya-proj-row-actions .btn,
+    .apya-proj-drawer-foot .btn { min-height: 44px; }
+    .apya-proj-check { width: 28px; height: 28px; font-size: 13px; }
+    .apya-proj-defer { min-height: 44px; padding-inline: 12px; }
+    .apya-proj-drawer-close { width: 44px; height: 44px; }
+
+    /* Panel mobilde tam ekran alt sayfa â€” 460px'lik saÄŸ panel 390px'e sÄ±ÄŸmaz. */
+    .apya-proj-drawer {
+        inset: auto 0 0 0;
+        width: 100%;
+        max-height: 92vh;
+        border-left: 0;
+        border-top: 1px solid var(--apya-border-default);
+        border-radius: var(--apya-radius-xl) var(--apya-radius-xl) 0 0;
+        animation: apyaFadeIn var(--apya-motion-slow) var(--apya-easing-standard) both;
+    }
+    .apya-proj-drawer-foot { padding-bottom: calc(14px + env(safe-area-inset-bottom, 0px)); }
+}
