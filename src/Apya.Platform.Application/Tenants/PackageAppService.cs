@@ -46,9 +46,10 @@ public class PackageAppService : PlatformAppService, IPackageAppService
     public async Task<List<PackageDto>> GetListAsync()
     {
         await _packageManager.EnsureDefaultPackagesAsync();
-        var queryable = await _packageRepository.WithDetailsAsync(p => p.Features);
+        var queryable = await _packageRepository.WithDetailsAsync(p => p.Features, p => p.Permissions);
         var list = await AsyncExecuter.ToListAsync(queryable.OrderBy(p => p.DisplayOrder));
-        return list.Select(ToDto).ToList();
+        var total = (await _packageManager.GetTenantPermissionNamesAsync()).Count;
+        return list.Select(p => ToDto(p, total)).ToList();
     }
 
     public async Task UpdateFeaturesAsync(UpdatePackageFeaturesDto input)
@@ -58,6 +59,10 @@ public class PackageAppService : PlatformAppService, IPackageAppService
         // Yalnız katalogdaki feature'ları işle; toggle'ı true/false, sayısalı pozitif int'e normalize et.
         foreach (var meta in PackageFeatureCatalog.Managed)
         {
+            // Modül feature'ları izin ağacından türetilir; buradan yazılırsa ilk izin
+            // kaydında geri alınır ve host'a yalan söylemiş oluruz.
+            if (PackageFeatureGates.Map.ContainsKey(meta.Name)) { continue; }
+
             if (!input.Features.TryGetValue(meta.Name, out var raw)) { continue; }
 
             string value;
@@ -199,7 +204,7 @@ public class PackageAppService : PlatformAppService, IPackageAppService
         return pkg;
     }
 
-    private static PackageDto ToDto(PlatformPackage p)
+    private static PackageDto ToDto(PlatformPackage p, int totalPermissionCount)
     {
         var stored = p.ToFeatureValues();
         return new PackageDto
@@ -208,11 +213,14 @@ public class PackageAppService : PlatformAppService, IPackageAppService
             Name = p.Name,
             Description = p.Description,
             DisplayOrder = p.DisplayOrder,
+            PermissionCount = p.Permissions.Count,
+            TotalPermissionCount = totalPermissionCount,
             Features = PackageFeatureCatalog.Managed.Select(m => new PackageFeatureDto
             {
                 FeatureName = m.Name,
                 DisplayName = m.DisplayName,
                 IsNumeric = m.IsNumeric,
+                IsDerived = PackageFeatureGates.Map.ContainsKey(m.Name),
                 Value = stored.TryGetValue(m.Name, out var v) ? v : (m.IsNumeric ? "0" : "false")
             }).ToList()
         };

@@ -9,6 +9,12 @@ public class PackageDto
     public string? Description { get; set; }
     public int DisplayOrder { get; set; }
     public List<PackageFeatureDto> Features { get; set; } = new();
+
+    /// <summary>Pakete dahil izin sayısı.</summary>
+    public int PermissionCount { get; set; }
+
+    /// <summary>Tanımlı toplam tenant izni sayısı (tavanın evreni).</summary>
+    public int TotalPermissionCount { get; set; }
 }
 
 public class PackageFeatureDto
@@ -17,6 +23,12 @@ public class PackageFeatureDto
     public string DisplayName { get; set; } = string.Empty;
     public string Value { get; set; } = string.Empty;
     public bool IsNumeric { get; set; }
+
+    /// <summary>
+    /// Değeri izin ağacından TÜRETİLİR (elle düzenlenmez): modül feature'ları.
+    /// Bkz. <see cref="PackageFeatureGates"/>.
+    /// </summary>
+    public bool IsDerived { get; set; }
 }
 
 public class UpdatePackageFeaturesDto

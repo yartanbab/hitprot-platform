@@ -14,10 +14,11 @@
     </abp-card-header>
     <abp-card-body>
         <p class="text-muted">
-            Her paketin hangi modülleri açacağını ve limitlerini buradan düzenleyin. Değişiklik;
-            paketin <strong>yeni atandığı</strong> tenant'lara ve <strong>"yeniden uygula"</strong> dediğiniz
-            mevcut tenant'lara yansır.
-            <apya-hint text="Yeniden uygula, paketin TÜM özellik değerlerini o tenant'a olduğu gibi yazar — tenant'a özel olarak elle verdiğiniz herhangi bir istisna/limit varsa üzerine yazılır ve kaybolur." />
+            Her paketin hangi <strong>izinleri</strong> kapsadığını ve limitlerini buradan düzenleyin.
+            İzin listesi paketin tavanıdır: listede olmayan bir izni o paketteki tenant kendi
+            kullanıcılarına <strong>veremez</strong>. Değişiklik; paketin <strong>yeni atandığı</strong>
+            tenant'lara ve <strong>"yeniden uygula"</strong> dediğiniz mevcut tenant'lara yansır.
+            <apya-hint text="İzin tavanı anında geçerlidir (yeniden uygulamaya gerek yok). Yeniden uygula yalnız feature/limit değerlerini o tenant'a olduğu gibi yazar — tenant'a özel elle verdiğiniz istisna/limit varsa üzerine yazılır ve kaybolur." />
         </p>
         <div class="row g-3" id="PackageCards"></div>
     </abp-card-body>
@@ -38,6 +39,38 @@
             <div class="modal-footer">
                 <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Vazgeç</button>
                 <button type="button" class="btn btn-primary" id="PkgSaveBtn"><i class="fa fa-check me-1"></i> Kaydet</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@* İzin tavanı modalı — yetki yönetimiyle AYNI ağaç, paket bazında işaretlenir *@
+<div class="modal fade" id="PackagePermissionModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="PkgPermTitle">Paket İzinleri</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
+            </div>
+            <div class="modal-body">
+                <div class="d-flex flex-wrap gap-2 align-items-center mb-3">
+                    <div class="flex-grow-1">
+                        <input type="search" class="form-control" id="PkgPermSearch" placeholder="İzin ara…" autocomplete="off">
+                    </div>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" id="PkgPermSelectAll">Tümünü seç</button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" id="PkgPermClearAll">Tümünü kaldır</button>
+                </div>
+                <div class="alert alert-light border py-2 small mb-3">
+                    <i class="fa fa-circle-info me-1 text-primary"></i>
+                    Modül özellikleri (Finans, Hibe, AI…) bu seçimden <strong>otomatik türetilir</strong>;
+                    ayrıca açmanız gerekmez.
+                </div>
+                <div id="PkgPermGroups"></div>
+            </div>
+            <div class="modal-footer">
+                <span class="me-auto text-muted small" id="PkgPermCount"></span>
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Vazgeç</button>
+                <button type="button" class="btn btn-primary" id="PkgPermSaveBtn"><i class="fa fa-check me-1"></i> Kaydet</button>
             </div>
         </div>
     </div>
