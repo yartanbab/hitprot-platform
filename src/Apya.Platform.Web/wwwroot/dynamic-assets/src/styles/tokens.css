@@ -147,6 +147,10 @@
     --apya-shadow-xl: 0 20px 25px -5px rgba(17, 24, 39, 0.12), 0 8px 10px -6px rgba(17, 24, 39, 0.05);
     --apya-shadow-focus: 0 0 0 3px rgba(79, 70, 229, 0.25); /* accent-500 @25% */
 
+    /* Dashboard kart gölgesi: yakın temas + geniş yumuşak zemin ayrımı.
+       İki katman kasıtlı — tek katmanlı md/lg kartı zeminden ayırmıyordu. */
+    --apya-shadow-card: 0 1px 2px rgba(17, 24, 39, 0.04), 0 8px 24px -16px rgba(17, 24, 39, 0.14);
+
     /* --- 1.7 Radius --- */
     --apya-radius-xs: 2px;
     --apya-radius-sm: 4px;
@@ -155,6 +159,8 @@
     --apya-radius-xl: 12px;
     --apya-radius-2xl: 16px;
     --apya-radius-full: 9999px;
+    /* Dashboard kartı — xl (12) ile 2xl (16) arasında kendi kademesi var. */
+    --apya-radius-card: 14px;
 
     /* --- 1.7b Density — tablo/liste satır yüksekliği ---
        <html data-density="compact|cozy|comfortable"> ile geçiş (aşağıda).
@@ -355,6 +361,7 @@
     --apya-shadow-lg: 0 10px 40px -12px rgba(0, 0, 0, 0.80);
     --apya-shadow-xl: 0 20px 60px -16px rgba(0, 0, 0, 0.90);
     --apya-shadow-focus: 0 0 0 3px rgba(99, 102, 241, 0.35);
+    --apya-shadow-card: 0 1px 2px rgba(0, 0, 0, 0.40), 0 10px 30px -18px rgba(0, 0, 0, 0.70);
 }
 
 /* class-based fallback (Tailwind darkMode: 'class' geriye dönük uyumluluğu) */

@@ -111,19 +111,27 @@ export default {
         'neutral-700':     'var(--apya-neutral-700)',
         'brand-50':        'var(--apya-brand-50)',
         'brand-100':       'var(--apya-brand-100)',
+        /* 200/300/600: dashboard ısı takviminin yoğunluk kademeleri.
+           tokens.css'te zaten tanımlıydılar, yalnız köprülenmemişlerdi. */
+        'brand-200':       'var(--apya-brand-200)',
+        'brand-300':       'var(--apya-brand-300)',
         'brand-500':       'var(--apya-brand-500)',
+        'brand-600':       'var(--apya-brand-600)',
         'brand-700':       'var(--apya-brand-700)',
         'positive-50':     'var(--apya-positive-50)',
         'positive-100':    'var(--apya-positive-100)',
         'positive-500':    'var(--apya-positive-500)',
+        'positive-600':    'var(--apya-positive-600)',
         'positive-700':    'var(--apya-positive-700)',
         'negative-50':     'var(--apya-negative-50)',
         'negative-100':    'var(--apya-negative-100)',
         'negative-500':    'var(--apya-negative-500)',
+        'negative-600':    'var(--apya-negative-600)',
         'negative-700':    'var(--apya-negative-700)',
         'warning-50':      'var(--apya-warning-50)',
         'warning-100':     'var(--apya-warning-100)',
         'warning-500':     'var(--apya-warning-500)',
+        'warning-600':     'var(--apya-warning-600)',
         'warning-700':     'var(--apya-warning-700)',
         'critical-50':     'var(--apya-critical-50)',
         'critical-500':    'var(--apya-critical-500)',
@@ -150,6 +158,12 @@ export default {
         'md':              'var(--apya-shadow-md)',
         'lg':              'var(--apya-shadow-lg)',
         'xl':              'var(--apya-shadow-xl)',
+        /* Dashboard kart yüzeyi — iki katmanlı, tokens.css'te light+dark tanımlı. */
+        'card':            'var(--apya-shadow-card)',
+      },
+      borderRadius: {
+        /* Dashboard kartının kendi kademesi (14px); xl=12, 2xl=16 arasında. */
+        'card':            'var(--apya-radius-card)',
       },
       /* tokens.css'teki --apya-z-* ölçeğinin BİREBİR aynısı. Sayı olarak
          tutuluyor (var() değil) ki test dosyası değerleri karşılaştırabilsin;
