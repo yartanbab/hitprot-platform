@@ -477,6 +477,7 @@
         "Platform:Feedback:BodyRequired": "Açıklama boş bırakılamaz.",
         "Platform:Feedback:CommentRequired": "Yorum metni boş bırakılamaz.",
         "Platform:Feedback:RateLimitExceeded": "Kısa sürede çok fazla geri bildirim gönderdiniz. Lütfen birkaç dakika sonra tekrar deneyin.",
+        "Platform:RateLimitExceeded": "Kısa sürede çok fazla istek gönderildi. Lütfen bir dakika sonra tekrar deneyin.",
         "Platform:Feedback:InvalidStatusTransition": "Bu durum geçişi geçerli değil.",
         "Platform:Telemetry:Disabled": "Telemetri şu anda devre dışı.",
         "Setting:Shell.Pins": "Sabitlenen Menü Öğeleri",

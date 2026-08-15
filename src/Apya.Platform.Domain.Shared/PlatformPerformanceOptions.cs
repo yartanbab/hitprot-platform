@@ -20,4 +20,11 @@ public class PlatformPerformanceOptions
 
     /// <summary>Dashboard istatistik bandının stat-başına cache süresi (saniye).</summary>
     public int DashboardCacheSeconds { get; set; } = 180;
+
+    /// <summary>
+    /// Kiracı başına dakikalık istek tavanı (gürültücü komşu koruması).
+    /// Oturumsuz istekler IP'ye, host kullanıcıları ortak "host" kovasına göre sayılır.
+    /// Statik dosyalar sayılmaz. 0 = kapalı.
+    /// </summary>
+    public int TenantRateLimitPerMinute { get; set; } = 1000;
 }
