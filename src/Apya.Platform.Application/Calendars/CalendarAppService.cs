@@ -2,10 +2,15 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
+using System.Security.Cryptography;
+using System.Text;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using Apya.Platform.Tasks;
+using Volo.Abp;
 using Volo.Abp.Application.Services;
 using Volo.Abp.Domain.Repositories;
 
@@ -20,6 +25,7 @@ public class CalendarAppService : ApplicationService, ICalendarAppService
     private readonly IConfiguration _configuration;
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly CalendarTokenProtector _tokenProtector;
+    private readonly IDistributedCache _distributedCache;
 
     public CalendarAppService(
         IRepository<ExternalCalendarAccount, Guid> accountRepository,
@@ -27,7 +33,8 @@ public class CalendarAppService : ApplicationService, ICalendarAppService
         CalendarManager calendarManager,
         IConfiguration configuration,
         IHttpClientFactory httpClientFactory,
-        CalendarTokenProtector tokenProtector)
+        CalendarTokenProtector tokenProtector,
+        IDistributedCache distributedCache)
     {
         _accountRepository = accountRepository;
         _taskRepository    = taskRepository;
@@ -35,7 +42,11 @@ public class CalendarAppService : ApplicationService, ICalendarAppService
         _configuration     = configuration;
         _httpClientFactory = httpClientFactory;
         _tokenProtector    = tokenProtector;
+        _distributedCache  = distributedCache;
     }
+
+    // SEC-012: OAuth 'state' CSRF token'ı için kullanıcı-bağlı sunucu-taraflı anahtar.
+    private static string OAuthStateCacheKey(Guid userId) => $"calendar-oauth-state:{userId}";
 
     public async Task<List<CalendarAccountDto>> GetMyAccountsAsync()
     {
@@ -94,7 +105,15 @@ public class CalendarAppService : ApplicationService, ICalendarAppService
 
         var selfUrl     = _configuration["App:SelfUrl"]?.TrimEnd('/') ?? throw new InvalidOperationException("App:SelfUrl eksik.");
         var redirectUri = Uri.EscapeDataString($"{selfUrl}/Calendars/Callback");
-        var state       = (int)provider;
+
+        // SEC-012: kriptografik rastgele state token'ı üret, kullanıcıya bağlı sunucu-taraflı
+        // cache'e yaz (tek kullanımlık, 10 dk); callback bunu doğrular. State = "{provider}.{token}".
+        var stateToken = Convert.ToHexString(RandomNumberGenerator.GetBytes(32));
+        await _distributedCache.SetStringAsync(
+            OAuthStateCacheKey(CurrentUser.Id!.Value),
+            stateToken,
+            new DistributedCacheEntryOptions { AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(10) });
+        var state = Uri.EscapeDataString($"{(int)provider}.{stateToken}");
 
         if (provider == CalendarProviderType.Google)
             return $"https://accounts.google.com/o/oauth2/v2/auth" +
@@ -108,9 +127,24 @@ public class CalendarAppService : ApplicationService, ICalendarAppService
                $"&state={state}&redirect_uri={redirectUri}";
     }
 
-    /// <summary>OAuth callback'ten gelen code'u token'a çevirip hesabı bağlar.</summary>
-    public async Task ExchangeCodeAndConnectAsync(CalendarProviderType provider, string code, string redirectUri)
+    /// <summary>OAuth callback'ten gelen code'u token'a çevirip hesabı bağlar. State token'ı
+    /// (SEC-012) auth başlangıcında saklanan kullanıcı-bağlı, tek kullanımlık değerle doğrulanır.</summary>
+    public async Task ExchangeCodeAndConnectAsync(CalendarProviderType provider, string code, string redirectUri, string stateToken)
     {
+        // SEC-012: account-linking CSRF savunması — state auth başlangıcındaki token'la eşleşmeli.
+        var cacheKey = OAuthStateCacheKey(CurrentUser.Id!.Value);
+        var expectedToken = await _distributedCache.GetStringAsync(cacheKey);
+        await _distributedCache.RemoveAsync(cacheKey); // tek kullanımlık: replay engelle
+        if (string.IsNullOrEmpty(expectedToken)
+            || string.IsNullOrEmpty(stateToken)
+            || !CryptographicOperations.FixedTimeEquals(
+                   Encoding.UTF8.GetBytes(expectedToken),
+                   Encoding.UTF8.GetBytes(stateToken)))
+        {
+            Logger.LogWarning("Takvim OAuth state doğrulaması başarısız (CSRF şüphesi). Provider={Provider}", provider);
+            throw new BusinessException(message: "Takvim bağlantısı doğrulanamadı (geçersiz oturum durumu).");
+        }
+
         var sectionKey   = provider == CalendarProviderType.Google ? "Google" : "Outlook";
         var clientId     = _configuration[$"Calendars:{sectionKey}:ClientId"] ?? string.Empty;
         var clientSecret = _configuration[$"Calendars:{sectionKey}:ClientSecret"] ?? string.Empty;

@@ -11,6 +11,6 @@ public interface ICalendarAppService : IApplicationService
     Task ConnectAccountAsync(ConnectCalendarInput input);
     Task DisconnectAccountAsync(Guid id);
     Task<string> GetAuthUrlAsync(CalendarProviderType provider);
-    Task ExchangeCodeAndConnectAsync(CalendarProviderType provider, string code, string redirectUri);
+    Task ExchangeCodeAndConnectAsync(CalendarProviderType provider, string code, string redirectUri, string stateToken);
     Task ForceSyncAsync(Guid id);
 }
