@@ -5194,7 +5194,14 @@ i.apya-priority-dot {
     /* Mobilde ikon ve ipucu dÃ¼ÅŸer â€” 390px'de Ã¼Ã§ kutuya sadece etiket+deÄŸer sÄ±ÄŸar. */
     .apya-proj-kpi .kpi-icon-box,
     .apya-proj-kpi-hint { display: none; }
-    .apya-proj-kpi .apya-overline { font-size: 9.5px; }
+    /* Etiket mobilde sarar: üç kutu 360px'te 105px'e düşüyor ve tek satırda
+       "YAKLAŞAN GÖREV" kırpılıyordu (320px'te 16px eksik). Sarınca üç kutu da
+       aynı yükseklikte kalır (flex satırında stretch), kırpma kalkar. */
+    .apya-proj-kpi .apya-overline {
+        font-size: 9.5px;
+        white-space: normal;
+        line-height: 1.25;
+    }
     .apya-proj-kpi-value { font-size: 18px; }
     /* Åeritte mobilde yalnÄ±z ilk Ã¼Ã§ hÃ¼cre: Risk, GecikmiÅŸ, Ortalama. */
     .apya-proj-kpi.is-mobile-hidden { display: none; }
@@ -5217,8 +5224,22 @@ i.apya-priority-dot {
     /* AraÃ§ Ã§ubuÄŸu: yoÄŸunluk/gÃ¶rÃ¼nÃ¼m anahtarlarÄ± ve rol rozeti gizlenir. */
     .apya-proj-toolbar-desktop { display: none; }
     .apya-proj-toolbar { gap: 8px; }
-    .apya-proj-toolbar-end { margin-left: 0; width: 100%; }
+    /* SARMA ŞART: .apya-proj-toolbar-end sarmadığı için sayaç + geri bildirim
+       linki + arama + sıralama + "Yeni Proje Ekle" tek satırda kalıyor, 375px
+       viewport'ta şerit 523px'e çıkıp SAYFAYI yatay kaydırıyordu (2026-08-15
+       ölçümü; düğme 148px dışarıda). Üst kap .apya-proj-toolbar zaten sarıyor,
+       taşma tümüyle bu iç satırdan geliyordu.
+       Sarınca sıra: (sayaç + geri bildirim) · arama · (sıralama + eylem). */
+    .apya-proj-toolbar-end { margin-left: 0; width: 100%; flex-wrap: wrap; row-gap: 8px; }
     .apya-proj-sort { flex: 1 1 auto; height: var(--apya-control-h-lg); }
+    /* Eylem düğmesi kendi satırında tam metinle durur; daraltılırsa iki satıra
+       kırılıp 46px'lik bir kutuya dönüyordu. Yüksekliği yanındaki sıralama
+       kutusuyla (44px) eşitlenir — blok içindeki 44px dokunma hedefi kuralı. */
+    .apya-proj-toolbar-end > .btn {
+        flex: none;
+        white-space: nowrap;
+        min-height: var(--apya-control-h-lg);
+    }
 
     /* Liste gÃ¶rÃ¼nÃ¼mÃ¼ mobilde hiÃ§ basÄ±lmaz (JS kart moduna dÃ¼ÅŸer); yine de
        CSS tarafÄ±nda da gizlenir ki eski bir localStorage deÄŸeri ekranÄ± bozmasÄ±n. */
@@ -5226,6 +5247,17 @@ i.apya-priority-dot {
 
     .apya-tile-grid { gap: 10px; }
     .apya-proj-card { flex: none; }
+
+    /* Kart mobilde tek sütun — başlığı tek satıra kırpmanın anlamı yok; uzun
+       proje adları (ör. "Kırsal Kalkınma Hibe Programı Başvurusu" 259px isterken
+       kutu 213px) iki satıra sarar, üçüncü satırda yine üç nokta ile kesilir. */
+    .apya-proj-card-title {
+        white-space: normal;
+        display: -webkit-box;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
+        line-clamp: 2;
+    }
 
     /* Dokunma hedefleri 44px */
     .apya-proj-card-actions .btn,
