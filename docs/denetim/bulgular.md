@@ -291,10 +291,9 @@ SEC-001 (`48b34af`) `appsettings.json`'daki `OpenIddict:Applications:Platform_We
 
 ### Temizlik
 
-#### CLEAN-001 ⚪ `AÇIK` — Ölü stub dosyalar
-"Bu dosya artık kullanılmıyor / Moved to..." diyen boş stub'lar duruyor:
-[Application/Projects/ProjectTaskAppService.cs](src/Apya.Platform.Application/Projects/ProjectTaskAppService.cs), [Application/AiTasks/AiTaskGeneratorAppService.cs](src/Apya.Platform.Application/AiTasks/AiTaskGeneratorAppService.cs), [Application/Tasks/Drafts/DraftTaskAppService.cs](src/Apya.Platform.Application/Tasks/Drafts/DraftTaskAppService.cs)
-**Öneri:** Sil (ayrı küçük temizlik PR'ı). CLAUDE.md gereği silmeden önce onay.
+#### CLEAN-001 ⚪ `DÜZELTİLDİ` — Ölü stub dosyalar
+"Bu dosya artık kullanılmıyor / Moved to APYA-109.4" diyen 3 boş stub (hiçbir tip tanımlamıyordu — yalnız yorum + boş namespace) silindi: `Application/Projects/ProjectTaskAppService.cs`, `Application/AiTasks/AiTaskGeneratorAppService.cs`, `Application/Tasks/Drafts/DraftTaskAppService.cs` (kullanıcı onayı "devam"). `AiTasks/` + `Drafts/` klasörleri boş kaldı (git tutmaz).
+**Doğrulama (2026-08-16):** tip tanımlamadıkları için referanssız; build 0 hata; tam suite **353/353** yeşil.
 
 ---
 
