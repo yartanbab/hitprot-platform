@@ -42,6 +42,8 @@ Düzeltme PR'ları bulgu ID'sine referans verir. Denetim çok oturuma yayılır;
 
 | 2026-08-15 | SEC-001/002 | Commit'li sırlar (`OpenIddict ClientSecret`, `StringEncryption:DefaultPassPhrase`) `appsettings.json` (Web + DbMigrator) içinden BOŞALTILDI → gerçek değerler yalnız env var / user-secrets ile verilmeli. Sicildeki örnek değerler de redakte edildi. **NOT: Değerler git GEÇMİŞİNDE hâlâ var** (bu yalnız güncel dosyaları temizler). Prod'da ezilmiyorsa passphrase rotasyonu + AI anahtarlarının yeniden şifrelenmesi ayrı iş. | 🟡 Kısmi (güncel dosyalar temiz; geçmiş + rotasyon açık) |
 
+| 2026-08-15 | SEC-011 | **Webhook SSRF düzeltildi.** `WebhookUrlGuard`: (1) abonelikte erken doğrulama (`ValidateOrThrow` — http/https şema + IP literal iç aralık reddi, Create+Update'te), (2) **bağlantı-anında IP denetimi** (`GuardedConnectAsync` ConnectCallback → DNS çözümü sonrası loopback/private/link-local/metadata IP'leri reddeder; DNS-rebinding'e ve her redirect'e karşı) + **auto-redirect kapalı**. `WebhookClient` `SocketsHttpHandler` ile yapılandırıldı. Yeni hata kodu `WebhookTargetUrlNotAllowed` + tr/en. Build ✅. | 🟢 Uygulandı, doğrulanıyor |
+
 ## Faz 2 — E2E canlı doğrulama (2026-08-15, MSSQL + kullanıcı Chrome oturumu)
 
 Ortam: MSSQL (çalışıyordu, TCP 1433 kapalı ama Shared Memory ile `localhost` bağlanır) → `dotnet ef database update` ile `Add_ConsentRecords` + `Drop_ProjectAnalyses` uygulandı → app `https://localhost:44386` sorunsuz boot. (DbMigrator'ın ilk seed hatası soğuk-DB/şema-uyuşmazlığı kaynaklı geçiciydi.) Doğrulama kullanıcının gerçek Chrome oturumunda (in-app panel oturumsuzdu → ayrı çerez jarı).
@@ -93,6 +95,22 @@ Build uyarısı: `Scriban` 7.2.1 paketinde yüksek önemli açık (GHSA-7jvp-hj4
 #### SEC-009 🟠 `DOĞRULANDI` — System.Security.Cryptography.Xml 9.0.16 çoklu yüksek CVE
 `dotnet ef` çıktısı: `System.Security.Cryptography.Xml` 9.0.16'da birden çok yüksek önem açığı (GHSA-23rf-6693-g89p, GHSA-8q5v-6pqq-x66h, GHSA-cvvh-rhrc-wg4q, GHSA-g8r8-53c2-pm3f, GHSA-mmjf-rqrv-855v). Muhtemelen transitif (ABP/OpenIddict XML imzalama). AutoMapper (SEC-005) + Scriban (SEC-008) ile birlikte **üç ayrı bağımlılık açığı ailesi** build'de raporlanıyor.
 **Öneri:** Bağımlılıkları güncelle; `dotnet list package --vulnerable --include-transitive` ile tam envanter çıkar, tek "bağımlılık güvenlik" PR'ında topla.
+
+#### SEC-012 🟡 `DOĞRULANDI` — Takvim OAuth `state` CSRF token olarak doğrulanmıyor
+[Callback.cshtml.cs:26-46](src/Apya.Platform.Web/Pages/Calendars/Callback.cshtml.cs): `state` yalnız sağlayıcı enum'unu (0/1) taşıyor; başlangıçta rastgele, session'a-bağlı bir state üretilip callback'te karşılaştırılmıyor. `[Authorize]` var (tam anonim değil) ama OAuth **account-linking CSRF** açık: kurban (girişli) kandırılıp saldırganın hazırladığı callback URL'ine yönlendirilirse, kod değişimi kurbanın bağlamında yapılır → istenmeyen takvim hesabı bağlanabilir. OAuth kodları tek-kullanımlık/kısa ömürlü olduğu için sömürü zor ama savunma eksik.
+**Öneri:** Auth başlangıcında kriptografik rastgele `state` üret, kullanıcı session'ına/çereze bağla; callback'te birebir doğrula (sağlayıcı bilgisini state içine imzalı gömerek taşı).
+
+#### SEC-011 🔴 `DOĞRULANDI` — Webhook hedef URL'inde SSRF (full-read)
+Kiracı, webhook aboneliğine **herhangi bir hedef URL** girebilir; sunucu doğrulama yapmadan oraya POST eder ve **yanıt gövdesini teslimat log'una kaydeder** (kiracı görür) → sadece kör değil, **full-read SSRF**.
+- URL doğrulaması YOK: `WebhookSubscription.SetTargetUrl` yalnız `Check.NotNullOrWhiteSpace + maxLength` ([WebhookSubscription.cs:50,61](src/Apya.Platform.Domain/DynamicAssets/Webhooks/WebhookSubscription.cs)); AppService düz geçiriyor. Şema/iç-IP/host kontrolü hiç yok.
+- HttpClient korumasız: `"WebhookClient"` yalnız 15sn timeout ([PlatformApplicationModule.cs:34](src/Apya.Platform.Application/PlatformApplicationModule.cs)) — çözülen IP'yi özel aralıklara karşı denetleyen handler yok.
+- Gönderici yanıtı döndürür + kaydeder: [WebhookDeliverySender.cs:36-64](src/Apya.Platform.Application/DynamicAssets/Webhooks/WebhookDeliverySender.cs); `ResendDeliveryAsync` **web isteği içinde senkron** ([WebhookSubscriptionAppService.cs:142](src/Apya.Platform.Application/DynamicAssets/Webhooks/WebhookSubscriptionAppService.cs)) → saldırgan tetikleyip yanıtı okur.
+**Etki:** `http://169.254.169.254/` (bulut metadata), `http://localhost:*`, `10./172.16./192.168.` iç servisler. Plesk paylaşımlı barındırmada aynı sunucudaki diğer siteler/servisler. Kiracı-doğrulamalı ama çok-kiracılı → herhangi bir kiracı yöneticisi.
+**Öneri:** Abonelikte URL doğrula — `https` zorunlu; host'u çöz ve **loopback/link-local/private/metadata IP'leri reddet** (DNS-rebinding'e karşı bağlantı-anında IP denetleyen handler ideal); mümkünse çıkış allowlist'i. Yanıt gövdesini kiracıya döndürmeyi de gözden geçir.
+
+#### SEC-010 🟠 `DOĞRULANDI` — Takvim OAuth token'ları DB'de düz metin
+`CalendarAppService` Google/Outlook `AccessToken` ve `RefreshToken`'ı **şifrelemeden** saklıyor ([CalendarAppService.cs:59-60,68-69,133-134](src/Apya.Platform.Application/Calendars/CalendarAppService.cs) — `existing.AccessToken = input.AccessToken`, hiç `Encrypt` yok). `ExternalCalendarAccount.AccessToken` DB'de ham. DB'ye (ya da yedeğe) erişen biri kullanıcıların Google/Microsoft takvimlerine erişebilir; refresh token uzun ömürlü olduğu için kalıcı erişim. (Passphrase blast-radius araştırmasında bulundu — passphrase'e bağlı DEĞİL.)
+**Öneri:** Token'ları `IStringEncryptionService` ile şifrele (AI anahtarlarındaki desen: `AiProviderAppService.Encrypt`/`AiProviderCredentialStore.Decrypt`); okuma noktalarında (`GoogleCalendarProvider`/`MicrosoftOutlookProvider` `BuildClient(account.AccessToken)`) çöz. NOT: bu da passphrase'e bağlanır → SEC-001 rotasyonuyla koordine.
 
 #### SEC-004 ⚪ `BEKLİYOR` — Git geçmişinde sır taraması önerilir
 `appsettings.json` şu an OpenAI anahtarını redakte tutuyor (`sk-proj-...[GIZLI_ANAHTAR]...`), ama geçmiş commit'lerde gerçek anahtar bulunmuş olabilir (`git log -S "sk-proj"` commit `582f3af`'i işaret ediyor).

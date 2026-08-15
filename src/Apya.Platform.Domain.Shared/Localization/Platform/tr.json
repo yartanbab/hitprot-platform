@@ -400,6 +400,7 @@
         "Platform:DynamicAssets:FormExpired": "Bu formun yanıt alma süresi doldu.",
         "Platform:DynamicAssets:FormKvkkConsentRequired": "Devam etmek için aydınlatma metnini onaylamanız gerekir.",
         "Platform:DynamicAssets:FormCaptchaFailed": "Doğrulama başarısız. Lütfen tekrar deneyin.",
+        "Platform:DynamicAssets:WebhookTargetUrlNotAllowed": "Geçersiz webhook adresi. Yalnızca http/https ve genel (internet) adreslere izin verilir; yerel/özel ağ adresleri kabul edilmez.",
         "Menu:AiCenter:UsageLogs": "AI Kullanım Kayıtları",
         "Permission:Ai.UsageLogs": "AI Kullanım Kayıtları",
         "Menu:AiCenter:Reports": "AI Raporları",
