@@ -8,6 +8,7 @@ using Volo.Abp;
 using Volo.Abp.Application.Dtos;
 using Volo.Abp.Domain.Repositories;
 using Apya.Platform.DynamicAssets.Dtos;
+using Apya.Platform.Permissions;
 
 namespace Apya.Platform.DynamicAssets;
 
@@ -16,7 +17,8 @@ namespace Apya.Platform.DynamicAssets;
 /// Provides the critical <see cref="InstantiateFromTemplateAsync"/> method
 /// for creating concrete documents from template blueprints.
 /// </summary>
-    [Authorize]
+    // SEC-016: Çıplak [Authorize] otomatik API'de DynamicAssets iznini atlıyordu (sayfalar uyguluyor).
+    [Authorize(PlatformPermissions.DynamicAssets.Default)]
     public class DynamicDocumentAppService : PlatformAppService, IDynamicDocumentAppService
     {
         private readonly IAppDocumentRepository _documentRepository;
@@ -39,6 +41,7 @@ namespace Apya.Platform.DynamicAssets;
     ///   4. Deep-copy each block into the new document with fresh IDs.
     ///   5. Persist and return the new document as DTO.
     /// </summary>
+    [Authorize(PlatformPermissions.DynamicAssets.Create)]
     public async Task<DocumentDto> InstantiateFromTemplateAsync(InstantiateDocumentDto input)
     {
         // Step 1: Fetch template with blocks
@@ -122,6 +125,7 @@ namespace Apya.Platform.DynamicAssets;
         return new PagedResultDto<DocumentDto>(totalCount, dtos);
     }
 
+    [Authorize(PlatformPermissions.DynamicAssets.Delete)]
     public async Task DeleteAsync(Guid id)
     {
         await _documentRepository.DeleteAsync(id);

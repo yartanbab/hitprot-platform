@@ -14,7 +14,7 @@ Düzeltme PR'ları bulgu ID'sine referans verir. Denetim çok oturuma yayılır;
 
 | Faz | Kapsam | Durum |
 |---|---|---|
-| **1 — Yatay statik tarama** | Güvenlik, izin haritası, mimari, bug, perf, ölü kod | ✅ 1. geçiş tamam (bu belge). Derin per-servis + AI modülü + webhooks 2. geçişe |
+| **1 — Yatay statik tarama** | Güvenlik, izin haritası, mimari, bug, perf, ölü kod | ✅ 1. geçiş + **2. geçiş izin haritası tamam** (2026-08-16): tüm AppService yetkilendirmesi tarandı → SEC-013/014/015/016 bulundu. AI modülü iç veri-akış derinleşmesi hâlâ kısmi |
 | **1b — KVKK / Veri koruma** | TR öncelikli → AB → Dünya | ✅ **Dalga 1 (4/4) UYGULANDI + doğrulandı**; metinler taslak (hukuki inceleme bekliyor) |
 | **Düzeltmeler** | SEC-007, SEC-DEP Kademe 1, FN-001, CORR-004, ARCH-001+FN-002 (33 ölü dosya) | ✅ Hepsi uygulandı+doğrulandı; **suite tam yeşil 351/351** (TEST-001 çözüldü) |
 | **2 — Dikey dinamik (E2E)** | Sayfa/buton canlı tıklama, UX/UI, veri bütünlüğü | ⏳ DB kapalı (MSSQL) → kullanıcı başlatmalı + DbMigrator + giriş; install-libs ✅ |
@@ -48,6 +48,9 @@ Düzeltme PR'ları bulgu ID'sine referans verir. Denetim çok oturuma yayılır;
 | 2026-08-15 | FN-004 | **`Consents.Default` host admin'e seed edildi.** `ConsentsPermissionDataSeedContributor` (LoginScreen deseni; host-context, "ADMIN" rolü, idempotent). Migration YOK. Kiracı-admin kapsamı paket sistemine bırakıldı (ayrı karar). | ✅ Doğrulandı: build 0 hata; tam suite **351/351** yeşil |
 | 2026-08-15 | SEC-012 | **Takvim OAuth state CSRF doğrulaması eklendi.** `GetAuthUrlAsync` rastgele token'ı kullanıcı-bağlı `IDistributedCache`'e yazar (`state="{provider}.{token}"`, 10 dk, tek kullanımlık); `ExchangeCodeAndConnectAsync` FixedTimeEquals ile doğrular+siler, eşleşmezse `BusinessException`. Cookie yerine cache (Application'a ASP.NET Core ref eklememek için); yeni endpoint/JS yok. | ✅ Doğrulandı: build 0 hata; tam suite **351/351** yeşil |
 | 2026-08-16 | SEC-003 | **Anonim form cevap-şema doğrulaması eklendi.** `ResponseAppService.ValidateAnswers`: boyut sınırı (1 MB), geçerli JSON nesnesi, anahtarlar yalnız var olan cevaplanabilir bloklara ait (bilinmeyen anahtar reddi), zorunlu bloklar dolu. 3 yeni hata kodu + tr/en. Honeypot+min-süre (KVKK-005) + bu = çöp/spam veri kapandı. Per-tip format + 3.taraf CAPTCHA bilinçle kapsam dışı. | ✅ Doğrulandı: build 0 hata; tam suite **351/351** yeşil |
+| 2026-08-16 | CORR-001 | **Negatif/sıfır ödeme tutarı guard'ı.** `RecordPaymentAsync` başına `amount <= 0 → BusinessException(PaymentAmountInvalid)`; yeni hata kodu + tr; 2 birim test. Aşırı ödeme bilinçle serbest (avans/kısmi). | ✅ Doğrulandı: build 0 hata; tam suite **353/353** yeşil (yeni testlerle) |
+| 2026-08-16 | SEC-013 + SEC-016 | **Broken access control (izin haritası 2. geçiş).** ProjectAppService→Projects.Default, TaskAppService→Tasks.Default; Template+DynamicDocument→DynamicAssets.Default+mutasyon Create/Delete. SEC-015 yanlış alarm (metotlar zaten gated), EntityLink açık. | ✅ Doğrulandı: build 0 hata; tam suite **353/353** yeşil |
+| 2026-08-16 | SEC-006 + SEC-014 | **AI izin modeli (kullanıcı kararı host+kiracı).** `AiPermissionDataSeedContributor` tüm `Ai.*`+`UseAiFeatures`'ı host+kiracı admin'e seed eder (tavan efektif erişimi kontrol eder). AI uçları (`AiTaskGenerator`+`AiAssistant`) `[Authorize(UseAiFeatures)]` ile gate edildi. Migration YOK. | ✅ Doğrulandı: build 0 hata; tam suite **353/353** yeşil |
 
 ## Faz 2 — E2E canlı doğrulama (2026-08-15, MSSQL + kullanıcı Chrome oturumu)
 
@@ -152,6 +155,32 @@ Aynı desen: `ReportAppService` ([:17](src/Apya.Platform.Application/Reports/Rep
 
 **Olumlu (güvenlik):** Yetkilendirme kapsamı güçlü — `[Authorize]` taşımayan her sınıf ya ölü stub ya bilinçli `[AllowAnonymous]`. Dosya yükleme path-traversal koruması (`ResolveSafePath`), KVKK ekleri wwwroot dışında (`FeedbackFileStorage` App_Data), uzantı+boyut allowlist'i, antiforgery refresh, prod'da Swagger kapalı, CSP ihlal raporlama, tenant rate-limit — hepsi mevcut.
 
+### Güvenlik — Faz 1 2. geçiş: izin haritası (2026-08-16)
+
+Tüm AppService'lerin sınıf/method yetkilendirmesi sistematik tarandı (SEC-007'nin çağırdığı geçiş). Çıplak `[Authorize]` (kimlik var, izin yok) servisler karşılık gelen izin + sayfa uygulamasıyla kıyaslandı.
+
+#### SEC-013 🟠 `DÜZELTİLDİ` — Broken Access Control genişlemesi: ProjectAppService + TaskAppService çıplak `[Authorize]` (SEC-007 ile aynı sınıf)
+**Düzeltme (2026-08-16):** `ProjectAppService` sınıfı → `[Authorize(Projects.Default)]` (DeleteAsync'in `Projects.Delete`'i method-seviyesi ezme olarak korundu); `TaskAppService` sınıfı → `[Authorize(Tasks.Default)]`. Sayfalar zaten bu izinleri uyguladığı için UI/test kullanıcıları kilitlenmedi (Web.Tests 50/50 korundu). Build 0 hata, tam suite 353/353.
+
+`ProjectAppService` sınıf-seviyesi çıplak `[Authorize]`; **yalnız `DeleteAsync`'te `[Authorize(Projects.Delete)]`** var — `CreateAsync/UpdateAsync/GetListAsync/GetDetailAsync/GetProjectsSummaryAsync/AddAttachmentAsync` **izinsiz** ([ProjectAppService.cs:27,72,112,140,202](src/Apya.Platform.Application/Projects/ProjectAppService.cs)). Oysa Projeler sayfaları `[Authorize(Projects.Default)]` uyguluyor → otomatik API (`/api/app/project`) `Projects.Default`'ı **atlıyor**: izinsiz kiracı kullanıcısı proje **listeler/oluşturur/günceller**. `Delete`'in gated olması gap'in kasıtsız olduğunu kanıtlıyor. `TaskAppService` **tamamen çıplak** ([TaskAppService.cs:18](src/Apya.Platform.Application/Tasks/TaskAppService.cs), method-seviyesi izin yok) → görev API'si `Tasks.Default`'ı atlıyor (sayfalar uyguluyor).
+**Kapsam:** Kiracı-arası sızıntı YOK (IMultiTenant); kiracı-içi rol yükseltmesi. **Fix:** sınıflara `[Authorize(Projects.Default)]` / `[Authorize(Tasks.Default)]` (SEC-007 deseni — sayfalar zaten uyguladığı için UI kullanıcıları kilitlenmez; API-only-izinsiz erişim = açığın kendisi). Create/Edit alt-izinleri opsiyonel takip.
+
+#### SEC-014 🟡 `DÜZELTİLDİ` — AI çağrı uçları izinsiz (kota/maliyet + KVKK-002 yurt dışı aktarım tetiği)
+**Düzeltme (2026-08-16):** `AiTaskGeneratorAppService` + `AiAssistantAppService` → `[Authorize(Projects.UseAiFeatures)]`. SEC-006 ile birlikte çözüldü: yeni `AiPermissionDataSeedContributor` `UseAiFeatures`'ı (+ tüm `Ai.*`) host + kiracı admin'e seed ettiği için gate artık normal kullanıcıları kilitlemiyor; `ai_agent` ABAC yolu da açık kalıyor. Build 0 hata, suite 353/353.
+
+`AiTaskGeneratorAppService` (`ParseDocumentFromBytesAsync` — yüklenen **belgenin tam metnini** dış AI'ya gönderir, bkz KVKK-002) ve `AiAssistantAppService` (Semantic Kernel `_kernel` ile doğrudan AI) **çıplak `[Authorize]`** ([AiTaskGeneratorAppService.cs:19](src/Apya.Platform.Ai.Application/AiTaskGeneratorAppService.cs), [AiAssistantAppService.cs:24](src/Apya.Platform.Application/Agentic/AiAssistantAppService.cs)) → herhangi bir kimlikli kullanıcı (AI izni olmadan) AI'yı tetikler: kiracı AI anahtarı/kotası tüketilir + veri OpenAI/Anthropic/**DeepSeek**'e gider. **`Projects.UseAiFeatures` izni TANIMLI** ([PlatformPermissions.cs:90](src/Apya.Platform.Application.Contracts/Permissions/PlatformPermissions.cs)) ama uygulanmıyor.
+**Fix:** uçları `[Authorize(Projects.UseAiFeatures)]` ile gate et. **🔴 SEC-006'ya BLOKLU (2026-08-16):** `AiAttributePermissionValueProvider` `UseAiFeatures`'ı YALNIZ `client_id=ai_agent` claim'ine veriyor ([AiAttributePermissionValueProvider.cs:45](src/Apya.Platform.Application/Permissions/AiAttributePermissionValueProvider.cs)); normal kullanıcıya hiç seed edilmiyor. `[Authorize(UseAiFeatures)]` eklersem normal AI kullanıcıları kilitlenir; `Projects.Default` ile gate edersem ABAC `ai_agent` akışı kırılır. Doğru gate UseAiFeatures (ABAC tasarım niyeti) AMA önce seed edilmeli = **SEC-006 AI-izin-modeli kararı** (host vs kiracı vs paket). Bu karar verilmeden güvenle uygulanamaz.
+
+#### SEC-015 ⚪ `KAPANDI` (yanlış alarm) — Webhook aboneliğinde izin var
+İlk taramada sınıf-seviyesi çıplak `[Authorize]` görülüp gap sanılmıştı; **method-seviyesi kontrol edilince YANLIŞ olduğu görüldü.** `WebhookSubscriptionAppService`'in **her metodu gated**: `CreateAsync→DynamicAssets.Create`, `UpdateAsync/ResendDelivery/RegenerateSecret→Edit`, `GetAsync/GetListAsync/GetDeliveryLogs→Default`, `DeleteAsync→Delete` ([WebhookSubscriptionAppService.cs:39,61,89,96,112,138,168](src/Apya.Platform.Application/DynamicAssets/Webhooks/WebhookSubscriptionAppService.cs)). Sınıf-seviyesi `[Authorize]` yalnız varsayılan; metotlar eziyor. Webhook düzgün korunuyor. **Ders: çıplak sınıf-`[Authorize]` gördüğünde method-seviyesini de kontrol et** (bkz SEC-016'da aynı doğrulama yapıldı).
+
+#### SEC-016 🔵 `DÜZELTİLDİ` (kısmi) — Diğer çıplak `[Authorize]` servisler
+`DynamicDocumentAppService`, `TemplateAppService`, `EntityLinkAppService` çıplak `[Authorize]` (method-seviyesi de yok, auto-API açık) — DynamicAssets sayfaları `DynamicAssets.Default/Create/Edit` uyguluyor.
+**Düzeltme (2026-08-16):** `TemplateAppService` + `DynamicDocumentAppService` → sınıf `[Authorize(DynamicAssets.Default)]` + mutasyonlar method-seviyesi (`Create→DynamicAssets.Create`, `Delete→DynamicAssets.Delete`, `InstantiateFromTemplate→Create`). Build 0 hata, suite 353/353.
+**AÇIK — `EntityLinkAppService`:** cross-module varlık bağlama (proje/görev/belge) → `DynamicAssets.Default` çok dar olabilir; doğru izin belirsiz (proje bağlayan kullanıcı DynamicAssets istemez). Gate kararı bekliyor → dokunulmadı.
+
+**Doğrulanan (açık DEĞİL — kasıtlı/gated):** `FeedbackSettingsAppService` (okuma çıplak, **yazma `[Authorize(Feedbacks.ManageSettings)]`** — [:63](src/Apya.Platform.Application/Feedbacks/FeedbackSettingsAppService.cs)); kullanıcı-scoped/any-authed olanlar (`NotificationAppService`, `FeedbackAppService` gönderim, `CalendarAppService` kendi hesapları, `ShellAppService`, `TelemetryAppService`) — bunlar bilinçli çıplak, veri CurrentUser/kendi kapsamında.
+
 ### Mimari & Veri Bütünlüğü
 
 #### ARCH-001 🟠 `AÇIK` (niyet onayı gerekli) — Çift taraflı defter iş akışına bağlı değil
@@ -165,10 +194,11 @@ Bazı servisler ABP zaman soyutlaması (`Clock.Now`) yerine ham `DateTime.Now` k
 **Not:** `ProjectAppService`/`ReportAppService` daha önce bilinçli `Clock.Now`'a çevrilmiş (ARCH-043/046) — bu servisler geride kalmış. En riskli: hibe son-tarih "bugün" sınırı (çağrı açık/kapalı yanlış görünebilir).
 **Öneri:** Hepsini `Clock.Now`'a çevir (tek satırlık cerrahi değişiklikler).
 
-#### CORR-001 🔵 `AÇIK` — Ödeme kaydında aşırı/negatif tutar guard'ı yok
-`RecordPaymentAsync` `amount`'un fatura kalanını aşmadığını doğrulamıyor; sıfır/negatif `amount` da bir `Payment` satırı üretiyor (side-effect'ler `amount > 0` ile korunuyor ama kayıt yine de oluşuyor).
-**Kanıt:** [InvoiceManager.cs:124-171](src/Apya.Platform.Domain/Invoices/InvoiceManager.cs)
-**Not:** İş kuralına bağlı (avans/kısmi ödeme kasıtlı olabilir). Doğrulanmalı.
+#### CORR-001 🔵 `DÜZELTİLDİ` (kısmi — kasıtlı) — Ödeme kaydında negatif/sıfır tutar guard'ı yok
+`RecordPaymentAsync` sıfır/negatif `amount`'ta da bir `Payment` satırı üretiyordu (side-effect'ler `amount > 0` ile korunuyordu ama satır oluşup `payments.Sum`'ı → fatura durumunu kirletiyordu).
+**Kanıt:** [InvoiceManager.cs](src/Apya.Platform.Domain/Invoices/InvoiceManager.cs) `RecordPaymentAsync`
+**Düzeltme (2026-08-16):** Metot başına `if (amount <= 0) throw BusinessException(PaymentAmountInvalid)` guard'ı (invoice sorgusundan önce). Yeni hata kodu `Platform:Payment:AmountInvalid` + tr mesajı (mevcut Payment kodları tr-only → aynı desen). **2 birim test** eklendi (0 ve -100 → `BusinessException` + Insert yok). **Aşırı ödeme (amount > fatura kalanı) bilinçle ENGELLENMEDİ** — avans/kısmi ödeme kasıtlı olabilir (iş kuralı kararı; blokla­mak isteniyorsa ayrı iş).
+**Doğrulama:** build 0 hata; tam suite **353/353** yeşil (Application 42→44).
 
 ### İşlevsel (çalışmayan / eksik)
 
@@ -273,8 +303,8 @@ SEC-001 (`48b34af`) `appsettings.json`'daki `OpenIddict:Applications:Platform_We
 | ID | Önem | Konu | Kaynak |
 |---|---|---|---|
 | SEC-005 | 🟡 | AutoMapper CVE-2026-32933 dev'de açık (14.x fix yok) → ABP'yi AM15-uyumlu sürüme yükselt | project_automapper_cve |
-| CORR-002 | 🟡 | Feedback `nextval` açığı (çift DB provider) | project_dual_db_provider |
-| SEC-006 | 🔵 | AI merkezi permission seed'leri eksik | project_ai_evaluation_center |
+| CORR-002 | ✅ | **KAPANDI (yanlış/bayat not).** Feedback `nextval` çift-DB açığı zaten çözülmüş: SqlServer `20260811121727_Add_FeedbackNumberSequence` + Postgres `ExtendFeedbackManagement` ikisi de `AppFeedbackNumberSeq`'i şemasız (default) oluşturur; `FeedbackNumberGenerator` çalışma-anında sağlayıcıya göre `NEXT VALUE FOR` / `nextval` seçer, sorgu şemaları eşleşir. Doğrulandı 2026-08-16. | project_dual_db_provider |
+| SEC-006 | ✅ `DÜZELTİLDİ` | **AI izinleri host + kiracı admin'e seed edildi** (kullanıcı kararı "host+kiracı"). `AiPermissionDataSeedContributor` (Ai.Application): tüm `Ai.*` + `Projects.UseAiFeatures`'ı bulunduğu bağlamın "ADMIN" rolüne verir (host + her kiracı), `IPermissionDefinitionManager` ile dinamik enumerate + idempotent. **Geniş grant güvenli**: `PackagePermissionStateChecker` paket tavanında olmayan izni rolde verilse bile IsGranted=false yapar (host muaf) → Premium/Enterprise AI görür, Basic/Standard görmez. Migration YOK (izin grant'ı veri, deploy'da DbMigrator uygular). SEC-014'ü de açtı. 2026-08-16. | ~~project_ai_evaluation_center~~ | (`PackageFeatureGates.AiAssist` tüm `Ai.*`'ı gate'ler; `ai.AiProviderConfigs` kiracı-bazlı; menü kiracı bağlamında). Hiçbir role AI izni seed edilmiyor → AiAssist açık olsa bile kimse AI Center'ı göremiyor. **FN-004 gibi host-admin seed YANLIŞ olur** (host operatör kiracı AI'ını çalıştırmaz). Doğru fix: AiAssist paketli kiracının admin rolüne AI izinlerini grant et → **paket-izin sistemine entegrasyon (mimari karar, FN-004 kiracı-kapsamıyla aynı sınıf)**. 2026-08-16 karakterize edildi. | project_ai_evaluation_center, project_package_permission_ceiling |
 | UX-001 | 🔵 | Mobil denetimden kalan TR localization eksikleri | project_mobile_design_review |
 | QA-001 | 🟡 | Etkileşimli QA yapılmadan merge: kayıtlı görünümler #161, dashboard #168, projeler konsolu #169 → E2E ilk hedefleri | ilgili proje kayıtları |
 | QA-002 | 🔵 | Bildirim hiyerarşisi #166 canlı QA açık | project_notification_hierarchy |

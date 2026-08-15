@@ -8,6 +8,7 @@ using Volo.Abp;
 using Volo.Abp.Application.Dtos;
 using Volo.Abp.Domain.Repositories;
 using Apya.Platform.DynamicAssets.Dtos;
+using Apya.Platform.Permissions;
 
 namespace Apya.Platform.DynamicAssets;
 
@@ -15,7 +16,8 @@ namespace Apya.Platform.DynamicAssets;
 /// Manages template documents (IsTemplate = true).
 /// Templates serve as blueprints that can be instantiated into concrete documents.
 /// </summary>
-[Authorize]
+// SEC-016: Çıplak [Authorize] otomatik API'de DynamicAssets iznini atlıyordu (sayfalar uyguluyor).
+[Authorize(PlatformPermissions.DynamicAssets.Default)]
 public class TemplateAppService : PlatformAppService, ITemplateAppService
 {
     private readonly IAppDocumentRepository _documentRepository;
@@ -29,6 +31,7 @@ public class TemplateAppService : PlatformAppService, ITemplateAppService
         _logger = logger;
     }
 
+    [Authorize(PlatformPermissions.DynamicAssets.Create)]
     public async Task<DocumentDto> CreateAsync(CreateTemplateDto input)
     {
         var document = new AppDocument(
@@ -91,6 +94,7 @@ public class TemplateAppService : PlatformAppService, ITemplateAppService
         return new PagedResultDto<DocumentDto>(totalCount, dtos);
     }
 
+    [Authorize(PlatformPermissions.DynamicAssets.Delete)]
     public async Task DeleteAsync(Guid id)
     {
         var document = await _documentRepository.GetAsync(id);

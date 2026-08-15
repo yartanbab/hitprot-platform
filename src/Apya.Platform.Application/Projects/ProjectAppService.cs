@@ -24,7 +24,9 @@ using Microsoft.Extensions.Logging;
 
 namespace Apya.Platform.Application.Projects;
 
-[Authorize]
+// SEC-013: Çıplak [Authorize] otomatik API'de (/api/app/project) Projects.Default'ı atlıyordu —
+// sayfa uyguluyor ama API izinsiz kiracı kullanıcısına proje listeleme/oluşturma/güncelleme veriyordu.
+[Authorize(PlatformPermissions.Projects.Default)]
 public class ProjectAppService :
     CrudAppService<
         Project,

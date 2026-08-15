@@ -15,7 +15,8 @@ using Apya.Platform.Incomes;
 
 namespace Apya.Platform.Tasks
 {
-    [Authorize]
+    // SEC-013: Çıplak [Authorize] otomatik API'de (/api/app/task) Tasks.Default'ı atlıyordu.
+    [Authorize(PlatformPermissions.Tasks.Default)]
     public class TaskAppService :
         CrudAppService<
             TaskItem,

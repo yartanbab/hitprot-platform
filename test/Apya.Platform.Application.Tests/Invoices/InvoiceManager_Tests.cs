@@ -159,4 +159,24 @@ public class InvoiceManager_Tests
         await _paymentRepo.Received(1).InsertAsync(
             Arg.Any<Payment>(), Arg.Any<bool>(), Arg.Any<CancellationToken>());
     }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(-100)]
+    public async Task RecordPaymentAsync_With_NonPositive_Amount_Should_Throw_And_Not_Insert(decimal amount)
+    {
+        // CORR-001: Sıfır/negatif tutar geçersiz — guard metodun en başında, invoice sorgusundan
+        // önce reddeder; hiçbir Payment satırı üretilmemeli (payments.Sum'ı kirletmez).
+        var invoiceId = Guid.NewGuid();
+
+        await Should.ThrowAsync<BusinessException>(() => _sut.RecordPaymentAsync(
+            invoiceId: invoiceId,
+            amount: amount,
+            paymentMethod: "Nakit",
+            reference: "",
+            cashAccountId: null));
+
+        await _paymentRepo.DidNotReceive().InsertAsync(
+            Arg.Any<Payment>(), Arg.Any<bool>(), Arg.Any<CancellationToken>());
+    }
 }

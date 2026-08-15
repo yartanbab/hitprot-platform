@@ -8,6 +8,7 @@ using Apya.Platform.CashAccounts;
 using Apya.Platform.CashMovements;
 using Apya.Platform.CustomerLedger;
 using Apya.Platform.ExchangeRates;
+using Volo.Abp;
 using Volo.Abp.Domain.Repositories;
 using Volo.Abp.Domain.Services;
 
@@ -128,6 +129,14 @@ public class InvoiceManager : DomainService
         string reference,
         Guid? cashAccountId)
     {
+        // CORR-001: Sıfır/negatif ödeme tutarı geçersiz — yan etkiler zaten amount>0 ile korunuyordu
+        // ama Payment satırı yine de oluşup payments.Sum'ı (fatura durumunu) kirletiyordu.
+        // (Aşırı ödeme kasıtlı olabilir — avans/kısmi — o bilinçli olarak engellenmiyor.)
+        if (amount <= 0)
+        {
+            throw new BusinessException(PlatformDomainErrorCodes.PaymentAmountInvalid);
+        }
+
         var invoice = await _invoiceRepository.GetAsync(invoiceId);
         var isSales = invoice.Direction == InvoiceDirection.Sales;
 
