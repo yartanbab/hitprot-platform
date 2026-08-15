@@ -11,7 +11,7 @@ import { Skeleton } from '../../components/ui';
  * Yetkisi olmayan alanlar sunucudan NULL gelir; o kutucuk "yetki gerekli"
  * durumuna düşer. Frontend hiçbir değeri kendi kararıyla gizlemez.
  */
-function StatStripCard({ filter, template }) {
+function StatStripCard({ filter, template, compact }) {
     const { data, isLoading, isError, refetch } = useSummary(filter);
 
     /* Kolon şablonu DashboardRoot'tan gelir: şeridin ÖLÇÜLEN genişliğinden
@@ -22,7 +22,7 @@ function StatStripCard({ filter, template }) {
 
     if (isLoading) {
         return (
-            <div className="h-full grid gap-5" style={gridStyle}>
+            <div className={cn('h-full grid', compact ? 'gap-3' : 'gap-5')} style={gridStyle}>
                 {Array.from({ length: 5 }, (_, i) => (
                     <div key={i} className="rounded-card shadow-card bg-surface-base border border-default p-4">
                         <Skeleton height={14} className="w-2/3 mb-2" />
@@ -56,8 +56,9 @@ function StatStripCard({ filter, template }) {
            Kutu yüksekliği de kolon sayısını takip eder (stripLayoutFor → h), yani
            çok satırlı dizilimde kutu büyür; sabit h=2 bırakılınca satırlar 148px'lik
            kutuya sıkışıp `overflow-hidden` altyazıları kesiyordu. */
-        <div className="h-full grid gap-5" style={gridStyle}>
+        <div className={cn('h-full grid', compact ? 'gap-3' : 'gap-5')} style={gridStyle}>
             <Tile
+                compact={compact}
                 label={t('Dashboard:Summary:DueThisPeriod', 'Bu dönem teslim')}
                 value={data.dueThisPeriod}
                 pill={t('Dashboard:Summary:DueThisWeek', '{0} bu hafta', data.dueThisWeek)}
@@ -66,6 +67,7 @@ function StatStripCard({ filter, template }) {
                 spark={data.dueTrend}
             />
             <Tile
+                compact={compact}
                 label={t('Dashboard:Summary:Overdue', 'Gecikmiş')}
                 value={data.overdue}
                 tone="negative"
@@ -78,6 +80,7 @@ function StatStripCard({ filter, template }) {
                 caption={t('Dashboard:Summary:OverdueProjects', '{0} projede', data.overdueProjectCount)}
             />
             <Tile
+                compact={compact}
                 label={t('Dashboard:Summary:Blocked', 'Tıkanan iş')}
                 value={data.blocked}
                 tone="warning"
@@ -88,6 +91,7 @@ function StatStripCard({ filter, template }) {
                 caption={t('Dashboard:Summary:BlockedReasons', 'onay · bilgi · bağımlılık')}
             />
             <Tile
+                compact={compact}
                 label={t('Dashboard:Summary:PendingApprovals', 'Bende onay')}
                 value={data.pendingApprovals}
                 locked={data.pendingApprovals == null}
@@ -101,28 +105,35 @@ function StatStripCard({ filter, template }) {
                     ? t('Dashboard:Summary:AvgWait', 'ortalama bekleme {0} sa', data.pendingApprovalAvgAgeHours)
                     : null}
             />
-            <BudgetTile data={data} />
+            <BudgetTile data={data} compact={compact} />
         </div>
     );
 }
 
-function Tile({ label, value, pill, pillTone = 'neutral', caption, tone = 'neutral', icon, iconTone = 'brand', spark, locked, lockedPermission }) {
+function Tile({ label, value, pill, pillTone = 'neutral', caption, tone = 'neutral', icon, iconTone = 'brand', spark, locked, lockedPermission, compact }) {
+    /* Kompakt kip (dar mobil, bkz stripLayoutFor): padding/punto küçülür,
+       sparkline gizlenir — kutucuk ~97px'lik satıra sığmalı. */
+    const showSpark = !compact && spark && spark.length > 1;
     return (
         <div
             className={cn(
                 'rounded-card shadow-card bg-surface-base border border-default',
-                'flex flex-col gap-[7px] overflow-hidden',
-                /* Üst ve yan padding TÜM kutucuklarda aynı; yalnız alt padding
-                   grafikli kutucukta sıfırlanır ki sparkline kenara yapışsın.
-                   Farklı üst padding vermek şeritteki başlıkları kaydırıyordu. */
-                'pt-4 px-4',
-                spark ? 'pb-0' : 'pb-4',
+                'flex flex-col overflow-hidden',
+                compact ? 'gap-[5px] pt-3 px-3 pb-3' : cn(
+                    'gap-[7px]',
+                    /* Üst ve yan padding TÜM kutucuklarda aynı; yalnız alt padding
+                       grafikli kutucukta sıfırlanır ki sparkline kenara yapışsın.
+                       Farklı üst padding vermek şeritteki başlıkları kaydırıyordu. */
+                    'pt-4 px-4',
+                    spark ? 'pb-0' : 'pb-4',
+                ),
             )}
         >
             <div className="flex items-center justify-between gap-2">
                 <span className="text-[12.5px] font-medium text-text-secondary truncate">{label}</span>
                 <span className={cn(
-                    'inline-flex items-center justify-center w-6 h-6 rounded-lg flex-none',
+                    'inline-flex items-center justify-center rounded-lg flex-none',
+                    compact ? 'w-5 h-5' : 'w-6 h-6',
                     iconTone === 'negative' ? 'bg-negative-50 text-negative-700'
                         : iconTone === 'warning' ? 'bg-warning-50 text-warning-700'
                         : 'bg-accent-soft text-accent-600',
@@ -133,7 +144,7 @@ function Tile({ label, value, pill, pillTone = 'neutral', caption, tone = 'neutr
 
             {locked ? (
                 <>
-                    <span className="font-mono text-[28px] font-semibold leading-none tracking-[-0.03em] text-text-tertiary">— —</span>
+                    <span className={cn('font-mono font-semibold leading-none tracking-[-0.03em] text-text-tertiary', compact ? 'text-[22px]' : 'text-[28px]')}>— —</span>
                     <span className="text-[11.5px] text-text-tertiary">{t('Dashboard:Stat:Locked', 'yetki gerekli')}</span>
                     <span className="font-mono text-[9px] text-text-tertiary">{lockedPermission}</span>
                 </>
@@ -141,7 +152,8 @@ function Tile({ label, value, pill, pillTone = 'neutral', caption, tone = 'neutr
                 <>
                     <div className="flex items-baseline gap-2 flex-wrap">
                         <span className={cn(
-                            'font-mono text-[28px] font-semibold leading-none tracking-[-0.03em] tabular-nums',
+                            'font-mono font-semibold leading-none tracking-[-0.03em] tabular-nums',
+                            compact ? 'text-[22px]' : 'text-[28px]',
                             tone === 'negative' ? 'text-negative-500'
                                 : tone === 'warning' ? 'text-warning-600'
                                 : 'text-text-primary',
@@ -166,7 +178,7 @@ function Tile({ label, value, pill, pillTone = 'neutral', caption, tone = 'neutr
             {/* Taşan sparkline: kartın yatay padding'ini iptal edip alt kenara yapışır.
                 mt-auto ŞART — kutucuk içerikten uzun olduğunda grafik ortada asılı
                 kalmasın, her zaman alt kenarı kucaklasın. */}
-            {spark && spark.length > 1 && (
+            {showSpark && (
                 <div className="h-9 mt-auto -mx-4">
                     <AreaSpark values={spark} ariaLabel={t('Dashboard:Summary:DueTrend', 'Teslim dağılımı')} />
                 </div>
@@ -176,23 +188,31 @@ function Tile({ label, value, pill, pillTone = 'neutral', caption, tone = 'neutr
 }
 
 /** Bütçe kutucuğu — halka grafikli, ViewBudget yoksa kilitli. */
-function BudgetTile({ data }) {
+function BudgetTile({ data, compact }) {
     const locked = data.budgetUsedRatio == null && data.budgetTotal == null;
 
     return (
-        <div className="rounded-card shadow-card bg-surface-base border border-default p-4 flex items-center justify-between gap-2.5">
-            <div className="flex flex-col gap-[7px] min-w-0">
+        /* Kompakt kipte tam satıra yayılır: 145px'lik yarım kolonda Gauge (58px)
+           + altyazı sığmıyor, tek başına geniş satırda rahat ediyor. */
+        <div
+            className={cn(
+                'rounded-card shadow-card bg-surface-base border border-default flex items-center justify-between',
+                compact ? 'p-3 gap-2' : 'p-4 gap-2.5',
+            )}
+            style={compact ? { gridColumn: '1 / -1' } : undefined}
+        >
+            <div className={cn('flex flex-col min-w-0', compact ? 'gap-[5px]' : 'gap-[7px]')}>
                 <span className="text-[12.5px] font-medium text-text-secondary truncate">
                     {t('Dashboard:Summary:BudgetUsage', 'Bütçe kullanımı')}
                 </span>
                 {locked ? (
                     <>
-                        <span className="font-mono text-[28px] font-semibold leading-none tracking-[-0.03em] text-text-tertiary">— —</span>
+                        <span className={cn('font-mono font-semibold leading-none tracking-[-0.03em] text-text-tertiary', compact ? 'text-[22px]' : 'text-[28px]')}>— —</span>
                         <span className="font-mono text-[9px] text-text-tertiary">Platform.Projects.ViewBudget</span>
                     </>
                 ) : (
                     <>
-                        <span className="font-mono text-[28px] font-semibold leading-none tracking-[-0.03em] text-text-primary tabular-nums">
+                        <span className={cn('font-mono font-semibold leading-none tracking-[-0.03em] text-text-primary tabular-nums', compact ? 'text-[22px]' : 'text-[28px]')}>
                             %{Math.round((data.budgetUsedRatio ?? 0) * 100)}
                         </span>
                         <span className="text-[11.5px] text-text-tertiary truncate">
