@@ -35,7 +35,9 @@ $(function () {
     var OPEN_STATUSES = [1, 2, 3]; // Todo/InProgress/InReview — Done(4) ve Cancelled(0) hariç
     var CURRENT_USER_ID = (abp.currentUser && abp.currentUser.id) || '';
 
-    var STATUS_LABELS = { '': 'tümü', '0': 'İptal', '1': 'Yapılacak', '2': 'Sürüyor', '3': 'Testte', '4': 'Tamamlandı' };
+    // Sözcükler tr.json'daki Tasks:Status:* ile birebir — durum çipi, filtre
+    // chip'i ve toplu işlem menüsü aynı durumu aynı adla anmalı.
+    var STATUS_LABELS = { '': 'tümü', '0': 'İptal', '1': 'Bekliyor', '2': 'Sürüyor', '3': 'Testte', '4': 'Tamamlandı' };
     var PRIORITY_LABELS = { '': 'tümü', '1': 'Düşük', '2': 'Orta', '3': 'Yüksek', '4': 'Kritik' };
 
     // ─── Filtre state'i ────────────────────────────────────────────────────
@@ -96,13 +98,11 @@ $(function () {
     }
 
     // ─── Alt görev hiyerarşisi ─────────────────────────────────────────────
-    // Liste normalde HİYERARŞİK: yalnız kök görevler sayfalanır. Filtre veya
-    // arama aktifken DÜZ kipe döner — aksi halde filtreye uyan bir alt görev,
-    // üstü uymadığı için listeden tamamen düşerdi. Proje seçimi bir kapsam
-    // (scope), filtre değil → hiyerarşiyi bozmaz.
-    var expanded = {};
-    var subtaskCache = {};
-
+    // Mekanizma ortak modülde (createSubtaskHierarchy). Burada yalnız "hangi
+    // durumda hiyerarşik" kararı var: filtre veya arama aktifken DÜZ kipe
+    // dönülür — aksi halde filtreye uyan bir alt görev, üstü uymadığı için
+    // listeden tamamen düşerdi. Proje seçimi bir kapsam (scope), filtre değil
+    // → hiyerarşiyi bozmaz.
     function hasActiveFilter() {
         // Proje HARİÇ: kapsam sayılır, hiyerarşiyi bozmaz.
         return !!(state.get('status') || state.get('assignee') || state.get('priority') ||
@@ -164,7 +164,7 @@ $(function () {
     }
 
     function applyFilters(resetSubtasks) {
-        if (resetSubtasks !== false) { subtaskCache = {}; }
+        if (resetSubtasks !== false) { hierarchy.reset(); }
         renderFilterUi();
         state.writeUrl({ view: currentView === 'list' ? '' : currentView });
         if (dataTable) { dataTable.ajax.reload(); }
@@ -212,6 +212,14 @@ $(function () {
         },
         columnDefs: buildColumns()
     }));
+
+    var hierarchy = console_.createSubtaskHierarchy({
+        table: '#TasksTable',
+        getTable: function () { return dataTable; },
+        service: taskService,
+        isEnabled: isHierarchical,
+        openTask: function (id) { editModal.open(id); }
+    });
 
     function buildColumns() {
         var cols = [];
@@ -368,71 +376,8 @@ $(function () {
         if (bulk) { bulk.syncRowChecks(); }
 
         // Açık alt görev satırlarını geri aç (child satırlar her draw'da kaybolur).
-        if (!isHierarchical()) { return; }
-        if (!Object.keys(expanded).length) { return; }
-        dataTable.rows().every(function () {
-            var d = this.data();
-            if (d && expanded[d.id]) { renderSubtasks(this, d.id); }
-        });
+        hierarchy.restore();
     });
-
-    // ─── Alt görev aç/kapa ─────────────────────────────────────────────────
-    $(document).on('click', '#TasksTable tbody [data-subtask-toggle]', function (e) {
-        e.stopPropagation();
-        var $btn = $(this);
-        var id = $btn.attr('data-subtask-toggle');
-        var row = dataTable.row($btn.closest('tr'));
-        if (!row || !row.data()) { return; }
-
-        if (row.child.isShown()) {
-            row.child.hide();
-            delete expanded[id];
-            $btn.attr('aria-expanded', 'false').attr('aria-label', 'Alt görevleri göster');
-            return;
-        }
-        expanded[id] = true;
-        renderSubtasks(row, id);
-    });
-
-    $(document).on('click', '#TasksTable tbody .apya-subtask-row', function (e) {
-        e.stopPropagation();
-        var id = $(this).attr('data-subtask-id');
-        if (id) { editModal.open(id); }
-    });
-    $(document).on('keydown', '#TasksTable tbody .apya-subtask-row', function (e) {
-        if (e.key !== 'Enter' && e.key !== ' ') { return; }
-        e.preventDefault();
-        e.stopPropagation();
-        var id = $(this).attr('data-subtask-id');
-        if (id) { editModal.open(id); }
-    });
-
-    function renderSubtasks(rowApi, id) {
-        var $btn = $(rowApi.node()).find('[data-subtask-toggle]');
-        $btn.attr('aria-expanded', 'true').attr('aria-label', 'Alt görevleri gizle');
-
-        if (subtaskCache[id]) {
-            rowApi.child(apyaTask.subtaskRows(subtaskCache[id])).show();
-            return;
-        }
-
-        var $icon = $btn.find('i');
-        $icon.attr('class', 'fa fa-spinner fa-spin');
-        taskService.getList({ parentTaskId: id, maxResultCount: 100, sorting: 'Number' }).then(
-            function (res) {
-                $icon.attr('class', 'fa fa-chevron-right');
-                subtaskCache[id] = res.items || [];
-                if (!expanded[id]) { return; }
-                rowApi.child(apyaTask.subtaskRows(subtaskCache[id])).show();
-            },
-            function () {
-                $icon.attr('class', 'fa fa-chevron-right');
-                delete expanded[id];
-                $btn.attr('aria-expanded', 'false').attr('aria-label', 'Alt görevleri göster');
-                abp.notify.error('Alt görevler yüklenemedi.');
-            }
-        );
-    }
 
     // ─── Şerit araması → DataTables ────────────────────────────────────────
     var searchTimer = null;
@@ -440,7 +385,7 @@ $(function () {
         var term = this.value;
         clearTimeout(searchTimer);
         searchTimer = setTimeout(function () {
-            subtaskCache = {};
+            hierarchy.reset();
             dataTable.search(term).draw();
             renderFilterUi();
         }, 300);
@@ -621,7 +566,7 @@ $(function () {
         enableCustomColumns: true,
         getFilter: buildInput,
         onChanged: function () {
-            subtaskCache = {};
+            hierarchy.reset();
             dataTable.ajax.reload(null, false);
             loadSummary();
             if (currentView === 'gantt') { loadGantt(); }
@@ -678,7 +623,7 @@ $(function () {
         editModal: editModal,
         canEdit: canEditTasks,
         onSaved: function () {
-            subtaskCache = {};
+            hierarchy.reset();
             dataTable.ajax.reload(null, false);
             loadSummary();
         }
@@ -688,7 +633,7 @@ $(function () {
 
     // ─── Yenileme ──────────────────────────────────────────────────────────
     function reloadAll() {
-        subtaskCache = {};
+        hierarchy.reset();
         dataTable.ajax.reload(null, false);
         loadSummary();
         if (currentView === 'kanban') { kb.load(); }

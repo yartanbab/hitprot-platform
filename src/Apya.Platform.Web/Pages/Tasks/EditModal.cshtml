@@ -60,7 +60,7 @@
                         <label class="apya-overline d-block mb-1">Durum</label>
                         <select asp-for="StatusOrColumn" asp-items="Model.StatusOrColumnList" id="StatusOrColumn_@Model.Id" class="d-none"></select>
                         <div class="apya-status-pill-row" data-status-select="#StatusOrColumn_@Model.Id">
-                            @foreach (var (label, sv) in new[] { ("Yapılacak", 1), ("Sürüyor", 2), ("Testte", 3), ("Tamamlandı", 4) })
+                            @foreach (var (label, sv) in new[] { ("Bekliyor", 1), ("Sürüyor", 2), ("Testte", 3), ("Tamamlandı", 4) })
                             {
                                 var val = "s:" + sv;
                                 var isActive = Model.StatusOrColumnList.FirstOrDefault(x => x.Value == val)?.Selected == true;

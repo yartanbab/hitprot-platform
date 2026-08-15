@@ -6,9 +6,7 @@
 // yok). Sayfa hangi filtre alanlarına sahip olduğunu `defaults` ile bildirir,
 // modül onları URL'e yazıp chip'lere bağlar.
 //
-// Şu an yalnız Pages/Tasks/index.js kullanıyor. Pages/Projects/ProjectDetails.js
-// kendi kopyasıyla çalışmaya devam ediyor — onu bu modüle taşımak ayrı bir iş
-// (yeni merge edilmiş bir sayfayı aynı turda riske atmamak için bilinçli karar).
+// Kullananlar: Pages/Tasks/index.js ve Pages/Projects/ProjectDetails.js.
 (function (window, $) {
     'use strict';
 
@@ -367,6 +365,104 @@
         return { render: render };
     }
 
+    // --- Alt görev hiyerarşisi ------------------------------------------------
+    // Liste HİYERARŞİK kiptedir: yalnız kök görevler sayfalanır, alt görevler
+    // chevron ile DataTables child satırında TEMBEL yüklenir (parentTaskId ile
+    // ayrı istek). Filtre veya arama aktifken sayfa `isEnabled()` ile düz kipe
+    // döner — aksi halde filtreye uyan bir alt görev, üstü uymadığı için
+    // listeden tamamen düşerdi.
+    //
+    // Sayfanın sorumluluğu: kolon render'ında `apyaTask.subtaskToggle(row)`
+    // basmak, `listFilter`da `rootOnly` göndermek ve `draw`da `restore()`
+    // çağırmak. Açık/kapalı durumu ve önbellek burada tutulur.
+    function createSubtaskHierarchy(opts) {
+        var expanded = {};   // { taskId: true } — açık kalan üst görevler
+        var cache = {};      // { taskId: [alt görev DTO] } — sekme/çizim arası
+
+        // Child satırına AÇIKÇA sınıf veriyoruz (row.child'ın 2. parametresi):
+        // DataTables 2.3'te child satırı kendiliğinden hiçbir sınıf almıyor
+        // (yalnız ÜST satıra `dt-hasChild` yazıyor — sondada ölçüldü). Satır
+        // hover'ı bu sınıfla dışarıda bırakılır, bkz. apya-shell.css §17.
+        var CHILD_CLASS = 'apya-subtask-child';
+
+        function render(rowApi, id) {
+            var $btn = $(rowApi.node()).find('[data-subtask-toggle]');
+            $btn.attr('aria-expanded', 'true').attr('aria-label', 'Alt görevleri gizle');
+
+            if (cache[id]) {
+                rowApi.child(window.apyaTask.subtaskRows(cache[id]), CHILD_CLASS).show();
+                return;
+            }
+
+            var $icon = $btn.find('i');
+            $icon.attr('class', 'fa fa-spinner fa-spin');
+            opts.service.getList({ parentTaskId: id, maxResultCount: 100, sorting: 'Number' }).then(
+                function (res) {
+                    $icon.attr('class', 'fa fa-chevron-right');
+                    cache[id] = res.items || [];
+                    if (!expanded[id]) { return; }
+                    rowApi.child(window.apyaTask.subtaskRows(cache[id]), CHILD_CLASS).show();
+                },
+                function () {
+                    $icon.attr('class', 'fa fa-chevron-right');
+                    delete expanded[id];
+                    $btn.attr('aria-expanded', 'false').attr('aria-label', 'Alt görevleri göster');
+                    abp.notify.error('Alt görevler yüklenemedi.');
+                }
+            );
+        }
+
+        $(document).on('click', opts.table + ' tbody [data-subtask-toggle]', function (e) {
+            e.stopPropagation();   // satır tıklaması görev detayını açıyor
+            var dt = opts.getTable();
+            if (!dt) { return; }
+            var $btn = $(this);
+            var id = $btn.attr('data-subtask-toggle');
+            var row = dt.row($btn.closest('tr'));
+            if (!row || !row.data()) { return; }
+
+            if (row.child.isShown()) {
+                row.child.hide();
+                delete expanded[id];
+                $btn.attr('aria-expanded', 'false').attr('aria-label', 'Alt görevleri göster');
+                return;
+            }
+            expanded[id] = true;
+            render(row, id);
+        });
+
+        $(document).on('click', opts.table + ' tbody .apya-subtask-row', function (e) {
+            e.stopPropagation();
+            var id = $(this).attr('data-subtask-id');
+            if (id) { opts.openTask(id); }
+        });
+
+        $(document).on('keydown', opts.table + ' tbody .apya-subtask-row', function (e) {
+            if (e.key !== 'Enter' && e.key !== ' ') { return; }
+            e.preventDefault();
+            e.stopPropagation();
+            var id = $(this).attr('data-subtask-id');
+            if (id) { opts.openTask(id); }
+        });
+
+        return {
+            // Veri bayatladığında (filtre değişimi, kayıt güncelleme) çağrılır.
+            reset: function () { cache = {}; },
+
+            // Child satırlar her `draw`da kaybolur → açık olanları geri açar.
+            restore: function () {
+                if (!opts.isEnabled()) { return; }
+                if (!Object.keys(expanded).length) { return; }
+                var dt = opts.getTable();
+                if (!dt) { return; }
+                dt.rows().every(function () {
+                    var d = this.data();
+                    if (d && expanded[d.id]) { render(this, d.id); }
+                });
+            }
+        };
+    }
+
     // --- Klavye kısayolları --------------------------------------------------
     // Kural: bir metin alanına yazarken veya herhangi bir pencere/menü açıkken
     // HİÇBİR kısayol tetiklenmez — görev detay island'ı (React) ve SweetAlert
@@ -508,6 +604,7 @@
         createColumnPrefs: createColumnPrefs,
         renderEmptyState: renderEmptyState,
         createSavedViews: createSavedViews,
+        createSubtaskHierarchy: createSubtaskHierarchy,
         bindShortcuts: bindShortcuts,
         runSequential: runSequential
     };
