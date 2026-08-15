@@ -14,7 +14,7 @@ Düzeltme PR'ları bulgu ID'sine referans verir. Denetim çok oturuma yayılır;
 
 | Faz | Kapsam | Durum |
 |---|---|---|
-| **1 — Yatay statik tarama** | Güvenlik, izin haritası, mimari, bug, perf, ölü kod | ✅ 1. geçiş tamam (bu belge). Derin per-servis + AI modülü + webhooks 2. geçişe |
+| **1 — Yatay statik tarama** | Güvenlik, izin haritası, mimari, bug, perf, ölü kod | ✅ 1. geçiş + **2. geçiş izin haritası tamam** (2026-08-16): tüm AppService yetkilendirmesi tarandı → SEC-013/014/015/016 bulundu. AI modülü iç veri-akış derinleşmesi hâlâ kısmi |
 | **1b — KVKK / Veri koruma** | TR öncelikli → AB → Dünya | ✅ **Dalga 1 (4/4) UYGULANDI + doğrulandı**; metinler taslak (hukuki inceleme bekliyor) |
 | **Düzeltmeler** | SEC-007, SEC-DEP Kademe 1, FN-001, CORR-004, ARCH-001+FN-002 (33 ölü dosya) | ✅ Hepsi uygulandı+doğrulandı; **suite tam yeşil 351/351** (TEST-001 çözüldü) |
 | **2 — Dikey dinamik (E2E)** | Sayfa/buton canlı tıklama, UX/UI, veri bütünlüğü | ⏳ DB kapalı (MSSQL) → kullanıcı başlatmalı + DbMigrator + giriş; install-libs ✅ |
@@ -152,6 +152,27 @@ Aynı desen: `ReportAppService` ([:17](src/Apya.Platform.Application/Reports/Rep
 - **Kademe 3 (ABP framework upgrade):** 10.0.2 → en son 10.x. Scriban/Xml CVE'lerini de kökten çözebilir ama geniş regresyon + canlı QA gerektirir; ayrı proje.
 
 **Olumlu (güvenlik):** Yetkilendirme kapsamı güçlü — `[Authorize]` taşımayan her sınıf ya ölü stub ya bilinçli `[AllowAnonymous]`. Dosya yükleme path-traversal koruması (`ResolveSafePath`), KVKK ekleri wwwroot dışında (`FeedbackFileStorage` App_Data), uzantı+boyut allowlist'i, antiforgery refresh, prod'da Swagger kapalı, CSP ihlal raporlama, tenant rate-limit — hepsi mevcut.
+
+### Güvenlik — Faz 1 2. geçiş: izin haritası (2026-08-16)
+
+Tüm AppService'lerin sınıf/method yetkilendirmesi sistematik tarandı (SEC-007'nin çağırdığı geçiş). Çıplak `[Authorize]` (kimlik var, izin yok) servisler karşılık gelen izin + sayfa uygulamasıyla kıyaslandı.
+
+#### SEC-013 🟠 `DOĞRULANDI` — Broken Access Control genişlemesi: ProjectAppService + TaskAppService çıplak `[Authorize]` (SEC-007 ile aynı sınıf)
+`ProjectAppService` sınıf-seviyesi çıplak `[Authorize]`; **yalnız `DeleteAsync`'te `[Authorize(Projects.Delete)]`** var — `CreateAsync/UpdateAsync/GetListAsync/GetDetailAsync/GetProjectsSummaryAsync/AddAttachmentAsync` **izinsiz** ([ProjectAppService.cs:27,72,112,140,202](src/Apya.Platform.Application/Projects/ProjectAppService.cs)). Oysa Projeler sayfaları `[Authorize(Projects.Default)]` uyguluyor → otomatik API (`/api/app/project`) `Projects.Default`'ı **atlıyor**: izinsiz kiracı kullanıcısı proje **listeler/oluşturur/günceller**. `Delete`'in gated olması gap'in kasıtsız olduğunu kanıtlıyor. `TaskAppService` **tamamen çıplak** ([TaskAppService.cs:18](src/Apya.Platform.Application/Tasks/TaskAppService.cs), method-seviyesi izin yok) → görev API'si `Tasks.Default`'ı atlıyor (sayfalar uyguluyor).
+**Kapsam:** Kiracı-arası sızıntı YOK (IMultiTenant); kiracı-içi rol yükseltmesi. **Fix:** sınıflara `[Authorize(Projects.Default)]` / `[Authorize(Tasks.Default)]` (SEC-007 deseni — sayfalar zaten uyguladığı için UI kullanıcıları kilitlenmez; API-only-izinsiz erişim = açığın kendisi). Create/Edit alt-izinleri opsiyonel takip.
+
+#### SEC-014 🟡 `DOĞRULANDI` — AI çağrı uçları izinsiz (kota/maliyet + KVKK-002 yurt dışı aktarım tetiği)
+`AiTaskGeneratorAppService` (`ParseDocumentFromBytesAsync` — yüklenen **belgenin tam metnini** dış AI'ya gönderir, bkz KVKK-002) ve `AiAssistantAppService` (Semantic Kernel `_kernel` ile doğrudan AI) **çıplak `[Authorize]`** ([AiTaskGeneratorAppService.cs:19](src/Apya.Platform.Ai.Application/AiTaskGeneratorAppService.cs), [AiAssistantAppService.cs:24](src/Apya.Platform.Application/Agentic/AiAssistantAppService.cs)) → herhangi bir kimlikli kullanıcı (AI izni olmadan) AI'yı tetikler: kiracı AI anahtarı/kotası tüketilir + veri OpenAI/Anthropic/**DeepSeek**'e gider. **`Projects.UseAiFeatures` izni TANIMLI** ([PlatformPermissions.cs:90](src/Apya.Platform.Application.Contracts/Permissions/PlatformPermissions.cs)) ama uygulanmıyor.
+**Fix:** uçları `[Authorize(Projects.UseAiFeatures)]` ile gate et. ⚠️ Önce UI'nin AI'yı bu izinle mi tetiklediği doğrulanmalı (mevcut AI kullanıcıları kilitlenmesin).
+
+#### SEC-015 🟡 `DOĞRULANDI` — Webhook aboneliğinde hiç izin yok
+`WebhookSubscriptionAppService` çıplak `[Authorize]` ([:19](src/Apya.Platform.Application/DynamicAssets/Webhooks/WebhookSubscriptionAppService.cs)); **webhook için hiç izin tanımlı değil** (`PlatformPermissions`'da `Webhook*` yok) → herhangi bir kimlikli kiracı kullanıcısı webhook oluşturabilir (SEC-011 SSRF yüzeyi + rastgele dış URL'e veri sızdırma; SEC-011 IP guard koydu ama **oluşturma yetkisi** hâlâ herkeste).
+**Fix (karar):** (a) ucuz — `[Authorize(DynamicAssets.Default)]` altına al (mevcut izni yeniden kullan), veya (b) yeni `Webhooks.Manage` izni (tanım + seed + paket entegrasyonu = daha büyük). Öneri: (a).
+
+#### SEC-016 🔵 `AÇIK` — Diğer çıplak `[Authorize]` servisler (gözden geçir)
+`DynamicDocumentAppService`, `TemplateAppService`, `EntityLinkAppService` çıplak `[Authorize]` — FormAppService `DynamicAssets.Default` kullanırken bunlar açık. Düşük hassasiyet; `DynamicAssets.Default`'a hizalama değerlendirilmeli.
+
+**Doğrulanan (açık DEĞİL — kasıtlı/gated):** `FeedbackSettingsAppService` (okuma çıplak, **yazma `[Authorize(Feedbacks.ManageSettings)]`** — [:63](src/Apya.Platform.Application/Feedbacks/FeedbackSettingsAppService.cs)); kullanıcı-scoped/any-authed olanlar (`NotificationAppService`, `FeedbackAppService` gönderim, `CalendarAppService` kendi hesapları, `ShellAppService`, `TelemetryAppService`) — bunlar bilinçli çıplak, veri CurrentUser/kendi kapsamında.
 
 ### Mimari & Veri Bütünlüğü
 
