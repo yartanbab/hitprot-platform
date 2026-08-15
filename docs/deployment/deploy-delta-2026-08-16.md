@@ -54,6 +54,36 @@ yapıyorsan bu sürümde değişen bundle'lar: `public-form.js`, `form-builder.j
 
 ---
 
+## ⚡ Hızlı incremental (FTP) yol — full paket yerine
+
+Tam self-contained paketi (~271 MB) yeniden yüklemek GEREKMEZ; büyük kısmı sabit .NET runtime.
+Yalnız değişenleri FileZilla ile atmak yeterli (2026-08-12 kararı). **AMA bu sürüm migration+seed
+ağırlıklı → aşağıdaki sıra ŞART; FTP tek başına yetmez.**
+
+**Sıra:** `App_offline.htm` (site köküne, ANCM'i düşürür + DLL kilidini çözer) → **DbMigrator çalıştır
+(§2 — 3 migration + izin seed'leri)** → değişen dosyaları at → `App_offline.htm` sil.
+⚠️ Migration'sız yeni kodu atarsan app çöker (`AppConsentRecords` tablosu yok).
+
+**Bu sürümde değişen dosyalar** (`fde53e8` → `fa933f2`):
+- **DLL'ler** (kaynağı değişen 9 proje, + `.pdb` opsiyonel): `Apya.Platform.Web.dll`, `Application.dll`,
+  `Application.Contracts.dll`, `Domain.dll`, `Domain.Shared.dll`, `Ai.Application.dll`,
+  `EntityFrameworkCore.dll`, `EntityFrameworkCore.SqlServer.dll`, `HttpApi.dll`.
+- **wwwroot bundle'ları:** `js/`: `public-form.js`, `form-builder.js`, `dashboard.js`, `task-detail.js`,
+  `apya-task-console.js`, `apya-topbar-shell.js`, `sidebar-toggle.js` · `css/`: `apya-shell.css`,
+  `apya-theme-bridge.css`.
+- Yeni sayfalar (Legal, Admin/Consent, CookieNotice) runtime compilation kapalı → `Web.dll` içinde
+  gelir, ayrı `.cshtml` atmaya gerek yok.
+
+**Listeyi güvenilir çıkar:** git-diff DEĞİL (kaynak≠publish). Yerelde tam `dotnet publish` → FileZilla
+**"tarihe göre"** dizin karşılaştırması (boyuta göre DEĞİL — embedded-resource'lu DLL aynı boyutta
+değişebilir). **SDK yaması geldiyse** runtime DLL'leri de (`Microsoft.AspNetCore.*`, `coreclr`…) değişir
+→ o zaman büyük paket; date-compare bunu da yakalar.
+
+**Filtrede tut (yoksa "yerelde yok" görünüp silinir/ezilir):** `appsettings.secrets.json`,
+`openiddict.pfx`, `App_Data/uploads/*`, `App_Data/DataProtection-Keys/*`, `Logs/*`.
+
+---
+
 ## ⚠️ Deploy sonrası davranış değişiklikleri
 
 | Değişiklik | Etki / aksiyon |
