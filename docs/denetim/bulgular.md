@@ -275,8 +275,8 @@ SEC-001 (`48b34af`) `appsettings.json`'daki `OpenIddict:Applications:Platform_We
 | ID | Önem | Konu | Kaynak |
 |---|---|---|---|
 | SEC-005 | 🟡 | AutoMapper CVE-2026-32933 dev'de açık (14.x fix yok) → ABP'yi AM15-uyumlu sürüme yükselt | project_automapper_cve |
-| CORR-002 | 🟡 | Feedback `nextval` açığı (çift DB provider) | project_dual_db_provider |
-| SEC-006 | 🔵 | AI merkezi permission seed'leri eksik | project_ai_evaluation_center |
+| CORR-002 | ✅ | **KAPANDI (yanlış/bayat not).** Feedback `nextval` çift-DB açığı zaten çözülmüş: SqlServer `20260811121727_Add_FeedbackNumberSequence` + Postgres `ExtendFeedbackManagement` ikisi de `AppFeedbackNumberSeq`'i şemasız (default) oluşturur; `FeedbackNumberGenerator` çalışma-anında sağlayıcıya göre `NEXT VALUE FOR` / `nextval` seçer, sorgu şemaları eşleşir. Doğrulandı 2026-08-16. | project_dual_db_provider |
+| SEC-006 | 🟡 `KARAR GEREKLİ` | **AI Center kiracı-facing paket özelliği** (`PackageFeatureGates.AiAssist` tüm `Ai.*`'ı gate'ler; `ai.AiProviderConfigs` kiracı-bazlı; menü kiracı bağlamında). Hiçbir role AI izni seed edilmiyor → AiAssist açık olsa bile kimse AI Center'ı göremiyor. **FN-004 gibi host-admin seed YANLIŞ olur** (host operatör kiracı AI'ını çalıştırmaz). Doğru fix: AiAssist paketli kiracının admin rolüne AI izinlerini grant et → **paket-izin sistemine entegrasyon (mimari karar, FN-004 kiracı-kapsamıyla aynı sınıf)**. 2026-08-16 karakterize edildi. | project_ai_evaluation_center, project_package_permission_ceiling |
 | UX-001 | 🔵 | Mobil denetimden kalan TR localization eksikleri | project_mobile_design_review |
 | QA-001 | 🟡 | Etkileşimli QA yapılmadan merge: kayıtlı görünümler #161, dashboard #168, projeler konsolu #169 → E2E ilk hedefleri | ilgili proje kayıtları |
 | QA-002 | 🔵 | Bildirim hiyerarşisi #166 canlı QA açık | project_notification_hierarchy |
