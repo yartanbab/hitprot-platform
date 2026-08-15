@@ -2,9 +2,14 @@ using System;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
+using System.Threading.RateLimiting;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.AspNetCore.ResponseCompression;
+using Microsoft.Extensions.Localization;
+using Microsoft.Extensions.Options;
+using Volo.Abp.MultiTenancy;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.RequestLocalization;
@@ -202,6 +207,7 @@ public class PlatformWebModule : AbpModule
         ConfigureAuthentication(context);
         ConfigureUrls(configuration);
         ConfigureResponseCompression(context);
+        ConfigureRateLimiting(context);
         ConfigureBundles(context);
         ConfigureVirtualFileSystem(hostingEnvironment);
         ConfigureMultiTenancyLocalization();
@@ -241,6 +247,60 @@ public class PlatformWebModule : AbpModule
         // Paylaşımlı hosting'de CPU bütçesi dar — en hızlı seviye yeterli kazanç sağlar.
         context.Services.Configure<BrotliCompressionProviderOptions>(o => o.Level = CompressionLevel.Fastest);
         context.Services.Configure<GzipCompressionProviderOptions>(o => o.Level = CompressionLevel.Fastest);
+    }
+
+    private void ConfigureRateLimiting(ServiceConfigurationContext context)
+    {
+        // Gürültücü komşu koruması: bir kiracının istek fırtınası paylaşımlı sunucuda
+        // diğer kiracıları yavaşlatmasın. Bölüm anahtarı tenant; oturumsuz istekler IP'ye
+        // göre ayrılır (yoksa kimliksiz bir bot herkesin kovasını tüketebilirdi), host
+        // kullanıcıları ortak "host" kovasında. Statik dosyalar bu middleware'e hiç
+        // ulaşmaz (MapAbpStaticAssets pipeline'da daha önce kısa devre eder). SignalR
+        // bağlantısı tek istek sayılır. Tavan: Platform:Performance:TenantRateLimitPerMinute
+        // (0 = kapalı) — canlıda sorun çıkarırsa konfigden kapatılabilir, deploy gerekmez.
+        context.Services.AddRateLimiter(options =>
+        {
+            options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+
+            options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(httpContext =>
+            {
+                var limit = httpContext.RequestServices
+                    .GetRequiredService<IOptions<PlatformPerformanceOptions>>()
+                    .Value.TenantRateLimitPerMinute;
+                if (limit <= 0)
+                {
+                    return RateLimitPartition.GetNoLimiter("kapali");
+                }
+
+                var tenantId = httpContext.RequestServices.GetRequiredService<ICurrentTenant>().Id;
+                var partitionKey = tenantId?.ToString("N")
+                    ?? (httpContext.User?.Identity?.IsAuthenticated == true
+                        ? "host"
+                        : "anon:" + (httpContext.Connection.RemoteIpAddress?.ToString() ?? "bilinmiyor"));
+
+                return RateLimitPartition.GetFixedWindowLimiter(partitionKey, _ => new FixedWindowRateLimiterOptions
+                {
+                    PermitLimit = limit,
+                    Window = TimeSpan.FromMinutes(1),
+                    QueueLimit = 0
+                });
+            });
+
+            options.OnRejected = async (rejectionContext, cancellationToken) =>
+            {
+                var httpContext = rejectionContext.HttpContext;
+                httpContext.Response.Headers.RetryAfter = "60";
+
+                httpContext.RequestServices.GetRequiredService<ILogger<PlatformWebModule>>()
+                    .LogWarning("[PERF] Rate limit aşıldı: {Method} {Path}",
+                        httpContext.Request.Method, httpContext.Request.Path.Value);
+
+                var localizer = httpContext.RequestServices
+                    .GetRequiredService<IStringLocalizer<PlatformResource>>();
+                await httpContext.Response.WriteAsync(
+                    localizer["Platform:RateLimitExceeded"], cancellationToken);
+            };
+        });
     }
 
     private void ConfigureDataProtection(ServiceConfigurationContext context)
@@ -493,6 +553,9 @@ public class PlatformWebModule : AbpModule
         // UseMultiTenancy'den SONRA: tenant AsyncLocal scope'u ancak bu noktadan içeride
         // aktif kalır — daha dışarı konursa log anında CurrentTenant.Id hep null görünür.
         app.UseMiddleware<Middleware.SlowRequestLoggingMiddleware>();
+
+        // UseMultiTenancy'den SONRA: bölüm anahtarı CurrentTenant.Id'den türetiliyor.
+        app.UseRateLimiter();
 
         app.UseUnitOfWork();
         app.UseDynamicClaims();

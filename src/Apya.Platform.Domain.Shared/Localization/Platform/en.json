@@ -427,6 +427,7 @@
     "DataTable:Invoice:Loading": "Loading invoices...",
     "Welcome": "Welcome",
     "LongWelcomeMessage": "Welcome to the application. This is a startup project based on the ABP framework. For more information, visit abp.io.",
+    "Platform:RateLimitExceeded": "Too many requests in a short time. Please try again in a minute.",
     "Platform:Task:TitleRequired": "Task title cannot be empty.",
     "Platform:Task:ViewPrivateDenied": "You do not have permission to view this private task. Only the creator and assignee can view it.",
     "Platform:Task:ViewImpersonationDenied": "You cannot view this private task while using impersonation.",
