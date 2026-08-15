@@ -3710,7 +3710,7 @@ namespace Apya.Platform.Migrations
 
                     b.HasIndex("ProjectId");
 
-                    b.HasIndex("Status");
+                    b.HasIndex("TenantId", "Status");
 
                     b.ToTable("AppInvoices", (string)null);
                 });
@@ -4702,9 +4702,11 @@ namespace Apya.Platform.Migrations
 
                     b.HasIndex("ProjectId");
 
-                    b.HasIndex("Status", "AssigneeId");
-
                     b.HasIndex("TenantId", "Number");
+
+                    b.HasIndex("TenantId", "ParentTaskId");
+
+                    b.HasIndex("TenantId", "Status", "AssigneeId");
 
                     b.ToTable("AppTasks", (string)null);
                 });

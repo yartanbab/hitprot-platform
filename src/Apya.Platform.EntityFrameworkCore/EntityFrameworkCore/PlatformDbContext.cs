@@ -571,8 +571,12 @@ namespace Apya.Platform.EntityFrameworkCore
 
                 // REV-004: Performans indeksleri
                 b.HasIndex(x => x.ProjectId);
-                b.HasIndex(x => x.ParentTaskId);
-                b.HasIndex(x => new { x.Status, x.AssigneeId });
+                // TenantId öneki: liste sorguları hep "TenantId + ParentTaskId IS NULL" (kök
+                // görevler) ya da "TenantId + Status IN (...)" gelir; öneksiz hâlde SQL Server
+                // diğer kiracıların satırlarını okuyup ayıklıyordu — maliyet kiracı sayısıyla
+                // büyür. GUID kolonlu indeksler (ProjectId vb.) zaten seçici, önek gerekmez.
+                b.HasIndex(x => new { x.TenantId, x.ParentTaskId });
+                b.HasIndex(x => new { x.TenantId, x.Status, x.AssigneeId });
 
                 /* Görev kodu (GRV-N) tenant içinde tekil. UNIQUE DEĞİL bilinçli olarak:
                    soft-delete'li görevler tabloda kalıyor ve numaraları serbest bırakılmıyor,
@@ -726,7 +730,8 @@ namespace Apya.Platform.EntityFrameworkCore
                 b.ConfigureByConvention();
                 b.HasIndex(x => x.InvoiceNumber).IsUnique();
                 b.HasIndex(x => x.ProjectId);
-                b.HasIndex(x => x.Status);
+                // TenantId öneki: Status düşük seçicilikli — TaskItem indekslerindeki gerekçeyle aynı.
+                b.HasIndex(x => new { x.TenantId, x.Status });
                 b.HasIndex(x => x.CustomerId); // APYA-142c
                 b.HasMany(x => x.Items).WithOne().HasForeignKey(x => x.InvoiceId).IsRequired();
             });

@@ -786,7 +786,9 @@ namespace Apya.Platform.Tasks
                 .WhereIf(!string.IsNullOrWhiteSpace(input.Filter), t =>
                     t.Title.Contains(input.Filter!) || (t.Description != null && t.Description.Contains(input.Filter!)))
                 .Include(t => t.Assignee)
-                .Include(t => t.ParentTask);
+                .Include(t => t.ParentTask)
+                // Liste yalnız DTO'ya map'lenir, entity değiştirilmez — tracking gereksiz.
+                .AsNoTracking();
         }
 
         // --- 5. USER LOOKUP (Kullanıcı Listesi) ---
