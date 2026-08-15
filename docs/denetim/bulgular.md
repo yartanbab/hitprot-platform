@@ -174,10 +174,10 @@ Tüm AppService'lerin sınıf/method yetkilendirmesi sistematik tarandı (SEC-00
 #### SEC-015 ⚪ `KAPANDI` (yanlış alarm) — Webhook aboneliğinde izin var
 İlk taramada sınıf-seviyesi çıplak `[Authorize]` görülüp gap sanılmıştı; **method-seviyesi kontrol edilince YANLIŞ olduğu görüldü.** `WebhookSubscriptionAppService`'in **her metodu gated**: `CreateAsync→DynamicAssets.Create`, `UpdateAsync/ResendDelivery/RegenerateSecret→Edit`, `GetAsync/GetListAsync/GetDeliveryLogs→Default`, `DeleteAsync→Delete` ([WebhookSubscriptionAppService.cs:39,61,89,96,112,138,168](src/Apya.Platform.Application/DynamicAssets/Webhooks/WebhookSubscriptionAppService.cs)). Sınıf-seviyesi `[Authorize]` yalnız varsayılan; metotlar eziyor. Webhook düzgün korunuyor. **Ders: çıplak sınıf-`[Authorize]` gördüğünde method-seviyesini de kontrol et** (bkz SEC-016'da aynı doğrulama yapıldı).
 
-#### SEC-016 🔵 `DÜZELTİLDİ` (kısmi) — Diğer çıplak `[Authorize]` servisler
+#### SEC-016 🔵 `DÜZELTİLDİ` — Diğer çıplak `[Authorize]` servisler (Template/DynamicDocument gated; EntityLink kabul edilen düşük risk)
 `DynamicDocumentAppService`, `TemplateAppService`, `EntityLinkAppService` çıplak `[Authorize]` (method-seviyesi de yok, auto-API açık) — DynamicAssets sayfaları `DynamicAssets.Default/Create/Edit` uyguluyor.
 **Düzeltme (2026-08-16):** `TemplateAppService` + `DynamicDocumentAppService` → sınıf `[Authorize(DynamicAssets.Default)]` + mutasyonlar method-seviyesi (`Create→DynamicAssets.Create`, `Delete→DynamicAssets.Delete`, `InstantiateFromTemplate→Create`). Build 0 hata, suite 353/353.
-**AÇIK — `EntityLinkAppService`:** cross-module varlık bağlama (proje/görev/belge) → `DynamicAssets.Default` çok dar olabilir; doğru izin belirsiz (proje bağlayan kullanıcı DynamicAssets istemez). Gate kararı bekliyor → dokunulmadı.
+**`EntityLinkAppService` — gözden geçirildi, kabul edilen düşük risk (2026-08-16):** `EntityLink` **IMultiTenant** (`CreationAuditedAggregateRoot`+`TenantId`) → ABP veri filtresi cross-tenant sızıntıyı önler. Kiracı içinde herhangi bir kimlikli kullanıcı polimorfik link (Task↔Document↔Project) kurabiliyor; **cross-module olduğu için doğru tek izin yok** → cerrahi gate mümkün değil, `[Authorize]` bırakıldı. Riski düşük (kiracı-izole metadata). **IDOR incelemesi (2026-08-16) — gerçek risk YOK:** `EntityLinkDto` yalnız link metadata'sı taşır (Source/Target EntityName+Id + RelationType) — **hedef varlığın İÇERİĞİ yok** (belge başlığı/dosyası, görev detayı vb.). Bağlı varlığın gerçek içeriğini görmek için UI o varlığın kendi **izin-korumalı** servisini çağırmalı (ör. `DocumentAppService`→`Documents.Default`). IMultiTenant cross-tenant'ı önler. Kalan artık yalnız "kaynak→hedef {GUID} linki var" bilgisi (içerik değil, ihmal edilebilir). Ayrıca net bir tüketici bulunamadı (auto-API dışında büyük ölçüde kullanılmıyor). **Sonuç: SEC-016 EntityLink tamamen triyaj edildi, ek aksiyon gerekmiyor.**
 
 **Doğrulanan (açık DEĞİL — kasıtlı/gated):** `FeedbackSettingsAppService` (okuma çıplak, **yazma `[Authorize(Feedbacks.ManageSettings)]`** — [:63](src/Apya.Platform.Application/Feedbacks/FeedbackSettingsAppService.cs)); kullanıcı-scoped/any-authed olanlar (`NotificationAppService`, `FeedbackAppService` gönderim, `CalendarAppService` kendi hesapları, `ShellAppService`, `TelemetryAppService`) — bunlar bilinçli çıplak, veri CurrentUser/kendi kapsamında.
 
@@ -291,10 +291,9 @@ SEC-001 (`48b34af`) `appsettings.json`'daki `OpenIddict:Applications:Platform_We
 
 ### Temizlik
 
-#### CLEAN-001 ⚪ `AÇIK` — Ölü stub dosyalar
-"Bu dosya artık kullanılmıyor / Moved to..." diyen boş stub'lar duruyor:
-[Application/Projects/ProjectTaskAppService.cs](src/Apya.Platform.Application/Projects/ProjectTaskAppService.cs), [Application/AiTasks/AiTaskGeneratorAppService.cs](src/Apya.Platform.Application/AiTasks/AiTaskGeneratorAppService.cs), [Application/Tasks/Drafts/DraftTaskAppService.cs](src/Apya.Platform.Application/Tasks/Drafts/DraftTaskAppService.cs)
-**Öneri:** Sil (ayrı küçük temizlik PR'ı). CLAUDE.md gereği silmeden önce onay.
+#### CLEAN-001 ⚪ `DÜZELTİLDİ` — Ölü stub dosyalar
+"Bu dosya artık kullanılmıyor / Moved to APYA-109.4" diyen 3 boş stub (hiçbir tip tanımlamıyordu — yalnız yorum + boş namespace) silindi: `Application/Projects/ProjectTaskAppService.cs`, `Application/AiTasks/AiTaskGeneratorAppService.cs`, `Application/Tasks/Drafts/DraftTaskAppService.cs` (kullanıcı onayı "devam"). `AiTasks/` + `Drafts/` klasörleri boş kaldı (git tutmaz).
+**Doğrulama (2026-08-16):** tip tanımlamadıkları için referanssız; build 0 hata; tam suite **353/353** yeşil.
 
 ---
 
