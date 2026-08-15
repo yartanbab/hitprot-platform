@@ -11,12 +11,15 @@ using Volo.Abp;
 using Volo.Abp.Application.Services;
 using Volo.Abp.Domain.Repositories;
 using Apya.Platform.AiTasks;
+using Apya.Platform.Permissions;
 using Apya.Platform.Projects;
 using Apya.Platform.Tasks;
 
 namespace Apya.Platform.Ai;
 
-[Authorize]
+// SEC-014: Çıplak [Authorize] izinsiz kullanıcının AI'yı tetiklemesine (kiracı anahtarı/kotası +
+// belgenin tam metnini dış AI'ya göndererek KVKK-002 aktarımı) izin veriyordu.
+[Authorize(PlatformPermissions.Projects.UseAiFeatures)]
 public class AiTaskGeneratorAppService : ApplicationService, IAiTaskGeneratorAppService
 {
     private readonly IRepository<Project, Guid> _projectRepository;

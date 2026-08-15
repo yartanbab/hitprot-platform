@@ -13,6 +13,7 @@ using Apya.Platform.Agentic.Dtos;
 using Apya.Platform.DynamicAssets;
 using Apya.Platform.DynamicAssets.Dtos;
 using Apya.Platform.Agentic.Plugins;
+using Apya.Platform.Permissions;
 using Apya.Platform.Tasks;
 
 namespace Apya.Platform.Agentic;
@@ -21,7 +22,9 @@ namespace Apya.Platform.Agentic;
 /// AI Assistant implementation using Microsoft Semantic Kernel.
 /// Injected SK Kernel takes actions directly within Apya modules.
 /// </summary>
-[Authorize]
+// SEC-014: Çıplak [Authorize] izinsiz kullanıcının Semantic Kernel AI ajanını çağırmasına
+// (kiracı AI anahtarı/kotası + dış AI'ya veri) izin veriyordu.
+[Authorize(PlatformPermissions.Projects.UseAiFeatures)]
 public class AiAssistantAppService : PlatformAppService, IAiAssistantAppService
 {
     private readonly Kernel _kernel;
