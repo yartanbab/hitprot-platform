@@ -4,11 +4,13 @@ using Localization.Resources.AbpUi;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.Mvc.ApplicationParts;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Apya.Platform.EntityFrameworkCore;
 using Apya.Platform.Localization;
 using Apya.Platform.Web;
 using Apya.Platform.Web.Menus;
+using Volo.Abp;
 using Volo.Abp.AspNetCore.TestBase;
 using Volo.Abp.Localization;
 using Volo.Abp.Modularity;
@@ -28,6 +30,19 @@ public class PlatformWebTestModule : AbpModule
 {
     public override void PreConfigureServices(ServiceConfigurationContext context)
     {
+        // TEST-002: SEC-001 commit'li ClientSecret'i appsettings'ten boşalttı; OpenIddict data
+        // seeder Confidential Platform_Web istemcisi için boş secret'ı reddedip test host'unu
+        // çökertiyor. Testlerde gerçek OAuth yok → seed'in geçmesi için test-only dummy secret ver
+        // (prod sırrı değil). In-memory kaynak en sona eklenir → appsettings'teki boş değeri ezer.
+        var testConfiguration = new ConfigurationBuilder()
+            .AddConfiguration(context.Services.GetConfiguration())
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["OpenIddict:Applications:Platform_Web:ClientSecret"] = "test-only-not-a-real-secret"
+            })
+            .Build();
+        context.Services.ReplaceConfiguration(testConfiguration);
+
         context.Services.PreConfigure<IMvcBuilder>(builder =>
         {
             builder.PartManager.ApplicationParts.Add(new CompiledRazorAssemblyPart(typeof(PlatformWebModule).Assembly));
