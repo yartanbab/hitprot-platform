@@ -89,6 +89,34 @@ public class FeedbackFileStorage : ITransientDependency
         return File.Exists(resolved) ? File.OpenRead(resolved) : null;
     }
 
+    /// <summary>
+    /// Saklanan dosyayı diskten siler (KVKK saklama süresi imhası). Path traversal'a
+    /// karşı ad yalnızca dosya adına indirgenir ve kök klasör altına çözülmesi zorunludur.
+    /// Dosya yoksa sessizce döner. İşlem başarısını (silindi/zaten yok) döner.
+    /// </summary>
+    public bool Delete(string storedFileName)
+    {
+        var root = Path.GetFullPath(GetRootFolder());
+        var safeName = Path.GetFileName(storedFileName ?? string.Empty);
+
+        if (string.IsNullOrEmpty(safeName))
+        {
+            return false;
+        }
+
+        var resolved = Path.GetFullPath(Path.Combine(root, safeName));
+        if (!resolved.StartsWith(root + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        if (File.Exists(resolved))
+        {
+            File.Delete(resolved);
+        }
+        return true;
+    }
+
     /// <summary>İçerik türü — indirmede Content-Type başlığı için.</summary>
     public static string GetContentType(string fileName)
     {

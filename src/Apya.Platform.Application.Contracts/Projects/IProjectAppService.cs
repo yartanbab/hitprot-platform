@@ -30,10 +30,5 @@ namespace Apya.Platform.Projects
 
         // --- DOSYA YÖNETİMİ ---
         Task AddAttachmentAsync(Guid projectId, string fileName, string storedFileName, long fileSize);
-
-        // --- ANALİZ VE HİBE METODLARI (Hata verenler bunlardı) ---
-        Task<ProjectAnalysisDto?> GetAnalysisAsync(Guid projectId);
-        Task<ProjectAnalysisDto> AddAnalysisAsync(CreateAnalysisDto input);
-        Task<List<GrantDto>> GetSuitableGrantsAsync(Guid projectId);
     }
 }

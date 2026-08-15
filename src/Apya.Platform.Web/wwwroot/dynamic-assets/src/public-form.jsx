@@ -105,6 +105,8 @@ function PublicForm({ slug }) {
   const [answers, setAnswers] = useState({});
   const [status, setStatus] = useState('loading'); // loading | ready | error | submitting | done
   const [errorMsg, setErrorMsg] = useState('');
+  const [kvkkConsent, setKvkkConsent] = useState(false);
+  const honeypot = useRef(''); // bot doldurur, insan boş bırakır
   const startedAt = useRef(Date.now());
 
   useEffect(() => {
@@ -144,6 +146,10 @@ function PublicForm({ slug }) {
         if (empty) { setErrorMsg('Lütfen tüm zorunlu alanları doldurun.'); return; }
       }
     }
+    if (doc?.requireKvkk && !kvkkConsent) {
+      setErrorMsg('Devam etmek için aydınlatma metnini onaylamanız gerekir.');
+      return;
+    }
     setErrorMsg('');
     setStatus('submitting');
     try {
@@ -151,6 +157,8 @@ function PublicForm({ slug }) {
         documentSlug: slug,
         answers: JSON.stringify(answers),
         completionSeconds: Math.round((Date.now() - startedAt.current) / 1000),
+        kvkkConsent,
+        website: honeypot.current, // honeypot; boş kalmalı
       });
       setStatus('done');
     } catch (e) {
@@ -206,6 +214,34 @@ function PublicForm({ slug }) {
                 </div>
               );
             })}
+
+            {/* Honeypot: ekran dışına konumlanmış, ekran okuyucudan gizli; botlar doldurur. */}
+            {doc.requireCaptcha && (
+              <input
+                type="text"
+                tabIndex={-1}
+                autoComplete="off"
+                aria-hidden="true"
+                defaultValue=""
+                onChange={(e) => { honeypot.current = e.target.value; }}
+                style={{ position: 'absolute', left: '-9999px', width: 1, height: 1, opacity: 0 }}
+              />
+            )}
+
+            {doc.requireKvkk && (
+              <label className="flex items-start gap-2 text-sm text-text-secondary">
+                <input
+                  type="checkbox"
+                  checked={kvkkConsent}
+                  onChange={(e) => setKvkkConsent(e.target.checked)}
+                  className="mt-0.5 h-4 w-4 rounded text-accent"
+                />
+                <span>
+                  <a href="/aydinlatma-metni" target="_blank" rel="noopener" className="text-accent underline">Aydınlatma metnini</a>
+                  {' '}okudum, kişisel verilerimin işlenmesini kabul ediyorum.
+                </span>
+              </label>
+            )}
 
             {errorMsg && <p className="text-sm font-medium text-negative-500">{errorMsg}</p>}
 

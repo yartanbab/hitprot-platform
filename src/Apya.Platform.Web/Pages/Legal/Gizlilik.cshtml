@@ -1,0 +1,77 @@
+@page "/gizlilik-politikasi"
+@model Apya.Platform.Web.Pages.Legal.GizlilikModel
+@{
+    Layout = "~/Pages/Legal/_LegalLayout.cshtml";
+    ViewBag.Title = "Gizlilik Politikası";
+}
+
+<h1>Gizlilik Politikası</h1>
+<p class="apya-legal__meta">Son güncelleme: @DateTime.Now.ToString("dd.MM.yyyy")</p>
+
+<div class="apya-legal__note">
+    <strong>Taslak:</strong> Bu metin bir şablondur. Yayımlanmadan önce
+    <span class="apya-legal__ph">[köşeli parantezli alanlar]</span> doldurulmalı ve hukuki
+    incelemeden geçirilmelidir.
+</div>
+
+<h2>1. Kapsam</h2>
+<p>
+    Bu politika, <span class="apya-legal__ph">[Şirket Ünvanı]</span> tarafından işletilen platformun
+    kişisel verileri nasıl işlediğini açıklar. Kişisel verilerin işlenmesine ilişkin ayrıntılı
+    bilgilendirme için <a href="/aydinlatma-metni">Aydınlatma Metni</a>’ne bakınız.
+</p>
+
+<h2>2. Toplanan Veriler ve Amaçları</h2>
+<p>
+    Hesap ve iletişim bilgileri, müşteri/cari kayıtları, proje ve finans verileri, form yanıtları,
+    yüklenen belgeler ve teknik kayıtlar (IP, tarayıcı bilgisi) işlenir. Amaçlar ve hukuki sebepler
+    Aydınlatma Metni’nde belirtilmiştir.
+</p>
+
+<h2>3. Çerezler</h2>
+<p>Platform yalnızca hizmetin çalışması için gerekli <strong>zorunlu çerezleri</strong> kullanır:</p>
+<table>
+    <thead>
+        <tr><th>Çerez</th><th>Amaç</th><th>Tür</th></tr>
+    </thead>
+    <tbody>
+        <tr><td>Oturum / kimlik doğrulama</td><td>Giriş yapmış kullanıcının oturumunu sürdürmek</td><td>Zorunlu</td></tr>
+        <tr><td>Antiforgery (XSRF-TOKEN)</td><td>Sahte istek (CSRF) koruması</td><td>Zorunlu</td></tr>
+        <tr><td>Dil / kültür</td><td>Arayüz dili tercihini hatırlamak</td><td>Zorunlu</td></tr>
+        <tr><td>Tema tercihi</td><td>Açık/koyu tema seçimini hatırlamak</td><td>İşlevsel</td></tr>
+    </tbody>
+</table>
+<p>
+    Platform <strong>üçüncü taraf reklam veya izleme çerezi kullanmaz</strong>; harici analitik
+    izleyiciler (ör. Google Analytics) bulunmaz. Zorunlu çerezler için mevzuat uyarınca ayrıca
+    rıza gerekmez; ancak tercihler bu politika üzerinden şeffaf biçimde bildirilir.
+</p>
+
+<h2>4. Veri Aktarımı</h2>
+<p>
+    İsteğe bağlı yapay zekâ ve takvim entegrasyonları kullanıldığında ilgili veriler yurt dışındaki
+    hizmet sağlayıcılara aktarılabilir. Ayrıntı ve alıcı listesi için Aydınlatma Metni’nin
+    “Yurt İçi ve Yurt Dışına Aktarım” bölümüne bakınız.
+</p>
+
+<h2>5. Veri Güvenliği</h2>
+<ul>
+    <li>Kimlik doğrulama ve rol/izin tabanlı erişim kontrolü;</li>
+    <li>Hassas kimlik bilgilerinin (ör. yapay zekâ anahtarları) şifreli saklanması;</li>
+    <li>Belge erişimlerinin loglanması ve dosyaların yetki kontrolüyle sunulması;</li>
+    <li>Kiracılar arası veri izolasyonu (multi-tenant).</li>
+</ul>
+
+<h2>6. Saklama ve İmha</h2>
+<p>
+    Veriler, amaç ve mevzuatın gerektirdiği süreler boyunca saklanır. Teknik kayıtlar için
+    yapılandırılabilir saklama süreleri uygulanır; sürenin sonunda veriler silinir, yok edilir
+    veya anonimleştirilir.
+</p>
+
+<h2>7. Haklarınız ve İletişim</h2>
+<p>
+    KVKK md. 11 kapsamındaki haklarınızı kullanmak için
+    <span class="apya-legal__ph">[Başvuru E-posta/KEP]</span> adresine başvurabilirsiniz.
+    Talebiniz mevzuatta öngörülen süre içinde sonuçlandırılır.
+</p>

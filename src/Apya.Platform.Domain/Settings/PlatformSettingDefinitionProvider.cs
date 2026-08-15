@@ -131,6 +131,13 @@ public class PlatformSettingDefinitionProvider : SettingDefinitionProvider
                 PlatformSettings.Feedback.AllowAnonymous,
                 defaultValue: PlatformSettingDefaults.FeedbackAllowAnonymous.ToString().ToLowerInvariant(),
                 displayName: L("Setting:Feedback.AllowAnonymous"))
+                .WithProviders(GlobalSettingValueProvider.ProviderName),
+
+            new SettingDefinition(
+                PlatformSettings.Feedback.AttachmentRetentionDays,
+                defaultValue: PlatformSettingDefaults.FeedbackAttachmentRetentionDays.ToString(),
+                displayName: L("Setting:Feedback.AttachmentRetentionDays"),
+                description: L("Setting:Feedback.AttachmentRetentionDays.Description"))
                 .WithProviders(GlobalSettingValueProvider.ProviderName)
         );
     }

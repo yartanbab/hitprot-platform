@@ -143,6 +143,12 @@ public static class PlatformPermissions
         public const string TrialBalance = Default + ".TrialBalance";
     }
 
+    // --- RIZA / KVKK ANALİZ YETKİLERİ ---
+    public static class Consents
+    {
+        public const string Default = GroupName + ".Consents"; // Rıza analiz panelini görüntüleme
+    }
+
     // --- DİNAMİK VARLIK (FORM/ŞABLON) YETKİLERİ ---
     public static class DynamicAssets
     {

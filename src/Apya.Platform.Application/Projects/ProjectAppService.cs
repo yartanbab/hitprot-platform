@@ -19,6 +19,7 @@ using Volo.Abp.TenantManagement;
 using Apya.Platform.Permissions;
 using Apya.Platform.Tasks;
 using Apya.Platform.Customers;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
 namespace Apya.Platform.Application.Projects;
@@ -224,24 +225,6 @@ public class ProjectAppService :
         });
     }
 
-    // --- STUBS (henüz implement edilmedi) ---
-    public Task<ProjectAnalysisDto?> GetAnalysisAsync(Guid projectId)
-    {
-        Logger.LogWarning("GetAnalysisAsync çağrıldı ama implement edilmedi. ProjectId: {ProjectId}", projectId);
-        throw new NotImplementedException("Proje analizi henüz desteklenmiyor.");
-    }
-
-    public Task<ProjectAnalysisDto> AddAnalysisAsync(CreateAnalysisDto input)
-    {
-        Logger.LogWarning("AddAnalysisAsync çağrıldı ama implement edilmedi.");
-        throw new NotImplementedException("Proje analizi ekleme henüz desteklenmiyor.");
-    }
-
-    public Task<List<GrantDto>> GetSuitableGrantsAsync(Guid projectId)
-    {
-        Logger.LogWarning("GetSuitableGrantsAsync çağrıldı ama implement edilmedi. ProjectId: {ProjectId}", projectId);
-        throw new NotImplementedException("Uygun hibe önerisi henüz desteklenmiyor.");
-    }
 
     // --- DETAIL ---
     public async Task<ProjectDetailDto> GetDetailAsync(Guid id)
@@ -251,7 +234,13 @@ public class ProjectAppService :
             var project = await Repository.GetAsync(id);
             var dto = ObjectMapper.Map<Project, ProjectDetailDto>(project);
 
-            var taskItems = await _taskRepository.GetListAsync(t => t.ProjectId == id);
+            // FN-001: Assignee navigasyonu include edilmeden map'lenirse AutoMapper AssigneeName'i
+            // null bırakır (bkz. PlatformApplicationAutoMapperProfile: AssigneeName ← Assignee.UserName)
+            // → Proje Detay'daki "Atanan" filtresi hep boş kalıyordu. Include ile düzeltildi.
+            var taskItems = await AsyncExecuter.ToListAsync(
+                (await _taskRepository.GetQueryableAsync())
+                    .Include(t => t.Assignee)
+                    .Where(t => t.ProjectId == id));
             dto.Tasks = ObjectMapper.Map<List<TaskItem>, List<Apya.Platform.Tasks.TaskDto>>(taskItems);
 
             var taskIds = taskItems.Select(t => t.Id).ToList();
