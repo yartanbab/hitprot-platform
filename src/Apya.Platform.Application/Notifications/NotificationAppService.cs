@@ -1,4 +1,5 @@
 using System;
+using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -38,7 +39,10 @@ public class NotificationAppService : ApplicationService, INotificationAppServic
     {
         var userId = CurrentUser.GetId();
 
+        // Salt-okuma listesi: entity'ler yalnız DTO'ya kopyalanır, değiştirilmez —
+        // change tracker maliyetine gerek yok.
         var query = (await _notificationRepository.GetQueryableAsync())
+            .AsNoTracking()
             .Where(n => n.UserId == userId);
 
         if (input.IsRead.HasValue)
