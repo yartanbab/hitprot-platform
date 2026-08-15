@@ -94,6 +94,9 @@ public static class PlatformDomainErrorCodes
     public const string FormExpired = "Platform:DynamicAssets:FormExpired";
     public const string FormKvkkConsentRequired = "Platform:DynamicAssets:FormKvkkConsentRequired";
     public const string FormCaptchaFailed = "Platform:DynamicAssets:FormCaptchaFailed";
+    public const string FormAnswersTooLarge = "Platform:DynamicAssets:FormAnswersTooLarge";
+    public const string FormAnswersInvalid = "Platform:DynamicAssets:FormAnswersInvalid";
+    public const string FormRequiredAnswerMissing = "Platform:DynamicAssets:FormRequiredAnswerMissing";
     public const string WebhookTargetUrlNotAllowed = "Platform:DynamicAssets:WebhookTargetUrlNotAllowed";
 
     // --- AI Modülü ---
