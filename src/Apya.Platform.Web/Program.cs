@@ -36,6 +36,9 @@ public class Program
             .MinimumLevel.Information()
 #endif
             .MinimumLevel.Override("Microsoft", LogEventLevel.Information)
+            // İstek-başına 2+ Information satırı (Hosting.Diagnostics) log dosyasına I/O
+            // üretiyordu; uygulamanın kendi [PERF] telemetrisi varken gereksiz gürültü.
+            .MinimumLevel.Override("Microsoft.AspNetCore", LogEventLevel.Warning)
             .MinimumLevel.Override("Microsoft.EntityFrameworkCore", LogEventLevel.Warning)
             .Enrich.FromLogContext()
             .WriteTo.Async(c => c.File("Logs/logs.txt"))
