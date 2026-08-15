@@ -40,6 +40,8 @@ Düzeltme PR'ları bulgu ID'sine referans verir. Denetim çok oturuma yayılır;
 | 2026-08-15 | SEC-DEP Kademe 1 | Scriban 7.2.1→**7.2.2** + System.Security.Cryptography.Xml 9.0.16→**9.0.18** (Directory.Build.props + 2 csproj). SQLitePCLRaw: **yamalı sürüm henüz yok** (2.1.11 en son, upstream efcore#38547), test-only → izlemede. AutoMapper: **kullanıcı kararı = riski kabul + izle** (AM15 ticari, temiz fix yok). | ✅ **Doğrulandı**: restore'da Scriban+Xml uyarıları GİTTİ; build 0 hata; testler baseline'la aynı (166/42/93 ✅, Web 42/50 — SIFIR yeni regresyon) |
 | 2026-08-15 | KVKK (çerez/rıza omurgası) | **Birleşik ConsentRecord omurgası kuruldu** (kullanıcı onaylı, yeni entity + çift-provider migration): Domain.Shared enum/consts, Domain `ConsentRecord`, Contracts DTO+`IConsentAppService`+izin `Consents.Default`, Application `ConsentAppService` (`[RemoteService(false)]`), EF config+DbSet, **SqlServer + Postgres migration** (`Add_ConsentRecords`). Web: anonim `ConsentController` (IP/UA sunucuda), çerez bilgilendirme şeridi (`CookieNotice` VC, `LayoutHooks.Body.Last`), admin analiz sayfası `/Admin/Consent` (Chart.js, izin korumalı), menü. Build ✅. **Etkileşimli QA E2E fazında (canlı tıklama yapılmadı).** | 🟢 Backend+UI tamam, QA bekliyor |
 
+| 2026-08-15 | SEC-001/002 | Commit'li sırlar (`OpenIddict ClientSecret`, `StringEncryption:DefaultPassPhrase`) `appsettings.json` (Web + DbMigrator) içinden BOŞALTILDI → gerçek değerler yalnız env var / user-secrets ile verilmeli. Sicildeki örnek değerler de redakte edildi. **NOT: Değerler git GEÇMİŞİNDE hâlâ var** (bu yalnız güncel dosyaları temizler). Prod'da ezilmiyorsa passphrase rotasyonu + AI anahtarlarının yeniden şifrelenmesi ayrı iş. | 🟡 Kısmi (güncel dosyalar temiz; geçmiş + rotasyon açık) |
+
 ## Faz 2 — E2E canlı doğrulama (2026-08-15, MSSQL + kullanıcı Chrome oturumu)
 
 Ortam: MSSQL (çalışıyordu, TCP 1433 kapalı ama Shared Memory ile `localhost` bağlanır) → `dotnet ef database update` ile `Add_ConsentRecords` + `Drop_ProjectAnalyses` uygulandı → app `https://localhost:44386` sorunsuz boot. (DbMigrator'ın ilk seed hatası soğuk-DB/şema-uyuşmazlığı kaynaklı geçiciydi.) Doğrulama kullanıcının gerçek Chrome oturumunda (in-app panel oturumsuzdu → ayrı çerez jarı).
@@ -66,8 +68,8 @@ Ortam: MSSQL (çalışıyordu, TCP 1433 kapalı ama Shared Memory ile `localhost
 
 #### SEC-001 🟠 `BEKLİYOR` — Kaynak kontrolüne girmiş sırlar
 `appsettings.json` üretim-hassas iki sırrı düz metin taşıyor ve `appsettings.Production.json` bunları **ezmiyor**:
-- OpenIddict `Platform_Web:ClientSecret` = `1q2w3e*`
-- `StringEncryption:DefaultPassPhrase` = `7VUtWfI922CCIwoJ`
+- OpenIddict `Platform_Web:ClientSecret` = `[REDAKTE]`
+- `StringEncryption:DefaultPassPhrase` = `[REDAKTE]`
 
 **Kanıt:** [appsettings.json:17,37](src/Apya.Platform.Web/appsettings.json), [appsettings.Production.json](src/Apya.Platform.Web/appsettings.Production.json) (StringEncryption/ClientSecret yok)
 **Risk:** Prod bu değerleri environment variable / user-secret ile ezmiyorsa, git'e erişen herkes prod passphrase + client secret'ına sahip.
@@ -75,7 +77,7 @@ Ortam: MSSQL (çalışıyordu, TCP 1433 kapalı ama Shared Memory ile `localhost
 **Öneri:** İki sırrı da environment variable'a taşı; passphrase'i döndür (rotate); `appsettings.json`'dan çıkar.
 
 #### SEC-002 🟠 `DOĞRULANDI` — Kiracı AI API anahtarları git'teki passphrase ile çözülebilir
-`AiProviderCredentialStore.ResolveAsync` kiracı AI API anahtarını `IStringEncryptionService.Decrypt` ile çözüyor. Bu servis `StringEncryption:DefaultPassPhrase`'i kullanır — yani SEC-001'deki commit'li `7VUtWfI922CCIwoJ`. DB'yi + repoyu gören biri tüm kiracıların OpenAI/AI sağlayıcı anahtarlarını çözebilir.
+`AiProviderCredentialStore.ResolveAsync` kiracı AI API anahtarını `IStringEncryptionService.Decrypt` ile çözüyor. Bu servis `StringEncryption:DefaultPassPhrase`'i kullanır — yani SEC-001'deki commit'li `[REDAKTE]`. DB'yi + repoyu gören biri tüm kiracıların OpenAI/AI sağlayıcı anahtarlarını çözebilir.
 **Kanıt:** [AiProviderCredentialStore.cs:36](src/Apya.Platform.Ai.Application/Providers/AiProviderCredentialStore.cs)
 **Öneri:** SEC-001 ile birlikte çözülür; passphrase döndürülünce mevcut şifreli anahtarların yeniden şifrelenmesi gerekir.
 
