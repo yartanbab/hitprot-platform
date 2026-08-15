@@ -606,6 +606,7 @@
         "Dashboard:View:Finance": "Finans",
         "Dashboard:View:Today": "Bugün",
         "Dashboard:View:Grants": "Hibe takibi",
+        "Dashboard:SelectView": "Görünüm seç",
         "Dashboard:SelectRange": "Zaman aralığı seç",
         "Dashboard:Range:Month": "Bu ay",
         "Dashboard:Range:Week": "Bu hafta",

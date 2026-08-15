@@ -209,7 +209,7 @@ function DashboardRoot() {
                                 <Card
                                     filter={filter}
                                     editMode={editMode}
-                                    {...(card.cardKey === 'summary-strip' ? { template: strip.template } : null)}
+                                    {...(card.cardKey === 'summary-strip' ? { template: strip.template, compact: strip.compact } : null)}
                                 />
                                 {editMode && (
                                     <button
@@ -263,12 +263,15 @@ function PageHeader({ viewKey, onViewChange, range, onRangeChange, editMode, can
                     <h1 className="text-[22px] font-semibold tracking-[-0.025em] text-text-primary m-0">
                         {t('Dashboard:Title', 'Genel Bakış')}
                     </h1>
-                    <span className="inline-flex items-center h-[22px] px-[9px] rounded-full bg-accent-soft text-accent-600 text-[11.5px] font-semibold flex-none">
+                    {/* Rozet mobilde gizli: aktif görünümü zaten dropdown gösteriyor. */}
+                    <span className="inline-flex items-center h-[22px] px-[9px] rounded-full bg-accent-soft text-accent-600 text-[11.5px] font-semibold flex-none mobile:hidden">
                         {t(activeView.labelKey, activeView.fallback)}
                     </span>
                 </div>
 
-                <nav className="flex items-center gap-1 flex-wrap" aria-label={t('Dashboard:Views', 'Görünümler')}>
+                {/* Sekmeler mobilde çok yer kaplıyordu (4 sekme 2 satıra sarıyordu) —
+                    dar ekranda gizlenir, yerini alttaki ViewSelect dropdown'ı alır. */}
+                <nav className="flex items-center gap-1 flex-wrap mobile:hidden" aria-label={t('Dashboard:Views', 'Görünümler')}>
                     {VIEWS.map((view) => (
                         <button
                             key={view.key}
@@ -290,6 +293,7 @@ function PageHeader({ viewKey, onViewChange, range, onRangeChange, editMode, can
             </div>
 
             <div className="flex items-center gap-2 flex-none mobile:flex-wrap">
+                <ViewSelect value={viewKey} onChange={onViewChange} />
                 <RangeSelect value={range} onChange={onRangeChange} />
                 {canEdit && (
                     <>
@@ -303,6 +307,28 @@ function PageHeader({ viewKey, onViewChange, range, onRangeChange, editMode, can
                 )}
             </div>
         </header>
+    );
+}
+
+/* Görünüm seçimi — YALNIZ mobilde görünür; geniş ekranda sekmeler (nav) iş görür. */
+function ViewSelect({ value, onChange }) {
+    return (
+        <label className="hidden mobile:inline-flex items-center flex-1 min-w-0">
+            <span className="sr-only">{t('Dashboard:SelectView', 'Görünüm seç')}</span>
+            <select
+                value={value}
+                onChange={(e) => onChange(e.target.value)}
+                className={cn(
+                    'h-8 w-full px-3 rounded-[9px] text-[12.5px] font-medium',
+                    'bg-surface-sunken text-text-secondary border-0',
+                    'focus-visible:outline-none focus-visible:shadow-focus',
+                )}
+            >
+                {VIEWS.map((view) => (
+                    <option key={view.key} value={view.key}>{t(view.labelKey, view.fallback)}</option>
+                ))}
+            </select>
+        </label>
     );
 }
 

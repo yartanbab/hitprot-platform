@@ -100,7 +100,11 @@ export function stripLayoutFor(stripWidth) {
     if (stripWidth >= 1015) return { template: 'repeat(4, minmax(0, 2fr)) minmax(0, 3fr)', h: 2 };
     if (stripWidth >= 694)  return { template: 'repeat(3, minmax(0, 1fr))', h: 4 };
     if (stripWidth >= 456)  return { template: 'repeat(2, minmax(0, 1fr))', h: 6 };
-    return { template: 'minmax(0, 1fr)', h: 10 };
+    /* Dar mobil: tek kolonlu dev kartlar (h=10 → 820px) ekranı yiyordu.
+       Kompakt kip: 2 kolon küçük kutucuk (padding/punto küçülür, sparkline
+       gizlenir), bütçe kutucuğu tam satıra yayılır → 3 satır.
+       h=4 → 84*4-20 = 316px; gap 12 ile satır ≈ 97px, kompakt içerik ≈ 91px. */
+    return { template: 'repeat(2, minmax(0, 1fr))', h: 4, compact: true };
 }
 
 /**
