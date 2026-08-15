@@ -63,6 +63,17 @@ public static class PlatformSettings
         public const string SavedViews = Prefix + ".Shell.SavedViews";
     }
 
+    /// <summary>Sürüm notları ("Yenilikler") — kullanıcı seviyesinde görülme takibi.</summary>
+    public static class ReleaseNotes
+    {
+        /// <summary>
+        /// Kullanıcının en son gördüğü sürüm notu <c>Version</c>'ı (örn. "2026.08.16").
+        /// Boş = hiç görmedi. Katalogdaki en yeni sürümden farklıysa ilk açılışta
+        /// "Yenilikler" penceresi açılır. Kullanıcı seviyesinde saklanır (cihazlar arası taşınır).
+        /// </summary>
+        public const string LastSeenVersion = Prefix + ".ReleaseNotes.LastSeenVersion";
+    }
+
     public static class Telemetry
     {
         /// <summary>

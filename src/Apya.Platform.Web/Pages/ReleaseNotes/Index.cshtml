@@ -1,0 +1,45 @@
+@page
+@using Apya.Platform.Web.ReleaseNotes
+@model Apya.Platform.Web.Pages.ReleaseNotes.IndexModel
+@{
+    ViewData["Title"] = "Yenilikler";
+}
+
+<div class="apya-page" data-page-description="Sürüm notları">
+    <div class="container-fluid py-3" style="max-width: 900px;">
+        <h1 class="h4 mb-1">🎉 Yenilikler</h1>
+        <p class="text-muted">Uygulamadaki güncellemelerin sürüm sürüm geçmişi.</p>
+
+        @foreach (var release in Model.Releases)
+        {
+            <div class="card mb-3">
+                <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+                    <div>
+                        <strong>@release.Title</strong>
+                        <div class="text-muted small">@release.Date</div>
+                    </div>
+                    <span class="apya-chip apya-chip-neutral">Sürüm @release.Version</span>
+                </div>
+                <div class="card-body pt-1">
+                    @foreach (var item in release.Items)
+                    {
+                        <div class="d-flex align-items-start gap-3 py-2 apya-release-detail-item">
+                            <span aria-hidden="true" style="font-size:1.25rem;line-height:1.3;">@ReleaseNoteCategoryInfo.Emoji(item.Category)</span>
+                            <div class="flex-grow-1">
+                                <div class="d-flex align-items-center gap-2 flex-wrap">
+                                    <strong>@item.Title</strong>
+                                    <span class="apya-chip @ReleaseNoteCategoryInfo.ChipClass(item.Category)">@ReleaseNoteCategoryInfo.Label(item.Category)</span>
+                                </div>
+                                <div class="text-muted mt-1">@item.Description</div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+<style>
+    .apya-release-detail-item + .apya-release-detail-item { border-top: 1px solid var(--apya-border, rgba(0,0,0,.08)); }
+</style>

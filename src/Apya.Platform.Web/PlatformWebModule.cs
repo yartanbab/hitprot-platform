@@ -167,6 +167,8 @@ public class PlatformWebModule : AbpModule
             options.Add(Volo.Abp.Ui.LayoutHooks.LayoutHooks.Head.Last, typeof(Apya.Platform.Web.Components.ApyaThemeHead.ApyaThemeHeadViewComponent));
             // Zorunlu çerez bilgilendirme şeridi — ack çerezi yoksa gösterilir (KVKK).
             options.Add(Volo.Abp.Ui.LayoutHooks.LayoutHooks.Body.Last, typeof(Apya.Platform.Web.Components.CookieNotice.CookieNoticeViewComponent));
+            // "Yenilikler" penceresi — kullanıcı en yeni sürümü görmediyse ilk açılışta modal açar.
+            options.Add(Volo.Abp.Ui.LayoutHooks.LayoutHooks.Body.Last, typeof(Apya.Platform.Web.Components.ReleaseNotes.ReleaseNotesViewComponent));
         });
 
         // GAP-012 + ARCH-010: Audit Logging Selectors.

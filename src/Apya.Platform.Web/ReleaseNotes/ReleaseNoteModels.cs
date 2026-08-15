@@ -1,0 +1,82 @@
+using System.Collections.Generic;
+
+namespace Apya.Platform.Web.ReleaseNotes;
+
+/// <summary>Sürüm notu kategorisi — kullanıcıya emoji + etiket + renk sınıfıyla gösterilir.</summary>
+public enum ReleaseNoteCategory
+{
+    Security,     // Güvenlik
+    Feature,      // Yenilik
+    Improvement,  // İyileştirme
+    Fix           // Düzeltme
+}
+
+public static class ReleaseNoteCategoryInfo
+{
+    public static string Emoji(ReleaseNoteCategory c) => c switch
+    {
+        ReleaseNoteCategory.Security    => "🔒",
+        ReleaseNoteCategory.Feature     => "🆕",
+        ReleaseNoteCategory.Improvement => "⚙️",
+        ReleaseNoteCategory.Fix         => "🐛",
+        _ => "•"
+    };
+
+    public static string Label(ReleaseNoteCategory c) => c switch
+    {
+        ReleaseNoteCategory.Security    => "Güvenlik",
+        ReleaseNoteCategory.Feature     => "Yenilik",
+        ReleaseNoteCategory.Improvement => "İyileştirme",
+        ReleaseNoteCategory.Fix         => "Düzeltme",
+        _ => ""
+    };
+
+    /// <summary>Rozet ton sınıfı — mevcut <c>.apya-chip-*</c> paletiyle uyumlu.</summary>
+    public static string ChipClass(ReleaseNoteCategory c) => c switch
+    {
+        ReleaseNoteCategory.Security    => "apya-chip-negative",
+        ReleaseNoteCategory.Feature     => "apya-chip-positive",
+        ReleaseNoteCategory.Improvement => "apya-chip-accent",
+        ReleaseNoteCategory.Fix         => "apya-chip-warning",
+        _ => "apya-chip-neutral"
+    };
+}
+
+public sealed class ReleaseNoteItem
+{
+    public ReleaseNoteCategory Category { get; }
+
+    /// <summary>Kısa başlık — madde özetinde bu görünür.</summary>
+    public string Title { get; }
+
+    /// <summary>"Ne işe yaradığı" — sade açıklama, ayrıntı görünümünde gösterilir.</summary>
+    public string Description { get; }
+
+    public ReleaseNoteItem(ReleaseNoteCategory category, string title, string description)
+    {
+        Category = category;
+        Title = title;
+        Description = description;
+    }
+}
+
+public sealed class ReleaseNote
+{
+    /// <summary>Benzersiz sürüm kimliği (görülme takibi bununla yapılır). Örn. "2026.08.16".</summary>
+    public string Version { get; }
+
+    public string Date { get; }
+
+    /// <summary>Sürümün tek cümlelik başlığı.</summary>
+    public string Title { get; }
+
+    public IReadOnlyList<ReleaseNoteItem> Items { get; }
+
+    public ReleaseNote(string version, string date, string title, params ReleaseNoteItem[] items)
+    {
+        Version = version;
+        Date = date;
+        Title = title;
+        Items = items;
+    }
+}

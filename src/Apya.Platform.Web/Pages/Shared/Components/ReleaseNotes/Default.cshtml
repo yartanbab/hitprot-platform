@@ -1,0 +1,49 @@
+@using Apya.Platform.Web.ReleaseNotes
+@model ReleaseNote
+
+<div class="modal fade" id="apyaReleaseNotesModal" tabindex="-1" aria-labelledby="apyaReleaseNotesTitle"
+     aria-hidden="true" data-version="@Model.Version">
+    <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div>
+                    <h5 class="modal-title mb-0" id="apyaReleaseNotesTitle">🎉 Yenilikler</h5>
+                    <small class="text-muted">@Model.Title · @Model.Date</small>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-muted small mb-3">Bu sürümde neler değişti:</p>
+                <ul class="list-unstyled mb-0 apya-release-summary">
+                    @foreach (var item in Model.Items)
+                    {
+                        <li class="d-flex align-items-start gap-2 py-1">
+                            <span aria-hidden="true" style="font-size:1.05rem;line-height:1.4">@ReleaseNoteCategoryInfo.Emoji(item.Category)</span>
+                            <span>@item.Title</span>
+                        </li>
+                    }
+                </ul>
+            </div>
+            <div class="modal-footer">
+                <a href="~/ReleaseNotes" class="btn btn-outline-secondary">Ayrıntı gör</a>
+                <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Anladım</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    (function () {
+        var el = document.getElementById('apyaReleaseNotesModal');
+        if (!el || typeof bootstrap === 'undefined') { return; }
+        var version = el.getAttribute('data-version');
+        var marked = false;
+        function markSeen() {
+            if (marked) { return; } marked = true;
+            try { fetch('/release-notes/mark-seen?version=' + encodeURIComponent(version), { method: 'POST' }); } catch (e) { }
+        }
+        // "Anladım" / kapatma → görüldü. ("Ayrıntı gör" zaten /ReleaseNotes'a gidince sunucuda işaretler.)
+        el.addEventListener('hide.bs.modal', markSeen);
+        new bootstrap.Modal(el).show();
+    })();
+</script>

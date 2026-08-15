@@ -241,6 +241,11 @@ public class PlatformMenuContributor : IMenuContributor
             context.Menu.Items.Remove(administration);
         }
 
+        // Yenilikler — sürüm notları geçmişi; her oturumlu kullanıcıya açık (izin kapısı yok).
+        context.Menu.AddItem(new ApplicationMenuItem(
+            "Apya.ReleaseNotes", l["Menu:ReleaseNotes"],
+            icon: "fa fa-gift", url: "/ReleaseNotes", order: 98));
+
         // Ayarlar — kenar çubuğunun dibindeki tek giriş. Kişisel tercihler her
         // oturumlu kullanıcıya açık olduğu için izin kapısı YOK; yönetim
         // bağlantıları sayfanın kendi içinde izinle filtrelenir.
