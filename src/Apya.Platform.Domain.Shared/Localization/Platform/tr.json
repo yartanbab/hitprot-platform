@@ -437,6 +437,7 @@
         "Platform:Invoice:TaxRateInvalid": "Geçersiz KDV oranı. Oran 0 ile 100 arasında olmalıdır.",
         "Platform:Invoice:CurrencyInvalid": "Geçersiz para birimi.",
         "Platform:Payment:ExchangeRateMissing": "Tahsilat tarihi için kur bulunamadı. Lütfen ilgili kuru tanımlayın.",
+        "Platform:Payment:AmountInvalid": "Ödeme tutarı sıfırdan büyük olmalıdır.",
         "Platform:FxRevaluation:RateMissing": "Değerleme tarihi için kur bulunamadı. Lütfen ilgili kuru tanımlayın.",
         "Platform:Project:NameRequired": "Proje adı boş bırakılamaz.",
         "Platform:Project:BudgetInvalid": "Geçersiz bütçe. Bütçe negatif olamaz.",

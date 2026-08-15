@@ -48,6 +48,7 @@ Düzeltme PR'ları bulgu ID'sine referans verir. Denetim çok oturuma yayılır;
 | 2026-08-15 | FN-004 | **`Consents.Default` host admin'e seed edildi.** `ConsentsPermissionDataSeedContributor` (LoginScreen deseni; host-context, "ADMIN" rolü, idempotent). Migration YOK. Kiracı-admin kapsamı paket sistemine bırakıldı (ayrı karar). | ✅ Doğrulandı: build 0 hata; tam suite **351/351** yeşil |
 | 2026-08-15 | SEC-012 | **Takvim OAuth state CSRF doğrulaması eklendi.** `GetAuthUrlAsync` rastgele token'ı kullanıcı-bağlı `IDistributedCache`'e yazar (`state="{provider}.{token}"`, 10 dk, tek kullanımlık); `ExchangeCodeAndConnectAsync` FixedTimeEquals ile doğrular+siler, eşleşmezse `BusinessException`. Cookie yerine cache (Application'a ASP.NET Core ref eklememek için); yeni endpoint/JS yok. | ✅ Doğrulandı: build 0 hata; tam suite **351/351** yeşil |
 | 2026-08-16 | SEC-003 | **Anonim form cevap-şema doğrulaması eklendi.** `ResponseAppService.ValidateAnswers`: boyut sınırı (1 MB), geçerli JSON nesnesi, anahtarlar yalnız var olan cevaplanabilir bloklara ait (bilinmeyen anahtar reddi), zorunlu bloklar dolu. 3 yeni hata kodu + tr/en. Honeypot+min-süre (KVKK-005) + bu = çöp/spam veri kapandı. Per-tip format + 3.taraf CAPTCHA bilinçle kapsam dışı. | ✅ Doğrulandı: build 0 hata; tam suite **351/351** yeşil |
+| 2026-08-16 | CORR-001 | **Negatif/sıfır ödeme tutarı guard'ı.** `RecordPaymentAsync` başına `amount <= 0 → BusinessException(PaymentAmountInvalid)`; yeni hata kodu + tr; 2 birim test. Aşırı ödeme bilinçle serbest (avans/kısmi). | ✅ Doğrulandı: build 0 hata; tam suite **353/353** yeşil (yeni testlerle) |
 
 ## Faz 2 — E2E canlı doğrulama (2026-08-15, MSSQL + kullanıcı Chrome oturumu)
 
@@ -165,10 +166,11 @@ Bazı servisler ABP zaman soyutlaması (`Clock.Now`) yerine ham `DateTime.Now` k
 **Not:** `ProjectAppService`/`ReportAppService` daha önce bilinçli `Clock.Now`'a çevrilmiş (ARCH-043/046) — bu servisler geride kalmış. En riskli: hibe son-tarih "bugün" sınırı (çağrı açık/kapalı yanlış görünebilir).
 **Öneri:** Hepsini `Clock.Now`'a çevir (tek satırlık cerrahi değişiklikler).
 
-#### CORR-001 🔵 `AÇIK` — Ödeme kaydında aşırı/negatif tutar guard'ı yok
-`RecordPaymentAsync` `amount`'un fatura kalanını aşmadığını doğrulamıyor; sıfır/negatif `amount` da bir `Payment` satırı üretiyor (side-effect'ler `amount > 0` ile korunuyor ama kayıt yine de oluşuyor).
-**Kanıt:** [InvoiceManager.cs:124-171](src/Apya.Platform.Domain/Invoices/InvoiceManager.cs)
-**Not:** İş kuralına bağlı (avans/kısmi ödeme kasıtlı olabilir). Doğrulanmalı.
+#### CORR-001 🔵 `DÜZELTİLDİ` (kısmi — kasıtlı) — Ödeme kaydında negatif/sıfır tutar guard'ı yok
+`RecordPaymentAsync` sıfır/negatif `amount`'ta da bir `Payment` satırı üretiyordu (side-effect'ler `amount > 0` ile korunuyordu ama satır oluşup `payments.Sum`'ı → fatura durumunu kirletiyordu).
+**Kanıt:** [InvoiceManager.cs](src/Apya.Platform.Domain/Invoices/InvoiceManager.cs) `RecordPaymentAsync`
+**Düzeltme (2026-08-16):** Metot başına `if (amount <= 0) throw BusinessException(PaymentAmountInvalid)` guard'ı (invoice sorgusundan önce). Yeni hata kodu `Platform:Payment:AmountInvalid` + tr mesajı (mevcut Payment kodları tr-only → aynı desen). **2 birim test** eklendi (0 ve -100 → `BusinessException` + Insert yok). **Aşırı ödeme (amount > fatura kalanı) bilinçle ENGELLENMEDİ** — avans/kısmi ödeme kasıtlı olabilir (iş kuralı kararı; blokla­mak isteniyorsa ayrı iş).
+**Doğrulama:** build 0 hata; tam suite **353/353** yeşil (Application 42→44).
 
 ### İşlevsel (çalışmayan / eksik)
 
