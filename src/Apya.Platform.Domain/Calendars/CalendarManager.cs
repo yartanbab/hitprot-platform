@@ -16,17 +16,20 @@ public class CalendarManager : DomainService
     private readonly IRepository<CalendarSyncMapping, Guid> _mappingRepository;
     private readonly IEnumerable<ICalendarProvider> _providers;
     private readonly IConfiguration _configuration;
+    private readonly CalendarTokenProtector _tokenProtector;
 
     public CalendarManager(
         IRepository<ExternalCalendarAccount, Guid> accountRepository,
         IRepository<CalendarSyncMapping, Guid> mappingRepository,
         IEnumerable<ICalendarProvider> providers,
-        IConfiguration configuration)
+        IConfiguration configuration,
+        CalendarTokenProtector tokenProtector)
     {
         _accountRepository = accountRepository;
         _mappingRepository = mappingRepository;
         _providers         = providers;
         _configuration     = configuration;
+        _tokenProtector    = tokenProtector;
     }
 
     public async Task SyncTaskToExternalCalendarsAsync(TaskItem task)
@@ -124,8 +127,8 @@ public class CalendarManager : DomainService
         try
         {
             var (newAccess, newRefresh, expiresAt) = await provider.RefreshTokenAsync(account, clientId, clientSecret);
-            account.AccessToken     = newAccess;
-            account.RefreshToken    = newRefresh;
+            account.AccessToken     = _tokenProtector.Protect(newAccess);
+            account.RefreshToken    = _tokenProtector.Protect(newRefresh);
             account.TokenExpiryTime = expiresAt;
             await _accountRepository.UpdateAsync(account);
         }

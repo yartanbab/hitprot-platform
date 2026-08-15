@@ -19,19 +19,22 @@ public class CalendarAppService : ApplicationService, ICalendarAppService
     private readonly CalendarManager _calendarManager;
     private readonly IConfiguration _configuration;
     private readonly IHttpClientFactory _httpClientFactory;
+    private readonly CalendarTokenProtector _tokenProtector;
 
     public CalendarAppService(
         IRepository<ExternalCalendarAccount, Guid> accountRepository,
         IRepository<TaskItem, Guid> taskRepository,
         CalendarManager calendarManager,
         IConfiguration configuration,
-        IHttpClientFactory httpClientFactory)
+        IHttpClientFactory httpClientFactory,
+        CalendarTokenProtector tokenProtector)
     {
         _accountRepository = accountRepository;
         _taskRepository    = taskRepository;
         _calendarManager   = calendarManager;
         _configuration     = configuration;
         _httpClientFactory = httpClientFactory;
+        _tokenProtector    = tokenProtector;
     }
 
     public async Task<List<CalendarAccountDto>> GetMyAccountsAsync()
@@ -56,8 +59,8 @@ public class CalendarAppService : ApplicationService, ICalendarAppService
 
         if (existing != null)
         {
-            existing.AccessToken     = input.AccessToken;
-            existing.RefreshToken    = input.RefreshToken;
+            existing.AccessToken     = _tokenProtector.Protect(input.AccessToken);
+            existing.RefreshToken    = _tokenProtector.Protect(input.RefreshToken);
             existing.TokenExpiryTime = input.TokenExpiryTime;
             await _accountRepository.UpdateAsync(existing);
         }
@@ -65,8 +68,8 @@ public class CalendarAppService : ApplicationService, ICalendarAppService
         {
             var account = new ExternalCalendarAccount(GuidGenerator.Create(), CurrentUser.Id!.Value, input.Provider, input.ExternalEmail)
             {
-                AccessToken     = input.AccessToken,
-                RefreshToken    = input.RefreshToken,
+                AccessToken     = _tokenProtector.Protect(input.AccessToken),
+                RefreshToken    = _tokenProtector.Protect(input.RefreshToken),
                 TokenExpiryTime = input.TokenExpiryTime
             };
             await _accountRepository.InsertAsync(account);
