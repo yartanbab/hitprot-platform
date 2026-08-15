@@ -1604,7 +1604,25 @@ i.apya-priority-dot {
     padding-left: 12px;
     padding-right: 12px;
 }
-.apya-clean-table tbody tr:hover td { background: var(--apya-surface-raised) !important; }
+/* `:not(.apya-subtask-child)` ŞART: DataTables'ın alt görev panelini taşıyan
+   child satırı da bir <tr>'dir. O da bu kuraldan zemin alınca panelin TAMAMI
+   raised oluyor, içindeki `.apya-subtask-row:hover` de AYNI rengi bastığı için
+   tek tek alt görev satırının vurgusu hiç görünmüyordu.
+   Sınıfı `row.child(html, className)` ile BİZ veriyoruz: DataTables 2.3 child
+   satırına kendiliğinden sınıf koymuyor (sondada ölçüldü, üst satıra
+   `dt-hasChild` yazıyor) — `.child` seçicisi boşa düşerdi. */
+.apya-clean-table tbody tr:not(.apya-subtask-child):hover td { background: var(--apya-surface-raised) !important; }
+/* Koyu temada `--apya-surface-raised` KART ZEMİNİNİN TA KENDİSİ (#141416 —
+   `--bs-card-bg` de ona eşleniyor) → hover hiç görünmüyordu; satır vurgusu
+   açık temada varken koyuda tamamen kayıptı (ölçüldü: hover'lı td ile kart
+   aynı renk). Koyuda zemini koyulaştırmak "basılı" hissi verdiği için metin
+   renginden türetilen ince bir aydınlatma katmanı kullanılıyor. */
+[data-theme="dark"] .apya-clean-table tbody tr:not(.apya-subtask-child):hover td {
+    background: color-mix(in srgb, var(--apya-text-primary) 7%, transparent) !important;
+}
+[data-theme="dark"] .apya-subtask-row:hover {
+    background: color-mix(in srgb, var(--apya-text-primary) 7%, transparent);
+}
 
 /* ----------------------------------------------------------------------------
    18) GÖRÜNÜM MODU SEGMENTİ — hedef tasarımda header'da, arama pilinin sağında.
@@ -1744,13 +1762,22 @@ i.apya-priority-dot {
    `flex:1 1 auto` yalnız BOŞ alanı paylaştırır, taşmayı engellemez — kanban
    board'u (kanban.css `min-height:400px` + içerik) konsolu 1060px'e çıkarıp
    sayfayı kaydırıyordu. 56px = .lpx-content üst+alt dolgusu (28+28, canlı ölçüm). */
-.apya-page.apya-project-console {
+/* Görevler konsolu (Pages/Tasks) AYNI dikey iskeleti kullanır: aksi halde
+   `.apya-console-main` doğal yüksekliğinde kalıp altta ölü alan bırakıyordu
+   (§9'un "son kart esner" kuralı burada işlemiyor, çünkü tavan yok — bkz.
+   yukarıdaki not). `container-type` BİLEREK dışarıda: /Tasks'ta kap yalnız
+   mobilde tanımlanır, masaüstünde açmak şerit kırılımlarını erken tetikler
+   (bkz. §21 "Görevler konsolu: kap MOBİLDE tanımlanır"). */
+.apya-page.apya-project-console,
+.apya-page.apya-task-console {
     gap: var(--apya-space-3);
     height: calc(100vh - var(--apya-header-h) - 56px);
-    container-type: inline-size;
 }
-.apya-page.apya-project-console > .card { flex: none; min-height: auto; }
-.apya-page.apya-project-console > .apya-console-main {
+.apya-page.apya-project-console { container-type: inline-size; }
+.apya-page.apya-project-console > .card,
+.apya-page.apya-task-console > .card { flex: none; min-height: auto; }
+.apya-page.apya-project-console > .apya-console-main,
+.apya-page.apya-task-console > .apya-console-main {
     flex: 1 1 auto;
     min-height: 0;
     display: flex;
@@ -2751,8 +2778,11 @@ i.apya-priority-dot {
 .apya-gantt-key.is-today { width: 1px; height: 14px; background: var(--apya-negative-500); border-radius: 0; }
 
 /* --- Durum halleri: yükleniyor / boş / filtre-boş / 403 --- */
-/* Konsol yüzen çubuğun konum referansı. */
-.apya-page.apya-project-console { position: relative; }
+/* Konsol yüzen çubuğun konum referansı. Görevler konsolu da aynı iskeleti
+   kullanıyor (tam yükseklik) → toplu işlem çubuğu belgenin değil konsolun
+   dibine otursun. */
+.apya-page.apya-project-console,
+.apya-page.apya-task-console { position: relative; }
 .apya-console-views > .view-panel { position: relative; }
 /* İskelet satırlar tablo başlığının ALTINDAN başlar (44px thead payı). */
 .apya-console-skeleton {
@@ -3010,7 +3040,8 @@ i.apya-priority-dot {
 
     /* Tam yükseklik kilidi kalkar — mobilde doğal akış ve sayfa kaydırması
        beklenen davranış. Alt bar + FAB son satırı örtmesin diye dip boşluk. */
-    .apya-page.apya-project-console { height: auto; padding-bottom: 74px; }
+    .apya-page.apya-project-console,
+    .apya-page.apya-task-console { height: auto; padding-bottom: 74px; }
 
     /* --- Alt sekme barı ---
        Aynı `.apya-console-tabs` düğümü yerinde kalır, yalnız konumu değişir.

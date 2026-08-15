@@ -45,7 +45,8 @@ $(function () {
     var canDeleteTasks  = $console.data('can-delete-tasks') === true;
     var canBulk         = $console.data('can-bulk') === true;
 
-    var STATUS_LABELS   = { '': 'tümü', '0': 'İptal', '1': 'Yapılacak', '2': 'Sürüyor', '3': 'Testte', '4': 'Tamamlandı' };
+    // Sözcükler tr.json'daki Tasks:Status:* ile birebir (bkz. Tasks/index.js).
+    var STATUS_LABELS   = { '': 'tümü', '0': 'İptal', '1': 'Bekliyor', '2': 'Sürüyor', '3': 'Testte', '4': 'Tamamlandı' };
     var PRIORITY_LABELS = { '': 'tümü', '1': 'Düşük', '2': 'Orta', '3': 'Yüksek', '4': 'Kritik' };
 
     // Filtre state'i + URL senkronu ortak modülde (/js/apya-task-console.js).
@@ -115,6 +116,22 @@ $(function () {
 
     function hasActiveFilters() { return state.hasActive(); }
 
+    // ─── Alt görev hiyerarşisi ─────────────────────────────────────────────
+    // Görevler konsoluyla AYNI kural (mekanizma ortak modülde): normalde yalnız
+    // kök görevler sayfalanır, alt görevler chevron altında açılır. Filtre veya
+    // arama aktifken düz kipe dönülür — aksi halde filtreye uyan bir alt görev,
+    // üstü uymadığı için listeden tamamen düşerdi. Proje kapsamı filtre değil,
+    // zaten sayfanın tanımı.
+    function isHierarchical() {
+        return !hasActiveFilters() && !(dataTable && dataTable.search());
+    }
+
+    function listFilter() {
+        var input = buildInput();
+        if (isHierarchical()) { input.rootOnly = true; }
+        return input;
+    }
+
     function assigneeLabel() {
         if (filterState.mine) { return 'ben'; }
         if (!filterState.assignee) { return 'tümü'; }
@@ -149,6 +166,7 @@ $(function () {
     function applyFilters() {
         renderFilterUi();
         writeStateToUrl();
+        hierarchy.reset();
         if (dataTable) { dataTable.ajax.reload(); }
         if (kb && currentView === 'kanban') { kb.load(); }
     }
@@ -176,13 +194,21 @@ $(function () {
                 data.search.search = '';
                 data.start = 0;
             },
-            ajax: abp.libs.datatables.createAjax(taskService.getList, buildInput),
+            ajax: abp.libs.datatables.createAjax(taskService.getList, listFilter),
             createdRow: function (row, data) {
                 $(row).attr('data-id', data.id).css('cursor', 'pointer');
             },
             columnDefs: buildColumns()
         })
     );
+
+    var hierarchy = console_.createSubtaskHierarchy({
+        table: '#ProjectTasksTable',
+        getTable: function () { return dataTable; },
+        service: taskService,
+        isEnabled: isHierarchical,
+        openTask: function (id) { editModal.open(id); }
+    });
 
     // Kolon tanımları — seçim kolonu yalnız toplu işlem yetkisi varsa eklenir.
     function buildColumns() {
@@ -209,11 +235,17 @@ $(function () {
                     width: '26%',
                     data: 'title',
                     render: function (data, type, row) {
-                        var head = '<span class="fw-bold">' + apyaTask.esc(data) + '</span>' + apyaTask.commentCount(row.comments);
-                        if (row.parentTaskTitle) {
+                        var head = '<span class="fw-bold">' + apyaTask.esc(data) + '</span>' +
+                            apyaTask.commentCount(row.comments) + apyaTask.subtaskCountBadge(row);
+                        // Üst görev bağlamı yalnız DÜZ kipte gerekli — hiyerarşik
+                        // kipte alt görev zaten üstünün altında duruyor.
+                        if (!isHierarchical() && row.parentTaskTitle) {
                             head += '<div class="text-muted small"><i class="fa fa-level-up-alt fa-rotate-90 me-1"></i>' + apyaTask.esc(row.parentTaskTitle) + '</div>';
                         }
-                        return '<div>' + head + apyaTask.tagChips(row.tags) + '</div>';
+                        return '<div class="apya-task-title-cell">' +
+                            (isHierarchical() ? apyaTask.subtaskToggle(row) : '') +
+                            '<div class="apya-task-title-main">' + head + apyaTask.tagChips(row.tags) + '</div>' +
+                            '</div>';
                     }
                 },
                 {
@@ -228,21 +260,10 @@ $(function () {
                     className: 'apya-c-status',
                     width: '12%',
                     data: 'status',
-                    render: function (data, type, row) {
-                        // Özel kolondaysa kolon adını göster (ortak kanban paritesi).
-                        if (row.boardColumnName) {
-                            return '<span class="apya-chip apya-chip-brand">' + row.boardColumnName + '</span>';
-                        }
-                        var map = {
-                            1: { tone: 'neutral', text: 'Yapılacak' },
-                            2: { tone: 'warning', text: 'Sürüyor' },
-                            3: { tone: 'brand',   text: 'Testte' },
-                            4: { tone: 'positive', text: 'Tamamlandı' },
-                            0: { tone: 'negative', text: 'İptal' }
-                        };
-                        var s = map[data] || { tone: 'neutral', text: 'Bilinmiyor' };
-                        return '<span class="apya-chip apya-chip-' + s.tone + '">' + s.text + '</span>';
-                    }
+                    // Kopyalanmış durum haritası kaldırıldı: alt görev satırları
+                    // ile üst satırlar aynı sözcükleri kullansın diye paylaşılan
+                    // çipe geçildi (Görevler listesiyle de aynı).
+                    render: function (data, type, row) { return apyaTask.statusChip(data, row.boardColumnName); }
                 },
                 {
                     title: 'Öncelik',
@@ -319,7 +340,11 @@ $(function () {
     $('#console-search').on('input', function () {
         var term = this.value;
         clearTimeout(searchTimer);
-        searchTimer = setTimeout(function () { if (dataTable) { dataTable.search(term).draw(); } }, 300);
+        searchTimer = setTimeout(function () {
+            if (!dataTable) { return; }
+            hierarchy.reset();          // arama düz kipe geçirir, önbellek bayatlar
+            dataTable.search(term).draw();
+        }, 300);
     });
 
     if (dataTable) {
@@ -332,6 +357,8 @@ $(function () {
                     : info.recordsDisplay + ' / ' + info.recordsTotal + ' görev');
             renderEmptyState();
             syncRowChecks(); // yeniden çizimde seçim işaretlerini geri koy
+            // Açık alt görev satırları her draw'da kaybolur → geri açılır.
+            hierarchy.restore();
         });
 
         // Yükleniyor: spinner yerine tablo hizasında iskelet satırlar.
@@ -434,7 +461,10 @@ $(function () {
         enableCustomColumns: true,
         // Aynı filtre state'i board'a da uygulanır — liste ve kanban ayrışmasın.
         getFilter: buildInput,
-        onChanged: function () { if (dataTable) { dataTable.ajax.reload(null, false); } }
+        onChanged: function () {
+            hierarchy.reset();
+            if (dataTable) { dataTable.ajax.reload(null, false); }
+        }
     });
 
     // --- Zaman Çizelgesi (paylaşılan bileşen: /js/apya-gantt.js) ---
@@ -444,7 +474,10 @@ $(function () {
         getFilter: buildInput,
         editModal: editModal,
         canEdit: $console.data('can-edit-tasks') === true,
-        onSaved: function () { if (dataTable) { dataTable.ajax.reload(null, false); } }
+        onSaved: function () {
+            hierarchy.reset();
+            if (dataTable) { dataTable.ajax.reload(null, false); }
+        }
     });
 
     // --- Satıra tıklayınca görev detay modalını aç ---
@@ -571,6 +604,7 @@ $(function () {
 
     // Liste 403'te hiç kurulmadığı için tüm yenilemeler tek yerden korunur.
     function reloadAll(resetPaging) {
+        hierarchy.reset();
         if (dataTable) { dataTable.ajax.reload(null, resetPaging !== false); }
         kb.load();
     }

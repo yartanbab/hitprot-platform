@@ -2,7 +2,7 @@
  *  rozet karşılıkları — TaskDetailHeader ve TaskGeneralForm ortak kullanır. */
 export const STATUS = {
     0: { text: 'İptal',      variant: 'neutral'  },
-    1: { text: 'Yapılacak',  variant: 'neutral'  },
+    1: { text: 'Bekliyor',   variant: 'neutral'  },
     2: { text: 'Sürüyor',    variant: 'warning'  },
     3: { text: 'Testte',     variant: 'brand'    },
     4: { text: 'Tamamlandı', variant: 'positive' },
