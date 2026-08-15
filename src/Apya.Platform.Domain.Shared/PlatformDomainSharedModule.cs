@@ -1,4 +1,5 @@
 using Apya.Platform.Localization;
+using Microsoft.Extensions.DependencyInjection;
 using Volo.Abp.AuditLogging;
 using Volo.Abp.BackgroundJobs;
 using Volo.Abp.FeatureManagement;
@@ -36,6 +37,11 @@ public class PlatformDomainSharedModule : AbpModule
 
     public override void ConfigureServices(ServiceConfigurationContext context)
     {
+        // Performans eşikleri (yavaş istek/sorgu logu + dashboard cache TTL).
+        // En alt katmanda bağlanır ki EFCore, Application ve Web aynı seçenekleri tüketsin.
+        var configuration = context.Services.GetConfiguration();
+        Configure<PlatformPerformanceOptions>(configuration.GetSection(PlatformPerformanceOptions.SectionName));
+
         Configure<AbpVirtualFileSystemOptions>(options =>
         {
             options.FileSets.AddEmbedded<PlatformDomainSharedModule>();

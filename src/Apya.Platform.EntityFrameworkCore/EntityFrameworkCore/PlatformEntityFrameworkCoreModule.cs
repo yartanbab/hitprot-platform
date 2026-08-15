@@ -88,6 +88,13 @@ public class PlatformEntityFrameworkCoreModule : AbpModule
             {
                 options.UseNpgsql();
             }
+
+            // Yavaş sorgu telemetrisi — eşik Platform:Performance:SlowQueryThresholdMs.
+            options.PreConfigure(ctx =>
+            {
+                ctx.DbContextOptions.AddInterceptors(
+                    ctx.ServiceProvider.GetRequiredService<SlowQueryInterceptor>());
+            });
         });
     }
 }

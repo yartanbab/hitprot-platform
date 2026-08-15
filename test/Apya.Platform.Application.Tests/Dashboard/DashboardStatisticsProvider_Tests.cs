@@ -25,6 +25,7 @@ using Microsoft.Extensions.Options;
 using NSubstitute;
 using Shouldly;
 using Volo.Abp.Authorization.Permissions;
+using Volo.Abp.Caching;
 using Volo.Abp.Domain.Repositories;
 using Volo.Abp.Features;
 using Volo.Abp.Identity;
@@ -50,8 +51,10 @@ public class DashboardStatisticsProvider_Tests
     private readonly IRepository<TaskItem, Guid> _taskRepo = Substitute.For<IRepository<TaskItem, Guid>>();
     private readonly IRepository<Invoice, Guid> _invoiceRepo = Substitute.For<IRepository<Invoice, Guid>>();
     private readonly IRepository<Project, Guid> _projectRepo = Substitute.For<IRepository<Project, Guid>>();
+    private readonly IDistributedCache<DashboardStatCacheItem> _statCache =
+        Substitute.For<IDistributedCache<DashboardStatCacheItem>>();
 
-    private DashboardStatisticsProvider BuildSut()
+    private DashboardStatisticsProvider BuildSut(int dashboardCacheSeconds = 0)
     {
         var clock = Substitute.For<IClock>();
         clock.Now.Returns(new DateTime(2026, 8, 14, 10, 0, 0, DateTimeKind.Utc));
@@ -87,7 +90,11 @@ public class DashboardStatisticsProvider_Tests
             _executer,
             localizer,
             clock,
-            Options.Create(new DashboardOptions()));
+            Options.Create(new DashboardOptions()),
+            _statCache,
+            // Varsayılan TTL=0 (cache kapalı): kilit sözleşmesi testleri hesap yolunu
+            // cache'e sapmadan doğrudan ölçer. Cache testi TTL>0 ile kurar.
+            Options.Create(new PlatformPerformanceOptions { DashboardCacheSeconds = dashboardCacheSeconds }));
     }
 
     [Fact]
@@ -139,5 +146,22 @@ public class DashboardStatisticsProvider_Tests
         // Bütçe kutucukları ViewBudget'a bağlı olmalı — özel yetki, Projects.Default değil.
         stats.Single(s => s.Key == "budget-usage")
             .RequiredPermission.ShouldBe(PlatformPermissions.Projects.ViewBudget);
+    }
+
+    [Fact]
+    public async Task Cache_acikken_izinli_istatistik_cache_ten_okunur_hesap_calismaz()
+    {
+        _permissionChecker.IsGrantedAsync(Arg.Any<string>()).Returns(true);
+
+        // Cache her anahtara hazır değer döner → factory (gerçek hesap) hiç çağrılmaz.
+        _statCache.GetOrAddAsync(default!, default!)
+            .ReturnsForAnyArgs(new DashboardStatCacheItem { Current = 42m });
+
+        var stats = await BuildSut(dashboardCacheSeconds: 180).BuildAsync(new DashboardQueryDto());
+
+        // Tüm değerler cache'ten geldi; hesap çalışsaydı repo/executer'a inilirdi.
+        stats.Where(s => !s.Locked).ShouldAllBe(s => s.Value == 42m);
+        _executer.ReceivedCalls().ShouldBeEmpty();
+        await _taskRepo.DidNotReceive().GetQueryableAsync();
     }
 }
