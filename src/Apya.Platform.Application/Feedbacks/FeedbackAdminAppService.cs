@@ -315,7 +315,7 @@ public class FeedbackAdminAppService : ApplicationService, IFeedbackAdminAppServ
                     .OrderBy(x => x.Key)
                     .ToList(),
 
-                Trend = BuildTrend(rows, trendSince),
+                Trend = BuildTrend(rows, trendSince, Clock.Now.Date),
 
                 TopPages = rows
                     .Where(r => !string.IsNullOrWhiteSpace(r.PageUrl))
@@ -610,7 +610,7 @@ public class FeedbackAdminAppService : ApplicationService, IFeedbackAdminAppServ
         }
     }
 
-    private static List<FeedbackTrendPointDto> BuildTrend(List<StatsRow> rows, DateTime trendSince)
+    private static List<FeedbackTrendPointDto> BuildTrend(List<StatsRow> rows, DateTime trendSince, DateTime today)
     {
         var counts = rows
             .Where(r => r.CreationTime >= trendSince)
@@ -619,7 +619,7 @@ public class FeedbackAdminAppService : ApplicationService, IFeedbackAdminAppServ
 
         // Boş günler de dizide yer alsın; grafik kesintisiz çizilsin.
         var result = new List<FeedbackTrendPointDto>();
-        for (var day = trendSince; day <= DateTime.Now.Date; day = day.AddDays(1))
+        for (var day = trendSince; day <= today; day = day.AddDays(1)) // CORR-004: today = Clock.Now.Date (çağırandan)
         {
             result.Add(new FeedbackTrendPointDto
             {

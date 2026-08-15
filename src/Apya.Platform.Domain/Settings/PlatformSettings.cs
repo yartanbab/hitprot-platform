@@ -125,6 +125,14 @@ public static class PlatformSettings
 
         /// <summary>Kullanıcı anonim gönderebilir mi?</summary>
         public const string AllowAnonymous = Prefix + ".Feedback.AllowAnonymous";
+
+        /// <summary>
+        /// Geri bildirim EKLERİNİN (ekran görüntüsü vb.) saklanma süresi (gün). Süre
+        /// dolunca ekin dosyası ve kaydı imha edilir; geri bildirim METNİ korunur
+        /// (ürün hafızası). KVKK: ekran görüntüleri kişisel veri içerebildiği için
+        /// süresiz saklanmaz.
+        /// </summary>
+        public const string AttachmentRetentionDays = Prefix + ".Feedback.AttachmentRetentionDays";
     }
 }
 
@@ -179,4 +187,11 @@ public static class PlatformSettingDefaults
     public const int    FeedbackMaxFileSizeMb     = 5;
     public const string FeedbackAllowedExtensions = ".png,.jpg,.jpeg,.gif,.webp,.pdf,.txt,.log";
     public const bool   FeedbackAllowAnonymous    = true;
+
+    /// <summary>Geri bildirim ekleri varsayılan saklama süresi: 180 gün (6 ay).</summary>
+    public const int    FeedbackAttachmentRetentionDays = 180;
+
+    /// <summary>Ek saklama süresi alt/üst sınırı — form manipülasyonuna karşı clamp.</summary>
+    public const int    FeedbackAttachmentRetentionMinDays = 30;
+    public const int    FeedbackAttachmentRetentionMaxDays = 3650;
 }

@@ -37,6 +37,14 @@ public class PublicDocumentAppService : PlatformAppService, IPublicDocumentAppSe
             throw new BusinessException(PlatformDomainErrorCodes.FormNotPublished);
         }
 
+        // Yayın penceresi: başlangıç/bitiş tarihi geçmişse form kapalı (önceden UYGULANMIYORDU).
+        var settings = FormPublishSettings.Parse(document.PublishSettingsJson);
+        var windowViolation = settings.WindowViolation(Clock.Now);
+        if (windowViolation != null)
+        {
+            throw new BusinessException(windowViolation);
+        }
+
         // Best-effort view counter (analytics). Failure must not block rendering.
         try
         {
@@ -48,6 +56,9 @@ public class PublicDocumentAppService : PlatformAppService, IPublicDocumentAppSe
             // Concurrent views can collide on the concurrency stamp; ignore.
         }
 
-        return ObjectMapper.Map<AppDocument, PublicDocumentDto>(document);
+        var dto = ObjectMapper.Map<AppDocument, PublicDocumentDto>(document);
+        dto.RequireKvkk = settings.Kvkk;
+        dto.RequireCaptcha = settings.Captcha;
+        return dto;
     }
 }

@@ -156,6 +156,9 @@ public class PlatformPermissionDefinitionProvider : PermissionDefinitionProvider
 
         var systemHealthPermission = systemGroup.AddPermission(PlatformPermissions.SystemHealth.Default, L("Permission:SystemHealth"));
         systemHealthPermission.AddChild(PlatformPermissions.SystemHealth.Resolve, L("Permission:SystemHealth.Resolve"));
+
+        // Rıza/KVKK analiz paneli — host/yönetici seviyesinde tek izin, alt izni yok.
+        systemGroup.AddPermission(PlatformPermissions.Consents.Default, L("Permission:Consents"));
     }
 
     private static LocalizableString L(string name)

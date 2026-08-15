@@ -184,7 +184,7 @@ public class ShellAppService : PlatformAppService, IShellAppService
     private async Task<ShellBadgesDto> GetBadgesAsync()
     {
         var badges = new ShellBadgesDto();
-        var today = DateTime.Now.Date;
+        var today = Clock.Now.Date; // CORR-004: DateTime.Now yerine IClock
 
         // --- Geciken görevler ---
         // GİZLİLİK: yalnız kullanıcıya ATANMIŞ görevler sayılır. Tüm görevleri
@@ -217,7 +217,7 @@ public class ShellAppService : PlatformAppService, IShellAppService
         // tüm hataların toplamı değil — kalıcı yüksek sayı rozeti anlamsızlaştırır.
         if (await IsGrantedAsync(PlatformPermissions.DynamicAssets.Default))
         {
-            var since = DateTime.Now.AddDays(-1);
+            var since = Clock.Now.AddDays(-1); // CORR-004: DateTime.Now yerine IClock
             var logQuery = await _webhookLogRepository.GetQueryableAsync();
             badges.WebhookErrors = logQuery.Count(x => !x.IsSuccess && x.CreationTime >= since);
         }

@@ -16,6 +16,7 @@ using Microsoft.AspNetCore.RequestLocalization;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.Extensions.Logging;
+using Volo.Abp.BackgroundWorkers;
 using Microsoft.AspNetCore.Extensions.DependencyInjection;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -164,6 +165,8 @@ public class PlatformWebModule : AbpModule
             // jQuery ready'ye kalıyordu — bu da sidebar'ın anlık aşağı kaymasına sebep oluyordu.
             options.Add(Volo.Abp.Ui.LayoutHooks.LayoutHooks.Body.Last, typeof(Apya.Platform.Web.Components.TenantBadge.TenantBadgeViewComponent));
             options.Add(Volo.Abp.Ui.LayoutHooks.LayoutHooks.Head.Last, typeof(Apya.Platform.Web.Components.ApyaThemeHead.ApyaThemeHeadViewComponent));
+            // Zorunlu çerez bilgilendirme şeridi — ack çerezi yoksa gösterilir (KVKK).
+            options.Add(Volo.Abp.Ui.LayoutHooks.LayoutHooks.Body.Last, typeof(Apya.Platform.Web.Components.CookieNotice.CookieNoticeViewComponent));
         });
 
         // GAP-012 + ARCH-010: Audit Logging Selectors.
@@ -487,6 +490,10 @@ public class PlatformWebModule : AbpModule
     {
         // QuestPDF Community lisansı — gelir <$1M USD için ücretsiz
         QuestPDF.Settings.License = QuestPDF.Infrastructure.LicenseType.Community;
+
+        // KVKK-004: Geri bildirim eklerinin saklama süresini uygulayan worker. Web'de
+        // çünkü dosya silme FeedbackFileStorage'a bağlı (yalnız Web katmanında).
+        context.AddBackgroundWorkerAsync<Apya.Platform.Web.Feedbacks.FeedbackAttachmentRetentionWorker>();
 
         var app = context.GetApplicationBuilder();
         var env = context.GetEnvironment();

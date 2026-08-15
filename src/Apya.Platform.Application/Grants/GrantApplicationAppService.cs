@@ -119,7 +119,7 @@ public class GrantApplicationAppService : ApplicationService, IGrantApplicationA
             .Where(r => r.Deadline.HasValue && (r.DaysRemaining ?? -1) >= 0)
             .Select(r => new UpcomingDeadlineDto { Title = r.GrantName, Date = r.Deadline!.Value, Kind = "Cagri" }));
 
-        var today = DateTime.Now.Date;
+        var today = Clock.Now.Date; // CORR-004: DateTime.Now yerine IClock (saat dilimi tutarlılığı)
         dto.BuAySonTarih = deadlines.Count(d => d.Date.Year == today.Year && d.Date.Month == today.Month);
         dto.YaklasanSonTarihler = deadlines.OrderBy(d => d.Date).Take(5).ToList();
 

@@ -34,9 +34,9 @@
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
     <!-- CVE override: EF.Tools → Build.Tasks.Core 17.14.28 → System.Security.Cryptography.Xml 9.0.0
-         GHSA-37gx-xxp4-5rgx, GHSA-w3x6-4m5h-cxqf (both High). Patched in 9.0.16.
-         PrivateAssets=all: dev-time only, not deployed to production. -->
-    <PackageReference Include="System.Security.Cryptography.Xml" Version="9.0.16">
+         GHSA-37gx-xxp4-5rgx, GHSA-w3x6-4m5h-cxqf. 9.0.18: CVE-2026-50648 + 4 diğer High
+         (EncryptedXml DoS) patch'i (9.0.17'ye kadar açık). PrivateAssets=all: dev-time only. -->
+    <PackageReference Include="System.Security.Cryptography.Xml" Version="9.0.18">
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
   </ItemGroup>

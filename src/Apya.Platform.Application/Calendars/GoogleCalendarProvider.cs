@@ -16,21 +16,23 @@ public class GoogleCalendarProvider : ICalendarProvider, ITransientDependency
 {
     private readonly ILogger<GoogleCalendarProvider> _logger;
     private readonly IHttpClientFactory _httpClientFactory;
+    private readonly CalendarTokenProtector _tokenProtector;
 
     private const string CalendarApiBase = "https://www.googleapis.com/calendar/v3";
     private const string TokenEndpoint   = "https://oauth2.googleapis.com/token";
 
     public CalendarProviderType ProviderType => CalendarProviderType.Google;
 
-    public GoogleCalendarProvider(ILogger<GoogleCalendarProvider> logger, IHttpClientFactory httpClientFactory)
+    public GoogleCalendarProvider(ILogger<GoogleCalendarProvider> logger, IHttpClientFactory httpClientFactory, CalendarTokenProtector tokenProtector)
     {
         _logger = logger;
         _httpClientFactory = httpClientFactory;
+        _tokenProtector = tokenProtector;
     }
 
     public async Task<string> CreateEventAsync(ExternalCalendarAccount account, CalendarEvent eventData)
     {
-        var client = BuildClient(account.AccessToken);
+        var client = BuildClient(_tokenProtector.Unprotect(account.AccessToken));
         var body = BuildGoogleEventBody(eventData);
         var response = await client.PostAsync($"{CalendarApiBase}/calendars/primary/events",
             new StringContent(JsonSerializer.Serialize(body), Encoding.UTF8, "application/json"));
@@ -44,7 +46,7 @@ public class GoogleCalendarProvider : ICalendarProvider, ITransientDependency
 
     public async Task UpdateEventAsync(ExternalCalendarAccount account, string externalEventId, CalendarEvent eventData)
     {
-        var client = BuildClient(account.AccessToken);
+        var client = BuildClient(_tokenProtector.Unprotect(account.AccessToken));
         var body = BuildGoogleEventBody(eventData);
         var response = await client.PatchAsync($"{CalendarApiBase}/calendars/primary/events/{externalEventId}",
             new StringContent(JsonSerializer.Serialize(body), Encoding.UTF8, "application/json"));
@@ -55,7 +57,7 @@ public class GoogleCalendarProvider : ICalendarProvider, ITransientDependency
 
     public async Task DeleteEventAsync(ExternalCalendarAccount account, string externalEventId)
     {
-        var client = BuildClient(account.AccessToken);
+        var client = BuildClient(_tokenProtector.Unprotect(account.AccessToken));
         var response = await client.DeleteAsync($"{CalendarApiBase}/calendars/primary/events/{externalEventId}");
 
         if (response.StatusCode != System.Net.HttpStatusCode.NotFound)
@@ -70,11 +72,12 @@ public class GoogleCalendarProvider : ICalendarProvider, ITransientDependency
     public async Task<(string AccessToken, string RefreshToken, DateTime ExpiresAt)> RefreshTokenAsync(
         ExternalCalendarAccount account, string clientId, string clientSecret)
     {
+        var refreshToken = _tokenProtector.Unprotect(account.RefreshToken);
         var client = _httpClientFactory.CreateClient();
         var form = new FormUrlEncodedContent(new Dictionary<string, string>
         {
             ["grant_type"]    = "refresh_token",
-            ["refresh_token"] = account.RefreshToken,
+            ["refresh_token"] = refreshToken,
             ["client_id"]     = clientId,
             ["client_secret"] = clientSecret
         });
@@ -83,7 +86,7 @@ public class GoogleCalendarProvider : ICalendarProvider, ITransientDependency
         response.EnsureSuccessStatusCode();
         var json = await response.Content.ReadFromJsonAsync<GoogleTokenResponse>();
 
-        return (json!.AccessToken, json.RefreshToken ?? account.RefreshToken,
+        return (json!.AccessToken, json.RefreshToken ?? refreshToken,
                 DateTime.UtcNow.AddSeconds(json.ExpiresIn - 60));
     }
 

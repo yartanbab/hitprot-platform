@@ -1,0 +1,109 @@
+@page "/aydinlatma-metni"
+@model Apya.Platform.Web.Pages.Legal.AydinlatmaModel
+@{
+    Layout = "~/Pages/Legal/_LegalLayout.cshtml";
+    ViewBag.Title = "Aydınlatma Metni";
+}
+
+<h1>Kişisel Verilerin Korunması Aydınlatma Metni</h1>
+<p class="apya-legal__meta">6698 sayılı Kişisel Verilerin Korunması Kanunu (KVKK) md. 10 kapsamında · Son güncelleme: @DateTime.Now.ToString("dd.MM.yyyy")</p>
+
+<div class="apya-legal__note">
+    <strong>Taslak:</strong> Bu metin bir şablondur. Yayımlanmadan önce
+    <span class="apya-legal__ph">[köşeli parantezli alanlar]</span> veri sorumlusunun bilgileriyle
+    doldurulmalı ve bir hukuk danışmanınca gözden geçirilmelidir. VERBİS kayıt yükümlülüğü ayrıca
+    değerlendirilmelidir.
+</div>
+
+<h2>1. Veri Sorumlusu</h2>
+<p>
+    İşbu aydınlatma metni, <span class="apya-legal__ph">[Şirket Ünvanı]</span>
+    (“Veri Sorumlusu” / “Platform”) tarafından, KVKK md. 10 ve ilgili mevzuat uyarınca hazırlanmıştır.
+</p>
+<ul>
+    <li><strong>Ünvan:</strong> <span class="apya-legal__ph">[Şirket Ünvanı]</span></li>
+    <li><strong>Adres:</strong> <span class="apya-legal__ph">[Açık Adres]</span></li>
+    <li><strong>VERBİS / Mersis No:</strong> <span class="apya-legal__ph">[No]</span></li>
+    <li><strong>İletişim / KEP:</strong> <span class="apya-legal__ph">[E-posta / KEP adresi]</span></li>
+</ul>
+
+<h2>2. İşlenen Kişisel Veriler</h2>
+<p>Platform üzerinden aşağıdaki kişisel veri kategorileri işlenebilir:</p>
+<ul>
+    <li><strong>Kimlik / İletişim:</strong> ad-soyad, kullanıcı adı, e-posta, telefon.</li>
+    <li><strong>Müşteri/cari kayıtları:</strong> firma unvanı, vergi/TC kimlik numarası, adres, iletişim bilgileri.</li>
+    <li><strong>İşlem güvenliği:</strong> IP adresi, tarayıcı bilgisi (user-agent), oturum ve erişim kayıtları.</li>
+    <li><strong>Form yanıtları:</strong> yayımlanmış formlar aracılığıyla toplanan ve kişisel veri içerebilen yanıtlar.</li>
+    <li><strong>Belge ve ekler:</strong> yüklenen dosyalar ve geri bildirim ekran görüntüleri (kişisel veri içerebilir).</li>
+</ul>
+
+<h2>3. İşleme Amaçları</h2>
+<ul>
+    <li>Hizmetin sunulması, hesap ve yetki yönetimi;</li>
+    <li>Proje, görev ve finans (cari, kasa, fatura) süreçlerinin yürütülmesi;</li>
+    <li>Güvenlik, kötüye kullanım tespiti ve kayıt tutma yükümlülükleri;</li>
+    <li>Yasal yükümlülüklerin (ör. vergi mevzuatı saklama süreleri) yerine getirilmesi;</li>
+    <li>Talep ve şikâyetlerin değerlendirilmesi, hizmet iyileştirme.</li>
+</ul>
+
+<h2>4. Hukuki Sebepler (KVKK md. 5)</h2>
+<p>
+    Kişisel veriler; sözleşmenin kurulması/ifası, veri sorumlusunun hukuki yükümlülüğü,
+    bir hakkın tesisi/kullanılması/korunması, meşru menfaat ve gerektiğinde açık rıza
+    hukuki sebeplerine dayanılarak işlenir.
+</p>
+
+<h2>5. Yurt İçi ve Yurt Dışına Aktarım (KVKK md. 8–9)</h2>
+<p>
+    Hizmetin sağlanabilmesi için kişisel veriler aşağıdaki hizmet sağlayıcı/işleyicilere
+    aktarılabilir. <strong>Yurt dışına aktarım</strong>, KVKK md. 9 kapsamında ilgili kişinin
+    açık rızası veya öngörülen güvence mekanizmaları (yeterlilik kararı / uygun güvenceli
+    standart sözleşme) çerçevesinde gerçekleştirilir.
+</p>
+<table>
+    <thead>
+        <tr><th>Alıcı / Hizmet</th><th>Amaç</th><th>Konum</th></tr>
+    </thead>
+    <tbody>
+        <tr><td>Yapay zekâ sağlayıcıları (OpenAI, Anthropic)</td><td>Belge/görev metinlerinin yapay zekâ ile analizi (isteğe bağlı özellik)</td><td>ABD (yurt dışı)</td></tr>
+        <tr><td>Yapay zekâ sağlayıcısı (DeepSeek)</td><td>Aynı — kiracı tarafından seçilirse</td><td>Çin (yurt dışı)</td></tr>
+        <tr><td>Takvim entegrasyonu (Google / Microsoft)</td><td>Takvim senkronizasyonu (kullanıcı bağlarsa)</td><td>ABD/AB (yurt dışı)</td></tr>
+        <tr><td>Barındırma / altyapı</td><td>Sunucu ve veritabanı barındırma</td><td><span class="apya-legal__ph">[Sunucu Ülkesi]</span></td></tr>
+    </tbody>
+</table>
+<p class="apya-legal__meta">
+    Yapay zekâ ve takvim aktarımları isteğe bağlı özelliklerdir; kullanılmadığında ilgili
+    aktarım gerçekleşmez. Yapay zekâ özellikleri kiracı yöneticisi tarafından kapatılabilir.
+</p>
+
+<h2>6. Toplama Yöntemi</h2>
+<p>
+    Kişisel veriler; platforma giriş/kayıt, form doldurma, dosya yükleme ve otomatik
+    sistem kayıtları (log) yoluyla elektronik ortamda toplanır.
+</p>
+
+<h2>7. İlgili Kişinin Hakları (KVKK md. 11)</h2>
+<p>Her ilgili kişi, veri sorumlusuna başvurarak;</p>
+<ul>
+    <li>kişisel verilerinin işlenip işlenmediğini öğrenme, işlenmişse buna ilişkin bilgi talep etme;</li>
+    <li>işleme amacını ve amacına uygun kullanılıp kullanılmadığını öğrenme;</li>
+    <li>yurt içinde/dışında aktarıldığı üçüncü kişileri bilme;</li>
+    <li>eksik/yanlış işlenmişse düzeltilmesini, şartları oluştuysa silinmesini/yok edilmesini isteme;</li>
+    <li>işlenen verilerin münhasıran otomatik sistemlerle analizi sonucu aleyhine bir sonuç çıkmasına itiraz etme;</li>
+    <li>kanuna aykırı işleme sebebiyle zarara uğraması hâlinde zararın giderilmesini talep etme</li>
+</ul>
+<p>
+    haklarına sahiptir. Talepler, <span class="apya-legal__ph">[Başvuru E-posta/KEP]</span>
+    adresine iletilebilir ve mevzuatta öngörülen süre içinde sonuçlandırılır.
+</p>
+
+<h2>8. Saklama Süreleri</h2>
+<p>
+    Kişisel veriler, işleme amacının gerektirdiği ve ilgili mevzuatın (ör. vergi/ticaret
+    mevzuatı) öngördüğü süreler boyunca saklanır; sürenin sonunda silinir, yok edilir veya
+    anonim hâle getirilir. Teknik kayıtlar için yapılandırılabilir saklama süreleri uygulanır.
+</p>
+
+<p class="apya-legal__meta">
+    Ayrıntılı bilgi için <a href="/gizlilik-politikasi">Gizlilik Politikası</a>’na bakınız.
+</p>

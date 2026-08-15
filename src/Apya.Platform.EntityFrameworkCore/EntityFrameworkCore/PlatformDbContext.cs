@@ -108,7 +108,6 @@ namespace Apya.Platform.EntityFrameworkCore
 
         /* --- PROJE MODÜLÜ TABLOLARI --- */
         public DbSet<Project> Projects { get; set; }
-        public DbSet<ProjectAnalysis> ProjectAnalyses { get; set; }
         // (BUG-001) ProjectTask, ProjectSubTasks, ProjectTaskComments kaldırıldı.
         public DbSet<Grant> Grants { get; set; }
         public DbSet<GrantCall> GrantCalls { get; set; }
@@ -156,6 +155,9 @@ namespace Apya.Platform.EntityFrameworkCore
 
         /* --- İSTEMCİ HATA TELEMETRİSİ --- */
         public DbSet<ClientError> ClientErrors { get; set; }
+
+        /* --- RIZA / KVKK OMURGASI --- */
+        public DbSet<Apya.Platform.Consents.ConsentRecord> ConsentRecords { get; set; }
 
         /* --- DASHBOARD --- */
         public DbSet<Apya.Platform.Dashboard.DashboardLayout> DashboardLayouts { get; set; }
@@ -436,12 +438,6 @@ namespace Apya.Platform.EntityFrameworkCore
                 b.HasOne<Customer>().WithMany().HasForeignKey(x => x.CustomerId).OnDelete(DeleteBehavior.SetNull);
                 b.HasIndex(x => x.CustomerId);
                 b.HasIndex(x => new { x.TenantId, x.Category });
-            });
-
-            builder.Entity<ProjectAnalysis>(b =>
-            {
-                b.ToTable(PlatformConsts.DbTablePrefix + "ProjectAnalyses", PlatformConsts.DbSchema);
-                b.ConfigureByConvention();
             });
 
             builder.Entity<Grant>(b =>
@@ -980,6 +976,23 @@ namespace Apya.Platform.EntityFrameworkCore
                 // Panel sıralamaları + saklama worker'ının tarama sorgusu
                 b.HasIndex(x => x.LastSeenAt);
                 b.HasIndex(x => new { x.IsResolved, x.OccurrenceCount });
+            });
+
+            /* --- RIZA / KVKK OMURGASI YAPILANDIRMASI --- */
+            builder.Entity<Apya.Platform.Consents.ConsentRecord>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "ConsentRecords", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+                b.Property(x => x.SubjectId).HasMaxLength(Apya.Platform.Consents.ConsentConsts.MaxSubjectIdLength);
+                b.Property(x => x.PolicyVersion).IsRequired().HasMaxLength(Apya.Platform.Consents.ConsentConsts.MaxPolicyVersionLength);
+                b.Property(x => x.AcceptedCategories).HasMaxLength(Apya.Platform.Consents.ConsentConsts.MaxAcceptedCategoriesLength);
+                b.Property(x => x.IpAddress).HasMaxLength(Apya.Platform.Consents.ConsentConsts.MaxIpAddressLength);
+                b.Property(x => x.UserAgent).HasMaxLength(Apya.Platform.Consents.ConsentConsts.MaxUserAgentLength);
+                b.Property(x => x.SourceRef).HasMaxLength(Apya.Platform.Consents.ConsentConsts.MaxSourceRefLength);
+                // Analiz sorguları: tenant + tür + zaman penceresi.
+                b.HasIndex(x => new { x.TenantId, x.Type, x.OccurredAt });
+                // Aynı öznenin belirli bir türde son rızasını bulmak için.
+                b.HasIndex(x => new { x.TenantId, x.Type, x.SubjectId });
             });
 
             builder.Entity<Apya.Platform.Dashboard.DashboardLayout>(b =>

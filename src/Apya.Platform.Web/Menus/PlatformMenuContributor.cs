@@ -211,6 +211,8 @@ public class PlatformMenuContributor : IMenuContributor
             platform.AddItem(new ApplicationMenuItem("Apya.Platform.Webhooks", l["Menu:Webhooks"], icon: "fa fa-bolt", url: "/DynamicAssets/Webhooks"));
         if (await permission.IsGrantedAsync(PlatformPermissions.SystemHealth.Default))
             platform.AddItem(new ApplicationMenuItem("Apya.Platform.SystemHealth", l["Menu:SystemHealth"], icon: "fa fa-heart-pulse", url: "/Admin/SystemHealth"));
+        if (await permission.IsGrantedAsync(PlatformPermissions.Consents.Default))
+            platform.AddItem(new ApplicationMenuItem("Apya.Platform.Consents", l["Menu:Consents"], icon: "fa fa-shield-halved", url: "/Admin/Consent"));
         if (platform.Items.Count > 0) context.Menu.AddItem(platform);
 
         // ── YÖNETİM bölümü kaldırıldı ─────────────────────────────────────────

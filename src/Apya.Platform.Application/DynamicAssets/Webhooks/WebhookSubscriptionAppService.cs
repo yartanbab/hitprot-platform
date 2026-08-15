@@ -39,6 +39,8 @@ public class WebhookSubscriptionAppService : PlatformAppService, IWebhookSubscri
     [Authorize(PlatformPermissions.DynamicAssets.Create)]
     public async Task<WebhookSubscriptionDto> CreateAsync(CreateUpdateWebhookSubscriptionDto input)
     {
+        WebhookUrlGuard.ValidateOrThrow(input.TargetUrl); // SEC-011: SSRF erken red
+
         var subscription = new WebhookSubscription(
             GuidGenerator.Create(),
             input.DocumentId,
@@ -59,6 +61,8 @@ public class WebhookSubscriptionAppService : PlatformAppService, IWebhookSubscri
     [Authorize(PlatformPermissions.DynamicAssets.Edit)]
     public async Task<WebhookSubscriptionDto> UpdateAsync(Guid id, CreateUpdateWebhookSubscriptionDto input)
     {
+        WebhookUrlGuard.ValidateOrThrow(input.TargetUrl); // SEC-011: SSRF erken red
+
         var subscription = await _subscriptionRepository.GetAsync(id);
 
         subscription.SetTargetUrl(input.TargetUrl);

@@ -90,6 +90,14 @@ public static class PlatformDomainErrorCodes
     public const string FormNotFound = "Platform:DynamicAssets:FormNotFound";
     public const string FormCategoryNameRequired = "Platform:DynamicAssets:FormCategoryNameRequired";
     public const string FormNotPublished = "Platform:DynamicAssets:FormNotPublished";
+    public const string FormNotStarted = "Platform:DynamicAssets:FormNotStarted";
+    public const string FormExpired = "Platform:DynamicAssets:FormExpired";
+    public const string FormKvkkConsentRequired = "Platform:DynamicAssets:FormKvkkConsentRequired";
+    public const string FormCaptchaFailed = "Platform:DynamicAssets:FormCaptchaFailed";
+    public const string FormAnswersTooLarge = "Platform:DynamicAssets:FormAnswersTooLarge";
+    public const string FormAnswersInvalid = "Platform:DynamicAssets:FormAnswersInvalid";
+    public const string FormRequiredAnswerMissing = "Platform:DynamicAssets:FormRequiredAnswerMissing";
+    public const string WebhookTargetUrlNotAllowed = "Platform:DynamicAssets:WebhookTargetUrlNotAllowed";
 
     // --- AI Modülü ---
     public const string AiProviderUnavailable = "Platform:Ai:ProviderUnavailable";
@@ -103,36 +111,6 @@ public static class PlatformDomainErrorCodes
     public const string PromptCategorySelfReference = "Platform:Ai:PromptCategorySelfReference";
     public const string AiEvaluationResultInvalidSchema = "Platform:Ai:EvaluationResultInvalidSchema";
     public const string AiProviderNotConfigured = "Platform:Ai:ProviderNotConfigured";
-
-    // --- Muhasebe (Accounting) — Hesap (Account) ---
-    public const string AccountCodeRequired = "Platform:Accounting:Account:CodeRequired";
-    public const string AccountNameRequired = "Platform:Accounting:Account:NameRequired";
-    public const string AccountInactive = "Platform:Accounting:Account:Inactive";
-    public const string AccountParentSelfReference = "Platform:Accounting:Account:ParentSelfReference";
-
-    // --- Muhasebe (Accounting) — Yevmiye (JournalEntry) ---
-    public const string JournalEntryRequiresAtLeastTwoLines = "Platform:Accounting:JournalEntry:RequiresAtLeastTwoLines";
-    public const string JournalEntryTooManyLines = "Platform:Accounting:JournalEntry:TooManyLines";
-    public const string JournalEntryNotBalanced = "Platform:Accounting:JournalEntry:NotBalanced";
-    public const string JournalEntryCurrencyInconsistent = "Platform:Accounting:JournalEntry:CurrencyInconsistent";
-    public const string JournalEntryLineAmountMustBePositive = "Platform:Accounting:JournalEntry:LineAmountMustBePositive";
-    public const string JournalEntryIdempotencyKeyRequired = "Platform:Accounting:JournalEntry:IdempotencyKeyRequired";
-    public const string JournalEntryDuplicateIdempotencyKey = "Platform:Accounting:JournalEntry:DuplicateIdempotencyKey";
-    public const string JournalEntryDescriptionRequired = "Platform:Accounting:JournalEntry:DescriptionRequired";
-    public const string JournalEntryPostingDateInvalid = "Platform:Accounting:JournalEntry:PostingDateInvalid";
-    public const string JournalEntryAccountNotFound = "Platform:Accounting:JournalEntry:AccountNotFound";
-    public const string JournalEntryAccountTenantMismatch = "Platform:Accounting:JournalEntry:AccountTenantMismatch";
-    public const string JournalEntryReversalTargetMissing = "Platform:Accounting:JournalEntry:ReversalTargetMissing";
-    public const string JournalEntryReversalAlreadyExists = "Platform:Accounting:JournalEntry:ReversalAlreadyExists";
-    public const string JournalEntryReversalSelfReference = "Platform:Accounting:JournalEntry:ReversalSelfReference";
-
-    // --- Muhasebe (Accounting) — Money Value Object ---
-    public const string MoneyCurrencyInvalid = "Platform:Accounting:Money:CurrencyInvalid";
-    public const string MoneyCurrencyMismatch = "Platform:Accounting:Money:CurrencyMismatch";
-    public const string MoneyAmountInvalidPrecision = "Platform:Accounting:Money:AmountInvalidPrecision";
-
-    // --- Muhasebe (Accounting) — Outbox ---
-    public const string OutboxMessageInvalidTransition = "Platform:Accounting:Outbox:InvalidTransition";
 
     // --- Geri Bildirim (Feedback) Modülü ---
     public const string FeedbackSubjectRequired = "Platform:Feedback:SubjectRequired";

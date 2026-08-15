@@ -11,10 +11,12 @@ using Microsoft.Extensions.Logging;
 using Apya.Platform.Projects;
 using Volo.Abp.MultiTenancy;
 using Volo.Abp.TenantManagement;
+using Apya.Platform.Permissions;
 
 namespace Apya.Platform.Reports;
 
-[Authorize]
+// SEC-007: Çıplak [Authorize] finansal özeti izinsiz kullanıcıya sızdırıyordu; sayfayla hizalandı.
+[Authorize(PlatformPermissions.Reports.Default)]
 public class ReportAppService : ApplicationService, IReportAppService
 {
     private readonly IRepository<Project, Guid> _projectRepository;

@@ -34,16 +34,21 @@ public class CallbackModel : AbpPageModel
         if (string.IsNullOrEmpty(code) || string.IsNullOrEmpty(state))
             return Redirect("/Calendars?msg=error");
 
-        if (!int.TryParse(state, out var providerInt) || !Enum.IsDefined(typeof(CalendarProviderType), providerInt))
+        // SEC-012: state = "{provider}.{token}"; token AppService'te kullanıcı-bağlı cache ile doğrulanır.
+        var stateParts = state.Split('.', 2);
+        if (stateParts.Length != 2
+            || !int.TryParse(stateParts[0], out var providerInt)
+            || !Enum.IsDefined(typeof(CalendarProviderType), providerInt))
             return Redirect("/Calendars?msg=error");
 
         var provider    = (CalendarProviderType)providerInt;
+        var stateToken  = stateParts[1];
         var selfUrl     = _configuration["App:SelfUrl"]?.TrimEnd('/') ?? string.Empty;
         var redirectUri = $"{selfUrl}/Calendars/Callback";
 
         try
         {
-            await _calendarAppService.ExchangeCodeAndConnectAsync(provider, code, redirectUri);
+            await _calendarAppService.ExchangeCodeAndConnectAsync(provider, code, redirectUri, stateToken);
             return Redirect("/Calendars?msg=success");
         }
         catch (Exception ex)

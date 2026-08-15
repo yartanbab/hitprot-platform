@@ -16,21 +16,23 @@ public class MicrosoftOutlookProvider : ICalendarProvider, ITransientDependency
 {
     private readonly ILogger<MicrosoftOutlookProvider> _logger;
     private readonly IHttpClientFactory _httpClientFactory;
+    private readonly CalendarTokenProtector _tokenProtector;
 
     private const string GraphBase     = "https://graph.microsoft.com/v1.0/me/events";
     private const string TokenEndpoint = "https://login.microsoftonline.com/common/oauth2/v2.0/token";
 
     public CalendarProviderType ProviderType => CalendarProviderType.Outlook;
 
-    public MicrosoftOutlookProvider(ILogger<MicrosoftOutlookProvider> logger, IHttpClientFactory httpClientFactory)
+    public MicrosoftOutlookProvider(ILogger<MicrosoftOutlookProvider> logger, IHttpClientFactory httpClientFactory, CalendarTokenProtector tokenProtector)
     {
         _logger = logger;
         _httpClientFactory = httpClientFactory;
+        _tokenProtector = tokenProtector;
     }
 
     public async Task<string> CreateEventAsync(ExternalCalendarAccount account, CalendarEvent eventData)
     {
-        var client = BuildClient(account.AccessToken);
+        var client = BuildClient(_tokenProtector.Unprotect(account.AccessToken));
         var body = BuildGraphEventBody(eventData);
         var response = await client.PostAsync(GraphBase,
             new StringContent(JsonSerializer.Serialize(body), Encoding.UTF8, "application/json"));
@@ -44,7 +46,7 @@ public class MicrosoftOutlookProvider : ICalendarProvider, ITransientDependency
 
     public async Task UpdateEventAsync(ExternalCalendarAccount account, string externalEventId, CalendarEvent eventData)
     {
-        var client = BuildClient(account.AccessToken);
+        var client = BuildClient(_tokenProtector.Unprotect(account.AccessToken));
         var body = BuildGraphEventBody(eventData);
         var response = await client.PatchAsync($"{GraphBase}/{externalEventId}",
             new StringContent(JsonSerializer.Serialize(body), Encoding.UTF8, "application/json"));
@@ -55,7 +57,7 @@ public class MicrosoftOutlookProvider : ICalendarProvider, ITransientDependency
 
     public async Task DeleteEventAsync(ExternalCalendarAccount account, string externalEventId)
     {
-        var client = BuildClient(account.AccessToken);
+        var client = BuildClient(_tokenProtector.Unprotect(account.AccessToken));
         var response = await client.DeleteAsync($"{GraphBase}/{externalEventId}");
 
         if (response.StatusCode != System.Net.HttpStatusCode.NotFound)
@@ -70,11 +72,12 @@ public class MicrosoftOutlookProvider : ICalendarProvider, ITransientDependency
     public async Task<(string AccessToken, string RefreshToken, DateTime ExpiresAt)> RefreshTokenAsync(
         ExternalCalendarAccount account, string clientId, string clientSecret)
     {
+        var refreshToken = _tokenProtector.Unprotect(account.RefreshToken);
         var client = _httpClientFactory.CreateClient();
         var form = new FormUrlEncodedContent(new Dictionary<string, string>
         {
             ["grant_type"]    = "refresh_token",
-            ["refresh_token"] = account.RefreshToken,
+            ["refresh_token"] = refreshToken,
             ["client_id"]     = clientId,
             ["client_secret"] = clientSecret,
             ["scope"]         = "Calendars.ReadWrite offline_access"
@@ -84,7 +87,7 @@ public class MicrosoftOutlookProvider : ICalendarProvider, ITransientDependency
         response.EnsureSuccessStatusCode();
         var json = await response.Content.ReadFromJsonAsync<MsTokenResponse>();
 
-        return (json!.AccessToken, json.RefreshToken ?? account.RefreshToken,
+        return (json!.AccessToken, json.RefreshToken ?? refreshToken,
                 DateTime.UtcNow.AddSeconds(json.ExpiresIn - 60));
     }
 

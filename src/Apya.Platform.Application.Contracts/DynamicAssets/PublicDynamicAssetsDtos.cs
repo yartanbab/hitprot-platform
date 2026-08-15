@@ -16,6 +16,12 @@ public class PublicDocumentDto
     /// <summary>Theme/branding JSON (colors, font, logo, cover) for public rendering.</summary>
     public string? ThemeJson { get; set; }
     public List<PublicBlockDto> Blocks { get; set; } = new();
+
+    /// <summary>Yayın ayarı: KVKK aydınlatma onayı zorunlu mu? (frontend onay kutusu render eder)</summary>
+    public bool RequireKvkk { get; set; }
+
+    /// <summary>Yayın ayarı: bot koruması (honeypot + zamanlama) etkin mi?</summary>
+    public bool RequireCaptcha { get; set; }
 }
 
 /// <summary>
@@ -47,4 +53,13 @@ public class SubmitResponseDto
 
     /// <summary>How long the respondent took to complete the form, in seconds (optional).</summary>
     public int? CompletionSeconds { get; set; }
+
+    /// <summary>KVKK aydınlatma onayı işaretlendi mi (form KVKK istiyorsa zorunlu).</summary>
+    public bool KvkkConsent { get; set; }
+
+    /// <summary>
+    /// Honeypot: insan boş bırakır, bot doldurur. Dolu gelirse gönderim reddedilir.
+    /// Görünmez alan olarak render edilir (public-form.jsx).
+    /// </summary>
+    public string? Website { get; set; }
 }

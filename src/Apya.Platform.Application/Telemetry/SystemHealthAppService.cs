@@ -129,7 +129,7 @@ public class SystemHealthAppService : ApplicationService, ISystemHealthAppServic
                     .Take(SlowestEndpointsCount)
                     .ToList(),
 
-                ErrorTrend = BuildErrorTrend(errorRows, since),
+                ErrorTrend = BuildErrorTrend(errorRows, since, Clock.Now.Date),
 
                 ErrorsByTenant = errorRows
                     .GroupBy(r => r.TenantId)
@@ -365,14 +365,14 @@ public class SystemHealthAppService : ApplicationService, ISystemHealthAppServic
         };
     }
 
-    private static List<HealthTrendPointDto> BuildErrorTrend(List<AuditRow> errorRows, DateTime since)
+    private static List<HealthTrendPointDto> BuildErrorTrend(List<AuditRow> errorRows, DateTime since, DateTime today)
     {
         var counts = errorRows
             .GroupBy(r => r.ExecutionTime.Date)
             .ToDictionary(g => g.Key, g => g.Count());
 
         var result = new List<HealthTrendPointDto>();
-        for (var day = since.Date; day <= DateTime.Now.Date; day = day.AddDays(1))
+        for (var day = since.Date; day <= today; day = day.AddDays(1)) // CORR-004: today = Clock.Now.Date (çağırandan)
         {
             result.Add(new HealthTrendPointDto
             {

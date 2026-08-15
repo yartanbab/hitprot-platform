@@ -19,6 +19,11 @@
 <body>
     @Html.AntiForgeryToken()
     <div id="public-form-root" data-slug="@Model.Slug"></div>
+    <footer style="max-width:640px;margin:1.5rem auto 3rem;text-align:center;font-size:.8rem;color:var(--apya-text-muted,#6b7280);">
+        <a href="/aydinlatma-metni" target="_blank" rel="noopener" style="color:var(--apya-primary,#4f46e5);">Aydınlatma Metni</a>
+        &nbsp;·&nbsp;
+        <a href="/gizlilik-politikasi" target="_blank" rel="noopener" style="color:var(--apya-primary,#4f46e5);">Gizlilik Politikası</a>
+    </footer>
     <script type="module" src="~/js/public-form.js" asp-append-version="true"></script>
 </body>
 </html>

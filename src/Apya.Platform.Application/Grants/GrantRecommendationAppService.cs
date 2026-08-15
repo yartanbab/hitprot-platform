@@ -81,7 +81,7 @@ public class GrantRecommendationAppService : ApplicationService, IGrantRecommend
                 .GroupBy(t => t.GrantId)
                 .ToDictionary(g => g.Key, g => (IReadOnlyList<GrantCriteriaTag>)g.ToList());
 
-            var today = DateTime.Now.Date;
+            var today = Clock.Now.Date; // CORR-004: DateTime.Now yerine IClock (saat dilimi tutarlılığı)
             foreach (var call in openCalls)
             {
                 if (!grants.TryGetValue(call.GrantId, out var grant))
