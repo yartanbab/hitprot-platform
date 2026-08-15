@@ -9,6 +9,7 @@ using Apya.Platform.CashMovements;
 using Apya.Platform.CustomerLedger;
 using Apya.Platform.Expenses;
 using Apya.Platform.Incomes;
+using Apya.Platform.Permissions;
 
 namespace Apya.Platform.Reports;
 
@@ -17,7 +18,8 @@ namespace Apya.Platform.Reports;
 /// faturasız gelir/gider ayrı grup. Bu tam çift-taraflı THP mizanı DEĞİLDİR
 /// (o ayrı faz — mali müşavir girdisiyle).
 /// </summary>
-[Authorize]
+// SEC-007: Çıplak [Authorize] mizanı izinsiz kullanıcıya sızdırıyordu; sayfayla (Reports.TrialBalance) hizalandı.
+[Authorize(PlatformPermissions.Reports.TrialBalance)]
 public class TrialBalanceAppService : ApplicationService, ITrialBalanceAppService
 {
     private readonly IRepository<CashAccount, Guid> _cashAccountRepository;

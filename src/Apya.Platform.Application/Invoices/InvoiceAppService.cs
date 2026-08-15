@@ -9,11 +9,14 @@ using Volo.Abp.Application.Services;
 using Volo.Abp.Domain.Repositories;
 using Apya.Platform.Customers;
 using Apya.Platform.Invoices.Dtos;
+using Apya.Platform.Permissions;
 using Apya.Platform.Projects;
 
 namespace Apya.Platform.Invoices;
 
-[Authorize]
+// SEC-007: Çıplak [Authorize] otomatik API'de (/api/app/invoice) rol iznini atlıyordu —
+// izin sayfada uygulanıyor ama serviste değildi. Sayfayla hizalandı (Invoices.Default).
+[Authorize(PlatformPermissions.Invoices.Default)]
 public class InvoiceAppService : ApplicationService, IInvoiceAppService
 {
     private readonly IRepository<Invoice, Guid> _invoiceRepository;

@@ -4,6 +4,7 @@
 
     Scriban: Volo.Abp.TextTemplating.Scriban 10.0.2 ships Scriban 6.3.0 (10+ CVEs).
     ABP 10.4.0 already moved to Scriban >= 7.0.0, confirming 7.x is API-compatible.
+    7.2.2: patches GHSA-7jvp-hj45-2f2m (TypedObjectAccessor mass-assignment) — still 7.x, safe patch bump.
 
     AutoMapper: Volo.Abp.AutoMapper 10.0.2 ships AutoMapper 14.0.0 (GHSA-rvv3-g6hj-g44x / CVE-2026-32933).
     DO NOT bump to 15.x: AutoMapper 15 changed the MapperConfiguration ctor
@@ -16,7 +17,7 @@
 
   -->
   <ItemGroup>
-    <PackageReference Include="Scriban" Version="7.2.1" />
+    <PackageReference Include="Scriban" Version="7.2.2" />
     <PackageReference Include="AutoMapper" Version="14.0.0" />
   </ItemGroup>
 </Project>
