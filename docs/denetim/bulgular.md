@@ -44,6 +44,8 @@ Düzeltme PR'ları bulgu ID'sine referans verir. Denetim çok oturuma yayılır;
 
 | 2026-08-15 | SEC-011 | **Webhook SSRF düzeltildi.** `WebhookUrlGuard`: (1) abonelikte erken doğrulama (`ValidateOrThrow` — http/https şema + IP literal iç aralık reddi, Create+Update'te), (2) **bağlantı-anında IP denetimi** (`GuardedConnectAsync` ConnectCallback → DNS çözümü sonrası loopback/private/link-local/metadata IP'leri reddeder; DNS-rebinding'e ve her redirect'e karşı) + **auto-redirect kapalı**. `WebhookClient` `SocketsHttpHandler` ile yapılandırıldı. Yeni hata kodu `WebhookTargetUrlNotAllowed` + tr/en. Build ✅. | 🟢 Uygulandı, doğrulanıyor |
 | 2026-08-15 | SEC-010 | **Takvim OAuth token'ları şifrelendi.** Yeni `CalendarTokenProtector` (Domain, `IStringEncryptionService` sarmalar); entity daima ciphertext — yazımlar `Protect` (`ConnectAccountAsync` + `EnsureFreshTokenAsync`), okumalar `Unprotect` (Google/Outlook `BuildClient` + refresh). Çift-şifreleme fallback tuzağı düzeltildi. Şema değişikliği/migration YOK (kolonlar sınırsız). `Unprotect` hataya dayanıklı (eski düz-metin/rotasyon → boş+log → yeniden bağla). | ✅ Doğrulandı: build 0 hata; Domain 166 + Application 42 + EF 93 = **301/301** yeşil (kapsayan projeler); Web.Tests bağımsız kırık (TEST-002) |
+| 2026-08-15 | TEST-002 | **Web.Tests host-boot çökmesi giderildi** (SEC-001 yan etkisi). `PlatformWebTestModule.PreConfigureServices`'te `ReplaceConfiguration` ile test-only dummy OpenIddict `Platform_Web:ClientSecret`. Ayrıca TEST-001 ortamsal (taze worktree `wwwroot/libs` boş → `abp install-libs`). | ✅ Doğrulandı: build 0 hata; tam suite **351/351** yeşil (166+42+50+93) |
+| 2026-08-15 | FN-004 | **`Consents.Default` host admin'e seed edildi.** `ConsentsPermissionDataSeedContributor` (LoginScreen deseni; host-context, "ADMIN" rolü, idempotent). Migration YOK. Kiracı-admin kapsamı paket sistemine bırakıldı (ayrı karar). | ✅ Doğrulandı: build 0 hata; tam suite **351/351** yeşil |
 
 ## Faz 2 — E2E canlı doğrulama (2026-08-15, MSSQL + kullanıcı Chrome oturumu)
 
@@ -61,9 +63,11 @@ Ortam: MSSQL (çalışıyordu, TCP 1433 kapalı ama Shared Memory ile `localhost
 
 **Canlı gösterilemeyenler (demo veri kısıtı, kod-doğrulandı):** FN-001 (DB'de atanmış görev YOK), form KVKK onayı (KVKK'lı yayınlanmış form YOK), SEC-007 yetkisiz-blok (kısıtlı-izinli kullanıcı yok).
 
-#### FN-004 🟡 `DOĞRULANDI` (E2E'de çıktı) — Yeni `Consents.Default` izni admin'e seed edilmiyor
-`/Admin/Consent` sayfası `Consents.Default` istiyor (doğru) ama bu yeni izin hiçbir role otomatik verilmiyor → host/admin bile analiz panelini göremiyor (E2E'de "Erişim reddedildi" alındı). AI izin seed'leri eksikliğiyle aynı sınıf.
-**Öneri:** İzni admin/host rolüne bir data seeder ile ver (veya kurulumda Identity → Roller'den elle grant). Omurga backend'i DB'de doğrulandı; yalnız panel erişimi bu izne bağlı.
+#### FN-004 🟡 `DÜZELTİLDİ` — Yeni `Consents.Default` izni admin'e seed edilmiyor
+`/Admin/Consent` sayfası `Consents.Default` istiyor (doğru) ama bu yeni izin hiçbir role otomatik verilmiyordu → host/admin bile analiz panelini göremiyordu (E2E'de "Erişim reddedildi" alındı). AI izin seed'leri eksikliğiyle aynı sınıf.
+**Düzeltme (2026-08-15):** `ConsentsPermissionDataSeedContributor` (Application, `LoginScreenPermissionDataSeedContributor` deseninin birebir kopyası): host bağlamında (`context.TenantId == null`) "ADMIN" rolüne `Consents.Default`'ı `IPermissionDataSeeder` ile verir (idempotent, mevcut grant'ları eler). Migration YOK (izin grant'ı veri). Deploy'da DbMigrator çalıştırılınca uygulanır.
+**Açık tasarım notu (kiracı kapsamı):** `ConsentAppService.GetAnalyticsAsync` `IMultiTenant` filtresine tabi → panel kiracı-bazlı veri gösterir; rıza kayıtlarının çoğu (form KVKK, AI aktarım, kiracı çerezleri) kiracı-scoped. Kiracı admin'inin KENDİ rıza analizini görmesi isteniyorsa `Consents.Default`'ın paket izin tavanı sistemine ([[project_package_permission_ceiling]]) eklenmesi gerekir — ayrı karar. Bu seeder yalnız host admin'i açar.
+**Doğrulama:** build 0 hata; tam suite **351/351** yeşil (sıfır regresyon). Canlı "Erişim reddedildi → görünür" E2E DbMigrator seed sonrası doğrulanacak.
 
 ## Faz 1 — Bulgular (1. geçiş)
 
