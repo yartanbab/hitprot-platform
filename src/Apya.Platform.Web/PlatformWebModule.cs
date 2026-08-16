@@ -389,6 +389,7 @@ public class PlatformWebModule : AbpModule
                     bundle.AddFiles("/js/apya-telemetry.js");
                     bundle.AddFiles("/js/apya-feedback.js");
                     bundle.AddFiles("/js/apya-money.js"); // apya.money.format → "1.000,00 TRY" (tüm sayfalarda)
+                    bundle.AddFiles("/js/apya-money-input.js"); // tutar giriş maskesi (data-money-input, gizli ham alan)
                     bundle.AddFiles("/js/apya-finance-modal.js"); // gelir/gider modalı: proje tarih aralığı kontrolü
                     bundle.AddFiles("/Pages/Notifications/notification-bell.js");
                     bundle.AddFiles("/js/dark-mode.js");
