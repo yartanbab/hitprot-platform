@@ -16,7 +16,7 @@ public static class ReleaseNoteCatalog
         new ReleaseNote(
             version: "2026.08.16",
             date: "16 Ağustos 2026",
-            title: "Güvenlik, gizlilik (KVKK) ve kararlılık güncellemesi",
+            title: "Güvenlik, gizlilik ve kararlılık güncellemesi",
 
             // ── Güvenlik ──────────────────────────────────────────────────────
             new ReleaseNoteItem(ReleaseNoteCategory.Security,
@@ -28,13 +28,13 @@ public static class ReleaseNoteCatalog
             new ReleaseNoteItem(ReleaseNoteCategory.Security,
                 "Takvim entegrasyonu artık şifreli",
                 "Google/Outlook takvim bağlantı bilgileriniz veritabanında artık şifreli saklanıyor. " +
-                "⚠️ Bu güncelleme nedeniyle mevcut takvim bağlantılarını bir kez YENİDEN BAĞLAMANIZ gerekir " +
+                "Bu güncelleme nedeniyle mevcut takvim bağlantılarını bir kez yeniden bağlamanız gerekir " +
                 "(Takvim ekranından). Sonraki bağlantılar otomatik şifrelenir."),
 
             new ReleaseNoteItem(ReleaseNoteCategory.Security,
-                "AI özellikleri yetkilendirmeye bağlandı",
-                "Yapay zekâ (belge → görev üretimi, AI asistan) artık yalnızca AI iznine sahip kullanıcılar " +
-                "ve paketinde AI bulunan kiracılar için çalışır. Bu, kota/maliyet israfını ve izinsiz kullanımı önler."),
+                "Yapay zekâ özellikleri yetkilendirmeye bağlandı",
+                "Yapay zekâ (belge → görev üretimi, AI asistan) artık yalnızca yapay zekâ iznine sahip kullanıcılar " +
+                "ve paketinde yapay zekâ bulunan kiracılar için çalışır. Bu, kota/maliyet israfını ve izinsiz kullanımı önler."),
 
             new ReleaseNoteItem(ReleaseNoteCategory.Security,
                 "Webhook ve genel form korumaları",

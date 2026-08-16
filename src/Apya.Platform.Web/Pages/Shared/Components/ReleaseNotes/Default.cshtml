@@ -1,25 +1,25 @@
 @using Apya.Platform.Web.ReleaseNotes
 @model ReleaseNote
 
-<div class="modal fade" id="apyaReleaseNotesModal" tabindex="-1" aria-labelledby="apyaReleaseNotesTitle"
-     aria-hidden="true" data-version="@Model.Version">
+<div class="modal fade apya-rn-modal" id="apyaReleaseNotesModal" tabindex="-1"
+     aria-labelledby="apyaReleaseNotesTitle" aria-hidden="true" data-version="@Model.Version">
     <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
         <div class="modal-content">
             <div class="modal-header">
                 <div>
-                    <h5 class="modal-title mb-0" id="apyaReleaseNotesTitle">🎉 Yenilikler</h5>
-                    <small class="text-muted">@Model.Title · @Model.Date</small>
+                    <div class="apya-rn-kicker">Yenilikler</div>
+                    <h5 class="modal-title mb-0" id="apyaReleaseNotesTitle">@Model.Title</h5>
+                    <small class="text-muted">Sürüm @Model.Version · @Model.Date</small>
                 </div>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
             </div>
             <div class="modal-body">
-                <p class="text-muted small mb-3">Bu sürümde neler değişti:</p>
-                <ul class="list-unstyled mb-0 apya-release-summary">
+                <ul class="apya-rn-summary list-unstyled mb-0">
                     @foreach (var item in Model.Items)
                     {
-                        <li class="d-flex align-items-start gap-2 py-1">
-                            <span aria-hidden="true" style="font-size:1.05rem;line-height:1.4">@ReleaseNoteCategoryInfo.Emoji(item.Category)</span>
-                            <span>@item.Title</span>
+                        <li>
+                            <span class="apya-rn-tag apya-rn-tag--@ReleaseNoteCategoryInfo.Key(item.Category)">@ReleaseNoteCategoryInfo.Label(item.Category)</span>
+                            <span class="apya-rn-summary-title">@item.Title</span>
                         </li>
                     }
                 </ul>
@@ -32,6 +32,25 @@
     </div>
 </div>
 
+<style>
+    .apya-rn-kicker { font-size: .68rem; letter-spacing: .13em; text-transform: uppercase; font-weight: 700; color: var(--lpx-primary, #37437d); margin-bottom: 4px; }
+    .apya-rn-summary li { display: grid; grid-template-columns: 108px 1fr; gap: 12px; align-items: baseline; padding: 8px 0; border-bottom: 1px solid var(--apya-border, rgba(0,0,0,.08)); }
+    .apya-rn-summary li:last-child { border-bottom: 0; }
+    .apya-rn-summary-title { font-size: .92rem; }
+    .apya-rn-tag { display: inline-block; font-size: .64rem; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; padding: 2px 8px; border-radius: 4px; border: 1px solid currentColor; line-height: 1.5; white-space: nowrap; }
+    .apya-rn-tag--security { color: #a4373a; } .apya-rn-tag--feature { color: #2c7355; }
+    .apya-rn-tag--improvement { color: #2f6d84; } .apya-rn-tag--fix { color: #8a6413; }
+    @@media (prefers-color-scheme: dark) {
+        .apya-rn-tag--security { color: #d98a8b; } .apya-rn-tag--feature { color: #7dc3a2; }
+        .apya-rn-tag--improvement { color: #84bcd0; } .apya-rn-tag--fix { color: #d9b567; }
+    }
+    [data-theme="dark"] .apya-rn-tag--security { color: #d98a8b; }
+    [data-theme="dark"] .apya-rn-tag--feature { color: #7dc3a2; }
+    [data-theme="dark"] .apya-rn-tag--improvement { color: #84bcd0; }
+    [data-theme="dark"] .apya-rn-tag--fix { color: #d9b567; }
+    @@media (max-width: 560px) { .apya-rn-summary li { grid-template-columns: 1fr; gap: 3px; } }
+</style>
+
 <script>
     (function () {
         var el = document.getElementById('apyaReleaseNotesModal');
@@ -42,7 +61,6 @@
             if (marked) { return; } marked = true;
             try { fetch('/release-notes/mark-seen?version=' + encodeURIComponent(version), { method: 'POST' }); } catch (e) { }
         }
-        // "Anladım" / kapatma → görüldü. ("Ayrıntı gör" zaten /ReleaseNotes'a gidince sunucuda işaretler.)
         el.addEventListener('hide.bs.modal', markSeen);
         new bootstrap.Modal(el).show();
     })();

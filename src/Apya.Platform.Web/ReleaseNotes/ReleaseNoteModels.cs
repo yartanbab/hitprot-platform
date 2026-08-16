@@ -13,15 +13,6 @@ public enum ReleaseNoteCategory
 
 public static class ReleaseNoteCategoryInfo
 {
-    public static string Emoji(ReleaseNoteCategory c) => c switch
-    {
-        ReleaseNoteCategory.Security    => "🔒",
-        ReleaseNoteCategory.Feature     => "🆕",
-        ReleaseNoteCategory.Improvement => "⚙️",
-        ReleaseNoteCategory.Fix         => "🐛",
-        _ => "•"
-    };
-
     public static string Label(ReleaseNoteCategory c) => c switch
     {
         ReleaseNoteCategory.Security    => "Güvenlik",
@@ -31,14 +22,14 @@ public static class ReleaseNoteCategoryInfo
         _ => ""
     };
 
-    /// <summary>Rozet ton sınıfı — mevcut <c>.apya-chip-*</c> paletiyle uyumlu.</summary>
-    public static string ChipClass(ReleaseNoteCategory c) => c switch
+    /// <summary>CSS değiştirici anahtarı → <c>apya-rn-tag--{key}</c> (kurumsal kategori etiketi).</summary>
+    public static string Key(ReleaseNoteCategory c) => c switch
     {
-        ReleaseNoteCategory.Security    => "apya-chip-negative",
-        ReleaseNoteCategory.Feature     => "apya-chip-positive",
-        ReleaseNoteCategory.Improvement => "apya-chip-accent",
-        ReleaseNoteCategory.Fix         => "apya-chip-warning",
-        _ => "apya-chip-neutral"
+        ReleaseNoteCategory.Security    => "security",
+        ReleaseNoteCategory.Feature     => "feature",
+        ReleaseNoteCategory.Improvement => "improvement",
+        ReleaseNoteCategory.Fix         => "fix",
+        _ => "neutral"
     };
 }
 
