@@ -38,6 +38,14 @@ public class PlatformSettingDefinitionProvider : SettingDefinitionProvider
                 description: L("Setting:Projects.DefaultView.Description"))
         );
 
+        // Sürüm notları "en son görülen sürüm" — kullanıcı seviyesi iç değer (ayar ekranında GÖSTERİLMEZ).
+        // Boş varsayılan = hiç görmedi → ilk açılışta "Yenilikler" penceresi açılır.
+        context.Add(
+            new SettingDefinition(
+                PlatformSettings.ReleaseNotes.LastSeenVersion,
+                defaultValue: "")
+        );
+
         // Sabitlenen menü öğeleri — TaskDetail.Ui ile aynı ray: .WithProviders()
         // ile KISITLANMAZ ki User provider zincirde kalsın (SetForCurrentUserAsync
         // buraya yazar) ve varsayılan da zincirden dönebilsin.

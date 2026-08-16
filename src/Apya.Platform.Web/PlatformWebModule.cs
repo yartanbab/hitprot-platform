@@ -167,6 +167,8 @@ public class PlatformWebModule : AbpModule
             options.Add(Volo.Abp.Ui.LayoutHooks.LayoutHooks.Head.Last, typeof(Apya.Platform.Web.Components.ApyaThemeHead.ApyaThemeHeadViewComponent));
             // Zorunlu çerez bilgilendirme şeridi — ack çerezi yoksa gösterilir (KVKK).
             options.Add(Volo.Abp.Ui.LayoutHooks.LayoutHooks.Body.Last, typeof(Apya.Platform.Web.Components.CookieNotice.CookieNoticeViewComponent));
+            // "Yenilikler" penceresi — kullanıcı en yeni sürümü görmediyse ilk açılışta modal açar.
+            options.Add(Volo.Abp.Ui.LayoutHooks.LayoutHooks.Body.Last, typeof(Apya.Platform.Web.Components.ReleaseNotes.ReleaseNotesViewComponent));
         });
 
         // GAP-012 + ARCH-010: Audit Logging Selectors.
@@ -387,6 +389,7 @@ public class PlatformWebModule : AbpModule
                     bundle.AddFiles("/js/apya-telemetry.js");
                     bundle.AddFiles("/js/apya-feedback.js");
                     bundle.AddFiles("/js/apya-money.js"); // apya.money.format → "1.000,00 TRY" (tüm sayfalarda)
+                    bundle.AddFiles("/js/apya-money-input.js"); // tutar giriş maskesi (data-money-input, gizli ham alan)
                     bundle.AddFiles("/js/apya-finance-modal.js"); // gelir/gider modalı: proje tarih aralığı kontrolü
                     bundle.AddFiles("/Pages/Notifications/notification-bell.js");
                     bundle.AddFiles("/js/dark-mode.js");

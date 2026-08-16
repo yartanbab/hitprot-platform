@@ -1,0 +1,65 @@
+@page
+@using Apya.Platform.Web.ReleaseNotes
+@model Apya.Platform.Web.Pages.ReleaseNotes.IndexModel
+@{
+    ViewData["Title"] = "Yenilikler";
+}
+
+<div class="apya-page apya-rn-page" data-page-description="Sürüm notları">
+    <div class="container-fluid py-3" style="max-width: 860px;">
+        <div class="apya-rn-head">
+            <div class="apya-rn-kicker">Yenilikler</div>
+            <h1 class="h4 mb-1">Sürüm geçmişi</h1>
+            <p class="text-muted mb-0">Uygulamadaki güncellemelerin sürüm sürüm kaydı.</p>
+        </div>
+
+        @foreach (var release in Model.Releases)
+        {
+            <section class="card apya-rn-release mb-3">
+                <header class="card-header d-flex justify-content-between align-items-baseline flex-wrap gap-2">
+                    <div>
+                        <strong>@release.Title</strong>
+                        <div class="text-muted small">@release.Date</div>
+                    </div>
+                    <span class="apya-rn-ver">Sürüm @release.Version</span>
+                </header>
+                <div class="card-body py-1">
+                    @foreach (var item in release.Items)
+                    {
+                        <div class="apya-rn-row">
+                            <div class="apya-rn-row-tag">
+                                <span class="apya-rn-tag apya-rn-tag--@ReleaseNoteCategoryInfo.Key(item.Category)">@ReleaseNoteCategoryInfo.Label(item.Category)</span>
+                            </div>
+                            <div>
+                                <div class="apya-rn-row-title">@item.Title</div>
+                                <p class="text-muted mb-0">@item.Description</p>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </section>
+        }
+    </div>
+</div>
+
+<style>
+    .apya-rn-head { margin-bottom: 22px; }
+    .apya-rn-kicker { font-size: .68rem; letter-spacing: .13em; text-transform: uppercase; font-weight: 700; color: var(--lpx-primary, #37437d); margin-bottom: 4px; }
+    .apya-rn-ver { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .76rem; color: var(--apya-text-secondary, #616b7a); border: 1px solid var(--apya-border, rgba(0,0,0,.12)); border-radius: 5px; padding: 3px 9px; white-space: nowrap; }
+    .apya-rn-row { display: grid; grid-template-columns: 120px 1fr; gap: 16px; padding: 15px 0; }
+    .apya-rn-row + .apya-rn-row { border-top: 1px solid var(--apya-border, rgba(0,0,0,.08)); }
+    .apya-rn-row-tag { padding-top: 2px; }
+    .apya-rn-row-title { font-weight: 600; font-size: .95rem; margin-bottom: 3px; }
+    .apya-rn-tag { display: inline-block; font-size: .64rem; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; padding: 2px 8px; border-radius: 4px; border: 1px solid currentColor; line-height: 1.5; white-space: nowrap; }
+    .apya-rn-tag--security { color: #a4373a; } .apya-rn-tag--feature { color: #2c7355; }
+    .apya-rn-tag--improvement { color: #2f6d84; } .apya-rn-tag--fix { color: #8a6413; }
+    @@media (prefers-color-scheme: dark) {
+        .apya-rn-tag--security { color: #d98a8b; } .apya-rn-tag--feature { color: #7dc3a2; }
+        .apya-rn-tag--improvement { color: #84bcd0; } .apya-rn-tag--fix { color: #d9b567; }
+    }
+    [data-theme="dark"] .apya-rn-tag--security { color: #d98a8b; }
+    [data-theme="dark"] .apya-rn-tag--feature { color: #7dc3a2; }
+    [data-theme="dark"] .apya-rn-tag--improvement { color: #84bcd0; }
+    [data-theme="dark"] .apya-rn-tag--fix { color: #d9b567; }
+    @@media (max-width: 560px) { .apya-rn-row { grid-template-columns: 1fr; gap: 6px; } }
+</style>
