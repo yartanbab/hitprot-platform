@@ -1,6 +1,6 @@
-# Deploy delta — 2026-08-16 (`fde53e8` → `ace8126`)
+# Deploy delta — 2026-08-16 (`fde53e8` → `8024ede`)
 
-Bu, **canlıdaki `fde53e8`** (2026-08-14 üçüncü yayın) ile **güncel `main` `ace8126`** arasındaki
+Bu, **canlıdaki `fde53e8`** (2026-08-14 üçüncü yayın) ile **güncel `main` `8024ede`** arasındaki
 yayın farkıdır. Tam Plesk süreci için `docs/deployment/plesk-windows.md` + hafıza kaydı geçerli;
 bu belge yalnız **bu sürüme özel** zorunlu adımları ve davranış değişikliklerini toplar.
 
@@ -14,6 +14,10 @@ prod provider = **SqlServer** (MSSQL).
 - **Denetim (PR #178/#179/#180):** güvenlik (SEC-003/006/007/010/011/012/013/014/016),
   doğruluk (CORR-001/004), KVKK Dalga 1 (aydınlatma/gizlilik + çerez/rıza + form onayı),
   FN-001/004, TEST-001/002, ölü kod temizliği.
+- **Yenilikler penceresi (PR #183):** ilk açılışta sürüm notları penceresi + `/ReleaseNotes`
+  geçmiş sayfası + menüde "Yenilikler". İçerik kod-içi katalog, görülme kullanıcı ayarında → **migration YOK.**
+- **Tutar giriş maskesi (PR #183):** Fatura kalem birim fiyatına yazarken binlik nokta
+  (`apya-money-input.js`). Gizli-alan yöntemi → sunucu ham değeri alır, **migration YOK.**
 
 ---
 
@@ -69,10 +73,10 @@ ağırlıklı → aşağıdaki sıra ŞART; FTP tek başına yetmez.**
   `Application.Contracts.dll`, `Domain.dll`, `Domain.Shared.dll`, `Ai.Application.dll`,
   `EntityFrameworkCore.dll`, `EntityFrameworkCore.SqlServer.dll`, `HttpApi.dll`.
 - **wwwroot bundle'ları:** `js/`: `public-form.js`, `form-builder.js`, `dashboard.js`, `task-detail.js`,
-  `apya-task-console.js`, `apya-topbar-shell.js`, `sidebar-toggle.js` · `css/`: `apya-shell.css`,
-  `apya-theme-bridge.css`.
-- Yeni sayfalar (Legal, Admin/Consent, CookieNotice) runtime compilation kapalı → `Web.dll` içinde
-  gelir, ayrı `.cshtml` atmaya gerek yok.
+  `apya-task-console.js`, `apya-topbar-shell.js`, `sidebar-toggle.js`, **`apya-money-input.js` (YENİ)**
+  · `css/`: `apya-shell.css`, `apya-theme-bridge.css`.
+- Yeni sayfalar (Legal, Admin/Consent, CookieNotice, **ReleaseNotes**) runtime compilation kapalı →
+  `Web.dll` içinde gelir, ayrı `.cshtml` atmaya gerek yok.
 
 **Listeyi güvenilir çıkar:** git-diff DEĞİL (kaynak≠publish). Yerelde tam `dotnet publish` → FileZilla
 **"tarihe göre"** dizin karşılaştırması (boyuta göre DEĞİL — embedded-resource'lu DLL aynı boyutta
@@ -92,6 +96,8 @@ değişebilir). **SDK yaması geldiyse** runtime DLL'leri de (`Microsoft.AspNetC
 | **SEC-006/014 — AI izinleri** | Deploy+DbMigrator sonrası AI Center + AI üretimi host admin'e ve AiAssist paketli kiracı admin'lerine görünür olur (önceden hiç kimse — `Projects.UseAiFeatures` gate). |
 | **SEC-013/016 — Projects/Tasks/Template API izni** | API artık `Projects.Default`/`Tasks.Default`/`DynamicAssets.Default` istiyor. Sayfalar zaten uyguladığı için mevcut kullanıcılar kilitlenmez; yine de giriş sonrası proje/görev listesini kontrol et. |
 | **KVKK yasal metinler** | `/aydinlatma-metni` + `/gizlilik-politikasi` **TASLAK/placeholder** — hukuki inceleme + `[...]` doldurma yapılmadan nihai sayma. |
+| **Yenilikler penceresi** | Deploy sonrası her kullanıcının ilk açılışında sürüm notları penceresi bir kez çıkar (beklenen davranış). |
+| **Fatura tutar maskesi** | Fatura oluştururken birim fiyat yazarken binlik nokta görünür. **✅ TEST ET:** bir fatura oluştur, birim fiyat gir, kaydet → tutarın doğru kaydolduğunu doğrula (gizli-alan yöntemi, ham değer sunucuya gider). |
 
 ---
 
@@ -102,6 +108,8 @@ değişebilir). **SDK yaması geldiyse** runtime DLL'leri de (`Microsoft.AspNetC
 - [ ] Admin'de **AI Center** menüsü + `/Admin/Consent` görünür/erişilebilir (izin seed'i çalıştı).
 - [ ] Projeler / Görevler / Faturalar sayfaları açılıyor (izin gating regresyonu yok).
 - [ ] (varsa) çerez şeridi görünüyor, form KVKK onay kutusu render oluyor.
+- [ ] İlk açılışta **"Yenilikler" penceresi** çıkıyor; "Ayrıntı gör" → `/ReleaseNotes` açılıyor; menüde "Yenilikler" var.
+- [ ] **Fatura** oluştur → birim fiyat yazarken **nokta görünüyor** → kaydet → **tutar doğru kaydoldu.**
 
 ## Geri alma
 Önceki paket (`fde53e8`) + `docs/deployment/plesk-windows.md`'deki geri-alma planı. Migration'lar
