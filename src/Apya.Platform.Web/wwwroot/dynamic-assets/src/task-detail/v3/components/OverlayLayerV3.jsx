@@ -24,6 +24,18 @@ export function OverlayLayerV3({ open, onClose, label, children }) {
             onOpenChange={(next) => { if (!next) onClose?.(); }}
         >
             <RadixDialog.Portal>
+                {/* Overlay GÖRSEL İÇİN DEĞİL, scroll kilidi için: Radix'te
+                    react-remove-scroll `Content`'te değil `Overlay`'de yaşar
+                    ("shards: [contentRef]"). Overlay basılmazsa en üstteki aktif
+                    kilit alttaki görev detayı modalınınki olarak kalır; onun
+                    shard'ı yalnız kendi Content'ini kapsadığı için bu katmanın
+                    içindeki her tekerlek olayı "dışarısı" sayılıp iptal edilir
+                    → özellik seçici / transfer / alt görev panelleri fare
+                    tekerleğiyle kaydırılamıyordu (kaydırma çubuğu çalışıyordu).
+                    Arka planı çocuk katman kendi çiziyor: bu yüzden saydam ve
+                    tıklamaya kapalı (pointer-events Radix tarafından satır içi
+                    'auto' veriliyor, sınıfla ezilemez). */}
+                <RadixDialog.Overlay className="fixed inset-0" style={{ pointerEvents: 'none' }} />
                 <RadixDialog.Content asChild aria-describedby={undefined}>
                     <div className="fixed inset-0 z-modal">
                         <RadixDialog.Title className="sr-only">{label}</RadixDialog.Title>

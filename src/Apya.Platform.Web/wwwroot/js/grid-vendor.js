@@ -1,5 +1,5 @@
 import { c as cr, r as U, a as St, g as fr } from "./react-vendor.js";
-import { r as qe } from "./ui-vendor.js";
+import { c as qe } from "./ui-vendor.js";
 var mn = { exports: {} }, Pe = {}, ft = { exports: {} };
 (function(t, e) {
   (function(n, r) {
