@@ -24,13 +24,23 @@ const RISK_STYLE = {
     },
 };
 
-function Pill({ item, onSelect }) {
+function Pill({ item, onSelect, onDragStart, isPending, hasError }) {
     const meta = SOURCES[item.source];
     const risk = RISK_STYLE[item.risk];
+    /* Taşınamayan öğe (fatura vadesi vb.) sürüklenemez: kullanıcı sunucunun
+       reddedeceği bir hareketi hiç başlatmasın. */
+    const draggable = item.canReschedule && !item.isDone;
 
     return (
         <button
             type="button"
+            draggable={draggable}
+            onDragStart={draggable ? (e) => {
+                e.stopPropagation();
+                e.dataTransfer.effectAllowed = 'move';
+                e.dataTransfer.setData('text/plain', item.key);
+                onDragStart(item);
+            } : undefined}
             onClick={(e) => { e.stopPropagation(); onSelect(item); }}
             title={item.subtitle ? `${item.title} — ${item.subtitle}` : item.title}
             style={risk ? { backgroundImage: risk.pattern } : undefined}
@@ -39,10 +49,17 @@ function Pill({ item, onSelect }) {
                 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-border-focus',
                 risk ? risk.pill : 'bg-neutral-subtle text-text-primary',
                 item.isDone && 'line-through opacity-65',
+                draggable && 'cursor-grab active:cursor-grabbing',
+                /* Hata SATIRDA kalır — toast'a kaçmaz. */
+                hasError && 'ring-1 ring-negative-500',
+                isPending && 'opacity-60',
             )}
         >
-            {meta && <i className={cn('fa shrink-0 text-[9px] opacity-70', meta.icon)} aria-hidden="true" />}
+            {isPending
+                ? <i className="fa fa-circle-notch fa-spin shrink-0 text-[9px]" aria-hidden="true" />
+                : meta && <i className={cn('fa shrink-0 text-[9px] opacity-70', meta.icon)} aria-hidden="true" />}
             <span className="truncate">{item.title}</span>
+            {hasError && <i className="fa fa-triangle-exclamation ms-auto shrink-0 text-[9px]" aria-hidden="true" />}
         </button>
     );
 }
@@ -85,9 +102,14 @@ function CapacityBar({ load, capacity }) {
     );
 }
 
-export function MonthGrid({ month, byDay, today, capacity, onSelectItem, onSelectDay, selectedDay }) {
+export function MonthGrid({
+    month, byDay, today, capacity, onSelectItem, onSelectDay, selectedDay,
+    onDropItem, pending = {}, errors = {},
+}) {
     const days = monthGridDays(month);
     const todayKey = isoDay(today);
+    const [dragging, setDragging] = React.useState(null);
+    const [dropTarget, setDropTarget] = React.useState(null);
 
     return (
         <div className="overflow-hidden rounded-card border border-default bg-surface-base">
@@ -121,11 +143,27 @@ export function MonthGrid({ month, byDay, today, capacity, onSelectItem, onSelec
                             role="gridcell"
                             tabIndex={-1}
                             onClick={() => onSelectDay(key)}
+                            onDragOver={dragging ? (e) => {
+                                e.preventDefault();
+                                e.dataTransfer.dropEffect = 'move';
+                                if (dropTarget !== key) setDropTarget(key);
+                            } : undefined}
+                            onDragLeave={dragging ? () => setDropTarget((t) => (t === key ? null : t)) : undefined}
+                            onDrop={dragging ? (e) => {
+                                e.preventDefault();
+                                const item = dragging;
+                                setDragging(null);
+                                setDropTarget(null);
+                                if (item && item.date.slice(0, 10) !== key) {
+                                    onDropItem(item, new Date(`${key}T00:00:00`));
+                                }
+                            } : undefined}
                             className={cn(
                                 'flex min-h-[96px] cursor-pointer flex-col gap-[3px] border-b border-r border-subtle p-1.5',
                                 'transition-colors duration-fast last:border-r-0 hover:bg-surface-hover',
                                 isOtherMonth ? 'bg-surface-sunken' : 'bg-surface-base',
                                 isSelected && 'ring-2 ring-inset ring-border-focus',
+                                dropTarget === key && 'bg-primary-subtle ring-2 ring-inset ring-accent',
                             )}
                         >
                             <div className="flex items-center justify-between">
@@ -147,7 +185,14 @@ export function MonthGrid({ month, byDay, today, capacity, onSelectItem, onSelec
                             </div>
 
                             {pills.map((item) => (
-                                <Pill key={item.key} item={item} onSelect={onSelectItem} />
+                                <Pill
+                                    key={item.key}
+                                    item={item}
+                                    onSelect={onSelectItem}
+                                    onDragStart={setDragging}
+                                    isPending={!!pending[item.key]}
+                                    hasError={!!errors[item.key]}
+                                />
                             ))}
                             {summaries.map((summary) => (
                                 <SummaryRow

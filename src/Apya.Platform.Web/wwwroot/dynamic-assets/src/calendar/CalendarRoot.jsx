@@ -6,8 +6,10 @@ import { DayPanel } from './DayPanel';
 import { MonthGrid } from './MonthGrid';
 import { SourceRail } from './SourceRail';
 import { Toolbar } from './Toolbar';
+import { ItemDrawer } from './ItemDrawer';
 import { useCalendarFeed } from './hooks/useCalendarFeed';
 import { useCalendarPrefs } from './hooks/useCalendarPrefs';
+import { useCalendarMutations } from './hooks/useCalendarMutations';
 import { layoutOf, useContainerWidth } from './hooks/useContainerWidth';
 import {
     MONTH_CELLS, addDays, dayLoad, groupByDay, isoDay, monthGridStart, stripTime,
@@ -45,6 +47,7 @@ export function CalendarRoot() {
     const today = useMemo(() => stripTime(new Date()), []);
     const [month, setMonth] = useState(() => new Date(today.getFullYear(), today.getMonth(), 1));
     const [selectedDay, setSelectedDay] = useState(null);
+    const [selectedItemKey, setSelectedItemKey] = useState(null);
 
     const { view, setView, applyResponsiveDefault, enabledSources, toggleSource, resetSources } =
         useCalendarPrefs();
@@ -96,19 +99,25 @@ export function CalendarRoot() {
         }
     }, [selectedDay, byDay, isPending, range]);
 
-    const openItem = useCallback((item) => {
-        /* Faz 3: burası etkinlik drawer'ını açacak. Şimdilik öğenin ekranına götürür. */
-        if (item.href) window.location.href = item.href;
-    }, []);
+    /* Öğeye tıklamak listeye GİTMEZ, drawer açar (tasarım §3). Drawer içinde
+       "ekranında aç" bağlantısı duruyor — bağlam kaybolmasın diye. */
+    const openItem = useCallback((item) => setSelectedItemKey(item.key), []);
 
     const goToday = useCallback(() => {
         setMonth(new Date(today.getFullYear(), today.getMonth(), 1));
         setSelectedDay(isoDay(today));
     }, [today]);
 
+    const mutations = useCalendarMutations();
+
     const hasAnyData = allItems.length > 0;
     const filteredToEmpty = hasAnyData && items.length === 0;
     const selectedItems = selectedDay ? (byDay[selectedDay] ?? []) : [];
+    /* Drawer'daki öğe cache'ten okunur: iyimser güncelleme sonrası drawer da
+       anında yeni tarihi gösterir, ayrı bir kopya bayatlamaz. */
+    const selectedItem = selectedItemKey
+        ? allItems.find((i) => i.key === selectedItemKey) ?? null
+        : null;
 
     const panel = selectedDay && (
         <DayPanel
@@ -129,7 +138,7 @@ export function CalendarRoot() {
                 onPrev={() => setMonth((m) => new Date(m.getFullYear(), m.getMonth() - 1, 1))}
                 onNext={() => setMonth((m) => new Date(m.getFullYear(), m.getMonth() + 1, 1))}
                 onToday={goToday}
-                overloadDays={overloadDays}
+                overloadDays={overloadDays}
             />
 
             {isError && (
@@ -137,6 +146,34 @@ export function CalendarRoot() {
                     Takvim yüklenemedi.
                     <button type="button" onClick={() => refetch()} className="ml-2 font-semibold underline">
                         Yeniden dene
+                    </button>
+                </div>
+            )}
+
+            {/* Geri alma ŞERİDİ — toast değil: takvime bakarken kaybolan bir bildirim
+                geri almayı imkânsız kılar (tasarım §4). */}
+            {mutations.lastAction && (
+                <div
+                    className="flex items-center gap-2 rounded-card border border-subtle bg-surface-raised px-3 py-2 text-[12.5px] text-text-secondary"
+                    role="status"
+                    aria-live="polite"
+                >
+                    <i className="fa fa-clock-rotate-left text-text-tertiary" aria-hidden="true" />
+                    <span className="min-w-0 flex-1 truncate">{mutations.lastAction.message}</span>
+                    {mutations.lastAction.undo && (
+                        <button
+                            type="button"
+                            onClick={() => { mutations.lastAction.undo(); mutations.dismissAction(); }}
+                            className="font-semibold text-text-link hover:underline"
+                        >
+                            Geri al
+                        </button>
+                    )}
+                    <button
+                        type="button" onClick={mutations.dismissAction} aria-label="Şeridi kapat"
+                        className="rounded p-1 text-text-tertiary hover:bg-surface-hover"
+                    >
+                        <i className="fa fa-xmark" aria-hidden="true" />
                     </button>
                 </div>
             )}
@@ -184,6 +221,9 @@ export function CalendarRoot() {
                             selectedDay={selectedDay}
                             onSelectItem={openItem}
                             onSelectDay={setSelectedDay}
+                            onDropItem={mutations.reschedule}
+                            pending={mutations.pending}
+                            errors={mutations.errors}
                         />
                     ) : (
                         <AgendaView items={items} today={today} onSelectItem={openItem} />
@@ -206,6 +246,19 @@ export function CalendarRoot() {
                 <Sheet open onOpenChange={(open) => { if (!open) setSelectedDay(null); }}>
                     <SheetContent side="bottom" title="Gün detayı" className="max-h-[80vh] p-0">{panel}</SheetContent>
                 </Sheet>
+            )}
+
+            {selectedItem && (
+                <ItemDrawer
+                    item={selectedItem}
+                    capacity={capacity}
+                    onClose={() => setSelectedItemKey(null)}
+                    onReschedule={mutations.reschedule}
+                    onComplete={mutations.complete}
+                    isPending={!!mutations.pending[selectedItem.key]}
+                    error={mutations.errors[selectedItem.key]}
+                    onRetry={() => mutations.clearError(selectedItem.key)}
+                />
             )}
         </div>
     );
