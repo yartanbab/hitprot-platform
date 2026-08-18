@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Button, Sheet, SheetContent } from '../components/ui';
 import { cn } from '../lib/utils';
 import { RISK, SOURCES, addDays, fmt } from './lib/model';
@@ -33,6 +33,11 @@ export function ItemDrawer({ item, capacity, onClose, onReschedule, onComplete, 
     const meta = SOURCES[item.source];
     const risk = RISK_LABEL[item.risk];
     const currentDay = item.date.slice(0, 10);
+
+    /* Öğe taşınınca (sürükle-bırak, "+1 gün ertele" veya geri alma) alan da
+       yeni tarihe döner. Aksi hâlde alan eski günde kalır ve "Uygula" düğmesi
+       kullanıcıya farkında olmadan geri-taşıma teklif eder. */
+    useEffect(() => setDateDraft(currentDay), [currentDay]);
 
     const applyDate = () => {
         if (!dateDraft || dateDraft === currentDay) return;

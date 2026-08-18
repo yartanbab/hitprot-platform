@@ -527,7 +527,9 @@ function Y({ label: t, children: s }) {
   ] }) : null;
 }
 function ze({ item: t, capacity: s, onClose: a, onReschedule: r, onComplete: o, isPending: d, error: u, onRetry: l }) {
-  const [i, m] = f.useState(() => t.date.slice(0, 10)), n = I[t.source], c = Ue[t.risk], x = t.date.slice(0, 10), y = () => {
+  const [i, m] = f.useState(() => t.date.slice(0, 10)), n = I[t.source], c = Ue[t.risk], x = t.date.slice(0, 10);
+  f.useEffect(() => m(x), [x]);
+  const y = () => {
     !i || i === x || r(t, /* @__PURE__ */ new Date(`${i}T00:00:00`));
   };
   return /* @__PURE__ */ e.jsx(q, { open: !0, onOpenChange: (b) => {
