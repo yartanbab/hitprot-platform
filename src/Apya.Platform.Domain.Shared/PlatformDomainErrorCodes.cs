@@ -80,6 +80,33 @@ public static class PlatformDomainErrorCodes
     public const string FileUnsupportedExtension = "Platform:File:UnsupportedExtension";
     public const string FileSizeExceeded = "Platform:File:SizeExceeded";
 
+    // --- Doküman (Documents) Modülü — belge/meta şema ---
+    public const string DocumentFileNameRequired = "Platform:Documents:FileNameRequired";
+    public const string DocumentFileLocked = "Platform:Documents:FileLocked";
+    public const string DocumentFileAmountInvalid = "Platform:Documents:FileAmountInvalid";
+    public const string DocumentTypeNameRequired = "Platform:Documents:TypeNameRequired";
+    public const string DocumentTypeCodeRequired = "Platform:Documents:TypeCodeRequired";
+    public const string DocumentFieldKeyRequired = "Platform:Documents:FieldKeyRequired";
+    public const string DocumentFieldRequiredValueMissing = "Platform:Documents:FieldRequiredValueMissing";
+    public const string DocumentTagNameRequired = "Platform:Documents:TagNameRequired";
+    public const string DocumentWorkStepMismatch = "Platform:Documents:WorkStepMismatch";
+    public const string CompliancePackageNameRequired = "Platform:Documents:CompliancePackageNameRequired";
+    public const string ComplianceRequirementTitleRequired = "Platform:Documents:ComplianceRequirementTitleRequired";
+    public const string ComplianceWaiveReasonRequired = "Platform:Documents:ComplianceWaiveReasonRequired";
+    public const string CompliancePackageAlreadyApplied = "Platform:Documents:CompliancePackageAlreadyApplied";
+
+    // --- Rapor / teslim paketi (Faz C) ---
+    public const string ReportTemplateNameRequired = "Platform:Documents:ReportTemplateNameRequired";
+    public const string DeliveryPackageNameRequired = "Platform:Documents:DeliveryPackageNameRequired";
+    public const string DeliveryPackageBlocked = "Platform:Documents:DeliveryPackageBlocked";
+    public const string DeliveryPackageNotEditable = "Platform:Documents:DeliveryPackageNotEditable";
+    public const string DeliveryPackageItemLimit = "Platform:Documents:DeliveryPackageItemLimit";
+    public const string ShareLinkExpired = "Platform:Documents:ShareLinkExpired";
+    public const string ShareLinkRevoked = "Platform:Documents:ShareLinkRevoked";
+    public const string ShareLinkDownloadNotAllowed = "Platform:Documents:ShareLinkDownloadNotAllowed";
+    public const string WorkStepNameRequired = "Platform:Documents:WorkStepNameRequired";
+    public const string WorkStepScheduleInvalid = "Platform:Documents:WorkStepScheduleInvalid";
+
     // --- Dinamik Varlıklar (DynamicAssets) Modülü ---
     public const string DocumentSlugAlreadyExists = "Platform:DynamicAssets:SlugAlreadyExists";
     public const string DocumentBlockNotFound = "Platform:DynamicAssets:BlockNotFound";

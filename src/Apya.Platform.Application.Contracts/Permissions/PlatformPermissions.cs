@@ -109,6 +109,21 @@ public static class PlatformPermissions
         public const string Edit = Default + ".Edit";
         public const string Delete = Default + ".Delete";
         public const string ViewAccessLog = Default + ".ViewAccessLog";
+
+        /// <summary>Belge meta verisini (tür, tutar, dönem, özel alanlar) düzenleme.</summary>
+        public const string ManageMeta = Default + ".ManageMeta";
+
+        /// <summary>Toplu taşıma/etiketleme — çok sayıda kaydı tek işlemde değiştirir.</summary>
+        public const string BulkOperations = Default + ".BulkOperations";
+
+        /// <summary>Kurum paketi uygulama, kontrol listesi kalemi feragati ve elle bağlama.</summary>
+        public const string ManageCompliance = Default + ".ManageCompliance";
+
+        /// <summary>Teslim paketi kurma ve rapor üretme.</summary>
+        public const string GenerateReports = Default + ".GenerateReports";
+
+        /// <summary>Süreli dış paylaşım linki oluşturma/iptal etme — veriyi kurum dışına açar.</summary>
+        public const string ShareExternally = Default + ".ShareExternally";
     }
 
     // --- BİLDİRİM YETKİLERİ ---

@@ -34,6 +34,18 @@ public class Document : FullAuditedAggregateRoot<Guid>, IMultiTenant
 
     public bool IsExpiryWarningSent { get; set; }
 
+    /// <summary>
+    /// Sol bağlam ağacındaki gruplama ("Proje", "Finans", "Personel / İK", "Sözleşmeler").
+    /// Custom = kullanıcının kendi tanımladığı bağlam.
+    /// </summary>
+    public DocumentContextType ContextType { get; set; } = DocumentContextType.Custom;
+
+    /// <summary>Ağaçtaki elle sıralama; eşitlik durumunda Title'a göre sıralanır.</summary>
+    public int SortOrder { get; set; }
+
+    /// <summary>Sistem klasörü — kullanıcı silemez (ilk kurulum sihirbazının ürettiği iskelet).</summary>
+    public bool IsSystemFolder { get; set; }
+
     public Document()
     {
     }
