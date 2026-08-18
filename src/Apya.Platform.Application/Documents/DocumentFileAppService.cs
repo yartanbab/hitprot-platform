@@ -40,6 +40,7 @@ public class DocumentFileAppService : ApplicationService, IDocumentFileAppServic
     private readonly IRepository<DocumentFieldValue, Guid> _fieldValueRepository;
     private readonly IRepository<DocumentTag, Guid> _tagRepository;
     private readonly IRepository<DocumentFileTag, Guid> _fileTagRepository;
+    private readonly IRepository<DocumentFieldPermission, Guid> _fieldPermissionRepository;
     private readonly IRepository<DocumentAccessLog, Guid> _accessLogRepository;
     private readonly IRepository<Project, Guid> _projectRepository;
     private readonly IRepository<ProjectWorkStep, Guid> _workStepRepository;
@@ -55,6 +56,7 @@ public class DocumentFileAppService : ApplicationService, IDocumentFileAppServic
         IRepository<DocumentFieldValue, Guid> fieldValueRepository,
         IRepository<DocumentTag, Guid> tagRepository,
         IRepository<DocumentFileTag, Guid> fileTagRepository,
+        IRepository<DocumentFieldPermission, Guid> fieldPermissionRepository,
         IRepository<DocumentAccessLog, Guid> accessLogRepository,
         IRepository<Project, Guid> projectRepository,
         IRepository<ProjectWorkStep, Guid> workStepRepository,
@@ -69,6 +71,7 @@ public class DocumentFileAppService : ApplicationService, IDocumentFileAppServic
         _fieldValueRepository = fieldValueRepository;
         _tagRepository = tagRepository;
         _fileTagRepository = fileTagRepository;
+        _fieldPermissionRepository = fieldPermissionRepository;
         _accessLogRepository = accessLogRepository;
         _projectRepository = projectRepository;
         _workStepRepository = workStepRepository;
@@ -604,7 +607,13 @@ public class DocumentFileAppService : ApplicationService, IDocumentFileAppServic
         }
     }
 
-    /// <summary>Tipin şeması + belgenin değerleri — değeri olmayan alanlar da boş olarak döner.</summary>
+    /// <summary>
+    /// Tipin şeması + belgenin değerleri — değeri olmayan alanlar da boş olarak döner.
+    ///
+    /// Alan bazlı izinler BURADA uygulanır (Faz D): Hidden alanlar hiç dönmez,
+    /// Masked alanların gerçek değeri DTO'ya konmaz. Maskelemeyi istemciye
+    /// bırakmak, değeri zaten tel üzerinden göndermek demek olurdu.
+    /// </summary>
     private async Task<List<DocumentFieldValueDto>> BuildFieldsAsync(DocumentFile file)
     {
         if (!file.DocumentTypeId.HasValue)
@@ -612,10 +621,12 @@ public class DocumentFileAppService : ApplicationService, IDocumentFileAppServic
             return new List<DocumentFieldValueDto>();
         }
 
+        var typeId = file.DocumentTypeId.Value;
+
         var fieldQueryable = await _fieldRepository.GetQueryableAsync();
         var fields = await AsyncExecuter.ToListAsync(
             fieldQueryable.AsNoTracking()
-                .Where(f => f.DocumentTypeId == file.DocumentTypeId!.Value)
+                .Where(f => f.DocumentTypeId == typeId)
                 .OrderBy(f => f.Order));
 
         var valueQueryable = await _fieldValueRepository.GetQueryableAsync();
@@ -623,32 +634,62 @@ public class DocumentFileAppService : ApplicationService, IDocumentFileAppServic
             valueQueryable.AsNoTracking().Where(v => v.DocumentFileId == file.Id));
         var valueByField = values.ToDictionary(v => v.FieldId);
 
-        return fields.Select(f =>
+        var permissions = await _fieldPermissionRepository.GetListAsync(p => p.DocumentTypeId == typeId);
+        var roles = CurrentUser.Roles ?? Array.Empty<string>();
+
+        var result = new List<DocumentFieldValueDto>();
+
+        foreach (var field in fields)
         {
+            var level = DocumentFieldMasker.ResolveLevel(
+                new MaskableField(field.Id, typeId, field.Visibility), roles, permissions);
+
+            if (!DocumentFieldMasker.IsVisible(level))
+            {
+                continue;
+            }
+
             var dto = new DocumentFieldValueDto
             {
-                FieldId = f.Id,
-                Key = f.Key,
-                Label = f.Label,
-                FieldType = f.FieldType,
-                IsRequired = f.IsRequired,
-                FillSource = f.FillSource,
-                Visibility = f.Visibility,
-                Order = f.Order,
-                OptionsJson = f.OptionsJson
+                FieldId = field.Id,
+                Key = field.Key,
+                Label = field.Label,
+                FieldType = field.FieldType,
+                IsRequired = field.IsRequired,
+                FillSource = field.FillSource,
+                Visibility = field.Visibility,
+                Order = field.Order,
+                OptionsJson = field.OptionsJson,
+                AccessLevel = level,
+                IsMasked = DocumentFieldMasker.IsMasked(level),
+                IsEditable = DocumentFieldMasker.IsEditable(level),
             };
 
-            if (valueByField.TryGetValue(f.Id, out var value))
+            if (valueByField.TryGetValue(field.Id, out var value))
             {
-                dto.ValueText = value.ValueText;
-                dto.ValueNumber = value.ValueNumber;
-                dto.ValueDate = value.ValueDate;
+                if (dto.IsMasked)
+                {
+                    // Gerçek değer DTO'ya HİÇ konmaz; yalnız biçimi korunmuş gösterim.
+                    dto.MaskedDisplay = DocumentFieldMasker.MaskDisplay(
+                        value.ValueText
+                        ?? value.ValueNumber?.ToString(System.Globalization.CultureInfo.InvariantCulture)
+                        ?? value.ValueDate?.ToString("dd.MM.yyyy"));
+                }
+                else
+                {
+                    dto.ValueText = value.ValueText;
+                    dto.ValueNumber = value.ValueNumber;
+                    dto.ValueDate = value.ValueDate;
+                }
+
                 dto.Confidence = value.Confidence;
                 dto.FilledBy = value.FilledBy;
             }
 
-            return dto;
-        }).ToList();
+            result.Add(dto);
+        }
+
+        return result;
     }
 
     private async Task<List<DocumentAttachmentDto>> BuildVersionsAsync(Guid documentFileId)
@@ -686,10 +727,22 @@ public class DocumentFileAppService : ApplicationService, IDocumentFileAppServic
             return;
         }
 
+        var typeId = file.DocumentTypeId.Value;
+
         var fieldQueryable = await _fieldRepository.GetQueryableAsync();
         var schemaFields = await AsyncExecuter.ToListAsync(
-            fieldQueryable.AsNoTracking().Where(f => f.DocumentTypeId == file.DocumentTypeId!.Value));
-        var schemaById = schemaFields.ToDictionary(f => f.Id);
+            fieldQueryable.AsNoTracking().Where(f => f.DocumentTypeId == typeId));
+
+        // Yazma izni OKUMA ile aynı kaynaktan çözülür: düzenleyemediği bir alanı
+        // istemci yine de gönderebilir — maskeleme yalnız görüntüde kalırsa
+        // güvenlik sınırı olmaz.
+        var permissions = await _fieldPermissionRepository.GetListAsync(p => p.DocumentTypeId == typeId);
+        var roles = CurrentUser.Roles ?? Array.Empty<string>();
+
+        var schemaById = schemaFields
+            .Where(f => DocumentFieldMasker.IsEditable(
+                DocumentFieldMasker.ResolveLevel(new MaskableField(f.Id, typeId, f.Visibility), roles, permissions)))
+            .ToDictionary(f => f.Id);
 
         var existing = await _fieldValueRepository.GetListAsync(v => v.DocumentFileId == file.Id);
         var existingByField = existing.ToDictionary(v => v.FieldId);

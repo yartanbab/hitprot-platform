@@ -23,4 +23,16 @@ public class DocumentFieldValueDto
     public DateTime? ValueDate { get; set; }
     public int? Confidence { get; set; }
     public DocumentFieldFillSource? FilledBy { get; set; }
+
+    /* --- Alan bazlı izin (Faz D) — sunucuda çözülür, istemci yalnız çizer --- */
+
+    public DocumentFieldAccessLevel AccessLevel { get; set; } = DocumentFieldAccessLevel.Edit;
+
+    /// <summary>true ise Value* alanları GERÇEK DEĞERİ TAŞIMAZ; MaskedDisplay gösterilir.</summary>
+    public bool IsMasked { get; set; }
+
+    /// <summary>Maskeli alanın biçim korunmuş gösterimi (32.450,00 → ••.•••,••).</summary>
+    public string? MaskedDisplay { get; set; }
+
+    public bool IsEditable { get; set; } = true;
 }

@@ -23,6 +23,7 @@ export default defineConfig({
         'expense-capture':  'src/expense-capture.jsx',
         'documents':        'src/documents.jsx',
         'deliveries':       'src/deliveries.jsx',
+        'documents-admin':  'src/documents-admin.jsx',
         'task-detail':      'src/task-detail.jsx',
       },
       formats: ['es'],

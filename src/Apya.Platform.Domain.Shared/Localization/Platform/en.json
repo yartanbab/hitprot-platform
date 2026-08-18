@@ -278,6 +278,7 @@
     "Permission:Documents.ManageCompliance": "Manage Compliance",
     "Permission:Documents.GenerateReports": "Generate Reports & Delivery Packages",
     "Permission:Documents.ShareExternally": "Create External Share Links",
+    "Permission:Documents.Administer": "Administer Documents (rules, schema, permissions)",
     "Permission:DynamicAssets": "Templates & Forms",
     "Permission:DynamicAssets.Create": "Create Template/Form",
     "Permission:DynamicAssets.Edit": "Edit Template/Form",

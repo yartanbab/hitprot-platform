@@ -104,6 +104,15 @@ public static class PlatformDomainErrorCodes
     public const string ShareLinkExpired = "Platform:Documents:ShareLinkExpired";
     public const string ShareLinkRevoked = "Platform:Documents:ShareLinkRevoked";
     public const string ShareLinkDownloadNotAllowed = "Platform:Documents:ShareLinkDownloadNotAllowed";
+
+    // --- Yönetim: kural motoru + alan bazlı izinler (Faz D) ---
+    public const string DocumentRuleNameRequired = "Platform:Documents:RuleNameRequired";
+    public const string DocumentRuleConditionLimit = "Platform:Documents:RuleConditionLimit";
+    public const string DocumentRuleActionLimit = "Platform:Documents:RuleActionLimit";
+    public const string DocumentRuleNoActions = "Platform:Documents:RuleNoActions";
+    public const string DocumentRuleAffectedLimit = "Platform:Documents:RuleAffectedLimit";
+    public const string DocumentTypeIsSystem = "Platform:Documents:TypeIsSystem";
+    public const string DocumentIntegrationNameRequired = "Platform:Documents:IntegrationNameRequired";
     public const string WorkStepNameRequired = "Platform:Documents:WorkStepNameRequired";
     public const string WorkStepScheduleInvalid = "Platform:Documents:WorkStepScheduleInvalid";
 

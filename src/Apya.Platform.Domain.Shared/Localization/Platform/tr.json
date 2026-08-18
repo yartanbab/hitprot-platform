@@ -228,6 +228,7 @@
         "Permission:Documents.ManageCompliance": "Kurum Uygunluğunu Yönetme",
         "Permission:Documents.GenerateReports": "Rapor ve Teslim Paketi Üretme",
         "Permission:Documents.ShareExternally": "Süreli Dış Paylaşım Linki",
+        "Permission:Documents.Administer": "Doküman Yönetimi (kural, şema, izin)",
         "Permission:DynamicAssets": "Şablonlar & Formlar",
         "Permission:DynamicAssets.Create": "Şablon/Form Oluşturma",
         "Permission:DynamicAssets.Edit": "Şablon/Form Düzenleme",

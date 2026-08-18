@@ -124,6 +124,9 @@ public static class PlatformPermissions
 
         /// <summary>Süreli dış paylaşım linki oluşturma/iptal etme — veriyi kurum dışına açar.</summary>
         public const string ShareExternally = Default + ".ShareExternally";
+
+        /// <summary>Yönetim ekranı: meta şema yazma, kural motoru, alan bazlı izinler, entegrasyonlar.</summary>
+        public const string Administer = Default + ".Administer";
     }
 
     // --- BİLDİRİM YETKİLERİ ---

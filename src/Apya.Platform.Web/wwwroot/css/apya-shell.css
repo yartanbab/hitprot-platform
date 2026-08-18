@@ -5611,3 +5611,28 @@ i.apya-priority-dot {
     }
     .apya-proj-drawer-foot { padding-bottom: calc(14px + env(safe-area-inset-bottom, 0px)); }
 }
+
+/* ----------------------------------------------------------------------------
+   17c) DOKÜMAN YÖNETİMİ — kural kurgusu blokları (Faz D)
+   ---------------------------------------------------------------------------- */
+.apya-doc-rule-block {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 10px 12px;
+    border: 1px solid var(--apya-border-default);
+    border-radius: var(--apya-radius-lg, 10px);
+    background: var(--apya-surface-raised);
+}
+.apya-doc-rule-block.is-if {
+    border-color: var(--apya-accent-500);
+    background: var(--apya-accent-soft);
+}
+.apya-doc-rule-block.is-then {
+    border-color: var(--apya-positive-500);
+    background: var(--apya-positive-soft, rgba(16, 185, 129, .08));
+}
+.apya-doc-rule-block em {
+    font-style: normal;
+    color: var(--apya-text-tertiary);
+}

@@ -188,6 +188,12 @@ namespace Apya.Platform.EntityFrameworkCore
         public DbSet<Apya.Platform.Documents.DeliveryPackageItem> DeliveryPackageItems { get; set; }
         public DbSet<Apya.Platform.Documents.ExternalShareLink> ExternalShareLinks { get; set; }
         public DbSet<Apya.Platform.Documents.ExternalShareAccessLog> ExternalShareAccessLogs { get; set; }
+        public DbSet<Apya.Platform.Documents.DocumentRule> DocumentRules { get; set; }
+        public DbSet<Apya.Platform.Documents.DocumentRuleCondition> DocumentRuleConditions { get; set; }
+        public DbSet<Apya.Platform.Documents.DocumentRuleAction> DocumentRuleActions { get; set; }
+        public DbSet<Apya.Platform.Documents.DocumentRuleRun> DocumentRuleRuns { get; set; }
+        public DbSet<Apya.Platform.Documents.DocumentFieldPermission> DocumentFieldPermissions { get; set; }
+        public DbSet<Apya.Platform.Documents.DocumentIntegration> DocumentIntegrations { get; set; }
 
         /* --- AI MODÜLÜ --- */
         public DbSet<DraftBatch> DraftBatches { get; set; }
@@ -1044,6 +1050,89 @@ namespace Apya.Platform.EntityFrameworkCore
                  .OnDelete(DeleteBehavior.Cascade);
 
                 b.HasIndex(x => new { x.ShareLinkId, x.CreationTime });
+            });
+
+            /* --- YÖNETİM: KURAL MOTORU + ALAN İZİNLERİ + ENTEGRASYONLAR (FAZ D) --- */
+            builder.Entity<Apya.Platform.Documents.DocumentRule>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "DocumentRules", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+
+                b.Property(x => x.Name).IsRequired().HasMaxLength(Apya.Platform.Documents.RuleConsts.MaxRuleNameLength);
+                b.Property(x => x.Description).HasMaxLength(Apya.Platform.Documents.RuleConsts.MaxDescriptionLength);
+
+                b.HasIndex(x => new { x.TenantId, x.IsEnabled, x.Order });
+            });
+
+            builder.Entity<Apya.Platform.Documents.DocumentRuleCondition>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "DocumentRuleConditions", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+
+                b.Property(x => x.CompareValue).HasMaxLength(Apya.Platform.Documents.RuleConsts.MaxCompareValueLength);
+
+                b.HasOne<Apya.Platform.Documents.DocumentRule>()
+                 .WithMany()
+                 .HasForeignKey(x => x.RuleId)
+                 .OnDelete(DeleteBehavior.Cascade);
+
+                b.HasIndex(x => new { x.RuleId, x.Order });
+            });
+
+            builder.Entity<Apya.Platform.Documents.DocumentRuleAction>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "DocumentRuleActions", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+
+                b.Property(x => x.Payload).HasMaxLength(Apya.Platform.Documents.RuleConsts.MaxActionPayloadLength);
+
+                b.HasOne<Apya.Platform.Documents.DocumentRule>()
+                 .WithMany()
+                 .HasForeignKey(x => x.RuleId)
+                 .OnDelete(DeleteBehavior.Cascade);
+
+                b.HasIndex(x => new { x.RuleId, x.Order });
+            });
+
+            builder.Entity<Apya.Platform.Documents.DocumentRuleRun>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "DocumentRuleRuns", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+
+                b.Property(x => x.SampleJson).HasColumnType("text");
+
+                // Kural silinse bile çalıştırma izi kalır → FK YOK (append-only kayıt).
+                b.HasIndex(x => new { x.RuleId, x.CreationTime });
+            });
+
+            builder.Entity<Apya.Platform.Documents.DocumentFieldPermission>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "DocumentFieldPermissions", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+
+                b.Property(x => x.RoleName).IsRequired().HasMaxLength(Apya.Platform.Documents.RuleConsts.MaxRoleNameLength);
+
+                b.HasOne<Apya.Platform.Documents.DocumentType>()
+                 .WithMany()
+                 .HasForeignKey(x => x.DocumentTypeId)
+                 .OnDelete(DeleteBehavior.Cascade);
+
+                // FieldId için FK YOK: DocumentType → DocumentTypeField → buraya ve
+                // DocumentType → buraya iki cascade yolu olur, SQL Server reddeder.
+                b.HasIndex(x => new { x.DocumentTypeId, x.FieldId, x.RoleName }).IsUnique()
+                    .HasFilter(isSqlServer ? "[IsDeleted] = 0" : "\"IsDeleted\" = false");
+            });
+
+            builder.Entity<Apya.Platform.Documents.DocumentIntegration>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "DocumentIntegrations", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+
+                b.Property(x => x.Name).IsRequired().HasMaxLength(Apya.Platform.Documents.RuleConsts.MaxRuleNameLength);
+                b.Property(x => x.Target).HasMaxLength(300);
+                b.Property(x => x.SettingsJson).HasColumnType("text");
+
+                b.HasIndex(x => new { x.TenantId, x.Kind });
             });
 
             /* --- BELGE (DOCUMENT FILE) + META ŞEMA --- */
