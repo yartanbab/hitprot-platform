@@ -63,6 +63,19 @@ public static class PlatformSettings
         public const string SavedViews = Prefix + ".Shell.SavedViews";
     }
 
+    /// <summary>
+    /// Takvim tercihleri — kullanıcı seviyesinde, Projects.DefaultView ile aynı ray.
+    /// </summary>
+    public static class Calendar
+    {
+        /// <summary>
+        /// Günlük kapasite (saat). Gün hücresindeki yük çubuğu ve "kapasite aşımı"
+        /// uyarısı buna göre hesaplanır. "0" = kapasite takibi KAPALI: çubuk çizilmez.
+        /// Yük yalnız açık görevlerin tahmini süresinden toplanır.
+        /// </summary>
+        public const string DailyCapacityHours = Prefix + ".Calendar.DailyCapacityHours";
+    }
+
     /// <summary>Sürüm notları ("Yenilikler") — kullanıcı seviyesinde görülme takibi.</summary>
     public static class ReleaseNotes
     {
@@ -161,6 +174,12 @@ public static class PlatformSettingDefaults
 
     /// <summary>Geçerli Projeler görünüm değerleri — form manipülasyonuna karşı beyaz liste.</summary>
     public static readonly string[] ProjectsDefaultViewValues = { "card", "list" };
+
+    /// <summary>
+    /// Günlük kapasite varsayılanı: 8 saat. Kullanıcı ilk kurulumda 4/6/8 veya
+    /// "kapalı" (0) seçer; 0 seçilirse kapasite çubukları hiç çizilmez.
+    /// </summary>
+    public const string CalendarDailyCapacityHours = "8";
 
     /// <summary>
     /// Sabitlenen menü öğeleri varsayılanı — handoff'un "varsayılan: Kasa & Banka,

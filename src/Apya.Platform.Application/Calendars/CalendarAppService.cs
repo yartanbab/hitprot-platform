@@ -26,6 +26,7 @@ public class CalendarAppService : ApplicationService, ICalendarAppService
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly CalendarTokenProtector _tokenProtector;
     private readonly IDistributedCache _distributedCache;
+    private readonly CalendarFeedProvider _feedProvider;
 
     public CalendarAppService(
         IRepository<ExternalCalendarAccount, Guid> accountRepository,
@@ -34,8 +35,10 @@ public class CalendarAppService : ApplicationService, ICalendarAppService
         IConfiguration configuration,
         IHttpClientFactory httpClientFactory,
         CalendarTokenProtector tokenProtector,
-        IDistributedCache distributedCache)
+        IDistributedCache distributedCache,
+        CalendarFeedProvider feedProvider)
     {
+        _feedProvider      = feedProvider;
         _accountRepository = accountRepository;
         _taskRepository    = taskRepository;
         _calendarManager   = calendarManager;
@@ -47,6 +50,11 @@ public class CalendarAppService : ApplicationService, ICalendarAppService
 
     // SEC-012: OAuth 'state' CSRF token'ı için kullanıcı-bağlı sunucu-taraflı anahtar.
     private static string OAuthStateCacheKey(Guid userId) => $"calendar-oauth-state:{userId}";
+
+    public Task<CalendarFeedDto> GetFeedAsync(GetCalendarFeedInput input)
+    {
+        return _feedProvider.BuildAsync(input);
+    }
 
     public async Task<List<CalendarAccountDto>> GetMyAccountsAsync()
     {

@@ -22,8 +22,10 @@
     .apya-cal-num { align-self: flex-end; font-size: 11.5px; font-weight: 600; color: var(--apya-text-secondary); font-variant-numeric: tabular-nums; line-height: 1; padding: 3px 5px; border-radius: 99px; }
     .apya-cal-day.is-today .apya-cal-num { background: var(--apya-accent-500); color: #fff; }
 
-    .apya-cal-pill { display: block; width: 100%; padding: 2px 7px; border: 0; border-radius: 6px; font-size: 10.5px; font-weight: 600; line-height: 1.5; text-align: left; color: var(--apya-text-primary); background: color-mix(in srgb, var(--apya-accent-500) 14%, transparent); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; cursor: pointer; }
+    .apya-cal-pill { display: block; width: 100%; padding: 2px 7px; border: 0; border-radius: 6px; font-size: 10.5px; font-weight: 600; line-height: 1.5; text-align: left; color: var(--apya-text-primary); background: color-mix(in srgb, var(--apya-text-primary) 7%, transparent); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; cursor: pointer; }
+    /* Renk yalnız risk için: gecikmiş kırmızı, bugün son gün amber. Risksiz öğe nötr kalır. */
     .apya-cal-pill.tone-negative { background: color-mix(in srgb, var(--apya-negative-500) 14%, transparent); }
+    .apya-cal-pill.tone-warning { background: color-mix(in srgb, var(--apya-warning-500) 16%, transparent); }
     .apya-cal-pill.tone-positive { background: color-mix(in srgb, var(--apya-positive-500) 14%, transparent); }
     .apya-cal-pill.is-done { text-decoration: line-through; opacity: .65; }
     .apya-cal-more { border: 0; background: none; padding: 0 7px; font-size: 10.5px; font-weight: 600; color: var(--apya-accent-500); text-align: left; cursor: pointer; }
@@ -82,9 +84,9 @@
                             <h5 class="apya-cal-title" id="cal-title"></h5>
                         </div>
                         <div class="apya-cal-legend">
-                            <span><i style="background:var(--apya-accent-500)"></i>Görev</span>
-                            <span id="cal-legend-invoice"><i style="background:var(--apya-negative-500)"></i>Fatura</span>
-                            <apya-hint placement="bottom" text="Yalnız son tarihi (due date) girilmiş görevler ve faturalar takvimde görünür. Son tarihsiz bir görev burada hiç listelenmez." />
+                            @* Kaynak listesi sunucudan gelir (izin verilmeyen kaynak hiç yazılmaz) — bkz. calendar.js/renderLegend *@
+                            <span id="cal-legend-sources" class="d-flex gap-3"></span>
+                            <apya-hint placement="bottom" text="Yalnız tarihi olan kayıtlar takvimde görünür: görev son tarihi, fatura vadesi, hibe son tarihi, gider/gelir ve kasa hareketi tarihi. Renk yalnız riski gösterir — kırmızı gecikmiş, amber bugün son gün." />
                         </div>
                     </div>
                     <div class="apya-cal-grid" id="cal-grid" aria-live="polite"></div>

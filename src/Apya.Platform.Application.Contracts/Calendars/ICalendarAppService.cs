@@ -7,6 +7,13 @@ namespace Apya.Platform.Calendars;
 
 public interface ICalendarAppService : IApplicationService
 {
+    /// <summary>
+    /// Takvimin tek veri ucu: verilen aralıktaki tüm kaynakları (görev, fatura, hibe,
+    /// gider, gelir, kasa hareketi) tek şekle indirger. İzin verilmeyen kaynak
+    /// sorgulanmaz, ray satırında <c>IsAvailable=false</c> döner.
+    /// </summary>
+    Task<CalendarFeedDto> GetFeedAsync(GetCalendarFeedInput input);
+
     Task<List<CalendarAccountDto>> GetMyAccountsAsync();
     Task ConnectAccountAsync(ConnectCalendarInput input);
     Task DisconnectAccountAsync(Guid id);

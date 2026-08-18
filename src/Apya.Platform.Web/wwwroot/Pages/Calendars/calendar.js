@@ -2,8 +2,10 @@
  * Aylık takvim görünümü (HANDOFF: 7 kolonlu grid, renk-kodlu event pill'leri,
  * gün pop-over'ı, "Bu Hafta" ajandası).
  *
- * Tamamen istemci-tarafı: mevcut Task (vade) + Invoice (vade) API'lerinden okur,
- * backend değişikliği yoktur. Kaynak izinleri yoksa o kaynak sessizce atlanır.
+ * Veri tek uçtan gelir: CalendarAppService.GetFeedAsync — görev, fatura, hibe,
+ * gider, gelir ve kasa hareketi aynı şekle indirgenmiş olarak döner. İzin
+ * verilmeyen kaynak sunucuda hiç sorgulanmaz, ray sayacı sızdırmaz.
+ * Renk YALNIZ risk için: gecikmiş kırmızı, bugün son gün amber, gerisi nötr.
  */
 $(function () {
     var $grid = $('#cal-grid');
@@ -12,21 +14,22 @@ $(function () {
     var DAY_MS = 86400000;
     var DOW_LABELS = ['Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz'];
 
-    var canTasks = abp.auth.isGranted('Platform.Tasks');
-    var canInvoices = abp.auth.isGranted('Platform.Invoices');
+    // CalendarSourceType (Domain.Shared) ile birebir.
+    var SOURCE_META = {
+        1: { label: 'Görev',  icon: 'fa-circle-check' },
+        2: { label: 'Fatura', icon: 'fa-file-invoice' },
+        3: { label: 'Hibe',   icon: 'fa-award' },
+        4: { label: 'Gider',  icon: 'fa-arrow-trend-down' },
+        5: { label: 'Gelir',  icon: 'fa-arrow-trend-up' },
+        6: { label: 'Kasa',   icon: 'fa-wallet' }
+    };
+    // CalendarRiskLevel: 0 yok, 1 bugün son gün, 2 gecikmiş.
+    var RISK_TONE = { 1: 'tone-warning', 2: 'tone-negative' };
 
-    var taskSvc = (apya.platform.tasks && apya.platform.tasks.task)
-        || (apya.platform.application && apya.platform.application.tasks && apya.platform.application.tasks.task)
-        || null;
-    var invoiceSvc = (apya.platform.invoices && apya.platform.invoices.invoice)
-        || (apya.platform.application && apya.platform.application.invoices && apya.platform.application.invoices.invoice)
-        || null;
-
-    if (!canInvoices || !invoiceSvc) { $('#cal-legend-invoice').hide(); }
+    var calSvc = apya.platform.calendars.calendar;
 
     var today = stripTime(new Date());
     var viewMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-    var invoiceCache = null; // faturalar tek seferde çekilir (liste API'sinde tarih filtresi yok)
 
     function stripTime(d) { return new Date(d.getFullYear(), d.getMonth(), d.getDate()); }
     function isoDay(d) {
@@ -48,63 +51,46 @@ $(function () {
     /* ── Veri ── */
 
     function fetchEvents(from, to) {
-        var reqs = [];
+        return calSvc.getFeed({ from: isoDay(from), to: isoDay(to) })
+            .then(function (feed) {
+                renderLegend(feed.sources || []);
 
-        reqs.push((canTasks && taskSvc)
-            ? taskSvc.getList({
-                minDueDate: isoDay(from),
-                maxDueDate: isoDay(to),
-                maxResultCount: 500,
-                skipCount: 0
-            }).then(function (r) { return r.items || []; }, function () { return []; })
-            : Promise.resolve([]));
-
-        reqs.push((canInvoices && invoiceSvc)
-            ? (invoiceCache
-                ? Promise.resolve(invoiceCache)
-                : invoiceSvc.getList({ maxResultCount: 500, skipCount: 0 })
-                    .then(function (r) { invoiceCache = r.items || []; return invoiceCache; },
-                          function () { return []; }))
-            : Promise.resolve([]));
-
-        return Promise.all(reqs).then(function (res) {
-            var byDay = {};
-            var push = function (day, ev) { (byDay[day] = byDay[day] || []).push(ev); };
-
-            res[0].forEach(function (t) {
-                if (!t.dueDate) { return; }
-                push(t.dueDate.slice(0, 10), {
-                    type: 'task',
-                    tone: '',
-                    done: t.status === 4,
-                    title: t.title,
-                    sub: t.projectName || t.assigneeName || '',
-                    href: '/Tasks'
+                var byDay = {};
+                (feed.items || []).forEach(function (item) {
+                    var day = item.date.slice(0, 10);
+                    var sub = item.subtitle || '';
+                    if (item.amount != null) {
+                        sub = sub ? sub + ' · ' + money(item.amount, item.currency) : money(item.amount, item.currency);
+                    }
+                    (byDay[day] = byDay[day] || []).push({
+                        source: item.source,
+                        tone: RISK_TONE[item.risk] || '',
+                        done: item.isDone,
+                        title: item.title,
+                        sub: sub,
+                        href: item.href || ''
+                    });
                 });
-            });
+                return byDay;
+            }, function () { return {}; });
+    }
 
-            res[1].forEach(function (i) {
-                if (!i.dueDate) { return; }
-                var day = i.dueDate.slice(0, 10);
-                if (day < isoDay(from) || day > isoDay(to)) { return; }
-                push(day, {
-                    type: 'invoice',
-                    tone: 'tone-negative',
-                    done: false,
-                    title: (i.invoiceNumber ? i.invoiceNumber + ' · ' : '') + (i.customerName || 'Fatura'),
-                    sub: money(i.totalAmount, i.currency),
-                    href: '/Invoices'
-                });
-            });
-
-            return byDay;
-        });
+    // Renk anahtarı sunucudan gelen kaynak listesinden doğar: izin verilmeyen
+    // kaynak hiç yazılmaz (kullanıcıya olmayan bir veri türü vaat edilmez).
+    function renderLegend(sources) {
+        var html = sources.filter(function (s) { return s.isAvailable; })
+            .map(function (s) {
+                var meta = SOURCE_META[s.source];
+                return meta ? '<span><i class="fa ' + meta.icon + ' me-1"></i>' + meta.label + '</span>' : '';
+            }).join('');
+        $('#cal-legend-sources').html(html);
     }
 
     /* ── Ay grid'i ── */
 
     function pillHtml(ev, full) {
-        var icon = ev.type === 'invoice' ? '<i class="fa fa-file-invoice me-1"></i>' : '';
+        var meta = SOURCE_META[ev.source];
+        var icon = meta ? '<i class="fa ' + meta.icon + ' me-1"></i>' : '';
         var text = esc(ev.title) + (full && ev.sub ? ' <span class="text-muted">· ' + esc(ev.sub) + '</span>' : '');
         return '<button type="button" class="apya-cal-pill ' + ev.tone + (ev.done ? ' is-done' : '') +
             '" data-href="' + ev.href + '" title="' + esc(ev.title + (ev.sub ? ' — ' + ev.sub : '')) + '">' +
