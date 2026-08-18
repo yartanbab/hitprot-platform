@@ -87,7 +87,6 @@ public static class PlatformDomainErrorCodes
     public const string DocumentTypeNameRequired = "Platform:Documents:TypeNameRequired";
     public const string DocumentTypeCodeRequired = "Platform:Documents:TypeCodeRequired";
     public const string DocumentFieldKeyRequired = "Platform:Documents:FieldKeyRequired";
-    public const string DocumentFieldRequiredValueMissing = "Platform:Documents:FieldRequiredValueMissing";
     public const string DocumentTagNameRequired = "Platform:Documents:TagNameRequired";
     public const string DocumentWorkStepMismatch = "Platform:Documents:WorkStepMismatch";
     public const string CompliancePackageNameRequired = "Platform:Documents:CompliancePackageNameRequired";
@@ -110,9 +109,15 @@ public static class PlatformDomainErrorCodes
     public const string DocumentRuleConditionLimit = "Platform:Documents:RuleConditionLimit";
     public const string DocumentRuleActionLimit = "Platform:Documents:RuleActionLimit";
     public const string DocumentRuleNoActions = "Platform:Documents:RuleNoActions";
+    public const string DocumentRuleDisabled = "Platform:Documents:RuleDisabled";
     public const string DocumentRuleAffectedLimit = "Platform:Documents:RuleAffectedLimit";
     public const string DocumentTypeIsSystem = "Platform:Documents:TypeIsSystem";
+    public const string DocumentTypeInUse = "Platform:Documents:TypeInUse";
     public const string DocumentIntegrationNameRequired = "Platform:Documents:IntegrationNameRequired";
+
+    // --- Eşleştirme + risk kütüğü (Faz E) ---
+    public const string ProjectRiskTitleRequired = "Platform:Projects:RiskTitleRequired";
+    public const string DocumentExpenseAlreadyMatched = "Platform:Documents:ExpenseAlreadyMatched";
     public const string WorkStepNameRequired = "Platform:Documents:WorkStepNameRequired";
     public const string WorkStepScheduleInvalid = "Platform:Documents:WorkStepScheduleInvalid";
 

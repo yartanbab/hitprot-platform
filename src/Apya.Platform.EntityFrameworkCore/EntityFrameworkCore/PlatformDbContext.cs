@@ -194,6 +194,8 @@ namespace Apya.Platform.EntityFrameworkCore
         public DbSet<Apya.Platform.Documents.DocumentRuleRun> DocumentRuleRuns { get; set; }
         public DbSet<Apya.Platform.Documents.DocumentFieldPermission> DocumentFieldPermissions { get; set; }
         public DbSet<Apya.Platform.Documents.DocumentIntegration> DocumentIntegrations { get; set; }
+        public DbSet<Apya.Platform.Documents.DocumentExpenseMatch> DocumentExpenseMatches { get; set; }
+        public DbSet<ProjectRisk> ProjectRisks { get; set; }
 
         /* --- AI MODÜLÜ --- */
         public DbSet<DraftBatch> DraftBatches { get; set; }
@@ -1133,6 +1135,42 @@ namespace Apya.Platform.EntityFrameworkCore
                 b.Property(x => x.SettingsJson).HasColumnType("text");
 
                 b.HasIndex(x => new { x.TenantId, x.Kind });
+            });
+
+            /* --- EŞLEŞTİRME + RİSK KÜTÜĞÜ (FAZ E) --- */
+            builder.Entity<Apya.Platform.Documents.DocumentExpenseMatch>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "DocumentExpenseMatches", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+
+                b.Property(x => x.AnnexNumber)
+                    .HasMaxLength(Apya.Platform.Documents.MatchingConsts.MaxAnnexNumberLength);
+
+                // DocumentFile ve Expense'e FK YOK: her ikisi de Project'ten cascade
+                // aldığı için iki yol oluşur ve SQL Server reddeder (bkz. A1 notu).
+                // Bütünlük servis katmanında korunur.
+                b.HasIndex(x => new { x.DocumentFileId, x.ExpenseId }).IsUnique()
+                    .HasFilter(isSqlServer ? "[IsDeleted] = 0" : "\"IsDeleted\" = false");
+                b.HasIndex(x => x.ExpenseId);
+            });
+
+            builder.Entity<ProjectRisk>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "ProjectRisks", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+
+                b.Property(x => x.Title).IsRequired()
+                    .HasMaxLength(Apya.Platform.Documents.MatchingConsts.MaxRiskTitleLength);
+                b.Property(x => x.Mitigation)
+                    .HasMaxLength(Apya.Platform.Documents.MatchingConsts.MaxRiskTextLength);
+
+                b.HasOne<Project>()
+                 .WithMany()
+                 .HasForeignKey(x => x.ProjectId)
+                 .OnDelete(DeleteBehavior.Cascade);
+
+                // WorkStep'e FK YOK — Project'ten ikinci cascade yolu olurdu.
+                b.HasIndex(x => new { x.ProjectId, x.IsClosed });
             });
 
             /* --- BELGE (DOCUMENT FILE) + META ŞEMA --- */

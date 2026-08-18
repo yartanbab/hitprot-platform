@@ -360,6 +360,20 @@
                     <span class="apya-console-menu-trailing apya-numeric">@Model.Project?.Code</span>
                 </button>
 
+                @* Belge tarafı: her ikisi de proje bağlamlı ekranlar, bu yüzden
+                   genel menüde değil burada duruyorlar. *@
+                @if (await AuthorizationService.IsGrantedAsync(PlatformPermissions.Documents.Default))
+                {
+                    <a href="/Documents/Timeline?projectId=@Model.Project?.Id" class="apya-console-menu-item text-decoration-none">
+                        <span class="apya-console-menu-icon"><i class="fa fa-timeline" aria-hidden="true"></i></span>
+                        Zaman çizelgesi & bütçe
+                    </a>
+                    <a href="/Documents/Matching?projectId=@Model.Project?.Id" class="apya-console-menu-item text-decoration-none">
+                        <span class="apya-console-menu-icon"><i class="fa fa-link" aria-hidden="true"></i></span>
+                        Harcama & belge eşleştirme
+                    </a>
+                }
+
                 <div class="apya-console-menu-head is-divided">Görünüm</div>
                 <div class="apya-console-menu-row">
                     <span>Yoğunluk</span>

@@ -5636,3 +5636,60 @@ i.apya-priority-dot {
     font-style: normal;
     color: var(--apya-text-tertiary);
 }
+
+/* ----------------------------------------------------------------------------
+   17d) ZAMAN ÇİZELGESİ + EŞLEŞTİRME (Faz E)
+   ---------------------------------------------------------------------------- */
+.apya-doc-gantt-row {
+    display: grid;
+    grid-template-columns: 190px minmax(0, 1fr) 60px 80px;
+    align-items: center;
+    gap: 10px;
+    min-height: var(--row-h);
+    border-bottom: 1px solid var(--apya-border-subtle);
+}
+.apya-doc-gantt-row:last-child { border-bottom: none; }
+.apya-doc-gantt-track {
+    position: relative;
+    height: 20px;
+    border-radius: 6px;
+    background: var(--apya-surface-sunken);
+    display: flex;
+    align-items: center;
+}
+.apya-doc-gantt-bar {
+    position: absolute;
+    top: 3px;
+    bottom: 3px;
+    border-radius: 4px;
+    min-width: 4px;
+}
+
+/* Üç kolonlu eşleştirme tezgâhı; dar ekranda alt alta düşer. */
+.apya-doc-matchboard {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 14px;
+    align-items: start;
+}
+@media (min-width: 1100px) {
+    .apya-doc-matchboard {
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr) minmax(0, 1fr);
+    }
+}
+.apya-doc-candidate {
+    border: 1px solid var(--apya-border-default);
+    border-radius: var(--apya-radius-lg, 10px);
+    background: var(--apya-surface-raised);
+    padding: 10px;
+}
+
+@media (max-width: 767.98px) {
+    .apya-doc-gantt-row {
+        grid-template-columns: minmax(0, 1fr) 60px;
+        row-gap: 4px;
+        padding: 8px 0;
+    }
+    /* Dar ekranda Gantt çubuğu satırın tamamını kaplar. */
+    .apya-doc-gantt-track { grid-column: 1 / -1; }
+}

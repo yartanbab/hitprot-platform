@@ -165,8 +165,7 @@ public class DocumentAdminAppService : ApplicationService, IDocumentAdminAppServ
 
         if (!isDryRun && !rule.IsEnabled)
         {
-            throw new BusinessException(PlatformDomainErrorCodes.DocumentRuleNoActions)
-                .WithData("Reason", "Kapalı kural çalıştırılamaz.");
+            throw new BusinessException(PlatformDomainErrorCodes.DocumentRuleDisabled);
         }
 
         var conditions = (await _conditionRepository.GetListAsync(c => c.RuleId == ruleId))
@@ -595,8 +594,8 @@ public class DocumentAdminAppService : ApplicationService, IDocumentAdminAppServ
         var inUse = await _fileRepository.CountAsync(f => f.DocumentTypeId == id);
         if (inUse > 0)
         {
-            throw new BusinessException(PlatformDomainErrorCodes.DocumentTypeIsSystem)
-                .WithData("Reason", $"Bu tip {inUse} belgede kullanılıyor.");
+            throw new BusinessException(PlatformDomainErrorCodes.DocumentTypeInUse)
+                .WithData("Count", inUse);
         }
 
         var fields = await _fieldRepository.GetListAsync(f => f.DocumentTypeId == id);
