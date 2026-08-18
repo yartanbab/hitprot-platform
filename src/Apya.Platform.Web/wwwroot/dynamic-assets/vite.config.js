@@ -22,6 +22,7 @@ export default defineConfig({
         'dashboard':        'src/dashboard.jsx',
         'expense-capture':  'src/expense-capture.jsx',
         'documents':        'src/documents.jsx',
+        'deliveries':       'src/deliveries.jsx',
         'task-detail':      'src/task-detail.jsx',
       },
       formats: ['es'],
