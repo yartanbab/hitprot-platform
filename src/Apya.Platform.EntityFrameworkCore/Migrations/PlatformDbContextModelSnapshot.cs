@@ -3766,9 +3766,14 @@ namespace Apya.Platform.Migrations
                     b.HasIndex("CustomerId");
 
                     b.HasIndex("InvoiceNumber")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasDatabaseName("IX_AppInvoices_InvoiceNumber_Host")
+                        .HasFilter("\"TenantId\" IS NULL");
 
                     b.HasIndex("ProjectId");
+
+                    b.HasIndex("TenantId", "InvoiceNumber")
+                        .IsUnique();
 
                     b.HasIndex("TenantId", "Status");
 

@@ -724,7 +724,24 @@ namespace Apya.Platform.EntityFrameworkCore
             {
                 b.ToTable(PlatformConsts.DbTablePrefix + "Invoices", PlatformConsts.DbSchema);
                 b.ConfigureByConvention();
-                b.HasIndex(x => x.InvoiceNumber).IsUnique();
+                // Fatura numarası KİRACI BAZINDA tekildir. Önceden tekillik yalnız
+                // InvoiceNumber üzerindeydi, yani numara tüm kurulumda global tekil oluyordu:
+                // iki farklı kiracı "FTR-2026-0001" numarasını kullanamıyor, ikincisi
+                // "duplicate key" ile patlıyordu. (Soft-delete not: indeks IsDeleted'a
+                // bakmaz — silinmiş bir faturanın numarası aynı kiracıda yeniden kullanılamaz;
+                // bu davranış eskisiyle aynı, değiştirilmedi.)
+                b.HasIndex(x => new { x.TenantId, x.InvoiceNumber }).IsUnique();
+
+                // Host (TenantId NULL) faturaları yukarıdaki indeksin KAPSAMI DIŞINDA kalır:
+                // SQL Server nullable kolonlu tekil indekse otomatik "[TenantId] IS NOT NULL"
+                // filtresi ekler, Postgres'te ise NULL'lar birbirinden farklı sayılır — iki
+                // yolda da host tarafında tekillik kaybolurdu. Bu filtreli ikinci indeks
+                // host bağlamındaki tekilliği korur.
+                // (.HasFilter içeren HER indeks provider-özeldir: köşeli parantez vs çift tırnak.)
+                b.HasIndex(x => x.InvoiceNumber)
+                    .IsUnique()
+                    .HasDatabaseName("IX_AppInvoices_InvoiceNumber_Host")
+                    .HasFilter(isSqlServer ? "[TenantId] IS NULL" : "\"TenantId\" IS NULL");
                 b.HasIndex(x => x.ProjectId);
                 // TenantId öneki: Status düşük seçicilikli — TaskItem indekslerindeki gerekçeyle aynı.
                 b.HasIndex(x => new { x.TenantId, x.Status });
