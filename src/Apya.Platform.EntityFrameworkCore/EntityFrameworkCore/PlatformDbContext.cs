@@ -856,7 +856,7 @@ namespace Apya.Platform.EntityFrameworkCore
             });
 
             /* --- DİNAMİK VARLIKLAR (DYNAMIC ASSETS) YAPILANDIRMASI --- */
-            builder.ApplyConfiguration(new AppDocumentConfiguration());
+            builder.ApplyConfiguration(new AppDocumentConfiguration(isSqlServer));
             builder.ApplyConfiguration(new AppBlockConfiguration());
             builder.ApplyConfiguration(new AppResponseConfiguration());
             builder.ApplyConfiguration(new FormCategoryConfiguration());

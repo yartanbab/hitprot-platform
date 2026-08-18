@@ -1995,6 +1995,11 @@ namespace Apya.Platform.Migrations
                     b.HasIndex("ParentTemplateId");
 
                     b.HasIndex("Slug")
+                        .IsUnique()
+                        .HasDatabaseName("IX_AppDocuments_Dynamic_Slug_Host")
+                        .HasFilter("\"TenantId\" IS NULL");
+
+                    b.HasIndex("TenantId", "Slug")
                         .IsUnique();
 
                     b.HasIndex("TenantId", "Status");
