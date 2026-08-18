@@ -107,38 +107,6 @@ export function stripLayoutFor(stripWidth) {
     return { template: 'repeat(2, minmax(0, 1fr))', h: 4, compact: true };
 }
 
-/**
- * Kartları sırayla `cols` genişliğindeki satırlara dizer.
- *
- * `y` gerçek piksel satırı değil, artan bir satır indeksidir; RGL'in dikey
- * sıkıştırması (compactType="vertical") kartları yukarı çekerek nihai yeri bulur.
- * Eskiden tablet düzeni yalnız `w`'yi kırpıp `x`'i KORUYORDU: 12 kolonluk düzende
- * x=8 olan kart 8 kolonluk ızgaraya sığmadığı için RGL onu rastgele alt satıra
- * itiyordu — "kart boyutları ve yerleri tutarsız" şikâyetinin kaynağı buydu.
- */
-export function packRows(items, cols) {
-    let x = 0;
-    let row = 0;
-
-    const placed = [...items]
-        .sort((a, b) => a.y - b.y || a.x - b.x)
-        .map((item) => {
-            const w = Math.min(item.w, cols);
-            if (x + w > cols) { x = 0; row += 1; }
-            const result = { ...item, w, x, y: row };
-            x += w;
-            if (x >= cols) { x = 0; row += 1; }
-            return result;
-        });
-
-    /* Satır arkadaşları aynı yüksekliğe çekilir. Aksi halde dikey sıkıştırma
-       kısa kartı yukarı emiyor ve satırlar kayıyor (masonry) — kullanıcının
-       "kart yerleri tutarsız" dediği görüntünün dar ekrandaki hâli buydu. */
-    const tallest = new Map();
-    placed.forEach((item) => tallest.set(item.y, Math.max(tallest.get(item.y) ?? 0, item.h)));
-    return placed.map((item) => ({ ...item, h: tallest.get(item.y) }));
-}
-
 const VIEW_STORAGE_KEY = 'apya-dashboard-view';
 
 /** Aktif sekme lokalde kalır (düzenin kendisi SUNUCUDA — bkz useDashboardLayout). */
