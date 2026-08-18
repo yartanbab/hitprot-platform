@@ -130,9 +130,10 @@ public partial class DemoWorldSeeder
             {
                 ProjectCategory.GrantProject => Pick(DemoWorldData.GrantTopics),
                 ProjectCategory.Event => Pick(DemoWorldData.EventTopics),
-                _ => DemoWorldData.ProjectTopics[i % DemoWorldData.ProjectTopics.Length]
+                _ => DemoWorldData.ProjectTopics[_projectSeq % DemoWorldData.ProjectTopics.Length]
             };
 
+            _projectSeq++;
             var name = category == ProjectCategory.Event ? $"{topic} {_today.Year}" : topic;
 
             // Hibe projesi karşı tarafı hibe kurumu; diğerleri normal cari.
@@ -218,6 +219,11 @@ public partial class DemoWorldSeeder
         foreach (var project in projects)
         {
             var taskCount = Rand(6, 11);
+
+            // Başlıklar proje başına karıştırılır. Sabit bir formülle seçilirse (proje kodu
+            // uzunluğu her projede aynı olduğu için) 150 projenin hepsinde AYNI görev listesi
+            // çıkıyordu — demoda ilk bakışta göze batan bir yapaylık.
+            var titles = DemoWorldData.TaskTitles.OrderBy(_ => _rnd.Next()).ToArray();
             var projectRootIds = new List<Guid>();
 
             for (var t = 0; t < taskCount; t++)
@@ -226,7 +232,7 @@ public partial class DemoWorldSeeder
                 var assignee = Pick(team.Assignable);
 
                 var root = BuildTask(
-                    tenantId, project.Id, DemoWorldData.TaskTitles[(t * 3 + project.Code.Length) % DemoWorldData.TaskTitles.Length],
+                    tenantId, project.Id, titles[t % titles.Length],
                     status, dueOffset, assignee, parentId: null);
 
                 roots.Add(root);

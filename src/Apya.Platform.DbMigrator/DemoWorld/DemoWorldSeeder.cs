@@ -82,6 +82,11 @@ public partial class DemoWorldSeeder : IDataSeedContributor, ITransientDependenc
     /// kalır ve hakediş dilimi hiç üretilmezdi.</summary>
     private int _grantAppNo;
 
+    /// <summary>Proje konusu sayacı. BAĞLAMLAR ARASI DEVAM EDER: bağlam-içi indeks
+    /// kullanılsaydı her kiracı havuzun ilk 4-5 konusunu alır ve 30 kiracının hepsinde
+    /// aynı proje adları görünürdü.</summary>
+    private int _projectSeq;
+
     public DemoWorldSeeder(
         IServiceProvider sp,
         IConfiguration configuration,
