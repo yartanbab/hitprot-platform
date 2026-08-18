@@ -148,7 +148,8 @@ public partial class DemoWorldSeeder
                     "- Kapsam ve hedefler\n- Sorumluluklar\n- Zaman plani\n- Riskler ve onlemler\n",
                     projectId: project.Id,
                     parentDocumentId: null,
-                    icon: Pick(new[] { "fa-file-lines", "fa-file-contract", "fa-list-check", "fa-clipboard" }));
+                    // İkon alanı EMOJİ bekler (Documents CreateModal placeholder "📄"), FontAwesome sınıfı değil.
+                    icon: Pick(new[] { "📄", "📑", "📋", "🗂️" }));
 
                 // Bir kısmının son kullanma tarihi var; bir bölümü yakında doluyor
                 // (Dokumanlar ekranindaki "suresi doluyor" uyarisi bos kalmasin).
@@ -172,8 +173,8 @@ public partial class DemoWorldSeeder
     {
         var categories = new[]
         {
-            new FormCategory(_guid.Create(), "Ic Talepler", "#2563eb", "fa-inbox", 1) { TenantId = tenantId },
-            new FormCategory(_guid.Create(), "Musteri Geri Bildirim", "#16a34a", "fa-comments", 2) { TenantId = tenantId },
+            new FormCategory(_guid.Create(), "Ic Talepler", "#2563eb", "📥", 1) { TenantId = tenantId },
+            new FormCategory(_guid.Create(), "Musteri Geri Bildirim", "#16a34a", "💬", 2) { TenantId = tenantId },
         };
         await Repo<FormCategory>().InsertManyAsync(categories, autoSave: true);
 
@@ -245,6 +246,10 @@ public partial class DemoWorldSeeder
                     response.TenantId = tenantId;
                     response.SetStatus(Chance(70) ? ResponseStatus.Reviewed : ResponseStatus.Pending);
                     responses.Add(response);
+
+                    // Formdaki yanit sayaci denormalize tutuluyor; yanit satirini eklemek
+                    // yetmez, sayaci da islemek gerekir yoksa kart "0 yanit" gosterir.
+                    form.IncrementResponseCount();
                 }
             }
         }
