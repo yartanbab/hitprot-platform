@@ -456,12 +456,25 @@ $(function () {
     taskService.getUsersLookup().then(function (res) {
         var $menu = $('#chip-assignee-menu');
         (res.items || []).forEach(function (u) {
-            var name = u.userName;
+            // Etiket ad+soyad; ikisi de boşsa kullanıcı adına düşülür — listedeki
+            // "atanan" sütunu da aynı kuralı uyguluyor (AssigneeName eşlemesi).
+            var full = [u.name, u.surname]
+                .filter(function (s) { return s && String(s).trim(); })
+                .join(' ')
+                .trim();
+            var name = full || u.userName;
+
+            // Baş harfler: ad ve soyadın ilk harfi (proje kartlarındaki ToInitials ile aynı).
+            var parts = String(name).trim().split(/\s+/);
+            var initials = (parts.length >= 2
+                ? parts[0].charAt(0) + parts[parts.length - 1].charAt(0)
+                : String(name).trim().slice(0, 2)).toUpperCase();
+
             $menu.append(
                 $('<button type="button" class="apya-console-menu-item">')
                     .attr('data-filter', 'assignee').attr('data-value', u.id).attr('data-label', name)
                     .append($('<span class="apya-avatar apya-avatar-' + apyaTask.hashTone(name) + '">')
-                        .text(String(name).trim().slice(0, 2).toUpperCase()))
+                        .text(initials))
                     .append(document.createTextNode(name))
             );
         });
