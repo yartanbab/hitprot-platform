@@ -139,4 +139,72 @@ public class CalendarAppService_Tests : PlatformEntityFrameworkCoreTestBase
         feed.Items.ShouldNotBeEmpty();
         feed.Items.ShouldAllBe(i => i.Source == CalendarSourceType.Task);
     }
+
+    [Fact]
+    public async Task RescheduleItemAsync_gorevi_baska_gune_tasir()
+    {
+        var today = _clock.Now.Date;
+        var task = new TaskItem(Guid.NewGuid(), "Tasinacak gorev",
+            dueDate: today, tenantId: _currentTenant.Id, now: today.AddDays(-2));
+        await _taskRepository.InsertAsync(task, autoSave: true);
+
+        await _calendar.RescheduleItemAsync(new RescheduleCalendarItemInput
+        {
+            Source   = CalendarSourceType.Task,
+            SourceId = task.Id,
+            NewDate  = today.AddDays(3)
+        });
+
+        var updated = await _taskRepository.GetAsync(task.Id);
+        updated.DueDate!.Value.Date.ShouldBe(today.AddDays(3));
+    }
+
+    [Fact]
+    public async Task RescheduleItemAsync_fatura_vadesini_degistirmeyi_reddeder()
+    {
+        var today = _clock.Now.Date;
+        var project = new Project(Guid.NewGuid(), _currentTenant.Id, null, "Vade Testi", "VDE-1", "Vade korumasi");
+        await _projectRepository.InsertAsync(project, autoSave: true);
+
+        var invoice = new Invoice(Guid.NewGuid(), _currentTenant.Id, project.Id, "FTR-VADE-1",
+            today.AddDays(-10), today, 20m, "TRY", InvoiceDirection.Sales, null, null);
+        await _invoiceRepository.InsertAsync(invoice, autoSave: true);
+
+        // Muhasebe kaydının vadesi takvimden sürüklenerek değiştirilemez.
+        await Should.ThrowAsync<Volo.Abp.BusinessException>(() =>
+            _calendar.RescheduleItemAsync(new RescheduleCalendarItemInput
+            {
+                Source   = CalendarSourceType.Invoice,
+                SourceId = invoice.Id,
+                NewDate  = today.AddDays(5)
+            }));
+
+        var unchanged = await _invoiceRepository.GetAsync(invoice.Id);
+        unchanged.DueDate.Date.ShouldBe(today);
+    }
+
+    [Fact]
+    public async Task CompleteItemAsync_gorevi_kapatir_ve_riski_kalkar()
+    {
+        var today = _clock.Now.Date;
+        var task = new TaskItem(Guid.NewGuid(), "Kapanacak gorev",
+            dueDate: today.AddDays(-3), tenantId: _currentTenant.Id, now: today.AddDays(-10));
+        await _taskRepository.InsertAsync(task, autoSave: true);
+
+        await _calendar.CompleteItemAsync(new CompleteCalendarItemInput
+        {
+            Source   = CalendarSourceType.Task,
+            SourceId = task.Id
+        });
+
+        var feed = await _calendar.GetFeedAsync(new GetCalendarFeedInput
+        {
+            From = today.AddDays(-7),
+            To   = today
+        });
+
+        var item = feed.Items.Single(i => i.Title == "Kapanacak gorev");
+        item.IsDone.ShouldBeTrue();
+        item.Risk.ShouldBe(CalendarRiskLevel.None);
+    }
 }

@@ -101,3 +101,22 @@ public class GetCalendarFeedInput
     /// <summary>Yalnız bu projeye bağlı öğeler.</summary>
     public Guid? ProjectId { get; set; }
 }
+
+/// <summary>Takvimden bir öğeyi başka güne taşımak için.</summary>
+public class RescheduleCalendarItemInput
+{
+    public CalendarSourceType Source { get; set; }
+
+    public Guid SourceId { get; set; }
+
+    /// <summary>Öğenin taşınacağı gün (saat bileşeni yok sayılır).</summary>
+    public DateTime NewDate { get; set; }
+}
+
+/// <summary>Takvimden bir öğeyi kapatmak için.</summary>
+public class CompleteCalendarItemInput
+{
+    public CalendarSourceType Source { get; set; }
+
+    public Guid SourceId { get; set; }
+}

@@ -27,6 +27,7 @@ public class CalendarAppService : ApplicationService, ICalendarAppService
     private readonly CalendarTokenProtector _tokenProtector;
     private readonly IDistributedCache _distributedCache;
     private readonly CalendarFeedProvider _feedProvider;
+    private readonly ITaskAppService _taskAppService;
 
     public CalendarAppService(
         IRepository<ExternalCalendarAccount, Guid> accountRepository,
@@ -36,9 +37,11 @@ public class CalendarAppService : ApplicationService, ICalendarAppService
         IHttpClientFactory httpClientFactory,
         CalendarTokenProtector tokenProtector,
         IDistributedCache distributedCache,
-        CalendarFeedProvider feedProvider)
+        CalendarFeedProvider feedProvider,
+        ITaskAppService taskAppService)
     {
         _feedProvider      = feedProvider;
+        _taskAppService    = taskAppService;
         _accountRepository = accountRepository;
         _taskRepository    = taskRepository;
         _calendarManager   = calendarManager;
@@ -54,6 +57,52 @@ public class CalendarAppService : ApplicationService, ICalendarAppService
     public Task<CalendarFeedDto> GetFeedAsync(GetCalendarFeedInput input)
     {
         return _feedProvider.BuildAsync(input);
+    }
+
+    /// <summary>
+    /// Öğeyi başka güne taşır. Yalnız görev taşınabilir; diğer kaynaklar bir muhasebe
+    /// ya da kurum kaydının tarihidir ve takvimden değiştirilmez (feed'de
+    /// <c>CanReschedule=false</c> döner, ekran da sürüklemeye izin vermez — bu kontrol
+    /// istemciye güvenmemek içindir).
+    /// <para>
+    /// Gün farkı SUNUCUDA hesaplanır ve görevin kendi <c>DeferAsync</c>'ine devredilir:
+    /// gizlilik kontrolü, başlangıç/bitiş tutarlılığı ve dış takvim senkronu tek yerde
+    /// kalsın diye takvim kendi güncelleme yolunu açmaz.
+    /// </para>
+    /// </summary>
+    public async Task RescheduleItemAsync(RescheduleCalendarItemInput input)
+    {
+        EnsureReschedulable(input.Source);
+
+        var task = await _taskRepository.GetAsync(input.SourceId);
+        var basis = (task.DueDate ?? Clock.Now).Date;
+        var days = (int)(input.NewDate.Date - basis).TotalDays;
+
+        if (days == 0) return;
+
+        await _taskAppService.DeferAsync(input.SourceId, days);
+    }
+
+    public async Task CompleteItemAsync(CompleteCalendarItemInput input)
+    {
+        if (input.Source != CalendarSourceType.Task)
+        {
+            throw new BusinessException(message: "Bu öğe takvimden tamamlanamaz.");
+        }
+
+        await _taskAppService.UpdateStatusAsync(input.SourceId, Tasks.TaskStatus.Done);
+    }
+
+    private static void EnsureReschedulable(CalendarSourceType source)
+    {
+        if (source == CalendarSourceType.Task) return;
+
+        throw new BusinessException(message: source switch
+        {
+            CalendarSourceType.Invoice => "Fatura vadesi takvimden değiştirilemez.",
+            CalendarSourceType.Grant   => "Hibe son tarihi takvimden değiştirilemez.",
+            _                          => "Bu öğenin tarihi takvimden değiştirilemez."
+        });
     }
 
     public async Task<List<CalendarAccountDto>> GetMyAccountsAsync()

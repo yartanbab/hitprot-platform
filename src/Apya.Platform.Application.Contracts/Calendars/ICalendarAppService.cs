@@ -14,6 +14,16 @@ public interface ICalendarAppService : IApplicationService
     /// </summary>
     Task<CalendarFeedDto> GetFeedAsync(GetCalendarFeedInput input);
 
+    /// <summary>
+    /// Öğeyi başka güne taşır. Yalnız <see cref="CalendarItemDto.CanReschedule"/> olan
+    /// kaynaklarda geçerlidir: fatura/gider/gelir vadeleri ve hibe son tarihleri
+    /// muhasebe/kurum kaydıdır, takvimden sürüklenerek değiştirilmez.
+    /// </summary>
+    Task RescheduleItemAsync(RescheduleCalendarItemInput input);
+
+    /// <summary>Öğeyi kapatır (görev → Tamamlandı). Kapatılamayan kaynakta hata döner.</summary>
+    Task CompleteItemAsync(CompleteCalendarItemInput input);
+
     Task<List<CalendarAccountDto>> GetMyAccountsAsync();
     Task ConnectAccountAsync(ConnectCalendarInput input);
     Task DisconnectAccountAsync(Guid id);
