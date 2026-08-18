@@ -8,7 +8,7 @@ import { CardCatalog } from './catalog/CardCatalog';
 import {
     CARD_REGISTRY, VIEWS, DEFAULT_VIEW,
     GRID_BREAKPOINTS, GRID_COLS, GRID_ROW_HEIGHT, GRID_MARGIN,
-    tierFromWidth, fullWidthCardWidth, stripLayoutFor, packRows,
+    tierFromWidth, fullWidthCardWidth, stripLayoutFor,
     readViewPreference, writeViewPreference,
 } from './layouts/viewPresets';
 import { useDashboardLayout, useSaveLayout, useResetLayout } from './hooks/useDashboardLayout';
@@ -74,25 +74,16 @@ function DashboardRoot() {
         [gridWidth],
     );
 
-    const layouts = useMemo(() => {
-        /* Özet şeridi tam genişlikte olduğu için yüksekliği kutucuk satır
-           sayısını takip etmeli — sabit h=2 çok satırlı dizilimde içeriği kırpar. */
-        const desktop = cards.map((card) => toGridItem(card, strip.h));
-        return {
-            desktop,
-            tablet: packRows(
-                /* Tablette kart ya tam (6) ya yarım (3) genişlik alır: şeritler ve
-                   masaüstünde 2/3'ten geniş duran kartlar tam, kalanı yarım. */
-                desktop.map((item) => ({
-                    ...item,
-                    w: (CARD_REGISTRY[item.i]?.band || item.w >= 8) ? GRID_COLS.tablet : GRID_COLS.tablet / 2,
-                    minW: undefined,
-                })),
-                GRID_COLS.tablet,
-            ),
-            mobile: packRows(desktop.map((item) => ({ ...item, w: 1, minW: undefined })), GRID_COLS.mobile),
-        };
-    }, [cards, strip.h]);
+    /* RGL YALNIZ masaüstü kırılımında render edilir (aşağıya bakın). Tablet ve
+       mobil düzenler artık RGL'in sabit-piksel ızgarasından TÜRETİLMİYOR; doğal
+       akışlı `NativeStack` çiziyor. Sabit yükseklik (h×64px) dar ekranda içerikle
+       uyuşmayıp kartları üst üste bindiriyordu — kullanıcının bildirdiği hata buydu.
+       Bu yüzden yalnız desktop düzenini hazırlıyoruz.
+       Özet şeridinin yüksekliği kutucuk satır sayısını takip etmeli (strip.h). */
+    const layouts = useMemo(
+        () => ({ desktop: cards.map((card) => toGridItem(card, strip.h)) }),
+        [cards, strip.h],
+    );
 
     const handleViewChange = useCallback((next) => {
         setViewKey(next);
@@ -182,9 +173,10 @@ function DashboardRoot() {
                   kart ↔ kart 10px (GRID_MARGIN) — başlık mesafesinden DAHA DAR,
                   böylece kartlar tek blok gibi okunur, başlık ayrışır. */}
             <main className="px-4 pt-4 pb-4 mobile:px-3">
-                {/* Ölçüm kabı — RGL'e verilen `width` bu düğümden okunur. */}
+                {/* Ölçüm kabı — hem RGL'in `width`'i hem de kırılım (tier) kararı bu
+                    düğümün ölçülen genişliğinden gelir. */}
                 <div ref={gridHostRef}>
-                {gridWidth != null && (
+                {gridWidth != null && (tier === 'desktop' ? (
                 <Responsive
                     width={gridWidth}
                     className={cn('apya-dashboard-grid', editMode && 'apya-dashboard-grid--edit')}
@@ -230,7 +222,9 @@ function DashboardRoot() {
                         );
                     })}
                 </Responsive>
-                )}
+                ) : (
+                    <NativeStack tier={tier} cards={cards} filter={filter} strip={strip} />
+                ))}
                 </div>
 
                 {/* Izgara ile alt şerit arası da kart↔kart boşluğuyla aynı (20px). */}
@@ -249,6 +243,43 @@ function DashboardRoot() {
                 presentCardKeys={cards.map((c) => c.cardKey)}
                 onAdd={handleAddCard}
             />
+        </div>
+    );
+}
+
+/**
+ * Masaüstü altı (tablet + mobil) yerleşim — RGL YERİNE doğal akışlı CSS ızgarası.
+ *
+ * Kartlar DOĞAL yükseklikte akar; sabit piksel yükseklik (RGL'in h×64px'i) yok,
+ * dolayısıyla içerik dar ekranda uzasa bile kutuya sığmayıp alttaki karta binmez —
+ * kullanıcının bildirdiği "havada duran, üst üste binen kartlar" hatasının kök nedeni
+ * buydu. Düzenleme/sürükleme zaten yalnız masaüstünde aktif olduğu için burada kayıp yok.
+ *   - mobil (tek kolon): her kart tam satır, doğal yükseklik.
+ *   - tablet (iki kolon): kartlar ikişerli akar; şerit kartları (band) tam satır kaplar.
+ * `strip` şablonu DashboardRoot'ta kabın genişliğinden türetilir; burada yalnız aktarılır.
+ */
+function NativeStack({ tier, cards, filter, strip }) {
+    const columns = tier === 'tablet' ? 2 : 1;
+    return (
+        <div
+            className={cn('grid items-stretch', tier === 'tablet' ? 'gap-3.5' : 'gap-3')}
+            style={{ gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` }}
+        >
+            {cards.map((card) => {
+                const meta = CARD_REGISTRY[card.cardKey];
+                if (!meta) return null;
+                const Card = meta.component;
+                const spanFull = columns > 1 && meta.band;
+                return (
+                    <div key={card.cardKey} style={spanFull ? { gridColumn: '1 / -1' } : undefined}>
+                        <Card
+                            filter={filter}
+                            editMode={false}
+                            {...(card.cardKey === 'summary-strip' ? { template: strip.template, compact: strip.compact } : null)}
+                        />
+                    </div>
+                );
+            })}
         </div>
     );
 }
