@@ -50,15 +50,26 @@ Her katmanda **aynı alan klasörü** kullanılır: `Domain/Projects/` ↔ `Appl
 ## 3. Komutlar
 
 ```bash
-dotnet build Apya.Platform.sln
-dotnet test
+# Çözüm dosyası .slnx'tir (.sln YOK). Build öncesi çalışan Web uygulamasını DURDUR:
+# aksi halde bin/ altındaki DLL'ler kilitli olduğu için MSB3021 "being used by
+# another process" hatalarıyla düşer (kod hatası sanma).
+dotnet build Apya.Platform.slnx
+dotnet test Apya.Platform.slnx
 
-# Migration (EntityFrameworkCore proje dizininde)
-dotnet ef migrations add <Ad> --startup-project ../Apya.Platform.Web
-dotnet ef database update --startup-project ../Apya.Platform.Web
+# --- Migration: HER şema değişikliğinde İKİ tane üret (çift provider) ---
+# Postgres — appsettings "SqlServer" dediği için sağlayıcıyı override ET, yoksa
+# "target project doesn't match your migrations assembly" hatası alırsın.
+cd src/Apya.Platform.EntityFrameworkCore
+Database__Provider=PostgreSql dotnet ef migrations add <Ad> --startup-project ../Apya.Platform.Web
 
-# Migration + seed uygula
-dotnet run --project src/Apya.Platform.DbMigrator
+# SQL Server — migration'lar AYRI assembly'de; proje kendi startup'ı olmalı
+# (Web startup olursa Generic Host design-time factory'yi atlar).
+cd src/Apya.Platform.EntityFrameworkCore.SqlServer
+dotnet ef migrations add <Ad> --project . --startup-project . --output-dir Migrations
+
+# --- Migration + seed uygula: PROJE DİZİNİNDEN (aşağıdaki nota bak) ---
+cd src/Apya.Platform.DbMigrator
+dotnet run -- --OpenIddict:Applications:Platform_Web:ClientSecret=<secret>
 
 # İstemci kütüphaneleri (wwwroot/libs) — worktree'de ŞART.
 # Eksikse Web her isteğe 500 "The Libs Folder is Missing!" döner.
@@ -79,6 +90,20 @@ cd src/Apya.Platform.Web/wwwroot/dynamic-assets && npm ci
 > kazanım değil, install-libs artığıdır: kilit dosyasından `@testing-library/dom` ve
 > bağımlılıklarını düşürür, yerine yalnız o makineye özgü platform ikililerini
 > (`@esbuild/*`, `fsevents`) ekler. `git checkout -- .../yarn.lock` ile at.
+
+> **DbMigrator'ı depo kökünden çalıştırma.** `Host.CreateDefaultBuilder` yapılandırmayı
+> **çalışma dizininden** okur, `appsettings.json` ise proje dizinindedir. Kökten
+> `dotnet run --project src/Apya.Platform.DbMigrator` dersen appsettings HİÇ yüklenmez →
+> `Database:Provider` görülmez, Npgsql varsayılanına düşer ve bağlantı dizesi boş gelir
+> (`The ConnectionString property has not been initialized`). Önce `cd` et.
+>
+> **`ClientSecret` parametresi şart.** `appsettings.json`'da `Platform_Web` istemcisinin
+> secret'ı boştur; `OpenIddictDataSeedContributor` confidential istemcide boş secret'ı
+> reddeder ve **tüm tohumlama zincirini** daha ilk adımda düşürür. Tarayıcı girişini
+> etkilemez — uygulama non-tiered, giriş çerez tabanlıdır; bu istemci API/Swagger içindir.
+>
+> **Başarıyı çıkış kodundan değil log'dan doğrula:** `"Successfully completed all database
+> migrations."` satırını ara. Tam log `src/Apya.Platform.DbMigrator/Logs/logs.txt`'te.
 
 Web: `https://localhost:44386`
 
