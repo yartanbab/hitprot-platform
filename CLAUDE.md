@@ -71,6 +71,13 @@ dotnet ef migrations add <Ad> --project . --startup-project . --output-dir Migra
 cd src/Apya.Platform.DbMigrator
 dotnet run -- --OpenIddict:Applications:Platform_Web:ClientSecret=<secret>
 
+# --- Yalnız şema uygula (SEED ÇALIŞMAZ — aşağıdaki uyarıya bak) ---
+cd src/Apya.Platform.EntityFrameworkCore.SqlServer
+dotnet ef database update --project . --startup-project .
+# Postgres'e uygulamak için:
+#   cd src/Apya.Platform.EntityFrameworkCore
+#   Database__Provider=PostgreSql dotnet ef database update --startup-project ../Apya.Platform.Web
+
 # İstemci kütüphaneleri (wwwroot/libs) — worktree'de ŞART.
 # Eksikse Web her isteğe 500 "The Libs Folder is Missing!" döner.
 abp install-libs
@@ -104,6 +111,19 @@ cd src/Apya.Platform.Web/wwwroot/dynamic-assets && npm ci
 >
 > **Başarıyı çıkış kodundan değil log'dan doğrula:** `"Successfully completed all database
 > migrations."` satırını ara. Tam log `src/Apya.Platform.DbMigrator/Logs/logs.txt`'te.
+
+> **`dotnet ef database update` yalnız ŞEMA uygular — TOHUMLAMA ÇALIŞTIRMAZ.**
+> DbMigrator ise migrate **+ seed** yapar (admin kullanıcısı, OpenIddict istemcisi,
+> izin/paket tohumları). Boş bir veritabanını sadece `database update` ile kurarsan
+> uygulama ayağa kalkar ama **giriş yapılamaz**. Günlük kullanımda DbMigrator'ı tercih et;
+> `database update`'i tek bir migration'ı hızlıca uygulamak/geri almak gibi cerrahi
+> durumlar için sakla.
+>
+> Hedef veritabanı `Database:Provider` + connection string'den çözülür — **bulunduğun
+> proje dizininden DEĞİL.** (`migrations add`'deki "target project doesn't match your
+> migrations assembly" hatası burada çıkmaz; komut sessizce config'in gösterdiği
+> sağlayıcıya uygular.) Postgres'e uygulayacaksan override'ı unutma, yoksa farkında
+> olmadan SQL Server'a gidersin.
 
 Web: `https://localhost:44386`
 
