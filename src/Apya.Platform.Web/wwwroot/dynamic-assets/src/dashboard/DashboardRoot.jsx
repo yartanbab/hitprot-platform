@@ -94,8 +94,8 @@ function DashboardRoot() {
 
     const handleLayoutChange = useCallback((currentLayout) => {
         if (!editMode) return; /* Düzenleme kapalıyken sürükleme zaten yok */
-        /* Tablet/mobil düzenleri 12 kolonluk düzenden TÜRETİLİR (packRows).
-           O koordinatları kaydetmek masaüstü düzenini bozardı. */
+        /* RGL zaten yalnız masaüstünde render ediliyor; bu savunma amaçlı: dar
+           kırılımlar NativeStack ile çizildiği için kaydedilecek koordinat yok. */
         if (tier !== 'desktop') return;
         setDraftCards((previous) => {
             const source = previous ?? cards;
