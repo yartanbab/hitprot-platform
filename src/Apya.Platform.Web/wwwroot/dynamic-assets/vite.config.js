@@ -23,6 +23,7 @@ export default defineConfig({
         'expense-capture':  'src/expense-capture.jsx',
         'documents':        'src/documents.jsx',
         'task-detail':      'src/task-detail.jsx',
+        'calendar':         'src/calendar.jsx',
       },
       formats: ['es'],
       fileName: (_format, entryName) => `${entryName}.js`,

@@ -4,108 +4,22 @@
     ViewBag.Title = "Takvim";
 }
 
-<style>
-    /* ── Aylık takvim (HANDOFF: 7 kolonlu grid, renk-kodlu event pill'leri,
-       gün pop-over'ı, "Bu Hafta" ajandası) — tamamen token-driven. ── */
-    .apya-cal-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 14px; }
-    .apya-cal-title { font-size: 15px; font-weight: 650; color: var(--apya-text-primary); margin: 0 0 0 6px; text-transform: capitalize; }
-    .apya-cal-legend { display: flex; gap: 14px; font-size: 11.5px; color: var(--apya-text-secondary); }
-    .apya-cal-legend i { display: inline-block; width: 8px; height: 8px; border-radius: 99px; margin-right: 5px; }
+@* Tailwind island stylesheet (js/style.css) — bu partial olmadan island stilsiz kalır. *@
+<partial name="_ApyaThemeBootstrap" />
 
-    .apya-cal-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); border: 1px solid var(--apya-border-default); border-radius: var(--apya-radius-lg); overflow: hidden; position: relative; }
-    .apya-cal-dow { padding: 8px 10px; background: var(--apya-surface-raised); border-bottom: 1px solid var(--apya-border-default); font-size: 10.5px; font-weight: 700; letter-spacing: .4px; text-transform: uppercase; color: var(--apya-text-tertiary); text-align: right; }
-    .apya-cal-day { min-height: 92px; padding: 6px; border-bottom: 1px solid var(--apya-border-subtle); border-right: 1px solid var(--apya-border-subtle); background: var(--apya-surface-base); cursor: pointer; transition: background var(--apya-motion-fast) ease; display: flex; flex-direction: column; gap: 3px; min-width: 0; }
-    .apya-cal-day:nth-child(7n) { border-right: 0; }
-    .apya-cal-day:hover { background: var(--apya-surface-raised); }
-    .apya-cal-day.is-other { background: var(--apya-surface-sunken); }
-    .apya-cal-day.is-other .apya-cal-num { color: var(--apya-text-disabled); }
-    .apya-cal-num { align-self: flex-end; font-size: 11.5px; font-weight: 600; color: var(--apya-text-secondary); font-variant-numeric: tabular-nums; line-height: 1; padding: 3px 5px; border-radius: 99px; }
-    .apya-cal-day.is-today .apya-cal-num { background: var(--apya-accent-500); color: #fff; }
+@*
+    Takvim, React island'a taşındı (dynamic-assets/src/calendar.jsx).
+    Veri tek uçtan gelir: /api/app/calendar/feed.
 
-    .apya-cal-pill { display: block; width: 100%; padding: 2px 7px; border: 0; border-radius: 6px; font-size: 10.5px; font-weight: 600; line-height: 1.5; text-align: left; color: var(--apya-text-primary); background: color-mix(in srgb, var(--apya-text-primary) 7%, transparent); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; cursor: pointer; }
-    /* Renk yalnız risk için: gecikmiş kırmızı, bugün son gün amber. Risksiz öğe nötr kalır. */
-    .apya-cal-pill.tone-negative { background: color-mix(in srgb, var(--apya-negative-500) 14%, transparent); }
-    .apya-cal-pill.tone-warning { background: color-mix(in srgb, var(--apya-warning-500) 16%, transparent); }
-    .apya-cal-pill.tone-positive { background: color-mix(in srgb, var(--apya-positive-500) 14%, transparent); }
-    .apya-cal-pill.is-done { text-decoration: line-through; opacity: .65; }
-    .apya-cal-more { border: 0; background: none; padding: 0 7px; font-size: 10.5px; font-weight: 600; color: var(--apya-accent-500); text-align: left; cursor: pointer; }
+    Entegrasyon kartları (Google/Outlook bağlama) şimdilik sayfanın altında
+    duruyor; Faz 5'te sağdan açılan senkron drawer'ına taşınacak — o zamana
+    kadar hesap bağlama akışı çalışır durumda kalsın diye kaldırılmadı.
+*@
+<div data-page-description="Görev, fatura, hibe ve finans tarihleri tek takvimde" class="apya-page">
+    <div id="apya-calendar-root"></div>
+</div>
 
-    /* Mobil: ay grid'i 7 sütuna sıkışınca pill'ler ~50px hücrede 10.5px'te
-       hem okunaksız hem dokunma hedefi olarak yetersizdi (2026-08 tasarım
-       denetimi) — tek yol görev/faturaya gitmek olduğu için önem taşıyor. */
-    @@media (max-width: 575.98px) {
-        .apya-cal-day { min-height: 78px; padding: 4px; gap: 4px; }
-        .apya-cal-pill { font-size: 11.5px; padding: 4px 6px; line-height: 1.4; }
-        .apya-cal-dow { padding: 6px 4px; font-size: 9.5px; }
-    }
-    /* Ay gezinme okları — dokunmatikte 40px altı hit alanı (2026-08 tasarım
-       denetimi). btn-group bitişik olduğu için genişleme komşu butona taşmaz,
-       yalnızca grup büyür. */
-    @@media (pointer: coarse) {
-        #cal-prev, #cal-today, #cal-next { min-height: 40px; }
-    }
-
-    /* fixed: grid'in overflow:hidden'ından etkilenmesin (alt satır pop-over'ları kırpılmasın) */
-    .apya-cal-popover { position: fixed; z-index: var(--apya-z-popover, 1030); width: 280px; background: var(--apya-surface-elevated, var(--apya-surface-base)); border: 1px solid var(--apya-border-default); border-radius: var(--apya-radius-xl); box-shadow: var(--apya-shadow-lg); padding: 12px; }
-    .apya-cal-popover-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; font-size: 12.5px; font-weight: 650; color: var(--apya-text-primary); }
-    .apya-cal-popover-close { border: 0; background: none; color: var(--apya-text-tertiary); cursor: pointer; padding: 2px 6px; }
-    .apya-cal-popover .apya-cal-pill { margin-bottom: 4px; white-space: normal; }
-
-    .apya-agenda-day { padding: 8px 0; border-bottom: 1px solid var(--apya-border-subtle); }
-    .apya-agenda-day:last-child { border-bottom: 0; }
-    .apya-agenda-date { font-size: 10.5px; font-weight: 700; letter-spacing: .4px; text-transform: uppercase; color: var(--apya-text-tertiary); margin-bottom: 5px; }
-    .apya-agenda-date.is-today { color: var(--apya-accent-500); }
-    .apya-agenda-empty { padding: 28px 8px; text-align: center; color: var(--apya-text-tertiary); font-size: 12.5px; }
-
-    /* ── Entegrasyon kartları (mevcut) — token-driven. ── */
-    .calendar-card { border-radius: var(--apya-radius-xl); border: 1px solid var(--apya-border-default); background: var(--apya-surface-base); box-shadow: var(--apya-shadow-sm); transition: transform var(--apya-motion-base) ease, box-shadow var(--apya-motion-base) ease; padding: 20px 22px; margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between; }
-    .calendar-card:hover { transform: translateY(-3px); box-shadow: var(--apya-shadow-md); }
-    .provider-info { display: flex; align-items: center; }
-    .provider-logo { width: 46px; height: 46px; display: flex; align-items: center; justify-content: center; border-radius: var(--apya-radius-lg); margin-right: 16px; font-size: 1.35rem; color: #fff; }
-    .logo-google { background: #ea4335; }
-    .logo-outlook { background: #0078d4; }
-    .connected-email { font-size: 0.85rem; color: var(--apya-text-secondary); margin-top: 4px; }
-    .provider-name { font-weight: 700; font-size: 1.05rem; color: var(--apya-text-primary); margin-bottom: 2px; }
-</style>
-
-<div data-page-description="Takvim entegrasyonları" class="apya-page">
-    <div class="row g-3">
-        @* ── Aylık takvim ── *@
-        <div class="col-12 col-xl-8">
-            <div class="card h-100">
-                <div class="card-body">
-                    <div class="apya-cal-head">
-                        <div class="d-flex align-items-center">
-                            <div class="btn-group btn-group-sm" role="group" aria-label="Ay gezinme">
-                                <button type="button" id="cal-prev" class="btn btn-outline-secondary" title="Önceki ay"><i class="fa fa-chevron-left"></i></button>
-                                <button type="button" id="cal-today" class="btn btn-outline-secondary">Bugün</button>
-                                <button type="button" id="cal-next" class="btn btn-outline-secondary" title="Sonraki ay"><i class="fa fa-chevron-right"></i></button>
-                            </div>
-                            <h5 class="apya-cal-title" id="cal-title"></h5>
-                        </div>
-                        <div class="apya-cal-legend">
-                            @* Kaynak listesi sunucudan gelir (izin verilmeyen kaynak hiç yazılmaz) — bkz. calendar.js/renderLegend *@
-                            <span id="cal-legend-sources" class="d-flex gap-3"></span>
-                            <apya-hint placement="bottom" text="Yalnız tarihi olan kayıtlar takvimde görünür: görev son tarihi, fatura vadesi, hibe son tarihi, gider/gelir ve kasa hareketi tarihi. Renk yalnız riski gösterir — kırmızı gecikmiş, amber bugün son gün." />
-                        </div>
-                    </div>
-                    <div class="apya-cal-grid" id="cal-grid" aria-live="polite"></div>
-                </div>
-            </div>
-        </div>
-
-        @* ── Bu Hafta ajandası ── *@
-        <div class="col-12 col-xl-4">
-            <div class="card h-100">
-                <div class="card-body">
-                    <h6 class="card-title mb-3"><i class="fa fa-list-ul me-2 text-muted"></i>Bu Hafta</h6>
-                    <div id="cal-agenda"></div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    @* ── Dış takvim entegrasyonları ── *@
+<div class="apya-page">
     <div class="row justify-content-center mt-4">
         <div class="col-12 col-lg-8">
             <h6 class="apya-overline mb-1">Dış Takvimler</h6>
@@ -166,7 +80,20 @@
     </div>
 </div>
 
+<style>
+    /* ── Entegrasyon kartları — token-driven. Faz 5'te drawer'a taşınacak. ── */
+    .calendar-card { border-radius: var(--apya-radius-xl); border: 1px solid var(--apya-border-default); background: var(--apya-surface-base); box-shadow: var(--apya-shadow-sm); transition: transform var(--apya-motion-base) ease, box-shadow var(--apya-motion-base) ease; padding: 20px 22px; margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between; }
+    .calendar-card:hover { transform: translateY(-3px); box-shadow: var(--apya-shadow-md); }
+    .provider-info { display: flex; align-items: center; }
+    .provider-logo { width: 46px; height: 46px; display: flex; align-items: center; justify-content: center; border-radius: var(--apya-radius-lg); margin-right: 16px; font-size: 1.35rem; color: #fff; }
+    .logo-google { background: #ea4335; }
+    .logo-outlook { background: #0078d4; }
+    .connected-email { font-size: 0.85rem; color: var(--apya-text-secondary); margin-top: 4px; }
+    .provider-name { font-weight: 700; font-size: 1.05rem; color: var(--apya-text-primary); margin-bottom: 2px; }
+</style>
+
+<script type="module" src="~/js/calendar.js" asp-append-version="true"></script>
+
 @section scripts {
     <abp-script src="/Pages/Calendars/index.js" />
-    <abp-script src="/Pages/Calendars/calendar.js" />
 }
