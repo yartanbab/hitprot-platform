@@ -16,14 +16,27 @@ public class DocumentAttachment : CreationAuditedEntity<Guid>, IMultiTenant
     public long FileSize { get; set; }        // Boyut (Byte)
 
     /// <summary>
+    /// Bu ekin ait olduğu belge (meta verinin sahibi). Versiyon zinciri buna asılır.
+    /// </summary>
+    public Guid DocumentFileId { get; set; }
+
+    /// <summary>
     /// Aynı "dosya kimliği"ni versiyonlar arasında taşır — ilk yüklemede kendi Id'si,
     /// sonraki versiyonlarda aynı değer devralınır.
+    /// KORUNUYOR: <see cref="DocumentFileId"/>'ye geçişin veri taşıması bu kolondan üretildi;
+    /// taşımanın geri alınabilmesi için Faz A'da silinmiyor.
     /// </summary>
     public Guid VersionGroupId { get; set; }
 
     public int VersionNumber { get; set; } = 1;
 
     public bool IsLatest { get; set; } = true;
+
+    /// <summary>Dosya içeriğinin SHA-256 özeti (hex). Çift kayıt tespiti — Faz E.</summary>
+    public string? ContentHash { get; set; }
+
+    /// <summary>OCR ile çıkarılmış düz metin. Belge içi arama için; OCR altyapısı gelene kadar null.</summary>
+    public string? OcrText { get; set; }
 
     public DocumentAttachment() { }
 

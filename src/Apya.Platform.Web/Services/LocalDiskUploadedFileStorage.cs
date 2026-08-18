@@ -53,4 +53,18 @@ public class LocalDiskUploadedFileStorage : IUploadedFileStorage, ITransientDepe
 
         return storedFileName;
     }
+
+    public async Task<string> StoreGeneratedAsync(byte[] content, string extension)
+    {
+        if (content == null || content.Length == 0)
+            throw new BusinessException(PlatformDomainErrorCodes.FileUnsupportedExtension);
+
+        var uploadsFolder = _rootFolderProvider.GetRootFolder();
+        var storedFileName = Guid.NewGuid().ToString() + (extension.StartsWith(".") ? extension : "." + extension);
+        var filePath = Path.Combine(uploadsFolder, storedFileName);
+
+        await File.WriteAllBytesAsync(filePath, content);
+
+        return storedFileName;
+    }
 }

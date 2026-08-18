@@ -1579,6 +1579,307 @@ i.apya-priority-dot {
 .apya-docs-detail {
     min-height: 460px;
 }
+/* Detay paneli uzun form taşıyor (özel alanlar + versiyonlar) — kabuk büyümesin. */
+@media (min-width: 992px) {
+    .apya-docs-detail {
+        max-height: calc(100vh - var(--apya-header-h, 60px) - 220px);
+        overflow: hidden;
+    }
+    .apya-docs-detail > .apya-md-detail {
+        max-height: 100%;
+    }
+}
+
+/* ----------------------------------------------------------------------------
+   17b) DOKÜMANLAR — belge listesi (Faz A)
+   KPI şeridi, sekmeler, liste satırı, görünüm anahtarı, toplu işlem şeridi.
+   Satır yüksekliği var(--row-h) → yoğunluk anahtarı (data-density) otomatik uygular.
+   Tüm renkler token; koyu tema ayrıca ezilmez (tokenlar zaten temaya duyarlı).
+   ---------------------------------------------------------------------------- */
+.apya-doc-kpis {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 12px;
+    margin-bottom: 14px;
+}
+.apya-doc-kpi {
+    border: 1px solid var(--apya-border-default);
+    border-radius: var(--apya-radius-xl);
+    background: var(--apya-surface-raised);
+    box-shadow: var(--apya-shadow-sm);
+    padding: 12px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+.apya-doc-kpi-icon {
+    width: 24px;
+    height: 24px;
+    border-radius: 8px;
+    display: grid;
+    place-items: center;
+    font-size: 11px;
+    flex: none;
+}
+.apya-doc-kpi-icon.is-accent { background: var(--apya-accent-soft); color: var(--apya-accent-500); }
+.apya-doc-kpi-icon.is-warning { background: rgba(217, 119, 6, .14); color: var(--apya-warning-500); }
+.apya-doc-kpi-value {
+    font-size: 22px;
+    font-weight: 500;
+    letter-spacing: -.02em;
+    color: var(--apya-text-primary);
+}
+
+.apya-doc-tabs {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    border-bottom: 1px solid var(--apya-border-default);
+    margin-bottom: 14px;
+}
+.apya-doc-tab {
+    appearance: none;
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    padding: 9px 14px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--apya-text-tertiary);
+    cursor: pointer;
+}
+.apya-doc-tab.is-active {
+    color: var(--apya-accent-500);
+    border-bottom-color: var(--apya-accent-500);
+    font-weight: 600;
+}
+.apya-doc-tab:disabled { opacity: .45; cursor: not-allowed; }
+
+/* Uygunluk/Etkinlik sekmelerinde sağ detay kolonu yok → orta panel genişler. */
+@media (min-width: 992px) {
+    .apya-docs-shell.is-wide {
+        grid-template-columns: 240px minmax(0, 1fr);
+    }
+}
+
+/* --- Uygunluk kontrol listesi --- */
+.apya-doc-check-card {
+    border: 1px solid var(--apya-border-default);
+    border-radius: var(--apya-radius-xl);
+    background: var(--apya-surface-raised);
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+.apya-doc-check-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+}
+.apya-doc-progress {
+    height: 6px;
+    border-radius: var(--apya-radius-full);
+    background: var(--apya-surface-sunken);
+    overflow: hidden;
+}
+.apya-doc-progress > div {
+    height: 100%;
+    border-radius: var(--apya-radius-full);
+    transition: width var(--apya-duration-normal, .2s) var(--apya-easing-standard, ease);
+}
+.apya-doc-check-list {
+    display: flex;
+    flex-direction: column;
+    border-top: 1px solid var(--apya-border-subtle);
+}
+.apya-doc-check-row {
+    display: grid;
+    grid-template-columns: 118px minmax(0, 1fr) 150px minmax(0, 200px);
+    align-items: center;
+    gap: 10px;
+    min-height: var(--row-h);
+    padding: 6px 0;
+    border-bottom: 1px solid var(--apya-border-subtle);
+}
+.apya-doc-check-row:last-child { border-bottom: none; }
+/* Teslimi bloke eden eksik kalem — satırın solunda uyarı şeridi. */
+.apya-doc-check-row.is-blocking {
+    box-shadow: inset 3px 0 0 0 var(--apya-negative-500);
+    padding-left: 10px;
+}
+
+/* --- Etkinlik (denetim izi) satırı --- */
+.apya-doc-activity-row {
+    display: grid;
+    grid-template-columns: 128px minmax(0, 1fr) minmax(0, 200px) 150px;
+    align-items: center;
+    gap: 10px;
+    min-height: var(--row-h);
+    padding: 0 14px;
+    border-bottom: 1px solid var(--apya-border-subtle);
+}
+.apya-doc-activity-row:hover { background: var(--apya-surface-hover); }
+
+.apya-doc-filterchip {
+    appearance: none;
+    height: 26px;
+    padding: 0 10px;
+    border: 1px solid var(--apya-border-default);
+    border-radius: var(--apya-radius-full);
+    background: var(--apya-surface-raised);
+    color: var(--apya-text-secondary);
+    font-size: 11.5px;
+    cursor: pointer;
+}
+.apya-doc-filterchip.is-active {
+    border-color: var(--apya-accent-500);
+    background: var(--apya-accent-soft);
+    color: var(--apya-accent-500);
+    font-weight: 600;
+}
+
+/* Metin görünümlü eylem düğmesi (feragat/kaldır) — Button primitive'i fazla ağır kalıyor. */
+.apya-doc-linkbtn {
+    appearance: none;
+    border: none;
+    background: none;
+    padding: 0;
+    font-size: 11.5px;
+    color: var(--apya-accent-500);
+    cursor: pointer;
+    white-space: nowrap;
+}
+.apya-doc-linkbtn:disabled { opacity: .5; cursor: not-allowed; }
+
+@media (max-width: 767.98px) {
+    .apya-doc-check-row,
+    .apya-doc-activity-row {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 4px;
+        padding: 10px 14px;
+    }
+}
+
+/* Liste satırı — tablo yerine grid: kolon şablonu JS'te tek yerde tanımlı. */
+.apya-doc-row {
+    display: grid;
+    align-items: center;
+    gap: 8px;
+    padding: 0 14px;
+    min-height: var(--row-h);
+    border-bottom: 1px solid var(--apya-border-subtle);
+    cursor: pointer;
+}
+.apya-doc-row:hover { background: var(--apya-surface-hover); }
+.apya-doc-row.is-selected { background: var(--apya-accent-soft); }
+.apya-doc-row-head {
+    min-height: 34px;
+    background: var(--apya-surface-sunken);
+    cursor: default;
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: var(--apya-text-tertiary);
+}
+.apya-doc-row-head:hover { background: var(--apya-surface-sunken); }
+
+.apya-doc-viewtoggle {
+    display: flex;
+    border: 1px solid var(--apya-border-default);
+    border-radius: 8px;
+    overflow: hidden;
+}
+.apya-doc-viewtoggle button {
+    appearance: none;
+    border: none;
+    background: var(--apya-surface-raised);
+    color: var(--apya-text-tertiary);
+    width: 30px;
+    height: 28px;
+    display: grid;
+    place-items: center;
+    font-size: 12px;
+    cursor: pointer;
+}
+.apya-doc-viewtoggle button.is-active {
+    background: var(--apya-accent-soft);
+    color: var(--apya-accent-500);
+}
+
+.apya-doc-bulkbar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    background: var(--apya-surface-inverse, #111827);
+    color: var(--apya-text-inverse, #fff);
+}
+.apya-doc-bulkbar-action {
+    appearance: none;
+    border: none;
+    background: none;
+    color: inherit;
+    opacity: .82;
+    font-size: 12px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+.apya-doc-bulkbar-action:hover:not(:disabled) { opacity: 1; }
+.apya-doc-bulkbar-action:disabled { opacity: .45; cursor: not-allowed; }
+
+.apya-doc-toast {
+    position: fixed;
+    right: 20px;
+    bottom: 20px;
+    z-index: 95;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 16px;
+    border-radius: var(--apya-radius-xl);
+    border: 1px solid var(--apya-border-strong);
+    background: var(--apya-surface-elevated);
+    color: var(--apya-text-primary);
+    box-shadow: var(--apya-shadow-lg);
+}
+.apya-doc-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 90;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background: var(--apya-surface-overlay);
+}
+.apya-doc-dialog {
+    width: 100%;
+    max-width: 380px;
+    padding: 22px;
+    border-radius: var(--apya-radius-2xl);
+    border: 1px solid var(--apya-border-strong);
+    background: var(--apya-surface-elevated);
+    box-shadow: var(--apya-shadow-xl);
+}
+
+/* Detay panelindeki tip seçici — Input primitive'i ile aynı görsel dil. */
+.apya-select {
+    width: 100%;
+    height: 32px;
+    padding: 0 8px;
+    font-size: 12.5px;
+    border: 1px solid var(--apya-border-default);
+    border-radius: var(--apya-radius-md, 8px);
+    background: var(--apya-surface-raised);
+    color: var(--apya-text-primary);
+}
+.apya-select:disabled { opacity: .6; }
 
 /* ─── Genel amaçlı temiz tablo — zebra/kalın border yerine ince alt çizgi + hover.
    striped-rows="true" kaldırılan abp-table'lara eklenir (bkz. Tasks/Index.cshtml).
@@ -5309,4 +5610,86 @@ i.apya-priority-dot {
         animation: apyaFadeIn var(--apya-motion-slow) var(--apya-easing-standard) both;
     }
     .apya-proj-drawer-foot { padding-bottom: calc(14px + env(safe-area-inset-bottom, 0px)); }
+}
+
+/* ----------------------------------------------------------------------------
+   17c) DOKÜMAN YÖNETİMİ — kural kurgusu blokları (Faz D)
+   ---------------------------------------------------------------------------- */
+.apya-doc-rule-block {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 10px 12px;
+    border: 1px solid var(--apya-border-default);
+    border-radius: var(--apya-radius-lg, 10px);
+    background: var(--apya-surface-raised);
+}
+.apya-doc-rule-block.is-if {
+    border-color: var(--apya-accent-500);
+    background: var(--apya-accent-soft);
+}
+.apya-doc-rule-block.is-then {
+    border-color: var(--apya-positive-500);
+    background: var(--apya-positive-soft, rgba(16, 185, 129, .08));
+}
+.apya-doc-rule-block em {
+    font-style: normal;
+    color: var(--apya-text-tertiary);
+}
+
+/* ----------------------------------------------------------------------------
+   17d) ZAMAN ÇİZELGESİ + EŞLEŞTİRME (Faz E)
+   ---------------------------------------------------------------------------- */
+.apya-doc-gantt-row {
+    display: grid;
+    grid-template-columns: 190px minmax(0, 1fr) 60px 80px;
+    align-items: center;
+    gap: 10px;
+    min-height: var(--row-h);
+    border-bottom: 1px solid var(--apya-border-subtle);
+}
+.apya-doc-gantt-row:last-child { border-bottom: none; }
+.apya-doc-gantt-track {
+    position: relative;
+    height: 20px;
+    border-radius: 6px;
+    background: var(--apya-surface-sunken);
+    display: flex;
+    align-items: center;
+}
+.apya-doc-gantt-bar {
+    position: absolute;
+    top: 3px;
+    bottom: 3px;
+    border-radius: 4px;
+    min-width: 4px;
+}
+
+/* Üç kolonlu eşleştirme tezgâhı; dar ekranda alt alta düşer. */
+.apya-doc-matchboard {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 14px;
+    align-items: start;
+}
+@media (min-width: 1100px) {
+    .apya-doc-matchboard {
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr) minmax(0, 1fr);
+    }
+}
+.apya-doc-candidate {
+    border: 1px solid var(--apya-border-default);
+    border-radius: var(--apya-radius-lg, 10px);
+    background: var(--apya-surface-raised);
+    padding: 10px;
+}
+
+@media (max-width: 767.98px) {
+    .apya-doc-gantt-row {
+        grid-template-columns: minmax(0, 1fr) 60px;
+        row-gap: 4px;
+        padding: 8px 0;
+    }
+    /* Dar ekranda Gantt çubuğu satırın tamamını kaplar. */
+    .apya-doc-gantt-track { grid-column: 1 / -1; }
 }
