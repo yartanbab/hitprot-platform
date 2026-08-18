@@ -57,7 +57,19 @@ namespace Apya.Platform
             // 1. TaskItem -> Yeni TaskDto
             // Başına Apya.Platform.Tasks yazarak yenisini kastettiğimizi belirttik.
             CreateMap<Apya.Platform.Tasks.TaskItem, Apya.Platform.Tasks.TaskDto>()
-                .ForMember(dest => dest.AssigneeName, opt => opt.MapFrom(src => src.Assignee != null ? src.Assignee.UserName : null))
+                // Sorumlu adı ad+soyad olarak gösterilir; ikisi de boşsa kullanıcı adına düşülür.
+                // Daha önce doğrudan UserName'e eşleniyordu, bu yüzden görev LİSTESİNDE "pm1"
+                // görünürken görev DETAYINDA (TaskAppService, ad+soyad kurar) "Mehmet Demir"
+                // yazıyordu. Tek kaynak burası olsun diye eşleme buraya taşındı.
+                // İfade EF Core'a çevrilebilir biçimde tutuldu (ProjectTo kullanımına hazır).
+                .ForMember(dest => dest.AssigneeName, opt => opt.MapFrom(src =>
+                    src.Assignee == null
+                        ? null
+                        : (src.Assignee.Name == null || src.Assignee.Name == "")
+                            ? src.Assignee.UserName
+                            : (src.Assignee.Surname == null || src.Assignee.Surname == "")
+                                ? src.Assignee.Name
+                                : src.Assignee.Name + " " + src.Assignee.Surname))
                 .ForMember(dest => dest.ParentTaskTitle, opt => opt.MapFrom(src => src.ParentTask != null ? src.ParentTask.Title : null))
                 .ForMember(dest => dest.IsFavorite, opt => opt.Ignore()) // TaskFavorite join'inden AppService'te doldurulur
                 // Alt görev sayaçları gizlilik (APYA-22) süzgecinden geçmek zorunda,
