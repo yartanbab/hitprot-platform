@@ -60,9 +60,25 @@ dotnet ef database update --startup-project ../Apya.Platform.Web
 # Migration + seed uygula
 dotnet run --project src/Apya.Platform.DbMigrator
 
-# İstemci kütüphaneleri
+# İstemci kütüphaneleri (wwwroot/libs) — worktree'de ŞART.
+# Eksikse Web her isteğe 500 "The Libs Folder is Missing!" döner.
 abp install-libs
+
+# React uygulaması (wwwroot/dynamic-assets) — abp install-libs SONRASINDA ŞART.
+cd src/Apya.Platform.Web/wwwroot/dynamic-assets && npm ci
 ```
+
+> **`abp install-libs` çalıştırdıysan `npm ci`'yi ATLAMA.** install-libs,
+> `wwwroot/dynamic-assets` altında **yarn** çalıştırır; bu proje ise **npm** ile kuruludur
+> (`package-lock.json` commit'lidir). `@testing-library/dom` bir *peer dependency* ve
+> yarn v1 peer'ları kurmaz → paket `node_modules`'a hiç inmez ve frontend testleri
+> `Cannot find module '@testing-library/dom'` ile toptan patlar (37 dosya / 242 test).
+> `npm ci` doğru kurulumu geri getirir.
+>
+> Aynı sebeple **`dynamic-assets/yarn.lock`'ta oluşan değişikliği COMMIT ETME** —
+> kazanım değil, install-libs artığıdır: kilit dosyasından `@testing-library/dom` ve
+> bağımlılıklarını düşürür, yerine yalnız o makineye özgü platform ikililerini
+> (`@esbuild/*`, `fsevents`) ekler. `git checkout -- .../yarn.lock` ile at.
 
 Web: `https://localhost:44386`
 
