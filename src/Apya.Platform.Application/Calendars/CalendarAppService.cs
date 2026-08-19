@@ -29,6 +29,8 @@ public class CalendarAppService : ApplicationService, ICalendarAppService
     private readonly CalendarFeedProvider _feedProvider;
     private readonly ITaskAppService _taskAppService;
     private readonly IRepository<CalendarSyncLogEntry, Guid> _syncLogRepository;
+    private readonly IRepository<IcalSubscription, Guid> _icalRepository;
+    private readonly IcalSubscriptionFetcher _icalFetcher;
 
     public CalendarAppService(
         IRepository<ExternalCalendarAccount, Guid> accountRepository,
@@ -40,11 +42,15 @@ public class CalendarAppService : ApplicationService, ICalendarAppService
         IDistributedCache distributedCache,
         CalendarFeedProvider feedProvider,
         ITaskAppService taskAppService,
-        IRepository<CalendarSyncLogEntry, Guid> syncLogRepository)
+        IRepository<CalendarSyncLogEntry, Guid> syncLogRepository,
+        IRepository<IcalSubscription, Guid> icalRepository,
+        IcalSubscriptionFetcher icalFetcher)
     {
         _feedProvider       = feedProvider;
         _taskAppService     = taskAppService;
         _syncLogRepository  = syncLogRepository;
+        _icalRepository     = icalRepository;
+        _icalFetcher        = icalFetcher;
         _accountRepository = accountRepository;
         _taskRepository    = taskRepository;
         _calendarManager   = calendarManager;
@@ -138,7 +144,63 @@ public class CalendarAppService : ApplicationService, ICalendarAppService
             }
         }
 
+        // iCal abonelikleri de aynı katmandan gelir: ekran için "dış etkinlik" hepsi
+        // birdir, farkı sağlayıcısı değil salt-okunur olmasıdır.
+        await AppendIcalSubscriptionsAsync(dto, from, to);
+
         return dto;
+    }
+
+    /// <summary>
+    /// Abone olunan .ics takvimlerini besler. Abonelik başına TOLERANSLI: biri
+    /// yanıt vermezse o satır hata durumuna düşer, diğerleri gelmeye devam eder.
+    /// </summary>
+    private async Task AppendIcalSubscriptionsAsync(CalendarExternalEventsDto dto, DateTime from, DateTime to)
+    {
+        var subscriptions = await _icalRepository.GetListAsync(x => x.UserId == CurrentUser.Id && x.IsEnabled);
+
+        foreach (var subscription in subscriptions)
+        {
+            var status = new ExternalCalendarStatusDto
+            {
+                AccountId = subscription.Id,
+                Provider  = CalendarProviderType.ICloud, // ICS aboneliği: sağlayıcıya bağlı değil
+                Email     = subscription.DisplayName,
+                Error     = subscription.LastError
+            };
+            dto.Accounts.Add(status);
+
+            try
+            {
+                var events = await _icalFetcher.FetchAsync(subscription, from, to);
+                status.EventCount = events.Count;
+                status.Error      = null;
+
+                foreach (var ev in events)
+                {
+                    dto.Items.Add(new CalendarItemDto
+                    {
+                        Key       = $"{(int)CalendarSourceType.ExternalEvent}:{subscription.Id}:{ev.ExternalId}",
+                        Source    = CalendarSourceType.ExternalEvent,
+                        SourceId  = subscription.Id,
+                        Title     = ev.Title,
+                        Date      = ev.StartTime.Date,
+                        StartTime = ev.IsAllDay ? null : ev.StartTime,
+                        EndTime   = ev.IsAllDay ? null : ev.EndTime,
+                        IsAllDay  = ev.IsAllDay,
+                        Subtitle  = subscription.DisplayName,
+                        Risk      = CalendarRiskLevel.None,
+                        // Tek yönlü abonelik: APYA'dan taşınamaz, kapatılamaz.
+                        CanReschedule = false
+                    });
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.LogWarning(ex, "iCal aboneliği okunamadı. Id={Id}", subscription.Id);
+                status.Error = "Bağlantı yanıt vermiyor.";
+            }
+        }
     }
 
     /* ── Senkron ayarları (Faz 5) ─────────────────────────────────────────── */
