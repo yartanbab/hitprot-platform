@@ -105,11 +105,45 @@ function CapacityBar({ load, capacity }) {
 export function MonthGrid({
     month, byDay, today, capacity, onSelectItem, onSelectDay, selectedDay,
     onDropItem, pending = {}, errors = {},
+    focusedDay, onFocusDay, onNavigate,
 }) {
     const days = monthGridDays(month);
     const todayKey = isoDay(today);
     const [dragging, setDragging] = React.useState(null);
     const [dropTarget, setDropTarget] = React.useState(null);
+    const gridRef = React.useRef(null);
+
+    /* Roving tabindex: grid TEK sekme durağıdır. 42 hücre sekme sırasına girseydi
+       klavye kullanıcısı takvimi geçmek için 42 kez Tab'lardı; içeri girildikten
+       sonra oklarla gezilir (WAI-ARIA grid deseni). */
+    const focusedKey = focusedDay ?? selectedDay ?? todayKey;
+
+    const moveFocus = (deltaDays) => {
+        const next = addDays(new Date(`${focusedKey}T00:00:00`), deltaDays);
+        /* Görünen ayın dışına çıkılırsa ay değişir — odak kaybolmasın. */
+        if (!days.some((d) => isoDay(d) === isoDay(next))) onNavigate?.(next);
+        onFocusDay?.(isoDay(next));
+    };
+
+    const onKeyDown = (e) => {
+        const step = { ArrowLeft: -1, ArrowRight: 1, ArrowUp: -7, ArrowDown: 7 }[e.key];
+        if (step) {
+            e.preventDefault();
+            moveFocus(step);
+            return;
+        }
+        if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            onSelectDay(focusedKey);
+        }
+    };
+
+    /* Odak DOM'a da taşınır ki ekran okuyucu hangi hücrede olunduğunu söylesin.
+       Yalnız grid ZATEN odaktayken: sayfa yüklenince odağı çalmayalım. */
+    React.useEffect(() => {
+        const node = gridRef.current?.querySelector(`[data-day="${focusedKey}"]`);
+        if (node && gridRef.current?.contains(document.activeElement)) node.focus();
+    }, [focusedKey]);
 
     return (
         <div className="overflow-hidden rounded-card border border-default bg-surface-base">
@@ -127,7 +161,14 @@ export function MonthGrid({
                 ))}
             </div>
 
-            <div className="grid grid-cols-7">
+            <div
+                ref={gridRef}
+                role="grid"
+                aria-label="Ay takvimi"
+                tabIndex={0}
+                onKeyDown={onKeyDown}
+                className="grid grid-cols-7 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-border-focus"
+            >
                 {days.map((day) => {
                     const key = isoDay(day);
                     const items = byDay[key] ?? [];
@@ -141,8 +182,11 @@ export function MonthGrid({
                         <div
                             key={key}
                             role="gridcell"
-                            tabIndex={-1}
-                            onClick={() => onSelectDay(key)}
+                            data-day={key}
+                            tabIndex={key === focusedKey ? 0 : -1}
+                            aria-selected={isSelected}
+                            aria-label={`${fmt.dayTitle(day)}${items.length ? `, ${items.length} öğe` : ', boş'}`}
+                            onClick={() => { onFocusDay?.(key); onSelectDay(key); }}
                             onDragOver={dragging ? (e) => {
                                 e.preventDefault();
                                 e.dataTransfer.dropEffect = 'move';

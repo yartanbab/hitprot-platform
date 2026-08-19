@@ -11,11 +11,15 @@ import { ItemDrawer } from './ItemDrawer';
 import { SyncDrawer } from './SyncDrawer';
 import { SmartDeferPanel } from './SmartDeferPanel';
 import { SetupWizard } from './SetupWizard';
+import { ShortcutHelp } from './ShortcutHelp';
+import { Announcer } from './Announcer';
+import { PrintView } from './PrintView';
 import { useCalendarFeed } from './hooks/useCalendarFeed';
 import { useCalendarPrefs } from './hooks/useCalendarPrefs';
 import { useCalendarMutations } from './hooks/useCalendarMutations';
 import { useExternalEvents } from './hooks/useExternalEvents';
 import { useCalendarPreferences } from './hooks/useCalendarPreferences';
+import { useCalendarKeyboard } from './hooks/useCalendarKeyboard';
 import { layoutOf, useContainerWidth } from './hooks/useContainerWidth';
 import {
     MONTH_CELLS, addDays, dayLoad, fmt, groupByDay, isoDay, monthGridStart, stripTime, weekDays,
@@ -64,6 +68,8 @@ export function CalendarRoot() {
     const [syncOpen, setSyncOpen] = useState(false);
     const [deferOpen, setDeferOpen] = useState(false);
     const [setupDismissed, setSetupDismissed] = useState(false);
+    const [helpOpen, setHelpOpen] = useState(false);
+    const [focusedDay, setFocusedDay] = useState(null);
 
     const { view, setView, applyResponsiveDefault, enabledSources, toggleSource, resetSources } =
         useCalendarPrefs();
@@ -155,6 +161,27 @@ export function CalendarRoot() {
 
     const mutations = useCalendarMutations();
 
+    /* Klavye: sürükle-bırakla yapılabilen her şey klavyeyle de yapılabilmeli. */
+    const deferFocusedDay = useCallback((days) => {
+        const key = focusedDay ?? selectedDay;
+        if (!key) return;
+        for (const item of byDay[key] ?? []) {
+            if (item.canReschedule && !item.isDone) {
+                mutations.reschedule(item, addDays(new Date(`T00:00:00`), days));
+            }
+        }
+    }, [focusedDay, selectedDay, byDay, mutations]);
+
+    useCalendarKeyboard({
+        onView: setView,
+        onToday: goToday,
+        onPrev: () => setMonth((m) => step(m, view, -1)),
+        onNext: () => setMonth((m) => step(m, view, 1)),
+        onDeferSelected: deferFocusedDay,
+        onUndo: () => mutations.lastAction?.undo?.(),
+        onToggleHelp: () => setHelpOpen((v) => !v),
+    });
+
     const hasAnyData = allItems.length > 0;
     const filteredToEmpty = hasAnyData && items.length === 0;
     const selectedItems = selectedDay ? (byDay[selectedDay] ?? []) : [];
@@ -184,6 +211,7 @@ export function CalendarRoot() {
                 onNext={() => setMonth((m) => step(m, view, 1))}
                 onToday={goToday}
                 overloadDays={overloadDays}
+                onHelp={() => setHelpOpen(true)}
             />
 
             {isError && (
@@ -270,6 +298,9 @@ export function CalendarRoot() {
                             onSelectItem={openItem}
                             onSelectDay={setSelectedDay}
                             onDropItem={mutations.reschedule}
+                            focusedDay={focusedDay}
+                            onFocusDay={setFocusedDay}
+                            onNavigate={(date) => setMonth(date)}
                             pending={mutations.pending}
                             errors={mutations.errors}
                         />
@@ -310,6 +341,22 @@ export function CalendarRoot() {
                     <SheetContent side="bottom" title="Gün detayı" className="max-h-[80vh] p-0">{panel}</SheetContent>
                 </Sheet>
             )}
+
+            {/* Baskı çıktısı yalnız  print içinde görünür; ekranda yer kaplamaz. */}
+            <PrintView
+                items={items}
+                month={month}
+                today={today}
+                generatedAt={fmt.dayShort(today)}
+            />
+
+            <ShortcutHelp open={helpOpen} onClose={() => setHelpOpen(false)} />
+
+            {/* Duyurular: taşıma nazik, senkron hatası ısrarlı. */}
+            <Announcer
+                polite={mutations.lastAction?.message ?? ''}
+                assertive={external.data?.accounts?.find((a) => a.error)?.error ?? ''}
+            />
 
             <SyncDrawer open={syncOpen} onClose={() => setSyncOpen(false)} />
 

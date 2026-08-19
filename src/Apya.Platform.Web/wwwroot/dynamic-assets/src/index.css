@@ -91,3 +91,48 @@
     font-weight: 600;
   }
 }
+
+/* ---------------------------------------------------------------------------
+   Takvim baskı çıktısı (Faz 8) — A4 YATAY, iki sayfa.
+   Tailwind ile ifade EDİLEMEZ: @page kuralı ve ekran arayüzünü baskıda tamamen
+   gizlemek. Kapsam .apya-print-* ile sınırlı; başka sayfaların baskısına sızmaz.
+--------------------------------------------------------------------------- */
+@media print {
+    @page {
+        size: A4 landscape;
+        margin: 10mm;
+    }
+
+    /* Ekran arayüzü (araç çubuğu, ray, drawer'lar) baskıda YOK. */
+    #apya-calendar-root > div > *:not(.apya-print-root) {
+        display: none !important;
+    }
+
+    /* LeptonX kabuğu: kenar çubuğu ve üst bar kağıda basılmasın. */
+    .lpx-sidebar, .lpx-topbar, .lpx-topbar-container, .lpx-mobile-navbar,
+    .apya-mobile-tabbar, .apya-mobile-drawer {
+        display: none !important;
+    }
+
+    .apya-print-root {
+        display: block !important;
+        color: #111;
+        background: #fff;
+    }
+
+    .apya-print-page {
+        /* Her sayfa kendi kağıdını doldurur; içerik taşarsa kırpılmaz, akar. */
+        break-inside: auto;
+    }
+
+    .apya-print-break {
+        break-before: page;
+    }
+
+    /* Dolgular kalkar: risk sol kenar çizgisi + koyu metinle anlatılır
+       (siyah-beyaz çıktıda renk ayırt edilemez). */
+    .apya-print-root * {
+        background: transparent !important;
+        box-shadow: none !important;
+    }
+}
