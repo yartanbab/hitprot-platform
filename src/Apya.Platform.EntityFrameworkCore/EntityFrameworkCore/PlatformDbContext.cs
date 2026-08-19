@@ -170,6 +170,32 @@ namespace Apya.Platform.EntityFrameworkCore
         public DbSet<Apya.Platform.Documents.Document> Documents { get; set; }
         public DbSet<Apya.Platform.Documents.DocumentAttachment> DocumentAttachments { get; set; }
         public DbSet<Apya.Platform.Documents.DocumentAccessLog> DocumentAccessLogs { get; set; }
+        public DbSet<Apya.Platform.Documents.DocumentFile> DocumentFiles { get; set; }
+        public DbSet<Apya.Platform.Documents.DocumentType> DocumentTypes { get; set; }
+        public DbSet<Apya.Platform.Documents.DocumentTypeField> DocumentTypeFields { get; set; }
+        public DbSet<Apya.Platform.Documents.DocumentFieldValue> DocumentFieldValues { get; set; }
+        public DbSet<Apya.Platform.Documents.DocumentTag> DocumentTags { get; set; }
+        public DbSet<Apya.Platform.Documents.DocumentFileTag> DocumentFileTags { get; set; }
+        public DbSet<ProjectWorkStep> ProjectWorkSteps { get; set; }
+        public DbSet<Apya.Platform.Documents.CompliancePackage> CompliancePackages { get; set; }
+        public DbSet<Apya.Platform.Documents.ComplianceRequirement> ComplianceRequirements { get; set; }
+        public DbSet<Apya.Platform.Documents.ComplianceAssignment> ComplianceAssignments { get; set; }
+        public DbSet<Apya.Platform.Documents.ComplianceItemState> ComplianceItemStates { get; set; }
+        public DbSet<Apya.Platform.Documents.ReportTemplate> ReportTemplates { get; set; }
+        public DbSet<Apya.Platform.Documents.ReportSection> ReportSections { get; set; }
+        public DbSet<Apya.Platform.Documents.ReportRun> ReportRuns { get; set; }
+        public DbSet<Apya.Platform.Documents.DeliveryPackage> DeliveryPackages { get; set; }
+        public DbSet<Apya.Platform.Documents.DeliveryPackageItem> DeliveryPackageItems { get; set; }
+        public DbSet<Apya.Platform.Documents.ExternalShareLink> ExternalShareLinks { get; set; }
+        public DbSet<Apya.Platform.Documents.ExternalShareAccessLog> ExternalShareAccessLogs { get; set; }
+        public DbSet<Apya.Platform.Documents.DocumentRule> DocumentRules { get; set; }
+        public DbSet<Apya.Platform.Documents.DocumentRuleCondition> DocumentRuleConditions { get; set; }
+        public DbSet<Apya.Platform.Documents.DocumentRuleAction> DocumentRuleActions { get; set; }
+        public DbSet<Apya.Platform.Documents.DocumentRuleRun> DocumentRuleRuns { get; set; }
+        public DbSet<Apya.Platform.Documents.DocumentFieldPermission> DocumentFieldPermissions { get; set; }
+        public DbSet<Apya.Platform.Documents.DocumentIntegration> DocumentIntegrations { get; set; }
+        public DbSet<Apya.Platform.Documents.DocumentExpenseMatch> DocumentExpenseMatches { get; set; }
+        public DbSet<ProjectRisk> ProjectRisks { get; set; }
 
         /* --- AI MODÜLÜ --- */
         public DbSet<DraftBatch> DraftBatches { get; set; }
@@ -844,15 +870,481 @@ namespace Apya.Platform.EntityFrameworkCore
             {
                 b.ToTable(PlatformConsts.DbTablePrefix + "DocumentAttachments", PlatformConsts.DbSchema);
                 b.ConfigureByConvention();
+                b.Property(x => x.ContentHash).HasMaxLength(Apya.Platform.Documents.DocumentConsts.ContentHashLength);
+                b.Property(x => x.OcrText).HasColumnType("text");
                 b.HasIndex(x => x.DocumentId);
                 b.HasIndex(x => new { x.DocumentId, x.VersionGroupId });
+                b.HasIndex(x => x.DocumentFileId);
+                b.HasIndex(x => x.ContentHash); // çift kayıt tespiti (Faz E)
             });
 
             builder.Entity<Apya.Platform.Documents.DocumentAccessLog>(b =>
             {
                 b.ToTable(PlatformConsts.DbTablePrefix + "DocumentAccessLogs", PlatformConsts.DbSchema);
                 b.ConfigureByConvention();
+                b.Property(x => x.Detail).HasMaxLength(500);
+                b.Property(x => x.ActorRole).HasMaxLength(64);
                 b.HasIndex(x => x.DocumentId);
+                // Etkinlik sekmesi belge bazında ve daima tarihe göre azalan okur.
+                b.HasIndex(x => new { x.DocumentFileId, x.CreationTime });
+                b.HasIndex(x => new { x.TenantId, x.CreationTime });
+            });
+
+            /* --- KURUM UYGUNLUĞU (COMPLIANCE) --- */
+            builder.Entity<Apya.Platform.Documents.CompliancePackage>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "CompliancePackages", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+
+                b.Property(x => x.Name).IsRequired().HasMaxLength(Apya.Platform.Documents.ComplianceConsts.MaxPackageNameLength);
+                b.Property(x => x.Issuer).IsRequired().HasMaxLength(Apya.Platform.Documents.ComplianceConsts.MaxIssuerLength);
+                b.Property(x => x.Code).IsRequired().HasMaxLength(Apya.Platform.Documents.ComplianceConsts.MaxPackageCodeLength);
+                b.Property(x => x.Description).HasMaxLength(Apya.Platform.Documents.ComplianceConsts.MaxDescriptionLength);
+
+                b.HasIndex(x => new { x.TenantId, x.Code }).IsUnique()
+                    .HasFilter(isSqlServer ? "[IsDeleted] = 0" : "\"IsDeleted\" = false");
+            });
+
+            builder.Entity<Apya.Platform.Documents.ComplianceRequirement>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "ComplianceRequirements", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+
+                b.Property(x => x.Title).IsRequired().HasMaxLength(Apya.Platform.Documents.ComplianceConsts.MaxRequirementTitleLength);
+
+                b.HasOne<Apya.Platform.Documents.CompliancePackage>()
+                 .WithMany()
+                 .HasForeignKey(x => x.PackageId)
+                 .OnDelete(DeleteBehavior.Cascade);
+
+                b.HasOne<Apya.Platform.Documents.DocumentType>()
+                 .WithMany()
+                 .HasForeignKey(x => x.DocumentTypeId)
+                 .OnDelete(DeleteBehavior.SetNull);
+
+                b.HasIndex(x => new { x.PackageId, x.Order });
+            });
+
+            builder.Entity<Apya.Platform.Documents.ComplianceAssignment>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "ComplianceAssignments", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+
+                b.Property(x => x.PeriodCode).HasMaxLength(Apya.Platform.Documents.DocumentConsts.MaxPeriodCodeLength);
+
+                b.HasOne<Project>()
+                 .WithMany()
+                 .HasForeignKey(x => x.ProjectId)
+                 .OnDelete(DeleteBehavior.Cascade);
+
+                // Paket host'ta da olabildiği için FK YOK — silme kontrolü servis katmanında.
+                b.HasIndex(x => new { x.ProjectId, x.PackageId, x.PeriodCode }).IsUnique()
+                    .HasFilter(isSqlServer ? "[IsDeleted] = 0" : "\"IsDeleted\" = false");
+            });
+
+            builder.Entity<Apya.Platform.Documents.ComplianceItemState>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "ComplianceItemStates", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+
+                b.Property(x => x.PeriodCode).HasMaxLength(Apya.Platform.Documents.DocumentConsts.MaxPeriodCodeLength);
+                b.Property(x => x.WaiveReason).HasMaxLength(Apya.Platform.Documents.ComplianceConsts.MaxWaiveReasonLength);
+
+                b.HasOne<Apya.Platform.Documents.ComplianceAssignment>()
+                 .WithMany()
+                 .HasForeignKey(x => x.AssignmentId)
+                 .OnDelete(DeleteBehavior.Cascade);
+
+                // DocumentFile'a FK YOK: belge silinince karar satırı da anlamsızlaşır ama
+                // cascade zinciri (Project → Assignment → State) ile çakışırdı.
+                b.HasIndex(x => new { x.AssignmentId, x.RequirementId, x.WorkStepId, x.PeriodCode }).IsUnique()
+                    .HasFilter(isSqlServer ? "[IsDeleted] = 0" : "\"IsDeleted\" = false");
+            });
+
+            /* --- RAPOR / TESLİM PAKETİ (FAZ C) --- */
+            builder.Entity<Apya.Platform.Documents.ReportTemplate>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "ReportTemplates", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+
+                b.Property(x => x.Name).IsRequired()
+                    .HasMaxLength(Apya.Platform.Documents.ReportingConsts.MaxTemplateNameLength);
+                b.Property(x => x.Issuer).HasMaxLength(Apya.Platform.Documents.ComplianceConsts.MaxIssuerLength);
+
+                b.HasIndex(x => new { x.TenantId, x.Order });
+            });
+
+            builder.Entity<Apya.Platform.Documents.ReportSection>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "ReportSections", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+
+                b.HasOne<Apya.Platform.Documents.ReportTemplate>()
+                 .WithMany()
+                 .HasForeignKey(x => x.TemplateId)
+                 .OnDelete(DeleteBehavior.Cascade);
+
+                b.HasIndex(x => new { x.TemplateId, x.SectionKey }).IsUnique()
+                    .HasFilter(isSqlServer ? "[IsDeleted] = 0" : "\"IsDeleted\" = false");
+            });
+
+            builder.Entity<Apya.Platform.Documents.DeliveryPackage>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "DeliveryPackages", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+
+                b.Property(x => x.Name).IsRequired()
+                    .HasMaxLength(Apya.Platform.Documents.ReportingConsts.MaxPackageNameLength);
+                b.Property(x => x.PeriodCode).HasMaxLength(Apya.Platform.Documents.DocumentConsts.MaxPeriodCodeLength);
+                b.Property(x => x.StoredFileName)
+                    .HasMaxLength(Apya.Platform.Documents.ReportingConsts.MaxStoredFileNameLength);
+
+                b.HasOne<Project>()
+                 .WithMany()
+                 .HasForeignKey(x => x.ProjectId)
+                 .OnDelete(DeleteBehavior.Cascade);
+
+                // Şablon host'ta da olabilir → FK yok; ad çözümlemesi servis katmanında.
+                b.HasIndex(x => new { x.TenantId, x.ProjectId });
+                b.HasIndex(x => x.Status);
+            });
+
+            builder.Entity<Apya.Platform.Documents.DeliveryPackageItem>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "DeliveryPackageItems", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+
+                b.Property(x => x.AnnexNumber)
+                    .HasMaxLength(Apya.Platform.Documents.ReportingConsts.MaxAnnexNumberLength);
+
+                b.HasOne<Apya.Platform.Documents.DeliveryPackage>()
+                 .WithMany()
+                 .HasForeignKey(x => x.PackageId)
+                 .OnDelete(DeleteBehavior.Cascade);
+
+                // DocumentFile'a FK YOK: Project → Package → Item ile Project → DocumentFile
+                // iki cascade yolu oluşturur, SQL Server bunu reddeder (bkz. A1 migration notu).
+                b.HasIndex(x => new { x.PackageId, x.Order });
+                b.HasIndex(x => x.DocumentFileId);
+            });
+
+            builder.Entity<Apya.Platform.Documents.ReportRun>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "ReportRuns", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+
+                b.Property(x => x.StoredFileName).IsRequired()
+                    .HasMaxLength(Apya.Platform.Documents.ReportingConsts.MaxStoredFileNameLength);
+                b.Property(x => x.PeriodCode).HasMaxLength(Apya.Platform.Documents.DocumentConsts.MaxPeriodCodeLength);
+
+                b.HasIndex(x => new { x.TenantId, x.ProjectId, x.Version });
+            });
+
+            builder.Entity<Apya.Platform.Documents.ExternalShareLink>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "ExternalShareLinks", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+
+                b.Property(x => x.TokenHash).IsRequired()
+                    .HasMaxLength(Apya.Platform.Documents.ReportingConsts.ShareTokenHashLength);
+                b.Property(x => x.Watermark).HasMaxLength(120);
+
+                // Anonim çözümleme yalnız bu indeksle çalışır; token'ın kendisi saklanmaz.
+                b.HasIndex(x => x.TokenHash).IsUnique()
+                    .HasFilter(isSqlServer ? "[IsDeleted] = 0" : "\"IsDeleted\" = false");
+                b.HasIndex(x => new { x.TargetType, x.TargetId });
+            });
+
+            builder.Entity<Apya.Platform.Documents.ExternalShareAccessLog>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "ExternalShareAccessLogs", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+
+                b.Property(x => x.IpHash).HasMaxLength(64);
+                b.Property(x => x.UserAgent).HasMaxLength(400);
+
+                b.HasOne<Apya.Platform.Documents.ExternalShareLink>()
+                 .WithMany()
+                 .HasForeignKey(x => x.ShareLinkId)
+                 .OnDelete(DeleteBehavior.Cascade);
+
+                b.HasIndex(x => new { x.ShareLinkId, x.CreationTime });
+            });
+
+            /* --- YÖNETİM: KURAL MOTORU + ALAN İZİNLERİ + ENTEGRASYONLAR (FAZ D) --- */
+            builder.Entity<Apya.Platform.Documents.DocumentRule>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "DocumentRules", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+
+                b.Property(x => x.Name).IsRequired().HasMaxLength(Apya.Platform.Documents.RuleConsts.MaxRuleNameLength);
+                b.Property(x => x.Description).HasMaxLength(Apya.Platform.Documents.RuleConsts.MaxDescriptionLength);
+
+                b.HasIndex(x => new { x.TenantId, x.IsEnabled, x.Order });
+            });
+
+            builder.Entity<Apya.Platform.Documents.DocumentRuleCondition>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "DocumentRuleConditions", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+
+                b.Property(x => x.CompareValue).HasMaxLength(Apya.Platform.Documents.RuleConsts.MaxCompareValueLength);
+
+                b.HasOne<Apya.Platform.Documents.DocumentRule>()
+                 .WithMany()
+                 .HasForeignKey(x => x.RuleId)
+                 .OnDelete(DeleteBehavior.Cascade);
+
+                b.HasIndex(x => new { x.RuleId, x.Order });
+            });
+
+            builder.Entity<Apya.Platform.Documents.DocumentRuleAction>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "DocumentRuleActions", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+
+                b.Property(x => x.Payload).HasMaxLength(Apya.Platform.Documents.RuleConsts.MaxActionPayloadLength);
+
+                b.HasOne<Apya.Platform.Documents.DocumentRule>()
+                 .WithMany()
+                 .HasForeignKey(x => x.RuleId)
+                 .OnDelete(DeleteBehavior.Cascade);
+
+                b.HasIndex(x => new { x.RuleId, x.Order });
+            });
+
+            builder.Entity<Apya.Platform.Documents.DocumentRuleRun>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "DocumentRuleRuns", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+
+                b.Property(x => x.SampleJson).HasColumnType("text");
+
+                // Kural silinse bile çalıştırma izi kalır → FK YOK (append-only kayıt).
+                b.HasIndex(x => new { x.RuleId, x.CreationTime });
+            });
+
+            builder.Entity<Apya.Platform.Documents.DocumentFieldPermission>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "DocumentFieldPermissions", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+
+                b.Property(x => x.RoleName).IsRequired().HasMaxLength(Apya.Platform.Documents.RuleConsts.MaxRoleNameLength);
+
+                b.HasOne<Apya.Platform.Documents.DocumentType>()
+                 .WithMany()
+                 .HasForeignKey(x => x.DocumentTypeId)
+                 .OnDelete(DeleteBehavior.Cascade);
+
+                // FieldId için FK YOK: DocumentType → DocumentTypeField → buraya ve
+                // DocumentType → buraya iki cascade yolu olur, SQL Server reddeder.
+                b.HasIndex(x => new { x.DocumentTypeId, x.FieldId, x.RoleName }).IsUnique()
+                    .HasFilter(isSqlServer ? "[IsDeleted] = 0" : "\"IsDeleted\" = false");
+            });
+
+            builder.Entity<Apya.Platform.Documents.DocumentIntegration>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "DocumentIntegrations", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+
+                b.Property(x => x.Name).IsRequired().HasMaxLength(Apya.Platform.Documents.RuleConsts.MaxRuleNameLength);
+                b.Property(x => x.Target).HasMaxLength(300);
+                b.Property(x => x.SettingsJson).HasColumnType("text");
+
+                b.HasIndex(x => new { x.TenantId, x.Kind });
+            });
+
+            /* --- EŞLEŞTİRME + RİSK KÜTÜĞÜ (FAZ E) --- */
+            builder.Entity<Apya.Platform.Documents.DocumentExpenseMatch>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "DocumentExpenseMatches", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+
+                b.Property(x => x.AnnexNumber)
+                    .HasMaxLength(Apya.Platform.Documents.MatchingConsts.MaxAnnexNumberLength);
+
+                // DocumentFile ve Expense'e FK YOK: her ikisi de Project'ten cascade
+                // aldığı için iki yol oluşur ve SQL Server reddeder (bkz. A1 notu).
+                // Bütünlük servis katmanında korunur.
+                b.HasIndex(x => new { x.DocumentFileId, x.ExpenseId }).IsUnique()
+                    .HasFilter(isSqlServer ? "[IsDeleted] = 0" : "\"IsDeleted\" = false");
+                b.HasIndex(x => x.ExpenseId);
+            });
+
+            builder.Entity<ProjectRisk>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "ProjectRisks", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+
+                b.Property(x => x.Title).IsRequired()
+                    .HasMaxLength(Apya.Platform.Documents.MatchingConsts.MaxRiskTitleLength);
+                b.Property(x => x.Mitigation)
+                    .HasMaxLength(Apya.Platform.Documents.MatchingConsts.MaxRiskTextLength);
+
+                b.HasOne<Project>()
+                 .WithMany()
+                 .HasForeignKey(x => x.ProjectId)
+                 .OnDelete(DeleteBehavior.Cascade);
+
+                // WorkStep'e FK YOK — Project'ten ikinci cascade yolu olurdu.
+                b.HasIndex(x => new { x.ProjectId, x.IsClosed });
+            });
+
+            /* --- BELGE (DOCUMENT FILE) + META ŞEMA --- */
+            builder.Entity<Apya.Platform.Documents.DocumentFile>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "DocumentFiles", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+
+                b.Property(x => x.DisplayName).IsRequired()
+                    .HasMaxLength(Apya.Platform.Documents.DocumentConsts.MaxDisplayNameLength);
+                b.Property(x => x.Currency).HasMaxLength(Apya.Platform.Documents.DocumentConsts.CurrencyLength);
+                b.Property(x => x.PeriodCode).HasMaxLength(Apya.Platform.Documents.DocumentConsts.MaxPeriodCodeLength);
+                b.Property(x => x.ExternalRef).HasMaxLength(Apya.Platform.Documents.DocumentConsts.MaxExternalRefLength);
+                // Tutar alanı çift provider'da aynı davransın (Postgres numeric ↔ SqlServer decimal(18,2) farkı).
+                b.Property(x => x.Amount).HasPrecision(18, 2);
+
+                b.HasOne<Apya.Platform.Documents.Document>()
+                 .WithMany()
+                 .HasForeignKey(x => x.DocumentId)
+                 .OnDelete(DeleteBehavior.Restrict);
+
+                b.HasOne<Apya.Platform.Documents.DocumentType>()
+                 .WithMany()
+                 .HasForeignKey(x => x.DocumentTypeId)
+                 .OnDelete(DeleteBehavior.SetNull);
+
+                b.HasOne<Project>()
+                 .WithMany()
+                 .HasForeignKey(x => x.ProjectId)
+                 .OnDelete(DeleteBehavior.SetNull);
+
+                b.HasOne<ProjectWorkStep>()
+                 .WithMany()
+                 .HasForeignKey(x => x.WorkStepId)
+                 .OnDelete(DeleteBehavior.SetNull);
+
+                // Liste sorgusu daima klasör (+kiracı) kapsamında çalışır.
+                b.HasIndex(x => new { x.TenantId, x.DocumentId });
+                b.HasIndex(x => new { x.TenantId, x.ProjectId });
+                b.HasIndex(x => x.WorkStepId);
+                b.HasIndex(x => x.DocumentTypeId);
+                b.HasIndex(x => new { x.TenantId, x.PeriodCode });
+                b.HasIndex(x => x.ExpiryDate); // "süresi dolanlar" akıllı klasörü
+            });
+
+            builder.Entity<Apya.Platform.Documents.DocumentType>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "DocumentTypes", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+
+                b.Property(x => x.Name).IsRequired()
+                    .HasMaxLength(Apya.Platform.Documents.DocumentConsts.MaxTypeNameLength);
+                b.Property(x => x.Code).IsRequired()
+                    .HasMaxLength(Apya.Platform.Documents.DocumentConsts.MaxTypeCodeLength);
+                b.Property(x => x.Icon).HasMaxLength(64);
+                b.Property(x => x.FileNamePattern)
+                    .HasMaxLength(Apya.Platform.Documents.DocumentConsts.MaxFileNamePatternLength);
+
+                // Sistem tipleri TenantId = null; kod kiracı içinde benzersiz olmalı.
+                // Soft-delete olduğu için filtresiz unique, silinmiş kaydın kodunu kalıcı bloke ederdi.
+                b.HasIndex(x => new { x.TenantId, x.Code }).IsUnique()
+                    .HasFilter(isSqlServer ? "[IsDeleted] = 0" : "\"IsDeleted\" = false");
+            });
+
+            builder.Entity<Apya.Platform.Documents.DocumentTypeField>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "DocumentTypeFields", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+
+                b.Property(x => x.Key).IsRequired()
+                    .HasMaxLength(Apya.Platform.Documents.DocumentConsts.MaxFieldKeyLength);
+                b.Property(x => x.Label).IsRequired()
+                    .HasMaxLength(Apya.Platform.Documents.DocumentConsts.MaxFieldLabelLength);
+                b.Property(x => x.OptionsJson).HasColumnType("text");
+
+                b.HasOne<Apya.Platform.Documents.DocumentType>()
+                 .WithMany()
+                 .HasForeignKey(x => x.DocumentTypeId)
+                 .OnDelete(DeleteBehavior.Cascade);
+
+                b.HasIndex(x => new { x.DocumentTypeId, x.Key }).IsUnique()
+                    .HasFilter(isSqlServer ? "[IsDeleted] = 0" : "\"IsDeleted\" = false");
+            });
+
+            builder.Entity<Apya.Platform.Documents.DocumentFieldValue>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "DocumentFieldValues", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+
+                b.Property(x => x.ValueText)
+                    .HasMaxLength(Apya.Platform.Documents.DocumentConsts.MaxFieldValueTextLength);
+                b.Property(x => x.ValueNumber).HasPrecision(18, 2);
+
+                b.HasOne<Apya.Platform.Documents.DocumentFile>()
+                 .WithMany()
+                 .HasForeignKey(x => x.DocumentFileId)
+                 .OnDelete(DeleteBehavior.Cascade);
+
+                b.HasOne<Apya.Platform.Documents.DocumentTypeField>()
+                 .WithMany()
+                 .HasForeignKey(x => x.FieldId)
+                 .OnDelete(DeleteBehavior.Cascade);
+
+                // Bir belgede bir alan yalnız bir kez değer taşır.
+                b.HasIndex(x => new { x.DocumentFileId, x.FieldId }).IsUnique()
+                    .HasFilter(isSqlServer ? "[IsDeleted] = 0" : "\"IsDeleted\" = false");
+            });
+
+            builder.Entity<Apya.Platform.Documents.DocumentTag>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "DocumentTags", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+
+                b.Property(x => x.Name).IsRequired()
+                    .HasMaxLength(Apya.Platform.Documents.DocumentConsts.MaxTagNameLength);
+
+                b.HasIndex(x => new { x.TenantId, x.Name }).IsUnique()
+                    .HasFilter(isSqlServer ? "[IsDeleted] = 0" : "\"IsDeleted\" = false");
+            });
+
+            builder.Entity<Apya.Platform.Documents.DocumentFileTag>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "DocumentFileTags", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+
+                b.HasOne<Apya.Platform.Documents.DocumentFile>()
+                 .WithMany()
+                 .HasForeignKey(x => x.DocumentFileId)
+                 .OnDelete(DeleteBehavior.Cascade);
+
+                b.HasOne<Apya.Platform.Documents.DocumentTag>()
+                 .WithMany()
+                 .HasForeignKey(x => x.TagId)
+                 .OnDelete(DeleteBehavior.Cascade);
+
+                b.HasIndex(x => new { x.DocumentFileId, x.TagId }).IsUnique();
+                b.HasIndex(x => x.TagId);
+            });
+
+            /* --- PROJE İŞ ADIMI (WORK STEP) --- */
+            builder.Entity<ProjectWorkStep>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "ProjectWorkSteps", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+
+                b.Property(x => x.Name).IsRequired().HasMaxLength(ProjectWorkStepConsts.MaxNameLength);
+
+                // Restrict (Cascade DEĞİL): SQL Server, Project'ten hem WorkStep'e (cascade)
+                // hem DocumentFile'a (set null) giden iki yolu "multiple cascade paths" sayıp
+                // FK oluşturmayı reddediyor. Project zaten soft-delete olduğu için gerçek
+                // cascade pratikte tetiklenmiyor; kısıt güvenli taraf.
+                b.HasOne<Project>()
+                 .WithMany()
+                 .HasForeignKey(x => x.ProjectId)
+                 .OnDelete(DeleteBehavior.Restrict);
+
+                b.HasIndex(x => new { x.ProjectId, x.Order });
             });
 
             /* --- DİNAMİK VARLIKLAR (DYNAMIC ASSETS) YAPILANDIRMASI --- */

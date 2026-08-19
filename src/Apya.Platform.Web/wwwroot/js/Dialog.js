@@ -1,5 +1,5 @@
 import { r as u, j as o, d as b } from "./react-vendor.js";
-import { t as re, e as ae, f as E, S as ne, b as Y, g as _, c as $, d as H, h as A, D as L, i as se, j as U } from "./ui-vendor.js";
+import { t as re, f as ae, g as E, S as ne, b as Y, c as _, d as $, e as H, h as A, D as L, i as se, j as U } from "./ui-vendor.js";
 const G = "apya-theme", N = "system", q = u.createContext({
   preference: N,
   resolvedTheme: "light",

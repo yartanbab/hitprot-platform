@@ -25,8 +25,11 @@ public static class DashboardDefaultLayouts
         [ProjectManagement] = new()
         {
             Card("summary-strip",     DashboardChartType.NumberTrend, 0, 0, 12, 2),
-            Card("deliveries",        DashboardChartType.RankBar,     0, 2,  8, 6),
-            Card("project-health",    DashboardChartType.Bullet,      8, 2,  4, 6),
+            // Teslimler / Proje sağlığı 7/5: tasarımın 1.55fr:1fr oranına en yakın
+            // 12-kolon tamsayısı (eski 8/4 = 2:1 fazla genişti). Kart kataloğundaki
+            // varsayılan boyutlarla (deliveries w7 / project-health w5) da hizalı.
+            Card("deliveries",        DashboardChartType.RankBar,     0, 2,  7, 6),
+            Card("project-health",    DashboardChartType.Bullet,      7, 2,  5, 6),
             Card("approvals",         DashboardChartType.RankBar,     0, 8,  4, 5),
             Card("blockers",          DashboardChartType.RankBar,     4, 8,  4, 5),
             Card("ai-suggestions",    DashboardChartType.NumberTrend, 8, 8,  4, 5),

@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -13,6 +14,10 @@ public class Program
 {
     public static async Task Main(string[] args)
     {
+        // Plesk Zamanlanmış Görev çalışma dizinini ayarlamaz → exe kendi klasörünü cwd yapsın ki
+        // appsettings(.secrets).json ve Logs/ exe'nin yanından okunsun/yazılsın (cwd-bağımsız çalışma).
+        Directory.SetCurrentDirectory(AppContext.BaseDirectory);
+
         Log.Logger = new LoggerConfiguration()
             .MinimumLevel.Information()
             .MinimumLevel.Override("Microsoft", LogEventLevel.Warning)
