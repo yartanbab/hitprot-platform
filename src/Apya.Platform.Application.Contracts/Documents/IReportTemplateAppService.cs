@@ -12,4 +12,13 @@ public interface IReportTemplateAppService : IApplicationService
 
     /// <summary>Bölümleri sürükleyerek sırala / aç-kapa. Kapalı bölüm çıktıya girmez.</summary>
     Task<ReportTemplateDto> UpdateSectionsAsync(UpdateReportSectionsDto input);
+
+    Task<ReportTemplateDto> CreateAsync(CreateUpdateReportTemplateDto input);
+
+    Task<ReportTemplateDto> UpdateAsync(Guid id, CreateUpdateReportTemplateDto input);
+
+    Task DeleteAsync(Guid id);
+
+    /// <summary>Sistem şablonunu kiracıya kopyalar ("düzenlemek için önce kopyala").</summary>
+    Task<ReportTemplateDto> DuplicateAsync(Guid id);
 }

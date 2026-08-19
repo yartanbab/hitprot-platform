@@ -25,6 +25,7 @@ export default defineConfig({
         'deliveries':       'src/deliveries.jsx',
         'documents-admin':  'src/documents-admin.jsx',
         'documents-project':'src/documents-project.jsx',
+        'documents-report': 'src/documents-report.jsx',
         'task-detail':      'src/task-detail.jsx',
         'calendar':         'src/calendar.jsx',
       },

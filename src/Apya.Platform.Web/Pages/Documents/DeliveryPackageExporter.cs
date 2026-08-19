@@ -86,6 +86,14 @@ internal static class DeliveryPackageExporter
     {
         container.PaddingBottom(8).BorderBottom(1.5f, Unit.Point).Column(col =>
         {
+            // Önizleme çıktısı gerçek teslim dosyasıyla KARIŞMAMALI: ekleri kesilmiş,
+            // EK numaraları geçicidir. Damga her sayfanın başlığında görünür.
+            if (model.IsPreview)
+            {
+                col.Item().Text("ÖNİZLEME — TESLİM İÇİN KULLANMAYIN")
+                    .FontSize(8).Bold().FontColor(Colors.Red.Darken2).LetterSpacing(0.15f);
+            }
+
             col.Item().Text(model.TemplateName?.ToUpperInvariant() ?? "TESLİM DOSYASI")
                 .FontSize(8).Bold().FontColor(Grey).LetterSpacing(0.1f);
             col.Item().PaddingTop(2).Text(model.ProjectName).FontSize(15).Bold();

@@ -96,6 +96,7 @@ public static class PlatformDomainErrorCodes
 
     // --- Rapor / teslim paketi (Faz C) ---
     public const string ReportTemplateNameRequired = "Platform:Documents:ReportTemplateNameRequired";
+    public const string ReportTemplateIsSystem = "Platform:Documents:ReportTemplateIsSystem";
     public const string DeliveryPackageNameRequired = "Platform:Documents:DeliveryPackageNameRequired";
     public const string DeliveryPackageBlocked = "Platform:Documents:DeliveryPackageBlocked";
     public const string DeliveryPackageNotEditable = "Platform:Documents:DeliveryPackageNotEditable";

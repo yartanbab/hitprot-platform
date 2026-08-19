@@ -5,10 +5,17 @@ namespace Apya.Platform.Documents;
 /// <summary>
 /// Hangi rapor bölümünün verisi BUGÜN üretilebiliyor.
 ///
-/// Zaman çizelgesi, harcama↔belge eşleşmesi, ekip katkısı, riskler ve kilometre
-/// taşları Faz E'nin verisine dayanıyor; şablonda görünürler ama varsayılan olarak
-/// KAPALI gelirler ve UI'da "veri henüz yok" olarak işaretlenirler. Boş bölümü
-/// sessizce basmak, kuruma giden raporda eksik sayfa demek olurdu.
+/// Boş bölümü sessizce basmak, kuruma giden raporda eksik sayfa demek olurdu;
+/// bu yüzden verisi olmayan bölüm şablonda görünür ama KAPALI gelir ve UI'da
+/// "veri henüz yok" olarak işaretlenir.
+///
+/// Bu liste Faz C'de yazıldığında zaman çizelgesi / eşleştirme / risk verisi henüz
+/// yoktu. Faz E üçünü de üretti (ProjectTimelineAppService, DocumentExpenseMatch,
+/// ProjectRisk); ekip katkısı da TaskTimeLog.UserId üzerinden kişi bazında
+/// çıkarılabiliyor — dördü birden açıldı.
+///
+/// Kilometre taşı KAPALI kalıyor: karşılığı olan bir varlık yok. Uydurma veri
+/// üretmektense bölümü kapalı tutmak doğru.
 /// </summary>
 public static class ReportSectionAvailability
 {
@@ -21,6 +28,12 @@ public static class ReportSectionAvailability
         ReportSectionKey.MissingDocuments,
         ReportSectionKey.AnnexIndex,
         ReportSectionKey.AuditTrail,
+
+        // --- Faz E ile gelen veriler ---
+        ReportSectionKey.Timeline,
+        ReportSectionKey.ExpenseDocumentMatch,
+        ReportSectionKey.Risks,
+        ReportSectionKey.TeamContribution,
     };
 
     public static bool IsAvailable(ReportSectionKey key) => Available.Contains(key);

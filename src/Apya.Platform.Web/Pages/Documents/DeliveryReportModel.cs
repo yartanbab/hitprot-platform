@@ -24,6 +24,16 @@ public class DeliveryReportModel
     /// <summary>Şablonda AÇIK olan bölümler, sıralı. Kapalı bölüm buraya hiç girmez.</summary>
     public List<ReportSectionKey> Sections { get; set; } = new();
 
+    /// <summary>
+    /// Rapor Derleyici önizlemesi mi. Önizlemede ekler kesilmiş olabilir ve EK
+    /// numaraları geçicidir; çıktıya "ÖNİZLEME" damgası basılır ki kuruma
+    /// yanlışlıkla önizleme gönderilmesin.
+    /// </summary>
+    public bool IsPreview { get; set; }
+
+    /// <summary>Önizlemede listeye girmeyen ek sayısı (0 = hepsi gösteriliyor).</summary>
+    public int TruncatedAnnexCount { get; set; }
+
     public ProjectSummaryBlock Summary { get; set; } = new();
     public List<WorkStepProgressRow> WorkSteps { get; set; } = new();
     public List<ComplianceRow> Compliance { get; set; } = new();
