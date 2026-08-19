@@ -66,7 +66,10 @@ export function CalendarRoot() {
     const isNarrow = layout === 'narrow';
 
     const today = useMemo(() => stripTime(new Date()), []);
-    const [month, setMonth] = useState(() => new Date(today.getFullYear(), today.getMonth(), 1));
+    /* Çapa BUGÜN'dür, ayın 1'i değil: Hafta/Gün görünümüne geçince kullanıcı
+       içinde bulunduğu haftayı görmeli, ayın ilk haftasını değil. Ay görünümü
+       yalnız yıl+ay kullandığı için bundan etkilenmez. */
+    const [month, setMonth] = useState(today);
     const [selectedDay, setSelectedDay] = useState(null);
     const [selectedItemKey, setSelectedItemKey] = useState(null);
     const [syncOpen, setSyncOpen] = useState(false);

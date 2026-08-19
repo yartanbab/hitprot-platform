@@ -1,7 +1,7 @@
 import React from 'react';
 import { cn } from '../lib/utils';
 import {
-    RISK, SOURCES, buildDayCell, dayLoad, fmt, isoDay, monthGridDays, summaryLabel,
+    RISK, SOURCES, addDays, buildDayCell, dayLoad, fmt, isoDay, monthGridDays, summaryLabel,
 } from './lib/model';
 
 const DOW = ['Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz'];

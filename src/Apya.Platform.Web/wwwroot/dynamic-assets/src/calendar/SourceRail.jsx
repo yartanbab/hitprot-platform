@@ -16,6 +16,7 @@ const PROVIDER_LABEL = { 1: 'Google', 2: 'Outlook', 3: 'iCloud' };
 export function SourceRail({
     sources, counts, enabled, onToggle, compact = false,
     externalAccounts = [], externalLoading = false, onOpenSync,
+    teamOpen = false, onToggleTeam, teamContent,
 }) {
     const available = (sources ?? []).filter((s) => s.isAvailable);
     if (available.length === 0) return null;

@@ -20,7 +20,9 @@ export function useCalendarPreferences() {
 export function useUpdatePreferences() {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: (input) => api.post('/api/app/calendar/preferences', input),
+        /* ABP konvansiyonu: Update* metotları PUT'a düşer. POST 405 döner ve
+           ayarlar SESSİZCE kaydedilmemiş olur. */
+        mutationFn: (input) => api.put('/api/app/calendar/preferences', input),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: KEY });
             /* Kapasite değişti → gün yükü çubukları ve aşım uyarısı yeniden hesaplanmalı. */

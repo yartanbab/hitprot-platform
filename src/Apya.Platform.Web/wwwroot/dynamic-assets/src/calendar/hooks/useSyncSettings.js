@@ -22,7 +22,8 @@ export function useUpdateSyncRules() {
     const queryClient = useQueryClient();
 
     return useMutation({
-        mutationFn: (input) => api.post('/api/app/calendar/sync-rules', input),
+        /* ABP konvansiyonu: UpdateSyncRulesAsync → PUT (POST 405). */
+        mutationFn: (input) => api.put('/api/app/calendar/sync-rules', input),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: KEY });
             /* Kural değişince dış etkinlik katmanı da bayatlar. */
