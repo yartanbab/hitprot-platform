@@ -7,8 +7,9 @@ namespace Apya.Platform.Calendars;
 /// <summary>Salt-okunur iCal abonelik bağlantısı (dışa aktarım).</summary>
 public interface IIcalFeedAppService : IApplicationService
 {
-    /// <summary>Kullanıcının bağlantısı — yoksa üretilir.</summary>
-    Task<IcalFeedTokenDto> GetOrCreateAsync();
+    /// <summary>Kullanıcının bağlantısı — yoksa üretilir. Kayıt OLUŞTURDUĞU için
+    /// GET değil POST: yan etkisi olan bir çağrı GET gibi görünmemeli.</summary>
+    Task<IcalFeedTokenDto> EnsureAsync();
 
     /// <summary>Token'ı yeniler; eski bağlantı anında geçersizleşir.</summary>
     Task<IcalFeedTokenDto> RegenerateAsync();

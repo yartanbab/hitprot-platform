@@ -3,6 +3,10 @@ import { Button, EmptyState, Sheet, SheetContent, Skeleton } from '../components
 import { cn } from '../lib/utils';
 import { INTERNAL_SOURCE_ORDER, SOURCES, fmt } from './lib/model';
 import { useSyncSettings, useUpdateSyncRules } from './hooks/useSyncSettings';
+import {
+    useAddIcalSubscription, useDeleteIcalSubscription, useIcalFeedLink,
+    useIcalSubscriptions, useProbeIcal, useRegenerateIcalFeed,
+} from './hooks/useIcal';
 
 const PROVIDER = {
     1: { label: 'Google Calendar', icon: 'fa-google', brand: 'bg-[#ea4335]' },
@@ -163,6 +167,189 @@ function AccountCard({ account, onSave, saving }) {
     );
 }
 
+const REFRESH_OPTIONS = [
+    { value: 15, label: '15 dk' },
+    { value: 60, label: '1 saat' },
+    { value: 360, label: '6 saat' },
+    { value: 1440, label: 'Günlük' },
+];
+
+/**
+ * iCal: dışa abonelik bağlantısı + içeri .ics abonelikleri.
+ *
+ * Tek yönlü olduğu EKRANDA yazar — kullanıcı çift yönlü senkron beklerken
+ * sessizce tek yönlü bir bağlantı kurmuş olmasın.
+ */
+function IcalSection({ open }) {
+    const feed = useIcalFeedLink(open);
+    const regenerate = useRegenerateIcalFeed();
+    const subs = useIcalSubscriptions(open);
+    const add = useAddIcalSubscription();
+    const remove = useDeleteIcalSubscription();
+    const probe = useProbeIcal();
+
+    const [url, setUrl] = useState('');
+    const [name, setName] = useState('');
+    const [refresh, setRefresh] = useState(60);
+    const [copied, setCopied] = useState(false);
+
+    const feedUrl = feed.data?.path ? `${window.location.origin}${feed.data.path}` : '';
+
+    const copyLink = async () => {
+        try {
+            await navigator.clipboard.writeText(feedUrl);
+            setCopied(true);
+            setTimeout(() => setCopied(false), 2000);
+        } catch { /* pano kapalıysa kullanıcı elle seçer */ }
+    };
+
+    return (
+        <section className="rounded-card border border-subtle bg-surface-base">
+            <header className="border-b border-subtle px-3 py-2">
+                <h4 className="text-[12px] font-semibold text-text-primary">iCal</h4>
+            </header>
+
+            <div className="border-b border-subtle px-3 py-2.5">
+                <p className="text-[11px] font-bold uppercase tracking-wider text-text-tertiary">
+                    APYA takviminize abone olun
+                </p>
+                <div className="mt-1.5 flex items-center gap-1.5">
+                    <input
+                        readOnly
+                        value={feedUrl}
+                        aria-label="iCal abonelik bağlantısı"
+                        className="min-w-0 flex-1 truncate rounded-md border border-default bg-surface-sunken px-2 py-1 font-mono text-[11px] text-text-secondary"
+                    />
+                    <Button size="sm" variant="outline" onClick={copyLink} disabled={!feedUrl}>
+                        {copied ? 'Kopyalandı' : 'Kopyala'}
+                    </Button>
+                </div>
+                <p className="mt-1.5 text-[11px] leading-snug text-text-tertiary">
+                    Salt-okunur bağlantı; size atanan tarihli görevleri taşır. Bağlantıyı bilen
+                    herkes bu takvimi okuyabilir —
+                    <button
+                        type="button"
+                        onClick={() => regenerate.mutate()}
+                        className="ms-1 font-semibold text-text-link hover:underline"
+                    >
+                        yeniden üret
+                    </button>
+                    {' '}dediğinizde eski bağlantı anında geçersizleşir.
+                </p>
+            </div>
+
+            <div className="px-3 py-2.5">
+                <p className="text-[11px] font-bold uppercase tracking-wider text-text-tertiary">
+                    Dışarıdan takvim ekle
+                </p>
+
+                <div className="mt-1.5 flex flex-col gap-1.5">
+                    <input
+                        type="url"
+                        value={url}
+                        onChange={(e) => { setUrl(e.target.value); probe.reset(); }}
+                        placeholder="https://…/basic.ics"
+                        aria-label="Takvim bağlantısı"
+                        className="rounded-md border border-default bg-surface-base px-2 py-1.5 text-[12px] text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-border-focus"
+                    />
+
+                    {probe.data?.isValid && (
+                        <p className="text-[11px] text-positive-700">
+                            <i className="fa fa-circle-check me-1" aria-hidden="true" />
+                            Bağlantı doğrulandı · {probe.data.eventCount} etkinlik bulundu
+                        </p>
+                    )}
+                    {probe.data && !probe.data.isValid && (
+                        <p className="text-[11px] text-negative-700">
+                            <i className="fa fa-triangle-exclamation me-1" aria-hidden="true" />
+                            {probe.data.error}
+                        </p>
+                    )}
+
+                    <div className="flex items-center gap-1.5">
+                        <input
+                            value={name}
+                            onChange={(e) => setName(e.target.value)}
+                            placeholder={probe.data?.suggestedName || 'Görünen ad'}
+                            aria-label="Görünen ad"
+                            className="min-w-0 flex-1 rounded-md border border-default bg-surface-base px-2 py-1.5 text-[12px] text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-border-focus"
+                        />
+                        <select
+                            value={refresh}
+                            onChange={(e) => setRefresh(Number(e.target.value))}
+                            aria-label="Yenileme sıklığı"
+                            className="rounded-md border border-default bg-surface-base px-2 py-1.5 text-[12px] text-text-primary"
+                        >
+                            {REFRESH_OPTIONS.map((o) => (
+                                <option key={o.value} value={o.value}>{o.label}</option>
+                            ))}
+                        </select>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                        <Button
+                            size="sm" variant="outline" disabled={!url || probe.isPending}
+                            onClick={() => probe.mutate(url)}
+                        >
+                            {probe.isPending ? 'Deneniyor…' : 'Bağlantıyı dene'}
+                        </Button>
+                        <Button
+                            size="sm" variant="primary"
+                            disabled={!url || add.isPending}
+                            onClick={() => add.mutate(
+                                { url, displayName: name, color: 'accent', refreshMinutes: refresh },
+                                { onSuccess: () => { setUrl(''); setName(''); probe.reset(); } },
+                            )}
+                        >
+                            {add.isPending ? 'Ekleniyor…' : 'Takvimi ekle'}
+                        </Button>
+                    </div>
+
+                    {add.isError && (
+                        <p className="text-[11px] text-negative-700">
+                            {add.error?.message || 'Takvim eklenemedi.'}
+                        </p>
+                    )}
+
+                    <p className="text-[11px] leading-snug text-text-tertiary">
+                        iCal abonelikleri <strong className="font-semibold">tek yönlüdür</strong>:
+                        etkinlikler APYA'da salt-okunur görünür, APYA öğeleri bu takvime yazılmaz.
+                        Çift yönlü senkron için Google veya Outlook hesabı bağlayın.
+                    </p>
+                </div>
+
+                {(subs.data ?? []).length > 0 && (
+                    <div className="mt-3 border-t border-subtle pt-2">
+                        {subs.data.map((sub) => (
+                            <div key={sub.id} className="flex items-start gap-2 border-b border-subtle py-2 last:border-b-0">
+                                <span className="min-w-0 flex-1">
+                                    <span className="block truncate text-[12px] font-medium text-text-primary">
+                                        {sub.displayName}
+                                    </span>
+                                    <span className={cn(
+                                        'block truncate text-[10.5px]',
+                                        sub.lastError ? 'text-negative-700' : 'text-text-tertiary',
+                                    )}>
+                                        {sub.lastError ?? `${sub.lastEventCount} etkinlik · ${relativeTime(sub.lastFetchedAt)} çekildi`}
+                                    </span>
+                                </span>
+                                <button
+                                    type="button"
+                                    onClick={() => remove.mutate(sub.id)}
+                                    className="shrink-0 rounded p-1 text-[11px] text-text-tertiary hover:text-negative-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-border-focus"
+                                    aria-label={`${sub.displayName} aboneliğini kaldır`}
+                                >
+                                    Kaldır
+                                </button>
+                            </div>
+                        ))}
+                    </div>
+                )}
+            </div>
+        </section>
+    );
+}
+
 /**
  * Senkron drawer'ı — entegrasyon ayarları sayfanın ALTINDAN buraya taşındı.
  *
@@ -198,34 +385,43 @@ export function SyncDrawer({ open, onClose }) {
                             <Skeleton height={92} />
                             <Skeleton height={92} />
                         </div>
-                    ) : (data?.accounts ?? []).length === 0 ? (
-                        <EmptyState
-                            icon={<i className="fa fa-calendar-plus" />}
-                            title="Bağlı takvim yok"
-                            description="Google veya Outlook hesabı bağlayınca size atanan tarihli öğeler oraya etkinlik olarak yazılır."
-                            action={
-                                <Button size="sm" variant="outline" onClick={() => { window.location.href = '/Calendars/SimulateAuth?provider=1'; }}>
-                                    Hesap bağla
-                                </Button>
-                            }
-                        />
                     ) : (
                         <div className="flex flex-col gap-3">
-                            {data.accounts.map((account) => (
-                                <AccountCard
-                                    key={account.id}
-                                    account={account}
-                                    saving={update.isPending}
-                                    onSave={(input) => update.mutate(input)}
-                                />
-                            ))}
+                            {(data?.accounts ?? []).length === 0 ? (
+                                <div className="rounded-card border border-subtle bg-surface-base p-4">
+                                    <EmptyState
+                                        compact
+                                        icon={<i className="fa fa-calendar-plus" />}
+                                        title="Bağlı hesap yok"
+                                        description="Google veya Outlook bağlayınca size atanan tarihli öğeler oraya etkinlik olarak yazılır."
+                                        action={
+                                            <Button size="sm" variant="outline" onClick={() => { window.location.href = '/Calendars/SimulateAuth?provider=1'; }}>
+                                                Hesap bağla
+                                            </Button>
+                                        }
+                                    />
+                                </div>
+                            ) : (
+                                data.accounts.map((account) => (
+                                    <AccountCard
+                                        key={account.id}
+                                        account={account}
+                                        saving={update.isPending}
+                                        onSave={(input) => update.mutate(input)}
+                                    />
+                                ))
+                            )}
+
+                            {/* iCal hesap GEREKTİRMEZ: OAuth bağlantısı olmayan kullanıcı da
+                                .ics abonesi olabilmeli ve kendi bağlantısını alabilmeli. */}
+                            <IcalSection open={open} />
 
                             <section className="rounded-card border border-subtle bg-surface-base">
                                 <header className="border-b border-subtle px-3 py-2">
                                     <h4 className="text-[12px] font-semibold text-text-primary">Senkron günlüğü</h4>
                                 </header>
                                 <div className="px-3 py-2">
-                                    {(data.log ?? []).length === 0 ? (
+                                    {(data?.log ?? []).length === 0 ? (
                                         <p className="py-2 text-[11.5px] text-text-tertiary">
                                             Henüz senkron kaydı yok.
                                         </p>

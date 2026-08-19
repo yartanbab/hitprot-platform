@@ -49,7 +49,7 @@ public class IcalFeedAppService : ApplicationService, IIcalFeedAppService
     }
 
     /// <summary>Kullanıcının abonelik bağlantısı — yoksa üretilir.</summary>
-    public async Task<IcalFeedTokenDto> GetOrCreateAsync()
+    public async Task<IcalFeedTokenDto> EnsureAsync()
     {
         var existing = await _tokenRepository.FirstOrDefaultAsync(x => x.UserId == CurrentUser.Id);
         if (existing != null)
