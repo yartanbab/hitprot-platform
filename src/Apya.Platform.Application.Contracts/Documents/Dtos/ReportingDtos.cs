@@ -231,3 +231,22 @@ public class AnnexFileDto
     public string FileName { get; set; } = string.Empty;
     public string? StoredFileName { get; set; }
 }
+
+/// <summary>
+/// Rapor Derleyici'de şablon künyesi. Bölümler ayrı uçtan (UpdateSectionsAsync)
+/// yönetilir — künye düzenlemesi bölüm sırasını sıfırlamasın diye ayrıldı.
+/// </summary>
+public class CreateUpdateReportTemplateDto
+{
+    [Required]
+    [StringLength(ReportingConsts.MaxTemplateNameLength)]
+    public string Name { get; set; } = string.Empty;
+
+    public ReportRecipient Recipient { get; set; } = ReportRecipient.Institution;
+
+    /// <summary>Kurum alıcılarında hangi kurum ("KOSGEB", "TÜBİTAK"); diğerlerinde boş.</summary>
+    [StringLength(ReportingConsts.MaxIssuerLength)]
+    public string? Issuer { get; set; }
+
+    public int Order { get; set; }
+}

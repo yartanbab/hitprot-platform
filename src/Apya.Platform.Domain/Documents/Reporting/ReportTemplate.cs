@@ -48,6 +48,31 @@ public class ReportTemplate : FullAuditedAggregateRoot<Guid>, IMultiTenant
         Order = order;
     }
 
+    /// <summary>
+    /// Kiracının kendi şablonunu düzenler. Sistem şablonu DEĞİŞTİRİLEMEZ: host
+    /// seviyesinde tohumlanır ve tüm kiracılarda paylaşılır — birinin düzenlemesi
+    /// hepsini etkilerdi.
+    /// </summary>
+    public void Update(string name, ReportRecipient recipient, string? issuer, int order)
+    {
+        GuardNotSystem();
+
+        SetName(name);
+        Recipient = recipient;
+        Issuer = string.IsNullOrWhiteSpace(issuer) ? null : issuer.Trim();
+        Order = order;
+    }
+
+    /// <summary>Düzenleme/silme öncesi sistem şablonu koruması.</summary>
+    public void GuardNotSystem()
+    {
+        if (IsSystem)
+        {
+            throw new BusinessException(PlatformDomainErrorCodes.ReportTemplateIsSystem)
+                .WithData("Name", Name);
+        }
+    }
+
     public void SetName(string name)
     {
         if (string.IsNullOrWhiteSpace(name))

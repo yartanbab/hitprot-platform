@@ -28,40 +28,29 @@ public class DeliveriesModel : AbpPageModel
 {
     private readonly IDeliveryPackageAppService _packageAppService;
     private readonly IReportTemplateAppService _templateAppService;
-    private readonly IComplianceAppService _complianceAppService;
-    private readonly IProjectWorkStepAppService _workStepAppService;
-    private readonly IDocumentActivityAppService _activityAppService;
-    private readonly IDocumentFileAppService _documentFileAppService;
-    private readonly IProjectAppService _projectAppService;
     private readonly IExternalShareAppService _shareAppService;
     private readonly IUploadedFileStorage _fileStorage;
     private readonly IUploadedFileRootFolderProvider _rootFolderProvider;
-    private readonly IClock _clock;
+
+    // Rapor modelini kuran altı bağımlılık (proje, uygunluk, iş adımı, belge,
+    // etkinlik, saat) buradan çıkıp DeliveryReportModelBuilder'a taşındı —
+    // Rapor Derleyici önizlemesi ile üretim aynı kodu kullansın diye.
+    private readonly DeliveryReportModelBuilder _reportModelBuilder;
 
     public DeliveriesModel(
         IDeliveryPackageAppService packageAppService,
         IReportTemplateAppService templateAppService,
-        IComplianceAppService complianceAppService,
-        IProjectWorkStepAppService workStepAppService,
-        IDocumentActivityAppService activityAppService,
-        IDocumentFileAppService documentFileAppService,
-        IProjectAppService projectAppService,
         IExternalShareAppService shareAppService,
         IUploadedFileStorage fileStorage,
         IUploadedFileRootFolderProvider rootFolderProvider,
-        IClock clock)
+        DeliveryReportModelBuilder reportModelBuilder)
     {
         _packageAppService = packageAppService;
         _templateAppService = templateAppService;
-        _complianceAppService = complianceAppService;
-        _workStepAppService = workStepAppService;
-        _activityAppService = activityAppService;
-        _documentFileAppService = documentFileAppService;
-        _projectAppService = projectAppService;
         _shareAppService = shareAppService;
         _fileStorage = fileStorage;
         _rootFolderProvider = rootFolderProvider;
-        _clock = clock;
+        _reportModelBuilder = reportModelBuilder;
     }
 
     public void OnGet()
@@ -121,7 +110,7 @@ public class DeliveriesModel : AbpPageModel
         await AuthorizationService.CheckAsync(PlatformPermissions.Documents.GenerateReports);
 
         var package = await _packageAppService.GetAsync(packageId);
-        var model = await BuildReportModelAsync(package);
+        var model = await _reportModelBuilder.BuildAsync(package);
 
         var pdf = DeliveryPackageExporter.ToPdf(model);
 
@@ -183,134 +172,6 @@ public class DeliveriesModel : AbpPageModel
 
     /* ─── Yardımcılar ─────────────────────────────────────────────────── */
 
-    private async Task<DeliveryReportModel> BuildReportModelAsync(DeliveryPackageDetailDto package)
-    {
-        var project = await _projectAppService.GetAsync(package.ProjectId);
-        var overview = await _complianceAppService.GetOverviewAsync(package.ProjectId, package.PeriodCode);
-        var workSteps = await _workStepAppService.GetListAsync(package.ProjectId);
-
-        var sections = await ResolveSectionsAsync(package.ReportTemplateId);
-
-        var model = new DeliveryReportModel
-        {
-            PackageName = package.Name,
-            ProjectName = project.Name,
-            ProjectCode = project.Code,
-            PeriodCode = package.PeriodCode,
-            TemplateName = package.ReportTemplateName,
-            GeneratedAt = _clock.Now,
-            GeneratedBy = CurrentUser.UserName ?? "Sistem",
-            Sections = sections,
-        };
-
-        model.Summary = new DeliveryReportModel.ProjectSummaryBlock
-        {
-            CompliancePercent = overview.Summary.Percent,
-            DocumentCount = package.Items.Count,
-            MissingCount = overview.Summary.MissingCount,
-            BlockingCount = overview.Summary.BlockingMissingCount,
-            Currency = project.Currency ?? "TRY",
-        };
-
-        model.WorkSteps = workSteps.Select(s => new DeliveryReportModel.WorkStepProgressRow
-        {
-            Order = s.Order,
-            Name = s.Name,
-            ProgressPercent = s.ProgressPercent,
-            DocumentCount = s.DocumentCount,
-        }).ToList();
-
-        model.Compliance = overview.Checklists
-            .SelectMany(c => c.Items.Select(i => new DeliveryReportModel.ComplianceRow
-            {
-                PackageName = c.PackageName,
-                Title = i.Title,
-                Scope = i.WorkStepName ?? i.PeriodCode ?? "Proje",
-                Status = i.Status,
-                IsBlocking = i.IsBlocking,
-                DocumentName = i.DocumentFileName,
-            }))
-            .ToList();
-
-        model.MissingDocuments = model.Compliance
-            .Where(c => c.Status == ComplianceItemStatus.Missing)
-            .Select(c => c.IsBlocking ? $"{c.Title} ({c.Scope}) — teslimi bloke ediyor" : $"{c.Title} ({c.Scope})")
-            .ToList();
-
-        // Ekler: paketteki sıraya göre, tutar/tür bilgisi belge detayından.
-        foreach (var item in package.Items.OrderBy(i => i.Order))
-        {
-            var file = await _documentFileAppService.GetAsync(item.DocumentFileId);
-
-            model.Annexes.Add(new DeliveryReportModel.AnnexRow
-            {
-                AnnexNumber = item.AnnexNumber ?? string.Empty,
-                DocumentName = file.DisplayName,
-                TypeName = file.DocumentTypeName,
-                DocumentDate = file.DocumentDate,
-                Amount = file.Amount,
-                FileSize = file.FileSize,
-            });
-
-            if (file.Amount.HasValue)
-            {
-                model.Summary.DocumentedAmount += file.Amount.Value;
-            }
-        }
-
-        if (sections.Contains(ReportSectionKey.AuditTrail))
-        {
-            var activity = await _activityAppService.GetListAsync(new GetDocumentActivityInput
-            {
-                ProjectId = package.ProjectId,
-                MaxResultCount = 100,
-            });
-
-            model.AuditTrail = activity.Items.Select(a => new DeliveryReportModel.AuditRow
-            {
-                At = a.CreationTime,
-                Actor = a.ActorName,
-                Action = ActionLabel(a.Action),
-                Target = a.DocumentFileName,
-                Detail = a.Detail,
-            }).ToList();
-        }
-
-        return model;
-    }
-
-    /// <summary>
-    /// Şablonun AÇIK bölümleri, sıralı. Şablon seçilmemişse makul bir varsayılan
-    /// set kullanılır — paket yine de üretilebilmeli.
-    /// </summary>
-    private async Task<List<ReportSectionKey>> ResolveSectionsAsync(Guid? templateId)
-    {
-        if (!templateId.HasValue)
-        {
-            return new List<ReportSectionKey>
-            {
-                ReportSectionKey.ProjectSummary,
-                ReportSectionKey.ComplianceStatus,
-                ReportSectionKey.MissingDocuments,
-                ReportSectionKey.AnnexIndex,
-            };
-        }
-
-        var templates = await _templateAppService.GetListAsync();
-        var template = templates.FirstOrDefault(t => t.Id == templateId.Value);
-
-        if (template == null)
-        {
-            return new List<ReportSectionKey> { ReportSectionKey.ProjectSummary, ReportSectionKey.AnnexIndex };
-        }
-
-        return template.Sections
-            .Where(s => s.IsEnabled)
-            .OrderBy(s => s.Order)
-            .Select(s => s.SectionKey)
-            .ToList();
-    }
-
     /// <summary>
     /// ZIP'e konacak ek dosyasını diskten okur. Dosya yoksa null döner ve exporter
     /// EKSIK-EKLER.txt notu üretir — sessizce atlamak, eksik ekli paketi fark
@@ -346,14 +207,4 @@ public class DeliveriesModel : AbpPageModel
         return PhysicalFile(path, download.ContentType, download.FileName);
     }
 
-    private static string ActionLabel(DocumentAccessAction action) => action switch
-    {
-        DocumentAccessAction.Uploaded => "Yüklendi",
-        DocumentAccessAction.Downloaded => "İndirildi",
-        DocumentAccessAction.Deleted => "Silindi",
-        DocumentAccessAction.Viewed => "Görüntülendi",
-        DocumentAccessAction.MetaChanged => "Meta değişti",
-        DocumentAccessAction.Moved => "Taşındı",
-        _ => "—",
-    };
 }

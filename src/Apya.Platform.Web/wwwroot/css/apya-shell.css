@@ -5693,3 +5693,33 @@ i.apya-priority-dot {
     /* Dar ekranda Gantt çubuğu satırın tamamını kaplar. */
     .apya-doc-gantt-track { grid-column: 1 / -1; }
 }
+
+/* ----------------------------------------------------------------------------
+   17e) RAPOR DERLEYİCİ
+   ---------------------------------------------------------------------------- */
+.apya-doc-reportgrid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 14px;
+    align-items: start;
+}
+@media (min-width: 992px) {
+    .apya-doc-reportgrid {
+        grid-template-columns: 300px minmax(0, 1fr);
+    }
+}
+.apya-doc-select,
+.apya-doc-input {
+    height: 32px;
+    padding: 0 10px;
+    font-size: 12.5px;
+    color: var(--apya-text-primary);
+    background: var(--apya-surface-raised);
+    border: 1px solid var(--apya-border-default);
+    border-radius: 8px;
+}
+.apya-doc-select:focus-visible,
+.apya-doc-input:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px var(--apya-border-focus);
+}

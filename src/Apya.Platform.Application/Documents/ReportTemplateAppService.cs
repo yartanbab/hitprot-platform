@@ -91,6 +91,99 @@ public class ReportTemplateAppService : ApplicationService, IReportTemplateAppSe
         return templates.First(t => t.Id == input.TemplateId);
     }
 
+    /* ─── Şablon CRUD (Rapor Derleyici) ────────────────────────────────── */
+
+    /// <summary>
+    /// Yeni kiracı şablonu. Bölümler 12 anahtarın TAMAMI için oluşturulur ki
+    /// kullanıcı sonradan açıp kapatabilsin; varsayılan olarak yalnız verisi
+    /// olanlar açık gelir.
+    /// </summary>
+    [Authorize(PlatformPermissions.Documents.GenerateReports)]
+    public virtual async Task<ReportTemplateDto> CreateAsync(CreateUpdateReportTemplateDto input)
+    {
+        var template = new ReportTemplate(
+            GuidGenerator.Create(), CurrentTenant.Id, input.Name,
+            input.Recipient, input.Issuer, isSystem: false, order: input.Order);
+
+        await _templateRepository.InsertAsync(template, autoSave: true);
+
+        var order = 1;
+        var sections = Enum.GetValues<ReportSectionKey>()
+            .Select(key => new ReportSection(
+                GuidGenerator.Create(), CurrentTenant.Id, template.Id, key,
+                order++, ReportSectionAvailability.IsAvailable(key)))
+            .ToList();
+
+        await _sectionRepository.InsertManyAsync(sections, autoSave: true);
+
+        var templates = await GetListAsync();
+        return templates.First(t => t.Id == template.Id);
+    }
+
+    /// <summary>Şablon künyesini düzenler. Sistem şablonunu entity reddeder.</summary>
+    [Authorize(PlatformPermissions.Documents.GenerateReports)]
+    public virtual async Task<ReportTemplateDto> UpdateAsync(Guid id, CreateUpdateReportTemplateDto input)
+    {
+        var template = await _templateRepository.GetAsync(id);
+
+        template.Update(input.Name, input.Recipient, input.Issuer, input.Order);
+        await _templateRepository.UpdateAsync(template);
+
+        var templates = await GetListAsync();
+        return templates.First(t => t.Id == id);
+    }
+
+    /// <summary>
+    /// Şablonu ve bölümlerini siler. Sistem şablonu silinemez. Üretilmiş teslim
+    /// paketleri şablon ADINI kendi kaydında tuttuğu için geçmiş bozulmaz.
+    /// </summary>
+    [Authorize(PlatformPermissions.Documents.GenerateReports)]
+    public virtual async Task DeleteAsync(Guid id)
+    {
+        var template = await _templateRepository.GetAsync(id);
+        template.GuardNotSystem();
+
+        await _sectionRepository.DeleteAsync(s => s.TemplateId == id);
+        await _templateRepository.DeleteAsync(template);
+    }
+
+    /// <summary>
+    /// Sistem şablonunu kiracıya kopyalar — "düzenlemek için önce kopyala"
+    /// akışının tek tıkla karşılığı. Bölüm sırası ve açık/kapalı durumu korunur.
+    /// </summary>
+    [Authorize(PlatformPermissions.Documents.GenerateReports)]
+    public virtual async Task<ReportTemplateDto> DuplicateAsync(Guid id)
+    {
+        ReportTemplate source;
+        List<ReportSection> sourceSections;
+
+        // Kaynak sistem şablonu olabilir (host'ta) — okuma filtre kapalı yapılır,
+        // kopya HER ZAMAN mevcut kiracıya yazılır.
+        using (_mtFilter.Disable())
+        {
+            source = await _templateRepository.GetAsync(id);
+            sourceSections = (await _sectionRepository.GetListAsync(s => s.TemplateId == id))
+                .OrderBy(s => s.Order)
+                .ToList();
+        }
+
+        var copy = new ReportTemplate(
+            GuidGenerator.Create(), CurrentTenant.Id, $"{source.Name} (kopya)",
+            source.Recipient, source.Issuer, isSystem: false, order: source.Order);
+
+        await _templateRepository.InsertAsync(copy, autoSave: true);
+
+        var sections = sourceSections
+            .Select(s => new ReportSection(
+                GuidGenerator.Create(), CurrentTenant.Id, copy.Id, s.SectionKey, s.Order, s.IsEnabled))
+            .ToList();
+
+        await _sectionRepository.InsertManyAsync(sections, autoSave: true);
+
+        var templates = await GetListAsync();
+        return templates.First(t => t.Id == copy.Id);
+    }
+
     private static ReportTemplateDto Map(ReportTemplate template, List<ReportSection> sections) => new()
     {
         Id = template.Id,
