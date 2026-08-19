@@ -466,6 +466,16 @@ export function DocumentsRoot() {
           </p>
         </div>
         <div className="d-flex align-items-center gap-2">
+          {/* Buradaki "Yükle" tek seferlik ve seçili klasöre çalışır; sıra,
+              ilerleme ve tekrar deneme isteyen toplu iş kuyruk ekranında. */}
+          {canCreate && (
+            <a
+              className="apya-doc-linkbtn"
+              href={`${abpAppPath()}Documents/Upload${activeFolderId ? `?documentId=${activeFolderId}` : ''}`}
+            >
+              Toplu yükleme
+            </a>
+          )}
           {canCreate && (
             <Button variant="secondary" leadingIcon={<i className="fa fa-folder-plus" />} onClick={openCreateFolder}>
               Yeni klasör
