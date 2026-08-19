@@ -5723,3 +5723,40 @@ i.apya-priority-dot {
     outline: none;
     box-shadow: 0 0 0 2px var(--apya-border-focus);
 }
+
+/* ----------------------------------------------------------------------------
+   17f) YÜKLEME KUYRUĞU
+   ---------------------------------------------------------------------------- */
+.apya-doc-uploadgrid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 14px;
+    align-items: start;
+}
+@media (min-width: 992px) {
+    .apya-doc-uploadgrid {
+        grid-template-columns: 320px minmax(0, 1fr);
+    }
+}
+.apya-doc-dropzone {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 26px 14px;
+    text-align: center;
+    cursor: pointer;
+    border: 1.5px dashed var(--apya-border-default);
+    border-radius: var(--apya-radius-lg, 10px);
+    background: var(--apya-surface-sunken);
+    transition: border-color .12s ease, background .12s ease;
+}
+.apya-doc-dropzone:hover,
+.apya-doc-dropzone.is-over {
+    border-color: var(--apya-accent-500);
+    background: var(--apya-surface-raised);
+}
+.apya-doc-dropzone:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px var(--apya-border-focus);
+}

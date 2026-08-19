@@ -26,6 +26,7 @@ export default defineConfig({
         'documents-admin':  'src/documents-admin.jsx',
         'documents-project':'src/documents-project.jsx',
         'documents-report': 'src/documents-report.jsx',
+        'documents-upload': 'src/documents-upload.jsx',
         'task-detail':      'src/task-detail.jsx',
         'calendar':         'src/calendar.jsx',
       },
