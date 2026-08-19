@@ -651,10 +651,25 @@ namespace Apya.Platform.Tasks
             if (input.AssigneeId.HasValue)
             {
                 var user = await _userRepository.FindAsync(input.AssigneeId.Value);
-                taskDto.AssigneeName = user?.UserName;
+                taskDto.AssigneeName = FormatAssigneeName(user);
             }
 
             return taskDto;
+        }
+
+        /// <summary>
+        /// Sorumlu adını "Ad Soyad" olarak biçimlendirir; ikisi de boşsa kullanıcı adına düşer.
+        /// Listede AutoMapper profili, oluşturma/güncelleme dönüşünde burası aynı sonucu üretsin
+        /// diye tek yerde toplandı (önceden bu yollar ham UserName yazıyordu).
+        /// </summary>
+        private static string? FormatAssigneeName(Volo.Abp.Identity.IdentityUser? user)
+        {
+            if (user == null) return null;
+
+            var full = string.Join(" ", new[] { user.Name, user.Surname }
+                .Where(s => !string.IsNullOrWhiteSpace(s)));
+
+            return string.IsNullOrWhiteSpace(full) ? user.UserName : full;
         }
 
         // --- 3. UPDATE (Güncelleme) - REV-001: Rich Domain Model ---
@@ -735,7 +750,7 @@ namespace Apya.Platform.Tasks
             if (task.AssigneeId.HasValue)
             {
                 var user = await _userRepository.FindAsync(task.AssigneeId.Value);
-                taskDto.AssigneeName = user?.UserName;
+                taskDto.AssigneeName = FormatAssigneeName(user);
             }
 
             return taskDto;

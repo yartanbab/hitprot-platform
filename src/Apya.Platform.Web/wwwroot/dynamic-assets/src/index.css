@@ -2,6 +2,21 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Dashboard kart yüzeyi token'ları. Tasarım sistemi bunları
+   `src/styles/tokens.css`'te tanımlıyor ama o dosya ne bu bundle'a giriyor ne de
+   sayfaya link'leniyor; kabuk CSS'i (wwwroot/css) de tanımlamıyor. Sonuç: yayınlanan
+   `js/style.css` `rounded-card`/`shadow-card` için `var(--apya-radius-card)` ve
+   `var(--apya-shadow-card)` KULLANIYOR ama değer TANIMSIZ → kartlar keskin köşeli ve
+   gölgesiz render oluyordu. Island'ın kendi CSS'ine koyuyoruz ki daima birlikte yüklensin.
+   Değerler `src/styles/tokens.css` ile birebir. */
+:root {
+  --apya-radius-card: 14px;
+  --apya-shadow-card: 0 1px 2px rgba(17, 24, 39, 0.04), 0 8px 24px -16px rgba(17, 24, 39, 0.14);
+}
+[data-theme="dark"] {
+  --apya-shadow-card: 0 1px 2px rgba(0, 0, 0, 0.40), 0 10px 30px -18px rgba(0, 0, 0, 0.70);
+}
+
 @layer utilities {
   /* font-tabular: 11 yerde (Dashboard widget'ları, MoneyInput, DataTable,
      ExpenseForm) kullanılıyor ama Tailwind default'u değil — tanımsızdı,

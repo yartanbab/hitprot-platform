@@ -163,7 +163,14 @@ public class ProjectAppService :
                 if (items.Any())
                 {
                     var projectIds = items.Select(x => x.Id).ToList();
-                    allTaskItems = await _taskRepository.GetListAsync(x => x.ProjectId.HasValue && projectIds.Contains(x.ProjectId.Value));
+                    // FN-001 (liste tarafı): Assignee navigasyonu include edilmezse AutoMapper
+                    // AssigneeName'i null bırakır → proje kartındaki ekip baş harfleri "?" çıkıyordu
+                    // (EnrichProgressAndRisk baş harfleri AssigneeName'den türetir).
+                    // GetDetailAsync'te aynı düzeltme zaten vardı; liste yolu atlanmıştı.
+                    allTaskItems = await AsyncExecuter.ToListAsync(
+                        (await _taskRepository.GetQueryableAsync())
+                            .Include(t => t.Assignee)
+                            .Where(x => x.ProjectId.HasValue && projectIds.Contains(x.ProjectId.Value)));
                     if (canViewBudget)
                     {
                         var allTaskIds = allTaskItems.Select(x => x.Id).ToList();
@@ -412,7 +419,11 @@ public class ProjectAppService :
             if (items.Any())
             {
                 var projectIds = items.Select(x => x.Id).ToList();
-                allTaskItems = await _taskRepository.GetListAsync(x => x.ProjectId.HasValue && projectIds.Contains(x.ProjectId.Value));
+                // FN-001 (özet tarafı): baş harfler AssigneeName'den türediği için Assignee şart.
+                allTaskItems = await AsyncExecuter.ToListAsync(
+                    (await _taskRepository.GetQueryableAsync())
+                        .Include(t => t.Assignee)
+                        .Where(x => x.ProjectId.HasValue && projectIds.Contains(x.ProjectId.Value)));
             }
             var allTasks = ObjectMapper.Map<List<TaskItem>, List<Apya.Platform.Tasks.TaskDto>>(allTaskItems);
 

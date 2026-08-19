@@ -1,0 +1,145 @@
+@page "/Share/{token}"
+@model Apya.Platform.Web.Pages.Share.IndexModel
+@{
+    Layout = null;
+    ViewBag.Title = "Paylaşılan teslim dosyası";
+}
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    @* Dış sayfa arama motorlarına düşmemeli. *@
+    <meta name="robots" content="noindex, nofollow" />
+    <title>@ViewBag.Title</title>
+    <link rel="stylesheet" href="~/dynamic-assets/src/styles/tokens.css" />
+    <style>
+        body {
+            margin: 0;
+            background: var(--apya-surface-base, #F5F5F5);
+            color: var(--apya-text-primary, #111827);
+            font-family: Inter, system-ui, -apple-system, sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+        .wrap { max-width: 880px; margin: 0 auto; padding: 32px 20px 60px; position: relative; }
+        .card {
+            background: var(--apya-surface-raised, #fff);
+            border: 1px solid var(--apya-border-default, #E5E7EB);
+            border-radius: var(--apya-radius-xl, 12px);
+            padding: 20px;
+        }
+        .head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+        h1 { font-size: 20px; margin: 0 0 4px; letter-spacing: -.02em; }
+        .sub { font-size: 12.5px; color: var(--apya-text-tertiary, #6B7280); }
+        .chip {
+            display: inline-flex; align-items: center; height: 24px; padding: 0 10px;
+            border-radius: 9999px; font-size: 11.5px; font-weight: 600;
+            background: var(--apya-accent-soft, #EEF2FF); color: var(--apya-accent-500, #4F46E5);
+        }
+        table { width: 100%; border-collapse: collapse; margin-top: 16px; }
+        th {
+            text-align: left; font-size: 10.5px; text-transform: uppercase; letter-spacing: .06em;
+            color: var(--apya-text-tertiary, #6B7280); padding: 8px 6px;
+            border-bottom: 1px solid var(--apya-border-default, #E5E7EB);
+        }
+        td { padding: 9px 6px; font-size: 12.5px; border-bottom: 1px solid var(--apya-border-subtle, #F3F4F6); }
+        .masked { color: var(--apya-text-tertiary, #6B7280); font-style: italic; }
+        .notice {
+            margin-top: 18px; padding: 12px 14px; font-size: 12px; border-radius: 10px;
+            background: var(--apya-surface-sunken, #F3F4F6); color: var(--apya-text-secondary, #4B5563);
+        }
+        .error { text-align: center; padding: 60px 20px; }
+        .error h1 { font-size: 18px; }
+        /* Filigran: yalnız görsel caydırıcı — indirmeyi engelleyen şey sunucudaki
+           AllowDownload bayrağıdır, bu katman değil. */
+        .watermark {
+            position: fixed; inset: 0; pointer-events: none; z-index: 1;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 64px; font-weight: 800; letter-spacing: .08em;
+            color: rgba(17, 24, 39, .06); transform: rotate(-24deg); text-align: center;
+        }
+        .content { position: relative; z-index: 2; }
+    </style>
+</head>
+<body>
+@if (Model.ErrorMessage != null)
+{
+    <div class="wrap">
+        <div class="card error">
+            <h1>@Model.ErrorMessage</h1>
+            <p class="sub">Dosyayı paylaşan kişiden yeni bir bağlantı isteyin.</p>
+        </div>
+    </div>
+}
+else if (Model.View != null)
+{
+    var view = Model.View;
+
+    if (!string.IsNullOrWhiteSpace(view.Watermark))
+    {
+        <div class="watermark">@view.Watermark</div>
+    }
+
+    <div class="wrap content">
+        <div class="card">
+            <div class="head">
+                <div>
+                    <h1>@view.PackageName</h1>
+                    <div class="sub">
+                        @view.ProjectName
+                        @if (!string.IsNullOrWhiteSpace(view.PeriodCode)) { <text> · @view.PeriodCode</text> }
+                        @if (view.GeneratedAt.HasValue) { <text> · @view.GeneratedAt.Value.ToString("dd.MM.yyyy") tarihinde üretildi</text> }
+                    </div>
+                </div>
+                <span class="chip">Salt okunur</span>
+            </div>
+
+            <table>
+                <thead>
+                <tr>
+                    <th style="width:70px">Ek no</th>
+                    <th>Belge</th>
+                    <th style="width:120px">Tür</th>
+                    <th style="width:100px">Tarih</th>
+                </tr>
+                </thead>
+                <tbody>
+                @foreach (var item in view.Items)
+                {
+                    <tr>
+                        <td>@item.AnnexNumber</td>
+                        <td>
+                            @item.DocumentFileName
+                            @if (item.IsMasked)
+                            {
+                                <div class="masked">Bu belgenin bazı alanları maskelidir.</div>
+                            }
+                        </td>
+                        <td>@(item.DocumentTypeName ?? "—")</td>
+                        <td>@(item.DocumentDate?.ToString("dd.MM.yyyy") ?? "—")</td>
+                    </tr>
+                }
+                @if (view.Items.Count == 0)
+                {
+                    <tr><td colspan="4" class="sub">Pakette ek yok.</td></tr>
+                }
+                </tbody>
+            </table>
+
+            <div class="notice">
+                Bu bağlantı <strong>@view.ExpiresAt.ToString("dd.MM.yyyy")</strong> tarihine kadar geçerlidir.
+                @if (view.AllowDownload)
+                {
+                    <text>Dosya indirme açıktır.</text>
+                }
+                else
+                {
+                    <text>Dosya indirme <strong>kapalıdır</strong>; belgeler yalnız bu listede görüntülenebilir.</text>
+                }
+                Her erişim kaydedilir.
+            </div>
+        </div>
+    </div>
+}
+</body>
+</html>

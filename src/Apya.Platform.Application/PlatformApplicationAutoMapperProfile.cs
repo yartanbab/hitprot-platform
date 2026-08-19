@@ -57,7 +57,19 @@ namespace Apya.Platform
             // 1. TaskItem -> Yeni TaskDto
             // Başına Apya.Platform.Tasks yazarak yenisini kastettiğimizi belirttik.
             CreateMap<Apya.Platform.Tasks.TaskItem, Apya.Platform.Tasks.TaskDto>()
-                .ForMember(dest => dest.AssigneeName, opt => opt.MapFrom(src => src.Assignee != null ? src.Assignee.UserName : null))
+                // Sorumlu adı ad+soyad olarak gösterilir; ikisi de boşsa kullanıcı adına düşülür.
+                // Daha önce doğrudan UserName'e eşleniyordu, bu yüzden görev LİSTESİNDE "pm1"
+                // görünürken görev DETAYINDA (TaskAppService, ad+soyad kurar) "Mehmet Demir"
+                // yazıyordu. Tek kaynak burası olsun diye eşleme buraya taşındı.
+                // İfade EF Core'a çevrilebilir biçimde tutuldu (ProjectTo kullanımına hazır).
+                .ForMember(dest => dest.AssigneeName, opt => opt.MapFrom(src =>
+                    src.Assignee == null
+                        ? null
+                        : (src.Assignee.Name == null || src.Assignee.Name == "")
+                            ? src.Assignee.UserName
+                            : (src.Assignee.Surname == null || src.Assignee.Surname == "")
+                                ? src.Assignee.Name
+                                : src.Assignee.Name + " " + src.Assignee.Surname))
                 .ForMember(dest => dest.ParentTaskTitle, opt => opt.MapFrom(src => src.ParentTask != null ? src.ParentTask.Title : null))
                 .ForMember(dest => dest.IsFavorite, opt => opt.Ignore()) // TaskFavorite join'inden AppService'te doldurulur
                 // Alt görev sayaçları gizlilik (APYA-22) süzgecinden geçmek zorunda,
@@ -77,6 +89,35 @@ namespace Apya.Platform
             CreateMap<Apya.Platform.Documents.Document, Apya.Platform.Documents.DocumentDto>();
             CreateMap<Apya.Platform.Documents.CreateUpdateDocumentDto, Apya.Platform.Documents.Document>();
             CreateMap<Apya.Platform.Documents.DocumentAttachment, Apya.Platform.Documents.DocumentAttachmentDto>();
+
+            // Belge (DocumentFile) — ad/proje/tip gibi ilişkili adlar AppService'te toplu doldurulur,
+            // AutoMapper yalnız düz alanları taşır (N+1 sorgu üretmemek için Ignore).
+            CreateMap<Apya.Platform.Documents.DocumentFile, Apya.Platform.Documents.DocumentFileDto>()
+                .ForMember(d => d.FolderName, o => o.Ignore())
+                .ForMember(d => d.DocumentTypeName, o => o.Ignore())
+                .ForMember(d => d.DocumentTypeCode, o => o.Ignore())
+                .ForMember(d => d.DocumentTypeIcon, o => o.Ignore())
+                .ForMember(d => d.ProjectName, o => o.Ignore())
+                .ForMember(d => d.WorkStepName, o => o.Ignore())
+                .ForMember(d => d.WorkStepOrder, o => o.Ignore())
+                .ForMember(d => d.FileName, o => o.Ignore())
+                .ForMember(d => d.ContentType, o => o.Ignore())
+                .ForMember(d => d.FileSize, o => o.Ignore())
+                .ForMember(d => d.DownloadUrl, o => o.Ignore())
+                .ForMember(d => d.UploaderName, o => o.Ignore())
+                .ForMember(d => d.Tags, o => o.Ignore());
+            CreateMap<Apya.Platform.Documents.DocumentFile, Apya.Platform.Documents.DocumentFileDetailDto>()
+                .IncludeBase<Apya.Platform.Documents.DocumentFile, Apya.Platform.Documents.DocumentFileDto>()
+                .ForMember(d => d.Fields, o => o.Ignore())
+                .ForMember(d => d.Versions, o => o.Ignore());
+            CreateMap<Apya.Platform.Documents.DocumentType, Apya.Platform.Documents.DocumentTypeDto>()
+                .ForMember(d => d.Fields, o => o.Ignore());
+            CreateMap<Apya.Platform.Documents.DocumentTypeField, Apya.Platform.Documents.DocumentTypeFieldDto>();
+
+            // --- PROJE İŞ ADIMI (WORK STEP) ---
+            CreateMap<ProjectWorkStep, ProjectWorkStepDto>()
+                .ForMember(d => d.ProjectName, o => o.Ignore())
+                .ForMember(d => d.DocumentCount, o => o.Ignore());
 
             // --- CARİ (MÜŞTERİ) MODÜLÜ ---
             CreateMap<Customer, CustomerDto>();

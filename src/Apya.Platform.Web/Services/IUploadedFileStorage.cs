@@ -13,4 +13,11 @@ public interface IUploadedFileStorage
 {
     /// <summary>Doğrula ve diske yaz; saklanan dosya adını döner.</summary>
     Task<string> StoreAsync(IFormFile file);
+
+    /// <summary>
+    /// SİSTEMİN ÜRETTİĞİ dosyayı (teslim paketi PDF/ZIP'i, rapor sürümü) saklar.
+    /// Kullanıcı yüklemesi değildir: uzantı beyaz listesi ve boyut sınırı burada
+    /// uygulanmaz — içeriği biz üretiyoruz, doğrulanacak bir şey yok.
+    /// </summary>
+    Task<string> StoreGeneratedAsync(byte[] content, string extension);
 }
