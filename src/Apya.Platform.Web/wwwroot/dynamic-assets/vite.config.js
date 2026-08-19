@@ -26,6 +26,7 @@ export default defineConfig({
         'documents-admin':  'src/documents-admin.jsx',
         'documents-project':'src/documents-project.jsx',
         'task-detail':      'src/task-detail.jsx',
+        'calendar':         'src/calendar.jsx',
       },
       formats: ['es'],
       fileName: (_format, entryName) => `${entryName}.js`,

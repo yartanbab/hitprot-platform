@@ -513,6 +513,8 @@
         "Setting:Shell.Pins.Description": "Kenar çubuğunun en üstünde sabit duran menü öğeleri. Kullanıcıya özeldir, cihazlar arasında taşınır.",
         "Setting:TaskDetail.Ui": "Görev Detay Görünümü",
         "Setting:TaskDetail.Ui.Description": "Görev detayının hangi arayüzle açılacağı (yeni modal / eski panel).",
+        "Setting:Calendar.DailyCapacityHours": "Günlük Kapasite (saat)",
+        "Setting:Calendar.DailyCapacityHours.Description": "Takvimdeki gün yükü çubuğu ve kapasite aşımı uyarısı bu değere göre hesaplanır. 0 girilirse kapasite takibi kapanır.",
         "Setting:Projects.DefaultView": "Projeler Açılış Görünümü",
         "Setting:Projects.DefaultView.Description": "Projeler ekranının kart ızgarasıyla mı yoksa yoğun listeyle mi açılacağı. Kullanıcıya özeldir.",
         "Settings:ProjectsView.Label": "Projeler açılış görünümü",

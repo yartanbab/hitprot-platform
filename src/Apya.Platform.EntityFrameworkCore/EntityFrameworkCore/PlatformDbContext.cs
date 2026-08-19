@@ -165,6 +165,9 @@ namespace Apya.Platform.EntityFrameworkCore
         /* --- TAKVİM MODÜLÜ --- */
         public DbSet<ExternalCalendarAccount> ExternalCalendarAccounts { get; set; }
         public DbSet<CalendarSyncMapping> CalendarSyncMappings { get; set; }
+        public DbSet<CalendarSyncLogEntry> CalendarSyncLogEntries { get; set; }
+        public DbSet<CalendarFeedToken> CalendarFeedTokens { get; set; }
+        public DbSet<IcalSubscription> IcalSubscriptions { get; set; }
 
         /* --- DOKÜMAN (WIKI) MODÜLÜ --- */
         public DbSet<Apya.Platform.Documents.Document> Documents { get; set; }
@@ -829,7 +832,41 @@ namespace Apya.Platform.EntityFrameworkCore
                 b.ConfigureByConvention();
                 b.Property(x => x.ExternalEmail).IsRequired().HasMaxLength(256);
                 b.Property(x => x.AccessToken).IsRequired();
+                // Kaynak listesi "1,2,6" gibi kısa; proje listesi Guid CSV'si (36+1 karakter).
+                b.Property(x => x.SyncSources).HasMaxLength(64);
+                b.Property(x => x.SyncProjectIds).HasMaxLength(2048);
                 b.HasIndex(x => new { x.UserId, x.Provider });
+            });
+
+            builder.Entity<CalendarFeedToken>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "CalendarFeedTokens", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+                b.Property(x => x.TokenHash).IsRequired().HasMaxLength(64);
+                b.Property(x => x.TokenProtected).IsRequired().HasMaxLength(1024);
+                // Anonim uc token ile ARAR: benzersiz indeks hem hiz hem cakisma korumasi.
+                b.HasIndex(x => x.TokenHash).IsUnique();
+                b.HasIndex(x => x.UserId);
+            });
+
+            builder.Entity<IcalSubscription>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "IcalSubscriptions", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+                b.Property(x => x.Url).IsRequired().HasMaxLength(2048);
+                b.Property(x => x.DisplayName).IsRequired().HasMaxLength(128);
+                b.Property(x => x.Color).HasMaxLength(32);
+                b.Property(x => x.LastError).HasMaxLength(512);
+                b.HasIndex(x => x.UserId);
+            });
+
+            builder.Entity<CalendarSyncLogEntry>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "CalendarSyncLogEntries", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+                b.Property(x => x.Message).IsRequired().HasMaxLength(512);
+                // Drawer "hesabın son N satırı"nı sorar — sorgu deseni bu indekse oturur.
+                b.HasIndex(x => new { x.ExternalCalendarAccountId, x.CreationTime });
             });
 
             builder.Entity<CalendarSyncMapping>(b =>

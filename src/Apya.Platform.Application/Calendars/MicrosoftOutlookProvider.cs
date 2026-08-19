@@ -66,8 +66,54 @@ public class MicrosoftOutlookProvider : ICalendarProvider, ITransientDependency
         _logger.LogInformation("Outlook Calendar: event deleted. EventId={EventId}", externalEventId);
     }
 
-    public Task<List<CalendarEvent>> GetEventsAsync(ExternalCalendarAccount account, DateTime start, DateTime end)
-        => Task.FromResult(new List<CalendarEvent>());
+    /// <summary>
+    /// Aralıktaki etkinlikleri okur. <c>/calendarView</c> kullanılır (ham
+    /// <c>/events</c> değil): tekrarlayan etkinlikleri Graph tek tek örneklere açar.
+    /// </summary>
+    public async Task<List<CalendarEvent>> GetEventsAsync(ExternalCalendarAccount account, DateTime start, DateTime end)
+    {
+        var client = BuildClient(_tokenProtector.Unprotect(account.AccessToken));
+        var url = "https://graph.microsoft.com/v1.0/me/calendarView" +
+                  $"?startDateTime={Uri.EscapeDataString(start.ToString("s"))}" +
+                  $"&endDateTime={Uri.EscapeDataString(end.ToString("s"))}" +
+                  "&$select=id,subject,start,end,isAllDay&$orderby=start/dateTime&$top=250";
+
+        var response = await client.GetAsync(url);
+        response.EnsureSuccessStatusCode();
+        var json = await response.Content.ReadFromJsonAsync<JsonElement>();
+
+        var events = new List<CalendarEvent>();
+        if (!json.TryGetProperty("value", out var items)) return events;
+
+        foreach (var item in items.EnumerateArray())
+        {
+            var startTime = ReadGraphTime(item, "start");
+            var endTime = ReadGraphTime(item, "end");
+            if (startTime == null || endTime == null) continue;
+
+            events.Add(new CalendarEvent
+            {
+                ExternalId = item.TryGetProperty("id", out var id) ? id.GetString() : null,
+                Title      = item.TryGetProperty("subject", out var s) ? (s.GetString() ?? "(başlıksız)") : "(başlıksız)",
+                StartTime  = startTime.Value,
+                EndTime    = endTime.Value,
+                IsAllDay   = item.TryGetProperty("isAllDay", out var allDay) && allDay.ValueKind == JsonValueKind.True
+            });
+        }
+
+        _logger.LogDebug("Outlook Calendar: {Count} etkinlik okundu. Email={Email}", events.Count, account.ExternalEmail);
+        return events;
+    }
+
+    private static DateTime? ReadGraphTime(JsonElement item, string property)
+    {
+        if (!item.TryGetProperty(property, out var node)) return null;
+        if (!node.TryGetProperty("dateTime", out var dt)) return null;
+        return dt.GetString() is { } text
+               && DateTime.TryParse(text, null, System.Globalization.DateTimeStyles.RoundtripKind, out var parsed)
+            ? parsed
+            : null;
+    }
 
     public async Task<(string AccessToken, string RefreshToken, DateTime ExpiresAt)> RefreshTokenAsync(
         ExternalCalendarAccount account, string clientId, string clientSecret)

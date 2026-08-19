@@ -44,6 +44,19 @@ public class PlatformApplicationModule : AbpModule
             ConnectCallback = Apya.Platform.DynamicAssets.Webhooks.WebhookUrlGuard.GuardedConnectAsync
         });
 
+        // iCal abonelikleri de KULLANICININ girdiği bir adresi sunucudan çeker — tehdit
+        // webhook'larla birebir aynı, koruma da aynı olmalı. Ayrı isim: zaman aşımı
+        // takvim dosyalarına göre ayarlanır (büyük tatil takvimleri yavaş gelebilir).
+        context.Services.AddHttpClient("IcalClient", client =>
+        {
+            client.Timeout = System.TimeSpan.FromSeconds(20);
+        })
+        .ConfigurePrimaryHttpMessageHandler(() => new System.Net.Http.SocketsHttpHandler
+        {
+            AllowAutoRedirect = false,
+            ConnectCallback = Apya.Platform.DynamicAssets.Webhooks.WebhookUrlGuard.GuardedConnectAsync
+        });
+
         Configure<AbpAutoMapperOptions>(options =>
         {
             // PROJE İÇİNDEKİ MAPPING PROFİLLERİNİ TARA VE YÜKLE

@@ -26,6 +26,11 @@ public class CalendarAppService : ApplicationService, ICalendarAppService
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly CalendarTokenProtector _tokenProtector;
     private readonly IDistributedCache _distributedCache;
+    private readonly CalendarFeedProvider _feedProvider;
+    private readonly ITaskAppService _taskAppService;
+    private readonly IRepository<CalendarSyncLogEntry, Guid> _syncLogRepository;
+    private readonly IRepository<IcalSubscription, Guid> _icalRepository;
+    private readonly IcalSubscriptionFetcher _icalFetcher;
 
     public CalendarAppService(
         IRepository<ExternalCalendarAccount, Guid> accountRepository,
@@ -34,8 +39,18 @@ public class CalendarAppService : ApplicationService, ICalendarAppService
         IConfiguration configuration,
         IHttpClientFactory httpClientFactory,
         CalendarTokenProtector tokenProtector,
-        IDistributedCache distributedCache)
+        IDistributedCache distributedCache,
+        CalendarFeedProvider feedProvider,
+        ITaskAppService taskAppService,
+        IRepository<CalendarSyncLogEntry, Guid> syncLogRepository,
+        IRepository<IcalSubscription, Guid> icalRepository,
+        IcalSubscriptionFetcher icalFetcher)
     {
+        _feedProvider       = feedProvider;
+        _taskAppService     = taskAppService;
+        _syncLogRepository  = syncLogRepository;
+        _icalRepository     = icalRepository;
+        _icalFetcher        = icalFetcher;
         _accountRepository = accountRepository;
         _taskRepository    = taskRepository;
         _calendarManager   = calendarManager;
@@ -47,6 +62,252 @@ public class CalendarAppService : ApplicationService, ICalendarAppService
 
     // SEC-012: OAuth 'state' CSRF token'ı için kullanıcı-bağlı sunucu-taraflı anahtar.
     private static string OAuthStateCacheKey(Guid userId) => $"calendar-oauth-state:{userId}";
+
+    public Task<CalendarFeedDto> GetFeedAsync(GetCalendarFeedInput input)
+    {
+        return _feedProvider.BuildAsync(input);
+    }
+
+    /// <summary>
+    /// Öğeyi başka güne taşır. Yalnız görev taşınabilir; diğer kaynaklar bir muhasebe
+    /// ya da kurum kaydının tarihidir ve takvimden değiştirilmez (feed'de
+    /// <c>CanReschedule=false</c> döner, ekran da sürüklemeye izin vermez — bu kontrol
+    /// istemciye güvenmemek içindir).
+    /// <para>
+    /// Gün farkı SUNUCUDA hesaplanır ve görevin kendi <c>DeferAsync</c>'ine devredilir:
+    /// gizlilik kontrolü, başlangıç/bitiş tutarlılığı ve dış takvim senkronu tek yerde
+    /// kalsın diye takvim kendi güncelleme yolunu açmaz.
+    /// </para>
+    /// </summary>
+    public async Task RescheduleItemAsync(RescheduleCalendarItemInput input)
+    {
+        EnsureReschedulable(input.Source);
+
+        var task = await _taskRepository.GetAsync(input.SourceId);
+        var basis = (task.DueDate ?? Clock.Now).Date;
+        var days = (int)(input.NewDate.Date - basis).TotalDays;
+
+        if (days == 0) return;
+
+        await _taskAppService.DeferAsync(input.SourceId, days);
+    }
+
+    public async Task CompleteItemAsync(CompleteCalendarItemInput input)
+    {
+        if (input.Source != CalendarSourceType.Task)
+        {
+            throw new BusinessException(message: "Bu öğe takvimden tamamlanamaz.");
+        }
+
+        await _taskAppService.UpdateStatusAsync(input.SourceId, Tasks.TaskStatus.Done);
+    }
+
+    public async Task<CalendarExternalEventsDto> GetExternalEventsAsync(GetCalendarFeedInput input)
+    {
+        var from = input.From.Date;
+        var to = input.To.Date.AddDays(1); // bitiş günü dahil
+
+        var results = await _calendarManager.GetExternalEventsAsync(CurrentUser.Id!.Value, from, to);
+        var dto = new CalendarExternalEventsDto();
+
+        foreach (var result in results)
+        {
+            dto.Accounts.Add(new ExternalCalendarStatusDto
+            {
+                AccountId  = result.AccountId,
+                Provider   = result.Provider,
+                Email      = result.Email,
+                EventCount = result.Events.Count,
+                Error      = result.Error
+            });
+
+            foreach (var ev in result.Events)
+            {
+                dto.Items.Add(new CalendarItemDto
+                {
+                    // Dış etkinliğin kimliği Guid değil (sağlayıcı string'i) — anahtar
+                    // hesap + dış id'den türetilir ki hesaplar arası çakışmasın.
+                    Key       = $"{(int)CalendarSourceType.ExternalEvent}:{result.AccountId}:{ev.ExternalId ?? ev.StartTime.Ticks.ToString()}",
+                    Source    = CalendarSourceType.ExternalEvent,
+                    SourceId  = result.AccountId,
+                    Title     = ev.Title,
+                    Date      = ev.StartTime.Date,
+                    StartTime = ev.IsAllDay ? null : ev.StartTime,
+                    EndTime   = ev.IsAllDay ? null : ev.EndTime,
+                    IsAllDay  = ev.IsAllDay,
+                    Subtitle  = result.Email,
+                    Risk      = CalendarRiskLevel.None,
+                    // Dış etkinlik APYA'da salt-okunurdur: buradan taşınmaz, kapatılmaz.
+                    IsDone        = false,
+                    CanReschedule = false
+                });
+            }
+        }
+
+        // iCal abonelikleri de aynı katmandan gelir: ekran için "dış etkinlik" hepsi
+        // birdir, farkı sağlayıcısı değil salt-okunur olmasıdır.
+        await AppendIcalSubscriptionsAsync(dto, from, to);
+
+        return dto;
+    }
+
+    /// <summary>
+    /// Abone olunan .ics takvimlerini besler. Abonelik başına TOLERANSLI: biri
+    /// yanıt vermezse o satır hata durumuna düşer, diğerleri gelmeye devam eder.
+    /// </summary>
+    private async Task AppendIcalSubscriptionsAsync(CalendarExternalEventsDto dto, DateTime from, DateTime to)
+    {
+        var subscriptions = await _icalRepository.GetListAsync(x => x.UserId == CurrentUser.Id && x.IsEnabled);
+
+        foreach (var subscription in subscriptions)
+        {
+            var status = new ExternalCalendarStatusDto
+            {
+                AccountId = subscription.Id,
+                Provider  = CalendarProviderType.ICloud, // ICS aboneliği: sağlayıcıya bağlı değil
+                Email     = subscription.DisplayName,
+                Error     = subscription.LastError
+            };
+            dto.Accounts.Add(status);
+
+            try
+            {
+                var events = await _icalFetcher.FetchAsync(subscription, from, to);
+                status.EventCount = events.Count;
+                status.Error      = null;
+
+                foreach (var ev in events)
+                {
+                    dto.Items.Add(new CalendarItemDto
+                    {
+                        Key       = $"{(int)CalendarSourceType.ExternalEvent}:{subscription.Id}:{ev.ExternalId}",
+                        Source    = CalendarSourceType.ExternalEvent,
+                        SourceId  = subscription.Id,
+                        Title     = ev.Title,
+                        Date      = ev.StartTime.Date,
+                        StartTime = ev.IsAllDay ? null : ev.StartTime,
+                        EndTime   = ev.IsAllDay ? null : ev.EndTime,
+                        IsAllDay  = ev.IsAllDay,
+                        Subtitle  = subscription.DisplayName,
+                        Risk      = CalendarRiskLevel.None,
+                        // Tek yönlü abonelik: APYA'dan taşınamaz, kapatılamaz.
+                        CanReschedule = false
+                    });
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.LogWarning(ex, "iCal aboneliği okunamadı. Id={Id}", subscription.Id);
+                status.Error = "Bağlantı yanıt vermiyor.";
+            }
+        }
+    }
+
+    /* ── Senkron ayarları (Faz 5) ─────────────────────────────────────────── */
+
+    private const int SyncLogPageSize = 20;
+
+    public async Task<CalendarSyncSettingsDto> GetSyncSettingsAsync()
+    {
+        var accounts = await _accountRepository.GetListAsync(x => x.UserId == CurrentUser.Id);
+        var dto = new CalendarSyncSettingsDto
+        {
+            Accounts = accounts.Select(ToSyncAccountDto).ToList()
+        };
+
+        if (accounts.Count == 0) return dto;
+
+        var accountIds = accounts.Select(a => a.Id).ToList();
+        var logQuery = await _syncLogRepository.GetQueryableAsync();
+        var entries = await AsyncExecuter.ToListAsync(
+            logQuery.Where(e => accountIds.Contains(e.ExternalCalendarAccountId))
+                    .OrderByDescending(e => e.CreationTime)
+                    .Take(SyncLogPageSize));
+
+        dto.Log = entries.Select(e => new CalendarSyncLogEntryDto
+        {
+            Id         = e.Id,
+            AccountId  = e.ExternalCalendarAccountId,
+            Kind       = e.Kind,
+            Message    = e.Message,
+            ItemCount  = e.ItemCount,
+            OccurredAt = e.CreationTime
+        }).ToList();
+
+        return dto;
+    }
+
+    public async Task UpdateSyncRulesAsync(UpdateCalendarSyncRulesInput input)
+    {
+        var account = await _accountRepository.GetAsync(input.AccountId);
+        if (account.UserId != CurrentUser.Id) throw new UnauthorizedAccessException();
+
+        account.IsSyncEnabled  = input.IsSyncEnabled;
+        account.ConflictRule   = input.ConflictRule;
+        // Dış takvim etkinliği bir KAYNAK değil, hedeftir: kendi kendine yazılamaz.
+        account.SyncSources    = string.Join(',', (input.SyncSources ?? new List<CalendarSourceType>())
+            .Where(s => s != CalendarSourceType.ExternalEvent)
+            .Distinct()
+            .Select(s => (int)s));
+        account.SyncProjectIds = string.Join(',', (input.SyncProjectIds ?? new List<Guid>()).Distinct());
+
+        await _accountRepository.UpdateAsync(account);
+    }
+
+    private static CalendarSyncAccountDto ToSyncAccountDto(ExternalCalendarAccount a) => new()
+    {
+        Id             = a.Id,
+        Provider       = a.Provider,
+        ExternalEmail  = a.ExternalEmail,
+        IsSyncEnabled  = a.IsSyncEnabled,
+        LastSyncTime   = a.LastSyncTime,
+        ConflictRule   = a.ConflictRule,
+        SyncSources    = ParseSources(a.SyncSources),
+        SyncProjectIds = ParseGuids(a.SyncProjectIds)
+    };
+
+    /// <summary>
+    /// "1,2,6" → kaynak listesi. BOŞ = yalnız görev: mevcut hesaplar kural
+    /// tanımlanana kadar eski davranışta kalsın, sessizce her şeyi göndermeye başlamasın.
+    /// </summary>
+    private static List<CalendarSourceType> ParseSources(string? csv)
+    {
+        if (string.IsNullOrWhiteSpace(csv))
+        {
+            return new List<CalendarSourceType> { CalendarSourceType.Task };
+        }
+
+        return csv.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                  .Select(part => int.TryParse(part, out var value) ? (CalendarSourceType?)value : null)
+                  .Where(s => s != null && CalendarSources.Internal.Contains(s.Value))
+                  .Select(s => s!.Value)
+                  .Distinct()
+                  .ToList();
+    }
+
+    private static List<Guid> ParseGuids(string? csv)
+    {
+        if (string.IsNullOrWhiteSpace(csv)) return new List<Guid>();
+
+        return csv.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                  .Select(part => Guid.TryParse(part, out var value) ? (Guid?)value : null)
+                  .Where(g => g != null)
+                  .Select(g => g!.Value)
+                  .Distinct()
+                  .ToList();
+    }
+
+    private static void EnsureReschedulable(CalendarSourceType source)
+    {
+        if (source == CalendarSourceType.Task) return;
+
+        throw new BusinessException(message: source switch
+        {
+            CalendarSourceType.Invoice => "Fatura vadesi takvimden değiştirilemez.",
+            CalendarSourceType.Grant   => "Hibe son tarihi takvimden değiştirilemez.",
+            _                          => "Bu öğenin tarihi takvimden değiştirilemez."
+        });
+    }
 
     public async Task<List<CalendarAccountDto>> GetMyAccountsAsync()
     {

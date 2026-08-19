@@ -38,6 +38,17 @@ public class PlatformSettingDefinitionProvider : SettingDefinitionProvider
                 description: L("Setting:Projects.DefaultView.Description"))
         );
 
+        // Takvim günlük kapasitesi — Projects.DefaultView ile aynı ray (kullanıcı seviyesi).
+        // .WithProviders() ile KISITLANMAZ: hem User provider zincirde kalsın hem de
+        // varsayılan (8 sa) DefaultValueSettingValueProvider'dan dönebilsin.
+        context.Add(
+            new SettingDefinition(
+                PlatformSettings.Calendar.DailyCapacityHours,
+                defaultValue: PlatformSettingDefaults.CalendarDailyCapacityHours,
+                displayName: L("Setting:Calendar.DailyCapacityHours"),
+                description: L("Setting:Calendar.DailyCapacityHours.Description"))
+        );
+
         // Sürüm notları "en son görülen sürüm" — kullanıcı seviyesi iç değer (ayar ekranında GÖSTERİLMEZ).
         // Boş varsayılan = hiç görmedi → ilk açılışta "Yenilikler" penceresi açılır.
         context.Add(
