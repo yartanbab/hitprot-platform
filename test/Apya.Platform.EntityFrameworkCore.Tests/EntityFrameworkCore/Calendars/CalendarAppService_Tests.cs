@@ -251,4 +251,53 @@ public class CalendarAppService_Tests : PlatformEntityFrameworkCoreTestBase
         row.EventCount.ShouldBe(0);
         result.Items.ShouldBeEmpty();
     }
+
+    [Fact]
+    public async Task UpdateSyncRulesAsync_kurallari_saklar_ve_geri_okur()
+    {
+        var account = new ExternalCalendarAccount(
+            Guid.NewGuid(), _currentUser.Id!.Value, CalendarProviderType.Google, "kural@apya.co");
+        await _accountRepository.InsertAsync(account, autoSave: true);
+
+        var projectId = Guid.NewGuid();
+        await _calendar.UpdateSyncRulesAsync(new UpdateCalendarSyncRulesInput
+        {
+            AccountId      = account.Id,
+            IsSyncEnabled  = true,
+            SyncSources    = new System.Collections.Generic.List<CalendarSourceType>
+            {
+                CalendarSourceType.Task,
+                CalendarSourceType.Invoice,
+                // Dış etkinlik bir HEDEF, kaynak değil — kaydedilmemeli.
+                CalendarSourceType.ExternalEvent
+            },
+            SyncProjectIds = new System.Collections.Generic.List<Guid> { projectId },
+            ConflictRule   = CalendarConflictRule.ApyaWins
+        });
+
+        var settings = await _calendar.GetSyncSettingsAsync();
+        var row = settings.Accounts.Single(a => a.Id == account.Id);
+
+        row.SyncSources.ShouldContain(CalendarSourceType.Task);
+        row.SyncSources.ShouldContain(CalendarSourceType.Invoice);
+        row.SyncSources.ShouldNotContain(CalendarSourceType.ExternalEvent);
+        row.SyncProjectIds.ShouldBe(new[] { projectId });
+        row.ConflictRule.ShouldBe(CalendarConflictRule.ApyaWins);
+    }
+
+    [Fact]
+    public async Task GetSyncSettingsAsync_kuralsiz_hesapta_yalniz_gorev_dondurur()
+    {
+        var account = new ExternalCalendarAccount(
+            Guid.NewGuid(), _currentUser.Id!.Value, CalendarProviderType.Outlook, "eski@apya.co");
+        await _accountRepository.InsertAsync(account, autoSave: true);
+
+        var settings = await _calendar.GetSyncSettingsAsync();
+        var row = settings.Accounts.Single(a => a.Id == account.Id);
+
+        // Kural tanımlanmamış eski hesap birden bire fatura/gider göndermeye başlamamalı.
+        row.SyncSources.ShouldBe(new[] { CalendarSourceType.Task });
+        row.SyncProjectIds.ShouldBeEmpty();
+        row.ConflictRule.ShouldBe(CalendarConflictRule.LastWriteWins);
+    }
 }

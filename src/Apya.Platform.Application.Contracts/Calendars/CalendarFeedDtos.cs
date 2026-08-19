@@ -162,3 +162,64 @@ public class CalendarExternalEventsDto
 
     public List<ExternalCalendarStatusDto> Accounts { get; set; } = new();
 }
+
+/// <summary>Senkron drawer'ındaki hesap kartı: bağlantı + kurallar.</summary>
+public class CalendarSyncAccountDto
+{
+    public Guid Id { get; set; }
+
+    public CalendarProviderType Provider { get; set; }
+
+    public string ExternalEmail { get; set; } = string.Empty;
+
+    public bool IsSyncEnabled { get; set; }
+
+    public DateTime? LastSyncTime { get; set; }
+
+    /// <summary>Bu hesaba yazılacak kaynak türleri. Boş = yalnız görevler.</summary>
+    public List<CalendarSourceType> SyncSources { get; set; } = new();
+
+    /// <summary>Boş = proje süzgeci yok (tüm projeler).</summary>
+    public List<Guid> SyncProjectIds { get; set; } = new();
+
+    public CalendarConflictRule ConflictRule { get; set; }
+}
+
+public class CalendarSyncLogEntryDto
+{
+    public Guid Id { get; set; }
+
+    public Guid AccountId { get; set; }
+
+    public CalendarSyncLogKind Kind { get; set; }
+
+    public string Message { get; set; } = string.Empty;
+
+    public int ItemCount { get; set; }
+
+    public DateTime OccurredAt { get; set; }
+}
+
+/// <summary>Senkron drawer'ının tüm içeriği — hesaplar, kurallar ve günlük.</summary>
+public class CalendarSyncSettingsDto
+{
+    public List<CalendarSyncAccountDto> Accounts { get; set; } = new();
+
+    public List<CalendarSyncLogEntryDto> Log { get; set; } = new();
+}
+
+/// <summary>Bir hesabın senkron kurallarını günceller.</summary>
+public class UpdateCalendarSyncRulesInput
+{
+    public Guid AccountId { get; set; }
+
+    public bool IsSyncEnabled { get; set; }
+
+    /// <summary>Boş liste = yalnız görevler gitsin.</summary>
+    public List<CalendarSourceType> SyncSources { get; set; } = new();
+
+    /// <summary>Boş liste = proje süzgeci yok.</summary>
+    public List<Guid> SyncProjectIds { get; set; } = new();
+
+    public CalendarConflictRule ConflictRule { get; set; }
+}

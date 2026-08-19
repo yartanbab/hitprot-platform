@@ -31,6 +31,12 @@ public interface ICalendarAppService : IApplicationService
     /// </summary>
     Task<CalendarExternalEventsDto> GetExternalEventsAsync(GetCalendarFeedInput input);
 
+    /// <summary>Senkron drawer'ının içeriği: bağlı hesaplar, kuralları ve senkron günlüğü.</summary>
+    Task<CalendarSyncSettingsDto> GetSyncSettingsAsync();
+
+    /// <summary>Bir hesabın senkron kurallarını günceller (hangi kaynaklar, hangi projeler, çakışma kuralı).</summary>
+    Task UpdateSyncRulesAsync(UpdateCalendarSyncRulesInput input);
+
     Task<List<CalendarAccountDto>> GetMyAccountsAsync();
     Task ConnectAccountAsync(ConnectCalendarInput input);
     Task DisconnectAccountAsync(Guid id);

@@ -28,6 +28,7 @@ public class CalendarAppService : ApplicationService, ICalendarAppService
     private readonly IDistributedCache _distributedCache;
     private readonly CalendarFeedProvider _feedProvider;
     private readonly ITaskAppService _taskAppService;
+    private readonly IRepository<CalendarSyncLogEntry, Guid> _syncLogRepository;
 
     public CalendarAppService(
         IRepository<ExternalCalendarAccount, Guid> accountRepository,
@@ -38,10 +39,12 @@ public class CalendarAppService : ApplicationService, ICalendarAppService
         CalendarTokenProtector tokenProtector,
         IDistributedCache distributedCache,
         CalendarFeedProvider feedProvider,
-        ITaskAppService taskAppService)
+        ITaskAppService taskAppService,
+        IRepository<CalendarSyncLogEntry, Guid> syncLogRepository)
     {
-        _feedProvider      = feedProvider;
-        _taskAppService    = taskAppService;
+        _feedProvider       = feedProvider;
+        _taskAppService     = taskAppService;
+        _syncLogRepository  = syncLogRepository;
         _accountRepository = accountRepository;
         _taskRepository    = taskRepository;
         _calendarManager   = calendarManager;
@@ -136,6 +139,100 @@ public class CalendarAppService : ApplicationService, ICalendarAppService
         }
 
         return dto;
+    }
+
+    /* ── Senkron ayarları (Faz 5) ─────────────────────────────────────────── */
+
+    private const int SyncLogPageSize = 20;
+
+    public async Task<CalendarSyncSettingsDto> GetSyncSettingsAsync()
+    {
+        var accounts = await _accountRepository.GetListAsync(x => x.UserId == CurrentUser.Id);
+        var dto = new CalendarSyncSettingsDto
+        {
+            Accounts = accounts.Select(ToSyncAccountDto).ToList()
+        };
+
+        if (accounts.Count == 0) return dto;
+
+        var accountIds = accounts.Select(a => a.Id).ToList();
+        var logQuery = await _syncLogRepository.GetQueryableAsync();
+        var entries = await AsyncExecuter.ToListAsync(
+            logQuery.Where(e => accountIds.Contains(e.ExternalCalendarAccountId))
+                    .OrderByDescending(e => e.CreationTime)
+                    .Take(SyncLogPageSize));
+
+        dto.Log = entries.Select(e => new CalendarSyncLogEntryDto
+        {
+            Id         = e.Id,
+            AccountId  = e.ExternalCalendarAccountId,
+            Kind       = e.Kind,
+            Message    = e.Message,
+            ItemCount  = e.ItemCount,
+            OccurredAt = e.CreationTime
+        }).ToList();
+
+        return dto;
+    }
+
+    public async Task UpdateSyncRulesAsync(UpdateCalendarSyncRulesInput input)
+    {
+        var account = await _accountRepository.GetAsync(input.AccountId);
+        if (account.UserId != CurrentUser.Id) throw new UnauthorizedAccessException();
+
+        account.IsSyncEnabled  = input.IsSyncEnabled;
+        account.ConflictRule   = input.ConflictRule;
+        // Dış takvim etkinliği bir KAYNAK değil, hedeftir: kendi kendine yazılamaz.
+        account.SyncSources    = string.Join(',', (input.SyncSources ?? new List<CalendarSourceType>())
+            .Where(s => s != CalendarSourceType.ExternalEvent)
+            .Distinct()
+            .Select(s => (int)s));
+        account.SyncProjectIds = string.Join(',', (input.SyncProjectIds ?? new List<Guid>()).Distinct());
+
+        await _accountRepository.UpdateAsync(account);
+    }
+
+    private static CalendarSyncAccountDto ToSyncAccountDto(ExternalCalendarAccount a) => new()
+    {
+        Id             = a.Id,
+        Provider       = a.Provider,
+        ExternalEmail  = a.ExternalEmail,
+        IsSyncEnabled  = a.IsSyncEnabled,
+        LastSyncTime   = a.LastSyncTime,
+        ConflictRule   = a.ConflictRule,
+        SyncSources    = ParseSources(a.SyncSources),
+        SyncProjectIds = ParseGuids(a.SyncProjectIds)
+    };
+
+    /// <summary>
+    /// "1,2,6" → kaynak listesi. BOŞ = yalnız görev: mevcut hesaplar kural
+    /// tanımlanana kadar eski davranışta kalsın, sessizce her şeyi göndermeye başlamasın.
+    /// </summary>
+    private static List<CalendarSourceType> ParseSources(string? csv)
+    {
+        if (string.IsNullOrWhiteSpace(csv))
+        {
+            return new List<CalendarSourceType> { CalendarSourceType.Task };
+        }
+
+        return csv.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                  .Select(part => int.TryParse(part, out var value) ? (CalendarSourceType?)value : null)
+                  .Where(s => s != null && CalendarSources.Internal.Contains(s.Value))
+                  .Select(s => s!.Value)
+                  .Distinct()
+                  .ToList();
+    }
+
+    private static List<Guid> ParseGuids(string? csv)
+    {
+        if (string.IsNullOrWhiteSpace(csv)) return new List<Guid>();
+
+        return csv.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                  .Select(part => Guid.TryParse(part, out var value) ? (Guid?)value : null)
+                  .Where(g => g != null)
+                  .Select(g => g!.Value)
+                  .Distinct()
+                  .ToList();
     }
 
     private static void EnsureReschedulable(CalendarSourceType source)

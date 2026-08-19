@@ -165,6 +165,7 @@ namespace Apya.Platform.EntityFrameworkCore
         /* --- TAKVİM MODÜLÜ --- */
         public DbSet<ExternalCalendarAccount> ExternalCalendarAccounts { get; set; }
         public DbSet<CalendarSyncMapping> CalendarSyncMappings { get; set; }
+        public DbSet<CalendarSyncLogEntry> CalendarSyncLogEntries { get; set; }
 
         /* --- DOKÜMAN (WIKI) MODÜLÜ --- */
         public DbSet<Apya.Platform.Documents.Document> Documents { get; set; }
@@ -786,7 +787,19 @@ namespace Apya.Platform.EntityFrameworkCore
                 b.ConfigureByConvention();
                 b.Property(x => x.ExternalEmail).IsRequired().HasMaxLength(256);
                 b.Property(x => x.AccessToken).IsRequired();
+                // Kaynak listesi "1,2,6" gibi kısa; proje listesi Guid CSV'si (36+1 karakter).
+                b.Property(x => x.SyncSources).HasMaxLength(64);
+                b.Property(x => x.SyncProjectIds).HasMaxLength(2048);
                 b.HasIndex(x => new { x.UserId, x.Provider });
+            });
+
+            builder.Entity<CalendarSyncLogEntry>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "CalendarSyncLogEntries", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+                b.Property(x => x.Message).IsRequired().HasMaxLength(512);
+                // Drawer "hesabın son N satırı"nı sorar — sorgu deseni bu indekse oturur.
+                b.HasIndex(x => new { x.ExternalCalendarAccountId, x.CreationTime });
             });
 
             builder.Entity<CalendarSyncMapping>(b =>

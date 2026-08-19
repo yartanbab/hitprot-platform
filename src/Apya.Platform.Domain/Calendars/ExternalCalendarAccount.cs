@@ -24,6 +24,26 @@ public class ExternalCalendarAccount : FullAuditedAggregateRoot<Guid>
     public string ExternalSyncToken { get; set; } = string.Empty;
     public DateTime? LastSyncTime { get; set; }
 
+    /// <summary>
+    /// Bu hesaba HANGİ kaynak türlerinin yazılacağı — CalendarSourceType sayılarının
+    /// virgülle ayrık listesi ("1,2,6"). BOŞ = yalnız görevler (eski davranış korunur,
+    /// mevcut hesaplar sessizce her şeyi göndermeye başlamasın).
+    /// <para>
+    /// Ayrı tablo yerine CSV: bu değer üzerinden ilişkisel sorgu yapılmıyor, yalnız
+    /// senkron sırasında okunup süzgeç olarak kullanılıyor.
+    /// </para>
+    /// </summary>
+    public string SyncSources { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Yalnız bu projelerin öğeleri gitsin — Guid'lerin virgülle ayrık listesi.
+    /// BOŞ = proje süzgeci yok (tüm projeler).
+    /// </summary>
+    public string SyncProjectIds { get; set; } = string.Empty;
+
+    /// <summary>Çakışma kuralı. Varsayılan: son değişen kazanır.</summary>
+    public CalendarConflictRule ConflictRule { get; set; } = CalendarConflictRule.LastWriteWins;
+
     public ExternalCalendarAccount()
     {
         IsSyncEnabled = true;
