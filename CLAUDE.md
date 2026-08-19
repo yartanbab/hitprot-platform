@@ -50,19 +50,80 @@ Her katmanda **aynı alan klasörü** kullanılır: `Domain/Projects/` ↔ `Appl
 ## 3. Komutlar
 
 ```bash
-dotnet build Apya.Platform.sln
-dotnet test
+# Çözüm dosyası .slnx'tir (.sln YOK). Build öncesi çalışan Web uygulamasını DURDUR:
+# aksi halde bin/ altındaki DLL'ler kilitli olduğu için MSB3021 "being used by
+# another process" hatalarıyla düşer (kod hatası sanma).
+dotnet build Apya.Platform.slnx
+dotnet test Apya.Platform.slnx
 
-# Migration (EntityFrameworkCore proje dizininde)
-dotnet ef migrations add <Ad> --startup-project ../Apya.Platform.Web
-dotnet ef database update --startup-project ../Apya.Platform.Web
+# --- Migration: HER şema değişikliğinde İKİ tane üret (çift provider) ---
+# Postgres — appsettings "SqlServer" dediği için sağlayıcıyı override ET, yoksa
+# "target project doesn't match your migrations assembly" hatası alırsın.
+cd src/Apya.Platform.EntityFrameworkCore
+Database__Provider=PostgreSql dotnet ef migrations add <Ad> --startup-project ../Apya.Platform.Web
 
-# Migration + seed uygula
-dotnet run --project src/Apya.Platform.DbMigrator
+# SQL Server — migration'lar AYRI assembly'de; proje kendi startup'ı olmalı
+# (Web startup olursa Generic Host design-time factory'yi atlar).
+cd src/Apya.Platform.EntityFrameworkCore.SqlServer
+dotnet ef migrations add <Ad> --project . --startup-project . --output-dir Migrations
 
-# İstemci kütüphaneleri
+# --- Migration + seed uygula: PROJE DİZİNİNDEN (aşağıdaki nota bak) ---
+cd src/Apya.Platform.DbMigrator
+dotnet run -- --OpenIddict:Applications:Platform_Web:ClientSecret=<secret>
+
+# --- Yalnız şema uygula (SEED ÇALIŞMAZ — aşağıdaki uyarıya bak) ---
+cd src/Apya.Platform.EntityFrameworkCore.SqlServer
+dotnet ef database update --project . --startup-project .
+# Postgres'e uygulamak için:
+#   cd src/Apya.Platform.EntityFrameworkCore
+#   Database__Provider=PostgreSql dotnet ef database update --startup-project ../Apya.Platform.Web
+
+# İstemci kütüphaneleri (wwwroot/libs) — worktree'de ŞART.
+# Eksikse Web her isteğe 500 "The Libs Folder is Missing!" döner.
 abp install-libs
+
+# React uygulaması (wwwroot/dynamic-assets) — abp install-libs SONRASINDA ŞART.
+cd src/Apya.Platform.Web/wwwroot/dynamic-assets && npm ci
 ```
+
+> **`abp install-libs` çalıştırdıysan `npm ci`'yi ATLAMA.** install-libs,
+> `wwwroot/dynamic-assets` altında **yarn** çalıştırır; bu proje ise **npm** ile kuruludur
+> (`package-lock.json` commit'lidir). `@testing-library/dom` bir *peer dependency* ve
+> yarn v1 peer'ları kurmaz → paket `node_modules`'a hiç inmez ve frontend testleri
+> `Cannot find module '@testing-library/dom'` ile toptan patlar (37 dosya / 242 test).
+> `npm ci` doğru kurulumu geri getirir.
+>
+> Aynı sebeple **`dynamic-assets/yarn.lock`'ta oluşan değişikliği COMMIT ETME** —
+> kazanım değil, install-libs artığıdır: kilit dosyasından `@testing-library/dom` ve
+> bağımlılıklarını düşürür, yerine yalnız o makineye özgü platform ikililerini
+> (`@esbuild/*`, `fsevents`) ekler. `git checkout -- .../yarn.lock` ile at.
+
+> **DbMigrator'ı depo kökünden çalıştırma.** `Host.CreateDefaultBuilder` yapılandırmayı
+> **çalışma dizininden** okur, `appsettings.json` ise proje dizinindedir. Kökten
+> `dotnet run --project src/Apya.Platform.DbMigrator` dersen appsettings HİÇ yüklenmez →
+> `Database:Provider` görülmez, Npgsql varsayılanına düşer ve bağlantı dizesi boş gelir
+> (`The ConnectionString property has not been initialized`). Önce `cd` et.
+>
+> **`ClientSecret` parametresi şart.** `appsettings.json`'da `Platform_Web` istemcisinin
+> secret'ı boştur; `OpenIddictDataSeedContributor` confidential istemcide boş secret'ı
+> reddeder ve **tüm tohumlama zincirini** daha ilk adımda düşürür. Tarayıcı girişini
+> etkilemez — uygulama non-tiered, giriş çerez tabanlıdır; bu istemci API/Swagger içindir.
+>
+> **Başarıyı çıkış kodundan değil log'dan doğrula:** `"Successfully completed all database
+> migrations."` satırını ara. Tam log `src/Apya.Platform.DbMigrator/Logs/logs.txt`'te.
+
+> **`dotnet ef database update` yalnız ŞEMA uygular — TOHUMLAMA ÇALIŞTIRMAZ.**
+> DbMigrator ise migrate **+ seed** yapar (admin kullanıcısı, OpenIddict istemcisi,
+> izin/paket tohumları). Boş bir veritabanını sadece `database update` ile kurarsan
+> uygulama ayağa kalkar ama **giriş yapılamaz**. Günlük kullanımda DbMigrator'ı tercih et;
+> `database update`'i tek bir migration'ı hızlıca uygulamak/geri almak gibi cerrahi
+> durumlar için sakla.
+>
+> Hedef veritabanı `Database:Provider` + connection string'den çözülür — **bulunduğun
+> proje dizininden DEĞİL.** (`migrations add`'deki "target project doesn't match your
+> migrations assembly" hatası burada çıkmaz; komut sessizce config'in gösterdiği
+> sağlayıcıya uygular.) Postgres'e uygulayacaksan override'ı unutma, yoksa farkında
+> olmadan SQL Server'a gidersin.
 
 Web: `https://localhost:44386`
 
