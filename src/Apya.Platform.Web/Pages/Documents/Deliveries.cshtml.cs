@@ -112,9 +112,14 @@ public class DeliveriesModel : AbpPageModel
     /// Paketi üretir. Preflight bloke ediyorsa AppService hata fırlatır —
     /// istemci düğmeyi kapatmış olsa da sunucu kontrolü atlanmaz.
     /// </summary>
-    [Authorize(PlatformPermissions.Documents.GenerateReports)]
     public async Task<IActionResult> OnPostGenerateAsync(Guid packageId)
     {
+        // Handler metoduna konan [Authorize] ASP.NET Core tarafından SESSİZCE yok sayılır
+        // (derleyici uyarısı MVC1001). Sınıftaki izin yalnızca Documents.Default olduğu için
+        // kontrol burada çalışma anında yapılmalı — yoksa sadece görüntüleme yetkisi olan
+        // kullanıcı da paket üretebilirdi.
+        await AuthorizationService.CheckAsync(PlatformPermissions.Documents.GenerateReports);
+
         var package = await _packageAppService.GetAsync(packageId);
         var model = await BuildReportModelAsync(package);
 
