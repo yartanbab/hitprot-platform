@@ -23,6 +23,7 @@ public class DocumentAppService :
     IDocumentAppService
 {
     private readonly IRepository<DocumentAttachment, Guid> _attachmentRepository;
+    private readonly IRepository<DocumentFile, Guid> _documentFileRepository;
     private readonly IRepository<DocumentAccessLog, Guid> _accessLogRepository;
     private readonly IRepository<IdentityUser, Guid> _identityRepository;
     private readonly IRepository<Project, Guid> _projectRepository;
@@ -30,12 +31,14 @@ public class DocumentAppService :
     public DocumentAppService(
         IRepository<Document, Guid> repository,
         IRepository<DocumentAttachment, Guid> attachmentRepository,
+        IRepository<DocumentFile, Guid> documentFileRepository,
         IRepository<DocumentAccessLog, Guid> accessLogRepository,
         IRepository<IdentityUser, Guid> identityRepository,
         IRepository<Project, Guid> projectRepository)
         : base(repository)
     {
         _attachmentRepository = attachmentRepository;
+        _documentFileRepository = documentFileRepository;
         _accessLogRepository = accessLogRepository;
         _identityRepository = identityRepository;
         _projectRepository = projectRepository;
@@ -48,18 +51,41 @@ public class DocumentAppService :
     public virtual async Task<DocumentAttachmentDto> AddAttachmentAsync(Guid documentId, string fileName, string storedFileName, string contentType, long fileSize)
     {
         // Belge var mı + tenant sınırı repository filtreleriyle doğrulanır (yoksa EntityNotFoundException).
-        await Repository.GetAsync(documentId);
+        var folder = await Repository.GetAsync(documentId);
 
         // Aynı klasörde aynı isimde bir dosya zaten varsa: yeni yükleme onun yeni versiyonu olur.
         var existingLatest = (await _attachmentRepository.GetListAsync(x =>
                 x.DocumentId == documentId && x.FileName == fileName && x.IsLatest))
             .FirstOrDefault();
 
+        // Meta verinin sahibi DocumentFile'dır: yeni versiyon mevcut belgeye eklenir,
+        // yeni dosya ise yeni bir belge açar (tür/tutar/dönem sonradan doldurulur).
+        var documentFile = existingLatest != null
+            ? await _documentFileRepository.GetAsync(existingLatest.DocumentFileId)
+            : null;
+
+        if (documentFile == null)
+        {
+            documentFile = new DocumentFile(
+                GuidGenerator.Create(),
+                CurrentTenant.Id,
+                documentId,
+                fileName,
+                projectId: folder.ProjectId);
+
+            await _documentFileRepository.InsertAsync(documentFile, autoSave: true);
+        }
+        else
+        {
+            documentFile.EnsureNotLocked();
+        }
+
         var newId = GuidGenerator.Create();
         var attachment = new DocumentAttachment(newId)
         {
             TenantId = CurrentTenant.Id,
             DocumentId = documentId,
+            DocumentFileId = documentFile.Id,
             FileName = fileName,
             StoredFileName = storedFileName,
             ContentType = contentType,
@@ -75,9 +101,19 @@ public class DocumentAppService :
             await _attachmentRepository.UpdateAsync(existingLatest);
         }
 
-        await _attachmentRepository.InsertAsync(attachment);
+        await _attachmentRepository.InsertAsync(attachment, autoSave: true);
+
+        // VersionNumber artan bir sayaçtır (aradan versiyon silinmiş olabilir);
+        // görünen "N versiyon" sayısı için gerçek satır sayısı okunur.
+        var versionCount = await _attachmentRepository.CountAsync(x => x.DocumentFileId == documentFile.Id);
+        documentFile.RegisterVersion(attachment.Id, versionCount);
+        await _documentFileRepository.UpdateAsync(documentFile);
+
         await _accessLogRepository.InsertAsync(new DocumentAccessLog(
-            GuidGenerator.Create(), CurrentTenant.Id, documentId, attachment.Id, DocumentAccessAction.Uploaded));
+            GuidGenerator.Create(), CurrentTenant.Id, documentId, attachment.Id,
+            DocumentAccessAction.Uploaded, documentFile.Id,
+            attachment.VersionNumber > 1 ? $"v{attachment.VersionNumber}" : null,
+            CurrentUser.Roles?.FirstOrDefault()));
 
         return await MapAttachmentToDtoAsync(attachment);
     }
@@ -125,10 +161,40 @@ public class DocumentAppService :
         // Ek artık IMultiTenant; ek olarak belgenin de bu tenant'ta görülebilir olduğu doğrulanır.
         await Repository.GetAsync(attachment.DocumentId);
 
-        await _accessLogRepository.InsertAsync(new DocumentAccessLog(
-            GuidGenerator.Create(), CurrentTenant.Id, attachment.DocumentId, attachment.Id, DocumentAccessAction.Deleted));
+        var documentFile = await _documentFileRepository.FindAsync(attachment.DocumentFileId);
+        documentFile?.EnsureNotLocked();
 
-        await _attachmentRepository.DeleteAsync(attachment);
+        await _accessLogRepository.InsertAsync(new DocumentAccessLog(
+            GuidGenerator.Create(), CurrentTenant.Id, attachment.DocumentId, attachment.Id,
+            DocumentAccessAction.Deleted, attachment.DocumentFileId,
+            $"v{attachment.VersionNumber}", CurrentUser.Roles?.FirstOrDefault()));
+
+        await _attachmentRepository.DeleteAsync(attachment, autoSave: true);
+
+        if (documentFile == null)
+        {
+            return;
+        }
+
+        // Versiyon silindikten sonra belgenin denormalize alanları tazelenir;
+        // son versiyon da gittiyse belge (meta verisiyle birlikte) anlamsız kalır, silinir.
+        var remaining = await _attachmentRepository.GetListAsync(x => x.DocumentFileId == documentFile.Id);
+
+        if (remaining.Count == 0)
+        {
+            await _documentFileRepository.DeleteAsync(documentFile);
+            return;
+        }
+
+        var latest = remaining.OrderByDescending(x => x.VersionNumber).First();
+        if (!latest.IsLatest)
+        {
+            latest.IsLatest = true;
+            await _attachmentRepository.UpdateAsync(latest);
+        }
+
+        documentFile.RegisterVersion(latest.Id, remaining.Count);
+        await _documentFileRepository.UpdateAsync(documentFile);
     }
 
     [Authorize(PlatformPermissions.Documents.ViewAccessLog)]
@@ -165,7 +231,9 @@ public class DocumentAppService :
         await Repository.GetAsync(attachment.DocumentId);
 
         await _accessLogRepository.InsertAsync(new DocumentAccessLog(
-            GuidGenerator.Create(), CurrentTenant.Id, attachment.DocumentId, attachment.Id, DocumentAccessAction.Downloaded));
+            GuidGenerator.Create(), CurrentTenant.Id, attachment.DocumentId, attachment.Id,
+            DocumentAccessAction.Downloaded, attachment.DocumentFileId,
+            null, CurrentUser.Roles?.FirstOrDefault()));
 
         return new DocumentAttachmentDownloadDto
         {
