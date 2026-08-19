@@ -274,7 +274,12 @@ export function suggestReschedule(items, { today, capacity = null, horizonDays =
             const count = countByDay[key] ?? 0;
             const itemLoad = item.loadHours ?? 0;
 
-            const fits = capacity
+            /* Kendi başına kapasiteyi aşan öğe HİÇBİR güne sığmaz (68 saatlik görev,
+               6 saatlik kapasite). Kapasite kuralında ısrar etmek hepsini ufuk
+               gününe yığar — yani "bugüne yığma" hatasının başka güne taşınmışı.
+               Böyle öğelerde gün başına ADET kuralına düşülür ki yine dağılsınlar. */
+            const tooBigForAnyDay = capacity && itemLoad > capacity;
+            const fits = capacity && !tooBigForAnyDay
                 ? load + itemLoad <= capacity
                 : count < fallbackPerDay;
 

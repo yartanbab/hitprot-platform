@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Button, Sheet, SheetContent } from '../components/ui';
 import { cn } from '../lib/utils';
 import { SOURCES, fmt, isoDay, suggestReschedule } from './lib/model';
@@ -21,6 +21,13 @@ export function SmartDeferPanel({ open, items, today, capacity, onClose }) {
     );
 
     const [selected, setSelected] = useState(() => new Set(suggestions.map((s) => s.item.key)));
+
+    /* Öneriler veri geldikçe DEĞİŞİR; ilk render'da liste boştu. Senkronlanmazsa
+       kullanıcı paneli açtığında hiçbiri seçili olmaz ve düğme "0 öğeyi ertele"
+       der — 25 kutuyu elle işaretlemesi gerekirdi. */
+    useEffect(() => {
+        setSelected(new Set(suggestions.map((s) => s.item.key)));
+    }, [suggestions]);
     const bulk = useBulkReschedule();
 
     const results = bulk.data ?? [];

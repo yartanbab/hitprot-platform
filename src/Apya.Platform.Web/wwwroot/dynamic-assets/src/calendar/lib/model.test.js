@@ -229,3 +229,27 @@ describe('suggestReschedule', () => {
         expect(new Set(suggestions.map((s) => isoDay(s.date))).size).toBeGreaterThan(1);
     });
 });
+
+describe('suggestReschedule — kapasiteyi tek basina asan oge', () => {
+    const today = new Date(2026, 7, 14);
+
+    it('hicbir gune sigmayan ogeleri yine de dagitir, tek gune yigmaz', () => {
+        /* 69 saatlik gorev, 6 saatlik kapasite: kapasite kuralinda israr etmek
+           hepsini ufuk gunune yigardi — "bugune yigma" hatasinin baska gune tasinmisi. */
+        const items = Array.from({ length: 4 }, (_, i) => item({
+            key: `buyuk${i}`,
+            date: '2026-08-10T00:00:00',
+            risk: RISK.OVERDUE,
+            canReschedule: true,
+            loadHours: 69,
+        }));
+
+        const { suggestions } = suggestReschedule(items, { today, capacity: 6, fallbackPerDay: 2 });
+
+        const gunler = new Set(suggestions.map((s) => isoDay(s.date)));
+        expect(suggestions).toHaveLength(4);
+        expect(gunler.size).toBeGreaterThan(1);
+        /* Ufuk gunune kacis olmamali: ilk oneri bugun olmali. */
+        expect(isoDay(suggestions[0].date)).toBe('2026-08-14');
+    });
+});
