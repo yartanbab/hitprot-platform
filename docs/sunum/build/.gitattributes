@@ -1,0 +1,2 @@
+# Kabuk betiği CRLF ile checkout edilirse Git Bash "$'\r': command not found" der.
+*.sh text eol=lf
