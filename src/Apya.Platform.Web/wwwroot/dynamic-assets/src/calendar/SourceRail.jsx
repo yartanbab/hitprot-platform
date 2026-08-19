@@ -15,7 +15,7 @@ const PROVIDER_LABEL = { 1: 'Google', 2: 'Outlook', 3: 'iCloud' };
 
 export function SourceRail({
     sources, counts, enabled, onToggle, compact = false,
-    externalAccounts = [], externalLoading = false,
+    externalAccounts = [], externalLoading = false, onOpenSync,
 }) {
     const available = (sources ?? []).filter((s) => s.isAvailable);
     if (available.length === 0) return null;
@@ -92,11 +92,28 @@ export function SourceRail({
             {/* Dış takvimler — izinle değil kullanıcının kendi bağlantısıyla gelir,
                 bu yüzden kaynak anahtarlarından AYRI bir bölümde durur. Bozuk
                 bağlantı burada görünür; takvimin kalanı çalışmaya devam eder. */}
-            {(externalAccounts.length > 0 || externalLoading) && !compact && (
+            {!compact && (
                 <>
-                    <p className="mt-2 border-t border-subtle px-2 pb-1 pt-2 text-[10.5px] font-bold uppercase tracking-wider text-text-tertiary">
-                        Dış takvimler
-                    </p>
+                    <div className="mt-2 flex items-center justify-between border-t border-subtle px-2 pb-1 pt-2">
+                        <p className="text-[10.5px] font-bold uppercase tracking-wider text-text-tertiary">
+                            Dış takvimler
+                        </p>
+                        {onOpenSync && (
+                            <button
+                                type="button"
+                                onClick={onOpenSync}
+                                className="rounded p-1 text-[11px] font-medium text-text-link hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-border-focus"
+                            >
+                                Ayarlar
+                            </button>
+                        )}
+                    </div>
+
+                    {externalAccounts.length === 0 && !externalLoading && (
+                        <p className="px-2 pb-1 text-[11.5px] text-text-tertiary">
+                            Bağlı takvim yok.
+                        </p>
+                    )}
 
                     {externalLoading && externalAccounts.length === 0 && (
                         <p className="px-2 py-1 text-[11.5px] text-text-tertiary">

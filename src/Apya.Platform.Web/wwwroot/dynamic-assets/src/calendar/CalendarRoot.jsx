@@ -8,6 +8,7 @@ import { SourceRail } from './SourceRail';
 import { Toolbar } from './Toolbar';
 import { WeekGrid } from './WeekGrid';
 import { ItemDrawer } from './ItemDrawer';
+import { SyncDrawer } from './SyncDrawer';
 import { useCalendarFeed } from './hooks/useCalendarFeed';
 import { useCalendarPrefs } from './hooks/useCalendarPrefs';
 import { useCalendarMutations } from './hooks/useCalendarMutations';
@@ -57,6 +58,7 @@ export function CalendarRoot() {
     const [month, setMonth] = useState(() => new Date(today.getFullYear(), today.getMonth(), 1));
     const [selectedDay, setSelectedDay] = useState(null);
     const [selectedItemKey, setSelectedItemKey] = useState(null);
+    const [syncOpen, setSyncOpen] = useState(false);
 
     const { view, setView, applyResponsiveDefault, enabledSources, toggleSource, resetSources } =
         useCalendarPrefs();
@@ -226,6 +228,7 @@ export function CalendarRoot() {
                             compact={layout !== 'wide'}
                             externalAccounts={external.data?.accounts ?? []}
                             externalLoading={external.isFetching}
+                            onOpenSync={() => setSyncOpen(true)}
                         />
                     </div>
                 )}
@@ -296,6 +299,8 @@ export function CalendarRoot() {
                     <SheetContent side="bottom" title="Gün detayı" className="max-h-[80vh] p-0">{panel}</SheetContent>
                 </Sheet>
             )}
+
+            <SyncDrawer open={syncOpen} onClose={() => setSyncOpen(false)} />
 
             {selectedItem && (
                 <ItemDrawer
