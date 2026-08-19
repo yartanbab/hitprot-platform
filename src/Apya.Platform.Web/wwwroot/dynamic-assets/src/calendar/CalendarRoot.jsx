@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Button, EmptyState, Sheet, SheetContent, Skeleton } from '../components/ui';
 import { cn } from '../lib/utils';
+import { api } from '../lib/api/httpClient';
 import { AgendaView } from './AgendaView';
 import { DayPanel } from './DayPanel';
 import { MonthGrid } from './MonthGrid';
@@ -9,10 +10,20 @@ import { Toolbar } from './Toolbar';
 import { WeekGrid } from './WeekGrid';
 import { ItemDrawer } from './ItemDrawer';
 import { SyncDrawer } from './SyncDrawer';
+import { SmartDeferPanel } from './SmartDeferPanel';
+import { SetupWizard } from './SetupWizard';
+import { ShortcutHelp } from './ShortcutHelp';
+import { Announcer } from './Announcer';
+import { PrintView } from './PrintView';
+import { TeamLayer } from './TeamLayer';
 import { useCalendarFeed } from './hooks/useCalendarFeed';
 import { useCalendarPrefs } from './hooks/useCalendarPrefs';
 import { useCalendarMutations } from './hooks/useCalendarMutations';
 import { useExternalEvents } from './hooks/useExternalEvents';
+import { useCalendarPreferences } from './hooks/useCalendarPreferences';
+import { useCalendarKeyboard } from './hooks/useCalendarKeyboard';
+import { useTeamLoad } from './hooks/useTeamLoad';
+import { useOfflineQueue } from './hooks/useOfflineQueue';
 import { layoutOf, useContainerWidth } from './hooks/useContainerWidth';
 import {
     MONTH_CELLS, addDays, dayLoad, fmt, groupByDay, isoDay, monthGridStart, stripTime, weekDays,
@@ -55,10 +66,18 @@ export function CalendarRoot() {
     const isNarrow = layout === 'narrow';
 
     const today = useMemo(() => stripTime(new Date()), []);
-    const [month, setMonth] = useState(() => new Date(today.getFullYear(), today.getMonth(), 1));
+    /* Çapa BUGÜN'dür, ayın 1'i değil: Hafta/Gün görünümüne geçince kullanıcı
+       içinde bulunduğu haftayı görmeli, ayın ilk haftasını değil. Ay görünümü
+       yalnız yıl+ay kullandığı için bundan etkilenmez. */
+    const [month, setMonth] = useState(today);
     const [selectedDay, setSelectedDay] = useState(null);
     const [selectedItemKey, setSelectedItemKey] = useState(null);
     const [syncOpen, setSyncOpen] = useState(false);
+    const [deferOpen, setDeferOpen] = useState(false);
+    const [setupDismissed, setSetupDismissed] = useState(false);
+    const [helpOpen, setHelpOpen] = useState(false);
+    const [focusedDay, setFocusedDay] = useState(null);
+    const [teamOpen, setTeamOpen] = useState(false);
 
     const { view, setView, applyResponsiveDefault, enabledSources, toggleSource, resetSources } =
         useCalendarPrefs();
@@ -104,6 +123,13 @@ export function CalendarRoot() {
     const { data, isPending, isError, refetch } = useCalendarFeed(range);
     /* Dış etkinlikler ayrı sorgudan gelir: yavaş/kırılgan dış çağrı grid'i bekletmesin. */
     const external = useExternalEvents(range);
+    const preferences = useCalendarPreferences();
+    const teamLoad = useTeamLoad({ from: range.from, to: range.to, enabled: teamOpen });
+
+    /* Çevrimdışı kuyruk: bağlantı yokken taşımalar burada birikir, gelince gönderilir. */
+    const offline = useOfflineQueue({
+        onFlush: (entry) => api.post('/api/app/calendar/reschedule-item', entry.payload),
+    });
 
     const allItems = useMemo(
         () => [...(data?.items ?? []), ...(external.data?.items ?? [])],
@@ -147,7 +173,28 @@ export function CalendarRoot() {
         setSelectedDay(isoDay(today));
     }, [today]);
 
-    const mutations = useCalendarMutations();
+    const mutations = useCalendarMutations({ onOfflineFailure: offline.enqueue });
+
+    /* Klavye: sürükle-bırakla yapılabilen her şey klavyeyle de yapılabilmeli. */
+    const deferFocusedDay = useCallback((days) => {
+        const key = focusedDay ?? selectedDay;
+        if (!key) return;
+        for (const item of byDay[key] ?? []) {
+            if (item.canReschedule && !item.isDone) {
+                mutations.reschedule(item, addDays(new Date(`T00:00:00`), days));
+            }
+        }
+    }, [focusedDay, selectedDay, byDay, mutations]);
+
+    useCalendarKeyboard({
+        onView: setView,
+        onToday: goToday,
+        onPrev: () => setMonth((m) => step(m, view, -1)),
+        onNext: () => setMonth((m) => step(m, view, 1)),
+        onDeferSelected: deferFocusedDay,
+        onUndo: () => mutations.lastAction?.undo?.(),
+        onToggleHelp: () => setHelpOpen((v) => !v),
+    });
 
     const hasAnyData = allItems.length > 0;
     const filteredToEmpty = hasAnyData && items.length === 0;
@@ -178,6 +225,7 @@ export function CalendarRoot() {
                 onNext={() => setMonth((m) => step(m, view, 1))}
                 onToday={goToday}
                 overloadDays={overloadDays}
+                onHelp={() => setHelpOpen(true)}
             />
 
             {isError && (
@@ -186,6 +234,27 @@ export function CalendarRoot() {
                     <button type="button" onClick={() => refetch()} className="ml-2 font-semibold underline">
                         Yeniden dene
                     </button>
+                </div>
+            )}
+
+            {/* Çevrimdışı şerit: değişiklik kaybolmadı, kuyrukta bekliyor. */}
+            {(!offline.isOnline || offline.pendingCount > 0) && (
+                <div
+                    role="status"
+                    aria-live="polite"
+                    className="flex items-center gap-2 rounded-card border border-warning-100 bg-warning-50 px-3 py-2 text-[12.5px] text-warning-700"
+                >
+                    <i className={cn('fa', offline.isOnline ? 'fa-cloud-arrow-up' : 'fa-wifi')} aria-hidden="true" />
+                    <span className="flex-1">
+                        {offline.isOnline
+                            ? `${offline.pendingCount} değişiklik gönderiliyor…`
+                            : `Çevrimdışısınız — ${offline.pendingCount} değişiklik kuyrukta, bağlantı gelince gönderilecek.`}
+                    </span>
+                    {offline.isOnline && offline.pendingCount > 0 && (
+                        <button type="button" onClick={offline.flush} className="font-semibold underline">
+                            Şimdi gönder
+                        </button>
+                    )}
                 </div>
             )}
 
@@ -229,6 +298,16 @@ export function CalendarRoot() {
                             externalAccounts={external.data?.accounts ?? []}
                             externalLoading={external.isFetching}
                             onOpenSync={() => setSyncOpen(true)}
+                            teamOpen={teamOpen}
+                            onToggleTeam={() => setTeamOpen((v) => !v)}
+                            teamContent={teamOpen ? (
+                                <TeamLayer
+                                    rows={teamLoad.data}
+                                    days={weekDayList}
+                                    capacity={capacity}
+                                    loading={teamLoad.isPending}
+                                />
+                            ) : null}
                         />
                     </div>
                 )}
@@ -264,6 +343,9 @@ export function CalendarRoot() {
                             onSelectItem={openItem}
                             onSelectDay={setSelectedDay}
                             onDropItem={mutations.reschedule}
+                            focusedDay={focusedDay}
+                            onFocusDay={setFocusedDay}
+                            onNavigate={(date) => setMonth(date)}
                             pending={mutations.pending}
                             errors={mutations.errors}
                         />
@@ -278,7 +360,12 @@ export function CalendarRoot() {
                             onSelectDay={setSelectedDay}
                         />
                     ) : (
-                        <AgendaView items={items} today={today} onSelectItem={openItem} />
+                        <AgendaView
+                            items={items}
+                            today={today}
+                            onSelectItem={openItem}
+                            onSmartDefer={() => setDeferOpen(true)}
+                        />
                     )}
                 </div>
 
@@ -300,7 +387,38 @@ export function CalendarRoot() {
                 </Sheet>
             )}
 
+            {/* Baskı çıktısı yalnız  print içinde görünür; ekranda yer kaplamaz. */}
+            <PrintView
+                items={items}
+                month={month}
+                today={today}
+                generatedAt={fmt.dayShort(today)}
+            />
+
+            <ShortcutHelp open={helpOpen} onClose={() => setHelpOpen(false)} />
+
+            {/* Duyurular: taşıma nazik, senkron hatası ısrarlı. */}
+            <Announcer
+                polite={mutations.lastAction?.message ?? ''}
+                assertive={external.data?.accounts?.find((a) => a.error)?.error ?? ''}
+            />
+
             <SyncDrawer open={syncOpen} onClose={() => setSyncOpen(false)} />
+
+            <SmartDeferPanel
+                open={deferOpen}
+                items={items}
+                today={today}
+                capacity={capacity}
+                onClose={() => setDeferOpen(false)}
+            />
+
+            {/* Kurulum yalnız HİÇ yapılmadıysa ve tercihler yüklendiyse açılır. */}
+            <SetupWizard
+                open={preferences.data ? !preferences.data.setupCompleted && !setupDismissed : false}
+                counts={counts}
+                onDone={() => setSetupDismissed(true)}
+            />
 
             {selectedItem && (
                 <ItemDrawer

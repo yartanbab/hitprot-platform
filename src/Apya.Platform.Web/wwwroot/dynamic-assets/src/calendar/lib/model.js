@@ -220,3 +220,88 @@ export function hourRange(events) {
 
 /** Saatli (dış) öğe mi? APYA öğeleri gün bazlıdır ve ızgaraya inmez. */
 export const isTimed = (item) => !!item.startTime;
+
+/* ─── Akıllı toplu erteleme ─────────────────────────────────────────────── */
+
+/** Hafta sonu mu? Öneriler iş gününe dağıtılır. */
+export const isWeekend = (d) => d.getDay() === 0 || d.getDay() === 6;
+
+/**
+ * Gecikmiş öğeler için yeni tarih önerir.
+ *
+ * Kurallar (tasarım §5):
+ * - Yalnız AÇIK, GECİKMİŞ ve taşınabilir öğeler önerilir.
+ * - Fatura/gider vadeleri ve hibe son tarihleri DEĞİŞMEZ; listede "değişmez"
+ *   olarak ayrı gösterilir ki kullanıcı neden ertelenmediğini görsün.
+ * - Öğeler bugünden itibaren BOŞ günlere dağıtılır: bir günün mevcut yükü +
+ *   eklenenler kapasiteyi aşarsa sonraki güne geçilir.
+ * - Kapasite kapalıysa (null) gün başına en fazla `fallbackPerDay` öğe konur —
+ *   yoksa hepsi bugüne yığılır ve "akıllı" olmaz.
+ * - Hafta sonları atlanır.
+ *
+ * Girdi olarak aralıktaki TÜM öğeler beklenir: mevcut yük onlardan hesaplanır.
+ */
+export function suggestReschedule(items, { today, capacity = null, horizonDays = 21, fallbackPerDay = 3 } = {}) {
+    const todayKey = isoDay(today);
+    const open = (items ?? []).filter((i) => !i.isDone);
+
+    const overdue = open.filter((i) => i.date.slice(0, 10) < todayKey && i.risk === RISK.OVERDUE);
+    const movable = overdue.filter((i) => i.canReschedule);
+    const fixed = overdue.filter((i) => !i.canReschedule);
+
+    /* Bugünden ileriye mevcut yük — öneriler var olan planın üstüne yığılmasın. */
+    const loadByDay = {};
+    const countByDay = {};
+    for (const item of open) {
+        const key = item.date.slice(0, 10);
+        if (key < todayKey) continue;
+        loadByDay[key] = (loadByDay[key] ?? 0) + (item.loadHours ?? 0);
+        countByDay[key] = (countByDay[key] ?? 0) + 1;
+    }
+
+    const suggestions = [];
+    let cursor = 0;
+
+    for (const item of movable) {
+        let placed = null;
+
+        while (cursor < horizonDays) {
+            const day = addDays(today, cursor);
+            if (isWeekend(day)) { cursor += 1; continue; }
+
+            const key = isoDay(day);
+            const load = loadByDay[key] ?? 0;
+            const count = countByDay[key] ?? 0;
+            const itemLoad = item.loadHours ?? 0;
+
+            /* Kendi başına kapasiteyi aşan öğe HİÇBİR güne sığmaz (68 saatlik görev,
+               6 saatlik kapasite). Kapasite kuralında ısrar etmek hepsini ufuk
+               gününe yığar — yani "bugüne yığma" hatasının başka güne taşınmışı.
+               Böyle öğelerde gün başına ADET kuralına düşülür ki yine dağılsınlar. */
+            const tooBigForAnyDay = capacity && itemLoad > capacity;
+            const fits = capacity && !tooBigForAnyDay
+                ? load + itemLoad <= capacity
+                : count < fallbackPerDay;
+
+            if (fits) {
+                loadByDay[key] = load + itemLoad;
+                countByDay[key] = count + 1;
+                placed = day;
+                break;
+            }
+            cursor += 1;
+        }
+
+        /* Ufuk dolduysa son iş gününe koy — öneri üretmeden bırakmak, kullanıcıyı
+           gecikmiş öğeyle baş başa bırakmak olurdu. */
+        if (!placed) {
+            let day = addDays(today, horizonDays);
+            while (isWeekend(day)) day = addDays(day, 1);
+            placed = day;
+        }
+
+        suggestions.push({ item, date: placed });
+    }
+
+    return { suggestions, fixed };
+}

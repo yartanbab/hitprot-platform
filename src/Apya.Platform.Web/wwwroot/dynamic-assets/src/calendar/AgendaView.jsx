@@ -8,7 +8,7 @@ import { buildAgenda, fmt } from './lib/model';
  * Ajanda — grid'in yapamadığı: sıralama önceliğe göre.
  * Gecikmiş blok en üstte, sonra günü gününe. Tamamlanmış öğeler listeye alınmaz.
  */
-export function AgendaView({ items, today, onSelectItem }) {
+export function AgendaView({ items, today, onSelectItem, onSmartDefer }) {
     const { overdue, days } = buildAgenda(items, today);
 
     if (overdue.length === 0 && days.length === 0) {
@@ -30,6 +30,15 @@ export function AgendaView({ items, today, onSelectItem }) {
                     <header className="flex items-center gap-2 border-b border-negative-100 px-3 py-2">
                         <span className="text-[11px] font-bold uppercase tracking-wider text-negative-700">Gecikmiş</span>
                         <span className="font-mono text-[11px] font-semibold tabular-nums text-negative-700">{overdue.length}</span>
+                        {onSmartDefer && (
+                            <button
+                                type="button"
+                                onClick={onSmartDefer}
+                                className="ms-auto rounded-md px-2 py-0.5 text-[11.5px] font-semibold text-text-link hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-border-focus"
+                            >
+                                Akıllı ertele
+                            </button>
+                        )}
                     </header>
                     <div className="p-1">
                         {overdue.map((item) => (

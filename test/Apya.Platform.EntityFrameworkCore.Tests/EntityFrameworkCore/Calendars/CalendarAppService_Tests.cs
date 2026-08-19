@@ -300,4 +300,132 @@ public class CalendarAppService_Tests : PlatformEntityFrameworkCoreTestBase
         row.SyncProjectIds.ShouldBeEmpty();
         row.ConflictRule.ShouldBe(CalendarConflictRule.LastWriteWins);
     }
+
+    [Fact]
+    public async Task UpdatePreferencesAsync_tercihleri_saklar_ve_geri_okur()
+    {
+        await _calendar.UpdatePreferencesAsync(new UpdateCalendarPreferencesInput
+        {
+            DailyCapacityHours = 6m,
+            Sources = new System.Collections.Generic.List<CalendarSourceType>
+            {
+                CalendarSourceType.Task,
+                CalendarSourceType.Invoice,
+                // Dış etkinlik bir kaynak SEÇİMİ değil (hesap bağlantısına bağlı).
+                CalendarSourceType.ExternalEvent
+            },
+            SetupCompleted = true
+        });
+
+        var prefs = await _calendar.GetPreferencesAsync();
+
+        prefs.DailyCapacityHours.ShouldBe(6m);
+        prefs.SetupCompleted.ShouldBeTrue();
+        prefs.Sources.ShouldContain(CalendarSourceType.Task);
+        prefs.Sources.ShouldNotContain(CalendarSourceType.ExternalEvent);
+    }
+
+    [Fact]
+    public async Task UpdatePreferencesAsync_sifir_kapasite_takibi_kapatir()
+    {
+        await _calendar.UpdatePreferencesAsync(new UpdateCalendarPreferencesInput
+        {
+            DailyCapacityHours = 0m,
+            SetupCompleted = true
+        });
+
+        var prefs = await _calendar.GetPreferencesAsync();
+        prefs.DailyCapacityHours.ShouldBeNull();
+
+        // Feed de kapasite döndürmemeli — çubuklar çizilmesin.
+        var feed = await _calendar.GetFeedAsync(new GetCalendarFeedInput
+        {
+            From = _clock.Now.Date,
+            To   = _clock.Now.Date
+        });
+        feed.DailyCapacityHours.ShouldBeNull();
+    }
+
+    [Fact]
+    public async Task BulkRescheduleAsync_basarisiz_satir_digerlerini_dusurmez()
+    {
+        var today = _clock.Now.Date;
+        var task = new TaskItem(Guid.NewGuid(), "Toplu tasinan gorev",
+            dueDate: today.AddDays(-3), tenantId: _currentTenant.Id, now: today.AddDays(-10));
+        await _taskRepository.InsertAsync(task, autoSave: true);
+
+        var results = await _calendar.BulkRescheduleAsync(new System.Collections.Generic.List<RescheduleCalendarItemInput>
+        {
+            new() { Source = CalendarSourceType.Task, SourceId = task.Id, NewDate = today.AddDays(2) },
+            // Fatura vadesi ertelenemez → bu satır hata döner…
+            new() { Source = CalendarSourceType.Invoice, SourceId = Guid.NewGuid(), NewDate = today.AddDays(2) }
+        });
+
+        results.Count.ShouldBe(2);
+        results[0].Succeeded.ShouldBeTrue();
+        results[1].Succeeded.ShouldBeFalse();
+        results[1].Error.ShouldNotBeNullOrWhiteSpace();
+
+        // …ama BAŞARILI satır uygulanmış kalmalı.
+        var updated = await _taskRepository.GetAsync(task.Id);
+        updated.DueDate!.Value.Date.ShouldBe(today.AddDays(2));
+    }
+
+    [Fact]
+    public async Task GetTeamLoadAsync_kisi_basina_gunluk_yuku_toplar()
+    {
+        var today = _clock.Now.Date;
+        // Atanan GERÇEK bir kullanıcı olmalı: AssigneeId'de AbpUsers'a FK var,
+        // CurrentUser.Id test bağlamında bir satıra karşılık gelmeyebilir.
+        var userRepo = GetRequiredService<IRepository<Volo.Abp.Identity.IdentityUser, Guid>>();
+        var assignee = (await userRepo.GetListAsync()).First().Id;
+
+        await _taskRepository.InsertAsync(
+            NewTask("Ekip gorevi 1", today, assignee, hours: 5m), autoSave: true);
+        await _taskRepository.InsertAsync(
+            NewTask("Ekip gorevi 2", today, assignee, hours: 3m), autoSave: true);
+        // Tamamlanmis gorev yuke GIRMEZ: kalan kapasiteyi etkilemez.
+        var done = NewTask("Biten", today, assignee, hours: 8m);
+        done.ChangeStatus(Apya.Platform.Tasks.TaskStatus.Done, today);
+        await _taskRepository.InsertAsync(done, autoSave: true);
+
+        var rows = await _calendar.GetTeamLoadAsync(new GetCalendarFeedInput
+        {
+            From = today,
+            To   = today
+        });
+
+        var row = rows.Single(r => r.UserId == assignee);
+        row.TotalHours.ShouldBe(8m);
+        row.Days.Single().Hours.ShouldBe(8m);
+        row.Days.Single().ItemCount.ShouldBe(2);
+    }
+
+    [Fact]
+    public async Task GetTeamLoadAsync_atanmamis_gorevi_saymaz()
+    {
+        var today = _clock.Now.Date;
+
+        await _taskRepository.InsertAsync(
+            new TaskItem(Guid.NewGuid(), "Atanmamis", dueDate: today,
+                tenantId: _currentTenant.Id, now: today.AddDays(-1)),
+            autoSave: true);
+
+        var rows = await _calendar.GetTeamLoadAsync(new GetCalendarFeedInput
+        {
+            From = today,
+            To   = today
+        });
+
+        rows.ShouldAllBe(r => r.UserId != Guid.Empty);
+        rows.SelectMany(r => r.Days).ShouldAllBe(d => d.ItemCount > 0);
+    }
+
+    private TaskItem NewTask(string title, DateTime due, Guid assigneeId, decimal? hours = null)
+    {
+        var task = new TaskItem(Guid.NewGuid(), title, dueDate: due, assigneeId: assigneeId,
+            tenantId: _currentTenant.Id, now: due.AddDays(-2));
+        if (hours.HasValue) task.SetPlanningInfo(hours, null, null);
+        return task;
+    }
 }

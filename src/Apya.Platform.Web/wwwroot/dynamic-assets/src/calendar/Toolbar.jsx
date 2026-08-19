@@ -10,7 +10,7 @@ const VIEW_LABELS = { month: 'Ay', week: 'Hafta', day: 'Gün', agenda: 'Ajanda' 
  * Oklar görünüme göre adım atar (ay / hafta / gün). Ajanda bugünden ileri akan
  * bir pencere olduğu için oklar orada GİZLENİR — çalışmayan düğme koymamak için.
  */
-export function Toolbar({ title, view, onView, onPrev, onNext, onToday, overloadDays }) {
+export function Toolbar({ title, view, onView, onPrev, onNext, onToday, overloadDays, onHelp }) {
     const showNav = view !== 'agenda';
     return (
         <div className="flex flex-wrap items-center gap-2">
@@ -46,6 +46,27 @@ export function Toolbar({ title, view, onView, onPrev, onNext, onToday, overload
                         <i className="fa fa-triangle-exclamation me-1" aria-hidden="true" />
                         {overloadDays} günde kapasite aşımı
                     </span>
+                )}
+
+                <button
+                    type="button"
+                    onClick={() => window.print()}
+                    title="A4 yatay, iki sayfa"
+                    className="h-9 rounded-md border border-default bg-surface-base px-2.5 text-[12px] text-text-secondary hover:bg-surface-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-border-focus"
+                >
+                    <i className="fa fa-print" aria-hidden="true" /><span className="sr-only">Yazdır</span>
+                </button>
+
+                {onHelp && (
+                    <button
+                        type="button"
+                        onClick={onHelp}
+                        title="Klavye kısayolları (?)"
+                        aria-label="Klavye kısayolları"
+                        className="h-9 w-9 rounded-md border border-default bg-surface-base text-text-secondary hover:bg-surface-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-border-focus"
+                    >
+                        <i className="fa fa-keyboard" aria-hidden="true" />
+                    </button>
                 )}
 
                 <div role="tablist" aria-label="Görünüm" className="flex rounded-md border border-default bg-surface-base p-0.5">

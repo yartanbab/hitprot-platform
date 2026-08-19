@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Button, Sheet, SheetContent } from '../components/ui';
 import { cn } from '../lib/utils';
 import { RISK, SOURCES, addDays, fmt } from './lib/model';
+import { MeetingActions } from './MeetingActions';
 
 const RISK_LABEL = {
     [RISK.OVERDUE]: { text: 'Gecikmiş', cls: 'bg-negative-50 text-negative-700' },
@@ -135,6 +136,9 @@ export function ItemDrawer({ item, capacity, onClose, onReschedule, onComplete, 
                             : null}
                     </Field>
                 </div>
+
+                {/* Dış takvim etkinliği tek yönlü kalmasın: notlardan görev çıkarılabilir. */}
+                {item.source === 7 && <MeetingActions item={item} />}
 
                 {item.href && (
                     <footer className="border-t border-subtle px-4 py-3">
