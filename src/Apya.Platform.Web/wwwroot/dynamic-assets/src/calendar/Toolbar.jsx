@@ -1,39 +1,40 @@
 import React from 'react';
 import { Button } from '../components/ui';
 import { cn } from '../lib/utils';
-import { fmt } from './lib/model';
 
-const VIEW_LABELS = { month: 'Ay', agenda: 'Ajanda' };
+const VIEW_LABELS = { month: 'Ay', week: 'Hafta', day: 'Gün', agenda: 'Ajanda' };
 
 /**
- * Üst araç çubuğu: ay gezinme + görünüm anahtarı + kapasite uyarısı.
+ * Üst araç çubuğu: gezinme + görünüm anahtarı + kapasite uyarısı.
  *
- * Hafta ve Gün görünümleri bilerek YOK: saat ızgarası dış takvim etkinliklerini
- * gerektiriyor, o veri Faz 4'te geliyor. Çalışmayan bir düğme koymaktansa
- * eksik bırakıldı.
+ * Oklar görünüme göre adım atar (ay / hafta / gün). Ajanda bugünden ileri akan
+ * bir pencere olduğu için oklar orada GİZLENİR — çalışmayan düğme koymamak için.
  */
-export function Toolbar({ month, view, onView, onPrev, onNext, onToday, overloadDays }) {
+export function Toolbar({ title, view, onView, onPrev, onNext, onToday, overloadDays }) {
+    const showNav = view !== 'agenda';
     return (
         <div className="flex flex-wrap items-center gap-2">
-            <div className="flex">
-                <button
-                    type="button" onClick={onPrev} aria-label="Önceki ay"
-                    className="h-9 w-9 rounded-l-md border border-default bg-surface-base text-text-secondary hover:bg-surface-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-border-focus"
-                >
-                    <i className="fa fa-chevron-left" aria-hidden="true" />
-                </button>
-                <button
-                    type="button" onClick={onNext} aria-label="Sonraki ay"
-                    className="h-9 w-9 rounded-r-md border border-l-0 border-default bg-surface-base text-text-secondary hover:bg-surface-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-border-focus"
-                >
-                    <i className="fa fa-chevron-right" aria-hidden="true" />
-                </button>
-            </div>
+            {showNav && (
+                <div className="flex">
+                    <button
+                        type="button" onClick={onPrev} aria-label="Öncekine git"
+                        className="h-9 w-9 rounded-l-md border border-default bg-surface-base text-text-secondary hover:bg-surface-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-border-focus"
+                    >
+                        <i className="fa fa-chevron-left" aria-hidden="true" />
+                    </button>
+                    <button
+                        type="button" onClick={onNext} aria-label="Sonrakine git"
+                        className="h-9 w-9 rounded-r-md border border-l-0 border-default bg-surface-base text-text-secondary hover:bg-surface-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-border-focus"
+                    >
+                        <i className="fa fa-chevron-right" aria-hidden="true" />
+                    </button>
+                </div>
+            )}
 
             <Button variant="outline" size="sm" onClick={onToday}>Bugün</Button>
 
             <h2 className="ml-1 text-[17px] font-semibold capitalize tracking-tight text-text-primary">
-                {fmt.monthTitle(month)}
+                {title}
             </h2>
 
             <div className="ml-auto flex items-center gap-2">

@@ -17,9 +17,13 @@ export const SOURCES = {
     4: { key: 'expense', label: 'Gider',           plural: 'gider',          icon: 'fa-arrow-trend-down' },
     5: { key: 'income',  label: 'Gelir',           plural: 'gelir',          icon: 'fa-arrow-trend-up' },
     6: { key: 'cash',    label: 'Kasa hareketi',   plural: 'kasa hareketi',  icon: 'fa-wallet' },
+    7: { key: 'external', label: 'Dış etkinlik',   plural: 'dış etkinlik',   icon: 'fa-calendar-days' },
 };
 
-export const SOURCE_ORDER = [1, 2, 3, 4, 5, 6];
+export const SOURCE_ORDER = [1, 2, 3, 4, 5, 6, 7];
+
+/** Ray'da anahtarı olan (izne bağlı) iç kaynaklar — dış etkinlik ayrı bölümde. */
+export const INTERNAL_SOURCE_ORDER = [1, 2, 3, 4, 5, 6];
 
 /** CalendarRiskLevel */
 export const RISK = { NONE: 0, DUE_TODAY: 1, OVERDUE: 2 };
@@ -180,3 +184,39 @@ export function buildAgenda(items, today) {
 
     return { overdue, days };
 }
+
+/* ─── Hafta / Gün ───────────────────────────────────────────────────────── */
+
+/** Verilen günü içeren haftanın 7 günü (pazartesi başlar). */
+export function weekDays(date) {
+    const start = mondayOf(stripTime(date));
+    return Array.from({ length: 7 }, (_, i) => addDays(start, i));
+}
+
+const timeFmt = new Intl.DateTimeFormat('tr-TR', { hour: '2-digit', minute: '2-digit' });
+
+/** Saat etiketi — dış etkinliklerde "09:00" biçimi. */
+export const timeLabel = (iso) => (iso ? timeFmt.format(new Date(iso)) : '');
+
+/** Gün başlangıcından itibaren dakika — saat ızgarasında konumlandırma için. */
+export function minutesOfDay(iso) {
+    const d = new Date(iso);
+    return d.getHours() * 60 + d.getMinutes();
+}
+
+/**
+ * Saat ızgarasının kapsayacağı aralık. Sabit 00–24 çizmek ekranın çoğunu boş
+ * bırakır; etkinliklerin gerçek aralığına göre daraltılır, en az 08–18 gösterilir.
+ */
+export function hourRange(events) {
+    let min = 8, max = 18;
+    for (const ev of events ?? []) {
+        if (!ev.startTime) continue;
+        min = Math.min(min, Math.floor(minutesOfDay(ev.startTime) / 60));
+        max = Math.max(max, Math.ceil(minutesOfDay(ev.endTime ?? ev.startTime) / 60));
+    }
+    return { start: Math.max(0, min), end: Math.min(24, Math.max(max, min + 4)) };
+}
+
+/** Saatli (dış) öğe mi? APYA öğeleri gün bazlıdır ve ızgaraya inmez. */
+export const isTimed = (item) => !!item.startTime;

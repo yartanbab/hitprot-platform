@@ -6,18 +6,27 @@ import { DayPanel } from './DayPanel';
 import { MonthGrid } from './MonthGrid';
 import { SourceRail } from './SourceRail';
 import { Toolbar } from './Toolbar';
+import { WeekGrid } from './WeekGrid';
 import { ItemDrawer } from './ItemDrawer';
 import { useCalendarFeed } from './hooks/useCalendarFeed';
 import { useCalendarPrefs } from './hooks/useCalendarPrefs';
 import { useCalendarMutations } from './hooks/useCalendarMutations';
+import { useExternalEvents } from './hooks/useExternalEvents';
 import { layoutOf, useContainerWidth } from './hooks/useContainerWidth';
 import {
-    MONTH_CELLS, addDays, dayLoad, groupByDay, isoDay, monthGridStart, stripTime,
+    MONTH_CELLS, addDays, dayLoad, fmt, groupByDay, isoDay, monthGridStart, stripTime, weekDays,
 } from './lib/model';
 
 /** Ajanda penceresi: geriye gecikmişleri, ileriye planı kapsar. */
 const AGENDA_PAST_DAYS = 60;
 const AGENDA_FUTURE_DAYS = 60;
+
+/** Gezinme adımı görünüme göre değişir: ay görünümünde ay, haftada hafta, günde gün. */
+function step(anchor, view, direction) {
+    if (view === 'week') return addDays(anchor, 7 * direction);
+    if (view === 'day') return addDays(anchor, direction);
+    return new Date(anchor.getFullYear(), anchor.getMonth() + direction, 1);
+}
 
 function MonthSkeleton() {
     return (
@@ -60,17 +69,44 @@ export function CalendarRoot() {
         applyResponsiveDefault(isNarrow ? 'agenda' : 'month');
     }, [containerWidth, isNarrow, applyResponsiveDefault]);
 
-    const range = useMemo(() => {
+    /* Görünüme göre sorgulanacak aralık ve başlık. Hafta/Gün, ay grid'inden
+       farklı bir pencere ister; ajanda ise bugünden akan sabit bir penceredir. */
+    const { range, title, weekDayList } = useMemo(() => {
         if (view === 'agenda') {
-            return { from: addDays(today, -AGENDA_PAST_DAYS), to: addDays(today, AGENDA_FUTURE_DAYS) };
+            return {
+                range: { from: addDays(today, -AGENDA_PAST_DAYS), to: addDays(today, AGENDA_FUTURE_DAYS) },
+                title: 'Ajanda',
+                weekDayList: null,
+            };
+        }
+        if (view === 'week') {
+            const days = weekDays(month);
+            return {
+                range: { from: days[0], to: days[6] },
+                title: `${fmt.dayShort(days[0])} – ${fmt.dayShort(days[6])} ${days[6].getFullYear()}`,
+                weekDayList: days,
+            };
+        }
+        if (view === 'day') {
+            const day = stripTime(month);
+            return { range: { from: day, to: day }, title: fmt.dayTitle(day), weekDayList: [day] };
         }
         const start = monthGridStart(month);
-        return { from: start, to: addDays(start, MONTH_CELLS - 1) };
+        return {
+            range: { from: start, to: addDays(start, MONTH_CELLS - 1) },
+            title: fmt.monthTitle(month),
+            weekDayList: null,
+        };
     }, [view, month, today]);
 
     const { data, isPending, isError, refetch } = useCalendarFeed(range);
+    /* Dış etkinlikler ayrı sorgudan gelir: yavaş/kırılgan dış çağrı grid'i bekletmesin. */
+    const external = useExternalEvents(range);
 
-    const allItems = data?.items ?? [];
+    const allItems = useMemo(
+        () => [...(data?.items ?? []), ...(external.data?.items ?? [])],
+        [data, external.data],
+    );
     const items = useMemo(
         () => allItems.filter((item) => enabledSources.has(item.source)),
         [allItems, enabledSources],
@@ -103,8 +139,9 @@ export function CalendarRoot() {
        "ekranında aç" bağlantısı duruyor — bağlam kaybolmasın diye. */
     const openItem = useCallback((item) => setSelectedItemKey(item.key), []);
 
+    /* Çapa BUGÜN'e alınır (ayın 1'ine değil): hafta/gün görünümü bugüne otursun. */
     const goToday = useCallback(() => {
-        setMonth(new Date(today.getFullYear(), today.getMonth(), 1));
+        setMonth(today);
         setSelectedDay(isoDay(today));
     }, [today]);
 
@@ -132,11 +169,11 @@ export function CalendarRoot() {
     return (
         <div ref={containerRef} className="flex flex-col gap-3">
             <Toolbar
-                month={month}
+                title={title}
                 view={view}
                 onView={setView}
-                onPrev={() => setMonth((m) => new Date(m.getFullYear(), m.getMonth() - 1, 1))}
-                onNext={() => setMonth((m) => new Date(m.getFullYear(), m.getMonth() + 1, 1))}
+                onPrev={() => setMonth((m) => step(m, view, -1))}
+                onNext={() => setMonth((m) => step(m, view, 1))}
                 onToday={goToday}
                 overloadDays={overloadDays}
             />
@@ -187,6 +224,8 @@ export function CalendarRoot() {
                             enabled={enabledSources}
                             onToggle={toggleSource}
                             compact={layout !== 'wide'}
+                            externalAccounts={external.data?.accounts ?? []}
+                            externalLoading={external.isFetching}
                         />
                     </div>
                 )}
@@ -224,6 +263,16 @@ export function CalendarRoot() {
                             onDropItem={mutations.reschedule}
                             pending={mutations.pending}
                             errors={mutations.errors}
+                        />
+                    ) : weekDayList ? (
+                        <WeekGrid
+                            days={weekDayList}
+                            byDay={byDay}
+                            today={today}
+                            capacity={capacity}
+                            selectedDay={selectedDay}
+                            onSelectItem={openItem}
+                            onSelectDay={setSelectedDay}
                         />
                     ) : (
                         <AgendaView items={items} today={today} onSelectItem={openItem} />

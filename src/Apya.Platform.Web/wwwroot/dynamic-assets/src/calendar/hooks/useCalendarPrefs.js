@@ -13,7 +13,7 @@ import { SOURCE_ORDER } from '../lib/model';
 const VIEW_KEY = 'apya.calendar.view';
 const SOURCES_KEY = 'apya.calendar.sources';
 
-export const VIEWS = ['month', 'agenda'];
+export const VIEWS = ['month', 'week', 'day', 'agenda'];
 
 function readStorage(key) {
     try { return window.localStorage.getItem(key); } catch { return null; }

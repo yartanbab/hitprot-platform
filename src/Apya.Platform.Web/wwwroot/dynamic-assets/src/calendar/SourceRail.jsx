@@ -11,7 +11,12 @@ import { SOURCES, SOURCE_ORDER } from './lib/model';
  * `compact` (tablet): satırlar ikona daralır, sayaç ikonun üstünde rozet olur —
  * kolonlardan hiçbiri kaybolmaz, yalnız genişlik 256 → 60px'e iner.
  */
-export function SourceRail({ sources, counts, enabled, onToggle, compact = false }) {
+const PROVIDER_LABEL = { 1: 'Google', 2: 'Outlook', 3: 'iCloud' };
+
+export function SourceRail({
+    sources, counts, enabled, onToggle, compact = false,
+    externalAccounts = [], externalLoading = false,
+}) {
     const available = (sources ?? []).filter((s) => s.isAvailable);
     if (available.length === 0) return null;
 
@@ -83,6 +88,60 @@ export function SourceRail({ sources, counts, enabled, onToggle, compact = false
                     </button>
                 );
             })}
+
+            {/* Dış takvimler — izinle değil kullanıcının kendi bağlantısıyla gelir,
+                bu yüzden kaynak anahtarlarından AYRI bir bölümde durur. Bozuk
+                bağlantı burada görünür; takvimin kalanı çalışmaya devam eder. */}
+            {(externalAccounts.length > 0 || externalLoading) && !compact && (
+                <>
+                    <p className="mt-2 border-t border-subtle px-2 pb-1 pt-2 text-[10.5px] font-bold uppercase tracking-wider text-text-tertiary">
+                        Dış takvimler
+                    </p>
+
+                    {externalLoading && externalAccounts.length === 0 && (
+                        <p className="px-2 py-1 text-[11.5px] text-text-tertiary">
+                            <i className="fa fa-circle-notch fa-spin me-1.5" aria-hidden="true" />
+                            senkronize ediliyor…
+                        </p>
+                    )}
+
+                    {externalAccounts.map((account) => (
+                        <div
+                            key={account.accountId}
+                            className={cn(
+                                'flex items-start gap-2 rounded-md px-2 py-1.5',
+                                account.error && 'bg-negative-50',
+                            )}
+                        >
+                            <span
+                                className={cn(
+                                    'mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-md text-[10px]',
+                                    account.error ? 'bg-negative-100 text-negative-700' : 'bg-neutral-subtle text-text-tertiary',
+                                )}
+                                aria-hidden="true"
+                            >
+                                <i className={cn('fa', account.error ? 'fa-triangle-exclamation' : 'fa-calendar-days')} />
+                            </span>
+                            <span className="min-w-0 flex-1">
+                                <span className="block truncate text-[12px] font-medium text-text-primary">
+                                    {PROVIDER_LABEL[account.provider] ?? 'Takvim'}
+                                </span>
+                                <span className={cn(
+                                    'block truncate text-[10.5px]',
+                                    account.error ? 'text-negative-700' : 'text-text-tertiary',
+                                )}>
+                                    {account.error ?? `${account.email} · ${account.eventCount} etkinlik`}
+                                </span>
+                                {account.error && (
+                                    <a href="/Calendars" className="text-[10.5px] font-semibold text-text-link hover:underline">
+                                        Yeniden bağla
+                                    </a>
+                                )}
+                            </span>
+                        </div>
+                    ))}
+                </>
+            )}
         </nav>
     );
 }

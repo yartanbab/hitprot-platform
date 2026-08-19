@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
-    RISK, buildAgenda, buildDayCell, dayLoad, groupByDay, isoDay, monthGridDays, summaryLabel,
+    RISK, buildAgenda, buildDayCell, dayLoad, groupByDay, hourRange, isTimed, isoDay,
+    monthGridDays, summaryLabel, weekDays,
 } from './model';
 
 const item = (over) => ({
@@ -122,5 +123,42 @@ describe('buildAgenda', () => {
             item({ key: 'b', date: '2026-08-20T00:00:00' }),
         ], today);
         expect(days.map((d) => d.key)).toEqual(['2026-08-14', '2026-08-20', '2026-09-01']);
+    });
+});
+
+describe('weekDays', () => {
+    it('pazartesiden başlayan 7 gün üretir', () => {
+        /* 14 Ağustos 2026 cuma → hafta 10 Ağustos pazartesi başlar. */
+        const days = weekDays(new Date(2026, 7, 14));
+        expect(days).toHaveLength(7);
+        expect(isoDay(days[0])).toBe('2026-08-10');
+        expect(isoDay(days[6])).toBe('2026-08-16');
+    });
+});
+
+describe('hourRange', () => {
+    it('etkinlik yokken makul bir çalışma günü gösterir', () => {
+        expect(hourRange([])).toEqual({ start: 8, end: 18 });
+    });
+
+    it('erken ve geç etkinlikleri kapsayacak şekilde genişler', () => {
+        const range = hourRange([
+            { startTime: '2026-08-14T06:30:00', endTime: '2026-08-14T07:15:00' },
+            { startTime: '2026-08-14T20:00:00', endTime: '2026-08-14T21:30:00' },
+        ]);
+        expect(range.start).toBe(6);
+        expect(range.end).toBe(22);
+    });
+
+    it('saatsiz (gün bazlı) öğeleri hesaba katmaz', () => {
+        /* APYA öğeleri saat ızgarasına inmez — aralığı da genişletmemeli. */
+        expect(hourRange([{ startTime: null, date: '2026-08-14T00:00:00' }])).toEqual({ start: 8, end: 18 });
+    });
+});
+
+describe('isTimed', () => {
+    it('yalnız saatli öğeleri ızgaraya alır', () => {
+        expect(isTimed({ startTime: '2026-08-14T09:00:00' })).toBe(true);
+        expect(isTimed({ startTime: null })).toBe(false);
     });
 });
