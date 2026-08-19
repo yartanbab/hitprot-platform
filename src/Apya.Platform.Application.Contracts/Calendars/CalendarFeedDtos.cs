@@ -223,3 +223,37 @@ public class UpdateCalendarSyncRulesInput
 
     public CalendarConflictRule ConflictRule { get; set; }
 }
+
+/// <summary>Takvimin kullanıcıya özel tercihleri (kurulum sihirbazı bunları yazar).</summary>
+public class CalendarPreferencesDto
+{
+    /// <summary>Günlük kapasite (saat). null = kapasite takibi kapalı.</summary>
+    public decimal? DailyCapacityHours { get; set; }
+
+    /// <summary>Takvimde açık kaynak türleri. Boş = hepsi açık.</summary>
+    public List<CalendarSourceType> Sources { get; set; } = new();
+
+    /// <summary>Kurulum sihirbazı tamamlandı mı? false ise takvim ilk açılışta onu gösterir.</summary>
+    public bool SetupCompleted { get; set; }
+}
+
+public class UpdateCalendarPreferencesInput
+{
+    /// <summary>0 veya null = kapasite takibi kapalı.</summary>
+    public decimal? DailyCapacityHours { get; set; }
+
+    public List<CalendarSourceType> Sources { get; set; } = new();
+
+    public bool SetupCompleted { get; set; }
+}
+
+/// <summary>Toplu ertelemede tek satırın sonucu — kısmi başarısızlık satırda görünsün.</summary>
+public class BulkRescheduleResultDto
+{
+    public Guid SourceId { get; set; }
+
+    public bool Succeeded { get; set; }
+
+    /// <summary>Null = başarılı. Doluysa o satır hata durumunda kalır.</summary>
+    public string? Error { get; set; }
+}

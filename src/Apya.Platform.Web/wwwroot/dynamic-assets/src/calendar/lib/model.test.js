@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
-    RISK, buildAgenda, buildDayCell, dayLoad, groupByDay, hourRange, isTimed, isoDay,
-    monthGridDays, summaryLabel, weekDays,
+    RISK, buildAgenda, buildDayCell, dayLoad, groupByDay, hourRange, isTimed, isWeekend, isoDay,
+    monthGridDays, suggestReschedule, summaryLabel, weekDays,
 } from './model';
 
 const item = (over) => ({
@@ -160,5 +160,72 @@ describe('isTimed', () => {
     it('yalnız saatli öğeleri ızgaraya alır', () => {
         expect(isTimed({ startTime: '2026-08-14T09:00:00' })).toBe(true);
         expect(isTimed({ startTime: null })).toBe(false);
+    });
+});
+
+describe('suggestReschedule', () => {
+    const today = new Date(2026, 7, 14); // 14 Ağustos 2026, Cuma
+
+    const overdue = (key, opts = {}) => item({
+        key,
+        date: '2026-08-10T00:00:00',
+        risk: RISK.OVERDUE,
+        canReschedule: true,
+        ...opts,
+    });
+
+    it('gecikmis ogeleri is gunlerine dagitir, hafta sonunu atlar', () => {
+        const { suggestions } = suggestReschedule(
+            [overdue('a', { loadHours: 8 }), overdue('b', { loadHours: 8 })],
+            { today, capacity: 8 },
+        );
+
+        expect(suggestions).toHaveLength(2);
+        // 14 Ağustos cuma dolduktan sonra sıradaki iş günü 17 Ağustos PAZARTESİ.
+        expect(isoDay(suggestions[0].date)).toBe('2026-08-14');
+        expect(isoDay(suggestions[1].date)).toBe('2026-08-17');
+        expect(suggestions.map((s) => isWeekend(s.date))).toEqual([false, false]);
+    });
+
+    it('mevcut yuku hesaba katar — oneriler dolu gunun ustune yigilmaz', () => {
+        const items = [
+            // Bugün zaten kapasiteyi doldurmuş bir görev var.
+            item({ key: 'dolu', date: '2026-08-14T00:00:00', loadHours: 8 }),
+            overdue('gec', { loadHours: 4 }),
+        ];
+
+        const { suggestions } = suggestReschedule(items, { today, capacity: 8 });
+
+        expect(isoDay(suggestions[0].date)).not.toBe('2026-08-14');
+    });
+
+    it('tasinamayan ogeleri ONERMEZ, ayri listeler', () => {
+        const { suggestions, fixed } = suggestReschedule(
+            [overdue('gorev'), overdue('fatura', { source: 2, canReschedule: false })],
+            { today, capacity: 8 },
+        );
+
+        expect(suggestions.map((s) => s.item.key)).toEqual(['gorev']);
+        expect(fixed.map((f) => f.key)).toEqual(['fatura']);
+    });
+
+    it('tamamlanmis gecikmis oge onerilmez', () => {
+        const { suggestions } = suggestReschedule(
+            [overdue('kapali', { isDone: true })],
+            { today, capacity: 8 },
+        );
+
+        expect(suggestions).toHaveLength(0);
+    });
+
+    it('kapasite kapaliyken gun basina sinirli oge koyar', () => {
+        const items = Array.from({ length: 5 }, (_, i) => overdue(`t${i}`));
+
+        const { suggestions } = suggestReschedule(items, { today, capacity: null, fallbackPerDay: 2 });
+
+        // Hepsi bugüne yığılmamalı.
+        const firstDay = suggestions.filter((s) => isoDay(s.date) === '2026-08-14');
+        expect(firstDay.length).toBe(2);
+        expect(new Set(suggestions.map((s) => isoDay(s.date))).size).toBeGreaterThan(1);
     });
 });

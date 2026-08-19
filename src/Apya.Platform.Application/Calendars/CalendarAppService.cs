@@ -9,10 +9,12 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Apya.Platform.Settings;
 using Apya.Platform.Tasks;
 using Volo.Abp;
 using Volo.Abp.Application.Services;
 using Volo.Abp.Domain.Repositories;
+using Volo.Abp.SettingManagement;
 
 namespace Apya.Platform.Calendars;
 
@@ -31,6 +33,7 @@ public class CalendarAppService : ApplicationService, ICalendarAppService
     private readonly IRepository<CalendarSyncLogEntry, Guid> _syncLogRepository;
     private readonly IRepository<IcalSubscription, Guid> _icalRepository;
     private readonly IcalSubscriptionFetcher _icalFetcher;
+    private readonly Volo.Abp.SettingManagement.ISettingManager _settingManager;
 
     public CalendarAppService(
         IRepository<ExternalCalendarAccount, Guid> accountRepository,
@@ -44,13 +47,15 @@ public class CalendarAppService : ApplicationService, ICalendarAppService
         ITaskAppService taskAppService,
         IRepository<CalendarSyncLogEntry, Guid> syncLogRepository,
         IRepository<IcalSubscription, Guid> icalRepository,
-        IcalSubscriptionFetcher icalFetcher)
+        IcalSubscriptionFetcher icalFetcher,
+        Volo.Abp.SettingManagement.ISettingManager settingManager)
     {
         _feedProvider       = feedProvider;
         _taskAppService     = taskAppService;
         _syncLogRepository  = syncLogRepository;
         _icalRepository     = icalRepository;
         _icalFetcher        = icalFetcher;
+        _settingManager     = settingManager;
         _accountRepository = accountRepository;
         _taskRepository    = taskRepository;
         _calendarManager   = calendarManager;
@@ -202,6 +207,79 @@ public class CalendarAppService : ApplicationService, ICalendarAppService
             }
         }
     }
+
+    /* ── Tercihler ve toplu erteleme (Faz 7) ───────────────────────────────── */
+
+    public async Task<CalendarPreferencesDto> GetPreferencesAsync()
+    {
+        var capacityRaw = await SettingProvider.GetOrNullAsync(PlatformSettings.Calendar.DailyCapacityHours);
+        var sourcesRaw  = await SettingProvider.GetOrNullAsync(PlatformSettings.Calendar.Sources);
+        var setupRaw    = await SettingProvider.GetOrNullAsync(PlatformSettings.Calendar.SetupCompleted);
+
+        return new CalendarPreferencesDto
+        {
+            DailyCapacityHours = ParseCapacity(capacityRaw),
+            Sources            = ParseSources(sourcesRaw),
+            SetupCompleted     = string.Equals(setupRaw, "true", StringComparison.OrdinalIgnoreCase)
+        };
+    }
+
+    public async Task UpdatePreferencesAsync(UpdateCalendarPreferencesInput input)
+    {
+        // 0 = kapasite takibi KAPALI. Negatif değer anlamsız, sıfıra çekilir.
+        var capacity = input.DailyCapacityHours is > 0 ? input.DailyCapacityHours.Value : 0m;
+        await _settingManager.SetForCurrentUserAsync(
+            PlatformSettings.Calendar.DailyCapacityHours,
+            capacity.ToString(System.Globalization.CultureInfo.InvariantCulture));
+
+        // Dış etkinlik bir kaynak seçimi DEĞİL (hesap bağlantısına bağlı) — ayıklanır.
+        var sources = (input.Sources ?? new List<CalendarSourceType>())
+            .Where(s => CalendarSources.Internal.Contains(s))
+            .Distinct()
+            .Select(s => (int)s);
+        await _settingManager.SetForCurrentUserAsync(
+            PlatformSettings.Calendar.Sources, string.Join(",", sources));
+
+        await _settingManager.SetForCurrentUserAsync(
+            PlatformSettings.Calendar.SetupCompleted, input.SetupCompleted ? "true" : "false");
+    }
+
+    /// <summary>
+    /// Toplu erteleme. Öğeler TEK TEK uygulanır ve her biri kendi sonucunu döner:
+    /// biri (ör. silinmiş bir görev) patlarsa diğerleri uygulanmış kalmalı — kullanıcı
+    /// on öğeyi ertelerken birinin hatası yüzünden dokuzunu kaybetmesin.
+    /// </summary>
+    public async Task<List<BulkRescheduleResultDto>> BulkRescheduleAsync(List<RescheduleCalendarItemInput> items)
+    {
+        var results = new List<BulkRescheduleResultDto>();
+
+        foreach (var item in items ?? new List<RescheduleCalendarItemInput>())
+        {
+            try
+            {
+                await RescheduleItemAsync(item);
+                results.Add(new BulkRescheduleResultDto { SourceId = item.SourceId, Succeeded = true });
+            }
+            catch (Exception ex)
+            {
+                Logger.LogWarning(ex, "Toplu ertelemede öğe taşınamadı. SourceId={SourceId}", item.SourceId);
+                results.Add(new BulkRescheduleResultDto
+                {
+                    SourceId  = item.SourceId,
+                    Succeeded = false,
+                    Error     = ex is BusinessException ? ex.Message : "Taşınamadı."
+                });
+            }
+        }
+
+        return results;
+    }
+
+    private static decimal? ParseCapacity(string? raw)
+        => decimal.TryParse(raw, System.Globalization.NumberStyles.Number,
+               System.Globalization.CultureInfo.InvariantCulture, out var value) && value > 0
+            ? value
+            : null;
 
     /* ── Senkron ayarları (Faz 5) ─────────────────────────────────────────── */
 

@@ -74,6 +74,19 @@ public static class PlatformSettings
         /// Yük yalnız açık görevlerin tahmini süresinden toplanır.
         /// </summary>
         public const string DailyCapacityHours = Prefix + ".Calendar.DailyCapacityHours";
+
+        /// <summary>
+        /// İlk kurulum sihirbazı tamamlandı mı? "true" = bir daha gösterilmez.
+        /// Kullanıcı seviyesinde; ayar ekranında GÖSTERİLMEZ (iç değer).
+        /// </summary>
+        public const string SetupCompleted = Prefix + ".Calendar.SetupCompleted";
+
+        /// <summary>
+        /// Takvimde açık kaynak türleri — CalendarSourceType sayıları, virgülle ayrık.
+        /// Boş = hepsi açık. Kurulumda seçilir, cihazlar arası taşınır (localStorage
+        /// yalnız o cihazdaki geçici tercihtir).
+        /// </summary>
+        public const string Sources = Prefix + ".Calendar.Sources";
     }
 
     /// <summary>Sürüm notları ("Yenilikler") — kullanıcı seviyesinde görülme takibi.</summary>

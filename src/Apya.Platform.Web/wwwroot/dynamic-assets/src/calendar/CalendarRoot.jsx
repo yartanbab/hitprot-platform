@@ -9,10 +9,13 @@ import { Toolbar } from './Toolbar';
 import { WeekGrid } from './WeekGrid';
 import { ItemDrawer } from './ItemDrawer';
 import { SyncDrawer } from './SyncDrawer';
+import { SmartDeferPanel } from './SmartDeferPanel';
+import { SetupWizard } from './SetupWizard';
 import { useCalendarFeed } from './hooks/useCalendarFeed';
 import { useCalendarPrefs } from './hooks/useCalendarPrefs';
 import { useCalendarMutations } from './hooks/useCalendarMutations';
 import { useExternalEvents } from './hooks/useExternalEvents';
+import { useCalendarPreferences } from './hooks/useCalendarPreferences';
 import { layoutOf, useContainerWidth } from './hooks/useContainerWidth';
 import {
     MONTH_CELLS, addDays, dayLoad, fmt, groupByDay, isoDay, monthGridStart, stripTime, weekDays,
@@ -59,6 +62,8 @@ export function CalendarRoot() {
     const [selectedDay, setSelectedDay] = useState(null);
     const [selectedItemKey, setSelectedItemKey] = useState(null);
     const [syncOpen, setSyncOpen] = useState(false);
+    const [deferOpen, setDeferOpen] = useState(false);
+    const [setupDismissed, setSetupDismissed] = useState(false);
 
     const { view, setView, applyResponsiveDefault, enabledSources, toggleSource, resetSources } =
         useCalendarPrefs();
@@ -104,6 +109,7 @@ export function CalendarRoot() {
     const { data, isPending, isError, refetch } = useCalendarFeed(range);
     /* Dış etkinlikler ayrı sorgudan gelir: yavaş/kırılgan dış çağrı grid'i bekletmesin. */
     const external = useExternalEvents(range);
+    const preferences = useCalendarPreferences();
 
     const allItems = useMemo(
         () => [...(data?.items ?? []), ...(external.data?.items ?? [])],
@@ -278,7 +284,12 @@ export function CalendarRoot() {
                             onSelectDay={setSelectedDay}
                         />
                     ) : (
-                        <AgendaView items={items} today={today} onSelectItem={openItem} />
+                        <AgendaView
+                            items={items}
+                            today={today}
+                            onSelectItem={openItem}
+                            onSmartDefer={() => setDeferOpen(true)}
+                        />
                     )}
                 </div>
 
@@ -301,6 +312,21 @@ export function CalendarRoot() {
             )}
 
             <SyncDrawer open={syncOpen} onClose={() => setSyncOpen(false)} />
+
+            <SmartDeferPanel
+                open={deferOpen}
+                items={items}
+                today={today}
+                capacity={capacity}
+                onClose={() => setDeferOpen(false)}
+            />
+
+            {/* Kurulum yalnız HİÇ yapılmadıysa ve tercihler yüklendiyse açılır. */}
+            <SetupWizard
+                open={preferences.data ? !preferences.data.setupCompleted && !setupDismissed : false}
+                counts={counts}
+                onDone={() => setSetupDismissed(true)}
+            />
 
             {selectedItem && (
                 <ItemDrawer

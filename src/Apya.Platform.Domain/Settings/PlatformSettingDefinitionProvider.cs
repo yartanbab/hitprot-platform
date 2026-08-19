@@ -49,6 +49,11 @@ public class PlatformSettingDefinitionProvider : SettingDefinitionProvider
                 description: L("Setting:Calendar.DailyCapacityHours.Description"))
         );
 
+        // Kurulum sihirbazı bayrağı ve kaynak seçimi — kullanıcı seviyesi iç değerler
+        // (ayar ekranında GÖSTERİLMEZ; takvimin kendi kurulum akışı yazar).
+        context.Add(new SettingDefinition(PlatformSettings.Calendar.SetupCompleted, defaultValue: "false"));
+        context.Add(new SettingDefinition(PlatformSettings.Calendar.Sources, defaultValue: ""));
+
         // Sürüm notları "en son görülen sürüm" — kullanıcı seviyesi iç değer (ayar ekranında GÖSTERİLMEZ).
         // Boş varsayılan = hiç görmedi → ilk açılışta "Yenilikler" penceresi açılır.
         context.Add(

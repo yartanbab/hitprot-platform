@@ -31,7 +31,19 @@ public interface ICalendarAppService : IApplicationService
     /// </summary>
     Task<CalendarExternalEventsDto> GetExternalEventsAsync(GetCalendarFeedInput input);
 
-    /// <summary>Senkron drawer'ının içeriği: bağlı hesaplar, kuralları ve senkron günlüğü.</summary>
+    /// <summary>Takvim tercihleri: kapasite, açık kaynaklar, kurulum durumu.</summary>
+    Task<CalendarPreferencesDto> GetPreferencesAsync();
+
+    /// <summary>Tercihleri yazar (kurulum sihirbazı ve ayarlar buradan geçer).</summary>
+    Task UpdatePreferencesAsync(UpdateCalendarPreferencesInput input);
+
+    /// <summary>
+    /// Birden çok öğeyi tek çağrıda taşır (akıllı toplu erteleme). Satır satır sonuç
+    /// döner: biri başarısız olursa diğerleri uygulanmış kalır ve hata O SATIRDA görünür.
+    /// </summary>
+    Task<List<BulkRescheduleResultDto>> BulkRescheduleAsync(List<RescheduleCalendarItemInput> items);
+
+    /// <summary>Senkron drawer.ının içeriği: bağlı hesaplar, kuralları ve senkron günlüğü.</summary>
     Task<CalendarSyncSettingsDto> GetSyncSettingsAsync();
 
     /// <summary>Bir hesabın senkron kurallarını günceller (hangi kaynaklar, hangi projeler, çakışma kuralı).</summary>

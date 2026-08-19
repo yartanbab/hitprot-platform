@@ -300,4 +300,74 @@ public class CalendarAppService_Tests : PlatformEntityFrameworkCoreTestBase
         row.SyncProjectIds.ShouldBeEmpty();
         row.ConflictRule.ShouldBe(CalendarConflictRule.LastWriteWins);
     }
+
+    [Fact]
+    public async Task UpdatePreferencesAsync_tercihleri_saklar_ve_geri_okur()
+    {
+        await _calendar.UpdatePreferencesAsync(new UpdateCalendarPreferencesInput
+        {
+            DailyCapacityHours = 6m,
+            Sources = new System.Collections.Generic.List<CalendarSourceType>
+            {
+                CalendarSourceType.Task,
+                CalendarSourceType.Invoice,
+                // Dış etkinlik bir kaynak SEÇİMİ değil (hesap bağlantısına bağlı).
+                CalendarSourceType.ExternalEvent
+            },
+            SetupCompleted = true
+        });
+
+        var prefs = await _calendar.GetPreferencesAsync();
+
+        prefs.DailyCapacityHours.ShouldBe(6m);
+        prefs.SetupCompleted.ShouldBeTrue();
+        prefs.Sources.ShouldContain(CalendarSourceType.Task);
+        prefs.Sources.ShouldNotContain(CalendarSourceType.ExternalEvent);
+    }
+
+    [Fact]
+    public async Task UpdatePreferencesAsync_sifir_kapasite_takibi_kapatir()
+    {
+        await _calendar.UpdatePreferencesAsync(new UpdateCalendarPreferencesInput
+        {
+            DailyCapacityHours = 0m,
+            SetupCompleted = true
+        });
+
+        var prefs = await _calendar.GetPreferencesAsync();
+        prefs.DailyCapacityHours.ShouldBeNull();
+
+        // Feed de kapasite döndürmemeli — çubuklar çizilmesin.
+        var feed = await _calendar.GetFeedAsync(new GetCalendarFeedInput
+        {
+            From = _clock.Now.Date,
+            To   = _clock.Now.Date
+        });
+        feed.DailyCapacityHours.ShouldBeNull();
+    }
+
+    [Fact]
+    public async Task BulkRescheduleAsync_basarisiz_satir_digerlerini_dusurmez()
+    {
+        var today = _clock.Now.Date;
+        var task = new TaskItem(Guid.NewGuid(), "Toplu tasinan gorev",
+            dueDate: today.AddDays(-3), tenantId: _currentTenant.Id, now: today.AddDays(-10));
+        await _taskRepository.InsertAsync(task, autoSave: true);
+
+        var results = await _calendar.BulkRescheduleAsync(new System.Collections.Generic.List<RescheduleCalendarItemInput>
+        {
+            new() { Source = CalendarSourceType.Task, SourceId = task.Id, NewDate = today.AddDays(2) },
+            // Fatura vadesi ertelenemez → bu satır hata döner…
+            new() { Source = CalendarSourceType.Invoice, SourceId = Guid.NewGuid(), NewDate = today.AddDays(2) }
+        });
+
+        results.Count.ShouldBe(2);
+        results[0].Succeeded.ShouldBeTrue();
+        results[1].Succeeded.ShouldBeFalse();
+        results[1].Error.ShouldNotBeNullOrWhiteSpace();
+
+        // …ama BAŞARILI satır uygulanmış kalmalı.
+        var updated = await _taskRepository.GetAsync(task.Id);
+        updated.DueDate!.Value.Date.ShouldBe(today.AddDays(2));
+    }
 }
