@@ -32,6 +32,8 @@ public class CalendarAppService_Tests : PlatformEntityFrameworkCoreTestBase
     private readonly IRepository<CashAccount, Guid> _cashAccountRepository;
     private readonly ICurrentTenant _currentTenant;
     private readonly IClock _clock;
+    private readonly IRepository<ExternalCalendarAccount, Guid> _accountRepository;
+    private readonly Volo.Abp.Users.ICurrentUser _currentUser;
 
     public CalendarAppService_Tests()
     {
@@ -43,6 +45,8 @@ public class CalendarAppService_Tests : PlatformEntityFrameworkCoreTestBase
         _cashAccountRepository = GetRequiredService<IRepository<CashAccount, Guid>>();
         _currentTenant     = GetRequiredService<ICurrentTenant>();
         _clock             = GetRequiredService<IClock>();
+        _accountRepository = GetRequiredService<IRepository<ExternalCalendarAccount, Guid>>();
+        _currentUser       = GetRequiredService<Volo.Abp.Users.ICurrentUser>();
     }
 
     [Fact]
@@ -78,7 +82,9 @@ public class CalendarAppService_Tests : PlatformEntityFrameworkCoreTestBase
         });
 
         // Her kaynak için ray satırı döner (izin açık → hepsi erişilebilir).
-        feed.Sources.Count.ShouldBe(Enum.GetValues<CalendarSourceType>().Length);
+        // Dış takvim etkinliği bu listede YOKTUR: izin modeli farklı, ayrı uçtan gelir.
+        feed.Sources.Count.ShouldBe(CalendarSources.Internal.Length);
+        feed.Sources.ShouldNotContain(s => s.Source == CalendarSourceType.ExternalEvent);
         feed.Sources.ShouldAllBe(s => s.IsAvailable);
 
         var task = feed.Items.Single(i => i.Title == "Takvim görevi");
@@ -206,5 +212,43 @@ public class CalendarAppService_Tests : PlatformEntityFrameworkCoreTestBase
         var item = feed.Items.Single(i => i.Title == "Kapanacak gorev");
         item.IsDone.ShouldBeTrue();
         item.Risk.ShouldBe(CalendarRiskLevel.None);
+    }
+
+    [Fact]
+    public async Task GetExternalEventsAsync_bagli_hesap_yokken_bos_doner_patlamaz()
+    {
+        var today = _clock.Now.Date;
+
+        var result = await _calendar.GetExternalEventsAsync(new GetCalendarFeedInput
+        {
+            From = today,
+            To   = today.AddDays(7)
+        });
+
+        result.Items.ShouldBeEmpty();
+        result.Accounts.ShouldBeEmpty();
+    }
+
+    [Fact]
+    public async Task GetExternalEventsAsync_bozuk_hesabi_hata_satiri_olarak_dondurur()
+    {
+        var today = _clock.Now.Date;
+
+        // Okuma sağlayıcısı olmayan bir hesap: takvimin tamamı düşmemeli, yalnız
+        // o hesabın satırı hata durumuna geçmeli (tasarımın "bağlantı bozuk" hâli).
+        var account = new ExternalCalendarAccount(
+            Guid.NewGuid(), _currentUser.Id!.Value, CalendarProviderType.ICloud, "kirik@apya.co");
+        await _accountRepository.InsertAsync(account, autoSave: true);
+
+        var result = await _calendar.GetExternalEventsAsync(new GetCalendarFeedInput
+        {
+            From = today,
+            To   = today.AddDays(7)
+        });
+
+        var row = result.Accounts.Single(a => a.AccountId == account.Id);
+        row.Error.ShouldNotBeNullOrWhiteSpace();
+        row.EventCount.ShouldBe(0);
+        result.Items.ShouldBeEmpty();
     }
 }

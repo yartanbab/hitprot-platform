@@ -24,6 +24,13 @@ public interface ICalendarAppService : IApplicationService
     /// <summary>Öğeyi kapatır (görev → Tamamlandı). Kapatılamayan kaynakta hata döner.</summary>
     Task CompleteItemAsync(CompleteCalendarItemInput input);
 
+    /// <summary>
+    /// Bağlı dış takvimlerden aralıktaki etkinlikleri okur. İç feed'den ayrı uçtur:
+    /// yavaş/kırılgan bir dış çağrı takvimin kalanını bekletmesin ve bir hesabın
+    /// bozuk bağlantısı diğerlerini düşürmesin diye.
+    /// </summary>
+    Task<CalendarExternalEventsDto> GetExternalEventsAsync(GetCalendarFeedInput input);
+
     Task<List<CalendarAccountDto>> GetMyAccountsAsync();
     Task ConnectAccountAsync(ConnectCalendarInput input);
     Task DisconnectAccountAsync(Guid id);

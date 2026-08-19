@@ -108,6 +108,52 @@ public class CalendarManager : DomainService
         }
     }
 
+    /// <summary>
+    /// Kullanıcının bağlı hesaplarından aralıktaki etkinlikleri okur.
+    /// <para>
+    /// Hesap başına TOLERANSLI: biri patlarsa (yetki süresi doldu, ağ hatası) o hesabın
+    /// satırı <c>Error</c> ile döner, diğerleri okunmaya devam eder. Takvimin tamamı
+    /// tek bir bozuk bağlantı yüzünden boş kalmaz — tasarımın "bağlantı bozuk" durumu
+    /// bu sonucun üzerine kurulur.
+    /// </para>
+    /// </summary>
+    public async Task<List<ExternalEventFetchResult>> GetExternalEventsAsync(Guid userId, DateTime start, DateTime end)
+    {
+        var accounts = await _accountRepository.GetListAsync(x => x.UserId == userId && x.IsSyncEnabled);
+        var results = new List<ExternalEventFetchResult>();
+
+        foreach (var account in accounts)
+        {
+            var result = new ExternalEventFetchResult
+            {
+                AccountId = account.Id,
+                Provider  = account.Provider,
+                Email     = account.ExternalEmail
+            };
+            results.Add(result);
+
+            var provider = _providers.FirstOrDefault(x => x.ProviderType == account.Provider);
+            if (provider == null)
+            {
+                result.Error = "Bu sağlayıcı için okuma desteği yok.";
+                continue;
+            }
+
+            try
+            {
+                var fresh = await EnsureFreshTokenAsync(account, provider);
+                result.Events = await provider.GetEventsAsync(fresh, start, end);
+            }
+            catch (Exception ex)
+            {
+                Logger.LogWarning(ex, "Dış takvim etkinlikleri okunamadı. AccountId={AccountId}", account.Id);
+                result.Error = "Bağlantı yenilenmeli — etkinlikler okunamadı.";
+            }
+        }
+
+        return results;
+    }
+
     // ── Token yenileme ────────────────────────────────────────────────────────
 
     private async Task<ExternalCalendarAccount> EnsureFreshTokenAsync(ExternalCalendarAccount account, ICalendarProvider provider)

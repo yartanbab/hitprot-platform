@@ -22,5 +22,30 @@ public enum CalendarSourceType
     Income = 5,
 
     /// <summary>Kasa hareketleri (CashMovement.MovementDate).</summary>
-    CashMovement = 6
+    CashMovement = 6,
+
+    /// <summary>
+    /// Bağlı Google/Outlook hesabından okunan etkinlik. Diğerleri gibi bir Platform
+    /// iznine DEĞİL, kullanıcının kendi hesap bağlantısına bağlıdır; bu yüzden iç
+    /// kaynak döngüsünde yer almaz, ayrı uçtan gelir (GetExternalEventsAsync).
+    /// </summary>
+    ExternalEvent = 7
+}
+
+/// <summary>
+/// Takvimin İÇ kaynakları — her biri bir Platform iznine bağlı ve tek feed
+/// çağrısında toplanır. Dış takvim etkinliği bilerek DIŞARIDA: izin modeli ve
+/// hata toleransı farklı (bkz. <see cref="CalendarSourceType.ExternalEvent"/>).
+/// </summary>
+public static class CalendarSources
+{
+    public static readonly CalendarSourceType[] Internal =
+    {
+        CalendarSourceType.Task,
+        CalendarSourceType.Invoice,
+        CalendarSourceType.Grant,
+        CalendarSourceType.Expense,
+        CalendarSourceType.Income,
+        CalendarSourceType.CashMovement
+    };
 }

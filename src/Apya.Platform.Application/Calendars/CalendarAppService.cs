@@ -93,6 +93,51 @@ public class CalendarAppService : ApplicationService, ICalendarAppService
         await _taskAppService.UpdateStatusAsync(input.SourceId, Tasks.TaskStatus.Done);
     }
 
+    public async Task<CalendarExternalEventsDto> GetExternalEventsAsync(GetCalendarFeedInput input)
+    {
+        var from = input.From.Date;
+        var to = input.To.Date.AddDays(1); // bitiş günü dahil
+
+        var results = await _calendarManager.GetExternalEventsAsync(CurrentUser.Id!.Value, from, to);
+        var dto = new CalendarExternalEventsDto();
+
+        foreach (var result in results)
+        {
+            dto.Accounts.Add(new ExternalCalendarStatusDto
+            {
+                AccountId  = result.AccountId,
+                Provider   = result.Provider,
+                Email      = result.Email,
+                EventCount = result.Events.Count,
+                Error      = result.Error
+            });
+
+            foreach (var ev in result.Events)
+            {
+                dto.Items.Add(new CalendarItemDto
+                {
+                    // Dış etkinliğin kimliği Guid değil (sağlayıcı string'i) — anahtar
+                    // hesap + dış id'den türetilir ki hesaplar arası çakışmasın.
+                    Key       = $"{(int)CalendarSourceType.ExternalEvent}:{result.AccountId}:{ev.ExternalId ?? ev.StartTime.Ticks.ToString()}",
+                    Source    = CalendarSourceType.ExternalEvent,
+                    SourceId  = result.AccountId,
+                    Title     = ev.Title,
+                    Date      = ev.StartTime.Date,
+                    StartTime = ev.IsAllDay ? null : ev.StartTime,
+                    EndTime   = ev.IsAllDay ? null : ev.EndTime,
+                    IsAllDay  = ev.IsAllDay,
+                    Subtitle  = result.Email,
+                    Risk      = CalendarRiskLevel.None,
+                    // Dış etkinlik APYA'da salt-okunurdur: buradan taşınmaz, kapatılmaz.
+                    IsDone        = false,
+                    CanReschedule = false
+                });
+            }
+        }
+
+        return dto;
+    }
+
     private static void EnsureReschedulable(CalendarSourceType source)
     {
         if (source == CalendarSourceType.Task) return;

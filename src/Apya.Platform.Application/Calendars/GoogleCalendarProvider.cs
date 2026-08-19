@@ -66,8 +66,65 @@ public class GoogleCalendarProvider : ICalendarProvider, ITransientDependency
         _logger.LogInformation("Google Calendar: event deleted. EventId={EventId}", externalEventId);
     }
 
-    public Task<List<CalendarEvent>> GetEventsAsync(ExternalCalendarAccount account, DateTime start, DateTime end)
-        => Task.FromResult(new List<CalendarEvent>());
+    /// <summary>
+    /// Aralıktaki etkinlikleri okur. <c>singleEvents=true</c> ile tekrarlayan
+    /// etkinlikler tek tek örneklere açılır — takvim ızgarası RRULE yorumlamaz.
+    /// </summary>
+    public async Task<List<CalendarEvent>> GetEventsAsync(ExternalCalendarAccount account, DateTime start, DateTime end)
+    {
+        var client = BuildClient(_tokenProtector.Unprotect(account.AccessToken));
+        var url = $"{CalendarApiBase}/calendars/primary/events" +
+                  $"?timeMin={Uri.EscapeDataString(start.ToString("o"))}" +
+                  $"&timeMax={Uri.EscapeDataString(end.ToString("o"))}" +
+                  "&singleEvents=true&orderBy=startTime&maxResults=250";
+
+        var response = await client.GetAsync(url);
+        response.EnsureSuccessStatusCode();
+        var json = await response.Content.ReadFromJsonAsync<JsonElement>();
+
+        var events = new List<CalendarEvent>();
+        if (!json.TryGetProperty("items", out var items)) return events;
+
+        foreach (var item in items.EnumerateArray())
+        {
+            // İptal edilmiş örnekler start/end taşımaz.
+            if (!item.TryGetProperty("start", out var startNode)) continue;
+            if (!item.TryGetProperty("end", out var endNode)) continue;
+
+            var (startTime, isAllDay) = ReadGoogleTime(startNode);
+            var (endTime, _) = ReadGoogleTime(endNode);
+            if (startTime == null || endTime == null) continue;
+
+            events.Add(new CalendarEvent
+            {
+                ExternalId  = item.TryGetProperty("id", out var id) ? id.GetString() : null,
+                Title       = item.TryGetProperty("summary", out var s) ? (s.GetString() ?? "(başlıksız)") : "(başlıksız)",
+                Description = item.TryGetProperty("description", out var d) ? d.GetString() : null,
+                StartTime   = startTime.Value,
+                EndTime     = endTime.Value,
+                IsAllDay    = isAllDay
+            });
+        }
+
+        _logger.LogDebug("Google Calendar: {Count} etkinlik okundu. Email={Email}", events.Count, account.ExternalEmail);
+        return events;
+    }
+
+    /// <summary>Google zaman düğümü: saatli etkinlikte <c>dateTime</c>, tüm gün olanda <c>date</c>.</summary>
+    private static (DateTime? Time, bool IsAllDay) ReadGoogleTime(JsonElement node)
+    {
+        if (node.TryGetProperty("dateTime", out var dt) && dt.GetString() is { } dts
+            && DateTime.TryParse(dts, null, System.Globalization.DateTimeStyles.RoundtripKind, out var parsed))
+        {
+            return (parsed, false);
+        }
+        if (node.TryGetProperty("date", out var d) && d.GetString() is { } ds
+            && DateTime.TryParse(ds, out var day))
+        {
+            return (day, true);
+        }
+        return (null, false);
+    }
 
     public async Task<(string AccessToken, string RefreshToken, DateTime ExpiresAt)> RefreshTokenAsync(
         ExternalCalendarAccount account, string clientId, string clientSecret)

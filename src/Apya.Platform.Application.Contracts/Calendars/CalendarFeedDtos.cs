@@ -23,6 +23,17 @@ public class CalendarItemDto
     /// <summary>Öğenin takvimdeki günü (saat bileşeni sıfırlanmıştır).</summary>
     public DateTime Date { get; set; }
 
+    /// <summary>
+    /// Saatli öğelerde başlangıç/bitiş — YALNIZ dış takvim etkinliklerinde dolar.
+    /// APYA öğeleri gün bazlıdır ve hafta görünümünde saat ızgarasına inmez, üstteki
+    /// son tarih şeridinde durur.
+    /// </summary>
+    public DateTime? StartTime { get; set; }
+
+    public DateTime? EndTime { get; set; }
+
+    public bool IsAllDay { get; set; }
+
     public CalendarRiskLevel Risk { get; set; }
 
     /// <summary>Tamamlanmış/ödenmiş öğe — risk hesabına girmez, üstü çizili gösterilir.</summary>
@@ -119,4 +130,35 @@ public class CompleteCalendarItemInput
     public CalendarSourceType Source { get; set; }
 
     public Guid SourceId { get; set; }
+}
+
+/// <summary>Bağlı bir dış takvim hesabının o turdaki durumu (ray satırı).</summary>
+public class ExternalCalendarStatusDto
+{
+    public Guid AccountId { get; set; }
+
+    public CalendarProviderType Provider { get; set; }
+
+    public string Email { get; set; } = string.Empty;
+
+    public int EventCount { get; set; }
+
+    /// <summary>Null = sağlıklı. Doluysa ray satırı hata durumuna düşer ve
+    /// "yeniden bağla" gösterilir; takvimin kalanı çalışmaya devam eder.</summary>
+    public string? Error { get; set; }
+}
+
+/// <summary>
+/// Dış takvim etkinlikleri — iç feed'den AYRI uç.
+/// <para>
+/// Neden ayrı: dış çağrı yavaş ve kırılgandır (ağ, süresi dolmuş yetki). Aynı
+/// isteğe koyulsaydı bir bozuk hesap tüm takvimi bekletir ya da düşürürdü;
+/// ayrı olduğu için görevler anında gelir, dış etkinlikler geldiğinde eklenir.
+/// </para>
+/// </summary>
+public class CalendarExternalEventsDto
+{
+    public List<CalendarItemDto> Items { get; set; } = new();
+
+    public List<ExternalCalendarStatusDto> Accounts { get; set; } = new();
 }

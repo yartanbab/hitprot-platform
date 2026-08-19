@@ -147,7 +147,7 @@ public class CalendarFeedProvider : ITransientDependency
 
         var feed = new CalendarFeedDto { From = from, To = to };
 
-        foreach (var source in Enum.GetValues<CalendarSourceType>())
+        foreach (var source in CalendarSources.Internal)
         {
             var permission = RequiredPermission(source);
             var granted    = await _permissionChecker.IsGrantedAsync(permission);
