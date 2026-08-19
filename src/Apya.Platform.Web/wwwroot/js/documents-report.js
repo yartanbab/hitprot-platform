@@ -398,7 +398,7 @@ function oe({ section: a, onToggle: i, onMove: t, isFirst: l, isLast: p, busy: m
   ] });
 }
 function de() {
-  const a = new URLSearchParams(window.location.search), [i, t] = r.useState([]), [l, p] = r.useState([]), [m, u] = r.useState(null), [f, z] = r.useState(a.get("projectId") || ""), [y, c] = r.useState("sections"), [j, w] = r.useState(!0), [T, b] = r.useState(!1), N = r.useCallback(async () => {
+  const a = new URLSearchParams(window.location.search), [i, t] = r.useState([]), [l, p] = r.useState([]), [m, u] = r.useState(null), [f, z] = r.useState((a.get("projectId") || "").toLowerCase()), [y, c] = r.useState("sections"), [j, w] = r.useState(!0), [T, b] = r.useState(!1), N = r.useCallback(async () => {
     w(!0);
     try {
       const [s, o] = await Promise.all([Z(), X()]);

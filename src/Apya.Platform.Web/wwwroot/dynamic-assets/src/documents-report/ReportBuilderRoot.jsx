@@ -68,7 +68,10 @@ export function ReportBuilderRoot() {
   const [templates, setTemplates] = useState([]);
   const [projects, setProjects] = useState([]);
   const [selectedId, setSelectedId] = useState(null);
-  const [projectId, setProjectId] = useState(params.get('projectId') || '');
+  // GUID'i küçük harfe indiriyoruz: Razor menüsünden gelen bağlantı BÜYÜK harfli
+  // ("...?projectId=3A2326E2-..."), sunucu ise küçük harfli döner. Eşleşmeyince
+  // <select> hiçbir seçeneği seçili gösteremiyordu.
+  const [projectId, setProjectId] = useState((params.get('projectId') || '').toLowerCase());
   const [tab, setTab] = useState('sections');
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
