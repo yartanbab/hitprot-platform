@@ -3868,7 +3868,13 @@ namespace Apya.Platform.Migrations
                     b.HasIndex("ParentTemplateId");
 
                     b.HasIndex("Slug")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasDatabaseName("IX_AppDocuments_Dynamic_Slug_Host")
+                        .HasFilter("[TenantId] IS NULL");
+
+                    b.HasIndex("TenantId", "Slug")
+                        .IsUnique()
+                        .HasFilter("[TenantId] IS NOT NULL");
 
                     b.HasIndex("TenantId", "Status");
 
@@ -5642,9 +5648,15 @@ namespace Apya.Platform.Migrations
                     b.HasIndex("CustomerId");
 
                     b.HasIndex("InvoiceNumber")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasDatabaseName("IX_AppInvoices_InvoiceNumber_Host")
+                        .HasFilter("[TenantId] IS NULL");
 
                     b.HasIndex("ProjectId");
+
+                    b.HasIndex("TenantId", "InvoiceNumber")
+                        .IsUnique()
+                        .HasFilter("[TenantId] IS NOT NULL");
 
                     b.HasIndex("TenantId", "Status");
 
