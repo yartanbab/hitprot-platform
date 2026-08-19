@@ -482,6 +482,64 @@ public class CalendarFeedProvider : ITransientDependency
         }).ToList();
     }
 
+    /// <summary>
+    /// Ekip katmanı: kişi başına günlük yük.
+    /// <para>
+    /// Görünürlük feed ile AYNI: gizli görev süzgeci uygulanır ve yalnız görev kaynağı
+    /// izinliyse hesaplanır. Ekip katmanı var olan görünürlüğü kişi kırılımında sunar,
+    /// yeni bir kapı açmaz — aksi hâlde "kimin nesi var" ekranı bir sızıntı olurdu.
+    /// </para>
+    /// <para>
+    /// Dış takvim etkinlikleri BURADA YOK: başka kullanıcının Google/Outlook token'ıyla
+    /// okuma yapılmaz. Tasarımdaki "başlıksız meşgul" katmanı ayrı bir yetki modeli ister.
+    /// </para>
+    /// </summary>
+    public async Task<List<CalendarTeamLoadDto>> BuildTeamLoadAsync(GetCalendarFeedInput input)
+    {
+        if (!await _permissionChecker.IsGrantedAsync(PlatformPermissions.Tasks.Default))
+        {
+            return new List<CalendarTeamLoadDto>();
+        }
+
+        var from = input.From.Date;
+        var toExclusive = input.To.Date.AddDays(1);
+
+        var query = await _taskRepo.GetQueryableAsync();
+        query = await ApplyTaskPrivacyFilterAsync(query);
+        query = query.Where(t => t.DueDate != null && t.DueDate >= from && t.DueDate < toExclusive
+                                 && t.AssigneeId != null && t.Status != TaskStatusEnum.Done);
+
+        if (input.ProjectId.HasValue)
+        {
+            query = query.Where(t => t.ProjectId == input.ProjectId.Value);
+        }
+
+        var tasks = await _executer.ToListAsync(query.Take(MaxItemsPerSource));
+        if (tasks.Count == 0) return new List<CalendarTeamLoadDto>();
+
+        var names = await GetUserNamesAsync(tasks.Select(t => t.AssigneeId!.Value));
+
+        return tasks
+            .GroupBy(t => t.AssigneeId!.Value)
+            .Select(g => new CalendarTeamLoadDto
+            {
+                UserId     = g.Key,
+                Name       = names.GetValueOrDefault(g.Key) ?? "—",
+                TotalHours = g.Sum(t => t.EstimatedHours ?? 0),
+                Days       = g.GroupBy(t => t.DueDate!.Value.Date)
+                              .OrderBy(d => d.Key)
+                              .Select(d => new CalendarDayLoadDto
+                              {
+                                  Date      = d.Key,
+                                  Hours     = d.Sum(t => t.EstimatedHours ?? 0),
+                                  ItemCount = d.Count()
+                              })
+                              .ToList()
+            })
+            .OrderByDescending(r => r.TotalHours)
+            .ToList();
+    }
+
     /* ── Yardımcılar ───────────────────────────────────────────────────────── */
 
     /// <summary>Gecikmiş / bugün son gün ayrımı. Kapanmış öğe risk taşımaz.</summary>

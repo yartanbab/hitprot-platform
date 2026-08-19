@@ -257,3 +257,34 @@ public class BulkRescheduleResultDto
     /// <summary>Null = başarılı. Doluysa o satır hata durumunda kalır.</summary>
     public string? Error { get; set; }
 }
+
+/// <summary>Bir kişinin bir gündeki yükü — ekip katmanının şeritleri.</summary>
+public class CalendarDayLoadDto
+{
+    public DateTime Date { get; set; }
+
+    /// <summary>Açık görevlerin tahmini süresi (saat).</summary>
+    public decimal Hours { get; set; }
+
+    public int ItemCount { get; set; }
+}
+
+/// <summary>
+/// Ekip katmanı satırı: kişi + günlük yükü.
+/// <para>
+/// YETKİ: yalnız çağıran kullanıcının GÖREBİLDİĞİ görevlerden hesaplanır (gizli
+/// görev süzgeci feed ile aynı). Yani ekip katmanı yeni bir görünürlük açmaz,
+/// var olanı kişi kırılımında gösterir.
+/// </para>
+/// </summary>
+public class CalendarTeamLoadDto
+{
+    public Guid UserId { get; set; }
+
+    public string Name { get; set; } = string.Empty;
+
+    public List<CalendarDayLoadDto> Days { get; set; } = new();
+
+    /// <summary>Aralıktaki toplam saat — ray satırındaki özet.</summary>
+    public decimal TotalHours { get; set; }
+}

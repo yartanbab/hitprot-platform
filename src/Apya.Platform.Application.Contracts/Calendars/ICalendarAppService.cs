@@ -31,6 +31,12 @@ public interface ICalendarAppService : IApplicationService
     /// </summary>
     Task<CalendarExternalEventsDto> GetExternalEventsAsync(GetCalendarFeedInput input);
 
+    /// <summary>
+    /// Ekip katmanı: kişi başına günlük yük. Yalnız çağıranın GÖREBİLDİĞİ görevlerden
+    /// hesaplanır — yeni bir görünürlük açmaz.
+    /// </summary>
+    Task<List<CalendarTeamLoadDto>> GetTeamLoadAsync(GetCalendarFeedInput input);
+
     /// <summary>Takvim tercihleri: kapasite, açık kaynaklar, kurulum durumu.</summary>
     Task<CalendarPreferencesDto> GetPreferencesAsync();
 

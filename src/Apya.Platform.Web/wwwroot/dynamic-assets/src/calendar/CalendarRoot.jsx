@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Button, EmptyState, Sheet, SheetContent, Skeleton } from '../components/ui';
 import { cn } from '../lib/utils';
+import { api } from '../lib/api/httpClient';
 import { AgendaView } from './AgendaView';
 import { DayPanel } from './DayPanel';
 import { MonthGrid } from './MonthGrid';
@@ -14,12 +15,15 @@ import { SetupWizard } from './SetupWizard';
 import { ShortcutHelp } from './ShortcutHelp';
 import { Announcer } from './Announcer';
 import { PrintView } from './PrintView';
+import { TeamLayer } from './TeamLayer';
 import { useCalendarFeed } from './hooks/useCalendarFeed';
 import { useCalendarPrefs } from './hooks/useCalendarPrefs';
 import { useCalendarMutations } from './hooks/useCalendarMutations';
 import { useExternalEvents } from './hooks/useExternalEvents';
 import { useCalendarPreferences } from './hooks/useCalendarPreferences';
 import { useCalendarKeyboard } from './hooks/useCalendarKeyboard';
+import { useTeamLoad } from './hooks/useTeamLoad';
+import { useOfflineQueue } from './hooks/useOfflineQueue';
 import { layoutOf, useContainerWidth } from './hooks/useContainerWidth';
 import {
     MONTH_CELLS, addDays, dayLoad, fmt, groupByDay, isoDay, monthGridStart, stripTime, weekDays,
@@ -70,6 +74,7 @@ export function CalendarRoot() {
     const [setupDismissed, setSetupDismissed] = useState(false);
     const [helpOpen, setHelpOpen] = useState(false);
     const [focusedDay, setFocusedDay] = useState(null);
+    const [teamOpen, setTeamOpen] = useState(false);
 
     const { view, setView, applyResponsiveDefault, enabledSources, toggleSource, resetSources } =
         useCalendarPrefs();
@@ -116,6 +121,12 @@ export function CalendarRoot() {
     /* Dış etkinlikler ayrı sorgudan gelir: yavaş/kırılgan dış çağrı grid'i bekletmesin. */
     const external = useExternalEvents(range);
     const preferences = useCalendarPreferences();
+    const teamLoad = useTeamLoad({ from: range.from, to: range.to, enabled: teamOpen });
+
+    /* Çevrimdışı kuyruk: bağlantı yokken taşımalar burada birikir, gelince gönderilir. */
+    const offline = useOfflineQueue({
+        onFlush: (entry) => api.post('/api/app/calendar/reschedule-item', entry.payload),
+    });
 
     const allItems = useMemo(
         () => [...(data?.items ?? []), ...(external.data?.items ?? [])],
@@ -159,7 +170,7 @@ export function CalendarRoot() {
         setSelectedDay(isoDay(today));
     }, [today]);
 
-    const mutations = useCalendarMutations();
+    const mutations = useCalendarMutations({ onOfflineFailure: offline.enqueue });
 
     /* Klavye: sürükle-bırakla yapılabilen her şey klavyeyle de yapılabilmeli. */
     const deferFocusedDay = useCallback((days) => {
@@ -223,6 +234,27 @@ export function CalendarRoot() {
                 </div>
             )}
 
+            {/* Çevrimdışı şerit: değişiklik kaybolmadı, kuyrukta bekliyor. */}
+            {(!offline.isOnline || offline.pendingCount > 0) && (
+                <div
+                    role="status"
+                    aria-live="polite"
+                    className="flex items-center gap-2 rounded-card border border-warning-100 bg-warning-50 px-3 py-2 text-[12.5px] text-warning-700"
+                >
+                    <i className={cn('fa', offline.isOnline ? 'fa-cloud-arrow-up' : 'fa-wifi')} aria-hidden="true" />
+                    <span className="flex-1">
+                        {offline.isOnline
+                            ? `${offline.pendingCount} değişiklik gönderiliyor…`
+                            : `Çevrimdışısınız — ${offline.pendingCount} değişiklik kuyrukta, bağlantı gelince gönderilecek.`}
+                    </span>
+                    {offline.isOnline && offline.pendingCount > 0 && (
+                        <button type="button" onClick={offline.flush} className="font-semibold underline">
+                            Şimdi gönder
+                        </button>
+                    )}
+                </div>
+            )}
+
             {/* Geri alma ŞERİDİ — toast değil: takvime bakarken kaybolan bir bildirim
                 geri almayı imkânsız kılar (tasarım §4). */}
             {mutations.lastAction && (
@@ -263,6 +295,16 @@ export function CalendarRoot() {
                             externalAccounts={external.data?.accounts ?? []}
                             externalLoading={external.isFetching}
                             onOpenSync={() => setSyncOpen(true)}
+                            teamOpen={teamOpen}
+                            onToggleTeam={() => setTeamOpen((v) => !v)}
+                            teamContent={teamOpen ? (
+                                <TeamLayer
+                                    rows={teamLoad.data}
+                                    days={weekDayList}
+                                    capacity={capacity}
+                                    loading={teamLoad.isPending}
+                                />
+                            ) : null}
                         />
                     </div>
                 )}

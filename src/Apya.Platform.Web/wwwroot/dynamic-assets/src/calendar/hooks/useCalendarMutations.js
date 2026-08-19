@@ -39,7 +39,7 @@ function patchItemDone(queryClient, key) {
     });
 }
 
-export function useCalendarMutations() {
+export function useCalendarMutations({ onOfflineFailure } = {}) {
     const queryClient = useQueryClient();
     /** { key, message, undo } — kalıcı şerit. */
     const [lastAction, setLastAction] = useState(null);
@@ -71,7 +71,17 @@ export function useCalendarMutations() {
             patchItemDate(queryClient, item.key, isoDay(newDate));
             return { snapshot, previousDate: item.date.slice(0, 10) };
         },
-        onError: (error, { item }, context) => {
+        onError: (error, { item, newDate }, context) => {
+            /* ÇEVRİMDIŞI: bu bir hata değil, ertelenmiş yazmadır. Öğe yeni gününde
+               KALIR ve kuyruğa alınır — kullanıcı bağlantısı yokken işini kaybetmesin. */
+            if (typeof navigator !== 'undefined' && !navigator.onLine) {
+                onOfflineFailure?.({
+                    key: item.key,
+                    payload: { source: item.source, sourceId: item.sourceId, newDate: isoDay(newDate) },
+                });
+                return;
+            }
+
             /* Geri sarma: sunucu reddettiyse öğe eski gününde kalmalı. */
             context?.snapshot?.forEach(([key, data]) => queryClient.setQueryData(key, data));
             setErrors((prev) => ({

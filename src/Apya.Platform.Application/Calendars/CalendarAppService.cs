@@ -208,6 +208,9 @@ public class CalendarAppService : ApplicationService, ICalendarAppService
         }
     }
 
+    public Task<List<CalendarTeamLoadDto>> GetTeamLoadAsync(GetCalendarFeedInput input)
+        => _feedProvider.BuildTeamLoadAsync(input);
+
     /* ── Tercihler ve toplu erteleme (Faz 7) ───────────────────────────────── */
 
     public async Task<CalendarPreferencesDto> GetPreferencesAsync()

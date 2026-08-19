@@ -89,6 +89,31 @@ export function SourceRail({
                 );
             })}
 
+            {/* Ekip katmanı — "kim ne zaman müsait". Kapalıyken sorgu bile atılmaz. */}
+            {!compact && onToggleTeam && (
+                <>
+                    <button
+                        type="button"
+                        role="switch"
+                        aria-checked={teamOpen}
+                        onClick={onToggleTeam}
+                        className={cn(
+                            'mt-2 flex items-center gap-2 border-t border-subtle px-2 pb-1 pt-2 text-left',
+                            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-border-focus',
+                        )}
+                    >
+                        <span className="flex-1 text-[10.5px] font-bold uppercase tracking-wider text-text-tertiary">
+                            Ekip katmanı
+                        </span>
+                        <i
+                            className={cn('fa text-[11px]', teamOpen ? 'fa-toggle-on text-accent' : 'fa-toggle-off text-text-tertiary')}
+                            aria-hidden="true"
+                        />
+                    </button>
+                    {teamContent}
+                </>
+            )}
+
             {/* Dış takvimler — izinle değil kullanıcının kendi bağlantısıyla gelir,
                 bu yüzden kaynak anahtarlarından AYRI bir bölümde durur. Bozuk
                 bağlantı burada görünür; takvimin kalanı çalışmaya devam eder. */}
