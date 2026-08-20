@@ -13,6 +13,7 @@ import { cn } from '../format';
 const SMART_FOLDERS = [
   { key: 'expiring', label: 'Süresi dolanlar', icon: 'fa-clock-rotate-left' },
   { key: 'missing-meta', label: 'Eksik meta', icon: 'fa-triangle-exclamation' },
+  { key: 'suggested', label: 'Öneri bekleyen', icon: 'fa-wand-magic-sparkles' },
   { key: 'trash', label: 'Çöp kutusu', icon: 'fa-trash-can' },
 ];
 

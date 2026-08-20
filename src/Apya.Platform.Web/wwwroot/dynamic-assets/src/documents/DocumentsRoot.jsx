@@ -3,6 +3,7 @@ import { Button, Input } from '../components/ui';
 import {
   abpAuth, abpDocument, abpNotify, abpAppPath,
   bulkMoveFiles, bulkTagFiles, deleteFile, getComplianceOverview, getDocumentTypes, getFile, getFiles,
+  applySuggestions, dismissSuggestions, getSuggestions,
   getWorkSteps, linkComplianceDocument, moveFile, restoreFile, updateFileMeta, uploadAttachment,
 } from './api';
 import { cn, fmt } from './format';
@@ -11,8 +12,12 @@ import { BulkBar, FileList } from './components/FileList';
 import { DetailPanel } from './components/DetailPanel';
 import { ComplianceTab } from './components/ComplianceTab';
 import { ActivityTab } from './components/ActivityTab';
+import { SuggestionBanner } from './components/SuggestionBanner';
 
 const PAGE_SIZE = 25;
+
+/** Hiçbir belgeyle eşleşmeyen kimlik — "öneri yok" durumunu boş listeye çevirir. */
+const EMPTY_GUID = '00000000-0000-0000-0000-000000000000';
 
 /* ─── Küçük yardımcı bileşenler ───────────────────────────────────────── */
 
@@ -176,6 +181,9 @@ export function DocumentsRoot() {
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef(null);
 
+  const [suggestions, setSuggestions] = useState(null);
+  const [suggestionBusy, setSuggestionBusy] = useState(false);
+
   const [missingItems, setMissingItems] = useState([]);
   // "Yükle" düğmesine basılan eksik kalem; yükleme bitince buna bağlanır.
   const pendingRequirementRef = useRef(null);
@@ -225,10 +233,15 @@ export function DocumentsRoot() {
       base.missingRequiredFields = true;
     } else if (node.kind === 'smart' && node.smart === 'trash') {
       base.onlyDeleted = true;
+    } else if (node.kind === 'smart' && node.smart === 'suggested') {
+      // Öneriler saklanmıyor; süzgeç hesaplanan kimlik kümesiyle kurulur.
+      // Henüz yüklenmediyse boş küme gönderilir → liste boş, sahte sonuç yok.
+      base.documentFileIds = [...new Set((suggestions?.items ?? []).map((i) => i.documentFileId))];
+      if (base.documentFileIds.length === 0) base.documentFileIds = [EMPTY_GUID];
     }
 
     return base;
-  }, [node, page, sorting, search]);
+  }, [node, page, sorting, search, suggestions]);
 
   const loadFiles = useCallback(async () => {
     setLoadingFiles(true);
@@ -296,6 +309,39 @@ export function DocumentsRoot() {
   }, [activeProjectId, node.kind, node.workStepId]);
 
   useEffect(() => { loadMissing(); }, [loadMissing]);
+
+  /* --- Öneriler --- */
+  const loadSuggestions = useCallback(async () => {
+    try {
+      setSuggestions(await getSuggestions(activeProjectId));
+    } catch (e) {
+      // Öneri üretilemediyse ekranın geri kalanı çalışmaya devam etmeli.
+      setSuggestions(null);
+      console.error('[Documents] loadSuggestions', e);
+    }
+  }, [activeProjectId]);
+
+  useEffect(() => { loadSuggestions(); }, [loadSuggestions]);
+
+  const refToDto = (item) => ({
+    documentFileId: item.documentFileId,
+    kind: item.kind,
+    payload: item.payload,
+  });
+
+  const runSuggestionAction = async (action, refs, message) => {
+    setSuggestionBusy(true);
+    try {
+      await action(refs);
+      flash(message);
+      await Promise.all([loadSuggestions(), loadFiles(), loadTree()]);
+    } catch (e) {
+      abpNotify('error', 'Öneri işlenemedi.');
+      console.error('[Documents] suggestion action', e);
+    } finally {
+      setSuggestionBusy(false);
+    }
+  };
 
   /* --- Ağaç düğümleri --- */
   const tree = useMemo(() => {
@@ -710,6 +756,25 @@ export function DocumentsRoot() {
           </div>
         ) : (
         <div className="apya-docs-main">
+          {canEditMeta && (
+            <SuggestionBanner
+              summary={suggestions}
+              busy={suggestionBusy}
+              onApplyAll={() => runSuggestionAction(
+                applySuggestions,
+                (suggestions?.items ?? []).map(refToDto),
+                'Öneriler uygulandı.',
+              )}
+              onApply={(item) => runSuggestionAction(
+                applySuggestions, [refToDto(item)], 'Öneri uygulandı.',
+              )}
+              onDismiss={(item) => runSuggestionAction(
+                dismissSuggestions, [refToDto(item)], 'Öneri yoksayıldı.',
+              )}
+              onReload={loadSuggestions}
+            />
+          )}
+
           <div className="apya-grid-toolbar" style={{ padding: '12px 14px', borderBottom: '1px solid var(--apya-border-subtle)' }}>
             <Input
               size="sm"

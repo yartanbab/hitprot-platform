@@ -195,6 +195,7 @@ namespace Apya.Platform.EntityFrameworkCore
         public DbSet<Apya.Platform.Documents.DocumentRuleCondition> DocumentRuleConditions { get; set; }
         public DbSet<Apya.Platform.Documents.DocumentRuleAction> DocumentRuleActions { get; set; }
         public DbSet<Apya.Platform.Documents.DocumentRuleRun> DocumentRuleRuns { get; set; }
+        public DbSet<Apya.Platform.Documents.DocumentSuggestionDismissal> DocumentSuggestionDismissals { get; set; }
         public DbSet<Apya.Platform.Documents.DocumentFieldPermission> DocumentFieldPermissions { get; set; }
         public DbSet<Apya.Platform.Documents.DocumentIntegration> DocumentIntegrations { get; set; }
         public DbSet<Apya.Platform.Documents.DocumentExpenseMatch> DocumentExpenseMatches { get; set; }
@@ -1168,6 +1169,24 @@ namespace Apya.Platform.EntityFrameworkCore
 
                 // Kural silinse bile çalıştırma izi kalır → FK YOK (append-only kayıt).
                 b.HasIndex(x => new { x.RuleId, x.CreationTime });
+            });
+
+            builder.Entity<Apya.Platform.Documents.DocumentSuggestionDismissal>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "DocumentSuggestionDismissals", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+
+                b.Property(x => x.SuggestionKey).IsRequired()
+                    .HasMaxLength(Apya.Platform.Documents.DocumentConsts.MaxSuggestionKeyLength);
+
+                // Belge silinince reddetme kararı da anlamsızlaşır.
+                b.HasOne<Apya.Platform.Documents.DocumentFile>()
+                 .WithMany()
+                 .HasForeignKey(x => x.DocumentFileId)
+                 .OnDelete(DeleteBehavior.Cascade);
+
+                // Aynı öneri iki kez reddedilemez; okuma da bu indeksten gider.
+                b.HasIndex(x => new { x.DocumentFileId, x.SuggestionKey }).IsUnique();
             });
 
             builder.Entity<Apya.Platform.Documents.DocumentFieldPermission>(b =>

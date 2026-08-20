@@ -23,9 +23,16 @@ function abpAjax(options) {
 const handler = (name, params = {}) => {
   const query = new URLSearchParams();
   Object.entries(params).forEach(([key, value]) => {
-    if (value !== undefined && value !== null && value !== '') {
-      query.append(key, value);
+    if (value === undefined || value === null || value === '') return;
+
+    // Diziler TEKRARLI anahtar olarak yazılır ("ids=a&ids=b"); virgülle
+    // birleştirilse ASP.NET Core listeye bağlayamaz.
+    if (Array.isArray(value)) {
+      value.forEach((entry) => query.append(key, entry));
+      return;
     }
+
+    query.append(key, value);
   });
   const qs = query.toString();
   return `${abpAppPath()}Documents?handler=${name}${qs ? '&' + qs : ''}`;
@@ -81,6 +88,15 @@ export const removeComplianceAssignment = (assignmentId) =>
 export const waiveComplianceItem = (payload) => postJson(handler('WaiveComplianceItem'), payload);
 
 export const linkComplianceDocument = (payload) => postJson(handler('LinkComplianceDocument'), payload);
+
+/* ─── Öneriler (Faz D) ────────────────────────────────────────────────── */
+
+export const getSuggestions = (projectId) =>
+  abpAjax({ url: handler('Suggestions', { projectId }), type: 'GET' });
+
+export const applySuggestions = (suggestions) => postJson(handler('ApplySuggestions'), { suggestions });
+
+export const dismissSuggestions = (suggestions) => postJson(handler('DismissSuggestions'), { suggestions });
 
 /* --- Kiracının kendi paketi (katalog) --- */
 

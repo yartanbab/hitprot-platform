@@ -617,6 +617,12 @@ public class DocumentFileAppService : ApplicationService, IDocumentFileAppServic
             queryable = queryable.Where(f => f.Status == input.Status.Value);
         }
 
+        if (input.DocumentFileIds is { Count: > 0 })
+        {
+            var ids = input.DocumentFileIds;
+            queryable = queryable.Where(f => ids.Contains(f.Id));
+        }
+
         if (input.UploadedAfter.HasValue)
         {
             // Belge tarihi değil YÜKLEME anı: "bu ay yüklenen" sayacı, geçmiş

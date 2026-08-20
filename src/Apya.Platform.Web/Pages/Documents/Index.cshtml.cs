@@ -24,6 +24,7 @@ public class IndexModel : AbpPageModel
     private readonly IProjectWorkStepAppService _workStepAppService;
     private readonly IComplianceAppService _complianceAppService;
     private readonly IDocumentActivityAppService _documentActivityAppService;
+    private readonly IDocumentSuggestionAppService _suggestionAppService;
     private readonly ITaskAppService _taskAppService;
     private readonly IUploadedFileStorage _fileStorage;
     private readonly IUploadedFileRootFolderProvider _rootFolderProvider;
@@ -35,6 +36,7 @@ public class IndexModel : AbpPageModel
         IProjectWorkStepAppService workStepAppService,
         IComplianceAppService complianceAppService,
         IDocumentActivityAppService documentActivityAppService,
+        IDocumentSuggestionAppService suggestionAppService,
         ITaskAppService taskAppService,
         IUploadedFileStorage fileStorage,
         IUploadedFileRootFolderProvider rootFolderProvider)
@@ -45,6 +47,7 @@ public class IndexModel : AbpPageModel
         _workStepAppService = workStepAppService;
         _complianceAppService = complianceAppService;
         _documentActivityAppService = documentActivityAppService;
+        _suggestionAppService = suggestionAppService;
         _taskAppService = taskAppService;
         _fileStorage = fileStorage;
         _rootFolderProvider = rootFolderProvider;
@@ -156,6 +159,20 @@ public class IndexModel : AbpPageModel
     {
         var item = await _complianceAppService.WaiveItemAsync(input);
         return new JsonResult(item);
+    }
+
+    /* ─── Öneriler (Faz D) ─────────────────────────────────────────────── */
+
+    public async Task<IActionResult> OnGetSuggestionsAsync(Guid? projectId)
+        => new JsonResult(await _suggestionAppService.GetPendingAsync(projectId));
+
+    public async Task<IActionResult> OnPostApplySuggestionsAsync([FromBody] ApplyDocumentSuggestionsDto input)
+        => new JsonResult(new { applied = await _suggestionAppService.ApplyAsync(input) });
+
+    public async Task<IActionResult> OnPostDismissSuggestionsAsync([FromBody] ApplyDocumentSuggestionsDto input)
+    {
+        await _suggestionAppService.DismissAsync(input);
+        return NoContent();
     }
 
     public async Task<IActionResult> OnGetComplianceRequirementsAsync(Guid packageId)

@@ -1787,6 +1787,53 @@ i.apya-priority-dot {
 }
 .apya-doc-row-head:hover { background: var(--apya-surface-sunken); }
 
+/* ── Öneri şeridi ────────────────────────────────────────────────────────
+   Mor/ai tonu bilinçli: bu satırlar SİSTEMİN önerisi, kullanıcının verisi
+   değil. Onaylanana kadar hiçbir şey değişmez. */
+.apya-doc-suggestion-banner {
+    border: 1px solid var(--apya-ai-50);
+    background: var(--apya-ai-50);
+    border-radius: var(--apya-radius-xl);
+    padding: 12px 14px;
+    margin-bottom: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+.apya-doc-suggestion-icon {
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    display: grid;
+    place-items: center;
+    flex: none;
+    font-size: 12px;
+    background: var(--apya-surface-raised);
+    color: var(--apya-ai-600);
+}
+.apya-doc-suggestion-list {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    border-top: 1px solid var(--apya-border-subtle);
+    padding-top: 8px;
+}
+.apya-doc-suggestion-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 1fr) 54px 120px;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 4px;
+    border-bottom: 1px solid var(--apya-border-subtle);
+}
+.apya-doc-suggestion-row:last-of-type { border-bottom: none; }
+
+@media (max-width: 900px) {
+    .apya-doc-suggestion-row { grid-template-columns: minmax(0, 1fr) 54px; }
+    .apya-doc-suggestion-row > :nth-child(2),
+    .apya-doc-suggestion-row > :nth-child(3) { grid-column: 1 / -1; }
+}
+
 /* Çöp kutusu satırı: solgun, tıklanamaz — tek eylemi "Geri al". */
 .apya-doc-row.is-trashed { cursor: default; opacity: .72; }
 .apya-doc-row.is-trashed:hover { background: var(--apya-surface-raised); opacity: 1; }

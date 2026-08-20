@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Volo.Abp.Application.Dtos;
 
 namespace Apya.Platform.Documents;
@@ -43,4 +44,10 @@ public class GetDocumentFilesInput : PagedAndSortedResultRequestDto
     /// kapatılır; diğer tüm süzgeçler aynen çalışmaya devam eder.
     /// </summary>
     public bool? OnlyDeleted { get; set; }
+
+    /// <summary>
+    /// Belirli belgeler. "Öneri bekleyen" akıllı klasörü bunu kullanır: öneriler
+    /// listede saklanmadığı için süzgeç, hesaplanan kimlik kümesiyle kurulur.
+    /// </summary>
+    public List<Guid>? DocumentFileIds { get; set; }
 }

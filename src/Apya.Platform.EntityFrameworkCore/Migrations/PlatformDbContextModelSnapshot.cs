@@ -3355,6 +3355,39 @@ namespace Apya.Platform.Migrations
                     b.ToTable("AppDocumentRuleRuns", (string)null);
                 });
 
+            modelBuilder.Entity("Apya.Platform.Documents.DocumentSuggestionDismissal", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreationTime")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("CreationTime");
+
+                    b.Property<Guid?>("CreatorId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("CreatorId");
+
+                    b.Property<Guid>("DocumentFileId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("SuggestionKey")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<Guid?>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("TenantId");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DocumentFileId", "SuggestionKey")
+                        .IsUnique();
+
+                    b.ToTable("AppDocumentSuggestionDismissals", (string)null);
+                });
+
             modelBuilder.Entity("Apya.Platform.Documents.DocumentTag", b =>
                 {
                     b.Property<Guid>("Id")
@@ -9525,6 +9558,15 @@ namespace Apya.Platform.Migrations
                     b.HasOne("Apya.Platform.Documents.DocumentRule", null)
                         .WithMany()
                         .HasForeignKey("RuleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Apya.Platform.Documents.DocumentSuggestionDismissal", b =>
+                {
+                    b.HasOne("Apya.Platform.Documents.DocumentFile", null)
+                        .WithMany()
+                        .HasForeignKey("DocumentFileId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
