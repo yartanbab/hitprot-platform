@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Badge, Button } from '../../components/ui';
+import { Badge, Button, ModalPortal } from '../../components/ui';
 import { abpNotify, applySetup, completeSetup } from '../api';
 import { cn } from '../format';
 
@@ -85,6 +85,7 @@ export function SetupWizard({ state, onDone }) {
   };
 
   return (
+    <ModalPortal>
     <div className="apya-in apya-doc-overlay">
       <div className="apya-pop-in apya-doc-setup" onClick={(e) => e.stopPropagation()}>
         <div className="d-flex align-items-start gap-3 mb-3">
@@ -232,5 +233,6 @@ export function SetupWizard({ state, onDone }) {
         </div>
       </div>
     </div>
+    </ModalPortal>
   );
 }

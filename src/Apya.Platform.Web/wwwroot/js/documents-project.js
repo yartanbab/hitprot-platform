@@ -65,10 +65,10 @@ function xe() {
   const v = async () => {
     const l = window.prompt("Risk başlığı:");
     if (!l) return;
-    const k = Number(window.prompt("Olasılık (1-5):", "3")) || 3, A = Number(window.prompt("Etki (1-5):", "3")) || 3, z = window.prompt("Önlem (boş bırakılabilir):") || null;
+    const N = Number(window.prompt("Olasılık (1-5):", "3")) || 3, A = Number(window.prompt("Etki (1-5):", "3")) || 3, z = window.prompt("Önlem (boş bırakılabilir):") || null;
     p(!0);
     try {
-      await ie({ projectId: a, title: l, likelihood: k, impact: A, mitigation: z }), await f();
+      await ie({ projectId: a, title: l, likelihood: N, impact: A, mitigation: z }), await f();
     } catch {
       I("error", "Risk eklenemedi.");
     } finally {
@@ -232,15 +232,15 @@ function W({ label: a, value: t, max: m }) {
   ] });
 }
 function ge() {
-  const a = new URLSearchParams(window.location.search).get("projectId"), [t, m] = r.useState(null), [c, d] = r.useState([]), [i, p] = r.useState(null), [f, v] = r.useState([]), [M, T] = r.useState(!0), [y, l] = r.useState(!1), k = r.useCallback(async () => {
+  const a = new URLSearchParams(window.location.search).get("projectId"), [t, m] = r.useState(null), [c, d] = r.useState([]), [i, p] = r.useState(null), [f, v] = r.useState([]), [M, T] = r.useState(!0), [y, l] = r.useState(!1), N = r.useCallback(async () => {
     if (!a) {
       T(!1);
       return;
     }
     T(!0);
     try {
-      const [s, N] = await Promise.all([re(a), oe(a)]);
-      m(s), d(N ?? []);
+      const [s, k] = await Promise.all([re(a), oe(a)]);
+      m(s), d(k ?? []);
     } catch (s) {
       I("error", "Eşleştirme tezgâhı yüklenemedi."), console.error("[Matching] load", s);
     } finally {
@@ -248,21 +248,21 @@ function ge() {
     }
   }, [a]);
   r.useEffect(() => {
-    k();
-  }, [k]);
+    N();
+  }, [N]);
   const A = async (s) => {
     p(s), v([]);
     try {
       v(await ce(s.id) ?? []);
-    } catch (N) {
-      console.error("[Matching] candidates", N);
+    } catch (k) {
+      console.error("[Matching] candidates", k);
     }
   }, z = async (s) => {
     if (!i) return;
-    const N = window.prompt("EK numarası (boş bırakılabilir):") || null;
+    const k = window.prompt("EK numarası (boş bırakılabilir):") || null;
     l(!0);
     try {
-      await de({ documentFileId: s, expenseId: i.id, annexNumber: N }), p(null), v([]), await k();
+      await de({ documentFileId: s, expenseId: i.id, annexNumber: k }), p(null), v([]), await N();
     } catch (O) {
       I("error", "Bağlama başarısız oldu."), console.error("[Matching] createMatch", O);
     } finally {
@@ -389,7 +389,7 @@ function ge() {
             className: "apya-doc-linkbtn",
             disabled: y,
             onClick: async () => {
-              l(!0), await pe(s.id), await k(), l(!1);
+              l(!0), await pe(s.id), await N(), l(!1);
             },
             children: "Kaldır"
           }
@@ -426,7 +426,7 @@ const $ = (...a) => a.filter(Boolean).join(" "), q = {
   Matched: { label: "Eşleşti", variant: "positive" },
   Expired: { label: "Süre dolan", variant: "negative" },
   Missing: { label: "Eksik", variant: "negative" }
-}, be = ["", "Project", "WorkStep", "UnassignedGroup", "Document", "MissingItem", "TaskGroup", "Task", "SubTask"], ke = ["None", "Planned", "InProgress", "Done", "Late", "Cancelled", "Draft", "Final", "Matched", "Expired", "Missing"], F = (a) => typeof a.kind == "number" ? be[a.kind] : a.kind, Ne = (a) => typeof a.status == "number" ? ke[a.status] : a.status;
+}, be = ["", "Project", "WorkStep", "UnassignedGroup", "Document", "MissingItem", "TaskGroup", "Task", "SubTask"], Ne = ["None", "Planned", "InProgress", "Done", "Late", "Cancelled", "Draft", "Final", "Matched", "Expired", "Missing"], F = (a) => typeof a.kind == "number" ? be[a.kind] : a.kind, ke = (a) => typeof a.status == "number" ? Ne[a.status] : a.status;
 function Se(a) {
   return a >= 85 ? "var(--apya-positive-500)" : a >= 60 ? "var(--apya-warning-500)" : "var(--apya-negative-500)";
 }
@@ -434,7 +434,7 @@ function ze(a) {
   return a.startDate && a.endDate ? `${j(a.startDate)} — ${j(a.endDate)}` : a.startDate ? j(a.startDate) : a.endDate ? j(a.endDate) : "—";
 }
 function we({ row: a, isOpen: t, onToggle: m, currency: c }) {
-  const d = F(a), i = ve[Ne(a)], p = q[d] ?? q.Document, f = d === "Project" || d === "WorkStep" || d === "TaskGroup" || d === "UnassignedGroup";
+  const d = F(a) || "Document", i = ve[ke(a)], p = q[d] ?? q.Document, f = d === "Project" || d === "WorkStep" || d === "TaskGroup" || d === "UnassignedGroup";
   return /* @__PURE__ */ e.jsxs(
     "div",
     {
@@ -485,7 +485,7 @@ function we({ row: a, isOpen: t, onToggle: m, currency: c }) {
   );
 }
 function Ce() {
-  const a = new URLSearchParams(window.location.search).get("projectId"), [t, m] = r.useState(null), [c, d] = r.useState({}), [i, p] = r.useState(/* @__PURE__ */ new Set()), [f, v] = r.useState(!0), [M, T] = r.useState(!1), [y, l] = r.useState(a ?? null), [k, A] = r.useState(!1), [z, s] = r.useState(""), [N, O] = r.useState(""), P = se.useRef(c);
+  const a = new URLSearchParams(window.location.search).get("projectId"), [t, m] = r.useState(null), [c, d] = r.useState({}), [i, p] = r.useState(/* @__PURE__ */ new Set()), [f, v] = r.useState(!0), [M, T] = r.useState(!1), [y, l] = r.useState(a ?? null), [N, A] = r.useState(!1), [z, s] = r.useState(""), [k, O] = r.useState(""), P = se.useRef(c);
   r.useEffect(() => {
     P.current = c;
   }, [c]);
@@ -555,10 +555,10 @@ function Ce() {
       return !0;
     }, w = (x) => {
       const b = F(x);
-      return b === "Project" || b === "WorkStep" || b === "TaskGroup" || b === "UnassignedGroup" ? !0 : !(k && b !== "MissingItem" || z && b !== z || N && x.ownerName !== N);
+      return b === "Project" || b === "WorkStep" || b === "TaskGroup" || b === "UnassignedGroup" ? !0 : !(N && b !== "MissingItem" || z && b !== z || k && x.ownerName !== k);
     };
     return o.filter((x) => D(x) && w(x));
-  }, [t, c, i, k, z, N]), te = r.useMemo(() => {
+  }, [t, c, i, N, z, k]), te = r.useMemo(() => {
     const n = /* @__PURE__ */ new Set();
     return Object.values(c).forEach((o) => o.forEach((h) => {
       h.ownerName && n.add(h.ownerName);
@@ -569,7 +569,7 @@ function Ce() {
     return /* @__PURE__ */ e.jsx("div", { className: "p-4", children: /* @__PURE__ */ e.jsx(
       K,
       {
-        icon: "fa-diagram-project",
+        icon: /* @__PURE__ */ e.jsx("i", { className: "fa fa-diagram-project" }),
         title: "Henüz proje yok",
         description: "Kapsam ağacı projelerden doğar; önce bir proje oluşturun.",
         action: /* @__PURE__ */ e.jsx(B, { asChild: !0, children: /* @__PURE__ */ e.jsx("a", { href: `${L()}Projects`, children: "Projelere git" }) })
@@ -639,7 +639,7 @@ function Ce() {
           "select",
           {
             className: "apya-doc-select",
-            value: N,
+            value: k,
             onChange: (n) => O(n.target.value),
             "aria-label": "Sorumlu süz",
             children: [
@@ -652,7 +652,7 @@ function Ce() {
           "button",
           {
             type: "button",
-            className: $("apya-doc-filterchip", k && "is-active"),
+            className: $("apya-doc-filterchip", N && "is-active"),
             onClick: () => A((n) => !n),
             children: "Sadece eksikler"
           }

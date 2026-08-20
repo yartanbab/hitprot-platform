@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Button, Input } from '../components/ui';
+import { Button, Input, ModalPortal } from '../components/ui';
 import {
   abpAuth, abpDocument, abpNotify, abpAppPath,
   bulkMoveFiles, bulkTagFiles, deleteFile, getComplianceOverview, getDocumentTypes, getFile, getFiles,
@@ -39,6 +39,7 @@ function Toast({ message, onDone }) {
 function ConfirmDialog({ title, message, onConfirm, onCancel }) {
   const [busy, setBusy] = useState(false);
   return (
+    <ModalPortal>
     <div className="apya-in apya-doc-overlay" onClick={onCancel}>
       <div className="apya-pop-in apya-doc-dialog" onClick={(e) => e.stopPropagation()}>
         <div className="d-flex align-items-start gap-3 mb-3">
@@ -64,6 +65,7 @@ function ConfirmDialog({ title, message, onConfirm, onCancel }) {
         </div>
       </div>
     </div>
+    </ModalPortal>
   );
 }
 
