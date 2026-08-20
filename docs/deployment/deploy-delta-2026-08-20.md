@@ -56,8 +56,11 @@ korunuyor → `/ReleaseNotes` sayfasında **iki sürüm birden** listelenir.
 ### 2. 🔴 VERİ TAŞIMA UYARISI — önce yedek al
 `A1_DocumentsCore` migration'ı yalnız tablo eklemiyor, **veri de taşıyor**: mevcut
 `AppDocumentAttachments` kayıtlarından her sürüm grubunun en son sürümü yeni `AppDocumentFiles`
-tablosuna kopyalanıyor (`ROW_NUMBER()` penceresiyle). Yerelde bu backfill boş veriyle koştu;
-**prod'da ilk kez gerçek belgelerle çalışacak.**
+tablosuna kopyalanıyor (`ROW_NUMBER()` penceresiyle).
+
+Backfill **yerelde gerçek satırlarla doğrulandı**: 15 sürüm grubu → 15 `AppDocumentFiles` kaydı
+(bire bir). Yani mantık boş veriyle değil, gerçek kayıtlarla çalıştı. Yine de prod'un veri hacmi ve
+geçmişi (çok sürümlü belgeler, silinmiş kayıtlar, kiracı dağılımı) yereldekinden farklı.
 
 **DbMigrator'dan önce veritabanı yedeği al.** Geri alma yolu yedekten dönmektir.
 
