@@ -51,6 +51,13 @@ public class PlatformSettingDefinitionProvider : SettingDefinitionProvider
 
         // Kurulum sihirbazı bayrağı ve kaynak seçimi — kullanıcı seviyesi iç değerler
         // (ayar ekranında GÖSTERİLMEZ; takvimin kendi kurulum akışı yazar).
+        // Dokümanlar kurulum sihirbazı — Calendar.SetupCompleted ile aynı ray, ama
+        // KİRACI seviyesinde yazılır (klasör şeması kiracının tamamına kurulur).
+        // .WithProviders() ile KISITLANMAZ: hem Tenant provider zincirde kalsın hem
+        // de "false" varsayılanı dönebilsin.
+        context.Add(new SettingDefinition(PlatformSettings.Documents.SetupCompleted, defaultValue: "false"));
+        context.Add(new SettingDefinition(PlatformSettings.Documents.SetupSchema, defaultValue: ""));
+
         context.Add(new SettingDefinition(PlatformSettings.Calendar.SetupCompleted, defaultValue: "false"));
         context.Add(new SettingDefinition(PlatformSettings.Calendar.Sources, defaultValue: ""));
 

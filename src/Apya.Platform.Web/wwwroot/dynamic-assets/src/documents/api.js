@@ -89,6 +89,14 @@ export const waiveComplianceItem = (payload) => postJson(handler('WaiveComplianc
 
 export const linkComplianceDocument = (payload) => postJson(handler('LinkComplianceDocument'), payload);
 
+/* ─── İlk kurulum (Faz F) ─────────────────────────────────────────────── */
+
+export const getSetupState = () => abpAjax({ url: handler('SetupState'), type: 'GET' });
+
+export const applySetup = (dto) => postJson(handler('ApplySetup'), dto);
+
+export const completeSetup = () => abpAjax({ url: handler('CompleteSetup'), type: 'POST' });
+
 /* ─── Öneriler (Faz D) ────────────────────────────────────────────────── */
 
 export const getSuggestions = (projectId) =>

@@ -1787,6 +1787,85 @@ i.apya-priority-dot {
 }
 .apya-doc-row-head:hover { background: var(--apya-surface-sunken); }
 
+/* ── İlk kurulum sihirbazı ───────────────────────────────────────────── */
+.apya-doc-setup {
+    width: min(560px, calc(100vw - 32px));
+    max-height: calc(100vh - 64px);
+    overflow-y: auto;
+    background: var(--apya-surface-raised);
+    border: 1px solid var(--apya-border-default);
+    border-radius: var(--apya-radius-xl);
+    padding: 18px;
+    box-shadow: var(--apya-shadow-lg, 0 10px 15px -3px rgba(17, 24, 39, .1));
+}
+.apya-doc-setup-icon {
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    display: grid;
+    place-items: center;
+    flex: none;
+    background: var(--apya-ai-50);
+    color: var(--apya-ai-600);
+}
+.apya-doc-setup-steps {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+}
+.apya-doc-setup-step {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    height: 30px;
+    padding: 0 11px;
+    border-radius: var(--apya-radius-full);
+    border: 1px solid var(--apya-border-default);
+    background: var(--apya-surface-raised);
+    color: var(--apya-text-secondary);
+    font-size: 12px;
+    cursor: pointer;
+}
+.apya-doc-setup-step.is-active {
+    border-color: var(--apya-accent-500);
+    background: var(--apya-accent-soft);
+    color: var(--apya-accent-500);
+    font-weight: 600;
+}
+.apya-doc-setup-step.is-done { color: var(--apya-positive-500); }
+.apya-doc-setup-step-no {
+    width: 18px;
+    height: 18px;
+    border-radius: var(--apya-radius-full);
+    display: grid;
+    place-items: center;
+    font-size: 10px;
+    font-weight: 700;
+    background: var(--apya-surface-sunken);
+}
+.apya-doc-setup-preview {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    padding: 10px;
+    border-radius: 10px;
+    background: var(--apya-surface-sunken);
+}
+
+/* Belge yakala: geniş ekranda normal düğme, dar ekranda sağ altta sabit.
+   Sahadaki kullanıcının tek eylemi bu — listeyi kaydırırken kaybolmamalı. */
+@media (max-width: 640px) {
+    .apya-doc-capture-btn {
+        position: fixed;
+        right: 16px;
+        bottom: calc(16px + var(--apya-mobile-tabbar-h, 0px));
+        z-index: 900;
+        border-radius: var(--apya-radius-full);
+        box-shadow: var(--apya-shadow-lg, 0 10px 24px -8px rgba(17, 24, 39, .4));
+    }
+}
+
 /* ── Öneri şeridi ────────────────────────────────────────────────────────
    Mor/ai tonu bilinçli: bu satırlar SİSTEMİN önerisi, kullanıcının verisi
    değil. Onaylanana kadar hiçbir şey değişmez. */

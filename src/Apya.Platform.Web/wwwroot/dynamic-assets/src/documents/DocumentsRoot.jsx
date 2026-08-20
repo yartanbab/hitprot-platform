@@ -3,7 +3,7 @@ import { Button, Input } from '../components/ui';
 import {
   abpAuth, abpDocument, abpNotify, abpAppPath,
   bulkMoveFiles, bulkTagFiles, deleteFile, getComplianceOverview, getDocumentTypes, getFile, getFiles,
-  applySuggestions, dismissSuggestions, getSuggestions,
+  applySuggestions, dismissSuggestions, getSetupState, getSuggestions,
   getWorkSteps, linkComplianceDocument, moveFile, restoreFile, updateFileMeta, uploadAttachment,
 } from './api';
 import { cn, fmt } from './format';
@@ -13,6 +13,7 @@ import { DetailPanel } from './components/DetailPanel';
 import { ComplianceTab } from './components/ComplianceTab';
 import { ActivityTab } from './components/ActivityTab';
 import { SuggestionBanner } from './components/SuggestionBanner';
+import { SetupWizard } from './components/SetupWizard';
 
 const PAGE_SIZE = 25;
 
@@ -180,7 +181,9 @@ export function DocumentsRoot() {
   const [toast, setToast] = useState(null);
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef(null);
+  const cameraInputRef = useRef(null);
 
+  const [setupState, setSetupState] = useState(null);
   const [suggestions, setSuggestions] = useState(null);
   const [suggestionBusy, setSuggestionBusy] = useState(false);
 
@@ -322,6 +325,22 @@ export function DocumentsRoot() {
   }, [activeProjectId]);
 
   useEffect(() => { loadSuggestions(); }, [loadSuggestions]);
+
+  /* --- İlk kurulum sihirbazı ---
+     Yalnız kurulum HİÇ yapılmamışsa açılır. Bayrak kiracı ayarında olduğu için
+     ikinci kullanıcı aynı sihirbazı yeniden görmez. */
+  useEffect(() => {
+    if (!canCreate) return;
+
+    (async () => {
+      try {
+        setSetupState(await getSetupState());
+      } catch (e) {
+        // Kurulum durumu okunamadıysa ekran normal çalışmaya devam etsin.
+        console.error('[Documents] setupState', e);
+      }
+    })();
+  }, [canCreate]);
 
   const refToDto = (item) => ({
     documentFileId: item.documentFileId,
@@ -700,8 +719,33 @@ export function DocumentsRoot() {
               Yükle
             </Button>
           )}
+
+          {/* Belge yakala — sahadaki kullanıcının ana eylemi. Mobilde kamerayı
+              açar; dar ekranda sağ altta sabit bir düğmeye dönüşür (CSS). */}
+          {canCreate && (
+            <Button
+              variant="secondary"
+              className="apya-doc-capture-btn"
+              isLoading={uploading}
+              disabled={!activeFolderId}
+              title={activeFolderId ? undefined : 'Önce bir klasör seçin'}
+              leadingIcon={<i className="fa fa-camera" />}
+              onClick={() => cameraInputRef.current?.click()}
+            >
+              Belge yakala
+            </Button>
+          )}
           <input
             ref={fileInputRef} type="file" multiple hidden
+            onChange={(e) => { handleUpload(e.target.files); e.target.value = ''; }}
+          />
+
+          {/* Sahadaki kullanıcı: belgeyi telefonun kamerasıyla yakalar.
+              `capture` mobil tarayıcıda doğrudan kamerayı açar; masaüstünde
+              yok sayılıp normal dosya seçiciye düşer, o yüzden ayrı bir kod
+              yolu gerekmiyor. OCR YOK — dosya olduğu gibi yüklenir. */}
+          <input
+            ref={cameraInputRef} type="file" accept="image/*" capture="environment" hidden
             onChange={(e) => { handleUpload(e.target.files); e.target.value = ''; }}
           />
         </div>
@@ -867,6 +911,17 @@ export function DocumentsRoot() {
           onCancel={() => setDeleteTarget(null)}
         />
       )}
+      {/* Sihirbaz yalnız kurulum hiç yapılmamışken açılır. */}
+      {setupState && !setupState.setupCompleted && (
+        <SetupWizard
+          state={setupState}
+          onDone={async () => {
+            setSetupState({ ...setupState, setupCompleted: true });
+            await Promise.all([loadTree(), loadFiles()]);
+          }}
+        />
+      )}
+
       {toast && <Toast message={toast} onDone={() => setToast(null)} />}
     </div>
   );

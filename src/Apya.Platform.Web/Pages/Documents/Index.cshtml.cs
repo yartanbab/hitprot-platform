@@ -24,6 +24,7 @@ public class IndexModel : AbpPageModel
     private readonly IProjectWorkStepAppService _workStepAppService;
     private readonly IComplianceAppService _complianceAppService;
     private readonly IDocumentActivityAppService _documentActivityAppService;
+    private readonly IDocumentSetupAppService _setupAppService;
     private readonly IDocumentSuggestionAppService _suggestionAppService;
     private readonly ITaskAppService _taskAppService;
     private readonly IUploadedFileStorage _fileStorage;
@@ -36,6 +37,7 @@ public class IndexModel : AbpPageModel
         IProjectWorkStepAppService workStepAppService,
         IComplianceAppService complianceAppService,
         IDocumentActivityAppService documentActivityAppService,
+        IDocumentSetupAppService setupAppService,
         IDocumentSuggestionAppService suggestionAppService,
         ITaskAppService taskAppService,
         IUploadedFileStorage fileStorage,
@@ -47,6 +49,7 @@ public class IndexModel : AbpPageModel
         _workStepAppService = workStepAppService;
         _complianceAppService = complianceAppService;
         _documentActivityAppService = documentActivityAppService;
+        _setupAppService = setupAppService;
         _suggestionAppService = suggestionAppService;
         _taskAppService = taskAppService;
         _fileStorage = fileStorage;
@@ -159,6 +162,20 @@ public class IndexModel : AbpPageModel
     {
         var item = await _complianceAppService.WaiveItemAsync(input);
         return new JsonResult(item);
+    }
+
+    /* ─── İlk kurulum (Faz F) ──────────────────────────────────────────── */
+
+    public async Task<IActionResult> OnGetSetupStateAsync()
+        => new JsonResult(await _setupAppService.GetStateAsync());
+
+    public async Task<IActionResult> OnPostApplySetupAsync([FromBody] ApplyDocumentSetupDto input)
+        => new JsonResult(await _setupAppService.ApplyAsync(input));
+
+    public async Task<IActionResult> OnPostCompleteSetupAsync()
+    {
+        await _setupAppService.CompleteAsync();
+        return NoContent();
     }
 
     /* ─── Öneriler (Faz D) ─────────────────────────────────────────────── */
