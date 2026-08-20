@@ -143,6 +143,10 @@ public class ExternalCalendarStatusDto
 
     public int EventCount { get; set; }
 
+    /// <summary>Hesabın en son senkron zamanı — araç çubuğundaki "Senkron · N önce"
+    /// rozeti bunu okur. Hiç senkronlanmadıysa null.</summary>
+    public DateTime? LastSyncTime { get; set; }
+
     /// <summary>Null = sağlıklı. Doluysa ray satırı hata durumuna düşer ve
     /// "yeniden bağla" gösterilir; takvimin kalanı çalışmaya devam eder.</summary>
     public string? Error { get; set; }

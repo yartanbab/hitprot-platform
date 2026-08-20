@@ -119,11 +119,12 @@ public class CalendarAppService : ApplicationService, ICalendarAppService
         {
             dto.Accounts.Add(new ExternalCalendarStatusDto
             {
-                AccountId  = result.AccountId,
-                Provider   = result.Provider,
-                Email      = result.Email,
-                EventCount = result.Events.Count,
-                Error      = result.Error
+                AccountId    = result.AccountId,
+                Provider     = result.Provider,
+                Email        = result.Email,
+                EventCount   = result.Events.Count,
+                LastSyncTime = result.LastSyncTime,
+                Error        = result.Error
             });
 
             foreach (var ev in result.Events)

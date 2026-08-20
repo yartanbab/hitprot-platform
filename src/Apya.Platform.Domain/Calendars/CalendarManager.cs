@@ -181,9 +181,10 @@ public class CalendarManager : DomainService
         {
             var result = new ExternalEventFetchResult
             {
-                AccountId = account.Id,
-                Provider  = account.Provider,
-                Email     = account.ExternalEmail
+                AccountId    = account.Id,
+                Provider     = account.Provider,
+                Email        = account.ExternalEmail,
+                LastSyncTime = account.LastSyncTime
             };
             results.Add(result);
 
