@@ -14,6 +14,10 @@ public static class ReportingConsts
     /// <summary>Paylaşım linki token'ının SHA-256 özeti (hex). Token'ın kendisi SAKLANMAZ.</summary>
     public const int ShareTokenHashLength = 64;
 
+    public const int MaxScheduleErrorLength = 400;
+    public const int MaxSubscriberNameLength = 128;
+    public const int MaxSubscriberEmailLength = 256;
+
     /// <summary>Süreli link varsayılan ömrü (gün).</summary>
     public const int DefaultShareLifetimeDays = 14;
 

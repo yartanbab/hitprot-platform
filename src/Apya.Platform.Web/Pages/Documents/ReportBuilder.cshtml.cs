@@ -24,6 +24,7 @@ public class ReportBuilderModel : AbpPageModel
     private readonly IReportTemplateAppService _templateAppService;
     private readonly IDeliveryPackageAppService _packageAppService;
     private readonly IExternalShareAppService _shareAppService;
+    private readonly IReportScheduleAppService _scheduleAppService;
     private readonly IProjectAppService _projectAppService;
     private readonly DeliveryReportModelBuilder _reportModelBuilder;
 
@@ -31,12 +32,14 @@ public class ReportBuilderModel : AbpPageModel
         IReportTemplateAppService templateAppService,
         IDeliveryPackageAppService packageAppService,
         IExternalShareAppService shareAppService,
+        IReportScheduleAppService scheduleAppService,
         IProjectAppService projectAppService,
         DeliveryReportModelBuilder reportModelBuilder)
     {
         _templateAppService = templateAppService;
         _packageAppService = packageAppService;
         _shareAppService = shareAppService;
+        _scheduleAppService = scheduleAppService;
         _projectAppService = projectAppService;
         _reportModelBuilder = reportModelBuilder;
     }
@@ -105,6 +108,35 @@ public class ReportBuilderModel : AbpPageModel
     /// </summary>
     public async Task<IActionResult> OnGetPackagesAsync(Guid projectId)
         => new JsonResult(await _packageAppService.GetListAsync(projectId));
+
+    /* ─── Zamanlanmış üretim + aboneler (Faz E) ───────────────────────── */
+
+    public async Task<IActionResult> OnGetSchedulesAsync(Guid projectId)
+        => new JsonResult(await _scheduleAppService.GetListAsync(projectId));
+
+    public async Task<IActionResult> OnPostCreateScheduleAsync([FromBody] CreateUpdateReportScheduleDto input)
+        => new JsonResult(await _scheduleAppService.CreateAsync(input));
+
+    public async Task<IActionResult> OnPostUpdateScheduleAsync(Guid id, [FromBody] CreateUpdateReportScheduleDto input)
+        => new JsonResult(await _scheduleAppService.UpdateAsync(id, input));
+
+    public async Task<IActionResult> OnPostSetScheduleEnabledAsync(Guid id, bool isEnabled)
+        => new JsonResult(await _scheduleAppService.SetEnabledAsync(id, isEnabled));
+
+    public async Task<IActionResult> OnPostDeleteScheduleAsync(Guid id)
+    {
+        await _scheduleAppService.DeleteAsync(id);
+        return NoContent();
+    }
+
+    public async Task<IActionResult> OnPostAddSubscriberAsync(Guid scheduleId, [FromBody] CreateUpdateReportSubscriberDto input)
+        => new JsonResult(await _scheduleAppService.AddSubscriberAsync(scheduleId, input));
+
+    public async Task<IActionResult> OnPostRemoveSubscriberAsync(Guid subscriberId)
+    {
+        await _scheduleAppService.RemoveSubscriberAsync(subscriberId);
+        return NoContent();
+    }
 
     public async Task<IActionResult> OnGetShareLinksAsync(Guid packageId)
         => new JsonResult(await _shareAppService.GetListAsync(ShareTargetType.DeliveryPackage, packageId));

@@ -501,6 +501,7 @@ public class PlatformWebModule : AbpModule
         // KVKK-004: Geri bildirim eklerinin saklama süresini uygulayan worker. Web'de
         // çünkü dosya silme FeedbackFileStorage'a bağlı (yalnız Web katmanında).
         context.AddBackgroundWorkerAsync<Apya.Platform.Web.Feedbacks.FeedbackAttachmentRetentionWorker>();
+        context.AddBackgroundWorkerAsync<Apya.Platform.Web.Documents.ScheduledReportWorker>();
 
         var app = context.GetApplicationBuilder();
         var env = context.GetEnvironment();

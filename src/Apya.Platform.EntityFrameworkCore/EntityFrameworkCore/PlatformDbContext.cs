@@ -196,6 +196,8 @@ namespace Apya.Platform.EntityFrameworkCore
         public DbSet<Apya.Platform.Documents.DocumentRuleAction> DocumentRuleActions { get; set; }
         public DbSet<Apya.Platform.Documents.DocumentRuleRun> DocumentRuleRuns { get; set; }
         public DbSet<Apya.Platform.Documents.DocumentSuggestionDismissal> DocumentSuggestionDismissals { get; set; }
+        public DbSet<Apya.Platform.Documents.ReportSchedule> ReportSchedules { get; set; }
+        public DbSet<Apya.Platform.Documents.ReportSubscriber> ReportSubscribers { get; set; }
         public DbSet<Apya.Platform.Documents.DocumentFieldPermission> DocumentFieldPermissions { get; set; }
         public DbSet<Apya.Platform.Documents.DocumentIntegration> DocumentIntegrations { get; set; }
         public DbSet<Apya.Platform.Documents.DocumentExpenseMatch> DocumentExpenseMatches { get; set; }
@@ -1169,6 +1171,42 @@ namespace Apya.Platform.EntityFrameworkCore
 
                 // Kural silinse bile çalıştırma izi kalır → FK YOK (append-only kayıt).
                 b.HasIndex(x => new { x.RuleId, x.CreationTime });
+            });
+
+            builder.Entity<Apya.Platform.Documents.ReportSchedule>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "ReportSchedules", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+
+                b.Property(x => x.LastError)
+                    .HasMaxLength(Apya.Platform.Documents.ReportingConsts.MaxScheduleErrorLength);
+
+                b.HasOne<Apya.Platform.Documents.DeliveryPackage>()
+                 .WithMany()
+                 .HasForeignKey(x => x.DeliveryPackageId)
+                 .OnDelete(DeleteBehavior.Cascade);
+
+                // Worker "vadesi gelenleri" bu indeksten okur.
+                b.HasIndex(x => new { x.IsEnabled, x.NextRunAt });
+            });
+
+            builder.Entity<Apya.Platform.Documents.ReportSubscriber>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "ReportSubscribers", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+
+                b.Property(x => x.Name).IsRequired()
+                    .HasMaxLength(Apya.Platform.Documents.ReportingConsts.MaxSubscriberNameLength);
+                b.Property(x => x.Email).IsRequired()
+                    .HasMaxLength(Apya.Platform.Documents.ReportingConsts.MaxSubscriberEmailLength);
+
+                b.HasOne<Apya.Platform.Documents.ReportSchedule>()
+                 .WithMany()
+                 .HasForeignKey(x => x.ScheduleId)
+                 .OnDelete(DeleteBehavior.Cascade);
+
+                b.HasIndex(x => new { x.ScheduleId, x.Email }).IsUnique()
+                    .HasFilter(isSqlServer ? "[IsDeleted] = 0" : "\"IsDeleted\" = false");
             });
 
             builder.Entity<Apya.Platform.Documents.DocumentSuggestionDismissal>(b =>

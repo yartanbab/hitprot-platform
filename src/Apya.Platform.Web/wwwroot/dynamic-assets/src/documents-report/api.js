@@ -75,3 +75,24 @@ export const RECIPIENT_LABEL = {
   4: 'Denetçi · YMM',
   5: 'İç kullanım',
 };
+
+/* ─── Zamanlanmış üretim + aboneler (Faz E) ──────────────────────────────── */
+
+export const getSchedules = (projectId) =>
+  abpAjax({ url: handlerUrl('Schedules', { projectId }), type: 'GET' });
+
+export const createSchedule = (dto) => post(handlerUrl('CreateSchedule'), dto);
+
+export const updateSchedule = (id, dto) => post(handlerUrl('UpdateSchedule', { id }), dto);
+
+export const setScheduleEnabled = (id, isEnabled) =>
+  abpAjax({ url: handlerUrl('SetScheduleEnabled', { id, isEnabled }), type: 'POST' });
+
+export const deleteSchedule = (id) =>
+  abpAjax({ url: handlerUrl('DeleteSchedule', { id }), type: 'POST' });
+
+export const addSubscriber = (scheduleId, dto) =>
+  post(handlerUrl('AddSubscriber', { scheduleId }), dto);
+
+export const removeSubscriber = (subscriberId) =>
+  abpAjax({ url: handlerUrl('RemoveSubscriber', { subscriberId }), type: 'POST' });

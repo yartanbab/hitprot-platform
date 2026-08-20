@@ -107,6 +107,7 @@ public static class PlatformDomainErrorCodes
     public const string ShareLinkExpired = "Platform:Documents:ShareLinkExpired";
     public const string ShareLinkRevoked = "Platform:Documents:ShareLinkRevoked";
     public const string ShareLinkDownloadNotAllowed = "Platform:Documents:ShareLinkDownloadNotAllowed";
+    public const string ReportSubscriberEmailInvalid = "Platform:Documents:ReportSubscriberEmailInvalid";
 
     // --- Yönetim: kural motoru + alan bazlı izinler (Faz D) ---
     public const string DocumentRuleNameRequired = "Platform:Documents:RuleNameRequired";

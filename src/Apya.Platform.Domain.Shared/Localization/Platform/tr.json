@@ -428,6 +428,7 @@
         "Platform:Documents:ShareLinkExpired": "Bu paylaşım bağlantısının süresi {ExpiresAt} tarihinde doldu.",
         "Platform:Documents:ShareLinkRevoked": "Bu paylaşım bağlantısı iptal edilmiş.",
         "Platform:Documents:ShareLinkDownloadNotAllowed": "Bu paylaşım bağlantısı indirmeye kapalı; yalnızca görüntüleyebilirsiniz.",
+        "Platform:Documents:ReportSubscriberEmailInvalid": "Geçerli bir e-posta adresi girin.",
         "Platform:Documents:RuleNameRequired": "Kural adı boş bırakılamaz.",
         "Platform:Documents:RuleConditionLimit": "Bir kurala en fazla {Max} koşul eklenebilir.",
         "Platform:Documents:RuleActionLimit": "Bir kurala en fazla {Max} eylem eklenebilir.",

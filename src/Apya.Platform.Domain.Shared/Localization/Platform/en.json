@@ -476,6 +476,7 @@
     "Platform:Documents:ShareLinkExpired": "This share link expired on {ExpiresAt}.",
     "Platform:Documents:ShareLinkRevoked": "This share link has been revoked.",
     "Platform:Documents:ShareLinkDownloadNotAllowed": "This share link is view-only; downloads are disabled.",
+    "Platform:Documents:ReportSubscriberEmailInvalid": "Enter a valid e-mail address.",
     "Platform:Documents:RuleNameRequired": "Rule name cannot be empty.",
     "Platform:Documents:RuleConditionLimit": "A rule can have at most {Max} conditions.",
     "Platform:Documents:RuleActionLimit": "A rule can have at most {Max} actions.",
