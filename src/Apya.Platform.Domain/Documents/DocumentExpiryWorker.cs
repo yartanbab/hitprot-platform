@@ -64,31 +64,49 @@ public class DocumentExpiryWorker : AsyncPeriodicBackgroundWorkerBase
             {
                 using (currentTenant.Change(tenantGroup.Key))
                 {
-                    var groupIds = new List<Guid>();
+                    var notifiedIds = new List<Guid>();
+                    var ownerlessCount = 0;
 
                     foreach (var document in tenantGroup)
                     {
-                        if (document.CreatorId.HasValue)
+                        // Sahibi olmayan belgeye gönderilecek adres yok. Bunu "uyarıldı"
+                        // diye işaretlersek belge bir daha ASLA hatırlatılmaz; işaretlemiyoruz.
+                        // Belge son tarih penceresinde kaldığı sürece her turda yeniden denenir.
+                        if (!document.CreatorId.HasValue)
                         {
-                            await localEventBus.PublishAsync(new DocumentExpiringEto
-                            {
-                                DocumentId = document.Id,
-                                DocumentTitle = document.Title,
-                                ProjectId = document.ProjectId,
-                                CreatorId = document.CreatorId.Value,
-                                ExpiryDate = document.ExpiryDate!.Value
-                            });
+                            ownerlessCount++;
+                            continue;
                         }
 
-                        groupIds.Add(document.Id);
+                        await localEventBus.PublishAsync(new DocumentExpiringEto
+                        {
+                            DocumentId = document.Id,
+                            DocumentTitle = document.Title,
+                            ProjectId = document.ProjectId,
+                            CreatorId = document.CreatorId.Value,
+                            ExpiryDate = document.ExpiryDate!.Value
+                        });
+
+                        notifiedIds.Add(document.Id);
                     }
 
-                    // Tek bir SQL UPDATE — N×UpdateAsync yerine
-                    await documentRepository.BulkMarkExpiryWarningSentAsync(groupIds);
+                    if (notifiedIds.Count > 0)
+                    {
+                        // Tek bir SQL UPDATE — N×UpdateAsync yerine
+                        await documentRepository.BulkMarkExpiryWarningSentAsync(notifiedIds);
+                    }
 
                     Logger.LogInformation(
                         "TenantId={TenantId}: {Count} belge için son tarih uyarısı gönderildi.",
-                        tenantGroup.Key, groupIds.Count);
+                        tenantGroup.Key, notifiedIds.Count);
+
+                    if (ownerlessCount > 0)
+                    {
+                        Logger.LogWarning(
+                            "TenantId={TenantId}: {Count} belgenin sahibi (CreatorId) yok, uyarı gönderilemedi. "
+                            + "Belgeler işaretlenmedi, sonraki turda yeniden denenecek.",
+                            tenantGroup.Key, ownerlessCount);
+                    }
                 }
             }
             catch (Exception ex)
