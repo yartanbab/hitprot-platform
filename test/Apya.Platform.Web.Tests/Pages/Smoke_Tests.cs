@@ -49,6 +49,8 @@ public class Smoke_Tests : PlatformWebTestBase
     [InlineData("/Reports/TrialBalance")]
     [InlineData("/Tasks")]
     [InlineData("/Grants")]
+    [InlineData("/Documents")]
+    [InlineData("/Documents/Scope")]
     public async Task Page_ReturnsOkOrRedirect(string url)
     {
         var response = await Client.GetAsync(url);

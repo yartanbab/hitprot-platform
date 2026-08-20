@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { Badge, Button, EmptyState, SkeletonList } from '../components/ui';
+import { SchedulePanel } from './SchedulePanel';
 import {
   abpAppPath, abpNotify, createShareLink, fmtDate, getPackages, getShareLinks, revokeShareLink,
 } from './api';
@@ -91,7 +92,11 @@ export function DistributionTab({ projectId }) {
 
   if (loading) return <div className="apya-doc-check-card"><SkeletonList rows={5} /></div>;
 
+  // Dağıtım = paylaşım linkleri + ZAMANLANMIŞ üretim; ikisi de "rapor kime,
+  // ne zaman gider" sorusunun parçası, aynı sekmede duruyorlar.
+
   return (
+    <div className="d-flex flex-column gap-3">
     <div className="apya-doc-check-card">
       <div className="apya-doc-check-head">
         <span style={{ fontSize: 13.5, fontWeight: 600 }}>Üretilmiş paketler</span>
@@ -176,6 +181,9 @@ export function DistributionTab({ projectId }) {
           ))}
         </>
       )}
+    </div>
+
+    <SchedulePanel projectId={projectId} packages={packages} />
     </div>
   );
 }

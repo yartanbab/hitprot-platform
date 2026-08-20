@@ -30,6 +30,18 @@ public class ComplianceRequirement : FullAuditedAggregateRoot<Guid>, IMultiTenan
 
     public int Order { get; private set; }
 
+    /// <summary>Kalemin kökeni — listede kaynak etiketi buradan basılır.</summary>
+    public ComplianceRequirementSource Source { get; private set; } = ComplianceRequirementSource.InstitutionPackage;
+
+    /// <summary>
+    /// Kaynağın işaret ettiği kayıt. <see cref="ComplianceRequirementSource.TaskAttachment"/>
+    /// için görevin kimliği; diğer kaynaklarda null.
+    ///
+    /// FK YOK: görev silinirse kalem "kaynağı kaldırılmış" olarak yaşamaya devam
+    /// eder — kurumun istediği belge, görev silindi diye ortadan kalkmaz.
+    /// </summary>
+    public Guid? SourceEntityId { get; private set; }
+
     protected ComplianceRequirement() { }
 
     public ComplianceRequirement(
@@ -40,7 +52,9 @@ public class ComplianceRequirement : FullAuditedAggregateRoot<Guid>, IMultiTenan
         ComplianceScope scope,
         Guid? documentTypeId = null,
         bool isBlocking = false,
-        int order = 0) : base(id)
+        int order = 0,
+        ComplianceRequirementSource source = ComplianceRequirementSource.InstitutionPackage,
+        Guid? sourceEntityId = null) : base(id)
     {
         TenantId = tenantId;
         PackageId = packageId;
@@ -49,6 +63,22 @@ public class ComplianceRequirement : FullAuditedAggregateRoot<Guid>, IMultiTenan
         DocumentTypeId = documentTypeId;
         IsBlocking = isBlocking;
         Order = order;
+        SetSource(source, sourceEntityId);
+    }
+
+    /// <summary>
+    /// Kaynağı ve işaret ettiği kaydı belirler. Göreve bağlı kalem, göreve
+    /// bağlanmadan anlamsızdır; kimlik zorunlu tutulur.
+    /// </summary>
+    public void SetSource(ComplianceRequirementSource source, Guid? sourceEntityId)
+    {
+        if (source == ComplianceRequirementSource.TaskAttachment && sourceEntityId is null)
+        {
+            throw new BusinessException(PlatformDomainErrorCodes.ComplianceTaskSourceRequiresTask);
+        }
+
+        Source = source;
+        SourceEntityId = source == ComplianceRequirementSource.TaskAttachment ? sourceEntityId : null;
     }
 
     public void SetTitle(string title)
@@ -59,12 +89,20 @@ public class ComplianceRequirement : FullAuditedAggregateRoot<Guid>, IMultiTenan
         Title = Check.NotNullOrWhiteSpace(title, nameof(title), maxLength: ComplianceConsts.MaxRequirementTitleLength).Trim();
     }
 
-    public void Update(string title, ComplianceScope scope, Guid? documentTypeId, bool isBlocking, int order)
+    public void Update(
+        string title,
+        ComplianceScope scope,
+        Guid? documentTypeId,
+        bool isBlocking,
+        int order,
+        ComplianceRequirementSource source = ComplianceRequirementSource.InstitutionPackage,
+        Guid? sourceEntityId = null)
     {
         SetTitle(title);
         Scope = scope;
         DocumentTypeId = documentTypeId;
         IsBlocking = isBlocking;
         Order = order;
+        SetSource(source, sourceEntityId);
     }
 }

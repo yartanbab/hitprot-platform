@@ -1,11 +1,22 @@
 using System;
+using Volo.Abp;
+using Volo.Abp.Domain.Entities;
 using Volo.Abp.Domain.Entities.Auditing;
 using Volo.Abp.MultiTenancy;
 
 namespace Apya.Platform.Documents;
 
-public class DocumentAttachment : CreationAuditedEntity<Guid>, IMultiTenant
+/// <summary>
+/// Belgenin bir versiyonu (fiziksel dosya).
+///
+/// SOFT-DELETE: belge çöp kutusuna gittiğinde ekleri de birlikte gizlenir ve
+/// geri alındığında birlikte döner. Sert silinselerdi "geri yükle" açılamayan
+/// bir belge üretirdi — kim/ne zaman sildi bilgisi üst satırdaki DocumentFile'da.
+/// </summary>
+public class DocumentAttachment : CreationAuditedEntity<Guid>, IMultiTenant, ISoftDelete
 {
+    public bool IsDeleted { get; set; }
+
     public Guid? TenantId { get; set; }
 
     public Guid DocumentId { get; set; }

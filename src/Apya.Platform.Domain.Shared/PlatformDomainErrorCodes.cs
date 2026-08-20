@@ -93,6 +93,9 @@ public static class PlatformDomainErrorCodes
     public const string ComplianceRequirementTitleRequired = "Platform:Documents:ComplianceRequirementTitleRequired";
     public const string ComplianceWaiveReasonRequired = "Platform:Documents:ComplianceWaiveReasonRequired";
     public const string CompliancePackageAlreadyApplied = "Platform:Documents:CompliancePackageAlreadyApplied";
+    public const string CompliancePackageReadOnly = "Platform:Documents:CompliancePackageReadOnly";
+    public const string CompliancePackageInUse = "Platform:Documents:CompliancePackageInUse";
+    public const string ComplianceTaskSourceRequiresTask = "Platform:Documents:ComplianceTaskSourceRequiresTask";
 
     // --- Rapor / teslim paketi (Faz C) ---
     public const string ReportTemplateNameRequired = "Platform:Documents:ReportTemplateNameRequired";
@@ -104,6 +107,7 @@ public static class PlatformDomainErrorCodes
     public const string ShareLinkExpired = "Platform:Documents:ShareLinkExpired";
     public const string ShareLinkRevoked = "Platform:Documents:ShareLinkRevoked";
     public const string ShareLinkDownloadNotAllowed = "Platform:Documents:ShareLinkDownloadNotAllowed";
+    public const string ReportSubscriberEmailInvalid = "Platform:Documents:ReportSubscriberEmailInvalid";
 
     // --- Yönetim: kural motoru + alan bazlı izinler (Faz D) ---
     public const string DocumentRuleNameRequired = "Platform:Documents:RuleNameRequired";

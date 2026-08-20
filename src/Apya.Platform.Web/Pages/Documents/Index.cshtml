@@ -4,7 +4,16 @@
     ViewBag.Title = "Dokümanlar";
 }
 
-<div data-page-description="Klasörler ve doküman arşivi" class="apya-page">
+@* Tailwind island stylesheet (js/style.css) — bu partial olmadan island stilsiz kalır. *@
+<partial name="_ApyaThemeBootstrap" />
+
+@*
+    data-filter: konsol filtre sözleşmesi. Üst bardaki kayıtlı görünüm çipi
+    (wwwroot/js/apya-saved-views.js) yalnız bu işareti taşıyan ekranlarda basılır
+    ve ekranın FİLTRE URL'İNİ adlandırıp saklar. İşaret STATİK olmalı — çip
+    DOMContentLoaded'da kurulur, React adası ise daha sonra bağlanır.
+*@
+<div data-page-description="Klasörler ve doküman arşivi" class="apya-page" data-filter="documents">
     <div id="documents-island"></div>
 </div>
 

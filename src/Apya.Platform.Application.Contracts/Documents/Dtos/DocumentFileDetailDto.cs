@@ -12,4 +12,10 @@ public class DocumentFileDetailDto : DocumentFileDto
     public List<DocumentFieldValueDto> Fields { get; set; } = new();
 
     public List<DocumentAttachmentDto> Versions { get; set; } = new();
+
+    /// <summary>
+    /// Belgenin bağlı olduğu kayıtlar: proje, iş adımı, eşleştiği harcama, içinde
+    /// bulunduğu teslim paketleri ve karşıladığı kontrol listesi kalemleri.
+    /// </summary>
+    public List<RelatedRecordDto> Related { get; set; } = new();
 }

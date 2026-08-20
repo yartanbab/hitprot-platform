@@ -3,6 +3,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 using Apya.Platform.Documents;
+using Apya.Platform.Storage;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Volo.Abp;
@@ -22,13 +23,20 @@ namespace Apya.Platform.Web.Pages.Share;
 public class IndexModel : AbpPageModel
 {
     private readonly IExternalShareAppService _shareAppService;
+    private readonly IUploadedFileRootFolderProvider _rootFolderProvider;
 
-    public IndexModel(IExternalShareAppService shareAppService)
+    public IndexModel(
+        IExternalShareAppService shareAppService,
+        IUploadedFileRootFolderProvider rootFolderProvider)
     {
         _shareAppService = shareAppService;
+        _rootFolderProvider = rootFolderProvider;
     }
 
     public SharedPackageViewDto? View { get; private set; }
+
+    /// <summary>İndirme bağlantılarını kurmak için görünüme taşınan token.</summary>
+    public string? Token { get; private set; }
 
     /// <summary>Link süresi dolmuş/iptal edilmiş ya da hiç yoksa gösterilecek mesaj.</summary>
     public string? ErrorMessage { get; private set; }
@@ -44,6 +52,7 @@ public class IndexModel : AbpPageModel
         try
         {
             View = await _shareAppService.ResolveAsync(token, HashClientIp(), TruncatedUserAgent());
+            Token = token;
         }
         catch (BusinessException ex) when (ex.Code == PlatformDomainErrorCodes.ShareLinkExpired)
         {
@@ -59,6 +68,46 @@ public class IndexModel : AbpPageModel
             // geçerli token tahmin etmeyi kolaylaştıracak bir ipucu vermeyiz.
             ErrorMessage = "Bağlantı geçersiz.";
         }
+    }
+
+    /// <summary>
+    /// Denetçinin tek bir eki indirmesi. Süre, iptal, indirme izni ve dosyanın
+    /// pakete aidiyeti AppService içinde doğrulanır — buradan geçmek yetki vermez.
+    ///
+    /// Hata durumunda ayrıntı verilmez: geçersiz token, süresi dolmuş link ve
+    /// pakette olmayan dosya aynı 404'ü alır.
+    /// </summary>
+    public async Task<IActionResult> OnGetDownloadAsync(string token, Guid fileId)
+    {
+        if (string.IsNullOrWhiteSpace(token))
+        {
+            return NotFound();
+        }
+
+        GeneratedFileDownloadDto download;
+
+        try
+        {
+            download = await _shareAppService.PrepareDownloadAsync(
+                token, fileId, HashClientIp(), TruncatedUserAgent());
+        }
+        catch (BusinessException)
+        {
+            return NotFound();
+        }
+        catch (EntityNotFoundException)
+        {
+            return NotFound();
+        }
+
+        var path = _rootFolderProvider.ResolveSafePath(download.StoredFileName);
+
+        if (path == null || !System.IO.File.Exists(path))
+        {
+            return NotFound();
+        }
+
+        return PhysicalFile(path, download.ContentType, download.FileName);
     }
 
     /// <summary>

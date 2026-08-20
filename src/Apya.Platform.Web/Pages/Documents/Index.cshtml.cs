@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using Apya.Platform.Storage;
 using Microsoft.AspNetCore.Authorization;
@@ -8,6 +9,7 @@ using Microsoft.AspNetCore.Mvc;
 using Apya.Platform.Documents;
 using Apya.Platform.Permissions;
 using Apya.Platform.Projects;
+using Apya.Platform.Tasks;
 using Apya.Platform.Web.Services;
 using Volo.Abp.AspNetCore.Mvc.UI.RazorPages;
 
@@ -22,6 +24,9 @@ public class IndexModel : AbpPageModel
     private readonly IProjectWorkStepAppService _workStepAppService;
     private readonly IComplianceAppService _complianceAppService;
     private readonly IDocumentActivityAppService _documentActivityAppService;
+    private readonly IDocumentSetupAppService _setupAppService;
+    private readonly IDocumentSuggestionAppService _suggestionAppService;
+    private readonly ITaskAppService _taskAppService;
     private readonly IUploadedFileStorage _fileStorage;
     private readonly IUploadedFileRootFolderProvider _rootFolderProvider;
 
@@ -32,6 +37,9 @@ public class IndexModel : AbpPageModel
         IProjectWorkStepAppService workStepAppService,
         IComplianceAppService complianceAppService,
         IDocumentActivityAppService documentActivityAppService,
+        IDocumentSetupAppService setupAppService,
+        IDocumentSuggestionAppService suggestionAppService,
+        ITaskAppService taskAppService,
         IUploadedFileStorage fileStorage,
         IUploadedFileRootFolderProvider rootFolderProvider)
     {
@@ -41,6 +49,9 @@ public class IndexModel : AbpPageModel
         _workStepAppService = workStepAppService;
         _complianceAppService = complianceAppService;
         _documentActivityAppService = documentActivityAppService;
+        _setupAppService = setupAppService;
+        _suggestionAppService = suggestionAppService;
+        _taskAppService = taskAppService;
         _fileStorage = fileStorage;
         _rootFolderProvider = rootFolderProvider;
     }
@@ -97,6 +108,12 @@ public class IndexModel : AbpPageModel
         return NoContent();
     }
 
+    public async Task<IActionResult> OnPostRestoreFileAsync(Guid id)
+    {
+        await _documentFileAppService.RestoreAsync(id);
+        return NoContent();
+    }
+
     public async Task<IActionResult> OnGetDocumentTypesAsync()
     {
         var types = await _documentTypeAppService.GetListAsync();
@@ -145,6 +162,81 @@ public class IndexModel : AbpPageModel
     {
         var item = await _complianceAppService.WaiveItemAsync(input);
         return new JsonResult(item);
+    }
+
+    /* ─── İlk kurulum (Faz F) ──────────────────────────────────────────── */
+
+    public async Task<IActionResult> OnGetSetupStateAsync()
+        => new JsonResult(await _setupAppService.GetStateAsync());
+
+    public async Task<IActionResult> OnPostApplySetupAsync([FromBody] ApplyDocumentSetupDto input)
+        => new JsonResult(await _setupAppService.ApplyAsync(input));
+
+    public async Task<IActionResult> OnPostCompleteSetupAsync()
+    {
+        await _setupAppService.CompleteAsync();
+        return NoContent();
+    }
+
+    /* ─── Öneriler (Faz D) ─────────────────────────────────────────────── */
+
+    public async Task<IActionResult> OnGetSuggestionsAsync(Guid? projectId)
+        => new JsonResult(await _suggestionAppService.GetPendingAsync(projectId));
+
+    public async Task<IActionResult> OnPostApplySuggestionsAsync([FromBody] ApplyDocumentSuggestionsDto input)
+        => new JsonResult(new { applied = await _suggestionAppService.ApplyAsync(input) });
+
+    public async Task<IActionResult> OnPostDismissSuggestionsAsync([FromBody] ApplyDocumentSuggestionsDto input)
+    {
+        await _suggestionAppService.DismissAsync(input);
+        return NoContent();
+    }
+
+    public async Task<IActionResult> OnGetComplianceRequirementsAsync(Guid packageId)
+        => new JsonResult(await _complianceAppService.GetRequirementListAsync(packageId));
+
+    /// <summary>
+    /// Göreve bağlı kalem kurarken görev seçtirmek için hafif liste.
+    /// Yetki Tasks tarafındaki [Authorize] ile uygulanır.
+    /// </summary>
+    public async Task<IActionResult> OnGetProjectTasksAsync(Guid projectId)
+    {
+        var tasks = await _taskAppService.GetListAsync(new GetTasksInput
+        {
+            ProjectId = projectId,
+            MaxResultCount = 200,
+            Sorting = "number",
+        });
+
+        return new JsonResult(tasks.Items.Select(t => new { t.Id, t.Number, t.Title }));
+    }
+
+    public async Task<IActionResult> OnPostCreateCompliancePackageAsync(
+        [FromBody] CreateUpdateCompliancePackageDto input)
+        => new JsonResult(await _complianceAppService.CreatePackageAsync(input));
+
+    public async Task<IActionResult> OnPostUpdateCompliancePackageAsync(
+        Guid id, [FromBody] CreateUpdateCompliancePackageDto input)
+        => new JsonResult(await _complianceAppService.UpdatePackageAsync(id, input));
+
+    public async Task<IActionResult> OnPostDeleteCompliancePackageAsync(Guid id)
+    {
+        await _complianceAppService.DeletePackageAsync(id);
+        return NoContent();
+    }
+
+    public async Task<IActionResult> OnPostAddComplianceRequirementAsync(
+        Guid packageId, [FromBody] CreateUpdateComplianceRequirementDto input)
+        => new JsonResult(await _complianceAppService.AddRequirementAsync(packageId, input));
+
+    public async Task<IActionResult> OnPostUpdateComplianceRequirementAsync(
+        Guid id, [FromBody] CreateUpdateComplianceRequirementDto input)
+        => new JsonResult(await _complianceAppService.UpdateRequirementAsync(id, input));
+
+    public async Task<IActionResult> OnPostDeleteComplianceRequirementAsync(Guid id)
+    {
+        await _complianceAppService.DeleteRequirementAsync(id);
+        return NoContent();
     }
 
     public async Task<IActionResult> OnPostLinkComplianceDocumentAsync([FromBody] LinkComplianceDocumentDto input)

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Volo.Abp.Application.Dtos;
 
 namespace Apya.Platform.Documents;
@@ -31,4 +32,22 @@ public class GetDocumentFilesInput : PagedAndSortedResultRequestDto
 
     /// <summary>Zorunlu meta alanı boş olanlar — "eksik meta" akıllı klasörü.</summary>
     public bool? MissingRequiredFields { get; set; }
+
+    /// <summary>
+    /// Bu andan sonra yüklenenler (CreationTime). "Bu ay yüklenen" sayacı
+    /// bunu kullanır; belge tarihi değil YÜKLEME anı ölçülür.
+    /// </summary>
+    public DateTime? UploadedAfter { get; set; }
+
+    /// <summary>
+    /// Çöp kutusu: YALNIZ silinmiş belgeler. Açıkken soft-delete filtresi
+    /// kapatılır; diğer tüm süzgeçler aynen çalışmaya devam eder.
+    /// </summary>
+    public bool? OnlyDeleted { get; set; }
+
+    /// <summary>
+    /// Belirli belgeler. "Öneri bekleyen" akıllı klasörü bunu kullanır: öneriler
+    /// listede saklanmadığı için süzgeç, hesaplanan kimlik kümesiyle kurulur.
+    /// </summary>
+    public List<Guid>? DocumentFileIds { get; set; }
 }

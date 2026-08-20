@@ -64,6 +64,22 @@ public static class PlatformSettings
     }
 
     /// <summary>
+    /// Dokümanlar modülünün kurulum durumu — KİRACI seviyesinde.
+    ///
+    /// Takvimin sihirbazı kullanıcı seviyesinde; burada kiracı seviyesi doğru
+    /// olan: klasör şeması ve kurum paketi kiracının tamamına kurulur, ikinci
+    /// kullanıcı aynı sihirbazı yeniden görmemeli.
+    /// </summary>
+    public static class Documents
+    {
+        /// <summary>"true" = ilk kurulum tamamlandı, sihirbaz bir daha açılmaz.</summary>
+        public const string SetupCompleted = Prefix + ".Documents.SetupCompleted";
+
+        /// <summary>Kurulumda seçilen klasör şeması ("workstep" | "period" | "mixed").</summary>
+        public const string SetupSchema = Prefix + ".Documents.SetupSchema";
+    }
+
+    /// <summary>
     /// Takvim tercihleri — kullanıcı seviyesinde, Projects.DefaultView ile aynı ray.
     /// </summary>
     public static class Calendar

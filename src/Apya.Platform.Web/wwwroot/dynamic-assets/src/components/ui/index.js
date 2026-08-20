@@ -25,3 +25,4 @@ export { Sparkline } from './Sparkline';
 export { ThemeToggle } from './ThemeToggle';
 export { Sheet, SheetTrigger, SheetClose, SheetContent } from './Sheet';
 export { Dialog, DialogContent, DialogClose } from './Dialog';
+export { ModalPortal } from './ModalPortal';

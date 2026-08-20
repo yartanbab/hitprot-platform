@@ -195,6 +195,9 @@ namespace Apya.Platform.EntityFrameworkCore
         public DbSet<Apya.Platform.Documents.DocumentRuleCondition> DocumentRuleConditions { get; set; }
         public DbSet<Apya.Platform.Documents.DocumentRuleAction> DocumentRuleActions { get; set; }
         public DbSet<Apya.Platform.Documents.DocumentRuleRun> DocumentRuleRuns { get; set; }
+        public DbSet<Apya.Platform.Documents.DocumentSuggestionDismissal> DocumentSuggestionDismissals { get; set; }
+        public DbSet<Apya.Platform.Documents.ReportSchedule> ReportSchedules { get; set; }
+        public DbSet<Apya.Platform.Documents.ReportSubscriber> ReportSubscribers { get; set; }
         public DbSet<Apya.Platform.Documents.DocumentFieldPermission> DocumentFieldPermissions { get; set; }
         public DbSet<Apya.Platform.Documents.DocumentIntegration> DocumentIntegrations { get; set; }
         public DbSet<Apya.Platform.Documents.DocumentExpenseMatch> DocumentExpenseMatches { get; set; }
@@ -959,7 +962,16 @@ namespace Apya.Platform.EntityFrameworkCore
                  .HasForeignKey(x => x.DocumentTypeId)
                  .OnDelete(DeleteBehavior.SetNull);
 
+                // Varsayılan AÇIKÇA InstitutionPackage(1): enum 1'den başlıyor,
+                // kolon varsayılanı 0 kalsaydı MEVCUT satırlar geçersiz bir
+                // kaynakla doğar ve listede "bilinmeyen kaynak" görünürdü.
+                b.Property(x => x.Source)
+                 .HasDefaultValue(Apya.Platform.Documents.ComplianceRequirementSource.InstitutionPackage);
+
+                // SourceEntityId'ye FK YOK: göreve bağlı kalem, görev silinse de
+                // yaşamalı — kurumun istediği belge görev silindi diye kalkmaz.
                 b.HasIndex(x => new { x.PackageId, x.Order });
+                b.HasIndex(x => x.SourceEntityId);
             });
 
             builder.Entity<Apya.Platform.Documents.ComplianceAssignment>(b =>
@@ -1161,6 +1173,60 @@ namespace Apya.Platform.EntityFrameworkCore
                 b.HasIndex(x => new { x.RuleId, x.CreationTime });
             });
 
+            builder.Entity<Apya.Platform.Documents.ReportSchedule>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "ReportSchedules", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+
+                b.Property(x => x.LastError)
+                    .HasMaxLength(Apya.Platform.Documents.ReportingConsts.MaxScheduleErrorLength);
+
+                b.HasOne<Apya.Platform.Documents.DeliveryPackage>()
+                 .WithMany()
+                 .HasForeignKey(x => x.DeliveryPackageId)
+                 .OnDelete(DeleteBehavior.Cascade);
+
+                // Worker "vadesi gelenleri" bu indeksten okur.
+                b.HasIndex(x => new { x.IsEnabled, x.NextRunAt });
+            });
+
+            builder.Entity<Apya.Platform.Documents.ReportSubscriber>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "ReportSubscribers", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+
+                b.Property(x => x.Name).IsRequired()
+                    .HasMaxLength(Apya.Platform.Documents.ReportingConsts.MaxSubscriberNameLength);
+                b.Property(x => x.Email).IsRequired()
+                    .HasMaxLength(Apya.Platform.Documents.ReportingConsts.MaxSubscriberEmailLength);
+
+                b.HasOne<Apya.Platform.Documents.ReportSchedule>()
+                 .WithMany()
+                 .HasForeignKey(x => x.ScheduleId)
+                 .OnDelete(DeleteBehavior.Cascade);
+
+                b.HasIndex(x => new { x.ScheduleId, x.Email }).IsUnique()
+                    .HasFilter(isSqlServer ? "[IsDeleted] = 0" : "\"IsDeleted\" = false");
+            });
+
+            builder.Entity<Apya.Platform.Documents.DocumentSuggestionDismissal>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "DocumentSuggestionDismissals", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+
+                b.Property(x => x.SuggestionKey).IsRequired()
+                    .HasMaxLength(Apya.Platform.Documents.DocumentConsts.MaxSuggestionKeyLength);
+
+                // Belge silinince reddetme kararı da anlamsızlaşır.
+                b.HasOne<Apya.Platform.Documents.DocumentFile>()
+                 .WithMany()
+                 .HasForeignKey(x => x.DocumentFileId)
+                 .OnDelete(DeleteBehavior.Cascade);
+
+                // Aynı öneri iki kez reddedilemez; okuma da bu indeksten gider.
+                b.HasIndex(x => new { x.DocumentFileId, x.SuggestionKey }).IsUnique();
+            });
+
             builder.Entity<Apya.Platform.Documents.DocumentFieldPermission>(b =>
             {
                 b.ToTable(PlatformConsts.DbTablePrefix + "DocumentFieldPermissions", PlatformConsts.DbSchema);
@@ -1360,7 +1426,10 @@ namespace Apya.Platform.EntityFrameworkCore
                  .HasForeignKey(x => x.TagId)
                  .OnDelete(DeleteBehavior.Cascade);
 
-                b.HasIndex(x => new { x.DocumentFileId, x.TagId }).IsUnique();
+                // Bağlantı artık SOFT-DELETE. Filtre olmasaydı çöp kutusundaki bir
+                // belgenin etiketi, aynı etiketin yeniden eklenmesini engellerdi.
+                b.HasIndex(x => new { x.DocumentFileId, x.TagId }).IsUnique()
+                    .HasFilter(isSqlServer ? "[IsDeleted] = 0" : "\"IsDeleted\" = false");
                 b.HasIndex(x => x.TagId);
             });
 

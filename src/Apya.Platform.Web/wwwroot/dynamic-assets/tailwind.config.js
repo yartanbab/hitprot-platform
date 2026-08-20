@@ -67,6 +67,10 @@ export default {
         'text-secondary':  'var(--apya-text-secondary)',
         'text-tertiary':   'var(--apya-text-tertiary)',
         'text-link':       'var(--apya-brand-500)',
+        /* Koyu zemin üzerine yazı. Köprülenmemişti: Button'ın primary varyantı
+           `text-text-inverse` kullanıyor, karşılığı üretilmediği için yazı
+           devralınan GRİYE düşüyordu — mavi zeminde okunmuyordu. */
+        'text-inverse':    'var(--apya-text-inverse)',
         'text-negative':   'var(--apya-negative-500)',
         'text-warning':    'var(--apya-warning-500)',
         'text-positive':   'var(--apya-positive-500)',

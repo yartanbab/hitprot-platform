@@ -1,5 +1,5 @@
 import React from 'react';
-import { Badge, Button, SkeletonList } from '../components/ui';
+import { Badge, Button, ModalPortal, SkeletonList } from '../components/ui';
 
 /**
  * Preflight modalı — "Paketi üret" öncesi son kontrol.
@@ -21,6 +21,7 @@ export function PreflightDialog({ result, loading, busy, onGenerate, onClose }) 
   const canGenerate = result?.canGenerate === true;
 
   return (
+    <ModalPortal>
     <div className="apya-in apya-doc-overlay" onClick={onClose}>
       <div
         className="apya-pop-in apya-doc-dialog"
@@ -100,5 +101,6 @@ export function PreflightDialog({ result, loading, busy, onGenerate, onClose }) 
         </div>
       </div>
     </div>
+    </ModalPortal>
   );
 }

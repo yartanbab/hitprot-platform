@@ -69,4 +69,28 @@ public class CompliancePackage : FullAuditedAggregateRoot<Guid>, IMultiTenant
     public void SetCode(string code)
         => Code = Check.NotNullOrWhiteSpace(code, nameof(code), maxLength: ComplianceConsts.MaxPackageCodeLength)
             .Trim().ToUpperInvariant();
+
+    public void Update(string name, string issuer, string? description, int order)
+    {
+        EnsureEditable();
+
+        SetName(name);
+        SetIssuer(issuer);
+        Description = description;
+        Order = order;
+    }
+
+    /// <summary>
+    /// Sistem paketleri host seviyesinde tohumlanır ve tüm kiracılarca paylaşılır;
+    /// bir kiracının onu değiştirmesi diğerlerinin kontrol listesini bozardı.
+    /// Kiracı kendi kopyasını oluşturur.
+    /// </summary>
+    public void EnsureEditable()
+    {
+        if (IsSystem)
+        {
+            throw new BusinessException(PlatformDomainErrorCodes.CompliancePackageReadOnly)
+                .WithData("Name", Name);
+        }
+    }
 }

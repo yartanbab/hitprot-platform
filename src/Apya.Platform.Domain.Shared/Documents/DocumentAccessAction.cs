@@ -13,5 +13,8 @@ public enum DocumentAccessAction
     MetaChanged = 5,
 
     /// <summary>Belgenin başka klasöre taşınması.</summary>
-    Moved = 6
+    Moved = 6,
+
+    /// <summary>Çöp kutusundan geri alınması.</summary>
+    Restored = 7
 }

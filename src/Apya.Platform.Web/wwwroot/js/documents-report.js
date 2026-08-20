@@ -1,28 +1,28 @@
-import { r, j as e, b as q } from "./react-vendor.js";
+import { r as c, j as e, b as J } from "./react-vendor.js";
 /* empty css      */
-import { g as C, B as E } from "./Dialog.js";
-import { S as R } from "./SkeletonShape.js";
-import { E as L } from "./EmptyState.js";
-const g = (a, i) => {
-  var t, l, p;
-  return (p = (l = (t = window == null ? void 0 : window.abp) == null ? void 0 : t.notify) == null ? void 0 : l[a]) == null ? void 0 : p.call(l, i);
-}, D = () => {
+import { g as P, B as T, I as L } from "./Dialog.js";
+import { S as B } from "./SkeletonShape.js";
+import { E as O } from "./EmptyState.js";
+const N = (a, n) => {
+  var i, o, h;
+  return (h = (o = (i = window == null ? void 0 : window.abp) == null ? void 0 : i.notify) == null ? void 0 : o[a]) == null ? void 0 : h.call(o, n);
+}, R = () => {
   var a;
   return ((a = window == null ? void 0 : window.abp) == null ? void 0 : a.appPath) ?? "/";
 };
 function v(a) {
-  return new Promise((i, t) => {
-    window.abp.ajax(a).done(i).fail(t);
+  return new Promise((n, i) => {
+    window.abp.ajax(a).done(n).fail(i);
   });
 }
-const k = (a, i = {}) => {
-  const t = new URLSearchParams();
-  Object.entries(i).forEach(([p, m]) => {
-    m != null && m !== "" && t.append(p, m);
+const k = (a, n = {}) => {
+  const i = new URLSearchParams();
+  Object.entries(n).forEach(([h, y]) => {
+    y != null && y !== "" && i.append(h, y);
   });
-  const l = t.toString();
-  return `${D()}Documents/ReportBuilder?handler=${a}${l ? "&" + l : ""}`;
-}, A = (a, i) => v({ url: a, type: "POST", contentType: "application/json", data: JSON.stringify(i) }), Z = () => v({ url: k("Templates"), type: "GET" }), H = (a) => A(k("UpdateSections"), a), J = (a) => A(k("CreateTemplate"), a), Q = (a) => v({ url: k("DuplicateTemplate", { id: a }), type: "POST" }), V = (a) => v({ url: k("DeleteTemplate", { id: a }), type: "POST" }), X = () => v({ url: k("Projects"), type: "GET" }), ee = (a, i, t) => v({ url: k("Preview", { projectId: a, templateId: i, periodCode: t }), type: "GET" }), ae = (a, i, t) => k("PreviewPdf", { projectId: a, templateId: i, periodCode: t }), se = (a) => v({ url: k("Packages", { projectId: a }), type: "GET" }), B = (a) => v({ url: k("ShareLinks", { packageId: a }), type: "GET" }), te = (a) => A(k("CreateShareLink"), a), ie = (a) => v({ url: k("RevokeShareLink", { id: a }), type: "POST" }), $ = (a, i = "TRY") => a == null ? "—" : new Intl.NumberFormat("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(a) + " " + ({ TRY: "₺", USD: "$", EUR: "€" }[i] || i), F = (a) => a ? new Intl.DateTimeFormat("tr-TR", { day: "2-digit", month: "2-digit", year: "numeric" }).format(new Date(a)) : "—", U = {
+  const o = i.toString();
+  return `${R()}Documents/ReportBuilder?handler=${a}${o ? "&" + o : ""}`;
+}, E = (a, n) => v({ url: a, type: "POST", contentType: "application/json", data: JSON.stringify(n) }), V = () => v({ url: k("Templates"), type: "GET" }), Q = (a) => E(k("UpdateSections"), a), X = (a) => E(k("CreateTemplate"), a), ee = (a) => v({ url: k("DuplicateTemplate", { id: a }), type: "POST" }), ae = (a) => v({ url: k("DeleteTemplate", { id: a }), type: "POST" }), te = () => v({ url: k("Projects"), type: "GET" }), se = (a, n, i) => v({ url: k("Preview", { projectId: a, templateId: n, periodCode: i }), type: "GET" }), ne = (a, n, i) => k("PreviewPdf", { projectId: a, templateId: n, periodCode: i }), ie = (a) => v({ url: k("Packages", { projectId: a }), type: "GET" }), A = (a) => v({ url: k("ShareLinks", { packageId: a }), type: "GET" }), le = (a) => E(k("CreateShareLink"), a), re = (a) => v({ url: k("RevokeShareLink", { id: a }), type: "POST" }), $ = (a, n = "TRY") => a == null ? "—" : new Intl.NumberFormat("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(a) + " " + ({ TRY: "₺", USD: "$", EUR: "€" }[n] || n), F = (a) => a ? new Intl.DateTimeFormat("tr-TR", { day: "2-digit", month: "2-digit", year: "numeric" }).format(new Date(a)) : "—", K = {
   1: "Proje özeti",
   2: "İş adımı ilerlemesi",
   3: "Zaman çizelgesi",
@@ -35,49 +35,49 @@ const k = (a, i = {}) => {
   10: "Denetim izi",
   11: "Kilometre taşları",
   12: "Kapak sayfası"
-}, ne = {
+}, ce = {
   1: "Kurum",
   2: "Banka / finans",
   3: "Müşteri",
   4: "Denetçi · YMM",
   5: "İç kullanım"
-};
-function le({ projectId: a, template: i }) {
-  const [t, l] = r.useState(null), [p, m] = r.useState(""), [u, f] = r.useState(!1), z = r.useCallback(async () => {
+}, oe = (a) => v({ url: k("Schedules", { projectId: a }), type: "GET" }), de = (a) => E(k("CreateSchedule"), a), me = (a, n) => v({ url: k("SetScheduleEnabled", { id: a, isEnabled: n }), type: "POST" }), ye = (a) => v({ url: k("DeleteSchedule", { id: a }), type: "POST" }), ue = (a, n) => E(k("AddSubscriber", { scheduleId: a }), n), pe = (a) => v({ url: k("RemoveSubscriber", { subscriberId: a }), type: "POST" });
+function he({ projectId: a, template: n }) {
+  const [i, o] = c.useState(null), [h, y] = c.useState(""), [u, x] = c.useState(!1), d = c.useCallback(async () => {
     if (!a) {
-      l(null);
+      o(null);
       return;
     }
-    f(!0);
+    x(!0);
     try {
-      l(await ee(a, i == null ? void 0 : i.id, p));
-    } catch (c) {
-      g("error", "Önizleme üretilemedi."), console.error("[ReportBuilder] preview", c);
+      o(await se(a, n == null ? void 0 : n.id, h));
+    } catch (l) {
+      N("error", "Önizleme üretilemedi."), console.error("[ReportBuilder] preview", l);
     } finally {
-      f(!1);
+      x(!1);
     }
-  }, [a, i == null ? void 0 : i.id, p]);
-  if (r.useEffect(() => {
-    z();
-  }, [z]), !a)
+  }, [a, n == null ? void 0 : n.id, h]);
+  if (c.useEffect(() => {
+    d();
+  }, [d]), !a)
     return /* @__PURE__ */ e.jsx("div", { className: "apya-doc-check-card", children: /* @__PURE__ */ e.jsx(
-      L,
+      O,
       {
         icon: /* @__PURE__ */ e.jsx("i", { className: "fa fa-eye" }),
         title: "Proje bağlamı gerekiyor",
         description: "Önizleme gerçek veriyle üretilir; üstteki listeden bir proje seçin."
       }
     ) });
-  if (u) return /* @__PURE__ */ e.jsx("div", { className: "apya-doc-check-card", children: /* @__PURE__ */ e.jsx(R, { rows: 6 }) });
-  if (!t) return null;
-  const y = t.summary;
+  if (u) return /* @__PURE__ */ e.jsx("div", { className: "apya-doc-check-card", children: /* @__PURE__ */ e.jsx(B, { rows: 6 }) });
+  if (!i) return null;
+  const m = i.summary;
   return /* @__PURE__ */ e.jsxs("div", { className: "apya-doc-check-card", children: [
     /* @__PURE__ */ e.jsxs("div", { className: "apya-doc-check-head", children: [
       /* @__PURE__ */ e.jsxs("span", { style: { fontSize: 13.5, fontWeight: 600 }, children: [
-        t.projectName,
-        t.templateName && /* @__PURE__ */ e.jsxs("span", { style: { fontWeight: 400, color: "var(--apya-text-tertiary)" }, children: [
+        i.projectName,
+        i.templateName && /* @__PURE__ */ e.jsxs("span", { style: { fontWeight: 400, color: "var(--apya-text-tertiary)" }, children: [
           " · ",
-          t.templateName
+          i.templateName
         ] })
       ] }),
       /* @__PURE__ */ e.jsxs("span", { className: "d-flex align-items-center gap-2", children: [
@@ -87,8 +87,8 @@ function le({ projectId: a, template: i }) {
             className: "apya-doc-input",
             style: { width: 110 },
             placeholder: "Dönem (ops.)",
-            value: p,
-            onChange: (c) => m(c.target.value),
+            value: h,
+            onChange: (l) => y(l.target.value),
             "aria-label": "Dönem kodu"
           }
         ),
@@ -98,7 +98,7 @@ function le({ projectId: a, template: i }) {
             className: "apya-doc-linkbtn",
             target: "_blank",
             rel: "noreferrer",
-            href: ae(a, i == null ? void 0 : i.id, p),
+            href: ne(a, n == null ? void 0 : n.id, h),
             children: "PDF önizle"
           }
         )
@@ -116,12 +116,12 @@ function le({ projectId: a, template: i }) {
         /* @__PURE__ */ e.jsx("span", { className: "apya-md-overline", children: "Uygunluk" }),
         /* @__PURE__ */ e.jsxs("div", { className: "apya-numeric apya-doc-kpi-value", children: [
           "%",
-          y.compliancePercent
+          m.compliancePercent
         ] })
       ] }),
       /* @__PURE__ */ e.jsxs("div", { className: "apya-doc-kpi", children: [
         /* @__PURE__ */ e.jsx("span", { className: "apya-md-overline", children: "Belge" }),
-        /* @__PURE__ */ e.jsx("div", { className: "apya-numeric apya-doc-kpi-value", children: y.documentCount })
+        /* @__PURE__ */ e.jsx("div", { className: "apya-numeric apya-doc-kpi-value", children: m.documentCount })
       ] }),
       /* @__PURE__ */ e.jsxs("div", { className: "apya-doc-kpi", children: [
         /* @__PURE__ */ e.jsx("span", { className: "apya-md-overline", children: "Eksik" }),
@@ -129,211 +129,450 @@ function le({ projectId: a, template: i }) {
           "div",
           {
             className: "apya-numeric apya-doc-kpi-value",
-            style: { color: y.blockingCount > 0 ? "var(--apya-negative-500)" : void 0 },
-            children: y.missingCount
+            style: { color: m.blockingCount > 0 ? "var(--apya-negative-500)" : void 0 },
+            children: m.missingCount
           }
         ),
         /* @__PURE__ */ e.jsxs("div", { style: { fontSize: 11, color: "var(--apya-text-tertiary)" }, children: [
-          y.blockingCount,
+          m.blockingCount,
           " bloke edici"
         ] })
       ] }),
       /* @__PURE__ */ e.jsxs("div", { className: "apya-doc-kpi", children: [
         /* @__PURE__ */ e.jsx("span", { className: "apya-md-overline", children: "Belgelenen tutar" }),
-        /* @__PURE__ */ e.jsx("div", { className: "apya-numeric apya-doc-kpi-value", style: { fontSize: 16 }, children: $(y.documentedAmount, y.currency) })
+        /* @__PURE__ */ e.jsx("div", { className: "apya-numeric apya-doc-kpi-value", style: { fontSize: 16 }, children: $(m.documentedAmount, m.currency) })
       ] })
     ] }),
     /* @__PURE__ */ e.jsxs("div", { className: "apya-md-overline", children: [
       "Çıktıya girecek bölümler (",
-      t.sections.length,
+      i.sections.length,
       ")"
     ] }),
-    t.sections.length === 0 ? /* @__PURE__ */ e.jsx("div", { style: { fontSize: 12, color: "var(--apya-text-tertiary)" }, children: "Açık bölüm yok — Bölümler sekmesinden en az bir tane açın." }) : /* @__PURE__ */ e.jsx("div", { className: "d-flex flex-wrap gap-1 mb-3", children: t.sections.map((c, j) => /* @__PURE__ */ e.jsxs(C, { variant: "neutral", size: "sm", children: [
-      j + 1,
+    i.sections.length === 0 ? /* @__PURE__ */ e.jsx("div", { style: { fontSize: 12, color: "var(--apya-text-tertiary)" }, children: "Açık bölüm yok — Bölümler sekmesinden en az bir tane açın." }) : /* @__PURE__ */ e.jsx("div", { className: "d-flex flex-wrap gap-1 mb-3", children: i.sections.map((l, b) => /* @__PURE__ */ e.jsxs(P, { variant: "neutral", size: "sm", children: [
+      b + 1,
       ". ",
-      U[c] ?? c
-    ] }, `${c}-${j}`)) }),
+      K[l] ?? l
+    ] }, `${l}-${b}`)) }),
     /* @__PURE__ */ e.jsxs("div", { className: "apya-md-overline", children: [
       "Ekler (",
-      t.annexes.length,
-      t.truncatedAnnexCount > 0 && ` · +${t.truncatedAnnexCount} gösterilmiyor`,
+      i.annexes.length,
+      i.truncatedAnnexCount > 0 && ` · +${i.truncatedAnnexCount} gösterilmiyor`,
       ")"
     ] }),
-    t.annexes.length === 0 ? /* @__PURE__ */ e.jsx("div", { style: { fontSize: 12, color: "var(--apya-text-tertiary)" }, children: "Bu projede henüz belge yok; ek dizini boş çıkacak." }) : t.annexes.slice(0, 12).map((c) => /* @__PURE__ */ e.jsxs(
+    i.annexes.length === 0 ? /* @__PURE__ */ e.jsx("div", { style: { fontSize: 12, color: "var(--apya-text-tertiary)" }, children: "Bu projede henüz belge yok; ek dizini boş çıkacak." }) : i.annexes.slice(0, 12).map((l) => /* @__PURE__ */ e.jsxs(
       "div",
       {
         className: "apya-doc-check-row",
         style: { gridTemplateColumns: "60px minmax(0,1fr) 90px 110px" },
         children: [
-          /* @__PURE__ */ e.jsx("span", { className: "apya-numeric", style: { fontSize: 11 }, children: c.annexNumber }),
-          /* @__PURE__ */ e.jsx("span", { className: "text-truncate", style: { fontSize: 12.5 }, children: c.documentName }),
-          /* @__PURE__ */ e.jsx("span", { style: { fontSize: 11, color: "var(--apya-text-tertiary)" }, children: c.typeName ?? "—" }),
-          /* @__PURE__ */ e.jsx("span", { className: "apya-numeric text-end", style: { fontSize: 11.5 }, children: c.amount != null ? $(c.amount) : F(c.documentDate) })
+          /* @__PURE__ */ e.jsx("span", { className: "apya-numeric", style: { fontSize: 11 }, children: l.annexNumber }),
+          /* @__PURE__ */ e.jsx("span", { className: "text-truncate", style: { fontSize: 12.5 }, children: l.documentName }),
+          /* @__PURE__ */ e.jsx("span", { style: { fontSize: 11, color: "var(--apya-text-tertiary)" }, children: l.typeName ?? "—" }),
+          /* @__PURE__ */ e.jsx("span", { className: "apya-numeric text-end", style: { fontSize: 11.5 }, children: l.amount != null ? $(l.amount) : F(l.documentDate) })
         ]
       },
-      c.annexNumber + c.documentName
+      l.annexNumber + l.documentName
     )),
-    t.missingDocuments.length > 0 && /* @__PURE__ */ e.jsxs(e.Fragment, { children: [
+    i.missingDocuments.length > 0 && /* @__PURE__ */ e.jsxs(e.Fragment, { children: [
       /* @__PURE__ */ e.jsxs("div", { className: "apya-md-overline mt-3", children: [
         "Eksik belgeler (",
-        t.missingDocuments.length,
+        i.missingDocuments.length,
         ")"
       ] }),
-      t.missingDocuments.slice(0, 10).map((c, j) => /* @__PURE__ */ e.jsxs("div", { style: { fontSize: 12, padding: "3px 0" }, children: [
+      i.missingDocuments.slice(0, 10).map((l, b) => /* @__PURE__ */ e.jsxs("div", { style: { fontSize: 12, padding: "3px 0" }, children: [
         /* @__PURE__ */ e.jsx("i", { className: "fa fa-triangle-exclamation", style: { color: "var(--apya-warning-500)" } }),
         " ",
-        c
-      ] }, j))
+        l
+      ] }, b))
     ] })
   ] });
 }
-function re({ projectId: a }) {
-  const [i, t] = r.useState([]), [l, p] = r.useState(null), [m, u] = r.useState([]), [f, z] = r.useState(null), [y, c] = r.useState(!1), [j, w] = r.useState(!1), T = r.useCallback(async () => {
-    if (!a) {
-      t([]);
-      return;
-    }
-    c(!0);
+const xe = [
+  { value: 2, label: "Aylık" },
+  { value: 3, label: "Üç aylık" },
+  { value: 1, label: "Haftalık" }
+], U = ["Pazar", "Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi"], W = (a) => a ? new Intl.DateTimeFormat("tr-TR", {
+  day: "2-digit",
+  month: "2-digit",
+  year: "numeric",
+  hour: "2-digit",
+  minute: "2-digit"
+}).format(new Date(a)) : "—";
+function fe(a) {
+  if (a.frequency === 1) return `Her ${U[a.dayOfWeek]}, ${a.hourOfDay}:00`;
+  const n = a.frequency === 3 ? "üç ayda bir" : "her ay";
+  return `Ayın ${a.dayOfMonth}'i, ${n}, ${a.hourOfDay}:00`;
+}
+function ke({ schedule: a, busy: n, onChanged: i }) {
+  const [o, h] = c.useState(""), [y, u] = c.useState(""), [x, d] = c.useState(!1), m = async () => {
+    var l, b;
     try {
-      t(await se(a) ?? []);
-    } catch (n) {
-      g("error", "Paketler yüklenemedi."), console.error("[ReportBuilder] packages", n);
-    } finally {
-      c(!1);
-    }
-  }, [a]);
-  r.useEffect(() => {
-    T();
-  }, [T]);
-  const b = async (n) => {
-    p(n), z(null);
-    try {
-      u(await B(n.id) ?? []);
-    } catch (S) {
-      console.error("[ReportBuilder] shareLinks", S);
-    }
-  }, N = async (n) => {
-    if (l) {
-      w(!0);
-      try {
-        const S = await te({
-          targetType: 1,
-          // DeliveryPackage
-          targetId: l.id,
-          lifetimeDays: 30,
-          allowDownload: n,
-          watermark: null
-        });
-        z(S), u(await B(l.id) ?? []);
-      } catch {
-        g("error", "Paylaşım linki oluşturulamadı.");
-      } finally {
-        w(!1);
-      }
-    }
-  }, h = async (n) => {
-    w(!0);
-    try {
-      await ie(n), u(await B(l.id) ?? []);
-    } catch {
-      g("error", "Link iptal edilemedi.");
-    } finally {
-      w(!1);
+      await ue(a.id, { name: o.trim(), email: y.trim(), userId: null }), h(""), u(""), d(!1), i();
+    } catch (t) {
+      N("error", ((b = (l = t == null ? void 0 : t.responseJSON) == null ? void 0 : l.error) == null ? void 0 : b.message) || "Abone eklenemedi.");
     }
   };
-  return a ? y ? /* @__PURE__ */ e.jsx("div", { className: "apya-doc-check-card", children: /* @__PURE__ */ e.jsx(R, { rows: 5 }) }) : /* @__PURE__ */ e.jsxs("div", { className: "apya-doc-check-card", children: [
-    /* @__PURE__ */ e.jsxs("div", { className: "apya-doc-check-head", children: [
-      /* @__PURE__ */ e.jsx("span", { style: { fontSize: 13.5, fontWeight: 600 }, children: "Üretilmiş paketler" }),
+  return /* @__PURE__ */ e.jsxs("div", { className: "d-flex flex-column gap-2", children: [
+    /* @__PURE__ */ e.jsx("div", { className: "apya-md-overline", children: "Aboneler" }),
+    a.subscribers.length === 0 ? /* @__PURE__ */ e.jsx("div", { style: { fontSize: 11.5, color: "var(--apya-text-tertiary)" }, children: "Abone yok — üretim yine yapılır, kimse haberdar edilmez." }) : a.subscribers.map((l) => /* @__PURE__ */ e.jsxs("div", { className: "d-flex align-items-center gap-2", style: { fontSize: 12 }, children: [
+      /* @__PURE__ */ e.jsxs("span", { className: "text-truncate", style: { flex: 1 }, children: [
+        l.name,
+        " ",
+        /* @__PURE__ */ e.jsxs("span", { style: { color: "var(--apya-text-tertiary)" }, children: [
+          "· ",
+          l.email
+        ] })
+      ] }),
       /* @__PURE__ */ e.jsx(
-        "a",
+        "button",
         {
+          type: "button",
           className: "apya-doc-linkbtn",
-          href: `${D()}Documents/Deliveries?projectId=${a}`,
-          children: "Teslimler ekranı"
+          disabled: n,
+          onClick: async () => {
+            await pe(l.id), i();
+          },
+          children: "Çıkar"
+        }
+      )
+    ] }, l.id)),
+    x ? /* @__PURE__ */ e.jsxs("div", { className: "d-flex flex-wrap gap-2", children: [
+      /* @__PURE__ */ e.jsx(L, { size: "sm", placeholder: "Ad", value: o, onChange: (l) => h(l.target.value) }),
+      /* @__PURE__ */ e.jsx(L, { size: "sm", type: "email", placeholder: "e-posta", value: y, onChange: (l) => u(l.target.value) }),
+      /* @__PURE__ */ e.jsx(T, { size: "sm", disabled: !o.trim() || !y.trim(), onClick: m, children: "Ekle" }),
+      /* @__PURE__ */ e.jsx(T, { size: "sm", variant: "outline", onClick: () => d(!1), children: "Vazgeç" })
+    ] }) : /* @__PURE__ */ e.jsx("button", { type: "button", className: "apya-doc-linkbtn", onClick: () => d(!0), children: "+ Abone ekle" })
+  ] });
+}
+function be({ projectId: a, packages: n }) {
+  const [i, o] = c.useState([]), [h, y] = c.useState(!0), [u, x] = c.useState(!1), [d, m] = c.useState(null), l = c.useCallback(async () => {
+    if (!a) {
+      o([]), y(!1);
+      return;
+    }
+    y(!0);
+    try {
+      o(await oe(a) ?? []);
+    } catch (t) {
+      N("error", "Zamanlamalar yüklenemedi."), console.error("[Documents] schedules", t);
+    } finally {
+      y(!1);
+    }
+  }, [a]);
+  c.useEffect(() => {
+    l();
+  }, [l]);
+  const b = async () => {
+    x(!0);
+    try {
+      await de({
+        deliveryPackageId: d.deliveryPackageId,
+        frequency: Number(d.frequency),
+        dayOfMonth: Number(d.dayOfMonth),
+        dayOfWeek: Number(d.dayOfWeek),
+        hourOfDay: Number(d.hourOfDay)
+      }), m(null), await l();
+    } catch (t) {
+      N("error", "Zamanlama kurulamadı."), console.error("[Documents] createSchedule", t);
+    } finally {
+      x(!1);
+    }
+  };
+  return a ? h ? /* @__PURE__ */ e.jsx(B, { rows: 3 }) : /* @__PURE__ */ e.jsxs("div", { className: "apya-doc-check-card", children: [
+    /* @__PURE__ */ e.jsxs("div", { className: "apya-doc-check-head", children: [
+      /* @__PURE__ */ e.jsx("span", { style: { fontSize: 13.5, fontWeight: 600 }, children: "Zamanlanmış üretim" }),
+      /* @__PURE__ */ e.jsx("div", { className: "flex-grow-1" }),
+      !d && n.length > 0 && /* @__PURE__ */ e.jsx(
+        "button",
+        {
+          type: "button",
+          className: "apya-doc-linkbtn",
+          onClick: () => m({
+            deliveryPackageId: n[0].id,
+            frequency: 2,
+            dayOfMonth: 1,
+            dayOfWeek: 1,
+            hourOfDay: 6
+          }),
+          children: "+ Zamanlama ekle"
         }
       )
     ] }),
-    i.length === 0 ? /* @__PURE__ */ e.jsx("div", { style: { fontSize: 12, color: "var(--apya-text-tertiary)" }, children: "Bu projede paket yok. Dağıtmak için önce Teslimler ekranından bir paket üretin." }) : i.map((n) => /* @__PURE__ */ e.jsxs(
-      "button",
-      {
-        type: "button",
-        className: `apya-md-item${(l == null ? void 0 : l.id) === n.id ? " selected" : ""}`,
-        style: { borderRadius: 8, height: "auto", paddingTop: 7, paddingBottom: 7 },
-        onClick: () => b(n),
-        children: [
-          /* @__PURE__ */ e.jsxs("span", { style: { minWidth: 0, flex: 1, textAlign: "left" }, children: [
-            /* @__PURE__ */ e.jsx("span", { className: "d-block text-truncate", style: { fontSize: 12.5, fontWeight: 500 }, children: n.name }),
-            /* @__PURE__ */ e.jsxs("span", { className: "d-block", style: { fontSize: 10.5, color: "var(--apya-text-tertiary)" }, children: [
-              n.reportTemplateName ?? "şablonsuz",
-              n.periodCode && ` · ${n.periodCode}`
-            ] })
-          ] }),
-          /* @__PURE__ */ e.jsx(C, { variant: n.status === 2 ? "positive" : n.status === 3 ? "accent" : "neutral", size: "sm", children: n.status === 2 ? "üretildi" : n.status === 3 ? "gönderildi" : "taslak" })
-        ]
-      },
-      n.id
-    )),
-    l && /* @__PURE__ */ e.jsxs(e.Fragment, { children: [
-      /* @__PURE__ */ e.jsxs("div", { className: "apya-md-overline mt-3", children: [
-        "Paylaşım linkleri · ",
-        l.name
-      ] }),
-      /* @__PURE__ */ e.jsxs("div", { className: "d-flex gap-2 mb-2", children: [
-        /* @__PURE__ */ e.jsx(E, { variant: "outline", size: "sm", disabled: j, onClick: () => N(!1), children: "Salt görüntüleme linki" }),
-        /* @__PURE__ */ e.jsx(E, { variant: "outline", size: "sm", disabled: j, onClick: () => N(!0), children: "İndirmeye açık link" })
-      ] }),
-      f && /* @__PURE__ */ e.jsxs("div", { style: {
-        fontSize: 11.5,
-        padding: 8,
-        borderRadius: 8,
-        background: "var(--apya-surface-sunken)",
-        marginBottom: 8,
-        wordBreak: "break-all"
-      }, children: [
-        /* @__PURE__ */ e.jsx("strong", { children: "Link yalnız şimdi gösterilir" }),
-        " — kopyalayın, tekrar görüntülenemez:",
-        /* @__PURE__ */ e.jsxs("div", { className: "apya-numeric mt-1", children: [
-          window.location.origin,
-          D(),
-          "Share/",
-          f.token
-        ] })
-      ] }),
-      m.length === 0 ? /* @__PURE__ */ e.jsx("div", { style: { fontSize: 12, color: "var(--apya-text-tertiary)" }, children: "Bu pakette link yok." }) : m.map((n) => /* @__PURE__ */ e.jsxs(
-        "div",
+    /* @__PURE__ */ e.jsx("div", { style: { fontSize: 11.5, color: "var(--apya-text-tertiary)" }, children: "Seçtiğiniz teslim paketi bu ritimde yeniden üretilir; her üretim sürüm arşivine yeni bir satır ekler. Abonelere dosya değil, arşive götüren bir bildirim gider." }),
+    n.length === 0 && /* @__PURE__ */ e.jsx("div", { style: { fontSize: 12, color: "var(--apya-text-tertiary)" }, children: "Önce bir teslim paketi oluşturun — zamanlama mevcut bir paketi üretir." }),
+    d && /* @__PURE__ */ e.jsxs("div", { className: "d-flex flex-wrap gap-2 align-items-center", children: [
+      /* @__PURE__ */ e.jsx(
+        "select",
         {
-          className: "apya-doc-check-row",
-          style: { gridTemplateColumns: "minmax(0,1fr) 110px 90px 70px" },
-          children: [
-            /* @__PURE__ */ e.jsxs("span", { style: { fontSize: 12 }, children: [
-              n.allowDownload ? "İndirilebilir" : "Salt görüntüleme",
-              n.isRevoked && /* @__PURE__ */ e.jsx(C, { variant: "negative", size: "sm", children: "iptal" })
-            ] }),
-            /* @__PURE__ */ e.jsxs("span", { style: { fontSize: 11, color: "var(--apya-text-tertiary)" }, children: [
-              F(n.expiresAt),
-              " bitiyor"
-            ] }),
-            /* @__PURE__ */ e.jsxs("span", { className: "apya-numeric", style: { fontSize: 11 }, children: [
-              n.accessCount ?? 0,
-              " erişim"
-            ] }),
-            /* @__PURE__ */ e.jsx("span", { className: "text-end", children: !n.isRevoked && /* @__PURE__ */ e.jsx(
+          className: "apya-doc-select",
+          value: d.deliveryPackageId,
+          onChange: (t) => m({ ...d, deliveryPackageId: t.target.value }),
+          "aria-label": "Paket",
+          children: n.map((t) => /* @__PURE__ */ e.jsx("option", { value: t.id, children: t.name }, t.id))
+        }
+      ),
+      /* @__PURE__ */ e.jsx(
+        "select",
+        {
+          className: "apya-doc-select",
+          value: d.frequency,
+          onChange: (t) => m({ ...d, frequency: Number(t.target.value) }),
+          "aria-label": "Sıklık",
+          children: xe.map((t) => /* @__PURE__ */ e.jsx("option", { value: t.value, children: t.label }, t.value))
+        }
+      ),
+      Number(d.frequency) === 1 ? /* @__PURE__ */ e.jsx(
+        "select",
+        {
+          className: "apya-doc-select",
+          value: d.dayOfWeek,
+          onChange: (t) => m({ ...d, dayOfWeek: Number(t.target.value) }),
+          "aria-label": "Gün",
+          children: U.map((t, g) => /* @__PURE__ */ e.jsx("option", { value: g, children: t }, t))
+        }
+      ) : /* @__PURE__ */ e.jsx(
+        "select",
+        {
+          className: "apya-doc-select",
+          value: d.dayOfMonth,
+          onChange: (t) => m({ ...d, dayOfMonth: Number(t.target.value) }),
+          "aria-label": "Ayın günü",
+          children: Array.from({ length: 28 }, (t, g) => g + 1).map((t) => /* @__PURE__ */ e.jsxs("option", { value: t, children: [
+            "Ayın ",
+            t,
+            "'i"
+          ] }, t))
+        }
+      ),
+      /* @__PURE__ */ e.jsx(
+        "select",
+        {
+          className: "apya-doc-select",
+          value: d.hourOfDay,
+          onChange: (t) => m({ ...d, hourOfDay: Number(t.target.value) }),
+          "aria-label": "Saat",
+          children: Array.from({ length: 24 }, (t, g) => g).map((t) => /* @__PURE__ */ e.jsxs("option", { value: t, children: [
+            String(t).padStart(2, "0"),
+            ":00"
+          ] }, t))
+        }
+      ),
+      /* @__PURE__ */ e.jsx(T, { size: "sm", isLoading: u, onClick: b, children: "Kur" }),
+      /* @__PURE__ */ e.jsx(T, { size: "sm", variant: "outline", onClick: () => m(null), children: "Vazgeç" })
+    ] }),
+    i.map((t) => /* @__PURE__ */ e.jsxs(
+      "div",
+      {
+        className: "d-flex flex-column gap-2 p-2",
+        style: { background: "var(--apya-surface-sunken)", borderRadius: 10 },
+        children: [
+          /* @__PURE__ */ e.jsxs("div", { className: "d-flex align-items-center gap-2 flex-wrap", children: [
+            /* @__PURE__ */ e.jsx("span", { style: { fontSize: 12.5, fontWeight: 600 }, children: t.packageName }),
+            /* @__PURE__ */ e.jsx(P, { variant: t.isEnabled ? "positive" : "neutral", size: "sm", children: t.isEnabled ? "açık" : "kapalı" }),
+            /* @__PURE__ */ e.jsx("span", { style: { fontSize: 11.5, color: "var(--apya-text-secondary)" }, children: fe(t) }),
+            /* @__PURE__ */ e.jsx("div", { className: "flex-grow-1" }),
+            /* @__PURE__ */ e.jsx(
               "button",
               {
                 type: "button",
                 className: "apya-doc-linkbtn",
-                disabled: j,
-                onClick: () => h(n.id),
-                children: "İptal"
+                disabled: u,
+                onClick: async () => {
+                  x(!0);
+                  try {
+                    await me(t.id, !t.isEnabled), await l();
+                  } finally {
+                    x(!1);
+                  }
+                },
+                children: t.isEnabled ? "Duraklat" : "Sürdür"
               }
-            ) })
+            ),
+            /* @__PURE__ */ e.jsx(
+              "button",
+              {
+                type: "button",
+                className: "apya-doc-linkbtn",
+                disabled: u,
+                onClick: async () => {
+                  await ye(t.id), await l();
+                },
+                children: "Sil"
+              }
+            )
+          ] }),
+          /* @__PURE__ */ e.jsxs("div", { className: "d-flex gap-3 flex-wrap apya-numeric", style: { fontSize: 11, color: "var(--apya-text-tertiary)" }, children: [
+            /* @__PURE__ */ e.jsxs("span", { children: [
+              "sıradaki: ",
+              W(t.nextRunAt)
+            ] }),
+            /* @__PURE__ */ e.jsxs("span", { children: [
+              "son: ",
+              W(t.lastRunAt)
+            ] })
+          ] }),
+          t.lastError && /* @__PURE__ */ e.jsxs("div", { style: { fontSize: 11.5, color: "var(--apya-negative-500)" }, children: [
+            "Son deneme başarısız: ",
+            t.lastError
+          ] }),
+          /* @__PURE__ */ e.jsx(ke, { schedule: t, busy: u, onChanged: l })
+        ]
+      },
+      t.id
+    )),
+    i.length === 0 && !d && n.length > 0 && /* @__PURE__ */ e.jsx("div", { style: { fontSize: 12, color: "var(--apya-text-tertiary)" }, children: "Kurulu zamanlama yok." })
+  ] }) : null;
+}
+function je({ projectId: a }) {
+  const [n, i] = c.useState([]), [o, h] = c.useState(null), [y, u] = c.useState([]), [x, d] = c.useState(null), [m, l] = c.useState(!1), [b, t] = c.useState(!1), g = c.useCallback(async () => {
+    if (!a) {
+      i([]);
+      return;
+    }
+    l(!0);
+    try {
+      i(await ie(a) ?? []);
+    } catch (r) {
+      N("error", "Paketler yüklenemedi."), console.error("[ReportBuilder] packages", r);
+    } finally {
+      l(!1);
+    }
+  }, [a]);
+  c.useEffect(() => {
+    g();
+  }, [g]);
+  const z = async (r) => {
+    h(r), d(null);
+    try {
+      u(await A(r.id) ?? []);
+    } catch (C) {
+      console.error("[ReportBuilder] shareLinks", C);
+    }
+  }, w = async (r) => {
+    if (o) {
+      t(!0);
+      try {
+        const C = await le({
+          targetType: 1,
+          // DeliveryPackage
+          targetId: o.id,
+          lifetimeDays: 30,
+          allowDownload: r,
+          watermark: null
+        });
+        d(C), u(await A(o.id) ?? []);
+      } catch {
+        N("error", "Paylaşım linki oluşturulamadı.");
+      } finally {
+        t(!1);
+      }
+    }
+  }, j = async (r) => {
+    t(!0);
+    try {
+      await re(r), u(await A(o.id) ?? []);
+    } catch {
+      N("error", "Link iptal edilemedi.");
+    } finally {
+      t(!1);
+    }
+  };
+  return a ? m ? /* @__PURE__ */ e.jsx("div", { className: "apya-doc-check-card", children: /* @__PURE__ */ e.jsx(B, { rows: 5 }) }) : /* @__PURE__ */ e.jsxs("div", { className: "d-flex flex-column gap-3", children: [
+    /* @__PURE__ */ e.jsxs("div", { className: "apya-doc-check-card", children: [
+      /* @__PURE__ */ e.jsxs("div", { className: "apya-doc-check-head", children: [
+        /* @__PURE__ */ e.jsx("span", { style: { fontSize: 13.5, fontWeight: 600 }, children: "Üretilmiş paketler" }),
+        /* @__PURE__ */ e.jsx(
+          "a",
+          {
+            className: "apya-doc-linkbtn",
+            href: `${R()}Documents/Deliveries?projectId=${a}`,
+            children: "Teslimler ekranı"
+          }
+        )
+      ] }),
+      n.length === 0 ? /* @__PURE__ */ e.jsx("div", { style: { fontSize: 12, color: "var(--apya-text-tertiary)" }, children: "Bu projede paket yok. Dağıtmak için önce Teslimler ekranından bir paket üretin." }) : n.map((r) => /* @__PURE__ */ e.jsxs(
+        "button",
+        {
+          type: "button",
+          className: `apya-md-item${(o == null ? void 0 : o.id) === r.id ? " selected" : ""}`,
+          style: { borderRadius: 8, height: "auto", paddingTop: 7, paddingBottom: 7 },
+          onClick: () => z(r),
+          children: [
+            /* @__PURE__ */ e.jsxs("span", { style: { minWidth: 0, flex: 1, textAlign: "left" }, children: [
+              /* @__PURE__ */ e.jsx("span", { className: "d-block text-truncate", style: { fontSize: 12.5, fontWeight: 500 }, children: r.name }),
+              /* @__PURE__ */ e.jsxs("span", { className: "d-block", style: { fontSize: 10.5, color: "var(--apya-text-tertiary)" }, children: [
+                r.reportTemplateName ?? "şablonsuz",
+                r.periodCode && ` · ${r.periodCode}`
+              ] })
+            ] }),
+            /* @__PURE__ */ e.jsx(P, { variant: r.status === 2 ? "positive" : r.status === 3 ? "accent" : "neutral", size: "sm", children: r.status === 2 ? "üretildi" : r.status === 3 ? "gönderildi" : "taslak" })
           ]
         },
-        n.id
-      ))
-    ] })
+        r.id
+      )),
+      o && /* @__PURE__ */ e.jsxs(e.Fragment, { children: [
+        /* @__PURE__ */ e.jsxs("div", { className: "apya-md-overline mt-3", children: [
+          "Paylaşım linkleri · ",
+          o.name
+        ] }),
+        /* @__PURE__ */ e.jsxs("div", { className: "d-flex gap-2 mb-2", children: [
+          /* @__PURE__ */ e.jsx(T, { variant: "outline", size: "sm", disabled: b, onClick: () => w(!1), children: "Salt görüntüleme linki" }),
+          /* @__PURE__ */ e.jsx(T, { variant: "outline", size: "sm", disabled: b, onClick: () => w(!0), children: "İndirmeye açık link" })
+        ] }),
+        x && /* @__PURE__ */ e.jsxs("div", { style: {
+          fontSize: 11.5,
+          padding: 8,
+          borderRadius: 8,
+          background: "var(--apya-surface-sunken)",
+          marginBottom: 8,
+          wordBreak: "break-all"
+        }, children: [
+          /* @__PURE__ */ e.jsx("strong", { children: "Link yalnız şimdi gösterilir" }),
+          " — kopyalayın, tekrar görüntülenemez:",
+          /* @__PURE__ */ e.jsxs("div", { className: "apya-numeric mt-1", children: [
+            window.location.origin,
+            R(),
+            "Share/",
+            x.token
+          ] })
+        ] }),
+        y.length === 0 ? /* @__PURE__ */ e.jsx("div", { style: { fontSize: 12, color: "var(--apya-text-tertiary)" }, children: "Bu pakette link yok." }) : y.map((r) => /* @__PURE__ */ e.jsxs(
+          "div",
+          {
+            className: "apya-doc-check-row",
+            style: { gridTemplateColumns: "minmax(0,1fr) 110px 90px 70px" },
+            children: [
+              /* @__PURE__ */ e.jsxs("span", { style: { fontSize: 12 }, children: [
+                r.allowDownload ? "İndirilebilir" : "Salt görüntüleme",
+                r.isRevoked && /* @__PURE__ */ e.jsx(P, { variant: "negative", size: "sm", children: "iptal" })
+              ] }),
+              /* @__PURE__ */ e.jsxs("span", { style: { fontSize: 11, color: "var(--apya-text-tertiary)" }, children: [
+                F(r.expiresAt),
+                " bitiyor"
+              ] }),
+              /* @__PURE__ */ e.jsxs("span", { className: "apya-numeric", style: { fontSize: 11 }, children: [
+                r.accessCount ?? 0,
+                " erişim"
+              ] }),
+              /* @__PURE__ */ e.jsx("span", { className: "text-end", children: !r.isRevoked && /* @__PURE__ */ e.jsx(
+                "button",
+                {
+                  type: "button",
+                  className: "apya-doc-linkbtn",
+                  disabled: b,
+                  onClick: () => j(r.id),
+                  children: "İptal"
+                }
+              ) })
+            ]
+          },
+          r.id
+        ))
+      ] })
+    ] }),
+    /* @__PURE__ */ e.jsx(be, { projectId: a, packages: n })
   ] }) : /* @__PURE__ */ e.jsx("div", { className: "apya-doc-check-card", children: /* @__PURE__ */ e.jsx(
-    L,
+    O,
     {
       icon: /* @__PURE__ */ e.jsx("i", { className: "fa fa-share-nodes" }),
       title: "Proje bağlamı gerekiyor",
@@ -341,21 +580,21 @@ function re({ projectId: a }) {
     }
   ) });
 }
-const W = (...a) => a.filter(Boolean).join(" "), ce = [
+const M = (...a) => a.filter(Boolean).join(" "), ge = [
   { key: "sections", label: "Bölümler" },
   { key: "preview", label: "Önizleme" },
   { key: "distribution", label: "Dağıtım" }
 ];
-function oe({ section: a, onToggle: i, onMove: t, isFirst: l, isLast: p, busy: m }) {
-  const u = U[a.sectionKey] ?? `Bölüm ${a.sectionKey}`;
+function ve({ section: a, onToggle: n, onMove: i, isFirst: o, isLast: h, busy: y }) {
+  const u = K[a.sectionKey] ?? `Bölüm ${a.sectionKey}`;
   return /* @__PURE__ */ e.jsxs("div", { className: "apya-doc-check-row", style: { gridTemplateColumns: "34px minmax(0,1fr) auto auto" }, children: [
     /* @__PURE__ */ e.jsx(
       "input",
       {
         type: "checkbox",
         checked: a.isEnabled,
-        disabled: m || !a.isAvailable,
-        onChange: (f) => i(a.id, f.target.checked),
+        disabled: y || !a.isAvailable,
+        onChange: (x) => n(a.id, x.target.checked),
         "aria-label": `${u} bölümünü aç/kapa`
       }
     ),
@@ -377,8 +616,8 @@ function oe({ section: a, onToggle: i, onMove: t, isFirst: l, isLast: p, busy: m
         {
           type: "button",
           className: "apya-doc-linkbtn",
-          disabled: m || l,
-          onClick: () => t(a.id, -1),
+          disabled: y || o,
+          onClick: () => i(a.id, -1),
           "aria-label": "Yukarı taşı",
           children: "↑"
         }
@@ -388,8 +627,8 @@ function oe({ section: a, onToggle: i, onMove: t, isFirst: l, isLast: p, busy: m
         {
           type: "button",
           className: "apya-doc-linkbtn",
-          disabled: m || p,
-          onClick: () => t(a.id, 1),
+          disabled: y || h,
+          onClick: () => i(a.id, 1),
           "aria-label": "Aşağı taşı",
           children: "↓"
         }
@@ -397,84 +636,84 @@ function oe({ section: a, onToggle: i, onMove: t, isFirst: l, isLast: p, busy: m
     ] })
   ] });
 }
-function de() {
-  const a = new URLSearchParams(window.location.search), [i, t] = r.useState([]), [l, p] = r.useState([]), [m, u] = r.useState(null), [f, z] = r.useState((a.get("projectId") || "").toLowerCase()), [y, c] = r.useState("sections"), [j, w] = r.useState(!0), [T, b] = r.useState(!1), N = r.useCallback(async () => {
-    w(!0);
+function Se() {
+  const a = new URLSearchParams(window.location.search), [n, i] = c.useState([]), [o, h] = c.useState([]), [y, u] = c.useState(null), [x, d] = c.useState((a.get("projectId") || "").toLowerCase()), [m, l] = c.useState("sections"), [b, t] = c.useState(!0), [g, z] = c.useState(!1), w = c.useCallback(async () => {
+    t(!0);
     try {
-      const [s, o] = await Promise.all([Z(), X()]);
-      t(s ?? []), p(o ?? []), u((d) => {
-        var x;
-        return d ?? ((x = s == null ? void 0 : s[0]) == null ? void 0 : x.id) ?? null;
+      const [s, p] = await Promise.all([V(), te()]);
+      i(s ?? []), h(p ?? []), u((f) => {
+        var S;
+        return f ?? ((S = s == null ? void 0 : s[0]) == null ? void 0 : S.id) ?? null;
       });
     } catch (s) {
-      g("error", "Şablonlar yüklenemedi."), console.error("[ReportBuilder] load", s);
+      N("error", "Şablonlar yüklenemedi."), console.error("[ReportBuilder] load", s);
     } finally {
-      w(!1);
+      t(!1);
     }
   }, []);
-  r.useEffect(() => {
-    N();
-  }, [N]);
-  const h = r.useMemo(
-    () => i.find((s) => s.id === m) ?? null,
-    [i, m]
-  ), n = r.useMemo(
-    () => h ? [...h.sections].sort((s, o) => s.order - o.order) : [],
-    [h]
-  ), S = async (s) => {
-    if (h) {
-      b(!0);
+  c.useEffect(() => {
+    w();
+  }, [w]);
+  const j = c.useMemo(
+    () => n.find((s) => s.id === y) ?? null,
+    [n, y]
+  ), r = c.useMemo(
+    () => j ? [...j.sections].sort((s, p) => s.order - p.order) : [],
+    [j]
+  ), C = async (s) => {
+    if (j) {
+      z(!0);
       try {
-        const o = await H({
-          templateId: h.id,
-          sections: s.map((d, x) => ({ sectionId: d.id, order: x + 1, isEnabled: d.isEnabled }))
+        const p = await Q({
+          templateId: j.id,
+          sections: s.map((f, S) => ({ sectionId: f.id, order: S + 1, isEnabled: f.isEnabled }))
         });
-        t((d) => d.map((x) => x.id === o.id ? o : x));
-      } catch (o) {
-        g("error", "Bölümler kaydedilemedi."), console.error("[ReportBuilder] persistSections", o);
+        i((f) => f.map((S) => S.id === p.id ? p : S));
+      } catch (p) {
+        N("error", "Bölümler kaydedilemedi."), console.error("[ReportBuilder] persistSections", p);
       } finally {
-        b(!1);
+        z(!1);
       }
     }
-  }, I = (s, o) => S(n.map((d) => d.id === s ? { ...d, isEnabled: o } : d)), K = (s, o) => {
-    const d = [...n], x = d.findIndex((_) => _.id === s), P = x + o;
-    x < 0 || P < 0 || P >= d.length || ([d[x], d[P]] = [d[P], d[x]], S(d));
-  }, O = async () => {
+  }, q = (s, p) => C(r.map((f) => f.id === s ? { ...f, isEnabled: p } : f)), G = (s, p) => {
+    const f = [...r], S = f.findIndex((H) => H.id === s), D = S + p;
+    S < 0 || D < 0 || D >= f.length || ([f[S], f[D]] = [f[D], f[S]], C(f));
+  }, Y = async () => {
     const s = window.prompt("Şablon adı:");
     if (s) {
-      b(!0);
+      z(!0);
       try {
-        const o = await J({ name: s, recipient: 1, issuer: null, order: i.length + 1 });
-        await N(), u(o.id);
+        const p = await X({ name: s, recipient: 1, issuer: null, order: n.length + 1 });
+        await w(), u(p.id);
       } catch {
-        g("error", "Şablon oluşturulamadı.");
+        N("error", "Şablon oluşturulamadı.");
       } finally {
-        b(!1);
+        z(!1);
       }
     }
-  }, Y = async (s) => {
-    b(!0);
+  }, Z = async (s) => {
+    z(!0);
     try {
-      const o = await Q(s);
-      await N(), u(o.id);
+      const p = await ee(s);
+      await w(), u(p.id);
     } catch {
-      g("error", "Şablon kopyalanamadı.");
+      N("error", "Şablon kopyalanamadı.");
     } finally {
-      b(!1);
+      z(!1);
     }
-  }, G = async (s) => {
+  }, _ = async (s) => {
     if (window.confirm("Bu şablon silinsin mi? Üretilmiş paketler etkilenmez.")) {
-      b(!0);
+      z(!0);
       try {
-        await V(s), u(null), await N();
+        await ae(s), u(null), await w();
       } catch {
-        g("error", "Şablon silinemedi.");
+        N("error", "Şablon silinemedi.");
       } finally {
-        b(!1);
+        z(!1);
       }
     }
   };
-  return j ? /* @__PURE__ */ e.jsx("div", { className: "p-4", children: /* @__PURE__ */ e.jsx(R, { rows: 8 }) }) : /* @__PURE__ */ e.jsxs("div", { className: "apya-fade-in px-4 py-4 sm:px-7 sm:py-7 mx-auto", style: { maxWidth: 1560 }, children: [
+  return b ? /* @__PURE__ */ e.jsx("div", { className: "p-4", children: /* @__PURE__ */ e.jsx(B, { rows: 8 }) }) : /* @__PURE__ */ e.jsxs("div", { className: "apya-fade-in px-4 py-4 sm:px-7 sm:py-7 mx-auto", style: { maxWidth: 1560 }, children: [
     /* @__PURE__ */ e.jsxs("div", { className: "d-flex align-items-start justify-content-between flex-wrap gap-3 mb-4", children: [
       /* @__PURE__ */ e.jsxs("div", { children: [
         /* @__PURE__ */ e.jsx("h1", { style: { fontSize: 20, fontWeight: 700, margin: 0 }, children: "Rapor derleyici" }),
@@ -485,29 +724,29 @@ function de() {
           "select",
           {
             className: "apya-doc-select",
-            value: f,
-            onChange: (s) => z(s.target.value),
+            value: x,
+            onChange: (s) => d(s.target.value),
             "aria-label": "Proje bağlamı",
             children: [
               /* @__PURE__ */ e.jsx("option", { value: "", children: "Proje seçin…" }),
-              l.map((s) => /* @__PURE__ */ e.jsx("option", { value: s.id, children: s.code ? `${s.code} · ${s.name}` : s.name }, s.id))
+              o.map((s) => /* @__PURE__ */ e.jsx("option", { value: s.id, children: s.code ? `${s.code} · ${s.name}` : s.name }, s.id))
             ]
           }
         ),
-        /* @__PURE__ */ e.jsxs(E, { variant: "outline", size: "sm", disabled: T, onClick: O, children: [
+        /* @__PURE__ */ e.jsxs(T, { variant: "outline", size: "sm", disabled: g, onClick: Y, children: [
           /* @__PURE__ */ e.jsx("i", { className: "fa fa-plus" }),
           " Yeni şablon"
         ] })
       ] })
     ] }),
-    /* @__PURE__ */ e.jsx("div", { className: "apya-doc-tabs mb-3", role: "tablist", children: ce.map((s) => /* @__PURE__ */ e.jsx(
+    /* @__PURE__ */ e.jsx("div", { className: "apya-doc-tabs mb-3", role: "tablist", children: ge.map((s) => /* @__PURE__ */ e.jsx(
       "button",
       {
         type: "button",
         role: "tab",
-        "aria-selected": y === s.key,
-        className: W("apya-doc-tab", y === s.key && "active"),
-        onClick: () => c(s.key),
+        "aria-selected": m === s.key,
+        className: M("apya-doc-tab", m === s.key && "active"),
+        onClick: () => l(s.key),
         children: s.label
       },
       s.key
@@ -515,85 +754,85 @@ function de() {
     /* @__PURE__ */ e.jsxs("div", { className: "apya-doc-reportgrid", children: [
       /* @__PURE__ */ e.jsxs("div", { className: "apya-doc-check-card", children: [
         /* @__PURE__ */ e.jsx("div", { className: "apya-md-overline", children: "Şablonlar" }),
-        i.length === 0 ? /* @__PURE__ */ e.jsx("div", { style: { fontSize: 12, color: "var(--apya-text-tertiary)" }, children: "Şablon yok." }) : i.map((s) => /* @__PURE__ */ e.jsxs(
+        n.length === 0 ? /* @__PURE__ */ e.jsx("div", { style: { fontSize: 12, color: "var(--apya-text-tertiary)" }, children: "Şablon yok." }) : n.map((s) => /* @__PURE__ */ e.jsxs(
           "button",
           {
             type: "button",
-            className: W("apya-md-item", m === s.id && "selected"),
+            className: M("apya-md-item", y === s.id && "selected"),
             style: { borderRadius: 8, height: "auto", paddingTop: 7, paddingBottom: 7 },
             onClick: () => u(s.id),
             children: [
               /* @__PURE__ */ e.jsxs("span", { style: { minWidth: 0, flex: 1, textAlign: "left" }, children: [
                 /* @__PURE__ */ e.jsx("span", { className: "d-block text-truncate", style: { fontSize: 12.5, fontWeight: 500 }, children: s.name }),
                 /* @__PURE__ */ e.jsxs("span", { className: "d-block", style: { fontSize: 10.5, color: "var(--apya-text-tertiary)" }, children: [
-                  ne[s.recipient] ?? "—",
+                  ce[s.recipient] ?? "—",
                   s.issuer && ` · ${s.issuer}`
                 ] })
               ] }),
               /* @__PURE__ */ e.jsxs("span", { className: "d-flex align-items-center gap-1", children: [
-                s.isSystem && /* @__PURE__ */ e.jsx(C, { variant: "neutral", size: "sm", children: "sistem" }),
-                /* @__PURE__ */ e.jsx(C, { variant: "accent", size: "sm", children: s.enabledSectionCount })
+                s.isSystem && /* @__PURE__ */ e.jsx(P, { variant: "neutral", size: "sm", children: "sistem" }),
+                /* @__PURE__ */ e.jsx(P, { variant: "accent", size: "sm", children: s.enabledSectionCount })
               ] })
             ]
           },
           s.id
         ))
       ] }),
-      y === "sections" && /* @__PURE__ */ e.jsx("div", { className: "apya-doc-check-card", children: h ? /* @__PURE__ */ e.jsxs(e.Fragment, { children: [
+      m === "sections" && /* @__PURE__ */ e.jsx("div", { className: "apya-doc-check-card", children: j ? /* @__PURE__ */ e.jsxs(e.Fragment, { children: [
         /* @__PURE__ */ e.jsxs("div", { className: "apya-doc-check-head", children: [
-          /* @__PURE__ */ e.jsx("span", { style: { fontSize: 13.5, fontWeight: 600 }, children: h.name }),
+          /* @__PURE__ */ e.jsx("span", { style: { fontSize: 13.5, fontWeight: 600 }, children: j.name }),
           /* @__PURE__ */ e.jsxs("span", { className: "d-flex gap-2", children: [
             /* @__PURE__ */ e.jsx(
               "button",
               {
                 type: "button",
                 className: "apya-doc-linkbtn",
-                disabled: T,
-                onClick: () => Y(h.id),
+                disabled: g,
+                onClick: () => Z(j.id),
                 children: "Kopyala"
               }
             ),
-            !h.isSystem && /* @__PURE__ */ e.jsx(
+            !j.isSystem && /* @__PURE__ */ e.jsx(
               "button",
               {
                 type: "button",
                 className: "apya-doc-linkbtn",
-                disabled: T,
-                onClick: () => G(h.id),
+                disabled: g,
+                onClick: () => _(j.id),
                 children: "Sil"
               }
             )
           ] })
         ] }),
-        h.isSystem && /* @__PURE__ */ e.jsxs("div", { style: { fontSize: 11.5, color: "var(--apya-text-tertiary)", marginBottom: 6 }, children: [
+        j.isSystem && /* @__PURE__ */ e.jsxs("div", { style: { fontSize: 11.5, color: "var(--apya-text-tertiary)", marginBottom: 6 }, children: [
           "Sistem şablonu tüm kiracılarda paylaşılır; künyesi düzenlenemez. Kendinize uyarlamak için ",
           /* @__PURE__ */ e.jsx("strong", { children: "Kopyala" }),
           "'yı kullanın."
         ] }),
-        n.map((s, o) => /* @__PURE__ */ e.jsx(
-          oe,
+        r.map((s, p) => /* @__PURE__ */ e.jsx(
+          ve,
           {
             section: s,
-            busy: T,
-            isFirst: o === 0,
-            isLast: o === n.length - 1,
-            onToggle: I,
-            onMove: K
+            busy: g,
+            isFirst: p === 0,
+            isLast: p === r.length - 1,
+            onToggle: q,
+            onMove: G
           },
           s.id
         ))
       ] }) : /* @__PURE__ */ e.jsx(
-        L,
+        O,
         {
           icon: /* @__PURE__ */ e.jsx("i", { className: "fa fa-list-check" }),
           title: "Şablon seçin",
           description: "Soldan bir şablon seçerek bölümlerini düzenleyin."
         }
       ) }),
-      y === "preview" && /* @__PURE__ */ e.jsx(le, { projectId: f, template: h }),
-      y === "distribution" && /* @__PURE__ */ e.jsx(re, { projectId: f })
+      m === "preview" && /* @__PURE__ */ e.jsx(he, { projectId: x, template: j }),
+      m === "distribution" && /* @__PURE__ */ e.jsx(je, { projectId: x })
     ] })
   ] });
 }
-const M = document.getElementById("report-builder-island");
-M && q(M).render(/* @__PURE__ */ e.jsx(de, {}));
+const I = document.getElementById("report-builder-island");
+I && J(I).render(/* @__PURE__ */ e.jsx(Se, {}));

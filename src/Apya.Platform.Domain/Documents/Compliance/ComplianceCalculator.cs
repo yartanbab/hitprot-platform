@@ -84,6 +84,15 @@ public static class ComplianceCalculator
         ComplianceScopeInstance instance,
         IReadOnlyList<ComplianceDocument> documents)
     {
+        // Göreve bağlı kalem OTOMATİK karşılanamaz: DocumentFile'ın TaskId'si yok,
+        // yani "bu belge o görevin eki" bilgisi veriden türetilemez. Tipi tutan
+        // rastgele bir belgeyle yeşile döndürmek, aslında eksik olan bir kalemi
+        // karşılanmış gösterirdi.
+        if (requirement.Source == ComplianceRequirementSource.TaskAttachment)
+        {
+            return null;
+        }
+
         if (!requirement.DocumentTypeId.HasValue)
         {
             return null;

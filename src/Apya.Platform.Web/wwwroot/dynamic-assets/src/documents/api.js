@@ -23,9 +23,16 @@ function abpAjax(options) {
 const handler = (name, params = {}) => {
   const query = new URLSearchParams();
   Object.entries(params).forEach(([key, value]) => {
-    if (value !== undefined && value !== null && value !== '') {
-      query.append(key, value);
+    if (value === undefined || value === null || value === '') return;
+
+    // Diziler TEKRARLI anahtar olarak yazılır ("ids=a&ids=b"); virgülle
+    // birleştirilse ASP.NET Core listeye bağlayamaz.
+    if (Array.isArray(value)) {
+      value.forEach((entry) => query.append(key, entry));
+      return;
     }
+
+    query.append(key, value);
   });
   const qs = query.toString();
   return `${abpAppPath()}Documents?handler=${name}${qs ? '&' + qs : ''}`;
@@ -53,6 +60,9 @@ export const bulkTagFiles = (documentFileIds, tags, remove = false) =>
 
 export const deleteFile = (id) => abpAjax({ url: handler('DeleteFile', { id }), type: 'POST' });
 
+/** Çöp kutusundan geri alma — belge ekleri ve etiketleriyle birlikte döner. */
+export const restoreFile = (id) => abpAjax({ url: handler('RestoreFile', { id }), type: 'POST' });
+
 /* ─── Yardımcı kaynaklar ──────────────────────────────────────────────── */
 
 export const getDocumentTypes = () => abpAjax({ url: handler('DocumentTypes'), type: 'GET' });
@@ -78,6 +88,47 @@ export const removeComplianceAssignment = (assignmentId) =>
 export const waiveComplianceItem = (payload) => postJson(handler('WaiveComplianceItem'), payload);
 
 export const linkComplianceDocument = (payload) => postJson(handler('LinkComplianceDocument'), payload);
+
+/* ─── İlk kurulum (Faz F) ─────────────────────────────────────────────── */
+
+export const getSetupState = () => abpAjax({ url: handler('SetupState'), type: 'GET' });
+
+export const applySetup = (dto) => postJson(handler('ApplySetup'), dto);
+
+export const completeSetup = () => abpAjax({ url: handler('CompleteSetup'), type: 'POST' });
+
+/* ─── Öneriler (Faz D) ────────────────────────────────────────────────── */
+
+export const getSuggestions = (projectId) =>
+  abpAjax({ url: handler('Suggestions', { projectId }), type: 'GET' });
+
+export const applySuggestions = (suggestions) => postJson(handler('ApplySuggestions'), { suggestions });
+
+export const dismissSuggestions = (suggestions) => postJson(handler('DismissSuggestions'), { suggestions });
+
+/* --- Kiracının kendi paketi (katalog) --- */
+
+export const getProjectTasks = (projectId) =>
+  abpAjax({ url: handler('ProjectTasks', { projectId }), type: 'GET' });
+
+export const getComplianceRequirements = (packageId) =>
+  abpAjax({ url: handler('ComplianceRequirements', { packageId }), type: 'GET' });
+
+export const createCompliancePackage = (dto) => postJson(handler('CreateCompliancePackage'), dto);
+
+export const updateCompliancePackage = (id, dto) => postJson(handler('UpdateCompliancePackage', { id }), dto);
+
+export const deleteCompliancePackage = (id) =>
+  abpAjax({ url: handler('DeleteCompliancePackage', { id }), type: 'POST' });
+
+export const addComplianceRequirement = (packageId, dto) =>
+  postJson(handler('AddComplianceRequirement', { packageId }), dto);
+
+export const updateComplianceRequirement = (id, dto) =>
+  postJson(handler('UpdateComplianceRequirement', { id }), dto);
+
+export const deleteComplianceRequirement = (id) =>
+  abpAjax({ url: handler('DeleteComplianceRequirement', { id }), type: 'POST' });
 
 /* ─── Etkinlik / denetim izi (Faz B) ──────────────────────────────────── */
 

@@ -27,6 +27,9 @@ public interface IDocumentFileAppService : IApplicationService
 
     Task DeleteAsync(Guid id);
 
+    /// <summary>Çöp kutusundan geri alma — belge ekleri ve etiketleriyle birlikte döner.</summary>
+    Task RestoreAsync(Guid id);
+
     /// <summary>Etiket girişinde öneri listesi (tenant'ın mevcut etiketleri).</summary>
     Task<List<string>> GetTagsAsync();
 }

@@ -42,6 +42,12 @@ export const createMatch = (dto) => postJson(handler('Matching', 'CreateMatch'),
 export const removeMatch = (matchId) =>
   abpAjax({ url: handler('Matching', 'RemoveMatch', { matchId }), type: 'POST' });
 
+/* Proje kapsami — agac TEMBEL yuklenir: once proje satirlari, sonra dal. */
+export const getScopeOverview = () =>
+  abpAjax({ url: handler('Scope', 'Overview'), type: 'GET' });
+export const getScopeBranch = (projectId) =>
+  abpAjax({ url: handler('Scope', 'Branch', { projectId }), type: 'GET' });
+
 /* Ortak bicimleyiciler */
 export const fmtMoney = (v, currency = 'TRY') =>
   v === null || v === undefined

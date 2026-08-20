@@ -3,7 +3,8 @@ import { j as e, r, b as de } from "./react-vendor.js";
 import { g as E, B as w, I as me } from "./Dialog.js";
 import { S as J } from "./SkeletonShape.js";
 import { E as U } from "./EmptyState.js";
-const H = (t) => {
+import { M as pe } from "./ModalPortal.js";
+const M = (t) => {
   var s, l;
   return (l = (s = window == null ? void 0 : window.abp) == null ? void 0 : s.auth) == null ? void 0 : l.isGranted(t);
 }, h = (t, s) => {
@@ -25,20 +26,20 @@ const c = (t, s = {}) => {
   });
   const p = l.toString();
   return `${_()}Documents/Deliveries?handler=${t}${p ? "&" + p : ""}`;
-}, R = (t, s) => m({ url: t, type: "POST", contentType: "application/json", data: JSON.stringify(s) }), pe = (t) => m({ url: c("Packages", { projectId: t }), type: "GET" }), M = (t) => m({ url: c("Package", { id: t }), type: "GET" }), ye = (t) => R(c("CreatePackage"), t), xe = (t) => m({ url: c("DeletePackage", { id: t }), type: "POST" }), he = (t, s) => R(c("AddItems"), { packageId: t, documentFileIds: s }), ue = (t) => m({ url: c("RemoveItem", { itemId: t }), type: "POST" }), fe = (t) => m({ url: c("Preflight", { packageId: t }), type: "GET" }), ge = (t) => m({ url: c("Generate", { packageId: t }), type: "POST" }), ve = () => m({ url: c("Templates"), type: "GET" }), je = (t) => m({ url: c("Runs", { projectId: t }), type: "GET" }), D = (t) => m({ url: c("ShareLinks", { packageId: t }), type: "GET" }), ke = (t) => R(c("CreateShareLink"), t), we = (t) => m({ url: c("RevokeShareLink", { id: t }), type: "POST" }), be = (t, s) => m({
+}, R = (t, s) => m({ url: t, type: "POST", contentType: "application/json", data: JSON.stringify(s) }), ye = (t) => m({ url: c("Packages", { projectId: t }), type: "GET" }), H = (t) => m({ url: c("Package", { id: t }), type: "GET" }), xe = (t) => R(c("CreatePackage"), t), he = (t) => m({ url: c("DeletePackage", { id: t }), type: "POST" }), ue = (t, s) => R(c("AddItems"), { packageId: t, documentFileIds: s }), fe = (t) => m({ url: c("RemoveItem", { itemId: t }), type: "POST" }), ge = (t) => m({ url: c("Preflight", { packageId: t }), type: "GET" }), je = (t) => m({ url: c("Generate", { packageId: t }), type: "POST" }), ve = () => m({ url: c("Templates"), type: "GET" }), ke = (t) => m({ url: c("Runs", { projectId: t }), type: "GET" }), D = (t) => m({ url: c("ShareLinks", { packageId: t }), type: "GET" }), we = (t) => R(c("CreateShareLink"), t), be = (t) => m({ url: c("RevokeShareLink", { id: t }), type: "POST" }), Se = (t, s) => m({
   url: `${_()}Documents?handler=Files&projectId=${t}&maxResultCount=50&skipCount=0` + (s ? `&filterText=${encodeURIComponent(s)}` : ""),
   type: "GET"
-}), Se = {
+}), Ne = {
   1: "Zorunlu kalem",
   2: "Süresi dolmuş belge",
   3: "Eksik meta",
   4: "Gizli alan",
   5: "Boş paket"
 };
-function Ne({ result: t, loading: s, busy: l, onGenerate: p, onClose: y }) {
+function Pe({ result: t, loading: s, busy: l, onGenerate: p, onClose: y }) {
   var b;
   const o = (t == null ? void 0 : t.canGenerate) === !0;
-  return /* @__PURE__ */ e.jsx("div", { className: "apya-in apya-doc-overlay", onClick: y, children: /* @__PURE__ */ e.jsxs(
+  return /* @__PURE__ */ e.jsx(pe, { children: /* @__PURE__ */ e.jsx("div", { className: "apya-in apya-doc-overlay", onClick: y, children: /* @__PURE__ */ e.jsxs(
     "div",
     {
       className: "apya-pop-in apya-doc-dialog",
@@ -81,7 +82,7 @@ function Ne({ result: t, loading: s, busy: l, onGenerate: p, onClose: y }) {
               /* @__PURE__ */ e.jsx(E, { variant: x.isBlocking ? "negative" : "warning", size: "sm", children: x.isBlocking ? "Bloke" : "Uyarı" }),
               /* @__PURE__ */ e.jsxs("div", { style: { minWidth: 0 }, children: [
                 /* @__PURE__ */ e.jsx("div", { style: { fontSize: 12.5 }, children: x.message }),
-                /* @__PURE__ */ e.jsx("div", { style: { fontSize: 10.5, color: "var(--apya-text-tertiary)" }, children: Se[x.kind] || "—" })
+                /* @__PURE__ */ e.jsx("div", { style: { fontSize: 10.5, color: "var(--apya-text-tertiary)" }, children: Ne[x.kind] || "—" })
               ] })
             ]
           },
@@ -104,7 +105,7 @@ function Ne({ result: t, loading: s, busy: l, onGenerate: p, onClose: y }) {
         ] })
       ]
     }
-  ) });
+  ) }) });
 }
 const Y = (...t) => t.filter(Boolean).join(" "), N = {
   date: (t) => t ? new Intl.DateTimeFormat("tr-TR", { day: "2-digit", month: "2-digit", year: "numeric" }).format(new Date(t)) : "—",
@@ -114,14 +115,14 @@ const Y = (...t) => t.filter(Boolean).join(" "), N = {
   2: { text: "Üretildi", chip: "apya-chip-positive" },
   3: { text: "Gönderildi", chip: "apya-chip-accent" }
 }, C = { Pdf: 1, Zip: 2, Excel: 4 };
-function Pe({ message: t, onDone: s }) {
+function ze({ message: t, onDone: s }) {
   return r.useEffect(() => {
     const l = setTimeout(s, 3200);
     return () => clearTimeout(l);
   }, [s]), /* @__PURE__ */ e.jsx("div", { className: "apya-pop-in apya-doc-toast", role: "status", children: /* @__PURE__ */ e.jsx("span", { style: { fontSize: 12 }, children: t }) });
 }
-function ze() {
-  const t = new URLSearchParams(window.location.search).get("projectId"), [s, l] = r.useState([]), [p, y] = r.useState([]), [o, b] = r.useState([]), [x, g] = r.useState(!0), [B, I] = r.useState(null), [i, v] = r.useState(null), [u, d] = r.useState(!1), [Q, V] = r.useState(null), [X, A] = r.useState(!1), [ee, S] = r.useState(!1), [ae, L] = r.useState(""), [G, P] = r.useState([]), [$, z] = r.useState([]), [W, O] = r.useState(null), j = H("Platform.Documents.GenerateReports"), T = H("Platform.Documents.ShareExternally"), f = r.useCallback(async () => {
+function Te() {
+  const t = new URLSearchParams(window.location.search).get("projectId"), [s, l] = r.useState([]), [p, y] = r.useState([]), [o, b] = r.useState([]), [x, g] = r.useState(!0), [B, I] = r.useState(null), [i, j] = r.useState(null), [u, d] = r.useState(!1), [Q, V] = r.useState(null), [X, A] = r.useState(!1), [ee, S] = r.useState(!1), [ae, L] = r.useState(""), [G, P] = r.useState([]), [$, z] = r.useState([]), [W, O] = r.useState(null), v = M("Platform.Documents.GenerateReports"), T = M("Platform.Documents.ShareExternally"), f = r.useCallback(async () => {
     if (!t) {
       g(!1);
       return;
@@ -129,9 +130,9 @@ function ze() {
     g(!0);
     try {
       const [a, n, k] = await Promise.all([
-        pe(t),
+        ye(t),
         ve(),
-        je(t)
+        ke(t)
       ]);
       l(a ?? []), y(n ?? []), b(k ?? []);
     } catch (a) {
@@ -146,8 +147,8 @@ function ze() {
   const F = async (a) => {
     I(a);
     try {
-      const [n, k] = await Promise.all([M(a), T ? D(a) : Promise.resolve([])]);
-      v(n), z(k ?? []);
+      const [n, k] = await Promise.all([H(a), T ? D(a) : Promise.resolve([])]);
+      j(n), z(k ?? []);
     } catch (n) {
       h("error", "Paket açılamadı."), console.error("[Deliveries] openPackage", n);
     }
@@ -156,7 +157,7 @@ function ze() {
     if (a) {
       d(!0);
       try {
-        const n = await ye({
+        const n = await xe({
           projectId: t,
           name: a,
           formats: C.Pdf | C.Zip | C.Excel
@@ -171,7 +172,7 @@ function ze() {
   }, se = async (a) => {
     d(!0);
     try {
-      await xe(a), B === a && (I(null), v(null)), await f();
+      await he(a), B === a && (I(null), j(null)), await f();
     } catch {
       h("error", "Paket silinemedi.");
     } finally {
@@ -183,7 +184,7 @@ function ze() {
       return;
     }
     try {
-      const n = await be(t, a.trim());
+      const n = await Se(t, a.trim());
       P(n.items ?? []);
     } catch (n) {
       console.error("[Deliveries] search", n);
@@ -191,7 +192,7 @@ function ze() {
   }, ne = async (a) => {
     d(!0);
     try {
-      v(await he(i.id, [a])), L(""), P([]), await f();
+      j(await ue(i.id, [a])), L(""), P([]), await f();
     } catch {
       h("error", "Ek eklenemedi.");
     } finally {
@@ -200,7 +201,7 @@ function ze() {
   }, re = async (a) => {
     d(!0);
     try {
-      v(await ue(a)), await f();
+      j(await fe(a)), await f();
     } catch {
       h("error", "Ek çıkarılamadı.");
     } finally {
@@ -209,7 +210,7 @@ function ze() {
   }, le = async () => {
     S(!0), A(!0);
     try {
-      V(await fe(i.id));
+      V(await ge(i.id));
     } catch {
       h("error", "Kontrol çalıştırılamadı."), S(!1);
     } finally {
@@ -218,8 +219,8 @@ function ze() {
   }, oe = async () => {
     d(!0);
     try {
-      const a = await ge(i.id);
-      S(!1), O(`Paket üretildi — sürüm v${a.version}.`), v(await M(i.id)), await f();
+      const a = await je(i.id);
+      S(!1), O(`Paket üretildi — sürüm v${a.version}.`), j(await H(i.id)), await f();
     } catch (a) {
       h("error", "Paket üretilemedi — engelleyen kalemler olabilir."), console.error("[Deliveries] generate", a);
     } finally {
@@ -231,7 +232,7 @@ function ze() {
     const n = window.confirm("İndirmeye izin verilsin mi? (İptal = yalnız görüntüleme)"), k = window.prompt("Filigran metni (boş bırakılabilir):") || null;
     d(!0);
     try {
-      const K = await ke({
+      const K = await we({
         targetType: 1,
         targetId: i.id,
         lifetimeDays: a,
@@ -251,7 +252,7 @@ function ze() {
         /* @__PURE__ */ e.jsx("h1", { style: { fontSize: 20, fontWeight: 700, margin: 0 }, children: "Teslimler & arşiv" }),
         /* @__PURE__ */ e.jsx("p", { style: { fontSize: 12, color: "var(--apya-text-tertiary)", margin: "4px 0 0" }, children: "Paket kurucu, üretim öncesi kontrol ve rapor sürümleri" })
       ] }),
-      j && /* @__PURE__ */ e.jsx(w, { variant: "primary", leadingIcon: /* @__PURE__ */ e.jsx("i", { className: "fa fa-plus" }), disabled: u, onClick: te, children: "Yeni paket" })
+      v && /* @__PURE__ */ e.jsx(w, { variant: "primary", leadingIcon: /* @__PURE__ */ e.jsx("i", { className: "fa fa-plus" }), disabled: u, onClick: te, children: "Yeni paket" })
     ] }),
     /* @__PURE__ */ e.jsxs("div", { className: "apya-docs-shell is-wide", children: [
       /* @__PURE__ */ e.jsxs("div", { className: "apya-docs-tree", style: { maxHeight: "none" }, children: [
@@ -325,15 +326,15 @@ function ze() {
               /* @__PURE__ */ e.jsx("i", { className: "fa fa-share-nodes" }),
               " Paylaş"
             ] }),
-            j && /* @__PURE__ */ e.jsx(w, { variant: "primary", size: "sm", disabled: u, onClick: le, children: "Paketi üret" }),
-            j && i.status === 1 && /* @__PURE__ */ e.jsx("button", { type: "button", className: "apya-doc-linkbtn", disabled: u, onClick: () => se(i.id), children: "Sil" })
+            v && /* @__PURE__ */ e.jsx(w, { variant: "primary", size: "sm", disabled: u, onClick: le, children: "Paketi üret" }),
+            v && i.status === 1 && /* @__PURE__ */ e.jsx("button", { type: "button", className: "apya-doc-linkbtn", disabled: u, onClick: () => se(i.id), children: "Sil" })
           ] })
         ] }),
         i.status !== 1 && /* @__PURE__ */ e.jsxs("div", { style: { fontSize: 11.5, color: "var(--apya-text-tertiary)" }, children: [
           /* @__PURE__ */ e.jsx("i", { className: "fa fa-lock" }),
           " Üretilmiş paket düzenlenemez — içerik değişirse denetim izi anlamsızlaşır."
         ] }),
-        i.status === 1 && j && /* @__PURE__ */ e.jsxs("div", { children: [
+        i.status === 1 && v && /* @__PURE__ */ e.jsxs("div", { children: [
           /* @__PURE__ */ e.jsx(
             me,
             {
@@ -372,7 +373,7 @@ function ze() {
             /* @__PURE__ */ e.jsx("span", { className: "apya-numeric", style: { fontSize: 11.5, color: "var(--apya-text-tertiary)" }, children: N.size(a.fileSize) }),
             /* @__PURE__ */ e.jsxs("span", { className: "text-end", children: [
               a.expiryDate && new Date(a.expiryDate) <= /* @__PURE__ */ new Date() && /* @__PURE__ */ e.jsx(E, { variant: "negative", size: "sm", children: "Süresi dolmuş" }),
-              i.status === 1 && j && /* @__PURE__ */ e.jsx("button", { type: "button", className: "apya-doc-linkbtn", disabled: u, onClick: () => re(a.id), children: "Çıkar" })
+              i.status === 1 && v && /* @__PURE__ */ e.jsx("button", { type: "button", className: "apya-doc-linkbtn", disabled: u, onClick: () => re(a.id), children: "Çıkar" })
             ] })
           ] }, a.id)) })
         ] }),
@@ -391,7 +392,7 @@ function ze() {
               " erişim"
             ] }),
             /* @__PURE__ */ e.jsx("span", { className: "text-end", children: a.isActive && /* @__PURE__ */ e.jsx("button", { type: "button", className: "apya-doc-linkbtn", disabled: u, onClick: async () => {
-              await we(a.id), z(await D(i.id));
+              await be(a.id), z(await D(i.id));
             }, children: "İptal et" }) })
           ] }, a.id))
         ] })
@@ -405,7 +406,7 @@ function ze() {
       ) })
     ] }),
     ee && /* @__PURE__ */ e.jsx(
-      Ne,
+      Pe,
       {
         result: Q,
         loading: X,
@@ -414,7 +415,7 @@ function ze() {
         onClose: () => S(!1)
       }
     ),
-    W && /* @__PURE__ */ e.jsx(Pe, { message: W, onDone: () => O(null) })
+    W && /* @__PURE__ */ e.jsx(ze, { message: W, onDone: () => O(null) })
   ] }) : /* @__PURE__ */ e.jsx("div", { className: "apya-fade-in px-4 py-4 sm:px-7 sm:py-7 mx-auto", style: { maxWidth: 1560 }, children: /* @__PURE__ */ e.jsx(
     U,
     {
@@ -425,4 +426,4 @@ function ze() {
   ) });
 }
 const q = document.getElementById("deliveries-island");
-q && de(q).render(/* @__PURE__ */ e.jsx(ze, {}));
+q && de(q).render(/* @__PURE__ */ e.jsx(Te, {}));

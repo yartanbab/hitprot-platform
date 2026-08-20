@@ -1,9 +1,10 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Button, Input } from '../components/ui';
+import { Button, Input, ModalPortal } from '../components/ui';
 import {
   abpAuth, abpDocument, abpNotify, abpAppPath,
-  bulkMoveFiles, bulkTagFiles, deleteFile, getDocumentTypes, getFile, getFiles,
-  getWorkSteps, moveFile, updateFileMeta, uploadAttachment,
+  bulkMoveFiles, bulkTagFiles, deleteFile, getComplianceOverview, getDocumentTypes, getFile, getFiles,
+  applySuggestions, dismissSuggestions, getSetupState, getSuggestions,
+  getWorkSteps, linkComplianceDocument, moveFile, restoreFile, updateFileMeta, uploadAttachment,
 } from './api';
 import { cn, fmt } from './format';
 import { ContextTree } from './components/ContextTree';
@@ -11,8 +12,13 @@ import { BulkBar, FileList } from './components/FileList';
 import { DetailPanel } from './components/DetailPanel';
 import { ComplianceTab } from './components/ComplianceTab';
 import { ActivityTab } from './components/ActivityTab';
+import { SuggestionBanner } from './components/SuggestionBanner';
+import { SetupWizard } from './components/SetupWizard';
 
 const PAGE_SIZE = 25;
+
+/** Hiçbir belgeyle eşleşmeyen kimlik — "öneri yok" durumunu boş listeye çevirir. */
+const EMPTY_GUID = '00000000-0000-0000-0000-000000000000';
 
 /* ─── Küçük yardımcı bileşenler ───────────────────────────────────────── */
 
@@ -33,6 +39,7 @@ function Toast({ message, onDone }) {
 function ConfirmDialog({ title, message, onConfirm, onCancel }) {
   const [busy, setBusy] = useState(false);
   return (
+    <ModalPortal>
     <div className="apya-in apya-doc-overlay" onClick={onCancel}>
       <div className="apya-pop-in apya-doc-dialog" onClick={(e) => e.stopPropagation()}>
         <div className="d-flex align-items-start gap-3 mb-3">
@@ -58,12 +65,13 @@ function ConfirmDialog({ title, message, onConfirm, onCancel }) {
         </div>
       </div>
     </div>
+    </ModalPortal>
   );
 }
 
 /** KPI şeridi. Uygunluk ve eksik belge yalnız bir proje bağlamı seçiliyken
     doluyor — proje yokken kontrol listesi tanımsızdır ve sahte sayı basmıyoruz. */
-function KpiStrip({ total, expiring, compliance }) {
+function KpiStrip({ uploadedThisMonth, expiring, compliance }) {
   const tiles = [
     {
       key: 'compliance',
@@ -85,7 +93,15 @@ function KpiStrip({ total, expiring, compliance }) {
         ? `${compliance.blockingMissingCount} tanesi teslimi bloke ediyor`
         : null,
     },
-    { key: 'total', label: 'Toplam belge', value: total, icon: 'fa-folder-open', tone: 'accent' },
+    {
+      key: 'uploaded',
+      label: 'Bu ay yüklenen',
+      value: uploadedThisMonth ?? '—',
+      icon: 'fa-arrow-up-from-bracket',
+      tone: 'accent',
+      // "Dönem" bu ekranda seçili değil; ölçülebilir tek pencere takvim ayı.
+      foot: 'ayın 1\'inden bugüne',
+    },
     { key: 'expiring', label: 'Süresi dolan', value: expiring ?? '—', icon: 'fa-clock-rotate-left', tone: 'negative' },
   ];
 
@@ -118,16 +134,40 @@ export function DocumentsRoot() {
   const [files, setFiles] = useState([]);
   const [totalCount, setTotalCount] = useState(0);
   const [expiringCount, setExpiringCount] = useState(null);
+  const [uploadedThisMonth, setUploadedThisMonth] = useState(null);
   const [loadingFiles, setLoadingFiles] = useState(true);
 
-  const [node, setNode] = useState({ key: 'all', kind: 'all' });
-  const [expanded, setExpanded] = useState(new Set());
-  const [search, setSearch] = useState('');
-  const [sorting, setSorting] = useState('creationTime desc');
-  const [view, setView] = useState('list');
-  const [page, setPage] = useState(0);
+  /* --- URL, filtrelerin tek doğruluk kaynağı ---
+     Üst bardaki kayıtlı görünüm çipi ekranın FİLTRE URL'İNİ adlandırıp saklıyor
+     ve uygularken sayfayı o sorguyla yeniden açıyor. Filtreler yalnız React
+     state'inde yaşasaydı kaydedilen görünüm boş bir ekran açardı. */
+  const initialQuery = useMemo(() => new URLSearchParams(window.location.search), []);
 
-  const [tab, setTab] = useState('files');
+  const [node, setNode] = useState(() => {
+    const smart = initialQuery.get('smart');
+    // Klasör/iş adımı düğümü ağaç yüklenmeden çözülemez (projeyi ağaç taşıyor);
+    // onu aşağıdaki geri yükleme effect'i tamamlar.
+    return smart ? { key: smart, kind: 'smart', smart } : { key: 'all', kind: 'all' };
+  });
+
+  // Yükleme yalnız klasör bağlamında yapılır; uygunluk ve etkinlik ise proje
+  // kapsamında çalışır — klasör de iş adımı da projeyi taşır. Aşağıdaki
+  // yükleyicilerin bağımlılığı olduğu için burada, node'un hemen ardında durur.
+  const activeFolderId = node.kind === 'folder' ? node.documentId : null;
+  const activeProjectId = node.projectId || null;
+
+  // Çöp kutusu: satırlar silinmiş belgeler, tek eylem geri alma.
+  const isTrash = node.kind === 'smart' && node.smart === 'trash';
+  const [expanded, setExpanded] = useState(new Set());
+  const [search, setSearch] = useState(initialQuery.get('q') || '');
+  const [sorting, setSorting] = useState(initialQuery.get('sort') || 'creationTime desc');
+  const [view, setView] = useState(initialQuery.get('view') === 'grid' ? 'grid' : 'list');
+  const [page, setPage] = useState(Number(initialQuery.get('page')) || 0);
+
+  const [tab, setTab] = useState(() => {
+    const requested = initialQuery.get('tab');
+    return ['files', 'compliance', 'activity'].includes(requested) ? requested : 'files';
+  });
   const [complianceSummary, setComplianceSummary] = useState(null);
 
   const [selectedId, setSelectedId] = useState(null);
@@ -143,6 +183,15 @@ export function DocumentsRoot() {
   const [toast, setToast] = useState(null);
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef(null);
+  const cameraInputRef = useRef(null);
+
+  const [setupState, setSetupState] = useState(null);
+  const [suggestions, setSuggestions] = useState(null);
+  const [suggestionBusy, setSuggestionBusy] = useState(false);
+
+  const [missingItems, setMissingItems] = useState([]);
+  // "Yükle" düğmesine basılan eksik kalem; yükleme bitince buna bağlanır.
+  const pendingRequirementRef = useRef(null);
 
   const canCreate = abpAuth('Platform.Documents.Create');
   const canEditMeta = abpAuth('Platform.Documents.ManageMeta');
@@ -187,10 +236,17 @@ export function DocumentsRoot() {
       base.expiringWithinDays = 30;
     } else if (node.kind === 'smart' && node.smart === 'missing-meta') {
       base.missingRequiredFields = true;
+    } else if (node.kind === 'smart' && node.smart === 'trash') {
+      base.onlyDeleted = true;
+    } else if (node.kind === 'smart' && node.smart === 'suggested') {
+      // Öneriler saklanmıyor; süzgeç hesaplanan kimlik kümesiyle kurulur.
+      // Henüz yüklenmediyse boş küme gönderilir → liste boş, sahte sonuç yok.
+      base.documentFileIds = [...new Set((suggestions?.items ?? []).map((i) => i.documentFileId))];
+      if (base.documentFileIds.length === 0) base.documentFileIds = [EMPTY_GUID];
     }
 
     return base;
-  }, [node, page, sorting, search]);
+  }, [node, page, sorting, search, suggestions]);
 
   const loadFiles = useCallback(async () => {
     setLoadingFiles(true);
@@ -208,17 +264,105 @@ export function DocumentsRoot() {
 
   useEffect(() => { loadFiles(); }, [loadFiles]);
 
-  /* --- KPI: süresi dolan sayısı (tek satırlık sorgu, yalnız totalCount okunur) --- */
+  /* --- KPI: tek satırlık sorgular, yalnız totalCount okunur --- */
   const loadKpis = useCallback(async () => {
     try {
-      const expiring = await getFiles({ maxResultCount: 1, skipCount: 0, expiringWithinDays: 30 });
+      const now = new Date();
+      const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+
+      const [expiring, uploaded] = await Promise.all([
+        getFiles({ maxResultCount: 1, skipCount: 0, expiringWithinDays: 30 }),
+        getFiles({ maxResultCount: 1, skipCount: 0, uploadedAfter: monthStart }),
+      ]);
+
       setExpiringCount(expiring.totalCount ?? 0);
+      setUploadedThisMonth(uploaded.totalCount ?? 0);
     } catch (e) {
       console.error('[Documents] loadKpis', e);
     }
   }, []);
 
   useEffect(() => { loadKpis(); }, [loadKpis]);
+
+  /* --- Satır içi eksik kalemler ---
+     Kontrol listesi PROJE kapsamında tanımlı; proje bağlamı yoksa gösterilecek
+     bir eksik de yok. İş adımı seçiliyse yalnız o adımın kalemleri süzülür. */
+  const loadMissing = useCallback(async () => {
+    if (!activeProjectId) {
+      setMissingItems([]);
+      return;
+    }
+
+    try {
+      const overview = await getComplianceOverview(activeProjectId, null);
+
+      const items = (overview.checklists ?? []).flatMap((checklist) =>
+        (checklist.items ?? [])
+          .filter((item) => item.status === 2) // 2 = Missing
+          .map((item) => ({ ...item, assignmentId: checklist.assignmentId })));
+
+      setMissingItems(
+        node.kind === 'workstep'
+          ? items.filter((i) => i.workStepId === node.workStepId)
+          : items,
+      );
+    } catch (e) {
+      // Kontrol listesi okunamadıysa dosya listesi yine çalışmalı.
+      setMissingItems([]);
+      console.error('[Documents] loadMissing', e);
+    }
+  }, [activeProjectId, node.kind, node.workStepId]);
+
+  useEffect(() => { loadMissing(); }, [loadMissing]);
+
+  /* --- Öneriler --- */
+  const loadSuggestions = useCallback(async () => {
+    try {
+      setSuggestions(await getSuggestions(activeProjectId));
+    } catch (e) {
+      // Öneri üretilemediyse ekranın geri kalanı çalışmaya devam etmeli.
+      setSuggestions(null);
+      console.error('[Documents] loadSuggestions', e);
+    }
+  }, [activeProjectId]);
+
+  useEffect(() => { loadSuggestions(); }, [loadSuggestions]);
+
+  /* --- İlk kurulum sihirbazı ---
+     Yalnız kurulum HİÇ yapılmamışsa açılır. Bayrak kiracı ayarında olduğu için
+     ikinci kullanıcı aynı sihirbazı yeniden görmez. */
+  useEffect(() => {
+    if (!canCreate) return;
+
+    (async () => {
+      try {
+        setSetupState(await getSetupState());
+      } catch (e) {
+        // Kurulum durumu okunamadıysa ekran normal çalışmaya devam etsin.
+        console.error('[Documents] setupState', e);
+      }
+    })();
+  }, [canCreate]);
+
+  const refToDto = (item) => ({
+    documentFileId: item.documentFileId,
+    kind: item.kind,
+    payload: item.payload,
+  });
+
+  const runSuggestionAction = async (action, refs, message) => {
+    setSuggestionBusy(true);
+    try {
+      await action(refs);
+      flash(message);
+      await Promise.all([loadSuggestions(), loadFiles(), loadTree()]);
+    } catch (e) {
+      abpNotify('error', 'Öneri işlenemedi.');
+      console.error('[Documents] suggestion action', e);
+    } finally {
+      setSuggestionBusy(false);
+    }
+  };
 
   /* --- Ağaç düğümleri --- */
   const tree = useMemo(() => {
@@ -269,6 +413,50 @@ export function DocumentsRoot() {
 
     return build('root');
   }, [folders, workSteps]);
+
+  /* --- URL'deki klasör/iş adımı düğümünü ağaç gelince geri yükle ---
+     Bir kez çalışır: kullanıcı sonradan başka düğüme geçtiğinde geri sürüklemez. */
+  const restoredRef = useRef(false);
+
+  useEffect(() => {
+    if (restoredRef.current || loadingTree || tree.length === 0) return;
+
+    const folderId = initialQuery.get('folder');
+    const stepId = initialQuery.get('step');
+    if (!folderId && !stepId) {
+      restoredRef.current = true;
+      return;
+    }
+
+    const flatten = (nodes) => nodes.flatMap((n) => [n, ...flatten(n.children || [])]);
+    const found = flatten(tree).find((n) => (
+      folderId ? n.documentId === folderId : n.workStepId === stepId
+    ));
+
+    restoredRef.current = true;
+    if (found) {
+      setNode(found);
+      // Geri yüklenen düğümün üstleri açık gelsin ki ağaçta görünsün.
+      setExpanded((prev) => new Set([...prev, found.key]));
+    }
+  }, [loadingTree, tree, initialQuery]);
+
+  /* --- Durum → URL --- */
+  useEffect(() => {
+    const params = new URLSearchParams();
+
+    if (tab !== 'files') params.set('tab', tab);
+    if (node.kind === 'folder') params.set('folder', node.documentId);
+    else if (node.kind === 'workstep') params.set('step', node.workStepId);
+    else if (node.kind === 'smart') params.set('smart', node.smart);
+    if (search.trim()) params.set('q', search.trim());
+    if (view !== 'list') params.set('view', view);
+    if (sorting !== 'creationTime desc') params.set('sort', sorting);
+    if (page > 0) params.set('page', String(page));
+
+    const qs = params.toString();
+    window.history.replaceState(null, '', qs ? `${window.location.pathname}?${qs}` : window.location.pathname);
+  }, [tab, node, search, view, sorting, page]);
 
   /* --- Seçim / detay --- */
   const openDetail = useCallback(async (file) => {
@@ -396,26 +584,66 @@ export function DocumentsRoot() {
   };
 
   /* --- Yükleme --- */
-  const activeFolderId = node.kind === 'folder' ? node.documentId : null;
-
-  // Uygunluk ve etkinlik proje kapsamında çalışır; klasör de iş adımı da projeyi taşır.
-  const activeProjectId = node.projectId || null;
-
   const handleUpload = async (fileList) => {
     if (!activeFolderId || !fileList?.length) return;
+
+    // Eksik kalem satırından gelindiyse hedef burada sabitlenir; kullanıcı
+    // dosya seçerken bağlam değişse bile yükleme doğru kaleme bağlanır.
+    const requirement = pendingRequirementRef.current;
+    pendingRequirementRef.current = null;
+
     setUploading(true);
     try {
+      let firstFileId = null;
+
       for (const file of Array.from(fileList)) {
-        await uploadAttachment(activeFolderId, file);
+        const attachment = await uploadAttachment(activeFolderId, file);
+        firstFileId = firstFileId ?? attachment?.documentFileId ?? null;
       }
-      flash(fileList.length === 1 ? 'Dosya yüklendi.' : `${fileList.length} dosya yüklendi.`);
-      await Promise.all([loadFiles(), loadKpis(), loadTree()]);
+
+      if (requirement && firstFileId) {
+        await linkComplianceDocument({
+          assignmentId: requirement.assignmentId,
+          requirementId: requirement.requirementId,
+          workStepId: requirement.workStepId || null,
+          periodCode: requirement.periodCode || null,
+          documentFileId: firstFileId,
+        });
+        flash(`Yüklendi ve "${requirement.title}" kalemine bağlandı.`);
+      } else {
+        flash(fileList.length === 1 ? 'Dosya yüklendi.' : `${fileList.length} dosya yüklendi.`);
+      }
+
+      await Promise.all([loadFiles(), loadKpis(), loadTree(), loadMissing()]);
     } catch (e) {
       abpNotify('error', 'Dosya yüklenemedi.');
       console.error('[Documents] upload', e);
     } finally {
       setUploading(false);
     }
+  };
+
+  /** Çöp kutusundan geri alma — belge ekleri ve etiketleriyle birlikte döner. */
+  const handleRestore = async (file) => {
+    try {
+      await restoreFile(file.id);
+      flash(`"${file.displayName}" geri alındı.`);
+      await Promise.all([loadFiles(), loadKpis(), loadTree()]);
+    } catch (e) {
+      abpNotify('error', 'Belge geri alınamadı.');
+      console.error('[Documents] restore', e);
+    }
+  };
+
+  /** Eksik kalem satırındaki "Yükle": dosya seçiciyi açar, hedefi saklar. */
+  const handleUploadForRequirement = (item) => {
+    if (!activeFolderId) {
+      abpNotify('warn', 'Yükleme klasör bağlamında yapılır — soldan bir klasör seçin.');
+      return;
+    }
+
+    pendingRequirementRef.current = item;
+    fileInputRef.current?.click();
   };
 
   const openCreateFolder = () => {
@@ -493,14 +721,39 @@ export function DocumentsRoot() {
               Yükle
             </Button>
           )}
+
+          {/* Belge yakala — sahadaki kullanıcının ana eylemi. Mobilde kamerayı
+              açar; dar ekranda sağ altta sabit bir düğmeye dönüşür (CSS). */}
+          {canCreate && (
+            <Button
+              variant="secondary"
+              className="apya-doc-capture-btn"
+              isLoading={uploading}
+              disabled={!activeFolderId}
+              title={activeFolderId ? undefined : 'Önce bir klasör seçin'}
+              leadingIcon={<i className="fa fa-camera" />}
+              onClick={() => cameraInputRef.current?.click()}
+            >
+              Belge yakala
+            </Button>
+          )}
           <input
             ref={fileInputRef} type="file" multiple hidden
+            onChange={(e) => { handleUpload(e.target.files); e.target.value = ''; }}
+          />
+
+          {/* Sahadaki kullanıcı: belgeyi telefonun kamerasıyla yakalar.
+              `capture` mobil tarayıcıda doğrudan kamerayı açar; masaüstünde
+              yok sayılıp normal dosya seçiciye düşer, o yüzden ayrı bir kod
+              yolu gerekmiyor. OCR YOK — dosya olduğu gibi yüklenir. */}
+          <input
+            ref={cameraInputRef} type="file" accept="image/*" capture="environment" hidden
             onChange={(e) => { handleUpload(e.target.files); e.target.value = ''; }}
           />
         </div>
       </div>
 
-      <KpiStrip total={totalCount} expiring={expiringCount} compliance={complianceSummary} />
+      <KpiStrip uploadedThisMonth={uploadedThisMonth} expiring={expiringCount} compliance={complianceSummary} />
 
       <div className="apya-doc-tabs" role="tablist">
         {[
@@ -540,6 +793,7 @@ export function DocumentsRoot() {
               projectId={activeProjectId}
               periodCode={null}
               onSummaryChange={setComplianceSummary}
+              documentTypes={documentTypes}
             />
           </div>
         ) : tab === 'activity' ? (
@@ -548,6 +802,25 @@ export function DocumentsRoot() {
           </div>
         ) : (
         <div className="apya-docs-main">
+          {canEditMeta && (
+            <SuggestionBanner
+              summary={suggestions}
+              busy={suggestionBusy}
+              onApplyAll={() => runSuggestionAction(
+                applySuggestions,
+                (suggestions?.items ?? []).map(refToDto),
+                'Öneriler uygulandı.',
+              )}
+              onApply={(item) => runSuggestionAction(
+                applySuggestions, [refToDto(item)], 'Öneri uygulandı.',
+              )}
+              onDismiss={(item) => runSuggestionAction(
+                dismissSuggestions, [refToDto(item)], 'Öneri yoksayıldı.',
+              )}
+              onReload={loadSuggestions}
+            />
+          )}
+
           <div className="apya-grid-toolbar" style={{ padding: '12px 14px', borderBottom: '1px solid var(--apya-border-subtle)' }}>
             <Input
               size="sm"
@@ -597,6 +870,11 @@ export function DocumentsRoot() {
             emptyHint={activeFolderId
               ? 'Dosyaları buraya sürükleyin ya da "Yükle" ile ekleyin.'
               : 'Sol taraftan bir klasör seçin; yükleme klasör bağlamında yapılır.'}
+            missingItems={missingItems}
+            onUploadMissing={handleUploadForRequirement}
+            canUpload={canCreate}
+            isTrash={isTrash}
+            onRestore={handleRestore}
           />
 
           {canBulk && (
@@ -630,11 +908,22 @@ export function DocumentsRoot() {
       {deleteTarget && (
         <ConfirmDialog
           title="Belge silinecek"
-          message={`"${deleteTarget.displayName}" ve tüm versiyonları kalıcı olarak silinecek.`}
+          message={`"${deleteTarget.displayName}" ve tüm versiyonları çöp kutusuna taşınacak. Sol alttaki "Çöp kutusu"ndan geri alabilirsiniz.`}
           onConfirm={handleDelete}
           onCancel={() => setDeleteTarget(null)}
         />
       )}
+      {/* Sihirbaz yalnız kurulum hiç yapılmamışken açılır. */}
+      {setupState && !setupState.setupCompleted && (
+        <SetupWizard
+          state={setupState}
+          onDone={async () => {
+            setSetupState({ ...setupState, setupCompleted: true });
+            await Promise.all([loadTree(), loadFiles()]);
+          }}
+        />
+      )}
+
       {toast && <Toast message={toast} onDone={() => setToast(null)} />}
     </div>
   );
