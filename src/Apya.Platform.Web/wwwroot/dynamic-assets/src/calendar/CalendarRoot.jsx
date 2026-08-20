@@ -26,7 +26,7 @@ import { useTeamLoad } from './hooks/useTeamLoad';
 import { useOfflineQueue } from './hooks/useOfflineQueue';
 import { layoutOf, useContainerWidth } from './hooks/useContainerWidth';
 import {
-    MONTH_CELLS, addDays, dayLoad, fmt, groupByDay, isoDay, monthGridStart, stripTime, weekDays,
+    MONTH_CELLS, RISK, addDays, dayLoad, fmt, groupByDay, isoDay, monthGridStart, stripTime, weekDays,
 } from './lib/model';
 
 /** Ajanda penceresi: geriye gecikmişleri, ileriye planı kapsar. */
@@ -154,6 +154,40 @@ export function CalendarRoot() {
         return Object.values(byDay).filter((dayItems) => dayLoad(dayItems) > capacity).length;
     }, [byDay, capacity]);
 
+    /* Risk özeti rayda gösterilir. GÖRÜNEN öğeler üzerinden sayılır: kapalı bir
+       kaynağın gecikmişleri sayaçta görünüp takvimde görünmemeli. */
+    const riskCounts = useMemo(() => {
+        let overdue = 0;
+        let dueToday = 0;
+        for (const item of items) {
+            if (item.isDone) continue;
+            if (item.risk === RISK.OVERDUE) overdue++;
+            else if (item.risk === RISK.DUE_TODAY) dueToday++;
+        }
+        const syncError = (external.data?.accounts ?? []).filter((a) => a.error).length;
+        return { overdue, dueToday, syncError };
+    }, [items, external.data]);
+
+    /* Kapalı kaynak sayısı = "kaç filtre uygulanmış". Yalnız erişilebilir
+       kaynaklar sayılır; izin verilmeyen kaynak zaten hiç çizilmiyor. */
+    const availableSources = useMemo(
+        () => (data?.sources ?? []).filter((s) => s.isAvailable),
+        [data],
+    );
+    const filterCount = useMemo(
+        () => availableSources.filter((s) => !enabledSources.has(s.source)).length,
+        [availableSources, enabledSources],
+    );
+
+    /* En yeni senkron zamanı — birden çok hesap varsa en tazesi gösterilir. */
+    const lastSyncAt = useMemo(() => {
+        const times = (external.data?.accounts ?? [])
+            .map((a) => a.lastSyncTime)
+            .filter(Boolean)
+            .sort();
+        return times.length ? times[times.length - 1] : null;
+    }, [external.data]);
+
     /* Ay değişince seçili gün o ayda kalmaz — panel bayat veri göstermesin. */
     useEffect(() => {
         if (!selectedDay) return;
@@ -226,6 +260,10 @@ export function CalendarRoot() {
                 onToday={goToday}
                 overloadDays={overloadDays}
                 onHelp={() => setHelpOpen(true)}
+                filterCount={filterCount}
+                onClearFilters={resetSources}
+                lastSyncAt={lastSyncAt}
+                syncError={riskCounts.syncError > 0}
             />
 
             {isError && (
@@ -308,6 +346,8 @@ export function CalendarRoot() {
                                     loading={teamLoad.isPending}
                                 />
                             ) : null}
+                            teamMembers={teamLoad.data ?? []}
+                            riskCounts={riskCounts}
                         />
                     </div>
                 )}
@@ -366,6 +406,29 @@ export function CalendarRoot() {
                             onSelectItem={openItem}
                             onSmartDefer={() => setDeferOpen(true)}
                         />
+                    )}
+
+                    {/* Efsane — hücrelerdeki çizgilerin ne anlama geldiği başka
+                        hiçbir yerde yazmıyor. Yalnız çubukların göründüğü
+                        görünümlerde çizilir; ajandada çubuk yok. */}
+                    {!isPending && view !== 'agenda' && (
+                        <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 px-1 text-[10.5px] text-text-tertiary">
+                            <span className="flex items-center gap-1.5">
+                                <span className="h-[3px] w-[18px] rounded-full bg-primary-subtle" aria-hidden="true" />
+                                gün yükü
+                            </span>
+                            <span className="flex items-center gap-1.5">
+                                <span className="h-[3px] w-[18px] rounded-full bg-negative" aria-hidden="true" />
+                                kapasite aşımı
+                            </span>
+                            <span className="flex items-center gap-1.5">
+                                <span
+                                    className="h-[8px] w-[18px] rounded-[3px] border border-dashed border-accent bg-primary-subtle"
+                                    aria-hidden="true"
+                                />
+                                önerilen yeni tarih
+                            </span>
+                        </div>
                     )}
                 </div>
 

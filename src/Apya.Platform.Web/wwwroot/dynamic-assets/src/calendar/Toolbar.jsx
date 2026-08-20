@@ -4,14 +4,38 @@ import { cn } from '../lib/utils';
 
 const VIEW_LABELS = { month: 'Ay', week: 'Hafta', day: 'Gün', agenda: 'Ajanda' };
 
+/** "2 dk önce" / "3 sa önce" / "dün" — rozet dar, uzun tarih sığmaz. */
+function sinceLabel(iso) {
+    if (!iso) return null;
+    const dk = Math.round((Date.now() - new Date(iso).getTime()) / 60000);
+    if (!Number.isFinite(dk) || dk < 0) return null;
+    if (dk < 1) return 'az önce';
+    if (dk < 60) return `${dk} dk önce`;
+    const sa = Math.round(dk / 60);
+    if (sa < 24) return `${sa} sa önce`;
+    const gun = Math.round(sa / 24);
+    return gun === 1 ? 'dün' : `${gun} gün önce`;
+}
+
+/** Yeni görev — kabuğun kendi modal yöneticisi; yoksa sayfaya düşer. */
+function openNewTask() {
+    const url = '/Tasks/CreateModal';
+    if (window.abp?.ModalManager) new window.abp.ModalManager(url).open();
+    else window.location.href = url;
+}
+
 /**
  * Üst araç çubuğu: gezinme + görünüm anahtarı + kapasite uyarısı.
  *
  * Oklar görünüme göre adım atar (ay / hafta / gün). Ajanda bugünden ileri akan
  * bir pencere olduğu için oklar orada GİZLENİR — çalışmayan düğme koymamak için.
  */
-export function Toolbar({ title, view, onView, onPrev, onNext, onToday, overloadDays, onHelp }) {
+export function Toolbar({
+    title, view, onView, onPrev, onNext, onToday, overloadDays, onHelp,
+    filterCount = 0, onClearFilters, lastSyncAt, syncError = false, canCreateTask = true,
+}) {
     const showNav = view !== 'agenda';
+    const since = sinceLabel(lastSyncAt);
     return (
         <div className="flex flex-wrap items-center gap-2">
             {showNav && (
@@ -46,6 +70,40 @@ export function Toolbar({ title, view, onView, onPrev, onNext, onToday, overload
                         <i className="fa fa-triangle-exclamation me-1" aria-hidden="true" />
                         {overloadDays} günde kapasite aşımı
                     </span>
+                )}
+
+                {/* Senkron durumu — yalnız bağlı hesap varsa anlamlı. Hata varsa
+                    rozet kritik renge döner; "en son ne zaman" bilgisi kaybolmaz. */}
+                {(since || syncError) && (
+                    <span
+                        className={cn(
+                            'flex items-center gap-1.5 rounded-md px-2 py-1 text-[11.5px] font-medium',
+                            syncError ? 'bg-negative-50 text-negative-700' : 'text-text-tertiary',
+                        )}
+                        title={syncError ? 'Bir dış takvim senkronlanamıyor' : 'Dış takvimlerin son senkron zamanı'}
+                    >
+                        <span
+                            className={cn('h-[6px] w-[6px] rounded-full', syncError ? 'bg-negative' : 'bg-positive')}
+                            aria-hidden="true"
+                        />
+                        Senkron{since ? ` · ${since}` : ''}
+                    </span>
+                )}
+
+                {/* Filtre — kaç kaynağın kapalı olduğunu gösterir, tıklayınca açar.
+                    Sayaç 0'ken düğme çizilmez: "0 filtre" diye bir durum yok. */}
+                {filterCount > 0 && onClearFilters && (
+                    <button
+                        type="button"
+                        onClick={onClearFilters}
+                        title="Filtreleri temizle — kapalı kaynakları geri aç"
+                        className="flex h-9 items-center gap-1.5 rounded-md border border-default bg-surface-base px-2.5 text-[12px] font-medium text-text-secondary hover:bg-surface-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-border-focus"
+                    >
+                        Filtre
+                        <span className="rounded-full bg-primary-subtle px-1.5 text-[11px] font-semibold text-accent">
+                            {filterCount}
+                        </span>
+                    </button>
                 )}
 
                 <button
@@ -88,6 +146,12 @@ export function Toolbar({ title, view, onView, onPrev, onNext, onToday, overload
                         </button>
                     ))}
                 </div>
+
+                {canCreateTask && (
+                    <Button variant="primary" size="sm" onClick={openNewTask}>
+                        <i className="fa fa-plus me-1.5" aria-hidden="true" />Yeni görev
+                    </Button>
+                )}
             </div>
         </div>
     );

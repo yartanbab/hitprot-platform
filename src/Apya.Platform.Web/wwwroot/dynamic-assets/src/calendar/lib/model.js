@@ -9,18 +9,40 @@
  * (Domain.Shared/Calendars/CalendarSourceType.cs, CalendarRiskLevel.cs).
  */
 
-/** CalendarSourceType — sayısal değer → ekran meta verisi. */
+/**
+ * CalendarSourceType — sayısal değer → ekran meta verisi.
+ *
+ * `railLabel` YALNIZ sol raydaki başlıktır; makette satırlar çoğul yazılır
+ * ("Görevler", "Hibe son tarihleri"). `label` tekildir ve tek öğeden söz eden
+ * yerlerde (drawer başlığı, rozet) kullanılır — ikisini karıştırma.
+ */
 export const SOURCES = {
-    1: { key: 'task',    label: 'Görev',           plural: 'görev',          icon: 'fa-circle-check' },
-    2: { key: 'invoice', label: 'Fatura',          plural: 'fatura',         icon: 'fa-file-invoice' },
-    3: { key: 'grant',   label: 'Hibe',            plural: 'hibe',           icon: 'fa-award' },
-    4: { key: 'expense', label: 'Gider',           plural: 'gider',          icon: 'fa-arrow-trend-down' },
-    5: { key: 'income',  label: 'Gelir',           plural: 'gelir',          icon: 'fa-arrow-trend-up' },
-    6: { key: 'cash',    label: 'Kasa hareketi',   plural: 'kasa hareketi',  icon: 'fa-wallet' },
-    7: { key: 'external', label: 'Dış etkinlik',   plural: 'dış etkinlik',   icon: 'fa-calendar-days' },
+    1: { key: 'task',    label: 'Görev',          plural: 'görev',         icon: 'fa-circle-check',     railLabel: 'Görevler' },
+    2: { key: 'invoice', label: 'Fatura',         plural: 'fatura',        icon: 'fa-file-invoice',     railLabel: 'Faturalar' },
+    3: { key: 'grant',   label: 'Hibe',           plural: 'hibe',          icon: 'fa-award',            railLabel: 'Hibe son tarihleri' },
+    4: { key: 'expense', label: 'Gider',          plural: 'gider',         icon: 'fa-arrow-trend-down', railLabel: 'Gider / gelir' },
+    5: { key: 'income',  label: 'Gelir',          plural: 'gelir',         icon: 'fa-arrow-trend-up',   railLabel: 'Gider / gelir' },
+    6: { key: 'cash',    label: 'Kasa hareketi',  plural: 'kasa hareketi', icon: 'fa-wallet',           railLabel: 'Nakit hareketleri' },
+    7: { key: 'external', label: 'Dış etkinlik',  plural: 'dış etkinlik',  icon: 'fa-calendar-days',    railLabel: 'Dış etkinlikler' },
 };
 
 export const SOURCE_ORDER = [1, 2, 3, 4, 5, 6, 7];
+
+/**
+ * Rayda TEK satır olarak çizilen kaynak grupları.
+ *
+ * Maket ve uygulama promptu gider ile geliri "Gider/gelir vadesi" diye TEK
+ * kaynak sayar. Enum'da ikisi ayrı kalır — sunucu, izin ve tercih kaydı öyle
+ * çalışıyor; birleştirme yalnız GÖRÜNÜM katmanındadır: tek anahtar ikisini
+ * birden çevirir, sayaç ikisinin toplamıdır.
+ */
+export const RAIL_GROUPS = [
+    { key: 'task',    sources: [1] },
+    { key: 'invoice', sources: [2] },
+    { key: 'grant',   sources: [3] },
+    { key: 'money',   sources: [4, 5] },
+    { key: 'cash',    sources: [6] },
+];
 
 /** Ray'da anahtarı olan (izne bağlı) iç kaynaklar — dış etkinlik ayrı bölümde. */
 export const INTERNAL_SOURCE_ORDER = [1, 2, 3, 4, 5, 6];

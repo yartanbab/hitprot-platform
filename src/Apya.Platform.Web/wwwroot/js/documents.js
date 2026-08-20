@@ -1,9 +1,9 @@
 import { j as e, r as o, b as oa } from "./react-vendor.js";
 /* empty css      */
-import { S as Ne, B as T, g as M, h as ca, I as U } from "./Dialog.js";
+import { S as Se, B as T, g as M, h as ca, I as U } from "./Dialog.js";
 import { S as ae } from "./SkeletonShape.js";
 import { E as V } from "./EmptyState.js";
-import { H as Se } from "./Hint.js";
+import { H as we } from "./Hint.js";
 const da = () => {
   var a, n, t;
   return (t = (n = (a = window == null ? void 0 : window.apya) == null ? void 0 : a.platform) == null ? void 0 : n.documents) == null ? void 0 : t.document;
@@ -13,7 +13,7 @@ const da = () => {
 }, C = (a, n) => {
   var t, c, r;
   return (r = (c = (t = window == null ? void 0 : window.abp) == null ? void 0 : t.notify) == null ? void 0 : c[a]) == null ? void 0 : r.call(c, n);
-}, Fe = () => {
+}, ce = () => {
   var a;
   return ((a = window == null ? void 0 : window.abp) == null ? void 0 : a.appPath) ?? "/";
 };
@@ -28,8 +28,8 @@ const S = (a, n = {}) => {
     u != null && u !== "" && t.append(r, u);
   });
   const c = t.toString();
-  return `${Fe()}Documents?handler=${a}${c ? "&" + c : ""}`;
-}, Z = (a, n) => D({ url: a, type: "POST", contentType: "application/json", data: JSON.stringify(n) }), we = (a) => D({ url: S("Files", a), type: "GET" }), Ce = (a) => D({ url: S("File", { id: a }), type: "GET" }), ua = (a, n) => Z(S("UpdateFileMeta", { id: a }), n), ma = (a, n) => D({ url: S("MoveFile", { id: a, targetDocumentId: n }), type: "POST" }), ze = (a, n) => Z(S("BulkMove"), { documentFileIds: a, targetDocumentId: n }), pa = (a, n, t = !1) => Z(S("BulkTag"), { documentFileIds: a, tags: n, remove: t }), ya = (a) => D({ url: S("DeleteFile", { id: a }), type: "POST" }), xa = () => D({ url: S("DocumentTypes"), type: "GET" }), ha = (a) => D({ url: S("WorkSteps", { projectId: a }), type: "GET" }), fa = (a) => D({ url: S("CompliancePackages", { projectId: a }), type: "GET" }), ga = (a, n) => D({ url: S("ComplianceOverview", { projectId: a, periodCode: n }), type: "GET" }), va = (a, n, t) => Z(S("ApplyCompliancePackage"), { projectId: a, packageId: n, periodCode: t }), ja = (a) => D({ url: S("RemoveComplianceAssignment", { assignmentId: a }), type: "POST" }), ka = (a) => Z(S("WaiveComplianceItem"), a), ba = (a) => D({ url: S("Activity", a), type: "GET" }), Na = (a, n) => {
+  return `${ce()}Documents?handler=${a}${c ? "&" + c : ""}`;
+}, Z = (a, n) => D({ url: a, type: "POST", contentType: "application/json", data: JSON.stringify(n) }), Ce = (a) => D({ url: S("Files", a), type: "GET" }), ze = (a) => D({ url: S("File", { id: a }), type: "GET" }), ua = (a, n) => Z(S("UpdateFileMeta", { id: a }), n), ma = (a, n) => D({ url: S("MoveFile", { id: a, targetDocumentId: n }), type: "POST" }), De = (a, n) => Z(S("BulkMove"), { documentFileIds: a, targetDocumentId: n }), pa = (a, n, t = !1) => Z(S("BulkTag"), { documentFileIds: a, tags: n, remove: t }), ya = (a) => D({ url: S("DeleteFile", { id: a }), type: "POST" }), xa = () => D({ url: S("DocumentTypes"), type: "GET" }), ha = (a) => D({ url: S("WorkSteps", { projectId: a }), type: "GET" }), fa = (a) => D({ url: S("CompliancePackages", { projectId: a }), type: "GET" }), ga = (a, n) => D({ url: S("ComplianceOverview", { projectId: a, periodCode: n }), type: "GET" }), va = (a, n, t) => Z(S("ApplyCompliancePackage"), { projectId: a, packageId: n, periodCode: t }), ja = (a) => D({ url: S("RemoveComplianceAssignment", { assignmentId: a }), type: "POST" }), ka = (a) => Z(S("WaiveComplianceItem"), a), ba = (a) => D({ url: S("Activity", a), type: "GET" }), Na = (a, n) => {
   const t = new FormData();
   return t.append("documentId", a), t.append("file", n), D({
     url: S("UploadFile"),
@@ -53,7 +53,7 @@ const G = {
   2: { text: "Kesin", chip: "apya-chip-positive" },
   3: { text: "Eşleşti", chip: "apya-chip-accent" },
   4: { text: "Süre dolan", chip: "apya-chip-negative" }
-}, De = {
+}, Te = {
   1: { text: "Manuel", variant: "neutral" },
   2: { text: "OCR", variant: "brand" },
   3: { text: "AI", variant: "accent" },
@@ -66,7 +66,7 @@ const G = {
   5: "Meta değişti",
   6: "Taşındı"
 };
-function oe(a, n) {
+function de(a, n) {
   var c;
   const t = ((c = (n || "").split(".").pop()) == null ? void 0 : c.toLowerCase()) || "";
   return a != null && a.includes("pdf") || t === "pdf" ? { icon: "fa-file-pdf", color: "#EF4444", label: "PDF" } : a != null && a.includes("sheet") || a != null && a.includes("excel") || ["xlsx", "xls", "csv"].includes(t) ? { icon: "fa-file-excel", color: "#10B981", label: "XLS" } : a != null && a.includes("word") || ["docx", "doc"].includes(t) ? { icon: "fa-file-word", color: "#3B82F6", label: "DOC" } : a != null && a.includes("presentation") || ["pptx", "ppt"].includes(t) ? { icon: "fa-file-powerpoint", color: "#F59E0B", label: "PPT" } : a != null && a.startsWith("image/") || ["png", "jpg", "jpeg", "gif", "webp"].includes(t) ? { icon: "fa-file-image", color: "#8B5CF6", label: "IMG" } : ["zip", "rar", "7z"].includes(t) ? { icon: "fa-file-zipper", color: "#6B7280", label: "ZIP" } : { icon: "fa-file", color: "#6B7280", label: "DOSYA" };
@@ -81,7 +81,7 @@ const za = [
   { key: "expiring", label: "Süresi dolanlar", icon: "fa-clock-rotate-left" },
   { key: "missing-meta", label: "Eksik meta", icon: "fa-triangle-exclamation" }
 ];
-function Ee({
+function Fe({
   node: a,
   depth: n,
   activeKey: t,
@@ -134,7 +134,7 @@ function Ee({
       }
     ),
     h && k && a.children.map((j) => /* @__PURE__ */ e.jsx(
-      Ee,
+      Fe,
       {
         node: j,
         depth: n + 1,
@@ -178,7 +178,7 @@ function Da({
       }
     ),
     a ? /* @__PURE__ */ e.jsx("div", { className: "p-2", children: /* @__PURE__ */ e.jsx(ae, { rows: 5 }) }) : n.length === 0 ? /* @__PURE__ */ e.jsx("div", { className: "text-[11px] text-center py-5 px-2", style: { color: "var(--apya-text-tertiary)" }, children: "Henüz klasör yok." }) : n.map((h) => /* @__PURE__ */ e.jsx(
-      Ee,
+      Fe,
       {
         node: h,
         depth: 0,
@@ -211,14 +211,14 @@ function Da({
     ))
   ] });
 }
-const Be = [
+const Ee = [
   { key: "displayName", label: "Belge", sortable: !0, width: "minmax(0,1fr)" },
   { key: "workStep", label: "İş adımı", sortable: !1, width: "140px" },
   { key: "type", label: "Tür", sortable: !1, width: "96px" },
   { key: "amount", label: "Tutar", sortable: !0, width: "116px", align: "right" },
   { key: "documentDate", label: "Tarih", sortable: !0, width: "96px" },
   { key: "status", label: "Durum", sortable: !1, width: "110px" }
-], $e = `34px ${Be.map((a) => a.width).join(" ")}`;
+], Be = `34px ${Ee.map((a) => a.width).join(" ")}`;
 function Ta({ column: a, sorting: n, onSort: t }) {
   if (!a.sortable)
     return /* @__PURE__ */ e.jsx("span", { style: { textAlign: a.align || "left" }, children: a.label });
@@ -254,7 +254,7 @@ function Ta({ column: a, sorting: n, onSort: t }) {
   );
 }
 function Ia({ file: a, selected: n, checked: t, onSelect: c, onToggleCheck: r, onDragStart: u }) {
-  const p = oe(a.contentType, a.fileName), m = G[a.status] || G[1];
+  const p = de(a.contentType, a.fileName), m = G[a.status] || G[1];
   return /* @__PURE__ */ e.jsxs(
     "div",
     {
@@ -262,7 +262,7 @@ function Ia({ file: a, selected: n, checked: t, onSelect: c, onToggleCheck: r, o
       onDragStart: () => u(a),
       onClick: () => c(a),
       className: N("apya-doc-row", n && "is-selected"),
-      style: { gridTemplateColumns: $e },
+      style: { gridTemplateColumns: Be },
       children: [
         /* @__PURE__ */ e.jsx("span", { onClick: (x) => {
           x.stopPropagation(), r(a.id);
@@ -300,8 +300,8 @@ function Ia({ file: a, selected: n, checked: t, onSelect: c, onToggleCheck: r, o
     }
   );
 }
-function Fa({ file: a, selected: n, onSelect: t, onDragStart: c }) {
-  const r = oe(a.contentType, a.fileName), u = G[a.status] || G[1];
+function $a({ file: a, selected: n, onSelect: t, onDragStart: c }) {
+  const r = de(a.contentType, a.fileName), u = G[a.status] || G[1];
   return /* @__PURE__ */ e.jsxs(
     "button",
     {
@@ -341,7 +341,7 @@ function Fa({ file: a, selected: n, onSelect: t, onDragStart: c }) {
     }
   );
 }
-function Ea({
+function Fa({
   loading: a,
   files: n,
   totalCount: t,
@@ -360,7 +360,7 @@ function Ea({
   emptyHint: E
 }) {
   const i = n.length > 0 && n.every((l) => x.has(l.id)), z = Math.max(1, Math.ceil(t / b));
-  return a ? c === "grid" ? /* @__PURE__ */ e.jsx("div", { className: "apya-tile-grid p-3", children: Array.from({ length: 6 }).map((l, f) => /* @__PURE__ */ e.jsx(Ne, { height: 120, rounded: "lg" }, f)) }) : /* @__PURE__ */ e.jsx("div", { className: "p-3 d-flex flex-column gap-2", children: Array.from({ length: 8 }).map((l, f) => /* @__PURE__ */ e.jsx(Ne, { height: 40, rounded: "md" }, f)) }) : n.length === 0 ? /* @__PURE__ */ e.jsx(
+  return a ? c === "grid" ? /* @__PURE__ */ e.jsx("div", { className: "apya-tile-grid p-3", children: Array.from({ length: 6 }).map((l, f) => /* @__PURE__ */ e.jsx(Se, { height: 120, rounded: "lg" }, f)) }) : /* @__PURE__ */ e.jsx("div", { className: "p-3 d-flex flex-column gap-2", children: Array.from({ length: 8 }).map((l, f) => /* @__PURE__ */ e.jsx(Se, { height: 40, rounded: "md" }, f)) }) : n.length === 0 ? /* @__PURE__ */ e.jsx(
     V,
     {
       icon: /* @__PURE__ */ e.jsx("i", { className: "fa fa-inbox" }),
@@ -369,7 +369,7 @@ function Ea({
     }
   ) : /* @__PURE__ */ e.jsxs(e.Fragment, { children: [
     c === "grid" ? /* @__PURE__ */ e.jsx("div", { className: "apya-tile-grid p-3", children: n.map((l) => /* @__PURE__ */ e.jsx(
-      Fa,
+      $a,
       {
         file: l,
         selected: p === l.id,
@@ -378,7 +378,7 @@ function Ea({
       },
       l.id
     )) }) : /* @__PURE__ */ e.jsxs("div", { children: [
-      /* @__PURE__ */ e.jsxs("div", { className: "apya-doc-row apya-doc-row-head", style: { gridTemplateColumns: $e }, children: [
+      /* @__PURE__ */ e.jsxs("div", { className: "apya-doc-row apya-doc-row-head", style: { gridTemplateColumns: Be }, children: [
         /* @__PURE__ */ e.jsx("span", { onClick: k, style: { cursor: "pointer" }, children: /* @__PURE__ */ e.jsx(
           "i",
           {
@@ -388,7 +388,7 @@ function Ea({
             "aria-checked": i
           }
         ) }),
-        Be.map((l) => /* @__PURE__ */ e.jsx(Ta, { column: l, sorting: r, onSort: u }, l.key))
+        Ee.map((l) => /* @__PURE__ */ e.jsx(Ta, { column: l, sorting: r, onSort: u }, l.key))
       ] }),
       n.map((l) => /* @__PURE__ */ e.jsx(
         Ia,
@@ -430,7 +430,7 @@ function Ea({
     )
   ] });
 }
-function Ba({ count: a, onClear: n, onMove: t, onTag: c, busy: r }) {
+function Ea({ count: a, onClear: n, onMove: t, onTag: c, busy: r }) {
   return a === 0 ? null : /* @__PURE__ */ e.jsxs("div", { className: "apya-doc-bulkbar", children: [
     /* @__PURE__ */ e.jsxs("span", { style: { fontSize: 12.5, fontWeight: 600 }, children: [
       a,
@@ -449,7 +449,7 @@ function Ba({ count: a, onClear: n, onMove: t, onTag: c, busy: r }) {
     /* @__PURE__ */ e.jsx("button", { type: "button", className: "apya-doc-bulkbar-action", onClick: n, children: "Vazgeç" })
   ] });
 }
-function $a({ tags: a }) {
+function Ba({ tags: a }) {
   return a != null && a.length ? /* @__PURE__ */ e.jsx("div", { className: "d-flex flex-wrap gap-1", children: a.map((n) => /* @__PURE__ */ e.jsx("span", { className: N("apya-chip", Ca(n)), children: n }, n)) }) : null;
 }
 function Ra({ field: a, value: n, onChange: t, disabled: c }) {
@@ -500,7 +500,7 @@ function Pa({
         description: "Künye, özel alanlar ve versiyon geçmişi burada görünür."
       }
     ) });
-  const h = oe(a.contentType, a.fileName), k = G[m.status] || G[1], v = F.daysLeft(m.expiryDate), b = (i, z) => {
+  const h = de(a.contentType, a.fileName), k = G[m.status] || G[1], v = F.daysLeft(m.expiryDate), b = (i, z) => {
     x((l) => ({
       ...l,
       fields: l.fields.map((f) => f.fieldId === i ? { ...f, valueText: null, valueNumber: null, valueDate: null, ...z } : f)
@@ -569,7 +569,7 @@ function Pa({
     /* @__PURE__ */ e.jsxs("div", { className: "mb-3", children: [
       /* @__PURE__ */ e.jsxs("div", { className: "apya-md-overline mb-2 d-flex align-items-center", children: [
         "Özel alanlar",
-        /* @__PURE__ */ e.jsx(Se, { text: "Alan şeması belge tipine bağlıdır. Tip değiştirdiğinizde kaydettikten sonra o tipin alanları görünür." })
+        /* @__PURE__ */ e.jsx(we, { text: "Alan şeması belge tipine bağlıdır. Tip değiştirdiğinizde kaydettikten sonra o tipin alanları görünür." })
       ] }),
       /* @__PURE__ */ e.jsxs("div", { className: "d-flex flex-column gap-2", children: [
         /* @__PURE__ */ e.jsxs("label", { className: "d-flex flex-column gap-1", children: [
@@ -634,7 +634,7 @@ function Pa({
             /* @__PURE__ */ e.jsxs("span", { className: "d-flex align-items-center gap-1", style: { fontSize: 11, color: "var(--apya-text-tertiary)" }, children: [
               i.label,
               i.isRequired && /* @__PURE__ */ e.jsx("span", { style: { color: "var(--apya-negative-500)" }, children: "*" }),
-              /* @__PURE__ */ e.jsx(M, { variant: ((z = De[i.fillSource]) == null ? void 0 : z.variant) || "neutral", size: "sm", children: ((l = De[i.fillSource]) == null ? void 0 : l.text) || "—" }),
+              /* @__PURE__ */ e.jsx(M, { variant: ((z = Te[i.fillSource]) == null ? void 0 : z.variant) || "neutral", size: "sm", children: ((l = Te[i.fillSource]) == null ? void 0 : l.text) || "—" }),
               i.confidence !== null && i.confidence !== void 0 && /* @__PURE__ */ e.jsxs("span", { className: "apya-numeric", style: { fontSize: 10 }, children: [
                 "%",
                 i.confidence
@@ -672,12 +672,12 @@ function Pa({
     ] }),
     ((y = a.tags) == null ? void 0 : y.length) > 0 && /* @__PURE__ */ e.jsxs("div", { className: "mb-3", children: [
       /* @__PURE__ */ e.jsx("div", { className: "apya-md-overline mb-2", children: "Etiketler" }),
-      /* @__PURE__ */ e.jsx($a, { tags: a.tags })
+      /* @__PURE__ */ e.jsx(Ba, { tags: a.tags })
     ] }),
     /* @__PURE__ */ e.jsxs("div", { children: [
       /* @__PURE__ */ e.jsxs("div", { className: "apya-md-overline mb-2 d-flex align-items-center", children: [
         "Versiyonlar",
-        /* @__PURE__ */ e.jsx(Se, { text: "Aynı klasöre aynı isimle yeniden yüklenen dosya yeni versiyon olur; önceki versiyonlar burada kalır." })
+        /* @__PURE__ */ e.jsx(we, { text: "Aynı klasöre aynı isimle yeniden yüklenen dosya yeni versiyon olur; önceki versiyonlar burada kalır." })
       ] }),
       (E = a.versions) != null && E.length ? /* @__PURE__ */ e.jsx("div", { className: "d-flex flex-column gap-1", children: a.versions.map((i) => /* @__PURE__ */ e.jsxs("div", { className: "d-flex align-items-center justify-content-between", style: { fontSize: 11.5 }, children: [
         /* @__PURE__ */ e.jsxs("span", { className: "d-flex align-items-center gap-2", style: { minWidth: 0 }, children: [
@@ -692,7 +692,7 @@ function Pa({
     ] })
   ] });
 }
-const Te = {
+const Ie = {
   1: { text: "Karşılandı", chip: "apya-chip-positive", icon: "fa-check" },
   2: { text: "Eksik", chip: "apya-chip-warning", icon: "fa-triangle-exclamation" },
   3: { text: "Feragat", chip: "apya-chip-neutral", icon: "fa-ban" }
@@ -702,7 +702,7 @@ function La({ percent: a, blocking: n }) {
   return /* @__PURE__ */ e.jsx("div", { className: "apya-doc-progress", role: "progressbar", "aria-valuenow": a, "aria-valuemin": 0, "aria-valuemax": 100, children: /* @__PURE__ */ e.jsx("div", { style: { width: `${a}%`, background: t } }) });
 }
 function Oa({ item: a, canManage: n, onWaive: t, busy: c }) {
-  const r = Te[a.status] || Te[2], u = a.workStepName ? `${a.workStepOrder} · ${a.workStepName}` : a.periodCode || Ma[a.scope];
+  const r = Ie[a.status] || Ie[2], u = a.workStepName ? `${a.workStepOrder} · ${a.workStepName}` : a.periodCode || Ma[a.scope];
   return /* @__PURE__ */ e.jsxs("div", { className: N("apya-doc-check-row", a.status === 2 && a.isBlocking && "is-blocking"), children: [
     /* @__PURE__ */ e.jsxs("span", { className: N("apya-chip", r.chip), children: [
       /* @__PURE__ */ e.jsx("i", { className: `fa ${r.icon}` }),
@@ -999,7 +999,7 @@ function qa({ projectId: a, documentFileId: n }) {
     )
   ] });
 }
-const re = 25;
+const oe = 25;
 function Ga({ message: a, onDone: n }) {
   return o.useEffect(() => {
     const t = setTimeout(n, 2800);
@@ -1074,7 +1074,7 @@ function Ya({ total: a, expiring: n, compliance: t }) {
   ] }, r.key)) });
 }
 function Ha() {
-  const [a, n] = o.useState([]), [t, c] = o.useState([]), [r, u] = o.useState([]), [p, m] = o.useState(!0), [x, h] = o.useState([]), [k, v] = o.useState(0), [b, j] = o.useState(null), [y, E] = o.useState(!0), [i, z] = o.useState({ key: "all", kind: "all" }), [l, f] = o.useState(/* @__PURE__ */ new Set()), [I, K] = o.useState(""), [L, Re] = o.useState("creationTime desc"), [se, ce] = o.useState("list"), [te, J] = o.useState(0), [q, Ae] = o.useState("files"), [Pe, Me] = o.useState(null), [de, ue] = o.useState(null), [Le, ne] = o.useState(null), [Oe, me] = o.useState(!1), [We, pe] = o.useState(!1), [$, O] = o.useState(/* @__PURE__ */ new Set()), [Ue, Ke] = o.useState(null), le = o.useRef([]), [_, ie] = o.useState(null), [ye, xe] = o.useState(null), [qe, he] = o.useState(!1), fe = o.useRef(null), ge = H("Platform.Documents.Create"), Ge = H("Platform.Documents.ManageMeta"), _e = H("Platform.Documents.BulkOperations"), Ye = H("Platform.Documents.Delete"), W = o.useCallback((s) => xe(s), []), Q = o.useCallback(async () => {
+  const [a, n] = o.useState([]), [t, c] = o.useState([]), [r, u] = o.useState([]), [p, m] = o.useState(!0), [x, h] = o.useState([]), [k, v] = o.useState(0), [b, j] = o.useState(null), [y, E] = o.useState(!0), [i, z] = o.useState({ key: "all", kind: "all" }), [l, f] = o.useState(/* @__PURE__ */ new Set()), [I, K] = o.useState(""), [L, Re] = o.useState("creationTime desc"), [se, ue] = o.useState("list"), [te, J] = o.useState(0), [q, Ae] = o.useState("files"), [Pe, Me] = o.useState(null), [me, pe] = o.useState(null), [Le, ne] = o.useState(null), [Oe, ye] = o.useState(!1), [We, xe] = o.useState(!1), [R, O] = o.useState(/* @__PURE__ */ new Set()), [Ue, Ke] = o.useState(null), le = o.useRef([]), [_, ie] = o.useState(null), [he, fe] = o.useState(null), [qe, ge] = o.useState(!1), ve = o.useRef(null), re = H("Platform.Documents.Create"), Ge = H("Platform.Documents.ManageMeta"), _e = H("Platform.Documents.BulkOperations"), Ye = H("Platform.Documents.Delete"), W = o.useCallback((s) => fe(s), []), Q = o.useCallback(async () => {
     m(!0);
     try {
       const [s, d, g] = await Promise.all([
@@ -1092,26 +1092,26 @@ function Ha() {
   o.useEffect(() => {
     Q();
   }, [Q]);
-  const ve = o.useMemo(() => {
-    const s = { maxResultCount: re, skipCount: te * re, sorting: L };
+  const je = o.useMemo(() => {
+    const s = { maxResultCount: oe, skipCount: te * oe, sorting: L };
     return I.trim() && (s.filterText = I.trim()), i.kind === "folder" ? (s.documentId = i.documentId, s.includeSubFolders = !0) : i.kind === "workstep" ? s.workStepId = i.workStepId : i.kind === "smart" && i.smart === "expiring" ? s.expiringWithinDays = 30 : i.kind === "smart" && i.smart === "missing-meta" && (s.missingRequiredFields = !0), s;
-  }, [i, te, L, I]), R = o.useCallback(async () => {
+  }, [i, te, L, I]), A = o.useCallback(async () => {
     E(!0);
     try {
-      const s = await we(ve);
+      const s = await Ce(je);
       h(s.items ?? []), v(s.totalCount ?? 0);
     } catch (s) {
       C("error", "Belge listesi yüklenemedi."), console.error("[Documents] loadFiles", s);
     } finally {
       E(!1);
     }
-  }, [ve]);
+  }, [je]);
   o.useEffect(() => {
-    R();
-  }, [R]);
+    A();
+  }, [A]);
   const X = o.useCallback(async () => {
     try {
-      const s = await we({ maxResultCount: 1, skipCount: 0, expiringWithinDays: 30 });
+      const s = await Ce({ maxResultCount: 1, skipCount: 0, expiringWithinDays: 30 });
       j(s.totalCount ?? 0);
     } catch (s) {
       console.error("[Documents] loadKpis", s);
@@ -1153,16 +1153,16 @@ function Ha() {
     });
     return g("root");
   }, [a, t]), Ve = o.useCallback(async (s) => {
-    ue(s.id), me(!0);
+    pe(s.id), ye(!0);
     try {
-      ne(await Ce(s.id));
+      ne(await ze(s.id));
     } catch (d) {
       C("error", "Belge detayı açılamadı."), console.error("[Documents] openDetail", d);
     } finally {
-      me(!1);
+      ye(!1);
     }
   }, []), Ze = async (s) => {
-    pe(!0);
+    xe(!0);
     try {
       await ua(s.id, {
         displayName: s.displayName,
@@ -1183,28 +1183,28 @@ function Ha() {
           valueDate: d.valueDate ?? null
         })),
         tags: s.tags || []
-      }), W("Belge güncellendi."), ne(await Ce(s.id)), await R();
+      }), W("Belge güncellendi."), ne(await ze(s.id)), await A();
     } catch (d) {
       C("error", "Belge güncellenemedi."), console.error("[Documents] handleSave", d);
     } finally {
-      pe(!1);
+      xe(!1);
     }
   }, Je = async () => {
     if (_)
       try {
-        await ya(_.id), de === _.id && (ue(null), ne(null)), W("Belge silindi."), await Promise.all([R(), X()]);
+        await ya(_.id), me === _.id && (pe(null), ne(null)), W("Belge silindi."), await Promise.all([A(), X()]);
       } catch (s) {
         C("error", "Belge silinemedi."), console.error("[Documents] handleDelete", s);
       } finally {
         ie(null);
       }
   }, Qe = (s) => {
-    le.current = $.has(s.id) ? Array.from($) : [s.id];
+    le.current = R.has(s.id) ? Array.from(R) : [s.id];
   }, Xe = async (s) => {
     const d = le.current;
     if (d.length)
       try {
-        d.length === 1 ? await ma(d[0], s) : await ze(d, s), W(d.length === 1 ? "Belge taşındı." : `${d.length} belge taşındı.`), O(/* @__PURE__ */ new Set()), await R();
+        d.length === 1 ? await ma(d[0], s) : await De(d, s), W(d.length === 1 ? "Belge taşındı." : `${d.length} belge taşındı.`), O(/* @__PURE__ */ new Set()), await A();
       } catch (g) {
         C("error", "Taşıma başarısız oldu."), console.error("[Documents] move", g);
       } finally {
@@ -1219,7 +1219,7 @@ function Ha() {
       return;
     }
     try {
-      await ze(Array.from($), d.id), W(`${$.size} belge taşındı.`), O(/* @__PURE__ */ new Set()), await R();
+      await De(Array.from(R), d.id), W(`${R.size} belge taşındı.`), O(/* @__PURE__ */ new Set()), await A();
     } catch (g) {
       C("error", "Toplu taşıma başarısız oldu."), console.error("[Documents] bulkMove", g);
     }
@@ -1229,34 +1229,34 @@ function Ha() {
     const d = s.split(",").map((g) => g.trim()).filter(Boolean);
     if (d.length)
       try {
-        await pa(Array.from($), d), W(`${$.size} belge etiketlendi.`), O(/* @__PURE__ */ new Set()), await R();
+        await pa(Array.from(R), d), W(`${R.size} belge etiketlendi.`), O(/* @__PURE__ */ new Set()), await A();
       } catch (g) {
         C("error", "Etiketleme başarısız oldu."), console.error("[Documents] bulkTag", g);
       }
-  }, A = i.kind === "folder" ? i.documentId : null, je = i.projectId || null, ke = async (s) => {
-    if (!(!A || !(s != null && s.length))) {
-      he(!0);
+  }, $ = i.kind === "folder" ? i.documentId : null, ke = i.projectId || null, be = async (s) => {
+    if (!(!$ || !(s != null && s.length))) {
+      ge(!0);
       try {
         for (const d of Array.from(s))
-          await Na(A, d);
-        W(s.length === 1 ? "Dosya yüklendi." : `${s.length} dosya yüklendi.`), await Promise.all([R(), X(), Q()]);
+          await Na($, d);
+        W(s.length === 1 ? "Dosya yüklendi." : `${s.length} dosya yüklendi.`), await Promise.all([A(), X(), Q()]);
       } catch (d) {
         C("error", "Dosya yüklenemedi."), console.error("[Documents] upload", d);
       } finally {
-        he(!1);
+        ge(!1);
       }
     }
   }, sa = () => {
-    const s = new window.abp.ModalManager(Fe() + "Documents/CreateModal");
-    s.open({ parentDocumentId: A || void 0 }), s.onResult(() => {
+    const s = new window.abp.ModalManager(ce() + "Documents/CreateModal");
+    s.open({ parentDocumentId: $ || void 0 }), s.onResult(() => {
       Q(), W("Klasör oluşturuldu.");
     });
-  }, be = (s) => f((d) => {
+  }, Ne = (s) => f((d) => {
     const g = new Set(d);
     return g.has(s) ? g.delete(s) : g.add(s), g;
   }), ta = (s) => {
     var d;
-    z(s), J(0), O(/* @__PURE__ */ new Set()), (d = s.key) != null && d.startsWith("folder-") && be(s.key);
+    z(s), J(0), O(/* @__PURE__ */ new Set()), (d = s.key) != null && d.startsWith("folder-") && Ne(s.key);
   }, na = (s) => O((d) => {
     const g = new Set(d);
     return g.has(s) ? g.delete(s) : g.add(s), g;
@@ -1267,11 +1267,11 @@ function Ha() {
       className: "apya-fade-in px-4 py-4 sm:px-7 sm:py-7 mx-auto",
       style: { maxWidth: 1560 },
       onDragOver: (s) => {
-        A && s.preventDefault();
+        $ && s.preventDefault();
       },
       onDrop: (s) => {
         var d;
-        !A || !((d = s.dataTransfer.files) != null && d.length) || (s.preventDefault(), ke(s.dataTransfer.files));
+        !$ || !((d = s.dataTransfer.files) != null && d.length) || (s.preventDefault(), be(s.dataTransfer.files));
       },
       children: [
         /* @__PURE__ */ e.jsxs("div", { className: "d-flex align-items-start justify-content-between flex-wrap gap-3 mb-4", children: [
@@ -1280,18 +1280,26 @@ function Ha() {
             /* @__PURE__ */ e.jsx("p", { style: { fontSize: 12, color: "var(--apya-text-tertiary)", margin: "4px 0 0" }, children: "Klasörler, belgeler ve meta veri" })
           ] }),
           /* @__PURE__ */ e.jsxs("div", { className: "d-flex align-items-center gap-2", children: [
-            ge && /* @__PURE__ */ e.jsx(T, { variant: "secondary", leadingIcon: /* @__PURE__ */ e.jsx("i", { className: "fa fa-folder-plus" }), onClick: sa, children: "Yeni klasör" }),
-            ge && /* @__PURE__ */ e.jsx(
+            re && /* @__PURE__ */ e.jsx(
+              "a",
+              {
+                className: "apya-doc-linkbtn",
+                href: `${ce()}Documents/Upload${$ ? `?documentId=${$}` : ""}`,
+                children: "Toplu yükleme"
+              }
+            ),
+            re && /* @__PURE__ */ e.jsx(T, { variant: "secondary", leadingIcon: /* @__PURE__ */ e.jsx("i", { className: "fa fa-folder-plus" }), onClick: sa, children: "Yeni klasör" }),
+            re && /* @__PURE__ */ e.jsx(
               T,
               {
                 variant: "primary",
                 isLoading: qe,
-                disabled: !A,
-                title: A ? void 0 : "Önce bir klasör seçin",
+                disabled: !$,
+                title: $ ? void 0 : "Önce bir klasör seçin",
                 leadingIcon: /* @__PURE__ */ e.jsx("i", { className: "fa fa-upload" }),
                 onClick: () => {
                   var s;
-                  return (s = fe.current) == null ? void 0 : s.click();
+                  return (s = ve.current) == null ? void 0 : s.click();
                 },
                 children: "Yükle"
               }
@@ -1299,12 +1307,12 @@ function Ha() {
             /* @__PURE__ */ e.jsx(
               "input",
               {
-                ref: fe,
+                ref: ve,
                 type: "file",
                 multiple: !0,
                 hidden: !0,
                 onChange: (s) => {
-                  ke(s.target.files), s.target.value = "";
+                  be(s.target.files), s.target.value = "";
                 }
               }
             )
@@ -1335,7 +1343,7 @@ function Ha() {
               tree: He,
               activeKey: i.key,
               expanded: l,
-              onToggle: be,
+              onToggle: Ne,
               onSelect: ta,
               onDropFiles: Xe,
               dragTarget: Ue,
@@ -1345,11 +1353,11 @@ function Ha() {
           q === "compliance" ? /* @__PURE__ */ e.jsx("div", { className: "apya-docs-main", children: /* @__PURE__ */ e.jsx(
             Wa,
             {
-              projectId: je,
+              projectId: ke,
               periodCode: null,
               onSummaryChange: Me
             }
-          ) }) : q === "activity" ? /* @__PURE__ */ e.jsx("div", { className: "apya-docs-main", children: /* @__PURE__ */ e.jsx(qa, { projectId: je, documentFileId: null }) }) : /* @__PURE__ */ e.jsxs("div", { className: "apya-docs-main", children: [
+          ) }) : q === "activity" ? /* @__PURE__ */ e.jsx("div", { className: "apya-docs-main", children: /* @__PURE__ */ e.jsx(qa, { projectId: ke, documentFileId: null }) }) : /* @__PURE__ */ e.jsxs("div", { className: "apya-docs-main", children: [
             /* @__PURE__ */ e.jsxs("div", { className: "apya-grid-toolbar", style: { padding: "12px 14px", borderBottom: "1px solid var(--apya-border-subtle)" }, children: [
               /* @__PURE__ */ e.jsx(
                 U,
@@ -1374,7 +1382,7 @@ function Ha() {
                   {
                     type: "button",
                     className: N(se === "list" && "is-active"),
-                    onClick: () => ce("list"),
+                    onClick: () => ue("list"),
                     "aria-label": "Liste görünümü",
                     children: /* @__PURE__ */ e.jsx("i", { className: "fa fa-list" })
                   }
@@ -1384,7 +1392,7 @@ function Ha() {
                   {
                     type: "button",
                     className: N(se === "grid" && "is-active"),
-                    onClick: () => ce("grid"),
+                    onClick: () => ue("grid"),
                     "aria-label": "Kart görünümü",
                     children: /* @__PURE__ */ e.jsx("i", { className: "fa fa-border-all" })
                   }
@@ -1392,7 +1400,7 @@ function Ha() {
               ] })
             ] }),
             /* @__PURE__ */ e.jsx(
-              Ea,
+              Fa,
               {
                 loading: y,
                 files: x,
@@ -1402,22 +1410,22 @@ function Ha() {
                 onSort: (s) => {
                   Re(s), J(0);
                 },
-                selectedId: de,
+                selectedId: me,
                 onSelect: Ve,
-                checkedIds: $,
+                checkedIds: R,
                 onToggleCheck: na,
                 onToggleAll: la,
                 page: te,
-                pageSize: re,
+                pageSize: oe,
                 onPageChange: J,
                 onDragStart: Qe,
-                emptyHint: A ? 'Dosyaları buraya sürükleyin ya da "Yükle" ile ekleyin.' : "Sol taraftan bir klasör seçin; yükleme klasör bağlamında yapılır."
+                emptyHint: $ ? 'Dosyaları buraya sürükleyin ya da "Yükle" ile ekleyin.' : "Sol taraftan bir klasör seçin; yükleme klasör bağlamında yapılır."
               }
             ),
             _e && /* @__PURE__ */ e.jsx(
-              Ba,
+              Ea,
               {
-                count: $.size,
+                count: R.size,
                 onClear: () => O(/* @__PURE__ */ new Set()),
                 onMove: ea,
                 onTag: aa
@@ -1447,10 +1455,10 @@ function Ha() {
             onCancel: () => ie(null)
           }
         ),
-        ye && /* @__PURE__ */ e.jsx(Ga, { message: ye, onDone: () => xe(null) })
+        he && /* @__PURE__ */ e.jsx(Ga, { message: he, onDone: () => fe(null) })
       ]
     }
   );
 }
-const Ie = document.getElementById("documents-island");
-Ie && oa(Ie).render(/* @__PURE__ */ e.jsx(Ha, {}));
+const $e = document.getElementById("documents-island");
+$e && oa($e).render(/* @__PURE__ */ e.jsx(Ha, {}));

@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Volo.Abp.Application.Services;
+using Volo.Abp.Domain.Entities;
 using Volo.Abp.Domain.Repositories;
 using Volo.Abp.Identity;
 using Apya.Platform.Permissions;
@@ -51,7 +52,22 @@ public class DocumentAppService :
     public virtual async Task<DocumentAttachmentDto> AddAttachmentAsync(Guid documentId, string fileName, string storedFileName, string contentType, long fileSize)
     {
         // Belge var mı + tenant sınırı repository filtreleriyle doğrulanır (yoksa EntityNotFoundException).
-        var folder = await Repository.GetAsync(documentId);
+        //
+        // 🔴 İZLEMEDEN oku. Repository.GetAsync klasörü değişiklik izleyicisine alıyordu;
+        // altına DocumentFile/DocumentAttachment eklenince EF, ilişki düzeltmesi sırasında
+        // klasörü de "değişmiş" sayıp ConcurrencyStamp'li bir UPDATE üretiyordu. AYNI
+        // klasöre eşzamanlı iki yükleme geldiğinde ikincisi AbpDbConcurrencyException ile
+        // düşüyordu — yükleme kuyruğunda 4 dosyanın 2-3'ü HER SEFERİNDE hata veriyordu,
+        // iki kullanıcı aynı klasöre aynı anda yüklediğinde de aynısı olurdu.
+        // Burada yalnız varlık kontrolü ve ProjectId gerekiyor; izlemeye gerek yok.
+        var folderQueryable = await Repository.GetQueryableAsync();
+        var folder = await AsyncExecuter.FirstOrDefaultAsync(
+            folderQueryable.AsNoTracking().Where(d => d.Id == documentId));
+
+        if (folder == null)
+        {
+            throw new EntityNotFoundException(typeof(Document), documentId);
+        }
 
         // Aynı klasörde aynı isimde bir dosya zaten varsa: yeni yükleme onun yeni versiyonu olur.
         var existingLatest = (await _attachmentRepository.GetListAsync(x =>
@@ -142,6 +158,7 @@ public class DocumentAppService :
                 Id = x.Id,
                 CreationTime = x.CreationTime,
                 DocumentId = x.DocumentId,
+                DocumentFileId = x.DocumentFileId,
                 FileName = x.FileName,
                 ContentType = x.ContentType,
                 FileSize = x.FileSize,
@@ -257,6 +274,7 @@ public class DocumentAppService :
             Id = attachment.Id,
             CreationTime = attachment.CreationTime,
             DocumentId = attachment.DocumentId,
+            DocumentFileId = attachment.DocumentFileId,
             FileName = attachment.FileName,
             ContentType = attachment.ContentType,
             FileSize = attachment.FileSize,

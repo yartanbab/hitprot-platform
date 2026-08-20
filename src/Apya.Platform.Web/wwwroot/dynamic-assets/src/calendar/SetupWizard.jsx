@@ -34,7 +34,9 @@ export function SetupWizard({ open, counts, onDone }) {
                 sources: [...sources],
                 setupCompleted: true,
             },
-            { onSettled: onDone },
+            /* onSettled DEĞİL: hata durumunda da kapanırsa ayarlar sessizce
+               kaybolur ve kullanıcı kurulumu yaptığını sanır. */
+            { onSuccess: onDone },
         );
     };
 
@@ -177,6 +179,12 @@ export function SetupWizard({ open, counts, onDone }) {
                         </>
                     )}
                 </div>
+
+                {update.isError && (
+                    <p role="alert" className="px-5 pb-3 text-[11px] text-negative-700">
+                        {update.error?.message || 'Ayarlar kaydedilemedi, lütfen tekrar deneyin.'}
+                    </p>
+                )}
 
                 <footer className="flex items-center gap-2 border-t border-subtle px-5 py-3">
                     <span className="text-[11.5px] text-text-tertiary">Adım {step + 1} / {STEPS.length}</span>
