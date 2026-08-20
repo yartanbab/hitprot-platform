@@ -1,12 +1,20 @@
-# Deploy delta — 2026-08-20 (`b82e481` → `main`)
+# Deploy delta — 2026-08-20 (`b82e481` → bu belgenin bulunduğu `main`)
 
-Bu, **canlıdaki `b82e481`** (2026-08-16 dördüncü yayın) ile bu yayının `main`'i arasındaki farktır.
-Tam Plesk süreci için `docs/deployment/plesk-windows.md` geçerli; bu belge yalnız **bu sürüme özel**
-zorunlu adımları ve davranış değişikliklerini toplar.
+Bu, **canlıdaki `b82e481`** (2026-08-16 dördüncü yayın) ile bu yayının `main`'i (PR #205 + #206
+dahil) arasındaki farktır — **kesin sha paket adında yazar.**
+Tam Plesk süreci için `docs/deployment/plesk-windows.md`
+geçerli; bu belge yalnız **bu sürüme özel** zorunlu adımları ve davranış değişikliklerini toplar.
 
 **Yükleme biçimi (bu yayın için karar):** tüm kod baştan yüklenecek — **full self-contained paket**.
 Incremental FTP yolu bu sürümde kullanılmıyor (bir önceki runbook'taki `⚡ Hızlı incremental` bölümü
 hâlâ geçerli bir yöntemdir, ama 21 PR'lık bu deltada dosya listesi çok geniş).
+
+**İki paket üretilir** (Masaüstünde):
+
+| Paket | Ne için | Sonrası |
+|---|---|---|
+| `Apya-Yayin-<sha>.zip` | Web uygulaması — sunucudaki site köküne açılır | Kalıcı |
+| `Apya-DbMigrator-<sha>.zip` | 12 migration + seed'leri uygular, Plesk Zamanlanmış Görev ile **bir kez** çalışır | 🔴 **Bitince sunucudan SİL** (sır içerir) |
 
 ---
 
@@ -37,7 +45,11 @@ korunuyor → `/ReleaseNotes` sayfasında **iki sürüm birden** listelenir.
   `dynamic-assets/yarn.lock`'ta oluşan değişikliği **commit etme** (install-libs artığı).
 - `dotnet publish -c Release -r win-x64 --self-contained true` (kısa yola, ör. `C:\ApyaPublish`).
 - **Pakete GİRMEMELİ:** `openiddict.pfx` (sunucudaki sertifikayı ezerse `CertificatePassword`
-  eşleşmez → uygulama açılmadan çöker), `appsettings.secrets.json` (`CopyToPublishDirectory=Never`).
+  eşleşmez → uygulama açılmadan çöker), `appsettings.secrets.json`.
+  🔴 **DbMigrator paketinde secrets dosyasına ayrıca dikkat:** Web'de `CopyToPublishDirectory=Never`
+  ama **`Apya.Platform.DbMigrator.csproj`'de `PreserveNewest`** — yani yerelde o dizinde bir
+  `appsettings.secrets.json` varsa **publish çıktısına kopyalanır.** Paketlemeden önce publish
+  klasöründe olmadığını doğrula (paketleme script'i bulursa siler ve uyarır).
 - ZIP üretirken ters-slash tuzağı: `ZipFile::Open($zip,'Create')` + entry adını `-replace '\\','/'`.
   Denetim: ZIP'i açıp `wwwroot/libs` girdi sayısını say (0 = ayraç bozuk).
 
