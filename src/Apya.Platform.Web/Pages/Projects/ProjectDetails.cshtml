@@ -364,6 +364,10 @@
                    genel menüde değil burada duruyorlar. *@
                 @if (await AuthorizationService.IsGrantedAsync(PlatformPermissions.Documents.Default))
                 {
+                    <a href="/Documents/Scope?projectId=@Model.Project?.Id" class="apya-console-menu-item text-decoration-none">
+                        <span class="apya-console-menu-icon"><i class="fa fa-diagram-project" aria-hidden="true"></i></span>
+                        Proje kapsamı
+                    </a>
                     <a href="/Documents/Timeline?projectId=@Model.Project?.Id" class="apya-console-menu-item text-decoration-none">
                         <span class="apya-console-menu-icon"><i class="fa fa-timeline" aria-hidden="true"></i></span>
                         Zaman çizelgesi & bütçe

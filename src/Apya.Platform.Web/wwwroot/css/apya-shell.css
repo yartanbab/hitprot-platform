@@ -1787,6 +1787,42 @@ i.apya-priority-dot {
 }
 .apya-doc-row-head:hover { background: var(--apya-surface-sunken); }
 
+/* ── Proje kapsamı ağacı ─────────────────────────────────────────────────
+   Satır yüksekliği .apya-doc-row'dan (var(--row-h)) gelir; yoğunluk anahtarı
+   bu ağaçta da çalışsın diye burada EZİLMEZ. Girinti satır içinde inline
+   padding ile verilir — derinlik veriden gelir, sınıfa gömülemez. */
+.apya-doc-scope-row.is-group { background: var(--apya-surface-sunken); }
+.apya-doc-scope-row.is-missing { background: var(--apya-warning-50); }
+.apya-doc-scope-row.is-missing:hover { background: var(--apya-warning-100); }
+.apya-doc-scope-row.is-total {
+    background: var(--apya-surface-sunken);
+    border-bottom: none;
+    border-top: 1px solid var(--apya-border-default);
+}
+.apya-doc-scope-caret {
+    width: 14px;
+    flex: none;
+    font-size: 9px;
+    color: var(--apya-text-tertiary);
+}
+.apya-doc-scope-icon {
+    width: 20px;
+    height: 20px;
+    border-radius: 6px;
+    display: grid;
+    place-items: center;
+    font-size: 9.5px;
+    flex: none;
+    background: var(--apya-surface-sunken);
+    color: var(--apya-text-secondary);
+}
+.apya-doc-scope-icon.is-project { background: var(--apya-accent-soft); color: var(--apya-accent-500); }
+.apya-doc-scope-icon.is-workstep { background: var(--apya-accent-soft); color: var(--apya-accent-500); }
+.apya-doc-scope-icon.is-document { background: rgba(5, 150, 105, .14); color: var(--apya-positive-500); }
+.apya-doc-scope-icon.is-missingitem { background: rgba(217, 119, 6, .16); color: var(--apya-warning-600); }
+.apya-doc-scope-icon.is-task,
+.apya-doc-scope-icon.is-subtask { background: var(--apya-ai-50); color: var(--apya-ai-600); }
+
 .apya-doc-viewtoggle {
     display: flex;
     border: 1px solid var(--apya-border-default);
