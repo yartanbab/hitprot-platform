@@ -1,5 +1,5 @@
 import React from 'react';
-import { Slot } from '@radix-ui/react-slot';
+import { Slot, Slottable } from '@radix-ui/react-slot';
 import { cva } from 'class-variance-authority';
 import { cn } from '../../lib/utils';
 
@@ -115,9 +115,17 @@ const Button = React.forwardRef(function Button(
             {...props}
         >
             {isLoading ? <Spinner /> : leadingIcon}
-            <span className={isLoading ? 'opacity-80' : undefined}>
-                {isLoading && loadingText ? loadingText : children}
-            </span>
+            {/* asChild'da <span> sarmalayıcı KULLANILAMAZ: Slot tek bir element
+                çocuk bekler, ikon + span + trailing üçlüsü onu düşürür
+                ("Slot failed to slot onto its children" → ada komple çöker).
+                Slottable, ikonları çocuğun kendi içine enjekte ettirir. */}
+            {asChild ? (
+                <Slottable>{children}</Slottable>
+            ) : (
+                <span className={isLoading ? 'opacity-80' : undefined}>
+                    {isLoading && loadingText ? loadingText : children}
+                </span>
+            )}
             {!isLoading && trailingIcon}
         </Comp>
     );
