@@ -79,7 +79,13 @@ public class ReportBuilderModel : AbpPageModel
         var projects = await _projectAppService.GetListAsync(
             new PagedAndSortedResultRequestDto { MaxResultCount = 200, Sorting = "Name" });
 
+        // Host bağlamında ProjectAppService tenant süzgecini bilinçli olarak KAPATIR
+        // (host tüm kiracıların projesini görür). Rapor derleyici zinciri ise süzgeci
+        // açık bırakır: yabancı bir proje seçilince Preview "Project bulunamadı" (404)
+        // döner. Seçici bu yüzden derleyicinin gerçekten derleyebildiği kümeye indirilir.
+        // Kiracı bağlamında süzgeç zaten açık olduğundan bu satır etkisizdir.
         return new JsonResult(projects.Items
+            .Where(p => p.TenantId == CurrentTenant.Id)
             .Select(p => new { id = p.Id, name = p.Name, code = p.Code })
             .ToList());
     }
