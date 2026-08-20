@@ -89,6 +89,21 @@ public static class PlatformSettings
         public const string Sources = Prefix + ".Calendar.Sources";
     }
 
+    /// <summary>
+    /// İlk giriş tanıtım turu — kullanıcı seviyesinde görülme takibi
+    /// (Calendar.SetupCompleted ile aynı ray).
+    /// </summary>
+    public static class Tour
+    {
+        /// <summary>
+        /// Tanıtım turu tamamlandı veya atlandı mı? "true" = ilk açılışta bir daha
+        /// gösterilmez (kullanıcı menüsünden istenildiğinde yine açılabilir).
+        /// Kullanıcı seviyesinde saklanır, cihazlar arası taşınır; ayar ekranında
+        /// GÖSTERİLMEZ (iç değer).
+        /// </summary>
+        public const string Completed = Prefix + ".Tour.Completed";
+    }
+
     /// <summary>Sürüm notları ("Yenilikler") — kullanıcı seviyesinde görülme takibi.</summary>
     public static class ReleaseNotes
     {

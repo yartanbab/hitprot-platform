@@ -36,6 +36,17 @@ public class PlatformMenuContributor : IMenuContributor
             icon: "fa fa-sliders",
             url: "/Settings",
             order: 100));
+
+        // Tanıtım turunu istenildiği zaman yeniden açar. Menü öğesi bir URL taşımak
+        // zorunda olduğu için modal doğrudan tetiklenemez; ?tur=1 ile Dashboard'a
+        // gidilir, ProductTourViewComponent bu işareti görüp pencereyi açar ve
+        // adresi temizler.
+        context.Menu.AddItem(new ApplicationMenuItem(
+            "Apya.Account.Tour",
+            l["Menu:ProductTour"],
+            icon: "fa fa-circle-play",
+            url: "/Dashboard?tur=1",
+            order: 101));
     }
 
     private async Task ConfigureMainMenuAsync(MenuConfigurationContext context)
