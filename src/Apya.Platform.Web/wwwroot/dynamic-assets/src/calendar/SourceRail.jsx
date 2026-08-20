@@ -13,10 +13,19 @@ import { SOURCES, SOURCE_ORDER } from './lib/model';
  */
 const PROVIDER_LABEL = { 1: 'Google', 2: 'Outlook', 3: 'iCloud' };
 
+/** "Ayşe Yılmaz" → "AY"; tek kelimeyse ilk iki harf. */
+function initials(name) {
+    const parts = String(name ?? '').trim().split(/\s+/).filter(Boolean);
+    if (parts.length === 0) return '?';
+    if (parts.length === 1) return parts[0].slice(0, 2).toLocaleUpperCase('tr');
+    return (parts[0][0] + parts[parts.length - 1][0]).toLocaleUpperCase('tr');
+}
+
 export function SourceRail({
     sources, counts, enabled, onToggle, compact = false,
     externalAccounts = [], externalLoading = false, onOpenSync,
-    teamOpen = false, onToggleTeam, teamContent,
+    teamOpen = false, onToggleTeam, teamContent, teamMembers = [],
+    riskCounts,
 }) {
     const available = (sources ?? []).filter((s) => s.isAvailable);
     if (available.length === 0) return null;
@@ -90,30 +99,6 @@ export function SourceRail({
                 );
             })}
 
-            {/* Ekip katmanı — "kim ne zaman müsait". Kapalıyken sorgu bile atılmaz. */}
-            {!compact && onToggleTeam && (
-                <>
-                    <button
-                        type="button"
-                        role="switch"
-                        aria-checked={teamOpen}
-                        onClick={onToggleTeam}
-                        className={cn(
-                            'mt-2 flex items-center gap-2 border-t border-subtle px-2 pb-1 pt-2 text-left',
-                            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-border-focus',
-                        )}
-                    >
-                        <span className="flex-1 text-[10.5px] font-bold uppercase tracking-wider text-text-tertiary">
-                            Ekip katmanı
-                        </span>
-                        <i
-                            className={cn('fa text-[11px]', teamOpen ? 'fa-toggle-on text-accent' : 'fa-toggle-off text-text-tertiary')}
-                            aria-hidden="true"
-                        />
-                    </button>
-                    {teamContent}
-                </>
-            )}
 
             {/* Dış takvimler — izinle değil kullanıcının kendi bağlantısıyla gelir,
                 bu yüzden kaynak anahtarlarından AYRI bir bölümde durur. Bozuk
@@ -130,7 +115,7 @@ export function SourceRail({
                                 onClick={onOpenSync}
                                 className="rounded p-1 text-[11px] font-medium text-text-link hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-border-focus"
                             >
-                                Ayarlar
+                                + Ekle
                             </button>
                         )}
                     </div>
@@ -183,6 +168,91 @@ export function SourceRail({
                             </span>
                         </div>
                     ))}
+
+                {/* Ekip katmanı — "kim ne zaman müsait". Kapalıyken sorgu bile atılmaz. */}
+                {!compact && onToggleTeam && (
+                    <>
+                        <button
+                            type="button"
+                            role="switch"
+                            aria-checked={teamOpen}
+                            onClick={onToggleTeam}
+                            className={cn(
+                                'mt-2 flex items-center gap-2 border-t border-subtle px-2 pb-1 pt-2 text-left',
+                                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-border-focus',
+                            )}
+                        >
+                            <span className="flex-1 text-[10.5px] font-bold uppercase tracking-wider text-text-tertiary">
+                                Ekip katmanı
+                            </span>
+                            <i
+                                className={cn('fa text-[11px]', teamOpen ? 'fa-toggle-on text-accent' : 'fa-toggle-off text-text-tertiary')}
+                                aria-hidden="true"
+                            />
+                        </button>
+
+                        {/* Kimlerin yükü sayılıyor. Katman AÇIKKEN dolar: kapalıyken
+                            ekip sorgusu hiç atılmıyor, uydurma isim göstermeyiz. */}
+                        {teamMembers.length > 0 && (
+                            <div className="flex flex-wrap items-center gap-1 px-2 pb-1">
+                                {teamMembers.slice(0, 3).map((m) => (
+                                    <span
+                                        key={m.userId}
+                                        title={m.name}
+                                        className="flex items-center gap-1 rounded-full bg-neutral-subtle py-0.5 pe-2 ps-0.5 text-[10.5px] text-text-secondary"
+                                    >
+                                        <span
+                                            className="flex h-4 w-4 items-center justify-center rounded-full bg-accent text-[8.5px] font-bold text-white"
+                                            aria-hidden="true"
+                                        >
+                                            {initials(m.name)}
+                                        </span>
+                                        <span className="max-w-[86px] truncate">{m.name}</span>
+                                    </span>
+                                ))}
+                                {teamMembers.length > 3 && (
+                                    <span className="text-[10.5px] font-medium text-text-tertiary">
+                                        +{teamMembers.length - 3}
+                                    </span>
+                                )}
+                            </div>
+                        )}
+
+                        {teamContent}
+                    </>
+                )}
+                    {/* Risk özeti — takvime bakmadan "kaç şey yanıyor" sorusunun
+                        cevabı. Sıfır olan satır çizilmez; boş sayaç gürültüdür. */}
+                    {riskCounts && (riskCounts.overdue > 0 || riskCounts.dueToday > 0 || riskCounts.syncError > 0) && (
+                        <>
+                            <p className="mt-2 border-t border-subtle px-2 pb-1 pt-2 text-[10.5px] font-bold uppercase tracking-wider text-text-tertiary">
+                                Risk
+                            </p>
+                            {[
+                                { key: 'overdue', label: 'Gecikmiş', value: riskCounts.overdue, dot: 'bg-negative' },
+                                { key: 'dueToday', label: 'Bugün son gün', value: riskCounts.dueToday, dot: 'bg-warning' },
+                                { key: 'syncError', label: 'Senkron hatası', value: riskCounts.syncError, dot: 'bg-negative-700' },
+                            ].filter((r) => r.value > 0).map((r) => (
+                                <div key={r.key} className="flex items-center gap-2 px-2 py-1">
+                                    <span className={cn('h-[7px] w-[7px] shrink-0 rounded-full', r.dot)} aria-hidden="true" />
+                                    <span className="flex-1 text-[11.5px] text-text-secondary">{r.label}</span>
+                                    <span className="font-mono text-[11px] tabular-nums text-text-primary">{r.value}</span>
+                                </div>
+                            ))}
+                        </>
+                    )}
+
+                    {onOpenSync && (
+                        <button
+                            type="button"
+                            onClick={onOpenSync}
+                            className="mt-2 flex items-center gap-2 rounded-md border border-subtle px-2.5 py-2 text-left text-[12px] font-medium text-text-secondary hover:bg-surface-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-border-focus"
+                        >
+                            <i className="fa fa-gear text-[12px] text-text-tertiary" aria-hidden="true" />
+                            <span className="flex-1">Senkron ayarları</span>
+                            <i className="fa fa-chevron-right text-[10px] text-text-tertiary" aria-hidden="true" />
+                        </button>
+                    )}
                 </>
             )}
         </nav>

@@ -46,6 +46,10 @@ public class ExternalEventFetchResult
 
     public List<CalendarEvent> Events { get; set; } = new();
 
+    /// <summary>Hesabın en son senkron zamanı — araç çubuğundaki
+    /// "Senkron · N önce" rozetini besler. Hiç senkronlanmadıysa null.</summary>
+    public DateTime? LastSyncTime { get; set; }
+
     /// <summary>Null = başarılı. Doluysa kullanıcıya gösterilecek hata.</summary>
     public string? Error { get; set; }
 }
