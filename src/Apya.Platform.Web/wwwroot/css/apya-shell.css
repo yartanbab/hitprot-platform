@@ -1787,6 +1787,31 @@ i.apya-priority-dot {
 }
 .apya-doc-row-head:hover { background: var(--apya-surface-sunken); }
 
+/* ── Satır içi eksik belge kalemi ────────────────────────────────────────
+   Kesikli alt çizgi + amber zemin: satır bir DOSYA değil, olması gereken bir
+   boşluk. Tıklanabilir değil; tek eylemi sağdaki "Yükle". */
+.apya-doc-missing-row {
+    background: var(--apya-warning-50);
+    border-bottom: 1px dashed var(--apya-border-default);
+    cursor: default;
+}
+.apya-doc-missing-row:hover { background: var(--apya-warning-100); }
+.apya-doc-missing-upload {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    height: 24px;
+    padding: 0 9px;
+    border-radius: var(--apya-radius-full);
+    border: 1px solid var(--apya-warning-100);
+    background: var(--apya-surface-raised);
+    color: var(--apya-warning-700, #92400E);
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+}
+.apya-doc-missing-upload:hover { background: var(--apya-warning-50); }
+
 /* ── Proje kapsamı ağacı ─────────────────────────────────────────────────
    Satır yüksekliği .apya-doc-row'dan (var(--row-h)) gelir; yoğunluk anahtarı
    bu ağaçta da çalışsın diye burada EZİLMEZ. Girinti satır içinde inline

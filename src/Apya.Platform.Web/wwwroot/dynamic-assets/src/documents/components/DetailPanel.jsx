@@ -1,7 +1,25 @@
 import React, { useEffect, useState } from 'react';
 import { Badge, Button, buttonVariants, EmptyState, Hint, Input, SkeletonList } from '../../components/ui';
+import { abpAppPath } from '../api';
 import { cn, fmt, fileVisual, FILL_SOURCE_META, STATUS_META } from '../format';
 import { TagChips } from './FileList';
+
+/**
+ * İlişkili kayıt türü → ikon, etiket ve derin link.
+ * Anahtarlar RelatedRecordKind enum DEĞERLERİDİR (sunucu enum'ları sayı olarak
+ * serileştirir). Kontrol listesi kaleminin kendi sayfası yok; link üretmiyoruz.
+ */
+const RELATED_META = {
+  1: { icon: 'fa-diagram-project', label: 'Proje' },
+  2: { icon: 'fa-list-check', label: 'İş adımı' },
+  3: { icon: 'fa-receipt', label: 'Harcama', href: (id) => (id ? `${abpAppPath()}Expenses` : null) },
+  4: {
+    icon: 'fa-box-archive',
+    label: 'Teslim paketi',
+    href: (id) => (id ? `${abpAppPath()}Documents/Deliveries?packageId=${id}` : null),
+  },
+  5: { icon: 'fa-clipboard-check', label: 'Kontrol listesi kalemi' },
+};
 
 /**
  * Sağ detay paneli: künye + özel meta alanları + versiyon geçmişi.
@@ -247,6 +265,55 @@ export function DetailPanel({
         <div className="mb-3">
           <div className="apya-md-overline mb-2">Etiketler</div>
           <TagChips tags={detail.tags} />
+        </div>
+      )}
+
+      {/* --- İlişkili kayıtlar --- */}
+      {detail.related?.length > 0 && (
+        <div className="mb-3">
+          <div className="apya-md-overline mb-2 d-flex align-items-center">
+            İlişkili kayıtlar
+            <Hint text="Belgenin bağlandığı harcama, içinde gittiği teslim paketi ve karşıladığı kontrol listesi kalemleri." />
+          </div>
+          <div className="d-flex flex-column gap-2">
+            {detail.related.map((record, index) => {
+              const meta = RELATED_META[record.kind] ?? RELATED_META[3];
+              const href = meta.href?.(record.entityId);
+
+              const body = (
+                <>
+                  <span
+                    className="d-grid place-items-center flex-shrink-0"
+                    style={{ width: 22, height: 22, borderRadius: 6, background: 'var(--apya-surface-sunken)', color: 'var(--apya-text-secondary)', fontSize: 10 }}
+                  >
+                    <i className={`fa ${meta.icon}`} />
+                  </span>
+                  <span style={{ minWidth: 0 }}>
+                    <span className="d-block text-truncate" style={{ fontSize: 12 }}>{record.label}</span>
+                    <span
+                      className="d-block text-truncate apya-numeric"
+                      style={{ fontSize: 10.5, color: 'var(--apya-text-tertiary)' }}
+                    >
+                      {[meta.label, record.detail].filter(Boolean).join(' · ')}
+                    </span>
+                  </span>
+                </>
+              );
+
+              return href ? (
+                <a
+                  key={`${record.kind}-${record.entityId}-${index}`}
+                  href={href}
+                  className="d-flex align-items-center gap-2 text-decoration-none"
+                  style={{ color: 'inherit' }}
+                >
+                  {body}
+                </a>
+              ) : (
+                <div key={`${record.kind}-${index}`} className="d-flex align-items-center gap-2">{body}</div>
+              );
+            })}
+          </div>
         </div>
       )}
 

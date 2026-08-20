@@ -31,4 +31,10 @@ public class GetDocumentFilesInput : PagedAndSortedResultRequestDto
 
     /// <summary>Zorunlu meta alanı boş olanlar — "eksik meta" akıllı klasörü.</summary>
     public bool? MissingRequiredFields { get; set; }
+
+    /// <summary>
+    /// Bu andan sonra yüklenenler (CreationTime). "Bu ay yüklenen" sayacı
+    /// bunu kullanır; belge tarihi değil YÜKLEME anı ölçülür.
+    /// </summary>
+    public DateTime? UploadedAfter { get; set; }
 }

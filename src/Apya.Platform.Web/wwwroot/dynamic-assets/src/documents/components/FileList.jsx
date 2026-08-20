@@ -51,6 +51,63 @@ function SortHeader({ column, sorting, onSort }) {
   );
 }
 
+/**
+ * Kontrol listesinde karşılığı olmayan zorunlu kalem — dosya listesinin İÇİNDE,
+ * kesikli çerçeveyle gösterilir. "Eksik olan" da bir liste satırıdır: ayrı bir
+ * sekmeye saklanırsa yükleme akışından kopar.
+ *
+ * Satırlar listenin BAŞINDA durur, aralara serpiştirilmez: dosya listesi sunucuda
+ * sayfalanıyor, eksikler ise sayfalama dışı — araya karıştırılsa 2. sayfada
+ * kaybolurlardı.
+ */
+function MissingRow({ item, onUpload, canUpload }) {
+  const scopeLabel = item.workStepName
+    ? `${item.workStepOrder} · ${item.workStepName}`
+    : item.periodCode || 'Proje';
+
+  return (
+    <div className="apya-doc-row apya-doc-missing-row" style={{ gridTemplateColumns: GRID_TEMPLATE }}>
+      <span style={{ color: 'var(--apya-warning-600, #B45309)', textAlign: 'center', fontWeight: 700, fontSize: 12 }}>!</span>
+
+      <span className="d-flex align-items-center gap-2" style={{ minWidth: 0 }}>
+        <span
+          className="d-grid place-items-center flex-shrink-0"
+          style={{
+            width: 26, height: 26, borderRadius: 7, fontSize: 11,
+            border: '1px dashed var(--apya-border-default)', color: 'var(--apya-text-tertiary)',
+          }}
+        >
+          <i className="fa fa-plus" />
+        </span>
+        <span className="text-truncate" style={{ fontSize: 13, fontWeight: 500, color: 'var(--apya-warning-700, #92400E)' }}>
+          Eksik: {item.title}
+        </span>
+        {item.isBlocking && <Badge variant="warning" size="sm">teslimi bloke ediyor</Badge>}
+      </span>
+
+      <span className="text-truncate" style={{ fontSize: 12, color: 'var(--apya-warning-700, #92400E)' }}>{scopeLabel}</span>
+
+      <span className="text-truncate" style={{ fontSize: 12, color: 'var(--apya-warning-700, #92400E)' }}>
+        {item.documentTypeName || '—'}
+      </span>
+
+      <span className="apya-numeric" style={{ fontSize: 12, textAlign: 'right', color: 'var(--apya-text-tertiary)' }}>—</span>
+
+      <span style={{ fontSize: 11.5, color: 'var(--apya-warning-700, #92400E)' }}>bekliyor</span>
+
+      <span>
+        {canUpload ? (
+          <button type="button" className="apya-doc-missing-upload" onClick={() => onUpload(item)}>
+            <i className="fa fa-upload" /> Yükle
+          </button>
+        ) : (
+          <span className="apya-chip apya-chip-warning">Eksik</span>
+        )}
+      </span>
+    </div>
+  );
+}
+
 function FileRow({ file, selected, checked, onSelect, onToggleCheck, onDragStart }) {
   const visual = fileVisual(file.contentType, file.fileName);
   const status = STATUS_META[file.status] || STATUS_META[1];
@@ -156,9 +213,14 @@ export function FileList({
   loading, files, totalCount, view, sorting, onSort,
   selectedId, onSelect, checkedIds, onToggleCheck, onToggleAll,
   page, pageSize, onPageChange, onDragStart, emptyHint,
+  missingItems = [], onUploadMissing, canUpload = false,
 }) {
   const allChecked = files.length > 0 && files.every((f) => checkedIds.has(f.id));
   const pageCount = Math.max(1, Math.ceil(totalCount / pageSize));
+
+  // Eksik kalemler yalnız listenin ilk sayfasında; ikinci sayfada tekrar
+  // basmak "her sayfada aynı eksikler" gibi yanlış bir izlenim verirdi.
+  const missing = page === 0 && view === 'list' ? missingItems : [];
 
   if (loading) {
     return view === 'grid'
@@ -166,7 +228,9 @@ export function FileList({
       : <div className="p-3 d-flex flex-column gap-2">{Array.from({ length: 8 }).map((_, i) => <Skeleton key={i} height={40} rounded="md" />)}</div>;
   }
 
-  if (files.length === 0) {
+  // Klasör boş ama eksik kalem varsa boş durum BASILMAZ — "burada bir şey yok"
+  // demek, yüklenmesi gereken belgeler dururken yanlış olur.
+  if (files.length === 0 && missing.length === 0) {
     return (
       <EmptyState
         icon={<i className="fa fa-inbox" />}
@@ -202,6 +266,15 @@ export function FileList({
               <SortHeader key={column.key} column={column} sorting={sorting} onSort={onSort} />
             ))}
           </div>
+
+          {missing.map((item) => (
+            <MissingRow
+              key={`missing-${item.assignmentId}-${item.requirementId}-${item.workStepId || 'none'}`}
+              item={item}
+              onUpload={onUploadMissing}
+              canUpload={canUpload}
+            />
+          ))}
 
           {files.map((file) => (
             <FileRow

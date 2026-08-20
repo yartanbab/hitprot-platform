@@ -13,6 +13,7 @@ using Volo.Abp.Domain.Repositories;
 using Volo.Abp.Identity;
 using Volo.Abp.MultiTenancy;
 using Apya.Platform.Permissions;
+using Apya.Platform.Expenses;
 using Apya.Platform.Projects;
 
 namespace Apya.Platform.Documents;
@@ -44,6 +45,12 @@ public class DocumentFileAppService : ApplicationService, IDocumentFileAppServic
     private readonly IRepository<DocumentAccessLog, Guid> _accessLogRepository;
     private readonly IRepository<Project, Guid> _projectRepository;
     private readonly IRepository<ProjectWorkStep, Guid> _workStepRepository;
+    private readonly IRepository<DocumentExpenseMatch, Guid> _matchRepository;
+    private readonly IRepository<Expense, Guid> _expenseRepository;
+    private readonly IRepository<DeliveryPackageItem, Guid> _packageItemRepository;
+    private readonly IRepository<DeliveryPackage, Guid> _packageRepository;
+    private readonly IRepository<ComplianceItemState, Guid> _itemStateRepository;
+    private readonly IRepository<ComplianceRequirement, Guid> _requirementRepository;
     private readonly IRepository<IdentityUser, Guid> _identityRepository;
     private readonly IDataFilter<IMultiTenant> _mtFilter;
 
@@ -60,6 +67,12 @@ public class DocumentFileAppService : ApplicationService, IDocumentFileAppServic
         IRepository<DocumentAccessLog, Guid> accessLogRepository,
         IRepository<Project, Guid> projectRepository,
         IRepository<ProjectWorkStep, Guid> workStepRepository,
+        IRepository<DocumentExpenseMatch, Guid> matchRepository,
+        IRepository<Expense, Guid> expenseRepository,
+        IRepository<DeliveryPackageItem, Guid> packageItemRepository,
+        IRepository<DeliveryPackage, Guid> packageRepository,
+        IRepository<ComplianceItemState, Guid> itemStateRepository,
+        IRepository<ComplianceRequirement, Guid> requirementRepository,
         IRepository<IdentityUser, Guid> identityRepository,
         IDataFilter<IMultiTenant> mtFilter)
     {
@@ -75,6 +88,12 @@ public class DocumentFileAppService : ApplicationService, IDocumentFileAppServic
         _accessLogRepository = accessLogRepository;
         _projectRepository = projectRepository;
         _workStepRepository = workStepRepository;
+        _matchRepository = matchRepository;
+        _expenseRepository = expenseRepository;
+        _packageItemRepository = packageItemRepository;
+        _packageRepository = packageRepository;
+        _itemStateRepository = itemStateRepository;
+        _requirementRepository = requirementRepository;
         _identityRepository = identityRepository;
         _mtFilter = mtFilter;
     }
@@ -106,6 +125,7 @@ public class DocumentFileAppService : ApplicationService, IDocumentFileAppServic
 
         dto.Fields = await BuildFieldsAsync(file);
         dto.Versions = await BuildVersionsAsync(file.Id);
+        dto.Related = await BuildRelatedAsync(file);
 
         // Detay panelinin açılması = belgenin görüntülenmesi. Liste render'ı LOGLANMAZ
         // (128 satırlık bir sayfa 128 log satırı üretirdi); iz yalnız bilinçli erişimde tutulur.
@@ -344,6 +364,120 @@ public class DocumentFileAppService : ApplicationService, IDocumentFileAppServic
     /* ─────────────────────────── Yardımcılar ─────────────────────────── */
 
     /// <summary>
+    /// Belgenin bağlı olduğu kayıtlar. Proje ve iş adımı DTO'da zaten ayrı alan
+    /// olarak var, burada TEKRARLANMAZ — bu liste yalnız panelde başka türlü
+    /// görünmeyen bağları taşır: eşleştiği harcama, içinde bulunduğu teslim
+    /// paketi ve karşıladığı kontrol listesi kalemi.
+    /// </summary>
+    private async Task<List<RelatedRecordDto>> BuildRelatedAsync(DocumentFile file)
+    {
+        var related = new List<RelatedRecordDto>();
+
+        /* --- Eşleştiği harcama --- */
+        var matchQueryable = await _matchRepository.GetQueryableAsync();
+        var matches = await AsyncExecuter.ToListAsync(
+            matchQueryable.AsNoTracking()
+                .Where(m => m.DocumentFileId == file.Id)
+                .Select(m => new { m.ExpenseId, m.AnnexNumber, m.Score }));
+
+        if (matches.Count > 0)
+        {
+            var expenseIds = matches.Select(m => m.ExpenseId).ToList();
+            var expenseQueryable = await _expenseRepository.GetQueryableAsync();
+            var expenses = (await AsyncExecuter.ToListAsync(
+                    expenseQueryable.AsNoTracking()
+                        .Where(e => expenseIds.Contains(e.Id))
+                        .Select(e => new { e.Id, e.Title, e.Amount, e.Currency, e.ExpenseDate })))
+                .ToDictionary(k => k.Id);
+
+            foreach (var match in matches)
+            {
+                var expense = expenses.GetValueOrDefault(match.ExpenseId);
+
+                related.Add(new RelatedRecordDto
+                {
+                    Kind = RelatedRecordKind.Expense,
+                    EntityId = match.ExpenseId,
+                    Label = expense?.Title ?? "(silinmiş harcama)",
+                    Detail = expense == null
+                        ? null
+                        : $"{expense.Amount:N2} {expense.Currency} · {expense.ExpenseDate:dd.MM.yyyy}"
+                          + (string.IsNullOrWhiteSpace(match.AnnexNumber) ? string.Empty : $" · {match.AnnexNumber}"),
+                });
+            }
+        }
+
+        /* --- İçinde bulunduğu teslim paketleri --- */
+        var itemQueryable = await _packageItemRepository.GetQueryableAsync();
+        var packageItems = await AsyncExecuter.ToListAsync(
+            itemQueryable.AsNoTracking()
+                .Where(i => i.DocumentFileId == file.Id)
+                .Select(i => new { i.PackageId, i.AnnexNumber }));
+
+        if (packageItems.Count > 0)
+        {
+            var packageIds = packageItems.Select(i => i.PackageId).ToList();
+            var packageQueryable = await _packageRepository.GetQueryableAsync();
+            var packages = (await AsyncExecuter.ToListAsync(
+                    packageQueryable.AsNoTracking()
+                        .Where(p => packageIds.Contains(p.Id))
+                        .Select(p => new { p.Id, p.Name, p.PeriodCode, p.Status })))
+                .ToDictionary(k => k.Id);
+
+            foreach (var item in packageItems)
+            {
+                var package = packages.GetValueOrDefault(item.PackageId);
+
+                related.Add(new RelatedRecordDto
+                {
+                    Kind = RelatedRecordKind.DeliveryPackage,
+                    EntityId = item.PackageId,
+                    Label = package?.Name ?? "(silinmiş paket)",
+                    Detail = string.Join(" · ", new[] { item.AnnexNumber, package?.PeriodCode }
+                        .Where(x => !string.IsNullOrWhiteSpace(x))),
+                });
+            }
+        }
+
+        /* --- Karşıladığı kontrol listesi kalemleri --- */
+        var stateQueryable = await _itemStateRepository.GetQueryableAsync();
+        var states = await AsyncExecuter.ToListAsync(
+            stateQueryable.AsNoTracking()
+                .Where(s => s.DocumentFileId == file.Id)
+                .Select(s => new { s.RequirementId, s.PeriodCode }));
+
+        if (states.Count > 0)
+        {
+            var requirementIds = states.Select(s => s.RequirementId).ToList();
+            var requirementQueryable = await _requirementRepository.GetQueryableAsync();
+            var requirements = (await AsyncExecuter.ToListAsync(
+                    requirementQueryable.AsNoTracking()
+                        .Where(r => requirementIds.Contains(r.Id))
+                        .Select(r => new { r.Id, r.Title, r.IsBlocking })))
+                .ToDictionary(k => k.Id);
+
+            foreach (var state in states)
+            {
+                var requirement = requirements.GetValueOrDefault(state.RequirementId);
+
+                related.Add(new RelatedRecordDto
+                {
+                    Kind = RelatedRecordKind.ComplianceRequirement,
+                    EntityId = state.RequirementId,
+                    Label = requirement?.Title ?? "(kaldırılmış kalem)",
+                    Detail = string.Join(" · ", new[]
+                    {
+                        state.PeriodCode,
+                        requirement?.IsBlocking == true ? "teslimi bloke eden" : null,
+                    }.Where(x => !string.IsNullOrWhiteSpace(x))),
+                });
+            }
+        }
+
+        return related;
+    }
+
+    /// <summary>
     /// Denetim izi kaydı. Rol, olay ANINDAKİ haliyle kopyalanır — kullanıcının rolü
     /// sonradan değişse bile iz "o gün kim, hangi yetkiyle" sorusunu doğru yanıtlasın.
     /// </summary>
@@ -402,6 +536,14 @@ public class DocumentFileAppService : ApplicationService, IDocumentFileAppServic
         if (input.Status.HasValue)
         {
             queryable = queryable.Where(f => f.Status == input.Status.Value);
+        }
+
+        if (input.UploadedAfter.HasValue)
+        {
+            // Belge tarihi değil YÜKLEME anı: "bu ay yüklenen" sayacı, geçmiş
+            // tarihli bir faturayı bu ay yüklediğimizde de saymalı.
+            var after = input.UploadedAfter.Value;
+            queryable = queryable.Where(f => f.CreationTime >= after);
         }
 
         if (!string.IsNullOrWhiteSpace(input.Tag))
