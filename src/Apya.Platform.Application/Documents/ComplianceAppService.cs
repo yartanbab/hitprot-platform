@@ -35,6 +35,7 @@ public class ComplianceAppService : ApplicationService, IComplianceAppService
     private readonly IRepository<DocumentType, Guid> _typeRepository;
     private readonly IRepository<ProjectWorkStep, Guid> _workStepRepository;
     private readonly IRepository<Project, Guid> _projectRepository;
+    private readonly IRepository<Apya.Platform.Tasks.TaskItem, Guid> _taskRepository;
     private readonly IDataFilter<IMultiTenant> _mtFilter;
 
     public ComplianceAppService(
@@ -46,6 +47,7 @@ public class ComplianceAppService : ApplicationService, IComplianceAppService
         IRepository<DocumentType, Guid> typeRepository,
         IRepository<ProjectWorkStep, Guid> workStepRepository,
         IRepository<Project, Guid> projectRepository,
+        IRepository<Apya.Platform.Tasks.TaskItem, Guid> taskRepository,
         IDataFilter<IMultiTenant> mtFilter)
     {
         _packageRepository = packageRepository;
@@ -56,6 +58,7 @@ public class ComplianceAppService : ApplicationService, IComplianceAppService
         _typeRepository = typeRepository;
         _workStepRepository = workStepRepository;
         _projectRepository = projectRepository;
+        _taskRepository = taskRepository;
         _mtFilter = mtFilter;
     }
 
@@ -92,6 +95,9 @@ public class ComplianceAppService : ApplicationService, IComplianceAppService
             IsSystem = p.IsSystem,
             RequirementCount = counts.TryGetValue(p.Id, out var count) ? count : 0,
             IsApplied = appliedIds.Contains(p.Id),
+            // Sistem paketi tüm kiracılarca paylaşılır; yalnız kiracının kendi
+            // paketi düzenlenebilir.
+            IsEditable = !p.IsSystem,
         }).ToList();
     }
 
@@ -136,6 +142,10 @@ public class ComplianceAppService : ApplicationService, IComplianceAppService
             .Select(r => r.DocumentTypeId!.Value).Distinct().ToList();
         var typeNames = await GetTypeNamesAsync(typeIds);
 
+        var taskNames = await GetTaskNamesAsync(requirements
+            .Where(r => r.SourceEntityId.HasValue)
+            .Select(r => r.SourceEntityId!.Value).Distinct().ToList());
+
         var assignmentIds = assignments.Select(a => a.Id).ToList();
         var states = await _stateRepository.GetListAsync(s => assignmentIds.Contains(s.AssignmentId));
 
@@ -154,7 +164,7 @@ public class ComplianceAppService : ApplicationService, IComplianceAppService
                 requirements.Where(r => r.PackageId == assignment.PackageId).ToList(),
                 workSteps, documents,
                 states.Where(s => s.AssignmentId == assignment.Id).ToList(),
-                typeNames);
+                typeNames, taskNames);
 
             overview.Checklists.Add(checklist);
         }
@@ -244,6 +254,141 @@ public class ComplianceAppService : ApplicationService, IComplianceAppService
     /// Hesabın kendisi <see cref="ComplianceCalculator"/>'dadır (Domain, saf fonksiyon).
     /// Burada yalnızca sonuçlar DTO'ya çevrilir ve tip adları eklenir.
     /// </summary>
+    /* ───────────────── Kiracının kendi paketi (katalog CRUD) ───────────────── */
+
+    /// <summary>
+    /// Kiracının kendi kontrol listesi paketi. Kurumun listesi dışında kalan
+    /// iç zorunluluklar ("her projede imzalı sözleşme olacak") buradan tanımlanır.
+    /// Kod, addan türetilir ve kiracı içinde tekilleştirilir.
+    /// </summary>
+    [Authorize(PlatformPermissions.Documents.ManageCompliance)]
+    public virtual async Task<CompliancePackageDto> CreatePackageAsync(CreateUpdateCompliancePackageDto input)
+    {
+        var code = await GenerateUniqueCodeAsync(input.Name);
+
+        var package = new CompliancePackage(
+            GuidGenerator.Create(), CurrentTenant.Id,
+            input.Name, input.Issuer, code, input.Description,
+            isSystem: false, order: input.Order);
+
+        await _packageRepository.InsertAsync(package, autoSave: true);
+
+        return await MapPackageAsync(package);
+    }
+
+    [Authorize(PlatformPermissions.Documents.ManageCompliance)]
+    public virtual async Task<CompliancePackageDto> UpdatePackageAsync(Guid id, CreateUpdateCompliancePackageDto input)
+    {
+        var package = await _packageRepository.GetAsync(id);
+
+        // Sistem paketi kiracıya GÖRÜNÜR ama kiracıya AİT değildir.
+        package.Update(input.Name, input.Issuer, input.Description, input.Order);
+
+        await _packageRepository.UpdateAsync(package);
+
+        return await MapPackageAsync(package);
+    }
+
+    /// <summary>
+    /// Paketi siler. Bir projeye uygulanmışsa REDDEDİLİR — sessizce silmek, o
+    /// projenin uygunluk yüzdesini bir anda değiştirirdi.
+    /// </summary>
+    [Authorize(PlatformPermissions.Documents.ManageCompliance)]
+    public virtual async Task DeletePackageAsync(Guid id)
+    {
+        var package = await _packageRepository.GetAsync(id);
+        package.EnsureEditable();
+
+        var assignmentCount = await _assignmentRepository.CountAsync(a => a.PackageId == id);
+        if (assignmentCount > 0)
+        {
+            throw new BusinessException(PlatformDomainErrorCodes.CompliancePackageInUse)
+                .WithData("Count", assignmentCount);
+        }
+
+        var requirements = await _requirementRepository.GetListAsync(r => r.PackageId == id);
+        if (requirements.Count > 0)
+        {
+            await _requirementRepository.DeleteManyAsync(requirements);
+        }
+
+        await _packageRepository.DeleteAsync(package);
+    }
+
+    [Authorize(PlatformPermissions.Documents.ManageCompliance)]
+    public virtual async Task<ComplianceRequirementDto> AddRequirementAsync(
+        Guid packageId, CreateUpdateComplianceRequirementDto input)
+    {
+        var package = await _packageRepository.GetAsync(packageId);
+        package.EnsureEditable();
+
+        await EnsureSourceValidAsync(input);
+
+        var requirement = new ComplianceRequirement(
+            GuidGenerator.Create(), CurrentTenant.Id, packageId,
+            input.Title, input.Scope, input.DocumentTypeId, input.IsBlocking, input.Order,
+            input.Source, input.SourceEntityId);
+
+        await _requirementRepository.InsertAsync(requirement, autoSave: true);
+
+        return await MapRequirementAsync(requirement);
+    }
+
+    [Authorize(PlatformPermissions.Documents.ManageCompliance)]
+    public virtual async Task<ComplianceRequirementDto> UpdateRequirementAsync(
+        Guid id, CreateUpdateComplianceRequirementDto input)
+    {
+        var requirement = await _requirementRepository.GetAsync(id);
+
+        var package = await _packageRepository.GetAsync(requirement.PackageId);
+        package.EnsureEditable();
+
+        await EnsureSourceValidAsync(input);
+
+        requirement.Update(
+            input.Title, input.Scope, input.DocumentTypeId, input.IsBlocking, input.Order,
+            input.Source, input.SourceEntityId);
+
+        await _requirementRepository.UpdateAsync(requirement);
+
+        return await MapRequirementAsync(requirement);
+    }
+
+    [Authorize(PlatformPermissions.Documents.ManageCompliance)]
+    public virtual async Task DeleteRequirementAsync(Guid id)
+    {
+        var requirement = await _requirementRepository.GetAsync(id);
+
+        var package = await _packageRepository.GetAsync(requirement.PackageId);
+        package.EnsureEditable();
+
+        // Kaleme ait kullanıcı kararları (feragat / elle bağlama) da gider;
+        // kalem yoksa kararı da yaşatmanın anlamı yok.
+        var states = await _stateRepository.GetListAsync(s => s.RequirementId == id);
+        if (states.Count > 0)
+        {
+            await _stateRepository.DeleteManyAsync(states);
+        }
+
+        await _requirementRepository.DeleteAsync(requirement);
+    }
+
+    /// <summary>Paketin kalemleri (katalog düzenleme ekranı).</summary>
+    public virtual async Task<List<ComplianceRequirementDto>> GetRequirementListAsync(Guid packageId)
+    {
+        var requirements = (await GetRequirementsAsync(new List<Guid> { packageId }))
+            .OrderBy(r => r.Order).ThenBy(r => r.Title)
+            .ToList();
+
+        var typeNames = await GetTypeNamesAsync(requirements
+            .Where(r => r.DocumentTypeId.HasValue).Select(r => r.DocumentTypeId!.Value).Distinct().ToList());
+
+        var taskNames = await GetTaskNamesAsync(requirements
+            .Where(r => r.SourceEntityId.HasValue).Select(r => r.SourceEntityId!.Value).Distinct().ToList());
+
+        return requirements.Select(r => MapRequirement(r, typeNames, taskNames)).ToList();
+    }
+
     private static ComplianceChecklistDto BuildChecklist(
         ComplianceAssignment assignment,
         CompliancePackage package,
@@ -252,7 +397,8 @@ public class ComplianceAppService : ApplicationService, IComplianceAppService
         List<(Guid Id, string Name, int Order)> workSteps,
         List<ComplianceDocument> documents,
         List<ComplianceItemState> states,
-        Dictionary<Guid, string> typeNames)
+        Dictionary<Guid, string> typeNames,
+        Dictionary<Guid, string> taskNames)
     {
         var evaluations = ComplianceCalculator.Evaluate(
             requirements, workSteps, documents, states, effectivePeriod);
@@ -284,9 +430,138 @@ public class ComplianceAppService : ApplicationService, IComplianceAppService
                 DocumentFileId = e.DocumentFileId,
                 DocumentFileName = e.DocumentFileName,
                 WaiveReason = e.WaiveReason,
+                Source = e.Requirement.Source,
+                SourceEntityName = e.Requirement.SourceEntityId.HasValue
+                    ? taskNames.GetValueOrDefault(e.Requirement.SourceEntityId.Value)
+                    : null,
+                RequiresManualLink = e.Requirement.Source == ComplianceRequirementSource.TaskAttachment,
             }).ToList(),
             Summary = ToDto(summary),
         };
+    }
+
+    /* ───────────────────────── Katalog yardımcıları ───────────────────────── */
+
+    /// <summary>
+    /// Kod, addan türetilir ve kiracı içinde tekilleştirilir. Kullanıcıdan kod
+    /// istemiyoruz: makine anahtarı, kullanıcının uğraşması gereken bir şey değil.
+    /// </summary>
+    private async Task<string> GenerateUniqueCodeAsync(string name)
+    {
+        var slug = new string((name ?? string.Empty)
+            .ToUpperInvariant()
+            .Select(c => char.IsLetterOrDigit(c) ? c : '_')
+            .ToArray());
+
+        slug = slug.Trim('_');
+        if (slug.Length == 0)
+        {
+            slug = "PAKET";
+        }
+
+        if (slug.Length > ComplianceConsts.MaxPackageCodeLength - 4)
+        {
+            slug = slug[..(ComplianceConsts.MaxPackageCodeLength - 4)];
+        }
+
+        var candidate = slug;
+        var suffix = 1;
+
+        while (await _packageRepository.AnyAsync(p => p.Code == candidate && p.TenantId == CurrentTenant.Id))
+        {
+            candidate = $"{slug}_{++suffix}";
+        }
+
+        return candidate;
+    }
+
+    /// <summary>Göreve bağlı kalemin işaret ettiği görev gerçekten var mı.</summary>
+    private async Task EnsureSourceValidAsync(CreateUpdateComplianceRequirementDto input)
+    {
+        if (input.Source != ComplianceRequirementSource.TaskAttachment)
+        {
+            return;
+        }
+
+        if (input.SourceEntityId is null)
+        {
+            throw new BusinessException(PlatformDomainErrorCodes.ComplianceTaskSourceRequiresTask);
+        }
+
+        await _taskRepository.GetAsync(input.SourceEntityId.Value);
+    }
+
+    private async Task<CompliancePackageDto> MapPackageAsync(CompliancePackage package)
+    {
+        var count = await _requirementRepository.CountAsync(r => r.PackageId == package.Id);
+
+        return new CompliancePackageDto
+        {
+            Id = package.Id,
+            TenantId = package.TenantId,
+            Name = package.Name,
+            Issuer = package.Issuer,
+            Code = package.Code,
+            Description = package.Description,
+            IsSystem = package.IsSystem,
+            RequirementCount = count,
+            IsApplied = false,
+            IsEditable = !package.IsSystem,
+        };
+    }
+
+    private async Task<ComplianceRequirementDto> MapRequirementAsync(ComplianceRequirement requirement)
+    {
+        var typeNames = await GetTypeNamesAsync(requirement.DocumentTypeId.HasValue
+            ? new List<Guid> { requirement.DocumentTypeId.Value }
+            : new List<Guid>());
+
+        var taskNames = await GetTaskNamesAsync(requirement.SourceEntityId.HasValue
+            ? new List<Guid> { requirement.SourceEntityId.Value }
+            : new List<Guid>());
+
+        return MapRequirement(requirement, typeNames, taskNames);
+    }
+
+    private static ComplianceRequirementDto MapRequirement(
+        ComplianceRequirement requirement,
+        Dictionary<Guid, string> typeNames,
+        Dictionary<Guid, string> taskNames) => new()
+    {
+        Id = requirement.Id,
+        PackageId = requirement.PackageId,
+        Title = requirement.Title,
+        Scope = requirement.Scope,
+        DocumentTypeId = requirement.DocumentTypeId,
+        DocumentTypeName = requirement.DocumentTypeId.HasValue
+            ? typeNames.GetValueOrDefault(requirement.DocumentTypeId.Value)
+            : null,
+        IsBlocking = requirement.IsBlocking,
+        Order = requirement.Order,
+        Source = requirement.Source,
+        SourceEntityId = requirement.SourceEntityId,
+        SourceEntityName = requirement.SourceEntityId.HasValue
+            ? taskNames.GetValueOrDefault(requirement.SourceEntityId.Value)
+            : null,
+    };
+
+    /// <summary>
+    /// Göreve bağlı kalemlerin görev adları. Görev silinmişse ad dönmez; kalem
+    /// "kaynağı kaldırılmış" olarak listelenmeye devam eder.
+    /// </summary>
+    private async Task<Dictionary<Guid, string>> GetTaskNamesAsync(List<Guid> taskIds)
+    {
+        if (taskIds.Count == 0)
+        {
+            return new Dictionary<Guid, string>();
+        }
+
+        var queryable = await _taskRepository.GetQueryableAsync();
+        return (await AsyncExecuter.ToListAsync(
+                queryable.AsNoTracking()
+                    .Where(t => taskIds.Contains(t.Id))
+                    .Select(t => new { t.Id, t.Number, t.Title })))
+            .ToDictionary(k => k.Id, v => $"#{v.Number} · {v.Title}");
     }
 
     private static ComplianceSummaryDto ToDto(ComplianceSummary summary) => new()

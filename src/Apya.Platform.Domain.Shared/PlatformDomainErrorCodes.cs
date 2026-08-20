@@ -93,6 +93,9 @@ public static class PlatformDomainErrorCodes
     public const string ComplianceRequirementTitleRequired = "Platform:Documents:ComplianceRequirementTitleRequired";
     public const string ComplianceWaiveReasonRequired = "Platform:Documents:ComplianceWaiveReasonRequired";
     public const string CompliancePackageAlreadyApplied = "Platform:Documents:CompliancePackageAlreadyApplied";
+    public const string CompliancePackageReadOnly = "Platform:Documents:CompliancePackageReadOnly";
+    public const string CompliancePackageInUse = "Platform:Documents:CompliancePackageInUse";
+    public const string ComplianceTaskSourceRequiresTask = "Platform:Documents:ComplianceTaskSourceRequiresTask";
 
     // --- Rapor / teslim paketi (Faz C) ---
     public const string ReportTemplateNameRequired = "Platform:Documents:ReportTemplateNameRequired";

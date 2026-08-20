@@ -959,7 +959,16 @@ namespace Apya.Platform.EntityFrameworkCore
                  .HasForeignKey(x => x.DocumentTypeId)
                  .OnDelete(DeleteBehavior.SetNull);
 
+                // Varsayılan AÇIKÇA InstitutionPackage(1): enum 1'den başlıyor,
+                // kolon varsayılanı 0 kalsaydı MEVCUT satırlar geçersiz bir
+                // kaynakla doğar ve listede "bilinmeyen kaynak" görünürdü.
+                b.Property(x => x.Source)
+                 .HasDefaultValue(Apya.Platform.Documents.ComplianceRequirementSource.InstitutionPackage);
+
+                // SourceEntityId'ye FK YOK: göreve bağlı kalem, görev silinse de
+                // yaşamalı — kurumun istediği belge görev silindi diye kalkmaz.
                 b.HasIndex(x => new { x.PackageId, x.Order });
+                b.HasIndex(x => x.SourceEntityId);
             });
 
             builder.Entity<Apya.Platform.Documents.ComplianceAssignment>(b =>

@@ -701,6 +701,7 @@ export function DocumentsRoot() {
               projectId={activeProjectId}
               periodCode={null}
               onSummaryChange={setComplianceSummary}
+              documentTypes={documentTypes}
             />
           </div>
         ) : tab === 'activity' ? (

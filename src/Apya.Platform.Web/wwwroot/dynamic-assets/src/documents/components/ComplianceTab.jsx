@@ -5,6 +5,7 @@ import {
   getCompliancePackages, removeComplianceAssignment, waiveComplianceItem,
 } from '../api';
 import { cn } from '../format';
+import { PackageCatalog } from './PackageEditor';
 
 /**
  * Uygunluk sekmesi — kurum kontrol listesi.
@@ -21,6 +22,17 @@ const STATUS_META = {
 };
 
 const SCOPE_LABEL = { 1: 'Proje', 2: 'İş adımı', 3: 'Dönem' };
+
+/**
+ * Kalemin kökeni. Enum sunucudan SAYI olarak gelir (ComplianceRequirementSource).
+ * Kontrol listesi tek bir yerde toplanır ama satır nereden geldiğini söyler —
+ * "bunu kurum mu istiyor, biz mi?" sorusunun cevabı teslim hazırlığında kritik.
+ */
+const SOURCE_LABEL = {
+  1: 'kurum şablonu',
+  2: 'klasör şeması',
+  3: 'task eki',
+};
 
 function ProgressBar({ percent, blocking }) {
   const tone = blocking > 0
@@ -50,10 +62,18 @@ function ChecklistRow({ item, canManage, onWaive, busy }) {
       <span style={{ minWidth: 0 }}>
         <span className="d-block text-truncate" style={{ fontSize: 13, fontWeight: 500 }}>{item.title}</span>
         <span className="d-block" style={{ fontSize: 11, color: 'var(--apya-text-tertiary)' }}>
-          {scopeLabel}
+          {SOURCE_LABEL[item.source] || SOURCE_LABEL[1]}
+          {item.sourceEntityName && ` · ${item.sourceEntityName}`}
+          {' · '}{scopeLabel}
           {item.documentTypeName && ` · ${item.documentTypeName}`}
           {item.waiveReason && ` · ${item.waiveReason}`}
         </span>
+        {/* Göreve bağlı kalem otomatik karşılanamaz — kullanıcı boşuna beklemesin. */}
+        {item.requiresManualLink && item.status === 2 && (
+          <span className="d-block" style={{ fontSize: 10.5, color: 'var(--apya-warning-700, #92400E)' }}>
+            Otomatik eşleşmez — belgeyi elle bağlayın.
+          </span>
+        )}
       </span>
 
       <span className="text-truncate" style={{ fontSize: 11.5, color: 'var(--apya-text-secondary)' }}>
@@ -79,7 +99,7 @@ function ChecklistRow({ item, canManage, onWaive, busy }) {
   );
 }
 
-export function ComplianceTab({ projectId, periodCode, onSummaryChange }) {
+export function ComplianceTab({ projectId, periodCode, onSummaryChange, documentTypes = [] }) {
   const [overview, setOverview] = useState(null);
   const [packages, setPackages] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -236,6 +256,15 @@ export function ComplianceTab({ projectId, periodCode, onSummaryChange }) {
           </div>
         </div>
       ))}
+
+      {canManage && (
+        <PackageCatalog
+          packages={packages}
+          projectId={projectId}
+          documentTypes={documentTypes}
+          onChanged={load}
+        />
+      )}
 
       {canManage && available.length > 0 && (
         <div className="apya-doc-check-card">

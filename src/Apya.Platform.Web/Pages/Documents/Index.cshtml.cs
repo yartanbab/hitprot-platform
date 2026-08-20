@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using Apya.Platform.Storage;
 using Microsoft.AspNetCore.Authorization;
@@ -8,6 +9,7 @@ using Microsoft.AspNetCore.Mvc;
 using Apya.Platform.Documents;
 using Apya.Platform.Permissions;
 using Apya.Platform.Projects;
+using Apya.Platform.Tasks;
 using Apya.Platform.Web.Services;
 using Volo.Abp.AspNetCore.Mvc.UI.RazorPages;
 
@@ -22,6 +24,7 @@ public class IndexModel : AbpPageModel
     private readonly IProjectWorkStepAppService _workStepAppService;
     private readonly IComplianceAppService _complianceAppService;
     private readonly IDocumentActivityAppService _documentActivityAppService;
+    private readonly ITaskAppService _taskAppService;
     private readonly IUploadedFileStorage _fileStorage;
     private readonly IUploadedFileRootFolderProvider _rootFolderProvider;
 
@@ -32,6 +35,7 @@ public class IndexModel : AbpPageModel
         IProjectWorkStepAppService workStepAppService,
         IComplianceAppService complianceAppService,
         IDocumentActivityAppService documentActivityAppService,
+        ITaskAppService taskAppService,
         IUploadedFileStorage fileStorage,
         IUploadedFileRootFolderProvider rootFolderProvider)
     {
@@ -41,6 +45,7 @@ public class IndexModel : AbpPageModel
         _workStepAppService = workStepAppService;
         _complianceAppService = complianceAppService;
         _documentActivityAppService = documentActivityAppService;
+        _taskAppService = taskAppService;
         _fileStorage = fileStorage;
         _rootFolderProvider = rootFolderProvider;
     }
@@ -151,6 +156,53 @@ public class IndexModel : AbpPageModel
     {
         var item = await _complianceAppService.WaiveItemAsync(input);
         return new JsonResult(item);
+    }
+
+    public async Task<IActionResult> OnGetComplianceRequirementsAsync(Guid packageId)
+        => new JsonResult(await _complianceAppService.GetRequirementListAsync(packageId));
+
+    /// <summary>
+    /// Göreve bağlı kalem kurarken görev seçtirmek için hafif liste.
+    /// Yetki Tasks tarafındaki [Authorize] ile uygulanır.
+    /// </summary>
+    public async Task<IActionResult> OnGetProjectTasksAsync(Guid projectId)
+    {
+        var tasks = await _taskAppService.GetListAsync(new GetTasksInput
+        {
+            ProjectId = projectId,
+            MaxResultCount = 200,
+            Sorting = "number",
+        });
+
+        return new JsonResult(tasks.Items.Select(t => new { t.Id, t.Number, t.Title }));
+    }
+
+    public async Task<IActionResult> OnPostCreateCompliancePackageAsync(
+        [FromBody] CreateUpdateCompliancePackageDto input)
+        => new JsonResult(await _complianceAppService.CreatePackageAsync(input));
+
+    public async Task<IActionResult> OnPostUpdateCompliancePackageAsync(
+        Guid id, [FromBody] CreateUpdateCompliancePackageDto input)
+        => new JsonResult(await _complianceAppService.UpdatePackageAsync(id, input));
+
+    public async Task<IActionResult> OnPostDeleteCompliancePackageAsync(Guid id)
+    {
+        await _complianceAppService.DeletePackageAsync(id);
+        return NoContent();
+    }
+
+    public async Task<IActionResult> OnPostAddComplianceRequirementAsync(
+        Guid packageId, [FromBody] CreateUpdateComplianceRequirementDto input)
+        => new JsonResult(await _complianceAppService.AddRequirementAsync(packageId, input));
+
+    public async Task<IActionResult> OnPostUpdateComplianceRequirementAsync(
+        Guid id, [FromBody] CreateUpdateComplianceRequirementDto input)
+        => new JsonResult(await _complianceAppService.UpdateRequirementAsync(id, input));
+
+    public async Task<IActionResult> OnPostDeleteComplianceRequirementAsync(Guid id)
+    {
+        await _complianceAppService.DeleteRequirementAsync(id);
+        return NoContent();
     }
 
     public async Task<IActionResult> OnPostLinkComplianceDocumentAsync([FromBody] LinkComplianceDocumentDto input)

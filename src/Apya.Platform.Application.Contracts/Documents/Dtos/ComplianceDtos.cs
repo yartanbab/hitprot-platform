@@ -17,6 +17,12 @@ public class CompliancePackageDto : EntityDto<Guid>
 
     /// <summary>Bu paket sorgulanan projeye zaten uygulanmış mı?</summary>
     public bool IsApplied { get; set; }
+
+    /// <summary>
+    /// Kiracının düzenleyebileceği paket mi. Sistem paketleri host'ta tohumlanır
+    /// ve tüm kiracılarca paylaşılır — biri değiştirse diğerlerinin listesi bozulurdu.
+    /// </summary>
+    public bool IsEditable { get; set; }
 }
 
 /// <summary>
@@ -46,6 +52,18 @@ public class ComplianceItemDto
     public string? DocumentFileName { get; set; }
 
     public string? WaiveReason { get; set; }
+
+    /// <summary>Kalemin kökeni — listede kaynak etiketi buradan basılır.</summary>
+    public ComplianceRequirementSource Source { get; set; }
+
+    /// <summary>Göreve bağlı kalemde görevin adı; kaynak silinmişse null.</summary>
+    public string? SourceEntityName { get; set; }
+
+    /// <summary>
+    /// Göreve bağlı kalem otomatik karşılanamaz (belge↔görev bağı şemada yok);
+    /// istemci "elle bağlanmalı" ipucunu buna bakarak gösterir.
+    /// </summary>
+    public bool RequiresManualLink { get; set; }
 }
 
 public class ComplianceChecklistDto
@@ -120,4 +138,62 @@ public class LinkComplianceDocumentDto
 
     /// <summary>null = elle bağlamayı kaldır.</summary>
     public Guid? DocumentFileId { get; set; }
+}
+
+/// <summary>Kiracının kendi kontrol listesi paketini kurması/düzenlemesi.</summary>
+public class CreateUpdateCompliancePackageDto
+{
+    [Required]
+    [StringLength(ComplianceConsts.MaxPackageNameLength)]
+    public string Name { get; set; } = string.Empty;
+
+    /// <summary>Belgeyi isteyen taraf ("KOSGEB", "Banka", "İç politika").</summary>
+    [Required]
+    [StringLength(ComplianceConsts.MaxIssuerLength)]
+    public string Issuer { get; set; } = string.Empty;
+
+    [StringLength(ComplianceConsts.MaxDescriptionLength)]
+    public string? Description { get; set; }
+
+    public int Order { get; set; }
+}
+
+/// <summary>Pakete kalem ekleme/düzenleme.</summary>
+public class CreateUpdateComplianceRequirementDto
+{
+    [Required]
+    [StringLength(ComplianceConsts.MaxRequirementTitleLength)]
+    public string Title { get; set; } = string.Empty;
+
+    public ComplianceScope Scope { get; set; } = ComplianceScope.Project;
+
+    /// <summary>Doluysa kalem otomatik karşılanabilir; boşsa elle bağlama gerekir.</summary>
+    public Guid? DocumentTypeId { get; set; }
+
+    public bool IsBlocking { get; set; }
+
+    public int Order { get; set; }
+
+    public ComplianceRequirementSource Source { get; set; } = ComplianceRequirementSource.FolderSchema;
+
+    /// <summary>TaskAttachment kaynağında ZORUNLU: kalemin bağlandığı görev.</summary>
+    public Guid? SourceEntityId { get; set; }
+}
+
+/// <summary>Katalog düzenleme ekranında paketin bir kalemi.</summary>
+public class ComplianceRequirementDto : EntityDto<Guid>
+{
+    public Guid PackageId { get; set; }
+    public string Title { get; set; } = string.Empty;
+    public ComplianceScope Scope { get; set; }
+    public Guid? DocumentTypeId { get; set; }
+    public string? DocumentTypeName { get; set; }
+    public bool IsBlocking { get; set; }
+    public int Order { get; set; }
+
+    public ComplianceRequirementSource Source { get; set; }
+    public Guid? SourceEntityId { get; set; }
+
+    /// <summary>Göreve bağlı kalemde görevin adı; görev silinmişse null.</summary>
+    public string? SourceEntityName { get; set; }
 }

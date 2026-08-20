@@ -26,4 +26,22 @@ public interface IComplianceAppService : IApplicationService
     Task<ComplianceItemDto> WaiveItemAsync(WaiveComplianceItemDto input);
 
     Task<ComplianceItemDto> LinkDocumentAsync(LinkComplianceDocumentDto input);
+
+    /* --- Kiracının kendi paketi (katalog) --- */
+
+    /// <summary>Paketin kalemleri — katalog düzenleme ekranı için.</summary>
+    Task<List<ComplianceRequirementDto>> GetRequirementListAsync(Guid packageId);
+
+    Task<CompliancePackageDto> CreatePackageAsync(CreateUpdateCompliancePackageDto input);
+
+    Task<CompliancePackageDto> UpdatePackageAsync(Guid id, CreateUpdateCompliancePackageDto input);
+
+    /// <summary>Bir projeye uygulanmış paket SİLİNEMEZ.</summary>
+    Task DeletePackageAsync(Guid id);
+
+    Task<ComplianceRequirementDto> AddRequirementAsync(Guid packageId, CreateUpdateComplianceRequirementDto input);
+
+    Task<ComplianceRequirementDto> UpdateRequirementAsync(Guid id, CreateUpdateComplianceRequirementDto input);
+
+    Task DeleteRequirementAsync(Guid id);
 }

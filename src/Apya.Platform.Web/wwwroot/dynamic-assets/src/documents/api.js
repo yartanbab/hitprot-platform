@@ -82,6 +82,30 @@ export const waiveComplianceItem = (payload) => postJson(handler('WaiveComplianc
 
 export const linkComplianceDocument = (payload) => postJson(handler('LinkComplianceDocument'), payload);
 
+/* --- Kiracının kendi paketi (katalog) --- */
+
+export const getProjectTasks = (projectId) =>
+  abpAjax({ url: handler('ProjectTasks', { projectId }), type: 'GET' });
+
+export const getComplianceRequirements = (packageId) =>
+  abpAjax({ url: handler('ComplianceRequirements', { packageId }), type: 'GET' });
+
+export const createCompliancePackage = (dto) => postJson(handler('CreateCompliancePackage'), dto);
+
+export const updateCompliancePackage = (id, dto) => postJson(handler('UpdateCompliancePackage', { id }), dto);
+
+export const deleteCompliancePackage = (id) =>
+  abpAjax({ url: handler('DeleteCompliancePackage', { id }), type: 'POST' });
+
+export const addComplianceRequirement = (packageId, dto) =>
+  postJson(handler('AddComplianceRequirement', { packageId }), dto);
+
+export const updateComplianceRequirement = (id, dto) =>
+  postJson(handler('UpdateComplianceRequirement', { id }), dto);
+
+export const deleteComplianceRequirement = (id) =>
+  abpAjax({ url: handler('DeleteComplianceRequirement', { id }), type: 'POST' });
+
 /* ─── Etkinlik / denetim izi (Faz B) ──────────────────────────────────── */
 
 export const getActivity = (input) => abpAjax({ url: handler('Activity', input), type: 'GET' });

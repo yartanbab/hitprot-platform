@@ -2201,6 +2201,14 @@ namespace Apya.Platform.Migrations
                     b.Property<int>("Scope")
                         .HasColumnType("integer");
 
+                    b.Property<int>("Source")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(1);
+
+                    b.Property<Guid?>("SourceEntityId")
+                        .HasColumnType("uuid");
+
                     b.Property<Guid?>("TenantId")
                         .HasColumnType("uuid")
                         .HasColumnName("TenantId");
@@ -2213,6 +2221,8 @@ namespace Apya.Platform.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("DocumentTypeId");
+
+                    b.HasIndex("SourceEntityId");
 
                     b.HasIndex("PackageId", "Order");
 
