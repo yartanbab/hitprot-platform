@@ -13,12 +13,13 @@ const DOW = ['Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz'];
  */
 const RISK_STYLE = {
     [RISK.OVERDUE]: {
-        pill: 'bg-negative-50 text-negative-700',
+        /* Maketteki sol kenar çubuğu: pill'i okumadan da "bu gecikmiş" denir. */
+        pill: 'border-l-2 border-negative bg-negative-50 text-negative-700',
         /* çapraz tarama */
         pattern: 'repeating-linear-gradient(45deg, transparent, transparent 3px, rgba(0,0,0,.07) 3px, rgba(0,0,0,.07) 5px)',
     },
     [RISK.DUE_TODAY]: {
-        pill: 'bg-warning-50 text-warning-700',
+        pill: 'border-l-2 border-warning bg-warning-50 text-warning-700',
         /* dikey çizgi */
         pattern: 'repeating-linear-gradient(90deg, transparent, transparent 4px, rgba(0,0,0,.06) 4px, rgba(0,0,0,.06) 5px)',
     },
@@ -82,11 +83,18 @@ function SummaryRow({ summary, onSelect }) {
     );
 }
 
-/** Gün yükü çubuğu: kapasiteye kadar nötr, aşan kısım kırmızı. */
+/**
+ * Gün yükü çubuğu — kapasiteye kadar olan kısım accent, AŞAN kısım kırmızı.
+ *
+ * 🔴 Önce aşım hâlinde çubuğun TAMAMI kırmızıya boyanıyordu; 8 saatlik kapasiteyi
+ * 9 saatle aşan günle 147 saatle aşan gün aynı görünüyordu ve ekran baştan aşağı
+ * kırmızıya kesiyordu. Artık çubuk toplam yükü temsil eder ve kapasite noktasından
+ * ikiye bölünür: ne kadarının aşım olduğu oranından okunur.
+ */
 function CapacityBar({ load, capacity }) {
     if (!capacity || load <= 0) return null;
-    const ratio = Math.min(load / capacity, 1);
     const over = load > capacity;
+    const usedPct = over ? (capacity / load) * 100 : (load / capacity) * 100;
 
     return (
         <div
@@ -94,10 +102,8 @@ function CapacityBar({ load, capacity }) {
             title={`Gün yükü ${fmt.hours(load)} / kapasite ${fmt.hours(capacity)}`}
             aria-label={`Gün yükü ${fmt.hours(load)}, kapasite ${fmt.hours(capacity)}`}
         >
-            <span
-                className={cn('h-full', over ? 'bg-negative' : 'bg-accent')}
-                style={{ width: `${ratio * 100}%` }}
-            />
+            <span className="h-full bg-accent" style={{ width: `${usedPct}%` }} />
+            {over && <span className="h-full flex-1 bg-negative" />}
         </div>
     );
 }

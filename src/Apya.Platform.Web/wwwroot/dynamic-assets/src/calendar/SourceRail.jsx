@@ -1,6 +1,6 @@
 import React from 'react';
 import { cn } from '../lib/utils';
-import { SOURCES, SOURCE_ORDER } from './lib/model';
+import { RAIL_GROUPS, SOURCES } from './lib/model';
 
 /**
  * Kaynak rayı — hangi veri türü takvimde görünsün.
@@ -30,6 +30,25 @@ export function SourceRail({
     const available = (sources ?? []).filter((s) => s.isAvailable);
     if (available.length === 0) return null;
 
+    /* Ray satırları gruplardan türer: gider+gelir tek satır. Grubun hiçbir
+       kaynağına izin yoksa satır hiç çizilmez; bir kısmı izinliyse yalnız
+       izinli olanlar sayılır ve anahtarlanır. */
+    const izinli = new Set(available.map((s) => s.source));
+    const groups = RAIL_GROUPS
+        .map(({ key, sources: list }) => {
+            const acik = list.filter((s) => izinli.has(s));
+            if (acik.length === 0) return null;
+            return {
+                key,
+                sources: acik,
+                meta: SOURCES[acik[0]],
+                /* Grubun tamamı kapalıysa kapalı sayılır — biri açıksa satır açıktır. */
+                isOn: acik.some((s) => enabled.has(s)),
+                count: acik.reduce((sum, s) => sum + (counts[s] ?? 0), 0),
+            };
+        })
+        .filter(Boolean);
+
     return (
         <nav
             aria-label="Takvim kaynakları"
@@ -44,20 +63,24 @@ export function SourceRail({
                 </p>
             )}
 
-            {available.map((row) => {
-                const meta = SOURCES[row.source];
+            {groups.map(({ key, sources: groupSources, meta, isOn, count }) => {
                 if (!meta) return null;
-                const isOn = enabled.has(row.source);
-                const count = counts[row.source] ?? 0;
 
                 return (
                     <button
-                        key={row.source}
+                        key={key}
                         type="button"
                         role="switch"
                         aria-checked={isOn}
-                        title={compact ? `${meta.label} — ${count} öğe` : undefined}
-                        onClick={() => onToggle(row.source)}
+                        title={compact ? `${meta.railLabel ?? meta.label} — ${count} öğe` : undefined}
+                        /* Grup tek anahtar: gider ve gelir birlikte açılıp kapanır.
+                           Karışık durumda (biri açık, biri kapalı) hepsini körlemesine
+                           çevirmek durumu TERS çevirirdi — yalnız hedeften sapanlar
+                           anahtarlanır. */
+                        onClick={() => {
+                            const hedef = !isOn;
+                            groupSources.forEach((s) => { if (enabled.has(s) !== hedef) onToggle(s); });
+                        }}
                         className={cn(
                             'group flex items-center rounded-md text-left transition-colors duration-fast',
                             'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-border-focus',
@@ -90,7 +113,7 @@ export function SourceRail({
                         ) : (
                             <>
                                 <span className={cn('flex-1 truncate text-[12.5px] font-medium', !isOn && 'line-through decoration-1')}>
-                                    {meta.label}
+                                    {meta.railLabel ?? meta.label}
                                 </span>
                                 <span className="font-mono text-[11px] tabular-nums text-text-tertiary">{count}</span>
                             </>
