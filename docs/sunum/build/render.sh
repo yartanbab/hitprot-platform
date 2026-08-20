@@ -54,3 +54,18 @@ if [ "$MODE" = "pdf" ] || [ "$MODE" = "all" ]; then
     --print-to-pdf="$PDF_W" "file:///$TMP_W/_print.html" 2>/dev/null || true
   echo "PDF: $OUT_PDF"
 fi
+
+# --- Uygulama içi tanıtım turunun varlıkları -------------------------------
+# Turda gösterilen 6 slayt + tam sunum PDF'i wwwroot'a KOPYALANIR. Kopyalama
+# burada durur ki kaynak ile uygulamadaki görsel asla ayrışmasın: slides.mjs
+# değişip render.sh koşunca uygulama da güncellenmiş olur.
+# Slayt seçimi TourSlideCatalog.cs ile aynı olmalı (test bunu doğrular).
+if [ "$MODE" = "all" ]; then
+  WWW="$HERE/../../../src/Apya.Platform.Web/wwwroot/tanitim"
+  mkdir -p "$WWW"
+  for n in 01 04 05 06 08 16; do
+    cp "$OUT_IMG/slayt-$n.png" "$WWW/slayt-$n.png"
+  done
+  cp "$OUT_PDF" "$WWW/apya-sunum.pdf"
+  echo "TUR : $(ls -1 "$WWW"/slayt-*.png | wc -l) slayt + PDF -> wwwroot/tanitim"
+fi

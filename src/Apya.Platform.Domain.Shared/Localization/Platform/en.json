@@ -777,6 +777,27 @@
     "DesignSystem:Status": "Status",
     "DesignSystem:Sample": "Sample text",
     "Setting:Shell.SavedViews": "Saved Views",
-    "Setting:Shell.SavedViews.Description": "Named filter combinations per screen. Per user, carried across devices."
+    "Setting:Shell.SavedViews.Description": "Named filter combinations per screen. Per user, carried across devices.",
+    "Menu:ProductTour": "Product tour",
+    "Tour:Kicker": "Product tour",
+    "Tour:Close": "Close",
+    "Tour:DownloadPdf": "Download PDF",
+    "Tour:GoToSlide": "Go to slide {0}",
+    "Tour:Skip": "Skip",
+    "Tour:Prev": "Back",
+    "Tour:Next": "Next",
+    "Tour:Done": "Get started",
+    "Tour:Slide:Welcome:Title": "Welcome to Apya Platform",
+    "Tour:Slide:Welcome:Body": "Your projects, your team and your money come together on one screen. This short tour shows you where to start.",
+    "Tour:Slide:Flow:Title": "How work flows end to end",
+    "Tour:Slide:Flow:Body": "Customer, project, task, money and reports feed each other — you never enter the same information twice.",
+    "Tour:Slide:Overview:Title": "Overview: where your day starts",
+    "Tour:Slide:Overview:Body": "The first screen tells you what needs attention today; every number links to the list behind it.",
+    "Tour:Slide:Projects:Title": "Every project has its own console",
+    "Tour:Slide:Projects:Body": "Progress and budget sit side by side, so you never have to guess whether a project is profitable.",
+    "Tour:Slide:Finance:Title": "Invoices, expenses and payments in one ledger",
+    "Tour:Slide:Finance:Body": "You enter the record; the cash account, the customer ledger and the project cost update behind the scenes.",
+    "Tour:Slide:Start:Title": "You are ready to start",
+    "Tour:Slide:Start:Body": "Download the full presentation as PDF, and reopen this tour any time from the user menu."
   }
 }

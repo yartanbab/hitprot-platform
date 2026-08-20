@@ -54,6 +54,12 @@ public class PlatformSettingDefinitionProvider : SettingDefinitionProvider
         context.Add(new SettingDefinition(PlatformSettings.Calendar.SetupCompleted, defaultValue: "false"));
         context.Add(new SettingDefinition(PlatformSettings.Calendar.Sources, defaultValue: ""));
 
+        // İlk giriş tanıtım turu — Calendar.SetupCompleted ile aynı ray: kullanıcı
+        // seviyesi iç bayrak, ayar ekranında GÖSTERİLMEZ. .WithProviders() ile
+        // KISITLANMAZ ki hem User provider zincirde kalsın (SetForCurrentUserAsync
+        // buraya yazar) hem de "false" varsayılanı zincirden dönebilsin.
+        context.Add(new SettingDefinition(PlatformSettings.Tour.Completed, defaultValue: "false"));
+
         // Sürüm notları "en son görülen sürüm" — kullanıcı seviyesi iç değer (ayar ekranında GÖSTERİLMEZ).
         // Boş varsayılan = hiç görmedi → ilk açılışta "Yenilikler" penceresi açılır.
         context.Add(

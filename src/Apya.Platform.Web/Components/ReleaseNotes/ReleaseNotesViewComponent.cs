@@ -32,6 +32,15 @@ public class ReleaseNotesViewComponent : AbpViewComponent
             return Content(string.Empty);
         }
 
+        // Tanıtım turu henüz görülmediyse burası SUSAR: yeni kullanıcı ilk girişte
+        // iki modalı üst üste almasın. Tur bitince (veya atlanınca) bu pencere normal
+        // akışına döner — o sırada katalogdaki en yeni sürümü hâlâ görmemiş olacağı
+        // için bir sonraki sayfa açılışında gösterilir.
+        if (!await _settingProvider.IsTrueAsync(PlatformSettings.Tour.Completed))
+        {
+            return Content(string.Empty);
+        }
+
         var lastSeen = await _settingProvider.GetOrNullAsync(PlatformSettings.ReleaseNotes.LastSeenVersion);
         var latest = ReleaseNoteCatalog.Latest;
 

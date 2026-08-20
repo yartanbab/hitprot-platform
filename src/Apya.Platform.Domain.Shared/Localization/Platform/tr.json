@@ -856,6 +856,27 @@
         "DesignSystem:Status": "Durum",
         "DesignSystem:Sample": "Örnek metin",
         "Setting:Shell.SavedViews": "Kayıtlı Görünümler",
-        "Setting:Shell.SavedViews.Description": "Ekranların filtre kombinasyonlarını adlandırıp kaydeder. Kullanıcıya özeldir, cihazlar arasında taşınır."
+        "Setting:Shell.SavedViews.Description": "Ekranların filtre kombinasyonlarını adlandırıp kaydeder. Kullanıcıya özeldir, cihazlar arasında taşınır.",
+        "Menu:ProductTour": "Tanıtım turu",
+        "Tour:Kicker": "Tanıtım turu",
+        "Tour:Close": "Kapat",
+        "Tour:DownloadPdf": "Sunumu PDF indir",
+        "Tour:GoToSlide": "{0}. slayta git",
+        "Tour:Skip": "Atla",
+        "Tour:Prev": "Geri",
+        "Tour:Next": "İleri",
+        "Tour:Done": "Başlayalım",
+        "Tour:Slide:Welcome:Title": "Apya Platform'a hoş geldiniz",
+        "Tour:Slide:Welcome:Body": "Projeleriniz, ekibiniz ve paranız tek ekranda birleşir. Bu kısa tur nereden başlayacağınızı gösterir.",
+        "Tour:Slide:Flow:Title": "İşin baştan sona yolculuğu",
+        "Tour:Slide:Flow:Body": "Müşteri, proje, görev, para ve rapor birbirini besler — aynı bilgiyi ikinci kez yazmazsınız.",
+        "Tour:Slide:Overview:Title": "Genel Bakış: gününüz nereden başlıyor",
+        "Tour:Slide:Overview:Body": "Açılışta gördüğünüz ekran bugün neyin dikkat istediğini söyler; her rakam ilgili listeye tıklanır.",
+        "Tour:Slide:Projects:Title": "Her projenin kendi konsolu",
+        "Tour:Slide:Projects:Body": "İşin durumu ve bütçesi yan yana durur; proje kâr ediyor mu diye tahmin etmezsiniz.",
+        "Tour:Slide:Finance:Title": "Fatura, gider ve tahsilat tek defterde",
+        "Tour:Slide:Finance:Body": "Siz kaydı girersiniz; kasa, cari ve proje maliyeti arkada kendiliğinden işlenir.",
+        "Tour:Slide:Start:Title": "Başlamaya hazırsınız",
+        "Tour:Slide:Start:Body": "Sunumun tamamını PDF olarak indirebilir, turu istediğiniz zaman kullanıcı menüsünden yeniden açabilirsiniz."
     }
 }

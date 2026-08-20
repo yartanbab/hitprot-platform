@@ -169,6 +169,10 @@ public class PlatformWebModule : AbpModule
             options.Add(Volo.Abp.Ui.LayoutHooks.LayoutHooks.Body.Last, typeof(Apya.Platform.Web.Components.CookieNotice.CookieNoticeViewComponent));
             // "Yenilikler" penceresi — kullanıcı en yeni sürümü görmediyse ilk açılışta modal açar.
             options.Add(Volo.Abp.Ui.LayoutHooks.LayoutHooks.Body.Last, typeof(Apya.Platform.Web.Components.ReleaseNotes.ReleaseNotesViewComponent));
+            // İlk giriş tanıtım turu — turu görmemiş kullanıcıda modal açar. "Yenilikler"den
+            // SONRA kaydedilir ki DOM'da sonra gelsin; zaten ikisi aynı anda açılmaz
+            // (ReleaseNotesViewComponent tur tamamlanana kadar boş döner).
+            options.Add(Volo.Abp.Ui.LayoutHooks.LayoutHooks.Body.Last, typeof(Apya.Platform.Web.Components.ProductTour.ProductTourViewComponent));
         });
 
         // GAP-012 + ARCH-010: Audit Logging Selectors.
