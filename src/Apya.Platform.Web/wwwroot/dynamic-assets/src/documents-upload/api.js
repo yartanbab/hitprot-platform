@@ -83,7 +83,7 @@ export function uploadFile(documentId, file, { onProgress, signal } = {}) {
         try { resolve(JSON.parse(xhr.responseText)); }
         catch { resolve(null); }
       } else {
-        reject(new Error(serverMessage(xhr) || `Sunucu ${xhr.status} döndü`));
+        reject(new Error(serverMessage(xhr)));
       }
     };
 
@@ -96,14 +96,47 @@ export function uploadFile(documentId, file, { onProgress, signal } = {}) {
   });
 }
 
+/* ─── Hata mesajı: ham istisna metni KULLANICIYA gösterilmez ──────────────
+   Development'ta ABP gerçek istisnayı `error.message`'a koyar. Kuyruk satırında
+   "Volo.Abp.Data.AbpDbConcurrencyException: The database operation was expected
+   to affect 1 row(s)…" yazması ne okunabilir ne de eyleme dönük. Ham metin
+   konsola gider, ekrana duruma göre insan dilinde bir karşılık yazılır.       */
+const ISTISNA_KALIBI = /(^|[\s.])[A-Z][\w.]*(Exception|Error)\b/;
+
+const DURUM_MESAJLARI = {
+  400: 'Dosya kabul edilmedi.',
+  401: 'Oturumunuz düşmüş — sayfayı yenileyin.',
+  403: 'Bu klasöre yükleme yetkiniz yok.',
+  404: 'Hedef klasör bulunamadı.',
+  413: 'Dosya sunucu sınırını aşıyor.',
+};
+
+/** Ham metin insan diliyse döner; istisna dökümüyse null. Testlerde kullanılır. */
+export function humanMessage(raw) {
+  if (!raw) return null;
+  const tek = String(raw).replace(/\s+/g, ' ').trim();
+  if (!tek) return null;
+  if (ISTISNA_KALIBI.test(tek) || tek.includes('--->') || tek.includes(' at ')) return null;
+  return tek.length > 160 ? `${tek.slice(0, 157)}…` : tek;
+}
+
+export function statusMessage(status) {
+  if (DURUM_MESAJLARI[status]) return DURUM_MESAJLARI[status];
+  return status >= 500 ? 'Sunucu hatası — tekrar deneyebilirsiniz.' : `Sunucu ${status} döndü`;
+}
+
 /** ABP hata gövdesinden kullanıcıya gösterilebilir mesajı çıkarır. */
 function serverMessage(xhr) {
+  let raw = null;
   try {
     const body = JSON.parse(xhr.responseText);
-    return body?.error?.message || body?.error?.details || null;
+    raw = body?.error?.message || body?.error?.details || null;
   } catch {
-    return xhr.responseText?.slice(0, 160) || null;
+    raw = xhr.responseText || null;
   }
+  /* Ham hâli geliştirici için kaybolmasın. */
+  if (raw) console.error('[Upload] sunucu hatası:', raw);
+  return humanMessage(raw) ?? statusMessage(xhr.status);
 }
 
 export const fmtSize = (bytes) => {
