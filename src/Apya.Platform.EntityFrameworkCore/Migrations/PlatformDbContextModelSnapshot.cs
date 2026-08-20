@@ -2564,6 +2564,12 @@ namespace Apya.Platform.Migrations
                     b.Property<long>("FileSize")
                         .HasColumnType("bigint");
 
+                    b.Property<bool>("IsDeleted")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("IsDeleted");
+
                     b.Property<bool>("IsLatest")
                         .HasColumnType("boolean");
 
@@ -2968,6 +2974,12 @@ namespace Apya.Platform.Migrations
                     b.Property<Guid>("DocumentFileId")
                         .HasColumnType("uuid");
 
+                    b.Property<bool>("IsDeleted")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("IsDeleted");
+
                     b.Property<Guid>("TagId")
                         .HasColumnType("uuid");
 
@@ -2976,7 +2988,8 @@ namespace Apya.Platform.Migrations
                     b.HasIndex("TagId");
 
                     b.HasIndex("DocumentFileId", "TagId")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasFilter("\"IsDeleted\" = false");
 
                     b.ToTable("AppDocumentFileTags", (string)null);
                 });

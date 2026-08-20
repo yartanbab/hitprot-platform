@@ -53,6 +53,9 @@ export const bulkTagFiles = (documentFileIds, tags, remove = false) =>
 
 export const deleteFile = (id) => abpAjax({ url: handler('DeleteFile', { id }), type: 'POST' });
 
+/** Çöp kutusundan geri alma — belge ekleri ve etiketleriyle birlikte döner. */
+export const restoreFile = (id) => abpAjax({ url: handler('RestoreFile', { id }), type: 'POST' });
+
 /* ─── Yardımcı kaynaklar ──────────────────────────────────────────────── */
 
 export const getDocumentTypes = () => abpAjax({ url: handler('DocumentTypes'), type: 'GET' });

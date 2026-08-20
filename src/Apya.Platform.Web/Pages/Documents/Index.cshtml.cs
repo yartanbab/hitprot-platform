@@ -97,6 +97,12 @@ public class IndexModel : AbpPageModel
         return NoContent();
     }
 
+    public async Task<IActionResult> OnPostRestoreFileAsync(Guid id)
+    {
+        await _documentFileAppService.RestoreAsync(id);
+        return NoContent();
+    }
+
     public async Task<IActionResult> OnGetDocumentTypesAsync()
     {
         var types = await _documentTypeAppService.GetListAsync();

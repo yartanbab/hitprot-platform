@@ -108,25 +108,34 @@ function MissingRow({ item, onUpload, canUpload }) {
   );
 }
 
-function FileRow({ file, selected, checked, onSelect, onToggleCheck, onDragStart }) {
+function FileRow({ file, selected, checked, onSelect, onToggleCheck, onDragStart, isTrash, onRestore }) {
   const visual = fileVisual(file.contentType, file.fileName);
   const status = STATUS_META[file.status] || STATUS_META[1];
 
   return (
     <div
-      draggable
-      onDragStart={() => onDragStart(file)}
-      onClick={() => onSelect(file)}
-      className={cn('apya-doc-row', selected && 'is-selected')}
+      draggable={!isTrash}
+      onDragStart={isTrash ? undefined : () => onDragStart(file)}
+      onClick={isTrash ? undefined : () => onSelect(file)}
+      className={cn('apya-doc-row', selected && 'is-selected', isTrash && 'is-trashed')}
       style={{ gridTemplateColumns: GRID_TEMPLATE }}
     >
-      <span onClick={(e) => { e.stopPropagation(); onToggleCheck(file.id); }} style={{ cursor: 'pointer' }}>
-        <i
-          className={`fa fa-${checked ? 'square-check' : 'square'}`}
-          style={{ fontSize: 13, color: checked ? 'var(--apya-accent-500)' : 'var(--apya-text-tertiary)' }}
-          role="checkbox"
-          aria-checked={checked}
-        />
+      {/* Çöp kutusunda satır seçilemez ve taşınamaz: silinmiş belge üzerinde
+          yapılabilecek tek şey geri almaktır. */}
+      <span
+        onClick={isTrash ? undefined : (e) => { e.stopPropagation(); onToggleCheck(file.id); }}
+        style={{ cursor: isTrash ? 'default' : 'pointer' }}
+      >
+        {isTrash ? (
+          <i className="fa fa-trash-can" style={{ fontSize: 12, color: 'var(--apya-text-tertiary)' }} />
+        ) : (
+          <i
+            className={`fa fa-${checked ? 'square-check' : 'square'}`}
+            style={{ fontSize: 13, color: checked ? 'var(--apya-accent-500)' : 'var(--apya-text-tertiary)' }}
+            role="checkbox"
+            aria-checked={checked}
+          />
+        )}
       </span>
 
       <span className="d-flex align-items-center gap-2" style={{ minWidth: 0 }}>
@@ -158,7 +167,13 @@ function FileRow({ file, selected, checked, onSelect, onToggleCheck, onDragStart
       </span>
 
       <span>
-        <span className={cn('apya-chip', status.chip)}>{status.text}</span>
+        {isTrash ? (
+          <button type="button" className="apya-doc-linkbtn" onClick={() => onRestore(file)}>
+            <i className="fa fa-rotate-left" /> Geri al
+          </button>
+        ) : (
+          <span className={cn('apya-chip', status.chip)}>{status.text}</span>
+        )}
       </span>
     </div>
   );
@@ -213,7 +228,7 @@ export function FileList({
   loading, files, totalCount, view, sorting, onSort,
   selectedId, onSelect, checkedIds, onToggleCheck, onToggleAll,
   page, pageSize, onPageChange, onDragStart, emptyHint,
-  missingItems = [], onUploadMissing, canUpload = false,
+  missingItems = [], onUploadMissing, canUpload = false, isTrash = false, onRestore,
 }) {
   const allChecked = files.length > 0 && files.every((f) => checkedIds.has(f.id));
   const pageCount = Math.max(1, Math.ceil(totalCount / pageSize));
@@ -284,6 +299,8 @@ export function FileList({
               onSelect={onSelect}
               onToggleCheck={onToggleCheck}
               onDragStart={onDragStart}
+              isTrash={isTrash}
+              onRestore={onRestore}
             />
           ))}
         </div>

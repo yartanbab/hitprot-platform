@@ -1787,6 +1787,10 @@ i.apya-priority-dot {
 }
 .apya-doc-row-head:hover { background: var(--apya-surface-sunken); }
 
+/* Çöp kutusu satırı: solgun, tıklanamaz — tek eylemi "Geri al". */
+.apya-doc-row.is-trashed { cursor: default; opacity: .72; }
+.apya-doc-row.is-trashed:hover { background: var(--apya-surface-raised); opacity: 1; }
+
 /* ── Satır içi eksik belge kalemi ────────────────────────────────────────
    Kesikli alt çizgi + amber zemin: satır bir DOSYA değil, olması gereken bir
    boşluk. Tıklanabilir değil; tek eylemi sağdaki "Yükle". */

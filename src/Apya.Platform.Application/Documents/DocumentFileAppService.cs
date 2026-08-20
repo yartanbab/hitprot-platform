@@ -53,6 +53,7 @@ public class DocumentFileAppService : ApplicationService, IDocumentFileAppServic
     private readonly IRepository<ComplianceRequirement, Guid> _requirementRepository;
     private readonly IRepository<IdentityUser, Guid> _identityRepository;
     private readonly IDataFilter<IMultiTenant> _mtFilter;
+    private readonly IDataFilter<ISoftDelete> _softDeleteFilter;
 
     public DocumentFileAppService(
         IRepository<DocumentFile, Guid> fileRepository,
@@ -74,7 +75,8 @@ public class DocumentFileAppService : ApplicationService, IDocumentFileAppServic
         IRepository<ComplianceItemState, Guid> itemStateRepository,
         IRepository<ComplianceRequirement, Guid> requirementRepository,
         IRepository<IdentityUser, Guid> identityRepository,
-        IDataFilter<IMultiTenant> mtFilter)
+        IDataFilter<IMultiTenant> mtFilter,
+        IDataFilter<ISoftDelete> softDeleteFilter)
     {
         _fileRepository = fileRepository;
         _documentRepository = documentRepository;
@@ -96,11 +98,34 @@ public class DocumentFileAppService : ApplicationService, IDocumentFileAppServic
         _requirementRepository = requirementRepository;
         _identityRepository = identityRepository;
         _mtFilter = mtFilter;
+        _softDeleteFilter = softDeleteFilter;
     }
 
     public virtual async Task<PagedResultDto<DocumentFileDto>> GetListAsync(GetDocumentFilesInput input)
     {
+        if (input.OnlyDeleted != true)
+        {
+            return await QueryPageAsync(input);
+        }
+
+        // Çöp kutusu. Sorgu bu bloğun İÇİNDE koşmak ZORUNDA: filtreyi kapatıp
+        // dışarı IQueryable taşırsak EF yürütme anında filtreyi yeniden uygular
+        // ve liste sessizce boş döner.
+        using (_softDeleteFilter.Disable())
+        {
+            return await QueryPageAsync(input, onlyDeleted: true);
+        }
+    }
+
+    private async Task<PagedResultDto<DocumentFileDto>> QueryPageAsync(
+        GetDocumentFilesInput input, bool onlyDeleted = false)
+    {
         var queryable = (await _fileRepository.GetQueryableAsync()).AsNoTracking();
+
+        if (onlyDeleted)
+        {
+            queryable = queryable.Where(f => f.IsDeleted);
+        }
 
         queryable = await ApplyFiltersAsync(queryable, input);
 
@@ -114,6 +139,60 @@ public class DocumentFileAppService : ApplicationService, IDocumentFileAppServic
         var dtos = await MapWithRelatedNamesAsync(files);
 
         return new PagedResultDto<DocumentFileDto>(totalCount, dtos);
+    }
+
+    /// <summary>
+    /// Çöp kutusundan geri alma. Belge, ekleri, alan değerleri ve etiketleri
+    /// BİRLİKTE geri gelir — yalnız üst satırı geri almak, açılamayan bir belge
+    /// bırakırdı.
+    /// </summary>
+    [Authorize(PlatformPermissions.Documents.Delete)]
+    public virtual async Task RestoreAsync(Guid id)
+    {
+        using (_softDeleteFilter.Disable())
+        {
+            var file = await _fileRepository.GetAsync(id);
+
+            if (!file.IsDeleted)
+            {
+                return;
+            }
+
+            file.IsDeleted = false;
+            await _fileRepository.UpdateAsync(file);
+
+            var attachments = await _attachmentRepository.GetListAsync(a => a.DocumentFileId == id && a.IsDeleted);
+            foreach (var attachment in attachments)
+            {
+                attachment.IsDeleted = false;
+            }
+            if (attachments.Count > 0)
+            {
+                await _attachmentRepository.UpdateManyAsync(attachments);
+            }
+
+            var values = await _fieldValueRepository.GetListAsync(v => v.DocumentFileId == id && v.IsDeleted);
+            foreach (var value in values)
+            {
+                value.IsDeleted = false;
+            }
+            if (values.Count > 0)
+            {
+                await _fieldValueRepository.UpdateManyAsync(values);
+            }
+
+            var fileTags = await _fileTagRepository.GetListAsync(t => t.DocumentFileId == id && t.IsDeleted);
+            foreach (var fileTag in fileTags)
+            {
+                fileTag.IsDeleted = false;
+            }
+            if (fileTags.Count > 0)
+            {
+                await _fileTagRepository.UpdateManyAsync(fileTags);
+            }
+
+            await LogAsync(file, DocumentAccessAction.Restored, $"{attachments.Count} versiyonla birlikte");
+        }
     }
 
     public virtual async Task<DocumentFileDetailDto> GetAsync(Guid id)

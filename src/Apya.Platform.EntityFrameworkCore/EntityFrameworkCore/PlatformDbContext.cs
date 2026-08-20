@@ -1360,7 +1360,10 @@ namespace Apya.Platform.EntityFrameworkCore
                  .HasForeignKey(x => x.TagId)
                  .OnDelete(DeleteBehavior.Cascade);
 
-                b.HasIndex(x => new { x.DocumentFileId, x.TagId }).IsUnique();
+                // Bağlantı artık SOFT-DELETE. Filtre olmasaydı çöp kutusundaki bir
+                // belgenin etiketi, aynı etiketin yeniden eklenmesini engellerdi.
+                b.HasIndex(x => new { x.DocumentFileId, x.TagId }).IsUnique()
+                    .HasFilter(isSqlServer ? "[IsDeleted] = 0" : "\"IsDeleted\" = false");
                 b.HasIndex(x => x.TagId);
             });
 

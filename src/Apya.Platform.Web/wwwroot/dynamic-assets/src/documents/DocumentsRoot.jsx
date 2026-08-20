@@ -3,7 +3,7 @@ import { Button, Input } from '../components/ui';
 import {
   abpAuth, abpDocument, abpNotify, abpAppPath,
   bulkMoveFiles, bulkTagFiles, deleteFile, getComplianceOverview, getDocumentTypes, getFile, getFiles,
-  getWorkSteps, linkComplianceDocument, moveFile, updateFileMeta, uploadAttachment,
+  getWorkSteps, linkComplianceDocument, moveFile, restoreFile, updateFileMeta, uploadAttachment,
 } from './api';
 import { cn, fmt } from './format';
 import { ContextTree } from './components/ContextTree';
@@ -147,6 +147,9 @@ export function DocumentsRoot() {
   // yükleyicilerin bağımlılığı olduğu için burada, node'un hemen ardında durur.
   const activeFolderId = node.kind === 'folder' ? node.documentId : null;
   const activeProjectId = node.projectId || null;
+
+  // Çöp kutusu: satırlar silinmiş belgeler, tek eylem geri alma.
+  const isTrash = node.kind === 'smart' && node.smart === 'trash';
   const [expanded, setExpanded] = useState(new Set());
   const [search, setSearch] = useState(initialQuery.get('q') || '');
   const [sorting, setSorting] = useState(initialQuery.get('sort') || 'creationTime desc');
@@ -220,6 +223,8 @@ export function DocumentsRoot() {
       base.expiringWithinDays = 30;
     } else if (node.kind === 'smart' && node.smart === 'missing-meta') {
       base.missingRequiredFields = true;
+    } else if (node.kind === 'smart' && node.smart === 'trash') {
+      base.onlyDeleted = true;
     }
 
     return base;
@@ -551,6 +556,18 @@ export function DocumentsRoot() {
     }
   };
 
+  /** Çöp kutusundan geri alma — belge ekleri ve etiketleriyle birlikte döner. */
+  const handleRestore = async (file) => {
+    try {
+      await restoreFile(file.id);
+      flash(`"${file.displayName}" geri alındı.`);
+      await Promise.all([loadFiles(), loadKpis(), loadTree()]);
+    } catch (e) {
+      abpNotify('error', 'Belge geri alınamadı.');
+      console.error('[Documents] restore', e);
+    }
+  };
+
   /** Eksik kalem satırındaki "Yükle": dosya seçiciyi açar, hedefi saklar. */
   const handleUploadForRequirement = (item) => {
     if (!activeFolderId) {
@@ -744,6 +761,8 @@ export function DocumentsRoot() {
             missingItems={missingItems}
             onUploadMissing={handleUploadForRequirement}
             canUpload={canCreate}
+            isTrash={isTrash}
+            onRestore={handleRestore}
           />
 
           {canBulk && (
@@ -777,7 +796,7 @@ export function DocumentsRoot() {
       {deleteTarget && (
         <ConfirmDialog
           title="Belge silinecek"
-          message={`"${deleteTarget.displayName}" ve tüm versiyonları kalıcı olarak silinecek.`}
+          message={`"${deleteTarget.displayName}" ve tüm versiyonları çöp kutusuna taşınacak. Sol alttaki "Çöp kutusu"ndan geri alabilirsiniz.`}
           onConfirm={handleDelete}
           onCancel={() => setDeleteTarget(null)}
         />

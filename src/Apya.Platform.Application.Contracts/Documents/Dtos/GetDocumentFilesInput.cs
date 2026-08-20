@@ -37,4 +37,10 @@ public class GetDocumentFilesInput : PagedAndSortedResultRequestDto
     /// bunu kullanır; belge tarihi değil YÜKLEME anı ölçülür.
     /// </summary>
     public DateTime? UploadedAfter { get; set; }
+
+    /// <summary>
+    /// Çöp kutusu: YALNIZ silinmiş belgeler. Açıkken soft-delete filtresi
+    /// kapatılır; diğer tüm süzgeçler aynen çalışmaya devam eder.
+    /// </summary>
+    public bool? OnlyDeleted { get; set; }
 }
