@@ -205,6 +205,18 @@ public class SharedPackageItemDto
     public string? DocumentTypeName { get; set; }
     public DateTime? DocumentDate { get; set; }
 
+    /// <summary>
+    /// İndirme bağlantısının hedefi. Anonim sayfaya çıkar ama tek başına bir yetki
+    /// taşımaz — indirme yolunda bu kimliğin linkin paketine ait olduğu doğrulanır.
+    /// </summary>
+    public Guid DocumentFileId { get; set; }
+
+    /// <summary>
+    /// Belgenin indirilebilir bir sürümü var mı. Linkin AllowDownload bayrağı
+    /// açık olsa bile dosyası olmayan kalem indirilemez.
+    /// </summary>
+    public bool CanDownload { get; set; }
+
     /// <summary>Maskeli alanlar dışa aktarımda boş görünür (Faz D'de rol matrisiyle genişleyecek).</summary>
     public bool IsMasked { get; set; }
 }

@@ -22,4 +22,12 @@ public interface IExternalShareAppService : IApplicationService
     /// erişimi kaydeder ve salt okunur içeriği döner.
     /// </summary>
     Task<SharedPackageViewDto> ResolveAsync(string token, string? ipHash, string? userAgent);
+
+    /// <summary>
+    /// Anonim denetçi indirmesi. Token'ı çözer, süre/iptal VE indirme iznini
+    /// doğrular, istenen belgenin gerçekten linkin paketine ait olduğunu kontrol
+    /// eder ve erişimi "indirme" olarak kaydeder.
+    /// </summary>
+    Task<GeneratedFileDownloadDto> PrepareDownloadAsync(
+        string token, Guid documentFileId, string? ipHash, string? userAgent);
 }

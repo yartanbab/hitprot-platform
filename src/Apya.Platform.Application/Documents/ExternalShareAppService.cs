@@ -31,6 +31,7 @@ public class ExternalShareAppService : ApplicationService, IExternalShareAppServ
     private readonly IRepository<DeliveryPackage, Guid> _packageRepository;
     private readonly IRepository<DeliveryPackageItem, Guid> _itemRepository;
     private readonly IRepository<DocumentFile, Guid> _fileRepository;
+    private readonly IRepository<DocumentAttachment, Guid> _attachmentRepository;
     private readonly IRepository<DocumentType, Guid> _typeRepository;
     private readonly IRepository<DocumentTypeField, Guid> _fieldRepository;
     private readonly IRepository<Project, Guid> _projectRepository;
@@ -42,6 +43,7 @@ public class ExternalShareAppService : ApplicationService, IExternalShareAppServ
         IRepository<DeliveryPackage, Guid> packageRepository,
         IRepository<DeliveryPackageItem, Guid> itemRepository,
         IRepository<DocumentFile, Guid> fileRepository,
+        IRepository<DocumentAttachment, Guid> attachmentRepository,
         IRepository<DocumentType, Guid> typeRepository,
         IRepository<DocumentTypeField, Guid> fieldRepository,
         IRepository<Project, Guid> projectRepository,
@@ -52,6 +54,7 @@ public class ExternalShareAppService : ApplicationService, IExternalShareAppServ
         _packageRepository = packageRepository;
         _itemRepository = itemRepository;
         _fileRepository = fileRepository;
+        _attachmentRepository = attachmentRepository;
         _typeRepository = typeRepository;
         _fieldRepository = fieldRepository;
         _projectRepository = projectRepository;
@@ -119,24 +122,9 @@ public class ExternalShareAppService : ApplicationService, IExternalShareAppServ
     [AllowAnonymous]
     public virtual async Task<SharedPackageViewDto> ResolveAsync(string token, string? ipHash, string? userAgent)
     {
-        var tokenHash = Hash(token);
-
         using (_mtFilter.Disable())
         {
-            var queryable = await _linkRepository.GetQueryableAsync();
-            var link = await AsyncExecuter.FirstOrDefaultAsync(queryable.Where(l => l.TokenHash == tokenHash));
-
-            if (link == null)
-            {
-                throw new EntityNotFoundException(typeof(ExternalShareLink), tokenHash);
-            }
-
-            link.EnsureUsable(Clock.Now);
-
-            if (link.TargetType != ShareTargetType.DeliveryPackage)
-            {
-                throw new EntityNotFoundException(typeof(ExternalShareLink), link.Id);
-            }
+            var link = await ResolvePackageLinkAsync(token);
 
             var view = await BuildPackageViewAsync(link);
 
@@ -150,7 +138,83 @@ public class ExternalShareAppService : ApplicationService, IExternalShareAppServ
         }
     }
 
+    /// <summary>
+    /// Anonim denetçi indirmesi.
+    ///
+    /// 🔐 Token bir PAKETİ açar, sistemdeki her belgeyi değil: istenen dosyanın
+    /// linkin paketine ait olduğu burada doğrulanır. Doğrulama olmadan geçerli bir
+    /// token, kimliğini bilen herkese tüm belgeleri indirtirdi.
+    /// </summary>
+    [AllowAnonymous]
+    public virtual async Task<GeneratedFileDownloadDto> PrepareDownloadAsync(
+        string token, Guid documentFileId, string? ipHash, string? userAgent)
+    {
+        using (_mtFilter.Disable())
+        {
+            var link = await ResolvePackageLinkAsync(token);
+
+            link.EnsureDownloadAllowed();
+
+            var itemQueryable = await _itemRepository.GetQueryableAsync();
+            var belongsToPackage = await AsyncExecuter.AnyAsync(
+                itemQueryable.Where(i => i.PackageId == link.TargetId && i.DocumentFileId == documentFileId));
+
+            if (!belongsToPackage)
+            {
+                throw new EntityNotFoundException(typeof(DocumentFile), documentFileId);
+            }
+
+            var file = await _fileRepository.GetAsync(documentFileId);
+
+            if (!file.LatestAttachmentId.HasValue)
+            {
+                throw new EntityNotFoundException(typeof(DocumentAttachment), documentFileId);
+            }
+
+            var attachment = await _attachmentRepository.GetAsync(file.LatestAttachmentId.Value);
+
+            link.RegisterAccess();
+            await _linkRepository.UpdateAsync(link);
+
+            await _accessLogRepository.InsertAsync(new ExternalShareAccessLog(
+                GuidGenerator.Create(), link.TenantId, link.Id, isDownload: true, ipHash, userAgent));
+
+            return new GeneratedFileDownloadDto
+            {
+                StoredFileName = attachment.StoredFileName,
+                FileName = attachment.FileName,
+                ContentType = attachment.ContentType,
+            };
+        }
+    }
+
     /* ─────────────────────────── Yardımcılar ─────────────────────────── */
+
+    /// <summary>
+    /// Token'ı çözüp kullanılabilirliğini doğrular. ÇAĞIRAN, çok-kiracılı filtreyi
+    /// kapatmış olmalıdır — anonim istekte kiracı bağlamı yoktur.
+    /// </summary>
+    private async Task<ExternalShareLink> ResolvePackageLinkAsync(string token)
+    {
+        var tokenHash = Hash(token);
+
+        var queryable = await _linkRepository.GetQueryableAsync();
+        var link = await AsyncExecuter.FirstOrDefaultAsync(queryable.Where(l => l.TokenHash == tokenHash));
+
+        if (link == null)
+        {
+            throw new EntityNotFoundException(typeof(ExternalShareLink), tokenHash);
+        }
+
+        link.EnsureUsable(Clock.Now);
+
+        if (link.TargetType != ShareTargetType.DeliveryPackage)
+        {
+            throw new EntityNotFoundException(typeof(ExternalShareLink), link.Id);
+        }
+
+        return link;
+    }
 
     /// <summary>256 bit kriptografik rastgele, URL güvenli base64.</summary>
     private static string GenerateToken()
@@ -231,6 +295,8 @@ public class ExternalShareAppService : ApplicationService, IExternalShareAppServ
                         ? typeNames.GetValueOrDefault(file.DocumentTypeId.Value)
                         : null,
                     DocumentDate = file?.DocumentDate,
+                    DocumentFileId = i.DocumentFileId,
+                    CanDownload = file?.LatestAttachmentId != null,
                     IsMasked = file?.DocumentTypeId != null && confidentialTypeIds.Contains(file.DocumentTypeId.Value),
                 };
             }).ToList(),
