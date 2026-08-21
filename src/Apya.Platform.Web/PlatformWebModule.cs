@@ -3,6 +3,7 @@ using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Threading.RateLimiting;
+using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.RateLimiting;
@@ -128,8 +129,14 @@ public class PlatformWebModule : AbpModule
                         "Production'da openiddict.pfx açılamaz; lütfen User Secrets veya " +
                         "appsettings.secrets.json üzerinden sağlayın. Detay: ARCH-008.");
                 }
+                // EphemeralKeySet ŞART (paylaşımlı Windows hosting):
+                // Varsayılan (UserKeySet) özel anahtarı uygulama havuzu kimliğinin PROFIL
+                // anahtar deposuna yazmaya çalışır. IIS'te "Load User Profile" kapalıysa o depo
+                // yoktur ve .NET yanıltıcı bir "The system cannot find the file specified"
+                // (CryptographicException) fırlatır — pfx yerinde olsa bile. Sonuç: ANCM 502.5.
+                // Ephemeral anahtarı yalnız bellekte tutar; diske/profile hiç dokunmaz.
                 serverBuilder.AddProductionEncryptionAndSigningCertificate(
-                    "openiddict.pfx", certificatePassword);
+                    "openiddict.pfx", certificatePassword, X509KeyStorageFlags.EphemeralKeySet);
             });
         }
     }
