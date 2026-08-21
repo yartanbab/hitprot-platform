@@ -53,6 +53,26 @@ korunuyor → `/ReleaseNotes` sayfasında **iki sürüm birden** listelenir.
 - ZIP üretirken ters-slash tuzağı: `ZipFile::Open($zip,'Create')` + entry adını `-replace '\\','/'`.
   Denetim: ZIP'i açıp `wwwroot/libs` girdi sayısını say (0 = ayraç bozuk).
 
+### 1b. 🌐 DOMAIN DEĞİŞİYOR — `apya.pargetto.com.tr` → `apya.pargetto.com`
+
+Bu yayın aynı zamanda **alan adı taşımasını** taşıyor. `appsettings.Production.json` içindeki
+`App:SelfUrl` ve `OpenIddict:Applications:Platform_Web:RootUrl` yeni adrese güncellendi — yani
+**pakette yeni domain var**, sunucuda ek bir ayar gerekmiyor.
+
+Sunucu tarafında yapılması gerekenler:
+- Plesk'te **yeni alan adı/alt alan adı** tanımlı ve site köküne bağlı olmalı
+- **DNS** yeni adrese yönlenmeli
+- **SSL sertifikası** yeni domain için alınmalı (Let's Encrypt) — HTTPS yoksa giriş çalışmaz
+- Eski `.com.tr` adresi kullanımdan kalkacaksa oradan yeni adrese **kalıcı yönlendirme** kurulabilir
+
+OpenIddict tarafı kendiliğinden düzelir: seeder redirect URI'ları karşılaştırıp farklıysa
+`UpdateAsync` ile günceller (`HasSameRedirectUris`). Yani DbMigrator yeni `RootUrl` ile bir kez
+çalıştığında kayıtlı redirect adresleri yeni domaine geçer.
+
+> ⚠️ Sunucudaki `appsettings.secrets.json` dosyasında da `SelfUrl` / `RootUrl` satırları varsa
+> onları da güncelle — **secrets, `appsettings.Production.json`'ı ezer**, eski domain orada
+> kalırsa paketteki yeni değer hiç devreye girmez.
+
 ### 2. 🔴 VERİ TAŞIMA UYARISI — önce yedek al
 `A1_DocumentsCore` migration'ı yalnız tablo eklemiyor, **veri de taşıyor**: mevcut
 `AppDocumentAttachments` kayıtlarından her sürüm grubunun en son sürümü yeni `AppDocumentFiles`
@@ -99,9 +119,20 @@ Bekleyen **12 migration** (SqlServer, prod). DbMigrator sırayla uygular:
   (KOSGEB Ar-Ge, TÜBİTAK 1501) + kontrol listesi kalemleri · sistem rapor şablonları.
   Hepsi **host seviyesinde** (`TenantId = null`), sabit GUID'lerle, idempotent — kiracılar okur.
 
-> ⚠️ **KRİTİK (değişmedi):** `SUNUCU-1-dbmigrator-secrets.json` içindeki **`ClientSecret` +
-> `DefaultPassPhrase` ilk seed'deki değerlerle AYNI olmak zorunda.** Değişirse OpenIddict seed'i /
-> giriş ve AI anahtarı çözümü kırılır.
+> ℹ️ **`ClientSecret` ve `DefaultPassPhrase` hakkında (ölçülerek düzeltildi):**
+>
+> - **`ClientSecret`** — önceki runbook'lar "ilk seed'dekiyle aynı olmalı" diyordu; **kod bunu
+>   gerektirmiyor.** `OpenIddictDataSeedContributor` istemci **zaten varsa** yalnızca redirect URI
+>   ve scope'ları günceller, `ClientSecret` alanına dokunmaz (secret sadece `CreateAsync` yolunda,
+>   yani istemci ilk kez oluşturulurken yazılır). Yani farklı bir değer versen de canlıdaki secret
+>   değişmez. **Tek şart: boş olmamalı** — confidential istemcide boş secret `BusinessException`
+>   atar ve tüm seed zincirini ilk adımda düşürür.
+> - **`DefaultPassPhrase`** — yalnız iki yerdeki değerleri şifreler: `ai.AiProviderConfigs` (AI
+>   sağlayıcı anahtarları) ve `AppExternalCalendarAccounts` (takvim OAuth token'ları). **Bu tablolar
+>   boşsa passphrase'in değeri önemsizdir.** Kayıt varsa ilk kurulumdakiyle aynı olmalı; yoksa o
+>   kayıtlar çözülemez (AI anahtarı çalışmaz, kullanıcılar takvimi yeniden bağlar).
+>
+> İkisinin de doğru değeri **sunucudaki Web uygulamasının `appsettings.secrets.json`** dosyasındadır.
 
 > ✅ **Demo verisi prod'a GİRMEZ:** 150 proje / 30 kiracılık demo dünyası `App:SeedDemoData`
 > anahtarına bağlı ve `appsettings.Production.json` bunu **`false`** tutuyor. DbMigrator'ı
@@ -129,7 +160,7 @@ görülmeme sorunu çözüldü.)
 
 ## Doğrulama (deploy sonrası)
 
-- [ ] `https://apya.pargetto.com.tr` → 200; `/` → `/Account/Login` (kök yönlendirme + authz)
+- [ ] `https://apya.pargetto.com` → 200; `/` → `/Account/Login` (kök yönlendirme + authz)
 - [ ] **Giriş çalışıyor** (ClientSecret + passphrase eşleşiyor demektir)
 - [ ] DB: 12 yeni migration kayıtlı; `AppDocumentFiles`, `AppCompliancePackages`, `AppReportTemplates`,
       `AppCalendarFeedTokens`, `AppReportSchedules` tabloları var
