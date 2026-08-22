@@ -48,8 +48,14 @@ export function SetupWizard({ open, counts, onDone }) {
 
     return (
         <Dialog open={open} onOpenChange={(next) => { if (!next) onDone(); }}>
-            <DialogContent className="w-full max-w-[520px] p-0">
-                <header className="border-b border-subtle px-5 py-4">
+            {/* h-auto + max-h: panel içeriğe göre boylanır, viewport'u AŞMAZ.
+                Paylaşılan DialogContent sabit 88dvh yükseklik ve tablet:min-h-520px
+                dayatıyordu; kısa masaüstü viewport'unda (ör. Windows ölçekleme) bu
+                520px, ekranı aşınca ortalanmış overflow-hidden panel footer'ı
+                kırpıyordu. Orta bölüm min-h-0+overflow-y-auto ile scroll eder,
+                header/footer shrink-0 ile her zaman görünür kalır. */}
+            <DialogContent className="w-full max-w-[520px] p-0 h-auto max-h-[88dvh] tablet:min-h-0">
+                <header className="shrink-0 border-b border-subtle px-5 py-4">
                     <h2 className="text-[18px] font-semibold tracking-tight text-text-primary">
                         Takviminizi kurun
                     </h2>
@@ -81,7 +87,7 @@ export function SetupWizard({ open, counts, onDone }) {
                     </ol>
                 </header>
 
-                <div className="px-5 py-4">
+                <div className="min-h-0 overflow-y-auto px-5 py-4">
                     {step === 0 && (
                         <>
                             <p className="text-[13px] font-semibold text-text-primary">Takvimde ne görünsün?</p>
@@ -181,12 +187,12 @@ export function SetupWizard({ open, counts, onDone }) {
                 </div>
 
                 {update.isError && (
-                    <p role="alert" className="px-5 pb-3 text-[11px] text-negative-700">
+                    <p role="alert" className="shrink-0 px-5 pb-3 text-[11px] text-negative-700">
                         {update.error?.message || 'Ayarlar kaydedilemedi, lütfen tekrar deneyin.'}
                     </p>
                 )}
 
-                <footer className="flex items-center gap-2 border-t border-subtle px-5 py-3">
+                <footer className="shrink-0 flex items-center gap-2 border-t border-subtle px-5 py-3">
                     <span className="text-[11.5px] text-text-tertiary">Adım {step + 1} / {STEPS.length}</span>
                     <span className="flex-1" />
                     {/* Atlamak da kurulumu tamamlanmış sayar: kullanıcı her açılışta
