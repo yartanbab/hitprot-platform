@@ -51,9 +51,11 @@ public class DraftTaskAppService : ApplicationService, IDraftTaskAppService
         {
             await _projectAttachmentRepository.InsertAsync(new ProjectAttachment
             {
+                TenantId = CurrentTenant.Id,
                 ProjectId = input.ProjectId.Value,
                 FileName = input.FileName,
                 StoredFileName = input.StoredFileName,
+                ContentType = "application/pdf",
                 FileSize = input.FileBytes.Length
             });
         }

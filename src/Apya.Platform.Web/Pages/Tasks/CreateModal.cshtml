@@ -10,7 +10,7 @@
 
 @* Yeni Görev — tasarım kanvasının 1b (sıkı tek kolon) + 1d (hızlı giriş) birleşimi.
    Maket: docs/design/gorev-olustur/yeni-gorev-ekrani.dc.html
-   Stil TEK KAYNAK: apya-shell.css §23. Burada inline stil YOK.
+   Stil TEK KAYNAK: apya-shell.css §24. Burada inline stil YOK.
 
    Tek POST kuralı: hızlı satır da, çipler de, açılır form da AYNI gerçek alanları yazar.
    Gerçek <select>/<input>'lar DOM'da kalır (.apya-tc-native ile gizlenir) — model binding,
@@ -223,7 +223,7 @@
         var $form = $('#CreateTaskForm');
 
         // <abp-modal> class attribute'u geçirmiyor (bkz. EditModal.cshtml'deki aynı not):
-        // 640px genişlik ve §23 kuralları bu sınıfla açılıyor.
+        // 640px genişlik ve §24 kuralları bu sınıfla açılıyor.
         $form.find('.modal-dialog').addClass('apya-tc-dialog');
 
         $('#TaskTagsSelect').select2({

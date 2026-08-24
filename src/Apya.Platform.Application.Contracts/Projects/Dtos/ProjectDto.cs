@@ -33,6 +33,9 @@ public class ProjectDto : AuditedEntityDto<Guid>
 
     public bool IsApproved { get; set; }
 
+    /// <summary>Kapak görselinin saklanan dosya adı; boşsa kartta kategori ikonu gösterilir.</summary>
+    public string? CoverImageFileName { get; set; }
+
     public decimal TotalBudget { get; set; }
     public decimal HourlyRate { get; set; }
     public string Currency { get; set; } = "TRY";

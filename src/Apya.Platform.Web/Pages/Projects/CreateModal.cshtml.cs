@@ -5,8 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.AspNetCore.Http;
-using System.IO;
-using Apya.Platform.Storage;
+using Apya.Platform.Web.Services;
 using Volo.Abp.TenantManagement;
 using Volo.Abp.Application.Dtos;
 using Apya.Platform.Projects;
@@ -33,18 +32,18 @@ public class CreateModalModel : PlatformPageModel
     private readonly IProjectAppService _projectAppService;
     private readonly ITenantAppService _tenantAppService;
     private readonly ICustomerAppService _customerAppService;
-    private readonly IUploadedFileRootFolderProvider _rootFolderProvider;
+    private readonly IUploadedFileStorage _fileStorage;
 
     public CreateModalModel(
         IProjectAppService projectAppService,
         ITenantAppService tenantAppService,
         ICustomerAppService customerAppService,
-        IUploadedFileRootFolderProvider rootFolderProvider)
+        IUploadedFileStorage fileStorage)
     {
         _projectAppService = projectAppService;
         _tenantAppService = tenantAppService;
         _customerAppService = customerAppService;
-        _rootFolderProvider = rootFolderProvider;
+        _fileStorage = fileStorage;
     }
 
     public async Task OnGetAsync()
@@ -93,23 +92,17 @@ public class CreateModalModel : PlatformPageModel
         var createdProject = await _projectAppService.CreateAsync(Project);
 
         // 2. Dosya yukleme (Attachment)
+        // SEC: dosya artik IUploadedFileStorage uzerinden yaziliyor — uzanti beyaz
+        // listesi + 25 MB siniri burada uygulanir. Onceden diske dogrudan yaziliyordu.
         if (UploadFile != null && UploadFile.Length > 0)
         {
-            var uploadsFolder = _rootFolderProvider.GetRootFolder();
+            var storedFileName = await _fileStorage.StoreAsync(UploadFile);
 
-            var storedFileName = Guid.NewGuid().ToString() + Path.GetExtension(UploadFile.FileName);
-            var filePath = Path.Combine(uploadsFolder, storedFileName);
-
-            using (var stream = new FileStream(filePath, FileMode.Create))
-            {
-                await UploadFile.CopyToAsync(stream);
-            }
-
-            // ProjectAppService icindeki AddAttachmentAsync metodunu cagiriyoruz
             await _projectAppService.AddAttachmentAsync(
-                createdProject.Id, 
-                UploadFile.FileName, 
-                storedFileName, 
+                createdProject.Id,
+                UploadFile.FileName,
+                storedFileName,
+                UploadFile.ContentType ?? "",
                 UploadFile.Length);
         }
 

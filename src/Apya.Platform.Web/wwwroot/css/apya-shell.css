@@ -5250,6 +5250,41 @@ i.apya-priority-dot {
     box-shadow: var(--apya-shadow-focus);
     border-color: var(--apya-border-focus);
 }
+/* Kartın TAMAMI tıklanabilir (detayı açar) — hover'da belirgin bir yükselme ve
+   vurgu kenarı bunu görünür kılar. .apya-tile'ın genel hover'ı yalnız gölge
+   değiştiriyordu ve "burası tıklanabilir" mesajı zayıf kalıyordu. */
+.apya-proj-card {
+    transition: box-shadow var(--apya-motion-base) var(--apya-easing-standard),
+                border-color var(--apya-motion-base) var(--apya-easing-standard),
+                transform var(--apya-motion-base) var(--apya-easing-standard);
+}
+.apya-proj-card:hover {
+    border-color: var(--apya-accent-500);
+    box-shadow: var(--apya-shadow-md);
+    transform: translateY(-2px);
+}
+@media (prefers-reduced-motion: reduce) {
+    .apya-proj-card { transition: none; }
+    .apya-proj-card:hover { transform: none; }
+}
+/* Kapak görseli kategori ikon kutusunun YERİNE geçer — aynı 38px yuva, kart
+   yüksekliği görselli/görselsiz birebir aynı. */
+.apya-proj-card-cover {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    flex-shrink: 0;
+    overflow: hidden;
+    border-radius: var(--apya-radius-md);
+    background: var(--apya-surface-sunken);
+}
+.apya-proj-card-cover img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
 .apya-proj-card-head {
     display: flex;
     align-items: flex-start;
@@ -5525,54 +5560,51 @@ i.apya-priority-dot {
 .apya-proj-drawer-foot > .btn:first-child { flex: 1 1 0; }
 
 /* --- 22.8 BOÅ / AZ VERÄ° DURUMLARI ----------------------------------------- */
-/* Tek proje â€” liste yerine odak kartÄ± + "3 adÄ±m kaldÄ±" kutusu. */
-.apya-proj-focus {
-    background: var(--apya-surface-base);
-    border: 1px solid var(--apya-border-default);
-    border-radius: var(--apya-radius-xl);
-    box-shadow: var(--apya-shadow-sm);
-    padding: 20px 22px;
-    padding-left: calc(22px + 3px);
-    position: relative;
-    overflow: hidden;
+/* Tek proje — kart ızgarası AYNEN kalır; eksikler ızgaranın üstünde tek
+   satırlık şeritte. (Eski "odak kartı" kaldırıldı: tam genişlikte, kartla
+   aynı bilgiyi farklı biçimde gösteren ikinci bir tasarımdı.) */
+.apya-proj-steps-strip {
     display: flex;
-    flex-direction: column;
-    gap: 16px;
-}
-.apya-proj-focus > .apya-proj-edge { position: absolute; inset: 0 auto 0 0; width: 3px; }
-.apya-proj-focus-head {
-    display: flex;
-    align-items: flex-start;
-    gap: 12px;
-}
-.apya-proj-focus-title {
-    font-size: 17px;
-    font-weight: var(--apya-weight-bold);
-    color: var(--apya-text-primary);
-}
-.apya-proj-steps {
-    padding: 14px 16px;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    padding: 10px 14px;
     border: 1px dashed var(--apya-border-strong);
     border-radius: var(--apya-radius-lg);
     background: var(--apya-surface-raised);
 }
-.apya-proj-steps-title {
+.apya-proj-steps-strip-title {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
     font-size: var(--apya-fs-sm);
     font-weight: var(--apya-weight-semibold);
     color: var(--apya-text-primary);
-    margin-bottom: 8px;
 }
-.apya-proj-steps ul {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 7px;
+.apya-proj-steps-strip-title i { color: var(--apya-accent-500); }
+.apya-proj-step-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 9px;
+    border-radius: 999px;
+    background: var(--apya-surface-base);
+    border: 1px solid var(--apya-border-subtle);
     font-size: var(--apya-fs-sm);
     color: var(--apya-text-secondary);
 }
-.apya-proj-steps i { color: var(--apya-accent-500); margin-right: 8px; font-size: 11px; }
+.apya-proj-step-chip i { font-size: 11px; color: var(--apya-text-tertiary); }
+.apya-proj-steps-strip-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-left: auto;
+    font-size: var(--apya-fs-sm);
+    font-weight: var(--apya-weight-semibold);
+    color: var(--apya-accent-500);
+    text-decoration: none;
+}
+.apya-proj-steps-strip-link:hover { text-decoration: underline; }
 
 /* HiÃ§ proje yok â€” _EmptyState'in altÄ±na ÅŸablon kartlarÄ±. */
 .apya-proj-templates {
@@ -5952,8 +5984,330 @@ i.apya-priority-dot {
     box-shadow: 0 0 0 2px var(--apya-border-focus);
 }
 
+/* ============================================================================
+   23) PROJE DÜZENLEME — Pages/Projects/Edit
+   ----------------------------------------------------------------------------
+   Üç sekme tek sayfada: Bilgiler · Görsel & Dosyalar · Tehlikeli bölge.
+   Panellerin görünürlüğünü Edit.js `hidden` ile sürer; CSS'te ikinci bir
+   gizleme kuralı YOK (iki kaynak olursa biri sessizce diğerini ezer).
+
+   Renk/ölçü tamamı --apya-* token'ı; sabit hex yok.
+   ---------------------------------------------------------------------------- */
+.apya-proj-edit {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+/* --- 23.1 BAŞLIK ŞERİDİ ---------------------------------------------------- */
+.apya-proj-edit-rail {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    border: 1px solid var(--apya-border-default);
+    border-radius: var(--apya-radius-xl);
+    background: var(--apya-surface-base);
+    box-shadow: var(--apya-shadow-sm);
+}
+.apya-proj-edit-identity {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1 1 auto;
+    min-width: 0;
+}
+.apya-proj-edit-name {
+    margin: 0;
+    font-size: 17px;
+    font-weight: var(--apya-weight-bold);
+    color: var(--apya-text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.apya-proj-edit-alert {
+    margin: 0;
+}
+/* asp-validation-summary hata yokken de <div> basar — boş kırmızı kutu kalmasın. */
+.apya-proj-edit-alert.validation-summary-valid {
+    display: none;
+}
+
+/* --- 23.2 SEKMELER --------------------------------------------------------- */
+.apya-proj-edit-tabs {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-wrap: wrap;
+}
+.apya-proj-edit-tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 9px 14px;
+    border: 1px solid var(--apya-border-default);
+    border-radius: var(--apya-radius-lg);
+    background: var(--apya-surface-base);
+    color: var(--apya-text-secondary);
+    font-size: var(--apya-fs-sm);
+    font-weight: var(--apya-weight-semibold);
+    cursor: pointer;
+    transition: background var(--apya-motion-base) var(--apya-easing-standard),
+                border-color var(--apya-motion-base) var(--apya-easing-standard),
+                color var(--apya-motion-base) var(--apya-easing-standard);
+}
+.apya-proj-edit-tab:hover {
+    border-color: var(--apya-border-strong);
+    color: var(--apya-text-primary);
+}
+.apya-proj-edit-tab.is-active {
+    border-color: var(--apya-accent-500);
+    background: var(--apya-accent-soft);
+    color: var(--apya-text-accent, var(--apya-accent-500));
+}
+.apya-proj-edit-tab.is-danger.is-active {
+    border-color: var(--apya-negative-500);
+    background: color-mix(in srgb, var(--apya-negative-500) 8%, transparent);
+    color: var(--apya-text-negative);
+}
+.apya-proj-edit-tab:focus-visible {
+    outline: none;
+    box-shadow: var(--apya-shadow-focus);
+}
+.apya-proj-edit-tab-count {
+    padding: 1px 6px;
+    border-radius: 999px;
+    background: var(--apya-surface-sunken);
+    font-size: 11px;
+    color: var(--apya-text-tertiary);
+}
+
+/* --- 23.3 PANELLER --------------------------------------------------------- */
+.apya-proj-edit-panel {
+    padding: 20px 22px;
+}
+.apya-proj-edit-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0 18px;
+}
+.apya-proj-edit-grid > .is-wide {
+    grid-column: 1 / -1;
+}
+.apya-proj-edit-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    padding-top: 14px;
+    border-top: 1px solid var(--apya-border-subtle);
+}
+.apya-proj-edit-section-head {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 12px;
+}
+.apya-proj-edit-section-head.is-divided {
+    margin-top: 22px;
+    padding-top: 18px;
+    border-top: 1px solid var(--apya-border-subtle);
+}
+.apya-proj-edit-hint {
+    font-size: var(--apya-fs-sm);
+    color: var(--apya-text-tertiary);
+}
+.apya-proj-edit-upload {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+.apya-proj-edit-upload input[type="file"] {
+    max-width: 340px;
+}
+.apya-proj-edit-upload input[type="text"] {
+    max-width: 260px;
+}
+.apya-proj-edit-empty {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 12px;
+    padding: 16px 18px;
+    border: 1px dashed var(--apya-border-strong);
+    border-radius: var(--apya-radius-lg);
+    color: var(--apya-text-tertiary);
+    font-size: var(--apya-fs-sm);
+}
+
+/* --- 23.4 KAPAK GÖRSELİ ---------------------------------------------------- */
+.apya-proj-cover-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 18px;
+    flex-wrap: wrap;
+}
+.apya-proj-cover-preview {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 220px;
+    height: 132px;
+    flex: 0 0 auto;
+    overflow: hidden;
+    border: 1px solid var(--apya-border-default);
+    border-radius: var(--apya-radius-lg);
+    background: var(--apya-surface-sunken);
+}
+.apya-proj-cover-preview img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+.apya-proj-cover-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    color: var(--apya-text-tertiary);
+    font-size: var(--apya-fs-sm);
+}
+.apya-proj-cover-empty i {
+    font-size: 22px;
+}
+/* Önizlemenin yanındaki sütun kalan genişliği ALIR; yoksa içeriğine göre
+   daralıp dosya seçici ile "Yükle" düğmesini alt alta düşürüyordu. */
+.apya-proj-cover-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    flex: 1 1 320px;
+    min-width: 0;
+}
+
+/* --- 23.5 DOSYA LİSTESİ ---------------------------------------------------- */
+.apya-proj-file-list {
+    list-style: none;
+    margin: 14px 0 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+.apya-proj-file {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 9px 12px;
+    border: 1px solid var(--apya-border-subtle);
+    border-radius: var(--apya-radius-lg);
+    background: var(--apya-surface-base);
+}
+.apya-proj-file:hover {
+    border-color: var(--apya-border-strong);
+}
+.apya-proj-file-thumb {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    flex: 0 0 auto;
+    overflow: hidden;
+    border-radius: var(--apya-radius-lg);
+    background: var(--apya-surface-sunken);
+    color: var(--apya-text-tertiary);
+}
+.apya-proj-file-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+.apya-proj-file-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    flex: 1 1 auto;
+    min-width: 0;
+}
+.apya-proj-file-name {
+    font-size: 13px;
+    font-weight: var(--apya-weight-semibold);
+    color: var(--apya-text-primary);
+    text-decoration: none;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.apya-proj-file-name:hover {
+    text-decoration: underline;
+}
+.apya-proj-file-meta {
+    font-size: 11px;
+    color: var(--apya-text-tertiary);
+}
+
+/* --- 23.6 TEHLİKELİ BÖLGE -------------------------------------------------- */
+.apya-proj-danger {
+    border-color: var(--apya-negative-500);
+}
+.apya-proj-danger-head {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+}
+.apya-proj-danger-title {
+    font-size: 15px;
+    font-weight: var(--apya-weight-bold);
+    color: var(--apya-text-negative);
+}
+.apya-proj-danger-form {
+    margin-top: 18px;
+    padding: 16px 18px;
+    border: 1px solid var(--apya-border-default);
+    border-radius: var(--apya-radius-lg);
+    background: color-mix(in srgb, var(--apya-negative-500) 5%, transparent);
+}
+.apya-proj-danger-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 6px;
+}
+.apya-proj-danger-row input {
+    max-width: 240px;
+}
+
+/* --- 23.7 MOBİL (≤768px) --------------------------------------------------- */
+@media (max-width: 768px) {
+    .apya-proj-edit-grid {
+        grid-template-columns: minmax(0, 1fr);
+    }
+    .apya-proj-edit-panel {
+        padding: 16px 14px;
+    }
+    .apya-proj-edit-rail {
+        flex-wrap: wrap;
+        row-gap: 8px;
+    }
+    .apya-proj-cover-preview {
+        width: 100%;
+        height: 160px;
+    }
+    .apya-proj-edit-upload input[type="file"],
+    .apya-proj-edit-upload input[type="text"] {
+        max-width: 100%;
+    }
+    /* 44px dokunma hedefi — sekmeler ve silme onayı mobilde de rahat basılsın. */
+    .apya-proj-edit-tab {
+        min-height: 44px;
+    }
+}
 /* ----------------------------------------------------------------------------
-   23) YENİ GÖREV MODALI — Pages/Tasks/CreateModal
+   24) YENİ GÖREV MODALI — Pages/Tasks/CreateModal
    Maket: docs/design/gorev-olustur/yeni-gorev-ekrani.dc.html (1b + 1d birleşimi).
    Tüm renk/ölçü token'dan; maketteki ham hex'lerin birebir karşılığı kullanıldı
    (#4F46E5 → accent-500, #E5E7EB → border-default, #F9FAFB → surface-raised …),

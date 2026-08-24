@@ -29,7 +29,7 @@ $(function () {
 
     var CAN_VIEW_BUDGET = $console.data('can-view-budget') === true;
     var CAN_CREATE = $console.data('can-create') === true;
-    var CAN_DELETE = $console.data('can-delete') === true;
+    var CAN_EDIT = $console.data('can-edit') === true;
     var DEFAULT_VIEW = $console.data('default-view') === 'list' ? 'list' : 'card';
     // Görev paneli (sağdan açılan drawer) etkin mi? Kapalıyken (varsayılan) tıklama
     // proje detay sayfasına gider ve "Görev paneli" düğmesi hiç basılmaz. Ayardan açılır.
@@ -353,10 +353,9 @@ $(function () {
             '<div class="apya-proj-cell apya-proj-row-actions">' +
             '  <a class="btn btn-sm btn-outline-secondary" href="/Projects/ProjectDetails/' + p.id + '"' +
             '     data-stop title="Proje detayına git"><i class="fa fa-list-check me-1"></i>Detay</a>' +
-            (CAN_DELETE
-                ? '  <button type="button" class="btn btn-sm btn-outline-secondary js-delete-project" data-stop' +
-                  '   data-id="' + p.id + '" data-name="' + esc(p.name) + '" title="Projeyi sil" aria-label="Projeyi sil">' +
-                  '<i class="fa fa-trash"></i></button>'
+            (CAN_EDIT
+                ? '  <a class="btn btn-sm btn-outline-secondary" href="/Projects/Edit/' + p.id + '" data-stop' +
+                  '   title="Projeyi düzenle" aria-label="Projeyi düzenle"><i class="fa fa-pen"></i></a>'
                 : '') +
             '</div>' +
             '</div>';
@@ -385,12 +384,19 @@ $(function () {
 
         var budget = budgetBarHtml(p, false);
 
+        // Kapak görseli varsa kategori ikon kutusunun YERİNE geçer — aynı 40px
+        // yuva, yani kartın yüksekliği görselli/görselsiz aynı kalır.
+        var thumb = p.coverImageFileName
+            ? '<span class="apya-proj-card-cover" aria-hidden="true">' +
+              '<img src="/file/get/' + encodeURIComponent(p.coverImageFileName) + '" alt=""></span>'
+            : '<span class="kpi-icon-box kpi-icon-box--sm ' + cat.box + '"><i class="fa ' + cat.icon + '"></i></span>';
+
         return '' +
             '<div class="apya-tile apya-proj-card" role="button" tabindex="0" data-id="' + p.id + '"' +
-            ' aria-label="' + esc(p.name) + ' görev panelini aç">' +
+            ' aria-label="' + esc(p.name) + (DRAWER_ENABLED ? ' görev panelini aç' : ' projesinin detayını aç') + '">' +
             '<span class="' + riskEdgeClass(p) + '"></span>' +
             '<div class="apya-proj-card-head">' +
-            '  <span class="kpi-icon-box kpi-icon-box--sm ' + cat.box + '"><i class="fa ' + cat.icon + '"></i></span>' +
+            thumb +
             '  <div style="flex:1 1 auto;min-width:0">' +
             '    <div class="apya-proj-card-title">' + esc(p.name) + '</div>' +
             '    <div class="apya-proj-card-sub">' +
@@ -398,11 +404,6 @@ $(function () {
             '      <span class="apya-proj-client">' + (esc(p.customerName) || 'müşteri girilmemiş') + '</span>' +
             '    </div>' +
             '  </div>' +
-            (CAN_DELETE
-                ? '  <button type="button" class="btn btn-sm btn-outline-secondary js-delete-project" data-stop' +
-                  '   data-id="' + p.id + '" data-name="' + esc(p.name) + '" title="Projeyi sil" aria-label="Projeyi sil">' +
-                  '<i class="fa fa-trash"></i></button>'
-                : '') +
             '</div>' +
             '<div class="apya-proj-chips">' + chips.join('') + '</div>' +
             '<div class="apya-tile-progress-group">' +
@@ -413,8 +414,12 @@ $(function () {
             '<div class="apya-proj-card-foot">' +
             facepileHtml(p, true) +
             '  <div class="apya-proj-card-actions">' +
+            (CAN_EDIT
+                ? '    <a class="btn btn-sm btn-outline-secondary" href="/Projects/Edit/' + p.id + '" data-stop' +
+                  '       title="Projeyi düzenle" aria-label="Projeyi düzenle"><i class="fa fa-pen"></i></a>'
+                : '') +
             '    <a class="btn btn-sm btn-outline-secondary" href="/Projects/ProjectDetails/' + p.id + '" data-stop>' +
-            '      <i class="fa fa-list-check me-1"></i>Detay / Görevler</a>' +
+            '      <i class="fa fa-list-check me-1"></i>Detay</a>' +
             '  </div>' +
             '</div>' +
             '</div>';
@@ -429,56 +434,32 @@ $(function () {
             '</button>';
     }
 
-    // ==================================================== TEK PROJE (ODAK)
-    function focusHtml(p) {
-        var cat = category(p);
+    // ============================================ KURULUM İPUCU ŞERİDİ
+    // Eski "odak kartı"nın yerini alır. Tek projesi olan hesapta kart ızgarası
+    // AYNEN kalır (tasarım tek: kart), eksikler ızgaranın ÜSTÜNDE tek satırlık
+    // bir şeritte listelenir — kart ne uzar ne biçim değiştirir.
+    function stepsHtml(p) {
         var steps = [];
-        if (!(p.taskCount > 0)) { steps.push(['fa-circle-plus', 'Görev ekle — ilerleme yüzdesi görevlerden hesaplanır']); }
-        if (!p.customerName) { steps.push(['fa-building', 'Müşteri bağla — bütçe ve fatura eşleşmesi için']); }
+        if (!(p.taskCount > 0)) { steps.push(['fa-circle-plus', 'Görev ekle']); }
+        if (!p.customerName) { steps.push(['fa-building', 'Müşteri bağla']); }
         if (p.daysRemaining === null || p.daysRemaining === undefined || p.daysRemaining <= 0) {
-            steps.push(['fa-calendar', 'Bitiş tarihini güncelle — süre ' + (p.daysRemaining === null || p.daysRemaining === undefined ? 'girilmemiş' : 'doldu')]);
+            steps.push(['fa-calendar', 'Bitiş tarihini güncelle']);
         }
+        if (!steps.length) { return ''; }
 
         return '' +
-            '<div class="apya-proj-focus" data-id="' + p.id + '">' +
-            '<span class="' + riskEdgeClass(p) + '"></span>' +
-            '<div class="apya-proj-focus-head">' +
-            '  <span class="kpi-icon-box kpi-icon-box--sm ' + cat.box + '"><i class="fa ' + cat.icon + '"></i></span>' +
-            '  <div style="flex:1 1 auto;min-width:0">' +
-            '    <div class="d-flex align-items-center gap-2 flex-wrap">' +
-            '      <span class="apya-proj-focus-title">' + esc(p.name) + '</span>' +
-            '      <span class="apya-proj-code apya-numeric">' + esc(p.code) + '</span>' +
-            (p.displayStatus ? chip(STATUS_TONE[p.displayStatus] || 'neutral', p.displayStatus) : '') +
-            (cat.label ? '<span class="apya-chip ' + cat.chip + '">' + cat.label + '</span>' : '') +
-            '    </div>' +
-            '    <div class="apya-proj-card-sub mt-1">' +
-            '      <span class="apya-numeric">' + esc(dateRange(p)) + '</span><span>·</span>' +
-            '      <span>' + (esc(p.customerName) || 'müşteri girilmemiş') + '</span>' +
-            '    </div>' +
-            '  </div>' + daysChipHtml(p) +
-            '</div>' +
-            '<div class="apya-proj-stat-grid">' +
-            '  <div>' + (budgetBarHtml(p, false) || '<span class="apya-proj-days">Bütçe görüntüleme yetkiniz yok</span>') + '</div>' +
-            '  <div>' + progressBarHtml(p, false) + '</div>' +
-            '</div>' +
-            (steps.length
-                ? '<div class="apya-proj-steps">' +
-                  '  <div class="apya-proj-steps-title">Bu projeyi tamamlamak için ' + steps.length + ' adım kaldı</div>' +
-                  '  <ul>' + steps.map(function (s) {
-                      return '<li><i class="fa ' + s[0] + '"></i>' + esc(s[1]) + '</li>';
-                  }).join('') + '</ul>' +
-                  '</div>'
+            '<div class="apya-proj-steps-strip">' +
+            '  <span class="apya-proj-steps-strip-title">' +
+            '    <i class="fa fa-lightbulb" aria-hidden="true"></i>' +
+            'Bu projeyi tamamlamak için ' + steps.length + ' adım kaldı</span>' +
+            steps.map(function (s) {
+                return '<span class="apya-proj-step-chip"><i class="fa ' + s[0] + '" aria-hidden="true"></i>' +
+                    esc(s[1]) + '</span>';
+            }).join('') +
+            (CAN_EDIT
+                ? '<a class="apya-proj-steps-strip-link" href="/Projects/Edit/' + p.id + '">' +
+                  '<i class="fa fa-pen" aria-hidden="true"></i>Projeyi düzenle</a>'
                 : '') +
-            '<div class="apya-proj-card-foot">' +
-            '  <span class="apya-proj-days">Oluşturulma ' + (fmtDate(p.creationTime) || '—') + '</span>' +
-            '  <div class="apya-proj-card-actions">' +
-            (DRAWER_ENABLED
-                ? '    <button type="button" class="btn btn-sm btn-primary js-open-drawer" data-id="' + p.id + '">' +
-                  '      <i class="fa fa-list-check me-1"></i>Görev paneli</button>'
-                : '') +
-            '    <a class="btn btn-sm btn-outline-secondary" href="/Projects/ProjectDetails/' + p.id + '">Detay</a>' +
-            '  </div>' +
-            '</div>' +
             '</div>';
     }
 
@@ -575,16 +556,17 @@ $(function () {
 
         var noProjectsAtAll = state.items.length === 0 && !state.loading;
         var noResult = state.items.length > 0 && list.length === 0;
-        // Odak kartı YALNIZ kiracının gerçekten tek projesi varken — filtre bir
-        // sonuca indiği için değil. Aksi hâlde çipe her basışta ekran biçim
-        // değiştirir ve kullanıcı listeyi kaybettiğini sanır.
-        var focusMode = state.items.length === 1 && list.length === 1;
+        // Kurulum ipucu şeridi YALNIZ kiracının gerçekten tek projesi varken —
+        // filtre bir sonuca indiği için değil. Görünüm biçimi değişmez, yalnız
+        // ızgaranın üstüne bir satır eklenir.
+        var singleProject = state.items.length === 1 && list.length === 1 && !noResult;
+        var stepsMarkup = singleProject ? stepsHtml(list[0]) : '';
 
         $('#ProjectsEmpty').prop('hidden', !noProjectsAtAll);
         $('#ProjectsNoResult').prop('hidden', !noResult);
-        $('#ProjectsFocus').prop('hidden', !focusMode);
-        $('#ProjectsList').prop('hidden', noProjectsAtAll || noResult || focusMode || effectiveView !== 'list');
-        $('#ProjectsGrid').prop('hidden', noProjectsAtAll || noResult || focusMode || effectiveView !== 'card');
+        $('#ProjectsSteps').prop('hidden', !stepsMarkup).html(stepsMarkup);
+        $('#ProjectsList').prop('hidden', noProjectsAtAll || noResult || effectiveView !== 'list');
+        $('#ProjectsGrid').prop('hidden', noProjectsAtAll || noResult || effectiveView !== 'card');
 
         if (noResult) {
             $('#ProjectsNoResultHint').text(state.query
@@ -592,19 +574,12 @@ $(function () {
                 : filterByKey(state.filter).label + ' filtresinde proje yok.');
             $('#ProjectsListBody').empty();
             $('#ProjectsGrid').empty();
-            $('#ProjectsFocus').empty();
-        } else if (focusMode) {
-            $('#ProjectsFocus').html(focusHtml(list[0]));
-            $('#ProjectsListBody').empty();
-            $('#ProjectsGrid').empty();
         } else if (effectiveView === 'list') {
             $('#ProjectsListBody').html(list.map(rowHtml).join(''));
             $('#ProjectsGrid').empty();
-            $('#ProjectsFocus').empty();
         } else {
             $('#ProjectsGrid').html(list.map(cardHtml).join('') + (CAN_CREATE ? newCardHtml() : ''));
             $('#ProjectsListBody').empty();
-            $('#ProjectsFocus').empty();
         }
 
         // Açık panelin satırı/kartı işaretli kalsın.
@@ -731,8 +706,10 @@ $(function () {
                 ? '    <button type="button" class="btn btn-primary btn-sm" id="DrawerAddTask">' +
                   '      <i class="fa fa-plus me-1"></i>Görev ekle</button>'
                 : '') +
-            '    <a class="btn btn-outline-secondary btn-sm" href="/Projects/ProjectDetails/' + p.id + '">' +
-            '      <i class="fa fa-pen me-1"></i>Projeyi düzenle</a>' +
+            (CAN_EDIT
+                ? '    <a class="btn btn-outline-secondary btn-sm" href="/Projects/Edit/' + p.id + '">' +
+                  '      <i class="fa fa-pen me-1"></i>Projeyi düzenle</a>'
+                : '') +
             '  </div>' +
             '</aside>';
     }
@@ -995,10 +972,6 @@ $(function () {
         e.preventDefault();
         openDrawer(String($(this).data('id')));
     });
-    $console.on('click', '.js-open-drawer', function () {
-        openDrawer(String($(this).data('id')));
-    });
-
     // --- Panel: kapatma (dış tık + X + ESC)
     $(document).on('click', '[data-drawer-close]', function () { closeDrawer(); });
     $(document).on('keydown', function (e) {
@@ -1053,19 +1026,9 @@ $(function () {
         });
     });
 
-    // --- Silme
-    $console.on('click', '.js-delete-project', function () {
-        var id = String($(this).data('id'));
-        var name = String($(this).data('name'));
-        abp.message.confirm('"' + name + '" projesini silmek istiyor musunuz?').then(function (confirmed) {
-            if (!confirmed) { return; }
-            projectService.delete(id).then(function () {
-                abp.notify.success(l('Notify:Project:Deleted'));
-                if (drawer.projectId === id) { closeDrawer(); }
-                reload();
-            });
-        });
-    });
+    // --- Silme: bu ekranda YOK. Tek yol proje düzenleme ekranının "Tehlikeli
+    // bölge" sekmesi; orada silmek için proje kodunun elle yazılması gerekiyor.
+    // Listeden tek tıkla silme kaldırıldı (yanlışlıkla silme riski).
 
     // --- Yeni proje (araç çubuğu, dashed kart, boş durum ve şablon kartları)
     // "Şablon" kartları ayrı bir şablon altyapısı DEĞİL: aynı oluşturma modalını
