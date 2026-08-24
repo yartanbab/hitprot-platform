@@ -14,6 +14,31 @@ public static class ReleaseNoteCatalog
     public static IReadOnlyList<ReleaseNote> All { get; } = new List<ReleaseNote>
     {
         new ReleaseNote(
+            version: "2026.08.24",
+            date: "24 Ağustos 2026",
+            title: "Arayüz iyileştirmeleri ve düzeltmeler",
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
+                "Projeye tıklayınca doğrudan proje sayfası açılıyor",
+                "Projeler ekranında bir projeye tıkladığınızda artık sağdan açılan görev paneli yerine " +
+                "doğrudan proje detay sayfası açılıyor. Hızlı paneli tercih ediyorsanız Genel Ayarlar'dan " +
+                "\"Proje görev paneli\"ni açabilirsiniz."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
+                "Sayfalar daha akıcı açılıyor",
+                "Sayfa açılırken içerik blokları yumuşak bir geçişle beliriyor. Cihazınızda \"hareketi azalt\" " +
+                "tercihi açıksa bu efekt otomatik devre dışı kalır."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Fix,
+                "Takvim ilk kurulum penceresi kısa ekranlarda düzgün görünüyor",
+                "Takvim ilk kurulum sihirbazının alt bilgi çubuğu kısa masaüstü ekranlarında kırpılıyordu; düzeltildi."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Fix,
+                "Yeni müşteri ekleme hatası giderildi",
+                "Yönetici yeni bir müşteri (kiracı) eklerken karşılaşılabilen sunucu hatası giderildi.")
+        ),
+
+        new ReleaseNote(
             version: "2026.08.20",
             date: "20 Ağustos 2026",
             title: "Takvim ve Dokümanlar baştan tasarlandı",
