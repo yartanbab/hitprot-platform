@@ -33,6 +33,10 @@ public class IndexModel : AbpPageModel
     [BindProperty]
     public string ProjectsDefaultView { get; set; } = PlatformSettingDefaults.ProjectsDefaultView;
 
+    /// <summary>Projeye tıklayınca sağdan açılan görev paneli etkin mi?</summary>
+    [BindProperty]
+    public bool ProjectsDetailPanel { get; set; } = PlatformSettingDefaults.ProjectsDetailPanel;
+
     /// <summary>Kullanıcının erişebildiği yönetim hedefleri (boşsa bölüm hiç basılmaz).</summary>
     public List<AdminLink> AdminLinks { get; } = new();
 
@@ -55,6 +59,12 @@ public class IndexModel : AbpPageModel
 
         ProjectsDefaultView = await _settingManager.GetOrNullForCurrentUserAsync(PlatformSettings.Projects.DefaultView)
                               ?? PlatformSettingDefaults.ProjectsDefaultView;
+
+        // Boş/tanımsızsa varsayılana (KAPALI) iner; yalnız açık "true" değeri paneli açar.
+        var detailPanel = await _settingManager.GetOrNullForCurrentUserAsync(PlatformSettings.Projects.DetailPanel);
+        ProjectsDetailPanel = detailPanel == null
+            ? PlatformSettingDefaults.ProjectsDetailPanel
+            : detailPanel.Equals("true", System.StringComparison.OrdinalIgnoreCase);
 
         await LoadAdminLinksAsync();
     }
@@ -122,6 +132,10 @@ public class IndexModel : AbpPageModel
             ? ProjectsDefaultView
             : PlatformSettingDefaults.ProjectsDefaultView;
         await _settingManager.SetForCurrentUserAsync(PlatformSettings.Projects.DefaultView, projectsView);
+
+        await _settingManager.SetForCurrentUserAsync(
+            PlatformSettings.Projects.DetailPanel,
+            ProjectsDetailPanel.ToString().ToLowerInvariant());
 
         TempData["Saved"] = true;
         return RedirectToPage();

@@ -18,6 +18,11 @@
     var defaultView = await SettingProvider.GetOrNullAsync(PlatformSettings.Projects.DefaultView)
                       ?? PlatformSettingDefaults.ProjectsDefaultView;
 
+    // Görev paneli (sağdan açılan drawer) şimdilik varsayılan KAPALI; kullanıcı Ayarlar'dan açabilir.
+    var detailPanel = string.Equals(
+        await SettingProvider.GetOrNullAsync(PlatformSettings.Projects.DetailPanel),
+        "true", StringComparison.OrdinalIgnoreCase);
+
     // Rol bazlı açılış ön ayarı. Ayrı bir rol tablosu okumak yerine izinlerden
     // türetilir: sistemdeki rol ADLARINA bağlanmak kırılgan olurdu (kiracı kendi
     // rollerini adlandırıyor), izinler ise sabit. Yalnız İLK ziyarette geçerli;
@@ -47,6 +52,7 @@
      data-can-create="@canCreate.ToString().ToLowerInvariant()"
      data-can-delete="@canDelete.ToString().ToLowerInvariant()"
      data-default-view="@defaultView"
+     data-detail-panel="@detailPanel.ToString().ToLowerInvariant()"
      data-role-preset="@rolePreset">
 
     @* --- KPI şeridi: 6 bölmeli tek satır. Risk / Geçmiş / Yaklaşan hücreleri

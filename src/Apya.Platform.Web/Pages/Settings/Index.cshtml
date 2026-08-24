@@ -72,6 +72,20 @@
                 </div>
             </fieldset>
 
+            <fieldset class="mb-3">
+                <legend class="form-label mb-1">@L["Settings:ProjectsDetailPanel.Label"]</legend>
+                <div class="form-text mb-2">@L["Settings:ProjectsDetailPanel.Help"]</div>
+
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" role="switch" name="ProjectsDetailPanel"
+                           id="projpanel-toggle" value="true" checked="@Model.ProjectsDetailPanel" />
+                    <label class="form-check-label" for="projpanel-toggle">
+                        <strong>@L["Settings:ProjectsDetailPanel.Switch"]</strong>
+                        <div class="text-muted small">@L["Settings:ProjectsDetailPanel.Switch.Desc"]</div>
+                    </label>
+                </div>
+            </fieldset>
+
             <button type="submit" class="btn btn-primary">@L["Settings:Save"]</button>
         </form>
 

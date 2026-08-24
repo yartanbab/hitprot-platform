@@ -34,6 +34,14 @@ public static class PlatformSettings
         /// buradaki değer localStorage boşken geçerli olan varsayılandır.
         /// </summary>
         public const string DefaultView = Prefix + ".Projects.DefaultView";
+
+        /// <summary>
+        /// Projeye tıklayınca sağdan açılan görev paneli (slide-over drawer) etkin mi?
+        /// Kullanıcı seviyesinde saklanır, DefaultView ile aynı ray.
+        ///   "false" (VARSAYILAN) → panel açılmaz; tıklama proje detay sayfasına gider
+        ///   "true"  → panel açılır (eski davranış)
+        /// </summary>
+        public const string DetailPanel = Prefix + ".Projects.DetailPanel";
     }
 
     /// <summary>
@@ -218,6 +226,9 @@ public static class PlatformSettingDefaults
 
     /// <summary>Geçerli Projeler görünüm değerleri — form manipülasyonuna karşı beyaz liste.</summary>
     public static readonly string[] ProjectsDefaultViewValues = { "card", "list" };
+
+    /// <summary>Proje görev paneli varsayılanı: KAPALI (şimdilik gizli; ayardan açılır).</summary>
+    public const bool ProjectsDetailPanel = false;
 
     /// <summary>
     /// Günlük kapasite varsayılanı: 8 saat. Kullanıcı ilk kurulumda 4/6/8 veya

@@ -38,6 +38,16 @@ public class PlatformSettingDefinitionProvider : SettingDefinitionProvider
                 description: L("Setting:Projects.DefaultView.Description"))
         );
 
+        // Proje görev paneli (sağdan açılan drawer) — DefaultView ile aynı ray.
+        // Varsayılan KAPALI ("false"): şimdilik gizli, kullanıcı ayardan açar.
+        context.Add(
+            new SettingDefinition(
+                PlatformSettings.Projects.DetailPanel,
+                defaultValue: PlatformSettingDefaults.ProjectsDetailPanel.ToString().ToLowerInvariant(),
+                displayName: L("Setting:Projects.DetailPanel"),
+                description: L("Setting:Projects.DetailPanel.Description"))
+        );
+
         // Takvim günlük kapasitesi — Projects.DefaultView ile aynı ray (kullanıcı seviyesi).
         // .WithProviders() ile KISITLANMAZ: hem User provider zincirde kalsın hem de
         // varsayılan (8 sa) DefaultValueSettingValueProvider'dan dönebilsin.
