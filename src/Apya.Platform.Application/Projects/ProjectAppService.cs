@@ -291,13 +291,13 @@ public class ProjectAppService :
     public async Task<ProjectAttachmentDto> AddAttachmentAsync(
         Guid projectId, string fileName, string storedFileName, string contentType, long fileSize, string? title = null)
     {
-        // Proje gerçekten erişilebilir mi? Kiracı filtresi repository'de — yoksa
-        // EntityNotFoundException. Aksi hâlde başka kiracının projesine ek yazılabilirdi.
-        await Repository.GetAsync(projectId);
+        var project = await GetAccessibleProjectAsync(projectId);
 
         var attachment = new ProjectAttachment
         {
-            TenantId = CurrentTenant.Id,
+            // CurrentTenant.Id DEĞİL: ek, projenin kiracısına ait olmalı; aksi
+            // hâlde host'un eklediği dosya kiracının listesinde hiç görünmezdi.
+            TenantId = project.TenantId,
             ProjectId = projectId,
             FileName = fileName,
             StoredFileName = storedFileName,
@@ -306,35 +306,55 @@ public class ProjectAppService :
             FileSize = fileSize
         };
 
-        await _projectAttachmentRepository.InsertAsync(attachment, autoSave: true);
+        // Kayıt projenin kiracı bağlamında yapılır: ABP, kaydederken entity'nin
+        // TenantId'si ile CurrentTenant'ı karşılaştırır (MultiTenancyConflict).
+        // autoSave içeride SaveChanges çağırdığı için kapsam onu da örtmeli.
+        using (CurrentTenant.Change(project.TenantId))
+        {
+            await _projectAttachmentRepository.InsertAsync(attachment, autoSave: true);
+        }
 
         return MapAttachment(attachment);
     }
 
     public async Task<List<ProjectAttachmentDto>> GetAttachmentsAsync(Guid projectId)
     {
-        await Repository.GetAsync(projectId);
+        var project = await GetAccessibleProjectAsync(projectId);
 
-        var queryable = await _projectAttachmentRepository.GetQueryableAsync();
-        var items = await AsyncExecuter.ToListAsync(
-            queryable.AsNoTracking()
-                     .Where(x => x.ProjectId == projectId)
-                     .OrderByDescending(x => x.CreationTime));
+        // Sorgu projenin kiracı bağlamında koşar: ekin TenantId'si projeyle aynı,
+        // host bağlamında filtre TenantId == null eşlediği için liste boş dönerdi.
+        using (CurrentTenant.Change(project.TenantId))
+        {
+            var queryable = await _projectAttachmentRepository.GetQueryableAsync();
+            var items = await AsyncExecuter.ToListAsync(
+                queryable.AsNoTracking()
+                         .Where(x => x.ProjectId == projectId)
+                         .OrderByDescending(x => x.CreationTime));
 
-        return items.Select(MapAttachment).ToList();
+            return items.Select(MapAttachment).ToList();
+        }
     }
 
     [Authorize(PlatformPermissions.Projects.Edit)]
     public async Task<string> DeleteAttachmentAsync(Guid attachmentId)
     {
-        var attachment = await _projectAttachmentRepository.GetAsync(attachmentId);
+        // Ek satırının kendisi de kiracıya ait — host bağlamında filtre onu da
+        // gizler, bu yüzden okuma projeyle aynı istisnadan geçer.
+        ProjectAttachment attachment;
+        using (CurrentTenant.Id == null ? DataFilter.Disable<IMultiTenant>() : null)
+        {
+            attachment = await _projectAttachmentRepository.GetAsync(attachmentId);
+        }
 
-        // Ekin projesi bu bağlamdan görülebiliyor mu? (Host'ta kiracı filtresi kapalı
-        // olduğu için ek satırının kendi TenantId'si tek başına yetmez.)
-        await Repository.GetAsync(attachment.ProjectId);
+        // Ekin projesi bu bağlamdan görülebiliyor mu? Ek satırının kendi TenantId'si
+        // tek başına yetmez — yetki projeye bakar.
+        var project = await GetAccessibleProjectAsync(attachment.ProjectId);
 
         var storedFileName = attachment.StoredFileName;
-        await _projectAttachmentRepository.DeleteAsync(attachment);
+        using (CurrentTenant.Change(project.TenantId))
+        {
+            await _projectAttachmentRepository.DeleteAsync(attachment);
+        }
 
         return storedFileName;
     }
@@ -343,7 +363,7 @@ public class ProjectAppService :
     [Authorize(PlatformPermissions.Projects.Edit)]
     public async Task<string?> SetCoverImageAsync(Guid projectId, string storedFileName)
     {
-        var project = await Repository.GetAsync(projectId);
+        var project = await GetAccessibleProjectAsync(projectId);
         var previous = project.CoverImageFileName;
 
         project.SetCoverImage(storedFileName);
@@ -356,7 +376,7 @@ public class ProjectAppService :
     [Authorize(PlatformPermissions.Projects.Edit)]
     public async Task<string?> RemoveCoverImageAsync(Guid projectId)
     {
-        var project = await Repository.GetAsync(projectId);
+        var project = await GetAccessibleProjectAsync(projectId);
         var previous = project.CoverImageFileName;
 
         project.SetCoverImage(null);
@@ -464,6 +484,25 @@ public class ProjectAppService :
     }
 
     // ==================== PRIVATE HELPERS ====================
+
+    /// <summary>
+    /// Projeyi çağıranın erişebildiği kapsamda getirir; yoksa EntityNotFoundException.
+    ///
+    /// Kiracı kullanıcısında kiracı filtresi AÇIK kalır — çapraz kiracı erişimi
+    /// kapalıdır. HOST için filtre kapatılır: host zaten tüm kiracıların projelerini
+    /// listeliyor (GetListAsync aynı kalıbı kullanır) ve "Yeni Proje" formunda
+    /// hesap seçip proje açabiliyor. Filtre host bağlamında TenantId == null
+    /// eşlediğinden, kiracıya ait proje "bulunamadı" sayılıyordu; sonuç olarak
+    /// host'un açtığı kiracı projesine dosya eklenemiyor, ek listesi okunamıyor
+    /// ve kapak görseli değiştirilemiyordu.
+    /// </summary>
+    private async Task<Project> GetAccessibleProjectAsync(Guid projectId)
+    {
+        using (CurrentTenant.Id == null ? DataFilter.Disable<IMultiTenant>() : null)
+        {
+            return await Repository.GetAsync(projectId);
+        }
+    }
 
     /// <summary>
     /// Kod işlemlerinin hangi kiracıda yürüyeceğini belirler. Kiracı kullanıcısı
