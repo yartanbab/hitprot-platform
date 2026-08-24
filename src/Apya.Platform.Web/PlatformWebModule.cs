@@ -377,6 +377,8 @@ public class PlatformWebModule : AbpModule
                     bundle.AddFiles("/css/apya-theme-bridge.css");
                     bundle.AddFiles("/global.css");
                     bundle.AddFiles("/css/apya-shell.css");
+                    // Sayfa yüklenirken üst-seviye blokların kademeli girişi (saf CSS).
+                    bundle.AddFiles("/css/apya-entrance.css");
                 }
             );
 
