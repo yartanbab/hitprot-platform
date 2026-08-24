@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using System.Threading.Tasks;
+using Volo.Abp.Authorization;
 using Volo.Abp.Application.Dtos;
 using Volo.Abp.Application.Services;
 using Volo.Abp.Domain.Repositories;
@@ -64,6 +65,34 @@ public class GrantAppService :
         var dto = await base.UpdateAsync(id, input);
         await SyncCriteriaAsync(id, input);
         return await GetAsync(id);
+    }
+
+    // Katalog yazma izinleri host-only tanımlıdır (PlatformPermissionDefinitionProvider).
+    // Aşağısı ikinci kilit: izin verisi elle kurcalansa bile kiracı bağlamında katalog yazılamaz.
+    protected override async Task CheckCreatePolicyAsync()
+    {
+        EnsureHostContext();
+        await base.CheckCreatePolicyAsync();
+    }
+
+    protected override async Task CheckUpdatePolicyAsync()
+    {
+        EnsureHostContext();
+        await base.CheckUpdatePolicyAsync();
+    }
+
+    protected override async Task CheckDeletePolicyAsync()
+    {
+        EnsureHostContext();
+        await base.CheckDeletePolicyAsync();
+    }
+
+    private void EnsureHostContext()
+    {
+        if (CurrentTenant.Id != null)
+        {
+            throw new AbpAuthorizationException("Hibe programı yalnızca host bağlamında yönetilebilir.");
+        }
     }
 
     // Programın kriter etiketlerini DTO ile senkronla: mevcutları sil, yenilerini ekle.

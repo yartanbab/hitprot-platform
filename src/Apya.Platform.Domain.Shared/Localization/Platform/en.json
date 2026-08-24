@@ -231,7 +231,7 @@
     "Permission:Tasks.Delete": "Delete Task",
     "Permission:Tasks.Assign": "Assign Task",
     "Permission:Tasks.ChangeStatus": "Change Status",
-    "Permission:Grants": "Grant Programs",
+    "Permission:Grants": "View Grant Programs",
     "Permission:Grants.Create": "Create Grant",
     "Permission:Grants.Edit": "Edit Grant",
     "Permission:Grants.Delete": "Delete Grant",

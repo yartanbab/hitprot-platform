@@ -181,7 +181,7 @@
         "Permission:Tasks.Delete": "Görev Silme",
         "Permission:Tasks.Assign": "Görev Atama",
         "Permission:Tasks.ChangeStatus": "Durum Değiştirme",
-        "Permission:Grants": "Hibe Programları",
+        "Permission:Grants": "Hibe Programlarını Görüntüleme",
         "Permission:Grants.Create": "Hibe Oluşturma",
         "Permission:Grants.Edit": "Hibe Düzenleme",
         "Permission:Grants.Delete": "Hibe Silme",
