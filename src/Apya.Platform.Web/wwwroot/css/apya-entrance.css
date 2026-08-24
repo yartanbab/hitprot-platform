@@ -1,0 +1,59 @@
+/* =============================================================================
+   APYA ENTRANCE — sayfa yüklenirken üst-seviye blokların kademeli girişi
+   Global stil bundle'ına PlatformWebModule.ConfigureBundles ile eklenir.
+
+   Tasarım kararları (bilerek böyle):
+   - SAF CSS, JS yok: bundle <head>'de render-blocking → paint ÖNCESİ devrede,
+     içerik "önce görünüp kaybolma" (FOUC) yaşamaz.
+   - Yalnız `prefers-reduced-motion: no-preference` altında: hareket istemeyen
+     kullanıcıya HİÇBİR şey uygulanmaz (ne gizleme ne animasyon).
+   - `animation-fill-mode: backwards`: animasyon BİTİNCE transform kalmaz. Kalıcı
+     `translateY(0)` bile bir "transform" değeridir ve içindeki `position:fixed`
+     modalları hapseder (Documents modülü kök-transform tuzağı). backwards, from
+     durumunu yalnız gecikme boyunca tutar, bitişte elemanın kendi stiline döner.
+   - Yalnız İÇERİK KÖKÜNÜN ilk-seviye çocukları hedeflenir. DataTables/AJAX daha
+     derine enjekte eder → yeniden render'da animasyon TEKRAR oynamaz.
+
+   İki sayfa yapısı desteklenir:
+     A) .lpx-content > [blok] [blok] ...        (bloklar doğrudan)
+     B) .lpx-content > .apya-page > [blok] ...   (tek sarmalayıcı; çocukları girer)
+   ============================================================================= */
+
+@media (prefers-reduced-motion: no-preference) {
+    @keyframes apyaEnter {
+        from { opacity: 0; transform: translateY(8px); }
+        to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Üst-seviye blokların girişi (her iki yapı için) */
+    .lpx-content > *,
+    .lpx-content > .apya-page > * {
+        animation: apyaEnter var(--apya-motion-slow, 200ms) var(--apya-easing-decelerate, cubic-bezier(0, 0, 0.2, 1)) backwards;
+    }
+
+    /* Sarmalayıcı .apya-page kendisi animasyona girmez — daha yüksek özgüllük ile
+       ezer; girişi çocukları yapar (yapı B'de tek blok yerine kademeli kaskad). */
+    .lpx-content > .apya-page {
+        animation: none;
+    }
+
+    /* Kademeli gecikme (stagger) — 55ms adım. Yapı A (0,2,0) ve yapı B (0,3,0)
+       özgüllükleri kısayolun gecikmesini (0) ezer. 8 blok çoğu sayfayı kapsar;
+       fazlası kısayol gecikmesiyle (0) hemen girer — tipik olarak katlama altı. */
+    .lpx-content > *:nth-child(1),
+    .lpx-content > .apya-page > *:nth-child(1) { animation-delay: 0ms; }
+    .lpx-content > *:nth-child(2),
+    .lpx-content > .apya-page > *:nth-child(2) { animation-delay: 55ms; }
+    .lpx-content > *:nth-child(3),
+    .lpx-content > .apya-page > *:nth-child(3) { animation-delay: 110ms; }
+    .lpx-content > *:nth-child(4),
+    .lpx-content > .apya-page > *:nth-child(4) { animation-delay: 165ms; }
+    .lpx-content > *:nth-child(5),
+    .lpx-content > .apya-page > *:nth-child(5) { animation-delay: 220ms; }
+    .lpx-content > *:nth-child(6),
+    .lpx-content > .apya-page > *:nth-child(6) { animation-delay: 275ms; }
+    .lpx-content > *:nth-child(7),
+    .lpx-content > .apya-page > *:nth-child(7) { animation-delay: 330ms; }
+    .lpx-content > *:nth-child(n+8),
+    .lpx-content > .apya-page > *:nth-child(n+8) { animation-delay: 385ms; }
+}
