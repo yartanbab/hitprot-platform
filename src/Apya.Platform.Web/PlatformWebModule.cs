@@ -478,6 +478,10 @@ public class PlatformWebModule : AbpModule
                     bundle.AddFiles("/js/ai-hub-client.js");
                     bundle.AddFiles("/js/ajax-error-detail.js");
                     bundle.AddFiles("/js/apya-hint.js"); // bilgi ipucu (ⓘ) — body'ye delege tooltip init
+                    // Yeni Görev modalı (hızlı giriş ayrıştırıcısı + meta çipleri). Modal AJAX ile
+                    // yüklendiği için modülün GLOBAL demette olması şart: modalın kendi <script>'i
+                    // apya.taskCreate.init'i çağırır, o an dosya zaten yüklü olmalı.
+                    bundle.AddFiles("/js/apya-quick-task.js");
                 }
             );
             // ----------------------
