@@ -37,4 +37,12 @@ public class CreateProjectDto
     public decimal TotalBudget { get; set; }
     public decimal HourlyRate { get; set; }
     public string Currency { get; set; } = "TRY";
+
+    /// <summary>
+    /// Kategoriye bağlı hazır görev takvimi projeyle birlikte kurulsun mu?
+    /// Yalnız OLUŞTURMADA dikkate alınır — güncellemede yok sayılır, yoksa her
+    /// kayıtta görevler yeniden eklenirdi. Takvimi olmayan kategoride (Diğer)
+    /// etkisizdir. Bkz. <see cref="ProjectTaskTemplate"/>.
+    /// </summary>
+    public bool AddTemplateTasks { get; set; }
 }

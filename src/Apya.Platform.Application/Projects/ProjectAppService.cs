@@ -40,6 +40,7 @@ public class ProjectAppService :
     private readonly IRepository<Grant, Guid> _grantRepository;
     private readonly IRepository<ProjectAttachment, Guid> _projectAttachmentRepository;
     private readonly IRepository<TaskItem, Guid> _taskRepository;
+    private readonly TaskManager _taskManager;
     private readonly IRepository<TaskTimeLog, Guid> _timeLogRepository;
     private readonly IRepository<Customer, Guid> _customerRepository;
     private readonly ITenantStore _tenantStore;
@@ -52,6 +53,7 @@ public class ProjectAppService :
         IRepository<Grant, Guid> grantRepository,
         IRepository<ProjectAttachment, Guid> projectAttachmentRepository,
         IRepository<TaskItem, Guid> taskRepository,
+        TaskManager taskManager,
         IRepository<TaskTimeLog, Guid> timeLogRepository,
         IRepository<Customer, Guid> customerRepository,
         ITenantStore tenantStore,
@@ -63,6 +65,7 @@ public class ProjectAppService :
         _grantRepository = grantRepository;
         _projectAttachmentRepository = projectAttachmentRepository;
         _taskRepository = taskRepository;
+        _taskManager = taskManager;
         _timeLogRepository = timeLogRepository;
         _customerRepository = customerRepository;
         _tenantStore = tenantStore;
@@ -120,7 +123,53 @@ public class ProjectAppService :
 
         await Repository.InsertAsync(project);
 
+        if (input.AddTemplateTasks)
+        {
+            await CreateTemplateTasksAsync(project, targetTenantId);
+        }
+
         return ObjectMapper.Map<Project, ProjectDto>(project);
+    }
+
+    /// <summary>
+    /// Kategorinin hazır görev takvimini projeyle AYNI iş biriminde kurar —
+    /// AppService metodu tek UoW'da sarılı olduğu için proje ve görevler birlikte
+    /// commit olur, biri düşerse ikisi de yazılmaz.
+    /// </summary>
+    private async Task CreateTemplateTasksAsync(Project project, Guid? targetTenantId)
+    {
+        var items = ProjectTaskTemplate.For(project.Category);
+        if (items.Count == 0)
+        {
+            return;
+        }
+
+        var start = project.StartDate ?? Clock.Now;
+        var end = project.EndDate ?? start;
+
+        using (CurrentTenant.Change(targetTenantId))
+        {
+            // Sıra numarası BİR KEZ okunup yerelde artırılır: GetNextNumberAsync
+            // DB'den MAX okur, insert'ler henüz flush olmadığı için döngüde
+            // çağrılsa altı görev de aynı numarayı alırdı (GRV-N kodu çakışırdı).
+            var number = await _taskManager.GetNextNumberAsync();
+
+            foreach (var item in items)
+            {
+                var task = new TaskItem(
+                    GuidGenerator.Create(),
+                    item.Title,
+                    projectId: project.Id,
+                    startDate: start,
+                    dueDate: ProjectTaskTemplate.DueDateFor(item, start, end),
+                    tenantId: targetTenantId,
+                    now: Clock.Now
+                );
+
+                task.AssignNumber(number++);
+                await _taskRepository.InsertAsync(task);
+            }
+        }
     }
 
     // --- UPDATE --- domain metodu üzerinden; AutoMapper direct mapping yok

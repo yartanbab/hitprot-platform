@@ -155,6 +155,21 @@
     .apya-pform-datewarn.is-error { display: flex; background: var(--apya-negative-50); color: var(--apya-negative-700); }
     .apya-pform-datewarn.is-warn { display: flex; background: var(--apya-warning-50); color: var(--apya-text-warning); }
 
+    /* --- Hazır görev takvimi --- */
+    .apya-pform-tpl {
+        display: flex; align-items: flex-start; gap: var(--apya-space-3);
+        padding: var(--apya-space-3); border-radius: var(--apya-radius-xl);
+        border: 1px solid var(--apya-border-default); background: var(--apya-surface-raised);
+    }
+    .apya-pform-tpl.is-on {
+        border-color: var(--apya-accent-500); background: var(--apya-accent-soft);
+    }
+    .apya-pform-tpl[hidden] { display: none; }
+    .apya-pform-tpl-check { flex: none; margin-top: 2px; }
+    .apya-pform-tpl-text { min-width: 0; cursor: pointer; margin: 0; }
+    .apya-pform-tpl-title { font-size: var(--apya-fs-sm); font-weight: var(--apya-weight-semibold); color: var(--apya-text-primary); }
+    .apya-pform-tpl-desc { font-size: var(--apya-fs-xs); line-height: var(--apya-leading-snug); color: var(--apya-text-tertiary); text-wrap: pretty; }
+
     /* --- Kiracı satırı (yalnız host) --- */
     .apya-pform-tenant {
         display: flex; align-items: center; gap: var(--apya-space-3);
@@ -352,6 +367,18 @@
                         <i class="fa fa-circle-exclamation" aria-hidden="true" id="PfDateWarnIcon"></i>
                         <span id="PfDateWarnText"></span>
                     </div>
+
+                    @* Kategoriye bağlı hazır görev takvimi. Onay kutusu label'ın
+                       DIŞINDA: `for` hedefi label'ın içine yuvalanırsa tıklama
+                       sonsuz döngüye girer (bkz. dosya sonundaki dosya alanı notu). *@
+                    <div class="apya-pform-tpl" id="PfTemplate">
+                        <input class="form-check-input apya-pform-tpl-check" type="checkbox"
+                               asp-for="Project.AddTemplateTasks" id="PfTemplateCheck" />
+                        <label class="apya-pform-tpl-text" for="PfTemplateCheck">
+                            <span class="apya-pform-tpl-title d-block" id="PfTemplateTitle"></span>
+                            <span class="apya-pform-tpl-desc d-block" id="PfTemplateDesc"></span>
+                        </label>
+                    </div>
                 </div>
 
                 @* ---------------- 4. DETAY (kategoriye göre) ---------------- *@
@@ -441,13 +468,18 @@
 
         // Kategoriye göre hangi detay alanı görünür — tasarım 4a §1.
         var CAT = {
-            '0': { label: 'Diğer / Genel', detail: 'Açıklama',           purpose: false, audience: false, activities: false },
-            '1': { label: 'Hibe Projesi',  detail: 'Hibe detayları',     purpose: true,  audience: true,  activities: true },
-            '2': { label: 'Etkinlik',      detail: 'Etkinlik detayları', purpose: true,  audience: true,  activities: false }
+            '0': { label: 'Diğer / Genel', detail: 'Açıklama',           purpose: false, audience: false, activities: false,
+                   tpl: null },
+            '1': { label: 'Hibe Projesi',  detail: 'Hibe detayları',     purpose: true,  audience: true,  activities: true,
+                   tpl: { title: 'Hibe görev takvimini ekle (6 görev)',
+                          desc: 'Başvuru dosyası · ara rapor · harcama belgeleri · ödeme talebi · sonuç raporu · kapanış — tarihler proje aralığına yayılır.' } },
+            '2': { label: 'Etkinlik',      detail: 'Etkinlik detayları', purpose: true,  audience: true,  activities: false,
+                   tpl: { title: 'Etkinlik görev takvimini ekle (5 görev)',
+                          desc: 'Tedarikçi onayı · katılım formu · stant tasarımı · lojistik · etkinlik sonrası rapor.' } }
         };
 
         // Formu tek yerden okuyan durum — doğrulama, rozet, taslak hepsi buna bakar.
-        var state = { codeTaken: false, codeSuggestion: '', codeAuto: true, tried: false };
+        var state = { codeTaken: false, codeSuggestion: '', codeAuto: true, tried: false, tplCat: null };
 
         var $cat = $('#PfCategory'), $name = $('#PfName'), $code = $('#PfCode');
         var $start = $('#PfStart'), $end = $('#PfEnd');
@@ -495,6 +527,22 @@
                 $(this).toggleClass('is-selected', on).attr('aria-checked', on ? 'true' : 'false');
                 if (on) { $('#PfDetailHint').text($(this).data('hint') || ''); }
             });
+
+            // Hazır görev takvimi: yalnız takvimi olan kategoride görünür.
+            // Kategori değişince VARSAYILAN işaretli gelir; kullanıcı kaldırdıysa
+            // aynı kategori içinde seçimi korunur.
+            var $tpl = $('#PfTemplate'), $tplCheck = $('#PfTemplateCheck');
+            if (meta.tpl) {
+                $('#PfTemplateTitle').text(meta.tpl.title);
+                $('#PfTemplateDesc').text(meta.tpl.desc);
+                $tpl.prop('hidden', false);
+                if (state.tplCat !== key) { $tplCheck.prop('checked', true); }
+            } else {
+                $tpl.prop('hidden', true);
+                $tplCheck.prop('checked', false); // Diğer'de sunucu zaten yok sayar
+            }
+            state.tplCat = key;
+            $tpl.toggleClass('is-on', $tplCheck.prop('checked'));
 
             $('#PfDetailTitle').text(meta.detail);
             $('#PfPurposeField').toggle(meta.purpose);
@@ -555,6 +603,10 @@
                         .on('click', function () { setCode(state.codeSuggestion, true); refresh(); }));
             }
         }
+
+        $('#PfTemplateCheck').on('change', function () {
+            $('#PfTemplate').toggleClass('is-on', this.checked);
+        });
 
         $('#PfCodeRegen').on('click', function () { fetchNextCode(); });
         $code.on('input', function () {
