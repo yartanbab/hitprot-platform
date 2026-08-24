@@ -52,6 +52,18 @@ public class OpenIddictDataSeedContributor : IDataSeedContributor, ITransientDep
     [UnitOfWork]
     public virtual async Task SeedAsync(DataSeedContext context)
     {
+        // OpenIddict scope/application'ları HOST seviyesindedir ("Platform" scope'u +
+        // Platform_Web/Swagger istemcileri — hepsi host-global, kiracıya özel DEĞİL). Kiracı
+        // bağlamında (yeni kiracı oluşturma, TenantProfileAppService.CreateTenantWithProfileAsync
+        // tam contributor zincirini çalıştırır) yeniden çalıştırmanın faydası yok ve zararlı:
+        // confidential Platform_Web istemcisi için ClientSecret boşsa (yerelde ya da sır rotasyonu
+        // sonrası appsettings'te boş bırakılmışsa) seed TheClientSecretIsRequiredForConfidential
+        // Applications ile düşer → "Yeni Müşteri" 500. Host seed'i (TenantId == null) etkilenmez.
+        if (context.TenantId != null)
+        {
+            return;
+        }
+
         await CreateScopesAsync();
         await CreateApplicationsAsync();
     }
