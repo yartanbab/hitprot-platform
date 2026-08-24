@@ -99,6 +99,18 @@ public static class PlatformPermissions
         public const string Delete = Default + ".Delete";
         public const string Assign = Default + ".Assign"; // Başkasına görev atama
         public const string ChangeStatus = Default + ".ChangeStatus"; // Durum değiştirme (Tamamla/Geri Al)
+
+        /// <summary>
+        /// Görev oluşturma modalındaki hızlı giriş satırı (işaretçiyle yazma). Yoksa modal
+        /// doğrudan sıkı form modunda açılır — oluşturma yeteneği kaybolmaz, yalnız kısayol gider.
+        /// </summary>
+        public const string QuickCreate = Default + ".QuickCreate";
+
+        /// <summary>
+        /// Planlama alanlarını (tahmini süre, görev tipi, sprint, üst görev) görme ve set etme.
+        /// Yoksa "Daha fazla" açılırı hiç çizilmez ve bu alanlar sunucuda da yok sayılır.
+        /// </summary>
+        public const string ManagePlanning = Default + ".ManagePlanning";
     }
 
     // --- WIKI / DOKÜMANTASYON YETKİLERİ ---

@@ -86,6 +86,66 @@
                 </div>
             </fieldset>
 
+            <fieldset class="mb-3">
+                <legend class="form-label mb-1">@L["Settings:TaskCreate.Label"]</legend>
+                <div class="form-text mb-2">@L["Settings:TaskCreate.Help"]</div>
+
+                @if (Model.QuickEntryAvailable)
+                {
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="radio" name="TaskCreateDefaultMode" id="tcmode-quick"
+                               value="quick" checked="@(Model.TaskCreateDefaultMode != "form")" />
+                        <label class="form-check-label" for="tcmode-quick">
+                            <strong>@L["Settings:TaskCreate.Quick"]</strong>
+                            <div class="text-muted small">@L["Settings:TaskCreate.Quick.Desc"]</div>
+                        </label>
+                    </div>
+
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="radio" name="TaskCreateDefaultMode" id="tcmode-form"
+                               value="form" checked="@(Model.TaskCreateDefaultMode == "form")" />
+                        <label class="form-check-label" for="tcmode-form">
+                            <strong>@L["Settings:TaskCreate.Form"]</strong>
+                            <div class="text-muted small">@L["Settings:TaskCreate.Form.Desc"]</div>
+                        </label>
+                    </div>
+                }
+                else
+                {
+                    @* Paket ya da izin kapalı: seçim anlamsız, sebebi yazılıyor —
+                       ayarın sessizce yok olması "bozuk" hissi veriyor. *@
+                    <div class="alert alert-light border small mb-3" role="note">
+                        @L["Settings:TaskCreate.Unavailable"]
+                    </div>
+                }
+
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" role="switch" name="TaskCreateShowKeyboardHints"
+                           id="tchints-toggle" value="true" checked="@Model.TaskCreateShowKeyboardHints" />
+                    <label class="form-check-label" for="tchints-toggle">
+                        <strong>@L["Settings:TaskCreate.Hints"]</strong>
+                        <div class="text-muted small">@L["Settings:TaskCreate.Hints.Desc"]</div>
+                    </label>
+                </div>
+            </fieldset>
+
+            @if (Model.CanManageTenantSettings)
+            {
+                <fieldset class="mb-3">
+                    <legend class="form-label mb-1">@L["Settings:TaskCreate.Tenant.Label"]</legend>
+                    <div class="form-text mb-2">@L["Settings:TaskCreate.Tenant.Help"]</div>
+
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" role="switch" name="TaskCreateShowInfoBanner"
+                               id="tcbanner-toggle" value="true" checked="@Model.TaskCreateShowInfoBanner" />
+                        <label class="form-check-label" for="tcbanner-toggle">
+                            <strong>@L["Settings:TaskCreate.Banner"]</strong>
+                            <div class="text-muted small">@L["Settings:TaskCreate.Banner.Desc"]</div>
+                        </label>
+                    </div>
+                </fieldset>
+            }
+
             <button type="submit" class="btn btn-primary">@L["Settings:Save"]</button>
         </form>
 

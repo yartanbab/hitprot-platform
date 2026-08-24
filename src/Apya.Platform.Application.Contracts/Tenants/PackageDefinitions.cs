@@ -37,6 +37,7 @@ public static class PackageDefinitions
         [PlatformFeatures.AiAssist] = "false",
         [PlatformFeatures.MultiCurrency] = "false",
         [PlatformFeatures.AdvancedReports] = "false",
+        [PlatformFeatures.TaskQuickEntry] = "false",
         [PlatformFeatures.MaxUsers] = "3",
         [PlatformFeatures.MaxProjects] = "5",
     };
@@ -51,6 +52,7 @@ public static class PackageDefinitions
         [PlatformFeatures.AiAssist] = "false",
         [PlatformFeatures.MultiCurrency] = "true",
         [PlatformFeatures.AdvancedReports] = "false",
+        [PlatformFeatures.TaskQuickEntry] = "true",
         [PlatformFeatures.MaxUsers] = "10",
         [PlatformFeatures.MaxProjects] = "25",
     };
@@ -65,6 +67,7 @@ public static class PackageDefinitions
         [PlatformFeatures.AiAssist] = "true",
         [PlatformFeatures.MultiCurrency] = "true",
         [PlatformFeatures.AdvancedReports] = "true",
+        [PlatformFeatures.TaskQuickEntry] = "true",
         [PlatformFeatures.MaxUsers] = "50",
         [PlatformFeatures.MaxProjects] = "200",
     };
@@ -79,6 +82,7 @@ public static class PackageDefinitions
         [PlatformFeatures.AiAssist] = "true",
         [PlatformFeatures.MultiCurrency] = "true",
         [PlatformFeatures.AdvancedReports] = "true",
+        [PlatformFeatures.TaskQuickEntry] = "true",
         [PlatformFeatures.MaxUsers] = "100000",
         [PlatformFeatures.MaxProjects] = "100000",
     };

@@ -16,6 +16,7 @@ public static class PackageFeatureCatalog
         new(PlatformFeatures.Documents, "Doküman Yönetimi", false),
         new(PlatformFeatures.Forms, "Form / Dinamik Varlık", false),
         new(PlatformFeatures.Calendar, "Takvim", false),
+        new(PlatformFeatures.TaskQuickEntry, "Hızlı Görev Girişi", false),
         new(PlatformFeatures.AiAssist, "AI Asistan", false),
         new(PlatformFeatures.MultiCurrency, "Çoklu Döviz", false),
         new(PlatformFeatures.AdvancedReports, "Gelişmiş Raporlar", false),

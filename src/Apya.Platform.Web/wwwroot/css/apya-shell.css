@@ -6306,3 +6306,302 @@ i.apya-priority-dot {
         min-height: 44px;
     }
 }
+/* ----------------------------------------------------------------------------
+   24) YENİ GÖREV MODALI — Pages/Tasks/CreateModal
+   Maket: docs/design/gorev-olustur/yeni-gorev-ekrani.dc.html (1b + 1d birleşimi).
+   Tüm renk/ölçü token'dan; maketteki ham hex'lerin birebir karşılığı kullanıldı
+   (#4F46E5 → accent-500, #E5E7EB → border-default, #F9FAFB → surface-raised …),
+   böylece koyu tema ayrı kural yazmadan geliyor.
+
+   <abp-modal> class attribute'u geçirmediği için .apya-tc-dialog, modalın
+   .modal-dialog'una JS ile ekleniyor (aynı yöntem §16 görev detay drawer'ında da var).
+   ---------------------------------------------------------------------------- */
+.apya-tc-dialog {
+    max-width: 640px;
+}
+
+.apya-tc {
+    font-size: var(--apya-fs-base);
+    color: var(--apya-text-primary);
+}
+
+/* Eski bilgi kutusu — varsayılan KAPALI, kiracı ayarıyla açılır. */
+.apya-tc-banner {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--apya-space-2);
+    margin: var(--apya-space-4) var(--apya-space-5) 0;
+    padding: var(--apya-space-3);
+    border: 1px solid var(--apya-border-default);
+    border-radius: var(--apya-radius-lg);
+    background: var(--apya-surface-raised);
+    font-size: 12.5px;
+    line-height: 1.55;
+    color: var(--apya-text-secondary);
+}
+.apya-tc-banner i {
+    margin-top: 2px;
+    color: var(--apya-accent-500);
+}
+
+/* ── 1d: hızlı giriş satırı ── */
+.apya-tc-quick {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--apya-space-3);
+    padding: 18px var(--apya-space-5) 14px;
+}
+.apya-tc-quick-icon {
+    margin-top: 4px;
+    font-size: 15px;
+    color: var(--apya-accent-500);
+}
+.apya-tc-quick-input {
+    flex: 1;
+    min-width: 0;
+    padding: 0;
+    border: 0;
+    outline: none;
+    background: transparent;
+    font: 400 16px/1.5 var(--apya-font-sans);
+    color: var(--apya-text-primary);
+}
+.apya-tc-quick-input::placeholder {
+    color: var(--apya-text-tertiary);
+}
+
+/* Canlı önizleme çipleri — ayrıştırıcının ne anladığının görünür kanıtı. */
+.apya-tc-preview {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    padding: 0 var(--apya-space-5) var(--apya-space-4) 47px;
+}
+.apya-tc-pchip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 9px;
+    border: 1px solid var(--apya-border-default);
+    border-radius: 7px;
+    background: var(--apya-surface-raised);
+    font: 500 12px var(--apya-font-sans);
+    color: var(--apya-text-secondary);
+}
+.apya-tc-pchip-p3,
+.apya-tc-pchip-p4 {
+    border-color: rgba(217, 119, 6, 0.25);
+    background: var(--apya-warning-50);
+    color: var(--apya-text-warning);
+}
+.apya-tc-pchip-tag {
+    border-color: transparent;
+    background: var(--apya-accent-soft);
+    color: var(--apya-accent-600);
+}
+.apya-tc-pchip-private {
+    border-color: transparent;
+    background: var(--apya-negative-50);
+    color: var(--apya-text-negative);
+}
+.apya-tc-pchip-date {
+    font-family: var(--apya-font-mono);
+}
+
+/* İşaretçi ipuçları — ayarla kapatılabilir. */
+.apya-tc-hints {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--apya-space-3);
+    padding: 0 var(--apya-space-5) var(--apya-space-4) 47px;
+    font: 400 11.5px/1.5 var(--apya-font-sans);
+    color: var(--apya-text-tertiary);
+}
+.apya-tc-hints b {
+    font-family: var(--apya-font-mono);
+    color: var(--apya-text-secondary);
+}
+
+/* ── 1b: sıkı form ──
+   Hızlı satır açıkken form KATLIDIR; TAB / chevron açar. Katlıyken de DOM'da kalır:
+   gerçek alanlar POST edilebilir olmalı. display:none yeterli — alanları disabled
+   ETME, disabled alan hiç gönderilmez ve varsayılan tarih/durum kaybolur. */
+.apya-tc-form[data-collapsed="true"] .apya-tc-content,
+.apya-tc-form[data-collapsed="true"] .apya-tc-meta,
+.apya-tc-form[data-collapsed="true"] .apya-tc-planning {
+    display: none;
+}
+
+.apya-tc-content {
+    padding: 18px var(--apya-space-5) var(--apya-space-1);
+}
+.apya-tc-title {
+    display: block;
+    width: 100%;
+    padding: 0;
+    border: 0;
+    outline: none;
+    background: transparent;
+    font: 600 19px/1.35 var(--apya-font-sans);
+    letter-spacing: -0.015em;
+    color: var(--apya-text-primary);
+}
+.apya-tc-desc {
+    display: block;
+    width: 100%;
+    margin-top: 10px;
+    padding: 0;
+    border: 0;
+    outline: none;
+    resize: none;
+    background: transparent;
+    font: 400 13.5px/1.6 var(--apya-font-sans);
+    color: var(--apya-text-secondary);
+}
+.apya-tc-title::placeholder,
+.apya-tc-desc::placeholder {
+    color: var(--apya-text-tertiary);
+}
+.apya-tc-error {
+    display: block;
+    margin-top: 6px;
+    font-size: var(--apya-fs-xs);
+    color: var(--apya-text-negative);
+}
+
+/* Meta çubuğu — sekiz alan tek satırda. */
+.apya-tc-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: var(--apya-space-3) var(--apya-space-5) var(--apya-space-4);
+}
+.apya-tc-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 10px;
+    border: 1px dashed var(--apya-border-strong);
+    border-radius: var(--apya-radius-full);
+    background: var(--apya-surface-base);
+    font: 500 12.5px var(--apya-font-sans);
+    color: var(--apya-text-secondary);
+    cursor: pointer;
+    transition: border-color var(--apya-motion-fast), background var(--apya-motion-fast);
+}
+/* Değeri olan çip DOLU kenarlığa geçer — boş mu dolu mu tek bakışta okunur. */
+.apya-tc-chip.is-set,
+.apya-tc-chip[data-chip="status"],
+.apya-tc-chip[data-chip="priority"],
+.apya-tc-chip[data-chip="dates"] {
+    border-style: solid;
+    border-color: var(--apya-border-default);
+    color: var(--apya-text-primary);
+}
+.apya-tc-chip:hover {
+    background: var(--apya-surface-hover);
+}
+.apya-tc-chip:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px var(--apya-border-focus);
+}
+.apya-tc-chip i {
+    font-size: 10px;
+    color: var(--apya-text-tertiary);
+}
+.apya-tc-chip[data-chip="priority"] i {
+    color: var(--apya-warning-500);
+}
+.apya-tc-dot {
+    display: inline-block;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--apya-text-tertiary);
+}
+
+/* Çip açılırı — Bootstrap dropdown gövdesi. */
+.apya-tc-pop {
+    min-width: 240px;
+    padding: var(--apya-space-2);
+    border: 1px solid var(--apya-border-default);
+    border-radius: var(--apya-radius-lg);
+    background: var(--apya-surface-base);
+    box-shadow: var(--apya-shadow-lg);
+}
+.apya-tc-pop-dates {
+    display: grid;
+    gap: var(--apya-space-2);
+}
+.apya-tc-pop-dates label,
+.apya-tc-planning label {
+    display: grid;
+    gap: 4px;
+    font-size: var(--apya-fs-xs);
+    font-weight: var(--apya-weight-semibold);
+    color: var(--apya-text-secondary);
+}
+.apya-tc-pop-tags {
+    min-width: 320px;
+}
+.apya-tc-native {
+    width: 100%;
+}
+
+/* Planlama alanları — Tasks.ManagePlanning + Platform.TaskQuickEntry arkasında. */
+.apya-tc-planning {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--apya-space-3);
+    padding: 0 var(--apya-space-5) var(--apya-space-4);
+}
+.apya-tc-planning[hidden] {
+    display: none;
+}
+
+@media (max-width: 575.98px) {
+    .apya-tc-planning {
+        grid-template-columns: 1fr;
+    }
+    .apya-tc-preview,
+    .apya-tc-hints {
+        padding-left: var(--apya-space-5);
+    }
+}
+
+/* Gizli görev çipi — gerçek checkbox çipin içinde, görsel olarak gizli.
+   Çip <label> olduğu için tıklamayı checkbox'a kendisi taşır; ayrı JS gerekmez. */
+.apya-tc-chip-private {
+    margin: 0;
+    user-select: none;
+}
+.apya-tc-native-check {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+    pointer-events: none;
+}
+.apya-tc-chip-private.is-set {
+    border-style: solid;
+    border-color: var(--apya-negative-500);
+    background: var(--apya-negative-50);
+    color: var(--apya-text-negative);
+}
+.apya-tc-chip-private.is-set i {
+    color: var(--apya-negative-500);
+}
+.apya-tc-native-check:focus-visible + i {
+    outline: 2px solid var(--apya-border-focus);
+    outline-offset: 2px;
+}
+
+/* Koyu temada indigo metin okunmuyor: --apya-accent-600 (#4F46E5) koyu blokta DAHA DA
+   koyulaşıyor ve accent-soft zemin neredeyse siyahın üstünde → 2,71:1 (AA sınırı 4,5:1).
+   Accent skalası positive/negative/warning'in "-700 = parlak metin" konvansiyonunu
+   izlemediği için token seçimi tema-farkında olmak zorunda: accent-300 → 8,56:1.
+   Ölçüm: docs/design/gorev-olustur/uygulama-notlari.md */
+[data-theme="dark"] .apya-tc-pchip-tag {
+    color: var(--apya-accent-300);
+}
