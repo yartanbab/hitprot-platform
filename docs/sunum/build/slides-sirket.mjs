@@ -1,10 +1,8 @@
-// Apya Platform — müşteri tanıtım sunumu, slayt içerikleri.
+// Apya Platform — ŞİRKET odaklı müşteri tanıtım sunumu, slayt içerikleri.
 // Tek kaynak: buradan hem HTML deck, hem PDF, hem PNG, hem PPTX üretilir.
+// Dernek/vakıf sürümü ayrı dosyadadır: slides-dernek.mjs
 
-const ARROW = (id, color = "#9CA3AF") => `
-  <defs><marker id="${id}" viewBox="0 0 10 10" refX="9" refY="5"
-      markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-      <path d="M0,0 L10,5 L0,10 z" fill="${color}"/></marker></defs>`;
+import { ARROW, sideNav as shellNav } from "./common.mjs";
 
 /* ── 02 · Bugünkü dağınıklık ─────────────────────────────────────────── */
 const s02 = () => {
@@ -90,7 +88,7 @@ const s04 = () => {
     ["2", "Proje", "Bütçe, tarih ve ekip", "tanımlanır."],
     ["3", "Görevler", "İş parçalara bölünür,", "kişilere atanır."],
     ["4", "Para", "Fatura, gider ve tahsilat", "kaydı girilir."],
-    ["5", "Rapor", "Kârlılık, ekstre ve", "mizan otomatik oluşur."],
+    ["5", "Rapor", "Kârlılık ve cari ekstre", "otomatik oluşur."],
   ];
   const X = [0, 304, 608, 912, 1216];
   const arrows = [["kimin için", 255], ["nasıl bölünür", 559], ["maliyeti ne", 863], ["sonuç ne", 1167]];
@@ -119,16 +117,8 @@ const s04 = () => {
 };
 
 /* ── 05 · Genel Bakış ekranı ─────────────────────────────────────────── */
-const sideNav = (active) => {
-  const items = [
-    ["Genel Bakış", "dash"], ["Projeler", "proj"], ["Görevler", "task"], ["Takvim", "cal"],
-    ["Finans", "fin"], ["Dokümanlar", "doc"], ["Raporlar", "rep"],
-  ];
-  return `<div class="side">
-    <b>Menü</b>
-    ${items.map(([t, k]) => `<a class="${k === active ? "on" : ""}"><i></i>${t}</a>`).join("")}
-  </div>`;
-};
+const MENU = ["Genel Bakış", "Projeler", "Görevler", "Takvim", "Finans", "Dokümanlar", "Raporlar"];
+const sideNav = (active) => shellNav(MENU, MENU.indexOf(active));
 
 const s05 = () => {
   const kpi = (k, v, d, c) => `<div class="kpi"><span class="k">${k}</span><span class="v">${v}</span><span class="d" style="color:${c}">${d}</span></div>`;
@@ -136,7 +126,7 @@ const s05 = () => {
   const months = ["Oca", "Şub", "Mar", "Nis", "May", "Haz", "Tem", "Ağu"];
   return `<div class="app">
     <div class="bar"><em></em><em></em><em></em><span>Genel Bakış</span></div>
-    <div class="win">${sideNav("dash")}
+    <div class="win">${sideNav("Genel Bakış")}
       <div class="main">
         <div class="grid4">
           ${kpi("Aktif proje", "12", "3 tanesi bu ay bitiyor", "#4B5563")}
@@ -169,7 +159,7 @@ const s05 = () => {
 /* ── 06 · Proje konsolu ──────────────────────────────────────────────── */
 const s06 = () => `<div class="app">
   <div class="bar"><em></em><em></em><em></em><span>Projeler › Belediye Su Şebekesi Yenileme</span></div>
-  <div class="win">${sideNav("proj")}
+  <div class="win">${sideNav("Projeler")}
     <div class="main">
       <div class="card" style="padding:18px 20px;display:flex;align-items:center;gap:28px">
         <div style="flex:1">
@@ -292,7 +282,7 @@ const s08 = () => {
     }).join("")}
     <rect x="0" y="396" width="1416" height="70" rx="16" fill="#EFF6FF"/>
     <text x="34" y="439" font-size="21" font-weight="600" fill="#1D4ED8">
-      Tek defter · Çift kayıt otomatik tutulur — Mizan, Cari Ekstre ve Proje Kârlılığı her an hazır
+      Tek defter · Çift kayıt otomatik tutulur — Cari Ekstre ve Proje Kârlılığı her an hazır
     </text>
   </svg></figure>`;
 };
@@ -372,7 +362,7 @@ const s10 = () => {
     </div>`;
   const rows = (data) => `<table class="tbl" style="background:transparent">${data.map(
     ([a, b, c]) => `<tr><td>${a}</td><td class="r" style="color:${c || "inherit"}">${b}</td></tr>`).join("")}</table>`;
-  return `<div class="grid3" style="height:100%">
+  return `<div class="grid2" style="height:100%">
     ${card("Proje Kârlılığı", "Bütçe, gerçekleşen ve kalan — proje bazında.",
       rows([["Su Şebekesi", "+ 360.000 ₺", "#059669"], ["Fabrika Otomasyon", "+ 142.500 ₺", "#059669"],
             ["Depo Yenileme", "− 28.400 ₺", "#DC2626"], ["Bakım Sözleşmesi", "+ 96.000 ₺", "#059669"],
@@ -381,45 +371,7 @@ const s10 = () => {
       rows([["Devir", "0 ₺"], ["Fatura #2026-114", "+ 285.000 ₺"], ["Tahsilat", "− 150.000 ₺"],
             ["Fatura #2026-131", "+ 78.000 ₺"], ["Tahsilat", "− 78.000 ₺"],
             ["Bakiye", "135.000 ₺", "#B45309"]]))}
-    ${card("Mizan (Özet)", "Dönem sonu borç / alacak dengesi.",
-      rows([["Kasa & Banka", "612.300 ₺"], ["Alıcılar", "418.900 ₺"], ["Satıcılar", "236.100 ₺"],
-            ["Giderler", "294.600 ₺"], ["Gelirler", "1.089.700 ₺"], ["Denge", "Tutuyor", "#059669"]]))}
   </div>`;
-};
-
-/* ── 11 · AI Değerlendirme Merkezi ───────────────────────────────────── */
-const s11 = () => {
-  const X = [0, 508, 1016];
-  const steps = [
-    ["Form / başvuru gelir", "Tedarikçi ön değerlendirme,\nsaha formu, hibe başvurusu…", "#2563EB"],
-    ["Yapay zekâ okur", "Sizin yazdığınız kriterlere göre\nyanıtı değerlendirir.", "#7C3AED"],
-    ["Skor + risk + gerekçe", "Her karar, neden öyle verildiğiyle\nbirlikte kaydedilir.", "#059669"],
-  ];
-  return `<figure><svg class="flow" viewBox="0 0 1416 388" role="img"
-      aria-label="Gelen form yanıtını yapay zekâ tanımlı kriterlere göre değerlendirir, skor ve gerekçe üretir, sonuç kurala göre otomatik aksiyona bağlanır">
-    ${ARROW("a11", "#94A3B8")}
-    ${steps.map(([t, d, c], i) => {
-      const lines = d.split("\n");
-      return `
-      <rect x="${X[i]}" y="10" width="400" height="210" rx="16" fill="#FFFFFF" stroke="#E5E7EB"/>
-      <rect x="${X[i]}" y="10" width="400" height="4" rx="2" fill="${c}"/>
-      <text class="m" x="${X[i] + 26}" y="58" font-size="14" font-weight="700" fill="${c}"
-            letter-spacing="2">ADIM ${i + 1}</text>
-      <text x="${X[i] + 26}" y="110" font-size="27" font-weight="700" fill="#111827">${t}</text>
-      ${lines.map((ln, j) => `<text x="${X[i] + 26}" y="${152 + j * 26}" font-size="17" fill="#6B7280">${ln}</text>`).join("")}`;
-    }).join("")}
-    ${[[454, "otomatik"], [962, "saniyede"]].map(([mid, l]) => `
-      <line x1="${mid - 40}" y1="118" x2="${mid + 40}" y2="118" stroke="#94A3B8" stroke-width="2.5" marker-end="url(#a11)"/>
-      <text x="${mid}" y="102" font-size="15" fill="#6B7280" text-anchor="middle">${l}</text>`).join("")}
-
-    <rect x="0" y="262" width="1416" height="110" rx="16" fill="#F5F3FF"/>
-    <text x="34" y="306" font-size="22" font-weight="700" fill="#6D28D9">Sonuç sizin kuralınıza bağlanır</text>
-    <text x="34" y="340" font-size="18" fill="#7C3AED">
-      Riskliyse yöneticiye bildirim gönder · Belirli skorun üstündeyse onaya düşür · Etiketle · Dış sisteme ilet
-    </text>
-    <text x="1382" y="306" font-size="15" fill="#8B5CF6" text-anchor="end">Sağlayıcı seçimi sizde:</text>
-    <text x="1382" y="340" font-size="16" font-weight="600" fill="#6D28D9" text-anchor="end">Claude · Gemini · OpenAI · DeepSeek</text>
-  </svg></figure>`;
 };
 
 /* ── 12 · Hibe yönetimi ──────────────────────────────────────────────── */
@@ -654,6 +606,8 @@ const s16 = () => {
 };
 
 /* ── Slayt listesi ───────────────────────────────────────────────────── */
+export const deckTitle = "Apya Platform Tanıtımı";
+
 export const slides = [
   {
     section: "", eyebrow: "APYA PLATFORM", night: true, cover: true,
@@ -733,14 +687,7 @@ export const slides = [
     note: `Her rapor <b>Excel veya PDF</b> olarak indirilir; tarih aralığı, proje ve müşteri filtreleri hazır gelir.`,
   },
   {
-    section: "EKRANLAR", eyebrow: "07 · YAPAY ZEKÂ",
-    title: "İlk değerlendirmeyi yapay zekâ yapar",
-    sub: "Kararı siz verirsiniz — o sadece ön eleme ve gerekçe hazırlar.",
-    canvas: s11(),
-    note: `Yapay zekâ <b>kendi kuralını uydurmaz</b>: kriterleri siz yazarsınız, o uygular ve her puan için gerekçesini kayda geçer.`,
-  },
-  {
-    section: "EKRANLAR", eyebrow: "08 · HİBE YÖNETİMİ",
+    section: "EKRANLAR", eyebrow: "07 · HİBE YÖNETİMİ",
     title: "Size uygun hibeyi kaçırmayın",
     sub: "Açık çağrılar tek listede; profilinize uyanlar öne çıkar.",
     canvas: s12(),

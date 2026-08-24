@@ -1,18 +1,25 @@
 // PNG slaytlardan 16:9 PPTX üretir. Her slayt tam-kanama görsel;
 // konuşmacı notlarına slaytın başlığı ve alt notu düz metin olarak yazılır.
 //
-// Kullanım: node pptx.mjs [pptxgenjs-kurulu-dizin]
+// Kullanım: node pptx.mjs <sirket|dernek> [pptxgenjs-kurulu-dizin]
 // Dizin verilmezse build/_tmp/pptx aranır (orada `npm install pptxgenjs@4`).
 
 import { readdirSync } from "node:fs";
 import { join, dirname, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
-import { slides } from "./slides.mjs";
+
+const DECKS = ["sirket", "dernek"];
+const DECK = (process.argv[2] || "").toLowerCase();
+if (!DECKS.includes(DECK)) {
+  console.error(`Kullanım: node pptx.mjs <${DECKS.join("|")}> [pptxgenjs-dizini]`);
+  process.exit(1);
+}
+const { slides, deckTitle } = await import(`./slides-${DECK}.mjs`);
 
 const HERE = dirname(fileURLToPath(import.meta.url));
-const IMG = resolve(HERE, "../gorseller");
-const OUT = resolve(HERE, "../apya-sunum.pptx");
-const MODDIR = resolve(process.argv[2] || join(HERE, "_tmp/pptx"));
+const IMG = resolve(HERE, `../${DECK}/gorseller`);
+const OUT = resolve(HERE, `../${DECK}/apya-sunum-${DECK}.pptx`);
+const MODDIR = resolve(process.argv[3] || join(HERE, "_tmp/pptx"));
 
 const { default: PptxGenJS } = await import(
   pathToFileURL(join(MODDIR, "node_modules/pptxgenjs/dist/pptxgen.cjs.js")).href
@@ -30,7 +37,7 @@ const pptx = new PptxGenJS();
 // modern genis varsayilani LAYOUT_WIDE'dir (13.333 x 7.5). Asagidaki
 // gorsel olculeri bu ikinciyle eslesir.
 pptx.layout = "LAYOUT_WIDE";                 // 13.333 x 7.5 inch (16:9)
-pptx.title = "Apya Platform Tanıtımı";
+pptx.title = deckTitle;
 pptx.subject = "Müşteri tanıtım sunumu";
 pptx.company = "Apya";
 
