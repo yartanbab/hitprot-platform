@@ -21,9 +21,15 @@ namespace Apya.Platform.Ai.Permissions;
 /// (paket izin tavanı — pakette olmayan izin rolde verilse bile IsGranted=false) + AiAssist FEATURE
 /// gate'iyle kontrol edilir. Yani AiAssist paketi olmayan kiracı yine AI göremez; host muaftır.
 ///
-/// Host + her kiracı için çalışır (<see cref="DataSeedContext.TenantId"/> ayrımı yapmaz — grant
-/// bulunduğu bağlamın "admin" rolüne yazılır). <see cref="IPermissionDataSeeder"/> mevcut grant'ları
-/// eler → idempotent. Desen: <see cref="Apya.Platform.Accounts.LoginScreenPermissionDataSeedContributor"/>.
+/// YALNIZ HOST bağlamında çalışır (<see cref="DataSeedContext.TenantId"/> == null). Kiracı
+/// bağlamında ÇALIŞTIRILMAZ: yeni kiracı oluşturulurken (CreateTenantWithProfileAsync — tek sahip
+/// transactional UoW) ABP'nin kimlik tohumlayıcısı taze "admin" rolüne tüm Both-tarafı izinleri
+/// (feature/paket'ten BAĞIMSIZ — AI izinleri dahil) zaten verir. Burada ikinci kez vermek, aynı UoW'da
+/// mükerrer (TenantId, Name, "R", "admin") satırı üretir → IX_AbpPermissionGrants ihlali
+/// (ör. "Ai.Evaluations.Retry" → SqlServer 2627 / PostgreSql 23505) → "Yeni Müşteri" 500.
+/// Tavan (<see cref="Apya.Platform.Tenants.PackagePermissionStateChecker"/>) + AiAssist FEATURE gate'i
+/// efektif erişimi zaten sınırlar; kiracı admin'i izne creation'da sahiptir, paket açılınca etkinleşir.
+/// Desen: <see cref="Apya.Platform.Accounts.LoginScreenPermissionDataSeedContributor"/>.
 /// </summary>
 public class AiPermissionDataSeedContributor : IDataSeedContributor, ITransientDependency
 {
@@ -43,6 +49,14 @@ public class AiPermissionDataSeedContributor : IDataSeedContributor, ITransientD
 
     public async Task SeedAsync(DataSeedContext context)
     {
+        // YALNIZ HOST: kiracı bağlamında çalıştırma. Yeni kiracı oluşturulurken ABP taze "admin"
+        // rolüne tüm Both-tarafı izinleri (AI dahil) zaten verir; aynı UoW'da ikinci kez vermek
+        // mükerrer grant → IX_AbpPermissionGrants ihlali → "Yeni Müşteri" 500 (bkz. sınıf notu).
+        if (context.TenantId != null)
+        {
+            return;
+        }
+
         var adminRole = await _roleRepository.FindByNormalizedNameAsync("ADMIN");
         if (adminRole == null)
         {
