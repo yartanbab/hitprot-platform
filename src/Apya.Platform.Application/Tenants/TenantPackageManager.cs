@@ -8,8 +8,10 @@ using Volo.Abp.Domain.Repositories;
 using Volo.Abp.Features;
 using Volo.Abp.FeatureManagement;
 using Volo.Abp.Guids;
+using Volo.Abp.Identity;
 using Volo.Abp.Linq;
 using Volo.Abp.MultiTenancy;
+using Volo.Abp.PermissionManagement;
 
 namespace Apya.Platform.Tenants;
 
@@ -27,6 +29,10 @@ public class TenantPackageManager : ITransientDependency
     private readonly IAsyncQueryableExecuter _asyncExecuter;
     private readonly IPermissionDefinitionManager _permissionDefinitionManager;
     private readonly PackageCeilingStore _ceilingStore;
+    private readonly IFeatureChecker _featureChecker;
+    private readonly ICurrentTenant _currentTenant;
+    private readonly IPermissionDataSeeder _permissionDataSeeder;
+    private readonly IIdentityRoleRepository _roleRepository;
 
     public TenantPackageManager(
         IFeatureManager featureManager,
@@ -34,7 +40,11 @@ public class TenantPackageManager : ITransientDependency
         IGuidGenerator guidGenerator,
         IAsyncQueryableExecuter asyncExecuter,
         IPermissionDefinitionManager permissionDefinitionManager,
-        PackageCeilingStore ceilingStore)
+        PackageCeilingStore ceilingStore,
+        IFeatureChecker featureChecker,
+        ICurrentTenant currentTenant,
+        IPermissionDataSeeder permissionDataSeeder,
+        IIdentityRoleRepository roleRepository)
     {
         _featureManager = featureManager;
         _packageRepository = packageRepository;
@@ -42,11 +52,19 @@ public class TenantPackageManager : ITransientDependency
         _asyncExecuter = asyncExecuter;
         _permissionDefinitionManager = permissionDefinitionManager;
         _ceilingStore = ceilingStore;
+        _featureChecker = featureChecker;
+        _currentTenant = currentTenant;
+        _permissionDataSeeder = permissionDataSeeder;
+        _roleRepository = roleRepository;
     }
 
     public async Task ApplyPackageAsync(Guid tenantId, PackageCode packageCode)
     {
         var values = await GetFeatureValuesAsync(packageCode);
+
+        // Feature'lar YAZILMADAN ÖNCE ölç: bu paketle hangi modüller ilk kez açılıyor?
+        var newlyEnabled = await GetNewlyEnabledFeaturesAsync(tenantId, values);
+
         foreach (var kv in values)
         {
             await _featureManager.SetAsync(
@@ -58,6 +76,74 @@ public class TenantPackageManager : ITransientDependency
 
         // Tenant'ın paketi değişmiş olabilir: izin tavanı önbelleği bayat kalmasın.
         await _ceilingStore.InvalidateTenantAsync(tenantId);
+
+        await GrantNewlyEnabledPermissionsAsync(tenantId, newlyEnabled);
+    }
+
+    /// <summary>
+    /// Paket uygulanmadan önce tenant'ta KAPALI olup bu paketle açılacak modül feature'ları.
+    /// Yalnız izinle ifade edilebilenler (<see cref="PackageFeatureGates.Map"/>) sayılır;
+    /// MaxUsers/MaxProjects gibi sayısal feature'ların izin karşılığı yoktur.
+    /// </summary>
+    private async Task<List<string>> GetNewlyEnabledFeaturesAsync(
+        Guid tenantId,
+        IReadOnlyDictionary<string, string> values)
+    {
+        var result = new List<string>();
+        using (_currentTenant.Change(tenantId))
+        {
+            foreach (var kv in values)
+            {
+                if (kv.Value != "true" || !PackageFeatureGates.Map.ContainsKey(kv.Key)) { continue; }
+                if (!await _featureChecker.IsEnabledAsync(kv.Key))
+                {
+                    result.Add(kv.Key);
+                }
+            }
+        }
+        return result;
+    }
+
+    /// <summary>
+    /// Yeni açılan modüllerin izinlerini tenant'ın statik admin rolüne verir.
+    ///
+    /// <para>Neden gerekli: <see cref="IFeatureManager"/> yalnız feature değeri yazar, izin
+    /// vermez. Bu adım olmadan paket yükseltilince modülün izin kutuları ekranda belirir ama
+    /// BOŞ gelir — biri elle işaretleyip kaydedene kadar kenar çubuğunda hiçbir şey çıkmaz.</para>
+    ///
+    /// <para>Yalnız <em>yeni açılan</em> modüller işlenir: zaten açık modüllerde host'un
+    /// bilinçli olarak kaldırdığı izinler paket her uygulandığında geri gelmez. Statik admin
+    /// rolü olmayan tenant'ta (özel rol setiyle kurulmuş) sessizce atlanır; orada izinleri
+    /// host, izin yönetimi ekranından dağıtır.</para>
+    /// </summary>
+    private async Task GrantNewlyEnabledPermissionsAsync(Guid tenantId, List<string> newlyEnabledFeatures)
+    {
+        if (!newlyEnabledFeatures.Any()) { return; }
+
+        // Tenant tarafında tanımlı izinler — host-only olanlar (katalog yazma vb.) zaten dışarıda.
+        var tenantPermissions = await GetTenantPermissionNamesAsync();
+        var toGrant = tenantPermissions
+            .Where(name => newlyEnabledFeatures.Any(f => PackageFeatureGates.IsGatedBy(f, name)))
+            .Distinct()
+            .ToList();
+
+        if (!toGrant.Any()) { return; }
+
+        using (_currentTenant.Change(tenantId))
+        {
+            var adminRole = (await _roleRepository.GetListAsync()).FirstOrDefault(r => r.IsStatic);
+            if (adminRole == null) { return; }
+
+            // IPermissionManager DEĞİL: o, izni yazmadan önce state checker'ları çalıştırır ve
+            // feature değeri aynı UoW içinde henüz görünmediği için "izin devre dışı" diyerek
+            // reddeder. Seeder doğrudan grant kaydı yazar ve mevcut olanları atlar (idempotent →
+            // IX_AbpPermissionGrants üzerinde mükerrer kayıt üretmez).
+            await _permissionDataSeeder.SeedAsync(
+                RolePermissionValueProvider.ProviderName,
+                adminRole.Name,
+                toGrant,
+                tenantId);
+        }
     }
 
     /// <summary>
