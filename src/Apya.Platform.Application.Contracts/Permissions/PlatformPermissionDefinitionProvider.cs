@@ -3,6 +3,7 @@ using Apya.Platform.Localization;
 using Volo.Abp.Authorization.Permissions;
 using Volo.Abp.Features;
 using Volo.Abp.Localization;
+using Volo.Abp.MultiTenancy;
 
 namespace Apya.Platform.Permissions;
 
@@ -37,9 +38,13 @@ public class PlatformPermissionDefinitionProvider : PermissionDefinitionProvider
 
         var grantsPermission = grantsGroup.AddPermission(PlatformPermissions.Grants.Default, L("Permission:Grants"));
         grantsPermission.RequireFeatures(PlatformFeatures.Grants);
-        grantsPermission.AddChild(PlatformPermissions.Grants.Create, L("Permission:Grants.Create"));
-        grantsPermission.AddChild(PlatformPermissions.Grants.Edit,   L("Permission:Grants.Edit"));
-        grantsPermission.AddChild(PlatformPermissions.Grants.Delete, L("Permission:Grants.Delete"));
+        // Katalog yazma izinleri HOST'a özeldir: hibe programını ve çağrısını yalnız host açar,
+        // kiracı kendisine yayınlananı görüntüler ve başvurur. Host-only olmasaydı bu izne sahip
+        // bir kiracı kullanıcısı, ekranda buton olmasa bile /api/app/grant üzerinden kendi
+        // kiracısında program/çağrı açabilirdi (GrantAppService düz CrudAppService'tir).
+        grantsPermission.AddChild(PlatformPermissions.Grants.Create, L("Permission:Grants.Create"), MultiTenancySides.Host);
+        grantsPermission.AddChild(PlatformPermissions.Grants.Edit,   L("Permission:Grants.Edit"),   MultiTenancySides.Host);
+        grantsPermission.AddChild(PlatformPermissions.Grants.Delete, L("Permission:Grants.Delete"), MultiTenancySides.Host);
 
         // ============================================================
         // FİNANS & MUHASEBE

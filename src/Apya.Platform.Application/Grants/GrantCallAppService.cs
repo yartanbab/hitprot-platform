@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using System.Threading.Tasks;
+using Volo.Abp.Authorization;
 using Volo.Abp.Application.Services;
 using Volo.Abp.Domain.Repositories;
 using Apya.Platform.Grants.Dtos;
@@ -33,6 +34,34 @@ public class GrantCallAppService :
         return input.GrantId.HasValue
             ? query.Where(c => c.GrantId == input.GrantId.Value)
             : query;
+    }
+
+    // Çağrı yazma izinleri host-only tanımlıdır (PlatformPermissionDefinitionProvider).
+    // Aşağısı ikinci kilit: izin verisi elle kurcalansa bile kiracı bağlamında çağrı açılamaz.
+    protected override async Task CheckCreatePolicyAsync()
+    {
+        EnsureHostContext();
+        await base.CheckCreatePolicyAsync();
+    }
+
+    protected override async Task CheckUpdatePolicyAsync()
+    {
+        EnsureHostContext();
+        await base.CheckUpdatePolicyAsync();
+    }
+
+    protected override async Task CheckDeletePolicyAsync()
+    {
+        EnsureHostContext();
+        await base.CheckDeletePolicyAsync();
+    }
+
+    private void EnsureHostContext()
+    {
+        if (CurrentTenant.Id != null)
+        {
+            throw new AbpAuthorizationException("Hibe çağrısı yalnızca host bağlamında yönetilebilir.");
+        }
     }
 
     // AutoMapper yerine domain kurucusu/guard'ı kullan (private setter'lar + SetSchedule kuralı).
