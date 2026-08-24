@@ -71,6 +71,9 @@ public class ProjectAppService :
     }
 
     // --- CREATE ---
+    // SEC: CrudAppService'in CreatePolicyName'i set edilmediği ve override CheckCreatePolicyAsync'i
+    // çağırmadığı için oluşturma yalnız Projects.Default'a bakıyordu — izin açıkça bağlandı.
+    [Authorize(PlatformPermissions.Projects.Create)]
     public override async Task<ProjectDto> CreateAsync(CreateProjectDto input)
     {
         // Paket kotası: tenant'ın MaxProjects limitini aşması engellenir (host'a uygulanmaz).
@@ -111,6 +114,8 @@ public class ProjectAppService :
     }
 
     // --- UPDATE --- domain metodu üzerinden; AutoMapper direct mapping yok
+    // SEC: CreateAsync ile aynı boşluk — güncelleme de Projects.Default ile yapılabiliyordu.
+    [Authorize(PlatformPermissions.Projects.Edit)]
     public override async Task<ProjectDto> UpdateAsync(Guid id, CreateProjectDto input)
     {
         var project = await Repository.GetAsync(id);
@@ -223,16 +228,97 @@ public class ProjectAppService :
     }
 
     // --- ATTACHMENTS ---
-    public async Task AddAttachmentAsync(Guid projectId, string fileName, string storedFileName, long fileSize)
+    [Authorize(PlatformPermissions.Projects.Edit)]
+    public async Task<ProjectAttachmentDto> AddAttachmentAsync(
+        Guid projectId, string fileName, string storedFileName, string contentType, long fileSize, string? title = null)
     {
-        await _projectAttachmentRepository.InsertAsync(new ProjectAttachment
+        // Proje gerçekten erişilebilir mi? Kiracı filtresi repository'de — yoksa
+        // EntityNotFoundException. Aksi hâlde başka kiracının projesine ek yazılabilirdi.
+        await Repository.GetAsync(projectId);
+
+        var attachment = new ProjectAttachment
         {
+            TenantId = CurrentTenant.Id,
             ProjectId = projectId,
             FileName = fileName,
             StoredFileName = storedFileName,
+            ContentType = contentType ?? "",
+            Title = string.IsNullOrWhiteSpace(title) ? null : title.Trim(),
             FileSize = fileSize
-        });
+        };
+
+        await _projectAttachmentRepository.InsertAsync(attachment, autoSave: true);
+
+        return MapAttachment(attachment);
     }
+
+    public async Task<List<ProjectAttachmentDto>> GetAttachmentsAsync(Guid projectId)
+    {
+        await Repository.GetAsync(projectId);
+
+        var queryable = await _projectAttachmentRepository.GetQueryableAsync();
+        var items = await AsyncExecuter.ToListAsync(
+            queryable.AsNoTracking()
+                     .Where(x => x.ProjectId == projectId)
+                     .OrderByDescending(x => x.CreationTime));
+
+        return items.Select(MapAttachment).ToList();
+    }
+
+    [Authorize(PlatformPermissions.Projects.Edit)]
+    public async Task<string> DeleteAttachmentAsync(Guid attachmentId)
+    {
+        var attachment = await _projectAttachmentRepository.GetAsync(attachmentId);
+
+        // Ekin projesi bu bağlamdan görülebiliyor mu? (Host'ta kiracı filtresi kapalı
+        // olduğu için ek satırının kendi TenantId'si tek başına yetmez.)
+        await Repository.GetAsync(attachment.ProjectId);
+
+        var storedFileName = attachment.StoredFileName;
+        await _projectAttachmentRepository.DeleteAsync(attachment);
+
+        return storedFileName;
+    }
+
+    // --- COVER IMAGE ---
+    [Authorize(PlatformPermissions.Projects.Edit)]
+    public async Task<string?> SetCoverImageAsync(Guid projectId, string storedFileName)
+    {
+        var project = await Repository.GetAsync(projectId);
+        var previous = project.CoverImageFileName;
+
+        project.SetCoverImage(storedFileName);
+        await Repository.UpdateAsync(project);
+
+        // Eskisi yenisiyle aynıysa çağıran diski silmesin.
+        return string.Equals(previous, storedFileName, StringComparison.OrdinalIgnoreCase) ? null : previous;
+    }
+
+    [Authorize(PlatformPermissions.Projects.Edit)]
+    public async Task<string?> RemoveCoverImageAsync(Guid projectId)
+    {
+        var project = await Repository.GetAsync(projectId);
+        var previous = project.CoverImageFileName;
+
+        project.SetCoverImage(null);
+        await Repository.UpdateAsync(project);
+
+        return previous;
+    }
+
+    private static ProjectAttachmentDto MapAttachment(ProjectAttachment x) => new()
+    {
+        Id = x.Id,
+        ProjectId = x.ProjectId,
+        FileName = x.FileName,
+        StoredFileName = x.StoredFileName,
+        ContentType = x.ContentType,
+        Title = x.Title,
+        FileSize = x.FileSize,
+        CreationTime = x.CreationTime,
+        IsImage = !string.IsNullOrEmpty(x.ContentType)
+                  && x.ContentType.StartsWith("image/", StringComparison.OrdinalIgnoreCase)
+    };
 
 
     // --- DETAIL ---

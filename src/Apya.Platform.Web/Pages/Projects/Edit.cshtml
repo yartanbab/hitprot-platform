@@ -1,0 +1,275 @@
+@page "{id:Guid}"
+@using Apya.Platform.Permissions
+@model Apya.Platform.Web.Pages.Projects.EditModel
+@{
+    ViewBag.Title = "Projeyi Düzenle";
+
+    var coverUrl = string.IsNullOrWhiteSpace(Model.Current.CoverImageFileName)
+        ? null
+        : "/file/get/" + Model.Current.CoverImageFileName;
+
+    string Size(long bytes)
+    {
+        if (bytes >= 1024 * 1024) { return (bytes / 1024d / 1024d).ToString("0.#") + " MB"; }
+        if (bytes >= 1024) { return (bytes / 1024d).ToString("0.#") + " KB"; }
+        return bytes + " B";
+    }
+}
+
+@section scripts {
+    <abp-script src="/Pages/Projects/Edit.js" />
+}
+
+@*
+    HANDOFF: Proje düzenleme — üç sekme (Bilgiler · Görsel & Dosyalar · Tehlikeli
+    bölge). Stil tek kaynak: apya-shell.css §23. Her sekme kendi form post'unu
+    yapar; sekme seçimi ?tab= ile derin bağlanabilir (⋯ menüsündeki silme
+    buraya ?tab=danger ile gelir).
+*@
+<div data-page-description="Proje bilgileri, görseli ve dosyaları"
+     class="apya-page apya-proj-edit"
+     data-active-tab="@Model.Tab"
+     data-project-code="@Model.Current.Code">
+
+    @* ─── Başlık şeridi ─── *@
+    <div class="apya-proj-edit-rail">
+        <a href="/Projects/ProjectDetails/@Model.Id" class="btn btn-outline-secondary apya-proj-edit-back">
+            <i class="fa fa-arrow-left" aria-hidden="true"></i> Geri
+        </a>
+        <div class="apya-proj-edit-identity">
+            <h1 class="apya-proj-edit-name">@Model.Current.Name</h1>
+            <span class="apya-chip apya-chip-brand apya-numeric">@Model.Current.Code</span>
+        </div>
+        <a href="/Projects/ProjectDetails/@Model.Id" class="btn btn-outline-secondary btn-sm">
+            <i class="fa fa-list-check me-1" aria-hidden="true"></i>Detay / Görevler
+        </a>
+    </div>
+
+    @if (TempData["Saved"] != null)
+    {
+        <div class="alert alert-success apya-proj-edit-alert" role="status">
+            <i class="fa fa-circle-check me-1" aria-hidden="true"></i>Değişiklikler kaydedildi.
+        </div>
+    }
+
+    <div asp-validation-summary="All" class="alert alert-danger apya-proj-edit-alert"
+         role="alert" data-validation-summary></div>
+
+    @* ─── Sekmeler ─── *@
+    <div class="apya-proj-edit-tabs" role="tablist">
+        <button type="button" class="apya-proj-edit-tab" data-tab="info" role="tab">
+            <i class="fa fa-circle-info" aria-hidden="true"></i>Bilgiler
+        </button>
+        <button type="button" class="apya-proj-edit-tab" data-tab="files" role="tab">
+            <i class="fa fa-images" aria-hidden="true"></i>Görsel &amp; Dosyalar
+            <span class="apya-proj-edit-tab-count apya-numeric">@Model.Attachments.Count</span>
+        </button>
+        @if (Model.CanDelete)
+        {
+            <button type="button" class="apya-proj-edit-tab is-danger" data-tab="danger" role="tab">
+                <i class="fa fa-triangle-exclamation" aria-hidden="true"></i>Tehlikeli bölge
+            </button>
+        }
+    </div>
+
+    @* ─── 1) BİLGİLER ─── *@
+    <section class="card apya-proj-edit-panel" data-panel="info" role="tabpanel">
+        <form method="post" asp-route-id="@Model.Id">
+            <div class="apya-proj-edit-grid">
+                <div class="is-wide">
+                    <abp-input asp-for="Project.Name" label="Proje Adı" />
+                </div>
+                <div>
+                    <abp-input asp-for="Project.Code" label="Proje Kodu" />
+                </div>
+                <div>
+                    <abp-select asp-for="Project.CustomerId" asp-items="Model.Customers" label="Cari (Müşteri)">
+                        <option value="">— Cari seçilmedi —</option>
+                    </abp-select>
+                </div>
+                <div>
+                    <abp-select asp-for="Project.Category" asp-items="Model.Categories" label="Proje Kategorisi" />
+                </div>
+                <div>
+                    <abp-input asp-for="Project.StartDate" type="date" label="Başlangıç Tarihi" />
+                </div>
+                <div>
+                    <abp-input asp-for="Project.EndDate" type="date" label="Bitiş Tarihi" />
+                </div>
+                @if (Model.CanViewBudget)
+                {
+                    <div>
+                        <abp-input asp-for="Project.TotalBudget" label="Bütçesi (₺)" />
+                    </div>
+                }
+                <div>
+                    <abp-input asp-for="Project.Duration" label="Süresi" />
+                </div>
+                <div class="is-wide">
+                    <abp-input asp-for="Project.Purpose" label="Amacı" />
+                </div>
+                <div class="is-wide">
+                    <abp-input asp-for="Project.TargetAudience" label="Hedef Kitlesi" />
+                </div>
+                <div class="is-wide">
+                    <abp-input asp-for="Project.Activities" label="Faaliyetleri" />
+                </div>
+                <div class="is-wide">
+                    <abp-input asp-for="Project.Description" type="textarea" label="Açıklama" />
+                </div>
+            </div>
+
+            <div class="apya-proj-edit-actions">
+                <a href="/Projects" class="btn btn-outline-secondary btn-sm">Vazgeç</a>
+                <button type="submit" class="btn btn-primary btn-sm">
+                    <i class="fa fa-floppy-disk me-1" aria-hidden="true"></i>Kaydet
+                </button>
+            </div>
+        </form>
+    </section>
+
+    @* ─── 2) GÖRSEL & DOSYALAR ─── *@
+    <section class="card apya-proj-edit-panel" data-panel="files" role="tabpanel">
+
+        <div class="apya-proj-edit-section-head">
+            <span class="apya-overline">Kapak görseli</span>
+            <span class="apya-proj-edit-hint">Projeler listesindeki kartta ve detay ekranında görünür.</span>
+        </div>
+
+        <div class="apya-proj-cover-row">
+            <div class="apya-proj-cover-preview" id="CoverPreview">
+                @if (coverUrl != null)
+                {
+                    <img src="@coverUrl" alt="@Model.Current.Name kapak görseli" />
+                }
+                else
+                {
+                    <span class="apya-proj-cover-empty">
+                        <i class="fa fa-image" aria-hidden="true"></i>
+                        <span>Görsel yok</span>
+                    </span>
+                }
+            </div>
+
+            <div class="apya-proj-cover-actions">
+                <form method="post" asp-page-handler="UploadCover" asp-route-id="@Model.Id"
+                      enctype="multipart/form-data" class="apya-proj-edit-upload">
+                    <input type="file" class="form-control form-control-sm" asp-for="CoverFile"
+                           accept=".png,.jpg,.jpeg,.gif" id="CoverFileInput" />
+                    <button type="submit" class="btn btn-primary btn-sm">
+                        <i class="fa fa-upload me-1" aria-hidden="true"></i>Yükle
+                    </button>
+                </form>
+                <div class="apya-proj-edit-hint">PNG, JPG veya GIF · en fazla 25 MB</div>
+
+                @if (coverUrl != null)
+                {
+                    <form method="post" asp-page-handler="RemoveCover" asp-route-id="@Model.Id">
+                        <button type="submit" class="btn btn-outline-secondary btn-sm"
+                                data-confirm="Kapak görseli kaldırılsın mı?">
+                            <i class="fa fa-xmark me-1" aria-hidden="true"></i>Kapağı kaldır
+                        </button>
+                    </form>
+                }
+            </div>
+        </div>
+
+        <div class="apya-proj-edit-section-head is-divided">
+            <span class="apya-overline">Proje dosyaları</span>
+            <span class="apya-proj-edit-hint">Sözleşme, rapor, sunum, görsel…</span>
+        </div>
+
+        <form method="post" asp-page-handler="UploadAttachment" asp-route-id="@Model.Id"
+              enctype="multipart/form-data" class="apya-proj-edit-upload">
+            <input type="file" class="form-control form-control-sm" asp-for="AttachmentFile" />
+            <input type="text" class="form-control form-control-sm" asp-for="AttachmentTitle"
+                   placeholder="Kısa açıklama (opsiyonel)" maxlength="256" />
+            <button type="submit" class="btn btn-primary btn-sm">
+                <i class="fa fa-plus me-1" aria-hidden="true"></i>Dosya ekle
+            </button>
+        </form>
+
+        @if (!Model.Attachments.Any())
+        {
+            <div class="apya-proj-edit-empty">
+                <i class="fa fa-folder-open" aria-hidden="true"></i>
+                <span>Bu projeye henüz dosya eklenmedi.</span>
+            </div>
+        }
+        else
+        {
+            <ul class="apya-proj-file-list">
+                @foreach (var file in Model.Attachments)
+                {
+                    <li class="apya-proj-file">
+                        <span class="apya-proj-file-thumb">
+                            @if (file.IsImage)
+                            {
+                                <img src="/file/get/@file.StoredFileName" alt="" />
+                            }
+                            else
+                            {
+                                <i class="fa fa-file-lines" aria-hidden="true"></i>
+                            }
+                        </span>
+                        <span class="apya-proj-file-text">
+                            <a href="/file/get/@file.StoredFileName" target="_blank" rel="noopener"
+                               class="apya-proj-file-name">@file.FileName</a>
+                            <span class="apya-proj-file-meta apya-numeric">
+                                @Size(file.FileSize) · @file.CreationTime.ToString("dd.MM.yyyy")
+                                @if (!string.IsNullOrWhiteSpace(file.Title))
+                                {
+                                    <span class="apya-proj-file-title">· @file.Title</span>
+                                }
+                            </span>
+                        </span>
+                        <form method="post" asp-page-handler="DeleteAttachment" asp-route-id="@Model.Id">
+                            <input type="hidden" name="attachmentId" value="@file.Id" />
+                            <button type="submit" class="btn btn-sm btn-outline-secondary"
+                                    title="Dosyayı sil" aria-label="Dosyayı sil"
+                                    data-confirm="&quot;@file.FileName&quot; dosyası silinsin mi?">
+                                <i class="fa fa-trash" aria-hidden="true"></i>
+                            </button>
+                        </form>
+                    </li>
+                }
+            </ul>
+        }
+    </section>
+
+    @* ─── 3) TEHLİKELİ BÖLGE ─── *@
+    @if (Model.CanDelete)
+    {
+        <section class="card apya-proj-edit-panel apya-proj-danger" data-panel="danger" role="tabpanel">
+            <div class="apya-proj-danger-head">
+                <span class="kpi-icon-box kpi-icon-box--sm kpi-icon-box--negative" aria-hidden="true">
+                    <i class="fa fa-triangle-exclamation"></i>
+                </span>
+                <div>
+                    <div class="apya-proj-danger-title">Projeyi sil</div>
+                    <div class="apya-proj-edit-hint">
+                        Proje çöp kutusuna taşınır; görevleri, bütçe kayıtları ve dosyaları
+                        listelerde görünmez olur. Bu işlem arayüzden geri alınamaz.
+                    </div>
+                </div>
+            </div>
+
+            <form method="post" asp-page-handler="DeleteProject" asp-route-id="@Model.Id"
+                  class="apya-proj-danger-form" id="DeleteProjectForm">
+                <label class="form-label" for="DeleteConfirmCode">
+                    Onaylamak için proje kodunu yazın:
+                    <strong class="apya-numeric">@Model.Current.Code</strong>
+                </label>
+                <div class="apya-proj-danger-row">
+                    <input type="text" class="form-control form-control-sm apya-numeric"
+                           asp-for="DeleteConfirmCode" id="DeleteConfirmCode"
+                           autocomplete="off" placeholder="@Model.Current.Code" />
+                    <button type="submit" class="btn btn-danger btn-sm" id="DeleteProjectButton" disabled>
+                        <i class="fa fa-trash me-1" aria-hidden="true"></i>Projeyi kalıcı olarak sil
+                    </button>
+                </div>
+                <div class="apya-proj-edit-hint" id="DeleteCodeHint">Kod eşleşene kadar buton kapalı kalır.</div>
+            </form>
+        </section>
+    }
+</div>

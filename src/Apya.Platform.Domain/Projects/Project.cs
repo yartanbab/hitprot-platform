@@ -37,6 +37,12 @@ public class Project : FullAuditedAggregateRoot<Guid>, IMultiTenant
 
     public bool IsApproved { get; private set; }
 
+    /// <summary>
+    /// Kapak görselinin App_Data/uploads altındaki saklanan dosya adı (GUID.uzantı).
+    /// Boşsa kartlarda kategori ikonu gösterilir.
+    /// </summary>
+    public string? CoverImageFileName { get; private set; }
+
     /* --- BÜTÇE & KAYNAK YÖNETİMİ --- */
     public decimal TotalBudget { get; private set; } = 0;
     public decimal HourlyRate { get; private set; } = 0; // Saatlik maliyet (opsiyonel)
@@ -156,6 +162,15 @@ public class Project : FullAuditedAggregateRoot<Guid>, IMultiTenant
         SetBudgetInfo(totalBudget, hourlyRate, currency);
         SetProjectDetails(purpose, duration, targetAudience, activities);
         SetSchedule(startDate, endDate);
+    }
+
+    /// <summary>
+    /// Kapak görselini ayarlar; null/boş geçilirse kaldırır.
+    /// Dosyanın kendisi Web katmanında saklanır, burada yalnız ad tutulur.
+    /// </summary>
+    public void SetCoverImage(string? storedFileName)
+    {
+        CoverImageFileName = string.IsNullOrWhiteSpace(storedFileName) ? null : storedFileName.Trim();
     }
 
     public void Approve() => IsApproved = true;
