@@ -35,7 +35,17 @@ public static class ReleaseNoteCatalog
 
             new ReleaseNoteItem(ReleaseNoteCategory.Fix,
                 "Yeni müşteri ekleme hatası giderildi",
-                "Yönetici yeni bir müşteri (kiracı) eklerken karşılaşılabilen sunucu hatası giderildi.")
+                "Yönetici yeni bir müşteri (kiracı) eklerken karşılaşılabilen sunucu hatası giderildi."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
+                "Girişte artık kiracı adı sormuyoruz",
+                "Kullanıcı adınız (veya e-postanız) ve şifrenizle giriş yapmanız yeterli; hesabınızın bağlı " +
+                "olduğu firma otomatik bulunuyor."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
+                "Hibe çağrıları yalnız platform tarafından açılıyor",
+                "Hibe programı ve çağrısı oluşturma, düzenleme ve silme artık yalnız platform yönetimine ait. " +
+                "Firmalar kendilerine yayınlanan çağrıları görüntüler, firma profilini günceller ve başvurur.")
         ),
 
         new ReleaseNote(
