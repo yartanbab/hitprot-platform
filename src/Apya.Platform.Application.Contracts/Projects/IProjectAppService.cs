@@ -28,6 +28,20 @@ namespace Apya.Platform.Projects
         /// </summary>
         Task<ProjectsSummaryDto> GetProjectsSummaryAsync();
 
+        /// <summary>
+        /// "Yeni Proje" formunun açılışta doldurduğu boş proje kodu: PRJ-{yıl}-{sıra}.
+        /// Sıra, hedef kiracıdaki aynı yıla ait en büyük koddan bir fazlasıdır.
+        /// </summary>
+        /// <param name="tenantId">Host kullanıcısının adına proje açtığı kiracı; kiracı kullanıcısı için yok sayılır.</param>
+        Task<string> GetNextCodeAsync(Guid? tenantId = null);
+
+        /// <summary>
+        /// Kodun hedef kiracıda boşta olup olmadığını söyler, doluysa boş bir kod önerir.
+        /// Formdaki canlı uyarı bunu kullanır; asıl engelleme CreateAsync içindeki
+        /// kontroldedir — istemci kontrolü tek başına yeterli değildir.
+        /// </summary>
+        Task<ProjectCodeCheckDto> CheckCodeAsync(string code, Guid? tenantId = null);
+
         // --- DOSYA YÖNETİMİ ---
         Task<ProjectAttachmentDto> AddAttachmentAsync(
             Guid projectId, string fileName, string storedFileName, string contentType, long fileSize, string? title = null);

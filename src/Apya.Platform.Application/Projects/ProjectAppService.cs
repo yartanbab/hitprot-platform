@@ -89,6 +89,16 @@ public class ProjectAppService :
 
         var overrideTenantId = CurrentTenant.Id == null ? input.TenantId : null;
 
+        // Proje kodu hedef kiracıda benzersiz olmalı. DB'de unique index YOK
+        // (PlatformDbContext'te Projects yalnız CustomerId ve TenantId+Category indeksli),
+        // bu yüzden kontrol burada yapılır — formdaki canlı uyarı tek başına yeterli değil.
+        var targetTenantId = overrideTenantId ?? CurrentTenant.Id;
+        if (await IsCodeTakenAsync(input.Code, targetTenantId))
+        {
+            throw new BusinessException(PlatformDomainErrorCodes.ProjectCodeAlreadyExists)
+                .WithData("Code", input.Code);
+        }
+
         var project = await _projectManager.CreateAsync(
             input.GrantId,
             input.Name,
@@ -380,7 +390,77 @@ public class ProjectAppService :
         }
     }
 
+    // ==================== PROJE KODU ====================
+
+    public async Task<string> GetNextCodeAsync(Guid? tenantId = null)
+    {
+        return await BuildNextCodeAsync(ResolveTargetTenantId(tenantId));
+    }
+
+    public async Task<ProjectCodeCheckDto> CheckCodeAsync(string code, Guid? tenantId = null)
+    {
+        var trimmed = (code ?? string.Empty).Trim();
+        var targetTenantId = ResolveTargetTenantId(tenantId);
+
+        if (trimmed.Length == 0 || !await IsCodeTakenAsync(trimmed, targetTenantId))
+        {
+            return new ProjectCodeCheckDto { IsAvailable = true, Suggestion = trimmed };
+        }
+
+        return new ProjectCodeCheckDto
+        {
+            IsAvailable = false,
+            Suggestion = await BuildNextCodeAsync(targetTenantId)
+        };
+    }
+
     // ==================== PRIVATE HELPERS ====================
+
+    /// <summary>
+    /// Kod işlemlerinin hangi kiracıda yürüyeceğini belirler. Kiracı kullanıcısı
+    /// başka kiracıya bakamaz — yalnız host, adına proje açtığı kiracıyı seçebilir.
+    /// CreateAsync'teki overrideTenantId ile aynı kural.
+    /// </summary>
+    private Guid? ResolveTargetTenantId(Guid? requestedTenantId)
+    {
+        return CurrentTenant.Id == null ? requestedTenantId : CurrentTenant.Id;
+    }
+
+    private async Task<bool> IsCodeTakenAsync(string code, Guid? targetTenantId)
+    {
+        using (CurrentTenant.Change(targetTenantId))
+        {
+            var queryable = await Repository.GetQueryableAsync();
+            return await AsyncExecuter.AnyAsync(queryable.Where(x => x.Code == code));
+        }
+    }
+
+    /// <summary>
+    /// PRJ-{yıl}-{sıra}: hedef kiracıda bu yıla ait en büyük sıra + 1, üç hane.
+    /// Elle girilmiş farklı biçimdeki kodlar (ör. "PRJ-009") sayıma girmez.
+    /// </summary>
+    private async Task<string> BuildNextCodeAsync(Guid? targetTenantId)
+    {
+        var prefix = $"PRJ-{Clock.Now.Year}-";
+
+        using (CurrentTenant.Change(targetTenantId))
+        {
+            var queryable = await Repository.GetQueryableAsync();
+            var existing = await AsyncExecuter.ToListAsync(
+                queryable.Where(x => x.Code.StartsWith(prefix)).Select(x => x.Code));
+
+            var next = 1;
+            foreach (var code in existing)
+            {
+                if (int.TryParse(code.Substring(prefix.Length), out var seq) && seq >= next)
+                {
+                    next = seq + 1;
+                }
+            }
+
+            return prefix + next.ToString("D3");
+        }
+    }
 
     private static string NormalizeSorting(string? sorting)
     {

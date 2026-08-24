@@ -9,8 +9,10 @@ public class CreateProjectDto
     [MaxLength(128)]
     public string Name { get; set; } = string.Empty;
 
+    // Uzunluk DB ile hizalı: PlatformDbContext'te Code kolonu HasMaxLength(32).
+    // 64 kalırsa 33+ karakterlik kod doğrulamadan geçip INSERT'te patlıyordu.
     [Required]
-    [MaxLength(64)]
+    [MaxLength(32)]
     public string Code { get; set; } = string.Empty;
 
     public string? Description { get; set; }
