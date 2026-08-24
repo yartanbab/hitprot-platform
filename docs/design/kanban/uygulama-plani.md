@@ -39,10 +39,18 @@ konsolu), kart üstü proje adı (yalnız `/Tasks`), kulvar seçimi (yalnız `/T
 
 ---
 
-## 1. Faz 0 — Üç düzeltme (migration yok · 1 PR · küçük)
+## 1. Faz 0 — Üç düzeltme (migration yok · 1 PR · küçük) — ✅ TAMAMLANDI (2026-08-24)
 
 Mockup'ta da PROMPT'ta da geçmeyen, incelemede bulunan kusurlar. Bağımsız ve hemen
 değer üretir; sonraki fazların hepsi bunların üstüne biner.
+
+> **Sonuç:** üçü de uygulandı. Doğrulama testlere taşındı —
+> `dynamic-assets/src/test/apyaKanban.test.js` (8 test), `apyaTaskRender.test.js`
+> stub desenini izler. Tüm JS paketi 41 dosya / 286 test yeşil,
+> `dotnet build Apya.Platform.slnx` 0 hata. Testler `HEAD` sürümüne karşı
+> çalıştırılıp **5'inin düştüğü** görülerek anlamlı oldukları kanıtlandı.
+> Canlı QA yapılmadı: worktree'de `wwwroot/libs` + `appsettings.secrets.json` yok
+> ve izin kapısı yetkisiz ikinci bir kullanıcı gerektiriyor.
 
 ### 0.1 İzin boşluğu (gerçek hata)
 
@@ -311,5 +319,6 @@ cd src/Apya.Platform.Web/wwwroot/dynamic-assets && npm ci
 > frontend testleri toptan patlıyor). `dynamic-assets/yarn.lock`'taki değişikliği
 > **commit etme**. Build öncesi çalışan Web uygulamasını durdur (MSB3021).
 
-**Faz sırası:** 0 → 1 → 2a → 2b → 3 → 4 → 5 → 6 → 7. Faz 0 ve 1 birbirinden
+**Faz sırası:** ~~0~~ → 1 → 2a → 2b → 3 → 4 → 5 → 6 → 7. Faz 0 ve 1 birbirinden
 bağımsız; 2'den sonrası sıralı. Migration yalnız Faz 6'da.
+**Faz 0 tamamlandı (2026-08-24); sıradaki: Faz 1 — adlandırmayı birleştir.**

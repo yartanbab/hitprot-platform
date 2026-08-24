@@ -12,6 +12,7 @@
         showProjectName: true|false,  // global'de kartta proje adı göster
         enableTimer: true,            // zaman sayacı butonları
         enableCustomColumns: bool,    // varsayılan: projectId != null
+        canEditColumns: bool,         // varsayılan: Projects.Edit izni (⋯ menüsü + Kolon ekle)
         getFilter: fn -> {},          // /Tasks filtreleri (assigneeId, statuses...)
         onChanged: fn,                // taşıma/sil/timer sonrası (liste yenile)
         canEdit: fn(task)->bool,      // varsayılan: ManageTeam || creator || assignee
@@ -74,6 +75,13 @@
         // Özel kolonlara izin (false ise asla); izin varsa AKTİF projede çalışır.
         var customColumnsAllowed = opts.enableCustomColumns !== false;
         function effectiveCols() { return customColumnsAllowed && !!projectId; }
+        // Kolon DÜZENLEME yetkisi ayrıdır: özel kolonlar herkese GÖRÜNÜR (kartlar
+        // orada durur), ama ⋯ menüsü ve "Kolon ekle" karosu yalnız Projects.Edit
+        // ile çizilir. Eskiden hiç kontrol yoktu; yetkisiz kullanıcı düğmeleri
+        // görüyor, tıklayınca API 403 dönüyordu.
+        var canEditColumns = (typeof opts.canEditColumns === 'boolean')
+            ? opts.canEditColumns
+            : abp.auth.isGranted('Platform.Projects.Edit');
         var editModal = opts.editModal || null;
         var getFilter = typeof opts.getFilter === 'function' ? opts.getFilter : function () { return {}; };
         var onChanged = typeof opts.onChanged === 'function' ? opts.onChanged : function () { };
@@ -124,8 +132,11 @@
             var tagWrap = el('div', 'd-flex flex-column gap-1');
             var idBadge = el('small', 'text-muted border px-1 rounded bg-light');
             idBadge.style.fontSize = '0.72rem';
-            idBadge.innerHTML = '<i class="fa fa-tag me-1"></i>#';
-            idBadge.appendChild(document.createTextNode(('' + task.id).substring(0, 4)));
+            idBadge.innerHTML = '<i class="fa fa-tag me-1"></i>';
+            // Kullanıcıya görünen kod ("GRV-17") — liste satırıyla aynı kimlik.
+            // Eski payload'da code yoksa GUID kısaltmasına düş.
+            idBadge.appendChild(document.createTextNode(
+                task.code || ('#' + ('' + task.id).substring(0, 4))));
             tagWrap.appendChild(idBadge);
 
             if (showProject && task.projectName) {
@@ -208,11 +219,17 @@
             board.querySelectorAll('.js-custom-col, .js-add-col').forEach(function (n) { n.remove(); });
             customIds = {};
 
-            // Sistem kolonlarına DB kolon-id'sini ata (drag → moveTaskToColumn)
+            // Sistem kolonlarına DB kolon-id'sini ata (drag → moveTaskToColumn) ve
+            // WIP limitini taşı — rozet markup'ı _KanbanBoard.cshtml'de hazır bekliyor.
+            // Limit yoksa attribute KALDIRILIR: proje değiştirince bayat limit kalmasın.
             cols.forEach(function (c) {
                 if (c.statusValue != null) {
                     var sys = board.querySelector('.kanban-column[data-status-id="' + c.statusValue + '"]');
-                    if (sys) { sys.setAttribute('data-column-id', c.id); }
+                    if (sys) {
+                        sys.setAttribute('data-column-id', c.id);
+                        if (c.wipLimit) { sys.setAttribute('data-wip-limit', c.wipLimit); }
+                        else { sys.removeAttribute('data-wip-limit'); }
+                    }
                 }
             });
             // Özel kolonlar (statusValue=null)
@@ -228,12 +245,7 @@
                     // (eski kod yeniden adlandırmada rengi hep 'primary' yapıyordu).
                     col.setAttribute('data-column-color', c.colorClass || 'primary');
                     if (c.wipLimit) { col.setAttribute('data-wip-limit', c.wipLimit); }
-                    col.innerHTML =
-                        '<div class="kanban-header">' +
-                            '<span class="text-' + (c.colorClass || 'primary') + ' js-col-name"><i class="fa fa-circle me-2"></i></span>' +
-                            '<span class="d-flex align-items-center gap-2 apya-touch-actions">' +
-                                '<span class="apya-chip apya-chip-' + colorTone(c.colorClass) + ' kanban-count">0</span>' +
-                                '<span class="kanban-wip' + (c.wipLimit ? '' : ' d-none') + '" title="WIP limiti"></span>' +
+                    var menu = !canEditColumns ? '' :
                                 '<span class="dropdown">' +
                                     '<button type="button" class="kanban-col-menu" data-bs-toggle="dropdown" aria-expanded="false" title="Kolon ayarları" aria-label="Kolon ayarları"><i class="fa fa-ellipsis"></i></button>' +
                                     '<div class="dropdown-menu dropdown-menu-end apya-console-menu">' +
@@ -251,19 +263,28 @@
                                         '<button type="button" class="apya-console-menu-item is-danger js-col-delete">' +
                                             '<span class="apya-console-menu-icon"><i class="fa fa-trash"></i></span>Kolonu sil</button>' +
                                     '</div>' +
-                                '</span>' +
+                                '</span>';
+                    col.innerHTML =
+                        '<div class="kanban-header">' +
+                            '<span class="text-' + (c.colorClass || 'primary') + ' js-col-name"><i class="fa fa-circle me-2"></i></span>' +
+                            '<span class="d-flex align-items-center gap-2 apya-touch-actions">' +
+                                '<span class="apya-chip apya-chip-' + colorTone(c.colorClass) + ' kanban-count">0</span>' +
+                                '<span class="kanban-wip' + (c.wipLimit ? '' : ' d-none') + '" title="WIP limiti"></span>' +
+                                menu +
                             '</span>' +
                         '</div>' +
                         '<div class="kanban-cards" id="kanban-col-' + c.id + '"></div>';
                     col.querySelector('.js-col-name').appendChild(document.createTextNode(' ' + c.name));
                     board.appendChild(col);
                 });
-            // "Kolon ekle" hayalet kolonu (handoff: kesik çizgili, dar)
-            var add = el('div', 'kanban-column js-add-col kanban-add-col');
-            add.innerHTML = '<i class="fa fa-plus"></i>' +
-                '<span class="kanban-add-col-title">Kolon ekle</span>' +
-                '<span class="kanban-add-col-sub">özel kolon · durum eşlemesi</span>';
-            board.appendChild(add);
+            // "Kolon ekle" hayalet kolonu (handoff: kesik çizgili, dar) — yalnız yetkiliye
+            if (canEditColumns) {
+                var add = el('div', 'kanban-column js-add-col kanban-add-col');
+                add.innerHTML = '<i class="fa fa-plus"></i>' +
+                    '<span class="kanban-add-col-title">Kolon ekle</span>' +
+                    '<span class="kanban-add-col-sub">özel kolon · durum eşlemesi</span>';
+                board.appendChild(add);
+            }
         }
 
         // Global moda dönerken (proje seçimi kalkınca) özel kolonları + Kolon Ekle
@@ -273,7 +294,10 @@
             var board = document.querySelector(boardSel);
             if (!board) { return; }
             board.querySelectorAll('.js-custom-col, .js-add-col').forEach(function (n) { n.remove(); });
-            board.querySelectorAll('.kanban-column[data-column-id]').forEach(function (c) { c.removeAttribute('data-column-id'); });
+            board.querySelectorAll('.kanban-column[data-column-id]').forEach(function (c) {
+                c.removeAttribute('data-column-id');
+                c.removeAttribute('data-wip-limit'); // sistem kolonuna yazılan WIP de bayat kalmasın
+            });
             customIds = {};
         }
 
@@ -500,8 +524,9 @@
         }
 
         // Özel kolon ekle / sil / yeniden adlandır — izin varsa bağla; aktif proje
-        // yoksa karo/butonlar zaten DOM'da olmaz (guard çift güvence).
-        if (customColumnsAllowed) {
+        // yoksa ya da Projects.Edit yoksa karo/butonlar zaten DOM'da olmaz
+        // (guard çift güvence).
+        if (customColumnsAllowed && canEditColumns) {
             $doc.on('click', boardSel + ' .js-add-col', function () {
                 if (!projectId) { return; }
                 askName('Yeni kolon', '', function (name) {
