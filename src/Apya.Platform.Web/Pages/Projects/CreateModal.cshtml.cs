@@ -11,9 +11,16 @@ using Volo.Abp.Application.Dtos;
 using Apya.Platform.Projects;
 using Apya.Platform.Projects.Dtos;
 using Apya.Platform.Customers;
+using Microsoft.AspNetCore.Authorization;
+using Apya.Platform.Permissions;
 
 namespace Apya.Platform.Web.Pages.Projects;
 
+// Sayfa seviyesinde yetki YOKTU: anonim istek OnGetAsync'e kadar geliyor ve
+// içerideki AppService çağrısı AbpAuthorizationException atıyordu → giriş
+// ekranına 302 yerine 500. İzin, "Yeni Proje Ekle" düğmesinin göründüğü
+// koşulla aynı (Index.cshtml → canCreate).
+[Authorize(PlatformPermissions.Projects.Create)]
 public class CreateModalModel : PlatformPageModel
 {
     [BindProperty]
