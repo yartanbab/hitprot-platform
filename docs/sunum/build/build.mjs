@@ -1,19 +1,27 @@
-// Tek kaynaktan üç çıktı üretir:
-//   docs/sunum/apya-sunum.html   → ekranda gezilen deck (Artifact kaynağı da bu)
-//   <out>/_print.html            → PDF için (slayt = sayfa)
-//   <out>/slayt-NN.html          → PNG ekran görüntüsü için
+// Bir destenin kaynağından üç çıktı üretir:
+//   docs/sunum/<deste>/apya-sunum-<deste>.html → ekranda gezilen deck
+//   <out>/_print.html                          → PDF için (slayt = sayfa)
+//   <out>/slayt-NN.html                        → PNG ekran görüntüsü için
 //
-// Kullanım: node build.mjs <gecici-cikti-dizini>
+// Kullanım: node build.mjs <sirket|dernek> [gecici-cikti-dizini]
 
 import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
 import { join, dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { slides } from "./slides.mjs";
+
+const DECKS = ["sirket", "dernek"];
+const DECK = (process.argv[2] || "").toLowerCase();
+if (!DECKS.includes(DECK)) {
+  console.error(`Kullanım: node build.mjs <${DECKS.join("|")}> [gecici-dizin]`);
+  process.exit(1);
+}
+const { slides, deckTitle } = await import(`./slides-${DECK}.mjs`);
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(HERE, "../../..");             // repo kökü
-const OUT_DECK = resolve(HERE, "../apya-sunum.html");
-const TMP = resolve(process.argv[2] || join(HERE, "_tmp"));
+const OUT_DECK = resolve(HERE, `../${DECK}/apya-sunum-${DECK}.html`);
+const TMP = resolve(process.argv[3] || join(HERE, "_tmp", DECK));
+mkdirSync(dirname(OUT_DECK), { recursive: true });
 mkdirSync(TMP, { recursive: true });
 
 /* ---- Fontlar: ürünün kendi self-host woff2'leri, base64 gömülü ---- */
@@ -66,7 +74,7 @@ function slideHtml(s, i, { plain = false } = {}) {
 const STYLE = `<style>\n${FONT_CSS}\n${THEME_CSS}\n</style>`;
 
 /* ---- 1) Ekranda gezilen deck ---- */
-const deck = `<title>Apya Platform Tanıtımı</title>
+const deck = `<title>${deckTitle}</title>
 ${STYLE}
 <style>
   html{ scroll-behavior:smooth; }
@@ -101,7 +109,7 @@ ${slides.map((s, i) => `<div class="stage" id="s${i + 1}"><div class="fit">${sli
 writeFileSync(OUT_DECK, deck, "utf8");
 
 /* ---- 2) PDF kaynağı ---- */
-const print = `<title>Apya Platform Tanıtımı</title>
+const print = `<title>${deckTitle}</title>
 ${STYLE}
 <style>
   @page{ size:1600px 900px; margin:0; }
