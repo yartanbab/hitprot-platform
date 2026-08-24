@@ -31,6 +31,9 @@ $(function () {
     var CAN_CREATE = $console.data('can-create') === true;
     var CAN_DELETE = $console.data('can-delete') === true;
     var DEFAULT_VIEW = $console.data('default-view') === 'list' ? 'list' : 'card';
+    // Görev paneli (sağdan açılan drawer) etkin mi? Kapalıyken (varsayılan) tıklama
+    // proje detay sayfasına gider ve "Görev paneli" düğmesi hiç basılmaz. Ayardan açılır.
+    var DRAWER_ENABLED = $console.data('detail-panel') === true;
     var ROLE_PRESET = String($console.data('role-preset') || 'pm');
 
     var PAGE_SIZE = 100;
@@ -469,8 +472,10 @@ $(function () {
             '<div class="apya-proj-card-foot">' +
             '  <span class="apya-proj-days">Oluşturulma ' + (fmtDate(p.creationTime) || '—') + '</span>' +
             '  <div class="apya-proj-card-actions">' +
-            '    <button type="button" class="btn btn-sm btn-primary js-open-drawer" data-id="' + p.id + '">' +
-            '      <i class="fa fa-list-check me-1"></i>Görev paneli</button>' +
+            (DRAWER_ENABLED
+                ? '    <button type="button" class="btn btn-sm btn-primary js-open-drawer" data-id="' + p.id + '">' +
+                  '      <i class="fa fa-list-check me-1"></i>Görev paneli</button>'
+                : '') +
             '    <a class="btn btn-sm btn-outline-secondary" href="/Projects/ProjectDetails/' + p.id + '">Detay</a>' +
             '  </div>' +
             '</div>' +
@@ -754,6 +759,11 @@ $(function () {
     }
 
     function openDrawer(id) {
+        // Panel kapalıysa (varsayılan): drawer'ı hiç açma, proje detay sayfasına git.
+        if (!DRAWER_ENABLED) {
+            window.location.href = '/Projects/ProjectDetails/' + id;
+            return;
+        }
         var p = findProject(id);
         if (!p) { return; }
         drawer.projectId = id;
