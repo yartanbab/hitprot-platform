@@ -45,6 +45,36 @@ public static class PlatformSettings
     }
 
     /// <summary>
+    /// Görev oluşturma modalının ekstra konfigürasyonları. Bunlar YETKİ DEĞİL görünüm
+    /// tercihidir: kapatmak yalnız çizimi durdurur. Yetki tarafı
+    /// <c>Tasks.QuickCreate</c> / <c>Tasks.ManagePlanning</c> izinlerinde, paket tarafı
+    /// <c>Platform.TaskQuickEntry</c> feature'ındadır — üçü AND'lenir.
+    /// </summary>
+    public static class TaskCreate
+    {
+        /// <summary>
+        /// Modal hangi katmanla açılsın? Kullanıcı seviyesinde saklanır.
+        ///   "quick" → hızlı giriş satırı (VARSAYILAN)
+        ///   "form"  → doğrudan sıkı form
+        /// İzin ya da feature kapalıysa bu değere bakılmaksızın "form" geçerlidir.
+        /// </summary>
+        public const string DefaultMode = Prefix + ".TaskCreate.DefaultMode";
+
+        /// <summary>
+        /// İşaretçi ipuçları (<c>@ # ! &gt;</c>) ve <c>⌘↵</c> rozeti gösterilsin mi?
+        /// Kullanıcı seviyesinde: kısayolları ezberleyen kullanıcı satırı sadeleştirir.
+        /// </summary>
+        public const string ShowKeyboardHints = Prefix + ".TaskCreate.ShowKeyboardHints";
+
+        /// <summary>
+        /// Eski bilgi kutusu ("Dosya ekleme, alt görevler… görev oluştuktan sonra")
+        /// gösterilsin mi? KİRACI seviyesinde: yeni kullanıcıları çok olan kiracı
+        /// açık tutmak isteyebilir. Varsayılan KAPALI — yeni ekranın gerekçesi buydu.
+        /// </summary>
+        public const string ShowInfoBanner = Prefix + ".TaskCreate.ShowInfoBanner";
+    }
+
+    /// <summary>
     /// Uygulama kabuğu (sol menü + üst bar) tercihleri — kullanıcı seviyesinde.
     /// Yerleşim durumları (bölüm katlama, ray modu) localStorage'da yeterli;
     /// burada YALNIZ cihazlar arası taşınması gerekenler tutulur.
@@ -229,6 +259,18 @@ public static class PlatformSettingDefaults
 
     /// <summary>Proje görev paneli varsayılanı: KAPALI (şimdilik gizli; ayardan açılır).</summary>
     public const bool ProjectsDetailPanel = false;
+
+    /// <summary>Görev oluşturma modalı varsayılan katmanı: hızlı giriş satırı.</summary>
+    public const string TaskCreateDefaultMode = "quick";
+
+    /// <summary>Geçerli katman değerleri — form manipülasyonuna karşı beyaz liste.</summary>
+    public static readonly string[] TaskCreateDefaultModeValues = { "quick", "form" };
+
+    /// <summary>İşaretçi/kısayol ipuçları varsayılanı: AÇIK (ekranın öğrenilmesi buna bağlı).</summary>
+    public const bool TaskCreateShowKeyboardHints = true;
+
+    /// <summary>Eski bilgi kutusu varsayılanı: KAPALI — yeni ekranın çıkış noktası buydu.</summary>
+    public const bool TaskCreateShowInfoBanner = false;
 
     /// <summary>
     /// Günlük kapasite varsayılanı: 8 saat. Kullanıcı ilk kurulumda 4/6/8 veya

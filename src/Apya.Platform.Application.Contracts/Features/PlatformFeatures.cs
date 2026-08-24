@@ -38,6 +38,17 @@ public static class PlatformFeatures
     /// <summary>Takvim entegrasyonu (Google/Outlook) modülü.</summary>
     public const string Calendar = GroupName + ".Calendar";
 
+    /// <summary>
+    /// Görev oluşturma ekranının "ekstra konfigürasyonları": işaretçiyle yazılan hızlı
+    /// giriş satırı (<c>@kişi #etiket !öncelik &gt;tarih</c>) ve planlama alanları
+    /// (tahmini süre, görev tipi, sprint, üst görev).
+    ///
+    /// <para>Görev oluşturmanın KENDİSİ bu kapının arkasında DEĞİL — o her pakette açıktır
+    /// (<see cref="Apya.Platform.Permissions.PlatformPermissions.Tasks"/>.Create). Kapı
+    /// kapalıyken modal sıkı form modunda açılır; hızlı satır ve planlama alanları çizilmez.</para>
+    /// </summary>
+    public const string TaskQuickEntry = GroupName + ".TaskQuickEntry";
+
     // ── Sayısal limitler (paket kotaları) ─────────────────────────────────────
 
     /// <summary>Tenant'ın oluşturabileceği maksimum kullanıcı sayısı.</summary>
