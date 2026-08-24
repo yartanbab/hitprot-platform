@@ -5,7 +5,7 @@
 //
 // Kullanım: node build.mjs <sirket|dernek> [gecici-cikti-dizini]
 
-import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
+import { readFileSync, writeFileSync, mkdirSync, readdirSync, rmSync } from "node:fs";
 import { join, dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -125,6 +125,11 @@ ${slides.map((s, i) => slideHtml(s, i, { plain: true })).join("\n")}`;
 writeFileSync(join(TMP, "_print.html"), print, "utf8");
 
 /* ---- 3) PNG kaynakları ---- */
+// Deste KÜÇÜLDÜYSE önceki koşudan kalan slayt HTML'leri burada durur ve
+// render.sh onları da basar → PPTX'e bayat slayt sızar. Önce süpür.
+for (const f of readdirSync(TMP)) {
+  if (/^slayt-\d+\.html$/.test(f)) { rmSync(join(TMP, f)); }
+}
 slides.forEach((s, i) => {
   const one = `<title>Apya · ${pad2(i + 1)}</title>
 ${STYLE}

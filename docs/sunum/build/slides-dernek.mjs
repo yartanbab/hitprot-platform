@@ -93,7 +93,7 @@ const s04 = () => {
     ["2", "Proje", "Fonun bütçesi, tarihi ve", "ekibi tanımlanır."],
     ["3", "Faaliyet", "İş parçalara bölünür,", "kişilere atanır."],
     ["4", "Harcama", "Fatura, fiş ve ödeme", "kaydı girilir."],
-    ["5", "Rapor", "Fon kullanımı ve mizan", "otomatik oluşur."],
+    ["5", "Rapor", "Fon kullanımı raporu", "otomatik oluşur."],
   ];
   const X = [0, 304, 608, 912, 1216];
   // Etiketler kutular arasındaki 104 px boşluğa sığmalı — ~11 karakteri geçme,
@@ -370,7 +370,7 @@ const s10 = () => {
     </div>`;
   const rows = (data) => `<table class="tbl" style="background:transparent">${data.map(
     ([a, b, c]) => `<tr><td>${a}</td><td class="r" style="color:${c || "inherit"}">${b}</td></tr>`).join("")}</table>`;
-  return `<div class="grid3" style="height:100%">
+  return `<div class="grid2" style="height:100%">
     ${card("Proje / Fon Bütçesi", "Bütçe, harcanan ve kalan — proje bazında.",
       rows([["Okuma Atölyeleri", "kalan 360.000 ₺", "#059669"], ["Kadın Kooperatifi", "kalan 142.500 ₺", "#059669"],
             ["Depo Yenileme", "aşım 28.400 ₺", "#DC2626"], ["Çevre Eğitimi", "kalan 96.000 ₺", "#059669"],
@@ -379,45 +379,7 @@ const s10 = () => {
       rows([["Devir", "0 ₺"], ["Bağış · Mart", "+ 285.000 ₺"], ["Bağış · Haziran", "+ 78.000 ₺"],
             ["Proje harcaması", "− 150.000 ₺"], ["Proje harcaması", "− 78.000 ₺"],
             ["Bakiye", "135.000 ₺", "#B45309"]]))}
-    ${card("Mizan (Özet)", "Dönem sonu borç / alacak dengesi.",
-      rows([["Kasa & Banka", "612.300 ₺"], ["Alacaklar", "418.900 ₺"], ["Borçlar", "236.100 ₺"],
-            ["Giderler", "294.600 ₺"], ["Gelirler", "1.089.700 ₺"], ["Denge", "Tutuyor", "#059669"]]))}
   </div>`;
-};
-
-/* ── 11 · AI ön eleme ────────────────────────────────────────────────── */
-const s11 = () => {
-  const X = [0, 508, 1016];
-  const steps = [
-    ["Başvuru formu gelir", "Destek talebi, katılım başvurusu,\neğitmen adaylığı…", "#2563EB"],
-    ["Yapay zekâ okur", "Sizin yazdığınız kriterlere göre\nyanıtı değerlendirir.", "#7C3AED"],
-    ["Skor + risk + gerekçe", "Her karar, neden öyle verildiğiyle\nbirlikte kaydedilir.", "#059669"],
-  ];
-  return `<figure><svg class="flow" viewBox="0 0 1416 388" role="img"
-      aria-label="Gelen başvuru formunu yapay zekâ tanımlı kriterlere göre değerlendirir, skor ve gerekçe üretir, sonuç kurala göre otomatik aksiyona bağlanır">
-    ${ARROW("a11", "#94A3B8")}
-    ${steps.map(([t, d, c], i) => {
-      const lines = d.split("\n");
-      return `
-      <rect x="${X[i]}" y="10" width="400" height="210" rx="16" fill="#FFFFFF" stroke="#E5E7EB"/>
-      <rect x="${X[i]}" y="10" width="400" height="4" rx="2" fill="${c}"/>
-      <text class="m" x="${X[i] + 26}" y="58" font-size="14" font-weight="700" fill="${c}"
-            letter-spacing="2">ADIM ${i + 1}</text>
-      <text x="${X[i] + 26}" y="110" font-size="27" font-weight="700" fill="#111827">${t}</text>
-      ${lines.map((ln, j) => `<text x="${X[i] + 26}" y="${152 + j * 26}" font-size="17" fill="#6B7280">${ln}</text>`).join("")}`;
-    }).join("")}
-    ${[[454, "otomatik"], [962, "saniyede"]].map(([mid, l]) => `
-      <line x1="${mid - 40}" y1="118" x2="${mid + 40}" y2="118" stroke="#94A3B8" stroke-width="2.5" marker-end="url(#a11)"/>
-      <text x="${mid}" y="102" font-size="15" fill="#6B7280" text-anchor="middle">${l}</text>`).join("")}
-
-    <rect x="0" y="262" width="1416" height="110" rx="16" fill="#F5F3FF"/>
-    <text x="34" y="306" font-size="22" font-weight="700" fill="#6D28D9">Sonuç sizin kuralınıza bağlanır</text>
-    <text x="34" y="340" font-size="18" fill="#7C3AED">
-      Riskliyse koordinatöre bildirim gönder · Belirli skorun üstündeyse onaya düşür · Etiketle · Dış sisteme ilet
-    </text>
-    <text x="1382" y="306" font-size="15" fill="#8B5CF6" text-anchor="end">Sağlayıcı seçimi sizde:</text>
-    <text x="1382" y="340" font-size="16" font-weight="600" fill="#6D28D9" text-anchor="end">Claude · Gemini · OpenAI · DeepSeek</text>
-  </svg></figure>`;
 };
 
 /* ── 12 · Fon / hibe yönetimi ────────────────────────────────────────── */
@@ -688,7 +650,7 @@ export const slides = [
     title: "Kaynaktan rapora giden yol",
     sub: "Sistemde her şey bu beş adımın üzerinde ilerler.",
     canvas: s04(),
-    note: `Her adım bir sonrakini <b>otomatik besler</b>: harcamayı girdiğinizde fonun kalanı, faaliyeti bitirdiğinizde ilerleme, dönem sonunda ise mizan kendiliğinden güncellenir.`,
+    note: `Her adım bir sonrakini <b>otomatik besler</b>: harcamayı girdiğinizde fonun kalanı, faaliyeti bitirdiğinizde ilerleme, dönem sonunda ise raporlar kendiliğinden güncellenir.`,
   },
   {
     section: "EKRANLAR", eyebrow: "01 · GENEL BAKIŞ",
@@ -733,14 +695,7 @@ export const slides = [
     note: `Her rapor <b>Excel veya PDF</b> olarak indirilir; tarih aralığı, proje ve kurum filtreleri hazır gelir.`,
   },
   {
-    section: "EKRANLAR", eyebrow: "07 · YAPAY ZEKÂ",
-    title: "Başvuruları yapay zekâ ön eler",
-    sub: "Kararı siz verirsiniz — o sadece ön eleme ve gerekçe hazırlar.",
-    canvas: s11(),
-    note: `Yapay zekâ <b>kendi kuralını uydurmaz</b>: kriterleri siz yazarsınız, o uygular ve her puan için gerekçesini kayda geçer.`,
-  },
-  {
-    section: "EKRANLAR", eyebrow: "08 · FON YÖNETİMİ",
+    section: "EKRANLAR", eyebrow: "07 · FON YÖNETİMİ",
     title: "Size uygun fonu kaçırmayın",
     sub: "Açık çağrılar tek listede; derneğinizin profiline uyanlar öne çıkar.",
     canvas: s12(),

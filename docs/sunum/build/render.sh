@@ -47,6 +47,9 @@ FLAGS=(--headless=new --disable-gpu --hide-scrollbars --no-first-run
 node "$HERE/build.mjs" "$DECK" "$TMP" >/dev/null
 
 if [ "$MODE" = "png" ] || [ "$MODE" = "all" ]; then
+  # Deste KÜÇÜLDÜYSE eski görseller ortada kalır (örn. 16 slayttan 15'e inince
+  # slayt-16.png öksüz kalır) ve PPTX'e bayat slayt sızar. Önce temizle.
+  rm -f "$OUT_IMG"/slayt-*.png
   for f in "$TMP"/slayt-*.html; do
     n=$(basename "$f" .html)
     "$CHROME" "${FLAGS[@]}" --window-size=1600,900 \

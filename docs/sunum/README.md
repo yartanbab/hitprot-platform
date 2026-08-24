@@ -1,6 +1,6 @@
 # Apya Platform — Tanıtım Sunumları
 
-İki ayrı deste, tek derleme zinciri. Her deste 16 slayt, sıralı anlatım.
+İki ayrı deste, tek derleme zinciri. Her deste 15 slayt, sıralı anlatım.
 
 | Deste | Kime | Klasör |
 |---|---|---|
@@ -15,9 +15,9 @@ sonra derleme komutu çalıştırılır — üç çıktı da senkron kalır.
 
 | Dosya | Ne için |
 |---|---|
-| `apya-sunum-<deste>.pdf` | Gönderilecek / basılacak sürüm (16 sayfa, 16:9) |
+| `apya-sunum-<deste>.pdf` | Gönderilecek / basılacak sürüm (15 sayfa, 16:9) |
 | `apya-sunum-<deste>.pptx` | PowerPoint ile sunum (13,33 × 7,5 inç; konuşmacı notları dolu) |
-| `gorseller/slayt-01..16.png` | Teklif, e-posta, web sitesi için tek tek görseller (1600 × 900) |
+| `gorseller/slayt-01..15.png` | Teklif, e-posta, web sitesi için tek tek görseller (1600 × 900) |
 | `apya-sunum-<deste>.html` | Tarayıcıda gezilen sürüm (↓ ↑ ile slayt geçişi) |
 
 ## Slayt sırası (iki destede de aynı iskelet)
@@ -33,13 +33,20 @@ sonra derleme komutu çalıştırılır — üç çıktı da senkron kalır.
 | 07 | Ekranlar | Görevler: liste · kanban · takvim · Gantt | aynı |
 | 08 | Ekranlar | Finans akışı | Kaynak akışı (hibe · bağış · harcama) |
 | 09 | Ekranlar | Dokümanlar & formlar | Belgeler & formlar (denetime hazırlık) |
-| 10 | Ekranlar | Raporlar | Raporlar (fon bütçesi · cari ekstre · mizan) |
-| 11 | Ekranlar | AI Değerlendirme Merkezi | AI ile başvuru ön eleme |
-| 12 | Ekranlar | Hibe yönetimi | Fon yönetimi |
-| 13 | Güven | Roller ve yetkiler | Roller (yönetim/denetim kurulu dahil) |
-| 14 | Güven | Çok şirketli yapı + güvenlik | Şube / temsilcilik + şeffaflık |
-| 15 | Güven | Masaüstü / tablet / telefon | aynı |
-| 16 | Başlangıç | Dört adım | Dört adım |
+| 10 | Ekranlar | Raporlar | Raporlar (fon bütçesi · cari ekstre) |
+| 11 | Ekranlar | Hibe yönetimi | Fon yönetimi |
+| 12 | Güven | Roller ve yetkiler | Roller (yönetim/denetim kurulu dahil) |
+| 13 | Güven | Çok şirketli yapı + güvenlik | Şube / temsilcilik + şeffaflık |
+| 14 | Güven | Masaüstü / tablet / telefon | aynı |
+| 15 | Başlangıç | Dört adım | Dört adım |
+
+## Kapsam dışı bırakılanlar
+
+**Yapay zekâ ve mizan İKİ DESTEDEN DE çıkarıldı** (kullanıcı kararı, 2026-08-19).
+AI Değerlendirme Merkezi slaytı tamamen kaldırıldı (16 → 15 slayt); Raporlar
+slaytındaki `Mizan (Özet)` kartı ile akış adımı ve finans şeridindeki mizan
+geçişleri silindi. Her iki özellik de üründe **vardır**, şimdilik anlatılmıyor.
+Geri eklemek isteyen için `0c9e725` commit'i son hâllerini taşır.
 
 ## Dernek destesinin kapsam kuralı
 
@@ -57,7 +64,7 @@ tanımlıdır.)
 cd docs/sunum/build && bash render.sh dernek all
 ```
 
-HTML deck'i, PDF'i ve 16 PNG'yi üretir (`sirket` de aynı şekilde). `render.sh
+HTML deck'i, PDF'i ve 15 PNG'yi üretir (`sirket` de aynı şekilde). `render.sh
 <deste> png` yalnız görselleri, `render.sh <deste> pdf` yalnız PDF'i basar.
 Chrome yoksa Edge'e düşer.
 
