@@ -1,8 +1,10 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Threading.RateLimiting;
+using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.RateLimiting;
@@ -128,10 +130,67 @@ public class PlatformWebModule : AbpModule
                         "Production'da openiddict.pfx açılamaz; lütfen User Secrets veya " +
                         "appsettings.secrets.json üzerinden sağlayın. Detay: ARCH-008.");
                 }
-                serverBuilder.AddProductionEncryptionAndSigningCertificate(
-                    "openiddict.pfx", certificatePassword);
+                var certificate = LoadOpenIddictCertificate(certificatePassword);
+                serverBuilder.AddEncryptionCertificate(certificate);
+                serverBuilder.AddSigningCertificate(certificate);
             });
         }
+    }
+
+    /// <summary>
+    /// OpenIddict imzalama/şifreleme sertifikasını paylaşımlı Windows hosting'de de açılacak
+    /// biçimde yükler.
+    ///
+    /// İki ayrı tuzak var, ikisi de aynı yanıltıcı hatayı verir
+    /// (<c>CryptographicException: The system cannot find the file specified</c>) ve dışarıdan
+    /// ANCM 502.5 olarak görünür:
+    ///
+    /// 1. <b>Yol:</b> göreli "openiddict.pfx" çalışma dizinine göre çözülür; IIS/ANCM altında
+    ///    çalışma dizini site kökü olmayabilir. Bu yüzden <see cref="AppContext.BaseDirectory"/>
+    ///    ile MUTLAK yol kullanılır.
+    /// 2. <b>Anahtar deposu:</b> varsayılan (UserKeySet) özel anahtarı uygulama havuzu kimliğinin
+    ///    profil deposuna yazar; "Load User Profile" kapalıysa o depo yoktur. MachineKeySet makine
+    ///    deposuna yazma izni ister, EphemeralKeySet ise bazı ortamlarda desteklenmez.
+    ///
+    /// Hangisinin çalışacağı sunucuya göre değiştiği için seçenekler SIRAYLA denenir; ilk başarılı
+    /// olan kullanılır. Hiçbiri olmazsa her denemenin hatası tek mesajda toplanır — böylece log
+    /// tek turda teşhis verir, deneme-yanılma turu gerekmez.
+    /// </summary>
+    private static X509Certificate2 LoadOpenIddictCertificate(string password)
+    {
+        var path = Path.Combine(AppContext.BaseDirectory, "openiddict.pfx");
+        if (!File.Exists(path))
+        {
+            throw new InvalidOperationException(
+                $"openiddict.pfx bulunamadı: {path} — sertifikayı uygulamanın yanına koyun.");
+        }
+
+        var attempts = new[]
+        {
+            X509KeyStorageFlags.MachineKeySet | X509KeyStorageFlags.PersistKeySet | X509KeyStorageFlags.Exportable,
+            X509KeyStorageFlags.MachineKeySet,
+            X509KeyStorageFlags.EphemeralKeySet,
+            X509KeyStorageFlags.UserKeySet | X509KeyStorageFlags.PersistKeySet,
+            X509KeyStorageFlags.DefaultKeySet
+        };
+
+        var failures = new List<string>();
+        foreach (var flags in attempts)
+        {
+            try
+            {
+                return X509CertificateLoader.LoadPkcs12FromFile(path, password, flags);
+            }
+            catch (Exception ex)
+            {
+                failures.Add($"  - {flags}: {ex.GetType().Name}: {ex.Message}");
+            }
+        }
+
+        throw new InvalidOperationException(
+            $"openiddict.pfx hiçbir anahtar deposu seçeneğiyle açılamadı ({path}). " +
+            "Parola yanlış olabilir ya da uygulama havuzunun anahtar deposuna erişimi yok. Denemeler:" +
+            Environment.NewLine + string.Join(Environment.NewLine, failures));
     }
 
     public override void ConfigureServices(ServiceConfigurationContext context)
