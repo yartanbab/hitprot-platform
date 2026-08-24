@@ -22,10 +22,33 @@ public class CreateModalModel : PlatformPageModel
     [BindProperty]
     public IFormFile? UploadFile { get; set; }
 
+    /// <summary>
+    /// "Oluştur ve görev ekle" düğmesi bunu true yapar; yanıt Index.js'e
+    /// yeni projenin görev paneline gitmesini söyler.
+    /// </summary>
+    [BindProperty]
+    public bool GoToTasks { get; set; }
+
     public List<SelectListItem> Tenants { get; set; } = new();
     public List<SelectListItem> Currencies { get; set; } = new();
     public List<SelectListItem> Customers { get; set; } = new();
-    public List<SelectListItem> Categories { get; set; } = new();
+
+    /// <summary>
+    /// Kategori artık açılır liste değil, seçim kartı — formun geri kalanının
+    /// hangi alanları göstereceğini bu belirlediği için en görünür alan o.
+    /// </summary>
+    public IReadOnlyList<CategoryCard> CategoryCards { get; } = new List<CategoryCard>
+    {
+        new((int)ProjectCategory.GrantProject, "Hibe Projesi", "Bütçe kalemleri ve rapor takvimi",
+            "fa-award", "brand",
+            "Hibe projesi seçildi — amaç, hedef kitle ve faaliyetler başvuru dosyasına gider."),
+        new((int)ProjectCategory.Event, "Etkinlik", "Geri sayım ve tedarikçi görevleri",
+            "fa-calendar-days", "warning",
+            "Etkinlik seçildi — hedef kitle sorulur, faaliyet listesi gerekmez."),
+        new((int)ProjectCategory.Other, "Diğer / Genel", "Sadece ad, kod ve tarih aralığı",
+            "fa-diagram-project", "neutral",
+            "Genel proje — yalnız açıklama istenir, hibe alanları gizlendi.")
+    };
 
     public Guid? CurrentTenantId => CurrentUser.TenantId;
 
@@ -51,7 +74,8 @@ public class CreateModalModel : PlatformPageModel
         Project = new CreateProjectDto
         {
             StartDate = Clock.Now,
-            EndDate = Clock.Now.AddMonths(1)
+            EndDate = Clock.Now.AddMonths(1),
+            Category = ProjectCategory.GrantProject
         };
 
         if (!CurrentUser.TenantId.HasValue)
@@ -76,14 +100,6 @@ public class CreateModalModel : PlatformPageModel
         Customers = customerResult.Items
             .Select(c => new SelectListItem(c.Name, c.Id.ToString()))
             .ToList();
-
-        // APYA-132: PROJE KATEGORİLERİ
-        Categories = new List<SelectListItem>
-        {
-            new SelectListItem("Diğer / Genel", ((int)ProjectCategory.Other).ToString()),
-            new SelectListItem("Hibe Projesi", ((int)ProjectCategory.GrantProject).ToString()),
-            new SelectListItem("Etkinlik", ((int)ProjectCategory.Event).ToString())
-        };
     }
 
     public async Task<IActionResult> OnPostAsync()
@@ -106,6 +122,11 @@ public class CreateModalModel : PlatformPageModel
                 UploadFile.Length);
         }
 
-        return NoContent();
+        // NoContent yerine kimlik dönüyoruz: "Oluştur ve görev ekle" akışında
+        // Index.js doğrudan yeni projenin detayına gidebilsin diye.
+        return new OkObjectResult(new { id = createdProject.Id, goToTasks = GoToTasks });
     }
+
+    /// <summary>Kategori seçim kartının görünüm verisi.</summary>
+    public record CategoryCard(int Value, string Label, string Description, string Icon, string Tone, string Hint);
 }

@@ -1040,11 +1040,27 @@ $(function () {
     var createModal = new abp.ModalManager(abp.appPath + 'Projects/CreateModal');
     createModal.onOpen(function () {
         if (!pendingCategory) { return; }
-        createModal.getModal().find('select[name$="Category"]').val(pendingCategory).trigger('change');
+        // Kategori artık açılır liste değil, seçim kartı: kartın kendisine tıklanır
+        // (gizli input'u yazmak yetmez — görünürlük kuralları o tıklamaya bağlı).
+        createModal.getModal()
+            .find('.apya-pform-cat[data-cat="' + pendingCategory + '"]')
+            .trigger('click');
         pendingCategory = null;
     });
-    createModal.onResult(function () {
+    createModal.onResult(function (event, data) {
         abp.notify.success(l('Notify:Project:Created'));
+        // ABP sonucu "abp-ajax-success" olayından taşır: ikinci argüman
+        // { responseText, statusText, xhr, $form }. Ad yanıltıcı — JSON yanıtta
+        // jQuery gövdeyi ZATEN nesneye çevirmiş olur, metin geldiği hâl için de bak.
+        var result = data && data.responseText;
+        if (typeof result === 'string') {
+            try { result = JSON.parse(result); } catch (e) { result = null; }
+        }
+        // "Oluştur ve görev ekle": listeye dönmek yerine doğrudan görev paneline.
+        if (result && result.goToTasks && result.id) {
+            window.location.href = '/Projects/ProjectDetails/' + result.id;
+            return;
+        }
         reload();
         loadTaskKpis();
     });

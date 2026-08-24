@@ -6,55 +6,718 @@
     Layout = null;
 }
 
-<form asp-page="/Projects/CreateModal" method="post" enctype="multipart/form-data">
-    <abp-modal>
-        <abp-modal-header title="Yeni Proje Oluştur"></abp-modal-header>
+@*
+    Yeni Proje formu — "4a" geniş modal (tek ekran, bölümlere ayrılmış).
+    Tasarım referansı: Projeler Redesign.dc.html · tur 4a.
+
+    Renk/ölçü DEĞERİ yok: her şey --apya-* token'larından gelir, böylece dark tema
+    apya-theme-bridge üzerinden kendiliğinden çalışır (ayrı hex bloğu yazılmadı).
+
+    Serbest metin "Süresi" (Project.Duration) alanı FORMDAN kaldırıldı — süre
+    Başlangıç/Bitiş'ten hesaplanıp rozet olarak gösterilir. Entity'deki kolon
+    yerinde duruyor (şema değişmedi); yeni kayıtlarda boş kalır.
+*@
+
+<style>
+    /* 840px: abp-modal size="Large" 800px veriyor, tasarım 840 istiyor.
+       modal-dialog'a sınıf veremiyoruz (tag helper üretiyor) → form üzerinden hedefle.
+       DİKKAT: form, dialog'un ATASI (form > .modal > .modal-dialog) — `:has()` ters
+       yön olduğu için hiç eşleşmez, düz alt-öğe seçicisi şart. */
+    #ProjectCreateForm .modal-dialog { max-width: 840px; }
+
+    .apya-pform { display: flex; flex-direction: column; gap: var(--apya-space-5); }
+
+    /* --- Üst özet + taslak bandı --- */
+    .apya-pform-summary {
+        font-size: var(--apya-fs-xs); color: var(--apya-text-tertiary);
+        margin-top: calc(var(--apya-space-1) * -1);
+    }
+    .apya-pform-draft {
+        display: none; align-items: center; gap: var(--apya-space-3);
+        padding: var(--apya-space-3); border-radius: var(--apya-radius-lg);
+        background: var(--apya-warning-50); border: 1px solid var(--apya-warning-100);
+    }
+    .apya-pform-draft.is-shown { display: flex; }
+    .apya-pform-draft-text { flex: 1 1 auto; min-width: 0; font-size: var(--apya-fs-sm); color: var(--apya-text-warning); }
+
+    /* --- Bölüm başlığı (etiket + ince çizgi) --- */
+    .apya-pform-sec { display: flex; flex-direction: column; gap: var(--apya-space-3); }
+    .apya-pform-sec-head { display: flex; align-items: center; gap: var(--apya-space-2); }
+    .apya-pform-sec-head > .apya-pform-sec-title {
+        font-size: var(--apya-fs-xs); font-weight: var(--apya-weight-bold);
+        letter-spacing: .06em; text-transform: uppercase; color: var(--apya-text-tertiary);
+        white-space: nowrap;
+    }
+    .apya-pform-sec-head > .apya-pform-sec-hint {
+        font-size: var(--apya-fs-xs); color: var(--apya-text-tertiary); min-width: 0;
+    }
+    .apya-pform-sec-head::after {
+        content: ""; flex: 1 1 auto; height: 1px; background: var(--apya-border-subtle);
+    }
+
+    /* --- Kategori seçim kartları --- */
+    .apya-pform-cats { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--apya-space-3); }
+    .apya-pform-cat {
+        display: flex; align-items: flex-start; gap: var(--apya-space-3);
+        padding: var(--apya-space-3); border-radius: var(--apya-radius-xl);
+        border: 1px solid var(--apya-border-default); background: var(--apya-surface-base);
+        cursor: pointer; position: relative; text-align: start;
+        transition: border-color var(--apya-motion-fast) var(--apya-easing-standard),
+                    box-shadow var(--apya-motion-fast) var(--apya-easing-standard);
+    }
+    .apya-pform-cat:hover { border-color: var(--apya-border-strong); }
+    .apya-pform-cat.is-selected {
+        border-color: var(--apya-accent-500); background: var(--apya-accent-soft);
+        box-shadow: 0 0 0 3px var(--apya-accent-soft);
+    }
+    .apya-pform-cat:focus-visible { outline: 2px solid var(--apya-border-focus); outline-offset: 2px; }
+    .apya-pform-cat-name { font-size: var(--apya-fs-sm); font-weight: var(--apya-weight-semibold); color: var(--apya-text-primary); }
+    .apya-pform-cat-desc { font-size: var(--apya-fs-xs); line-height: var(--apya-leading-snug); color: var(--apya-text-tertiary); text-wrap: pretty; }
+    .apya-pform-cat-tick {
+        position: absolute; top: var(--apya-space-2); inset-inline-end: var(--apya-space-2);
+        font-size: var(--apya-fs-xs); color: var(--apya-accent-500); opacity: 0;
+    }
+    .apya-pform-cat.is-selected .apya-pform-cat-tick { opacity: 1; }
+
+    /* --- Alanlar --- */
+    .apya-pform-grid-2 { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--apya-space-4); }
+    .apya-pform-grid-3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--apya-space-4); }
+    .apya-pform-field { min-width: 0; }
+    .apya-pform-label {
+        display: flex; align-items: baseline; gap: var(--apya-space-2);
+        font-size: var(--apya-fs-xs); font-weight: var(--apya-weight-semibold);
+        color: var(--apya-neutral-700); margin-bottom: var(--apya-space-1);
+    }
+    .apya-pform-req { color: var(--apya-negative-500); }
+    .apya-pform-label-note { font-weight: var(--apya-weight-regular); color: var(--apya-text-tertiary); }
+    .apya-pform-label-action {
+        margin-inline-start: auto; font-size: var(--apya-fs-xs); font-weight: var(--apya-weight-regular);
+        color: var(--apya-accent-500); background: none; border: 0; padding: 0;
+        text-decoration: underline; cursor: pointer;
+    }
+    .apya-pform-help { font-size: var(--apya-fs-xs); color: var(--apya-text-tertiary); margin-top: var(--apya-space-1); }
+    .apya-pform-err {
+        display: none; font-size: var(--apya-fs-xs); color: var(--apya-negative-600); margin-top: var(--apya-space-1);
+    }
+    .apya-pform-err.is-shown { display: block; }
+    .apya-pform-field.is-invalid-field .form-control,
+    .apya-pform-field.is-invalid-field .form-select { border-color: var(--apya-border-error); }
+
+    .apya-pform-chip-auto {
+        padding: 1px 7px; border-radius: var(--apya-radius-full);
+        font-size: 10px; font-weight: var(--apya-weight-semibold);
+        background: var(--apya-accent-soft); color: var(--apya-accent-600);
+    }
+    .apya-pform-chip-auto[hidden] { display: none; }
+
+    /* Kod ve tarihler sayısal: mono + tabular (mevcut .apya-numeric kuralıyla aynı dil) */
+    .apya-pform-mono {
+        font-family: var(--apya-font-mono); font-variant-numeric: tabular-nums;
+    }
+
+    /* --- Bütçe: ₺ önekli --- */
+    .apya-pform-money { display: flex; align-items: stretch; }
+    .apya-pform-money-prefix {
+        flex: none; width: 36px; display: flex; align-items: center; justify-content: center;
+        background: var(--apya-surface-raised); border: 1px solid var(--apya-border-strong);
+        border-inline-end: 0;
+        border-start-start-radius: var(--apya-radius-lg); border-end-start-radius: var(--apya-radius-lg);
+        font-family: var(--apya-font-mono); font-weight: var(--apya-weight-semibold);
+        color: var(--apya-neutral-500);
+    }
+    .apya-pform-money .form-control {
+        border-start-start-radius: 0; border-end-start-radius: 0;
+    }
+
+    /* --- Süre rozeti + hızlı çipler --- */
+    .apya-pform-durbar { display: flex; align-items: center; gap: var(--apya-space-2); flex-wrap: wrap; }
+    .apya-pform-dur {
+        display: inline-flex; align-items: center; gap: var(--apya-space-2);
+        padding: 3px 11px; border-radius: var(--apya-radius-full);
+        font-size: var(--apya-fs-xs); font-weight: var(--apya-weight-semibold);
+        background: var(--apya-surface-sunken); color: var(--apya-text-secondary);
+    }
+    .apya-pform-dur.is-invalid { background: var(--apya-negative-50); color: var(--apya-negative-700); }
+    .apya-pform-durbar-label { font-size: var(--apya-fs-xs); color: var(--apya-text-tertiary); }
+    .apya-pform-quick {
+        padding: 3px 10px; border-radius: var(--apya-radius-full);
+        font-size: var(--apya-fs-xs); font-weight: var(--apya-weight-semibold);
+        background: var(--apya-surface-base); border: 1px solid var(--apya-border-default);
+        color: var(--apya-text-secondary); cursor: pointer; white-space: nowrap;
+    }
+    .apya-pform-quick:hover { border-color: var(--apya-accent-500); color: var(--apya-accent-600); }
+
+    .apya-pform-datewarn {
+        display: none; align-items: center; gap: var(--apya-space-2);
+        padding: var(--apya-space-2) var(--apya-space-3); border-radius: var(--apya-radius-lg);
+        font-size: var(--apya-fs-xs); font-weight: var(--apya-weight-semibold);
+    }
+    .apya-pform-datewarn.is-error { display: flex; background: var(--apya-negative-50); color: var(--apya-negative-700); }
+    .apya-pform-datewarn.is-warn { display: flex; background: var(--apya-warning-50); color: var(--apya-text-warning); }
+
+    /* --- Kiracı satırı (yalnız host) --- */
+    .apya-pform-tenant {
+        display: flex; align-items: center; gap: var(--apya-space-3);
+        padding: var(--apya-space-2) var(--apya-space-3);
+        border: 1px solid var(--apya-border-default); border-radius: var(--apya-radius-lg);
+        background: var(--apya-surface-raised);
+    }
+    .apya-pform-tenant-label { flex: 1 1 auto; font-size: var(--apya-fs-sm); color: var(--apya-text-secondary); }
+    /* Yükseklik SABİTLENMEZ: temanın .form-select dolgusu (10.8px×2) + 21px satır
+       yüksekliği 42.6px eder, 36px'e sıkıştırılınca yazı dikeyde kırpılıyordu. */
+    .apya-pform-tenant .form-select { width: auto; min-width: 220px; }
+
+    /* --- Dosya alanı --- */
+    .apya-pform-file {
+        display: flex; align-items: center; gap: var(--apya-space-3);
+        padding: var(--apya-space-3) var(--apya-space-4);
+        border: 1px dashed var(--apya-border-strong); border-radius: var(--apya-radius-xl);
+        background: var(--apya-surface-raised); cursor: pointer;
+    }
+    .apya-pform-file:hover { border-color: var(--apya-accent-500); background: var(--apya-accent-soft); }
+    .apya-pform-file-name { font-size: var(--apya-fs-sm); font-weight: var(--apya-weight-semibold); color: var(--apya-text-primary); }
+    .apya-pform-file-hint { font-size: var(--apya-fs-xs); color: var(--apya-text-tertiary); }
+    .apya-pform-file-input { display: none; }
+
+    /* --- Alt bar --- */
+    .apya-pform-footer { display: flex; align-items: center; gap: var(--apya-space-3); width: 100%; }
+    .apya-pform-status { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+    .apya-pform-valid {
+        display: inline-flex; align-items: center; gap: var(--apya-space-2);
+        font-size: var(--apya-fs-xs); font-weight: var(--apya-weight-semibold); color: var(--apya-text-warning);
+    }
+    .apya-pform-valid.is-ok { color: var(--apya-positive-700); }
+    .apya-pform-saved {
+        display: none; align-items: center; gap: var(--apya-space-1);
+        font-size: var(--apya-fs-xs); color: var(--apya-text-tertiary);
+    }
+    .apya-pform-saved.is-shown { display: inline-flex; }
+    .apya-pform-actions { margin-inline-start: auto; display: flex; gap: var(--apya-space-2); }
+
+    /* --- Mobil: tam ekran, tek kolon --- */
+    @@media (max-width: 767.98px) {
+        #ProjectCreateForm .modal-dialog { max-width: none; margin: 0; }
+        #ProjectCreateForm .modal-content { min-height: 100vh; border-radius: 0; }
+        .apya-pform-cats,
+        .apya-pform-grid-2,
+        .apya-pform-grid-3 { grid-template-columns: 1fr; }
+        .apya-pform-footer { flex-direction: column; align-items: stretch; }
+        .apya-pform-actions { margin-inline-start: 0; flex-direction: column-reverse; }
+        .apya-pform-actions .btn { width: 100%; min-height: 44px; }
+        .apya-pform-cat,
+        .apya-pform-quick,
+        .apya-pform-file { min-height: 44px; }
+    }
+</style>
+
+<form asp-page="/Projects/CreateModal" method="post" enctype="multipart/form-data" id="ProjectCreateForm">
+    <abp-modal size="Large">
+        <abp-modal-header title="Yeni Proje"></abp-modal-header>
 
         <abp-modal-body>
-            @if (Model.CurrentTenantId == null)
-            {
-                <abp-select asp-for="Project.TenantId" asp-items="Model.Tenants" label="Müşteri Seçin (Boş bırakılırsa Host adına açılır)">
-                    <option value="">Kendi Hesabım (Platform)</option>
-                </abp-select>
-            }
-            <abp-input asp-for="Project.Name" label="Proje Adı" />
-            <abp-input asp-for="Project.Code" label="Proje Kodu (Örn: PRJ-2026-001)" />
-            <abp-row>
-                <abp-column size-md="_6">
-                    <abp-select asp-for="Project.CustomerId" asp-items="Model.Customers" label="Cari (Müşteri)">
-                        <option value="">— Cari seçilmedi —</option>
-                    </abp-select>
-                </abp-column>
-                <abp-column size-md="_6">
-                    <abp-select asp-for="Project.Category" asp-items="Model.Categories" label="Proje Kategorisi" />
-                </abp-column>
-            </abp-row>
-            <abp-input asp-for="Project.Purpose" label="Amacı" />
-            <abp-input asp-for="Project.Duration" label="Süresi" />
-            
-            <abp-row>
-                <abp-column size-md="_6">
-                    <abp-input asp-for="Project.StartDate" type="date" label="Başlangıç Tarihi" />
-                </abp-column>
-                <abp-column size-md="_6">
-                    <abp-input asp-for="Project.EndDate" type="date" label="Bitiş Tarihi" />
-                </abp-column>
-            </abp-row>
-            <abp-input asp-for="Project.TargetAudience" label="Hedef Kitlesi" />
-            <abp-input asp-for="Project.Activities" label="Faaliyetleri" />
-            <abp-input asp-for="Project.TotalBudget" label="Bütçesi (Miktar)" />
-            @* Çoklu para birimi gizlendi — proje bütçesi TRY. *@
+            @* value AÇIKÇA sayı: asp-for enum'u ADIYLA basar ("GrantProject"),
+               kartların data-cat'i ise sayı — eşleşmeyince hiçbir kart seçili gelmez. *@
+            <input type="hidden" asp-for="Project.Category" id="PfCategory"
+                   value="@((int)Model.Project.Category)" />
             <input type="hidden" asp-for="Project.Currency" value="TRY" />
-            <abp-input asp-for="Project.Description" type="textarea" label="Açıklama" />
+            <input type="hidden" asp-for="Project.TotalBudget" id="PfBudget" value="0" />
+            <input type="hidden" asp-for="GoToTasks" id="PfGoToTasks" value="false" />
 
-            <div class="mb-3">
-                <label class="form-label">Proje Dosyası (Opsiyonel)</label>
-                <input type="file" class="form-control" asp-for="UploadFile">
-                <small class="text-muted">PDF, Excel veya Görsel yükleyebilirsiniz.</small>
+            <div class="apya-pform">
+
+                <div class="apya-pform-summary" id="PfSummary"></div>
+
+                @* Yarıda bırakılmış form varsa üstte bant — Devam et / Sil *@
+                <div class="apya-pform-draft" id="PfDraftBanner" role="status">
+                    <i class="fa fa-clock-rotate-left" aria-hidden="true"></i>
+                    <span class="apya-pform-draft-text">Kaldığınız yerden devam edin — kaydedilmemiş bir taslağınız var.</span>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" id="PfDraftRestore">Devam et</button>
+                    <button type="button" class="btn btn-sm btn-link text-decoration-none" id="PfDraftDiscard">Sil</button>
+                </div>
+
+                @* ---------------- 1. PROJE TÜRÜ ---------------- *@
+                <div class="apya-pform-sec">
+                    <div class="apya-pform-sec-head"><span class="apya-pform-sec-title">Proje türü</span></div>
+                    <div class="apya-pform-cats" role="radiogroup" aria-label="Proje türü">
+                        @foreach (var cat in Model.CategoryCards)
+                        {
+                            <button type="button" class="apya-pform-cat" role="radio" aria-checked="false"
+                                    data-cat="@cat.Value" data-hint="@cat.Hint">
+                                <span class="kpi-icon-box kpi-icon-box--xs kpi-icon-box--@cat.Tone" aria-hidden="true">
+                                    <i class="fa @cat.Icon"></i>
+                                </span>
+                                <span class="d-block" style="min-width:0">
+                                    <span class="apya-pform-cat-name d-block">@cat.Label</span>
+                                    <span class="apya-pform-cat-desc d-block">@cat.Description</span>
+                                </span>
+                                <i class="fa fa-circle-check apya-pform-cat-tick" aria-hidden="true"></i>
+                            </button>
+                        }
+                    </div>
+                </div>
+
+                @* ---------------- 2. TEMEL BİLGİLER ---------------- *@
+                <div class="apya-pform-sec">
+                    <div class="apya-pform-sec-head"><span class="apya-pform-sec-title">Temel bilgiler</span></div>
+
+                    <div class="apya-pform-field" id="PfNameField">
+                        <label class="apya-pform-label" asp-for="Project.Name">
+                            Proje Adı <span class="apya-pform-req" aria-hidden="true">*</span>
+                        </label>
+                        <input class="form-control" asp-for="Project.Name" id="PfName"
+                               placeholder="Örn. KOSGEB Ar-Ge Destek Programı" autocomplete="off" />
+                        <div class="apya-pform-err" id="PfNameErr">Proje adı zorunlu.</div>
+                    </div>
+
+                    <div class="apya-pform-grid-2">
+                        <div class="apya-pform-field" id="PfCodeField">
+                            @* Rozet ve "Yeniden üret" label'ın DIŞINDA: label'ın içindeki
+                               tıklama `for` hedefine yönlendirilir, buton kendi işini yapamaz. *@
+                            <div class="apya-pform-label">
+                                <label asp-for="Project.Code" class="mb-0">
+                                    Proje Kodu <span class="apya-pform-req" aria-hidden="true">*</span>
+                                </label>
+                                <span class="apya-pform-chip-auto" id="PfCodeAuto">otomatik</span>
+                                <button type="button" class="apya-pform-label-action" id="PfCodeRegen">Yeniden üret</button>
+                            </div>
+                            <input class="form-control apya-pform-mono" asp-for="Project.Code" id="PfCode"
+                                   maxlength="32" autocomplete="off" />
+                            <div class="apya-pform-help" id="PfCodeHelp">Yıl + sıra numarası; istediğiniz gibi değiştirebilirsiniz.</div>
+                            <div class="apya-pform-err" id="PfCodeErr"></div>
+                        </div>
+
+                        <div class="apya-pform-field">
+                            <label class="apya-pform-label" asp-for="Project.CustomerId">Cari (Müşteri)</label>
+                            <select class="form-select" asp-for="Project.CustomerId" asp-items="Model.Customers" id="PfCustomer">
+                                <option value="">— Cari seçilmedi —</option>
+                            </select>
+                            <div class="apya-pform-help">Bütçe ve fatura eşleşmesi için; sonradan da bağlanabilir.</div>
+                        </div>
+                    </div>
+
+                    @if (Model.CurrentTenantId == null)
+                    {
+                        <div class="apya-pform-tenant">
+                            <i class="fa fa-building" aria-hidden="true" style="color:var(--apya-neutral-500)"></i>
+                            <label class="apya-pform-tenant-label mb-0" asp-for="Project.TenantId">Proje hesabı</label>
+                            <select class="form-select" asp-for="Project.TenantId" asp-items="Model.Tenants" id="PfTenant">
+                                <option value="">Kendi Hesabım (Platform)</option>
+                            </select>
+                        </div>
+                    }
+                </div>
+
+                @* ---------------- 3. ZAMAN VE BÜTÇE ---------------- *@
+                <div class="apya-pform-sec">
+                    <div class="apya-pform-sec-head"><span class="apya-pform-sec-title">Zaman ve bütçe</span></div>
+
+                    <div class="apya-pform-grid-3">
+                        <div class="apya-pform-field">
+                            <label class="apya-pform-label" asp-for="Project.StartDate">
+                                Başlangıç Tarihi <span class="apya-pform-req" aria-hidden="true">*</span>
+                            </label>
+                            <input type="date" class="form-control apya-pform-mono" asp-for="Project.StartDate"
+                                   asp-format="{0:yyyy-MM-dd}" id="PfStart" />
+                        </div>
+                        <div class="apya-pform-field">
+                            <label class="apya-pform-label" asp-for="Project.EndDate">
+                                Bitiş Tarihi <span class="apya-pform-req" aria-hidden="true">*</span>
+                            </label>
+                            <input type="date" class="form-control apya-pform-mono" asp-for="Project.EndDate"
+                                   asp-format="{0:yyyy-MM-dd}" id="PfEnd" />
+                        </div>
+                        <div class="apya-pform-field">
+                            <label class="apya-pform-label" for="PfBudgetDisplay">
+                                Bütçe <span class="apya-pform-label-note">(₺)</span>
+                            </label>
+                            <div class="apya-pform-money">
+                                <span class="apya-pform-money-prefix" aria-hidden="true">₺</span>
+                                <input class="form-control apya-pform-mono" id="PfBudgetDisplay" inputmode="numeric"
+                                       placeholder="0" autocomplete="off" aria-label="Bütçe tutarı" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="apya-pform-durbar">
+                        <span class="apya-pform-dur" id="PfDuration">
+                            <i class="fa fa-hourglass-half" aria-hidden="true"></i><span id="PfDurationText">Tarih seçin</span>
+                        </span>
+                        <span class="apya-pform-durbar-label">Hızlı süre:</span>
+                        <button type="button" class="apya-pform-quick" data-months="3">3 ay</button>
+                        <button type="button" class="apya-pform-quick" data-months="6">6 ay</button>
+                        <button type="button" class="apya-pform-quick" data-months="12">1 yıl</button>
+                    </div>
+
+                    <div class="apya-pform-datewarn" id="PfDateWarn" role="status">
+                        <i class="fa fa-circle-exclamation" aria-hidden="true" id="PfDateWarnIcon"></i>
+                        <span id="PfDateWarnText"></span>
+                    </div>
+                </div>
+
+                @* ---------------- 4. DETAY (kategoriye göre) ---------------- *@
+                <div class="apya-pform-sec">
+                    <div class="apya-pform-sec-head">
+                        <span class="apya-pform-sec-title" id="PfDetailTitle">Açıklama</span>
+                        <span class="apya-pform-sec-hint" id="PfDetailHint"></span>
+                    </div>
+
+                    <div class="apya-pform-field" id="PfPurposeField">
+                        <label class="apya-pform-label" asp-for="Project.Purpose">Amacı</label>
+                        <input class="form-control" asp-for="Project.Purpose" id="PfPurpose"
+                               placeholder="Projenin çözdüğü problem, tek cümle" autocomplete="off" />
+                    </div>
+
+                    <div class="apya-pform-grid-2" id="PfDetailPair">
+                        <div class="apya-pform-field" id="PfAudienceField">
+                            <label class="apya-pform-label" asp-for="Project.TargetAudience">Hedef Kitlesi</label>
+                            <input class="form-control" asp-for="Project.TargetAudience" id="PfAudience"
+                                   placeholder="Örn. KOBİ üreticiler" autocomplete="off" />
+                        </div>
+                        <div class="apya-pform-field" id="PfActivitiesField">
+                            <label class="apya-pform-label" asp-for="Project.Activities">Faaliyetleri</label>
+                            <input class="form-control" asp-for="Project.Activities" id="PfActivities"
+                                   placeholder="Ana iş paketleri, virgülle" autocomplete="off" />
+                        </div>
+                    </div>
+
+                    <div class="apya-pform-field">
+                        <label class="apya-pform-label" asp-for="Project.Description">Açıklama</label>
+                        <textarea class="form-control" asp-for="Project.Description" id="PfDescription" rows="3"
+                                  placeholder="Ekibin bilmesi gerekenler…"></textarea>
+                    </div>
+
+                    @* input, label'ın DIŞINDA: `for` hedefi label'ın içine yuvalanırsa
+                       tıklama label → input → label diye sonsuz döngüye girip sekmeyi dondurur. *@
+                    <label class="apya-pform-file" for="PfFile">
+                        <span class="kpi-icon-box kpi-icon-box--accent" aria-hidden="true"><i class="fa fa-paperclip"></i></span>
+                        <span class="flex-grow-1" style="min-width:0">
+                            <span class="apya-pform-file-name d-block" id="PfFileName">Proje dosyası ekleyin (opsiyonel)</span>
+                            <span class="apya-pform-file-hint d-block">PDF, Excel veya görsel · en fazla 20 MB</span>
+                        </span>
+                        <span class="btn btn-sm btn-outline-secondary">Dosya seç</span>
+                    </label>
+                    <input type="file" asp-for="UploadFile" id="PfFile" class="apya-pform-file-input" />
+                </div>
             </div>
-
         </abp-modal-body>
 
-        <abp-modal-footer buttons="@(AbpModalButtons.Cancel|AbpModalButtons.Save)"></abp-modal-footer>
+        <abp-modal-footer>
+            <div class="apya-pform-footer">
+                <div class="apya-pform-status">
+                    <span class="apya-pform-valid" id="PfValid">
+                        <i class="fa fa-circle-exclamation" aria-hidden="true" id="PfValidIcon"></i><span id="PfValidText"></span>
+                    </span>
+                    <span class="apya-pform-saved" id="PfSaved">
+                        <i class="fa fa-cloud-arrow-up" aria-hidden="true"></i><span>Taslak kaydedildi</span>
+                    </span>
+                </div>
+                <div class="apya-pform-actions">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Vazgeç</button>
+                    <button type="submit" class="btn btn-outline-primary" id="PfSubmitAndTasks">
+                        <i class="fa fa-list-check me-1" aria-hidden="true"></i>Oluştur ve görev ekle
+                    </button>
+                    <button type="submit" class="btn btn-primary" id="PfSubmit">
+                        <i class="fa fa-check me-1" aria-hidden="true"></i>Projeyi oluştur
+                    </button>
+                </div>
+            </div>
+        </abp-modal-footer>
     </abp-modal>
 </form>
+
+@*
+    Modal ModalManager ile enjekte edildiği için @@section scripts çalışmaz
+    (Layout = null) — script gövdeye gömülür, AiTaskGeneratorModal'daki gibi.
+*@
+<script>
+    (function () {
+        var $form = $('#ProjectCreateForm');
+        if (!$form.length) { return; }
+
+        var svc = (apya.platform.projects && apya.platform.projects.project)
+            || apya.platform.application.projects.project;
+
+        var DRAFT_KEY = 'apya.projects.draft';
+
+        // Kategoriye göre hangi detay alanı görünür — tasarım 4a §1.
+        var CAT = {
+            '0': { label: 'Diğer / Genel', detail: 'Açıklama',           purpose: false, audience: false, activities: false },
+            '1': { label: 'Hibe Projesi',  detail: 'Hibe detayları',     purpose: true,  audience: true,  activities: true },
+            '2': { label: 'Etkinlik',      detail: 'Etkinlik detayları', purpose: true,  audience: true,  activities: false }
+        };
+
+        // Formu tek yerden okuyan durum — doğrulama, rozet, taslak hepsi buna bakar.
+        var state = { codeTaken: false, codeSuggestion: '', codeAuto: true, tried: false };
+
+        var $cat = $('#PfCategory'), $name = $('#PfName'), $code = $('#PfCode');
+        var $start = $('#PfStart'), $end = $('#PfEnd');
+        var $budget = $('#PfBudget'), $budgetView = $('#PfBudgetDisplay');
+        var $tenant = $('#PfTenant');
+
+        // ProjectCategory enum'u sayı olarak da adıyla da gelebilir (asp-for adı basar,
+        // ModelState geri dolarsa yine ad gelir) — tek biçime indir.
+        var CAT_BY_NAME = { Other: '0', GrantProject: '1', Event: '2' };
+        function currentCat() {
+            var v = String($cat.val() || '0');
+            return CAT_BY_NAME[v] || (CAT[v] ? v : '0');
+        }
+        function tenantId() { return ($tenant.length && $tenant.val()) ? $tenant.val() : null; }
+        function parseDate(v) { var d = v ? new Date(v + 'T00:00:00') : null; return (d && !isNaN(d)) ? d : null; }
+
+        // toISOString() YEREL tarihi UTC'ye çevirir: TZ+03:00'ta yerel gece yarısı
+        // bir önceki güne düşer ("3 ay" 24 Kasım yerine 23 Kasım verirdi). Yerel biçimle.
+        function pad2(n) { return (n < 10 ? '0' : '') + n; }
+        function isoDate(d) { return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate()); }
+
+        // ---------------------------------------------------- SÜRE (takvim ayı)
+        function monthsBetween(d1, d2) {
+            var m = (d2.getFullYear() - d1.getFullYear()) * 12 + (d2.getMonth() - d1.getMonth());
+            if (d2.getDate() < d1.getDate()) { m--; }
+            var a = new Date(d1); a.setMonth(a.getMonth() + m);
+            var rest = Math.round((d2 - a) / 86400000);
+            if (m >= 12 && m % 12 === 0 && !rest) { return (m / 12) + ' yıl'; }
+            return m + ' ay' + (rest ? ' ' + rest + ' gün' : '');
+        }
+
+        function dayDiff() {
+            var d1 = parseDate($start.val()), d2 = parseDate($end.val());
+            if (!d1 || !d2) { return null; }
+            return Math.round((d2 - d1) / 86400000);
+        }
+
+        // ---------------------------------------------------- KATEGORİ
+        function applyCategory() {
+            var key = currentCat(), meta = CAT[key] || CAT['0'];
+            $cat.val(key); // ad geldiyse sayıya sabitle — gönderim de tek biçim olsun
+
+            $('.apya-pform-cat').each(function () {
+                var on = String($(this).data('cat')) === key;
+                $(this).toggleClass('is-selected', on).attr('aria-checked', on ? 'true' : 'false');
+                if (on) { $('#PfDetailHint').text($(this).data('hint') || ''); }
+            });
+
+            $('#PfDetailTitle').text(meta.detail);
+            $('#PfPurposeField').toggle(meta.purpose);
+            $('#PfAudienceField').toggle(meta.audience);
+            $('#PfActivitiesField').toggle(meta.activities);
+            // Tek alan kaldıysa iki kolonluk grid'i tek kolona düşür.
+            $('#PfDetailPair')
+                .toggle(meta.audience || meta.activities)
+                .css('grid-template-columns', meta.activities ? '' : 'minmax(0, 1fr)');
+        }
+
+        $(document).on('click', '#ProjectCreateForm .apya-pform-cat', function () {
+            $cat.val(String($(this).data('cat')));
+            applyCategory();
+            refresh();
+            saveDraft();
+        });
+
+        // ---------------------------------------------------- PROJE KODU
+        function setCode(value, auto) {
+            $code.val(value);
+            state.codeAuto = !!auto;
+            $('#PfCodeAuto').prop('hidden', !state.codeAuto);
+            checkCode();
+        }
+
+        function fetchNextCode() {
+            return svc.getNextCode(tenantId()).then(function (code) { setCode(code, true); });
+        }
+
+        var codeTimer = null;
+        function checkCode() {
+            clearTimeout(codeTimer);
+            codeTimer = setTimeout(function () {
+                var value = ($code.val() || '').trim();
+                if (!value) { state.codeTaken = false; renderCode(); refresh(); return; }
+                svc.checkCode(value, tenantId()).then(function (r) {
+                    // Kullanıcı yanıt beklerken yazmaya devam etmiş olabilir.
+                    if (($code.val() || '').trim() !== value) { return; }
+                    state.codeTaken = !r.isAvailable;
+                    state.codeSuggestion = r.suggestion;
+                    renderCode();
+                    refresh();
+                });
+            }, 350);
+        }
+
+        function renderCode() {
+            $('#PfCodeHelp').toggle(!state.codeTaken);
+            $('#PfCodeField').toggleClass('is-invalid-field', state.codeTaken);
+            var $err = $('#PfCodeErr').toggleClass('is-shown', state.codeTaken);
+            if (state.codeTaken) {
+                $err.empty()
+                    .append($('<i class="fa fa-circle-exclamation me-1" aria-hidden="true"></i>'))
+                    .append(document.createTextNode('“' + ($code.val() || '').trim() + '” zaten kullanılıyor. '))
+                    .append($('<button type="button" class="apya-pform-label-action ms-0"></button>')
+                        .text(state.codeSuggestion + ' kullan')
+                        .on('click', function () { setCode(state.codeSuggestion, true); refresh(); }));
+            }
+        }
+
+        $('#PfCodeRegen').on('click', function () { fetchNextCode(); });
+        $code.on('input', function () {
+            state.codeAuto = false;
+            $('#PfCodeAuto').prop('hidden', true);
+            checkCode();
+        });
+        if ($tenant.length) { $tenant.on('change', function () { if (state.codeAuto) { fetchNextCode(); } else { checkCode(); } }); }
+
+        // ---------------------------------------------------- TARİH + BÜTÇE
+        $('.apya-pform-quick').on('click', function () {
+            var d = parseDate($start.val());
+            if (!d) { abp.notify.warn('Önce başlangıç tarihini seçin.'); return; }
+            d.setMonth(d.getMonth() + parseInt($(this).data('months'), 10));
+            $end.val(isoDate(d));
+            refresh();
+            saveDraft();
+        });
+
+        function formatMoney(digits) {
+            return digits ? Number(digits).toLocaleString('tr-TR') : '';
+        }
+
+        $budgetView.on('input', function () {
+            // Yalnız rakam: görünen alan binlik ayraçlı, gönderilen hidden alan ham.
+            var digits = ($(this).val() || '').replace(/\D/g, '');
+            $budget.val(digits || '0');
+            $(this).val(formatMoney(digits));
+            saveDraft();
+        });
+
+        // ---------------------------------------------------- DOSYA
+        $('#PfFile').on('change', function () {
+            var f = this.files && this.files[0];
+            $('#PfFileName').text(f ? f.name : 'Proje dosyası ekleyin (opsiyonel)');
+        });
+
+        // ---------------------------------------------------- DOĞRULAMA + ÖZET
+        function missingFields() {
+            var missing = [];
+            if (!($name.val() || '').trim()) { missing.push('Proje Adı'); }
+            if (!($code.val() || '').trim()) { missing.push('Proje Kodu'); }
+            if (state.codeTaken) { missing.push('Benzersiz kod'); }
+            if (!$start.val() || !$end.val()) { missing.push('Tarih aralığı'); }
+            else if (dayDiff() < 0) { missing.push('Tarih aralığı'); }
+            return missing;
+        }
+
+        function refresh() {
+            var days = dayDiff();
+
+            // Süre rozeti
+            var durText = days === null ? 'Tarih seçin'
+                : days < 0 ? 'Bitiş, başlangıçtan önce'
+                : days < 31 ? days + ' gün'
+                : monthsBetween(parseDate($start.val()), parseDate($end.val()));
+            $('#PfDurationText').text(durText);
+            $('#PfDuration').toggleClass('is-invalid', days !== null && days < 0);
+
+            // Tarih uyarısı: negatif aralık BLOKLAR, aynı gün yalnız teyit ister
+            var $warn = $('#PfDateWarn').removeClass('is-error is-warn');
+            if (days !== null && days < 0) {
+                $warn.addClass('is-error');
+                $('#PfDateWarnIcon').attr('class', 'fa fa-circle-exclamation');
+                $('#PfDateWarnText').text('Bitiş tarihi başlangıçtan önce olamaz.');
+            } else if (days === 0) {
+                $warn.addClass('is-warn');
+                $('#PfDateWarnIcon').attr('class', 'fa fa-triangle-exclamation');
+                $('#PfDateWarnText').text('Başlangıç ve bitiş aynı gün — tek günlük proje mi?');
+            }
+
+            // Ad hatası yalnız bir kez kaydetmeye çalışıldıktan sonra
+            var nameEmpty = !($name.val() || '').trim();
+            $('#PfNameErr').toggleClass('is-shown', state.tried && nameEmpty);
+            $('#PfNameField').toggleClass('is-invalid-field', state.tried && nameEmpty);
+
+            // Alt bardaki canlı sayaç
+            var missing = missingFields(), ok = missing.length === 0;
+            $('#PfValid').toggleClass('is-ok', ok);
+            $('#PfValidIcon').attr('class', ok ? 'fa fa-circle-check' : 'fa fa-circle-exclamation');
+            $('#PfValidText').text(ok ? 'Kaydetmeye hazır'
+                : missing.length + ' zorunlu alan eksik: ' + missing.join(', '));
+
+            // Başlıktaki özet
+            var meta = CAT[currentCat()] || CAT['0'];
+            $('#PfSummary').text(meta.label + ' · ' + (($name.val() || '').trim() || 'adsız proje')
+                + ' · ' + (($code.val() || '').trim() || '—'));
+
+            return ok;
+        }
+
+        // ---------------------------------------------------- TASLAK
+        var DRAFT_FIELDS = ['PfName', 'PfCode', 'PfCustomer', 'PfStart', 'PfEnd',
+            'PfPurpose', 'PfAudience', 'PfActivities', 'PfDescription'];
+
+        var draftTimer = null;
+        function saveDraft() {
+            clearTimeout(draftTimer);
+            draftTimer = setTimeout(function () {
+                try {
+                    var data = { category: currentCat(), budget: $budget.val() };
+                    DRAFT_FIELDS.forEach(function (id) { data[id] = $('#' + id).val() || ''; });
+                    window.localStorage.setItem(DRAFT_KEY, JSON.stringify(data));
+                    $('#PfSaved').addClass('is-shown');
+                } catch (e) { /* özel kip / kota */ }
+            }, 500);
+        }
+
+        function readDraft() {
+            try {
+                var raw = window.localStorage.getItem(DRAFT_KEY);
+                return raw ? JSON.parse(raw) : null;
+            } catch (e) { return null; }
+        }
+
+        function clearDraft() {
+            try { window.localStorage.removeItem(DRAFT_KEY); } catch (e) { /* yoksay */ }
+        }
+
+        $('#PfDraftRestore').on('click', function () {
+            var d = readDraft();
+            $('#PfDraftBanner').removeClass('is-shown');
+            if (!d) { return; }
+            DRAFT_FIELDS.forEach(function (id) { if (d[id] !== undefined) { $('#' + id).val(d[id]); } });
+            $cat.val(d.category || '0');
+            $budget.val(d.budget || '0');
+            $budgetView.val(formatMoney((d.budget || '').replace(/\D/g, '')));
+            applyCategory();
+            checkCode();
+            refresh();
+        });
+
+        $('#PfDraftDiscard').on('click', function () {
+            clearDraft();
+            $('#PfDraftBanner').removeClass('is-shown');
+        });
+
+        // ---------------------------------------------------- GÖNDERİM
+        $('#PfSubmitAndTasks').on('click', function () { $('#PfGoToTasks').val('true'); });
+        $('#PfSubmit').on('click', function () { $('#PfGoToTasks').val('false'); });
+
+        $form.on('submit', function (e) {
+            state.tried = true;
+            if (!refresh()) {
+                e.preventDefault();
+                e.stopImmediatePropagation();
+                abp.notify.warn('Eksik zorunlu alanlar var.');
+                return false;
+            }
+            // Kayıt başarılıysa taslak durmasın; hata olursa modal açık kalır ve
+            // kullanıcı yazdıklarını kaybetmesin diye yeniden kaydedilir.
+            clearDraft();
+        });
+
+        // ---------------------------------------------------- AÇILIŞ
+        $form.on('input change', 'input, select, textarea', function () {
+            if (this.id !== 'PfBudgetDisplay' && this.id !== 'PfCode') { saveDraft(); }
+            refresh();
+        });
+
+        applyCategory();
+        if (readDraft()) { $('#PfDraftBanner').addClass('is-shown'); }
+        fetchNextCode().then(refresh, refresh);
+        refresh();
+    })();
+</script>
