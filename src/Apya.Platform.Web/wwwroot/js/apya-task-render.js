@@ -88,7 +88,7 @@
     // TaskStatus enum: Cancelled=0, Todo=1, InProgress=2, InReview=3, Done=4.
     var STATUS_MAP = {
         0: { tone: 'negative', text: 'İptal' },
-        1: { tone: 'neutral', text: 'Bekliyor' },
+        1: { tone: 'neutral', text: 'Yapılacak' },
         2: { tone: 'warning', text: 'Sürüyor' },
         3: { tone: 'brand', text: 'Testte' },
         4: { tone: 'positive', text: 'Tamamlandı' }

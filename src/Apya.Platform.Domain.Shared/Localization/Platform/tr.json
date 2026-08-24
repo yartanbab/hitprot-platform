@@ -317,7 +317,7 @@
         "Notification:TaskDueSoon:Body": "\"{0}\" görevinin bitiş süresine 48 saatten az kaldı.",
         "Notification:DocumentExpiring:Title": "Son Tarihi Yaklaşan Belge",
         "Notification:DocumentExpiring:Body": "\"{0}\" belgesinin son tarihine 7 günden az kaldı.",
-        "Tasks:Status:Todo": "Bekliyor",
+        "Tasks:Status:Todo": "Yapılacak",
         "Tasks:Status:InProgress": "Sürüyor",
         "Tasks:Status:InReview": "Testte",
         "Tasks:Status:Done": "Tamamlandı",

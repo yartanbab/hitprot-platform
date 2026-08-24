@@ -37,7 +37,7 @@ $(function () {
 
     // Sözcükler tr.json'daki Tasks:Status:* ile birebir — durum çipi, filtre
     // chip'i ve toplu işlem menüsü aynı durumu aynı adla anmalı.
-    var STATUS_LABELS = { '': 'tümü', '0': 'İptal', '1': 'Bekliyor', '2': 'Sürüyor', '3': 'Testte', '4': 'Tamamlandı' };
+    var STATUS_LABELS = { '': 'tümü', '0': 'İptal', '1': 'Yapılacak', '2': 'Sürüyor', '3': 'Testte', '4': 'Tamamlandı' };
     var PRIORITY_LABELS = { '': 'tümü', '1': 'Düşük', '2': 'Orta', '3': 'Yüksek', '4': 'Kritik' };
 
     // ─── Filtre state'i ────────────────────────────────────────────────────

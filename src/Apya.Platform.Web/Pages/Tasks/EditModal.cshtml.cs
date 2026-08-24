@@ -73,7 +73,7 @@ namespace Apya.Platform.Web.Pages.Tasks
             StatusOrColumnList = new List<SelectListItem>();
 
             // Sistem durumları her zaman (seed durumundan bağımsız, board'la aynı isimler)
-            foreach (var (label, sv) in new[] { ("Bekliyor", 1), ("Sürüyor", 2), ("Testte", 3), ("Tamamlandı", 4) })
+            foreach (var (label, sv) in new[] { ("Yapılacak", 1), ("Sürüyor", 2), ("Testte", 3), ("Tamamlandı", 4) })
             {
                 StatusOrColumnList.Add(new SelectListItem(label, "s:" + sv, selected == "s:" + sv));
             }

@@ -39,7 +39,7 @@ export function SubtasksTab({ taskId, task, onOpenSubtask }) {
         }
     };
 
-    /** Checkbox: Tamamlandı(4) ↔ Bekliyor(1). Satır tıklamasını tetiklemez. */
+    /** Checkbox: Tamamlandı(4) ↔ Yapılacak(1). Satır tıklamasını tetiklemez. */
     const toggleDone = async (e, sub) => {
         e.stopPropagation();
         try {

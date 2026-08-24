@@ -61,7 +61,7 @@ describe('statusChip', () => {
     it('özel kolon adı varsa durum yerine onu gösterir (kanban paritesi)', () => {
         const html = apyaTask.statusChip(1, 'İncelemede');
         expect(html).toContain('İncelemede');
-        expect(html).not.toContain('Bekliyor');
+        expect(html).not.toContain('Yapılacak');
     });
 });
 

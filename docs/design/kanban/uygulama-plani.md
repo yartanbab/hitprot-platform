@@ -89,10 +89,26 @@ sistem kolonuna `data-wip-limit` yazmıyor. API'den WIP verilse bile görünmez.
 
 ---
 
-## 2. Faz 1 — Adlandırmayı birleştir: "Yapılacak" (migration yok · 1 PR · küçük)
+## 2. Faz 1 — Adlandırmayı birleştir: "Yapılacak" (migration yok · 1 PR · küçük) — ✅ TAMAMLANDI (2026-08-24)
 
 Seed kolonu "Yapılacak", durum etiketi "Bekliyor" diyor. Karar: **her yerde
 "Yapılacak"**; seed adı zaten doğru.
+
+> **Sonuç:** aşağıdaki 9 dosyaya ek olarak alt görev sekmesinde iki yer daha
+> çıktı (`SubtasksTab.jsx` yorumu + testinin başlığı) → toplam **12 kaynak dosya**.
+> `npm run build` çalıştırıldı; `wwwroot/js/task-detail.js` içinde "Bekliyor" 0,
+> "Yapılacak" 2. JS 286/286, .NET 219/219 (82 Web + 137 EF Core), build 0 hata.
+>
+> İki yan bulgu:
+> 1. Build ~30 bundle dosyasını satır sonu yüzünden "hayalet" değiştirdi
+>    (içerik diff'i boş) → `rm` + `git checkout --` ile geri alındı.
+> 2. **Commit'li `style.css` bayatmış**: `SetupWizard.jsx:57`'deki
+>    `max-h-[88dvh]` sınıfı CSS'te yoktu. Yeniden build zorunlu olduğu için
+>    düzeltme bu commit'e dâhil — Takvim kurulum sihirbazının yükseklik sınırı
+>    böylece geri geliyor.
+> 3. Worktree'de `wwwroot/libs` kurulu olmadığı için Web smoke testlerinin 10'u
+>    `AbpMvcLibsService.CheckLibs`'te düşüyordu; `abp install-libs` + `npm ci`
+>    sonrası 82/82 yeşil. (Kod değişikliğiyle ilgisi yoktu.)
 
 ⚠ PROMPT'tan sapma: PROMPT 3 dosya sayıyor, gerçek yüzey **9 dosya**:
 
@@ -319,6 +335,6 @@ cd src/Apya.Platform.Web/wwwroot/dynamic-assets && npm ci
 > frontend testleri toptan patlıyor). `dynamic-assets/yarn.lock`'taki değişikliği
 > **commit etme**. Build öncesi çalışan Web uygulamasını durdur (MSB3021).
 
-**Faz sırası:** ~~0~~ → 1 → 2a → 2b → 3 → 4 → 5 → 6 → 7. Faz 0 ve 1 birbirinden
+**Faz sırası:** ~~0~~ → ~~1~~ → 2a → 2b → 3 → 4 → 5 → 6 → 7. Faz 0 ve 1 birbirinden
 bağımsız; 2'den sonrası sıralı. Migration yalnız Faz 6'da.
-**Faz 0 tamamlandı (2026-08-24); sıradaki: Faz 1 — adlandırmayı birleştir.**
+**Faz 0 + Faz 1 tamamlandı (2026-08-24); sıradaki: Faz 2a — kolonları DB'den render et.**

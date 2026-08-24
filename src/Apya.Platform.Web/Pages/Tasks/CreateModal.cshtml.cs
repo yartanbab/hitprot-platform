@@ -85,13 +85,13 @@ public class CreateModalModel : PlatformPageModel
     }
 
     // Proje verilmişse kanban kolonlarını (sistem = s:<status>, özel = c:<guid>) + İptal,
-    // yoksa sistem durumlarını listeler. Varsayılan seçili: Bekliyor.
+    // yoksa sistem durumlarını listeler. Varsayılan seçili: Yapılacak.
     private async System.Threading.Tasks.Task BuildStatusOrColumnListAsync(Guid? projectId)
     {
         StatusOrColumnList = new List<SelectListItem>();
 
-        // Sistem durumları her zaman (varsayılan seçili: Bekliyor)
-        foreach (var (label, sv) in new[] { ("Bekliyor", 1), ("Sürüyor", 2), ("Testte", 3), ("Tamamlandı", 4) })
+        // Sistem durumları her zaman (varsayılan seçili: Yapılacak)
+        foreach (var (label, sv) in new[] { ("Yapılacak", 1), ("Sürüyor", 2), ("Testte", 3), ("Tamamlandı", 4) })
         {
             StatusOrColumnList.Add(new SelectListItem(label, "s:" + sv, sv == 1));
         }
