@@ -3679,6 +3679,29 @@ i.apya-priority-dot {
     border-bottom-color: var(--apya-border-subtle);
 }
 
+/* Sekme etiketleri — rengi AÇIKÇA token'a bağla.
+   LeptonX `.card-body`ye sabit #686B6E basıyor ve koyu temada DÖNDÜRMÜYOR;
+   nav-tabs bu rengi miras alınca iki şey birden bozuluyordu: kontrast 3,43:1'e
+   düşüyor (AA eşiği 4,5) ve aktif/pasif ayrımı tamamen kayboluyor — beş sekme de
+   aynı renkte basılıyordu. Ölçüm (#141416 zemin): pasif 7,18:1, aktif 16,74:1.
+   Aktif kural .active ile yazıldı ki tema kendi `.nav-link.active` rengini
+   geri getirmesin. */
+.apya-settings-tabs .nav-tabs .nav-link {
+    color: var(--apya-text-secondary);
+}
+.apya-settings-tabs .nav-tabs .nav-link:hover,
+.apya-settings-tabs .nav-tabs .nav-link:focus-visible {
+    color: var(--apya-text-primary);
+}
+/* Aktif göstergesi — tema alt çizgiyi rgba(104,107,110,0.08) ile basıyor, yani
+   pratikte görünmüyor (2,4px ama %8 saydam). Rengi accent'e bağla ki aktif sekme
+   metin renginin yanında ikinci bir işaretle de belli olsun. Genişliğe
+   dokunulmuyor; temanın 2,4px'i korunuyor. */
+.apya-settings-tabs .nav-tabs .nav-link.active {
+    color: var(--apya-text-primary);
+    border-bottom-color: var(--apya-accent-500);
+}
+
 /* Rozetler — ayarın KAPSAMINI ve KAYDETME MODELİNİ ayırt eder. Aynı görünen iki
    kontrolden biri seçilir seçilmez localStorage'a yazıyor, diğeri Kaydet
    bekliyordu; ekranda hiçbir işaret yoktu. */
