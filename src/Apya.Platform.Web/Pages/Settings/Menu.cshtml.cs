@@ -127,6 +127,17 @@ public class MenuModel : AbpPageModel
         // gelen yalnızca YER bilgisidir, her hedef ayrıca izinden geçer.
         var layout = MenuLayout.Parse(LayoutJson);
 
+        // Parse bozuk/şişirilmiş yükü BOŞ düzene düşürüyor. Bunu "kullanıcı
+        // her şeyi boşalttı" sanıp kaydedersek kayıtlı düzeni SİLERİZ, üstelik
+        // ekranda "kaydedildi" yazarız. Gelen yük doluysa ama çözülemiyorsa
+        // kaydetme iptal edilir ve ekran hatayla yeniden basılır.
+        if (layout.IsEmpty && !string.IsNullOrWhiteSpace(LayoutJson))
+        {
+            ModelState.AddModelError(string.Empty, L["MenuLayout:SaveFailed"]);
+            await OnGetAsync();
+            return Page();
+        }
+
         await _settingManager.SetForCurrentUserAsync(
             PlatformSettings.Shell.MenuLayout,
             layout.IsEmpty ? null : layout.Serialize());

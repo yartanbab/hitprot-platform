@@ -161,4 +161,31 @@ public class MenuLayout_Tests
         names.ShouldBeUnique();
         names.ShouldAllBe(n => !n.Contains('_'));
     }
+
+    /// <summary>
+    /// Yazma ve okuma yolu boyut sınırında ANLAŞMALI. Normalize'ın izin verdiği
+    /// üst sınırlar ham uzunluk sınırından çok daha büyük bir JSON üretebiliyor;
+    /// Serialize kırpmasaydı ayar kaydedilir, sonraki Parse onu reddeder ve
+    /// kullanıcının düzeni sessizce kaybolurdu.
+    /// </summary>
+    [Fact]
+    public void Serialize_Output_IsAlwaysAcceptedByParse()
+    {
+        var layout = new MenuLayout();
+        for (var g = 0; g < PlatformSettingDefaults.ShellMenuLayoutGroupMax; g++)
+        {
+            var children = new List<string>();
+            for (var c = 0; c < PlatformSettingDefaults.ShellMenuLayoutListMax; c++)
+            {
+                children.Add("Apya.G" + g + ".Child" + c + new string('x', 60));
+            }
+            layout.Items["Apya.Group" + g] = children;
+        }
+
+        var json = layout.Serialize();
+
+        json.Length.ShouldBeLessThanOrEqualTo(PlatformSettingDefaults.ShellMenuLayoutMaxChars);
+        // Asıl sözleşme: yazılan değer geri okunabilmeli (boş düzene düşmemeli).
+        MenuLayout.Parse(json).IsEmpty.ShouldBeFalse();
+    }
 }

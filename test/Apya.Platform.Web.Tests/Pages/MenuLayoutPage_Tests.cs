@@ -68,6 +68,25 @@ public class MenuLayoutPage_Tests : PlatformWebTestBase
 
     // ── Varsayılan (düzen yok) ───────────────────────────────────────────────
 
+    /// <summary>
+    /// Düzen kaydetmemiş kullanıcıda bölüm sırası KODDAKİ order: değerleridir.
+    /// Havuz kurulum sırasını esas aldığı için ağaç Order'a göre sıralanmazsa
+    /// "Raporlar" (order 5) "İçerik"in (order 6) arkasına düşer — kullanıcı
+    /// hiçbir şey yapmadan menüsünün sırası değişir.
+    /// </summary>
+    [Fact]
+    public async Task Duzen_yokken_bolum_sirasi_koddaki_order_degerlerine_uyar()
+    {
+        var sidebar = SidebarUrls(await GetResponseAsStringAsync("/Settings"));
+
+        var reports = System.Array.IndexOf(sidebar, "/Reports");
+        var documents = System.Array.IndexOf(sidebar, "/Documents");
+
+        reports.ShouldBeGreaterThan(-1);
+        documents.ShouldBeGreaterThan(-1);
+        reports.ShouldBeLessThan(documents);
+    }
+
     [Fact]
     public async Task Duzen_yokken_yonetim_hedefleri_Ayarlar_sayfasinda_durur()
     {

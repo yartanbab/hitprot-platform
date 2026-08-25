@@ -128,6 +128,7 @@
     "MenuLayout:Save": "Save",
     "MenuLayout:Back": "Back to Settings",
     "MenuLayout:Reset": "Reset to default",
+    "MenuLayout:SaveFailed": "Menu layout could not be saved — the submitted layout was unreadable. Your current layout is unchanged; reload the page and try again.",
     "MenuLayout:Saved": "Menu layout saved.",
     "Settings:TaskDetailUi.V1": "Old panel",
     "Settings:TaskDetailUi.V1.Desc": "Right-side panel; includes Finance, Dependencies, History and comments.",

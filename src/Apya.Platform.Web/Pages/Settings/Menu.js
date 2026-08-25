@@ -39,8 +39,13 @@ $(function () {
             function (li) { return li.classList.contains('apya-navedit-item'); });
     }
 
+    // Kilitli satır ("Ayarlar") düzenin parçası DEĞİL: sunucudaki Place guard'ı
+    // onu zaten yok sayıyor, ama yüke koyarsak liste kotasından (60) yer harcar
+    // ve kalabalık bir kenar çubuğunda son gerçek bölüm sessizce kırpılır.
     function namesOf(list) {
-        return itemsOf(list).map(function (li) { return li.getAttribute('data-nav-node'); });
+        return itemsOf(list)
+            .filter(function (li) { return li.getAttribute('data-nav-locked') !== 'true'; })
+            .map(function (li) { return li.getAttribute('data-nav-node'); });
     }
 
     function allLists() {

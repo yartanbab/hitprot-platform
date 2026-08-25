@@ -70,9 +70,30 @@ public class MenuLayout
         return parsed == null ? new MenuLayout() : Normalize(parsed);
     }
 
+    /// <summary>
+    /// Normalize edip JSON'a çevirir ve sonucun <see cref="Parse"/> tarafından
+    /// KABUL EDİLECEĞİNİ garanti eder.
+    ///
+    /// Normalize'ın izin verdiği üst sınırlar (60 ad × 128 karakter × 40 grup)
+    /// ham uzunluk sınırından çok daha büyük bir JSON üretebiliyor. Kırpma
+    /// burada yapılmazsa ayar sorunsuz KAYDEDİLİR, sonraki okumada Parse
+    /// uzunluk kontrolünde reddeder ve kullanıcının düzeni sessizce kaybolur.
+    /// En ucuz kırpma sondaki gruplar: 1. seviye sıralama (sections /
+    /// settingsOrder) korunur, en içteki gruplar koddaki yerine döner.
+    /// </summary>
     public string Serialize()
     {
-        return JsonSerializer.Serialize(Normalize(this), SerializerOptions);
+        var normalized = Normalize(this);
+        var json = JsonSerializer.Serialize(normalized, SerializerOptions);
+
+        while (json.Length > PlatformSettingDefaults.ShellMenuLayoutMaxChars &&
+               normalized.Items.Count > 0)
+        {
+            normalized.Items.Remove(normalized.Items.Keys.Last());
+            json = JsonSerializer.Serialize(normalized, SerializerOptions);
+        }
+
+        return json;
     }
 
     /// <summary>

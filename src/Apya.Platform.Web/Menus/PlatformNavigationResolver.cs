@@ -67,7 +67,7 @@ public class PlatformNavigationResolver : IScopedDependency
     private readonly ICurrentTenant _currentTenant;
     private readonly ISettingProvider _settingProvider;
 
-    private Task<NavResolution>? _cached;
+    private NavResolution? _cached;
 
     public PlatformNavigationResolver(
         IStringLocalizer<PlatformResource> l,
@@ -83,9 +83,16 @@ public class PlatformNavigationResolver : IScopedDependency
         _settingProvider = settingProvider;
     }
 
-    public Task<NavResolution> ResolveAsync()
+    /// <summary>
+    /// İstek başına bir kez çözer. Sonuç YALNIZ BAŞARIDA saklanır: hatalı bir
+    /// Task önbelleğe alınsaydı geçici bir izin/ayar hatası aynı isteğin üç
+    /// tüketicisine de (kenar çubuğu, Ayarlar sayfası, tema başlığı) yeniden
+    /// fırlatılır ve sayfa tamamen çökerdi — oysa modülün geri kalanı
+    /// "bozuksa varsayılana düş" ilkesiyle yazılmış.
+    /// </summary>
+    public async Task<NavResolution> ResolveAsync()
     {
-        return _cached ??= ResolveCoreAsync();
+        return _cached ??= await ResolveCoreAsync();
     }
 
     /// <summary>Havuzdaki bir düğüm: öğenin kendisi + koddaki yeri.</summary>
@@ -143,12 +150,19 @@ public class PlatformNavigationResolver : IScopedDependency
                 var children = item.Items.ToList();
                 item.Items.Clear();
 
-                pool[item.Name] = new PoolEntry
+                // Ad havuzun ANAHTARI: aynı adla ikinci bir öğe gelirse ilkini
+                // ezmek onu menüden tamamen düşürür ve çocuklarını yanlış
+                // kategoriye iliştirir. İlk kayıt korunur; çocuklar yine aynı
+                // ad altında toplanır (mevcut öğeye eklenirler).
+                if (!pool.ContainsKey(item.Name))
                 {
-                    Item = item,
-                    DefaultParent = parent,
-                    DefaultIndex = sequence++
-                };
+                    pool[item.Name] = new PoolEntry
+                    {
+                        Item = item,
+                        DefaultParent = parent,
+                        DefaultIndex = sequence++
+                    };
+                }
 
                 Collect(children, item.Name);
             }
@@ -557,5 +571,11 @@ public class PlatformNavigationResolver : IScopedDependency
             SettingsItemName, l["Menu:Settings"],
             icon: "fa fa-gear", url: "/Settings", order: 99));
 
-        return roots;
+        // Order'a göre sırala. Bloklar kodda konu konu yazılmış (Raporlar,
+        // AI Merkezi'nden SONRA geliyor) ama görünen sırayı `order:` değerleri
+        // anlatır. Eskiden menüyü ABP Order'a göre diziyordu; havuz artık
+        // ekleme sırasını (DefaultIndex) esas aldığı için sıralama BURADA
+        // yapılmazsa `order:` argümanları sessizce ölür ve "Raporlar" 5.
+        // sıradan 7. sıraya kayar.
+        return roots.OrderBy(x => x.Order).ToList();
     }}

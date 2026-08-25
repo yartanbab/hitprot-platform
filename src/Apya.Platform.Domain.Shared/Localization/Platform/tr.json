@@ -636,6 +636,7 @@
         "MenuLayout:Save": "Kaydet",
         "MenuLayout:Back": "Ayarlar'a dön",
         "MenuLayout:Reset": "Varsayılana dön",
+        "MenuLayout:SaveFailed": "Menü düzeni kaydedilemedi — gönderilen düzen okunamadı. Mevcut düzeniniz değişmedi; sayfayı yenileyip tekrar deneyin.",
         "MenuLayout:Saved": "Menü düzeni kaydedildi.",
         "Settings:TaskDetailUi.V1": "Eski panel",
         "Settings:TaskDetailUi.V1.Desc": "Sağdan açılan panel; Finans, Bağımlılıklar, Geçmiş ve yorumlar dahil.",
