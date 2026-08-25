@@ -40,6 +40,7 @@ namespace Apya.Platform.Tasks
         private readonly IRepository<TaskFavorite, Guid> _favoriteRepository;
         private readonly IRepository<TaskWatcher, Guid> _watcherRepository;
         private readonly TaskManager _taskManager;
+        private readonly Apya.Platform.IssueTasks.IssueTaskManager _issueTaskManager;
         private readonly IRepository<Expense, Guid> _expenseRepository;
         private readonly IRepository<IncomeEntry, Guid> _incomeRepository;
         private readonly IRepository<Apya.Platform.Projects.Project, Guid> _projectLookupRepository;
@@ -61,6 +62,7 @@ namespace Apya.Platform.Tasks
             IRepository<TaskFavorite, Guid> favoriteRepository,
             IRepository<TaskWatcher, Guid> watcherRepository,
             TaskManager taskManager,
+            Apya.Platform.IssueTasks.IssueTaskManager issueTaskManager,
             IRepository<Expense, Guid> expenseRepository,
             IRepository<IncomeEntry, Guid> incomeRepository,
             IRepository<Apya.Platform.Projects.Project, Guid> projectLookupRepository,
@@ -81,6 +83,7 @@ namespace Apya.Platform.Tasks
             _favoriteRepository    = favoriteRepository;
             _watcherRepository     = watcherRepository;
             _taskManager           = taskManager;
+            _issueTaskManager      = issueTaskManager;
             _expenseRepository     = expenseRepository;
             _incomeRepository      = incomeRepository;
             _projectLookupRepository = projectLookupRepository;
@@ -840,6 +843,10 @@ namespace Apya.Platform.Tasks
 
             // Bağımlılıkları da temizleyelim (APYA-30)
             await _dependencyRepository.DeleteDirectAsync(x => x.TaskId == id || x.PredecessorTaskId == id);
+
+            // Sinyal köprüsünün bağı da gitmeli: bağ soft-delete DEĞİL ve (SourceType,
+            // SourceKey) unique — kalırsa kaynak bir daha göreve dönüştürülemezdi.
+            await _issueTaskManager.RemoveLinksOfTaskAsync(id);
 
             await base.DeleteAsync(id);
         }

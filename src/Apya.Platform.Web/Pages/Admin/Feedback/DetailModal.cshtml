@@ -22,6 +22,13 @@
         </ul>
         <div class="tab-content">
         <div class="tab-pane fade show active" id="fb-tab-detail-@f.Id">
+        @if (Model.IssueTaskLink is not null)
+        {
+            <div class="d-flex flex-wrap gap-2 align-items-center mb-3">
+                <partial name="_IssueTaskLinkBadge" model="Model.IssueTaskLink" />
+            </div>
+        }
+
         <dl class="row mb-3">
             <dt class="col-sm-3">Numara</dt>
             <dd class="col-sm-9"><code>@f.FeedbackNumber</code></dd>
@@ -252,6 +259,15 @@
         {
             <button type="button" class="btn btn-outline-danger btn-sm me-auto detail-delete-btn" data-id="@f.Id">
                 <i class="fa fa-trash me-1"></i> Sil
+            </button>
+        }
+        @if (Model.CanCreateIssueTask && Model.IssueTaskLink is null)
+        {
+            @* Detay kapanıp dönüştürme modalı açılır — iç içe modal yığını kurmuyoruz. *@
+            <button type="button" class="btn btn-sm btn-outline-primary issue-task-create"
+                    data-source-type="@((int)Apya.Platform.IssueTasks.IssueSourceType.Feedback)"
+                    data-source-id="@f.Id">
+                <i class="fa fa-list-check me-1"></i>Göreve Dönüştür
             </button>
         }
         <abp-button text="Kapat" button-type="Secondary" data-bs-dismiss="modal"></abp-button>

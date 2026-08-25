@@ -1,5 +1,6 @@
 @page
 @using Apya.Platform.Feedbacks
+@using Apya.Platform.IssueTasks
 @using Apya.Platform.Telemetry
 @using Apya.Platform.Web.Feedbacks
 @model Apya.Platform.Web.Pages.Admin.Feedback.SettingsModel
@@ -115,6 +116,95 @@
             </abp-card>
         </div>
     </div>
+
+    @* Köprü ayarları ayrı izne bağlı — yetkisi olmayana form alanları hiç gönderilmez. *@
+    @if (Model.CanManageIssueTasks)
+    {
+    <div class="row g-3 mt-0">
+        <div class="col-12">
+            <abp-card>
+                <abp-card-header><abp-card-title>Göreve Dönüştürme</abp-card-title></abp-card-header>
+                <abp-card-body>
+                    <p class="text-muted text-sm">
+                        Geri bildirimler ve hatalar host tarafında bir projede göreve dönüştürülür.
+                        Hedef proje seçilmeden ne elle ne otomatik dönüştürme çalışır.
+                    </p>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label" for="IssueTasks_TargetProjectId">Görevlerin açılacağı proje</label>
+                            <select class="form-select" id="IssueTasks_TargetProjectId"
+                                    asp-for="IssueTasks.TargetProjectId" asp-items="Model.ProjectList"></select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label" for="IssueTasks_DefaultAssigneeId">Varsayılan sorumlu</label>
+                            <select class="form-select" id="IssueTasks_DefaultAssigneeId"
+                                    asp-for="IssueTasks.DefaultAssigneeId" asp-items="Model.AssigneeList"></select>
+                            <div class="form-text">Otomatik açılan görevler bu kişiye atanır.</div>
+                        </div>
+                    </div>
+
+                    <div class="form-check form-switch mb-3">
+                        <input class="form-check-input" type="checkbox" role="switch"
+                               id="IssueTasks_CloseSourceOnTaskDone" asp-for="IssueTasks.CloseSourceOnTaskDone" />
+                        <label class="form-check-label" for="IssueTasks_CloseSourceOnTaskDone">
+                            Görev tamamlanınca kaynağı kapat
+                        </label>
+                        <div class="form-text">
+                            Görev "Tamamlandı" olduğunda bağlı geri bildirim kapatılır ve gönderen kullanıcı
+                            bilgilendirilir; bağlı istemci hatası çözüldü işaretlenir.
+                        </div>
+                    </div>
+
+                    <hr />
+
+                    <div class="form-check form-switch mb-3">
+                        <input class="form-check-input" type="checkbox" role="switch"
+                               id="IssueTasks_AutoCreateEnabled" asp-for="IssueTasks.AutoCreateEnabled" />
+                        <label class="form-check-label" for="IssueTasks_AutoCreateEnabled">
+                            Eşiği geçen kayıtlar için görev otomatik açılsın
+                        </label>
+                        <div class="form-text">
+                            Saatte bir çalışır. Eşikler düşük ayarlanırsa görev listesi hızla dolar;
+                            tur başına en fazla @IssueTaskConsts.MaxAutoTasksPerRun görev açılır.
+                        </div>
+                    </div>
+
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label class="form-label" for="IssueTasks_FeedbackMinPriority">
+                                En düşük geri bildirim önceliği
+                            </label>
+                            <select class="form-select" id="IssueTasks_FeedbackMinPriority"
+                                    asp-for="IssueTasks.FeedbackMinPriority"
+                                    asp-items="Html.GetEnumSelectList<FeedbackPriority>()"></select>
+                            <div class="form-text">Bu ve üstü öncelikteki açık kayıtlar göreve dönüşür.</div>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label" for="IssueTasks_ClientErrorThreshold">
+                                İstemci hatası oluşum eşiği
+                            </label>
+                            <input type="number" class="form-control" id="IssueTasks_ClientErrorThreshold"
+                                   asp-for="IssueTasks.ClientErrorThreshold"
+                                   min="@IssueTaskConsts.MinOccurrenceThreshold"
+                                   max="@IssueTaskConsts.MaxOccurrenceThreshold" />
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label" for="IssueTasks_ServerErrorThreshold">
+                                Sunucu hatası tekrar eşiği
+                            </label>
+                            <input type="number" class="form-control" id="IssueTasks_ServerErrorThreshold"
+                                   asp-for="IssueTasks.ServerErrorThreshold"
+                                   min="@IssueTaskConsts.MinOccurrenceThreshold"
+                                   max="@IssueTaskConsts.MaxOccurrenceThreshold" />
+                            <div class="form-text">Son 7 gündeki tekrar sayısı.</div>
+                        </div>
+                    </div>
+                </abp-card-body>
+            </abp-card>
+        </div>
+    </div>
+    }
 
     <div class="mt-3">
         <button type="submit" class="btn btn-primary">

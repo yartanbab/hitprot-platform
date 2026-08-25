@@ -13,6 +13,13 @@
             <span class="text-muted">· son @Model.WindowDays gün</span>
         </p>
 
+        @if (Model.IssueTaskLink is not null)
+        {
+            <div class="d-flex flex-wrap gap-2 align-items-center mb-3">
+                <partial name="_IssueTaskLinkBadge" model="Model.IssueTaskLink" />
+            </div>
+        }
+
         @if (Model.Errors.Count == 0)
         {
             <partial name="_EmptyState" model='new EmptyStateModel { Icon = "fa-thumbs-up", Title = "Kayıt bulunamadı.", Description = "Bu adres için seçili pencerede audit log hatası yok." }' />
@@ -65,6 +72,16 @@
         }
     </abp-modal-body>
     <abp-modal-footer>
+        @if (Model.CanCreateIssueTask && Model.IssueTaskLink is null && Model.Errors.Count > 0)
+        {
+            @* Detay kapanıp dönüştürme modalı açılır — iç içe modal yığını kurmuyoruz. *@
+            <button type="button" class="btn btn-sm btn-outline-primary issue-task-create"
+                    data-source-type="@((int)Apya.Platform.IssueTasks.IssueSourceType.ServerError)"
+                    data-source-url="@Model.Url"
+                    data-window-days="@Model.WindowDays">
+                <i class="fa fa-list-check me-1"></i>Göreve Dönüştür
+            </button>
+        }
         <abp-button text="Kapat" button-type="Secondary" data-bs-dismiss="modal"></abp-button>
     </abp-modal-footer>
 </abp-modal>

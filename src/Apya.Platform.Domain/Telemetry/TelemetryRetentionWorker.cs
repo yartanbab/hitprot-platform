@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using System.Threading.Tasks;
+using Apya.Platform.IssueTasks;
 using Apya.Platform.Settings;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -45,6 +46,7 @@ public class TelemetryRetentionWorker : AsyncPeriodicBackgroundWorkerBase
         var asyncExecuter = workerContext.ServiceProvider.GetRequiredService<IAsyncQueryableExecuter>();
         var auditLogRepository = workerContext.ServiceProvider.GetRequiredService<IRepository<AuditLog, Guid>>();
         var clientErrorRepository = workerContext.ServiceProvider.GetRequiredService<IRepository<ClientError, Guid>>();
+        var linkRepository = workerContext.ServiceProvider.GetRequiredService<IRepository<IssueTaskLink, Guid>>();
 
         // KRİTİK: setting .WithProviders(Global) ile kısıtlı → DefaultValueSettingValueProvider
         // zincirden çıkarılıyor, GetAsync<T>'nin kendi varsayılanı (0) kullanılır. Açık varsayılan
@@ -62,7 +64,8 @@ public class TelemetryRetentionWorker : AsyncPeriodicBackgroundWorkerBase
         using (dataFilter.Disable())
         {
             var auditLogsDeleted = await DeleteAuditLogsInBatchesAsync(auditLogRepository, asyncExecuter, cutoff);
-            var clientErrorsDeleted = await DeleteClientErrorsInBatchesAsync(clientErrorRepository, asyncExecuter, cutoff);
+            var clientErrorsDeleted = await DeleteClientErrorsInBatchesAsync(
+                clientErrorRepository, linkRepository, asyncExecuter, cutoff);
 
             Logger.LogInformation(
                 "TelemetryRetentionWorker tamamlandı: {AuditLogsDeleted} audit log, {ClientErrorsDeleted} istemci hatası silindi.",
@@ -107,17 +110,25 @@ public class TelemetryRetentionWorker : AsyncPeriodicBackgroundWorkerBase
         return totalDeleted;
     }
 
+    /// <summary>
+    /// Göreve dönüştürülmüş hatalar SİLİNMEZ: bağ kaydı görevden kaynağa gitmeyi sağlar,
+    /// kaynak silinirse "kaynağa git" kırılır. Bağ kaldırılınca kayıt yine temizlenir.
+    /// </summary>
     private static async Task<int> DeleteClientErrorsInBatchesAsync(
         IRepository<ClientError, Guid> repository,
+        IRepository<IssueTaskLink, Guid> linkRepository,
         IAsyncQueryableExecuter asyncExecuter,
         DateTime cutoff)
     {
         var totalDeleted = 0;
+        var linkQuery = (await linkRepository.GetQueryableAsync())
+            .Where(l => l.SourceType == IssueSourceType.ClientError && l.SourceId != null);
 
         while (true)
         {
             var query = (await repository.GetQueryableAsync())
                 .Where(e => e.LastSeenAt < cutoff)
+                .Where(e => !linkQuery.Any(l => l.SourceId == e.Id))
                 .OrderBy(e => e.Id)
                 .Select(e => e.Id)
                 .Take(TelemetryConsts.RetentionBatchSize);

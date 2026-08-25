@@ -1,0 +1,79 @@
+@page
+@using Volo.Abp.AspNetCore.Mvc.UI.Bootstrap.TagHelpers.Modal
+@using Apya.Platform.Web.Pages.Admin.IssueTasks
+@model Apya.Platform.Web.Pages.Admin.IssueTasks.CreateTaskModalModel
+@{
+    Layout = null;
+}
+
+<form asp-page="/Admin/IssueTasks/CreateTaskModal" method="post">
+    <input type="hidden" asp-for="SourceType" />
+    <input type="hidden" asp-for="SourceId" />
+    <input type="hidden" asp-for="SourceUrl" />
+    <input type="hidden" asp-for="WindowDays" />
+
+    <abp-modal size="Large">
+        <abp-modal-header title="Göreve Dönüştür"></abp-modal-header>
+
+        <abp-modal-body class="p-4">
+            @* Neyi dönüştürdüğünü göster: yanlış kayıttan görev açmak sessiz bir hatadır. *@
+            <div class="alert alert-light border shadow-sm mb-4 rounded-3">
+                <div class="text-uppercase text-muted" style="font-size:.7rem;letter-spacing:.04em;">
+                    @CreateTaskModalModel.SourceTypeLabel(Model.SourceType)
+                </div>
+                <div style="word-break:break-word;">@Model.SourceSummary</div>
+            </div>
+
+            @if (!Model.Target.IsReady && Model.Input.ProjectId == null)
+            {
+                <div class="alert alert-warning">
+                    Görevlerin açılacağı proje henüz seçilmemiş.
+                    <a href="/Admin/Feedback/Settings" target="_blank">Geri Bildirim Ayarları</a>
+                    ekranından hedef projeyi belirleyin ya da aşağıdan bir proje seçin.
+                </div>
+            }
+
+            <div class="mb-3">
+                <label class="form-label" for="Input_ProjectId">Proje</label>
+                <select class="form-select" id="Input_ProjectId" name="Input.ProjectId"
+                        asp-items="Model.ProjectList"></select>
+                <div class="form-text">Görev host tarafında bu projede açılır.</div>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label" for="Input_Title">Başlık</label>
+                <input class="form-control" id="Input_Title" name="Input.Title" maxlength="200"
+                       placeholder="Boş bırakılırsa kaynaktan üretilir" />
+            </div>
+
+            <div class="row g-3 mb-3">
+                <div class="col-md-4">
+                    <label class="form-label" for="Input_Priority">Öncelik</label>
+                    <select class="form-select" id="Input_Priority" name="Input.Priority"
+                            asp-items="Model.PriorityList"></select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label" for="Input_AssigneeId">Sorumlu</label>
+                    <select class="form-select" id="Input_AssigneeId" name="Input.AssigneeId"
+                            asp-items="Model.AssigneeList"></select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label" for="Input_DueDate">Son Tarih</label>
+                    <input type="date" class="form-control" id="Input_DueDate" name="Input.DueDate" />
+                </div>
+            </div>
+
+            <div class="mb-0">
+                <label class="form-label" for="Input_Note">Not</label>
+                <textarea class="form-control" id="Input_Note" name="Input.Note" rows="3" maxlength="2000"
+                          placeholder="Ekip için ek bilgi — görev açıklamasının başına eklenir."></textarea>
+                <div class="form-text">
+                    Kaynağın teşhis bağlamı (sayfa, tarayıcı, yığın izi, davranış izi) görev açıklamasına
+                    otomatik kopyalanır.
+                </div>
+            </div>
+        </abp-modal-body>
+
+        <abp-modal-footer buttons="@(AbpModalButtons.Cancel | AbpModalButtons.Save)"></abp-modal-footer>
+    </abp-modal>
+</form>

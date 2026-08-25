@@ -229,6 +229,16 @@ public static class PlatformPermissions
         public const string Resolve = Default + ".Resolve"; // istemci hatasını çözüldü işaretle
     }
 
+    /// <summary>
+    /// Geri bildirim ve hata sinyallerini göreve dönüştürme köprüsü. Host-only:
+    /// görev host projesinde açılır, kaynak hangi kiracıdan gelirse gelsin.
+    /// </summary>
+    public static class IssueTasks
+    {
+        public const string Default = GroupName + ".IssueTasks"; // bağı görme + göreve dönüştürme
+        public const string ManageSettings = Default + ".ManageSettings"; // hedef proje ve otomatik kural ayarları
+    }
+
     // --- HİBE YETKİLERİ ---
     public static class Grants
     {

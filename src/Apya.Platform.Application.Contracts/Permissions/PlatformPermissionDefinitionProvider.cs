@@ -176,6 +176,10 @@ public class PlatformPermissionDefinitionProvider : PermissionDefinitionProvider
         var systemHealthPermission = systemGroup.AddPermission(PlatformPermissions.SystemHealth.Default, L("Permission:SystemHealth"));
         systemHealthPermission.AddChild(PlatformPermissions.SystemHealth.Resolve, L("Permission:SystemHealth.Resolve"));
 
+        // Sinyalden göreve köprüsü — geri bildirim/hata kaydını host projesinde göreve dönüştürme.
+        var issueTasksPermission = systemGroup.AddPermission(PlatformPermissions.IssueTasks.Default, L("Permission:IssueTasks"));
+        issueTasksPermission.AddChild(PlatformPermissions.IssueTasks.ManageSettings, L("Permission:IssueTasks.ManageSettings"));
+
         // Rıza/KVKK analiz paneli — host/yönetici seviyesinde tek izin, alt izni yok.
         systemGroup.AddPermission(PlatformPermissions.Consents.Default, L("Permission:Consents"));
     }

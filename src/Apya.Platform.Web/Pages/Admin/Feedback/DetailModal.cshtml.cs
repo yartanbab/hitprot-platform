@@ -4,6 +4,8 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using Apya.Platform.Feedbacks;
 using Apya.Platform.Feedbacks.Dtos;
+using Apya.Platform.IssueTasks;
+using Apya.Platform.IssueTasks.Dtos;
 using Apya.Platform.Permissions;
 using Apya.Platform.Web.Telemetry;
 using Microsoft.AspNetCore.Authorization;
@@ -16,6 +18,7 @@ namespace Apya.Platform.Web.Pages.Admin.Feedback;
 public class DetailModalModel : AbpPageModel
 {
     private readonly IFeedbackAdminAppService _feedbackAdminAppService;
+    private readonly IIssueTaskAppService _issueTaskAppService;
 
     [BindProperty(SupportsGet = true)]
     public Guid Id { get; set; }
@@ -32,9 +35,18 @@ public class DetailModalModel : AbpPageModel
 
     public List<FeedbackAssigneeDto> Assignees { get; set; } = new();
 
-    public DetailModalModel(IFeedbackAdminAppService feedbackAdminAppService)
+    /// <summary>Bu geri bildirim göreve dönüştürülmüşse bağ; yoksa null.</summary>
+    public IssueTaskLinkDto? IssueTaskLink { get; set; }
+
+    /// <summary>Köprü izni olmayan yönetici için bağ hiç sorgulanmaz (servis yetki ister).</summary>
+    public bool CanCreateIssueTask { get; set; }
+
+    public DetailModalModel(
+        IFeedbackAdminAppService feedbackAdminAppService,
+        IIssueTaskAppService issueTaskAppService)
     {
         _feedbackAdminAppService = feedbackAdminAppService;
+        _issueTaskAppService = issueTaskAppService;
     }
 
     public async Task OnGetAsync()
@@ -44,6 +56,12 @@ public class DetailModalModel : AbpPageModel
         Details = ParseDetails(Feedback.DetailsJson);
         Activities = await _feedbackAdminAppService.GetActivitiesAsync(Id);
         Assignees = await _feedbackAdminAppService.GetAssigneesAsync();
+
+        CanCreateIssueTask = await AuthorizationService.IsGrantedAsync(PlatformPermissions.IssueTasks.Default);
+        if (CanCreateIssueTask)
+        {
+            IssueTaskLink = await _issueTaskAppService.GetLinkForFeedbackAsync(Id);
+        }
     }
 
     /// <summary>DetailsJson düz bir string sözlüğüdür; anahtarlar Türkçe etiketlere çevrilir.</summary>
@@ -66,7 +84,7 @@ public class DetailModalModel : AbpPageModel
 
                 if (!string.IsNullOrWhiteSpace(value))
                 {
-                    result.Add(new KeyValuePair<string, string>(DetailLabel(prop.Name), value!));
+                    result.Add(new KeyValuePair<string, string>(FeedbackDetailLabels.For(prop.Name), value!));
                 }
             }
         }
@@ -77,18 +95,5 @@ public class DetailModalModel : AbpPageModel
 
         return result;
     }
-
-    private static string DetailLabel(string key) => key switch
-    {
-        "expected"    => "Beklenen sonuç",
-        "actual"      => "Gerçekleşen sonuç",
-        "steps"       => "Yeniden oluşturma adımları",
-        "frequency"   => "Tekrar sıklığı",
-        "problem"     => "Çözülmek istenen problem",
-        "solution"    => "Önerilen çözüm",
-        "benefit"     => "Sağlayacağı fayda",
-        "usage"       => "Kullanım sıklığı",
-        _             => key
-    };
 
 }

@@ -276,6 +276,34 @@ public static class PlatformSettings
         /// </summary>
         public const string AttachmentRetentionDays = Prefix + ".Feedback.AttachmentRetentionDays";
     }
+
+    /// <summary>
+    /// Geri bildirim / hata sinyallerinin göreve dönüştürülmesi. Hepsi host seviyesindedir —
+    /// görev host projesinde açılır, kaynak hangi kiracıdan gelirse gelsin.
+    /// </summary>
+    public static class IssueTasks
+    {
+        /// <summary>Görevlerin açılacağı HOST projesinin Id'si. Boşsa dönüştürme çalışmaz.</summary>
+        public const string TargetProjectId = Prefix + ".IssueTasks.TargetProjectId";
+
+        /// <summary>Otomatik açılan görevlerin varsayılan sorumlusu. Boş bırakılabilir.</summary>
+        public const string DefaultAssigneeId = Prefix + ".IssueTasks.DefaultAssigneeId";
+
+        /// <summary>Eşiği geçen sinyaller için görev otomatik açılsın mı?</summary>
+        public const string AutoCreateEnabled = Prefix + ".IssueTasks.AutoCreateEnabled";
+
+        /// <summary>Otomatik görev açılacak en düşük geri bildirim önceliği (FeedbackPriority sayısal değeri).</summary>
+        public const string FeedbackMinPriority = Prefix + ".IssueTasks.FeedbackMinPriority";
+
+        /// <summary>İstemci hatasının otomatik göreve dönüşmesi için gereken oluşum sayısı.</summary>
+        public const string ClientErrorThreshold = Prefix + ".IssueTasks.ClientErrorThreshold";
+
+        /// <summary>Sunucu hatasının otomatik göreve dönüşmesi için gereken tekrar sayısı.</summary>
+        public const string ServerErrorThreshold = Prefix + ".IssueTasks.ServerErrorThreshold";
+
+        /// <summary>Görev tamamlandığında kaynak kayıt da kapatılsın mı? (Geri bağ.)</summary>
+        public const string CloseSourceOnTaskDone = Prefix + ".IssueTasks.CloseSourceOnTaskDone";
+    }
 }
 
 /// <summary>Ayarların kod içinde tekrarlanmaması için varsayılanlar tek yerde.</summary>
@@ -395,4 +423,13 @@ public static class PlatformSettingDefaults
     /// <summary>Ek saklama süresi alt/üst sınırı — form manipülasyonuna karşı clamp.</summary>
     public const int    FeedbackAttachmentRetentionMinDays = 30;
     public const int    FeedbackAttachmentRetentionMaxDays = 3650;
+
+    /// <summary>Otomatik görev açma varsayılanı: KAPALI — eşikler ayarlanmadan görev üretmesin.</summary>
+    public const bool   IssueTaskAutoCreateEnabled = false;
+
+    /// <summary>Otomatik göreve dönüşen en düşük geri bildirim önceliği: Kritik (FeedbackPriority.Critical).</summary>
+    public const int    IssueTaskFeedbackMinPriority = 4;
+
+    /// <summary>Görev tamamlanınca kaynağı kapatma varsayılanı: AÇIK — döngü kapansın.</summary>
+    public const bool   IssueTaskCloseSourceOnTaskDone = true;
 }

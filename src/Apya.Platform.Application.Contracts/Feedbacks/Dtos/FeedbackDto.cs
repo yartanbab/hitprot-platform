@@ -46,4 +46,10 @@ public class FeedbackDto : EntityDto<Guid>
     public DateTime? LastRespondedAt { get; set; }
     public DateTime? ResolvedAt { get; set; }
     public string? AdminTags { get; set; }
+
+    /// <summary>Kayıt göreve dönüştürülmüşse görevin Id'si — listede rozet için.</summary>
+    public Guid? LinkedTaskId { get; set; }
+
+    /// <summary>Bağlı görevin kullanıcıya gösterilen sırası ("GRV-42" → 42).</summary>
+    public int? LinkedTaskNumber { get; set; }
 }
