@@ -238,7 +238,32 @@ imkânsız. Bu fazın ilk yarısı bu boşluğu kapatmak.
 
 ---
 
-## 4. Faz 3 — Üç yüzeyi standartlaştır: 5a + 5b (migration yok · 1 PR · orta)
+## 4. Faz 3 — Üç yüzeyi standartlaştır: 5a + 5b (migration yok · 1 PR · orta) — ✅ TAMAMLANDI (2026-08-24)
+
+> **Sonuç:** kartta proje adı artık renkli ince şerit + ad; ton `apyaTask.hashTone`
+> ile projeye göre sabit (etiket/avatar ile aynı sözlük). Bootstrap `text-primary`
+> kalktı — dark temada `-emphasis` kalıntısı bırakan sınıf ailesiydi, kolon
+> başlıklarındakiyle aynı tuzak.
+>
+> Bu panoda çizilmeyen bir özel kolonda duran kart artık "Projede özel kolon: X"
+> satırıyla nerede olduğunu söylüyor; kolon kaybolmuş görünmüyor.
+>
+> **Kulvarlar** `/Tasks`'a eklendi (`enableLanes`): Grupla → Kulvar yok / Projeye
+> göre / Atanana göre. Seçim `localStorage`'da kalıyor. Projeye göre gruplanınca
+> kart üstündeki proje adı kulvar başlığına taşınıyor. Değersiz kartlar
+> ("Projesiz"/"Atanmamış") daima son kulvarda. Kulvar kipinde taşıma sonrası board
+> yeniden çiziliyor ki kart doğru kulvara otursun.
+>
+> ⚠ **Mockup'tan bilinçli sapma (kullanıcı kararı):** kulvarlar mockup 1b'deki
+> ızgara düzeni (kulvar=satır, durum=sütun) yerine **kolon içi gruplama** olarak
+> yapıldı. Sürükleme kapları değişmediği için taşıma mantığı aynı kaldı, risk
+> düşük ve davranış birim testle kapsanabildi. Izgara düzeni istenirse ayrı iş.
+>
+> Araç çubuğu (`_KanbanBoard.cshtml`) artık iki kontrolü de taşıyor ve JS
+> koşullarına göre açıyor: "Grupla" yalnız kulvar açık panoda, "Kolonları düzenle"
+> yalnız `Projects.Edit` + proje seçiliyken. Üç sayfanın araç çubuğuna dokunulmadı.
+>
+> Doğrulama: JS 336/336 (kanban dosyası 44 → 58 test), build 0 hata.
 
 Faz 2 bittiğinde kolon/kart tek yerden besleniyor olacak; bu faz **çevreyi** hizalar.
 
@@ -384,9 +409,9 @@ cd src/Apya.Platform.Web/wwwroot/dynamic-assets && npm ci
 > frontend testleri toptan patlıyor). `dynamic-assets/yarn.lock`'taki değişikliği
 > **commit etme**. Build öncesi çalışan Web uygulamasını durdur (MSB3021).
 
-**Faz sırası:** ~~0~~ → ~~1~~ → ~~2a~~ → ~~2b~~ → 3 → 4 → 5 → 6 → 7. Faz 0 ve 1 birbirinden
+**Faz sırası:** ~~0~~ → ~~1~~ → ~~2a~~ → ~~2b~~ → ~~3~~ → 4 → 5 → 6 → 7. Faz 0 ve 1 birbirinden
 bağımsız; 2'den sonrası sıralı. Migration yalnız Faz 6'da.
-**Faz 0 + 1 + 2a + 2b tamamlandı (2026-08-24), 3b paneli dâhil.**
+**Faz 0 + 1 + 2a + 2b + 3 tamamlandı (2026-08-24), 3b paneli dâhil.**
 🔴 Açık: **tüm fazların canlı QA'sı** — panodaki etkileşimler (Enter/Esc, sürükleyince
 reorder, silme onayı, ＋ modalı) jQuery delegasyonunda olduğu için birim testle
-kapsanamıyor. **Sıradaki: Faz 3 — üç yüzeyi standartlaştır (5a + 5b).**
+kapsanamıyor. **Sıradaki: Faz 4 — özel kolon → durum eşlemesi (migration YOK).**

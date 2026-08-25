@@ -184,6 +184,39 @@
 .kanban-card[data-priority="3"] { border-left-color: #fd7e14; }                            /* High (turuncu — token seti yok) */
 .kanban-card[data-priority="4"] { border-left-color: var(--apya-negative-500, #dc3545); }  /* Critical */
 
+/* Kartta proje adı (genel panoda ZORUNLU): renkli ince şerit + ad.
+   Ton apyaTask.hashTone ile projeye göre sabit — etiket/avatar ile aynı sözlük.
+   Bootstrap text-* utility'si kullanılmaz (dark'ta -emphasis kalıntısı). */
+.kanban-card-project {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--apya-text-secondary);
+}
+.kanban-card-project::before {
+    content: "";
+    flex: none;
+    width: 3px;
+    height: 12px;
+    border-radius: 2px;
+    background: var(--apya-brand-500);
+}
+.kanban-card-project.is-positive::before { background: var(--apya-positive-500); }
+.kanban-card-project.is-negative::before { background: var(--apya-negative-500); }
+.kanban-card-project.is-warning::before  { background: var(--apya-warning-500); }
+.kanban-card-project.is-brand::before    { background: var(--apya-brand-500); }
+.kanban-card-project.is-neutral::before  { background: var(--apya-neutral-500); }
+.kanban-card-project.is-ai::before       { background: var(--apya-accent-500); }
+
+/* Kart bu panoda çizilmeyen bir özel kolonda duruyorsa nerede olduğunu söyler */
+.kanban-card-colnote {
+    margin-top: 6px;
+    font-size: 10.5px;
+    color: var(--apya-text-tertiary);
+}
+
 /* Sürükleme yer tutucusu (handoff): kartın soluk kopyası yerine, bırakılacak
    yeri gösteren kesik çizgili accent bir hedef. */
 .sortable-ghost {
@@ -315,6 +348,41 @@
 }
 .kanban-edit-cols:hover { border-color: var(--apya-accent-500); color: var(--apya-accent-600); }
 .kanban-edit-cols:focus-visible { outline: none; box-shadow: var(--apya-shadow-focus); }
+
+/* Kulvar seçici (yalnız genel panoda görünür) */
+.kanban-group { display: inline-flex; align-items: center; gap: 6px; margin-right: auto; }
+.kanban-group-label { font-size: 11px; font-weight: 700; letter-spacing: 0.3px; text-transform: uppercase; color: var(--apya-text-tertiary); }
+.kanban-group-select {
+    height: 30px;
+    padding: 0 8px;
+    border: 1px solid var(--apya-border-default);
+    border-radius: var(--apya-radius-md);
+    background: var(--apya-surface-base);
+    color: var(--apya-text-primary);
+    font-size: 12.5px;
+}
+.kanban-group-select:focus { outline: none; border-color: var(--apya-border-focus); box-shadow: var(--apya-shadow-focus); }
+
+/* Kulvar başlığı — kolonun İÇİNDE, kartları gruplar. Kart değildir: sayaca
+   girmez ve Sortable draggable:'.kanban-card' sayesinde sürüklenemez. */
+.kanban-lane-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin: 2px 0 6px;
+    padding: 4px 6px;
+    border-radius: var(--apya-radius-md);
+    background: var(--apya-surface-sunken);
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
+    color: var(--apya-text-secondary);
+}
+.kanban-lane-head:not(:first-child) { margin-top: 12px; }
+.kanban-lane-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.kanban-lane-count { flex: none; color: var(--apya-text-tertiary); }
 
 /* ── 3b paneli: tek yerden sırala + ad + renk + WIP ──
    body'ye basılır (ata transform'lar position:fixed'i hapsedebiliyor). */

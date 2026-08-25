@@ -21,14 +21,26 @@
 @* "Kolonları düzenle" (3b paneli) — sunucuda Projects.Edit ile kapılı, JS proje
    seçiliyken görünür kılar (özel kolonlar projeye ait). Üç sayfa da bu partial'ı
    kullandığı için düğme her panoda AYNI yerde çıkar; sayfa araç çubukları değişmez. *@
-@if (await AuthorizationService.IsGrantedAsync(PlatformPermissions.Projects.Edit))
-{
-    <div class="kanban-toolbar js-kanban-toolbar d-none">
-        <button type="button" class="kanban-edit-cols js-edit-cols">
+@* Araç çubuğu her sayfada var; içindeki kontroller kendi koşullarıyla açılır:
+   "Grupla" yalnız kulvar açık panoda (genel pano), "Kolonları düzenle" yalnız
+   Projects.Edit + proje seçiliyken. Böylece üç sayfanın kendi araç çubuğuna
+   dokunmadan tek yerden yönetiliyorlar. *@
+<div class="kanban-toolbar js-kanban-toolbar d-none">
+    <label class="kanban-group js-kanban-group d-none">
+        <span class="kanban-group-label">Grupla</span>
+        <select class="kanban-group-select js-group-select" aria-label="Kartları grupla">
+            <option value="">Kulvar yok</option>
+            <option value="project">Projeye göre</option>
+            <option value="assignee">Atanana göre</option>
+        </select>
+    </label>
+    @if (await AuthorizationService.IsGrantedAsync(PlatformPermissions.Projects.Edit))
+    {
+        <button type="button" class="kanban-edit-cols js-edit-cols d-none">
             <i class="fa fa-sliders me-1" aria-hidden="true"></i>Kolonları düzenle
         </button>
-    </div>
-}
+    }
+</div>
 <div class="kanban-board mt-2"
      data-col-1="@L["Tasks:Status:Todo"]"
      data-col-2="@L["Tasks:Status:InProgress"]"

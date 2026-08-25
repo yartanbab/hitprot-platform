@@ -88,6 +88,14 @@
         var editModal = opts.editModal || null;
         // Kolon başlığındaki ＋ bunu kullanır; verilmezse düğme hiç çizilmez.
         var createModal = opts.createModal || null;
+        // Kulvar (gruplama) yalnız genel panoda anlamlı: proje panosunda tek proje
+        // zaten var. Kartlar kolonun İÇİNDE kulvar başlıkları altında toplanır —
+        // sürükleme kapları değişmediği için taşıma mantığı aynı kalır.
+        var enableLanes = opts.enableLanes === true;
+        var grouping = '';
+        if (enableLanes) {
+            try { grouping = localStorage.getItem('apya-kanban-group') || ''; } catch (e) { }
+        }
         var getFilter = typeof opts.getFilter === 'function' ? opts.getFilter : function () { return {}; };
         var onChanged = typeof opts.onChanged === 'function' ? opts.onChanged : function () { };
 
@@ -146,9 +154,14 @@
                 task.code || ('#' + ('' + task.id).substring(0, 4))));
             tagWrap.appendChild(idBadge);
 
-            if (showProject && task.projectName) {
-                var pj = el('span', 'small fw-bold text-primary');
-                pj.innerHTML = '<i class="fa fa-rocket me-1"></i>';
+            // Genel panoda proje adı ZORUNLU: renkli ince şerit + ad. Ton projeye
+            // göre deterministik (apyaTask.hashTone — etiket/avatar ile aynı sözlük),
+            // böylece aynı proje her kartta aynı rengi taşır. Bootstrap text-primary
+            // KULLANILMAZ: dark temada -emphasis kalıntısı bırakan sınıf ailesi.
+            // Projeye göre gruplandıysa ad kulvar başlığında zaten var — kart sadeleşir.
+            if (showProject && task.projectName && grouping !== 'project') {
+                var tone = (window.apyaTask && apyaTask.hashTone) ? apyaTask.hashTone(task.projectName) : 'brand';
+                var pj = el('span', 'kanban-card-project is-' + tone);
                 pj.appendChild(document.createTextNode(task.projectName));
                 tagWrap.appendChild(pj);
             }
@@ -206,6 +219,16 @@
                 bottom.appendChild(due);
             }
             card.appendChild(bottom);
+
+            // Kart, bu panoda ÇİZİLMEYEN bir özel kolonda duruyorsa (genel panoda
+            // "Tümü" seçili ya da başka bir projenin kolonu) nerede olduğunu söyle —
+            // yoksa kart durum kolonunda görünür ve özel kolon kaybolmuş sanılır.
+            if (task.boardColumnName && !(task.boardColumnId && customIds[task.boardColumnId])) {
+                var colNote = el('div', 'kanban-card-colnote');
+                colNote.innerHTML = '<i class="fa fa-diagram-project me-1"></i>';
+                colNote.appendChild(document.createTextNode('Projede özel kolon: ' + task.boardColumnName));
+                card.appendChild(colNote);
+            }
 
             // Aksiyonlar: düzenle + sil
             var actions = el('div', 'apya-touch-actions text-end mt-2 d-flex justify-content-end gap-1');
@@ -323,6 +346,59 @@
             col.querySelector('.js-col-name').appendChild(document.createTextNode(' ' + c.name));
             col.querySelector('.kanban-cards').id = isSys ? SYS[c.statusValue] : ('kanban-col-' + c.id);
             return col;
+        }
+
+        // ── Kulvarlar (kolon içi gruplama) ──────────────────────────────────
+        // Değeri olmayan kartlar tek bir kovada toplanır ve DAİMA sona konur.
+        var LANE_FALLBACK = { project: 'Projesiz', assignee: 'Atanmamış' };
+        function laneKeyOf(task) {
+            if (grouping === 'project') { return task.projectName || LANE_FALLBACK.project; }
+            if (grouping === 'assignee') { return task.assigneeName || LANE_FALLBACK.assignee; }
+            return '';
+        }
+        function laneGroups(list) {
+            var map = {};
+            list.forEach(function (t) {
+                var k = laneKeyOf(t);
+                (map[k] = map[k] || []).push(t);
+            });
+            var fallback = LANE_FALLBACK[grouping];
+            return Object.keys(map).sort(function (a, b) {
+                if (a === fallback) { return 1; }
+                if (b === fallback) { return -1; }
+                return a.localeCompare(b, 'tr');
+            }).map(function (k) { return { key: k, tasks: map[k] }; });
+        }
+        function buildLaneHead(lane) {
+            var h = el('div', 'kanban-lane-head');
+            var n = el('span', 'kanban-lane-name');
+            n.textContent = lane.key;
+            var c = el('span', 'kanban-lane-count');
+            c.textContent = lane.tasks.length;
+            h.appendChild(n);
+            h.appendChild(c);
+            return h;
+        }
+        function setGrouping(mode) {
+            grouping = (mode === 'project' || mode === 'assignee') ? mode : '';
+            try { localStorage.setItem('apya-kanban-group', grouping); } catch (e) { }
+            load();
+        }
+
+        // Araç çubuğu kontrolleri: "Grupla" kulvar açık panoda, "Kolonları düzenle"
+        // yetki + proje seçiliyken. Çubuğun kendisi ikisinden biri varsa görünür.
+        function syncToolbar() {
+            var board = document.querySelector(boardSel);
+            var bar = board && board.parentNode && board.parentNode.querySelector('.js-kanban-toolbar');
+            if (!bar) { return; }
+            var showCols = canEditColumns && effectiveCols();
+            var editBtn = bar.querySelector('.js-edit-cols');
+            if (editBtn) { editBtn.classList.toggle('d-none', !showCols); }
+            var group = bar.querySelector('.js-kanban-group');
+            if (group) { group.classList.toggle('d-none', !enableLanes); }
+            var sel = bar.querySelector('.js-group-select');
+            if (sel && sel.value !== grouping) { sel.value = grouping; }
+            bar.classList.toggle('d-none', !(showCols || enableLanes));
         }
 
         // Hedef durum kolonunun ADI board'dan okunur — JS'te ikinci bir durum
@@ -668,10 +744,7 @@
                 board.appendChild(note);
             }
 
-            // "Kolonları düzenle" düğmesi partial'da duruyor (sunucuda Projects.Edit
-            // ile kapılı); burada yalnız proje seçiliyken görünür kılınır.
-            var toolbar = board.parentNode && board.parentNode.querySelector('.js-kanban-toolbar');
-            if (toolbar) { toolbar.classList.toggle('d-none', !(canEditColumns && effectiveCols())); }
+            syncToolbar();
         }
 
         // ── Yükle ──
@@ -708,14 +781,30 @@
 
         function render(tasks, activeLog) {
             document.querySelectorAll(boardSel + ' .kanban-cards').forEach(function (n) { n.innerHTML = ''; });
+            // Kartlar önce kabına göre toplanır: kulvar kipinde her kabın içi
+            // gruplanarak basılacak, kapların kendisi değişmiyor.
+            var buckets = {};
             tasks.forEach(function (task) {
                 var container = null;
                 if (task.boardColumnId && customIds[task.boardColumnId]) {
                     container = document.getElementById('kanban-col-' + task.boardColumnId);
                 }
                 if (!container) { container = document.getElementById(SYS[task.status]); }
-                if (container) { container.appendChild(buildCard(task, activeLog)); }
+                if (!container) { return; }
+                (buckets[container.id] = buckets[container.id] || []).push(task);
             });
+            Object.keys(buckets).forEach(function (id) {
+                var container = document.getElementById(id);
+                if (!grouping) {
+                    buckets[id].forEach(function (t) { container.appendChild(buildCard(t, activeLog)); });
+                    return;
+                }
+                laneGroups(buckets[id]).forEach(function (lane) {
+                    container.appendChild(buildLaneHead(lane));
+                    lane.tasks.forEach(function (t) { container.appendChild(buildCard(t, activeLog)); });
+                });
+            });
+            syncToolbar();
             updateCounts();
             initSortable();
             ensureColumnConfig();
@@ -786,6 +875,9 @@
                         else { return; }
                         promise.then(function () {
                             abp.notify.success('Görev taşındı.');
+                            // Kulvar kipinde kart, bırakıldığı yerdeki kulvarın altında
+                            // kalır; doğru kulvara oturması için yeniden çiz.
+                            if (grouping) { load(); onChanged(); return; }
                             updateCounts();
                             onChanged();
                         }).catch(function () {
@@ -1002,6 +1094,11 @@
             });
         }
 
+        // Kulvar seçici yetkiden bağımsızdır: gruplama bir okuma işlemi.
+        if (enableLanes) {
+            $doc.on('change', '.js-group-select', function () { setGrouping(this.value); });
+        }
+
         if (editModal && editModal.onResult) { editModal.onResult(function () { load(); onChanged(); }); }
 
         return {
@@ -1012,7 +1109,9 @@
             // 3b paneli: partial'daki düğme bunu çağırıyor; sayfalar kendi
             // araç çubuklarından da açabilsin diye dışarı veriliyor.
             openColumnPanel: openColumnPanel,
-            closeColumnPanel: closeColumnPanel
+            closeColumnPanel: closeColumnPanel,
+            setGrouping: setGrouping,
+            getGrouping: function () { return grouping; }
         };
     }
 

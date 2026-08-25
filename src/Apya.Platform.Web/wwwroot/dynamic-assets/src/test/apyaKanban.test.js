@@ -12,11 +12,26 @@ let granted = {};
 
 // _KanbanBoard.cshtml'in birebir yansıması: kolonlar JS'ten basılır, partial
 // yalnız kabı ve proje seçili değilken kullanılacak varsayılan adları taşır.
+// Araç çubuğu da partial'da: "Grupla" kulvar açık panoda, "Kolonları düzenle"
+// yetki + proje seçiliyken görünür (ikisi de JS tarafından açılıp kapanıyor).
 function boardHtml() {
-    return `<div class="kanban-board"
-        data-col-1="Yapılacak" data-col-2="Sürüyor"
-        data-col-3="Testte" data-col-4="Tamamlandı"></div>`;
+    return `<div class="kanban-wrap">
+        <div class="kanban-toolbar js-kanban-toolbar d-none">
+            <label class="kanban-group js-kanban-group d-none">
+                <select class="kanban-group-select js-group-select">
+                    <option value="">Kulvar yok</option>
+                    <option value="project">Projeye göre</option>
+                    <option value="assignee">Atanana göre</option>
+                </select>
+            </label>
+            <button type="button" class="kanban-edit-cols js-edit-cols d-none">Kolonları düzenle</button>
+        </div>
+        <div class="kanban-board"
+            data-col-1="Yapılacak" data-col-2="Sürüyor"
+            data-col-3="Testte" data-col-4="Tamamlandı"></div>
+    </div>`;
 }
+const hidden = (sel) => document.querySelector(sel).classList.contains('d-none');
 
 const sysCols = [
     { id: 'c1', statusValue: 1, name: 'Yapılacak', colorClass: 'secondary', order: 0, isSystem: true },
@@ -595,5 +610,189 @@ describe('3b kolon paneli', () => {
         await flush();
 
         expect(document.querySelector('.kanban-panel')).toBeNull();
+    });
+});
+
+// ── Faz 3: kart standardı (genel pano ↔ proje panosu farkı) ────────────────
+describe('kartta proje adı', () => {
+    const projTask = { id: 't1', code: 'GRV-1', title: 'A', status: 1, priority: 2, projectName: 'Finans Modülü' };
+
+    it('genel panoda renkli şeritli proje adı basılır', async () => {
+        mountBoard(sysCols, [projTask]);
+        apya.kanban.create({ projectId: 'p1', showProjectName: true }).load();
+        await flush();
+
+        const p = document.querySelector('.kanban-card-project');
+        expect(p).not.toBeNull();
+        expect(p.textContent).toBe('Finans Modülü');
+        // Ton sınıfı taşır (şerit rengi CSS'ten gelir); Bootstrap text-* KULLANILMAZ.
+        expect(p.className).toContain('is-');
+        expect(p.className).not.toContain('text-primary');
+    });
+
+    it('proje panosunda kartta proje adı görünmez', async () => {
+        mountBoard(sysCols, [projTask]);
+        apya.kanban.create({ projectId: 'p1', showProjectName: false }).load();
+        await flush();
+
+        expect(document.querySelector('.kanban-card-project')).toBeNull();
+    });
+});
+
+describe('çizilmeyen özel kolon bilgisi', () => {
+    const inCustom = {
+        id: 't1', code: 'GRV-1', title: 'A', status: 2, priority: 2,
+        boardColumnId: 'x9', boardColumnName: 'Hakem değerlendirmesi'
+    };
+
+    it('özel kolon bu panoda yokken kartta nerede olduğu yazar', async () => {
+        // Proje seçili değil → özel kolonlar çizilmiyor, kart durum kolonunda duruyor.
+        mountBoard(sysCols, [inCustom]);
+        apya.kanban.create({ projectId: null }).load();
+        await flush();
+
+        const note = document.querySelector('.kanban-card-colnote');
+        expect(note).not.toBeNull();
+        expect(note.textContent).toContain('Projede özel kolon: Hakem değerlendirmesi');
+    });
+
+    it('özel kolon panoda çiziliyken bilgi tekrarlanmaz', async () => {
+        mountBoard(sysCols.concat([customCol]), [inCustom]);
+        apya.kanban.create({ projectId: 'p1' }).load();
+        await flush();
+
+        expect(document.querySelector('.kanban-card-colnote')).toBeNull();
+        // Kart özel kolonun içinde duruyor.
+        expect(document.querySelector('#kanban-col-x9 .kanban-card')).not.toBeNull();
+    });
+});
+
+// ── Faz 3: kulvarlar (kolon içi gruplama) ──────────────────────────────────
+describe('kulvarlar', () => {
+    const tasks = [
+        { id: 't1', code: 'GRV-1', title: 'A', status: 1, priority: 2, projectName: 'Finans', assigneeName: 'Burak Y.' },
+        { id: 't2', code: 'GRV-2', title: 'B', status: 1, priority: 2, projectName: 'Altyapı', assigneeName: 'Burak Y.' },
+        { id: 't3', code: 'GRV-3', title: 'C', status: 1, priority: 2, projectName: 'Finans' },
+        { id: 't4', code: 'GRV-4', title: 'D', status: 2, priority: 2, projectName: 'Finans', assigneeName: 'Selin E.' }
+    ];
+    const laneNames = (statusId) =>
+        Array.from(col(statusId).querySelectorAll('.kanban-lane-name')).map((n) => n.textContent);
+
+    beforeEach(() => { localStorage.removeItem('apya-kanban-group'); });
+
+    it('kulvar kapalıyken başlık basılmaz', async () => {
+        mountBoard(sysCols, tasks);
+        apya.kanban.create({ projectId: null, showProjectName: true, enableLanes: true }).load();
+        await flush();
+
+        expect(document.querySelector('.kanban-lane-head')).toBeNull();
+    });
+
+    it('projeye göre gruplar, kolon içinde alfabetik sıralar', async () => {
+        mountBoard(sysCols, tasks);
+        const kb = apya.kanban.create({ projectId: null, showProjectName: true, enableLanes: true });
+        kb.load();
+        await flush();
+        kb.setGrouping('project');
+        await flush();
+
+        expect(laneNames(1)).toEqual(['Altyapı', 'Finans']);
+        expect(laneNames(2)).toEqual(['Finans']);
+        // Sayaç kulvardaki kart sayısını gösterir.
+        const counts = Array.from(col(1).querySelectorAll('.kanban-lane-count')).map((n) => n.textContent);
+        expect(counts).toEqual(['1', '2']);
+    });
+
+    it('projeye göre gruplanınca kart üstündeki proje adı kalkar', async () => {
+        mountBoard(sysCols, tasks);
+        const kb = apya.kanban.create({ projectId: null, showProjectName: true, enableLanes: true });
+        kb.load();
+        await flush();
+        expect(document.querySelector('.kanban-card-project')).not.toBeNull();
+
+        kb.setGrouping('project');
+        await flush();
+
+        expect(document.querySelector('.kanban-card-project')).toBeNull();
+    });
+
+    it('atanana göre gruplar, atanmamışları sona koyar', async () => {
+        mountBoard(sysCols, tasks);
+        const kb = apya.kanban.create({ projectId: null, showProjectName: true, enableLanes: true });
+        kb.load();
+        await flush();
+        kb.setGrouping('assignee');
+        await flush();
+
+        expect(laneNames(1)).toEqual(['Burak Y.', 'Atanmamış']);
+    });
+
+    it('kulvar başlığı kart sayılmaz — kolon sayacı bozulmaz', async () => {
+        mountBoard(sysCols, tasks);
+        const kb = apya.kanban.create({ projectId: null, showProjectName: true, enableLanes: true });
+        kb.load();
+        await flush();
+        kb.setGrouping('project');
+        await flush();
+
+        expect(col(1).querySelector('.kanban-count').textContent).toBe('3');
+    });
+
+    it('seçim localStorage\'da kalır ve seçici onu yansıtır', async () => {
+        mountBoard(sysCols, tasks);
+        const kb = apya.kanban.create({ projectId: null, showProjectName: true, enableLanes: true });
+        kb.load();
+        await flush();
+        kb.setGrouping('assignee');
+        await flush();
+
+        expect(localStorage.getItem('apya-kanban-group')).toBe('assignee');
+        expect(kb.getGrouping()).toBe('assignee');
+    });
+
+});
+
+describe('araç çubuğu görünürlüğü', () => {
+    it('kulvar açık panoda "Grupla" görünür, "Kolonları düzenle" yetkisizde gizli', async () => {
+        mountBoard(sysCols, []);
+        apya.kanban.create({ projectId: null, enableLanes: true }).load();
+        await flush();
+
+        expect(hidden('.js-kanban-toolbar')).toBe(false);
+        expect(hidden('.js-kanban-group')).toBe(false);
+        expect(hidden('.js-edit-cols')).toBe(true);
+    });
+
+    it('proje panosunda "Grupla" gizli — tek proje zaten var', async () => {
+        granted['Platform.Projects.Edit'] = true;
+        mountBoard(sysCols, []);
+        apya.kanban.create({ projectId: 'p1' }).load();
+        await flush();
+
+        expect(hidden('.js-kanban-group')).toBe(true);
+        expect(hidden('.js-edit-cols')).toBe(false);
+        expect(hidden('.js-kanban-toolbar')).toBe(false);
+    });
+
+    it('ne kulvar ne kolon yetkisi varsa çubuğun tamamı gizlenir', async () => {
+        mountBoard(sysCols, []);
+        apya.kanban.create({ projectId: 'p1' }).load();
+        await flush();
+
+        expect(hidden('.js-kanban-toolbar')).toBe(true);
+    });
+
+    it('genel panoda proje seçilince "Kolonları düzenle" açılır', async () => {
+        granted['Platform.Projects.Edit'] = true;
+        mountBoard(sysCols, []);
+        const kb = apya.kanban.create({ projectId: null, enableLanes: true });
+        kb.load();
+        await flush();
+        expect(hidden('.js-edit-cols')).toBe(true);
+
+        kb.setProject('p1');
+        await flush();
+
+        expect(hidden('.js-edit-cols')).toBe(false);
     });
 });

@@ -576,6 +576,7 @@ $(function () {
         editModal: editModal,
         createModal: createModal,   // kolon başlığındaki ＋ (o kolon ön seçili açar)
         showProjectName: true,
+        enableLanes: true,          // genel pano: Grupla → Proje / Atanan kulvarları
         enableTimer: false,
         enableCustomColumns: true,
         getFilter: buildInput,
