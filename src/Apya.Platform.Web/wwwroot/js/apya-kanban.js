@@ -872,6 +872,12 @@
                     draggable: '.kanban-panel-row',
                     handle: '.kanban-panel-grip',
                     animation: 150,
+                    // Kart Sortable'ıyla aynı dokunma koruması: gecikmesiz sürükleme
+                    // dokunmatikte parmak titremesini "drag" sanıp dokunuşu yutuyor
+                    // (buton ancak ikinci dokunuşta çalışıyordu).
+                    delay: 150,
+                    delayOnTouchOnly: true,
+                    touchStartThreshold: 5,
                     onEnd: refreshDirty
                 });
             }
@@ -1332,6 +1338,13 @@
                     handle: '.kanban-header',
                     animation: 150,
                     ghostClass: 'kanban-col-ghost',
+                    // handle=.kanban-header aç/kapa, ⋯ ve ＋ butonlarını da içeriyor:
+                    // dokunmatikte gecikmesiz sürükleme bu dokunuşları drag başlangıcı
+                    // sanıp yutuyordu (mobilde "iki kere basmak gerekiyor" şikâyeti).
+                    // delayOnTouchOnly: true → fare kullanıcıları etkilenmez.
+                    delay: 150,
+                    delayOnTouchOnly: true,
+                    touchStartThreshold: 5,
                     onEnd: function () {
                         // Proje seçimi bu arada kalkmış olabilir (genel panoda "Tümü"):
                         // kaydedilecek yer yok, düzeni geri al.

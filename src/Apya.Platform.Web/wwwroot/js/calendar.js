@@ -1,11 +1,11 @@
-import { j as e, d as pe, r as g, b as yt } from "./react-vendor.js";
-import { c as k, B as A, d as oe, e as ce, S as ie, D as Je, i as Ze, T as kt } from "./Dialog.js";
-import { D as vt } from "./useDeviceMode.js";
-import { a as jt } from "./QueryProvider.js";
-import { E as de } from "./EmptyState.js";
-import { a as K } from "./httpClient.js";
-import { u as W, b as _, a as ee } from "./query-vendor.js";
-/* empty css      */
+import { j as e, d as pe, r as g, b as yt } from "./react-vendor-D57GAUXd.js";
+import { c as k, B as A, d as oe, e as ce, S as ie, D as Je, i as Ze, T as kt } from "./Dialog-CkwGYc9B.js";
+import { D as vt } from "./useDeviceMode-Dk7fb2QY.js";
+import { a as jt } from "./QueryProvider-B2D_02u4.js";
+import { E as de } from "./EmptyState-CUE7sfrU.js";
+import { a as K } from "./httpClient-CRlyQ1eg.js";
+import { u as W, b as _, a as ee } from "./query-vendor-D4__WO2j.js";
+/* empty css               */
 const P = {
   1: { key: "task", label: "Görev", plural: "görev", icon: "fa-circle-check", railLabel: "Görevler" },
   2: { key: "invoice", label: "Fatura", plural: "fatura", icon: "fa-file-invoice", railLabel: "Faturalar" },

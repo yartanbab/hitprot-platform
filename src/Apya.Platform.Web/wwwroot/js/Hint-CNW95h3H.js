@@ -1,4 +1,4 @@
-import { j as i } from "./react-vendor.js";
+import { j as i } from "./react-vendor-D57GAUXd.js";
 function r({ text: a, placement: n = "top", className: t }) {
   return a ? /* @__PURE__ */ i.jsx(
     "span",
