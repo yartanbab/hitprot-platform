@@ -11,7 +11,7 @@ const OPTIONS = [
 export function TaskPrivacyDialogV3({ isPrivate = false, onChange = () => {} }) {
     const priv = Boolean(isPrivate);
     return (
-        <Popover.Root>
+        <Popover.Root modal>
             <Popover.Trigger asChild>
                 <button
                     type="button"

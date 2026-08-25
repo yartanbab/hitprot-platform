@@ -7,12 +7,14 @@ import {
     statusOf, priorityOf,
 } from '../taskMetaV3';
 
-/* pointer-events-auto ŞART: içerik body'ye portal ediliyor. Görev detayı modal
-   olarak açıldığında Radix Dialog `body { pointer-events: none }` yazıyor ve
-   non-modal popover katmanına `auto`yu geri vermiyor — menü açık görünüp
-   tıklamaları arkasındaki öğeye geçiriyordu. */
+/* Popover.Root'lara `modal` ŞART: içerik body'ye portal edildiği için non-modal
+   popover, Dialog'un focus trap'inin DIŞINDA kalıyor. Açılışta odağı alır almaz trap
+   odağı geri çekiyor, popover da bunu "focusOutside" sayıp kendini kapatıyordu.
+   Masaüstünde görünmüyordu: Radix, odağın geri çekildiği öğe trigger'ın kendisiyse
+   kapanmayı iptal ediyor ve tıklama zaten trigger'ı odaklıyor. iOS Safari dokunmada
+   <button>'a odak VERMEDİĞİ için orada her açılış flash edip kapanıyordu. */
 const POPOVER_CLS =
-    'z-popover pointer-events-auto rounded-[13px] border border-default bg-surface-elevated p-1.5 shadow-float animate-fade-in-fast';
+    'z-popover rounded-[13px] border border-default bg-surface-elevated p-1.5 shadow-float animate-fade-in-fast';
 
 const MENU_ROW_CLS =
     'flex items-center gap-[11px] w-full px-[9px] py-2 rounded-[9px] text-[12.5px] font-medium text-left cursor-pointer hover:bg-surface-hover';
@@ -116,7 +118,7 @@ export function TaskDetailHeaderV3({
                         </button>
 
                         {/* Durum */}
-                        <Popover.Root>
+                        <Popover.Root modal>
                             <Popover.Trigger asChild>
                                 <button
                                     type="button"
@@ -156,7 +158,7 @@ export function TaskDetailHeaderV3({
                         </Popover.Root>
 
                         {/* Öncelik */}
-                        <Popover.Root>
+                        <Popover.Root modal>
                             <Popover.Trigger asChild>
                                 <button
                                     type="button"
@@ -256,7 +258,7 @@ export function TaskDetailHeaderV3({
                         </button>
                     )}
 
-                    <Popover.Root open={menuOpen} onOpenChange={setMenuOpen}>
+                    <Popover.Root modal open={menuOpen} onOpenChange={setMenuOpen}>
                         <Popover.Trigger asChild>
                             <button
                                 type="button"

@@ -5,10 +5,14 @@ import {
     initialsOf, avatarColorOf, dueUrgency,
 } from '../taskMetaV3';
 
-/* pointer-events-auto: bkz. TaskDetailHeaderV3 — modal içinde portal edilen
-   popover'a Radix `auto` vermiyor, tıklamalar arkaya geçiyor. */
+/* Popover.Root'lara `modal` ŞART: içerik body'ye portal edildiği için non-modal
+   popover, Dialog'un focus trap'inin DIŞINDA kalıyor. Açılışta odağı alır almaz trap
+   odağı geri çekiyor, popover da bunu "focusOutside" sayıp kendini kapatıyordu.
+   Masaüstünde görünmüyordu: Radix, odağın geri çekildiği öğe trigger'ın kendisiyse
+   kapanmayı iptal ediyor ve tıklama zaten trigger'ı odaklıyor. iOS Safari dokunmada
+   <button>'a odak VERMEDİĞİ için orada her açılış flash edip kapanıyordu. */
 const POPOVER_CLS =
-    'z-popover pointer-events-auto rounded-[14px] border border-default bg-surface-elevated p-2 shadow-float animate-fade-in-fast';
+    'z-popover rounded-[14px] border border-default bg-surface-elevated p-2 shadow-float animate-fade-in-fast';
 
 const SEARCH_INPUT_CLS =
     'w-full h-[34px] pl-[31px] pr-3 rounded-[9px] border border-default bg-neutral-subtle text-text-primary text-[12.5px] focus:border-focus focus:bg-surface-base focus:shadow-focus focus:outline-none';
@@ -101,7 +105,7 @@ export function TaskMetadataGridV3({
 
                 {/* 1 — Sorumlu */}
                 <Cell label="Sorumlu">
-                    <Popover.Root>
+                    <Popover.Root modal>
                         <Popover.Trigger asChild>
                             <button
                                 type="button"
@@ -212,7 +216,7 @@ export function TaskMetadataGridV3({
                 {/* 5 — Durum */}
                 <Cell label="Durum">
                     <div className="flex items-center h-8">
-                        <Popover.Root>
+                        <Popover.Root modal>
                             <Popover.Trigger asChild>
                                 <button
                                     type="button"
@@ -303,7 +307,7 @@ export function TaskMetadataGridV3({
 
                 {/* 7 — Proje (+ taşı / kopyala) */}
                 <Cell label="Proje">
-                    <Popover.Root>
+                    <Popover.Root modal>
                         <Popover.Trigger asChild>
                             <button
                                 type="button"
