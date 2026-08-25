@@ -1,9 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
-using System.Net;
 using System.Text;
+using System.Text.Encodings.Web;
 using System.Text.Json;
+using System.Text.Unicode;
 using Apya.Platform.Feedbacks;
 using Apya.Platform.Telemetry;
 
@@ -187,7 +188,21 @@ public static class IssueTaskDescriptionBuilder
     };
 
     /// <summary>HTML kaçışı — hata metni ve kullanıcı girdisi işaretleme İÇEREBİLİR.</summary>
-    private static string E(string? value) => WebUtility.HtmlEncode(value ?? string.Empty);
+    /// <summary>
+    /// Yalnız HTML anlamı olan karakterleri kaçırır (&lt; &gt; &amp; " ').
+    ///
+    /// Önceden WebUtility.HtmlEncode kullanılıyordu; o yalnız 160–255 aralığını
+    /// sayısal varlığa çeviriyor, 255 üstünü olduğu gibi bırakıyor. Türkçede
+    /// sonuç tutarsızdı: "ç" ve "ü" kaçırılıp "ı", "ğ", "ş" kaçırılmıyordu
+    /// ("Beklenen sonu&amp;#231;" ama "Ayrıntılar"). Çıktı UTF-8 olduğu için
+    /// bunların hiçbirini kaçırmaya gerek yok; kaçırmak ayrıca açıklama uzunluk
+    /// bütçesini (MaxDescriptionLength) her Türkçe harf için 6 katına çıkarıyordu.
+    ///
+    /// XSS koruması etkilenmez: &lt; ve &amp; hâlâ kaçırılıyor.
+    /// </summary>
+    private static readonly HtmlEncoder Encoder = HtmlEncoder.Create(UnicodeRanges.All);
+
+    private static string E(string? value) => Encoder.Encode(value ?? string.Empty);
 
     /// <summary>Satır sonlarını korur; içerik yine kaçırılır.</summary>
     private static string Multiline(string value) =>
