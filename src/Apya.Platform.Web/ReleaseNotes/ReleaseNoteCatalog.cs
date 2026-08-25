@@ -14,9 +14,40 @@ public static class ReleaseNoteCatalog
     public static IReadOnlyList<ReleaseNote> All { get; } = new List<ReleaseNote>
     {
         new ReleaseNote(
-            version: "2026.08.24",
-            date: "24 Ağustos 2026",
-            title: "Arayüz iyileştirmeleri ve düzeltmeler",
+            version: "2026.08.25",
+            date: "25 Ağustos 2026",
+            title: "Proje ve görev ekranlarında yenilenme",
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "Proje düzenleme ekranı",
+                "Projeleri artık kendi düzenleme sayfasında güncelleyebilirsiniz; proje kartındaki " +
+                "düzenle düğmesi sizi bu ekrana götürür. Silme işlemi güvenlik için menüden kaldırıldı — " +
+                "bir projeyi silmek için düzenleme ekranında proje kodunu yazarak onaylamanız gerekiyor."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "Projelere kapak görseli ve dosya ekleme",
+                "Projelere kapak görseli yükleyebilir; sözleşme, teklif gibi dosyaları doğrudan projenin " +
+                "kendisine ekleyebilirsiniz."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "Yeni Görev ekranı ve hızlı giriş satırı",
+                "Görev oluşturma ekranı yenilendi. Hızlı giriş satırına yazarken @kişi ile atama, " +
+                "#etiket, !öncelik ve >tarih kısayollarını kullanabilirsiniz. Bu ekstralar paketinize " +
+                "ve yetkinize bağlıdır; kapalı olsa da görev oluşturma çalışmaya devam eder."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
+                "Yeni Proje formu yenilendi",
+                "Yeni proje oluşturma penceresi tek ekranda toplandı. Kategori seçtiğinizde o kategoriye " +
+                "uygun hazır bir görev takvimi öneriliyor ve isterseniz projeyle birlikte oluşturuluyor."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Fix,
+                "Aynı proje kodu artık iki kez kullanılamıyor",
+                "Daha önce aynı proje kodu farkında olmadan ikinci bir projeye verilebiliyordu. " +
+                "Kod artık kaydedilirken sunucu tarafında kontrol ediliyor."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Fix,
+                "Panodaki proje bağlantısı düzeltildi",
+                "Ana sayfadaki \"Proje Sağlığı\" kartında bir projeye tıklandığında açılmayan bağlantı düzeltildi."),
 
             new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
                 "Projeye tıklayınca doğrudan proje sayfası açılıyor",
