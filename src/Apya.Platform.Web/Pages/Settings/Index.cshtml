@@ -184,6 +184,9 @@
     Yönetim hedefleri — eski YÖNETİM menü bölümünün gittiği yer (kabuk handoff'u
     2026-08-13). Sekme değil bağlantı: ABP modül sayfaları kendi route'larında
     kalır. Yetkisi olmayan kullanıcıda liste boş döner ve kart hiç basılmaz.
+
+    Liste artık sabit değil: kullanıcı /Settings/Menu'den buradaki bir hedefi
+    kenar çubuğuna alabilir ya da kenar çubuğundan buraya bir öğe indirebilir.
 *@
 @if (Model.AdminLinks.Count > 0)
 {
@@ -196,21 +199,46 @@
             <ul class="apya-settings-links">
                 @foreach (var link in Model.AdminLinks)
                 {
-                    <li>
-                        <a href="@link.Url" class="apya-settings-link">
-                            <span class="kpi-icon-box kpi-icon-box--sm kpi-icon-box--neutral" aria-hidden="true">
-                                <i class="@link.Icon"></i>
-                            </span>
-                            <span class="apya-settings-link-text">
-                                <span class="apya-settings-link-title">@link.Title</span>
-                                <span class="apya-settings-link-desc">@link.Description</span>
-                            </span>
-                            <i class="fa fa-chevron-right apya-settings-link-chevron" aria-hidden="true"></i>
-                        </a>
-                    </li>
+                    @* Kullanıcı bir kategoriyi bütün hâlinde indirebiliyor → liste
+                       artık düz değil: grup girdisi başlık + kendi alt listesi olur. *@
+                    if (link.IsGroup)
+                    {
+                        <li class="apya-settings-group">
+                            <div class="apya-settings-group-head">
+                                <span class="kpi-icon-box kpi-icon-box--sm kpi-icon-box--neutral" aria-hidden="true">
+                                    <i class="@link.Icon"></i>
+                                </span>
+                                <span class="apya-settings-group-title">@link.Title</span>
+                            </div>
+                            <ul class="apya-settings-links apya-settings-links--nested">
+                                @foreach (var child in link.Children)
+                                {
+                                    <partial name="_SettingsAdminLink" model="child" />
+                                }
+                            </ul>
+                        </li>
+                    }
+                    else
+                    {
+                        <partial name="_SettingsAdminLink" model="link" />
+                    }
                 }
             </ul>
         </abp-card-body>
     </abp-card>
 }
+
+@* Menü düzeni — her oturumlu kullanıcıya açık (kişisel tercih, izin kapısı yok). *@
+<abp-card class="mt-3">
+    <abp-card-header>
+        <abp-card-title>@L["Settings:MenuLayout.Title"]</abp-card-title>
+    </abp-card-header>
+    <abp-card-body>
+        <div class="form-text mb-3">@L["Settings:MenuLayout.Help"]</div>
+        <a href="/Settings/Menu" class="btn btn-outline-primary">
+            <i class="fa fa-bars-staggered me-1" aria-hidden="true"></i>
+            @L["Settings:MenuLayout.Open"]
+        </a>
+    </abp-card-body>
+</abp-card>
 </div>

@@ -3663,6 +3663,29 @@ i.apya-priority-dot {
     transform: translateX(2px);
 }
 
+/* Taşınmış kategori — kullanıcı menü düzeninden bir bölümü bütün hâlinde
+   buraya indirebiliyor. Başlık tıklanmaz (grubun URL'si yok); yalnız altındaki
+   bağlantıları toplar, hiyerarşi girintiyle ve ince çizgiyle anlatılır. */
+.apya-settings-group {
+    margin: var(--apya-space-2) 0;
+}
+.apya-settings-group-head {
+    display: flex;
+    align-items: center;
+    gap: var(--apya-space-3);
+    padding: var(--apya-space-2) var(--apya-space-3);
+    color: var(--apya-text-primary);
+}
+.apya-settings-group-title {
+    font-size: var(--apya-fs-base);
+    font-weight: var(--apya-weight-semibold);
+}
+.apya-settings-links--nested {
+    margin-left: calc(var(--apya-space-3) + 14px);
+    padding-left: var(--apya-space-3);
+    border-left: 1px solid var(--apya-border-subtle);
+}
+
 /* ============================================================================
    KABUK — SOL MENÜ ZENGİNLEŞTİRMELERİ (apya-sidebar-shell.js)
    ----------------------------------------------------------------------------
@@ -3849,36 +3872,6 @@ i.apya-priority-dot {
     padding-top: 6px !important;
     padding-bottom: 6px !important;
 }
-.apya-shell-foot-hint {
-    flex: 1 0 100%;
-    padding-left: 28px;
-    font-size: 10.5px;
-    line-height: 1.35;
-    color: var(--apya-text-tertiary);
-}
-.apya-shell-status {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    padding: 8px 10px 0;
-}
-.apya-shell-status-dot {
-    flex: 0 0 7px;
-    width: 7px;
-    height: 7px;
-    border-radius: var(--apya-radius-full);
-    background: var(--apya-positive-500);
-}
-.apya-shell-status-dot.is-down { background: var(--apya-negative-500); }
-.apya-shell-status-text {
-    font-size: var(--apya-fs-xs);
-    color: var(--apya-text-tertiary);
-}
-.apya-shell-status-version {
-    margin-left: auto;
-    font-size: var(--apya-fs-xs);
-    color: var(--apya-text-disabled);
-}
 
 /* --- Ray modu: etiket taşıyan her şey gizlenir ---
    72px'lik rayda rozet/iğne/alt liste sığmaz ve taşar; aktiflik göstergesi
@@ -3888,9 +3881,7 @@ i.apya-priority-dot {
     html[data-sidebar="collapsed"] .lpx-sidebar-container:not(:hover) #lpx-sidebar .apya-shell-rowbtn,
     html[data-sidebar="collapsed"] .lpx-sidebar-container:not(:hover) #lpx-sidebar .apya-shell-badge,
     html[data-sidebar="collapsed"] .lpx-sidebar-container:not(:hover) #lpx-sidebar .apya-shell-subnav,
-    html[data-sidebar="collapsed"] .lpx-sidebar-container:not(:hover) #lpx-sidebar .apya-shell-section-chevron,
-    html[data-sidebar="collapsed"] .lpx-sidebar-container:not(:hover) .apya-shell-foot-hint,
-    html[data-sidebar="collapsed"] .lpx-sidebar-container:not(:hover) .apya-shell-status {
+    html[data-sidebar="collapsed"] .lpx-sidebar-container:not(:hover) #lpx-sidebar .apya-shell-section-chevron {
         display: none !important;
     }
 }
@@ -4414,25 +4405,6 @@ i.apya-priority-dot {
 }
 /* Kiracı pili tasarımda EN SOLDA (breadcrumb'dan önce) — sağ kümede değil. */
 .lpx-topbar-content > .apya-tenant-switch { order: 5; margin-right: auto; }
-
-/* --- 4) Sol menü dip bloğu ---
-   Ekran görüntüsünde "Kiracı · Kimlik · Platform · Geri bildirim" iki satıra
-   kırılıyor ve durum satırıyla üst üste biniyordu. Tasarımda tek satır,
-   taşarsa kırpılır. */
-.apya-shell-foot-hint {
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    font-size: 10px;
-    letter-spacing: -0.01em;
-}
-.apya-shell-status { padding-top: 10px; }
-.apya-shell-status-text {
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-.apya-shell-status-version { flex: 0 0 auto; padding-left: 6px; }
 
 /* --- 5) Sabitleme iğnesi: tasarımdaki dolu indigo hâl ---
    Uygulamada sabitlenmiş iğne ince bir ok gibi duruyordu; tasarımda dolu,
@@ -6612,4 +6584,145 @@ i.apya-priority-dot {
    Ölçüm: docs/design/gorev-olustur/uygulama-notlari.md */
 [data-theme="dark"] .apya-tc-pchip-tag {
     color: var(--apya-accent-300);
+}
+
+/* ----------------------------------------------------------------------------
+   25) MENÜ DÜZENİ EDİTÖRÜ — Pages/Settings/Menu
+   İki sütun aynı satır markup'ını kullanır; taşınan <li> DOM'da olduğu gibi
+   öbür sütuna geçer. Hangi okun görüneceğini KAPSAYICININ [data-nav-side]
+   değeri belirler — böylece JS'in düğme değiştirmesi gerekmez.
+   ---------------------------------------------------------------------------- */
+.apya-navedit-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+.apya-navedit-list--inner {
+    margin-top: 4px;
+    margin-left: 20px;
+    padding-left: 12px;
+    border-left: 1px solid var(--apya-border-subtle);
+}
+
+.apya-navedit-item--ghost > .apya-navedit-row {
+    opacity: .4;
+}
+
+.apya-navedit-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 40px;
+    padding: 6px 10px;
+    border: 1px solid var(--apya-border-default);
+    border-radius: var(--apya-radius-md);
+    background: var(--apya-surface-base);
+    /* Renk AÇIKÇA verilir: LeptonX'in .card-body kuralı sabit #686B6E basıyor ve
+       koyu temada dönmüyor → miras alınsa satır başlığı koyu zeminde 3,57:1'de
+       kalırdı (AA sınırı 4,5:1). Ölçüm: koyu temada .card-body #686B6E,
+       .card ise #F4F4F5 döndürüyor. */
+    color: var(--apya-text-primary);
+}
+.apya-navedit-item--group > .apya-navedit-row {
+    background: var(--apya-surface-raised);
+    font-weight: 600;
+}
+
+.apya-navedit-handle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    color: var(--apya-text-tertiary);
+    cursor: grab;
+}
+.apya-navedit-handle--locked {
+    cursor: default;
+}
+.apya-navedit-icon {
+    width: 18px;
+    text-align: center;
+    color: var(--apya-text-secondary);
+}
+.apya-navedit-title {
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.apya-navedit-locked-hint {
+    flex: 0 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: var(--apya-text-xs);
+    color: var(--apya-text-tertiary);
+}
+
+.apya-navedit-actions {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    flex: 0 0 auto;
+}
+.apya-navedit-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    /* Dokunma hedefi: mobilde 44px'e çıkar (aşağıdaki medya sorgusu). */
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    border: 0;
+    border-radius: var(--apya-radius-sm);
+    background: transparent;
+    color: var(--apya-text-secondary);
+    font-size: var(--apya-text-xs);
+}
+.apya-navedit-btn:hover {
+    background: var(--apya-surface-hover);
+    color: var(--apya-text-primary);
+}
+.apya-navedit-btn:focus-visible {
+    outline: 2px solid var(--apya-border-focus);
+    outline-offset: 1px;
+}
+.apya-navedit-btn--move {
+    color: var(--apya-accent-600);
+}
+
+/* Sütuna göre tek ok: soldaki sütunda "Ayarlar'a", sağdakinde "kenar çubuğuna". */
+[data-nav-side="sidebar"] [data-nav-to-sidebar],
+[data-nav-side="settings"] [data-nav-to-settings] {
+    display: none;
+}
+
+/* Boş liste ipucu — yalnız gerçekten boşken görünür (tek çocuk olduğunda).
+   JS'in yer tutucuyu yönetmesi gerekmesin diye kural CSS'te. */
+.apya-navedit-empty {
+    padding: 8px 10px;
+    border: 1px dashed var(--apya-border-subtle);
+    border-radius: var(--apya-radius-md);
+    color: var(--apya-text-tertiary);
+    font-size: var(--apya-text-xs);
+}
+.apya-navedit-empty:not(:only-child) {
+    display: none;
+}
+
+@media (max-width: 767.98px) {
+    .apya-navedit-btn {
+        width: 44px;
+        height: 44px;
+        font-size: var(--apya-text-sm);
+    }
+    .apya-navedit-list--inner {
+        margin-left: 10px;
+        padding-left: 8px;
+    }
 }

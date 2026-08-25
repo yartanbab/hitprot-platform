@@ -1,0 +1,150 @@
+@page "/Settings/Menu"
+@model Apya.Platform.Web.Pages.Settings.MenuModel
+@inject Microsoft.Extensions.Localization.IStringLocalizer<Apya.Platform.Localization.PlatformResource> L
+@{
+    ViewBag.Title = L["MenuLayout:Title"].Value;
+}
+
+@*
+    İki sütun AYNI ağaç markup'ını kullanır: taşınan <li> DOM'da olduğu gibi öbür
+    sütuna geçer, düğme cerrahisi gerekmez. Hangi ok görüneceğini sütunun
+    [data-nav-side] değeri CSS'te belirler (apya-shell.css §25).
+
+    Gruplar da taşınabilir (kategoriyi bütün hâlinde indirme) ve her madde her
+    gruba sürüklenebilir; tek kısıt grubu grubun İÇİNE bırakmamak — LeptonX'in
+    bastığı derinlik üç seviye.
+*@
+@functions {
+    void RenderNode(Apya.Platform.Web.Pages.Settings.MenuModel.NavNode node)
+    {
+        <li class="apya-navedit-item @(node.IsGroup ? "apya-navedit-item--group" : "")"
+            data-nav-node="@node.Name"
+            data-nav-kind="@(node.IsGroup ? "group" : "leaf")"
+            data-nav-locked="@(node.IsLocked ? "true" : "false")"
+            data-nav-admin="@(node.IsAdminLink ? "true" : "false")">
+            <div class="apya-navedit-row">
+                @if (node.IsLocked)
+                {
+                    <span class="apya-navedit-handle apya-navedit-handle--locked" aria-hidden="true">
+                        <i class="fa fa-lock"></i>
+                    </span>
+                }
+                else
+                {
+                    <span class="apya-navedit-handle" title="@L["MenuLayout:Drag"]" aria-hidden="true">
+                        <i class="fa fa-grip-vertical"></i>
+                    </span>
+                }
+                <i class="apya-navedit-icon @node.Icon" aria-hidden="true"></i>
+                <span class="apya-navedit-title">@node.Title</span>
+
+                @if (node.IsLocked)
+                {
+                    <span class="apya-navedit-locked-hint">@L["MenuLayout:LockedHint"]</span>
+                }
+                else
+                {
+                    <span class="apya-navedit-actions">
+                        <button type="button" class="apya-navedit-btn" data-nav-up
+                                aria-label="@L["MenuLayout:MoveUp"]" title="@L["MenuLayout:MoveUp"]">
+                            <i class="fa fa-chevron-up" aria-hidden="true"></i>
+                        </button>
+                        <button type="button" class="apya-navedit-btn" data-nav-down
+                                aria-label="@L["MenuLayout:MoveDown"]" title="@L["MenuLayout:MoveDown"]">
+                            <i class="fa fa-chevron-down" aria-hidden="true"></i>
+                        </button>
+                        <button type="button" class="apya-navedit-btn apya-navedit-btn--move" data-nav-to-settings
+                                aria-label="@L["MenuLayout:MoveToSettings"]" title="@L["MenuLayout:MoveToSettings"]">
+                            <i class="fa fa-arrow-right" aria-hidden="true"></i>
+                        </button>
+                        <button type="button" class="apya-navedit-btn apya-navedit-btn--move" data-nav-to-sidebar
+                                aria-label="@L["MenuLayout:MoveToSidebar"]" title="@L["MenuLayout:MoveToSidebar"]">
+                            <i class="fa fa-arrow-left" aria-hidden="true"></i>
+                        </button>
+                    </span>
+                }
+            </div>
+
+            @if (node.IsGroup)
+            {
+                <ul class="apya-navedit-list apya-navedit-list--inner" data-nav-list="@node.Name">
+                    @foreach (var child in node.Children)
+                    {
+                        RenderNode(child);
+                    }
+                    <li class="apya-navedit-empty">@L["MenuLayout:Empty"]</li>
+                </ul>
+            }
+        </li>
+    }
+}
+
+<div data-page-description="@L["MenuLayout:PageDescription"]">
+    @if (TempData["Saved"] != null)
+    {
+        <div class="alert alert-success" role="status">@L["MenuLayout:Saved"]</div>
+    }
+
+    <form method="post" id="ApyaMenuEditor">
+        @* Tarayıcı DOM'dan kurar; sunucuda MenuLayout.Parse normalize eder. *@
+        <input type="hidden" asp-for="LayoutJson" id="ApyaMenuLayoutJson" />
+
+        <div class="row g-3">
+            <div class="col-lg-6">
+                <abp-card>
+                    <abp-card-header>
+                        <abp-card-title>@L["MenuLayout:Sidebar"]</abp-card-title>
+                    </abp-card-header>
+                    <abp-card-body>
+                        <div class="form-text mb-3">@L["MenuLayout:SidebarHelp"]</div>
+                        <div data-nav-side="sidebar">
+                            <ul class="apya-navedit-list apya-navedit-list--root" data-nav-root="sidebar">
+                                @foreach (var node in Model.Sidebar)
+                                {
+                                    RenderNode(node);
+                                }
+                                <li class="apya-navedit-empty">@L["MenuLayout:Empty"]</li>
+                            </ul>
+                        </div>
+                    </abp-card-body>
+                </abp-card>
+            </div>
+
+            <div class="col-lg-6">
+                <abp-card>
+                    <abp-card-header>
+                        <abp-card-title>@L["MenuLayout:SettingsColumn"]</abp-card-title>
+                    </abp-card-header>
+                    <abp-card-body>
+                        <div class="form-text mb-3">@L["MenuLayout:SettingsHelp"]</div>
+                        <div data-nav-side="settings">
+                            <ul class="apya-navedit-list apya-navedit-list--root" data-nav-root="settings">
+                                @foreach (var node in Model.SettingsColumn)
+                                {
+                                    RenderNode(node);
+                                }
+                                <li class="apya-navedit-empty">@L["MenuLayout:Empty"]</li>
+                            </ul>
+                        </div>
+                    </abp-card-body>
+                </abp-card>
+            </div>
+        </div>
+
+        <div class="d-flex flex-wrap gap-2 mt-3">
+            <button type="submit" class="btn btn-primary">@L["MenuLayout:Save"]</button>
+            <a href="/Settings" class="btn btn-link">@L["MenuLayout:Back"]</a>
+            @if (Model.HasCustomLayout)
+            {
+                <button type="submit" asp-page-handler="Reset" class="btn btn-outline-secondary ms-auto">
+                    @L["MenuLayout:Reset"]
+                </button>
+            }
+        </div>
+    </form>
+</div>
+
+@section scripts {
+    <script src="~/libs/sortablejs/Sortable.min.js"></script>
+    <abp-script src="/Pages/Settings/Menu.js" />
+}

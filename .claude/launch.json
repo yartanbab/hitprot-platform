@@ -11,7 +11,7 @@
     {
       "name": "apya-web-qa",
       "runtimeExecutable": "dotnet",
-      "runtimeArgs": ["run", "--project", "src/Apya.Platform.Web", "--", "--urls", "https://localhost:44387"],
+      "runtimeArgs": ["run", "--launch-profile", "Apya.Platform.Web", "--project", "src/Apya.Platform.Web", "--", "--urls", "https://localhost:44387"],
       "port": 44387,
       "url": "https://localhost:44387"
     }

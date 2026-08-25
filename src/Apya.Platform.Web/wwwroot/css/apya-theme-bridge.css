@@ -893,7 +893,12 @@ html, body {
 #lpx-sidebar .lpx-menu-item-link {
     color: var(--apya-text-secondary) !important;
     border-radius: var(--apya-radius-lg);
-    margin: 1px 8px;
+    /* 8px → 16px: `.lpx-nav` kabının kendi yatay iç boşluğu YOK (ölçüm: nav
+       kenar çubuğunun 0,4px SOLUNDA başlıyor), yani satırların kenardan tek
+       payı bu marj. 8px'te menü kenara yapışık duruyordu; hover hapı ve bölüm
+       ayraç çizgisi de kenara değiyordu. Değer kullanıcı kararı (2026-08-25):
+       önce 12px denendi, 16px'te karar kılındı. */
+    margin: 1px 16px;
     /* Tema anchor'a `width: 100%` veriyor; yukarıdaki 8px'lik yan marjlar buna
        EKLENİYOR → her satır kapsayıcıdan 16px taşıyor ve sidebar yatay kayıyordu
        (canlı ölçüm: scrollWidth 280 / clientWidth 264). `auto` ile anchor kalan
@@ -987,6 +992,15 @@ html, body {
 /* Bölüm içi yaprak: ikon, başlık metniyle aynı x'te hizalansın */
 #lpx-sidebar ul.lpx-inner-menu > li.lpx-inner-menu-item > a.lpx-menu-item-link {
     padding-left: 22px !important;
+}
+/* Üst düzey YAPRAK (Genel Bakış, Yenilikler, Ayarlar) temadan 18px alıyordu ve
+   bölüm içi yapraklardan 4px solda kalıyordu — ölçüldü: ikon 25,6px'e karşı
+   29,6px. Aynı x'e getirilir; hiyerarşi zaten bölüm başlığıyla anlatılıyor,
+   üst düzey yaprağın soluk bir girinti farkıyla ayrışmasına gerek yok.
+   `:has()` ile alt menüsü OLMAYAN öğeler seçilir — bölüm başlıklarının kendi
+   kuralı var (padding: 15px 22px 4px). */
+#lpx-sidebar li.outer-menu-item:not(:has(> ul.lpx-inner-menu)) > a.lpx-menu-item-link {
+    padding-left: 22px;
 }
 /* 2. seviye iç grup (Yönetim → Müşteri/Kimlik yönetimi çocukları) daha içeride */
 #lpx-sidebar ul.lpx-inner-menu ul.lpx-inner-menu > li.lpx-inner-menu-item > a.lpx-menu-item-link {

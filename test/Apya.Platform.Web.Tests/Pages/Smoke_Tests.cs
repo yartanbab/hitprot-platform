@@ -51,6 +51,8 @@ public class Smoke_Tests : PlatformWebTestBase
     [InlineData("/Grants")]
     [InlineData("/Documents")]
     [InlineData("/Documents/Scope")]
+    [InlineData("/Settings")]
+    [InlineData("/Settings/Menu")]
     public async Task Page_ReturnsOkOrRedirect(string url)
     {
         var response = await Client.GetAsync(url);
