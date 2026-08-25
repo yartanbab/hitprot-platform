@@ -53,7 +53,15 @@ beforeAll(async () => {
     global.$ = function () { return { on() { return this; } }; };
     global.$.extend = Object.assign;
     global.jQuery = global.$;
-    global.Sortable = class { destroy() { } };
+    // Kurulan Sortable örneklerini kaydeder: kolon sürükleme (handle
+    // '.kanban-header') YALNIZ yetkili + proje seçili panoda kurulmalı.
+    global.Sortable = class {
+        constructor(el, opts) { Sortable.calls.push({ el, opts: opts || {} }); }
+        destroy() { }
+    };
+    global.Sortable.calls = [];
+    const columnSortables = () => Sortable.calls.filter((c) => c.opts.handle === '.kanban-header');
+    global.__columnSortables = columnSortables;
     global.moment = function () { return { diff: () => 9999, format: () => '01 Oca' }; };
     global.abp = {
         auth: { isGranted: (p) => granted[p] === true },
@@ -67,6 +75,7 @@ beforeAll(async () => {
 beforeEach(() => {
     granted = {};
     localStorage.clear();
+    Sortable.calls = [];
 });
 
 describe('kolonların kaynağı', () => {
@@ -180,6 +189,129 @@ describe('kolon düzenleme yetkisi (Projects.Edit)', () => {
 
         expect(document.querySelector('.kanban-col-menu')).toBeNull();
         expect(document.querySelector('.js-add-col')).toBeNull();
+    });
+});
+
+describe('yerinde ad düzenleme (3a)', () => {
+    it('yetkili ve DB kaydı olan kolonun başlığı düzenlenebilir işaretlenir', async () => {
+        granted['Platform.Projects.Edit'] = true;
+        mountBoard(sysCols.concat([customCol]), []);
+        apya.kanban.create({ projectId: 'p1' }).load();
+        await flush();
+
+        expect(document.querySelectorAll('.js-col-name.is-editable').length).toBe(5);
+        // Düzenleme kutusu tıklanmadan açılmaz.
+        expect(document.querySelector('.kanban-col-name-input')).toBeNull();
+    });
+
+    it('yetki yoksa başlık düzenlenebilir işaretlenmez', async () => {
+        mountBoard(sysCols, []);
+        apya.kanban.create({ projectId: 'p1' }).load();
+        await flush();
+
+        expect(document.querySelector('.js-col-name.is-editable')).toBeNull();
+    });
+
+    it('proje seçili değilken (DB kaydı yok) başlık düzenlenemez', async () => {
+        granted['Platform.Projects.Edit'] = true;
+        mountBoard(sysCols, []);
+        apya.kanban.create({ projectId: null }).load();
+        await flush();
+
+        expect(document.querySelector('.js-col-name.is-editable')).toBeNull();
+    });
+});
+
+describe('kolon sırası projeye ait (3c-5)', () => {
+    it('yetkili + proje seçiliyken kolon sürükleme kurulur', async () => {
+        granted['Platform.Projects.Edit'] = true;
+        mountBoard(sysCols, []);
+        apya.kanban.create({ projectId: 'p1' }).load();
+        await flush();
+
+        expect(__columnSortables().length).toBe(1);
+    });
+
+    it('yetki yoksa kolon sürükleme hiç kurulmaz', async () => {
+        mountBoard(sysCols, []);
+        apya.kanban.create({ projectId: 'p1' }).load();
+        await flush();
+
+        expect(__columnSortables().length).toBe(0);
+    });
+
+    it('proje seçili değilken kurulmaz (kaydedilecek yer yok)', async () => {
+        granted['Platform.Projects.Edit'] = true;
+        mountBoard(sysCols, []);
+        apya.kanban.create({ projectId: null }).load();
+        await flush();
+
+        expect(__columnSortables().length).toBe(0);
+    });
+
+    it('sıra localStorage\'a YAZILMAZ (artık sunucuda)', async () => {
+        granted['Platform.Projects.Edit'] = true;
+        mountBoard(sysCols, []);
+        apya.kanban.create({ projectId: 'p1' }).load();
+        await flush();
+
+        expect(localStorage.getItem('apya-kanban-order-p1')).toBeNull();
+    });
+});
+
+describe('kolon silme onayı için gereken veri', () => {
+    it('kart durumunu taşır (hedef kolonu isimlendirmek için)', async () => {
+        mountBoard(sysCols, [{ id: 't1', code: 'GRV-1', title: 'A', status: 2, priority: 2 }]);
+        apya.kanban.create({ projectId: 'p1' }).load();
+        await flush();
+
+        expect(document.querySelector('.kanban-card').getAttribute('data-status')).toBe('2');
+    });
+
+    it('sistem kolonunun kilitli sil düğmesi gerekçe için işaretli', async () => {
+        granted['Platform.Projects.Edit'] = true;
+        mountBoard(sysCols, []);
+        apya.kanban.create({ projectId: 'p1' }).load();
+        await flush();
+
+        expect(col(1).querySelector('.js-col-delete-locked')).not.toBeNull();
+    });
+});
+
+describe('proje seçilmemiş uyarısı (3c-4)', () => {
+    it('yetkiliye "proje seç" karosu gösterilir, "Kolon ekle" gösterilmez', async () => {
+        granted['Platform.Projects.Edit'] = true;
+        mountBoard(sysCols, []);
+        apya.kanban.create({ projectId: null }).load();
+        await flush();
+
+        const note = document.querySelector('.kanban-note-col');
+        expect(note).not.toBeNull();
+        expect(note.textContent).toContain('Özel kolonlar projeye ait');
+        expect(document.querySelector('.js-add-col')).toBeNull();
+    });
+
+    it('yetkisiz kullanıcıya hiç gösterilmez', async () => {
+        mountBoard(sysCols, []);
+        apya.kanban.create({ projectId: null }).load();
+        await flush();
+
+        expect(document.querySelector('.kanban-note-col')).toBeNull();
+    });
+
+    it('proje seçilince karo yerini "Kolon ekle"ye bırakır', async () => {
+        granted['Platform.Projects.Edit'] = true;
+        mountBoard(sysCols, []);
+        const kb = apya.kanban.create({ projectId: null });
+        kb.load();
+        await flush();
+        expect(document.querySelector('.kanban-note-col')).not.toBeNull();
+
+        kb.setProject('p1');
+        await flush();
+
+        expect(document.querySelector('.kanban-note-col')).toBeNull();
+        expect(document.querySelector('.js-add-col')).not.toBeNull();
     });
 });
 

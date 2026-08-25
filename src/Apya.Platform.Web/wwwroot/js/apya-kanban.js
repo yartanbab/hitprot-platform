@@ -29,6 +29,8 @@
     var SYS = { 1: 'kanban-todo', 2: 'kanban-inprogress', 3: 'kanban-inreview', 4: 'kanban-done' };
 
     function el(tag, cls) { var e = document.createElement(tag); if (cls) { e.className = cls; } return e; }
+    // Swal html'ine kullanıcı girdisi (kolon/görev adı) basılıyor — kaçış şart.
+    function esc(s) { var d = document.createElement('div'); d.textContent = s == null ? '' : String(s); return d.innerHTML; }
 
     // Ad sorma — window.prompt yerine repo deseni (SweetAlert). prompt tarayıcıyı
     // kilitliyor, mobilde kırpılıyor ve tema dışı görünüyordu.
@@ -120,6 +122,8 @@
             var card = el('div', 'kanban-card shadow-sm');
             card.setAttribute('data-id', task.id);
             card.setAttribute('data-priority', priorityAttr(task.priority));
+            // Kolon silme onayı kartın döneceği durum kolonunu bundan bulur.
+            card.setAttribute('data-status', task.status);
 
             var isDone = task.status === 4 || task.status === 0;
             if (task.dueDate && !isDone) {
@@ -260,7 +264,7 @@
         function columnMenuHtml(c) {
             if (!canEditColumns || !c.id) { return ''; }
             var del = c.isSystem
-                ? '<div class="apya-console-menu-item is-locked" aria-disabled="true" ' +
+                ? '<div class="apya-console-menu-item is-locked js-col-delete-locked" aria-disabled="true" ' +
                       'title="Sistem kolonu görev durumuna bağlıdır; silinemez, yeniden adlandırılabilir">' +
                       '<span class="apya-console-menu-icon"><i class="fa fa-lock"></i></span>Kolonu sil</div>'
                 : '<button type="button" class="apya-console-menu-item is-danger js-col-delete">' +
@@ -304,7 +308,9 @@
                 : '';
             col.innerHTML =
                 '<div class="kanban-header">' +
-                    '<span class="kanban-title js-col-name"><i class="fa fa-circle me-2"></i></span>' +
+                    '<span class="kanban-title js-col-name' + (canEditColumns && c.id ? ' is-editable' : '') +
+                        '" title="' + (canEditColumns && c.id ? 'Adı düzenlemek için tıkla' : '') + '">' +
+                        '<i class="fa fa-circle me-2"></i></span>' +
                     '<span class="d-flex align-items-center gap-2 apya-touch-actions">' +
                         '<span class="apya-chip apya-chip-' + colorTone(c.colorClass) + ' kanban-count">0</span>' +
                         '<span class="kanban-wip' + (c.wipLimit ? '' : ' d-none') + '" title="WIP limiti"></span>' +
@@ -317,6 +323,81 @@
             col.querySelector('.js-col-name').appendChild(document.createTextNode(' ' + c.name));
             col.querySelector('.kanban-cards').id = isSys ? SYS[c.statusValue] : ('kanban-col-' + c.id);
             return col;
+        }
+
+        // Hedef durum kolonunun ADI board'dan okunur — JS'te ikinci bir durum
+        // sözlüğü tutulmaz (adlandırma tek kaynaktan gelsin).
+        function statusColumnName(statusValue) {
+            var col = document.querySelector(boardSel + ' .kanban-column[data-status-id="' + statusValue + '"]');
+            var n = col && col.querySelector('.js-col-name');
+            return n ? n.textContent.trim() : ('Durum ' + statusValue);
+        }
+
+        // Silme onayının gövdesi: kaç görev var ve hangi kolona dönecekler.
+        // Kolon silinince görevler MoveToColumn(null) ile durum kolonuna döner.
+        function buildDeletePreview(cards) {
+            if (!cards.length) {
+                return '<p class="kanban-del-note">Kolon boş; silmek hiçbir görevi etkilemez.</p>';
+            }
+            var shown = Array.prototype.slice.call(cards, 0, 8);
+            var rows = shown.map(function (card) {
+                var codeEl = card.querySelector('small');
+                var titleEl = card.querySelector('.fw-bold');
+                return '<li>' +
+                    '<span class="kanban-del-code">' + esc(codeEl ? codeEl.textContent.trim() : '') + '</span>' +
+                    '<span class="kanban-del-title">' + esc(titleEl ? titleEl.textContent : '') + '</span>' +
+                    '<span class="kanban-del-target">→ ' + esc(statusColumnName(card.getAttribute('data-status'))) + '</span>' +
+                    '</li>';
+            }).join('');
+            var more = cards.length > shown.length
+                ? '<li class="kanban-del-more">+' + (cards.length - shown.length) + ' görev daha</li>'
+                : '';
+            return '<p class="kanban-del-note">Kolon kalkar, içindeki <b>' + cards.length +
+                ' görev silinmez</b> — durumlarına göre varsayılan kolona döner.</p>' +
+                '<ul class="kanban-del-list">' + rows + more + '</ul>';
+        }
+
+        // Yerinde ad düzenleme (mockup 3a): Enter kaydeder, Esc iptal eder, 64
+        // karakter sayacı görünür (BoardColumn.Name sınırı). SweetAlert kutusunun
+        // yerini alır — başlığa tıklayınca ya da ⋯ → "Yeniden adlandır" ile açılır.
+        function startRename(colEl) {
+            if (!colEl || !projectId || !canEditColumns) { return; }
+            if (!colEl.getAttribute('data-column-id')) { return; }  // DB kaydı yoksa düzenlenemez
+            var nameEl = colEl.querySelector('.js-col-name');
+            if (!nameEl || colEl.querySelector('.kanban-col-rename')) { return; }
+
+            var current = nameEl.textContent.trim();
+            var box = el('span', 'kanban-col-rename');
+            var input = document.createElement('input');
+            input.type = 'text';
+            input.maxLength = 64;
+            input.value = current;
+            input.className = 'kanban-col-name-input';
+            input.setAttribute('aria-label', 'Kolon adı');
+            var counter = el('span', 'kanban-col-name-counter');
+            function sync() { counter.textContent = input.value.length + '/64'; }
+            sync();
+            box.appendChild(input);
+            box.appendChild(counter);
+            nameEl.style.display = 'none';
+            nameEl.parentNode.insertBefore(box, nameEl);
+
+            function close() { box.remove(); nameEl.style.display = ''; }
+            input.addEventListener('input', sync);
+            input.addEventListener('keydown', function (e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    var v = input.value.trim();
+                    close();
+                    if (v && v !== current) { saveColumn($(colEl), { name: v }); }
+                } else if (e.key === 'Escape') {
+                    e.preventDefault();
+                    close();
+                }
+            });
+            input.addEventListener('blur', close); // blur = iptal; kaydeden tuş Enter
+            input.focus();
+            input.select();
         }
 
         // Board'u baştan kurar. Sıra: DB Order (sistem ve özel kolonlar aynı listede).
@@ -339,6 +420,13 @@
                     '<span class="kanban-add-col-title">Kolon ekle</span>' +
                     '<span class="kanban-add-col-sub">özel kolon · durum eşlemesi</span>';
                 board.appendChild(add);
+            } else if (canEditColumns && customColumnsAllowed) {
+                // Genel panoda proje seçilmemiş: kolon yönetimi neden yok, tek satırda söyle.
+                var note = el('div', 'kanban-column kanban-note-col');
+                note.innerHTML = '<i class="fa fa-circle-info"></i>' +
+                    '<span class="kanban-add-col-title">Özel kolonlar projeye ait</span>' +
+                    '<span class="kanban-add-col-sub">Kolon eklemek ya da düzenlemek için yukarıdan bir proje seç.</span>';
+                board.appendChild(note);
             }
         }
 
@@ -466,34 +554,26 @@
         }
 
         // ── Sütun sırala (header drag) + boyutlandır (sağ kenar) — localStorage ──
+        // Kolon SIRASI artık projeye ait (ReorderAsync) — renderColumns DB Order'ıyla
+        // diziyor, burada yalnız kullanıcıya ait GENİŞLİK tercihi uygulanır.
+        // (Eskiden sıra da localStorage'daydı: aynı projeyi açan iki kişi farklı
+        // düzen görüyordu ve ReorderAsync hiç çağrılmıyordu.)
         function applyLayout() {
             var board = document.querySelector(boardSel);
             if (!board) { return; }
-            try {
-                var order = JSON.parse(localStorage.getItem(kbKey('order')) || 'null');
-                if (order && order.length) {
-                    order.forEach(function (tok) {
-                        var col = colByToken(board, tok);
-                        if (col) { board.appendChild(col); }
-                    });
-                    var addTile = board.querySelector('.js-add-col');
-                    if (addTile) { board.appendChild(addTile); } // ekle karosu sona
-                }
-            } catch (e) { }
             board.querySelectorAll('.kanban-column').forEach(function (col) {
                 var w = localStorage.getItem(kbKey('w-' + colToken(col)));
                 if (w) { col.style.flexBasis = w + 'px'; }
             });
         }
-        function colByToken(board, tok) {
-            if (tok.charAt(0) === 'c') { return board.querySelector('.kanban-column[data-column-id-custom="' + tok.substring(1) + '"]'); }
-            return board.querySelector('.kanban-column[data-status-id="' + tok.substring(1) + '"]');
-        }
 
         function ensureColumnConfig() {
             var board = document.querySelector(boardSel);
             if (!board || typeof Sortable === 'undefined') { return; }
-            if (!configInited) {
+            // Kolon sırası PROJEYE ait: yalnız Projects.Edit olan ve proje seçili
+            // bir panoda sürüklenebilir. Sıra sunucuya yazılır (ReorderAsync) —
+            // tüm ekip aynı düzeni görür.
+            if (!configInited && canEditColumns && projectId) {
                 configInited = true;
                 new Sortable(board, {
                     draggable: '.kanban-column:not(.js-add-col)',
@@ -501,15 +581,27 @@
                     animation: 150,
                     ghostClass: 'kanban-col-ghost',
                     onEnd: function () {
-                        var order = Array.prototype.map.call(
+                        // Proje seçimi bu arada kalkmış olabilir (genel panoda "Tümü"):
+                        // kaydedilecek yer yok, düzeni geri al.
+                        if (!projectId) { load(); return; }
+                        var ids = Array.prototype.map.call(
                             board.querySelectorAll('.kanban-column:not(.js-add-col)'),
-                            function (c) { return colToken(c); });
-                        try { localStorage.setItem(kbKey('order'), JSON.stringify(order)); } catch (e) { }
+                            function (c) { return c.getAttribute('data-column-id'); })
+                            .filter(function (id) { return !!id; });
+                        if (!ids.length) { return; }
+                        colSvc.reorder(projectId, ids)
+                            .then(function () { abp.notify.success('Kolon sırası kaydedildi.'); })
+                            .catch(function () {
+                                // Sıra sunucuda değişmedi → DB düzenine geri dön.
+                                abp.notify.error('Sıralama kaydedilemedi.');
+                                load();
+                            });
                     }
                 });
             }
-            // Boyutlandırma tutamağı (eksik olan kolonlara ekle)
-            board.querySelectorAll('.kanban-column:not(.js-add-col)').forEach(function (col) {
+            // Boyutlandırma tutamağı (eksik olan kolonlara ekle) — karo/not
+            // döşemeleri gerçek kolon değil, atlanır.
+            board.querySelectorAll('.kanban-column:not(.js-add-col):not(.kanban-note-col)').forEach(function (col) {
                 if (col.querySelector('.kanban-resize-handle')) { return; }
                 var handle = el('div', 'kanban-resize-handle');
                 handle.title = 'Sürükleyerek genişliği ayarla';
@@ -606,21 +698,45 @@
                         .then(function () { abp.notify.success('Kolon eklendi.'); load(); });
                 });
             });
+            // Silme onayı kartların NEREYE gideceğini isim isim söyler: kolon
+            // kalkınca görevler MoveToColumn(null) ile durum kolonuna döner.
+            // Hedef kolon adları board'dan okunur — JS'te ikinci bir durum sözlüğü yok.
             $doc.on('click', boardSel + ' .js-col-delete', function () {
-                if (!projectId) { return; }
-                var id = $(this).closest('.kanban-column').data('column-id');
-                abp.message.confirm('Bu kolonu silmek istediğinize emin misiniz? İçindeki görevler durumlarına göre varsayılan kolonlara döner.', 'Kolonu Sil', function (ok) {
-                    if (!ok) { return; }
-                    colSvc.delete(id).then(function () { abp.notify.info('Kolon silindi.'); load(); });
-                });
-            });
-            $doc.on('click', boardSel + ' .js-col-rename', function () {
                 if (!projectId) { return; }
                 var $col = $(this).closest('.kanban-column');
                 var id = $col.data('column-id');
-                askName('Kolon adı', $col.find('.js-col-name').text().trim(), function (name) {
-                    saveColumn($col, { name: name });
+                var name = $col.find('.js-col-name').text().trim();
+                var cards = $col[0].querySelectorAll('.kanban-cards .kanban-card');
+
+                Swal.fire({
+                    title: '"' + name + '" kolonu silinsin mi?',
+                    html: buildDeletePreview(cards),
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: 'Kolonu sil',
+                    cancelButtonText: 'Vazgeç',
+                    confirmButtonColor: '#dc3545'
+                }).then(function (r) {
+                    if (!r.isConfirmed) { return; }
+                    colSvc.delete(id).then(function () { abp.notify.info('Kolon silindi.'); load(); });
                 });
+            });
+
+            // Sistem kolonunda "Kolonu sil" kilitli — tıklayınca gerekçe ve alternatif.
+            $doc.on('click', boardSel + ' .js-col-delete-locked', function () {
+                var name = $(this).closest('.kanban-column').find('.js-col-name').text().trim();
+                abp.message.info(
+                    '"' + name + '" görev durumuna bağlı bir sistem kolonu; panodan kaldırılamaz. ' +
+                    'Ekibinin diline uydurmak için ⋯ menüsünden yeniden adlandırabilirsin.',
+                    'Varsayılan kolonlar silinemez');
+            });
+            // Yeniden adlandırma yerinde yapılır (Enter kaydet · Esc iptal):
+            // ⋯ menüsünden ya da doğrudan başlığa tıklayarak.
+            $doc.on('click', boardSel + ' .js-col-rename', function () {
+                startRename($(this).closest('.kanban-column')[0]);
+            });
+            $doc.on('click', boardSel + ' .js-col-name.is-editable', function () {
+                startRename($(this).closest('.kanban-column')[0]);
             });
 
             $doc.on('click', boardSel + ' .js-col-color', function () {

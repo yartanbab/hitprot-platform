@@ -187,7 +187,31 @@ imkânsız. Bu fazın ilk yarısı bu boşluğu kapatmak.
 > sistem kolonunun adını API'den değiştirince başlık değişiyor; "Tümü"de dört kolon
 > varsayılan adlarla geliyor; boş kolonda metin çıkıyor, dolu kolonda çıkmıyor.
 
-### PR 2b — Düzenleme yüzeyi (3a/3b/3c)
+### PR 2b — Düzenleme yüzeyi (3a/3b/3c) — ✅ TAMAMLANDI, **3b paneli hariç** (2026-08-24)
+
+> **Yapılanlar:** yerinde ad düzenleme (başlığa tıkla ya da ⋯ → Yeniden adlandır;
+> Enter kaydeder, Esc iptal, 64 karakter sayacı) · sistem kolonunda kilitli sil +
+> tıklayınca gerekçe ve yeniden adlandırma alternatifi · silme onayı artık kaç
+> görev olduğunu ve her kartın hangi kolona döneceğini isim isim gösteriyor
+> (hedef adlar board'dan okunur, JS'te ikinci durum sözlüğü yok) · **`ReorderAsync`
+> canlandırıldı**: kolon sırası artık projeye ait, sürükle-bırak sunucuya yazılıyor,
+> hata olursa DB düzenine dönüp bildirim çıkıyor; `localStorage` sıra anahtarı
+> kalktı, genişlik tercihi kullanıcıda kaldı · kolon sürükleme yalnız
+> `Projects.Edit` + proje seçiliyken kuruluyor · proje seçilmemiş panoda
+> "Özel kolonlar projeye ait · proje seç" karosu.
+>
+> Doğrulama: JS 310/310 (kanban dosyası 20 → 32 test), build 0 hata. Testler bir
+> önceki commit'e karşı çalıştırıldı, **7'si düştü** → anlamlı oldukları kanıtlandı.
+>
+> 🔴 **YAPILMADI — 3b "Kolonları düzenle" paneli.** Tek panelde sırala + ad + renk +
+> WIP + "n değişiklik bekliyor" + tek kaydet. Ertelenmesinin gerekçesi: sunduğu
+> yeteneklerin tamamı artık panoda doğrudan var (yerinde ad, ⋯ içinde renk/WIP,
+> sürükleyerek sıralama). Panelin kendine özgü değeri yalnız **toplu düzenleme**
+> ve hepsini tek listede görmek. Yapılıp yapılmayacağı kullanıcı kararı.
+>
+> 🔴 Etkileşim yolları (Enter kaydeder, Esc iptal, sürükleyince `reorder` çağrılır,
+> silme onayı) **birim testle kapsanamıyor**: modül tüm olayları jQuery delegasyonuyla
+> bağlıyor, repoda jQuery devDependency yok. Bunlar canlı QA bekliyor.
 
 - **Yerinde düzenleme (3a):** başlığa tıkla → `<input>`, 64 karakter sayacı, Enter kaydeder / Esc iptal. Mevcut SweetAlert `askName` akışının yerini alır.
 - **⋯ menüsü:** ad + 6 renk + WIP tek formda, **tek `UpdateAsync` çağrısı** (kısmi güncelleme yok — mevcut `saveColumn` deseni korunur).
@@ -353,6 +377,8 @@ cd src/Apya.Platform.Web/wwwroot/dynamic-assets && npm ci
 > frontend testleri toptan patlıyor). `dynamic-assets/yarn.lock`'taki değişikliği
 > **commit etme**. Build öncesi çalışan Web uygulamasını durdur (MSB3021).
 
-**Faz sırası:** ~~0~~ → ~~1~~ → ~~2a~~ → 2b → 3 → 4 → 5 → 6 → 7. Faz 0 ve 1 birbirinden
+**Faz sırası:** ~~0~~ → ~~1~~ → ~~2a~~ → ~~2b~~ → 3 → 4 → 5 → 6 → 7. Faz 0 ve 1 birbirinden
 bağımsız; 2'den sonrası sıralı. Migration yalnız Faz 6'da.
-**Faz 0 + 1 + 2a tamamlandı (2026-08-24); sıradaki: Faz 2b — düzenleme yüzeyi (3a/3b/3c).**
+**Faz 0 + 1 + 2a + 2b tamamlandı (2026-08-24).** Açık kalanlar: 3b "Kolonları düzenle"
+paneli (kullanıcı kararı bekliyor) ve tüm fazların canlı QA'sı.
+**Sıradaki: Faz 3 — üç yüzeyi standartlaştır (5a + 5b).**

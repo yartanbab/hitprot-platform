@@ -78,6 +78,68 @@
     color: var(--apya-text-tertiary);
 }
 
+/* Yerinde ad düzenleme (mockup 3a): Enter kaydeder, Esc iptal eder.
+   Başlık tıklanabilir olduğunda metin imleci + hafif zemin ipucu verir. */
+.kanban-header .js-col-name.is-editable { cursor: text; border-radius: var(--apya-radius-sm, 4px); }
+.kanban-header .js-col-name.is-editable:hover {
+    background: var(--apya-surface-base);
+    box-shadow: 0 0 0 4px var(--apya-surface-base);
+}
+.kanban-col-rename { display: inline-flex; align-items: center; gap: 6px; flex: 1 1 auto; min-width: 0; }
+.kanban-col-name-input {
+    flex: 1 1 auto;
+    min-width: 0;
+    height: 26px;
+    padding: 0 8px;
+    border: 1px solid var(--apya-border-focus, var(--apya-accent-500));
+    border-radius: var(--apya-radius-md);
+    background: var(--apya-surface-base);
+    color: var(--apya-text-primary);
+    font-size: 13px;
+    font-weight: 600;
+    text-transform: none;   /* .kanban-header uppercase'i düzenlemede yanıltıcı */
+    letter-spacing: 0;
+}
+.kanban-col-name-input:focus { outline: none; box-shadow: var(--apya-shadow-focus); }
+.kanban-col-name-counter {
+    flex: none;
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--apya-text-tertiary);
+    letter-spacing: 0;
+}
+
+/* Kolon silme onayı (Swal gövdesi): kartlar ve dönecekleri durum kolonu */
+.kanban-del-note { font-size: 13px; line-height: 1.55; margin-bottom: 10px; }
+.kanban-del-list { list-style: none; margin: 0; padding: 0; text-align: left; max-height: 220px; overflow-y: auto; }
+.kanban-del-list > li {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 8px;
+    border-top: 1px solid var(--apya-border-subtle);
+    font-size: 12.5px;
+}
+.kanban-del-code { flex: none; font-weight: 600; color: var(--apya-text-tertiary); }
+.kanban-del-title { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.kanban-del-target { flex: none; font-weight: 600; color: var(--apya-text-secondary); }
+.kanban-del-more { justify-content: center; color: var(--apya-text-tertiary); }
+
+/* Genel panoda proje seçilmemiş: kolon yönetiminin neden yok olduğunu söyleyen karo */
+.kanban-column.kanban-note-col {
+    flex: 0 0 220px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    border: 1px dashed var(--apya-border-default);
+    background: transparent;
+    box-shadow: none;
+    color: var(--apya-text-secondary);
+    text-align: center;
+}
+
 /* Kolon başlığındaki ＋ — bu kolona görev ekler (durum/kolon ön seçili) */
 .kanban-col-add {
     width: 24px;
