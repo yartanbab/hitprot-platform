@@ -3,10 +3,18 @@
 Bu, **canlıdaki `1d4a039`** (2026-08-20 beşinci yayın — 12 migration uygulandı, ayakta) ile bu
 yayının `main`'i arasındaki farktır. Kesin sha paket adında yazar.
 
-> ✅ **Bu yayın KOD-ONLY'dir.** `1d4a039`'a göre **yeni migration YOK**, dolayısıyla:
-> - **DbMigrator paketi ÜRETİLMEZ, çalıştırılmaz.**
-> - **Veritabanı yedeği bu yayın için zorunlu değildir** (yine de rutin yedek her zaman iyidir).
-> - Şema, seed tabloları ve OpenIddict kayıtları olduğu gibi kalır.
+> 🛑 **BU BELGE ARTIK TEK BAŞINA KULLANILMAZ — `deploy-delta-2026-08-25.md`'ye bak.**
+> Bu belge hazırlandıktan sonra **#218, #219, #220, #221, #222 de main'e girdi** ve **#218 bir
+> migration getirdi** (`ProjectCoverAndAttachments`). Dolayısıyla aşağıdaki "KOD-ONLY" muafiyeti
+> **GEÇERSİZDİR**: DbMigrator **çalıştırılmalı** ve veritabanı yedeği **zorunludur**.
+> Bu belgenin "Ne değişti" ve "Davranış değişiklikleri" bölümleri hâlâ doğrudur ve 08-25 belgesi
+> onlara atıf yapar.
+
+> ~~✅ **Bu yayın KOD-ONLY'dir.**~~ (⛔️ **geçersiz — yukarıdaki nota bak**) `1d4a039`'a göre yeni
+> migration YOK, dolayısıyla:
+> - ~~**DbMigrator paketi ÜRETİLMEZ, çalıştırılmaz.**~~
+> - ~~**Veritabanı yedeği bu yayın için zorunlu değildir.**~~
+> - ~~Şema, seed tabloları ve OpenIddict kayıtları olduğu gibi kalır.~~
 
 **Tek paket üretilir** (Masaüstünde):
 
