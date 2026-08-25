@@ -9,6 +9,7 @@ using Apya.Platform.Incomes;
 using Apya.Platform.Permissions;
 using Apya.Platform.Projects;
 using Apya.Platform.Tasks;
+using Volo.Abp.MultiTenancy;
 
 namespace Apya.Platform.ProjectFinance;
 
@@ -34,6 +35,11 @@ public class ProjectFinanceAppService : ApplicationService, IProjectFinanceAppSe
 
     public async Task<ProjectFinanceSummaryDto> GetSummaryAsync(Guid projectId)
     {
+        // Proje kartına basınca gelen 404'ün ASIL kaynağı burasıydı: ProjectDetails
+        // sayfası GetDetailAsync'ten (host kapsamını açıyor) sonra bunu çağırıyor,
+        // buradaki filtresiz GetAsync ise kiracı projesini "bulunamadı" sayıyordu.
+        using var hostScope = CurrentTenant.Id == null ? DataFilter.Disable<IMultiTenant>() : null;
+
         var project = await _projectRepository.GetAsync(projectId);
 
         var expenses = await _expenseRepository.GetListAsync(x => x.ProjectId == projectId);

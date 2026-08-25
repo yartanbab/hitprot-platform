@@ -177,7 +177,9 @@ public class ProjectAppService :
     [Authorize(PlatformPermissions.Projects.Edit)]
     public override async Task<ProjectDto> UpdateAsync(Guid id, CreateProjectDto input)
     {
-        var project = await Repository.GetAsync(id);
+        // GetAccessibleProjectAsync: host, listede gördüğü kiracı projesini
+        // düzenleyebilmeli. Düz Repository.GetAsync ile kaydetme 404 veriyordu.
+        var project = await GetAccessibleProjectAsync(id);
 
         project.Update(
             input.Name,
@@ -275,7 +277,23 @@ public class ProjectAppService :
     [Authorize(PlatformPermissions.Projects.Delete)]
     public override async Task DeleteAsync(Guid id)
     {
-        await base.DeleteAsync(id);
+        using (CurrentTenant.Id == null ? DataFilter.Disable<IMultiTenant>() : null)
+        {
+            await base.DeleteAsync(id);
+        }
+    }
+
+    /// <summary>
+    /// Tekil okuma da host bağlamında kiracı projesini görmeli: düzenleme ekranı
+    /// (/Projects/Edit/{id}) bunu çağırıyor ve listedeki karttan gelen host
+    /// kullanıcısına 404 veriyordu.
+    /// </summary>
+    public override async Task<ProjectDto> GetAsync(Guid id)
+    {
+        using (CurrentTenant.Id == null ? DataFilter.Disable<IMultiTenant>() : null)
+        {
+            return await base.GetAsync(id);
+        }
     }
 
     // --- GRANTS ---
