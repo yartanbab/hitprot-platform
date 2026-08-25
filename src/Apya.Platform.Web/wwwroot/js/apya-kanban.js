@@ -399,10 +399,18 @@
             return !!board && board.getAttribute('data-can-bulk') === 'true';
         }
         function selectedIds() { return Object.keys(selected); }
-        function bulkBar() {
+        // Çubukları board'un sarmalayıcısında ara, bulunamazsa belgeye düş.
+        // Sıkı `board.parentNode` bağı, partial'da çubuk sarmalayıcı dışına
+        // taşındığında çubuğu sessizce GİZLİ bırakıyordu (canlı QA'da yakalandı).
+        function nearBoard(sel) {
             var board = document.querySelector(boardSel);
-            return board && board.parentNode && board.parentNode.querySelector('.js-kb-bar');
+            if (!board) { return null; }
+            var wrap = board.closest ? board.closest('.kanban-wrap') : null;
+            return (wrap && wrap.querySelector(sel)) ||
+                   (board.parentNode && board.parentNode.querySelector(sel)) ||
+                   document.querySelector(sel);
         }
+        function bulkBar() { return nearBoard('.js-kb-bar'); }
 
         function clearSelection() {
             selected = {};
@@ -579,8 +587,7 @@
         // Araç çubuğu kontrolleri: "Grupla" kulvar açık panoda, "Kolonları düzenle"
         // yetki + proje seçiliyken. Çubuğun kendisi ikisinden biri varsa görünür.
         function syncToolbar() {
-            var board = document.querySelector(boardSel);
-            var bar = board && board.parentNode && board.parentNode.querySelector('.js-kanban-toolbar');
+            var bar = nearBoard('.js-kanban-toolbar');
             if (!bar) { return; }
             var showCols = canEditColumns && effectiveCols();
             var editBtn = bar.querySelector('.js-edit-cols');

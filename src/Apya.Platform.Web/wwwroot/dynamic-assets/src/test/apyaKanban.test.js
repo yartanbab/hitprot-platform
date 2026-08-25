@@ -1122,3 +1122,20 @@ describe('İptal kolonu', () => {
         expect(items).not.toContain('İptal edildi');
     });
 });
+
+describe('araç çubuğu markup konumuna dayanıklı', () => {
+    it('çubuk sarmalayıcının DIŞINDA olsa da açılır (canlı QA regresyonu)', async () => {
+        // Gerçek partial'da çubuk bir ara .kanban-wrap dışına taşınmıştı ve
+        // board.parentNode araması onu bulamayıp sessizce gizli bırakmıştı.
+        mountBoard(sysCols, []);
+        const wrap = document.querySelector('.kanban-wrap');
+        const bar = document.querySelector('.js-kanban-toolbar');
+        wrap.parentNode.insertBefore(bar, wrap);   // çubuğu dışarı taşı
+
+        apya.kanban.create({ projectId: null, enableLanes: true }).load();
+        await flush();
+
+        expect(bar.classList.contains('d-none')).toBe(false);
+        expect(bar.querySelector('.js-kanban-group').classList.contains('d-none')).toBe(false);
+    });
+});
