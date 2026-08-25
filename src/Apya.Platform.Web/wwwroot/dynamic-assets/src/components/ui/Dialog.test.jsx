@@ -24,13 +24,24 @@ describe('Dialog', () => {
         renderDialog();
         const content = screen.getByRole('dialog');
         expect(content.className).toContain('w-[min(92vw,1400px)]');
-        expect(content.className).toContain('h-[min(88dvh,940px)]');
+        expect(content.className).toContain('h-[min(88svh,940px)]');
+    });
+
+    /* Regresyon: ciplak `tablet:min-h-[520px]` yatay telefonda (932x430 -> genislik
+       768'i astigi icin tablet: devrede) paneli viewport'tan uzun yapiyor, panel
+       ortalandigi ve overflow-hidden oldugu icin ustten VE alttan kirpiliyordu.
+       min-h daima viewport'a kiskaclanmali. */
+    it('min-height i viewport a kiskaclar, sabit px e sabitlemez', () => {
+        renderDialog();
+        const content = screen.getByRole('dialog');
+        expect(content.className).toContain('tablet:min-h-[min(520px,88svh)]');
+        expect(content.className).not.toContain('tablet:min-h-[520px]');
     });
 
     it('fullscreen modunda kenar bosluklu tam viewport kaplar', () => {
         renderDialog({ fullscreen: true });
         const content = screen.getByRole('dialog');
-        expect(content.className).toContain('h-[calc(100dvh-2*var(--apya-space-4))]');
+        expect(content.className).toContain('h-[calc(100svh-2*var(--apya-space-4))]');
         expect(content.className).not.toContain('w-[min(92vw,1400px)]');
     });
 
@@ -38,7 +49,7 @@ describe('Dialog', () => {
         renderDialog();
         const content = screen.getByRole('dialog');
         expect(content.className).toContain('mobile:w-screen');
-        expect(content.className).toContain('mobile:h-[100dvh]');
+        expect(content.className).toContain('mobile:h-[100svh]');
     });
 
     it('Escape onOpenChange(false) tetikler', async () => {

@@ -20,8 +20,11 @@ export function TaskDetailFooterV3({
     const saveLabel = isSaving ? 'Kaydediliyor…' : justSaved ? 'Kaydedildi' : 'Kaydet';
     const canSave = isDirty && !isSaving;
 
+    /* shrink-0 ŞART: kolon flex'inde varsayılan flex-shrink:1'dir ve içerik taştığında
+       tarayıcı footer'ı da kısaltıp Kaydet/Vazgeç düğmelerini yarım bırakabiliyordu.
+       Kısalması gereken tek öğe ortadaki kaydırma alanı. */
     return (
-        <footer className="flex items-center justify-between gap-4 px-6 lt-860:px-4 py-3.5 border-t border-subtle bg-surface-base">
+        <footer className="shrink-0 flex items-center justify-between gap-4 px-6 lt-860:px-4 py-3.5 border-t border-subtle bg-surface-base">
             <div className="flex items-center gap-3.5 min-w-0 lt-560:hidden">
                 <span className="flex items-center gap-[7px] text-[11.5px] text-text-tertiary">
                     <i className="fa-regular fa-clock text-[11px]" />

@@ -53,6 +53,23 @@ describe('TaskDetailHeaderV3 / temel', () => {
         expect(spies.onToggleFullscreen).toHaveBeenCalledTimes(1);
     });
 
+    /* Oncelik cipi metadata izgarasina tasindi (TaskMetadataGridV3 "Oncelik" hucresi).
+       Baslikta kalirsa rozet satiri sisip dar ekranda gorev adina yer birakmiyor. */
+    it('oncelik cipini ARTIK gostermez', () => {
+        renderHeader({ priorityValue: 2 });
+        expect(screen.queryByText('Orta')).not.toBeInTheDocument();
+    });
+
+    /* Baslik, rozet/aksiyon satirinin KARDESI olmali; icine girerse sagdaki
+       dugmeler kadar daralip mobilde iki-uc satira kiriliyor. */
+    it('basligi rozet satirinin disinda, kendi tam genislikli satirinda render eder', () => {
+        renderHeader();
+        const title = screen.getByText(TASK.title);
+        const badgeRow = screen.getByText(TASK.code).closest('button').parentElement;
+        expect(badgeRow.contains(title)).toBe(false);
+        expect(title.className).toContain('flex-1');
+    });
+
     it('basligi duzenleyip odaktan cikinca title alanini gunceller', () => {
         const spies = renderHeader();
         const title = screen.getByText(TASK.title);

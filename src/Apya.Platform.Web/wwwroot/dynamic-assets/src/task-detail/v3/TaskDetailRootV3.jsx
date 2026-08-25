@@ -360,7 +360,6 @@ export function TaskDetailRootV3({ taskId, presentation = 'modal', onClose, swit
                 onToggleFullscreen={toggleFullscreen}
                 onFieldChange={form.setField}
                 statusValue={form.values.status}
-                priorityValue={form.values.priority}
                 titleValue={task?.title}
                 isPrivateValue={form.values.isPrivate}
                 isFavorite={isFavorite}
@@ -383,6 +382,7 @@ export function TaskDetailRootV3({ taskId, presentation = 'modal', onClose, swit
                     projectOptions={projects.options}
                     onFieldChange={form.setField}
                     statusValue={form.values.status}
+                    priorityValue={form.values.priority}
                     assigneeValue={form.values.assigneeId}
                     projectValue={form.values.projectId}
                     dueDateValue={form.values.dueDate}
@@ -495,9 +495,13 @@ export function TaskDetailRootV3({ taskId, presentation = 'modal', onClose, swit
                 <DialogContent
                     title={task?.title ? `Görev Detayı: ${task.title}` : 'Görev Detayı'}
                     fullscreen={fullscreen}
+                    /* short:h-[100svh] — yatay telefonda başlık+metadata+sekme
+                       çubuğu+footer zaten ~220px yer kapladığı için %88'lik pay
+                       içeriğe avuç içi kadar alan bırakıyordu; kısa viewport'ta
+                       panel tüm yüksekliği alsın. */
                     className={fullscreen
-                        ? 'p-0 rounded-xl border border-default shadow-xl'
-                        : 'w-[min(96vw,1180px)] max-w-none p-0 rounded-[18px] border border-default shadow-xl'}
+                        ? 'p-0 rounded-xl border border-default shadow-xl short:h-[100svh]'
+                        : 'w-[min(96vw,1180px)] max-w-none p-0 rounded-[18px] border border-default shadow-xl short:h-[100svh]'}
                     /* Özellik seçici / transfer diyaloğu / alt görev paneli createPortal ile
                        body'ye basılıyor; Radix'in dismissable-layer yığınında olmadıkları için
                        içlerindeki HER tıklama "dışarı tıklama" sayılıp ana modalı kapatıyordu

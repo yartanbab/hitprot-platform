@@ -595,11 +595,16 @@ function J({ open: r, onOpenChange: e, children: t }) {
 const ke = x.forwardRef(function({ title: e, description: t, fullscreen: n = !1, className: a, children: s, onOpenChange: d, ...c }, m) {
   const l = n ? i(
     "w-[calc(100vw-2*var(--apya-space-4))]",
-    "h-[calc(100dvh-2*var(--apya-space-4))]"
+    "h-[calc(100svh-2*var(--apya-space-4))]"
   ) : i(
     "w-[min(92vw,1400px)]",
-    "h-[min(88dvh,940px)]",
-    "tablet:min-h-[520px]"
+    "h-[min(88svh,940px)]",
+    /* min-h VİEWPORT'A KISKAÇLANIR. Çıplak `min-h-[520px]` yatay telefonda
+       (932×430 → genişlik 768'i aştığı için `tablet:` devrede) paneli 520px'e
+       zorluyor, panel ortalandığı ve overflow-hidden olduğu için üstten VE
+       alttan kırpılıyordu. Takvim sihirbazı bunu yerel olarak yamamıştı
+       (SetupWizard.jsx `tablet:min-h-0`); kaynağı burası. */
+    "tablet:min-h-[min(520px,88svh)]"
   );
   return /* @__PURE__ */ o.jsxs(Y, { children: [
     /* @__PURE__ */ o.jsx(
@@ -630,7 +635,7 @@ const ke = x.forwardRef(function({ title: e, description: t, fullscreen: n = !1,
           l,
           /* Mobil: tam ekran, köşesiz, safe-area. Modal içi footer'ın
              iOS home indicator'ın altında kalmaması için padding. */
-          "mobile:w-screen mobile:h-[100dvh] mobile:max-w-none",
+          "mobile:w-screen mobile:h-[100svh] mobile:max-w-none",
           "mobile:rounded-none mobile:border-0",
           "mobile:pb-[env(safe-area-inset-bottom)]",
           a
