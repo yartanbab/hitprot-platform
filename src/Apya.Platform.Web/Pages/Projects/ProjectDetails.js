@@ -46,7 +46,7 @@ $(function () {
     var canBulk         = $console.data('can-bulk') === true;
 
     // Sözcükler tr.json'daki Tasks:Status:* ile birebir (bkz. Tasks/index.js).
-    var STATUS_LABELS   = { '': 'tümü', '0': 'İptal', '1': 'Bekliyor', '2': 'Sürüyor', '3': 'Testte', '4': 'Tamamlandı' };
+    var STATUS_LABELS   = { '': 'tümü', '0': 'İptal', '1': 'Yapılacak', '2': 'Sürüyor', '3': 'Testte', '4': 'Tamamlandı' };
     var PRIORITY_LABELS = { '': 'tümü', '1': 'Düşük', '2': 'Orta', '3': 'Yüksek', '4': 'Kritik' };
 
     // Filtre state'i + URL senkronu ortak modülde (/js/apya-task-console.js).
@@ -456,6 +456,7 @@ $(function () {
     var kb = apya.kanban.create({
         projectId: projectId,
         editModal: editModal,
+        createModal: createModal,      // kolon başlığındaki ＋ (o kolon ön seçili açar)
         showProjectName: false,        // tek proje → kartta proje adı gereksiz
         enableTimer: false,            // zaman sayacı her board'da gizli (kullanıcı kararı)
         enableCustomColumns: true,

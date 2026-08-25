@@ -60,6 +60,32 @@ public class BoardColumn : FullAuditedAggregateRoot<Guid>, IMultiTenant
 
     public void SetOrder(int order) => Order = order;
 
+    /// <summary>
+    /// Faz 4a: özel kolonun temsil ettiği görev durumu. null = durum değişmesin
+    /// (bugünkü davranış). Değer verilirse kart bu kolona taşındığında Status da
+    /// ona çekilir — pano ile liste/rapor ayrışmaz.
+    /// <para>
+    /// Sistem kolonunda DEĞİŞTİRİLEMEZ: <see cref="StatusValue"/> onun kimliği,
+    /// kartlar oraya Status üzerinden yerleşir.
+    /// </para>
+    /// </summary>
+    public void SetStatusValue(int? statusValue)
+    {
+        if (IsSystem)
+        {
+            throw new BusinessException("Apya:BoardColumn:SystemStatusImmutable");
+        }
+
+        // Cancelled(0) kasten dışarıda: iptal ayrı bir akış (daraltılmış İptal kolonu).
+        if (statusValue.HasValue && (statusValue.Value < 1 || statusValue.Value > 4))
+        {
+            throw new BusinessException("Apya:BoardColumn:InvalidStatusValue")
+                .WithData("Value", statusValue.Value);
+        }
+
+        StatusValue = statusValue;
+    }
+
     /// <summary>WIP limiti. null veya 0 → limit yok. Negatif değer kabul edilmez.</summary>
     public void SetWipLimit(int? wipLimit)
     {

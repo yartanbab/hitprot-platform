@@ -88,17 +88,23 @@
     // TaskStatus enum: Cancelled=0, Todo=1, InProgress=2, InReview=3, Done=4.
     var STATUS_MAP = {
         0: { tone: 'negative', text: 'İptal' },
-        1: { tone: 'neutral', text: 'Bekliyor' },
+        1: { tone: 'neutral', text: 'Yapılacak' },
         2: { tone: 'warning', text: 'Sürüyor' },
         3: { tone: 'brand', text: 'Testte' },
         4: { tone: 'positive', text: 'Tamamlandı' }
     };
 
+    // Durum çipi + (varsa) özel kolon çipi YAN YANA. Eskiden kolon adı durumun
+    // YERİNE geçiyordu: pano ile rapor ayrışıyor, "Testte" filtresi özel kolondaki
+    // kartları bulamıyordu (Faz 4a). Artık ikisi de görünür.
     function statusChip(status, boardColumnName) {
-        // Özel kolondaysa kolon adını göster (kanban paritesi).
-        if (boardColumnName) return '<span class="apya-chip apya-chip-brand">' + esc(boardColumnName) + '</span>';
         var s = STATUS_MAP[status] || STATUS_MAP[1];
-        return '<span class="apya-chip apya-chip-' + s.tone + '">' + s.text + '</span>';
+        var html = '<span class="apya-chip apya-chip-' + s.tone + '">' + s.text + '</span>';
+        if (boardColumnName) {
+            html += '<span class="apya-chip apya-chip-brand ms-1" title="Projeye özel kolon">' +
+                esc(boardColumnName) + '</span>';
+        }
+        return html;
     }
 
     // Aç/kapa chevron'u. Alt görevi olmayan satırda AYNI genişlikte boş bir yer

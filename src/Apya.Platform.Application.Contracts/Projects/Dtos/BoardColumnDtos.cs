@@ -29,6 +29,28 @@ public class CreateBoardColumnDto
 
     [StringLength(32)]
     public string ColorClass { get; set; } = "secondary";
+
+    /// <summary>Faz 4a: özel kolonun temsil ettiği görev durumu (TaskStatus 1-4).
+    /// null = durum değişmesin (varsayılan davranış).</summary>
+    [Range(1, 4)]
+    public int? StatusValue { get; set; }
+}
+
+/// <summary>
+/// Faz 4a: özel kolon → durum eşlemesi. AYRI bir uçtur, bilerek:
+/// <see cref="UpdateBoardColumnDto"/> ad + renk + WIP'i BİRLİKTE ister ve eksik
+/// gelen alanı sıfırlar; eşlemeyi oraya koymak her yeniden adlandırmada eşlemeyi
+/// sessizce silerdi.
+/// </summary>
+public class SetStatusMappingDto
+{
+    /// <summary>TaskStatus 1-4; null = durum değişmesin.</summary>
+    [Range(1, 4)]
+    public int? StatusValue { get; set; }
+
+    /// <summary>true → kolonda HÂLİHAZIRDA duran kartların durumu da bu değere çekilir.
+    /// false ise eşleme yalnız bundan sonra taşınan kartlara uygulanır.</summary>
+    public bool ApplyToExistingTasks { get; set; }
 }
 
 public class UpdateBoardColumnDto

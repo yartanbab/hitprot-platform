@@ -37,6 +37,20 @@ public class TaskItem : FullAuditedAggregateRoot<Guid>, IMultiTenant
     // --- Durum ve Öncelik ---
     public TaskStatus Status { get; private set; }
     public TaskPriority Priority { get; private set; }
+
+    // --- İptal (Faz 4b) ---
+    // İptal edilen kart panoda kayboluyordu, kullanıcı silindi sanıyordu. Artık
+    // daraltılmış bir İptal kolonunda duruyor; geri alınınca ESKİ durumuna dönsün
+    // diye iptalden önceki durum saklanıyor.
+    /// <summary>Neden iptal edildi (kartta görünür). Yalnız iptal edilmiş görevde dolu.</summary>
+    public string? CancelReason { get; private set; }
+
+    /// <summary>Ne zaman iptal edildi. Yalnız iptal edilmiş görevde dolu.</summary>
+    public DateTime? CancelledDate { get; private set; }
+
+    /// <summary>İptalden ÖNCEKİ durum (TaskStatus int). Geri alınınca buraya dönülür;
+    /// yoksa Todo'ya düşülür.</summary>
+    public int? StatusBeforeCancel { get; private set; }
     public Guid? ProjectId { get; private set; }
 
     /// <summary>Faz 2: Kullanıcı tanımlı kanban kolonundaki görevler için. Boşsa görev Status'a göre render edilir.</summary>
@@ -149,6 +163,43 @@ public class TaskItem : FullAuditedAggregateRoot<Guid>, IMultiTenant
         {
             CompletedDate = null; // Done'dan geri alınırsa temizle
         }
+
+        // İptal muhasebesi BURADA yapılır ki hangi yoldan gelinirse gelinsin
+        // (pano sürükleme, liste toplu işlem, API) tutarlı olsun.
+        if (newStatus == TaskStatus.Cancelled)
+        {
+            StatusBeforeCancel = (int)oldStatus;
+            CancelledDate = now;
+        }
+        else if (oldStatus == TaskStatus.Cancelled)
+        {
+            // İptalden çıkıldı: iptal izleri temizlenir.
+            StatusBeforeCancel = null;
+            CancelledDate = null;
+            CancelReason = null;
+        }
+    }
+
+    /// <summary>
+    /// Görevi iptal eder ve nedenini kaydeder. <see cref="ChangeStatus"/> zaten
+    /// iptal muhasebesini tutuyor; bu metot yalnız nedeni ekler.
+    /// </summary>
+    public void Cancel(string? reason, DateTime? now = null)
+    {
+        ChangeStatus(TaskStatus.Cancelled, now);
+        CancelReason = string.IsNullOrWhiteSpace(reason) ? null : reason.Trim();
+    }
+
+    /// <summary>
+    /// İptali geri alır: görev iptalden ÖNCEKİ durumuna döner. Önceki durum
+    /// bilinmiyorsa (eski kayıt) Todo'ya düşülür.
+    /// </summary>
+    public void RestoreFromCancel(DateTime? now = null)
+    {
+        if (Status != TaskStatus.Cancelled) return;
+        var target = StatusBeforeCancel.HasValue ? (TaskStatus)StatusBeforeCancel.Value : TaskStatus.Todo;
+        if (target == TaskStatus.Cancelled) { target = TaskStatus.Todo; }
+        ChangeStatus(target, now);
     }
 
     /// <summary>

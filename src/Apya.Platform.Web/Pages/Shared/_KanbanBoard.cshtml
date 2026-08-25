@@ -1,46 +1,117 @@
+@using Microsoft.AspNetCore.Mvc.Localization
+@using Microsoft.AspNetCore.Authorization
+@using Apya.Platform.Localization
+@using Apya.Platform.Permissions
+@inject IHtmlLocalizer<PlatformResource> L
+@inject IAuthorizationService AuthorizationService
 @*
-    Merkezi Kanban board markup'ı (tek kaynak).
+    Merkezi Kanban board kabı (tek kaynak).
     Projeler / Görevler (/Board) / Tasks sayfaları bu partial'ı kullanır.
-    4 sistem kolonu (TaskStatus 1-4). Özel kolonlar ve count'lar sayfa JS'i
-    tarafından doldurulur; sınıf/ID'ler tüm sayfalarda aynıdır.
+
+    Kolonlar ARTIK JS'ten basılır (/js/apya-kanban.js · renderColumns):
+    proje seçiliyken BoardColumn kayıtlarından (sistem + özel, DB sırasıyla),
+    proje seçili değilken aşağıdaki data-col-* varsayılan adlarından.
+    Böylece sistem kolonunun adı/rengi/WIP'i de düzenlenebilir hâle gelir —
+    eskiden burada sabit yazdığı için DB'deki ad hiç görünmüyordu.
+
+    Varsayılan adlar Tasks:Status:* anahtarlarından okunur; JS'te ikinci bir
+    Türkçe kopya TUTULMAZ (adlandırma tek kaynaktan gelsin).
     Tasarım: /css/kanban.css
 *@
-<div class="kanban-board mt-2">
-    @* Kolon başlığı rengi kanban.css'ten gelir (data-status-id bazlı token) —
-       Bootstrap text-* utility'leri kaldırıldı (dark'ta -emphasis kalıntısı bug sınıfı). *@
-    <!-- Bekliyor (Todo=1) -->
-    <div class="kanban-column" data-status-id="1">
-        <div class="kanban-header">
-            <span class="kanban-title"><i class="fa fa-circle me-2"></i>Bekliyor</span>
-            <span class="apya-chip apya-chip-neutral kanban-count">0</span>
-        </div>
-        <div class="kanban-cards" id="kanban-todo"></div>
+@* "Kolonları düzenle" (3b paneli) — sunucuda Projects.Edit ile kapılı, JS proje
+   seçiliyken görünür kılar (özel kolonlar projeye ait). Üç sayfa da bu partial'ı
+   kullandığı için düğme her panoda AYNI yerde çıkar; sayfa araç çubukları değişmez. *@
+@{
+    // Toplu işlem çubuğu listedekiyle aynı kapıdan geçer: durum değiştirme YA DA
+    // silme yetkisi. Çubuk .apya-console-bulkbar bileşenini yeniden kullanır ve
+    // position:absolute olduğu için konumlandırılmış bir sarmalayıcı ister.
+    var kbCanChangeStatus = await AuthorizationService.IsGrantedAsync(PlatformPermissions.Tasks.ChangeStatus);
+    var kbCanDelete = await AuthorizationService.IsGrantedAsync(PlatformPermissions.Tasks.Delete);
+}
+@* Araç çubuğu ile toplu işlem çubuğu board ile AYNI sarmalayıcıda olmalı:
+   JS ikisini de board.parentNode içinde arıyor (.apya-console-bulkbar ayrıca
+   position:absolute olduğu için konumlandırılmış bir ata istiyor).
+   Kontroller kendi koşullarıyla açılır: "Grupla" yalnız kulvar açık panoda,
+   "Kolonları düzenle" yalnız Projects.Edit + proje seçiliyken. *@
+<div class="kanban-wrap">
+    <div class="kanban-toolbar js-kanban-toolbar d-none">
+        <label class="kanban-group js-kanban-group d-none">
+            <span class="kanban-group-label">Grupla</span>
+            <select class="kanban-group-select js-group-select" aria-label="Kartları grupla">
+                <option value="">Kulvar yok</option>
+                <option value="project">Projeye göre</option>
+                <option value="assignee">Atanana göre</option>
+            </select>
+        </label>
+        @if (await AuthorizationService.IsGrantedAsync(PlatformPermissions.Projects.Edit))
+        {
+            <button type="button" class="kanban-edit-cols js-edit-cols d-none">
+                <i class="fa fa-sliders me-1" aria-hidden="true"></i>Kolonları düzenle
+            </button>
+        }
     </div>
 
-    <!-- Sürüyor (InProgress=2) -->
-    <div class="kanban-column" data-status-id="2">
-        <div class="kanban-header">
-            <span class="kanban-title"><i class="fa fa-circle me-2"></i>Sürüyor</span>
-            <span class="apya-chip apya-chip-warning kanban-count">0</span>
-        </div>
-        <div class="kanban-cards" id="kanban-inprogress"></div>
-    </div>
+    <div class="kanban-board mt-2"
+         data-col-1="@L["Tasks:Status:Todo"]"
+         data-col-2="@L["Tasks:Status:InProgress"]"
+         data-col-3="@L["Tasks:Status:InReview"]"
+         data-col-4="@L["Tasks:Status:Done"]"
+         data-can-bulk="@((kbCanChangeStatus || kbCanDelete).ToString().ToLowerInvariant())"></div>
 
-    <!-- Testte (InReview=3) -->
-    <div class="kanban-column" data-status-id="3">
-        <div class="kanban-header">
-            <span class="kanban-title"><i class="fa fa-circle me-2"></i>Testte</span>
-            <span class="apya-chip apya-chip-brand kanban-count">0</span>
+    @if (kbCanChangeStatus || kbCanDelete)
+    {
+        <div class="apya-console-bulkbar d-none js-kb-bar" role="region" aria-label="Panoda toplu işlem">
+            <span class="apya-console-bulkbar-count js-kb-count">0 kart seçili</span>
+            <span class="apya-console-bulkbar-sep" aria-hidden="true"></span>
+            @if (kbCanChangeStatus)
+            {
+                <span class="dropdown">
+                    <button type="button" class="apya-console-bulkbar-btn" data-bs-toggle="dropdown" aria-expanded="false">Taşı</button>
+                    @* Hedefler panodaki kolonlardan JS ile doldurulur (özel kolonlar dâhil). *@
+                    <div class="dropdown-menu apya-console-menu js-kb-move-menu"></div>
+                </span>
+                <span class="dropdown">
+                    <button type="button" class="apya-console-bulkbar-btn" data-bs-toggle="dropdown" aria-expanded="false">Son tarih</button>
+                    <div class="dropdown-menu apya-console-menu">
+                        <button type="button" class="apya-console-menu-item js-kb-defer" data-days="1">1 gün ertele</button>
+                        <button type="button" class="apya-console-menu-item js-kb-defer" data-days="7">1 hafta ertele</button>
+                    </div>
+                </span>
+                <button type="button" class="apya-console-bulkbar-btn js-kb-cancel-tasks">İptal et</button>
+            }
+            @if (await AuthorizationService.IsGrantedAsync(PlatformPermissions.Tasks.Assign))
+            {
+                <span class="dropdown">
+                    <button type="button" class="apya-console-bulkbar-btn" data-bs-toggle="dropdown" aria-expanded="false">Ata</button>
+                    @* Kullanıcı listesi JS ile bir kez doldurulur (getUsersLookup). *@
+                    <div class="dropdown-menu apya-console-menu js-kb-assign-menu"></div>
+                </span>
+            }
+            @if (await AuthorizationService.IsGrantedAsync(PlatformPermissions.Tasks.Edit))
+            {
+                <span class="dropdown">
+                    <button type="button" class="apya-console-bulkbar-btn" data-bs-toggle="dropdown" aria-expanded="false">Öncelik</button>
+                    <div class="dropdown-menu apya-console-menu">
+                        <button type="button" class="apya-console-menu-item js-kb-priority" data-priority="1">Düşük</button>
+                        <button type="button" class="apya-console-menu-item js-kb-priority" data-priority="2">Orta</button>
+                        <button type="button" class="apya-console-menu-item js-kb-priority" data-priority="3">Yüksek</button>
+                        <button type="button" class="apya-console-menu-item js-kb-priority" data-priority="4">Kritik</button>
+                    </div>
+                </span>
+            }
+            @if (kbCanDelete)
+            {
+                <button type="button" class="apya-console-bulkbar-btn is-danger js-kb-delete">Sil</button>
+            }
+            <span class="apya-console-bulkbar-sep" aria-hidden="true"></span>
+            @* Son toplu taşımayı tersine çevirir; yalnız geri alınabilir bir işlem varken görünür. *@
+            <button type="button" class="apya-console-bulkbar-btn js-kb-undo d-none">
+                <i class="fa fa-rotate-left me-1" aria-hidden="true"></i>Geri al
+            </button>
+            <span class="apya-console-bulkbar-hint js-kb-hint">Shift: aralık · Ctrl: tek tek · Esc: bırak</span>
+            <button type="button" class="apya-console-bulkbar-close js-kb-clear" aria-label="Seçimi temizle">
+                <i class="fa fa-xmark" aria-hidden="true"></i>
+            </button>
         </div>
-        <div class="kanban-cards" id="kanban-inreview"></div>
-    </div>
-
-    <!-- Tamamlandı (Done=4) -->
-    <div class="kanban-column" data-status-id="4">
-        <div class="kanban-header">
-            <span class="kanban-title"><i class="fa fa-check-circle me-2"></i>Tamamlandı</span>
-            <span class="apya-chip apya-chip-positive kanban-count">0</span>
-        </div>
-        <div class="kanban-cards" id="kanban-done"></div>
-    </div>
+    }
 </div>

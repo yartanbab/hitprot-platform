@@ -603,6 +603,7 @@ namespace Apya.Platform.EntityFrameworkCore
                 b.Property(x => x.TaskType).HasMaxLength(64);
                 b.Property(x => x.Sprint).HasMaxLength(32);
                 b.Property(x => x.EstimatedHours).HasPrecision(9, 2);
+                b.Property(x => x.CancelReason).HasMaxLength(256); // Faz 4b: iptal nedeni
 
                 // REV-004: Performans indeksleri
                 b.HasIndex(x => x.ProjectId);

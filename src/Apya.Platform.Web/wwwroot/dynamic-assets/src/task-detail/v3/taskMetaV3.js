@@ -10,7 +10,7 @@
 /** Backend TaskStatus: Cancelled=0, Todo=1, InProgress=2, InReview=3, Done=4 */
 export const STATUS_META = {
     0: { label: 'İptal',       icon: 'fa-ban',          bg: 'bg-neutral-subtle', fg: 'text-text-secondary', dot: 'bg-neutral-400' },
-    1: { label: 'Bekliyor',    icon: 'fa-clock',        bg: 'bg-neutral-subtle', fg: 'text-text-secondary', dot: 'bg-neutral-400' },
+    1: { label: 'Yapılacak',   icon: 'fa-clock',        bg: 'bg-neutral-subtle', fg: 'text-text-secondary', dot: 'bg-neutral-400' },
     2: { label: 'Sürüyor',     icon: 'fa-spinner',      bg: 'bg-warning-subtle', fg: 'text-warning',        dot: 'bg-warning' },
     3: { label: 'Testte',      icon: 'fa-flask',        bg: 'bg-primary-subtle', fg: 'text-primary',        dot: 'bg-primary' },
     4: { label: 'Tamamlandı',  icon: 'fa-circle-check', bg: 'bg-success-subtle', fg: 'text-success',        dot: 'bg-success' },

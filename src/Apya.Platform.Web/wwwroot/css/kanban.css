@@ -6,6 +6,11 @@
    böylece dark mode geri açıldığında board otomatik uyum sağlar.
    ============================================================================= */
 
+/* Toplu işlem çubuğu .apya-console-bulkbar position:absolute — konumlandırılmış
+   bir sarmalayıcı ister; board'un kendisi overflow-x:auto olduğu için çubuk onun
+   DIŞINDA, kardeşi olarak duruyor. */
+.kanban-wrap { position: relative; }
+
 .kanban-board {
     display: flex;
     gap: 1.5rem;
@@ -39,19 +44,130 @@
 }
 .kanban-header:active { cursor: grabbing; }
 
-/* Kolon başlığı: nötr etiket + durum-renkli nokta ikonu (HANDOFF prototip deseni).
-   Renk yalnız ikonda — metin her temada okunur kalır. */
+/* Kolon başlığı: nötr etiket + renkli nokta ikonu (HANDOFF prototip deseni).
+   Renk yalnız ikonda — metin her temada okunur kalır.
+   Kaynak artık BoardColumn.ColorClass: sistem ve özel kolonlar AYNI mekanizmayı
+   kullanır (eskiden sistem kolonu data-status-id'ye, özel kolon Bootstrap
+   text-* utility'sine bağlıydı; ikincisi dark'ta -emphasis kalıntısı bırakıyordu). */
 .kanban-header .kanban-title { color: var(--apya-text-secondary); }
-.kanban-column[data-status-id="1"] .kanban-title i { color: var(--apya-neutral-500, #6b7280); }
-.kanban-column[data-status-id="2"] .kanban-title i { color: var(--apya-warning-500, #f59e0b); }
-.kanban-column[data-status-id="3"] .kanban-title i { color: var(--apya-brand-500, #2563eb); }
-.kanban-column[data-status-id="4"] .kanban-title i { color: var(--apya-positive-500, #059669); }
-/* Özel (kullanıcı tanımlı) kolonlar rengini JS'teki text-{colorClass} ile taşır (köprülü). */
+.kanban-column[data-column-color="secondary"] .kanban-title i { color: var(--apya-neutral-500, #6b7280); }
+.kanban-column[data-column-color="warning"]   .kanban-title i { color: var(--apya-warning-500, #f59e0b); }
+.kanban-column[data-column-color="info"]      .kanban-title i { color: var(--apya-brand-500, #2563eb); }
+.kanban-column[data-column-color="success"]   .kanban-title i { color: var(--apya-positive-500, #059669); }
+.kanban-column[data-column-color="primary"]   .kanban-title i { color: var(--apya-accent-500, #4f46e5); }
+.kanban-column[data-column-color="danger"]    .kanban-title i { color: var(--apya-negative-500, #dc2626); }
 
 .kanban-cards {
     flex: 1;
     min-height: 100px;
 }
+
+/* Boş kolon metni — kart değildir: sayaçlara girmez, sürüklenemez
+   (Sortable draggable: '.kanban-card' ile dışarıda bırakılır) ve bırakma
+   hedefini kapatmasın diye fare olaylarını yutmaz. */
+.kanban-empty {
+    padding: 18px 12px;
+    text-align: center;
+    pointer-events: none;
+    user-select: none;
+}
+.kanban-empty-title {
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--apya-text-secondary);
+}
+.kanban-empty-sub {
+    margin-top: 4px;
+    font-size: 11px;
+    line-height: 1.5;
+    color: var(--apya-text-tertiary);
+}
+
+/* Yerinde ad düzenleme (mockup 3a): Enter kaydeder, Esc iptal eder.
+   Başlık tıklanabilir olduğunda metin imleci + hafif zemin ipucu verir. */
+.kanban-header .js-col-name.is-editable { cursor: text; border-radius: var(--apya-radius-sm, 4px); }
+.kanban-header .js-col-name.is-editable:hover {
+    background: var(--apya-surface-base);
+    box-shadow: 0 0 0 4px var(--apya-surface-base);
+}
+.kanban-col-rename { display: inline-flex; align-items: center; gap: 6px; flex: 1 1 auto; min-width: 0; }
+.kanban-col-name-input {
+    flex: 1 1 auto;
+    min-width: 0;
+    height: 26px;
+    padding: 0 8px;
+    border: 1px solid var(--apya-border-focus, var(--apya-accent-500));
+    border-radius: var(--apya-radius-md);
+    background: var(--apya-surface-base);
+    color: var(--apya-text-primary);
+    font-size: 13px;
+    font-weight: 600;
+    text-transform: none;   /* .kanban-header uppercase'i düzenlemede yanıltıcı */
+    letter-spacing: 0;
+}
+.kanban-col-name-input:focus { outline: none; box-shadow: var(--apya-shadow-focus); }
+.kanban-col-name-counter {
+    flex: none;
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--apya-text-tertiary);
+    letter-spacing: 0;
+}
+
+/* Kolon silme onayı (Swal gövdesi): kartlar ve dönecekleri durum kolonu */
+.kanban-del-note { font-size: 13px; line-height: 1.55; margin-bottom: 10px; }
+.kanban-del-list { list-style: none; margin: 0; padding: 0; text-align: left; max-height: 220px; overflow-y: auto; }
+.kanban-del-list > li {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 8px;
+    border-top: 1px solid var(--apya-border-subtle);
+    font-size: 12.5px;
+}
+.kanban-del-code { flex: none; font-weight: 600; color: var(--apya-text-tertiary); }
+.kanban-del-title { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.kanban-del-target { flex: none; font-weight: 600; color: var(--apya-text-secondary); }
+.kanban-del-more { justify-content: center; color: var(--apya-text-tertiary); }
+
+/* Genel panoda proje seçilmemiş: kolon yönetiminin neden yok olduğunu söyleyen karo */
+.kanban-column.kanban-note-col {
+    flex: 0 0 220px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    border: 1px dashed var(--apya-border-default);
+    background: transparent;
+    box-shadow: none;
+    color: var(--apya-text-secondary);
+    text-align: center;
+}
+
+/* Kolon başlığındaki ＋ — bu kolona görev ekler (durum/kolon ön seçili) */
+.kanban-col-add {
+    width: 24px;
+    height: 24px;
+    display: grid;
+    place-items: center;
+    border: none;
+    border-radius: var(--apya-radius-md);
+    background: transparent;
+    color: var(--apya-text-tertiary);
+    font-size: 12px;
+    cursor: pointer;
+}
+.kanban-col-add:hover { background: var(--apya-surface-base); color: var(--apya-accent-600); }
+.kanban-col-add:focus-visible { outline: none; box-shadow: var(--apya-shadow-focus); }
+
+/* Sistem kolonunda "Kolonu sil" kilitli görünür — tıklanabilir değil, gerekçesi
+   title'da. Silme yerine yeniden adlandırma alternatifi menüde duruyor. */
+.apya-console-menu-item.is-locked {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+.apya-console-menu-item.is-locked:hover { background: transparent; }
 
 .kanban-card {
     background: var(--apya-surface-base, #fff);
@@ -68,10 +184,118 @@
 .kanban-card:hover { transform: translateY(-3px); box-shadow: var(--apya-shadow-md, 0 5px 15px rgba(0, 0, 0, 0.08)); }
 .kanban-card:active { cursor: grabbing; }
 
+/* Toplu seçim: onay kutusu hover'da belirir, seçiliyken kalıcı görünür.
+   Seçili kart accent bir halkayla işaretlenir — sürükleme görselini bozmadan. */
+.kanban-card-check {
+    flex: none;
+    margin-top: 2px;
+    opacity: 0;
+    transition: opacity 0.15s;
+    cursor: pointer;
+}
+.kanban-card:hover .kanban-card-check,
+.kanban-card-check:focus-visible,
+.kanban-card.is-selected .kanban-card-check { opacity: 1; }
+.kanban-card.is-selected {
+    box-shadow: 0 0 0 2px var(--apya-accent-500), var(--apya-shadow-sm, 0 1px 2px rgba(17, 24, 39, 0.05));
+    background: var(--apya-accent-soft, var(--apya-surface-base));
+}
+/* Dokunmatikte hover yok — kutu daima görünür olmalı. */
+@media (hover: none) {
+    .kanban-card-check { opacity: 1; }
+}
+
 .kanban-card[data-priority="1"] { border-left-color: var(--apya-positive-500, #198754); }  /* Low */
 .kanban-card[data-priority="2"] { border-left-color: var(--apya-warning-500, #ffc107); }   /* Medium */
 .kanban-card[data-priority="3"] { border-left-color: #fd7e14; }                            /* High (turuncu — token seti yok) */
 .kanban-card[data-priority="4"] { border-left-color: var(--apya-negative-500, #dc3545); }  /* Critical */
+
+/* Kartta proje adı (genel panoda ZORUNLU): renkli ince şerit + ad.
+   Ton apyaTask.hashTone ile projeye göre sabit — etiket/avatar ile aynı sözlük.
+   Bootstrap text-* utility'si kullanılmaz (dark'ta -emphasis kalıntısı). */
+.kanban-card-project {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--apya-text-secondary);
+}
+.kanban-card-project::before {
+    content: "";
+    flex: none;
+    width: 3px;
+    height: 12px;
+    border-radius: 2px;
+    background: var(--apya-brand-500);
+}
+.kanban-card-project.is-positive::before { background: var(--apya-positive-500); }
+.kanban-card-project.is-negative::before { background: var(--apya-negative-500); }
+.kanban-card-project.is-warning::before  { background: var(--apya-warning-500); }
+.kanban-card-project.is-brand::before    { background: var(--apya-brand-500); }
+.kanban-card-project.is-neutral::before  { background: var(--apya-neutral-500); }
+.kanban-card-project.is-ai::before       { background: var(--apya-accent-500); }
+
+/* ── Faz 7: risk dili + kart meta rozetleri ──
+   Gecikme GÜN SAYISIYLA söylenir; "Süresi Geçti" tek başına ne kadar geç
+   olduğunu söylemiyordu. Engelli kart bekleten görevin KODUNU taşır. */
+.kanban-card-meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    margin-top: 8px;
+}
+.kanban-card-metaitem { font-size: 10.5px; color: var(--apya-text-tertiary); white-space: nowrap; }
+.kanban-chip-late,
+.kanban-chip-blocked {
+    padding: 1px 7px;
+    border-radius: var(--apya-radius-full);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.2px;
+    white-space: nowrap;
+}
+.kanban-chip-late {
+    background: color-mix(in srgb, var(--apya-negative-500) 14%, transparent);
+    color: var(--apya-text-negative, var(--apya-negative-700, #991b1b));
+}
+.kanban-chip-blocked {
+    background: color-mix(in srgb, var(--apya-warning-500) 16%, transparent);
+    color: var(--apya-text-warning, var(--apya-warning-700, #92400e));
+}
+
+/* Kolon başlığı özeti — başlığın hemen altında, kartlardan sayılır */
+.kanban-col-summary {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: -6px 0 10px;
+    font-size: 10.5px;
+    font-weight: 600;
+}
+.kanban-col-summary .is-late { color: var(--apya-text-negative, var(--apya-negative-700, #991b1b)); }
+.kanban-col-summary .is-blocked { color: var(--apya-text-warning, var(--apya-warning-700, #92400e)); }
+
+/* Pano üstü tek satır risk uyarısı */
+.kanban-risk-strip {
+    display: flex;
+    align-items: center;
+    margin-bottom: 8px;
+    padding: 8px 12px;
+    border-radius: var(--apya-radius-lg);
+    background: color-mix(in srgb, var(--apya-negative-500) 10%, transparent);
+    color: var(--apya-text-negative, var(--apya-negative-700, #991b1b));
+    font-size: 12.5px;
+    font-weight: 600;
+}
+
+/* Kart bu panoda çizilmeyen bir özel kolonda duruyorsa nerede olduğunu söyler */
+.kanban-card-colnote {
+    margin-top: 6px;
+    font-size: 10.5px;
+    color: var(--apya-text-tertiary);
+}
 
 /* Sürükleme yer tutucusu (handoff): kartın soluk kopyası yerine, bırakılacak
    yeri gösteren kesik çizgili accent bir hedef. */
@@ -169,6 +393,62 @@
 .kanban-col-swatch:focus-visible { outline: none; box-shadow: var(--apya-shadow-focus); }
 .kanban-col-swatch[aria-pressed="true"] { border-color: var(--apya-border-strong); background: var(--apya-surface-sunken); }
 
+/* İptal kolonu (Faz 4b) — en sağda, varsayılan daraltılmış. Kapalıyken kartlar
+   DOM'da kalır (sayaç doğru olsun) ama liste gizlenir; başlık dikey okunur. */
+.kanban-column.kanban-cancel-col { flex: 0 0 280px; }
+.kanban-cancel-col .kanban-title { color: var(--apya-text-tertiary); }
+.kanban-cancel-col[data-column-color="danger"] .kanban-title i { color: var(--apya-negative-500); }
+
+.kanban-column.kanban-cancel-col.is-collapsed { flex: 0 0 52px; padding: 1rem 0.5rem; }
+.kanban-cancel-col.is-collapsed .kanban-header {
+    flex-direction: column-reverse;
+    gap: 10px;
+    margin-bottom: 0;
+    cursor: default;
+}
+.kanban-cancel-col.is-collapsed .kanban-title {
+    writing-mode: vertical-rl;
+    transform: rotate(180deg);
+    white-space: nowrap;
+}
+.kanban-cancel-col.is-collapsed .kanban-title i { display: none; }
+.kanban-cancel-col.is-collapsed .kanban-cards { display: none; }
+
+.kanban-cancel-toggle {
+    width: 24px;
+    height: 24px;
+    display: grid;
+    place-items: center;
+    border: none;
+    border-radius: var(--apya-radius-md);
+    background: transparent;
+    color: var(--apya-text-tertiary);
+    cursor: pointer;
+}
+.kanban-cancel-toggle:hover { background: var(--apya-surface-base); color: var(--apya-text-primary); }
+.kanban-cancel-toggle:focus-visible { outline: none; box-shadow: var(--apya-shadow-focus); }
+
+/* İptal edilmiş kartta tarih + sebep + geri alma */
+.kanban-cancel-note { margin-top: 8px; padding-top: 8px; border-top: 1px dashed var(--apya-border-default); }
+.kanban-cancel-when {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.4px;
+    color: var(--apya-text-negative, var(--apya-negative-700, #991b1b));
+}
+.kanban-cancel-why { margin-top: 3px; font-size: 11px; line-height: 1.5; color: var(--apya-text-tertiary); }
+.kanban-cancel-restore {
+    margin-top: 6px;
+    padding: 0;
+    border: none;
+    background: transparent;
+    color: var(--apya-accent-600);
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+}
+.kanban-cancel-restore:hover { text-decoration: underline; }
+
 /* "Kolon ekle" hayalet kolonu — dar, kesik çizgili (handoff) */
 .kanban-column.kanban-add-col {
     flex: 0 0 158px;
@@ -188,6 +468,207 @@
 [data-theme="dark"] .kanban-column.kanban-add-col:hover { color: var(--apya-accent-300); }
 .kanban-add-col-title { font-size: 11.5px; font-weight: 600; }
 .kanban-add-col-sub { font-size: 10px; line-height: 1.4; color: var(--apya-text-tertiary); padding: 0 8px; }
+
+/* ── "Kolonları düzenle" tetikleyicisi (partial'da, board'un üstünde) ── */
+.kanban-toolbar { display: flex; justify-content: flex-end; margin-bottom: 2px; }
+.kanban-edit-cols {
+    height: 30px;
+    padding: 0 12px;
+    border: 1px solid var(--apya-border-default);
+    border-radius: var(--apya-radius-md);
+    background: var(--apya-surface-base);
+    color: var(--apya-text-secondary);
+    font-size: 12.5px;
+    font-weight: 600;
+    cursor: pointer;
+}
+.kanban-edit-cols:hover { border-color: var(--apya-accent-500); color: var(--apya-accent-600); }
+.kanban-edit-cols:focus-visible { outline: none; box-shadow: var(--apya-shadow-focus); }
+
+/* Kulvar seçici (yalnız genel panoda görünür) */
+.kanban-group { display: inline-flex; align-items: center; gap: 6px; margin-right: auto; }
+.kanban-group-label { font-size: 11px; font-weight: 700; letter-spacing: 0.3px; text-transform: uppercase; color: var(--apya-text-tertiary); }
+.kanban-group-select {
+    height: 30px;
+    padding: 0 8px;
+    border: 1px solid var(--apya-border-default);
+    border-radius: var(--apya-radius-md);
+    background: var(--apya-surface-base);
+    color: var(--apya-text-primary);
+    font-size: 12.5px;
+}
+.kanban-group-select:focus { outline: none; border-color: var(--apya-border-focus); box-shadow: var(--apya-shadow-focus); }
+
+/* Kulvar başlığı — kolonun İÇİNDE, kartları gruplar. Kart değildir: sayaca
+   girmez ve Sortable draggable:'.kanban-card' sayesinde sürüklenemez. */
+.kanban-lane-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin: 2px 0 6px;
+    padding: 4px 6px;
+    border-radius: var(--apya-radius-md);
+    background: var(--apya-surface-sunken);
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
+    color: var(--apya-text-secondary);
+}
+.kanban-lane-head:not(:first-child) { margin-top: 12px; }
+.kanban-lane-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.kanban-lane-count { flex: none; color: var(--apya-text-tertiary); }
+
+/* ── 3b paneli: tek yerden sırala + ad + renk + WIP ──
+   body'ye basılır (ata transform'lar position:fixed'i hapsedebiliyor). */
+.kanban-panel-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 1080;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    background: rgba(17, 24, 39, 0.45);
+}
+.kanban-panel {
+    width: min(760px, 100%);
+    max-height: min(86dvh, 780px);
+    display: flex;
+    flex-direction: column;
+    border-radius: var(--apya-radius-xl, 0.75rem);
+    background: var(--apya-surface-base);
+    box-shadow: var(--apya-shadow-lg, 0 20px 45px rgba(17, 24, 39, 0.25));
+    overflow: hidden;
+}
+.kanban-panel-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 16px 18px 12px;
+    border-bottom: 1px solid var(--apya-border-subtle);
+}
+.kanban-panel-title { font-size: 15px; font-weight: 700; color: var(--apya-text-primary); }
+.kanban-panel-sub { font-size: 12px; color: var(--apya-text-tertiary); margin-top: 2px; }
+.kanban-panel-close {
+    width: 28px; height: 28px; flex: none;
+    display: grid; place-items: center;
+    border: none; border-radius: var(--apya-radius-md);
+    background: transparent; color: var(--apya-text-tertiary); cursor: pointer;
+}
+.kanban-panel-close:hover { background: var(--apya-surface-sunken); color: var(--apya-text-primary); }
+
+/* Satır ızgarası: tutamak · ad · renk · WIP · eylem */
+.kanban-panel-cols,
+.kanban-panel-row {
+    display: grid;
+    grid-template-columns: 24px minmax(0, 1fr) 150px 78px 64px;
+    gap: 10px;
+    align-items: start;
+}
+.kanban-panel-cols {
+    padding: 8px 18px;
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+    color: var(--apya-text-tertiary);
+    border-bottom: 1px solid var(--apya-border-subtle);
+}
+.kanban-panel-cols > span:first-child { grid-column: 1 / span 2; }
+.kanban-panel-rows { flex: 1 1 auto; overflow-y: auto; padding: 4px 18px; }
+.kanban-panel-row { padding: 10px 0; border-bottom: 1px solid var(--apya-border-subtle); }
+.kanban-panel-grip { padding-top: 6px; color: var(--apya-text-tertiary); cursor: grab; font-size: 12px; }
+.kanban-panel-grip:active { cursor: grabbing; }
+.kanban-panel-nameline { display: flex; align-items: center; gap: 8px; }
+.kanban-panel-name input {
+    flex: 1 1 auto; min-width: 0; height: 30px; padding: 0 8px;
+    border: 1px solid var(--apya-border-default);
+    border-radius: var(--apya-radius-md);
+    background: var(--apya-surface-base); color: var(--apya-text-primary);
+    font-size: 13px;
+}
+.kanban-panel-name input:focus { outline: none; border-color: var(--apya-border-focus); box-shadow: var(--apya-shadow-focus); }
+.kanban-panel-counter { flex: none; font-size: 10px; font-weight: 600; color: var(--apya-text-tertiary); }
+.kanban-panel-meta { margin-top: 4px; font-size: 11px; color: var(--apya-text-tertiary); }
+.kanban-panel-warn {
+    margin-top: 6px;
+    padding: 6px 8px;
+    border-radius: var(--apya-radius-md);
+    background: color-mix(in srgb, var(--apya-warning-500) 12%, transparent);
+    color: var(--apya-text-warning, var(--apya-warning-700, #92400e));
+    font-size: 11px;
+    line-height: 1.5;
+}
+/* Durum eşlemesi (4a) — yalnız özel kolon satırında */
+.kanban-panel-map { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.kanban-panel-map-label { font-size: 10.5px; font-weight: 700; letter-spacing: 0.3px; text-transform: uppercase; color: var(--apya-text-tertiary); }
+.kanban-panel-map select {
+    height: 26px;
+    padding: 0 6px;
+    border: 1px solid var(--apya-border-default);
+    border-radius: var(--apya-radius-md);
+    background: var(--apya-surface-base);
+    color: var(--apya-text-primary);
+    font-size: 12px;
+}
+.kanban-panel-map select:focus { outline: none; border-color: var(--apya-border-focus); box-shadow: var(--apya-shadow-focus); }
+.kanban-panel-map-apply { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; color: var(--apya-text-secondary); cursor: pointer; }
+
+.kanban-panel-color { display: flex; flex-wrap: wrap; gap: 2px; padding-top: 2px; }
+.kanban-panel-wip input {
+    width: 100%; height: 30px; padding: 0 8px;
+    border: 1px solid var(--apya-border-default);
+    border-radius: var(--apya-radius-md);
+    background: var(--apya-surface-base); color: var(--apya-text-primary);
+    font-size: 12.5px;
+}
+.kanban-panel-wip input:focus { outline: none; border-color: var(--apya-border-focus); box-shadow: var(--apya-shadow-focus); }
+.kanban-panel-act { padding-top: 6px; text-align: right; font-size: 11px; font-weight: 600; }
+.kanban-panel-lock { color: var(--apya-text-tertiary); white-space: nowrap; }
+.kanban-panel-del {
+    border: none; background: transparent; cursor: pointer;
+    color: var(--apya-text-negative, var(--apya-negative-700, #991b1b));
+    font-size: 11px; font-weight: 600; padding: 0;
+}
+.kanban-panel-del:hover { text-decoration: underline; }
+
+.kanban-panel-addcol {
+    margin: 10px 18px 0;
+    padding: 8px;
+    border: 1px dashed var(--apya-border-strong);
+    border-radius: var(--apya-radius-md);
+    background: transparent;
+    color: var(--apya-text-secondary);
+    font-size: 12.5px; font-weight: 600; cursor: pointer;
+}
+.kanban-panel-addcol:hover { border-color: var(--apya-accent-500); color: var(--apya-accent-600); }
+.kanban-panel-note { margin: 10px 18px; font-size: 11.5px; line-height: 1.55; color: var(--apya-text-tertiary); }
+.kanban-panel-foot {
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    padding: 12px 18px;
+    border-top: 1px solid var(--apya-border-subtle);
+    background: var(--apya-surface-sunken);
+}
+.kanban-panel-dirty { font-size: 12px; color: var(--apya-text-tertiary); }
+.kanban-panel-dirty.is-dirty { color: var(--apya-accent-600); font-weight: 600; }
+.kanban-panel-actions { display: flex; gap: 8px; }
+.kanban-panel-btn {
+    height: 32px; padding: 0 14px;
+    border: 1px solid var(--apya-border-default);
+    border-radius: var(--apya-radius-md);
+    background: var(--apya-surface-base);
+    color: var(--apya-text-secondary);
+    font-size: 12.5px; font-weight: 600; cursor: pointer;
+}
+.kanban-panel-btn.is-primary {
+    border-color: var(--apya-accent-500);
+    background: var(--apya-accent-500);
+    color: #fff;
+}
+.kanban-panel-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
 /* Sütun yeniden boyutlandırma tutamağı (sağ kenar) */
 .kanban-resize-handle {
