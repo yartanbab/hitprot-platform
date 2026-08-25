@@ -140,6 +140,23 @@ $(function () {
         return min ? moment(min).format('DD MMM') + ' sonrası' : moment(max).format('DD MMM') + ' öncesi';
     }
 
+    // Mobilde chip'ler katlıyken etkin filtre sayısı düğmedeki rozetten okunur.
+    // BOYUT sayılır, chip değil: "Bana atanan" hem Atanan chip'ini hem kendi
+    // chip'ini etkiliyor, iki kez sayılmamalı. Proje bir kapsam ama kullanıcı
+    // açısından yine daraltma → sayılır.
+    function activeFilterCount() {
+        var n = 0;
+        if (state.get('status') !== '') { n++; }
+        if (state.get('mine') || state.get('assignee') !== '') { n++; }
+        if (state.get('project') !== '') { n++; }
+        if (state.get('priority') !== '') { n++; }
+        if (state.get('minDue') || state.get('maxDue')) { n++; }
+        if (state.get('overdue')) { n++; }
+        if (state.get('due7')) { n++; }
+        if (state.get('open')) { n++; }
+        return n;
+    }
+
     function renderFilterUi() {
         $('#chip-status [data-chip-text]').text('Durum: ' + STATUS_LABELS[state.get('status')]);
         $('#chip-priority [data-chip-text]').text('Öncelik: ' + PRIORITY_LABELS[state.get('priority')]);
@@ -161,6 +178,10 @@ $(function () {
         $('#bar-mine').attr('aria-pressed', String(state.get('mine')));
 
         $('#btn-clear-filters').toggleClass('d-none', !state.hasActive());
+
+        var activeCount = activeFilterCount();
+        $('#filters-active-count').text(activeCount).toggleClass('d-none', activeCount === 0);
+        $('#btn-filters-toggle').toggleClass('is-active', activeCount > 0);
     }
 
     function applyFilters(resetSubtasks) {
@@ -435,6 +456,14 @@ $(function () {
         }
         applyFilters();
         $('#chip-daterange').dropdown('hide');
+    });
+
+    // Filtreleri katla/aç — düğme yalnız mobilde görünür, sınıfı taşıyan
+    // .apya-console-filters'tır (chip kümesi CSS'te ona bağlı).
+    $('#btn-filters-toggle').on('click', function () {
+        var open = !$('#console-filters').hasClass('is-filters-open');
+        $('#console-filters').toggleClass('is-filters-open', open);
+        $(this).attr('aria-expanded', String(open));
     });
 
     $('#btn-clear-filters').on('click', function () { clearAllFilters(); });

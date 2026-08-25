@@ -2772,6 +2772,35 @@ i.apya-priority-dot {
 }
 .apya-console-filter-clear:focus-visible { outline: none; box-shadow: var(--apya-shadow-focus); }
 
+/* --- Filtreleri katlama düğmesi (mobil) ---
+   Sarmalayıcı masaüstünde `display: contents`: chip'ler DOM'da bir kapsayıcıya
+   girse de düzen bakımından hâlâ .apya-console-filters'ın doğrudan flex
+   öğeleridir → masaüstü görünümü bit bit aynı kalır. Mobil kırılımda
+   sarmalayıcı gerçek bir kutuya dönüp gizlenebilir hâle gelir. */
+.apya-console-filter-set { display: contents; }
+/* Düğme masaüstünde YOK; yalnız mobil kırılımda açılır (aşağıda). */
+.apya-console-filters .apya-filters-toggle { display: none; }
+/* .apya-filter-chip > i chevron için 8px/0.7 veriyor — buradaki ikon asıl
+   simge, kısılmamalı. */
+.apya-console-filters .apya-filters-toggle > i { font-size: 11px; opacity: 1; }
+.apya-filters-badge {
+    display: inline-grid;
+    place-items: center;
+    min-width: 16px;
+    height: 16px;
+    padding: 0 4px;
+    border-radius: var(--apya-radius-full);
+    background: var(--apya-accent-500);
+    color: var(--apya-text-inverse);
+    font-size: 10px;
+    font-weight: var(--apya-weight-bold);
+    line-height: 1;
+}
+/* Koyu temada accent-500 zeminde ters metin 4,43:1'de kalıyordu (AA eşiği 4,5;
+   rozet 10px kalın rakam, büyük metin sayılmaz). Zemin bir kademe açılınca
+   9,9:1 — ters metin token'ı koyu temada zaten koyu. */
+[data-theme="dark"] .apya-filters-badge { background: var(--apya-accent-300); }
+
 /* Facepile avatarları filtre düğmesine dönüştü — buton sıfırlaması + seçili halka */
 .apya-console-facepile .apya-avatar {
     padding: 0;
@@ -3517,6 +3546,33 @@ i.apya-priority-dot {
     .apya-console-kebab { width: 44px; height: 44px; }
     .apya-console-search { height: 44px; }
     .apya-filter-chip { min-height: 40px; }
+
+    /* --- Filtre çubuğu tek düğmenin arkasına katlanır ---
+       Kapsam YALNIZ Görevler konsolu: proje detay konsolunun filtre çubuğu
+       daha kısa ve orada bu düğme basılmıyor.
+       "Filtre" etiketi düşer — düğmenin kendisi zaten aynı şeyi söylüyor. */
+    .apya-task-console .apya-console-filter-label { display: none; }
+    .apya-task-console .apya-console-filters .apya-filters-toggle { display: inline-flex; }
+    .apya-task-console .apya-console-filter-set { display: none; }
+    .apya-task-console .apya-console-filters.is-filters-open .apya-console-filter-set {
+        display: flex;
+        flex: 1 1 100%;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 7px;
+        padding-bottom: 8px;
+    }
+
+    /* --- Konsol kimliği tek satır ---
+       Ad ve "Tüm projeler" chip'i alt alta iki satır kaplıyordu; ikisi de kısa,
+       yan yana sığıyor. Proje konsoluna UYGULANMAZ: orada kimlik uzun proje
+       adı + kod chip'i + kiracı chip'i taşıyor, tek satıra sığmaz. */
+    .apya-task-console .apya-console-identity {
+        flex-direction: row;
+        align-items: center;
+        gap: 8px;
+        min-width: 0;
+    }
     /* Kod kopyala 20px KALIR — 44px'e büyütmek 11px'lik kod chip'inin yanında
        orantısız duruyor. Görsel boyut korunup hit alanı büyütülüyor
        (20 + 2×12 = 44). Komşu chip tıklanabilir değil, çakışma yok. */
