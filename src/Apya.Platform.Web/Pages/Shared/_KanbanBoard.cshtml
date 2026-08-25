@@ -41,8 +41,75 @@
         </button>
     }
 </div>
-<div class="kanban-board mt-2"
-     data-col-1="@L["Tasks:Status:Todo"]"
-     data-col-2="@L["Tasks:Status:InProgress"]"
-     data-col-3="@L["Tasks:Status:InReview"]"
-     data-col-4="@L["Tasks:Status:Done"]"></div>
+@{
+    // Toplu işlem çubuğu listedekiyle aynı kapıdan geçer: durum değiştirme YA DA
+    // silme yetkisi. Çubuk .apya-console-bulkbar bileşenini yeniden kullanır ve
+    // position:absolute olduğu için konumlandırılmış bir sarmalayıcı ister.
+    var kbCanChangeStatus = await AuthorizationService.IsGrantedAsync(PlatformPermissions.Tasks.ChangeStatus);
+    var kbCanDelete = await AuthorizationService.IsGrantedAsync(PlatformPermissions.Tasks.Delete);
+}
+<div class="kanban-wrap">
+    <div class="kanban-board mt-2"
+         data-col-1="@L["Tasks:Status:Todo"]"
+         data-col-2="@L["Tasks:Status:InProgress"]"
+         data-col-3="@L["Tasks:Status:InReview"]"
+         data-col-4="@L["Tasks:Status:Done"]"
+         data-can-bulk="@((kbCanChangeStatus || kbCanDelete).ToString().ToLowerInvariant())"></div>
+
+    @if (kbCanChangeStatus || kbCanDelete)
+    {
+        <div class="apya-console-bulkbar d-none js-kb-bar" role="region" aria-label="Panoda toplu işlem">
+            <span class="apya-console-bulkbar-count js-kb-count">0 kart seçili</span>
+            <span class="apya-console-bulkbar-sep" aria-hidden="true"></span>
+            @if (kbCanChangeStatus)
+            {
+                <span class="dropdown">
+                    <button type="button" class="apya-console-bulkbar-btn" data-bs-toggle="dropdown" aria-expanded="false">Taşı</button>
+                    @* Hedefler panodaki kolonlardan JS ile doldurulur (özel kolonlar dâhil). *@
+                    <div class="dropdown-menu apya-console-menu js-kb-move-menu"></div>
+                </span>
+                <span class="dropdown">
+                    <button type="button" class="apya-console-bulkbar-btn" data-bs-toggle="dropdown" aria-expanded="false">Son tarih</button>
+                    <div class="dropdown-menu apya-console-menu">
+                        <button type="button" class="apya-console-menu-item js-kb-defer" data-days="1">1 gün ertele</button>
+                        <button type="button" class="apya-console-menu-item js-kb-defer" data-days="7">1 hafta ertele</button>
+                    </div>
+                </span>
+                <button type="button" class="apya-console-bulkbar-btn js-kb-cancel-tasks">İptal et</button>
+            }
+            @if (await AuthorizationService.IsGrantedAsync(PlatformPermissions.Tasks.Assign))
+            {
+                <span class="dropdown">
+                    <button type="button" class="apya-console-bulkbar-btn" data-bs-toggle="dropdown" aria-expanded="false">Ata</button>
+                    @* Kullanıcı listesi JS ile bir kez doldurulur (getUsersLookup). *@
+                    <div class="dropdown-menu apya-console-menu js-kb-assign-menu"></div>
+                </span>
+            }
+            @if (await AuthorizationService.IsGrantedAsync(PlatformPermissions.Tasks.Edit))
+            {
+                <span class="dropdown">
+                    <button type="button" class="apya-console-bulkbar-btn" data-bs-toggle="dropdown" aria-expanded="false">Öncelik</button>
+                    <div class="dropdown-menu apya-console-menu">
+                        <button type="button" class="apya-console-menu-item js-kb-priority" data-priority="1">Düşük</button>
+                        <button type="button" class="apya-console-menu-item js-kb-priority" data-priority="2">Orta</button>
+                        <button type="button" class="apya-console-menu-item js-kb-priority" data-priority="3">Yüksek</button>
+                        <button type="button" class="apya-console-menu-item js-kb-priority" data-priority="4">Kritik</button>
+                    </div>
+                </span>
+            }
+            @if (kbCanDelete)
+            {
+                <button type="button" class="apya-console-bulkbar-btn is-danger js-kb-delete">Sil</button>
+            }
+            <span class="apya-console-bulkbar-sep" aria-hidden="true"></span>
+            @* Son toplu taşımayı tersine çevirir; yalnız geri alınabilir bir işlem varken görünür. *@
+            <button type="button" class="apya-console-bulkbar-btn js-kb-undo d-none">
+                <i class="fa fa-rotate-left me-1" aria-hidden="true"></i>Geri al
+            </button>
+            <span class="apya-console-bulkbar-hint js-kb-hint">Shift: aralık · Ctrl: tek tek · Esc: bırak</span>
+            <button type="button" class="apya-console-bulkbar-close js-kb-clear" aria-label="Seçimi temizle">
+                <i class="fa fa-xmark" aria-hidden="true"></i>
+            </button>
+        </div>
+    }
+</div>

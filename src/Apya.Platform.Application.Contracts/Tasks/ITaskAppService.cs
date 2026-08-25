@@ -48,6 +48,13 @@ namespace Apya.Platform.Tasks
         Task DeleteAttachmentAsync(Guid attachmentId);
         Task UpdateStatusAsync(Guid id, Apya.Platform.Tasks.TaskStatus status);
 
+        /// <summary>Yalnız atananı değiştirir (null = atamayı kaldır). Toplu işlem
+        /// tüm görevi okuyup yazmasın diye granüler uç — UpdateStatusAsync ile aynı desen.</summary>
+        Task SetAssigneeAsync(Guid id, Guid? assigneeId);
+
+        /// <summary>Yalnız önceliği değiştirir. Toplu işlem için granüler uç.</summary>
+        Task SetPriorityAsync(Guid id, Apya.Platform.Tasks.TaskPriority priority);
+
         /// <summary>
         /// Görevin son tarihini <paramref name="days"/> gün ileri alır ("Ötele").
         /// Son tarihi olmayan görev bugünden itibaren tarihlenir. Yalnız DueDate'e

@@ -6,6 +6,11 @@
    böylece dark mode geri açıldığında board otomatik uyum sağlar.
    ============================================================================= */
 
+/* Toplu işlem çubuğu .apya-console-bulkbar position:absolute — konumlandırılmış
+   bir sarmalayıcı ister; board'un kendisi overflow-x:auto olduğu için çubuk onun
+   DIŞINDA, kardeşi olarak duruyor. */
+.kanban-wrap { position: relative; }
+
 .kanban-board {
     display: flex;
     gap: 1.5rem;
@@ -178,6 +183,27 @@
 }
 .kanban-card:hover { transform: translateY(-3px); box-shadow: var(--apya-shadow-md, 0 5px 15px rgba(0, 0, 0, 0.08)); }
 .kanban-card:active { cursor: grabbing; }
+
+/* Toplu seçim: onay kutusu hover'da belirir, seçiliyken kalıcı görünür.
+   Seçili kart accent bir halkayla işaretlenir — sürükleme görselini bozmadan. */
+.kanban-card-check {
+    flex: none;
+    margin-top: 2px;
+    opacity: 0;
+    transition: opacity 0.15s;
+    cursor: pointer;
+}
+.kanban-card:hover .kanban-card-check,
+.kanban-card-check:focus-visible,
+.kanban-card.is-selected .kanban-card-check { opacity: 1; }
+.kanban-card.is-selected {
+    box-shadow: 0 0 0 2px var(--apya-accent-500), var(--apya-shadow-sm, 0 1px 2px rgba(17, 24, 39, 0.05));
+    background: var(--apya-accent-soft, var(--apya-surface-base));
+}
+/* Dokunmatikte hover yok — kutu daima görünür olmalı. */
+@media (hover: none) {
+    .kanban-card-check { opacity: 1; }
+}
 
 .kanban-card[data-priority="1"] { border-left-color: var(--apya-positive-500, #198754); }  /* Low */
 .kanban-card[data-priority="2"] { border-left-color: var(--apya-warning-500, #ffc107); }   /* Medium */

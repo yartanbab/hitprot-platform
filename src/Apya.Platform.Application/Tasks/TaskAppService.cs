@@ -1144,6 +1144,43 @@ namespace Apya.Platform.Tasks
         }
 
         /// <summary>
+        /// Yalnız atananı değiştirir (null = atamayı kaldır). Toplu işlem tüm görevi
+        /// okuyup yazmasın diye granüler uç. Başkasına atamak ayrı yetki ister.
+        /// </summary>
+        [Authorize(PlatformPermissions.Tasks.Assign)]
+        public async Task SetAssigneeAsync(Guid id, Guid? assigneeId)
+        {
+            var task = await Repository.GetAsync(id);
+            var previousAssigneeId = task.AssigneeId;
+
+            task.AssignTo(assigneeId);
+            await Repository.UpdateAsync(task);
+
+            // BİLDİRİM: yalnız gerçekten DEĞİŞTİYSE ve biri atandıysa (atama
+            // kaldırıldığında kimseye bildirim gitmez).
+            if (task.AssigneeId.HasValue && task.AssigneeId != previousAssigneeId)
+            {
+                await _localEventBus.PublishAsync(new TaskAssignedEto
+                {
+                    TaskId         = task.Id,
+                    TaskTitle      = task.Title,
+                    AssigneeId     = task.AssigneeId.Value,
+                    ModifierUserId = CurrentUser.Id,
+                    AssignerName   = CurrentUser.UserName ?? "Sistem"
+                });
+            }
+        }
+
+        /// <summary>Yalnız önceliği değiştirir. Toplu işlem için granüler uç.</summary>
+        [Authorize(PlatformPermissions.Tasks.Edit)]
+        public async Task SetPriorityAsync(Guid id, Apya.Platform.Tasks.TaskPriority priority)
+        {
+            var task = await Repository.GetAsync(id);
+            task.ChangePriority(priority);
+            await Repository.UpdateAsync(task);
+        }
+
+        /// <summary>
         /// "Ötele" — son tarihi <paramref name="days"/> gün ileri alır. Son tarihi
         /// olmayan görevde bugün başlangıç kabul edilir. StartDate'e dokunulmaz;
         /// yalnız yeni son tarih başlangıcın gerisinde kalırsa başlangıç da kayar

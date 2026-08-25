@@ -325,7 +325,37 @@ Faz 2 bittiğinde kolon/kart tek yerden besleniyor olacak; bu faz **çevreyi** h
 
 ---
 
-## 6. Faz 5 — Panoda toplu seçim: 4c (backend YOK · 1 PR · orta)
+## 6. Faz 5 — Panoda toplu seçim: 4c (⚠ İKİ KÜÇÜK UÇ EKLENDİ · 1 PR · orta) — ✅ TAMAMLANDI (2026-08-24)
+
+> **Yapılanlar:** kartta onay kutusu (hover'da belirir, seçiliyken kalıcı), sade
+> tık detay açar · Ctrl/⌘ tek tek seçer · Shift **aynı kolon içinde** aralık seçer ·
+> Esc bırakır. Alt çubuk `.apya-console-bulkbar` bileşenini yeniden kullanıyor ve
+> `_KanbanBoard.cshtml`'de duruyor (sunucuda `Tasks.ChangeStatus || Tasks.Delete`
+> kapısı, listedekiyle aynı). Eylemler: **Taşı** (hedefler panodaki kolonlardan
+> doldurulur), **Son tarih** (1 gün / 1 hafta ertele), **İptal et**, **Sil** (onaylı).
+> Sıralı çalıştırma: bir kart hata verse kalanlar denenir, hata verenlerin KODU
+> bildirimde geçer. **Geri al** son toplu taşımayı/iptali eski kolon-durumuna
+> döndürür (anlık görüntü karttan alınır).
+>
+> ⚠ **Plandan sapma:** `createBulkSelection` genelleştirilmedi. O fonksiyon
+> `apya-task-console.js` içinde, DataTables satırlarına ve sayfalama senkronuna
+> bağlı ve **`/Board`'da o dosya hiç yüklenmiyor**. Kart seçimi kanban modülünde
+> kendi içinde yaşıyor; paylaşılan kısım görsel bileşen. İki sayfada çalışan tablo
+> seçimi riske atılmadı.
+>
+> ⚠ **Plan "backend YOK" diyordu ama iki küçük uç gerekti** (kullanıcı onayıyla
+> eklendi): `ITaskAppService`'te atama/öncelik için granüler uç yoktu — yalnız
+> `UpdateStatusAsync`, `DeferAsync`, `TransferAsync` vardı; liste tarafındaki toplu
+> işlem de bu yüzden sadece durum + silme yapıyordu. Eklenenler:
+> `SetAssigneeAsync` (`Tasks.Assign` yetkisi, atanan gerçekten değiştiyse
+> `TaskAssignedEto` yayınlar) ve `SetPriorityAsync` (`Tasks.Edit`). Migration YOK.
+> Böylece çubuk mockup'taki tam eylem setine kavuştu: Taşı · Ata · Öncelik ·
+> Son tarih · İptal et · Sil.
+>
+> 🔑 "Geri al" yalnız taşıma ve iptalde çalışıyor: erteleme/atama/öncelik için
+> kartta eski değer tutulmadığından tersine çevrilemiyor (bildirimde de vaat edilmiyor).
+>
+> Doğrulama: JS 353/353 (kanban 67 → 75 test), build 0 hata.
 
 ⚠ PROMPT'tan sapma: PROMPT "yeni backend gerekir" diyor — **gerekmiyor**.
 `createBulkSelection` ve `runSequential` hazır (`wwwroot/js/apya-task-console.js:110`),
@@ -437,9 +467,9 @@ cd src/Apya.Platform.Web/wwwroot/dynamic-assets && npm ci
 > frontend testleri toptan patlıyor). `dynamic-assets/yarn.lock`'taki değişikliği
 > **commit etme**. Build öncesi çalışan Web uygulamasını durdur (MSB3021).
 
-**Faz sırası:** ~~0~~ → ~~1~~ → ~~2a~~ → ~~2b~~ → ~~3~~ → ~~4~~ → 5 → 6 → 7. Faz 0 ve 1 birbirinden
-bağımsız; 2'den sonrası sıralı. Migration yalnız Faz 6'da.
-**Faz 0 + 1 + 2a + 2b + 3 + 4 tamamlandı (2026-08-24), 3b paneli dâhil.**
+**Faz sırası:** ~~0~~ → ~~1~~ → ~~2a~~ → ~~2b~~ → ~~3~~ → ~~4~~ → ~~5~~ → 6 → 7. Faz 0 ve 1
+birbirinden bağımsız; 2'den sonrası sıralı. Migration yalnız Faz 6'da.
+**Faz 0 + 1 + 2a + 2b + 3 + 4 + 5 tamamlandı (2026-08-24), 3b paneli dâhil.**
 🔴 Açık: **tüm fazların canlı QA'sı** — panodaki etkileşimler (Enter/Esc, sürükleyince
 reorder, silme onayı, ＋ modalı) jQuery delegasyonunda olduğu için birim testle
-kapsanamıyor. **Sıradaki: Faz 5 — panoda toplu seçim (backend YOK).**
+kapsanamıyor. **Sıradaki: Faz 6 — İptal kolonu (⚠ MİGRATION, onay ister).**

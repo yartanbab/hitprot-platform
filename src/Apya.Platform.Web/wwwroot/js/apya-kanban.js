@@ -142,9 +142,20 @@
             var isActive = enableTimer && activeLog && activeLog.taskId === task.id;
             if (isActive) { card.classList.add('timer-active'); }
 
-            // Üst satır: id rozeti + (proje adı / üst görev) + timer
+            // Üst satır: onay kutusu + id rozeti + (proje adı / üst görev) + timer
             var top = el('div', 'd-flex justify-content-between align-items-start mb-1');
             var tagWrap = el('div', 'd-flex flex-column gap-1');
+            var topLeft = el('div', 'd-flex align-items-start gap-2');
+            // Toplu seçim onay kutusu — yalnız yetkiliye; hover'da beliriyor,
+            // seçim varken kalıcı görünüyor (CSS .kanban-card.is-selected).
+            if (bulkAllowed()) {
+                var check = document.createElement('input');
+                check.type = 'checkbox';
+                check.className = 'kanban-card-check js-card-check';
+                check.setAttribute('aria-label', 'Kartı seç');
+                check.checked = !!selected[task.id];
+                topLeft.appendChild(check);
+            }
             var idBadge = el('small', 'text-muted border px-1 rounded bg-light');
             idBadge.style.fontSize = '0.72rem';
             idBadge.innerHTML = '<i class="fa fa-tag me-1"></i>';
@@ -171,7 +182,8 @@
                 pt.appendChild(document.createTextNode(task.parentTaskTitle));
                 tagWrap.appendChild(pt);
             }
-            top.appendChild(tagWrap);
+            topLeft.appendChild(tagWrap);
+            top.appendChild(topLeft);
 
             if (enableTimer) {
                 var tc = el('div', 'timer-controls');
@@ -349,6 +361,157 @@
             col.querySelector('.js-col-name').appendChild(document.createTextNode(' ' + c.name));
             col.querySelector('.kanban-cards').id = isSys ? SYS[c.statusValue] : ('kanban-col-' + c.id);
             return col;
+        }
+
+        // ── Toplu seçim (4c) ────────────────────────────────────────────────
+        // Liste tarafındaki createBulkSelection DataTables satırlarına bağlı ve
+        // /Board'da apya-task-console.js hiç yüklenmiyor; seçim burada kendi
+        // içinde yaşıyor, PAYLAŞILAN kısım görsel bileşen (.apya-console-bulkbar).
+        var selected = {};      // { taskId: true }
+        var lastPickedId = null;
+        var lastBulk = null;    // "Geri al": { entries: [{ id, columnId, status }] }
+
+        function bulkAllowed() {
+            var board = document.querySelector(boardSel);
+            return !!board && board.getAttribute('data-can-bulk') === 'true';
+        }
+        function selectedIds() { return Object.keys(selected); }
+        function bulkBar() {
+            var board = document.querySelector(boardSel);
+            return board && board.parentNode && board.parentNode.querySelector('.js-kb-bar');
+        }
+
+        function clearSelection() {
+            selected = {};
+            lastPickedId = null;
+            syncSelection();
+        }
+
+        function syncSelection() {
+            var ids = selectedIds();
+            document.querySelectorAll(boardSel + ' .kanban-card').forEach(function (card) {
+                var on = !!selected[card.getAttribute('data-id')];
+                card.classList.toggle('is-selected', on);
+                var box = card.querySelector('.js-card-check');
+                if (box) { box.checked = on; }
+            });
+            var bar = bulkBar();
+            if (!bar) { return; }
+            bar.classList.toggle('d-none', ids.length === 0);
+            var count = bar.querySelector('.js-kb-count');
+            if (count) { count.textContent = ids.length + ' kart seçili'; }
+        }
+
+        // Shift ile aralık: yalnız AYNI kolonun içinde anlamlı — kartlar kolonlara
+        // dağılmış durumda, panonun tamamında "aralık" diye bir sıra yok.
+        function selectRange(fromId, toId) {
+            var toCard = document.querySelector(boardSel + ' .kanban-card[data-id="' + toId + '"]');
+            if (!toCard) { return; }
+            var cards = Array.prototype.slice.call(
+                toCard.closest('.kanban-cards').querySelectorAll('.kanban-card'));
+            var ids = cards.map(function (c) { return c.getAttribute('data-id'); });
+            var a = ids.indexOf(fromId), b = ids.indexOf(toId);
+            if (a < 0) { selected[toId] = true; return; }
+            var lo = Math.min(a, b), hi = Math.max(a, b);
+            for (var i = lo; i <= hi; i++) { selected[ids[i]] = true; }
+        }
+
+        // Sıralı çalıştırma: bir kart hata verse de kalanlar denenir; hata veren
+        // kartların KODU bildirimde geçer (liste tarafındaki runSequential deseni).
+        function runSequential(ids, fn) {
+            var failed = [];
+            return ids.reduce(function (chain, id) {
+                return chain.then(function () {
+                    return Promise.resolve(fn(id)).catch(function () { failed.push(id); });
+                });
+            }, Promise.resolve()).then(function () { return failed; });
+        }
+
+        function codeOf(id) {
+            var card = document.querySelector(boardSel + ' .kanban-card[data-id="' + id + '"]');
+            var small = card && card.querySelector('small');
+            return small ? small.textContent.trim() : id.substring(0, 8);
+        }
+
+        // İşlem öncesi konumu sakla ki "Geri al" kartları yerine koyabilsin.
+        function snapshot(ids) {
+            return ids.map(function (id) {
+                var card = document.querySelector(boardSel + ' .kanban-card[data-id="' + id + '"]');
+                var col = card && card.closest('.kanban-column');
+                return {
+                    id: id,
+                    status: card ? parseInt(card.getAttribute('data-status'), 10) : null,
+                    columnId: col ? col.getAttribute('data-column-id-custom') : null
+                };
+            });
+        }
+
+        function finishBulk(ids, failed, doneMsg, undoEntries) {
+            var okCount = ids.length - failed.length;
+            if (failed.length) {
+                abp.notify.error(failed.map(codeOf).join(', ') + ' işlenemedi, eski yerinde kaldı.');
+            }
+            if (okCount > 0) {
+                lastBulk = undoEntries
+                    ? { entries: undoEntries.filter(function (e) { return failed.indexOf(e.id) < 0; }) }
+                    : null;
+                abp.notify.success(okCount + ' görev ' + doneMsg + (lastBulk ? ' · geri almak için çubuktaki "Geri al"' : ''));
+            }
+            clearSelection();
+            load();
+            onChanged();
+            syncUndoButton();
+        }
+
+        function syncUndoButton() {
+            var bar = bulkBar();
+            var btn = bar && bar.querySelector('.js-kb-undo');
+            if (btn) { btn.classList.toggle('d-none', !lastBulk || !lastBulk.entries.length); }
+        }
+
+        // "Ata" menüsü kullanıcı listesinden BİR KEZ doldurulur (her render'da
+        // istek atmasın); menü yoksa yetki de yok demektir.
+        var assignMenuFilled = false;
+        function fillAssignMenu() {
+            var bar = bulkBar();
+            var menu = bar && bar.querySelector('.js-kb-assign-menu');
+            if (!menu || assignMenuFilled) { return; }
+            assignMenuFilled = true;
+            taskSvc.getUsersLookup().then(function (res) {
+                var none = el('button', 'apya-console-menu-item js-kb-assign');
+                none.type = 'button';
+                none.textContent = 'Atamayı kaldır';
+                menu.appendChild(none);
+                (res.items || []).forEach(function (u) {
+                    var btn = el('button', 'apya-console-menu-item js-kb-assign');
+                    btn.type = 'button';
+                    btn.setAttribute('data-user-id', u.id);
+                    btn.textContent = u.userName || u.name || '';
+                    menu.appendChild(btn);
+                });
+            }).catch(function () { assignMenuFilled = false; });
+        }
+
+        // Taşı menüsü panodaki kolonlardan doldurulur: sistem kolonu durum,
+        // özel kolon kolon bağı üzerinden taşır (tek kaynak: DOM'daki kolonlar).
+        function fillMoveMenu() {
+            var bar = bulkBar();
+            var menu = bar && bar.querySelector('.js-kb-move-menu');
+            if (!menu) { return; }
+            menu.innerHTML = '';
+            document.querySelectorAll(boardSel + ' .kanban-column:not(.js-add-col):not(.kanban-note-col)').forEach(function (col) {
+                var name = col.querySelector('.js-col-name');
+                var btn = el('button', 'apya-console-menu-item js-kb-move');
+                btn.type = 'button';
+                // DB kolonu varsa taşıma kolon ucundan gider (sistem kolonunda da
+                // doğru: MoveTaskToColumnAsync durumu değiştirip bağı temizler).
+                // Proje seçili değilken kolon kaydı yoktur → durum ucuna düşülür.
+                var colId = col.getAttribute('data-column-id');
+                if (colId) { btn.setAttribute('data-column-id', colId); }
+                else { btn.setAttribute('data-status-id', col.getAttribute('data-status-id')); }
+                btn.textContent = name ? name.textContent.trim() : '';
+                menu.appendChild(btn);
+            });
         }
 
         // ── Kulvarlar (kolon içi gruplama) ──────────────────────────────────
@@ -861,6 +1024,9 @@
                 });
             });
             syncToolbar();
+            fillMoveMenu();     // taşı hedefleri panodaki güncel kolonlardan
+            fillAssignMenu();   // kullanıcı listesi bir kez
+            syncSelection();    // yeniden çizimde seçim vurgusu korunur
             updateCounts();
             initSortable();
             ensureColumnConfig();
@@ -1019,9 +1185,122 @@
         $doc.on('click', boardSel + ' .js-edit-task', function () {
             if (editModal) { editModal.open({ id: $(this).data('id') }); }
         });
+        // Karta tıklama: sade tık detay açar, Ctrl/⌘ tek tek seçer, Shift aralık
+        // seçer. Seçim varken sade tık da seçime katılır — kullanıcı "seçim kipi"
+        // içindeyken kart açmak istemiyor.
         $doc.on('click', boardSel + ' .kanban-card', function (e) {
             if (e.target.closest('.btn')) { return; }
-            if (editModal) { editModal.open({ id: $(this).data('id') }); }
+            var id = String($(this).data('id'));
+
+            if (bulkAllowed()) {
+                var isCheck = !!e.target.closest('.js-card-check');
+                var toggle = isCheck || e.ctrlKey || e.metaKey;
+                var range = e.shiftKey && lastPickedId;
+                if (toggle || range || selectedIds().length) {
+                    e.preventDefault();
+                    if (range) { selectRange(lastPickedId, id); }
+                    else if (selected[id]) { delete selected[id]; }
+                    else { selected[id] = true; }
+                    lastPickedId = id;
+                    syncSelection();
+                    return;
+                }
+            }
+            if (editModal) { editModal.open({ id: id }); }
+        });
+
+        // Esc seçimi bırakır (mockup 4c).
+        $doc.on('keydown', function (e) {
+            if (e.key === 'Escape' && selectedIds().length) { clearSelection(); }
+        });
+
+        $doc.on('click', '.js-kb-clear', function () { clearSelection(); });
+
+        // Taşı: hedef sistem kolonuysa durum, özel kolonsa kolon bağı üzerinden.
+        $doc.on('click', '.js-kb-move', function () {
+            var ids = selectedIds();
+            if (!ids.length) { return; }
+            var columnId = $(this).attr('data-column-id');
+            var statusId = $(this).attr('data-status-id');
+            var target = $(this).text().trim();
+            var before = snapshot(ids);
+            runSequential(ids, function (id) {
+                return columnId ? colSvc.moveTaskToColumn(id, columnId)
+                                : taskSvc.updateStatus(id, parseInt(statusId, 10));
+            }).then(function (failed) {
+                finishBulk(ids, failed, '"' + target + '" kolonuna taşındı.', before);
+            });
+        });
+
+        $doc.on('click', '.js-kb-cancel-tasks', function () {
+            var ids = selectedIds();
+            if (!ids.length) { return; }
+            var before = snapshot(ids);
+            runSequential(ids, function (id) { return taskSvc.updateStatus(id, 0); })
+                .then(function (failed) { finishBulk(ids, failed, 'iptal edildi.', before); });
+        });
+
+        $doc.on('click', '.js-kb-assign', function () {
+            var ids = selectedIds();
+            if (!ids.length) { return; }
+            var userId = $(this).attr('data-user-id') || null;
+            var who = $(this).text().trim();
+            runSequential(ids, function (id) { return taskSvc.setAssignee(id, userId); })
+                .then(function (failed) {
+                    // Atama geri alınmıyor: kartta önceki atananın id'si yok.
+                    finishBulk(ids, failed, userId ? ('"' + who + '" kişisine atandı.') : 'ataması kaldırıldı.', null);
+                });
+        });
+
+        $doc.on('click', '.js-kb-priority', function () {
+            var ids = selectedIds();
+            if (!ids.length) { return; }
+            var p = parseInt($(this).attr('data-priority'), 10);
+            var label = $(this).text().trim();
+            runSequential(ids, function (id) { return taskSvc.setPriority(id, p); })
+                .then(function (failed) { finishBulk(ids, failed, 'önceliği "' + label + '" yapıldı.', null); });
+        });
+
+        $doc.on('click', '.js-kb-defer', function () {
+            var ids = selectedIds();
+            if (!ids.length) { return; }
+            var days = parseInt($(this).attr('data-days'), 10);
+            runSequential(ids, function (id) { return taskSvc.defer(id, days); })
+                .then(function (failed) {
+                    // Erteleme geri alınmıyor: eski tarihi kartta tutmuyoruz.
+                    finishBulk(ids, failed, days + ' gün ertelendi.', null);
+                });
+        });
+
+        $doc.on('click', '.js-kb-delete', function () {
+            var ids = selectedIds();
+            if (!ids.length) { return; }
+            abp.message.confirm(
+                'Seçili görevler kalıcı olarak silinecek. Bu işlem geri alınamaz.',
+                ids.length + ' görev silinecek',
+                function (ok) {
+                    if (!ok) { return; }
+                    runSequential(ids, function (id) { return taskSvc.delete(id); })
+                        .then(function (failed) { finishBulk(ids, failed, 'silindi.', null); });
+                });
+        });
+
+        // Geri al: son toplu taşımanın kartlarını eski kolon/durumuna döndürür.
+        $doc.on('click', '.js-kb-undo', function () {
+            if (!lastBulk || !lastBulk.entries.length) { return; }
+            var entries = lastBulk.entries;
+            lastBulk = null;
+            runSequential(entries.map(function (e) { return e.id; }), function (id) {
+                var e = entries.filter(function (x) { return x.id === id; })[0];
+                return e.columnId ? colSvc.moveTaskToColumn(id, e.columnId)
+                                  : taskSvc.updateStatus(id, e.status);
+            }).then(function (failed) {
+                if (failed.length) { abp.notify.error(failed.map(codeOf).join(', ') + ' geri alınamadı.'); }
+                else { abp.notify.info('Son toplu işlem geri alındı.'); }
+                load();
+                onChanged();
+                syncUndoButton();
+            });
         });
         // Kolon başlığındaki ＋ — görev oluşturma modalını o kolon ön seçili açar.
         // Sistem kolonu "s:<status>", özel kolon "c:<guid>" (CreateModal aynı dili konuşur).
