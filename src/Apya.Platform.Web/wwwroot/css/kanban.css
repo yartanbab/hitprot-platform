@@ -300,6 +300,157 @@
 .kanban-add-col-title { font-size: 11.5px; font-weight: 600; }
 .kanban-add-col-sub { font-size: 10px; line-height: 1.4; color: var(--apya-text-tertiary); padding: 0 8px; }
 
+/* ── "Kolonları düzenle" tetikleyicisi (partial'da, board'un üstünde) ── */
+.kanban-toolbar { display: flex; justify-content: flex-end; margin-bottom: 2px; }
+.kanban-edit-cols {
+    height: 30px;
+    padding: 0 12px;
+    border: 1px solid var(--apya-border-default);
+    border-radius: var(--apya-radius-md);
+    background: var(--apya-surface-base);
+    color: var(--apya-text-secondary);
+    font-size: 12.5px;
+    font-weight: 600;
+    cursor: pointer;
+}
+.kanban-edit-cols:hover { border-color: var(--apya-accent-500); color: var(--apya-accent-600); }
+.kanban-edit-cols:focus-visible { outline: none; box-shadow: var(--apya-shadow-focus); }
+
+/* ── 3b paneli: tek yerden sırala + ad + renk + WIP ──
+   body'ye basılır (ata transform'lar position:fixed'i hapsedebiliyor). */
+.kanban-panel-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 1080;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    background: rgba(17, 24, 39, 0.45);
+}
+.kanban-panel {
+    width: min(760px, 100%);
+    max-height: min(86dvh, 780px);
+    display: flex;
+    flex-direction: column;
+    border-radius: var(--apya-radius-xl, 0.75rem);
+    background: var(--apya-surface-base);
+    box-shadow: var(--apya-shadow-lg, 0 20px 45px rgba(17, 24, 39, 0.25));
+    overflow: hidden;
+}
+.kanban-panel-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 16px 18px 12px;
+    border-bottom: 1px solid var(--apya-border-subtle);
+}
+.kanban-panel-title { font-size: 15px; font-weight: 700; color: var(--apya-text-primary); }
+.kanban-panel-sub { font-size: 12px; color: var(--apya-text-tertiary); margin-top: 2px; }
+.kanban-panel-close {
+    width: 28px; height: 28px; flex: none;
+    display: grid; place-items: center;
+    border: none; border-radius: var(--apya-radius-md);
+    background: transparent; color: var(--apya-text-tertiary); cursor: pointer;
+}
+.kanban-panel-close:hover { background: var(--apya-surface-sunken); color: var(--apya-text-primary); }
+
+/* Satır ızgarası: tutamak · ad · renk · WIP · eylem */
+.kanban-panel-cols,
+.kanban-panel-row {
+    display: grid;
+    grid-template-columns: 24px minmax(0, 1fr) 150px 78px 64px;
+    gap: 10px;
+    align-items: start;
+}
+.kanban-panel-cols {
+    padding: 8px 18px;
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+    color: var(--apya-text-tertiary);
+    border-bottom: 1px solid var(--apya-border-subtle);
+}
+.kanban-panel-cols > span:first-child { grid-column: 1 / span 2; }
+.kanban-panel-rows { flex: 1 1 auto; overflow-y: auto; padding: 4px 18px; }
+.kanban-panel-row { padding: 10px 0; border-bottom: 1px solid var(--apya-border-subtle); }
+.kanban-panel-grip { padding-top: 6px; color: var(--apya-text-tertiary); cursor: grab; font-size: 12px; }
+.kanban-panel-grip:active { cursor: grabbing; }
+.kanban-panel-nameline { display: flex; align-items: center; gap: 8px; }
+.kanban-panel-name input {
+    flex: 1 1 auto; min-width: 0; height: 30px; padding: 0 8px;
+    border: 1px solid var(--apya-border-default);
+    border-radius: var(--apya-radius-md);
+    background: var(--apya-surface-base); color: var(--apya-text-primary);
+    font-size: 13px;
+}
+.kanban-panel-name input:focus { outline: none; border-color: var(--apya-border-focus); box-shadow: var(--apya-shadow-focus); }
+.kanban-panel-counter { flex: none; font-size: 10px; font-weight: 600; color: var(--apya-text-tertiary); }
+.kanban-panel-meta { margin-top: 4px; font-size: 11px; color: var(--apya-text-tertiary); }
+.kanban-panel-warn {
+    margin-top: 6px;
+    padding: 6px 8px;
+    border-radius: var(--apya-radius-md);
+    background: color-mix(in srgb, var(--apya-warning-500) 12%, transparent);
+    color: var(--apya-text-warning, var(--apya-warning-700, #92400e));
+    font-size: 11px;
+    line-height: 1.5;
+}
+.kanban-panel-color { display: flex; flex-wrap: wrap; gap: 2px; padding-top: 2px; }
+.kanban-panel-wip input {
+    width: 100%; height: 30px; padding: 0 8px;
+    border: 1px solid var(--apya-border-default);
+    border-radius: var(--apya-radius-md);
+    background: var(--apya-surface-base); color: var(--apya-text-primary);
+    font-size: 12.5px;
+}
+.kanban-panel-wip input:focus { outline: none; border-color: var(--apya-border-focus); box-shadow: var(--apya-shadow-focus); }
+.kanban-panel-act { padding-top: 6px; text-align: right; font-size: 11px; font-weight: 600; }
+.kanban-panel-lock { color: var(--apya-text-tertiary); white-space: nowrap; }
+.kanban-panel-del {
+    border: none; background: transparent; cursor: pointer;
+    color: var(--apya-text-negative, var(--apya-negative-700, #991b1b));
+    font-size: 11px; font-weight: 600; padding: 0;
+}
+.kanban-panel-del:hover { text-decoration: underline; }
+
+.kanban-panel-addcol {
+    margin: 10px 18px 0;
+    padding: 8px;
+    border: 1px dashed var(--apya-border-strong);
+    border-radius: var(--apya-radius-md);
+    background: transparent;
+    color: var(--apya-text-secondary);
+    font-size: 12.5px; font-weight: 600; cursor: pointer;
+}
+.kanban-panel-addcol:hover { border-color: var(--apya-accent-500); color: var(--apya-accent-600); }
+.kanban-panel-note { margin: 10px 18px; font-size: 11.5px; line-height: 1.55; color: var(--apya-text-tertiary); }
+.kanban-panel-foot {
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    padding: 12px 18px;
+    border-top: 1px solid var(--apya-border-subtle);
+    background: var(--apya-surface-sunken);
+}
+.kanban-panel-dirty { font-size: 12px; color: var(--apya-text-tertiary); }
+.kanban-panel-dirty.is-dirty { color: var(--apya-accent-600); font-weight: 600; }
+.kanban-panel-actions { display: flex; gap: 8px; }
+.kanban-panel-btn {
+    height: 32px; padding: 0 14px;
+    border: 1px solid var(--apya-border-default);
+    border-radius: var(--apya-radius-md);
+    background: var(--apya-surface-base);
+    color: var(--apya-text-secondary);
+    font-size: 12.5px; font-weight: 600; cursor: pointer;
+}
+.kanban-panel-btn.is-primary {
+    border-color: var(--apya-accent-500);
+    background: var(--apya-accent-500);
+    color: #fff;
+}
+.kanban-panel-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
 /* Sütun yeniden boyutlandırma tutamağı (sağ kenar) */
 .kanban-resize-handle {
     position: absolute; top: 0; right: -4px; width: 8px; height: 100%;

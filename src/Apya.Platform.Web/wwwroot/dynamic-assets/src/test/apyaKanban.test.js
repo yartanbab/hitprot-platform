@@ -32,8 +32,13 @@ async function flush() {
     for (let i = 0; i < 4; i++) { await new Promise((r) => setTimeout(r, 0)); }
 }
 
+// Kolon servisine giden çağrılar burada birikir: panel "tek kaydet"te YALNIZ
+// değişen satırları göndermeli, sıra değişmediyse reorder'a hiç dokunmamalı.
+let colCalls;
+
 function mountBoard(cols, tasks) {
     document.body.innerHTML = boardHtml();
+    colCalls = { update: [], reorder: [], create: [], delete: [] };
     window.apya.platform = {
         tasks: {
             task: {
@@ -42,7 +47,13 @@ function mountBoard(cols, tasks) {
             }
         },
         projects: {
-            boardColumn: { getListByProject: () => Promise.resolve(cols) }
+            boardColumn: {
+                getListByProject: () => Promise.resolve(cols),
+                update: (id, dto) => { colCalls.update.push({ id, dto }); return Promise.resolve({}); },
+                reorder: (pid, ids) => { colCalls.reorder.push({ pid, ids }); return Promise.resolve(); },
+                create: (dto) => { colCalls.create.push(dto); return Promise.resolve({}); },
+                delete: (id) => { colCalls.delete.push(id); return Promise.resolve(); }
+            }
         }
     };
 }
@@ -426,5 +437,163 @@ describe('kart kimlik rozeti', () => {
         await flush();
 
         expect(document.querySelector('#kanban-todo .kanban-card small').textContent).toContain('#aaaa');
+    });
+});
+
+// ── 3b "Kolonları düzenle" paneli ───────────────────────────────────────────
+// Panel olaylarını jQuery delegasyonuyla DEĞİL doğrudan bağlıyor; bu yüzden
+// panonun aksine etkileşimleri de burada doğrulanabiliyor.
+describe('3b kolon paneli', () => {
+    const rows = () => document.querySelectorAll('.kanban-panel-row');
+    const nameInput = (i) => rows()[i].querySelector('.js-p-name');
+    const wipInput = (i) => rows()[i].querySelector('.js-p-wip');
+    const dirtyText = () => document.querySelector('.js-p-dirty').textContent;
+    const saveBtn = () => document.querySelector('.js-p-save');
+
+    async function openPanel(cols, tasks) {
+        granted['Platform.Projects.Edit'] = true;
+        mountBoard(cols, tasks);
+        const kb = apya.kanban.create({ projectId: 'p1' });
+        kb.load();
+        await flush();
+        kb.openColumnPanel();
+        await flush();
+        return kb;
+    }
+
+    it('her kolon için satır açar, DB sırasını korur', async () => {
+        await openPanel(sysCols.concat([customCol]), []);
+
+        expect(rows().length).toBe(5);
+        expect(nameInput(0).value).toBe('Yapılacak');
+        expect(nameInput(4).value).toBe('Hakem değerlendirmesi');
+        expect(document.querySelector('.kanban-panel-sub').textContent).toBe('5 kolon');
+    });
+
+    it('sistem satırında Kilit, özel satırında Sil düğmesi', async () => {
+        await openPanel(sysCols.concat([customCol]), []);
+
+        expect(rows()[0].querySelector('.kanban-panel-lock')).not.toBeNull();
+        expect(rows()[0].querySelector('.js-p-del')).toBeNull();
+        expect(rows()[4].querySelector('.js-p-del')).not.toBeNull();
+        expect(rows()[4].querySelector('.kanban-panel-lock')).toBeNull();
+    });
+
+    it('meta satırı durumu ve kart sayısını söyler', async () => {
+        await openPanel(sysCols.concat([customCol]), [
+            { id: 't1', code: 'GRV-1', title: 'A', status: 2, priority: 2 },
+            { id: 't2', code: 'GRV-2', title: 'B', status: 2, priority: 2 }
+        ]);
+
+        expect(rows()[1].querySelector('.js-p-meta').textContent).toBe('Sistem · durum: Sürüyor · 2 kart');
+        expect(rows()[4].querySelector('.js-p-meta').textContent).toBe('Özel kolon · durumu değiştirmez · 0 kart');
+    });
+
+    it('açılışta değişiklik yok, kaydet kapalı', async () => {
+        await openPanel(sysCols, []);
+
+        expect(dirtyText()).toBe('Değişiklik yok');
+        expect(saveBtn().disabled).toBe(true);
+    });
+
+    it('ad değişince sayaç ve kaydet düğmesi uyanır', async () => {
+        await openPanel(sysCols, []);
+
+        nameInput(2).value = 'Kod İncelemesi';
+        nameInput(2).dispatchEvent(new Event('input'));
+
+        expect(dirtyText()).toBe('1 değişiklik bekliyor');
+        expect(saveBtn().disabled).toBe(false);
+        expect(rows()[2].querySelector('.js-p-counter').textContent).toBe('14/64');
+    });
+
+    it('WIP limiti mevcut kart sayısının altına inince uyarır (ama engellemez)', async () => {
+        await openPanel(sysCols, [
+            { id: 't1', code: 'GRV-1', title: 'A', status: 2, priority: 2 },
+            { id: 't2', code: 'GRV-2', title: 'B', status: 2, priority: 2 },
+            { id: 't3', code: 'GRV-3', title: 'C', status: 2, priority: 2 }
+        ]);
+
+        const warn = rows()[1].querySelector('.js-p-warn');
+        expect(warn.classList.contains('d-none')).toBe(true);
+
+        wipInput(1).value = '2';
+        wipInput(1).dispatchEvent(new Event('input'));
+
+        expect(warn.classList.contains('d-none')).toBe(false);
+        expect(warn.textContent).toContain('3 kart var');
+        expect(warn.textContent).toContain('engellenmez');
+    });
+
+    it('kaydet YALNIZ değişen satırı gönderir, ad+renk+WIP birlikte gider', async () => {
+        await openPanel(sysCols, []);
+
+        nameInput(2).value = 'Kod İncelemesi';
+        nameInput(2).dispatchEvent(new Event('input'));
+        saveBtn().click();
+        await flush();
+
+        expect(colCalls.update.length).toBe(1);
+        expect(colCalls.update[0].id).toBe('c3');
+        // UpdateBoardColumnDto üç alanı BİRLİKTE ister; biri eksikse diğeri sıfırlanır.
+        expect(colCalls.update[0].dto).toEqual({ name: 'Kod İncelemesi', colorClass: 'info', wipLimit: null });
+    });
+
+    it('sıra değişmediyse reorder çağrılmaz', async () => {
+        await openPanel(sysCols, []);
+
+        nameInput(0).value = 'Sırada';
+        nameInput(0).dispatchEvent(new Event('input'));
+        saveBtn().click();
+        await flush();
+
+        expect(colCalls.reorder.length).toBe(0);
+    });
+
+    it('renk seçimi tek kaydetmede ada eşlik eder', async () => {
+        await openPanel(sysCols, []);
+
+        rows()[0].querySelector('.js-col-color[data-color="danger"]').click();
+        saveBtn().click();
+        await flush();
+
+        expect(colCalls.update.length).toBe(1);
+        expect(colCalls.update[0].dto.colorClass).toBe('danger');
+        expect(colCalls.update[0].dto.name).toBe('Yapılacak');
+    });
+
+    it('Vazgeç hiçbir şey göndermez ve paneli kapatır', async () => {
+        await openPanel(sysCols, []);
+
+        nameInput(1).value = 'Değişti';
+        nameInput(1).dispatchEvent(new Event('input'));
+        document.querySelector('.js-p-cancel').click();
+
+        expect(document.querySelector('.kanban-panel')).toBeNull();
+        expect(colCalls.update.length).toBe(0);
+        expect(colCalls.reorder.length).toBe(0);
+    });
+
+    it('yetki yoksa panel hiç açılmaz', async () => {
+        mountBoard(sysCols, []);
+        const kb = apya.kanban.create({ projectId: 'p1' });
+        kb.load();
+        await flush();
+        kb.openColumnPanel();
+        await flush();
+
+        expect(document.querySelector('.kanban-panel')).toBeNull();
+    });
+
+    it('proje seçili değilken panel açılmaz', async () => {
+        granted['Platform.Projects.Edit'] = true;
+        mountBoard(sysCols, []);
+        const kb = apya.kanban.create({ projectId: null });
+        kb.load();
+        await flush();
+        kb.openColumnPanel();
+        await flush();
+
+        expect(document.querySelector('.kanban-panel')).toBeNull();
     });
 });

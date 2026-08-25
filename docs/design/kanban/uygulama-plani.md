@@ -187,7 +187,7 @@ imkânsız. Bu fazın ilk yarısı bu boşluğu kapatmak.
 > sistem kolonunun adını API'den değiştirince başlık değişiyor; "Tümü"de dört kolon
 > varsayılan adlarla geliyor; boş kolonda metin çıkıyor, dolu kolonda çıkmıyor.
 
-### PR 2b — Düzenleme yüzeyi (3a/3b/3c) — ✅ TAMAMLANDI, **3b paneli hariç** (2026-08-24)
+### PR 2b — Düzenleme yüzeyi (3a/3b/3c) — ✅ TAMAMLANDI (2026-08-24)
 
 > **Yapılanlar:** yerinde ad düzenleme (başlığa tıkla ya da ⋯ → Yeniden adlandır;
 > Enter kaydeder, Esc iptal, 64 karakter sayacı) · sistem kolonunda kilitli sil +
@@ -203,11 +203,18 @@ imkânsız. Bu fazın ilk yarısı bu boşluğu kapatmak.
 > Doğrulama: JS 310/310 (kanban dosyası 20 → 32 test), build 0 hata. Testler bir
 > önceki commit'e karşı çalıştırıldı, **7'si düştü** → anlamlı oldukları kanıtlandı.
 >
-> 🔴 **YAPILMADI — 3b "Kolonları düzenle" paneli.** Tek panelde sırala + ad + renk +
-> WIP + "n değişiklik bekliyor" + tek kaydet. Ertelenmesinin gerekçesi: sunduğu
-> yeteneklerin tamamı artık panoda doğrudan var (yerinde ad, ⋯ içinde renk/WIP,
-> sürükleyerek sıralama). Panelin kendine özgü değeri yalnız **toplu düzenleme**
-> ve hepsini tek listede görmek. Yapılıp yapılmayacağı kullanıcı kararı.
+> ✅ **3b "Kolonları düzenle" paneli de yapıldı** (kullanıcı kararı, 2026-08-24).
+> Tetikleyici `_KanbanBoard.cshtml`'de — sunucuda `Projects.Edit` ile kapılı, JS
+> proje seçiliyken görünür kılıyor; üç sayfada da aynı yerde çıkıyor, sayfa araç
+> çubukları değişmedi. Panel `document.body`'ye basılıyor (ata `transform`
+> `position:fixed`'i hapsedebiliyor). Satır başına ad + 64 sayaç + 6 renk + WIP,
+> sürükleyerek sıralama, "n değişiklik bekliyor", tek kaydette **yalnız değişen
+> satırlar** `UpdateAsync` + sıra değiştiyse `ReorderAsync`. WIP mevcut kart
+> sayısının altına inince satır içi uyarı (engellemez). Sistem satırı "Kilit",
+> özel satırda "Sil" → aynı zengin onay. Vazgeç hiçbir şey göndermez.
+>
+> 🔑 Panel olaylarını jQuery delegasyonuyla DEĞİL doğrudan bağlıyor; bu yüzden
+> panonun aksine **etkileşimleri de birim testle kapsandı** (12 test).
 >
 > 🔴 Etkileşim yolları (Enter kaydeder, Esc iptal, sürükleyince `reorder` çağrılır,
 > silme onayı) **birim testle kapsanamıyor**: modül tüm olayları jQuery delegasyonuyla
@@ -379,6 +386,7 @@ cd src/Apya.Platform.Web/wwwroot/dynamic-assets && npm ci
 
 **Faz sırası:** ~~0~~ → ~~1~~ → ~~2a~~ → ~~2b~~ → 3 → 4 → 5 → 6 → 7. Faz 0 ve 1 birbirinden
 bağımsız; 2'den sonrası sıralı. Migration yalnız Faz 6'da.
-**Faz 0 + 1 + 2a + 2b tamamlandı (2026-08-24).** Açık kalanlar: 3b "Kolonları düzenle"
-paneli (kullanıcı kararı bekliyor) ve tüm fazların canlı QA'sı.
-**Sıradaki: Faz 3 — üç yüzeyi standartlaştır (5a + 5b).**
+**Faz 0 + 1 + 2a + 2b tamamlandı (2026-08-24), 3b paneli dâhil.**
+🔴 Açık: **tüm fazların canlı QA'sı** — panodaki etkileşimler (Enter/Esc, sürükleyince
+reorder, silme onayı, ＋ modalı) jQuery delegasyonunda olduğu için birim testle
+kapsanamıyor. **Sıradaki: Faz 3 — üç yüzeyi standartlaştır (5a + 5b).**

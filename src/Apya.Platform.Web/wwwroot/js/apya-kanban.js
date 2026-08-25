@@ -400,6 +400,245 @@
             input.select();
         }
 
+        // ── 3b "Kolonları düzenle" paneli ────────────────────────────────────
+        // Tek yerden sırala + adlandır + renk + WIP. Değişiklikler biriktirilir,
+        // "Değişiklikleri kaydet"te gider: satır başına UpdateAsync (DTO ad+renk+WIP'i
+        // BİRLİKTE ister) + sıra değiştiyse ReorderAsync. Silme buradan da zengin
+        // onaydan geçer. Panel body'ye basılır — ata bir 'transform' position:fixed'i
+        // kapsayıp paneli hapsedebilir (bkz. modal yığın bağlamı tuzağı).
+        var panelRoot = null;
+
+        function cardCountOf(c) {
+            var sel = c.statusValue != null
+                ? '.kanban-column[data-status-id="' + c.statusValue + '"]'
+                : '.kanban-column[data-column-id-custom="' + c.id + '"]';
+            var col = document.querySelector(boardSel + ' ' + sel);
+            return col ? col.querySelectorAll('.kanban-cards .kanban-card').length : 0;
+        }
+
+        function closeColumnPanel() {
+            if (panelRoot) { panelRoot.remove(); panelRoot = null; }
+        }
+
+        function openColumnPanel() {
+            if (!projectId || !canEditColumns || panelRoot) { return; }
+            colSvc.getListByProject(projectId).then(function (cols) {
+                renderColumnPanel(cols.slice().sort(function (a, b) { return a.order - b.order; }));
+            });
+        }
+
+        function renderColumnPanel(cols) {
+            closeColumnPanel();
+            // Düzenlenen kopya: iptal edilirse sunucuya hiçbir şey gitmez.
+            var draft = cols.map(function (c) {
+                return {
+                    id: c.id, statusValue: c.statusValue, isSystem: c.isSystem,
+                    cards: cardCountOf(c),
+                    name: c.name, colorClass: c.colorClass || 'primary', wipLimit: c.wipLimit || null,
+                    origName: c.name, origColor: c.colorClass || 'primary', origWip: c.wipLimit || null
+                };
+            });
+            var origOrder = draft.map(function (d) { return d.id; }).join(',');
+
+            panelRoot = el('div', 'kanban-panel-backdrop');
+            panelRoot.innerHTML =
+                '<div class="kanban-panel" role="dialog" aria-modal="true" aria-label="Kolonları düzenle">' +
+                    '<div class="kanban-panel-head">' +
+                        '<div>' +
+                            '<div class="kanban-panel-title">Kolonları düzenle</div>' +
+                            '<div class="kanban-panel-sub">' + draft.length + ' kolon</div>' +
+                        '</div>' +
+                        '<button type="button" class="kanban-panel-close js-p-close" aria-label="Kapat"><i class="fa fa-xmark"></i></button>' +
+                    '</div>' +
+                    '<div class="kanban-panel-cols"><span>Kolon adı</span><span>Renk</span><span>WIP</span><span></span></div>' +
+                    '<div class="kanban-panel-rows js-p-rows"></div>' +
+                    '<button type="button" class="kanban-panel-addcol js-p-add"><i class="fa fa-plus me-1"></i>Özel kolon ekle</button>' +
+                    '<p class="kanban-panel-note">Sistem kolonları görev durumuna bağlı olduğu için silinemez — adını ve rengini değiştirebilirsin. Sıralama sürükle-bırak ile yapılır ve projeye kaydedilir.</p>' +
+                    '<div class="kanban-panel-foot">' +
+                        '<span class="kanban-panel-dirty js-p-dirty">Değişiklik yok</span>' +
+                        '<span class="kanban-panel-actions">' +
+                            '<button type="button" class="kanban-panel-btn js-p-cancel">Vazgeç</button>' +
+                            '<button type="button" class="kanban-panel-btn is-primary js-p-save" disabled>Değişiklikleri kaydet</button>' +
+                        '</span>' +
+                    '</div>' +
+                '</div>';
+            document.body.appendChild(panelRoot);
+
+            var rowsEl = panelRoot.querySelector('.js-p-rows');
+            var dirtyEl = panelRoot.querySelector('.js-p-dirty');
+            var saveBtn = panelRoot.querySelector('.js-p-save');
+
+            draft.forEach(function (d) { rowsEl.appendChild(buildPanelRow(d, refreshDirty)); });
+
+            function currentOrder() {
+                return Array.prototype.map.call(rowsEl.querySelectorAll('.kanban-panel-row'),
+                    function (r) { return r.getAttribute('data-id'); }).join(',');
+            }
+            function changedRows() {
+                return draft.filter(function (d) {
+                    return d.name !== d.origName || d.colorClass !== d.origColor || d.wipLimit !== d.origWip;
+                });
+            }
+            function refreshDirty() {
+                var n = changedRows().length + (currentOrder() !== origOrder ? 1 : 0);
+                dirtyEl.textContent = n === 0 ? 'Değişiklik yok' : (n + ' değişiklik bekliyor');
+                dirtyEl.classList.toggle('is-dirty', n > 0);
+                saveBtn.disabled = n === 0;
+            }
+
+            if (typeof Sortable !== 'undefined') {
+                new Sortable(rowsEl, {
+                    draggable: '.kanban-panel-row',
+                    handle: '.kanban-panel-grip',
+                    animation: 150,
+                    onEnd: refreshDirty
+                });
+            }
+
+            panelRoot.querySelector('.js-p-close').addEventListener('click', closeColumnPanel);
+            panelRoot.querySelector('.js-p-cancel').addEventListener('click', closeColumnPanel);
+            panelRoot.addEventListener('click', function (e) {
+                if (e.target === panelRoot) { closeColumnPanel(); }   // dışarı tıkla = vazgeç
+            });
+            panelRoot.querySelector('.js-p-add').addEventListener('click', function () {
+                askName('Yeni kolon', '', function (name) {
+                    colSvc.create({ projectId: projectId, name: name, colorClass: 'primary' })
+                        .then(function () {
+                            abp.notify.success('Kolon eklendi.');
+                            load();
+                            openColumnPanelSoon();
+                        });
+                });
+            });
+
+            panelRoot.querySelector('.js-p-save').addEventListener('click', function () {
+                saveBtn.disabled = true;
+                var updates = changedRows().map(function (d) {
+                    return colSvc.update(d.id, { name: d.name, colorClass: d.colorClass, wipLimit: d.wipLimit });
+                });
+                var orderNow = currentOrder();
+                Promise.all(updates)
+                    .then(function () {
+                        if (orderNow === origOrder) { return null; }
+                        return colSvc.reorder(projectId, orderNow.split(','));
+                    })
+                    .then(function () {
+                        abp.notify.success('Kolonlar güncellendi.');
+                        closeColumnPanel();
+                        load();
+                    })
+                    .catch(function () {
+                        abp.notify.error('Kolonlar kaydedilemedi.');
+                        saveBtn.disabled = false;
+                    });
+            });
+
+            refreshDirty();
+        }
+
+        // Kolon eklendikten sonra paneli tazeleyerek yeniden aç (liste değişti).
+        function openColumnPanelSoon() {
+            closeColumnPanel();
+            setTimeout(openColumnPanel, 0);
+        }
+
+        function buildPanelRow(d, onChange) {
+            var row = el('div', 'kanban-panel-row');
+            row.setAttribute('data-id', d.id);
+
+            var meta = d.statusValue != null
+                ? 'Sistem · durum: ' + statusColumnName(d.statusValue) + ' · ' + d.cards + ' kart'
+                : 'Özel kolon · durumu değiştirmez · ' + d.cards + ' kart';
+
+            row.innerHTML =
+                '<span class="kanban-panel-grip" title="Sürükleyerek sırala" aria-hidden="true"><i class="fa fa-grip-vertical"></i></span>' +
+                '<div class="kanban-panel-name">' +
+                    '<div class="kanban-panel-nameline">' +
+                        '<input type="text" class="js-p-name" maxlength="64" aria-label="Kolon adı" />' +
+                        '<span class="kanban-panel-counter js-p-counter"></span>' +
+                    '</div>' +
+                    '<div class="kanban-panel-meta js-p-meta"></div>' +
+                    '<div class="kanban-panel-warn js-p-warn d-none"></div>' +
+                '</div>' +
+                '<div class="kanban-panel-color">' + colorSwatches(d.colorClass) + '</div>' +
+                '<div class="kanban-panel-wip">' +
+                    '<input type="number" min="0" max="999" class="js-p-wip" placeholder="—" aria-label="WIP limiti" />' +
+                '</div>' +
+                '<div class="kanban-panel-act">' +
+                    (d.isSystem
+                        ? '<span class="kanban-panel-lock" title="Sistem kolonu görev durumuna bağlıdır"><i class="fa fa-lock me-1"></i>Kilit</span>'
+                        : '<button type="button" class="kanban-panel-del js-p-del">Sil</button>') +
+                '</div>';
+
+            // Ad/limit değerleri textContent-güvenli yollarla atanır (XSS).
+            var nameInput = row.querySelector('.js-p-name');
+            var counter = row.querySelector('.js-p-counter');
+            var wipInput = row.querySelector('.js-p-wip');
+            nameInput.value = d.name;
+            wipInput.value = d.wipLimit == null ? '' : d.wipLimit;
+            row.querySelector('.js-p-meta').textContent = meta;
+
+            function syncCounter() { counter.textContent = nameInput.value.length + '/64'; }
+            function syncWarn() {
+                var warn = row.querySelector('.js-p-warn');
+                if (d.wipLimit && d.cards > d.wipLimit) {
+                    warn.classList.remove('d-none');
+                    warn.textContent = 'Şu anda bu kolonda ' + d.cards + ' kart var — limiti ' + d.wipLimit +
+                        ' yaparsan kolon başlığı uyarı rozetiyle görünür, kart eklemek engellenmez.';
+                } else {
+                    warn.classList.add('d-none');
+                }
+            }
+            syncCounter();
+            syncWarn();
+
+            nameInput.addEventListener('input', function () {
+                d.name = nameInput.value;
+                syncCounter();
+                onChange();
+            });
+            wipInput.addEventListener('input', function () {
+                var raw = wipInput.value.trim();
+                var v = raw === '' ? null : parseInt(raw, 10);
+                d.wipLimit = (v === null || isNaN(v) || v <= 0) ? null : v;
+                syncWarn();
+                onChange();
+            });
+            row.querySelectorAll('.js-col-color').forEach(function (btn) {
+                btn.addEventListener('click', function () {
+                    d.colorClass = btn.getAttribute('data-color');
+                    row.querySelectorAll('.js-col-color').forEach(function (b) {
+                        b.setAttribute('aria-pressed', String(b === btn));
+                    });
+                    onChange();
+                });
+            });
+            var del = row.querySelector('.js-p-del');
+            if (del) {
+                del.addEventListener('click', function () {
+                    var sel = '.kanban-column[data-column-id-custom="' + d.id + '"] .kanban-cards .kanban-card';
+                    var cards = document.querySelectorAll(boardSel + ' ' + sel);
+                    Swal.fire({
+                        title: '"' + d.name + '" kolonu silinsin mi?',
+                        html: buildDeletePreview(cards),
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonText: 'Kolonu sil',
+                        cancelButtonText: 'Vazgeç',
+                        confirmButtonColor: '#dc3545'
+                    }).then(function (r) {
+                        if (!r.isConfirmed) { return; }
+                        colSvc.delete(d.id).then(function () {
+                            abp.notify.info('Kolon silindi.');
+                            load();
+                            openColumnPanelSoon();
+                        });
+                    });
+                });
+            }
+            return row;
+        }
+
         // Board'u baştan kurar. Sıra: DB Order (sistem ve özel kolonlar aynı listede).
         function renderColumns(cols) {
             var board = document.querySelector(boardSel);
@@ -428,6 +667,11 @@
                     '<span class="kanban-add-col-sub">Kolon eklemek ya da düzenlemek için yukarıdan bir proje seç.</span>';
                 board.appendChild(note);
             }
+
+            // "Kolonları düzenle" düğmesi partial'da duruyor (sunucuda Projects.Edit
+            // ile kapılı); burada yalnız proje seçiliyken görünür kılınır.
+            var toolbar = board.parentNode && board.parentNode.querySelector('.js-kanban-toolbar');
+            if (toolbar) { toolbar.classList.toggle('d-none', !(canEditColumns && effectiveCols())); }
         }
 
         // ── Yükle ──
@@ -739,6 +983,9 @@
                 startRename($(this).closest('.kanban-column')[0]);
             });
 
+            // "Kolonları düzenle" (3b paneli) — partial'daki düğme, board'un kardeşi.
+            $doc.on('click', '.js-edit-cols', function () { openColumnPanel(); });
+
             $doc.on('click', boardSel + ' .js-col-color', function () {
                 saveColumn($(this).closest('.kanban-column'), { colorClass: $(this).data('color') });
             });
@@ -761,7 +1008,11 @@
             load: load,
             reload: load,
             setProject: setProject,
-            getProjectId: function () { return projectId; }
+            getProjectId: function () { return projectId; },
+            // 3b paneli: partial'daki düğme bunu çağırıyor; sayfalar kendi
+            // araç çubuklarından da açabilsin diye dışarı veriliyor.
+            openColumnPanel: openColumnPanel,
+            closeColumnPanel: closeColumnPanel
         };
     }
 

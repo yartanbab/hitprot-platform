@@ -1,6 +1,9 @@
 @using Microsoft.AspNetCore.Mvc.Localization
+@using Microsoft.AspNetCore.Authorization
 @using Apya.Platform.Localization
+@using Apya.Platform.Permissions
 @inject IHtmlLocalizer<PlatformResource> L
+@inject IAuthorizationService AuthorizationService
 @*
     Merkezi Kanban board kabı (tek kaynak).
     Projeler / Görevler (/Board) / Tasks sayfaları bu partial'ı kullanır.
@@ -15,6 +18,17 @@
     Türkçe kopya TUTULMAZ (adlandırma tek kaynaktan gelsin).
     Tasarım: /css/kanban.css
 *@
+@* "Kolonları düzenle" (3b paneli) — sunucuda Projects.Edit ile kapılı, JS proje
+   seçiliyken görünür kılar (özel kolonlar projeye ait). Üç sayfa da bu partial'ı
+   kullandığı için düğme her panoda AYNI yerde çıkar; sayfa araç çubukları değişmez. *@
+@if (await AuthorizationService.IsGrantedAsync(PlatformPermissions.Projects.Edit))
+{
+    <div class="kanban-toolbar js-kanban-toolbar d-none">
+        <button type="button" class="kanban-edit-cols js-edit-cols">
+            <i class="fa fa-sliders me-1" aria-hidden="true"></i>Kolonları düzenle
+        </button>
+    </div>
+}
 <div class="kanban-board mt-2"
      data-col-1="@L["Tasks:Status:Todo"]"
      data-col-2="@L["Tasks:Status:InProgress"]"
