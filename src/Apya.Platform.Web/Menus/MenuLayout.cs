@@ -96,14 +96,18 @@ public class MenuLayout
     /// ham uzunluk sınırından çok daha büyük bir JSON üretebiliyor. Kırpma
     /// burada yapılmazsa ayar sorunsuz KAYDEDİLİR, sonraki okumada Parse
     /// uzunluk kontrolünde reddeder ve kullanıcının düzeni sessizce kaybolur.
-    /// En ucuz kırpma sondaki gruplar: 1. seviye sıralama (sections /
-    /// settingsOrder) korunur, en içteki gruplar koddaki yerine döner.
     ///
-    /// Sıra ÖNEMLİ: önce grup içi sıralar, sonra gizlemeler, en son kullanıcının
-    /// kendi kurduğu kısayol/kategoriler. Sonuncular kullanıcının EMEK verdiği
-    /// veri (ad + ikon + hedef yazdı); bir sıralama tercihinden daha değerli,
-    /// o yüzden en sona bırakılır. Yine de sınıra dahiller: sonsuz döngüye
-    /// düşmek yerine bir şeyi feda etmek, ayarın tümüyle reddedilmesinden iyi.
+    /// Sıra ÖNEMLİ — önce YERLEŞİM verisi, en son kullanıcının EMEK verdiği veri:
+    /// grup içi sıralar → gizlemeler → Ayarlar sırası → kenar çubuğu sırası →
+    /// kısayollar → kategoriler. İlk dördü kaybolunca öğe koddaki yerine döner
+    /// (tercih kaybı); son ikisi kaybolunca kullanıcının yazdığı ad/ikon/hedef
+    /// yok olur, o yüzden en sona bırakılır.
+    ///
+    /// 🔴 Sections ve SettingsOrder de zincire DAHİL olmak zorunda. Yalnız
+    /// Items/Hidden/Links/Groups kırpılsaydı, bu ikisi tek başına sınırı aşan
+    /// bir yük taşıdığında (60 ad × 128 karakter × 2 liste ≈ 15,7 KB > 8 KB)
+    /// zincir tükenir ve metot sınır ÜSTÜ bir değer döndürürdü — yani tam da
+    /// engellemeye çalıştığı sessiz kayıp gerçekleşirdi.
     /// </summary>
     public string Serialize()
     {
@@ -115,6 +119,8 @@ public class MenuLayout
         {
             () => Drop(normalized.Items),
             () => Drop(normalized.Hidden),
+            () => Drop(normalized.SettingsOrder),
+            () => Drop(normalized.Sections),
             () => Drop(normalized.Links),
             () => Drop(normalized.Groups)
         };
@@ -183,9 +189,7 @@ public class MenuLayout
             Groups = CleanCustom(source.Groups, PlatformSettingDefaults.ShellMenuLayoutCustomGroupMax,
                                  g => new MenuLayoutGroup { Name = g.Name, Title = g.Title, Icon = g.Icon }),
             Links = CleanCustom(source.Links, PlatformSettingDefaults.ShellMenuLayoutCustomLinkMax,
-                                l => new MenuLayoutLink { Name = l.Name, Title = l.Title, Icon = l.Icon, Url = l.Url })
-                    .Where(l => l.Url.Length > 0)
-                    .ToList(),
+                                l => new MenuLayoutLink { Name = l.Name, Title = l.Title, Icon = l.Icon, Url = l.Url }),
             // Gizleme yerleşimden BAĞIMSIZ: bir ad hem bir listede hem burada
             // olabilir, o yüzden `seen` tekilliğine katılmaz.
             Hidden = CleanList(source.Hidden, new HashSet<string>(StringComparer.Ordinal))
@@ -206,21 +210,34 @@ public class MenuLayout
 
         foreach (var raw in source)
         {
-            if (raw == null || cleaned.Count >= max) { break; }
+            // Tavana ULAŞINCA dur, ama tek bir null girdi listenin KALANINI
+            // düşürmesin — `break` olsaydı bozuk bir yükteki bir boşluk,
+            // arkasındaki bütün geçerli kayıtları sessizce siler.
+            if (cleaned.Count >= max) { break; }
+            if (raw == null) { continue; }
 
             var entry = copy(raw) as T ?? new T();
             entry.Name = CleanCustomName(raw.Name) ?? string.Empty;
-            if (entry.Name.Length == 0 || !seen.Add(entry.Name)) { continue; }
+            if (entry.Name.Length == 0) { continue; }
 
             entry.Title = Clip(raw.Title, PlatformSettingDefaults.ShellMenuLayoutTitleMax);
             if (entry.Title.Length == 0) { continue; }
 
             entry.Icon = MenuIcons.Normalize(raw.Icon);
 
+            // Geçersiz hedef girdiyi BURADA eler. Filtre dışarıda (ToList'ten
+            // sonra) olsaydı geçersiz kısayollar önce tavandan yer yer, sonra
+            // ayıklanırdı — baştaki birkaç bozuk kayıt sondaki geçerlilerin
+            // hiç değerlendirilmemesine yol açardı.
             if (entry is MenuLayoutLink link)
             {
                 link.Url = NormalizePath((raw as MenuLayoutLink)?.Url);
+                if (link.Url.Length == 0) { continue; }
             }
+
+            // Tekillik en sona: elenen bir girdi adı REZERVE ETMESİN, yoksa
+            // aynı adı taşıyan geçerli bir sonraki kayıt da düşerdi.
+            if (!seen.Add(entry.Name)) { continue; }
 
             cleaned.Add(entry);
         }
@@ -277,6 +294,15 @@ public class MenuLayout
         // yazılandan bambaşka bir sayfaya giderdi. Açık yönlendirme değil ama
         // sessizce yanlış hedef; kullanıcıya "geçersiz" demek doğrusu.
         if (Uri.TryCreate(url, UriKind.Absolute, out _)) { return string.Empty; }
+
+        // 🔴 "/" ile başlamak YETMEZ. Tarayıcı özel şemalarda ters bölüyü eğik
+        // çizgiye normalize ediyor: `/\evil.example` üç kontrolden de geçer
+        // (mutlak URI değil · "/" ile başlar · "//" ile başlamaz) ama tarayıcıda
+        // `//evil.example` olarak çözülür ve BAŞKA BİR ORIGIN'e gider. Aynı
+        // şekilde araya sıkışan sekme/satır sonu URL'den atılır: "/\t/evil" de
+        // protokol-göreli hâle gelir. Trim yalnız uçları aldığı için ikisini de
+        // burada elemek gerekiyor.
+        if (url.Any(c => c == '\\' || char.IsControl(c))) { return string.Empty; }
 
         if (!url.StartsWith('/') || url.StartsWith("//"))
         {

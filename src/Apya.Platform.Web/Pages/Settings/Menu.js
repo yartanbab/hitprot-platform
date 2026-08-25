@@ -194,6 +194,7 @@ $(function () {
     // =========================================================================
     // 4) Özel kategori / kısayol — ekle, düzenle, sil
     // =========================================================================
+    var toolbar = form.querySelector('.apya-navedit-toolbar');
     var formBox = document.getElementById('ApyaNavForm');
     var fieldTitle = document.getElementById('ApyaNavFormTitle');
     var fieldIcon = document.getElementById('ApyaNavFormIcon');
@@ -266,6 +267,21 @@ $(function () {
         return item;
     }
 
+    function limitOf(kind) {
+        var raw = toolbar && toolbar.getAttribute('data-nav-max-' + kind);
+        var max = parseInt(raw, 10);
+        return isNaN(max) ? Infinity : max;
+    }
+
+    function limitMessage(kind) {
+        return (toolbar && toolbar.getAttribute('data-nav-limit-' + kind)) || '';
+    }
+
+    // Gizlenenler bölmesindekiler de sayılır: onlar da yüke giriyor.
+    function atLimit(kind) {
+        return form.querySelectorAll('[data-nav-custom="' + kind + '"]').length >= limitOf(kind);
+    }
+
     function saveForm() {
         var title = fieldTitle.value.trim();
         var icon = fieldIcon.value;
@@ -285,6 +301,13 @@ $(function () {
         if (editing) {
             applyRow(editing, title, icon, url);
         } else {
+            // Tavan SUNUCUNUN sınırı (MenuLayout.Normalize). Burada durdurmazsak
+            // 11. kategori kaydedilirken sessizce kırpılır: kullanıcı ad+ikon+hedef
+            // yazar, "kaydedildi" görür ve kaybını ancak menüde fark eder.
+            if (atLimit(editKind)) {
+                errorBox.textContent = limitMessage(editKind);
+                return;
+            }
             var item = createRow(editKind, title, icon, url);
             appendTo(sidebarRoot, item);
             bindAllSortables();   // yeni kategori de bırakma hedefi olsun

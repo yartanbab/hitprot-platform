@@ -2,6 +2,7 @@
 @model Apya.Platform.Web.Pages.Settings.MenuModel
 @inject Microsoft.Extensions.Localization.IStringLocalizer<Apya.Platform.Localization.PlatformResource> L
 @using Apya.Platform.Web.Menus
+@using Apya.Platform.Settings
 @{
     ViewBag.Title = L["MenuLayout:Title"].Value;
 }
@@ -26,7 +27,12 @@
             data-nav-custom="@(node.IsCustom ? (node.IsGroup ? "group" : "link") : "")"
             data-nav-title="@node.Title"
             data-nav-icon="@node.Icon"
-            data-nav-url="@node.Url">
+            data-nav-url="@node.Url"
+            @* Gizlenenler bölmesindeki KÖK satırlar nereden geldiklerini taşır;
+               olmadan "geri getir" hepsini kenar çubuğunun köküne bırakırdı.
+               Diğer satırlarda boş kalır — Menu.js'teki listByKey boş anahtarı
+               zaten null sayıyor, ayrıca koşullu basmaya gerek yok. *@
+            data-nav-from="@node.From">
             <div class="apya-navedit-row">
                 @if (node.IsLocked)
                 {
@@ -118,7 +124,14 @@
         @* Tarayıcı DOM'dan kurar; sunucuda MenuLayout.Parse normalize eder. *@
         <input type="hidden" asp-for="LayoutJson" id="ApyaMenuLayoutJson" />
 
-        <div class="apya-navedit-toolbar">
+        @* Adet tavanları SUNUCUNUN sınırlarıdır (MenuLayout.Normalize). Ekrana
+           taşınmasalardı 11. kategori sessizce kırpılır, kullanıcı ad+ikon+hedef
+           yazıp "kaydedildi" gördükten sonra kaybını ancak menüde fark ederdi. *@
+        <div class="apya-navedit-toolbar"
+             data-nav-max-group="@PlatformSettingDefaults.ShellMenuLayoutCustomGroupMax"
+             data-nav-max-link="@PlatformSettingDefaults.ShellMenuLayoutCustomLinkMax"
+             data-nav-limit-group="@L["MenuLayout:LimitGroup", PlatformSettingDefaults.ShellMenuLayoutCustomGroupMax]"
+             data-nav-limit-link="@L["MenuLayout:LimitLink", PlatformSettingDefaults.ShellMenuLayoutCustomLinkMax]">
             <button type="button" class="btn btn-outline-primary btn-sm" data-nav-new="group">
                 <i class="fa fa-folder-plus me-1" aria-hidden="true"></i>@L["MenuLayout:NewGroup"]
             </button>
@@ -136,9 +149,12 @@
 
                 <label class="visually-hidden" for="ApyaNavFormIcon">@L["MenuLayout:FormIcon"]</label>
                 <select id="ApyaNavFormIcon" class="form-select form-select-sm">
+                    @* Etiket ÇEVİRİLİR: sınıf adının İngilizce parçasını basmak
+                       ("shield-halved") Türkçe arayüzde anlaşılmaz bir seçenek
+                       listesi bırakıyordu. Anahtar ikon adından türetiliyor. *@
                     @foreach (var icon in Model.IconChoices)
                     {
-                        <option value="@icon">@icon.Replace("fa fa-", "")</option>
+                        <option value="@icon">@L["MenuLayout:Icon." + icon.Replace("fa fa-", "")]</option>
                     }
                 </select>
                 <i class="apya-navedit-icon" id="ApyaNavFormPreview" aria-hidden="true"></i>
@@ -168,7 +184,7 @@
                     RenderNode(new Apya.Platform.Web.Pages.Settings.MenuModel.NavNode(
                         "__NAME__", "__TITLE__", MenuIcons.Default,
                         IsGroup: true, IsLocked: false, IsAdminLink: false,
-                        IsCustom: true, Url: string.Empty, templateChildren));
+                        IsCustom: true, Url: string.Empty, From: string.Empty, templateChildren));
                 }
             </ul>
         </template>
@@ -178,7 +194,7 @@
                     RenderNode(new Apya.Platform.Web.Pages.Settings.MenuModel.NavNode(
                         "__NAME__", "__TITLE__", MenuIcons.Default,
                         IsGroup: false, IsLocked: false, IsAdminLink: false,
-                        IsCustom: true, Url: "__URL__", templateChildren));
+                        IsCustom: true, Url: "__URL__", From: string.Empty, templateChildren));
                 }
             </ul>
         </template>
