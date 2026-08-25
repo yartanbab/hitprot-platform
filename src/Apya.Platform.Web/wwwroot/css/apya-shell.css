@@ -3687,6 +3687,92 @@ i.apya-priority-dot {
 }
 
 /* ============================================================================
+   AYARLAR HUB'I — SEKMELER (/Settings)
+   ----------------------------------------------------------------------------
+   Sayfa eskiden tek kartta 6 fieldset'lik kesintisiz dikey şeritti (~1400px):
+   Kaydet ortada kalıyor, altındaki mobil gezinme forma hiç dahil olmuyordu.
+   Sekmeler hem konu grubunu görünür kılar hem Kaydet'i daima aktif panelin
+   altına alır.
+
+   YAPI ŞARTI (Index.cshtml): <form> .tab-content'i SARAR. Bootstrap gizlemeyi
+   `.tab-content > .tab-pane` DOĞRUDAN ÇOCUK seçicisiyle yapar; form araya
+   girerse hiçbir panel gizlenmez.
+   ============================================================================ */
+.apya-settings-tabs .nav-tabs {
+    border-bottom-color: var(--apya-border-subtle);
+}
+
+/* Sekme etiketleri — rengi AÇIKÇA token'a bağla.
+   LeptonX `.card-body`ye sabit #686B6E basıyor ve koyu temada DÖNDÜRMÜYOR;
+   nav-tabs bu rengi miras alınca iki şey birden bozuluyordu: kontrast 3,43:1'e
+   düşüyor (AA eşiği 4,5) ve aktif/pasif ayrımı tamamen kayboluyor — beş sekme de
+   aynı renkte basılıyordu. Ölçüm (#141416 zemin): pasif 7,18:1, aktif 16,74:1.
+   Aktif kural .active ile yazıldı ki tema kendi `.nav-link.active` rengini
+   geri getirmesin. */
+.apya-settings-tabs .nav-tabs .nav-link {
+    color: var(--apya-text-secondary);
+}
+.apya-settings-tabs .nav-tabs .nav-link:hover,
+.apya-settings-tabs .nav-tabs .nav-link:focus-visible {
+    color: var(--apya-text-primary);
+}
+/* Aktif göstergesi — tema alt çizgiyi rgba(104,107,110,0.08) ile basıyor, yani
+   pratikte görünmüyor (2,4px ama %8 saydam). Rengi accent'e bağla ki aktif sekme
+   metin renginin yanında ikinci bir işaretle de belli olsun. Genişliğe
+   dokunulmuyor; temanın 2,4px'i korunuyor. */
+.apya-settings-tabs .nav-tabs .nav-link.active {
+    color: var(--apya-text-primary);
+    border-bottom-color: var(--apya-accent-500);
+}
+
+/* Rozetler — ayarın KAPSAMINI ve KAYDETME MODELİNİ ayırt eder. Aynı görünen iki
+   kontrolden biri seçilir seçilmez localStorage'a yazıyor, diğeri Kaydet
+   bekliyordu; ekranda hiçbir işaret yoktu. */
+.apya-settings-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    margin-inline-start: var(--apya-space-2);
+    padding: 1px 8px;
+    border-radius: var(--apya-radius-full);
+    font-size: var(--apya-fs-xs);
+    font-weight: var(--apya-weight-medium);
+    line-height: 1.6;
+    vertical-align: middle;
+    white-space: nowrap;
+}
+/* Renkler token'a bağlı: her iki token da koyu temada yeniden tanımlı, rozet
+   otomatik döner (.card-body'nin sabit metin rengi bu span'i etkilemez). */
+.apya-settings-badge--instant {
+    background: var(--apya-brand-50);
+    color: var(--apya-brand-700);
+}
+.apya-settings-badge--tenant {
+    background: var(--apya-warning-50);
+    color: var(--apya-warning-700);
+}
+
+.apya-settings-save {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: var(--apya-space-4);
+    padding-top: var(--apya-space-3);
+    border-top: 1px solid var(--apya-border-subtle);
+}
+/* Kaydedilecek alanı OLMAYAN panelde (Mobil, Menü, Yönetim) düğme anlamsız —
+   gizlenir. Kural bilerek TERS yazıldı: :has() desteklenmeyen bir tarayıcıda
+   düğme GÖRÜNÜR kalır. Düz yazılsaydı (yalnız data-needs-save'de göster)
+   destek yokluğunda kaydetmek imkânsız hale gelirdi.
+
+   `.is-dirty` istisnası ŞART (Index.js): form TEK ve bütün panellerin alanlarını
+   birlikte POST ediyor. Görevler sekmesinde bir şey değiştirip Mobil sekmesine
+   geçen kullanıcının bekleyen değişikliği, düğme gizlendiği için kaydedilemez
+   hale geliyordu. */
+.apya-settings-tabs:not(.is-dirty):has(> .tab-content > .tab-pane.active:not([data-needs-save])) .apya-settings-save {
+    display: none;
+}
+
+/* ============================================================================
    KABUK — SOL MENÜ ZENGİNLEŞTİRMELERİ (apya-sidebar-shell.js)
    ----------------------------------------------------------------------------
    Temanın menü markup'ı korunur; buradaki kurallar JS'in eklediği düğümleri
