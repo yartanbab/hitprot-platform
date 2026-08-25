@@ -17,16 +17,16 @@ namespace Apya.Platform.Web.Pages.Settings;
 ///
 /// İzin kapısı YOK: düzen kullanıcıya özeldir (Shell.Pins ile aynı ray) ve
 /// kimsenin göremediği bir ekranı açmaz — resolver her iki yüzeyi de izinle
-/// filtreler, buradan gelen menü ADI listesi yalnız SIRA/KONUM bilgisidir.
+/// filtreler, buradan gelen menü ADI listesi yalnız YER bilgisidir.
 /// </summary>
 [Authorize]
 public class MenuModel : AbpPageModel
 {
-    /// <summary>Kenar çubuğu sütunu — 1. seviye öğeler ve alt ağaçları.</summary>
+    /// <summary>Kenar çubuğu sütunu.</summary>
     public List<NavNode> Sidebar { get; private set; } = new();
 
-    /// <summary>Ayarlar sayfası sütunu.</summary>
-    public List<NavSettingsLink> SettingsLinks { get; private set; } = new();
+    /// <summary>Ayarlar sayfası sütunu — grup girdileri çocuklarıyla gelir.</summary>
+    public List<NavNode> SettingsColumn { get; private set; } = new();
 
     /// <summary>Kullanıcı düzeni hiç değiştirmediyse "Varsayılana dön" gösterilmez.</summary>
     public bool HasCustomLayout { get; private set; }
@@ -35,14 +35,19 @@ public class MenuModel : AbpPageModel
     [BindProperty]
     public string LayoutJson { get; set; } = string.Empty;
 
-    /// <summary>Düzenleme ekranındaki bir satır.</summary>
+    /// <summary>Düzenleme ekranındaki bir satır. İki sütun da aynı tipi kullanır.</summary>
     public record NavNode(
         string Name,
         string Title,
         string Icon,
         bool IsGroup,
         bool IsLocked,
+        bool IsAdminLink,
         List<NavNode> Children);
+
+    /// <summary>Katalogdan gelen adlar — kenar çubuğu sütununda da işaretlenir.</summary>
+    private static readonly HashSet<string> AdminLinkNames =
+        PlatformAdminLinks.All.Select(x => x.Name).ToHashSet(System.StringComparer.Ordinal);
 
     private readonly PlatformNavigationResolver _navigation;
     private readonly ISettingManager _settingManager;
@@ -57,52 +62,54 @@ public class MenuModel : AbpPageModel
     {
         var resolution = await _navigation.ResolveAsync();
 
-        Sidebar = resolution.Sidebar.Select(ToNode).ToList();
-        SettingsLinks = resolution.SettingsLinks;
+        Sidebar = resolution.Sidebar.Select(FromMenuItem).ToList();
+        SettingsColumn = resolution.SettingsLinks.Select(FromSettingsEntry).ToList();
         HasCustomLayout = !resolution.Layout.IsEmpty;
 
-        AddMissingHomeGroups();
+        RestoreEmptyGroups(resolution.EmptyGroups);
     }
 
-    private static NavNode ToNode(ApplicationMenuItem item)
+    private static NavNode FromMenuItem(ApplicationMenuItem item)
     {
         return new NavNode(
             item.Name,
             item.DisplayName,
             item.Icon ?? string.Empty,
-            IsGroup: item.Items.Count > 0,
+            IsGroup: string.IsNullOrEmpty(item.Url),
             // Ayarlar kapısının kendisi taşınamaz/sıralanamaz — taşınırsa
             // kullanıcının düzeni geri alacağı ekran kaybolur.
             IsLocked: item.Name == PlatformNavigationResolver.SettingsItemName,
-            item.Items.Select(ToNode).ToList());
+            IsAdminLink: AdminLinkNames.Contains(item.Name),
+            item.Items.Select(FromMenuItem).ToList());
+    }
+
+    private static NavNode FromSettingsEntry(NavSettingsEntry entry)
+    {
+        return new NavNode(
+            entry.Name, entry.Title, entry.Icon,
+            entry.IsGroup, IsLocked: false, entry.IsAdminLink,
+            entry.Children.Select(FromSettingsEntry).ToList());
     }
 
     /// <summary>
-    /// Ayarlar sütunundaki bir öğenin geri döneceği grup kenar çubuğunda
-    /// görünmüyorsa (henüz hiç öğe taşınmadığı için doğmamış "Yönetim" grubu ya
-    /// da tüm çocukları taşındığı için düşmüş bir bölüm) BOŞ olarak eklenir.
-    /// Yoksa öğenin hedefi ekranda hiç olmaz ve geri alınamaz.
+    /// İçi boşaldığı için iki yüzeyden de ayıklanan grupları düzenleme ekranına
+    /// geri koyar. Serbest yerleşimde boş bir grup geçerli bir BIRAKMA HEDEFİDİR;
+    /// ekranda görünmezse kullanıcının oraya öğe döndürme yolu kapanır. En
+    /// bilinen hâli, henüz içine bir şey taşınmamış "Yönetim" grubu.
     /// </summary>
-    private void AddMissingHomeGroups()
+    private void RestoreEmptyGroups(List<NavEmptyGroup> emptyGroups)
     {
-        var present = new HashSet<string>();
-        void Collect(IEnumerable<NavNode> nodes)
+        foreach (var group in emptyGroups)
         {
-            foreach (var node in nodes)
-            {
-                present.Add(node.Name);
-                Collect(node.Children);
-            }
-        }
-        Collect(Sidebar);
-
-        foreach (var link in SettingsLinks)
-        {
-            if (link.HomeGroupName.Length == 0 || !present.Add(link.HomeGroupName)) { continue; }
-
             var node = new NavNode(
-                link.HomeGroupName, link.HomeGroupTitle, link.HomeGroupIcon,
-                IsGroup: true, IsLocked: false, new List<NavNode>());
+                group.Name, group.Title, group.Icon,
+                IsGroup: true, IsLocked: false, IsAdminLink: false, new List<NavNode>());
+
+            if (group.InSettings)
+            {
+                SettingsColumn.Add(node);
+                continue;
+            }
 
             // Kilitli "Ayarlar" satırının ÜSTÜNE: o satır "her zaman dipte"
             // diyor, altında bir grup belirirse ekran kendi kuralını yalanlar.
@@ -114,9 +121,10 @@ public class MenuModel : AbpPageModel
     public async Task<IActionResult> OnPostAsync()
     {
         // Doğrulama MenuLayout.Parse'ta: bozuk/şişirilmiş JSON boş düzene düşer.
-        // Ayrıca listedeki adlar SUNUCUDA kurulan ağaçla eşleştirilir — tanınmayan
-        // ad yok sayılır, "toSidebar"daki hedefe izin yoksa yine basılmaz.
-        // Yani buradan yetki yükseltilemez, yalnız sıra/konum bildirilir.
+        // Ayrıca adlar SUNUCUDA kurulan havuzla eşleştirilir — tanınmayan ad,
+        // yaprağın altına yerleştirme, döngü ve fazla derinlik yok sayılır ve
+        // ilgili düğüm koddaki yerine döner. Yani buradan yetki yükseltilemez;
+        // gelen yalnızca YER bilgisidir, her hedef ayrıca izinden geçer.
         var layout = MenuLayout.Parse(LayoutJson);
 
         await _settingManager.SetForCurrentUserAsync(

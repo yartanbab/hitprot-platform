@@ -199,22 +199,29 @@
             <ul class="apya-settings-links">
                 @foreach (var link in Model.AdminLinks)
                 {
-                    <li>
-                        <a href="@link.Url" class="apya-settings-link">
-                            <span class="kpi-icon-box kpi-icon-box--sm kpi-icon-box--neutral" aria-hidden="true">
-                                <i class="@link.Icon"></i>
-                            </span>
-                            <span class="apya-settings-link-text">
-                                <span class="apya-settings-link-title">@link.Title</span>
-                                @* Kenar çubuğundan inen öğelerin açıklaması yok — boş satır basmıyoruz. *@
-                                @if (!string.IsNullOrEmpty(link.Description))
+                    @* Kullanıcı bir kategoriyi bütün hâlinde indirebiliyor → liste
+                       artık düz değil: grup girdisi başlık + kendi alt listesi olur. *@
+                    if (link.IsGroup)
+                    {
+                        <li class="apya-settings-group">
+                            <div class="apya-settings-group-head">
+                                <span class="kpi-icon-box kpi-icon-box--sm kpi-icon-box--neutral" aria-hidden="true">
+                                    <i class="@link.Icon"></i>
+                                </span>
+                                <span class="apya-settings-group-title">@link.Title</span>
+                            </div>
+                            <ul class="apya-settings-links apya-settings-links--nested">
+                                @foreach (var child in link.Children)
                                 {
-                                    <span class="apya-settings-link-desc">@link.Description</span>
+                                    <partial name="_SettingsAdminLink" model="child" />
                                 }
-                            </span>
-                            <i class="fa fa-chevron-right apya-settings-link-chevron" aria-hidden="true"></i>
-                        </a>
-                    </li>
+                            </ul>
+                        </li>
+                    }
+                    else
+                    {
+                        <partial name="_SettingsAdminLink" model="link" />
+                    }
                 }
             </ul>
         </abp-card-body>

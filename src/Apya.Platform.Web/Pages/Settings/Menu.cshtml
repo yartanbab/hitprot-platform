@@ -6,48 +6,53 @@
 }
 
 @*
-    İki sütun aynı satır markup'ını kullanır: taşınan <li> DOM'da olduğu gibi
-    öbür sütuna geçer, düğme cerrahisi gerekmez. Hangi ok görüneceğini sütunun
+    İki sütun AYNI ağaç markup'ını kullanır: taşınan <li> DOM'da olduğu gibi öbür
+    sütuna geçer, düğme cerrahisi gerekmez. Hangi ok görüneceğini sütunun
     [data-nav-side] değeri CSS'te belirler (apya-shell.css §25).
 
-    Taşıma yalnız YAPRAKLARDA; gruplar sıralanır, taşınmaz.
+    Gruplar da taşınabilir (kategoriyi bütün hâlinde indirme) ve her madde her
+    gruba sürüklenebilir; tek kısıt grubu grubun İÇİNE bırakmamak — LeptonX'in
+    bastığı derinlik üç seviye.
 *@
 @functions {
-    void RenderRow(string title, string icon, bool isGroup, bool isLocked)
+    void RenderNode(Apya.Platform.Web.Pages.Settings.MenuModel.NavNode node)
     {
-        <div class="apya-navedit-row">
-            @if (isLocked)
-            {
-                <span class="apya-navedit-handle apya-navedit-handle--locked" aria-hidden="true">
-                    <i class="fa fa-lock"></i>
-                </span>
-            }
-            else
-            {
-                <span class="apya-navedit-handle" title="@L["MenuLayout:Drag"]" aria-hidden="true">
-                    <i class="fa fa-grip-vertical"></i>
-                </span>
-            }
-            <i class="apya-navedit-icon @icon" aria-hidden="true"></i>
-            <span class="apya-navedit-title">@title</span>
+        <li class="apya-navedit-item @(node.IsGroup ? "apya-navedit-item--group" : "")"
+            data-nav-node="@node.Name"
+            data-nav-kind="@(node.IsGroup ? "group" : "leaf")"
+            data-nav-locked="@(node.IsLocked ? "true" : "false")"
+            data-nav-admin="@(node.IsAdminLink ? "true" : "false")">
+            <div class="apya-navedit-row">
+                @if (node.IsLocked)
+                {
+                    <span class="apya-navedit-handle apya-navedit-handle--locked" aria-hidden="true">
+                        <i class="fa fa-lock"></i>
+                    </span>
+                }
+                else
+                {
+                    <span class="apya-navedit-handle" title="@L["MenuLayout:Drag"]" aria-hidden="true">
+                        <i class="fa fa-grip-vertical"></i>
+                    </span>
+                }
+                <i class="apya-navedit-icon @node.Icon" aria-hidden="true"></i>
+                <span class="apya-navedit-title">@node.Title</span>
 
-            @if (isLocked)
-            {
-                <span class="apya-navedit-locked-hint">@L["MenuLayout:LockedHint"]</span>
-            }
-            else
-            {
-                <span class="apya-navedit-actions">
-                    <button type="button" class="apya-navedit-btn" data-nav-up
-                            aria-label="@L["MenuLayout:MoveUp"]" title="@L["MenuLayout:MoveUp"]">
-                        <i class="fa fa-chevron-up" aria-hidden="true"></i>
-                    </button>
-                    <button type="button" class="apya-navedit-btn" data-nav-down
-                            aria-label="@L["MenuLayout:MoveDown"]" title="@L["MenuLayout:MoveDown"]">
-                        <i class="fa fa-chevron-down" aria-hidden="true"></i>
-                    </button>
-                    @if (!isGroup)
-                    {
+                @if (node.IsLocked)
+                {
+                    <span class="apya-navedit-locked-hint">@L["MenuLayout:LockedHint"]</span>
+                }
+                else
+                {
+                    <span class="apya-navedit-actions">
+                        <button type="button" class="apya-navedit-btn" data-nav-up
+                                aria-label="@L["MenuLayout:MoveUp"]" title="@L["MenuLayout:MoveUp"]">
+                            <i class="fa fa-chevron-up" aria-hidden="true"></i>
+                        </button>
+                        <button type="button" class="apya-navedit-btn" data-nav-down
+                                aria-label="@L["MenuLayout:MoveDown"]" title="@L["MenuLayout:MoveDown"]">
+                            <i class="fa fa-chevron-down" aria-hidden="true"></i>
+                        </button>
                         <button type="button" class="apya-navedit-btn apya-navedit-btn--move" data-nav-to-settings
                                 aria-label="@L["MenuLayout:MoveToSettings"]" title="@L["MenuLayout:MoveToSettings"]">
                             <i class="fa fa-arrow-right" aria-hidden="true"></i>
@@ -56,18 +61,9 @@
                                 aria-label="@L["MenuLayout:MoveToSidebar"]" title="@L["MenuLayout:MoveToSidebar"]">
                             <i class="fa fa-arrow-left" aria-hidden="true"></i>
                         </button>
-                    }
-                </span>
-            }
-        </div>
-    }
-
-    void RenderNode(Apya.Platform.Web.Pages.Settings.MenuModel.NavNode node)
-    {
-        <li class="apya-navedit-item @(node.IsGroup ? "apya-navedit-item--group" : "")"
-            data-nav-node="@node.Name"
-            data-nav-locked="@(node.IsLocked ? "true" : "false")">
-            @{ RenderRow(node.Title, node.Icon, node.IsGroup, node.IsLocked); }
+                    </span>
+                }
+            </div>
 
             @if (node.IsGroup)
             {
@@ -102,7 +98,7 @@
                     <abp-card-body>
                         <div class="form-text mb-3">@L["MenuLayout:SidebarHelp"]</div>
                         <div data-nav-side="sidebar">
-                            <ul class="apya-navedit-list apya-navedit-list--root" data-nav-root="true">
+                            <ul class="apya-navedit-list apya-navedit-list--root" data-nav-root="sidebar">
                                 @foreach (var node in Model.Sidebar)
                                 {
                                     RenderNode(node);
@@ -122,15 +118,10 @@
                     <abp-card-body>
                         <div class="form-text mb-3">@L["MenuLayout:SettingsHelp"]</div>
                         <div data-nav-side="settings">
-                            <ul class="apya-navedit-list apya-navedit-list--settings" data-nav-settings-list="true">
-                                @foreach (var link in Model.SettingsLinks)
+                            <ul class="apya-navedit-list apya-navedit-list--root" data-nav-root="settings">
+                                @foreach (var node in Model.SettingsColumn)
                                 {
-                                    <li class="apya-navedit-item"
-                                        data-nav-node="@link.Name"
-                                        data-nav-locked="false"
-                                        data-nav-home="@link.HomeGroupName">
-                                        @{ RenderRow(link.Title, link.Icon, isGroup: false, isLocked: false); }
-                                    </li>
+                                    RenderNode(node);
                                 }
                                 <li class="apya-navedit-empty">@L["MenuLayout:Empty"]</li>
                             </ul>

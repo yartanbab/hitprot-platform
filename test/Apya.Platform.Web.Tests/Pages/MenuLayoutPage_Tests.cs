@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using System.Threading.Tasks;
 using Apya.Platform.Settings;
@@ -9,12 +10,12 @@ using Xunit;
 namespace Apya.Platform.Pages;
 
 /// <summary>
-/// Menü düzeni — kenar çubuğu ile Ayarlar sayfası arasında öğe taşıma.
+/// Menü düzeni — kenar çubuğu ile Ayarlar sayfası arasında serbest yerleşim.
 ///
 /// Test host'u AddAlwaysAllowAuthorization kullanır: sayfalar TAM render olur,
-/// böylece hem düzenleme ekranının markup'ı hem de düzenin İKİ yüzeye birden
-/// uygulanması aynı istekte ölçülebilir. Düzen ayarı GLOBAL seviyeye yazılır —
-/// resolver ISettingProvider ile okuduğu için zincirden aynen döner.
+/// böylece düzenin İKİ yüzeye birden uygulanması aynı istekte ölçülebilir.
+/// Düzen GLOBAL seviyeye yazılır — resolver ISettingProvider ile okuduğu için
+/// zincirden aynen döner.
 /// </summary>
 public class MenuLayoutPage_Tests : PlatformWebTestBase
 {
@@ -23,6 +24,16 @@ public class MenuLayoutPage_Tests : PlatformWebTestBase
         var doc = new HtmlDocument();
         doc.LoadHtml(html);
         return doc;
+    }
+
+    /// <summary>
+    /// HtmlAgilityPack InnerText'i KAÇIŞLI döndürür ("İçerik" → "&#x130;&#xE7;erik").
+    /// Ham hâliyle karşılaştırmak, Türkçe metinde "içermemeli" iddialarını her
+    /// koşulda geçen sahte bir teste çevirir.
+    /// </summary>
+    private static string Text(HtmlNode node)
+    {
+        return HtmlEntity.DeEntitize(node.InnerText).Trim();
     }
 
     /// <summary>Ayarlar sayfasındaki yönetim listesinin bağlantı adresleri.</summary>
@@ -34,7 +45,7 @@ public class MenuLayoutPage_Tests : PlatformWebTestBase
         return list?.SelectNodes(".//a[@href]")
                    ?.Select(a => a.GetAttributeValue("href", ""))
                    .ToArray()
-               ?? System.Array.Empty<string>();
+               ?? Array.Empty<string>();
     }
 
     /// <summary>Kenar çubuğu menüsündeki bağlantı adresleri.</summary>
@@ -46,7 +57,7 @@ public class MenuLayoutPage_Tests : PlatformWebTestBase
         return menu?.SelectNodes(".//a[@href]")
                    ?.Select(a => a.GetAttributeValue("href", ""))
                    .ToArray()
-               ?? System.Array.Empty<string>();
+               ?? Array.Empty<string>();
     }
 
     private async Task SetLayoutAsync(string json)
@@ -72,11 +83,27 @@ public class MenuLayoutPage_Tests : PlatformWebTestBase
     {
         var html = await GetResponseAsStringAsync("/Settings/Menu");
 
-        html.ShouldContain("data-nav-root=\"true\"");
-        html.ShouldContain("data-nav-settings-list=\"true\"");
-        // Kenar çubuğu sütunundan bir yaprak ve Ayarlar sütunundan bir hedef.
+        html.ShouldContain("data-nav-root=\"sidebar\"");
+        html.ShouldContain("data-nav-root=\"settings\"");
         html.ShouldContain("data-nav-node=\"Apya.Work.Projects\"");
         html.ShouldContain("data-nav-node=\"Apya.Admin.Tenants\"");
+    }
+
+    /// <summary>
+    /// Grup satırı da taşınabilir olmalı: kullanıcı bir kategoriyi bütün hâlinde
+    /// indirebiliyor (2026-08-25 kararı).
+    /// </summary>
+    [Fact]
+    public async Task Grup_satirinda_da_tasima_dugmesi_var()
+    {
+        var html = await GetResponseAsStringAsync("/Settings/Menu");
+
+        var group = Parse(html).DocumentNode
+            .SelectSingleNode("//li[@data-nav-node='Apya.AiCenter']");
+
+        group.ShouldNotBeNull();
+        group.GetAttributeValue("data-nav-kind", "").ShouldBe("group");
+        group.SelectSingleNode(".//button[@data-nav-to-settings]").ShouldNotBeNull();
     }
 
     /// <summary>
@@ -97,7 +124,15 @@ public class MenuLayoutPage_Tests : PlatformWebTestBase
         row.SelectNodes(".//button[@data-nav-up]").ShouldBeNull();
     }
 
-    // ── Düzen uygulanmış ─────────────────────────────────────────────────────
+    [Fact]
+    public async Task Kilitli_Ayarlar_girisi_duzende_adi_gecse_bile_kenar_cubugunda_kalir()
+    {
+        await SetLayoutAsync("""{"settingsOrder":["Apya.Settings"]}""");
+
+        SidebarUrls(await GetResponseAsStringAsync("/Settings")).ShouldContain("/Settings");
+    }
+
+    // ── Sütunlar arası taşıma ────────────────────────────────────────────────
 
     /// <summary>
     /// Asıl sözleşme: bir hedef AYNI ANDA iki yüzeyde durmaz. Taşınan öğe
@@ -107,14 +142,15 @@ public class MenuLayoutPage_Tests : PlatformWebTestBase
     public async Task Tasinan_ogeler_iki_yuzey_arasinda_yer_degistirir()
     {
         await SetLayoutAsync("""
-            {"toSidebar":["Apya.Admin.Tenants"],"toSettings":["Apya.Platform.Consents"]}
+            {"settingsOrder":["Apya.Platform.Consents"],
+             "items":{"Apya.Management":["Apya.Admin.Tenants"]}}
             """);
 
         var html = await GetResponseAsStringAsync("/Settings");
         var settings = SettingsLinkUrls(html);
         var sidebar = SidebarUrls(html);
 
-        // Kiracı Yönetimi: Ayarlar → kenar çubuğu
+        // Kiracı Yönetimi: Ayarlar → kenar çubuğunun "Yönetim" grubu
         settings.ShouldNotContain("/TenantManagement/Tenants");
         sidebar.ShouldContain("/TenantManagement/Tenants");
 
@@ -122,6 +158,49 @@ public class MenuLayoutPage_Tests : PlatformWebTestBase
         sidebar.ShouldNotContain("/Admin/Consent");
         settings.ShouldContain("/Admin/Consent");
     }
+
+    /// <summary>
+    /// Bir kategori bütün hâlinde Ayarlar'a inebilir: başlık + altındaki
+    /// bağlantılar orada görünür, kenar çubuğunda hiçbiri kalmaz.
+    /// </summary>
+    [Fact]
+    public async Task Kategori_butun_halinde_Ayarlar_sayfasina_iner()
+    {
+        await SetLayoutAsync("""{"settingsOrder":["Apya.Content"]}""");
+
+        var html = await GetResponseAsStringAsync("/Settings");
+
+        SidebarUrls(html).ShouldNotContain("/Documents");
+        SettingsLinkUrls(html).ShouldContain("/Documents");
+        SettingsLinkUrls(html).ShouldContain("/DynamicAssets");
+
+        // Grup başlığıyla birlikte basılır — düz bağlantı yığını değil.
+        var group = Parse(html).DocumentNode
+            .SelectSingleNode("//li[contains(@class,'apya-settings-group')]");
+        group.ShouldNotBeNull();
+        Text(group.SelectSingleNode(".//span[contains(@class,'apya-settings-group-title')]"))
+            .ShouldBe("İçerik");
+    }
+
+    /// <summary>Bir madde başka bir bölüme taşınabilir (serbest yerleşim).</summary>
+    [Fact]
+    public async Task Madde_baska_bir_gruba_tasinabilir()
+    {
+        await SetLayoutAsync("""
+            {"items":{"Apya.Platform":["Apya.Finance.ExchangeRates","Apya.Platform.Notifications"]}}
+            """);
+
+        var sidebar = SidebarUrls(await GetResponseAsStringAsync("/Settings"));
+
+        // Kurlar hâlâ menüde ama artık Platform bölümünün ilk maddesi.
+        sidebar.ShouldContain("/ExchangeRates");
+        Array.IndexOf(sidebar, "/ExchangeRates")
+            .ShouldBeLessThan(Array.IndexOf(sidebar, "/Notifications"));
+        // Finans'ta kalan iki madde bozulmadı.
+        sidebar.ShouldContain("/CashAccounts");
+    }
+
+    // ── Sıralama ─────────────────────────────────────────────────────────────
 
     [Fact]
     public async Task Bolum_sirasi_kayitli_duzene_gore_uygulanir()
@@ -133,9 +212,9 @@ public class MenuLayoutPage_Tests : PlatformWebTestBase
         var sidebar = SidebarUrls(await GetResponseAsStringAsync("/Settings"));
 
         // Bölüm başlıklarının URL'si yok; ilk çocuklarının sırasıyla ölçülür.
-        var reports = System.Array.IndexOf(sidebar, "/Reports");
-        var cash = System.Array.IndexOf(sidebar, "/CashAccounts");
-        var dashboard = System.Array.IndexOf(sidebar, "/Dashboard");
+        var reports = Array.IndexOf(sidebar, "/Reports");
+        var cash = Array.IndexOf(sidebar, "/CashAccounts");
+        var dashboard = Array.IndexOf(sidebar, "/Dashboard");
 
         reports.ShouldBeGreaterThan(-1);
         cash.ShouldBeGreaterThan(-1);
@@ -153,27 +232,46 @@ public class MenuLayoutPage_Tests : PlatformWebTestBase
 
         var sidebar = SidebarUrls(await GetResponseAsStringAsync("/Settings"));
 
-        System.Array.IndexOf(sidebar, "/ExchangeRates")
-            .ShouldBeLessThan(System.Array.IndexOf(sidebar, "/CashAccounts"));
+        Array.IndexOf(sidebar, "/ExchangeRates")
+            .ShouldBeLessThan(Array.IndexOf(sidebar, "/CashAccounts"));
     }
 
+    // ── Dayanıklılık ─────────────────────────────────────────────────────────
+
     /// <summary>
-    /// Bir bölümün TÜM yaprakları Ayarlar'a inerse başlık kenar çubuğunda
-    /// kalmamalı — LeptonX içi boş bir bölüm başlığı basar.
+    /// Tüm çocukları taşınan bölüm kenar çubuğunda kalmamalı — LeptonX içi boş
+    /// bir bölüm başlığı basar.
     /// </summary>
     [Fact]
-    public async Task Tum_cocuklari_tasinan_bolum_kenar_cubugundan_dusr()
+    public async Task Tum_cocuklari_tasinan_bolum_kenar_cubugundan_duser()
     {
         await SetLayoutAsync("""
-            {"toSettings":["Apya.Content.Documents","Apya.Content.DynamicAssets"]}
+            {"settingsOrder":["Apya.Content.Documents","Apya.Content.DynamicAssets"]}
             """);
 
         var html = await GetResponseAsStringAsync("/Settings");
 
         SidebarUrls(html).ShouldNotContain("/Documents");
-        Parse(html).DocumentNode
-            .SelectSingleNode("//ul[contains(@class,'lpx-nav-menu')]")
-            .InnerText.ShouldNotContain("İçerik");
+        Text(Parse(html).DocumentNode.SelectSingleNode("//ul[contains(@class,'lpx-nav-menu')]"))
+            .ShouldNotContain("İçerik");
+    }
+
+    /// <summary>
+    /// Boşalan grup düzenleme ekranında GERİ GELİR: serbest yerleşimde boş bir
+    /// grup geçerli bir bırakma hedefidir, görünmezse geri dönüş yolu kapanır.
+    /// </summary>
+    [Fact]
+    public async Task Bosalan_grup_duzenleme_ekraninda_gorunmeye_devam_eder()
+    {
+        await SetLayoutAsync("""
+            {"settingsOrder":["Apya.Content.Documents","Apya.Content.DynamicAssets"]}
+            """);
+
+        var html = await GetResponseAsStringAsync("/Settings/Menu");
+
+        html.ShouldContain("data-nav-node=\"Apya.Content\"");
+        // Yönetim grubu da (hiç kullanılmasa bile) hedef olarak durur.
+        html.ShouldContain("data-nav-node=\"Apya.Management\"");
     }
 
     /// <summary>
@@ -189,25 +287,45 @@ public class MenuLayoutPage_Tests : PlatformWebTestBase
             .ShouldContain("/Dashboard");
     }
 
-    /// <summary>
-    /// Yetkisi olmayan bir hedef, düzen ayarında "kenar çubuğuna al" dense bile
-    /// basılmamalı. Düzen bir SIRA/KONUM bildirimidir, yetki kapısı değildir.
-    /// (Burada test host'u her izni verdiği için ters yön ölçülür: tanınmayan
-    /// ad sessizce yok sayılır, menü çökmez.)
-    /// </summary>
     [Fact]
     public async Task Taninmayan_ad_yok_sayilir()
     {
         await SetLayoutAsync("""
-            {"toSidebar":["Apya.Admin.YokBoyleBirSey"],
-             "toSettings":["Apya.Yok.Bu.Da"],
-             "sections":["Apya.Hayali"]}
+            {"sections":["Apya.Hayali"],
+             "settingsOrder":["Apya.Yok.Bu.Da"],
+             "items":{"Apya.YokBoyleGrup":["Apya.Dashboard"]}}
             """);
 
         var html = await GetResponseAsStringAsync("/Settings");
 
         SidebarUrls(html).ShouldContain("/Dashboard");
         SettingsLinkUrls(html).ShouldContain("/TenantManagement/Tenants");
+    }
+
+    /// <summary>Yaprağın altına öğe yerleştirilemez — düğüm varsayılan yerinde kalır.</summary>
+    [Fact]
+    public async Task Yapragin_altina_yerlestirme_yok_sayilir()
+    {
+        await SetLayoutAsync("""{"items":{"Apya.Dashboard":["Apya.Reports.Overview"]}}""");
+
+        var sidebar = SidebarUrls(await GetResponseAsStringAsync("/Settings"));
+
+        sidebar.ShouldContain("/Dashboard");
+        sidebar.ShouldContain("/Reports");
+    }
+
+    /// <summary>Döngüsel yerleşim menüyü kilitlememeli; düğümler varsayılana döner.</summary>
+    [Fact]
+    public async Task Dongusel_duzen_menuyu_cokertmez()
+    {
+        await SetLayoutAsync("""
+            {"items":{"Apya.Work":["Apya.Content"],"Apya.Content":["Apya.Work"]}}
+            """);
+
+        var sidebar = SidebarUrls(await GetResponseAsStringAsync("/Settings"));
+
+        sidebar.ShouldContain("/Projects");
+        sidebar.ShouldContain("/Documents");
     }
 
     /// <summary>
@@ -217,7 +335,7 @@ public class MenuLayoutPage_Tests : PlatformWebTestBase
     [Fact]
     public async Task Dip_blok_ipucu_gercek_listeden_uretilir()
     {
-        await SetLayoutAsync("""{"toSidebar":["Apya.Admin.Tenants"]}""");
+        await SetLayoutAsync("""{"items":{"Apya.Management":["Apya.Admin.Tenants"]}}""");
 
         var html = await GetResponseAsStringAsync("/Settings");
         var block = Parse(html).DocumentNode.SelectSingleNode("//script[@id='ApyaShellNav']");

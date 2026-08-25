@@ -8,40 +8,36 @@ using Apya.Platform.Settings;
 namespace Apya.Platform.Web.Menus;
 
 /// <summary>
-/// Kullanıcının kenar çubuğu düzeni — <see cref="PlatformSettings.Shell.MenuLayout"/>
+/// Kullanıcının menü düzeni — <see cref="PlatformSettings.Shell.MenuLayout"/>
 /// ayarının çözülmüş hâli. Menü ADI saklanır, etiketi değil (Shell.Pins ile aynı
 /// gerekçe: dil ya da etiket değişince düzen kaybolmasın).
 ///
-/// Listede olmayan ad varsayılan yerinde kalır → sonradan koda eklenen bir menü
-/// öğesi, kaydedilmiş eski düzen yüzünden kaybolmaz veya yanlış yere düşmez.
+/// Model: her öğenin bir YERİ vardır — (sütun, üst öğe, sıra). Üç liste bunu
+/// eksiksiz anlatır:
+///   Sections      → kenar çubuğunun 1. seviyesi
+///   SettingsOrder → Ayarlar sayfasının 1. seviyesi
+///   Items[üst]    → o üst öğenin çocukları (sütun üstten miras alınır)
+///
+/// Adı hiçbir listede geçmeyen öğe KODDAKİ yerinde kalır: sonradan eklenen bir
+/// menü girişi eski bir düzen yüzünden kaybolmaz ya da yanlış sütuna düşmez.
 /// </summary>
 public class MenuLayout
 {
-    /// <summary>1. seviye öğelerin sırası (menü adı).</summary>
+    /// <summary>Kenar çubuğunun 1. seviyesindeki öğeler, sırasıyla.</summary>
     [JsonPropertyName("sections")]
     public List<string> Sections { get; set; } = new();
 
-    /// <summary>Bir grubun çocuklarının sırası — anahtar grubun menü adı.</summary>
-    [JsonPropertyName("items")]
-    public Dictionary<string, List<string>> Items { get; set; } = new();
-
-    /// <summary>Ayarlar sayfasından kenar çubuğuna ("Yönetim" grubuna) alınan bağlantılar.</summary>
-    [JsonPropertyName("toSidebar")]
-    public List<string> ToSidebar { get; set; } = new();
-
-    /// <summary>Kenar çubuğundan Ayarlar sayfasına indirilen yaprak öğeler.</summary>
-    [JsonPropertyName("toSettings")]
-    public List<string> ToSettings { get; set; } = new();
-
-    /// <summary>Ayarlar sayfasındaki listenin sırası.</summary>
+    /// <summary>Ayarlar sayfasının 1. seviyesindeki öğeler, sırasıyla.</summary>
     [JsonPropertyName("settingsOrder")]
     public List<string> SettingsOrder { get; set; } = new();
 
+    /// <summary>Bir grubun çocukları — anahtar grubun menü adı, değer sıralı çocuk adları.</summary>
+    [JsonPropertyName("items")]
+    public Dictionary<string, List<string>> Items { get; set; } = new();
+
     /// <summary>Kullanıcı hiç dokunmadıysa true — menü koda gömülü hâliyle basılır.</summary>
     [JsonIgnore]
-    public bool IsEmpty =>
-        Sections.Count == 0 && Items.Count == 0 &&
-        ToSidebar.Count == 0 && ToSettings.Count == 0 && SettingsOrder.Count == 0;
+    public bool IsEmpty => Sections.Count == 0 && SettingsOrder.Count == 0 && Items.Count == 0;
 
     private static readonly JsonSerializerOptions SerializerOptions = new()
     {
@@ -82,15 +78,17 @@ public class MenuLayout
     /// <summary>
     /// Üst sınırları ve tekilliği uygular. Manipüle edilmiş bir istek ayarı
     /// şişiremesin diye her liste kırpılır; adlar trim'lenir ve tekilleştirilir.
+    ///
+    /// Bir ad birden çok yerde geçemez — yoksa öğe iki sütunda birden görünürdü.
+    /// Öncelik: Sections → SettingsOrder → Items (deterministik olması yeterli;
+    /// tarayıcı zaten çakışan bir yük üretmez).
     /// </summary>
     public static MenuLayout Normalize(MenuLayout source)
     {
-        var toSettings = CleanList(source.ToSettings);
-        var toSidebar = CleanList(source.ToSidebar)
-            // Aynı ad iki yönde birden olamaz — manipüle edilmiş yükte
-            // deterministik davranmak için Ayarlar tarafı kazanır.
-            .Where(n => !toSettings.Contains(n))
-            .ToList();
+        var seen = new HashSet<string>(StringComparer.Ordinal);
+
+        var sections = CleanList(source.Sections, seen);
+        var settingsOrder = CleanList(source.SettingsOrder, seen);
 
         var items = new Dictionary<string, List<string>>();
         foreach (var pair in source.Items ?? new Dictionary<string, List<string>>())
@@ -100,7 +98,7 @@ public class MenuLayout
             var key = CleanName(pair.Key);
             if (key == null || items.ContainsKey(key)) { continue; }
 
-            var children = CleanList(pair.Value);
+            var children = CleanList(pair.Value, seen);
             if (children.Count == 0) { continue; }
 
             items[key] = children;
@@ -108,25 +106,27 @@ public class MenuLayout
 
         return new MenuLayout
         {
-            Sections = CleanList(source.Sections),
-            Items = items,
-            ToSidebar = toSidebar,
-            ToSettings = toSettings,
-            SettingsOrder = CleanList(source.SettingsOrder)
+            Sections = sections,
+            SettingsOrder = settingsOrder,
+            Items = items
         };
     }
 
-    private static List<string> CleanList(List<string>? names)
+    private static List<string> CleanList(List<string>? names, HashSet<string> seen)
     {
         if (names == null) { return new List<string>(); }
 
-        return names
-            .Select(CleanName)
-            .Where(n => n != null)
-            .Select(n => n!)
-            .Distinct(StringComparer.Ordinal)
-            .Take(PlatformSettingDefaults.ShellMenuLayoutListMax)
-            .ToList();
+        var cleaned = new List<string>();
+        foreach (var raw in names)
+        {
+            if (cleaned.Count >= PlatformSettingDefaults.ShellMenuLayoutListMax) { break; }
+
+            var name = CleanName(raw);
+            if (name == null || !seen.Add(name)) { continue; }
+
+            cleaned.Add(name);
+        }
+        return cleaned;
     }
 
     private static string? CleanName(string? name)

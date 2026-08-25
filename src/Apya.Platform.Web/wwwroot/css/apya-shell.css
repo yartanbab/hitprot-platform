@@ -3663,6 +3663,29 @@ i.apya-priority-dot {
     transform: translateX(2px);
 }
 
+/* Taşınmış kategori — kullanıcı menü düzeninden bir bölümü bütün hâlinde
+   buraya indirebiliyor. Başlık tıklanmaz (grubun URL'si yok); yalnız altındaki
+   bağlantıları toplar, hiyerarşi girintiyle ve ince çizgiyle anlatılır. */
+.apya-settings-group {
+    margin: var(--apya-space-2) 0;
+}
+.apya-settings-group-head {
+    display: flex;
+    align-items: center;
+    gap: var(--apya-space-3);
+    padding: var(--apya-space-2) var(--apya-space-3);
+    color: var(--apya-text-primary);
+}
+.apya-settings-group-title {
+    font-size: var(--apya-fs-base);
+    font-weight: var(--apya-weight-semibold);
+}
+.apya-settings-links--nested {
+    margin-left: calc(var(--apya-space-3) + 14px);
+    padding-left: var(--apya-space-3);
+    border-left: 1px solid var(--apya-border-subtle);
+}
+
 /* ============================================================================
    KABUK — SOL MENÜ ZENGİNLEŞTİRMELERİ (apya-sidebar-shell.js)
    ----------------------------------------------------------------------------

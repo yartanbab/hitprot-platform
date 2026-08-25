@@ -43,18 +43,14 @@ public class MenuLayout_Tests
     {
         var layout = MenuLayout.Parse("""
             {"sections":["Apya.Work","Apya.Finance"],
-             "items":{"Apya.Work":["Apya.Work.Projects"]},
-             "toSidebar":["Apya.Admin.Tenants"],
-             "toSettings":["Apya.Platform.Consents"],
-             "settingsOrder":["Apya.Admin.Users"]}
+             "settingsOrder":["Apya.Admin.Users","Apya.AiCenter"],
+             "items":{"Apya.Work":["Apya.Work.Projects"]}}
             """);
 
         layout.IsEmpty.ShouldBeFalse();
         layout.Sections.ShouldBe(new[] { "Apya.Work", "Apya.Finance" });
+        layout.SettingsOrder.ShouldBe(new[] { "Apya.Admin.Users", "Apya.AiCenter" });
         layout.Items["Apya.Work"].ShouldBe(new[] { "Apya.Work.Projects" });
-        layout.ToSidebar.ShouldBe(new[] { "Apya.Admin.Tenants" });
-        layout.ToSettings.ShouldBe(new[] { "Apya.Platform.Consents" });
-        layout.SettingsOrder.ShouldBe(new[] { "Apya.Admin.Users" });
     }
 
     [Fact]
@@ -66,6 +62,28 @@ public class MenuLayout_Tests
         });
 
         layout.Sections.ShouldBe(new[] { "Apya.Work", "Apya.Finance" });
+    }
+
+    /// <summary>
+    /// Bir ad yalnız TEK bir yerde durabilir — yoksa aynı öğe iki sütunda birden
+    /// görünürdü. Tarayıcı böyle bir yük üretmez; kural manipüle edilmiş istek için.
+    /// </summary>
+    [Fact]
+    public void Normalize_NameCanAppearInOnlyOnePlace()
+    {
+        var layout = MenuLayout.Normalize(new MenuLayout
+        {
+            Sections = new List<string> { "Apya.Finance" },
+            SettingsOrder = new List<string> { "Apya.Finance", "Apya.Admin.Users" },
+            Items = new Dictionary<string, List<string>>
+            {
+                ["Apya.Work"] = new() { "Apya.Finance", "Apya.Work.Projects" }
+            }
+        });
+
+        layout.Sections.ShouldBe(new[] { "Apya.Finance" });
+        layout.SettingsOrder.ShouldBe(new[] { "Apya.Admin.Users" });
+        layout.Items["Apya.Work"].ShouldBe(new[] { "Apya.Work.Projects" });
     }
 
     [Fact]
@@ -109,45 +127,24 @@ public class MenuLayout_Tests
         layout.Items.ShouldNotContainKey("Apya.Work");
     }
 
-    /// <summary>
-    /// Aynı ad iki yönde birden gelirse (yalnız manipüle edilmiş yükte mümkün)
-    /// davranış deterministik olmalı: Ayarlar tarafı kazanır.
-    /// </summary>
-    [Fact]
-    public void Normalize_NameCannotBeInBothDirections()
-    {
-        var layout = MenuLayout.Normalize(new MenuLayout
-        {
-            ToSidebar = new List<string> { "Apya.Admin.Tenants", "Apya.Admin.Users" },
-            ToSettings = new List<string> { "Apya.Admin.Tenants" }
-        });
-
-        layout.ToSidebar.ShouldBe(new[] { "Apya.Admin.Users" });
-        layout.ToSettings.ShouldBe(new[] { "Apya.Admin.Tenants" });
-    }
-
     [Fact]
     public void Serialize_RoundTrips()
     {
         var original = new MenuLayout
         {
             Sections = new List<string> { "Apya.Finance", "Apya.Work" },
+            SettingsOrder = new List<string> { "Apya.AiCenter", "Apya.Admin.Users" },
             Items = new Dictionary<string, List<string>>
             {
                 ["Apya.Finance"] = new() { "Apya.Finance.Hub", "Apya.Finance.CashAccounts" }
-            },
-            ToSidebar = new List<string> { "Apya.Admin.Roles" },
-            ToSettings = new List<string> { "Apya.Platform.Consents" },
-            SettingsOrder = new List<string> { "Apya.Platform.Consents", "Apya.Admin.Users" }
+            }
         };
 
         var restored = MenuLayout.Parse(original.Serialize());
 
         restored.Sections.ShouldBe(original.Sections);
-        restored.Items["Apya.Finance"].ShouldBe(original.Items["Apya.Finance"]);
-        restored.ToSidebar.ShouldBe(original.ToSidebar);
-        restored.ToSettings.ShouldBe(original.ToSettings);
         restored.SettingsOrder.ShouldBe(original.SettingsOrder);
+        restored.Items["Apya.Finance"].ShouldBe(original.Items["Apya.Finance"]);
     }
 
     /// <summary>

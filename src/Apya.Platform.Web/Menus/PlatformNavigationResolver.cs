@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -19,7 +20,7 @@ namespace Apya.Platform.Web.Menus;
 /// <summary>
 /// Gezinme hedeflerinin TEK kaynağı. Menü ağacını kurar, kullanıcının menü
 /// düzenini uygular ve iki yüzeyi birden üretir: kenar çubuğu ağacı ve Ayarlar
-/// sayfasındaki bağlantı listesi.
+/// sayfasındaki liste.
 ///
 /// Neden contributor'da değil: aynı ağacı üç tüketici okuyor — kenar çubuğu
 /// (PlatformMenuContributor), Ayarlar sayfası ve menü düzenleme ekranı. Liste
@@ -27,16 +28,38 @@ namespace Apya.Platform.Web.Menus;
 /// öğeler iki yüzey arasında taşınabildiği için bu kopya kaçınılmaz olarak
 /// ayrışırdı.
 ///
+/// YERLEŞİM MODELİ: koddaki ağaç bir VARSAYILANDIR. Çözüm sırasında bütün
+/// düğümler tek bir havuza düzleştirilir, kullanıcının düzeni her düğüme bir üst
+/// öğe (ya da iki kökten biri) atar, ağaç sıfırdan kurulur. Serbest yerleşimin
+/// (öğeyi başka gruba ya da öbür sütuna taşıma) sıralamayla aynı mekanizmadan
+/// çıkmasının sebebi bu: "sırala" ile "taşı" tek bir işlemdir.
+///
 /// Scoped + memoize: Ayarlar sayfasında hem kabuk hem sayfa modeli çözümlüyor,
 /// ağaç istek başına BİR kez kurulur.
 /// </summary>
 public class PlatformNavigationResolver : IScopedDependency
 {
-    /// <summary>Ayarlar'dan kenar çubuğuna alınan bağlantıların toplandığı grup.</summary>
+    /// <summary>Ayarlar'dan kenar çubuğuna alınan bağlantıların varsayılan hedefi.</summary>
     public const string ManagementGroupName = "Apya.Management";
 
     /// <summary>Menü düzeninde asla taşınamayan/sıralanamayan öğe — kapının kendisi.</summary>
     public const string SettingsItemName = "Apya.Settings";
+
+    /// <summary>Ayarlar sayfasındaki açıklama satırı — ApplicationMenuItem'da alan yok, CustomData'da taşınır.</summary>
+    public const string DescriptionDataKey = "apya:desc";
+
+    /// <summary>Kenar çubuğu sütununun kökü. Menü adı olamaz: adlar "Apya." ile başlar.</summary>
+    private const string SidebarRoot = "#sidebar";
+
+    /// <summary>Ayarlar sütununun kökü.</summary>
+    private const string SettingsRoot = "#settings";
+
+    /// <summary>
+    /// Kökten itibaren izin verilen en fazla seviye. Düzenleme ekranı grubu
+    /// grubun içine bıraktırmıyor; bu tavan manipüle edilmiş bir yüke karşı:
+    /// aşan (ya da döngüye giren) düğüm sessizce varsayılan yerine döner.
+    /// </summary>
+    private const int MaxDepth = 4;
 
     private readonly IStringLocalizer<PlatformResource> _l;
     private readonly IPermissionChecker _permission;
@@ -65,34 +88,281 @@ public class PlatformNavigationResolver : IScopedDependency
         return _cached ??= ResolveCoreAsync();
     }
 
+    /// <summary>Havuzdaki bir düğüm: öğenin kendisi + koddaki yeri.</summary>
+    private sealed class PoolEntry
+    {
+        public required ApplicationMenuItem Item { get; init; }
+
+        /// <summary>Kullanıcı düzeni bir şey söylemezse düşeceği üst öğe.</summary>
+        public required string DefaultParent { get; init; }
+
+        /// <summary>Koddaki sıra — düzende adı geçmeyen öğeler bu sırayı korur.</summary>
+        public required int DefaultIndex { get; init; }
+    }
+
     private async Task<NavResolution> ResolveCoreAsync()
     {
         var layout = MenuLayout.Parse(
             await _settingProvider.GetOrNullAsync(PlatformSettings.Shell.MenuLayout));
 
         var result = new NavResolution { Layout = layout };
-        var roots = await BuildTreeAsync();
+        var pool = await BuildPoolAsync();
+        var parentOf = ResolveParents(pool, layout);
 
-        // 1) Ayarlar'dan kenar çubuğuna alınanlar → "Yönetim" grubu.
-        //    Grup yalnız içine bir şey taşındığında doğar; boşsa hiç basılmaz.
-        var promoted = await BuildManagementGroupAsync(layout);
-        if (promoted != null) { roots.Add(promoted); }
+        var sidebar = Assemble(SidebarRoot, pool, parentOf, layout);
+        var settings = Assemble(SettingsRoot, pool, parentOf, layout);
 
-        // 2) Kenar çubuğundan Ayarlar'a inenleri ağaçtan SÖK.
-        var moved = ExtractMovedLeaves(roots, layout.ToSettings);
+        // İçi boşalan grup basılmaz — LeptonX içi boş bir bölüm başlığı basar,
+        // Ayarlar sayfasında da başlıksız bir blok kalırdı. Düzenleme ekranı
+        // bunları EmptyGroups'tan geri koyar.
+        Prune(sidebar, inSettings: false, result.EmptyGroups);
+        Prune(settings, inSettings: true, result.EmptyGroups);
 
-        // 3) Tüm çocukları taşınmış grup kalmasın — LeptonX boş bölüm başlığı basar.
-        PruneEmptyGroups(roots);
+        // ABP menüyü Order'a göre diziyor → istenen dizilim Order'a yazılmalı.
+        AssignOrders(sidebar);
 
-        // 4) Sıralama: 1. seviye + her grubun içi.
-        result.Sidebar.AddRange(ApplyOrder(roots, layout.Sections));
-        foreach (var item in roots) { ApplyChildOrder(item, layout); }
-
-        // 5) Ayarlar listesi: katalogda kalanlar + kenar çubuğundan inenler.
-        var settingsLinks = await BuildSettingsLinksAsync(layout, moved);
-        result.SettingsLinks.AddRange(ApplyOrder(settingsLinks, layout.SettingsOrder, x => x.Name));
-
+        result.Sidebar.AddRange(sidebar);
+        result.SettingsLinks.AddRange(settings.Select(ToSettingsEntry));
         return result;
+    }
+
+    /// <summary>
+    /// Bütün gezinme hedeflerini tek havuza düzleştirir: koddaki kenar çubuğu
+    /// ağacı + yönetim bağlantıları + (boş doğan) "Yönetim" grubu. Çocuk
+    /// listeleri BOŞALTILIR; ağaç sonra yerleşime göre yeniden kurulur.
+    /// </summary>
+    private async Task<Dictionary<string, PoolEntry>> BuildPoolAsync()
+    {
+        var pool = new Dictionary<string, PoolEntry>(StringComparer.Ordinal);
+        var sequence = 0;
+
+        void Collect(IEnumerable<ApplicationMenuItem> items, string parent)
+        {
+            foreach (var item in items)
+            {
+                var children = item.Items.ToList();
+                item.Items.Clear();
+
+                pool[item.Name] = new PoolEntry
+                {
+                    Item = item,
+                    DefaultParent = parent,
+                    DefaultIndex = sequence++
+                };
+
+                Collect(children, item.Name);
+            }
+        }
+
+        Collect(await BuildTreeAsync(), SidebarRoot);
+
+        // "Yönetim" grubu havuzda hep vardır ama BOŞ doğar: kullanıcı bir yönetim
+        // bağlantısını kenar çubuğuna aldığında burası onun varsayılan hedefi
+        // olur. İçine bir şey girmezse ayıklanır ve menüde hiç görünmez.
+        pool[ManagementGroupName] = new PoolEntry
+        {
+            Item = new ApplicationMenuItem(
+                ManagementGroupName, _l["Menu:Management"], icon: "fa fa-user-gear"),
+            DefaultParent = SidebarRoot,
+            DefaultIndex = sequence++
+        };
+
+        foreach (var definition in PlatformAdminLinks.All)
+        {
+            if (!await _permission.IsGrantedAsync(definition.PermissionName)) { continue; }
+
+            var item = new ApplicationMenuItem(
+                definition.Name, _l[definition.TitleKey],
+                icon: definition.Icon, url: definition.Url);
+            item.WithCustomData(DescriptionDataKey, _l[definition.DescriptionKey].Value);
+
+            pool[definition.Name] = new PoolEntry
+            {
+                Item = item,
+                // Yönetim hedeflerinin varsayılan yeri Ayarlar sayfası.
+                DefaultParent = SettingsRoot,
+                DefaultIndex = sequence++
+            };
+        }
+
+        return pool;
+    }
+
+    /// <summary>
+    /// Her düğüme bir üst öğe atar: önce koddaki varsayılan, sonra kullanıcının
+    /// düzeni. Tanınmayan ad, yaprağın altına yerleştirme, döngü ve fazla
+    /// derinlik sessizce yok sayılır — düğüm varsayılan yerinde kalır.
+    /// </summary>
+    private static Dictionary<string, string> ResolveParents(
+        Dictionary<string, PoolEntry> pool, MenuLayout layout)
+    {
+        var parentOf = pool.ToDictionary(
+            kv => kv.Key, kv => kv.Value.DefaultParent, StringComparer.Ordinal);
+
+        void Place(IEnumerable<string> names, string parent)
+        {
+            foreach (var name in names)
+            {
+                // Ayarlar kapısı taşınamaz: taşınsaydı kullanıcının düzeni geri
+                // alacağı ekran kaybolurdu.
+                if (name == SettingsItemName || !pool.ContainsKey(name)) { continue; }
+                parentOf[name] = parent;
+            }
+        }
+
+        Place(layout.Sections, SidebarRoot);
+        Place(layout.SettingsOrder, SettingsRoot);
+
+        foreach (var pair in layout.Items)
+        {
+            // Üst öğe var olan bir GRUP olmalı; yaprağın altına öğe konmaz.
+            if (!pool.TryGetValue(pair.Key, out var parent) || !IsGroup(parent.Item)) { continue; }
+            Place(pair.Value, pair.Key);
+        }
+
+        foreach (var name in pool.Keys.ToList())
+        {
+            if (!ReachesRoot(name, parentOf))
+            {
+                parentOf[name] = pool[name].DefaultParent;
+            }
+        }
+
+        return parentOf;
+    }
+
+    /// <summary>Düğüm iki kökten birine <see cref="MaxDepth"/> adımda ulaşıyor mu?</summary>
+    private static bool ReachesRoot(string name, Dictionary<string, string> parentOf)
+    {
+        var current = name;
+        for (var depth = 0; depth < MaxDepth; depth++)
+        {
+            if (!parentOf.TryGetValue(current, out var parent)) { return false; }
+            if (parent == SidebarRoot || parent == SettingsRoot) { return true; }
+            if (parent == name) { return false; } // kendi kendinin atası
+            current = parent;
+        }
+        return false; // döngü ya da fazla derin
+    }
+
+    /// <summary>Bir üst öğenin çocuklarını sıralı kurar ve altlarını doldurur.</summary>
+    private static List<ApplicationMenuItem> Assemble(
+        string parent,
+        Dictionary<string, PoolEntry> pool,
+        Dictionary<string, string> parentOf,
+        MenuLayout layout)
+    {
+        var children = pool
+            .Where(kv => parentOf[kv.Key] == parent)
+            .OrderBy(kv => kv.Value.DefaultIndex)
+            .Select(kv => kv.Value.Item)
+            .ToList();
+
+        var order =
+            parent == SidebarRoot ? layout.Sections :
+            parent == SettingsRoot ? layout.SettingsOrder :
+            layout.Items.TryGetValue(parent, out var explicitOrder) ? explicitOrder : new List<string>();
+
+        var ordered = ApplyOrder(children, order, x => x.Name);
+
+        foreach (var child in ordered)
+        {
+            foreach (var grandChild in Assemble(child.Name, pool, parentOf, layout))
+            {
+                child.AddItem(grandChild);
+            }
+        }
+
+        return ordered;
+    }
+
+    /// <summary>URL'si olmayan öğe gruptur — çocuğu kalmasa bile grup olarak kalır.</summary>
+    private static bool IsGroup(ApplicationMenuItem item)
+    {
+        return string.IsNullOrEmpty(item.Url);
+    }
+
+    private static void Prune(IList<ApplicationMenuItem> siblings, bool inSettings, List<NavEmptyGroup> removed)
+    {
+        for (var i = siblings.Count - 1; i >= 0; i--)
+        {
+            var item = siblings[i];
+            if (!IsGroup(item)) { continue; }
+
+            // Önce içeri: iç grup boşalınca dıştaki de boşalabilir.
+            Prune(item.Items, inSettings, removed);
+            if (item.Items.Count > 0) { continue; }
+
+            siblings.RemoveAt(i);
+            removed.Add(new NavEmptyGroup
+            {
+                Name = item.Name,
+                Title = item.DisplayName,
+                Icon = item.Icon ?? string.Empty,
+                InSettings = inSettings
+            });
+        }
+    }
+
+    private static void AssignOrders(IList<ApplicationMenuItem> siblings)
+    {
+        for (var i = 0; i < siblings.Count; i++)
+        {
+            // "Ayarlar" her hâlükârda dipte: kenar çubuğunun sabit kapısı,
+            // kullanıcı düzeninin parçası değil.
+            siblings[i].Order = siblings[i].Name == SettingsItemName ? 9999 : i;
+            AssignOrders(siblings[i].Items);
+        }
+    }
+
+    /// <summary>Katalogdan gelen adlar — <see cref="NavSettingsEntry.IsAdminLink"/> için.</summary>
+    private static readonly HashSet<string> AdminLinkNames =
+        PlatformAdminLinks.All.Select(x => x.Name).ToHashSet(StringComparer.Ordinal);
+
+    private static NavSettingsEntry ToSettingsEntry(ApplicationMenuItem item)
+    {
+        var entry = new NavSettingsEntry
+        {
+            Name = item.Name,
+            Title = item.DisplayName,
+            Url = item.Url ?? string.Empty,
+            Icon = item.Icon ?? string.Empty,
+            IsGroup = IsGroup(item),
+            IsAdminLink = AdminLinkNames.Contains(item.Name),
+            Description = item.CustomData.TryGetValue(DescriptionDataKey, out var description)
+                ? description?.ToString() ?? string.Empty
+                // Kenar çubuğundan inen öğelerin açıklaması yok; uydurmuyoruz.
+                : string.Empty
+        };
+
+        foreach (var child in item.Items)
+        {
+            entry.Children.Add(ToSettingsEntry(child));
+        }
+
+        return entry;
+    }
+
+    /// <summary>
+    /// Kayıtlı sıraya göre dizer; listede olmayanlar KENDİ aralarındaki sırayı
+    /// koruyarak sona eklenir. Sonradan eklenen bir menü öğesi böylece kaybolmaz.
+    /// </summary>
+    private static List<T> ApplyOrder<T>(List<T> items, List<string> order, Func<T, string> nameOf)
+    {
+        if (order.Count == 0) { return items; }
+
+        var byName = items.ToLookup(nameOf);
+        var sorted = new List<T>(items.Count);
+        var placed = new HashSet<string>(StringComparer.Ordinal);
+
+        foreach (var name in order)
+        {
+            if (!placed.Add(name)) { continue; }
+            sorted.AddRange(byName[name]);
+        }
+
+        sorted.AddRange(items.Where(x => !placed.Contains(nameOf(x))));
+        return sorted;
     }
 
     // =========================================================================
@@ -288,181 +558,4 @@ public class PlatformNavigationResolver : IScopedDependency
             icon: "fa fa-gear", url: "/Settings", order: 99));
 
         return roots;
-    }
-
-    // =========================================================================
-    // Düzen uygulama
-    // =========================================================================
-
-    /// <summary>
-    /// Ayarlar'dan kenar çubuğuna alınan bağlantıları "Yönetim" grubunda toplar.
-    /// Hiçbiri alınmamışsa (varsayılan) null döner — grup basılmaz.
-    /// </summary>
-    private async Task<ApplicationMenuItem?> BuildManagementGroupAsync(MenuLayout layout)
-    {
-        if (layout.ToSidebar.Count == 0) { return null; }
-
-        var group = new ApplicationMenuItem(
-            ManagementGroupName, _l["Menu:Management"], icon: "fa fa-user-gear", order: 97);
-
-        foreach (var definition in PlatformAdminLinks.All)
-        {
-            if (!layout.ToSidebar.Contains(definition.Name)) { continue; }
-            if (!await _permission.IsGrantedAsync(definition.PermissionName)) { continue; }
-
-            group.AddItem(new ApplicationMenuItem(
-                definition.Name, _l[definition.TitleKey],
-                icon: definition.Icon, url: definition.Url));
-        }
-
-        return group.Items.Count > 0 ? group : null;
-    }
-
-    /// <summary>
-    /// Ayarlar'a indirilen YAPRAK öğeleri ağaçtan söker ve üst grubuyla birlikte
-    /// döner. Grup adı listede geçse bile sökülmez: yalnız yapraklar taşınabilir.
-    /// </summary>
-    private List<NavSettingsLink> ExtractMovedLeaves(List<ApplicationMenuItem> roots, List<string> toSettings)
-    {
-        var moved = new List<NavSettingsLink>();
-        if (toSettings.Count == 0) { return moved; }
-
-        void Walk(IList<ApplicationMenuItem> siblings, ApplicationMenuItem? parent)
-        {
-            for (var i = siblings.Count - 1; i >= 0; i--)
-            {
-                var item = siblings[i];
-                if (item.Items.Count > 0)
-                {
-                    Walk(item.Items, item);
-                    continue;
-                }
-
-                // Ayarlar kapısının kendisi taşınamaz — taşınsa geri dönüş yolu kalmaz.
-                if (item.Name == SettingsItemName) { continue; }
-                if (!toSettings.Contains(item.Name)) { continue; }
-
-                siblings.RemoveAt(i);
-                moved.Add(new NavSettingsLink
-                {
-                    Name = item.Name,
-                    Title = item.DisplayName,
-                    // Kenar çubuğu öğelerinin açıklaması yok; Ayarlar listesindeki
-                    // ikinci satır uydurulmaz, boş bırakılır.
-                    Description = string.Empty,
-                    Url = item.Url ?? string.Empty,
-                    Icon = item.Icon ?? string.Empty,
-                    IsAdminLink = false,
-                    HomeGroupName = parent?.Name ?? string.Empty,
-                    HomeGroupTitle = parent?.DisplayName ?? string.Empty,
-                    HomeGroupIcon = parent?.Icon ?? string.Empty
-                });
-            }
-        }
-
-        Walk(roots, null);
-        return moved;
-    }
-
-    /// <summary>
-    /// Tüm çocukları Ayarlar'a taşınmış grupları düşürür. Yapılmazsa LeptonX
-    /// içi boş bir bölüm başlığı basar.
-    /// </summary>
-    private static void PruneEmptyGroups(IList<ApplicationMenuItem> siblings)
-    {
-        for (var i = siblings.Count - 1; i >= 0; i--)
-        {
-            var item = siblings[i];
-            if (item.Items.Count == 0) { continue; } // yaprak — URL'si var, dokunma
-
-            PruneEmptyGroups(item.Items);
-            if (item.Items.Count == 0 && string.IsNullOrEmpty(item.Url))
-            {
-                siblings.RemoveAt(i);
-            }
-        }
-    }
-
-    private void ApplyChildOrder(ApplicationMenuItem item, MenuLayout layout)
-    {
-        if (item.Items.Count == 0) { return; }
-
-        if (layout.Items.TryGetValue(item.Name, out var order))
-        {
-            var sorted = ApplyOrder(item.Items.ToList(), order);
-            item.Items.Clear();
-            foreach (var child in sorted) { item.Items.Add(child); }
-        }
-
-        foreach (var child in item.Items) { ApplyChildOrder(child, layout); }
-    }
-
-    private static List<ApplicationMenuItem> ApplyOrder(List<ApplicationMenuItem> items, List<string> order)
-    {
-        var sorted = ApplyOrder(items, order, x => x.Name);
-
-        // ABP menüyü Order'a göre sıralıyor → istenen dizilim Order'a yazılmalı,
-        // yoksa listedeki sıra render'da kaybolur. "Ayarlar" her hâlükârda dipte
-        // kalır: kenar çubuğunun sabit kapısı, kullanıcı düzeninin parçası değil.
-        for (var i = 0; i < sorted.Count; i++)
-        {
-            sorted[i].Order = sorted[i].Name == SettingsItemName ? 9999 : i;
-        }
-
-        return sorted;
-    }
-
-    /// <summary>
-    /// Kayıtlı sıraya göre dizer; listede olmayanlar KENDİ aralarındaki sırayı
-    /// koruyarak sona eklenir. Sonradan eklenen bir menü öğesi böylece kaybolmaz.
-    /// </summary>
-    private static List<T> ApplyOrder<T>(List<T> items, List<string> order, System.Func<T, string> nameOf)
-    {
-        if (order.Count == 0) { return items; }
-
-        var byName = items.ToLookup(nameOf);
-        var sorted = new List<T>(items.Count);
-        var placed = new HashSet<string>();
-
-        foreach (var name in order)
-        {
-            if (!placed.Add(name)) { continue; }
-            sorted.AddRange(byName[name]);
-        }
-
-        sorted.AddRange(items.Where(x => !placed.Contains(nameOf(x))));
-        return sorted;
-    }
-
-    /// <summary>
-    /// Ayarlar sayfasının listesi: katalogda kalan yönetim bağlantıları +
-    /// kenar çubuğundan indirilen yapraklar.
-    /// </summary>
-    private async Task<List<NavSettingsLink>> BuildSettingsLinksAsync(MenuLayout layout, List<NavSettingsLink> moved)
-    {
-        var links = new List<NavSettingsLink>();
-
-        foreach (var definition in PlatformAdminLinks.All)
-        {
-            // Kenar çubuğuna alınmışsa burada gösterilmez (aynı hedef iki yerde durmaz).
-            if (layout.ToSidebar.Contains(definition.Name)) { continue; }
-            if (!await _permission.IsGrantedAsync(definition.PermissionName)) { continue; }
-
-            links.Add(new NavSettingsLink
-            {
-                Name = definition.Name,
-                Title = _l[definition.TitleKey],
-                Description = _l[definition.DescriptionKey],
-                Url = definition.Url,
-                Icon = definition.Icon,
-                IsAdminLink = true,
-                HomeGroupName = ManagementGroupName,
-                HomeGroupTitle = _l["Menu:Management"],
-                HomeGroupIcon = "fa fa-user-gear"
-            });
-        }
-
-        links.AddRange(moved);
-        return links;
-    }
-}
+    }}

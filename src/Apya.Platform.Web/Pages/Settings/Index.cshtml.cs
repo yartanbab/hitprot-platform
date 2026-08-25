@@ -64,7 +64,7 @@ public class IndexModel : AbpPageModel
     /// çözümü kenar çubuğu da okuyor, öğeler iki yüzey arasında taşınabildiği
     /// için tek kaynak şart.
     /// </summary>
-    public List<NavSettingsLink> AdminLinks { get; private set; } = new();
+    public List<NavSettingsEntry> AdminLinks { get; private set; } = new();
 
     private readonly ISettingManager _settingManager;
     private readonly IPermissionChecker _permission;
