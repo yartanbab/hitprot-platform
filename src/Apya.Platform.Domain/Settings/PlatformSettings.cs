@@ -99,6 +99,22 @@ public static class PlatformSettings
         /// (bkz. PlatformSettingDefaults.ShellSavedViews*).
         /// </summary>
         public const string SavedViews = Prefix + ".Shell.SavedViews";
+
+        /// <summary>
+        /// Kullanıcının kenar çubuğu düzeni — JSON nesne:
+        /// <c>{"sections":[..],"items":{"&lt;üst&gt;":[..]},"toSidebar":[..],"toSettings":[..],"settingsOrder":[..]}</c>
+        /// Pins ile aynı gerekçe: menü ADI saklanır, etiketi değil.
+        ///   sections      → 1. seviye öğelerin sırası
+        ///   items         → bir grubun çocuklarının sırası (grup adıyla anahtarlanır)
+        ///   toSidebar     → Ayarlar sayfasından kenar çubuğuna alınan yönetim bağlantıları
+        ///   toSettings    → kenar çubuğundan Ayarlar sayfasına indirilen yaprak öğeler
+        ///   settingsOrder → Ayarlar sayfasındaki listenin sırası
+        /// Listede olmayan ad varsayılan yerinde/sırasında kalır: sonradan eklenen
+        /// bir menü öğesi kaydedilmiş düzen yüzünden kaybolmaz.
+        /// Ayar değeri sınırlı uzunlukta → adet/uzunluk kısıtlanır
+        /// (bkz. PlatformSettingDefaults.ShellMenuLayout*).
+        /// </summary>
+        public const string MenuLayout = Prefix + ".Shell.MenuLayout";
     }
 
     /// <summary>
@@ -299,6 +315,24 @@ public static class PlatformSettingDefaults
 
     /// <summary>Saklanan filtre sorgusu üst sınırı (karakter).</summary>
     public const int ShellSavedViewQueryMax = 400;
+
+    /// <summary>
+    /// Menü düzeni varsayılanı: BOŞ — "kullanıcı hiç dokunmadı" demek. Boşken
+    /// menü koda gömülü hâliyle basılır; kullanıcı ilk kaydettiğinde JSON yazılır.
+    /// </summary>
+    public const string ShellMenuLayout = "";
+
+    /// <summary>Menü düzeni JSON'unun ham uzunluk sınırı — manipüle edilmiş istek ayarı şişirmesin.</summary>
+    public const int ShellMenuLayoutMaxChars = 8000;
+
+    /// <summary>Bir düzen listesindeki en fazla menü adı (sections/items/toSidebar/...).</summary>
+    public const int ShellMenuLayoutListMax = 60;
+
+    /// <summary>items sözlüğündeki en fazla grup anahtarı.</summary>
+    public const int ShellMenuLayoutGroupMax = 40;
+
+    /// <summary>Tek bir menü adının en fazla uzunluğu (örn. "Apya.Finance.CashAccounts").</summary>
+    public const int ShellMenuLayoutNameMax = 128;
 
     /// <summary>Giriş ekranı kiracı seçicisi varsayılanı: KAPALI (yalnız kullanıcı girişi).</summary>
     public const bool   AccountShowTenantSwitch   = false;
