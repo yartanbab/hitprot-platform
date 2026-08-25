@@ -55,6 +55,17 @@ namespace Apya.Platform.Tasks
         /// <summary>Tamamlanmış alt görev sayısı — rozetin payı ("2/5" içindeki 2).</summary>
         public int CompletedSubTaskCount { get; set; }
 
+        /// <summary>Faz 7: kanban kartındaki yorum rozeti. Comments listesi YALNIZ
+        /// GetAsync'te dolduğu için liste tarafında sayı ayrı taşınır.</summary>
+        public int CommentCount { get; set; }
+
+        /// <summary>Faz 7: kanban kartındaki ek rozeti (aynı gerekçe).</summary>
+        public int AttachmentCount { get; set; }
+
+        /// <summary>Faz 7: bu görevi bekleten AÇIK öncüllerin kodları ("GRV-12").
+        /// Boşsa görev engelli değildir. Kapanmış öncüller sayılmaz.</summary>
+        public List<string> BlockedByCodes { get; set; } = new List<string>();
+
         public Guid? ProjectId { get; set; }
         public string? ProjectName { get; set; }
 

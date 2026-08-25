@@ -237,6 +237,42 @@
             }
             card.appendChild(bottom);
 
+            // Faz 7 — risk dili ve meta rozetleri. Gecikme GÜN SAYISIYLA söylenir
+            // ("3 gün gecikti"); "Süresi Geçti" tek başına ne kadar geç olduğunu
+            // söylemiyordu. Engelli kart bekleten görevin KODUNU taşır.
+            var meta = el('div', 'kanban-card-meta');
+            if (!isDone && task.dueDate) {
+                var lateDays = Math.floor(moment().diff(moment(task.dueDate), 'days'));
+                if (lateDays > 0) {
+                    var od = el('span', 'kanban-chip-late');
+                    od.textContent = lateDays + ' gün gecikti';
+                    meta.appendChild(od);
+                }
+            }
+            if (task.blockedByCodes && task.blockedByCodes.length) {
+                var bl = el('span', 'kanban-chip-blocked');
+                bl.innerHTML = '<i class="fa fa-lock me-1"></i>';
+                bl.appendChild(document.createTextNode('Engelli · ' + task.blockedByCodes.join(', ')));
+                meta.appendChild(bl);
+            }
+            if (task.commentCount) {
+                var cm = el('span', 'kanban-card-metaitem');
+                cm.innerHTML = '<i class="fa fa-comment me-1"></i>' + task.commentCount;
+                meta.appendChild(cm);
+            }
+            if (task.attachmentCount) {
+                var at = el('span', 'kanban-card-metaitem');
+                at.innerHTML = '<i class="fa fa-paperclip me-1"></i>' + task.attachmentCount;
+                meta.appendChild(at);
+            }
+            if (task.subTaskCount) {
+                var st = el('span', 'kanban-card-metaitem');
+                st.innerHTML = '<i class="fa fa-list-check me-1"></i>' +
+                    (task.completedSubTaskCount || 0) + '/' + task.subTaskCount;
+                meta.appendChild(st);
+            }
+            if (meta.childNodes.length) { card.appendChild(meta); }
+
             // İptal edilmiş kart: ne zaman ve neden iptal edildiği görünür,
             // "İptali geri al" kartı iptalden ÖNCEKİ durumuna döndürür.
             if (task.status === 0) {
@@ -597,6 +633,31 @@
             var sel = bar.querySelector('.js-group-select');
             if (sel && sel.value !== grouping) { sel.value = grouping; }
             bar.classList.toggle('d-none', !(showCols || enableLanes));
+        }
+
+        // Faz 7 — pano üstünde tek satır risk uyarısı. Sayılar kolon özetleriyle
+        // AYNI kaynaktan (kartların kendi rozetleri) gelir, ayrışamaz.
+        function syncRiskStrip() {
+            var board = document.querySelector(boardSel);
+            var wrap = board && board.closest ? board.closest('.kanban-wrap') : null;
+            if (!wrap) { return; }
+            var strip = wrap.querySelector('.js-kanban-risk');
+            var late = board.querySelectorAll('.kanban-chip-late').length;
+            var blocked = board.querySelectorAll('.kanban-chip-blocked').length;
+
+            if (!late && !blocked) {
+                if (strip) { strip.remove(); }
+                return;
+            }
+            if (!strip) {
+                strip = el('div', 'kanban-risk-strip js-kanban-risk');
+                board.parentNode.insertBefore(strip, board);
+            }
+            var parts = [];
+            if (late) { parts.push(late + ' görev gecikmiş'); }
+            if (blocked) { parts.push(blocked + ' görev engelli'); }
+            strip.innerHTML = '<i class="fa fa-triangle-exclamation me-2"></i>';
+            strip.appendChild(document.createTextNode(parts.join(', ') + '.'));
         }
 
         // Hedef durum kolonunun ADI board'dan okunur — JS'te ikinci bir durum
@@ -1080,6 +1141,7 @@
             fillAssignMenu();   // kullanıcı listesi bir kez
             syncSelection();    // yeniden çizimde seçim vurgusu korunur
             updateCounts();
+            syncRiskStrip();
             initSortable();
             ensureColumnConfig();
             applyLayout();
@@ -1093,6 +1155,22 @@
                 var n = col.querySelectorAll('.kanban-cards .kanban-card').length;
                 var b = col.querySelector('.kanban-count');
                 if (b) { b.textContent = n; }
+
+                // Faz 7 — kolon başlığı özeti: kaç kart gecikmiş / engelli.
+                // Kartların KENDİ sınıflarından sayılır, ikinci bir veri yolu yok.
+                var head = col.querySelector('.kanban-header');
+                if (head && !col.classList.contains('js-add-col')) {
+                    var old = head.querySelector('.kanban-col-summary');
+                    if (old) { old.remove(); }
+                    var late = col.querySelectorAll('.kanban-cards .kanban-chip-late').length;
+                    var blocked = col.querySelectorAll('.kanban-cards .kanban-chip-blocked').length;
+                    if (late || blocked) {
+                        var sum = el('div', 'kanban-col-summary');
+                        if (late) { sum.innerHTML += '<span class="is-late">' + late + ' gecikmiş</span>'; }
+                        if (blocked) { sum.innerHTML += '<span class="is-blocked">' + blocked + ' engelli</span>'; }
+                        head.insertAdjacentElement('afterend', sum);
+                    }
+                }
 
                 var cards = col.querySelector('.kanban-cards');
                 if (cards && !col.classList.contains('js-add-col')) {

@@ -436,7 +436,31 @@ kartta iptal tarihi + sebep.
 
 ---
 
-## 8. Faz 7 — Kart ve risk dili: 1a + 2a + 2b (⚠ DTO işi · 1 PR · orta)
+## 8. Faz 7 — Kart ve risk dili: 1a + 2a + 2b (⚠ DTO işi · 1 PR · orta) — ✅ TAMAMLANDI (2026-08-25)
+
+> **Backend:** `TaskDto`'ya `CommentCount`, `AttachmentCount`, `BlockedByCodes`.
+> `PopulateCardMetaAsync` bunları **tek sorguda** toplar (`PopulateSubTaskCountsAsync`
+> deseni — N+1 yok). Engelli tanımı: **AÇIK** öncülü olan görev; Done/Cancelled
+> öncül engel sayılmaz, yoksa biten her iş sonsuza dek engelli görünürdü.
+>
+> **Kart:** gecikme artık GÜN SAYISIYLA ("3 gün gecikti") — "Süresi Geçti" ne kadar
+> geç olduğunu söylemiyordu. Engelli kart bekleten görevin KODUNU taşıyor
+> ("Engelli · GRV-12"). Yorum/ek/alt görev sayaçları; sıfır olan rozet basılmaz.
+>
+> **Kolon başlığı özeti** ("2 gecikmiş · 1 engelli") ve **pano üstü tek satır risk
+> şeridi** ("1 görev gecikmiş, 1 görev engelli.") — ikisi de kartların KENDİ
+> rozetlerinden sayılıyor, ikinci bir veri yolu yok, ayrışamazlar. Risk yokken
+> şerit hiç çizilmiyor.
+>
+> 🔴 **Kapsam dışı bırakıldı (veri yok):** "Ort. akış süresi", "Zamanında %82",
+> "Bu hafta +7". Sayfalanmış liste üzerinden istemcide hesaplamak yanıltıcı olurdu;
+> sunucu tarafı metrik ucu ister. Planın 9. bölümünde ürün kararı olarak duruyor.
+>
+> 🔴 **Kart detay çekmecesi (2a) bu fazda ELE ALINMADI:** mevcut `task-detail.js`
+> React adası zaten çalışıyor; "durum ve öncelik satır içi düzenleme" ayrı bir iş
+> ve ada içinde yapılmalı.
+>
+> Doğrulama: JS 367/367 (kanban 82 → 89 test), build 0 hata.
 
 ⚠ PROMPT'tan sapma: PROMPT §7 bunu istemci hesabı sayıyor. "2 yorum · 3 ek" ve
 "ENGELLİ · APY-402 bekleniyor" verisi **liste payload'unda yok**: `GetListAsync`
@@ -496,9 +520,15 @@ cd src/Apya.Platform.Web/wwwroot/dynamic-assets && npm ci
 > frontend testleri toptan patlıyor). `dynamic-assets/yarn.lock`'taki değişikliği
 > **commit etme**. Build öncesi çalışan Web uygulamasını durdur (MSB3021).
 
-**Faz sırası:** ~~0~~ → ~~1~~ → ~~2a~~ → ~~2b~~ → ~~3~~ → ~~4~~ → ~~5~~ → ~~6~~ → 7.
-**Faz 0–6 tamamlandı, 3b paneli dâhil. Sıradaki: Faz 7 (risk dili + kart sayaçları).**
+**Faz sırası:** ~~0~~ → ~~1~~ → ~~2a~~ → ~~2b~~ → ~~3~~ → ~~4~~ → ~~5~~ → ~~6~~ → ~~7~~.
+**PLANIN TAMAMI UYGULANDI (2026-08-25), 3b paneli dâhil.**
 🔴 Faz 6 MİGRATION getirdi (2 dosya) → **deploy'da DbMigrator şart.**
+
+**Açık kalanlar:** §9'daki ürün kararları (kolon gizleme, kolonu temizle, akış
+metrikleri) · kapsam dışı bırakılan mockup ekranları (§10: 1b ızgara kulvar,
+1c koyu tema keşfi, 1d şablonlar, 2c mobil) · kart detay çekmecesinde satır içi
+durum/öncelik düzenleme · **gerçek sürükle-bırak canlı QA'sı** (kolon sıralama
+ve İptal'e sürükleme; SortableJS gerçek fare olayı istiyor).
 🔴 Açık: **tüm fazların canlı QA'sı** — panodaki etkileşimler (Enter/Esc, sürükleyince
 reorder, silme onayı, ＋ modalı) jQuery delegasyonunda olduğu için birim testle
 kapsanamıyor. **Sıradaki: Faz 6 — İptal kolonu (⚠ MİGRATION, onay ister).**

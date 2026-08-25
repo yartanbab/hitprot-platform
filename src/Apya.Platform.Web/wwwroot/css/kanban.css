@@ -236,6 +236,60 @@
 .kanban-card-project.is-neutral::before  { background: var(--apya-neutral-500); }
 .kanban-card-project.is-ai::before       { background: var(--apya-accent-500); }
 
+/* ── Faz 7: risk dili + kart meta rozetleri ──
+   Gecikme GÜN SAYISIYLA söylenir; "Süresi Geçti" tek başına ne kadar geç
+   olduğunu söylemiyordu. Engelli kart bekleten görevin KODUNU taşır. */
+.kanban-card-meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    margin-top: 8px;
+}
+.kanban-card-metaitem { font-size: 10.5px; color: var(--apya-text-tertiary); white-space: nowrap; }
+.kanban-chip-late,
+.kanban-chip-blocked {
+    padding: 1px 7px;
+    border-radius: var(--apya-radius-full);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.2px;
+    white-space: nowrap;
+}
+.kanban-chip-late {
+    background: color-mix(in srgb, var(--apya-negative-500) 14%, transparent);
+    color: var(--apya-text-negative, var(--apya-negative-700, #991b1b));
+}
+.kanban-chip-blocked {
+    background: color-mix(in srgb, var(--apya-warning-500) 16%, transparent);
+    color: var(--apya-text-warning, var(--apya-warning-700, #92400e));
+}
+
+/* Kolon başlığı özeti — başlığın hemen altında, kartlardan sayılır */
+.kanban-col-summary {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: -6px 0 10px;
+    font-size: 10.5px;
+    font-weight: 600;
+}
+.kanban-col-summary .is-late { color: var(--apya-text-negative, var(--apya-negative-700, #991b1b)); }
+.kanban-col-summary .is-blocked { color: var(--apya-text-warning, var(--apya-warning-700, #92400e)); }
+
+/* Pano üstü tek satır risk uyarısı */
+.kanban-risk-strip {
+    display: flex;
+    align-items: center;
+    margin-bottom: 8px;
+    padding: 8px 12px;
+    border-radius: var(--apya-radius-lg);
+    background: color-mix(in srgb, var(--apya-negative-500) 10%, transparent);
+    color: var(--apya-text-negative, var(--apya-negative-700, #991b1b));
+    font-size: 12.5px;
+    font-weight: 600;
+}
+
 /* Kart bu panoda çizilmeyen bir özel kolonda duruyorsa nerede olduğunu söyler */
 .kanban-card-colnote {
     margin-top: 6px;

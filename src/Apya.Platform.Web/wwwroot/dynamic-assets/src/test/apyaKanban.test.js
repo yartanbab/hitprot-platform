@@ -1139,3 +1139,103 @@ describe('araç çubuğu markup konumuna dayanıklı', () => {
         expect(bar.querySelector('.js-kanban-group').classList.contains('d-none')).toBe(false);
     });
 });
+
+// ── Faz 7: risk dili + kart meta rozetleri ─────────────────────────────────
+describe('risk dili ve kart meta', () => {
+    const gecmis = new Date(Date.now() - 3 * 864e5).toISOString();
+    const ileri = new Date(Date.now() + 10 * 864e5).toISOString();
+
+    beforeEach(() => {
+        // moment stub'ı gerçek tarih farkı hesaplasın (gün sayısı testi için).
+        global.moment = (d) => ({
+            diff: (other, unit) => {
+                const a = d ? new Date(d).getTime() : Date.now();
+                const b = other && other.__t ? other.__t : Date.now();
+                const ms = a - b;
+                return unit === 'days' ? Math.trunc(ms / 864e5) : Math.trunc(ms / 36e5);
+            },
+            format: () => '01 Oca',
+            __t: d ? new Date(d).getTime() : Date.now()
+        });
+    });
+
+    it('gecikmiş kartta gün sayısı yazar', async () => {
+        mountBoard(sysCols, [{ id: 't1', code: 'GRV-1', title: 'A', status: 1, priority: 2, dueDate: gecmis }]);
+        apya.kanban.create({ projectId: 'p1' }).load();
+        await flush();
+
+        const chip = document.querySelector('.kanban-chip-late');
+        expect(chip).not.toBeNull();
+        expect(chip.textContent).toBe('3 gün gecikti');
+    });
+
+    it('zamanı gelmemiş kartta gecikme rozeti olmaz', async () => {
+        mountBoard(sysCols, [{ id: 't1', code: 'GRV-1', title: 'A', status: 1, priority: 2, dueDate: ileri }]);
+        apya.kanban.create({ projectId: 'p1' }).load();
+        await flush();
+
+        expect(document.querySelector('.kanban-chip-late')).toBeNull();
+    });
+
+    it('tamamlanmış kart gecikmiş sayılmaz', async () => {
+        mountBoard(sysCols, [{ id: 't1', code: 'GRV-1', title: 'A', status: 4, priority: 2, dueDate: gecmis }]);
+        apya.kanban.create({ projectId: 'p1' }).load();
+        await flush();
+
+        expect(document.querySelector('.kanban-chip-late')).toBeNull();
+    });
+
+    it('engelli kart bekleten görevin kodunu taşır', async () => {
+        mountBoard(sysCols, [{ id: 't1', code: 'GRV-1', title: 'A', status: 2, priority: 2, blockedByCodes: ['GRV-12', 'GRV-15'] }]);
+        apya.kanban.create({ projectId: 'p1' }).load();
+        await flush();
+
+        expect(document.querySelector('.kanban-chip-blocked').textContent).toContain('Engelli · GRV-12, GRV-15');
+    });
+
+    it('yorum, ek ve alt görev sayaçları basılır; sıfır olanlar basılmaz', async () => {
+        mountBoard(sysCols, [{
+            id: 't1', code: 'GRV-1', title: 'A', status: 1, priority: 2,
+            commentCount: 2, attachmentCount: 0, subTaskCount: 8, completedSubTaskCount: 3
+        }]);
+        apya.kanban.create({ projectId: 'p1' }).load();
+        await flush();
+
+        const meta = document.querySelector('.kanban-card-meta').textContent;
+        expect(meta).toContain('2');
+        expect(meta).toContain('3/8');
+        expect(document.querySelectorAll('.kanban-card-metaitem').length).toBe(2); // ek yok
+    });
+
+    it('kolon başlığı gecikmiş/engelli özetini gösterir', async () => {
+        mountBoard(sysCols, [
+            { id: 't1', code: 'GRV-1', title: 'A', status: 1, priority: 2, dueDate: gecmis },
+            { id: 't2', code: 'GRV-2', title: 'B', status: 1, priority: 2, dueDate: gecmis },
+            { id: 't3', code: 'GRV-3', title: 'C', status: 1, priority: 2, blockedByCodes: ['GRV-9'] }
+        ]);
+        apya.kanban.create({ projectId: 'p1' }).load();
+        await flush();
+
+        const sum = col(1).querySelector('.kanban-col-summary');
+        expect(sum.querySelector('.is-late').textContent).toBe('2 gecikmiş');
+        expect(sum.querySelector('.is-blocked').textContent).toBe('1 engelli');
+    });
+
+    it('pano üstü uyarı şeridi toplamları söyler, risk yokken hiç çizilmez', async () => {
+        mountBoard(sysCols, [
+            { id: 't1', code: 'GRV-1', title: 'A', status: 1, priority: 2, dueDate: gecmis },
+            { id: 't2', code: 'GRV-2', title: 'B', status: 2, priority: 2, blockedByCodes: ['GRV-9'] }
+        ]);
+        const kb = apya.kanban.create({ projectId: 'p1' });
+        kb.load();
+        await flush();
+        expect(document.querySelector('.kanban-risk-strip').textContent)
+            .toContain('1 görev gecikmiş, 1 görev engelli.');
+
+        // Riskler kalkınca şerit de kalkmalı.
+        mountBoard(sysCols, [{ id: 't3', code: 'GRV-3', title: 'C', status: 1, priority: 2 }]);
+        apya.kanban.create({ projectId: 'p1' }).load();
+        await flush();
+        expect(document.querySelector('.kanban-risk-strip')).toBeNull();
+    });
+});

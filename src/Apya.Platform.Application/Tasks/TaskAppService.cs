@@ -218,6 +218,7 @@ namespace Apya.Platform.Tasks
             await PopulateFavoritesAsync(result.Items);
             await PopulateSubTaskCountsAsync(result.Items);
             await PopulateProjectNamesAsync(result.Items);
+            await PopulateCardMetaAsync(result.Items);   // Faz 7: yorum/ek sayısı + engelli
             return result;
         }
 
@@ -353,6 +354,71 @@ namespace Apya.Platform.Tasks
         // Alt görev sayaçlarını tek toplu GroupBy sorgusuyla iliştirir (N+1 yok) —
         // PopulateTagsAsync ile aynı desen. Liste satırındaki aç/kapa chevron'u ve
         // "2/5" rozeti bunu kullanır.
+        /// <summary>
+        /// Faz 7: kanban kartındaki yorum/ek rozetleri ve "engelli" bilgisi.
+        /// Comments/Attachments/PredecessorIds YALNIZ GetAsync'te doluyordu; kart
+        /// bunları listede gösterebilsin diye sayılar burada TEK sorguda toplanır
+        /// (PopulateSubTaskCountsAsync ile aynı desen — N+1 yok).
+        /// </summary>
+        private async Task PopulateCardMetaAsync(System.Collections.Generic.IReadOnlyList<TaskDto> items)
+        {
+            if (items.Count == 0) return;
+            var taskIds = items.Select(i => i.Id).ToList();
+
+            var commentQ = await _commentRepository.GetQueryableAsync();
+            var commentCounts = await AsyncExecuter.ToListAsync(
+                commentQ.Where(c => taskIds.Contains(c.TaskId))
+                        .GroupBy(c => c.TaskId)
+                        .Select(g => new { TaskId = g.Key, N = g.Count() }));
+
+            var attachmentQ = await _attachmentRepository.GetQueryableAsync();
+            var attachmentCounts = await AsyncExecuter.ToListAsync(
+                attachmentQ.Where(a => taskIds.Contains(a.TaskId))
+                           .GroupBy(a => a.TaskId)
+                           .Select(g => new { TaskId = g.Key, N = g.Count() }));
+
+            var commentMap = commentCounts.ToDictionary(x => x.TaskId, x => x.N);
+            var attachmentMap = attachmentCounts.ToDictionary(x => x.TaskId, x => x.N);
+
+            // Engelli: AÇIK bir öncülü olan görev. Kapanmış (Done/Cancelled) öncül
+            // engel sayılmaz — yoksa biten her iş kartı sonsuza dek engelli görünürdü.
+            var depQ = await _dependencyRepository.GetQueryableAsync();
+            var deps = await AsyncExecuter.ToListAsync(
+                depQ.Where(d => taskIds.Contains(d.TaskId))
+                    .Select(d => new { d.TaskId, d.PredecessorTaskId }));
+
+            var blockedCodes = new Dictionary<Guid, List<string>>();
+            if (deps.Count > 0)
+            {
+                var predIds = deps.Select(d => d.PredecessorTaskId).Distinct().ToList();
+                var taskQ = await Repository.GetQueryableAsync();
+                var openPreds = await AsyncExecuter.ToListAsync(
+                    taskQ.Where(t => predIds.Contains(t.Id)
+                                     && t.Status != Apya.Platform.Tasks.TaskStatus.Done
+                                     && t.Status != Apya.Platform.Tasks.TaskStatus.Cancelled)
+                         .Select(t => new { t.Id, t.Number }));
+
+                var openMap = openPreds.ToDictionary(p => p.Id, p => $"GRV-{p.Number}");
+                foreach (var d in deps)
+                {
+                    if (!openMap.TryGetValue(d.PredecessorTaskId, out var code)) { continue; }
+                    if (!blockedCodes.TryGetValue(d.TaskId, out var list))
+                    {
+                        list = new List<string>();
+                        blockedCodes[d.TaskId] = list;
+                    }
+                    list.Add(code);
+                }
+            }
+
+            foreach (var item in items)
+            {
+                item.CommentCount = commentMap.TryGetValue(item.Id, out var cN) ? cN : 0;
+                item.AttachmentCount = attachmentMap.TryGetValue(item.Id, out var aN) ? aN : 0;
+                if (blockedCodes.TryGetValue(item.Id, out var codes)) { item.BlockedByCodes = codes; }
+            }
+        }
+
         private async Task PopulateSubTaskCountsAsync(System.Collections.Generic.IReadOnlyList<TaskDto> items)
         {
             if (items.Count == 0) return;
