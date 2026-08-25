@@ -374,7 +374,36 @@ Tasks listesi tam olarak prompt'un tarif ettiği sıralı akışı çalıştır�
 
 ---
 
-## 7. Faz 6 — İptal kolonu: 4b (⚠ MİGRATION İSTER · onay şart · 1 PR · orta)
+## 7. Faz 6 — İptal kolonu: 4b (⚠ MİGRATION · 1 PR · orta) — ✅ TAMAMLANDI (2026-08-25)
+
+> **Şema (kullanıcı onayıyla):** `TaskItem`'a `CancelReason` (256), `CancelledDate`,
+> `StatusBeforeCancel`. **İki migration üretildi** — `20260825102706_AddTaskCancelFields`
+> (Postgres) ve `20260825102730_AddTaskCancelFields` (SqlServer); ikisi de yalnız
+> `AppTasks` tablosuna 3 **nullable** kolon ekliyor, veri kaybı riski yok.
+> 🔴 **Deploy'da DbMigrator ŞART.**
+>
+> 🔑 **İptal muhasebesi `ChangeStatus` İÇİNDE:** İptal'e geçişte önceki durum ve
+> tarih saklanıyor, İptal'den çıkışta izler temizleniyor. Böylece hangi yoldan
+> gelinirse gelinsin (pano sürükleme, liste, Faz 5 toplu "İptal et", API) davranış
+> aynı — `CancelAsync` yalnız nedeni ekliyor.
+>
+> **Pano:** `SYS` haritasına 0 eklendi — eskiden iptal edilen kart haritada
+> karşılığı olmadığı için **sessizce düşüyordu**. Artık en sağda daraltılmış bir
+> İptal kolonunda duruyor (tercih `localStorage`), kapalıyken de render edilip
+> sayacı doğru kalıyor. Kartta iptal tarihi + sebep + "İptali geri al".
+> Kolona sürükleme sebep soruyor (boş geçilebilir ama sessiz iptal yok);
+> vazgeçilirse bırakma geri alınıyor. İptal kolonu toplu "Taşı" hedefleri arasında
+> **yok** — çubuktaki "İptal et" o yolu kullanıyor.
+>
+> ⚠ **Mockup'tan sapma:** "geri sürüklenince eski durumuna döner" yerine, kolona
+> sürükleyip bırakma **bırakılan kolonun** durumunu uyguluyor (açık niyet), eski
+> duruma dönüş kart üzerindeki "İptali geri al" ile yapılıyor. Kullanıcı "Testte"ye
+> bıraktığında kartın başka bir duruma gitmesi şaşırtıcı olurdu.
+>
+> Doğrulama: JS 359/359 (kanban 75 → 81 test), 5 yeni domain testi
+> (`TaskItem_Tests`), build 0 hata.
+
+### Özgün plan (referans)
 
 ⚠ PROMPT'tan sapma: PROMPT "mevcut Status'la çalışır" diyor. Kolonu **göstermek**
 için doğru, ama mockup'taki "Sebep: kapsam dışı bırakıldı" ve "geri sürüklenince
@@ -467,9 +496,9 @@ cd src/Apya.Platform.Web/wwwroot/dynamic-assets && npm ci
 > frontend testleri toptan patlıyor). `dynamic-assets/yarn.lock`'taki değişikliği
 > **commit etme**. Build öncesi çalışan Web uygulamasını durdur (MSB3021).
 
-**Faz sırası:** ~~0~~ → ~~1~~ → ~~2a~~ → ~~2b~~ → ~~3~~ → ~~4~~ → ~~5~~ → 6 → 7. Faz 0 ve 1
-birbirinden bağımsız; 2'den sonrası sıralı. Migration yalnız Faz 6'da.
-**Faz 0 + 1 + 2a + 2b + 3 + 4 + 5 tamamlandı (2026-08-24), 3b paneli dâhil.**
+**Faz sırası:** ~~0~~ → ~~1~~ → ~~2a~~ → ~~2b~~ → ~~3~~ → ~~4~~ → ~~5~~ → ~~6~~ → 7.
+**Faz 0–6 tamamlandı, 3b paneli dâhil. Sıradaki: Faz 7 (risk dili + kart sayaçları).**
+🔴 Faz 6 MİGRATION getirdi (2 dosya) → **deploy'da DbMigrator şart.**
 🔴 Açık: **tüm fazların canlı QA'sı** — panodaki etkileşimler (Enter/Esc, sürükleyince
 reorder, silme onayı, ＋ modalı) jQuery delegasyonunda olduğu için birim testle
 kapsanamıyor. **Sıradaki: Faz 6 — İptal kolonu (⚠ MİGRATION, onay ister).**

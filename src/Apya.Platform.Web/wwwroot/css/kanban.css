@@ -339,6 +339,62 @@
 .kanban-col-swatch:focus-visible { outline: none; box-shadow: var(--apya-shadow-focus); }
 .kanban-col-swatch[aria-pressed="true"] { border-color: var(--apya-border-strong); background: var(--apya-surface-sunken); }
 
+/* İptal kolonu (Faz 4b) — en sağda, varsayılan daraltılmış. Kapalıyken kartlar
+   DOM'da kalır (sayaç doğru olsun) ama liste gizlenir; başlık dikey okunur. */
+.kanban-column.kanban-cancel-col { flex: 0 0 280px; }
+.kanban-cancel-col .kanban-title { color: var(--apya-text-tertiary); }
+.kanban-cancel-col[data-column-color="danger"] .kanban-title i { color: var(--apya-negative-500); }
+
+.kanban-column.kanban-cancel-col.is-collapsed { flex: 0 0 52px; padding: 1rem 0.5rem; }
+.kanban-cancel-col.is-collapsed .kanban-header {
+    flex-direction: column-reverse;
+    gap: 10px;
+    margin-bottom: 0;
+    cursor: default;
+}
+.kanban-cancel-col.is-collapsed .kanban-title {
+    writing-mode: vertical-rl;
+    transform: rotate(180deg);
+    white-space: nowrap;
+}
+.kanban-cancel-col.is-collapsed .kanban-title i { display: none; }
+.kanban-cancel-col.is-collapsed .kanban-cards { display: none; }
+
+.kanban-cancel-toggle {
+    width: 24px;
+    height: 24px;
+    display: grid;
+    place-items: center;
+    border: none;
+    border-radius: var(--apya-radius-md);
+    background: transparent;
+    color: var(--apya-text-tertiary);
+    cursor: pointer;
+}
+.kanban-cancel-toggle:hover { background: var(--apya-surface-base); color: var(--apya-text-primary); }
+.kanban-cancel-toggle:focus-visible { outline: none; box-shadow: var(--apya-shadow-focus); }
+
+/* İptal edilmiş kartta tarih + sebep + geri alma */
+.kanban-cancel-note { margin-top: 8px; padding-top: 8px; border-top: 1px dashed var(--apya-border-default); }
+.kanban-cancel-when {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.4px;
+    color: var(--apya-text-negative, var(--apya-negative-700, #991b1b));
+}
+.kanban-cancel-why { margin-top: 3px; font-size: 11px; line-height: 1.5; color: var(--apya-text-tertiary); }
+.kanban-cancel-restore {
+    margin-top: 6px;
+    padding: 0;
+    border: none;
+    background: transparent;
+    color: var(--apya-accent-600);
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+}
+.kanban-cancel-restore:hover { text-decoration: underline; }
+
 /* "Kolon ekle" hayalet kolonu — dar, kesik çizgili (handoff) */
 .kanban-column.kanban-add-col {
     flex: 0 0 158px;

@@ -34,6 +34,12 @@ namespace Apya.Platform.Tasks
         public Apya.Platform.Tasks.TaskStatus Status { get; set; }
         public Apya.Platform.Tasks.TaskPriority Priority { get; set; }
 
+        /// <summary>Faz 4b: iptal nedeni — panodaki İptal kolonunda kartta görünür.</summary>
+        public string? CancelReason { get; set; }
+
+        /// <summary>Faz 4b: iptal tarihi.</summary>
+        public DateTime? CancelledDate { get; set; }
+
         public Guid? AssigneeId { get; set; }
         public string? AssigneeName { get; set; }
         public Guid? ParentTaskId { get; set; }

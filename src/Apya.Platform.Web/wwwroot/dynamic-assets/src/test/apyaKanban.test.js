@@ -64,7 +64,7 @@ let colCalls;
 
 function mountBoard(cols, tasks, canBulk) {
     document.body.innerHTML = boardHtml(canBulk);
-    colCalls = { update: [], reorder: [], create: [], delete: [], map: [], assign: [], priority: [] };
+    colCalls = { update: [], reorder: [], create: [], delete: [], map: [], assign: [], priority: [], cancel: [], restore: [] };
     window.apya.platform = {
         tasks: {
             task: {
@@ -72,7 +72,9 @@ function mountBoard(cols, tasks, canBulk) {
                 getActiveTimeLog: () => Promise.resolve(null),
                 getUsersLookup: () => Promise.resolve({ items: [{ id: 'u1', userName: 'burak' }, { id: 'u2', userName: 'selin' }] }),
                 setAssignee: (id, uid) => { colCalls.assign.push({ id, uid }); return Promise.resolve(); },
-                setPriority: (id, p) => { colCalls.priority.push({ id, p }); return Promise.resolve(); }
+                setPriority: (id, p) => { colCalls.priority.push({ id, p }); return Promise.resolve(); },
+                cancel: (id, reason) => { colCalls.cancel.push({ id, reason }); return Promise.resolve(); },
+                restoreFromCancel: (id) => { colCalls.restore.push(id); return Promise.resolve(); }
             }
         },
         projects: {
@@ -136,7 +138,8 @@ describe('kolonların kaynağı', () => {
         apya.kanban.create({ projectId: null }).load();
         await flush();
 
-        expect(document.querySelectorAll('.kanban-column').length).toBe(4);
+        // 4 durum kolonu + İptal kolonu (Faz 4b, daraltılmış).
+        expect(document.querySelectorAll('.kanban-column').length).toBe(5);
         expect(col(1).querySelector('.kanban-title').textContent).toContain('Yapılacak');
         expect(col(4).querySelector('.kanban-title').textContent).toContain('Tamamlandı');
         // DB kolonu yok → drag status ile taşınmalı, kolon-id yazılmamalı.
@@ -155,7 +158,7 @@ describe('kolonların kaynağı', () => {
         apya.kanban.create({ projectId: 'p1' }).load();
         await flush();
 
-        const names = Array.from(document.querySelectorAll('.kanban-column:not(.js-add-col) .kanban-title'))
+        const names = Array.from(document.querySelectorAll('.kanban-column:not(.js-add-col):not(.kanban-cancel-col) .kanban-title'))
             .map((n) => n.textContent.trim());
         expect(names).toEqual(['Yapılacak', 'Hakem değerlendirmesi', 'Sürüyor', 'Testte', 'Tamamlandı']);
     });
@@ -826,7 +829,7 @@ describe('eşlemeli özel kolon', () => {
         await flush();
 
         // Beş ayrı kolon: eşleme "Testte"ye olsa da kolon kendi başına duruyor.
-        expect(document.querySelectorAll('.kanban-column:not(.js-add-col)').length).toBe(5);
+        expect(document.querySelectorAll('.kanban-column:not(.js-add-col):not(.kanban-cancel-col)').length).toBe(5);
         const own = document.querySelector('.js-custom-col');
         expect(own).not.toBeNull();
         expect(own.hasAttribute('data-status-id')).toBe(false);
@@ -1048,5 +1051,74 @@ describe('toplu ata / öncelik', () => {
         await flush();
 
         expect(document.querySelectorAll('.js-kb-assign-menu .js-kb-assign').length).toBe(3);
+    });
+});
+
+// ── Faz 6 (4b): İptal kolonu ───────────────────────────────────────────────
+describe('İptal kolonu', () => {
+    const cancelled = {
+        id: 'tc', code: 'GRV-9', title: 'Eski hibe formu migrasyonu', status: 0, priority: 2,
+        cancelReason: 'kapsam dışı bırakıldı', cancelledDate: '2026-08-12T00:00:00Z'
+    };
+    const cancelCol = () => document.querySelector('.kanban-cancel-col');
+
+    beforeEach(() => { localStorage.removeItem('apya-kanban-cancelled'); });
+
+    it('panoda daima var ve varsayılan daraltılmış', async () => {
+        mountBoard(sysCols, []);
+        apya.kanban.create({ projectId: 'p1' }).load();
+        await flush();
+
+        expect(cancelCol()).not.toBeNull();
+        expect(cancelCol().classList.contains('is-collapsed')).toBe(true);
+        expect(cancelCol().getAttribute('data-status-id')).toBe('0');
+    });
+
+    it('iptal edilen kart artık düşmüyor — İptal kolonunda render ediliyor', async () => {
+        // Eskiden SYS haritasında 0 yoktu; kart sessizce kayboluyordu.
+        mountBoard(sysCols, [cancelled]);
+        apya.kanban.create({ projectId: 'p1' }).load();
+        await flush();
+
+        expect(document.querySelector('#kanban-cancelled .kanban-card')).not.toBeNull();
+        expect(cancelCol().querySelector('.kanban-count').textContent).toBe('1');
+    });
+
+    it('kartta iptal tarihi, sebebi ve geri alma düğmesi bulunur', async () => {
+        mountBoard(sysCols, [cancelled]);
+        apya.kanban.create({ projectId: 'p1' }).load();
+        await flush();
+
+        const note = document.querySelector('.kanban-cancel-note');
+        expect(note.querySelector('.kanban-cancel-when').textContent).toContain('İPTAL');
+        expect(note.querySelector('.kanban-cancel-why').textContent).toBe('Sebep: kapsam dışı bırakıldı');
+        expect(note.querySelector('.js-restore-task')).not.toBeNull();
+    });
+
+    it('sebepsiz iptalde sebep satırı basılmaz', async () => {
+        mountBoard(sysCols, [{ ...cancelled, cancelReason: null }]);
+        apya.kanban.create({ projectId: 'p1' }).load();
+        await flush();
+
+        expect(document.querySelector('.kanban-cancel-why')).toBeNull();
+        expect(document.querySelector('.kanban-cancel-when')).not.toBeNull();
+    });
+
+    it('tercih açıkken kolon genişlemiş gelir', async () => {
+        localStorage.setItem('apya-kanban-cancelled', '1');
+        mountBoard(sysCols, [cancelled]);
+        apya.kanban.create({ projectId: 'p1' }).load();
+        await flush();
+
+        expect(cancelCol().classList.contains('is-collapsed')).toBe(false);
+    });
+
+    it('toplu "Taşı" hedefleri arasında YOKTUR (iptal sebep sorar)', async () => {
+        mountBoard(sysCols, [cancelled]);
+        apya.kanban.create({ projectId: 'p1' }).load();
+        await flush();
+
+        const items = Array.from(document.querySelectorAll('.js-kb-move')).map((b) => b.textContent);
+        expect(items).not.toContain('İptal edildi');
     });
 });

@@ -55,6 +55,12 @@ namespace Apya.Platform.Tasks
         /// <summary>Yalnız önceliği değiştirir. Toplu işlem için granüler uç.</summary>
         Task SetPriorityAsync(Guid id, Apya.Platform.Tasks.TaskPriority priority);
 
+        /// <summary>Faz 4b: görevi nedeniyle birlikte iptal eder (panodaki İptal kolonu).</summary>
+        Task CancelAsync(Guid id, string? reason);
+
+        /// <summary>Faz 4b: iptali geri alır — görev iptalden ÖNCEKİ durumuna döner.</summary>
+        Task RestoreFromCancelAsync(Guid id);
+
         /// <summary>
         /// Görevin son tarihini <paramref name="days"/> gün ileri alır ("Ötele").
         /// Son tarihi olmayan görev bugünden itibaren tarihlenir. Yalnız DueDate'e

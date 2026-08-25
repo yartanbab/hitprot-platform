@@ -26,7 +26,9 @@
     window.apya = window.apya || {};
     if (apya.kanban) { return; }
 
-    var SYS = { 1: 'kanban-todo', 2: 'kanban-inprogress', 3: 'kanban-inreview', 4: 'kanban-done' };
+    // 0 (İptal) DAHİL: eskiden haritada yoktu, iptal edilen kart sessizce
+    // düşüyordu ve kullanıcı görevin silindiğini sanıyordu (Faz 4b).
+    var SYS = { 0: 'kanban-cancelled', 1: 'kanban-todo', 2: 'kanban-inprogress', 3: 'kanban-inreview', 4: 'kanban-done' };
 
     function el(tag, cls) { var e = document.createElement(tag); if (cls) { e.className = cls; } return e; }
     // Swal html'ine kullanıcı girdisi (kolon/görev adı) basılıyor — kaçış şart.
@@ -92,6 +94,9 @@
         // zaten var. Kartlar kolonun İÇİNDE kulvar başlıkları altında toplanır —
         // sürükleme kapları değişmediği için taşıma mantığı aynı kalır.
         var enableLanes = opts.enableLanes === true;
+        // İptal kolonu varsayılan KAPALI (daraltılmış); tercih kullanıcıya ait.
+        var showCancelled = false;
+        try { showCancelled = localStorage.getItem('apya-kanban-cancelled') === '1'; } catch (e) { }
         var grouping = '';
         if (enableLanes) {
             try { grouping = localStorage.getItem('apya-kanban-group') || ''; } catch (e) { }
@@ -231,6 +236,24 @@
                 bottom.appendChild(due);
             }
             card.appendChild(bottom);
+
+            // İptal edilmiş kart: ne zaman ve neden iptal edildiği görünür,
+            // "İptali geri al" kartı iptalden ÖNCEKİ durumuna döndürür.
+            if (task.status === 0) {
+                var cx = el('div', 'kanban-cancel-note');
+                var when = task.cancelledDate ? moment(task.cancelledDate).format('DD MMM') : '';
+                var head = el('div', 'kanban-cancel-when');
+                head.textContent = when ? ('İPTAL · ' + when) : 'İPTAL';
+                cx.appendChild(head);
+                if (task.cancelReason) {
+                    var why = el('div', 'kanban-cancel-why');
+                    why.textContent = 'Sebep: ' + task.cancelReason;
+                    cx.appendChild(why);
+                }
+                cx.innerHTML += '<button type="button" class="kanban-cancel-restore js-restore-task" ' +
+                    'data-id="' + task.id + '">İptali geri al</button>';
+                card.appendChild(cx);
+            }
 
             // Kart, bu panoda ÇİZİLMEYEN bir özel kolonda duruyorsa (genel panoda
             // "Tümü" seçili ya da başka bir projenin kolonu) nerede olduğunu söyle —
@@ -499,7 +522,9 @@
             var menu = bar && bar.querySelector('.js-kb-move-menu');
             if (!menu) { return; }
             menu.innerHTML = '';
-            document.querySelectorAll(boardSel + ' .kanban-column:not(.js-add-col):not(.kanban-note-col)').forEach(function (col) {
+            // İptal kolonu hedef listesinde YOK: iptal sebep soruyor, çubuktaki
+            // "İptal et" o yolu kullanıyor.
+            document.querySelectorAll(boardSel + ' .kanban-column:not(.js-add-col):not(.kanban-note-col):not(.kanban-cancel-col)').forEach(function (col) {
                 var name = col.querySelector('.js-col-name');
                 var btn = el('button', 'apya-console-menu-item js-kb-move');
                 btn.type = 'button';
@@ -946,6 +971,26 @@
                 board.appendChild(buildColumn(c));
             });
 
+            // İptal kolonu (Faz 4b): BoardColumn kaydı YOK, yalnız Status 0'ın
+            // panodaki karşılığı. En sağda, varsayılan daraltılmış; kapalıyken de
+            // kartlar render edilir (sayaç doğru kalsın, CSS listeyi gizler).
+            var cancelCol = el('div', 'kanban-column kanban-cancel-col' + (showCancelled ? '' : ' is-collapsed'));
+            cancelCol.setAttribute('data-status-id', '0');
+            cancelCol.setAttribute('data-cancel-col', 'true');
+            cancelCol.setAttribute('data-column-color', 'danger');
+            cancelCol.innerHTML =
+                '<div class="kanban-header">' +
+                    '<span class="kanban-title js-col-name"><i class="fa fa-ban me-2"></i>İptal edildi</span>' +
+                    '<span class="d-flex align-items-center gap-2">' +
+                        '<span class="apya-chip apya-chip-negative kanban-count">0</span>' +
+                        '<button type="button" class="kanban-cancel-toggle js-cancel-toggle" ' +
+                            'title="' + (showCancelled ? 'Daralt' : 'Genişlet') + '" aria-label="İptal kolonunu aç/kapat">' +
+                            '<i class="fa fa-angle-' + (showCancelled ? 'right' : 'left') + '"></i></button>' +
+                    '</span>' +
+                '</div>' +
+                '<div class="kanban-cards" id="kanban-cancelled"></div>';
+            board.appendChild(cancelCol);
+
             // "Kolon ekle" hayalet kolonu (handoff: kesik çizgili, dar) — yalnız
             // yetkiliye ve yalnız proje seçiliyken (özel kolon projeye aittir).
             if (canEditColumns && effectiveCols()) {
@@ -1092,6 +1137,29 @@
                         var columnId = col.attr('data-column-id');
                         var statusId = col.attr('data-status-id');
                         var promise;
+                        // İptal kolonuna bırakma sebep sorar; iptal SEBEPSİZ de olur
+                        // (kullanıcı boş geçebilir) ama işlem sessizce yapılmaz.
+                        if (col.attr('data-cancel-col')) {
+                            Swal.fire({
+                                title: 'Görev iptal edilsin mi?',
+                                input: 'text',
+                                inputPlaceholder: 'Sebep (isteğe bağlı)',
+                                showCancelButton: true,
+                                confirmButtonText: 'İptal et',
+                                cancelButtonText: 'Vazgeç'
+                            }).then(function (r) {
+                                if (!r.isConfirmed) { load(); return; }   // bırakmayı geri al
+                                taskSvc.cancel(taskId, r.value || null).then(function () {
+                                    abp.notify.info('Görev iptal edildi.');
+                                    load();
+                                    onChanged();
+                                }).catch(function () {
+                                    abp.notify.error('Görev iptal edilemedi.');
+                                    load();
+                                });
+                            });
+                            return;
+                        }
                         if (columnId) { promise = colSvc.moveTaskToColumn(taskId, columnId); }
                         else if (statusId) { promise = taskSvc.updateStatus(taskId, parseInt(statusId)); }
                         else { return; }
@@ -1215,6 +1283,25 @@
         });
 
         $doc.on('click', '.js-kb-clear', function () { clearSelection(); });
+
+        // İptal kolonunu aç/kapat — tercih kullanıcıda kalır.
+        $doc.on('click', boardSel + ' .js-cancel-toggle', function (e) {
+            e.stopPropagation();
+            showCancelled = !showCancelled;
+            try { localStorage.setItem('apya-kanban-cancelled', showCancelled ? '1' : '0'); } catch (err) { }
+            load();
+        });
+
+        // "İptali geri al" — kartı iptalden ÖNCEKİ durumuna döndürür.
+        $doc.on('click', boardSel + ' .js-restore-task', function (e) {
+            e.stopPropagation();
+            var id = $(this).data('id');
+            taskSvc.restoreFromCancel(id).then(function () {
+                abp.notify.success('İptal geri alındı.');
+                load();
+                onChanged();
+            }).catch(function () { abp.notify.error('İptal geri alınamadı.'); });
+        });
 
         // Taşı: hedef sistem kolonuysa durum, özel kolonsa kolon bağı üzerinden.
         $doc.on('click', '.js-kb-move', function () {

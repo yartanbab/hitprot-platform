@@ -1181,6 +1181,55 @@ namespace Apya.Platform.Tasks
         }
 
         /// <summary>
+        /// Faz 4b: görevi nedeniyle iptal eder. Durum muhasebesi (önceki durumu
+        /// saklama, iptal tarihi) domain'de <see cref="TaskItem.ChangeStatus"/>
+        /// içinde tutuluyor — hangi yoldan gelinirse gelinsin tutarlı.
+        /// </summary>
+        [Authorize(PlatformPermissions.Tasks.ChangeStatus)]
+        public async Task CancelAsync(Guid id, string? reason)
+        {
+            var task = await Repository.GetAsync(id);
+            var oldStatus = task.Status;
+            task.Cancel(reason, Clock.Now);
+            await Repository.UpdateAsync(task);
+
+            await _localEventBus.PublishAsync(new TaskStatusChangedEto
+            {
+                TaskId         = id,
+                TaskTitle      = task.Title,
+                OldStatus      = oldStatus,
+                NewStatus      = Apya.Platform.Tasks.TaskStatus.Cancelled,
+                AssigneeId     = task.AssigneeId,
+                CreatorId      = task.CreatorId,
+                ModifierUserId = CurrentUser.Id,
+                ChangedByName  = CurrentUser.UserName ?? "Bilinmeyen"
+            });
+        }
+
+        /// <summary>Faz 4b: iptali geri alır — görev iptalden ÖNCEKİ durumuna döner.</summary>
+        [Authorize(PlatformPermissions.Tasks.ChangeStatus)]
+        public async Task RestoreFromCancelAsync(Guid id)
+        {
+            var task = await Repository.GetAsync(id);
+            if (task.Status != Apya.Platform.Tasks.TaskStatus.Cancelled) { return; }
+
+            task.RestoreFromCancel(Clock.Now);
+            await Repository.UpdateAsync(task);
+
+            await _localEventBus.PublishAsync(new TaskStatusChangedEto
+            {
+                TaskId         = id,
+                TaskTitle      = task.Title,
+                OldStatus      = Apya.Platform.Tasks.TaskStatus.Cancelled,
+                NewStatus      = task.Status,
+                AssigneeId     = task.AssigneeId,
+                CreatorId      = task.CreatorId,
+                ModifierUserId = CurrentUser.Id,
+                ChangedByName  = CurrentUser.UserName ?? "Bilinmeyen"
+            });
+        }
+
+        /// <summary>
         /// "Ötele" — son tarihi <paramref name="days"/> gün ileri alır. Son tarihi
         /// olmayan görevde bugün başlangıç kabul edilir. StartDate'e dokunulmaz;
         /// yalnız yeni son tarih başlangıcın gerisinde kalırsa başlangıç da kayar
