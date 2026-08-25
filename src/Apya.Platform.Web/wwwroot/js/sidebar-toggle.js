@@ -599,7 +599,19 @@ $(function () {
             drawer.classList.add('apya-mshell-in-panel');
         }
         var first = panelBody.querySelector('.apya-mshell-panel-row');
-        if (first) { first.focus(); }
+        // ODAK ASLA KAYDIRMASIN. Odak verildiği an panel HÂLÂ translateX(100%):
+        // tarayıcı odaklanan satırı görünür kılmak için en yakın kaydırma kabını
+        // (#mobile-navbar; overflow:hidden ama yine de programatik kaydırılabilir,
+        // translateX(100%) paneli scrollWidth'i 2 viewport'a çıkarıyor) tam bir
+        // viewport genişliği sağa kaydırıyordu. Çekmecenin TAMAMI — başlık dâhil —
+        // ekran dışına çıkıyor, geriye BOŞ EKRAN kalıyordu. Chromium kaymayı geçiş
+        // bitince kırpıp geri alıyor (yalnız bir flaş); iOS Safari almıyor, ekran
+        // bir sonraki dokunuşa kadar boş kalıyor — bildirilen hata bu.
+        if (first) { first.focus({ preventScroll: true }); }
+        // preventScroll'u desteklemeyen eski sürümler için aynı görevdeki geri
+        // alma (boyanmadan önce çalışır, bu yüzden kayma hiç görünmez).
+        drawer.scrollLeft = 0;
+        drawer.scrollTop = 0;
     }
 
     function closePanel() {
