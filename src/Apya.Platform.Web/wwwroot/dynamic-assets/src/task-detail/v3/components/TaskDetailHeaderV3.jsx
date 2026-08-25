@@ -6,6 +6,7 @@ import {
     SELECTABLE_STATUSES, SELECTABLE_PRIORITIES,
     statusOf, priorityOf,
 } from '../taskMetaV3';
+import { dialogPortalContainer } from '../../../lib/dom/dialogPortalContainer';
 
 /* Popover.Root'lara `modal` ŞART: içerik body'ye portal edildiği için non-modal
    popover, Dialog'un focus trap'inin DIŞINDA kalıyor. Açılışta odağı alır almaz trap
@@ -64,6 +65,12 @@ export function TaskDetailHeaderV3({
     onExportPdf,
 }) {
     const [copied, setCopied] = useState(false);
+    /* Kap DÜĞÜM olarak state'te tutulur, ref'te DEĞİL: `container` prop'u ana
+       bileşenin render'ında hesaplanıyor ve ref ilk render'da henüz boş oluyor.
+       Uncontrolled popover açıldığında ana bileşen yeniden render EDİLMEDİĞİ için
+       kap sonsuza dek undefined kalırdı. State ile mount sonrası bir render daha
+       olur ve düğüm yerine oturur. Bkz. dialogPortalContainer. */
+    const [rootEl, setRootEl] = useState(null);
     const [menuOpen, setMenuOpen] = useState(false);
     const titleRef = useRef(null);
 
@@ -100,7 +107,7 @@ export function TaskDetailHeaderV3({
     ];
 
     return (
-        <header className="px-6 pt-[18px] pb-4 border-b border-subtle bg-surface-base">
+        <header ref={setRootEl} className="px-6 pt-[18px] pb-4 border-b border-subtle bg-surface-base">
             <div className="flex items-start justify-between gap-4">
 
                 {/* ---- Sol: rozetler + başlık ---- */}
@@ -129,7 +136,7 @@ export function TaskDetailHeaderV3({
                                     <i className="fa-solid fa-chevron-down text-[8px] opacity-60" />
                                 </button>
                             </Popover.Trigger>
-                            <Popover.Portal>
+                            <Popover.Portal container={dialogPortalContainer(rootEl)}>
                                 <Popover.Content sideOffset={6} align="start" className={`${POPOVER_CLS} w-[196px]`}>
                                     <div className="px-[9px] pt-[5px] pb-[7px] text-[10px] font-bold uppercase tracking-[.08em] text-text-tertiary">
                                         Durumu değiştir
@@ -169,7 +176,7 @@ export function TaskDetailHeaderV3({
                                     <i className="fa-solid fa-chevron-down text-[8px] opacity-60" />
                                 </button>
                             </Popover.Trigger>
-                            <Popover.Portal>
+                            <Popover.Portal container={dialogPortalContainer(rootEl)}>
                                 <Popover.Content sideOffset={6} align="start" className={`${POPOVER_CLS} w-[184px]`}>
                                     <div className="px-[9px] pt-[5px] pb-[7px] text-[10px] font-bold uppercase tracking-[.08em] text-text-tertiary">
                                         Öncelik seç
@@ -270,7 +277,7 @@ export function TaskDetailHeaderV3({
                                 <i className="fa-solid fa-ellipsis text-sm" />
                             </button>
                         </Popover.Trigger>
-                        <Popover.Portal>
+                        <Popover.Portal container={dialogPortalContainer(rootEl)}>
                             <Popover.Content sideOffset={6} align="end" className={`${POPOVER_CLS} w-[244px]`}>
                                 {menuItems.map((item) => (
                                     <button

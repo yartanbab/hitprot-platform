@@ -1,5 +1,6 @@
 import React, { useRef, useState } from 'react';
 import * as Popover from '@radix-ui/react-popover';
+import { dialogPortalContainer } from '../../../lib/dom/dialogPortalContainer';
 
 /**
  * WYSIWYG açıklama editörü — markdown işareti GÖRÜNMEZ, biçim doğrudan uygulanır.
@@ -144,11 +145,9 @@ export function RichTextEditorV3({ value, onChange, mentionName = 'ekip arkadaş
                     return (
                         <Popover.Root key="link" modal open={linkOpen} onOpenChange={setLinkOpen}>
                             <Popover.Trigger asChild>{node}</Popover.Trigger>
-                            {/* Popover'ı Dialog'un İÇİNE portal et. body'ye basıldığında Dialog'un focus
-                                trap'i URL kutusuna verilen odağı anında geri çalıyor, alana yazılamıyor ve
-                                tuşlar editöre gidip seçili metni eziyordu. Sayfa modunda dialog yoktur,
-                                closest null döner ve Radix varsayılan olarak body'ye basar. */}
-                            <Popover.Portal container={editorRef.current?.closest('[role="dialog"]') ?? undefined}>
+                            {/* Popover'ı modalın İÇİNE portal et — aksi halde Dialog'un focus trap'i
+                                URL kutusuna verilen odağı geri çalıyor. Bkz. dialogPortalContainer. */}
+                            <Popover.Portal container={dialogPortalContainer(editorRef.current)}>
                                 <Popover.Content
                                     sideOffset={6}
                                     align="start"
