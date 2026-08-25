@@ -48,9 +48,20 @@ $(function () {
         return Math.max(MIN, Math.min(MAX, Math.round(value)));
     }
 
+    // Odaklanabilir bir `role="separator"` ARIA'da bir WIDGET'tır ve
+    // aria-valuenow ister; yoksa ekran okuyucu tutamağı duyurur ama genişliğin
+    // ne olduğunu ve ok tuşlarının neyi değiştirdiğini söyleyemez. Değer her
+    // uygulamada tazelenmeli — bir kez basılıp bırakılırsa sürükledikçe yalan
+    // söylemeye başlar.
+    function announce(width) {
+        if (!handle) { return; }
+        handle.setAttribute('aria-valuenow', String(Math.round(width)));
+    }
+
     function apply(width) {
         applied = width;
         document.documentElement.style.setProperty('--apya-sidebar-w', width + 'px');
+        announce(width);
     }
 
     // Varsayılana dönüş: satır içi stili SİL, CSS kendi değerini geri alsın.
@@ -60,6 +71,10 @@ $(function () {
         applied = null;
         document.documentElement.style.removeProperty('--apya-sidebar-w');
         persist(null);
+        // Varsayılan JS'te SABİT YAZILI DEĞİL (tek kaynak apya-theme-bridge.css).
+        // Duyurulacak değeri bu yüzden ölçümden alıyoruz; getBoundingClientRect
+        // düzeni zorladığı için satır içi stil silindikten sonra taze gelir.
+        announce(container.getBoundingClientRect().width);
     }
 
     function persist(width) {
@@ -74,11 +89,19 @@ $(function () {
     handle.setAttribute('role', 'separator');
     handle.setAttribute('aria-orientation', 'vertical');
     handle.setAttribute('aria-label', handleLabel());
+    // Sınırlar sürükleme/klavye ile aynı sabitlerden; ekranda kilitlenen değer
+    // ile duyurulan aralık ayrışmasın.
+    handle.setAttribute('aria-valuemin', String(MIN));
+    handle.setAttribute('aria-valuemax', String(MAX));
     handle.tabIndex = 0;
     // Kaba DEĞİL gövdeye: tutamak position:fixed ve kabın konumuna dokunulmuyor
     // (bkz. apya-shell.css §26 — kaba position vermek temanın fixed kuralını
     // eziyor ve kenar çubuğunu akışa döndürüyordu).
     document.body.appendChild(handle);
+
+    // İlk değer: kullanıcı hiç sürüklemeden odaklanırsa da genişlik duyurulsun.
+    // baseWidth() kayıtlı değeri, yoksa geçerli CSS varsayılanının ölçümünü verir.
+    announce(baseWidth());
 
     // Etiket SUNUCUDAN gelir (ApyaThemeHead → #ApyaMobileShellL10n): kabuk
     // metinleri JS'e gömülmüyor. Blok okunamazsa erişilebilirlik etiketsiz
