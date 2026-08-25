@@ -1,6 +1,7 @@
 @page "/Settings/Menu"
 @model Apya.Platform.Web.Pages.Settings.MenuModel
 @inject Microsoft.Extensions.Localization.IStringLocalizer<Apya.Platform.Localization.PlatformResource> L
+@using Apya.Platform.Web.Menus
 @{
     ViewBag.Title = L["MenuLayout:Title"].Value;
 }
@@ -21,7 +22,11 @@
             data-nav-node="@node.Name"
             data-nav-kind="@(node.IsGroup ? "group" : "leaf")"
             data-nav-locked="@(node.IsLocked ? "true" : "false")"
-            data-nav-admin="@(node.IsAdminLink ? "true" : "false")">
+            data-nav-admin="@(node.IsAdminLink ? "true" : "false")"
+            data-nav-custom="@(node.IsCustom ? (node.IsGroup ? "group" : "link") : "")"
+            data-nav-title="@node.Title"
+            data-nav-icon="@node.Icon"
+            data-nav-url="@node.Url">
             <div class="apya-navedit-row">
                 @if (node.IsLocked)
                 {
@@ -61,6 +66,30 @@
                                 aria-label="@L["MenuLayout:MoveToSidebar"]" title="@L["MenuLayout:MoveToSidebar"]">
                             <i class="fa fa-arrow-left" aria-hidden="true"></i>
                         </button>
+
+                        @* Yalnız kullanıcının kendi kurduğu satırlar düzenlenip silinebilir:
+                           koddan gelen bir öğenin adını değiştirmek yerelleştirmeyi kırar,
+                           silmek ise "gizle" ile zaten karşılanıyor. *@
+                        @if (node.IsCustom)
+                        {
+                            <button type="button" class="apya-navedit-btn" data-nav-edit
+                                    aria-label="@L["MenuLayout:Edit"]" title="@L["MenuLayout:Edit"]">
+                                <i class="fa fa-pen" aria-hidden="true"></i>
+                            </button>
+                            <button type="button" class="apya-navedit-btn apya-navedit-btn--danger" data-nav-delete
+                                    aria-label="@L["MenuLayout:Delete"]" title="@L["MenuLayout:Delete"]">
+                                <i class="fa fa-trash" aria-hidden="true"></i>
+                            </button>
+                        }
+
+                        <button type="button" class="apya-navedit-btn" data-nav-hide
+                                aria-label="@L["MenuLayout:Hide"]" title="@L["MenuLayout:Hide"]">
+                            <i class="fa fa-eye-slash" aria-hidden="true"></i>
+                        </button>
+                        <button type="button" class="apya-navedit-btn" data-nav-show
+                                aria-label="@L["MenuLayout:Show"]" title="@L["MenuLayout:Show"]">
+                            <i class="fa fa-eye" aria-hidden="true"></i>
+                        </button>
                     </span>
                 }
             </div>
@@ -88,6 +117,71 @@
     <form method="post" id="ApyaMenuEditor">
         @* Tarayıcı DOM'dan kurar; sunucuda MenuLayout.Parse normalize eder. *@
         <input type="hidden" asp-for="LayoutJson" id="ApyaMenuLayoutJson" />
+
+        <div class="apya-navedit-toolbar">
+            <button type="button" class="btn btn-outline-primary btn-sm" data-nav-new="group">
+                <i class="fa fa-folder-plus me-1" aria-hidden="true"></i>@L["MenuLayout:NewGroup"]
+            </button>
+            <button type="button" class="btn btn-outline-primary btn-sm" data-nav-new="link">
+                <i class="fa fa-link me-1" aria-hidden="true"></i>@L["MenuLayout:NewLink"]
+            </button>
+
+            @* Tek form üç iş görür: kategori ekle, kısayol ekle, ikisini düzenle.
+               Ayrı ayrı üç form basmak aynı alanları üç kez çoğaltırdı. *@
+            <div class="apya-navedit-form" id="ApyaNavForm" hidden>
+                <label class="visually-hidden" for="ApyaNavFormTitle">@L["MenuLayout:FormTitle"]</label>
+                <input type="text" id="ApyaNavFormTitle" class="form-control form-control-sm"
+                       maxlength="40" placeholder="@L["MenuLayout:FormTitle"]"
+                       data-required="@L["MenuLayout:FormTitleRequired"]" />
+
+                <label class="visually-hidden" for="ApyaNavFormIcon">@L["MenuLayout:FormIcon"]</label>
+                <select id="ApyaNavFormIcon" class="form-select form-select-sm">
+                    @foreach (var icon in Model.IconChoices)
+                    {
+                        <option value="@icon">@icon.Replace("fa fa-", "")</option>
+                    }
+                </select>
+                <i class="apya-navedit-icon" id="ApyaNavFormPreview" aria-hidden="true"></i>
+
+                <label class="visually-hidden" for="ApyaNavFormUrl">@L["MenuLayout:FormUrl"]</label>
+                <input type="text" id="ApyaNavFormUrl" class="form-control form-control-sm"
+                       maxlength="200" placeholder="@L["MenuLayout:FormUrl"]"
+                       data-invalid="@L["MenuLayout:FormUrlInvalid"]" hidden />
+
+                <button type="button" class="btn btn-primary btn-sm" id="ApyaNavFormSave">@L["MenuLayout:FormSave"]</button>
+                <button type="button" class="btn btn-link btn-sm" id="ApyaNavFormCancel">@L["MenuLayout:FormCancel"]</button>
+                <span class="apya-navedit-form-error" id="ApyaNavFormError" role="alert"></span>
+            </div>
+        </div>
+
+        @*
+            Yeni satırı JS elle kurmuyor: şablonu AYNI RenderNode üretiyor.
+            Elle kurulsaydı markup iki yerde yaşar ve er geç ayrışırdı (bu repoda
+            "test DOM'u partial'dan ayrıştı" vakası zaten yaşandı).
+        *@
+        @{
+            var templateChildren = new List<Apya.Platform.Web.Pages.Settings.MenuModel.NavNode>();
+        }
+        <template id="ApyaNavGroupTemplate">
+            <ul>
+                @{
+                    RenderNode(new Apya.Platform.Web.Pages.Settings.MenuModel.NavNode(
+                        "__NAME__", "__TITLE__", MenuIcons.Default,
+                        IsGroup: true, IsLocked: false, IsAdminLink: false,
+                        IsCustom: true, Url: string.Empty, templateChildren));
+                }
+            </ul>
+        </template>
+        <template id="ApyaNavLinkTemplate">
+            <ul>
+                @{
+                    RenderNode(new Apya.Platform.Web.Pages.Settings.MenuModel.NavNode(
+                        "__NAME__", "__TITLE__", MenuIcons.Default,
+                        IsGroup: false, IsLocked: false, IsAdminLink: false,
+                        IsCustom: true, Url: "__URL__", templateChildren));
+                }
+            </ul>
+        </template>
 
         <div class="row g-3">
             <div class="col-lg-6">
@@ -130,6 +224,24 @@
                 </abp-card>
             </div>
         </div>
+
+        <abp-card class="mt-3">
+            <abp-card-header>
+                <abp-card-title>@L["MenuLayout:Hidden"]</abp-card-title>
+            </abp-card-header>
+            <abp-card-body>
+                <div class="form-text mb-3">@L["MenuLayout:HiddenHelp"]</div>
+                <div data-nav-side="hidden">
+                    <ul class="apya-navedit-list apya-navedit-list--root" data-nav-root="hidden">
+                        @foreach (var node in Model.HiddenItems)
+                        {
+                            RenderNode(node);
+                        }
+                        <li class="apya-navedit-empty">@L["MenuLayout:Empty"]</li>
+                    </ul>
+                </div>
+            </abp-card-body>
+        </abp-card>
 
         <div class="d-flex flex-wrap gap-2 mt-3">
             <button type="submit" class="btn btn-primary">@L["MenuLayout:Save"]</button>

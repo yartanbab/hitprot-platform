@@ -347,4 +347,128 @@ public class MenuLayoutPage_Tests : PlatformWebTestBase
         sidebar.ShouldContain("/Documents");
     }
 
+// ── Özel kategori / kısayol / gizleme ───────────────────────────────────
+
+    /// <summary>Kullanıcının kendi kategorisi menüde basılır ve içine öğe alır.</summary>
+    [Fact]
+    public async Task Ozel_kategori_menude_basilir()
+    {
+        await SetLayoutAsync("""
+            {"groups":[{"n":"Apya.User.gunluk","t":"Günlük","i":"fa fa-star"}],
+             "items":{"Apya.User.gunluk":["Apya.Finance.ExchangeRates"]}}
+            """);
+
+        var html = await GetResponseAsStringAsync("/Settings");
+        var menu = Parse(html).DocumentNode.SelectSingleNode("//ul[contains(@class,'lpx-nav-menu')]");
+
+        Text(menu).ShouldContain("Günlük");
+        // Taşınan öğe artık o kategorinin altında; menüden düşmedi.
+        SidebarUrls(html).ShouldContain("/ExchangeRates");
+    }
+
+    /// <summary>
+    /// Kategori SİLİNİNCE (düzenden çıkınca) çocukları koddaki yerlerine döner —
+    /// menüden kaybolmazlar. Ayrı bir temizlik kodu yok; "üstü yok" durumundaki
+    /// düğümü varsayılana döndüren mevcut koruma bunu zaten sağlıyor.
+    /// </summary>
+    [Fact]
+    public async Task Silinen_kategorinin_cocuklari_koddaki_yerine_doner()
+    {
+        await SetLayoutAsync("""
+            {"items":{"Apya.User.gunluk":["Apya.Finance.ExchangeRates"]}}
+            """);
+
+        var html = await GetResponseAsStringAsync("/Settings");
+
+        SidebarUrls(html).ShouldContain("/ExchangeRates");
+        Text(Parse(html).DocumentNode.SelectSingleNode("//ul[contains(@class,'lpx-nav-menu')]"))
+            .ShouldNotContain("Günlük");
+    }
+
+    /// <summary>Kendi kısayolu menüde bir yaprak olarak basılır.</summary>
+    [Fact]
+    public async Task Ozel_kisayol_menude_basilir()
+    {
+        await SetLayoutAsync("""
+            {"links":[{"n":"Apya.User.k1","t":"Geciken işler","i":"fa fa-bolt","u":"/Tasks?gecikmis=1"}]}
+            """);
+
+        var html = await GetResponseAsStringAsync("/Settings");
+
+        SidebarUrls(html).ShouldContain("/Tasks?gecikmis=1");
+        Text(Parse(html).DocumentNode.SelectSingleNode("//ul[contains(@class,'lpx-nav-menu')]"))
+            .ShouldContain("Geciken işler");
+    }
+
+    /// <summary>Dış adres taşıyan kısayol hiç basılmaz (doğrulama sunucuda).</summary>
+    [Fact]
+    public async Task Dis_adresli_kisayol_basilmaz()
+    {
+        await SetLayoutAsync("""
+            {"links":[{"n":"Apya.User.k1","t":"Dışarı","i":"fa fa-bolt","u":"https://baska-site.example/x"}]}
+            """);
+
+        var html = await GetResponseAsStringAsync("/Settings");
+
+        Text(Parse(html).DocumentNode.SelectSingleNode("//ul[contains(@class,'lpx-nav-menu')]"))
+            .ShouldNotContain("Dışarı");
+    }
+
+    /// <summary>Gizlenen öğe İKİ yüzeyde de yok, ama düzenleme ekranında duruyor.</summary>
+    [Fact]
+    public async Task Gizlenen_oge_iki_yuzeyde_de_basilmaz_ama_editorde_durur()
+    {
+        await SetLayoutAsync("""{"hidden":["Apya.Platform.Consents","Apya.Admin.Roles"]}""");
+
+        var html = await GetResponseAsStringAsync("/Settings");
+        SidebarUrls(html).ShouldNotContain("/Admin/Consent");
+        SettingsLinkUrls(html).ShouldNotContain("/Identity/Roles");
+
+        var editor = await GetResponseAsStringAsync("/Settings/Menu");
+        editor.ShouldContain("data-nav-root=\"hidden\"");
+        editor.ShouldContain("data-nav-node=\"Apya.Platform.Consents\"");
+        editor.ShouldContain("data-nav-node=\"Apya.Admin.Roles\"");
+    }
+
+    /// <summary>
+    /// Bir GRUP gizlenirse alt ağacı da gizlenir. Yoksa çocukları "üstü yok"
+    /// durumuna düşüp varsayılan yerlerine dağılır ve kullanıcı gizlediği
+    /// kategorinin içeriğini menüde görmeye devam ederdi.
+    /// </summary>
+    [Fact]
+    public async Task Gizlenen_kategori_alt_agaciyla_gizlenir()
+    {
+        await SetLayoutAsync("""{"hidden":["Apya.Content"]}""");
+
+        var sidebar = SidebarUrls(await GetResponseAsStringAsync("/Settings"));
+
+        sidebar.ShouldNotContain("/Documents");
+        sidebar.ShouldNotContain("/DynamicAssets");
+    }
+
+    /// <summary>"Ayarlar" gizlenemez — gizlenseydi düzeni geri alacak ekranın kapısı kapanırdı.</summary>
+    [Fact]
+    public async Task Ayarlar_girisi_gizlenemez()
+    {
+        await SetLayoutAsync("""{"hidden":["Apya.Settings"]}""");
+
+        SidebarUrls(await GetResponseAsStringAsync("/Settings")).ShouldContain("/Settings");
+    }
+
+    /// <summary>Düzenleme ekranı ekleme aracını ve ikon seçeneklerini basar.</summary>
+    [Fact]
+    public async Task Duzenleme_ekrani_ekleme_aracini_basar()
+    {
+        var html = await GetResponseAsStringAsync("/Settings/Menu");
+
+        html.ShouldContain("data-nav-new=\"group\"");
+        html.ShouldContain("data-nav-new=\"link\"");
+        html.ShouldContain("ApyaNavGroupTemplate");
+        html.ShouldContain("ApyaNavLinkTemplate");
+
+        // İkon seçenekleri beyaz listeden gelir — serbest metin alanı yok.
+        var options = Parse(html).DocumentNode
+            .SelectNodes("//select[@id='ApyaNavFormIcon']/option");
+        options.Count.ShouldBe(Apya.Platform.Web.Menus.MenuIcons.All.Count);
+    }
 }

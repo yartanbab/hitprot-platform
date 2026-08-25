@@ -466,6 +466,9 @@ public class PlatformWebModule : AbpModule
                     // apya-sidebar-shell.js'ten SONRA: paylaşılan
                     // window.apyaShellState promise'ini o kuruyor.
                     bundle.AddFiles("/js/apya-topbar-shell.js");
+                    // Kenar çubuğu genişlik tutamağı — yalnız --apya-sidebar-w yazar;
+                    // boyanma öncesi uygulama ApyaThemeHead'deki FOUC betiğinde.
+                    bundle.AddFiles("/js/apya-sidebar-resize.js");
                     // Sıra serbest: paleti açarken #ApyaCommandPaletteTrigger'a
                     // tıklanıyor ve command-palette.js onu DELEGE dinleyiciyle
                     // yakalıyor → bu dosya ondan önce yüklense de çalışır.

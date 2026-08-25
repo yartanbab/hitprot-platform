@@ -268,10 +268,16 @@ public class MenuLayout
         url = (url ?? string.Empty).Trim();
         if (url.Length == 0) { return string.Empty; }
 
-        if (Uri.TryCreate(url, UriKind.Absolute, out var absolute))
-        {
-            url = absolute.PathAndQuery;
-        }
+        // Mutlak adres REDDEDİLİR, yoluna indirgenmez.
+        //
+        // ShellAppService.NormalizeScreen (kayıtlı görünümler) mutlak adresi
+        // PathAndQuery'ye çeviriyor; orada değer EKRANIN KENDİ URL'inden
+        // üretildiği için makul. Burada ise metni kullanıcı yazıyor:
+        // "https://baska-site.example/x" sessizce "/x" olsaydı kısayol,
+        // yazılandan bambaşka bir sayfaya giderdi. Açık yönlendirme değil ama
+        // sessizce yanlış hedef; kullanıcıya "geçersiz" demek doğrusu.
+        if (Uri.TryCreate(url, UriKind.Absolute, out _)) { return string.Empty; }
+
         if (!url.StartsWith('/') || url.StartsWith("//"))
         {
             return string.Empty;

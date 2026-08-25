@@ -188,4 +188,157 @@ public class MenuLayout_Tests
         // Asıl sözleşme: yazılan değer geri okunabilmeli (boş düzene düşmemeli).
         MenuLayout.Parse(json).IsEmpty.ShouldBeFalse();
     }
+// ── Özel kategori / kısayol ─────────────────────────────────────────────
+
+    /// <summary>
+    /// Özel ad ayrılmış ön ekle başlamalı ve yalnız alfasayısal son ek almalı.
+    /// Alt çizgi ÖZELLİKLE yasak: LeptonX id'yi MenuItem_Apya_User_ab12 diye
+    /// basıyor, kabuk JS'i alt çizgiyi noktaya çevirerek adı geri okuyor.
+    /// </summary>
+    [Theory]
+    [InlineData("Apya.Work")]              // ayrılmış ad alanı dışında
+    [InlineData("Apya.User.")]             // son ek yok
+    [InlineData("Apya.User.ab_12")]        // alt çizgi
+    [InlineData("Apya.User.ab-12")]        // tire
+    [InlineData("Apya.User.ab 12")]        // boşluk
+    [InlineData("")]
+    public void Normalize_RejectsInvalidCustomName(string name)
+    {
+        var layout = MenuLayout.Normalize(new MenuLayout
+        {
+            Groups = new List<MenuLayoutGroup> { new() { Name = name, Title = "Deneme" } }
+        });
+
+        layout.Groups.ShouldBeEmpty();
+    }
+
+    [Fact]
+    public void Normalize_AcceptsValidCustomGroup()
+    {
+        var layout = MenuLayout.Normalize(new MenuLayout
+        {
+            Groups = new List<MenuLayoutGroup>
+            {
+                new() { Name = "Apya.User.ab12", Title = "  Günlük  ", Icon = "fa fa-star" }
+            }
+        });
+
+        layout.Groups.Single().Name.ShouldBe("Apya.User.ab12");
+        layout.Groups.Single().Title.ShouldBe("Günlük");
+        layout.Groups.Single().Icon.ShouldBe("fa fa-star");
+    }
+
+    /// <summary>
+    /// İkon doğrudan class attribute'una basılıyor: beyaz liste dışı değer
+    /// sayfaya rastgele sınıf enjekte etme yüzeyi olurdu.
+    /// </summary>
+    [Theory]
+    [InlineData("fa fa-skull-crossbones")]
+    [InlineData("apya-navedit-btn")]
+    [InlineData("")]
+    [InlineData(null)]
+    public void Normalize_UnknownIconFallsBackToDefault(string? icon)
+    {
+        var layout = MenuLayout.Normalize(new MenuLayout
+        {
+            Groups = new List<MenuLayoutGroup>
+            {
+                new() { Name = "Apya.User.ab12", Title = "Deneme", Icon = icon! }
+            }
+        });
+
+        layout.Groups.Single().Icon.ShouldBe(MenuIcons.Default);
+    }
+
+    /// <summary>Kısayol yalnız site içi yola gidebilir — dış adres elenir.</summary>
+    [Theory]
+    [InlineData("https://baska-site.example/x", "")]
+    [InlineData("//baska-site.example/x", "")]
+    [InlineData("javascript:alert(1)", "")]
+    [InlineData("Tasks", "")]
+    [InlineData("/Tasks?gecikmis=1", "/Tasks?gecikmis=1")]
+    public void Normalize_LinkUrlMustBeSitePath(string url, string expected)
+    {
+        var layout = MenuLayout.Normalize(new MenuLayout
+        {
+            Links = new List<MenuLayoutLink>
+            {
+                new() { Name = "Apya.User.ab12", Title = "Kısayol", Url = url }
+            }
+        });
+
+        if (expected.Length == 0) { layout.Links.ShouldBeEmpty(); }
+        else { layout.Links.Single().Url.ShouldBe(expected); }
+    }
+
+    [Fact]
+    public void Normalize_CapsCustomCounts()
+    {
+        var groups = Enumerable.Range(0, PlatformSettingDefaults.ShellMenuLayoutCustomGroupMax + 5)
+            .Select(i => new MenuLayoutGroup { Name = "Apya.User.g" + i, Title = "G" + i })
+            .ToList();
+        var links = Enumerable.Range(0, PlatformSettingDefaults.ShellMenuLayoutCustomLinkMax + 5)
+            .Select(i => new MenuLayoutLink { Name = "Apya.User.l" + i, Title = "L" + i, Url = "/x" })
+            .ToList();
+
+        var layout = MenuLayout.Normalize(new MenuLayout { Groups = groups, Links = links });
+
+        layout.Groups.Count.ShouldBe(PlatformSettingDefaults.ShellMenuLayoutCustomGroupMax);
+        layout.Links.Count.ShouldBe(PlatformSettingDefaults.ShellMenuLayoutCustomLinkMax);
+    }
+
+    /// <summary>
+    /// Gizleme YERLEŞİMDEN bağımsız: bir ad hem bir sırada hem gizlide olabilir,
+    /// tekillik havuzuna katılmamalı.
+    /// </summary>
+    [Fact]
+    public void Normalize_HiddenIsIndependentOfPlacement()
+    {
+        var layout = MenuLayout.Normalize(new MenuLayout
+        {
+            Sections = new List<string> { "Apya.Work" },
+            Hidden = new List<string> { "Apya.Work" }
+        });
+
+        layout.Sections.ShouldBe(new[] { "Apya.Work" });
+        layout.Hidden.ShouldBe(new[] { "Apya.Work" });
+    }
+
+    /// <summary>
+    /// Boyut kırpması yeni alanları da kapsamalı. Yalnız Items azaltılsaydı,
+    /// Items bitince döngü çıkar ve sınırı aşan JSON dönerdi — kaydedilir ama
+    /// bir sonraki okumada reddedilir, yani düzen sessizce kaybolur.
+    /// </summary>
+    [Fact]
+    public void Serialize_TrimsCustomEntriesWhenStillTooLong()
+    {
+        var layout = new MenuLayout();
+        for (var i = 0; i < PlatformSettingDefaults.ShellMenuLayoutCustomLinkMax; i++)
+        {
+            layout.Links.Add(new MenuLayoutLink
+            {
+                Name = "Apya.User.l" + i,
+                Title = new string('t', PlatformSettingDefaults.ShellMenuLayoutTitleMax),
+                Url = "/" + new string('u', PlatformSettingDefaults.ShellMenuLayoutUrlMax - 1)
+            });
+        }
+        for (var i = 0; i < PlatformSettingDefaults.ShellMenuLayoutListMax; i++)
+        {
+            layout.Hidden.Add("Apya.Hidden" + i + new string('x', 100));
+        }
+
+        var json = layout.Serialize();
+
+        json.Length.ShouldBeLessThanOrEqualTo(PlatformSettingDefaults.ShellMenuLayoutMaxChars);
+        MenuLayout.Parse(json).IsEmpty.ShouldBeFalse();
+    }
+
+    /// <summary>İkon beyaz listesi boş olamaz ve varsayılanı içermeli.</summary>
+    [Fact]
+    public void IconWhitelist_ContainsDefault()
+    {
+        MenuIcons.All.ShouldNotBeEmpty();
+        MenuIcons.All.ShouldContain(MenuIcons.Default);
+        MenuIcons.All.ShouldBeUnique();
+    }
 }
