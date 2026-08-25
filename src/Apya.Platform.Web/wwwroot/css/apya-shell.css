@@ -6773,17 +6773,26 @@ i.apya-priority-dot {
    ve işaretçi olayları kapanır, yoksa fare menünün üstünden çıkınca sürükleme
    yarıda kalıyor ve satırlar seçili görünüyordu.
    ---------------------------------------------------------------------------- */
-.lpx-sidebar-container {
-    /* Tutamak bu kaba göre konumlanır. Tema kaba position vermiyor. */
-    position: relative;
-}
+/* 🔴 Tutamak KABA GÖRE konumlandırılamaz. İlk sürümde `.lpx-sidebar-container`'a
+   `position: relative` verilmişti; apya-shell.css tema CSS'inden SONRA yüklendiği
+   için temanın kendi `position: fixed; top: 0; height: 100vh` kuralını eziyordu.
+   Sonuç: kenar çubuğu akışa dönüyor, içerik onun ALTINA diziliyordu (ölçüldü:
+   içerik y=720; `fixed` geri konunca y=0) ve sayfa kaydırılınca üst bar yerinden
+   çıkıyordu. Tutamak kendisi `fixed` olur, kaba hiç dokunulmaz.
+
+   Konum token'dan: kenar çubuğu genişliği zaten --apya-sidebar-w ile sürülüyor,
+   tutamak da onun sağ kenarına oturur. Gövdeye takılır — köke yakın bir
+   `transform` `position: fixed`'i kapsayıp tutamağı kenar çubuğuna hapsedebilirdi
+   (bu repoda ModalPortal vakasında yaşandı). */
 .apya-sidebar-resizer {
-    position: absolute;
+    position: fixed;
     top: 0;
-    right: -3px;
     bottom: 0;
+    left: calc(var(--apya-sidebar-w) - 3px);
     width: 6px;
-    z-index: 3;
+    /* Kenar çubuğu kabı 1000; tutamak onun üstünde ama üst bardaki açılır
+       menü düzeltmesinin (1002) altında kalmalı. */
+    z-index: 1001;
     cursor: col-resize;
     background: transparent;
 }

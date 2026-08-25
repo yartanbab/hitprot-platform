@@ -51,7 +51,10 @@ $(function () {
     handle.setAttribute('aria-orientation', 'vertical');
     handle.setAttribute('aria-label', handleLabel());
     handle.tabIndex = 0;
-    container.appendChild(handle);
+    // Kaba DEĞİL gövdeye: tutamak position:fixed ve kabın konumuna dokunulmuyor
+    // (bkz. apya-shell.css §26 — kaba position vermek temanın fixed kuralını
+    // eziyor ve kenar çubuğunu akışa döndürüyordu).
+    document.body.appendChild(handle);
 
     // Etiket SUNUCUDAN gelir (ApyaThemeHead → #ApyaMobileShellL10n): kabuk
     // metinleri JS'e gömülmüyor. Blok okunamazsa erişilebilirlik etiketsiz
