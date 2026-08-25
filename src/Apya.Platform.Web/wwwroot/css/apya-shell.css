@@ -6605,3 +6605,144 @@ i.apya-priority-dot {
 [data-theme="dark"] .apya-tc-pchip-tag {
     color: var(--apya-accent-300);
 }
+
+/* ----------------------------------------------------------------------------
+   25) MENÜ DÜZENİ EDİTÖRÜ — Pages/Settings/Menu
+   İki sütun aynı satır markup'ını kullanır; taşınan <li> DOM'da olduğu gibi
+   öbür sütuna geçer. Hangi okun görüneceğini KAPSAYICININ [data-nav-side]
+   değeri belirler — böylece JS'in düğme değiştirmesi gerekmez.
+   ---------------------------------------------------------------------------- */
+.apya-navedit-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+.apya-navedit-list--inner {
+    margin-top: 4px;
+    margin-left: 20px;
+    padding-left: 12px;
+    border-left: 1px solid var(--apya-border-subtle);
+}
+
+.apya-navedit-item--ghost > .apya-navedit-row {
+    opacity: .4;
+}
+
+.apya-navedit-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 40px;
+    padding: 6px 10px;
+    border: 1px solid var(--apya-border-default);
+    border-radius: var(--apya-radius-md);
+    background: var(--apya-surface-base);
+    /* Renk AÇIKÇA verilir: LeptonX'in .card-body kuralı sabit #686B6E basıyor ve
+       koyu temada dönmüyor → miras alınsa satır başlığı koyu zeminde 3,57:1'de
+       kalırdı (AA sınırı 4,5:1). Ölçüm: koyu temada .card-body #686B6E,
+       .card ise #F4F4F5 döndürüyor. */
+    color: var(--apya-text-primary);
+}
+.apya-navedit-item--group > .apya-navedit-row {
+    background: var(--apya-surface-raised);
+    font-weight: 600;
+}
+
+.apya-navedit-handle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    color: var(--apya-text-tertiary);
+    cursor: grab;
+}
+.apya-navedit-handle--locked {
+    cursor: default;
+}
+.apya-navedit-icon {
+    width: 18px;
+    text-align: center;
+    color: var(--apya-text-secondary);
+}
+.apya-navedit-title {
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.apya-navedit-locked-hint {
+    flex: 0 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: var(--apya-text-xs);
+    color: var(--apya-text-tertiary);
+}
+
+.apya-navedit-actions {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    flex: 0 0 auto;
+}
+.apya-navedit-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    /* Dokunma hedefi: mobilde 44px'e çıkar (aşağıdaki medya sorgusu). */
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    border: 0;
+    border-radius: var(--apya-radius-sm);
+    background: transparent;
+    color: var(--apya-text-secondary);
+    font-size: var(--apya-text-xs);
+}
+.apya-navedit-btn:hover {
+    background: var(--apya-surface-hover);
+    color: var(--apya-text-primary);
+}
+.apya-navedit-btn:focus-visible {
+    outline: 2px solid var(--apya-border-focus);
+    outline-offset: 1px;
+}
+.apya-navedit-btn--move {
+    color: var(--apya-accent-600);
+}
+
+/* Sütuna göre tek ok: soldaki sütunda "Ayarlar'a", sağdakinde "kenar çubuğuna". */
+[data-nav-side="sidebar"] [data-nav-to-sidebar],
+[data-nav-side="settings"] [data-nav-to-settings] {
+    display: none;
+}
+
+/* Boş liste ipucu — yalnız gerçekten boşken görünür (tek çocuk olduğunda).
+   JS'in yer tutucuyu yönetmesi gerekmesin diye kural CSS'te. */
+.apya-navedit-empty {
+    padding: 8px 10px;
+    border: 1px dashed var(--apya-border-subtle);
+    border-radius: var(--apya-radius-md);
+    color: var(--apya-text-tertiary);
+    font-size: var(--apya-text-xs);
+}
+.apya-navedit-empty:not(:only-child) {
+    display: none;
+}
+
+@media (max-width: 767.98px) {
+    .apya-navedit-btn {
+        width: 44px;
+        height: 44px;
+        font-size: var(--apya-text-sm);
+    }
+    .apya-navedit-list--inner {
+        margin-left: 10px;
+        padding-left: 8px;
+    }
+}
