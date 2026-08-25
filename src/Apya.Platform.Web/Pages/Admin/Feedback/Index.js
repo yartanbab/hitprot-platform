@@ -2,6 +2,9 @@ $(function () {
     var service = apya.platform.feedbacks.feedbackAdmin;
     var detailModal = new abp.ModalManager(abp.appPath + 'Admin/Feedback/DetailModal');
 
+    // Detay modalındaki "Göreve Dönüştür" düğmesini ortak köprüye bağla.
+    apyaIssueTask.bind(detailModal);
+
     var TYPE_LABELS = {
         1: 'Hata', 2: 'Öneri', 3: 'Soru', 4: 'Beğeni', 5: 'Kullanım zorluğu',
         6: 'Eksik içerik', 7: 'Performans', 8: 'Tasarım / UX', 9: 'Diğer'
@@ -79,6 +82,15 @@ $(function () {
                             {
                                 text: 'Detay',
                                 action: function (data) { detailModal.open({ id: data.record.id }); }
+                            },
+                            {
+                                text: 'Göreve Dönüştür',
+                                visible: function (record) {
+                                    return abp.auth.isGranted('Platform.IssueTasks') && !record.linkedTaskId;
+                                },
+                                action: function (data) {
+                                    apyaIssueTask.open({ sourceType: 1, sourceId: data.record.id });
+                                }
                             }
                         ]
                     }
@@ -115,7 +127,16 @@ $(function () {
                     render: function (n) { return n ? $('<div>').text(n).html() : '<span class="text-muted">—</span>'; }
                 },
                 { title: 'Puan', data: 'rating', defaultContent: '—' },
-                { title: 'Cevap', data: 'commentCount' }
+                { title: 'Cevap', data: 'commentCount' },
+                {
+                    title: 'Görev', data: 'linkedTaskId',
+                    orderable: false,
+                    render: function (id, type, row) {
+                        if (!id) { return '<span class="text-muted">—</span>'; }
+                        var label = row.linkedTaskNumber ? 'GRV-' + row.linkedTaskNumber : 'Görev';
+                        return '<a href="/Tasks/Detail/' + id + '" target="_blank" class="apya-chip apya-chip-brand text-decoration-none">' + label + '</a>';
+                    }
+                }
             ]
         })
     );
@@ -145,6 +166,10 @@ $(function () {
     $('#Filter_Text').on('keyup', function () {
         clearTimeout(textFilterDebounce);
         textFilterDebounce = setTimeout(function () { dataTable.ajax.reload(); }, 400);
+    });
+
+    apyaIssueTask.onCreated(function () {
+        dataTable.ajax.reload(null, false);
     });
 
     $('#btn-bulk-apply').on('click', function () {

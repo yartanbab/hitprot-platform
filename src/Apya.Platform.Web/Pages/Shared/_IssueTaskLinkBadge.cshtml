@@ -1,0 +1,31 @@
+@using Apya.Platform.IssueTasks.Dtos
+@model IssueTaskLinkDto
+@*
+    Kaynağın bağlı olduğu görevin rozeti. Bağ yoksa çağıran taraf bu partial'ı hiç
+    render etmez. Görev silinmişse rozet "kaldırıldı" der — sessizce kırık link vermeyiz.
+*@
+@if (Model.TaskExists)
+{
+    <a href="/Tasks/Detail/@Model.TaskId" target="_blank" class="apya-chip apya-chip-brand text-decoration-none">
+        <i class="fa fa-list-check me-1"></i>GRV-@Model.TaskNumber
+        <span class="text-muted ms-1">@Model.TaskTitle</span>
+    </a>
+}
+else
+{
+    <span class="apya-chip apya-chip-neutral">
+        <i class="fa fa-link-slash me-1"></i>Bağlı görev kaldırılmış
+    </span>
+}
+
+@if (Model.IsAutomatic)
+{
+    <span class="apya-chip apya-chip-neutral" title="Bu görev otomatik kural tarafından açıldı.">otomatik</span>
+}
+
+@if (Model.SourceClosedAt.HasValue)
+{
+    <span class="apya-chip apya-chip-positive" title="Görev tamamlandığında kaynak kapatıldı.">
+        görevle kapatıldı
+    </span>
+}

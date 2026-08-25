@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Apya.Platform.Feedbacks.Dtos;
+using Apya.Platform.IssueTasks;
 using Apya.Platform.Permissions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
@@ -39,6 +40,7 @@ public class FeedbackAdminAppService : ApplicationService, IFeedbackAdminAppServ
     private readonly IRepository<FeedbackAttachment, Guid> _attachmentRepository;
     private readonly IRepository<FeedbackActivity, Guid> _activityRepository;
     private readonly FeedbackManager _feedbackManager;
+    private readonly IssueTasks.IssueTaskManager _issueTaskManager;
     private readonly ITenantRepository _tenantRepository;
     private readonly IIdentityUserRepository _userRepository;
     private readonly IDataFilter<IMultiTenant> _multiTenantFilter;
@@ -49,6 +51,7 @@ public class FeedbackAdminAppService : ApplicationService, IFeedbackAdminAppServ
         IRepository<FeedbackAttachment, Guid> attachmentRepository,
         IRepository<FeedbackActivity, Guid> activityRepository,
         FeedbackManager feedbackManager,
+        IssueTasks.IssueTaskManager issueTaskManager,
         ITenantRepository tenantRepository,
         IIdentityUserRepository userRepository,
         IDataFilter<IMultiTenant> multiTenantFilter,
@@ -58,6 +61,7 @@ public class FeedbackAdminAppService : ApplicationService, IFeedbackAdminAppServ
         _attachmentRepository = attachmentRepository;
         _activityRepository = activityRepository;
         _feedbackManager = feedbackManager;
+        _issueTaskManager = issueTaskManager;
         _tenantRepository = tenantRepository;
         _userRepository = userRepository;
         _multiTenantFilter = multiTenantFilter;
@@ -167,6 +171,7 @@ public class FeedbackAdminAppService : ApplicationService, IFeedbackAdminAppServ
             var tenantNames = await GetTenantNamesAsync();
 
             var dtos = items.Select(f => MapToListDto(f, tenantNames)).ToList();
+            await FillIssueTaskLinksAsync(dtos);
 
             return new PagedResultDto<FeedbackDto>(totalCount, dtos);
         }
@@ -629,6 +634,39 @@ public class FeedbackAdminAppService : ApplicationService, IFeedbackAdminAppServ
         }
 
         return result;
+    }
+
+    /// <summary>
+    /// Listedeki kayıtların göreve dönüştürülmüş olanlarını tek sorguda işaretler
+    /// (satır başına sorgu açmadan). Bağ yoksa alanlar boş kalır.
+    /// </summary>
+    private async Task FillIssueTaskLinksAsync(List<FeedbackDto> dtos)
+    {
+        if (dtos.Count == 0)
+        {
+            return;
+        }
+
+        var keys = dtos.Select(d => d.Id.ToString("N")).ToList();
+        var links = await _issueTaskManager.GetLinksAsync(IssueSourceType.Feedback, keys);
+        if (links.Count == 0)
+        {
+            return;
+        }
+
+        var taskNumbers = await _issueTaskManager.GetTaskNumbersAsync(links.Select(l => l.TaskId).ToList());
+        var byKey = links.ToDictionary(l => l.SourceKey);
+
+        foreach (var dto in dtos)
+        {
+            if (!byKey.TryGetValue(dto.Id.ToString("N"), out var link))
+            {
+                continue;
+            }
+
+            dto.LinkedTaskId = link.TaskId;
+            dto.LinkedTaskNumber = taskNumbers.TryGetValue(link.TaskId, out var number) ? number : null;
+        }
     }
 
     private void EnsureHostContext()

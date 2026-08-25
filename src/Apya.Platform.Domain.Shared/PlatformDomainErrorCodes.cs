@@ -169,6 +169,12 @@ public static class PlatformDomainErrorCodes
     // --- Telemetri (Telemetry) Modülü ---
     public const string TelemetryDisabled = "Platform:Telemetry:Disabled";
 
+    // --- Sinyalden göreve (IssueTasks) Modülü ---
+    public const string IssueTaskAlreadyLinked = "Platform:IssueTask:AlreadyLinked";
+    public const string IssueTaskTargetProjectNotSet = "Platform:IssueTask:TargetProjectNotSet";
+    public const string IssueTaskTargetProjectNotFound = "Platform:IssueTask:TargetProjectNotFound";
+    public const string IssueTaskSourceNotFound = "Platform:IssueTask:SourceNotFound";
+
     // --- Dashboard ---
     public const string DashboardLayoutTooLarge = "Platform:Dashboard:LayoutTooLarge";
 }

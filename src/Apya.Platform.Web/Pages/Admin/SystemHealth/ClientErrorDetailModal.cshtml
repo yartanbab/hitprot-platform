@@ -26,6 +26,10 @@
             <span class="apya-chip apya-chip-neutral">@ClientErrorDetailModalModel.SourceLabel(e.Source)</span>
             <span class="apya-chip apya-chip-warning">@e.OccurrenceCount kez görüldü</span>
             <span class="apya-chip apya-chip-neutral">@(e.TenantName ?? "-")</span>
+            @if (Model.IssueTaskLink is not null)
+            {
+                <partial name="_IssueTaskLinkBadge" model="Model.IssueTaskLink" />
+            }
         </div>
 
         <div class="alert alert-danger py-2 mb-3" style="white-space:pre-wrap;word-break:break-word;">@e.Message</div>
@@ -81,6 +85,15 @@
         }
     </abp-modal-body>
     <abp-modal-footer>
+        @if (Model.CanCreateIssueTask && Model.IssueTaskLink is null)
+        {
+            @* Detay kapanıp dönüştürme modalı açılır — iç içe modal yığını kurmuyoruz. *@
+            <button type="button" class="btn btn-sm btn-outline-primary issue-task-create"
+                    data-source-type="@((int)Apya.Platform.IssueTasks.IssueSourceType.ClientError)"
+                    data-source-id="@e.Id">
+                <i class="fa fa-list-check me-1"></i>Göreve Dönüştür
+            </button>
+        }
         @if (canResolve)
         {
             @* Durum değiştirme burada da yapılabilsin — tabloya dönmek gerekmesin. *@

@@ -1,5 +1,7 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Apya.Platform.IssueTasks;
+using Apya.Platform.IssueTasks.Dtos;
 using Apya.Platform.Permissions;
 using Apya.Platform.Telemetry;
 using Apya.Platform.Telemetry.Dtos;
@@ -17,6 +19,7 @@ namespace Apya.Platform.Web.Pages.Admin.SystemHealth;
 public class ServerErrorDetailModalModel : AbpPageModel
 {
     private readonly ISystemHealthAppService _systemHealthAppService;
+    private readonly IIssueTaskAppService _issueTaskAppService;
 
     [BindProperty(SupportsGet = true)]
     public string Url { get; set; } = string.Empty;
@@ -26,9 +29,18 @@ public class ServerErrorDetailModalModel : AbpPageModel
 
     public List<ServerErrorDetailDto> Errors { get; set; } = new();
 
-    public ServerErrorDetailModalModel(ISystemHealthAppService systemHealthAppService)
+    /// <summary>Bu adresteki arıza daha önce göreve dönüştürülmüşse bağ; yoksa null.</summary>
+    public IssueTaskLinkDto? IssueTaskLink { get; set; }
+
+    /// <summary>Köprü izni olmayan yönetici için bağ hiç sorgulanmaz (servis yetki ister).</summary>
+    public bool CanCreateIssueTask { get; set; }
+
+    public ServerErrorDetailModalModel(
+        ISystemHealthAppService systemHealthAppService,
+        IIssueTaskAppService issueTaskAppService)
     {
         _systemHealthAppService = systemHealthAppService;
+        _issueTaskAppService = issueTaskAppService;
     }
 
     public async Task OnGetAsync()
@@ -38,5 +50,11 @@ public class ServerErrorDetailModalModel : AbpPageModel
             Url = Url,
             WindowDays = WindowDays
         });
+
+        CanCreateIssueTask = await AuthorizationService.IsGrantedAsync(PlatformPermissions.IssueTasks.Default);
+        if (CanCreateIssueTask && Errors.Count > 0)
+        {
+            IssueTaskLink = await _issueTaskAppService.GetLinkForServerErrorAsync(Url, WindowDays);
+        }
     }
 }

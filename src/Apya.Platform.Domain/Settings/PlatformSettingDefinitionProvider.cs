@@ -1,4 +1,5 @@
-﻿using Apya.Platform.Localization;
+﻿using Apya.Platform.IssueTasks;
+using Apya.Platform.Localization;
 using Volo.Abp.Localization;
 using Volo.Abp.Settings;
 
@@ -224,6 +225,54 @@ public class PlatformSettingDefinitionProvider : SettingDefinitionProvider
                 defaultValue: PlatformSettingDefaults.FeedbackAttachmentRetentionDays.ToString(),
                 displayName: L("Setting:Feedback.AttachmentRetentionDays"),
                 description: L("Setting:Feedback.AttachmentRetentionDays.Description"))
+                .WithProviders(GlobalSettingValueProvider.ProviderName)
+        );
+
+        // --- Sinyalden göreve köprüsü --- (hepsi host seviyesinde)
+        context.Add(
+            new SettingDefinition(
+                PlatformSettings.IssueTasks.TargetProjectId,
+                defaultValue: "",
+                displayName: L("Setting:IssueTasks.TargetProjectId"),
+                description: L("Setting:IssueTasks.TargetProjectId.Description"))
+                .WithProviders(GlobalSettingValueProvider.ProviderName),
+
+            new SettingDefinition(
+                PlatformSettings.IssueTasks.DefaultAssigneeId,
+                defaultValue: "",
+                displayName: L("Setting:IssueTasks.DefaultAssigneeId"))
+                .WithProviders(GlobalSettingValueProvider.ProviderName),
+
+            new SettingDefinition(
+                PlatformSettings.IssueTasks.AutoCreateEnabled,
+                defaultValue: PlatformSettingDefaults.IssueTaskAutoCreateEnabled.ToString().ToLowerInvariant(),
+                displayName: L("Setting:IssueTasks.AutoCreateEnabled"),
+                description: L("Setting:IssueTasks.AutoCreateEnabled.Description"))
+                .WithProviders(GlobalSettingValueProvider.ProviderName),
+
+            new SettingDefinition(
+                PlatformSettings.IssueTasks.FeedbackMinPriority,
+                defaultValue: PlatformSettingDefaults.IssueTaskFeedbackMinPriority.ToString(),
+                displayName: L("Setting:IssueTasks.FeedbackMinPriority"))
+                .WithProviders(GlobalSettingValueProvider.ProviderName),
+
+            new SettingDefinition(
+                PlatformSettings.IssueTasks.ClientErrorThreshold,
+                defaultValue: IssueTaskConsts.DefaultClientErrorThreshold.ToString(),
+                displayName: L("Setting:IssueTasks.ClientErrorThreshold"))
+                .WithProviders(GlobalSettingValueProvider.ProviderName),
+
+            new SettingDefinition(
+                PlatformSettings.IssueTasks.ServerErrorThreshold,
+                defaultValue: IssueTaskConsts.DefaultServerErrorThreshold.ToString(),
+                displayName: L("Setting:IssueTasks.ServerErrorThreshold"))
+                .WithProviders(GlobalSettingValueProvider.ProviderName),
+
+            new SettingDefinition(
+                PlatformSettings.IssueTasks.CloseSourceOnTaskDone,
+                defaultValue: PlatformSettingDefaults.IssueTaskCloseSourceOnTaskDone.ToString().ToLowerInvariant(),
+                displayName: L("Setting:IssueTasks.CloseSourceOnTaskDone"),
+                description: L("Setting:IssueTasks.CloseSourceOnTaskDone.Description"))
                 .WithProviders(GlobalSettingValueProvider.ProviderName)
         );
     }

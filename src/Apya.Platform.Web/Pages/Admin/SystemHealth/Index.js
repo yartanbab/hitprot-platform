@@ -15,6 +15,10 @@ $(function () {
         viewUrl: '/Admin/SystemHealth/ServerErrorDetailModal'
     });
 
+    // Her iki detay modalındaki "Göreve Dönüştür" düğmesi ortak köprüye bağlanır.
+    apyaIssueTask.bind(clientErrorDetailModal);
+    apyaIssueTask.bind(serverErrorDetailModal);
+
     function getFilterInput() {
         var isResolved = $('#Filter_IsResolved').val();
         var source = $('#Filter_Source').val();
@@ -69,6 +73,13 @@ $(function () {
                                         dataTable.ajax.reload(null, false);
                                     });
                                 }
+                            },
+                            {
+                                text: 'Göreve Dönüştür',
+                                visible: abp.auth.isGranted('Platform.IssueTasks'),
+                                action: function (data) {
+                                    apyaIssueTask.open({ sourceType: 2, sourceId: data.record.id });
+                                }
                             }
                         ]
                     }
@@ -96,6 +107,10 @@ $(function () {
             ]
         })
     );
+
+    apyaIssueTask.onCreated(function () {
+        dataTable.ajax.reload(null, false);
+    });
 
     // Detayda durum değiştirilirse tablo da tazelensin.
     clientErrorDetailModal.onOpen(function () {

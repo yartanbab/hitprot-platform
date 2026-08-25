@@ -54,6 +54,21 @@
     <ProjectReference Include="..\Apya.Platform.Domain\Apya.Platform.Domain.csproj" />
     <ProjectReference Include="..\Apya.Platform.Ai.EntityFrameworkCore\Apya.Platform.Ai.EntityFrameworkCore.csproj" />
     <ProjectReference Include="..\Apya.Platform.Ai.Application.Contracts\Apya.Platform.Ai.Application.Contracts.csproj" />
+
+    <!--
+      İzin ve paket tohumlayıcıları APPLICATION katmanında yaşıyor. Bu referans
+      olmadan DbMigrator o derlemeyi hiç yüklemiyordu; ölçüm: bin çıktısında
+      Apya.Platform.Application.dll YOKTU ve modül grafiğinde de geçmiyordu.
+      Sonuç: YEDİ IDataSeedContributor sessizce hiç çalışmıyordu —
+        · beş izin tohumlayıcısı (Documents, Tasks, Consents, LoginScreen,
+          IssueTasks) → yeni izinler admin rolüne hiç verilmiyor, özellik
+          kurulu bir sistemde "yetkisiz" görünüyordu;
+        · AiPermissionDataSeedContributor;
+        · PackageDataSeedContributor → AppPlatformPackages tablosu boş kalıyordu.
+      Web tarafında tohumlama çağrısı yok, yani DbMigrator tek yol.
+    -->
+    <ProjectReference Include="..\Apya.Platform.Application\Apya.Platform.Application.csproj" />
+    <ProjectReference Include="..\Apya.Platform.Ai.Application\Apya.Platform.Ai.Application.csproj" />
   </ItemGroup>
 
 </Project>

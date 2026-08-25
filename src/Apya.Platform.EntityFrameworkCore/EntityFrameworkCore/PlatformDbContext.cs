@@ -37,6 +37,7 @@ using Apya.Platform.Tasks;
 using Apya.Platform.Notifications;
 using Apya.Platform.Feedbacks;
 using Apya.Platform.Telemetry;
+using Apya.Platform.IssueTasks;
 using Apya.Platform.Calendars;
 using Apya.Platform.Invoices;
 using Apya.Platform.DynamicAssets;
@@ -155,6 +156,9 @@ namespace Apya.Platform.EntityFrameworkCore
 
         /* --- İSTEMCİ HATA TELEMETRİSİ --- */
         public DbSet<ClientError> ClientErrors { get; set; }
+
+        /* --- SİNYALDEN GÖREVE KÖPRÜSÜ --- */
+        public DbSet<IssueTaskLink> IssueTaskLinks { get; set; }
 
         /* --- RIZA / KVKK OMURGASI --- */
         public DbSet<Apya.Platform.Consents.ConsentRecord> ConsentRecords { get; set; }
@@ -1599,6 +1603,23 @@ namespace Apya.Platform.EntityFrameworkCore
                 // Panel sıralamaları + saklama worker'ının tarama sorgusu
                 b.HasIndex(x => x.LastSeenAt);
                 b.HasIndex(x => new { x.IsResolved, x.OccurrenceCount });
+            });
+
+            /* --- SİNYALDEN GÖREVE KÖPRÜSÜ --- */
+            builder.Entity<IssueTaskLink>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "IssueTaskLinks", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+
+                b.Property(x => x.SourceKey).IsRequired().HasMaxLength(IssueTaskConsts.MaxSourceKeyLength);
+                b.Property(x => x.SourceLabel).HasMaxLength(IssueTaskConsts.MaxSourceLabelLength);
+
+                // Bir kaynak yalnızca BİR görev açar; otomatik kural da bu index'e çarpar.
+                // Bağ soft-delete değil, bu yüzden filtreye gerek yok.
+                b.HasIndex(x => new { x.SourceType, x.SourceKey }).IsUnique();
+
+                // Görev tarafından bağa gitmek (geri bağ + görev silinince temizlik).
+                b.HasIndex(x => x.TaskId);
             });
 
             /* --- RIZA / KVKK OMURGASI YAPILANDIRMASI --- */
