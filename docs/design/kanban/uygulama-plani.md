@@ -156,7 +156,25 @@ okunmuyor, ⋯ menüsü basılmıyor (`apya-kanban.js:196` sistem kolonuna yaln�
 `data-column-id` yazıyor). "Sistem kolonunu yeniden adlandır" bugün UI'da
 imkânsız. Bu fazın ilk yarısı bu boşluğu kapatmak.
 
-### PR 2a — Kolonları DB'den render et
+### PR 2a — Kolonları DB'den render et — ✅ TAMAMLANDI (2026-08-24)
+
+> **Sonuç:** partial boşaltıldı, tek `buildColumn` üreteci geldi, kolonlar DB
+> `Order` sırasıyla diziliyor, boş kolon metinleri ve başlıkta ＋ eklendi.
+> ⋯ menüsü artık sistem kolonunda da var — "Kolonu sil" kilitli, yeniden
+> adlandırma çalışıyor (API'de `UpdateAsync` zaten `IsSystem` guard'ı taşımıyordu).
+> `CreateModal` artık GET'te `StatusOrColumn` alıyor → ＋ o kolonu ön seçiyor.
+>
+> Plan dışı iki düzeltme: (1) özel kolon başlığı Bootstrap `text-{renk}`
+> kullanıyordu — dark temada `-emphasis` kalıntısı bırakan bilinen tuzak; iki
+> kolon türü de artık token tabanlı `data-column-color` kullanıyor. (2) Boş
+> kolon metni sürükleme sonrası senkron değildi (boş kolona kart bırakılınca
+> metin kalıyordu) → mantık `updateCounts`'a taşındı, Sortable'a
+> `draggable: '.kanban-card'` eklendi.
+>
+> Doğrulama: JS 298/298 (kanban 8→20 test), .NET 571/571 (Web smoke testleri
+> partial'ı sunucuda render ediyor), build 0 hata, uygulama worktree'den ayağa
+> kalktı (`/health/ready` 200) ve yeni varlıklar sunuluyor.
+> **Görsel QA yapılmadı** — parola girmem yasak, oturum açılamadı.
 
 - `_KanbanBoard.cshtml` boşalır: yalnız `<div class="kanban-board mt-2"></div>` kalır; dört kolon JS'ten basılır.
 - `apya-kanban.js`: tek `renderColumns(cols)` hem sistem hem özel kolonu üretir.
@@ -335,6 +353,6 @@ cd src/Apya.Platform.Web/wwwroot/dynamic-assets && npm ci
 > frontend testleri toptan patlıyor). `dynamic-assets/yarn.lock`'taki değişikliği
 > **commit etme**. Build öncesi çalışan Web uygulamasını durdur (MSB3021).
 
-**Faz sırası:** ~~0~~ → ~~1~~ → 2a → 2b → 3 → 4 → 5 → 6 → 7. Faz 0 ve 1 birbirinden
+**Faz sırası:** ~~0~~ → ~~1~~ → ~~2a~~ → 2b → 3 → 4 → 5 → 6 → 7. Faz 0 ve 1 birbirinden
 bağımsız; 2'den sonrası sıralı. Migration yalnız Faz 6'da.
-**Faz 0 + Faz 1 tamamlandı (2026-08-24); sıradaki: Faz 2a — kolonları DB'den render et.**
+**Faz 0 + 1 + 2a tamamlandı (2026-08-24); sıradaki: Faz 2b — düzenleme yüzeyi (3a/3b/3c).**

@@ -574,6 +574,7 @@ $(function () {
     var kb = apya.kanban.create({
         projectId: state.get('project') || null,
         editModal: editModal,
+        createModal: createModal,   // kolon başlığındaki ＋ (o kolon ön seçili açar)
         showProjectName: true,
         enableTimer: false,
         enableCustomColumns: true,

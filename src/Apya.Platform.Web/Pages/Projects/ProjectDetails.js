@@ -456,6 +456,7 @@ $(function () {
     var kb = apya.kanban.create({
         projectId: projectId,
         editModal: editModal,
+        createModal: createModal,      // kolon başlığındaki ＋ (o kolon ön seçili açar)
         showProjectName: false,        // tek proje → kartta proje adı gereksiz
         enableTimer: false,            // zaman sayacı her board'da gizli (kullanıcı kararı)
         enableCustomColumns: true,

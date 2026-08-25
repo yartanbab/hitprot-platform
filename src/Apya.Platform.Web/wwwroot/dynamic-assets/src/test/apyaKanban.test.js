@@ -3,33 +3,19 @@ import { describe, it, expect, beforeAll, beforeEach } from 'vitest';
 // wwwroot/js/apya-kanban.js bir IIFE; jQuery + Sortable + abp + moment'i global
 // bekler. Burada YALNIZ kullanılan yüzeyleri sağlanır (apyaTaskRender.test.js ile
 // aynı desen). Test edilen davranışlar sürükle-bırak değil, RENDER kararları:
-// hangi kontrol kime çiziliyor, rozetlere ne yazılıyor.
+// hangi kolon nereden geliyor, hangi kontrol kime çiziliyor, rozetlere ne yazılıyor.
 //
 // Sürükleme/ölçme gibi gerçek jQuery isteyen parçalar kapsam dışı — repoda jQuery
 // devDependency yok (bkz. apyaTaskConsole.test.js'teki aynı not).
 
 let granted = {};
 
-// _KanbanBoard.cshtml'in birebir yansıması. Partial değişirse burası da değişmeli;
-// WIP rozeti markup'ı orada bulunmazsa updateCounts sessizce hiçbir şey yapmaz.
+// _KanbanBoard.cshtml'in birebir yansıması: kolonlar JS'ten basılır, partial
+// yalnız kabı ve proje seçili değilken kullanılacak varsayılan adları taşır.
 function boardHtml() {
-    const col = (status, id, tone, title) =>
-        `<div class="kanban-column" data-status-id="${status}">
-            <div class="kanban-header">
-                <span class="kanban-title"><i class="fa fa-circle me-2"></i>${title}</span>
-                <span class="d-flex align-items-center gap-2">
-                    <span class="apya-chip apya-chip-${tone} kanban-count">0</span>
-                    <span class="kanban-wip d-none" title="WIP limiti"></span>
-                </span>
-            </div>
-            <div class="kanban-cards" id="${id}"></div>
-        </div>`;
-    return `<div class="kanban-board">
-        ${col(1, 'kanban-todo', 'neutral', 'Yapılacak')}
-        ${col(2, 'kanban-inprogress', 'warning', 'Sürüyor')}
-        ${col(3, 'kanban-inreview', 'brand', 'Testte')}
-        ${col(4, 'kanban-done', 'positive', 'Tamamlandı')}
-    </div>`;
+    return `<div class="kanban-board"
+        data-col-1="Yapılacak" data-col-2="Sürüyor"
+        data-col-3="Testte" data-col-4="Tamamlandı"></div>`;
 }
 
 const sysCols = [
@@ -61,6 +47,8 @@ function mountBoard(cols, tasks) {
     };
 }
 
+const col = (statusId) => document.querySelector(`.kanban-column[data-status-id="${statusId}"]`);
+
 beforeAll(async () => {
     global.$ = function () { return { on() { return this; } }; };
     global.$.extend = Object.assign;
@@ -81,6 +69,57 @@ beforeEach(() => {
     localStorage.clear();
 });
 
+describe('kolonların kaynağı', () => {
+    it('proje seçiliyken sistem kolonlarının ADI DB kaydından gelir', async () => {
+        const renamed = sysCols.map((c) => (c.statusValue === 3 ? { ...c, name: 'Kod İncelemesi' } : c));
+        mountBoard(renamed, []);
+        apya.kanban.create({ projectId: 'p1' }).load();
+        await flush();
+
+        expect(col(3).querySelector('.kanban-title').textContent).toContain('Kod İncelemesi');
+        // Kart kabı SYS id'siyle doğar — render() görevleri buraya yerleştiriyor.
+        expect(col(3).querySelector('.kanban-cards').id).toBe('kanban-inreview');
+    });
+
+    it('proje seçili DEĞİLKEN adlar partial\'daki varsayılanlardan gelir', async () => {
+        mountBoard(sysCols, []);
+        apya.kanban.create({ projectId: null }).load();
+        await flush();
+
+        expect(document.querySelectorAll('.kanban-column').length).toBe(4);
+        expect(col(1).querySelector('.kanban-title').textContent).toContain('Yapılacak');
+        expect(col(4).querySelector('.kanban-title').textContent).toContain('Tamamlandı');
+        // DB kolonu yok → drag status ile taşınmalı, kolon-id yazılmamalı.
+        expect(col(1).hasAttribute('data-column-id')).toBe(false);
+    });
+
+    it('kolonlar DB Order sırasına göre dizilir (özel kolon sistemin arasına girebilir)', async () => {
+        const cols = [
+            { ...sysCols[0], order: 0 },
+            { ...customCol, order: 1 },
+            { ...sysCols[1], order: 2 },
+            { ...sysCols[2], order: 3 },
+            { ...sysCols[3], order: 4 }
+        ];
+        mountBoard(cols, []);
+        apya.kanban.create({ projectId: 'p1' }).load();
+        await flush();
+
+        const names = Array.from(document.querySelectorAll('.kanban-column:not(.js-add-col) .kanban-title'))
+            .map((n) => n.textContent.trim());
+        expect(names).toEqual(['Yapılacak', 'Hakem değerlendirmesi', 'Sürüyor', 'Testte', 'Tamamlandı']);
+    });
+
+    it('renk hem sistem hem özel kolonda data-column-color ile taşınır', async () => {
+        mountBoard(sysCols.concat([customCol]), []);
+        apya.kanban.create({ projectId: 'p1' }).load();
+        await flush();
+
+        expect(col(2).getAttribute('data-column-color')).toBe('warning');
+        expect(document.querySelector('.js-custom-col').getAttribute('data-column-color')).toBe('primary');
+    });
+});
+
 describe('kolon düzenleme yetkisi (Projects.Edit)', () => {
     it('yetki YOKSA ⋯ menüsü ve "Kolon ekle" karosu çizilmez — özel kolon yine görünür', async () => {
         mountBoard(sysCols.concat([customCol]), []);
@@ -89,25 +128,48 @@ describe('kolon düzenleme yetkisi (Projects.Edit)', () => {
 
         // Kolon duruyor: kartları kaybolmasın diye görünürlük yetkiye bağlı DEĞİL.
         expect(document.querySelector('.js-custom-col')).not.toBeNull();
-        expect(document.querySelector('.js-custom-col .js-col-name').textContent).toContain('Hakem değerlendirmesi');
+        expect(document.querySelector('.js-custom-col .kanban-title').textContent).toContain('Hakem değerlendirmesi');
 
-        // Düzenleme yüzeyi yok.
         expect(document.querySelector('.kanban-col-menu')).toBeNull();
         expect(document.querySelector('.js-col-delete')).toBeNull();
-        expect(document.querySelector('.js-col-wip-save')).toBeNull();
         expect(document.querySelector('.js-add-col')).toBeNull();
     });
 
-    it('yetki VARSA ⋯ menüsü ve "Kolon ekle" karosu çizilir', async () => {
+    it('yetki VARSA her kolonda ⋯ menüsü ve panoda "Kolon ekle" karosu çizilir', async () => {
         granted['Platform.Projects.Edit'] = true;
         mountBoard(sysCols.concat([customCol]), []);
         apya.kanban.create({ projectId: 'p1' }).load();
         await flush();
 
-        expect(document.querySelector('.kanban-col-menu')).not.toBeNull();
-        expect(document.querySelector('.js-col-rename')).not.toBeNull();
-        expect(document.querySelector('.js-col-delete')).not.toBeNull();
+        expect(document.querySelectorAll('.kanban-col-menu').length).toBe(5);
         expect(document.querySelector('.js-add-col')).not.toBeNull();
+    });
+
+    it('sistem kolonunda SİL kilitli, özel kolonda gerçek sil düğmesi', async () => {
+        granted['Platform.Projects.Edit'] = true;
+        mountBoard(sysCols.concat([customCol]), []);
+        apya.kanban.create({ projectId: 'p1' }).load();
+        await flush();
+
+        // Sistem: tıklanamaz kilit; yeniden adlandırma alternatifi duruyor.
+        expect(col(1).querySelector('.apya-console-menu-item.is-locked')).not.toBeNull();
+        expect(col(1).querySelector('.js-col-delete')).toBeNull();
+        expect(col(1).querySelector('.js-col-rename')).not.toBeNull();
+
+        // Özel: silinebilir.
+        const custom = document.querySelector('.js-custom-col');
+        expect(custom.querySelector('.js-col-delete')).not.toBeNull();
+        expect(custom.querySelector('.apya-console-menu-item.is-locked')).toBeNull();
+    });
+
+    it('proje seçili değilken kolon yönetimi hiç render edilmez', async () => {
+        granted['Platform.Projects.Edit'] = true;
+        mountBoard(sysCols, []);
+        apya.kanban.create({ projectId: null }).load();
+        await flush();
+
+        expect(document.querySelector('.kanban-col-menu')).toBeNull();
+        expect(document.querySelector('.js-add-col')).toBeNull();
     });
 
     it('opts.canEditColumns açıkça verilirse izin sorgusunu ezer', async () => {
@@ -121,6 +183,61 @@ describe('kolon düzenleme yetkisi (Projects.Edit)', () => {
     });
 });
 
+describe('kolon başlığındaki ＋ (görev ekle)', () => {
+    it('createModal verilmezse çizilmez', async () => {
+        mountBoard(sysCols, []);
+        apya.kanban.create({ projectId: 'p1' }).load();
+        await flush();
+
+        expect(document.querySelector('.js-col-add-task')).toBeNull();
+    });
+
+    it('createModal + proje varsa her kolonda çizilir', async () => {
+        mountBoard(sysCols, []);
+        apya.kanban.create({ projectId: 'p1', createModal: { open() { } } }).load();
+        await flush();
+
+        expect(document.querySelectorAll('.js-col-add-task').length).toBe(4);
+    });
+
+    it('proje seçili değilken çizilmez (görev bir projeye açılır)', async () => {
+        mountBoard(sysCols, []);
+        apya.kanban.create({ projectId: null, createModal: { open() { } } }).load();
+        await flush();
+
+        expect(document.querySelector('.js-col-add-task')).toBeNull();
+    });
+});
+
+describe('boş kolon metni', () => {
+    it('kartı olmayan kolonda görünür, dolu kolonda görünmez', async () => {
+        mountBoard(sysCols, [{ id: 't1', code: 'GRV-1', title: 'A', status: 1, priority: 2 }]);
+        apya.kanban.create({ projectId: 'p1' }).load();
+        await flush();
+
+        expect(col(1).querySelector('.kanban-empty')).toBeNull();
+        expect(col(2).querySelector('.kanban-empty')).not.toBeNull();
+        expect(col(3).querySelector('.kanban-empty-title').textContent).toBe('Test bekleyen iş yok');
+    });
+
+    it('boş metin kart sayılmaz — sayaç 0 kalır', async () => {
+        mountBoard(sysCols, []);
+        apya.kanban.create({ projectId: 'p1' }).load();
+        await flush();
+
+        expect(col(2).querySelector('.kanban-count').textContent).toBe('0');
+    });
+
+    it('özel kolonun kendi genel metni olur', async () => {
+        mountBoard(sysCols.concat([customCol]), []);
+        apya.kanban.create({ projectId: 'p1' }).load();
+        await flush();
+
+        const custom = document.querySelector('.js-custom-col');
+        expect(custom.querySelector('.kanban-empty-title').textContent).toBe('Bu kolon boş');
+    });
+});
+
 describe('sistem kolonunda WIP rozeti', () => {
     it('limit gelince "n / limit" yazar, aşımda is-over sınıfı alır', async () => {
         const cols = sysCols.map((c) => (c.statusValue === 2 ? { ...c, wipLimit: 1 } : c));
@@ -131,7 +248,7 @@ describe('sistem kolonunda WIP rozeti', () => {
         apya.kanban.create({ projectId: 'p1' }).load();
         await flush();
 
-        const wip = document.querySelector('.kanban-column[data-status-id="2"] .kanban-wip');
+        const wip = col(2).querySelector('.kanban-wip');
         expect(wip.classList.contains('d-none')).toBe(false);
         expect(wip.textContent).toBe('2 / 1');
         expect(wip.classList.contains('is-over')).toBe(true);
@@ -142,25 +259,23 @@ describe('sistem kolonunda WIP rozeti', () => {
         apya.kanban.create({ projectId: 'p1' }).load();
         await flush();
 
-        const wip = document.querySelector('.kanban-column[data-status-id="1"] .kanban-wip');
-        expect(wip.classList.contains('d-none')).toBe(true);
+        expect(col(1).querySelector('.kanban-wip').classList.contains('d-none')).toBe(true);
     });
 
-    it('proje seçimi kalkınca sistem kolonundaki bayat WIP limiti silinir', async () => {
+    it('proje seçimi kalkınca sistem kolonunda bayat WIP limiti kalmaz', async () => {
         const cols = sysCols.map((c) => (c.statusValue === 2 ? { ...c, wipLimit: 1 } : c));
         mountBoard(cols, [{ id: 't1', code: 'GRV-1', title: 'A', status: 2, priority: 2 }]);
         const kb = apya.kanban.create({ projectId: 'p1' });
         kb.load();
         await flush();
-
-        const col = document.querySelector('.kanban-column[data-status-id="2"]');
-        expect(col.getAttribute('data-wip-limit')).toBe('1');
+        expect(col(2).getAttribute('data-wip-limit')).toBe('1');
 
         kb.setProject(null);
         await flush();
 
-        expect(col.hasAttribute('data-wip-limit')).toBe(false);
-        expect(col.querySelector('.kanban-wip').classList.contains('d-none')).toBe(true);
+        // Board baştan çizilir; kolonu YENİDEN sorgula (eski düğüm artık kopuk).
+        expect(col(2).hasAttribute('data-wip-limit')).toBe(false);
+        expect(col(2).querySelector('.kanban-wip').classList.contains('d-none')).toBe(true);
     });
 });
 
@@ -170,8 +285,7 @@ describe('kart kimlik rozeti', () => {
         apya.kanban.create({ projectId: 'p1' }).load();
         await flush();
 
-        const badge = document.querySelector('#kanban-todo .kanban-card small');
-        expect(badge.textContent).toContain('GRV-17');
+        expect(document.querySelector('#kanban-todo .kanban-card small').textContent).toContain('GRV-17');
     });
 
     it('kod yoksa GUID kısaltmasına düşer', async () => {
@@ -179,7 +293,6 @@ describe('kart kimlik rozeti', () => {
         apya.kanban.create({ projectId: 'p1' }).load();
         await flush();
 
-        const badge = document.querySelector('#kanban-todo .kanban-card small');
-        expect(badge.textContent).toContain('#aaaa');
+        expect(document.querySelector('#kanban-todo .kanban-card small').textContent).toContain('#aaaa');
     });
 });

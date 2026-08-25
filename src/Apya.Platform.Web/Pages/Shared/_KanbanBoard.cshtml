@@ -1,58 +1,22 @@
+@using Microsoft.AspNetCore.Mvc.Localization
+@using Apya.Platform.Localization
+@inject IHtmlLocalizer<PlatformResource> L
 @*
-    Merkezi Kanban board markup'ı (tek kaynak).
+    Merkezi Kanban board kabı (tek kaynak).
     Projeler / Görevler (/Board) / Tasks sayfaları bu partial'ı kullanır.
-    4 sistem kolonu (TaskStatus 1-4). Özel kolonlar ve count'lar sayfa JS'i
-    tarafından doldurulur; sınıf/ID'ler tüm sayfalarda aynıdır.
+
+    Kolonlar ARTIK JS'ten basılır (/js/apya-kanban.js · renderColumns):
+    proje seçiliyken BoardColumn kayıtlarından (sistem + özel, DB sırasıyla),
+    proje seçili değilken aşağıdaki data-col-* varsayılan adlarından.
+    Böylece sistem kolonunun adı/rengi/WIP'i de düzenlenebilir hâle gelir —
+    eskiden burada sabit yazdığı için DB'deki ad hiç görünmüyordu.
+
+    Varsayılan adlar Tasks:Status:* anahtarlarından okunur; JS'te ikinci bir
+    Türkçe kopya TUTULMAZ (adlandırma tek kaynaktan gelsin).
     Tasarım: /css/kanban.css
 *@
-<div class="kanban-board mt-2">
-    @* Kolon başlığı rengi kanban.css'ten gelir (data-status-id bazlı token) —
-       Bootstrap text-* utility'leri kaldırıldı (dark'ta -emphasis kalıntısı bug sınıfı). *@
-    <!-- Yapılacak (Todo=1) -->
-    <div class="kanban-column" data-status-id="1">
-        <div class="kanban-header">
-            <span class="kanban-title"><i class="fa fa-circle me-2"></i>Yapılacak</span>
-            <span class="d-flex align-items-center gap-2">
-                <span class="apya-chip apya-chip-neutral kanban-count">0</span>
-                <span class="kanban-wip d-none" title="WIP limiti"></span>
-            </span>
-        </div>
-        <div class="kanban-cards" id="kanban-todo"></div>
-    </div>
-
-    <!-- Sürüyor (InProgress=2) -->
-    <div class="kanban-column" data-status-id="2">
-        <div class="kanban-header">
-            <span class="kanban-title"><i class="fa fa-circle me-2"></i>Sürüyor</span>
-            <span class="d-flex align-items-center gap-2">
-                <span class="apya-chip apya-chip-warning kanban-count">0</span>
-                <span class="kanban-wip d-none" title="WIP limiti"></span>
-            </span>
-        </div>
-        <div class="kanban-cards" id="kanban-inprogress"></div>
-    </div>
-
-    <!-- Testte (InReview=3) -->
-    <div class="kanban-column" data-status-id="3">
-        <div class="kanban-header">
-            <span class="kanban-title"><i class="fa fa-circle me-2"></i>Testte</span>
-            <span class="d-flex align-items-center gap-2">
-                <span class="apya-chip apya-chip-brand kanban-count">0</span>
-                <span class="kanban-wip d-none" title="WIP limiti"></span>
-            </span>
-        </div>
-        <div class="kanban-cards" id="kanban-inreview"></div>
-    </div>
-
-    <!-- Tamamlandı (Done=4) -->
-    <div class="kanban-column" data-status-id="4">
-        <div class="kanban-header">
-            <span class="kanban-title"><i class="fa fa-check-circle me-2"></i>Tamamlandı</span>
-            <span class="d-flex align-items-center gap-2">
-                <span class="apya-chip apya-chip-positive kanban-count">0</span>
-                <span class="kanban-wip d-none" title="WIP limiti"></span>
-            </span>
-        </div>
-        <div class="kanban-cards" id="kanban-done"></div>
-    </div>
-</div>
+<div class="kanban-board mt-2"
+     data-col-1="@L["Tasks:Status:Todo"]"
+     data-col-2="@L["Tasks:Status:InProgress"]"
+     data-col-3="@L["Tasks:Status:InReview"]"
+     data-col-4="@L["Tasks:Status:Done"]"></div>

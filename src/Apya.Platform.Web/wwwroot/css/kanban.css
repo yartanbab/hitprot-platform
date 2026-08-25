@@ -39,19 +39,68 @@
 }
 .kanban-header:active { cursor: grabbing; }
 
-/* Kolon başlığı: nötr etiket + durum-renkli nokta ikonu (HANDOFF prototip deseni).
-   Renk yalnız ikonda — metin her temada okunur kalır. */
+/* Kolon başlığı: nötr etiket + renkli nokta ikonu (HANDOFF prototip deseni).
+   Renk yalnız ikonda — metin her temada okunur kalır.
+   Kaynak artık BoardColumn.ColorClass: sistem ve özel kolonlar AYNI mekanizmayı
+   kullanır (eskiden sistem kolonu data-status-id'ye, özel kolon Bootstrap
+   text-* utility'sine bağlıydı; ikincisi dark'ta -emphasis kalıntısı bırakıyordu). */
 .kanban-header .kanban-title { color: var(--apya-text-secondary); }
-.kanban-column[data-status-id="1"] .kanban-title i { color: var(--apya-neutral-500, #6b7280); }
-.kanban-column[data-status-id="2"] .kanban-title i { color: var(--apya-warning-500, #f59e0b); }
-.kanban-column[data-status-id="3"] .kanban-title i { color: var(--apya-brand-500, #2563eb); }
-.kanban-column[data-status-id="4"] .kanban-title i { color: var(--apya-positive-500, #059669); }
-/* Özel (kullanıcı tanımlı) kolonlar rengini JS'teki text-{colorClass} ile taşır (köprülü). */
+.kanban-column[data-column-color="secondary"] .kanban-title i { color: var(--apya-neutral-500, #6b7280); }
+.kanban-column[data-column-color="warning"]   .kanban-title i { color: var(--apya-warning-500, #f59e0b); }
+.kanban-column[data-column-color="info"]      .kanban-title i { color: var(--apya-brand-500, #2563eb); }
+.kanban-column[data-column-color="success"]   .kanban-title i { color: var(--apya-positive-500, #059669); }
+.kanban-column[data-column-color="primary"]   .kanban-title i { color: var(--apya-accent-500, #4f46e5); }
+.kanban-column[data-column-color="danger"]    .kanban-title i { color: var(--apya-negative-500, #dc2626); }
 
 .kanban-cards {
     flex: 1;
     min-height: 100px;
 }
+
+/* Boş kolon metni — kart değildir: sayaçlara girmez, sürüklenemez
+   (Sortable draggable: '.kanban-card' ile dışarıda bırakılır) ve bırakma
+   hedefini kapatmasın diye fare olaylarını yutmaz. */
+.kanban-empty {
+    padding: 18px 12px;
+    text-align: center;
+    pointer-events: none;
+    user-select: none;
+}
+.kanban-empty-title {
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--apya-text-secondary);
+}
+.kanban-empty-sub {
+    margin-top: 4px;
+    font-size: 11px;
+    line-height: 1.5;
+    color: var(--apya-text-tertiary);
+}
+
+/* Kolon başlığındaki ＋ — bu kolona görev ekler (durum/kolon ön seçili) */
+.kanban-col-add {
+    width: 24px;
+    height: 24px;
+    display: grid;
+    place-items: center;
+    border: none;
+    border-radius: var(--apya-radius-md);
+    background: transparent;
+    color: var(--apya-text-tertiary);
+    font-size: 12px;
+    cursor: pointer;
+}
+.kanban-col-add:hover { background: var(--apya-surface-base); color: var(--apya-accent-600); }
+.kanban-col-add:focus-visible { outline: none; box-shadow: var(--apya-shadow-focus); }
+
+/* Sistem kolonunda "Kolonu sil" kilitli görünür — tıklanabilir değil, gerekçesi
+   title'da. Silme yerine yeniden adlandırma alternatifi menüde duruyor. */
+.apya-console-menu-item.is-locked {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+.apya-console-menu-item.is-locked:hover { background: transparent; }
 
 .kanban-card {
     background: var(--apya-surface-base, #fff);

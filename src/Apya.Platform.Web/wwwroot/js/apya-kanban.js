@@ -9,6 +9,7 @@
      var kb = apya.kanban.create({
         projectId: '...'|null,        // null = global board (tüm projeler)
         editModal: <abp.ModalManager>,
+        createModal: <abp.ModalManager>, // kolon başlığındaki ＋ (yoksa çizilmez)
         showProjectName: true|false,  // global'de kartta proje adı göster
         enableTimer: true,            // zaman sayacı butonları
         enableCustomColumns: bool,    // varsayılan: projectId != null
@@ -83,6 +84,8 @@
             ? opts.canEditColumns
             : abp.auth.isGranted('Platform.Projects.Edit');
         var editModal = opts.editModal || null;
+        // Kolon başlığındaki ＋ bunu kullanır; verilmezse düğme hiç çizilmez.
+        var createModal = opts.createModal || null;
         var getFilter = typeof opts.getFilter === 'function' ? opts.getFilter : function () { return {}; };
         var onChanged = typeof opts.onChanged === 'function' ? opts.onChanged : function () { };
 
@@ -212,73 +215,125 @@
             return card;
         }
 
-        // ── Özel kolonları render et (sadece enableCols) ──
+        // ── Kolonlar: sistem + özel TEK üreteçten ────────────────────────────
+        // Sistem kolonları da (ad/renk/WIP) DB'den gelir. Eskiden markup'ta sabit
+        // yazdıkları için DB'deki ad hiç görünmüyor, ⋯ menüsü de basılmıyordu:
+        // "sistem kolonunu yeniden adlandır" UI'da imkânsızdı.
+        var SYS_DEFAULT_COLOR = { 1: 'secondary', 2: 'warning', 3: 'info', 4: 'success' };
+
+        // Proje seçili DEĞİLKEN (genel pano "Tümü") BoardColumn kaydı yoktur; adlar
+        // _KanbanBoard.cshtml'deki data-col-* niteliklerinden okunur → adlandırma
+        // tek kaynaktan (Tasks:Status:*) gelir, JS'te ikinci bir Türkçe kopya yok.
+        function defaultColumns(board) {
+            return [1, 2, 3, 4].map(function (sv) {
+                return {
+                    id: null, statusValue: sv, isSystem: true, order: sv - 1, wipLimit: null,
+                    name: board.getAttribute('data-col-' + sv) || '',
+                    colorClass: SYS_DEFAULT_COLOR[sv]
+                };
+            });
+        }
+
+        // Boş kolon metni — sürükleme hedefi görünür kalsın diye kolonun kendi dilinde.
+        var EMPTY_TEXT = {
+            1: ['Sırada iş yok', 'Yeni bir görev ekleyerek başla.'],
+            2: ['Henüz iş başlamadı', 'Kart sürükleyerek buraya taşı ya da sıradaki bir işe başla.'],
+            3: ['Test bekleyen iş yok', ''],
+            4: ['Henüz kapatılan görev yok', '']
+        };
+        function buildEmptyState(statusValue) {
+            var t = EMPTY_TEXT[statusValue] || ['Bu kolon boş', 'Kartları buraya sürükleyebilirsin.'];
+            var box = el('div', 'kanban-empty');
+            var title = el('div', 'kanban-empty-title');
+            title.textContent = t[0];
+            box.appendChild(title);
+            if (t[1]) {
+                var sub = el('div', 'kanban-empty-sub');
+                sub.textContent = t[1];
+                box.appendChild(sub);
+            }
+            return box;
+        }
+
+        // ⋯ menüsü. Sistem kolonunda SİL kilitli görünür (StatusValue'ya bağlı, API de
+        // reddeder) — kullanıcıya yeniden adlandırma alternatifi kalır.
+        function columnMenuHtml(c) {
+            if (!canEditColumns || !c.id) { return ''; }
+            var del = c.isSystem
+                ? '<div class="apya-console-menu-item is-locked" aria-disabled="true" ' +
+                      'title="Sistem kolonu görev durumuna bağlıdır; silinemez, yeniden adlandırılabilir">' +
+                      '<span class="apya-console-menu-icon"><i class="fa fa-lock"></i></span>Kolonu sil</div>'
+                : '<button type="button" class="apya-console-menu-item is-danger js-col-delete">' +
+                      '<span class="apya-console-menu-icon"><i class="fa fa-trash"></i></span>Kolonu sil</button>';
+            return '<span class="dropdown">' +
+                '<button type="button" class="kanban-col-menu" data-bs-toggle="dropdown" aria-expanded="false" title="Kolon ayarları" aria-label="Kolon ayarları"><i class="fa fa-ellipsis"></i></button>' +
+                '<div class="dropdown-menu dropdown-menu-end apya-console-menu">' +
+                    '<button type="button" class="apya-console-menu-item js-col-rename">' +
+                        '<span class="apya-console-menu-icon"><i class="fa fa-pen"></i></span>Yeniden adlandır</button>' +
+                    '<div class="apya-console-menu-head is-divided">Renk</div>' +
+                    '<div class="kanban-col-colors">' + colorSwatches(c.colorClass) + '</div>' +
+                    '<div class="apya-console-menu-head is-divided">WIP limiti</div>' +
+                    '<div class="kanban-col-wip-row">' +
+                        '<input type="number" min="0" max="999" class="js-col-wip" ' +
+                            'value="' + (c.wipLimit || '') + '" placeholder="limit yok" aria-label="WIP limiti" />' +
+                        '<button type="button" class="kanban-col-wip-save js-col-wip-save">Kaydet</button>' +
+                    '</div>' +
+                    del +
+                '</div>' +
+            '</span>';
+        }
+
+        // Tek kolon elemanı. Sistem kolonunun kart kabı SYS id'siyle doğar
+        // (render() görevleri hâlâ statüye göre oraya yerleştiriyor).
+        function buildColumn(c) {
+            var isSys = c.statusValue != null;
+            var col = el('div', 'kanban-column shadow-sm border' + (isSys ? '' : ' js-custom-col'));
+            if (isSys) { col.setAttribute('data-status-id', c.statusValue); }
+            else { col.setAttribute('data-column-id-custom', c.id); }
+            if (c.id) { col.setAttribute('data-column-id', c.id); }
+            // Mevcut renk DOM'da taşınır: UpdateBoardColumnDto ad VE rengi BİRLİKTE
+            // ister; biri okunmadan gönderilirse diğeri sıfırlanır.
+            col.setAttribute('data-column-color', c.colorClass || 'primary');
+            if (c.wipLimit) { col.setAttribute('data-wip-limit', c.wipLimit); }
+
+            // Renk YALNIZ noktada: başlık metni nötr kalır. (Bootstrap text-* utility'si
+            // dark temada -emphasis kalıntısı bırakıyordu; renk artık CSS'te
+            // [data-column-color] üzerinden token'a bağlı.)
+            var addBtn = (createModal && projectId)
+                ? '<button type="button" class="kanban-col-add js-col-add-task" title="Bu kolona görev ekle" aria-label="Bu kolona görev ekle"><i class="fa fa-plus"></i></button>'
+                : '';
+            col.innerHTML =
+                '<div class="kanban-header">' +
+                    '<span class="kanban-title js-col-name"><i class="fa fa-circle me-2"></i></span>' +
+                    '<span class="d-flex align-items-center gap-2 apya-touch-actions">' +
+                        '<span class="apya-chip apya-chip-' + colorTone(c.colorClass) + ' kanban-count">0</span>' +
+                        '<span class="kanban-wip' + (c.wipLimit ? '' : ' d-none') + '" title="WIP limiti"></span>' +
+                        addBtn +
+                        columnMenuHtml(c) +
+                    '</span>' +
+                '</div>' +
+                '<div class="kanban-cards"></div>';
+            // Ad textContent ile: XSS-güvenli (kolon adı kullanıcı girdisi).
+            col.querySelector('.js-col-name').appendChild(document.createTextNode(' ' + c.name));
+            col.querySelector('.kanban-cards').id = isSys ? SYS[c.statusValue] : ('kanban-col-' + c.id);
+            return col;
+        }
+
+        // Board'u baştan kurar. Sıra: DB Order (sistem ve özel kolonlar aynı listede).
         function renderColumns(cols) {
             var board = document.querySelector(boardSel);
             if (!board) { return; }
-            board.querySelectorAll('.js-custom-col, .js-add-col').forEach(function (n) { n.remove(); });
+            board.innerHTML = '';
             customIds = {};
 
-            // Sistem kolonlarına DB kolon-id'sini ata (drag → moveTaskToColumn) ve
-            // WIP limitini taşı — rozet markup'ı _KanbanBoard.cshtml'de hazır bekliyor.
-            // Limit yoksa attribute KALDIRILIR: proje değiştirince bayat limit kalmasın.
-            cols.forEach(function (c) {
-                if (c.statusValue != null) {
-                    var sys = board.querySelector('.kanban-column[data-status-id="' + c.statusValue + '"]');
-                    if (sys) {
-                        sys.setAttribute('data-column-id', c.id);
-                        if (c.wipLimit) { sys.setAttribute('data-wip-limit', c.wipLimit); }
-                        else { sys.removeAttribute('data-wip-limit'); }
-                    }
-                }
+            cols.slice().sort(function (a, b) { return a.order - b.order; }).forEach(function (c) {
+                if (c.statusValue == null) { customIds[c.id] = true; }
+                board.appendChild(buildColumn(c));
             });
-            // Özel kolonlar (statusValue=null)
-            cols.filter(function (c) { return c.statusValue == null; })
-                .sort(function (a, b) { return a.order - b.order; })
-                .forEach(function (c) {
-                    customIds[c.id] = true;
-                    var col = el('div', 'kanban-column shadow-sm border js-custom-col');
-                    col.setAttribute('data-column-id', c.id);
-                    col.setAttribute('data-column-id-custom', c.id);
-                    // Mevcut renk DOM'da taşınır: UpdateBoardColumnDto ad VE rengi
-                    // BİRLİKTE ister; biri okunmadan gönderilirse diğeri sıfırlanır
-                    // (eski kod yeniden adlandırmada rengi hep 'primary' yapıyordu).
-                    col.setAttribute('data-column-color', c.colorClass || 'primary');
-                    if (c.wipLimit) { col.setAttribute('data-wip-limit', c.wipLimit); }
-                    var menu = !canEditColumns ? '' :
-                                '<span class="dropdown">' +
-                                    '<button type="button" class="kanban-col-menu" data-bs-toggle="dropdown" aria-expanded="false" title="Kolon ayarları" aria-label="Kolon ayarları"><i class="fa fa-ellipsis"></i></button>' +
-                                    '<div class="dropdown-menu dropdown-menu-end apya-console-menu">' +
-                                        '<button type="button" class="apya-console-menu-item js-col-rename">' +
-                                            '<span class="apya-console-menu-icon"><i class="fa fa-pen"></i></span>Yeniden adlandır</button>' +
-                                        '<div class="apya-console-menu-head is-divided">Renk</div>' +
-                                        '<div class="kanban-col-colors">' + colorSwatches(c.colorClass) + '</div>' +
-                                        '<div class="apya-console-menu-head is-divided">WIP limiti</div>' +
-                                        '<div class="kanban-col-wip-row">' +
-                                            '<input type="number" min="0" max="999" class="js-col-wip" ' +
-                                                'value="' + (c.wipLimit || '') + '" placeholder="limit yok" ' +
-                                                'aria-label="WIP limiti" />' +
-                                            '<button type="button" class="kanban-col-wip-save js-col-wip-save">Kaydet</button>' +
-                                        '</div>' +
-                                        '<button type="button" class="apya-console-menu-item is-danger js-col-delete">' +
-                                            '<span class="apya-console-menu-icon"><i class="fa fa-trash"></i></span>Kolonu sil</button>' +
-                                    '</div>' +
-                                '</span>';
-                    col.innerHTML =
-                        '<div class="kanban-header">' +
-                            '<span class="text-' + (c.colorClass || 'primary') + ' js-col-name"><i class="fa fa-circle me-2"></i></span>' +
-                            '<span class="d-flex align-items-center gap-2 apya-touch-actions">' +
-                                '<span class="apya-chip apya-chip-' + colorTone(c.colorClass) + ' kanban-count">0</span>' +
-                                '<span class="kanban-wip' + (c.wipLimit ? '' : ' d-none') + '" title="WIP limiti"></span>' +
-                                menu +
-                            '</span>' +
-                        '</div>' +
-                        '<div class="kanban-cards" id="kanban-col-' + c.id + '"></div>';
-                    col.querySelector('.js-col-name').appendChild(document.createTextNode(' ' + c.name));
-                    board.appendChild(col);
-                });
-            // "Kolon ekle" hayalet kolonu (handoff: kesik çizgili, dar) — yalnız yetkiliye
-            if (canEditColumns) {
+
+            // "Kolon ekle" hayalet kolonu (handoff: kesik çizgili, dar) — yalnız
+            // yetkiliye ve yalnız proje seçiliyken (özel kolon projeye aittir).
+            if (canEditColumns && effectiveCols()) {
                 var add = el('div', 'kanban-column js-add-col kanban-add-col');
                 add.innerHTML = '<i class="fa fa-plus"></i>' +
                     '<span class="kanban-add-col-title">Kolon ekle</span>' +
@@ -287,29 +342,20 @@
             }
         }
 
-        // Global moda dönerken (proje seçimi kalkınca) özel kolonları + Kolon Ekle
-        // karosunu DOM'dan temizle ve sistem kolonlarının DB kolon-id'lerini sıfırla
-        // (drag tekrar status ile taşınsın).
-        function clearCustomColumns() {
+        // ── Yükle ──
+        // Proje seçiliyse kolonlar DB'den (sistem + özel), değilse partial'daki
+        // varsayılan adlardan kurulur. Her iki yolda da board baştan çizilir —
+        // böylece proje değiştirince bayat kolon/limit kalmaz.
+        function load() {
             var board = document.querySelector(boardSel);
             if (!board) { return; }
-            board.querySelectorAll('.js-custom-col, .js-add-col').forEach(function (n) { n.remove(); });
-            board.querySelectorAll('.kanban-column[data-column-id]').forEach(function (c) {
-                c.removeAttribute('data-column-id');
-                c.removeAttribute('data-wip-limit'); // sistem kolonuna yazılan WIP de bayat kalmasın
-            });
-            customIds = {};
-        }
-
-        // ── Yükle ──
-        function load() {
             if (effectiveCols()) {
                 colSvc.getListByProject(projectId).then(function (cols) {
                     renderColumns(cols);
                     fetchTasks();
                 });
             } else {
-                clearCustomColumns();
+                renderColumns(defaultColumns(board));
                 fetchTasks();
             }
         }
@@ -344,11 +390,24 @@
             applyLayout();
         }
 
+        // Sayaç + WIP + boş metin: kolon başlığının kartlarla senkronu TEK yerde.
+        // Sürükleme sonrası da çağrılır — boş kolona kart bırakılınca metin kalkar,
+        // son kart çıkınca geri gelir (yeniden yükleme beklemeden).
         function updateCounts() {
             document.querySelectorAll(boardSel + ' .kanban-column').forEach(function (col) {
                 var n = col.querySelectorAll('.kanban-cards .kanban-card').length;
                 var b = col.querySelector('.kanban-count');
                 if (b) { b.textContent = n; }
+
+                var cards = col.querySelector('.kanban-cards');
+                if (cards && !col.classList.contains('js-add-col')) {
+                    var empty = cards.querySelector('.kanban-empty');
+                    if (n === 0 && !empty) {
+                        cards.appendChild(buildEmptyState(col.getAttribute('data-status-id')));
+                    } else if (n > 0 && empty) {
+                        empty.remove();
+                    }
+                }
 
                 // WIP rozeti: "n / limit". Aşımda negatif tona geçer — limit sert
                 // kısıt değil, uyarı sinyalidir (bkz. BoardColumn.WipLimit).
@@ -374,6 +433,8 @@
                     group: 'apya-kanban-cards',
                     animation: 150,
                     ghostClass: 'sortable-ghost',
+                    // Boş kolon metni de kabın çocuğu — sürüklenebilir sanılmasın.
+                    draggable: '.kanban-card',
                     // Dokunmatikte board yatay overflow-x:auto ile kaydırılıyor;
                     // gecikme'siz sürükleme bir kartın üstünden yana kaydırma
                     // hareketini anında "drag" sanıyordu (2026-08 tasarım denetimi).
@@ -478,6 +539,17 @@
             if (e.target.closest('.btn')) { return; }
             if (editModal) { editModal.open({ id: $(this).data('id') }); }
         });
+        // Kolon başlığındaki ＋ — görev oluşturma modalını o kolon ön seçili açar.
+        // Sistem kolonu "s:<status>", özel kolon "c:<guid>" (CreateModal aynı dili konuşur).
+        $doc.on('click', boardSel + ' .js-col-add-task', function (e) {
+            e.stopPropagation();
+            if (!createModal || !projectId) { return; }
+            var $col = $(this).closest('.kanban-column');
+            var custom = $col.attr('data-column-id-custom');
+            var statusOrColumn = custom ? ('c:' + custom) : ('s:' + $col.attr('data-status-id'));
+            createModal.open({ projectId: projectId, statusOrColumn: statusOrColumn });
+        });
+
         $doc.on('click', boardSel + ' .js-delete-task', function (e) {
             e.stopPropagation();
             var id = $(this).data('id');

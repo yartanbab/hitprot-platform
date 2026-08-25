@@ -22,6 +22,7 @@ $(function () {
     var kb = apya.kanban.create({
         projectId: null,            // ilk proje listesi gelince setProject ile atanır
         editModal: editModal,
+        createModal: createModal,   // kolon başlığındaki ＋ (o kolon ön seçili açar)
         showProjectName: false,     // tek proje seçili → kartta proje adı gereksiz
         enableTimer: false,         // zaman sayacı her board'da gizli (kullanıcı kararı)
         enableCustomColumns: true   // seçili projenin özel kolonları + Kolon Ekle gelir

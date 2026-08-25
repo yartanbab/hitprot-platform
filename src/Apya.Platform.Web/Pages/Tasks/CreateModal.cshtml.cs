@@ -17,7 +17,8 @@ public class CreateModalModel : PlatformPageModel
     public CreateUpdateTaskDto Task { get; set; } = new();
 
     // Birleşik "Durum / Kolon" seçimi — "s:<int>" sistem durumu, "c:<guid>" özel kolon.
-    [BindProperty]
+    // SupportsGet: kanban kolon başlığındaki ＋ bu değeri geçirerek o kolonu ön seçer.
+    [BindProperty(SupportsGet = true)]
     public string? StatusOrColumn { get; set; }
 
     public List<SelectListItem> UserList { get; set; } = new();
@@ -90,10 +91,14 @@ public class CreateModalModel : PlatformPageModel
     {
         StatusOrColumnList = new List<SelectListItem>();
 
-        // Sistem durumları her zaman (varsayılan seçili: Yapılacak)
+        // Kanban kolon başlığındaki ＋ "s:<status>" ya da "c:<guid>" gönderir; gelmezse
+        // varsayılan Yapılacak seçili kalır.
+        var selected = string.IsNullOrWhiteSpace(StatusOrColumn) ? "s:1" : StatusOrColumn;
+
+        // Sistem durumları her zaman
         foreach (var (label, sv) in new[] { ("Yapılacak", 1), ("Sürüyor", 2), ("Testte", 3), ("Tamamlandı", 4) })
         {
-            StatusOrColumnList.Add(new SelectListItem(label, "s:" + sv, sv == 1));
+            StatusOrColumnList.Add(new SelectListItem(label, "s:" + sv, "s:" + sv == selected));
         }
 
         // Projenin özel kolonları (StatusValue=null)
@@ -104,12 +109,12 @@ public class CreateModalModel : PlatformPageModel
                 var cols = await _boardColumnAppService.GetListByProjectAsync(projectId.Value);
                 foreach (var c in cols.Where(c => !c.StatusValue.HasValue).OrderBy(c => c.Order))
                 {
-                    StatusOrColumnList.Add(new SelectListItem(c.Name, "c:" + c.Id, false));
+                    StatusOrColumnList.Add(new SelectListItem(c.Name, "c:" + c.Id, "c:" + c.Id == selected));
                 }
             }
             catch { /* yetki/erişim yoksa yalnızca sistem durumları */ }
         }
 
-        StatusOrColumnList.Add(new SelectListItem("İptal", "s:0", false));
+        StatusOrColumnList.Add(new SelectListItem("İptal", "s:0", selected == "s:0"));
     }
 }
