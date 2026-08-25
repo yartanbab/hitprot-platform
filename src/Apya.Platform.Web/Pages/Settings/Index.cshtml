@@ -40,11 +40,39 @@
         }
 
         <form method="post" class="apya-settings-tabs">
+            @*
+                Sekme SIRASI: Yönetim · Menü · Görevler · Projeler · Mobil · Kiracı.
+
+                🔴 Yönetim izne bağlı basılıyor (AdminLinks boşsa hiç yok). Bu yüzden
+                "ilk sekme aktif" SABİT yazılamaz: yetkisi olmayan kullanıcıda aktif
+                sekme de aktif panel de hiç basılmaz ve sayfa BOŞ açılır. Aktiflik
+                bu yüzden ilk GÖRÜNEN sekmeye veriliyor — Yönetim varsa o, yoksa Menü.
+
+                Panellerin .tab-content içindeki DOM sırası bilinçli olarak değişmedi:
+                görünen sıra bu <ul>'den gelir, paneller id ile eşleşir.
+            *@
+            @{
+                var yonetimVar = Model.AdminLinks.Count > 0;
+                var menuIlk = !yonetimVar;
+            }
             <ul class="nav nav-tabs" id="SettingsTab" role="tablist">
+                @if (yonetimVar)
+                {
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="st-admin-tab" data-bs-toggle="tab"
+                                data-bs-target="#st-admin" type="button" role="tab"
+                                aria-controls="st-admin" aria-selected="true">@L["Settings:Admin.Title"]</button>
+                    </li>
+                }
                 <li class="nav-item" role="presentation">
-                    <button class="nav-link active" id="st-tasks-tab" data-bs-toggle="tab"
+                    <button class="nav-link @(menuIlk ? "active" : null)" id="st-menu-tab" data-bs-toggle="tab"
+                            data-bs-target="#st-menu" type="button" role="tab"
+                            aria-controls="st-menu" aria-selected="@(menuIlk ? "true" : "false")">@L["Settings:Tabs.Menu"]</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="st-tasks-tab" data-bs-toggle="tab"
                             data-bs-target="#st-tasks" type="button" role="tab"
-                            aria-controls="st-tasks" aria-selected="true">@L["Settings:Tabs.Tasks"]</button>
+                            aria-controls="st-tasks" aria-selected="false">@L["Settings:Tabs.Tasks"]</button>
                 </li>
                 <li class="nav-item" role="presentation">
                     <button class="nav-link" id="st-projects-tab" data-bs-toggle="tab"
@@ -56,11 +84,6 @@
                             data-bs-target="#st-mobile" type="button" role="tab"
                             aria-controls="st-mobile" aria-selected="false">@L["Settings:Tabs.Mobile"]</button>
                 </li>
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="st-menu-tab" data-bs-toggle="tab"
-                            data-bs-target="#st-menu" type="button" role="tab"
-                            aria-controls="st-menu" aria-selected="false">@L["Settings:Tabs.Menu"]</button>
-                </li>
                 @if (Model.CanManageTenantSettings)
                 {
                     <li class="nav-item" role="presentation">
@@ -69,20 +92,12 @@
                                 aria-controls="st-tenant" aria-selected="false">@L["Settings:Tabs.Tenant"]</button>
                     </li>
                 }
-                @if (Model.AdminLinks.Count > 0)
-                {
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link" id="st-admin-tab" data-bs-toggle="tab"
-                                data-bs-target="#st-admin" type="button" role="tab"
-                                aria-controls="st-admin" aria-selected="false">@L["Settings:Admin.Title"]</button>
-                    </li>
-                }
             </ul>
 
             <div class="tab-content pt-3" id="SettingsTabContent">
 
                 @* --- GÖREVLER: görev detayı nasıl açılır + Yeni Görev penceresi --- *@
-                <div class="tab-pane fade show active" id="st-tasks" role="tabpanel"
+                <div class="tab-pane fade" id="st-tasks" role="tabpanel"
                      aria-labelledby="st-tasks-tab" data-needs-save="true">
 
                     <fieldset class="mb-4">
@@ -262,7 +277,7 @@
                     kaybolmaması gerekiyor: izin kapısı YOKTUR, her oturumlu kullanıcı
                     kendi menü düzenini değiştirebilir.
                 *@
-                <div class="tab-pane fade" id="st-menu" role="tabpanel" aria-labelledby="st-menu-tab">
+                <div class="tab-pane fade @(menuIlk ? "show active" : null)" id="st-menu" role="tabpanel" aria-labelledby="st-menu-tab">
                     <div class="form-text mb-3">@L["Settings:MenuLayout.Help"]</div>
                     <a href="/Settings/Menu" class="btn btn-outline-primary">
                         <i class="fa fa-bars-staggered me-1" aria-hidden="true"></i>
@@ -316,7 +331,7 @@
                 *@
                 @if (Model.AdminLinks.Count > 0)
                 {
-                    <div class="tab-pane fade" id="st-admin" role="tabpanel" aria-labelledby="st-admin-tab">
+                    <div class="tab-pane fade show active" id="st-admin" role="tabpanel" aria-labelledby="st-admin-tab">
                         <div class="form-text mb-3">@L["Settings:Admin.Help"]</div>
                         <ul class="apya-settings-links">
                             @foreach (var link in Model.AdminLinks)
