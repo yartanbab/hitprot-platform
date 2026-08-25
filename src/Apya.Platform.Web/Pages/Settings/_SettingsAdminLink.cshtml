@@ -1,0 +1,21 @@
+@model Apya.Platform.Web.Menus.NavSettingsEntry
+@*
+    Ayarlar sayfasındaki tek bağlantı satırı. Partial olmasının sebebi, aynı
+    satırın hem 1. seviyede hem de taşınmış bir kategorinin altında basılması.
+*@
+<li>
+    <a href="@Model.Url" class="apya-settings-link">
+        <span class="kpi-icon-box kpi-icon-box--sm kpi-icon-box--neutral" aria-hidden="true">
+            <i class="@Model.Icon"></i>
+        </span>
+        <span class="apya-settings-link-text">
+            <span class="apya-settings-link-title">@Model.Title</span>
+            @* Kenar çubuğundan inen öğelerin açıklaması yok — boş satır basmıyoruz. *@
+            @if (!string.IsNullOrEmpty(Model.Description))
+            {
+                <span class="apya-settings-link-desc">@Model.Description</span>
+            }
+        </span>
+        <i class="fa fa-chevron-right apya-settings-link-chevron" aria-hidden="true"></i>
+    </a>
+</li>

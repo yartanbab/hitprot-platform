@@ -129,6 +129,15 @@ public class PlatformSettingDefinitionProvider : SettingDefinitionProvider
                 description: L("Setting:Shell.SavedViews.Description"))
         );
 
+        // Kenar çubuğu düzeni — SavedViews ile aynı ray (kullanıcı seviyesi, JSON değer).
+        context.Add(
+            new SettingDefinition(
+                PlatformSettings.Shell.MenuLayout,
+                defaultValue: PlatformSettingDefaults.ShellMenuLayout,
+                displayName: L("Setting:Shell.MenuLayout"),
+                description: L("Setting:Shell.MenuLayout.Description"))
+        );
+
         // --- Telemetri ---
         // Global (host) ayarları: tenant'lar değiştiremez.
         context.Add(

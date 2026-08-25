@@ -433,23 +433,9 @@ $(function () {
         li.classList.add('apya-shell-foot-item');
         foot.appendChild(li);
 
-        // İkinci satır: katlanan YÖNETİM bölümünün nereye gittiğini açıklar.
-        // Handoff bunu açıkça "kaldırılmamalı" diye işaretliyor.
-        var hint = document.createElement('span');
-        hint.className = 'apya-shell-foot-hint';
-        hint.textContent = 'Kiracı · Kimlik · Platform · Geri bildirim';
-        settings.appendChild(hint);
-
-        var health = state.health || {};
-        var status = document.createElement('div');
-        status.className = 'apya-shell-status';
-        status.innerHTML =
-            '<span class="apya-shell-status-dot' + (health.isHealthy ? '' : ' is-down') + '"></span>' +
-            '<span class="apya-shell-status-text">' +
-            (health.isHealthy ? 'Tüm sistemler çalışıyor' : 'Sistem sorunu var') + '</span>' +
-            (health.version ? '<span class="apya-shell-status-version apya-numeric">' +
-             escapeHtml(health.version) + '</span>' : '');
-        foot.appendChild(status);
+        // İpucu satırı ("Kiracı · Kimlik · …") ve sistem durumu satırı
+        // ("Tüm sistemler çalışıyor") kullanıcı kararıyla kaldırıldı (2026-08-25).
+        // Dip blok artık yalnız Ayarlar girişini taşır.
 
         nav.appendChild(foot);
     }

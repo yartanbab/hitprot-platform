@@ -3,13 +3,12 @@ using System.Threading.Tasks;
 using Apya.Platform.Features;
 using Apya.Platform.Permissions;
 using Apya.Platform.Settings;
+using Apya.Platform.Web.Menus;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Volo.Abp.Authorization.Permissions;
 using Volo.Abp.AspNetCore.Mvc.UI.RazorPages;
-using Volo.Abp.Identity;
 using Volo.Abp.SettingManagement;
-using Volo.Abp.TenantManagement;
 
 namespace Apya.Platform.Web.Pages.Settings;
 
@@ -59,23 +58,29 @@ public class IndexModel : AbpPageModel
     /// <summary>Kiracı seviyesindeki ayarı düzenleyebilir mi? (PlatformPermissions.TenantSettings)</summary>
     public bool CanManageTenantSettings { get; set; }
 
-    /// <summary>Kullanıcının erişebildiği yönetim hedefleri (boşsa bölüm hiç basılmaz).</summary>
-    public List<AdminLink> AdminLinks { get; } = new();
-
-    public record AdminLink(string Title, string Description, string Url, string Icon);
+    /// <summary>
+    /// Kullanıcının erişebildiği yönetim hedefleri (boşsa bölüm hiç basılmaz).
+    /// Liste artık burada kurulmuyor: kaynak PlatformNavigationResolver — aynı
+    /// çözümü kenar çubuğu da okuyor, öğeler iki yüzey arasında taşınabildiği
+    /// için tek kaynak şart.
+    /// </summary>
+    public List<NavSettingsEntry> AdminLinks { get; private set; } = new();
 
     private readonly ISettingManager _settingManager;
     private readonly IPermissionChecker _permission;
     private readonly Volo.Abp.Features.IFeatureChecker _featureChecker;
+    private readonly PlatformNavigationResolver _navigation;
 
     public IndexModel(
         ISettingManager settingManager,
         IPermissionChecker permission,
-        Volo.Abp.Features.IFeatureChecker featureChecker)
+        Volo.Abp.Features.IFeatureChecker featureChecker,
+        PlatformNavigationResolver navigation)
     {
         _settingManager = settingManager;
         _permission = permission;
         _featureChecker = featureChecker;
+        _navigation = navigation;
     }
 
     public async Task OnGetAsync()
@@ -112,58 +117,9 @@ public class IndexModel : AbpPageModel
 
         CanManageTenantSettings = await _permission.IsGrantedAsync(PlatformPermissions.TenantSettings.Default);
 
-        await LoadAdminLinksAsync();
-    }
-
-    private async Task LoadAdminLinksAsync()
-    {
-        async Task AddIfGrantedAsync(string permissionName, AdminLink link)
-        {
-            if (await _permission.IsGrantedAsync(permissionName))
-            {
-                AdminLinks.Add(link);
-            }
-        }
-
-        await AddIfGrantedAsync(TenantManagementPermissions.Tenants.Default, new AdminLink(
-            L["Menu:TenantManagement"], L["Settings:Admin.Tenants.Desc"],
-            "/TenantManagement/Tenants", "fa fa-building"));
-
-        await AddIfGrantedAsync(IdentityPermissions.Users.Default, new AdminLink(
-            L["Menu:IdentityUsers"], L["Settings:Admin.Users.Desc"],
-            "/Identity/Users", "fa fa-users"));
-
-        await AddIfGrantedAsync(IdentityPermissions.Roles.Default, new AdminLink(
-            L["Menu:IdentityRoles"], L["Settings:Admin.Roles.Desc"],
-            "/Identity/Roles", "fa fa-user-shield"));
-
-        // ABP'nin kendi Ayar Yönetimi ekranı (e-posta vb.) — modülün menü
-        // contributor'ı da bu izne bakıyor, aynı kapı kullanılır.
-        await AddIfGrantedAsync(SettingManagementPermissions.Emailing, new AdminLink(
-            L["Menu:SettingManagement"], L["Settings:Admin.SettingManagement.Desc"],
-            "/SettingManagement", "fa fa-envelope"));
-
-        // Paket Yönetimi + Tasarım Sistemi aynı kapıyı (Tenants.Update) kullanır —
-        // yeni permission tanımlamamak için bilinçli tercih, tenant'ta görünmez.
-        await AddIfGrantedAsync(TenantManagementPermissions.Tenants.Update, new AdminLink(
-            L["Menu:PackageManagement"], L["Settings:Admin.Packages.Desc"],
-            "/PackageManagement", "fa fa-box-open"));
-
-        await AddIfGrantedAsync(TenantManagementPermissions.Tenants.Update, new AdminLink(
-            L["Menu:DesignSystem"], L["Settings:Admin.DesignSystem.Desc"],
-            "/DesignSystem", "fa fa-palette"));
-
-        await AddIfGrantedAsync(PlatformPermissions.Feedbacks.Default, new AdminLink(
-            L["Menu:FeedbackAdmin"], L["Settings:Admin.Feedback.Desc"],
-            "/Admin/Feedback", "fa fa-inbox"));
-
-        await AddIfGrantedAsync(PlatformPermissions.Feedbacks.ManageSettings, new AdminLink(
-            L["Menu:FeedbackSettings"], L["Settings:Admin.FeedbackSettings.Desc"],
-            "/Admin/Feedback/Settings", "fa fa-sliders"));
-
-        await AddIfGrantedAsync(PlatformPermissions.LoginScreen.Default, new AdminLink(
-            L["Menu:LoginScreen"], L["Settings:Admin.LoginScreen.Desc"],
-            "/Admin/LoginScreen", "fa fa-right-to-bracket"));
+        // İzin filtresi ve sıra resolver'da uygulanır; kullanıcının menü
+        // düzeninde kenar çubuğuna aldığı hedefler burada GÖSTERİLMEZ.
+        AdminLinks = (await _navigation.ResolveAsync()).SettingsLinks;
     }
 
     public async Task<IActionResult> OnPostAsync()

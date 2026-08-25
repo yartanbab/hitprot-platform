@@ -56,6 +56,11 @@
                             data-bs-target="#st-mobile" type="button" role="tab"
                             aria-controls="st-mobile" aria-selected="false">@L["Settings:Tabs.Mobile"]</button>
                 </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="st-menu-tab" data-bs-toggle="tab"
+                            data-bs-target="#st-menu" type="button" role="tab"
+                            aria-controls="st-menu" aria-selected="false">@L["Settings:Tabs.Menu"]</button>
+                </li>
                 @if (Model.CanManageTenantSettings)
                 {
                     <li class="nav-item" role="presentation">
@@ -148,6 +153,16 @@
                         <div class="form-check form-switch">
                             <input class="form-check-input" type="checkbox" role="switch" name="TaskCreateShowKeyboardHints"
                                    id="tchints-toggle" value="true" checked="@Model.TaskCreateShowKeyboardHints" />
+                            @*
+                                İşaretsiz onay kutusu POST'ta HİÇ görünmez; bağlı özellik
+                                ise varsayılanıyla (burada TRUE) başlatıldığı için sunucu
+                                "kullanıcı kapattı"yı hiç göremez ve ayar bir daha
+                                kapanmazdı — üstelik başka bir sekmeden yapılan her kayıt
+                                da onu sessizce geri açardı. Gizli eşlikçi asp-for'un
+                                ürettiğinin aynısı: işaretliyken "true,false" gider,
+                                model binder ilk değeri alır.
+                            *@
+                            <input type="hidden" name="TaskCreateShowKeyboardHints" value="false" />
                             <label class="form-check-label" for="tchints-toggle">
                                 <strong>@L["Settings:TaskCreate.Hints"]</strong>
                                 <div class="text-muted small">@L["Settings:TaskCreate.Hints.Desc"]</div>
@@ -190,6 +205,8 @@
                         <div class="form-check form-switch">
                             <input class="form-check-input" type="checkbox" role="switch" name="ProjectsDetailPanel"
                                    id="projpanel-toggle" value="true" checked="@Model.ProjectsDetailPanel" />
+                            @* Gizli "false" eşlikçisi — gerekçe için Görevler sekmesine bak. *@
+                            <input type="hidden" name="ProjectsDetailPanel" value="false" />
                             <label class="form-check-label" for="projpanel-toggle">
                                 <strong>@L["Settings:ProjectsDetailPanel.Switch"]</strong>
                                 <div class="text-muted small">@L["Settings:ProjectsDetailPanel.Switch.Desc"]</div>
@@ -239,6 +256,21 @@
                 </div>
 
                 @*
+                    --- MENÜ: kenar çubuğu ↔ Ayarlar yerleşimi (PR #232) ---
+                    Ayrı bir ekrana (/Settings/Menu) açılan bağlantı; burada kaydedilecek
+                    alan yok → data-needs-save YOK. Sekmeli düzene geçerken bu bölümün
+                    kaybolmaması gerekiyor: izin kapısı YOKTUR, her oturumlu kullanıcı
+                    kendi menü düzenini değiştirebilir.
+                *@
+                <div class="tab-pane fade" id="st-menu" role="tabpanel" aria-labelledby="st-menu-tab">
+                    <div class="form-text mb-3">@L["Settings:MenuLayout.Help"]</div>
+                    <a href="/Settings/Menu" class="btn btn-outline-primary">
+                        <i class="fa fa-bars-staggered me-1" aria-hidden="true"></i>
+                        @L["Settings:MenuLayout.Open"]
+                    </a>
+                </div>
+
+                @*
                     --- KİRACI: kişisel değil, TÜM kullanıcıları etkiler ---
                     Sekme yalnız PlatformPermissions.TenantSettings olan kullanıcıda basılır.
                     Yetkilendirme gizlemeyle DEĞİL, OnPostAsync içindeki izin kontrolüyle
@@ -263,6 +295,8 @@
                             <div class="form-check form-switch">
                                 <input class="form-check-input" type="checkbox" role="switch" name="TaskCreateShowInfoBanner"
                                        id="tcbanner-toggle" value="true" checked="@Model.TaskCreateShowInfoBanner" />
+                                @* Gizli "false" eşlikçisi — gerekçe için Görevler sekmesine bak. *@
+                                <input type="hidden" name="TaskCreateShowInfoBanner" value="false" />
                                 <label class="form-check-label" for="tcbanner-toggle">
                                     <strong>@L["Settings:TaskCreate.Banner"]</strong>
                                     <div class="text-muted small">@L["Settings:TaskCreate.Banner.Desc"]</div>
@@ -271,6 +305,7 @@
                         </fieldset>
                     </div>
                 }
+                                @* Gizli "false" eşlikçisi — gerekçe için Görevler sekmesine bak. *@
 
                 @*
                     --- YÖNETİM: eski YÖNETİM menü bölümünün gittiği yer (kabuk handoff'u
@@ -286,18 +321,31 @@
                         <ul class="apya-settings-links">
                             @foreach (var link in Model.AdminLinks)
                             {
-                                <li>
-                                    <a href="@link.Url" class="apya-settings-link">
-                                        <span class="kpi-icon-box kpi-icon-box--sm kpi-icon-box--neutral" aria-hidden="true">
-                                            <i class="@link.Icon"></i>
-                                        </span>
-                                        <span class="apya-settings-link-text">
-                                            <span class="apya-settings-link-title">@link.Title</span>
-                                            <span class="apya-settings-link-desc">@link.Description</span>
-                                        </span>
-                                        <i class="fa fa-chevron-right apya-settings-link-chevron" aria-hidden="true"></i>
-                                    </a>
-                                </li>
+                                @* Kullanıcı /Settings/Menu'den bir kategoriyi bütün hâlinde
+                                   buraya indirebiliyor → liste artık DÜZ DEĞİL. Grup girdisini
+                                   yaprak gibi basmak href="" üretir (tıklayınca aynı sayfa) ve
+                                   Children altındaki bütün hedefleri ekrandan siler. *@
+                                if (link.IsGroup)
+                                {
+                                    <li class="apya-settings-group">
+                                        <div class="apya-settings-group-head">
+                                            <span class="kpi-icon-box kpi-icon-box--sm kpi-icon-box--neutral" aria-hidden="true">
+                                                <i class="@link.Icon"></i>
+                                            </span>
+                                            <span class="apya-settings-group-title">@link.Title</span>
+                                        </div>
+                                        <ul class="apya-settings-links apya-settings-links--nested">
+                                            @foreach (var child in link.Children)
+                                            {
+                                                <partial name="_SettingsAdminLink" model="child" />
+                                            }
+                                        </ul>
+                                    </li>
+                                }
+                                else
+                                {
+                                    <partial name="_SettingsAdminLink" model="link" />
+                                }
                             }
                         </ul>
                     </div>
