@@ -28,7 +28,7 @@ export const DEFAULT_VIEW = 'project-management';
  * `w`/`h`: kart kataloğundan eklenirken kullanılan varsayılan boyut.
  */
 export const CARD_REGISTRY = {
-    /* h=2 (138px): kutucuk içeriği ~122px. h=3 verilince ızgara kutusu
+    /* h=2 (140px): kutucuk içeriği ~122px. h=3 verilince ızgara kutusu
        içerikten ~75px yüksek kalıyor ve altındaki satırla arasında ölü boşluk
        oluşuyordu. minH de 2 olmalı — aksi halde RGL yüksekliği 3'e zorlar. */
     /* `band`: kart yatay bir şerittir — dar kırılımlarda yarım genişliğe
@@ -63,10 +63,13 @@ export const CARD_REGISTRY = {
 export const GRID_BREAKPOINTS = { desktop: 920, tablet: 560, mobile: 0 };
 export const GRID_COLS = { desktop: 12, tablet: 6, mobile: 1 };
 export const GRID_ROW_HEIGHT = 64;
-/* Kart ↔ kart boşluğu 20px (kullanıcı kararı): 10px'te kartlar birbirine
-   yapışık duruyordu. Yatay ve dikey aynı — özet şeridi de dahil her yerde
-   tek bir boşluk değeri geçerli, ayrıca istisna yok. */
-export const GRID_MARGIN = [20, 20];
+/* Kart ↔ kart boşluğu 12px (kullanıcı kararı). Yatay ve dikey aynı — özet
+   şeridi de dahil her yerde tek bir boşluk değeri geçerli, istisna yok. */
+export const GRID_MARGIN = [12, 12];
+/* Izgaranın KENDİ kenar dolgusu yok. RGL'e `containerPadding` verilmezse
+   `margin`i kenara da uygular; sayfa dolgusuyla toplanınca sol/sağ 16+20=36px
+   oluyordu. Kenar boşluğu artık TEK yerden gelir: `main` px-[18px] pb-[18px]. */
+export const GRID_CONTAINER_PADDING = [0, 0];
 
 /** Kabın genişliğinden kırılım adı — RGL ile AYNI eşikleri kullanır. */
 export function tierFromWidth(width) {
@@ -77,7 +80,7 @@ export function tierFromWidth(width) {
 
 /** Tam genişlikteki bir kartın piksel genişliği (iki yandan containerPadding düşer). */
 export function fullWidthCardWidth(gridWidth) {
-    return Math.max(0, gridWidth - GRID_MARGIN[0] * 2);
+    return Math.max(0, gridWidth - GRID_CONTAINER_PADDING[0] * 2);
 }
 
 /**
@@ -93,8 +96,9 @@ export function fullWidthCardWidth(gridWidth) {
  * kırpılıyordu — kullanıcının bildirdiği "Büt…" hatası buydu.
  *
  * `h` satır sayısını takip eder; sabit h=2 bırakılırsa çok satırlı dizilimde
- * kutucuklar 148px'lik kutuya sıkışıp içerikleri kırpılıyor (kutucuklar h-full).
- * Bir kutucuk satırı 148px, satır arası 20px → h = (148n + 20(n-1) + 20) / 84.
+ * kutucuklar tek satırlık kutuya sıkışıp içerikleri kırpılıyor (kutucuklar h-full).
+ * RGL kutu yüksekliği = 64h + 12(h-1). Bir kutucuk satırı 140px (h=2), satır
+ * arası da 12px → n satırlık dizilim için h = 2n (2 → 140, 4 → 292, 6 → 444).
  */
 export function stripLayoutFor(stripWidth) {
     if (stripWidth >= 1015) return { template: 'repeat(4, minmax(0, 2fr)) minmax(0, 3fr)', h: 2 };
@@ -103,7 +107,8 @@ export function stripLayoutFor(stripWidth) {
     /* Dar mobil: tek kolonlu dev kartlar (h=10 → 820px) ekranı yiyordu.
        Kompakt kip: 2 kolon küçük kutucuk (padding/punto küçülür, sparkline
        gizlenir), bütçe kutucuğu tam satıra yayılır → 3 satır.
-       h=4 → 84*4-20 = 316px; gap 12 ile satır ≈ 97px, kompakt içerik ≈ 91px. */
+       h=4 → 76*4-12 = 292px; gap 12 ile satır ≈ 89px. (Kompakt kip yalnız
+       mobilde geçerli, orada kartlar NativeStack ile doğal yükseklikte akar.) */
     return { template: 'repeat(2, minmax(0, 1fr))', h: 4, compact: true };
 }
 

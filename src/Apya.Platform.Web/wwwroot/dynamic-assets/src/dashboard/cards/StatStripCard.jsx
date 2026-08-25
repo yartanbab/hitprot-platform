@@ -22,7 +22,7 @@ function StatStripCard({ filter, template, compact }) {
 
     if (isLoading) {
         return (
-            <div className={cn('h-full grid', compact ? 'gap-3' : 'gap-5')} style={gridStyle}>
+            <div className="h-full grid gap-3" style={gridStyle}>
                 {Array.from({ length: 5 }, (_, i) => (
                     <div key={i} className="rounded-card shadow-card bg-surface-base border border-default p-4">
                         <Skeleton height={14} className="w-2/3 mb-2" />
@@ -51,12 +51,12 @@ function StatStripCard({ filter, template, compact }) {
            bırakılırsa kutu içerikten kısa kalınca taşıp alttaki satıra biniyor,
            uzun kalınca da altta ölü boşluk bırakıyordu — ikisini de gördük.
            Ek alt padding YOK: tüm boşluklar tek kaynaktan, GRID_MARGIN'den gelir.
-           Kutucuk arası da aynı 20px (gap-5) — ızgaradaki kart aralarıyla birebir.
+           Kutucuk arası da aynı 12px (gap-3) — ızgaradaki kart aralarıyla birebir.
 
            Kutu yüksekliği de kolon sayısını takip eder (stripLayoutFor → h), yani
            çok satırlı dizilimde kutu büyür; sabit h=2 bırakılınca satırlar 148px'lik
            kutuya sıkışıp `overflow-hidden` altyazıları kesiyordu. */
-        <div className={cn('h-full grid', compact ? 'gap-3' : 'gap-5')} style={gridStyle}>
+        <div className="h-full grid gap-3" style={gridStyle}>
             <Tile
                 compact={compact}
                 label={t('Dashboard:Summary:DueThisPeriod', 'Bu dönem teslim')}
