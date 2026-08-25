@@ -1,5 +1,5 @@
-import { j as e } from "./react-vendor.js";
-import { S as s, c as m } from "./Dialog.js";
+import { j as e } from "./react-vendor-D57GAUXd.js";
+import { S as s, c as m } from "./Dialog-BdNKdiS6.js";
 function x({ rows: a = 4, withLeading: t = !0, withTrailing: l = !0, className: i }) {
   return /* @__PURE__ */ e.jsx("ul", { className: m("flex flex-col gap-2", i), "aria-busy": "true", children: Array.from({ length: a }).map((o, r) => /* @__PURE__ */ e.jsxs(
     "li",
