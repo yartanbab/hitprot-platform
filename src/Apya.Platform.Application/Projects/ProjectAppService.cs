@@ -70,6 +70,23 @@ public class ProjectAppService :
         _featureChecker = featureChecker;
     }
 
+    /// <summary>
+    /// Host bağlamında kiracı filtresini kapatır; kiracı bağlamında null döner (hiçbir şey değişmez).
+    ///
+    /// /Projects listesi host'a TÜM kiracıların projelerini gösteriyor (GetListAsync bu
+    /// kapsamı bilerek açıyor). Detay/düzenleme yolları aynı kapsamı görmezse listedeki
+    /// karta basınca 404 alınır — canlıda tam olarak bu oluyordu.
+    /// </summary>
+    private IDisposable? HostWideScope()
+        => CurrentTenant.Id == null ? DataFilter.Disable<IMultiTenant>() : null;
+
+    // --- READ (tekil) ---
+    public override async Task<ProjectDto> GetAsync(Guid id)
+    {
+        using var hostScope = HostWideScope();
+        return await base.GetAsync(id);
+    }
+
     // --- CREATE ---
     // SEC: CrudAppService'in CreatePolicyName'i set edilmediği ve override CheckCreatePolicyAsync'i
     // çağırmadığı için oluşturma yalnız Projects.Default'a bakıyordu — izin açıkça bağlandı.
@@ -118,6 +135,8 @@ public class ProjectAppService :
     [Authorize(PlatformPermissions.Projects.Edit)]
     public override async Task<ProjectDto> UpdateAsync(Guid id, CreateProjectDto input)
     {
+        using var hostScope = HostWideScope();
+
         var project = await Repository.GetAsync(id);
 
         project.Update(
@@ -216,6 +235,7 @@ public class ProjectAppService :
     [Authorize(PlatformPermissions.Projects.Delete)]
     public override async Task DeleteAsync(Guid id)
     {
+        using var hostScope = HostWideScope();
         await base.DeleteAsync(id);
     }
 
@@ -232,13 +252,18 @@ public class ProjectAppService :
     public async Task<ProjectAttachmentDto> AddAttachmentAsync(
         Guid projectId, string fileName, string storedFileName, string contentType, long fileSize, string? title = null)
     {
+        using var hostScope = HostWideScope();
+
         // Proje gerçekten erişilebilir mi? Kiracı filtresi repository'de — yoksa
         // EntityNotFoundException. Aksi hâlde başka kiracının projesine ek yazılabilirdi.
-        await Repository.GetAsync(projectId);
+        var project = await Repository.GetAsync(projectId);
 
         var attachment = new ProjectAttachment
         {
-            TenantId = CurrentTenant.Id,
+            // Kiracı, CurrentTenant'tan DEĞİL projeden alınır: host bir kiracının
+            // projesine dosya eklediğinde ek TenantId=null yazılırdı ve o kiracı
+            // kendi dosyasını göremezdi.
+            TenantId = project.TenantId,
             ProjectId = projectId,
             FileName = fileName,
             StoredFileName = storedFileName,
@@ -254,6 +279,8 @@ public class ProjectAppService :
 
     public async Task<List<ProjectAttachmentDto>> GetAttachmentsAsync(Guid projectId)
     {
+        using var hostScope = HostWideScope();
+
         await Repository.GetAsync(projectId);
 
         var queryable = await _projectAttachmentRepository.GetQueryableAsync();
@@ -268,6 +295,8 @@ public class ProjectAppService :
     [Authorize(PlatformPermissions.Projects.Edit)]
     public async Task<string> DeleteAttachmentAsync(Guid attachmentId)
     {
+        using var hostScope = HostWideScope();
+
         var attachment = await _projectAttachmentRepository.GetAsync(attachmentId);
 
         // Ekin projesi bu bağlamdan görülebiliyor mu? (Host'ta kiracı filtresi kapalı
@@ -284,6 +313,8 @@ public class ProjectAppService :
     [Authorize(PlatformPermissions.Projects.Edit)]
     public async Task<string?> SetCoverImageAsync(Guid projectId, string storedFileName)
     {
+        using var hostScope = HostWideScope();
+
         var project = await Repository.GetAsync(projectId);
         var previous = project.CoverImageFileName;
 
@@ -297,6 +328,8 @@ public class ProjectAppService :
     [Authorize(PlatformPermissions.Projects.Edit)]
     public async Task<string?> RemoveCoverImageAsync(Guid projectId)
     {
+        using var hostScope = HostWideScope();
+
         var project = await Repository.GetAsync(projectId);
         var previous = project.CoverImageFileName;
 
