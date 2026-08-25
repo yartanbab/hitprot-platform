@@ -44,7 +44,7 @@ public class BoardColumnAppService : PlatformAppService, IBoardColumnAppService
 
         var col = new BoardColumn(
             GuidGenerator.Create(), input.ProjectId, input.Name, nextOrder,
-            input.ColorClass, statusValue: null, isSystem: false, CurrentTenant.Id);
+            input.ColorClass, statusValue: input.StatusValue, isSystem: false, CurrentTenant.Id);
 
         await _columnRepository.InsertAsync(col, autoSave: true);
         return ToDto(col);
@@ -100,20 +100,49 @@ public class BoardColumnAppService : PlatformAppService, IBoardColumnAppService
         var col = await _columnRepository.GetAsync(columnId);
         var task = await _taskRepository.GetAsync(taskId);
 
+        // Durum eşlemesi olan HER kolon Status'u değiştirir; ayrım kolon bağında:
+        // sistem kolonunda bağ TEMİZLENİR (kart durum kolonunda yaşar), özel
+        // kolonda KORUNUR (kart kolonda durur, durumu da hizalanır — Faz 4a).
         if (col.StatusValue.HasValue)
         {
-            // Sistem kolonu → Status değişir, özel kolon bağı temizlenir.
             // Clock.Now ŞART: Done'a taşınınca CompletedDate dolsun (yoksa null kalır).
             task.ChangeStatus((Apya.Platform.Tasks.TaskStatus)col.StatusValue.Value, Clock.Now);
-            task.MoveToColumn(null);
+            task.MoveToColumn(col.IsSystem ? (Guid?)null : columnId);
         }
         else
         {
-            // Özel kolon → görevi kolona bağla (Status değişmez).
+            // Eşlemesiz özel kolon → görevi kolona bağla (Status değişmez).
             task.MoveToColumn(columnId);
         }
 
         await _taskRepository.UpdateAsync(task, autoSave: true);
+    }
+
+    [Authorize(PlatformPermissions.Projects.Edit)]
+    public async Task<BoardColumnDto> SetStatusMappingAsync(Guid id, SetStatusMappingDto input)
+    {
+        var col = await _columnRepository.GetAsync(id);
+        if (col.IsSystem)
+        {
+            throw new UserFriendlyException("Sistem kolonunun temsil ettiği durum değiştirilemez.");
+        }
+
+        col.SetStatusValue(input.StatusValue);
+        await _columnRepository.UpdateAsync(col, autoSave: true);
+
+        // Eşleme varsayılan olarak yalnız BUNDAN SONRA taşınan kartlara uygulanır;
+        // kullanıcı isterse kolonda hâlihazırda duranları da hizalar.
+        if (input.ApplyToExistingTasks && input.StatusValue.HasValue)
+        {
+            var tasks = await _taskRepository.GetListAsync(t => t.BoardColumnId == id);
+            foreach (var t in tasks)
+            {
+                t.ChangeStatus((Apya.Platform.Tasks.TaskStatus)input.StatusValue.Value, Clock.Now);
+                await _taskRepository.UpdateAsync(t);
+            }
+        }
+
+        return ToDto(col);
     }
 
     private async Task<List<BoardColumn>> SeedDefaultsAsync(Guid projectId)

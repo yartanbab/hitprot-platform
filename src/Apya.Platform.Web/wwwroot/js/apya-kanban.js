@@ -313,7 +313,10 @@
         // Tek kolon elemanı. Sistem kolonunun kart kabı SYS id'siyle doğar
         // (render() görevleri hâlâ statüye göre oraya yerleştiriyor).
         function buildColumn(c) {
-            var isSys = c.statusValue != null;
+            // SİSTEM ayrımı isSystem'dan gelir, statusValue'dan DEĞİL: Faz 4a ile
+            // eşlemeli ÖZEL kolonun da statusValue'su dolu olabiliyor ama o kendi
+            // kolonu olarak yaşar (kartlar boardColumnId ile bağlı).
+            var isSys = !!c.isSystem;
             var col = el('div', 'kanban-column shadow-sm border' + (isSys ? '' : ' js-custom-col'));
             if (isSys) { col.setAttribute('data-status-id', c.statusValue); }
             else { col.setAttribute('data-column-id-custom', c.id); }
@@ -485,7 +488,7 @@
         var panelRoot = null;
 
         function cardCountOf(c) {
-            var sel = c.statusValue != null
+            var sel = c.isSystem
                 ? '.kanban-column[data-status-id="' + c.statusValue + '"]'
                 : '.kanban-column[data-column-id-custom="' + c.id + '"]';
             var col = document.querySelector(boardSel + ' ' + sel);
@@ -508,10 +511,12 @@
             // Düzenlenen kopya: iptal edilirse sunucuya hiçbir şey gitmez.
             var draft = cols.map(function (c) {
                 return {
-                    id: c.id, statusValue: c.statusValue, isSystem: c.isSystem,
-                    cards: cardCountOf(c),
+                    id: c.id, isSystem: c.isSystem, cards: cardCountOf(c),
                     name: c.name, colorClass: c.colorClass || 'primary', wipLimit: c.wipLimit || null,
-                    origName: c.name, origColor: c.colorClass || 'primary', origWip: c.wipLimit || null
+                    statusValue: c.statusValue == null ? null : c.statusValue,
+                    applyToExisting: false,
+                    origName: c.name, origColor: c.colorClass || 'primary', origWip: c.wipLimit || null,
+                    origStatus: c.statusValue == null ? null : c.statusValue
                 };
             });
             var origOrder = draft.map(function (d) { return d.id; }).join(',');
@@ -555,8 +560,13 @@
                     return d.name !== d.origName || d.colorClass !== d.origColor || d.wipLimit !== d.origWip;
                 });
             }
+            // Durum eşlemesi AYRI uçtan gider (UpdateBoardColumnDto'ya konsaydı her
+            // yeniden adlandırma eşlemeyi sessizce sıfırlardı).
+            function mappedRows() {
+                return draft.filter(function (d) { return !d.isSystem && d.statusValue !== d.origStatus; });
+            }
             function refreshDirty() {
-                var n = changedRows().length + (currentOrder() !== origOrder ? 1 : 0);
+                var n = changedRows().length + mappedRows().length + (currentOrder() !== origOrder ? 1 : 0);
                 dirtyEl.textContent = n === 0 ? 'Değişiklik yok' : (n + ' değişiklik bekliyor');
                 dirtyEl.classList.toggle('is-dirty', n > 0);
                 saveBtn.disabled = n === 0;
@@ -591,7 +601,12 @@
                 saveBtn.disabled = true;
                 var updates = changedRows().map(function (d) {
                     return colSvc.update(d.id, { name: d.name, colorClass: d.colorClass, wipLimit: d.wipLimit });
-                });
+                }).concat(mappedRows().map(function (d) {
+                    return colSvc.setStatusMapping(d.id, {
+                        statusValue: d.statusValue,
+                        applyToExistingTasks: !!d.applyToExisting
+                    });
+                }));
                 var orderNow = currentOrder();
                 Promise.all(updates)
                     .then(function () {
@@ -622,9 +637,12 @@
             var row = el('div', 'kanban-panel-row');
             row.setAttribute('data-id', d.id);
 
-            var meta = d.statusValue != null
-                ? 'Sistem · durum: ' + statusColumnName(d.statusValue) + ' · ' + d.cards + ' kart'
-                : 'Özel kolon · durumu değiştirmez · ' + d.cards + ' kart';
+            // Durum eşlemesi seçenekleri: etiketler board'daki sistem kolonlarından
+            // okunur, JS'te ikinci bir durum sözlüğü tutulmuyor.
+            var mapOptions = ['', 1, 2, 3, 4].map(function (v) {
+                var label = v === '' ? 'Durum değişmesin' : statusColumnName(v);
+                return '<option value="' + v + '">' + esc(label) + '</option>';
+            }).join('');
 
             row.innerHTML =
                 '<span class="kanban-panel-grip" title="Sürükleyerek sırala" aria-hidden="true"><i class="fa fa-grip-vertical"></i></span>' +
@@ -634,6 +652,14 @@
                         '<span class="kanban-panel-counter js-p-counter"></span>' +
                     '</div>' +
                     '<div class="kanban-panel-meta js-p-meta"></div>' +
+                    (d.isSystem ? '' :
+                        '<div class="kanban-panel-map">' +
+                            '<span class="kanban-panel-map-label">Durum eşlemesi</span>' +
+                            '<select class="js-p-status" aria-label="Bu kolon hangi durumu temsil ediyor">' + mapOptions + '</select>' +
+                            '<label class="kanban-panel-map-apply js-p-apply-wrap d-none">' +
+                                '<input type="checkbox" class="js-p-apply" /> mevcut kartları da güncelle' +
+                            '</label>' +
+                        '</div>') +
                     '<div class="kanban-panel-warn js-p-warn d-none"></div>' +
                 '</div>' +
                 '<div class="kanban-panel-color">' + colorSwatches(d.colorClass) + '</div>' +
@@ -652,7 +678,20 @@
             var wipInput = row.querySelector('.js-p-wip');
             nameInput.value = d.name;
             wipInput.value = d.wipLimit == null ? '' : d.wipLimit;
-            row.querySelector('.js-p-meta').textContent = meta;
+
+            var statusSel = row.querySelector('.js-p-status');
+            var applyWrap = row.querySelector('.js-p-apply-wrap');
+            var applyBox = row.querySelector('.js-p-apply');
+            if (statusSel) { statusSel.value = d.statusValue == null ? '' : String(d.statusValue); }
+
+            function syncMeta() {
+                var kind = d.isSystem ? 'Sistem' : 'Özel kolon';
+                var what = d.statusValue != null
+                    ? 'durum: ' + statusColumnName(d.statusValue)
+                    : 'durumu değiştirmez';
+                row.querySelector('.js-p-meta').textContent = kind + ' · ' + what + ' · ' + d.cards + ' kart';
+            }
+            syncMeta();
 
             function syncCounter() { counter.textContent = nameInput.value.length + '/64'; }
             function syncWarn() {
@@ -680,6 +719,23 @@
                 syncWarn();
                 onChange();
             });
+            if (statusSel) {
+                statusSel.addEventListener('change', function () {
+                    var raw = statusSel.value;
+                    d.statusValue = raw === '' ? null : parseInt(raw, 10);
+                    // "Mevcut kartları da güncelle" yalnız gerçekten kart varken ve
+                    // bir duruma eşlenirken sorulur — boş kolonda anlamsız.
+                    var offer = d.statusValue != null && d.cards > 0;
+                    applyWrap.classList.toggle('d-none', !offer);
+                    if (!offer) { applyBox.checked = false; }
+                    d.applyToExisting = offer && applyBox.checked;
+                    syncMeta();
+                    onChange();
+                });
+                applyBox.addEventListener('change', function () {
+                    d.applyToExisting = applyBox.checked;
+                });
+            }
             row.querySelectorAll('.js-col-color').forEach(function (btn) {
                 btn.addEventListener('click', function () {
                     d.colorClass = btn.getAttribute('data-color');
@@ -723,7 +779,7 @@
             customIds = {};
 
             cols.slice().sort(function (a, b) { return a.order - b.order; }).forEach(function (c) {
-                if (c.statusValue == null) { customIds[c.id] = true; }
+                if (!c.isSystem) { customIds[c.id] = true; }
                 board.appendChild(buildColumn(c));
             });
 

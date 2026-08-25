@@ -466,6 +466,21 @@
     font-size: 11px;
     line-height: 1.5;
 }
+/* Durum eşlemesi (4a) — yalnız özel kolon satırında */
+.kanban-panel-map { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.kanban-panel-map-label { font-size: 10.5px; font-weight: 700; letter-spacing: 0.3px; text-transform: uppercase; color: var(--apya-text-tertiary); }
+.kanban-panel-map select {
+    height: 26px;
+    padding: 0 6px;
+    border: 1px solid var(--apya-border-default);
+    border-radius: var(--apya-radius-md);
+    background: var(--apya-surface-base);
+    color: var(--apya-text-primary);
+    font-size: 12px;
+}
+.kanban-panel-map select:focus { outline: none; border-color: var(--apya-border-focus); box-shadow: var(--apya-shadow-focus); }
+.kanban-panel-map-apply { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; color: var(--apya-text-secondary); cursor: pointer; }
+
 .kanban-panel-color { display: flex; flex-wrap: wrap; gap: 2px; padding-top: 2px; }
 .kanban-panel-wip input {
     width: 100%; height: 30px; padding: 0 8px;

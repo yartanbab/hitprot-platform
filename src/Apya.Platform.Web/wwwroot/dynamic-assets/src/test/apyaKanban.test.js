@@ -53,7 +53,7 @@ let colCalls;
 
 function mountBoard(cols, tasks) {
     document.body.innerHTML = boardHtml();
-    colCalls = { update: [], reorder: [], create: [], delete: [] };
+    colCalls = { update: [], reorder: [], create: [], delete: [], map: [] };
     window.apya.platform = {
         tasks: {
             task: {
@@ -67,7 +67,8 @@ function mountBoard(cols, tasks) {
                 update: (id, dto) => { colCalls.update.push({ id, dto }); return Promise.resolve({}); },
                 reorder: (pid, ids) => { colCalls.reorder.push({ pid, ids }); return Promise.resolve(); },
                 create: (dto) => { colCalls.create.push(dto); return Promise.resolve({}); },
-                delete: (id) => { colCalls.delete.push(id); return Promise.resolve(); }
+                delete: (id) => { colCalls.delete.push(id); return Promise.resolve(); },
+                setStatusMapping: (id, dto) => { colCalls.map.push({ id, dto }); return Promise.resolve({}); }
             }
         }
     };
@@ -794,5 +795,147 @@ describe('araç çubuğu görünürlüğü', () => {
         await flush();
 
         expect(hidden('.js-edit-cols')).toBe(false);
+    });
+});
+
+// ── Faz 4a: özel kolon → durum eşlemesi ────────────────────────────────────
+describe('eşlemeli özel kolon', () => {
+    // statusValue DOLU ama isSystem false: kendi kolonu olarak yaşamalı.
+    const mapped = {
+        id: 'x9', statusValue: 3, name: 'Hakem değerlendirmesi',
+        colorClass: 'primary', order: 4, isSystem: false
+    };
+
+    it('sistem kolonuna karışmaz, kendi kolonu olarak çizilir', async () => {
+        mountBoard(sysCols.concat([mapped]), []);
+        apya.kanban.create({ projectId: 'p1' }).load();
+        await flush();
+
+        // Beş ayrı kolon: eşleme "Testte"ye olsa da kolon kendi başına duruyor.
+        expect(document.querySelectorAll('.kanban-column:not(.js-add-col)').length).toBe(5);
+        const own = document.querySelector('.js-custom-col');
+        expect(own).not.toBeNull();
+        expect(own.hasAttribute('data-status-id')).toBe(false);
+        expect(own.querySelector('.kanban-cards').id).toBe('kanban-col-x9');
+        // Sistem "Testte" kolonu hâlâ tek ve kendi kabına sahip.
+        expect(document.querySelectorAll('.kanban-column[data-status-id="3"]').length).toBe(1);
+        expect(col(3).querySelector('.kanban-cards').id).toBe('kanban-inreview');
+    });
+
+    it('eşlemeli kolondaki kart o kolonda durur (durum kolonunda değil)', async () => {
+        mountBoard(sysCols.concat([mapped]), [
+            { id: 't1', code: 'GRV-1', title: 'A', status: 3, priority: 2, boardColumnId: 'x9', boardColumnName: 'Hakem değerlendirmesi' }
+        ]);
+        apya.kanban.create({ projectId: 'p1' }).load();
+        await flush();
+
+        expect(document.querySelector('#kanban-col-x9 .kanban-card')).not.toBeNull();
+        expect(document.querySelector('#kanban-inreview .kanban-card')).toBeNull();
+    });
+
+    it('silme kilidi yalnız sistem kolonunda — eşlemeli özel kolon silinebilir', async () => {
+        granted['Platform.Projects.Edit'] = true;
+        mountBoard(sysCols.concat([mapped]), []);
+        apya.kanban.create({ projectId: 'p1' }).load();
+        await flush();
+
+        const own = document.querySelector('.js-custom-col');
+        expect(own.querySelector('.js-col-delete')).not.toBeNull();
+        expect(own.querySelector('.apya-console-menu-item.is-locked')).toBeNull();
+    });
+});
+
+describe('panelde durum eşlemesi', () => {
+    const rows = () => document.querySelectorAll('.kanban-panel-row');
+    const saveBtn = () => document.querySelector('.js-p-save');
+
+    async function openPanel(cols, tasks) {
+        granted['Platform.Projects.Edit'] = true;
+        mountBoard(cols, tasks);
+        const kb = apya.kanban.create({ projectId: 'p1' });
+        kb.load();
+        await flush();
+        kb.openColumnPanel();
+        await flush();
+        return kb;
+    }
+
+    it('eşleme seçici yalnız özel kolon satırında çıkar', async () => {
+        await openPanel(sysCols.concat([customCol]), []);
+
+        expect(rows()[0].querySelector('.js-p-status')).toBeNull();   // sistem
+        expect(rows()[4].querySelector('.js-p-status')).not.toBeNull(); // özel
+    });
+
+    it('meta satırı eşlemeyi yansıtır', async () => {
+        await openPanel(sysCols.concat([customCol]), []);
+        const row = rows()[4];
+        expect(row.querySelector('.js-p-meta').textContent).toContain('durumu değiştirmez');
+
+        const sel = row.querySelector('.js-p-status');
+        sel.value = '3';
+        sel.dispatchEvent(new Event('change'));
+
+        expect(row.querySelector('.js-p-meta').textContent).toContain('durum: Testte');
+    });
+
+    it('"mevcut kartları da güncelle" yalnız kart varken sorulur', async () => {
+        await openPanel(sysCols.concat([customCol]), []);
+        const row = rows()[4];
+        const sel = row.querySelector('.js-p-status');
+        sel.value = '3';
+        sel.dispatchEvent(new Event('change'));
+
+        // Kolon boş → seçenek anlamsız.
+        expect(row.querySelector('.js-p-apply-wrap').classList.contains('d-none')).toBe(true);
+    });
+
+    it('kartı olan kolonda seçenek çıkar ve kaydete taşınır', async () => {
+        await openPanel(sysCols.concat([customCol]), [
+            { id: 't1', code: 'GRV-1', title: 'A', status: 2, priority: 2, boardColumnId: 'x9', boardColumnName: 'Hakem değerlendirmesi' }
+        ]);
+        const row = rows()[4];
+        const sel = row.querySelector('.js-p-status');
+        sel.value = '3';
+        sel.dispatchEvent(new Event('change'));
+
+        const wrap = row.querySelector('.js-p-apply-wrap');
+        expect(wrap.classList.contains('d-none')).toBe(false);
+
+        const box = row.querySelector('.js-p-apply');
+        box.checked = true;
+        box.dispatchEvent(new Event('change'));
+
+        saveBtn().click();
+        await flush();
+
+        expect(colCalls.map.length).toBe(1);
+        expect(colCalls.map[0].id).toBe('x9');
+        expect(colCalls.map[0].dto).toEqual({ statusValue: 3, applyToExistingTasks: true });
+        // Eşleme AYRI uçtan gitti; ad/renk/WIP güncellemesi tetiklenmedi.
+        expect(colCalls.update.length).toBe(0);
+    });
+
+    it('eşleme değişmediyse ayrı uç hiç çağrılmaz', async () => {
+        await openPanel(sysCols.concat([customCol]), []);
+        const nameInput = rows()[4].querySelector('.js-p-name');
+        nameInput.value = 'Yeni ad';
+        nameInput.dispatchEvent(new Event('input'));
+
+        saveBtn().click();
+        await flush();
+
+        expect(colCalls.update.length).toBe(1);
+        expect(colCalls.map.length).toBe(0);
+    });
+
+    it('eşleme değişikliği de "n değişiklik bekliyor" sayacına girer', async () => {
+        await openPanel(sysCols.concat([customCol]), []);
+        const sel = rows()[4].querySelector('.js-p-status');
+        sel.value = '2';
+        sel.dispatchEvent(new Event('change'));
+
+        expect(document.querySelector('.js-p-dirty').textContent).toBe('1 değişiklik bekliyor');
+        expect(saveBtn().disabled).toBe(false);
     });
 });

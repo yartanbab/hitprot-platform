@@ -58,10 +58,11 @@ describe('statusChip', () => {
         expect(apyaTask.statusChip(2)).toContain('Sürüyor');
     });
 
-    it('özel kolon adı varsa durum yerine onu gösterir (kanban paritesi)', () => {
+    it('özel kolon adını durumun YANINDA gösterir (pano ile rapor ayrışmasın)', () => {
         const html = apyaTask.statusChip(1, 'İncelemede');
         expect(html).toContain('İncelemede');
-        expect(html).not.toContain('Yapılacak');
+        // Durum çipi KALIR: "Yapılacak" filtresi bu kartı hâlâ bulabilmeli.
+        expect(html).toContain('Yapılacak');
     });
 });
 

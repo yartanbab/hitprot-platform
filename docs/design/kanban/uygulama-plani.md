@@ -279,7 +279,35 @@ Faz 2 bittiğinde kolon/kart tek yerden besleniyor olacak; bu faz **çevreyi** h
 
 ---
 
-## 5. Faz 4 — Özel kolon → durum eşlemesi: 4a (migration YOK · 1 PR · orta)
+## 5. Faz 4 — Özel kolon → durum eşlemesi: 4a (migration YOK · 1 PR · orta) — ✅ TAMAMLANDI (2026-08-24)
+
+> **Sonuç:** `BoardColumn.SetStatusValue` geldi (sistem kolonunda reddediliyor,
+> geçerli aralık 1-4 — Cancelled ayrı akış). `CreateBoardColumnDto.StatusValue`
+> eklendi. `MoveTaskToColumnAsync` artık eşlemesi olan HER kolonda `ChangeStatus`
+> uyguluyor; ayrım kolon bağında: sistem kolonunda bağ temizleniyor, özel kolonda
+> **korunuyor** (kart kolonda durur, durumu da hizalanır).
+>
+> ⚠ **Plandan sapma — `UpdateBoardColumnDto`'ya StatusValue EKLENMEDİ.** Eklenseydi
+> ad+renk+WIP'i birlikte isteyen DTO, eşlemeyi göndermeyen her yeniden adlandırmada
+> onu **sessizce sıfırlardı** — kolon adı/renk için zaten belgelenmiş tuzağın aynısı.
+> Yerine ayrı uç: `SetStatusMappingAsync(id, { StatusValue, ApplyToExistingTasks })`.
+> "Mevcut kartları da güncelle" doğal olarak bu uca oturdu.
+>
+> 🔴 **Uygulama sırasında bulunan kritik hata:** JS "sistem kolonu"nu
+> `statusValue != null` ile ayırıyordu. 4a ile eşlemeli ÖZEL kolonun da
+> `statusValue`'su dolabildiği için o kolon sistem kolonu sanılıp durum kolonuyla
+> aynı kaba çizilecekti (kartlar kaybolurdu). Ayrım `isSystem`'a çekildi —
+> `buildColumn`, `cardCountOf`, `customIds` üçü de.
+>
+> `statusChip` artık iki çip döndürüyor: durum + kolon adı. Eskiden kolon adı
+> durumun YERİNE geçiyordu, "Testte" filtresi özel kolondaki kartı bulamıyordu.
+>
+> UI: eşleme 3b panelinde özel kolon satırındaki seçiciden yapılıyor; "mevcut
+> kartları da güncelle" yalnız kolonda kart varken çıkıyor. Mockup 4a'daki ayrı
+> diyalog yerine panel kullanıldı (kolon yönetimi tek yerde kalsın).
+>
+> Doğrulama: JS 345/345 (kanban 58 → 67 test; 9'u önceki commit'e karşı düşüyor),
+> yeni `BoardColumn_Tests` 7 domain testi, build 0 hata.
 
 ⚠ PROMPT "yeni backend gerekir" diyor — doğru, ama **şema değişikliği yok**:
 `BoardColumn.StatusValue` sütunu zaten var (`Domain/Projects/BoardColumn.cs:23`).
@@ -409,9 +437,9 @@ cd src/Apya.Platform.Web/wwwroot/dynamic-assets && npm ci
 > frontend testleri toptan patlıyor). `dynamic-assets/yarn.lock`'taki değişikliği
 > **commit etme**. Build öncesi çalışan Web uygulamasını durdur (MSB3021).
 
-**Faz sırası:** ~~0~~ → ~~1~~ → ~~2a~~ → ~~2b~~ → ~~3~~ → 4 → 5 → 6 → 7. Faz 0 ve 1 birbirinden
+**Faz sırası:** ~~0~~ → ~~1~~ → ~~2a~~ → ~~2b~~ → ~~3~~ → ~~4~~ → 5 → 6 → 7. Faz 0 ve 1 birbirinden
 bağımsız; 2'den sonrası sıralı. Migration yalnız Faz 6'da.
-**Faz 0 + 1 + 2a + 2b + 3 tamamlandı (2026-08-24), 3b paneli dâhil.**
+**Faz 0 + 1 + 2a + 2b + 3 + 4 tamamlandı (2026-08-24), 3b paneli dâhil.**
 🔴 Açık: **tüm fazların canlı QA'sı** — panodaki etkileşimler (Enter/Esc, sürükleyince
 reorder, silme onayı, ＋ modalı) jQuery delegasyonunda olduğu için birim testle
-kapsanamıyor. **Sıradaki: Faz 4 — özel kolon → durum eşlemesi (migration YOK).**
+kapsanamıyor. **Sıradaki: Faz 5 — panoda toplu seçim (backend YOK).**
