@@ -1,23 +1,26 @@
 /* =============================================================================
    MENÜ DÜZENİ EDİTÖRÜ — /Settings/Menu
    -----------------------------------------------------------------------------
-   İki sütun, tek markup: taşınan <li> DOM'da olduğu gibi öbür sütuna geçer.
-   Hangi okun görüneceğini sütunun [data-nav-side] değeri CSS'te belirler,
+   Üç bölme, tek markup: taşınan <li> DOM'da olduğu gibi öbür bölmeye geçer.
+   Hangi düğmenin görüneceğini bölmenin [data-nav-side] değeri CSS'te belirler,
    bu yüzden burada düğme cerrahisi YOK. Bir grup taşınırken alt ağacı da
    kendiliğinden gelir — DOM'da zaten içinde.
 
    SIRA + TAŞIMA → SortableJS. Bütün listeler AYNI Sortable grubunda: madde
-                   herhangi bir gruba ve öbür sütuna sürüklenebilir. Tek kısıt
+                   herhangi bir gruba ve öbür bölmeye sürüklenebilir. Tek kısıt
                    grubu grubun İÇİNE bırakmamak; LeptonX üç seviye basıyor,
                    dördüncü seviye görsel olarak kırılır (sunucu da MaxDepth ile
                    aynı tavanı uyguluyor).
-   OK DÜĞMELERİ  → sürüklemenin klavye/dokunma karşılığı. ↑/↓ sıra, ←/→ sütun.
-   DÖNÜŞ YERİ    → → ile inen madde nereden geldiğini data-nav-from'a yazar;
-                   ← ona geri koyar. Yönetim bağlantılarının (data-nav-admin)
-                   varsayılan dönüş yeri "Yönetim" grubudur.
+   DÜĞMELER      → sürüklemenin klavye/dokunma karşılığı. ↑/↓ sıra, ←/→ bölme,
+                   göz gizler/geri getirir, kalem+çöp yalnız ÖZEL öğelerde.
+   DÖNÜŞ YERİ    → bölme değiştiren madde nereden geldiğini data-nav-from'a
+                   yazar; geri alma önce oraya bakar.
+   YENİ SATIR    → markup'ı JS kurmaz, Razor'un bastığı <template>'ten klonlanır
+                   (RenderNode ile aynı kaynak, ayrışamaz).
 
    Kaydet'e basılınca düzen DOM'dan kurulup gizli alana yazılır; doğrulama ve
    üst sınırlar SUNUCUDA (MenuLayout.Parse + resolver'ın yerleşim koruması).
+   Buradaki kontroller yalnız kullanıcıya anında geri bildirim içindir.
    ============================================================================= */
 $(function () {
     'use strict';
@@ -28,10 +31,13 @@ $(function () {
 
     var sidebarRoot = form.querySelector('[data-nav-root="sidebar"]');
     var settingsRoot = form.querySelector('[data-nav-root="settings"]');
-    if (!sidebarRoot || !settingsRoot) { return; }
+    var hiddenRoot = form.querySelector('[data-nav-root="hidden"]');
+    if (!sidebarRoot || !settingsRoot || !hiddenRoot) { return; }
 
     // Sunucudaki PlatformNavigationResolver.ManagementGroupName ile aynı olmalı.
     var MANAGEMENT_GROUP = 'Apya.Management';
+    // PlatformSettingDefaults.ShellMenuLayoutCustomPrefix ile aynı olmalı.
+    var CUSTOM_PREFIX = 'Apya.User.';
 
     function itemsOf(list) {
         return Array.prototype.filter.call(
@@ -49,7 +55,7 @@ $(function () {
     }
 
     function allLists() {
-        return [sidebarRoot, settingsRoot].concat(
+        return [sidebarRoot, settingsRoot, hiddenRoot].concat(
             Array.prototype.slice.call(form.querySelectorAll('[data-nav-list]')));
     }
 
@@ -91,42 +97,47 @@ $(function () {
     // =========================================================================
     // 1) Sürükleme — bütün listeler tek grupta, iki kısıtla
     // =========================================================================
-    function setupSortable() {
-        if (typeof Sortable === 'undefined') { return; } // kütüphane yoksa ok düğmeleri çalışmaya devam eder
-
-        allLists().forEach(function (list) {
-            new Sortable(list, {
-                animation: 150,
-                handle: '.apya-navedit-handle',
-                draggable: '.apya-navedit-item',
-                filter: '[data-nav-locked="true"]',
-                group: { name: 'apya-nav' },
-                fallbackOnBody: true,
-                swapThreshold: 0.65,
-                ghostClass: 'apya-navedit-item--ghost',
-                onMove: function (evt) {
-                    // Grup yalnız bir sütunun köküne bırakılabilir.
-                    if (evt.dragged.getAttribute('data-nav-kind') === 'group' &&
-                        evt.to.hasAttribute('data-nav-list')) {
-                        return false;
-                    }
-                    // Kilitli "Ayarlar" satırının altına geçilemez.
-                    if (evt.related &&
-                        evt.related.getAttribute('data-nav-locked') === 'true' &&
-                        evt.willInsertAfter) {
-                        return false;
-                    }
-                    return true;
-                },
-                onEnd: function (evt) {
-                    // Sütun değiştiyse dönüş adresini tazele.
-                    if (evt.from !== evt.to) {
-                        evt.item.setAttribute('data-nav-from', listKey(evt.from));
-                    }
-                    normalizePlaceholders();
+    function sortableOptions() {
+        return {
+            animation: 150,
+            handle: '.apya-navedit-handle',
+            draggable: '.apya-navedit-item',
+            filter: '[data-nav-locked="true"]',
+            group: { name: 'apya-nav' },
+            fallbackOnBody: true,
+            swapThreshold: 0.65,
+            ghostClass: 'apya-navedit-item--ghost',
+            onMove: function (evt) {
+                // Grup yalnız bir bölmenin köküne bırakılabilir.
+                if (evt.dragged.getAttribute('data-nav-kind') === 'group' &&
+                    evt.to.hasAttribute('data-nav-list')) {
+                    return false;
                 }
-            });
-        });
+                // Kilitli "Ayarlar" satırının altına geçilemez.
+                if (evt.related &&
+                    evt.related.getAttribute('data-nav-locked') === 'true' &&
+                    evt.willInsertAfter) {
+                    return false;
+                }
+                return true;
+            },
+            onEnd: function (evt) {
+                if (evt.from !== evt.to) {
+                    evt.item.setAttribute('data-nav-from', listKey(evt.from));
+                }
+                normalizePlaceholders();
+            }
+        };
+    }
+
+    function bindSortable(list) {
+        if (typeof Sortable === 'undefined' || Sortable.get(list)) { return; }
+        new Sortable(list, sortableOptions());
+    }
+
+    // Yeni kategori de bırakma hedefi olmalı → listeler sonradan da bağlanır.
+    function bindAllSortables() {
+        allLists().forEach(bindSortable);
     }
 
     // =========================================================================
@@ -151,12 +162,13 @@ $(function () {
     }
 
     // =========================================================================
-    // 3) Sütunlar arası taşıma (düğmeyle)
+    // 3) Bölmeler arası taşıma
     // =========================================================================
-    function toSettings(item) {
+    function relocate(item, target, focusSelector) {
         item.setAttribute('data-nav-from', listKey(item.parentElement));
-        appendTo(settingsRoot, item);
-        item.querySelector('[data-nav-to-sidebar]').focus();
+        appendTo(target, item);
+        var focus = item.querySelector(focusSelector);
+        if (focus) { focus.focus(); }
     }
 
     function toSidebar(item) {
@@ -166,19 +178,181 @@ $(function () {
         if (!target && item.getAttribute('data-nav-admin') === 'true') {
             target = form.querySelector('[data-nav-list="' + MANAGEMENT_GROUP + '"]');
         }
-        // Hedef Ayarlar sütununda kaldıysa kullanılamaz: madde kenar çubuğuna
-        // gitmeli. (Örn. taşınan bir kategori de aşağı inmişse.)
+        // Hedef başka bölmede kaldıysa kullanılamaz: madde kenar çubuğuna gitmeli.
         if (target && sideOf(target) !== 'sidebar') { target = null; }
-        if (!target) { target = sidebarRoot; }
 
-        item.setAttribute('data-nav-from', listKey(item.parentElement));
-        appendTo(target, item);
-        item.querySelector('[data-nav-to-settings]').focus();
+        relocate(item, target || sidebarRoot, '[data-nav-to-settings]');
     }
 
+    // Gizlemeden geri alma: eski yerine, orası artık kenar çubuğunda değilse köke.
+    function unhide(item) {
+        var target = listByKey(item.getAttribute('data-nav-from'));
+        if (target && sideOf(target) === 'hidden') { target = null; }
+        relocate(item, target || sidebarRoot, '[data-nav-hide]');
+    }
+
+    // =========================================================================
+    // 4) Özel kategori / kısayol — ekle, düzenle, sil
+    // =========================================================================
+    var toolbar = form.querySelector('.apya-navedit-toolbar');
+    var formBox = document.getElementById('ApyaNavForm');
+    var fieldTitle = document.getElementById('ApyaNavFormTitle');
+    var fieldIcon = document.getElementById('ApyaNavFormIcon');
+    var fieldUrl = document.getElementById('ApyaNavFormUrl');
+    var preview = document.getElementById('ApyaNavFormPreview');
+    var errorBox = document.getElementById('ApyaNavFormError');
+    var editing = null;   // düzenlenen <li> ya da null (yeni)
+    var editKind = 'group';
+
+    function newName() {
+        // Yalnız alfasayısal son ek: sunucudaki CleanCustomName bunu şart koşuyor
+        // (ve alt çizgi LeptonX id çevirisini bozardı).
+        return CUSTOM_PREFIX +
+               Date.now().toString(36) +
+               Math.random().toString(36).replace(/[^a-z0-9]/g, '').slice(0, 6);
+    }
+
+    function openForm(kind, item) {
+        editKind = kind;
+        editing = item || null;
+        errorBox.textContent = '';
+
+        fieldTitle.value = item ? (item.getAttribute('data-nav-title') || '') : '';
+        fieldIcon.value = item ? (item.getAttribute('data-nav-icon') || fieldIcon.options[0].value)
+                               : fieldIcon.options[0].value;
+        fieldUrl.value = item ? (item.getAttribute('data-nav-url') || '') : '';
+        fieldUrl.hidden = kind !== 'link';
+
+        syncPreview();
+        formBox.hidden = false;
+        fieldTitle.focus();
+    }
+
+    function closeForm() {
+        formBox.hidden = true;
+        editing = null;
+        errorBox.textContent = '';
+    }
+
+    function syncPreview() {
+        preview.className = 'apya-navedit-icon ' + fieldIcon.value;
+    }
+
+    // Sunucunun kabul edeceği kuralın aynısı — burada yalnız anında geri bildirim
+    // için var, yetkili doğrulama MenuLayout.NormalizePath'te.
+    function isSitePath(url) {
+        return url.length > 0 && url.charAt(0) === '/' && url.slice(0, 2) !== '//';
+    }
+
+    function applyRow(item, title, icon, url) {
+        item.setAttribute('data-nav-title', title);
+        item.setAttribute('data-nav-icon', icon);
+        item.setAttribute('data-nav-url', url || '');
+        item.querySelector(':scope > .apya-navedit-row .apya-navedit-title').textContent = title;
+        item.querySelector(':scope > .apya-navedit-row .apya-navedit-icon').className =
+            'apya-navedit-icon ' + icon;
+    }
+
+    function createRow(kind, title, icon, url) {
+        var template = document.getElementById(
+            kind === 'group' ? 'ApyaNavGroupTemplate' : 'ApyaNavLinkTemplate');
+        var item = template.content.querySelector('.apya-navedit-item').cloneNode(true);
+
+        var name = newName();
+        item.setAttribute('data-nav-node', name);
+        var inner = item.querySelector(':scope > [data-nav-list]');
+        if (inner) { inner.setAttribute('data-nav-list', name); }
+
+        applyRow(item, title, icon, url);
+        return item;
+    }
+
+    function limitOf(kind) {
+        var raw = toolbar && toolbar.getAttribute('data-nav-max-' + kind);
+        var max = parseInt(raw, 10);
+        return isNaN(max) ? Infinity : max;
+    }
+
+    function limitMessage(kind) {
+        return (toolbar && toolbar.getAttribute('data-nav-limit-' + kind)) || '';
+    }
+
+    // Gizlenenler bölmesindekiler de sayılır: onlar da yüke giriyor.
+    function atLimit(kind) {
+        return form.querySelectorAll('[data-nav-custom="' + kind + '"]').length >= limitOf(kind);
+    }
+
+    function saveForm() {
+        var title = fieldTitle.value.trim();
+        var icon = fieldIcon.value;
+        var url = fieldUrl.value.trim();
+
+        if (!title) {
+            errorBox.textContent = fieldTitle.dataset.required || fieldTitle.placeholder;
+            fieldTitle.focus();
+            return;
+        }
+        if (editKind === 'link' && !isSitePath(url)) {
+            errorBox.textContent = fieldUrl.dataset.invalid || fieldUrl.placeholder;
+            fieldUrl.focus();
+            return;
+        }
+
+        if (editing) {
+            applyRow(editing, title, icon, url);
+        } else {
+            // Tavan SUNUCUNUN sınırı (MenuLayout.Normalize). Burada durdurmazsak
+            // 11. kategori kaydedilirken sessizce kırpılır: kullanıcı ad+ikon+hedef
+            // yazar, "kaydedildi" görür ve kaybını ancak menüde fark eder.
+            if (atLimit(editKind)) {
+                errorBox.textContent = limitMessage(editKind);
+                return;
+            }
+            var item = createRow(editKind, title, icon, url);
+            appendTo(sidebarRoot, item);
+            bindAllSortables();   // yeni kategori de bırakma hedefi olsun
+        }
+
+        closeForm();
+        normalizePlaceholders();
+    }
+
+    // Silme: satır DOM'dan kalkar, çocukları varsa ÜST LİSTEYE devredilir.
+    // Sunucu da aynı sonucu üretirdi (üstü olmayan düğüm koddaki yerine döner)
+    // ama ekranda öğelerin yok olup kaydettikten sonra geri gelmesi kafa karıştırır.
+    function deleteRow(item) {
+        var parent = item.parentElement;
+        var inner = item.querySelector(':scope > [data-nav-list]');
+        if (inner) {
+            itemsOf(inner).forEach(function (child) { parent.insertBefore(child, item); });
+        }
+        item.remove();
+        normalizePlaceholders();
+    }
+
+    fieldIcon.addEventListener('change', syncPreview);
+    document.getElementById('ApyaNavFormSave').addEventListener('click', saveForm);
+    document.getElementById('ApyaNavFormCancel').addEventListener('click', closeForm);
+    formBox.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') { e.preventDefault(); saveForm(); }
+        else if (e.key === 'Escape') { closeForm(); }
+    });
+
+    // =========================================================================
+    // 5) Tek delege dinleyici
+    // =========================================================================
     form.addEventListener('click', function (e) {
-        var button = e.target.closest('button[data-nav-up], button[data-nav-down], ' +
-                                      'button[data-nav-to-settings], button[data-nav-to-sidebar]');
+        var newButton = e.target.closest('button[data-nav-new]');
+        if (newButton) {
+            e.preventDefault();
+            openForm(newButton.getAttribute('data-nav-new'), null);
+            return;
+        }
+
+        var button = e.target.closest(
+            'button[data-nav-up], button[data-nav-down], button[data-nav-to-settings], ' +
+            'button[data-nav-to-sidebar], button[data-nav-hide], button[data-nav-show], ' +
+            'button[data-nav-edit], button[data-nav-delete]');
         if (!button) { return; }
 
         var item = button.closest('.apya-navedit-item');
@@ -187,22 +361,43 @@ $(function () {
 
         if (button.hasAttribute('data-nav-up')) { move(item, -1); }
         else if (button.hasAttribute('data-nav-down')) { move(item, 1); }
-        else if (button.hasAttribute('data-nav-to-settings')) { toSettings(item); }
-        else { toSidebar(item); }
+        else if (button.hasAttribute('data-nav-to-settings')) { relocate(item, settingsRoot, '[data-nav-to-sidebar]'); }
+        else if (button.hasAttribute('data-nav-to-sidebar')) { toSidebar(item); }
+        else if (button.hasAttribute('data-nav-hide')) { relocate(item, hiddenRoot, '[data-nav-show]'); }
+        else if (button.hasAttribute('data-nav-show')) { unhide(item); }
+        else if (button.hasAttribute('data-nav-edit')) { openForm(item.getAttribute('data-nav-custom'), item); }
+        else { deleteRow(item); }
 
         normalizePlaceholders();
     });
 
     // =========================================================================
-    // 4) Kaydet — düzeni DOM'dan kur
-    // Her öğenin YERİ = (sütun, üst öğe, sıra). Üç liste bunu eksiksiz anlatır;
+    // 6) Kaydet — düzeni DOM'dan kur
+    // Her öğenin YERİ = (bölme, üst öğe, sıra). Listeler bunu eksiksiz anlatır;
     // ayrıca "şu öğe taşındı" diye bir işaret tutmaya gerek yok.
     // =========================================================================
+    function customEntries(kind) {
+        return Array.prototype.slice
+            .call(form.querySelectorAll('[data-nav-custom="' + kind + '"]'))
+            .map(function (li) {
+                var entry = {
+                    n: li.getAttribute('data-nav-node'),
+                    t: li.getAttribute('data-nav-title') || '',
+                    i: li.getAttribute('data-nav-icon') || ''
+                };
+                if (kind === 'link') { entry.u = li.getAttribute('data-nav-url') || ''; }
+                return entry;
+            });
+    }
+
     function serialize() {
         var layout = {
             sections: namesOf(sidebarRoot),
             settingsOrder: namesOf(settingsRoot),
-            items: {}
+            items: {},
+            groups: customEntries('group'),
+            links: customEntries('link'),
+            hidden: namesOf(hiddenRoot)
         };
 
         form.querySelectorAll('[data-nav-list]').forEach(function (list) {
@@ -222,5 +417,5 @@ $(function () {
         output.value = serialize();
     });
 
-    setupSortable();
+    bindAllSortables();
 });

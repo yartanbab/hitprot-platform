@@ -35,9 +35,27 @@ public class MenuLayout
     [JsonPropertyName("items")]
     public Dictionary<string, List<string>> Items { get; set; } = new();
 
+    /// <summary>Kullanıcının kendi kurduğu kategoriler. Yerleşimleri diğerleriyle aynı yoldan.</summary>
+    [JsonPropertyName("groups")]
+    public List<MenuLayoutGroup> Groups { get; set; } = new();
+
+    /// <summary>Kullanıcının kendi eklediği kısayollar (site içi yol).</summary>
+    [JsonPropertyName("links")]
+    public List<MenuLayoutLink> Links { get; set; } = new();
+
+    /// <summary>
+    /// Tamamen gizlenen öğeler — iki yüzeyde de basılmaz. Bir GRUP gizlenirse
+    /// alt ağacıyla birlikte gizlenir. Gizleme bir YETKİ DEĞİLDİR: sayfanın
+    /// kendi adresi açılmaya devam eder, yalnız gezinmede görünmez.
+    /// </summary>
+    [JsonPropertyName("hidden")]
+    public List<string> Hidden { get; set; } = new();
+
     /// <summary>Kullanıcı hiç dokunmadıysa true — menü koda gömülü hâliyle basılır.</summary>
     [JsonIgnore]
-    public bool IsEmpty => Sections.Count == 0 && SettingsOrder.Count == 0 && Items.Count == 0;
+    public bool IsEmpty =>
+        Sections.Count == 0 && SettingsOrder.Count == 0 && Items.Count == 0 &&
+        Groups.Count == 0 && Links.Count == 0 && Hidden.Count == 0;
 
     private static readonly JsonSerializerOptions SerializerOptions = new()
     {
@@ -78,22 +96,60 @@ public class MenuLayout
     /// ham uzunluk sınırından çok daha büyük bir JSON üretebiliyor. Kırpma
     /// burada yapılmazsa ayar sorunsuz KAYDEDİLİR, sonraki okumada Parse
     /// uzunluk kontrolünde reddeder ve kullanıcının düzeni sessizce kaybolur.
-    /// En ucuz kırpma sondaki gruplar: 1. seviye sıralama (sections /
-    /// settingsOrder) korunur, en içteki gruplar koddaki yerine döner.
+    ///
+    /// Sıra ÖNEMLİ — önce YERLEŞİM verisi, en son kullanıcının EMEK verdiği veri:
+    /// grup içi sıralar → gizlemeler → Ayarlar sırası → kenar çubuğu sırası →
+    /// kısayollar → kategoriler. İlk dördü kaybolunca öğe koddaki yerine döner
+    /// (tercih kaybı); son ikisi kaybolunca kullanıcının yazdığı ad/ikon/hedef
+    /// yok olur, o yüzden en sona bırakılır.
+    ///
+    /// 🔴 Sections ve SettingsOrder de zincire DAHİL olmak zorunda. Yalnız
+    /// Items/Hidden/Links/Groups kırpılsaydı, bu ikisi tek başına sınırı aşan
+    /// bir yük taşıdığında (60 ad × 128 karakter × 2 liste ≈ 15,7 KB > 8 KB)
+    /// zincir tükenir ve metot sınır ÜSTÜ bir değer döndürürdü — yani tam da
+    /// engellemeye çalıştığı sessiz kayıp gerçekleşirdi.
     /// </summary>
     public string Serialize()
     {
         var normalized = Normalize(this);
         var json = JsonSerializer.Serialize(normalized, SerializerOptions);
+        if (json.Length <= PlatformSettingDefaults.ShellMenuLayoutMaxChars) { return json; }
 
-        while (json.Length > PlatformSettingDefaults.ShellMenuLayoutMaxChars &&
-               normalized.Items.Count > 0)
+        var shrinkers = new Func<bool>[]
         {
-            normalized.Items.Remove(normalized.Items.Keys.Last());
-            json = JsonSerializer.Serialize(normalized, SerializerOptions);
+            () => Drop(normalized.Items),
+            () => Drop(normalized.Hidden),
+            () => Drop(normalized.SettingsOrder),
+            () => Drop(normalized.Sections),
+            () => Drop(normalized.Links),
+            () => Drop(normalized.Groups)
+        };
+
+        foreach (var shrink in shrinkers)
+        {
+            while (json.Length > PlatformSettingDefaults.ShellMenuLayoutMaxChars && shrink())
+            {
+                json = JsonSerializer.Serialize(normalized, SerializerOptions);
+            }
+            if (json.Length <= PlatformSettingDefaults.ShellMenuLayoutMaxChars) { break; }
         }
 
         return json;
+    }
+
+    /// <summary>Sondaki girdiyi düşürür; düşürecek bir şey kalmadıysa false.</summary>
+    private static bool Drop<T>(List<T> list)
+    {
+        if (list.Count == 0) { return false; }
+        list.RemoveAt(list.Count - 1);
+        return true;
+    }
+
+    private static bool Drop<TKey, TValue>(Dictionary<TKey, TValue> map) where TKey : notnull
+    {
+        if (map.Count == 0) { return false; }
+        map.Remove(map.Keys.Last());
+        return true;
     }
 
     /// <summary>
@@ -129,8 +185,130 @@ public class MenuLayout
         {
             Sections = sections,
             SettingsOrder = settingsOrder,
-            Items = items
+            Items = items,
+            Groups = CleanCustom(source.Groups, PlatformSettingDefaults.ShellMenuLayoutCustomGroupMax,
+                                 g => new MenuLayoutGroup { Name = g.Name, Title = g.Title, Icon = g.Icon }),
+            Links = CleanCustom(source.Links, PlatformSettingDefaults.ShellMenuLayoutCustomLinkMax,
+                                l => new MenuLayoutLink { Name = l.Name, Title = l.Title, Icon = l.Icon, Url = l.Url }),
+            // Gizleme yerleşimden BAĞIMSIZ: bir ad hem bir listede hem burada
+            // olabilir, o yüzden `seen` tekilliğine katılmaz.
+            Hidden = CleanList(source.Hidden, new HashSet<string>(StringComparer.Ordinal))
         };
+    }
+
+    /// <summary>
+    /// Özel kategori/kısayol temizliği: ad ön eki, başlık uzunluğu, ikon beyaz
+    /// listesi, kısayolda site içi yol kuralı ve adet tavanı.
+    /// </summary>
+    private static List<T> CleanCustom<T>(List<T>? source, int max, Func<T, T> copy)
+        where T : MenuLayoutGroup, new()
+    {
+        if (source == null) { return new List<T>(); }
+
+        var cleaned = new List<T>();
+        var seen = new HashSet<string>(StringComparer.Ordinal);
+
+        foreach (var raw in source)
+        {
+            // Tavana ULAŞINCA dur, ama tek bir null girdi listenin KALANINI
+            // düşürmesin — `break` olsaydı bozuk bir yükteki bir boşluk,
+            // arkasındaki bütün geçerli kayıtları sessizce siler.
+            if (cleaned.Count >= max) { break; }
+            if (raw == null) { continue; }
+
+            var entry = copy(raw) as T ?? new T();
+            entry.Name = CleanCustomName(raw.Name) ?? string.Empty;
+            if (entry.Name.Length == 0) { continue; }
+
+            entry.Title = Clip(raw.Title, PlatformSettingDefaults.ShellMenuLayoutTitleMax);
+            if (entry.Title.Length == 0) { continue; }
+
+            entry.Icon = MenuIcons.Normalize(raw.Icon);
+
+            // Geçersiz hedef girdiyi BURADA eler. Filtre dışarıda (ToList'ten
+            // sonra) olsaydı geçersiz kısayollar önce tavandan yer yer, sonra
+            // ayıklanırdı — baştaki birkaç bozuk kayıt sondaki geçerlilerin
+            // hiç değerlendirilmemesine yol açardı.
+            if (entry is MenuLayoutLink link)
+            {
+                link.Url = NormalizePath((raw as MenuLayoutLink)?.Url);
+                if (link.Url.Length == 0) { continue; }
+            }
+
+            // Tekillik en sona: elenen bir girdi adı REZERVE ETMESİN, yoksa
+            // aynı adı taşıyan geçerli bir sonraki kayıt da düşerdi.
+            if (!seen.Add(entry.Name)) { continue; }
+
+            cleaned.Add(entry);
+        }
+
+        return cleaned;
+    }
+
+    /// <summary>
+    /// Özel ad yalnız ayrılmış ön ekle ve yalın karakterlerle olabilir. Alt
+    /// çizgi YASAK: LeptonX `MenuItem_Apya_User_ab12` basıyor ve kabuk JS'i
+    /// `_` → `.` çevirisiyle adı geri okuyor; ada alt çizgi girerse o çeviri
+    /// sessizce bozulur.
+    /// </summary>
+    private static string? CleanCustomName(string? name)
+    {
+        name = name?.Trim();
+        if (string.IsNullOrEmpty(name) ||
+            name.Length > PlatformSettingDefaults.ShellMenuLayoutNameMax ||
+            !name.StartsWith(PlatformSettingDefaults.ShellMenuLayoutCustomPrefix, StringComparison.Ordinal))
+        {
+            return null;
+        }
+
+        var suffix = name.Substring(PlatformSettingDefaults.ShellMenuLayoutCustomPrefix.Length);
+        if (suffix.Length == 0 || !suffix.All(char.IsLetterOrDigit)) { return null; }
+
+        return name;
+    }
+
+    private static string Clip(string? value, int max)
+    {
+        value = (value ?? string.Empty).Trim();
+        return value.Length <= max ? value : value.Substring(0, max);
+    }
+
+    /// <summary>
+    /// Yalnız site içi YOL bırakır ("/Tasks"). Manipüle edilmiş bir istek başka
+    /// bir origin'e götüren "kısayol" bırakamasın diye şema/host taşıyan ve
+    /// protokol-göreli ("//site") değerler elenir. Aynı kural
+    /// ShellAppService.NormalizeScreen'de de var — kayıtlı görünümler için
+    /// yazılmıştı, kısayollar da aynı yüzey.
+    /// </summary>
+    private static string NormalizePath(string? url)
+    {
+        url = (url ?? string.Empty).Trim();
+        if (url.Length == 0) { return string.Empty; }
+
+        // Mutlak adres REDDEDİLİR, yoluna indirgenmez.
+        //
+        // ShellAppService.NormalizeScreen (kayıtlı görünümler) mutlak adresi
+        // PathAndQuery'ye çeviriyor; orada değer EKRANIN KENDİ URL'inden
+        // üretildiği için makul. Burada ise metni kullanıcı yazıyor:
+        // "https://baska-site.example/x" sessizce "/x" olsaydı kısayol,
+        // yazılandan bambaşka bir sayfaya giderdi. Açık yönlendirme değil ama
+        // sessizce yanlış hedef; kullanıcıya "geçersiz" demek doğrusu.
+        if (Uri.TryCreate(url, UriKind.Absolute, out _)) { return string.Empty; }
+
+        // 🔴 "/" ile başlamak YETMEZ. Tarayıcı özel şemalarda ters bölüyü eğik
+        // çizgiye normalize ediyor: `/\evil.example` üç kontrolden de geçer
+        // (mutlak URI değil · "/" ile başlar · "//" ile başlamaz) ama tarayıcıda
+        // `//evil.example` olarak çözülür ve BAŞKA BİR ORIGIN'e gider. Aynı
+        // şekilde araya sıkışan sekme/satır sonu URL'den atılır: "/\t/evil" de
+        // protokol-göreli hâle gelir. Trim yalnız uçları aldığı için ikisini de
+        // burada elemek gerekiyor.
+        if (url.Any(c => c == '\\' || char.IsControl(c))) { return string.Empty; }
+
+        if (!url.StartsWith('/') || url.StartsWith("//"))
+        {
+            return string.Empty;
+        }
+        return Clip(url, PlatformSettingDefaults.ShellMenuLayoutUrlMax);
     }
 
     private static List<string> CleanList(List<string>? names, HashSet<string> seen)
@@ -160,4 +338,27 @@ public class MenuLayout
         }
         return name;
     }
+}
+
+/// <summary>Kullanıcının kendi kurduğu kategori. JSON anahtarları kısa: ayar değeri sınırlı uzunlukta.</summary>
+public class MenuLayoutGroup
+{
+    /// <summary>"Apya.User.&lt;alfasayısal&gt;" — koddaki adlarla çakışmayan ayrılmış ad alanı.</summary>
+    [JsonPropertyName("n")]
+    public string Name { get; set; } = string.Empty;
+
+    [JsonPropertyName("t")]
+    public string Title { get; set; } = string.Empty;
+
+    /// <summary>Yalnız <see cref="MenuIcons.All"/> içinden; liste dışı değer varsayılana düşer.</summary>
+    [JsonPropertyName("i")]
+    public string Icon { get; set; } = MenuIcons.Default;
+}
+
+/// <summary>Kullanıcının kendi eklediği kısayol — kategoriden tek farkı hedef yolu.</summary>
+public class MenuLayoutLink : MenuLayoutGroup
+{
+    /// <summary>Site içi yol ("/Tasks"). Dış adres kabul edilmez.</summary>
+    [JsonPropertyName("u")]
+    public string Url { get; set; } = string.Empty;
 }

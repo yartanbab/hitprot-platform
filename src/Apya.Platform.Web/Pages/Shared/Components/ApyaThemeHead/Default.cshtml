@@ -67,6 +67,16 @@
                 var shell = null;
                 try { shell = localStorage.getItem('apya-mobile-shell'); } catch (e) { }
                 html.setAttribute('data-mobile-shell', shell === 'tabs' ? 'tabs' : 'drawer');
+
+                // Kenar çubuğu genişliği — kullanıcı tutamakla ayarlamışsa. Paint'ten
+                // ÖNCE yazılır, yoksa her yenilemede menü 250px'ten seçilen
+                // genişliğe zıplar. Sınırlar apya-sidebar-resize.js ile aynı;
+                // localStorage elle kurcalanmış olabilir.
+                var sidebarWidth = null;
+                try { sidebarWidth = parseInt(localStorage.getItem('apya-sidebar-width'), 10); } catch (e) { }
+                if (sidebarWidth >= 200 && sidebarWidth <= 420) {
+                    html.style.setProperty('--apya-sidebar-w', sidebarWidth + 'px');
+                }
             }
         } catch (e) { /* sessizce devam */ }
     })();
@@ -99,6 +109,9 @@
         ["short.Apya.Dashboard"] = L["MobileShell:Short.Apya.Dashboard"].Value,
         ["short.Apya.Work"] = L["MobileShell:Short.Apya.Work"].Value,
         ["short.Apya.Finance"] = L["MobileShell:Short.Apya.Finance"].Value,
-        ["short.Apya.Reports"] = L["MobileShell:Short.Apya.Reports"].Value
+        ["short.Apya.Reports"] = L["MobileShell:Short.Apya.Reports"].Value,
+        // Kenar çubuğu genişlik tutamağının erişilebilirlik etiketi. Tek etiket
+        // için ayrı bir JSON bloğu açmak yerine kabuğun mevcut sözlüğüne biner.
+        ["sidebarWidth"] = L["Shell:SidebarWidth"].Value
     }))
 </script>

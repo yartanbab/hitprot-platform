@@ -6782,10 +6782,50 @@ i.apya-priority-dot {
     color: var(--apya-accent-600);
 }
 
-/* Sütuna göre tek ok: soldaki sütunda "Ayarlar'a", sağdakinde "kenar çubuğuna". */
+/* Bölmeye göre hangi düğme görünür:
+     kenar çubuğu → "Ayarlar'a" oku + gizle
+     Ayarlar      → "kenar çubuğuna" oku + gizle
+     Gizlenenler  → yalnız geri getir (ok yok: geri getirmek tek adım olmalı)
+   Kural CSS'te olduğu için taşınan satırın düğmelerini JS'in değiştirmesi
+   gerekmiyor — <li> olduğu gibi öbür bölmeye geçiyor. */
 [data-nav-side="sidebar"] [data-nav-to-sidebar],
-[data-nav-side="settings"] [data-nav-to-settings] {
+[data-nav-side="settings"] [data-nav-to-settings],
+[data-nav-side="hidden"] [data-nav-to-sidebar],
+[data-nav-side="hidden"] [data-nav-to-settings],
+[data-nav-side="hidden"] [data-nav-hide],
+[data-nav-side="sidebar"] [data-nav-show],
+[data-nav-side="settings"] [data-nav-show] {
     display: none;
+}
+.apya-navedit-btn--danger {
+    color: var(--apya-negative-500);
+}
+
+/* Ekleme araç çubuğu ve tek-form (kategori ekle / kısayol ekle / düzenle) */
+.apya-navedit-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+.apya-navedit-form {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    flex: 1 1 100%;
+    padding: 10px;
+    border: 1px solid var(--apya-border-default);
+    border-radius: var(--apya-radius-md);
+    background: var(--apya-surface-raised);
+}
+.apya-navedit-form input[type="text"] { flex: 1 1 180px; min-width: 0; }
+.apya-navedit-form select { flex: 0 1 160px; }
+.apya-navedit-form-error {
+    flex: 1 1 100%;
+    color: var(--apya-text-negative);
+    font-size: var(--apya-text-xs);
 }
 
 /* Boş liste ipucu — yalnız gerçekten boşken görünür (tek çocuk olduğunda).
@@ -6811,4 +6851,57 @@ i.apya-priority-dot {
         margin-left: 10px;
         padding-left: 8px;
     }
+}
+
+/* ----------------------------------------------------------------------------
+   26) KENAR ÇUBUĞU GENİŞLİK TUTAMAĞI — apya-sidebar-resize.js
+   Tutamak kabın SAĞ kenarında oturur; sürüklenirken tüm sayfada metin seçimi
+   ve işaretçi olayları kapanır, yoksa fare menünün üstünden çıkınca sürükleme
+   yarıda kalıyor ve satırlar seçili görünüyordu.
+   ---------------------------------------------------------------------------- */
+/* 🔴 Tutamak KABA GÖRE konumlandırılamaz. İlk sürümde `.lpx-sidebar-container`'a
+   `position: relative` verilmişti; apya-shell.css tema CSS'inden SONRA yüklendiği
+   için temanın kendi `position: fixed; top: 0; height: 100vh` kuralını eziyordu.
+   Sonuç: kenar çubuğu akışa dönüyor, içerik onun ALTINA diziliyordu (ölçüldü:
+   içerik y=720; `fixed` geri konunca y=0) ve sayfa kaydırılınca üst bar yerinden
+   çıkıyordu. Tutamak kendisi `fixed` olur, kaba hiç dokunulmaz.
+
+   Konum token'dan: kenar çubuğu genişliği zaten --apya-sidebar-w ile sürülüyor,
+   tutamak da onun sağ kenarına oturur. Gövdeye takılır — köke yakın bir
+   `transform` `position: fixed`'i kapsayıp tutamağı kenar çubuğuna hapsedebilirdi
+   (bu repoda ModalPortal vakasında yaşandı). */
+.apya-sidebar-resizer {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: calc(var(--apya-sidebar-w) - 3px);
+    width: 6px;
+    /* Kenar çubuğu kabı 1000; tutamak onun üstünde ama üst bardaki açılır
+       menü düzeltmesinin (1002) altında kalmalı. */
+    z-index: 1001;
+    cursor: col-resize;
+    background: transparent;
+}
+.apya-sidebar-resizer:hover,
+.apya-sidebar-resizer:focus-visible {
+    background: var(--apya-accent-500);
+    opacity: .35;
+    outline: none;
+}
+body.apya-sidebar-resizing {
+    user-select: none;
+    cursor: col-resize;
+}
+/* Sürükleme sırasında iframe/kanvas gibi öğeler işaretçiyi yutmasın. */
+body.apya-sidebar-resizing .lpx-content-container {
+    pointer-events: none;
+}
+
+/* Ray/gizli modda ve dar ekranda tutamak anlamsız: genişlik oralarda
+   --apya-sidebar-w'den gelmiyor. */
+html[data-sidebar] .apya-sidebar-resizer {
+    display: none;
+}
+@media (max-width: 767.98px) {
+    .apya-sidebar-resizer { display: none; }
 }
