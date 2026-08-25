@@ -421,16 +421,6 @@ $(function () {
     // 5) Dip blok — Ayarlar (iki satır) + sistem durumu
     // Ayarlar öğesi akışın sonundan alınıp kenar çubuğunun DİBİNE sabitlenir.
     // =========================================================================
-    function readShellNavHint() {
-        var el = document.getElementById('ApyaShellNav');
-        if (!el) { return ''; }
-        try {
-            return (JSON.parse(el.textContent) || {}).settingsHint || '';
-        } catch (e) {
-            return '';
-        }
-    }
-
     function setupFooter() {
         var settings = anchorByName('Apya.Settings');
         var nav = sidebar.querySelector('.lpx-nav') || sidebar;
@@ -443,32 +433,9 @@ $(function () {
         li.classList.add('apya-shell-foot-item');
         foot.appendChild(li);
 
-        // İkinci satır: katlanan YÖNETİM bölümünün nereye gittiğini açıklar.
-        // Handoff bunu açıkça "kaldırılmamalı" diye işaretliyor.
-        //
-        // Metin SUNUCUDAN gelir (ApyaThemeHead → #ApyaShellNav): kullanıcı menü
-        // düzeninden hedefleri taşıyabildiği ve her hedef izinle filtrelendiği
-        // için buraya sabit bir liste yazılamaz. Blok yoksa (yetkisi olan hedef
-        // yok) ipucu satırı da basılmaz — yanlış liste göstermektense hiç
-        // göstermemek doğru.
-        var hintText = readShellNavHint();
-        if (hintText) {
-            var hint = document.createElement('span');
-            hint.className = 'apya-shell-foot-hint';
-            hint.textContent = hintText;
-            settings.appendChild(hint);
-        }
-
-        var health = state.health || {};
-        var status = document.createElement('div');
-        status.className = 'apya-shell-status';
-        status.innerHTML =
-            '<span class="apya-shell-status-dot' + (health.isHealthy ? '' : ' is-down') + '"></span>' +
-            '<span class="apya-shell-status-text">' +
-            (health.isHealthy ? 'Tüm sistemler çalışıyor' : 'Sistem sorunu var') + '</span>' +
-            (health.version ? '<span class="apya-shell-status-version apya-numeric">' +
-             escapeHtml(health.version) + '</span>' : '');
-        foot.appendChild(status);
+        // İpucu satırı ("Kiracı · Kimlik · …") ve sistem durumu satırı
+        // ("Tüm sistemler çalışıyor") kullanıcı kararıyla kaldırıldı (2026-08-25).
+        // Dip blok artık yalnız Ayarlar girişini taşır.
 
         nav.appendChild(foot);
     }

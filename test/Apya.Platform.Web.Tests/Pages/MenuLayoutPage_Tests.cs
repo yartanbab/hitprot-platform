@@ -328,21 +328,4 @@ public class MenuLayoutPage_Tests : PlatformWebTestBase
         sidebar.ShouldContain("/Documents");
     }
 
-    /// <summary>
-    /// Dip bloktaki ipucu artık sabit değil; kullanıcının GERÇEKTEN gördüğü
-    /// hedeflerden üretilir (ApyaThemeHead → #ApyaShellNav).
-    /// </summary>
-    [Fact]
-    public async Task Dip_blok_ipucu_gercek_listeden_uretilir()
-    {
-        await SetLayoutAsync("""{"items":{"Apya.Management":["Apya.Admin.Tenants"]}}""");
-
-        var html = await GetResponseAsStringAsync("/Settings");
-        var block = Parse(html).DocumentNode.SelectSingleNode("//script[@id='ApyaShellNav']");
-
-        block.ShouldNotBeNull();
-        // Kenar çubuğuna alınan hedef ipucunda YER ALMAZ.
-        block.InnerText.ShouldNotContain("Kiracı Yönetimi");
-        block.InnerText.ShouldContain("settingsHint");
-    }
 }

@@ -3872,36 +3872,6 @@ i.apya-priority-dot {
     padding-top: 6px !important;
     padding-bottom: 6px !important;
 }
-.apya-shell-foot-hint {
-    flex: 1 0 100%;
-    padding-left: 28px;
-    font-size: 10.5px;
-    line-height: 1.35;
-    color: var(--apya-text-tertiary);
-}
-.apya-shell-status {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    padding: 8px 10px 0;
-}
-.apya-shell-status-dot {
-    flex: 0 0 7px;
-    width: 7px;
-    height: 7px;
-    border-radius: var(--apya-radius-full);
-    background: var(--apya-positive-500);
-}
-.apya-shell-status-dot.is-down { background: var(--apya-negative-500); }
-.apya-shell-status-text {
-    font-size: var(--apya-fs-xs);
-    color: var(--apya-text-tertiary);
-}
-.apya-shell-status-version {
-    margin-left: auto;
-    font-size: var(--apya-fs-xs);
-    color: var(--apya-text-disabled);
-}
 
 /* --- Ray modu: etiket taşıyan her şey gizlenir ---
    72px'lik rayda rozet/iğne/alt liste sığmaz ve taşar; aktiflik göstergesi
@@ -3911,9 +3881,7 @@ i.apya-priority-dot {
     html[data-sidebar="collapsed"] .lpx-sidebar-container:not(:hover) #lpx-sidebar .apya-shell-rowbtn,
     html[data-sidebar="collapsed"] .lpx-sidebar-container:not(:hover) #lpx-sidebar .apya-shell-badge,
     html[data-sidebar="collapsed"] .lpx-sidebar-container:not(:hover) #lpx-sidebar .apya-shell-subnav,
-    html[data-sidebar="collapsed"] .lpx-sidebar-container:not(:hover) #lpx-sidebar .apya-shell-section-chevron,
-    html[data-sidebar="collapsed"] .lpx-sidebar-container:not(:hover) .apya-shell-foot-hint,
-    html[data-sidebar="collapsed"] .lpx-sidebar-container:not(:hover) .apya-shell-status {
+    html[data-sidebar="collapsed"] .lpx-sidebar-container:not(:hover) #lpx-sidebar .apya-shell-section-chevron {
         display: none !important;
     }
 }
@@ -4437,25 +4405,6 @@ i.apya-priority-dot {
 }
 /* Kiracı pili tasarımda EN SOLDA (breadcrumb'dan önce) — sağ kümede değil. */
 .lpx-topbar-content > .apya-tenant-switch { order: 5; margin-right: auto; }
-
-/* --- 4) Sol menü dip bloğu ---
-   Ekran görüntüsünde "Kiracı · Kimlik · Platform · Geri bildirim" iki satıra
-   kırılıyor ve durum satırıyla üst üste biniyordu. Tasarımda tek satır,
-   taşarsa kırpılır. */
-.apya-shell-foot-hint {
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    font-size: 10px;
-    letter-spacing: -0.01em;
-}
-.apya-shell-status { padding-top: 10px; }
-.apya-shell-status-text {
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-.apya-shell-status-version { flex: 0 0 auto; padding-left: 6px; }
 
 /* --- 5) Sabitleme iğnesi: tasarımdaki dolu indigo hâl ---
    Uygulamada sabitlenmiş iğne ince bir ok gibi duruyordu; tasarımda dolu,
