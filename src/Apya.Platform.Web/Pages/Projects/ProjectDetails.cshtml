@@ -327,6 +327,8 @@
                     title="PDF yükle, AI taslak görevlere bölsün, beğendiklerini onayla.">
                 <i class="fa fa-robot" aria-hidden="true"></i> AI ile Görev Oluştur
             </button>
+            @* Kolon araçları "Yeni Görev"in solunda (kullanıcı kararı 2026-08-25). *@
+            <partial name="_KanbanColumnTools" />
             <button id="btn-create-task"
                     class="btn btn-primary"
                     data-project-id="@Model.Id">

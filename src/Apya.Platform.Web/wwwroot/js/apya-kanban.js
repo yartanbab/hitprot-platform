@@ -95,8 +95,38 @@
         // sürükleme kapları değişmediği için taşıma mantığı aynı kalır.
         var enableLanes = opts.enableLanes === true;
         // İptal kolonu varsayılan KAPALI (daraltılmış); tercih kullanıcıya ait.
-        var showCancelled = false;
-        try { showCancelled = localStorage.getItem('apya-kanban-cancelled') === '1'; } catch (e) { }
+        // Kolon daraltma tercihi KOLON BAZINDA (kullanıcıya ait, genişlik tercihiyle
+        // aynı yerde). İptal kolonu da aynı mekanizmayı kullanır; tek farkı
+        // kaydedilmiş tercih yokken VARSAYILAN olarak daralmış gelmesi.
+        var collapsed = {};
+        try { collapsed = JSON.parse(localStorage.getItem(kbKey('collapsed')) || '{}') || {}; } catch (e) { collapsed = {}; }
+        function isCollapsed(token, isCancelCol) {
+            if (Object.prototype.hasOwnProperty.call(collapsed, token)) { return !!collapsed[token]; }
+            return !!isCancelCol;   // İptal kolonu varsayılan kapalı, diğerleri açık
+        }
+        function saveCollapsed() {
+            try { localStorage.setItem(kbKey('collapsed'), JSON.stringify(collapsed)); } catch (e) { }
+        }
+
+        // Aç/kapa düğmesini DOĞRUDAN bağlar (jQuery delegasyonu değil): kolonlar
+        // her render'da yeniden kurulduğu için sızıntı olmaz, davranış test edilebilir
+        // kalır. Yeniden yükleme YAPMAZ — sınıfı ve ok yönünü yerinde çevirir.
+        function bindCollapse(colEl, token) {
+            var btn = colEl.querySelector('.js-col-collapse');
+            if (!btn) { return; }
+            btn.addEventListener('click', function (e) {
+                e.stopPropagation();
+                var shut = !colEl.classList.contains('is-collapsed');
+                colEl.classList.toggle('is-collapsed', shut);
+                collapsed[token] = shut;
+                saveCollapsed();
+
+                btn.setAttribute('title', shut ? 'Genişlet' : 'Daralt');
+                btn.setAttribute('aria-expanded', String(!shut));
+                var icon = btn.querySelector('i');
+                if (icon) { icon.className = 'fa fa-angle-' + (shut ? 'right' : 'left'); }
+            });
+        }
         var grouping = '';
         if (enableLanes) {
             try { grouping = localStorage.getItem('apya-kanban-group') || ''; } catch (e) { }
@@ -403,6 +433,13 @@
             var addBtn = (createModal && projectId)
                 ? '<button type="button" class="kanban-col-add js-col-add-task" title="Bu kolona görev ekle" aria-label="Bu kolona görev ekle"><i class="fa fa-plus"></i></button>'
                 : '';
+            // Aç/kapa: her kolonda (İptal kolonundaki desen genelleştirildi).
+            var token = isSys ? ('s' + c.statusValue) : ('c' + c.id);
+            var shut = isCollapsed(token, false);
+            if (shut) { col.classList.add('is-collapsed'); }
+            var collapseBtn = '<button type="button" class="kanban-col-collapse js-col-collapse" ' +
+                'title="' + (shut ? 'Genişlet' : 'Daralt') + '" aria-expanded="' + (!shut) + '" ' +
+                'aria-label="Kolonu aç/kapat"><i class="fa fa-angle-' + (shut ? 'right' : 'left') + '"></i></button>';
             col.innerHTML =
                 '<div class="kanban-header">' +
                     '<span class="kanban-title js-col-name' + (canEditColumns && c.id ? ' is-editable' : '') +
@@ -413,12 +450,14 @@
                         '<span class="kanban-wip' + (c.wipLimit ? '' : ' d-none') + '" title="WIP limiti"></span>' +
                         addBtn +
                         columnMenuHtml(c) +
+                        collapseBtn +
                     '</span>' +
                 '</div>' +
                 '<div class="kanban-cards"></div>';
             // Ad textContent ile: XSS-güvenli (kolon adı kullanıcı girdisi).
             col.querySelector('.js-col-name').appendChild(document.createTextNode(' ' + c.name));
             col.querySelector('.kanban-cards').id = isSys ? SYS[c.statusValue] : ('kanban-col-' + c.id);
+            bindCollapse(col, token);
             return col;
         }
 
@@ -1042,7 +1081,8 @@
             // İptal kolonu (Faz 4b): BoardColumn kaydı YOK, yalnız Status 0'ın
             // panodaki karşılığı. En sağda, varsayılan daraltılmış; kapalıyken de
             // kartlar render edilir (sayaç doğru kalsın, CSS listeyi gizler).
-            var cancelCol = el('div', 'kanban-column kanban-cancel-col' + (showCancelled ? '' : ' is-collapsed'));
+            var cancelShut = isCollapsed('s0', true);   // varsayılan: kapalı
+            var cancelCol = el('div', 'kanban-column kanban-cancel-col' + (cancelShut ? ' is-collapsed' : ''));
             cancelCol.setAttribute('data-status-id', '0');
             cancelCol.setAttribute('data-cancel-col', 'true');
             cancelCol.setAttribute('data-column-color', 'danger');
@@ -1051,12 +1091,13 @@
                     '<span class="kanban-title js-col-name"><i class="fa fa-ban me-2"></i>İptal edildi</span>' +
                     '<span class="d-flex align-items-center gap-2">' +
                         '<span class="apya-chip apya-chip-negative kanban-count">0</span>' +
-                        '<button type="button" class="kanban-cancel-toggle js-cancel-toggle" ' +
-                            'title="' + (showCancelled ? 'Daralt' : 'Genişlet') + '" aria-label="İptal kolonunu aç/kapat">' +
-                            '<i class="fa fa-angle-' + (showCancelled ? 'right' : 'left') + '"></i></button>' +
+                        '<button type="button" class="kanban-col-collapse js-col-collapse" ' +
+                            'title="' + (cancelShut ? 'Genişlet' : 'Daralt') + '" aria-expanded="' + (!cancelShut) + '" ' +
+                            'aria-label="İptal kolonunu aç/kapat"><i class="fa fa-angle-' + (cancelShut ? 'right' : 'left') + '"></i></button>' +
                     '</span>' +
                 '</div>' +
                 '<div class="kanban-cards" id="kanban-cancelled"></div>';
+            bindCollapse(cancelCol, 's0');
             board.appendChild(cancelCol);
 
             // "Kolon ekle" hayalet kolonu (handoff: kesik çizgili, dar) — yalnız
@@ -1369,13 +1410,6 @@
 
         $doc.on('click', '.js-kb-clear', function () { clearSelection(); });
 
-        // İptal kolonunu aç/kapat — tercih kullanıcıda kalır.
-        $doc.on('click', boardSel + ' .js-cancel-toggle', function (e) {
-            e.stopPropagation();
-            showCancelled = !showCancelled;
-            try { localStorage.setItem('apya-kanban-cancelled', showCancelled ? '1' : '0'); } catch (err) { }
-            load();
-        });
 
         // "İptali geri al" — kartı iptalden ÖNCEKİ durumuna döndürür.
         $doc.on('click', boardSel + ' .js-restore-task', function (e) {

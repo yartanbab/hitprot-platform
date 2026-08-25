@@ -113,6 +113,10 @@
             <input type="search" id="console-search" placeholder="Görev ara" aria-label="Görev ara" />
         </div>
 
+        @* Kolon araçları "Yeni Görev"in solunda (kullanıcı kararı 2026-08-25);
+           yalnız Kanban görünümünde ve koşulları sağlanınca JS tarafından açılır. *@
+        <partial name="_KanbanColumnTools" />
+
         @if (canCreate)
         {
             @* APYA-122: AI ile Görev Oluştur burada YOK — proje bağlamı olmadan

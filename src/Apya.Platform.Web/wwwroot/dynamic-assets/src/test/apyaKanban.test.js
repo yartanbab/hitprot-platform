@@ -16,7 +16,7 @@ let granted = {};
 // yetki + proje seçiliyken görünür (ikisi de JS tarafından açılıp kapanıyor).
 function boardHtml(canBulk) {
     canBulk = canBulk === false ? 'false' : 'true';
-    return `<div class="kanban-wrap">
+    return `<div class="kanban-page">
         <div class="kanban-toolbar js-kanban-toolbar d-none">
             <label class="kanban-group js-kanban-group d-none">
                 <select class="kanban-group-select js-group-select">
@@ -27,18 +27,20 @@ function boardHtml(canBulk) {
             </label>
             <button type="button" class="kanban-edit-cols js-edit-cols d-none">Kolonları düzenle</button>
         </div>
-        <div class="kanban-board"
-            data-col-1="Yapılacak" data-col-2="Sürüyor"
-            data-col-3="Testte" data-col-4="Tamamlandı"
-            data-can-bulk="${canBulk}"></div>
-        <div class="apya-console-bulkbar d-none js-kb-bar">
-            <span class="js-kb-count">0 kart seçili</span>
-            <div class="js-kb-move-menu"></div>
-            <div class="js-kb-assign-menu"></div>
-            <button type="button" class="js-kb-cancel-tasks">İptal et</button>
-            <button type="button" class="js-kb-delete">Sil</button>
-            <button type="button" class="js-kb-undo d-none">Geri al</button>
-            <button type="button" class="js-kb-clear">x</button>
+        <div class="kanban-wrap">
+            <div class="kanban-board"
+                data-col-1="Yapılacak" data-col-2="Sürüyor"
+                data-col-3="Testte" data-col-4="Tamamlandı"
+                data-can-bulk="${canBulk}"></div>
+            <div class="apya-console-bulkbar d-none js-kb-bar">
+                <span class="js-kb-count">0 kart seçili</span>
+                <div class="js-kb-move-menu"></div>
+                <div class="js-kb-assign-menu"></div>
+                <button type="button" class="js-kb-cancel-tasks">İptal et</button>
+                <button type="button" class="js-kb-delete">Sil</button>
+                <button type="button" class="js-kb-undo d-none">Geri al</button>
+                <button type="button" class="js-kb-clear">x</button>
+            </div>
         </div>
     </div>`;
 }
@@ -1062,7 +1064,7 @@ describe('İptal kolonu', () => {
     };
     const cancelCol = () => document.querySelector('.kanban-cancel-col');
 
-    beforeEach(() => { localStorage.removeItem('apya-kanban-cancelled'); });
+    beforeEach(() => { localStorage.removeItem('apya-kanban-collapsed-p1'); });
 
     it('panoda daima var ve varsayılan daraltılmış', async () => {
         mountBoard(sysCols, []);
@@ -1105,7 +1107,8 @@ describe('İptal kolonu', () => {
     });
 
     it('tercih açıkken kolon genişlemiş gelir', async () => {
-        localStorage.setItem('apya-kanban-cancelled', '1');
+        // Daraltma tercihi artık kolon bazında: kbKey('collapsed') → { token: kapalı? }
+        localStorage.setItem('apya-kanban-collapsed-p1', JSON.stringify({ s0: false }));
         mountBoard(sysCols, [cancelled]);
         apya.kanban.create({ projectId: 'p1' }).load();
         await flush();
@@ -1124,13 +1127,13 @@ describe('İptal kolonu', () => {
 });
 
 describe('araç çubuğu markup konumuna dayanıklı', () => {
-    it('çubuk sarmalayıcının DIŞINDA olsa da açılır (canlı QA regresyonu)', async () => {
+    it('çubuk sarmalayıcının İÇİNDE olsa da açılır (iki yerleşim de desteklenir)', async () => {
         // Gerçek partial'da çubuk bir ara .kanban-wrap dışına taşınmıştı ve
         // board.parentNode araması onu bulamayıp sessizce gizli bırakmıştı.
         mountBoard(sysCols, []);
         const wrap = document.querySelector('.kanban-wrap');
         const bar = document.querySelector('.js-kanban-toolbar');
-        wrap.parentNode.insertBefore(bar, wrap);   // çubuğu dışarı taşı
+        wrap.insertBefore(bar, wrap.firstChild);   // çubuğu sarmalayıcının İÇİNE taşı
 
         apya.kanban.create({ projectId: null, enableLanes: true }).load();
         await flush();
@@ -1237,5 +1240,75 @@ describe('risk dili ve kart meta', () => {
         apya.kanban.create({ projectId: 'p1' }).load();
         await flush();
         expect(document.querySelector('.kanban-risk-strip')).toBeNull();
+    });
+});
+
+// ── Kolon aç/kapa — TÜM kolonlarda (kullanıcı isteği 2026-08-25) ───────────
+describe('kolon aç/kapa', () => {
+    const toggleOf = (statusId) => col(statusId).querySelector('.js-col-collapse');
+
+    beforeEach(() => { localStorage.removeItem('apya-kanban-collapsed-p1'); });
+
+    it('her kolonda aç/kapa düğmesi olur, İptal kolonu dâhil', async () => {
+        mountBoard(sysCols.concat([customCol]), []);
+        apya.kanban.create({ projectId: 'p1' }).load();
+        await flush();
+
+        // 4 sistem + 1 özel + 1 İptal
+        expect(document.querySelectorAll('.js-col-collapse').length).toBe(6);
+    });
+
+    it('normal kolonlar açık, İptal kolonu kapalı başlar', async () => {
+        mountBoard(sysCols, []);
+        apya.kanban.create({ projectId: 'p1' }).load();
+        await flush();
+
+        expect(col(1).classList.contains('is-collapsed')).toBe(false);
+        expect(col(0).classList.contains('is-collapsed')).toBe(true);
+        expect(toggleOf(1).getAttribute('aria-expanded')).toBe('true');
+        expect(toggleOf(0).getAttribute('aria-expanded')).toBe('false');
+    });
+
+    it('tıklayınca daraltır, ok yönü ve aria durumu döner', async () => {
+        mountBoard(sysCols, []);
+        apya.kanban.create({ projectId: 'p1' }).load();
+        await flush();
+
+        toggleOf(2).click();
+
+        expect(col(2).classList.contains('is-collapsed')).toBe(true);
+        expect(toggleOf(2).getAttribute('aria-expanded')).toBe('false');
+        expect(toggleOf(2).getAttribute('title')).toBe('Genişlet');
+        expect(toggleOf(2).querySelector('i').className).toContain('fa-angle-right');
+    });
+
+    it('tercih kolon bazında saklanır ve yeniden yüklemede korunur', async () => {
+        mountBoard(sysCols, []);
+        const kb = apya.kanban.create({ projectId: 'p1' });
+        kb.load();
+        await flush();
+        toggleOf(3).click();
+
+        expect(JSON.parse(localStorage.getItem('apya-kanban-collapsed-p1'))).toEqual({ s3: true });
+
+        kb.load();
+        await flush();
+        expect(col(3).classList.contains('is-collapsed')).toBe(true);
+        expect(col(1).classList.contains('is-collapsed')).toBe(false);
+    });
+
+    it('daraltma kartları DOM\'dan silmez — sayaç ve risk özeti bozulmaz', async () => {
+        mountBoard(sysCols, [
+            { id: 't1', code: 'GRV-1', title: 'A', status: 1, priority: 2 },
+            { id: 't2', code: 'GRV-2', title: 'B', status: 1, priority: 2 }
+        ]);
+        apya.kanban.create({ projectId: 'p1' }).load();
+        await flush();
+
+        toggleOf(1).click();
+
+        expect(col(1).classList.contains('is-collapsed')).toBe(true);
+        expect(col(1).querySelectorAll('.kanban-card').length).toBe(2);
+        expect(col(1).querySelector('.kanban-count').textContent).toBe('2');
     });
 });
