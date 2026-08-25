@@ -15,7 +15,7 @@ Düzeltme PR'ları bulgu ID'sine referans verir. Denetim çok oturuma yayılır;
 | Faz | Kapsam | Durum |
 |---|---|---|
 | **1 — Yatay statik tarama** | Güvenlik, izin haritası, mimari, bug, perf, ölü kod | ✅ 1. geçiş + **2. geçiş izin haritası tamam** (2026-08-16): tüm AppService yetkilendirmesi tarandı → SEC-013/014/015/016 bulundu. AI modülü iç veri-akış derinleşmesi hâlâ kısmi |
-| **1b — KVKK / Veri koruma** | TR öncelikli → AB → Dünya | ✅ **Dalga 1 (4/4) UYGULANDI + doğrulandı**; metinler taslak (hukuki inceleme bekliyor) |
+| **1b — KVKK / Veri koruma** | TR öncelikli → AB → Dünya | ✅ **Dalga 1 (4/4) UYGULANDI + doğrulandı**; yer tutucular dolduruldu + KVKK-007 kapandı (PR #230) — 🔴 **hukuki inceleme hâlâ bekliyor** |
 | **Düzeltmeler** | SEC-007, SEC-DEP Kademe 1, FN-001, CORR-004, ARCH-001+FN-002 (33 ölü dosya) | ✅ Hepsi uygulandı+doğrulandı; **suite tam yeşil 351/351** (TEST-001 çözüldü) |
 | **2 — Dikey dinamik (E2E)** | Sayfa/buton canlı tıklama, UX/UI, veri bütünlüğü | ⏳ DB kapalı (MSSQL) → kullanıcı başlatmalı + DbMigrator + giriş; install-libs ✅ |
 
@@ -51,6 +51,7 @@ Düzeltme PR'ları bulgu ID'sine referans verir. Denetim çok oturuma yayılır;
 | 2026-08-16 | CORR-001 | **Negatif/sıfır ödeme tutarı guard'ı.** `RecordPaymentAsync` başına `amount <= 0 → BusinessException(PaymentAmountInvalid)`; yeni hata kodu + tr; 2 birim test. Aşırı ödeme bilinçle serbest (avans/kısmi). | ✅ Doğrulandı: build 0 hata; tam suite **353/353** yeşil (yeni testlerle) |
 | 2026-08-16 | SEC-013 + SEC-016 | **Broken access control (izin haritası 2. geçiş).** ProjectAppService→Projects.Default, TaskAppService→Tasks.Default; Template+DynamicDocument→DynamicAssets.Default+mutasyon Create/Delete. SEC-015 yanlış alarm (metotlar zaten gated), EntityLink açık. | ✅ Doğrulandı: build 0 hata; tam suite **353/353** yeşil |
 | 2026-08-16 | SEC-006 + SEC-014 | **AI izin modeli (kullanıcı kararı host+kiracı).** `AiPermissionDataSeedContributor` tüm `Ai.*`+`UseAiFeatures`'ı host+kiracı admin'e seed eder (tavan efektif erişimi kontrol eder). AI uçları (`AiTaskGenerator`+`AiAssistant`) `[Authorize(UseAiFeatures)]` ile gate edildi. Migration YOK. | ✅ Doğrulandı: build 0 hata; tam suite **353/353** yeşil |
+| 2026-08-25 | KVKK-001 + KVKK-007 | **Yasal metin yer tutucuları dolduruldu** (`Pages/Legal/*.cshtml`): veri sorumlusu = PARGETTO LTD. ŞTİ., Halkalı V.D. 7330956504, açık adres; KVKK md. 11 başvuru adresi `kvkk@pargetto.com`. **KVKK-007 cevaplandı → barındırma Türkiye (yurt içi)**, aktarım tablosuna işlendi. VERBİS/Mersis satırı Vergi Dairesi/No ile değiştirildi (kayıt durumu bilinmiyor, muafiyet eşiği ayrıca değerlendirilmeli). "Taslak" uyarı kutusu kaldırıldı. `Son güncelleme` dinamik tarihten (`DateTime.Now`) revizyon tarihine sabitlendi — metin değişmese de sayfa her gün "bugün güncellendi" diyordu. Migration/izin/şema değişikliği YOK. | ✅ Doğrulandı: build 0 hata; iki sayfa canlı render **200**, kırmızı yer tutucu **0**. **PR #230 AÇIK.** 🔴 Hukuki inceleme hâlâ bekliyor |
 
 ## Faz 2 — E2E canlı doğrulama (2026-08-15, MSSQL + kullanıcı Chrome oturumu)
 
@@ -245,8 +246,8 @@ Form builder yayınlama ayarlarında dört anahtar (Başlangıç, Bitiş, KVKK o
 Verisini görme/düzeltme/silme/taşıma talepleri için hiçbir akış yok (kişisel veri dışa aktarımı, hesap silme talebi, başvuru formu). AB fazında GDPR md. 15-20 (erişim, taşınabilirlik) bunu zorunlu kılar.
 **Öneri (Dalga 2):** "Verilerim" sayfası: kişisel veri dökümü (JSON/PDF) + silme talebi akışı (muhasebe kayıtları VUK istisnasıyla).
 
-#### KVKK-007 ⚪ `BEKLİYOR` — Veri lokasyonu doğrulanmalı (kullanıcıya soru)
-Plesk paylaşımlı Windows barındırma (`apya.pargetto.com.tr`) — sunucu ve MSSQL **hangi ülkede**? TR'de ise yurt içi işleme; değilse tüm kiracı verisi md. 9 kapsamında yurt dışında demektir ve KVKK-002'nin kapsamı büyür.
+#### KVKK-007 ⚪ `KAPANDI` — Veri lokasyonu doğrulandı: **Türkiye (yurt içi)**
+Plesk Windows barındırma (`apya.pargetto.com`) — **kullanıcı teyidi (2026-08-25): sunucu ve MSSQL Türkiye'de.** Yurt içi işleme → **risk doğmadı** (yanlış alarm değil; cevap bekleyen bir soruydu). KVKK-002'nin kapsamı BÜYÜMÜYOR: yurt dışına aktarım yalnız **isteğe bağlı** AI (OpenAI/Anthropic/DeepSeek) + takvim (Google/Microsoft) entegrasyonlarıyla sınırlı kalıyor. Aydınlatma metnindeki aktarım tablosuna "Türkiye (yurt içi)" olarak işlendi (PR #230).
 
 **Olumlu (KVKK):** Üçüncü taraf analitik/izleyici hiç yok (çerezler yalnız oturum/antiforgery/kültür — zorunlu çerez); geri bildirim ekran görüntüleri bilinçli wwwroot dışında ve yetkiyle servis ediliyor; telemetri saklama süresi ayarlanabilir ve worker'la siliniyor; IP/UA alanları uzunluk-sınırlı.
 
@@ -315,7 +316,7 @@ SEC-001 (`48b34af`) `appsettings.json`'daki `OpenIddict:Applications:Platform_We
 
 1. **SEC-001 doğrulaması** (prod env var mı?) → cevaba göre SEC-001/002 önemini kesinleştir.
 2. **ARCH-001 niyet kararı** (kullanıcı) → defter yarım mı, migrasyon mu, terk mi?
-3. **KVKK-007 doğrulaması** (kullanıcı): Plesk sunucusu/DB hangi ülkede?
+3. ~~**KVKK-007 doğrulaması** (kullanıcı): Plesk sunucusu/DB hangi ülkede?~~ → ✅ **CEVAPLANDI (2026-08-25): Türkiye, yurt içi.**
 4. KVKK Dalga 1 düzeltmeleri (onay sonrası): aydınlatma sayfaları + form KVKK/captcha/tarih penceresi (KVKK-001/003/005 + FN-003) + feedback retention (KVKK-004).
 5. Faz 1'i genişlet: N+1 taraması, kur cache, dashboard sorguları, kalan AppService'lerin izin haritası.
 6. **Faz 2 (E2E)** ortam kurulumu → QA-001 hedeflerinden başla.
