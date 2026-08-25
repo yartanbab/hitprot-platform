@@ -25,14 +25,48 @@ function openNewTask() {
 }
 
 /**
+ * Dar kapta birincil eylem: sağ altta sabit yuvarlak düğme.
+ *
+ * NEDEN AYRI BİLEŞEN: araç çubuğundaki düğmeyi gizleyen koşul ile bunu açan
+ * koşul AYNI kaynaktan (CalendarRoot'un `isNarrow`'u) okumak ZORUNDA. Görevler
+ * konsolunda biri kabı biri viewport'u ölçtüğü için ara genişlikte iki eylem de
+ * kaybolabiliyordu; eylem tek dosyada durunca ikisi sessizce ayrışamaz.
+ *
+ * Island kökünün DOĞRUDAN çocuğu olarak çizilmeli: baskı kuralı
+ * (`#apya-calendar-root > div > *:not(.apya-print-root)`) FAB'ı ancak o zaman
+ * gizler. `position: fixed` olduğu için kolonun akışına ve gap'ine girmez.
+ */
+export function NewTaskFab() {
+    return (
+        <button
+            type="button"
+            onClick={openNewTask}
+            aria-label="Yeni görev"
+            title="Yeni görev"
+            /* bottom inline: env() güvenli alanı (iPhone ana ekran çubuğu) keyfi
+               Tailwind değeriyle değil, doğrudan yazılıyor. */
+            style={{ bottom: 'calc(1rem + env(safe-area-inset-bottom))' }}
+            className="fixed right-4 z-fixed grid h-14 w-14 place-items-center rounded-full bg-accent text-text-inverse shadow-lg transition-colors duration-fast hover:bg-accent-600 active:bg-accent-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-border-focus"
+        >
+            <i className="fa fa-plus text-[19px]" aria-hidden="true" />
+        </button>
+    );
+}
+
+/**
  * Üst araç çubuğu: gezinme + görünüm anahtarı + kapasite uyarısı.
  *
  * Oklar görünüme göre adım atar (ay / hafta / gün). Ajanda bugünden ileri akan
  * bir pencere olduğu için oklar orada GİZLENİR — çalışmayan düğme koymamak için.
+ *
+ * `compact` (dar kap): "Yeni görev" FAB'a devreder, A4 yazdırma ve klavye
+ * kısayolları çizilmez — ikisi de telefonda anlamsız. Kalanlar (Senkron, filtre,
+ * görünüm sekmeleri) 375px'e sığar; sığmazsa grup sarar, taşmaz.
  */
 export function Toolbar({
     title, view, onView, onPrev, onNext, onToday, overloadDays, onHelp,
     filterCount = 0, onClearFilters, lastSyncAt, syncError = false, canCreateTask = true,
+    compact = false,
 }) {
     const showNav = view !== 'agenda';
     const since = sinceLabel(lastSyncAt);
@@ -61,7 +95,10 @@ export function Toolbar({
                 {title}
             </h2>
 
-            <div className="ml-auto flex items-center gap-2">
+            {/* Sağ grup SARAR: dış kabın flex-wrap'i yalnız başlık satırını
+                ayırıyordu, grubun kendisi tek satırda kalıp 375px'te sayfayı
+                yatay taşırıyordu. Sarma yalnız sığmadığında devreye girer. */}
+            <div className="ml-auto flex flex-wrap items-center justify-end gap-2">
                 {overloadDays > 0 && (
                     <span
                         className="rounded-md bg-negative-50 px-2 py-1 text-[11.5px] font-semibold text-negative-700"
@@ -106,16 +143,18 @@ export function Toolbar({
                     </button>
                 )}
 
-                <button
-                    type="button"
-                    onClick={() => window.print()}
-                    title="A4 yatay, iki sayfa"
-                    className="h-9 rounded-md border border-default bg-surface-base px-2.5 text-[12px] text-text-secondary hover:bg-surface-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-border-focus"
-                >
-                    <i className="fa fa-print" aria-hidden="true" /><span className="sr-only">Yazdır</span>
-                </button>
+                {!compact && (
+                    <button
+                        type="button"
+                        onClick={() => window.print()}
+                        title="A4 yatay, iki sayfa"
+                        className="h-9 rounded-md border border-default bg-surface-base px-2.5 text-[12px] text-text-secondary hover:bg-surface-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-border-focus"
+                    >
+                        <i className="fa fa-print" aria-hidden="true" /><span className="sr-only">Yazdır</span>
+                    </button>
+                )}
 
-                {onHelp && (
+                {onHelp && !compact && (
                     <button
                         type="button"
                         onClick={onHelp}
@@ -147,7 +186,8 @@ export function Toolbar({
                     ))}
                 </div>
 
-                {canCreateTask && (
+                {/* Dar kapta buton FAB'a devreder — bkz. NewTaskFab. */}
+                {canCreateTask && !compact && (
                     <Button variant="primary" size="sm" onClick={openNewTask}>
                         <i className="fa fa-plus me-1.5" aria-hidden="true" />Yeni görev
                     </Button>

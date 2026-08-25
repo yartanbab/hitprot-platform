@@ -1,5 +1,6 @@
 import React, { useRef, useState } from 'react';
 import * as Popover from '@radix-ui/react-popover';
+import { dialogPortalContainer } from '../../../lib/dom/dialogPortalContainer';
 
 /**
  * WYSIWYG açıklama editörü — markdown işareti GÖRÜNMEZ, biçim doğrudan uygulanır.
@@ -98,8 +99,11 @@ export function RichTextEditorV3({ value, onChange, mentionName = 'ekip arkadaş
     const handleToolbarClick = (btn) => {
         switch (btn.cmd) {
             case 'link':
+                /* Popover'ı AÇMA — bunu Radix'in Popover.Trigger'ı click'te toggle ederek
+                   yapıyor. Burada da setLinkOpen(true) çağrılınca aynı state iki yerden
+                   sürülüyor, mousedown açıyor ve hemen ardından gelen click kapatıyordu.
+                   Buranın tek işi, odak popover'a geçmeden önce seçimi saklamak. */
                 saveSelection();
-                setLinkOpen(true);
                 return;
             case 'image':
                 exec('insertHTML', IMAGE_PLACEHOLDER_HTML);
@@ -139,13 +143,15 @@ export function RichTextEditorV3({ value, onChange, mentionName = 'ekip arkadaş
                     if (btn.cmd !== 'link') return node;
 
                     return (
-                        <Popover.Root key="link" open={linkOpen} onOpenChange={setLinkOpen}>
+                        <Popover.Root key="link" modal open={linkOpen} onOpenChange={setLinkOpen}>
                             <Popover.Trigger asChild>{node}</Popover.Trigger>
-                            <Popover.Portal>
+                            {/* Popover'ı modalın İÇİNE portal et — aksi halde Dialog'un focus trap'i
+                                URL kutusuna verilen odağı geri çalıyor. Bkz. dialogPortalContainer. */}
+                            <Popover.Portal container={dialogPortalContainer(editorRef.current)}>
                                 <Popover.Content
                                     sideOffset={6}
                                     align="start"
-                                    className="z-popover pointer-events-auto w-[290px] rounded-[13px] border border-default bg-surface-elevated p-3 shadow-float animate-fade-in-fast"
+                                    className="z-popover w-[290px] rounded-[13px] border border-default bg-surface-elevated p-3 shadow-float animate-fade-in-fast"
                                 >
                                     <div className="text-[10px] font-bold uppercase tracking-[.08em] text-text-tertiary mb-2">
                                         Bağlantı adresi

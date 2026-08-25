@@ -4,11 +4,16 @@ import {
     STATUS_META, SELECTABLE_STATUSES, statusOf,
     initialsOf, avatarColorOf, dueUrgency,
 } from '../taskMetaV3';
+import { dialogPortalContainer } from '../../../lib/dom/dialogPortalContainer';
 
-/* pointer-events-auto: bkz. TaskDetailHeaderV3 — modal içinde portal edilen
-   popover'a Radix `auto` vermiyor, tıklamalar arkaya geçiyor. */
+/* Popover.Root'lara `modal` ŞART: içerik body'ye portal edildiği için non-modal
+   popover, Dialog'un focus trap'inin DIŞINDA kalıyor. Açılışta odağı alır almaz trap
+   odağı geri çekiyor, popover da bunu "focusOutside" sayıp kendini kapatıyordu.
+   Masaüstünde görünmüyordu: Radix, odağın geri çekildiği öğe trigger'ın kendisiyse
+   kapanmayı iptal ediyor ve tıklama zaten trigger'ı odaklıyor. iOS Safari dokunmada
+   <button>'a odak VERMEDİĞİ için orada her açılış flash edip kapanıyordu. */
 const POPOVER_CLS =
-    'z-popover pointer-events-auto rounded-[14px] border border-default bg-surface-elevated p-2 shadow-float animate-fade-in-fast';
+    'z-popover rounded-[14px] border border-default bg-surface-elevated p-2 shadow-float animate-fade-in-fast';
 
 const SEARCH_INPUT_CLS =
     'w-full h-[34px] pl-[31px] pr-3 rounded-[9px] border border-default bg-neutral-subtle text-text-primary text-[12.5px] focus:border-focus focus:bg-surface-base focus:shadow-focus focus:outline-none';
@@ -71,6 +76,12 @@ export function TaskMetadataGridV3({
     const [projectQuery, setProjectQuery] = useState('');
     const [tagDraft, setTagDraft] = useState('');
     const [addingTag, setAddingTag] = useState(false);
+    /* Kap DÜĞÜM olarak state'te tutulur, ref'te DEĞİL: `container` prop'u ana
+       bileşenin render'ında hesaplanıyor ve ref ilk render'da henüz boş oluyor.
+       Uncontrolled popover açıldığında ana bileşen yeniden render EDİLMEDİĞİ için
+       kap sonsuza dek undefined kalırdı. State ile mount sonrası bir render daha
+       olur ve düğüm yerine oturur. Bkz. dialogPortalContainer. */
+    const [rootEl, setRootEl] = useState(null);
 
     const status = statusOf(statusValue ?? task.status);
     const assigneeId = assigneeValue ?? task.assigneeId ?? null;
@@ -96,12 +107,12 @@ export function TaskMetadataGridV3({
     };
 
     return (
-        <div className="px-6 lt-860:px-4 py-[18px] border-b border-subtle bg-surface-base">
+        <div ref={setRootEl} className="px-6 lt-860:px-4 py-[18px] border-b border-subtle bg-surface-base">
             <div className="grid grid-cols-4 lt-860:grid-cols-2 lt-560:grid-cols-1 gap-y-5 gap-x-6">
 
                 {/* 1 — Sorumlu */}
                 <Cell label="Sorumlu">
-                    <Popover.Root>
+                    <Popover.Root modal>
                         <Popover.Trigger asChild>
                             <button
                                 type="button"
@@ -112,7 +123,7 @@ export function TaskMetadataGridV3({
                                 <i className="fa-solid fa-chevron-down text-[8px] text-text-tertiary" />
                             </button>
                         </Popover.Trigger>
-                        <Popover.Portal>
+                        <Popover.Portal container={dialogPortalContainer(rootEl)}>
                             <Popover.Content sideOffset={6} align="start" className={`${POPOVER_CLS} w-[264px]`}>
                                 <div className="relative mb-[7px]">
                                     <i className="fa-solid fa-magnifying-glass absolute left-[11px] top-1/2 -translate-y-1/2 text-[11px] text-text-tertiary" />
@@ -212,7 +223,7 @@ export function TaskMetadataGridV3({
                 {/* 5 — Durum */}
                 <Cell label="Durum">
                     <div className="flex items-center h-8">
-                        <Popover.Root>
+                        <Popover.Root modal>
                             <Popover.Trigger asChild>
                                 <button
                                     type="button"
@@ -223,7 +234,7 @@ export function TaskMetadataGridV3({
                                     <i className="fa-solid fa-chevron-down text-[8px] opacity-60" />
                                 </button>
                             </Popover.Trigger>
-                            <Popover.Portal>
+                            <Popover.Portal container={dialogPortalContainer(rootEl)}>
                                 <Popover.Content sideOffset={6} align="start" className={`${POPOVER_CLS} w-[196px]`}>
                                     <div className="px-[9px] pt-[5px] pb-[7px] text-[10px] font-bold uppercase tracking-[.08em] text-text-tertiary">
                                         Durumu değiştir
@@ -303,7 +314,7 @@ export function TaskMetadataGridV3({
 
                 {/* 7 — Proje (+ taşı / kopyala) */}
                 <Cell label="Proje">
-                    <Popover.Root>
+                    <Popover.Root modal>
                         <Popover.Trigger asChild>
                             <button
                                 type="button"
@@ -314,7 +325,7 @@ export function TaskMetadataGridV3({
                                 <i className="fa-solid fa-chevron-down text-[8px] text-text-tertiary" />
                             </button>
                         </Popover.Trigger>
-                        <Popover.Portal>
+                        <Popover.Portal container={dialogPortalContainer(rootEl)}>
                             <Popover.Content sideOffset={6} align="start" className={`${POPOVER_CLS} w-[250px]`}>
                                 <div className="relative mb-[7px]">
                                     <i className="fa-solid fa-magnifying-glass absolute left-[11px] top-1/2 -translate-y-1/2 text-[11px] text-text-tertiary" />

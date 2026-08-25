@@ -203,77 +203,92 @@
     <div class="apya-console-filters" id="console-filters">
         <span class="apya-console-filter-label">Filtre</span>
 
-        <div class="dropdown">
-            <button type="button" class="apya-filter-chip" id="chip-status"
-                    data-bs-toggle="dropdown" aria-expanded="false">
-                <span data-chip-text>Durum: tümü</span><i class="fa fa-chevron-down" aria-hidden="true"></i>
-            </button>
-            <div class="dropdown-menu apya-console-menu">
-                <button type="button" class="apya-console-menu-item" data-filter="status" data-value="">Tümü</button>
-                <button type="button" class="apya-console-menu-item" data-filter="status" data-value="1">@L["Tasks:Status:Todo"]</button>
-                <button type="button" class="apya-console-menu-item" data-filter="status" data-value="2">@L["Tasks:Status:InProgress"]</button>
-                <button type="button" class="apya-console-menu-item" data-filter="status" data-value="3">@L["Tasks:Status:InReview"]</button>
-                <button type="button" class="apya-console-menu-item" data-filter="status" data-value="4">@L["Tasks:Status:Done"]</button>
-                <button type="button" class="apya-console-menu-item" data-filter="status" data-value="0">İptal</button>
-            </div>
-        </div>
+        @* Mobilde chip'ler tek düğmenin arkasına katlanır — 375px'te üç satır
+           kaplıyorlardı. Düğme YALNIZ mobilde görünür: masaüstünde sarmalayıcı
+           `display: contents` olduğu için chip'ler eskisi gibi doğrudan filtre
+           çubuğunun flex öğeleridir, düzen hiç değişmez. *@
+        <button type="button" class="apya-filter-chip apya-filters-toggle" id="btn-filters-toggle"
+                aria-expanded="false" aria-controls="console-filter-set">
+            <i class="fa fa-filter" aria-hidden="true"></i>
+            <span>Filtreler</span>
+            @* Katlıyken kaç filtrenin etkin olduğu görünür kalsın (index.js doldurur). *@
+            <span class="apya-filters-badge d-none" id="filters-active-count"></span>
+        </button>
 
-        @* Atanan ve Proje listeleri JS ile doldurulur (lookup uçları) — konsolda
-           bunlar PageModel'den geliyor, burada tenant'ın tamamı söz konusu. *@
-        <div class="dropdown">
-            <button type="button" class="apya-filter-chip" id="chip-assignee"
-                    data-bs-toggle="dropdown" aria-expanded="false">
-                <span data-chip-text>Atanan: tümü</span><i class="fa fa-chevron-down" aria-hidden="true"></i>
-            </button>
-            <div class="dropdown-menu apya-console-menu" id="chip-assignee-menu">
-                <button type="button" class="apya-console-menu-item" data-filter="assignee" data-value="">Tümü</button>
-            </div>
-        </div>
+        <div class="apya-console-filter-set" id="console-filter-set">
 
-        <div class="dropdown">
-            <button type="button" class="apya-filter-chip" id="chip-project"
-                    data-bs-toggle="dropdown" aria-expanded="false">
-                <span data-chip-text>Proje: tümü</span><i class="fa fa-chevron-down" aria-hidden="true"></i>
-            </button>
-            <div class="dropdown-menu apya-console-menu" id="chip-project-menu">
-                <button type="button" class="apya-console-menu-item" data-filter="project" data-value="">Tümü</button>
+            <div class="dropdown">
+                <button type="button" class="apya-filter-chip" id="chip-status"
+                        data-bs-toggle="dropdown" aria-expanded="false">
+                    <span data-chip-text>Durum: tümü</span><i class="fa fa-chevron-down" aria-hidden="true"></i>
+                </button>
+                <div class="dropdown-menu apya-console-menu">
+                    <button type="button" class="apya-console-menu-item" data-filter="status" data-value="">Tümü</button>
+                    <button type="button" class="apya-console-menu-item" data-filter="status" data-value="1">@L["Tasks:Status:Todo"]</button>
+                    <button type="button" class="apya-console-menu-item" data-filter="status" data-value="2">@L["Tasks:Status:InProgress"]</button>
+                    <button type="button" class="apya-console-menu-item" data-filter="status" data-value="3">@L["Tasks:Status:InReview"]</button>
+                    <button type="button" class="apya-console-menu-item" data-filter="status" data-value="4">@L["Tasks:Status:Done"]</button>
+                    <button type="button" class="apya-console-menu-item" data-filter="status" data-value="0">İptal</button>
+                </div>
             </div>
-        </div>
-        <apya-hint placement="bottom" text="Üç görünümü de filtreler. Bir proje seçtiğinizde Kanban o projenin kendi kolonlarına geçer ve Kolon Ekle görünür; Tüm Projeler seçiliyken ortak kolonlar kullanılır." />
 
-        <div class="dropdown">
-            <button type="button" class="apya-filter-chip" id="chip-priority"
-                    data-bs-toggle="dropdown" aria-expanded="false">
-                <span data-chip-text>Öncelik: tümü</span><i class="fa fa-chevron-down" aria-hidden="true"></i>
-            </button>
-            <div class="dropdown-menu apya-console-menu">
-                <button type="button" class="apya-console-menu-item" data-filter="priority" data-value="">Tümü</button>
-                <button type="button" class="apya-console-menu-item" data-filter="priority" data-value="1">Düşük</button>
-                <button type="button" class="apya-console-menu-item" data-filter="priority" data-value="2">Orta</button>
-                <button type="button" class="apya-console-menu-item" data-filter="priority" data-value="3">Yüksek</button>
-                <button type="button" class="apya-console-menu-item" data-filter="priority" data-value="4">Kritik</button>
+            @* Atanan ve Proje listeleri JS ile doldurulur (lookup uçları) — konsolda
+               bunlar PageModel'den geliyor, burada tenant'ın tamamı söz konusu. *@
+            <div class="dropdown">
+                <button type="button" class="apya-filter-chip" id="chip-assignee"
+                        data-bs-toggle="dropdown" aria-expanded="false">
+                    <span data-chip-text>Atanan: tümü</span><i class="fa fa-chevron-down" aria-hidden="true"></i>
+                </button>
+                <div class="dropdown-menu apya-console-menu" id="chip-assignee-menu">
+                    <button type="button" class="apya-console-menu-item" data-filter="assignee" data-value="">Tümü</button>
+                </div>
             </div>
-        </div>
 
-        @* Tarih aralığı konsolda yok ama burada mevcut bir yetenek — kaldırmak
-           gerileme olurdu, chip biçimine taşındı. *@
-        <div class="dropdown">
-            <button type="button" class="apya-filter-chip" id="chip-daterange"
-                    data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
-                <span data-chip-text>Son Tarih: tümü</span><i class="fa fa-chevron-down" aria-hidden="true"></i>
-            </button>
-            <div class="dropdown-menu apya-console-menu p-3" style="min-width:240px;">
-                <label for="Filter_MinDueDate" class="form-label small fw-bold text-muted">@L["Tasks:Filter:MinDueDate"]</label>
-                <input type="date" id="Filter_MinDueDate" class="form-control form-control-sm mb-2">
-                <label for="Filter_MaxDueDate" class="form-label small fw-bold text-muted">@L["Tasks:Filter:MaxDueDate"]</label>
-                <input type="date" id="Filter_MaxDueDate" class="form-control form-control-sm mb-2">
-                <button type="button" id="btn-apply-daterange" class="btn btn-primary btn-sm w-100">@L["Common:Filter"]</button>
+            <div class="dropdown">
+                <button type="button" class="apya-filter-chip" id="chip-project"
+                        data-bs-toggle="dropdown" aria-expanded="false">
+                    <span data-chip-text>Proje: tümü</span><i class="fa fa-chevron-down" aria-hidden="true"></i>
+                </button>
+                <div class="dropdown-menu apya-console-menu" id="chip-project-menu">
+                    <button type="button" class="apya-console-menu-item" data-filter="project" data-value="">Tümü</button>
+                </div>
             </div>
-        </div>
+            <apya-hint placement="bottom" text="Üç görünümü de filtreler. Bir proje seçtiğinizde Kanban o projenin kendi kolonlarına geçer ve Kolon Ekle görünür; Tüm Projeler seçiliyken ortak kolonlar kullanılır." />
 
-        <button type="button" class="apya-filter-chip" id="chip-overdue" aria-pressed="false">Gecikmiş</button>
-        <button type="button" class="apya-filter-chip" id="chip-mine" aria-pressed="false">Bana atanan</button>
-        <button type="button" class="apya-console-filter-clear d-none" id="btn-clear-filters">Filtreleri temizle</button>
+            <div class="dropdown">
+                <button type="button" class="apya-filter-chip" id="chip-priority"
+                        data-bs-toggle="dropdown" aria-expanded="false">
+                    <span data-chip-text>Öncelik: tümü</span><i class="fa fa-chevron-down" aria-hidden="true"></i>
+                </button>
+                <div class="dropdown-menu apya-console-menu">
+                    <button type="button" class="apya-console-menu-item" data-filter="priority" data-value="">Tümü</button>
+                    <button type="button" class="apya-console-menu-item" data-filter="priority" data-value="1">Düşük</button>
+                    <button type="button" class="apya-console-menu-item" data-filter="priority" data-value="2">Orta</button>
+                    <button type="button" class="apya-console-menu-item" data-filter="priority" data-value="3">Yüksek</button>
+                    <button type="button" class="apya-console-menu-item" data-filter="priority" data-value="4">Kritik</button>
+                </div>
+            </div>
+
+            @* Tarih aralığı konsolda yok ama burada mevcut bir yetenek — kaldırmak
+               gerileme olurdu, chip biçimine taşındı. *@
+            <div class="dropdown">
+                <button type="button" class="apya-filter-chip" id="chip-daterange"
+                        data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
+                    <span data-chip-text>Son Tarih: tümü</span><i class="fa fa-chevron-down" aria-hidden="true"></i>
+                </button>
+                <div class="dropdown-menu apya-console-menu p-3" style="min-width:240px;">
+                    <label for="Filter_MinDueDate" class="form-label small fw-bold text-muted">@L["Tasks:Filter:MinDueDate"]</label>
+                    <input type="date" id="Filter_MinDueDate" class="form-control form-control-sm mb-2">
+                    <label for="Filter_MaxDueDate" class="form-label small fw-bold text-muted">@L["Tasks:Filter:MaxDueDate"]</label>
+                    <input type="date" id="Filter_MaxDueDate" class="form-control form-control-sm mb-2">
+                    <button type="button" id="btn-apply-daterange" class="btn btn-primary btn-sm w-100">@L["Common:Filter"]</button>
+                </div>
+            </div>
+
+            <button type="button" class="apya-filter-chip" id="chip-overdue" aria-pressed="false">Gecikmiş</button>
+            <button type="button" class="apya-filter-chip" id="chip-mine" aria-pressed="false">Bana atanan</button>
+            <button type="button" class="apya-console-filter-clear d-none" id="btn-clear-filters">Filtreleri temizle</button>
+        </div>
     </div>
 
     <div class="apya-console-views">

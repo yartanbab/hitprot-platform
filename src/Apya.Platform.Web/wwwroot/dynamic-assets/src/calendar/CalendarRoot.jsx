@@ -6,7 +6,7 @@ import { AgendaView } from './AgendaView';
 import { DayPanel } from './DayPanel';
 import { MonthGrid } from './MonthGrid';
 import { SourceRail } from './SourceRail';
-import { Toolbar } from './Toolbar';
+import { Toolbar, NewTaskFab } from './Toolbar';
 import { WeekGrid } from './WeekGrid';
 import { ItemDrawer } from './ItemDrawer';
 import { SyncDrawer } from './SyncDrawer';
@@ -264,6 +264,7 @@ export function CalendarRoot() {
                 onClearFilters={resetSources}
                 lastSyncAt={lastSyncAt}
                 syncError={riskCounts.syncError > 0}
+                compact={isNarrow}
             />
 
             {isError && (
@@ -449,6 +450,11 @@ export function CalendarRoot() {
                     <SheetContent side="bottom" title="Gün detayı" className="max-h-[80vh] p-0">{panel}</SheetContent>
                 </Sheet>
             )}
+
+            {/* Dar kapta birincil eylem araç çubuğundan FAB'a taşınır: sığmıyordu
+                ve satırı ekran dışına taşırıyordu. Koşul Toolbar'ın `compact`
+                prop'uyla AYNI değer — ikisi tek `isNarrow`dan okur. */}
+            {isNarrow && <NewTaskFab />}
 
             {/* Baskı çıktısı yalnız  print içinde görünür; ekranda yer kaplamaz. */}
             <PrintView
