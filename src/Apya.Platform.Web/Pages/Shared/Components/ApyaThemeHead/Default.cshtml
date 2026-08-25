@@ -1,3 +1,4 @@
+@model string
 @using Microsoft.Extensions.Localization
 @using Apya.Platform.Localization
 @inject IStringLocalizer<PlatformResource> L
@@ -102,3 +103,16 @@
         ["short.Apya.Reports"] = L["MobileShell:Short.Apya.Reports"].Value
     }))
 </script>
+
+@*
+    Kenar çubuğu dip bloğunun "Ayarlar" ipucu — apya-sidebar-shell.js okur.
+    ApyaMobileShellL10n ile aynı gerekçe: metin JS'e gömülmez, sunucudan iner.
+    Liste kullanıcının Ayarlar sayfasında gerçekten gördüğü hedeflerdir; boşsa
+    blok hiç basılmaz ve ipucu satırı da çıkmaz.
+*@
+@if (!string.IsNullOrEmpty(Model))
+{
+    <script type="application/json" id="ApyaShellNav">
+        @Html.Raw(System.Text.Json.JsonSerializer.Serialize(new { settingsHint = Model }))
+    </script>
+}

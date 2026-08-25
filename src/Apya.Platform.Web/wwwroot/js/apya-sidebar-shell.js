@@ -421,6 +421,16 @@ $(function () {
     // 5) Dip blok — Ayarlar (iki satır) + sistem durumu
     // Ayarlar öğesi akışın sonundan alınıp kenar çubuğunun DİBİNE sabitlenir.
     // =========================================================================
+    function readShellNavHint() {
+        var el = document.getElementById('ApyaShellNav');
+        if (!el) { return ''; }
+        try {
+            return (JSON.parse(el.textContent) || {}).settingsHint || '';
+        } catch (e) {
+            return '';
+        }
+    }
+
     function setupFooter() {
         var settings = anchorByName('Apya.Settings');
         var nav = sidebar.querySelector('.lpx-nav') || sidebar;
@@ -435,10 +445,19 @@ $(function () {
 
         // İkinci satır: katlanan YÖNETİM bölümünün nereye gittiğini açıklar.
         // Handoff bunu açıkça "kaldırılmamalı" diye işaretliyor.
-        var hint = document.createElement('span');
-        hint.className = 'apya-shell-foot-hint';
-        hint.textContent = 'Kiracı · Kimlik · Platform · Geri bildirim';
-        settings.appendChild(hint);
+        //
+        // Metin SUNUCUDAN gelir (ApyaThemeHead → #ApyaShellNav): kullanıcı menü
+        // düzeninden hedefleri taşıyabildiği ve her hedef izinle filtrelendiği
+        // için buraya sabit bir liste yazılamaz. Blok yoksa (yetkisi olan hedef
+        // yok) ipucu satırı da basılmaz — yanlış liste göstermektense hiç
+        // göstermemek doğru.
+        var hintText = readShellNavHint();
+        if (hintText) {
+            var hint = document.createElement('span');
+            hint.className = 'apya-shell-foot-hint';
+            hint.textContent = hintText;
+            settings.appendChild(hint);
+        }
 
         var health = state.health || {};
         var status = document.createElement('div');
