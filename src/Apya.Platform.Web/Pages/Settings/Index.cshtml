@@ -5,6 +5,29 @@
     ViewBag.Title = L["Settings:Title"].Value;
 }
 
+@section scripts {
+    <abp-script src="/Pages/Settings/Index.js" />
+}
+
+@*
+    AYARLAR HUB'I — sekmeli düzen.
+
+    Öncesi: tek kartta 6 fieldset arka arkaya (~1400px kesintisiz şerit). Üç somut
+    karışıklık vardı, üçü de burada çözülüyor:
+      1) Kaydet sayfanın ORTASINDA kalıyordu — altındaki mobil gezinme forma dahil
+         değildi. Artık düğme daima aktif panelin altında.
+      2) İki kaydetme modeli (POST ⇄ anında localStorage) ekranda birebir aynı
+         görünüyordu. Artık "anında kaydedilir" rozetiyle ayrışıyor.
+      3) Kiracı geneli ayar kişisel tercihlerin arasına gömülüydü. Artık kendi
+         sekmesinde ve "tüm kullanıcıları etkiler" rozetli.
+
+    YAPI ŞARTI — <form> .tab-content'i SARAR, araya girmez. Bootstrap gizlemeyi
+    `.tab-content > .tab-pane` DOĞRUDAN ÇOCUK seçicisiyle yapar; form panellerle
+    .tab-content arasına girerse hiçbir panel gizlenmez, hepsi alt alta basılır.
+
+    Sekmeler yalnız GÖRÜNÜRLÜK katmanı: gizli paneldeki alanlar da DOM'da durur,
+    tek POST hepsini birlikte kaydeder. Sunucu tarafı (IndexModel) değişmedi.
+*@
 <div data-page-description="@L["Settings:PageDescription"]" class="apya-page--narrow">
 <abp-card>
     <abp-card-header>
@@ -16,201 +39,275 @@
             <div class="alert alert-success" role="status">@L["Settings:Saved"]</div>
         }
 
-        <form method="post">
-            <fieldset class="mb-3">
-                <legend class="form-label mb-1">@L["Settings:TaskDetailUi.Label"]</legend>
-                <div class="form-text mb-2">@L["Settings:TaskDetailUi.Help"]</div>
-
-                <div class="form-check mb-2">
-                    <input class="form-check-input" type="radio" name="TaskDetailUi" id="taskui-v3"
-                           value="v3" checked="@(Model.TaskDetailUi != "v1" && Model.TaskDetailUi != "v2")" />
-                    <label class="form-check-label" for="taskui-v3">
-                        <strong>@L["Settings:TaskDetailUi.V3"]</strong>
-                        <div class="text-muted small">@L["Settings:TaskDetailUi.V3.Desc"]</div>
-                    </label>
-                </div>
-
-                <div class="form-check mb-2">
-                    <input class="form-check-input" type="radio" name="TaskDetailUi" id="taskui-v2"
-                           value="v2" checked="@(Model.TaskDetailUi == "v2")" />
-                    <label class="form-check-label" for="taskui-v2">
-                        <strong>@L["Settings:TaskDetailUi.V2"]</strong>
-                        <div class="text-muted small">@L["Settings:TaskDetailUi.V2.Desc"]</div>
-                    </label>
-                </div>
-
-                <div class="form-check">
-                    <input class="form-check-input" type="radio" name="TaskDetailUi" id="taskui-v1"
-                           value="v1" checked="@(Model.TaskDetailUi == "v1")" />
-                    <label class="form-check-label" for="taskui-v1">
-                        <strong>@L["Settings:TaskDetailUi.V1"]</strong>
-                        <div class="text-muted small">@L["Settings:TaskDetailUi.V1.Desc"]</div>
-                    </label>
-                </div>
-            </fieldset>
-
-            <fieldset class="mb-3">
-                <legend class="form-label mb-1">@L["Settings:ProjectsView.Label"]</legend>
-                <div class="form-text mb-2">@L["Settings:ProjectsView.Help"]</div>
-
-                <div class="form-check mb-2">
-                    <input class="form-check-input" type="radio" name="ProjectsDefaultView" id="projview-card"
-                           value="card" checked="@(Model.ProjectsDefaultView != "list")" />
-                    <label class="form-check-label" for="projview-card">
-                        <strong>@L["Settings:ProjectsView.Card"]</strong>
-                        <div class="text-muted small">@L["Settings:ProjectsView.Card.Desc"]</div>
-                    </label>
-                </div>
-
-                <div class="form-check">
-                    <input class="form-check-input" type="radio" name="ProjectsDefaultView" id="projview-list"
-                           value="list" checked="@(Model.ProjectsDefaultView == "list")" />
-                    <label class="form-check-label" for="projview-list">
-                        <strong>@L["Settings:ProjectsView.List"]</strong>
-                        <div class="text-muted small">@L["Settings:ProjectsView.List.Desc"]</div>
-                    </label>
-                </div>
-            </fieldset>
-
-            <fieldset class="mb-3">
-                <legend class="form-label mb-1">@L["Settings:ProjectsDetailPanel.Label"]</legend>
-                <div class="form-text mb-2">@L["Settings:ProjectsDetailPanel.Help"]</div>
-
-                <div class="form-check form-switch">
-                    <input class="form-check-input" type="checkbox" role="switch" name="ProjectsDetailPanel"
-                           id="projpanel-toggle" value="true" checked="@Model.ProjectsDetailPanel" />
-                    <label class="form-check-label" for="projpanel-toggle">
-                        <strong>@L["Settings:ProjectsDetailPanel.Switch"]</strong>
-                        <div class="text-muted small">@L["Settings:ProjectsDetailPanel.Switch.Desc"]</div>
-                    </label>
-                </div>
-            </fieldset>
-
-            <fieldset class="mb-3">
-                <legend class="form-label mb-1">@L["Settings:TaskCreate.Label"]</legend>
-                <div class="form-text mb-2">@L["Settings:TaskCreate.Help"]</div>
-
-                @if (Model.QuickEntryAvailable)
+        <form method="post" class="apya-settings-tabs">
+            <ul class="nav nav-tabs" id="SettingsTab" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="st-tasks-tab" data-bs-toggle="tab"
+                            data-bs-target="#st-tasks" type="button" role="tab"
+                            aria-controls="st-tasks" aria-selected="true">@L["Settings:Tabs.Tasks"]</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="st-projects-tab" data-bs-toggle="tab"
+                            data-bs-target="#st-projects" type="button" role="tab"
+                            aria-controls="st-projects" aria-selected="false">@L["Settings:Tabs.Projects"]</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="st-mobile-tab" data-bs-toggle="tab"
+                            data-bs-target="#st-mobile" type="button" role="tab"
+                            aria-controls="st-mobile" aria-selected="false">@L["Settings:Tabs.Mobile"]</button>
+                </li>
+                @if (Model.CanManageTenantSettings)
                 {
-                    <div class="form-check mb-2">
-                        <input class="form-check-input" type="radio" name="TaskCreateDefaultMode" id="tcmode-quick"
-                               value="quick" checked="@(Model.TaskCreateDefaultMode != "form")" />
-                        <label class="form-check-label" for="tcmode-quick">
-                            <strong>@L["Settings:TaskCreate.Quick"]</strong>
-                            <div class="text-muted small">@L["Settings:TaskCreate.Quick.Desc"]</div>
-                        </label>
-                    </div>
-
-                    <div class="form-check mb-3">
-                        <input class="form-check-input" type="radio" name="TaskCreateDefaultMode" id="tcmode-form"
-                               value="form" checked="@(Model.TaskCreateDefaultMode == "form")" />
-                        <label class="form-check-label" for="tcmode-form">
-                            <strong>@L["Settings:TaskCreate.Form"]</strong>
-                            <div class="text-muted small">@L["Settings:TaskCreate.Form.Desc"]</div>
-                        </label>
-                    </div>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="st-tenant-tab" data-bs-toggle="tab"
+                                data-bs-target="#st-tenant" type="button" role="tab"
+                                aria-controls="st-tenant" aria-selected="false">@L["Settings:Tabs.Tenant"]</button>
+                    </li>
                 }
-                else
+                @if (Model.AdminLinks.Count > 0)
                 {
-                    @* Paket ya da izin kapalı: seçim anlamsız, sebebi yazılıyor —
-                       ayarın sessizce yok olması "bozuk" hissi veriyor. *@
-                    <div class="alert alert-light border small mb-3" role="note">
-                        @L["Settings:TaskCreate.Unavailable"]
-                    </div>
-                }
-
-                <div class="form-check form-switch">
-                    <input class="form-check-input" type="checkbox" role="switch" name="TaskCreateShowKeyboardHints"
-                           id="tchints-toggle" value="true" checked="@Model.TaskCreateShowKeyboardHints" />
-                    <label class="form-check-label" for="tchints-toggle">
-                        <strong>@L["Settings:TaskCreate.Hints"]</strong>
-                        <div class="text-muted small">@L["Settings:TaskCreate.Hints.Desc"]</div>
-                    </label>
-                </div>
-            </fieldset>
-
-            @if (Model.CanManageTenantSettings)
-            {
-                <fieldset class="mb-3">
-                    <legend class="form-label mb-1">@L["Settings:TaskCreate.Tenant.Label"]</legend>
-                    <div class="form-text mb-2">@L["Settings:TaskCreate.Tenant.Help"]</div>
-
-                    <div class="form-check form-switch">
-                        <input class="form-check-input" type="checkbox" role="switch" name="TaskCreateShowInfoBanner"
-                               id="tcbanner-toggle" value="true" checked="@Model.TaskCreateShowInfoBanner" />
-                        <label class="form-check-label" for="tcbanner-toggle">
-                            <strong>@L["Settings:TaskCreate.Banner"]</strong>
-                            <div class="text-muted small">@L["Settings:TaskCreate.Banner.Desc"]</div>
-                        </label>
-                    </div>
-                </fieldset>
-            }
-
-            <button type="submit" class="btn btn-primary">@L["Settings:Save"]</button>
-        </form>
-
-        @*
-            Mobil gezinme — sunucuya GİTMEZ, bu yüzden yukarıdaki formun DIŞINDA.
-            Kenar çubuğu modu ile aynı desen: kaynak <html data-mobile-shell>,
-            kalıcılık localStorage 'apya-mobile-shell', uygulama sidebar-toggle.js
-            (seçim anında yazılır, "Kaydet" gerekmez).
-        *@
-        <fieldset class="mt-4" id="MobileShellChooser">
-            <legend class="form-label mb-1">@L["Settings:MobileShell.Label"]</legend>
-            <div class="form-text mb-2">@L["Settings:MobileShell.Help"]</div>
-
-            <div class="form-check mb-2">
-                <input class="form-check-input" type="radio" name="MobileShell" id="mshell-drawer"
-                       value="drawer" data-mobile-shell="drawer" />
-                <label class="form-check-label" for="mshell-drawer">
-                    <strong>@L["Settings:MobileShell.Drawer"]</strong>
-                    <div class="text-muted small">@L["Settings:MobileShell.Drawer.Desc"]</div>
-                </label>
-            </div>
-
-            <div class="form-check">
-                <input class="form-check-input" type="radio" name="MobileShell" id="mshell-tabs"
-                       value="tabs" data-mobile-shell="tabs" />
-                <label class="form-check-label" for="mshell-tabs">
-                    <strong>@L["Settings:MobileShell.Tabs"]</strong>
-                    <div class="text-muted small">@L["Settings:MobileShell.Tabs.Desc"]</div>
-                </label>
-            </div>
-        </fieldset>
-    </abp-card-body>
-</abp-card>
-
-@*
-    Yönetim hedefleri — eski YÖNETİM menü bölümünün gittiği yer (kabuk handoff'u
-    2026-08-13). Sekme değil bağlantı: ABP modül sayfaları kendi route'larında
-    kalır. Yetkisi olmayan kullanıcıda liste boş döner ve kart hiç basılmaz.
-*@
-@if (Model.AdminLinks.Count > 0)
-{
-    <abp-card class="mt-3">
-        <abp-card-header>
-            <abp-card-title>@L["Settings:Admin.Title"]</abp-card-title>
-        </abp-card-header>
-        <abp-card-body>
-            <div class="form-text mb-3">@L["Settings:Admin.Help"]</div>
-            <ul class="apya-settings-links">
-                @foreach (var link in Model.AdminLinks)
-                {
-                    <li>
-                        <a href="@link.Url" class="apya-settings-link">
-                            <span class="kpi-icon-box kpi-icon-box--sm kpi-icon-box--neutral" aria-hidden="true">
-                                <i class="@link.Icon"></i>
-                            </span>
-                            <span class="apya-settings-link-text">
-                                <span class="apya-settings-link-title">@link.Title</span>
-                                <span class="apya-settings-link-desc">@link.Description</span>
-                            </span>
-                            <i class="fa fa-chevron-right apya-settings-link-chevron" aria-hidden="true"></i>
-                        </a>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="st-admin-tab" data-bs-toggle="tab"
+                                data-bs-target="#st-admin" type="button" role="tab"
+                                aria-controls="st-admin" aria-selected="false">@L["Settings:Admin.Title"]</button>
                     </li>
                 }
             </ul>
-        </abp-card-body>
-    </abp-card>
-}
+
+            <div class="tab-content pt-3" id="SettingsTabContent">
+
+                @* --- GÖREVLER: görev detayı nasıl açılır + Yeni Görev penceresi --- *@
+                <div class="tab-pane fade show active" id="st-tasks" role="tabpanel"
+                     aria-labelledby="st-tasks-tab" data-needs-save="true">
+
+                    <fieldset class="mb-4">
+                        <legend class="form-label mb-1">@L["Settings:TaskDetailUi.Label"]</legend>
+                        <div class="form-text mb-2">@L["Settings:TaskDetailUi.Help"]</div>
+
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="radio" name="TaskDetailUi" id="taskui-v3"
+                                   value="v3" checked="@(Model.TaskDetailUi != "v1" && Model.TaskDetailUi != "v2")" />
+                            <label class="form-check-label" for="taskui-v3">
+                                <strong>@L["Settings:TaskDetailUi.V3"]</strong>
+                                <div class="text-muted small">@L["Settings:TaskDetailUi.V3.Desc"]</div>
+                            </label>
+                        </div>
+
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="radio" name="TaskDetailUi" id="taskui-v2"
+                                   value="v2" checked="@(Model.TaskDetailUi == "v2")" />
+                            <label class="form-check-label" for="taskui-v2">
+                                <strong>@L["Settings:TaskDetailUi.V2"]</strong>
+                                <div class="text-muted small">@L["Settings:TaskDetailUi.V2.Desc"]</div>
+                            </label>
+                        </div>
+
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="TaskDetailUi" id="taskui-v1"
+                                   value="v1" checked="@(Model.TaskDetailUi == "v1")" />
+                            <label class="form-check-label" for="taskui-v1">
+                                <strong>@L["Settings:TaskDetailUi.V1"]</strong>
+                                <div class="text-muted small">@L["Settings:TaskDetailUi.V1.Desc"]</div>
+                            </label>
+                        </div>
+                    </fieldset>
+
+                    <fieldset>
+                        <legend class="form-label mb-1">@L["Settings:TaskCreate.Label"]</legend>
+                        <div class="form-text mb-2">@L["Settings:TaskCreate.Help"]</div>
+
+                        @if (Model.QuickEntryAvailable)
+                        {
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="radio" name="TaskCreateDefaultMode" id="tcmode-quick"
+                                       value="quick" checked="@(Model.TaskCreateDefaultMode != "form")" />
+                                <label class="form-check-label" for="tcmode-quick">
+                                    <strong>@L["Settings:TaskCreate.Quick"]</strong>
+                                    <div class="text-muted small">@L["Settings:TaskCreate.Quick.Desc"]</div>
+                                </label>
+                            </div>
+
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="radio" name="TaskCreateDefaultMode" id="tcmode-form"
+                                       value="form" checked="@(Model.TaskCreateDefaultMode == "form")" />
+                                <label class="form-check-label" for="tcmode-form">
+                                    <strong>@L["Settings:TaskCreate.Form"]</strong>
+                                    <div class="text-muted small">@L["Settings:TaskCreate.Form.Desc"]</div>
+                                </label>
+                            </div>
+                        }
+                        else
+                        {
+                            @* Paket ya da izin kapalı: seçim anlamsız, sebebi yazılıyor —
+                               ayarın sessizce yok olması "bozuk" hissi veriyor. *@
+                            <div class="alert alert-light border small mb-3" role="note">
+                                @L["Settings:TaskCreate.Unavailable"]
+                            </div>
+                        }
+
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" role="switch" name="TaskCreateShowKeyboardHints"
+                                   id="tchints-toggle" value="true" checked="@Model.TaskCreateShowKeyboardHints" />
+                            <label class="form-check-label" for="tchints-toggle">
+                                <strong>@L["Settings:TaskCreate.Hints"]</strong>
+                                <div class="text-muted small">@L["Settings:TaskCreate.Hints.Desc"]</div>
+                            </label>
+                        </div>
+                    </fieldset>
+                </div>
+
+                @* --- PROJELER: açılış görünümü + sağdan açılan görev paneli --- *@
+                <div class="tab-pane fade" id="st-projects" role="tabpanel"
+                     aria-labelledby="st-projects-tab" data-needs-save="true">
+
+                    <fieldset class="mb-4">
+                        <legend class="form-label mb-1">@L["Settings:ProjectsView.Label"]</legend>
+                        <div class="form-text mb-2">@L["Settings:ProjectsView.Help"]</div>
+
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="radio" name="ProjectsDefaultView" id="projview-card"
+                                   value="card" checked="@(Model.ProjectsDefaultView != "list")" />
+                            <label class="form-check-label" for="projview-card">
+                                <strong>@L["Settings:ProjectsView.Card"]</strong>
+                                <div class="text-muted small">@L["Settings:ProjectsView.Card.Desc"]</div>
+                            </label>
+                        </div>
+
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="ProjectsDefaultView" id="projview-list"
+                                   value="list" checked="@(Model.ProjectsDefaultView == "list")" />
+                            <label class="form-check-label" for="projview-list">
+                                <strong>@L["Settings:ProjectsView.List"]</strong>
+                                <div class="text-muted small">@L["Settings:ProjectsView.List.Desc"]</div>
+                            </label>
+                        </div>
+                    </fieldset>
+
+                    <fieldset>
+                        <legend class="form-label mb-1">@L["Settings:ProjectsDetailPanel.Label"]</legend>
+                        <div class="form-text mb-2">@L["Settings:ProjectsDetailPanel.Help"]</div>
+
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" role="switch" name="ProjectsDetailPanel"
+                                   id="projpanel-toggle" value="true" checked="@Model.ProjectsDetailPanel" />
+                            <label class="form-check-label" for="projpanel-toggle">
+                                <strong>@L["Settings:ProjectsDetailPanel.Switch"]</strong>
+                                <div class="text-muted small">@L["Settings:ProjectsDetailPanel.Switch.Desc"]</div>
+                            </label>
+                        </div>
+                    </fieldset>
+                </div>
+
+                @*
+                    --- MOBİL: sunucuya GİTMEZ ---
+                    Kaynak <html data-mobile-shell>, kalıcılık localStorage
+                    'apya-mobile-shell', uygulama sidebar-toggle.js (#MobileShellChooser
+                    kimliğine bağlı — DEĞİŞTİRME). Seçim anında yazılır, "Kaydet" gerekmez;
+                    bu yüzden panelde data-needs-save YOK, Kaydet düğmesi burada gizlenir.
+                    name="MobileShell" IndexModel'de bağlı bir alan değil — forma dahil olsa
+                    da POST'ta yok sayılır.
+                *@
+                <div class="tab-pane fade" id="st-mobile" role="tabpanel" aria-labelledby="st-mobile-tab">
+                    <fieldset id="MobileShellChooser">
+                        <legend class="form-label mb-1">
+                            @L["Settings:MobileShell.Label"]
+                            <span class="apya-settings-badge apya-settings-badge--instant"
+                                  title="@L["Settings:Badge.Instant.Title"]">
+                                <i class="fa fa-bolt" aria-hidden="true"></i>@L["Settings:Badge.Instant"]
+                            </span>
+                        </legend>
+                        <div class="form-text mb-2">@L["Settings:MobileShell.Help"]</div>
+
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="radio" name="MobileShell" id="mshell-drawer"
+                                   value="drawer" data-mobile-shell="drawer" />
+                            <label class="form-check-label" for="mshell-drawer">
+                                <strong>@L["Settings:MobileShell.Drawer"]</strong>
+                                <div class="text-muted small">@L["Settings:MobileShell.Drawer.Desc"]</div>
+                            </label>
+                        </div>
+
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="MobileShell" id="mshell-tabs"
+                                   value="tabs" data-mobile-shell="tabs" />
+                            <label class="form-check-label" for="mshell-tabs">
+                                <strong>@L["Settings:MobileShell.Tabs"]</strong>
+                                <div class="text-muted small">@L["Settings:MobileShell.Tabs.Desc"]</div>
+                            </label>
+                        </div>
+                    </fieldset>
+                </div>
+
+                @*
+                    --- KİRACI: kişisel değil, TÜM kullanıcıları etkiler ---
+                    Sekme yalnız PlatformPermissions.TenantSettings olan kullanıcıda basılır.
+                    Yetkilendirme gizlemeyle DEĞİL, OnPostAsync içindeki izin kontrolüyle
+                    sağlanır — gizli alan yetki değildir.
+                *@
+                @if (Model.CanManageTenantSettings)
+                {
+                    <div class="tab-pane fade" id="st-tenant" role="tabpanel"
+                         aria-labelledby="st-tenant-tab" data-needs-save="true">
+
+                        <div class="alert alert-warning small" role="note">@L["Settings:Tenant.Help"]</div>
+
+                        <fieldset>
+                            <legend class="form-label mb-1">
+                                @L["Settings:TaskCreate.Tenant.Label"]
+                                <span class="apya-settings-badge apya-settings-badge--tenant">
+                                    <i class="fa fa-users" aria-hidden="true"></i>@L["Settings:Badge.Tenant"]
+                                </span>
+                            </legend>
+                            <div class="form-text mb-2">@L["Settings:TaskCreate.Tenant.Help"]</div>
+
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" role="switch" name="TaskCreateShowInfoBanner"
+                                       id="tcbanner-toggle" value="true" checked="@Model.TaskCreateShowInfoBanner" />
+                                <label class="form-check-label" for="tcbanner-toggle">
+                                    <strong>@L["Settings:TaskCreate.Banner"]</strong>
+                                    <div class="text-muted small">@L["Settings:TaskCreate.Banner.Desc"]</div>
+                                </label>
+                            </div>
+                        </fieldset>
+                    </div>
+                }
+
+                @*
+                    --- YÖNETİM: eski YÖNETİM menü bölümünün gittiği yer (kabuk handoff'u
+                    2026-08-13). İçerik ayar DEĞİL bağlantı — ABP modül sayfaları kendi
+                    route'larında kalır, buraya gömülmez. Kaydedilecek alan olmadığı için
+                    data-needs-save YOK; Kaydet düğmesi bu sekmede gizlenir. Yetkisi
+                    olmayanda liste boş döner ve sekme hiç basılmaz.
+                *@
+                @if (Model.AdminLinks.Count > 0)
+                {
+                    <div class="tab-pane fade" id="st-admin" role="tabpanel" aria-labelledby="st-admin-tab">
+                        <div class="form-text mb-3">@L["Settings:Admin.Help"]</div>
+                        <ul class="apya-settings-links">
+                            @foreach (var link in Model.AdminLinks)
+                            {
+                                <li>
+                                    <a href="@link.Url" class="apya-settings-link">
+                                        <span class="kpi-icon-box kpi-icon-box--sm kpi-icon-box--neutral" aria-hidden="true">
+                                            <i class="@link.Icon"></i>
+                                        </span>
+                                        <span class="apya-settings-link-text">
+                                            <span class="apya-settings-link-title">@link.Title</span>
+                                            <span class="apya-settings-link-desc">@link.Description</span>
+                                        </span>
+                                        <i class="fa fa-chevron-right apya-settings-link-chevron" aria-hidden="true"></i>
+                                    </a>
+                                </li>
+                            }
+                        </ul>
+                    </div>
+                }
+            </div>
+
+            <div class="apya-settings-save">
+                <button type="submit" class="btn btn-primary">@L["Settings:Save"]</button>
+            </div>
+        </form>
+    </abp-card-body>
+</abp-card>
 </div>
