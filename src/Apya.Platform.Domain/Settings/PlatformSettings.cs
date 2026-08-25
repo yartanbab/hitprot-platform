@@ -338,6 +338,26 @@ public static class PlatformSettingDefaults
     /// <summary>Tek bir menü adının en fazla uzunluğu (örn. "Apya.Finance.CashAccounts").</summary>
     public const int ShellMenuLayoutNameMax = 128;
 
+    /// <summary>
+    /// Kullanıcının kendi kurduğu kategori/kısayol adlarının ön eki. Koddaki
+    /// menü adlarıyla çakışmasın diye ayrı ad alanı; ALT ÇİZGİ İÇEREMEZ çünkü
+    /// LeptonX id'yi `MenuItem_Apya_User_ab12` diye basıyor ve
+    /// apya-sidebar-shell.js `_` → `.` çevirisiyle geri okuyor.
+    /// </summary>
+    public const string ShellMenuLayoutCustomPrefix = "Apya.User.";
+
+    /// <summary>En fazla kaç özel kategori kurulabilir.</summary>
+    public const int ShellMenuLayoutCustomGroupMax = 10;
+
+    /// <summary>En fazla kaç özel kısayol eklenebilir.</summary>
+    public const int ShellMenuLayoutCustomLinkMax = 20;
+
+    /// <summary>Özel kategori/kısayol başlığı üst sınırı — kenar çubuğu dar.</summary>
+    public const int ShellMenuLayoutTitleMax = 40;
+
+    /// <summary>Özel kısayolun hedef yolu üst sınırı (ShellSavedViewQueryMax ile aynı ray).</summary>
+    public const int ShellMenuLayoutUrlMax = 200;
+
     /// <summary>Giriş ekranı kiracı seçicisi varsayılanı: KAPALI (yalnız kullanıcı girişi).</summary>
     public const bool   AccountShowTenantSwitch   = false;
 

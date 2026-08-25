@@ -113,11 +113,16 @@ public class PlatformNavigationResolver : IScopedDependency
             await _settingProvider.GetOrNullAsync(PlatformSettings.Shell.MenuLayout));
 
         var result = new NavResolution { Layout = layout };
-        var pool = await BuildPoolAsync();
+        var pool = await BuildPoolAsync(layout);
         var parentOf = ResolveParents(pool, layout);
 
-        var sidebar = Assemble(SidebarRoot, pool, parentOf, layout);
-        var settings = Assemble(SettingsRoot, pool, parentOf, layout);
+        // Gizlenenler ağaca hiç girmez. Bir GRUP gizlendiyse alt ağacı da düşer,
+        // yoksa çocukları "üstü yok" diye varsayılan yerlerine dağılır ve
+        // kullanıcı gizlediği kategorinin içeriğini menüde bulmaya devam ederdi.
+        var hidden = ResolveHidden(pool, parentOf, layout, result.Hidden);
+
+        var sidebar = Assemble(SidebarRoot, pool, parentOf, layout, hidden);
+        var settings = Assemble(SettingsRoot, pool, parentOf, layout, hidden);
 
         // İçi boşalan grup basılmaz — LeptonX içi boş bir bölüm başlığı basar,
         // Ayarlar sayfasında da başlıksız bir blok kalırdı. Düzenleme ekranı
@@ -138,7 +143,7 @@ public class PlatformNavigationResolver : IScopedDependency
     /// ağacı + yönetim bağlantıları + (boş doğan) "Yönetim" grubu. Çocuk
     /// listeleri BOŞALTILIR; ağaç sonra yerleşime göre yeniden kurulur.
     /// </summary>
-    private async Task<Dictionary<string, PoolEntry>> BuildPoolAsync()
+    private async Task<Dictionary<string, PoolEntry>> BuildPoolAsync(MenuLayout layout)
     {
         var pool = new Dictionary<string, PoolEntry>(StringComparer.Ordinal);
         var sequence = 0;
@@ -199,6 +204,36 @@ public class PlatformNavigationResolver : IScopedDependency
             };
         }
 
+        // Kullanıcının kendi kurduğu kategoriler ve kısayollar. Ayrılmış ad
+        // alanı (Apya.User.*) sayesinde koddaki adları EZEMEZLER; yine de
+        // ContainsKey ile korunur. Varsayılan yerleri kenar çubuğunun kökü —
+        // gerçek yerlerini sections/items zaten söylüyor.
+        //
+        // Kategori SİLİNİNCE burada hiç doğmaz; çocukları "üstü yok" durumuna
+        // düşer ve ResolveParents onları koddaki yerlerine geri gönderir. Silme
+        // için ayrı bir temizlik koduna gerek kalmamasının sebebi bu.
+        foreach (var group in layout.Groups)
+        {
+            if (pool.ContainsKey(group.Name)) { continue; }
+            pool[group.Name] = new PoolEntry
+            {
+                Item = new ApplicationMenuItem(group.Name, group.Title, icon: group.Icon),
+                DefaultParent = SidebarRoot,
+                DefaultIndex = sequence++
+            };
+        }
+
+        foreach (var link in layout.Links)
+        {
+            if (pool.ContainsKey(link.Name)) { continue; }
+            pool[link.Name] = new PoolEntry
+            {
+                Item = new ApplicationMenuItem(link.Name, link.Title, icon: link.Icon, url: link.Url),
+                DefaultParent = SidebarRoot,
+                DefaultIndex = sequence++
+            };
+        }
+
         return pool;
     }
 
@@ -245,6 +280,60 @@ public class PlatformNavigationResolver : IScopedDependency
         return parentOf;
     }
 
+    /// <summary>
+    /// Gizlenen adları ve onların TÜM ALT AĞACINI hesaplar; ayrıca düzenleme
+    /// ekranının listeleyeceği girdileri doldurur.
+    ///
+    /// Kilitli "Ayarlar" gizlenemez: gizlenseydi kullanıcının düzeni geri alacağı
+    /// ekranın kapısı kapanırdı (aynı gerekçe taşımada da var).
+    /// </summary>
+    private static HashSet<string> ResolveHidden(
+        Dictionary<string, PoolEntry> pool,
+        Dictionary<string, string> parentOf,
+        MenuLayout layout,
+        List<NavHiddenEntry> listed)
+    {
+        var roots = layout.Hidden
+            .Where(name => name != SettingsItemName && pool.ContainsKey(name))
+            .ToHashSet(StringComparer.Ordinal);
+
+        if (roots.Count == 0) { return roots; }
+
+        foreach (var name in roots)
+        {
+            var item = pool[name].Item;
+            listed.Add(new NavHiddenEntry
+            {
+                Name = name,
+                Title = item.DisplayName,
+                Icon = item.Icon ?? string.Empty,
+                IsGroup = IsGroup(item),
+                IsCustom = IsCustomName(name)
+            });
+        }
+
+        // Alt ağaç: bir düğümün atalarından biri gizliyse o da gizlidir.
+        var effective = new HashSet<string>(roots, StringComparer.Ordinal);
+        foreach (var name in pool.Keys)
+        {
+            var current = name;
+            for (var depth = 0; depth < MaxDepth; depth++)
+            {
+                if (!parentOf.TryGetValue(current, out var parent)) { break; }
+                if (roots.Contains(parent)) { effective.Add(name); break; }
+                current = parent;
+            }
+        }
+
+        return effective;
+    }
+
+    /// <summary>Kullanıcının kendi kurduğu kategori/kısayol mu?</summary>
+    private static bool IsCustomName(string name)
+    {
+        return name.StartsWith(PlatformSettingDefaults.ShellMenuLayoutCustomPrefix, StringComparison.Ordinal);
+    }
+
     /// <summary>Düğüm iki kökten birine <see cref="MaxDepth"/> adımda ulaşıyor mu?</summary>
     private static bool ReachesRoot(string name, Dictionary<string, string> parentOf)
     {
@@ -264,10 +353,11 @@ public class PlatformNavigationResolver : IScopedDependency
         string parent,
         Dictionary<string, PoolEntry> pool,
         Dictionary<string, string> parentOf,
-        MenuLayout layout)
+        MenuLayout layout,
+        HashSet<string> hidden)
     {
         var children = pool
-            .Where(kv => parentOf[kv.Key] == parent)
+            .Where(kv => parentOf[kv.Key] == parent && !hidden.Contains(kv.Key))
             .OrderBy(kv => kv.Value.DefaultIndex)
             .Select(kv => kv.Value.Item)
             .ToList();
@@ -281,7 +371,7 @@ public class PlatformNavigationResolver : IScopedDependency
 
         foreach (var child in ordered)
         {
-            foreach (var grandChild in Assemble(child.Name, pool, parentOf, layout))
+            foreach (var grandChild in Assemble(child.Name, pool, parentOf, layout, hidden))
             {
                 child.AddItem(grandChild);
             }

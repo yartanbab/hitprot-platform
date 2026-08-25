@@ -23,6 +23,13 @@ public class NavResolution
     /// </summary>
     public List<NavEmptyGroup> EmptyGroups { get; } = new();
 
+    /// <summary>
+    /// Kullanıcının tamamen gizlediği öğeler — iki yüzeyde de basılmaz. Yalnız
+    /// düzenleme ekranı okur: gizlenen bir şeyi geri alabilmenin tek yolu onu
+    /// ekranda görebilmek.
+    /// </summary>
+    public List<NavHiddenEntry> Hidden { get; } = new();
+
     /// <summary>Kullanıcının kayıtlı düzeni.</summary>
     public MenuLayout Layout { get; set; } = new();
 }
@@ -51,6 +58,20 @@ public class NavSettingsEntry
     public bool IsAdminLink { get; set; }
 
     public List<NavSettingsEntry> Children { get; } = new();
+}
+
+/// <summary>Gizlenen bir öğe — yalnız düzenleme ekranı kullanır.</summary>
+public class NavHiddenEntry
+{
+    public string Name { get; set; } = string.Empty;
+    public string Title { get; set; } = string.Empty;
+    public string Icon { get; set; } = string.Empty;
+
+    /// <summary>Grup ise alt ağacıyla birlikte gizlenmiştir.</summary>
+    public bool IsGroup { get; set; }
+
+    /// <summary>Kullanıcının kendi kurduğu bir kategori/kısayol mu?</summary>
+    public bool IsCustom { get; set; }
 }
 
 /// <summary>İçi boşaldığı için ayıklanmış grup — yalnız düzenleme ekranı kullanır.</summary>
