@@ -1,0 +1,30 @@
+@using Microsoft.AspNetCore.Authorization
+@using Apya.Platform.Permissions
+@inject IAuthorizationService AuthorizationService
+@*
+    Kanban kolon araçları — sayfanın KENDİ eylem çubuğunda, "Yeni Görev"in solunda
+    durur (kullanıcı kararı 2026-08-25; eskiden panonun üstünde ayrı bir satırdaydı).
+
+    Üç sayfa da bu partial'ı kendi araç çubuğuna dâhil eder; kontrolleri
+    /js/apya-kanban.js açıp kapatır:
+      · "Grupla"            → yalnız kulvar açık panoda (genel pano)
+      · "Kolonları düzenle" → yalnız Projects.Edit + proje seçiliyken
+    Modül bu düğümleri board'un sarmalayıcısında bulamazsa belgeye kadar arar,
+    bu yüzden pano markup'ının dışında durabiliyorlar.
+*@
+<div class="kanban-toolbar js-kanban-toolbar d-none">
+    <label class="kanban-group js-kanban-group d-none">
+        <span class="kanban-group-label">Grupla</span>
+        <select class="kanban-group-select js-group-select" aria-label="Kartları grupla">
+            <option value="">Kulvar yok</option>
+            <option value="project">Projeye göre</option>
+            <option value="assignee">Atanana göre</option>
+        </select>
+    </label>
+    @if (await AuthorizationService.IsGrantedAsync(PlatformPermissions.Projects.Edit))
+    {
+        <button type="button" class="kanban-edit-cols js-edit-cols d-none">
+            <i class="fa fa-sliders me-1" aria-hidden="true"></i>Kolonları düzenle
+        </button>
+    }
+</div>

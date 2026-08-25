@@ -26,6 +26,8 @@
     <select id="board-project" class="form-select form-select-sm w-auto"></select>
     <apya-hint placement="bottom" text="Pano her zaman tek bir projeye bağlıdır. Proje seçtiğinizde o projenin kendi kolonları yüklenir ve Kolon Ekle görünür; kolonlar projeye özeldir, diğer projeleri etkilemez." />
     <button id="btn-refresh-board" class="btn btn-outline-secondary btn-sm"><i class="fa fa-sync"></i> Yenile</button>
+    @* Kolon araçları "Yeni Görev"in solunda (kullanıcı kararı 2026-08-25). *@
+    <partial name="_KanbanColumnTools" />
     @if (await AuthorizationService.IsGrantedAsync(PlatformPermissions.Tasks.Create))
     {
         <button id="btn-new-task" class="btn btn-primary btn-sm"><i class="fa fa-plus me-1"></i> Yeni Görev</button>
