@@ -7,7 +7,7 @@ import { CardShell } from './cards/CardShell';
 import { CardCatalog } from './catalog/CardCatalog';
 import {
     CARD_REGISTRY, VIEWS, DEFAULT_VIEW,
-    GRID_BREAKPOINTS, GRID_COLS, GRID_ROW_HEIGHT, GRID_MARGIN,
+    GRID_BREAKPOINTS, GRID_COLS, GRID_ROW_HEIGHT, GRID_MARGIN, GRID_CONTAINER_PADDING,
     tierFromWidth, fullWidthCardWidth, stripLayoutFor,
     readViewPreference, writeViewPreference,
 } from './layouts/viewPresets';
@@ -168,11 +168,12 @@ function DashboardRoot() {
             )}
 
             {/* Boşluk hiyerarşisi (kullanıcı kararı):
-                  sol/üst kenar 16px — kartlar sol raya yakın dursun
+                  sol/sağ/alt kenar 18px — TEK kaynak burası; ızgaranın kendi
+                    kenar dolgusu kapalı (bkz GRID_CONTAINER_PADDING)
                   başlık → ilk kart 16px
-                  kart ↔ kart 10px (GRID_MARGIN) — başlık mesafesinden DAHA DAR,
+                  kart ↔ kart 12px (GRID_MARGIN) — kenar boşluğundan DAHA DAR,
                   böylece kartlar tek blok gibi okunur, başlık ayrışır. */}
-            <main className="px-4 pt-4 pb-4 mobile:px-3">
+            <main className="px-[18px] pt-4 pb-[18px] mobile:px-3">
                 {/* Ölçüm kabı — hem RGL'in `width`'i hem de kırılım (tier) kararı bu
                     düğümün ölçülen genişliğinden gelir. */}
                 <div ref={gridHostRef}>
@@ -185,6 +186,7 @@ function DashboardRoot() {
                     cols={GRID_COLS}
                     rowHeight={GRID_ROW_HEIGHT}
                     margin={GRID_MARGIN}
+                    containerPadding={GRID_CONTAINER_PADDING}
                     isDraggable={editMode}
                     isResizable={editMode}
                     draggableHandle={`.${CardShell.DRAG_HANDLE_CLASS}`}
@@ -227,7 +229,7 @@ function DashboardRoot() {
                 ))}
                 </div>
 
-                {/* Izgara ile alt şerit arası da kart↔kart boşluğuyla aynı (20px). */}
+                {/* Izgara ile alt şerit arası da kart↔kart boşluğuyla aynı (12px). */}
                 <FooterStrip
                     isDefault={layoutQuery.data?.isDefault !== false}
                     canEdit={canEdit}
@@ -287,8 +289,10 @@ function NativeStack({ tier, cards, filter, strip }) {
 function PageHeader({ viewKey, onViewChange, range, onRangeChange, editMode, canEdit, onToggleEdit, onOpenCatalog }) {
     const activeView = VIEWS.find((v) => v.key === viewKey) ?? VIEWS[0];
 
+    /* Yatay dolgu `main` ile AYNI (18px): başlık, kartların sol/sağ rayına
+       hizalanmazsa şerit kaymış görünüyor. */
     return (
-        <header className="px-4 pt-4 pb-3 bg-surface-base border-b border-default flex items-end justify-between gap-5 mobile:px-3 mobile:flex-col mobile:items-stretch mobile:gap-3">
+        <header className="px-[18px] pt-4 pb-3 bg-surface-base border-b border-default flex items-end justify-between gap-5 mobile:px-3 mobile:flex-col mobile:items-stretch mobile:gap-3">
             <div className="flex flex-col gap-2.5 min-w-0">
                 <div className="flex items-center gap-2.5">
                     <h1 className="text-[22px] font-semibold tracking-[-0.025em] text-text-primary m-0">
@@ -412,7 +416,7 @@ function EditToolbar({ onSave, isSaving }) {
 
 function FooterStrip({ isDefault, canEdit, onReset, onOpenCatalog, isResetting }) {
     return (
-        <div className="flex items-center justify-between gap-3 mt-5 px-4 py-3 rounded-card border border-dashed border-default bg-surface-base mobile:flex-col mobile:items-stretch">
+        <div className="flex items-center justify-between gap-3 mt-3 px-4 py-3 rounded-card border border-dashed border-default bg-surface-base mobile:flex-col mobile:items-stretch">
             <span className="text-[12.5px] text-text-secondary">
                 {isDefault
                     ? t('Dashboard:Footer:DefaultLayout', 'Bu görünüm rol varsayılanından geldi — kart ekleyip çıkarabilir, sürükleyip boyutlandırabilirsin.')
