@@ -2312,7 +2312,7 @@ const Cs = [
 function Ts({ isPrivate: t = !1, onChange: a = () => {
 } }) {
   const s = !!t;
-  return /* @__PURE__ */ e.jsxs(be, { children: [
+  return /* @__PURE__ */ e.jsxs(be, { modal: !0, children: [
     /* @__PURE__ */ e.jsx(he, { asChild: !0, children: /* @__PURE__ */ e.jsxs(
       "button",
       {
@@ -2365,7 +2365,7 @@ function Ts({ isPrivate: t = !1, onChange: a = () => {
     ) })
   ] });
 }
-const Je = "z-popover pointer-events-auto rounded-[13px] border border-default bg-surface-elevated p-1.5 shadow-float animate-fade-in-fast", Ds = "flex items-center gap-[11px] w-full px-[9px] py-2 rounded-[9px] text-[12.5px] font-medium text-left cursor-pointer hover:bg-surface-hover", Ss = [
+const Je = "z-popover rounded-[13px] border border-default bg-surface-elevated p-1.5 shadow-float animate-fade-in-fast", Ds = "flex items-center gap-[11px] w-full px-[9px] py-2 rounded-[9px] text-[12.5px] font-medium text-left cursor-pointer hover:bg-surface-hover", Ss = [
   { what: "Kaydet", key: "Ctrl S" },
   { what: "Yorum gönder", key: "Ctrl ↵" },
   { what: "Kapat / iptal", key: "Esc" },
@@ -2439,7 +2439,7 @@ function Es({
             ]
           }
         ),
-        /* @__PURE__ */ e.jsxs(be, { children: [
+        /* @__PURE__ */ e.jsxs(be, { modal: !0, children: [
           /* @__PURE__ */ e.jsx(he, { asChild: !0, children: /* @__PURE__ */ e.jsxs(
             "button",
             {
@@ -2472,7 +2472,7 @@ function Es({
             })
           ] }) })
         ] }),
-        /* @__PURE__ */ e.jsxs(be, { children: [
+        /* @__PURE__ */ e.jsxs(be, { modal: !0, children: [
           /* @__PURE__ */ e.jsx(he, { asChild: !0, children: /* @__PURE__ */ e.jsxs(
             "button",
             {
@@ -2554,7 +2554,7 @@ function Es({
           children: /* @__PURE__ */ e.jsx("i", { className: `fa-solid ${r ? "fa-compress" : "fa-expand"} text-[12px]` })
         }
       ),
-      /* @__PURE__ */ e.jsxs(be, { open: H, onOpenChange: Y, children: [
+      /* @__PURE__ */ e.jsxs(be, { modal: !0, open: H, onOpenChange: Y, children: [
         /* @__PURE__ */ e.jsx(he, { asChild: !0, children: /* @__PURE__ */ e.jsx(
           "button",
           {
@@ -2608,7 +2608,7 @@ function Es({
     ] })
   ] }) });
 }
-const Xe = "z-popover pointer-events-auto rounded-[14px] border border-default bg-surface-elevated p-2 shadow-float animate-fade-in-fast", Lt = "w-full h-[34px] pl-[31px] pr-3 rounded-[9px] border border-default bg-neutral-subtle text-text-primary text-[12.5px] focus:border-focus focus:bg-surface-base focus:shadow-focus focus:outline-none";
+const Xe = "z-popover rounded-[14px] border border-default bg-surface-elevated p-2 shadow-float animate-fade-in-fast", Lt = "w-full h-[34px] pl-[31px] pr-3 rounded-[9px] border border-default bg-neutral-subtle text-text-primary text-[12.5px] focus:border-focus focus:bg-surface-base focus:shadow-focus focus:outline-none";
 function Ne({ children: t }) {
   return /* @__PURE__ */ e.jsx(Zt, { asChild: !0, children: t });
 }
@@ -2659,7 +2659,7 @@ function Ps({
     k && !d.includes(k) && r("tagNames", [...d, k]), D(""), R(!1);
   };
   return /* @__PURE__ */ e.jsx("div", { className: "px-6 lt-860:px-4 py-[18px] border-b border-subtle bg-surface-base", children: /* @__PURE__ */ e.jsxs("div", { className: "grid grid-cols-4 lt-860:grid-cols-2 lt-560:grid-cols-1 gap-y-5 gap-x-6", children: [
-    /* @__PURE__ */ e.jsx(me, { label: "Sorumlu", children: /* @__PURE__ */ e.jsxs(be, { children: [
+    /* @__PURE__ */ e.jsx(me, { label: "Sorumlu", children: /* @__PURE__ */ e.jsxs(be, { modal: !0, children: [
       /* @__PURE__ */ e.jsx(he, { asChild: !0, children: /* @__PURE__ */ e.jsxs(
         "button",
         {
@@ -2760,7 +2760,7 @@ function Ps({
         }
       ) })
     ] }) }),
-    /* @__PURE__ */ e.jsx(me, { label: "Durum", children: /* @__PURE__ */ e.jsx("div", { className: "flex items-center h-8", children: /* @__PURE__ */ e.jsxs(be, { children: [
+    /* @__PURE__ */ e.jsx(me, { label: "Durum", children: /* @__PURE__ */ e.jsx("div", { className: "flex items-center h-8", children: /* @__PURE__ */ e.jsxs(be, { modal: !0, children: [
       /* @__PURE__ */ e.jsx(he, { asChild: !0, children: /* @__PURE__ */ e.jsxs(
         "button",
         {
@@ -2842,7 +2842,7 @@ function Ps({
         }
       )
     ] }) }),
-    /* @__PURE__ */ e.jsx(me, { label: "Proje", children: /* @__PURE__ */ e.jsxs(be, { children: [
+    /* @__PURE__ */ e.jsx(me, { label: "Proje", children: /* @__PURE__ */ e.jsxs(be, { modal: !0, children: [
       /* @__PURE__ */ e.jsx(he, { asChild: !0, children: /* @__PURE__ */ e.jsxs(
         "button",
         {
@@ -3214,14 +3214,14 @@ function Ms({ value: t, onChange: a, mentionName: s = "ekip arkadaşı" }) {
         },
         y.cmd + y.icon
       );
-      return y.cmd !== "link" ? j : /* @__PURE__ */ e.jsxs(be, { open: o, onOpenChange: n, children: [
+      return y.cmd !== "link" ? j : /* @__PURE__ */ e.jsxs(be, { modal: !0, open: o, onOpenChange: n, children: [
         /* @__PURE__ */ e.jsx(he, { asChild: !0, children: j }),
         /* @__PURE__ */ e.jsx(ge, { children: /* @__PURE__ */ e.jsxs(
           ye,
           {
             sideOffset: 6,
             align: "start",
-            className: "z-popover pointer-events-auto w-[290px] rounded-[13px] border border-default bg-surface-elevated p-3 shadow-float animate-fade-in-fast",
+            className: "z-popover w-[290px] rounded-[13px] border border-default bg-surface-elevated p-3 shadow-float animate-fade-in-fast",
             children: [
               /* @__PURE__ */ e.jsx("div", { className: "text-[10px] font-bold uppercase tracking-[.08em] text-text-tertiary mb-2", children: "Bağlantı adresi" }),
               /* @__PURE__ */ e.jsxs("div", { className: "flex gap-2", children: [
