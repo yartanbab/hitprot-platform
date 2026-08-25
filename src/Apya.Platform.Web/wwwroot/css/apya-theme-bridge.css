@@ -893,11 +893,12 @@ html, body {
 #lpx-sidebar .lpx-menu-item-link {
     color: var(--apya-text-secondary) !important;
     border-radius: var(--apya-radius-lg);
-    /* 8px → 12px: `.lpx-nav` kabının kendi yatay iç boşluğu YOK (ölçüm: nav
+    /* 8px → 16px: `.lpx-nav` kabının kendi yatay iç boşluğu YOK (ölçüm: nav
        kenar çubuğunun 0,4px SOLUNDA başlıyor), yani satırların kenardan tek
        payı bu marj. 8px'te menü kenara yapışık duruyordu; hover hapı ve bölüm
-       ayraç çizgisi de kenara değiyordu. */
-    margin: 1px 12px;
+       ayraç çizgisi de kenara değiyordu. Değer kullanıcı kararı (2026-08-25):
+       önce 12px denendi, 16px'te karar kılındı. */
+    margin: 1px 16px;
     /* Tema anchor'a `width: 100%` veriyor; yukarıdaki 8px'lik yan marjlar buna
        EKLENİYOR → her satır kapsayıcıdan 16px taşıyor ve sidebar yatay kayıyordu
        (canlı ölçüm: scrollWidth 280 / clientWidth 264). `auto` ile anchor kalan
