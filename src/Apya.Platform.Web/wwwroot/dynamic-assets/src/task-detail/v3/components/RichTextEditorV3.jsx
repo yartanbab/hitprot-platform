@@ -98,8 +98,11 @@ export function RichTextEditorV3({ value, onChange, mentionName = 'ekip arkadaş
     const handleToolbarClick = (btn) => {
         switch (btn.cmd) {
             case 'link':
+                /* Popover'ı AÇMA — bunu Radix'in Popover.Trigger'ı click'te toggle ederek
+                   yapıyor. Burada da setLinkOpen(true) çağrılınca aynı state iki yerden
+                   sürülüyor, mousedown açıyor ve hemen ardından gelen click kapatıyordu.
+                   Buranın tek işi, odak popover'a geçmeden önce seçimi saklamak. */
                 saveSelection();
-                setLinkOpen(true);
                 return;
             case 'image':
                 exec('insertHTML', IMAGE_PLACEHOLDER_HTML);
@@ -141,7 +144,11 @@ export function RichTextEditorV3({ value, onChange, mentionName = 'ekip arkadaş
                     return (
                         <Popover.Root key="link" modal open={linkOpen} onOpenChange={setLinkOpen}>
                             <Popover.Trigger asChild>{node}</Popover.Trigger>
-                            <Popover.Portal>
+                            {/* Popover'ı Dialog'un İÇİNE portal et. body'ye basıldığında Dialog'un focus
+                                trap'i URL kutusuna verilen odağı anında geri çalıyor, alana yazılamıyor ve
+                                tuşlar editöre gidip seçili metni eziyordu. Sayfa modunda dialog yoktur,
+                                closest null döner ve Radix varsayılan olarak body'ye basar. */}
+                            <Popover.Portal container={editorRef.current?.closest('[role="dialog"]') ?? undefined}>
                                 <Popover.Content
                                     sideOffset={6}
                                     align="start"
