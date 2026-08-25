@@ -629,36 +629,10 @@ $(function () {
         reloadAll(false);
     });
 
-    // --- 4. Projeyi Sil (Danger Zone) ---
-    $('#btn-delete-project').click(function () {
-        var pId   = $(this).data('project-id');
-        var pCode = $(this).data('project-code');
-
-        Swal.fire({
-            title: 'Projeyi Silmek Üzeresiniz!',
-            html: 'Dikkat! Bu işlem <b>geri alınamaz</b> ve projeye ait tüm görevler silinir.<br><br>Onaylamak için lütfen projenin kodunu (<b>' + pCode + '</b>) aşağıdaki kutuya yazın.',
-            icon: 'error',
-            input: 'text',
-            inputPlaceholder: pCode,
-            showCancelButton: true,
-            confirmButtonText: '<i class="fa fa-exclamation-triangle"></i> Evet, Kalıcı Olarak Sil',
-            cancelButtonText: 'Güvenli Bölgeye Dön (İptal)',
-            confirmButtonColor: '#dc3545',
-            preConfirm: function (inputValue) {
-                if (inputValue !== pCode) {
-                    Swal.showValidationMessage('Silme işlemini onaylamak için tam olarak "' + pCode + '" yazmalısınız.');
-                }
-                return inputValue;
-            }
-        }).then(function (result) {
-            if (result.isConfirmed) {
-                apya.platform.application.projects.project.delete(pId).then(function () {
-                    abp.notify.success('Proje ve bağlı tüm veriler başarıyla silindi.');
-                    setTimeout(function () { window.location.href = '/'; }, 1500);
-                });
-            }
-        });
-    });
+    // --- 4. Projeyi Sil ---
+    // Bu ekranda YOK. ⋯ menüsündeki madde artık /Projects/Edit/{id}?tab=danger
+    // adresine götürüyor; silme orada, proje kodu elle yazıldıktan sonra ve
+    // sunucu tarafında da doğrulanarak yapılıyor.
 
     // --- 5. Görünüm sekmeleri ---
     // Bootstrap tab yerine .view-panel + .d-none deseni (Tasks/Index ile aynı):

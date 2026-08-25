@@ -31,6 +31,14 @@ public class PlatformPermissionDefinitionProvider : PermissionDefinitionProvider
         tasksPermission.AddChild(PlatformPermissions.Tasks.Assign, L("Permission:Tasks.Assign"));
         tasksPermission.AddChild(PlatformPermissions.Tasks.ChangeStatus, L("Permission:Tasks.ChangeStatus"));
 
+        // Görev oluşturma ekranının ekstra konfigürasyonları — paket kapısı arkasında.
+        // Oluşturmanın kendisi (Tasks.Create) KAPISIZ kalır: paket düşürülünce kullanıcı
+        // görev açamaz hâle gelmemeli, yalnız kısayolları ve planlama alanları kaybolmalı.
+        tasksPermission.AddChild(PlatformPermissions.Tasks.QuickCreate, L("Permission:Tasks.QuickCreate"))
+            .RequireFeatures(PlatformFeatures.TaskQuickEntry);
+        tasksPermission.AddChild(PlatformPermissions.Tasks.ManagePlanning, L("Permission:Tasks.ManagePlanning"))
+            .RequireFeatures(PlatformFeatures.TaskQuickEntry);
+
         // ============================================================
         // HİBE YÖNETİMİ
         // ============================================================

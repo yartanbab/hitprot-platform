@@ -1,7 +1,7 @@
 import { r as x, j as e, d as fe, b as Ae } from "./react-vendor.js";
 import { c as m, t as r, S as L, a as Re, f as q, b as re, d as Le, e as Ie, I as He, B as H, T as Me } from "./Dialog.js";
-import { Q as k, a as Be } from "./QueryProvider.js";
-import { H as be, a as Pe, L as Ke } from "./signalr-vendor.js";
+import { Q as k, a as Pe } from "./QueryProvider.js";
+import { H as be, a as Be, L as Ke } from "./signalr-vendor.js";
 import { D as Fe } from "./useDeviceMode.js";
 import { u as We, r as Oe, T as Ue } from "./registerServiceWorker.js";
 import { r as Ge } from "./grid-vendor.js";
@@ -17,7 +17,7 @@ function _e({ hubUrl: t = "/signalr-hubs/notifications", children: n, enabled: a
   const [s, i] = x.useState(be.Disconnected), c = x.useRef(null);
   x.useEffect(() => {
     if (!a || typeof window > "u") return;
-    const o = new Pe().withUrl(t, { withCredentials: !0 }).withAutomaticReconnect([0, 2e3, 5e3, 1e4, 3e4]).configureLogging(Ke.Warning).build();
+    const o = new Be().withUrl(t, { withCredentials: !0 }).withAutomaticReconnect([0, 2e3, 5e3, 1e4, 3e4]).configureLogging(Ke.Warning).build();
     c.current = o, i(o.state);
     const d = () => i(o.state);
     return o.onreconnecting(d), o.onreconnected(d), o.onclose(d), o.start().then(d).catch((u) => {
@@ -58,7 +58,7 @@ function D({
   isFetching: g = !1,
   isStale: U = !1,
   dataUpdatedAt: N,
-  bleed: B = !1,
+  bleed: P = !1,
   className: A,
   bodyClassName: R,
   children: X
@@ -118,8 +118,8 @@ function D({
                 "div",
                 {
                   className: "flex items-center gap-2.5 flex-none",
-                  onMouseDown: (P) => P.stopPropagation(),
-                  onTouchStart: (P) => P.stopPropagation(),
+                  onMouseDown: (B) => B.stopPropagation(),
+                  onTouchStart: (B) => B.stopPropagation(),
                   children: s
                 }
               )
@@ -137,8 +137,8 @@ function D({
                  kesiliyor" dediği davranış. Kart kendi gerekçesiyle
                  `bodyClassName="overflow-visible"` diyerek vazgeçebilir. */
               "flex-1 min-h-0 pt-3 overflow-y-auto",
-              B ? "pb-0" : "px-[18px] pb-[18px]",
-              B && "px-[18px]",
+              P ? "pb-0" : "px-[18px] pb-[18px]",
+              P && "px-[18px]",
               R
             ),
             children: [
@@ -724,7 +724,7 @@ function Ht({ filter: t, editMode: n }) {
       ),
       children: /* @__PURE__ */ e.jsx("div", { className: "flex flex-col gap-2.5", children: i.map((l) => /* @__PURE__ */ e.jsxs(fe.Fragment, { children: [
         /* @__PURE__ */ e.jsx(Mt, { groupKey: l.key, count: l.items.length }),
-        /* @__PURE__ */ e.jsx("ul", { className: "flex flex-col gap-[3px]", children: l.items.map((o) => /* @__PURE__ */ e.jsx(Bt, { item: o }, o.taskId)) })
+        /* @__PURE__ */ e.jsx("ul", { className: "flex flex-col gap-[3px]", children: l.items.map((o) => /* @__PURE__ */ e.jsx(Pt, { item: o }, o.taskId)) })
       ] }, l.key)) })
     }
   );
@@ -743,7 +743,7 @@ const de = {
   OnTrack: "bg-positive-500",
   Upcoming: "bg-neutral-300"
 };
-function Bt({ item: t }) {
+function Pt({ item: t }) {
   return /* @__PURE__ */ e.jsx("li", { children: /* @__PURE__ */ e.jsxs(
     "a",
     {
@@ -768,7 +768,7 @@ function Bt({ item: t }) {
         /* @__PURE__ */ e.jsx("span", { className: m(
           "font-mono text-[11.5px] w-[50px] text-right flex-none tabular-nums",
           t.state === "Overdue" ? "text-negative-500" : "text-text-secondary"
-        ), children: Pt(t.dueDate) }),
+        ), children: Bt(t.dueDate) }),
         t.assigneeInitials && /* @__PURE__ */ e.jsx(
           "span",
           {
@@ -781,7 +781,7 @@ function Bt({ item: t }) {
     }
   ) });
 }
-function Pt(t) {
+function Bt(t) {
   const n = new Date(t);
   return Number.isNaN(n.getTime()) ? "" : n.toLocaleDateString(void 0, { day: "numeric", month: "short" });
 }
@@ -824,7 +824,7 @@ function Ft({ filter: t, editMode: n }) {
           /* @__PURE__ */ e.jsx(
             "a",
             {
-              href: `/Projects/Detail/${l.projectId}`,
+              href: `/Projects/ProjectDetails/${l.projectId}`,
               className: "text-[13px] font-medium text-text-primary truncate hover:underline",
               children: l.name
             }
@@ -1300,11 +1300,11 @@ const Se = [
 ];
 function ca() {
   var ne, se;
-  const [t, n] = x.useState(() => na()), [a, s] = x.useState(() => ba()), [i, c] = x.useState(!1), [l, o] = x.useState(!1), [d, u] = x.useState(null), b = ia(t), f = oa(), y = la(), E = x.useMemo(() => ({ range: a }), [a]), g = d ?? ((ne = b.data) == null ? void 0 : ne.cards) ?? [], U = x.useRef(null), [N, B] = x.useState(null);
+  const [t, n] = x.useState(() => na()), [a, s] = x.useState(() => ba()), [i, c] = x.useState(!1), [l, o] = x.useState(!1), [d, u] = x.useState(null), b = ia(t), f = oa(), y = la(), E = x.useMemo(() => ({ range: a }), [a]), g = d ?? ((ne = b.data) == null ? void 0 : ne.cards) ?? [], U = x.useRef(null), [N, P] = x.useState(null);
   x.useLayoutEffect(() => {
     const h = U.current;
     if (!h) return;
-    const j = () => B(h.clientWidth);
+    const j = () => P(h.clientWidth);
     j();
     const v = new ResizeObserver(j);
     return v.observe(h), () => v.disconnect();
@@ -1317,7 +1317,7 @@ function ca() {
     [g, R.h]
   ), Z = x.useCallback((h) => {
     n(h), sa(h), u(null), c(!1);
-  }, []), P = x.useCallback((h) => {
+  }, []), B = x.useCallback((h) => {
     i && A === "desktop" && u((j) => {
       const v = j ?? g;
       return h.map((T) => {
@@ -1393,7 +1393,7 @@ function ca() {
           isDraggable: i,
           isResizable: i,
           draggableHandle: `.${D.DRAG_HANDLE_CLASS}`,
-          onLayoutChange: P,
+          onLayoutChange: B,
           compactType: "vertical",
           preventCollision: !1,
           children: g.map((h) => {
@@ -1675,7 +1675,7 @@ function va() {
 Oe();
 const pe = document.getElementById("apya-dashboard-root");
 pe && Ae(pe).render(
-  /* @__PURE__ */ e.jsx(Me, { children: /* @__PURE__ */ e.jsx(Fe, { children: /* @__PURE__ */ e.jsx(Be, { children: /* @__PURE__ */ e.jsx(Ue, { children: /* @__PURE__ */ e.jsxs(_e, { children: [
+  /* @__PURE__ */ e.jsx(Me, { children: /* @__PURE__ */ e.jsx(Fe, { children: /* @__PURE__ */ e.jsx(Pe, { children: /* @__PURE__ */ e.jsx(Ue, { children: /* @__PURE__ */ e.jsxs(_e, { children: [
     /* @__PURE__ */ e.jsx(va, {}),
     /* @__PURE__ */ e.jsx(ca, {})
   ] }) }) }) }) })

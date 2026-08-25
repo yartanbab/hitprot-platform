@@ -12,6 +12,7 @@
     var canViewBudget = await AuthorizationService.IsGrantedAsync(PlatformPermissions.Projects.ViewBudget);
     var canCreate = await AuthorizationService.IsGrantedAsync(PlatformPermissions.Projects.Create);
     var canDelete = await AuthorizationService.IsGrantedAsync(PlatformPermissions.Projects.Delete);
+    var canEdit = await AuthorizationService.IsGrantedAsync(PlatformPermissions.Projects.Edit);
 
     // Açılış görünümü: Ayarlar ekranındaki kullanıcı tercihi (varsayılan "card").
     // Araç çubuğundaki anahtar bunu o cihazda localStorage ile ezer — JS karar verir.
@@ -50,7 +51,7 @@
      id="ProjectsConsole"
      data-can-view-budget="@canViewBudget.ToString().ToLowerInvariant()"
      data-can-create="@canCreate.ToString().ToLowerInvariant()"
-     data-can-delete="@canDelete.ToString().ToLowerInvariant()"
+     data-can-edit="@canEdit.ToString().ToLowerInvariant()"
      data-default-view="@defaultView"
      data-detail-panel="@detailPanel.ToString().ToLowerInvariant()"
      data-role-preset="@rolePreset">
@@ -189,11 +190,13 @@
         <div id="ProjectsListBody"></div>
     </div>
 
+    @* --- Kurulum ipucu şeridi: tek projesi olan yeni hesapta "sırada ne var"
+         (eski odak kartının yerini aldı — kart tasarımı artık tek projede de
+         ızgaradaki kartın aynısı). --- *@
+    <div id="ProjectsSteps" hidden></div>
+
     @* --- Kart ızgarası (varsayılan görünüm) --- *@
     <div id="ProjectsGrid" class="apya-tile-grid apya-fade-in" aria-live="polite" hidden></div>
-
-    @* --- Tek proje: liste yerine odak kartı (bkz. Index.js renderFocus) --- *@
-    <div id="ProjectsFocus" hidden></div>
 
     @* --- Filtre sonucu yok --- *@
     <div class="apya-proj-noresult" id="ProjectsNoResult" hidden>

@@ -48,6 +48,30 @@ public class PlatformSettingDefinitionProvider : SettingDefinitionProvider
                 description: L("Setting:Projects.DetailPanel.Description"))
         );
 
+        // Görev oluşturma modalının ekstraları — Projects.DetailPanel ile aynı ray.
+        // .WithProviders() ile KISITLANMAZ: DefaultMode/ShowKeyboardHints kullanıcı
+        // seviyesinde yazılır, ShowInfoBanner kiracı seviyesinde; ikisi de zincirde
+        // DefaultValueSettingValueProvider'a düşebilmeli.
+        context.Add(
+            new SettingDefinition(
+                PlatformSettings.TaskCreate.DefaultMode,
+                defaultValue: PlatformSettingDefaults.TaskCreateDefaultMode,
+                displayName: L("Setting:TaskCreate.DefaultMode"),
+                description: L("Setting:TaskCreate.DefaultMode.Description")),
+
+            new SettingDefinition(
+                PlatformSettings.TaskCreate.ShowKeyboardHints,
+                defaultValue: PlatformSettingDefaults.TaskCreateShowKeyboardHints.ToString().ToLowerInvariant(),
+                displayName: L("Setting:TaskCreate.ShowKeyboardHints"),
+                description: L("Setting:TaskCreate.ShowKeyboardHints.Description")),
+
+            new SettingDefinition(
+                PlatformSettings.TaskCreate.ShowInfoBanner,
+                defaultValue: PlatformSettingDefaults.TaskCreateShowInfoBanner.ToString().ToLowerInvariant(),
+                displayName: L("Setting:TaskCreate.ShowInfoBanner"),
+                description: L("Setting:TaskCreate.ShowInfoBanner.Description"))
+        );
+
         // Takvim günlük kapasitesi — Projects.DefaultView ile aynı ray (kullanıcı seviyesi).
         // .WithProviders() ile KISITLANMAZ: hem User provider zincirde kalsın hem de
         // varsayılan (8 sa) DefaultValueSettingValueProvider'dan dönebilsin.

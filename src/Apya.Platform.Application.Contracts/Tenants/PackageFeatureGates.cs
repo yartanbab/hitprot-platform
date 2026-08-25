@@ -46,6 +46,13 @@ public static class PackageFeatureGates
         [PlatformFeatures.Documents] = new[] { PlatformPermissions.Documents.Default },
         [PlatformFeatures.Forms] = new[] { PlatformPermissions.DynamicAssets.Default },
         [PlatformFeatures.Calendar] = new[] { PlatformPermissions.Calendars.Default },
+        // DİKKAT: Tasks.Default / Tasks.Create BİLEREK yok. Bu kapı yalnız oluşturma
+        // ekranının ekstralarını kapatır; kapanınca kullanıcı görev açamaz hâle GELMEMELİ.
+        [PlatformFeatures.TaskQuickEntry] = new[]
+        {
+            PlatformPermissions.Tasks.QuickCreate,
+            PlatformPermissions.Tasks.ManagePlanning,
+        },
         [PlatformFeatures.AiAssist] = new[]
         {
             AiGroupPrefix,

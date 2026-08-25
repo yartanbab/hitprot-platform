@@ -346,6 +346,13 @@
             <div class="dropdown-menu dropdown-menu-end apya-console-menu" aria-labelledby="btn-project-menu">
 
                 <div class="apya-console-menu-head">Proje</div>
+                @if (await AuthorizationService.IsGrantedAsync(PlatformPermissions.Projects.Edit))
+                {
+                    <a href="/Projects/Edit/@Model.Id" class="apya-console-menu-item text-decoration-none">
+                        <span class="apya-console-menu-icon"><i class="fa fa-pen" aria-hidden="true"></i></span>
+                        Projeyi düzenle
+                    </a>
+                }
                 @if (hasBudget)
                 {
                     <button type="button" class="apya-console-menu-item" id="menu-budget-summary"
@@ -431,17 +438,16 @@
                     Mevcut filtreyi kaydet
                 </button>
 
-                @* Silme: ayrılmış negatif bölüm. id + data-* attribute'ları Danger Zone
-                   kartındakiyle AYNEN aynı — mevcut SweetAlert akışı değişmedi. *@
-                @if (await AuthorizationService.IsGrantedAsync("Platform.Projects.ManageTeam") || await AuthorizationService.IsGrantedAsync(PlatformPermissions.Projects.Delete))
+                @* Silme: ayrılmış negatif bölüm. Menüden DOĞRUDAN silinmez — düzenleme
+                   ekranının "Tehlikeli bölge" sekmesine götürür; silme orada proje
+                   kodunun elle yazılmasına bağlı. *@
+                @if (await AuthorizationService.IsGrantedAsync(PlatformPermissions.Projects.Delete))
                 {
-                    <button type="button" class="apya-console-menu-item is-danger"
-                            id="btn-delete-project"
-                            data-project-id="@Model.Id"
-                            data-project-code="@Model.Project?.Code">
+                    <a href="/Projects/Edit/@Model.Id?tab=danger"
+                       class="apya-console-menu-item is-danger text-decoration-none">
                         <span class="apya-console-menu-icon"><i class="fa fa-trash" aria-hidden="true"></i></span>
                         Projeyi sil…
-                    </button>
+                    </a>
                 }
             </div>
         </div>

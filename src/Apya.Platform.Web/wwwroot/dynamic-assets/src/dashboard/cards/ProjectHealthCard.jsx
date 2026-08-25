@@ -69,7 +69,7 @@ function ProjectHealthCard({ filter, editMode }) {
                         {index > 0 && <span className="h-px bg-subtle my-2.5" />}
                         <div className="flex items-center justify-between gap-2">
                             <a
-                                href={`/Projects/Detail/${project.projectId}`}
+                                href={`/Projects/ProjectDetails/${project.projectId}`}
                                 className="text-[13px] font-medium text-text-primary truncate hover:underline"
                             >
                                 {project.name}

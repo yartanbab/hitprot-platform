@@ -44,6 +44,10 @@ public class PlatformFeatureDefinitionProvider : FeatureDefinitionProvider
             displayName: L("Feature:Platform:Forms"), valueType: new ToggleStringValueType());
         group.AddFeature(PlatformFeatures.Calendar, defaultValue: "true",
             displayName: L("Feature:Platform:Calendar"), valueType: new ToggleStringValueType());
+        group.AddFeature(PlatformFeatures.TaskQuickEntry, defaultValue: "true",
+            displayName: L("Feature:Platform:TaskQuickEntry"),
+            description: L("Feature:Platform:TaskQuickEntry:Description"),
+            valueType: new ToggleStringValueType());
 
         // ── Sayısal limitler (defaultValue yüksek: host/paketsiz ≈ sınırsız) ──
         group.AddFeature(PlatformFeatures.MaxUsers, defaultValue: "100000",

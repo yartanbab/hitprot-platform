@@ -1,12 +1,20 @@
-# Deploy delta — 2026-08-24 (`1d4a039` → bu belgenin bulunduğu `main` `b66ecc8`)
+# Deploy delta — 2026-08-24 (`1d4a039` → `main` `4323466`)
 
 Bu, **canlıdaki `1d4a039`** (2026-08-20 beşinci yayın — 12 migration uygulandı, ayakta) ile bu
 yayının `main`'i arasındaki farktır. Kesin sha paket adında yazar.
 
-> ✅ **Bu yayın KOD-ONLY'dir.** `1d4a039`'a göre **yeni migration YOK**, dolayısıyla:
-> - **DbMigrator paketi ÜRETİLMEZ, çalıştırılmaz.**
-> - **Veritabanı yedeği bu yayın için zorunlu değildir** (yine de rutin yedek her zaman iyidir).
-> - Şema, seed tabloları ve OpenIddict kayıtları olduğu gibi kalır.
+> 🛑 **BU BELGE ARTIK TEK BAŞINA KULLANILMAZ — `deploy-delta-2026-08-25.md`'ye bak.**
+> Bu belge hazırlandıktan sonra **#218, #219, #220, #221, #222 de main'e girdi** ve **#218 bir
+> migration getirdi** (`ProjectCoverAndAttachments`). Dolayısıyla aşağıdaki "KOD-ONLY" muafiyeti
+> **GEÇERSİZDİR**: DbMigrator **çalıştırılmalı** ve veritabanı yedeği **zorunludur**.
+> Bu belgenin "Ne değişti" ve "Davranış değişiklikleri" bölümleri hâlâ doğrudur ve 08-25 belgesi
+> onlara atıf yapar.
+
+> ~~✅ **Bu yayın KOD-ONLY'dir.**~~ (⛔️ **geçersiz — yukarıdaki nota bak**) `1d4a039`'a göre yeni
+> migration YOK, dolayısıyla:
+> - ~~**DbMigrator paketi ÜRETİLMEZ, çalıştırılmaz.**~~
+> - ~~**Veritabanı yedeği bu yayın için zorunlu değildir.**~~
+> - ~~Şema, seed tabloları ve OpenIddict kayıtları olduğu gibi kalır.~~
 
 **Tek paket üretilir** (Masaüstünde):
 
@@ -22,7 +30,10 @@ zorunlu adımları ve davranış değişikliklerini toplar. Bir önceki tam-depl
 
 ## Ne değişti (özet)
 
-Kaynak: `1d4a039..b66ecc8`, 15 commit — PR #209–#213 + deploy düzeltmeleri. Migration **yok**.
+Kaynak: `1d4a039..4323466` — PR #209–#216 + deploy düzeltmeleri. Migration **yok**.
+
+> ℹ️ Bu belge önce `b66ecc8`'e (PR #209–#213) göre yazıldı; hazırlık PR'ı (#214) merge edilmeden önce
+> **#215 ve #216 de main'e girdi**. Aşağıdaki son iki satır ve davranış maddeleri o iki PR'ı kapsar.
 
 | Alan | İçerik | Deploy etkisi |
 |---|---|---|
@@ -32,6 +43,8 @@ Kaynak: `1d4a039..b66ecc8`, 15 commit — PR #209–#213 + deploy düzeltmeleri.
 | ✨ **Proje görev paneli ayarı** (PR #212) | Yeni kullanıcı ayarı `Platform.Projects.DetailPanel`, **varsayılan KAPALI**. Kapalıyken projeye tıklama sağdan açılan panel yerine **proje detay sayfasına** gider. Ayardan açılır. | Kullanıcı görünür davranış değişikliği (§ Davranış). |
 | 💫 **Sayfa yükleme animasyonu** (PR #211) | `wwwroot/css/apya-entrance.css` — üst-seviye bloklara kademeli giriş; global bundle'a eklendi. `prefers-reduced-motion` korumalı | Kozmetik. ABP bundling runtime'da minify eder. |
 | 🗓️ **Takvim kurulum sihirbazı** (PR #210) | `SetupWizard.jsx` — kısa masaüstü ekranda footer kırpılması düzeltildi | 🔴 **React bundle yeniden derlenmeli** (§1). |
+| 🔑 **Kiracı adı yazmadan giriş** (PR #215) | `LoginTenantFinder` + `ApyaLoginModel` — kullanıcı adı/e-posta + şifre ile giriş, kiracı otomatik bulunur | Kullanıcı görünür davranış değişikliği (§ Davranış). Şemasız. |
+| 🎯 **Hibe kataloğu host'a kilitlendi** (PR #216) | `Grants.Create/Edit/Delete` → `MultiTenancySides.Host` + iki AppService'te host-bağlam guard'ı; `Permission:Grants` etiketi "Hibe Programlarını Görüntüleme" oldu. Ayrıca paketle **yeni açılan** modülün izinleri kiracının statik admin rolüne otomatik verilir | İzin/menü davranışı değişir (§ Davranış). Şemasız — izinler runtime verisidir. |
 
 **Sürüm notları kullanıcıya gösterilir:** katalogda yeni **`2026.08.24`** girdisi var
 (`src/Apya.Platform.Web/ReleaseNotes/ReleaseNoteCatalog.cs`). `/ReleaseNotes` artık **üç sürüm**
@@ -103,6 +116,9 @@ ezer**; orada eski `.com.tr` kalırsa paketteki yeni değer hiç devreye girmez.
 | **Projeye tıklama artık detay sayfasına gider** | `Platform.Projects.DetailPanel` varsayılan kapalı. Önceden sağdan açılan görev panelini kullananlar artık proje detay sayfasına yönlenir. Paneli geri isteyen kullanıcı **Genel Ayarlar → "Proje görev paneli"**nden açar. |
 | **Sayfalar kademeli beliriyor** | Saf CSS giriş animasyonu. "Hareketi azalt" tercihi açık cihazlarda otomatik kapanır. Regresyon riski düşük; yine de modal/`position:fixed` katmanların doğru açıldığını gözle doğrula. |
 | **Yeni müşteri ekleme** | Host yöneticisi yeni kiracı eklerken 500 almaz (seed contributor host-only guard). Deploy sonrası **bir kez yeni müşteri ekleyip 200 döndüğünü doğrula.** |
+| **Giriş ekranında kiracı adı sorulmuyor** | Kullanıcı adı/e-posta + şifre yeterli; kiracı otomatik bulunur. Aynı kullanıcı adı birden çok kiracıda varsa (demo verisinde 31 kiracıda `ceo`) doğru kiracı **şifre eşleşmesiyle** seçilir. Deploy sonrası **bir kiracı kullanıcısıyla giriş yapıp doğru kiracıya düştüğünü doğrula.** |
+| 🔴 **Hibe: kiracı artık çağrı açamıyor** | `Hibe Oluşturma/Düzenleme/Silme` izinleri host'a özel oldu; kiracının yetki ekranından **kaybolur** ve kiracı bağlamında API'den de reddedilir. Kiracıda yalnız **"Hibe Programlarını Görüntüleme"** kalır (görüntüleme + firma profili + başvuru). Kiracı rollerindeki eski `Platform.Grants.Create/Edit/Delete` kayıtları DB'de kalır ama **etkisizdir** — temizlik gerekmez. |
+| 🔴 **Hibe menüsü: mevcut kiracılarda ELLE izin gerekir** | Modül izinlerini otomatik verme yalnız paketle bir özellik **kapalıdan açığa** geçtiğinde çalışır. Hibe özelliği **zaten açık** olan bir kiracıda izin geriye dönük verilmez → menüde "Hibe Yönetimi" çıkmaz. O kiracıda bir kereliğine **Kiracı → Roller → admin → İzinler → Hibe Yönetimi → "Hibe Programlarını Görüntüleme"** işaretlenmeli. Bundan sonra açılan modüller otomatik gelir. |
 | **Sürüm notları** | Menüdeki **Yenilikler** → `/ReleaseNotes` artık **üç sürüm** listeler; ilk açılışta 2026.08.24 penceresi çıkar. |
 
 ---
@@ -115,6 +131,9 @@ ezer**; orada eski `.com.tr` kalırsa paketteki yeni değer hiç devreye girmez.
 - [ ] **Yeni müşteri (kiracı) ekleme 200 dönüyor** (Yeni Müşteri 500 regresyonu)
 - [ ] **Takvim ilk kurulum sihirbazı** kısa ekranda footer'ı kırpmıyor (bundle yeniden derlendi mi kanıtı)
 - [ ] Sayfa açılışında giriş animasyonu görünüyor; modal/açılır paneller normal açılıyor
+- [ ] **Kiracı adı yazmadan giriş** çalışıyor ve doğru kiracıya düşüyor
+- [ ] **Hibe:** kiracının yetki ekranında yalnız "Hibe Programlarını Görüntüleme" var (Oluşturma/Düzenleme/Silme görünmüyor)
+- [ ] **Hibe:** izin verilmiş bir kiracıda sol menüde "Hibe Yönetimi → Hibe Çağrıları" çıkıyor; host'ta "Başvurular" da görünüyor
 - [ ] `/ReleaseNotes` **üç sürümü** listeliyor
 - [ ] (Regresyon) Takvim Ay/Hafta/Gün geçişi, Dokümanlar ağacı, fatura oluşturma hâlâ çalışıyor
 

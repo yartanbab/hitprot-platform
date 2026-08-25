@@ -11,6 +11,7 @@ using Volo.Abp.Data;
 using Volo.Abp.Domain.Entities;
 using Volo.Abp.Domain.Repositories;
 using Volo.Abp.Identity;
+using Volo.Abp.MultiTenancy;
 
 namespace Apya.Platform.Projects;
 
@@ -40,6 +41,11 @@ public class ProjectMemberAppService : PlatformAppService, IProjectMemberAppServ
 
     public async Task<List<ProjectMemberDto>> GetListByProjectAsync(Guid projectId)
     {
+        // Host bağlamında kiracı projesinin ekibi de okunabilmeli. Filtre açık kalınca
+        // patlamıyor ama SESSİZCE boş liste dönüyordu: proje detayında ekip yokmuş gibi
+        // görünüyor, şeritteki facepile boş kalıyordu.
+        using var hostScope = CurrentTenant.Id == null ? _dataFilter.Disable<IMultiTenant>() : null;
+
         var members = await _memberRepository.GetListAsync(m => m.ProjectId == projectId);
         if (members.Count == 0)
         {

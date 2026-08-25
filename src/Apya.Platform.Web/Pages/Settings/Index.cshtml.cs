@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Apya.Platform.Features;
 using Apya.Platform.Permissions;
 using Apya.Platform.Settings;
 using Microsoft.AspNetCore.Authorization;
@@ -37,6 +38,27 @@ public class IndexModel : AbpPageModel
     [BindProperty]
     public bool ProjectsDetailPanel { get; set; } = PlatformSettingDefaults.ProjectsDetailPanel;
 
+    /// <summary>Yeni Görev modalının açılış katmanı ("quick" | "form").</summary>
+    [BindProperty]
+    public string TaskCreateDefaultMode { get; set; } = PlatformSettingDefaults.TaskCreateDefaultMode;
+
+    /// <summary>Hızlı giriş satırının işaretçi ipuçları gösterilsin mi?</summary>
+    [BindProperty]
+    public bool TaskCreateShowKeyboardHints { get; set; } = PlatformSettingDefaults.TaskCreateShowKeyboardHints;
+
+    /// <summary>Yeni Görev bilgi kutusu — KİRACI seviyesi, yalnız yetkiliye gösterilir.</summary>
+    [BindProperty]
+    public bool TaskCreateShowInfoBanner { get; set; } = PlatformSettingDefaults.TaskCreateShowInfoBanner;
+
+    /// <summary>
+    /// Hızlı giriş bu kullanıcı için mümkün mü (paket feature'ı + izin)? Değilse katman
+    /// seçimi gösterilmez — kullanıcı kapalı bir şeyi ayarlamaya çalışmasın.
+    /// </summary>
+    public bool QuickEntryAvailable { get; set; }
+
+    /// <summary>Kiracı seviyesindeki ayarı düzenleyebilir mi? (PlatformPermissions.TenantSettings)</summary>
+    public bool CanManageTenantSettings { get; set; }
+
     /// <summary>Kullanıcının erişebildiği yönetim hedefleri (boşsa bölüm hiç basılmaz).</summary>
     public List<AdminLink> AdminLinks { get; } = new();
 
@@ -44,11 +66,16 @@ public class IndexModel : AbpPageModel
 
     private readonly ISettingManager _settingManager;
     private readonly IPermissionChecker _permission;
+    private readonly Volo.Abp.Features.IFeatureChecker _featureChecker;
 
-    public IndexModel(ISettingManager settingManager, IPermissionChecker permission)
+    public IndexModel(
+        ISettingManager settingManager,
+        IPermissionChecker permission,
+        Volo.Abp.Features.IFeatureChecker featureChecker)
     {
         _settingManager = settingManager;
         _permission = permission;
+        _featureChecker = featureChecker;
     }
 
     public async Task OnGetAsync()
@@ -65,6 +92,25 @@ public class IndexModel : AbpPageModel
         ProjectsDetailPanel = detailPanel == null
             ? PlatformSettingDefaults.ProjectsDetailPanel
             : detailPanel.Equals("true", System.StringComparison.OrdinalIgnoreCase);
+
+        TaskCreateDefaultMode = await _settingManager.GetOrNullForCurrentUserAsync(PlatformSettings.TaskCreate.DefaultMode)
+                                ?? PlatformSettingDefaults.TaskCreateDefaultMode;
+
+        var hints = await _settingManager.GetOrNullForCurrentUserAsync(PlatformSettings.TaskCreate.ShowKeyboardHints);
+        TaskCreateShowKeyboardHints = hints == null
+            ? PlatformSettingDefaults.TaskCreateShowKeyboardHints
+            : hints.Equals("true", System.StringComparison.OrdinalIgnoreCase);
+
+        var banner = await _settingManager.GetOrNullForCurrentTenantAsync(PlatformSettings.TaskCreate.ShowInfoBanner);
+        TaskCreateShowInfoBanner = banner == null
+            ? PlatformSettingDefaults.TaskCreateShowInfoBanner
+            : banner.Equals("true", System.StringComparison.OrdinalIgnoreCase);
+
+        // Modaldaki kapılarla AYNI sıra: feature kapalıysa izne hiç bakılmaz.
+        QuickEntryAvailable = await _featureChecker.IsEnabledAsync(PlatformFeatures.TaskQuickEntry)
+                              && await _permission.IsGrantedAsync(PlatformPermissions.Tasks.QuickCreate);
+
+        CanManageTenantSettings = await _permission.IsGrantedAsync(PlatformPermissions.TenantSettings.Default);
 
         await LoadAdminLinksAsync();
     }
@@ -136,6 +182,24 @@ public class IndexModel : AbpPageModel
         await _settingManager.SetForCurrentUserAsync(
             PlatformSettings.Projects.DetailPanel,
             ProjectsDetailPanel.ToString().ToLowerInvariant());
+
+        var taskCreateMode = System.Array.IndexOf(PlatformSettingDefaults.TaskCreateDefaultModeValues, TaskCreateDefaultMode) >= 0
+            ? TaskCreateDefaultMode
+            : PlatformSettingDefaults.TaskCreateDefaultMode;
+        await _settingManager.SetForCurrentUserAsync(PlatformSettings.TaskCreate.DefaultMode, taskCreateMode);
+
+        await _settingManager.SetForCurrentUserAsync(
+            PlatformSettings.TaskCreate.ShowKeyboardHints,
+            TaskCreateShowKeyboardHints.ToString().ToLowerInvariant());
+
+        // KİRACI ayarı: yetkisi olmayanın POST'u yok sayılır. Alan ekranda hiç
+        // basılmıyor ama gizli olması yetkilendirme değildir — sunucuda da kapalı.
+        if (await _permission.IsGrantedAsync(PlatformPermissions.TenantSettings.Default))
+        {
+            await _settingManager.SetForCurrentTenantAsync(
+                PlatformSettings.TaskCreate.ShowInfoBanner,
+                TaskCreateShowInfoBanner.ToString().ToLowerInvariant());
+        }
 
         TempData["Saved"] = true;
         return RedirectToPage();

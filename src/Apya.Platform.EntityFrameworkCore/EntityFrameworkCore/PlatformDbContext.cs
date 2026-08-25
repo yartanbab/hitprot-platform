@@ -465,6 +465,7 @@ namespace Apya.Platform.EntityFrameworkCore
                 b.ConfigureByConvention();
                 b.Property(x => x.Name).IsRequired().HasMaxLength(128);
                 b.Property(x => x.Code).IsRequired().HasMaxLength(32);
+                b.Property(x => x.CoverImageFileName).HasMaxLength(256);
                 b.HasOne<Grant>().WithMany().HasForeignKey(x => x.GrantId);
                 // APYA-132: Customer ilişkisi + Type filtreleme
                 b.HasOne<Customer>().WithMany().HasForeignKey(x => x.CustomerId).OnDelete(DeleteBehavior.SetNull);
@@ -562,6 +563,12 @@ namespace Apya.Platform.EntityFrameworkCore
             {
                 b.ToTable(PlatformConsts.DbTablePrefix + "ProjectAttachments", PlatformConsts.DbSchema);
                 b.ConfigureByConvention();
+                b.Property(x => x.FileName).IsRequired().HasMaxLength(256);
+                b.Property(x => x.StoredFileName).IsRequired().HasMaxLength(256);
+                b.Property(x => x.ContentType).HasMaxLength(128);
+                b.Property(x => x.Title).HasMaxLength(256);
+                // Ek listesi daima proje bağlamında okunur (düzenleme ekranı, detay).
+                b.HasIndex(x => x.ProjectId);
             });
 
 

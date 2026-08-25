@@ -8,100 +8,238 @@
     Layout = null;
 }
 
-<form asp-page="/Tasks/CreateModal" method="post">
-    <abp-modal size="Large">
-        <abp-modal-header title="@($"🚀 {L["Tasks:Create:Title"].Value}")"></abp-modal-header>
+@* Yeni Görev — tasarım kanvasının 1b (sıkı tek kolon) + 1d (hızlı giriş) birleşimi.
+   Maket: docs/design/gorev-olustur/yeni-gorev-ekrani.dc.html
+   Stil TEK KAYNAK: apya-shell.css §24. Burada inline stil YOK.
 
-        <abp-modal-body class="p-4">
+   Tek POST kuralı: hızlı satır da, çipler de, açılır form da AYNI gerçek alanları yazar.
+   Gerçek <select>/<input>'lar DOM'da kalır (.apya-tc-native ile gizlenir) — model binding,
+   jQuery validate ve ABP'nin form-post hattı olduğu gibi çalışır. *@
+
+<form asp-page="/Tasks/CreateModal" method="post" id="CreateTaskForm">
+    <abp-modal size="Large">
+        <abp-modal-header title="@L["Tasks:Create:Title"].Value"></abp-modal-header>
+
+        <abp-modal-body class="p-0">
             <input type="hidden" asp-for="Task.ProjectId" />
 
-            <div class="alert alert-light border shadow-sm mb-4 d-flex align-items-center rounded-3" role="alert">
-                <i class="fa fa-info-circle text-primary fs-3 me-3"></i>
-                <div class="text-muted" style="font-size: 0.95rem;">
-                    @L["Tasks:Create:InfoText"]
+            <div class="apya-tc"
+                 data-quick-entry="@Model.ShowQuickEntry.ToString().ToLowerInvariant()"
+                 data-hints="@Model.ShowKeyboardHints.ToString().ToLowerInvariant()">
+
+                @if (Model.ShowInfoBanner)
+                {
+                    <div class="apya-tc-banner" role="note">
+                        <i class="fa fa-circle-info"></i>
+                        <span>@L["Tasks:Create:InfoText"]</span>
+                    </div>
+                }
+
+                @* ── 1d katmanı: hızlı giriş satırı ─────────────────────────────── *@
+                @if (Model.ShowQuickEntry)
+                {
+                    <div class="apya-tc-quick">
+                        <i class="fa-solid fa-bolt apya-tc-quick-icon"></i>
+                        <input type="text" id="TaskQuickLine" class="apya-tc-quick-input"
+                               autocomplete="off" spellcheck="false"
+                               placeholder="@L["Tasks:Quick:Placeholder"]" />
+                    </div>
+
+                    <div class="apya-tc-preview" id="TaskQuickPreview" hidden></div>
+
+                    @if (Model.ShowKeyboardHints)
+                    {
+                        <div class="apya-tc-hints">
+                            <span><b>@@</b> @L["Tasks:Quick:Hint:Assignee"]</span>
+                            <span><b>#</b> @L["Tasks:Quick:Hint:Tag"]</span>
+                            <span><b>!</b> @L["Tasks:Quick:Hint:Priority"]</span>
+                            <span><b>&gt;</b> @L["Tasks:Quick:Hint:Date"]</span>
+                            <span><b>~</b> @L["Tasks:Quick:Hint:Private"]</span>
+                        </div>
+                    }
+                }
+
+                @* ── 1b katmanı: sıkı form ──────────────────────────────────────── *@
+                <div class="apya-tc-form" id="TaskCreateForm" data-collapsed="@Model.ShowQuickEntry.ToString().ToLowerInvariant()">
+
+                    <div class="apya-tc-content">
+                        <input asp-for="Task.Title" class="apya-tc-title" autocomplete="off"
+                               placeholder="@L["Tasks:Field:TitlePlaceholder"].Value" />
+                        <span asp-validation-for="Task.Title" class="apya-tc-error"></span>
+
+                        <textarea asp-for="Task.Description" class="apya-tc-desc" rows="2"
+                                  placeholder="@L["Tasks:Field:DescriptionPlaceholder"].Value"></textarea>
+                    </div>
+
+                    @* Meta çubuğu — her çip bir açılırdır, açılır kendi gerçek alanını yazar. *@
+                    <div class="apya-tc-meta">
+
+                        @if (!Model.ProjectId.HasValue)
+                        {
+                            <div class="apya-tc-chip-wrap dropdown">
+                                <button type="button" class="apya-tc-chip" data-bs-toggle="dropdown" data-bs-auto-close="outside" data-chip="project">
+                                    <i class="fa-solid fa-folder-open"></i>
+                                    <span data-chip-label>@L["Tasks:Field:NoProject"]</span>
+                                </button>
+                                <div class="dropdown-menu apya-tc-pop">
+                                    <select class="form-select apya-tc-native" asp-for="Task.ProjectId" asp-items="@Model.ProjectList"
+                                            data-chip-source="project">
+                                        <option value="">@L["Tasks:Field:NoProject"]</option>
+                                    </select>
+                                </div>
+                            </div>
+                        }
+
+                        <div class="apya-tc-chip-wrap dropdown">
+                            <button type="button" class="apya-tc-chip" data-bs-toggle="dropdown" data-bs-auto-close="outside" data-chip="status">
+                                <span class="apya-tc-dot"></span>
+                                <span data-chip-label>@L["Tasks:Status:Todo"]</span>
+                            </button>
+                            <div class="dropdown-menu apya-tc-pop">
+                                <select class="form-select apya-tc-native" asp-for="StatusOrColumn"
+                                        asp-items="@Model.StatusOrColumnList" data-chip-source="status"></select>
+                            </div>
+                        </div>
+
+                        <div class="apya-tc-chip-wrap dropdown">
+                            <button type="button" class="apya-tc-chip" data-bs-toggle="dropdown" data-bs-auto-close="outside" data-chip="priority">
+                                <i class="fa-solid fa-flag"></i>
+                                <span data-chip-label>@L["Tasks:Priority:Medium"]</span>
+                            </button>
+                            <div class="dropdown-menu apya-tc-pop">
+                                <select class="form-select apya-tc-native" asp-for="Task.Priority" data-chip-source="priority">
+                                    <option value="1">@L["Tasks:Priority:Low"]</option>
+                                    <option value="2" selected>@L["Tasks:Priority:Medium"]</option>
+                                    <option value="3">@L["Tasks:Priority:High"]</option>
+                                    <option value="4">@L["Tasks:Priority:Critical"]</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="apya-tc-chip-wrap dropdown">
+                            <button type="button" class="apya-tc-chip" data-bs-toggle="dropdown" data-bs-auto-close="outside" data-chip="assignee">
+                                <i class="fa-regular fa-user"></i>
+                                <span data-chip-label>@L["Tasks:Field:Unassigned"]</span>
+                            </button>
+                            <div class="dropdown-menu apya-tc-pop">
+                                <select class="form-select apya-tc-native" asp-for="Task.AssigneeId"
+                                        asp-items="@Model.UserList" data-chip-source="assignee">
+                                    <option value="">@L["Tasks:Field:Unassigned"]</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="apya-tc-chip-wrap dropdown">
+                            <button type="button" class="apya-tc-chip" data-bs-toggle="dropdown" data-bs-auto-close="outside" data-chip="dates">
+                                <i class="fa-regular fa-calendar"></i>
+                                <span data-chip-label></span>
+                            </button>
+                            <div class="dropdown-menu apya-tc-pop apya-tc-pop-dates">
+                                <label>
+                                    <span>@L["Tasks:Field:StartDate"]</span>
+                                    <input asp-for="Task.StartDate" type="date" class="form-control" data-chip-source="startDate" />
+                                </label>
+                                <label>
+                                    <span>@L["Tasks:Field:DueDate"]</span>
+                                    <input asp-for="Task.DueDate" type="date" class="form-control" data-chip-source="dueDate" />
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="apya-tc-chip-wrap dropdown">
+                            <button type="button" class="apya-tc-chip" data-bs-toggle="dropdown" data-bs-auto-close="outside" data-chip="tags">
+                                <i class="fa-solid fa-tag"></i>
+                                <span data-chip-label>@L["Tasks:Field:Tags"]</span>
+                            </button>
+                            <div class="dropdown-menu apya-tc-pop apya-tc-pop-tags">
+                                <select class="form-select" asp-for="Task.TagNames" multiple id="TaskTagsSelect"
+                                        data-chip-source="tags">
+                                    @foreach (var tag in Model.AllTagNames)
+                                    {
+                                        <option value="@tag">@tag</option>
+                                    }
+                                </select>
+                            </div>
+                        </div>
+
+                        @* Gizli görev — maketin footer'ındaki "Gizli" düğmesi. Gerçek checkbox
+                           çipin İÇİNDE yaşar: ABP footer'ı özelleştirilemiyor, alan da
+                           kaybolmamalı (~gizli işaretçisi bunu yazar). *@
+                        <label class="apya-tc-chip apya-tc-chip-private" data-chip="private">
+                            <input class="apya-tc-native-check" type="checkbox" asp-for="Task.IsPrivate"
+                                   data-chip-source="private" />
+                            <i class="fa-solid fa-user-secret"></i>
+                            <span>@L["Tasks:Field:PrivateShort"]</span>
+                        </label>
+
+                        @if (Model.ShowPlanningFields)
+                        {
+                            <button type="button" class="apya-tc-chip apya-tc-chip-more" id="TaskMoreToggle"
+                                    aria-expanded="false" aria-controls="TaskPlanning">
+                                <i class="fa-solid fa-ellipsis"></i>
+                                <span>@L["Tasks:Create:More"]</span>
+                            </button>
+                        }
+                    </div>
+
+                    @* ── Planlama alanları — izin + paket kapısı arkasında ─────────── *@
+                    @if (Model.ShowPlanningFields)
+                    {
+                        <div class="apya-tc-planning" id="TaskPlanning" hidden>
+                            <label>
+                                <span>@L["Tasks:Field:EstimatedHours"]</span>
+                                <input asp-for="Task.EstimatedHours" type="number" step="0.25" min="0" max="9999.99"
+                                       class="form-control" placeholder="—" />
+                            </label>
+                            <label>
+                                <span>@L["Tasks:Field:TaskType"]</span>
+                                <input asp-for="Task.TaskType" type="text" maxlength="64" class="form-control" />
+                            </label>
+                            <label>
+                                <span>@L["Tasks:Field:Sprint"]</span>
+                                <input asp-for="Task.Sprint" type="text" maxlength="32" class="form-control" />
+                            </label>
+                        </div>
+                    }
                 </div>
             </div>
-
-            <h6 class="apya-form-section-title"><i class="fa fa-align-left me-2"></i>@L["Tasks:Section:BasicInfo"]</h6>
-            <div class="apya-form-section mb-4">
-                <abp-input asp-for="Task.Title" label="@L["Tasks:Field:Title"].Value" placeholder="@L["Tasks:Field:TitlePlaceholder"].Value" />
-
-                <div class="mt-3">
-                    <abp-input asp-for="Task.Description" type="textarea" label="@L["Tasks:Field:Description"].Value" rows="3" placeholder="@L["Tasks:Field:DescriptionPlaceholder"].Value" />
-                </div>
-            </div>
-
-            <h6 class="apya-form-section-title"><i class="fa fa-calendar-alt me-2"></i>@L["Tasks:Section:Schedule"]</h6>
-            <div class="apya-form-section mb-4">
-                <div class="row g-3">
-                    <div class="col-md-6">
-                        <abp-input asp-for="Task.StartDate" label="@L["Tasks:Field:StartDate"].Value" type="date" />
-                    </div>
-                    <div class="col-md-6">
-                        <abp-input asp-for="Task.DueDate" label="@L["Tasks:Field:DueDate"].Value" type="date" />
-                    </div>
-                </div>
-            </div>
-
-            <h6 class="apya-form-section-title"><i class="fa fa-user-tag me-2"></i>@L["Tasks:Section:StatusPriority"]</h6>
-            <div class="apya-form-section">
-                <div class="row g-3">
-                    <div class="col-md-4">
-                        <label class="form-label fw-semibold" asp-for="StatusOrColumn">@L["Tasks:Field:Status"]</label>
-                        <select class="form-select shadow-sm" asp-for="StatusOrColumn" asp-items="@Model.StatusOrColumnList"></select>
-                    </div>
-
-                    <div class="col-md-4">
-                        <label class="form-label fw-semibold" asp-for="Task.Priority">@L["Tasks:Field:Priority"]</label>
-                        <select class="form-select shadow-sm" asp-for="Task.Priority">
-                            <option value="1">🟢 @L["Tasks:Priority:Low"]</option>
-                            <option value="2" selected>🟡 @L["Tasks:Priority:Medium"]</option>
-                            <option value="3">🔴 @L["Tasks:Priority:High"]</option>
-                            <option value="4">⚫ @L["Tasks:Priority:Critical"]</option>
-                        </select>
-                    </div>
-
-                    <div class="col-md-4">
-                        <label class="form-label fw-semibold" asp-for="Task.AssigneeId">@L["Tasks:Field:Assignee"]</label>
-                        <select class="form-select shadow-sm" asp-for="Task.AssigneeId" asp-items="@Model.UserList">
-                            <option value="">👤 @L["Tasks:Field:Unassigned"]</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="row g-3 mt-1">
-                    <div class="col-12">
-                        <label class="form-label fw-semibold" asp-for="Task.TagNames">Etiketler</label>
-                        <select class="form-select" asp-for="Task.TagNames" multiple id="TaskTagsSelect">
-                            @foreach (var tag in Model.AllTagNames)
-                            {
-                                <option value="@tag">@tag</option>
-                            }
-                        </select>
-                    </div>
-                </div>
-            </div>
-
-            <div class="mt-4 text-end">
-                <div class="form-check form-switch d-inline-block text-start apya-form-section">
-                    <input class="form-check-input ms-0 mt-1" style="transform: scale(1.3);" type="checkbox" asp-for="Task.IsPrivate">
-                    <label class="form-check-label fw-bold text-danger ms-3" asp-for="Task.IsPrivate">
-                        <i class="fa fa-user-secret me-1"></i> @L["Tasks:Field:Private"]
-                    </label>
-                    <small class="d-block text-muted ms-3 mt-1">@L["Tasks:Field:PrivateHint"]</small>
-                </div>
-            </div>
-
         </abp-modal-body>
 
         <abp-modal-footer buttons="@(AbpModalButtons.Cancel | AbpModalButtons.Save)"></abp-modal-footer>
     </abp-modal>
 </form>
 
+@* Ayrıştırıcının sözlükleri — ayrı endpoint açmamak için sayfa modelinden gömülür. *@
+<script type="application/json" id="TaskQuickLookups">
+    @Html.Raw(System.Text.Json.JsonSerializer.Serialize(new
+    {
+        users = Model.UserList.Select(u => new { id = u.Value, name = u.Text }),
+        tags = Model.AllTagNames
+    }))
+</script>
+
 <script>
-    $('#TaskTagsSelect').select2({
-        tags: true,
-        width: '100%',
-        placeholder: 'Etiket ekle veya seç…',
-        dropdownParent: $('#TaskTagsSelect').closest('.modal')
-    });
+    (function () {
+        var $form = $('#CreateTaskForm');
+
+        // <abp-modal> class attribute'u geçirmiyor (bkz. EditModal.cshtml'deki aynı not):
+        // 640px genişlik ve §24 kuralları bu sınıfla açılıyor.
+        $form.find('.modal-dialog').addClass('apya-tc-dialog');
+
+        $('#TaskTagsSelect').select2({
+            tags: true,
+            width: '100%',
+            placeholder: '@L["Tasks:Field:TagsPlaceholder"]',
+            dropdownParent: $('#TaskTagsSelect').closest('.apya-tc-pop')
+        });
+
+        // Çipler, hızlı satır ayrıştırıcısı ve klavye kısayolları ortak modülde
+        // (/js/apya-quick-task.js, global demet). Modül yüklenmediyse form yine
+        // çalışır — yalnız çip etiketleri ve hızlı satır ölü kalır, kayıt bozulmaz.
+        if (window.apya && apya.taskCreate) {
+            apya.taskCreate.init($form);
+        } else {
+            console.warn('[apya] taskCreate modülü yüklenmedi — Yeni Görev çipleri devre dışı.');
+        }
+    })();
 </script>

@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Apya.Platform.Features;
+using Apya.Platform.Permissions;
 using Volo.Abp.Authorization.Permissions;
 using Volo.Abp.DependencyInjection;
 using Volo.Abp.Domain.Repositories;
@@ -178,7 +180,9 @@ public class TenantPackageManager : ITransientDependency
     /// </summary>
     public async Task EnsureDefaultPackagesAsync()
     {
-        var queryable = await _packageRepository.WithDetailsAsync(p => p.Permissions);
+        // Features de yüklenir: aşağıdaki "sonradan eklenen feature" telafisi paketin
+        // mevcut satırlarını görmeden hangisinin eksik olduğunu bilemez.
+        var queryable = await _packageRepository.WithDetailsAsync(p => p.Permissions, p => p.Features);
         var existing = await _asyncExecuter.ToListAsync(queryable);
         var existingCodes = existing.Select(p => p.Code).ToHashSet();
 
@@ -213,7 +217,71 @@ public class TenantPackageManager : ITransientDependency
             await _packageRepository.UpdateAsync(pkg, autoSave: true);
             await _ceilingStore.InvalidatePackageAsync(pkg.Code);
         }
+
+        await BackfillLateAdditionsAsync(existing.Where(p => p.Permissions.Any()));
     }
+
+    /// <summary>
+    /// Kod registry'sine SONRADAN eklenen feature ve izinleri, DB'de zaten var olan
+    /// paketlere tamamlar.
+    ///
+    /// <para>Neden gerekli: paket satırları bir kez tohumlanır. Yeni bir capability feature'ı
+    /// (ör. <see cref="PlatformFeatures.TaskQuickEntry"/>) eklendiğinde eski paketlerde o
+    /// feature'ın SATIRI yoktur → <c>GetFeatureValuesAsync</c> DB'yi okuduğu için paket
+    /// uygulanırken hiç yazılmaz ve tenant feature'ın <c>defaultValue</c>'suna ("true") düşer;
+    /// Basic paket yeteneği sessizce AÇIK kalır. Aynı şekilde yeni izin adı eski paketlerin
+    /// tavan listesinde olmadığı için <see cref="PackagePermissionStateChecker"/> onu her
+    /// tenant'ta kapatır.</para>
+    ///
+    /// <para>Telafi bilerek DAR: yalnız <see cref="LateAddedPermissions"/> listesindeki adlar ve
+    /// yalnız SATIRI HİÇ OLMAYAN feature'lar işlenir. Kör bir "eksikleri tamamla" taraması
+    /// host'un ekrandan bilinçli olarak kaldırdığı izinleri de geri getirirdi.</para>
+    /// </summary>
+    private async Task BackfillLateAdditionsAsync(IEnumerable<PlatformPackage> packages)
+    {
+        foreach (var pkg in packages)
+        {
+            var changed = false;
+            var registry = PackageDefinitions.For(pkg.Code);
+
+            // 1) Satırı hiç olmayan feature'lar — var olan değerler EZİLMEZ.
+            var haveFeatures = pkg.Features.Select(f => f.FeatureName).ToHashSet(StringComparer.Ordinal);
+            foreach (var kv in registry.Where(kv => !haveFeatures.Contains(kv.Key)))
+            {
+                pkg.SetFeature(_guidGenerator.Create(), kv.Key, kv.Value);
+                changed = true;
+            }
+
+            // 2) Sonradan tanımlanan izinler — paketin varsayılanı içeriyorsa tavana eklenir.
+            var havePermissions = pkg.ToPermissionNames().ToHashSet(StringComparer.Ordinal);
+            var missing = LateAddedPermissions
+                .Where(name => !havePermissions.Contains(name)
+                               && PackagePermissionDefaults.IsIncluded(pkg.Code, name))
+                .ToList();
+            if (missing.Any())
+            {
+                pkg.ReplacePermissions(
+                    havePermissions.Concat(missing).Select(name => (_guidGenerator.Create(), name)));
+                changed = true;
+            }
+
+            if (!changed) { continue; }
+
+            await _packageRepository.UpdateAsync(pkg, autoSave: true);
+            await _ceilingStore.InvalidatePackageAsync(pkg.Code);
+        }
+    }
+
+    /// <summary>
+    /// İlk paket tohumundan SONRA tanımlanan izinler. Sürüm sürüm büyür; bir ad buraya
+    /// eklendiğinde <see cref="BackfillLateAdditionsAsync"/> onu mevcut paketlerin tavanına
+    /// taşır. Buraya yazılmayan yeni izin, kurulu sistemlerde hiçbir tenant'ta açılamaz.
+    /// </summary>
+    private static readonly string[] LateAddedPermissions =
+    {
+        PlatformPermissions.Tasks.QuickCreate,
+        PlatformPermissions.Tasks.ManagePlanning,
+    };
 
     private IEnumerable<(Guid Id, string Name)> DefaultPermissionsFor(
         PackageCode code,

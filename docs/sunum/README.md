@@ -1,48 +1,72 @@
-# Apya Platform — Müşteri Tanıtım Sunumu
+# Apya Platform — Tanıtım Sunumları
 
-16 slaytlık sıralı anlatım. **Tek kaynak, üç çıktı**: slayt içerikleri
-`build/slides.mjs` içinde yaşar; PDF, PNG ve PPTX hepsi oradan üretilir.
-Bir cümleyi düzeltmek için yalnızca `slides.mjs` değiştirilir, sonra derleme
-komutu çalıştırılır — üç çıktı da senkron kalır.
+İki ayrı deste, tek derleme zinciri. Her deste 15 slayt, sıralı anlatım.
 
-## Çıktılar
+| Deste | Kime | Klasör |
+|---|---|---|
+| `sirket` | Proje yürüten şirketler | [`sirket/`](sirket/) |
+| `dernek` | Dernek ve vakıflar | [`dernek/`](dernek/) |
+
+Slayt içerikleri `build/slides-<deste>.mjs` içinde yaşar; PDF, PNG ve PPTX
+hepsi oradan üretilir. Bir cümleyi düzeltmek için yalnızca o dosya değiştirilir,
+sonra derleme komutu çalıştırılır — üç çıktı da senkron kalır.
+
+## Çıktılar (her deste için)
 
 | Dosya | Ne için |
 |---|---|
-| `apya-sunum.pdf` | Müşteriye gönderilecek / basılacak sürüm (16 sayfa, 16:9) |
-| `apya-sunum.pptx` | PowerPoint ile sunum (13,33 × 7,5 inç; konuşmacı notları dolu) |
-| `gorseller/slayt-01..16.png` | Teklif, e-posta, web sitesi için tek tek görseller (1600 × 900) |
-| `apya-sunum.html` | Tarayıcıda gezilen sürüm (↓ ↑ ile slayt geçişi) |
+| `apya-sunum-<deste>.pdf` | Gönderilecek / basılacak sürüm (15 sayfa, 16:9) |
+| `apya-sunum-<deste>.pptx` | PowerPoint ile sunum (13,33 × 7,5 inç; konuşmacı notları dolu) |
+| `gorseller/slayt-01..15.png` | Teklif, e-posta, web sitesi için tek tek görseller (1600 × 900) |
+| `apya-sunum-<deste>.html` | Tarayıcıda gezilen sürüm (↓ ↑ ile slayt geçişi) |
 
-## Slayt sırası
+## Slayt sırası (iki destede de aynı iskelet)
 
-| # | Bölüm | Slayt |
-|---|---|---|
-| 01 | — | Kapak |
-| 02 | Neden | Bugün bilgi altı ayrı yerde duruyor |
-| 03 | Neden | Apya üç şeyi birbirine bağlar (iş · para · belge) |
-| 04 | Neden | İşin baştan sona yolculuğu — **ana görsel** |
-| 05 | Ekranlar | Genel Bakış |
-| 06 | Ekranlar | Proje konsolu |
-| 07 | Ekranlar | Görevler: liste · kanban · takvim · Gantt |
-| 08 | Ekranlar | Finans akışı |
-| 09 | Ekranlar | Dokümanlar & formlar |
-| 10 | Ekranlar | Raporlar |
-| 11 | Ekranlar | AI Değerlendirme Merkezi |
-| 12 | Ekranlar | Hibe yönetimi |
-| 13 | Güven | Roller ve yetkiler |
-| 14 | Güven | Çok şirketli yapı + güvenlik |
-| 15 | Güven | Masaüstü / tablet / telefon |
-| 16 | Başlangıç | Kullanmaya başlamak: dört adım |
+| # | Bölüm | Şirket | Dernek |
+|---|---|---|---|
+| 01 | — | Kapak | Kapak |
+| 02 | Neden | Bilgi altı ayrı yerde | Fon raporu istendiğinde işler durur |
+| 03 | Neden | İş · Para · Belge | Faaliyet · Kaynak · Kanıt |
+| 04 | Neden | İşin yolculuğu — **ana görsel** | Kaynaktan rapora giden yol — **ana görsel** |
+| 05 | Ekranlar | Genel Bakış | Genel Bakış |
+| 06 | Ekranlar | Proje konsolu | Fon konsolu |
+| 07 | Ekranlar | Görevler: liste · kanban · takvim · Gantt | aynı |
+| 08 | Ekranlar | Finans akışı | Kaynak akışı (hibe · bağış · harcama) |
+| 09 | Ekranlar | Dokümanlar & formlar | Belgeler & formlar (denetime hazırlık) |
+| 10 | Ekranlar | Raporlar | Raporlar (fon bütçesi · cari ekstre) |
+| 11 | Ekranlar | Hibe yönetimi | Fon yönetimi |
+| 12 | Güven | Roller ve yetkiler | Roller (yönetim/denetim kurulu dahil) |
+| 13 | Güven | Çok şirketli yapı + güvenlik | Şube / temsilcilik + şeffaflık |
+| 14 | Güven | Masaüstü / tablet / telefon | aynı |
+| 15 | Başlangıç | Dört adım | Dört adım |
+
+## Kapsam dışı bırakılanlar
+
+**Yapay zekâ ve mizan İKİ DESTEDEN DE çıkarıldı** (kullanıcı kararı, 2026-08-19).
+AI Değerlendirme Merkezi slaytı tamamen kaldırıldı (16 → 15 slayt); Raporlar
+slaytındaki `Mizan (Özet)` kartı ile akış adımı ve finans şeridindeki mizan
+geçişleri silindi. Her iki özellik de üründe **vardır**, şimdilik anlatılmıyor.
+Geri eklemek isteyen için `0c9e725` commit'i son hâllerini taşır.
+
+## Dernek destesinin kapsam kuralı
+
+**Üyelik ve aidat takibi üründe YOKTUR** — üye modülü, aidat tahakkuku ve
+gönüllü yönetimi bulunmaz. Dernek destesi bunlara **hiç değinmez**; ürünün
+gerçekten güçlü olduğu yerleri anlatır: fon/hibe yönetimi, bağış ve faturasız
+gelir (`IncomeCategory.Donation` / `.Grant`), proje bazlı bütçe, belge düzeni,
+rol/yetki ve işlem geçmişi. Yeni slayt eklerken bu kurala uy — olmayan özelliği
+anlatma. (Kuruluş tipi olarak "Dernek" ve "Vakıf" üründe `CompanyType` ile
+tanımlıdır.)
 
 ## Yeniden üretme
 
 ```bash
-cd docs/sunum/build && bash render.sh all
+cd docs/sunum/build && bash render.sh dernek all
 ```
 
-HTML deck'i, PDF'i ve 16 PNG'yi üretir. `render.sh png` yalnız görselleri,
-`render.sh pdf` yalnız PDF'i basar. Chrome yoksa Edge'e düşer.
+HTML deck'i, PDF'i ve 15 PNG'yi üretir (`sirket` de aynı şekilde). `render.sh
+<deste> png` yalnız görselleri, `render.sh <deste> pdf` yalnız PDF'i basar.
+Chrome yoksa Edge'e düşer.
 
 PPTX ayrı adımdır; `pptxgenjs` gerekir ama **depoya bağımlılık eklenmemiştir**,
 git dışı `_tmp/` altına kurulur:
@@ -52,14 +76,14 @@ cd docs/sunum/build && mkdir -p _tmp/pptx && cd _tmp/pptx && npm init -y && npm 
 ```
 
 ```bash
-cd docs/sunum/build && node pptx.mjs
+cd docs/sunum/build && node pptx.mjs dernek
 ```
 
 PDF'i doğrulamak için (sayfa sayısı, sayfa ölçüsü, koyu zeminlerin basılıp
 basılmadığı):
 
 ```bash
-cd docs/sunum/build && node pdfcheck.mjs ../apya-sunum.pdf
+cd docs/sunum/build && node pdfcheck.mjs ../dernek/apya-sunum-dernek.pdf
 ```
 
 ## Notlar
@@ -67,6 +91,9 @@ cd docs/sunum/build && node pdfcheck.mjs ../apya-sunum.pdf
 - **Ekranlar maket, veriler örnektir.** Gerçek ekran görüntüsü istenirse
   PNG'ler birebir aynı ölçüde (1600 × 900) değiştirilebilir; PPTX ve PDF
   yeniden üretilince otomatik güncellenir.
+- `build/common.mjs` yalnız **içerik taşımayan** parçaları tutar (SVG ok ucu,
+  maket sol menüsü). Metin ve veri her destenin kendi dosyasında kalır —
+  desteler bilinçli olarak ayrışacak.
 - Renk ve tipografi ürünün kendi tasarım sisteminden alınır
   (`src/Apya.Platform.Web/wwwroot/dynamic-assets/src/styles/tokens.css`);
   fontlar `wwwroot/fonts/` altındaki self-host woff2'lerdir ve HTML'e
@@ -74,6 +101,12 @@ cd docs/sunum/build && node pdfcheck.mjs ../apya-sunum.pdf
 - Gömülü font yalnız latin + latin-ext kapsar. Yeni bir sembol (ok, üçgen,
   onay işareti vb.) eklerseniz bu aralığın dışında kalır ve sistem fontuna
   düşer; metinle ifade etmek daha güvenlidir.
+- Akış slaytlarında ok etiketleri kutular arasındaki ~104 px boşluğa sığmalı —
+  yaklaşık 11 karakteri geçme, yoksa kutuların üzerine taşar.
 - PDF, Chrome'un `--print-to-pdf` çıktısıdır. `build.mjs` içindeki
   `print-color-adjust: exact` kuralı kaldırılırsa koyu slaytların zemini
   bazı ortamlarda beyaza düşer.
+- `render.sh` dosya yollarını `cygpath` ile Windows biçimine çevirir. Bu şarttır:
+  MSYS düz argümanları çevirir ama `file:///` önekli bir dizeyi URL sanıp
+  dokunmaz; `/e/...` yolu Chrome'a `file:////e/...` olarak gider ve Chrome
+  **hata vermeden boş sayfa basar**.
