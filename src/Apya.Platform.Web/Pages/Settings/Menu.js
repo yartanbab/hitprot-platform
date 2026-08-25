@@ -102,6 +102,12 @@ $(function () {
             animation: 150,
             handle: '.apya-navedit-handle',
             draggable: '.apya-navedit-item',
+            // Dokunmatikte tutamağa dokunuş, gecikme olmadan anında drag'e
+            // dönüşüp listeyi kaydırmayı/dokunuşu yutuyor (kanban'daki örüntü).
+            // delayOnTouchOnly: true → fare sürüklemesi etkilenmez.
+            delay: 150,
+            delayOnTouchOnly: true,
+            touchStartThreshold: 5,
             filter: '[data-nav-locked="true"]',
             group: { name: 'apya-nav' },
             fallbackOnBody: true,

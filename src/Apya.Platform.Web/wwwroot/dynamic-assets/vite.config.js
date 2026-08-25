@@ -41,8 +41,16 @@ export default defineConfig({
         // (react/query/signalr/grid/ui hepsi ayrı) Rollup çakışan isimlere otomatik
         // numara ekliyor (vendor2/vendor3) ve chunk'lar arası import graph'ı bozuluyor
         // ("does not provide an export" runtime crash). Kategori bazlı isimlendirme
-        // bunu kalıcı çözer + her vendor grubu kendi (kararlı) dosya adını korur.
-        chunkFileNames: '[name].js',
+        // bunu kalıcı çözer.
+        // [hash] ŞART: chunk URL'leri ?v= taşımaz (entry'ler ABP asp-append-version
+        // ile versiyonlanır ama import graph'ındaki chunk'lar edilmez). Hash'siz
+        // sabit isimde her deploy sonrası ilk yükleme, service worker'ın (sw.js)
+        // stale-while-revalidate önbelleğinden ESKİ vendor chunk + YENİ entry
+        // karışımı servis ediyordu → island bozuk/boş açılıyor, ancak ikinci
+        // yenilemede düzeliyordu. İçerik değişince isim de değişir → kayma sınıfı
+        // kökten kapanır. Entry isimleri SABİT kalmalı (lib.fileName) — cshtml'ler
+        // onları adıyla refere ediyor.
+        chunkFileNames: '[name]-[hash].js',
         // React/react-dom + diğer ağır bağımlılıklar kategoriye göre ayrı, sabit
         // isimli chunk'lara — hem çakışma önlenir hem browser cache'i daha iyi
         // kullanılır (bir island güncellenince yalnız o island + kendi chunk'ı değişir).

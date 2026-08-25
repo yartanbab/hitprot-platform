@@ -11,15 +11,15 @@
        cached '/Dashboard')
 
    Neden cache-first DEĞİL: dashboard.js gibi asp-append-version'lı dosyalar
-   URL'sinde ?v= taşır ve düzgün cache-bust eder, ama Vite'ın ürettiği paylaşılan
-   chunk'lar (react-vendor.js, grid-vendor.js, query-vendor.js, signalr-vendor.js,
-   ui-vendor.js, httpClient.js — dashboard.js'in kendi import() graph'ından,
-   manualChunks ile BİLİNÇLİ sabit/hash'siz isimlendirilmiş, bkz vite.config.js)
-   HİÇBİR versiyon query string'i taşımaz. Cache-first altında bu dosyalar ilk
-   önbelleklendiği haliyle KALICI OLARAK kilitlenir — yeni bir build sonrası
-   içerik değişse de URL aynı kaldığı için eski sürüm sonsuza dek sunulur ve
-   React island'ı sessizce boş kalabilir. Stale-while-revalidate bu sınıfı kökten
-   kapatır: en kötü ihtimalle bir sonraki reload günceli getirir.
+   URL'sinde ?v= taşır; Vite chunk'ları ise artık İSMİNDE hash taşır
+   (react-vendor-<hash>.js — bkz. vite.config.js chunkFileNames). Yani /js/
+   URL'leri pratikte içerikle birlikte değişir. SWR yine de korunuyor:
+   elle eklenen hash'siz dosyalar (chart.umd.min.js gibi) ve olası istisnalar
+   için "en kötü ihtimalle bir sonraki reload günceli getirir" güvencesi kalsın.
+   (Tarihçe: chunk'lar hash'sizken deploy sonrası ilk yükleme SWR'den eski
+   vendor + yeni entry karışımı servis ediyordu — island boş/bozuk açılıyordu.
+   Hash bu sınıfı kökten kapattı; v5 bump'ı eski hash'siz chunk önbelleklerini
+   activate'te temizler.)
 
    Versiyonlama: CACHE_VERSION değişince eski cache'ler activate sırasında temizlenir
    (mevcut kullanıcıları anında temiz sayfaya döndürmek için deploy'da artırılabilir).
@@ -28,7 +28,7 @@
    service worker auth'a karışmaz, browser session yönetir.
    ============================================================================= */
 
-const CACHE_VERSION = 'v4';
+const CACHE_VERSION = 'v5';
 const CACHE_SHELL   = `apya-shell-${CACHE_VERSION}`;
 const CACHE_ASSETS  = `apya-assets-${CACHE_VERSION}`;
 const CACHE_RUNTIME = `apya-runtime-${CACHE_VERSION}`;
