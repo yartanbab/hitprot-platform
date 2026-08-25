@@ -1,11 +1,7 @@
 import React, { useRef, useState } from 'react';
 import * as Popover from '@radix-ui/react-popover';
 import { TaskPrivacyDialogV3 } from './TaskPrivacyDialogV3';
-import {
-    STATUS_META, PRIORITY_META,
-    SELECTABLE_STATUSES, SELECTABLE_PRIORITIES,
-    statusOf, priorityOf,
-} from '../taskMetaV3';
+import { STATUS_META, SELECTABLE_STATUSES, statusOf } from '../taskMetaV3';
 import { dialogPortalContainer } from '../../../lib/dom/dialogPortalContainer';
 
 /* Popover.Root'lara `modal` ŞART: içerik body'ye portal edildiği için non-modal
@@ -49,7 +45,6 @@ export function TaskDetailHeaderV3({
     onToggleFullscreen,
     onFieldChange = () => {},
     statusValue,
-    priorityValue,
     titleValue,
     isPrivateValue,
     isFavorite,
@@ -75,7 +70,6 @@ export function TaskDetailHeaderV3({
     const titleRef = useRef(null);
 
     const status = statusOf(statusValue ?? task.status);
-    const priority = priorityOf(priorityValue ?? task.priority);
     const code = task.code || 'GRV-—';
 
     const copyCode = () => {
@@ -107,138 +101,68 @@ export function TaskDetailHeaderV3({
     ];
 
     return (
-        <header ref={setRootEl} className="px-6 pt-[18px] pb-4 border-b border-subtle bg-surface-base">
+        <header ref={setRootEl} className="shrink-0 px-6 lt-860:px-4 pt-[18px] pb-4 border-b border-subtle bg-surface-base">
             <div className="flex items-start justify-between gap-4">
 
-                {/* ---- Sol: rozetler + başlık ---- */}
-                <div className="flex flex-col gap-[9px] min-w-0 flex-1">
-                    <div className="flex items-center gap-2 flex-wrap">
-                        <button
-                            type="button"
-                            onClick={copyCode}
-                            title="Kodu kopyala"
-                            className="flex items-center gap-1.5 h-[26px] px-[9px] rounded-[7px] border border-primary bg-primary-subtle text-primary font-mono text-[11px] font-bold tracking-[.04em] cursor-pointer"
-                        >
-                            <i className="fa-solid fa-hashtag text-[9px] opacity-70" />
-                            <span>{code}</span>
-                            <i className={`${copied ? 'fa-solid fa-check' : 'fa-regular fa-copy'} text-[9px] opacity-60`} />
-                        </button>
+                {/* ---- Sol: rozetler ---- */}
+                <div className="flex items-center gap-2 flex-wrap min-w-0 flex-1">
+                    <button
+                        type="button"
+                        onClick={copyCode}
+                        title="Kodu kopyala"
+                        className="flex items-center gap-1.5 h-[26px] px-[9px] rounded-[7px] border border-primary bg-primary-subtle text-primary font-mono text-[11px] font-bold tracking-[.04em] cursor-pointer"
+                    >
+                        <i className="fa-solid fa-hashtag text-[9px] opacity-70" />
+                        <span>{code}</span>
+                        <i className={`${copied ? 'fa-solid fa-check' : 'fa-regular fa-copy'} text-[9px] opacity-60`} />
+                    </button>
 
-                        {/* Durum */}
-                        <Popover.Root modal>
-                            <Popover.Trigger asChild>
-                                <button
-                                    type="button"
-                                    className={`flex items-center gap-[7px] h-[26px] px-2.5 rounded-[7px] border border-default text-[12px] font-semibold cursor-pointer ${status.bg} ${status.fg}`}
-                                >
-                                    <span className="h-[7px] w-[7px] rounded-full bg-current animate-pulse" />
-                                    <span>{status.label}</span>
-                                    <i className="fa-solid fa-chevron-down text-[8px] opacity-60" />
-                                </button>
-                            </Popover.Trigger>
-                            <Popover.Portal container={dialogPortalContainer(rootEl)}>
-                                <Popover.Content sideOffset={6} align="start" className={`${POPOVER_CLS} w-[196px]`}>
-                                    <div className="px-[9px] pt-[5px] pb-[7px] text-[10px] font-bold uppercase tracking-[.08em] text-text-tertiary">
-                                        Durumu değiştir
-                                    </div>
-                                    {SELECTABLE_STATUSES.map((id) => {
-                                        const meta = STATUS_META[id];
-                                        const active = (statusValue ?? task.status) === id;
-                                        return (
-                                            <PopoverItem key={id}>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => onFieldChange('status', id)}
-                                                    className={`flex items-center gap-[9px] w-full px-[9px] py-[7px] rounded-[9px] text-[12.5px] font-semibold text-left cursor-pointer ${
-                                                        active ? 'bg-primary-subtle text-primary' : 'text-text-primary hover:bg-surface-hover'
-                                                    }`}
-                                                >
-                                                    <span className={`h-2 w-2 rounded-full ${meta.dot}`} />
-                                                    <span className="flex-1">{meta.label}</span>
-                                                    {active && <i className="fa-solid fa-check text-[10px]" />}
-                                                </button>
-                                            </PopoverItem>
-                                        );
-                                    })}
-                                </Popover.Content>
-                            </Popover.Portal>
-                        </Popover.Root>
+                    {/* Durum */}
+                    <Popover.Root modal>
+                        <Popover.Trigger asChild>
+                            <button
+                                type="button"
+                                className={`flex items-center gap-[7px] h-[26px] px-2.5 rounded-[7px] border border-default text-[12px] font-semibold cursor-pointer ${status.bg} ${status.fg}`}
+                            >
+                                <span className="h-[7px] w-[7px] rounded-full bg-current animate-pulse" />
+                                <span>{status.label}</span>
+                                <i className="fa-solid fa-chevron-down text-[8px] opacity-60" />
+                            </button>
+                        </Popover.Trigger>
+                        <Popover.Portal container={dialogPortalContainer(rootEl)}>
+                            <Popover.Content sideOffset={6} align="start" className={`${POPOVER_CLS} w-[196px]`}>
+                                <div className="px-[9px] pt-[5px] pb-[7px] text-[10px] font-bold uppercase tracking-[.08em] text-text-tertiary">
+                                    Durumu değiştir
+                                </div>
+                                {SELECTABLE_STATUSES.map((id) => {
+                                    const meta = STATUS_META[id];
+                                    const active = (statusValue ?? task.status) === id;
+                                    return (
+                                        <PopoverItem key={id}>
+                                            <button
+                                                type="button"
+                                                onClick={() => onFieldChange('status', id)}
+                                                className={`flex items-center gap-[9px] w-full px-[9px] py-[7px] rounded-[9px] text-[12.5px] font-semibold text-left cursor-pointer ${
+                                                    active ? 'bg-primary-subtle text-primary' : 'text-text-primary hover:bg-surface-hover'
+                                                }`}
+                                            >
+                                                <span className={`h-2 w-2 rounded-full ${meta.dot}`} />
+                                                <span className="flex-1">{meta.label}</span>
+                                                {active && <i className="fa-solid fa-check text-[10px]" />}
+                                            </button>
+                                        </PopoverItem>
+                                    );
+                                })}
+                            </Popover.Content>
+                        </Popover.Portal>
+                    </Popover.Root>
 
-                        {/* Öncelik */}
-                        <Popover.Root modal>
-                            <Popover.Trigger asChild>
-                                <button
-                                    type="button"
-                                    className={`flex items-center gap-[7px] h-[26px] px-2.5 rounded-[7px] border border-default text-[12px] font-semibold cursor-pointer ${priority.bg} ${priority.fg}`}
-                                >
-                                    <i className={`fa-solid ${priority.icon} text-[10px]`} />
-                                    <span>{priority.label}</span>
-                                    <i className="fa-solid fa-chevron-down text-[8px] opacity-60" />
-                                </button>
-                            </Popover.Trigger>
-                            <Popover.Portal container={dialogPortalContainer(rootEl)}>
-                                <Popover.Content sideOffset={6} align="start" className={`${POPOVER_CLS} w-[184px]`}>
-                                    <div className="px-[9px] pt-[5px] pb-[7px] text-[10px] font-bold uppercase tracking-[.08em] text-text-tertiary">
-                                        Öncelik seç
-                                    </div>
-                                    {SELECTABLE_PRIORITIES.map((id) => {
-                                        const meta = PRIORITY_META[id];
-                                        const active = (priorityValue ?? task.priority) === id;
-                                        return (
-                                            <PopoverItem key={id}>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => onFieldChange('priority', id)}
-                                                    className={`flex items-center gap-[9px] w-full px-[9px] py-[7px] rounded-[9px] text-[12.5px] font-semibold text-left cursor-pointer ${
-                                                        active ? 'bg-primary-subtle text-primary' : 'text-text-primary hover:bg-surface-hover'
-                                                    }`}
-                                                >
-                                                    <i className={`fa-solid ${meta.icon} text-[11px] w-[13px]`} />
-                                                    <span className="flex-1">{meta.label}</span>
-                                                    {active && <i className="fa-solid fa-check text-[10px]" />}
-                                                </button>
-                                            </PopoverItem>
-                                        );
-                                    })}
-                                </Popover.Content>
-                            </Popover.Portal>
-                        </Popover.Root>
-
-                        {isWatched && (
-                            <span className="flex items-center gap-1.5 h-[26px] px-2.5 rounded-[7px] border border-subtle bg-neutral-subtle text-text-secondary text-[11.5px] font-semibold">
-                                <i className="fa-regular fa-eye text-[10px]" />
-                                Takip ediliyor
-                            </span>
-                        )}
-                    </div>
-
-                    <div className="flex items-center gap-2 min-w-0">
-                        {/* contentEditable + onInput yerine onBlur: her tuş vuruşunda form
-                            state'i güncellenirse React yeniden render eder ve caret metnin
-                            başına atlar. Değer yalnız odak çıkışında forma yazılır; bu yüzden
-                            initial content'i React değil DOM tutar (suppressContentEditableWarning). */}
-                        <div
-                            ref={titleRef}
-                            contentEditable
-                            suppressContentEditableWarning
-                            spellCheck={false}
-                            onBlur={(e) => onFieldChange('title', e.currentTarget.textContent.trim())}
-                            className="text-[24px] lt-560:text-[20px] font-extrabold tracking-[-.025em] leading-[1.2] text-text-primary px-2 -ml-2 py-[3px] rounded-[9px] border border-transparent cursor-text min-w-[60px] hover:bg-neutral-subtle hover:border-subtle focus:bg-neutral-subtle focus:border-focus focus:shadow-focus focus:outline-none"
-                        >
-                            {titleValue ?? task.title ?? 'Başlıksız görev'}
-                        </div>
-
-                        <button
-                            type="button"
-                            onClick={onToggleFavorite}
-                            title={isFavorite ? 'Favorilerden çıkar' : 'Favorilere ekle'}
-                            className={`flex items-center justify-center h-8 w-8 shrink-0 rounded-[9px] cursor-pointer ${
-                                isFavorite ? 'bg-warning-subtle text-warning' : 'text-text-tertiary hover:bg-surface-hover'
-                            }`}
-                        >
-                            <i className={`fa-${isFavorite ? 'solid' : 'regular'} fa-star text-[15px]`} />
-                        </button>
-                    </div>
+                    {isWatched && (
+                        <span className="flex items-center gap-1.5 h-[26px] px-2.5 rounded-[7px] border border-subtle bg-neutral-subtle text-text-secondary text-[11.5px] font-semibold">
+                            <i className="fa-regular fa-eye text-[10px]" />
+                            Takip ediliyor
+                        </span>
+                    )}
                 </div>
 
                 {/* ---- Sağ: gizlilik · tam ekran · ⋯ · kapat ---- */}
@@ -252,12 +176,15 @@ export function TaskDetailHeaderV3({
 
                     <div className="h-5 w-px bg-border-default mx-1" />
 
+                    {/* Tam ekran ≤767.98px'te GİZLİ: modal orada zaten 100vw × 100svh
+                        açılıyor (Dialog.jsx `mobile:` kuralları), düğme hiçbir şey
+                        değiştirmiyordu. Eşik Dialog'un mobil eşiğiyle aynı olmalı. */}
                     {presentation === 'modal' && (
                         <button
                             type="button"
                             onClick={onToggleFullscreen}
                             title={isFullscreen ? 'Küçült' : 'Tam ekran'}
-                            className={`flex items-center justify-center h-8 w-8 rounded-[9px] cursor-pointer ${
+                            className={`mobile:hidden flex items-center justify-center h-8 w-8 rounded-[9px] cursor-pointer ${
                                 isFullscreen ? 'bg-primary-subtle text-primary' : 'text-text-tertiary hover:bg-surface-hover hover:text-text-primary'
                             }`}
                         >
@@ -326,6 +253,38 @@ export function TaskDetailHeaderV3({
                         </button>
                     )}
                 </div>
+            </div>
+
+            {/* ---- Başlık: rozet/aksiyon satırının ALTINDA, tam genişlikte ----
+                Başlık daha önce sol sütunun içindeydi; sağdaki 3-4 aksiyon düğmesi
+                kadar dar kalıyordu ve dar ekranda iki-üç satıra kırılıyordu. Kendi
+                satırına alınınca modalın tamamı kadar genişler. */}
+            <div className="flex items-center gap-2 min-w-0 mt-[9px]">
+                {/* contentEditable + onInput yerine onBlur: her tuş vuruşunda form
+                    state'i güncellenirse React yeniden render eder ve caret metnin
+                    başına atlar. Değer yalnız odak çıkışında forma yazılır; bu yüzden
+                    initial content'i React değil DOM tutar (suppressContentEditableWarning). */}
+                <div
+                    ref={titleRef}
+                    contentEditable
+                    suppressContentEditableWarning
+                    spellCheck={false}
+                    onBlur={(e) => onFieldChange('title', e.currentTarget.textContent.trim())}
+                    className="flex-1 min-w-0 text-[24px] lt-560:text-[20px] font-extrabold tracking-[-.025em] leading-[1.2] text-text-primary px-2 -ml-2 py-[3px] rounded-[9px] border border-transparent cursor-text hover:bg-neutral-subtle hover:border-subtle focus:bg-neutral-subtle focus:border-focus focus:shadow-focus focus:outline-none"
+                >
+                    {titleValue ?? task.title ?? 'Başlıksız görev'}
+                </div>
+
+                <button
+                    type="button"
+                    onClick={onToggleFavorite}
+                    title={isFavorite ? 'Favorilerden çıkar' : 'Favorilere ekle'}
+                    className={`flex items-center justify-center h-8 w-8 shrink-0 rounded-[9px] cursor-pointer ${
+                        isFavorite ? 'bg-warning-subtle text-warning' : 'text-text-tertiary hover:bg-surface-hover'
+                    }`}
+                >
+                    <i className={`fa-${isFavorite ? 'solid' : 'regular'} fa-star text-[15px]`} />
+                </button>
             </div>
         </header>
     );

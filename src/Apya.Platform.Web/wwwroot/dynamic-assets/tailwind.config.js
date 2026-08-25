@@ -27,6 +27,10 @@ export default {
       screens: {
         mobile: { max: '767.98px' },
         tablet: '768px',
+        /* short: YÜKSEKLİĞE bakar, genişliğe değil — yatay tutulan telefon
+           (ör. 932×430) genişlik olarak `tablet:` sayılır ama dikeyde masaüstünden
+           bile dardır. Modallerin oradaki dikey payı israf olmasın diye. */
+        short: { raw: '(max-height: 560px)' },
         /* Görev detayı V4 duyarlılık tablosu (handoff §Duyarlılık) */
         'lt-1080': { max: '1080px' }, // Genel tek kolon; Detaylar ızgaraya döner
         'lt-860':  { max: '860px' },  // metadata 4→2, sol ray gizlenir, padding 24→16

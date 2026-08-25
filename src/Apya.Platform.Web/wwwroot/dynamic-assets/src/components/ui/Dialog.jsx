@@ -8,11 +8,15 @@ import { cn } from '../../lib/utils';
  *
  * Boyutlandırma sabit px DEĞİL:
  *   desktop   → w: min(92vw, 1400px)   ← .apya-page max-width'iyle aynı tavan
- *               h: min(88dvh, 940px)
+ *               h: min(88svh, 940px)
  *   fullscreen→ viewport - 2*space-4   ← "büyüt" aksiyonu
- *   mobile    → 100vw × 100dvh, köşesiz, safe-area padding'li
+ *   mobile    → 100vw × 100svh, köşesiz, safe-area padding'li
  *
- * dvh kullanımı bilinçli: mobil adres çubuğu açılıp kapanırken vh zıplar.
+ * BİRİM svh, dvh DEĞİL: panel `position:fixed` olduğu için sayfa hiç kaydırılmaz,
+ * dolayısıyla mobil tarayıcı çubukları hiç gizlenmez — geçerli viewport DAİMA
+ * "small viewport"tur. dvh ile panel çubukların altına taşıp footer'ı (Kaydet /
+ * Vazgeç) yarım bırakıyordu. svh tanımı gereği en küçük değer olduğu için taşamaz.
+ * (vh büsbütün yanlış: adres çubuğu açıkken bile lvh'yi verir.)
  */
 
 function Dialog({ open, onOpenChange, children }) {
@@ -30,12 +34,17 @@ const DialogContent = React.forwardRef(function DialogContent(
     const sizeClass = fullscreen
         ? cn(
             'w-[calc(100vw-2*var(--apya-space-4))]',
-            'h-[calc(100dvh-2*var(--apya-space-4))]',
+            'h-[calc(100svh-2*var(--apya-space-4))]',
         )
         : cn(
             'w-[min(92vw,1400px)]',
-            'h-[min(88dvh,940px)]',
-            'tablet:min-h-[520px]',
+            'h-[min(88svh,940px)]',
+            /* min-h VİEWPORT'A KISKAÇLANIR. Çıplak `min-h-[520px]` yatay telefonda
+               (932×430 → genişlik 768'i aştığı için `tablet:` devrede) paneli 520px'e
+               zorluyor, panel ortalandığı ve overflow-hidden olduğu için üstten VE
+               alttan kırpılıyordu. Takvim sihirbazı bunu yerel olarak yamamıştı
+               (SetupWizard.jsx `tablet:min-h-0`); kaynağı burası. */
+            'tablet:min-h-[min(520px,88svh)]',
         );
 
     return (
@@ -71,7 +80,7 @@ const DialogContent = React.forwardRef(function DialogContent(
                         sizeClass,
                         /* Mobil: tam ekran, köşesiz, safe-area. Modal içi footer'ın
                            iOS home indicator'ın altında kalmaması için padding. */
-                        'mobile:w-screen mobile:h-[100dvh] mobile:max-w-none',
+                        'mobile:w-screen mobile:h-[100svh] mobile:max-w-none',
                         'mobile:rounded-none mobile:border-0',
                         'mobile:pb-[env(safe-area-inset-bottom)]',
                         className,

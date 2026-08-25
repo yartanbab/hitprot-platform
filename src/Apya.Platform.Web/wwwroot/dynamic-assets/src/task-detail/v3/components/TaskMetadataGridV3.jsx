@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import * as Popover from '@radix-ui/react-popover';
 import {
     STATUS_META, SELECTABLE_STATUSES, statusOf,
+    PRIORITY_META, SELECTABLE_PRIORITIES, priorityOf,
     initialsOf, avatarColorOf, dueUrgency,
 } from '../taskMetaV3';
 import { dialogPortalContainer } from '../../../lib/dom/dialogPortalContainer';
@@ -63,6 +64,7 @@ export function TaskMetadataGridV3({
     projectOptions = [],
     onFieldChange = () => {},
     statusValue,
+    priorityValue,
     assigneeValue,
     projectValue,
     dueDateValue,
@@ -84,6 +86,7 @@ export function TaskMetadataGridV3({
     const [rootEl, setRootEl] = useState(null);
 
     const status = statusOf(statusValue ?? task.status);
+    const priority = priorityOf(priorityValue ?? task.priority);
     const assigneeId = assigneeValue ?? task.assigneeId ?? null;
     const projectId = projectValue ?? task.projectId ?? null;
 
@@ -264,7 +267,52 @@ export function TaskMetadataGridV3({
                     </div>
                 </Cell>
 
-                {/* 6 — Etiketler */}
+                {/* 6 — Öncelik (başlıktan buraya taşındı: başlık satırı rozetlerle
+                       dolduğu için mobilde görev adına yer kalmıyordu) */}
+                <Cell label="Öncelik">
+                    <div className="flex items-center h-8">
+                        <Popover.Root modal>
+                            <Popover.Trigger asChild>
+                                <button
+                                    type="button"
+                                    className={`flex items-center gap-[7px] h-[26px] px-2.5 rounded-[7px] text-[12.5px] font-bold cursor-pointer ${priority.bg} ${priority.fg}`}
+                                >
+                                    <i className={`fa-solid ${priority.icon} text-[11px]`} />
+                                    <span>{priority.label}</span>
+                                    <i className="fa-solid fa-chevron-down text-[8px] opacity-60" />
+                                </button>
+                            </Popover.Trigger>
+                            <Popover.Portal container={dialogPortalContainer(rootEl)}>
+                                <Popover.Content sideOffset={6} align="start" className={`${POPOVER_CLS} w-[184px]`}>
+                                    <div className="px-[9px] pt-[5px] pb-[7px] text-[10px] font-bold uppercase tracking-[.08em] text-text-tertiary">
+                                        Öncelik seç
+                                    </div>
+                                    {SELECTABLE_PRIORITIES.map((id) => {
+                                        const meta = PRIORITY_META[id];
+                                        const active = (priorityValue ?? task.priority) === id;
+                                        return (
+                                            <PopoverItem key={id}>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => onFieldChange('priority', id)}
+                                                    className={`flex items-center gap-[9px] w-full px-[9px] py-[7px] rounded-[9px] text-[12.5px] font-semibold text-left cursor-pointer ${
+                                                        active ? 'bg-primary-subtle text-primary' : 'text-text-primary hover:bg-surface-hover'
+                                                    }`}
+                                                >
+                                                    <i className={`fa-solid ${meta.icon} text-[11px] w-[13px]`} />
+                                                    <span className="flex-1">{meta.label}</span>
+                                                    {active && <i className="fa-solid fa-check text-[10px]" />}
+                                                </button>
+                                            </PopoverItem>
+                                        );
+                                    })}
+                                </Popover.Content>
+                            </Popover.Portal>
+                        </Popover.Root>
+                    </div>
+                </Cell>
+
+                {/* 7 — Etiketler */}
                 <Cell label="Etiketler">
                     <div className="flex items-center gap-1.5 flex-wrap min-h-8">
                         {tagsValue.map((tag) => (
@@ -312,7 +360,7 @@ export function TaskMetadataGridV3({
                     </div>
                 </Cell>
 
-                {/* 7 — Proje (+ taşı / kopyala) */}
+                {/* 8 — Proje (+ taşı / kopyala) */}
                 <Cell label="Proje">
                     <Popover.Root modal>
                         <Popover.Trigger asChild>
@@ -394,7 +442,7 @@ export function TaskMetadataGridV3({
                     </Popover.Root>
                 </Cell>
 
-                {/* 8 — Harcanan / tahmin */}
+                {/* 9 — Harcanan / tahmin */}
                 <Cell label="Harcanan / tahmin">
                     <div className="flex items-center gap-[9px] h-8">
                         <i className="fa-regular fa-clock text-[13px] text-text-tertiary" />
