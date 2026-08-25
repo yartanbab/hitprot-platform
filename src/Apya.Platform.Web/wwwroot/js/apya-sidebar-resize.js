@@ -55,7 +55,17 @@ $(function () {
     // söylemeye başlar.
     function announce(width) {
         if (!handle) { return; }
-        handle.setAttribute('aria-valuenow', String(Math.round(width)));
+
+        // Kenar çubuğunun basılmadığı hâllerde (dar ekran, ray/gizli mod) kap 0
+        // ölçülür. announce ÖLÇÜMLE de çağrıldığı için (ilk değer ve reset)
+        // buraya 0 gelebiliyor ve ilan edilen 200–420 aralığının DIŞINDA bir
+        // aria-valuenow yazılıyordu — ekran okuyucuya kendi bildirdiğimiz
+        // aralıkla çelişen bir değer. Aralık dışı değer duyurulmaz; son geçerli
+        // değer yerinde kalır (tutamak o hâllerde zaten gizli).
+        var value = Math.round(width);
+        if (value < MIN || value > MAX) { return; }
+
+        handle.setAttribute('aria-valuenow', String(value));
     }
 
     function apply(width) {
