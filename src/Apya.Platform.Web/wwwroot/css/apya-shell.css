@@ -6530,8 +6530,16 @@ i.apya-priority-dot {
     background: var(--apya-surface-base);
     box-shadow: var(--apya-shadow-lg);
 }
-.apya-tc-pop-dates {
+/* DİKKAT: `display` KOŞULSUZ verilmez. `.apya-tc-pop-dates` ile Bootstrap'in
+   `.dropdown-menu { display: none }` kuralı aynı özgüllükte (0,1,0); bu dosya
+   Bootstrap'ten SONRA yüklendiği için koşulsuz `display:grid` onu eziyor ve
+   açılır menü hiçbir zaman gizlenmiyordu — kullanıcıya "tarih kutusu açık
+   geliyor ve kapanmıyor" diye yansıyordu (yalnız bu pop `display` ayarlıyordu).
+   Izgara yalnız AÇIKKEN uygulanır; kapalıyken Bootstrap gizlemesi geçerli kalır. */
+.apya-tc-pop-dates.show {
     display: grid;
+}
+.apya-tc-pop-dates {
     gap: var(--apya-space-2);
 }
 .apya-tc-pop-dates label,
