@@ -66,12 +66,29 @@ public class NavHiddenEntry
     public string Name { get; set; } = string.Empty;
     public string Title { get; set; } = string.Empty;
     public string Icon { get; set; } = string.Empty;
+    public string Url { get; set; } = string.Empty;
 
     /// <summary>Grup ise alt ağacıyla birlikte gizlenmiştir.</summary>
     public bool IsGroup { get; set; }
 
     /// <summary>Kullanıcının kendi kurduğu bir kategori/kısayol mu?</summary>
     public bool IsCustom { get; set; }
+
+    /// <summary>
+    /// Gizlenmeden ÖNCEKİ üst öğe ("#sidebar" · "#settings" · grup adı).
+    /// Düzenleme ekranı bunu `data-nav-from`a basıyor; olmadan "geri getir"
+    /// her öğeyi kenar çubuğunun köküne bırakırdı ve Ayarlar sütununa indirilmiş
+    /// bir hedef her gizle/göster turunda yerini kaybederdi.
+    /// </summary>
+    public string From { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Gizli bir GRUBUN alt ağacı. Boş bırakılamaz: düzenleme ekranı grubu
+    /// çocuksuz basarsa, tarayıcı düzeni DOM'dan kurarken `items[grup]`
+    /// anahtarını hiç yazmaz ve sonraki HERHANGİ bir kayıt çocukların o
+    /// gruba ait olduğu bilgisini siler.
+    /// </summary>
+    public List<NavHiddenEntry> Children { get; } = new();
 }
 
 /// <summary>İçi boşaldığı için ayıklanmış grup — yalnız düzenleme ekranı kullanır.</summary>

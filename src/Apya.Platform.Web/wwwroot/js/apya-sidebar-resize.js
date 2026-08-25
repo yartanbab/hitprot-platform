@@ -25,17 +25,41 @@ $(function () {
     var KEY = 'apya-sidebar-width';
     var MIN = 200;
     var MAX = 420;
-    var DEFAULT = 250;
+
+    // Uygulanan SON değer. Ölçüm yerine bunu kullanmak şart: kabın gerçek
+    // genişliği token ile birebir aynı olmak zorunda değil (kenarlık,
+    // .lpx-has-scrollbar telafisi, calc(... - 15px) kuralları). Ölçümden
+    // yeniden başlansaydı genişlik her sürüklemede birkaç piksel kayardı.
+    // null → kullanıcı henüz dokunmadı, geçerli olan CSS varsayılanı.
+    var applied = null;
 
     // Dar ekranda kenar çubuğu çekmece/sekme oluyor; tutamak orada anlamsız.
     var MOBILE_MAX = 767.98;
+
+    // FOUC betiği kayıtlı genişliği zaten uygulamış olabilir; kaynağı ondan
+    // DEVRAL ki ilk sürükleme de ölçümden değil token değerinden başlasın.
+    // Sınırlar ApyaThemeHead'deki betikle aynı — depo elle kurcalanmış olabilir.
+    try {
+        var stored = parseInt(localStorage.getItem(KEY), 10);
+        if (stored >= MIN && stored <= MAX) { applied = stored; }
+    } catch (e) { /* gizli mod */ }
 
     function clamp(value) {
         return Math.max(MIN, Math.min(MAX, Math.round(value)));
     }
 
     function apply(width) {
+        applied = width;
         document.documentElement.style.setProperty('--apya-sidebar-w', width + 'px');
+    }
+
+    // Varsayılana dönüş: satır içi stili SİL, CSS kendi değerini geri alsın.
+    // Varsayılanı JS'te sabit yazmak, apya-theme-bridge.css ile ikinci bir
+    // kaynak yaratır ve o değer değişince buradaki sessizce yanlış kalır.
+    function reset() {
+        applied = null;
+        document.documentElement.style.removeProperty('--apya-sidebar-w');
+        persist(null);
     }
 
     function persist(width) {
@@ -68,8 +92,22 @@ $(function () {
         }
     }
 
-    function currentWidth() {
-        return container.getBoundingClientRect().width;
+    // Kaba göre ÖLÇÜM yalnız başlangıç noktası için: kullanıcı henüz bir
+    // genişlik uygulamadıysa geçerli olan CSS varsayılanıdır. Uygulama başladıktan
+    // sonra kaynak `applied`; ölçüm token'la birebir aynı olmadığı için ondan
+    // devam etmek her turda kayma üretirdi.
+    function baseWidth() {
+        return applied !== null ? applied : container.getBoundingClientRect().width;
+    }
+
+    // Tutamak CSS ile gizlenen yerlerde (dar ekran, ray/gizli mod) çalışmamalı.
+    // Kapı İKİ yolda da geçerli: tutamak tabIndex=0 olduğu için gizliyken bile
+    // klavyeyle odaklanılabiliyor ve ok tuşları sessizce kalıcı bir genişlik
+    // yazardı — kullanıcı hiçbir şey olmadığını görür, sonra masaüstünde menü
+    // beklenmedik genişlikte açılırdı.
+    function canResize() {
+        return window.innerWidth > MOBILE_MAX &&
+               !document.documentElement.getAttribute('data-sidebar');
     }
 
     // --- sürükleme ---
@@ -78,13 +116,14 @@ $(function () {
     var startWidth = 0;
 
     handle.addEventListener('pointerdown', function (e) {
-        if (window.innerWidth <= MOBILE_MAX) { return; }
-        if (document.documentElement.getAttribute('data-sidebar')) { return; } // ray/gizli mod
+        if (!canResize()) { return; }
 
         dragging = true;
         startX = e.clientX;
-        startWidth = currentWidth();
-        handle.setPointerCapture(e.pointerId);
+        startWidth = baseWidth();
+        // Yakalama başarısız olabilir (tarayıcı/eklenti); atmasına izin verirsek
+        // aşağıdaki belge dinleyicileri hiç kurulmadan sürükleme askıda kalırdı.
+        try { handle.setPointerCapture(e.pointerId); } catch (err) { /* yoksay */ }
         document.body.classList.add('apya-sidebar-resizing');
         e.preventDefault();
     });
@@ -97,31 +136,45 @@ $(function () {
     function endDrag(e) {
         if (!dragging) { return; }
         dragging = false;
-        try { handle.releasePointerCapture(e.pointerId); } catch (err) { /* yoksay */ }
+        if (e && e.pointerId !== undefined) {
+            try { handle.releasePointerCapture(e.pointerId); } catch (err) { /* yoksay */ }
+        }
         document.body.classList.remove('apya-sidebar-resizing');
-        persist(clamp(currentWidth()));
+        // Uygulanan değer saklanır, ölçülen DEĞİL.
+        if (applied !== null) { persist(applied); }
     }
     handle.addEventListener('pointerup', endDrag);
     handle.addEventListener('pointercancel', endDrag);
 
+    // Belge seviyesinde yedek: yakalama kurulamadıysa ya da işaretçi tutamağın
+    // dışında bırakıldıysa pointerup tutamağa hiç ulaşmaz. O durumda `dragging`
+    // true kalır ve `body.apya-sidebar-resizing` yüzünden içerik
+    // pointer-events:none olarak donmuş görünürdü — tek çıkış yenilemekti.
+    document.addEventListener('pointerup', endDrag);
+    document.addEventListener('pointercancel', endDrag);
+
     // --- klavye: sürükleme faresiz de çalışmalı ---
     handle.addEventListener('keydown', function (e) {
-        var step = e.shiftKey ? 32 : 8;
-        var width = null;
+        if (!canResize()) { return; }
 
-        if (e.key === 'ArrowLeft') { width = clamp(currentWidth() - step); }
-        else if (e.key === 'ArrowRight') { width = clamp(currentWidth() + step); }
-        else if (e.key === 'Home') { width = DEFAULT; }
+        var step = e.shiftKey ? 32 : 8;
+
+        if (e.key === 'Home') {
+            e.preventDefault();
+            reset();
+            return;
+        }
+
+        var width = null;
+        if (e.key === 'ArrowLeft') { width = clamp(baseWidth() - step); }
+        else if (e.key === 'ArrowRight') { width = clamp(baseWidth() + step); }
         else { return; }
 
         e.preventDefault();
         apply(width);
-        persist(width === DEFAULT ? null : width);
+        persist(width);
     });
 
     // --- çift tık: varsayılana dön ---
-    handle.addEventListener('dblclick', function () {
-        document.documentElement.style.removeProperty('--apya-sidebar-w');
-        persist(null);
-    });
+    handle.addEventListener('dblclick', reset);
 });

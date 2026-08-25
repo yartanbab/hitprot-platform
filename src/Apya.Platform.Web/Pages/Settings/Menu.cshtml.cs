@@ -45,6 +45,12 @@ public class MenuModel : AbpPageModel
         bool IsAdminLink,
         bool IsCustom,
         string Url,
+        /// <summary>
+        /// Gizlenmeden önceki üst öğe — yalnız Gizlenenler bölmesindeki KÖK
+        /// satırlarda dolu. Boşsa markup data-nav-from basmaz ve tarayıcı
+        /// "geri getir"i kenar çubuğunun köküne düşürür.
+        /// </summary>
+        string From,
         List<NavNode> Children);
 
     /// <summary>Gizlenenler bölmesi — buradan geri alınabilirler.</summary>
@@ -84,14 +90,22 @@ public class MenuModel : AbpPageModel
         SettingsColumn = resolution.SettingsLinks.Select(FromSettingsEntry).ToList();
         HasCustomLayout = !resolution.Layout.IsEmpty;
 
-        HiddenItems = resolution.Hidden
-            .Select(h => new NavNode(
-                h.Name, h.Title, h.Icon, h.IsGroup,
-                IsLocked: false, IsAdminLink: false, h.IsCustom, Url: string.Empty,
-                new List<NavNode>()))
-            .ToList();
+        HiddenItems = resolution.Hidden.Select(FromHiddenEntry).ToList();
 
         RestoreEmptyGroups(resolution.EmptyGroups);
+    }
+
+    /// <summary>
+    /// Gizli girdi → satır. Çocuklar ŞART: grup çocuksuz basılırsa tarayıcı
+    /// düzeni DOM'dan kurarken items[grup] anahtarını hiç yazmaz ve sonraki
+    /// herhangi bir kayıt çocukların o gruba ait olduğu bilgisini siler.
+    /// </summary>
+    private static NavNode FromHiddenEntry(NavHiddenEntry entry)
+    {
+        return new NavNode(
+            entry.Name, entry.Title, entry.Icon, entry.IsGroup,
+            IsLocked: false, IsAdminLink: false, entry.IsCustom, entry.Url, entry.From,
+            entry.Children.Select(FromHiddenEntry).ToList());
     }
 
     private static NavNode FromMenuItem(ApplicationMenuItem item)
@@ -106,7 +120,7 @@ public class MenuModel : AbpPageModel
             IsLocked: item.Name == PlatformNavigationResolver.SettingsItemName,
             IsAdminLink: AdminLinkNames.Contains(item.Name),
             IsCustom: IsCustomName(item.Name),
-            Url: item.Url ?? string.Empty,
+            Url: item.Url ?? string.Empty, From: string.Empty,
             item.Items.Select(FromMenuItem).ToList());
     }
 
@@ -115,7 +129,7 @@ public class MenuModel : AbpPageModel
         return new NavNode(
             entry.Name, entry.Title, entry.Icon,
             entry.IsGroup, IsLocked: false, entry.IsAdminLink,
-            IsCustom: IsCustomName(entry.Name), entry.Url,
+            IsCustom: IsCustomName(entry.Name), entry.Url, From: string.Empty,
             entry.Children.Select(FromSettingsEntry).ToList());
     }
 
@@ -132,7 +146,8 @@ public class MenuModel : AbpPageModel
             var node = new NavNode(
                 group.Name, group.Title, group.Icon,
                 IsGroup: true, IsLocked: false, IsAdminLink: false,
-                IsCustom: IsCustomName(group.Name), Url: string.Empty, new List<NavNode>());
+                IsCustom: IsCustomName(group.Name), Url: string.Empty, From: string.Empty,
+                new List<NavNode>());
 
             if (group.InSettings)
             {

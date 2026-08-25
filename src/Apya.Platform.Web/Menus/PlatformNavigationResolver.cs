@@ -299,19 +299,6 @@ public class PlatformNavigationResolver : IScopedDependency
 
         if (roots.Count == 0) { return roots; }
 
-        foreach (var name in roots)
-        {
-            var item = pool[name].Item;
-            listed.Add(new NavHiddenEntry
-            {
-                Name = name,
-                Title = item.DisplayName,
-                Icon = item.Icon ?? string.Empty,
-                IsGroup = IsGroup(item),
-                IsCustom = IsCustomName(name)
-            });
-        }
-
         // Alt ağaç: bir düğümün atalarından biri gizliyse o da gizlidir.
         var effective = new HashSet<string>(roots, StringComparer.Ordinal);
         foreach (var name in pool.Keys)
@@ -325,7 +312,61 @@ public class PlatformNavigationResolver : IScopedDependency
             }
         }
 
+        // Düzenleme ekranının basacağı ağaç. Gizli bir GRUP çocuklarıyla
+        // listelenmek ZORUNDA: ekran onu çocuksuz basarsa tarayıcı düzeni
+        // DOM'dan kurarken `items[grup]` anahtarını hiç yazmaz ve sonraki
+        // herhangi bir kayıt, çocukların o gruba ait olduğu bilgisini siler.
+        foreach (var name in roots)
+        {
+            listed.Add(Describe(name, pool, parentOf, layout, effective, includeFrom: true));
+        }
+
         return effective;
+    }
+
+    /// <summary>
+    /// Gizli bir düğümü (ve gizli alt ağacını) düzenleme ekranı için tarif eder.
+    /// <paramref name="includeFrom"/> yalnız KÖK girdide doludur: çocuğun dönüş
+    /// yeri zaten üstünün içi, ayrı bir adres taşımasına gerek yok.
+    /// </summary>
+    private static NavHiddenEntry Describe(
+        string name,
+        Dictionary<string, PoolEntry> pool,
+        Dictionary<string, string> parentOf,
+        MenuLayout layout,
+        HashSet<string> effective,
+        bool includeFrom)
+    {
+        var item = pool[name].Item;
+        var entry = new NavHiddenEntry
+        {
+            Name = name,
+            Title = item.DisplayName,
+            Icon = item.Icon ?? string.Empty,
+            Url = item.Url ?? string.Empty,
+            IsGroup = IsGroup(item),
+            IsCustom = IsCustomName(name),
+            From = includeFrom && parentOf.TryGetValue(name, out var parent) ? parent : string.Empty
+        };
+
+        if (!entry.IsGroup) { return entry; }
+
+        // Sıra Assemble ile AYNI kaynaktan: önce koddaki sıra, sonra kullanıcının
+        // items[grup] tercihi. Yalnız DefaultIndex kullanılsaydı, gizlenen bir
+        // grubun içindeki sıralama geri getirildiğinde kaybolurdu.
+        var children = pool.Keys
+            .Where(child => parentOf.TryGetValue(child, out var p) && p == name && effective.Contains(child))
+            .OrderBy(child => pool[child].DefaultIndex)
+            .ToList();
+
+        var order = layout.Items.TryGetValue(name, out var explicitOrder) ? explicitOrder : new List<string>();
+
+        foreach (var child in ApplyOrder(children, order, x => x))
+        {
+            entry.Children.Add(Describe(child, pool, parentOf, layout, effective, includeFrom: false));
+        }
+
+        return entry;
     }
 
     /// <summary>Kullanıcının kendi kurduğu kategori/kısayol mu?</summary>
