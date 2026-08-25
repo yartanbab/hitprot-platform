@@ -3,6 +3,7 @@
 @inject Microsoft.Extensions.Localization.IStringLocalizer<Apya.Platform.Localization.PlatformResource> L
 @using Apya.Platform.Web.Menus
 @using Apya.Platform.Settings
+@using System.Linq
 @{
     ViewBag.Title = L["MenuLayout:Title"].Value;
 }
@@ -115,9 +116,32 @@
 }
 
 <div data-page-description="@L["MenuLayout:PageDescription"]">
+    @*
+        Geri bildirim sayfanın TEPESİNDE, Kaydet düğmesi ise ~150 satır aşağıda.
+        Kullanıcı kaydettiği yerde hiçbir şey görmediği için "olmadı" sanıp tekrar
+        basıyordu. Kimlik veriliyor ki Menu.js kaydettikten sonra bunu görünür
+        alana kaydırabilsin — mesajı aşağı kopyalamak yerine kullanıcıyı mesaja
+        getiriyoruz, böylece tek kaynak korunuyor.
+    *@
     @if (TempData["Saved"] != null)
     {
-        <div class="alert alert-success" role="status">@L["MenuLayout:Saved"]</div>
+        <div class="alert alert-success" role="status" id="ApyaNavSaved">@L["MenuLayout:Saved"]</div>
+    }
+
+    @*
+        Kaydetme başarısızsa handler ModelState'e MenuLayout:SaveFailed ekliyordu
+        ama bu sayfa hatayı HİÇ basmıyordu: kullanıcı ne yeşil ne kırmızı, sıfır
+        geri bildirim alıyor ve düzeninin uçtuğunu fark etmiyordu. O yolda
+        RedirectToPage da yok, yani "Saved" kutusu da çıkmaz.
+    *@
+    @if (!ViewData.ModelState.IsValid)
+    {
+        <div class="alert alert-danger" role="alert" id="ApyaNavError">
+            @foreach (var hata in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+            {
+                <div>@hata.ErrorMessage</div>
+            }
+        </div>
     }
 
     <form method="post" id="ApyaMenuEditor">

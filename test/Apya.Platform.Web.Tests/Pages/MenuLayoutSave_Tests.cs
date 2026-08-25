@@ -143,4 +143,44 @@ public class MenuLayoutSave_Tests : PlatformWebTestBase
         kayitli.ShouldNotBeNullOrWhiteSpace();
         kayitli.ShouldContain("Apya.Content.DynamicAssets");
     }
+
+    // ── Geri bildirim görünüyor mu? ──────────────────────────────────────────
+
+    /// <summary>
+    /// Çözülemeyen yükte kullanıcı hatayı GÖRMELİ.
+    ///
+    /// Handler ModelState'e MenuLayout:SaveFailed ekliyordu ama sayfa hiçbir
+    /// doğrulama özeti basmıyordu: kullanıcı ne yeşil ne kırmızı, sıfır geri
+    /// bildirim alıyor ve düzeninin kaydedilmediğini fark etmiyordu. Üstelik bu
+    /// yolda RedirectToPage yok, yani "kaydedildi" kutusu da çıkmaz — ekran
+    /// tamamen sessiz kalıyordu.
+    /// </summary>
+    [Fact]
+    public async Task Cozulemeyen_yukte_hata_ekranda_gorunur()
+    {
+        var response = await PostLayoutAsync("{ bu gecerli bir json degil ");
+
+        // Hata yolu Page() döner — 302 DEĞİL. 302 görürsek kaydedilmiş demektir.
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        var html = await response.Content.ReadAsStringAsync();
+        html.ShouldContain("kaydedilemedi");
+    }
+
+    /// <summary>
+    /// Başarı kutusunun kimliği Menu.js'in onu görünür alana kaydırması için
+    /// şart. Kimlik düşerse kaydırma sessizce ölür ve kullanıcı yine kaydettiği
+    /// yerde hiçbir şey görmez — "bir daha bas" davranışı geri döner.
+    /// </summary>
+    [Fact]
+    public async Task Kaydedildi_kutusu_kaydirilabilir_kimlik_tasir()
+    {
+        await PostLayoutAsync("""
+            {"items":{"Apya.Content":["Apya.Content.DynamicAssets","Apya.Content.Documents"]}}
+            """);
+
+        var html = await GetResponseAsStringAsync(MenuUrl);
+
+        html.ShouldContain("id=\"ApyaNavSaved\"");
+    }
 }
