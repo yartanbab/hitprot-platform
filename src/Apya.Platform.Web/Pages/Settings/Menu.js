@@ -418,4 +418,19 @@ $(function () {
     });
 
     bindAllSortables();
+
+    // --- kaydettikten sonra geri bildirimi GÖRÜNÜR alana getir ---
+    // Onay/hata kutusu sayfanın tepesinde, Kaydet düğmesi ~150 satır aşağıda.
+    // Kaydeden kullanıcı, bastığı yerde hiçbir şey değişmediği için "olmadı"
+    // sanıp tekrar basıyordu — oysa ilk tıklama kaydediyordu (ölçüldü: POST
+    // gidiyor, ayar yazılıyor, yönlendirme dönüyor). Mesajı düğmenin yanına
+    // KOPYALAMAK yerine kullanıcıyı mesaja getiriyoruz: tek kaynak korunur,
+    // ekran okuyucu için role="status"/role="alert" yerinde kalır.
+    var bildirim = document.getElementById('ApyaNavError') ||
+                   document.getElementById('ApyaNavSaved');
+    if (bildirim && typeof bildirim.scrollIntoView === 'function') {
+        // Hizalama 'center' değil 'nearest': kutu zaten görünür alandaysa
+        // sayfa boşuna zıplamasın.
+        bildirim.scrollIntoView({ block: 'nearest' });
+    }
 });
