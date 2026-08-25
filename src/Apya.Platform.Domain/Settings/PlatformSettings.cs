@@ -178,6 +178,22 @@ public static class PlatformSettings
         public const string Completed = Prefix + ".Tour.Completed";
     }
 
+    /// <summary>
+    /// Zorunlu çerez bilgilendirme şeridi — kullanıcı seviyesinde onay takibi
+    /// (Tour.Completed ile aynı ray).
+    /// </summary>
+    public static class CookieNotice
+    {
+        /// <summary>
+        /// Şeritteki "Anladım" onayı verildi mi? "true" = şerit bir daha gösterilmez.
+        /// Onay ÖNCE <c>apya_cookie_ack</c> çerezine yazılır; bu ayar giriş yapmış
+        /// kullanıcı için İKİNCİ ve kalıcı dayanaktır — çerez temizlense, başka
+        /// tarayıcıya geçilse ya da çerez ömrü dolsa bile şerit geri gelmez.
+        /// Kullanıcı seviyesinde saklanır; ayar ekranında GÖSTERİLMEZ (iç değer).
+        /// </summary>
+        public const string Acknowledged = Prefix + ".CookieNotice.Acknowledged";
+    }
+
     /// <summary>Sürüm notları ("Yenilikler") — kullanıcı seviyesinde görülme takibi.</summary>
     public static class ReleaseNotes
     {

@@ -101,6 +101,12 @@ public class PlatformSettingDefinitionProvider : SettingDefinitionProvider
         // buraya yazar) hem de "false" varsayılanı zincirden dönebilsin.
         context.Add(new SettingDefinition(PlatformSettings.Tour.Completed, defaultValue: "false"));
 
+        // Çerez bilgilendirme şeridinin "Anladım" onayı — Tour.Completed ile aynı
+        // ray: kullanıcı seviyesi iç bayrak, ayar ekranında GÖSTERİLMEZ.
+        // .WithProviders() ile KISITLANMAZ ki User provider zincirde kalsın
+        // (SetForCurrentUserAsync buraya yazar) ve "false" varsayılanı dönebilsin.
+        context.Add(new SettingDefinition(PlatformSettings.CookieNotice.Acknowledged, defaultValue: "false"));
+
         // Sürüm notları "en son görülen sürüm" — kullanıcı seviyesi iç değer (ayar ekranında GÖSTERİLMEZ).
         // Boş varsayılan = hiç görmedi → ilk açılışta "Yenilikler" penceresi açılır.
         context.Add(

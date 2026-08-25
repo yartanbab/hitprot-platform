@@ -1,3 +1,4 @@
+@using Apya.Platform.Consents
 @model bool
 @* Model = onaylandı mı? true ise şerit hiç basılmaz. *@
 @if (!Model)
@@ -34,6 +35,15 @@
             if (!bar || !btn) { return; }
             btn.addEventListener('click', function () {
                 btn.disabled = true;
+                /* Onayı ÖNCE burada mühürle. Sunucu aynı çerezi kendi yanıtında da
+                   yazar; ama istek hiç gitmezse (çevrimdışı) ya da sunucu hata
+                   dönerse tek dayanak bu satır olur — aksi halde şerit kapanır
+                   gibi görünür ve bir sonraki sayfada geri gelir. */
+                try {
+                    document.cookie = '@ConsentConsts.CookieNoticeAckCookieName=@ConsentConsts.CookiePolicyVersion'
+                        + '; path=/; max-age=31536000; samesite=lax'
+                        + (location.protocol === 'https:' ? '; secure' : '');
+                } catch (e) { /* çerez yazılamıyorsa sunucu yanıtına güvenilir */ }
                 fetch('/consent/ack', { method: 'POST', credentials: 'same-origin' })
                     .catch(function () { /* rıza kaydı best-effort; şeridi yine de kapat */ })
                     .finally(function () { bar.remove(); });
