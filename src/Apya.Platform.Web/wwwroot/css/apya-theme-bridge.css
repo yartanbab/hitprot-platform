@@ -1013,13 +1013,17 @@ html, body {
 }
 
 /* ============================================================================
-   KABUK GEOMETRİSİ — --apya-sidebar-w 280px, --apya-header-h 57→64px
+   KABUK GEOMETRİSİ — --apya-sidebar-w 320px, --apya-header-h 57→64px
    ----------------------------------------------------------------------------
    Kabuk handoff'u (design_handoff_app_shell) üst barı bilinçli olarak
    değiştiriyor: 64px (marka satırı üst barla aynı hizada). Menü genişliği bir
-   süre 250px'e çekilmişti; 2026-08-26'da 280px'e geri alındı — proje ve menü
+   süre 250px'e çekilmişti; 2026-08-26'da 320px'e çıkarıldı — proje ve menü
    adları artık satırın kalanı kadar uzadığı için (bkz. apya-shell.css "KENAR
-   ÇUBUĞU — AD, YERİ OLDUĞU KADAR UZASIN") 30px doğrudan ada yazılıyor.
+   ÇUBUĞU — AD, YERİ OLDUĞU KADAR UZASIN") kazanılan her piksel doğrudan ada
+   yazılıyor. Canlı ölçüm (2026-08-26, /Projects): 280px'te 9 projeden 4'ünün
+   adı elipsliydi, 320px'te hiçbiri değil. Kenar çubuğunda dikey kaydırma
+   çubuğu olduğu için temanın navigasyonu --apya-sidebar-w'den 15px DAHA DAR
+   kalıyor; hesabı buna göre yap.
 
    Değerler tokens.css'te DEĞİL burada override edilir: tokens.css React
    island'la paylaşılan tek kaynak ve orada 280/57 "LeptonX'in canlı geometrisi"
@@ -1032,7 +1036,7 @@ html, body {
    geometriyi sürer (ray genişliği --apya-sidebar-w-collapsed'ta zaten bağlıydı).
    ============================================================================ */
 :root {
-    --apya-sidebar-w: 280px;
+    --apya-sidebar-w: 320px;
     --apya-header-h:   64px;
 }
 

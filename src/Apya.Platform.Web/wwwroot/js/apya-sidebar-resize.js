@@ -12,7 +12,7 @@
    ayarda, bölüm katlama ve ray modu localStorage'da).
 
    Boyanma ÖNCESİ uygulama ApyaThemeHead'deki FOUC betiğinde; burada yalnız
-   sürükleme var. Yoksa her yenilemede menü 280px'ten seçilen genişliğe zıplardı.
+   sürükleme var. Yoksa her yenilemede menü 320px'ten seçilen genişliğe zıplardı.
    ============================================================================= */
 $(function () {
     'use strict';
