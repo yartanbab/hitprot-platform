@@ -10,13 +10,33 @@ import { QK } from '../../lib/api/queryClient';
  * sekmesi lokalde tutulur (bkz viewPresets).
  */
 
+/**
+ * Razor'ın sayfaya gömdüğü VARSAYILAN görünüm düzeni (Pages/Dashboard/Index.cshtml).
+ * Bir kez okunur; yoksa ya da bozuksa sessizce null döner — gömme bir
+ * optimizasyondur, yokluğunda normal istek atılır.
+ */
+const embeddedLayout = (() => {
+    try {
+        const node = document.getElementById('apya-dashboard-layout');
+        return node ? JSON.parse(node.textContent) : null;
+    } catch {
+        return null;
+    }
+})();
+
 export function useDashboardLayout(viewKey) {
+    /* Gömülü kayıt YALNIZ kendi görünümüne tohum olur. Kullanıcı başka bir görünüm
+       seçtiyse (tercih localStorage'da, sunucu bilemez) anahtarlar tutmaz ve
+       istemci normal isteğini atar — yanlış düzen gösterme riski yok. */
+    const initialData = embeddedLayout?.viewKey === viewKey ? embeddedLayout : undefined;
+
     return useQuery({
         queryKey: QK.dashboard.layout(viewKey),
         queryFn: () => api.get(`/api/dashboard/layout?viewKey=${encodeURIComponent(viewKey)}`),
         /* Düzen kullanıcıdan başkası değiştiremez → uzun taze kalır. */
         staleTime: 5 * 60_000,
         enabled: Boolean(viewKey),
+        initialData,
     });
 }
 
