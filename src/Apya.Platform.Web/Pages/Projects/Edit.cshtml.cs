@@ -87,7 +87,6 @@ public class EditModel : PlatformPageModel
             Code = Current.Code,
             Description = Current.Description,
             Purpose = Current.Purpose,
-            Duration = Current.Duration,
             TargetAudience = Current.TargetAudience,
             Activities = Current.Activities,
             StartDate = Current.StartDate,
@@ -120,6 +119,7 @@ public class EditModel : PlatformPageModel
         Project.GrantId = Current.GrantId;
         Project.HourlyRate = Current.HourlyRate;
         Project.Currency = Current.Currency;
+        Project.Duration = Current.Duration;
         if (!CanViewBudget)
         {
             Project.TotalBudget = Current.TotalBudget;
