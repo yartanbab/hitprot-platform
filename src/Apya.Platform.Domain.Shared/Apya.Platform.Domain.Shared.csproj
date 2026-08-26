@@ -27,6 +27,8 @@
     <Content Remove="Localization\TenantManagement\*.json" />
     <EmbeddedResource Include="Localization\MultiTenancyUi\*.json" />
     <Content Remove="Localization\MultiTenancyUi\*.json" />
+    <EmbeddedResource Include="Localization\Validation\*.json" />
+    <Content Remove="Localization\Validation\*.json" />
   </ItemGroup>
 
   <ItemGroup>

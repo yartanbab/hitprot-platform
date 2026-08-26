@@ -1,0 +1,18 @@
+{
+    "culture": "en",
+    "texts": {
+        "The {0} field is required.": "{0} cannot be empty.",
+        "The field {0} must be a string with a maximum length of {1}.": "{0} can be at most {1} characters.",
+        "The field {0} must be a string with a minimum length of {2} and a maximum length of {1}.": "{0} must be between {2} and {1} characters.",
+        "The field {0} must be a string or array type with a maximum length of '{1}'.": "{0} can be at most {1} characters.",
+        "The field {0} must be a string or array type with a minimum length of '{1}'.": "{0} must be at least {1} characters.",
+        "The field {0} must be between {1} and {2}.": "{0} must be between {1} and {2}.",
+        "The field {0} must match the regular expression '{1}'.": "{0} is not in the expected format.",
+        "'{0}' and '{1}' do not match.": "{0} and {1} do not match.",
+        "The {0} field is not a valid e-mail address.": "{0} is not a valid e-mail address.",
+        "The {0} field is not a valid phone number.": "{0} is not a valid phone number.",
+        "The {0} field is not a valid fully-qualified http, https, or ftp URL.": "{0} is not a valid web address; it must start with http:// or https://.",
+        "The {0} field is not a valid credit card number.": "{0} is not a valid card number.",
+        "The {0} field only accepts files with the following extensions: {1}": "{0} only accepts these file extensions: {1}"
+    }
+}

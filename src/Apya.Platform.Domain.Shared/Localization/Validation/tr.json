@@ -1,0 +1,18 @@
+{
+    "culture": "tr",
+    "texts": {
+        "The {0} field is required.": "{0} boş bırakılamaz.",
+        "The field {0} must be a string with a maximum length of {1}.": "{0} en fazla {1} karakter olabilir.",
+        "The field {0} must be a string with a minimum length of {2} and a maximum length of {1}.": "{0} en az {2}, en fazla {1} karakter olmalıdır.",
+        "The field {0} must be a string or array type with a maximum length of '{1}'.": "{0} en fazla {1} karakter olabilir.",
+        "The field {0} must be a string or array type with a minimum length of '{1}'.": "{0} en az {1} karakter olmalıdır.",
+        "The field {0} must be between {1} and {2}.": "{0} {1} ile {2} arasında olmalıdır.",
+        "The field {0} must match the regular expression '{1}'.": "{0} beklenen biçimde değil.",
+        "'{0}' and '{1}' do not match.": "{0} ile {1} eşleşmiyor.",
+        "The {0} field is not a valid e-mail address.": "{0} geçerli bir e-posta adresi değil.",
+        "The {0} field is not a valid phone number.": "{0} geçerli bir telefon numarası değil.",
+        "The {0} field is not a valid fully-qualified http, https, or ftp URL.": "{0} geçerli bir web adresi değil; http:// veya https:// ile başlamalı.",
+        "The {0} field is not a valid credit card number.": "{0} geçerli bir kart numarası değil.",
+        "The {0} field only accepts files with the following extensions: {1}": "{0} yalnız şu uzantıları kabul eder: {1}"
+    }
+}

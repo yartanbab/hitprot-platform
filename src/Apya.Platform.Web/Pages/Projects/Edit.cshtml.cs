@@ -32,9 +32,13 @@ public class EditModel : PlatformPageModel
     [BindProperty(SupportsGet = true)]
     public Guid Id { get; set; }
 
-    /// <summary>Açılacak sekme: info | files | danger. ⋯ menüsündeki silme buraya ?tab=danger ile gelir.</summary>
+    /// <summary>
+    /// Açılacak sekme: info | files | danger. ⋯ menüsündeki silme buraya ?tab=danger ile gelir.
+    /// Hiçbir form bu alanı post etmez; nullable olmasa POST'ta örtük [Required] devreye girip
+    /// "Tab alanı zorunludur" hatası veriyordu. Değer <see cref="LoadAsync"/>'de normalize edilir.
+    /// </summary>
     [BindProperty(SupportsGet = true)]
-    public string Tab { get; set; } = "info";
+    public string? Tab { get; set; } = "info";
 
     [BindProperty]
     public CreateProjectDto Project { get; set; } = new();

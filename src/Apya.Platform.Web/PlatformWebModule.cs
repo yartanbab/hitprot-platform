@@ -28,6 +28,9 @@ using Apya.Platform.EntityFrameworkCore;
 using Apya.Platform.Localization;
 using Apya.Platform.MultiTenancy;
 using Apya.Platform.Web.Menus;
+using Apya.Platform.Web.Validation;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.DataAnnotations;
 using Microsoft.OpenApi.Models;
 using OpenIddict.Validation.AspNetCore;
 using Volo.Abp;
@@ -273,6 +276,7 @@ public class PlatformWebModule : AbpModule
         });
 
         ConfigureAuthentication(context);
+        ConfigureValidationLocalization(context);
         ConfigureUrls(configuration);
         ConfigureResponseCompression(context);
         ConfigureRateLimiting(context);
@@ -403,6 +407,53 @@ public class PlatformWebModule : AbpModule
         });
     }
 
+    /// <summary>
+    /// Doğrulama ve model bağlama hata metinlerinin Türkçeleştirilmesi.
+    ///
+    /// Üç ayrı kaynak var, üçü de burada kapatılır:
+    ///  1. DataAnnotations mesajları — ErrorMessage'ı boş attribute'lar yerelleştirilmez
+    ///     (bkz. <see cref="PlatformValidationAttributeAdapterProvider"/>).
+    ///  2. Model bağlama mesajları — MvcOptions.ModelBindingMessageProvider varsayılanı
+    ///     İngilizce sabittir; geçersiz tarih/sayı/enum girişlerinde bu çıkıyordu.
+    ///  3. Alan adları — ABP genel "DisplayName:{Alan}" karşılığını zaten çözüyor; buna
+    ///     bağlama özel katman eklenir (bkz. <see cref="PlatformDisplayMetadataProvider"/>).
+    /// </summary>
+    private void ConfigureValidationLocalization(ServiceConfigurationContext context)
+    {
+        context.Services.AddSingleton<IValidationAttributeAdapterProvider, PlatformValidationAttributeAdapterProvider>();
+
+        context.Services
+            .AddOptions<MvcOptions>()
+            .Configure<IStringLocalizerFactory>((options, localizerFactory) =>
+            {
+                // Non-nullable referans tipleri ÖRTÜK olarak [Required] sayılmasın.
+                // Bu kural, kullanıcının hiç görmediği teknik bağlama alanları için
+                // ("Tab", "LayoutJson", "Currency") sahte doğrulama hatası üretiyordu:
+                // form o alanı post etmediği için sayfa kaydedilemiyordu. Gerçek
+                // zorunluluklar 84 açık [Required] ile tanımlı, onlar etkilenmez.
+                options.SuppressImplicitRequiredAttributeForNonNullableReferenceTypes = true;
+
+                options.ModelMetadataDetailsProviders.Add(
+                    new PlatformDisplayMetadataProvider(localizerFactory));
+
+                // Localizer singleton; kültürü her erişimde CurrentUICulture'dan okur.
+                var l = localizerFactory.Create(typeof(PlatformResource));
+                var p = options.ModelBindingMessageProvider;
+
+                p.SetMissingBindRequiredValueAccessor(field => l["Validation:MissingBindRequiredValue", field]);
+                p.SetMissingKeyOrValueAccessor(() => l["Validation:MissingKeyOrValue"]);
+                p.SetMissingRequestBodyRequiredValueAccessor(() => l["Validation:MissingRequestBodyRequiredValue"]);
+                p.SetValueMustNotBeNullAccessor(value => l["Validation:ValueMustNotBeNull", value]);
+                p.SetAttemptedValueIsInvalidAccessor((value, field) => l["Validation:AttemptedValueIsInvalid", value, field]);
+                p.SetNonPropertyAttemptedValueIsInvalidAccessor(value => l["Validation:NonPropertyAttemptedValueIsInvalid", value]);
+                p.SetUnknownValueIsInvalidAccessor(field => l["Validation:UnknownValueIsInvalid", field]);
+                p.SetNonPropertyUnknownValueIsInvalidAccessor(() => l["Validation:NonPropertyUnknownValueIsInvalid"]);
+                p.SetValueIsInvalidAccessor(value => l["Validation:ValueIsInvalid", value]);
+                p.SetValueMustBeANumberAccessor(field => l["Validation:ValueMustBeANumber", field]);
+                p.SetNonPropertyValueMustBeANumberAccessor(() => l["Validation:NonPropertyValueMustBeANumber"]);
+            });
+    }
+
     private void ConfigureUrls(IConfiguration configuration)
     {
         Configure<AppUrlOptions>(options =>
@@ -447,6 +498,12 @@ public class PlatformWebModule : AbpModule
                 LeptonXLiteThemeBundles.Scripts.Global,
                 bundle =>
                 {
+                    // jQuery Validation'ın KENDİ varsayılan mesajları (min/max/number/email/url
+                    // gibi HTML5 özniteliklerinden türeyen kurallar) sunucudan gelmez, istemcide
+                    // gömülüdür ve İngilizcedir. Tema demetinden SONRA yüklendiği için
+                    // $.validator.messages'ı Türkçeyle ezer. data-val-* mesajları zaten
+                    // sunucudan yerelleştirilmiş gelir; bu dosya yalnız o boşluğu kapatır.
+                    bundle.AddFiles("/libs/jquery-validation/localization/messages_tr.js");
                     // Olu�turdu�umuz dosyay� buraya ekliyoruz
                     bundle.AddFiles("/js/jquery-fix.js");
                     // Erken kayıt: window.onerror/unhandledrejection dinleyicileri mümkün olduğunca
