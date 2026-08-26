@@ -515,10 +515,10 @@ function Tt(t) {
 }
 function Ct({ filter: t, template: n, compact: a }) {
   const { data: s, isLoading: i, isError: c, refetch: l } = jt(t), o = { gridTemplateColumns: n ?? "repeat(4, minmax(0, 2fr)) minmax(0, 3fr)" };
-  return i ? /* @__PURE__ */ e.jsx("div", { className: "h-full grid gap-3", style: o, children: Array.from({ length: 5 }, (d, u) => /* @__PURE__ */ e.jsxs("div", { className: "rounded-card shadow-card bg-surface-base border border-default p-4", children: [
-    /* @__PURE__ */ e.jsx(L, { height: 14, className: "w-2/3 mb-2" }),
+  return i ? /* @__PURE__ */ e.jsx("div", { className: "h-full grid gap-[12px]", style: o, children: Array.from({ length: 5 }, (d, u) => /* @__PURE__ */ e.jsxs("div", { className: "rounded-card shadow-card bg-surface-base border border-default p-[16px]", children: [
+    /* @__PURE__ */ e.jsx(L, { height: 14, className: "w-2/3 mb-[8px]" }),
     /* @__PURE__ */ e.jsx(L, { height: 28, className: "w-1/2" })
-  ] }, u)) }) : c || !s ? /* @__PURE__ */ e.jsxs("div", { className: "rounded-card shadow-card bg-surface-base border border-default p-4 flex items-center justify-between gap-3", children: [
+  ] }, u)) }) : c || !s ? /* @__PURE__ */ e.jsxs("div", { className: "rounded-card shadow-card bg-surface-base border border-default p-[16px] flex items-center justify-between gap-[12px]", children: [
     /* @__PURE__ */ e.jsx("span", { className: "text-[12.5px] text-text-secondary", children: r("Dashboard:Summary:Error", "Özet yüklenemedi.") }),
     /* @__PURE__ */ e.jsx("button", { type: "button", onClick: () => l(), className: "text-[12.5px] text-text-link hover:underline", children: r("Common:Retry", "Tekrar dene") })
   ] }) : (
@@ -526,12 +526,12 @@ function Ct({ filter: t, template: n, compact: a }) {
                bırakılırsa kutu içerikten kısa kalınca taşıp alttaki satıra biniyor,
                uzun kalınca da altta ölü boşluk bırakıyordu — ikisini de gördük.
                Ek alt padding YOK: tüm boşluklar tek kaynaktan, GRID_MARGIN'den gelir.
-               Kutucuk arası da aynı 12px (gap-3) — ızgaradaki kart aralarıyla birebir.
+               Kutucuk arası da aynı 12px — ızgaradaki kart aralarıyla birebir.
     
                Kutu yüksekliği de kolon sayısını takip eder (stripLayoutFor → h), yani
                çok satırlı dizilimde kutu büyür; sabit h=2 bırakılınca satırlar 148px'lik
                kutuya sıkışıp `overflow-hidden` altyazıları kesiyordu. */
-    /* @__PURE__ */ e.jsxs("div", { className: "h-full grid gap-3", style: o, children: [
+    /* @__PURE__ */ e.jsxs("div", { className: "h-full grid gap-[12px]", style: o, children: [
       /* @__PURE__ */ e.jsx(
         _,
         {
@@ -598,17 +598,17 @@ function _({ label: t, value: n, pill: a, pillTone: s = "neutral", caption: i, t
       className: m(
         "rounded-card shadow-card bg-surface-base border border-default",
         "flex flex-col overflow-hidden",
-        f ? "gap-[5px] pt-3 px-3 pb-3" : m(
+        f ? "gap-[5px] pt-[12px] px-[12px] pb-[12px]" : m(
           "gap-[7px]",
           /* Üst ve yan padding TÜM kutucuklarda aynı; yalnız alt padding
              grafikli kutucukta sıfırlanır ki sparkline kenara yapışsın.
              Farklı üst padding vermek şeritteki başlıkları kaydırıyordu. */
-          "pt-4 px-4",
-          d ? "pb-0" : "pb-4"
+          "pt-[16px] px-[16px]",
+          d ? "pb-[0px]" : "pb-[16px]"
         )
       ),
       children: [
-        /* @__PURE__ */ e.jsxs("div", { className: "flex items-center justify-between gap-2", children: [
+        /* @__PURE__ */ e.jsxs("div", { className: "flex items-center justify-between gap-[8px]", children: [
           /* @__PURE__ */ e.jsx("span", { className: "text-[12.5px] font-medium text-text-secondary truncate", children: t }),
           /* @__PURE__ */ e.jsx("span", { className: m(
             "inline-flex items-center justify-center rounded-lg flex-none",
@@ -617,14 +617,17 @@ function _({ label: t, value: n, pill: a, pillTone: s = "neutral", caption: i, t
           ), children: l })
         ] }),
         u ? /* @__PURE__ */ e.jsxs(e.Fragment, { children: [
-          /* @__PURE__ */ e.jsx("span", { className: m("font-mono font-semibold leading-none tracking-[-0.03em] text-text-tertiary", f ? "text-[22px]" : "text-[28px]"), children: "— —" }),
+          /* @__PURE__ */ e.jsx("span", { className: m("font-mono font-semibold tracking-[-0.03em] text-text-tertiary", f ? "text-[22px]" : "text-[28px]", "leading-none"), children: "— —" }),
           /* @__PURE__ */ e.jsx("span", { className: "text-[11.5px] text-text-tertiary", children: r("Dashboard:Stat:Locked", "yetki gerekli") }),
           /* @__PURE__ */ e.jsx("span", { className: "font-mono text-[9px] text-text-tertiary", children: b })
         ] }) : /* @__PURE__ */ e.jsxs(e.Fragment, { children: [
-          /* @__PURE__ */ e.jsxs("div", { className: "flex items-baseline gap-2 flex-wrap", children: [
+          /* @__PURE__ */ e.jsxs("div", { className: "flex items-baseline gap-[8px] flex-wrap", children: [
             /* @__PURE__ */ e.jsx("span", { className: m(
-              "font-mono font-semibold leading-none tracking-[-0.03em] tabular-nums",
+              "font-mono font-semibold tracking-[-0.03em] tabular-nums",
               f ? "text-[22px]" : "text-[28px]",
+              /* leading-none SIRASI ÖNEMLİ: tailwind-merge, text-[..] font-size
+                 sınıfını gördüğünde ÖNCESİNDEKİ leading-* sınıfını atıyor. */
+              "leading-none",
               c === "negative" ? "text-negative-500" : c === "warning" ? "text-warning-600" : "text-text-primary"
             ), children: n }),
             a && /* @__PURE__ */ e.jsx("span", { className: m(
@@ -634,7 +637,7 @@ function _({ label: t, value: n, pill: a, pillTone: s = "neutral", caption: i, t
           ] }),
           i && /* @__PURE__ */ e.jsx("span", { className: "text-[11.5px] text-text-tertiary truncate", children: i })
         ] }),
-        y && /* @__PURE__ */ e.jsx("div", { className: "h-9 mt-auto -mx-4", children: /* @__PURE__ */ e.jsx(et, { values: d, ariaLabel: r("Dashboard:Summary:DueTrend", "Teslim dağılımı") }) })
+        y && /* @__PURE__ */ e.jsx("div", { className: "h-9 mt-auto -mx-[16px]", children: /* @__PURE__ */ e.jsx(et, { values: d, ariaLabel: r("Dashboard:Summary:DueTrend", "Teslim dağılımı") }) })
       ]
     }
   );
@@ -649,17 +652,17 @@ function Et({ data: t, compact: n }) {
       {
         className: m(
           "rounded-card shadow-card bg-surface-base border border-default flex items-center justify-between",
-          n ? "p-3 gap-2" : "p-4 gap-2.5"
+          n ? "p-[12px] gap-[8px]" : "p-[16px] gap-[10px]"
         ),
         style: n ? { gridColumn: "1 / -1" } : void 0,
         children: [
           /* @__PURE__ */ e.jsxs("div", { className: m("flex flex-col min-w-0", n ? "gap-[5px]" : "gap-[7px]"), children: [
             /* @__PURE__ */ e.jsx("span", { className: "text-[12.5px] font-medium text-text-secondary truncate", children: r("Dashboard:Summary:BudgetUsage", "Bütçe kullanımı") }),
             a ? /* @__PURE__ */ e.jsxs(e.Fragment, { children: [
-              /* @__PURE__ */ e.jsx("span", { className: m("font-mono font-semibold leading-none tracking-[-0.03em] text-text-tertiary", n ? "text-[22px]" : "text-[28px]"), children: "— —" }),
+              /* @__PURE__ */ e.jsx("span", { className: m("font-mono font-semibold tracking-[-0.03em] text-text-tertiary", n ? "text-[22px]" : "text-[28px]", "leading-none"), children: "— —" }),
               /* @__PURE__ */ e.jsx("span", { className: "font-mono text-[9px] text-text-tertiary", children: "Platform.Projects.ViewBudget" })
             ] }) : /* @__PURE__ */ e.jsxs(e.Fragment, { children: [
-              /* @__PURE__ */ e.jsxs("span", { className: m("font-mono font-semibold leading-none tracking-[-0.03em] text-text-primary tabular-nums", n ? "text-[22px]" : "text-[28px]"), children: [
+              /* @__PURE__ */ e.jsxs("span", { className: m("font-mono font-semibold tracking-[-0.03em] text-text-primary tabular-nums", n ? "text-[22px]" : "text-[28px]", "leading-none"), children: [
                 "%",
                 Math.round((t.budgetUsedRatio ?? 0) * 100)
               ] }),

@@ -22,10 +22,10 @@ function StatStripCard({ filter, template, compact }) {
 
     if (isLoading) {
         return (
-            <div className="h-full grid gap-3" style={gridStyle}>
+            <div className="h-full grid gap-[12px]" style={gridStyle}>
                 {Array.from({ length: 5 }, (_, i) => (
-                    <div key={i} className="rounded-card shadow-card bg-surface-base border border-default p-4">
-                        <Skeleton height={14} className="w-2/3 mb-2" />
+                    <div key={i} className="rounded-card shadow-card bg-surface-base border border-default p-[16px]">
+                        <Skeleton height={14} className="w-2/3 mb-[8px]" />
                         <Skeleton height={28} className="w-1/2" />
                     </div>
                 ))}
@@ -35,7 +35,7 @@ function StatStripCard({ filter, template, compact }) {
 
     if (isError || !data) {
         return (
-            <div className="rounded-card shadow-card bg-surface-base border border-default p-4 flex items-center justify-between gap-3">
+            <div className="rounded-card shadow-card bg-surface-base border border-default p-[16px] flex items-center justify-between gap-[12px]">
                 <span className="text-[12.5px] text-text-secondary">
                     {t('Dashboard:Summary:Error', 'Özet yüklenemedi.')}
                 </span>
@@ -51,12 +51,12 @@ function StatStripCard({ filter, template, compact }) {
            bırakılırsa kutu içerikten kısa kalınca taşıp alttaki satıra biniyor,
            uzun kalınca da altta ölü boşluk bırakıyordu — ikisini de gördük.
            Ek alt padding YOK: tüm boşluklar tek kaynaktan, GRID_MARGIN'den gelir.
-           Kutucuk arası da aynı 12px (gap-3) — ızgaradaki kart aralarıyla birebir.
+           Kutucuk arası da aynı 12px — ızgaradaki kart aralarıyla birebir.
 
            Kutu yüksekliği de kolon sayısını takip eder (stripLayoutFor → h), yani
            çok satırlı dizilimde kutu büyür; sabit h=2 bırakılınca satırlar 148px'lik
            kutuya sıkışıp `overflow-hidden` altyazıları kesiyordu. */
-        <div className="h-full grid gap-3" style={gridStyle}>
+        <div className="h-full grid gap-[12px]" style={gridStyle}>
             <Tile
                 compact={compact}
                 label={t('Dashboard:Summary:DueThisPeriod', 'Bu dönem teslim')}
@@ -119,17 +119,17 @@ function Tile({ label, value, pill, pillTone = 'neutral', caption, tone = 'neutr
             className={cn(
                 'rounded-card shadow-card bg-surface-base border border-default',
                 'flex flex-col overflow-hidden',
-                compact ? 'gap-[5px] pt-3 px-3 pb-3' : cn(
+                compact ? 'gap-[5px] pt-[12px] px-[12px] pb-[12px]' : cn(
                     'gap-[7px]',
                     /* Üst ve yan padding TÜM kutucuklarda aynı; yalnız alt padding
                        grafikli kutucukta sıfırlanır ki sparkline kenara yapışsın.
                        Farklı üst padding vermek şeritteki başlıkları kaydırıyordu. */
-                    'pt-4 px-4',
-                    spark ? 'pb-0' : 'pb-4',
+                    'pt-[16px] px-[16px]',
+                    spark ? 'pb-[0px]' : 'pb-[16px]',
                 ),
             )}
         >
-            <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center justify-between gap-[8px]">
                 <span className="text-[12.5px] font-medium text-text-secondary truncate">{label}</span>
                 <span className={cn(
                     'inline-flex items-center justify-center rounded-lg flex-none',
@@ -144,16 +144,19 @@ function Tile({ label, value, pill, pillTone = 'neutral', caption, tone = 'neutr
 
             {locked ? (
                 <>
-                    <span className={cn('font-mono font-semibold leading-none tracking-[-0.03em] text-text-tertiary', compact ? 'text-[22px]' : 'text-[28px]')}>— —</span>
+                    <span className={cn('font-mono font-semibold tracking-[-0.03em] text-text-tertiary', compact ? 'text-[22px]' : 'text-[28px]', 'leading-none')}>— —</span>
                     <span className="text-[11.5px] text-text-tertiary">{t('Dashboard:Stat:Locked', 'yetki gerekli')}</span>
                     <span className="font-mono text-[9px] text-text-tertiary">{lockedPermission}</span>
                 </>
             ) : (
                 <>
-                    <div className="flex items-baseline gap-2 flex-wrap">
+                    <div className="flex items-baseline gap-[8px] flex-wrap">
                         <span className={cn(
-                            'font-mono font-semibold leading-none tracking-[-0.03em] tabular-nums',
+                            'font-mono font-semibold tracking-[-0.03em] tabular-nums',
                             compact ? 'text-[22px]' : 'text-[28px]',
+                            /* leading-none SIRASI ÖNEMLİ: tailwind-merge, text-[..] font-size
+                               sınıfını gördüğünde ÖNCESİNDEKİ leading-* sınıfını atıyor. */
+                            'leading-none',
                             tone === 'negative' ? 'text-negative-500'
                                 : tone === 'warning' ? 'text-warning-600'
                                 : 'text-text-primary',
@@ -179,7 +182,7 @@ function Tile({ label, value, pill, pillTone = 'neutral', caption, tone = 'neutr
                 mt-auto ŞART — kutucuk içerikten uzun olduğunda grafik ortada asılı
                 kalmasın, her zaman alt kenarı kucaklasın. */}
             {showSpark && (
-                <div className="h-9 mt-auto -mx-4">
+                <div className="h-9 mt-auto -mx-[16px]">
                     <AreaSpark values={spark} ariaLabel={t('Dashboard:Summary:DueTrend', 'Teslim dağılımı')} />
                 </div>
             )}
@@ -197,7 +200,7 @@ function BudgetTile({ data, compact }) {
         <div
             className={cn(
                 'rounded-card shadow-card bg-surface-base border border-default flex items-center justify-between',
-                compact ? 'p-3 gap-2' : 'p-4 gap-2.5',
+                compact ? 'p-[12px] gap-[8px]' : 'p-[16px] gap-[10px]',
             )}
             style={compact ? { gridColumn: '1 / -1' } : undefined}
         >
@@ -207,12 +210,12 @@ function BudgetTile({ data, compact }) {
                 </span>
                 {locked ? (
                     <>
-                        <span className={cn('font-mono font-semibold leading-none tracking-[-0.03em] text-text-tertiary', compact ? 'text-[22px]' : 'text-[28px]')}>— —</span>
+                        <span className={cn('font-mono font-semibold tracking-[-0.03em] text-text-tertiary', compact ? 'text-[22px]' : 'text-[28px]', 'leading-none')}>— —</span>
                         <span className="font-mono text-[9px] text-text-tertiary">Platform.Projects.ViewBudget</span>
                     </>
                 ) : (
                     <>
-                        <span className={cn('font-mono font-semibold leading-none tracking-[-0.03em] text-text-primary tabular-nums', compact ? 'text-[22px]' : 'text-[28px]')}>
+                        <span className={cn('font-mono font-semibold tracking-[-0.03em] text-text-primary tabular-nums', compact ? 'text-[22px]' : 'text-[28px]', 'leading-none')}>
                             %{Math.round((data.budgetUsedRatio ?? 0) * 100)}
                         </span>
                         <span className="text-[11.5px] text-text-tertiary truncate">
