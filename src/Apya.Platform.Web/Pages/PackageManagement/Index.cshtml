@@ -23,6 +23,44 @@
         <div class="row g-3" id="PackageCards"></div>
     </abp-card-body>
 </abp-card>
+
+<abp-card class="mt-3">
+    <abp-card-header>
+        <abp-card-title><i class="fa fa-hourglass-half text-primary me-2"></i> Paket Süresi ve Otomatik İndirme</abp-card-title>
+    </abp-card-header>
+    <abp-card-body>
+        <p class="text-muted">
+            Süreli paket atanmış müşteriler, süre dolduğunda otomatik olarak <strong>Basic</strong> pakete iner.
+            Mevcut verileri silinmez; yalnız yeni kayıt açma limitleri ve modül yetkileri Basic'e döner.
+            <strong>Süresi olmayan</strong> (süresiz) müşteriler bu kurallardan hiç etkilenmez.
+            <apya-hint text="Müşteriye süre, kiracı yönetimi ekranındaki 'Paket Değiştir' ile verilir. Süre verilmemiş müşteri süresiz sayılır ve hiçbir zaman düşürülmez." />
+        </p>
+        <div class="row g-3 align-items-end">
+            <div class="col-12 col-md-4">
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="SubAutoDowngrade">
+                    <label class="form-check-label" for="SubAutoDowngrade">Süre dolunca Basic'e indir</label>
+                </div>
+                <div class="form-text">Kapalıyken yalnız uyarı gider, paket değişmez.</div>
+            </div>
+            <div class="col-6 col-md-3">
+                <label class="form-label" for="SubGraceDays">Ek süre (gün)</label>
+                <input type="number" min="0" max="90" step="1" class="form-control" id="SubGraceDays">
+                <div class="form-text">0 = bitiş tarihinde iner.</div>
+            </div>
+            <div class="col-6 col-md-3">
+                <label class="form-label" for="SubWarningDays">Uyarı eşikleri (gün)</label>
+                <input type="text" class="form-control" id="SubWarningDays" placeholder="7,1" autocomplete="off">
+                <div class="form-text">Virgülle ayırın. Boş = uyarı yok.</div>
+            </div>
+            <div class="col-12 col-md-2">
+                <button type="button" class="btn btn-primary w-100" id="SubSaveBtn">
+                    <i class="fa fa-check me-1"></i> Kaydet
+                </button>
+            </div>
+        </div>
+    </abp-card-body>
+</abp-card>
 </div>
 
 @* Düzenleme modalı (saf JS; dinamik feature formu) *@

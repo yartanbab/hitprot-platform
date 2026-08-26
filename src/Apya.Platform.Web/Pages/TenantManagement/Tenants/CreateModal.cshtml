@@ -26,6 +26,8 @@
                     <abp-input asp-for="Tenant.AdminPassword" label="Yönetici Şifresi" />
                     <abp-select asp-for="Tenant.PackageCode" label="Paket (Edition)" />
                     <small class="form-text text-muted">Paket, tenant'ın hangi modüllere ve limitlere sahip olacağını belirler.</small>
+                    <abp-select asp-for="Tenant.SubscriptionPeriod" asp-items="Model.PeriodOptions" label="Paket Süresi" />
+                    <small class="form-text text-muted">Süre dolduğunda müşteri otomatik olarak Basic pakete iner. "Süresiz" seçilirse hiç düşmez.</small>
                 </div>
                 
                 <div class="tab-pane fade" id="legal" role="tabpanel" aria-labelledby="legal-tab">

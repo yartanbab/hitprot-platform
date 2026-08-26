@@ -1,5 +1,7 @@
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Volo.Abp.AspNetCore.Mvc.UI.RazorPages;
 using Apya.Platform.Tenants;
 
@@ -11,6 +13,12 @@ public class CreateModalModel : AbpPageModel
 
     [BindProperty]
     public CreateTenantExtendedDto Tenant { get; set; } = new();
+
+    /// <summary>
+    /// Abonelik süresi seçenekleri. Değer olarak enum ADI basılır — ABP'nin kendi
+    /// enum select'leriyle aynı kural, model binding'i sayı sırasına bağlı kalmaz.
+    /// </summary>
+    public List<SelectListItem> PeriodOptions { get; } = SubscriptionPeriodOptions.Build();
 
     public CreateModalModel(ITenantProfileAppService tenantProfileAppService)
     {

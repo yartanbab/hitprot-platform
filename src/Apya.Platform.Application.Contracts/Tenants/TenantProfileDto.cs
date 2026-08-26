@@ -18,4 +18,16 @@ public class TenantProfileDto : FullAuditedEntityDto<Guid>
     public string OperationalContactName { get; set; } = string.Empty;
     public string OperationalContactPhone { get; set; } = string.Empty;
     public bool IsActive { get; set; }
+
+    /// <summary>
+    /// Yürürlükteki aboneliğin dönemi. Abonelik satırı olmayan müşteride
+    /// <see cref="SubscriptionPeriod.Unlimited"/> — süresiz sayılır, hiç düşmez.
+    /// </summary>
+    public SubscriptionPeriod SubscriptionPeriod { get; set; } = SubscriptionPeriod.Unlimited;
+
+    /// <summary>Paketin geçerlilik bitişi. <c>null</c> = süresiz.</summary>
+    public DateTime? SubscriptionEndDate { get; set; }
+
+    /// <summary>Ek süredeyse <c>true</c>: bitiş geçti ama paket hâlâ açık.</summary>
+    public bool IsInGracePeriod { get; set; }
 }

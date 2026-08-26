@@ -21,6 +21,8 @@ public class TenantProfileAppService : PlatformAppService, ITenantProfileAppServ
     private readonly IRepository<TenantProfile, Guid> _tenantProfileRepository;
     private readonly TenantProfileManager _tenantProfileManager;
     private readonly TenantPackageManager _tenantPackageManager;
+    private readonly TenantSubscriptionManager _tenantSubscriptionManager;
+    private readonly IRepository<TenantSubscription, Guid> _subscriptionRepository;
     private readonly IDataSeeder _dataSeeder;
     private readonly IUnitOfWorkManager _unitOfWorkManager;
 
@@ -30,6 +32,8 @@ public class TenantProfileAppService : PlatformAppService, ITenantProfileAppServ
         IRepository<TenantProfile, Guid> tenantProfileRepository,
         TenantProfileManager tenantProfileManager,
         TenantPackageManager tenantPackageManager,
+        TenantSubscriptionManager tenantSubscriptionManager,
+        IRepository<TenantSubscription, Guid> subscriptionRepository,
         IDataSeeder dataSeeder,
         IUnitOfWorkManager unitOfWorkManager)
     {
@@ -38,6 +42,8 @@ public class TenantProfileAppService : PlatformAppService, ITenantProfileAppServ
         _tenantProfileRepository = tenantProfileRepository;
         _tenantProfileManager = tenantProfileManager;
         _tenantPackageManager = tenantPackageManager;
+        _tenantSubscriptionManager = tenantSubscriptionManager;
+        _subscriptionRepository = subscriptionRepository;
         _dataSeeder = dataSeeder;
         _unitOfWorkManager = unitOfWorkManager;
     }
@@ -56,10 +62,19 @@ public class TenantProfileAppService : PlatformAppService, ITenantProfileAppServ
         var tenantIds = tenants.Select(t => t.Id).ToList();
         var profiles = await _tenantProfileRepository.GetListAsync(p => tenantIds.Contains(p.TenantId));
 
+        // Yürürlükteki abonelikler tek sorguda: satırı olmayan müşteri süresiz sayılır.
+        var subscriptions = await _subscriptionRepository.GetListAsync(
+            s => tenantIds.Contains(s.TenantId)
+                 && (s.Status == SubscriptionStatus.Active || s.Status == SubscriptionStatus.InGrace));
+
         var dtos = new List<TenantProfileDto>();
         foreach (var tenant in tenants)
         {
             var profile = profiles.FirstOrDefault(p => p.TenantId == tenant.Id);
+            var subscription = subscriptions
+                .Where(s => s.TenantId == tenant.Id)
+                .OrderByDescending(s => s.StartDate)
+                .FirstOrDefault();
             dtos.Add(new TenantProfileDto
             {
                 Id = profile?.Id ?? Guid.Empty,
@@ -73,7 +88,11 @@ public class TenantProfileAppService : PlatformAppService, ITenantProfileAppServ
                 LegalRepresentativePhone = profile?.LegalRepresentativePhone ?? string.Empty,
                 OperationalContactName = profile?.OperationalContactName ?? string.Empty,
                 OperationalContactPhone = profile?.OperationalContactPhone ?? string.Empty,
-                IsActive = true
+                IsActive = true,
+                SubscriptionPeriod = subscription?.Period ?? SubscriptionPeriod.Unlimited,
+                // Ek süredeyse müşterinin gerçekten kapanacağı tarih gösterilir.
+                SubscriptionEndDate = subscription?.EffectiveEndDate,
+                IsInGracePeriod = subscription?.Status == SubscriptionStatus.InGrace
             });
         }
 
@@ -119,16 +138,28 @@ public class TenantProfileAppService : PlatformAppService, ITenantProfileAppServ
         // Paketin feature setini tenant'a uygula → feature'lar permission tavanını belirler.
         await _tenantPackageManager.ApplyPackageAsync(tenant.Id, input.PackageCode);
 
+        // Abonelik dönemi: süresiz seçilirse satır yine açılır ama EndDate boş kalır, yani
+        // süre işleyicisi bu müşteriye hiç dokunmaz.
+        var subscription = await _tenantSubscriptionManager.StartAsync(
+            tenant.Id, input.PackageCode, input.SubscriptionPeriod, SubscriptionSource.Manual);
+
         var result = ObjectMapper.Map<TenantProfile, TenantProfileDto>(profile);
+        FillSubscription(result, subscription);
 
         await uow.CompleteAsync();
 
         return result;
     }
 
-    /// <summary>Var olan bir tenant'ın paketini değiştirir ve feature setini yeniden uygular.</summary>
+    /// <summary>
+    /// Var olan bir tenant'ın paketini değiştirir, feature setini yeniden uygular ve yeni
+    /// bir abonelik dönemi başlatır (yürürlükteki dönem kapanır — kalan süre yanar).
+    /// </summary>
     [Authorize(TenantManagementPermissions.Tenants.Update)]
-    public async Task<TenantProfileDto> AssignPackageAsync(Guid tenantId, PackageCode packageCode)
+    public async Task<TenantProfileDto> AssignPackageAsync(
+        Guid tenantId,
+        PackageCode packageCode,
+        SubscriptionPeriod period)
     {
         using var uow = _unitOfWorkManager.Begin(requiresNew: true, isTransactional: true);
 
@@ -143,9 +174,52 @@ public class TenantProfileAppService : PlatformAppService, ITenantProfileAppServ
 
         await _tenantPackageManager.ApplyPackageAsync(tenantId, packageCode);
 
+        var subscription = await _tenantSubscriptionManager.StartAsync(
+            tenantId, packageCode, period, SubscriptionSource.Manual);
+
         var result = ObjectMapper.Map<TenantProfile, TenantProfileDto>(profile);
+        FillSubscription(result, subscription);
+
         await uow.CompleteAsync();
         return result;
+    }
+
+    /// <summary>
+    /// Yürürlükteki paketi bir dönem daha uzatır. Paket değişmediği için feature/izin
+    /// yeniden uygulanmaz; yalnız bitiş tarihi ileri alınır ve kalan süre korunur.
+    /// </summary>
+    [Authorize(TenantManagementPermissions.Tenants.Update)]
+    public async Task<TenantProfileDto> RenewPackageAsync(Guid tenantId, SubscriptionPeriod period)
+    {
+        using var uow = _unitOfWorkManager.Begin(requiresNew: true, isTransactional: true);
+
+        var profile = await _tenantProfileRepository.FirstOrDefaultAsync(x => x.TenantId == tenantId);
+        if (profile == null)
+        {
+            throw new UserFriendlyException("Bu tenant için profil bulunamadı; önce profil oluşturun.");
+        }
+
+        // Süresiz uzatma anlamsızdır: süresiz zaten hiç bitmez.
+        if (period == SubscriptionPeriod.Unlimited)
+        {
+            throw new UserFriendlyException("Uzatma için bir süre seçin; süresize çevirmek için paket atayın.");
+        }
+
+        var subscription = await _tenantSubscriptionManager.RenewAsync(
+            tenantId, period, SubscriptionSource.Manual);
+
+        var result = ObjectMapper.Map<TenantProfile, TenantProfileDto>(profile);
+        FillSubscription(result, subscription);
+
+        await uow.CompleteAsync();
+        return result;
+    }
+
+    private static void FillSubscription(TenantProfileDto dto, TenantSubscription subscription)
+    {
+        dto.SubscriptionPeriod = subscription.Period;
+        dto.SubscriptionEndDate = subscription.EffectiveEndDate;
+        dto.IsInGracePeriod = subscription.Status == SubscriptionStatus.InGrace;
     }
 
     public async Task<TenantProfileDto> GetProfileAsync(Guid tenantId)
@@ -163,7 +237,16 @@ public class TenantProfileAppService : PlatformAppService, ITenantProfileAppServ
             };
         }
 
-        return ObjectMapper.Map<TenantProfile, TenantProfileDto>(profile);
+        var dto = ObjectMapper.Map<TenantProfile, TenantProfileDto>(profile);
+
+        // Abonelik ayrı aggregate: AutoMapper doldurmaz, satır yoksa süresiz kalır.
+        var subscription = await _tenantSubscriptionManager.GetCurrentOrNullAsync(tenantId);
+        if (subscription != null)
+        {
+            FillSubscription(dto, subscription);
+        }
+
+        return dto;
     }
 
     [Authorize(TenantManagementPermissions.Tenants.Update)]

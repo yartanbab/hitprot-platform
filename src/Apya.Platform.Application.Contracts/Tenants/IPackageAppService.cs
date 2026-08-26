@@ -19,4 +19,9 @@ public interface IPackageAppService : IApplicationService
 
     /// <summary>Düzenlenen paketi, o pakete sahip mevcut tenant'lara yeniden uygular.</summary>
     Task<int> ReapplyToTenantsAsync(PackageCode code);
+
+    /// <summary>Paket süresi davranışı (otomatik indirme, ek süre, uyarı eşikleri).</summary>
+    Task<SubscriptionSettingsDto> GetSubscriptionSettingsAsync();
+
+    Task UpdateSubscriptionSettingsAsync(SubscriptionSettingsDto input);
 }
