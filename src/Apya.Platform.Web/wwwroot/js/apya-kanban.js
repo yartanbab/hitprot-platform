@@ -118,6 +118,7 @@
                 e.stopPropagation();
                 var shut = !colEl.classList.contains('is-collapsed');
                 colEl.classList.toggle('is-collapsed', shut);
+                applyColumnWidth(colEl, token);
                 collapsed[token] = shut;
                 saveCollapsed();
 
@@ -1320,9 +1321,18 @@
             var board = document.querySelector(boardSel);
             if (!board) { return; }
             board.querySelectorAll('.kanban-column').forEach(function (col) {
-                var w = localStorage.getItem(kbKey('w-' + colToken(col)));
-                if (w) { col.style.flexBasis = w + 'px'; }
+                applyColumnWidth(col, colToken(col));
             });
+        }
+
+        // Genişlik tercihi SATIR İÇİ flex-basis olarak yazılır ve satır içi stil
+        // `.kanban-column.is-collapsed { flex: 0 0 52px }` kuralını EZER: kolon
+        // daraltılmışken tercih uygulanırsa kapanır ama DARALMAZ. Kapalıyken
+        // genişliği CSS'e bırak, açılınca tercihi geri koy.
+        function applyColumnWidth(col, token) {
+            var w = col.classList.contains('is-collapsed')
+                ? null : localStorage.getItem(kbKey('w-' + token));
+            col.style.flexBasis = w ? (w + 'px') : '';
         }
 
         function ensureColumnConfig() {
