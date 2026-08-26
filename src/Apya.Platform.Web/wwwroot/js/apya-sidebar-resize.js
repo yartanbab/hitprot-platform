@@ -138,8 +138,12 @@ $(function () {
     // klavyeyle odaklanılabiliyor ve ok tuşları sessizce kalıcı bir genişlik
     // yazardı — kullanıcı hiçbir şey olmadığını görür, sonra masaüstünde menü
     // beklenmedik genişlikte açılırdı.
+    // Yatay telefonda genişlik MOBILE_MAX'i aşar ama kenar çubuğu yine çekmeceye
+    // döner (bkz. apya-theme-bridge.css "KABUK KIRILIMI") — kapı ortak yüklemi de
+    // sorar, yoksa tutamak görünmezken klavyeyle kalıcı genişlik yazılabilirdi.
     function canResize() {
         return window.innerWidth > MOBILE_MAX &&
+               !(window.apyaIsMobileShell && window.apyaIsMobileShell()) &&
                !document.documentElement.getAttribute('data-sidebar');
     }
 

@@ -18,6 +18,14 @@
 *@
 <script>
     (function () {
+        // Mobil kabuk kırılımı — CSS ile PAYLAŞILAN tek sorgu. Karşılığı
+        // apya-theme-bridge.css "KABUK KIRILIMI" bloğudur (orada gerekçesi de var):
+        // dar ekran VEYA kısa+dokunmatik (yatay telefon). İkisi birlikte değişmeli.
+        // Burada tanımlanır çünkü bu betik <head>'de, tüm bundle'lardan ÖNCE çalışır.
+        window.APYA_MOBILE_SHELL_MQ = '(max-width: 767.98px), (pointer: coarse) and (max-height: 540px) and (max-width: 1199.98px)';
+        window.apyaIsMobileShell = function () {
+            return !!window.matchMedia && window.matchMedia(window.APYA_MOBILE_SHELL_MQ).matches;
+        };
         try {
             var html = document.documentElement;
             // JS-var işareti: header'daki ham içerik gizleme kuralları (apya-theme-bridge.css

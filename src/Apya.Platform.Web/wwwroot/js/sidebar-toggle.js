@@ -289,6 +289,17 @@ $(function () {
         return;
     }
 
+    // Kabuk kırılımı: "dar ekran VEYA kısa+dokunmatik (yatay telefon)".
+    // Sorgu ApyaThemeHead'de CSS ile ORTAK tanımlı (window.APYA_MOBILE_SHELL_MQ);
+    // burada sabit genişlik karşılaştırması KULLANILMAZ, yoksa yatay telefonda
+    // CSS mobil kabuğu gösterirken JS masaüstü sanardı. FOUC betiği herhangi bir
+    // sebeple çalışmadıysa dar-ekran davranışına geri düşülür.
+    function isMobileShell() {
+        return window.apyaIsMobileShell
+            ? window.apyaIsMobileShell()
+            : window.innerWidth < 768;
+    }
+
     var toggle = navbar.querySelector('[data-lpx-toggle="mobile-navbar"]');
     var personToggle = navbar.querySelector('[data-lpx-toggle="mobile-user-menu-group"]');
     var group = document.getElementById('mobile-user-menu-group');
@@ -645,7 +656,7 @@ $(function () {
     // ancak ÜST düğümde capture ile stopPropagation hedefin kendi
     // dinleyicilerini de engeller.
     drawer.addEventListener('click', function (e) {
-        if (window.innerWidth >= 768) { return; }
+        if (!isMobileShell()) { return; }
         var a = e.target.closest('a.lpx-menu-item-link');
         if (!a || a.closest('.apya-mshell-panel')) { return; }
         var li = a.parentElement;
@@ -955,9 +966,10 @@ $(function () {
         if (isSheetOpen()) { closeSheet(); }
     });
 
-    // Masaüstüne genişletilirse açık kalan çekmece/sheet temizlenir.
+    // Masaüstüne geçilirse (genişleme VEYA cihazın dikeye dönmesi) açık kalan
+    // çekmece/sheet temizlenir.
     window.addEventListener('resize', function () {
-        if (window.innerWidth < 768) { return; }
+        if (isMobileShell()) { return; }
         if (isOpen()) { close(); }
         if (isSheetOpen()) { closeSheet(); }
     });
