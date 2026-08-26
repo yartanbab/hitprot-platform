@@ -50,6 +50,8 @@ public class ApyaLoginModel : Volo.Abp.Account.Web.Pages.Account.LoginModel
 
     public override async Task<IActionResult> OnPostAsync(string action)
     {
+        TrimUserNameInput();
+
         var tenantId = await ResolveTenantAsync(action);
 
         if (tenantId == null)
@@ -145,5 +147,22 @@ public class ApyaLoginModel : Volo.Abp.Account.Web.Pages.Account.LoginModel
         }
 
         return null;
+    }
+
+    /// <summary>
+    /// Kullanıcı adı / e-posta alanının baş ve sonundaki boşluklarını kırpar.
+    /// Şifreye DOKUNULMAZ. Ayrıntı: <see cref="AccountInputTrimmer"/>.
+    /// </summary>
+    private void TrimUserNameInput()
+    {
+        if (LoginInput == null)
+        {
+            return;
+        }
+
+        LoginInput.UserNameOrEmailAddress = AccountInputTrimmer.Trim(
+            ModelState,
+            "LoginInput.UserNameOrEmailAddress",
+            LoginInput.UserNameOrEmailAddress);
     }
 }
