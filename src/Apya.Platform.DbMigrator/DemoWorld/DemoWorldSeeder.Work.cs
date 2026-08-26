@@ -157,7 +157,6 @@ public partial class DemoWorldSeeder
                 hourlyRate: Rand(900, 1800),
                 currency: "TRY",
                 purpose: "Operasyonel verimliligi artirmak ve olculebilir is sonucu uretmek.",
-                duration: $"{(end - start).Days / 30} ay",
                 targetAudience: "Ilgili is birimleri ve son kullanicilar",
                 activities: "Analiz, tasarim, gelistirme, test, devreye alma ve kapanis raporlamasi.",
                 startDate: start,

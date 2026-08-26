@@ -32,7 +32,6 @@ public class Project : FullAuditedAggregateRoot<Guid>, IMultiTenant
     public string Description { get; private set; } = null!;
 
     public string? Purpose { get; private set; } // Amacı — opsiyonel
-    public string? Duration { get; private set; } // Süresi — opsiyonel
     public string? TargetAudience { get; private set; } // Hedef Kitlesi — opsiyonel
     public string? Activities { get; private set; } // Faaliyetleri — opsiyonel
 
@@ -74,7 +73,6 @@ public class Project : FullAuditedAggregateRoot<Guid>, IMultiTenant
         decimal hourlyRate = 0,
         string currency = "TRY",
         string? purpose = null,
-        string? duration = null,
         string? targetAudience = null,
         string? activities = null,
         DateTime? startDate = null,
@@ -91,7 +89,7 @@ public class Project : FullAuditedAggregateRoot<Guid>, IMultiTenant
         Code = code;
         Description = description;
         SetBudgetInfo(totalBudget, hourlyRate, currency);
-        SetProjectDetails(purpose, duration, targetAudience, activities);
+        SetProjectDetails(purpose, targetAudience, activities);
         SetSchedule(startDate, endDate);
     }
 
@@ -117,10 +115,9 @@ public class Project : FullAuditedAggregateRoot<Guid>, IMultiTenant
         Currency = currency ?? "TRY";
     }
 
-    public void SetProjectDetails(string? purpose, string? duration, string? targetAudience, string? activities)
+    public void SetProjectDetails(string? purpose, string? targetAudience, string? activities)
     {
         Purpose = purpose;
-        Duration = duration;
         TargetAudience = targetAudience;
         Activities = activities;
     }
@@ -151,7 +148,6 @@ public class Project : FullAuditedAggregateRoot<Guid>, IMultiTenant
         decimal hourlyRate,
         string currency,
         string? purpose,
-        string? duration,
         string? targetAudience,
         string? activities,
         DateTime? startDate,
@@ -164,7 +160,7 @@ public class Project : FullAuditedAggregateRoot<Guid>, IMultiTenant
         CustomerId = customerId;
         CategoryId = categoryId;
         SetBudgetInfo(totalBudget, hourlyRate, currency);
-        SetProjectDetails(purpose, duration, targetAudience, activities);
+        SetProjectDetails(purpose, targetAudience, activities);
         SetSchedule(startDate, endDate);
     }
 

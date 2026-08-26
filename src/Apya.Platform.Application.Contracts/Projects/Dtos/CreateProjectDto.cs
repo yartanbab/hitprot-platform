@@ -17,7 +17,6 @@ public class CreateProjectDto
 
     public string? Description { get; set; }
     public string? Purpose { get; set; }
-    public string? Duration { get; set; }
     public string? TargetAudience { get; set; }
     public string? Activities { get; set; }
 

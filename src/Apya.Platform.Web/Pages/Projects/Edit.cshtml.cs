@@ -122,7 +122,6 @@ public class EditModel : PlatformPageModel
         Project.GrantId = Current.GrantId;
         Project.HourlyRate = Current.HourlyRate;
         Project.Currency = Current.Currency;
-        Project.Duration = Current.Duration;
         if (!CanViewBudget)
         {
             Project.TotalBudget = Current.TotalBudget;
