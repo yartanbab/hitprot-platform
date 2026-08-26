@@ -64,9 +64,13 @@ $(function () {
     function tryReplaceUserAvatar() {
         var userNameEl = document.querySelector('.lpx-user-profile .user-full-name');
         if (!userNameEl) return false;
-        var fullName = (window.abp && abp.currentUser && (abp.currentUser.name || abp.currentUser.userName)) || userNameEl.textContent.trim();
+        // abp.currentUser.name YALNIZ ad'ı taşır, soyad ayrı alandadır (surName).
+        // Sadece name'e bakınca ad tek kelime kalıyor ve ilk İKİ harfi basılıyordu.
+        var cu = (window.abp && abp.currentUser) || {};
+        var fullName = [cu.name, cu.surName].filter(Boolean).join(' ').trim()
+            || cu.userName || userNameEl.textContent.trim();
         var parts = fullName.trim().split(/\s+/).filter(Boolean);
-        var initials = parts.length > 1 ? (parts[0][0] + parts[parts.length - 1][0]) : fullName.slice(0, 2);
+        var initials = parts.length > 1 ? (parts[0][0] + parts[parts.length - 1][0]) : (parts[0] || '').slice(0, 1);
         var avatar = document.createElement('span');
         avatar.className = 'apya-avatar apya-avatar-brand apya-user-avatar';
         avatar.textContent = initials.toUpperCase();

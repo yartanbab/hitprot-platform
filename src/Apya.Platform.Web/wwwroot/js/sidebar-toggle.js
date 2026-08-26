@@ -444,11 +444,14 @@ $(function () {
 
     // Kullanıcı kimliği — dark-mode.js'teki baş harf kuralının aynısı.
     var currentUser = (window.abp && window.abp.currentUser) || {};
-    var fullName = currentUser.name || currentUser.userName || '';
+    // name YALNIZ ad; soyad surName'de durur — ikisi birleşmezse tek kelime kalıp
+    // ad'ın ilk iki harfi basılıyordu (dark-mode.js'te aynı kural).
+    var fullName = [currentUser.name, currentUser.surName].filter(Boolean).join(' ').trim()
+        || currentUser.userName || '';
     var initials = '';
     if (fullName) {
-        var parts = fullName.trim().split(/\s+/);
-        initials = (parts.length > 1 ? (parts[0][0] + parts[parts.length - 1][0]) : fullName.slice(0, 2))
+        var parts = fullName.trim().split(/\s+/).filter(Boolean);
+        initials = (parts.length > 1 ? (parts[0][0] + parts[parts.length - 1][0]) : (parts[0] || '').slice(0, 1))
             .toLocaleUpperCase('tr');
     }
     // Avatar: temanın <i> düğümü KORUNUR (aç/kapa ona bağlı), yalnız glyph
