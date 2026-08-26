@@ -99,11 +99,14 @@ $(function () {
         if (state.myScope === null) { state.myScope = preset.myScope; }
     }
 
+    // Ön ayar sıralamayı ve kapsamı belirler; FİLTRE daima 'all' başlar. Rol
+    // gereği daraltılmış bir filtreyle açmak (risk/overdue) çoğu kiracıda boş
+    // liste üretip "projelerim kayboldu" izlenimi veriyordu.
     var ROLE_PRESETS = {
-        // Yönetici: özet + risk — önce riskli projeler.
-        admin: { label: 'Yönetici görünümü', filter: 'risk', sort: 'urgency', myScope: false },
+        // Yönetici: özet + risk — riskli projeler sıralamada öne çıkar.
+        admin: { label: 'Yönetici görünümü', filter: 'all', sort: 'urgency', myScope: false },
         // PM: proje + gecikmiş görev.
-        pm: { label: 'PM görünümü', filter: 'overdue', sort: 'urgency', myScope: false },
+        pm: { label: 'PM görünümü', filter: 'all', sort: 'urgency', myScope: false },
         // Saha: kendi görevleri — kapsam rozetten açılıp kapatılabilir.
         field: { label: 'Saha görünümü', filter: 'all', sort: 'urgency', myScope: true }
     };
