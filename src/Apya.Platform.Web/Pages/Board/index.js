@@ -32,9 +32,13 @@ $(function () {
     // İlk proje otomatik seçilir ve yüklenir.
     $('#board-project').on('change', function () { kb.setProject($(this).val() || null); });
 
-    apya.platform.application.projects.project.getList({ maxResultCount: 1000 }).then(function (res) {
+    // Hafif seçici ucu: yalnız id/ad/kod döner. Önce project.getList({maxResultCount:1000})
+    // çağrılıyordu — 1000 TAM proje DTO'su yalnız bu açılır listeyi doldurmak için.
+    // NOT: uç ada göre SIRALI döner, dolayısıyla otomatik seçilen ilk proje artık
+    // alfabetik olarak ilk olan; önceki sıra ABP'nin varsayılanıydı (belirsizdi).
+    apya.platform.tasks.task.getProjectsLookup().then(function (res) {
         var $sel = $('#board-project');
-        var items = res.items || [];
+        var items = res || [];
         items.forEach(function (p) {
             $sel.append($('<option>').val(p.id).text(p.name + (p.code ? ' (' + p.code + ')' : '')));
         });

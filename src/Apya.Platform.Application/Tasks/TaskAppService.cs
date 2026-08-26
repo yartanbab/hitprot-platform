@@ -273,22 +273,29 @@ namespace Apya.Platform.Tasks
             if (items.Count == 0) return;
             var taskIds = items.Select(i => i.Id).ToList();
 
-            var assignments = await _taskTagRepository.GetListAsync(x => taskIds.Contains(x.TaskId));
-            if (assignments.Count == 0) return;
+            // Atama + etiket TEK sorguda (önce iki ardışık tur atılıyordu). INNER JOIN,
+            // eskiden elle yapılan "tagMap.ContainsKey" elemesinin aynısını yapar:
+            // karşılığı silinmiş bir atama yine listeye girmez.
+            var assignmentQuery = await _taskTagRepository.GetQueryableAsync();
+            var tagQuery = await _tagRepository.GetQueryableAsync();
 
-            var tagIds = assignments.Select(a => a.TagId).Distinct().ToList();
-            var tags = await _tagRepository.GetListAsync(t => tagIds.Contains(t.Id));
-            var tagMap = tags.ToDictionary(t => t.Id, t => new TagDto { Id = t.Id, Name = t.Name });
+            var rows = await AsyncExecuter.ToListAsync(
+                from assignment in assignmentQuery.Where(x => taskIds.Contains(x.TaskId))
+                join tag in tagQuery on assignment.TagId equals tag.Id
+                select new { assignment.TaskId, tag.Id, tag.Name });
 
-            var assignmentsByTask = assignments.GroupBy(a => a.TaskId).ToDictionary(g => g.Key, g => g.ToList());
+            if (rows.Count == 0) return;
+
+            var tagsByTask = rows
+                .GroupBy(r => r.TaskId)
+                .ToDictionary(g => g.Key,
+                              g => g.Select(r => new TagDto { Id = r.Id, Name = r.Name }).ToList());
+
             foreach (var item in items)
             {
-                if (assignmentsByTask.TryGetValue(item.Id, out var taskAssignments))
+                if (tagsByTask.TryGetValue(item.Id, out var taskTags))
                 {
-                    item.Tags = taskAssignments
-                        .Where(a => tagMap.ContainsKey(a.TagId))
-                        .Select(a => tagMap[a.TagId])
-                        .ToList();
+                    item.Tags = taskTags;
                 }
             }
         }
@@ -368,50 +375,47 @@ namespace Apya.Platform.Tasks
             if (items.Count == 0) return;
             var taskIds = items.Select(i => i.Id).ToList();
 
-            var commentQ = await _commentRepository.GetQueryableAsync();
-            var commentCounts = await AsyncExecuter.ToListAsync(
-                commentQ.Where(c => taskIds.Contains(c.TaskId))
-                        .GroupBy(c => c.TaskId)
-                        .Select(g => new { TaskId = g.Key, N = g.Count() }));
+            // Yorum ve ek sayısı TEK sorguda: iki ayrı GroupBy turu yerine görevin
+            // kendi navigasyonları üzerinden ilintili alt sorgu. Sayılan görevler
+            // zaten liste sorgusundan geliyor, ek bir görünürlük kuralı GEREKMEZ.
+            var taskCountQuery = await Repository.GetQueryableAsync();
+            var counts = await AsyncExecuter.ToListAsync(
+                taskCountQuery.Where(t => taskIds.Contains(t.Id))
+                              .Select(t => new
+                              {
+                                  t.Id,
+                                  Comments = t.Comments.Count(),
+                                  Attachments = t.Attachments.Count()
+                              }));
 
-            var attachmentQ = await _attachmentRepository.GetQueryableAsync();
-            var attachmentCounts = await AsyncExecuter.ToListAsync(
-                attachmentQ.Where(a => taskIds.Contains(a.TaskId))
-                           .GroupBy(a => a.TaskId)
-                           .Select(g => new { TaskId = g.Key, N = g.Count() }));
-
-            var commentMap = commentCounts.ToDictionary(x => x.TaskId, x => x.N);
-            var attachmentMap = attachmentCounts.ToDictionary(x => x.TaskId, x => x.N);
+            var commentMap = counts.ToDictionary(x => x.Id, x => x.Comments);
+            var attachmentMap = counts.ToDictionary(x => x.Id, x => x.Attachments);
 
             // Engelli: AÇIK bir öncülü olan görev. Kapanmış (Done/Cancelled) öncül
             // engel sayılmaz — yoksa biten her iş kartı sonsuza dek engelli görünürdü.
-            var depQ = await _dependencyRepository.GetQueryableAsync();
-            var deps = await AsyncExecuter.ToListAsync(
-                depQ.Where(d => taskIds.Contains(d.TaskId))
-                    .Select(d => new { d.TaskId, d.PredecessorTaskId }));
+            // Bağımlılık + AÇIK öncül TEK sorguda (önce "önce bağımlılıklar, sonra
+            // öncüller" diye iki ardışık tur atılıyordu). INNER JOIN + durum süzgeci,
+            // eskiden elle yapılan "openMap'te yoksa atla" elemesinin aynısı.
+            var depQuery = await _dependencyRepository.GetQueryableAsync();
+            var predecessorQuery = await Repository.GetQueryableAsync();
+
+            var openBlockers = await AsyncExecuter.ToListAsync(
+                from dependency in depQuery.Where(d => taskIds.Contains(d.TaskId))
+                join predecessor in predecessorQuery
+                    on dependency.PredecessorTaskId equals predecessor.Id
+                where predecessor.Status != Apya.Platform.Tasks.TaskStatus.Done
+                      && predecessor.Status != Apya.Platform.Tasks.TaskStatus.Cancelled
+                select new { dependency.TaskId, predecessor.Number });
 
             var blockedCodes = new Dictionary<Guid, List<string>>();
-            if (deps.Count > 0)
+            foreach (var blocker in openBlockers)
             {
-                var predIds = deps.Select(d => d.PredecessorTaskId).Distinct().ToList();
-                var taskQ = await Repository.GetQueryableAsync();
-                var openPreds = await AsyncExecuter.ToListAsync(
-                    taskQ.Where(t => predIds.Contains(t.Id)
-                                     && t.Status != Apya.Platform.Tasks.TaskStatus.Done
-                                     && t.Status != Apya.Platform.Tasks.TaskStatus.Cancelled)
-                         .Select(t => new { t.Id, t.Number }));
-
-                var openMap = openPreds.ToDictionary(p => p.Id, p => $"GRV-{p.Number}");
-                foreach (var d in deps)
+                if (!blockedCodes.TryGetValue(blocker.TaskId, out var list))
                 {
-                    if (!openMap.TryGetValue(d.PredecessorTaskId, out var code)) { continue; }
-                    if (!blockedCodes.TryGetValue(d.TaskId, out var list))
-                    {
-                        list = new List<string>();
-                        blockedCodes[d.TaskId] = list;
-                    }
-                    list.Add(code);
+                    list = new List<string>();
+                    blockedCodes[blocker.TaskId] = list;
                 }
+                list.Add($"GRV-{blocker.Number}");
             }
 
             foreach (var item in items)
@@ -524,14 +528,20 @@ namespace Apya.Platform.Tasks
             };
         }
 
-        // Görev "Proje" seçici — tenant'ın projeleri (IMultiTenant → GetListAsync tenant'a göre filtreler).
+        // Görev "Proje" seçici — tenant'ın projeleri (IMultiTenant → sorgu tenant'a göre süzülür).
+        // Projeksiyon SQL'DE yapılır: seçici üç alan kullanıyor, projenin tamamını
+        // (bütçe, tarihler, açıklama…) çekip bellekte atmanın anlamı yok.
         public async Task<List<ProjectLookupDto>> GetProjectsLookupAsync()
         {
-            var projects = await _projectLookupRepository.GetListAsync();
-            return projects
-                .OrderBy(p => p.Name)
-                .Select(p => new ProjectLookupDto { Id = p.Id, Name = p.Name })
-                .ToList();
+            var query = await _projectLookupRepository.GetQueryableAsync();
+            return await AsyncExecuter.ToListAsync(
+                query.OrderBy(p => p.Name)
+                     .Select(p => new ProjectLookupDto
+                     {
+                         Id = p.Id,
+                         Name = p.Name,
+                         Code = p.Code
+                     }));
         }
 
         // Liste şeridindeki sayaç barları. Barlar aynı zamanda filtre düğmesi olduğu

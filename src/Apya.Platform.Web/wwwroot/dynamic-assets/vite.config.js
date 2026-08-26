@@ -10,6 +10,7 @@ export default defineConfig({
   build: {
     outDir: '../js',
     emptyOutDir: false,
+    manifest: true,
     lib: {
       // Her yeni island buraya eklenir; çıktı ayrı bir .js dosyasına gider.
       entry: {

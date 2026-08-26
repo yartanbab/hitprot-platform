@@ -510,9 +510,12 @@ $(function () {
         renderFilterUi();
     });
 
-    apya.platform.application.projects.project.getList({ maxResultCount: 1000 }).then(function (res) {
+    // Hafif seçici ucu: yalnız id/ad/kod döner. Önce project.getList({maxResultCount:1000})
+    // çağrılıyordu — 1000 TAM proje DTO'su (bütçe, tarihler, açıklama…) yalnız bu açılır
+    // listeyi doldurmak için indiriliyor ve görev listesi isteğiyle yarışıyordu.
+    taskService.getProjectsLookup().then(function (items) {
         var $menu = $('#chip-project-menu');
-        (res.items || []).forEach(function (p) {
+        (items || []).forEach(function (p) {
             var label = p.name + (p.code ? ' (' + p.code + ')' : '');
             $menu.append(
                 $('<button type="button" class="apya-console-menu-item">')

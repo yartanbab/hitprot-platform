@@ -43,4 +43,8 @@
         };
     })();
 </script>
+@* Preload, script ile YAN YANA: bu partial sayfa sonunda çağrılıyor, daha
+   erken bir çapası yok. Yine de chunk grafiği entry ile paralel iner —
+   entry ayrıştırılıp bağımlılıkların keşfedilmesi beklenmez. *@
+<island-preload entry="task-detail" />
 <script type="module" src="~/js/task-detail.js" asp-append-version="true"></script>
