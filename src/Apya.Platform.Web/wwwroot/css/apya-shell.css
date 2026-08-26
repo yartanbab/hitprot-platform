@@ -1579,14 +1579,29 @@ i.apya-priority-dot {
 .apya-docs-detail {
     min-height: 460px;
 }
-/* Detay paneli uzun form taşıyor (özel alanlar + versiyonlar) — kabuk büyümesin. */
+/* Detay paneli uzun form taşıyor (özel alanlar + versiyonlar) — kabuk büyümesin.
+   Panel görünür alana YAPIŞIR ve onun TAMAMINI kullanır: dosya listesi
+   kaydırılırken künye ekranda kalır, tavan `100vh − 220px` yerine tam boy olur
+   (900px'lik ekranda 623px yerine ~810px görünür alan).
+   Kaydırma ESNEK ÇOCUĞA verilir: yüzdeli `max-height` yüksekliği içeriğe bağlı
+   bir kapta doğru çözülmüyor, panel kabını 30px aşıyor ve `overflow:hidden`
+   son satırı erişilemez biçimde KIRPIYORDU. */
 @media (min-width: 992px) {
     .apya-docs-detail {
-        max-height: calc(100vh - var(--apya-header-h, 60px) - 220px);
+        display: flex;
+        flex-direction: column;
+        position: sticky;
+        /* LeptonX topbar'ı sticky (z-index 101) — panel altına girmesin. */
+        top: calc(var(--apya-header-h, 60px) + 12px);
+        /* svh: yatay tablette tarayıcı çubuğu vh'yi şişirip paneli alttan taşırır. */
+        max-height: calc(100vh - var(--apya-header-h, 60px) - 24px);
+        max-height: calc(100svh - var(--apya-header-h, 60px) - 24px);
         overflow: hidden;
     }
     .apya-docs-detail > .apya-md-detail {
-        max-height: 100%;
+        flex: 1 1 auto;
+        min-height: 0;
+        overflow-y: auto;
     }
 }
 
