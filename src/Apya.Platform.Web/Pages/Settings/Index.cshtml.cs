@@ -2,6 +2,8 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Apya.Platform.Features;
 using Apya.Platform.Permissions;
+using Apya.Platform.Projects;
+using Apya.Platform.Projects.Dtos;
 using Apya.Platform.Settings;
 using Apya.Platform.Web.Menus;
 using Microsoft.AspNetCore.Authorization;
@@ -66,21 +68,33 @@ public class IndexModel : AbpPageModel
     /// </summary>
     public List<NavSettingsEntry> AdminLinks { get; private set; } = new();
 
+    /// <summary>Kategori tanımlarını düzenleyebilir mi? (Projects.ManageCategories)</summary>
+    public bool CanManageCategories { get; set; }
+
+    /// <summary>Kiracının gördüğü kategori tanımları — kart listesi için.</summary>
+    public List<ProjectCategoryDto> ProjectCategories { get; private set; } = new();
+
+    /// <summary>Renk seçeneği anahtarları; rozet ve ikon kutusu sınıfını bu belirler.</summary>
+    public IReadOnlyList<string> CategoryTones => ProjectCategoryConsts.Tones;
+
     private readonly ISettingManager _settingManager;
     private readonly IPermissionChecker _permission;
     private readonly Volo.Abp.Features.IFeatureChecker _featureChecker;
     private readonly PlatformNavigationResolver _navigation;
+    private readonly IProjectCategoryAppService _projectCategoryAppService;
 
     public IndexModel(
         ISettingManager settingManager,
         IPermissionChecker permission,
         Volo.Abp.Features.IFeatureChecker featureChecker,
-        PlatformNavigationResolver navigation)
+        PlatformNavigationResolver navigation,
+        IProjectCategoryAppService projectCategoryAppService)
     {
         _settingManager = settingManager;
         _permission = permission;
         _featureChecker = featureChecker;
         _navigation = navigation;
+        _projectCategoryAppService = projectCategoryAppService;
     }
 
     public async Task OnGetAsync()
@@ -116,6 +130,11 @@ public class IndexModel : AbpPageModel
                               && await _permission.IsGrantedAsync(PlatformPermissions.Tasks.QuickCreate);
 
         CanManageTenantSettings = await _permission.IsGrantedAsync(PlatformPermissions.TenantSettings.Default);
+        CanManageCategories = await _permission.IsGrantedAsync(PlatformPermissions.Projects.ManageCategories);
+
+        // Liste izinden BAĞIMSIZ okunur: yetkisi olmayan da hangi kategorilerin
+        // tanımlı olduğunu görebilmeli, yalnız düzenleme denetimleri gizlenir.
+        ProjectCategories = await _projectCategoryAppService.GetListAsync();
 
         // İzin filtresi ve sıra resolver'da uygulanır; kullanıcının menü
         // düzeninde kenar çubuğuna aldığı hedefler burada GÖSTERİLMEZ.

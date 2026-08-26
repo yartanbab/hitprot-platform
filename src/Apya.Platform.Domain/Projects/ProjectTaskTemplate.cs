@@ -40,8 +40,12 @@ public static class ProjectTaskTemplate
 
     private static readonly IReadOnlyList<Item> None = Array.Empty<Item>();
 
-    /// <summary>Kategorinin görev takvimi; takvimi olmayan kategoride boş liste.</summary>
-    public static IReadOnlyList<Item> For(ProjectCategory category) => category switch
+    /// <summary>
+    /// Kategorinin görev takvimi; takvimi olmayan kategoride boş liste.
+    /// Kullanıcının eklediği kategorilerde <paramref name="systemKey"/> null gelir —
+    /// onlara bağlı bir şablon yoktur.
+    /// </summary>
+    public static IReadOnlyList<Item> For(ProjectCategory? systemKey) => systemKey switch
     {
         ProjectCategory.GrantProject => Grant,
         ProjectCategory.Event => Event,

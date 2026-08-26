@@ -42,6 +42,15 @@ public static class PlatformSettings
         ///   "true"  → panel açılır (eski davranış)
         /// </summary>
         public const string DetailPanel = Prefix + ".Projects.DetailPanel";
+
+        /// <summary>
+        /// Bu kiracıda GİZLENEN sistem kategorilerinin Id listesi (virgülle ayrık).
+        /// Sistem kategorileri global satırlardır — kiracı onları silemez, yalnız
+        /// gizleyebilir; bu yüzden görünürlük kiracı AYARINDA tutulur.
+        /// "Diğer / Genel" gizlenemez: kategorisiz projenin düşeceği yer orasıdır.
+        /// Kiracı seviyesinde saklanır.
+        /// </summary>
+        public const string HiddenCategories = Prefix + ".Projects.HiddenCategories";
     }
 
     /// <summary>

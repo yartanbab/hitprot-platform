@@ -230,10 +230,9 @@
         <abp-modal-header title="Yeni Proje"></abp-modal-header>
 
         <abp-modal-body>
-            @* value AÇIKÇA sayı: asp-for enum'u ADIYLA basar ("GrantProject"),
-               kartların data-cat'i ise sayı — eşleşmeyince hiçbir kart seçili gelmez. *@
-            <input type="hidden" asp-for="Project.Category" id="PfCategory"
-                   value="@((int)Model.Project.Category)" />
+            @* Kategori artık enum değil tanım Id'si — asp-for Guid'i olduğu gibi basar,
+               kartların data-cat'i de aynı Guid. Eski enum'daki "ad mı sayı mı" ikiliği yok. *@
+            <input type="hidden" asp-for="Project.CategoryId" id="PfCategory" />
             <input type="hidden" asp-for="Project.Currency" value="TRY" />
             <input type="hidden" asp-for="Project.TotalBudget" id="PfBudget" value="0" />
             <input type="hidden" asp-for="GoToTasks" id="PfGoToTasks" value="false" />
@@ -467,16 +466,28 @@
         var DRAFT_KEY = 'apya.projects.draft';
 
         // Kategoriye göre hangi detay alanı görünür — tasarım 4a §1.
-        var CAT = {
-            '0': { label: 'Diğer / Genel', detail: 'Açıklama',           purpose: false, audience: false, activities: false,
-                   tpl: null },
-            '1': { label: 'Hibe Projesi',  detail: 'Hibe detayları',     purpose: true,  audience: true,  activities: true,
-                   tpl: { title: 'Hibe görev takvimini ekle (6 görev)',
-                          desc: 'Başvuru dosyası · ara rapor · harcama belgeleri · ödeme talebi · sonuç raporu · kapanış — tarihler proje aralığına yayılır.' } },
-            '2': { label: 'Etkinlik',      detail: 'Etkinlik detayları', purpose: true,  audience: true,  activities: false,
-                   tpl: { title: 'Etkinlik görev takvimini ekle (5 görev)',
-                          desc: 'Tedarikçi onayı · katılım formu · stant tasarımı · lojistik · etkinlik sonrası rapor.' } }
+        // Anahtar kategori tanımının Id'si; hangi metaya sahip olduğunu DAVRANIŞ
+        // ANAHTARI (SystemKey) belirler. Kullanıcının eklediği kategorilerde anahtar
+        // yoktur ve "Diğer / Genel" ile aynı sade davranışa düşerler.
+        var CAT_BEHAVIOR = {
+            'Other':        { detail: 'Açıklama',           purpose: false, audience: false, activities: false, tpl: null },
+            'GrantProject': { detail: 'Hibe detayları',     purpose: true,  audience: true,  activities: true,
+                              tpl: { title: 'Hibe görev takvimini ekle (6 görev)',
+                                     desc: 'Başvuru dosyası · ara rapor · harcama belgeleri · ödeme talebi · sonuç raporu · kapanış — tarihler proje aralığına yayılır.' } },
+            'Event':        { detail: 'Etkinlik detayları', purpose: true,  audience: true,  activities: false,
+                              tpl: { title: 'Etkinlik görev takvimini ekle (5 görev)',
+                                     desc: 'Tedarikçi onayı · katılım formu · stant tasarımı · lojistik · etkinlik sonrası rapor.' } }
         };
+
+        var CAT = {};
+        @foreach (var cat in Model.CategoryCards)
+        {
+            @:CAT['@cat.Value'] = $.extend({ label: @Html.Raw(Json.Serialize(cat.Label)) },
+            @:    CAT_BEHAVIOR['@(cat.SystemKey?.ToString() ?? "Other")']);
+        }
+
+        // Kategorisi çözülemeyen durumda düşülecek anahtar — kart listesinin ilki.
+        var CAT_FALLBACK = '@(Model.CategoryCards.FirstOrDefault()?.Value.ToString() ?? "")';
 
         // Formu tek yerden okuyan durum — doğrulama, rozet, taslak hepsi buna bakar.
         var state = { codeTaken: false, codeSuggestion: '', codeAuto: true, tried: false, tplCat: null };
@@ -486,12 +497,11 @@
         var $budget = $('#PfBudget'), $budgetView = $('#PfBudgetDisplay');
         var $tenant = $('#PfTenant');
 
-        // ProjectCategory enum'u sayı olarak da adıyla da gelebilir (asp-for adı basar,
-        // ModelState geri dolarsa yine ad gelir) — tek biçime indir.
-        var CAT_BY_NAME = { Other: '0', GrantProject: '1', Event: '2' };
+        // Değer bir kategori Id'si. Taslaktan geri dolan Id o kiracıda artık
+        // görünmüyor olabilir (silinmiş/gizlenmiş) — bilinmeyen Id ilk karta düşer.
         function currentCat() {
-            var v = String($cat.val() || '0');
-            return CAT_BY_NAME[v] || (CAT[v] ? v : '0');
+            var v = String($cat.val() || '');
+            return CAT[v] ? v : CAT_FALLBACK;
         }
         function tenantId() { return ($tenant.length && $tenant.val()) ? $tenant.val() : null; }
         function parseDate(v) { var d = v ? new Date(v + 'T00:00:00') : null; return (d && !isNaN(d)) ? d : null; }
@@ -519,8 +529,8 @@
 
         // ---------------------------------------------------- KATEGORİ
         function applyCategory() {
-            var key = currentCat(), meta = CAT[key] || CAT['0'];
-            $cat.val(key); // ad geldiyse sayıya sabitle — gönderim de tek biçim olsun
+            var key = currentCat(), meta = CAT[key] || CAT[CAT_FALLBACK];
+            $cat.val(key); // çözülemeyen Id geldiyse geçerli olana sabitle
 
             $('.apya-pform-cat').each(function () {
                 var on = String($(this).data('cat')) === key;
@@ -691,7 +701,7 @@
                 : missing.length + ' zorunlu alan eksik: ' + missing.join(', '));
 
             // Başlıktaki özet
-            var meta = CAT[currentCat()] || CAT['0'];
+            var meta = CAT[currentCat()] || CAT[CAT_FALLBACK];
             $('#PfSummary').text(meta.label + ' · ' + (($name.val() || '').trim() || 'adsız proje')
                 + ' · ' + (($code.val() || '').trim() || '—'));
 
@@ -731,7 +741,9 @@
             $('#PfDraftBanner').removeClass('is-shown');
             if (!d) { return; }
             DRAFT_FIELDS.forEach(function (id) { if (d[id] !== undefined) { $('#' + id).val(d[id]); } });
-            $cat.val(d.category || '0');
+            @* Taslak enum döneminden kalmış olabilir ('1'/'2') ya da o kategori bu arada
+               silinmiş olabilir — currentCat() bilinmeyen değeri ilk karta düşürür. *@
+            $cat.val(d.category || '');
             $budget.val(d.budget || '0');
             $budgetView.val(formatMoney((d.budget || '').replace(/\D/g, '')));
             applyCategory();

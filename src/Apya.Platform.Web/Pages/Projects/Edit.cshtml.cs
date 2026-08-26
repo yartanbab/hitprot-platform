@@ -61,17 +61,20 @@ public class EditModel : PlatformPageModel
     public bool CanDelete { get; set; }
 
     private readonly IProjectAppService _projectAppService;
+    private readonly IProjectCategoryAppService _projectCategoryAppService;
     private readonly ICustomerAppService _customerAppService;
     private readonly IUploadedFileStorage _fileStorage;
     private readonly IUploadedFileRootFolderProvider _rootFolderProvider;
 
     public EditModel(
         IProjectAppService projectAppService,
+        IProjectCategoryAppService projectCategoryAppService,
         ICustomerAppService customerAppService,
         IUploadedFileStorage fileStorage,
         IUploadedFileRootFolderProvider rootFolderProvider)
     {
         _projectAppService = projectAppService;
+        _projectCategoryAppService = projectCategoryAppService;
         _customerAppService = customerAppService;
         _fileStorage = fileStorage;
         _rootFolderProvider = rootFolderProvider;
@@ -93,7 +96,7 @@ public class EditModel : PlatformPageModel
             EndDate = Current.EndDate,
             GrantId = Current.GrantId,
             CustomerId = Current.CustomerId,
-            Category = Current.Category,
+            CategoryId = Current.CategoryId,
             TotalBudget = Current.TotalBudget,
             HourlyRate = Current.HourlyRate,
             Currency = Current.Currency
@@ -242,12 +245,20 @@ public class EditModel : PlatformPageModel
             .Select(c => new SelectListItem(c.Name, c.Id.ToString()))
             .ToList();
 
-        Categories = new List<SelectListItem>
+        // Kategoriler tanım tablosundan gelir. Projenin MEVCUT kategorisi bu arada
+        // gizlenmiş/pasife alınmış olabilir — listede yoksa açılır kutu onu sessizce
+        // başka bir kategoriye kaydırırdı, bu yüzden geriye eklenir.
+        var selectable = await _projectCategoryAppService.GetSelectableAsync();
+        Categories = selectable
+            .Select(c => new SelectListItem(c.Name, c.Id.ToString()))
+            .ToList();
+
+        if (Current != null && Categories.All(c => c.Value != Current.CategoryId.ToString()))
         {
-            new SelectListItem("Diğer / Genel", ((int)ProjectCategory.Other).ToString()),
-            new SelectListItem("Hibe Projesi", ((int)ProjectCategory.GrantProject).ToString()),
-            new SelectListItem("Etkinlik", ((int)ProjectCategory.Event).ToString())
-        };
+            Categories.Insert(0, new SelectListItem(
+                (Current.CategoryName ?? "Bilinmeyen kategori") + " (pasif)",
+                Current.CategoryId.ToString()));
+        }
 
         if (Tab != "files" && Tab != "danger")
         {

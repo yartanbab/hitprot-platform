@@ -21,6 +21,7 @@ namespace Apya.Platform
             // Mevcut satırı şununla değiştir:
             // Hata veren satırı şununla değiştirin:
             CreateMap<Project, ProjectDto>();
+            CreateMap<ProjectCategoryDefinition, ProjectCategoryDto>();
             CreateMap<Project, ProjectDetailDto>().IncludeBase<Project, ProjectDto>();
 
             // Hibe (Grant) — CallCount/CriteriaTags DTO'da elle doldurulur (MapToGetOutputDtoAsync).

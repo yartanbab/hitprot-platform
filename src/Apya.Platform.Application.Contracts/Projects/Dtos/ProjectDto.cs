@@ -14,8 +14,20 @@ public class ProjectDto : AuditedEntityDto<Guid>
     public Guid? CustomerId { get; set; }
     /// <summary>APYA-132 — listede gösterim için AppService dolduruyor.</summary>
     public string? CustomerName { get; set; }
-    /// <summary>APYA-132 — Hibe / Etkinlik / Diğer</summary>
-    public ProjectCategory Category { get; set; }
+    /// <summary>Kategori tanımının Id.si.</summary>
+    public Guid CategoryId { get; set; }
+
+    /// <summary>Kategori adı — listede gösterim için AppService dolduruyor.</summary>
+    public string? CategoryName { get; set; }
+
+    /// <summary>Kategori ikonu (FontAwesome sınıfı) — kapak görseli yoksa kartta kullanılır.</summary>
+    public string? CategoryIcon { get; set; }
+
+    /// <summary>Kategori rozet rengi anahtarı.</summary>
+    public string? CategoryTone { get; set; }
+
+    /// <summary>Kategorinin davranış anahtarı; kullanıcı kategorilerinde null.</summary>
+    public ProjectCategory? CategorySystemKey { get; set; }
 
     public string Name { get; set; } = string.Empty;
 

@@ -1,6 +1,7 @@
 @page "/Settings"
 @model Apya.Platform.Web.Pages.Settings.IndexModel
 @inject Microsoft.Extensions.Localization.IStringLocalizer<Apya.Platform.Localization.PlatformResource> L
+@using Apya.Platform.Projects
 @{
     ViewBag.Title = L["Settings:Title"].Value;
 }
@@ -227,6 +228,102 @@
                                 <div class="text-muted small">@L["Settings:ProjectsDetailPanel.Switch.Desc"]</div>
                             </label>
                         </div>
+                    </fieldset>
+
+                    @*
+                        --- KATEGORİLER: bu formla GİTMEZ ---
+                        Sayfanın geri kalanı tek POST'la kaydedilir, kategoriler ise CRUD:
+                        ekleme/düzenleme/silme doğrudan ProjectCategoryAppService'e AJAX ile
+                        gider ve ANINDA kalıcı olur. Bu yüzden alanları `name` almaz — form
+                        gönderimine karışıp bağlanmayan alan olarak POST'a sızmasınlar.
+                    *@
+                    <fieldset class="mt-4" id="ProjectCategories"
+                              data-can-manage="@Model.CanManageCategories.ToString().ToLowerInvariant()">
+                        <legend class="form-label mb-1">@L["Settings:ProjectCategories.Label"]</legend>
+                        <div class="form-text mb-2">@L["Settings:ProjectCategories.Help"]</div>
+
+                        <ul class="list-group mb-3" id="ProjectCategoryList">
+                            @foreach (var cat in Model.ProjectCategories)
+                            {
+                                <li class="list-group-item d-flex align-items-center gap-3"
+                                    data-id="@cat.Id"
+                                    data-system="@cat.IsSystem.ToString().ToLowerInvariant()"
+                                    data-name="@cat.Name" data-icon="@cat.Icon" data-tone="@cat.Tone"
+                                    data-order="@cat.Order" data-active="@cat.IsActive.ToString().ToLowerInvariant()">
+                                    <span class="kpi-icon-box kpi-icon-box--xs kpi-icon-box--@cat.Tone" aria-hidden="true">
+                                        <i class="fa @cat.Icon"></i>
+                                    </span>
+                                    <span class="flex-grow-1 min-w-0">
+                                        <span class="d-block fw-semibold">@cat.Name</span>
+                                        <span class="d-block text-muted small">
+                                            @if (cat.IsSystem)
+                                            {
+                                                <span>@L["Settings:ProjectCategories.SystemBadge"] · </span>
+                                            }
+                                            @L["Settings:ProjectCategories.ProjectCount", cat.ProjectCount]
+                                        </span>
+                                    </span>
+
+                                    @if (Model.CanManageCategories)
+                                    {
+                                        @* "Diğer / Genel" ne gizlenebilir ne silinebilir: kategorisi
+                                           çözülemeyen projenin düştüğü yer orasıdır. *@
+                                        @if (cat.Id != ProjectCategoryConsts.SystemIds.Other)
+                                        {
+                                            <div class="form-check form-switch mb-0">
+                                                <input class="form-check-input" type="checkbox" role="switch"
+                                                       data-cat-active checked="@cat.IsActive"
+                                                       aria-label="@L["Settings:ProjectCategories.ActiveToggle"]" />
+                                            </div>
+                                        }
+                                        @if (!cat.IsSystem)
+                                        {
+                                            <button type="button" class="btn btn-sm btn-outline-secondary" data-cat-edit>
+                                                @L["Settings:ProjectCategories.Edit"]
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-outline-danger" data-cat-delete
+                                                    @(cat.ProjectCount > 0 ? "disabled" : null)
+                                                    title="@(cat.ProjectCount > 0 ? L["Settings:ProjectCategories.InUse"].Value : null)">
+                                                @L["Settings:ProjectCategories.Delete"]
+                                            </button>
+                                        }
+                                    }
+                                </li>
+                            }
+                        </ul>
+
+                        @if (Model.CanManageCategories)
+                        {
+                            <div class="row g-2 align-items-end" id="ProjectCategoryForm">
+                                <input type="hidden" id="CatEditId" value="" />
+                                <div class="col-12 col-md-4">
+                                    <label class="form-label small mb-1" for="CatName">@L["Settings:ProjectCategories.Name"]</label>
+                                    <input class="form-control form-control-sm" id="CatName" maxlength="@ProjectCategoryConsts.MaxNameLength" />
+                                </div>
+                                <div class="col-6 col-md-3">
+                                    <label class="form-label small mb-1" for="CatIcon">@L["Settings:ProjectCategories.Icon"]</label>
+                                    <input class="form-control form-control-sm" id="CatIcon" placeholder="fa-diagram-project"
+                                           maxlength="@ProjectCategoryConsts.MaxIconLength" />
+                                </div>
+                                <div class="col-6 col-md-3">
+                                    <label class="form-label small mb-1" for="CatTone">@L["Settings:ProjectCategories.Tone"]</label>
+                                    <select class="form-select form-select-sm" id="CatTone">
+                                        @foreach (var tone in Model.CategoryTones)
+                                        {
+                                            <option value="@tone">@L["Settings:ProjectCategories.Tone." + tone]</option>
+                                        }
+                                    </select>
+                                </div>
+                                <div class="col-12 col-md-2 d-flex gap-2">
+                                    <button type="button" class="btn btn-sm btn-primary flex-grow-1" id="CatSave">
+                                        @L["Settings:ProjectCategories.Add"]
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-link px-1" id="CatCancel" hidden>
+                                        @L["Settings:ProjectCategories.Cancel"]
+                                    </button>
+                                </div>
+                            </div>
+                        }
                     </fieldset>
                 </div>
 
