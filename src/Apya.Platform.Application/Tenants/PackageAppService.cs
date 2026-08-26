@@ -226,7 +226,7 @@ public class PackageAppService : PlatformAppService, IPackageAppService
             PlatformSettings.Subscription.WarningDays,
             string.Join(",", warningDays));
 
-        // Yükseltme kanalı: boş bırakılan alan o düğmeyi kapatır, ekstra doğrulama yok.
+        // Yükseltme kanalı: boş bırakılan alan o düğmeyi kapatır.
         await _settingManager.SetGlobalAsync(
             PlatformSettings.Subscription.UpgradeContactEmail,
             (input.UpgradeContactEmail ?? string.Empty).Trim());
@@ -237,7 +237,31 @@ public class PackageAppService : PlatformAppService, IPackageAppService
 
         await _settingManager.SetGlobalAsync(
             PlatformSettings.Subscription.UpgradeUrl,
-            (input.UpgradeUrl ?? string.Empty).Trim());
+            SanitizeUpgradeUrl(input.UpgradeUrl));
+    }
+
+    /// <summary>
+    /// Yükseltme bağlantısı kiracının "Paketim" ekranında doğrudan <c>href</c> olarak basılır.
+    /// Razor'ın öznitelik kaçışı ŞEMAYA dokunmaz: doğrulanmadan kaydedilen bir
+    /// <c>javascript:</c> adresi, bağlantıya tıklayan her kiracı yöneticisinin oturumunda
+    /// çalışırdı. Yalnız http/https kabul edilir.
+    ///
+    /// <para>Geçersiz değer hata üretmez, boşa düşer — bu ekranın uyarı günlerinde de
+    /// izlediği "sunucu normalize eder" davranışının aynısı; kaydetmenin ardından form
+    /// sunucudaki değerle yeniden basıldığı için host alanın boşaldığını görür.</para>
+    /// </summary>
+    private static string SanitizeUpgradeUrl(string? value)
+    {
+        var trimmed = (value ?? string.Empty).Trim();
+        if (string.IsNullOrEmpty(trimmed))
+        {
+            return string.Empty;
+        }
+
+        return Uri.TryCreate(trimmed, UriKind.Absolute, out var uri)
+               && (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps)
+            ? trimmed
+            : string.Empty;
     }
 
     public async Task<int> ReapplyToTenantsAsync(PackageCode code)
