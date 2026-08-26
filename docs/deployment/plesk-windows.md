@@ -159,6 +159,63 @@ self-contained paketin büyük kısmı (.NET runtime dosyaları) kod değişmedi
 
 ---
 
+
+---
+
+## 7. Uygulama havuzu: soğuk başlangıç önlemleri
+
+Paylaşımlı hosting'de "sayfa bazen çok geç açılıyor" şikâyetinin ana kaynağı kod
+değil, **app pool'un boşta öldürülmesi**dir. Havuz kapandıktan sonraki ilk istek
+ABP modül init + EF model kurulumu + localization yüklemesinin tamamını öder.
+
+Aşağıdaki üç ayar birlikte çalışır; **ikisi Plesk arayüzünden, biri `web.config`'ten**.
+
+### 7.1 Plesk arayüzü (app pool ayarları — web.config'ten YAPILAMAZ)
+
+Plesk → *Websites & Domains* → alan adı → **IIS Application Pool Settings**:
+
+| Ayar | Değer | Neden |
+|---|---|---|
+| **Idle Time-out** | `0` | Boşta kalınca havuzu öldürme |
+| **Start Mode** | `AlwaysRunning` | Sunucu/havuz açılışında uygulamayı hemen başlat |
+| Regular Time Interval (recycle) | `0` ya da gece saati | Gün ortasında geri dönüşüm yapma |
+
+> Plesk bu alanları göstermiyorsa hosting sağlayıcısı kısıtlamış demektir; destek
+> talebi aç. Bu ayarlar olmadan 7.2'deki ısıtma **yalnız** geri dönüşüm sonrası
+> devreye girer, boşta ölme sorununu çözmez.
+
+### 7.2 `web.config` — ısıtma isteği
+
+`<applicationInitialization>` bloğu zaten repoda ([src/Apya.Platform.Web/web.config]).
+IIS, havuz başladıktan sonra `/health/live`'ı **kendisi** çağırır; pipeline'ı gerçek
+kullanıcı değil bu istek ayağa kaldırır.
+
+**Önkoşul:** sunucuda IIS **Application Initialization** bileşeni kurulu olmalı.
+Kurulu değilse site `500.19` verir → bkz. Sorun giderme.
+
+### 7.3 Barındırma modeli: InProcess
+
+`web.config`'te `hostingModel="InProcess"`. Uygulama IIS worker sürecinin (w3wp)
+içinde barınır; `OutOfProcess`'teki IIS → Kestrel ters vekil atlaması ortadan kalkar
+(istek başına sabit gecikme payı).
+
+**Bu değişiklik ANCM sürümüne duyarlıdır.** Sunucudaki ANCM .NET 10 self-contained
+barındırmayı desteklemiyorsa site `500.30`/`500.31` ile açılmaz → bkz. Sorun giderme.
+
+### 7.4 Yayın sonrası doğrulama sırası
+
+Bu üç değişiklik ilk kez yayına alınırken **tek tek** doğrula; hepsini birden açıp
+hata alırsan hangisinin kırdığını ayıramazsın.
+
+1. Yayınla → `https://alanadi/health/live` → **200** bekle.
+   - `500.30`/`500.31` → 7.3'ü geri al (`hostingModel="OutOfProcess"`), tekrar dene.
+   - `500.19` → 7.2'deki `<applicationInitialization>` bloğunu sil, tekrar dene.
+2. Havuzu Plesk'ten **Recycle** et, ~30 sn bekle, `/health/live`'ı çağır.
+   Isıtma çalışıyorsa yanıt anında gelir (saniyeler değil).
+3. `https://alanadi/Dashboard` → sayfa açılır, tarayıcı ağ sekmesinde
+   `react-vendor` / `ui-vendor` istekleri **HTML ile paralel** başlamış olmalı
+   (`dashboard.js` inip ayrıştırıldıktan sonra değil).
+
 ## Sorun giderme
 
 **Site açılmıyor / 500.30, 500.19:**
@@ -168,10 +225,25 @@ self-contained paketin büyük kısmı (.NET runtime dosyaları) kod değişmedi
 **Hata: ANCM bulunamadı (500.19 / handler tanınmıyor):**
 Hosting'de ASP.NET Core desteği açık değil — destek talebi aç.
 
-**Performans (paylaşımlı hosting'in doğası):**
-App pool boştayken geri dönüştürülür → ilk ziyaretçi 20–40 sn bekleyebilir.
-Arka plan işleri (bildirim, doküman son tarih hatırlatma, kur değerleme) yalnızca
-app pool ayaktayken çalışır. Bu iki kısıt kalıcıysa VPS'e geçmek gerekir.
+**500.30 / 500.31 (uygulama başlatılamadı) — InProcess'ten sonra çıktıysa:**
+Sunucudaki ANCM sürümü .NET 10 self-contained in-process barındırmayı desteklemiyor.
+`web.config`'te tek satır geri al: `hostingModel="InProcess"` → `"OutOfProcess"`.
+Yeniden publish GEREKMEZ. Bkz. 7.3.
+
+**500.19 (config bölümü tanınmıyor) — ısıtmadan sonra çıktıysa:**
+IIS **Application Initialization** bileşeni kurulu değil. `web.config`'teki
+`<applicationInitialization>` bloğunu tümüyle sil (7.2). `hostingModel` bundan
+bağımsızdır, kalabilir. Bileşenin kurulmasını istemek için destek talebi aç.
+
+**Performans — soğuk başlangıç:**
+App pool boştayken geri dönüştürülürse ilk ziyaretçi 20–40 sn bekler.
+Önlemler **bölüm 7'de**: Idle Time-out=0, Start Mode=AlwaysRunning ve
+`/health/live` ısıtması. Bu ayarlar uygulanmadıysa şikâyet devam eder.
+
+**Performans — arka plan işleri:**
+Bildirim, doküman son tarih hatırlatma, kur değerleme ve abonelik süre kontrolü
+yalnızca app pool ayaktayken çalışır. Bölüm 7 uygulanmazsa bu işler de kaçar;
+kısıt kalıcıysa VPS'e geçmek gerekir.
 
 ---
 
