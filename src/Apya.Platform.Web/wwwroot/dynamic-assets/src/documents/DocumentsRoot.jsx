@@ -693,7 +693,10 @@ export function DocumentsRoot() {
             Klasörler, belgeler ve meta veri
           </p>
         </div>
-        <div className="d-flex align-items-center gap-2">
+        {/* flex-wrap ŞART: dar ekranda üç eylem yan yana sığmıyor ve satır
+            viewport'u yatay taşırıyordu (mobilde ölçüldü, "Yükle" ekranın
+            dışında kalıyordu). Sarınca ikinci satıra iner. */}
+        <div className="d-flex align-items-center flex-wrap gap-2">
           {/* Buradaki "Yükle" tek seferlik ve seçili klasöre çalışır; sıra,
               ilerleme ve tekrar deneme isteyen toplu iş kuyruk ekranında. */}
           {canCreate && (

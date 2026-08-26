@@ -2107,7 +2107,7 @@ function Hs() {
             /* @__PURE__ */ e.jsx("h1", { style: { fontSize: 20, fontWeight: 700, margin: 0 }, children: "Dokümanlar" }),
             /* @__PURE__ */ e.jsx("p", { style: { fontSize: 12, color: "var(--apya-text-tertiary)", margin: "4px 0 0" }, children: "Klasörler, belgeler ve meta veri" })
           ] }),
-          /* @__PURE__ */ e.jsxs("div", { className: "d-flex align-items-center gap-2", children: [
+          /* @__PURE__ */ e.jsxs("div", { className: "d-flex align-items-center flex-wrap gap-2", children: [
             Q && /* @__PURE__ */ e.jsx(
               "a",
               {

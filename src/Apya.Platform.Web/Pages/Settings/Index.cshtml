@@ -365,6 +365,33 @@
                             </label>
                         </div>
                     </fieldset>
+
+                    @*
+                        Mobilde masaüstü üst barı (arama şeridi). Aynı "sunucuya gitmez"
+                        kuralı: SoT <html data-mobile-topbar>, kalıcılık localStorage
+                        'apya-mobile-topbar', uygulama sidebar-toggle.js
+                        (#MobileTopbarToggle kimliğine bağlı — DEĞİŞTİRME).
+                        name="MobileTopbar" IndexModel'de bağlı alan değil, POST'ta yok sayılır.
+                    *@
+                    <fieldset class="mt-4">
+                        <legend class="form-label mb-1">
+                            @L["Settings:MobileTopbar.Label"]
+                            <span class="apya-settings-badge apya-settings-badge--instant"
+                                  title="@L["Settings:Badge.Instant.Title"]">
+                                <i class="fa fa-bolt" aria-hidden="true"></i>@L["Settings:Badge.Instant"]
+                            </span>
+                        </legend>
+                        <div class="form-text mb-2">@L["Settings:MobileTopbar.Help"]</div>
+
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" role="switch" name="MobileTopbar"
+                                   id="MobileTopbarToggle" value="true" />
+                            <label class="form-check-label" for="MobileTopbarToggle">
+                                <strong>@L["Settings:MobileTopbar.Switch"]</strong>
+                                <div class="text-muted small">@L["Settings:MobileTopbar.Switch.Desc"]</div>
+                            </label>
+                        </div>
+                    </fieldset>
                 </div>
 
                 @*

@@ -68,6 +68,13 @@
                 try { shell = localStorage.getItem('apya-mobile-shell'); } catch (e) { }
                 html.setAttribute('data-mobile-shell', shell === 'tabs' ? 'tabs' : 'drawer');
 
+                // Mobilde masaüstü üst barı (arama şeridi) — VARSAYILAN KAPALI.
+                // Attribute yalnız açıkken yazılır; CSS'teki kural
+                // html:not([data-mobile-topbar="on"]) ile eşleşir.
+                var mtopbar = null;
+                try { mtopbar = localStorage.getItem('apya-mobile-topbar'); } catch (e) { }
+                if (mtopbar === 'on') { html.setAttribute('data-mobile-topbar', 'on'); }
+
                 // Kenar çubuğu genişliği — kullanıcı tutamakla ayarlamışsa. Paint'ten
                 // ÖNCE yazılır, yoksa her yenilemede menü 320px'ten seçilen
                 // genişliğe zıplar. Sınırlar apya-sidebar-resize.js ile aynı;
