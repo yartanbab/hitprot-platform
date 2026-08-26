@@ -6972,3 +6972,37 @@ html[data-sidebar] .apya-sidebar-resizer {
 @media (max-width: 767.98px) {
     .apya-sidebar-resizer { display: none; }
 }
+
+/* ============================================================================
+   KENAR ÇUBUĞU — AD, YERİ OLDUĞU KADAR UZASIN
+   ----------------------------------------------------------------------------
+   Kırpmanın sebebi satırın darlığı DEĞİL, temanın etikete verdiği SABİT
+   genişlikti: `.lpx-nav-menu .lpx-menu-item-link .lpx-menu-item-text{width:178px}`
+   (iç menüde 154px). Ad hep aynı pikselde kesiliyor, kenar çubuğunu tutamakla
+   genişletmek adı bir karakter bile uzatmıyordu.
+
+   Genişlik satırın kalanına bırakılır: ad TEK SATIR kalır ama artık kenar
+   çubuğu kadar uzar; elips yalnız gerçekten yer kalmadığında devreye girer.
+   Sarma (çok satır) İSTENMİYOR — satır yüksekliği değişmez.
+   ============================================================================ */
+#lpx-sidebar .lpx-menu-item-text,
+#mobile-sidebar .lpx-menu-item-text {
+    width: auto !important;
+    flex: 1 1 auto;
+    min-width: 0;
+}
+/* Ad için ayrılan yeri büyüten iki küçük pay: satırın sağ dolgusu (temada 18px)
+   ve sayaçtan önceki boşluk. Sayaç/rozet kendi genişliğini korur. */
+#lpx-sidebar li.lpx-inner-menu-item > a.lpx-menu-item-link,
+#lpx-sidebar li.outer-menu-item:not(:has(> ul.lpx-inner-menu)) > a.lpx-menu-item-link {
+    padding-right: 10px;
+}
+#lpx-sidebar .apya-shell-count,
+#lpx-sidebar .apya-shell-badge {
+    flex: 0 0 auto;
+    align-self: center;
+}
+/* Sayaç `margin-left:auto` ile satırın sağına yapışıyordu; ad artık esnek
+   olduğu için bu marj yalnız 9px'lik satır boşluğuna ekleniyor ve adın yerini
+   çalıyor. */
+#lpx-sidebar .apya-shell-count { margin-left: 0; }
