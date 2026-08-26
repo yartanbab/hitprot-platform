@@ -77,6 +77,24 @@ public class PackagePermissionNodeDto
     public bool IsHostOnly { get; set; }
 }
 
+/// <summary>
+/// Paket süresi davranışı — host geneli (Global ayar). Bir müşteriye özel değildir:
+/// süre dolduğunda ne olacağını bütün platform için belirler.
+/// </summary>
+public class SubscriptionSettingsDto
+{
+    /// <summary>
+    /// Kapalıyken süresi dolan müşteriye yalnız uyarı gider, paketi değişmez.
+    /// </summary>
+    public bool AutoDowngradeEnabled { get; set; } = true;
+
+    /// <summary>Bitişten sonra paketin açık kaldığı ek süre (gün). 0 = ek süre yok.</summary>
+    public int GraceDays { get; set; }
+
+    /// <summary>Uyarı eşikleri — virgülle ayrık gün listesi ("7,1"). Boş = uyarı yok.</summary>
+    public string WarningDays { get; set; } = string.Empty;
+}
+
 public class UpdatePackagePermissionsDto
 {
     public PackageCode Code { get; set; }

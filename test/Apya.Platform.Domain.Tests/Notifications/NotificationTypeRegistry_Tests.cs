@@ -20,8 +20,11 @@ public class NotificationTypeRegistry_Tests
     [Fact]
     public void Every_NotificationType_Should_Have_A_Registry_Entry()
     {
+        // Ölçüt kaydın KENDİSİ; "kategorisi System mi" değil. System meşru bir kategoridir
+        // (paket süresi gibi platform bildirimleri oraya düşer) ve kategoriyle ölçmek onları
+        // kayıtsız gösteriyordu.
         var unregistered = Enum.GetValues<NotificationType>()
-            .Where(t => NotificationTypeRegistry.Get(t).Category == NotificationCategory.System)
+            .Where(t => !NotificationTypeRegistry.IsRegistered(t))
             .ToList();
 
         unregistered.ShouldBeEmpty(

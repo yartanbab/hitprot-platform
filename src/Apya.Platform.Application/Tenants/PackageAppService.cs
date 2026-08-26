@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
+using Apya.Platform.Settings;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.Localization;
 using Volo.Abp;
@@ -9,6 +11,8 @@ using Volo.Abp.Authorization.Permissions;
 using Volo.Abp.Domain.Repositories;
 using Volo.Abp.Localization;
 using Volo.Abp.MultiTenancy;
+using Volo.Abp.SettingManagement;
+using Volo.Abp.Settings;
 using Volo.Abp.TenantManagement;
 
 namespace Apya.Platform.Tenants;
@@ -26,6 +30,7 @@ public class PackageAppService : PlatformAppService, IPackageAppService
     private readonly IPermissionDefinitionManager _permissionDefinitionManager;
     private readonly IStringLocalizerFactory _stringLocalizerFactory;
     private readonly PackageCeilingStore _ceilingStore;
+    private readonly ISettingManager _settingManager;
 
     public PackageAppService(
         IRepository<PlatformPackage, Guid> packageRepository,
@@ -33,8 +38,10 @@ public class PackageAppService : PlatformAppService, IPackageAppService
         TenantPackageManager packageManager,
         IPermissionDefinitionManager permissionDefinitionManager,
         IStringLocalizerFactory stringLocalizerFactory,
-        PackageCeilingStore ceilingStore)
+        PackageCeilingStore ceilingStore,
+        ISettingManager settingManager)
     {
+        _settingManager = settingManager;
         _packageRepository = packageRepository;
         _tenantProfileRepository = tenantProfileRepository;
         _packageManager = packageManager;
@@ -169,6 +176,49 @@ public class PackageAppService : PlatformAppService, IPackageAppService
 
         await _packageRepository.UpdateAsync(pkg, autoSave: true);
         await _ceilingStore.InvalidatePackageAsync(input.Code);
+    }
+
+    public async Task<SubscriptionSettingsDto> GetSubscriptionSettingsAsync()
+    {
+        // Ayarlar Global provider'a KISITLI: varsayılan AÇIKÇA geçilmeli, yoksa boş/0 döner.
+        return new SubscriptionSettingsDto
+        {
+            AutoDowngradeEnabled = await SettingProvider.GetAsync(
+                PlatformSettings.Subscription.AutoDowngradeEnabled,
+                PlatformSettingDefaults.SubscriptionAutoDowngradeEnabled),
+            GraceDays = await SettingProvider.GetAsync(
+                PlatformSettings.Subscription.GraceDays,
+                PlatformSettingDefaults.SubscriptionGraceDays),
+            WarningDays = await SettingProvider.GetOrNullAsync(
+                PlatformSettings.Subscription.WarningDays)
+                ?? PlatformSettingDefaults.SubscriptionWarningDays
+        };
+    }
+
+    public async Task UpdateSubscriptionSettingsAsync(SubscriptionSettingsDto input)
+    {
+        await _settingManager.SetGlobalAsync(
+            PlatformSettings.Subscription.AutoDowngradeEnabled,
+            input.AutoDowngradeEnabled.ToString().ToLowerInvariant());
+
+        await _settingManager.SetGlobalAsync(
+            PlatformSettings.Subscription.GraceDays,
+            Math.Clamp(input.GraceDays, 0, PlatformSettingDefaults.SubscriptionGraceMaxDays)
+                .ToString(CultureInfo.InvariantCulture));
+
+        // Ham metin değil normalize edilmiş liste yazılır: "9, 3, abc, -1" → "9,3".
+        var warningDays = (input.WarningDays ?? string.Empty)
+            .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Select(part => int.TryParse(part, out var n) ? n : -1)
+            .Where(n => n > 0)
+            .Distinct()
+            .OrderByDescending(n => n)
+            .Take(5)
+            .ToList();
+
+        await _settingManager.SetGlobalAsync(
+            PlatformSettings.Subscription.WarningDays,
+            string.Join(",", warningDays));
     }
 
     public async Task<int> ReapplyToTenantsAsync(PackageCode code)

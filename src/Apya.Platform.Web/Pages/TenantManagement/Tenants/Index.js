@@ -58,6 +58,13 @@ $(function () {
                                 }
                             },
                             {
+                                text: 'Süreyi Uzat',
+                                visible: abp.auth.isGranted('AbpTenantManagement.Tenants.Update'),
+                                action: function (data) {
+                                    renewPackage(data.record);
+                                }
+                            },
+                            {
                                 text: 'Bağlantı Dizeleri (Connection Strings)',
                                 visible: abp.auth.isGranted('AbpTenantManagement.Tenants.ManageConnectionStrings'),
                                 action: function (data) {
@@ -112,6 +119,29 @@ $(function () {
                 render: function (data) {
                     var dic = { 1: 'Basic', 2: 'Standard', 3: 'Premium', 4: 'Enterprise' };
                     return '<span class="apya-chip apya-chip-brand">' + (dic[data] || '-') + '</span>';
+                }
+            },
+            {
+                title: 'Paket Bitişi',
+                data: "subscriptionEndDate",
+                render: function (data, type, row) {
+                    // Abonelik satırı olmayan müşteri süresizdir: süre işleyicisi ona dokunmaz.
+                    if (!data) {
+                        return '<span class="text-muted">Süresiz</span>';
+                    }
+
+                    var end = new Date(data);
+                    var text = end.toLocaleDateString('tr-TR');
+                    var daysLeft = Math.ceil((end - new Date()) / 86400000);
+
+                    if (row.isInGracePeriod) {
+                        return '<span class="apya-chip apya-chip-negative" title="Süre doldu, ek süre işliyor">'
+                            + text + ' · ek süre</span>';
+                    }
+                    if (daysLeft <= 7) {
+                        return '<span class="apya-chip apya-chip-warning">' + text + ' · ' + daysLeft + ' gün</span>';
+                    }
+                    return '<span class="apya-chip apya-chip-neutral">' + text + '</span>';
                 }
             },
             {
@@ -170,23 +200,82 @@ $(function () {
         dataTable.ajax.reload();
     });
 
+    var PACKAGES = { 1: 'Basic', 2: 'Standard', 3: 'Premium', 4: 'Enterprise' };
+
+    // SubscriptionPeriod: değer = AY SAYISI (0 = süresiz).
+    var PERIODS = { 0: 'Süresiz', 1: '1 Ay', 3: '3 Ay', 6: '6 Ay', 12: '1 Yıl' };
+
+    function buildSelect(id, options, selectedValue) {
+        var html = '<select id="' + id + '" class="form-select">';
+        Object.keys(options).forEach(function (value) {
+            var selected = String(selectedValue) === String(value) ? ' selected' : '';
+            html += '<option value="' + value + '"' + selected + '>' + options[value] + '</option>';
+        });
+        return html + '</select>';
+    }
+
     // Faz 2: tenant'a paket ata → feature seti yeniden uygulanır (AssignPackageAsync).
+    // Süre seçimi yeni bir abonelik dönemi başlatır; süre dolunca müşteri Basic'e iner.
     function changePackage(record) {
         Swal.fire({
             title: 'Paket Değiştir',
-            text: record.tenantName,
-            input: 'select',
-            inputOptions: { 1: 'Basic', 2: 'Standard', 3: 'Premium', 4: 'Enterprise' },
-            inputValue: String(record.packageCode || 1),
+            html: '<div class="text-start">'
+                + '<div class="mb-2 text-muted small">' + record.tenantName + '</div>'
+                + '<label class="form-label small">Paket</label>'
+                + buildSelect('pkgSelect', PACKAGES, record.packageCode || 1)
+                + '<label class="form-label small mt-3">Süre</label>'
+                + buildSelect('periodSelect', PERIODS, record.subscriptionPeriod || 0)
+                + '<div class="form-text mt-2">Yeni dönem bugün başlar; kalan süre devredilmez. '
+                + 'Kalan süreyi korumak için "Süreyi Uzat"ı kullanın.</div>'
+                + '</div>',
+            focusConfirm: false,
             showCancelButton: true,
             confirmButtonText: 'Uygula',
-            cancelButtonText: 'İptal'
+            cancelButtonText: 'İptal',
+            preConfirm: function () {
+                return {
+                    packageCode: parseInt(document.getElementById('pkgSelect').value, 10),
+                    period: parseInt(document.getElementById('periodSelect').value, 10)
+                };
+            }
         }).then(function (r) {
             if (!r.isConfirmed) { return; }
             apya.platform.tenants.tenantProfile
-                .assignPackage(record.tenantId, parseInt(r.value, 10))
+                .assignPackage(record.tenantId, r.value.packageCode, r.value.period)
                 .then(function () {
-                    abp.notify.success('Paket güncellendi ve tenant\'a uygulandı.');
+                    abp.notify.success('Paket güncellendi ve müşteriye uygulandı.');
+                    dataTable.ajax.reload();
+                });
+        });
+    }
+
+    // Paketi DEĞİŞTİRMEDEN süreyi uzatır: yeni dönem mevcut bitişin üstüne biner,
+    // kalan süre yanmaz. Ödeme altyapısı geldiğinde aynı kapı kullanılacak.
+    function renewPackage(record) {
+        var periods = { 1: '1 Ay', 3: '3 Ay', 6: '6 Ay', 12: '1 Yıl' };
+
+        Swal.fire({
+            title: 'Süreyi Uzat',
+            html: '<div class="text-start">'
+                + '<div class="mb-2 text-muted small">' + record.tenantName
+                + ' · ' + (PACKAGES[record.packageCode] || '-') + '</div>'
+                + '<label class="form-label small">Eklenecek süre</label>'
+                + buildSelect('renewSelect', periods, 1)
+                + '<div class="form-text mt-2">Kalan süre korunur: yeni dönem mevcut bitişin üstüne eklenir.</div>'
+                + '</div>',
+            focusConfirm: false,
+            showCancelButton: true,
+            confirmButtonText: 'Uzat',
+            cancelButtonText: 'İptal',
+            preConfirm: function () {
+                return parseInt(document.getElementById('renewSelect').value, 10);
+            }
+        }).then(function (r) {
+            if (!r.isConfirmed) { return; }
+            apya.platform.tenants.tenantProfile
+                .renewPackage(record.tenantId, r.value)
+                .then(function () {
+                    abp.notify.success('Paket süresi uzatıldı.');
                     dataTable.ajax.reload();
                 });
         });

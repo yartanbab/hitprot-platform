@@ -261,5 +261,30 @@ $(function () {
         }).always(function () { $btn.prop('disabled', false); abp.ui.clearBusy(permModalEl); });
     });
 
+    // --- Paket süresi ayarları (host geneli) ---
+    function loadSubscriptionSettings() {
+        svc.getSubscriptionSettings().then(function (s) {
+            $('#SubAutoDowngrade').prop('checked', !!s.autoDowngradeEnabled);
+            $('#SubGraceDays').val(s.graceDays);
+            $('#SubWarningDays').val(s.warningDays || '');
+        });
+    }
+
+    $('#SubSaveBtn').on('click', function () {
+        var $btn = $(this);
+        $btn.prop('disabled', true);
+
+        svc.updateSubscriptionSettings({
+            autoDowngradeEnabled: $('#SubAutoDowngrade').is(':checked'),
+            graceDays: parseInt($('#SubGraceDays').val(), 10) || 0,
+            warningDays: $('#SubWarningDays').val()
+        }).then(function () {
+            abp.notify.success('Süre ayarları kaydedildi.');
+            // Sunucu değerleri normalize eder ("9, abc, 3" → "9,3"); ekrana kaydedileni bas.
+            loadSubscriptionSettings();
+        }).always(function () { $btn.prop('disabled', false); });
+    });
+
     load();
+    loadSubscriptionSettings();
 });

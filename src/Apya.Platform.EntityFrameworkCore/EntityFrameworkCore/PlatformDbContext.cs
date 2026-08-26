@@ -267,6 +267,8 @@ namespace Apya.Platform.EntityFrameworkCore
 
         public DbSet<Apya.Platform.Tenants.TenantProfile> TenantProfiles { get; set; }
 
+        public DbSet<Apya.Platform.Tenants.TenantSubscription> TenantSubscriptions { get; set; }
+
         public DbSet<Apya.Platform.Tenants.PlatformPackage> PlatformPackages { get; set; }
         public DbSet<Apya.Platform.Tenants.PlatformPackageFeature> PlatformPackageFeatures { get; set; }
         public DbSet<Apya.Platform.Tenants.PlatformPackagePermission> PlatformPackagePermissions { get; set; }
@@ -309,6 +311,20 @@ namespace Apya.Platform.EntityFrameworkCore
                 b.Property(x => x.CorporateEmail).HasMaxLength(256);
                 // Paket (edition): mevcut profiller migration'da Basic'e düşsün (enum 0 değil).
                 b.Property(x => x.PackageCode).HasDefaultValue(Apya.Platform.Tenants.PackageCode.Basic);
+            });
+
+            /* --- ABONELİK (PAKET SÜRESİ) — host-side, TenantProfile ile aynı ray --- */
+            builder.Entity<Apya.Platform.Tenants.TenantSubscription>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "TenantSubscriptions", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+                b.Property(x => x.ExternalReference).HasMaxLength(128);
+                // Yürürlükteki aboneliği bulma sorgusu: süre işleyicisi her turda, kiracı
+                // listesi her sayfada sorar. TenantId tek başına yetmez — geçmiş satırlar
+                // (Superseded/Expired) zamanla birikir.
+                b.HasIndex(x => new { x.TenantId, x.Status });
+                // Süre işleyicisinin tarama sorgusu: bitişi gelmiş satırlar.
+                b.HasIndex(x => x.EndDate);
             });
 
             /* --- PAKET (EDITION) — Faz 2: host-side, düzenlenebilir --- */

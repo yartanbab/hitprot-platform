@@ -83,11 +83,27 @@ public static class NotificationTypeRegistry
 
             [NotificationType.FeedbackStatusChanged] = new(
                 NotificationCategory.Feedback, NotificationSeverity.Info,
-                "fa fa-list-check", "/Feedback", GroupSimilar: false)
+                "fa fa-list-check", "/Feedback", GroupSimilar: false),
+
+            // Paket süresi: kiracının kendi paketini göreceği bir ekran yok, derin link de yok.
+            [NotificationType.SubscriptionExpiring] = new(
+                NotificationCategory.System, NotificationSeverity.High,
+                "fa fa-hourglass-half", DeepLinkTemplate: null, GroupSimilar: false),
+
+            [NotificationType.SubscriptionDowngraded] = new(
+                NotificationCategory.System, NotificationSeverity.Critical,
+                "fa fa-circle-arrow-down", DeepLinkTemplate: null, GroupSimilar: false)
         };
 
     public static NotificationTypeInfo Get(NotificationType type)
         => Map.TryGetValue(type, out var info) ? info : Fallback;
+
+    /// <summary>
+    /// Tür gerçekten kayıtlı mı? Kapsama testi bunu sorar; "kategorisi System mi" diye
+    /// bakmak YANILTIR — System meşru bir kategoridir (platform bildirimleri) ve o
+    /// kategoriye kayıtlı türler fallback ile aynı görünürdü.
+    /// </summary>
+    public static bool IsRegistered(NotificationType type) => Map.ContainsKey(type);
 
     /// <summary>Tıklandığında gidilecek adres. Şablon kayda bağlıysa entityId şart.</summary>
     public static string? BuildDeepLink(NotificationType type, Guid? entityId)

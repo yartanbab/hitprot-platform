@@ -20,6 +20,12 @@ public class CreateTenantExtendedDto
     /// <summary>Tenant'a atanacak satış paketi (Basic/Standard/Premium/Enterprise).</summary>
     public PackageCode PackageCode { get; set; } = PackageCode.Basic;
 
+    /// <summary>
+    /// Paketin geçerlilik süresi. Varsayılan süresiz: süre verilmedikçe müşteri
+    /// kendiliğinden Basic'e düşmez.
+    /// </summary>
+    public SubscriptionPeriod SubscriptionPeriod { get; set; } = SubscriptionPeriod.Unlimited;
+
     public CompanyType CompanyType { get; set; } = CompanyType.Company;
 
     [StringLength(50)]
