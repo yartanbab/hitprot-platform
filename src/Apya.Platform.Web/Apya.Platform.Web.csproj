@@ -39,6 +39,15 @@
     <Content Update="appsettings.secrets.json" CopyToPublishDirectory="Never" />
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- Vite manifest'i island chunk'larının modulepreload edilmesi için ÇALIŞMA ZAMANINDA
+         okunur (IslandAssetManifest). Nokta ile başlayan dizinler SDK'nın varsayılan
+         glob'larından dışlandığı için bu dosya açıkça eklenmezse publish çıktısına HİÇ
+         girmez: uygulama yerelde ve testlerde çalışır (dosya proje klasöründe durur),
+         yayınlanmış sunucuda ise manifest bulunamaz ve tüm preload'lar sessizce boşa düşer. -->
+    <Content Include="wwwroot\js\.vite\manifest.json" CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
+
   <ItemGroup Condition="Exists('./openiddict.pfx')">
     <None Remove="openiddict.pfx" />
     <EmbeddedResource Include="openiddict.pfx">
