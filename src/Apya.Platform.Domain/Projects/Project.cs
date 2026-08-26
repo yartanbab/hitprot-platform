@@ -18,8 +18,12 @@ public class Project : FullAuditedAggregateRoot<Guid>, IMultiTenant
     /// <summary>APYA-132: Project'in bağlı olduğu Cari (Müşteri). Eski projelerde boş olabilir.</summary>
     public Guid? CustomerId { get; private set; }
 
-    /// <summary>APYA-132: Cari kategorisi. Varsayılan Other — Hibe/Etkinlik/Diğer ayrımı için.</summary>
-    public ProjectCategory Category { get; private set; } = ProjectCategory.Other;
+    /// <summary>
+    /// Cari kategorisi — <see cref="ProjectCategoryDefinition"/>'a FK. Sistem tanımları
+    /// global (TenantId null), kiracının kendi eklediği kategoriler kiracıya bağlıdır.
+    /// Varsayılan sistem kaydı "Diğer / Genel".
+    /// </summary>
+    public Guid CategoryId { get; private set; } = ProjectCategoryConsts.SystemIds.Other;
 
     public string Name { get; private set; } = null!;
 
@@ -76,14 +80,14 @@ public class Project : FullAuditedAggregateRoot<Guid>, IMultiTenant
         DateTime? startDate = null,
         DateTime? endDate = null,
         Guid? customerId = null,
-        ProjectCategory category = ProjectCategory.Other)
+        Guid? categoryId = null)
         : base(id)
     {
         TenantId = tenantId;
         SetName(name);
         GrantId = grantId;
         CustomerId = customerId;
-        Category = category;
+        CategoryId = categoryId ?? ProjectCategoryConsts.SystemIds.Other;
         Code = code;
         Description = description;
         SetBudgetInfo(totalBudget, hourlyRate, currency);
@@ -142,7 +146,7 @@ public class Project : FullAuditedAggregateRoot<Guid>, IMultiTenant
         string description,
         Guid? grantId,
         Guid? customerId,
-        ProjectCategory category,
+        Guid categoryId,
         decimal totalBudget,
         decimal hourlyRate,
         string currency,
@@ -158,7 +162,7 @@ public class Project : FullAuditedAggregateRoot<Guid>, IMultiTenant
         Description = description;
         GrantId = grantId;
         CustomerId = customerId;
-        Category = category;
+        CategoryId = categoryId;
         SetBudgetInfo(totalBudget, hourlyRate, currency);
         SetProjectDetails(purpose, duration, targetAudience, activities);
         SetSchedule(startDate, endDate);

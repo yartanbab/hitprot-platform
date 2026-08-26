@@ -31,8 +31,8 @@ public class CreateProjectDto
     /// <summary>APYA-132 — opsiyonel cari bağlantısı</summary>
     public Guid? CustomerId { get; set; }
 
-    /// <summary>APYA-132 — Hibe / Etkinlik / Diğer</summary>
-    public ProjectCategory Category { get; set; } = ProjectCategory.Other;
+    /// <summary>Seçilen kategori tanımının Id.si. Boş bırakılırsa "Diğer / Genel".</summary>
+    public Guid? CategoryId { get; set; }
 
     public decimal TotalBudget { get; set; }
     public decimal HourlyRate { get; set; }

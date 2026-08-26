@@ -163,7 +163,7 @@ public partial class DemoWorldSeeder
                 startDate: start,
                 endDate: end,
                 customerId: customerId,
-                category: category);
+                categoryId: ProjectCategoryConsts.IdFor(category));
 
             project.Approve();
             projects.Add(project);

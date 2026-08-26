@@ -153,13 +153,20 @@ $(function () {
 
     function lower(s) { return (s || '').toLocaleLowerCase('tr'); }
 
-    var CATEGORY = {
-        1: { label: 'Hibe', chip: 'apya-chip-brand', icon: 'fa-award', box: 'kpi-icon-box--brand' },
-        2: { label: 'Etkinlik', chip: 'apya-chip-warning', icon: 'fa-calendar-days', box: 'kpi-icon-box--warning' }
-        // 0 = Diğer/Genel → chip yok, nötr ikon
-    };
+    // Kategori artık sabit enum değil, kiracının düzenleyebildiği bir tanım: ad, ikon
+    // ve renk DTO ile birlikte gelir. Sunucu doldurmadıysa (kategori silinmiş) nötr
+    // görünüme düşülür.
+    // systemKey: 0 = Diğer/Genel, 1 = Hibe, 2 = Etkinlik, null = kullanıcı kategorisi.
+    var SYSTEM_OTHER = 0;
     function category(p) {
-        return CATEGORY[p.category] || { label: null, chip: null, icon: 'fa-diagram-project', box: 'kpi-icon-box--neutral' };
+        var tone = p.categoryTone || 'neutral';
+        return {
+            // "Diğer / Genel" rozet basmaz — her projede görünen etiket bilgi taşımaz.
+            label: (p.categorySystemKey === SYSTEM_OTHER) ? null : (p.categoryName || null),
+            chip: (p.categorySystemKey === SYSTEM_OTHER) ? null : ('apya-chip-' + tone),
+            icon: p.categoryIcon || 'fa-diagram-project',
+            box: 'kpi-icon-box--' + tone
+        };
     }
 
     var STATUS_TONE = { 'Aktif': 'positive', 'Risk': 'negative', 'Planlama': 'neutral' };
@@ -187,8 +194,11 @@ $(function () {
         { key: 'risk', label: 'Riskli', risky: true, test: function (p) { return riskOf(p) === 'high'; } },
         { key: 'overdue', label: 'Gecikmiş görevi olan', test: function (p) { return (p.overdueTaskCount || 0) > 0; } },
         { key: 'week', label: 'Bu hafta biten', test: function (p) { return p.daysRemaining !== null && p.daysRemaining !== undefined && p.daysRemaining >= 0 && p.daysRemaining <= 7; } },
-        { key: 'grant', label: 'Hibe', test: function (p) { return p.category === 1; } },
-        { key: 'event', label: 'Etkinlik', test: function (p) { return p.category === 2; } }
+        // Bu iki filtre DAVRANIŞ anahtarına bakar, kategori adına değil: kiracı sistem
+        // kategorisini yeniden adlandıramaz ama kendi kategorisine "Hibe" diyebilir —
+        // ada bakılsa o projeler de hibe sayılırdı.
+        { key: 'grant', label: 'Hibe', test: function (p) { return p.categorySystemKey === 1; } },
+        { key: 'event', label: 'Etkinlik', test: function (p) { return p.categorySystemKey === 2; } }
     ];
     var FILTER_KEYS = FILTERS.map(function (f) { return f.key; });
     function filterByKey(key) {
@@ -1034,7 +1044,12 @@ $(function () {
     // "Şablon" kartları ayrı bir şablon altyapısı DEĞİL: aynı oluşturma modalını
     // açar ve kategoriyi (Hibe/Etkinlik) önceden seçer. Kategoriye bağlı hazır
     // görev takvimi henüz yok — kart metinleri de bunu vaat etmiyor.
-    var CATEGORY_VALUE = { grant: '1', event: '2' };
+    // Sistem kategorilerinin Id'leri SABİTTİR (ProjectCategoryConsts.SystemIds) —
+    // migration onları bu değerlerle basar, bu yüzden burada sabit yazılabilirler.
+    var CATEGORY_VALUE = {
+        grant: 'a1c0a7e0-0000-4000-8000-000000000001',
+        event: 'a1c0a7e0-0000-4000-8000-000000000002'
+    };
     var pendingCategory = null;
 
     var createModal = new abp.ModalManager(abp.appPath + 'Projects/CreateModal');

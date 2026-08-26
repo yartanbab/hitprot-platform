@@ -46,6 +46,7 @@ public class ProjectAppService :
     private readonly ITenantStore _tenantStore;
     private readonly IRepository<Volo.Abp.TenantManagement.Tenant, Guid> _tenantRepository;
     private readonly IFeatureChecker _featureChecker;
+    private readonly ProjectCategoryStore _categoryStore;
 
     public ProjectAppService(
         IRepository<Project, Guid> repository,
@@ -58,7 +59,8 @@ public class ProjectAppService :
         IRepository<Customer, Guid> customerRepository,
         ITenantStore tenantStore,
         IRepository<Volo.Abp.TenantManagement.Tenant, Guid> tenantRepository,
-        IFeatureChecker featureChecker)
+        IFeatureChecker featureChecker,
+        ProjectCategoryStore categoryStore)
         : base(repository)
     {
         _projectManager = projectManager;
@@ -71,6 +73,7 @@ public class ProjectAppService :
         _tenantStore = tenantStore;
         _tenantRepository = tenantRepository;
         _featureChecker = featureChecker;
+        _categoryStore = categoryStore;
     }
 
     // --- CREATE ---
@@ -93,7 +96,7 @@ public class ProjectAppService :
         var overrideTenantId = CurrentTenant.Id == null ? input.TenantId : null;
 
         // Proje kodu hedef kiracıda benzersiz olmalı. DB'de unique index YOK
-        // (PlatformDbContext'te Projects yalnız CustomerId ve TenantId+Category indeksli),
+        // (PlatformDbContext'te Projects yalnız CustomerId ve TenantId+CategoryId indeksli),
         // bu yüzden kontrol burada yapılır — formdaki canlı uyarı tek başına yeterli değil.
         var targetTenantId = overrideTenantId ?? CurrentTenant.Id;
         if (await IsCodeTakenAsync(input.Code, targetTenantId))
@@ -117,7 +120,7 @@ public class ProjectAppService :
             input.StartDate,
             input.EndDate,
             input.CustomerId,
-            input.Category,
+            await ResolveCategoryIdAsync(input.CategoryId, targetTenantId),
             overrideTenantId: overrideTenantId
         );
 
@@ -132,13 +135,68 @@ public class ProjectAppService :
     }
 
     /// <summary>
+    /// Kategori adını/ikonunu DTO'ya basar. Kategori silinmiş ya da görünmüyorsa
+    /// alanlar boş bırakılır — UI kapak görseli yoksa varsayılan ikona düşer.
+    /// </summary>
+    private static void ApplyCategory(ProjectDto dto, Dictionary<Guid, ProjectCategoryDefinition> map)
+    {
+        if (!map.TryGetValue(dto.CategoryId, out var category))
+        {
+            return;
+        }
+
+        dto.CategoryName = category.Name;
+        dto.CategoryIcon = category.Icon;
+        dto.CategoryTone = category.Tone;
+        dto.CategorySystemKey = category.SystemKey;
+    }
+
+    /// <summary>
+    /// Gelen kategori Id'sini doğrular. Boş gelirse ya da hedef kiracıda seçilebilir
+    /// değilse "Diğer / Genel" sistem kategorisine düşer — böylece başka kiracının
+    /// kategorisi Id tahminiyle projeye iliştirilemez.
+    ///
+    /// <paramref name="currentCategoryId"/> güncellemede geçilir: projenin ZATEN sahip
+    /// olduğu kategori bu arada pasife alınmış ya da gizlenmiş olabilir. O durumda
+    /// kullanıcı kategoriye hiç dokunmadan kaydetse bile kategori sessizce sıfırlanırdı;
+    /// mevcut değer bu yüzden her zaman geçerli sayılır.
+    /// </summary>
+    private async Task<Guid> ResolveCategoryIdAsync(
+        Guid? categoryId, Guid? targetTenantId, Guid? currentCategoryId = null)
+    {
+        if (!categoryId.HasValue || categoryId.Value == Guid.Empty)
+        {
+            return currentCategoryId ?? ProjectCategoryConsts.SystemIds.Other;
+        }
+
+        if (categoryId == currentCategoryId)
+        {
+            return categoryId.Value;
+        }
+
+        using (CurrentTenant.Change(targetTenantId))
+        {
+            var category = await _categoryStore.FindAsync(categoryId.Value);
+            return category == null ? ProjectCategoryConsts.SystemIds.Other : category.Id;
+        }
+    }
+
+    /// <summary>
     /// Kategorinin hazır görev takvimini projeyle AYNI iş biriminde kurar —
     /// AppService metodu tek UoW'da sarılı olduğu için proje ve görevler birlikte
     /// commit olur, biri düşerse ikisi de yazılmaz.
     /// </summary>
     private async Task CreateTemplateTasksAsync(Project project, Guid? targetTenantId)
     {
-        var items = ProjectTaskTemplate.For(project.Category);
+        // Şablon, kategori TANIMINDAKİ davranış anahtarına bağlıdır; kullanıcının
+        // kendi eklediği kategoride anahtar null olur ve şablon kurulmaz.
+        ProjectCategory? systemKey;
+        using (CurrentTenant.Change(targetTenantId))
+        {
+            systemKey = await _categoryStore.GetSystemKeyAsync(project.CategoryId);
+        }
+
+        var items = ProjectTaskTemplate.For(systemKey);
         if (items.Count == 0)
         {
             return;
@@ -187,7 +245,7 @@ public class ProjectAppService :
             input.Description ?? "",
             input.GrantId,
             input.CustomerId,
-            input.Category,
+            await ResolveCategoryIdAsync(input.CategoryId, project.TenantId, project.CategoryId),
             input.TotalBudget,
             input.HourlyRate,
             input.Currency,
@@ -247,6 +305,7 @@ public class ProjectAppService :
 
                 var tenantNameMap = await ResolveTenantNamesAsync(dtos);
                 var customerNameMap = await ResolveCustomerNamesAsync(dtos);
+                var categoryMap = await _categoryStore.GetMapAsync();
                 var now = Clock.Now;
 
                 foreach (var dto in dtos)
@@ -261,6 +320,8 @@ public class ProjectAppService :
 
                     if (dto.CustomerId.HasValue && customerNameMap.TryGetValue(dto.CustomerId.Value, out var custName))
                         dto.CustomerName = custName;
+
+                    ApplyCategory(dto, categoryMap);
                 }
 
                 return new PagedResultDto<ProjectDto>(totalCount, dtos);
@@ -292,7 +353,9 @@ public class ProjectAppService :
     {
         using (CurrentTenant.Id == null ? DataFilter.Disable<IMultiTenant>() : null)
         {
-            return await base.GetAsync(id);
+            var dto = await base.GetAsync(id);
+            ApplyCategory(dto, await _categoryStore.GetMapAsync());
+            return dto;
         }
     }
 
@@ -425,6 +488,8 @@ public class ProjectAppService :
         {
             var project = await Repository.GetAsync(id);
             var dto = ObjectMapper.Map<Project, ProjectDetailDto>(project);
+
+            ApplyCategory(dto, await _categoryStore.GetMapAsync());
 
             // FN-001: Assignee navigasyonu include edilmeden map'lenirse AutoMapper AssigneeName'i
             // null bırakır (bkz. PlatformApplicationAutoMapperProfile: AssigneeName ← Assignee.UserName)

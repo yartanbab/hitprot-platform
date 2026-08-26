@@ -109,6 +109,7 @@ namespace Apya.Platform.EntityFrameworkCore
 
         /* --- PROJE MODÜLÜ TABLOLARI --- */
         public DbSet<Project> Projects { get; set; }
+        public DbSet<ProjectCategoryDefinition> ProjectCategories { get; set; }
         // (BUG-001) ProjectTask, ProjectSubTasks, ProjectTaskComments kaldırıldı.
         public DbSet<Grant> Grants { get; set; }
         public DbSet<GrantCall> GrantCalls { get; set; }
@@ -474,7 +475,23 @@ namespace Apya.Platform.EntityFrameworkCore
                 // APYA-132: Customer ilişkisi + Type filtreleme
                 b.HasOne<Customer>().WithMany().HasForeignKey(x => x.CustomerId).OnDelete(DeleteBehavior.SetNull);
                 b.HasIndex(x => x.CustomerId);
-                b.HasIndex(x => new { x.TenantId, x.Category });
+                b.HasOne<ProjectCategoryDefinition>().WithMany()
+                    .HasForeignKey(x => x.CategoryId).OnDelete(DeleteBehavior.Restrict);
+                b.HasIndex(x => new { x.TenantId, x.CategoryId });
+            });
+
+            /* --- PROJE KATEGORİSİ TANIMLARI --- */
+            builder.Entity<ProjectCategoryDefinition>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "ProjectCategories", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+                b.Property(x => x.Name).IsRequired().HasMaxLength(ProjectCategoryConsts.MaxNameLength);
+                b.Property(x => x.Icon).IsRequired().HasMaxLength(ProjectCategoryConsts.MaxIconLength);
+                b.Property(x => x.Tone).IsRequired().HasMaxLength(ProjectCategoryConsts.MaxToneLength);
+                // Sistem kayıtları TenantId = null ile global tutulur; aynı ad kiracı
+                // içinde tekrarlanamaz ama farklı kiracılar aynı adı kullanabilir.
+                b.HasIndex(x => new { x.TenantId, x.Name }).IsUnique();
+                b.HasIndex(x => x.SystemKey);
             });
 
             builder.Entity<Grant>(b =>

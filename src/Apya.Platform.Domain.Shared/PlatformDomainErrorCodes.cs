@@ -72,6 +72,11 @@ public static class PlatformDomainErrorCodes
     public const string ProjectNameRequired = "Platform:Project:NameRequired";
     public const string ProjectBudgetInvalid = "Platform:Project:BudgetInvalid";
     public const string ProjectScheduleInvalid = "Platform:Project:ScheduleInvalid";
+    public const string ProjectCategoryNameRequired = "Platform:ProjectCategory:NameRequired";
+    public const string ProjectCategoryNameAlreadyExists = "Platform:ProjectCategory:NameAlreadyExists";
+    public const string ProjectCategorySystemReadOnly = "Platform:ProjectCategory:SystemReadOnly";
+    public const string ProjectCategoryInUse = "Platform:ProjectCategory:InUse";
+    public const string ProjectCategoryNotFound = "Platform:ProjectCategory:NotFound";
 
     // --- Hibe (Grant) Modülü ---
     public const string GrantCallScheduleInvalid = "Platform:Grant:CallScheduleInvalid";

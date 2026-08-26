@@ -50,7 +50,7 @@ public class Project_Tests
     {
         var project = new Project(Guid.NewGuid(), null, null, "Test", "PRJ", "");
 
-        project.Category.ShouldBe(ProjectCategory.Other);
+        project.CategoryId.ShouldBe(ProjectCategoryConsts.SystemIds.Other);
         project.CustomerId.ShouldBeNull();
     }
 
@@ -66,10 +66,10 @@ public class Project_Tests
             code: "PRJ-1501",
             description: "",
             customerId: customerId,
-            category: ProjectCategory.GrantProject);
+            categoryId: ProjectCategoryConsts.SystemIds.GrantProject);
 
         project.CustomerId.ShouldBe(customerId);
-        project.Category.ShouldBe(ProjectCategory.GrantProject);
+        project.CategoryId.ShouldBe(ProjectCategoryConsts.SystemIds.GrantProject);
     }
 
     [Fact]
@@ -84,9 +84,9 @@ public class Project_Tests
             code: "EVT-001",
             description: "",
             customerId: customerId,
-            category: ProjectCategory.Event);
+            categoryId: ProjectCategoryConsts.SystemIds.Event);
 
-        project.Category.ShouldBe(ProjectCategory.Event);
+        project.CategoryId.ShouldBe(ProjectCategoryConsts.SystemIds.Event);
         project.GrantId.ShouldBeNull();
         project.CustomerId.ShouldBe(customerId);
     }

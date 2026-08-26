@@ -29,7 +29,7 @@ public class ProjectManager : DomainService
         DateTime? startDate = null,
         DateTime? endDate = null,
         Guid? customerId = null,
-        ProjectCategory category = ProjectCategory.Other,
+        Guid? categoryId = null,
         Guid? overrideTenantId = null)
     {
         // Host admin başka bir tenant adına proje oluşturabilir (overrideTenantId).
@@ -53,7 +53,7 @@ public class ProjectManager : DomainService
             startDate,
             endDate,
             customerId,
-            category
+            categoryId
         );
 
         return Task.FromResult(project);

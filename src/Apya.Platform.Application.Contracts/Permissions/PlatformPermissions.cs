@@ -88,6 +88,7 @@ public static class PlatformPermissions
         public const string ViewBudget = Default + ".ViewBudget"; // Bütçe alanını görme yetkisi (Özel)
         public const string ManageTeam = Default + ".ManageTeam"; // Projeye üye ekleme/çıkarma
         public const string UseAiFeatures = Default + ".UseAiFeatures";
+        public const string ManageCategories = Default + ".ManageCategories"; // Proje kategorilerini tanımlama
     }
 
     // --- GÖREV (TASK) YETKİLERİ ---

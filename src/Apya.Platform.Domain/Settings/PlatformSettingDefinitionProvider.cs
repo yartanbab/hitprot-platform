@@ -49,6 +49,16 @@ public class PlatformSettingDefinitionProvider : SettingDefinitionProvider
                 description: L("Setting:Projects.DetailPanel.Description"))
         );
 
+        // Gizlenen sistem kategorileri — kiracı seviyesi, virgülle ayrık Id listesi.
+        // Boş varsayılan = hiçbiri gizli değil.
+        context.Add(
+            new SettingDefinition(
+                PlatformSettings.Projects.HiddenCategories,
+                defaultValue: "",
+                displayName: L("Setting:Projects.HiddenCategories"),
+                description: L("Setting:Projects.HiddenCategories.Description"))
+        );
+
         // Görev oluşturma modalının ekstraları — Projects.DetailPanel ile aynı ray.
         // .WithProviders() ile KISITLANMAZ: DefaultMode/ShowKeyboardHints kullanıcı
         // seviyesinde yazılır, ShowInfoBanner kiracı seviyesinde; ikisi de zincirde

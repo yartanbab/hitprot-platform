@@ -43,34 +43,27 @@ public class CreateModalModel : PlatformPageModel
     /// <summary>
     /// Kategori artık açılır liste değil, seçim kartı — formun geri kalanının
     /// hangi alanları göstereceğini bu belirlediği için en görünür alan o.
+    /// Liste tanım tablosundan gelir; kullanıcının eklediği kategoriler de buradadır.
     /// </summary>
-    public IReadOnlyList<CategoryCard> CategoryCards { get; } = new List<CategoryCard>
-    {
-        new((int)ProjectCategory.GrantProject, "Hibe Projesi", "Bütçe kalemleri ve rapor takvimi",
-            "fa-award", "brand",
-            "Hibe projesi seçildi — amaç, hedef kitle ve faaliyetler başvuru dosyasına gider."),
-        new((int)ProjectCategory.Event, "Etkinlik", "Geri sayım ve tedarikçi görevleri",
-            "fa-calendar-days", "warning",
-            "Etkinlik seçildi — hedef kitle sorulur, faaliyet listesi gerekmez."),
-        new((int)ProjectCategory.Other, "Diğer / Genel", "Sadece ad, kod ve tarih aralığı",
-            "fa-diagram-project", "neutral",
-            "Genel proje — yalnız açıklama istenir, hibe alanları gizlendi.")
-    };
+    public IReadOnlyList<CategoryCard> CategoryCards { get; private set; } = new List<CategoryCard>();
 
     public Guid? CurrentTenantId => CurrentUser.TenantId;
 
     private readonly IProjectAppService _projectAppService;
+    private readonly IProjectCategoryAppService _projectCategoryAppService;
     private readonly ITenantAppService _tenantAppService;
     private readonly ICustomerAppService _customerAppService;
     private readonly IUploadedFileStorage _fileStorage;
 
     public CreateModalModel(
         IProjectAppService projectAppService,
+        IProjectCategoryAppService projectCategoryAppService,
         ITenantAppService tenantAppService,
         ICustomerAppService customerAppService,
         IUploadedFileStorage fileStorage)
     {
         _projectAppService = projectAppService;
+        _projectCategoryAppService = projectCategoryAppService;
         _tenantAppService = tenantAppService;
         _customerAppService = customerAppService;
         _fileStorage = fileStorage;
@@ -78,11 +71,16 @@ public class CreateModalModel : PlatformPageModel
 
     public async Task OnGetAsync()
     {
+        await LoadCategoryCardsAsync();
+
         Project = new CreateProjectDto
         {
             StartDate = Clock.Now,
             EndDate = Clock.Now.AddMonths(1),
-            Category = ProjectCategory.GrantProject
+            // Varsayılan seçim: "Hibe Projesi" görünürse o, değilse listenin ilki.
+            // Gizlenmiş bir kategoriyi seçili göstermek kartlarla eşleşmezdi.
+            CategoryId = (CategoryCards.FirstOrDefault(c => c.SystemKey == ProjectCategory.GrantProject)
+                          ?? CategoryCards.FirstOrDefault())?.Value
         };
 
         if (!CurrentUser.TenantId.HasValue)
@@ -134,6 +132,54 @@ public class CreateModalModel : PlatformPageModel
         return new OkObjectResult(new { id = createdProject.Id, goToTasks = GoToTasks });
     }
 
-    /// <summary>Kategori seçim kartının görünüm verisi.</summary>
-    public record CategoryCard(int Value, string Label, string Description, string Icon, string Tone, string Hint);
+    /// <summary>
+    /// Kategori kartlarını tanım tablosundan kurar.
+    ///
+    /// Kartın metinleri ve hangi detay alanlarını açtığı DAVRANIŞ ANAHTARINA bağlıdır:
+    /// sistem kategorilerinde (Hibe / Etkinlik) hibe alanları ve hazır görev takvimi
+    /// açılır, kullanıcının eklediği kategorilerde anahtar boştur ve kart "Diğer / Genel"
+    /// ile aynı sade davranışı gösterir.
+    /// </summary>
+    private async Task LoadCategoryCardsAsync()
+    {
+        var categories = await _projectCategoryAppService.GetSelectableAsync();
+
+        CategoryCards = categories.Select(c => new CategoryCard(
+            c.Id,
+            c.Name,
+            DescriptionFor(c.SystemKey),
+            c.Icon,
+            c.Tone,
+            HintFor(c.SystemKey, c.Name),
+            c.SystemKey)).ToList();
+    }
+
+    private static string DescriptionFor(ProjectCategory? systemKey) => systemKey switch
+    {
+        ProjectCategory.GrantProject => "Bütçe kalemleri ve rapor takvimi",
+        ProjectCategory.Event => "Geri sayım ve tedarikçi görevleri",
+        ProjectCategory.Other => "Sadece ad, kod ve tarih aralığı",
+        _ => "Ad, kod ve tarih aralığı"
+    };
+
+    private static string HintFor(ProjectCategory? systemKey, string name) => systemKey switch
+    {
+        ProjectCategory.GrantProject => "Hibe projesi seçildi — amaç, hedef kitle ve faaliyetler başvuru dosyasına gider.",
+        ProjectCategory.Event => "Etkinlik seçildi — hedef kitle sorulur, faaliyet listesi gerekmez.",
+        ProjectCategory.Other => "Genel proje — yalnız açıklama istenir, hibe alanları gizlendi.",
+        _ => $"{name} — yalnız açıklama istenir, hibe alanları gizlendi."
+    };
+
+    /// <summary>
+    /// Kategori seçim kartının görünüm verisi. <paramref name="SystemKey"/> boşsa
+    /// kullanıcı kategorisidir: bağlı davranışı yoktur.
+    /// </summary>
+    public record CategoryCard(
+        Guid Value,
+        string Label,
+        string Description,
+        string Icon,
+        string Tone,
+        string Hint,
+        ProjectCategory? SystemKey);
 }
