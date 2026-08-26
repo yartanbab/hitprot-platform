@@ -2042,6 +2042,21 @@ body.apya-mobile-nav-open {
     }
 }
 
+/* --- 6) MASAÜSTÜ ÜST BARI MOBİLDE GİZLİ ---
+   Tema dar ekranda hem `.lpx-mobile-navbar`ı hem `.lpx-topbar`ı basıyor.
+   Üst barda mobilde görünür kalan tek şey ortaya taşınmış komut paleti
+   tetikleyicisi (`.lpx-topbar > .apya-command-palette-trigger`, flex:1 1 auto
+   → tam genişlik) — sticky kap yüzünden sayfa boyunca takip eden İKİNCİ bir
+   arama şeridi çıkıyordu. Mobil barda zaten büyüteç düğmesi var (aynı paleti
+   açar) → şerit varsayılan olarak KAPALI, Ayarlar > Mobil'den açılır.
+   SoT <html data-mobile-topbar="on">, kalıcılık localStorage
+   'apya-mobile-topbar', pre-paint ApyaThemeHead, seçici sidebar-toggle.js. */
+@media (max-width: 767.98px) {
+    html:not([data-mobile-topbar="on"]) .lpx-topbar {
+        display: none !important;
+    }
+}
+
 @media (prefers-reduced-motion: reduce) {
     #mobile-navbar,
     #mobile-navbar > #mobile-sidebar,

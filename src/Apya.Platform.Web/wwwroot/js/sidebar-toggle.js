@@ -249,6 +249,23 @@ $(function () {
             if (input) { applyShell(input.getAttribute('data-mobile-shell')); }
         });
     }
+
+    // ── MOBİLDE ARAMA ŞERİDİ (masaüstü üst barı) ─────────────────────────────
+    // Aynı desen: SoT <html data-mobile-topbar="on">, kalıcılık
+    // 'apya-mobile-topbar', pre-paint ApyaThemeHead, görünüm
+    // apya-theme-bridge.css "MASAÜSTÜ ÜST BARI MOBİLDE GİZLİ".
+    // VARSAYILAN KAPALI — mobil barda zaten aynı paleti açan büyüteç düğmesi var.
+    var TOPBAR_KEY = 'apya-mobile-topbar';
+    var topbarToggle = document.getElementById('MobileTopbarToggle');
+    if (topbarToggle) {
+        topbarToggle.checked = htmlEl.getAttribute('data-mobile-topbar') === 'on';
+        topbarToggle.addEventListener('change', function () {
+            var on = topbarToggle.checked;
+            if (on) { htmlEl.setAttribute('data-mobile-topbar', 'on'); }
+            else { htmlEl.removeAttribute('data-mobile-topbar'); }
+            try { localStorage.setItem(TOPBAR_KEY, on ? 'on' : 'off'); } catch (e) { /* yok say */ }
+        });
+    }
 });
 
 $(function () {
