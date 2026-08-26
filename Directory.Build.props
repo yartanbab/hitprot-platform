@@ -2,9 +2,29 @@
   <!--
     Repo-wide NuGet version overrides to patch transitive dependency CVEs.
 
-    Scriban: Volo.Abp.TextTemplating.Scriban 10.0.2 ships Scriban 6.3.0 (10+ CVEs).
-    ABP 10.4.0 already moved to Scriban >= 7.0.0, confirming 7.x is API-compatible.
-    7.2.2: patches GHSA-7jvp-hj45-2f2m (TypedObjectAccessor mass-assignment) — still 7.x, safe patch bump.
+    Scriban: PINNED TO 6.x ON PURPOSE — DO NOT BUMP TO 7.x.
+    Volo.Abp.TextTemplating.Scriban 10.0.2 is compiled against Scriban 6.x, where
+    Scriban.Parsing.ParserOptions is a different kind of type than in 7.x. Loading 7.x
+    at runtime throws
+        System.TypeLoadException: Could not load type 'Scriban.Parsing.ParserOptions'
+        from assembly 'Volo.Abp.TextTemplating.Scriban' due to value type mismatch
+    inside ScribanTemplateRenderingEngine, i.e. EVERY ABP text template fails to render:
+    the forgot-password reset email, the email-confirmation mail, etc. The account pages
+    return 500 and no mail is ever sent.
+    Build + unit tests do NOT catch this (same trap as the AutoMapper note below);
+    only an actual template render does — verified 2026-08-26 by POSTing
+    /Account/ForgotPassword: 7.2.2 -> TypeLoadException, 6.6.0 -> 302 + mail rendered.
+    The earlier "ABP 10.4.0 already moved to Scriban >= 7.0.0, confirming 7.x is
+    API-compatible" reasoning was wrong for THIS ABP version: 10.4 ships a Scriban 7
+    build, 10.0.2 does not.
+
+    Trade-off accepted: 6.6.0 leaves GHSA-5wr9-m6jw-xx44 (critical) and
+    GHSA-24c8-4792-22hx (high) open. Both are attacks through malicious *template
+    content*, which is unreachable here: this solution has no Volo.Abp.TextTemplating
+    package reference of its own and no TextTemplateManagement module, so nobody —
+    tenant admin included — can author or edit a template. Only ABP's built-in static
+    templates are rendered, with model data escaped by Scriban as values, not code.
+    Revisit when ABP is upgraded to >= 10.4: then move back to Scriban 7.2.2+.
 
     AutoMapper: Volo.Abp.AutoMapper 10.0.2 ships AutoMapper 14.0.0 (GHSA-rvv3-g6hj-g44x / CVE-2026-32933).
     DO NOT bump to 15.x: AutoMapper 15 changed the MapperConfiguration ctor
@@ -17,7 +37,7 @@
 
   -->
   <ItemGroup>
-    <PackageReference Include="Scriban" Version="7.2.2" />
+    <PackageReference Include="Scriban" Version="6.6.0" />
     <PackageReference Include="AutoMapper" Version="14.0.0" />
   </ItemGroup>
 </Project>
