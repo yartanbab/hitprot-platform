@@ -24,6 +24,12 @@ public class SubscriptionExpiryWorker : AsyncPeriodicBackgroundWorkerBase
         // turuna kadar açık kalır, kiracı ödemediği paketi bir gün daha kullanırdı.
         // Tarama iki indeksli tek sorgu; saatlik yükü yok sayılır.
         Timer.Period = 60 * 60 * 1000;
+
+        // İlk tur AÇILIŞTA atılır. Varsayılan davranışta ilk tetikleme bir periyot SONRADIR;
+        // o zaman deploy'dan (ya da IIS uygulama havuzunun geri dönüşünden) sonra süresi
+        // çoktan dolmuş müşteriler bir saat daha paketlerini kullanmaya devam ederdi.
+        // Tur idempotenttir: yapacak iş yoksa tek sorguyla çıkar.
+        Timer.RunOnStart = true;
     }
 
     [UnitOfWork]
