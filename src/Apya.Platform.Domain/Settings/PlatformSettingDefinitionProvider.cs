@@ -275,6 +275,30 @@ public class PlatformSettingDefinitionProvider : SettingDefinitionProvider
                 description: L("Setting:IssueTasks.CloseSourceOnTaskDone.Description"))
                 .WithProviders(GlobalSettingValueProvider.ProviderName)
         );
+
+        // --- Paket süresi / abonelik --- (hepsi host seviyesinde)
+        context.Add(
+            new SettingDefinition(
+                PlatformSettings.Subscription.AutoDowngradeEnabled,
+                defaultValue: PlatformSettingDefaults.SubscriptionAutoDowngradeEnabled.ToString().ToLowerInvariant(),
+                displayName: L("Setting:Subscription.AutoDowngradeEnabled"),
+                description: L("Setting:Subscription.AutoDowngradeEnabled.Description"))
+                .WithProviders(GlobalSettingValueProvider.ProviderName),
+
+            new SettingDefinition(
+                PlatformSettings.Subscription.GraceDays,
+                defaultValue: PlatformSettingDefaults.SubscriptionGraceDays.ToString(),
+                displayName: L("Setting:Subscription.GraceDays"),
+                description: L("Setting:Subscription.GraceDays.Description"))
+                .WithProviders(GlobalSettingValueProvider.ProviderName),
+
+            new SettingDefinition(
+                PlatformSettings.Subscription.WarningDays,
+                defaultValue: PlatformSettingDefaults.SubscriptionWarningDays,
+                displayName: L("Setting:Subscription.WarningDays"),
+                description: L("Setting:Subscription.WarningDays.Description"))
+                .WithProviders(GlobalSettingValueProvider.ProviderName)
+        );
     }
 
     private static LocalizableString L(string name)

@@ -570,6 +570,7 @@ public class PlatformWebModule : AbpModule
         // çünkü dosya silme FeedbackFileStorage'a bağlı (yalnız Web katmanında).
         context.AddBackgroundWorkerAsync<Apya.Platform.Web.Feedbacks.FeedbackAttachmentRetentionWorker>();
         context.AddBackgroundWorkerAsync<Apya.Platform.Web.Documents.ScheduledReportWorker>();
+        context.AddBackgroundWorkerAsync<Apya.Platform.Web.Tenants.SubscriptionExpiryWorker>();
 
         var app = context.GetApplicationBuilder();
         var env = context.GetEnvironment();

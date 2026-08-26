@@ -13,5 +13,8 @@ public enum NotificationType
     GrantRecommended    = 9,
     FeedbackReceived      = 10, // Gönderim onayı — kullanıcıya teşekkür
     FeedbackResponded     = 11, // Yönetici kullanıcıya görünen cevap yazdı
-    FeedbackStatusChanged = 12  // Geri bildirimin durumu değişti
+    FeedbackStatusChanged = 12, // Geri bildirimin durumu değişti
+
+    SubscriptionExpiring   = 13, // Paket süresi dolmak üzere
+    SubscriptionDowngraded = 14  // Süre doldu, kiracı Basic pakete indirildi
 }

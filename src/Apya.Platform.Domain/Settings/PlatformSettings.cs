@@ -304,6 +304,33 @@ public static class PlatformSettings
         /// <summary>Görev tamamlandığında kaynak kayıt da kapatılsın mı? (Geri bağ.)</summary>
         public const string CloseSourceOnTaskDone = Prefix + ".IssueTasks.CloseSourceOnTaskDone";
     }
+
+    /// <summary>
+    /// Paket süresi / abonelik davranışı — hepsi host (Global) seviyesinde.
+    /// KRİTİK: .WithProviders(Global) DefaultValueSettingValueProvider'ı zincirden
+    /// çıkarır, bu yüzden okurken GetAsync&lt;T&gt;'ye AÇIK varsayılan geçilmeli.
+    /// </summary>
+    public static class Subscription
+    {
+        /// <summary>
+        /// Süresi dolan kiracı otomatik olarak Basic'e düşürülsün mü? Kapalıyken süre
+        /// işleyicisi yalnız uyarı üretir, paketi DEĞİŞTİRMEZ — özelliği canlıda önce
+        /// izleyip sonra açmak isteyen host için kaçış kapısı.
+        /// </summary>
+        public const string AutoDowngradeEnabled = Prefix + ".Subscription.AutoDowngradeEnabled";
+
+        /// <summary>
+        /// Bitiş tarihinden sonra paketin açık kalmaya devam ettiği ek süre (gün).
+        /// "0" (VARSAYILAN) = ek süre yok, bitişte düşer.
+        /// </summary>
+        public const string GraceDays = Prefix + ".Subscription.GraceDays";
+
+        /// <summary>
+        /// "Süreniz doluyor" bildiriminin kaç gün kala gönderileceği — virgülle ayrık
+        /// ("7,1"). Her eşik için dönem başına bir bildirim gider. Boş = uyarı gönderilmez.
+        /// </summary>
+        public const string WarningDays = Prefix + ".Subscription.WarningDays";
+    }
 }
 
 /// <summary>Ayarların kod içinde tekrarlanmaması için varsayılanlar tek yerde.</summary>
@@ -432,4 +459,16 @@ public static class PlatformSettingDefaults
 
     /// <summary>Görev tamamlanınca kaynağı kapatma varsayılanı: AÇIK — döngü kapansın.</summary>
     public const bool   IssueTaskCloseSourceOnTaskDone = true;
+
+    /// <summary>Otomatik düşürme varsayılanı: AÇIK. Aboneliği olmayan kiracı zaten süresiz sayılır.</summary>
+    public const bool   SubscriptionAutoDowngradeEnabled = true;
+
+    /// <summary>Ek süre varsayılanı: 0 gün — bitiş tarihinde düşer.</summary>
+    public const int    SubscriptionGraceDays = 0;
+
+    /// <summary>Ek süre üst sınırı — form manipülasyonuna karşı clamp.</summary>
+    public const int    SubscriptionGraceMaxDays = 90;
+
+    /// <summary>Uyarı eşikleri varsayılanı: 7 ve 1 gün kala.</summary>
+    public const string SubscriptionWarningDays = "7,1";
 }
