@@ -2122,8 +2122,16 @@ body.apya-mobile-nav-open {
    arama şeridi çıkıyordu. Mobil barda zaten büyüteç düğmesi var (aynı paleti
    açar) → şerit varsayılan olarak KAPALI, Ayarlar > Mobil'den açılır.
    SoT <html data-mobile-topbar="on">, kalıcılık localStorage
-   'apya-mobile-topbar', pre-paint ApyaThemeHead, seçici sidebar-toggle.js. */
-@media (max-width: 767.98px) {
+   'apya-mobile-topbar', pre-paint ApyaThemeHead, seçici sidebar-toggle.js.
+
+   🔑 KIRILIM DİKEYE ÖZEL DEĞİL. Tetikleyiciyi apya-topbar-shell.js
+   `.lpx-topbar-content`in DIŞINA, `.lpx-topbar`ın doğrudan çocuğu yapıyor
+   (arama barın ortasına otursun diye). Bu yüzden ne temanın ne de yukarıdaki
+   "KABUK KIRILIMI" bloğunun `.lpx-topbar-content { display: none }` kuralı onu
+   yakalar — yatay telefonda şerit aynen geri geliyordu. Sorgu bu yüzden ortak
+   kabuk kırılımıdır: mobil kabuk neredeyse şerit de orada olmalı. */
+@media (max-width: 767.98px),
+       (pointer: coarse) and (max-height: 540px) and (max-width: 1199.98px) { /* kabuk kırılımı — bkz. yukarıdaki "KABUK KIRILIMI" */
     html:not([data-mobile-topbar="on"]) .lpx-topbar {
         display: none !important;
     }
