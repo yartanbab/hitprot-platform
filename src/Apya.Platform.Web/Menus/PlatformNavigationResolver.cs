@@ -7,6 +7,7 @@ using Apya.Platform.Features;
 using Apya.Platform.Localization;
 using Apya.Platform.Permissions;
 using Apya.Platform.Settings;
+using Apya.Platform.Tenants;
 using Microsoft.Extensions.Localization;
 using Volo.Abp.Authorization.Permissions;
 using Volo.Abp.DependencyInjection;
@@ -44,6 +45,9 @@ public class PlatformNavigationResolver : IScopedDependency
 
     /// <summary>Menü düzeninde asla taşınamayan/sıralanamayan öğe — kapının kendisi.</summary>
     public const string SettingsItemName = "Apya.Settings";
+
+    /// <summary>Kapalı yeteneği olan kiracıya basılan tek keşif öğesi ("Kilitli özellikler").</summary>
+    public const string LockedFeaturesItemName = "Apya.LockedFeatures";
 
     /// <summary>Ayarlar sayfasındaki açıklama satırı — ApplicationMenuItem'da alan yok, CustomData'da taşınır.</summary>
     public const string DescriptionDataKey = "apya:desc";
@@ -511,6 +515,29 @@ public class PlatformNavigationResolver : IScopedDependency
         return sorted;
     }
 
+    /// <summary>
+    /// Kiracının paketinde KAPALI en az bir yetenek var mı? Sayısal limitler (kullanıcı/proje
+    /// adedi) sayılmaz — onlar "kilitli" değil, dolabilir kotalardır.
+    ///
+    /// <para>İlk kapalı yetenekte durur: alt paketlerde ilk kontrol zaten kapalı döner, tam
+    /// tarama yalnız her şeyi açık olan kiracıda yapılır. Değerler ABP tarafından kiracı
+    /// başına önbelleklenir ve çözüm istek başına bir kez koşar.</para>
+    /// </summary>
+    private async Task<bool> HasLockedCapabilitiesAsync()
+    {
+        foreach (var meta in PackageFeatureCatalog.Managed)
+        {
+            if (meta.IsNumeric) { continue; }
+
+            if (!await _feature.IsEnabledAsync(meta.Name))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     // =========================================================================
     // Menü ağacı — bu blok PlatformMenuContributor'dan OLDUĞU GİBİ taşındı.
     // Değişen tek şey bağımlılıkların nereden geldiği (context.ServiceProvider
@@ -691,6 +718,27 @@ public class PlatformNavigationResolver : IScopedDependency
             platform.AddItem(new ApplicationMenuItem("Apya.Platform.Consents", l["Menu:Consents"], icon: "fa fa-shield-halved", url: "/Admin/Consent"));
         if (platform.Items.Count > 0) roots.Add(platform);
 
+        // Kilitli özellikler — üst pakette açılacak bir şeyi OLAN kiracıya TEK keşif öğesi.
+        //
+        // Modülleri menüde tek tek kilitli göstermek bilerek yapılmadı: ağaç yukarıdaki
+        // ~30 ayrı izin kontrolüyle kuruluyor ve "izin yok" İKİ farklı sebeple doğuyor —
+        // paket tavanı ya da yöneticinin o rolü kısıtlaması. İkisi ayrılmadan kilit
+        // basmak, yöneticisi Dokümanlar'ı bilerek vermemiş kullanıcıya "paketinizi
+        // yükseltin" demek olurdu. Tek öğe bu ayrımı hiç gerektirmez: hedef, kapalı
+        // yetenekleri zaten doğru sebeple listeleyen Paketim ekranı.
+        //
+        // Üç şart birden: kiracı bağlamı (host'un paketi yok), Paketim'i görme izni
+        // (yoksa öğe 403'e giderdi) ve gerçekten kapalı bir yetenek olması (Enterprise'da
+        // basılmaz).
+        if (_currentTenant.Id != null
+            && await _permission.IsGrantedAsync(PlatformPermissions.TenantSettings.Default)
+            && await HasLockedCapabilitiesAsync())
+        {
+            roots.Add(new ApplicationMenuItem(
+                LockedFeaturesItemName, l["Menu:LockedFeatures"],
+                icon: "fa fa-lock", url: "/Subscription", order: 97));
+        }
+
         // Yenilikler — sürüm notları geçmişi; her oturumlu kullanıcıya açık (izin kapısı yok).
         roots.Add(new ApplicationMenuItem(
             "Apya.ReleaseNotes", l["Menu:ReleaseNotes"],
@@ -703,7 +751,8 @@ public class PlatformNavigationResolver : IScopedDependency
             SettingsItemName, l["Menu:Settings"],
             icon: "fa fa-gear", url: "/Settings", order: 99));
 
-        // Order'a göre sırala. Bloklar kodda konu konu yazılmış (Raporlar,
+        // Order'a göre sırala (Kilitli özellikler 97 → Yenilikler 98 → Ayarlar 99).
+        // Bloklar kodda konu konu yazılmış (Raporlar,
         // AI Merkezi'nden SONRA geliyor) ama görünen sırayı `order:` değerleri
         // anlatır. Eskiden menüyü ABP Order'a göre diziyordu; havuz artık
         // ekleme sırasını (DefaultIndex) esas aldığı için sıralama BURADA
