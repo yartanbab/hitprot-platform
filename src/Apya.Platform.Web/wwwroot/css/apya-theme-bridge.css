@@ -1003,12 +1003,13 @@ html, body {
     padding-left: 22px;
 }
 /* 2. seviye iç grup (Yönetim → Müşteri/Kimlik yönetimi çocukları) daha içeride.
-   38px → 28px (2026-08-26): girinti tek başına 16px yiyordu ve o piksellerin
-   tamamı adın yerinden çıkıyordu. Proje satırlarında hiyerarşiyi zaten renk
-   noktası anlatıyor. Ölçüm (280px): girinti 6px, metin üst seviye yapraktan
-   yalnız 3px içeride başlıyor (nokta ikondan dar); ada +10px yazıldı. */
+   38px → 32px (2026-08-26): girinti tek başına 16px yiyordu ve o piksellerin
+   tamamı adın yerinden çıkıyordu. Kısaltmanın sınırı hiyerarşi: 28px'te metin
+   üst seviye yapraktan yalnız 3px içeride kalıyor (renk noktası ikondan dar) ve
+   iki seviye tek sütun gibi okunuyordu. 32px'te fark 7px'e çıkıyor, ada yine
+   +6px yazılıyor. */
 #lpx-sidebar ul.lpx-inner-menu ul.lpx-inner-menu > li.lpx-inner-menu-item > a.lpx-menu-item-link {
-    padding-left: 28px !important;
+    padding-left: 32px !important;
 }
 
 /* ============================================================================
