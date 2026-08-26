@@ -537,6 +537,10 @@ public class PlatformWebModule : AbpModule
                     bundle.AddFiles("/js/apya-header-views.js");
                     bundle.AddFiles("/js/ai-hub-client.js");
                     bundle.AddFiles("/js/ajax-error-detail.js");
+                    // ajax-error-detail.js'ten SONRA: ikisi de abp.ajax'ın hata yolunu
+                    // sarmalıyor, bu dosya showError'u override ediyor. Sıra bilinçli —
+                    // en son sarmalayan, kota kodlarını ilk gören olur.
+                    bundle.AddFiles("/js/apya-quota-upsell.js");
                     bundle.AddFiles("/js/apya-hint.js"); // bilgi ipucu (ⓘ) — body'ye delege tooltip init
                     // Yeni Görev modalı (hızlı giriş ayrıştırıcısı + meta çipleri). Modal AJAX ile
                     // yüklendiği için modülün GLOBAL demette olması şart: modalın kendi <script>'i

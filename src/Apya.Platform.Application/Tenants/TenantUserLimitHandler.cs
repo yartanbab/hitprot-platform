@@ -53,7 +53,7 @@ public class TenantUserLimitHandler
             var currentCount = await _userRepository.GetCountAsync(); // yeni kullanıcı dahil
             if (currentCount > max)
             {
-                throw new BusinessException("Platform:Error:MaxUsersReached")
+                throw new BusinessException(PackageQuotaErrorCodes.MaxUsersReached)
                     .WithData("Max", max);
             }
         }
