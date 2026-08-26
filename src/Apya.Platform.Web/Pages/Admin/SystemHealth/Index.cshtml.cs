@@ -12,8 +12,15 @@ namespace Apya.Platform.Web.Pages.Admin.SystemHealth;
 [Authorize(PlatformPermissions.SystemHealth.Default)]
 public class IndexModel : AbpPageModel
 {
-    /// <summary>Seçilebilir pencereler — serbest sayı kabul edilmez (audit tablosu büyük).</summary>
-    public static readonly int[] AllowedWindows = { 7, 14, 30, 90 };
+    /// <summary>
+    /// Seçilebilir pencereler — serbest sayı kabul edilmez (audit tablosu büyük).
+    /// <para>
+    /// 1 gün BİLİNÇLİ olarak var: en dar pencere 7 günken bir haftalık birikim hep
+    /// taze görünüyor, "dün ne oldu" ile "bu hafta ne oldu" ayrılamıyordu. Çoktan
+    /// düzelmiş hataları güncel sanmaya yol açan tek nokta buydu.
+    /// </para>
+    /// </summary>
+    public static readonly int[] AllowedWindows = { 1, 7, 14, 30, 90 };
 
     private readonly ISystemHealthAppService _systemHealthAppService;
 
