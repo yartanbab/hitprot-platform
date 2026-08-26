@@ -1297,6 +1297,38 @@ describe('kolon aç/kapa', () => {
         expect(col(1).classList.contains('is-collapsed')).toBe(false);
     });
 
+    // Kaydedilmiş genişlik satır içi flex-basis'tir ve `.is-collapsed { flex: 0 0 52px }`
+    // sınıf kuralını ezer: kolon kapanıyor ama eski genişliğinde kalıyordu.
+    it('daraltınca kaydedilmiş genişlik satır içinden kalkar, açınca geri gelir', async () => {
+        localStorage.setItem('apya-kanban-w-s2-p1', '420');
+        mountBoard(sysCols, []);
+        apya.kanban.create({ projectId: 'p1' }).load();
+        await flush();
+        expect(col(2).style.flexBasis).toBe('420px');
+
+        toggleOf(2).click();
+        expect(col(2).style.flexBasis).toBe('');
+
+        toggleOf(2).click();
+        expect(col(2).style.flexBasis).toBe('420px');
+        localStorage.removeItem('apya-kanban-w-s2-p1');
+    });
+
+    it('kapalı kolon yeniden yüklemede de genişliği geri almaz', async () => {
+        localStorage.setItem('apya-kanban-w-s2-p1', '420');
+        mountBoard(sysCols, []);
+        const kb = apya.kanban.create({ projectId: 'p1' });
+        kb.load();
+        await flush();
+        toggleOf(2).click();
+
+        kb.load();
+        await flush();
+        expect(col(2).classList.contains('is-collapsed')).toBe(true);
+        expect(col(2).style.flexBasis).toBe('');
+        localStorage.removeItem('apya-kanban-w-s2-p1');
+    });
+
     it('daraltma kartları DOM\'dan silmez — sayaç ve risk özeti bozulmaz', async () => {
         mountBoard(sysCols, [
             { id: 't1', code: 'GRV-1', title: 'A', status: 1, priority: 2 },
