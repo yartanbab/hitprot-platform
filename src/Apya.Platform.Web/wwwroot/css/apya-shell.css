@@ -684,7 +684,8 @@ h1, h2, h3, h4, h5, h6 {
 }
 /* Mobilde marka 26px "A" kutusuna iniyor (apya-theme-bridge.css "MOBİL
    NAVİGASYON"); rozet orada yer kaplamasın. Masaüstü wordmark'ı dokunulmaz. */
-@media (max-width: 767.98px) {
+@media (max-width: 767.98px),
+       (pointer: coarse) and (max-height: 540px) and (max-width: 1199.98px) { /* kabuk kırılımı — bkz. apya-theme-bridge.css "KABUK KIRILIMI" */
     .lpx-brand-name::after { content: none; }
 }
 
@@ -4192,7 +4193,8 @@ i.apya-priority-dot {
 
 /* Mobilde üst bar zaten hamburger + logo düzenine geçiyor (theme-bridge);
    gezinme bloğu orada yer kaplamasın. */
-@media (max-width: 767.98px) {
+@media (max-width: 767.98px),
+       (pointer: coarse) and (max-height: 540px) and (max-width: 1199.98px) { /* kabuk kırılımı — bkz. apya-theme-bridge.css "KABUK KIRILIMI" */
     .apya-topbar-nav { display: none; }
 }
 
@@ -4409,7 +4411,8 @@ i.apya-priority-dot {
 .apya-shell-dialog-row > span { flex: 1; min-width: 0; }
 
 /* Dar üst barda yardım düğmesi kalır, "+ Yeni" kalır — ikisi de ikon zaten. */
-@media (max-width: 767.98px) {
+@media (max-width: 767.98px),
+       (pointer: coarse) and (max-height: 540px) and (max-width: 1199.98px) { /* kabuk kırılımı — bkz. apya-theme-bridge.css "KABUK KIRILIMI" */
     .apya-shell-new, .apya-shell-help { display: none; }
 }
 

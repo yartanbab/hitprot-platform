@@ -1302,7 +1302,7 @@ html[data-density="comfortable"] #DensityToggle i.fa-table-cells::before {
 }
 
 /* ============================================================================
-   MOBİL NAVİGASYON (<768px) — LeptonX .lpx-mobile-navbar üstüne kurulu
+   MOBİL NAVİGASYON (<768px + yatay telefon) — LeptonX .lpx-mobile-navbar üstüne kurulu
    ----------------------------------------------------------------------------
    Temanın kendi mobil davranışı üç noktada standart dışıydı (2026-08 tasarım
    denetimi + kullanıcı geri bildirimi):
@@ -1315,6 +1315,59 @@ html[data-density="comfortable"] #DensityToggle i.fa-table-cells::before {
         Esc tuşu ve açık bir kapat düğmesi gerekiyor.
    Geometri/backdrop/odak yönetimi sidebar-toggle.js'te; burası yalnız görünüm.
    ============================================================================ */
+
+/* --- 0) KABUK KIRILIMI: dar ekran VEYA YATAY TELEFON --- ★ TEK KAYNAK ★
+   Tema mobil kabuğu yalnız `max-width: 767px` ile açıyor. Telefon yataya
+   döndüğünde genişlik 768–950px'e çıkıyor ve kabuk MASAÜSTÜNE dönüyordu:
+   kenar çubuğu içeriğin üstünde kalıyor, daralt oku ise bu aralıktaki
+   dokunmatik kuralının (`min-width: … !important`, bkz. SIDEBAR — DOKUNMATİK
+   GENİŞLETME) altında kaldığı için hiçbir şey yapmıyordu — kullanıcı raporu:
+   "yatayda kapatma okuna basıyorum kapanmıyor".
+   Kırılım artık "dar VEYA kısa+dokunmatik": yatay telefonda da hamburger.
+   Yükseklik eşiği tabletleri DIŞARIDA bırakır (yatay telefon ≤ ~450px,
+   yatay tablet ≥ 744px); `pointer: coarse` fare kullanan kısa masaüstü
+   pencerelerini eler.
+   ⚠️ AYNI SORGU JS'te de var: ApyaThemeHead → window.APYA_MOBILE_SHELL_MQ.
+   Biri değişirse diğeri de değişmeli. Aşağıdaki kurallar temanın
+   `@media only screen and (max-width: 767px)` bloğundaki KABUK ANAHTARLARININ
+   kopyasıdır; kozmetiğin tamamı zaten medya sorgusuz yazıldığı için tekrar
+   edilmez. `.mobile-menu-opened` kuralları bilinçli olarak DIŞARIDA: bizim
+   çekmecemiz `position: fixed; inset: 0` ve opak (bkz. bölüm 3), içeriği
+   ayrıca gizlemeye gerek yok. */
+@media (pointer: coarse) and (max-height: 540px) and (min-width: 768px) and (max-width: 1199.98px) {
+    .lpx-mobile-navbar-container {
+        display: inline;
+    }
+    .lpx-mobile-navbar {
+        position: sticky;
+        top: 0;
+        width: 100%;
+        z-index: 110;
+    }
+    .lpx-sidebar-container {
+        display: none;
+    }
+    /* Bu aralıkta temanın kuralı `margin-left: 72px` (otomatik ray payı);
+       ray artık hiç çizilmediği için pay da sıfırlanır. */
+    .lpx-content-container {
+        margin-left: 0;
+        max-width: 100%;
+    }
+    .lpx-footbar-container {
+        left: 0;
+    }
+    /* Sticky üst bar mobil barın ALTINDAN başlar. Tema burada sabit 72px yazıyor;
+       bizim bar 54/48px (varyanta göre) ve yüksekliği zaten ölçülüp
+       --apya-mobile-header-h'e yazılıyor (sidebar-toggle.js) — ölçülen değer
+       kullanılır, yoksa aradan içerik sızardı. */
+    .lpx-topbar-container {
+        top: var(--apya-mobile-header-h, 54px);
+    }
+    .lpx-breadcrumb,
+    .lpx-topbar-content {
+        display: none;
+    }
+}
 
 /* --- 1) İkon glyph'leri: 'bi' (Bootstrap Icons) fontu bu projede yüklenmiyor,
    FontAwesome ile değiştiriliyor. font-family ::before'a DOĞRUDAN ve !important
@@ -1978,7 +2031,8 @@ body.apya-mobile-nav-open {
 /* Çubuk body'ye basılıyor (temanın mobil kabının DIŞINDA) → masaüstünde
    kendiliğinden gizlenmez, medya sorgusu ŞART. */
 .apya-mshell-tabs { display: none; }
-@media (max-width: 767.98px) {
+@media (max-width: 767.98px),
+       (pointer: coarse) and (max-height: 540px) and (max-width: 1199.98px) { /* kabuk kırılımı — bkz. apya-theme-bridge.css "KABUK KIRILIMI" */
     html[data-mobile-shell="tabs"] .apya-mshell-tabs {
         position: fixed;
         inset: auto 0 0 0;
@@ -2031,7 +2085,8 @@ body.apya-mobile-nav-open {
 }
 /* İçeriğin son satırı çubuğun altında kalmasın. Yükseklik ÖLÇÜLÜR
    (sidebar-toggle.js → --apya-mobile-tabs-h), elle yazılmaz. */
-@media (max-width: 767.98px) {
+@media (max-width: 767.98px),
+       (pointer: coarse) and (max-height: 540px) and (max-width: 1199.98px) { /* kabuk kırılımı — bkz. apya-theme-bridge.css "KABUK KIRILIMI" */
     html[data-mobile-shell="tabs"] .lpx-content-container .lpx-content {
         padding-bottom: calc(var(--apya-mobile-tabs-h, 65px) + 12px);
     }
