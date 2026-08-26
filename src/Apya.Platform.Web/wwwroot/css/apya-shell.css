@@ -3409,6 +3409,17 @@ i.apya-priority-dot {
    1052px'e çıkarıp konsolu taşırıyordu. Kapsam YALNIZ konsol — /Board ve
    /Tasks sayfalarındaki board davranışı değişmez. */
 .apya-console-views > #view-kanban { overflow: hidden; padding: var(--apya-space-3); }
+/* .kanban-wrap ZİNCİRE DAHİL: #226 toplu işlem çubuğu için board'un üstüne
+   konumlandırılmış bir sarmalayıcı ekledi; board artık #view-kanban'ın DOĞRUDAN
+   çocuğu değil. Aradaki block ölçüsüz kaldığı için aşağıdaki `flex:1 1 auto`
+   hiçbir şeye oturmuyor, kart alanı kabı aşıp `overflow:hidden`'a kırpılıyordu:
+   dikey kaydırma HİÇ doğmadığı için kolonun altındaki kartlara erişilemiyordu. */
+.apya-console-views .kanban-wrap {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+}
 .apya-console-views .kanban-board { flex: 1 1 auto; min-height: 0; padding-bottom: 0; }
 .apya-console-views .kanban-column { min-height: 0; }
 .apya-console-views .kanban-cards { min-height: 0; overflow-y: auto; }
