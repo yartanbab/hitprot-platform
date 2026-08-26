@@ -27,13 +27,18 @@ public static class PlatformAdminLinks
     /// <param name="PermissionName">Bu hedefi görebilmek için gereken izin.</param>
     /// <param name="TitleKey">PlatformResource yerelleştirme anahtarı — başlık.</param>
     /// <param name="DescriptionKey">PlatformResource yerelleştirme anahtarı — Ayarlar listesindeki açıklama.</param>
+    /// <param name="TenantOnly">
+    /// Yalnız kiracı bağlamında gösterilir. Host'un paketi yoktur (her şey açıktır), bu yüzden
+    /// "Paketim" gibi hedefler host'ta izin yeterli olsa bile basılmamalıdır.
+    /// </param>
     public record AdminLinkDefinition(
         string Name,
         string PermissionName,
         string TitleKey,
         string DescriptionKey,
         string Url,
-        string Icon);
+        string Icon,
+        bool TenantOnly = false);
 
     public static readonly IReadOnlyList<AdminLinkDefinition> All = new List<AdminLinkDefinition>
     {
@@ -75,6 +80,14 @@ public static class PlatformAdminLinks
 
         new("Apya.Admin.LoginScreen", PlatformPermissions.LoginScreen.Default,
             "Menu:LoginScreen", "Settings:Admin.LoginScreen.Desc",
-            "/Admin/LoginScreen", "fa fa-right-to-bracket")
+            "/Admin/LoginScreen", "fa fa-right-to-bracket"),
+
+        // Kiracının KENDİ paketi. Host'un paket yönetim ekranıyla karıştırılmasın:
+        // bu salt okunurdur ve TenantSettings kapısını kullanır — Basic dahil her
+        // pakette açıktır (izin hiçbir feature kapısının arkasında değil), yoksa
+        // yükseltme çağrısı tam da onu görmesi gerekene kapalı kalırdı.
+        new("Apya.Admin.Subscription", PlatformPermissions.TenantSettings.Default,
+            "Menu:Subscription", "Settings:Admin.Subscription.Desc",
+            "/Subscription", "fa fa-gem", TenantOnly: true)
     };
 }

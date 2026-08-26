@@ -53,6 +53,35 @@
                 <input type="text" class="form-control" id="SubWarningDays" placeholder="7,1" autocomplete="off">
                 <div class="form-text">Virgülle ayırın. Boş = uyarı yok.</div>
             </div>
+        </div>
+
+        <hr class="my-4">
+
+        <p class="text-muted">
+            Müşteri kendi <strong>"Paketim"</strong> ekranından paketini, kalan süresini ve kullanım
+            hakkını görür; alt pakette olduğunda üst paketin ne getireceği de orada listelenir.
+            Yükseltmek isteyen müşterinin size nasıl ulaşacağını aşağıda tanımlayın.
+            <apya-hint text="Üç alan da boş bırakılırsa 'Paketim' ekranında hiçbir yükseltme düğmesi basılmaz; müşteriye yalnız 'sistem yöneticinizle görüşün' notu gösterilir. Çalışmayan bir düğme göstermektense hiç göstermemek tercih edildi." />
+        </p>
+        <div class="row g-3 align-items-end">
+            <div class="col-12 col-md-4">
+                <label class="form-label" for="SubUpgradeEmail">Yükseltme e-postası</label>
+                <input type="email" class="form-control" id="SubUpgradeEmail"
+                       placeholder="satis@ornek.com" autocomplete="off">
+                <div class="form-text">Boş = e-posta düğmesi gösterilmez.</div>
+            </div>
+            <div class="col-12 col-md-3">
+                <label class="form-label" for="SubUpgradePhone">Yükseltme telefonu</label>
+                <input type="text" class="form-control" id="SubUpgradePhone"
+                       placeholder="+90 ..." autocomplete="off">
+                <div class="form-text">Boş = telefon düğmesi gösterilmez.</div>
+            </div>
+            <div class="col-12 col-md-3">
+                <label class="form-label" for="SubUpgradeUrl">Paket / fiyat sayfası</label>
+                <input type="url" class="form-control" id="SubUpgradeUrl"
+                       placeholder="https://..." autocomplete="off">
+                <div class="form-text">Boş = bağlantı gösterilmez.</div>
+            </div>
             <div class="col-12 col-md-2">
                 <button type="button" class="btn btn-primary w-100" id="SubSaveBtn">
                     <i class="fa fa-check me-1"></i> Kaydet

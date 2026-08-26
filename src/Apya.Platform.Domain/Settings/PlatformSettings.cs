@@ -339,6 +339,19 @@ public static class PlatformSettings
         /// ("7,1"). Her eşik için dönem başına bir bildirim gider. Boş = uyarı gönderilmez.
         /// </summary>
         public const string WarningDays = Prefix + ".Subscription.WarningDays";
+
+        // --- Yükseltme kanalı ---
+        // Kiracının "Paketim" ekranındaki yükseltme çağrısının nereye gideceği. ÜÇÜ DE BOŞSA
+        // ekranda hiçbir çağrı basılmaz: yapılandırılmamış bir düğme kullanıcıyı boşa çıkarır.
+
+        /// <summary>Yükseltme talebi için satış e-postası. Boş = e-posta düğmesi gösterilmez.</summary>
+        public const string UpgradeContactEmail = Prefix + ".Subscription.UpgradeContactEmail";
+
+        /// <summary>Yükseltme talebi için telefon. Boş = telefon düğmesi gösterilmez.</summary>
+        public const string UpgradeContactPhone = Prefix + ".Subscription.UpgradeContactPhone";
+
+        /// <summary>Dış satış/fiyat sayfası adresi. Boş = bağlantı gösterilmez.</summary>
+        public const string UpgradeUrl = Prefix + ".Subscription.UpgradeUrl";
     }
 }
 

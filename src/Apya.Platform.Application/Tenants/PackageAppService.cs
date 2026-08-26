@@ -191,7 +191,13 @@ public class PackageAppService : PlatformAppService, IPackageAppService
                 PlatformSettingDefaults.SubscriptionGraceDays),
             WarningDays = await SettingProvider.GetOrNullAsync(
                 PlatformSettings.Subscription.WarningDays)
-                ?? PlatformSettingDefaults.SubscriptionWarningDays
+                ?? PlatformSettingDefaults.SubscriptionWarningDays,
+            UpgradeContactEmail = await SettingProvider.GetOrNullAsync(
+                PlatformSettings.Subscription.UpgradeContactEmail) ?? string.Empty,
+            UpgradeContactPhone = await SettingProvider.GetOrNullAsync(
+                PlatformSettings.Subscription.UpgradeContactPhone) ?? string.Empty,
+            UpgradeUrl = await SettingProvider.GetOrNullAsync(
+                PlatformSettings.Subscription.UpgradeUrl) ?? string.Empty
         };
     }
 
@@ -219,6 +225,19 @@ public class PackageAppService : PlatformAppService, IPackageAppService
         await _settingManager.SetGlobalAsync(
             PlatformSettings.Subscription.WarningDays,
             string.Join(",", warningDays));
+
+        // Yükseltme kanalı: boş bırakılan alan o düğmeyi kapatır, ekstra doğrulama yok.
+        await _settingManager.SetGlobalAsync(
+            PlatformSettings.Subscription.UpgradeContactEmail,
+            (input.UpgradeContactEmail ?? string.Empty).Trim());
+
+        await _settingManager.SetGlobalAsync(
+            PlatformSettings.Subscription.UpgradeContactPhone,
+            (input.UpgradeContactPhone ?? string.Empty).Trim());
+
+        await _settingManager.SetGlobalAsync(
+            PlatformSettings.Subscription.UpgradeUrl,
+            (input.UpgradeUrl ?? string.Empty).Trim());
     }
 
     public async Task<int> ReapplyToTenantsAsync(PackageCode code)

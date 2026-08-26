@@ -36,6 +36,24 @@ public class SubscriptionSettingsPage_Tests : PlatformWebTestBase
     }
 
     /// <summary>
+    /// Yükseltme kanalı alanları da aynı JS bloğuna bağlıdır. Kimlik değişirse host
+    /// alanları doldurur, "Kaydet" der ve hiçbir şey kaydedilmez — kiracı tarafındaki
+    /// yükseltme düğmeleri de sessizce hiç görünmez.
+    /// </summary>
+    [Fact]
+    public async Task Yukseltme_kanali_alanlari_JS_kancalariyla_basilir()
+    {
+        var doc = Parse(await GetResponseAsStringAsync("/PackageManagement"));
+
+        foreach (var id in new[] { "SubUpgradeEmail", "SubUpgradePhone", "SubUpgradeUrl" })
+        {
+            doc.DocumentNode
+                .SelectSingleNode($"//*[@id='{id}']")
+                .ShouldNotBeNull($"'{id}' öğesi basılmadı; yükseltme kanalı JS'i buna bağlı");
+        }
+    }
+
+    /// <summary>
     /// Ek süre alanı sunucuda 0–90'a clamp'lenir; girdi de aynı aralığı göstermeli ki
     /// kullanıcı 365 yazıp sessizce 90'a düşürülmesin.
     /// </summary>
