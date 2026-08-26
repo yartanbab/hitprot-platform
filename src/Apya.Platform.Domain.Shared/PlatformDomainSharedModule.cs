@@ -62,11 +62,28 @@ public class PlatformDomainSharedModule : AbpModule
             options.Resources
                 .Get<AbpTenantManagementResource>()
                 .AddVirtualJson("/Localization/TenantManagement");
+
+            // Doğrulama mesajı şablonları ABP'nin KENDİ kaynağında ezilir, PlatformResource'ta
+            // değil: Account/Identity/TenantManagement gibi ABP modül sayfaları kendi
+            // localizer'larını kullanır ve PlatformResource'a hiç bakmaz. Şablon orada
+            // olmazsa aynı hata iki farklı üslupla çıkar ("... alanı zorunludur." ve
+            // "... boş bırakılamaz."). Buraya konunca tüm modüller tek ifadeyi paylaşır;
+            // PlatformResource da AbpValidationResource'u temel aldığı için oradan alır.
+            options.Resources
+                .Get<AbpValidationResource>()
+                .AddVirtualJson("/Localization/Validation");
         });
 
         Configure<AbpExceptionLocalizationOptions>(options =>
         {
             options.MapCodeNamespace("Platform", typeof(PlatformResource));
+
+            // BusinessException kodlarının ilk parçası (":" öncesi) burada eşlenmezse
+            // ABP çeviriyi HİÇ aramaz ve kullanıcıya "Sayfa işlenirken sunucu tarafında
+            // beklenmedik bir hata oluştu!" döner. "Apya:BoardColumn:*" ve "Project:*"
+            // kodları bu yüzden ekrana çıkmıyordu.
+            options.MapCodeNamespace("Apya", typeof(PlatformResource));
+            options.MapCodeNamespace("Project", typeof(PlatformResource));
         });
     }
 }
