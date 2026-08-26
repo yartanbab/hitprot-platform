@@ -18,6 +18,7 @@ using Volo.Abp.MultiTenancy;
 using Volo.Abp.TenantManagement;
 using Apya.Platform.Permissions;
 using Apya.Platform.Tasks;
+using Apya.Platform.Tenants;
 using Apya.Platform.Customers;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -89,7 +90,8 @@ public class ProjectAppService :
             var currentCount = await Repository.GetCountAsync();
             if (currentCount >= maxProjects)
             {
-                throw new BusinessException("Platform:Error:MaxProjectsReached").WithData("Max", maxProjects);
+                throw new BusinessException(PackageQuotaErrorCodes.MaxProjectsReached)
+                    .WithData("Max", maxProjects);
             }
         }
 

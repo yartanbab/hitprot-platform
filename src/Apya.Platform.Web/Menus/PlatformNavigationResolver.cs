@@ -188,6 +188,7 @@ public class PlatformNavigationResolver : IScopedDependency
 
         foreach (var definition in PlatformAdminLinks.All)
         {
+            if (definition.TenantOnly && _currentTenant.Id == null) { continue; }
             if (!await _permission.IsGrantedAsync(definition.PermissionName)) { continue; }
 
             var item = new ApplicationMenuItem(

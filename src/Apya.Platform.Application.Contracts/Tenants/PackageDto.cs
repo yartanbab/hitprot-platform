@@ -93,6 +93,18 @@ public class SubscriptionSettingsDto
 
     /// <summary>Uyarı eşikleri — virgülle ayrık gün listesi ("7,1"). Boş = uyarı yok.</summary>
     public string WarningDays { get; set; } = string.Empty;
+
+    // --- Yükseltme kanalı: kiracının "Paketim" ekranındaki çağrı buraya gider ---
+    // Üçü de boşsa ekranda hiçbir çağrı basılmaz.
+
+    /// <summary>Yükseltme talebi için satış e-postası.</summary>
+    public string UpgradeContactEmail { get; set; } = string.Empty;
+
+    /// <summary>Yükseltme talebi için telefon.</summary>
+    public string UpgradeContactPhone { get; set; } = string.Empty;
+
+    /// <summary>Dış satış/fiyat sayfası adresi.</summary>
+    public string UpgradeUrl { get; set; } = string.Empty;
 }
 
 public class UpdatePackagePermissionsDto

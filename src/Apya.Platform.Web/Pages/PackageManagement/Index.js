@@ -267,6 +267,9 @@ $(function () {
             $('#SubAutoDowngrade').prop('checked', !!s.autoDowngradeEnabled);
             $('#SubGraceDays').val(s.graceDays);
             $('#SubWarningDays').val(s.warningDays || '');
+            $('#SubUpgradeEmail').val(s.upgradeContactEmail || '');
+            $('#SubUpgradePhone').val(s.upgradeContactPhone || '');
+            $('#SubUpgradeUrl').val(s.upgradeUrl || '');
         });
     }
 
@@ -277,7 +280,10 @@ $(function () {
         svc.updateSubscriptionSettings({
             autoDowngradeEnabled: $('#SubAutoDowngrade').is(':checked'),
             graceDays: parseInt($('#SubGraceDays').val(), 10) || 0,
-            warningDays: $('#SubWarningDays').val()
+            warningDays: $('#SubWarningDays').val(),
+            upgradeContactEmail: $('#SubUpgradeEmail').val(),
+            upgradeContactPhone: $('#SubUpgradePhone').val(),
+            upgradeUrl: $('#SubUpgradeUrl').val()
         }).then(function () {
             abp.notify.success('Süre ayarları kaydedildi.');
             // Sunucu değerleri normalize eder ("9, abc, 3" → "9,3"); ekrana kaydedileni bas.

@@ -85,14 +85,15 @@ public static class NotificationTypeRegistry
                 NotificationCategory.Feedback, NotificationSeverity.Info,
                 "fa fa-list-check", "/Feedback", GroupSimilar: false),
 
-            // Paket süresi: kiracının kendi paketini göreceği bir ekran yok, derin link de yok.
+            // Paket süresi → "Paketim" ekranı. Bildirim tekil kayda değil kiracının kendi
+            // durumuna işaret eder; şablonda {0} yoktur.
             [NotificationType.SubscriptionExpiring] = new(
                 NotificationCategory.System, NotificationSeverity.High,
-                "fa fa-hourglass-half", DeepLinkTemplate: null, GroupSimilar: false),
+                "fa fa-hourglass-half", "/Subscription", GroupSimilar: false),
 
             [NotificationType.SubscriptionDowngraded] = new(
                 NotificationCategory.System, NotificationSeverity.Critical,
-                "fa fa-circle-arrow-down", DeepLinkTemplate: null, GroupSimilar: false)
+                "fa fa-circle-arrow-down", "/Subscription", GroupSimilar: false)
         };
 
     public static NotificationTypeInfo Get(NotificationType type)

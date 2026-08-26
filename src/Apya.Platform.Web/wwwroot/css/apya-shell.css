@@ -7024,3 +7024,21 @@ html[data-sidebar] .apya-sidebar-resizer {
    olduğu için bu marj yalnız 9px'lik satır boşluğuna ekleniyor ve adın yerini
    çalıyor. */
 #lpx-sidebar .apya-shell-count { margin-left: 0; }
+
+/* ============================================================================
+   PAKETİM (/Subscription) — kart içeriğinin metin rengi
+   ============================================================================
+   LeptonX `.card-body`ye sabit #686B6E basıyor ve koyu temada DÖNDÜRMÜYOR.
+   Bu sayfanın içeriği (paket adı, kota etiketleri, yükseltme kartı başlıkları
+   ve kazanım satırları) kendi rengini vermediği için o sabiti miras alıyordu:
+   koyu temada #141416 zeminde ölçülen kontrast 3,43:1 — AA eşiği 4,5:1.
+   Sayfanın EN büyük öğesi olan paket adı da buna dahildi.
+
+   Renk açıkça token'a bağlanır (aynı gerekçeyle .apya-settings-tabs ve
+   .apya-navedit-row da böyle yazılmıştı). Tarayıcı ölçümü: 3,43:1 → 16,74:1.
+
+   `.text-muted` bilerek DIŞARIDA: kendi kuralı var, miras onu etkilemiyor —
+   ikincil etiketler uygulamanın geri kalanıyla aynı tonda kalsın. */
+.apya-subscription .card-body {
+    color: var(--apya-text-primary);
+}

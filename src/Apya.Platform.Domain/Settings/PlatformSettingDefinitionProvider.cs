@@ -307,6 +307,26 @@ public class PlatformSettingDefinitionProvider : SettingDefinitionProvider
                 defaultValue: PlatformSettingDefaults.SubscriptionWarningDays,
                 displayName: L("Setting:Subscription.WarningDays"),
                 description: L("Setting:Subscription.WarningDays.Description"))
+                .WithProviders(GlobalSettingValueProvider.ProviderName),
+
+            // Yükseltme kanalı: host doldurur, KİRACI okur. Provider Global kalır (kiracı
+            // değiştiremez) ama okuma tenant bağlamında da çalışır — Global zincirdedir.
+            new SettingDefinition(
+                PlatformSettings.Subscription.UpgradeContactEmail,
+                displayName: L("Setting:Subscription.UpgradeContactEmail"),
+                description: L("Setting:Subscription.UpgradeContactEmail.Description"))
+                .WithProviders(GlobalSettingValueProvider.ProviderName),
+
+            new SettingDefinition(
+                PlatformSettings.Subscription.UpgradeContactPhone,
+                displayName: L("Setting:Subscription.UpgradeContactPhone"),
+                description: L("Setting:Subscription.UpgradeContactPhone.Description"))
+                .WithProviders(GlobalSettingValueProvider.ProviderName),
+
+            new SettingDefinition(
+                PlatformSettings.Subscription.UpgradeUrl,
+                displayName: L("Setting:Subscription.UpgradeUrl"),
+                description: L("Setting:Subscription.UpgradeUrl.Description"))
                 .WithProviders(GlobalSettingValueProvider.ProviderName)
         );
     }
