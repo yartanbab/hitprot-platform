@@ -1,10 +1,10 @@
 import { j as e, d as pe, r as g, b as kt } from "./react-vendor-D57GAUXd.js";
 import { c as k, B as A, d as oe, e as ce, S as ie, D as Je, i as Ze, T as vt } from "./Dialog-BdNKdiS6.js";
 import { D as jt } from "./useDeviceMode-Dk7fb2QY.js";
-import { a as Nt } from "./QueryProvider-B2D_02u4.js";
+import { a as Nt } from "./QueryProvider-AIUp_Zk5.js";
 import { E as de } from "./EmptyState-Bhcx2Wdd.js";
 import { a as K } from "./httpClient-CRlyQ1eg.js";
-import { u as W, b as _, a as ee } from "./query-vendor-D4__WO2j.js";
+import { u as W, b as _, a as ee } from "./query-vendor-Bf69L2iP.js";
 /* empty css               */
 const P = {
   1: { key: "task", label: "Görev", plural: "görev", icon: "fa-circle-check", railLabel: "Görevler" },

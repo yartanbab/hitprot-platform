@@ -1,7 +1,7 @@
 import { j as e, r as x, d as Le, b as Ht } from "./react-vendor-D57GAUXd.js";
 /* empty css               */
-import { a as He } from "./QueryProvider-B2D_02u4.js";
-import { u as ie, a as le, b as ue } from "./query-vendor-D4__WO2j.js";
+import { a as He } from "./QueryProvider-AIUp_Zk5.js";
+import { u as ie, a as le, b as ue } from "./query-vendor-Bf69L2iP.js";
 import { D as Vt, i as Qt, g as st, B as ae, I as Se, S as be } from "./Dialog-BdNKdiS6.js";
 import { C as ka } from "./Combobox-Cgzidxen.js";
 import { r as Ca } from "./httpClient-CRlyQ1eg.js";

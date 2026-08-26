@@ -1,10 +1,11 @@
 import { QueryClient } from '@tanstack/react-query';
 import { ApiError } from './httpClient';
+import { PERSIST_MAX_AGE_MS } from './queryPersister';
 
 /**
  * Shared QueryClient — sane enterprise defaults.
  * - staleTime: 30s (UI feels live, server pressure düşük)
- * - gcTime: 5 dk (geri navigasyon hızlı)
+ * - gcTime: kalıcılaştırma penceresiyle AYNI (bkz. aşağıdaki not)
  * - retry: 4xx hata için RETRY YOK (idempotency riski + UX yavaşlığı)
  * - refetchOnWindowFocus: true (kullanıcı tab'a dönünce taze veri)
  */
@@ -13,7 +14,11 @@ export function createApyaQueryClient() {
         defaultOptions: {
             queries: {
                 staleTime: 30_000,
-                gcTime: 5 * 60_000,
+                /* gcTime, persister'ın maxAge'inden KÜÇÜK OLAMAZ: sessionStorage'dan
+                   geri yüklenen sorgular gcTime dolduğu anda çöpe gider ve
+                   kalıcılaştırma sessizce etkisiz kalırdı. İkisi tek yerden
+                   (PERSIST_MAX_AGE_MS) besleniyor ki ayrışmasınlar. */
+                gcTime: PERSIST_MAX_AGE_MS,
                 refetchOnWindowFocus: true,
                 refetchOnReconnect: true,
                 retry: (failureCount, error) => {

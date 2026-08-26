@@ -37,12 +37,12 @@
       "_react-vendor-D57GAUXd.js"
     ]
   },
-  "_QueryProvider-B2D_02u4.js": {
-    "file": "QueryProvider-B2D_02u4.js",
+  "_QueryProvider-AIUp_Zk5.js": {
+    "file": "QueryProvider-AIUp_Zk5.js",
     "name": "QueryProvider",
     "imports": [
       "_react-vendor-D57GAUXd.js",
-      "_query-vendor-D4__WO2j.js",
+      "_query-vendor-Bf69L2iP.js",
       "_httpClient-CRlyQ1eg.js"
     ]
   },
@@ -66,8 +66,8 @@
     "file": "httpClient-CRlyQ1eg.js",
     "name": "httpClient"
   },
-  "_query-vendor-D4__WO2j.js": {
-    "file": "query-vendor-D4__WO2j.js",
+  "_query-vendor-Bf69L2iP.js": {
+    "file": "query-vendor-Bf69L2iP.js",
     "name": "query-vendor",
     "imports": [
       "_react-vendor-D57GAUXd.js"
@@ -112,10 +112,10 @@
       "_react-vendor-D57GAUXd.js",
       "_Dialog-BdNKdiS6.js",
       "_useDeviceMode-Dk7fb2QY.js",
-      "_QueryProvider-B2D_02u4.js",
+      "_QueryProvider-AIUp_Zk5.js",
       "_EmptyState-Bhcx2Wdd.js",
       "_httpClient-CRlyQ1eg.js",
-      "_query-vendor-D4__WO2j.js"
+      "_query-vendor-Bf69L2iP.js"
     ]
   },
   "src/customers.jsx": {
@@ -136,13 +136,13 @@
     "imports": [
       "_react-vendor-D57GAUXd.js",
       "_Dialog-BdNKdiS6.js",
-      "_QueryProvider-B2D_02u4.js",
+      "_QueryProvider-AIUp_Zk5.js",
       "_signalr-vendor-CjTpd8t3.js",
       "_useDeviceMode-Dk7fb2QY.js",
       "_registerServiceWorker-DJF2vjVD.js",
       "_grid-vendor-D-Pdxerz.js",
       "_EmptyState-Bhcx2Wdd.js",
-      "_query-vendor-D4__WO2j.js",
+      "_query-vendor-Bf69L2iP.js",
       "_httpClient-CRlyQ1eg.js"
     ]
   },
@@ -229,10 +229,10 @@
     "imports": [
       "_react-vendor-D57GAUXd.js",
       "_Dialog-BdNKdiS6.js",
-      "_QueryProvider-B2D_02u4.js",
+      "_QueryProvider-AIUp_Zk5.js",
       "_registerServiceWorker-DJF2vjVD.js",
       "_Combobox-Cgzidxen.js",
-      "_query-vendor-D4__WO2j.js"
+      "_query-vendor-Bf69L2iP.js"
     ]
   },
   "src/form-builder.jsx": {
@@ -285,8 +285,8 @@
     "isEntry": true,
     "imports": [
       "_react-vendor-D57GAUXd.js",
-      "_QueryProvider-B2D_02u4.js",
-      "_query-vendor-D4__WO2j.js",
+      "_QueryProvider-AIUp_Zk5.js",
+      "_query-vendor-Bf69L2iP.js",
       "_Dialog-BdNKdiS6.js",
       "_Combobox-Cgzidxen.js",
       "_httpClient-CRlyQ1eg.js",
