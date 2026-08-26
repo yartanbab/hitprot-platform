@@ -7,5 +7,8 @@ namespace Apya.Platform.Tasks
     {
         public Guid Id { get; set; }
         public string Name { get; set; } = string.Empty;
+
+        /// <summary>Proje kodu — görev konsolundaki filtre etiketi "Ad (KOD)" biçiminde.</summary>
+        public string Code { get; set; } = string.Empty;
     }
 }

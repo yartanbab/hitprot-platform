@@ -528,14 +528,20 @@ namespace Apya.Platform.Tasks
             };
         }
 
-        // Görev "Proje" seçici — tenant'ın projeleri (IMultiTenant → GetListAsync tenant'a göre filtreler).
+        // Görev "Proje" seçici — tenant'ın projeleri (IMultiTenant → sorgu tenant'a göre süzülür).
+        // Projeksiyon SQL'DE yapılır: seçici üç alan kullanıyor, projenin tamamını
+        // (bütçe, tarihler, açıklama…) çekip bellekte atmanın anlamı yok.
         public async Task<List<ProjectLookupDto>> GetProjectsLookupAsync()
         {
-            var projects = await _projectLookupRepository.GetListAsync();
-            return projects
-                .OrderBy(p => p.Name)
-                .Select(p => new ProjectLookupDto { Id = p.Id, Name = p.Name })
-                .ToList();
+            var query = await _projectLookupRepository.GetQueryableAsync();
+            return await AsyncExecuter.ToListAsync(
+                query.OrderBy(p => p.Name)
+                     .Select(p => new ProjectLookupDto
+                     {
+                         Id = p.Id,
+                         Name = p.Name,
+                         Code = p.Code
+                     }));
         }
 
         // Liste şeridindeki sayaç barları. Barlar aynı zamanda filtre düğmesi olduğu
