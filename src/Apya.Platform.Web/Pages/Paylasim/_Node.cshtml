@@ -1,0 +1,114 @@
+@using Apya.Platform.Tasks
+@model Apya.Platform.Web.Pages.Paylasim.GuestNodeViewModel
+@{
+    var node = Model.Node;
+    var view = Model.View;
+    var token = Model.Token;
+}
+
+@if (!string.IsNullOrWhiteSpace(node.Description))
+{
+    <p class="desc">@node.Description</p>
+}
+
+@if (node.DueDate.HasValue)
+{
+    <div class="meta" style="margin-top:6px">Termin: @node.DueDate.Value.ToString("dd.MM.yyyy")</div>
+}
+
+<h3>Yorumlar</h3>
+@if (node.Comments.Count == 0)
+{
+    <div class="empty">Henüz yorum yok.</div>
+}
+else
+{
+    foreach (var comment in node.Comments)
+    {
+        <div class="item">
+            <div>
+                <div class="@(comment.IsGuest ? "mine" : "")">@comment.AuthorName</div>
+                <div>@comment.Text</div>
+                @foreach (var reply in comment.Replies)
+                {
+                    <div class="reply">
+                        <div class="@(reply.IsGuest ? "mine" : "")">@reply.AuthorName</div>
+                        <div>@reply.Text</div>
+                        <div class="meta">@reply.CreationTime.ToString("dd.MM.yyyy HH:mm")</div>
+                    </div>
+                }
+            </div>
+            <div class="meta">@comment.CreationTime.ToString("dd.MM.yyyy HH:mm")</div>
+        </div>
+    }
+}
+
+@if (view.AllowComment)
+{
+    <form method="post" asp-page-handler="Comment" asp-route-token="@token">
+        <input type="hidden" name="taskId" value="@node.Id" />
+        <textarea name="text" placeholder="Bu görevle ilgili notunuz..." required></textarea>
+        <button type="submit">Gönder</button>
+    </form>
+}
+
+<h3>Dosyalar</h3>
+@if (node.Attachments.Count == 0)
+{
+    <div class="empty">Henüz dosya yok.</div>
+}
+else
+{
+    foreach (var attachment in node.Attachments)
+    {
+        <div class="item">
+            <div>
+                <div class="@(attachment.IsGuestUpload ? "mine" : "")">@attachment.FileName</div>
+                <div class="meta">
+                    @(attachment.IsGuestUpload ? "sizin yüklediğiniz" : "ekipten")
+                    · @FormatSize(attachment.FileSize)
+                    · @attachment.CreationTime.ToString("dd.MM.yyyy HH:mm")
+                </div>
+            </div>
+            @if (view.AllowDownload)
+            {
+                <a class="dl"
+                   href="/Paylasim/@token?handler=Download&amp;attachmentId=@attachment.Id">İndir</a>
+            }
+        </div>
+    }
+}
+
+@if (view.AllowUpload)
+{
+    <form method="post" enctype="multipart/form-data" asp-page-handler="Upload" asp-route-token="@token">
+        <input type="hidden" name="taskId" value="@node.Id" />
+        <input type="file" name="file" required />
+        <button type="submit">Yükle</button>
+    </form>
+}
+
+@if (node.SubTasks.Count > 0)
+{
+    <h3>Alt görevler</h3>
+    @foreach (var child in node.SubTasks)
+    {
+        <div class="subtask">
+            <div class="head">
+                <h2>@child.Title</h2>
+                <span class="chip">@child.StatusText</span>
+            </div>
+            @await Html.PartialAsync("_Node",
+                new Apya.Platform.Web.Pages.Paylasim.GuestNodeViewModel(child, view, token, Model.Depth + 1))
+        </div>
+    }
+}
+
+@functions {
+    // 1 KB altındaki dosyalar "0 KB" görünüyordu; küçük ekler (not, txt) misafirde
+    // boş dosya izlenimi veriyordu.
+    static string FormatSize(long bytes)
+        => bytes < 1024 ? $"{bytes} B"
+         : bytes < 1024 * 1024 ? $"{bytes / 1024.0:N0} KB"
+         : $"{bytes / (1024.0 * 1024.0):N1} MB";
+}

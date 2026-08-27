@@ -1,0 +1,134 @@
+@page "/Paylasim/{token}"
+@using Apya.Platform.Tasks
+@model Apya.Platform.Web.Pages.Paylasim.IndexModel
+@{
+    Layout = null;
+    ViewBag.Title = "Paylaşılan görev";
+}
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    @* Dış sayfa arama motorlarına düşmemeli. *@
+    <meta name="robots" content="noindex, nofollow" />
+    @* Token URL'de taşınır; dış sitelere referrer olarak sızmasın. *@
+    <meta name="referrer" content="no-referrer" />
+    <title>@ViewBag.Title</title>
+    <link rel="stylesheet" href="~/dynamic-assets/src/styles/tokens.css" />
+    <style>
+        body {
+            margin: 0;
+            background: var(--apya-surface-base, #F5F5F5);
+            color: var(--apya-text-primary, #111827);
+            font-family: Inter, system-ui, -apple-system, sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+        .wrap { max-width: 880px; margin: 0 auto; padding: 32px 20px 60px; }
+        .card {
+            background: var(--apya-surface-raised, #fff);
+            border: 1px solid var(--apya-border-default, #E5E7EB);
+            border-radius: var(--apya-radius-xl, 12px);
+            padding: 20px;
+        }
+        .head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+        h1 { font-size: 20px; margin: 0 0 4px; letter-spacing: -.02em; }
+        h2 { font-size: 15px; margin: 0 0 3px; letter-spacing: -.01em; }
+        h3 {
+            font-size: 10.5px; text-transform: uppercase; letter-spacing: .06em;
+            color: var(--apya-text-tertiary, #6B7280); margin: 18px 0 8px; font-weight: 700;
+        }
+        .sub { font-size: 12.5px; color: var(--apya-text-tertiary, #6B7280); }
+        .desc { font-size: 13px; color: var(--apya-text-secondary, #4B5563); margin: 8px 0 0; white-space: pre-wrap; }
+        .chip {
+            display: inline-flex; align-items: center; height: 24px; padding: 0 10px;
+            border-radius: 9999px; font-size: 11.5px; font-weight: 600; white-space: nowrap;
+            background: var(--apya-accent-soft, #EEF2FF); color: var(--apya-accent-500, #4F46E5);
+        }
+        /* Alt görev: sola çizgiyle girintilenir — ağaç derinliği tek bakışta okunsun. */
+        .subtask {
+            margin-top: 14px; padding-left: 16px;
+            border-left: 2px solid var(--apya-border-default, #E5E7EB);
+        }
+        .item {
+            display: flex; justify-content: space-between; gap: 12px; align-items: baseline;
+            padding: 8px 0; border-bottom: 1px solid var(--apya-border-subtle, #F3F4F6);
+            font-size: 12.5px;
+        }
+        .item:last-child { border-bottom: none; }
+        .meta { font-size: 11.5px; color: var(--apya-text-tertiary, #6B7280); }
+        .mine { font-weight: 600; }
+        .reply { margin-left: 18px; padding-left: 10px; border-left: 2px solid var(--apya-border-subtle, #F3F4F6); }
+        .dl { color: var(--apya-accent-600, #4F46E5); font-weight: 600; text-decoration: none; }
+        .dl:hover { text-decoration: underline; }
+        form { margin-top: 10px; display: flex; gap: 8px; flex-wrap: wrap; align-items: flex-start; }
+        textarea, input[type=file] {
+            flex: 1 1 260px; min-width: 0; font: inherit; font-size: 12.5px;
+            padding: 8px 10px; border-radius: 8px;
+            border: 1px solid var(--apya-border-default, #E5E7EB);
+            background: var(--apya-surface-base, #F9FAFB);
+            color: var(--apya-text-primary, #111827);
+        }
+        textarea { resize: vertical; min-height: 60px; }
+        button {
+            font: inherit; font-size: 12.5px; font-weight: 600; cursor: pointer;
+            padding: 8px 16px; border-radius: 8px; border: none;
+            background: var(--apya-accent-600, #4F46E5); color: #fff;
+        }
+        button:hover { filter: brightness(1.08); }
+        .notice {
+            margin-top: 18px; padding: 12px 14px; font-size: 12px; border-radius: 10px;
+            background: var(--apya-surface-sunken, #F3F4F6); color: var(--apya-text-secondary, #4B5563);
+        }
+        .flash {
+            margin-bottom: 16px; padding: 11px 14px; font-size: 12.5px; font-weight: 600;
+            border-radius: 10px; background: #ECFDF5; color: #065F46;
+        }
+        .flash.err { background: #FEF2F2; color: #991B1B; }
+        .empty { font-size: 12px; color: var(--apya-text-tertiary, #6B7280); padding: 6px 0; }
+        .error-page { text-align: center; padding: 60px 20px; }
+        .error-page h1 { font-size: 18px; }
+    </style>
+</head>
+<body>
+@if (Model.ErrorMessage != null)
+{
+    <div class="wrap">
+        <div class="card error-page">
+            <h1>@Model.ErrorMessage</h1>
+            <p class="sub">Görevi paylaşan kişiden yeni bir bağlantı isteyin.</p>
+        </div>
+    </div>
+}
+else if (Model.View != null)
+{
+    var view = Model.View;
+
+    <div class="wrap">
+        @if (Model.StatusMessage != null)
+        {
+            <div class="flash @(Model.StatusIsError ? "err" : "")">@Model.StatusMessage</div>
+        }
+
+        <div class="card">
+            <div class="head">
+                <div>
+                    <h1>@view.Root.Title</h1>
+                    <div class="sub">Merhaba @view.RecipientName — bu görev sizinle paylaşıldı.</div>
+                </div>
+                <span class="chip">@view.Root.StatusText</span>
+            </div>
+
+            @await Html.PartialAsync("_Node",
+                new Apya.Platform.Web.Pages.Paylasim.GuestNodeViewModel(view.Root, view, Model.Token!, 0))
+
+            <div class="notice">
+                Bu bağlantı <strong>@view.ExpiresAt.ToString("dd.MM.yyyy")</strong> tarihine kadar geçerlidir.
+                Yalnız bu görevi ve alt görevlerini açar; ekibin kendi arasındaki yazışma size gösterilmez.
+                Her erişim kaydedilir.
+            </div>
+        </div>
+    </div>
+}
+</body>
+</html>
