@@ -9,5 +9,11 @@ namespace Apya.Platform.Tasks
         public long FileSize { get; set; }
         public string DownloadUrl { get; set; } = string.Empty;
         public string UploaderName { get; set; } = string.Empty;
+
+        /// <summary>Dosyayı ekip dışından biri süreli link üzerinden yükledi.</summary>
+        public bool IsGuestUpload { get; set; }
+
+        /// <summary>Ekibin bu dosyayı dış paylaşımlara açıp açmadığı (misafir yüklemesinde anlamsız).</summary>
+        public bool IsVisibleToGuests { get; set; }
     }
 }

@@ -50,6 +50,12 @@ public class NotificationDomainEventHandler :
         var title = _l["Notification:TaskComment:Title"];
         var body  = _l["Notification:TaskComment:Body", eventData.CommenterName, eventData.CommentText];
 
+        // Dış paylaşım linkinden gelen yorumun kullanıcı kimliği YOKTUR (Guid.Empty).
+        // Olduğu gibi geçirilirse bildirim var olmayan bir kullanıcıya işaret eder ve
+        // avatar çözümlemesi boşa düşer; aktör alanı o durumda null bırakılır — ad zaten
+        // CommenterName'den gelir.
+        Guid? actorUserId = eventData.CommentUserId == Guid.Empty ? null : eventData.CommentUserId;
+
         if (eventData.AssigneeId.HasValue && eventData.AssigneeId != eventData.CommentUserId)
         {
             await _notificationManager.PublishAsync(
@@ -59,7 +65,7 @@ public class NotificationDomainEventHandler :
                 NotificationType.TaskCommentAdded,
                 entityType: "Task",
                 entityId: eventData.TaskId,
-                actorUserId: eventData.CommentUserId,
+                actorUserId: actorUserId,
                 actorName: eventData.CommenterName
             );
         }
@@ -73,7 +79,7 @@ public class NotificationDomainEventHandler :
                 NotificationType.TaskCommentAdded,
                 entityType: "Task",
                 entityId: eventData.TaskId,
-                actorUserId: eventData.CommentUserId,
+                actorUserId: actorUserId,
                 actorName: eventData.CommenterName
             );
         }

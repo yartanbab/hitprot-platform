@@ -44,6 +44,7 @@ namespace Apya.Platform.Tasks
         private readonly IRepository<Expense, Guid> _expenseRepository;
         private readonly IRepository<IncomeEntry, Guid> _incomeRepository;
         private readonly IRepository<Apya.Platform.Projects.Project, Guid> _projectLookupRepository;
+        private readonly IRepository<TaskShareLink, Guid> _shareLinkRepository;
         private readonly ILocalEventBus _localEventBus;
 
         public TaskAppService(
@@ -66,6 +67,7 @@ namespace Apya.Platform.Tasks
             IRepository<Expense, Guid> expenseRepository,
             IRepository<IncomeEntry, Guid> incomeRepository,
             IRepository<Apya.Platform.Projects.Project, Guid> projectLookupRepository,
+            IRepository<TaskShareLink, Guid> shareLinkRepository,
             ILocalEventBus localEventBus)
             : base(repository)
         {
@@ -87,6 +89,7 @@ namespace Apya.Platform.Tasks
             _expenseRepository     = expenseRepository;
             _incomeRepository      = incomeRepository;
             _projectLookupRepository = projectLookupRepository;
+            _shareLinkRepository   = shareLinkRepository;
             _localEventBus         = localEventBus;
 
             CreatePolicyName = PlatformPermissions.Tasks.Create;
@@ -1078,6 +1081,16 @@ namespace Apya.Platform.Tasks
             var users = await userQueryable.Where(u => userIds.Contains(u.Id)).ToListAsync();
             var userDict = users.ToDictionary(k => k.Id, v => v.UserName);
 
+            // Misafirin yüklediği dosyanın CreatorId'si YOKTUR (kullanıcı kaydı yok) — yükleyen
+            // adı paylaşım linkinin alıcısından çözülür. Bu olmadan dış katkılar listede
+            // "Sistem" görünür ve ekip dosyanın nereden geldiğini anlayamaz.
+            var shareLinkIds = attachments.Where(x => x.ShareLinkId.HasValue)
+                .Select(x => x.ShareLinkId!.Value).Distinct().ToList();
+            var recipientNames = shareLinkIds.Count == 0
+                ? new Dictionary<Guid, string>()
+                : (await _shareLinkRepository.GetListAsync(l => shareLinkIds.Contains(l.Id)))
+                    .ToDictionary(l => l.Id, l => l.RecipientName);
+
             return attachments.Select(x => new TaskAttachmentDto
             {
                 Id = x.Id,
@@ -1085,7 +1098,11 @@ namespace Apya.Platform.Tasks
                 FileName = x.FileName,
                 FileSize = x.FileSize,
                 DownloadUrl = "/file/get/" + x.StoredFileName,
-                UploaderName = (x.CreatorId.HasValue && userDict.ContainsKey(x.CreatorId.Value)) ? userDict[x.CreatorId.Value] : "Sistem"
+                IsGuestUpload = x.ShareLinkId.HasValue,
+                IsVisibleToGuests = x.IsVisibleToGuests,
+                UploaderName = x.ShareLinkId.HasValue
+                    ? recipientNames.GetValueOrDefault(x.ShareLinkId.Value, "Dış katılımcı")
+                    : (x.CreatorId.HasValue && userDict.ContainsKey(x.CreatorId.Value)) ? userDict[x.CreatorId.Value] : "Sistem"
             }).ToList();
         }
 
