@@ -34,9 +34,15 @@ public class CreateTaskModalModel : AbpPageModel
     [BindProperty(SupportsGet = true)]
     public Guid? SourceId { get; set; }
 
-    /// <summary>Sunucu hatasının adresi. (PageModel.Url'i gizlememek için ayrı ad.)</summary>
+    /// <summary>
+    /// Sunucu hatasının NORMALİZE uç yolu. (PageModel.Url'i gizlememek için ayrı ad.)
+    /// </summary>
     [BindProperty(SupportsGet = true)]
     public string? SourceUrl { get; set; }
+
+    /// <summary>Uç kimliğinin ikinci yarısı — GET ve POST ayrı arızalardır.</summary>
+    [BindProperty(SupportsGet = true)]
+    public string? SourceHttpMethod { get; set; }
 
     [BindProperty(SupportsGet = true)]
     public int WindowDays { get; set; } = 7;
@@ -90,6 +96,7 @@ public class CreateTaskModalModel : AbpPageModel
                 await _issueTaskAppService.CreateFromServerErrorAsync(new CreateServerErrorTaskInput
                 {
                     Url        = SourceUrl ?? string.Empty,
+                    HttpMethod = SourceHttpMethod,
                     WindowDays = WindowDays,
                     Title      = Input.Title,
                     Note       = Input.Note,
@@ -124,7 +131,7 @@ public class CreateTaskModalModel : AbpPageModel
             }
 
             case IssueSourceType.ServerError:
-                return $"{SourceUrl} · son {WindowDays} gün";
+                return $"{SourceHttpMethod} {SourceUrl} · son {WindowDays} gün".TrimStart();
 
             default:
                 return string.Empty;

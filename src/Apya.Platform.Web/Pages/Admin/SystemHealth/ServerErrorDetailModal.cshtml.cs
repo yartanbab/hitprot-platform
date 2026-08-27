@@ -21,8 +21,13 @@ public class ServerErrorDetailModalModel : AbpPageModel
     private readonly ISystemHealthAppService _systemHealthAppService;
     private readonly IIssueTaskAppService _issueTaskAppService;
 
+    /// <summary>Panelin gösterdiği NORMALİZE uç yolu (<c>/api/app/task/{id}</c>).</summary>
     [BindProperty(SupportsGet = true)]
     public string Url { get; set; } = string.Empty;
+
+    /// <summary>Uç kimliğinin ikinci yarısı; boşsa metot ayrımı yapılmaz.</summary>
+    [BindProperty(SupportsGet = true)]
+    public string? HttpMethod { get; set; }
 
     [BindProperty(SupportsGet = true)]
     public int WindowDays { get; set; } = 7;
@@ -48,13 +53,14 @@ public class ServerErrorDetailModalModel : AbpPageModel
         Errors = await _systemHealthAppService.GetServerErrorsAsync(new GetServerErrorListInput
         {
             Url = Url,
+            HttpMethod = HttpMethod,
             WindowDays = WindowDays
         });
 
         CanCreateIssueTask = await AuthorizationService.IsGrantedAsync(PlatformPermissions.IssueTasks.Default);
         if (CanCreateIssueTask && Errors.Count > 0)
         {
-            IssueTaskLink = await _issueTaskAppService.GetLinkForServerErrorAsync(Url, WindowDays);
+            IssueTaskLink = await _issueTaskAppService.GetLinkForServerErrorAsync(Url, HttpMethod, WindowDays);
         }
     }
 }

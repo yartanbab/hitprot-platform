@@ -19,10 +19,12 @@ public interface IIssueTaskAppService : IApplicationService
     Task<IssueTaskLinkDto?> GetLinkForClientErrorAsync(Guid clientErrorId);
 
     /// <summary>
-    /// Sunucu hatasının bağı. Kaynağın Id'si yoktur; anahtar URL + exception türünden
-    /// üretilir, tür de pencere içindeki en yeni audit log satırından çözülür.
+    /// Sunucu hatasının bağı. Kaynağın Id'si yoktur; anahtar
+    /// (HTTP metodu + normalize yol + exception türü) üzerinden üretilir, tür de
+    /// pencere içindeki en yeni audit log satırından çözülür.
+    /// <paramref name="url"/> panelin gösterdiği <b>normalize</b> yoldur.
     /// </summary>
-    Task<IssueTaskLinkDto?> GetLinkForServerErrorAsync(string url, int windowDays);
+    Task<IssueTaskLinkDto?> GetLinkForServerErrorAsync(string url, string? httpMethod, int windowDays);
 
     Task<IssueTaskLinkDto> CreateFromFeedbackAsync(Guid feedbackId, CreateIssueTaskInput input);
 
