@@ -162,13 +162,25 @@ public class ServerErrorSignalBuilder : DomainService
         }
     }
 
-    /// <summary>Hata sayılan istek: exception yazılmış ya da 5xx dönmüş olan.</summary>
+    /// <summary>
+    /// Hata sayılan istek: exception yazılmış ya da 5xx dönmüş olan — <b>4xx hariç</b>.
+    /// <para>
+    /// ABP ele alınmış istisnaları da audit satırının <c>Exceptions</c> alanına yazar
+    /// (403 yetki · 404 bulunamadı · 400 doğrulama). Bunlar dışlanmazsa otomasyon
+    /// işçisi eşiği aşan bir 403 ucundan KENDİLİĞİNDEN "sunucu hatası" görevi açar —
+    /// oysa ortada bir arıza yoktur. Ölçüt Sistem Sağlığı'ndaki
+    /// <c>SystemHealthAppService.FailedRequests</c> ile aynı tutulmalıdır.
+    /// </para>
+    /// </summary>
     private static IQueryable<AuditLog> FailedRequests(IQueryable<AuditLog> query, DateTime since)
     {
         return query
             .Where(a => a.ExecutionTime >= since)
-            .Where(a => (a.Exceptions != null && a.Exceptions != "")
-                        || (a.HttpStatusCode != null && a.HttpStatusCode >= 500));
+            .Where(a => ((a.Exceptions != null && a.Exceptions != "")
+                         || (a.HttpStatusCode != null && a.HttpStatusCode >= 500))
+                        && (a.HttpStatusCode == null
+                            || a.HttpStatusCode < 400
+                            || a.HttpStatusCode >= 500));
     }
 
     /// <summary>"Volo.Abp.BusinessException: mesaj..." → "Volo.Abp.BusinessException".</summary>
