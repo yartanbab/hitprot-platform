@@ -13,33 +13,96 @@
     var trendData = JsonSerializer.Serialize(h.ErrorTrend.Select(x => x.ErrorCount));
 }
 
-<div data-page-description="İstemci hataları ve sunucu metrikleri" class="apya-page">
+<div data-page-description="İstemci hataları ve sunucu metrikleri" class="apya-page apya-health">
 <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
-    <h5 class="mb-0"><i class="fa fa-heart-pulse me-2"></i> Sistem Sağlığı — Son @days Gün</h5>
+    <div class="d-flex flex-wrap align-items-center gap-2">
+        <h5 class="mb-0"><i class="fa fa-heart-pulse me-2"></i> Sistem Sağlığı — Son @days Gün</h5>
+
+        @* Durum bandı: çıplak 0-100 skor YOK — trafik ışığı, sayı ve gerekçe birlikte.
+           Renk tek başına anlam taşımasın diye noktalı chip kullanılıyor. *@
+        <span class="apya-chip apya-chip-@Model.StatusTone">
+            <span class="apya-health-dot me-1"></span>@Model.StatusText
+        </span>
+    </div>
 
     @* Pencere seçici — servis zaten windowDays alıyordu, sayfa 7'ye sabitliyordu. *@
     <div class="btn-group btn-group-sm" role="group" aria-label="Zaman penceresi">
         @foreach (var w in IndexModel.AllowedWindows)
         {
             <a class="btn @(w == days ? "btn-primary" : "btn-outline-secondary")"
-               asp-route-windowDays="@w" asp-route-clientFilter="@Model.ClientFilter">@w gün</a>
+               asp-route-windowDays="@w" asp-route-clientFilter="@Model.ClientFilter" asp-route-tab="@Model.Tab">@w gün</a>
         }
     </div>
 </div>
 
+@*
+    İki sekme. "Teşhis" tek bir hatanın kök nedenine inmek için; "Ölçümler" ise
+    pencere geneli için. Ölçüm kartları KALDIRILMADI: kiracı sağlığı ve uç tabloları
+    oradaki yerlerini koruyor, mevcut #client-errors / #failing-pages / #slowest-endpoints
+    çapaları da o sekmede yaşıyor.
+*@
+<ul class="nav nav-tabs mb-3" role="tablist">
+    <li class="nav-item" role="presentation">
+        <button class="nav-link @(Model.Tab == "metrics" ? "" : "active")" data-bs-toggle="tab"
+                data-bs-target="#sh-console" type="button" role="tab">
+            <i class="fa fa-stethoscope me-1"></i>Teşhis
+            <span class="apya-chip apya-chip-neutral ms-1">@Model.Issues.OpenCount</span>
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link @(Model.Tab == "metrics" ? "active" : "")" data-bs-toggle="tab"
+                data-bs-target="#sh-metrics" type="button" role="tab">
+            <i class="fa fa-chart-line me-1"></i>Ölçümler
+        </button>
+    </li>
+</ul>
+
+<div class="tab-content">
+<div class="tab-pane fade @(Model.Tab == "metrics" ? "" : "show active")" id="sh-console" role="tabpanel">
+    <div class="apya-md" id="HealthConsole">
+        <div class="apya-md-list">
+            @* Arama kutusu liste parçasının DIŞINDA: parça her tuş vuruşunda
+               yenileniyor, kutu içeride olsaydı odak kaybolurdu. *@
+            <div class="apya-health-toolbar">
+                <input id="Issue_Search" type="search" class="form-control form-control-sm"
+                       placeholder="Mesaj, sayfa veya uç ara" aria-label="Olay ara" />
+                <div class="apya-health-sortbar">
+                    <span>Etkiye göre sıralı</span>
+                    <select id="Issue_Sort" class="form-select form-select-sm w-auto" aria-label="Sıralama">
+                        <option value="impact">Etki</option>
+                        <option value="lastSeen">Son görülme</option>
+                        <option value="occurrence">Oluşum</option>
+                    </select>
+                </div>
+            </div>
+            <div id="IssueList">
+                <partial name="_IssueList" model="Model" />
+            </div>
+        </div>
+        <div class="apya-md-detail" id="IssueDetail">
+            <button type="button" class="apya-md-back" id="IssueBack">
+                <i class="fa fa-chevron-left"></i> Listeye dön
+            </button>
+            <partial name="_EmptyState" model='new EmptyStateModel { Icon = "fa-hand-pointer", Title = "Bir olay seçin.", Description = "Soldaki listeden bir satıra tıklayın; teşhis burada açılır." }' />
+        </div>
+    </div>
+</div>
+
+<div class="tab-pane fade @(Model.Tab == "metrics" ? "show active" : "")" id="sh-metrics" role="tabpanel">
+
 @* KPI kartları tıklanabilir: her metrik kendisini üreten bölüme götürür. *@
 <div class="row g-3 mb-4">
     <div class="col-md-3">
-        <partial name="_KpiCard" model='new KpiCardModel { Icon = "fa-server", Accent = "accent", Label = "Sunucu İsteği", Value = h.ServerRequestCount.ToString(), Href = $"?windowDays={days}#slowest-endpoints", HrefTitle = "En yavaş endpoint listesine git", Hint = "Audit log kayıtlarından sayılır. Toplama veritabanında (GROUP BY) yapılır; sayı seçili pencerenin TAMAMINI yansıtır — örneklem değildir." }' />
+        <partial name="_KpiCard" model='new KpiCardModel { Icon = "fa-server", Accent = "accent", Label = "Sunucu İsteği", Value = h.ServerRequestCount.ToString(), Href = $"?windowDays={days}&tab=metrics#slowest-endpoints", HrefTitle = "En yavaş endpoint listesine git", Hint = "Audit log kayıtlarından sayılır. Toplama veritabanında (GROUP BY) yapılır; sayı seçili pencerenin TAMAMINI yansıtır — örneklem değildir." }' />
     </div>
     <div class="col-md-3">
-        <partial name="_KpiCard" model='new KpiCardModel { Icon = "fa-triangle-exclamation", Accent = "negative", Label = "Sunucu Hatası", Value = h.ServerErrorCount.ToString(), SubText = $"%{(h.ServerErrorRate * 100):0.0} oran", Href = $"?windowDays={days}#failing-pages", HrefTitle = "En çok hata veren sayfalara git" }' />
+        <partial name="_KpiCard" model='new KpiCardModel { Icon = "fa-triangle-exclamation", Accent = "negative", Label = "Sunucu Hatası", Value = h.ServerErrorCount.ToString(), SubText = $"%{(h.ServerErrorRate * 100):0.0} oran", Href = $"?windowDays={days}&tab=metrics#failing-pages", HrefTitle = "En çok hata veren sayfalara git" }' />
     </div>
     <div class="col-md-3">
-        <partial name="_KpiCard" model='new KpiCardModel { Icon = "fa-bug", Accent = "warning", Label = "Çözülmemiş İstemci Hatası", Value = h.UnresolvedClientErrorCount.ToString(), Href = $"?windowDays={days}&clientFilter=unresolved#client-errors", HrefTitle = "Çözülmemiş istemci hatalarını listele", Hint = "TÜM ZAMANLARIN toplamı — seçili gün penceresiyle sınırlı DEĞİL. Çözüldü işaretlenmemiş her benzersiz hata (fingerprint) sayılır, ne zaman görüldüğüne bakılmaz." }' />
+        <partial name="_KpiCard" model='new KpiCardModel { Icon = "fa-bug", Accent = "warning", Label = "Çözülmemiş İstemci Hatası", Value = h.UnresolvedClientErrorCount.ToString(), Href = $"?windowDays={days}&tab=metrics&clientFilter=unresolved#client-errors", HrefTitle = "Çözülmemiş istemci hatalarını listele", Hint = "TÜM ZAMANLARIN toplamı — seçili gün penceresiyle sınırlı DEĞİL. Çözüldü işaretlenmemiş her benzersiz hata (fingerprint) sayılır, ne zaman görüldüğüne bakılmaz." }' />
     </div>
     <div class="col-md-3">
-        <partial name="_KpiCard" model='new KpiCardModel { Icon = "fa-desktop", Accent = "brand", Label = "İstemci Hata Oluşumu", Value = h.ClientErrorOccurrencesInWindow.ToString(), Href = $"?windowDays={days}&clientFilter=all#client-errors", HrefTitle = "Tüm istemci hatalarını listele", Hint = "Son görülme tarihi seçili pencere içinde kalan hataların, o hata için kaydedilmiş TOPLAM oluşum sayısının toplamı — yaklaşık bir değerdir, tam geçmiş tutulmaz. Üstteki Çözülmemiş kartıyla karıştırmayın: o tüm zamanları kapsar, bu yalnız pencereyi." }' />
+        <partial name="_KpiCard" model='new KpiCardModel { Icon = "fa-desktop", Accent = "brand", Label = "İstemci Hata Oluşumu", Value = h.ClientErrorOccurrencesInWindow.ToString(), Href = $"?windowDays={days}&tab=metrics&clientFilter=all#client-errors", HrefTitle = "Tüm istemci hatalarını listele", Hint = "Son görülme tarihi seçili pencere içinde kalan hataların, o hata için kaydedilmiş TOPLAM oluşum sayısının toplamı — yaklaşık bir değerdir, tam geçmiş tutulmaz. Üstteki Çözülmemiş kartıyla karıştırmayın: o tüm zamanları kapsar, bu yalnız pencereyi." }' />
     </div>
 </div>
 
@@ -322,7 +385,10 @@
         </abp-table>
     </abp-card-body>
 </abp-card>
-</div>
+
+</div>@* /#sh-metrics *@
+</div>@* /.tab-content *@
+</div>@* /.apya-page *@
 
 @section scripts {
     @* Sunucu hatası detayı seçili pencereyi kullanır — JS bunu buradan okur. *@

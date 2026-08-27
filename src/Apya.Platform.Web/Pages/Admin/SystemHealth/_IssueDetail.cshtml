@@ -1,0 +1,222 @@
+@using System.Globalization
+@using Apya.Platform.Telemetry.Dtos
+@using Apya.Platform.Web.Pages.Shared
+@using Apya.Platform.Web.Telemetry
+@model Apya.Platform.Web.Pages.Admin.SystemHealth.IssueDetailViewModel
+@{
+    var d = Model.Detail;
+    var issue = d.Issue;
+}
+
+@if (issue is null)
+{
+    <partial name="_EmptyState" model='new EmptyStateModel { Icon = "fa-hand-pointer", Title = "Bir olay seçin.", Description = "Soldaki listeden bir satıra tıklayın; teşhis burada açılır." }' />
+}
+else
+{
+    var tone = Apya.Platform.Web.Pages.Admin.SystemHealth.IndexModel.KindTone(issue);
+    var breadcrumb = BreadcrumbParser.Parse(d.BreadcrumbJson);
+
+    @* Sekmeler DOLU bölümler için çizilir: istemci hatasında "Oluşumlar",
+       sunucu hatasında "Davranış izi" hiç ölçülmüyor — boş sekme tıklatılmaz. *@
+    var tabs = new List<(string Key, string Label, int? Count)>();
+    if (!string.IsNullOrWhiteSpace(d.StackTrace)) { tabs.Add(("trace", issue.Kind == HealthIssueKind.ServerError ? "Hata metni" : "Yığın izi", null)); }
+    if (breadcrumb.Count > 0)                     { tabs.Add(("crumbs", "Davranış izi", breadcrumb.Count)); }
+    if (d.Occurrences.Count > 0)                  { tabs.Add(("occurrences", "Oluşumlar", d.Occurrences.Count)); }
+    if (d.Environment.Count > 0)                  { tabs.Add(("env", "Ortam", null)); }
+    if (d.Correlations.Count > 0)                 { tabs.Add(("correlation", "Korelasyon", d.Correlations.Count)); }
+    if (d.AffectedTenants.Count > 0)              { tabs.Add(("tenants", "Etkilenenler", d.AffectedTenants.Count)); }
+
+    <div class="card mb-3">
+        <div class="card-body">
+            <div class="d-flex align-items-start gap-3">
+                <span class="kpi-icon-box kpi-icon-box--sm kpi-icon-box--@tone">
+                    <i class="@Apya.Platform.Web.Pages.Admin.SystemHealth.IndexModel.KindIcon(issue.Kind)" aria-hidden="true"></i>
+                </span>
+                <div class="flex-grow-1 min-w-0">
+                    <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
+                        @if (issue.IsResolved)
+                        {
+                            <span class="apya-chip apya-chip-positive">Çözüldü</span>
+                        }
+                        else
+                        {
+                            <span class="apya-chip apya-chip-negative">Açık</span>
+                        }
+                        @if (issue.IsRegression && !issue.IsResolved)
+                        {
+                            <span class="apya-chip apya-chip-warning">
+                                Regresyon — @Apya.Platform.Web.Pages.Admin.SystemHealth.IndexModel.Ago(issue.FirstSeenAt) başladı
+                            </span>
+                        }
+                        <span class="apya-chip apya-chip-neutral">@(issue.TenantName ?? "-")</span>
+                        @if (issue.ClientErrorId.HasValue)
+                        {
+                            <code class="text-xs text-muted">fp: @(issue.Key.Length > 12 ? issue.Key[..12] + "…" : issue.Key)</code>
+                        }
+                    </div>
+                    <h5 class="mb-1" style="letter-spacing:-.02em;">@issue.Title</h5>
+                    <code class="text-sm text-muted" style="word-break:break-all;">
+                        @(issue.HttpMethod is null ? "" : issue.HttpMethod + " ")@issue.Where@(issue.HttpStatusCode.HasValue ? $" → {issue.HttpStatusCode}" : "")
+                    </code>
+                </div>
+                <div class="d-flex flex-shrink-0 gap-2">
+                    @if (Model.CanCreateIssueTask && issue.Kind != HealthIssueKind.Performance)
+                    {
+                        @* Performans ihlalinin görev kaynağı henüz yok (otomasyon adımında
+                           IssueSourceType.SlowEndpoint eklenecek) — ölü düğme koymuyoruz. *@
+                        <button type="button" class="btn btn-sm btn-primary issue-task-create"
+                                data-source-type="@(issue.Kind == HealthIssueKind.ServerError ? 3 : 2)"
+                                data-source-id="@(issue.ClientErrorId?.ToString() ?? "")"
+                                data-source-url="@(issue.Kind == HealthIssueKind.ServerError ? issue.Where : "")"
+                                data-source-http-method="@(issue.HttpMethod ?? "")"
+                                data-window-days="@Model.WindowDays">
+                            <i class="fa fa-list-check me-1"></i>Göreve dönüştür
+                        </button>
+                    }
+                    @if (Model.CanResolve && d.ClientErrorId.HasValue)
+                    {
+                        <button type="button"
+                                class="btn btn-sm @(d.IsResolved ? "btn-outline-secondary" : "btn-outline-success") health-toggle-resolved"
+                                data-id="@d.ClientErrorId"
+                                data-resolved="@d.IsResolved.ToString().ToLowerInvariant()">
+                            <i class="fa @(d.IsResolved ? "fa-rotate-left" : "fa-check") me-1"></i>
+                            @(d.IsResolved ? "Yeniden aç" : "Çözüldü")
+                        </button>
+                    }
+                </div>
+            </div>
+
+            <div class="apya-health-facts">
+                @foreach (var fact in d.Facts)
+                {
+                    <div class="apya-health-fact">
+                        <div class="apya-health-fact-label">@fact.Label</div>
+                        <div class="apya-health-fact-value@(fact.Tone == "neutral" ? "" : $" apya-health-fact-value--{fact.Tone}")">@fact.Value</div>
+                        @if (!string.IsNullOrWhiteSpace(fact.Sub))
+                        {
+                            <div class="apya-health-fact-sub">@fact.Sub</div>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="apya-health-tabs" role="tablist">
+            @for (var i = 0; i < tabs.Count; i++)
+            {
+                <button type="button" class="apya-health-tab @(i == 0 ? "active" : "")"
+                        data-tab="@tabs[i].Key" role="tab">
+                    @tabs[i].Label@if (tabs[i].Count.HasValue)
+                    {<span class="apya-health-tab-count">@tabs[i].Count</span>}
+                </button>
+            }
+        </div>
+        <div class="card-body">
+            @foreach (var (key, _, _) in tabs)
+            {
+                <div class="apya-health-pane @(key == tabs[0].Key ? "" : "d-none")" data-pane="@key">
+                    @switch (key)
+                    {
+                        case "trace":
+                            <pre class="apya-md-pre" style="max-height:420px;overflow:auto;">@d.StackTrace</pre>
+                            break;
+
+                        case "crumbs":
+                            <div>
+                                @foreach (var b in breadcrumb)
+                                {
+                                    <div class="apya-health-trace-item">
+                                        <div class="apya-health-trace-rail">
+                                            <span class="apya-health-trace-dot"></span>
+                                            <span class="apya-health-trace-line"></span>
+                                        </div>
+                                        <div class="apya-health-trace-body">
+                                            <div class="apya-health-trace-text">@b.Label</div>
+                                            <div class="apya-health-trace-meta">@b.Time.ToString("HH:mm:ss") · @b.Type</div>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                            break;
+
+                        case "occurrences":
+                            <div class="table-responsive">
+                                <table class="table table-sm mb-0">
+                                    <thead><tr><th>Zaman</th><th>Durum</th><th>Süre (ms)</th><th>Kullanıcı</th><th>Adres</th></tr></thead>
+                                    <tbody>
+                                        @foreach (var o in d.Occurrences)
+                                        {
+                                            <tr>
+                                                <td class="apya-numeric">@o.ExecutionTime.ToString("dd.MM HH:mm:ss")</td>
+                                                <td class="apya-numeric">@(o.HttpStatusCode?.ToString() ?? "-")</td>
+                                                <td class="apya-numeric">@o.ExecutionDuration</td>
+                                                <td>@(o.UserName ?? "anonim")</td>
+                                                <td><code class="text-xs">@(o.Url ?? "-")</code></td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                            break;
+
+                        case "env":
+                            <dl class="row text-sm mb-0">
+                                @foreach (var item in d.Environment)
+                                {
+                                    <dt class="col-sm-3">@item.Label</dt>
+                                    <dd class="col-sm-9" style="word-break:break-word;">@item.Value</dd>
+                                }
+                            </dl>
+                            break;
+
+                        case "correlation":
+                            <p class="text-sm text-muted mb-3">
+                                Aynı kiracıda, hatanın görüldüğü ana ±2 saniye içindeki sunucu kayıtları.
+                                Yakınlık kanıtıdır — nedensellik kanıtı değildir.
+                            </p>
+                            @foreach (var c in d.Correlations)
+                            {
+                                <div class="border rounded p-2 mb-2">
+                                    <div class="text-sm">
+                                        <code>@c.ExecutionTime.ToString("HH:mm:ss.fff")</code>
+                                        <span class="apya-chip apya-chip-neutral ms-1">@(c.HttpStatusCode?.ToString() ?? "-")</span>
+                                        <span class="text-muted ms-1">@c.ExecutionDuration ms · @c.OffsetSeconds.ToString("+0.##;-0.##;0", CultureInfo.InvariantCulture) sn</span>
+                                    </div>
+                                    <code class="text-xs text-muted d-block mt-1" style="word-break:break-all;">@(c.HttpMethod) @(c.Url)</code>
+                                    @if (!string.IsNullOrWhiteSpace(c.Exceptions))
+                                    {
+                                        <div class="text-xs text-muted mt-1" style="word-break:break-word;">
+                                            @(c.Exceptions!.Length > 240 ? c.Exceptions[..240] + "…" : c.Exceptions)
+                                        </div>
+                                    }
+                                </div>
+                            }
+                            break;
+
+                        case "tenants":
+                            <div class="table-responsive">
+                                <table class="table table-sm mb-0">
+                                    <thead><tr><th>Kiracı</th><th>Kayıt</th><th>Hata</th><th>Ort. (ms)</th></tr></thead>
+                                    <tbody>
+                                        @foreach (var t in d.AffectedTenants)
+                                        {
+                                            <tr>
+                                                <td>@(t.TenantName ?? "-")</td>
+                                                <td class="apya-numeric">@t.RequestCount</td>
+                                                <td class="apya-numeric">@t.ErrorCount</td>
+                                                <td class="apya-numeric">@t.AverageDurationMs.ToString("0")</td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                            break;
+                    }
+                </div>
+            }
+        </div>
+    </div>
+}
