@@ -39,6 +39,12 @@ export function TaskFeatureRailV3({
                         type="button"
                         draggable
                         title="Sürükleyerek sırayı değiştirin"
+                        /* Seçim `click`te değil pointerdown'da — gerekçe
+                           TaskFeatureNavbarV3'te: `draggable` düğmede basılıyken oluşan
+                           küçük kayma `click`i tümden yutuyor. */
+                        onPointerDown={(e) => {
+                            if (e.pointerType !== 'touch' && e.button === 0) onTabChange(tab.code);
+                        }}
                         onClick={() => onTabChange(tab.code)}
                         onDragStart={(e) => {
                             onDragStart(tab.code);
