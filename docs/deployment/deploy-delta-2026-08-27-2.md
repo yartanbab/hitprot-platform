@@ -1,8 +1,10 @@
-# Deploy delta — 2026-08-27 #2 (`e695ef2d` → `main` `722d9ff1`)
+# Deploy delta — 2026-08-27 #2 (`e695ef2d` → `main`)
 
-> **Paketin üretildiği commit `722d9ff1`.** Bu belgenin başlık düzeltmesi sonradan
-> geldiği için `main`, bir *docs* commit'i kadar ileride olabilir — pakette fark
-> yaratmaz, `docs/` publish çıktısına hiç girmez.
+> **Hedef SHA bilerek başlıkta değil.** Belgenin kendi commit'i `main`'i ilerlettiği
+> için buraya yazılan her SHA yazıldığı anda bayatlıyordu. Paketin üretildiği tam
+> commit, paket klasöründeki `OKUBENI-deploy.md` başlığında ve ZIP adında yazılıdır —
+> tek doğru kaynak orasıdır. `docs/` publish çıktısına hiç girmediği için bu belgeye
+> gelen sonraki değişiklikler paketi etkilemez.
 
 Bu belge **`deploy-delta-2026-08-27.md`'nin yerine GEÇMEZ**, onun üstüne biner.
 O belge `b52c360 → e695ef2d` aralığını anlatıyordu ve o yayın **tamamlandı**.
