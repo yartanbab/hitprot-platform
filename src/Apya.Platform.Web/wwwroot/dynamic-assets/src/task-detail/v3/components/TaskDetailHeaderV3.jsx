@@ -10,8 +10,17 @@ import { dialogPortalContainer } from '../../../lib/dom/dialogPortalContainer';
    Masaüstünde görünmüyordu: Radix, odağın geri çekildiği öğe trigger'ın kendisiyse
    kapanmayı iptal ediyor ve tıklama zaten trigger'ı odaklıyor. iOS Safari dokunmada
    <button>'a odak VERMEDİĞİ için orada her açılış flash edip kapanıyordu. */
+/* max-h + overflow ŞART: popover modalın İÇİNE portal ediliyor (bkz.
+   dialogPortalContainer) ve DialogContent hem `overflow-hidden` hem de kalıcı bir
+   `transform` taşıyor (animate-dialog-in, fill-mode "both" → scale(1) kalır). Kalıcı
+   transform, fixed konumlu popper sarmalayıcısının kapsayan bloğunu modal yapar;
+   dolayısıyla popover modal sınırında KIRPILIR. ⋯ menüsü (11 madde + kısayol bloğu)
+   alçak ekranlarda son satırlarını (kısayollar) böyle yutuyordu. Yükseklik Radix'in
+   bildirdiği available-height'a sabitlenince taşan kısım kesilmek yerine KAYAR.
+   Değişkenin doğru değeri taşıması `collisionBoundary`'ye bağlı — ⋯ menüsüne bak. */
 const POPOVER_CLS =
-    'z-popover rounded-[13px] border border-default bg-surface-elevated p-1.5 shadow-float animate-fade-in-fast';
+    'z-popover rounded-[13px] border border-default bg-surface-elevated p-1.5 shadow-float animate-fade-in-fast ' +
+    'max-h-[var(--radix-popover-content-available-height)] overflow-y-auto';
 
 const MENU_ROW_CLS =
     'flex items-center gap-[11px] w-full px-[9px] py-2 rounded-[9px] text-[12.5px] font-medium text-left cursor-pointer hover:bg-surface-hover';
@@ -68,6 +77,9 @@ export function TaskDetailHeaderV3({
     const [rootEl, setRootEl] = useState(null);
     const [menuOpen, setMenuOpen] = useState(false);
     const titleRef = useRef(null);
+
+    /* Popover'ların portal edildiği kap; `collisionBoundary` için de gerekli. */
+    const portalContainer = dialogPortalContainer(rootEl);
 
     const status = statusOf(statusValue ?? task.status);
     const code = task.code || 'GRV-—';
@@ -129,7 +141,7 @@ export function TaskDetailHeaderV3({
                                 <i className="fa-solid fa-chevron-down text-[8px] opacity-60" />
                             </button>
                         </Popover.Trigger>
-                        <Popover.Portal container={dialogPortalContainer(rootEl)}>
+                        <Popover.Portal container={portalContainer}>
                             <Popover.Content sideOffset={6} align="start" className={`${POPOVER_CLS} w-[196px]`}>
                                 <div className="px-[9px] pt-[5px] pb-[7px] text-[10px] font-bold uppercase tracking-[.08em] text-text-tertiary">
                                     Durumu değiştir
@@ -204,8 +216,19 @@ export function TaskDetailHeaderV3({
                                 <i className="fa-solid fa-ellipsis text-sm" />
                             </button>
                         </Popover.Trigger>
-                        <Popover.Portal container={dialogPortalContainer(rootEl)}>
-                            <Popover.Content sideOffset={6} align="end" className={`${POPOVER_CLS} w-[244px]`}>
+                        <Popover.Portal container={portalContainer}>
+                            <Popover.Content
+                                sideOffset={6}
+                                align="end"
+                                /* Sınır AÇIKÇA modal: varsayılan (`clippingAncestors`) kırpan
+                                   atayı bulamıyor — popper sarmalayıcısı `position:fixed`
+                                   olduğu için Floating UI viewport'u baz alıyor ve
+                                   available-height'ı 48px fazla bildiriyordu (ölçüm:
+                                   modal 564px'te biterken menü 600px'e uzanıyordu). */
+                                collisionBoundary={portalContainer ?? []}
+                                collisionPadding={12}
+                                className={`${POPOVER_CLS} w-[244px]`}
+                            >
                                 {menuItems.map((item) => (
                                     <button
                                         key={item.label}
