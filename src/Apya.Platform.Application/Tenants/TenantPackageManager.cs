@@ -281,6 +281,9 @@ public class TenantPackageManager : ITransientDependency
     {
         PlatformPermissions.Tasks.QuickCreate,
         PlatformPermissions.Tasks.ManagePlanning,
+        // #256 ile geldi. Feature kapısı YOK → tavanı bu liste dışında dolduracak bir yol da
+        // yok; buraya yazılmadığı sürece kurulu sistemlerde hiçbir kiracıda açılamıyordu.
+        PlatformPermissions.Projects.ManageCategories,
     };
 
     private IEnumerable<(Guid Id, string Name)> DefaultPermissionsFor(
