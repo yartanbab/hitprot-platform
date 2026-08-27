@@ -3561,6 +3561,27 @@ i.apya-priority-dot {
     .apya-console-views td.dt-empty { grid-column: 1 / -1 !important; grid-row: 1; }
 }
 
+/* --- Yatay telefon: tam yükseklik kilidi kalkar ------------------------------
+   Kullanıcı raporu (2026-08-27): "görevler mobilde yataya alınca sıkışıyor,
+   görünmüyor". Konsol yüksekliği `calc(100vh − header − 56px)` ile viewport'a
+   kilitli; kilidi kaldıran kural yalnız `max-width: 767.98px` altındaydı, telefon
+   yataya dönünce genişlik 768px'i aştığı için kilit yürürlükte kalıyordu.
+   932×430'da ölçüldü: şerit 135 + sekme 46 + filtre 42 + başlık klonu 24 +
+   sayfalama satırı, 310px'lik kaptan geriye liste gövdesine 39px bırakıyor
+   (içerik 326px). Sayfa da kaydırılamıyor (scrollHeight = clientHeight = 430),
+   dolayısıyla satırlara HİÇ erişilemiyor — ekranda yalnız kolon başlıkları ve
+   sayfalama görünüyor.
+   Sorgu, kabuk kırılımının yatay yarısıdır (apya-theme-bridge.css "KABUK
+   KIRILIMI" / window.APYA_MOBILE_SHELL_MQ) — dar ekran yarısını aşağıdaki
+   767.98px bloğu zaten karşılıyor.
+   Alt sekme barı, FAB ve 44px dokunma hedefleri BİLEREK dışarıda: 430px'lik bir
+   ekranda sabit 58px'lik alt bar yüksekliğin %13'ünü yer, sekmeler satır içinde
+   kalmalı. `padding-bottom: 74px` de bu yüzden yok — örtecek sabit bar yok. */
+@media (pointer: coarse) and (max-height: 540px) and (min-width: 768px) and (max-width: 1199.98px) {
+    .apya-page.apya-project-console,
+    .apya-page.apya-task-console { height: auto; }
+}
+
 @media (max-width: 767.98px) {
     /* --- Dokunma hedefleri ≥44px (handoff kabul kriteri) ---
        440px'te ölçülen ihlaller: Geri 30 · kod kopyala 20 · AI/Yeni Görev/⋯ 32.
