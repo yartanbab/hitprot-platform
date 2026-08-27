@@ -5889,7 +5889,18 @@ i.apya-priority-dot {
         flex-direction: column;
         gap: 10px;
     }
-    .apya-proj-search { width: 100%; height: var(--apya-control-h-lg); }
+    /* Arama tam satır DEĞİL: sıralama kutusu çip şeridine taşındığı için
+       (Index.js/placeSort) arama · eylem · geri bildirim tek satıra sığıyor.
+       flex-basis SIFIR olmak ZORUNDA: 'auto' olsaydı taban genişlik <input>'in
+       içsel genişliğinden (~200px) gelirdi; flex sarma kararını TABAN
+       genişliklere göre verir, kısılma ancak sarmadan sonra devreye girer —
+       yani 'auto' ile satır yine kırılıyordu (ölçüldü). */
+    /* min-width bir ALT SINIR değil, bilinçli bir sarma eşiği: flex sarma
+       kararını taban genişliğin min/max ile kırpılmış hâline göre verir, yani
+       120px sığmadığı anda satır kırılır. 360px'ten itibaren tek satır kalır
+       (arama ≥133px); 320px'te arama kendi satırına düşer — 92px'e kadar
+       kısılmış bir arama kutusundan iyidir. */
+    .apya-proj-search { flex: 1 1 0; min-width: 120px; width: auto; height: var(--apya-control-h-lg); }
 
     /* Şerit mobilde BASILMAZ. Kalan üç hücrenin sürdüğü filtreler (risk ·
        overdue · week) hemen alttaki çip şeridinde zaten var: aynı üç filtre
@@ -5915,6 +5926,19 @@ i.apya-priority-dot {
         padding: 6px 14px;
         font-size: var(--apya-fs-sm);
     }
+    /* Çip şeridi + sıralama kutusu tek satır. Kutu KAYDIRMA KABININ DIŞINDA,
+       sağa sabit: çiplerin içine konsa şerit yatay kaydığında ekrandan çıkardı.
+       Çipler solda kalır — "Tümü" ilk görünen öğe olmayı sürdürür. */
+    .apya-proj-filterbar { display: flex; align-items: center; gap: 8px; }
+    /* display:flex, [hidden]'ın UA display:none'ını ezer — açıkça geri alınır. */
+    .apya-proj-filterbar[hidden] { display: none; }
+    .apya-proj-filters { flex: 1 1 auto; min-width: 0; }
+    .apya-proj-filterbar > .apya-proj-sort {
+        flex: none;
+        max-width: 45%;
+        height: var(--apya-control-h-lg);
+    }
+
     /* Sayısı 0 olan çip mobilde basılmaz: 6 çipin 4'ü "0" derken şerit yatay
        kaymaya başlıyor ve ekran boş sayaç gürültüsüyle doluyor. "Tümü"
        (sıfırlama) her zaman kalır; aktif çip de kalır — gizlenirse hangi
@@ -5929,12 +5953,13 @@ i.apya-priority-dot {
        viewport'ta şerit 523px'e çıkıp SAYFAYI yatay kaydırıyordu (2026-08-15
        ölçümü; düğme 148px dışarıda). Üst kap .apya-proj-toolbar zaten sarıyor,
        taşma tümüyle bu iç satırdan geliyordu.
-       Sarınca sıra: arama · (sıralama + eylem + geri bildirim). */
+       Bugün satır zaten tek: arama · eylem · geri bildirim. flex-wrap yine de
+       kalıyor — güvenlik ağı: metni uzun bir yerelleştirme ya da daha geniş bir
+       eylem düğmesi taşmaya değil sarmaya düşsün. */
     .apya-proj-toolbar-end { margin-left: 0; width: 100%; flex-wrap: wrap; row-gap: 8px; }
-    .apya-proj-sort { flex: 1 1 auto; min-width: 0; height: var(--apya-control-h-lg); }
-    /* Eylem düğmesi kendi satırında tam metinle durur; daraltılırsa iki satıra
-       kırılıp 46px'lik bir kutuya dönüyordu. Yüksekliği yanındaki sıralama
-       kutusuyla (44px) eşitlenir — blok içindeki 44px dokunma hedefi kuralı. */
+    /* Eylem düğmesi tam metinle durur; daraltılırsa iki satıra kırılıp 46px'lik
+       bir kutuya dönüyordu. Kısılmaz (flex:none) — satırda esneyen taraf arama.
+       Yükseklik 44px: blok içindeki dokunma hedefi kuralı. */
     .apya-proj-toolbar-end > .btn {
         flex: none;
         white-space: nowrap;
@@ -5943,14 +5968,13 @@ i.apya-priority-dot {
     /* Sayaç mobilde basılmaz: "2 proje" ile çip şeridindeki "Tümü 2" aynı bilgi,
        alt alta iki kez yazılıyordu. Filtre aktifken sayaç "1 / 2 proje" diyor —
        o da aktif çipin kendi sayısında zaten var. Tek başına kalan geri bildirim
-       linki yeni bir satır açmasın diye order ile sıralama/eylem satırının
-       sonuna alınır ve metni düşüp ikona iner. Kazanç: ~32px (satır + row-gap). */
+       linki yeni bir satır açmasın diye order ile satırın sonuna alınır ve metni
+       düşüp ikona iner. Kazanç: ~32px (satır + row-gap). */
     .apya-proj-count { display: none; }
     .apya-proj-search { order: 1; }
-    .apya-proj-sort { order: 2; }
-    .apya-proj-toolbar-end > .btn { order: 3; }
+    .apya-proj-toolbar-end > .btn { order: 2; }
     .apya-proj-toolbar-end > .apya-feedback-open-link {
-        order: 4;
+        order: 3;
         flex: none;
         /* Widget'ın global kuralı (FeedbackWidget/Default.cshtml <style>) buraya
            0.5rem sol boşluk basıyor; flex gap zaten var. 320px'te bu fazladan
@@ -5963,7 +5987,7 @@ i.apya-priority-dot {
         min-height: var(--apya-control-h-lg);   /* dokunma hedefi */
         text-decoration: none;
     }
-    /* Metin görsel olarak düşer, ikon kalır — 320px'te sıralama + eylem + link
+    /* Metin görsel olarak düşer, ikon kalır — 320px'te arama + eylem + link
        tek satıra ancak böyle sığıyor. display:none DEĞİL, kırpma: metin erişim
        ağacında kalsın ki linkin okunabilir bir adı olsun (ikonun kendisi
        aria-hidden bir <i>, ondan ad üretilemez). */

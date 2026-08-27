@@ -175,8 +175,15 @@
     </div>
 
     @* --- Filtre çipleri: canlı sayılar JS'ten; aktif çip koyu zemin.
-         "Filtreleri temizle" yalnız aktif filtre/arama varken görünür. --- *@
-    <div class="apya-proj-filters" id="ProjectsFilters" role="group" aria-label="Hızlı filtreler"></div>
+         "Filtreleri temizle" yalnız aktif filtre/arama varken görünür.
+         Sarmalayıcı mobilde sıralama kutusunu da barındırır: Index.js/placeSort
+         onu 768px altında araç çubuğundan BURAYA taşır ki araç çubuğu tek satıra
+         insin (§22.10). Kutu çiplerin İÇİNE değil yanına girer — renderFilters
+         #ProjectsFilters'ın html'ini komple değiştiriyor, içeride olsa silinirdi.
+         Masaüstünde kutu araç çubuğundaki yerinde kalır. --- *@
+    <div class="apya-proj-filterbar" id="ProjectsFilterBar">
+        <div class="apya-proj-filters" id="ProjectsFilters" role="group" aria-label="Hızlı filtreler"></div>
+    </div>
 
     @* --- Yoğun liste --- *@
     <div class="apya-proj-list" id="ProjectsList" hidden>
