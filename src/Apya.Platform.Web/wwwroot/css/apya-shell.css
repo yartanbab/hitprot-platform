@@ -1183,12 +1183,14 @@ body.apya-command-palette-lock {
     display: flex;
     align-items: center;
 }
+/* Proje kartı facepile'ı da KİŞİ avatarıdır: zemin accent değil marka tonu
+   (avatar rengi her yerde aynı), metin kontrast token'ından gelir. */
 .apya-tile-avatar {
     width: 22px;
     height: 22px;
     border-radius: 50%;
-    background: var(--apya-accent-500);
-    color: #fff;
+    background: var(--apya-brand-500);
+    color: var(--apya-avatar-fg);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1198,7 +1200,9 @@ body.apya-command-palette-lock {
     margin-left: -8px;
 }
 .apya-tile-avatar:first-child { margin-left: 0; }
-.apya-tile-avatar.is-more { background: var(--apya-neutral-500); }
+/* "+N" sayacı kişi değil: nötr zeminde beyaz zaten 4,83:1 — token'ı miras ALMAZ
+   (koyu metin bu zeminde 3,04:1'e düşerdi). */
+.apya-tile-avatar.is-more { background: var(--apya-neutral-500); color: #fff; }
 
 /* Kalan gün rozeti — mevcut .apya-chip tonlarını kullanan kompakt varyant */
 .apya-tile-days-chip {
@@ -1280,7 +1284,7 @@ i.apya-priority-dot {
 .apya-avatar-positive { background: var(--apya-positive-500); }
 .apya-avatar-negative { background: var(--apya-negative-500); }
 .apya-avatar-warning { background: var(--apya-warning-500); }
-.apya-avatar-brand { background: var(--apya-brand-500); }
+.apya-avatar-brand { background: var(--apya-brand-500); color: var(--apya-avatar-fg); }
 .apya-avatar-ai { background: var(--apya-ai-500); }
 .apya-avatar-neutral { background: var(--apya-neutral-500); }
 

@@ -777,7 +777,7 @@ function ia({ name: t, size: a = 24 }) {
   return /* @__PURE__ */ e.jsx(
     "span",
     {
-      className: "flex shrink-0 items-center justify-center rounded-full text-white font-bold",
+      className: "flex shrink-0 items-center justify-center rounded-full text-[color:var(--apya-avatar-fg)] font-bold",
       style: { height: a, width: a, background: Re(t), fontSize: a * 0.4 },
       title: t || void 0,
       children: Ke(t)
@@ -2590,7 +2590,7 @@ function Lt({ name: t, size: a = 26 }) {
   return /* @__PURE__ */ e.jsx(
     "span",
     {
-      className: "flex shrink-0 items-center justify-center rounded-full text-white font-bold",
+      className: "flex shrink-0 items-center justify-center rounded-full text-[color:var(--apya-avatar-fg)] font-bold",
       style: { height: a, width: a, background: Re(t), fontSize: a * 0.38 },
       children: Ke(t)
     }
@@ -3112,7 +3112,7 @@ function De({ label: t, value: a, avatarName: s }) {
       s && /* @__PURE__ */ e.jsx(
         "span",
         {
-          className: "flex shrink-0 items-center justify-center h-[21px] w-[21px] rounded-full text-white text-[8.5px] font-bold",
+          className: "flex shrink-0 items-center justify-center h-[21px] w-[21px] rounded-full text-[color:var(--apya-avatar-fg)] text-[8.5px] font-bold",
           style: { background: Re(s) },
           children: Ke(s)
         }
@@ -3277,7 +3277,7 @@ function et({ name: t, size: a = 32 }) {
   return /* @__PURE__ */ e.jsx(
     "span",
     {
-      className: "flex shrink-0 items-center justify-center rounded-full text-white font-bold",
+      className: "flex shrink-0 items-center justify-center rounded-full text-[color:var(--apya-avatar-fg)] font-bold",
       style: { height: a, width: a, background: Re(t), fontSize: a * 0.34 },
       children: Ke(t)
     }
@@ -4154,7 +4154,7 @@ function tt({ name: t, size: a = 22 }) {
   return /* @__PURE__ */ e.jsx(
     "span",
     {
-      className: "flex shrink-0 items-center justify-center rounded-full text-white font-bold",
+      className: "flex shrink-0 items-center justify-center rounded-full text-[color:var(--apya-avatar-fg)] font-bold",
       style: { height: a, width: a, background: Re(t), fontSize: a * 0.4 },
       children: Ke(t)
     }

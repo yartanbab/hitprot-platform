@@ -60,7 +60,7 @@ const fmtShortDate = (iso) => (iso
 function Avatar({ name, size = 22 }) {
     return (
         <span
-            className="flex shrink-0 items-center justify-center rounded-full text-white font-bold"
+            className="flex shrink-0 items-center justify-center rounded-full text-[color:var(--apya-avatar-fg)] font-bold"
             style={{ height: size, width: size, background: avatarColorOf(name), fontSize: size * 0.4 }}
         >
             {initialsOf(name)}

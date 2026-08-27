@@ -37,6 +37,10 @@
     --apya-brand-800: #1E3A8A;
     --apya-brand-900: #172554;
 
+    /* Avatar metni. Zemin daima brand-500; koyu temada zemin AÇILDIĞI için
+       (#60A5FA) beyaz metin 2,54:1'e düşüyordu — orada metin koyulaşır. */
+    --apya-avatar-fg: #FFFFFF;   /* #2563EB üstünde 5,17:1 */
+
     /* --- 1.1b UI Accent (buton, aktif nav, odak halkası) ---
        Brand (mavi) navigasyondan ayrıştırıldı; UI aksanı indigo.
        Light: #4F46E5 · Dark override'da #6366F1 (aşağıda). */
@@ -279,6 +283,9 @@
     --apya-brand-500: #60A5FA;
     --apya-brand-600: #3B82F6;
     --apya-brand-700: #93C5FD;
+
+    /* Açılmış brand-500 (#60A5FA) üstünde beyaz 2,54:1 kalıyor → brand-900. */
+    --apya-avatar-fg: #172554;   /* #60A5FA üstünde 5,78:1 */
 
     /* UI Accent: indigo — dark'ta tam doygunluk (#6366F1) */
     --apya-accent-500: #6366F1;
