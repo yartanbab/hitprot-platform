@@ -513,8 +513,11 @@ $(function () {
         var base = scoped();
         var html = FILTERS.map(function (f) {
             var count = base.filter(f.test).length;
+            // is-empty: sayısı 0 olan çip mobilde basılmaz (apya-shell.css §22.10).
+            // "Tümü" dışarıda — o sıfırlama çipi, sayısı 0 olsa da kalmalı.
             var cls = 'apya-chip apya-proj-filter' +
                 (f.risky ? ' is-risk' : '') +
+                (count === 0 && f.key !== 'all' ? ' is-empty' : '') +
                 (state.filter === f.key ? ' is-active' : '');
             return '<button type="button" class="' + cls + '" data-filter="' + f.key + '"' +
                 ' aria-pressed="' + (state.filter === f.key ? 'true' : 'false') + '">' +

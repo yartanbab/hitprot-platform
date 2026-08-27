@@ -58,7 +58,11 @@
 
     @* --- KPI şeridi: 6 bölmeli tek satır. Risk / Geçmiş / Yaklaşan hücreleri
          sırasıyla risk · overdue · week filtresini sürer; aktif filtre hücrede
-         belli olur (bkz. §22.1 .is-active). --- *@
+         belli olur (bkz. §22.1 .is-active).
+         Şerit MASAÜSTÜNE özeldir: mobilde tümü gizlenir (§22.10), çünkü orada
+         geriye yalnız çip şeridiyle çiftlenen üç hücre kalıyordu. Bu yüzden
+         is-mobile-hidden şu an ETKİSİZ — hangi hücrelerin masaüstüne özel
+         olduğunu işaretlemek için duruyor. --- *@
     <div class="apya-proj-kpis" id="ProjectsKpis" aria-label="Proje özeti">
         <div class="apya-proj-kpi is-mobile-hidden">
             <span class="kpi-icon-box kpi-icon-box--xs kpi-icon-box--accent" aria-hidden="true"><i class="fa fa-rocket"></i></span>

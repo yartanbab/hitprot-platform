@@ -24,7 +24,10 @@
    data-feedback-action="@ctx.Action"
    data-feedback-entity-type="@ctx.EntityType"
    data-feedback-entity-id="@ctx.EntityId">
-    <i class="fa fa-comment-dots me-1"></i>@label
+    @* Etiket span içinde: dar ekranda bağlamı olan sayfalar linki ikona
+       indirebilsin diye (ör. Projeler konsolu — apya-shell.css §22.10). Boşluk
+       ikonda değil span’da: metin gizlenince boşluk da onunla gider. *@
+    <i class="fa fa-comment-dots"></i><span class="apya-feedback-link-text ms-1">@label</span>
 </a>
 
 <style>
