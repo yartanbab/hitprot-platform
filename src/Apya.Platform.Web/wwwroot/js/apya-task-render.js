@@ -43,12 +43,22 @@
         return icon + '<span class="apya-priority-text">' + p.text + '</span>';
     }
 
+    // Kişi baş harfi TEK KURAL: ad + soyad. Görünen ad tek string geldiği için soyad
+    // "son kelime" varsayılır — topbar avatarı (dark-mode.js) ve sunucudaki
+    // ProjectAppService.ToInitials / DashboardAppService.BuildInitials ile aynı sonucu
+    // verir. ToUpperInvariant eşleniği olsun diye locale'siz toUpperCase() kullanılır.
+    function personInitials(name) {
+        var parts = String(name || '').trim().split(/\s+/).filter(Boolean);
+        if (!parts.length) return '?';
+        return (parts.length > 1 ? parts[0][0] + parts[parts.length - 1][0] : parts[0].slice(0, 2)).toUpperCase();
+    }
+
     // avatarOnly=true: isim etiketi olmadan yalnız renkli daire (kompakt tablo kolonları için).
+    // Renk kişiye göre DEĞİŞMEZ — profil avatarındaki marka tonu her yerde aynı.
     function assigneeAvatar(name, avatarOnly) {
         if (!name) return '<span class="text-muted small">—</span>';
-        var initials = String(name).trim().split(/\s+/).slice(0, 2).map(function (w) { return w[0]; }).join('').toUpperCase();
-        var tone = hashTone(name);
-        var avatar = '<span class="apya-avatar apya-avatar-' + tone + '" title="' + esc(name) + '">' + esc(initials) + '</span>';
+        var initials = personInitials(name);
+        var avatar = '<span class="apya-avatar apya-avatar-brand" title="' + esc(name) + '">' + esc(initials) + '</span>';
         return avatarOnly ? avatar : avatar + '<span class="ms-2">' + esc(name) + '</span>';
     }
 
@@ -146,6 +156,7 @@
     window.apyaTask = {
         esc: esc,
         hashTone: hashTone,
+        personInitials: personInitials,
         tagChips: tagChips,
         priorityBadge: priorityBadge,
         assigneeAvatar: assigneeAvatar,

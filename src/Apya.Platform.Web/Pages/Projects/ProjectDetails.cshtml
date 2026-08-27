@@ -40,20 +40,17 @@
         .OrderBy(a => a.Name)
         .ToList();
 
-    // apya-task-render.js'teki initials + hashTone ile BİREBİR aynı sonucu üretir
-    // (aynı kişi listede ve şeritte aynı rengi/harfi alsın). JS toUpperCase()
-    // locale-invariant çalıştığı için burada da ToUpperInvariant kullanılır.
+    // apya-task-render.js'teki personInitials ile BİREBİR aynı sonucu üretir: ad +
+    // soyad baş harfi (aynı kişi listede, şeritte ve profilde aynı harfi alsın).
+    // JS toUpperCase() locale-invariant çalıştığı için burada da ToUpperInvariant.
+    // Avatar RENGİ hash'lenmez; her yerde profil avatarının marka tonu kullanılır.
     string Initials(string name)
     {
         var parts = name.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries);
-        return string.Concat(parts.Take(2).Select(p => char.ToUpperInvariant(p[0])));
-    }
-    string HashTone(string name)
-    {
-        var tones = new[] { "positive", "negative", "warning", "brand", "ai", "neutral" };
-        var h = 0;
-        foreach (var c in name) { unchecked { h = h * 31 + c; } }
-        return tones[(int)(Math.Abs((long)h) % tones.Length)];
+        if (parts.Length == 0) return "?";
+        return parts.Length > 1
+            ? $"{char.ToUpperInvariant(parts[0][0])}{char.ToUpperInvariant(parts[^1][0])}"
+            : parts[0][..Math.Min(2, parts[0].Length)].ToUpperInvariant();
     }
 
     // Backend Bootstrap renk adı döndürüyor (success/warning/danger/info/secondary) ->
@@ -296,7 +293,7 @@
             <span class="apya-console-facepile">
                 @foreach (var m in team.Take(5))
                 {
-                    <button type="button" class="apya-avatar apya-avatar-@HashTone(m.DisplayName)"
+                    <button type="button" class="apya-avatar apya-avatar-brand"
                             data-assignee-id="@m.UserId" aria-pressed="false"
                             title="@m.DisplayName — @m.RoleText — görevlerini filtrele">@Initials(m.DisplayName)</button>
                 }
@@ -507,7 +504,7 @@
                 @foreach (var a in assignees)
                 {
                     <button type="button" class="apya-console-menu-item" data-filter="assignee" data-value="@a.Id" data-label="@a.Name">
-                        <span class="apya-avatar apya-avatar-@HashTone(a.Name)">@Initials(a.Name)</span>@a.Name
+                        <span class="apya-avatar apya-avatar-brand">@Initials(a.Name)</span>@a.Name
                     </button>
                 }
             </div>
