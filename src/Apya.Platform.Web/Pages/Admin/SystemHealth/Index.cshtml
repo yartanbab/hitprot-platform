@@ -13,33 +13,96 @@
     var trendData = JsonSerializer.Serialize(h.ErrorTrend.Select(x => x.ErrorCount));
 }
 
-<div data-page-description="İstemci hataları ve sunucu metrikleri" class="apya-page">
+<div data-page-description="İstemci hataları ve sunucu metrikleri" class="apya-page apya-health">
 <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
-    <h5 class="mb-0"><i class="fa fa-heart-pulse me-2"></i> Sistem Sağlığı — Son @days Gün</h5>
+    <div class="d-flex flex-wrap align-items-center gap-2">
+        <h5 class="mb-0"><i class="fa fa-heart-pulse me-2"></i> Sistem Sağlığı — Son @days Gün</h5>
+
+        @* Durum bandı: çıplak 0-100 skor YOK — trafik ışığı, sayı ve gerekçe birlikte.
+           Renk tek başına anlam taşımasın diye noktalı chip kullanılıyor. *@
+        <span class="apya-chip apya-chip-@Model.StatusTone">
+            <span class="apya-health-dot me-1"></span>@Model.StatusText
+        </span>
+    </div>
 
     @* Pencere seçici — servis zaten windowDays alıyordu, sayfa 7'ye sabitliyordu. *@
     <div class="btn-group btn-group-sm" role="group" aria-label="Zaman penceresi">
         @foreach (var w in IndexModel.AllowedWindows)
         {
             <a class="btn @(w == days ? "btn-primary" : "btn-outline-secondary")"
-               asp-route-windowDays="@w" asp-route-clientFilter="@Model.ClientFilter">@w gün</a>
+               asp-route-windowDays="@w" asp-route-clientFilter="@Model.ClientFilter" asp-route-tab="@Model.Tab">@w gün</a>
         }
     </div>
 </div>
 
+@*
+    İki sekme. "Teşhis" tek bir hatanın kök nedenine inmek için; "Ölçümler" ise
+    pencere geneli için. Ölçüm kartları KALDIRILMADI: kiracı sağlığı ve uç tabloları
+    oradaki yerlerini koruyor, mevcut #client-errors / #failing-pages / #slowest-endpoints
+    çapaları da o sekmede yaşıyor.
+*@
+<ul class="nav nav-tabs mb-3" role="tablist">
+    <li class="nav-item" role="presentation">
+        <button class="nav-link @(Model.Tab == "metrics" ? "" : "active")" data-bs-toggle="tab"
+                data-bs-target="#sh-console" type="button" role="tab">
+            <i class="fa fa-stethoscope me-1"></i>Teşhis
+            <span class="apya-chip apya-chip-neutral ms-1">@Model.Issues.OpenCount</span>
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link @(Model.Tab == "metrics" ? "active" : "")" data-bs-toggle="tab"
+                data-bs-target="#sh-metrics" type="button" role="tab">
+            <i class="fa fa-chart-line me-1"></i>Ölçümler
+        </button>
+    </li>
+</ul>
+
+<div class="tab-content">
+<div class="tab-pane fade @(Model.Tab == "metrics" ? "" : "show active")" id="sh-console" role="tabpanel">
+    <div class="apya-md" id="HealthConsole">
+        <div class="apya-md-list">
+            @* Arama kutusu liste parçasının DIŞINDA: parça her tuş vuruşunda
+               yenileniyor, kutu içeride olsaydı odak kaybolurdu. *@
+            <div class="apya-health-toolbar">
+                <input id="Issue_Search" type="search" class="form-control form-control-sm"
+                       placeholder="Mesaj, sayfa veya uç ara" aria-label="Olay ara" />
+                <div class="apya-health-sortbar">
+                    <span>Etkiye göre sıralı</span>
+                    <select id="Issue_Sort" class="form-select form-select-sm w-auto" aria-label="Sıralama">
+                        <option value="impact">Etki</option>
+                        <option value="lastSeen">Son görülme</option>
+                        <option value="occurrence">Oluşum</option>
+                    </select>
+                </div>
+            </div>
+            <div id="IssueList">
+                <partial name="_IssueList" model="Model" />
+            </div>
+        </div>
+        <div class="apya-md-detail" id="IssueDetail">
+            <button type="button" class="apya-md-back" id="IssueBack">
+                <i class="fa fa-chevron-left"></i> Listeye dön
+            </button>
+            <partial name="_EmptyState" model='new EmptyStateModel { Icon = "fa-hand-pointer", Title = "Bir olay seçin.", Description = "Soldaki listeden bir satıra tıklayın; teşhis burada açılır." }' />
+        </div>
+    </div>
+</div>
+
+<div class="tab-pane fade @(Model.Tab == "metrics" ? "show active" : "")" id="sh-metrics" role="tabpanel">
+
 @* KPI kartları tıklanabilir: her metrik kendisini üreten bölüme götürür. *@
 <div class="row g-3 mb-4">
     <div class="col-md-3">
-        <partial name="_KpiCard" model='new KpiCardModel { Icon = "fa-server", Accent = "accent", Label = "Sunucu İsteği", Value = h.ServerRequestCount.ToString(), Href = $"?windowDays={days}#slowest-endpoints", HrefTitle = "En yavaş endpoint listesine git", Hint = "Audit log kayıtlarından sayılır; tek sorguda en fazla 200.000 satır taranır. Pencerede bundan fazla istek varsa aşan kısım sessizce dışarıda kalır ve bu karttaki tüm metrikler (hata oranı, en yavaş endpoint dahil) yalnız en yeni 200.000 satırı yansıtır." }' />
+        <partial name="_KpiCard" model='new KpiCardModel { Icon = "fa-server", Accent = "accent", Label = "Sunucu İsteği", Value = h.ServerRequestCount.ToString(), Href = $"?windowDays={days}&tab=metrics#slowest-endpoints", HrefTitle = "En yavaş endpoint listesine git", Hint = "Audit log kayıtlarından sayılır. Toplama veritabanında (GROUP BY) yapılır; sayı seçili pencerenin TAMAMINI yansıtır — örneklem değildir." }' />
     </div>
     <div class="col-md-3">
-        <partial name="_KpiCard" model='new KpiCardModel { Icon = "fa-triangle-exclamation", Accent = "negative", Label = "Sunucu Hatası", Value = h.ServerErrorCount.ToString(), SubText = $"%{(h.ServerErrorRate * 100):0.0} oran", Href = $"?windowDays={days}#failing-pages", HrefTitle = "En çok hata veren sayfalara git" }' />
+        <partial name="_KpiCard" model='new KpiCardModel { Icon = "fa-triangle-exclamation", Accent = "negative", Label = "Sunucu Hatası", Value = h.ServerErrorCount.ToString(), SubText = $"%{(h.ServerErrorRate * 100):0.0} oran", Href = $"?windowDays={days}&tab=metrics#failing-pages", HrefTitle = "En çok hata veren sayfalara git" }' />
     </div>
     <div class="col-md-3">
-        <partial name="_KpiCard" model='new KpiCardModel { Icon = "fa-bug", Accent = "warning", Label = "Çözülmemiş İstemci Hatası", Value = h.UnresolvedClientErrorCount.ToString(), Href = $"?windowDays={days}&clientFilter=unresolved#client-errors", HrefTitle = "Çözülmemiş istemci hatalarını listele", Hint = "TÜM ZAMANLARIN toplamı — seçili gün penceresiyle sınırlı DEĞİL. Çözüldü işaretlenmemiş her benzersiz hata (fingerprint) sayılır, ne zaman görüldüğüne bakılmaz." }' />
+        <partial name="_KpiCard" model='new KpiCardModel { Icon = "fa-bug", Accent = "warning", Label = "Çözülmemiş İstemci Hatası", Value = h.UnresolvedClientErrorCount.ToString(), Href = $"?windowDays={days}&tab=metrics&clientFilter=unresolved#client-errors", HrefTitle = "Çözülmemiş istemci hatalarını listele", Hint = "TÜM ZAMANLARIN toplamı — seçili gün penceresiyle sınırlı DEĞİL. Çözüldü işaretlenmemiş her benzersiz hata (fingerprint) sayılır, ne zaman görüldüğüne bakılmaz." }' />
     </div>
     <div class="col-md-3">
-        <partial name="_KpiCard" model='new KpiCardModel { Icon = "fa-desktop", Accent = "brand", Label = "İstemci Hata Oluşumu", Value = h.ClientErrorOccurrencesInWindow.ToString(), Href = $"?windowDays={days}&clientFilter=all#client-errors", HrefTitle = "Tüm istemci hatalarını listele", Hint = "Son görülme tarihi seçili pencere içinde kalan hataların, o hata için kaydedilmiş TOPLAM oluşum sayısının toplamı — yaklaşık bir değerdir, tam geçmiş tutulmaz. Üstteki Çözülmemiş kartıyla karıştırmayın: o tüm zamanları kapsar, bu yalnız pencereyi." }' />
+        <partial name="_KpiCard" model='new KpiCardModel { Icon = "fa-desktop", Accent = "brand", Label = "İstemci Hata Oluşumu", Value = h.ClientErrorOccurrencesInWindow.ToString(), Href = $"?windowDays={days}&tab=metrics&clientFilter=all#client-errors", HrefTitle = "Tüm istemci hatalarını listele", Hint = "Son görülme tarihi seçili pencere içinde kalan hataların, o hata için kaydedilmiş TOPLAM oluşum sayısının toplamı — yaklaşık bir değerdir, tam geçmiş tutulmaz. Üstteki Çözülmemiş kartıyla karıştırmayın: o tüm zamanları kapsar, bu yalnız pencereyi." }' />
     </div>
 </div>
 
@@ -52,7 +115,12 @@
     </div>
     <div class="col-md-6">
         <abp-card>
-            <abp-card-header><abp-card-title>Tenant Bazlı Hata Dağılımı</abp-card-title></abp-card-header>
+            <abp-card-header>
+                <abp-card-title>
+                    Kiracı Sağlığı
+                    <apya-hint text="Yalnız hata sayısı yanıltıcıdır: 10 istekte 3 hata ile 100.000 istekte 3 hata aynı değildir. Hacim, oran ve yavaşlık birlikte okunur. İstemci hatası sütunu, son görülmesi seçili pencere içinde kalan benzersiz tarayıcı hatalarıdır." />
+                </abp-card-title>
+            </abp-card-header>
             <abp-card-body>
                 @if (h.ErrorsByTenant.Count == 0)
                 {
@@ -60,15 +128,53 @@
                 }
                 else
                 {
+                    <div class="table-responsive">
                     <table class="table table-sm mb-0">
-                        <thead><tr><th>Tenant</th><th>Hata Sayısı</th></tr></thead>
+                        <thead>
+                            <tr>
+                                <th>Kiracı</th><th>İstek</th><th>Hata</th><th>Oran</th>
+                                <th>Ort. (ms)</th>
+                                <th title="@h.SlowThresholdMs ms'yi aşan çağrı">Yavaş</th>
+                                <th>İstemci</th>
+                            </tr>
+                        </thead>
                         <tbody>
                             @foreach (var t in h.ErrorsByTenant)
                             {
-                                <tr><td>@(t.TenantName ?? "-")</td><td>@t.ErrorCount</td></tr>
+                                <tr>
+                                    <td>@(t.TenantName ?? "-")</td>
+                                    <td class="apya-numeric">@t.RequestCount</td>
+                                    <td class="apya-numeric">@t.ErrorCount</td>
+                                    <td class="apya-numeric">
+                                        @if (t.ErrorRate > 0)
+                                        {
+                                            <span class="apya-chip apya-chip-negative">%@((t.ErrorRate * 100).ToString("0.0"))</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">%0,0</span>
+                                        }
+                                    </td>
+                                    <td class="apya-numeric">@t.AverageDurationMs.ToString("0")</td>
+                                    <td class="apya-numeric">@t.SlowCallCount</td>
+                                    <td class="apya-numeric">
+                                        @if (t.UnresolvedClientErrorCount > 0)
+                                        {
+                                            <span class="apya-chip apya-chip-warning"
+                                                  title="@t.ClientErrorCount hatanın @t.UnresolvedClientErrorCount tanesi açık">
+                                                @t.UnresolvedClientErrorCount / @t.ClientErrorCount
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">@t.ClientErrorCount</span>
+                                        }
+                                    </td>
+                                </tr>
                             }
                         </tbody>
                     </table>
+                    </div>
                 }
             </abp-card-body>
         </abp-card>
@@ -125,8 +231,8 @@
         <abp-card id="failing-pages">
             <abp-card-header>
                 <abp-card-title>
-                    En Çok Hata Veren Sayfalar
-                    <apya-hint text="Satıra tıklayınca o adresin pencere içindeki tek tek sunucu hataları (exception metni dahil) açılır." />
+                    En Çok Hata Veren Uçlar
+                    <apya-hint text="Uç kimliği HTTP metodu + yoldur; yoldaki kayda özgü kimlikler {id} ile birleştirilir — aynı rotanın 200 farklı kaydı tek satırdır. Satıra tıklayınca o ucun pencere içindeki tek tek sunucu hataları (exception metni ve somut adres dahil) açılır." />
                 </abp-card-title>
             </abp-card-header>
             <abp-card-body>
@@ -138,16 +244,17 @@
                 {
                     <div class="table-responsive">
                     <table class="table table-sm table-hover mb-0">
-                        <thead><tr><th>Sayfa</th><th>Toplam</th><th>Hata</th><th>Oran</th><th class="text-end"></th></tr></thead>
+                        <thead><tr><th>Metot</th><th>Uç</th><th>Toplam</th><th>Hata</th><th>Oran</th><th class="text-end"></th></tr></thead>
                         <tbody>
                             @foreach (var p in h.TopFailingPages)
                             {
-                                <tr class="apya-failing-page-row" data-url="@p.Url" role="button"
-                                    title="Hata kayıtlarını gör">
+                                <tr class="apya-failing-page-row" data-url="@p.Url" data-http-method="@p.HttpMethod"
+                                    role="button" title="Hata kayıtlarını gör">
+                                    <td><span class="apya-chip apya-chip-neutral">@(p.HttpMethod ?? "-")</span></td>
                                     <td><code class="text-sm">@p.Url</code></td>
-                                    <td>@p.TotalCount</td>
-                                    <td>@p.ErrorCount</td>
-                                    <td>%@((p.ErrorRate * 100).ToString("0.0"))</td>
+                                    <td class="apya-numeric">@p.TotalCount</td>
+                                    <td class="apya-numeric">@p.ErrorCount</td>
+                                    <td class="apya-numeric">%@((p.ErrorRate * 100).ToString("0.0"))</td>
                                     <td class="text-end text-muted"><i class="fa fa-chevron-right" aria-hidden="true" style="font-size:11px"></i></td>
                                 </tr>
                             }
@@ -160,25 +267,58 @@
     </div>
     <div class="col-md-6">
         <abp-card id="slowest-endpoints">
-            <abp-card-header><abp-card-title>En Yavaş Endpoint'ler</abp-card-title></abp-card-header>
+            <abp-card-header>
+                <abp-card-title>
+                    En Yavaş Uçlar
+                    <apya-hint text="@($"Listeye girmek için pencerede en az {h.EndpointMinCallCount} çağrı gerekir — tek kez çağrılmış soğuk bir uç sıralamayı kapatmasın. \"Yavaş\" sütunu {h.SlowThresholdMs} ms'yi aşan çağrı sayısıdır: ortalama tek bir uç değerle bozulur, bu sütun kaç çağrının fiilen yavaş olduğunu söyler.")" />
+                </abp-card-title>
+            </abp-card-header>
             <abp-card-body>
                 @if (h.SlowestEndpoints.Count == 0)
                 {
-                    <partial name="_EmptyState" model='new EmptyStateModel { Icon = "fa-gauge", Title = "Veri yok." }' />
+                    <partial name="_EmptyState" model='@(new EmptyStateModel { Icon = "fa-gauge", Title = "Veri yok.", Description = $"Seçili pencerede en az {h.EndpointMinCallCount} kez çağrılmış uç bulunmadı." })' />
                 }
                 else
                 {
                     <div class="table-responsive">
                     <table class="table table-sm mb-0">
-                        <thead><tr><th>Endpoint</th><th>Çağrı</th><th>Ort. (ms)</th><th>Maks. (ms)</th></tr></thead>
+                        <thead>
+                            <tr>
+                                <th>Metot</th><th>Uç</th><th>Çağrı</th>
+                                <th>Ort. (ms)</th><th>Maks. (ms)</th>
+                                <th title="@h.SlowThresholdMs ms'yi aşan çağrı">Yavaş</th>
+                                <th>Hata</th>
+                            </tr>
+                        </thead>
                         <tbody>
                             @foreach (var e in h.SlowestEndpoints)
                             {
                                 <tr>
+                                    <td><span class="apya-chip apya-chip-neutral">@(e.HttpMethod ?? "-")</span></td>
                                     <td><code class="text-sm">@e.Url</code></td>
-                                    <td>@e.CallCount</td>
-                                    <td>@e.AverageDurationMs.ToString("0")</td>
-                                    <td>@e.MaxDurationMs</td>
+                                    <td class="apya-numeric">@e.CallCount</td>
+                                    <td class="apya-numeric">@e.AverageDurationMs.ToString("0")</td>
+                                    <td class="apya-numeric">@e.MaxDurationMs</td>
+                                    <td class="apya-numeric">
+                                        @if (e.SlowCallCount > 0)
+                                        {
+                                            <span class="apya-chip apya-chip-warning">@e.SlowCallCount</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">0</span>
+                                        }
+                                    </td>
+                                    <td class="apya-numeric">
+                                        @if (e.ErrorCount > 0)
+                                        {
+                                            <span class="apya-chip apya-chip-negative">@e.ErrorCount</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">0</span>
+                                        }
+                                    </td>
                                 </tr>
                             }
                         </tbody>
@@ -245,7 +385,10 @@
         </abp-table>
     </abp-card-body>
 </abp-card>
-</div>
+
+</div>@* /#sh-metrics *@
+</div>@* /.tab-content *@
+</div>@* /.apya-page *@
 
 @section scripts {
     @* Sunucu hatası detayı seçili pencereyi kullanır — JS bunu buradan okur. *@

@@ -9,6 +9,10 @@
     <abp-modal-header title="Sunucu Hataları"></abp-modal-header>
     <abp-modal-body>
         <p class="text-sm mb-3">
+            @if (!string.IsNullOrWhiteSpace(Model.HttpMethod))
+            {
+                <span class="apya-chip apya-chip-neutral">@Model.HttpMethod</span>
+            }
             <code>@Model.Url</code>
             <span class="text-muted">· son @Model.WindowDays gün</span>
         </p>
@@ -49,6 +53,11 @@
                         <div id="@itemId" class="accordion-collapse collapse" data-bs-parent="#ServerErrorAccordion">
                             <div class="accordion-body">
                                 <dl class="row text-sm mb-2">
+                                    @* Normalize uçta {id} yazıyor; hangi SOMUT kaydın patladığı burada. *@
+                                    <dt class="col-sm-3">Adres</dt>
+                                    <dd class="col-sm-9 text-muted" style="word-break:break-all;">
+                                        <code class="text-xs">@(err.Url ?? "-")</code>
+                                    </dd>
                                     <dt class="col-sm-3">IP</dt>
                                     <dd class="col-sm-9 text-muted">@(err.ClientIpAddress ?? "-")</dd>
                                     <dt class="col-sm-3">Tarayıcı</dt>
@@ -78,6 +87,7 @@
             <button type="button" class="btn btn-sm btn-outline-primary issue-task-create"
                     data-source-type="@((int)Apya.Platform.IssueTasks.IssueSourceType.ServerError)"
                     data-source-url="@Model.Url"
+                    data-source-http-method="@Model.HttpMethod"
                     data-window-days="@Model.WindowDays">
                 <i class="fa fa-list-check me-1"></i>Göreve Dönüştür
             </button>

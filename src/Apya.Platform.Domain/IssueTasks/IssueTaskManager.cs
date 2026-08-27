@@ -106,12 +106,20 @@ public class IssueTaskManager : DomainService
 
     /// <summary>
     /// Sunucu hatasının tekilleştirme anahtarı. Audit log satırının kendi Id'si her
-    /// oluşumda değişir; aynı arıza için tek görev açılsın diye (URL + exception türü)
-    /// özeti kullanılır.
+    /// oluşumda değişir; aynı arıza için tek görev açılsın diye
+    /// (HTTP metodu + normalize yol + exception türü) özeti kullanılır.
+    /// <para>
+    /// <paramref name="url"/> <b>normalize</b> yol olmalıdır (<c>/api/app/task/{id}</c>);
+    /// ham adres verilirse her kayıt ayrı arıza sayılır ve aynı hata için onlarca
+    /// görev açılır.
+    /// </para>
     /// </summary>
-    public static string BuildServerErrorKey(string url, string? exceptionType)
+    public static string BuildServerErrorKey(string? httpMethod, string url, string? exceptionType)
     {
-        var raw = (url ?? string.Empty).Trim().ToLowerInvariant() + "|" + (exceptionType ?? string.Empty).Trim();
+        var raw = (httpMethod ?? string.Empty).Trim().ToUpperInvariant()
+                  + " " + (url ?? string.Empty).Trim().ToLowerInvariant()
+                  + "|" + (exceptionType ?? string.Empty).Trim();
+
         var hash = SHA256.HashData(Encoding.UTF8.GetBytes(raw));
         return Convert.ToHexString(hash)[..32].ToLowerInvariant();
     }
@@ -161,7 +169,7 @@ public class IssueTaskManager : DomainService
         return await CreateCoreAsync(
             IssueSourceType.ServerError,
             sourceId: null,
-            BuildServerErrorKey(signal.Url, signal.ExceptionType),
+            BuildServerErrorKey(signal.HttpMethod, signal.Url, signal.ExceptionType),
             signal.TenantId,
             Shorten(signal.Url, 120),
             options.Title.IsNullOrWhiteSpace()

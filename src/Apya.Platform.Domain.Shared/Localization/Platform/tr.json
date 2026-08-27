@@ -1176,6 +1176,7 @@
         "DisplayName:CashAccountId": "Kasa / banka hesabı",
         "DisplayName:Category": "Kategori",
         "DisplayName:CategoryId": "Kategori",
+        "DisplayName:ClientErrorId": "İstemci hatası",
         "DisplayName:ClientErrorThreshold": "İstemci hatası eşiği",
         "DisplayName:CloseSourceOnTaskDone": "Görev bitince kaynağı kapat",
         "DisplayName:Code": "Kod",
@@ -1213,6 +1214,7 @@
         "DisplayName:ExternalRef": "Dış referans",
         "DisplayName:FeedbackMinPriority": "En düşük geri bildirim önceliği",
         "DisplayName:File": "Dosya",
+        "DisplayName:Filter": "Arama",
         "DisplayName:FileBytes": "Dosya içeriği",
         "DisplayName:FileName": "Dosya adı",
         "DisplayName:FileNamePattern": "Dosya adı deseni",
@@ -1222,6 +1224,7 @@
         "DisplayName:GrantId": "Hibe",
         "DisplayName:HourOfDay": "Günün saati",
         "DisplayName:HourlyRate": "Saatlik ücret",
+        "DisplayName:HttpMethod": "HTTP metodu",
         "DisplayName:Iban": "IBAN",
         "DisplayName:Icon": "Simge",
         "DisplayName:Id": "Kayıt",
@@ -1249,6 +1252,7 @@
         "DisplayName:Likelihood": "Olasılık",
         "DisplayName:MaxAmount": "En yüksek tutar",
         "DisplayName:MaxFileSizeMb": "En büyük dosya boyutu (MB)",
+        "DisplayName:MaxResultCount": "En fazla kayıt",
         "DisplayName:Message": "Mesaj",
         "DisplayName:Method": "Yöntem",
         "DisplayName:MinMatchScore": "En düşük eşleşme puanı",
@@ -1358,6 +1362,7 @@
         "DisplayName:UserPromptTemplate": "Kullanıcı prompt şablonu",
         "DisplayName:Watermark": "Filigran",
         "DisplayName:WindowDays": "Gün aralığı",
+        "DisplayName:WindowSeconds": "Saniye aralığı",
         "DisplayName:WipLimit": "Eşzamanlı iş sınırı"
     }
 }

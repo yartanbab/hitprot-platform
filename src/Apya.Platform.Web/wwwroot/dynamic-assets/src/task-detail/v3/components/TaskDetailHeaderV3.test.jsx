@@ -128,6 +128,25 @@ describe('TaskDetailHeaderV3 / ⋯ menusu', () => {
         expect(screen.getByText('Takibi bırak')).toBeInTheDocument();
     });
 
+    /* REGRESYON: menu modalin ICINE portal ediliyor ve DialogContent overflow-hidden
+       + kalici transform tasiyor -> kirpan kap O. Yukseklik sinirlanmazsa alcak
+       ekranda son satirlar (kisayollar) gorunmez oluyordu. */
+    it('menuyu Radix in bildirdigi kullanilabilir yukseklikle sinirlar ve kaydirilabilir yapar', () => {
+        renderHeader();
+        fireEvent.click(screen.getByRole('button', { name: /diğer seçenekler/i }));
+        const content = screen.getByText('Bağlantıyı kopyala').closest('button').parentElement;
+        expect(content.className).toContain('max-h-[var(--radix-popover-content-available-height)]');
+        expect(content.className).toContain('overflow-y-auto');
+    });
+
+    it('kisayol bloğundaki dort satirin tamami render edilir', () => {
+        renderHeader();
+        fireEvent.click(screen.getByRole('button', { name: /diğer seçenekler/i }));
+        ['Kaydet', 'Yorum gönder', 'Kapat / iptal', 'Bağlantı kopyala'].forEach((label) => {
+            expect(screen.getByText(label)).toBeInTheDocument();
+        });
+    });
+
     // ── Su an ISLEVSIZ olan maddeler (yalnizca bildirim gosteriyorlar) ──
     it('STUB: Sablon olarak kaydet yalnizca handler i cagirir, gercek islev yok', () => {
         const spies = renderHeader();

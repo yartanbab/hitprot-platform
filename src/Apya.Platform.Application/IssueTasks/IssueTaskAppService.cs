@@ -132,18 +132,18 @@ public class IssueTaskAppService : ApplicationService, IIssueTaskAppService
         }
     }
 
-    public async Task<IssueTaskLinkDto?> GetLinkForServerErrorAsync(string url, int windowDays)
+    public async Task<IssueTaskLinkDto?> GetLinkForServerErrorAsync(string url, string? httpMethod, int windowDays)
     {
         EnsureHostContext();
 
         // Anahtar exception TÜRÜNÜ de içerir; tür pencere içindeki en yeni satırdan gelir.
-        var signal = await _serverErrorSignalBuilder.BuildAsync(url, windowDays);
+        var signal = await _serverErrorSignalBuilder.BuildAsync(url, httpMethod, windowDays);
         if (signal is null)
         {
             return null;
         }
 
-        var key = IssueTaskManager.BuildServerErrorKey(signal.Url, signal.ExceptionType);
+        var key = IssueTaskManager.BuildServerErrorKey(signal.HttpMethod, signal.Url, signal.ExceptionType);
         return await MapLinkOrNullAsync(await _issueTaskManager.FindLinkAsync(IssueSourceType.ServerError, key));
     }
 
@@ -201,7 +201,7 @@ public class IssueTaskAppService : ApplicationService, IIssueTaskAppService
     {
         EnsureHostContext();
 
-        var signal = await _serverErrorSignalBuilder.BuildAsync(input.Url, input.WindowDays);
+        var signal = await _serverErrorSignalBuilder.BuildAsync(input.Url, input.HttpMethod, input.WindowDays);
         if (signal is null)
         {
             throw new BusinessException(PlatformDomainErrorCodes.IssueTaskSourceNotFound)
