@@ -284,6 +284,9 @@ public class TenantPackageManager : ITransientDependency
         // #256 ile geldi. Feature kapısı YOK → tavanı bu liste dışında dolduracak bir yol da
         // yok; buraya yazılmadığı sürece kurulu sistemlerde hiçbir kiracıda açılamıyordu.
         PlatformPermissions.Projects.ManageCategories,
+        // Görev dış paylaşımı. ManageCategories ile aynı durum: feature kapısı yok →
+        // GrantNewlyEnabledPermissionsAsync onu hiçbir zaman "yeni açılan modül" saymaz.
+        PlatformPermissions.Tasks.ShareExternally,
     };
 
     private IEnumerable<(Guid Id, string Name)> DefaultPermissionsFor(
