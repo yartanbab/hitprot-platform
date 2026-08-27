@@ -35,23 +35,16 @@ export const priorityOf = (id) => PRIORITY_META[id] ?? PRIORITY_META[2];
 /** Baş harf rozeti — ui-avatars.com'a dış istek atmamak için (prototipteki desen). */
 export function initialsOf(name) {
     if (!name) return '—';
-    return name
-        .trim()
-        .split(/\s+/)
-        .map((w) => w[0])
-        .join('')
-        .slice(0, 2)
-        .toUpperCase();
+    const parts = String(name).trim().split(/\s+/).filter(Boolean);
+    if (!parts.length) return '—';
+    return (parts.length > 1 ? parts[0][0] + parts[parts.length - 1][0] : parts[0].slice(0, 2)).toUpperCase();
 }
 
-/** Ada göre kararlı avatar rengi — aynı kişi her yerde aynı renkte görünsün.
- *  Paletteki tonlar tokens.css'teki semantik renklerle çakışmayacak şekilde seçildi. */
-const AVATAR_COLORS = ['#4F46E5', '#0EA5E9', '#059669', '#D97706', '#DB2777', '#7C3AED'];
+/** Avatar rengi kişiye göre DEĞİŞMEZ — profil avatarının marka tonu her yerde aynı
+ *  (apya-task-render.js ve ProjectDetails.cshtml ile aynı kural). Önceden ada göre
+ *  hash'lenen ayrı bir palet vardı; aynı kişi listede mavi, detayda turuncu çıkıyordu. */
 export function avatarColorOf(name) {
-    if (!name) return '#9CA3AF';
-    let hash = 0;
-    for (let i = 0; i < name.length; i++) hash = (hash * 31 + name.charCodeAt(i)) | 0;
-    return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length];
+    return name ? 'var(--apya-brand-500)' : 'var(--apya-neutral-500)';
 }
 
 /** Son tarih aciliyeti: gecikmiş → negatif, ≤3 gün → uyarı, aksi → nötr. */

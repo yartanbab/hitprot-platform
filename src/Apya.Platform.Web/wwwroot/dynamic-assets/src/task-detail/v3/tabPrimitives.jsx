@@ -56,7 +56,7 @@ export function TabEmptyState({ icon, title, description }) {
 export function Avatar({ name, size = 24 }) {
     return (
         <span
-            className="flex shrink-0 items-center justify-center rounded-full text-white font-bold"
+            className="flex shrink-0 items-center justify-center rounded-full text-[color:var(--apya-avatar-fg)] font-bold"
             style={{ height: size, width: size, background: avatarColorOf(name), fontSize: size * 0.4 }}
             title={name || undefined}
         >

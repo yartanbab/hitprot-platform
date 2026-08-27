@@ -225,7 +225,7 @@ export function SourceRail({
                                         className="flex items-center gap-1 rounded-full bg-neutral-subtle py-0.5 pe-2 ps-0.5 text-[10.5px] text-text-secondary"
                                     >
                                         <span
-                                            className="flex h-4 w-4 items-center justify-center rounded-full bg-accent text-[8.5px] font-bold text-white"
+                                            className="flex h-4 w-4 items-center justify-center rounded-full bg-brand-500 text-[8.5px] font-bold text-[color:var(--apya-avatar-fg)]"
                                             aria-hidden="true"
                                         >
                                             {initials(m.name)}

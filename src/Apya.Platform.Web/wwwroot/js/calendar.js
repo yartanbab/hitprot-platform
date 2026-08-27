@@ -663,7 +663,7 @@ function Ut({
                     /* @__PURE__ */ e.jsx(
                       "span",
                       {
-                        className: "flex h-4 w-4 items-center justify-center rounded-full bg-accent text-[8.5px] font-bold text-white",
+                        className: "flex h-4 w-4 items-center justify-center rounded-full bg-brand-500 text-[8.5px] font-bold text-[color:var(--apya-avatar-fg)]",
                         "aria-hidden": "true",
                         children: Yt(h.name)
                       }

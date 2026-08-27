@@ -14,7 +14,7 @@ function Row({ label, value, avatarName }) {
             <span className="flex items-center gap-[7px] min-w-0">
                 {avatarName && (
                     <span
-                        className="flex shrink-0 items-center justify-center h-[21px] w-[21px] rounded-full text-white text-[8.5px] font-bold"
+                        className="flex shrink-0 items-center justify-center h-[21px] w-[21px] rounded-full text-[color:var(--apya-avatar-fg)] text-[8.5px] font-bold"
                         style={{ background: avatarColorOf(avatarName) }}
                     >
                         {initialsOf(avatarName)}

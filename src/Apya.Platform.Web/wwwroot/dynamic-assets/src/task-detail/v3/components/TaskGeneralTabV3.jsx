@@ -8,7 +8,7 @@ const CARD_CLS = 'flex flex-col rounded-2xl border border-subtle bg-surface-base
 function Avatar({ name, size = 32 }) {
     return (
         <span
-            className="flex shrink-0 items-center justify-center rounded-full text-white font-bold"
+            className="flex shrink-0 items-center justify-center rounded-full text-[color:var(--apya-avatar-fg)] font-bold"
             style={{ height: size, width: size, background: avatarColorOf(name), fontSize: size * 0.34 }}
         >
             {initialsOf(name)}
