@@ -227,6 +227,11 @@ public class SystemHealthAggregation_Tests : PlatformEntityFrameworkCoreTestBase
         });
     }
 
+    /// <summary>
+    /// 2xx dönerken istisna yazılmışsa ortada gerçekten bir anormallik vardır.
+    /// <b>4xx bunun istisnasıdır</b> — orada istisna beklenen akışın parçasıdır,
+    /// bkz. <see cref="Dortyuzler_sunucu_hatasi_degil_reddedilen_istektir"/>.
+    /// </summary>
     [Fact]
     public async Task Exception_yazilmis_istek_5xx_olmasa_da_hatadir()
     {
@@ -243,6 +248,48 @@ public class SystemHealthAggregation_Tests : PlatformEntityFrameworkCoreTestBase
 
             issues.Items.ShouldHaveSingleItem();
             issues.Items[0].Kind.ShouldBe(HealthIssueKind.ServerError);
+        });
+    }
+
+    /// <summary>
+    /// 4xx, sunucunun DOĞRU çalıştığı anlamına gelir: isteği geri çevirmiştir.
+    /// ABP <c>AbpAuthorizationException</c> (403) · <c>EntityNotFoundException</c> (404)
+    /// · <c>AbpValidationException</c> (400) istisnalarını da audit satırının
+    /// <c>Exceptions</c> alanına yazdığı için bunlar eskiden "sunucu hatası" sayılıyor
+    /// ve sağlık oranını şişiriyordu (yerel veride hataların %39'u).
+    /// </summary>
+    [Fact]
+    public async Task Dortyuzler_sunucu_hatasi_degil_reddedilen_istektir()
+    {
+        await WithUnitOfWorkAsync(async () =>
+        {
+            var prefix = NewPrefix();
+
+            // Sayaç paylaşılan veritabanında birikiyor; mutlak değer değil FARK ölçülür.
+            var before = (await _systemHealth.GetAsync(7)).ServerErrorCount;
+
+            await InsertAuditAsync($"{prefix}/Yetkisiz", statusCode: 403, withException: true);
+            await InsertAuditAsync($"{prefix}/Yok",      statusCode: 404, withException: true);
+            await InsertAuditAsync($"{prefix}/Patlayan", statusCode: 500, withException: true);
+
+            var issues = await _systemHealth.GetIssuesAsync(new GetHealthIssueListInput
+            {
+                WindowDays = 7,
+                Filter = prefix
+            });
+
+            var kinds = issues.Items.ToDictionary(i => i.Where!, i => i.Kind);
+
+            kinds[$"{prefix}/Yetkisiz"].ShouldBe(HealthIssueKind.RequestRejected);
+            kinds[$"{prefix}/Yok"].ShouldBe(HealthIssueKind.RequestRejected);
+            kinds[$"{prefix}/Patlayan"].ShouldBe(HealthIssueKind.ServerError);
+
+            issues.RejectedCount.ShouldBe(2);
+            issues.ServerCount.ShouldBe(1);
+
+            // Üç kayıt girildi, sağlık sayacı YALNIZ 5xx kadar artmalı.
+            var after = (await _systemHealth.GetAsync(7)).ServerErrorCount;
+            (after - before).ShouldBe(1);
         });
     }
 

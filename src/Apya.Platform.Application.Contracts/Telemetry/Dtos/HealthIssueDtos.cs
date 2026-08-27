@@ -14,11 +14,19 @@ public enum HealthIssueKind
     ClientPromise = 2,
     ClientAjax    = 3,
 
-    /// <summary>Sunucuda patlayan uç (AbpAuditLogs).</summary>
+    /// <summary>Sunucuda patlayan uç — 5xx ya da ele alınmamış istisna (AbpAuditLogs).</summary>
     ServerError = 4,
 
     /// <summary>Hata vermeyen ama yavaşlık eşiğini aşan uç.</summary>
-    Performance = 5
+    Performance = 5,
+
+    /// <summary>
+    /// Sunucunun 4xx ile geri çevirdiği istek: 401/403 yetki · 404 bulunamadı ·
+    /// 400 doğrulama. <b>Arıza değildir</b> — sağlık oranına girmez; ayrı kanal
+    /// olmasının sebebi teşhis değeri: aynı uçta biriken 403'ler "kullanıcı
+    /// göremeyeceği bir düğmeyi görüyor" demektir.
+    /// </summary>
+    RequestRejected = 6
 }
 
 public enum HealthIssueSort
@@ -124,6 +132,9 @@ public class HealthIssueListDto
     public int ClientCount { get; set; }
     public int ServerCount { get; set; }
     public int PerformanceCount { get; set; }
+
+    /// <summary>4xx ile geri çevrilen uçlar — bkz. <see cref="HealthIssueKind.RequestRejected"/>.</summary>
+    public int RejectedCount { get; set; }
 }
 
 /// <summary>

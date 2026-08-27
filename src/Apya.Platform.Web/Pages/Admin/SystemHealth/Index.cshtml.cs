@@ -182,6 +182,11 @@ public class IndexModel : AbpPageModel
         HealthIssueKind.ClientPromise => "İstemci · Promise",
         HealthIssueKind.ClientAjax    => "İstemci · AJAX",
         HealthIssueKind.ServerError   => "Sunucu",
+
+        // "İstemci" öneki BİLEREK kullanılmadı: yukarıdaki üç değer tarayıcıda oluşan
+        // hataları anlatıyor, bu ise sunucunun geri çevirdiği isteği.
+        HealthIssueKind.RequestRejected => "İstek reddi",
+
         _                             => "Performans"
     };
 
@@ -197,15 +202,20 @@ public class IndexModel : AbpPageModel
         {
             HealthIssueKind.ServerError => "negative",
             HealthIssueKind.Performance => "brand",
+
+            // Arıza değil — kırmızı DEĞİL. Yine de bakılmayı hak ediyor.
+            HealthIssueKind.RequestRejected => "warning",
+
             _                           => "warning"
         };
     }
 
     public static string KindIcon(HealthIssueKind kind) => kind switch
     {
-        HealthIssueKind.ServerError => "fa fa-triangle-exclamation",
-        HealthIssueKind.Performance => "fa fa-gauge-high",
-        _                           => "fa fa-bug"
+        HealthIssueKind.ServerError     => "fa fa-triangle-exclamation",
+        HealthIssueKind.Performance     => "fa fa-gauge-high",
+        HealthIssueKind.RequestRejected => "fa fa-ban",
+        _                               => "fa fa-bug"
     };
 
     /// <summary>
@@ -218,7 +228,9 @@ public class IndexModel : AbpPageModel
         HealthIssueKind.Performance =>
             $"· ort. {issue.AverageDurationMs?.ToString("0", CultureInfo.InvariantCulture) ?? "-"} ms",
 
-        HealthIssueKind.ServerError =>
+        // Reddedilen istekte de asıl soru "kaç kişiyi vuruyor" — tek kullanıcı kendi
+        // yetkisini zorluyorsa başka, on kullanıcı aynı düğmeye basıyorsa başka bir iş.
+        HealthIssueKind.ServerError or HealthIssueKind.RequestRejected =>
             $"· {issue.AffectedUserCount ?? 0} kullanıcı",
 
         _ => issue.IsResolved ? "· çözüldü" : $"· ilk: {Ago(issue.FirstSeenAt)}"

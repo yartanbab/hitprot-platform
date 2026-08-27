@@ -61,7 +61,12 @@ public partial class SystemHealthAppService
             var universe = new List<HealthIssueDto>();
             universe.AddRange(await BuildClientIssuesAsync(input, since, tenantNames));
 
-            foreach (var kind in new[] { HealthIssueKind.ServerError, HealthIssueKind.Performance })
+            foreach (var kind in new[]
+                     {
+                         HealthIssueKind.ServerError,
+                         HealthIssueKind.RequestRejected,
+                         HealthIssueKind.Performance
+                     })
             {
                 universe.AddRange(await BuildEndpointIssuesAsync(input, since, days, tenantNames, kind));
             }
@@ -87,7 +92,8 @@ public partial class SystemHealthAppService
                 ResolvedCount    = universe.Count(i => i.IsResolved),
                 ClientCount      = universe.Count(i => i.Kind <= HealthIssueKind.ClientAjax),
                 ServerCount      = universe.Count(i => i.Kind == HealthIssueKind.ServerError),
-                PerformanceCount = universe.Count(i => i.Kind == HealthIssueKind.Performance)
+                PerformanceCount = universe.Count(i => i.Kind == HealthIssueKind.Performance),
+                RejectedCount    = universe.Count(i => i.Kind == HealthIssueKind.RequestRejected)
             };
 
             var selected = universe.AsEnumerable();
@@ -241,12 +247,16 @@ public partial class SystemHealthAppService
             baseQuery = baseQuery.Where(a => a.TenantId == input.TenantId.Value);
         }
 
-        baseQuery = kind == HealthIssueKind.ServerError
-            ? baseQuery.Where(a => (a.Exceptions != null && a.Exceptions != "")
-                                   || (a.HttpStatusCode != null && a.HttpStatusCode >= 500))
-            : baseQuery.Where(a => a.ExecutionDuration >= SlowThresholdMs
-                                   && (a.Exceptions == null || a.Exceptions == "")
-                                   && (a.HttpStatusCode == null || a.HttpStatusCode < 500));
+        // Üç kanal AYRIK: bir uç ya patlamıştır (5xx), ya geri çevrilmiştir (4xx),
+        // ya da sağlam ama yavaştır. Aynı arıza konsolda iki satır olmaz.
+        baseQuery = kind switch
+        {
+            HealthIssueKind.ServerError     => FailedRequests(baseQuery),
+            HealthIssueKind.RequestRejected => RejectedRequests(baseQuery),
+            _ => baseQuery.Where(a => a.ExecutionDuration >= SlowThresholdMs
+                                      && (a.Exceptions == null || a.Exceptions == "")
+                                      && (a.HttpStatusCode == null || a.HttpStatusCode < 400))
+        };
 
         // Gün kovaları + ilk/son görülme. Gruplama ham yola göredir; normalizasyon
         // dönen küçük küme üzerinde bellekte yapılır.
@@ -302,6 +312,17 @@ public partial class SystemHealthAppService
             .ToList();
     }
 
+    /// <summary>
+    /// Uç olayının başlığı. Sunucu hatasında yolun kendisi yeterlidir (satır zaten
+    /// hata listesinde); diğer iki kanalda satırın NE anlattığı önekle söylenir.
+    /// </summary>
+    private static string EndpointIssueTitle(HealthIssueKind kind, string label) => kind switch
+    {
+        HealthIssueKind.ServerError     => label,
+        HealthIssueKind.RequestRejected => $"Reddedilen istek: {label}",
+        _                               => $"Yavaş uç: {label}"
+    };
+
     private HealthIssueDto BuildEndpointIssue(
         EndpointIdentity identity,
         List<EndpointDayRow> dayRows,
@@ -343,7 +364,7 @@ public partial class SystemHealthAppService
         {
             Key             = $"{(int)kind}|{identity.Method}|{identity.Url}",
             Kind            = kind,
-            Title           = kind == HealthIssueKind.ServerError ? label : $"Yavaş uç: {label}",
+            Title           = EndpointIssueTitle(kind, label),
             Where             = identity.Url,
             HttpMethod        = method,
             HttpStatusCode    = dayRows.Max(d => d.MaxStatusCode),

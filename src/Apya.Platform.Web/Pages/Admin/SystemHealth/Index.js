@@ -177,7 +177,8 @@ $(function () {
         resolved: { group: 'status', isResolved: true },
         server:   { group: 'kinds', kinds: '4' },
         client:   { group: 'kinds', kinds: '1,2,3' },
-        perf:     { group: 'kinds', kinds: '5' }
+        perf:     { group: 'kinds', kinds: '5' },
+        rejected: { group: 'kinds', kinds: '6' }   // HealthIssueKind.RequestRejected
     };
 
     function listUrl() {
