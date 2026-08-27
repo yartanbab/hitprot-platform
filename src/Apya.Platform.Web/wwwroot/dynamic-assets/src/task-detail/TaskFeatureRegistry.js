@@ -3,6 +3,7 @@ import { SubtasksTab } from './components/SubtasksTab';
 import { FilesTab } from './components/FilesTab';
 import { ChecklistTab } from './components/ChecklistTab';
 import { CommentsTab } from './components/CommentsTab';
+import { SharingTab } from './components/SharingTab';
 import { ActivityTab } from './components/ActivityTab';
 import { HistoryTab } from './components/HistoryTab';
 import { FinanceTab } from './components/FinanceTab';
@@ -66,6 +67,15 @@ export const TASK_FEATURE_REGISTRY = [
         code: 'comments', title: 'Yorumlar', icon: 'fa-comments',
         category: 'iletisim', isCore: false, order: 20, permission: null,
         implemented: true, component: CommentsTab,
+    },
+    {
+        // Ekip dışına açılan süreli linkler. permission dolu olduğu için "+" picker'da
+        // yalnız yetkisi olana görünür; sekmenin kendisi de yetkiyi ayrıca kontrol eder
+        // (izin sonradan alınmış bir görevde sekme atanmış kalabilir).
+        code: 'sharing', title: 'Dış Paylaşım', icon: 'fa-share-nodes',
+        category: 'iletisim', isCore: false, order: 25,
+        permission: 'Platform.Tasks.ShareExternally',
+        implemented: true, component: SharingTab,
     },
     {
         code: 'risks', title: 'Riskler', icon: 'fa-triangle-exclamation',
