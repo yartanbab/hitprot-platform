@@ -25,6 +25,7 @@ public class SystemHealthPage_Tests : PlatformWebTestBase
 {
     private const string SlowUrl = "/qa-health/Liste";
     private const string FailingUrl = "/qa-health/Detay";
+    private const string RejectedUrl = "/qa-health/Yetkisiz";
 
     private static HtmlDocument Parse(string html)
     {
@@ -87,6 +88,11 @@ public class SystemHealthPage_Tests : PlatformWebTestBase
         // Yoldaki kimlik normalize edilip tek uca toplanmalı.
         await repository.InsertAsync(Build($"{FailingUrl}/{Guid.NewGuid()}", "POST", 30, 500, null));
         await repository.InsertAsync(Build($"{FailingUrl}/{Guid.NewGuid()}", "POST", 30, 500, null));
+
+        // Yetki reddi: ABP istisnayı audit satırına yazar ama bu SUNUCU HATASI değil,
+        // reddedilen istektir — konsolda kendi kanalında görünmeli.
+        await repository.InsertAsync(
+            Build(RejectedUrl, "GET", 13, 403, "Volo.Authorization.AbpAuthorizationException: qa"));
 
         await uow.CompleteAsync();
     }
@@ -197,12 +203,18 @@ public class SystemHealthPage_Tests : PlatformWebTestBase
 
         var facets = list!.SelectNodes(".//button[contains(@class,'apya-health-facet')]");
         facets.ShouldNotBeNull("kanal çipleri basılmadı");
-        facets!.Count.ShouldBe(5);
+        facets!.Count.ShouldBe(6);
+        facets.Any(f => f.GetAttributeValue("data-facet", "") == "rejected")
+            .ShouldBeTrue("istek reddi çipi bekleniyordu");
 
         var rows = list.SelectNodes(".//button[contains(@class,'apya-health-row')]");
         rows.ShouldNotBeNull("tohumlanan hatalar konsolda görünmeli");
         rows!.Any(r => r.GetAttributeValue("data-kind", "") == "4")
             .ShouldBeTrue("sunucu hatası satırı bekleniyordu");
+
+        // 403, "4" kanalına DÜŞMEMELİ; kendi kanalında (6) çıkmalı.
+        rows.Any(r => r.GetAttributeValue("data-kind", "") == "6")
+            .ShouldBeTrue("istek reddi satırı bekleniyordu");
     }
 
     [Fact]

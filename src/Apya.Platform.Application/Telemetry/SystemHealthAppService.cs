@@ -344,11 +344,42 @@ public partial class SystemHealthAppService : ApplicationService, ISystemHealthA
 
     /* ─── Audit toplama — gruplama SQL'de yapılır ──────────────────────────── */
 
-    /// <summary>Hata sayılan istek: exception yazılmış ya da 5xx dönmüş olan.</summary>
+    /// <summary>
+    /// Hata sayılan istek: exception yazılmış ya da 5xx dönmüş olan — <b>4xx hariç</b>.
+    /// <para>
+    /// ABP, ele alınmış istisnaları da (<c>AbpAuthorizationException</c> → 403,
+    /// <c>EntityNotFoundException</c> → 404, <c>AbpValidationException</c> → 400) audit
+    /// satırının <c>Exceptions</c> alanına yazar. Bunlar sunucunun bozulduğu anlamına
+    /// GELMEZ; istek karşılanmamıştır — bkz. <see cref="RejectedRequests"/>. Eskiden
+    /// "exception varsa hatadır" denildiği için sağlık oranının %39'u 4xx'ten geliyordu.
+    /// </para>
+    /// <para>
+    /// Durum kodu NULL ise hangisi olduğu bilinemez; exception varsa hata sayılır.
+    /// </para>
+    /// <b>Bu ölçüt SUM(CASE WHEN) gerektiren yerlerde satır içi tekrarlanır</b>
+    /// (EF <c>Sum</c> içine <c>Where</c> katlayamıyor) — tanım burasıdır, kopyalar
+    /// buraya atıf verir.
+    /// </summary>
     private static IQueryable<AuditLog> FailedRequests(IQueryable<AuditLog> query)
     {
-        return query.Where(a => (a.Exceptions != null && a.Exceptions != "")
-                                || (a.HttpStatusCode != null && a.HttpStatusCode >= 500));
+        return query.Where(a => ((a.Exceptions != null && a.Exceptions != "")
+                                 || (a.HttpStatusCode != null && a.HttpStatusCode >= 500))
+                                && (a.HttpStatusCode == null
+                                    || a.HttpStatusCode < 400
+                                    || a.HttpStatusCode >= 500));
+    }
+
+    /// <summary>
+    /// Reddedilen istek: sunucu doğru çalışmış, isteği 4xx ile geri çevirmiştir
+    /// (401/403 yetki · 404 bulunamadı · 400 doğrulama). Sağlık oranına ve "sistem
+    /// bozuk" kararına GİRMEZ, ama teşhis konsolunda kendi kanalında görünür —
+    /// "kullanıcı sürekli 403 alıyor" başlı başına bir sinyaldir.
+    /// </summary>
+    private static IQueryable<AuditLog> RejectedRequests(IQueryable<AuditLog> query)
+    {
+        return query.Where(a => a.HttpStatusCode != null
+                                && a.HttpStatusCode >= 400
+                                && a.HttpStatusCode < 500);
     }
 
     /// <summary>
@@ -372,8 +403,12 @@ public partial class SystemHealthAppService : ApplicationService, ISystemHealthA
                     TotalDurationMs = g.Sum(x => (long)x.ExecutionDuration),
                     MaxDurationMs   = g.Max(x => x.ExecutionDuration),
                     // Count(predicate) EF'de çevrilmiyor; SUM(CASE WHEN) kullanılır.
-                    ErrorCount = g.Sum(x => (x.Exceptions != null && x.Exceptions != "")
-                                            || (x.HttpStatusCode != null && x.HttpStatusCode >= 500) ? 1 : 0),
+                    // Ölçüt FailedRequests ile AYNI olmalı — 4xx hata sayılmaz.
+                    ErrorCount = g.Sum(x => ((x.Exceptions != null && x.Exceptions != "")
+                                             || (x.HttpStatusCode != null && x.HttpStatusCode >= 500))
+                                            && (x.HttpStatusCode == null
+                                                || x.HttpStatusCode < 400
+                                                || x.HttpStatusCode >= 500) ? 1 : 0),
                     SlowCallCount = g.Sum(x => x.ExecutionDuration >= SlowThresholdMs ? 1 : 0)
                 })
                 // Yola göre KARARLI sıra — çağrı sayısına göre sıralayıp kesmek,
@@ -449,8 +484,12 @@ public partial class SystemHealthAppService : ApplicationService, ISystemHealthA
                     TenantId        = g.Key,
                     RequestCount    = g.Count(),
                     TotalDurationMs = g.Sum(x => (long)x.ExecutionDuration),
-                    ErrorCount      = g.Sum(x => (x.Exceptions != null && x.Exceptions != "")
-                                                 || (x.HttpStatusCode != null && x.HttpStatusCode >= 500) ? 1 : 0),
+                    // Ölçüt FailedRequests ile AYNI olmalı — 4xx hata sayılmaz.
+                    ErrorCount      = g.Sum(x => ((x.Exceptions != null && x.Exceptions != "")
+                                                  || (x.HttpStatusCode != null && x.HttpStatusCode >= 500))
+                                                 && (x.HttpStatusCode == null
+                                                     || x.HttpStatusCode < 400
+                                                     || x.HttpStatusCode >= 500) ? 1 : 0),
                     SlowCallCount   = g.Sum(x => x.ExecutionDuration >= SlowThresholdMs ? 1 : 0)
                 }));
 

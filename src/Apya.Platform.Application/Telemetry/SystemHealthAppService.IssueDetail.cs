@@ -179,13 +179,15 @@ public partial class SystemHealthAppService
         var query = (await _auditLogRepository.GetQueryableAsync())
             .Where(a => a.ExecutionTime >= since);
 
-        // İki tür ayrık kalmalı: hata veren uç sunucu hatasıdır, performans ihlali
-        // olarak ikinci kez sayılmaz (liste tarafıyla aynı ölçüt).
-        query = input.Kind == HealthIssueKind.ServerError
-            ? FailedRequests(query)
-            : query.Where(a => a.ExecutionDuration >= SlowThresholdMs
-                               && (a.Exceptions == null || a.Exceptions == "")
-                               && (a.HttpStatusCode == null || a.HttpStatusCode < 500));
+        // Üç tür ayrık kalmalı; liste tarafıyla AYNI ölçüt (BuildEndpointIssuesAsync).
+        query = input.Kind switch
+        {
+            HealthIssueKind.ServerError     => FailedRequests(query),
+            HealthIssueKind.RequestRejected => RejectedRequests(query),
+            _ => query.Where(a => a.ExecutionDuration >= SlowThresholdMs
+                                  && (a.Exceptions == null || a.Exceptions == "")
+                                  && (a.HttpStatusCode == null || a.HttpStatusCode < 400))
+        };
 
         var scanned = await AsyncExecuter.ToListAsync(
             ApplyEndpointFilter(query, url, input.HttpMethod)
@@ -231,7 +233,7 @@ public partial class SystemHealthAppService
         {
             Key               = $"{(int)input.Kind}|{method}|{url}",
             Kind              = input.Kind,
-            Title             = input.Kind == HealthIssueKind.ServerError ? label : $"Yavaş uç: {label}",
+            Title             = EndpointIssueTitle(input.Kind, label),
             Where             = url,
             HttpMethod        = method,
             HttpStatusCode    = rows.Max(r => r.HttpStatusCode),
@@ -271,7 +273,12 @@ public partial class SystemHealthAppService
             {
                 Label = "Oluşum",
                 Value = issue.OccurrenceCount.ToString(CultureInfo.InvariantCulture),
-                Sub   = issue.Kind == HealthIssueKind.ServerError ? "hatalı istek" : "yavaş çağrı",
+                Sub   = issue.Kind switch
+                {
+                    HealthIssueKind.ServerError     => "hatalı istek",
+                    HealthIssueKind.RequestRejected => "reddedilen istek",
+                    _                               => "yavaş çağrı"
+                },
                 Tone  = issue.Kind == HealthIssueKind.ServerError ? "negative" : "warning"
             },
             new()
@@ -338,8 +345,12 @@ public partial class SystemHealthAppService
                 TenantId          = g.Key,
                 TenantName        = ResolveTenantName(g.Key, tenantNames),
                 RequestCount      = g.Count(),
-                ErrorCount        = g.Count(x => x.HttpStatusCode >= 500
-                                                 || !x.Exceptions.IsNullOrWhiteSpace()),
+                // Ölçüt FailedRequests ile AYNI olmalı — 4xx hata sayılmaz.
+                ErrorCount        = g.Count(x => (x.HttpStatusCode >= 500
+                                                  || !x.Exceptions.IsNullOrWhiteSpace())
+                                                 && (x.HttpStatusCode == null
+                                                     || x.HttpStatusCode < 400
+                                                     || x.HttpStatusCode >= 500)),
                 AverageDurationMs = Math.Round(g.Average(x => (double)x.ExecutionDuration), 1)
             })
             .OrderByDescending(t => t.RequestCount)
