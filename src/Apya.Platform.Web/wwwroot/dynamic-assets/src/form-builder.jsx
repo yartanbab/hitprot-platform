@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
+import { draggableActivation } from './lib/dom/draggableActivation';
 import { api } from './lib/api/httpClient';
 import { Hint } from './components/ui/Hint';
 import './index.css';
@@ -153,7 +154,10 @@ function QuestionCard({ block, index, selected, onSelect, onPatch, onPatchSettin
       onDragStart={() => (dragRef.current = index)}
       onDragOver={(e) => e.preventDefault()}
       onDrop={() => onMove(index)}
-      onClick={() => onSelect(block.id)}
+      /* Seçim `click`te değil pointerdown'da: kart `draggable` olduğu için basılıyken
+         oluşan küçük kayma `click`i tümden yutuyor, kart tek tıklamayla seçilmiyordu.
+         Bkz. lib/dom/draggableActivation.js */
+      {...draggableActivation(() => onSelect(block.id))}
       className={`group relative rounded-2xl border bg-surface-raised p-5 transition ${selected ? 'border-focus shadow-md ring-1 ring-accent-soft' : 'border-default hover:border-strong'}`}
     >
       {/* left accent when selected (Google Forms) */}

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { draggableActivation } from '../../../lib/dom/draggableActivation';
 
 /**
  * Yatay sekme çubuğu (modal görünümü).
@@ -37,20 +38,10 @@ export function TaskFeatureNavbarV3({
                             type="button"
                             draggable
                             title="Sürükleyerek sırayı değiştirin"
-                            /* Seçim POINTERDOWN'da, `click`te DEĞİL: düğme `draggable` olduğu
-                               için fare basılıyken 4px'lik kayma bile yerel sürüklemeyi başlatır
-                               ve `click` HİÇ üretilmez — sekme tek tıklamayla değişmiyor, birkaç
-                               kez basmak gerekiyordu. `draggable`ı kayma eşiğinden sonra açmak
-                               çare değil: tarayıcı sürükleme kararını mousedown anında verir.
-                               DOKUNMA dışarıda — parmak değdiği an pointerdown gelir, çubuk yatay
-                               kaydırılabilir olduğu için kaydırma jesti sekme değişimine dönerdi;
-                               orada yerel sürükleme yok, `click` (ve klavye) güvenilir. Farede
-                               ikisi de çalışır, ikinci çağrı aynı kodla geldiği için etkisiz.
-                               Aynı düzeltme TaskFeatureRailV3'te de var. */
-                            onPointerDown={(e) => {
-                                if (e.pointerType !== 'touch' && e.button === 0) onTabChange(tab.code);
-                            }}
-                            onClick={() => onTabChange(tab.code)}
+                            /* Seçim `click`e bırakılamaz: düğme `draggable` olduğu için fare
+                               basılıyken oluşan küçük kayma `click`i tümden yutuyor, sekme tek
+                               tıklamayla değişmiyordu. Gerekçe: lib/dom/draggableActivation.js */
+                            {...draggableActivation(() => onTabChange(tab.code))}
                             onDragStart={(e) => {
                                 onDragStart(tab.code);
                                 try {

@@ -1,8 +1,9 @@
 import { b as X, j as e, r as c } from "./react-vendor-D57GAUXd.js";
+import { d as ee } from "./draggableActivation-Ybw9Upbh.js";
 import { a as D } from "./httpClient-CRlyQ1eg.js";
-import { H as ee } from "./Hint-CNW95h3H.js";
+import { H as te } from "./Hint-CNW95h3H.js";
 /* empty css               */
-const a = {
+const s = {
   ShortText: 0,
   LongText: 1,
   Select: 2,
@@ -22,38 +23,38 @@ const a = {
   SectionHeader: 16,
   Paragraph: 17,
   Dropdown: 18
-}, z = /* @__PURE__ */ new Set([a.Select, a.MultiSelect, a.Dropdown]), te = /* @__PURE__ */ new Set([a.SectionHeader, a.Paragraph]), Y = [
+}, z = /* @__PURE__ */ new Set([s.Select, s.MultiSelect, s.Dropdown]), ae = /* @__PURE__ */ new Set([s.SectionHeader, s.Paragraph]), Y = [
   { group: "Metin & Sayı", items: [
-    { type: a.ShortText, label: "Kısa Metin", icon: "✏️" },
-    { type: a.LongText, label: "Uzun Metin", icon: "📝" },
-    { type: a.Number, label: "Sayısal", icon: "🔢" },
-    { type: a.Email, label: "E-Posta", icon: "✉️" },
-    { type: a.Phone, label: "Telefon", icon: "📞" }
+    { type: s.ShortText, label: "Kısa Metin", icon: "✏️" },
+    { type: s.LongText, label: "Uzun Metin", icon: "📝" },
+    { type: s.Number, label: "Sayısal", icon: "🔢" },
+    { type: s.Email, label: "E-Posta", icon: "✉️" },
+    { type: s.Phone, label: "Telefon", icon: "📞" }
   ] },
   { group: "Seçim", items: [
-    { type: a.Select, label: "Tekli Seçim", icon: "🔘" },
-    { type: a.MultiSelect, label: "Çoklu Seçim", icon: "☑️" },
-    { type: a.Dropdown, label: "Açılır Liste", icon: "⬇️" }
+    { type: s.Select, label: "Tekli Seçim", icon: "🔘" },
+    { type: s.MultiSelect, label: "Çoklu Seçim", icon: "☑️" },
+    { type: s.Dropdown, label: "Açılır Liste", icon: "⬇️" }
   ] },
   { group: "Tarih & Zaman", items: [
-    { type: a.DatePicker, label: "Tarih", icon: "📅" },
-    { type: a.TimePicker, label: "Saat", icon: "🕐" }
+    { type: s.DatePicker, label: "Tarih", icon: "📅" },
+    { type: s.TimePicker, label: "Saat", icon: "🕐" }
   ] },
   { group: "Özel", items: [
-    { type: a.FilePicker, label: "Dosya Yükleme", icon: "📎" },
-    { type: a.Rating, label: "Derecelendirme", icon: "⭐" },
-    { type: a.Nps, label: "NPS (0-10)", icon: "📊" },
-    { type: a.Signature, label: "İmza", icon: "✍️" },
-    { type: a.Address, label: "Adres", icon: "📍" }
+    { type: s.FilePicker, label: "Dosya Yükleme", icon: "📎" },
+    { type: s.Rating, label: "Derecelendirme", icon: "⭐" },
+    { type: s.Nps, label: "NPS (0-10)", icon: "📊" },
+    { type: s.Signature, label: "İmza", icon: "✍️" },
+    { type: s.Address, label: "Adres", icon: "📍" }
   ] },
   { group: "Düzen", items: [
-    { type: a.SectionHeader, label: "Bölüm Başlığı", icon: "🏷️" },
-    { type: a.Paragraph, label: "Açıklama", icon: "💬" }
+    { type: s.SectionHeader, label: "Bölüm Başlığı", icon: "🏷️" },
+    { type: s.Paragraph, label: "Açıklama", icon: "💬" }
   ] }
 ], E = Object.fromEntries(Y.flatMap((t) => t.items.map((r) => [r.type, r.label]))), $ = () => Math.random().toString(36).slice(2, 10);
 function L(t) {
   const r = { id: $(), type: t, content: E[t] || "Soru", settings: { required: !1 } };
-  return z.has(t) && (r.settings.options = ["Seçenek 1", "Seçenek 2"]), t === a.SectionHeader && (r.content = "Bölüm Başlığı"), t === a.Paragraph && (r.content = "Açıklama metni…"), r;
+  return z.has(t) && (r.settings.options = ["Seçenek 1", "Seçenek 2"]), t === s.SectionHeader && (r.content = "Bölüm Başlığı"), t === s.Paragraph && (r.content = "Açıklama metni…"), r;
 }
 const p = "w-full rounded-xl border border-default bg-surface-raised px-3 py-2 text-sm text-text-primary focus:border-focus focus:outline-none focus:ring-2 focus:ring-accent-soft", K = ({ checked: t, onChange: r, label: n }) => /* @__PURE__ */ e.jsxs("label", { className: "flex items-center gap-2 cursor-pointer select-none", children: [
   /* @__PURE__ */ e.jsx("span", { className: "text-sm font-medium text-text-secondary", children: n }),
@@ -86,43 +87,43 @@ function se({ value: t, onChange: r }) {
     }
   );
 }
-function ae({ block: t }) {
+function re({ block: t }) {
   const r = t.settings || {};
   switch (t.type) {
-    case a.LongText:
+    case s.LongText:
       return /* @__PURE__ */ e.jsx("textarea", { disabled: !0, rows: 3, className: p, placeholder: r.placeholder || "Uzun yanıt…" });
-    case a.Number:
+    case s.Number:
       return /* @__PURE__ */ e.jsx("input", { disabled: !0, type: "number", className: p, placeholder: r.placeholder || "0" });
-    case a.Email:
+    case s.Email:
       return /* @__PURE__ */ e.jsx("input", { disabled: !0, type: "email", className: p, placeholder: r.placeholder || "ornek@firma.com" });
-    case a.Phone:
+    case s.Phone:
       return /* @__PURE__ */ e.jsx("input", { disabled: !0, type: "tel", className: p, placeholder: r.placeholder || "+90 5xx xxx xx xx" });
-    case a.DatePicker:
+    case s.DatePicker:
       return /* @__PURE__ */ e.jsx("input", { disabled: !0, type: "date", className: p });
-    case a.TimePicker:
+    case s.TimePicker:
       return /* @__PURE__ */ e.jsx("input", { disabled: !0, type: "time", className: p });
-    case a.FilePicker:
+    case s.FilePicker:
       return /* @__PURE__ */ e.jsx("div", { className: "rounded-xl border-2 border-dashed border-default px-3 py-6 text-center text-sm text-text-tertiary", children: "📎 Dosya seç / sürükle" });
-    case a.Dropdown:
+    case s.Dropdown:
       return /* @__PURE__ */ e.jsx("select", { disabled: !0, className: p, children: (r.options || []).map((n, d) => /* @__PURE__ */ e.jsx("option", { children: n }, d)) });
-    case a.Rating:
+    case s.Rating:
       return /* @__PURE__ */ e.jsx("div", { className: "flex gap-1 text-2xl text-warning", children: "★★★★★" });
-    case a.Nps:
+    case s.Nps:
       return /* @__PURE__ */ e.jsx("div", { className: "flex flex-wrap gap-1", children: Array.from({ length: 11 }, (n, d) => /* @__PURE__ */ e.jsx("span", { className: "flex h-8 w-8 items-center justify-center rounded-lg border border-default text-xs text-text-secondary", children: d }, d)) });
-    case a.Signature:
+    case s.Signature:
       return /* @__PURE__ */ e.jsx("div", { className: "rounded-xl border-2 border-dashed border-default px-3 py-8 text-center text-sm text-text-tertiary", children: "✍️ İmza alanı" });
-    case a.Address:
+    case s.Address:
       return /* @__PURE__ */ e.jsx("div", { className: "grid grid-cols-2 gap-2", children: ["Adres satırı", "İlçe", "İl", "Posta kodu"].map((n) => /* @__PURE__ */ e.jsx("input", { disabled: !0, className: p, placeholder: n }, n)) });
-    case a.TableGrid:
+    case s.TableGrid:
       return /* @__PURE__ */ e.jsx("div", { className: "rounded-xl border border-default p-3 text-sm text-text-tertiary", children: "▦ Tablo ızgarası" });
-    case a.RichText:
+    case s.RichText:
       return /* @__PURE__ */ e.jsx("div", { className: "rounded-xl border border-default p-3 text-sm text-text-tertiary", children: "𝐁 Zengin metin" });
     default:
       return /* @__PURE__ */ e.jsx("input", { disabled: !0, className: p, placeholder: r.placeholder || "Kısa yanıt…" });
   }
 }
-function re({ block: t, index: r, selected: n, onSelect: d, onPatch: P, onPatchSettings: h, onChangeType: T, onDuplicate: y, onRemove: B, onAddAfter: N, onMove: k, dragRef: S }) {
-  const f = t.settings || {}, j = te.has(t.type);
+function ne({ block: t, index: r, selected: n, onSelect: d, onPatch: P, onPatchSettings: h, onChangeType: T, onDuplicate: y, onRemove: B, onAddAfter: N, onMove: k, dragRef: S }) {
+  const f = t.settings || {}, j = ae.has(t.type);
   return /* @__PURE__ */ e.jsxs(
     "div",
     {
@@ -130,7 +131,7 @@ function re({ block: t, index: r, selected: n, onSelect: d, onPatch: P, onPatchS
       onDragStart: () => S.current = r,
       onDragOver: (l) => l.preventDefault(),
       onDrop: () => k(r),
-      onClick: () => d(t.id),
+      ...ee(() => d(t.id)),
       className: `group relative rounded-2xl border bg-surface-raised p-5 transition ${n ? "border-focus shadow-md ring-1 ring-accent-soft" : "border-default hover:border-strong"}`,
       children: [
         n && /* @__PURE__ */ e.jsx("span", { className: "absolute inset-y-0 left-0 w-1 rounded-l-2xl bg-accent" }),
@@ -142,8 +143,8 @@ function re({ block: t, index: r, selected: n, onSelect: d, onPatch: P, onPatchS
               value: t.content,
               onClick: (l) => l.stopPropagation(),
               onChange: (l) => P(t.id, { content: l.target.value }),
-              placeholder: t.type === a.SectionHeader ? "Bölüm başlığı" : "Açıklama metni",
-              className: `flex-1 border-none bg-transparent p-0 focus:outline-none focus:ring-0 ${t.type === a.SectionHeader ? "text-xl font-bold text-text-primary" : "text-sm text-text-secondary"}`
+              placeholder: t.type === s.SectionHeader ? "Bölüm başlığı" : "Açıklama metni",
+              className: `flex-1 border-none bg-transparent p-0 focus:outline-none focus:ring-0 ${t.type === s.SectionHeader ? "text-xl font-bold text-text-primary" : "text-sm text-text-secondary"}`
             }
           ) : /* @__PURE__ */ e.jsx(
             "input",
@@ -160,7 +161,7 @@ function re({ block: t, index: r, selected: n, onSelect: d, onPatch: P, onPatchS
         ] }),
         n && z.has(t.type) && /* @__PURE__ */ e.jsxs("div", { className: "mt-4 flex flex-col gap-2", children: [
           (f.options || []).map((l, b) => /* @__PURE__ */ e.jsxs("div", { className: "flex items-center gap-2", onClick: (m) => m.stopPropagation(), children: [
-            /* @__PURE__ */ e.jsx("span", { className: "text-text-tertiary", children: t.type === a.MultiSelect ? "☐" : "○" }),
+            /* @__PURE__ */ e.jsx("span", { className: "text-text-tertiary", children: t.type === s.MultiSelect ? "☐" : "○" }),
             /* @__PURE__ */ e.jsx(
               "input",
               {
@@ -185,7 +186,7 @@ function re({ block: t, index: r, selected: n, onSelect: d, onPatch: P, onPatchS
             }
           )
         ] }),
-        !j && !z.has(t.type) && /* @__PURE__ */ e.jsx("div", { className: "mt-4", onClick: (l) => l.stopPropagation(), children: /* @__PURE__ */ e.jsx(ae, { block: t }) }),
+        !j && !z.has(t.type) && /* @__PURE__ */ e.jsx("div", { className: "mt-4", onClick: (l) => l.stopPropagation(), children: /* @__PURE__ */ e.jsx(re, { block: t }) }),
         n && !j && /* @__PURE__ */ e.jsxs("div", { className: "mt-4 grid grid-cols-1 gap-3 border-t border-subtle pt-4 sm:grid-cols-2", onClick: (l) => l.stopPropagation(), children: [
           /* @__PURE__ */ e.jsxs("div", { children: [
             /* @__PURE__ */ e.jsx("label", { className: "mb-1 block text-[11px] font-semibold uppercase text-text-tertiary", children: "Placeholder" }),
@@ -195,7 +196,7 @@ function re({ block: t, index: r, selected: n, onSelect: d, onPatch: P, onPatchS
             /* @__PURE__ */ e.jsx("label", { className: "mb-1 block text-[11px] font-semibold uppercase text-text-tertiary", children: "Yardım Metni" }),
             /* @__PURE__ */ e.jsx("input", { className: p, value: f.helpText || "", onChange: (l) => h(t.id, { helpText: l.target.value }) })
           ] }),
-          (t.type === a.Number || t.type === a.Rating) && /* @__PURE__ */ e.jsxs(e.Fragment, { children: [
+          (t.type === s.Number || t.type === s.Rating) && /* @__PURE__ */ e.jsxs(e.Fragment, { children: [
             /* @__PURE__ */ e.jsxs("div", { children: [
               /* @__PURE__ */ e.jsx("label", { className: "mb-1 block text-[11px] font-semibold uppercase text-text-tertiary", children: "Min" }),
               /* @__PURE__ */ e.jsx("input", { type: "number", className: p, value: f.min ?? "", onChange: (l) => h(t.id, { min: l.target.value === "" ? null : Number(l.target.value) }) })
@@ -220,56 +221,56 @@ function re({ block: t, index: r, selected: n, onSelect: d, onPatch: P, onPatchS
     }
   );
 }
-function ne() {
+function le() {
   const t = c.useMemo(() => new URLSearchParams(window.location.search).get("id"), []), [r, n] = c.useState(t), [d, P] = c.useState(""), [h, T] = c.useState(!1), [y, B] = c.useState(""), [N, k] = c.useState(""), [S, f] = c.useState(null), [j, l] = c.useState([]), [b, m] = c.useState([]), [w, v] = c.useState(null), [F, u] = c.useState(!1), [O, H] = c.useState(!!t), R = c.useRef(null);
   c.useEffect(() => {
-    D.get("/api/app/form-category?MaxResultCount=100").then((s) => l(s.items || [])).catch(() => {
+    D.get("/api/app/form-category?MaxResultCount=100").then((a) => l(a.items || [])).catch(() => {
     });
   }, []), c.useEffect(() => {
     t && (async () => {
       try {
-        const s = await D.get(`/api/app/form/${t}`);
-        B(s.title || ""), P(s.slug || ""), k(s.description || ""), f(s.categoryId || null), m((s.blocks || []).slice().sort((o, i) => o.order - i.order).map((o) => ({
+        const a = await D.get(`/api/app/form/${t}`);
+        B(a.title || ""), P(a.slug || ""), k(a.description || ""), f(a.categoryId || null), m((a.blocks || []).slice().sort((o, i) => o.order - i.order).map((o) => ({
           id: o.id || $(),
           type: o.type,
           content: o.content,
-          settings: oe(o.settings)
+          settings: ie(o.settings)
         })));
-      } catch (s) {
-        C("error", (s == null ? void 0 : s.message) || "Form yüklenemedi.");
+      } catch (a) {
+        C("error", (a == null ? void 0 : a.message) || "Form yüklenemedi.");
       } finally {
         H(!1);
       }
     })();
   }, [t]);
-  const U = (s = a.ShortText) => {
-    const o = L(s);
+  const U = (a = s.ShortText) => {
+    const o = L(a);
     m((i) => [...i, o]), v(o.id);
-  }, J = (s) => {
-    const o = L(a.ShortText);
+  }, J = (a) => {
+    const o = L(s.ShortText);
     m((i) => {
-      const x = i.findIndex((A) => A.id === s), g = [...i];
+      const x = i.findIndex((A) => A.id === a), g = [...i];
       return g.splice(x + 1, 0, o), g;
     }), v(o.id);
-  }, _ = (s) => m((o) => o.filter((i) => i.id !== s)), q = (s) => m((o) => {
-    const i = o.findIndex((A) => A.id === s);
+  }, _ = (a) => m((o) => o.filter((i) => i.id !== a)), q = (a) => m((o) => {
+    const i = o.findIndex((A) => A.id === a);
     if (i < 0) return o;
     const x = { ...o[i], id: $(), settings: { ...o[i].settings } }, g = [...o];
     return g.splice(i + 1, 0, x), g;
-  }), G = (s, o) => m((i) => i.map((x) => x.id === s ? { ...x, ...o } : x)), Z = (s, o) => m((i) => i.map((x) => x.id === s ? { ...x, settings: { ...x.settings, ...o } } : x)), V = (s, o) => m((i) => i.map((x) => {
-    if (x.id !== s) return x;
+  }), G = (a, o) => m((i) => i.map((x) => x.id === a ? { ...x, ...o } : x)), Z = (a, o) => m((i) => i.map((x) => x.id === a ? { ...x, settings: { ...x.settings, ...o } } : x)), V = (a, o) => m((i) => i.map((x) => {
+    if (x.id !== a) return x;
     const g = { ...x.settings };
     return z.has(o) && !g.options && (g.options = ["Seçenek 1", "Seçenek 2"]), { ...x, type: o, settings: g };
-  })), Q = (s, o) => m((i) => {
+  })), Q = (a, o) => m((i) => {
     const x = o ?? R.current;
-    if (R.current = null, x == null || s < 0 || s >= i.length || x === s) return i;
+    if (R.current = null, x == null || a < 0 || a >= i.length || x === a) return i;
     const g = [...i], [A] = g.splice(x, 1);
-    return g.splice(s, 0, A), g;
-  }), I = () => b.map((s, o) => ({
-    type: s.type,
+    return g.splice(a, 0, A), g;
+  }), I = () => b.map((a, o) => ({
+    type: a.type,
     order: o + 1,
-    content: s.content || E[s.type] || "Soru",
-    settings: JSON.stringify(s.settings || {})
+    content: a.content || E[a.type] || "Soru",
+    settings: JSON.stringify(a.settings || {})
   })), W = async () => {
     if (!y.trim()) return C("warn", "Lütfen forma bir başlık verin.");
     u(!0);
@@ -277,13 +278,13 @@ function ne() {
       if (r)
         await D.put(`/api/app/form/${r}`, { title: y.trim(), description: N.trim() || null, categoryId: S, themeJson: null, blocks: [] }), await D.put(`/api/app/form/${r}/blocks`, { blocks: I() }), C("success", "Form kaydedildi.");
       else {
-        const s = await D.post("/api/app/form", { title: y.trim(), description: N.trim() || null, categoryId: S, themeJson: null, blocks: I() });
-        n(s.id), P(s.slug || "");
+        const a = await D.post("/api/app/form", { title: y.trim(), description: N.trim() || null, categoryId: S, themeJson: null, blocks: I() });
+        n(a.id), P(a.slug || "");
         const o = new URL(window.location.href);
-        o.searchParams.set("id", s.id), window.history.replaceState({}, "", o), C("success", "Form oluşturuldu.");
+        o.searchParams.set("id", a.id), window.history.replaceState({}, "", o), C("success", "Form oluşturuldu.");
       }
-    } catch (s) {
-      C("error", (s == null ? void 0 : s.message) || "Kaydetme başarısız.");
+    } catch (a) {
+      C("error", (a == null ? void 0 : a.message) || "Kaydetme başarısız.");
     } finally {
       u(!1);
     }
@@ -306,30 +307,30 @@ function ne() {
     /* @__PURE__ */ e.jsxs("div", { className: "mx-auto max-w-2xl px-4 py-6", children: [
       /* @__PURE__ */ e.jsxs("div", { className: "relative mb-4 overflow-hidden rounded-2xl border border-default bg-surface-raised p-6", children: [
         /* @__PURE__ */ e.jsx("span", { className: "absolute inset-x-0 top-0 h-1.5 bg-accent" }),
-        /* @__PURE__ */ e.jsx("input", { value: y, onChange: (s) => B(s.target.value), placeholder: "Form başlığı…", className: "w-full border-none bg-transparent p-0 text-3xl font-bold text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-0" }),
-        /* @__PURE__ */ e.jsx("input", { value: N, onChange: (s) => k(s.target.value), placeholder: "Form açıklaması (opsiyonel)…", className: "mt-2 w-full border-none bg-transparent p-0 text-sm text-text-secondary placeholder:text-text-tertiary focus:outline-none focus:ring-0" }),
+        /* @__PURE__ */ e.jsx("input", { value: y, onChange: (a) => B(a.target.value), placeholder: "Form başlığı…", className: "w-full border-none bg-transparent p-0 text-3xl font-bold text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-0" }),
+        /* @__PURE__ */ e.jsx("input", { value: N, onChange: (a) => k(a.target.value), placeholder: "Form açıklaması (opsiyonel)…", className: "mt-2 w-full border-none bg-transparent p-0 text-sm text-text-secondary placeholder:text-text-tertiary focus:outline-none focus:ring-0" }),
         /* @__PURE__ */ e.jsxs(
           "select",
           {
             value: S || "",
-            onChange: (s) => f(s.target.value || null),
+            onChange: (a) => f(a.target.value || null),
             className: "mt-3 rounded-lg border border-default bg-surface-sunken px-3 py-1.5 text-xs font-semibold text-text-secondary focus:border-accent focus:outline-none",
             children: [
               /* @__PURE__ */ e.jsx("option", { value: "", children: "Kategorisiz" }),
-              j.map((s) => /* @__PURE__ */ e.jsxs("option", { value: s.id, children: [
-                s.icon ? `${s.icon} ` : "",
-                s.name
-              ] }, s.id))
+              j.map((a) => /* @__PURE__ */ e.jsxs("option", { value: a.id, children: [
+                a.icon ? `${a.icon} ` : "",
+                a.name
+              ] }, a.id))
             ]
           }
         )
       ] }),
-      /* @__PURE__ */ e.jsx("div", { className: "flex flex-col gap-3", children: b.map((s, o) => /* @__PURE__ */ e.jsx(
-        re,
+      /* @__PURE__ */ e.jsx("div", { className: "flex flex-col gap-3", children: b.map((a, o) => /* @__PURE__ */ e.jsx(
+        ne,
         {
-          block: s,
+          block: a,
           index: o,
-          selected: s.id === w,
+          selected: a.id === w,
           onSelect: v,
           onPatch: G,
           onPatchSettings: Z,
@@ -340,15 +341,15 @@ function ne() {
           onMove: Q,
           dragRef: R
         },
-        s.id
+        a.id
       )) }),
-      /* @__PURE__ */ e.jsx("button", { onClick: () => U(a.ShortText), className: "mt-4 flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-default py-4 text-sm font-bold text-text-secondary transition hover:border-focus hover:text-accent", children: "+ Soru Ekle" }),
+      /* @__PURE__ */ e.jsx("button", { onClick: () => U(s.ShortText), className: "mt-4 flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-default py-4 text-sm font-bold text-text-secondary transition hover:border-focus hover:text-accent", children: "+ Soru Ekle" }),
       b.length === 0 && /* @__PURE__ */ e.jsx("p", { className: "mt-3 text-center text-sm text-text-tertiary", children: "Başlamak için bir soru ekleyin." })
     ] }),
-    h && /* @__PURE__ */ e.jsx(le, { formId: r, slug: d, onClose: () => T(!1) })
+    h && /* @__PURE__ */ e.jsx(oe, { formId: r, slug: d, onClose: () => T(!1) })
   ] });
 }
-function le({ formId: t, slug: r, onClose: n }) {
+function oe({ formId: t, slug: r, onClose: n }) {
   const [d, P] = c.useState(r || ""), [h, T] = c.useState(""), [y, B] = c.useState(""), [N, k] = c.useState(!1), [S, f] = c.useState(!1), [j, l] = c.useState(!1), [b, m] = c.useState(null), w = async () => {
     l(!0);
     try {
@@ -399,14 +400,14 @@ function le({ formId: t, slug: r, onClose: n }) {
       /* @__PURE__ */ e.jsx(K, { label: "KVKK onayı iste", checked: N, onChange: k }),
       /* @__PURE__ */ e.jsx(K, { label: "Bot koruması", checked: S, onChange: f }),
       /* @__PURE__ */ e.jsxs("div", { className: "-mt-2 flex items-start gap-1 text-[11px] text-text-tertiary", children: [
-        /* @__PURE__ */ e.jsx(ee, { text: "Başlangıç/Bitiş tarihi form penceresini sınırlar (dışında form kapalı). KVKK onayı açıkken genel formda zorunlu onay kutusu çıkar ve rıza kaydı tutulur. Bot koruması honeypot + minimum doldurma süresiyle otomatik gönderimleri eler (üçüncü taraf servis kullanılmaz)." }),
+        /* @__PURE__ */ e.jsx(te, { text: "Başlangıç/Bitiş tarihi form penceresini sınırlar (dışında form kapalı). KVKK onayı açıkken genel formda zorunlu onay kutusu çıkar ve rıza kaydı tutulur. Bot koruması honeypot + minimum doldurma süresiyle otomatik gönderimleri eler (üçüncü taraf servis kullanılmaz)." }),
         /* @__PURE__ */ e.jsx("span", { children: "Bu ayarlar sunucu tarafında uygulanır" })
       ] }),
       /* @__PURE__ */ e.jsx("button", { onClick: w, disabled: j, className: "mt-2 rounded-xl bg-accent px-5 py-2.5 text-sm font-bold text-white hover:bg-accent-600 disabled:opacity-50", children: j ? "Yayınlanıyor…" : "Yayınla" })
     ] })
   ] }) });
 }
-function oe(t) {
+function ie(t) {
   if (!t) return { required: !1 };
   try {
     return typeof t == "string" ? JSON.parse(t) : t;
@@ -419,4 +420,4 @@ function C(t, r) {
   n != null && n.notify && (t === "success" || t === "info") ? n.notify[t === "success" ? "success" : "info"](r) : n != null && n.message ? n.message[t === "error" ? "error" : t === "warn" ? "warn" : "info"](r) : console.log(`[${t}] ${r}`);
 }
 const M = document.getElementById("dynamic-assets-app-root");
-M && X(M).render(/* @__PURE__ */ e.jsx(ne, {}));
+M && X(M).render(/* @__PURE__ */ e.jsx(le, {}));

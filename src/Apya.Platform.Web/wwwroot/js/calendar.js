@@ -4,6 +4,7 @@ import { D as jt } from "./useDeviceMode-Dk7fb2QY.js";
 import { a as Nt } from "./QueryProvider-AIUp_Zk5.js";
 import { E as de } from "./EmptyState-Bhcx2Wdd.js";
 import { a as K } from "./httpClient-CRlyQ1eg.js";
+import { d as wt } from "./draggableActivation-Ybw9Upbh.js";
 import { u as W, b as _, a as ee } from "./query-vendor-Bf69L2iP.js";
 /* empty css               */
 const P = {
@@ -14,13 +15,13 @@ const P = {
   5: { key: "income", label: "Gelir", plural: "gelir", icon: "fa-arrow-trend-up", railLabel: "Gider / gelir" },
   6: { key: "cash", label: "Kasa hareketi", plural: "kasa hareketi", icon: "fa-wallet", railLabel: "Nakit hareketleri" },
   7: { key: "external", label: "Dış etkinlik", plural: "dış etkinlik", icon: "fa-calendar-days", railLabel: "Dış etkinlikler" }
-}, le = [1, 2, 3, 4, 5, 6, 7], wt = [
+}, le = [1, 2, 3, 4, 5, 6, 7], St = [
   { key: "task", sources: [1] },
   { key: "invoice", sources: [2] },
   { key: "grant", sources: [3] },
   { key: "money", sources: [4, 5] },
   { key: "cash", sources: [6] }
-], Se = [1, 2, 3, 4, 5, 6], O = { DUE_TODAY: 1, OVERDUE: 2 }, St = (t) => t.risk === O.OVERDUE || t.risk === O.DUE_TODAY, et = 864e5, De = (t) => new Date(t.getFullYear(), t.getMonth(), t.getDate()), L = (t, a) => new Date(t.getFullYear(), t.getMonth(), t.getDate() + a);
+], Se = [1, 2, 3, 4, 5, 6], O = { DUE_TODAY: 1, OVERDUE: 2 }, Dt = (t) => t.risk === O.OVERDUE || t.risk === O.DUE_TODAY, et = 864e5, De = (t) => new Date(t.getFullYear(), t.getMonth(), t.getDate()), L = (t, a) => new Date(t.getFullYear(), t.getMonth(), t.getDate() + a);
 function T(t) {
   const a = (s) => (s < 10 ? "0" : "") + s;
   return `${t.getFullYear()}-${a(t.getMonth() + 1)}-${a(t.getDate())}`;
@@ -34,10 +35,10 @@ function at(t) {
   const a = tt(t);
   return Array.from({ length: $e }, (s, r) => new Date(a.getTime() + r * et));
 }
-const Dt = new Intl.DateTimeFormat("tr-TR", { month: "long", year: "numeric" }), Ct = new Intl.DateTimeFormat("tr-TR", { day: "numeric", month: "long", weekday: "long" }), Tt = new Intl.DateTimeFormat("tr-TR", { day: "numeric", month: "short" }), w = {
-  monthTitle: (t) => Dt.format(t),
-  dayTitle: (t) => Ct.format(t),
-  dayShort: (t) => Tt.format(t),
+const Ct = new Intl.DateTimeFormat("tr-TR", { month: "long", year: "numeric" }), Tt = new Intl.DateTimeFormat("tr-TR", { day: "numeric", month: "long", weekday: "long" }), Et = new Intl.DateTimeFormat("tr-TR", { day: "numeric", month: "short" }), w = {
+  monthTitle: (t) => Ct.format(t),
+  dayTitle: (t) => Tt.format(t),
+  dayShort: (t) => Et.format(t),
   /** Tam tutar — panel ve ajanda satırlarında. */
   money: (t, a = "TRY") => {
     try {
@@ -74,59 +75,59 @@ function st(t) {
   return a;
 }
 const ge = (t) => (t ?? []).reduce((a, s) => a + (s.loadHours ?? 0), 0);
-function Et(t, { maxPills: a = 3, maxRiskPills: s = 2 } = {}) {
+function $t(t, { maxPills: a = 3, maxRiskPills: s = 2 } = {}) {
   const r = t ?? [];
   if (r.length === 0) return { pills: [], summaries: [] };
   if (r.length <= a) return { pills: r, summaries: [] };
-  const p = r.filter(St).slice(0, s), x = new Set(p.map((l) => l.key)), d = /* @__PURE__ */ new Map();
-  for (const l of r) {
-    if (x.has(l.key)) continue;
-    const b = d.get(l.source) ?? { source: l.source, count: 0, amount: 0, hasAmount: !1, only: null };
-    b.count += 1, b.only = b.count === 1 ? l : null, l.amount != null && (b.amount += l.amount, b.hasAmount = !0), d.set(l.source, b);
+  const p = r.filter(Dt).slice(0, s), x = new Set(p.map((n) => n.key)), d = /* @__PURE__ */ new Map();
+  for (const n of r) {
+    if (x.has(n.key)) continue;
+    const b = d.get(n.source) ?? { source: n.source, count: 0, amount: 0, hasAmount: !1, only: null };
+    b.count += 1, b.only = b.count === 1 ? n : null, n.amount != null && (b.amount += n.amount, b.hasAmount = !0), d.set(n.source, b);
   }
   const m = [];
-  for (const l of le) {
-    const b = d.get(l);
+  for (const n of le) {
+    const b = d.get(n);
     b && (b.count === 1 && b.only ? p.push(b.only) : m.push(b));
   }
   return { pills: p, summaries: m };
 }
-function $t(t, { compact: a = !0 } = {}) {
+function Rt(t, { compact: a = !0 } = {}) {
   const s = P[t.source], r = `${t.count} ${s ? s.plural : "öğe"}`;
   if (!t.hasAmount) return r;
-  const n = a ? w.moneyCompact(t.amount) : w.money(t.amount);
-  return `${r} · ${n}`;
+  const i = a ? w.moneyCompact(t.amount) : w.money(t.amount);
+  return `${r} · ${i}`;
 }
 function rt(t, a) {
-  const s = T(a), r = (t ?? []).filter((m) => !m.isDone), n = r.filter((m) => m.date.slice(0, 10) < s && m.risk === O.OVERDUE), p = r.filter((m) => m.date.slice(0, 10) >= s), x = st(p), d = Object.keys(x).sort().map((m) => ({
+  const s = T(a), r = (t ?? []).filter((m) => !m.isDone), i = r.filter((m) => m.date.slice(0, 10) < s && m.risk === O.OVERDUE), p = r.filter((m) => m.date.slice(0, 10) >= s), x = st(p), d = Object.keys(x).sort().map((m) => ({
     key: m,
     date: /* @__PURE__ */ new Date(`${m}T00:00:00`),
     isToday: m === s,
     items: x[m]
   }));
-  return { overdue: n, days: d };
+  return { overdue: i, days: d };
 }
-function Rt(t) {
+function At(t) {
   const a = Ee(De(t));
   return Array.from({ length: 7 }, (s, r) => L(a, r));
 }
-const At = new Intl.DateTimeFormat("tr-TR", { hour: "2-digit", minute: "2-digit" }), je = (t) => t ? At.format(new Date(t)) : "";
+const zt = new Intl.DateTimeFormat("tr-TR", { hour: "2-digit", minute: "2-digit" }), je = (t) => t ? zt.format(new Date(t)) : "";
 function fe(t) {
   const a = new Date(t);
   return a.getHours() * 60 + a.getMinutes();
 }
-function zt(t) {
+function Kt(t) {
   let a = 8, s = 18;
   for (const r of t ?? [])
     r.startTime && (a = Math.min(a, Math.floor(fe(r.startTime) / 60)), s = Math.max(s, Math.ceil(fe(r.endTime ?? r.startTime) / 60)));
   return { start: Math.max(0, a), end: Math.min(24, Math.max(s, a + 4)) };
 }
 const Ye = (t) => !!t.startTime, Ue = (t) => t.getDay() === 0 || t.getDay() === 6;
-function Kt(t, { today: a, capacity: s = null, horizonDays: r = 21, fallbackPerDay: n = 3 } = {}) {
-  const p = T(a), x = (t ?? []).filter((f) => !f.isDone), d = x.filter((f) => f.date.slice(0, 10) < p && f.risk === O.OVERDUE), m = d.filter((f) => f.canReschedule), l = d.filter((f) => !f.canReschedule), b = {}, i = {};
+function It(t, { today: a, capacity: s = null, horizonDays: r = 21, fallbackPerDay: i = 3 } = {}) {
+  const p = T(a), x = (t ?? []).filter((f) => !f.isDone), d = x.filter((f) => f.date.slice(0, 10) < p && f.risk === O.OVERDUE), m = d.filter((f) => f.canReschedule), n = d.filter((f) => !f.canReschedule), b = {}, l = {};
   for (const f of x) {
     const u = f.date.slice(0, 10);
-    u < p || (b[u] = (b[u] ?? 0) + (f.loadHours ?? 0), i[u] = (i[u] ?? 0) + 1);
+    u < p || (b[u] = (b[u] ?? 0) + (f.loadHours ?? 0), l[u] = (l[u] ?? 0) + 1);
   }
   const c = [];
   let o = 0;
@@ -138,9 +139,9 @@ function Kt(t, { today: a, capacity: s = null, horizonDays: r = 21, fallbackPerD
         o += 1;
         continue;
       }
-      const N = T(h), $ = b[N] ?? 0, E = i[N] ?? 0, j = f.loadHours ?? 0, y = s && j > s;
-      if (s && !y ? $ + j <= s : E < n) {
-        b[N] = $ + j, i[N] = E + 1, u = h;
+      const N = T(h), $ = b[N] ?? 0, E = l[N] ?? 0, j = f.loadHours ?? 0, y = s && j > s;
+      if (s && !y ? $ + j <= s : E < i) {
+        b[N] = $ + j, l[N] = E + 1, u = h;
         break;
       }
       o += 1;
@@ -152,14 +153,14 @@ function Kt(t, { today: a, capacity: s = null, horizonDays: r = 21, fallbackPerD
     }
     c.push({ item: f, date: u });
   }
-  return { suggestions: c, fixed: l };
+  return { suggestions: c, fixed: n };
 }
-const It = {
+const Ot = {
   [O.OVERDUE]: { label: "Gecikmiş", className: "bg-negative-50 text-negative-700" },
   [O.DUE_TODAY]: { label: "Bugün son gün", className: "bg-warning-50 text-warning-700" }
 };
 function Ce({ item: t, onSelect: a, showDate: s = !1 }) {
-  const r = P[t.source], n = It[t.risk];
+  const r = P[t.source], i = Ot[t.risk];
   return /* @__PURE__ */ e.jsxs(
     "button",
     {
@@ -187,14 +188,14 @@ function Ce({ item: t, onSelect: a, showDate: s = !1 }) {
             t.amount != null ? w.money(t.amount, t.currency) : null
           ].filter(Boolean).join(" · ") || (r ? r.label : "") })
         ] }),
-        n && /* @__PURE__ */ e.jsx("span", { className: k("shrink-0 rounded-sm px-1.5 py-0.5 text-[10px] font-bold", n.className), children: n.label })
+        i && /* @__PURE__ */ e.jsx("span", { className: k("shrink-0 rounded-sm px-1.5 py-0.5 text-[10px] font-bold", i.className), children: i.label })
       ]
     }
   );
 }
-function Ot({ items: t, today: a, onSelectItem: s, onSmartDefer: r }) {
-  const { overdue: n, days: p } = rt(t, a);
-  return n.length === 0 && p.length === 0 ? /* @__PURE__ */ e.jsx("div", { className: "rounded-card border border-subtle bg-surface-base p-6", children: /* @__PURE__ */ e.jsx(
+function Pt({ items: t, today: a, onSelectItem: s, onSmartDefer: r }) {
+  const { overdue: i, days: p } = rt(t, a);
+  return i.length === 0 && p.length === 0 ? /* @__PURE__ */ e.jsx("div", { className: "rounded-card border border-subtle bg-surface-base p-6", children: /* @__PURE__ */ e.jsx(
     de,
     {
       icon: /* @__PURE__ */ e.jsx("i", { className: "fa fa-mug-hot" }),
@@ -202,10 +203,10 @@ function Ot({ items: t, today: a, onSelectItem: s, onSmartDefer: r }) {
       description: "Son tarihli görevler, fatura vadeleri ve tarihli finans kayıtları burada öncelik sırasıyla listelenir."
     }
   ) }) : /* @__PURE__ */ e.jsxs("div", { className: "flex flex-col gap-4", children: [
-    n.length > 0 && /* @__PURE__ */ e.jsxs("section", { className: "rounded-card border border-negative-100 bg-surface-base", children: [
+    i.length > 0 && /* @__PURE__ */ e.jsxs("section", { className: "rounded-card border border-negative-100 bg-surface-base", children: [
       /* @__PURE__ */ e.jsxs("header", { className: "flex items-center gap-2 border-b border-negative-100 px-3 py-2", children: [
         /* @__PURE__ */ e.jsx("span", { className: "text-[11px] font-bold uppercase tracking-wider text-negative-700", children: "Gecikmiş" }),
-        /* @__PURE__ */ e.jsx("span", { className: "font-mono text-[11px] font-semibold tabular-nums text-negative-700", children: n.length }),
+        /* @__PURE__ */ e.jsx("span", { className: "font-mono text-[11px] font-semibold tabular-nums text-negative-700", children: i.length }),
         r && /* @__PURE__ */ e.jsx(
           "button",
           {
@@ -216,7 +217,7 @@ function Ot({ items: t, today: a, onSelectItem: s, onSmartDefer: r }) {
           }
         )
       ] }),
-      /* @__PURE__ */ e.jsx("div", { className: "p-1", children: n.map((x) => /* @__PURE__ */ e.jsx(Ce, { item: x, onSelect: s, showDate: !0 }, x.key)) })
+      /* @__PURE__ */ e.jsx("div", { className: "p-1", children: i.map((x) => /* @__PURE__ */ e.jsx(Ce, { item: x, onSelect: s, showDate: !0 }, x.key)) })
     ] }),
     p.map((x) => /* @__PURE__ */ e.jsxs("section", { className: "rounded-card border border-subtle bg-surface-base", children: [
       /* @__PURE__ */ e.jsxs("header", { className: k(
@@ -236,22 +237,22 @@ function Ot({ items: t, today: a, onSelectItem: s, onSmartDefer: r }) {
     ] }, x.key))
   ] });
 }
-function Pt({ dayKey: t, items: a, capacity: s, onSelectItem: r, onClose: n }) {
-  const p = /* @__PURE__ */ new Date(`${t}T00:00:00`), x = ge(a), d = s && x > s, m = a.reduce((l, b) => (l[b.source] = (l[b.source] ?? 0) + 1, l), {});
+function Mt({ dayKey: t, items: a, capacity: s, onSelectItem: r, onClose: i }) {
+  const p = /* @__PURE__ */ new Date(`${t}T00:00:00`), x = ge(a), d = s && x > s, m = a.reduce((n, b) => (n[b.source] = (n[b.source] ?? 0) + 1, n), {});
   return /* @__PURE__ */ e.jsxs("aside", { className: "flex h-full flex-col overflow-hidden rounded-card border border-subtle bg-surface-base", children: [
     /* @__PURE__ */ e.jsxs("header", { className: "flex items-start justify-between gap-2 border-b border-subtle px-3 py-2.5", children: [
       /* @__PURE__ */ e.jsxs("div", { className: "min-w-0", children: [
         /* @__PURE__ */ e.jsx("p", { className: "truncate text-[13px] font-semibold text-text-primary", children: w.dayTitle(p) }),
-        /* @__PURE__ */ e.jsx("p", { className: "mt-0.5 truncate text-[11.5px] text-text-tertiary", children: Object.keys(m).length === 0 ? "Planlanmış öğe yok" : Object.entries(m).map(([l, b]) => {
-          var i;
-          return `${b} ${((i = P[l]) == null ? void 0 : i.plural) ?? "öğe"}`;
+        /* @__PURE__ */ e.jsx("p", { className: "mt-0.5 truncate text-[11.5px] text-text-tertiary", children: Object.keys(m).length === 0 ? "Planlanmış öğe yok" : Object.entries(m).map(([n, b]) => {
+          var l;
+          return `${b} ${((l = P[n]) == null ? void 0 : l.plural) ?? "öğe"}`;
         }).join(" · ") })
       ] }),
-      n && /* @__PURE__ */ e.jsx(
+      i && /* @__PURE__ */ e.jsx(
         "button",
         {
           type: "button",
-          onClick: n,
+          onClick: i,
           "aria-label": "Günü kapat",
           className: "shrink-0 rounded-md p-1.5 text-text-tertiary hover:bg-surface-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-border-focus",
           children: /* @__PURE__ */ e.jsx("i", { className: "fa fa-xmark", "aria-hidden": "true" })
@@ -277,10 +278,10 @@ function Pt({ dayKey: t, items: a, capacity: s, onSelectItem: r, onClose: n }) {
         title: "Bu gün boş",
         description: "Bu güne düşen bir öğe yok."
       }
-    ) : a.map((l) => /* @__PURE__ */ e.jsx(Ce, { item: l, onSelect: r }, l.key)) })
+    ) : a.map((n) => /* @__PURE__ */ e.jsx(Ce, { item: n, onSelect: r }, n.key)) })
   ] });
 }
-const Mt = ["Pzt", "Sal", "Çar", "Per", "Cum", "Cmt", "Paz"], Lt = {
+const Lt = ["Pzt", "Sal", "Çar", "Per", "Cum", "Cmt", "Paz"], Ft = {
   [O.OVERDUE]: {
     /* Maketteki sol kenar çubuğu: pill'i okumadan da "bu gecikmiş" denir. */
     pill: "border-l-2 border-negative bg-negative-50 text-negative-700",
@@ -293,18 +294,21 @@ const Mt = ["Pzt", "Sal", "Çar", "Per", "Cum", "Cmt", "Paz"], Lt = {
     pattern: "repeating-linear-gradient(90deg, transparent, transparent 4px, rgba(0,0,0,.06) 4px, rgba(0,0,0,.06) 5px)"
   }
 };
-function Ft({ item: t, onSelect: a, onDragStart: s, isPending: r, hasError: n }) {
-  const p = P[t.source], x = Lt[t.risk], d = t.canReschedule && !t.isDone;
+function _t({ item: t, onSelect: a, onDragStart: s, isPending: r, hasError: i }) {
+  const p = P[t.source], x = Ft[t.risk], d = t.canReschedule && !t.isDone, m = wt(() => a(t));
   return /* @__PURE__ */ e.jsxs(
     "button",
     {
       type: "button",
       draggable: d,
-      onDragStart: d ? (m) => {
-        m.stopPropagation(), m.dataTransfer.effectAllowed = "move", m.dataTransfer.setData("text/plain", t.key), s(t);
+      onDragStart: d ? (n) => {
+        n.stopPropagation(), n.dataTransfer.effectAllowed = "move", n.dataTransfer.setData("text/plain", t.key), s(t);
       } : void 0,
-      onClick: (m) => {
-        m.stopPropagation(), a(t);
+      onPointerDown: (n) => {
+        n.stopPropagation(), m.onPointerDown(n);
+      },
+      onClick: (n) => {
+        n.stopPropagation(), m.onClick(n);
       },
       title: t.subtitle ? `${t.title} — ${t.subtitle}` : t.title,
       style: x ? { backgroundImage: x.pattern } : void 0,
@@ -315,18 +319,18 @@ function Ft({ item: t, onSelect: a, onDragStart: s, isPending: r, hasError: n })
         t.isDone && "line-through opacity-65",
         d && "cursor-grab active:cursor-grabbing",
         /* Hata SATIRDA kalır — toast'a kaçmaz. */
-        n && "ring-1 ring-negative-500",
+        i && "ring-1 ring-negative-500",
         r && "opacity-60"
       ),
       children: [
         r ? /* @__PURE__ */ e.jsx("i", { className: "fa fa-circle-notch fa-spin shrink-0 text-[9px]", "aria-hidden": "true" }) : p && /* @__PURE__ */ e.jsx("i", { className: k("fa shrink-0 text-[9px] opacity-70", p.icon), "aria-hidden": "true" }),
         /* @__PURE__ */ e.jsx("span", { className: "truncate", children: t.title }),
-        n && /* @__PURE__ */ e.jsx("i", { className: "fa fa-triangle-exclamation ms-auto shrink-0 text-[9px]", "aria-hidden": "true" })
+        i && /* @__PURE__ */ e.jsx("i", { className: "fa fa-triangle-exclamation ms-auto shrink-0 text-[9px]", "aria-hidden": "true" })
       ]
     }
   );
 }
-function _t({ summary: t, onSelect: a }) {
+function Bt({ summary: t, onSelect: a }) {
   const s = P[t.source];
   return /* @__PURE__ */ e.jsxs(
     "button",
@@ -342,12 +346,12 @@ function _t({ summary: t, onSelect: a }) {
       ),
       children: [
         s && /* @__PURE__ */ e.jsx("i", { className: k("fa shrink-0 text-[9px] opacity-60", s.icon), "aria-hidden": "true" }),
-        /* @__PURE__ */ e.jsx("span", { className: "truncate", children: $t(t) })
+        /* @__PURE__ */ e.jsx("span", { className: "truncate", children: Rt(t) })
       ]
     }
   );
 }
-function Bt({ load: t, capacity: a }) {
+function qt({ load: t, capacity: a }) {
   if (!a || t <= 0) return null;
   const s = t > a, r = s ? a / t * 100 : t / a * 100;
   return /* @__PURE__ */ e.jsxs(
@@ -363,24 +367,24 @@ function Bt({ load: t, capacity: a }) {
     }
   );
 }
-function qt({
+function Gt({
   month: t,
   byDay: a,
   today: s,
   capacity: r,
-  onSelectItem: n,
+  onSelectItem: i,
   onSelectDay: p,
   selectedDay: x,
   onDropItem: d,
   pending: m = {},
-  errors: l = {},
+  errors: n = {},
   focusedDay: b,
-  onFocusDay: i,
+  onFocusDay: l,
   onNavigate: c
 }) {
   const o = at(t), f = T(s), [u, h] = pe.useState(null), [N, $] = pe.useState(null), E = pe.useRef(null), j = b ?? x ?? f, y = (S) => {
     const C = L(/* @__PURE__ */ new Date(`${j}T00:00:00`), S);
-    o.some((M) => T(M) === T(C)) || c == null || c(C), i == null || i(T(C));
+    o.some((M) => T(M) === T(C)) || c == null || c(C), l == null || l(T(C));
   }, z = (S) => {
     const C = { ArrowLeft: -1, ArrowRight: 1, ArrowUp: -7, ArrowDown: 7 }[S.key];
     if (C) {
@@ -394,7 +398,7 @@ function qt({
     const S = (C = E.current) == null ? void 0 : C.querySelector(`[data-day="${j}"]`);
     S && ((M = E.current) != null && M.contains(document.activeElement)) && S.focus();
   }, [j]), /* @__PURE__ */ e.jsxs("div", { className: "overflow-hidden rounded-card border border-default bg-surface-base", children: [
-    /* @__PURE__ */ e.jsx("div", { className: "grid grid-cols-7 border-b border-default bg-surface-raised", children: Mt.map((S, C) => /* @__PURE__ */ e.jsx(
+    /* @__PURE__ */ e.jsx("div", { className: "grid grid-cols-7 border-b border-default bg-surface-raised", children: Lt.map((S, C) => /* @__PURE__ */ e.jsx(
       "div",
       {
         className: k(
@@ -415,7 +419,7 @@ function qt({
         onKeyDown: z,
         className: "grid grid-cols-7 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-border-focus",
         children: o.map((S) => {
-          const C = T(S), M = a[C] ?? [], { pills: V, summaries: ye } = Et(M), X = ge(M), F = S.getMonth() !== t.getMonth(), ae = C === f, te = C === x;
+          const C = T(S), M = a[C] ?? [], { pills: V, summaries: ye } = $t(M), X = ge(M), F = S.getMonth() !== t.getMonth(), ae = C === f, te = C === x;
           return /* @__PURE__ */ e.jsxs(
             "div",
             {
@@ -425,7 +429,7 @@ function qt({
               "aria-selected": te,
               "aria-label": `${w.dayTitle(S)}${M.length ? `, ${M.length} öğe` : ", boş"}`,
               onClick: () => {
-                i == null || i(C), p(C);
+                l == null || l(C), p(C);
               },
               onDragOver: u ? (D) => {
                 D.preventDefault(), D.dataTransfer.dropEffect = "move", N !== C && $(C);
@@ -460,25 +464,25 @@ function qt({
                   )
                 ] }),
                 V.map((D) => /* @__PURE__ */ e.jsx(
-                  Ft,
+                  _t,
                   {
                     item: D,
-                    onSelect: n,
+                    onSelect: i,
                     onDragStart: h,
                     isPending: !!m[D.key],
-                    hasError: !!l[D.key]
+                    hasError: !!n[D.key]
                   },
                   D.key
                 )),
                 ye.map((D) => /* @__PURE__ */ e.jsx(
-                  _t,
+                  Bt,
                   {
                     summary: D,
                     onSelect: () => p(C)
                   },
                   `${C}-${D.source}`
                 )),
-                /* @__PURE__ */ e.jsx(Bt, { load: X, capacity: r })
+                /* @__PURE__ */ e.jsx(qt, { load: X, capacity: r })
               ]
             },
             C
@@ -488,29 +492,29 @@ function qt({
     )
   ] });
 }
-const Gt = { 1: "Google", 2: "Outlook", 3: "iCloud" };
-function Yt(t) {
+const Yt = { 1: "Google", 2: "Outlook", 3: "iCloud" };
+function Ut(t) {
   const a = String(t ?? "").trim().split(/\s+/).filter(Boolean);
   return a.length === 0 ? "?" : a.length === 1 ? a[0].slice(0, 2).toLocaleUpperCase("tr") : (a[0][0] + a[a.length - 1][0]).toLocaleUpperCase("tr");
 }
-function Ut({
+function Qt({
   sources: t,
   counts: a,
   enabled: s,
   onToggle: r,
-  compact: n = !1,
+  compact: i = !1,
   externalAccounts: p = [],
   externalLoading: x = !1,
   onOpenSync: d,
   teamOpen: m = !1,
-  onToggleTeam: l,
+  onToggleTeam: n,
   teamContent: b,
-  teamMembers: i = [],
+  teamMembers: l = [],
   riskCounts: c
 }) {
   const o = (t ?? []).filter((h) => h.isAvailable);
   if (o.length === 0) return null;
-  const f = new Set(o.map((h) => h.source)), u = wt.map(({ key: h, sources: N }) => {
+  const f = new Set(o.map((h) => h.source)), u = St.map(({ key: h, sources: N }) => {
     const $ = N.filter((E) => f.has(E));
     return $.length === 0 ? null : {
       key: h,
@@ -527,17 +531,17 @@ function Ut({
       "aria-label": "Takvim kaynakları",
       className: k(
         "flex flex-col gap-1 rounded-card border border-subtle bg-surface-base p-2",
-        n ? "w-[60px] items-center" : "w-full"
+        i ? "w-[60px] items-center" : "w-full"
       ),
       children: [
-        !n && /* @__PURE__ */ e.jsx("p", { className: "px-2 pb-1 pt-1 text-[10.5px] font-bold uppercase tracking-wider text-text-tertiary", children: "Kaynaklar" }),
+        !i && /* @__PURE__ */ e.jsx("p", { className: "px-2 pb-1 pt-1 text-[10.5px] font-bold uppercase tracking-wider text-text-tertiary", children: "Kaynaklar" }),
         u.map(({ key: h, sources: N, meta: $, isOn: E, count: j }) => $ ? /* @__PURE__ */ e.jsxs(
           "button",
           {
             type: "button",
             role: "switch",
             "aria-checked": E,
-            title: n ? `${$.railLabel ?? $.label} — ${j} öğe` : void 0,
+            title: i ? `${$.railLabel ?? $.label} — ${j} öğe` : void 0,
             onClick: () => {
               const y = !E;
               N.forEach((z) => {
@@ -547,7 +551,7 @@ function Ut({
             className: k(
               "group flex items-center rounded-md text-left transition-colors duration-fast",
               "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-border-focus",
-              n ? "relative h-11 w-11 justify-center" : "gap-2.5 px-2 py-2",
+              i ? "relative h-11 w-11 justify-center" : "gap-2.5 px-2 py-2",
               E ? "text-text-primary" : "text-text-tertiary",
               "hover:bg-surface-hover"
             ),
@@ -563,7 +567,7 @@ function Ut({
                   children: /* @__PURE__ */ e.jsx("i", { className: k("fa", $.icon) })
                 }
               ),
-              n ? j > 0 && /* @__PURE__ */ e.jsx(
+              i ? j > 0 && /* @__PURE__ */ e.jsx(
                 "span",
                 {
                   className: k(
@@ -580,7 +584,7 @@ function Ut({
           },
           h
         ) : null),
-        !n && /* @__PURE__ */ e.jsxs(e.Fragment, { children: [
+        !i && /* @__PURE__ */ e.jsxs(e.Fragment, { children: [
           /* @__PURE__ */ e.jsxs("div", { className: "mt-2 flex items-center justify-between border-t border-subtle px-2 pb-1 pt-2", children: [
             /* @__PURE__ */ e.jsx("p", { className: "text-[10.5px] font-bold uppercase tracking-wider text-text-tertiary", children: "Dış takvimler" }),
             d && /* @__PURE__ */ e.jsx(
@@ -618,7 +622,7 @@ function Ut({
                   }
                 ),
                 /* @__PURE__ */ e.jsxs("span", { className: "min-w-0 flex-1", children: [
-                  /* @__PURE__ */ e.jsx("span", { className: "block truncate text-[12px] font-medium text-text-primary", children: Gt[h.provider] ?? "Takvim" }),
+                  /* @__PURE__ */ e.jsx("span", { className: "block truncate text-[12px] font-medium text-text-primary", children: Yt[h.provider] ?? "Takvim" }),
                   /* @__PURE__ */ e.jsx("span", { className: k(
                     "block truncate text-[10.5px]",
                     h.error ? "text-negative-700" : "text-text-tertiary"
@@ -629,14 +633,14 @@ function Ut({
             },
             h.accountId
           )),
-          !n && l && /* @__PURE__ */ e.jsxs(e.Fragment, { children: [
+          !i && n && /* @__PURE__ */ e.jsxs(e.Fragment, { children: [
             /* @__PURE__ */ e.jsxs(
               "button",
               {
                 type: "button",
                 role: "switch",
                 "aria-checked": m,
-                onClick: l,
+                onClick: n,
                 className: k(
                   "mt-2 flex items-center gap-2 border-t border-subtle px-2 pb-1 pt-2 text-left",
                   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-border-focus"
@@ -653,8 +657,8 @@ function Ut({
                 ]
               }
             ),
-            i.length > 0 && /* @__PURE__ */ e.jsxs("div", { className: "flex flex-wrap items-center gap-1 px-2 pb-1", children: [
-              i.slice(0, 3).map((h) => /* @__PURE__ */ e.jsxs(
+            l.length > 0 && /* @__PURE__ */ e.jsxs("div", { className: "flex flex-wrap items-center gap-1 px-2 pb-1", children: [
+              l.slice(0, 3).map((h) => /* @__PURE__ */ e.jsxs(
                 "span",
                 {
                   title: h.name,
@@ -665,7 +669,7 @@ function Ut({
                       {
                         className: "flex h-4 w-4 items-center justify-center rounded-full bg-brand-500 text-[8.5px] font-bold text-[color:var(--apya-avatar-fg)]",
                         "aria-hidden": "true",
-                        children: Yt(h.name)
+                        children: Ut(h.name)
                       }
                     ),
                     /* @__PURE__ */ e.jsx("span", { className: "max-w-[86px] truncate", children: h.name })
@@ -673,9 +677,9 @@ function Ut({
                 },
                 h.userId
               )),
-              i.length > 3 && /* @__PURE__ */ e.jsxs("span", { className: "text-[10.5px] font-medium text-text-tertiary", children: [
+              l.length > 3 && /* @__PURE__ */ e.jsxs("span", { className: "text-[10.5px] font-medium text-text-tertiary", children: [
                 "+",
-                i.length - 3
+                l.length - 3
               ] })
             ] }),
             b
@@ -710,8 +714,8 @@ function Ut({
     }
   );
 }
-const Qt = { month: "Ay", week: "Hafta", day: "Gün", agenda: "Ajanda" };
-function Ht(t) {
+const Ht = { month: "Ay", week: "Hafta", day: "Gün", agenda: "Ajanda" };
+function Wt(t) {
   if (!t) return null;
   const a = Math.round((Date.now() - new Date(t).getTime()) / 6e4);
   if (!Number.isFinite(a) || a < 0) return null;
@@ -727,7 +731,7 @@ function nt() {
   const t = "/Tasks/CreateModal";
   (a = window.abp) != null && a.ModalManager ? new window.abp.ModalManager(t).open() : window.location.href = t;
 }
-function Wt() {
+function Vt() {
   return /* @__PURE__ */ e.jsx(
     "button",
     {
@@ -741,23 +745,23 @@ function Wt() {
     }
   );
 }
-function Vt({
+function Xt({
   title: t,
   view: a,
   onView: s,
   onPrev: r,
-  onNext: n,
+  onNext: i,
   onToday: p,
   overloadDays: x,
   onHelp: d,
   filterCount: m = 0,
-  onClearFilters: l,
+  onClearFilters: n,
   lastSyncAt: b,
-  syncError: i = !1,
+  syncError: l = !1,
   canCreateTask: c = !0,
   compact: o = !1
 }) {
-  const f = a !== "agenda", u = Ht(b);
+  const f = a !== "agenda", u = Wt(b);
   return /* @__PURE__ */ e.jsxs("div", { className: "flex flex-wrap items-center gap-2", children: [
     f && /* @__PURE__ */ e.jsxs("div", { className: "flex", children: [
       /* @__PURE__ */ e.jsx(
@@ -774,7 +778,7 @@ function Vt({
         "button",
         {
           type: "button",
-          onClick: n,
+          onClick: i,
           "aria-label": "Sonrakine git",
           className: "h-9 w-9 rounded-r-md border border-l-0 border-default bg-surface-base text-text-secondary hover:bg-surface-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-border-focus",
           children: /* @__PURE__ */ e.jsx("i", { className: "fa fa-chevron-right", "aria-hidden": "true" })
@@ -796,19 +800,19 @@ function Vt({
           ]
         }
       ),
-      (u || i) && /* @__PURE__ */ e.jsxs(
+      (u || l) && /* @__PURE__ */ e.jsxs(
         "span",
         {
           className: k(
             "flex items-center gap-1.5 rounded-md px-2 py-1 text-[11.5px] font-medium",
-            i ? "bg-negative-50 text-negative-700" : "text-text-tertiary"
+            l ? "bg-negative-50 text-negative-700" : "text-text-tertiary"
           ),
-          title: i ? "Bir dış takvim senkronlanamıyor" : "Dış takvimlerin son senkron zamanı",
+          title: l ? "Bir dış takvim senkronlanamıyor" : "Dış takvimlerin son senkron zamanı",
           children: [
             /* @__PURE__ */ e.jsx(
               "span",
               {
-                className: k("h-[6px] w-[6px] rounded-full", i ? "bg-negative" : "bg-positive"),
+                className: k("h-[6px] w-[6px] rounded-full", l ? "bg-negative" : "bg-positive"),
                 "aria-hidden": "true"
               }
             ),
@@ -817,11 +821,11 @@ function Vt({
           ]
         }
       ),
-      m > 0 && l && /* @__PURE__ */ e.jsxs(
+      m > 0 && n && /* @__PURE__ */ e.jsxs(
         "button",
         {
           type: "button",
-          onClick: l,
+          onClick: n,
           title: "Filtreleri temizle — kapalı kaynakları geri aç",
           className: "flex h-9 items-center gap-1.5 rounded-md border border-default bg-surface-base px-2.5 text-[12px] font-medium text-text-secondary hover:bg-surface-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-border-focus",
           children: [
@@ -854,7 +858,7 @@ function Vt({
           children: /* @__PURE__ */ e.jsx("i", { className: "fa fa-keyboard", "aria-hidden": "true" })
         }
       ),
-      /* @__PURE__ */ e.jsx("div", { role: "tablist", "aria-label": "Görünüm", className: "flex rounded-md border border-default bg-surface-base p-0.5", children: Object.entries(Qt).map(([h, N]) => /* @__PURE__ */ e.jsx(
+      /* @__PURE__ */ e.jsx("div", { role: "tablist", "aria-label": "Görünüm", className: "flex rounded-md border border-default bg-surface-base p-0.5", children: Object.entries(Ht).map(([h, N]) => /* @__PURE__ */ e.jsx(
         "button",
         {
           role: "tab",
@@ -876,11 +880,11 @@ function Vt({
     ] })
   ] });
 }
-const Z = 44, Xt = ["Pzt", "Sal", "Çar", "Per", "Cum", "Cmt", "Paz"], Jt = {
+const Z = 44, Jt = ["Pzt", "Sal", "Çar", "Per", "Cum", "Cmt", "Paz"], Zt = {
   [O.OVERDUE]: "bg-negative-50 text-negative-700",
   [O.DUE_TODAY]: "bg-warning-50 text-warning-700"
 };
-function Zt({ load: t, capacity: a }) {
+function ea({ load: t, capacity: a }) {
   if (!a || t <= 0) return null;
   const s = t > a;
   return /* @__PURE__ */ e.jsx("div", { className: "mt-1 h-[3px] w-full overflow-hidden rounded-full bg-neutral-subtle", children: /* @__PURE__ */ e.jsx(
@@ -891,8 +895,8 @@ function Zt({ load: t, capacity: a }) {
     }
   ) });
 }
-function ea({ days: t, byDay: a, today: s, capacity: r, onSelectItem: n, onSelectDay: p, selectedDay: x }) {
-  const d = T(s), m = g.useRef(null), [l, b] = g.useState(() => {
+function ta({ days: t, byDay: a, today: s, capacity: r, onSelectItem: i, onSelectDay: p, selectedDay: x }) {
+  const d = T(s), m = g.useRef(null), [n, b] = g.useState(() => {
     const j = /* @__PURE__ */ new Date();
     return j.getHours() * 60 + j.getMinutes();
   });
@@ -903,15 +907,15 @@ function ea({ days: t, byDay: a, today: s, capacity: r, onSelectItem: n, onSelec
     }, 6e4);
     return () => clearInterval(j);
   }, []);
-  const i = t.map(T), c = {}, o = {};
-  for (const j of i) {
+  const l = t.map(T), c = {}, o = {};
+  for (const j of l) {
     const y = a[j] ?? [];
     c[j] = y.filter(Ye), o[j] = y.filter((z) => !Ye(z));
   }
-  const f = i.flatMap((j) => c[j]), { start: u, end: h } = zt(f), N = Array.from({ length: h - u }, (j, y) => u + y), $ = (h - u) * Z, E = i.includes(d) && l >= u * 60 && l <= h * 60;
+  const f = l.flatMap((j) => c[j]), { start: u, end: h } = Kt(f), N = Array.from({ length: h - u }, (j, y) => u + y), $ = (h - u) * Z, E = l.includes(d) && n >= u * 60 && n <= h * 60;
   return g.useEffect(() => {
     if (!E || !m.current) return;
-    const j = (l - u * 60) / 60 * Z;
+    const j = (n - u * 60) / 60 * Z;
     m.current.scrollTop = Math.max(0, j - 120);
   }, [E, u]), /* @__PURE__ */ e.jsxs("div", { className: "overflow-hidden rounded-card border border-default bg-surface-base", children: [
     /* @__PURE__ */ e.jsxs(
@@ -938,14 +942,14 @@ function ea({ days: t, byDay: a, today: s, capacity: r, onSelectItem: n, onSelec
                     /* @__PURE__ */ e.jsx("span", { className: k(
                       "text-[10.5px] font-bold uppercase tracking-wider",
                       S ? "text-accent" : "text-text-tertiary"
-                    ), children: Xt[(j.getDay() + 6) % 7] }),
+                    ), children: Jt[(j.getDay() + 6) % 7] }),
                     /* @__PURE__ */ e.jsx("span", { className: k(
                       "font-mono text-[13px] font-semibold tabular-nums",
                       S ? "text-accent" : "text-text-primary"
                     ), children: j.getDate() }),
                     r && z > r && /* @__PURE__ */ e.jsx("span", { className: "ms-auto rounded-sm bg-negative-50 px-1 text-[9.5px] font-bold text-negative-700", children: w.hours(z) })
                   ] }),
-                  /* @__PURE__ */ e.jsx(Zt, { load: z, capacity: r })
+                  /* @__PURE__ */ e.jsx(ea, { load: z, capacity: r })
                 ]
               },
               y
@@ -965,17 +969,17 @@ function ea({ days: t, byDay: a, today: s, capacity: r, onSelectItem: n, onSelec
             /* @__PURE__ */ e.jsx("br", {}),
             "tarih"
           ] }),
-          i.map((j) => /* @__PURE__ */ e.jsxs("div", { className: "flex min-h-[46px] flex-col gap-[3px] border-l border-subtle p-1", children: [
+          l.map((j) => /* @__PURE__ */ e.jsxs("div", { className: "flex min-h-[46px] flex-col gap-[3px] border-l border-subtle p-1", children: [
             o[j].slice(0, 4).map((y) => /* @__PURE__ */ e.jsxs(
               "button",
               {
                 type: "button",
-                onClick: () => n(y),
+                onClick: () => i(y),
                 title: y.title,
                 className: k(
                   "flex w-full items-center gap-1 truncate rounded-[5px] px-1.5 py-0.5 text-left text-[10.5px] font-semibold",
                   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-border-focus",
-                  Jt[y.risk] ?? "bg-neutral-subtle text-text-primary",
+                  Zt[y.risk] ?? "bg-neutral-subtle text-text-primary",
                   y.isDone && "line-through opacity-65"
                 ),
                 children: [
@@ -1024,7 +1028,7 @@ function ea({ days: t, byDay: a, today: s, capacity: r, onSelectItem: n, onSelec
               },
               j
             )) }),
-            i.map((j) => /* @__PURE__ */ e.jsxs("div", { className: "relative border-l border-subtle", children: [
+            l.map((j) => /* @__PURE__ */ e.jsxs("div", { className: "relative border-l border-subtle", children: [
               N.map((y, z) => /* @__PURE__ */ e.jsx(
                 "div",
                 {
@@ -1039,7 +1043,7 @@ function ea({ days: t, byDay: a, today: s, capacity: r, onSelectItem: n, onSelec
                   "button",
                   {
                     type: "button",
-                    onClick: () => n(y),
+                    onClick: () => i(y),
                     title: `${y.title} · ${je(y.startTime)}`,
                     style: {
                       top: `${C}px`,
@@ -1066,7 +1070,7 @@ function ea({ days: t, byDay: a, today: s, capacity: r, onSelectItem: n, onSelec
                 "div",
                 {
                   className: "pointer-events-none absolute inset-x-0 z-10 border-t-2 border-negative",
-                  style: { top: `${(l - u * 60) / 60 * Z}px` },
+                  style: { top: `${(n - u * 60) / 60 * Z}px` },
                   "aria-hidden": "true",
                   children: /* @__PURE__ */ e.jsx("span", { className: "absolute -left-1 -top-1 h-2 w-2 rounded-full bg-negative" })
                 }
@@ -1079,36 +1083,36 @@ function ea({ days: t, byDay: a, today: s, capacity: r, onSelectItem: n, onSelec
     ] })
   ] });
 }
-function ta({ item: t }) {
+function aa({ item: t }) {
   var b;
-  const [a, s] = g.useState(""), [r, n] = g.useState(() => /* @__PURE__ */ new Set()), p = t.description ?? t.subtitle ?? "", x = W({
+  const [a, s] = g.useState(""), [r, i] = g.useState(() => /* @__PURE__ */ new Set()), p = t.description ?? t.subtitle ?? "", x = W({
     queryKey: ["calendar", "projects-lookup"],
     queryFn: () => K.get("/api/app/task/projects-lookup"),
     staleTime: 10 * 6e4
   }), d = _({
     mutationFn: async () => {
-      const i = new FormData();
-      i.append("file", new Blob([`${t.title}
+      const l = new FormData();
+      l.append("file", new Blob([`${t.title}
 
 ${p}`], { type: "text/plain" }), "toplanti-notlari.txt");
       const c = await fetch(`/api/ai-task-generator/parse?projectId=${a}`, {
         method: "POST",
-        body: i,
+        body: l,
         headers: { "X-Requested-With": "XMLHttpRequest" }
       });
       if (!c.ok) throw new Error("Notlardan görev çıkarılamadı.");
       return c.json();
     },
-    onSuccess: (i) => n(new Set(((i == null ? void 0 : i.suggestions) ?? []).map((c, o) => o)))
+    onSuccess: (l) => i(new Set(((l == null ? void 0 : l.suggestions) ?? []).map((c, o) => o)))
   }), m = _({
     mutationFn: () => {
-      var i;
+      var l;
       return K.post("/api/ai-task-generator/create-tasks", {
         projectId: a,
-        approvedTasks: (((i = d.data) == null ? void 0 : i.suggestions) ?? []).filter((c, o) => r.has(o))
+        approvedTasks: (((l = d.data) == null ? void 0 : l.suggestions) ?? []).filter((c, o) => r.has(o))
       });
     }
-  }), l = ((b = d.data) == null ? void 0 : b.suggestions) ?? [];
+  }), n = ((b = d.data) == null ? void 0 : b.suggestions) ?? [];
   return /* @__PURE__ */ e.jsxs("section", { className: "border-t border-subtle px-4 py-3", children: [
     /* @__PURE__ */ e.jsx("p", { className: "text-[11px] font-bold uppercase tracking-wider text-text-tertiary", children: "Toplantıdan görev" }),
     !p && /* @__PURE__ */ e.jsx("p", { className: "mt-1 text-[11.5px] text-text-tertiary", children: "Bu etkinlikte not yok — çıkarılacak aksiyon maddesi bulunamaz." }),
@@ -1117,12 +1121,12 @@ ${p}`], { type: "text/plain" }), "toplanti-notlari.txt");
         "select",
         {
           value: a,
-          onChange: (i) => s(i.target.value),
+          onChange: (l) => s(l.target.value),
           "aria-label": "Görevlerin ekleneceği proje",
           className: "mt-1.5 w-full rounded-md border border-default bg-surface-base px-2 py-1.5 text-[12px] text-text-primary",
           children: [
             /* @__PURE__ */ e.jsx("option", { value: "", children: "Proje seçin…" }),
-            (x.data ?? []).map((i) => /* @__PURE__ */ e.jsx("option", { value: i.id, children: i.name }, i.id))
+            (x.data ?? []).map((l) => /* @__PURE__ */ e.jsx("option", { value: l.id, children: l.name }, l.id))
           ]
         }
       ),
@@ -1138,22 +1142,22 @@ ${p}`], { type: "text/plain" }), "toplanti-notlari.txt");
         }
       ),
       d.isError && /* @__PURE__ */ e.jsx("p", { className: "mt-1.5 text-[11px] text-negative-700", children: d.error.message }),
-      l.length > 0 && /* @__PURE__ */ e.jsxs("div", { className: "mt-2", children: [
-        l.map((i, c) => /* @__PURE__ */ e.jsxs("label", { className: "flex cursor-pointer items-start gap-2 border-b border-subtle py-1.5 last:border-b-0", children: [
+      n.length > 0 && /* @__PURE__ */ e.jsxs("div", { className: "mt-2", children: [
+        n.map((l, c) => /* @__PURE__ */ e.jsxs("label", { className: "flex cursor-pointer items-start gap-2 border-b border-subtle py-1.5 last:border-b-0", children: [
           /* @__PURE__ */ e.jsx(
             "input",
             {
               type: "checkbox",
               checked: r.has(c),
-              onChange: () => n((o) => {
+              onChange: () => i((o) => {
                 const f = new Set(o);
                 return f.has(c) ? f.delete(c) : f.add(c), f;
               }),
               className: "mt-1 h-3.5 w-3.5 accent-[color:var(--apya-accent-500)]"
             }
           ),
-          /* @__PURE__ */ e.jsx("span", { className: "min-w-0 flex-1 text-[12px] text-text-primary", children: i.title })
-        ] }, `${i.title}-${c}`)),
+          /* @__PURE__ */ e.jsx("span", { className: "min-w-0 flex-1 text-[12px] text-text-primary", children: l.title })
+        ] }, `${l.title}-${c}`)),
         /* @__PURE__ */ e.jsx(
           A,
           {
@@ -1169,7 +1173,7 @@ ${p}`], { type: "text/plain" }), "toplanti-notlari.txt");
     ] })
   ] });
 }
-const aa = {
+const sa = {
   [O.OVERDUE]: { text: "Gecikmiş", cls: "bg-negative-50 text-negative-700" },
   [O.DUE_TODAY]: { text: "Bugün son gün", cls: "bg-warning-50 text-warning-700" }
 };
@@ -1179,9 +1183,9 @@ function ne({ label: t, children: a }) {
     /* @__PURE__ */ e.jsx("span", { className: "min-w-0 text-right text-[12.5px] text-text-primary", children: a })
   ] }) : null;
 }
-function sa({ item: t, capacity: a, onClose: s, onReschedule: r, onComplete: n, isPending: p, error: x, onRetry: d }) {
-  const [m, l] = g.useState(() => t.date.slice(0, 10)), b = P[t.source], i = aa[t.risk], c = t.date.slice(0, 10);
-  g.useEffect(() => l(c), [c]);
+function ra({ item: t, capacity: a, onClose: s, onReschedule: r, onComplete: i, isPending: p, error: x, onRetry: d }) {
+  const [m, n] = g.useState(() => t.date.slice(0, 10)), b = P[t.source], l = sa[t.risk], c = t.date.slice(0, 10);
+  g.useEffect(() => n(c), [c]);
   const o = () => {
     !m || m === c || r(t, /* @__PURE__ */ new Date(`${m}T00:00:00`));
   };
@@ -1194,7 +1198,7 @@ function sa({ item: t, capacity: a, onClose: s, onReschedule: r, onComplete: n, 
           b && /* @__PURE__ */ e.jsx("i", { className: k("fa text-[10px]", b.icon), "aria-hidden": "true" }),
           b == null ? void 0 : b.label
         ] }),
-        i && /* @__PURE__ */ e.jsx("span", { className: k("rounded-md px-2 py-1 text-[11px] font-bold", i.cls), children: i.text }),
+        l && /* @__PURE__ */ e.jsx("span", { className: k("rounded-md px-2 py-1 text-[11px] font-bold", l.cls), children: l.text }),
         t.isDone && /* @__PURE__ */ e.jsx("span", { className: "rounded-md bg-positive-50 px-2 py-1 text-[11px] font-bold text-positive-700", children: "Tamamlandı" }),
         /* @__PURE__ */ e.jsx(
           "button",
@@ -1219,7 +1223,7 @@ function sa({ item: t, capacity: a, onClose: s, onReschedule: r, onComplete: n, 
       "kaydediliyor…"
     ] }),
     t.canReschedule && !t.isDone && /* @__PURE__ */ e.jsxs("div", { className: "flex flex-wrap gap-2 border-b border-subtle px-4 py-3", children: [
-      /* @__PURE__ */ e.jsxs(A, { size: "sm", variant: "secondary", onClick: () => n(t), children: [
+      /* @__PURE__ */ e.jsxs(A, { size: "sm", variant: "secondary", onClick: () => i(t), children: [
         /* @__PURE__ */ e.jsx("i", { className: "fa fa-check me-1.5", "aria-hidden": "true" }),
         "Tamamla"
       ] }),
@@ -1240,7 +1244,7 @@ function sa({ item: t, capacity: a, onClose: s, onReschedule: r, onComplete: n, 
           {
             type: "date",
             value: m,
-            onChange: (f) => l(f.target.value),
+            onChange: (f) => n(f.target.value),
             className: "rounded-md border border-default bg-surface-base px-2 py-1 text-[12.5px] text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-border-focus",
             "aria-label": "Son tarih"
           }
@@ -1255,7 +1259,7 @@ function sa({ item: t, capacity: a, onClose: s, onReschedule: r, onComplete: n, 
       /* @__PURE__ */ e.jsx(ne, { label: "Tutar", children: t.amount != null ? w.money(t.amount, t.currency) : null }),
       /* @__PURE__ */ e.jsx(ne, { label: "Gün yükü", children: t.loadHours != null ? `${w.hours(t.loadHours)}${a ? ` / ${w.hours(a)} kapasite` : ""}` : null })
     ] }),
-    t.source === 7 && /* @__PURE__ */ e.jsx(ta, { item: t }),
+    t.source === 7 && /* @__PURE__ */ e.jsx(aa, { item: t }),
     t.href && /* @__PURE__ */ e.jsx("footer", { className: "border-t border-subtle px-4 py-3", children: /* @__PURE__ */ e.jsxs(
       "a",
       {
@@ -1271,7 +1275,7 @@ function sa({ item: t, capacity: a, onClose: s, onReschedule: r, onComplete: n, 
   ] }) });
 }
 const it = ["calendar", "sync-settings"];
-function ra(t) {
+function na(t) {
   return W({
     queryKey: it,
     queryFn: () => K.get("/api/app/calendar/sync-settings"),
@@ -1279,7 +1283,7 @@ function ra(t) {
     staleTime: 3e4
   });
 }
-function na() {
+function ia() {
   const t = ee();
   return _({
     /* ABP konvansiyonu: UpdateSyncRulesAsync → PUT (POST 405). */
@@ -1290,7 +1294,7 @@ function na() {
   });
 }
 const lt = ["calendar", "ical-feed"], Re = ["calendar", "ical-subscriptions"];
-function ia(t) {
+function la(t) {
   return W({
     queryKey: lt,
     /* GetOrCreate: bağlantı yoksa ilk açılışta üretilir. */
@@ -1299,14 +1303,14 @@ function ia(t) {
     staleTime: 1 / 0
   });
 }
-function la() {
+function oa() {
   const t = ee();
   return _({
     mutationFn: () => K.post("/api/app/ical-feed/regenerate", {}),
     onSuccess: (a) => t.setQueryData(lt, a)
   });
 }
-function oa(t) {
+function ca(t) {
   return W({
     queryKey: Re,
     queryFn: () => K.get("/api/app/ical-subscription"),
@@ -1314,7 +1318,7 @@ function oa(t) {
     staleTime: 3e4
   });
 }
-function ca() {
+function da() {
   const t = ee();
   return _({
     mutationFn: (a) => K.post("/api/app/ical-subscription", a),
@@ -1323,7 +1327,7 @@ function ca() {
     }
   });
 }
-function da() {
+function ua() {
   const t = ee();
   return _({
     mutationFn: (a) => K.delete(`/api/app/ical-subscription/${a}`),
@@ -1332,16 +1336,16 @@ function da() {
     }
   });
 }
-function ua() {
+function xa() {
   return _({
     mutationFn: (t) => K.post(`/api/app/ical-subscription/probe?url=${encodeURIComponent(t)}`, {})
   });
 }
-const xa = {
+const pa = {
   1: { label: "Google Calendar", icon: "fa-google", brand: "bg-[#ea4335]" },
   2: { label: "Microsoft Outlook", icon: "fa-windows", brand: "bg-[#0078d4]" },
   3: { label: "iCloud", icon: "fa-apple", brand: "bg-neutral-700" }
-}, pa = {
+}, ma = {
   0: { title: "Son değişen kazanır", desc: "İki taraf da düzenlenirse en son yapılan değişiklik uygulanır; ekranda geri alma şeridi çıkar." },
   1: { title: "APYA her zaman kazanır", desc: "Dış takvim salt-okunur ayna olur; dışarıdaki düzenleme geri alınır." }
 }, Qe = {
@@ -1354,12 +1358,12 @@ function Ae(t) {
   const a = Math.round((Date.now() - new Date(t).getTime()) / 6e4);
   return a < 1 ? "az önce" : a < 60 ? `${a} dk önce` : a < 1440 ? `${Math.round(a / 60)} sa önce` : w.dayShort(new Date(t));
 }
-function ma({ account: t, onSave: a, saving: s }) {
-  const r = xa[t.provider] ?? { label: "Takvim", icon: "fa-calendar", brand: "bg-neutral-700" }, [n, p] = g.useState(() => new Set(t.syncSources ?? [])), [x, d] = g.useState(t.conflictRule ?? 0), [m, l] = g.useState(t.isSyncEnabled);
+function ba({ account: t, onSave: a, saving: s }) {
+  const r = pa[t.provider] ?? { label: "Takvim", icon: "fa-calendar", brand: "bg-neutral-700" }, [i, p] = g.useState(() => new Set(t.syncSources ?? [])), [x, d] = g.useState(t.conflictRule ?? 0), [m, n] = g.useState(t.isSyncEnabled);
   g.useEffect(() => {
-    p(new Set(t.syncSources ?? [])), d(t.conflictRule ?? 0), l(t.isSyncEnabled);
+    p(new Set(t.syncSources ?? [])), d(t.conflictRule ?? 0), n(t.isSyncEnabled);
   }, [t]);
-  const b = m !== t.isSyncEnabled || x !== t.conflictRule || n.size !== (t.syncSources ?? []).length || [...n].some((c) => !(t.syncSources ?? []).includes(c)), i = (c) => p((o) => {
+  const b = m !== t.isSyncEnabled || x !== t.conflictRule || i.size !== (t.syncSources ?? []).length || [...i].some((c) => !(t.syncSources ?? []).includes(c)), l = (c) => p((o) => {
     const f = new Set(o);
     return f.has(c) ? f.delete(c) : f.add(c), f;
   });
@@ -1380,7 +1384,7 @@ function ma({ account: t, onSave: a, saving: s }) {
           {
             type: "checkbox",
             checked: m,
-            onChange: (c) => l(c.target.checked),
+            onChange: (c) => n(c.target.checked),
             className: "h-3.5 w-3.5 accent-[color:var(--apya-accent-500)]"
           }
         ),
@@ -1391,14 +1395,14 @@ function ma({ account: t, onSave: a, saving: s }) {
       /* @__PURE__ */ e.jsx("p", { className: "mb-1.5 text-[11px] font-bold uppercase tracking-wider text-text-tertiary", children: "Bu hesaba ne gitsin?" }),
       /* @__PURE__ */ e.jsx("div", { className: "flex flex-wrap gap-1.5", children: Se.map((c) => {
         var f, u;
-        const o = n.has(c);
+        const o = i.has(c);
         return /* @__PURE__ */ e.jsxs(
           "button",
           {
             type: "button",
             role: "switch",
             "aria-checked": o,
-            onClick: () => i(c),
+            onClick: () => l(c),
             className: k(
               "flex items-center gap-1.5 rounded-md border px-2 py-1 text-[11.5px] font-medium transition-colors duration-fast",
               "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-border-focus",
@@ -1412,9 +1416,9 @@ function ma({ account: t, onSave: a, saving: s }) {
           c
         );
       }) }),
-      n.size === 0 && /* @__PURE__ */ e.jsx("p", { className: "mt-1.5 text-[11px] text-text-tertiary", children: "Hiçbiri seçili değil — yalnız görevler gönderilir." }),
+      i.size === 0 && /* @__PURE__ */ e.jsx("p", { className: "mt-1.5 text-[11px] text-text-tertiary", children: "Hiçbiri seçili değil — yalnız görevler gönderilir." }),
       /* @__PURE__ */ e.jsx("p", { className: "mb-1.5 mt-3 text-[11px] font-bold uppercase tracking-wider text-text-tertiary", children: "Çakışma kuralı" }),
-      /* @__PURE__ */ e.jsx("div", { className: "flex flex-col gap-1.5", children: Object.entries(pa).map(([c, o]) => {
+      /* @__PURE__ */ e.jsx("div", { className: "flex flex-col gap-1.5", children: Object.entries(ma).map(([c, o]) => {
         const f = Number(c), u = x === f;
         return /* @__PURE__ */ e.jsxs(
           "button",
@@ -1444,7 +1448,7 @@ function ma({ account: t, onSave: a, saving: s }) {
             onClick: () => a({
               accountId: t.id,
               isSyncEnabled: m,
-              syncSources: [...n],
+              syncSources: [...i],
               syncProjectIds: t.syncProjectIds ?? [],
               conflictRule: x
             }),
@@ -1456,15 +1460,15 @@ function ma({ account: t, onSave: a, saving: s }) {
     ] })
   ] });
 }
-const ba = [
+const fa = [
   { value: 15, label: "15 dk" },
   { value: 60, label: "1 saat" },
   { value: 360, label: "6 saat" },
   { value: 1440, label: "Günlük" }
 ];
-function fa({ open: t }) {
+function ha({ open: t }) {
   var N, $, E, j;
-  const a = ia(t), s = la(), r = oa(t), n = ca(), p = da(), x = ua(), [d, m] = g.useState(""), [l, b] = g.useState(""), [i, c] = g.useState(60), [o, f] = g.useState(!1), u = (N = a.data) != null && N.path ? `${window.location.origin}${a.data.path}` : "", h = async () => {
+  const a = la(t), s = oa(), r = ca(t), i = da(), p = ua(), x = xa(), [d, m] = g.useState(""), [n, b] = g.useState(""), [l, c] = g.useState(60), [o, f] = g.useState(!1), u = (N = a.data) != null && N.path ? `${window.location.origin}${a.data.path}` : "", h = async () => {
     try {
       await navigator.clipboard.writeText(u), f(!0), setTimeout(() => f(!1), 2e3);
     } catch {
@@ -1531,7 +1535,7 @@ function fa({ open: t }) {
           /* @__PURE__ */ e.jsx(
             "input",
             {
-              value: l,
+              value: n,
               onChange: (y) => b(y.target.value),
               placeholder: ((E = x.data) == null ? void 0 : E.suggestedName) || "Görünen ad",
               "aria-label": "Görünen ad",
@@ -1541,11 +1545,11 @@ function fa({ open: t }) {
           /* @__PURE__ */ e.jsx(
             "select",
             {
-              value: i,
+              value: l,
               onChange: (y) => c(Number(y.target.value)),
               "aria-label": "Yenileme sıklığı",
               className: "rounded-md border border-default bg-surface-base px-2 py-1.5 text-[12px] text-text-primary",
-              children: ba.map((y) => /* @__PURE__ */ e.jsx("option", { value: y.value, children: y.label }, y.value))
+              children: fa.map((y) => /* @__PURE__ */ e.jsx("option", { value: y.value, children: y.label }, y.value))
             }
           )
         ] }),
@@ -1565,18 +1569,18 @@ function fa({ open: t }) {
             {
               size: "sm",
               variant: "primary",
-              disabled: !d || n.isPending,
-              onClick: () => n.mutate(
-                { url: d, displayName: l, color: "accent", refreshMinutes: i },
+              disabled: !d || i.isPending,
+              onClick: () => i.mutate(
+                { url: d, displayName: n, color: "accent", refreshMinutes: l },
                 { onSuccess: () => {
                   m(""), b(""), x.reset();
                 } }
               ),
-              children: n.isPending ? "Ekleniyor…" : "Takvimi ekle"
+              children: i.isPending ? "Ekleniyor…" : "Takvimi ekle"
             }
           )
         ] }),
-        n.isError && /* @__PURE__ */ e.jsx("p", { className: "text-[11px] text-negative-700", children: ((j = n.error) == null ? void 0 : j.message) || "Takvim eklenemedi." }),
+        i.isError && /* @__PURE__ */ e.jsx("p", { className: "text-[11px] text-negative-700", children: ((j = i.error) == null ? void 0 : j.message) || "Takvim eklenemedi." }),
         /* @__PURE__ */ e.jsxs("p", { className: "text-[11px] leading-snug text-text-tertiary", children: [
           "iCal abonelikleri ",
           /* @__PURE__ */ e.jsx("strong", { className: "font-semibold", children: "tek yönlüdür" }),
@@ -1605,8 +1609,8 @@ function fa({ open: t }) {
     ] })
   ] });
 }
-function ha({ open: t, onClose: a }) {
-  const { data: s, isPending: r } = ra(t), n = na();
+function ga({ open: t, onClose: a }) {
+  const { data: s, isPending: r } = na(t), i = ia();
   return /* @__PURE__ */ e.jsx(oe, { open: t, onOpenChange: (p) => {
     p || a();
   }, children: /* @__PURE__ */ e.jsxs(ce, { side: "right", title: "Takvim senkronizasyonu", className: "w-full max-w-[440px] p-0", children: [
@@ -1642,15 +1646,15 @@ function ha({ open: t, onClose: a }) {
           }, children: "Hesap bağla" })
         }
       ) }) : s.accounts.map((p) => /* @__PURE__ */ e.jsx(
-        ma,
+        ba,
         {
           account: p,
-          saving: n.isPending,
-          onSave: (x) => n.mutate(x)
+          saving: i.isPending,
+          onSave: (x) => i.mutate(x)
         },
         p.id
       )),
-      /* @__PURE__ */ e.jsx(fa, { open: t }),
+      /* @__PURE__ */ e.jsx(ha, { open: t }),
       /* @__PURE__ */ e.jsxs("section", { className: "rounded-card border border-subtle bg-surface-base", children: [
         /* @__PURE__ */ e.jsx("header", { className: "border-b border-subtle px-3 py-2", children: /* @__PURE__ */ e.jsx("h4", { className: "text-[12px] font-semibold text-text-primary", children: "Senkron günlüğü" }) }),
         /* @__PURE__ */ e.jsx("div", { className: "px-3 py-2", children: ((s == null ? void 0 : s.log) ?? []).length === 0 ? /* @__PURE__ */ e.jsx("p", { className: "py-2 text-[11.5px] text-text-tertiary", children: "Henüz senkron kaydı yok." }) : s.log.map((p) => {
@@ -1666,14 +1670,14 @@ function ha({ open: t, onClose: a }) {
   ] }) });
 }
 const ot = ["calendar", "preferences"];
-function ga() {
+function ya() {
   return W({
     queryKey: ot,
     queryFn: () => K.get("/api/app/calendar/preferences"),
     staleTime: 5 * 6e4
   });
 }
-function ya() {
+function ka() {
   const t = ee();
   return _({
     /* ABP konvansiyonu: Update* metotları PUT'a düşer. POST 405 döner ve
@@ -1684,26 +1688,26 @@ function ya() {
     }
   });
 }
-function ka() {
+function va() {
   const t = ee();
   return _({
     mutationFn: (a) => K.post("/api/app/calendar/bulk-reschedule", a),
     onSettled: () => t.invalidateQueries({ queryKey: ["calendar", "feed"] })
   });
 }
-function va({ open: t, items: a, today: s, capacity: r, onClose: n }) {
+function ja({ open: t, items: a, today: s, capacity: r, onClose: i }) {
   const { suggestions: p, fixed: x } = g.useMemo(
-    () => Kt(a, { today: s, capacity: r }),
+    () => It(a, { today: s, capacity: r }),
     [a, s, r]
   ), [d, m] = g.useState(() => new Set(p.map((u) => u.item.key)));
   g.useEffect(() => {
     m(new Set(p.map((u) => u.item.key)));
   }, [p]);
-  const l = ka(), b = l.data ?? [], i = new Map(b.filter((u) => !u.succeeded).map((u) => [u.sourceId, u.error])), c = (u) => m((h) => {
+  const n = va(), b = n.data ?? [], l = new Map(b.filter((u) => !u.succeeded).map((u) => [u.sourceId, u.error])), c = (u) => m((h) => {
     const N = new Set(h);
     return N.has(u) ? N.delete(u) : N.add(u), N;
   }), o = p.filter((u) => d.has(u.item.key)), f = () => {
-    l.mutate(
+    n.mutate(
       o.map((u) => ({
         source: u.item.source,
         sourceId: u.item.sourceId,
@@ -1711,13 +1715,13 @@ function va({ open: t, items: a, today: s, capacity: r, onClose: n }) {
       })),
       {
         onSuccess: (u) => {
-          (u ?? []).every((h) => h.succeeded) && n();
+          (u ?? []).every((h) => h.succeeded) && i();
         }
       }
     );
   };
   return /* @__PURE__ */ e.jsx(oe, { open: t, onOpenChange: (u) => {
-    u || n();
+    u || i();
   }, children: /* @__PURE__ */ e.jsxs(ce, { side: "right", title: "Akıllı erteleme", className: "w-full max-w-[420px] p-0", children: [
     /* @__PURE__ */ e.jsxs("header", { className: "flex items-start gap-2 border-b border-subtle px-4 py-3", children: [
       /* @__PURE__ */ e.jsxs("div", { className: "min-w-0 flex-1", children: [
@@ -1731,7 +1735,7 @@ function va({ open: t, items: a, today: s, capacity: r, onClose: n }) {
         "button",
         {
           type: "button",
-          onClick: n,
+          onClick: i,
           "aria-label": "Kapat",
           className: "rounded-md p-1.5 text-text-tertiary hover:bg-surface-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-border-focus",
           children: /* @__PURE__ */ e.jsx("i", { className: "fa fa-xmark", "aria-hidden": "true" })
@@ -1740,7 +1744,7 @@ function va({ open: t, items: a, today: s, capacity: r, onClose: n }) {
     ] }),
     /* @__PURE__ */ e.jsxs("div", { className: "flex-1 overflow-y-auto px-4 py-2", children: [
       p.map(({ item: u, date: h }) => {
-        const N = i.get(u.sourceId);
+        const N = l.get(u.sourceId);
         return /* @__PURE__ */ e.jsxs(
           "label",
           {
@@ -1799,25 +1803,25 @@ function va({ open: t, items: a, today: s, capacity: r, onClose: n }) {
         {
           size: "sm",
           variant: "primary",
-          disabled: o.length === 0 || l.isPending,
+          disabled: o.length === 0 || n.isPending,
           onClick: f,
-          children: l.isPending ? "Erteleniyor…" : `${o.length} öğeyi ertele`
+          children: n.isPending ? "Erteleniyor…" : `${o.length} öğeyi ertele`
         }
       ),
-      /* @__PURE__ */ e.jsx(A, { size: "sm", variant: "ghost", onClick: n, children: "Vazgeç" })
+      /* @__PURE__ */ e.jsx(A, { size: "sm", variant: "ghost", onClick: i, children: "Vazgeç" })
     ] })
   ] }) });
 }
-const ja = [
+const Na = [
   { value: 4, label: "4 sa" },
   { value: 6, label: "6 sa" },
   { value: 8, label: "8 sa" },
   { value: 0, label: "Kapalı" }
 ], me = ["Kaynaklar", "Dış takvim", "Kurallar"];
-function Na({ open: t, counts: a, onDone: s }) {
+function wa({ open: t, counts: a, onDone: s }) {
   var c;
-  const [r, n] = g.useState(0), [p, x] = g.useState(() => new Set(Se)), [d, m] = g.useState(8), l = ya(), b = () => {
-    l.mutate(
+  const [r, i] = g.useState(0), [p, x] = g.useState(() => new Set(Se)), [d, m] = g.useState(8), n = ka(), b = () => {
+    n.mutate(
       {
         dailyCapacityHours: d > 0 ? d : 0,
         sources: [...p],
@@ -1827,7 +1831,7 @@ function Na({ open: t, counts: a, onDone: s }) {
          kaybolur ve kullanıcı kurulumu yaptığını sanır. */
       { onSuccess: s }
     );
-  }, i = (o) => x((f) => {
+  }, l = (o) => x((f) => {
     const u = new Set(f);
     return u.has(o) ? u.delete(o) : u.add(o), u;
   });
@@ -1861,7 +1865,7 @@ function Na({ open: t, counts: a, onDone: s }) {
               type: "button",
               role: "switch",
               "aria-checked": f,
-              onClick: () => i(o),
+              onClick: () => l(o),
               className: k(
                 "flex items-center gap-2.5 rounded-md border px-3 py-2 text-left transition-colors duration-fast",
                 "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-border-focus",
@@ -1877,7 +1881,7 @@ function Na({ open: t, counts: a, onDone: s }) {
           );
         }) }),
         /* @__PURE__ */ e.jsx("p", { className: "mt-4 text-[13px] font-semibold text-text-primary", children: "Günlük kapasiteniz" }),
-        /* @__PURE__ */ e.jsx("div", { className: "mt-2 flex gap-1.5", children: ja.map((o) => /* @__PURE__ */ e.jsx(
+        /* @__PURE__ */ e.jsx("div", { className: "mt-2 flex gap-1.5", children: Na.map((o) => /* @__PURE__ */ e.jsx(
           "button",
           {
             type: "button",
@@ -1937,7 +1941,7 @@ function Na({ open: t, counts: a, onDone: s }) {
         /* @__PURE__ */ e.jsx("p", { className: "mt-3 text-[12px] text-text-secondary", children: "Kurulum tamam — takvim seçtiğiniz kaynaklarla açılacak." })
       ] })
     ] }),
-    l.isError && /* @__PURE__ */ e.jsx("p", { role: "alert", className: "shrink-0 px-5 pb-3 text-[11px] text-negative-700", children: ((c = l.error) == null ? void 0 : c.message) || "Ayarlar kaydedilemedi, lütfen tekrar deneyin." }),
+    n.isError && /* @__PURE__ */ e.jsx("p", { role: "alert", className: "shrink-0 px-5 pb-3 text-[11px] text-negative-700", children: ((c = n.error) == null ? void 0 : c.message) || "Ayarlar kaydedilemedi, lütfen tekrar deneyin." }),
     /* @__PURE__ */ e.jsxs("footer", { className: "shrink-0 flex items-center gap-2 border-t border-subtle px-5 py-3", children: [
       /* @__PURE__ */ e.jsxs("span", { className: "text-[11.5px] text-text-tertiary", children: [
         "Adım ",
@@ -1946,12 +1950,12 @@ function Na({ open: t, counts: a, onDone: s }) {
         me.length
       ] }),
       /* @__PURE__ */ e.jsx("span", { className: "flex-1" }),
-      /* @__PURE__ */ e.jsx(A, { size: "sm", variant: "ghost", onClick: b, disabled: l.isPending, children: "Şimdilik atla" }),
-      r < me.length - 1 ? /* @__PURE__ */ e.jsx(A, { size: "sm", variant: "primary", onClick: () => n((o) => o + 1), children: "Devam" }) : /* @__PURE__ */ e.jsx(A, { size: "sm", variant: "primary", onClick: b, disabled: l.isPending, children: l.isPending ? "Kaydediliyor…" : "Bitir" })
+      /* @__PURE__ */ e.jsx(A, { size: "sm", variant: "ghost", onClick: b, disabled: n.isPending, children: "Şimdilik atla" }),
+      r < me.length - 1 ? /* @__PURE__ */ e.jsx(A, { size: "sm", variant: "primary", onClick: () => i((o) => o + 1), children: "Devam" }) : /* @__PURE__ */ e.jsx(A, { size: "sm", variant: "primary", onClick: b, disabled: n.isPending, children: n.isPending ? "Kaydediliyor…" : "Bitir" })
     ] })
   ] }) });
 }
-const wa = [
+const Sa = [
   {
     title: "Gezinme",
     rows: [
@@ -1976,7 +1980,7 @@ const wa = [
 function He({ children: t }) {
   return /* @__PURE__ */ e.jsx("kbd", { className: "rounded border border-strong bg-surface-raised px-1.5 py-0.5 font-mono text-[10.5px] font-semibold text-text-primary", children: t });
 }
-function Sa({ open: t, onClose: a }) {
+function Da({ open: t, onClose: a }) {
   return /* @__PURE__ */ e.jsx(Je, { open: t, onOpenChange: (s) => {
     s || a();
   }, children: /* @__PURE__ */ e.jsxs(Ze, { className: "w-full max-w-[480px] p-0", children: [
@@ -1994,10 +1998,10 @@ function Sa({ open: t, onClose: a }) {
       )
     ] }),
     /* @__PURE__ */ e.jsxs("div", { className: "px-5 py-4", children: [
-      wa.map((s) => /* @__PURE__ */ e.jsxs("section", { className: "mb-4 last:mb-0", children: [
+      Sa.map((s) => /* @__PURE__ */ e.jsxs("section", { className: "mb-4 last:mb-0", children: [
         /* @__PURE__ */ e.jsx("p", { className: "mb-1.5 text-[11px] font-bold uppercase tracking-wider text-text-tertiary", children: s.title }),
         s.rows.map((r) => /* @__PURE__ */ e.jsxs("div", { className: "flex items-center gap-2 border-b border-subtle py-1.5 last:border-b-0", children: [
-          /* @__PURE__ */ e.jsx("span", { className: "flex shrink-0 items-center gap-1", children: r.keys.map((n) => /* @__PURE__ */ e.jsx(He, { children: n }, n)) }),
+          /* @__PURE__ */ e.jsx("span", { className: "flex shrink-0 items-center gap-1", children: r.keys.map((i) => /* @__PURE__ */ e.jsx(He, { children: i }, i)) }),
           /* @__PURE__ */ e.jsx("span", { className: "text-[12px] text-text-secondary", children: r.label })
         ] }, r.label))
       ] }, s.title)),
@@ -2009,22 +2013,22 @@ function Sa({ open: t, onClose: a }) {
     ] })
   ] }) });
 }
-function Da({ polite: t, assertive: a }) {
+function Ca({ polite: t, assertive: a }) {
   return /* @__PURE__ */ e.jsxs(e.Fragment, { children: [
     /* @__PURE__ */ e.jsx("p", { role: "status", "aria-live": "polite", className: "sr-only", children: t }),
     /* @__PURE__ */ e.jsx("p", { role: "alert", "aria-live": "assertive", className: "sr-only", children: a })
   ] });
 }
-const Ca = ["Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi", "Pazar"];
-function Ta({ items: t, month: a, today: s, generatedAt: r }) {
+const Ta = ["Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi", "Pazar"];
+function Ea({ items: t, month: a, today: s, generatedAt: r }) {
   var c;
-  const n = at(a), p = T(s), x = {};
+  const i = at(a), p = T(s), x = {};
   for (const o of t ?? [])
     (x[c = o.date.slice(0, 10)] ?? (x[c] = [])).push(o);
   const d = Ee(s), m = (t ?? []).filter((o) => {
     const f = o.date.slice(0, 10);
     return f >= T(d) && f <= T(L(d, 7));
-  }), { overdue: l, days: b } = rt(m, s), i = (o) => o === O.OVERDUE ? "border-l-[3px] border-l-black" : o === O.DUE_TODAY ? "border-l-[3px] border-l-neutral-500" : "border-l-[3px] border-l-neutral-300";
+  }), { overdue: n, days: b } = rt(m, s), l = (o) => o === O.OVERDUE ? "border-l-[3px] border-l-black" : o === O.DUE_TODAY ? "border-l-[3px] border-l-neutral-500" : "border-l-[3px] border-l-neutral-300";
   return /* @__PURE__ */ e.jsxs("div", { className: "apya-print-root hidden print:block", children: [
     /* @__PURE__ */ e.jsxs("section", { className: "apya-print-page", children: [
       /* @__PURE__ */ e.jsxs("header", { className: "flex items-end justify-between border-b-2 border-black pb-2", children: [
@@ -2040,8 +2044,8 @@ function Ta({ items: t, month: a, today: s, generatedAt: r }) {
           ] })
         ] })
       ] }),
-      /* @__PURE__ */ e.jsx("div", { className: "mt-3 grid grid-cols-7", children: Ca.map((o) => /* @__PURE__ */ e.jsx("div", { className: "pb-1 text-[7.5pt] font-bold uppercase tracking-wide text-neutral-500", children: o }, o)) }),
-      /* @__PURE__ */ e.jsx("div", { className: "grid grid-cols-7 border-l border-t border-neutral-300", children: n.map((o) => {
+      /* @__PURE__ */ e.jsx("div", { className: "mt-3 grid grid-cols-7", children: Ta.map((o) => /* @__PURE__ */ e.jsx("div", { className: "pb-1 text-[7.5pt] font-bold uppercase tracking-wide text-neutral-500", children: o }, o)) }),
+      /* @__PURE__ */ e.jsx("div", { className: "grid grid-cols-7 border-l border-t border-neutral-300", children: i.map((o) => {
         const f = T(o), u = x[f] ?? [], h = o.getMonth() !== a.getMonth();
         return /* @__PURE__ */ e.jsxs(
           "div",
@@ -2060,7 +2064,7 @@ function Ta({ items: t, month: a, today: s, generatedAt: r }) {
                 {
                   className: k(
                     "mt-0.5 truncate ps-1 text-[7.5pt] leading-tight",
-                    i(N.risk),
+                    l(N.risk),
                     N.risk === O.OVERDUE ? "font-semibold" : "font-normal",
                     N.isDone && "line-through"
                   ),
@@ -2098,12 +2102,12 @@ function Ta({ items: t, month: a, today: s, generatedAt: r }) {
         ] })
       ] }),
       /* @__PURE__ */ e.jsxs("div", { className: "mt-3 columns-2 gap-8", children: [
-        l.length > 0 && /* @__PURE__ */ e.jsxs("div", { className: "mb-4 break-inside-avoid", children: [
+        n.length > 0 && /* @__PURE__ */ e.jsxs("div", { className: "mb-4 break-inside-avoid", children: [
           /* @__PURE__ */ e.jsxs("p", { className: "border-b-2 border-black pb-1 text-[9pt] font-bold uppercase tracking-wide", children: [
             "Gecikmiş · ",
-            l.length
+            n.length
           ] }),
-          l.map((o) => /* @__PURE__ */ e.jsx(We, { item: o, showDate: !0 }, o.key))
+          n.map((o) => /* @__PURE__ */ e.jsx(We, { item: o, showDate: !0 }, o.key))
         ] }),
         b.map((o) => /* @__PURE__ */ e.jsxs("div", { className: "mb-4 break-inside-avoid", children: [
           /* @__PURE__ */ e.jsxs("p", { className: "border-b border-black pb-1 text-[9pt] font-bold uppercase tracking-wide", children: [
@@ -2131,7 +2135,7 @@ function We({ item: t, showDate: a = !1 }) {
     ] })
   ] });
 }
-function Ea({ rows: t, days: a, capacity: s, loading: r }) {
+function $a({ rows: t, days: a, capacity: s, loading: r }) {
   if (r)
     return /* @__PURE__ */ e.jsxs("p", { className: "px-2 py-1.5 text-[11.5px] text-text-tertiary", children: [
       /* @__PURE__ */ e.jsx("i", { className: "fa fa-circle-notch fa-spin me-1.5", "aria-hidden": "true" }),
@@ -2139,7 +2143,7 @@ function Ea({ rows: t, days: a, capacity: s, loading: r }) {
     ] });
   if (!t || t.length === 0)
     return /* @__PURE__ */ e.jsx("p", { className: "px-2 py-1.5 text-[11.5px] text-text-tertiary", children: "Bu aralıkta atanmış açık görev yok." });
-  const n = (a ?? []).map(T);
+  const i = (a ?? []).map(T);
   return /* @__PURE__ */ e.jsxs("div", { className: "flex flex-col gap-1.5 px-2 pb-1", children: [
     t.map((p) => {
       const x = {};
@@ -2149,18 +2153,18 @@ function Ea({ rows: t, days: a, capacity: s, loading: r }) {
           /* @__PURE__ */ e.jsx("span", { className: "truncate text-[11.5px] font-medium text-text-primary", children: p.name }),
           /* @__PURE__ */ e.jsx("span", { className: "shrink-0 font-mono text-[10.5px] tabular-nums text-text-tertiary", children: w.hours(p.totalHours) })
         ] }),
-        /* @__PURE__ */ e.jsx("div", { className: "mt-0.5 flex gap-[2px]", children: (n.length ? n : (p.days ?? []).map((d) => d.date.slice(0, 10))).map((d) => {
-          const m = x[d], l = (m == null ? void 0 : m.hours) ?? 0, b = s && l > s, i = s ? Math.min(l / s, 1) : l > 0 ? 1 : 0;
+        /* @__PURE__ */ e.jsx("div", { className: "mt-0.5 flex gap-[2px]", children: (i.length ? i : (p.days ?? []).map((d) => d.date.slice(0, 10))).map((d) => {
+          const m = x[d], n = (m == null ? void 0 : m.hours) ?? 0, b = s && n > s, l = s ? Math.min(n / s, 1) : n > 0 ? 1 : 0;
           return /* @__PURE__ */ e.jsx(
             "span",
             {
-              title: `${d}: ${w.hours(l)}${m != null && m.itemCount ? ` · ${m.itemCount} öğe` : ""}`,
+              title: `${d}: ${w.hours(n)}${m != null && m.itemCount ? ` · ${m.itemCount} öğe` : ""}`,
               className: "h-[6px] flex-1 overflow-hidden rounded-sm bg-neutral-subtle",
               children: /* @__PURE__ */ e.jsx(
                 "span",
                 {
                   className: k("block h-full", b ? "bg-negative" : "bg-accent"),
-                  style: { width: `${i * 100}%` }
+                  style: { width: `${l * 100}%` }
                 }
               )
             },
@@ -2172,14 +2176,14 @@ function Ea({ rows: t, days: a, capacity: s, loading: r }) {
     /* @__PURE__ */ e.jsx("p", { className: "mt-1 text-[10.5px] leading-snug text-text-tertiary", children: "Yalnız görebildiğiniz projelerin görevleri sayılır." })
   ] });
 }
-const $a = 6e4;
-function Ra({ from: t, to: a }) {
+const Ra = 6e4;
+function Aa({ from: t, to: a }) {
   const s = T(t), r = T(a);
   return W({
     queryKey: ["calendar", "feed", s, r],
     queryFn: () => K.get(`/api/app/calendar/feed?From=${s}&To=${r}`),
-    staleTime: $a,
-    placeholderData: (n) => n
+    staleTime: Ra,
+    placeholderData: (i) => i
     /* ay geçişinde boş ekran yerine eski veri */
   });
 }
@@ -2197,20 +2201,20 @@ function Ne(t, a) {
   } catch {
   }
 }
-function Aa() {
+function za() {
   const t = new URLSearchParams(window.location.search).get("view");
   if (he.includes(t)) return t;
   const a = dt(ct);
   return he.includes(a) ? a : null;
 }
-function za() {
+function Ka() {
   const t = dt(Te);
   if (!t) return new Set(le);
   const a = t.split(",").map(Number).filter((s) => le.includes(s));
   return a.length ? new Set(a) : new Set(le);
 }
-function Ka({ defaultView: t = "month" } = {}) {
-  const [a] = g.useState(Aa), [s, r] = g.useState(() => a ?? t), [n, p] = g.useState(za);
+function Ia({ defaultView: t = "month" } = {}) {
+  const [a] = g.useState(za), [s, r] = g.useState(() => a ?? t), [i, p] = g.useState(Ka);
   g.useEffect(() => {
     const b = new URL(window.location.href);
     b.searchParams.get("view") !== s && (b.searchParams.set("view", s), window.history.replaceState({}, "", b));
@@ -2218,50 +2222,50 @@ function Ka({ defaultView: t = "month" } = {}) {
   const x = g.useCallback((b) => {
     he.includes(b) && (r(b), Ne(ct, b));
   }, []), d = g.useCallback((b) => {
-    p((i) => {
-      const c = new Set(i);
+    p((l) => {
+      const c = new Set(l);
       return c.has(b) ? c.delete(b) : c.add(b), Ne(Te, [...c].join(",")), c;
     });
   }, []), m = g.useCallback((b) => {
-    a || he.includes(b) && r((i) => i === b ? i : b);
-  }, [a]), l = g.useCallback(() => {
+    a || he.includes(b) && r((l) => l === b ? l : b);
+  }, [a]), n = g.useCallback(() => {
     const b = new Set(le);
     p(b), Ne(Te, [...b].join(","));
   }, []);
-  return { view: s, setView: x, applyResponsiveDefault: m, enabledSources: n, toggleSource: d, resetSources: l };
+  return { view: s, setView: x, applyResponsiveDefault: m, enabledSources: i, toggleSource: d, resetSources: n };
 }
 const H = ["calendar", "feed"];
-function Ia(t, a, s) {
+function Oa(t, a, s) {
   t.setQueriesData({ queryKey: H }, (r) => r != null && r.items ? {
     ...r,
-    items: r.items.map((n) => n.key === a ? { ...n, date: `${s}T00:00:00` } : n)
+    items: r.items.map((i) => i.key === a ? { ...i, date: `${s}T00:00:00` } : i)
   } : r);
 }
-function Oa(t, a) {
+function Pa(t, a) {
   t.setQueriesData({ queryKey: H }, (s) => s != null && s.items ? {
     ...s,
     items: s.items.map((r) => r.key === a ? { ...r, isDone: !0, risk: 0, loadHours: null } : r)
   } : s);
 }
-function Pa({ onOfflineFailure: t } = {}) {
-  const a = ee(), [s, r] = g.useState(null), [n, p] = g.useState({}), [x, d] = g.useState({}), m = g.useCallback((i) => {
+function Ma({ onOfflineFailure: t } = {}) {
+  const a = ee(), [s, r] = g.useState(null), [i, p] = g.useState({}), [x, d] = g.useState({}), m = g.useCallback((l) => {
     p((c) => {
-      if (!c[i]) return c;
+      if (!c[l]) return c;
       const o = { ...c };
-      return delete o[i], o;
+      return delete o[l], o;
     });
-  }, []), l = _({
-    mutationFn: ({ item: i, newDate: c }) => K.post("/api/app/calendar/reschedule-item", {
-      source: i.source,
-      sourceId: i.sourceId,
+  }, []), n = _({
+    mutationFn: ({ item: l, newDate: c }) => K.post("/api/app/calendar/reschedule-item", {
+      source: l.source,
+      sourceId: l.sourceId,
       newDate: T(c)
     }),
-    onMutate: async ({ item: i, newDate: c }) => {
+    onMutate: async ({ item: l, newDate: c }) => {
       await a.cancelQueries({ queryKey: H });
       const o = a.getQueriesData({ queryKey: H });
-      return m(i.key), d((f) => ({ ...f, [i.key]: !0 })), Ia(a, i.key, T(c)), { snapshot: o, previousDate: i.date.slice(0, 10) };
+      return m(l.key), d((f) => ({ ...f, [l.key]: !0 })), Oa(a, l.key, T(c)), { snapshot: o, previousDate: l.date.slice(0, 10) };
     },
-    onError: (i, { item: c, newDate: o }, f) => {
+    onError: (l, { item: c, newDate: o }, f) => {
       var u;
       if (typeof navigator < "u" && !navigator.onLine) {
         t == null || t({
@@ -2272,46 +2276,46 @@ function Pa({ onOfflineFailure: t } = {}) {
       }
       (u = f == null ? void 0 : f.snapshot) == null || u.forEach(([h, N]) => a.setQueryData(h, N)), p((h) => ({
         ...h,
-        [c.key]: (i == null ? void 0 : i.message) || "Kaydedilemedi — tarih değişmedi."
+        [c.key]: (l == null ? void 0 : l.message) || "Kaydedilemedi — tarih değişmedi."
       }));
     },
-    onSuccess: (i, { item: c, newDate: o }, f) => {
+    onSuccess: (l, { item: c, newDate: o }, f) => {
       r({
         key: c.key,
         message: `“${c.title}” ${T(o)} tarihine taşındı.`,
-        undo: () => l.mutate({
+        undo: () => n.mutate({
           item: { ...c, date: `${T(o)}T00:00:00` },
           newDate: /* @__PURE__ */ new Date(`${f.previousDate}T00:00:00`)
         })
       });
     },
-    onSettled: (i, c, { item: o }) => {
+    onSettled: (l, c, { item: o }) => {
       d((f) => {
         const u = { ...f };
         return delete u[o.key], u;
       }), a.invalidateQueries({ queryKey: H });
     }
   }), b = _({
-    mutationFn: ({ item: i }) => K.post("/api/app/calendar/complete-item", {
-      source: i.source,
-      sourceId: i.sourceId
+    mutationFn: ({ item: l }) => K.post("/api/app/calendar/complete-item", {
+      source: l.source,
+      sourceId: l.sourceId
     }),
-    onMutate: async ({ item: i }) => {
+    onMutate: async ({ item: l }) => {
       await a.cancelQueries({ queryKey: H });
       const c = a.getQueriesData({ queryKey: H });
-      return m(i.key), d((o) => ({ ...o, [i.key]: !0 })), Oa(a, i.key), { snapshot: c };
+      return m(l.key), d((o) => ({ ...o, [l.key]: !0 })), Pa(a, l.key), { snapshot: c };
     },
-    onError: (i, { item: c }, o) => {
+    onError: (l, { item: c }, o) => {
       var f;
       (f = o == null ? void 0 : o.snapshot) == null || f.forEach(([u, h]) => a.setQueryData(u, h)), p((u) => ({
         ...u,
-        [c.key]: (i == null ? void 0 : i.message) || "Tamamlanamadı."
+        [c.key]: (l == null ? void 0 : l.message) || "Tamamlanamadı."
       }));
     },
-    onSuccess: (i, { item: c }) => {
+    onSuccess: (l, { item: c }) => {
       r({ key: c.key, message: `“${c.title}” tamamlandı.`, undo: null });
     },
-    onSettled: (i, c, { item: o }) => {
+    onSettled: (l, c, { item: o }) => {
       d((f) => {
         const u = { ...f };
         return delete u[o.key], u;
@@ -2319,94 +2323,94 @@ function Pa({ onOfflineFailure: t } = {}) {
     }
   });
   return {
-    reschedule: (i, c) => l.mutate({ item: i, newDate: c }),
-    complete: (i) => b.mutate({ item: i }),
-    retry: (i, c) => c ? l.mutate({ item: i, newDate: c }) : b.mutate({ item: i }),
+    reschedule: (l, c) => n.mutate({ item: l, newDate: c }),
+    complete: (l) => b.mutate({ item: l }),
+    retry: (l, c) => c ? n.mutate({ item: l, newDate: c }) : b.mutate({ item: l }),
     lastAction: s,
     dismissAction: () => r(null),
-    errors: n,
+    errors: i,
     clearError: m,
     pending: x
   };
 }
-function Ma({ from: t, to: a, enabled: s = !0 }) {
-  const r = T(t), n = T(a);
+function La({ from: t, to: a, enabled: s = !0 }) {
+  const r = T(t), i = T(a);
   return W({
-    queryKey: ["calendar", "external", r, n],
-    queryFn: () => K.get(`/api/app/calendar/external-events?From=${r}&To=${n}`),
+    queryKey: ["calendar", "external", r, i],
+    queryFn: () => K.get(`/api/app/calendar/external-events?From=${r}&To=${i}`),
     enabled: s,
     staleTime: 12e4,
     retry: !1,
     placeholderData: (p) => p
   });
 }
-const La = ["INPUT", "TEXTAREA", "SELECT"];
-function Fa({
+const Fa = ["INPUT", "TEXTAREA", "SELECT"];
+function _a({
   onView: t,
   onToday: a,
   onPrev: s,
   onNext: r,
-  onDeferSelected: n,
+  onDeferSelected: i,
   onUndo: p,
   onToggleHelp: x,
   enabled: d = !0
 }) {
   g.useEffect(() => {
     if (!d) return;
-    const m = (l) => {
-      const b = l.target;
-      if (!(La.includes(b == null ? void 0 : b.tagName) || b != null && b.isContentEditable)) {
-        if ((l.metaKey || l.ctrlKey) && l.key.toLowerCase() === "z") {
-          l.preventDefault(), p == null || p();
+    const m = (n) => {
+      const b = n.target;
+      if (!(Fa.includes(b == null ? void 0 : b.tagName) || b != null && b.isContentEditable)) {
+        if ((n.metaKey || n.ctrlKey) && n.key.toLowerCase() === "z") {
+          n.preventDefault(), p == null || p();
           return;
         }
-        if (!(l.metaKey || l.ctrlKey || l.altKey)) {
-          if (l.shiftKey) {
-            l.key === "ArrowRight" && (l.preventDefault(), n == null || n(1)), l.key === "ArrowLeft" && (l.preventDefault(), n == null || n(-1)), l.key === "?" && (l.preventDefault(), x == null || x());
+        if (!(n.metaKey || n.ctrlKey || n.altKey)) {
+          if (n.shiftKey) {
+            n.key === "ArrowRight" && (n.preventDefault(), i == null || i(1)), n.key === "ArrowLeft" && (n.preventDefault(), i == null || i(-1)), n.key === "?" && (n.preventDefault(), x == null || x());
             return;
           }
-          switch (l.key) {
+          switch (n.key) {
             case "?":
-              l.preventDefault(), x == null || x();
+              n.preventDefault(), x == null || x();
               break;
             case "t":
             case "T":
-              l.preventDefault(), a == null || a();
+              n.preventDefault(), a == null || a();
               break;
             case "m":
             case "M":
-              l.preventDefault(), t == null || t("month");
+              n.preventDefault(), t == null || t("month");
               break;
             case "w":
             case "W":
-              l.preventDefault(), t == null || t("week");
+              n.preventDefault(), t == null || t("week");
               break;
             case "d":
             case "D":
-              l.preventDefault(), t == null || t("day");
+              n.preventDefault(), t == null || t("day");
               break;
             case "a":
             case "A":
-              l.preventDefault(), t == null || t("agenda");
+              n.preventDefault(), t == null || t("agenda");
               break;
             case "PageUp":
-              l.preventDefault(), s == null || s();
+              n.preventDefault(), s == null || s();
               break;
             case "PageDown":
-              l.preventDefault(), r == null || r();
+              n.preventDefault(), r == null || r();
               break;
           }
         }
       }
     };
     return window.addEventListener("keydown", m), () => window.removeEventListener("keydown", m);
-  }, [d, t, a, s, r, n, p, x]);
+  }, [d, t, a, s, r, i, p, x]);
 }
-function _a({ from: t, to: a, enabled: s }) {
-  const r = T(t), n = T(a);
+function Ba({ from: t, to: a, enabled: s }) {
+  const r = T(t), i = T(a);
   return W({
-    queryKey: ["calendar", "team-load", r, n],
-    queryFn: () => K.get(`/api/app/calendar/team-load?From=${r}&To=${n}`),
+    queryKey: ["calendar", "team-load", r, i],
+    queryFn: () => K.get(`/api/app/calendar/team-load?From=${r}&To=${i}`),
     enabled: s,
     staleTime: 6e4
   });
@@ -2426,24 +2430,24 @@ function Ve(t) {
   } catch {
   }
 }
-function Ba({ onFlush: t }) {
-  const [a, s] = g.useState(() => typeof navigator > "u" ? !0 : navigator.onLine), [r, n] = g.useState(() => we().length), p = g.useRef(!1), x = g.useCallback((m) => {
-    const b = we().filter((i) => i.key !== m.key).concat(m);
-    Ve(b), n(b.length);
+function qa({ onFlush: t }) {
+  const [a, s] = g.useState(() => typeof navigator > "u" ? !0 : navigator.onLine), [r, i] = g.useState(() => we().length), p = g.useRef(!1), x = g.useCallback((m) => {
+    const b = we().filter((l) => l.key !== m.key).concat(m);
+    Ve(b), i(b.length);
   }, []), d = g.useCallback(async () => {
     if (p.current) return;
     const m = we();
     if (m.length !== 0) {
       p.current = !0;
       try {
-        const l = [];
+        const n = [];
         for (const b of m)
           try {
             await t(b);
           } catch {
-            l.push(b);
+            n.push(b);
           }
-        Ve(l), n(l.length);
+        Ve(n), i(n.length);
       } finally {
         p.current = !1;
       }
@@ -2452,32 +2456,32 @@ function Ba({ onFlush: t }) {
   return g.useEffect(() => {
     const m = () => {
       s(!0), d();
-    }, l = () => s(!1);
-    return window.addEventListener("online", m), window.addEventListener("offline", l), navigator.onLine && d(), () => {
-      window.removeEventListener("online", m), window.removeEventListener("offline", l);
+    }, n = () => s(!1);
+    return window.addEventListener("online", m), window.addEventListener("offline", n), navigator.onLine && d(), () => {
+      window.removeEventListener("online", m), window.removeEventListener("offline", n);
     };
   }, [d]), { isOnline: a, pendingCount: r, enqueue: x, flush: d };
 }
-function qa() {
+function Ga() {
   const t = g.useRef(null), [a, s] = g.useState(0);
   return g.useLayoutEffect(() => {
     const r = t.current;
     if (!r || (s(r.getBoundingClientRect().width), typeof ResizeObserver > "u")) return;
-    const n = new ResizeObserver((p) => {
+    const i = new ResizeObserver((p) => {
       for (const x of p)
         s(x.contentRect.width);
     });
-    return n.observe(r), () => n.disconnect();
+    return i.observe(r), () => i.disconnect();
   }, []), [t, a];
 }
-function Ga(t) {
+function Ya(t) {
   return t === 0 || t >= 1180 ? "wide" : t >= 780 ? "medium" : "narrow";
 }
-const Ya = 60;
+const Ua = 60;
 function be(t, a, s) {
   return a === "week" ? L(t, 7 * s) : a === "day" ? L(t, s) : new Date(t.getFullYear(), t.getMonth() + s, 1);
 }
-function Ua() {
+function Qa() {
   return /* @__PURE__ */ e.jsxs("div", { className: "overflow-hidden rounded-card border border-default bg-surface-base", "aria-hidden": "true", children: [
     /* @__PURE__ */ e.jsx("div", { className: "grid grid-cols-7 border-b border-default bg-surface-raised", children: Array.from({ length: 7 }, (t, a) => /* @__PURE__ */ e.jsx("div", { className: "px-2.5 py-2", children: /* @__PURE__ */ e.jsx(ie, { height: 10 }) }, a)) }),
     /* @__PURE__ */ e.jsx("div", { className: "grid grid-cols-7", children: Array.from({ length: $e }, (t, a) => /* @__PURE__ */ e.jsxs("div", { className: "min-h-[96px] border-b border-r border-subtle p-1.5 last:border-r-0", children: [
@@ -2486,21 +2490,21 @@ function Ua() {
     ] }, a)) })
   ] });
 }
-function Qa() {
+function Ha() {
   var Le, Fe, _e, Be, qe;
-  const [t, a] = qa(), s = Ga(a), r = s === "narrow", n = g.useMemo(() => De(/* @__PURE__ */ new Date()), []), [p, x] = g.useState(n), [d, m] = g.useState(null), [l, b] = g.useState(null), [i, c] = g.useState(!1), [o, f] = g.useState(!1), [u, h] = g.useState(!1), [N, $] = g.useState(!1), [E, j] = g.useState(null), [y, z] = g.useState(!1), { view: S, setView: C, applyResponsiveDefault: M, enabledSources: V, toggleSource: ye, resetSources: X } = Ka();
+  const [t, a] = Ga(), s = Ya(a), r = s === "narrow", i = g.useMemo(() => De(/* @__PURE__ */ new Date()), []), [p, x] = g.useState(i), [d, m] = g.useState(null), [n, b] = g.useState(null), [l, c] = g.useState(!1), [o, f] = g.useState(!1), [u, h] = g.useState(!1), [N, $] = g.useState(!1), [E, j] = g.useState(null), [y, z] = g.useState(!1), { view: S, setView: C, applyResponsiveDefault: M, enabledSources: V, toggleSource: ye, resetSources: X } = Ia();
   g.useEffect(() => {
     a !== 0 && M(r ? "agenda" : "month");
   }, [a, r, M]);
   const { range: F, title: ae, weekDayList: te } = g.useMemo(() => {
     if (S === "agenda")
       return {
-        range: { from: L(n, -60), to: L(n, Ya) },
+        range: { from: L(i, -60), to: L(i, Ua) },
         title: "Ajanda",
         weekDayList: null
       };
     if (S === "week") {
-      const R = Rt(p);
+      const R = At(p);
       return {
         range: { from: R[0], to: R[6] },
         title: `${w.dayShort(R[0])} – ${w.dayShort(R[6])} ${R[6].getFullYear()}`,
@@ -2517,7 +2521,7 @@ function Qa() {
       title: w.monthTitle(p),
       weekDayList: null
     };
-  }, [S, p, n]), { data: D, isPending: U, isError: xt, refetch: pt } = Ra(F), q = Ma(F), ze = ga(), ke = _a({ from: F.from, to: F.to, enabled: y }), B = Ba({
+  }, [S, p, i]), { data: D, isPending: U, isError: xt, refetch: pt } = Aa(F), q = La(F), ze = ya(), ke = Ba({ from: F.from, to: F.to, enabled: y }), B = qa({
     onFlush: (v) => K.post("/api/app/calendar/reschedule-item", v.payload)
   }), ue = g.useMemo(
     () => {
@@ -2554,14 +2558,14 @@ function Qa() {
     d && !G[d] && !U && (d >= T(F.from) && d <= T(F.to) || m(null));
   }, [d, G, U, F]);
   const xe = g.useCallback((v) => b(v.key), []), Pe = g.useCallback(() => {
-    x(n), m(T(n));
-  }, [n]), I = Pa({ onOfflineFailure: B.enqueue }), ht = g.useCallback((v) => {
+    x(i), m(T(i));
+  }, [i]), I = Ma({ onOfflineFailure: B.enqueue }), ht = g.useCallback((v) => {
     const R = E ?? d;
     if (R)
       for (const J of G[R] ?? [])
         J.canReschedule && !J.isDone && I.reschedule(J, L(/* @__PURE__ */ new Date("T00:00:00"), v));
   }, [E, d, G, I]);
-  Fa({
+  _a({
     onView: C,
     onToday: Pe,
     onPrev: () => x((v) => be(v, S, -1)),
@@ -2573,8 +2577,8 @@ function Qa() {
     },
     onToggleHelp: () => $((v) => !v)
   });
-  const Me = ue.length > 0, gt = Me && Q.length === 0, yt = d ? G[d] ?? [] : [], se = l ? ue.find((v) => v.key === l) ?? null : null, ve = d && /* @__PURE__ */ e.jsx(
-    Pt,
+  const Me = ue.length > 0, gt = Me && Q.length === 0, yt = d ? G[d] ?? [] : [], se = n ? ue.find((v) => v.key === n) ?? null : null, ve = d && /* @__PURE__ */ e.jsx(
+    Mt,
     {
       dayKey: d,
       items: yt,
@@ -2585,7 +2589,7 @@ function Qa() {
   );
   return /* @__PURE__ */ e.jsxs("div", { ref: t, className: "flex flex-col gap-3", children: [
     /* @__PURE__ */ e.jsx(
-      Vt,
+      Xt,
       {
         title: ae,
         view: S,
@@ -2654,7 +2658,7 @@ function Qa() {
     ),
     /* @__PURE__ */ e.jsxs("div", { className: k("flex gap-3", r ? "flex-col" : "flex-row items-start"), children: [
       !r && /* @__PURE__ */ e.jsx("div", { className: k("shrink-0", s === "wide" ? "w-[240px]" : "w-auto"), children: /* @__PURE__ */ e.jsx(
-        Ut,
+        Qt,
         {
           sources: (D == null ? void 0 : D.sources) ?? [],
           counts: Ke,
@@ -2667,7 +2671,7 @@ function Qa() {
           teamOpen: y,
           onToggleTeam: () => z((v) => !v),
           teamContent: y ? /* @__PURE__ */ e.jsx(
-            Ea,
+            $a,
             {
               rows: ke.data,
               days: te,
@@ -2680,7 +2684,7 @@ function Qa() {
         }
       ) }),
       /* @__PURE__ */ e.jsxs("div", { className: "min-w-0 flex-1", children: [
-        U ? /* @__PURE__ */ e.jsx(Ua, {}) : gt ? /* @__PURE__ */ e.jsx("div", { className: "rounded-card border border-subtle bg-surface-base p-6", children: /* @__PURE__ */ e.jsx(
+        U ? /* @__PURE__ */ e.jsx(Qa, {}) : gt ? /* @__PURE__ */ e.jsx("div", { className: "rounded-card border border-subtle bg-surface-base p-6", children: /* @__PURE__ */ e.jsx(
           de,
           {
             icon: /* @__PURE__ */ e.jsx("i", { className: "fa fa-filter-circle-xmark" }),
@@ -2689,11 +2693,11 @@ function Qa() {
             action: /* @__PURE__ */ e.jsx(A, { size: "sm", variant: "outline", onClick: X, children: "Kaynakları aç" })
           }
         ) }) : Me ? S === "month" ? /* @__PURE__ */ e.jsx(
-          qt,
+          Gt,
           {
             month: p,
             byDay: G,
-            today: n,
+            today: i,
             capacity: Y,
             selectedDay: d,
             onSelectItem: xe,
@@ -2706,21 +2710,21 @@ function Qa() {
             errors: I.errors
           }
         ) : te ? /* @__PURE__ */ e.jsx(
-          ea,
+          ta,
           {
             days: te,
             byDay: G,
-            today: n,
+            today: i,
             capacity: Y,
             selectedDay: d,
             onSelectItem: xe,
             onSelectDay: m
           }
         ) : /* @__PURE__ */ e.jsx(
-          Ot,
+          Pt,
           {
             items: Q,
-            today: n,
+            today: i,
             onSelectItem: xe,
             onSmartDefer: () => f(!0)
           }
@@ -2764,37 +2768,37 @@ function Qa() {
     r && d && /* @__PURE__ */ e.jsx(oe, { open: !0, onOpenChange: (v) => {
       v || m(null);
     }, children: /* @__PURE__ */ e.jsx(ce, { side: "bottom", title: "Gün detayı", className: "max-h-[80vh] p-0", children: ve }) }),
-    r && /* @__PURE__ */ e.jsx(Wt, {}),
+    r && /* @__PURE__ */ e.jsx(Vt, {}),
     /* @__PURE__ */ e.jsx(
-      Ta,
+      Ea,
       {
         items: Q,
         month: p,
-        today: n,
-        generatedAt: w.dayShort(n)
+        today: i,
+        generatedAt: w.dayShort(i)
       }
     ),
-    /* @__PURE__ */ e.jsx(Sa, { open: N, onClose: () => $(!1) }),
+    /* @__PURE__ */ e.jsx(Da, { open: N, onClose: () => $(!1) }),
     /* @__PURE__ */ e.jsx(
-      Da,
+      Ca,
       {
         polite: ((Fe = I.lastAction) == null ? void 0 : Fe.message) ?? "",
         assertive: ((qe = (Be = (_e = q.data) == null ? void 0 : _e.accounts) == null ? void 0 : Be.find((v) => v.error)) == null ? void 0 : qe.error) ?? ""
       }
     ),
-    /* @__PURE__ */ e.jsx(ha, { open: i, onClose: () => c(!1) }),
+    /* @__PURE__ */ e.jsx(ga, { open: l, onClose: () => c(!1) }),
     /* @__PURE__ */ e.jsx(
-      va,
+      ja,
       {
         open: o,
         items: Q,
-        today: n,
+        today: i,
         capacity: Y,
         onClose: () => f(!1)
       }
     ),
     /* @__PURE__ */ e.jsx(
-      Na,
+      wa,
       {
         open: ze.data ? !ze.data.setupCompleted && !u : !1,
         counts: Ke,
@@ -2802,7 +2806,7 @@ function Qa() {
       }
     ),
     se && /* @__PURE__ */ e.jsx(
-      sa,
+      ra,
       {
         item: se,
         capacity: Y,
@@ -2818,5 +2822,5 @@ function Qa() {
 }
 const Xe = document.getElementById("apya-calendar-root");
 Xe && kt(Xe).render(
-  /* @__PURE__ */ e.jsx(vt, { children: /* @__PURE__ */ e.jsx(jt, { children: /* @__PURE__ */ e.jsx(Nt, { children: /* @__PURE__ */ e.jsx(Qa, {}) }) }) })
+  /* @__PURE__ */ e.jsx(vt, { children: /* @__PURE__ */ e.jsx(jt, { children: /* @__PURE__ */ e.jsx(Nt, { children: /* @__PURE__ */ e.jsx(Ha, {}) }) }) })
 );
