@@ -25,6 +25,14 @@ public static class ReleaseNoteCatalog
                 "yer açıyor. Kolon araçları kartların üzerinden alınıp üstteki eylem çubuğuna taşındı, " +
                 "böylece pano kalabalıkken de kartlar okunaklı kalıyor."),
 
+            // ── Projeler ──────────────────────────────────────────────────────
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "Kendi proje kategorilerinizi tanımlayın",
+                "Proje kategorileri artık sabit bir listeden gelmiyor. Ayarlar > Projeler altından " +
+                "kendi kategorilerinizi ekleyebilir; adını, simgesini, rengini ve sırasını " +
+                "belirleyebilirsiniz. Kullanmadığınız hazır kategorileri de gizleyebilirsiniz. " +
+                "Bir kategori projelerde kullanılıyorsa silinmez — önce projeleri taşımanız gerekir."),
+
             // ── Menü & Ayarlar ────────────────────────────────────────────────
             new ReleaseNoteItem(ReleaseNoteCategory.Feature,
                 "Sol menüyü kendinize göre düzenleyin",

@@ -24,16 +24,17 @@ birikmediğini kanıtlar. Canlı kod **ve** şema `e695ef2d`. Bu belgenin taban�
 
 ---
 
-## 🟢 Bu yayın KOD-ONLY — migration YOK
+## Migration YOK — ama DbMigrator ŞART
 
 | | 08-27 #1 (önceki) | **Bu yayın** |
 |---|---|---|
 | Yeni migration | 3 adet | **YOK** |
-| DbMigrator | **zorunluydu** | **gerekmez** |
-| Veritabanı yedeği | zorunluydu | zorunlu değil (yine de önerilir) |
-| Üretilecek paket | 2 (Web + DbMigrator) | **1 (yalnız Web)** |
+| Şema değişikliği | var (2 sütun düştü) | **YOK** |
+| DbMigrator | zorunlu | **🔴 ZORUNLU** — şema için değil, **izin tohumu** için |
+| Veritabanı yedeği | zorunlu | zorunlu değil (şemaya dokunulmuyor), yine de önerilir |
+| Üretilecek paket | 2 (Web + DbMigrator) | **2 (Web + DbMigrator)** |
 
-Doğrulama:
+Şema doğrulaması:
 
 ```bash
 git diff --name-only e695ef2d..main | grep -i migration
@@ -41,8 +42,15 @@ git diff --name-only e695ef2d..main | grep -i migration
 
 → **boş.** `AppDbContextModelSnapshot` de değişmemiştir.
 
-> ⚠️ **"Migration yok" paketi hafifletmez.** Publish klasörü yine **tamamen**
-> değiştirilir; aşağıdaki 4 öğe önce yedeklenir, sonra geri konur.
+🔴 **DbMigrator neden yine de gerekli:** bu yayın `Projects.ManageCategories` iznini
+kurulu kiracıların admin rolüne dağıtan bir **tohumlayıcı** getiriyor
+(aşağıdaki "Kategori izni boşluğu" bölümü). Tohum yalnız `DbMigrator` koştuğunda
+çalışır — Web paketini kopyalamak **yetmez**, kategori bölümü kiracıda yine çıkmaz.
+Şema zaten güncel olduğu için `Database.MigrateAsync()` bu turda hiçbir şey uygulamaz;
+DbMigrator pratikte yalnız `Executing data seeders...` adımı için koşar.
+
+> ⚠️ Publish klasörü yine **tamamen** değiştirilir; aşağıdaki 4 öğe önce yedeklenir,
+> sonra geri konur.
 
 ---
 
@@ -62,7 +70,7 @@ Reçetenin tamamı: `plesk-windows.md`.
 
 ---
 
-## Ne değişti (7 PR)
+## Ne değişti
 
 ### Yenilik
 
@@ -86,11 +94,18 @@ Reçetenin tamamı: `plesk-windows.md`.
 | #269 | Görev detayında `⋯` menüsü modal sınırında kırpılıyordu | Görev detayı |
 | #270 | Kişi baş harfi ve rengi tek kurala indi + koyu tema kontrastı | Uygulama geneli |
 
+### İzin düzeltmesi
+
+| PR | Başlık | Etkilenen |
+|---|---|---|
+| #277 | `Projects.ManageCategories` kiracılarda açılabilsin | **Tüm kiracılar** — 🔴 DbMigrator ister |
+
 ### Belge
 
 | PR | Başlık |
 |---|---|
 | #272 | Önceki yayının delta belgesi (`deploy-delta-2026-08-27.md`) |
+| #275 · #276 | Bu yayının sürüm notu + delta belgesi |
 
 ### Merge sırasında yapılan tek elle müdahale
 
@@ -103,9 +118,14 @@ ile yeniden üretildi. Demet, bu paketin kaynağıyla birebir tutarlıdır.
 
 ## Sürüm notları — `2026.08.27`
 
-`ReleaseNoteCatalog.All` listesinin başına **28 maddelik** yeni kayıt eklendi
-(7 Yenilik · 7 İyileştirme · 14 Düzeltme). Kapsam **PR #225 → #274**: son
+`ReleaseNoteCatalog.All` listesinin başına **29 maddelik** yeni kayıt eklendi
+(8 Yenilik · 7 İyileştirme · 14 Düzeltme). Kapsam **PR #225 → #274**: son
 duyurulan not `2026.08.25` (#223) idi, arada 50 commit duyurusuz kalmıştı.
+
+"Kendi proje kategorilerinizi tanımlayın" maddesi ilk taslakta **yoktu** — kiracı
+tarafı çalışmadığı için çıkarılmıştı. Bu yayında boşluk kapandığı için nota eklendi.
+🔴 Madde ancak **DbMigrator koştuğunda** doğru olur; adım atlanırsa duyuru gerçeğin
+önüne geçer.
 
 **Bilerek dışarıda bırakılanlar:**
 
@@ -113,7 +133,6 @@ duyurulan not `2026.08.25` (#223) idi, arada 50 commit duyurusuz kalmıştı.
 |---|---|
 | "Şifremi unuttum" (#266) | **SMTP girilmedi** — duyurulursa kullanıcı tıklar, posta gelmez |
 | Soğuk başlangıç hızı (#264'ün bir kısmı) | web.config + app pool **açılmadı**; ölçüldü: ilk istek **17,8 sn** |
-| Proje kategorisi tanımları (#256) | Kiracı kendi kategorisini **ekleyemiyor** (aşağıdaki bilinen boşluk) |
 | #225 · #226 · #230 · #236 · #238 · #272 | Dar yönetici yolu / mockup / test / daha önce duyuruldu / iç mesele |
 
 > 🔑 **Modalın ikinci kapısı:** `ReleaseNotesViewComponent`, tanıtım turu
@@ -122,19 +141,30 @@ duyurulan not `2026.08.25` (#223) idi, arada 50 commit duyurusuz kalmıştı.
 
 ---
 
-## 🔴 Bilinen boşluk (bu yayında ÇÖZÜLMEDİ)
+## ✅ Kategori izni boşluğu (bu yayında ÇÖZÜLDÜ)
 
-**`Projects.ManageCategories` kiracılarda açılamıyor** (#256'dan devreden).
-İki sebep üst üste:
+`Projects.ManageCategories` (#256 ile geldi) kiracılarda **hiçbir şekilde** açılamıyordu —
+ne otomatik veriliyordu ne de yetki ekranından işaretlenebiliyordu. İki ayrı boşluk üst üste:
 
-1. İzin `TenantPackageManager.LateAddedPermissions` listesinde **değil** → paket
-   tavanına taşınmıyor.
-2. `ProjectCategoryPermissionDataSeedContributor` yalnız **host** admin rolüne
-   veriyor (`if (context.TenantId != null) return;`).
+| # | Boşluk | Düzeltme |
+|---|---|---|
+| 1 | **Tavan** — izin `TenantPackageManager.LateAddedPermissions` listesinde değildi → kurulu sistemlerin paket satırlarına hiç girmedi → `PackagePermissionStateChecker` onu her kiracıda kapattı | İzin listeye eklendi; `BackfillLateAdditionsAsync` mevcut paketlerin tavanını tamamlıyor |
+| 2 | **Grant** — `ProjectCategoryPermissionDataSeedContributor` yalnız **host** admin rolüne veriyordu | Contributor, host bağlamındayken **kurulu kiracıların** statik admin rolüne de veriyor |
 
-Sonuç: kategori yönetimi canlıda yalnız host'ta. Kiracı üç sistem kategorisini
-görür, kendi kategorisini ekleyemez. **Çökme değil, eksik yüzey.**
-Düzeltmesi ayrı PR **+ yeniden DbMigrator** ister — bu yüzden bu kod-only yayına alınmadı.
+🔑 **2. boşluk neden paket akışıyla kapanmıyordu:** kiracıların yeni izinleri normalde
+`TenantPackageManager.GrantNewlyEnabledPermissionsAsync`'ten gelir, ama o yol yalnız bir
+modül feature'ı `false→true` olduğunda çalışır. Kategori izni hiçbir feature kapısının
+arkasında **değil** (`PackageFeatureGates.Map`) → hiçbir zaman "yeni açılan modül"
+sayılmaz, dolayısıyla mevcut kiracılara asla ulaşmazdı.
+
+🔴 **Kiracı bağlamında tohum hâlâ no-op.** Yeni kiracı oluşturulurken ABP'nin kimlik
+tohumlayıcısı taze "admin" rolüne tüm Both-tarafı izinleri zaten verir; aynı UoW içinde
+ikinci kez vermek mükerrer grant üretip "Yeni Müşteri" ekranını 500'e düşürürdü
+(2026-08-22'de canlıda yaşandı). Host döngüsü o UoW'un dışındadır ve
+`IPermissionDataSeeder` var olanları elediği için tekrar tekrar koşması güvenlidir.
+
+Altı test bu sözleşmeyi koruyor:
+`test/Apya.Platform.EntityFrameworkCore.Tests/EntityFrameworkCore/Projects/ProjectCategoryPermissionGap_Tests.cs`
 
 ---
 
@@ -159,9 +189,23 @@ ZIP'te sarmalayıcı klasör **yok** — `web.config` doğrudan site köküne d�
 
 Adım 1'deki dört öğe yerine.
 
-### 5. Siteyi başlat
+### 5. 🔴 DbMigrator'ı çalıştır
 
-Plesk → havuzu başlat. **DbMigrator çalıştırılmaz** — bu yayında migration yok.
+Şema için değil, **izin tohumu** için. Atlanırsa kategori bölümü kiracıda yine çıkmaz.
+
+1. `Apya-DbMigrator-<sha>.zip`'i site kökünün **dışında** bir klasöre aç (ör. `dbmigrator\`).
+2. Plesk → **Zamanlanmış Görevler** → tek seferlik görev → `migrate.bat`.
+3. 🔑 Başarıyı çıkış kodundan değil **log'dan** doğrula:
+   `Logs\logs.txt` içinde **`Successfully completed all database migrations.`** satırını ara.
+   Öncesinde **`Executing data seeders...`** de görünmeli — asıl iş orada.
+4. İşi biten `dbmigrator\` klasörünü sunucudan **SİL** — `migrate.bat` içinde secret düz metin.
+
+> Şema zaten `e695ef2d` seviyesinde olduğu için `Migrating database schema...` adımı
+> hiçbir migration uygulamadan geçer; bu **beklenen** davranıştır, hata değildir.
+
+### 6. Siteyi başlat
+
+Plesk → havuzu başlat.
 
 ---
 
@@ -203,6 +247,10 @@ soldaki değerde kalıyorsa kopyalama eksiktir.
 - Bir görevin dosya eki açılıyor mu (`App_Data\uploads` yerinde mi)
 - **"Yenilikler" penceresi açılıyor mu** — turu tamamlamış bir kullanıcıda çıkmalı
 - `/Admin/SystemHealth` → Teşhis / Ölçümler sekmeleri (host yöneticisi)
+- 🔴 **Kategori boşluğu gerçekten kapandı mı** — bir KİRACI hesabıyla (host değil)
+  `/Settings` → Projeler → **Proje kategorileri**: listenin ALTINDA kategori ekleme
+  formu (ad · simge · renk alanları) ve satırlarda aç/kapa anahtarı görünmeli.
+  Yalnız düz liste görünüyorsa izin geçmemiş → **DbMigrator adımı atlanmış** demektir.
 
 ---
 
@@ -215,15 +263,17 @@ soldaki değerde kalıyorsa kopyalama eksiktir.
 | **`hostingModel="InProcess"`** | `web.config` | App pool ayarından **SONRA** açılır. |
 | **`<applicationInitialization>`** | `web.config` | En son. **Üçü birden açılmaz.** |
 | Yükseltme kanalı | `/PackageManagement` | Satış e-postası/telefon/fiyat sayfası üçü de boşsa "Paketim" ekranında yükseltme düğmesi basılmaz. |
-| `Projects.ManageCategories` kiracı boşluğu | ayrı PR | Düzeltmesi DbMigrator ister. |
 
 ---
 
 ## Geri alma
 
-Migration olmadığı için geri alma **yalnız dosya işidir**: bir önceki
-`Apya-Yayin-e695ef2d.zip` paketini aynı yordamla geri açmak yeterli. Şema
-değişmediği için veritabanına dokunulmaz.
+Şemaya dokunulmadığı için geri alma **yalnız dosya işidir**: bir önceki
+`Apya-Yayin-e695ef2d.zip` paketini aynı yordamla geri açmak yeterli.
+
+⚠️ Tek kalıcı iz, tohumun yazdığı **izin grant'larıdır**: kiracı admin rollerine eklenen
+`Projects.ManageCategories` satırları geri dönmez. Zararsızdır — eski kod o izni zaten
+hiç sormaz. Gerçekten geri alınmak istenirse yetki yönetimi ekranından kaldırılır.
 
 ---
 
