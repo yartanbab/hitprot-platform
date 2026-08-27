@@ -14,6 +14,163 @@ public static class ReleaseNoteCatalog
     public static IReadOnlyList<ReleaseNote> All { get; } = new List<ReleaseNote>
     {
         new ReleaseNote(
+            version: "2026.08.27",
+            date: "27 Ağustos 2026",
+            title: "Kanban, kişiselleştirilebilir menü ve mobil deneyim",
+
+            // ── Kanban & görev akışı ──────────────────────────────────────────
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "Kanban panosu yenilendi",
+                "Kolonları tek tek açıp kapatabiliyorsunuz; kapattığınız kolon ince bir şeride dönüşüp " +
+                "yer açıyor. Kolon araçları kartların üzerinden alınıp üstteki eylem çubuğuna taşındı, " +
+                "böylece pano kalabalıkken de kartlar okunaklı kalıyor."),
+
+            // ── Menü & Ayarlar ────────────────────────────────────────────────
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "Sol menüyü kendinize göre düzenleyin",
+                "Menü öğelerinin sırasını sürükleyerek değiştirebilir, kullanmadıklarınızı gizleyebilir, " +
+                "kendi kategorinizi ve kısayolunuzu ekleyebilirsiniz. Bir öğeyi kenar çubuğu ile Ayarlar " +
+                "arasında taşıyabilir, kenar çubuğunun genişliğini tutamağından ayarlayabilirsiniz."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "Ayarlar sayfası sekmeli düzene geçti",
+                "Tek uzun sayfa yerine sekmeler var; Yönetim ve Menü sekmeleri en başta duruyor. " +
+                "Aradığınız ayarı bulmak için artık sayfayı baştan sona kaydırmanız gerekmiyor."),
+
+            // ── Paket & abonelik ──────────────────────────────────────────────
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "\"Paketim\" ekranı",
+                "Hangi pakette olduğunuzu, paketinizin neleri kapsadığını ve kullanım kotanızın ne kadarını " +
+                "doldurduğunuzu tek ekranda görüyorsunuz. Bir kotaya takıldığınızda çıkan uyarı sizi doğrudan " +
+                "bu ekrana ve üst pakete yönlendiriyor."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "Paketlere süre tanımlanabiliyor",
+                "Yönetici bir firmanın paketine bitiş tarihi verebiliyor. Süre dolduğunda hesap otomatik " +
+                "olarak Basic pakete iniyor; verileriniz durmaya devam ediyor, yalnız paket sınırları " +
+                "değişiyor. Süresi tanımlanmamış paketler eskisi gibi süresiz kalır."),
+
+            // ── Yönetim ───────────────────────────────────────────────────────
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "Hata ve geri bildirimleri göreve dönüştürün",
+                "Yöneticiler, kullanıcıdan gelen geri bildirimi veya sistemin yakaladığı bir hatayı tek " +
+                "tıkla göreve dönüştürebiliyor. Aynı hata tekrar ederse yeni görev açılmıyor, mevcut " +
+                "görevin tekrar sayacı artıyor."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "Sistem Sağlığı artık bir teşhis konsolu",
+                "Ekran ikiye ayrıldı: \"Teşhis\" sekmesinde istemci, sunucu ve performans olayları etkiye " +
+                "göre sıralı tek bir listede toplanıyor ve seçtiğiniz olayın kanıtı sağdaki panelde " +
+                "açılıyor; \"Ölçümler\" sekmesinde KPI kartları ve uç tabloları duruyor. Zaman penceresine " +
+                "1 gün seçeneği eklendi — böylece \"dün ne oldu\" ile \"bu hafta ne oldu\" karışmıyor."),
+
+            // ── Mobil ─────────────────────────────────────────────────────────
+            new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
+                "Telefonu yan çevirdiğinizde de mobil düzen kullanılıyor",
+                "Yatay tutulan telefonda uygulama masaüstü düzenine geçiyor ve menü sığmıyordu; artık bu " +
+                "durumda da hamburger menü ve mobil yerleşim devrede. Yatay ekranda görev listesinin " +
+                "sıkışıp görünmez olduğu sorun da giderildi."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
+                "Görevlerde mobil filtre düğmesi",
+                "Telefonda ekranın yarısını kaplayan filtre satırı tek bir düğmenin altına katlandı; " +
+                "görev kimliği ve başlığı tek satırda duruyor. Liste için daha çok yer kalıyor."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
+                "Takvim mobilde toparlandı",
+                "Araç çubuğu dar ekranda taşmıyor; \"Yeni görev\" düğmesi sağ alttaki yüzen düğmeye taşındı."),
+
+            // ── Hız ───────────────────────────────────────────────────────────
+            new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
+                "Sayfalar daha az istekle açılıyor",
+                "Açılışta yapılan tekrar eden sunucu istekleri ayıklandı, dosyalar tarayıcıya daha erken " +
+                "bildiriliyor ve sık kullandığınız listeler oturum boyunca önbellekte tutuluyor. " +
+                "Sayfalar arasında geçiş belirgin biçimde hızlandı."),
+
+            // ── Genel ─────────────────────────────────────────────────────────
+            new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
+                "Hata mesajları Türkçeleşti",
+                "Form doğrulama uyarıları ve sistem hata metinleri sistem genelinde Türkçeye çevrildi; " +
+                "\"The field X is required\" gibi İngilizce kalıntılar kalmadı."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
+                "Kişi baş harfleri ve renkleri her yerde aynı",
+                "Aynı kişi; görev listesinde, takvimde, profil rozetinde ve görev detayında artık aynı baş " +
+                "harfleri ve aynı rengi taşıyor. Baş harfler ad ve soyadın ilk harfinden üretiliyor, koyu " +
+                "temada okunabilirlik de düzeltildi."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
+                "Proje düzenlemede kullanılmayan \"Süresi\" alanı kaldırıldı",
+                "Hiçbir yerde işlenmeyen serbest metin alanı formdan çıkarıldı; proje süresi başlangıç ve " +
+                "bitiş tarihlerinden okunuyor."),
+
+            // ── Düzeltmeler ───────────────────────────────────────────────────
+            new ReleaseNoteItem(ReleaseNoteCategory.Fix,
+                "Çerez bildirimi bir daha sorulmuyor",
+                "\"Anladım\" dedikten sonra şerit her yeni sayfada tekrar çıkıyordu; onayınız artık kalıcı."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Fix,
+                "Görev detayında açılır pencereler iPhone'da kapanmıyor",
+                "iPhone ve iPad'de atama, etiket ve tarih seçicileri dokunur dokunmaz kapanıyordu. " +
+                "Aynı pencerelerdeki arama kutuları da artık odak alıp yazı kabul ediyor."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Fix,
+                "Görev detayındaki \"⋯\" menüsü tam görünüyor",
+                "Yorum ve açıklama satırlarındaki üç nokta menüsü pencere kenarında kırpılıyor, seçenekler " +
+                "okunamıyordu. Menü artık pencere içinde kendine yer buluyor."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Fix,
+                "Açıklama ve yorumlara bağlantı eklenebiliyor",
+                "Zengin metin araç çubuğundaki bağlantı düğmesi çalışmıyordu; düzeltildi."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Fix,
+                "Görev detayı penceresi dar ve yatay ekranlarda kırpılmıyor",
+                "Küçük telefonlarda ve yatay tutuşta pencerenin başlığı ve alt kısmı kesiliyordu."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Fix,
+                "Mobil menüde grup satırına basınca boş ekran açılıyordu",
+                "Alt öğeleri olan bir menü başlığına dokunduğunuzda boş bir sayfaya düşülüyordu; başlık " +
+                "artık yalnızca grubu açıp kapatıyor."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Fix,
+                "Menü düzenini kaydettiğinizde sonucu görüyorsunuz",
+                "Kaydet düğmesi sessiz kalıyor, işlem olmuş mu olmamış mı anlaşılmıyordu. Artık başarı " +
+                "bildirimi veriliyor, bir sorun varsa hata mesajı ekrana basılıyor."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Fix,
+                "Uzun proje ve menü adları kesilmiyor",
+                "Kenar çubuğunda sabit genişlik yüzünden kırpılan adlar yer olduğu kadar uzuyor."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Fix,
+                "Dokümanlarda detay paneli tam boy açılıyor",
+                "Panel yarım görünüyor, alt kısmına ulaşılamıyordu. Dar ekranda eylem düğmelerinin taşması " +
+                "da giderildi."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Fix,
+                "Panodaki kartlar üst üste binmiyor",
+                "Ana sayfada özet şeridi alttaki kartların üzerine taşıyordu; kart aralıkları ve sayfa " +
+                "kenar boşlukları da düzenlendi."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Fix,
+                "Projeler ekranı tüm projelerle açılıyor",
+                "Konsol, siz bir filtre seçmeden yalnız bir bölümü gösteriyordu; artık varsayılan olarak " +
+                "bütün projeler listeleniyor."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Fix,
+                "Yeni Görev'de tarih kutusu kendiliğinden açılmıyor",
+                "Form açıldığında takvim kutusu açık geliyor ve kapanmıyordu."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Fix,
+                "Dokunmatik ekranda sürükleme",
+                "Telefon ve tablette kart sürüklerken sayfanın da kayması engellendi."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Fix,
+                "Kullanıcı adındaki fazladan boşluk girişi engellemiyor",
+                "Kopyala-yapıştır sırasında araya karışan boşluk yüzünden doğru şifreyle bile giriş " +
+                "yapılamıyordu; baştaki ve sondaki boşluklar artık temizleniyor.")
+        ),
+
+        new ReleaseNote(
             version: "2026.08.25",
             date: "25 Ağustos 2026",
             title: "Proje ve görev ekranlarında yenilenme",
