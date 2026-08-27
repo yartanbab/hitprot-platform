@@ -7074,6 +7074,12 @@ namespace Apya.Platform.Migrations
                     b.Property<long>("FileSize")
                         .HasColumnType("bigint");
 
+                    b.Property<bool>("IsVisibleToGuests")
+                        .HasColumnType("boolean");
+
+                    b.Property<Guid?>("ShareLinkId")
+                        .HasColumnType("uuid");
+
                     b.Property<string>("StoredFileName")
                         .IsRequired()
                         .HasColumnType("text");
@@ -7082,6 +7088,8 @@ namespace Apya.Platform.Migrations
                         .HasColumnType("uuid");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("ShareLinkId");
 
                     b.HasIndex("TaskId");
 
@@ -7157,6 +7165,9 @@ namespace Apya.Platform.Migrations
                     b.Property<Guid?>("ParentCommentId")
                         .HasColumnType("uuid");
 
+                    b.Property<Guid?>("ShareLinkId")
+                        .HasColumnType("uuid");
+
                     b.Property<Guid>("TaskId")
                         .HasColumnType("uuid");
 
@@ -7167,6 +7178,8 @@ namespace Apya.Platform.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("ParentCommentId");
+
+                    b.HasIndex("ShareLinkId");
 
                     b.HasIndex("TaskId");
 
@@ -7363,6 +7376,147 @@ namespace Apya.Platform.Migrations
                     b.HasIndex("TenantId", "Status", "AssigneeId");
 
                     b.ToTable("AppTasks", (string)null);
+                });
+
+            modelBuilder.Entity("Apya.Platform.Tasks.TaskShareAccessLog", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Action")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("CreationTime")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("CreationTime");
+
+                    b.Property<Guid?>("CreatorId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("CreatorId");
+
+                    b.Property<string>("IpHash")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<Guid>("ShareLinkId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("TaskId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("TenantId");
+
+                    b.Property<string>("UserAgent")
+                        .HasMaxLength(400)
+                        .HasColumnType("character varying(400)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ShareLinkId", "CreationTime");
+
+                    b.ToTable("AppTaskShareAccessLogs", (string)null);
+                });
+
+            modelBuilder.Entity("Apya.Platform.Tasks.TaskShareLink", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("AccessCount")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("AllowComment")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("AllowDownload")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("AllowUpload")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("ConcurrencyStamp")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)")
+                        .HasColumnName("ConcurrencyStamp");
+
+                    b.Property<DateTime>("CreationTime")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("CreationTime");
+
+                    b.Property<Guid?>("CreatorId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("CreatorId");
+
+                    b.Property<Guid?>("DeleterId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("DeleterId");
+
+                    b.Property<DateTime?>("DeletionTime")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("DeletionTime");
+
+                    b.Property<DateTime>("ExpiresAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("ExtraProperties")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("ExtraProperties");
+
+                    b.Property<bool>("IsDeleted")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("IsDeleted");
+
+                    b.Property<DateTime?>("LastModificationTime")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("LastModificationTime");
+
+                    b.Property<Guid?>("LastModifierId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("LastModifierId");
+
+                    b.Property<string>("RecipientEmail")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<string>("RecipientName")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.Property<DateTime?>("RevokedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("TaskId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("TenantId");
+
+                    b.Property<string>("TokenHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<int>("UploadCount")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TaskId");
+
+                    b.HasIndex("TokenHash")
+                        .IsUnique()
+                        .HasFilter("\"IsDeleted\" = false");
+
+                    b.ToTable("AppTaskShareLinks", (string)null);
                 });
 
             modelBuilder.Entity("Apya.Platform.Tasks.TaskTagAssignment", b =>
@@ -10257,6 +10411,15 @@ namespace Apya.Platform.Migrations
                     b.Navigation("Assignee");
 
                     b.Navigation("ParentTask");
+                });
+
+            modelBuilder.Entity("Apya.Platform.Tasks.TaskShareAccessLog", b =>
+                {
+                    b.HasOne("Apya.Platform.Tasks.TaskShareLink", null)
+                        .WithMany()
+                        .HasForeignKey("ShareLinkId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("Apya.Platform.Tasks.TaskTemplateFeature", b =>

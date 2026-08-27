@@ -17,6 +17,16 @@ public static class PlatformDomainErrorCodes
     public const string TaskTransferNoTarget = "Platform:Task:TransferNoTarget";
     public const string TaskTransferSameProject = "Platform:Task:TransferSameProject";
 
+    // --- Görev dış paylaşım linki (misafir erişimi) ---
+    public const string TaskShareLinkExpired = "Platform:Task:ShareLinkExpired";
+    public const string TaskShareLinkRevoked = "Platform:Task:ShareLinkRevoked";
+    public const string TaskShareCommentNotAllowed = "Platform:Task:ShareCommentNotAllowed";
+    public const string TaskShareUploadNotAllowed = "Platform:Task:ShareUploadNotAllowed";
+    public const string TaskShareDownloadNotAllowed = "Platform:Task:ShareDownloadNotAllowed";
+    public const string TaskShareUploadLimitExceeded = "Platform:Task:ShareUploadLimitExceeded";
+    public const string TaskShareRecipientNameRequired = "Platform:Task:ShareRecipientNameRequired";
+    public const string TaskShareLifetimeInvalid = "Platform:Task:ShareLifetimeInvalid";
+
     // --- Cari (Customer) Modülü ---
     public const string CustomerNameRequired = "Platform:Customer:NameRequired";
     public const string CustomerFieldTooLong = "Platform:Customer:FieldTooLong";

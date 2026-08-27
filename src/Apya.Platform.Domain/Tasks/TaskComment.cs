@@ -11,6 +11,12 @@ namespace Apya.Platform.Tasks
         // Instagram tarzı yanıt: bir yoruma verilen cevap. null ise kök yorum.
         public Guid? ParentCommentId { get; set; }
 
+        // Dış paylaşım thread'i. null = ekip içi yorum, misafire ASLA gösterilmez.
+        // Dolu = o linkin konuşması; misafir yalnız kendi ShareLinkId'sini görür, ekip
+        // aynı thread'e yanıt yazarak misafirle konuşur. Görünürlük kuralının tamamı
+        // bu tek kolonda: "ShareLinkId dolu olan içerik o dış paylaşıma aittir."
+        public Guid? ShareLinkId { get; set; }
+
         // Constructor
         public TaskComment() { }
 
