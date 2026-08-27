@@ -145,6 +145,103 @@ public class SystemHealthPage_Tests : PlatformWebTestBase
         html.ShouldNotContain("200.000");
     }
 
+    /* ─── Teşhis konsolu ───────────────────────────────────────────────────── */
+
+    [Fact]
+    public async Task Iki_sekme_de_basilir_ve_olcum_capalari_yerinde_kalir()
+    {
+        await SeedAuditLogsAsync();
+
+        var doc = Parse(await GetResponseAsStringAsync("/Admin/SystemHealth"));
+
+        doc.GetElementbyId("sh-console").ShouldNotBeNull("teşhis sekmesi paneli basılmadı");
+        doc.GetElementbyId("sh-metrics").ShouldNotBeNull("ölçümler sekmesi paneli basılmadı");
+
+        // Konsol ölçüm kartlarını YERİNDEN ETMEMELİ: kiracı sağlığı ve uç tabloları
+        // ölçüm sekmesinde yaşıyor, mevcut derin bağlantı çapaları da orada.
+        foreach (var anchor in new[] { "client-errors", "failing-pages", "slowest-endpoints" })
+        {
+            doc.GetElementbyId(anchor).ShouldNotBeNull($"'{anchor}' çapası kayboldu");
+        }
+    }
+
+    [Fact]
+    public async Task Durum_bandi_gerekce_cumlesiyle_gelir()
+    {
+        await SeedAuditLogsAsync();
+
+        var doc = Parse(await GetResponseAsStringAsync("/Admin/SystemHealth"));
+
+        // Bandı KENDİ kapsayıcısından oku: sayfada başka chip'ler de var.
+        var band = doc.DocumentNode.SelectSingleNode("//span[contains(@class,'apya-health-dot')]/..");
+        band.ShouldNotBeNull("durum bandı basılmadı");
+
+        // Razor @@expression çıktısını HTML-kodluyor ("oranı" → "oran&#x131;");
+        // ham metinde aramak yanlış negatif verir, çözümlenmiş metne bakılır.
+        var text = HtmlEntity.DeEntitize(band!.InnerText);
+
+        // Çıplak skor YOK: oran + eşiğe göre konum birlikte yazılmalı.
+        text.ShouldContain("sunucu hata oranı");
+        text.ShouldMatch(@"%\d");
+    }
+
+    [Fact]
+    public async Task Konsol_listesi_kanal_cipleriyle_basilir()
+    {
+        await SeedAuditLogsAsync();
+
+        var doc = Parse(await GetResponseAsStringAsync("/Admin/SystemHealth"));
+        var list = doc.GetElementbyId("IssueList");
+
+        list.ShouldNotBeNull();
+
+        var facets = list!.SelectNodes(".//button[contains(@class,'apya-health-facet')]");
+        facets.ShouldNotBeNull("kanal çipleri basılmadı");
+        facets!.Count.ShouldBe(5);
+
+        var rows = list.SelectNodes(".//button[contains(@class,'apya-health-row')]");
+        rows.ShouldNotBeNull("tohumlanan hatalar konsolda görünmeli");
+        rows!.Any(r => r.GetAttributeValue("data-kind", "") == "4")
+            .ShouldBeTrue("sunucu hatası satırı bekleniyordu");
+    }
+
+    [Fact]
+    public async Task Liste_parcasi_ayri_handler_olarak_sunulur()
+    {
+        await SeedAuditLogsAsync();
+
+        // Liste JS'te DEĞİL Razor'da üretiliyor; JS yalnız bu parçayı yerine koyuyor.
+        var html = await GetResponseAsStringAsync("/Admin/SystemHealth?handler=IssueList&windowDays=7");
+
+        html.ShouldContain("apya-health-facet");
+        html.ShouldNotContain("<html", Case.Insensitive, "parça tam sayfa değil, yalnız liste olmalı");
+    }
+
+    [Fact]
+    public async Task Sunucu_kaniti_ilgisiz_sekmeleri_cizmez()
+    {
+        await SeedAuditLogsAsync();
+
+        var html = await GetResponseAsStringAsync(
+            $"/Admin/SystemHealth?handler=IssueDetail&windowDays=7&kind=4&url=%2Fqa-health%2FDetay%2F%7Bid%7D&httpMethod=POST");
+
+        var doc = Parse(html);
+        var tabs = doc.DocumentNode
+            .SelectNodes("//button[contains(@class,'apya-health-tab')]")
+            ?.Select(t => t.GetAttributeValue("data-tab", ""))
+            .ToList();
+
+        tabs.ShouldNotBeNull("kanıt paneli sekmeleri basılmadı");
+
+        // Sunucu kanalında bu ikisi ölçülmüyor → sekme HİÇ çizilmemeli.
+        tabs!.ShouldNotContain("crumbs");
+        tabs.ShouldNotContain("correlation");
+
+        // Buna karşılık oluşumlar ve etkilenenler dolu.
+        tabs.ShouldContain("occurrences");
+        tabs.ShouldContain("tenants");
+    }
+
     [Fact]
     public async Task Pencere_secici_dort_secenegi_de_calisir()
     {

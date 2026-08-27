@@ -7042,3 +7042,257 @@ html[data-sidebar] .apya-sidebar-resizer {
 .apya-subscription .card-body {
     color: var(--apya-text-primary);
 }
+
+/* ----------------------------------------------------------------------------
+   27) SISTEM SAGLIGI - teshis konsolu
+   Solda birlesik olay listesi, sagda kalici kanit paneli. Kabuk olarak §13
+   .apya-md kullanilir (grid + <992px liste/detay gecisi + pager hazir);
+   burada yalniz .apya-md-item'in karsilamadigi parcalar tanimlanir.
+
+   NEDEN AYRI SATIR SINIFI: .apya-md-item sol kenarligi SECIM icin kullaniyor
+   (selected -> accent). Konsolda sol kenarlik olayin TONUNU tasiyor (hata /
+   yavaslik / performans); ikisi ayni kenarligi paylasamaz, secim burada zemin
+   ile gosterilir.
+   ---------------------------------------------------------------------------- */
+
+/* Durum bandi: renk tek basina anlam tasimaz, noktali chip esligiyle okunur. */
+.apya-health-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: var(--apya-radius-full);
+    background: currentColor;
+    flex-shrink: 0;
+}
+
+.apya-health-toolbar {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--apya-border-subtle);
+}
+.apya-health-facets {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+.apya-health-facet {
+    padding: 4px 10px;
+    border: 0;
+    border-radius: var(--apya-radius-full);
+    background: var(--apya-surface-sunken);
+    color: var(--apya-text-secondary);
+    font-size: 11px;
+    font-weight: var(--apya-weight-semibold);
+    cursor: pointer;
+}
+.apya-health-facet:hover {
+    background: var(--apya-surface-hover);
+}
+.apya-health-facet.active {
+    background: var(--apya-accent-soft);
+    color: var(--apya-text-primary);
+}
+.apya-health-sortbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 10.5px;
+    font-weight: var(--apya-weight-bold);
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+    color: var(--apya-text-secondary);
+}
+
+/* --- Liste satiri --- */
+.apya-health-rows {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+.apya-health-row {
+    display: flex;
+    gap: 10px;
+    width: 100%;
+    padding: 12px 14px;
+    border: 0;
+    border-bottom: 1px solid var(--apya-border-subtle);
+    border-left: 3px solid var(--apya-border-strong);
+    background: transparent;
+    text-align: left;
+    cursor: pointer;
+    transition: background var(--apya-motion-fast) ease;
+}
+.apya-health-row:hover {
+    background: var(--apya-surface-hover);
+}
+.apya-health-row.selected {
+    background: var(--apya-accent-soft);
+}
+.apya-health-row--negative { border-left-color: var(--apya-negative-500); }
+.apya-health-row--warning  { border-left-color: var(--apya-warning-500); }
+.apya-health-row--brand    { border-left-color: var(--apya-brand-500); }
+.apya-health-row--neutral  { border-left-color: var(--apya-border-strong); }
+
+.apya-health-row-body { min-width: 0; flex: 1 1 auto; }
+.apya-health-row-head {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 3px;
+}
+.apya-health-row-kind {
+    font-size: 9.5px;
+    font-weight: var(--apya-weight-bold);
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+}
+.apya-health-row-kind--negative { color: var(--apya-text-negative); }
+.apya-health-row-kind--warning  { color: var(--apya-text-warning); }
+.apya-health-row-kind--brand    { color: var(--apya-text-link); }
+.apya-health-row-kind--neutral  { color: var(--apya-text-secondary); }
+
+.apya-health-row-when {
+    font-size: 10.5px;
+    color: var(--apya-text-secondary);
+    font-family: var(--apya-font-mono);
+}
+.apya-health-row-title,
+.apya-health-row-where {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.apya-health-row-title {
+    font-size: 12.5px;
+    font-weight: var(--apya-weight-semibold);
+    line-height: 1.35;
+    color: var(--apya-text-primary);
+}
+.apya-health-row-where {
+    margin-top: 2px;
+    font-size: 11px;
+    font-family: var(--apya-font-mono);
+    color: var(--apya-text-secondary);
+}
+.apya-health-row-meta {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 6px;
+    font-size: 10.5px;
+    color: var(--apya-text-secondary);
+}
+.apya-health-spark { width: 60px; height: 16px; flex-shrink: 0; }
+/* Zaman serisi olmayan kanal (istemci hatasi): bos birakmak yerine olculmedigini
+   soyleyen kesikli cizgi -- uydurma egri cizilmez. */
+.apya-health-spark--none {
+    width: 60px;
+    height: 9px;
+    border-bottom: 1px dashed var(--apya-border-strong);
+    flex-shrink: 0;
+}
+
+/* --- Kanit paneli: olgu seridi --- */
+.apya-health-facts {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 1px;
+    margin-top: 16px;
+    background: var(--apya-border-subtle);
+    border: 1px solid var(--apya-border-subtle);
+    border-radius: var(--apya-radius-lg);
+    overflow: hidden;
+}
+.apya-health-fact { background: var(--apya-surface-base); padding: 11px 13px; }
+.apya-health-fact-label {
+    margin-bottom: 5px;
+    font-size: 9.5px;
+    font-weight: var(--apya-weight-bold);
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    color: var(--apya-text-secondary);
+}
+.apya-health-fact-value {
+    font-size: 15px;
+    font-weight: var(--apya-weight-semibold);
+    font-family: var(--apya-font-mono);
+    color: var(--apya-text-primary);
+}
+.apya-health-fact-value--negative { color: var(--apya-text-negative); }
+.apya-health-fact-value--warning  { color: var(--apya-text-warning); }
+.apya-health-fact-value--brand    { color: var(--apya-text-link); }
+.apya-health-fact-sub {
+    margin-top: 2px;
+    font-size: 10.5px;
+    color: var(--apya-text-secondary);
+}
+@media (max-width: 1199.98px) {
+    .apya-health-facts { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* --- Kanit paneli: sekmeler (Bootstrap nav-tabs degil, duz alt kenarlik) --- */
+.apya-health-tabs {
+    display: flex;
+    gap: 2px;
+    padding: 0 14px;
+    border-bottom: 1px solid var(--apya-border-default);
+    overflow-x: auto;
+}
+.apya-health-tab {
+    padding: 12px 12px 10px;
+    border: 0;
+    border-bottom: 2px solid transparent;
+    background: none;
+    color: var(--apya-text-secondary);
+    font-size: 12.5px;
+    white-space: nowrap;
+    cursor: pointer;
+}
+.apya-health-tab:hover { color: var(--apya-text-primary); }
+.apya-health-tab.active {
+    color: var(--apya-text-primary);
+    border-bottom-color: var(--apya-accent-500);
+    font-weight: var(--apya-weight-semibold);
+}
+.apya-health-tab-count {
+    margin-left: 4px;
+    font-family: var(--apya-font-mono);
+    color: var(--apya-text-secondary);
+}
+
+/* --- Kanit paneli: davranis izi zaman cizelgesi --- */
+.apya-health-trace-item { display: flex; gap: 10px; }
+.apya-health-trace-rail {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 14px;
+    flex-shrink: 0;
+}
+.apya-health-trace-dot {
+    width: 8px;
+    height: 8px;
+    margin-top: 5px;
+    border-radius: var(--apya-radius-full);
+    background: var(--apya-accent-500);
+}
+.apya-health-trace-line {
+    flex: 1 1 auto;
+    width: 1px;
+    background: var(--apya-border-default);
+}
+.apya-health-trace-body { padding-bottom: 12px; min-width: 0; }
+.apya-health-trace-text { font-size: 12px; line-height: 1.4; color: var(--apya-text-primary); }
+.apya-health-trace-meta {
+    font-size: 10.5px;
+    font-family: var(--apya-font-mono);
+    color: var(--apya-text-secondary);
+}
+
+/* Koyu temada .card-body sabit #686B6E basiyor ve LeptonX bunu dondurmuyor;
+   konsolun sayisal hucreleri o rengi miras alinca kontrast 3,43:1'e dusuyordu.
+   `.text-muted` bilerek DISARIDA: kendi kurali var. */
+.apya-health .card-body {
+    color: var(--apya-text-primary);
+}
