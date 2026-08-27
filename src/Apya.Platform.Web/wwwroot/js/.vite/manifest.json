@@ -248,7 +248,6 @@
     "isEntry": true,
     "imports": [
       "_react-vendor-D57GAUXd.js",
-      "_draggableActivation-Ybw9Upbh.js",
       "_httpClient-CRlyQ1eg.js",
       "_Hint-CNW95h3H.js"
     ]
