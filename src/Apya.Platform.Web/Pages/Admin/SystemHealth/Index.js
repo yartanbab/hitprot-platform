@@ -141,10 +141,14 @@ $(function () {
         dataTable.ajax.reload();
     });
 
-    // "En Çok Hata Veren Sayfalar" satırı → o adresin sunucu hataları.
+    // "En Çok Hata Veren Uçlar" satırı → o ucun sunucu hataları.
+    // url NORMALİZE yoldur (/api/app/task/{id}); metot uç kimliğinin ikinci yarısı,
+    // taşınmazsa GET ve POST tek uç gibi listelenir.
     $('.apya-failing-page-row').on('click', function () {
+        var $row = $(this);
         serverErrorDetailModal.open({
-            url: $(this).data('url'),
+            url: $row.data('url'),
+            httpMethod: $row.data('http-method') || '',
             windowDays: windowDays
         });
     });

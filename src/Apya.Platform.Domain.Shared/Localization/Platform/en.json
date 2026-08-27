@@ -1014,6 +1014,7 @@
     "DisplayName:CashAccountId": "Cash / bank account",
     "DisplayName:Category": "Category",
     "DisplayName:CategoryId": "Category",
+    "DisplayName:ClientErrorId": "Client error",
     "DisplayName:ClientErrorThreshold": "Client error threshold",
     "DisplayName:CloseSourceOnTaskDone": "Close source when task is done",
     "DisplayName:Code": "Code",
@@ -1051,6 +1052,7 @@
     "DisplayName:ExternalRef": "External reference",
     "DisplayName:FeedbackMinPriority": "Minimum feedback priority",
     "DisplayName:File": "File",
+    "DisplayName:Filter": "Search",
     "DisplayName:FileBytes": "File content",
     "DisplayName:FileName": "File name",
     "DisplayName:FileNamePattern": "File name pattern",
@@ -1060,6 +1062,7 @@
     "DisplayName:GrantId": "Grant",
     "DisplayName:HourOfDay": "Hour of day",
     "DisplayName:HourlyRate": "Hourly rate",
+    "DisplayName:HttpMethod": "HTTP method",
     "DisplayName:Iban": "IBAN",
     "DisplayName:Icon": "Icon",
     "DisplayName:Id": "Record",
@@ -1087,6 +1090,7 @@
     "DisplayName:Likelihood": "Likelihood",
     "DisplayName:MaxAmount": "Maximum amount",
     "DisplayName:MaxFileSizeMb": "Maximum file size (MB)",
+    "DisplayName:MaxResultCount": "Max results",
     "DisplayName:Message": "Message",
     "DisplayName:Method": "Method",
     "DisplayName:MinMatchScore": "Minimum match score",
@@ -1196,6 +1200,7 @@
     "DisplayName:UserPromptTemplate": "User prompt template",
     "DisplayName:Watermark": "Watermark",
     "DisplayName:WindowDays": "Window (days)",
+    "DisplayName:WindowSeconds": "Window (seconds)",
     "DisplayName:WipLimit": "Work-in-progress limit"
   }
 }

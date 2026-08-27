@@ -30,7 +30,7 @@
 @* KPI kartları tıklanabilir: her metrik kendisini üreten bölüme götürür. *@
 <div class="row g-3 mb-4">
     <div class="col-md-3">
-        <partial name="_KpiCard" model='new KpiCardModel { Icon = "fa-server", Accent = "accent", Label = "Sunucu İsteği", Value = h.ServerRequestCount.ToString(), Href = $"?windowDays={days}#slowest-endpoints", HrefTitle = "En yavaş endpoint listesine git", Hint = "Audit log kayıtlarından sayılır; tek sorguda en fazla 200.000 satır taranır. Pencerede bundan fazla istek varsa aşan kısım sessizce dışarıda kalır ve bu karttaki tüm metrikler (hata oranı, en yavaş endpoint dahil) yalnız en yeni 200.000 satırı yansıtır." }' />
+        <partial name="_KpiCard" model='new KpiCardModel { Icon = "fa-server", Accent = "accent", Label = "Sunucu İsteği", Value = h.ServerRequestCount.ToString(), Href = $"?windowDays={days}#slowest-endpoints", HrefTitle = "En yavaş endpoint listesine git", Hint = "Audit log kayıtlarından sayılır. Toplama veritabanında (GROUP BY) yapılır; sayı seçili pencerenin TAMAMINI yansıtır — örneklem değildir." }' />
     </div>
     <div class="col-md-3">
         <partial name="_KpiCard" model='new KpiCardModel { Icon = "fa-triangle-exclamation", Accent = "negative", Label = "Sunucu Hatası", Value = h.ServerErrorCount.ToString(), SubText = $"%{(h.ServerErrorRate * 100):0.0} oran", Href = $"?windowDays={days}#failing-pages", HrefTitle = "En çok hata veren sayfalara git" }' />
@@ -52,7 +52,12 @@
     </div>
     <div class="col-md-6">
         <abp-card>
-            <abp-card-header><abp-card-title>Tenant Bazlı Hata Dağılımı</abp-card-title></abp-card-header>
+            <abp-card-header>
+                <abp-card-title>
+                    Kiracı Sağlığı
+                    <apya-hint text="Yalnız hata sayısı yanıltıcıdır: 10 istekte 3 hata ile 100.000 istekte 3 hata aynı değildir. Hacim, oran ve yavaşlık birlikte okunur. İstemci hatası sütunu, son görülmesi seçili pencere içinde kalan benzersiz tarayıcı hatalarıdır." />
+                </abp-card-title>
+            </abp-card-header>
             <abp-card-body>
                 @if (h.ErrorsByTenant.Count == 0)
                 {
@@ -60,15 +65,53 @@
                 }
                 else
                 {
+                    <div class="table-responsive">
                     <table class="table table-sm mb-0">
-                        <thead><tr><th>Tenant</th><th>Hata Sayısı</th></tr></thead>
+                        <thead>
+                            <tr>
+                                <th>Kiracı</th><th>İstek</th><th>Hata</th><th>Oran</th>
+                                <th>Ort. (ms)</th>
+                                <th title="@h.SlowThresholdMs ms'yi aşan çağrı">Yavaş</th>
+                                <th>İstemci</th>
+                            </tr>
+                        </thead>
                         <tbody>
                             @foreach (var t in h.ErrorsByTenant)
                             {
-                                <tr><td>@(t.TenantName ?? "-")</td><td>@t.ErrorCount</td></tr>
+                                <tr>
+                                    <td>@(t.TenantName ?? "-")</td>
+                                    <td class="apya-numeric">@t.RequestCount</td>
+                                    <td class="apya-numeric">@t.ErrorCount</td>
+                                    <td class="apya-numeric">
+                                        @if (t.ErrorRate > 0)
+                                        {
+                                            <span class="apya-chip apya-chip-negative">%@((t.ErrorRate * 100).ToString("0.0"))</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">%0,0</span>
+                                        }
+                                    </td>
+                                    <td class="apya-numeric">@t.AverageDurationMs.ToString("0")</td>
+                                    <td class="apya-numeric">@t.SlowCallCount</td>
+                                    <td class="apya-numeric">
+                                        @if (t.UnresolvedClientErrorCount > 0)
+                                        {
+                                            <span class="apya-chip apya-chip-warning"
+                                                  title="@t.ClientErrorCount hatanın @t.UnresolvedClientErrorCount tanesi açık">
+                                                @t.UnresolvedClientErrorCount / @t.ClientErrorCount
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">@t.ClientErrorCount</span>
+                                        }
+                                    </td>
+                                </tr>
                             }
                         </tbody>
                     </table>
+                    </div>
                 }
             </abp-card-body>
         </abp-card>
@@ -125,8 +168,8 @@
         <abp-card id="failing-pages">
             <abp-card-header>
                 <abp-card-title>
-                    En Çok Hata Veren Sayfalar
-                    <apya-hint text="Satıra tıklayınca o adresin pencere içindeki tek tek sunucu hataları (exception metni dahil) açılır." />
+                    En Çok Hata Veren Uçlar
+                    <apya-hint text="Uç kimliği HTTP metodu + yoldur; yoldaki kayda özgü kimlikler {id} ile birleştirilir — aynı rotanın 200 farklı kaydı tek satırdır. Satıra tıklayınca o ucun pencere içindeki tek tek sunucu hataları (exception metni ve somut adres dahil) açılır." />
                 </abp-card-title>
             </abp-card-header>
             <abp-card-body>
@@ -138,16 +181,17 @@
                 {
                     <div class="table-responsive">
                     <table class="table table-sm table-hover mb-0">
-                        <thead><tr><th>Sayfa</th><th>Toplam</th><th>Hata</th><th>Oran</th><th class="text-end"></th></tr></thead>
+                        <thead><tr><th>Metot</th><th>Uç</th><th>Toplam</th><th>Hata</th><th>Oran</th><th class="text-end"></th></tr></thead>
                         <tbody>
                             @foreach (var p in h.TopFailingPages)
                             {
-                                <tr class="apya-failing-page-row" data-url="@p.Url" role="button"
-                                    title="Hata kayıtlarını gör">
+                                <tr class="apya-failing-page-row" data-url="@p.Url" data-http-method="@p.HttpMethod"
+                                    role="button" title="Hata kayıtlarını gör">
+                                    <td><span class="apya-chip apya-chip-neutral">@(p.HttpMethod ?? "-")</span></td>
                                     <td><code class="text-sm">@p.Url</code></td>
-                                    <td>@p.TotalCount</td>
-                                    <td>@p.ErrorCount</td>
-                                    <td>%@((p.ErrorRate * 100).ToString("0.0"))</td>
+                                    <td class="apya-numeric">@p.TotalCount</td>
+                                    <td class="apya-numeric">@p.ErrorCount</td>
+                                    <td class="apya-numeric">%@((p.ErrorRate * 100).ToString("0.0"))</td>
                                     <td class="text-end text-muted"><i class="fa fa-chevron-right" aria-hidden="true" style="font-size:11px"></i></td>
                                 </tr>
                             }
@@ -160,25 +204,58 @@
     </div>
     <div class="col-md-6">
         <abp-card id="slowest-endpoints">
-            <abp-card-header><abp-card-title>En Yavaş Endpoint'ler</abp-card-title></abp-card-header>
+            <abp-card-header>
+                <abp-card-title>
+                    En Yavaş Uçlar
+                    <apya-hint text="@($"Listeye girmek için pencerede en az {h.EndpointMinCallCount} çağrı gerekir — tek kez çağrılmış soğuk bir uç sıralamayı kapatmasın. \"Yavaş\" sütunu {h.SlowThresholdMs} ms'yi aşan çağrı sayısıdır: ortalama tek bir uç değerle bozulur, bu sütun kaç çağrının fiilen yavaş olduğunu söyler.")" />
+                </abp-card-title>
+            </abp-card-header>
             <abp-card-body>
                 @if (h.SlowestEndpoints.Count == 0)
                 {
-                    <partial name="_EmptyState" model='new EmptyStateModel { Icon = "fa-gauge", Title = "Veri yok." }' />
+                    <partial name="_EmptyState" model='@(new EmptyStateModel { Icon = "fa-gauge", Title = "Veri yok.", Description = $"Seçili pencerede en az {h.EndpointMinCallCount} kez çağrılmış uç bulunmadı." })' />
                 }
                 else
                 {
                     <div class="table-responsive">
                     <table class="table table-sm mb-0">
-                        <thead><tr><th>Endpoint</th><th>Çağrı</th><th>Ort. (ms)</th><th>Maks. (ms)</th></tr></thead>
+                        <thead>
+                            <tr>
+                                <th>Metot</th><th>Uç</th><th>Çağrı</th>
+                                <th>Ort. (ms)</th><th>Maks. (ms)</th>
+                                <th title="@h.SlowThresholdMs ms'yi aşan çağrı">Yavaş</th>
+                                <th>Hata</th>
+                            </tr>
+                        </thead>
                         <tbody>
                             @foreach (var e in h.SlowestEndpoints)
                             {
                                 <tr>
+                                    <td><span class="apya-chip apya-chip-neutral">@(e.HttpMethod ?? "-")</span></td>
                                     <td><code class="text-sm">@e.Url</code></td>
-                                    <td>@e.CallCount</td>
-                                    <td>@e.AverageDurationMs.ToString("0")</td>
-                                    <td>@e.MaxDurationMs</td>
+                                    <td class="apya-numeric">@e.CallCount</td>
+                                    <td class="apya-numeric">@e.AverageDurationMs.ToString("0")</td>
+                                    <td class="apya-numeric">@e.MaxDurationMs</td>
+                                    <td class="apya-numeric">
+                                        @if (e.SlowCallCount > 0)
+                                        {
+                                            <span class="apya-chip apya-chip-warning">@e.SlowCallCount</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">0</span>
+                                        }
+                                    </td>
+                                    <td class="apya-numeric">
+                                        @if (e.ErrorCount > 0)
+                                        {
+                                            <span class="apya-chip apya-chip-negative">@e.ErrorCount</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">0</span>
+                                        }
+                                    </td>
                                 </tr>
                             }
                         </tbody>

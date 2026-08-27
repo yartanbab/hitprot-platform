@@ -30,6 +30,12 @@ window.apyaIssueTask = (function () {
                 if ($btn.data('source-url')) {
                     args.sourceUrl = $btn.data('source-url');
                     args.windowDays = $btn.data('window-days') || 7;
+
+                    // Uç kimliğinin ikinci yarısı: GET ve POST ayrı arızalardır,
+                    // taşınmazsa iki uç tek göreve düşer.
+                    if ($btn.data('source-http-method')) {
+                        args.sourceHttpMethod = $btn.data('source-http-method');
+                    }
                 }
 
                 sourceModal.close();

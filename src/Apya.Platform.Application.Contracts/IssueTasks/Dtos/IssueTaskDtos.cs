@@ -55,9 +55,14 @@ public class CreateIssueTaskInput
 /// <summary>Sunucu hatasından görev açma — kaynak audit log satırlarıdır, Id'si yoktur.</summary>
 public class CreateServerErrorTaskInput : CreateIssueTaskInput
 {
+    /// <summary>Panelin gösterdiği <b>normalize</b> uç yolu (<c>/api/app/task/{id}</c>).</summary>
     [Required]
     [StringLength(2048)]
     public string Url { get; set; } = string.Empty;
+
+    /// <summary>Uç kimliğinin ikinci yarısı — GET ve POST ayrı arızalardır.</summary>
+    [StringLength(16)]
+    public string? HttpMethod { get; set; }
 
     /// <summary>Audit log'un hangi pencereden derleneceği (gün).</summary>
     [Range(1, 365)]

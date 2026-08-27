@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Apya.Platform.Telemetry;
+using Volo.Abp;
 using Volo.Abp.AuditLogging;
 using Volo.Abp.Data;
 using Volo.Abp.Domain.Repositories;
@@ -13,13 +15,18 @@ namespace Apya.Platform.IssueTasks;
 
 /// <summary>
 /// Sunucu hatalarını AbpAuditLogs'tan derler. Audit log satırı başına görev açmak
-/// anlamsız olurdu — arıza tek, kayıt çok; bu yüzden URL bazında toplanır.
+/// anlamsız olurdu — arıza tek, kayıt çok; bu yüzden UÇ bazında toplanır.
+/// <para>
+/// Uç kimliği <b>HTTP metodu + normalize yol</b>'dur (bkz.
+/// <see cref="EndpointUrlNormalizer"/>): <c>/Projects/ProjectDetails/{id}</c> tek
+/// arızadır — aynı hata 200 projede patlasa da tek görev açar.
+/// </para>
 /// Hem panel (elle dönüştürme) hem otomatik kural aynı derlemeyi kullanır.
 /// </summary>
 public class ServerErrorSignalBuilder : DomainService
 {
-    /// <summary>Tek sinyal derlenirken taranan en fazla satır.</summary>
-    private const int ScanLimit = 200;
+    /// <summary>Tek sinyal derlenirken ön-daraltmadan sonra taranan en fazla satır.</summary>
+    private const int ScanLimit = 500;
 
     private readonly IRepository<AuditLog, Guid> _auditLogRepository;
     private readonly IDataFilter<IMultiTenant> _multiTenantFilter;
@@ -35,8 +42,11 @@ public class ServerErrorSignalBuilder : DomainService
         _clock = clock;
     }
 
-    /// <summary>Verilen URL'in pencere içindeki hatalarını tek sinyale indirger; hiç yoksa null.</summary>
-    public async Task<ServerErrorSignal?> BuildAsync(string url, int windowDays)
+    /// <summary>
+    /// Verilen ucun (metot + normalize yol) pencere içindeki hatalarını tek sinyale
+    /// indirger; hiç yoksa null.
+    /// </summary>
+    public async Task<ServerErrorSignal?> BuildAsync(string url, string? httpMethod, int windowDays)
     {
         var since = _clock.Now.AddDays(-NormalizeWindow(windowDays));
 
@@ -44,13 +54,27 @@ public class ServerErrorSignalBuilder : DomainService
         // satırlar görünür ve kiracı hataları hiç sayılmaz.
         using (_multiTenantFilter.Disable())
         {
-            var rows = await AsyncExecuter.ToListAsync(
-                FailedRequests(await _auditLogRepository.GetQueryableAsync(), since)
-                    .Where(a => a.Url == url)
-                    .OrderByDescending(a => a.ExecutionTime)
+            var query = FailedRequests(await _auditLogRepository.GetQueryableAsync(), since);
+
+            if (!httpMethod.IsNullOrWhiteSpace())
+            {
+                query = query.Where(a => a.HttpMethod == httpMethod);
+            }
+
+            // Normalize yol ham satırlarla EŞİT DEĞİLDİR; SQL yalnız sabit önekle
+            // daraltır, tam eşleştirme aşağıda bellekte yapılır.
+            var prefix = EndpointUrlNormalizer.LiteralPrefix(url);
+            if (prefix.Length > 0)
+            {
+                query = query.Where(a => a.Url != null && a.Url.StartsWith(prefix));
+            }
+
+            var scanned = await AsyncExecuter.ToListAsync(
+                query.OrderByDescending(a => a.ExecutionTime)
                     .Take(ScanLimit)
                     .Select(a => new Row
                     {
+                        RawUrl = a.Url,
                         ExecutionTime = a.ExecutionTime,
                         HttpMethod = a.HttpMethod,
                         HttpStatusCode = a.HttpStatusCode,
@@ -58,6 +82,10 @@ public class ServerErrorSignalBuilder : DomainService
                         TenantId = a.TenantId,
                         TenantName = a.TenantName
                     }));
+
+            var rows = scanned
+                .Where(r => EndpointUrlNormalizer.Normalize(r.RawUrl) == url)
+                .ToList();
 
             if (rows.Count == 0)
             {
@@ -75,9 +103,9 @@ public class ServerErrorSignalBuilder : DomainService
             return new ServerErrorSignal
             {
                 Url             = url,
+                HttpMethod      = httpMethod.IsNullOrWhiteSpace() ? newest.HttpMethod : httpMethod,
                 ExceptionText   = newest.Exceptions,
                 ExceptionType   = ExtractExceptionType(newest.Exceptions),
-                HttpMethod      = newest.HttpMethod,
                 HttpStatusCode  = newest.HttpStatusCode,
                 OccurrenceCount = rows.Count,
                 FirstSeenAt     = rows.Min(r => r.ExecutionTime),
@@ -88,21 +116,49 @@ public class ServerErrorSignalBuilder : DomainService
         }
     }
 
-    /// <summary>Pencere içinde en az <paramref name="minOccurrences"/> kez patlayan URL'ler.</summary>
-    public async Task<List<string>> FindFailingUrlsAsync(int windowDays, int minOccurrences, int maxResults)
+    /// <summary>
+    /// Pencere içinde en az <paramref name="minOccurrences"/> kez patlayan UÇLAR.
+    /// Eşik normalize uca uygulanır: aynı rotanın farklı kimlikli 200 kaydı tek
+    /// arızadır — eskiden hiçbiri tek başına eşiği geçemiyordu.
+    /// </summary>
+    public async Task<List<FailingEndpoint>> FindFailingEndpointsAsync(int windowDays, int minOccurrences, int maxResults)
     {
         var since = _clock.Now.AddDays(-NormalizeWindow(windowDays));
 
         using (_multiTenantFilter.Disable())
         {
-            return await AsyncExecuter.ToListAsync(
+            var raw = await AsyncExecuter.ToListAsync(
                 FailedRequests(await _auditLogRepository.GetQueryableAsync(), since)
                     .Where(a => a.Url != null && a.Url != "")
-                    .GroupBy(a => a.Url!)
-                    .Where(g => g.Count() >= minOccurrences)
-                    .OrderByDescending(g => g.Count())
-                    .Take(maxResults)
-                    .Select(g => g.Key));
+                    .GroupBy(a => new { a.HttpMethod, a.Url })
+                    .Select(g => new RawEndpointCount
+                    {
+                        HttpMethod = g.Key.HttpMethod,
+                        Url = g.Key.Url!,
+                        ErrorCount = g.Count()
+                    })
+                    // Yola göre KARARLI sıra: sayıya göre kesmek, kimlik taşıyan
+                    // yolları (her biri 1-2 hata) eler — normalize edildiğinde eşiği
+                    // birlikte geçecek olanlar tam da onlar.
+                    .OrderBy(r => r.Url).ThenBy(r => r.HttpMethod)
+                    .Take(TelemetryConsts.MaxEndpointGroupsScanned));
+
+            return raw
+                .GroupBy(r => new
+                {
+                    Method = r.HttpMethod ?? string.Empty,
+                    Url    = EndpointUrlNormalizer.Normalize(r.Url)
+                })
+                .Select(g => new FailingEndpoint
+                {
+                    HttpMethod = g.Key.Method.Length == 0 ? null : g.Key.Method,
+                    Url        = g.Key.Url,
+                    ErrorCount = g.Sum(x => x.ErrorCount)
+                })
+                .Where(e => e.ErrorCount >= minOccurrences)
+                .OrderByDescending(e => e.ErrorCount)
+                .Take(maxResults)
+                .ToList();
         }
     }
 
@@ -133,6 +189,7 @@ public class ServerErrorSignalBuilder : DomainService
     /// <summary>Audit log projeksiyonunun hedefi — ağır alanlar (Actions, Entity changes) taşınmaz.</summary>
     private sealed class Row
     {
+        public string? RawUrl { get; set; }
         public DateTime ExecutionTime { get; set; }
         public string? HttpMethod { get; set; }
         public int? HttpStatusCode { get; set; }
@@ -140,4 +197,23 @@ public class ServerErrorSignalBuilder : DomainService
         public Guid? TenantId { get; set; }
         public string? TenantName { get; set; }
     }
+
+    /// <summary>Normalizasyon öncesi ham yol sayımı (SQL projeksiyon hedefi).</summary>
+    private sealed class RawEndpointCount
+    {
+        public string? HttpMethod { get; set; }
+        public string Url { get; set; } = string.Empty;
+        public int ErrorCount { get; set; }
+    }
+}
+
+/// <summary>Eşiği geçmiş, göreve dönüştürülmeye aday bir uç.</summary>
+public class FailingEndpoint
+{
+    public string? HttpMethod { get; set; }
+
+    /// <summary>Normalize yol — ör. <c>/api/app/project/{id}</c>.</summary>
+    public string Url { get; set; } = string.Empty;
+
+    public int ErrorCount { get; set; }
 }

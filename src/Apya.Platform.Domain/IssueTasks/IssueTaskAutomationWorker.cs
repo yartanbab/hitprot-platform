@@ -250,24 +250,24 @@ public class IssueTaskAutomationWorker : AsyncPeriodicBackgroundWorkerBase
         var manager = workerContext.ServiceProvider.GetRequiredService<IssueTaskManager>();
         var signalBuilder = workerContext.ServiceProvider.GetRequiredService<ServerErrorSignalBuilder>();
 
-        var urls = await signalBuilder.FindFailingUrlsAsync(ServerErrorWindowDays, threshold, budget * 2);
+        var endpoints = await signalBuilder.FindFailingEndpointsAsync(ServerErrorWindowDays, threshold, budget * 2);
 
         var created = 0;
-        foreach (var url in urls)
+        foreach (var endpoint in endpoints)
         {
             if (created >= budget)
             {
                 break;
             }
 
-            var signal = await signalBuilder.BuildAsync(url, ServerErrorWindowDays);
+            var signal = await signalBuilder.BuildAsync(endpoint.Url, endpoint.HttpMethod, ServerErrorWindowDays);
             if (signal is null)
             {
                 continue;
             }
 
             // Anahtar exception TÜRÜNÜ de içerir; aynı uçtaki farklı arıza ayrı görev açar.
-            var key = IssueTaskManager.BuildServerErrorKey(signal.Url, signal.ExceptionType);
+            var key = IssueTaskManager.BuildServerErrorKey(signal.HttpMethod, signal.Url, signal.ExceptionType);
             if (await manager.FindLinkAsync(IssueSourceType.ServerError, key) is not null)
             {
                 continue;
