@@ -58,6 +58,15 @@ public class HealthIssueDto
     /// <summary>Sunucu/performans olaylarında uç kimliğinin ikinci yarısı.</summary>
     public string? HttpMethod { get; set; }
 
+    /// <summary>Sunucu/performans olaylarında en son görülen durum kodu.</summary>
+    public int? HttpStatusCode { get; set; }
+
+    /// <summary>
+    /// Sunucu/performans olaylarında ağırlıklı ortalama süre. İstemci hatalarında
+    /// <b>null</b> — tarayıcı tarafında süre ölçülmüyor.
+    /// </summary>
+    public double? AverageDurationMs { get; set; }
+
     public Guid? TenantId { get; set; }
     public string? TenantName { get; set; }
 
@@ -93,6 +102,97 @@ public class HealthIssueDto
     /// Sunucu/performans olaylarında boştur (audit log kalıcı aggregate değildir).
     /// </summary>
     public Guid? ClientErrorId { get; set; }
+}
+
+/// <summary>
+/// Konsolun sol listesi: sayfalanmış olaylar + kanal sayaçları.
+/// <para>
+/// Sayaçlar <b>kanal ve durum süzgeci UYGULANMADAN</b> hesaplanır: çipler o anki
+/// arama/kiracı kapsamında nelerin bulunduğunu göstermeli. "Sunucu" çipine basınca
+/// "İstemci · 3" sıfıra düşseydi çip kendi kendini gizlerdi.
+/// </para>
+/// </summary>
+public class HealthIssueListDto
+{
+    public List<HealthIssueDto> Items { get; set; } = new();
+
+    /// <summary>Süzgeçten geçen toplam olay — <see cref="Items"/> kırpılmış olabilir.</summary>
+    public int TotalCount { get; set; }
+
+    public int OpenCount { get; set; }
+    public int ResolvedCount { get; set; }
+    public int ClientCount { get; set; }
+    public int ServerCount { get; set; }
+    public int PerformanceCount { get; set; }
+}
+
+/// <summary>
+/// Kanıt panelindeki olgu şeridinin tek hücresi. Hücrelerin hangi bilgiyi taşıdığı
+/// KANALA GÖRE değişir (istemci hatasında süre ölçülmez, yerine kaynak/sayfa konur);
+/// bu karar sunucuda verilir ki arayüz kanal bilgisi taşımak zorunda kalmasın.
+/// </summary>
+public class HealthFactDto
+{
+    public string Label { get; set; } = string.Empty;
+    public string Value { get; set; } = string.Empty;
+    public string? Sub { get; set; }
+
+    /// <summary>neutral · negative · warning · brand — arayüzde token'a eşlenir.</summary>
+    public string Tone { get; set; } = "neutral";
+}
+
+/// <summary>Seçili olayın kanıt paneli.</summary>
+public class GetHealthIssueDetailInput
+{
+    public HealthIssueKind Kind { get; set; }
+
+    /// <summary>İstemci kanalında kaynağın Id'si.</summary>
+    public Guid? ClientErrorId { get; set; }
+
+    /// <summary>Sunucu/performans kanalında normalize uç yolu.</summary>
+    [StringLength(2048)]
+    public string? Url { get; set; }
+
+    [StringLength(16)]
+    public string? HttpMethod { get; set; }
+
+    [Range(1, 365)]
+    public int WindowDays { get; set; } = 7;
+}
+
+/// <summary>
+/// Kanıt panelinin içeriği. <b>Boş bölüm sekmesiz demektir</b>: arayüz yalnız dolu
+/// bölümler için sekme çizer, böylece istemci hatasında "Oluşumlar", sunucu hatasında
+/// "Davranış izi" gibi kanalın hiç üretmediği sekmeler tıklatılmaz.
+/// </summary>
+public class HealthIssueDetailDto
+{
+    public HealthIssueDto? Issue { get; set; }
+
+    /// <summary>Beş hücreli olgu şeridi; kanala göre içeriği değişir.</summary>
+    public List<HealthFactDto> Facts { get; set; } = new();
+
+    /// <summary>İstemcide yığın izi, sunucuda exception metni. Performansta boştur.</summary>
+    public string? StackTrace { get; set; }
+
+    /// <summary>İstemci kanalının davranış izi (ham JSON); çözümleme arayüzde yapılır.</summary>
+    public string? BreadcrumbJson { get; set; }
+
+    public List<HealthFactDto> Environment { get; set; } = new();
+
+    /// <summary>Sunucu/performans kanalında tek tek istekler.</summary>
+    public List<ServerErrorDetailDto> Occurrences { get; set; } = new();
+
+    /// <summary>İstemci kanalında aynı saniyedeki sunucu kayıtları.</summary>
+    public List<CorrelatedServerErrorDto> Correlations { get; set; } = new();
+
+    /// <summary>Sunucu/performans kanalında ucun vurduğu kiracılar.</summary>
+    public List<HealthTenantStatDto> AffectedTenants { get; set; } = new();
+
+    /// <summary>İstemci kanalında "çözüldü işaretle" ve göreve dönüştürme için.</summary>
+    public Guid? ClientErrorId { get; set; }
+
+    public bool IsResolved { get; set; }
 }
 
 /// <summary>Teşhis konsolunun filtre + sıralama girdisi.</summary>

@@ -138,7 +138,7 @@ public class SystemHealthAggregation_Tests : PlatformEntityFrameworkCoreTestBase
                 Filter = prefix
             });
 
-            issues.ShouldBeEmpty("hata da yavaşlık da yok — olay listesinde görünmemeli");
+            issues.Items.ShouldBeEmpty("hata da yavaşlık da yok — olay listesinde görünmemeli");
             endpoint.ShouldBeNull("3 çağrı min eşiğin (5) altında");
         });
     }
@@ -219,11 +219,11 @@ public class SystemHealthAggregation_Tests : PlatformEntityFrameworkCoreTestBase
                 Filter = prefix
             });
 
-            var kinds = issues.ToDictionary(i => i.Where!, i => i.Kind);
+            var kinds = issues.Items.ToDictionary(i => i.Where!, i => i.Kind);
 
             kinds[$"{prefix}/Patlayan"].ShouldBe(HealthIssueKind.ServerError);
             kinds[$"{prefix}/Yavas"].ShouldBe(HealthIssueKind.Performance);
-            issues.Count(i => i.Where == $"{prefix}/Patlayan").ShouldBe(1, "tek arıza iki satır olmamalı");
+            issues.Items.Count(i => i.Where == $"{prefix}/Patlayan").ShouldBe(1, "tek arıza iki satır olmamalı");
         });
     }
 
@@ -241,8 +241,8 @@ public class SystemHealthAggregation_Tests : PlatformEntityFrameworkCoreTestBase
                 Filter = prefix
             });
 
-            issues.ShouldHaveSingleItem();
-            issues[0].Kind.ShouldBe(HealthIssueKind.ServerError);
+            issues.Items.ShouldHaveSingleItem();
+            issues.Items[0].Kind.ShouldBe(HealthIssueKind.ServerError);
         });
     }
 
@@ -267,7 +267,7 @@ public class SystemHealthAggregation_Tests : PlatformEntityFrameworkCoreTestBase
                 Filter = prefix
             });
 
-            var issue = issues.ShouldHaveSingleItem();
+            var issue = issues.Items.ShouldHaveSingleItem();
             issue.OccurrenceCount.ShouldBe(4);
             issue.AffectedUserCount.ShouldBe(2, "anonim istek benzersiz kullanıcı değildir");
             issue.Trend.ShouldNotBeNull();
@@ -300,7 +300,7 @@ public class SystemHealthAggregation_Tests : PlatformEntityFrameworkCoreTestBase
                 Filter = $"qa-{token}"
             });
 
-            var issue = issues.ShouldHaveSingleItem();
+            var issue = issues.Items.ShouldHaveSingleItem();
             issue.Kind.ShouldBe(HealthIssueKind.ClientPromise, "kanal ClientErrorSource ile aynı sayısal değer");
             issue.OccurrenceCount.ShouldBe(7);
             issue.ClientErrorId.ShouldBe(error.Id);
@@ -332,8 +332,8 @@ public class SystemHealthAggregation_Tests : PlatformEntityFrameworkCoreTestBase
                 Filter = prefix
             });
 
-            issues.Single(i => i.Where == $"{prefix}/Yeni").IsRegression.ShouldBeTrue();
-            issues.Single(i => i.Where == $"{prefix}/Eski").IsRegression.ShouldBeFalse();
+            issues.Items.Single(i => i.Where == $"{prefix}/Yeni").IsRegression.ShouldBeTrue();
+            issues.Items.Single(i => i.Where == $"{prefix}/Eski").IsRegression.ShouldBeFalse();
         });
     }
 
@@ -412,7 +412,7 @@ public class SystemHealthAggregation_Tests : PlatformEntityFrameworkCoreTestBase
                 Kinds = new List<HealthIssueKind> { HealthIssueKind.ClientAjax }
             });
 
-            issues.ShouldHaveSingleItem().Kind.ShouldBe(HealthIssueKind.ClientAjax);
+            issues.Items.ShouldHaveSingleItem().Kind.ShouldBe(HealthIssueKind.ClientAjax);
         });
     }
 
@@ -453,6 +453,141 @@ public class SystemHealthAggregation_Tests : PlatformEntityFrameworkCoreTestBase
 
             var near = correlations.Single(c => c.Url == $"{prefix}/Yakin");
             near.OffsetSeconds.ShouldBe(-1, tolerance: 0.5);
+        });
+    }
+
+    [Fact]
+    public async Task Cip_sayaclari_kanal_suzgecinden_bagimsiz_kalir()
+    {
+        await WithUnitOfWorkAsync(async () =>
+        {
+            var prefix = NewPrefix();
+            var token  = prefix[1..];
+
+            await InsertAuditAsync($"{prefix}/Patlayan", statusCode: 500);
+            await InsertAuditAsync($"{prefix}/Yavas", durationMs: TelemetryConsts.DefaultSlowEndpointThresholdMs + 200);
+
+            var error = new ClientError(
+                Guid.NewGuid(), tenantId: null, fingerprint: Guid.NewGuid().ToString("N")[..32],
+                ClientErrorSource.JsError, $"{token} tarayici hatasi", _clock.Now.AddHours(-1));
+            await _clientErrorRepository.InsertAsync(error, autoSave: true);
+
+            // Yalnız sunucu kanalı istendi: liste tek satır dönmeli AMA çipler
+            // kapsamdaki üç kanalı da saymalı, yoksa çip kendi kendini gizlerdi.
+            var result = await _systemHealth.GetIssuesAsync(new GetHealthIssueListInput
+            {
+                WindowDays = 7,
+                Filter = token,
+                Kinds = new List<HealthIssueKind> { HealthIssueKind.ServerError }
+            });
+
+            result.Items.ShouldHaveSingleItem().Kind.ShouldBe(HealthIssueKind.ServerError);
+            result.TotalCount.ShouldBe(1, "süzgeçten geçen olay sayısı");
+
+            result.ServerCount.ShouldBe(1);
+            result.PerformanceCount.ShouldBe(1, "kanal süzgeci çip sayacını etkilememeli");
+            result.ClientCount.ShouldBe(1, "kanal süzgeci çip sayacını etkilememeli");
+            result.OpenCount.ShouldBe(3);
+        });
+    }
+
+    [Fact]
+    public async Task Istemci_kaniti_ize_ve_korelasyona_sahip_olusumlara_degil()
+    {
+        await WithUnitOfWorkAsync(async () =>
+        {
+            var prefix = NewPrefix();
+            var seenAt = _clock.Now.AddHours(-2);
+
+            var error = new ClientError(
+                Guid.NewGuid(), tenantId: null, fingerprint: Guid.NewGuid().ToString("N")[..32],
+                ClientErrorSource.JsError, "patladi", seenAt)
+            {
+                StackTrace = "at Foo()\n at Bar()",
+                BreadcrumbJson = "[]",
+                UserAgent = "Chrome 139",
+                PageUrl = $"{prefix}/Sayfa"
+            };
+            await _clientErrorRepository.InsertAsync(error, autoSave: true);
+
+            await InsertAuditAsync($"{prefix}/Yakin", statusCode: 500, executionTime: seenAt.AddSeconds(-1));
+
+            var detail = await _systemHealth.GetIssueDetailAsync(new GetHealthIssueDetailInput
+            {
+                Kind = HealthIssueKind.ClientJs,
+                ClientErrorId = error.Id,
+                WindowDays = 7
+            });
+
+            detail.Issue.ShouldNotBeNull();
+            detail.StackTrace.ShouldNotBeNullOrWhiteSpace();
+            detail.BreadcrumbJson.ShouldBe("[]");
+            detail.Environment.ShouldContain(f => f.Label == "Tarayıcı");
+            detail.Correlations.ShouldContain(c => c.Url == $"{prefix}/Yakin");
+            detail.Facts.Count.ShouldBe(5, "olgu şeridi beş hücreli");
+
+            // Bu iki bölüm istemci kanalında ÖLÇÜLMÜYOR → sekme hiç çizilmemeli.
+            detail.Occurrences.ShouldBeEmpty();
+            detail.AffectedTenants.ShouldBeEmpty();
+        });
+    }
+
+    [Fact]
+    public async Task Sunucu_kaniti_olusumlara_ve_etkilenenlere_sahip_ize_degil()
+    {
+        await WithUnitOfWorkAsync(async () =>
+        {
+            var prefix = NewPrefix();
+
+            await InsertAuditAsync($"{prefix}/Ucu/{Guid.NewGuid()}", "POST", statusCode: 500, withException: true);
+            await InsertAuditAsync($"{prefix}/Ucu/{Guid.NewGuid()}", "POST", statusCode: 500, withException: true);
+
+            var detail = await _systemHealth.GetIssueDetailAsync(new GetHealthIssueDetailInput
+            {
+                Kind = HealthIssueKind.ServerError,
+                Url = $"{prefix}/Ucu/{{id}}",
+                HttpMethod = "POST",
+                WindowDays = 7
+            });
+
+            detail.Issue.ShouldNotBeNull();
+            detail.Issue!.OccurrenceCount.ShouldBe(2, "iki farklı kimlik tek uca toplanmalı");
+            detail.Occurrences.Count.ShouldBe(2);
+            detail.AffectedTenants.ShouldHaveSingleItem().RequestCount.ShouldBe(2);
+
+            // Sunucu kanalında "yığın izi"nin karşılığı exception metnidir.
+            detail.StackTrace.ShouldNotBeNullOrWhiteSpace();
+
+            // Bu ikisi sunucu kanalında YOK → sekme çizilmemeli.
+            detail.BreadcrumbJson.ShouldBeNull();
+            detail.Correlations.ShouldBeEmpty();
+        });
+    }
+
+    [Fact]
+    public async Task Performans_kanitinda_yigin_izi_yoktur()
+    {
+        await WithUnitOfWorkAsync(async () =>
+        {
+            var prefix = NewPrefix();
+            var slow = TelemetryConsts.DefaultSlowEndpointThresholdMs + 700;
+
+            await InsertAuditAsync($"{prefix}/Agir", durationMs: slow, statusCode: 200);
+
+            var detail = await _systemHealth.GetIssueDetailAsync(new GetHealthIssueDetailInput
+            {
+                Kind = HealthIssueKind.Performance,
+                Url = $"{prefix}/Agir",
+                HttpMethod = "GET",
+                WindowDays = 7
+            });
+
+            detail.Issue!.Kind.ShouldBe(HealthIssueKind.Performance);
+            detail.Issue.AverageDurationMs.ShouldBe(slow);
+            detail.Occurrences.ShouldHaveSingleItem();
+
+            // Yavaş ama hatasız istekte exception yok → "Stack trace" sekmesi çizilmez.
+            detail.StackTrace.ShouldBeNullOrWhiteSpace();
         });
     }
 

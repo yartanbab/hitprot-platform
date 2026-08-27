@@ -43,7 +43,7 @@ public partial class SystemHealthAppService
     /// <summary>Etki sıralaması bellekte yapıldığından adaylar fazladan çekilir.</summary>
     private const int CandidateOverFetchFactor = 3;
 
-    public async Task<List<HealthIssueDto>> GetIssuesAsync(GetHealthIssueListInput input)
+    public async Task<HealthIssueListDto> GetIssuesAsync(GetHealthIssueListInput input)
     {
         EnsureHostContext();
 
@@ -54,44 +54,61 @@ public partial class SystemHealthAppService
         using (_multiTenantFilter.Disable())
         {
             var tenantNames = await GetTenantNamesAsync();
-            var issues = new List<HealthIssueDto>();
 
-            if (WantsAnyClientKind(input))
-            {
-                issues.AddRange(await BuildClientIssuesAsync(input, since, tenantNames));
-            }
+            // EVREN: pencere + kiracı + metin süzgeci. Kanal ve durum süzgeci burada
+            // UYGULANMAZ — çipler o kapsamda nelerin bulunduğunu göstermeli, yoksa
+            // "Sunucu"ya basınca "İstemci · 3" sıfırlanır ve çip kendini gizlerdi.
+            var universe = new List<HealthIssueDto>();
+            universe.AddRange(await BuildClientIssuesAsync(input, since, tenantNames));
 
-            // "Yalnızca çözülmüş" istendiyse sunucu tarafı hiç aday değil: audit log
-            // olaylarının çözülme durumu yoktur, hepsi açık sayılır.
-            if (input.IsResolved != true)
+            foreach (var kind in new[] { HealthIssueKind.ServerError, HealthIssueKind.Performance })
             {
-                foreach (var kind in new[] { HealthIssueKind.ServerError, HealthIssueKind.Performance })
-                {
-                    if (WantsKind(input, kind))
-                    {
-                        issues.AddRange(await BuildEndpointIssuesAsync(input, since, days, tenantNames, kind));
-                    }
-                }
+                universe.AddRange(await BuildEndpointIssuesAsync(input, since, days, tenantNames, kind));
             }
 
             if (!input.Filter.IsNullOrWhiteSpace())
             {
                 var term = input.Filter!.Trim();
-                issues = issues
+                universe = universe
                     .Where(i => i.Title.Contains(term, StringComparison.OrdinalIgnoreCase)
                                 || (i.Where ?? string.Empty).Contains(term, StringComparison.OrdinalIgnoreCase))
                     .ToList();
             }
 
-            foreach (var issue in issues)
+            foreach (var issue in universe)
             {
                 issue.IsRegression = IsRegression(issue.FirstSeenAt, since, now);
                 issue.ImpactScore  = CalculateImpact(issue, since, now);
             }
 
-            return SortIssues(issues, input.Sort)
+            var result = new HealthIssueListDto
+            {
+                OpenCount        = universe.Count(i => !i.IsResolved),
+                ResolvedCount    = universe.Count(i => i.IsResolved),
+                ClientCount      = universe.Count(i => i.Kind <= HealthIssueKind.ClientAjax),
+                ServerCount      = universe.Count(i => i.Kind == HealthIssueKind.ServerError),
+                PerformanceCount = universe.Count(i => i.Kind == HealthIssueKind.Performance)
+            };
+
+            var selected = universe.AsEnumerable();
+
+            if (input.Kinds is { Count: > 0 })
+            {
+                selected = selected.Where(i => input.Kinds.Contains(i.Kind));
+            }
+
+            if (input.IsResolved.HasValue)
+            {
+                selected = selected.Where(i => i.IsResolved == input.IsResolved.Value);
+            }
+
+            var filtered = selected.ToList();
+            result.TotalCount = filtered.Count;
+            result.Items = SortIssues(filtered, input.Sort)
                 .Take(Math.Clamp(input.MaxResultCount, 1, 200))
                 .ToList();
+
+            return result;
         }
     }
 
@@ -144,13 +161,10 @@ public partial class SystemHealthAppService
     private async Task<List<HealthIssueDto>> BuildClientIssuesAsync(
         GetHealthIssueListInput input, DateTime since, Dictionary<Guid, string> tenantNames)
     {
+        // Kanal ve durum süzgeci burada UYGULANMAZ: çağıran, çip sayaçlarını
+        // süzgeçsiz evren üzerinden hesaplıyor (bkz. GetIssuesAsync).
         var query = (await _clientErrorRepository.GetQueryableAsync())
             .Where(e => e.LastSeenAt >= since);
-
-        if (input.IsResolved.HasValue)
-        {
-            query = query.Where(e => e.IsResolved == input.IsResolved.Value);
-        }
 
         if (input.HostOnly)
         {
@@ -159,12 +173,6 @@ public partial class SystemHealthAppService
         else if (input.TenantId.HasValue)
         {
             query = query.Where(e => e.TenantId == input.TenantId.Value);
-        }
-
-        var sources = RequestedClientSources(input);
-        if (sources is not null)
-        {
-            query = query.Where(e => sources.Contains(e.Source));
         }
 
         var rows = await AsyncExecuter.ToListAsync(
@@ -252,7 +260,12 @@ public partial class SystemHealthAppService
                     Day         = g.Key.Date,
                     Count       = g.Count(),
                     FirstSeenAt = g.Min(x => x.ExecutionTime),
-                    LastSeenAt  = g.Max(x => x.ExecutionTime)
+                    LastSeenAt  = g.Max(x => x.ExecutionTime),
+                    // (long): Postgres SUM(int)→bigint döner, SQL Server'da int taşar.
+                    TotalDurationMs = g.Sum(x => (long)x.ExecutionDuration),
+                    // "En son" durum kodu GroupBy'da ifade edilemiyor; en YÜKSEK kod
+                    // alınır — arızalı uçta bu zaten 5xx'tir, en kötü durumu gösterir.
+                    MaxStatusCode = g.Max(x => x.HttpStatusCode)
                 })
                 .OrderBy(r => r.Url).ThenBy(r => r.HttpMethod)
                 .Take(IssueGroupScanLimit));
@@ -298,8 +311,10 @@ public partial class SystemHealthAppService
         DateTime since,
         int windowDays)
     {
-        var method = identity.Method.Length == 0 ? null : identity.Method;
-        var label  = $"{method} {identity.Url}".Trim();
+        var method     = identity.Method.Length == 0 ? null : identity.Method;
+        var label      = $"{method} {identity.Url}".Trim();
+        var occurrence = dayRows.Sum(d => d.Count);
+        var totalMs    = dayRows.Sum(d => d.TotalDurationMs);
 
         Guid? topTenant = null;
         string? tenantName = null;
@@ -329,16 +344,18 @@ public partial class SystemHealthAppService
             Key             = $"{(int)kind}|{identity.Method}|{identity.Url}",
             Kind            = kind,
             Title           = kind == HealthIssueKind.ServerError ? label : $"Yavaş uç: {label}",
-            Where           = identity.Url,
-            HttpMethod      = method,
-            TenantId        = topTenant,
-            TenantName      = tenantName,
-            OccurrenceCount = dayRows.Sum(d => d.Count),
+            Where             = identity.Url,
+            HttpMethod        = method,
+            HttpStatusCode    = dayRows.Max(d => d.MaxStatusCode),
+            AverageDurationMs = occurrence > 0 ? Math.Round((double)totalMs / occurrence, 1) : null,
+            TenantId          = topTenant,
+            TenantName        = tenantName,
+            OccurrenceCount   = occurrence,
             AffectedUserCount = affectedUsers,
-            FirstSeenAt     = dayRows.Min(d => d.FirstSeenAt),
-            LastSeenAt      = dayRows.Max(d => d.LastSeenAt),
-            IsResolved      = false,
-            Trend           = BuildTrendBuckets(dayRows, since, windowDays)
+            FirstSeenAt       = dayRows.Min(d => d.FirstSeenAt),
+            LastSeenAt        = dayRows.Max(d => d.LastSeenAt),
+            IsResolved        = false,
+            Trend             = BuildTrendBuckets(dayRows, since, windowDays)
         };
     }
 
@@ -408,36 +425,6 @@ public partial class SystemHealthAppService
         return buckets.ToList();
     }
 
-    /* ─── Kanal süzgeçleri ─────────────────────────────────────────────────── */
-
-    private static bool WantsKind(GetHealthIssueListInput input, HealthIssueKind kind)
-        => input.Kinds is null || input.Kinds.Count == 0 || input.Kinds.Contains(kind);
-
-    private static bool WantsAnyClientKind(GetHealthIssueListInput input)
-        => WantsKind(input, HealthIssueKind.ClientJs)
-           || WantsKind(input, HealthIssueKind.ClientPromise)
-           || WantsKind(input, HealthIssueKind.ClientAjax);
-
-    /// <summary>
-    /// İstenen istemci kanallarının <see cref="ClientErrorSource"/> karşılığı; hepsi
-    /// isteniyorsa null (süzgeç uygulanmaz). İlk üç enum değeri sayısal olarak aynı.
-    /// </summary>
-    private static List<ClientErrorSource>? RequestedClientSources(GetHealthIssueListInput input)
-    {
-        if (input.Kinds is null || input.Kinds.Count == 0)
-        {
-            return null;
-        }
-
-        var sources = input.Kinds
-            .Where(k => k <= HealthIssueKind.ClientAjax)
-            .Select(k => (ClientErrorSource)(int)k)
-            .Distinct()
-            .ToList();
-
-        return sources.Count == 0 ? null : sources;
-    }
-
     private static EndpointIdentity Identify(string? httpMethod, string rawUrl)
         => new(httpMethod ?? string.Empty, EndpointUrlNormalizer.Normalize(rawUrl));
 
@@ -468,6 +455,8 @@ public partial class SystemHealthAppService
         public int Count { get; set; }
         public DateTime FirstSeenAt { get; set; }
         public DateTime LastSeenAt { get; set; }
+        public long TotalDurationMs { get; set; }
+        public int? MaxStatusCode { get; set; }
     }
 
     private sealed class EndpointActorRow

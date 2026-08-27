@@ -32,7 +32,13 @@ public interface ISystemHealthAppService : IApplicationService
     /// performans ihlali olarak İKİNCİ kez listelenmez.
     /// </para>
     /// </summary>
-    Task<List<HealthIssueDto>> GetIssuesAsync(GetHealthIssueListInput input);
+    Task<HealthIssueListDto> GetIssuesAsync(GetHealthIssueListInput input);
+
+    /// <summary>
+    /// Seçili olayın kanıt paneli. Dolu bölümler kanala göre değişir; boş bölüm için
+    /// arayüz sekme çizmez.
+    /// </summary>
+    Task<HealthIssueDetailDto> GetIssueDetailAsync(GetHealthIssueDetailInput input);
 
     /// <summary>
     /// Bir istemci hatasının görülme anıyla ve kiracısıyla örtüşen sunucu kayıtları —
