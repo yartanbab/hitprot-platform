@@ -307,30 +307,37 @@ $(function () {
         if (!anchor || !state.projects || !state.projects.length) { return; }
         var li = anchor.parentElement;
 
-        var add = document.createElement('button');
-        add.type = 'button';
-        add.className = 'apya-shell-rowbtn';
-        add.title = 'Yeni proje';
-        add.setAttribute('aria-label', 'Yeni proje');
-        add.innerHTML = svgIcon(ICON_PLUS, 13);
-        add.addEventListener('click', function (e) {
-            e.preventDefault();
-            e.stopPropagation();
-            // ABP modal yöneticisi varsa doğrudan aç; yoksa listeye götür
-            // (sayfanın kendi "Yeni Proje Ekle" düğmesi orada).
-            if (window.abp && abp.ModalManager) {
-                new abp.ModalManager('/Projects/CreateModal').open();
-            } else {
-                location.href = '/Projects';
-            }
-        });
+        // "+" (yeni proje) diğer üç oluşturma girişiyle AYNI koşula bağlıdır:
+        // sayfa düğmesi (Index.cshtml → canCreate), "+ Yeni" menüsü ve komut
+        // paleti hep can.createProject'e bakar. Burada kontrol YOKTU; yetkisi
+        // olmayan kullanıcı düğmeyi görüyor, tıklayınca /Projects/CreateModal
+        // 403 (Volo.Authorization:010001) dönüyordu.
+        if (state.can && state.can.createProject) {
+            var add = document.createElement('button');
+            add.type = 'button';
+            add.className = 'apya-shell-rowbtn';
+            add.title = 'Yeni proje';
+            add.setAttribute('aria-label', 'Yeni proje');
+            add.innerHTML = svgIcon(ICON_PLUS, 13);
+            add.addEventListener('click', function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                // ABP modal yöneticisi varsa doğrudan aç; yoksa listeye götür
+                // (sayfanın kendi "Yeni Proje Ekle" düğmesi orada).
+                if (window.abp && abp.ModalManager) {
+                    new abp.ModalManager('/Projects/CreateModal').open();
+                } else {
+                    location.href = '/Projects';
+                }
+            });
+            anchor.appendChild(add);
+        }
 
         var chevron = document.createElement('button');
         chevron.type = 'button';
         chevron.className = 'apya-shell-rowbtn apya-shell-subtoggle';
         chevron.innerHTML = svgIcon(ICON_CHEVRON, 12);
 
-        anchor.appendChild(add);
         anchor.appendChild(chevron);
 
         var list = document.createElement('ul');
