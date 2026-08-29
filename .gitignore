@@ -265,6 +265,9 @@ src/Apya.Platform.Blazor.Server.Tiered/Logs/*
 # Use abp install-libs to restore.
 **/wwwroot/libs/*
 src/Apya.Platform.Web/App_Data/uploads/*
+# Veri koruma anahtarları — uygulama İLK ÇALIŞTIRMADA kendisi üretir.
+# Çerez ve antiforgery jetonlarını imzalayan anahtar malzemesi; commit'lenmemeli.
+src/Apya.Platform.Web/App_Data/DataProtection-Keys/*
 
 # Local secrets — must never be committed (contains DB password, API keys vb.)
 **/appsettings.secrets.json
