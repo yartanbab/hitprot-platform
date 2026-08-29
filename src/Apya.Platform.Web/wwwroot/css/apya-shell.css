@@ -5932,7 +5932,17 @@ i.apya-priority-dot {
     .apya-proj-filterbar { display: flex; align-items: center; gap: 8px; }
     /* display:flex, [hidden]'ın UA display:none'ını ezer — açıkça geri alınır. */
     .apya-proj-filterbar[hidden] { display: none; }
-    .apya-proj-filters { flex: 1 1 auto; min-width: 0; }
+    .apya-proj-filters {
+        flex: 1 1 auto;
+        min-width: 0;
+        /* Sağ kenarda solma. Kaydırılan şerit sıralama kutusuna dayandığında çip
+           kelime ortasından kesiliyor ve "bozuk" gibi okunuyordu (canlıda görüldü);
+           solan kenar bunu "devamı var"a çeviriyor. Koşullu yazmaya gerek yok:
+           çipler sola paketlendiği için taşma YOKKEN maske boş zemine düşer ve
+           görünmez — yani yalnız gerçekten kaydırılabilirken belirir. */
+        -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 20px), transparent);
+        mask-image: linear-gradient(to right, #000 calc(100% - 20px), transparent);
+    }
     .apya-proj-filterbar > .apya-proj-sort {
         flex: none;
         max-width: 45%;
