@@ -24,8 +24,13 @@
    Versiyonlama: CACHE_VERSION değişince eski cache'ler activate sırasında temizlenir
    (mevcut kullanıcıları anında temiz sayfaya döndürmek için deploy'da artırılabilir).
 
-   ABP route'ları: /Account/Login gibi guarded sayfalar offline'da çalışmaz —
-   service worker auth'a karışmaz, browser session yönetir.
+   Kimlik route'ları (/Account/*, /connect/*) SW'a HİÇ uğramaz — ne önbellekten
+   servis edilir ne önbelleğe yazılır. Sebep: bu sayfaların formunda antiforgery
+   token'ı GÖMÜLÜ gelir ve sunucudaki .AspNetCore.Antiforgery çerezine eşlidir.
+   Cache API, ASP.NET'in bu yanıtlara koyduğu "Cache-Control: no-store"u
+   UMURSAMAZ; dolayısıyla networkFirst mobil şebekede ağ her takıldığında
+   önbellekteki BAYAT login sayfasını servis ediyor, çerez o arada yenilendiği
+   için POST gövdesiz 400 alıyor ve kullanıcı "[400] Hata!" ekranını görüyordu.
    ============================================================================= */
 
 const CACHE_VERSION = 'v5';
@@ -39,6 +44,16 @@ const SHELL_URLS = [
     '/manifest.webmanifest',
     '/icons/apya-icon.svg',
 ];
+
+/* Kimlik route'ları — SW bunlara dokunmaz (gerekçe: baştaki açıklama).
+   Yol karşılaştırması küçük harfe indirilir: ASP.NET routing büyük/küçük harfe
+   duyarsızdır, "/account/login" de aynı sayfayı açar. */
+const AUTH_PATH_PREFIXES = ['/account/', '/connect/'];
+
+function isAuthRoute(pathname) {
+    const path = pathname.toLowerCase();
+    return AUTH_PATH_PREFIXES.some((prefix) => path.startsWith(prefix));
+}
 
 /* Pending SW'ı aktive et (registerServiceWorker.js'ten gelen mesaj) */
 self.addEventListener('message', (event) => {
@@ -60,6 +75,16 @@ self.addEventListener('activate', (event) => {
         await Promise.all(
             names.filter((n) => !keep.has(n)).map((n) => caches.delete(n)),
         );
+
+        /* Bu düzeltmeden ÖNCEKİ sürümlerin önbelleğe aldığı kimlik sayfalarını at.
+           Yeni kod oraya zaten bakmıyor; amaç zehirli kopyayı depoda bırakmamak.
+           CACHE_VERSION bump'ı yerine hedefli temizlik: tüm asset önbelleğini
+           silip herkese gereksiz bir yeniden indirme yüklemesin. */
+        const runtime = await caches.open(CACHE_RUNTIME);
+        const staleAuth = (await runtime.keys())
+            .filter((request) => isAuthRoute(new URL(request.url).pathname));
+        await Promise.all(staleAuth.map((request) => runtime.delete(request)));
+
         await self.clients.claim();
     })());
 });
@@ -82,6 +107,10 @@ self.addEventListener('fetch', (event) => {
     }
 
     if (req.mode === 'navigate') {
+        /* respondWith ÇAĞIRMIYORUZ → istek doğrudan ağa gider, SW aradan çekilir.
+           Böylece login sayfası ne önbellekten okunur ne önbelleğe yazılır. */
+        if (isAuthRoute(url.pathname)) return;
+
         event.respondWith(networkFirst(req, CACHE_RUNTIME));
         return;
     }
