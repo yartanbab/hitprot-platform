@@ -8,6 +8,15 @@ namespace Apya.Platform.Web.ReleaseNotes;
 /// YENİ SÜRÜM EKLERKEN: listenin BAŞINA yeni bir <see cref="ReleaseNote"/> ekle
 /// (en yeni ilk). <see cref="Latest"/> otomatik ilk öğedir; kullanıcı bunu
 /// görmediyse ilk açılışta "Yenilikler" penceresi açılır.
+///
+/// MADDELER MÜŞTERİ ODAKLIDIR. Bu liste hem "Yenilikler" penceresinde hem de
+/// /ReleaseNotes geçmiş sayfasında HER oturumlu kullanıcıya aynı şekilde gösterilir —
+/// izin kapısı YOKTUR. Bu yüzden yalnız host yöneticisini ilgilendiren maddeler
+/// (Sistem Sağlığı, kiracı yönetimi, paket süresi tanımlama, hibe çağrısı yönetimi)
+/// BURAYA YAZILMAZ: kiracı müşterisi ya erişemediği bir özelliği arar ya da kendisini
+/// ilgilendirmeyen işletim ayrıntısını okur. Ölçü tek soru: "bunu kiracıdaki bir
+/// kullanıcı kendi ekranında görebilir/yapabilir mi?" Hayırsa madde girmez.
+/// Kiracı yöneticisinin yaptığı işler (Ayarlar, menü düzeni, "Paketim") girer.
 /// </summary>
 public static class ReleaseNoteCatalog
 {
@@ -51,26 +60,6 @@ public static class ReleaseNoteCatalog
                 "Hangi pakette olduğunuzu, paketinizin neleri kapsadığını ve kullanım kotanızın ne kadarını " +
                 "doldurduğunuzu tek ekranda görüyorsunuz. Bir kotaya takıldığınızda çıkan uyarı sizi doğrudan " +
                 "bu ekrana ve üst pakete yönlendiriyor."),
-
-            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
-                "Paketlere süre tanımlanabiliyor",
-                "Yönetici bir firmanın paketine bitiş tarihi verebiliyor. Süre dolduğunda hesap otomatik " +
-                "olarak Basic pakete iniyor; verileriniz durmaya devam ediyor, yalnız paket sınırları " +
-                "değişiyor. Süresi tanımlanmamış paketler eskisi gibi süresiz kalır."),
-
-            // ── Yönetim ───────────────────────────────────────────────────────
-            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
-                "Hata ve geri bildirimleri göreve dönüştürün",
-                "Yöneticiler, kullanıcıdan gelen geri bildirimi veya sistemin yakaladığı bir hatayı tek " +
-                "tıkla göreve dönüştürebiliyor. Aynı hata tekrar ederse yeni görev açılmıyor, mevcut " +
-                "görevin tekrar sayacı artıyor."),
-
-            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
-                "Sistem Sağlığı artık bir teşhis konsolu",
-                "Ekran ikiye ayrıldı: \"Teşhis\" sekmesinde istemci, sunucu ve performans olayları etkiye " +
-                "göre sıralı tek bir listede toplanıyor ve seçtiğiniz olayın kanıtı sağdaki panelde " +
-                "açılıyor; \"Ölçümler\" sekmesinde KPI kartları ve uç tabloları duruyor. Zaman penceresine " +
-                "1 gün seçeneği eklendi — böylece \"dün ne oldu\" ile \"bu hafta ne oldu\" karışmıyor."),
 
             // ── Mobil ─────────────────────────────────────────────────────────
             new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
@@ -229,19 +218,10 @@ public static class ReleaseNoteCatalog
                 "Takvim ilk kurulum penceresi kısa ekranlarda düzgün görünüyor",
                 "Takvim ilk kurulum sihirbazının alt bilgi çubuğu kısa masaüstü ekranlarında kırpılıyordu; düzeltildi."),
 
-            new ReleaseNoteItem(ReleaseNoteCategory.Fix,
-                "Yeni müşteri ekleme hatası giderildi",
-                "Yönetici yeni bir müşteri (kiracı) eklerken karşılaşılabilen sunucu hatası giderildi."),
-
             new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
                 "Girişte artık kiracı adı sormuyoruz",
                 "Kullanıcı adınız (veya e-postanız) ve şifrenizle giriş yapmanız yeterli; hesabınızın bağlı " +
-                "olduğu firma otomatik bulunuyor."),
-
-            new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
-                "Hibe çağrıları yalnız platform tarafından açılıyor",
-                "Hibe programı ve çağrısı oluşturma, düzenleme ve silme artık yalnız platform yönetimine ait. " +
-                "Firmalar kendilerine yayınlanan çağrıları görüntüler, firma profilini günceller ve başvurur.")
+                "olduğu firma otomatik bulunuyor.")
         ),
 
         new ReleaseNote(
