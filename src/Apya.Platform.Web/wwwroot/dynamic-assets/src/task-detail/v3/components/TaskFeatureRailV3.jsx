@@ -1,4 +1,5 @@
 import React from 'react';
+import { draggableActivation } from '../../../lib/dom/draggableActivation';
 
 /**
  * Tam sayfa (odak) görünümündeki sol dikey özellik rayı — üst yatay sekme çubuğunun
@@ -39,7 +40,9 @@ export function TaskFeatureRailV3({
                         type="button"
                         draggable
                         title="Sürükleyerek sırayı değiştirin"
-                        onClick={() => onTabChange(tab.code)}
+                        /* Seçim `click`te değil pointerdown'da — `draggable` düğmede basılıyken
+                           oluşan kayma `click`i yutuyor. Bkz. lib/dom/draggableActivation.js */
+                        {...draggableActivation(() => onTabChange(tab.code))}
                         onDragStart={(e) => {
                             onDragStart(tab.code);
                             try {

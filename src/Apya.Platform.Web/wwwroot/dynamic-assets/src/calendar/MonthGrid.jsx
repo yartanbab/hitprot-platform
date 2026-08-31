@@ -1,5 +1,6 @@
 import React from 'react';
 import { cn } from '../lib/utils';
+import { draggableActivation } from '../lib/dom/draggableActivation';
 import {
     RISK, SOURCES, addDays, buildDayCell, dayLoad, fmt, isoDay, monthGridDays, summaryLabel,
 } from './lib/model';
@@ -31,6 +32,7 @@ function Pill({ item, onSelect, onDragStart, isPending, hasError }) {
     /* Taşınamayan öğe (fatura vadesi vb.) sürüklenemez: kullanıcı sunucunun
        reddedeceği bir hareketi hiç başlatmasın. */
     const draggable = item.canReschedule && !item.isDone;
+    const activation = draggableActivation(() => onSelect(item));
 
     return (
         <button
@@ -42,7 +44,13 @@ function Pill({ item, onSelect, onDragStart, isPending, hasError }) {
                 e.dataTransfer.setData('text/plain', item.key);
                 onDragStart(item);
             } : undefined}
-            onClick={(e) => { e.stopPropagation(); onSelect(item); }}
+            /* Seçim `click`te değil pointerdown'da: çubuk `draggable` olduğunda basılıyken
+               oluşan küçük kayma `click`i tümden yutuyor, öğe tek tıklamayla açılmıyordu.
+               Bkz. lib/dom/draggableActivation.js
+               stopPropagation İKİSİNDE de şart — gün hücresinin kendi onClick'i (günü seçer)
+               çubuğa yapılan tıklamayla tetiklenmemeli. */
+            onPointerDown={(e) => { e.stopPropagation(); activation.onPointerDown(e); }}
+            onClick={(e) => { e.stopPropagation(); activation.onClick(e); }}
             title={item.subtitle ? `${item.title} — ${item.subtitle}` : item.title}
             style={risk ? { backgroundImage: risk.pattern } : undefined}
             className={cn(

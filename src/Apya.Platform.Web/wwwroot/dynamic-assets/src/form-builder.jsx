@@ -143,14 +143,14 @@ function BlockPreview({ block }) {
 /* ============================================================
  * Question card — all editing happens inline (Google Forms style)
  * ============================================================ */
-function QuestionCard({ block, index, selected, onSelect, onPatch, onPatchSettings, onChangeType, onDuplicate, onRemove, onAddAfter, onMove, dragRef }) {
+export function QuestionCard({ block, index, selected, onSelect, onPatch, onPatchSettings, onChangeType, onDuplicate, onRemove, onAddAfter, onMove, dragRef }) {
   const s = block.settings || {};
   const isLayout = LAYOUT_ONLY.has(block.type);
+  const cardRef = useRef(null);
 
   return (
     <div
-      draggable
-      onDragStart={() => (dragRef.current = index)}
+      ref={cardRef}
       onDragOver={(e) => e.preventDefault()}
       onDrop={() => onMove(index)}
       onClick={() => onSelect(block.id)}
@@ -159,8 +159,24 @@ function QuestionCard({ block, index, selected, onSelect, onPatch, onPatchSettin
       {/* left accent when selected (Google Forms) */}
       {selected && <span className="absolute inset-y-0 left-0 w-1 rounded-l-2xl bg-accent" />}
 
-      {/* drag handle */}
-      <div className={`absolute -top-2 left-1/2 -translate-x-1/2 cursor-grab text-text-tertiary transition-opacity ${selected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`} title="Sürükle">⠿</div>
+      {/* drag handle — sürüklenen KART DEĞİL, bu tutamaç.
+          Kart `draggable` iken basılıyken oluşan 4px'lik kayma `click`i tümden
+          yutuyordu (bkz. lib/dom/draggableActivation.js): kart tek tıklamayla
+          seçilmiyor, içindeki metin kutularında fareyle metin de seçilemiyordu —
+          seçmeye çalışmak soruyu yerinden oynatıyordu. Tutamaç zaten çiziliyordu,
+          artık işlevi de o taşıyor (Google Forms'ta da sürükleme yalnız buradan).
+          px-4: tek bir ⠿ karakteri fare için fazla dar bir hedef; dolgu tıklama
+          alanını genişletir, glif ortalanmış olduğu için görsel olarak yerinde kalır. */}
+      <div
+        draggable
+        onDragStart={(e) => {
+          dragRef.current = index;
+          /* Sürükleme önizlemesi kartın kendisi olsun; yoksa yalnız ⠿ taşınır. */
+          if (cardRef.current) e.dataTransfer.setDragImage(cardRef.current, 24, 24);
+        }}
+        title="Sürükle"
+        className={`absolute -top-2 left-1/2 -translate-x-1/2 cursor-grab px-4 text-text-tertiary transition-opacity active:cursor-grabbing ${selected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}
+      >⠿</div>
 
       {/* header: question text + type */}
       <div className="flex items-start gap-3">

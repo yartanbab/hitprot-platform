@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { draggableActivation } from '../../../lib/dom/draggableActivation';
 
 /**
  * Yatay sekme çubuğu (modal görünümü).
@@ -37,7 +38,10 @@ export function TaskFeatureNavbarV3({
                             type="button"
                             draggable
                             title="Sürükleyerek sırayı değiştirin"
-                            onClick={() => onTabChange(tab.code)}
+                            /* Seçim `click`e bırakılamaz: düğme `draggable` olduğu için fare
+                               basılıyken oluşan küçük kayma `click`i tümden yutuyor, sekme tek
+                               tıklamayla değişmiyordu. Gerekçe: lib/dom/draggableActivation.js */
+                            {...draggableActivation(() => onTabChange(tab.code))}
                             onDragStart={(e) => {
                                 onDragStart(tab.code);
                                 try {

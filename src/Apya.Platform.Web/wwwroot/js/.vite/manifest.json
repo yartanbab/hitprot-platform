@@ -54,6 +54,10 @@
       "_Dialog-BdNKdiS6.js"
     ]
   },
+  "_draggableActivation-Ybw9Upbh.js": {
+    "file": "draggableActivation-Ybw9Upbh.js",
+    "name": "draggableActivation"
+  },
   "_grid-vendor-D-Pdxerz.js": {
     "file": "grid-vendor-D-Pdxerz.js",
     "name": "grid-vendor",
@@ -115,6 +119,7 @@
       "_QueryProvider-AIUp_Zk5.js",
       "_EmptyState-Bhcx2Wdd.js",
       "_httpClient-CRlyQ1eg.js",
+      "_draggableActivation-Ybw9Upbh.js",
       "_query-vendor-Bf69L2iP.js"
     ]
   },
@@ -218,6 +223,7 @@
       "_ModalPortal-8QCz-DZi.js",
       "_SkeletonShape-CiCOe1YJ.js",
       "_EmptyState-Bhcx2Wdd.js",
+      "_draggableActivation-Ybw9Upbh.js",
       "_Hint-CNW95h3H.js"
     ]
   },
@@ -290,7 +296,8 @@
       "_Dialog-BdNKdiS6.js",
       "_Combobox-Cgzidxen.js",
       "_httpClient-CRlyQ1eg.js",
-      "_ui-vendor-DaE-uom6.js"
+      "_ui-vendor-DaE-uom6.js",
+      "_draggableActivation-Ybw9Upbh.js"
     ]
   },
   "src/template-builder.jsx": {

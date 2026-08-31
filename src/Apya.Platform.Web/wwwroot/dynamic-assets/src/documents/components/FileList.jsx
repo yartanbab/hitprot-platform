@@ -1,6 +1,7 @@
 import React from 'react';
 import { Badge, Button, EmptyState, Skeleton } from '../../components/ui';
 import { cn, fmt, fileVisual, STATUS_META, tagChipClass } from '../format';
+import { draggableActivation } from '../../lib/dom/draggableActivation';
 
 /**
  * Orta panel: liste (tablo) ve grid görünümü + toplu işlem şeridi.
@@ -111,12 +112,17 @@ function MissingRow({ item, onUpload, canUpload }) {
 function FileRow({ file, selected, checked, onSelect, onToggleCheck, onDragStart, isTrash, onRestore }) {
   const visual = fileVisual(file.contentType, file.fileName);
   const status = STATUS_META[file.status] || STATUS_META[1];
+  const activation = draggableActivation(() => onSelect(file));
 
   return (
     <div
       draggable={!isTrash}
       onDragStart={isTrash ? undefined : () => onDragStart(file)}
-      onClick={isTrash ? undefined : () => onSelect(file)}
+      /* Seçim `click`te değil pointerdown'da: satır `draggable` olduğu için basılıyken
+         oluşan küçük kayma `click`i tümden yutuyor, belge tek tıklamayla açılmıyordu.
+         Bkz. lib/dom/draggableActivation.js */
+      onPointerDown={isTrash ? undefined : activation.onPointerDown}
+      onClick={isTrash ? undefined : activation.onClick}
       className={cn('apya-doc-row', selected && 'is-selected', isTrash && 'is-trashed')}
       style={{ gridTemplateColumns: GRID_TEMPLATE }}
     >
@@ -124,6 +130,9 @@ function FileRow({ file, selected, checked, onSelect, onToggleCheck, onDragStart
           yapılabilecek tek şey geri almaktır. */}
       <span
         onClick={isTrash ? undefined : (e) => { e.stopPropagation(); onToggleCheck(file.id); }}
+        /* Satır seçimi artık pointerdown'da olduğu için click'i durdurmak yetmez:
+           kutucuğa basmak satırı da seçerdi. */
+        onPointerDown={isTrash ? undefined : (e) => e.stopPropagation()}
         style={{ cursor: isTrash ? 'default' : 'pointer' }}
       >
         {isTrash ? (
@@ -188,7 +197,9 @@ function FileCard({ file, selected, onSelect, onDragStart }) {
       type="button"
       draggable
       onDragStart={() => onDragStart(file)}
-      onClick={() => onSelect(file)}
+      /* Kart `draggable`; seçim pointerdown'da olmazsa küçük bir kayma `click`i yutar.
+         Bkz. lib/dom/draggableActivation.js */
+      {...draggableActivation(() => onSelect(file))}
       className="apya-tile"
       style={{
         textAlign: 'left',
