@@ -56,4 +56,29 @@ public class SubscriptionPage_Tests : PlatformWebTestBase
         link.Url.ShouldBe("/Subscription");
         link.TenantOnly.ShouldBeTrue();
     }
+
+    /// <summary>
+    /// "Kilitli özellikler" keşif öğesi HOST'ta basılmamalı: host'un paketi yoktur ve
+    /// tüm yetenekleri açıktır, öğe orada anlamsız bir yükseltme çağrısı olurdu.
+    /// <para>Web testleri host bağlamında koştuğu için ölçülebilen taraf budur; kiracıda
+    /// basılma şartı (kapalı yetenek + Paketim izni) çözümleyicinin kendi kodundadır.</para>
+    /// </summary>
+    [Fact]
+    public async Task Kilitli_ozellikler_ogesi_host_menusunde_yer_almaz()
+    {
+        var html = await GetResponseAsStringAsync("/Settings");
+
+        html.ShouldNotContain(PlatformNavigationResolver.LockedFeaturesItemName);
+    }
+
+    /// <summary>
+    /// Öğe menü düzeni ayarında ADIYLA saklanıyor; ad alt çizgi içeremez (LeptonX
+    /// `MenuItem_Apya_...` basıyor ve kabuk `_` → `.` çevirisiyle adı geri okuyor).
+    /// </summary>
+    [Fact]
+    public void Kilitli_ozellikler_ogesinin_adi_menu_duzeniyle_uyumludur()
+    {
+        PlatformNavigationResolver.LockedFeaturesItemName.ShouldNotContain("_");
+        PlatformNavigationResolver.LockedFeaturesItemName.ShouldStartWith("Apya.");
+    }
 }

@@ -46,6 +46,7 @@
         "Menu:Feedback:Group": "Geri Bildirim",
         "Menu:PackageManagement": "Paket Yönetimi",
         "Menu:Subscription": "Paketim",
+        "Menu:LockedFeatures": "Kilitli özellikler",
         "Subscription:Title": "Paketim",
         "Subscription:PageDescription": "Paketiniz, süresi ve kullanım hakkınız",
         "Subscription:CurrentPackage": "Mevcut paketiniz",
