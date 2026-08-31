@@ -22,6 +22,34 @@ public static class ReleaseNoteCatalog
 {
     public static IReadOnlyList<ReleaseNote> All { get; } = new List<ReleaseNote>
     {
+        // 🔴 YAYIN GÜNÜ: version ve date, paketin gerçekten indiği tarihe göre düzeltilmeli.
+        new ReleaseNote(
+            version: "2026.08.28",
+            date: "28 Ağustos 2026",
+            title: "Görevi ekip dışındaki kişilerle paylaşma",
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "Bir görevi ekibinizde olmayan kişiye açabiliyorsunuz",
+                "Taşeron, tasarımcı, danışman ya da müşteriniz — göreve dahil etmek istediğiniz kişinin " +
+                "artık hesap açmasına ya da ekibinize katılmasına gerek yok. Görev detayındaki " +
+                "\"Dış Paylaşım\" bölümünden kişiye özel bir bağlantı üretiyorsunuz; o kişi bağlantıyla " +
+                "görevi ve alt görevlerini görüyor, yorum yazıyor, dosya yükleyip indirebiliyor. " +
+                "Yorumları ve dosyaları görevin içine düşüyor, ekibiniz bildirim alıyor."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "Paylaşımda neyi açacağınıza siz karar veriyorsunuz",
+                "Bağlantıyı üretirken yorum yazma, dosya yükleme ve dosya indirme yetkilerini tek tek " +
+                "açıp kapatabiliyor, kaç gün geçerli olacağını belirliyorsunuz. Süresi dolan bağlantı " +
+                "kendiliğinden kapanır; dilediğiniz an elle de iptal edebilirsiniz. Her erişim " +
+                "kaydedilir, kaç kez bakıldığını ve kaç dosya yüklendiğini listede görürsünüz."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Security,
+                "Ekip içi yazışmanız dışarı çıkmaz",
+                "Paylaşım bağlantısını açan kişi yalnız kendisiyle kurulan yazışmayı görür — ekibinizin " +
+                "görev üzerinde kendi arasında yazdıkları ona gösterilmez. Dosyalarda da aynı kural " +
+                "geçerli: bir dosya, siz \"dış paylaşımda görünsün\" demedikçe dışarıdan erişilemez.")
+        ),
+
         new ReleaseNote(
             version: "2026.08.27",
             date: "27 Ağustos 2026",

@@ -127,6 +127,8 @@ namespace Apya.Platform.EntityFrameworkCore
         // DİKKAT: Eski Task modülündeki yorumlar (Açık Adresiyle!)
         public DbSet<Apya.Platform.Tasks.TaskComment> TaskComments { get; set; }
         public DbSet<TaskAttachment> TaskAttachments { get; set; }
+        public DbSet<TaskShareLink> TaskShareLinks { get; set; }
+        public DbSet<TaskShareAccessLog> TaskShareAccessLogs { get; set; }
         public DbSet<TaskDependency> TaskDependencies { get; set; }
         public DbSet<TaskTimeLog> TaskTimeLogs { get; set; }
         public DbSet<Tag> Tags { get; set; }
@@ -665,6 +667,7 @@ namespace Apya.Platform.EntityFrameworkCore
                 b.ConfigureByConvention();
                 b.HasIndex(x => x.TaskId); // REV-004
                 b.HasIndex(x => x.ParentCommentId); // Instagram tarzı yanıt sorgusu
+                b.HasIndex(x => x.ShareLinkId); // misafir thread'i: linke bağlı yorumlar
             });
 
             builder.Entity<Apya.Platform.Projects.BoardColumn>(b =>
@@ -691,6 +694,38 @@ namespace Apya.Platform.EntityFrameworkCore
                 b.ToTable(PlatformConsts.DbTablePrefix + "TaskAttachments", PlatformConsts.DbSchema);
                 b.ConfigureByConvention();
                 b.HasIndex(x => x.TaskId); // REV-004
+                b.HasIndex(x => x.ShareLinkId); // misafirin yüklediklerini linke göre listeleme
+            });
+
+            builder.Entity<TaskShareLink>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "TaskShareLinks", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+
+                b.Property(x => x.TokenHash).IsRequired().HasMaxLength(TaskShareConsts.TokenHashLength);
+                b.Property(x => x.RecipientName).IsRequired().HasMaxLength(TaskShareConsts.MaxRecipientNameLength);
+                b.Property(x => x.RecipientEmail).HasMaxLength(TaskShareConsts.MaxRecipientEmailLength);
+
+                // Anonim çözümleme yalnız bu indeksle çalışır; token'ın kendisi saklanmaz.
+                b.HasIndex(x => x.TokenHash).IsUnique()
+                    .HasFilter(isSqlServer ? "[IsDeleted] = 0" : "\"IsDeleted\" = false");
+                b.HasIndex(x => x.TaskId);
+            });
+
+            builder.Entity<TaskShareAccessLog>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "TaskShareAccessLogs", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+
+                b.Property(x => x.IpHash).HasMaxLength(64);
+                b.Property(x => x.UserAgent).HasMaxLength(400);
+
+                b.HasOne<TaskShareLink>()
+                 .WithMany()
+                 .HasForeignKey(x => x.ShareLinkId)
+                 .OnDelete(DeleteBehavior.Cascade);
+
+                b.HasIndex(x => new { x.ShareLinkId, x.CreationTime });
             });
 
             // APYA-30: TaskDependency

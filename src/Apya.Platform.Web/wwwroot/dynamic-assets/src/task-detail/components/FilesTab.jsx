@@ -1,5 +1,7 @@
 import React, { useRef, useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useTaskAttachments } from '../hooks/useTaskAttachments';
+import { isGranted } from '../hooks/useTaskDetail';
 import { fileKindOf, fmtSize } from '../v3/tabPrimitives';
 
 /**
@@ -8,8 +10,20 @@ import { fileKindOf, fmtSize } from '../v3/tabPrimitives';
  */
 export function FilesTab({ taskId }) {
     const { attachments, upload, remove, isUploading } = useTaskAttachments(taskId);
+    const queryClient = useQueryClient();
     const inputRef = useRef(null);
     const [dragging, setDragging] = useState(false);
+
+    const canShare = isGranted('Platform.Tasks.ShareExternally');
+
+    const onToggleGuestVisibility = async (attachmentId, isVisible) => {
+        try {
+            await window.apya.platform.tasks.taskShare.setAttachmentGuestVisibility(attachmentId, isVisible);
+            queryClient.invalidateQueries({ queryKey: ['task-attachments', taskId] });
+        } catch (err) {
+            window?.abp?.notify?.error?.(err?.message || 'Görünürlük değiştirilemedi.');
+        }
+    };
 
     const uploadFile = async (file) => {
         if (!file) return;
@@ -83,8 +97,24 @@ export function FilesTab({ taskId }) {
                                     </div>
                                 </div>
 
+                                {/* Dış paylaşım görünürlüğü: misafir yüklemesinde anlamsız (dosya
+                                    zaten sahibinin), o yüzden yalnız ekip dosyalarında çıkar. */}
+                                {canShare && !att.isGuestUpload && (
+                                    <label className="flex items-center gap-1.5 text-[11px] text-text-tertiary cursor-pointer">
+                                        <input
+                                            type="checkbox"
+                                            checked={Boolean(att.isVisibleToGuests)}
+                                            onChange={(e) => onToggleGuestVisibility(att.id, e.target.checked)}
+                                        />
+                                        Dış paylaşımda görünsün
+                                    </label>
+                                )}
+
                                 <div className="flex items-center justify-between gap-2 pt-2.5 border-t border-subtle">
-                                    <span className="truncate text-[11px] text-text-tertiary">{att.uploaderName}</span>
+                                    <span className="truncate text-[11px] text-text-tertiary">
+                                        {att.uploaderName}
+                                        {att.isGuestUpload ? ' · dış' : ''}
+                                    </span>
                                     <div className="flex gap-1 shrink-0">
                                         <a
                                             href={att.downloadUrl}

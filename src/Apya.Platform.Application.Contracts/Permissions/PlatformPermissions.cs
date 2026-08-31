@@ -112,6 +112,14 @@ public static class PlatformPermissions
         /// Yoksa "Daha fazla" açılırı hiç çizilmez ve bu alanlar sunucuda da yok sayılır.
         /// </summary>
         public const string ManagePlanning = Default + ".ManagePlanning";
+
+        /// <summary>
+        /// Görevi ekip dışından birine süreli link ile açma (misafir erişimi). Link üretmeyi,
+        /// listelemeyi ve iptal etmeyi kapsar. Feature kapısı YOK — bkz.
+        /// <c>TaskSharePermissionDataSeedContributor</c>: kapısız izin mevcut kiracılara paket
+        /// akışından ulaşmaz, tavan ve grant ayrıca telafi edilir.
+        /// </summary>
+        public const string ShareExternally = Default + ".ShareExternally";
     }
 
     // --- WIKI / DOKÜMANTASYON YETKİLERİ ---

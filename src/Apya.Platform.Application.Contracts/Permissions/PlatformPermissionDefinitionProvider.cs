@@ -40,6 +40,10 @@ public class PlatformPermissionDefinitionProvider : PermissionDefinitionProvider
         tasksPermission.AddChild(PlatformPermissions.Tasks.ManagePlanning, L("Permission:Tasks.ManagePlanning"))
             .RequireFeatures(PlatformFeatures.TaskQuickEntry);
 
+        // Dış paylaşım BİLEREK kapısız: her pakette açılabilir olmalı, çünkü ekip dışına iş
+        // verdirmek pakete göre kısıtlanan bir "ekstra" değil, görevin temel kullanımı.
+        tasksPermission.AddChild(PlatformPermissions.Tasks.ShareExternally, L("Permission:Tasks.ShareExternally"));
+
         // ============================================================
         // HİBE YÖNETİMİ
         // ============================================================
