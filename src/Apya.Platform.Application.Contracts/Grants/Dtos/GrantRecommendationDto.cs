@@ -2,7 +2,7 @@ using System;
 
 namespace Apya.Platform.Grants.Dtos;
 
-/// <summary>Tenant öneri feed öğesi — canlı hesaplanır (kalıcı değil).</summary>
+/// <summary>Tenant çağrı feed öğesi — canlı hesaplanır (kalıcı değil).</summary>
 public class GrantRecommendationDto
 {
     public Guid GrantCallId { get; set; }
@@ -18,4 +18,8 @@ public class GrantRecommendationDto
 
     /// <summary>Host bu çağrıyı bu firmaya bilinçli olarak gönderdi mi (B3 host-push).</summary>
     public bool IsHostRecommended { get; set; }
+
+    /// <summary>Çağrı firmaya önerilir mi: skor >= program eşiği ya da host-push.
+    /// False olanlar da kiracıya listelenir ("Diğer Açık Çağrılar"), yalnız ayrı blokta.</summary>
+    public bool IsRecommended { get; set; }
 }
