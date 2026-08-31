@@ -12,7 +12,11 @@ import { Skeleton } from '../../components/ui';
  * durumuna düşer. Frontend hiçbir değeri kendi kararıyla gizlemez.
  */
 function StatStripCard({ filter, template, compact }) {
-    const { data, isLoading, isError, refetch } = useSummary(filter);
+    /* isLoading DEĞİL isPending: kalıcı önbellek geri yüklenirken sorgu
+       `fetchStatus:'idle'` döner → isLoading FALSE olur ama `data` hâlâ
+       undefined'dır ve aşağıdaki `!data` dalı devreye girip şeridi bir kare
+       "Özet yüklenemedi." hatasıyla çizerdi. */
+    const { data, isPending, isError, refetch } = useSummary(filter);
 
     /* Kolon şablonu DashboardRoot'tan gelir: şeridin ÖLÇÜLEN genişliğinden
        türetilir (bkz stripLayoutFor). Buradaki `lt-1080:`/`mobile:` gibi viewport
@@ -20,7 +24,7 @@ function StatStripCard({ filter, template, compact }) {
        ikisi çakışıyordu (kenar çubuğu 327px'lik sabit farkı yaratıyor). */
     const gridStyle = { gridTemplateColumns: template ?? 'repeat(4, minmax(0, 2fr)) minmax(0, 3fr)' };
 
-    if (isLoading) {
+    if (isPending) {
         return (
             <div className="h-full grid gap-[12px]" style={gridStyle}>
                 {Array.from({ length: 5 }, (_, i) => (

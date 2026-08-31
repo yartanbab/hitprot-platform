@@ -39,7 +39,7 @@ function IncomeExpenseCard({ filter, editMode }) {
                     </span>
                 </div>
             }
-            isLoading={query.isLoading}
+            isLoading={query.isPending}
             isError={query.isError}
             onRetry={query.refetch}
             isEmpty={!hasValues}

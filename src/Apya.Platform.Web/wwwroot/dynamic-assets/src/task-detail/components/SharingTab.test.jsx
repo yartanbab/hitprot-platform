@@ -2,6 +2,7 @@ import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { QueryProvider } from '../../lib/api/QueryProvider';
 import { SharingTab } from './SharingTab';
 
 function renderWithClient(ui) {
@@ -111,5 +112,26 @@ describe('SharingTab', () => {
         window.apya.platform.tasks.taskShare.getList = vi.fn(() => Promise.resolve([]));
         renderWithClient(<SharingTab taskId="t-1" />);
         expect(await screen.findByText(/henüz kimseyle paylaşılmadı/i)).toBeInTheDocument();
+    });
+
+    /**
+     * Kalıcı önbellek geri yükleme penceresi: GERÇEK QueryProvider kullanılır.
+     * O pencerede sorgu `fetchStatus:'idle'` döndüğü için `isLoading` FALSE olur
+     * ama liste henüz yoktur — sekme, paylaşımı OLAN görevde bile bir kare
+     * "henüz kimseyle paylaşılmadı" yazıyordu. Kapı `isPending` olmalı.
+     */
+    it('geri yukleme penceresinde bos durum DEGIL yukleniyor gosterir', () => {
+        window.abp = {
+            ...window.abp,
+            currentUser: { id: 'u1', tenantId: 't1' },
+        };
+        render(
+            <QueryProvider>
+                <SharingTab taskId="t-1" />
+            </QueryProvider>,
+        );
+
+        expect(screen.getByText('Yükleniyor…')).toBeInTheDocument();
+        expect(screen.queryByText(/henüz kimseyle paylaşılmadı/i)).not.toBeInTheDocument();
     });
 });

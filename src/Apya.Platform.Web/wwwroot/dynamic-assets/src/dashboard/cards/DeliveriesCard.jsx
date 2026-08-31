@@ -47,7 +47,7 @@ function DeliveriesCard({ filter, editMode }) {
                     {t('Dashboard:Deliveries:AllTasks', 'Görev listesi →')}
                 </a>
             }
-            isLoading={query.isLoading}
+            isLoading={query.isPending}
             isError={query.isError}
             onRetry={query.refetch}
             isEmpty={items.length === 0}

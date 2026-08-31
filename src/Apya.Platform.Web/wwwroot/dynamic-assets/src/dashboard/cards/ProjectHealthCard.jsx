@@ -33,7 +33,7 @@ function ProjectHealthCard({ filter, editMode }) {
             editMode={editMode}
             title={t('Dashboard:Health:Title', 'Proje sağlığı')}
             subtitle={t('Dashboard:Health:Subtitle', '{0} aktif proje', projects.length)}
-            isLoading={query.isLoading}
+            isLoading={query.isPending}
             isError={query.isError}
             onRetry={query.refetch}
             isEmpty={projects.length === 0}

@@ -41,7 +41,10 @@ export function useTaskShareLinks(taskId) {
 
     return {
         links: query.data ?? [],
-        isLoading: query.isLoading,
+        /* isLoading DEĞİL isPending: kalıcı önbellek geri yüklenirken isLoading
+           FALSE döner ama liste henüz yoktur; sekme o karede "henüz kimseyle
+           paylaşılmadı" yazıyordu — paylaşımı olan görevde bile. */
+        isPending: query.isPending,
         error: query.error,
         create: createMutation.mutateAsync,
         revoke: revokeMutation.mutateAsync,

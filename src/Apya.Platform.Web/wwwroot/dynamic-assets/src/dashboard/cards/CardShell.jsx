@@ -27,6 +27,9 @@ function CardShell({
     footer,
     accent,                     /* 'negative' | 'warning' — kritik kartların üst şeridi */
     editMode = false,
+    /* Sorgunun `isPending`i geçilir, `isLoading`i DEĞİL: kalıcı önbellek geri
+       yüklenirken isLoading FALSE döner ama veri henüz yoktur; kart o karede
+       boş/hatalı içerikle çizilirdi. (Prop adı geriye dönük uyum için kaldı.) */
     isLoading = false,
     isError = false,
     errorMessage,

@@ -21,7 +21,7 @@ function DeliveryHeatmapCard({ filter, editMode }) {
             editMode={editMode}
             title={t('Dashboard:Heatmap:Title', 'Teslim yoğunluğu')}
             subtitle={t('Dashboard:Heatmap:Subtitle', 'Önümüzdeki 4 hafta · hafta × gün')}
-            isLoading={query.isLoading}
+            isLoading={query.isPending}
             isError={query.isError}
             onRetry={query.refetch}
             isEmpty={cells.length === 0}
