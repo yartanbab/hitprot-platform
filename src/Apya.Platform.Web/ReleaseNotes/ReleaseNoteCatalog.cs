@@ -22,11 +22,10 @@ public static class ReleaseNoteCatalog
 {
     public static IReadOnlyList<ReleaseNote> All { get; } = new List<ReleaseNote>
     {
-        // 🔴 YAYIN GÜNÜ: version ve date, paketin gerçekten indiği tarihe göre düzeltilmeli.
         new ReleaseNote(
-            version: "2026.08.28",
-            date: "28 Ağustos 2026",
-            title: "Görevi ekip dışındaki kişilerle paylaşma",
+            version: "2026.08.31",
+            date: "31 Ağustos 2026",
+            title: "Görev paylaşımı, mobilde daha az kaydırma ve tek tıklama",
 
             new ReleaseNoteItem(ReleaseNoteCategory.Feature,
                 "Bir görevi ekibinizde olmayan kişiye açabiliyorsunuz",
@@ -47,7 +46,29 @@ public static class ReleaseNoteCatalog
                 "Ekip içi yazışmanız dışarı çıkmaz",
                 "Paylaşım bağlantısını açan kişi yalnız kendisiyle kurulan yazışmayı görür — ekibinizin " +
                 "görev üzerinde kendi arasında yazdıkları ona gösterilmez. Dosyalarda da aynı kural " +
-                "geçerli: bir dosya, siz \"dış paylaşımda görünsün\" demedikçe dışarıdan erişilemez.")
+                "geçerli: bir dosya, siz \"dış paylaşımda görünsün\" demedikçe dışarıdan erişilemez."),
+
+            // ── Mobil ─────────────────────────────────────────────────────────
+            new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
+                "Projeler telefonda çok daha az kaydırma istiyor",
+                "Proje listesi ekranında üstteki başlık bloğu ekranın yarısını kaplıyordu; aynı bilgiyi " +
+                "iki kez gösteren satırlar kaldırıldı ve sıralama kutusu filtre şeridinin yanına alındı. " +
+                "İlk proje kartı artık ekranın çok daha yukarısında başlıyor, araç çubuğu tek satıra indi. " +
+                "Bilgisayarda görünüm aynı kaldı."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Fix,
+                "Mobilde giriş sırasında çıkan hata giderildi",
+                "Telefondan giriş yaparken zaman zaman \"Hata! Sayfa işlenirken sunucu tarafında " +
+                "beklenmedik bir hata oluştu\" ekranı çıkıyordu. Giriş sayfası artık çevrimdışı " +
+                "önbelleğe alınmıyor; giriş her seferinde doğrudan sunucudan geliyor."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Fix,
+                "Sekmeler ve sürüklenebilir öğeler tek tıklamayla açılıyor",
+                "Görev detayındaki sekmeler (Genel · Alt Görevler · Dosyalar), takvimdeki etkinlik " +
+                "çubukları, belge satırları ve form oluşturucudaki soru kartları bazen ilk tıklamada " +
+                "tepki vermiyordu — fare azıcık kaydığında tıklama sürüklemeye dönüşüyordu. Hepsi " +
+                "artık ilk tıklamada çalışıyor. Form oluşturucuda kartlar yalnız soldaki tutamaçtan " +
+                "sürükleniyor, böylece kart içindeki metni fareyle seçebiliyorsunuz.")
         ),
 
         new ReleaseNote(
