@@ -13,7 +13,9 @@ using Apya.Platform.Permissions;
 namespace Apya.Platform.Grants;
 
 /// <summary>
-/// Mevcut tenant için profil-uyumlu açık çağrılar — CANLI hesaplanır (kalıcı değil).
+/// Mevcut tenant için açık çağrı katalogu — CANLI hesaplanır (kalıcı değil).
+/// Katalogun TAMAMI döner; profil uyumu satır satır IsRecommended ile işaretlenir
+/// (skor >= program eşiği ya da host-push). Eşik artık listeden ELEMEZ, yalnız ayırır.
 /// Katalog (Grant/GrantCall/GrantCriteriaTag) host'ta TenantId=null; okumak için
 /// IMultiTenant filtresi geçici kapatılır.
 /// </summary>
@@ -52,6 +54,20 @@ public class GrantRecommendationAppService : ApplicationService, IGrantRecommend
     }
 
     public async Task<List<GrantRecommendationDto>> GetMyRecommendationsAsync()
+    {
+        return (await BuildOpenCallFeedAsync()).Where(r => r.IsRecommended).ToList();
+    }
+
+    /// <summary>
+    /// Açık çağrı katalogunun TAMAMI. Kiracı sayfası tek istekle hem "Size Önerilen"
+    /// hem "Diğer Açık Çağrılar" bloğunu bundan doldurur; ayrım IsRecommended ile yapılır.
+    /// </summary>
+    public Task<List<GrantRecommendationDto>> GetOpenCallsAsync()
+    {
+        return BuildOpenCallFeedAsync();
+    }
+
+    private async Task<List<GrantRecommendationDto>> BuildOpenCallFeedAsync()
     {
         // 1) Firma sinyalleri (profil + proje geçmişi).
         var signals = await _signalsBuilder.BuildAsync(CurrentTenant.Id);
@@ -93,10 +109,6 @@ public class GrantRecommendationAppService : ApplicationService, IGrantRecommend
 
                 var score = _matcher.Score(signals, grant, gtags);
                 var isHostRecommended = hostRecCallIds.Contains(call.Id);
-                if (score < grant.MinMatchScore && !isHostRecommended)
-                {
-                    continue;
-                }
 
                 result.Add(new GrantRecommendationDto
                 {
@@ -110,13 +122,15 @@ public class GrantRecommendationAppService : ApplicationService, IGrantRecommend
                     MaxAmount = grant.MaxAmount,
                     Score = score,
                     AlreadyApplied = appliedIds.Contains(call.Id),
-                    IsHostRecommended = isHostRecommended
+                    IsHostRecommended = isHostRecommended,
+                    IsRecommended = score >= grant.MinMatchScore || isHostRecommended
                 });
             }
         }
 
         return result
-            .OrderByDescending(r => r.Score)
+            .OrderByDescending(r => r.IsRecommended)
+            .ThenByDescending(r => r.Score)
             .ThenBy(r => r.DaysRemaining ?? int.MaxValue)
             .ToList();
     }

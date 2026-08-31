@@ -23,6 +23,26 @@ public static class ReleaseNoteCatalog
     public static IReadOnlyList<ReleaseNote> All { get; } = new List<ReleaseNote>
     {
         new ReleaseNote(
+            version: "2026.09.01",
+            date: "1 Eylül 2026",
+            title: "Yayındaki bütün hibe çağrıları artık görünür",
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "Açık hibe çağrılarının tamamını görüyorsunuz",
+                "Hibeler ekranında şimdiye kadar yalnız firma profilinize yeterince uyan çağrılar " +
+                "listeleniyordu; uyum puanı tutmayan bir çağrı hiç görünmediği için varlığından " +
+                "haberiniz olmuyordu. Artık yayına alınan bütün açık çağrılar \"Diğer Açık Çağrılar\" " +
+                "başlığı altında listeleniyor ve hepsine doğrudan başvurabiliyorsunuz."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
+                "Size uygun çağrılar aynı sayfada ayrı duruyor",
+                "Firma profiliniz ve proje geçmişinizle yüksek uyum gösteren çağrılar sayfanın üstünde " +
+                "\"Size Önerilen Çağrılar\" başlığında ayrı kalmaya devam ediyor; size özel gönderilen " +
+                "çağrılar da burada çıkıyor. Her kartta o çağrı için uyum puanınızı görüyorsunuz, " +
+                "böylece listenin tamamına bakarken önceliğinizi kaybetmiyorsunuz.")
+        ),
+
+        new ReleaseNote(
             version: "2026.08.31",
             date: "31 Ağustos 2026",
             title: "Görev paylaşımı, mobilde daha az kaydırma ve tek tıklama",

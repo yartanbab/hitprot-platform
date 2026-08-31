@@ -67,15 +67,18 @@ $(function () {
         };
         profileSvc.updateMyProfile(dto).then(function () {
             abp.notify.success('Profil kaydedildi.');
-            loadRecommendations();
+            loadCalls();
         });
     });
 
-    // ---------- Önerilen Çağrılar ----------
-    function recoTile(r) {
+    // ---------- Çağrılar: önerilenler + kalan açık çağrılar ----------
+    // Tek istek (getOpenCalls) yayındaki TÜM açık çağrıları döner; isRecommended
+    // bayrağı listeyi iki bloğa ayırır — sunucu tarafında eleme yok.
+    function callTile(r) {
         var btn = r.alreadyApplied
             ? '<button class="btn btn-sm btn-outline-success" disabled><i class="fa fa-check me-1"></i>Başvuruldu</button>'
-            : '<button class="btn btn-sm btn-primary apya-apply-btn"><i class="fa fa-paper-plane me-1"></i>Başvur</button>';
+            : '<button class="btn btn-sm ' + (r.isRecommended ? 'btn-primary' : 'btn-outline-primary') +
+              ' apya-apply-btn"><i class="fa fa-paper-plane me-1"></i>Başvur</button>';
         var days = r.daysRemaining != null
             ? '<span class="apya-chip apya-chip-' + (r.daysRemaining <= 7 ? 'warning' : 'neutral') + '"><i class="fa fa-hourglass-half"></i>' +
               (r.daysRemaining < 0 ? 'Süre doldu' : r.daysRemaining + ' gün kaldı') + '</span>'
@@ -83,6 +86,9 @@ $(function () {
         var hostBadge = r.isHostRecommended
             ? '<span class="apya-chip apya-chip-brand"><i class="fa fa-star me-1"></i>Platform Önerdi</span>'
             : '';
+        // Uyum puanı önerilende vurgulu, eşiğin altındaki çağrıda nötr gösterilir.
+        var scoreChip = '<span class="apya-chip apya-chip-' + (r.isRecommended ? 'ai' : 'neutral') +
+            '" title="Firma profilinizle uyum puanınız">%' + r.score + '</span>';
         var $t = $(
             '<div class="apya-tile" data-call-id="' + r.grantCallId + '">' +
             '  <div class="apya-tile-head">' +
@@ -90,7 +96,7 @@ $(function () {
             '      <span class="apya-tile-icon-box"><i class="fa fa-award"></i></span>' +
             '      <div><div class="apya-tile-title">' + esc(r.grantName) + '</div><div class="apya-tile-sub">' + esc(r.issuer) + ' · ' + esc(r.period) + '</div></div>' +
             '    </div>' +
-            '    <div class="d-flex flex-column align-items-end gap-1">' + hostBadge + '<span class="apya-chip apya-chip-ai">%' + r.score + '</span></div>' +
+            '    <div class="d-flex flex-column align-items-end gap-1">' + hostBadge + scoreChip + '</div>' +
             '  </div>' +
             '  <div class="apya-tile-progress-label"><span>Maks. Tutar</span><span class="apya-numeric fw-semibold">' + money(r.maxAmount) + '</span></div>' +
             '  <div class="apya-tile-foot">' + days + btn + '</div>' +
@@ -98,20 +104,26 @@ $(function () {
         );
         return $t;
     }
-    function loadRecommendations() {
-        recoSvc.getMyRecommendations().then(function (items) {
-            var $g = $('#RecoGrid');
-            $g.empty();
-            if (!items.length) { $g.addClass('d-none'); $('#RecoEmpty').removeClass('d-none'); return; }
-            $g.removeClass('d-none'); $('#RecoEmpty').addClass('d-none');
-            items.forEach(function (r) { $g.append(recoTile(r)); });
+    function fillCallGrid($grid, $empty, items) {
+        $grid.empty();
+        if (!items.length) { $grid.addClass('d-none'); $empty.removeClass('d-none'); return; }
+        $grid.removeClass('d-none'); $empty.addClass('d-none');
+        items.forEach(function (r) { $grid.append(callTile(r)); });
+    }
+    function loadCalls() {
+        recoSvc.getOpenCalls().then(function (items) {
+            var recommended = items.filter(function (r) { return r.isRecommended; });
+            var others = items.filter(function (r) { return !r.isRecommended; });
+            fillCallGrid($('#RecoGrid'), $('#RecoEmpty'), recommended);
+            fillCallGrid($('#AllCallsGrid'), $('#AllCallsEmpty'), others);
+            $('#AllCallsCount').text(others.length ? ' (' + others.length + ')' : '');
         });
     }
-    $('#RecoGrid').on('click', '.apya-apply-btn', function () {
+    $('#RecoGrid, #AllCallsGrid').on('click', '.apya-apply-btn', function () {
         var callId = $(this).closest('.apya-tile').data('call-id');
         appSvc.apply(callId).then(function () {
             abp.notify.success('Başvurunuz alındı.');
-            loadRecommendations();
+            loadCalls();
             loadApplications();
         });
     });
@@ -170,7 +182,7 @@ $(function () {
     }
 
     loadProfile();
-    loadRecommendations();
+    loadCalls();
     loadApplications();
     loadDashboard();
 });
