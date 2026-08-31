@@ -68,7 +68,15 @@ public static class ReleaseNoteCatalog
                 "çubukları, belge satırları ve form oluşturucudaki soru kartları bazen ilk tıklamada " +
                 "tepki vermiyordu — fare azıcık kaydığında tıklama sürüklemeye dönüşüyordu. Hepsi " +
                 "artık ilk tıklamada çalışıyor. Form oluşturucuda kartlar yalnız soldaki tutamaçtan " +
-                "sürükleniyor, böylece kart içindeki metni fareyle seçebiliyorsunuz.")
+                "sürükleniyor, böylece kart içindeki metni fareyle seçebiliyorsunuz."),
+
+            // ── Paket ─────────────────────────────────────────────────────────
+            new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
+                "Paketinizde kapalı olan özellikleri menüden görebiliyorsunuz",
+                "Menünün altında \"Kilitli özellikler\" kısayolu çıkıyor; oradan paketinizde kapalı olan " +
+                "yeteneklerin listesine ulaşıyorsunuz. Daha önce kapalı bir modül menüde hiç görünmediği " +
+                "için neyi kaçırdığınızı fark etmiyordunuz. Kısayol yalnız gerçekten kapalı bir özelliğiniz " +
+                "varsa çıkar — her şeyi kapsayan pakette hiç görünmez.")
         ),
 
         new ReleaseNote(
