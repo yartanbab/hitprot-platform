@@ -58,7 +58,11 @@
 
     @* --- KPI şeridi: 6 bölmeli tek satır. Risk / Geçmiş / Yaklaşan hücreleri
          sırasıyla risk · overdue · week filtresini sürer; aktif filtre hücrede
-         belli olur (bkz. §22.1 .is-active). --- *@
+         belli olur (bkz. §22.1 .is-active).
+         Şerit MASAÜSTÜNE özeldir: mobilde tümü gizlenir (§22.10), çünkü orada
+         geriye yalnız çip şeridiyle çiftlenen üç hücre kalıyordu. Bu yüzden
+         is-mobile-hidden şu an ETKİSİZ — hangi hücrelerin masaüstüne özel
+         olduğunu işaretlemek için duruyor. --- *@
     <div class="apya-proj-kpis" id="ProjectsKpis" aria-label="Proje özeti">
         <div class="apya-proj-kpi is-mobile-hidden">
             <span class="kpi-icon-box kpi-icon-box--xs kpi-icon-box--accent" aria-hidden="true"><i class="fa fa-rocket"></i></span>
@@ -171,8 +175,15 @@
     </div>
 
     @* --- Filtre çipleri: canlı sayılar JS'ten; aktif çip koyu zemin.
-         "Filtreleri temizle" yalnız aktif filtre/arama varken görünür. --- *@
-    <div class="apya-proj-filters" id="ProjectsFilters" role="group" aria-label="Hızlı filtreler"></div>
+         "Filtreleri temizle" yalnız aktif filtre/arama varken görünür.
+         Sarmalayıcı mobilde sıralama kutusunu da barındırır: Index.js/placeSort
+         onu 768px altında araç çubuğundan BURAYA taşır ki araç çubuğu tek satıra
+         insin (§22.10). Kutu çiplerin İÇİNE değil yanına girer — renderFilters
+         #ProjectsFilters'ın html'ini komple değiştiriyor, içeride olsa silinirdi.
+         Masaüstünde kutu araç çubuğundaki yerinde kalır. --- *@
+    <div class="apya-proj-filterbar" id="ProjectsFilterBar">
+        <div class="apya-proj-filters" id="ProjectsFilters" role="group" aria-label="Hızlı filtreler"></div>
+    </div>
 
     @* --- Yoğun liste --- *@
     <div class="apya-proj-list" id="ProjectsList" hidden>

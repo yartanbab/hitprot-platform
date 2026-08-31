@@ -507,14 +507,19 @@ $(function () {
     function renderFilters() {
         // Hiç proje yokken çip şeridi "Tümü 0 · Riskli 0 · …" diye gürültü olur;
         // boş durum ekranı zaten ne yapılacağını söylüyor.
-        $('#ProjectsFilters').prop('hidden', state.items.length === 0);
+        // Sarmalayıcı gizlenir, iç kap değil: mobilde sıralama kutusu da orada
+        // duruyor ve hiç proje yokken sıralanacak bir şey de yok.
+        $('#ProjectsFilterBar').prop('hidden', state.items.length === 0);
         if (state.items.length === 0) { $('#ProjectsFilters').empty(); return; }
 
         var base = scoped();
         var html = FILTERS.map(function (f) {
             var count = base.filter(f.test).length;
+            // is-empty: sayısı 0 olan çip mobilde basılmaz (apya-shell.css §22.10).
+            // "Tümü" dışarıda — o sıfırlama çipi, sayısı 0 olsa da kalmalı.
             var cls = 'apya-chip apya-proj-filter' +
                 (f.risky ? ' is-risk' : '') +
+                (count === 0 && f.key !== 'all' ? ' is-empty' : '') +
                 (state.filter === f.key ? ' is-active' : '');
             return '<button type="button" class="' + cls + '" data-filter="' + f.key + '"' +
                 ' aria-pressed="' + (state.filter === f.key ? 'true' : 'false') + '">' +
@@ -1112,8 +1117,29 @@ $(function () {
     }
     $(window).on('resize', measure);
 
+    // Sıralama kutusu mobilde çip şeridine taşınır ki araç çubuğu tek satıra insin
+    // (§22.10). Taşıma DOM'da yapılır çünkü CSS bir öğeyi kardeş kaplar arasında
+    // taşıyamaz; AYNI <select> düğümü hareket eder, jQuery olay bağı ve seçili
+    // değer korunur. Masaüstünde kutu aramanın hemen ardındaki yerine döner.
+    //
+    // Kırılım isNarrow()/LIST_MIN_WIDTH DEĞİL 768px: o eşik liste görünümünün
+    // kolonları sığıyor mu sorusunu yanıtlıyor (820px) ve kap genişliğine bakıyor;
+    // buradaki eşik CSS'teki mobil bloğun eşiğiyle AYNI olmak zorunda, yoksa
+    // 768–820px arasında kutu bir kapta, ona ait stiller başka kapta kalır.
+    var sortBarQuery = window.matchMedia('(max-width: 768px)');
+    function placeSort() {
+        var $sort = $('#ProjectsSort');
+        if (sortBarQuery.matches) {
+            if (!$sort.parent().is('#ProjectsFilterBar')) { $('#ProjectsFilterBar').append($sort); }
+        } else if (!$sort.parent().is('.apya-proj-toolbar-end')) {
+            $sort.insertAfter($console.find('.apya-proj-search'));
+        }
+    }
+    sortBarQuery.addEventListener('change', placeSort);
+
     // ================================================================ AÇILIŞ
     restorePreferences();
+    placeSort();
     render();
     load(false);
     loadTaskKpis();
