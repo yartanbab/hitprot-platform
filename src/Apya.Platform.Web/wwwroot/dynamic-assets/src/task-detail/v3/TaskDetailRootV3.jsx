@@ -45,7 +45,14 @@ function projectCodeFrom(name) {
 
 export function TaskDetailRootV3({ taskId, presentation = 'modal', onClose, switchToTask }) {
     const [currentTaskId, setCurrentTaskId] = useState(taskId);
-    const { data: task, isLoading, isError, refetch } = useTaskDetail(currentTaskId);
+    /* isLoading DEĞİL isPending: kalıcılaştırılmış önbellek geri yüklenirken
+       (PersistQueryClientProvider'ın `isRestoring` penceresi) TanStack sorguyu
+       `fetchStatus:'idle'` gösterir → isLoading FALSE olur ama `task` hâlâ
+       undefined'dır. Gövde o karede undefined görevle mount olurdu; önbellek
+       dolu geldiği için (modalın ikinci açılışı) ardından iskelet aşaması hiç
+       yaşanmaz, remount olmaz ve mount anında değerini yakalayan çocuklar
+       (RichTextEditorV3'ün contentEditable'ı) sonsuza kadar BOŞ kalırdı. */
+    const { data: task, isPending, isError, refetch } = useTaskDetail(currentTaskId);
     const queryClient = useQueryClient();
     const guard = useDirtyGuard();
     const form = useTaskForm(task);
@@ -338,7 +345,7 @@ export function TaskDetailRootV3({ taskId, presentation = 'modal', onClose, swit
         </Suspense>
     );
 
-    const body = isLoading ? (
+    const body = isPending ? (
         <div className="p-8 space-y-4">
             <Skeleton className="h-8 w-1/3" />
             <Skeleton className="h-20 w-full" />

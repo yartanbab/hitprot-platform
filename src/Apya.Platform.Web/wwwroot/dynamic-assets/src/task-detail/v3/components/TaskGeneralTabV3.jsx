@@ -128,7 +128,13 @@ export function TaskGeneralTabV3({
                     <h2 className="text-[13.5px] font-bold text-text-primary">Açıklama</h2>
                     <span className="text-[11px] text-text-tertiary">Zengin metin · WYSIWYG</span>
                 </div>
+                {/* key=taskId ŞART: editör içeriğini caret'i korumak için yalnız
+                    MOUNT anında basıyor. Görev yerinde değişebiliyor (alt görev
+                    panelinden "tam ekran aç", "görevi çoğalt") — remount olmazsa
+                    kullanıcı yeni görevde ESKİ görevin metnini görür ve kaydedince
+                    yeni görevin açıklamasını onunla ezer. */}
                 <RichTextEditorV3
+                    key={taskId}
                     value={descriptionValue ?? task.description ?? ''}
                     onChange={(html) => onFieldChange('description', html)}
                     mentionName={currentUserName}
