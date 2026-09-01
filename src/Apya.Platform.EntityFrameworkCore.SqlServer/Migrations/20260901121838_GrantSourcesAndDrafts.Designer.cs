@@ -4,6 +4,7 @@ using Apya.Platform.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Volo.Abp.EntityFrameworkCore;
 
@@ -12,9 +13,11 @@ using Volo.Abp.EntityFrameworkCore;
 namespace Apya.Platform.Migrations
 {
     [DbContext(typeof(PlatformDbContext))]
-    partial class PlatformDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260901121838_GrantSourcesAndDrafts")]
+    partial class GrantSourcesAndDrafts
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -5701,49 +5704,6 @@ namespace Apya.Platform.Migrations
                     b.ToTable("AppGrantApplications", (string)null);
                 });
 
-            modelBuilder.Entity("Apya.Platform.Grants.GrantBookmark", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("ConcurrencyStamp")
-                        .IsConcurrencyToken()
-                        .IsRequired()
-                        .HasMaxLength(40)
-                        .HasColumnType("nvarchar(40)")
-                        .HasColumnName("ConcurrencyStamp");
-
-                    b.Property<DateTime>("CreationTime")
-                        .HasColumnType("datetime2")
-                        .HasColumnName("CreationTime");
-
-                    b.Property<Guid?>("CreatorId")
-                        .HasColumnType("uniqueidentifier")
-                        .HasColumnName("CreatorId");
-
-                    b.Property<string>("ExtraProperties")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)")
-                        .HasColumnName("ExtraProperties");
-
-                    b.Property<Guid>("GrantCallId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid?>("TenantId")
-                        .HasColumnType("uniqueidentifier")
-                        .HasColumnName("TenantId");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("GrantCallId");
-
-                    b.HasIndex("TenantId", "GrantCallId")
-                        .IsUnique()
-                        .HasFilter("[TenantId] IS NOT NULL");
-
-                    b.ToTable("AppGrantBookmarks", (string)null);
-                });
-
             modelBuilder.Entity("Apya.Platform.Grants.GrantCall", b =>
                 {
                     b.Property<Guid>("Id")
@@ -6366,9 +6326,6 @@ namespace Apya.Platform.Migrations
             modelBuilder.Entity("Apya.Platform.Grants.GrantRecommendation", b =>
                 {
                     b.Property<Guid>("Id")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid?>("AssignedUserId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("ConcurrencyStamp")
@@ -11164,15 +11121,6 @@ namespace Apya.Platform.Migrations
                 });
 
             modelBuilder.Entity("Apya.Platform.Grants.GrantApplication", b =>
-                {
-                    b.HasOne("Apya.Platform.Grants.GrantCall", null)
-                        .WithMany()
-                        .HasForeignKey("GrantCallId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
-            modelBuilder.Entity("Apya.Platform.Grants.GrantBookmark", b =>
                 {
                     b.HasOne("Apya.Platform.Grants.GrantCall", null)
                         .WithMany()
