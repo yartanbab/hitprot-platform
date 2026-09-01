@@ -17,7 +17,8 @@
         <abp-script src="/js/apya-transfer.js" />
         <abp-script src="/Pages/Finance/Index.js" />
     }
-    @if (Model.ActiveTab == FinanceContext.TabBudgetLines || Model.ActiveTab == FinanceContext.TabTranches)
+    @if (Model.ActiveTab == FinanceContext.TabBudgetLines || Model.ActiveTab == FinanceContext.TabTranches
+         || Model.ActiveTab == FinanceContext.TabFxBridge)
     {
         <abp-script src="/Pages/Finance/Budget.js" />
     }
@@ -116,6 +117,10 @@
 
             case FinanceContext.TabInvoices:
                 <partial name="_PanelInvoices" model="Model" />
+                break;
+
+            case FinanceContext.TabFxBridge:
+                <partial name="_PanelFxBridge" model="Model" />
                 break;
 
             case FinanceContext.TabDocuments:

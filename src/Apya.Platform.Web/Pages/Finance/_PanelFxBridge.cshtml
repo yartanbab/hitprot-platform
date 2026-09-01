@@ -1,0 +1,235 @@
+@*
+    "Kur köprüsü" sekmesi — tasarım 3c.
+
+    Üç defter kartı + kur politikası kartları + mutabakat tablosu.
+
+    TASARIMDAN EKSİK, BİLEREK: "gerçekleşen kur farkı" satırları ve iki uyarı kartı
+    (kur boşluğu · EUR yükümlülük kalkanı). Gerçekleşen kur farkı İKİ ayrı olayın
+    iki ayrı kuru demektir (fatura kuru → ödeme kuru, dilim kuru → dönüşüm kuru);
+    ödeme seviyesi kur altyapısı ayrı bir iş. Uydurma bir fark satırı basmıyoruz.
+*@
+@using Apya.Platform.ProjectBudgets
+@using Apya.Platform.Web.Pages.Finance
+@model IndexModel
+
+@functions {
+    string Money(decimal v, string cur) => v.ToString("N2") + (cur == "TRY" ? " ₺" : " " + cur);
+    string Rate(decimal? v) => v.HasValue ? v.Value.ToString("N4") : "—";
+
+    (string label, string hint) PolicyText(FxPolicy p) => p switch
+    {
+        FxPolicy.TrancheDate => ("Dilim (tahsil) kuru",
+            "Paranın geldiği günün kuru. Donör açısından en doğrusu; projede tahsil edilmiş dilim yoksa harcama günü kuruna düşer."),
+        FxPolicy.MonthlyDonor => ("Aylık donör kuru",
+            "Donörün o ay için yayımladığı kur (InforEuro tipi). Ay içindeki tüm kayıtlar aynı kuru kullanır."),
+        FxPolicy.FixedContract => ("Sabit sözleşme kuru",
+            "Sözleşmede yazan kur. Kur hiç sorgulanmaz."),
+        _ => ("Harcama günü kuru",
+            "Kaydın kendi günündeki kur. Varsayılan; ek veri istemez.")
+    };
+}
+
+@if (Model.FxBridge == null)
+{
+    <partial name="_EmptyState" model='new Apya.Platform.Web.Pages.Shared.EmptyStateModel {
+        Icon = "fa-arrow-right-arrow-left",
+        Title = "Kur köprüsü görüntülenemiyor",
+        Description = "Bir proje seçin ya da bütçe görme yetkinizi kontrol edin." }' />
+}
+else
+{
+    var b = Model.FxBridge;
+    var p = b.Policy;
+    var donor = p.DonorCurrency ?? "—";
+
+    @* ─── Üç defter ─── *@
+    <div class="row g-3 mb-3">
+        <div class="col-md-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <div class="apya-overline mb-2">
+                        <i class="fa fa-hand-holding-dollar me-1" aria-hidden="true"></i>Donör defteri
+                        <span class="apya-chip apya-chip-ai ms-1">@donor</span>
+                    </div>
+                    @if (p.HasDonorLedger)
+                    {
+                        <div class="d-flex justify-content-between"><span class="text-muted">Gelen</span><span class="apya-numeric">@Money(b.DonorIncome, donor)</span></div>
+                        <div class="d-flex justify-content-between"><span class="text-muted">Harcanan</span><span class="apya-numeric">@Money(b.DonorExpense, donor)</span></div>
+                        <div class="d-flex justify-content-between border-top mt-2 pt-2 fw-bold"><span>Net</span><span class="apya-numeric">@Money(b.DonorNet, donor)</span></div>
+                    }
+                    else
+                    {
+                        <p class="text-muted mb-0" style="font-size:12.5px">
+                            Bu projede donör para birimi tanımlı değil; donör defteri tutulmuyor.
+                        </p>
+                    }
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <div class="apya-overline mb-2">
+                        <i class="fa fa-scale-balanced me-1" aria-hidden="true"></i>Yasal defter
+                        <span class="apya-chip apya-chip-neutral ms-1">TRY</span>
+                    </div>
+                    <div class="d-flex justify-content-between"><span class="text-muted">Gelen</span><span class="apya-numeric">@Money(b.BookIncome, "TRY")</span></div>
+                    <div class="d-flex justify-content-between"><span class="text-muted">Harcanan</span><span class="apya-numeric">@Money(b.BookExpense, "TRY")</span></div>
+                    <div class="d-flex justify-content-between border-top mt-2 pt-2 fw-bold"><span>Net</span><span class="apya-numeric">@Money(b.BookNet, "TRY")</span></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <div class="apya-overline mb-2">
+                        <i class="fa fa-cash-register me-1" aria-hidden="true"></i>Kasa gerçeği
+                    </div>
+                    @if (!b.NetByCurrency.Any())
+                    {
+                        <p class="text-muted mb-0" style="font-size:12.5px">Bu projede kayıt yok.</p>
+                    }
+                    else
+                    {
+                        @* Her para birimi KENDİ içinde toplanır; çapraz kur uygulanmaz —
+                           "kasada gerçekte ne var" sorusunun cevabı budur. *@
+                        foreach (var kv in b.NetByCurrency.OrderBy(x => x.Key))
+                        {
+                            <div class="d-flex justify-content-between">
+                                <span class="text-muted">@kv.Key</span>
+                                <span class="apya-numeric @(kv.Value < 0 ? "text-danger" : "")">@Money(kv.Value, kv.Key)</span>
+                            </div>
+                        }
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @* ─── Kur politikası ─── *@
+    <div class="card mb-3">
+        <div class="card-body">
+            <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+                <span class="fw-semibold">Kur politikası</span>
+                <span class="small text-muted">donör karşılığı hangi günün kuruyla hesaplanır</span>
+                @if (Model.CanEditBudget)
+                {
+                    <span class="ms-auto d-flex gap-2">
+                        <button type="button" class="btn btn-sm btn-outline-secondary" id="BtnFxPolicy">
+                            <i class="fa fa-sliders me-1" aria-hidden="true"></i>Politikayı düzenle
+                        </button>
+                        @if (b.LockedRecordCount > 0)
+                        {
+                            <form method="post" asp-page-handler="RecalculateFx" class="d-inline"
+                                  asp-route-projectId="@Model.ProjectId" asp-route-tab="@Model.ActiveTab">
+                                <button type="submit" class="btn btn-sm btn-outline-secondary"
+                                        data-confirm="@($"{b.LockedRecordCount} kaydın donör karşılığı yürürlükteki politikayla yeniden hesaplanacak. Devam edilsin mi?")">
+                                    <i class="fa fa-rotate me-1" aria-hidden="true"></i>Yeniden hesapla
+                                </button>
+                            </form>
+                        }
+                    </span>
+                }
+            </div>
+
+            <div class="row g-2">
+                @foreach (var policy in new[] { FxPolicy.TrancheDate, FxPolicy.SpendDate, FxPolicy.MonthlyDonor, FxPolicy.FixedContract })
+                {
+                    var (label, hint) = PolicyText(policy);
+                    var secili = p.Policy == policy && p.HasDonorLedger;
+                    <div class="col-md-3">
+                        <div class="card h-100 @(secili ? "border-primary" : "")">
+                            <div class="card-body py-2 px-3">
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="fw-semibold" style="font-size:12.5px">@label</span>
+                                    @if (secili)
+                                    {
+                                        <span class="apya-chip apya-chip-accent ms-auto">Seçili</span>
+                                    }
+                                </div>
+                                <p class="text-muted mb-0 mt-1" style="font-size:11.5px;line-height:1.5">@hint</p>
+                                @if (policy == FxPolicy.FixedContract && secili && p.FixedDonorRate.HasValue)
+                                {
+                                    <div class="apya-numeric fw-bold mt-1" style="font-size:12.5px">
+                                        1 @p.ProjectCurrency = @Rate(p.FixedDonorRate) @donor
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+
+            <div class="d-flex flex-wrap gap-2 mt-3">
+                <span class="apya-chip apya-chip-neutral">Kayıt oluşunca donör karşılığı kilitlenir</span>
+                <span class="apya-chip apya-chip-neutral">Politika değişince kayıtlar kendiliğinden değişmez</span>
+                <span class="apya-chip apya-chip-neutral">Kur kaynağı: <a href="/ExchangeRates" class="text-decoration-none">Kurlar sayfası</a></span>
+            </div>
+
+            @if (b.MissingDonorRateCount > 0)
+            {
+                <p class="text-muted mb-0 mt-3" style="font-size:12.5px">
+                    <i class="fa fa-triangle-exclamation text-warning me-1" aria-hidden="true"></i>
+                    <strong>@b.MissingDonorRateCount kaydın</strong> donör karşılığı hesaplanamadı — o tarihler için
+                    <a href="/ExchangeRates" class="text-decoration-none">kur girilmemiş</a>.
+                    Kur eklendikten sonra "Yeniden hesapla" ile tamamlanır.
+                </p>
+            }
+        </div>
+    </div>
+
+    @* ─── Mutabakat ─── *@
+    @if (!b.Rows.Any())
+    {
+        <partial name="_EmptyState" model='new Apya.Platform.Web.Pages.Shared.EmptyStateModel {
+            Icon = "fa-list",
+            Title = "Bu projede kayıt yok",
+            Description = "Gelir/gider girildikçe üç defterdeki karşılıkları burada satır satır görünür." }' />
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table apya-clean-table align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th style="width:100px">Tarih</th>
+                        <th>Hareket</th>
+                        <th style="width:170px">Kasa</th>
+                        <th class="text-end apya-numeric" style="width:140px">İşlem PB</th>
+                        <th class="text-end apya-numeric" style="width:110px">Kur</th>
+                        <th class="text-end apya-numeric" style="width:140px">₺ defter</th>
+                        <th class="text-end apya-numeric" style="width:150px">@donor donör</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var r in b.Rows)
+                    {
+                        <tr>
+                            <td class="apya-numeric text-muted">@r.Date.ToString("dd.MM.yyyy")</td>
+                            <td>
+                                <span class="apya-chip apya-chip-@(r.IsInflow ? "positive" : "warning") me-2">@(r.IsInflow ? "Gelir" : "Gider")</span>
+                                <span class="fw-semibold">@r.Title</span>
+                            </td>
+                            <td class="small text-muted">@(r.CashAccountName ?? "—")</td>
+                            <td class="text-end apya-numeric">@Money(r.Amount, r.Currency)</td>
+                            <td class="text-end apya-numeric text-muted">
+                                @Rate(r.DonorRate ?? r.BookRate)
+                                @if (r.RateLocked)
+                                {
+                                    @* Kilit = donör karşılığı politikayla sabitlendi; politika
+                                       değişse bile bu satır kendiliğinden oynamaz. *@
+                                    <i class="fa fa-lock ms-1" style="font-size:9px"
+                                       title="Donör karşılığı kilitli" aria-hidden="true"></i>
+                                }
+                            </td>
+                            <td class="text-end apya-numeric">@Money(r.BookAmount, "TRY")</td>
+                            <td class="text-end apya-numeric @(r.DonorMissing ? "text-muted" : "")">
+                                @(r.DonorMissing ? "kur yok" : Money(r.DonorAmount!.Value, donor))
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+}

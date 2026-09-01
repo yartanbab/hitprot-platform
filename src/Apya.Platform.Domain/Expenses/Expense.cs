@@ -40,6 +40,30 @@ public class Expense : FullAuditedAggregateRoot<Guid>, IMultiTenant
     /// </summary>
     public Guid? BudgetLineId { get; set; }
 
+    /* --- ÜÇ DEFTER (kur köprüsü) ---
+       İşlem PB + tutar zaten Currency/Amount'ta. Bu alanlar aynı paranın
+       diğer iki defterdeki karşılığını SAKLAR, her okumada yeniden
+       hesaplamaz: kur değişince geçmiş kayıtların rakamı oynamamalı. */
+
+    /// <summary>₺ defter karşılığı. TRY kayıtlarda <see cref="Amount"/> ile aynıdır.</summary>
+    public decimal BookAmount { get; set; }
+
+    /// <summary>1 <see cref="Currency"/> = BookRate TRY. TRY kayıtlarda 1.</summary>
+    public decimal BookRate { get; set; } = 1m;
+
+    /// <summary>Donör para birimi karşılığı. Projenin donör PB'si yoksa boş.</summary>
+    public decimal? DonorAmount { get; set; }
+
+    /// <summary>1 <see cref="Currency"/> = DonorRate donör PB.</summary>
+    public decimal? DonorRate { get; set; }
+
+    /// <summary>
+    /// Donör karşılığı kilitli mi. Kayıt oluşurken kilitlenir; politika sonradan
+    /// değişse bile bu kayıt kendiliğinden yeniden hesaplanmaz — ancak açık bir
+    /// toplu yeniden hesaplama kilidi kırar.
+    /// </summary>
+    public bool RateLocked { get; set; }
+
     /// <summary>Opsiyonel cari ilişkisi.</summary>
     public Guid? CustomerId { get; set; }
 

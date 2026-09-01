@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using System.Threading.Tasks;
 using Apya.Platform.Projects.Dtos;
 using Apya.Platform.Tasks;
@@ -50,6 +51,19 @@ public static class FinanceLookupShared
             return null;
         }
     }
+
+    /// <summary>
+    /// Gelir/gider formlarının para birimi seçeneği. Liste, Kurlar sayfasındaki
+    /// (<c>ExchangeRates/CreateModal</c>) seçeneklerle AYNI tutulur — bir kayıt
+    /// ancak kuru girilebilen bir para biriminde açılabilmeli.
+    /// </summary>
+    public static List<SelectListItem> Currencies() => new()
+    {
+        new("TRY (₺)", "TRY"),
+        new("EUR (€)", "EUR"),
+        new("USD ($)", "USD"),
+        new("GBP (£)", "GBP")
+    };
 
     // JSON anahtarları kasıtlı kısa (s/e) — client 'i.s' / 'i.e' okur.
     private sealed class ProjectDateRange

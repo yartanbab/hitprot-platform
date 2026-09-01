@@ -19,7 +19,15 @@
                 </abp-column>
             </abp-row>
             @* Çoklu para birimi gizlendi — mevcut kaydın para birimi korunur. *@
-            <input type="hidden" asp-for="Expense.Currency" />
+            @* Para birimi seçici 5. adımda geri açıldı: kur köprüsü olmadan
+               açılsaydı, ₺ karşılığını hiçbir şeyin hesaplamadığı kayıtlar üretip
+               bütçe toplamlarını sessizce yanlışlardı. Artık kayıt oluşurken
+               ₺ defter ve donör karşılığı damgalanıyor (FxLedgerStamper). *@
+            <abp-row>
+                <abp-column size-md="_6">
+                    <abp-select asp-for="Expense.Currency" asp-items="Model.Currencies" label="Para birimi" />
+                </abp-column>
+            </abp-row>
             <abp-row>
                 <abp-column size-md="_6">
                     <abp-select asp-for="Expense.Category" asp-items="Model.Categories" label="Kategori" />

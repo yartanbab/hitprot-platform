@@ -48,6 +48,7 @@ public class IndexModel : AbpPageModel
     private readonly IExchangeRateAppService _exchangeRateAppService;
     private readonly IProjectAppService _projectAppService;
     private readonly IProjectBudgetAppService _projectBudgetAppService;
+    private readonly IProjectFxAppService _projectFxAppService;
 
     /// <summary>Seçili proje; boş = "Tüm projeler" (portföy).</summary>
     [BindProperty(SupportsGet = true)]
@@ -73,12 +74,18 @@ public class IndexModel : AbpPageModel
     /// <summary>"Dilimler &amp; kesintiler" sekmesinin verisi.</summary>
     public List<FundingTrancheDto> Tranches { get; private set; } = new();
 
+    /// <summary>"Kur köprüsü" sekmesinin verisi; yetki/donör yoksa null.</summary>
+    public ProjectFxBridgeDto? FxBridge { get; private set; }
+
     /// <summary>"Gelir-Gider" sekmesinin birleşik kayıt listesi.</summary>
     public List<LedgerRow> LedgerRows { get; private set; } = new();
 
     /// <summary>Gelir-Gider süzgeçlerinin seçenekleri (kalem/kasa adları).</summary>
     public List<(Guid Id, string Name)> LedgerLineOptions { get; private set; } = new();
     public List<(Guid Id, string Name)> LedgerAccountOptions { get; private set; } = new();
+
+    /// <summary>Gelir-Gider tablosundaki donör kolonu; proje donörsüzse null (kolon basılmaz).</summary>
+    public string? LedgerDonorCurrency { get; private set; }
 
     /// <summary>Gelir-Gider süzgeci: "gelir" | "gider" | boş.</summary>
     [BindProperty(SupportsGet = true)]
@@ -106,7 +113,8 @@ public class IndexModel : AbpPageModel
         ICashMovementAppService cashMovementAppService,
         IExchangeRateAppService exchangeRateAppService,
         IProjectAppService projectAppService,
-        IProjectBudgetAppService projectBudgetAppService)
+        IProjectBudgetAppService projectBudgetAppService,
+        IProjectFxAppService projectFxAppService)
     {
         _expenseAppService = expenseAppService;
         _incomeAppService = incomeAppService;
@@ -116,6 +124,7 @@ public class IndexModel : AbpPageModel
         _exchangeRateAppService = exchangeRateAppService;
         _projectAppService = projectAppService;
         _projectBudgetAppService = projectBudgetAppService;
+        _projectFxAppService = projectFxAppService;
     }
 
     public async Task OnGetAsync()
@@ -153,6 +162,11 @@ public class IndexModel : AbpPageModel
         {
             await LoadLedgerAsync();
         }
+        else if (ActiveTab == FinanceContext.TabFxBridge && SelectedProject != null)
+        {
+            await TryAddAsync(async () =>
+                FxBridge = await _projectFxAppService.GetBridgeAsync(SelectedProject.Id));
+        }
     }
 
     /// <summary>
@@ -186,6 +200,13 @@ public class IndexModel : AbpPageModel
             });
         }
 
+        // Donör kolonu yalnız projenin donör defteri varsa basılır.
+        if (SelectedProject != null)
+        {
+            await TryAddAsync(async () =>
+                LedgerDonorCurrency = (await _projectFxAppService.GetPolicyAsync(SelectedProject.Id)).DonorCurrency);
+        }
+
         var rows = new List<LedgerRow>();
 
         if (Kind != "gider")
@@ -214,6 +235,9 @@ public class IndexModel : AbpPageModel
                         CashAccountName = NameOf(accountNames, x.CashAccountId),
                         Amount = x.Amount,
                         Currency = x.Currency,
+                        BookAmount = x.BookAmount,
+                        DonorAmount = x.DonorAmount,
+                        RateLocked = x.RateLocked,
                         Url = "/Incomes"
                     });
                 }
@@ -246,6 +270,9 @@ public class IndexModel : AbpPageModel
                         CashAccountName = NameOf(accountNames, x.CashAccountId),
                         Amount = x.Amount,
                         Currency = x.Currency,
+                        BookAmount = x.BookAmount,
+                        DonorAmount = x.DonorAmount,
+                        RateLocked = x.RateLocked,
                         Url = "/Expenses"
                     });
                 }
@@ -520,6 +547,16 @@ public class IndexModel : AbpPageModel
         return RedirectToActiveTab();
     }
 
+    public async Task<IActionResult> OnPostRecalculateFxAsync()
+    {
+        if (ProjectId.HasValue)
+        {
+            await _projectFxAppService.RecalculateAsync(ProjectId.Value);
+        }
+
+        return RedirectToActiveTab();
+    }
+
     /// <summary>POST sonrası aynı proje + aynı sekmeye döner (PRG).</summary>
     private IActionResult RedirectToActiveTab()
         => RedirectToPage(new { projectId = ProjectId, tab = Tab });
@@ -587,6 +624,12 @@ public class IndexModel : AbpPageModel
         public string? CashAccountName { get; set; }
         public decimal Amount { get; set; }
         public string Currency { get; set; } = "TRY";
+
+        /* Üç defter — kayıt oluşurken damgalandı, burada yalnız gösterilir. */
+        public decimal BookAmount { get; set; }
+        public decimal? DonorAmount { get; set; }
+        public bool RateLocked { get; set; }
+
         public string Url { get; set; } = "#";
     }
 

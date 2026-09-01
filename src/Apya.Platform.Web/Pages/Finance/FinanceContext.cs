@@ -58,6 +58,7 @@ public static class FinanceContext
     public const string TabDonor = "donor";
     public const string TabDonations = "bagis";
     public const string TabCash = "kasa";
+    public const string TabFxBridge = "kur-koprusu";
     public const string TabDocuments = "belgeler";
 
     private static readonly FinanceTabDefinition Overview =
@@ -85,13 +86,19 @@ public static class FinanceContext
     private static readonly FinanceTabDefinition Cash =
         new(TabCash, "Finance:Tab:Cash", "fa-cash-register", new[] { PlatformPermissions.CashAccounts.Default });
 
+    // Donör defteri bir HİBE kavramı: kur köprüsü yalnız hibe şablonunda çıkar.
+    // Kurumsal/etkinlik projesinin donör para birimi yoktur, boş bir ekran basmak
+    // yerine sekme hiç görünmez.
+    private static readonly FinanceTabDefinition FxBridge =
+        new(TabFxBridge, "Finance:Tab:FxBridge", "fa-arrow-right-arrow-left", new[] { PlatformPermissions.Projects.ViewBudget });
+
     private static readonly FinanceTabDefinition Documents =
         new(TabDocuments, "Finance:Tab:Documents", "fa-folder-open", new[] { PlatformPermissions.Documents.Default });
 
     private static readonly Dictionary<FinanceContextTemplate, FinanceTabDefinition[]> Sets = new()
     {
         [FinanceContextTemplate.Corporate] = new[] { Overview, BudgetLines, Tranches, Ledger, Invoices, Cash, Documents },
-        [FinanceContextTemplate.Grant] = new[] { Overview, BudgetLines, Tranches, Ledger, Donor, Cash, Documents },
+        [FinanceContextTemplate.Grant] = new[] { Overview, BudgetLines, Tranches, Ledger, Donor, FxBridge, Cash, Documents },
         [FinanceContextTemplate.Event] = new[] { Overview, BudgetLines, Ledger, Donations, Cash, Documents }
     };
 

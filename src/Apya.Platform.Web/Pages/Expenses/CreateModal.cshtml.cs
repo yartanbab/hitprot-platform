@@ -32,6 +32,9 @@ public class CreateModalModel : AbpPageModel
     public List<SelectListItem> Categories { get; set; } = new();
     public string ProjectDatesJson { get; set; } = "{}";
 
+    /// <summary>Para birimi seçeneği; Kurlar sayfasıyla aynı liste (FinanceLookupShared).</summary>
+    public List<SelectListItem> Currencies { get; set; } = FinanceLookupShared.Currencies();
+
     public CreateModalModel(
         IExpenseAppService expenseAppService,
         ICashAccountAppService cashAccountAppService,

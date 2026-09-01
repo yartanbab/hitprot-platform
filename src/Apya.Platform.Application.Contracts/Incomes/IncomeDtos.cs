@@ -19,6 +19,12 @@ public class IncomeEntryDto : FullAuditedEntityDto<Guid>
     public Guid? BudgetLineId { get; set; }
     public Guid? CustomerId { get; set; }
     public string? Description { get; set; }
+    /* Üç defter — kayıt oluşurken damgalanır (bkz. FxLedgerStamper). */
+    public decimal BookAmount { get; set; }
+    public decimal BookRate { get; set; }
+    public decimal? DonorAmount { get; set; }
+    public decimal? DonorRate { get; set; }
+    public bool RateLocked { get; set; }
 }
 
 public class CreateUpdateIncomeEntryDto

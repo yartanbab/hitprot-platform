@@ -52,6 +52,19 @@ public class FinanceContext_Tests
         grant.ShouldContain(FinanceContext.TabTranches);
     }
 
+    /// <summary>
+    /// Kur köprüsü YALNIZ hibe şablonunda: donör defteri bir hibe kavramı.
+    /// Kurumsal/etkinlik projesinin donör para birimi yok, boş bir ekran basmak
+    /// yerine sekme hiç görünmüyor.
+    /// </summary>
+    [Fact]
+    public void FxBridge_yalniz_hibe_sablonunda_var()
+    {
+        Codes(FinanceContextTemplate.Grant).ShouldContain(FinanceContext.TabFxBridge);
+        Codes(FinanceContextTemplate.Corporate).ShouldNotContain(FinanceContext.TabFxBridge);
+        Codes(FinanceContextTemplate.Event).ShouldNotContain(FinanceContext.TabFxBridge);
+    }
+
     [Fact]
     public void TabsFor_Event_HasDonationsAndNoTranches()
     {
@@ -86,6 +99,7 @@ public class FinanceContext_Tests
     [InlineData(FinanceContext.TabInvoices, true)]
     [InlineData(FinanceContext.TabDonor, true)]
     [InlineData(FinanceContext.TabDonations, true)]
+    [InlineData(FinanceContext.TabFxBridge, true)]
     [InlineData(FinanceContext.TabOverview, false)]
     [InlineData(FinanceContext.TabBudgetLines, false)]
     [InlineData(FinanceContext.TabLedger, false)]

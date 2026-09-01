@@ -4683,6 +4683,12 @@ namespace Apya.Platform.Migrations
                     b.Property<decimal>("Amount")
                         .HasColumnType("decimal(18,2)");
 
+                    b.Property<decimal>("BookAmount")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("BookRate")
+                        .HasColumnType("decimal(18,6)");
+
                     b.Property<Guid?>("BudgetLineId")
                         .HasColumnType("uuid");
 
@@ -4727,6 +4733,12 @@ namespace Apya.Platform.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)");
 
+                    b.Property<decimal?>("DonorAmount")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal?>("DonorRate")
+                        .HasColumnType("decimal(18,6)");
+
                     b.Property<DateTime>("ExpenseDate")
                         .HasColumnType("timestamp with time zone");
 
@@ -4751,6 +4763,9 @@ namespace Apya.Platform.Migrations
 
                     b.Property<Guid?>("ProjectId")
                         .HasColumnType("uuid");
+
+                    b.Property<bool>("RateLocked")
+                        .HasColumnType("boolean");
 
                     b.Property<Guid?>("TaskId")
                         .HasColumnType("uuid");
@@ -5891,6 +5906,12 @@ namespace Apya.Platform.Migrations
                     b.Property<decimal>("Amount")
                         .HasColumnType("decimal(18,2)");
 
+                    b.Property<decimal>("BookAmount")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("BookRate")
+                        .HasColumnType("decimal(18,6)");
+
                     b.Property<Guid?>("BudgetLineId")
                         .HasColumnType("uuid");
 
@@ -5935,6 +5956,12 @@ namespace Apya.Platform.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)");
 
+                    b.Property<decimal?>("DonorAmount")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal?>("DonorRate")
+                        .HasColumnType("decimal(18,6)");
+
                     b.Property<string>("ExtraProperties")
                         .IsRequired()
                         .HasColumnType("text")
@@ -5959,6 +5986,9 @@ namespace Apya.Platform.Migrations
 
                     b.Property<Guid?>("ProjectId")
                         .HasColumnType("uuid");
+
+                    b.Property<bool>("RateLocked")
+                        .HasColumnType("boolean");
 
                     b.Property<Guid?>("TaskId")
                         .HasColumnType("uuid");
@@ -6913,6 +6943,10 @@ namespace Apya.Platform.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<string>("DonorCurrency")
+                        .HasMaxLength(3)
+                        .HasColumnType("character varying(3)");
+
                     b.Property<DateTime?>("EndDate")
                         .HasColumnType("timestamp with time zone");
 
@@ -6920,6 +6954,12 @@ namespace Apya.Platform.Migrations
                         .IsRequired()
                         .HasColumnType("text")
                         .HasColumnName("ExtraProperties");
+
+                    b.Property<decimal?>("FixedDonorRate")
+                        .HasColumnType("decimal(18,6)");
+
+                    b.Property<int>("FxPolicy")
+                        .HasColumnType("integer");
 
                     b.Property<Guid?>("GrantId")
                         .HasColumnType("uuid");

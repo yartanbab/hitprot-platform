@@ -18,9 +18,15 @@
 }
 
 @{
-    var gelir = Model.LedgerRows.Where(r => r.IsInflow).Sum(r => r.Amount);
-    var gider = Model.LedgerRows.Where(r => !r.IsInflow).Sum(r => r.Amount);
+    // Toplamlar İŞLEM para biriminde değil, ₺ DEFTERDE alınır: farklı para
+    // birimlerindeki tutarları toplamak anlamsız olurdu. Satırda her ikisi de var.
+    var gelir = Model.LedgerRows.Where(r => r.IsInflow).Sum(r => r.BookAmount);
+    var gider = Model.LedgerRows.Where(r => !r.IsInflow).Sum(r => r.BookAmount);
     var suzgecVar = !string.IsNullOrEmpty(Model.Kind) || Model.LineId.HasValue || Model.AccountId.HasValue;
+
+    // Donör kolonu yalnız projenin donör defteri varsa basılır.
+    var donorCurrency = Model.LedgerDonorCurrency;
+    var kolonSayisi = donorCurrency != null ? 4 : 4;
 }
 
 @* ─── Süzgeç çubuğu ─── *@
@@ -102,7 +108,12 @@ else
                     <th>Kayıt</th>
                     <th style="width:200px">Kalem</th>
                     <th style="width:190px">Kasa</th>
-                    <th class="text-end apya-numeric" style="width:150px">Tutar</th>
+                    <th class="text-end apya-numeric" style="width:150px">İşlem PB</th>
+                    <th class="text-end apya-numeric" style="width:140px">₺ defter</th>
+                    @if (donorCurrency != null)
+                    {
+                        <th class="text-end apya-numeric" style="width:150px">@donorCurrency donör</th>
+                    }
                 </tr>
             </thead>
             <tbody>
@@ -133,6 +144,28 @@ else
                         <td class="text-end apya-numeric fw-semibold @(r.IsInflow ? "text-success" : "text-danger")">
                             @(r.IsInflow ? "+" : "−")@Money(r.Amount) @(r.Currency == "TRY" ? "₺" : r.Currency)
                         </td>
+                        <td class="text-end apya-numeric text-muted">@Money(r.BookAmount) ₺</td>
+                        @if (donorCurrency != null)
+                        {
+                            <td class="text-end apya-numeric @(r.DonorAmount == null ? "text-muted" : "")">
+                                @if (r.DonorAmount == null)
+                                {
+                                    @* Kur girilmemiş: sıfır BASMIYORUZ — 0, "bedava" demek olurdu. *@
+                                    <span title="Bu tarih için kur girilmemiş">kur yok</span>
+                                }
+                                else
+                                {
+                                    @Money(r.DonorAmount.Value)
+
+                                    <text> @donorCurrency</text>
+                                    @if (r.RateLocked)
+                                    {
+                                        <i class="fa fa-lock ms-1" style="font-size:9px"
+                                           title="Donör karşılığı kilitli" aria-hidden="true"></i>
+                                    }
+                                }
+                            </td>
+                        }
                     </tr>
                 }
             </tbody>
@@ -142,15 +175,22 @@ else
                         DÖNEM TOPLAMI
                         <span class="fw-normal text-muted ms-2" style="font-size:12px">@Model.LedgerRows.Count kayıt</span>
                     </td>
+                    @* İşlem PB kolonu TOPLANMAZ: farklı para birimlerindeki tutarları
+                       alt alta toplamak anlamsız olurdu. Toplam ₺ defterde alınır. *@
+                    <td class="text-end apya-numeric text-muted fw-normal" style="font-size:11.5px">karışık PB</td>
                     <td class="text-end apya-numeric">
                         @* İşaret satır hücreleriyle aynı yazılır: kültürün "-" karakteri
                            yerine tabloda kullanılan "−" (U+2212). *@
-                        <div class="text-success">+@Money(gelir)</div>
-                        <div class="text-danger">−@Money(gider)</div>
+                        <div class="text-success">+@Money(gelir) ₺</div>
+                        <div class="text-danger">−@Money(gider) ₺</div>
                         <div class="@(gelir - gider >= 0 ? "text-success" : "text-danger")">
-                            = @(gelir - gider >= 0 ? "+" : "−")@Money(Math.Abs(gelir - gider))
+                            = @(gelir - gider >= 0 ? "+" : "−")@Money(Math.Abs(gelir - gider)) ₺
                         </div>
                     </td>
+                    @if (donorCurrency != null)
+                    {
+                        <td></td>
+                    }
                 </tr>
             </tfoot>
         </table>

@@ -33,6 +33,23 @@ public class IncomeEntry : FullAuditedAggregateRoot<Guid>, IMultiTenant
     /// saklanmaz, buradan toplanır.
     /// </summary>
     public Guid? BudgetLineId { get; set; }
+
+    /* --- ÜÇ DEFTER (kur köprüsü) — gerekçesi Expense'teki notla aynı --- */
+
+    /// <summary>₺ defter karşılığı. TRY kayıtlarda <see cref="Amount"/> ile aynıdır.</summary>
+    public decimal BookAmount { get; set; }
+
+    /// <summary>1 <see cref="Currency"/> = BookRate TRY.</summary>
+    public decimal BookRate { get; set; } = 1m;
+
+    /// <summary>Donör para birimi karşılığı; projenin donör PB'si yoksa boş.</summary>
+    public decimal? DonorAmount { get; set; }
+
+    /// <summary>1 <see cref="Currency"/> = DonorRate donör PB.</summary>
+    public decimal? DonorRate { get; set; }
+
+    /// <summary>Donör karşılığı kilitli mi (bkz. Expense.RateLocked).</summary>
+    public bool RateLocked { get; set; }
     public Guid? CustomerId { get; set; }
     public string? Description { get; set; }
 

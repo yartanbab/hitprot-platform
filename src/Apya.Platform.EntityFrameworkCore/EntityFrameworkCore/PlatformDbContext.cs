@@ -452,6 +452,10 @@ namespace Apya.Platform.EntityFrameworkCore
                 // istemiyoruz — silme zaten ProjectBudgetManager'da bağlı kayıt varsa
                 // reddediliyor, ikinci bir kaskad davranışı yalnız sürpriz üretir.
                 b.HasIndex(x => x.BudgetLineId);
+                b.Property(x => x.BookAmount).HasColumnType("decimal(18,2)");
+                b.Property(x => x.BookRate).HasColumnType("decimal(18,6)");
+                b.Property(x => x.DonorAmount).HasColumnType("decimal(18,2)");
+                b.Property(x => x.DonorRate).HasColumnType("decimal(18,6)");
             });
 
             /* --- GELİR MODÜLÜ YAPILANDIRMASI — APYA-142d --- */
@@ -469,6 +473,10 @@ namespace Apya.Platform.EntityFrameworkCore
                 b.HasIndex(x => x.TaskId);
                 b.HasIndex(x => x.CustomerId);
                 b.HasIndex(x => x.BudgetLineId); // gerekçe: Expense tarafındaki notla aynı
+                b.Property(x => x.BookAmount).HasColumnType("decimal(18,2)");
+                b.Property(x => x.BookRate).HasColumnType("decimal(18,6)");
+                b.Property(x => x.DonorAmount).HasColumnType("decimal(18,2)");
+                b.Property(x => x.DonorRate).HasColumnType("decimal(18,6)");
             });
 
             /* --- PROJE BÜTÇESİ — kalem / dilim / kesinti / revizyon --- */
@@ -572,6 +580,9 @@ namespace Apya.Platform.EntityFrameworkCore
                 b.HasOne<ProjectCategoryDefinition>().WithMany()
                     .HasForeignKey(x => x.CategoryId).OnDelete(DeleteBehavior.Restrict);
                 b.HasIndex(x => new { x.TenantId, x.CategoryId });
+                // Kur köprüsü: donör PB'si boşsa proje tek defterlidir.
+                b.Property(x => x.DonorCurrency).HasMaxLength(3);
+                b.Property(x => x.FixedDonorRate).HasColumnType("decimal(18,6)");
             });
 
             /* --- PROJE KATEGORİSİ TANIMLARI --- */

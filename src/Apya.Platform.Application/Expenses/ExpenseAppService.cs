@@ -25,17 +25,20 @@ public class ExpenseAppService :
     private readonly IRepository<CashMovement, Guid> _cashMovementRepository;
     private readonly IRepository<CashAccount, Guid> _cashAccountRepository;
     private readonly ProjectBudgetManager _budgetManager;
+    private readonly FxLedgerStamper _fxStamper;
 
     public ExpenseAppService(
         IRepository<Expense, Guid> repository,
         IRepository<CashMovement, Guid> cashMovementRepository,
         IRepository<CashAccount, Guid> cashAccountRepository,
-        ProjectBudgetManager budgetManager)
+        ProjectBudgetManager budgetManager,
+        FxLedgerStamper fxStamper)
         : base(repository)
     {
         _cashMovementRepository = cashMovementRepository;
         _cashAccountRepository = cashAccountRepository;
         _budgetManager = budgetManager;
+        _fxStamper = fxStamper;
         GetPolicyName = PlatformPermissions.Expenses.Default;
         GetListPolicyName = PlatformPermissions.Expenses.Default;
         CreatePolicyName = PlatformPermissions.Expenses.Create;
@@ -74,6 +77,40 @@ public class ExpenseAppService :
     protected override IQueryable<Expense> ApplyDefaultSorting(IQueryable<Expense> query)
     {
         return query.OrderByDescending(x => x.ExpenseDate);
+    }
+
+    /* --- ÜÇ DEFTER DAMGASI ---
+       Kaydın ₺ ve donör karşılığı, entity DB'ye gitmeden ÖNCE yazılır. Ayrı bir
+       "kaydet sonra güncelle" turu yapılmıyor: iki yazma arasında kalan kayıt,
+       raporlarda bir an için ₺ defterde 0 görünürdü.
+
+       GÜNCELLEMEDE DE YENİDEN DAMGALANIR. "Kilit" politika değişiminden korur,
+       kaydın kendisinin değişmesinden değil: tutarı ya da tarihi değiştirilen bir
+       kaydın eski donör karşılığını korumak, sessizce yanlış rakam üretirdi. */
+
+    protected override async Task<Expense> MapToEntityAsync(CreateUpdateExpenseDto createInput)
+    {
+        var entity = await base.MapToEntityAsync(createInput);
+        await ApplyFxStampAsync(entity, createInput);
+        return entity;
+    }
+
+    protected override async Task MapToEntityAsync(CreateUpdateExpenseDto updateInput, Expense entity)
+    {
+        await base.MapToEntityAsync(updateInput, entity);
+        await ApplyFxStampAsync(entity, updateInput);
+    }
+
+    private async Task ApplyFxStampAsync(Expense entity, CreateUpdateExpenseDto input)
+    {
+        var stamp = await _fxStamper.StampAsync(input.ProjectId, input.Currency, input.Amount, input.ExpenseDate);
+        entity.BookAmount = stamp.BookAmount;
+        entity.BookRate = stamp.BookRate;
+        entity.DonorAmount = stamp.DonorAmount;
+        entity.DonorRate = stamp.DonorRate;
+        // Kur bulunamadıysa kilitlemiyoruz: kilit "bu rakam kesinleşti" demek,
+        // boş bir donör karşılığı kesinleşmiş sayılmaz.
+        entity.RateLocked = stamp.DonorAmount != null;
     }
 
     public override async Task<ExpenseDto> CreateAsync(CreateUpdateExpenseDto input)
