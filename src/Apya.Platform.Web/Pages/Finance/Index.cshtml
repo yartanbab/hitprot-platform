@@ -124,13 +124,17 @@
                 break;
 
             case FinanceContext.TabDocuments:
-                <partial name="_EmptyState" model='new EmptyStateModel {
-                    Icon = "fa-folder-open",
-                    Title = "Belgeler doküman modülünde",
-                    Description = "Finans bağlamıyla süzülmüş belge listesi bu sekmeye gelecek; ayrı bir belge deposu kurulmayacak." }' />
-                <div class="text-center">
-                    <a href="/Documents" class="btn btn-sm btn-outline-secondary"><i class="fa fa-folder-open me-1" aria-hidden="true"></i>Dokümanlar</a>
-                </div>
+                @if (Model.SelectedProject == null)
+                {
+                    <partial name="_EmptyState" model='new EmptyStateModel {
+                        Icon = "fa-folder-open",
+                        Title = "Önce bir proje seçin",
+                        Description = "Belge açığı, uygunluk ve teslim paketi proje bağlamında anlamlıdır." }' />
+                }
+                else
+                {
+                    <partial name="_PanelDocuments" model="Model" />
+                }
                 break;
 
             case FinanceContext.TabDonor:

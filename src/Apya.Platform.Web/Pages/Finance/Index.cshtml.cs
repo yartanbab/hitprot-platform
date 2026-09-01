@@ -49,6 +49,9 @@ public class IndexModel : AbpPageModel
     private readonly IProjectAppService _projectAppService;
     private readonly IProjectBudgetAppService _projectBudgetAppService;
     private readonly IProjectFxAppService _projectFxAppService;
+    private readonly Apya.Platform.Documents.IDocumentMatchingAppService _matchingAppService;
+    private readonly Apya.Platform.Documents.IComplianceAppService _complianceAppService;
+    private readonly Apya.Platform.Documents.IDeliveryPackageAppService _deliveryPackageAppService;
 
     /// <summary>Seçili proje; boş = "Tüm projeler" (portföy).</summary>
     [BindProperty(SupportsGet = true)]
@@ -100,6 +103,22 @@ public class IndexModel : AbpPageModel
     /// <summary>Bütçe yazma yetkisi — ekleme/düzenleme düğmeleri buna bakar.</summary>
     public bool CanEditBudget { get; private set; }
 
+    /* ─── "Belgeler" sekmesi (5a/5b/5c) ────────────────────────────────
+       Belge deposu KURULMAZ: veri mevcut doküman modülünün servislerinden
+       gelir, ekran yalnız finans bağlamıyla süzülmüş özeti gösterir. */
+
+    /// <summary>Belgesiz harcama / harcamasız belge tahtası; yetki yoksa null.</summary>
+    public Apya.Platform.Documents.MatchingBoardDto? DocumentBoard { get; private set; }
+
+    /// <summary>Belgesiz harcamanın bütçe kalemi bazında kırılımı — finansın kendi sorusu.</summary>
+    public List<UndocumentedByLine> UndocumentedLines { get; private set; } = new();
+
+    /// <summary>Kontrol listesi özeti (kurum uygunluğu); paket uygulanmamışsa boş.</summary>
+    public Apya.Platform.Documents.ComplianceOverviewDto? Compliance { get; private set; }
+
+    /// <summary>Projenin teslim paketleri ve her birinin son kontrol sonucu.</summary>
+    public List<DeliveryRow> DeliveryPackages { get; private set; } = new();
+
     public List<TransactionRow> Transactions { get; private set; } = new();
     public List<AccountSummary> Accounts { get; private set; } = new();
     public decimal TotalBalanceTry { get; private set; }
@@ -114,7 +133,10 @@ public class IndexModel : AbpPageModel
         IExchangeRateAppService exchangeRateAppService,
         IProjectAppService projectAppService,
         IProjectBudgetAppService projectBudgetAppService,
-        IProjectFxAppService projectFxAppService)
+        IProjectFxAppService projectFxAppService,
+        Apya.Platform.Documents.IDocumentMatchingAppService matchingAppService,
+        Apya.Platform.Documents.IComplianceAppService complianceAppService,
+        Apya.Platform.Documents.IDeliveryPackageAppService deliveryPackageAppService)
     {
         _expenseAppService = expenseAppService;
         _incomeAppService = incomeAppService;
@@ -125,6 +147,9 @@ public class IndexModel : AbpPageModel
         _projectAppService = projectAppService;
         _projectBudgetAppService = projectBudgetAppService;
         _projectFxAppService = projectFxAppService;
+        _matchingAppService = matchingAppService;
+        _complianceAppService = complianceAppService;
+        _deliveryPackageAppService = deliveryPackageAppService;
     }
 
     public async Task OnGetAsync()
@@ -166,6 +191,10 @@ public class IndexModel : AbpPageModel
         {
             await TryAddAsync(async () =>
                 FxBridge = await _projectFxAppService.GetBridgeAsync(SelectedProject.Id));
+        }
+        else if (ActiveTab == FinanceContext.TabDocuments && SelectedProject != null)
+        {
+            await LoadDocumentsAsync();
         }
     }
 
@@ -587,6 +616,76 @@ public class IndexModel : AbpPageModel
     {
         try { return await fetch(); }
         catch (AbpAuthorizationException) { return new Dictionary<Guid, string>(); }
+    }
+
+    /// <summary>
+    /// "Belgeler" sekmesi: üç servisten üç soru. Her biri ayrı yetkiye bağlı ve
+    /// ayrı ayrı atlanabilir — birinin yetkisi yokken sekmenin tamamı boş kalmasın.
+    ///
+    /// Preflight paket BAŞINA çağrılır; liste kısa (bir projede birkaç paket) ve
+    /// "dışa aktarılabilir mi" sorusunun cevabı yalnız orada var.
+    /// </summary>
+    private async Task LoadDocumentsAsync()
+    {
+        var projectId = SelectedProject!.Id;
+
+        await TryAddAsync(async () => DocumentBoard = await _matchingAppService.GetBoardAsync(projectId));
+        await TryAddAsync(async () => Compliance = await _complianceAppService.GetOverviewAsync(projectId));
+
+        await TryAddAsync(async () =>
+        {
+            foreach (var package in await _deliveryPackageAppService.GetListAsync(projectId))
+            {
+                var row = new DeliveryRow { Package = package };
+                // Preflight yetkisi paket listesiyle aynı; yine de tek tek sarmalanır:
+                // biri patlarsa diğer paketler listede kalsın.
+                await TryAddAsync(async () =>
+                    row.Preflight = await _deliveryPackageAppService.PreflightAsync(package.Id));
+                DeliveryPackages.Add(row);
+            }
+        });
+
+        BuildUndocumentedByLine();
+    }
+
+    /// <summary>
+    /// Belgesiz harcamayı bütçe kalemine göre gruplar. Kalemi olmayan harcamalar
+    /// "kalemsiz" satırında toplanır — gizlenirse toplam tutmaz.
+    /// </summary>
+    private void BuildUndocumentedByLine()
+    {
+        if (DocumentBoard == null)
+        {
+            return;
+        }
+
+        UndocumentedLines = DocumentBoard.Expenses
+            .GroupBy(e => e.BudgetLineId)
+            .Select(g => new UndocumentedByLine
+            {
+                BudgetLineId = g.Key,
+                Name = g.First().BudgetLineName ?? "Kaleme yazılmamış",
+                Count = g.Count(),
+                Amount = g.Sum(e => e.Amount)
+            })
+            .OrderByDescending(x => x.Amount)
+            .ToList();
+    }
+
+    public class UndocumentedByLine
+    {
+        public Guid? BudgetLineId { get; set; }
+        public string Name { get; set; } = string.Empty;
+        public int Count { get; set; }
+        public decimal Amount { get; set; }
+    }
+
+    public class DeliveryRow
+    {
+        public Apya.Platform.Documents.DeliveryPackageDto Package { get; set; } = null!;
+
+        /// <summary>Yetki/hata durumunda null kalır; ekran "kontrol edilemedi" der.</summary>
+        public Apya.Platform.Documents.PreflightResultDto? Preflight { get; set; }
     }
 
     private static async Task TryAddAsync(Func<Task> fetch)

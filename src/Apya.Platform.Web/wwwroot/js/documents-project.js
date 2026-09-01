@@ -6,11 +6,11 @@ import { E as K } from "./EmptyState-Bhcx2Wdd.js";
 const I = (a, t) => {
   var m, c, d;
   return (d = (c = (m = window == null ? void 0 : window.abp) == null ? void 0 : m.notify) == null ? void 0 : c[a]) == null ? void 0 : d.call(c, t);
-}, L = () => {
+}, W = () => {
   var a;
   return ((a = window == null ? void 0 : window.abp) == null ? void 0 : a.appPath) ?? "/";
 };
-function C(a) {
+function T(a) {
   return new Promise((t, m) => {
     window.abp.ajax(a).done(t).fail(m);
   });
@@ -21,8 +21,8 @@ const S = (a, t, m = {}) => {
     p != null && p !== "" && c.append(i, p);
   });
   const d = c.toString();
-  return `${L()}Documents/${a}?handler=${t}${d ? "&" + d : ""}`;
-}, Q = (a, t) => C({ url: a, type: "POST", contentType: "application/json", data: JSON.stringify(t) }), ne = (a) => C({ url: S("Timeline", "Timeline", { projectId: a }), type: "GET" }), ie = (a) => Q(S("Timeline", "CreateRisk"), a), le = (a, t) => C({ url: S("Timeline", "SetRiskClosed", { id: a, isClosed: t }), type: "POST" }), re = (a) => C({ url: S("Matching", "Board", { projectId: a }), type: "GET" }), ce = (a) => C({ url: S("Matching", "Candidates", { expenseId: a }), type: "GET" }), oe = (a) => C({ url: S("Matching", "Matches", { projectId: a }), type: "GET" }), de = (a) => Q(S("Matching", "CreateMatch"), a), pe = (a) => C({ url: S("Matching", "RemoveMatch", { matchId: a }), type: "POST" }), me = () => C({ url: S("Scope", "Overview"), type: "GET" }), ue = (a) => C({ url: S("Scope", "Branch", { projectId: a }), type: "GET" }), g = (a, t = "TRY") => a == null ? "—" : new Intl.NumberFormat("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(a) + " " + ({ TRY: "₺", USD: "$", EUR: "€" }[t] || t), Y = (a, t = 1) => a == null ? "—" : new Intl.NumberFormat("tr-TR", { minimumFractionDigits: 0, maximumFractionDigits: t }).format(a), j = (a) => a ? new Intl.DateTimeFormat("tr-TR", { day: "2-digit", month: "2-digit", year: "numeric" }).format(new Date(a)) : "—";
+  return `${W()}Documents/${a}?handler=${t}${d ? "&" + d : ""}`;
+}, Q = (a, t) => T({ url: a, type: "POST", contentType: "application/json", data: JSON.stringify(t) }), ne = (a) => T({ url: S("Timeline", "Timeline", { projectId: a }), type: "GET" }), ie = (a) => Q(S("Timeline", "CreateRisk"), a), le = (a, t) => T({ url: S("Timeline", "SetRiskClosed", { id: a, isClosed: t }), type: "POST" }), re = (a) => T({ url: S("Matching", "Board", { projectId: a }), type: "GET" }), ce = (a) => T({ url: S("Matching", "Candidates", { expenseId: a }), type: "GET" }), oe = (a) => T({ url: S("Matching", "Matches", { projectId: a }), type: "GET" }), de = (a) => Q(S("Matching", "CreateMatch"), a), pe = (a) => T({ url: S("Matching", "RemoveMatch", { matchId: a }), type: "POST" }), me = () => T({ url: S("Scope", "Overview"), type: "GET" }), ue = (a) => T({ url: S("Scope", "Branch", { projectId: a }), type: "GET" }), g = (a, t = "TRY") => a == null ? "—" : new Intl.NumberFormat("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(a) + " " + ({ TRY: "₺", USD: "$", EUR: "€" }[t] || t), Y = (a, t = 1) => a == null ? "—" : new Intl.NumberFormat("tr-TR", { minimumFractionDigits: 0, maximumFractionDigits: t }).format(a), j = (a) => a ? new Intl.DateTimeFormat("tr-TR", { day: "2-digit", month: "2-digit", year: "numeric" }).format(new Date(a)) : "—";
 function ye(a) {
   return a >= 15 ? "negative" : a >= 8 ? "warning" : "neutral";
 }
@@ -86,7 +86,7 @@ function xe() {
     ) });
   if (c) return /* @__PURE__ */ e.jsx("div", { className: "p-4", children: /* @__PURE__ */ e.jsx(U, { rows: 8 }) });
   if (!t) return null;
-  const M = t.startDate ? new Date(t.startDate) : null, T = t.endDate ? new Date(t.endDate) : null, y = t.budget;
+  const M = t.startDate ? new Date(t.startDate) : null, C = t.endDate ? new Date(t.endDate) : null, y = t.budget;
   return /* @__PURE__ */ e.jsxs("div", { className: "apya-fade-in px-4 py-4 sm:px-7 sm:py-7 mx-auto", style: { maxWidth: 1560 }, children: [
     /* @__PURE__ */ e.jsxs("div", { className: "mb-4", children: [
       /* @__PURE__ */ e.jsx("h1", { style: { fontSize: 20, fontWeight: 700, margin: 0 }, children: t.projectName }),
@@ -164,7 +164,7 @@ function xe() {
           " · ",
           l.name
         ] }),
-        /* @__PURE__ */ e.jsx(he, { step: l, projectStart: M, projectEnd: T }),
+        /* @__PURE__ */ e.jsx(he, { step: l, projectStart: M, projectEnd: C }),
         /* @__PURE__ */ e.jsxs("span", { className: "apya-numeric", style: { fontSize: 11.5, textAlign: "right" }, children: [
           "%",
           l.progressPercent
@@ -224,7 +224,7 @@ const fe = (...a) => a.filter(Boolean).join(" "), je = {
   2: "Bu harcamaya zaten belge bağlı",
   3: "Aynı tutar/tarih/tedarikçi başka belgede"
 };
-function W({ label: a, value: t, max: m }) {
+function O({ label: a, value: t, max: m }) {
   return /* @__PURE__ */ e.jsxs("div", { className: "d-flex align-items-center gap-2", children: [
     /* @__PURE__ */ e.jsx("span", { style: { fontSize: 10.5, color: "var(--apya-text-tertiary)", width: 62 }, children: a }),
     /* @__PURE__ */ e.jsx("div", { className: "apya-doc-progress", style: { flex: 1, height: 4 }, children: /* @__PURE__ */ e.jsx("div", { style: { width: `${t / m * 100}%`, background: "var(--apya-accent-500)" } }) }),
@@ -232,19 +232,19 @@ function W({ label: a, value: t, max: m }) {
   ] });
 }
 function ge() {
-  const a = new URLSearchParams(window.location.search).get("projectId"), [t, m] = r.useState(null), [c, d] = r.useState([]), [i, p] = r.useState(null), [f, v] = r.useState([]), [M, T] = r.useState(!0), [y, l] = r.useState(!1), N = r.useCallback(async () => {
+  const a = new URLSearchParams(window.location.search).get("projectId"), [t, m] = r.useState(null), [c, d] = r.useState([]), [i, p] = r.useState(null), [f, v] = r.useState([]), [M, C] = r.useState(!0), [y, l] = r.useState(!1), N = r.useCallback(async () => {
     if (!a) {
-      T(!1);
+      C(!1);
       return;
     }
-    T(!0);
+    C(!0);
     try {
       const [s, k] = await Promise.all([re(a), oe(a)]);
       m(s), d(k ?? []);
     } catch (s) {
       I("error", "Eşleştirme tezgâhı yüklenemedi."), console.error("[Matching] load", s);
     } finally {
-      T(!1);
+      C(!1);
     }
   }, [a]);
   r.useEffect(() => {
@@ -263,8 +263,8 @@ function ge() {
     l(!0);
     try {
       await de({ documentFileId: s, expenseId: i.id, annexNumber: k }), p(null), v([]), await N();
-    } catch (O) {
-      I("error", "Bağlama başarısız oldu."), console.error("[Matching] createMatch", O);
+    } catch (L) {
+      I("error", "Bağlama başarısız oldu."), console.error("[Matching] createMatch", L);
     } finally {
       l(!1);
     }
@@ -300,7 +300,8 @@ function ge() {
                 /* @__PURE__ */ e.jsx("span", { className: "d-block text-truncate", style: { fontSize: 12.5, fontWeight: 500 }, children: s.title }),
                 /* @__PURE__ */ e.jsxs("span", { className: "d-block", style: { fontSize: 10.5, color: "var(--apya-text-tertiary)" }, children: [
                   j(s.expenseDate),
-                  s.supplierName && ` · ${s.supplierName}`
+                  s.supplierName && ` · ${s.supplierName}`,
+                  s.budgetLineName && ` · ${s.budgetLineName}`
                 ] })
               ] }),
               /* @__PURE__ */ e.jsx("span", { className: "apya-numeric", style: { fontSize: 11.5 }, children: g(s.amount, s.currency) })
@@ -324,11 +325,17 @@ function ge() {
             /* @__PURE__ */ e.jsx(R, { variant: s.isStrong ? "positive" : "warning", size: "sm", children: s.score })
           ] }),
           /* @__PURE__ */ e.jsxs("div", { className: "d-flex flex-column gap-1 mt-2", children: [
-            /* @__PURE__ */ e.jsx(W, { label: "tutar", value: s.amountScore, max: 50 }),
-            /* @__PURE__ */ e.jsx(W, { label: "tarih", value: s.dateScore, max: 30 }),
-            /* @__PURE__ */ e.jsx(W, { label: "tedarikçi", value: s.supplierScore, max: 20 })
+            /* @__PURE__ */ e.jsx(O, { label: "tutar", value: s.amountScore, max: 50 }),
+            /* @__PURE__ */ e.jsx(O, { label: "tarih", value: s.dateScore, max: 30 }),
+            /* @__PURE__ */ e.jsx(O, { label: "tedarikçi", value: s.supplierScore, max: 20 })
           ] }),
           s.reasons.length > 0 && /* @__PURE__ */ e.jsx("div", { style: { fontSize: 10.5, color: "var(--apya-text-tertiary)", marginTop: 4 }, children: s.reasons.join(" · ") }),
+          i.budgetLineName && /* @__PURE__ */ e.jsxs("div", { style: { fontSize: 10.5, color: "var(--apya-accent-500)", marginTop: 4 }, children: [
+            /* @__PURE__ */ e.jsx("i", { className: "fa fa-link" }),
+            " Bağlanınca «",
+            i.budgetLineName,
+            "» kalemi belgeli olur."
+          ] }),
           /* @__PURE__ */ e.jsx(
             B,
             {
@@ -484,8 +491,8 @@ function we({ row: a, isOpen: t, onToggle: m, currency: c }) {
     }
   );
 }
-function Ce() {
-  const a = new URLSearchParams(window.location.search).get("projectId"), [t, m] = r.useState(null), [c, d] = r.useState({}), [i, p] = r.useState(/* @__PURE__ */ new Set()), [f, v] = r.useState(!0), [M, T] = r.useState(!1), [y, l] = r.useState(a ?? null), [N, A] = r.useState(!1), [z, s] = r.useState(""), [k, O] = r.useState(""), P = se.useRef(c);
+function Te() {
+  const a = new URLSearchParams(window.location.search).get("projectId"), [t, m] = r.useState(null), [c, d] = r.useState({}), [i, p] = r.useState(/* @__PURE__ */ new Set()), [f, v] = r.useState(!0), [M, C] = r.useState(!1), [y, l] = r.useState(a ?? null), [N, A] = r.useState(!1), [z, s] = r.useState(""), [k, L] = r.useState(""), P = se.useRef(c);
   r.useEffect(() => {
     P.current = c;
   }, [c]);
@@ -524,7 +531,7 @@ function Ce() {
       p(/* @__PURE__ */ new Set());
       return;
     }
-    T(!0);
+    C(!0);
     try {
       await Promise.all(t.rows.filter((o) => o.entityId).map((o) => E(o.entityId))), p((o) => {
         const h = new Set(o);
@@ -535,7 +542,7 @@ function Ce() {
         }), h;
       });
     } finally {
-      T(!1);
+      C(!1);
     }
   }, [t, i, E]), ae = r.useMemo(() => {
     if (!t) return [];
@@ -572,7 +579,7 @@ function Ce() {
         icon: /* @__PURE__ */ e.jsx("i", { className: "fa fa-diagram-project" }),
         title: "Henüz proje yok",
         description: "Kapsam ağacı projelerden doğar; önce bir proje oluşturun.",
-        action: /* @__PURE__ */ e.jsx(B, { asChild: !0, children: /* @__PURE__ */ e.jsx("a", { href: `${L()}Projects`, children: "Projelere git" }) })
+        action: /* @__PURE__ */ e.jsx(B, { asChild: !0, children: /* @__PURE__ */ e.jsx("a", { href: `${W()}Projects`, children: "Projelere git" }) })
       }
     ) });
   const u = t.rollup, _ = t.rows.every((n) => i.has(n.id));
@@ -587,7 +594,7 @@ function Ce() {
         /* @__PURE__ */ e.jsx("i", { className: $("fa", _ ? "fa-compress" : "fa-expand") }),
         _ ? " Hepsini kapat" : " Hepsini aç"
       ] }),
-      y ? /* @__PURE__ */ e.jsx(B, { asChild: !0, size: "sm", children: /* @__PURE__ */ e.jsxs("a", { href: `${L()}Documents/ReportBuilder?projectId=${y}`, children: [
+      y ? /* @__PURE__ */ e.jsx(B, { asChild: !0, size: "sm", children: /* @__PURE__ */ e.jsxs("a", { href: `${W()}Documents/ReportBuilder?projectId=${y}`, children: [
         /* @__PURE__ */ e.jsx("i", { className: "fa fa-file-export" }),
         " Kapsamı raporla"
       ] }) }) : /* @__PURE__ */ e.jsxs(B, { size: "sm", disabled: !0, title: "Raporlamak için bir proje açın", children: [
@@ -640,7 +647,7 @@ function Ce() {
           {
             className: "apya-doc-select",
             value: k,
-            onChange: (n) => O(n.target.value),
+            onChange: (n) => L(n.target.value),
             "aria-label": "Sorumlu süz",
             children: [
               /* @__PURE__ */ e.jsx("option", { value: "", children: "Sorumlu: tümü" }),
@@ -714,4 +721,4 @@ V && G(V).render(/* @__PURE__ */ e.jsx(xe, {}));
 const J = document.getElementById("document-matching-island");
 J && G(J).render(/* @__PURE__ */ e.jsx(ge, {}));
 const Z = document.getElementById("project-scope-island");
-Z && G(Z).render(/* @__PURE__ */ e.jsx(Ce, {}));
+Z && G(Z).render(/* @__PURE__ */ e.jsx(Te, {}));
