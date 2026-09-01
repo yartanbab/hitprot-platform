@@ -55,6 +55,23 @@ kafayla geçilir.
 `--self-contained` üretiliyor ve `publish-release.ps1` runtime'ın pakette olduğunu
 `System.Private.CoreLib.dll` ile **doğrulamadan** ZIP üretmiyor.
 
+### 🔑 Bu paket artık güvenli varsayılanla çıkıyor
+
+Deploy hazırlığında ölçüldü: `web.config`, #264'ten beri `hostingModel="InProcess"`
+**ve** `<applicationInitialization>` bloğu **açık** halde commit'liydi — canlıya inen
+`63cb35c6` de dâhil. Oysa `deploy-delta-2026-08-27.md` bölüm 5 "bu pakette ikisi de
+KAPALI gelir" diyordu; belge ile dosya çelişiyordu.
+
+İkisi de belgenin vaat ettiği duruma çekildi. Ek olarak `AspNetCoreHostingModel`
+csproj'da **açıkça** `OutOfProcess` yapıldı: publish, `<aspNetCore>` elemanını yeniden
+yazıp `hostingModel`'i bu MSBuild özelliğinden alıyor ve özellik tanımsızken SDK
+varsayılanı `InProcess`'tir — yani yalnız `web.config`'i düzeltmek publish sırasında
+**sessizce geri alınırdı.** Publish çıktısı ölçülerek doğrulandı:
+`hostingModel="OutOfProcess"`, `applicationInitialization` yorumda.
+
+Sonuç: bu paket çöküşü yeniden üretemez. Soğuk başlangıç kazanımları site ayağa
+kalktıktan sonra, aşağıdaki "bekleyen işler" sırasıyla tek tek açılır.
+
 🔴 **Sıra önemli.** Site çökükken deploy edersen, sonrasında hâlâ hata alırsan sebebin
 eski mi yeni mi olduğunu ayırt edemezsin.
 
@@ -383,7 +400,7 @@ grant'ları geri dönmez. Zararsızdır — eski kod o izni hiç sormaz.
 |---|---|---|
 | **SMTP** | `/SettingManagement` → E-posta | Girilmeden şifre sıfırlama postası **gitmez**. Varsayılan gönderen `noreply@abp.io` değiştirilmeli |
 | **Plesk app pool** (Idle=0, AlwaysRunning) | Plesk | Yalnız hız değil **işlevsel**: `SubscriptionExpiryWorker` saatlik koşar, havuz uyursa abonelik süresi işlenmez |
-| **`hostingModel="InProcess"`** | `web.config` | 🔴 Bu yayında çöküşün muhtemel sebebi. App pool ayarından SONRA, **tek başına** denenmeli; açılmazsa geri al |
-| **`<applicationInitialization>`** | `web.config` | En son. **Üçü birden açılmaz** |
+| **`hostingModel="InProcess"`** | `web.config` + csproj | 🔴 Bu yayında çöküşün muhtemel sebebi; paket artık `OutOfProcess` çıkıyor. Açmak istersen app pool ayarından SONRA, **tek başına** dene; açılmazsa satırı geri al (yeniden publish gerekmez). Kalıcı yapacaksan csproj'daki `AspNetCoreHostingModel` da değişmeli — yoksa sonraki publish geri alır |
+| **`<applicationInitialization>`** | `web.config` | En son, ve yalnız IIS "Application Initialization" bileşeni kuruluysa (yoksa 500.19). **Üçü birden açılmaz** |
 | Hibe modülü 2a–2d | — | Kalan 11 ekran; başvuruların aşama şablonuna bağlanması burada |
 | Yükseltme kanalı | `/PackageManagement` | Satış e-postası/telefon/fiyat sayfası üçü de boşsa "Paketim" ekranında yükseltme düğmesi basılmaz |
