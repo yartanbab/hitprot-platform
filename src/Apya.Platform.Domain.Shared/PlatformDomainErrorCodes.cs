@@ -192,4 +192,7 @@ public static class PlatformDomainErrorCodes
 
     // --- Dashboard ---
     public const string DashboardLayoutTooLarge = "Platform:Dashboard:LayoutTooLarge";
+
+    // --- Demo Talebi (DemoRequests) Modülü ---
+    public const string DemoRequestRateLimitExceeded = "Platform:DemoRequest:RateLimitExceeded";
 }
