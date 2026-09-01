@@ -2,14 +2,13 @@
 @using System.Linq
 @using Microsoft.AspNetCore.Mvc.Localization
 @using Apya.Platform.Accounts
+@using Apya.Platform.Localization
 @using Volo.Abp.Account.Localization
-@using Volo.Abp.Account.Settings
 @using Volo.Abp.Account.Web.Pages.Account
 @using Volo.Abp.Identity
-@using Volo.Abp.Settings
 @model Apya.Platform.Web.Pages.Account.ApyaLoginModel
 @inject IHtmlLocalizer<AccountResource> L
-@inject ISettingProvider SettingProvider
+@inject IHtmlLocalizer<PlatformResource> PL
 @inject ILoginScreenSettingsAppService LoginScreenSettings
 @{
     Layout = "~/Pages/Account/_ApyaAccountLayout.cshtml";
@@ -19,7 +18,6 @@
     // Ayar açık OLSA BİLE yapılandırılmış sağlayıcı yoksa hiçbir şey gösterilmez —
     // ölü düğme çıkmasın.
     var showSocial = loginScreen.ShowSocialLogin && Model.VisibleExternalProviders.Any();
-    var selfRegistration = await SettingProvider.IsTrueAsync(AccountSettingNames.IsSelfRegistrationEnabled);
 }
 
 @if (Model.ShowRequireMigrateSeedMessage)
@@ -86,14 +84,12 @@
                 <span>@L["RememberMe"]</span>
             </label>
 
-            @if (selfRegistration)
-            {
-                <span class="apya-auth__muted">
-                    @L["AreYouANewUser"]
-                    <a class="apya-auth__link"
-                       href="@Url.Page("./Register", new { returnUrl = Model.ReturnUrl, returnUrlHash = Model.ReturnUrlHash })">@L["Register"]</a>
-                </span>
-            }
+            @* Self-servis kayıt kapalı (bkz. AccountSettingOverrideProvider): aday
+               müşteri hesap açmaz, demo talep eder ve ekip kendisine döner. *@
+            <span class="apya-auth__muted">
+                @PL["DemoRequest:LoginPrompt"]
+                <a class="apya-auth__link" asp-page="./DemoRequest">@PL["DemoRequest:LoginLink"]</a>
+            </span>
         </div>
 
         <button class="apya-auth__submit" type="submit" name="Action" value="Login">@L["Login"]</button>

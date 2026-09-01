@@ -587,6 +587,10 @@ public class PlatformNavigationResolver : IScopedDependency
             grants.AddItem(new ApplicationMenuItem("Apya.Grants.Calls", l["Menu:Grants:Calls"], icon: "fa fa-bullhorn", url: "/Grants"));
         if (_currentTenant.Id == null && await _permission.IsGrantedAsync(PlatformPermissions.Grants.Edit))
             grants.AddItem(new ApplicationMenuItem("Apya.Grants.Applications", l["Menu:Grants:Applications"], icon: "fa fa-file-signature", url: "/Grants/Applications"));
+        if (_currentTenant.Id == null && await _permission.IsGrantedAsync(PlatformPermissions.Grants.Edit))
+            grants.AddItem(new ApplicationMenuItem("Apya.Grants.StageTemplates", l["Menu:Grants:StageTemplates"], icon: "fa fa-diagram-project", url: "/Grants/StageTemplates"));
+        if (_currentTenant.Id == null && await _permission.IsGrantedAsync(PlatformPermissions.Grants.Edit))
+            grants.AddItem(new ApplicationMenuItem("Apya.Grants.Sources", l["Menu:Grants:Sources"], icon: "fa fa-globe", url: "/Grants/Sources"));
         if (grants.Items.Count > 0) roots.Add(grants);
 
         // Finans — Faz 1 sadeleştirme: yalnızca günlük işlem + hesap öğeleri kalır.
@@ -602,7 +606,12 @@ public class PlatformNavigationResolver : IScopedDependency
         if (await _permission.IsGrantedAsync(PlatformPermissions.Incomes.Default)
             || await _permission.IsGrantedAsync(PlatformPermissions.Expenses.Default)
             || await _permission.IsGrantedAsync(PlatformPermissions.Invoices.Default))
-            finance.AddItem(new ApplicationMenuItem("Apya.Finance.Hub", l["Menu:FinanceHub"], icon: "fa fa-right-left", url: "/Finance", order: 2));
+            // Menü ID'si SABİT: kayıtlı menü düzenleri ve kısayol iğneleri
+            // (PlatformSettings ShellPins / ShellMenuLayout) bu adı saklıyor —
+            // değişirse kullanıcının düzeni sessizce çözülemez hale gelir.
+            // Etiket ve ikon serbest: sayfa artık transfer ekranı değil, proje
+            // bağlamlı finans çatısı.
+            finance.AddItem(new ApplicationMenuItem("Apya.Finance.Hub", l["Menu:FinanceHub"], icon: "fa fa-chart-pie", url: "/Finance", order: 2));
         if (await _permission.IsGrantedAsync(PlatformPermissions.ExchangeRates.Default))
             finance.AddItem(new ApplicationMenuItem("Apya.Finance.ExchangeRates", l["Menu:ExchangeRates"], icon: "fa fa-money-bill-transfer", url: "/ExchangeRates", order: 3));
         // Cariler kullanıcı kararıyla menüden gizlendi (2026-06-22). /Customers sayfası korunur;
@@ -716,6 +725,8 @@ public class PlatformNavigationResolver : IScopedDependency
             platform.AddItem(new ApplicationMenuItem("Apya.Platform.SystemHealth", l["Menu:SystemHealth"], icon: "fa fa-heart-pulse", url: "/Admin/SystemHealth"));
         if (await _permission.IsGrantedAsync(PlatformPermissions.Consents.Default))
             platform.AddItem(new ApplicationMenuItem("Apya.Platform.Consents", l["Menu:Consents"], icon: "fa fa-shield-halved", url: "/Admin/Consent"));
+        if (await _permission.IsGrantedAsync(PlatformPermissions.DemoRequests.Default))
+            platform.AddItem(new ApplicationMenuItem("Apya.Platform.DemoRequests", l["Menu:DemoRequests"], icon: "fa fa-handshake", url: "/Admin/DemoRequests"));
         if (platform.Items.Count > 0) roots.Add(platform);
 
         // Kilitli özellikler — üst pakette açılacak bir şeyi OLAN kiracıya TEK keşif öğesi.

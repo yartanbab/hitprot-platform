@@ -23,6 +23,128 @@ public static class ReleaseNoteCatalog
     public static IReadOnlyList<ReleaseNote> All { get; } = new List<ReleaseNote>
     {
         new ReleaseNote(
+            version: "2026.09.01",
+            date: "1 Eylül 2026",
+            title: "Proje finansı tek ekranda, hibe çağrılarının tamamı listede",
+
+            // ── Finans ───────────────────────────────────────────────────────
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "Projenin bütün finansı tek ekranda toplandı",
+                "Bütçe, gelir-gider ve faturalar ayrı ayrı ekranlarda duruyordu; hangi rakamın hangi " +
+                "projeye ait olduğunu her seferinde yeniden süzmeniz gerekiyordu. Finans ekranında " +
+                "artık önce projeyi seçiyorsunuz, sekmeler o projenin bütçesini, kayıtlarını ve " +
+                "faturalarını gösteriyor. Sekmeler projenin türüne göre değişiyor: hibe projesinde " +
+                "fonlama dilimleri, kurumsal projede kâr-zarar öne çıkıyor."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "Bütçenizi kalemlere ayırıp gerçekleşmeyi kalem kalem izliyorsunuz",
+                "Projeye \"Personel\", \"Hizmet alımı\", \"Ekipman\" gibi bütçe kalemleri tanımlıyor, " +
+                "her gider ve geliri bir kaleme yazıyorsunuz. Kalemin ne kadarının harcandığını, ne " +
+                "kadarının kaldığını ve yüzde kaçının kullanıldığını tek tabloda görüyorsunuz. Kalem " +
+                "tanımlı bir projede kayıt açarken kalem seçimi zorunlu oluyor, böylece hiçbir harcama " +
+                "sınıflandırılmadan kalmıyor."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "Fonlama dilimleri, kesintiler ve bütçe revizyonları kayıt altında",
+                "Destek ödemesini dilim dilim planlıyor, geldiğinde tahsilatı işliyorsunuz; hangi " +
+                "dilimin ne kadarının geldiğini ve ne kadarının beklendiğini ekranda görüyorsunuz. " +
+                "Fon veren bir kesinti uyguladığında kesintiyi gerekçesiyle kaydediyor, kesintiyi ister " +
+                "bütçeye işliyor ister \"finanse edilmeyen\" olarak kapatıyorsunuz. Bütçe kalemlerinin " +
+                "tutarını değiştirdiğinizde önceki ve yeni tutar gerekçesiyle birlikte revizyon " +
+                "geçmişine yazılıyor — \"bu kalem neden değişti\" sorusunun cevabı kaybolmuyor."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "Görevlere bütçe ayırıp harcamayı görev bazında karşılaştırıyorsunuz",
+                "Bir görevi bütçe kalemine bağlayıp o göreve ayırdığınız tutarı yazabiliyorsunuz. " +
+                "Aynı kalemdeki görev bütçelerinin toplamı kalemi aşarsa kayıt kabul edilmiyor, " +
+                "böylece aynı para iki işe birden ayrılmıyor. Proje ekranına eklenen \"Finans\" " +
+                "sekmesinde hangi göreve ne kadar ayrıldığını ve o görevde ne kadar harcandığını " +
+                "yan yana görüyorsunuz; görev detayının Finans sekmesinde de görevin kendi bütçesi, " +
+                "gerçekleşeni ve kalanı çıkıyor."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "Döviz bütçeli projede üç rakamı birden görüyorsunuz",
+                "Hibe bütçeniz euro, harcamanız TL olduğunda hangi kurun geçerli olacağı hep tartışma " +
+                "konusuydu. Artık projede kur politikasını siz belirliyorsunuz: harcama günündeki kur, " +
+                "dilimin geldiği gündeki kur, ay başındaki kur ya da sözleşmedeki sabit kur. Her kayıt " +
+                "işlem para biriminde, TL karşılığıyla ve donör para birimiyle birlikte saklanıyor; " +
+                "hangi kurun kullanıldığı kayıtta yazıyor. Kur bulunamazsa uydurma bir rakam " +
+                "gösterilmiyor, \"kur yok\" uyarısı çıkıyor."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Fix,
+                "Gider veya geliri düzenlediğinizde görev bağı artık silinmiyor",
+                "Bir göreve bağlı gider ya da gelir kaydını açıp herhangi bir alanını değiştirip " +
+                "kaydettiğinizde görev bağı sessizce siliniyordu; kayıt görevin Finans sekmesinden " +
+                "kayboluyor, görev bazlı raporlar eksik çıkıyordu. Düzenleme ekranı artık görev " +
+                "bilgisini koruyor."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "Belge açığını finans ekranından görüyorsunuz",
+                "Finans ekranına \"Belgeler\" sekmesi eklendi. Kaç harcamanın belgesi eksik, bu " +
+                "harcamaların hangi bütçe kalemlerine yazıldığı ve kaç belgenin henüz bir harcamaya " +
+                "bağlanmadığı tek bakışta görünüyor. Aynı sekmede kurumun istediği belge listesinin " +
+                "yüzde kaçının tamamlandığı ve teslim paketinizin dışa aktarılmaya hazır olup " +
+                "olmadığı da yazıyor — teslimi bloke eden bir eksik varsa orada uyarı çıkıyor. " +
+                "Belgeleriniz yine Dokümanlar modülünde duruyor; bu sekme onları finans gözüyle " +
+                "özetliyor ve tek tıkla ilgili ekrana götürüyor."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
+                "Belge eşleştirirken hangi kalemin belgeleneceğini görüyorsunuz",
+                "Harcama-belge eşleştirme ekranında bir aday belgeyi bağlamadan önce \"bağlanınca " +
+                "hangi bütçe kalemi belgeli olur\" bilgisi kartın üzerinde yazıyor. Harcamalar " +
+                "listesinde de her satırın kalemi görünüyor, böylece hangi kalemin açığını " +
+                "kapattığınızı kaybetmiyorsunuz."),
+
+            // ── Hibe ─────────────────────────────────────────────────────────
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "Açık hibe çağrılarının tamamını görüyorsunuz",
+                "Hibeler ekranında şimdiye kadar yalnız firma profilinize yeterince uyan çağrılar " +
+                "listeleniyordu; uyum puanı tutmayan bir çağrı hiç görünmediği için varlığından " +
+                "haberiniz olmuyordu. Artık yayına alınan bütün açık çağrılar \"Diğer Açık Çağrılar\" " +
+                "başlığı altında listeleniyor ve hepsine doğrudan başvurabiliyorsunuz."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
+                "Size uygun çağrılar aynı sayfada ayrı duruyor",
+                "Firma profiliniz ve proje geçmişinizle yüksek uyum gösteren çağrılar sayfanın üstünde " +
+                "\"Size Önerilen Çağrılar\" başlığında ayrı kalmaya devam ediyor; size özel gönderilen " +
+                "çağrılar da burada çıkıyor. Her kartta o çağrı için uyum puanınızı görüyorsunuz, " +
+                "böylece listenin tamamına bakarken önceliğinizi kaybetmiyorsunuz."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "Erasmus+ gençlik programları hibe listenizde",
+                "Erasmus+ gençlik alanının beş programı katalogda tanımlandı: Gençlik Değişimleri " +
+                "(KA152), Gençlik Çalışanlarının Hareketliliği (KA153), Gençlik Katılımı (KA154), " +
+                "Küçük Ölçekli Ortaklıklar (KA210) ve İşbirliği Ortaklıkları (KA220). Her programın " +
+                "açıklamasında hedef kitlesi, kimlerin başvurabileceği ve götürü hibe kademeleri yazıyor. " +
+                "KA152, KA153 ve KA154 için 1 Ekim 2026 başvuru dönemi açık ve şimdiden listenizde " +
+                "görünüyor; KA210 ile KA220 ise 2027 başvuru takvimi açıklandığında listenize düşecek."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "Bir hibeye uygun olup olmadığınızı şart şart görüyorsunuz",
+                "Hibe detayında programın uygunluk şartları tek tek listeleniyor ve her şartın " +
+                "yanında sizin durumunuz yazıyor: sağlıyorsunuz, sağlamıyorsunuz ya da bilgi eksik. " +
+                "Eksik bilgi artık \"uygun değilsiniz\" demek değil — firma profilinizi " +
+                "tamamladığınızda o şart ölçülebilir hâle geliyor. Uyum puanınızın hangi başlıktan " +
+                "kaç puan aldığı da aynı ekranda kırılımıyla duruyor, böylece puanı yükseltmek için " +
+                "neye bakmanız gerektiğini görüyorsunuz."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "Alacağınız desteği başvuru dosyası hazırlamadan hesaplıyorsunuz",
+                "Hibe detayındaki bütçe hesaplayıcıya kalem kalem bütçenizi giriyorsunuz; program " +
+                "her kalem için tanımladığı destek oranını uygulayıp tahmini destek tutarını ve " +
+                "sizin payınıza düşeni gösteriyor. Program üst limiti devreye girdiğinde bunu " +
+                "ayrıca belirtiyor. Aynı sayfada başvurunun süreç adımlarını ve istenen evrak " +
+                "listesini de görüyorsunuz."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
+                "Açık hibeler listesinde giderebileceğiniz eksikleri ayırıyorsunuz",
+                "Tüm açık hibeler listesinde her satırda uygunluk durumunuz, uyum puanınız, destek " +
+                "üst limiti ve son başvuruya kalan gün yan yana duruyor. \"Sadece giderilebilir " +
+                "eksikleri göster\" süzgeciyle şu an şartını karşılamadığınız ama tamamlayabileceğiniz " +
+                "çağrıları ayırıyor, ilgilendiğiniz çağrıları takibe alıp listenizde tutuyorsunuz.")
+        ),
+
+        new ReleaseNote(
             version: "2026.08.31",
             date: "31 Ağustos 2026",
             title: "Görev paylaşımı, mobilde daha az kaydırma ve tek tıklama",

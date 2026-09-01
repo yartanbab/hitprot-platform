@@ -46,6 +46,8 @@ namespace Apya.Platform.Tasks
         private readonly IRepository<Apya.Platform.Projects.Project, Guid> _projectLookupRepository;
         private readonly IRepository<TaskShareLink, Guid> _shareLinkRepository;
         private readonly ILocalEventBus _localEventBus;
+        private readonly Apya.Platform.ProjectBudgets.ProjectBudgetManager _budgetManager;
+        private readonly IRepository<Apya.Platform.ProjectBudgets.ProjectBudgetLine, Guid> _budgetLineRepository;
 
         public TaskAppService(
             IRepository<TaskItem, Guid> repository,
@@ -68,9 +70,13 @@ namespace Apya.Platform.Tasks
             IRepository<IncomeEntry, Guid> incomeRepository,
             IRepository<Apya.Platform.Projects.Project, Guid> projectLookupRepository,
             IRepository<TaskShareLink, Guid> shareLinkRepository,
-            ILocalEventBus localEventBus)
+            ILocalEventBus localEventBus,
+            Apya.Platform.ProjectBudgets.ProjectBudgetManager budgetManager,
+            IRepository<Apya.Platform.ProjectBudgets.ProjectBudgetLine, Guid> budgetLineRepository)
             : base(repository)
         {
+            _budgetManager         = budgetManager;
+            _budgetLineRepository  = budgetLineRepository;
             _userRepository        = userRepository;
             _commentRepository     = commentRepository;
             _attachmentRepository  = attachmentRepository;
@@ -120,6 +126,25 @@ namespace Apya.Platform.Tasks
                 var assigneeFull = string.Join(" ", new[] { task.Assignee.Name, task.Assignee.Surname }
                     .Where(s => !string.IsNullOrWhiteSpace(s)));
                 taskDto.AssigneeName = string.IsNullOrWhiteSpace(assigneeFull) ? task.Assignee.UserName : assigneeFull;
+            }
+
+            // Bütçe bağının GÖSTERİM bilgisi: kalem adı ve kalemde kalan yer.
+            // "Kalan", görev planı girilirken "ne kadar yer var" sorusunun cevabı;
+            // kalemin onaylanan tutarından DİĞER görevlerin planları düşülür.
+            if (task.BudgetLineId.HasValue
+                && await AuthorizationService.IsGrantedAsync(PlatformPermissions.Projects.ViewBudget))
+            {
+                var line = await _budgetLineRepository.FindAsync(x => x.Id == task.BudgetLineId.Value);
+                if (line != null)
+                {
+                    taskDto.BudgetLineName = string.IsNullOrWhiteSpace(line.Code)
+                        ? line.Name
+                        : $"{line.Code} · {line.Name}";
+
+                    var siblings = await Repository.GetListAsync(x =>
+                        x.BudgetLineId == line.Id && x.PlannedAmount != null && x.Id != task.Id);
+                    taskDto.BudgetLineRemaining = line.ApprovedAmount - siblings.Sum(x => x.PlannedAmount!.Value);
+                }
             }
 
             // Üst görev görünür olsa da alt görevler KENDİ gizlilik kuralına tabi (APYA-22) —
@@ -690,6 +715,12 @@ namespace Apya.Platform.Tasks
             newTask.AssignNumber(await _taskManager.GetNextNumberAsync());
             newTask.SetPlanningInfo(input.EstimatedHours, input.TaskType, input.Sprint);
 
+            // Bütçe bağı: kalem projeye ait olmalı ve aynı kalemdeki görev
+            // planlarının toplamı kalemi aşmamalı. Kural ProjectBudgetManager'da.
+            await _budgetManager.EnsureTaskBudgetIsValidAsync(
+                input.ProjectId, input.BudgetLineId, input.PlannedAmount);
+            newTask.SetBudgetLink(input.BudgetLineId, input.PlannedAmount);
+
             // Durum varsayılandan farklıysa set et
             if (input.Status != Apya.Platform.Tasks.TaskStatus.Todo)
             {
@@ -784,6 +815,12 @@ namespace Apya.Platform.Tasks
             );
 
             task.SetPlanningInfo(input.EstimatedHours, input.TaskType, input.Sprint);
+
+            // excludeTaskId ŞART: görevin kendi eski planı "başka görevin planı"
+            // sayılırsa görev kendi tutarını güncelleyemez hale gelir.
+            await _budgetManager.EnsureTaskBudgetIsValidAsync(
+                input.ProjectId, input.BudgetLineId, input.PlannedAmount, excludeTaskId: id);
+            task.SetBudgetLink(input.BudgetLineId, input.PlannedAmount);
 
             // Proje değişimi (task.Update projeyi kapsamaz). Board kolonu proje-kapsamlı
             // olduğundan MoveToProject proje değişince kolonu temizler.

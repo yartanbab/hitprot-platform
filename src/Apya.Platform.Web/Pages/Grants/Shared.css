@@ -1,0 +1,211 @@
+/* =============================================================================
+   Hibe ekranlarının ORTAK sözlüğü.
+   Bu kurallar birden çok hibe sayfasında kullanılıyor; tek bir sayfanın CSS'inde
+   durdukları sürece o dosyayı yüklemeyen sayfada sessizce biçimsiz kalıyorlardı.
+   Yalnız bir ekrana ait ölçüler ilgili sayfanın kendi dosyasında kalır.
+   ============================================================================= */
+
+/* --- Bölüm başlığı (Parametreler, Eşleşme Ağırlıkları) --- */
+.apya-param-section-head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.apya-param-section-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    flex: none;
+    border-radius: var(--apya-radius-lg);
+    background: var(--apya-accent-soft);
+    color: var(--apya-accent-500);
+    font-size: var(--apya-fs-base);
+}
+
+.apya-param-section-icon--financial {
+    background: var(--apya-positive-50);
+    color: var(--apya-positive-700);
+}
+
+/* --- Alan ızgarası --- */
+.apya-param-grid {
+    display: grid;
+    gap: var(--apya-space-4);
+}
+
+.apya-param-grid--2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.apya-param-grid--3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.apya-param-grid--4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+
+@media (max-width: 767.98px) {
+    .apya-param-grid--2,
+    .apya-param-grid--3,
+    .apya-param-grid--4 { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* --- Etiketli alan --- */
+.apya-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+}
+
+.apya-field-label {
+    display: flex;
+    align-items: baseline;
+    gap: var(--apya-space-2);
+    font-size: var(--apya-text-xs);
+    font-weight: var(--apya-weight-medium);
+    color: var(--apya-text-secondary);
+}
+
+.apya-field-label > span:first-child {
+    flex: 1;
+    min-width: 0;
+}
+
+/* Şartın tek başına kaç firmayı elediği — label'ın sağında, canlı güncellenir. */
+.apya-field-impact {
+    flex: none;
+    font-family: var(--apya-font-mono);
+    font-variant-numeric: tabular-nums;
+    font-size: var(--apya-fs-xs);
+    color: var(--apya-text-tertiary);
+}
+
+.apya-field-impact.is-heavy { color: var(--apya-warning-700); }
+
+.apya-field-range {
+    display: flex;
+    align-items: center;
+    gap: var(--apya-space-2);
+}
+
+.apya-field-range > .form-control { min-width: 0; }
+
+.apya-field-range-sep {
+    flex: none;
+    color: var(--apya-text-tertiary);
+    font-size: var(--apya-text-xs);
+}
+
+/* --- Chip seçici (çoklu seçim) --- */
+.apya-choice-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.apya-choice {
+    padding: 5px var(--apya-space-3);
+    border: 1px solid var(--apya-border-default);
+    border-radius: var(--apya-radius-full);
+    background: var(--apya-surface-base);
+    color: var(--apya-text-tertiary);
+    font-size: var(--apya-text-xs);
+    cursor: pointer;
+}
+
+.apya-choice.is-on {
+    border-color: var(--apya-accent-500);
+    background: var(--apya-accent-soft);
+    color: var(--apya-accent-600);
+    font-weight: var(--apya-weight-semibold);
+}
+
+/* --- Etiket (chip) girişi --- */
+.apya-tag-input {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    padding: 6px var(--apya-space-2);
+    border: 1px solid var(--apya-border-default);
+    border-radius: var(--apya-radius-lg);
+    background: var(--apya-surface-base);
+}
+
+.apya-tag-input .apya-tag-chips { display: contents; }
+
+.apya-tag-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px var(--apya-space-2);
+    border-radius: var(--apya-radius-full);
+    background: var(--apya-accent-soft);
+    color: var(--apya-accent-600);
+    font-size: var(--apya-text-xs);
+}
+
+.apya-tag-remove {
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    font-size: 15px;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.apya-tag-entry {
+    flex: 1 1 90px;
+    min-width: 90px;
+    border: 0;
+    padding: 2px 0;
+    box-shadow: none !important;
+}
+
+.apya-tag-entry:focus { outline: none; }
+
+/* --- Küçük ilerleme çubuğu --- */
+.apya-mini-bar {
+    height: 6px;
+    border-radius: var(--apya-radius-full);
+    background: var(--apya-surface-sunken);
+    overflow: hidden;
+}
+
+.apya-mini-bar > span {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: var(--apya-accent-500);
+}
+
+/* --- Yan panel notu --- */
+.apya-side-note {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--apya-space-2);
+    padding: 10px;
+    border-radius: var(--apya-radius-lg);
+    background: var(--apya-warning-50);
+    color: var(--apya-warning-700);
+    font-size: var(--apya-text-xs);
+    line-height: 1.45;
+}
+
+.apya-side-note--quiet {
+    background: var(--apya-surface-sunken);
+    color: var(--apya-text-secondary);
+}
+
+/* --- Boş liste --- */
+.apya-src-empty {
+    padding: var(--apya-space-5);
+    text-align: center;
+    color: var(--apya-text-tertiary);
+}
+
+/* --- Koyu tema: aksan METNİ ---
+   accent-600 koyu temada -500'den DAHA KOYU tanımlıdır (#4F46E5); %13 tint üstünde
+   kontrast 4:1'in altına düşer. Metin -300'e çıkar (~8:1). */
+[data-theme="dark"] .apya-choice.is-on,
+[data-theme="dark"] .apya-tag-chip {
+    color: var(--apya-accent-300);
+}

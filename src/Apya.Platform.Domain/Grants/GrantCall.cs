@@ -20,6 +20,12 @@ public class GrantCall : FullAuditedAggregateRoot<Guid>, IMultiTenant
     public decimal? Budget { get; set; }
     public string? Reference { get; set; }
 
+    // --- 1a/3a · taslağın kaynağı ---
+    /// <summary>Kazımadan geldiyse kaynağın kimliği. Elle girilen çağrıda null.</summary>
+    public Guid? SourceId { get; set; }
+
+    public GrantCallOrigin Origin { get; set; }
+
     protected GrantCall() { }
 
     public GrantCall(Guid id, Guid grantId, string period, GrantCallStatus status) : base(id)

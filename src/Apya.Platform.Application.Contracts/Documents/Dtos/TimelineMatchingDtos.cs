@@ -113,6 +113,15 @@ public class UnmatchedExpenseDto
     public DateTime ExpenseDate { get; set; }
     public string? SupplierName { get; set; }
     public string? Description { get; set; }
+
+    /// <summary>
+    /// Harcamanın yazıldığı bütçe kalemi. Eşleştirme ekranı "bu belgeyi bağlarsan
+    /// hangi kalem belgeli olur" satırını buradan basar; kalem yoksa null kalır.
+    /// </summary>
+    public Guid? BudgetLineId { get; set; }
+
+    /// <summary>Kalemin "kod · ad" biçiminde gösterim adı; kod boşsa yalnız ad.</summary>
+    public string? BudgetLineName { get; set; }
 }
 
 /// <summary>Sağ kolon: hiçbir harcamaya bağlanmamış belgeler.</summary>

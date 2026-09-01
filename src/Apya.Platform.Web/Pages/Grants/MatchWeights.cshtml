@@ -1,0 +1,132 @@
+@page
+@using Apya.Platform.Localization
+@using Microsoft.AspNetCore.Mvc.Localization
+@inject IHtmlLocalizer<PlatformResource> L
+@model Apya.Platform.Web.Pages.Grants.MatchWeightsModel
+@{
+    ViewBag.Title = L["Grants:Weights:Title"].Value;
+}
+
+@section styles {
+    <abp-style src="/Pages/Grants/Shared.css" />
+    <abp-style src="/Pages/Grants/MatchWeights.css" />
+}
+
+@section scripts {
+    <abp-script src="/Pages/Grants/MatchWeights.js" />
+}
+
+@* Başlık + açıklama app header'da; sayfa içinde tekrarlanmıyor. *@
+<div data-page-description="@L["Grants:Weights:Description"]" class="apya-page" data-grant-id="@Model.Id">
+    <div class="apya-page-head">
+        <div class="apya-page-head-actions d-flex align-items-center gap-2">
+            <a id="WeightBackLink" href="/Grants" class="btn btn-sm btn-outline-secondary">
+                <i class="fa fa-arrow-left me-1"></i>@L["Grants:Parameters:Title"]
+            </a>
+            <span id="WeightScopeChip" class="apya-chip apya-chip-neutral"></span>
+            <button type="button" id="WeightResetBtn" class="btn btn-sm btn-link text-secondary">
+                @L["Grants:Weights:ResetToDefault"]
+            </button>
+            <button type="button" id="WeightSaveBtn" class="btn btn-sm btn-primary">
+                <i class="fa fa-check me-1"></i>@L["Grants:Weights:Save"]
+            </button>
+        </div>
+    </div>
+
+    <div class="apya-weight-layout">
+
+        <div class="d-flex flex-column gap-4">
+
+            <section class="card mb-0">
+                <div class="card-body d-flex flex-column gap-3">
+                    <div class="apya-param-section-head">
+                        <span class="apya-weight-icon"><i class="fa fa-bullseye"></i></span>
+                        <div>
+                            <div class="fw-bold">@L["Grants:Weights:Dimensions"]</div>
+                            <div class="small text-muted">@L["Grants:Weights:DimensionsHint"]</div>
+                        </div>
+                    </div>
+
+                    <div id="WeightDimensions" class="d-flex flex-column gap-2"></div>
+
+                    <div class="d-flex flex-column gap-2 pt-3 border-top">
+                        <div class="form-check mb-0">
+                            <input class="form-check-input" type="checkbox" id="WeightSizePenalty" />
+                            <label class="form-check-label small" for="WeightSizePenalty">@L["Grants:Weights:SizePenalty"]</label>
+                        </div>
+                        <div class="form-check mb-0">
+                            <input class="form-check-input" type="checkbox" id="WeightSkipMissing" />
+                            <label class="form-check-label small" for="WeightSkipMissing">@L["Grants:Weights:SkipMissing"]</label>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="card mb-0">
+                <div class="card-body d-flex flex-column gap-3">
+                    <div class="apya-param-section-head">
+                        <span class="apya-weight-icon apya-weight-icon--warning"><i class="fa fa-database"></i></span>
+                        <div>
+                            <div class="fw-bold">@L["Grants:Weights:Campaign"]</div>
+                            <div class="small text-muted">@L["Grants:Weights:CampaignHint"]</div>
+                        </div>
+                    </div>
+
+                    <div class="apya-campaign-table">
+                        <div class="apya-campaign-row apya-campaign-head">
+                            <span>@L["Grants:Weights:Col:Field"]</span>
+                            <span>@L["Grants:Weights:Col:Firms"]</span>
+                            <span>@L["Grants:Weights:Col:Calls"]</span>
+                            <span>@L["Grants:Weights:Col:How"]</span>
+                        </div>
+                        <div id="WeightCampaign"></div>
+                        <div id="WeightCampaignEmpty" class="apya-campaign-empty d-none">@L["Grants:Weights:CampaignEmpty"]</div>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <aside class="apya-weight-side">
+            <div class="card mb-0">
+                <div class="card-body d-flex flex-column gap-3">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <span class="apya-overline">@L["Grants:Weights:Impact"]</span>
+                        <span class="apya-chip apya-chip-ai"><i class="fa fa-bolt me-1"></i>@L["Grants:Parameters:Live"]</span>
+                    </div>
+
+                    <div class="d-flex flex-column gap-2">
+                        <div class="apya-weight-impact">
+                            <span class="text-secondary">@L["Grants:Weights:ImpactCurrent"]</span>
+                            <span class="apya-numeric" id="ImpactCurrent">—</span>
+                        </div>
+                        <div class="apya-weight-impact apya-weight-impact--new">
+                            <span>@L["Grants:Weights:ImpactNew"]</span>
+                            <span class="apya-numeric" id="ImpactNew">—</span>
+                        </div>
+                        <div class="small text-muted"><span id="ImpactTotal"></span></div>
+                    </div>
+
+                    <div class="d-flex flex-column gap-2 pt-3 border-top">
+                        <span class="apya-overline">@L["Grants:Weights:TopMovers"]</span>
+                        <div id="ImpactMovers" class="d-flex flex-column gap-1"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mb-0">
+                <div class="card-body d-flex flex-column gap-2">
+                    <span class="apya-overline">@L["Grants:Weights:Scope"]</span>
+                    <div class="form-check mb-0">
+                        <input class="form-check-input" type="radio" name="WeightScope" id="ScopeGrant" value="grant" checked />
+                        <label class="form-check-label small" for="ScopeGrant">@L["Grants:Weights:ScopeGrant"]</label>
+                    </div>
+                    <div class="form-check mb-0">
+                        <input class="form-check-input" type="radio" name="WeightScope" id="ScopeGlobal" value="global" />
+                        <label class="form-check-label small" for="ScopeGlobal">@L["Grants:Weights:ScopeGlobal"]</label>
+                    </div>
+                    <div id="ScopeWarning" class="apya-weight-warning d-none"></div>
+                </div>
+            </div>
+        </aside>
+    </div>
+</div>

@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using Apya.Platform.Projects;
 
@@ -21,6 +22,15 @@ public sealed class FirmSignals
 
     /// <summary>Devam eden (EndDate boş veya bugünden ileri) proje sayısı. B3/C'de kapasite sinyali için.</summary>
     public int ActiveProjectCount { get; set; }
+
+    // --- 1b · uygunluk kurallarının firma tarafı (FirmProfile'dan okunur) ---
+    // null = veri girilmemiş → ilgili kural Unknown döner, firma elenmez.
+    public DateTime? FoundedOn { get; set; }
+    public int? StaffCount { get; set; }
+    public int? RdStaffCount { get; set; }
+    public decimal? AnnualRevenue { get; set; }
+    public int? Trl { get; set; }
+    public bool? HasConsortiumPartner { get; set; }
 }
 
 public sealed record FirmSignalTag(GrantCriteriaKind Kind, string Value);

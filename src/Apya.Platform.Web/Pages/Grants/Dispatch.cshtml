@@ -1,0 +1,166 @@
+@page
+@using Apya.Platform.Localization
+@using Microsoft.AspNetCore.Mvc.Localization
+@inject IHtmlLocalizer<PlatformResource> L
+@model Apya.Platform.Web.Pages.Grants.DispatchModel
+@{
+    ViewBag.Title = L["Grants:Dispatch:Title"].Value;
+}
+
+@section styles {
+    <abp-style src="/Pages/Grants/Shared.css" />
+    <abp-style src="/Pages/Grants/Tenant.css" />
+    <abp-style src="/Pages/Grants/Dispatch.css" />
+}
+
+@section scripts {
+    <abp-script src="/Pages/Grants/Dispatch.js" />
+}
+
+@* Başlık + açıklama app header'da; sayfa içinde tekrarlanmıyor. *@
+<div data-page-description="@L["Grants:Dispatch:Description"]" class="apya-page" data-call-id="@Model.Id">
+    <div class="apya-page-head">
+        <div class="apya-page-head-actions d-flex align-items-center gap-2">
+            <a href="/Grants" class="btn btn-sm btn-outline-secondary">
+                <i class="fa fa-arrow-left me-1"></i>@L["Grants:Parameters:BackToPrograms"]
+            </a>
+            <span class="fw-semibold" id="CallTitle"></span>
+            <span class="apya-chip apya-chip-neutral" id="CallPeriod"></span>
+        </div>
+    </div>
+
+    <div class="apya-dispatch-layout">
+
+        @* ---------- Sol: süzgeç ---------- *@
+        <aside class="card mb-0 apya-dispatch-filter">
+            <div class="card-body d-flex flex-column gap-3">
+                <div class="apya-overline">@L["Grants:Dispatch:Filter"]</div>
+
+                <div class="apya-field">
+                    <span class="apya-field-label">
+                        <span>@L["Grants:Dispatch:MinScore"]</span>
+                        <span class="apya-field-impact" id="MinScoreValue"></span>
+                    </span>
+                    <input type="range" min="0" max="100" step="5" value="0" class="form-range" id="MinScore" />
+                    <div class="small text-muted" id="ThresholdNote"></div>
+                </div>
+
+                <div class="apya-field">
+                    <span class="apya-field-label"><span>@L["Grants:Parameters:CompanySizes"]</span></span>
+                    <div class="apya-choice-row" id="FilterSizes">
+                        <button type="button" class="apya-choice" data-size="1">@L["Grants:Size:Mikro"]</button>
+                        <button type="button" class="apya-choice" data-size="2">@L["Grants:Size:Kucuk"]</button>
+                        <button type="button" class="apya-choice" data-size="4">@L["Grants:Size:Orta"]</button>
+                        <button type="button" class="apya-choice" data-size="8">@L["Grants:Size:Buyuk"]</button>
+                    </div>
+                </div>
+
+                <div class="apya-field">
+                    <span class="apya-field-label"><span>@L["Grants:Dispatch:Budget"]</span></span>
+                    <div class="apya-field-range">
+                        <input type="number" min="0" step="0.01" class="form-control form-control-sm apya-numeric" id="BudgetMin" />
+                        <span class="apya-field-range-sep">—</span>
+                        <input type="number" min="0" step="0.01" class="form-control form-control-sm apya-numeric" id="BudgetMax" />
+                    </div>
+                </div>
+
+                <div class="apya-field">
+                    <label class="apya-field-label" for="FilterCategory"><span>@L["Grants:Dispatch:Category"]</span></label>
+                    <select class="form-select form-select-sm" id="FilterCategory">
+                        <option value="">@L["Grants:Dispatch:CategoryAll"]</option>
+                    </select>
+                </div>
+
+                <div class="d-flex flex-column gap-2 pt-3 border-top">
+                    <div class="form-check mb-0">
+                        <input class="form-check-input apya-filter-flag" type="checkbox" id="ExcludeSent" />
+                        <label class="form-check-label small" for="ExcludeSent">@L["Grants:Dispatch:ExcludeSent"]</label>
+                    </div>
+                    <div class="form-check mb-0">
+                        <input class="form-check-input apya-filter-flag" type="checkbox" id="ExcludeApplied" />
+                        <label class="form-check-label small" for="ExcludeApplied">@L["Grants:Dispatch:ExcludeApplied"]</label>
+                    </div>
+                    <div class="form-check mb-0">
+                        <input class="form-check-input apya-filter-flag" type="checkbox" id="OnlyEligible" />
+                        <label class="form-check-label small" for="OnlyEligible">@L["Grants:Dispatch:OnlyEligible"]</label>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        @* ---------- Orta: aday tablosu ---------- *@
+        <section class="card mb-0">
+            <div class="card-body d-flex flex-column gap-3">
+                <div class="d-flex align-items-center justify-content-between gap-2">
+                    <div class="fw-bold">@L["Grants:Dispatch:Candidates"]</div>
+                    <span class="apya-chip apya-numeric apya-chip-accent" id="CandidateCount"></span>
+                </div>
+
+                <div class="apya-cat-table">
+                    <div class="apya-cand-row apya-cat-head">
+                        <span><input type="checkbox" class="form-check-input" id="SelectAll" title="@L["Grants:Dispatch:SelectAll"]" /></span>
+                        <span>@L["Grants:Dispatch:Col:Firm"]</span>
+                        <span>@L["Grants:Dispatch:Col:Score"]</span>
+                        <span>@L["Grants:Dispatch:Col:Breakdown"]</span>
+                        <span>@L["Grants:Dispatch:Col:Consultant"]</span>
+                    </div>
+                    <div id="CandidateRows"></div>
+                    <div id="CandidateEmpty" class="apya-src-empty d-none">
+                        <div class="fw-semibold">@L["Grants:Dispatch:Empty"]</div>
+                        <div class="small">@L["Grants:Dispatch:EmptyHint"]</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        @* ---------- Sağ: gönderim paneli ---------- *@
+        <aside class="apya-dispatch-side">
+            <div class="card mb-0">
+                <div class="card-body d-flex flex-column gap-3">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <span class="apya-overline">@L["Grants:Dispatch:Send"]</span>
+                        <span class="apya-chip apya-numeric apya-chip-accent" id="SelectedCount"></span>
+                    </div>
+
+                    <div class="apya-field">
+                        <span class="apya-field-label"><span>@L["Grants:Dispatch:Channels"]</span></span>
+                        <div class="form-check mb-0">
+                            <input class="form-check-input" type="checkbox" id="ChannelNotification" checked />
+                            <label class="form-check-label small" for="ChannelNotification">@L["Grants:Dispatch:Channel:Notification"]</label>
+                        </div>
+                        <div class="form-check mb-0">
+                            <input class="form-check-input" type="checkbox" id="ChannelEmail" checked />
+                            <label class="form-check-label small" for="ChannelEmail">@L["Grants:Dispatch:Channel:Email"]</label>
+                        </div>
+                        <div class="form-check mb-0">
+                            <input class="form-check-input" type="checkbox" disabled />
+                            <label class="form-check-label small text-muted">@L["Grants:Dispatch:Channel:SmsSoon"]</label>
+                        </div>
+                    </div>
+
+                    <div class="apya-field">
+                        <label class="apya-field-label" for="AssignedUser"><span>@L["Grants:Dispatch:Consultant"]</span></label>
+                        <select class="form-select form-select-sm" id="AssignedUser"></select>
+                    </div>
+
+                    <div class="apya-field">
+                        <label class="apya-field-label" for="DispatchNote"><span>@L["Grants:Dispatch:Note"]</span></label>
+                        <textarea class="form-control form-control-sm" rows="3" maxlength="256"
+                                  id="DispatchNote" placeholder="@L["Grants:Dispatch:NotePlaceholder"]"></textarea>
+                    </div>
+
+                    <button type="button" id="SendBtn" class="btn btn-sm btn-primary" disabled>
+                        <i class="fa fa-paper-plane me-1"></i>@L["Grants:Dispatch:SendBtn"]
+                    </button>
+                </div>
+            </div>
+
+            <div class="card mb-0">
+                <div class="card-body d-flex flex-column gap-2">
+                    <span class="apya-overline">@L["Grants:Dispatch:Opportunity"]</span>
+                    <div id="OpportunityBox"></div>
+                </div>
+            </div>
+        </aside>
+    </div>
+</div>

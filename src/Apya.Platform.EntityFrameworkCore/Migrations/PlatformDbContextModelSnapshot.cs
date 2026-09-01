@@ -1901,6 +1901,116 @@ namespace Apya.Platform.Migrations
                     b.ToTable("AppDashboardLayouts", (string)null);
                 });
 
+            modelBuilder.Entity("Apya.Platform.DemoRequests.DemoRequest", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("AdminNote")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<int?>("BudgetRange")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("CompanyName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<int?>("CompanySize")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("ConcurrencyStamp")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)")
+                        .HasColumnName("ConcurrencyStamp");
+
+                    b.Property<DateTime>("CreationTime")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("CreationTime");
+
+                    b.Property<Guid?>("CreatorId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("CreatorId");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<string>("ExpectedOutcomes")
+                        .HasMaxLength(1500)
+                        .HasColumnType("character varying(1500)");
+
+                    b.Property<string>("ExtraProperties")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("ExtraProperties");
+
+                    b.Property<string>("FullName")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
+
+                    b.Property<string>("InterestedModules")
+                        .HasMaxLength(400)
+                        .HasColumnType("character varying(400)");
+
+                    b.Property<string>("IpAddress")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<DateTime?>("LastModificationTime")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("LastModificationTime");
+
+                    b.Property<Guid?>("LastModifierId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("LastModifierId");
+
+                    b.Property<string>("Message")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<int?>("OrganizationKind")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Phone")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.Property<string>("PlannedActivities")
+                        .HasMaxLength(1500)
+                        .HasColumnType("character varying(1500)");
+
+                    b.Property<string>("ProblemStatement")
+                        .HasMaxLength(1500)
+                        .HasColumnType("character varying(1500)");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("TargetAudience")
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.Property<string>("UserAgent")
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("IpAddress", "CreationTime");
+
+                    b.HasIndex("Status", "CreationTime");
+
+                    b.ToTable("AppDemoRequests", (string)null);
+                });
+
             modelBuilder.Entity("Apya.Platform.Documents.ComplianceAssignment", b =>
                 {
                     b.Property<Guid>("Id")
@@ -4683,6 +4793,15 @@ namespace Apya.Platform.Migrations
                     b.Property<decimal>("Amount")
                         .HasColumnType("decimal(18,2)");
 
+                    b.Property<decimal>("BookAmount")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("BookRate")
+                        .HasColumnType("decimal(18,6)");
+
+                    b.Property<Guid?>("BudgetLineId")
+                        .HasColumnType("uuid");
+
                     b.Property<Guid>("CashAccountId")
                         .HasColumnType("uuid");
 
@@ -4724,6 +4843,12 @@ namespace Apya.Platform.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)");
 
+                    b.Property<decimal?>("DonorAmount")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal?>("DonorRate")
+                        .HasColumnType("decimal(18,6)");
+
                     b.Property<DateTime>("ExpenseDate")
                         .HasColumnType("timestamp with time zone");
 
@@ -4749,6 +4874,9 @@ namespace Apya.Platform.Migrations
                     b.Property<Guid?>("ProjectId")
                         .HasColumnType("uuid");
 
+                    b.Property<bool>("RateLocked")
+                        .HasColumnType("boolean");
+
                     b.Property<Guid?>("TaskId")
                         .HasColumnType("uuid");
 
@@ -4762,6 +4890,8 @@ namespace Apya.Platform.Migrations
                         .HasColumnType("character varying(200)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("BudgetLineId");
 
                     b.HasIndex("CashAccountId");
 
@@ -5226,6 +5356,9 @@ namespace Apya.Platform.Migrations
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid");
 
+                    b.Property<decimal?>("AnnualRevenue")
+                        .HasColumnType("decimal(18,2)");
+
                     b.Property<string>("ConcurrencyStamp")
                         .IsConcurrencyToken()
                         .IsRequired()
@@ -5254,6 +5387,12 @@ namespace Apya.Platform.Migrations
                         .HasColumnType("text")
                         .HasColumnName("ExtraProperties");
 
+                    b.Property<DateTime?>("FoundedOn")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool?>("HasConsortiumPartner")
+                        .HasColumnType("boolean");
+
                     b.Property<bool>("IsDeleted")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("boolean")
@@ -5268,12 +5407,21 @@ namespace Apya.Platform.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("LastModifierId");
 
+                    b.Property<int?>("RdStaffCount")
+                        .HasColumnType("integer");
+
                     b.Property<int?>("Size")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("StaffCount")
                         .HasColumnType("integer");
 
                     b.Property<Guid?>("TenantId")
                         .HasColumnType("uuid")
                         .HasColumnName("TenantId");
+
+                    b.Property<int?>("Trl")
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -5394,6 +5542,9 @@ namespace Apya.Platform.Migrations
                         .HasColumnType("text")
                         .HasColumnName("ExtraProperties");
 
+                    b.Property<bool>("HasAdvancePayment")
+                        .HasColumnType("boolean");
+
                     b.Property<bool>("IsDeleted")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("boolean")
@@ -5416,19 +5567,76 @@ namespace Apya.Platform.Migrations
                     b.Property<decimal>("MaxAmount")
                         .HasColumnType("numeric");
 
+                    b.Property<int?>("MaxCompanyAgeYears")
+                        .HasColumnType("integer");
+
+                    b.Property<decimal?>("MaxRevenue")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<int?>("MaxTrl")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("MinCompanyAgeYears")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("MinConsortiumPartners")
+                        .HasColumnType("integer");
+
                     b.Property<double>("MinMatchScore")
                         .HasColumnType("double precision");
+
+                    b.Property<int?>("MinRdStaffCount")
+                        .HasColumnType("integer");
+
+                    b.Property<decimal?>("MinRevenue")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<int?>("MinStaffCount")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("MinTrl")
+                        .HasColumnType("integer");
 
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(128)
                         .HasColumnType("character varying(128)");
 
+                    b.Property<bool>("PrefersFemaleEntrepreneur")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("PrefersYoungEntrepreneur")
+                        .HasColumnType("boolean");
+
+                    b.Property<int?>("ProjectDurationMonths")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("RepaymentType")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("RequiresConsortium")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("RequiresGuaranteeLetter")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("SourceUrl")
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)");
+
+                    b.Property<Guid?>("StageTemplateId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int?>("SupportRatePercent")
+                        .HasColumnType("integer");
+
                     b.Property<Guid?>("TenantId")
                         .HasColumnType("uuid")
                         .HasColumnName("TenantId");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("StageTemplateId");
 
                     b.ToTable("AppGrants", (string)null);
                 });
@@ -5506,6 +5714,48 @@ namespace Apya.Platform.Migrations
                     b.ToTable("AppGrantApplications", (string)null);
                 });
 
+            modelBuilder.Entity("Apya.Platform.Grants.GrantBookmark", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ConcurrencyStamp")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)")
+                        .HasColumnName("ConcurrencyStamp");
+
+                    b.Property<DateTime>("CreationTime")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("CreationTime");
+
+                    b.Property<Guid?>("CreatorId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("CreatorId");
+
+                    b.Property<string>("ExtraProperties")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("ExtraProperties");
+
+                    b.Property<Guid>("GrantCallId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("TenantId");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("GrantCallId");
+
+                    b.HasIndex("TenantId", "GrantCallId")
+                        .IsUnique();
+
+                    b.ToTable("AppGrantBookmarks", (string)null);
+                });
+
             modelBuilder.Entity("Apya.Platform.Grants.GrantCall", b =>
                 {
                     b.Property<Guid>("Id")
@@ -5565,6 +5815,9 @@ namespace Apya.Platform.Migrations
                     b.Property<DateTime?>("OpenDate")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<int>("Origin")
+                        .HasColumnType("integer");
+
                     b.Property<string>("Period")
                         .IsRequired()
                         .HasMaxLength(32)
@@ -5573,6 +5826,9 @@ namespace Apya.Platform.Migrations
                     b.Property<string>("Reference")
                         .HasMaxLength(64)
                         .HasColumnType("character varying(64)");
+
+                    b.Property<Guid?>("SourceId")
+                        .HasColumnType("uuid");
 
                     b.Property<int>("Status")
                         .HasColumnType("integer");
@@ -5586,6 +5842,8 @@ namespace Apya.Platform.Migrations
                     b.HasIndex("Deadline");
 
                     b.HasIndex("GrantId");
+
+                    b.HasIndex("SourceId");
 
                     b.ToTable("AppGrantCalls", (string)null);
                 });
@@ -5732,6 +5990,318 @@ namespace Apya.Platform.Migrations
                     b.ToTable("AppGrantDisbursementTranches", (string)null);
                 });
 
+            modelBuilder.Entity("Apya.Platform.Grants.GrantDocumentRequirement", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ConcurrencyStamp")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)")
+                        .HasColumnName("ConcurrencyStamp");
+
+                    b.Property<DateTime>("CreationTime")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("CreationTime");
+
+                    b.Property<Guid?>("CreatorId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("CreatorId");
+
+                    b.Property<Guid?>("DeleterId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("DeleterId");
+
+                    b.Property<DateTime?>("DeletionTime")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("DeletionTime");
+
+                    b.Property<string>("ExtraProperties")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("ExtraProperties");
+
+                    b.Property<Guid>("GrantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("IsDeleted")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("IsDeleted");
+
+                    b.Property<DateTime?>("LastModificationTime")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("LastModificationTime");
+
+                    b.Property<Guid?>("LastModifierId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("LastModifierId");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.Property<int>("Obligation")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Order")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("RequiresESignature")
+                        .HasColumnType("boolean");
+
+                    b.Property<Guid?>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("TenantId");
+
+                    b.Property<int>("UploaderParty")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("GrantId", "Order");
+
+                    b.ToTable("AppGrantDocumentRequirements", (string)null);
+                });
+
+            modelBuilder.Entity("Apya.Platform.Grants.GrantDraftField", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ConcurrencyStamp")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)")
+                        .HasColumnName("ConcurrencyStamp");
+
+                    b.Property<int>("Confidence")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("CreationTime")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("CreationTime");
+
+                    b.Property<Guid?>("CreatorId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("CreatorId");
+
+                    b.Property<Guid?>("DeleterId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("DeleterId");
+
+                    b.Property<DateTime?>("DeletionTime")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("DeletionTime");
+
+                    b.Property<string>("ExtraProperties")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("ExtraProperties");
+
+                    b.Property<string>("FieldKey")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<Guid>("GrantCallId")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("IsDeleted")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("IsDeleted");
+
+                    b.Property<DateTime?>("LastModificationTime")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("LastModificationTime");
+
+                    b.Property<Guid?>("LastModifierId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("LastModifierId");
+
+                    b.Property<string>("RawValue")
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)");
+
+                    b.Property<string>("SourceExcerpt")
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid?>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("TenantId");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("GrantCallId", "FieldKey");
+
+                    b.ToTable("AppGrantDraftFields", (string)null);
+                });
+
+            modelBuilder.Entity("Apya.Platform.Grants.GrantEligibleCostItem", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ConcurrencyStamp")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)")
+                        .HasColumnName("ConcurrencyStamp");
+
+                    b.Property<DateTime>("CreationTime")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("CreationTime");
+
+                    b.Property<Guid?>("CreatorId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("CreatorId");
+
+                    b.Property<Guid?>("DeleterId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("DeleterId");
+
+                    b.Property<DateTime?>("DeletionTime")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("DeletionTime");
+
+                    b.Property<string>("ExtraProperties")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("ExtraProperties");
+
+                    b.Property<Guid>("GrantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("IsDeleted")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("IsDeleted");
+
+                    b.Property<int>("Kind")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("LastModificationTime")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("LastModificationTime");
+
+                    b.Property<Guid?>("LastModifierId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("LastModifierId");
+
+                    b.Property<int?>("LimitPercent")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid?>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("TenantId");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("GrantId", "Kind")
+                        .IsUnique();
+
+                    b.ToTable("AppGrantEligibleCostItems", (string)null);
+                });
+
+            modelBuilder.Entity("Apya.Platform.Grants.GrantMatchWeight", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ConcurrencyStamp")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)")
+                        .HasColumnName("ConcurrencyStamp");
+
+                    b.Property<DateTime>("CreationTime")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("CreationTime");
+
+                    b.Property<Guid?>("CreatorId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("CreatorId");
+
+                    b.Property<Guid?>("DeleterId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("DeleterId");
+
+                    b.Property<DateTime?>("DeletionTime")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("DeletionTime");
+
+                    b.Property<string>("ExtraProperties")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("ExtraProperties");
+
+                    b.Property<Guid?>("GrantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("IsDeleted")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("IsDeleted");
+
+                    b.Property<double>("KeywordMultiplier")
+                        .HasColumnType("double precision");
+
+                    b.Property<DateTime?>("LastModificationTime")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("LastModificationTime");
+
+                    b.Property<Guid?>("LastModifierId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("LastModifierId");
+
+                    b.Property<double>("ProjectHistoryMultiplier")
+                        .HasColumnType("double precision");
+
+                    b.Property<double>("RdStaffMultiplier")
+                        .HasColumnType("double precision");
+
+                    b.Property<double>("RegionMultiplier")
+                        .HasColumnType("double precision");
+
+                    b.Property<double>("SectorMultiplier")
+                        .HasColumnType("double precision");
+
+                    b.Property<bool>("SizePenaltyEnabled")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("SkipMissingDimensions")
+                        .HasColumnType("boolean");
+
+                    b.Property<double>("TechnicalMaturityMultiplier")
+                        .HasColumnType("double precision");
+
+                    b.Property<Guid?>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("TenantId");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("GrantId")
+                        .IsUnique();
+
+                    b.ToTable("AppGrantMatchWeights", (string)null);
+                });
+
             modelBuilder.Entity("Apya.Platform.Grants.GrantMilestone", b =>
                 {
                     b.Property<Guid>("Id")
@@ -5809,6 +6379,9 @@ namespace Apya.Platform.Migrations
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid");
 
+                    b.Property<Guid?>("AssignedUserId")
+                        .HasColumnType("uuid");
+
                     b.Property<string>("ConcurrencyStamp")
                         .IsConcurrencyToken()
                         .IsRequired()
@@ -5878,6 +6451,312 @@ namespace Apya.Platform.Migrations
                     b.ToTable("AppGrantRecommendations", (string)null);
                 });
 
+            modelBuilder.Entity("Apya.Platform.Grants.GrantScrapeRun", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ConcurrencyStamp")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)")
+                        .HasColumnName("ConcurrencyStamp");
+
+                    b.Property<DateTime>("CreationTime")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("CreationTime");
+
+                    b.Property<Guid?>("CreatorId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("CreatorId");
+
+                    b.Property<Guid?>("DeleterId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("DeleterId");
+
+                    b.Property<DateTime?>("DeletionTime")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("DeletionTime");
+
+                    b.Property<string>("ExtraProperties")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("ExtraProperties");
+
+                    b.Property<DateTime?>("FinishedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("FoundCount")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("IsDeleted")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("IsDeleted");
+
+                    b.Property<DateTime?>("LastModificationTime")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("LastModificationTime");
+
+                    b.Property<Guid?>("LastModifierId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("LastModifierId");
+
+                    b.Property<string>("Message")
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)");
+
+                    b.Property<int>("NewCount")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("SourceId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("StartedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid?>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("TenantId");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SourceId", "StartedAt");
+
+                    b.ToTable("AppGrantScrapeRuns", (string)null);
+                });
+
+            modelBuilder.Entity("Apya.Platform.Grants.GrantSource", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ConcurrencyStamp")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)")
+                        .HasColumnName("ConcurrencyStamp");
+
+                    b.Property<DateTime>("CreationTime")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("CreationTime");
+
+                    b.Property<Guid?>("CreatorId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("CreatorId");
+
+                    b.Property<Guid?>("DeleterId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("DeleterId");
+
+                    b.Property<DateTime?>("DeletionTime")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("DeletionTime");
+
+                    b.Property<string>("ExtraProperties")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("ExtraProperties");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsDeleted")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("IsDeleted");
+
+                    b.Property<DateTime?>("LastModificationTime")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("LastModificationTime");
+
+                    b.Property<Guid?>("LastModifierId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("LastModifierId");
+
+                    b.Property<DateTime?>("LastScrapedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(96)
+                        .HasColumnType("character varying(96)");
+
+                    b.Property<Guid?>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("TenantId");
+
+                    b.Property<string>("Url")
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("AppGrantSources", (string)null);
+                });
+
+            modelBuilder.Entity("Apya.Platform.Grants.GrantStageTemplate", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ConcurrencyStamp")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)")
+                        .HasColumnName("ConcurrencyStamp");
+
+                    b.Property<DateTime>("CreationTime")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("CreationTime");
+
+                    b.Property<Guid?>("CreatorId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("CreatorId");
+
+                    b.Property<Guid?>("DeleterId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("DeleterId");
+
+                    b.Property<DateTime?>("DeletionTime")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("DeletionTime");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<string>("ExtraProperties")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("ExtraProperties");
+
+                    b.Property<bool>("IsDefault")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsDeleted")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("IsDeleted");
+
+                    b.Property<DateTime?>("LastModificationTime")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("LastModificationTime");
+
+                    b.Property<Guid?>("LastModifierId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("LastModifierId");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(96)
+                        .HasColumnType("character varying(96)");
+
+                    b.Property<Guid?>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("TenantId");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("AppGrantStageTemplates", (string)null);
+                });
+
+            modelBuilder.Entity("Apya.Platform.Grants.GrantStageTemplateStep", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("CompletionCondition")
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.Property<string>("ConcurrencyStamp")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)")
+                        .HasColumnName("ConcurrencyStamp");
+
+                    b.Property<DateTime>("CreationTime")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("CreationTime");
+
+                    b.Property<Guid?>("CreatorId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("CreatorId");
+
+                    b.Property<Guid?>("DeleterId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("DeleterId");
+
+                    b.Property<DateTime?>("DeletionTime")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("DeletionTime");
+
+                    b.Property<string>("ExtraProperties")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("ExtraProperties");
+
+                    b.Property<bool>("IsDeleted")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("IsDeleted");
+
+                    b.Property<DateTime?>("LastModificationTime")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("LastModificationTime");
+
+                    b.Property<Guid?>("LastModifierId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("LastModifierId");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(96)
+                        .HasColumnType("character varying(96)");
+
+                    b.Property<string>("Note")
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.Property<int>("Order")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Owner")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("ReminderDays")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("RequiredDocumentsNote")
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.Property<Guid>("StageTemplateId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("TenantId");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("StageTemplateId", "Order");
+
+                    b.ToTable("AppGrantStageTemplateSteps", (string)null);
+                });
+
             modelBuilder.Entity("Apya.Platform.Incomes.IncomeEntry", b =>
                 {
                     b.Property<Guid>("Id")
@@ -5885,6 +6764,15 @@ namespace Apya.Platform.Migrations
 
                     b.Property<decimal>("Amount")
                         .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("BookAmount")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("BookRate")
+                        .HasColumnType("decimal(18,6)");
+
+                    b.Property<Guid?>("BudgetLineId")
+                        .HasColumnType("uuid");
 
                     b.Property<Guid?>("CashAccountId")
                         .HasColumnType("uuid");
@@ -5927,6 +6815,12 @@ namespace Apya.Platform.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)");
 
+                    b.Property<decimal?>("DonorAmount")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal?>("DonorRate")
+                        .HasColumnType("decimal(18,6)");
+
                     b.Property<string>("ExtraProperties")
                         .IsRequired()
                         .HasColumnType("text")
@@ -5952,6 +6846,9 @@ namespace Apya.Platform.Migrations
                     b.Property<Guid?>("ProjectId")
                         .HasColumnType("uuid");
 
+                    b.Property<bool>("RateLocked")
+                        .HasColumnType("boolean");
+
                     b.Property<Guid?>("TaskId")
                         .HasColumnType("uuid");
 
@@ -5965,6 +6862,8 @@ namespace Apya.Platform.Migrations
                         .HasColumnType("character varying(200)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("BudgetLineId");
 
                     b.HasIndex("CustomerId");
 
@@ -6420,6 +7319,352 @@ namespace Apya.Platform.Migrations
                     b.ToTable("AppNotificationPreferences", (string)null);
                 });
 
+            modelBuilder.Entity("Apya.Platform.ProjectBudgets.BudgetRevision", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ConcurrencyStamp")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)")
+                        .HasColumnName("ConcurrencyStamp");
+
+                    b.Property<DateTime>("CreationTime")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("CreationTime");
+
+                    b.Property<Guid?>("CreatorId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("CreatorId");
+
+                    b.Property<Guid?>("DeleterId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("DeleterId");
+
+                    b.Property<DateTime?>("DeletionTime")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("DeletionTime");
+
+                    b.Property<DateTime>("EffectiveDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("ExtraProperties")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("ExtraProperties");
+
+                    b.Property<bool>("IsDeleted")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("IsDeleted");
+
+                    b.Property<DateTime?>("LastModificationTime")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("LastModificationTime");
+
+                    b.Property<Guid?>("LastModifierId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("LastModifierId");
+
+                    b.Property<Guid>("ProjectId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Reason")
+                        .IsRequired()
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)");
+
+                    b.Property<int>("RevisionNo")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid?>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("TenantId");
+
+                    b.Property<decimal>("TotalApprovedAmount")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProjectId", "RevisionNo");
+
+                    b.ToTable("AppBudgetRevisions", (string)null);
+                });
+
+            modelBuilder.Entity("Apya.Platform.ProjectBudgets.BudgetRevisionLine", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("BudgetLineId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("BudgetRevisionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("NewAmount")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("PreviousAmount")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BudgetLineId");
+
+                    b.HasIndex("BudgetRevisionId");
+
+                    b.ToTable("AppBudgetRevisionLines", (string)null);
+                });
+
+            modelBuilder.Entity("Apya.Platform.ProjectBudgets.FundingTranche", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ConcurrencyStamp")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)")
+                        .HasColumnName("ConcurrencyStamp");
+
+                    b.Property<DateTime>("CreationTime")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("CreationTime");
+
+                    b.Property<Guid?>("CreatorId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("CreatorId");
+
+                    b.Property<Guid?>("DeleterId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("DeleterId");
+
+                    b.Property<DateTime?>("DeletionTime")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("DeletionTime");
+
+                    b.Property<string>("ExtraProperties")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("ExtraProperties");
+
+                    b.Property<Guid?>("IncomeEntryId")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("IsDeleted")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("IsDeleted");
+
+                    b.Property<DateTime?>("LastModificationTime")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("LastModificationTime");
+
+                    b.Property<Guid?>("LastModifierId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("LastModifierId");
+
+                    b.Property<string>("Note")
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)");
+
+                    b.Property<decimal>("PlannedAmount")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<DateTime?>("PlannedDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("ProjectId")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("ReceivedAmount")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<DateTime?>("ReceivedDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("SequenceNo")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid?>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("TenantId");
+
+                    b.Property<string>("Title")
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("IncomeEntryId");
+
+                    b.HasIndex("ProjectId", "SequenceNo");
+
+                    b.ToTable("AppFundingTranches", (string)null);
+                });
+
+            modelBuilder.Entity("Apya.Platform.ProjectBudgets.ProjectBudgetLine", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("ApprovedAmount")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.Property<string>("ConcurrencyStamp")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)")
+                        .HasColumnName("ConcurrencyStamp");
+
+                    b.Property<DateTime>("CreationTime")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("CreationTime");
+
+                    b.Property<Guid?>("CreatorId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("CreatorId");
+
+                    b.Property<Guid?>("DeleterId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("DeleterId");
+
+                    b.Property<DateTime?>("DeletionTime")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("DeletionTime");
+
+                    b.Property<string>("ExtraProperties")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("ExtraProperties");
+
+                    b.Property<bool>("IsDeleted")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("IsDeleted");
+
+                    b.Property<DateTime?>("LastModificationTime")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("LastModificationTime");
+
+                    b.Property<Guid?>("LastModifierId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("LastModifierId");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.Property<int>("Order")
+                        .HasColumnType("integer");
+
+                    b.Property<decimal>("PlannedAmount")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<Guid>("ProjectId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("TenantId");
+
+                    b.Property<decimal?>("TransferLimitPercent")
+                        .HasColumnType("decimal(5,2)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProjectId", "Code");
+
+                    b.HasIndex("ProjectId", "Order");
+
+                    b.ToTable("AppProjectBudgetLines", (string)null);
+                });
+
+            modelBuilder.Entity("Apya.Platform.ProjectBudgets.TrancheDeduction", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("Amount")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<Guid?>("BudgetRevisionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreationTime")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("CreationTime");
+
+                    b.Property<Guid?>("CreatorId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("CreatorId");
+
+                    b.Property<DateTime>("DeductionDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("DeleterId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("DeleterId");
+
+                    b.Property<DateTime?>("DeletionTime")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("DeletionTime");
+
+                    b.Property<bool>("IsDeleted")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("IsDeleted");
+
+                    b.Property<DateTime?>("LastModificationTime")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("LastModificationTime");
+
+                    b.Property<Guid?>("LastModifierId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("LastModifierId");
+
+                    b.Property<string>("Reason")
+                        .IsRequired()
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)");
+
+                    b.Property<int>("Resolution")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid?>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("TenantId");
+
+                    b.Property<Guid>("TrancheId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BudgetRevisionId");
+
+                    b.HasIndex("TrancheId");
+
+                    b.ToTable("AppTrancheDeductions", (string)null);
+                });
+
             modelBuilder.Entity("Apya.Platform.Projects.BoardColumn", b =>
                 {
                     b.Property<Guid>("Id")
@@ -6557,6 +7802,10 @@ namespace Apya.Platform.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<string>("DonorCurrency")
+                        .HasMaxLength(3)
+                        .HasColumnType("character varying(3)");
+
                     b.Property<DateTime?>("EndDate")
                         .HasColumnType("timestamp with time zone");
 
@@ -6564,6 +7813,12 @@ namespace Apya.Platform.Migrations
                         .IsRequired()
                         .HasColumnType("text")
                         .HasColumnName("ExtraProperties");
+
+                    b.Property<decimal?>("FixedDonorRate")
+                        .HasColumnType("decimal(18,6)");
+
+                    b.Property<int>("FxPolicy")
+                        .HasColumnType("integer");
 
                     b.Property<Guid?>("GrantId")
                         .HasColumnType("uuid");
@@ -7256,6 +8511,9 @@ namespace Apya.Platform.Migrations
                     b.Property<Guid?>("BoardColumnId")
                         .HasColumnType("uuid");
 
+                    b.Property<Guid?>("BudgetLineId")
+                        .HasColumnType("uuid");
+
                     b.Property<string>("CancelReason")
                         .HasMaxLength(256)
                         .HasColumnType("character varying(256)");
@@ -7330,6 +8588,9 @@ namespace Apya.Platform.Migrations
                     b.Property<Guid?>("ParentTaskId")
                         .HasColumnType("uuid");
 
+                    b.Property<decimal?>("PlannedAmount")
+                        .HasColumnType("decimal(18,2)");
+
                     b.Property<int>("Priority")
                         .HasColumnType("integer");
 
@@ -7364,6 +8625,8 @@ namespace Apya.Platform.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("AssigneeId");
+
+                    b.HasIndex("BudgetLineId");
 
                     b.HasIndex("ParentTaskId");
 
@@ -10279,7 +11542,24 @@ namespace Apya.Platform.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("Apya.Platform.Grants.Grant", b =>
+                {
+                    b.HasOne("Apya.Platform.Grants.GrantStageTemplate", null)
+                        .WithMany()
+                        .HasForeignKey("StageTemplateId")
+                        .OnDelete(DeleteBehavior.SetNull);
+                });
+
             modelBuilder.Entity("Apya.Platform.Grants.GrantApplication", b =>
+                {
+                    b.HasOne("Apya.Platform.Grants.GrantCall", null)
+                        .WithMany()
+                        .HasForeignKey("GrantCallId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Apya.Platform.Grants.GrantBookmark", b =>
                 {
                     b.HasOne("Apya.Platform.Grants.GrantCall", null)
                         .WithMany()
@@ -10295,6 +11575,11 @@ namespace Apya.Platform.Migrations
                         .HasForeignKey("GrantId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.HasOne("Apya.Platform.Grants.GrantSource", null)
+                        .WithMany()
+                        .HasForeignKey("SourceId")
+                        .OnDelete(DeleteBehavior.SetNull);
                 });
 
             modelBuilder.Entity("Apya.Platform.Grants.GrantCriteriaTag", b =>
@@ -10315,6 +11600,41 @@ namespace Apya.Platform.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("Apya.Platform.Grants.GrantDocumentRequirement", b =>
+                {
+                    b.HasOne("Apya.Platform.Grants.Grant", null)
+                        .WithMany("DocumentRequirements")
+                        .HasForeignKey("GrantId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Apya.Platform.Grants.GrantDraftField", b =>
+                {
+                    b.HasOne("Apya.Platform.Grants.GrantCall", null)
+                        .WithMany()
+                        .HasForeignKey("GrantCallId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Apya.Platform.Grants.GrantEligibleCostItem", b =>
+                {
+                    b.HasOne("Apya.Platform.Grants.Grant", null)
+                        .WithMany("EligibleCostItems")
+                        .HasForeignKey("GrantId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Apya.Platform.Grants.GrantMatchWeight", b =>
+                {
+                    b.HasOne("Apya.Platform.Grants.Grant", null)
+                        .WithMany()
+                        .HasForeignKey("GrantId")
+                        .OnDelete(DeleteBehavior.Cascade);
+                });
+
             modelBuilder.Entity("Apya.Platform.Grants.GrantMilestone", b =>
                 {
                     b.HasOne("Apya.Platform.Grants.GrantApplication", null)
@@ -10333,11 +11653,74 @@ namespace Apya.Platform.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("Apya.Platform.Grants.GrantScrapeRun", b =>
+                {
+                    b.HasOne("Apya.Platform.Grants.GrantSource", null)
+                        .WithMany()
+                        .HasForeignKey("SourceId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Apya.Platform.Grants.GrantStageTemplateStep", b =>
+                {
+                    b.HasOne("Apya.Platform.Grants.GrantStageTemplate", null)
+                        .WithMany("Steps")
+                        .HasForeignKey("StageTemplateId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("Apya.Platform.Invoices.InvoiceItem", b =>
                 {
                     b.HasOne("Apya.Platform.Invoices.Invoice", null)
                         .WithMany("Items")
                         .HasForeignKey("InvoiceId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Apya.Platform.ProjectBudgets.BudgetRevision", b =>
+                {
+                    b.HasOne("Apya.Platform.Projects.Project", null)
+                        .WithMany()
+                        .HasForeignKey("ProjectId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Apya.Platform.ProjectBudgets.BudgetRevisionLine", b =>
+                {
+                    b.HasOne("Apya.Platform.ProjectBudgets.BudgetRevision", null)
+                        .WithMany("Lines")
+                        .HasForeignKey("BudgetRevisionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Apya.Platform.ProjectBudgets.FundingTranche", b =>
+                {
+                    b.HasOne("Apya.Platform.Projects.Project", null)
+                        .WithMany()
+                        .HasForeignKey("ProjectId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Apya.Platform.ProjectBudgets.ProjectBudgetLine", b =>
+                {
+                    b.HasOne("Apya.Platform.Projects.Project", null)
+                        .WithMany()
+                        .HasForeignKey("ProjectId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Apya.Platform.ProjectBudgets.TrancheDeduction", b =>
+                {
+                    b.HasOne("Apya.Platform.ProjectBudgets.FundingTranche", null)
+                        .WithMany("Deductions")
+                        .HasForeignKey("TrancheId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
@@ -10659,11 +12042,30 @@ namespace Apya.Platform.Migrations
                     b.Navigation("Calls");
 
                     b.Navigation("CriteriaTags");
+
+                    b.Navigation("DocumentRequirements");
+
+                    b.Navigation("EligibleCostItems");
+                });
+
+            modelBuilder.Entity("Apya.Platform.Grants.GrantStageTemplate", b =>
+                {
+                    b.Navigation("Steps");
                 });
 
             modelBuilder.Entity("Apya.Platform.Invoices.Invoice", b =>
                 {
                     b.Navigation("Items");
+                });
+
+            modelBuilder.Entity("Apya.Platform.ProjectBudgets.BudgetRevision", b =>
+                {
+                    b.Navigation("Lines");
+                });
+
+            modelBuilder.Entity("Apya.Platform.ProjectBudgets.FundingTranche", b =>
+                {
+                    b.Navigation("Deductions");
                 });
 
             modelBuilder.Entity("Apya.Platform.Tasks.TaskItem", b =>

@@ -30,14 +30,12 @@ public class FirmProfileAppService : ApplicationService, IFirmProfileAppService
         var profile = await _profileRepo.FirstOrDefaultAsync();
         if (profile == null)
         {
-            return new FirmProfileDto();
+            return WithCompleteness(new FirmProfileDto());
         }
         var tags = await _tagRepo.GetListAsync(t => t.FirmProfileId == profile.Id);
-        return new FirmProfileDto
-        {
-            Size = profile.Size,
-            Tags = tags.Select(t => new GrantCriteriaTagDto { Kind = t.Kind, Value = t.Value }).ToList()
-        };
+        return WithCompleteness(Map(profile, tags
+            .Select(t => new GrantCriteriaTagDto { Kind = t.Kind, Value = t.Value })
+            .ToList()));
     }
 
     public async Task<FirmProfileDto> UpdateMyProfileAsync(UpdateFirmProfileDto input)
@@ -45,12 +43,13 @@ public class FirmProfileAppService : ApplicationService, IFirmProfileAppService
         var profile = await _profileRepo.FirstOrDefaultAsync();
         if (profile == null)
         {
-            profile = new FirmProfile(GuidGenerator.Create(), CurrentTenant.Id) { Size = input.Size };
+            profile = new FirmProfile(GuidGenerator.Create(), CurrentTenant.Id);
+            Apply(profile, input);
             await _profileRepo.InsertAsync(profile, autoSave: true);
         }
         else
         {
-            profile.Size = input.Size;
+            Apply(profile, input);
             await _profileRepo.UpdateAsync(profile, autoSave: true);
         }
 
@@ -66,6 +65,54 @@ public class FirmProfileAppService : ApplicationService, IFirmProfileAppService
 
         // Dönüş, kaydedilen girdiden kurulur — aynı UoW içinde henüz flush edilmemiş
         // tag'leri GetMyProfileAsync yeniden okuyamayacağı için (boş dönerdi).
-        return new FirmProfileDto { Size = profile.Size, Tags = saved };
+        return WithCompleteness(Map(profile, saved));
+    }
+
+    private static void Apply(FirmProfile profile, UpdateFirmProfileDto input)
+    {
+        profile.Size = input.Size;
+        profile.FoundedOn = input.FoundedOn;
+        profile.StaffCount = input.StaffCount;
+        profile.RdStaffCount = input.RdStaffCount;
+        profile.AnnualRevenue = input.AnnualRevenue;
+        profile.Trl = input.Trl;
+        profile.HasConsortiumPartner = input.HasConsortiumPartner;
+    }
+
+    private static FirmProfileDto Map(FirmProfile p, List<GrantCriteriaTagDto> tags) => new()
+    {
+        Size = p.Size,
+        FoundedOn = p.FoundedOn,
+        StaffCount = p.StaffCount,
+        RdStaffCount = p.RdStaffCount,
+        AnnualRevenue = p.AnnualRevenue,
+        Trl = p.Trl,
+        HasConsortiumPartner = p.HasConsortiumPartner,
+        Tags = tags
+    };
+
+    /// <summary>
+    /// Doluluk, programların ölçebildiği alanlar üzerinden sayılır: her biri bir uygunluk
+    /// şartının ya da bir skor boyutunun karşılığıdır. Boş bırakılan alan o şartı
+    /// ölçülemez yapar — 1d'deki "N alan eksik" tam olarak bunu sayar.
+    /// </summary>
+    private static FirmProfileDto WithCompleteness(FirmProfileDto dto)
+    {
+        var filled = new[]
+        {
+            dto.Size.HasValue,
+            dto.FoundedOn.HasValue,
+            dto.StaffCount.HasValue,
+            dto.RdStaffCount.HasValue,
+            dto.AnnualRevenue.HasValue,
+            dto.Trl.HasValue,
+            dto.HasConsortiumPartner.HasValue,
+            dto.Tags.Any(t => t.Kind == GrantCriteriaKind.NaceKodu),
+            dto.Tags.Any(t => t.Kind == GrantCriteriaKind.Sektor)
+        };
+
+        dto.MissingFieldCount = filled.Count(f => !f);
+        dto.CompletionPercent = (int)Math.Round(filled.Count(f => f) * 100.0 / filled.Length);
+        return dto;
     }
 }

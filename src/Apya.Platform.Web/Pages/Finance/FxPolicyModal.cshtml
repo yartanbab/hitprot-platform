@@ -1,0 +1,33 @@
+@page
+@model Apya.Platform.Web.Pages.Finance.FxPolicyModalModel
+@using Volo.Abp.AspNetCore.Mvc.UI.Bootstrap.TagHelpers.Modal
+@{
+    Layout = null;
+}
+<form method="post" action="@Url.Page("/Finance/FxPolicyModal", new { projectId = Model.ProjectId })">
+    <abp-modal>
+        <abp-modal-header title="Kur Politikası"></abp-modal-header>
+        <abp-modal-body>
+            <abp-row>
+                <abp-column size-md="_6">
+                    <abp-select asp-for="Policy.DonorCurrency" asp-items="Model.Currencies" label="Donör para birimi">
+                        <option value="">— Donör defteri yok —</option>
+                    </abp-select>
+                </abp-column>
+                <abp-column size-md="_6">
+                    <abp-select asp-for="Policy.Policy" asp-items="Model.Policies" label="Kur politikası" />
+                </abp-column>
+            </abp-row>
+
+            <abp-input asp-for="Policy.FixedDonorRate"
+                       label="@($"Sabit kur — 1 {Model.ProjectCurrency} = ? donör PB (yalnız \"Sabit sözleşme kuru\" için)")" />
+
+            <p class="text-muted mb-0" style="font-size:12px">
+                Donör para birimi boş bırakılırsa proje tek defterli olur; politika ve sabit kur temizlenir.
+                <strong>Mevcut kayıtlar bu ekrandan değişmez</strong> — donör karşılıkları kilitlidir;
+                yeniden hesaplamak için sekmedeki “Yeniden hesapla” düğmesini kullanın.
+            </p>
+        </abp-modal-body>
+        <abp-modal-footer buttons="@(AbpModalButtons.Cancel | AbpModalButtons.Save)"></abp-modal-footer>
+    </abp-modal>
+</form>

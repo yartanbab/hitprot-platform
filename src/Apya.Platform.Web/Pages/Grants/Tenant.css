@@ -1,0 +1,439 @@
+/* =============================================================================
+   1d · 9a · 1e — Kiracı hibe yüzeyi (ortak stil)
+   -----------------------------------------------------------------------------
+   Üç ekran da aynı sözlüğü kullanır (kova chip'leri, kart, uygunluk satırı), bu
+   yüzden tek dosyada. Tüm değerler --apya-* token'larından gelir.
+   ============================================================================= */
+
+/* --- Sekme şeridi --- */
+.apya-tenant-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--apya-space-1);
+    height: 38px;
+    padding: 4px;
+    margin-bottom: var(--apya-space-4);
+    border-radius: var(--apya-radius-lg);
+    background: var(--apya-surface-sunken);
+}
+
+.apya-tenant-tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0 var(--apya-space-3);
+    border: 0;
+    border-radius: var(--apya-radius-md);
+    background: transparent;
+    color: var(--apya-text-secondary);
+    font-size: var(--apya-fs-sm);
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.apya-tenant-tab:hover { color: var(--apya-text-primary); }
+
+.apya-tenant-tab.is-active {
+    background: var(--apya-surface-base);
+    color: var(--apya-text-primary);
+    font-weight: var(--apya-weight-semibold);
+    box-shadow: var(--apya-shadow-sm);
+}
+
+/* --- Üst şerit: profil + takvim --- */
+.apya-tenant-top {
+    display: grid;
+    grid-template-columns: 320px minmax(0, 1fr);
+    gap: var(--apya-space-4);
+    margin-bottom: var(--apya-space-4);
+}
+
+@media (max-width: 991.98px) {
+    .apya-tenant-top { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* --- 90 günlük zaman çizgisi --- */
+.apya-timeline {
+    position: relative;
+    display: flex;
+    align-items: flex-end;
+    min-height: 74px;
+    padding-bottom: var(--apya-space-4);
+}
+
+.apya-timeline::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 10px;
+    height: 2px;
+    border-radius: var(--apya-radius-full);
+    background: var(--apya-surface-sunken);
+}
+
+.apya-timeline-point {
+    position: absolute;
+    bottom: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    transform: translateX(-50%);
+    text-decoration: none;
+}
+
+.apya-timeline-label {
+    max-width: 128px;
+    font-size: var(--apya-fs-xs);
+    color: var(--apya-text-secondary);
+    text-align: center;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.apya-timeline-date {
+    font-family: var(--apya-font-mono);
+    font-variant-numeric: tabular-nums;
+    font-size: var(--apya-fs-xs);
+    color: var(--apya-text-tertiary);
+}
+
+.apya-timeline-dot {
+    position: relative;
+    z-index: 1;
+    width: 10px;
+    height: 10px;
+    border-radius: var(--apya-radius-full);
+    background: var(--apya-accent-500);
+}
+
+/* <20 gün kırmızı · 20-40 sarı · 40+ accent (tasarım 1d). */
+.apya-timeline-dot.is-urgent { background: var(--apya-negative-500); }
+.apya-timeline-dot.is-soon { background: var(--apya-warning-500); }
+
+/* --- Kart akışı --- */
+.apya-feed-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--apya-space-4);
+}
+
+@media (max-width: 1399.98px) { .apya-feed-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 767.98px) { .apya-feed-grid { grid-template-columns: minmax(0, 1fr); } }
+
+.apya-feed-card {
+    display: flex;
+    flex-direction: column;
+    gap: var(--apya-space-3);
+    padding: var(--apya-space-4);
+    border: 1px solid var(--apya-border-default);
+    border-radius: var(--apya-radius-xl);
+    background: var(--apya-surface-base);
+    box-shadow: var(--apya-shadow-sm);
+}
+
+.apya-feed-head {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+}
+
+.apya-feed-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    flex: none;
+    border-radius: var(--apya-radius-lg);
+    background: var(--apya-accent-soft);
+    color: var(--apya-accent-500);
+}
+
+.apya-feed-title {
+    font-size: var(--apya-fs-md);
+    font-weight: var(--apya-weight-semibold);
+    line-height: var(--apya-leading-snug);
+}
+
+.apya-feed-issuer {
+    font-family: var(--apya-font-mono);
+    font-size: var(--apya-fs-xs);
+    color: var(--apya-text-tertiary);
+}
+
+.apya-feed-amount {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--apya-space-2);
+    padding: var(--apya-space-2) 10px;
+    border-radius: var(--apya-radius-lg);
+    background: var(--apya-surface-raised);
+}
+
+.apya-feed-amount-value {
+    font-family: var(--apya-font-mono);
+    font-variant-numeric: tabular-nums;
+    font-size: var(--apya-fs-md);
+    font-weight: var(--apya-weight-bold);
+}
+
+.apya-feed-reasons {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: var(--apya-fs-sm);
+}
+
+.apya-feed-reason {
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+    color: var(--apya-text-secondary);
+}
+
+.apya-feed-reason > i { margin-top: 3px; font-size: var(--apya-text-xs); }
+.apya-feed-reason.is-good > i { color: var(--apya-positive-500); }
+.apya-feed-reason.is-missing > i { color: var(--apya-warning-500); }
+.apya-feed-reason.is-bad > i { color: var(--apya-negative-500); }
+
+.apya-feed-foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--apya-space-2);
+    flex-wrap: wrap;
+    margin-top: auto;
+    padding-top: var(--apya-space-3);
+    border-top: 1px solid var(--apya-border-subtle);
+}
+
+/* --- Kova sayaçları (9a) --- */
+.apya-bucket-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--apya-space-4);
+    margin-bottom: var(--apya-space-4);
+}
+
+@media (max-width: 767.98px) { .apya-bucket-grid { grid-template-columns: minmax(0, 1fr); } }
+
+.apya-bucket {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: var(--apya-space-3) var(--apya-space-4);
+    border: 1px solid var(--apya-border-default);
+    border-radius: var(--apya-radius-xl);
+    background: var(--apya-surface-base);
+}
+
+/* "Uygunsunuz" kartı 2px yeşil kenarlıkla ayrışır (tasarım 9a). */
+.apya-bucket.is-eligible {
+    border-width: 2px;
+    border-color: var(--apya-positive-500);
+}
+
+.apya-bucket-value {
+    font-family: var(--apya-font-mono);
+    font-variant-numeric: tabular-nums;
+    font-size: var(--apya-fs-2xl);
+    font-weight: var(--apya-weight-bold);
+    letter-spacing: var(--apya-tracking-tight);
+}
+
+/* --- Katalog tablosu (9a) --- */
+.apya-cat-table {
+    display: flex;
+    flex-direction: column;
+    border: 1px solid var(--apya-border-default);
+    border-radius: var(--apya-radius-xl);
+    overflow: hidden;
+}
+
+.apya-cat-row {
+    display: grid;
+    grid-template-columns: 20px minmax(0, 1fr) 118px 78px 150px 104px 92px 110px;
+    align-items: center;
+    gap: var(--apya-space-2);
+    padding: 11px var(--apya-space-4);
+    border-bottom: 1px solid var(--apya-border-subtle);
+    font-size: var(--apya-fs-sm);
+}
+
+.apya-cat-row:last-child { border-bottom: 0; }
+
+.apya-cat-head {
+    background: var(--apya-surface-raised);
+    border-bottom: 1px solid var(--apya-border-default);
+}
+
+.apya-cat-head > span {
+    font-size: var(--apya-text-xs);
+    font-weight: var(--apya-weight-bold);
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    color: var(--apya-text-tertiary);
+}
+
+/* Uygun olmayan satır zeminle geri çekilir ama GİZLENMEZ. */
+.apya-cat-row.is-ineligible { background: var(--apya-surface-raised); }
+
+.apya-cat-call {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.apya-cat-name {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+    font-weight: var(--apya-weight-medium);
+}
+
+.apya-cat-sub {
+    font-family: var(--apya-font-mono);
+    font-size: var(--apya-fs-xs);
+    color: var(--apya-text-tertiary);
+}
+
+.apya-cat-reason {
+    font-size: var(--apya-fs-xs);
+    color: var(--apya-text-secondary);
+}
+
+.apya-cat-num {
+    font-family: var(--apya-font-mono);
+    font-variant-numeric: tabular-nums;
+}
+
+.apya-cat-bookmark {
+    padding: 0 6px;
+    border: 0;
+    background: transparent;
+    color: var(--apya-text-disabled);
+    cursor: pointer;
+}
+
+.apya-cat-bookmark.is-on { color: var(--apya-accent-500); }
+
+/* --- Uygunluk tablosu (1e) --- */
+.apya-check-row {
+    display: grid;
+    grid-template-columns: 20px minmax(0, 1fr) 200px;
+    align-items: center;
+    gap: var(--apya-space-2);
+    padding: 10px var(--apya-space-3);
+    border-bottom: 1px solid var(--apya-border-subtle);
+    font-size: var(--apya-fs-sm);
+}
+
+.apya-check-row:last-child { border-bottom: 0; }
+.apya-check-row.is-failed { background: var(--apya-negative-50); }
+.apya-check-row.is-unknown { background: var(--apya-warning-50); }
+
+.apya-check-row > i.is-passed { color: var(--apya-positive-500); }
+.apya-check-row > i.is-failed { color: var(--apya-negative-500); }
+.apya-check-row > i.is-unknown { color: var(--apya-warning-500); }
+
+.apya-check-note {
+    font-family: var(--apya-font-mono);
+    font-size: var(--apya-fs-xs);
+    color: var(--apya-text-tertiary);
+    text-align: right;
+}
+
+/* --- Bütçe hesaplayıcı (1e) --- */
+.apya-budget-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 140px 78px 130px;
+    align-items: center;
+    gap: var(--apya-space-2);
+    padding: 8px var(--apya-space-3);
+    border-bottom: 1px solid var(--apya-border-subtle);
+    font-size: var(--apya-fs-sm);
+}
+
+.apya-budget-row:last-child { border-bottom: 0; }
+
+.apya-budget-row .form-control {
+    height: 30px;
+    padding: 0 var(--apya-space-2);
+    font-family: var(--apya-font-mono);
+    font-size: var(--apya-fs-sm);
+    text-align: right;
+}
+
+.apya-budget-summary {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--apya-space-3);
+    padding-top: var(--apya-space-3);
+    border-top: 1px solid var(--apya-border-default);
+}
+
+.apya-budget-metric {
+    font-family: var(--apya-font-mono);
+    font-variant-numeric: tabular-nums;
+    font-size: var(--apya-fs-2xl);
+    font-weight: var(--apya-weight-bold);
+    letter-spacing: var(--apya-tracking-tight);
+}
+
+.apya-budget-metric.is-support { color: var(--apya-positive-700); }
+
+/* --- Süreç şeridi (1e) --- */
+.apya-steps {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-wrap: wrap;
+}
+
+.apya-step {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    padding: 6px 10px;
+    border-radius: var(--apya-radius-md);
+    background: var(--apya-surface-raised);
+    font-size: var(--apya-fs-xs);
+}
+
+.apya-step-owner { color: var(--apya-text-tertiary); }
+
+/* --- Zorluk göstergesi (1e) --- */
+.apya-difficulty {
+    display: flex;
+    gap: 3px;
+}
+
+.apya-difficulty > span {
+    flex: 1;
+    height: 6px;
+    border-radius: var(--apya-radius-full);
+    background: var(--apya-surface-sunken);
+}
+
+.apya-difficulty > span.is-on { background: var(--apya-warning-500); }
+.apya-difficulty.is-hard > span.is-on { background: var(--apya-negative-500); }
+
+/* --- Uyum kırılımı barları (1e) --- */
+.apya-dim-row {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--apya-space-2);
+    font-size: var(--apya-fs-xs);
+    color: var(--apya-text-secondary);
+}
+
+[data-theme="dark"] .apya-feed-icon,
+[data-theme="dark"] .apya-cat-bookmark.is-on {
+    color: var(--apya-accent-300);
+}

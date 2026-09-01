@@ -1,0 +1,34 @@
+@page
+@model Apya.Platform.Web.Pages.Finance.DeductionModalModel
+@using Volo.Abp.AspNetCore.Mvc.UI.Bootstrap.TagHelpers.Modal
+@{
+    Layout = null;
+    var t = Model.Tranche!;
+    var kalan = t.PlannedAmount - t.DeductionTotal;
+}
+<form method="post" action="@Url.Page("/Finance/DeductionModal", new { projectId = Model.ProjectId, id = Model.Id })">
+    <abp-modal>
+        <abp-modal-header title="@($"{t.SequenceNo}. Dilim — Kesinti Ekle")"></abp-modal-header>
+        <abp-modal-body>
+            <p class="text-muted" style="font-size:12.5px">
+                Planlanan <span class="apya-numeric fw-semibold">@t.PlannedAmount.ToString("N2")</span> ·
+                mevcut kesinti <span class="apya-numeric fw-semibold text-danger">@t.DeductionTotal.ToString("N2")</span> ·
+                kesilebilecek en fazla <span class="apya-numeric fw-semibold">@kalan.ToString("N2")</span>
+            </p>
+            <abp-row>
+                <abp-column size-md="_6">
+                    <abp-input asp-for="Deduction.Amount" label="Kesinti tutarı" />
+                </abp-column>
+                <abp-column size-md="_6">
+                    <abp-input asp-for="Deduction.DeductionDate" type="date" label="Kesinti tarihi" />
+                </abp-column>
+            </abp-row>
+            <abp-input asp-for="Deduction.Reason" label="Gerekçe" />
+            <p class="text-muted mb-0" style="font-size:12px">
+                Kesinti önce <strong>açık</strong> kaydedilir. Bütçeyi küçültmek mi yoksa
+                “finanse edilmeyen” olarak bırakmak mı gerektiğine listedeki satırdan karar verirsiniz.
+            </p>
+        </abp-modal-body>
+        <abp-modal-footer buttons="@(AbpModalButtons.Cancel | AbpModalButtons.Save)"></abp-modal-footer>
+    </abp-modal>
+</form>

@@ -30,7 +30,29 @@ namespace Apya.Platform
                 .ForMember(d => d.CriteriaTags, o => o.Ignore());
             CreateMap<CreateUpdateGrantDto, Grant>()
                 .ForMember(d => d.CriteriaTags, o => o.Ignore())
+                .ForMember(d => d.EligibleCostItems, o => o.Ignore())
+                .ForMember(d => d.DocumentRequirements, o => o.Ignore())
                 .ForMember(d => d.Calls, o => o.Ignore());
+
+            // 1b · Parametre formu — türetilmiş alanlar (eş finansman) ve form durumu
+            // (tamamlanma, eksik zorunlu alanlar, yayına uygunluk) AppService'te doldurulur.
+            CreateMap<Grant, GrantParameterDto>()
+                .ForMember(d => d.CriteriaTags, o => o.Ignore())
+                .ForMember(d => d.EligibleCostItems, o => o.Ignore())
+                .ForMember(d => d.DocumentRequirements, o => o.Ignore())
+                .ForMember(d => d.StageTemplateName, o => o.Ignore())
+                .ForMember(d => d.StageStepCount, o => o.Ignore())
+                .ForMember(d => d.CoFinancingRatePercent, o => o.Ignore())
+                .ForMember(d => d.CompletionPercent, o => o.Ignore())
+                .ForMember(d => d.MissingRequiredFields, o => o.Ignore())
+                .ForMember(d => d.DraftCallCount, o => o.Ignore())
+                .ForMember(d => d.CanPublish, o => o.Ignore());
+            CreateMap<UpdateGrantParameterDto, Grant>()
+                .ForMember(d => d.CriteriaTags, o => o.Ignore())
+                .ForMember(d => d.EligibleCostItems, o => o.Ignore())
+                .ForMember(d => d.DocumentRequirements, o => o.Ignore())
+                .ForMember(d => d.Calls, o => o.Ignore());
+            CreateMap<GrantEligibleCostItem, GrantEligibleCostItemDto>();
 
             // Hibe Çağrısı (GrantCall) — GrantName MapToGetOutputDtoAsync'te doldurulur.
             // (Girdi→entity dönüşümü AppService'te MapToEntityAsync ile yapılır, AutoMapper değil.)
@@ -160,6 +182,29 @@ namespace Apya.Platform
             CreateMap<Apya.Platform.Feedbacks.FeedbackComment, Apya.Platform.Feedbacks.Dtos.FeedbackCommentDto>();
             CreateMap<Apya.Platform.Feedbacks.FeedbackAttachment, Apya.Platform.Feedbacks.Dtos.FeedbackAttachmentDto>();
             CreateMap<Apya.Platform.Feedbacks.FeedbackActivity, Apya.Platform.Feedbacks.Dtos.FeedbackActivityDto>();
+
+            // --- PROJE BÜTÇESİ (PROJECT BUDGET) MODÜLÜ ---
+            // Harcanan/gelir/bağlı kayıt sayısı entity'de YOK; AppService toplayıp doldurur.
+            CreateMap<Apya.Platform.ProjectBudgets.ProjectBudgetLine, Apya.Platform.ProjectBudgets.Dtos.ProjectBudgetLineDto>()
+                .ForMember(d => d.SpentAmount, o => o.Ignore())
+                .ForMember(d => d.IncomeAmount, o => o.Ignore())
+                .ForMember(d => d.LinkedRecordCount, o => o.Ignore());
+
+            // BudgetRevisionNo başka bir aggregate'ten gelir (AppService doldurur).
+            CreateMap<Apya.Platform.ProjectBudgets.TrancheDeduction, Apya.Platform.ProjectBudgets.Dtos.TrancheDeductionDto>()
+                .ForMember(d => d.BudgetRevisionNo, o => o.Ignore());
+
+            // DeductionTotal/ExpectedAmount entity'de hesaplanan özelliklerdir; adları
+            // birebir eştiği için AutoMapper kendi taşır.
+            CreateMap<Apya.Platform.ProjectBudgets.FundingTranche, Apya.Platform.ProjectBudgets.Dtos.FundingTrancheDto>();
+
+            CreateMap<Apya.Platform.ProjectBudgets.BudgetRevisionLine, Apya.Platform.ProjectBudgets.Dtos.BudgetRevisionLineDto>()
+                .ForMember(d => d.BudgetLineName, o => o.Ignore());
+            CreateMap<Apya.Platform.ProjectBudgets.BudgetRevision, Apya.Platform.ProjectBudgets.Dtos.BudgetRevisionDto>();
+
+            // --- DEMO TALEBİ (DEMO REQUESTS) MODÜLÜ ---
+            // InterestedModuleKeys hesaplanan bir özelliktir, eşlenmez.
+            CreateMap<Apya.Platform.DemoRequests.DemoRequest, Apya.Platform.DemoRequests.Dtos.DemoRequestDto>();
         }
     }
 }

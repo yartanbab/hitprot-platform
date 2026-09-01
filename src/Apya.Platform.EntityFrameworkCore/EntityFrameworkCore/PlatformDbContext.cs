@@ -32,6 +32,7 @@ using Apya.Platform.Incomes;
 using Apya.Platform.ExchangeRates;
 using Apya.Platform.FxRevaluations;
 using Apya.Platform.Projects;
+using Apya.Platform.ProjectBudgets;
 using Apya.Platform.Grants;
 using Apya.Platform.Tasks;
 using Apya.Platform.Notifications;
@@ -110,10 +111,26 @@ namespace Apya.Platform.EntityFrameworkCore
         /* --- PROJE MODÜLÜ TABLOLARI --- */
         public DbSet<Project> Projects { get; set; }
         public DbSet<ProjectCategoryDefinition> ProjectCategories { get; set; }
+
+        /* Proje bütçesi — kalem kırılımı, fonlama dilimleri, kesinti ve revizyon geçmişi */
+        public DbSet<ProjectBudgetLine> ProjectBudgetLines { get; set; }
+        public DbSet<FundingTranche> FundingTranches { get; set; }
+        public DbSet<TrancheDeduction> TrancheDeductions { get; set; }
+        public DbSet<BudgetRevision> BudgetRevisions { get; set; }
+        public DbSet<BudgetRevisionLine> BudgetRevisionLines { get; set; }
         // (BUG-001) ProjectTask, ProjectSubTasks, ProjectTaskComments kaldırıldı.
         public DbSet<Grant> Grants { get; set; }
         public DbSet<GrantCall> GrantCalls { get; set; }
         public DbSet<GrantCriteriaTag> GrantCriteriaTags { get; set; }
+        public DbSet<GrantEligibleCostItem> GrantEligibleCostItems { get; set; }
+        public DbSet<GrantDocumentRequirement> GrantDocumentRequirements { get; set; }
+        public DbSet<GrantStageTemplate> GrantStageTemplates { get; set; }
+        public DbSet<GrantStageTemplateStep> GrantStageTemplateSteps { get; set; }
+        public DbSet<GrantMatchWeight> GrantMatchWeights { get; set; }
+        public DbSet<GrantSource> GrantSources { get; set; }
+        public DbSet<GrantScrapeRun> GrantScrapeRuns { get; set; }
+        public DbSet<GrantDraftField> GrantDraftFields { get; set; }
+        public DbSet<GrantBookmark> GrantBookmarks { get; set; }
         public DbSet<FirmProfile> FirmProfiles { get; set; }
         public DbSet<FirmProfileTag> FirmProfileTags { get; set; }
         public DbSet<GrantApplication> GrantApplications { get; set; }
@@ -165,6 +182,9 @@ namespace Apya.Platform.EntityFrameworkCore
 
         /* --- RIZA / KVKK OMURGASI --- */
         public DbSet<Apya.Platform.Consents.ConsentRecord> ConsentRecords { get; set; }
+
+        /* --- DEMO TALEPLERİ (giriş ekranı) --- */
+        public DbSet<Apya.Platform.DemoRequests.DemoRequest> DemoRequests { get; set; }
 
         /* --- DASHBOARD --- */
         public DbSet<Apya.Platform.Dashboard.DashboardLayout> DashboardLayouts { get; set; }
@@ -439,6 +459,15 @@ namespace Apya.Platform.EntityFrameworkCore
                 b.HasIndex(x => x.ProjectId);
                 b.HasIndex(x => x.TaskId);
                 b.HasIndex(x => x.CustomerId);
+                // Kalem tablosundaki "Harcanan" kolonu bu indeks üzerinden toplanır.
+                // FK KURULMADI: kalem silinince gideri de silmek ya da güncellemek
+                // istemiyoruz — silme zaten ProjectBudgetManager'da bağlı kayıt varsa
+                // reddediliyor, ikinci bir kaskad davranışı yalnız sürpriz üretir.
+                b.HasIndex(x => x.BudgetLineId);
+                b.Property(x => x.BookAmount).HasColumnType("decimal(18,2)");
+                b.Property(x => x.BookRate).HasColumnType("decimal(18,6)");
+                b.Property(x => x.DonorAmount).HasColumnType("decimal(18,2)");
+                b.Property(x => x.DonorRate).HasColumnType("decimal(18,6)");
             });
 
             /* --- GELİR MODÜLÜ YAPILANDIRMASI — APYA-142d --- */
@@ -455,6 +484,73 @@ namespace Apya.Platform.EntityFrameworkCore
                 b.HasIndex(x => x.ProjectId);
                 b.HasIndex(x => x.TaskId);
                 b.HasIndex(x => x.CustomerId);
+                b.HasIndex(x => x.BudgetLineId); // gerekçe: Expense tarafındaki notla aynı
+                b.Property(x => x.BookAmount).HasColumnType("decimal(18,2)");
+                b.Property(x => x.BookRate).HasColumnType("decimal(18,6)");
+                b.Property(x => x.DonorAmount).HasColumnType("decimal(18,2)");
+                b.Property(x => x.DonorRate).HasColumnType("decimal(18,6)");
+            });
+
+            /* --- PROJE BÜTÇESİ — kalem / dilim / kesinti / revizyon --- */
+            builder.Entity<ProjectBudgetLine>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "ProjectBudgetLines", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+                b.Property(x => x.Code).HasMaxLength(ProjectBudgetConsts.MaxCodeLength);
+                b.Property(x => x.Name).IsRequired().HasMaxLength(ProjectBudgetConsts.MaxNameLength);
+                b.Property(x => x.PlannedAmount).HasColumnType("decimal(18,2)");
+                b.Property(x => x.ApprovedAmount).HasColumnType("decimal(18,2)");
+                b.Property(x => x.TransferLimitPercent).HasColumnType("decimal(5,2)");
+                b.HasOne<Project>().WithMany().HasForeignKey(x => x.ProjectId).OnDelete(DeleteBehavior.Cascade);
+                b.HasIndex(x => new { x.ProjectId, x.Order });
+                // Kod tekilliği VERİTABANINDA zorlanmaz: boş kod serbest ve soft-delete
+                // ile silinmiş bir kalemin kodu yeniden kullanılabilmeli. Kural
+                // ProjectBudgetManager.EnsureCodeIsFreeAsync'te (silinmişleri saymaz).
+                b.HasIndex(x => new { x.ProjectId, x.Code });
+            });
+
+            builder.Entity<FundingTranche>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "FundingTranches", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+                b.Property(x => x.Title).HasMaxLength(ProjectBudgetConsts.MaxNameLength);
+                b.Property(x => x.Note).HasMaxLength(ProjectBudgetConsts.MaxNoteLength);
+                b.Property(x => x.PlannedAmount).HasColumnType("decimal(18,2)");
+                b.Property(x => x.ReceivedAmount).HasColumnType("decimal(18,2)");
+                b.HasOne<Project>().WithMany().HasForeignKey(x => x.ProjectId).OnDelete(DeleteBehavior.Cascade);
+                b.HasIndex(x => new { x.ProjectId, x.SequenceNo });
+                b.HasIndex(x => x.IncomeEntryId);
+                b.HasMany(x => x.Deductions).WithOne().HasForeignKey(x => x.TrancheId).IsRequired();
+            });
+
+            builder.Entity<TrancheDeduction>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "TrancheDeductions", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+                b.Property(x => x.Reason).IsRequired().HasMaxLength(ProjectBudgetConsts.MaxReasonLength);
+                b.Property(x => x.Amount).HasColumnType("decimal(18,2)");
+                b.HasIndex(x => x.TrancheId);
+                b.HasIndex(x => x.BudgetRevisionId);
+            });
+
+            builder.Entity<BudgetRevision>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "BudgetRevisions", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+                b.Property(x => x.Reason).HasMaxLength(ProjectBudgetConsts.MaxReasonLength);
+                b.Property(x => x.TotalApprovedAmount).HasColumnType("decimal(18,2)");
+                b.HasOne<Project>().WithMany().HasForeignKey(x => x.ProjectId).OnDelete(DeleteBehavior.Cascade);
+                b.HasIndex(x => new { x.ProjectId, x.RevisionNo });
+                b.HasMany(x => x.Lines).WithOne().HasForeignKey(x => x.BudgetRevisionId).IsRequired();
+            });
+
+            builder.Entity<BudgetRevisionLine>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "BudgetRevisionLines", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+                b.Property(x => x.PreviousAmount).HasColumnType("decimal(18,2)");
+                b.Property(x => x.NewAmount).HasColumnType("decimal(18,2)");
+                b.HasIndex(x => x.BudgetLineId);
             });
 
             /* --- KASA HAREKETİ MODÜLÜ YAPILANDIRMASI — APYA-134 --- */
@@ -496,6 +592,9 @@ namespace Apya.Platform.EntityFrameworkCore
                 b.HasOne<ProjectCategoryDefinition>().WithMany()
                     .HasForeignKey(x => x.CategoryId).OnDelete(DeleteBehavior.Restrict);
                 b.HasIndex(x => new { x.TenantId, x.CategoryId });
+                // Kur köprüsü: donör PB'si boşsa proje tek defterlidir.
+                b.Property(x => x.DonorCurrency).HasMaxLength(3);
+                b.Property(x => x.FixedDonorRate).HasColumnType("decimal(18,6)");
             });
 
             /* --- PROJE KATEGORİSİ TANIMLARI --- */
@@ -521,6 +620,10 @@ namespace Apya.Platform.EntityFrameworkCore
                 b.Property(x => x.MinMatchScore).IsRequired();
                 b.Property(x => x.MaxAmount).IsRequired();
                 b.Property(x => x.EligibleCompanySizes).IsRequired().HasDefaultValue(0);
+                b.Property(x => x.SourceUrl).HasMaxLength(512);
+                b.Property(x => x.MinRevenue).HasColumnType("decimal(18,2)");
+                b.Property(x => x.MaxRevenue).HasColumnType("decimal(18,2)");
+                b.HasOne<GrantStageTemplate>().WithMany().HasForeignKey(x => x.StageTemplateId).OnDelete(DeleteBehavior.SetNull);
             });
 
             builder.Entity<GrantCall>(b =>
@@ -532,6 +635,8 @@ namespace Apya.Platform.EntityFrameworkCore
                 b.HasOne<Grant>().WithMany(g => g.Calls).HasForeignKey(x => x.GrantId).OnDelete(DeleteBehavior.Cascade);
                 b.HasIndex(x => x.GrantId);
                 b.HasIndex(x => x.Deadline);
+                // Kaynak silinirse çağrı kalır, yalnız bağı kopar (elle girilmiş gibi davranır).
+                b.HasOne<GrantSource>().WithMany().HasForeignKey(x => x.SourceId).OnDelete(DeleteBehavior.SetNull);
             });
 
             builder.Entity<GrantCriteriaTag>(b =>
@@ -543,12 +648,102 @@ namespace Apya.Platform.EntityFrameworkCore
                 b.HasIndex(x => x.GrantId);
             });
 
+            builder.Entity<GrantEligibleCostItem>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "GrantEligibleCostItems", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+                b.HasOne<Grant>().WithMany(g => g.EligibleCostItems).HasForeignKey(x => x.GrantId).OnDelete(DeleteBehavior.Cascade);
+                // Bir kalem bir programda en fazla bir kez açılabilir.
+                b.HasIndex(x => new { x.GrantId, x.Kind }).IsUnique();
+            });
+
+            builder.Entity<GrantBookmark>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "GrantBookmarks", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+                b.HasOne<GrantCall>().WithMany().HasForeignKey(x => x.GrantCallId).OnDelete(DeleteBehavior.Cascade);
+                // Kiracı bir çağrıyı en fazla bir kez takip eder.
+                b.HasIndex(x => new { x.TenantId, x.GrantCallId }).IsUnique();
+            });
+
+            builder.Entity<GrantSource>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "GrantSources", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+                b.Property(x => x.Name).IsRequired().HasMaxLength(96);
+                b.Property(x => x.Url).HasMaxLength(512);
+            });
+
+            builder.Entity<GrantScrapeRun>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "GrantScrapeRuns", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+                b.Property(x => x.Message).HasMaxLength(512);
+                b.HasOne<GrantSource>().WithMany().HasForeignKey(x => x.SourceId).OnDelete(DeleteBehavior.Cascade);
+                b.HasIndex(x => new { x.SourceId, x.StartedAt });
+            });
+
+            builder.Entity<GrantDraftField>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "GrantDraftFields", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+                b.Property(x => x.FieldKey).IsRequired().HasMaxLength(64);
+                b.Property(x => x.RawValue).HasMaxLength(512);
+                b.Property(x => x.SourceExcerpt).HasMaxLength(512);
+                b.HasOne<GrantCall>().WithMany().HasForeignKey(x => x.GrantCallId).OnDelete(DeleteBehavior.Cascade);
+                // Benzersiz DEĞİL: alanlar sil-yeniden ekle ile yazılıyor.
+                b.HasIndex(x => new { x.GrantCallId, x.FieldKey });
+            });
+
+            builder.Entity<GrantMatchWeight>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "GrantMatchWeights", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+                b.HasOne<Grant>().WithMany().HasForeignKey(x => x.GrantId).OnDelete(DeleteBehavior.Cascade);
+                // Kapsam başına tek satır. Benzersiz indeksin NULL davranışı sağlayıcılar
+                // arasında ayrışır (MSSQL tek NULL'a izin verir, Postgres çoğuna) — bu
+                // yüzden asıl güvence AppService'teki upsert; indeks yalnız okuma içindir.
+                b.HasIndex(x => x.GrantId).IsUnique();
+            });
+
+            builder.Entity<GrantDocumentRequirement>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "GrantDocumentRequirements", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+                b.Property(x => x.Name).IsRequired().HasMaxLength(128);
+                b.HasOne<Grant>().WithMany(g => g.DocumentRequirements).HasForeignKey(x => x.GrantId).OnDelete(DeleteBehavior.Cascade);
+                b.HasIndex(x => new { x.GrantId, x.Order });
+            });
+
+            builder.Entity<GrantStageTemplate>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "GrantStageTemplates", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+                b.Property(x => x.Name).IsRequired().HasMaxLength(96);
+                b.Property(x => x.Description).HasMaxLength(256);
+            });
+
+            builder.Entity<GrantStageTemplateStep>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "GrantStageTemplateSteps", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+                b.Property(x => x.Name).IsRequired().HasMaxLength(96);
+                b.Property(x => x.Note).HasMaxLength(128);
+                b.Property(x => x.RequiredDocumentsNote).HasMaxLength(128);
+                b.Property(x => x.CompletionCondition).HasMaxLength(128);
+                b.HasOne<GrantStageTemplate>().WithMany(t => t.Steps).HasForeignKey(x => x.StageTemplateId).OnDelete(DeleteBehavior.Cascade);
+                // Sıra benzersiz DEĞİL: kaydetme sil-ve-yeniden-ekle yapıyor, tek
+                // SaveChanges içinde geçici çakışma benzersiz indekste patlardı.
+                b.HasIndex(x => new { x.StageTemplateId, x.Order });
+            });
+
             builder.Entity<FirmProfile>(b =>
             {
                 b.ToTable(PlatformConsts.DbTablePrefix + "FirmProfiles", PlatformConsts.DbSchema);
                 b.ConfigureByConvention();
                 // Tenant başına tekil profil.
                 b.HasIndex(x => x.TenantId).IsUnique();
+                b.Property(x => x.AnnualRevenue).HasColumnType("decimal(18,2)");
             });
 
             builder.Entity<FirmProfileTag>(b =>
@@ -617,6 +812,12 @@ namespace Apya.Platform.EntityFrameworkCore
             {
                 b.ToTable(PlatformConsts.DbTablePrefix + "Tasks", PlatformConsts.DbSchema);
                 b.ConfigureByConvention();
+
+                // Bütçe bağı — FK KURULMADI, Expense/IncomeEntry ile aynı gerekçe:
+                // kalem silme zaten ProjectBudgetManager'da bağlı kayıt varsa
+                // reddediliyor; ikinci bir kaskad davranışı sürpriz üretir.
+                b.Property(t => t.PlannedAmount).HasColumnType("decimal(18,2)");
+                b.HasIndex(t => t.BudgetLineId);
 
                 b.HasOne(t => t.Assignee)
                  .WithMany()
@@ -1705,6 +1906,30 @@ namespace Apya.Platform.EntityFrameworkCore
                 b.HasIndex(x => new { x.TenantId, x.Type, x.OccurredAt });
                 // Aynı öznenin belirli bir türde son rızasını bulmak için.
                 b.HasIndex(x => new { x.TenantId, x.Type, x.SubjectId });
+            });
+
+            /* --- DEMO TALEPLERİ YAPILANDIRMASI --- */
+            builder.Entity<Apya.Platform.DemoRequests.DemoRequest>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "DemoRequests", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+                b.Property(x => x.FullName).IsRequired().HasMaxLength(Apya.Platform.DemoRequests.DemoRequestConsts.MaxFullNameLength);
+                b.Property(x => x.CompanyName).IsRequired().HasMaxLength(Apya.Platform.DemoRequests.DemoRequestConsts.MaxCompanyNameLength);
+                b.Property(x => x.Email).IsRequired().HasMaxLength(Apya.Platform.DemoRequests.DemoRequestConsts.MaxEmailLength);
+                b.Property(x => x.Phone).IsRequired().HasMaxLength(Apya.Platform.DemoRequests.DemoRequestConsts.MaxPhoneLength);
+                b.Property(x => x.InterestedModules).HasMaxLength(Apya.Platform.DemoRequests.DemoRequestConsts.MaxInterestedModulesLength);
+                b.Property(x => x.Message).HasMaxLength(Apya.Platform.DemoRequests.DemoRequestConsts.MaxMessageLength);
+                b.Property(x => x.TargetAudience).HasMaxLength(Apya.Platform.DemoRequests.DemoRequestConsts.MaxTargetAudienceLength);
+                b.Property(x => x.ProblemStatement).HasMaxLength(Apya.Platform.DemoRequests.DemoRequestConsts.MaxProblemStatementLength);
+                b.Property(x => x.PlannedActivities).HasMaxLength(Apya.Platform.DemoRequests.DemoRequestConsts.MaxPlannedActivitiesLength);
+                b.Property(x => x.ExpectedOutcomes).HasMaxLength(Apya.Platform.DemoRequests.DemoRequestConsts.MaxExpectedOutcomesLength);
+                b.Property(x => x.AdminNote).HasMaxLength(Apya.Platform.DemoRequests.DemoRequestConsts.MaxAdminNoteLength);
+                b.Property(x => x.IpAddress).HasMaxLength(Apya.Platform.DemoRequests.DemoRequestConsts.MaxIpAddressLength);
+                b.Property(x => x.UserAgent).HasMaxLength(Apya.Platform.DemoRequests.DemoRequestConsts.MaxUserAgentLength);
+                // Panelin varsayılan sorgusu: duruma göre süz, en yeniden eskiye sırala.
+                b.HasIndex(x => new { x.Status, x.CreationTime });
+                // Kötüye kullanım sayacı: aynı IP adresinin son bir saatteki talepleri.
+                b.HasIndex(x => new { x.IpAddress, x.CreationTime });
             });
 
             builder.Entity<Apya.Platform.Dashboard.DashboardLayout>(b =>

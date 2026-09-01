@@ -1,0 +1,33 @@
+@*
+    Finans sekme şeridi — bağlam şablonunun sekme seti.
+
+    Görsel dil konsol sekmelerinden gelir (.apya-console-tabs / .apya-console-tab,
+    apya-shell.css §21) — ikinci bir sekme deseni üretilmedi. Bu yüzden şerit
+    tasarımdaki 38px değil 46px; bilinçli sapma.
+
+    Sekmeler <button> değil <a>: seçim query string'te taşınır, sayfa sunucuda
+    render edilir. Dolayısıyla ARIA tab widget'ı taklit EDİLMEZ — gerçek gezinme
+    olduğu için <nav> + aria-current="page" kullanılır.
+*@
+@using Apya.Platform.Localization
+@using Apya.Platform.Web.Pages.Finance
+@using Microsoft.AspNetCore.Mvc.Localization
+@inject IHtmlLocalizer<PlatformResource> L
+@model IndexModel
+
+<nav class="apya-console-tabs" aria-label="@L["Finance:TabStripLabel"]">
+    @foreach (var tab in Model.Tabs)
+    {
+        var isActive = string.Equals(tab.Code, Model.ActiveTab, StringComparison.Ordinal);
+        <a href="@Model.TabUrl(tab.Code)"
+           class="apya-console-tab text-decoration-none@(isActive ? " active" : "")"
+           aria-current="@(isActive ? "page" : null)">
+            <i class="fa @tab.Icon" aria-hidden="true"></i>@L[tab.LabelKey]
+            @if (FinanceContext.IsContextual(tab.Code))
+            {
+                <span class="apya-finance-tab-dot" aria-hidden="true"
+                      title="@L["Finance:ContextualTabHint"]"></span>
+            }
+        </a>
+    }
+</nav>

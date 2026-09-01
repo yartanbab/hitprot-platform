@@ -1,0 +1,146 @@
+@page
+@using Apya.Platform.Localization
+@using Microsoft.AspNetCore.Mvc.Localization
+@inject IHtmlLocalizer<PlatformResource> L
+@model Apya.Platform.Web.Pages.Grants.DetailModel
+@{
+    ViewBag.Title = L["Grants:Detail:Title"].Value;
+}
+
+@section styles {
+    <abp-style src="/Pages/Grants/Shared.css" />
+    <abp-style src="/Pages/Grants/Tenant.css" />
+    <abp-style src="/Pages/Grants/Detail.css" />
+}
+
+@section scripts {
+    <abp-script src="/Pages/Grants/Detail.js" />
+}
+
+@* Başlık + açıklama app header'da; sayfa içinde tekrarlanmıyor. *@
+<div class="apya-page" data-call-id="@Model.Id">
+    <div class="apya-page-head">
+        <div class="apya-page-head-actions d-flex align-items-center gap-2">
+            <a href="/Grants" class="btn btn-sm btn-outline-secondary">
+                <i class="fa fa-arrow-left me-1"></i>@L["Grants:Detail:BackToList"]
+            </a>
+            <button type="button" id="BookmarkBtn" class="btn btn-sm btn-outline-secondary">
+                <i class="fa fa-bookmark me-1"></i><span id="BookmarkText"></span>
+            </button>
+            <button type="button" id="ApplyBtn" class="btn btn-sm btn-primary">
+                @L["Grants:Detail:Apply"]
+            </button>
+        </div>
+    </div>
+
+    <div class="apya-detail-head card mb-4">
+        <div class="card-body d-flex flex-column gap-2">
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+                <h5 class="fw-bold mb-0" id="CallTitle"></h5>
+                <span class="apya-chip" id="BucketChip"></span>
+                <span class="apya-chip apya-chip-neutral" id="DaysChip"></span>
+            </div>
+            <div class="apya-feed-issuer" id="CallIssuer"></div>
+            <div class="small text-muted" id="CallDescription"></div>
+            <div class="apya-detail-metrics" id="CallMetrics"></div>
+        </div>
+    </div>
+
+    <div class="apya-detail-layout">
+        <div class="d-flex flex-column gap-4">
+
+            <section class="card mb-0">
+                <div class="card-body d-flex flex-column gap-3">
+                    <div class="fw-bold">@L["Grants:Detail:Eligibility"]</div>
+                    <div class="apya-cat-table">
+                        <div class="apya-check-row apya-cat-head">
+                            <span></span>
+                            <span>@L["Grants:Detail:Col:Condition"]</span>
+                            <span class="text-end">@L["Grants:Detail:Col:Note"]</span>
+                        </div>
+                        <div id="RuleRows"></div>
+                        <div id="RuleEmpty" class="apya-src-empty d-none">@L["Grants:Detail:NoRules"]</div>
+                    </div>
+                    <div id="NotBlockingNote" class="apya-side-note apya-side-note--quiet d-none">
+                        <i class="fa fa-circle-info mt-1"></i><span>@L["Grants:Detail:NotBlocking"]</span>
+                    </div>
+                </div>
+            </section>
+
+            <section class="card mb-0">
+                <div class="card-body d-flex flex-column gap-3">
+                    <div>
+                        <div class="fw-bold">@L["Grants:Detail:Budget"]</div>
+                        <div class="small text-muted">@L["Grants:Detail:Budget:Hint"]</div>
+                    </div>
+                    <div class="apya-cat-table">
+                        <div class="apya-budget-row apya-cat-head">
+                            <span>@L["Grants:Detail:Budget:Item"]</span>
+                            <span class="text-end">@L["Grants:Detail:Budget:Yours"]</span>
+                            <span class="text-end">@L["Grants:Detail:Budget:Rate"]</span>
+                            <span class="text-end">@L["Grants:Detail:Budget:Support"]</span>
+                        </div>
+                        <div id="BudgetRows"></div>
+                        <div id="BudgetEmpty" class="apya-src-empty d-none">@L["Grants:Detail:Budget:NoItems"]</div>
+                    </div>
+                    <div class="apya-budget-summary">
+                        <div>
+                            <div class="apya-overline">@L["Grants:Detail:Budget:TotalSupport"]</div>
+                            <div class="apya-budget-metric is-support" id="BudgetSupport">—</div>
+                        </div>
+                        <div>
+                            <div class="apya-overline">@L["Grants:Detail:Budget:YourShare"]</div>
+                            <div class="apya-budget-metric" id="BudgetShare">—</div>
+                        </div>
+                        <div class="small text-muted d-flex align-items-end" id="BudgetNote"></div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="card mb-0">
+                <div class="card-body d-flex flex-column gap-3">
+                    <div class="fw-bold">@L["Grants:Detail:Process"]</div>
+                    <div id="StepStrip" class="apya-steps"></div>
+                    <div id="StepEmpty" class="small text-muted d-none">@L["Grants:Detail:Process:NoSteps"]</div>
+
+                    <div class="apya-overline">@L["Grants:Detail:Documents"]</div>
+                    <div id="DocumentList" class="d-flex flex-column gap-1"></div>
+                    <div id="DocumentEmpty" class="small text-muted d-none">@L["Grants:Detail:Documents:None"]</div>
+                </div>
+            </section>
+        </div>
+
+        <aside class="apya-detail-side">
+            <div class="card mb-0">
+                <div class="card-body d-flex flex-column gap-2">
+                    <span class="apya-overline">@L["Grants:Detail:Score"]</span>
+                    <div class="apya-budget-metric" id="ScoreValue">—</div>
+                    <div id="ScoreDimensions" class="d-flex flex-column gap-2"></div>
+                </div>
+            </div>
+
+            <div class="card mb-0">
+                <div class="card-body d-flex flex-column gap-2">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <span class="apya-overline">@L["Grants:Detail:Difficulty"]</span>
+                        <span class="apya-chip apya-chip-neutral" id="DifficultyLabel"></span>
+                    </div>
+                    <div class="apya-difficulty" id="DifficultyBar"></div>
+                    <div id="DifficultyReasons" class="d-flex flex-column gap-1"></div>
+                    <div id="HardWarning" class="apya-side-note d-none">
+                        <i class="fa fa-triangle-exclamation mt-1"></i>
+                        <span>@L["Grants:Detail:Difficulty:HardWarning"]</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mb-0">
+                <div class="card-body d-flex flex-column gap-2">
+                    <span class="apya-overline">@L["Grants:Detail:Similar"]</span>
+                    <div id="SimilarList" class="d-flex flex-column gap-1"></div>
+                    <div id="SimilarEmpty" class="small text-muted d-none">@L["Grants:Detail:Similar:None"]</div>
+                </div>
+            </div>
+        </aside>
+    </div>
+</div>

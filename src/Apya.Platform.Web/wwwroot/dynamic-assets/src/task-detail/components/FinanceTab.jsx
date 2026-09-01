@@ -23,27 +23,111 @@ function KpiCard({ label, value, tone, note }) {
 }
 
 /**
+ * "Bütçe bağı" kartı (tasarım 4a).
+ *
+ * Görev artık bir bütçe kalemine bağlanabiliyor ve kendi planlanan tutarını
+ * taşıyor, dolayısıyla bu kart uydurma değil GERÇEK veriye dayanıyor.
+ *
+ * TASARIMDAN BİLİNÇLİ SAPMA: prototip DÖRT hücre gösteriyor
+ * (bütçe · taahhüt · gerçekleşen · kalan); burada ÜÇ var. "Taahhüt" onay
+ * bekleyen sipariş/talep demek ve arkasında bir varlık yok — eklenseydi
+ * ekranda hep 0 gösteren bir hücre olurdu.
+ */
+function BudgetLinkCard({ task, spentByCurrency }) {
+    const planned = task?.plannedAmount;
+    if (!task?.budgetLineId || planned == null) { return null; }
+
+    // Görevin planı proje para birimindedir; gerçekleşen de aynı defterden
+    // okunur (₺). Çapraz kur toplamı YAPILMAZ.
+    const spent = spentByCurrency;
+    const remaining = planned - spent;
+    const pct = planned > 0 ? Math.round((spent / planned) * 100) : 0;
+    const over = remaining < 0;
+
+    return (
+        <div className={TAB_CARD}>
+            <TabCardHeader title="Bütçe bağı" />
+            <div className="px-4 pb-4 pt-1 flex flex-col gap-3">
+                <div className="flex items-center gap-2">
+                    <span className="inline-flex items-center rounded-full bg-accent-subtle px-2.5 py-0.5 text-[11px] font-semibold text-accent">
+                        {task.budgetLineName || 'Bütçe kalemi'}
+                    </span>
+                    {task.budgetLineRemaining != null && (
+                        <span className="text-[11px] text-text-tertiary">
+                            kalemde kalan {fmtMoney(task.budgetLineRemaining, 'TRY')}
+                        </span>
+                    )}
+                </div>
+
+                <div className="grid grid-cols-[repeat(auto-fit,minmax(120px,1fr))] gap-3">
+                    <Cell label="Görev bütçesi" value={fmtMoney(planned, 'TRY')} />
+                    <Cell label="Gerçekleşen" value={fmtMoney(spent, 'TRY')} />
+                    <Cell
+                        label="Kalan"
+                        value={fmtMoney(remaining, 'TRY')}
+                        tone={over ? 'text-negative' : 'text-success'}
+                    />
+                </div>
+
+                <div>
+                    <div className="h-2 w-full overflow-hidden rounded-full bg-neutral-subtle">
+                        <div
+                            className={`h-full rounded-full ${over ? 'bg-negative' : pct >= 80 ? 'bg-warning' : 'bg-success'}`}
+                            style={{ width: `${Math.min(Math.max(pct, 0), 100)}%` }}
+                        />
+                    </div>
+                    <div className="mt-1 text-[11.5px] text-text-tertiary">
+                        %{pct}
+                        {over && <span className="ml-1 text-negative">· görev bütçesi aşıldı</span>}
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+function Cell({ label, value, tone }) {
+    return (
+        <div className="flex flex-col gap-1">
+            <span className="text-[10.5px] font-bold uppercase tracking-[.07em] text-text-tertiary">{label}</span>
+            <span className={`font-mono text-[15px] font-bold ${tone || 'text-text-primary'}`}
+                  style={{ fontVariantNumeric: 'tabular-nums' }}>
+                {value}
+            </span>
+        </div>
+    );
+}
+
+/**
  * Finans sekmesi (V4 tasarım dili).
  *
- * TASARIMDAN BİLİNÇLİ SAPMA: prototip "Bütçe / Harcanan / Kalan" KPI'ları
- * gösteriyor, ama görevde bütçe alanı YOK — veri gider/gelir kayıtlarından
- * geliyor. Prototipin görsel formu (3 KPI kartı + rozetli satır listesi)
- * korunup etiketler gerçek anlamlarıyla bırakıldı; uydurma bir "bütçe"
- * gösterilmedi. Para birimine göre gruplar, çapraz-kur toplamaz.
+ * Üstte "Bütçe bağı" kartı (yalnız görevin bütçe kalemi ve planı varsa),
+ * ardından para birimi başına üç KPI ve kayıt listesi.
  */
 export function FinanceTab({ task }) {
     const expenses = task?.expenses || [];
     const incomes = task?.incomes || [];
 
+    // Görev bütçesi ₺ defterde tutulur; gerçekleşen de oradan toplanır.
+    const spentTry = expenses
+        .filter((l) => (l.currency || 'TRY') === 'TRY')
+        .reduce((a, l) => a + (l.amount || 0), 0);
+    const budgetCard = <BudgetLinkCard task={task} spentByCurrency={spentTry} />;
+
     if (expenses.length === 0 && incomes.length === 0) {
+        // Bütçe bağı kartı BURADA DA basılır: kaydı olmayan ama bütçesi planlanmış
+        // görev, "kayıt yok" derken planını göstermeye devam etmeli.
         return (
-            <div className={TAB_CARD}>
-                <TabCardHeader title="Görev Finansı" />
-                <TabEmptyState
-                    icon="fa-coins"
-                    title="Kayıt yok"
-                    description="Bu göreve bağlı gider/gelir kaydı yok (veya finansal verileri görüntüleme yetkiniz bulunmuyor)."
-                />
+            <div className="flex flex-col gap-4">
+                {budgetCard}
+                <div className={TAB_CARD}>
+                    <TabCardHeader title="Görev Finansı" />
+                    <TabEmptyState
+                        icon="fa-coins"
+                        title="Kayıt yok"
+                        description="Bu göreve bağlı gider/gelir kaydı yok (veya finansal verileri görüntüleme yetkiniz bulunmuyor)."
+                    />
+                </div>
             </div>
         );
     }
@@ -62,6 +146,7 @@ export function FinanceTab({ task }) {
 
     return (
         <div className="flex flex-col gap-4">
+            {budgetCard}
             {perCurrency.map(({ cur, inc, exp, net }) => (
                 <div key={cur} className="grid grid-cols-[repeat(auto-fit,minmax(190px,1fr))] gap-3">
                     <KpiCard label={`Toplam Gelir (${cur})`} value={fmtMoney(inc, cur)} tone="text-success" note="göreve etiketli gelirler" />

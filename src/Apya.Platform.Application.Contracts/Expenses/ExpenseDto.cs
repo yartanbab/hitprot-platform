@@ -15,6 +15,13 @@ public class ExpenseDto : FullAuditedEntityDto<Guid>
     public string? CashAccountName { get; set; }
     public Guid? ProjectId { get; set; }
     public Guid? TaskId { get; set; }
+    public Guid? BudgetLineId { get; set; }
     public Guid? CustomerId { get; set; }
     public string? Description { get; set; }
+    /* Üç defter — kayıt oluşurken damgalanır (bkz. FxLedgerStamper). */
+    public decimal BookAmount { get; set; }
+    public decimal BookRate { get; set; }
+    public decimal? DonorAmount { get; set; }
+    public decimal? DonorRate { get; set; }
+    public bool RateLocked { get; set; }
 }

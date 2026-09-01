@@ -10,6 +10,7 @@ using Volo.Abp.Domain.Repositories;
 using Apya.Platform.Customers;
 using Apya.Platform.Expenses;
 using Apya.Platform.Permissions;
+using Apya.Platform.ProjectBudgets;
 
 namespace Apya.Platform.Documents;
 
@@ -32,6 +33,7 @@ public class DocumentMatchingAppService : ApplicationService, IDocumentMatchingA
     private readonly IRepository<DocumentAttachment, Guid> _attachmentRepository;
     private readonly IRepository<Expense, Guid> _expenseRepository;
     private readonly IRepository<Customer, Guid> _customerRepository;
+    private readonly IRepository<ProjectBudgetLine, Guid> _budgetLineRepository;
 
     public DocumentMatchingAppService(
         IRepository<DocumentExpenseMatch, Guid> matchRepository,
@@ -41,7 +43,8 @@ public class DocumentMatchingAppService : ApplicationService, IDocumentMatchingA
         IRepository<DocumentFieldValue, Guid> fieldValueRepository,
         IRepository<DocumentAttachment, Guid> attachmentRepository,
         IRepository<Expense, Guid> expenseRepository,
-        IRepository<Customer, Guid> customerRepository)
+        IRepository<Customer, Guid> customerRepository,
+        IRepository<ProjectBudgetLine, Guid> budgetLineRepository)
     {
         _matchRepository = matchRepository;
         _fileRepository = fileRepository;
@@ -51,6 +54,7 @@ public class DocumentMatchingAppService : ApplicationService, IDocumentMatchingA
         _attachmentRepository = attachmentRepository;
         _expenseRepository = expenseRepository;
         _customerRepository = customerRepository;
+        _budgetLineRepository = budgetLineRepository;
     }
 
     public virtual async Task<MatchingBoardDto> GetBoardAsync(Guid projectId)
@@ -65,6 +69,10 @@ public class DocumentMatchingAppService : ApplicationService, IDocumentMatchingA
 
         var supplierNames = await GetCustomerNamesAsync(
             expenses.Where(e => e.CustomerId.HasValue).Select(e => e.CustomerId!.Value).Distinct().ToList());
+
+        // Kalem adlari TEK sorguda: her harcama icin ayri sorgu N+1 uretirdi.
+        var budgetLineNames = (await _budgetLineRepository.GetListAsync(l => l.ProjectId == projectId))
+            .ToDictionary(l => l.Id, l => string.IsNullOrWhiteSpace(l.Code) ? l.Name : l.Code + " · " + l.Name);
 
         var documents = await LoadMatchDocumentsAsync(projectId);
         var unmatchedDocuments = documents.Where(d => !matchedFileIds.Contains(d.Id)).ToList();
@@ -84,6 +92,10 @@ public class DocumentMatchingAppService : ApplicationService, IDocumentMatchingA
                 ExpenseDate = e.ExpenseDate,
                 SupplierName = e.CustomerId.HasValue ? supplierNames.GetValueOrDefault(e.CustomerId.Value) : null,
                 Description = e.Description,
+                BudgetLineId = e.BudgetLineId,
+                BudgetLineName = e.BudgetLineId.HasValue
+                    ? budgetLineNames.GetValueOrDefault(e.BudgetLineId.Value)
+                    : null,
             }).ToList(),
             Documents = unmatchedDocuments.Select(d => new UnmatchedDocumentDto
             {

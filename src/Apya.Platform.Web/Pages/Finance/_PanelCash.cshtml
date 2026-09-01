@@ -1,0 +1,38 @@
+@*
+    "Kasa" sekmesi — eski Finans Hub'ın işlem yüzeyi, birebir korunur:
+    toplam bakiye kartı + hesap listesi + hızlı transfer.
+*@
+@using Apya.Platform.Web.Pages.Finance
+@model IndexModel
+
+<div class="row g-3">
+    <div class="col-lg-5">
+        <div class="card mb-3 text-white" style="background: linear-gradient(135deg, var(--apya-accent-500), var(--apya-accent-700));">
+            <div class="card-body">
+                <div class="apya-overline text-white-50 d-flex align-items-center">
+                    Toplam Bakiye (₺ karşılığı)
+                    <apya-hint placement="bottom" text="Her hesabın bakiyesi, o para birimi için kayıtlı EN GÜNCEL kurla ₺'ye çevrilip toplanır. Kuru hiç girilmemiş bir para birimi toplama 0 olarak katılır — eksik görünüyorsa Kurlar sayfasından kur ekleyin." />
+                </div>
+                <h2 class="fw-bold apya-numeric mb-1">₺@Model.TotalBalanceTry.ToString("N0")</h2>
+                <div class="small text-white-50">
+                    <i class="fa fa-arrow-trend-up me-1" aria-hidden="true"></i>
+                    @Model.Accounts.Count hesap · @Model.DistinctCurrencyCount para birimi
+                </div>
+            </div>
+        </div>
+
+        <div class="card mb-0">
+            <div class="card-header fw-semibold">Hesaplar</div>
+            <partial name="_AccountsList" model="Model" />
+        </div>
+    </div>
+
+    <div class="col-lg-7">
+        <div class="card mb-0">
+            <div class="card-header fw-semibold"><i class="fa fa-paper-plane me-1" aria-hidden="true"></i>Hızlı Transfer</div>
+            <div class="card-body" id="ApyaTransferWidget">
+                <div class="text-muted text-center py-3" style="font-size:13px">Hesaplar yükleniyor...</div>
+            </div>
+        </div>
+    </div>
+</div>

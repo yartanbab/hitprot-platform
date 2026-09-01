@@ -1,0 +1,140 @@
+/* =============================================================================
+   1c · Çağrı → Firma Eşleştirme ve Gönderim
+   Ortak kiracı/katalog sözlüğü Tenant.css'te; burada yalnız bu ekranın ölçüleri.
+   ============================================================================= */
+
+.apya-dispatch-layout {
+    display: grid;
+    grid-template-columns: 268px minmax(0, 1fr) 320px;
+    gap: var(--apya-space-5);
+    align-items: start;
+}
+
+@media (max-width: 1399.98px) {
+    .apya-dispatch-layout { grid-template-columns: 268px minmax(0, 1fr); }
+    .apya-dispatch-side { grid-column: 1 / -1; }
+}
+
+@media (max-width: 991.98px) {
+    .apya-dispatch-layout { grid-template-columns: minmax(0, 1fr); }
+    .apya-dispatch-filter,
+    .apya-dispatch-side { position: static; }
+}
+
+.apya-dispatch-filter,
+.apya-dispatch-side {
+    position: sticky;
+    top: var(--apya-space-4);
+}
+
+.apya-dispatch-side {
+    display: flex;
+    flex-direction: column;
+    gap: var(--apya-space-3);
+}
+
+/* Aday satırı — tasarım 1c: 26px | 1fr | 90px | 300px | 74px */
+.apya-cand-row {
+    display: grid;
+    grid-template-columns: 26px minmax(0, 1fr) 90px 300px 74px;
+    align-items: center;
+    gap: var(--apya-space-2);
+    padding: 10px var(--apya-space-3);
+    border-bottom: 1px solid var(--apya-border-subtle);
+    font-size: var(--apya-fs-sm);
+}
+
+.apya-cand-row:last-child { border-bottom: 0; }
+
+/* Seçili OLMAYAN satır zeminle geri çekilir (tasarım 1c). */
+.apya-cand-row.is-unselected { background: var(--apya-surface-raised); }
+
+.apya-cand-firm {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.apya-cand-name {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+    font-weight: var(--apya-weight-medium);
+}
+
+.apya-cand-avatar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    flex: none;
+    border-radius: var(--apya-radius-full);
+    background: var(--apya-brand-500);
+    color: var(--apya-avatar-fg);
+    font-size: var(--apya-fs-xs);
+    font-weight: var(--apya-weight-bold);
+}
+
+.apya-cand-warning {
+    font-size: var(--apya-fs-xs);
+    color: var(--apya-warning-700);
+}
+
+/* Boyut kırılımı: her boyut için mini bar + kısa etiket. */
+.apya-cand-dims {
+    display: flex;
+    gap: 6px;
+    min-width: 0;
+}
+
+.apya-cand-dim {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    flex: 1;
+    min-width: 0;
+}
+
+.apya-cand-dim-label {
+    font-size: 10px;
+    color: var(--apya-text-tertiary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.apya-cand-dim-bar {
+    height: 5px;
+    border-radius: var(--apya-radius-full);
+    background: var(--apya-surface-sunken);
+    overflow: hidden;
+}
+
+.apya-cand-dim-bar > span { display: block; height: 100%; border-radius: inherit; }
+
+/* Yeşil = tam · sarı = kısmi · kırmızı = hiç (tasarım 1c). */
+.apya-cand-dim-bar > span.is-full { background: var(--apya-positive-500); }
+.apya-cand-dim-bar > span.is-partial { background: var(--apya-warning-500); }
+.apya-cand-dim-bar > span.is-none { background: var(--apya-negative-500); }
+
+.apya-opportunity {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--apya-space-2);
+    padding: 10px;
+    border-radius: var(--apya-radius-lg);
+    background: var(--apya-ai-50);
+    color: var(--apya-ai-600);
+    font-size: var(--apya-text-xs);
+    line-height: 1.45;
+}
+
+/* --- Koyu tema: mor "AI" metni ---
+   ai-600 koyu temada ai-500'ten DAHA KOYU tanımlıdır (#8B5CF6 < #A78BFA); %12 tint
+   üstünde kontrast 3.65:1'e düşüyordu (ölçüldü). Bir basamak açılınca 5.7:1. */
+[data-theme="dark"] .apya-opportunity {
+    color: var(--apya-ai-500);
+}

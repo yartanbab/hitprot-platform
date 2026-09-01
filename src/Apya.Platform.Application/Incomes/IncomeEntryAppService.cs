@@ -8,6 +8,7 @@ using Volo.Abp.Domain.Repositories;
 using Apya.Platform.CashAccounts;
 using Apya.Platform.CashMovements;
 using Apya.Platform.Permissions;
+using Apya.Platform.ProjectBudgets;
 
 namespace Apya.Platform.Incomes;
 
@@ -23,15 +24,21 @@ public class IncomeEntryAppService :
 {
     private readonly IRepository<CashMovement, Guid> _cashMovementRepository;
     private readonly IRepository<CashAccount, Guid> _cashAccountRepository;
+    private readonly ProjectBudgetManager _budgetManager;
+    private readonly FxLedgerStamper _fxStamper;
 
     public IncomeEntryAppService(
         IRepository<IncomeEntry, Guid> repository,
         IRepository<CashMovement, Guid> cashMovementRepository,
-        IRepository<CashAccount, Guid> cashAccountRepository)
+        IRepository<CashAccount, Guid> cashAccountRepository,
+        ProjectBudgetManager budgetManager,
+        FxLedgerStamper fxStamper)
         : base(repository)
     {
         _cashMovementRepository = cashMovementRepository;
         _cashAccountRepository = cashAccountRepository;
+        _budgetManager = budgetManager;
+        _fxStamper = fxStamper;
         GetPolicyName = PlatformPermissions.Incomes.Default;
         GetListPolicyName = PlatformPermissions.Incomes.Default;
         CreatePolicyName = PlatformPermissions.Incomes.Create;
@@ -70,8 +77,36 @@ public class IncomeEntryAppService :
     protected override IQueryable<IncomeEntry> ApplyDefaultSorting(IQueryable<IncomeEntry> query)
         => query.OrderByDescending(x => x.IncomeDate);
 
+    /* --- ÜÇ DEFTER DAMGASI — gerekçe ExpenseAppService'teki notla aynı --- */
+
+    protected override async Task<IncomeEntry> MapToEntityAsync(CreateUpdateIncomeEntryDto createInput)
+    {
+        var entity = await base.MapToEntityAsync(createInput);
+        await ApplyFxStampAsync(entity, createInput);
+        return entity;
+    }
+
+    protected override async Task MapToEntityAsync(CreateUpdateIncomeEntryDto updateInput, IncomeEntry entity)
+    {
+        await base.MapToEntityAsync(updateInput, entity);
+        await ApplyFxStampAsync(entity, updateInput);
+    }
+
+    private async Task ApplyFxStampAsync(IncomeEntry entity, CreateUpdateIncomeEntryDto input)
+    {
+        var stamp = await _fxStamper.StampAsync(input.ProjectId, input.Currency, input.Amount, input.IncomeDate);
+        entity.BookAmount = stamp.BookAmount;
+        entity.BookRate = stamp.BookRate;
+        entity.DonorAmount = stamp.DonorAmount;
+        entity.DonorRate = stamp.DonorRate;
+        entity.RateLocked = stamp.DonorAmount != null;
+    }
+
     public override async Task<IncomeEntryDto> CreateAsync(CreateUpdateIncomeEntryDto input)
     {
+        // Giderdeki ile aynı koşullu kural; bkz. ExpenseAppService.
+        await _budgetManager.EnsureBudgetLineIsValidAsync(input.ProjectId, input.BudgetLineId);
+
         var dto = await base.CreateAsync(input);
 
         if (input.CashAccountId.HasValue)
@@ -93,6 +128,8 @@ public class IncomeEntryAppService :
 
     public override async Task<IncomeEntryDto> UpdateAsync(Guid id, CreateUpdateIncomeEntryDto input)
     {
+        await _budgetManager.EnsureBudgetLineIsValidAsync(input.ProjectId, input.BudgetLineId);
+
         var dto = await base.UpdateAsync(id, input);
 
         var linked = await _cashMovementRepository.FirstOrDefaultAsync(

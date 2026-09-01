@@ -37,6 +37,14 @@ namespace Apya.Platform.Tasks
         [Range(0, 9999.99, ErrorMessage = "Tahmini süre 0 ile 9999,99 saat arasında olmalıdır.")]
         public decimal? EstimatedHours { get; set; }
 
+        /// <summary>
+        /// Bütçe kalemi bağı; boş bırakılırsa görev bütçesizdir. Doluysa aynı
+        /// kalemdeki görev planlarının toplamı kalemi aşamaz (sunucuda doğrulanır).
+        /// </summary>
+        public Guid? BudgetLineId { get; set; }
+
+        public decimal? PlannedAmount { get; set; }
+
         [StringLength(64)]
         public string? TaskType { get; set; }
 

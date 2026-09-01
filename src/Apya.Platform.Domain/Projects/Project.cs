@@ -1,4 +1,5 @@
 using System;
+using Apya.Platform.ProjectBudgets;
 using Volo.Abp;
 using Volo.Abp.Domain.Entities.Auditing;
 using Volo.Abp.MultiTenancy;
@@ -50,6 +51,21 @@ public class Project : FullAuditedAggregateRoot<Guid>, IMultiTenant
     public decimal TotalBudget { get; private set; } = 0;
     public decimal HourlyRate { get; private set; } = 0; // Saatlik maliyet (opsiyonel)
     public string Currency { get; private set; } = "TRY";
+
+    /// <summary>
+    /// Donör para birimi (ör. "EUR"). BOŞSA proje tek defterlidir ve donör
+    /// karşılığı hiç hesaplanmaz — dövizsiz projelerin hiçbir şeyi değişmez.
+    /// </summary>
+    public string? DonorCurrency { get; private set; }
+
+    /// <summary>Donör karşılığının hangi günün kuruyla hesaplanacağı.</summary>
+    public FxPolicy FxPolicy { get; private set; } = FxPolicy.SpendDate;
+
+    /// <summary>
+    /// <see cref="ProjectBudgets.FxPolicy.FixedContract"/> seçiliyse kullanılan
+    /// sabit kur: 1 <see cref="Currency"/> = FixedDonorRate <see cref="DonorCurrency"/>.
+    /// </summary>
+    public decimal? FixedDonorRate { get; private set; }
 
     /// <summary>
     /// EF Core için zorunlu parametre-siz constructor.
@@ -171,6 +187,39 @@ public class Project : FullAuditedAggregateRoot<Guid>, IMultiTenant
     public void SetCoverImage(string? storedFileName)
     {
         CoverImageFileName = string.IsNullOrWhiteSpace(storedFileName) ? null : storedFileName.Trim();
+    }
+
+    /// <summary>
+    /// Kur köprüsünü ayarlar. Donör para birimi boşaltılırsa politika ve sabit
+    /// kur da temizlenir — donörü olmayan projede "hangi kurla" sorusunun cevabı
+    /// yoktur, yarım bir yapılandırma bırakmak sonradan yanlış hesap üretir.
+    /// </summary>
+    public void SetFxBridge(string? donorCurrency, FxPolicy policy, decimal? fixedDonorRate)
+    {
+        var donor = string.IsNullOrWhiteSpace(donorCurrency)
+            ? null
+            : donorCurrency.Trim().ToUpperInvariant();
+
+        if (donor == null)
+        {
+            DonorCurrency = null;
+            FxPolicy = FxPolicy.SpendDate;
+            FixedDonorRate = null;
+            return;
+        }
+
+        if (donor == Currency)
+            throw new BusinessException(PlatformDomainErrorCodes.FxDonorCurrencySameAsProject)
+                .WithData("Currency", Currency);
+
+        if (policy == FxPolicy.FixedContract && (fixedDonorRate is null || fixedDonorRate <= 0))
+            throw new BusinessException(PlatformDomainErrorCodes.FxFixedRateRequired);
+
+        DonorCurrency = donor;
+        FxPolicy = policy;
+        // Sabit kur yalnız o politikada anlamlı; başka politikada saklamak
+        // "hangi değer geçerli" belirsizliği üretir.
+        FixedDonorRate = policy == FxPolicy.FixedContract ? fixedDonorRate : null;
     }
 
     public void Approve() => IsApproved = true;

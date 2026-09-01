@@ -140,6 +140,7 @@ export function MatchingRoot() {
                 <span className="d-block" style={{ fontSize: 10.5, color: 'var(--apya-text-tertiary)' }}>
                   {fmtDate(expense.expenseDate)}
                   {expense.supplierName && ` · ${expense.supplierName}`}
+                  {expense.budgetLineName && ` · ${expense.budgetLineName}`}
                 </span>
               </span>
               <span className="apya-numeric" style={{ fontSize: 11.5 }}>
@@ -184,6 +185,14 @@ export function MatchingRoot() {
               {c.reasons.length > 0 && (
                 <div style={{ fontSize: 10.5, color: 'var(--apya-text-tertiary)', marginTop: 4 }}>
                   {c.reasons.join(' · ')}
+                </div>
+              )}
+
+              {/* Butce etkisi: eslesmenin FINANS tarafindaki sonucu. Harcamanin
+                  kalemi yoksa satir hic basilmaz — uydurma bir kalem adi yazmayiz. */}
+              {selected.budgetLineName && (
+                <div style={{ fontSize: 10.5, color: 'var(--apya-accent-500)', marginTop: 4 }}>
+                  <i className="fa fa-link" /> Bağlanınca «{selected.budgetLineName}» kalemi belgeli olur.
                 </div>
               )}
 

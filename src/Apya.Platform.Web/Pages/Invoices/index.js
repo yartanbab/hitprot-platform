@@ -13,6 +13,10 @@ $(function () {
     var $empty = $('#InvoicesListEmpty');
     var $detail = $('#InvoiceDetail');
 
+    // Finans sekmesine gomuldugunde liste O PROJEYLE sinirlanir. /Invoices
+    // sayfasinda oznitelik yoktur -> null -> davranis eskisiyle birebir ayni.
+    var scopeProjectId = $md.data('project-id') || null;
+
     var STATUS = {
         0: { text: 'Taslak', chip: 'apya-chip-neutral' },
         1: { text: 'Gönderildi', chip: 'apya-chip-brand' },
@@ -43,6 +47,7 @@ $(function () {
     function applyFilter() {
         var q = ($('#InvoiceFilter').val() || '').toLocaleLowerCase('tr-TR').trim();
         state.filtered = state.all.filter(function (x) {
+            if (scopeProjectId && x.projectId !== scopeProjectId) { return false; }
             if (state.status !== '' && String(x.status) !== state.status) { return false; }
             if (!q) { return true; }
             return ((x.invoiceNumber || '').toLocaleLowerCase('tr-TR').indexOf(q) !== -1)
@@ -218,7 +223,11 @@ $(function () {
 
     // Cariler'deki "+ Yeni Fatura" ile ?customerId=... üzerinden gelindiyse
     // formu o cari ön-dolu şekilde otomatik aç.
-    var presetCustomerId = new URLSearchParams(window.location.search).get('customerId');
+    // Yalniz /Invoices sayfasinda: Finans sekmesinde ?customerId yok, ama
+    // olsaydi bile orada fatura formunu kendiliginden acmak istemiyoruz.
+    var presetCustomerId = scopeProjectId
+        ? null
+        : new URLSearchParams(window.location.search).get('customerId');
     if (presetCustomerId) {
         createModal.open({ customerId: presetCustomerId });
     }
