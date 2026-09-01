@@ -35,7 +35,8 @@ public class DemoRequestManager : DomainService
         string? interestedModules,
         string? message,
         string? ipAddress,
-        string? userAgent)
+        string? userAgent,
+        DemoRequestProjectBrief? projectBrief = null)
     {
         await EnsureNotFloodingAsync(ipAddress);
 
@@ -51,6 +52,16 @@ public class DemoRequestManager : DomainService
             message,
             ipAddress,
             userAgent);
+
+        if (projectBrief != null)
+        {
+            request.SetProjectBrief(
+                projectBrief.TargetAudience,
+                projectBrief.ProblemStatement,
+                projectBrief.PlannedActivities,
+                projectBrief.BudgetRange,
+                projectBrief.ExpectedOutcomes);
+        }
 
         return await _demoRequestRepository.InsertAsync(request, autoSave: true);
     }

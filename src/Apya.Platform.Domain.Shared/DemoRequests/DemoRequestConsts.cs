@@ -15,6 +15,12 @@ public static class DemoRequestConsts
     public const int MaxPhoneLength = 32;
     public const int MaxInterestedModulesLength = 400;
     public const int MaxMessageLength = 2000;
+
+    // --- Proje fikri (ön görüşme) alanları ---
+    public const int MaxTargetAudienceLength = 300;
+    public const int MaxProblemStatementLength = 1500;
+    public const int MaxPlannedActivitiesLength = 1500;
+    public const int MaxExpectedOutcomesLength = 1500;
     public const int MaxAdminNoteLength = 2000;
     public const int MaxIpAddressLength = 64;
     public const int MaxUserAgentLength = 512;

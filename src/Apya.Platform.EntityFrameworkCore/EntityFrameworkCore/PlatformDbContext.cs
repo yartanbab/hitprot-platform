@@ -1721,6 +1721,10 @@ namespace Apya.Platform.EntityFrameworkCore
                 b.Property(x => x.Phone).IsRequired().HasMaxLength(Apya.Platform.DemoRequests.DemoRequestConsts.MaxPhoneLength);
                 b.Property(x => x.InterestedModules).HasMaxLength(Apya.Platform.DemoRequests.DemoRequestConsts.MaxInterestedModulesLength);
                 b.Property(x => x.Message).HasMaxLength(Apya.Platform.DemoRequests.DemoRequestConsts.MaxMessageLength);
+                b.Property(x => x.TargetAudience).HasMaxLength(Apya.Platform.DemoRequests.DemoRequestConsts.MaxTargetAudienceLength);
+                b.Property(x => x.ProblemStatement).HasMaxLength(Apya.Platform.DemoRequests.DemoRequestConsts.MaxProblemStatementLength);
+                b.Property(x => x.PlannedActivities).HasMaxLength(Apya.Platform.DemoRequests.DemoRequestConsts.MaxPlannedActivitiesLength);
+                b.Property(x => x.ExpectedOutcomes).HasMaxLength(Apya.Platform.DemoRequests.DemoRequestConsts.MaxExpectedOutcomesLength);
                 b.Property(x => x.AdminNote).HasMaxLength(Apya.Platform.DemoRequests.DemoRequestConsts.MaxAdminNoteLength);
                 b.Property(x => x.IpAddress).HasMaxLength(Apya.Platform.DemoRequests.DemoRequestConsts.MaxIpAddressLength);
                 b.Property(x => x.UserAgent).HasMaxLength(Apya.Platform.DemoRequests.DemoRequestConsts.MaxUserAgentLength);
