@@ -117,7 +117,31 @@ public static class ReleaseNoteCatalog
                 "Küçük Ölçekli Ortaklıklar (KA210) ve İşbirliği Ortaklıkları (KA220). Her programın " +
                 "açıklamasında hedef kitlesi, kimlerin başvurabileceği ve götürü hibe kademeleri yazıyor. " +
                 "KA152, KA153 ve KA154 için 1 Ekim 2026 başvuru dönemi açık ve şimdiden listenizde " +
-                "görünüyor; KA210 ile KA220 ise 2027 başvuru takvimi açıklandığında listenize düşecek.")
+                "görünüyor; KA210 ile KA220 ise 2027 başvuru takvimi açıklandığında listenize düşecek."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "Bir hibeye uygun olup olmadığınızı şart şart görüyorsunuz",
+                "Hibe detayında programın uygunluk şartları tek tek listeleniyor ve her şartın " +
+                "yanında sizin durumunuz yazıyor: sağlıyorsunuz, sağlamıyorsunuz ya da bilgi eksik. " +
+                "Eksik bilgi artık \"uygun değilsiniz\" demek değil — firma profilinizi " +
+                "tamamladığınızda o şart ölçülebilir hâle geliyor. Uyum puanınızın hangi başlıktan " +
+                "kaç puan aldığı da aynı ekranda kırılımıyla duruyor, böylece puanı yükseltmek için " +
+                "neye bakmanız gerektiğini görüyorsunuz."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "Alacağınız desteği başvuru dosyası hazırlamadan hesaplıyorsunuz",
+                "Hibe detayındaki bütçe hesaplayıcıya kalem kalem bütçenizi giriyorsunuz; program " +
+                "her kalem için tanımladığı destek oranını uygulayıp tahmini destek tutarını ve " +
+                "sizin payınıza düşeni gösteriyor. Program üst limiti devreye girdiğinde bunu " +
+                "ayrıca belirtiyor. Aynı sayfada başvurunun süreç adımlarını ve istenen evrak " +
+                "listesini de görüyorsunuz."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
+                "Açık hibeler listesinde giderebileceğiniz eksikleri ayırıyorsunuz",
+                "Tüm açık hibeler listesinde her satırda uygunluk durumunuz, uyum puanınız, destek " +
+                "üst limiti ve son başvuruya kalan gün yan yana duruyor. \"Sadece giderilebilir " +
+                "eksikleri göster\" süzgeciyle şu an şartını karşılamadığınız ama tamamlayabileceğiniz " +
+                "çağrıları ayırıyor, ilgilendiğiniz çağrıları takibe alıp listenizde tutuyorsunuz.")
         ),
 
         new ReleaseNote(
