@@ -1,5 +1,7 @@
 ﻿using System;
 using Apya.Platform;
+using Apya.Platform.ProjectBudgets;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Volo.Abp.AuditLogging;
@@ -76,6 +78,30 @@ public class PlatformEntityFrameworkCoreModule : AbpModule
         context.Services.AddAbpDbContext<PlatformDbContext>(options =>
         {
             options.AddDefaultRepositories(includeAllEntities: true);
+
+            // 🔴 includeDetails: true TEK BAŞINA HİÇBİR ŞEY YAPMAZ. ABP'nin
+            // varsayılan deposu, aggregate'in alt koleksiyonunu ancak burada
+            // DefaultWithDetailsFunc ile tarif edilirse Include eder. Kayıt
+            // yoksa navigasyon BOŞ gelir ve çağıran bunu "alt kayıt yok" sanır.
+            //
+            // Bu iki aggregate'te sonucu yalnız görüntü değil, VERİ BÜTÜNLÜĞÜ
+            // idi: FundingTranche.AddDeduction "kesintilerin toplamı dilimi
+            // aşamaz" kuralını Deductions koleksiyonundan hesaplıyor. Koleksiyon
+            // boş yüklendiği için toplam 0 sanılıyor ve kural hiç çalışmıyordu —
+            // 700.000'lik dilime iki ayrı 600.000 kesinti kabul edildi (ölçüldü,
+            // 2026-09-02). RemoveDeduction da boş koleksiyonda sessizce hiçbir
+            // şey yapmıyordu.
+            //
+            // Sayfa akışı bunu GİZLİYORDU: /Finance dilimler sekmesi önce
+            // GetOverviewAsync çağırıyor, o da kesintileri ayrı sorguyla
+            // yüklüyor ve EF'in relationship fixup'ı navigasyonu dolduruyordu.
+            // Doğrudan API çağrısında böyle bir önceki sorgu olmadığı için
+            // kesintiler boş dönüyordu.
+            options.Entity<FundingTranche>(o => o.DefaultWithDetailsFunc =
+                q => q.Include(x => x.Deductions));
+
+            options.Entity<BudgetRevision>(o => o.DefaultWithDetailsFunc =
+                q => q.Include(x => x.Lines));
         });
 
         Configure<AbpDbContextOptions>(options =>
