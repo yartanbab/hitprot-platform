@@ -122,6 +122,14 @@ public static class PlatformDomainErrorCodes
     public const string GrantConversionNotApproved = "Platform:Grant:ConversionNotApproved";
     public const string GrantConversionMappingMissing = "Platform:Grant:ConversionMappingMissing";
 
+    // 6b · Red ve itiraz
+    public const string GrantAppealOnlyForRejection = "Platform:Grant:AppealOnlyForRejection";
+    public const string GrantAppealAlreadySubmitted = "Platform:Grant:AppealAlreadySubmitted";
+    public const string GrantAppealWindowClosed = "Platform:Grant:AppealWindowClosed";
+    public const string GrantAppealNotSubmitted = "Platform:Grant:AppealNotSubmitted";
+    public const string GrantAppealNoItems = "Platform:Grant:AppealNoItems";
+    public const string GrantDecisionNotFound = "Platform:Grant:DecisionNotFound";
+
     // --- Dosya (File) Modülü ---
     public const string FileUnsupportedExtension = "Platform:File:UnsupportedExtension";
     public const string FileSizeExceeded = "Platform:File:SizeExceeded";
