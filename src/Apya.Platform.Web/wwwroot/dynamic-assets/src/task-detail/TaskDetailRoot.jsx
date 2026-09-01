@@ -29,7 +29,13 @@ const FULLSCREEN_KEY = 'apya.taskDetail.fullscreen';
 export function TaskDetailRoot({ taskId, presentation = 'modal', onClose }) {
     const [currentTaskId, setCurrentTaskId] = useState(taskId);
     const [breadcrumbTrail, setBreadcrumbTrail] = useState([]); // [{id, title}]
-    const { data: task, isLoading, isError, refetch } = useTaskDetail(currentTaskId);
+    /* isLoading DEĞİL isPending: kalıcılaştırılmış önbellek geri yüklenirken
+       (PersistQueryClientProvider'ın `isRestoring` penceresi) TanStack sorguyu
+       `fetchStatus:'idle'` gösterir → isLoading FALSE olur ama `task` hâlâ
+       undefined'dır. Gövde o karede undefined görevle çizilip `task.creatorId`
+       okumasında ÇÖKÜYORDU. (v3 kökünde aynı kapı açıklama editörünü kalıcı
+       boş bırakıyordu — aynı sınıf hata.) */
+    const { data: task, isPending, isError, refetch } = useTaskDetail(currentTaskId);
     const guard = useDirtyGuard();
     const form = useTaskForm(task);
     const assignees = useAssigneeOptions();
@@ -200,7 +206,7 @@ export function TaskDetailRoot({ taskId, presentation = 'modal', onClose }) {
         };
     }, [pickerOpen]);
 
-    const body = isLoading
+    const body = isPending
         ? (
             <div aria-label="Görev yükleniyor" aria-busy="true" className="space-y-3">
                 <Skeleton className="h-6 w-1/3" />

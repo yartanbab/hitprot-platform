@@ -64,7 +64,7 @@ function StatisticsBand({ filter, editMode }) {
                     ))}
                 </div>
             }
-            isLoading={query.isLoading}
+            isLoading={query.isPending}
             isError={query.isError}
             onRetry={query.refetch}
             isEmpty={stats.length === 0}

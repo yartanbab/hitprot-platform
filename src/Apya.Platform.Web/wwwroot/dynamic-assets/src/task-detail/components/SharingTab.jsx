@@ -24,7 +24,7 @@ function fmtDate(value) {
  * gerekir — kutu bu yüzden "kapat" ile açıkça kapatılana kadar durur.
  */
 export function SharingTab({ taskId }) {
-    const { links, isLoading, create, revoke, isCreating } = useTaskShareLinks(taskId);
+    const { links, isPending, create, revoke, isCreating } = useTaskShareLinks(taskId);
     const [form, setForm] = useState(DEFAULT_FORM);
     const [justCreated, setJustCreated] = useState(null);
 
@@ -161,7 +161,7 @@ export function SharingTab({ taskId }) {
                 </div>
             </form>
 
-            {isLoading ? (
+            {isPending ? (
                 <p className="m-0 text-[12.5px] text-text-tertiary">Yükleniyor…</p>
             ) : links.length === 0 ? (
                 <p className="m-0 text-[12.5px] text-text-tertiary">Bu görev henüz kimseyle paylaşılmadı.</p>

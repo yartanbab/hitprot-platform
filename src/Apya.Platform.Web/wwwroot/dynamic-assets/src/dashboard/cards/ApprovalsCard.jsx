@@ -30,7 +30,7 @@ function ApprovalsCard({ editMode }) {
                     {items.length}
                 </span>
             )}
-            isLoading={query.isLoading}
+            isLoading={query.isPending}
             isError={query.isError}
             onRetry={query.refetch}
             isEmpty={items.length === 0}
