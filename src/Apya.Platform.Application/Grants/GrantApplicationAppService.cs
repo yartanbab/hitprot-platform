@@ -55,10 +55,13 @@ public class GrantApplicationAppService : ApplicationService, IGrantApplicationA
             return await ToDtoAsync(existing);
         }
 
+        // Yalnız HOST kataloğuna başvurulabilir. Filtre kapalıyken TenantId koşulu elle
+        // konmazsa kiracı, başka kiracının çağrı Id'siyle kendine başvuru açabilir.
         bool callExists;
         using (_mtFilter.Disable())
         {
-            callExists = await _callRepo.FindAsync(grantCallId) != null;
+            callExists = await _callRepo.FirstOrDefaultAsync(
+                c => c.Id == grantCallId && c.TenantId == null) != null;
         }
         if (!callExists)
         {
