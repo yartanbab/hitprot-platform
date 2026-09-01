@@ -602,7 +602,12 @@ public class PlatformNavigationResolver : IScopedDependency
         if (await _permission.IsGrantedAsync(PlatformPermissions.Incomes.Default)
             || await _permission.IsGrantedAsync(PlatformPermissions.Expenses.Default)
             || await _permission.IsGrantedAsync(PlatformPermissions.Invoices.Default))
-            finance.AddItem(new ApplicationMenuItem("Apya.Finance.Hub", l["Menu:FinanceHub"], icon: "fa fa-right-left", url: "/Finance", order: 2));
+            // Menü ID'si SABİT: kayıtlı menü düzenleri ve kısayol iğneleri
+            // (PlatformSettings ShellPins / ShellMenuLayout) bu adı saklıyor —
+            // değişirse kullanıcının düzeni sessizce çözülemez hale gelir.
+            // Etiket ve ikon serbest: sayfa artık transfer ekranı değil, proje
+            // bağlamlı finans çatısı.
+            finance.AddItem(new ApplicationMenuItem("Apya.Finance.Hub", l["Menu:FinanceHub"], icon: "fa fa-chart-pie", url: "/Finance", order: 2));
         if (await _permission.IsGrantedAsync(PlatformPermissions.ExchangeRates.Default))
             finance.AddItem(new ApplicationMenuItem("Apya.Finance.ExchangeRates", l["Menu:ExchangeRates"], icon: "fa fa-money-bill-transfer", url: "/ExchangeRates", order: 3));
         // Cariler kullanıcı kararıyla menüden gizlendi (2026-06-22). /Customers sayfası korunur;

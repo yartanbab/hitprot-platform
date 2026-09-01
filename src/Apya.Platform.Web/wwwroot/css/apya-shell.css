@@ -7367,3 +7367,49 @@ html[data-sidebar] .apya-sidebar-resizer {
 .apya-health .card-body {
     color: var(--apya-text-primary);
 }
+
+/* ============================================================================
+   24) FINANS TEK CATI - Pages/Finance/Index
+   ----------------------------------------------------------------------------
+   Sekme seridi ve baglam cubugu KENDI sinifini uretmez: seridi
+   .apya-console-tabs / .apya-console-tab (S21), cubugu .apya-console-rail
+   tasir. Serit bu yuzden tasarimdaki 38px degil 46px - bilincli sapma, ikinci
+   bir sekme deseni uretmemek icin.
+
+   Burada yalniz o desende karsiligi OLMAYAN iki sey var.
+
+   NOT - yorumlar bilerek aksansiz yazildi: bu dosyanin bazi bolumleri gecmiste
+   yanlis kodlamayla kaydedilmis (bkz. S22 yorumlarindaki bozuk karakterler);
+   yeni metin ayni tuzaga dusmesin.
+   ============================================================================ */
+
+/* Proje secici, serit olceginde. Alt sinir olmadan proje adi okunmaz hale
+   geliyor; ust sinir olmadan sagdaki chip'leri seritten disari itiyor. */
+.apya-finance-context .form-select {
+    min-width: 200px;
+    max-width: 320px;
+}
+
+/* Baglama ozel sekmenin isareti. "Ozel" = o sekme her sablonda YOK demektir;
+   listeyi elle isaretlemiyoruz, FinanceContext.IsContextual hesapliyor. */
+.apya-finance-tab-dot {
+    flex: none;
+    width: 5px;
+    height: 5px;
+    border-radius: var(--apya-radius-full);
+    background: var(--apya-accent-500);
+}
+
+/* KPI seridi tasarim olcegine cekilir. Paylasilan _KpiCard, LeptonX'in 24px
+   .card-body dolgusunu ve 24.5px deger boyutunu kullaniyor; dortlu seritte
+   metin sutununa 110px kaliyor ve "TL2.400.000" 143px istiyor -> deger
+   "TL2.400..." diye kirpiliyordu (olcum: 1440px, kenar cubugu acik, col-xl-3).
+   Tasarim bu karti 14-15px dolgu + 20px deger olarak tanimliyor; ayni olcege
+   cekilince gereken 126px'e iniyor ve sutun da 126px oluyor -> tam siginiyor.
+   Kapsam YALNIZ finans KPI seridi: paylasilan kart diger sayfalarda aynen kalir. */
+.apya-finance-kpis .card-body {
+    padding: 15px 16px;
+}
+.apya-finance-kpis .kpi-card-text h3 {
+    font-size: 20px;
+}
