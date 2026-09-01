@@ -1,0 +1,157 @@
+/* =============================================================================
+   2c · Başvuru Pipeline Konsolu (kanban)
+   Sütun sayısı şablondan geldiği için sabit değil; tasarımdaki altı sütunluk
+   görünüm minmax ile korunur, fazlası yatay kaydırılır.
+   ============================================================================= */
+
+.apya-pipe-board {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(232px, 1fr);
+    gap: var(--apya-space-3);
+    align-items: start;
+    overflow-x: auto;
+    padding-bottom: var(--apya-space-2);
+}
+
+.apya-pipe-col {
+    display: flex;
+    flex-direction: column;
+    gap: var(--apya-space-2);
+    min-width: 0;
+    padding: 10px;
+    border-radius: var(--apya-radius-lg);
+    background: var(--apya-surface-raised);
+}
+
+.apya-pipe-col-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--apya-space-2);
+    font-size: var(--apya-text-xs);
+    font-weight: var(--apya-weight-semibold);
+    color: var(--apya-text-secondary);
+}
+
+.apya-pipe-col-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.apya-pipe-col-count {
+    flex: none;
+    font-family: var(--apya-font-mono);
+    font-variant-numeric: tabular-nums;
+}
+
+/* Sürükleme hedefi boşken de görünür olmalı; yoksa kart bırakılacak yer belirsiz. */
+.apya-pipe-drop {
+    display: flex;
+    flex-direction: column;
+    gap: var(--apya-space-2);
+    min-height: 64px;
+}
+
+.apya-pipe-card {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 10px;
+    border: 1px solid var(--apya-border-subtle);
+    border-radius: var(--apya-radius-lg);
+    background: var(--apya-surface-base);
+    box-shadow: var(--apya-shadow-xs);
+    cursor: grab;
+}
+
+.apya-pipe-card:active { cursor: grabbing; }
+
+.apya-pipe-firm {
+    font-size: var(--apya-fs-sm);
+    font-weight: var(--apya-weight-semibold);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.apya-pipe-grant {
+    font-size: var(--apya-fs-xs);
+    color: var(--apya-text-tertiary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.apya-pipe-amount {
+    font-family: var(--apya-font-mono);
+    font-variant-numeric: tabular-nums;
+    font-size: var(--apya-fs-sm);
+    font-weight: var(--apya-weight-semibold);
+}
+
+.apya-pipe-risks { display: flex; flex-wrap: wrap; gap: 4px; }
+
+.apya-pipe-foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--apya-space-2);
+    font-size: var(--apya-fs-xs);
+    color: var(--apya-text-tertiary);
+}
+
+.apya-pipe-who {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    min-width: 0;
+}
+
+.apya-pipe-avatar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    flex: none;
+    border-radius: var(--apya-radius-full);
+    background: var(--apya-accent-500);
+    color: #fff;
+    font-size: 9px;
+    font-weight: var(--apya-weight-bold);
+}
+
+/* Atanmamış kart nötr kalır — accent avatar "atandı" demektir. */
+.apya-pipe-avatar--none { background: var(--apya-surface-sunken); color: var(--apya-text-tertiary); }
+
+.sortable-ghost { opacity: 0.4; }
+
+/* --- Alt şerit --- */
+.apya-pipe-summary {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: var(--apya-space-3);
+}
+
+@media (max-width: 991.98px) {
+    .apya-pipe-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+.apya-pipe-metric {
+    display: block;
+    font-family: var(--apya-font-mono);
+    font-variant-numeric: tabular-nums;
+    font-size: var(--apya-fs-2xl);
+    font-weight: var(--apya-weight-bold);
+    letter-spacing: var(--apya-tracking-tight);
+    line-height: 1.15;
+}
+
+.apya-pipe-metric--good { color: var(--apya-positive-700); }
+
+.apya-pipe-metric-sub {
+    font-size: var(--apya-fs-xs);
+    color: var(--apya-text-tertiary);
+}
