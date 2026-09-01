@@ -1916,6 +1916,25 @@
         "DisplayName:Watermark": "Filigran",
         "DisplayName:WindowDays": "Gün aralığı",
         "DisplayName:WindowSeconds": "Saniye aralığı",
-        "DisplayName:WipLimit": "Eşzamanlı iş sınırı"
+        "DisplayName:WipLimit": "Eşzamanlı iş sınırı",
+        "DisplayName:AnnualRevenue": "Yıllık ciro",
+        "DisplayName:CompletionCondition": "Tamamlanma koşulu",
+        "DisplayName:MaxCompanyAgeYears": "En fazla şirket yaşı (yıl)",
+        "DisplayName:MaxRevenue": "En yüksek ciro",
+        "DisplayName:MaxTrl": "En yüksek TRL",
+        "DisplayName:MinCompanyAgeYears": "En az şirket yaşı (yıl)",
+        "DisplayName:MinConsortiumPartners": "En az konsorsiyum ortağı sayısı",
+        "DisplayName:MinRdStaffCount": "En az Ar-Ge personeli sayısı",
+        "DisplayName:MinRevenue": "En düşük ciro",
+        "DisplayName:MinStaffCount": "En az personel sayısı",
+        "DisplayName:MinTrl": "En düşük TRL",
+        "DisplayName:Multiplier": "Çarpan",
+        "DisplayName:ProjectDurationMonths": "Proje süresi (ay)",
+        "DisplayName:RdStaffCount": "Ar-Ge personeli sayısı",
+        "DisplayName:ReminderDays": "Hatırlatma süresi (gün)",
+        "DisplayName:RequiredDocumentsNote": "Gerekli belgeler notu",
+        "DisplayName:StaffCount": "Personel sayısı",
+        "DisplayName:SupportRatePercent": "Destek oranı (%)",
+        "DisplayName:Trl": "TRL (teknoloji hazırlık seviyesi)"
     }
 }
