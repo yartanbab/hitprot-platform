@@ -188,6 +188,13 @@ public static class PlatformPermissions
         public const string Default = GroupName + ".Consents"; // Rıza analiz panelini görüntüleme
     }
 
+    // --- DEMO TALEBİ YETKİLERİ ---
+    public static class DemoRequests
+    {
+        public const string Default = GroupName + ".DemoRequests";  // Talep listesini görüntüleme
+        public const string Manage = Default + ".Manage";           // Durum / iç not güncelleme
+    }
+
     // --- DİNAMİK VARLIK (FORM/ŞABLON) YETKİLERİ ---
     public static class DynamicAssets
     {
