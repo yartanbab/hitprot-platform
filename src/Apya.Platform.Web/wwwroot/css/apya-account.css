@@ -514,3 +514,54 @@
         transition: none;
     }
 }
+
+/* --- Demo talep formu ------------------------------------------------------
+   Yalnız Pages/Account/DemoRequest.cshtml kullanır. Kartın iç genişliği 384px
+   (560px sütun - panel 88 - kart 88). 170px eşiği bu genişlikte iki kolon
+   verir (2x170+14=354); 190 denendi, 394 > 384 olduğu için tek kolona
+   düşüyordu. Dar ekranda auto-fit yine tek kolona iner. */
+.apya-auth__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+    gap: 0 14px;
+}
+
+/* Etiketin yanındaki "(isteğe bağlı)" ibaresi — zorunlu alanla karışmasın. */
+.apya-auth__optional {
+    font-weight: 400;
+    color: var(--apya-text-tertiary, #9CA3AF);
+}
+
+/* Select, input yüksekliğini paylaşır; ok işaretini tarayıcıya bırakıyoruz. */
+.apya-auth__select {
+    appearance: auto;
+    cursor: pointer;
+}
+
+/* Textarea sabit 48px yüksekliği DEVRALMAMALI, yoksa tek satır görünür. */
+.apya-auth__textarea {
+    height: auto;
+    min-height: 84px;
+    padding: 12px 16px;
+    line-height: 1.5;
+    resize: vertical;
+    font-family: inherit;
+}
+
+/* Modül onay kutuları: dar kartta iki kolon, taşarsa tek kolona iner. */
+.apya-auth__choices {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 8px 14px;
+}
+
+/* Bal küpü — ekrandan ve ekran okuyucudan çıkarılır ama forma GÖNDERİLİR.
+   display:none KULLANILMAZ: bazı botlar görünmeyen alanı atlar, amaç onları
+   doldurmaya teşvik etmek. */
+.apya-auth__hp {
+    position: absolute;
+    left: -9999px;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+}

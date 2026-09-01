@@ -716,6 +716,8 @@ public class PlatformNavigationResolver : IScopedDependency
             platform.AddItem(new ApplicationMenuItem("Apya.Platform.SystemHealth", l["Menu:SystemHealth"], icon: "fa fa-heart-pulse", url: "/Admin/SystemHealth"));
         if (await _permission.IsGrantedAsync(PlatformPermissions.Consents.Default))
             platform.AddItem(new ApplicationMenuItem("Apya.Platform.Consents", l["Menu:Consents"], icon: "fa fa-shield-halved", url: "/Admin/Consent"));
+        if (await _permission.IsGrantedAsync(PlatformPermissions.DemoRequests.Default))
+            platform.AddItem(new ApplicationMenuItem("Apya.Platform.DemoRequests", l["Menu:DemoRequests"], icon: "fa fa-handshake", url: "/Admin/DemoRequests"));
         if (platform.Items.Count > 0) roots.Add(platform);
 
         // Kilitli özellikler — üst pakette açılacak bir şeyi OLAN kiracıya TEK keşif öğesi.
