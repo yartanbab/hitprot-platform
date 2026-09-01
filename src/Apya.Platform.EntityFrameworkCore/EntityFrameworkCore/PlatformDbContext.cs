@@ -134,6 +134,9 @@ namespace Apya.Platform.EntityFrameworkCore
         public DbSet<FirmProfile> FirmProfiles { get; set; }
         public DbSet<FirmProfileTag> FirmProfileTags { get; set; }
         public DbSet<GrantApplication> GrantApplications { get; set; }
+        public DbSet<GrantApplicationBudgetLine> GrantApplicationBudgetLines { get; set; }
+        public DbSet<GrantApplicationFieldLock> GrantApplicationFieldLocks { get; set; }
+        public DbSet<GrantApplicationMessage> GrantApplicationMessages { get; set; }
         public DbSet<GrantRecommendation> GrantRecommendations { get; set; }
         public DbSet<GrantDisbursementTranche> GrantDisbursementTranches { get; set; }
         public DbSet<GrantMilestone> GrantMilestones { get; set; }
@@ -760,8 +763,46 @@ namespace Apya.Platform.EntityFrameworkCore
                 b.ToTable(PlatformConsts.DbTablePrefix + "GrantApplications", PlatformConsts.DbSchema);
                 b.ConfigureByConvention();
                 b.HasOne<GrantCall>().WithMany().HasForeignKey(x => x.GrantCallId).OnDelete(DeleteBehavior.Cascade);
+                b.Property(x => x.ProjectTitle).HasMaxLength(200);
+                b.Property(x => x.ProjectSummary).HasMaxLength(2000);
                 // Aynı tenant + çağrı için tek başvuru.
                 b.HasIndex(x => new { x.TenantId, x.GrantCallId }).IsUnique();
+            });
+
+            // --- 2a · Başvuru sihirbazı ---
+
+            builder.Entity<GrantApplicationBudgetLine>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "GrantApplicationBudgetLines", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+                b.Property(x => x.Amount).HasColumnType("decimal(18,2)");
+                b.Property(x => x.Justification).HasMaxLength(512);
+                b.HasOne<GrantApplication>().WithMany(a => a.BudgetLines).HasForeignKey(x => x.GrantApplicationId).OnDelete(DeleteBehavior.Cascade);
+                // Başvuru başına kalem başına tek satır.
+                b.HasIndex(x => new { x.GrantApplicationId, x.Kind }).IsUnique();
+            });
+
+            builder.Entity<GrantApplicationFieldLock>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "GrantApplicationFieldLocks", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+                b.Property(x => x.FieldKey).IsRequired().HasMaxLength(64);
+                b.Property(x => x.OwnerName).IsRequired().HasMaxLength(96);
+                b.Property(x => x.TakeoverRequestedByName).HasMaxLength(96);
+                b.HasOne<GrantApplication>().WithMany().HasForeignKey(x => x.GrantApplicationId).OnDelete(DeleteBehavior.Cascade);
+                // Bir alanın tek kilidi olur. Soft delete OLMADIĞI için (BasicAggregateRoot)
+                // bu tekil indeks silinmiş satırlarla dolmaz.
+                b.HasIndex(x => new { x.GrantApplicationId, x.FieldKey }).IsUnique();
+            });
+
+            builder.Entity<GrantApplicationMessage>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "GrantApplicationMessages", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+                b.Property(x => x.SenderName).IsRequired().HasMaxLength(96);
+                b.Property(x => x.Body).IsRequired().HasMaxLength(1000);
+                b.HasOne<GrantApplication>().WithMany().HasForeignKey(x => x.GrantApplicationId).OnDelete(DeleteBehavior.Cascade);
+                b.HasIndex(x => new { x.GrantApplicationId, x.CreationTime });
             });
 
             builder.Entity<GrantDisbursementTranche>(b =>
