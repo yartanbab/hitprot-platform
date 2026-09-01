@@ -5652,6 +5652,9 @@ namespace Apya.Platform.Migrations
                     b.Property<decimal?>("ApprovedAmount")
                         .HasColumnType("numeric");
 
+                    b.Property<Guid?>("AssignedUserId")
+                        .HasColumnType("uuid");
+
                     b.Property<string>("ConcurrencyStamp")
                         .IsConcurrencyToken()
                         .IsRequired()
@@ -5669,6 +5672,9 @@ namespace Apya.Platform.Migrations
 
                     b.Property<int>("CurrentStep")
                         .HasColumnType("integer");
+
+                    b.Property<Guid?>("CurrentStepId")
+                        .HasColumnType("uuid");
 
                     b.Property<Guid?>("DeleterId")
                         .HasColumnType("uuid")
@@ -5731,6 +5737,8 @@ namespace Apya.Platform.Migrations
                         .HasColumnName("TenantId");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("CurrentStepId");
 
                     b.HasIndex("GrantCallId");
 

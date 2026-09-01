@@ -765,6 +765,9 @@ namespace Apya.Platform.EntityFrameworkCore
                 b.ToTable(PlatformConsts.DbTablePrefix + "GrantApplications", PlatformConsts.DbSchema);
                 b.ConfigureByConvention();
                 b.HasOne<GrantCall>().WithMany().HasForeignKey(x => x.GrantCallId).OnDelete(DeleteBehavior.Cascade);
+                // Şablon adımına FK KURULMADI: adım silindiğinde başvuru silinmemeli
+                // ve geçmiş kayıt adımsız kalabilmeli. Çözümleme uygulama katmanında.
+                b.HasIndex(x => x.CurrentStepId);
                 b.Property(x => x.ProjectTitle).HasMaxLength(200);
                 b.Property(x => x.ProjectSummary).HasMaxLength(2000);
                 // Aynı tenant + çağrı için tek başvuru.
