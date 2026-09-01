@@ -53,6 +53,17 @@ public class DemoRequestAppService_Tests : PlatformEntityFrameworkCoreTestBase
             IpAddress = ipAddress
         };
 
+    /// <summary>Proje fikri bloğu doldurulmuş girdi.</summary>
+    private static CreateDemoRequestDto WithProjectBrief(CreateDemoRequestDto input)
+    {
+        input.TargetAudience = "  14-25 yaş arası dezavantajlı gençler  ";
+        input.ProblemStatement = "Kırsalda gençlerin dijital becerileri zayıf.";
+        input.PlannedActivities = "Atölyeler, uluslararası buluşma, eğitici eğitimi.";
+        input.BudgetRange = DemoRequestBudgetRange.From25kTo60k;
+        input.ExpectedOutcomes = "60 gence sertifikalı eğitim ve kalıcı bir dijital atölye.";
+        return input;
+    }
+
     [Fact]
     public async Task Talep_yeni_durumunda_dogar_ve_alanlar_kirpilir()
     {
@@ -90,6 +101,33 @@ public class DemoRequestAppService_Tests : PlatformEntityFrameworkCoreTestBase
 
         request.InterestedModules.ShouldBeNull();
         request.InterestedModuleKeys.ShouldBeEmpty();
+    }
+
+    /// <summary>
+    /// Proje fikri alanları isteğe bağlı: doldurulunca kırpılarak saklanır,
+    /// boş bırakılınca kayıt yine geçerlidir. İkisi de ölçülüyor çünkü zorunlu
+    /// olmamaları formun terk edilmemesi için alınmış bilinçli bir karar.
+    /// </summary>
+    [Fact]
+    public async Task Proje_fikri_alanlari_istege_baglidir()
+    {
+        var dolu = await _demoRequestAppService.CreateAsync(WithProjectBrief(NewInput()));
+        var doluKayit = await _demoRequestAppService.GetAsync(dolu);
+
+        doluKayit.TargetAudience.ShouldBe("14-25 yaş arası dezavantajlı gençler");
+        doluKayit.BudgetRange.ShouldBe(DemoRequestBudgetRange.From25kTo60k);
+        doluKayit.ProblemStatement.ShouldNotBeNullOrWhiteSpace();
+        doluKayit.PlannedActivities.ShouldNotBeNullOrWhiteSpace();
+        doluKayit.ExpectedOutcomes.ShouldNotBeNullOrWhiteSpace();
+
+        var bos = await _demoRequestAppService.CreateAsync(NewInput());
+        var bosKayit = await _demoRequestAppService.GetAsync(bos);
+
+        bosKayit.TargetAudience.ShouldBeNull();
+        bosKayit.BudgetRange.ShouldBeNull();
+        bosKayit.ExpectedOutcomes.ShouldBeNull();
+        // Çekirdek kayıt proje bloğu olmadan da geçerli olmalı.
+        bosKayit.Status.ShouldBe(DemoRequestStatus.New);
     }
 
     [Fact]

@@ -38,7 +38,7 @@ public class DemoRequestPages_Tests : PlatformWebTestBase
         return input.GetAttributeValue("value", "");
     }
 
-    private async Task<Guid> CreateDemoRequestAsync(string fullName, string company)
+    private async Task<Guid> CreateDemoRequestAsync(string fullName, string company, bool withProjectBrief = false)
     {
         var id = Guid.NewGuid();
 
@@ -48,8 +48,7 @@ public class DemoRequestPages_Tests : PlatformWebTestBase
         {
             var repository = GetRequiredService<IRepository<DemoRequest, Guid>>();
 
-            await repository.InsertAsync(
-                new DemoRequest(
+            var request = new DemoRequest(
                     id,
                     fullName,
                     company,
@@ -58,8 +57,19 @@ public class DemoRequestPages_Tests : PlatformWebTestBase
                     DemoRequestOrganizationKind.Association,
                     DemoRequestCompanySize.From11To50,
                     "Projects,Grants",
-                    "Hibe takibi için bakıyoruz."),
-                autoSave: true);
+                    "Hibe takibi için bakıyoruz.");
+
+            if (withProjectBrief)
+            {
+                request.SetProjectBrief(
+                    "14-25 yaş arası dezavantajlı gençler",
+                    "Kırsalda dijital beceri açığı var.",
+                    "Atölyeler ve uluslararası buluşma.",
+                    DemoRequestBudgetRange.From25kTo60k,
+                    "60 gence sertifikalı eğitim.");
+            }
+
+            await repository.InsertAsync(request, autoSave: true);
 
             await uow.CompleteAsync();
         }
@@ -98,6 +108,16 @@ public class DemoRequestPages_Tests : PlatformWebTestBase
         html.ShouldContain("name=\"Input.InterestedModules\"");
         html.ShouldContain("name=\"AcceptKvkk\"");
 
+        // Proje fikri bloğu — iletişim alanlarından SONRA gelmeli.
+        html.ShouldContain("name=\"Input.TargetAudience\"");
+        html.ShouldContain("name=\"Input.ProblemStatement\"");
+        html.ShouldContain("name=\"Input.PlannedActivities\"");
+        html.ShouldContain("name=\"Input.BudgetRange\"");
+        html.ShouldContain("name=\"Input.ExpectedOutcomes\"");
+        html.IndexOf("name=\"Input.Phone\"", System.StringComparison.Ordinal)
+            .ShouldBeLessThan(html.IndexOf("name=\"Input.ProblemStatement\"", System.StringComparison.Ordinal),
+                "Açık uçlu proje soruları iletişim bilgilerinden önce basılırsa terk oranı artar.");
+
         // Bal küpü render EDİLMELİ ama ekran dışına atılmış olmalı.
         html.ShouldContain("apya-auth__hp");
         html.ShouldContain("id=\"Website\"");
@@ -109,7 +129,7 @@ public class DemoRequestPages_Tests : PlatformWebTestBase
     [Fact]
     public async Task Panel_talebi_ve_takip_alanlarini_gosterir()
     {
-        var id = await CreateDemoRequestAsync("Zeynep Demir", "Ege Kalkınma Vakfı");
+        var id = await CreateDemoRequestAsync("Zeynep Demir", "Ege Kalkınma Vakfı", withProjectBrief: true);
 
         // Razor, @-ifadelerinden gelen Türkçe harfleri sayısal varlığa çevirir
         // ("ı" → "&#x131;"), .cshtml'e düz yazılan metni ise çevirmez. Model'den
@@ -126,6 +146,12 @@ public class DemoRequestPages_Tests : PlatformWebTestBase
 
         // Detay satırı çöken bölümle açılıyor.
         html.ShouldContain($"demo-detail-{id}");
+
+        // Proje fikri bloğu panelde görünmeli — ön görüşmeye bu bilgiyle gidiliyor.
+        html.ShouldContain("Proje fikri");
+        html.ShouldContain("14-25 yaş arası dezavantajlı gençler");
+        html.ShouldContain("25.000 - 60.000 €");
+        html.ShouldContain("Kırsalda dijital beceri açığı var.");
     }
 
     /// <summary>
