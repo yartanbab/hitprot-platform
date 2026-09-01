@@ -1,0 +1,445 @@
+@page
+@using Apya.Platform.Localization
+@using Microsoft.AspNetCore.Mvc.Localization
+@inject IHtmlLocalizer<PlatformResource> L
+@model Apya.Platform.Web.Pages.Grants.ParametersModel
+@{
+    ViewBag.Title = L["Grants:Parameters:Title"].Value;
+}
+
+@section styles {
+    <abp-style src="/Pages/Grants/Shared.css" />
+    <abp-style src="/Pages/Grants/Parameters.css" />
+}
+
+@section scripts {
+    <abp-script src="/Pages/Grants/Parameters.js" />
+}
+
+@* Başlık + açıklama app header'da; sayfa içinde tekrarlanmıyor. *@
+<div data-page-description="@L["Grants:Parameters:Description"]" class="apya-page" data-grant-id="@Model.Id">
+    <div class="apya-page-head">
+        <div class="apya-page-head-actions d-flex align-items-center gap-2">
+            <a href="/Grants" class="btn btn-sm btn-outline-secondary">
+                <i class="fa fa-arrow-left me-1"></i>@L["Grants:Parameters:BackToPrograms"]
+            </a>
+            <span id="ParamDraftInfo" class="apya-chip apya-chip-warning d-none"></span>
+            <button type="button" id="ParamSaveBtn" class="btn btn-sm btn-outline-secondary">
+                @L["Grants:Parameters:SaveDraft"]
+            </button>
+            <button type="button" id="ParamPublishBtn" class="btn btn-sm btn-primary" disabled>
+                <i class="fa fa-check me-1"></i>@L["Grants:Parameters:Publish"]
+            </button>
+        </div>
+    </div>
+
+    <div class="apya-param-layout">
+
+        @* ---------- Sol nav ---------- *@
+        <nav class="apya-param-nav">
+            <div class="apya-overline">@L["Grants:Parameters:Sections"]</div>
+            <button type="button" class="apya-param-nav-item is-active" data-target="#SectionIdentity">
+                <i class="fa fa-id-card-clip"></i>
+                <span>@L["Grants:Parameters:Section:Identity"]</span>
+            </button>
+            <button type="button" class="apya-param-nav-item" data-target="#SectionEligibility">
+                <i class="fa fa-user-check"></i>
+                <span>@L["Grants:Parameters:Section:Eligibility"]</span>
+                <span class="apya-chip apya-chip-accent" id="NavEligibilityBadge">0</span>
+            </button>
+            <button type="button" class="apya-param-nav-item" data-target="#SectionFinancial">
+                <i class="fa fa-sack-dollar"></i>
+                <span>@L["Grants:Parameters:Section:Financial"]</span>
+                <span class="apya-chip apya-chip-accent" id="NavFinancialBadge">0</span>
+            </button>
+            <button type="button" class="apya-param-nav-item" data-target="#SectionDocuments">
+                <i class="fa fa-folder-open"></i>
+                <span>@L["Grants:Parameters:Section:Documents"]</span>
+                <span class="apya-chip apya-chip-accent" id="NavDocumentsBadge">0</span>
+            </button>
+            <button type="button" class="apya-param-nav-item" data-target="#SectionProcess">
+                <i class="fa fa-diagram-project"></i>
+                <span>@L["Grants:Parameters:Section:Process"]</span>
+                <span class="apya-chip apya-chip-neutral" id="NavProcessBadge"></span>
+            </button>
+            <button type="button" class="apya-param-nav-item" data-target="#SectionWeights">
+                <i class="fa fa-bullseye"></i>
+                <span>@L["Grants:Parameters:Section:Weights"]</span>
+                <span class="apya-chip apya-chip-neutral" id="NavWeightsBadge"></span>
+            </button>
+
+            <div class="apya-param-progress">
+                <div class="apya-param-progress-head">
+                    <span>@L["Grants:Parameters:Completion"]</span>
+                    <span class="apya-numeric text-secondary" id="ParamCompletionText">%0</span>
+                </div>
+                <div class="apya-mini-bar"><span id="ParamCompletionBar" style="width:0"></span></div>
+                <div class="small" id="ParamMissingText"></div>
+            </div>
+        </nav>
+
+        @* ---------- Orta kolon ---------- *@
+        <div class="apya-param-sections">
+
+            <section class="card mb-0" id="SectionIdentity">
+                <div class="card-body d-flex flex-column gap-3">
+                    <div class="apya-param-section-head">
+                        <span class="apya-param-section-icon"><i class="fa fa-id-card-clip"></i></span>
+                        <div>
+                            <div class="fw-bold">@L["Grants:Parameters:Section:Identity"]</div>
+                            <div class="small text-muted" id="ParamSourceUrlText"></div>
+                        </div>
+                    </div>
+
+                    <div class="apya-param-grid apya-param-grid--2">
+                        <div class="apya-field">
+                            <label class="apya-field-label" for="ParamName"><span>@L["Grants:Parameters:Name"]</span></label>
+                            <input type="text" id="ParamName" class="form-control form-control-sm" maxlength="128" />
+                        </div>
+                        <div class="apya-field">
+                            <label class="apya-field-label" for="ParamIssuer"><span>@L["Grants:Parameters:Issuer"]</span></label>
+                            <input type="text" id="ParamIssuer" class="form-control form-control-sm" maxlength="64" />
+                        </div>
+                    </div>
+
+                    <div class="apya-field">
+                        <label class="apya-field-label" for="ParamSourceUrl"><span>@L["Grants:Parameters:SourceUrl"]</span></label>
+                        <input type="url" id="ParamSourceUrl" class="form-control form-control-sm apya-numeric" maxlength="512" />
+                    </div>
+
+                    <div class="apya-field">
+                        <label class="apya-field-label" for="ParamSummary"><span>@L["Grants:Parameters:Summary"]</span></label>
+                        <textarea id="ParamSummary" class="form-control form-control-sm" rows="2"></textarea>
+                    </div>
+                </div>
+            </section>
+
+            <section class="card mb-0" id="SectionEligibility">
+                <div class="card-body d-flex flex-column gap-3">
+                    <div class="apya-param-section-head">
+                        <span class="apya-param-section-icon"><i class="fa fa-user-check"></i></span>
+                        <div>
+                            <div class="fw-bold">@L["Grants:Parameters:Section:Eligibility"]</div>
+                            <div class="small text-muted">@L["Grants:Parameters:Section:EligibilityHint"]</div>
+                        </div>
+                    </div>
+
+                    <div class="apya-param-grid apya-param-grid--2">
+                        <div class="apya-field">
+                            <span class="apya-field-label">
+                                <span>@L["Grants:Parameters:CompanySizes"]</span>
+                                <span class="apya-field-impact" data-impact="0"></span>
+                            </span>
+                            <div class="apya-choice-row" id="ParamSizes">
+                                <button type="button" class="apya-choice" data-size="1">@L["Grants:Size:Mikro"]</button>
+                                <button type="button" class="apya-choice" data-size="2">@L["Grants:Size:Kucuk"]</button>
+                                <button type="button" class="apya-choice" data-size="4">@L["Grants:Size:Orta"]</button>
+                                <button type="button" class="apya-choice" data-size="8">@L["Grants:Size:Buyuk"]</button>
+                            </div>
+                        </div>
+                        <div class="apya-field">
+                            <span class="apya-field-label">
+                                <span>@L["Grants:Parameters:CompanyAge"]</span>
+                                <span class="apya-field-impact" data-impact="1"></span>
+                            </span>
+                            <div class="apya-field-range">
+                                <input type="number" min="0" max="200" id="ParamMinAge" class="form-control form-control-sm apya-numeric" />
+                                <span class="apya-field-range-sep">—</span>
+                                <input type="number" min="0" max="200" id="ParamMaxAge" class="form-control form-control-sm apya-numeric"
+                                       placeholder="@L["Grants:Parameters:Unlimited"]" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="apya-field">
+                        <label class="apya-field-label"><span>@L["Grants:Parameters:Nace"]</span></label>
+                        <div class="apya-tag-input" data-kind="3">
+                            <span class="apya-tag-chips"></span>
+                            <input type="text" class="form-control apya-tag-entry" placeholder="@L["Grants:Parameters:TagPlaceholder"]" />
+                        </div>
+                    </div>
+
+                    <div class="apya-param-grid apya-param-grid--3">
+                        <div class="apya-field">
+                            <label class="apya-field-label"><span>@L["Grants:Parameters:Sector"]</span></label>
+                            <div class="apya-tag-input" data-kind="0">
+                                <span class="apya-tag-chips"></span>
+                                <input type="text" class="form-control apya-tag-entry" placeholder="@L["Grants:Parameters:TagPlaceholder"]" />
+                            </div>
+                        </div>
+                        <div class="apya-field">
+                            <label class="apya-field-label"><span>@L["Grants:Parameters:Region"]</span></label>
+                            <div class="apya-tag-input" data-kind="1">
+                                <span class="apya-tag-chips"></span>
+                                <input type="text" class="form-control apya-tag-entry" placeholder="@L["Grants:Parameters:TagPlaceholder"]" />
+                            </div>
+                        </div>
+                        <div class="apya-field">
+                            <label class="apya-field-label"><span>@L["Grants:Parameters:Keyword"]</span></label>
+                            <div class="apya-tag-input" data-kind="2">
+                                <span class="apya-tag-chips"></span>
+                                <input type="text" class="form-control apya-tag-entry" placeholder="@L["Grants:Parameters:TagPlaceholder"]" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="apya-field">
+                        <span class="apya-field-label">
+                            <span>@L["Grants:Parameters:Trl"]</span>
+                            <span class="apya-field-impact" data-impact="2"></span>
+                        </span>
+                        <div class="apya-trl-bar" id="ParamTrl">
+                            @for (var i = 1; i <= 9; i++)
+                            {
+                                <button type="button" class="apya-trl-seg" data-trl="@i">@i</button>
+                            }
+                        </div>
+                    </div>
+
+                    <div class="apya-param-grid apya-param-grid--3">
+                        <div class="apya-field">
+                            <span class="apya-field-label">
+                                <span>@L["Grants:Parameters:StaffCount"]</span>
+                                <span class="apya-field-impact" data-impact="3"></span>
+                            </span>
+                            <input type="number" min="0" id="ParamMinStaff" class="form-control form-control-sm apya-numeric" />
+                        </div>
+                        <div class="apya-field">
+                            <span class="apya-field-label">
+                                <span>@L["Grants:Parameters:RdStaffCount"]</span>
+                                <span class="apya-field-impact" data-impact="4"></span>
+                            </span>
+                            <input type="number" min="0" id="ParamMinRdStaff" class="form-control form-control-sm apya-numeric" />
+                        </div>
+                        <div class="apya-field">
+                            <span class="apya-field-label">
+                                <span>@L["Grants:Parameters:MinMatchScore"]</span>
+                            </span>
+                            <input type="number" min="0" max="100" id="ParamMinScore" class="form-control form-control-sm apya-numeric" />
+                        </div>
+                    </div>
+
+                    <div class="apya-field">
+                        <span class="apya-field-label">
+                            <span>@L["Grants:Parameters:Revenue"]</span>
+                            <span class="apya-field-impact" data-impact="5"></span>
+                        </span>
+                        <div class="apya-field-range">
+                            <input type="number" min="0" step="0.01" id="ParamMinRevenue" class="form-control form-control-sm apya-numeric" />
+                            <span class="apya-field-range-sep">—</span>
+                            <input type="number" min="0" step="0.01" id="ParamMaxRevenue" class="form-control form-control-sm apya-numeric"
+                                   placeholder="@L["Grants:Parameters:Unlimited"]" />
+                        </div>
+                    </div>
+
+                    <div class="d-flex flex-wrap align-items-end gap-4 pt-3 border-top">
+                        <div class="apya-field">
+                            <span class="apya-field-label">
+                                <span>@L["Grants:Rule:Consortium"]</span>
+                                <span class="apya-field-impact" data-impact="6"></span>
+                            </span>
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="form-check mb-0">
+                                    <input class="form-check-input" type="checkbox" id="ParamConsortium" />
+                                    <label class="form-check-label small" for="ParamConsortium">@L["Grants:Parameters:Consortium"]</label>
+                                </div>
+                                <input type="number" min="2" max="99" id="ParamMinPartners" style="width:96px"
+                                       class="form-control form-control-sm apya-numeric" disabled
+                                       placeholder="@L["Grants:Parameters:MinPartners"]" />
+                            </div>
+                        </div>
+                        <div class="d-flex flex-column gap-1">
+                            <div class="form-check mb-0">
+                                <input class="form-check-input" type="checkbox" id="ParamPrefersFemale" />
+                                <label class="form-check-label small" for="ParamPrefersFemale">@L["Grants:Parameters:PrefersFemale"]</label>
+                            </div>
+                            <div class="form-check mb-0">
+                                <input class="form-check-input" type="checkbox" id="ParamPrefersYoung" />
+                                <label class="form-check-label small" for="ParamPrefersYoung">@L["Grants:Parameters:PrefersYoung"]</label>
+                            </div>
+                            <div class="small text-muted">@L["Grants:Parameters:PriorityHint"]</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="card mb-0" id="SectionFinancial">
+                <div class="card-body d-flex flex-column gap-3">
+                    <div class="apya-param-section-head">
+                        <span class="apya-param-section-icon apya-param-section-icon--financial"><i class="fa fa-sack-dollar"></i></span>
+                        <div>
+                            <div class="fw-bold">@L["Grants:Parameters:Section:Financial"]</div>
+                            <div class="small text-muted">@L["Grants:Parameters:Section:FinancialHint"]</div>
+                        </div>
+                    </div>
+
+                    <div class="apya-param-grid apya-param-grid--4">
+                        <div class="apya-field">
+                            <label class="apya-field-label" for="ParamMaxAmount"><span>@L["Grants:Parameters:MaxAmount"]</span></label>
+                            <input type="number" min="0" step="0.01" id="ParamMaxAmount" class="form-control form-control-sm apya-numeric" />
+                            <div class="small text-muted">@L["Grants:Parameters:MaxAmountHint"]</div>
+                        </div>
+                        <div class="apya-field">
+                            <label class="apya-field-label" for="ParamSupportRate"><span>@L["Grants:Parameters:SupportRate"]</span></label>
+                            <input type="number" min="0" max="100" id="ParamSupportRate" class="form-control form-control-sm apya-numeric" />
+                        </div>
+                        <div class="apya-field">
+                            <label class="apya-field-label" for="ParamCoFinancing"><span>@L["Grants:Parameters:CoFinancing"]</span></label>
+                            <input type="text" id="ParamCoFinancing" class="form-control form-control-sm apya-numeric" readonly disabled />
+                            <div class="small text-muted">@L["Grants:Parameters:CoFinancingHint"]</div>
+                        </div>
+                        <div class="apya-field">
+                            <label class="apya-field-label" for="ParamDuration"><span>@L["Grants:Parameters:Duration"]</span></label>
+                            <input type="number" min="1" max="240" id="ParamDuration" class="form-control form-control-sm apya-numeric" />
+                        </div>
+                    </div>
+
+                    <div class="apya-field">
+                        <span class="apya-field-label">
+                            <span>@L["Grants:Parameters:CostItems"]</span>
+                            <span class="text-muted fw-normal">@L["Grants:Parameters:CostItemsHint"]</span>
+                        </span>
+                        <div class="apya-cost-grid" id="ParamCostItems">
+                            @foreach (var (kind, key) in new[]
+                            {
+                                (0, "Personel"), (1, "MakineTechizat"), (2, "Danismanlik"),
+                                (3, "YazilimLisans"), (4, "Seyahat"), (5, "SarfMalzeme")
+                            })
+                            {
+                                <div class="apya-cost-tile" data-kind="@kind">
+                                    <span>@L["Grants:CostItem:" + key]</span>
+                                    <span class="apya-cost-tile-state">@L["Grants:Parameters:CostClosed"]</span>
+                                    <input type="number" min="0" max="100" class="apya-cost-limit d-none"
+                                           title="@L["Grants:Parameters:CostLimit"]" />
+                                </div>
+                            }
+                        </div>
+                    </div>
+
+                    <div class="d-flex flex-wrap align-items-center gap-4 pt-3 border-top">
+                        <div class="apya-field">
+                            <label class="apya-field-label" for="ParamRepayment"><span>@L["Grants:Parameters:Repayment"]</span></label>
+                            <select id="ParamRepayment" class="form-select form-select-sm">
+                                <option value="0">@L["Grants:Parameters:RepaymentNone"]</option>
+                                <option value="1">@L["Grants:Parameters:RepaymentYes"]</option>
+                            </select>
+                        </div>
+                        <div class="d-flex flex-column gap-1">
+                            <div class="form-check mb-0">
+                                <input class="form-check-input" type="checkbox" id="ParamAdvance" />
+                                <label class="form-check-label small" for="ParamAdvance">@L["Grants:Parameters:AdvancePayment"]</label>
+                            </div>
+                            <div class="form-check mb-0">
+                                <input class="form-check-input" type="checkbox" id="ParamGuarantee" />
+                                <label class="form-check-label small" for="ParamGuarantee">@L["Grants:Parameters:GuaranteeLetter"]</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="card mb-0" id="SectionDocuments">
+                <div class="card-body d-flex flex-column gap-3">
+                    <div class="apya-param-section-head">
+                        <span class="apya-param-section-icon"><i class="fa fa-folder-open"></i></span>
+                        <div>
+                            <div class="fw-bold">@L["Grants:Parameters:Section:Documents"]</div>
+                            <div class="small text-muted">@L["Grants:Parameters:Documents:Hint"]</div>
+                        </div>
+                    </div>
+
+                    <div class="apya-doc-table">
+                        <div class="apya-doc-row apya-doc-head">
+                            <span>@L["Grants:Parameters:Documents:Name"]</span>
+                            <span>@L["Grants:Parameters:Documents:Obligation"]</span>
+                            <span>@L["Grants:Parameters:Documents:Uploader"]</span>
+                            <span>@L["Grants:Parameters:Documents:ESignature"]</span>
+                            <span></span>
+                        </div>
+                        <div id="ParamDocuments"></div>
+                        <div id="ParamDocumentsEmpty" class="apya-doc-empty">@L["Grants:Parameters:Documents:Empty"]</div>
+                    </div>
+
+                    <div>
+                        <button type="button" id="ParamAddDocument" class="apya-param-add">
+                            <i class="fa fa-plus"></i>@L["Grants:Parameters:Documents:Add"]
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <section class="card mb-0" id="SectionProcess">
+                <div class="card-body d-flex flex-column gap-3">
+                    <div class="apya-param-section-head">
+                        <span class="apya-param-section-icon"><i class="fa fa-diagram-project"></i></span>
+                        <div>
+                            <div class="fw-bold">@L["Grants:Parameters:Section:Process"]</div>
+                            <div class="small text-muted">@L["Grants:Parameters:Process:Hint"]</div>
+                        </div>
+                    </div>
+
+                    <div class="apya-param-grid apya-param-grid--2">
+                        <div class="apya-field">
+                            <label class="apya-field-label" for="ParamStageTemplate">
+                                <span>@L["Grants:Parameters:Process:Template"]</span>
+                            </label>
+                            <select id="ParamStageTemplate" class="form-select form-select-sm"></select>
+                        </div>
+                        <div class="apya-field">
+                            <span class="apya-field-label"><span>&nbsp;</span></span>
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="apya-chip apya-chip-accent" id="ParamStageStepCount"></span>
+                                <a href="/Grants/StageTemplates" class="btn btn-sm btn-outline-secondary">
+                                    <i class="fa fa-diagram-project me-1"></i>@L["Grants:Parameters:Process:Manage"]
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="card mb-0" id="SectionWeights">
+                <div class="card-body d-flex flex-column gap-3">
+                    <div class="apya-param-section-head">
+                        <span class="apya-param-section-icon"><i class="fa fa-bullseye"></i></span>
+                        <div>
+                            <div class="fw-bold">@L["Grants:Parameters:Section:Weights"]</div>
+                            <div class="small text-muted">@L["Grants:Parameters:Section:WeightsHint"]</div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex align-items-center justify-content-between gap-3 flex-wrap">
+                        <div id="ParamWeightSummary" class="d-flex flex-wrap gap-1"></div>
+                        <a id="ParamWeightLink" href="/Grants/MatchWeights" class="btn btn-sm btn-outline-secondary">
+                            <i class="fa fa-bullseye me-1"></i>@L["Grants:Parameters:Weights:Manage"]
+                        </a>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        @* ---------- Sağ panel: canlı eşleşme ---------- *@
+        <aside class="apya-param-side">
+            <div class="card mb-0">
+                <div class="card-body d-flex flex-column gap-3">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <span class="apya-overline">@L["Grants:Parameters:LiveMatch"]</span>
+                        <span class="apya-chip apya-chip-ai"><i class="fa fa-bolt me-1"></i>@L["Grants:Parameters:Live"]</span>
+                    </div>
+                    <div>
+                        <div class="apya-param-metric" id="MatchCount">—</div>
+                        <div class="small text-secondary">
+                            @L["Grants:Parameters:FirmsMatching"]
+                            <span class="text-muted" id="MatchTotal"></span>
+                        </div>
+                    </div>
+                    <div class="d-flex flex-column gap-2" id="MatchSizeBreakdown"></div>
+                    <div class="d-flex flex-column gap-2 pt-3 border-top">
+                        <span class="apya-overline">@L["Grants:Parameters:TopEliminating"]</span>
+                        <div id="MatchTopRule"></div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+    </div>
+</div>

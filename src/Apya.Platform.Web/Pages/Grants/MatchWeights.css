@@ -1,0 +1,218 @@
+/* =============================================================================
+   4b · Eşleştirme Ağırlıkları
+   -----------------------------------------------------------------------------
+   Tüm değerler --apya-* token'larından gelir; ham renk/ölçü yazılmaz.
+   ============================================================================= */
+
+.apya-weight-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 320px;
+    gap: var(--apya-space-5);
+    align-items: start;
+}
+
+@media (max-width: 1199.98px) {
+    .apya-weight-layout { grid-template-columns: minmax(0, 1fr); }
+    .apya-weight-side { position: static; }
+}
+
+.apya-weight-side {
+    position: sticky;
+    top: var(--apya-space-4);
+    display: flex;
+    flex-direction: column;
+    gap: var(--apya-space-3);
+}
+
+.apya-weight-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    flex: none;
+    border-radius: var(--apya-radius-lg);
+    background: var(--apya-accent-soft);
+    color: var(--apya-accent-500);
+    font-size: var(--apya-fs-base);
+}
+
+.apya-weight-icon--warning {
+    background: var(--apya-warning-50);
+    color: var(--apya-warning-700);
+}
+
+/* --- Boyut satırı --- */
+.apya-weight-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 200px 150px;
+    align-items: center;
+    gap: var(--apya-space-3);
+    padding: 10px var(--apya-space-3);
+    border: 1px solid var(--apya-border-default);
+    border-radius: var(--apya-radius-lg);
+    background: var(--apya-surface-base);
+}
+
+@media (max-width: 767.98px) {
+    .apya-weight-row { grid-template-columns: minmax(0, 1fr); }
+}
+
+.apya-weight-row.is-off {
+    background: var(--apya-surface-raised);
+    color: var(--apya-text-tertiary);
+}
+
+.apya-weight-name {
+    font-size: var(--apya-fs-base);
+    font-weight: var(--apya-weight-medium);
+}
+
+/* 0 / 0,5 / 1 / 1,5 / 2 kademeleri — segment seçici. */
+.apya-weight-steps {
+    display: flex;
+    gap: 3px;
+}
+
+.apya-weight-step {
+    flex: 1;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 0;
+    border-radius: var(--apya-radius-md);
+    background: var(--apya-surface-sunken);
+    color: var(--apya-text-tertiary);
+    font-family: var(--apya-font-mono);
+    font-variant-numeric: tabular-nums;
+    font-size: var(--apya-fs-xs);
+    cursor: pointer;
+}
+
+.apya-weight-step.is-on {
+    background: var(--apya-accent-soft);
+    color: var(--apya-accent-600);
+    font-weight: var(--apya-weight-semibold);
+}
+
+.apya-weight-step.is-on.is-zero {
+    background: color-mix(in srgb, var(--apya-neutral-500) 16%, transparent);
+    color: var(--apya-text-secondary);
+}
+
+.apya-weight-note {
+    font-size: var(--apya-fs-xs);
+    color: var(--apya-text-tertiary);
+    text-align: right;
+}
+
+/* --- Eksik veri kampanyası --- */
+.apya-campaign-table {
+    display: flex;
+    flex-direction: column;
+    border: 1px solid var(--apya-border-default);
+    border-radius: var(--apya-radius-xl);
+    overflow: hidden;
+}
+
+.apya-campaign-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 80px 120px 190px;
+    align-items: center;
+    gap: var(--apya-space-2);
+    padding: 9px var(--apya-space-3);
+    border-bottom: 1px solid var(--apya-border-subtle);
+    font-size: var(--apya-fs-sm);
+}
+
+.apya-campaign-row:last-child { border-bottom: 0; }
+
+.apya-campaign-head {
+    background: var(--apya-surface-raised);
+    border-bottom: 1px solid var(--apya-border-default);
+}
+
+.apya-campaign-head > span {
+    font-size: var(--apya-text-xs);
+    font-weight: var(--apya-weight-bold);
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    color: var(--apya-text-tertiary);
+}
+
+.apya-campaign-count {
+    font-family: var(--apya-font-mono);
+    font-variant-numeric: tabular-nums;
+}
+
+.apya-campaign-how {
+    font-size: var(--apya-fs-xs);
+    color: var(--apya-text-tertiary);
+}
+
+.apya-campaign-empty {
+    padding: var(--apya-space-5);
+    text-align: center;
+    font-size: var(--apya-fs-sm);
+    color: var(--apya-text-tertiary);
+}
+
+/* --- Etki paneli --- */
+.apya-weight-impact {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--apya-space-2);
+    padding: 8px 10px;
+    border-radius: var(--apya-radius-lg);
+    background: var(--apya-surface-raised);
+    font-size: var(--apya-fs-sm);
+}
+
+.apya-weight-impact--new {
+    background: var(--apya-accent-soft);
+    color: var(--apya-accent-600);
+    font-weight: var(--apya-weight-semibold);
+}
+
+.apya-weight-impact > .apya-numeric {
+    font-size: var(--apya-fs-xl);
+    font-weight: var(--apya-weight-bold);
+    letter-spacing: var(--apya-tracking-tight);
+}
+
+.apya-mover {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--apya-space-2);
+    font-size: var(--apya-fs-sm);
+    color: var(--apya-text-secondary);
+}
+
+.apya-mover-scores {
+    flex: none;
+    font-family: var(--apya-font-mono);
+    font-variant-numeric: tabular-nums;
+    font-size: var(--apya-fs-xs);
+}
+
+.apya-mover-scores .is-up { color: var(--apya-positive-700); }
+.apya-mover-scores .is-down { color: var(--apya-negative-700); }
+.apya-mover-scores .is-old { color: var(--apya-text-tertiary); text-decoration: line-through; }
+
+.apya-weight-warning {
+    padding: 10px;
+    border-radius: var(--apya-radius-lg);
+    background: var(--apya-warning-50);
+    color: var(--apya-warning-700);
+    font-size: var(--apya-text-xs);
+    line-height: 1.45;
+}
+
+/* Koyu temada aksan metni: accent-600 dark'ta -500'den DAHA koyu tanımlı. */
+[data-theme="dark"] .apya-weight-step.is-on,
+[data-theme="dark"] .apya-weight-impact--new {
+    color: var(--apya-accent-300);
+}
