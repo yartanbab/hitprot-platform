@@ -137,6 +137,8 @@ namespace Apya.Platform.EntityFrameworkCore
         public DbSet<GrantApplicationBudgetLine> GrantApplicationBudgetLines { get; set; }
         public DbSet<GrantApplicationFieldLock> GrantApplicationFieldLocks { get; set; }
         public DbSet<GrantApplicationMessage> GrantApplicationMessages { get; set; }
+        public DbSet<GrantApplicationDocument> GrantApplicationDocuments { get; set; }
+        public DbSet<GrantApplicationDocumentVersion> GrantApplicationDocumentVersions { get; set; }
         public DbSet<GrantRecommendation> GrantRecommendations { get; set; }
         public DbSet<GrantDisbursementTranche> GrantDisbursementTranches { get; set; }
         public DbSet<GrantMilestone> GrantMilestones { get; set; }
@@ -803,6 +805,33 @@ namespace Apya.Platform.EntityFrameworkCore
                 b.Property(x => x.Body).IsRequired().HasMaxLength(1000);
                 b.HasOne<GrantApplication>().WithMany().HasForeignKey(x => x.GrantApplicationId).OnDelete(DeleteBehavior.Cascade);
                 b.HasIndex(x => new { x.GrantApplicationId, x.CreationTime });
+            });
+
+            // --- 2b · İki taraflı evrak takibi ---
+
+            builder.Entity<GrantApplicationDocument>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "GrantApplicationDocuments", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+                b.Property(x => x.Name).IsRequired().HasMaxLength(128);
+                b.Property(x => x.ReviewNote).HasMaxLength(512);
+                b.HasOne<GrantApplication>().WithMany().HasForeignKey(x => x.GrantApplicationId).OnDelete(DeleteBehavior.Cascade);
+                // Şablondan türetme idempotent olsun diye (başvuru, şablon satırı) tekil.
+                // Elle eklenen evrakta RequirementId null; NULL davranışı sağlayıcılar
+                // arasında ayrıştığı için asıl güvence AppService tarafındaki upsert.
+                b.HasIndex(x => new { x.GrantApplicationId, x.RequirementId });
+            });
+
+            builder.Entity<GrantApplicationDocumentVersion>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "GrantApplicationDocumentVersions", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+                b.Property(x => x.StoredFileName).IsRequired().HasMaxLength(256);
+                b.Property(x => x.OriginalFileName).IsRequired().HasMaxLength(256);
+                b.Property(x => x.UploaderName).IsRequired().HasMaxLength(96);
+                b.Property(x => x.Note).HasMaxLength(256);
+                b.HasOne<GrantApplicationDocument>().WithMany(d => d.Versions).HasForeignKey(x => x.DocumentId).OnDelete(DeleteBehavior.Cascade);
+                b.HasIndex(x => new { x.DocumentId, x.VersionNo }).IsUnique();
             });
 
             builder.Entity<GrantDisbursementTranche>(b =>
