@@ -1,0 +1,199 @@
+@page
+@using Apya.Platform.Localization
+@using Microsoft.AspNetCore.Mvc.Localization
+@inject IHtmlLocalizer<PlatformResource> L
+@model Apya.Platform.Web.Pages.Grants.WizardModel
+@{
+    ViewBag.Title = L["Grants:Wizard:Title"].Value;
+}
+
+@section styles {
+    <abp-style src="/Pages/Grants/Shared.css" />
+    <abp-style src="/Pages/Grants/Tenant.css" />
+    <abp-style src="/Pages/Grants/Wizard.css" />
+}
+
+@section scripts {
+    <abp-script src="/libs/signalr/signalr.min.js" />
+    <abp-script src="/Pages/Grants/Wizard.js" />
+}
+
+<div data-page-description="@L["Grants:Wizard:Description"]" class="apya-page" data-application-id="@Model.Id">
+
+    @* ---------- Program künyesi ---------- *@
+    <div class="card mb-0 apya-wiz-head">
+        <div class="card-body d-flex align-items-center gap-3">
+            <span class="apya-wiz-badge"><i class="fa fa-award"></i></span>
+            <div class="flex-fill min-w-0">
+                <div class="fw-bold" id="GrantName"></div>
+                <div class="apya-wiz-meta apya-numeric" id="GrantMeta"></div>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                <span class="apya-chip apya-numeric apya-chip-warning d-none" id="DeadlineChip"></span>
+                <span class="apya-chip apya-chip-neutral" id="SaveChip"></span>
+                <span class="apya-chip apya-chip-positive d-none" id="OnlineChip"></span>
+            </div>
+        </div>
+    </div>
+
+    @* ---------- Adım şeridi ---------- *@
+    <div class="card mb-0">
+        <div class="card-body d-flex align-items-center gap-3">
+            <div class="apya-wiz-steps" id="Steps"></div>
+            <div class="apya-wiz-progress">
+                <span class="apya-field-label"><span>@L["Grants:Wizard:Completion"]</span></span>
+                <div class="apya-mini-bar"><span id="CompletionBar" style="width:0"></span></div>
+                <span class="apya-numeric fw-semibold" id="CompletionValue"></span>
+            </div>
+        </div>
+    </div>
+
+    <div class="apya-wiz-layout">
+
+        @* ---------- Sol: aktif adım ---------- *@
+        <section class="card mb-0">
+            <div class="card-body d-flex flex-column gap-3">
+
+                @* Adım 1 · Firma bilgileri (salt okunur) *@
+                <div class="apya-wiz-step d-none" data-step="1">
+                    <div class="fw-bold">@L["Grants:Wizard:Step:Firm"]</div>
+                    <p class="apya-wiz-hint">@L["Grants:Wizard:Step:FirmHint"]</p>
+                    <div class="apya-param-grid apya-param-grid--3" id="FirmFacts"></div>
+                    <div class="apya-side-note apya-side-note--quiet d-none" id="FirmGap">
+                        <i class="fa fa-circle-info mt-1"></i>
+                        <span id="FirmGapText"></span>
+                    </div>
+                    <a href="/Grants" class="btn btn-sm btn-outline-secondary align-self-start">
+                        <i class="fa fa-user-pen me-1"></i>@L["Grants:Wizard:EditProfile"]
+                    </a>
+                </div>
+
+                @* Adım 2 · Proje özeti *@
+                <div class="apya-wiz-step d-none" data-step="2">
+                    <div class="fw-bold">@L["Grants:Wizard:Step:Summary"]</div>
+                    <p class="apya-wiz-hint">@L["Grants:Wizard:Step:SummaryHint"]</p>
+
+                    <div class="apya-field apya-wiz-field" data-field="summary:Title">
+                        <span class="apya-field-label">
+                            <span>@L["Grants:Wizard:ProjectTitle"]</span>
+                            <span class="apya-wiz-lock"></span>
+                        </span>
+                        <input type="text" class="form-control form-control-sm" id="ProjectTitle" maxlength="200" />
+                    </div>
+
+                    <div class="apya-field apya-wiz-field" data-field="summary:Body">
+                        <span class="apya-field-label">
+                            <span>@L["Grants:Wizard:ProjectSummary"]</span>
+                            <span class="apya-wiz-lock"></span>
+                        </span>
+                        <textarea class="form-control form-control-sm" rows="5" id="ProjectSummary" maxlength="2000"></textarea>
+                    </div>
+
+                    <div class="apya-field apya-wiz-field" data-field="summary:Duration">
+                        <span class="apya-field-label">
+                            <span>@L["Grants:Wizard:Duration"]</span>
+                            <span class="apya-wiz-lock"></span>
+                        </span>
+                        <input type="number" min="1" max="120" class="form-control form-control-sm apya-numeric"
+                               id="ProjectDuration" style="max-width:140px" />
+                    </div>
+                </div>
+
+                @* Adım 3 · Bütçe *@
+                <div class="apya-wiz-step d-none" data-step="3">
+                    <div class="d-flex align-items-center justify-content-between gap-2">
+                        <div class="fw-bold">@L["Grants:Wizard:Step:Budget"]</div>
+                        <span class="apya-chip apya-chip-accent d-none" id="CoEditChip">@L["Grants:Wizard:CoEditing"]</span>
+                    </div>
+                    <p class="apya-wiz-hint">@L["Grants:Wizard:Step:BudgetHint"]</p>
+
+                    <div class="apya-cat-table">
+                        <div class="apya-wiz-row apya-cat-head">
+                            <span>@L["Grants:Wizard:Col:Item"]</span>
+                            <span>@L["Grants:Wizard:Col:Amount"]</span>
+                            <span>@L["Grants:Wizard:Col:Limit"]</span>
+                            <span>@L["Grants:Wizard:Col:Support"]</span>
+                        </div>
+                        <div id="BudgetRows"></div>
+                    </div>
+
+                    <div class="apya-wiz-totals">
+                        <div>
+                            <span class="apya-field-label"><span>@L["Grants:Wizard:TotalProject"]</span></span>
+                            <span class="apya-wiz-total apya-numeric" id="TotalProject"></span>
+                        </div>
+                        <div>
+                            <span class="apya-field-label"><span>@L["Grants:Wizard:TotalSupport"]</span></span>
+                            <span class="apya-wiz-total apya-wiz-total--support apya-numeric" id="TotalSupport"></span>
+                        </div>
+                        <div>
+                            <span class="apya-field-label"><span>@L["Grants:Wizard:OwnContribution"]</span></span>
+                            <span class="apya-wiz-total apya-numeric" id="OwnContribution"></span>
+                        </div>
+                    </div>
+                    <div class="small text-muted" id="CapNote"></div>
+                </div>
+
+                @* Adım 4 · Gönder *@
+                <div class="apya-wiz-step d-none" data-step="4">
+                    <div class="fw-bold">@L["Grants:Wizard:Step:Submit"]</div>
+                    <p class="apya-wiz-hint">@L["Grants:Wizard:Step:SubmitHint"]</p>
+                    <div id="SubmitChecklist" class="d-flex flex-column gap-2"></div>
+                    <div class="apya-side-note d-none" id="SubmitWarning">
+                        <i class="fa fa-triangle-exclamation mt-1"></i>
+                        <span id="SubmitWarningText"></span>
+                    </div>
+                    <div class="apya-chip apya-chip-positive align-self-start d-none" id="SubmittedChip"></div>
+                </div>
+
+                @* Adım altı düğmeleri *@
+                <div class="d-flex align-items-center gap-2 pt-3 border-top">
+                    <button type="button" class="btn btn-sm btn-outline-secondary" id="PrevBtn">
+                        <i class="fa fa-arrow-left me-1"></i>@L["Grants:Wizard:Back"]
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" id="HandOverBtn"></button>
+                    <div class="flex-fill"></div>
+                    <button type="button" class="btn btn-sm btn-primary" id="NextBtn"></button>
+                </div>
+            </div>
+        </section>
+
+        @* ---------- Sağ: canlı panel ---------- *@
+        <aside class="apya-wiz-side">
+            <div class="card mb-0">
+                <div class="card-body d-flex flex-column gap-2">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <span class="apya-overline">@L["Grants:Wizard:WhoIsHere"]</span>
+                        <span class="apya-chip apya-chip-positive d-none" id="LiveChip">@L["Grants:Wizard:Live"]</span>
+                    </div>
+                    <div id="PresenceList" class="d-flex flex-column gap-2"></div>
+                    <div class="apya-wiz-hint">@L["Grants:Wizard:LockHint"]</div>
+                </div>
+            </div>
+
+            <div class="card mb-0">
+                <div class="card-body d-flex flex-column gap-2">
+                    <span class="apya-overline">@L["Grants:Wizard:Pending"]</span>
+                    <div id="PendingList" class="d-flex flex-column gap-2"></div>
+                </div>
+            </div>
+
+            <div class="card mb-0">
+                <div class="card-body d-flex flex-column gap-2">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <span class="apya-overline">@L["Grants:Wizard:Ask"]</span>
+                        <span class="apya-chip apya-numeric apya-chip-accent d-none" id="MessageCount"></span>
+                    </div>
+                    <div id="MessageList" class="apya-wiz-messages"></div>
+                    <div class="apya-wiz-compose">
+                        <input type="text" class="form-control form-control-sm" id="MessageBody"
+                               maxlength="1000" placeholder="@L["Grants:Wizard:AskPlaceholder"]" />
+                        <button type="button" class="btn btn-sm btn-outline-primary" id="SendMessageBtn">
+                            <i class="fa fa-paper-plane"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </aside>
+    </div>
+</div>
