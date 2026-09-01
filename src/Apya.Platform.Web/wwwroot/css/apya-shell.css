@@ -7508,3 +7508,12 @@ html[data-sidebar] .apya-sidebar-resizer {
 .apya-clean-table tbody tr.apya-matrix-task > td:first-child {
     padding-left: 44px;
 }
+
+/* Revizyon modali — kesinti kipindeki iki secenek karti (tasarim 2b).
+   Secili kart cerceve + halka ile isaretlenir; tasarimin
+   box-shadow:0 0 0 1px deseninin token'li karsiligi. */
+.apya-revmode { cursor: pointer; }
+.apya-revmode.is-selected {
+    border-color: var(--apya-accent-500);
+    box-shadow: 0 0 0 1px var(--apya-accent-500);
+}
