@@ -174,6 +174,9 @@ namespace Apya.Platform.EntityFrameworkCore
         /* --- RIZA / KVKK OMURGASI --- */
         public DbSet<Apya.Platform.Consents.ConsentRecord> ConsentRecords { get; set; }
 
+        /* --- DEMO TALEPLERİ (giriş ekranı) --- */
+        public DbSet<Apya.Platform.DemoRequests.DemoRequest> DemoRequests { get; set; }
+
         /* --- DASHBOARD --- */
         public DbSet<Apya.Platform.Dashboard.DashboardLayout> DashboardLayouts { get; set; }
 
@@ -1798,6 +1801,30 @@ namespace Apya.Platform.EntityFrameworkCore
                 b.HasIndex(x => new { x.TenantId, x.Type, x.OccurredAt });
                 // Aynı öznenin belirli bir türde son rızasını bulmak için.
                 b.HasIndex(x => new { x.TenantId, x.Type, x.SubjectId });
+            });
+
+            /* --- DEMO TALEPLERİ YAPILANDIRMASI --- */
+            builder.Entity<Apya.Platform.DemoRequests.DemoRequest>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "DemoRequests", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+                b.Property(x => x.FullName).IsRequired().HasMaxLength(Apya.Platform.DemoRequests.DemoRequestConsts.MaxFullNameLength);
+                b.Property(x => x.CompanyName).IsRequired().HasMaxLength(Apya.Platform.DemoRequests.DemoRequestConsts.MaxCompanyNameLength);
+                b.Property(x => x.Email).IsRequired().HasMaxLength(Apya.Platform.DemoRequests.DemoRequestConsts.MaxEmailLength);
+                b.Property(x => x.Phone).IsRequired().HasMaxLength(Apya.Platform.DemoRequests.DemoRequestConsts.MaxPhoneLength);
+                b.Property(x => x.InterestedModules).HasMaxLength(Apya.Platform.DemoRequests.DemoRequestConsts.MaxInterestedModulesLength);
+                b.Property(x => x.Message).HasMaxLength(Apya.Platform.DemoRequests.DemoRequestConsts.MaxMessageLength);
+                b.Property(x => x.TargetAudience).HasMaxLength(Apya.Platform.DemoRequests.DemoRequestConsts.MaxTargetAudienceLength);
+                b.Property(x => x.ProblemStatement).HasMaxLength(Apya.Platform.DemoRequests.DemoRequestConsts.MaxProblemStatementLength);
+                b.Property(x => x.PlannedActivities).HasMaxLength(Apya.Platform.DemoRequests.DemoRequestConsts.MaxPlannedActivitiesLength);
+                b.Property(x => x.ExpectedOutcomes).HasMaxLength(Apya.Platform.DemoRequests.DemoRequestConsts.MaxExpectedOutcomesLength);
+                b.Property(x => x.AdminNote).HasMaxLength(Apya.Platform.DemoRequests.DemoRequestConsts.MaxAdminNoteLength);
+                b.Property(x => x.IpAddress).HasMaxLength(Apya.Platform.DemoRequests.DemoRequestConsts.MaxIpAddressLength);
+                b.Property(x => x.UserAgent).HasMaxLength(Apya.Platform.DemoRequests.DemoRequestConsts.MaxUserAgentLength);
+                // Panelin varsayılan sorgusu: duruma göre süz, en yeniden eskiye sırala.
+                b.HasIndex(x => new { x.Status, x.CreationTime });
+                // Kötüye kullanım sayacı: aynı IP adresinin son bir saatteki talepleri.
+                b.HasIndex(x => new { x.IpAddress, x.CreationTime });
             });
 
             builder.Entity<Apya.Platform.Dashboard.DashboardLayout>(b =>

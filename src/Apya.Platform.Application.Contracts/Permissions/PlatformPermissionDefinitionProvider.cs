@@ -187,6 +187,11 @@ public class PlatformPermissionDefinitionProvider : PermissionDefinitionProvider
 
         // Rıza/KVKK analiz paneli — host/yönetici seviyesinde tek izin, alt izni yok.
         systemGroup.AddPermission(PlatformPermissions.Consents.Default, L("Permission:Consents"));
+
+        // Demo talepleri — giriş ekranından gelen talepler HOST kaydıdır; kiracıya
+        // ait değildir, bu yüzden feature kapısı yoktur.
+        var demoRequestsPermission = systemGroup.AddPermission(PlatformPermissions.DemoRequests.Default, L("Permission:DemoRequests"));
+        demoRequestsPermission.AddChild(PlatformPermissions.DemoRequests.Manage, L("Permission:DemoRequests.Manage"));
     }
 
     private static LocalizableString L(string name)

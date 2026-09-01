@@ -9,6 +9,8 @@ $(function () {
 
     function esc(t) { return $('<div>').text(t == null ? '' : t).html(); }
     function money(v) { return v != null ? Math.round(v).toLocaleString('tr-TR') + ' ₺' : '—'; }
+    // Tavan belirtilmemiş program 0 ile saklanır (MaxAmount kolonu NOT NULL) — "0 ₺" yerine — göster.
+    function ceiling(v) { return v ? money(v) : '—'; }
     function fmtDate(v) { return v ? new Date(v).toLocaleDateString('tr-TR') : '—'; }
 
     // ---------- Etiket (chip) girişi ----------
@@ -98,7 +100,7 @@ $(function () {
             '    </div>' +
             '    <div class="d-flex flex-column align-items-end gap-1">' + hostBadge + scoreChip + '</div>' +
             '  </div>' +
-            '  <div class="apya-tile-progress-label"><span>Maks. Tutar</span><span class="apya-numeric fw-semibold">' + money(r.maxAmount) + '</span></div>' +
+            '  <div class="apya-tile-progress-label"><span>Maks. Tutar</span><span class="apya-numeric fw-semibold">' + ceiling(r.maxAmount) + '</span></div>' +
             '  <div class="apya-tile-foot">' + days + btn + '</div>' +
             '</div>'
         );

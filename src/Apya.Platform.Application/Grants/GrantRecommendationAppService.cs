@@ -80,18 +80,23 @@ public class GrantRecommendationAppService : ApplicationService, IGrantRecommend
             .ToHashSet();
 
         // 3) Katalog (host TenantId=null → filtreyi kapat).
+        // 🔴 Filtre kapalıyken TenantId koşulu ELLE konur: aksi halde sorgu TÜM kiracıların
+        // çağrılarını döndürür ve kiracı, başka kiracının kataloğunu görür. Filtre yalnız
+        // host satırlarına ERİŞMEK için kapatılıyor, kapsamı genişletmek için değil.
         var result = new List<GrantRecommendationDto>();
         using (_mtFilter.Disable())
         {
-            var openCalls = await _callRepo.GetListAsync(c => c.Status == GrantCallStatus.Acik);
+            var openCalls = await _callRepo.GetListAsync(
+                c => c.Status == GrantCallStatus.Acik && c.TenantId == null);
             if (openCalls.Count == 0)
             {
                 return result;
             }
 
             var grantIds = openCalls.Select(c => c.GrantId).Distinct().ToList();
-            var grants = (await _grantRepo.GetListAsync(g => grantIds.Contains(g.Id))).ToDictionary(g => g.Id);
-            var tagsByGrant = (await _criteriaRepo.GetListAsync(t => grantIds.Contains(t.GrantId)))
+            var grants = (await _grantRepo.GetListAsync(g => grantIds.Contains(g.Id) && g.TenantId == null))
+                .ToDictionary(g => g.Id);
+            var tagsByGrant = (await _criteriaRepo.GetListAsync(t => grantIds.Contains(t.GrantId) && t.TenantId == null))
                 .GroupBy(t => t.GrantId)
                 .ToDictionary(g => g.Key, g => (IReadOnlyList<GrantCriteriaTag>)g.ToList());
 

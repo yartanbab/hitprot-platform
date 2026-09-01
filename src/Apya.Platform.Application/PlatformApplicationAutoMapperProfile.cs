@@ -179,6 +179,10 @@ namespace Apya.Platform
             CreateMap<Apya.Platform.ProjectBudgets.BudgetRevisionLine, Apya.Platform.ProjectBudgets.Dtos.BudgetRevisionLineDto>()
                 .ForMember(d => d.BudgetLineName, o => o.Ignore());
             CreateMap<Apya.Platform.ProjectBudgets.BudgetRevision, Apya.Platform.ProjectBudgets.Dtos.BudgetRevisionDto>();
+
+            // --- DEMO TALEBİ (DEMO REQUESTS) MODÜLÜ ---
+            // InterestedModuleKeys hesaplanan bir özelliktir, eşlenmez.
+            CreateMap<Apya.Platform.DemoRequests.DemoRequest, Apya.Platform.DemoRequests.Dtos.DemoRequestDto>();
         }
     }
 }

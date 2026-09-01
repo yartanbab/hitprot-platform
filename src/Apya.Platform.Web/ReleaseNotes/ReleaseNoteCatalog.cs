@@ -39,7 +39,16 @@ public static class ReleaseNoteCatalog
                 "Firma profiliniz ve proje geçmişinizle yüksek uyum gösteren çağrılar sayfanın üstünde " +
                 "\"Size Önerilen Çağrılar\" başlığında ayrı kalmaya devam ediyor; size özel gönderilen " +
                 "çağrılar da burada çıkıyor. Her kartta o çağrı için uyum puanınızı görüyorsunuz, " +
-                "böylece listenin tamamına bakarken önceliğinizi kaybetmiyorsunuz.")
+                "böylece listenin tamamına bakarken önceliğinizi kaybetmiyorsunuz."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "Erasmus+ gençlik programları hibe listenizde",
+                "Erasmus+ gençlik alanının beş programı katalogda tanımlandı: Gençlik Değişimleri " +
+                "(KA152), Gençlik Çalışanlarının Hareketliliği (KA153), Gençlik Katılımı (KA154), " +
+                "Küçük Ölçekli Ortaklıklar (KA210) ve İşbirliği Ortaklıkları (KA220). Her programın " +
+                "açıklamasında hedef kitlesi, kimlerin başvurabileceği ve götürü hibe kademeleri yazıyor. " +
+                "KA152, KA153 ve KA154 için 1 Ekim 2026 başvuru dönemi açık ve şimdiden listenizde " +
+                "görünüyor; KA210 ile KA220 ise 2027 başvuru takvimi açıklandığında listenize düşecek.")
         ),
 
         new ReleaseNote(
