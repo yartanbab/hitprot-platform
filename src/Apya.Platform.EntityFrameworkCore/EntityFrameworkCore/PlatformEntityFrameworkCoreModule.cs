@@ -1,5 +1,6 @@
 ﻿using System;
 using Apya.Platform;
+using Apya.Platform.FxRevaluations;
 using Apya.Platform.ProjectBudgets;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -101,6 +102,12 @@ public class PlatformEntityFrameworkCoreModule : AbpModule
                 q => q.Include(x => x.Deductions));
 
             options.Entity<BudgetRevision>(o => o.DefaultWithDetailsFunc =
+                q => q.Include(x => x.Lines));
+
+            // FxRevaluationAppService.GetAsync includeDetails ile okuyor; kayıt
+            // olmadan değerleme detayı SIFIR satır gösterip altında dolu bir
+            // TOPLAM basıyordu (ölçüldü: 0 satır / 13.491.414,76 ₺).
+            options.Entity<FxRevaluationSnapshot>(o => o.DefaultWithDetailsFunc =
                 q => q.Include(x => x.Lines));
         });
 

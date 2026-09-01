@@ -125,4 +125,42 @@ public class FundingTrancheDetails_Tests : PlatformEntityFrameworkCoreTestBase
         revision.Lines.Single().NewAmount.ShouldBe(400_000m);
         revision.NetDelta.ShouldBe(-100_000m);
     }
+
+    /// <summary>
+    /// Aynı eksiklik <see cref="Apya.Platform.FxRevaluations.FxRevaluationSnapshot"/>'ta da
+    /// vardı: değerleme detayı SIFIR satır gösterip altında dolu bir TOPLAM basıyordu
+    /// (ölçüldü 2026-09-02: 0 satır / 13.491.414,76 ₺). RunAsync satırları döndürüyordu
+    /// çünkü aggregate zaten bellekteydi — hata yalnız AYRI okumada görünüyordu.
+    /// </summary>
+    [Fact]
+    public async Task Kur_degerlemesi_okundugunda_satirlari_da_gelir()
+    {
+        // Değerleme YALNIZ yabancı para hesabı için satır üretir; fixture'da
+        // kasa hesabı yok, o yüzden testin kendisi kurar.
+        var accounts = GetRequiredService<IRepository<Apya.Platform.CashAccounts.CashAccount, Guid>>();
+        var rates = GetRequiredService<IRepository<Apya.Platform.ExchangeRates.ExchangeRate, Guid>>();
+
+        await accounts.InsertAsync(new Apya.Platform.CashAccounts.CashAccount(
+            Guid.NewGuid(), "USD kasa " + Guid.NewGuid().ToString("N")[..6],
+            Apya.Platform.CashAccounts.CashAccountType.Bank, "USD", 1_000m), autoSave: true);
+
+        await rates.InsertAsync(new Apya.Platform.ExchangeRates.ExchangeRate(
+            Guid.NewGuid(), "USD", "TRY", 41m, new DateTime(2026, 8, 30)), autoSave: true);
+
+        var fx = GetRequiredService<Apya.Platform.FxRevaluations.IFxRevaluationAppService>();
+
+        var created = await fx.RunAsync(new Apya.Platform.FxRevaluations.RunFxRevaluationDto
+        {
+            AsOfDate = new DateTime(2026, 8, 31),
+            Notes = "detay testi",
+        });
+
+        // Fixture kasa hesabı üretmiyorsa test SESSİZCE boş geçmesin.
+        created.Lines.ShouldNotBeEmpty("değerleme satırı üretilmediyse bu test hiçbir şey ölçmez");
+
+        // AYRI çağrı: aggregate'i bellekte tutan önceki sorgu YOK.
+        var reread = await fx.GetAsync(created.Id);
+
+        reread.Lines.Count.ShouldBe(created.Lines.Count);
+    }
 }
