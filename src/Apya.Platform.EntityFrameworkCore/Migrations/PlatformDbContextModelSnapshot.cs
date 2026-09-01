@@ -5718,6 +5718,9 @@ namespace Apya.Platform.Migrations
                     b.Property<int?>("ProjectDurationMonths")
                         .HasColumnType("integer");
 
+                    b.Property<Guid?>("ProjectId")
+                        .HasColumnType("uuid");
+
                     b.Property<string>("ProjectSummary")
                         .HasMaxLength(2000)
                         .HasColumnType("character varying(2000)");
@@ -5744,6 +5747,8 @@ namespace Apya.Platform.Migrations
                     b.HasIndex("CurrentStepId");
 
                     b.HasIndex("GrantCallId");
+
+                    b.HasIndex("ProjectId");
 
                     b.HasIndex("TenantId", "GrantCallId")
                         .IsUnique();

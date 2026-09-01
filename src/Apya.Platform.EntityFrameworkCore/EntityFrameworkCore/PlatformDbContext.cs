@@ -773,6 +773,9 @@ namespace Apya.Platform.EntityFrameworkCore
                 b.Property(x => x.ProjectTitle).HasMaxLength(200);
                 b.Property(x => x.ProjectSummary).HasMaxLength(2000);
                 b.Property(x => x.SuccessFeePercent).HasColumnType("decimal(5,2)");
+                // Projeye FK KURULMADI: proje silinse bile başvurunun kendisi durmalı,
+                // dönüştürüldüğü bilgisi denetim izidir.
+                b.HasIndex(x => x.ProjectId);
                 // Aynı tenant + çağrı için tek başvuru.
                 b.HasIndex(x => new { x.TenantId, x.GrantCallId }).IsUnique();
             });
