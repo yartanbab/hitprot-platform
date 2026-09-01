@@ -138,10 +138,17 @@
                 break;
 
             case FinanceContext.TabDonor:
-                <partial name="_EmptyState" model='new EmptyStateModel {
-                    Icon = "fa-file-export",
-                    Title = "Donör raporlaması hazırlanıyor",
-                    Description = "Rapor dönemleri, uygunluk denetimi ve donör rapor paketi bu sekmeye gelecek." }' />
+                @if (Model.SelectedProject == null)
+                {
+                    <partial name="_EmptyState" model='new EmptyStateModel {
+                        Icon = "fa-file-export",
+                        Title = "Önce bir proje seçin",
+                        Description = "Donör raporlaması proje bağlamında anlamlıdır." }' />
+                }
+                else
+                {
+                    <partial name="_PanelDonor" model="Model" />
+                }
                 break;
 
             case FinanceContext.TabDonations:

@@ -139,6 +139,24 @@ public class IndexModel : AbpPageModel
     /// <summary>Projenin teslim paketleri ve her birinin son kontrol sonucu.</summary>
     public List<DeliveryRow> DeliveryPackages { get; private set; } = new();
 
+    /* ─── "Donör & raporlama" sekmesi (tasarım 2a) ───────────────────── */
+
+    /// <summary>Uygunluk denetiminin bulguları; her satır GERÇEK bir sayıya dayanır.</summary>
+    public List<EligibilityFinding> EligibilityFindings { get; private set; } = new();
+
+    /// <summary>Donör raporunun teslim paketleri (dönem + durum).</summary>
+    public List<Apya.Platform.Documents.DeliveryPackageDto> DonorPackages { get; private set; } = new();
+
+    public class EligibilityFinding
+    {
+        public string Tone { get; set; } = "neutral";
+        public string Title { get; set; } = string.Empty;
+        public string Detail { get; set; } = string.Empty;
+        public int Count { get; set; }
+        public decimal Amount { get; set; }
+        public string? Url { get; set; }
+    }
+
     public List<TransactionRow> Transactions { get; private set; } = new();
     public List<AccountSummary> Accounts { get; private set; } = new();
     public decimal TotalBalanceTry { get; private set; }
@@ -229,6 +247,14 @@ public class IndexModel : AbpPageModel
         else if (ActiveTab == FinanceContext.TabDocuments && SelectedProject != null)
         {
             await LoadDocumentsAsync();
+        }
+        else if (ActiveTab == FinanceContext.TabDonor && SelectedProject != null)
+        {
+            await LoadBudgetAsync();
+            await LoadLedgerAsync();
+            await TryAddAsync(async () =>
+                FxBridge = await _projectFxAppService.GetBridgeAsync(SelectedProject.Id));
+            await LoadDonorReportingAsync();
         }
     }
 
@@ -720,6 +746,78 @@ public class IndexModel : AbpPageModel
 
         /// <summary>Yetki/hata durumunda null kalır; ekran "kontrol edilemedi" der.</summary>
         public Apya.Platform.Documents.PreflightResultDto? Preflight { get; set; }
+    }
+
+    /// <summary>
+    /// Donör raporlaması: uygunluk bulguları + teslim paketleri.
+    ///
+    /// TASARIMDAN BİLİNÇLİ SAPMA — "uygun olmayan tutar" satırı YOK. Kayıtta
+    /// uygunluk (eligible/ineligible) diye bir alan şemada bulunmuyor; olmayan
+    /// bir kavramı ekrana yazmak, kullanıcının denetlediğini sandığı ama hiç
+    /// denetlenmeyen bir rakam üretirdi. Buradaki üç bulgunun üçü de sayılabilir
+    /// gerçeklere dayanıyor.
+    /// </summary>
+    private async Task LoadDonorReportingAsync()
+    {
+        var projectId = SelectedProject!.Id;
+
+        // 1) Belgesiz harcama — donör denetiminin ilk sorduğu şey.
+        await TryAddAsync(async () =>
+        {
+            var board = await _matchingAppService.GetBoardAsync(projectId);
+            if (board.Expenses.Count > 0)
+            {
+                EligibilityFindings.Add(new EligibilityFinding
+                {
+                    Tone = "negative",
+                    Title = "Belgesiz harcama",
+                    Detail = "Donöre belgesiz harcama sunulamaz.",
+                    Count = board.Expenses.Count,
+                    Amount = board.UndocumentedTotal,
+                    Url = $"/Documents/Matching?projectId={projectId}"
+                });
+            }
+        });
+
+        // 2) Donör karşılığı hesaplanamayan kayıt — kur eksikse rapor tutmaz.
+        if (FxBridge is { MissingDonorRateCount: > 0 })
+        {
+            EligibilityFindings.Add(new EligibilityFinding
+            {
+                Tone = "warning",
+                Title = "Donör karşılığı hesaplanamadı",
+                Detail = "Kur kaydı eksik; bu kayıtlar donör raporunda tutar taşımaz.",
+                Count = FxBridge.MissingDonorRateCount,
+                Url = TabUrl(FinanceContext.TabFxBridge)
+            });
+        }
+
+        // 3) Proje tarih aralığı dışındaki kayıt. Donör "uygun dönem" der; bizde
+        //    dönem varlığı yok, en yakın GERÇEK sınır projenin kendi tarihleri.
+        var start = SelectedProject.StartDate?.Date;
+        var end = SelectedProject.EndDate?.Date;
+        if (start != null || end != null)
+        {
+            var outside = LedgerRows
+                .Where(r => (start != null && r.Date.Date < start) || (end != null && r.Date.Date > end))
+                .ToList();
+
+            if (outside.Count > 0)
+            {
+                EligibilityFindings.Add(new EligibilityFinding
+                {
+                    Tone = "warning",
+                    Title = "Proje tarihleri dışında kayıt",
+                    Detail = $"Proje aralığı: {start?.ToString("dd.MM.yyyy") ?? "—"} – {end?.ToString("dd.MM.yyyy") ?? "—"}",
+                    Count = outside.Count,
+                    Amount = outside.Sum(r => r.BookAmount),
+                    Url = TabUrl(FinanceContext.TabLedger)
+                });
+            }
+        }
+
+        await TryAddAsync(async () =>
+            DonorPackages = await _deliveryPackageAppService.GetListAsync(projectId));
     }
 
     private static async Task TryAddAsync(Func<Task> fetch)
