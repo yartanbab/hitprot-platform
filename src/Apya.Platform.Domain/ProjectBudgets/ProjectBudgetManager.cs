@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Apya.Platform.Expenses;
 using Apya.Platform.Incomes;
+using Apya.Platform.Tasks;
 using Volo.Abp;
 using Volo.Abp.Domain.Repositories;
 using Volo.Abp.Domain.Services;
@@ -26,19 +27,22 @@ public class ProjectBudgetManager : DomainService
     private readonly IRepository<BudgetRevision, Guid> _revisionRepository;
     private readonly IRepository<Expense, Guid> _expenseRepository;
     private readonly IRepository<IncomeEntry, Guid> _incomeRepository;
+    private readonly IRepository<TaskItem, Guid> _taskRepository;
 
     public ProjectBudgetManager(
         IRepository<ProjectBudgetLine, Guid> lineRepository,
         IRepository<FundingTranche, Guid> trancheRepository,
         IRepository<BudgetRevision, Guid> revisionRepository,
         IRepository<Expense, Guid> expenseRepository,
-        IRepository<IncomeEntry, Guid> incomeRepository)
+        IRepository<IncomeEntry, Guid> incomeRepository,
+        IRepository<TaskItem, Guid> taskRepository)
     {
         _lineRepository = lineRepository;
         _trancheRepository = trancheRepository;
         _revisionRepository = revisionRepository;
         _expenseRepository = expenseRepository;
         _incomeRepository = incomeRepository;
+        _taskRepository = taskRepository;
     }
 
     /// <summary>
@@ -142,6 +146,51 @@ public class ProjectBudgetManager : DomainService
             throw new BusinessException(PlatformDomainErrorCodes.BudgetLineProjectMismatch)
                 .WithData("BudgetLineId", budgetLineId)
                 .WithData("ProjectId", projectId);
+    }
+
+    /// <summary>
+    /// Görevin bütçe bağını doğrular. İki kural:
+    ///   1) Kalem, görevin projesine ait olmalı.
+    ///   2) Aynı kalemdeki görev planlarının TOPLAMI kalemin onaylanan tutarını
+    ///      aşamaz — aksi halde kalem bütçesi kâğıt üstünde iki kez dağıtılırdı.
+    ///
+    /// <paramref name="excludeTaskId"/> güncellemede kendi eski tutarını hesaba
+    /// katmamak için: yoksa görev kendi planını "başka bir görevin planı" sanıp
+    /// kendini bloke ederdi.
+    /// </summary>
+    public async Task EnsureTaskBudgetIsValidAsync(
+        Guid? projectId,
+        Guid? budgetLineId,
+        decimal? plannedAmount,
+        Guid? excludeTaskId = null)
+    {
+        if (budgetLineId == null)
+        {
+            return;
+        }
+
+        var line = await _lineRepository.FindAsync(x => x.Id == budgetLineId.Value);
+        if (line == null || projectId == null || line.ProjectId != projectId.Value)
+            throw new BusinessException(PlatformDomainErrorCodes.TaskBudgetLineProjectMismatch)
+                .WithData("BudgetLineId", budgetLineId);
+
+        if (plannedAmount is null or <= 0)
+        {
+            return;
+        }
+
+        var siblings = await _taskRepository.GetListAsync(x =>
+            x.BudgetLineId == budgetLineId.Value
+            && x.PlannedAmount != null
+            && (excludeTaskId == null || x.Id != excludeTaskId.Value));
+
+        var total = siblings.Sum(x => x.PlannedAmount!.Value) + plannedAmount.Value;
+
+        if (total > line.ApprovedAmount)
+            throw new BusinessException(PlatformDomainErrorCodes.TaskBudgetExceedsLine)
+                .WithData("LineName", line.Name)
+                .WithData("LineAmount", line.ApprovedAmount)
+                .WithData("RequestedTotal", total);
     }
 
     /// <summary>Projedeki bir sonraki dilim sırası.</summary>

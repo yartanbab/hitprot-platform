@@ -6,6 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Apya.Platform.Expenses;
 using Apya.Platform.Incomes;
+using Apya.Platform.Tasks;
 using Apya.Platform.ProjectBudgets;
 using Microsoft.Extensions.DependencyInjection;
 using NSubstitute;
@@ -32,6 +33,7 @@ public class ProjectBudgetManager_Tests
     private readonly IRepository<BudgetRevision, Guid> _revisionRepo;
     private readonly IRepository<Expense, Guid> _expenseRepo;
     private readonly IRepository<IncomeEntry, Guid> _incomeRepo;
+    private readonly IRepository<TaskItem, Guid> _taskRepo;
     private readonly ProjectBudgetManager _sut;
 
     private readonly Guid _projectId = Guid.NewGuid();
@@ -43,8 +45,9 @@ public class ProjectBudgetManager_Tests
         _revisionRepo = Substitute.For<IRepository<BudgetRevision, Guid>>();
         _expenseRepo = Substitute.For<IRepository<Expense, Guid>>();
         _incomeRepo = Substitute.For<IRepository<IncomeEntry, Guid>>();
+        _taskRepo = Substitute.For<IRepository<TaskItem, Guid>>();
 
-        _sut = new ProjectBudgetManager(_lineRepo, _trancheRepo, _revisionRepo, _expenseRepo, _incomeRepo);
+        _sut = new ProjectBudgetManager(_lineRepo, _trancheRepo, _revisionRepo, _expenseRepo, _incomeRepo, _taskRepo);
 
         var services = new ServiceCollection();
         services.AddSingleton<IGuidGenerator>(SimpleGuidGenerator.Instance);
@@ -71,7 +74,29 @@ public class ProjectBudgetManager_Tests
                 Arg.Any<Expression<Func<BudgetRevision, bool>>>(),
                 Arg.Any<bool>(),
                 Arg.Any<CancellationToken>())
-            .Returns(revisions.ToList());
+            .Returns(revisions.ToList());
+
+    private void GivenLine(ProjectBudgetLine? line)
+        => _lineRepo.FindAsync(
+                Arg.Any<Expression<Func<ProjectBudgetLine, bool>>>(),
+                Arg.Any<bool>(),
+                Arg.Any<CancellationToken>())
+            .Returns(line);
+
+    private void GivenSiblingTasks(params TaskItem[] tasks)
+        => _taskRepo.GetListAsync(
+                Arg.Any<Expression<Func<TaskItem, bool>>>(),
+                Arg.Any<bool>(),
+                Arg.Any<CancellationToken>())
+            .Returns(tasks.ToList());
+
+    private TaskItem PlannedTask(Guid lineId, decimal amount)
+    {
+        var t = new TaskItem(Guid.NewGuid(), "Gorev", _projectId, now: new DateTime(2026, 9, 1));
+        t.SetBudgetLink(lineId, amount);
+        return t;
+    }
+
 
     [Fact]
     public async Task Revizyon_onaylanan_tutari_degistirir_sozlesme_tutarina_DOKUNMAZ()
@@ -324,5 +349,122 @@ public class ProjectBudgetManager_Tests
 
         line.PlannedAmount.ShouldBe(75_000m);
         line.ApprovedAmount.ShouldBe(75_000m);
+    }
+
+    // ---------------------------------------------------------------------
+    // GOREV BUTCE BAGI (6. adim)
+    // ---------------------------------------------------------------------
+
+    [Fact]
+    public async Task Gorev_kalemsizse_dogrulama_yapilmaz()
+    {
+        // Kalem yoksa repository'ye hic gidilmemeli.
+        await _sut.EnsureTaskBudgetIsValidAsync(_projectId, budgetLineId: null, plannedAmount: 5_000m);
+
+        await _lineRepo.DidNotReceive().FindAsync(
+            Arg.Any<Expression<Func<ProjectBudgetLine, bool>>>(),
+            Arg.Any<bool>(),
+            Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task Baska_projenin_kalemine_gorev_baglanamaz()
+    {
+        var foreignLine = new ProjectBudgetLine(
+            Guid.NewGuid(), null, Guid.NewGuid(), "1", "Personel", 100_000m, 100_000m);
+        GivenLine(foreignLine);
+
+        var ex = await Should.ThrowAsync<BusinessException>(() =>
+            _sut.EnsureTaskBudgetIsValidAsync(_projectId, foreignLine.Id, 1_000m));
+
+        ex.Code.ShouldBe(PlatformDomainErrorCodes.TaskBudgetLineProjectMismatch);
+    }
+
+    [Fact]
+    public async Task Olmayan_kalem_reddedilir()
+    {
+        GivenLine(null);
+
+        var ex = await Should.ThrowAsync<BusinessException>(() =>
+            _sut.EnsureTaskBudgetIsValidAsync(_projectId, Guid.NewGuid(), 1_000m));
+
+        ex.Code.ShouldBe(PlatformDomainErrorCodes.TaskBudgetLineProjectMismatch);
+    }
+
+    [Fact]
+    public async Task Tutarsiz_bag_kardes_toplamina_bakmaz()
+    {
+        // Yalnizca "bu gorev bu kaleme ait" demek serbest: tutar yoksa dagitim da yok.
+        var line = Line("1", "Personel", 100_000m, 100_000m);
+        GivenLine(line);
+
+        await _sut.EnsureTaskBudgetIsValidAsync(_projectId, line.Id, plannedAmount: null);
+
+        await _taskRepo.DidNotReceive().GetListAsync(
+            Arg.Any<Expression<Func<TaskItem, bool>>>(),
+            Arg.Any<bool>(),
+            Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task Kardes_planlarin_toplami_kalemi_asamaz()
+    {
+        var line = Line("1", "Personel", 100_000m, 100_000m);
+        GivenLine(line);
+        GivenSiblingTasks(PlannedTask(line.Id, 60_000m), PlannedTask(line.Id, 30_000m));
+
+        var ex = await Should.ThrowAsync<BusinessException>(() =>
+            _sut.EnsureTaskBudgetIsValidAsync(_projectId, line.Id, 20_000m));
+
+        ex.Code.ShouldBe(PlatformDomainErrorCodes.TaskBudgetExceedsLine);
+    }
+
+    [Fact]
+    public async Task Kalemi_tam_dolduran_plan_kabul_edilir()
+    {
+        // Sinir degeri: toplam == onaylanan HATA DEGIL.
+        var line = Line("1", "Personel", 100_000m, 100_000m);
+        GivenLine(line);
+        GivenSiblingTasks(PlannedTask(line.Id, 90_000m));
+
+        await _sut.EnsureTaskBudgetIsValidAsync(_projectId, line.Id, 10_000m);
+    }
+
+    [Fact]
+    public async Task Guncellemede_gorevin_kendi_plani_iki_kez_sayilmaz()
+    {
+        // Kalemi tek basina dolduran gorev, AYNI tutarla kaydedilince kendini bloke etmemeli.
+        var line = Line("1", "Personel", 100_000m, 100_000m);
+        GivenLine(line);
+
+        var self = PlannedTask(line.Id, 100_000m);
+        // Repository, excludeTaskId filtresini uygulayan sorgunun sonucunu doner:
+        // kendisi harictir, dolayisiyla liste bostur.
+        GivenSiblingTasks();
+
+        await _sut.EnsureTaskBudgetIsValidAsync(_projectId, line.Id, 100_000m, excludeTaskId: self.Id);
+    }
+
+    [Fact]
+    public async Task Negatif_plan_gorevde_reddedilir()
+    {
+        // Kural entity'de: bag ile tutar birlikte yazilir, tutar negatif olamaz.
+        var task = new TaskItem(Guid.NewGuid(), "Gorev", _projectId, now: new DateTime(2026, 9, 1));
+
+        var ex = Should.Throw<BusinessException>(() => task.SetBudgetLink(Guid.NewGuid(), -1m));
+
+        ex.Code.ShouldBe(PlatformDomainErrorCodes.TaskBudgetAmountInvalid);
+    }
+
+    [Fact]
+    public async Task Bag_kaldirilinca_plan_da_silinir()
+    {
+        var task = new TaskItem(Guid.NewGuid(), "Gorev", _projectId, now: new DateTime(2026, 9, 1));
+        task.SetBudgetLink(Guid.NewGuid(), 5_000m);
+
+        task.SetBudgetLink(null, 5_000m);
+
+        task.BudgetLineId.ShouldBeNull();
+        task.PlannedAmount.ShouldBeNull();
     }
 }

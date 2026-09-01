@@ -705,6 +705,12 @@ namespace Apya.Platform.EntityFrameworkCore
                 b.ToTable(PlatformConsts.DbTablePrefix + "Tasks", PlatformConsts.DbSchema);
                 b.ConfigureByConvention();
 
+                // Bütçe bağı — FK KURULMADI, Expense/IncomeEntry ile aynı gerekçe:
+                // kalem silme zaten ProjectBudgetManager'da bağlı kayıt varsa
+                // reddediliyor; ikinci bir kaskad davranışı sürpriz üretir.
+                b.Property(t => t.PlannedAmount).HasColumnType("decimal(18,2)");
+                b.HasIndex(t => t.BudgetLineId);
+
                 b.HasOne(t => t.Assignee)
                  .WithMany()
                  .HasForeignKey(t => t.AssigneeId)

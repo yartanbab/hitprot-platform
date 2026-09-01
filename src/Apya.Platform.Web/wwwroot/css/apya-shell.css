@@ -7467,3 +7467,12 @@ html[data-sidebar] .apya-sidebar-resizer {
 .apya-finance-kpis .kpi-icon-box {
     display: none;
 }
+
+/* Proje konsolu -> "Finans" sekmesi (tasarim 2c).
+   .view-panel:not(.d-none) bir flex sutunudur (S23); govdeye min-height:0
+   verilmezse tablo panelin disina tasar ve kaydirma hic olusmaz. */
+.apya-finance-panel-body {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+}

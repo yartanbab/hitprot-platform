@@ -7652,6 +7652,9 @@ namespace Apya.Platform.Migrations
                     b.Property<Guid?>("BoardColumnId")
                         .HasColumnType("uuid");
 
+                    b.Property<Guid?>("BudgetLineId")
+                        .HasColumnType("uuid");
+
                     b.Property<string>("CancelReason")
                         .HasMaxLength(256)
                         .HasColumnType("character varying(256)");
@@ -7726,6 +7729,9 @@ namespace Apya.Platform.Migrations
                     b.Property<Guid?>("ParentTaskId")
                         .HasColumnType("uuid");
 
+                    b.Property<decimal?>("PlannedAmount")
+                        .HasColumnType("decimal(18,2)");
+
                     b.Property<int>("Priority")
                         .HasColumnType("integer");
 
@@ -7760,6 +7766,8 @@ namespace Apya.Platform.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("AssigneeId");
+
+                    b.HasIndex("BudgetLineId");
 
                     b.HasIndex("ParentTaskId");
 

@@ -470,6 +470,15 @@
                 title="Başlangıç-bitiş tarihlerinden türeyen zaman çizelgesi">
             <i class="fa fa-clock" aria-hidden="true"></i>@L["Tasks:View:Gantt"]
         </button>
+        @if (Model.Budget != null)
+        {
+            @* Tasarım 2c: şerit ve diğer sekmeler AYNEN kalır, yalnız bu sekme eklenir. *@
+            <button type="button" class="apya-console-tab" id="btn-view-finance"
+                    role="tab" aria-selected="false" aria-controls="view-finance"
+                    title="Projenin bütçe ve harcama özeti">
+                <i class="fa fa-coins" aria-hidden="true"></i>Finans
+            </button>
+        }
         <span class="apya-console-count apya-numeric" id="console-task-count">@totalTasks görev</span>
     </div>
 
@@ -602,6 +611,14 @@
              Paylaşılan bileşen (/js/apya-gantt.js) — Görevler sayfası da aynısını
              kullanır. İçerik tamamen JS ile basılır. *@
         <div id="view-gantt" class="view-panel d-none" role="tabpanel" aria-labelledby="btn-view-gantt"></div>
+
+        @* --- FİNANS GÖRÜNÜMÜ (tasarım 2c) --- *@
+        @if (Model.Budget != null)
+        {
+            <div id="view-finance" class="view-panel d-none" role="tabpanel" aria-labelledby="btn-view-finance">
+                <partial name="_ProjectFinancePanel" model="Model" />
+            </div>
+        }
 
     </div>
 </div>

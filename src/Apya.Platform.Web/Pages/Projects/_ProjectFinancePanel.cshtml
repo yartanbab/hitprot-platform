@@ -1,0 +1,281 @@
+@*
+    Proje konsolu → "Finans" sekmesi (tasarım 2c).
+
+    Şerit ve diğer sekmeler AYNEN korunur; bu panel eklemedir.
+    Veri, Finans çatısıyla AYNI servisten gelir (IProjectBudgetAppService) —
+    iki ekranın rakamı ayrışmasın diye ikinci bir hesap yazılmadı.
+
+    Görev bazlı kırılım İKİ kaynağı birleştirir: plan görevin bütçe bağından
+    (TaskDto.PlannedAmount), gerçekleşen ise finans özetinin TaskBreakdown alanindan.
+    Planı olmayan ama harcaması olan görev de tabloda görünür — plan sütunu boş kalır.
+*@
+@using Apya.Platform.Web.Pages.Shared
+@using Apya.Platform.ProjectFinance
+@model Apya.Platform.Web.Pages.Projects.ProjectDetailsModel
+
+@functions {
+    string Money(decimal v, string cur) => v.ToString("N2") + (cur == "TRY" ? " ₺" : " " + cur);
+    string MoneyKpi(decimal v, string cur) => cur == "TRY" ? "₺" + v.ToString("N0") : v.ToString("N0") + " " + cur;
+
+    string BarTone(int pct) => pct >= 100 ? "is-negative" : pct >= 80 ? "is-warning" : "is-positive";
+}
+
+@{
+    var b = Model.Budget!;
+    var cur = b.Currency;
+    var financeUrl = $"/Finance?projectId={Model.Id}&tab=genel";
+
+    // Plan gorevden, gerceklesen finans ozetinden gelir; ikisi TaskId uzerinde bulusur.
+    var actualByTask = (Model.Finance?.TaskBreakdown ?? new List<ProjectFinanceTaskLineDto>())
+        .Where(x => x.TaskId != null)
+        .ToDictionary(x => x.TaskId!.Value);
+
+    var lineNames = b.Lines.ToDictionary(l => l.Id, l => l.Name);
+
+    var taskRows = Model.Tasks
+        .Where(t => t.PlannedAmount != null || actualByTask.ContainsKey(t.Id))
+        .Select(t => new
+        {
+            t.Id,
+            t.Title,
+            Plan = t.PlannedAmount,
+            LineName = t.BudgetLineId != null && lineNames.ContainsKey(t.BudgetLineId.Value)
+                ? lineNames[t.BudgetLineId.Value] : null,
+            Actual = actualByTask.ContainsKey(t.Id) ? actualByTask[t.Id].Expense : 0m
+        })
+        .OrderByDescending(r => r.Plan ?? 0m).ThenByDescending(r => r.Actual)
+        .ToList();
+
+    // Hicbir goreve baglanmamis harcama; tabloda ayri satir olarak gosterilir.
+    var untaggedSpent = (Model.Finance?.TaskBreakdown ?? new List<ProjectFinanceTaskLineDto>())
+        .Where(x => x.TaskId == null).Sum(x => x.Expense);
+
+    var plannedTotal = taskRows.Sum(r => r.Plan ?? 0m);
+}
+
+<div class="apya-console-filters" style="border-radius:0">
+    <span class="apya-console-filter-label">Finans</span>
+    <span class="apya-chip apya-chip-neutral">@(b.HasBudgetLines ? $"{b.Lines.Count} kalem" : "kalem tanımlı değil")</span>
+    @if (b.LatestRevisionNo > 0)
+    {
+        <span class="apya-chip apya-chip-warning">Rev.@b.LatestRevisionNo</span>
+    }
+    @if (b.TrancheCount > 0)
+    {
+        <span class="apya-chip apya-chip-neutral">@b.CollectedTrancheCount/@b.TrancheCount dilim tahsil</span>
+    }
+    <a href="@financeUrl" class="ms-auto text-decoration-none" style="font-size:12.5px">Finans çatısında aç →</a>
+</div>
+
+<div class="p-3 apya-finance-panel-body">
+    <div class="row g-3 mb-3 apya-finance-kpis">
+        <div class="col-6 col-md-3">
+            <partial name="_KpiCard" model='new KpiCardModel {
+                Icon = "fa-wallet", Accent = "accent", Label = "Onaylanan bütçe",
+                Value = MoneyKpi(b.ApprovedBudget, cur),
+                SubText = b.LatestRevisionNo > 0 ? $"Rev.{b.LatestRevisionNo}" : "revizyon yok" }' />
+        </div>
+        <div class="col-6 col-md-3">
+            <partial name="_KpiCard" model='new KpiCardModel {
+                Icon = "fa-arrow-down-long", Accent = "positive",
+                Label = b.TrancheCount > 0 ? "Gelen (tahsil)" : "Gelir",
+                Value = MoneyKpi(b.MoneyIn, cur),
+                SubText = $"%{b.FundingPercent} bütçe" }' />
+        </div>
+        <div class="col-6 col-md-3">
+            <partial name="_KpiCard" model='new KpiCardModel {
+                Icon = "fa-arrow-up-long", Accent = "negative", Label = "Harcanan",
+                Value = MoneyKpi(b.SpentAmount, cur),
+                SubText = $"%{b.BudgetUsagePercent} bütçe" }' />
+        </div>
+        <div class="col-6 col-md-3">
+            <partial name="_KpiCard" model='new KpiCardModel {
+                Icon = "fa-scale-balanced", Accent = b.RemainingBudget < 0 ? "negative" : "neutral",
+                Label = "Kalan bütçe",
+                Value = MoneyKpi(b.RemainingBudget, cur),
+                SubText = b.RemainingBudget < 0 ? "bütçe aşıldı" : "onaylanan − harcanan" }' />
+        </div>
+    </div>
+
+    @* İki ilerleme: bütçe kullanımı ve görev tamamlanması yan yana —
+       tasarımın "bütçe/görev ilerleme çubukları" bloğu. *@
+    <div class="row g-3 mb-3">
+        <div class="col-md-6">
+            <div class="card mb-0">
+                <div class="card-body">
+                    <div class="apya-tile-progress-label">
+                        <span>Bütçe kullanımı</span>
+                        <span class="apya-numeric">%@b.BudgetUsagePercent</span>
+                    </div>
+                    <div class="apya-mini-progress @BarTone(b.BudgetUsagePercent)">
+                        <span style="width:@(Math.Min(b.BudgetUsagePercent, 100))%"></span>
+                    </div>
+                    <div class="small text-muted mt-2">
+                        <span class="apya-numeric">@Money(b.SpentAmount, cur)</span> /
+                        <span class="apya-numeric">@Money(b.ApprovedBudget, cur)</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card mb-0">
+                <div class="card-body">
+                    <div class="apya-tile-progress-label">
+                        <span>Görev ilerlemesi</span>
+                        <span class="apya-numeric">%@Model.Project?.ProgressPercent</span>
+                    </div>
+                    <div class="apya-mini-progress is-positive">
+                        <span style="width:@(Model.Project?.ProgressPercent ?? 0)%"></span>
+                    </div>
+                    <div class="small text-muted mt-2">@Model.Tasks.Count görev</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @if (b.HasBudgetLines)
+    {
+        <div class="table-responsive">
+            <table class="table apya-clean-table align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Kalem</th>
+                        <th class="text-end apya-numeric">Onaylanan</th>
+                        <th class="text-end apya-numeric">Harcanan</th>
+                        <th class="text-end apya-numeric">Kalan</th>
+                        <th style="width:130px">Gerçekleşme</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var line in b.Lines)
+                    {
+                        <tr>
+                            <td>
+                                <div class="fw-semibold">@line.Name</div>
+                                @if (!string.IsNullOrWhiteSpace(line.Code))
+                                {
+                                    <div class="small text-muted apya-numeric">@line.Code</div>
+                                }
+                            </td>
+                            <td class="text-end apya-numeric fw-semibold">@Money(line.ApprovedAmount, cur)</td>
+                            <td class="text-end apya-numeric">@Money(line.SpentAmount, cur)</td>
+                            <td class="text-end apya-numeric @(line.RemainingAmount < 0 ? "text-danger" : "")">@Money(line.RemainingAmount, cur)</td>
+                            <td>
+                                <div class="apya-tile-progress-label"><span class="apya-numeric">%@line.UsagePercent</span></div>
+                                <div class="apya-mini-progress @BarTone(line.UsagePercent)">
+                                    <span style="width:@(Math.Min(line.UsagePercent, 100))%"></span>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        @if (b.UnassignedSpentAmount > 0)
+        {
+            <p class="text-muted mt-3 mb-0" style="font-size:12.5px">
+                <i class="fa fa-circle-info me-1" aria-hidden="true"></i>
+                <strong class="apya-numeric">@Money(b.UnassignedSpentAmount, cur)</strong> tutarındaki harcama
+                hiçbir kaleme yazılmamış.
+            </p>
+        }
+    }
+    else
+    {
+        <partial name="_EmptyState" model='new EmptyStateModel {
+            Icon = "fa-list-ul",
+            Title = "Bu projede bütçe kalemi yok",
+            Description = "Kalem tanımlayana kadar bütçe tek tutar olarak yönetilir." }' />
+        <div class="text-center">
+            <a href="@($"/Finance?projectId={Model.Id}&tab=kalemler")" class="btn btn-sm btn-outline-secondary">
+                <i class="fa fa-plus me-1" aria-hidden="true"></i>Kalem tanımla
+            </a>
+        </div>
+    }
+    @* --- GOREV BAZLI KIRILIM --- *@
+    @if (taskRows.Count > 0 || untaggedSpent > 0)
+    {
+        <h6 class="mt-4 mb-2" style="font-size:12.5px;font-weight:700;letter-spacing:.02em">Görev bazlı kırılım</h6>
+        <div class="table-responsive">
+            <table class="table apya-clean-table align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Görev</th>
+                        <th>Kalem</th>
+                        <th class="text-end apya-numeric">Plan</th>
+                        <th class="text-end apya-numeric">Gerçekleşen</th>
+                        <th class="text-end apya-numeric">Fark</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var r in taskRows)
+                    {
+                        var diff = r.Plan != null ? r.Plan.Value - r.Actual : (decimal?)null;
+                        <tr>
+                            <td class="fw-semibold">@r.Title</td>
+                            <td>
+                                @if (r.LineName != null)
+                                {
+                                    <span class="apya-chip apya-chip-neutral">@r.LineName</span>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">—</span>
+                                }
+                            </td>
+                            <td class="text-end apya-numeric">
+                                @if (r.Plan != null)
+                                {
+                                    @Money(r.Plan.Value, cur)
+                                }
+                                else
+                                {
+                                    <span class="text-muted">plan yok</span>
+                                }
+                            </td>
+                            <td class="text-end apya-numeric">@Money(r.Actual, cur)</td>
+                            <td class="text-end apya-numeric @(diff < 0 ? "text-danger" : "")">
+                                @if (diff != null)
+                                {
+                                    @Money(diff.Value, cur)
+                                }
+                                else
+                                {
+                                    <span class="text-muted">—</span>
+                                }
+                            </td>
+                        </tr>
+                    }
+                    @if (untaggedSpent > 0)
+                    {
+                        <tr>
+                            <td class="text-muted fst-italic">Göreve bağlanmamış</td>
+                            <td><span class="text-muted">—</span></td>
+                            <td class="text-end apya-numeric"><span class="text-muted">—</span></td>
+                            <td class="text-end apya-numeric">@Money(untaggedSpent, cur)</td>
+                            <td class="text-end apya-numeric"><span class="text-muted">—</span></td>
+                        </tr>
+                    }
+                </tbody>
+                @if (plannedTotal > 0)
+                {
+                    <tfoot>
+                        <tr>
+                            <td colspan="2" class="fw-semibold">Planlanan toplam</td>
+                            <td class="text-end apya-numeric fw-semibold">@Money(plannedTotal, cur)</td>
+                            <td colspan="2" class="text-muted" style="font-size:12px">
+                                onaylanan bütçenin %@(b.ApprovedBudget > 0 ? (int)Math.Round(plannedTotal / b.ApprovedBudget * 100m) : 0) kadarı göreve dağıtılmış
+                            </td>
+                        </tr>
+                    </tfoot>
+                }
+            </table>
+        </div>
+    }
+
+    <p class="text-muted mt-3 mb-0" style="font-size:12px">
+        Kayıt listesi, dilimler ve revizyonlar Finans çatısındadır —
+        <a href="@financeUrl" class="text-decoration-none">bu projeyi çatıda aç</a>.
+    </p>
+</div>

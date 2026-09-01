@@ -209,6 +209,10 @@ public static class PlatformDomainErrorCodes
     public const string DeductionReasonRequired = "Platform:ProjectBudget:DeductionReasonRequired";
     public const string DeductionExceedsTranche = "Platform:ProjectBudget:DeductionExceedsTranche";
 
+    public const string TaskBudgetAmountInvalid = "Platform:ProjectBudget:TaskBudgetAmountInvalid";
+    public const string TaskBudgetExceedsLine = "Platform:ProjectBudget:TaskBudgetExceedsLine";
+    public const string TaskBudgetLineProjectMismatch = "Platform:ProjectBudget:TaskBudgetLineProjectMismatch";
+
     public const string FxDonorCurrencySameAsProject = "Platform:ProjectBudget:FxDonorCurrencySameAsProject";
     public const string FxFixedRateRequired = "Platform:ProjectBudget:FxFixedRateRequired";
     public const string FxRateMissing = "Platform:ProjectBudget:FxRateMissing";
