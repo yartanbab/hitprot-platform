@@ -1,0 +1,186 @@
+/* =============================================================================
+   2d · Başvuru Detayı (danışman görünümü)
+   Ortak sözlük Shared.css'te; burada yalnız bu ekranın ölçüleri.
+   ============================================================================= */
+
+.apya-dh-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 380px;
+    gap: var(--apya-space-5);
+    align-items: start;
+}
+
+@media (max-width: 1279.98px) {
+    .apya-dh-layout { grid-template-columns: minmax(0, 1fr); }
+    .apya-dh-side { position: static; }
+}
+
+.apya-dh-side {
+    position: sticky;
+    top: var(--apya-space-4);
+    display: flex;
+    flex-direction: column;
+    gap: var(--apya-space-3);
+}
+
+.apya-dh-avatar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    flex: none;
+    border-radius: var(--apya-radius-lg);
+    background: var(--apya-accent-500);
+    color: #fff;
+    font-size: var(--apya-fs-sm);
+    font-weight: var(--apya-weight-bold);
+}
+
+.apya-dh-meta {
+    font-size: var(--apya-fs-xs);
+    color: var(--apya-text-tertiary);
+}
+
+.apya-dh-hint {
+    font-size: var(--apya-fs-xs);
+    color: var(--apya-text-tertiary);
+    line-height: 1.5;
+}
+
+/* --- Süreç adımları: yatay şerit, taşarsa kaydırılır --- */
+.apya-dh-steps {
+    display: flex;
+    align-items: stretch;
+    gap: var(--apya-space-2);
+    overflow-x: auto;
+    padding-bottom: var(--apya-space-2);
+}
+
+.apya-dh-step {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    flex: 1 0 132px;
+    padding: 8px 10px;
+    border-radius: var(--apya-radius-lg);
+    background: var(--apya-surface-raised);
+    font-size: var(--apya-fs-xs);
+}
+
+.apya-dh-step.is-current {
+    background: var(--apya-accent-soft);
+    color: var(--apya-accent-600);
+    font-weight: var(--apya-weight-semibold);
+}
+
+.apya-dh-step.is-done { color: var(--apya-positive-700); }
+
+.apya-dh-step-no {
+    font-family: var(--apya-font-mono);
+    font-size: 10px;
+    color: var(--apya-text-tertiary);
+}
+
+.apya-dh-step-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* --- Form durumu --- */
+.apya-dh-section {
+    display: grid;
+    grid-template-columns: 22px minmax(0, 1fr) 132px 108px;
+    align-items: center;
+    gap: var(--apya-space-2);
+    padding: 9px 0;
+    border-bottom: 1px solid var(--apya-border-subtle);
+    font-size: var(--apya-fs-sm);
+}
+
+.apya-dh-section:last-child { border-bottom: 0; }
+
+.apya-dh-section-note {
+    font-size: var(--apya-fs-xs);
+    color: var(--apya-text-tertiary);
+}
+
+/* --- Akış --- */
+.apya-dh-feed {
+    display: flex;
+    flex-direction: column;
+    gap: var(--apya-space-3);
+    max-height: 420px;
+    overflow-y: auto;
+}
+
+.apya-dh-item {
+    display: grid;
+    grid-template-columns: 26px minmax(0, 1fr);
+    gap: var(--apya-space-2);
+    font-size: var(--apya-fs-sm);
+}
+
+.apya-dh-item-avatar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    border-radius: var(--apya-radius-full);
+    background: var(--apya-surface-sunken);
+    color: var(--apya-text-secondary);
+    font-size: 10px;
+    font-weight: var(--apya-weight-bold);
+}
+
+.apya-dh-item-head {
+    display: flex;
+    align-items: baseline;
+    gap: var(--apya-space-2);
+    flex-wrap: wrap;
+}
+
+.apya-dh-item-time {
+    font-family: var(--apya-font-mono);
+    font-size: var(--apya-fs-xs);
+    color: var(--apya-text-tertiary);
+}
+
+.apya-dh-item-text { line-height: 1.5; }
+
+.apya-dh-compose { display: flex; gap: 6px; }
+
+/* --- Sağ panel --- */
+.apya-dh-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--apya-space-2);
+    font-size: var(--apya-fs-sm);
+}
+
+.apya-dh-consulting {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--apya-space-2);
+}
+
+.apya-dh-metric {
+    display: block;
+    font-family: var(--apya-font-mono);
+    font-variant-numeric: tabular-nums;
+    font-size: var(--apya-fs-lg);
+    font-weight: var(--apya-weight-bold);
+    letter-spacing: var(--apya-tracking-tight);
+}
+
+.apya-dh-metric--good { color: var(--apya-positive-700); }
+
+/* --- Koyu tema: aksan METNİ ---
+   accent-600 koyu temada -500'den DAHA KOYU; tint üstünde kontrast 4:1'in
+   altına düşer. Metin -300'e çıkar. */
+[data-theme="dark"] .apya-dh-step.is-current {
+    color: var(--apya-accent-300);
+}

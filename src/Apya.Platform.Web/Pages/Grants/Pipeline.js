@@ -28,7 +28,8 @@ $(function () {
     function card(c) {
         var amount = c.approvedAmount != null ? c.approvedAmount : c.requestedSupport;
         return '<div class="apya-pipe-card" data-id="' + c.applicationId + '">' +
-            '<span class="apya-pipe-firm">' + esc(c.firmName) + '</span>' +
+            '<a class="apya-pipe-firm" href="/Grants/DetailHost?id=' + c.applicationId + '">' +
+            esc(c.firmName) + '</a>' +
             '<span class="apya-pipe-grant">' + esc(c.grantName) + (c.period ? ' · ' + esc(c.period) : '') + '</span>' +
             (amount != null
                 ? '<span class="apya-pipe-amount">' + money(amount) + ' ₺' +
