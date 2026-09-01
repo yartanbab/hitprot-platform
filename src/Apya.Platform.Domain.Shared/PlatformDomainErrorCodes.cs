@@ -130,6 +130,9 @@ public static class PlatformDomainErrorCodes
     public const string GrantAppealNoItems = "Platform:Grant:AppealNoItems";
     public const string GrantDecisionNotFound = "Platform:Grant:DecisionNotFound";
 
+    // 6c · Uygulama ve tahsilat
+    public const string GrantTranchePaymentBlockedByReport = "Platform:Grant:TranchePaymentBlockedByReport";
+
     // --- Dosya (File) Modülü ---
     public const string FileUnsupportedExtension = "Platform:File:UnsupportedExtension";
     public const string FileSizeExceeded = "Platform:File:SizeExceeded";
