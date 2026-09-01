@@ -1,3 +1,4 @@
+using Volo.Abp;
 using Volo.Abp.Domain.Entities.Auditing;
 using Volo.Abp.Identity;
 using Volo.Abp.MultiTenancy;
@@ -26,6 +27,46 @@ public class TaskItem : FullAuditedAggregateRoot<Guid>, IMultiTenant
     public decimal? EstimatedHours { get; private set; }
     public string? TaskType { get; private set; }
     public string? Sprint { get; private set; }
+
+    // --- Bütçe bağı (görev detayı → Finans sekmesi) ---
+
+    /// <summary>
+    /// Görevin parasının yazıldığı bütçe kalemi. Boşsa görev bütçesizdir ve
+    /// hiçbir şeyi değişmez — bordro/kira gibi göreve bağlanmayan harcamalar
+    /// meşru olduğu gibi, bütçesi planlanmamış görev de meşrudur.
+    /// </summary>
+    public Guid? BudgetLineId { get; private set; }
+
+    /// <summary>
+    /// Bu göreve ayrılan tutar. Kalemin onaylanan tutarının bir DİLİMİDİR:
+    /// aynı kalemdeki görev planlarının toplamı kalemi aşamaz
+    /// (<c>ProjectBudgetManager.EnsureTaskBudgetIsValidAsync</c>).
+    ///
+    /// "Taahhüt" (onay bekleyen sipariş/talep) BİLEREK YOK: arkasında bir varlık
+    /// olmadan eklenirse ekranda hep 0 gösteren bir kolon üretirdi.
+    /// </summary>
+    public decimal? PlannedAmount { get; private set; }
+
+    /// <summary>
+    /// Bütçe bağını kurar/kaldırır. Kalem boşaltılırsa tutar da temizlenir:
+    /// kalemsiz bir "görev bütçesi" hiçbir yere yazılamaz.
+    /// </summary>
+    public void SetBudgetLink(Guid? budgetLineId, decimal? plannedAmount)
+    {
+        if (budgetLineId == null)
+        {
+            BudgetLineId = null;
+            PlannedAmount = null;
+            return;
+        }
+
+        if (plannedAmount is < 0)
+            throw new BusinessException(PlatformDomainErrorCodes.TaskBudgetAmountInvalid)
+                .WithData("PlannedAmount", plannedAmount);
+
+        BudgetLineId = budgetLineId;
+        PlannedAmount = plannedAmount;
+    }
 
     // --- Zamanlama ---
     public DateTime StartDate { get; private set; }

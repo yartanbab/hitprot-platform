@@ -1,0 +1,168 @@
+@*
+    "Genel" sekmesi — tasarım 1a.
+
+    KPI şeridi + fonlama akışı, ardından son işlemler ve kasa listesi.
+    Proje seçilmemişken (portföy) ya da bütçe yetkisi yokken KPI şeridi hiç
+    basılmaz; alt bloklar yine çalışır.
+*@
+@using Apya.Platform.Web.Pages.Finance
+@using Apya.Platform.Web.Pages.Shared
+@model IndexModel
+
+@functions {
+    string MoneyKpi(decimal v, string cur)
+        => cur == "TRY" ? "₺" + v.ToString("N0") : v.ToString("N0") + " " + cur;
+
+    string MoneyC(decimal v, string cur) => v.ToString("N2") + (cur == "TRY" ? " ₺" : " " + cur);
+
+    (string tone, string icon) TxVisual(IndexModel.TxType type, bool isInflow) => type switch
+    {
+        IndexModel.TxType.Transfer => ("kpi-icon-box--accent", "fa-right-left"),
+        _ when isInflow => ("kpi-icon-box--positive", "fa-arrow-down-long"),
+        _ => ("kpi-icon-box--negative", "fa-arrow-up-long")
+    };
+}
+
+@if (Model.Budget != null)
+{
+    var b = Model.Budget;
+    var cur = b.Currency;
+
+    <div class="row g-3 mb-3 apya-finance-kpis">
+        <div class="col-6 col-md-4">
+            <partial name="_KpiCard" model='new KpiCardModel {
+                Icon = "fa-file-signature", Accent = "neutral", Label = "Sözleşme bütçesi",
+                Value = MoneyKpi(b.ContractBudget, cur),
+                SubText = b.HasBudgetLines ? $"{b.Lines.Count} kalem" : "kalem tanımlı değil",
+                Hint = b.HasBudgetLines
+                    ? "Kalemlerin sözleşmedeki ilk tutarlarının toplamı. Revizyon bu tutarı değiştirmez."
+                    : "Bu projede bütçe kalemi tanımlı değil; proje bütçesi tek tutar olarak gösteriliyor." }' />
+        </div>
+        <div class="col-6 col-md-4">
+            <partial name="_KpiCard" model='new KpiCardModel {
+                Icon = "fa-wallet", Accent = "accent", Label = "Onaylanan bütçe",
+                Value = MoneyKpi(b.ApprovedBudget, cur),
+                SubText = b.LatestRevisionNo > 0 ? $"Rev.{b.LatestRevisionNo}" : "revizyon yok",
+                Hint = "Yürürlükteki bütçe. Bütçe revizyonu yalnız bu tutarı değiştirir." }' />
+        </div>
+        <div class="col-6 col-md-4">
+            <partial name="_KpiCard" model='new KpiCardModel {
+                Icon = "fa-arrow-down-long", Accent = "positive",
+                Label = b.TrancheCount > 0 ? "Gelen (tahsil)" : "Gelir",
+                Value = MoneyKpi(b.MoneyIn, cur),
+                SubText = b.TrancheCount > 0
+                    ? $"{b.CollectedTrancheCount}/{b.TrancheCount} dilim · %{b.FundingPercent} bütçe"
+                    : "gelir kayıtları",
+                Hint = b.TrancheCount > 0
+                    ? "Fonlama dilimlerinden tahsil edilen toplam."
+                    : "Bu projede dilim tanımlı değil; projeye bağlı gelir kayıtlarının toplamı gösteriliyor." }' />
+        </div>
+        <div class="col-6 col-md-4">
+            <partial name="_KpiCard" model='new KpiCardModel {
+                Icon = "fa-arrow-up-long", Accent = "negative", Label = "Harcanan",
+                Value = MoneyKpi(b.SpentAmount, cur),
+                SubText = $"%{b.BudgetUsagePercent} bütçe",
+                Hint = "Bu projeye bağlı TÜM gider kayıtları — kaleme yazılmamış olanlar dahil." }' />
+        </div>
+        <div class="col-6 col-md-4">
+            <partial name="_KpiCard" model='new KpiCardModel {
+                Icon = "fa-sack-dollar", Accent = b.AvailableCash < 0 ? "negative" : "brand",
+                Label = "Kullanılabilir nakit",
+                Value = MoneyKpi(b.AvailableCash, cur),
+                SubText = "gelen − harcanan",
+                Hint = "Bütçe değil NAKİT sorusunun cevabı: eline geçen paradan ne kadarı duruyor." }' />
+        </div>
+        <div class="col-6 col-md-4">
+            <partial name="_KpiCard" model='new KpiCardModel {
+                Icon = "fa-scale-balanced", Accent = b.RemainingBudget < 0 ? "negative" : "neutral",
+                Label = "Kalan bütçe",
+                Value = MoneyKpi(b.RemainingBudget, cur),
+                SubText = b.RemainingBudget < 0 ? "bütçe aşıldı" : "onaylanan − harcanan",
+                Hint = "Onaylanan bütçe eksi toplam gider. Gelir bu hesaba girmez." }' />
+        </div>
+    </div>
+
+    @if (b.TrancheCount > 0)
+    {
+        var total = Math.Max(b.PlannedFunding, b.ReceivedFunding + b.DeductionTotal);
+        var receivedPct = total > 0 ? (double)(b.ReceivedFunding / total) * 100 : 0;
+        var deductedPct = total > 0 ? (double)(b.DeductionTotal / total) * 100 : 0;
+        var pendingPct = Math.Max(0, 100 - receivedPct - deductedPct);
+
+        <div class="card mb-3">
+            <div class="card-body">
+                <div class="d-flex align-items-baseline gap-2 mb-2">
+                    <span class="fw-semibold">Fonlama akışı</span>
+                    <span class="small text-muted">gelen · bekleyen · kesinti ayrı ayrı</span>
+                    <a class="ms-auto small text-decoration-none"
+                       href="@Model.TabUrl(FinanceContext.TabTranches)">Dilimler &amp; kesintiler →</a>
+                </div>
+                <div class="apya-funding-flow" role="img"
+                     aria-label="@($"Gelen {MoneyC(b.ReceivedFunding, cur)}, bekleyen {MoneyC(b.PendingFunding, cur)}, kesinti {MoneyC(b.DeductionTotal, cur)}")">
+                    <span class="is-received" style="width:@receivedPct.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)%"></span>
+                    <span class="is-pending" style="width:@pendingPct.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)%"></span>
+                    <span class="is-deducted" style="width:@deductedPct.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)%"></span>
+                </div>
+                <div class="d-flex flex-wrap gap-3 mt-2" style="font-size:11.5px">
+                    <span><i class="fa fa-circle text-success me-1" style="font-size:8px" aria-hidden="true"></i>Gelen <strong class="apya-numeric">@MoneyC(b.ReceivedFunding, cur)</strong></span>
+                    <span><i class="fa fa-circle text-secondary me-1" style="font-size:8px" aria-hidden="true"></i>Bekleyen dilim <strong class="apya-numeric">@MoneyC(b.PendingFunding, cur)</strong></span>
+                    <span><i class="fa fa-circle text-danger me-1" style="font-size:8px" aria-hidden="true"></i>Kesinti <strong class="apya-numeric">@MoneyC(b.DeductionTotal, cur)</strong></span>
+                </div>
+            </div>
+        </div>
+    }
+}
+else if (Model.SelectedProject == null)
+{
+    <div class="apya-chip apya-chip-neutral d-inline-flex mb-3">
+        <i class="fa fa-circle-info me-1" aria-hidden="true"></i>
+        Bütçe, harcama ve kalan tutarları görmek için bir proje seçin.
+    </div>
+}
+
+<div class="row g-3">
+    <div class="col-lg-7">
+        <div class="card mb-0">
+            <div class="card-header d-flex align-items-center justify-content-between">
+                <div>
+                    <span class="fw-semibold">Son İşlemler</span>
+                    <div class="small text-muted">@(Model.SelectedProject?.Name ?? "Tüm hesaplar")</div>
+                </div>
+            </div>
+            <div class="list-group list-group-flush">
+                @if (!Model.Transactions.Any())
+                {
+                    <div class="list-group-item text-muted text-center py-4" style="font-size:13px">Henüz işlem yok.</div>
+                }
+                @foreach (var t in Model.Transactions)
+                {
+                    var (tone, icon) = TxVisual(t.Type, t.IsInflow);
+                    <a href="@t.Url" class="list-group-item list-group-item-action d-flex align-items-center gap-3">
+                        <div class="kpi-icon-box kpi-icon-box--sm @tone">
+                            <i class="fa @icon" aria-hidden="true"></i>
+                        </div>
+                        <div class="flex-grow-1 min-w-0">
+                            <div class="fw-semibold text-truncate">@t.Title</div>
+                            <div class="small text-muted text-truncate">
+                                @(t.CustomerName ?? t.ProjectName ?? "—") · @t.Date.ToString("dd MMM yyyy")
+                            </div>
+                        </div>
+                        <div class="text-end flex-shrink-0">
+                            <span class="apya-chip apya-chip-neutral d-block mb-1">@t.CategoryLabel</span>
+                            <div class="apya-numeric fw-bold @(t.IsInflow ? "text-success" : "text-danger")">
+                                @(t.IsInflow ? "▲ +" : "▼ −")@MoneyC(t.Amount, t.Currency)
+                            </div>
+                        </div>
+                    </a>
+                }
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-5">
+        <div class="card mb-0">
+            <div class="card-header fw-semibold">Kasa &amp; Banka</div>
+            <partial name="_AccountsList" model="Model" />
+        </div>
+    </div>
+</div>

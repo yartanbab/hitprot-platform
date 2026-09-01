@@ -29,6 +29,14 @@ namespace Apya.Platform.Web.Pages.Tasks
         [BindProperty]
         public string? StatusOrColumn { get; set; }
 
+        /// <summary>
+        /// Bütçe bağı bloğu basıldıysa true. Yetkisi/kalemi olmayan kullanıcıda blok
+        /// hiç render edilmez; o POST'ta alanlar boş gelir ve KORUNUR — yoksa yetkisiz
+        /// bir kaydetme mevcut bağı sessizce silerdi.
+        /// </summary>
+        [BindProperty]
+        public bool BudgetFormRendered { get; set; }
+
         // Null hatalarını önlemek için listeleri burada başlatıyoruz
         public List<SelectListItem> UserList { get; set; } = new();
         public List<SelectListItem> StatusOrColumnList { get; set; } = new(); // Durum + özel kolonlar
@@ -41,6 +49,12 @@ namespace Apya.Platform.Web.Pages.Tasks
         public List<IncomeEntryDto> TaskIncomes { get; set; } = new();
         public List<TaskDto> ProjectTasks { get; set; } = new();
 
+        /// <summary>
+        /// Görevin bağlanabileceği bütçe kalemleri (6. adım). Projenin kalemi yoksa
+        /// veya kullanıcıda bütçe okuma yetkisi yoksa BOŞ kalır ve blok hiç basılmaz.
+        /// </summary>
+        public List<Apya.Platform.ProjectBudgets.Dtos.BudgetLineLookupDto> BudgetLines { get; set; } = new();
+
         // Satır tıklayınca açılan panelden silme — tablodaki eski çöp kutusu ile aynı yetki kuralı
         // (ManageTeam yetkisi VEYA görevin oluşturucusu/atananı).
         public bool CanDelete { get; set; }
@@ -50,19 +64,22 @@ namespace Apya.Platform.Web.Pages.Tasks
         private readonly IExpenseAppService _expenseAppService;
         private readonly IIncomeEntryAppService _incomeEntryAppService;
         private readonly Apya.Platform.Projects.IBoardColumnAppService _boardColumnAppService;
+        private readonly Apya.Platform.ProjectBudgets.IProjectBudgetAppService _projectBudgetAppService;
 
         public EditModalModel(
             ITaskAppService taskAppService,
             IUploadedFileStorage fileStorage,
             IExpenseAppService expenseAppService,
             IIncomeEntryAppService incomeEntryAppService,
-            Apya.Platform.Projects.IBoardColumnAppService boardColumnAppService)
+            Apya.Platform.Projects.IBoardColumnAppService boardColumnAppService,
+            Apya.Platform.ProjectBudgets.IProjectBudgetAppService projectBudgetAppService)
         {
             _taskAppService = taskAppService;
             _fileStorage = fileStorage;
             _expenseAppService = expenseAppService;
             _incomeEntryAppService = incomeEntryAppService;
             _boardColumnAppService = boardColumnAppService;
+            _projectBudgetAppService = projectBudgetAppService;
         }
 
         // Birleşik "Durum / Kolon" listesini kurar: proje varsa kanban kolonları
@@ -133,6 +150,9 @@ namespace Apya.Platform.Web.Pages.Tasks
                 ProjectId = taskDto.ProjectId ?? Guid.Empty,
                 IsPrivate = taskDto.IsPrivate,
                 PredecessorIds = taskDto.PredecessorIds ?? new List<Guid>(),
+                // Kopyalanmazsa form boş açılır ve KAYDEDİNCE bağ silinir.
+                BudgetLineId = taskDto.BudgetLineId,
+                PlannedAmount = taskDto.PlannedAmount,
                 TagNames = taskDto.Tags?.Select(t => t.Name).ToList() ?? new List<string>()
             };
 
@@ -182,6 +202,14 @@ namespace Apya.Platform.Web.Pages.Tasks
                     .ToList();
             }
 
+            // Bütçe kalemleri (6. adım): yetki yoksa sessizce boş kalır, blok basılmaz.
+            if (taskDto.ProjectId.HasValue
+                && await AuthorizationService.IsGrantedAsync(PlatformPermissions.Projects.ViewBudget))
+            {
+                var lookup = await _projectBudgetAppService.GetRecordFormLookupAsync(taskDto.ProjectId.Value);
+                BudgetLines = lookup.Lines;
+            }
+
             // Finans sekmesi izne bağlı: ExpenseAppService/IncomeEntryAppService
             // [Authorize] taşıyor. Koşulsuz çağırınca Expenses/Incomes izni OLMAYAN
             // kullanıcıda tüm görev detayı 403 ile ölüyordu.
@@ -223,6 +251,12 @@ namespace Apya.Platform.Web.Pages.Tasks
                 }
 
                 // Birleşik Durum/Kolon seçimini Task.Status + Task.BoardColumnId'ye uzlaştır
+                if (!BudgetFormRendered)
+                {
+                    Task.BudgetLineId = current.BudgetLineId;
+                    Task.PlannedAmount = current.PlannedAmount;
+                }
+
                 ApplyStatusOrColumn(current.Status);
 
                 await _taskAppService.UpdateAsync(Id, Task);

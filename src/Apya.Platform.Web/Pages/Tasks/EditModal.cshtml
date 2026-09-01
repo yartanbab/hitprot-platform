@@ -195,6 +195,40 @@
                 var netFinance   = totalIncome - totalExpense;
             }
             <div class="tab-pane fade" id="finance_@Model.Id" role="tabpanel">
+                @* ── Bütçe bağı (6. adım) ────────────────────────────────────────
+                   Blok YALNIZ projede kalem varsa ve kullanıcı bütçeyi görebiliyorsa
+                   basılır. Basılmadığında aşağıdaki gizli işaretçi de gitmez; POST
+                   tarafı bunu görüp mevcut bağı KORUR (alanlar boş POST edilip bağ
+                   silinmesin). *@
+                @if (Model.BudgetLines.Any())
+                {
+                    <input type="hidden" name="BudgetFormRendered" value="true" />
+                    <div class="row g-2 align-items-end mb-4">
+                        <div class="col-12 col-sm-7">
+                            <label class="apya-overline d-block mb-1" asp-for="Task.BudgetLineId">Bütçe kalemi</label>
+                            <select asp-for="Task.BudgetLineId" class="form-select" id="TaskBudgetLine_@Model.Id">
+                                <option value="">— Bağlı değil —</option>
+                                @foreach (var l in Model.BudgetLines)
+                                {
+                                    <option value="@l.Id" selected="@(Model.Task.BudgetLineId == l.Id)">
+                                        @(string.IsNullOrWhiteSpace(l.Code) ? l.Name : l.Code + " · " + l.Name)
+                                        (kalan @l.RemainingAmount.ToString("N2"))
+                                    </option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-12 col-sm-5">
+                            <label class="apya-overline d-block mb-1" asp-for="Task.PlannedAmount">Görev bütçesi</label>
+                            <input asp-for="Task.PlannedAmount" type="number" step="0.01" min="0"
+                                   class="form-control apya-numeric" placeholder="—" />
+                        </div>
+                        <div class="col-12">
+                            <div class="form-text">
+                                Aynı kalemdeki görev bütçelerinin toplamı kalemi aşamaz; aşarsa kayıt reddedilir.
+                            </div>
+                        </div>
+                    </div>
+                }
                 <div class="row text-center mb-4">
                     <div class="col-12 col-sm-4 mb-2 mb-sm-0">
                         <div class="card py-2 border-danger">

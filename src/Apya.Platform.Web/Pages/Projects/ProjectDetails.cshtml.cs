@@ -40,6 +40,19 @@ public class ProjectDetailsModel : PlatformPageModel
     public string TimeHealthLabel { get; set; } = "Saglam";
     public bool TimeNotStarted { get; set; }
 
+    /// <summary>
+    /// Konsolun "Finans" sekmesi. Finans çatısıyla AYNI servisten beslenir —
+    /// iki ekranın rakamı ayrışmasın. Bütçe yetkisi yoksa null kalır ve sekme
+    /// hiç basılmaz.
+    /// </summary>
+    public Apya.Platform.ProjectBudgets.Dtos.ProjectBudgetOverviewDto? Budget { get; set; }
+
+    /// <summary>
+    /// Görev bazlı kırılımın kaynağı. Zaten çağrılan özet servisinin sonucu artık
+    /// atılmıyor; iki skaler yerine tamamı saklanıyor (ek sorgu yok).
+    /// </summary>
+    public ProjectFinanceSummaryDto? Finance { get; set; }
+
     public decimal BudgetSpent { get; set; }
     public int BudgetPercent { get; set; }
 
@@ -48,16 +61,19 @@ public class ProjectDetailsModel : PlatformPageModel
 
     private readonly IProjectAppService _projectAppService;
     private readonly IProjectFinanceAppService _projectFinanceAppService;
+    private readonly Apya.Platform.ProjectBudgets.IProjectBudgetAppService _projectBudgetAppService;
     private readonly IProjectMemberAppService _projectMemberAppService;
 
     public ProjectDetailsModel(
         IProjectAppService projectAppService,
         IProjectFinanceAppService projectFinanceAppService,
-        IProjectMemberAppService projectMemberAppService)
+        IProjectMemberAppService projectMemberAppService,
+        Apya.Platform.ProjectBudgets.IProjectBudgetAppService projectBudgetAppService)
     {
         _projectAppService = projectAppService;
         _projectFinanceAppService = projectFinanceAppService;
         _projectMemberAppService = projectMemberAppService;
+        _projectBudgetAppService = projectBudgetAppService;
     }
 
     public async Task OnGetAsync()
@@ -86,8 +102,13 @@ public class ProjectDetailsModel : PlatformPageModel
         // (tek doğru kaynak = ProjectFinanceAppService). Önceki SpentBudget zaman
         // loglarından (emek maliyeti) hesaplanıyordu → gerçek gider/kalanı yansıtmıyordu.
         var finance = await _projectFinanceAppService.GetSummaryAsync(Id);
+        Finance = finance;
         BudgetSpent = finance.TotalExpense;
         BudgetPercent = finance.BudgetUsagePercent;
+
+        // Yetkisi olmayan kullanıcıda sessizce atlanır; sekme basılmaz.
+        try { Budget = await _projectBudgetAppService.GetOverviewAsync(Id); }
+        catch (Volo.Abp.Authorization.AbpAuthorizationException) { Budget = null; }
 
         Members = await _projectMemberAppService.GetListByProjectAsync(Id);
     }

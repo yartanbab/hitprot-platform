@@ -31,6 +31,9 @@ public class EditModalModel : AbpPageModel
     public List<SelectListItem> Categories { get; set; } = new();
     public string ProjectDatesJson { get; set; } = "{}";
 
+    /// <summary>Para birimi seçeneği; Kurlar sayfasıyla aynı liste (FinanceLookupShared).</summary>
+    public List<SelectListItem> Currencies { get; set; } = FinanceLookupShared.Currencies();
+
     public EditModalModel(
         IIncomeEntryAppService incomeAppService,
         ICashAccountAppService cashAccountAppService,
@@ -55,6 +58,10 @@ public class EditModalModel : AbpPageModel
         Income.Category = dto.Category;
         Income.CashAccountId = dto.CashAccountId;
         Income.ProjectId = dto.ProjectId;
+        Income.BudgetLineId = dto.BudgetLineId;
+        // Giderdeki ile aynı sessiz kayıp buradaydı: TaskId kopyalanmadığı için
+        // düzenleme kaydın görev bağını siliyordu.
+        Income.TaskId = dto.TaskId;
         Income.CustomerId = dto.CustomerId;
         Income.Description = dto.Description;
 

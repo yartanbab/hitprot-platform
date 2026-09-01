@@ -1,0 +1,242 @@
+@*
+    "Dilimler & kesintiler" sekmesi — tasarım 1b.
+
+    Üç parça: denklem şeridi (sözleşme − kesinti = onaylanan), dilim tablosu
+    (kesintiler ilgili dilimin ALTINDA alt satır olarak) ve toplam satırı.
+*@
+@using Apya.Platform.ProjectBudgets
+@using Apya.Platform.Web.Pages.Finance
+@model IndexModel
+
+@functions {
+    string Money(decimal v) => v.ToString("N2");
+
+    (string tone, string label) StatusChip(FundingTrancheStatus status) => status switch
+    {
+        FundingTrancheStatus.Collected => ("positive", "Tahsil edildi"),
+        FundingTrancheStatus.PartiallyCollected => ("warning", "Kısmi tahsil"),
+        FundingTrancheStatus.Disputed => ("negative", "İtiraz sürecinde"),
+        _ => ("neutral", "Bekliyor")
+    };
+
+    (string tone, string label) ResolutionChip(Apya.Platform.ProjectBudgets.Dtos.TrancheDeductionDto d) => d.Resolution switch
+    {
+        DeductionResolution.AppliedToBudget => ("positive", d.BudgetRevisionNo.HasValue
+            ? $"Bütçeye işlendi · Rev.{d.BudgetRevisionNo}"
+            : "Bütçeye işlendi"),
+        DeductionResolution.Unfunded => ("negative", "Finanse edilmeyen"),
+        _ => ("warning", "Açık")
+    };
+}
+
+@if (Model.Budget == null)
+{
+    <partial name="_EmptyState" model='new Apya.Platform.Web.Pages.Shared.EmptyStateModel {
+        Icon = "fa-scissors",
+        Title = "Dilimler görüntülenemiyor",
+        Description = "Bir proje seçin ya da bütçe görme yetkinizi kontrol edin." }' />
+}
+else
+{
+    var b = Model.Budget;
+    var cur = b.Currency == "TRY" ? "₺" : b.Currency;
+    var collectedPercent = b.PlannedFunding > 0
+        ? (int)Math.Round(b.ReceivedFunding / b.PlannedFunding * 100m)
+        : 0;
+
+    @* ─── Denklem şeridi ─── *@
+    <div class="card mb-3">
+        <div class="card-body d-flex flex-wrap align-items-center gap-4">
+            <div>
+                <div class="apya-overline">Sözleşme bütçesi</div>
+                <div class="apya-numeric fw-bold" style="font-size:20px">@cur@Money(b.ContractBudget)</div>
+            </div>
+            <div class="text-muted" style="font-size:20px">−</div>
+            <div>
+                <div class="apya-overline">Kesinti</div>
+                <div class="apya-numeric fw-bold text-danger" style="font-size:20px">@cur@Money(b.DeductionTotal)</div>
+            </div>
+            <div class="text-muted" style="font-size:20px">=</div>
+            <div>
+                <div class="apya-overline">Onaylanan bütçe@(b.LatestRevisionNo > 0 ? $" (Rev.{b.LatestRevisionNo})" : "")</div>
+                <div class="apya-numeric fw-bold" style="font-size:20px">@cur@Money(b.ApprovedBudget)</div>
+            </div>
+            <div class="ms-auto text-end">
+                <div class="apya-overline">Tahsil / Planlanan</div>
+                <div class="apya-numeric fw-bold" style="font-size:20px">%@collectedPercent</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+        <span class="fw-semibold">Dilimler</span>
+        <span class="apya-chip apya-chip-neutral">@Model.Tranches.Count dilim</span>
+        @{
+            var deductionCount = Model.Tranches.SelectMany(t => t.Deductions).Count();
+        }
+        @if (deductionCount > 0)
+        {
+            <span class="apya-chip apya-chip-warning">@deductionCount kesinti</span>
+        }
+        @if (Model.CanEditBudget)
+        {
+            <button type="button" class="btn btn-sm btn-primary ms-auto" id="BtnAddTranche">
+                <i class="fa fa-plus me-1" aria-hidden="true"></i>Dilim ekle
+            </button>
+        }
+    </div>
+
+    @if (!Model.Tranches.Any())
+    {
+        <partial name="_EmptyState" model='new Apya.Platform.Web.Pages.Shared.EmptyStateModel {
+            Icon = "fa-scissors",
+            Title = "Bu projede fonlama dilimi yok",
+            Description = "Para tek seferde geliyorsa dilim tanımlamanız gerekmez; parçalı fonlamada her taksit bir dilimdir." }' />
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table apya-clean-table align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th style="width:150px">Dilim</th>
+                        <th style="width:120px">Planlanan tarih</th>
+                        <th class="text-end apya-numeric">Planlanan</th>
+                        <th class="text-end apya-numeric">Gelen</th>
+                        <th class="text-end apya-numeric">Kesinti</th>
+                        <th style="width:150px">Durum</th>
+                        @if (Model.CanEditBudget)
+                        {
+                            <th style="width:170px"></th>
+                        }
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var t in Model.Tranches)
+                    {
+                        var (tone, label) = StatusChip(t.Status);
+                        <tr>
+                            <td>
+                                <div class="fw-semibold">@t.SequenceNo. Dilim</div>
+                                @if (!string.IsNullOrWhiteSpace(t.Title))
+                                {
+                                    <div class="small text-muted">@t.Title</div>
+                                }
+                            </td>
+                            <td class="apya-numeric text-muted">@(t.PlannedDate?.ToString("dd.MM.yyyy") ?? "—")</td>
+                            <td class="text-end apya-numeric">@Money(t.PlannedAmount)</td>
+                            <td class="text-end apya-numeric fw-semibold text-success">@Money(t.ReceivedAmount)</td>
+                            <td class="text-end apya-numeric @(t.DeductionTotal > 0 ? "text-danger" : "text-muted")">@Money(t.DeductionTotal)</td>
+                            <td><span class="apya-chip apya-chip-@tone">@label</span></td>
+                            @if (Model.CanEditBudget)
+                            {
+                                <td class="text-end">
+                                    <button type="button" class="btn btn-sm btn-link p-1 text-decoration-none"
+                                            data-collect-tranche="@t.Id" title="Tahsilat gir">
+                                        <i class="fa fa-hand-holding-dollar" aria-hidden="true"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-link p-1 text-decoration-none"
+                                            data-add-deduction="@t.Id" title="Kesinti ekle">
+                                        <i class="fa fa-scissors" aria-hidden="true"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-link p-1 text-decoration-none"
+                                            data-edit-tranche="@t.Id" title="Düzenle">
+                                        <i class="fa fa-pen" aria-hidden="true"></i>
+                                    </button>
+                                    <form method="post" asp-page-handler="DeleteTranche" class="d-inline"
+                                          asp-route-projectId="@Model.ProjectId" asp-route-tab="@Model.ActiveTab">
+                                        <input type="hidden" name="TrancheId" value="@t.Id" />
+                                        <button type="submit" class="btn btn-sm btn-link p-1 text-danger text-decoration-none"
+                                                title="Sil" data-confirm="Dilim ve kesintileri silinsin mi?">
+                                            <i class="fa fa-trash" aria-hidden="true"></i>
+                                        </button>
+                                    </form>
+                                </td>
+                            }
+                        </tr>
+
+                        @* Kesintiler ilgili dilimin ALTINDA — ayrı tablo değil, aynı satırın devamı. *@
+                        @foreach (var d in t.Deductions)
+                        {
+                            var (rTone, rLabel) = ResolutionChip(d);
+                            <tr class="apya-deduction-row">
+                                <td colspan="@(Model.CanEditBudget ? 7 : 6)">
+                                    <div class="d-flex flex-wrap align-items-center gap-2">
+                                        <i class="fa fa-scissors text-danger" aria-hidden="true"></i>
+                                        <span class="apya-numeric fw-bold text-danger">−@Money(d.Amount)</span>
+                                        <span>@d.Reason</span>
+                                        <span class="text-muted apya-numeric small">@d.DeductionDate.ToString("dd.MM.yyyy")</span>
+                                        <span class="apya-chip apya-chip-@rTone">@rLabel</span>
+
+                                        @if (Model.CanEditBudget)
+                                        {
+                                            <span class="ms-auto d-flex align-items-center gap-1">
+                                                @if (d.Resolution == DeductionResolution.Open)
+                                                {
+                                                    <button type="button" class="btn btn-sm btn-outline-secondary py-0"
+                                                            data-revise-budget="@d.Id">
+                                                        Bütçeye işle
+                                                    </button>
+                                                    <form method="post" asp-page-handler="MarkDeductionUnfunded" class="d-inline"
+                                                          asp-route-projectId="@Model.ProjectId" asp-route-tab="@Model.ActiveTab">
+                                                        <input type="hidden" name="DeductionId" value="@d.Id" />
+                                                        <button type="submit" class="btn btn-sm btn-outline-secondary py-0">
+                                                            Finanse edilmeyen
+                                                        </button>
+                                                    </form>
+                                                }
+                                                else
+                                                {
+                                                    <form method="post" asp-page-handler="ReopenDeduction" class="d-inline"
+                                                          asp-route-projectId="@Model.ProjectId" asp-route-tab="@Model.ActiveTab">
+                                                        <input type="hidden" name="DeductionId" value="@d.Id" />
+                                                        <button type="submit" class="btn btn-sm btn-link p-0 text-decoration-none">
+                                                            Kararı geri al
+                                                        </button>
+                                                    </form>
+                                                }
+                                                <form method="post" asp-page-handler="RemoveDeduction" class="d-inline"
+                                                      asp-route-projectId="@Model.ProjectId" asp-route-tab="@Model.ActiveTab">
+                                                    <input type="hidden" name="DeductionId" value="@d.Id" />
+                                                    <button type="submit" class="btn btn-sm btn-link p-1 text-danger text-decoration-none"
+                                                            title="Kesintiyi sil" data-confirm="Kesinti silinsin mi?">
+                                                        <i class="fa fa-trash" aria-hidden="true"></i>
+                                                    </button>
+                                                </form>
+                                            </span>
+                                        }
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+                <tfoot>
+                    <tr class="fw-bold">
+                        <td colspan="2">TOPLAM</td>
+                        <td class="text-end apya-numeric">@Money(b.PlannedFunding)</td>
+                        <td class="text-end apya-numeric text-success">@Money(b.ReceivedFunding)</td>
+                        <td class="text-end apya-numeric text-danger">@Money(b.DeductionTotal)</td>
+                        <td colspan="@(Model.CanEditBudget ? 2 : 1)">
+                            @if (b.PendingFunding > 0)
+                            {
+                                <span class="text-muted fw-normal" style="font-size:12px">
+                                    bekleyen <span class="apya-numeric">@Money(b.PendingFunding)</span>
+                                </span>
+                            }
+                        </td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+
+        @if (b.UnfundedTotal > 0)
+        {
+            <p class="text-muted mt-3 mb-0" style="font-size:12.5px">
+                <i class="fa fa-triangle-exclamation text-warning me-1" aria-hidden="true"></i>
+                <strong class="apya-numeric">@cur@Money(b.UnfundedTotal)</strong> tutarındaki kesinti
+                <strong>finanse edilmeyen</strong> olarak bırakıldı: bütçe aynı kaldı, karşılığı gelmeyecek.
+            </p>
+        }
+    }
+}

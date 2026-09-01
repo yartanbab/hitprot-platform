@@ -197,6 +197,33 @@ public static class PlatformDomainErrorCodes
     // --- Dashboard ---
     public const string DashboardLayoutTooLarge = "Platform:Dashboard:LayoutTooLarge";
 
+    // --- Proje bütçesi (ProjectBudget) — kalem, dilim, kesinti, revizyon ---
+    public const string BudgetLineNameRequired = "Platform:ProjectBudget:LineNameRequired";
+    public const string BudgetLineCodeAlreadyExists = "Platform:ProjectBudget:LineCodeAlreadyExists";
+    public const string BudgetLineAmountInvalid = "Platform:ProjectBudget:LineAmountInvalid";
+    public const string BudgetLineInUse = "Platform:ProjectBudget:LineInUse";
+    public const string BudgetLineRequired = "Platform:ProjectBudget:LineRequired";
+    public const string BudgetLineProjectMismatch = "Platform:ProjectBudget:LineProjectMismatch";
+    public const string BudgetTransferLimitInvalid = "Platform:ProjectBudget:TransferLimitInvalid";
+
+    public const string TrancheAmountInvalid = "Platform:ProjectBudget:TrancheAmountInvalid";
+    public const string TrancheCollectionInvalid = "Platform:ProjectBudget:TrancheCollectionInvalid";
+
+    public const string DeductionAmountInvalid = "Platform:ProjectBudget:DeductionAmountInvalid";
+    public const string DeductionReasonRequired = "Platform:ProjectBudget:DeductionReasonRequired";
+    public const string DeductionExceedsTranche = "Platform:ProjectBudget:DeductionExceedsTranche";
+
+    public const string TaskBudgetAmountInvalid = "Platform:ProjectBudget:TaskBudgetAmountInvalid";
+    public const string TaskBudgetExceedsLine = "Platform:ProjectBudget:TaskBudgetExceedsLine";
+    public const string TaskBudgetLineProjectMismatch = "Platform:ProjectBudget:TaskBudgetLineProjectMismatch";
+
+    public const string FxDonorCurrencySameAsProject = "Platform:ProjectBudget:FxDonorCurrencySameAsProject";
+    public const string FxFixedRateRequired = "Platform:ProjectBudget:FxFixedRateRequired";
+    public const string FxRateMissing = "Platform:ProjectBudget:FxRateMissing";
+
+    public const string BudgetRevisionEmpty = "Platform:ProjectBudget:RevisionEmpty";
+    public const string BudgetRevisionAmountInvalid = "Platform:ProjectBudget:RevisionAmountInvalid";
+
     // --- Demo Talebi (DemoRequests) Modülü ---
     public const string DemoRequestRateLimitExceeded = "Platform:DemoRequest:RateLimitExceeded";
 }

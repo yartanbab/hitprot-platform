@@ -18,6 +18,16 @@ namespace Apya.Platform.Tasks
 
         // --- Planlama ---
         public decimal? EstimatedHours { get; set; }
+
+        /// <summary>Görevin bağlı olduğu bütçe kalemi (görev detayı → Finans sekmesi).</summary>
+        public Guid? BudgetLineId { get; set; }
+        public string? BudgetLineName { get; set; }
+
+        /// <summary>Göreve ayrılan tutar. "Taahhüt" alanı BİLEREK yok — arkasında varlık yok.</summary>
+        public decimal? PlannedAmount { get; set; }
+
+        /// <summary>Kalemin kalanı — görev planı girilirken "ne kadar yer var" sorusunun cevabı.</summary>
+        public decimal? BudgetLineRemaining { get; set; }
         public string? TaskType { get; set; }
         public string? Sprint { get; set; }
 

@@ -32,6 +32,7 @@ using Apya.Platform.Incomes;
 using Apya.Platform.ExchangeRates;
 using Apya.Platform.FxRevaluations;
 using Apya.Platform.Projects;
+using Apya.Platform.ProjectBudgets;
 using Apya.Platform.Grants;
 using Apya.Platform.Tasks;
 using Apya.Platform.Notifications;
@@ -110,6 +111,13 @@ namespace Apya.Platform.EntityFrameworkCore
         /* --- PROJE MODÜLÜ TABLOLARI --- */
         public DbSet<Project> Projects { get; set; }
         public DbSet<ProjectCategoryDefinition> ProjectCategories { get; set; }
+
+        /* Proje bütçesi — kalem kırılımı, fonlama dilimleri, kesinti ve revizyon geçmişi */
+        public DbSet<ProjectBudgetLine> ProjectBudgetLines { get; set; }
+        public DbSet<FundingTranche> FundingTranches { get; set; }
+        public DbSet<TrancheDeduction> TrancheDeductions { get; set; }
+        public DbSet<BudgetRevision> BudgetRevisions { get; set; }
+        public DbSet<BudgetRevisionLine> BudgetRevisionLines { get; set; }
         // (BUG-001) ProjectTask, ProjectSubTasks, ProjectTaskComments kaldırıldı.
         public DbSet<Grant> Grants { get; set; }
         public DbSet<GrantCall> GrantCalls { get; set; }
@@ -451,6 +459,15 @@ namespace Apya.Platform.EntityFrameworkCore
                 b.HasIndex(x => x.ProjectId);
                 b.HasIndex(x => x.TaskId);
                 b.HasIndex(x => x.CustomerId);
+                // Kalem tablosundaki "Harcanan" kolonu bu indeks üzerinden toplanır.
+                // FK KURULMADI: kalem silinince gideri de silmek ya da güncellemek
+                // istemiyoruz — silme zaten ProjectBudgetManager'da bağlı kayıt varsa
+                // reddediliyor, ikinci bir kaskad davranışı yalnız sürpriz üretir.
+                b.HasIndex(x => x.BudgetLineId);
+                b.Property(x => x.BookAmount).HasColumnType("decimal(18,2)");
+                b.Property(x => x.BookRate).HasColumnType("decimal(18,6)");
+                b.Property(x => x.DonorAmount).HasColumnType("decimal(18,2)");
+                b.Property(x => x.DonorRate).HasColumnType("decimal(18,6)");
             });
 
             /* --- GELİR MODÜLÜ YAPILANDIRMASI — APYA-142d --- */
@@ -467,6 +484,73 @@ namespace Apya.Platform.EntityFrameworkCore
                 b.HasIndex(x => x.ProjectId);
                 b.HasIndex(x => x.TaskId);
                 b.HasIndex(x => x.CustomerId);
+                b.HasIndex(x => x.BudgetLineId); // gerekçe: Expense tarafındaki notla aynı
+                b.Property(x => x.BookAmount).HasColumnType("decimal(18,2)");
+                b.Property(x => x.BookRate).HasColumnType("decimal(18,6)");
+                b.Property(x => x.DonorAmount).HasColumnType("decimal(18,2)");
+                b.Property(x => x.DonorRate).HasColumnType("decimal(18,6)");
+            });
+
+            /* --- PROJE BÜTÇESİ — kalem / dilim / kesinti / revizyon --- */
+            builder.Entity<ProjectBudgetLine>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "ProjectBudgetLines", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+                b.Property(x => x.Code).HasMaxLength(ProjectBudgetConsts.MaxCodeLength);
+                b.Property(x => x.Name).IsRequired().HasMaxLength(ProjectBudgetConsts.MaxNameLength);
+                b.Property(x => x.PlannedAmount).HasColumnType("decimal(18,2)");
+                b.Property(x => x.ApprovedAmount).HasColumnType("decimal(18,2)");
+                b.Property(x => x.TransferLimitPercent).HasColumnType("decimal(5,2)");
+                b.HasOne<Project>().WithMany().HasForeignKey(x => x.ProjectId).OnDelete(DeleteBehavior.Cascade);
+                b.HasIndex(x => new { x.ProjectId, x.Order });
+                // Kod tekilliği VERİTABANINDA zorlanmaz: boş kod serbest ve soft-delete
+                // ile silinmiş bir kalemin kodu yeniden kullanılabilmeli. Kural
+                // ProjectBudgetManager.EnsureCodeIsFreeAsync'te (silinmişleri saymaz).
+                b.HasIndex(x => new { x.ProjectId, x.Code });
+            });
+
+            builder.Entity<FundingTranche>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "FundingTranches", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+                b.Property(x => x.Title).HasMaxLength(ProjectBudgetConsts.MaxNameLength);
+                b.Property(x => x.Note).HasMaxLength(ProjectBudgetConsts.MaxNoteLength);
+                b.Property(x => x.PlannedAmount).HasColumnType("decimal(18,2)");
+                b.Property(x => x.ReceivedAmount).HasColumnType("decimal(18,2)");
+                b.HasOne<Project>().WithMany().HasForeignKey(x => x.ProjectId).OnDelete(DeleteBehavior.Cascade);
+                b.HasIndex(x => new { x.ProjectId, x.SequenceNo });
+                b.HasIndex(x => x.IncomeEntryId);
+                b.HasMany(x => x.Deductions).WithOne().HasForeignKey(x => x.TrancheId).IsRequired();
+            });
+
+            builder.Entity<TrancheDeduction>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "TrancheDeductions", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+                b.Property(x => x.Reason).IsRequired().HasMaxLength(ProjectBudgetConsts.MaxReasonLength);
+                b.Property(x => x.Amount).HasColumnType("decimal(18,2)");
+                b.HasIndex(x => x.TrancheId);
+                b.HasIndex(x => x.BudgetRevisionId);
+            });
+
+            builder.Entity<BudgetRevision>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "BudgetRevisions", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+                b.Property(x => x.Reason).HasMaxLength(ProjectBudgetConsts.MaxReasonLength);
+                b.Property(x => x.TotalApprovedAmount).HasColumnType("decimal(18,2)");
+                b.HasOne<Project>().WithMany().HasForeignKey(x => x.ProjectId).OnDelete(DeleteBehavior.Cascade);
+                b.HasIndex(x => new { x.ProjectId, x.RevisionNo });
+                b.HasMany(x => x.Lines).WithOne().HasForeignKey(x => x.BudgetRevisionId).IsRequired();
+            });
+
+            builder.Entity<BudgetRevisionLine>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "BudgetRevisionLines", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+                b.Property(x => x.PreviousAmount).HasColumnType("decimal(18,2)");
+                b.Property(x => x.NewAmount).HasColumnType("decimal(18,2)");
+                b.HasIndex(x => x.BudgetLineId);
             });
 
             /* --- KASA HAREKETİ MODÜLÜ YAPILANDIRMASI — APYA-134 --- */
@@ -508,6 +592,9 @@ namespace Apya.Platform.EntityFrameworkCore
                 b.HasOne<ProjectCategoryDefinition>().WithMany()
                     .HasForeignKey(x => x.CategoryId).OnDelete(DeleteBehavior.Restrict);
                 b.HasIndex(x => new { x.TenantId, x.CategoryId });
+                // Kur köprüsü: donör PB'si boşsa proje tek defterlidir.
+                b.Property(x => x.DonorCurrency).HasMaxLength(3);
+                b.Property(x => x.FixedDonorRate).HasColumnType("decimal(18,6)");
             });
 
             /* --- PROJE KATEGORİSİ TANIMLARI --- */
@@ -725,6 +812,12 @@ namespace Apya.Platform.EntityFrameworkCore
             {
                 b.ToTable(PlatformConsts.DbTablePrefix + "Tasks", PlatformConsts.DbSchema);
                 b.ConfigureByConvention();
+
+                // Bütçe bağı — FK KURULMADI, Expense/IncomeEntry ile aynı gerekçe:
+                // kalem silme zaten ProjectBudgetManager'da bağlı kayıt varsa
+                // reddediliyor; ikinci bir kaskad davranışı sürpriz üretir.
+                b.Property(t => t.PlannedAmount).HasColumnType("decimal(18,2)");
+                b.HasIndex(t => t.BudgetLineId);
 
                 b.HasOne(t => t.Assignee)
                  .WithMany()

@@ -25,6 +25,15 @@ public class CreateUpdateExpenseDto
 
     public Guid? ProjectId { get; set; }
     public Guid? TaskId { get; set; }
+
+    /// <summary>
+    /// Harcamanın yazıldığı bütçe kalemi. Zorunluluk KOŞULLUDUR ve sunucuda
+    /// karara bağlanır (<c>ProjectBudgetManager.EnsureBudgetLineIsValidAsync</c>):
+    /// projenin kalemi varsa zorunlu, yoksa boş kalmalı. Bu yüzden burada
+    /// [Required] YOK — kural bir attribute'la ifade edilemez.
+    /// </summary>
+    public Guid? BudgetLineId { get; set; }
+
     public Guid? CustomerId { get; set; }
 
     [StringLength(ExpenseConsts.MaxDescriptionLength)]

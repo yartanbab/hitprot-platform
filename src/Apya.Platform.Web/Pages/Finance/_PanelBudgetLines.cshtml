@@ -1,0 +1,165 @@
+@*
+    "Bütçe kalemleri" sekmesi — tasarım 1a'nın kalem tablosu.
+
+    Harcanan/kalan/gerçekleşme SUNUCUDA hesaplanır (kalemde saklanmaz); burada
+    yalnız basılır. "Belge" kolonu tasarımda var ama doküman entegrasyonu henüz
+    yok — uydurma kolon basılmıyor.
+*@
+@using Apya.Platform.Web.Pages.Finance
+@model IndexModel
+
+@functions {
+    string Money(decimal v) => v.ToString("N2");
+
+    string BarTone(int usagePercent) => usagePercent >= 100 ? "is-negative"
+        : usagePercent >= 80 ? "is-warning"
+        : "is-positive";
+}
+
+@if (Model.Budget == null)
+{
+    <partial name="_EmptyState" model='new Apya.Platform.Web.Pages.Shared.EmptyStateModel {
+        Icon = "fa-list-ul",
+        Title = "Bütçe görüntülenemiyor",
+        Description = "Bir proje seçin ya da bütçe görme yetkinizi kontrol edin." }' />
+}
+else
+{
+    var b = Model.Budget;
+    var cur = b.Currency == "TRY" ? "₺" : b.Currency;
+
+    <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+        <span class="fw-semibold">Bütçe kalemleri</span>
+        <span class="apya-chip apya-chip-neutral">@b.Lines.Count kalem</span>
+        @if (b.LatestRevisionNo > 0)
+        {
+            <span class="apya-chip apya-chip-warning">Rev.@b.LatestRevisionNo</span>
+        }
+        @if (Model.CanEditBudget)
+        {
+            <div class="ms-auto d-flex gap-2">
+                @if (b.Lines.Any())
+                {
+                    <button type="button" class="btn btn-sm btn-outline-secondary" id="BtnApplyRevision">
+                        <i class="fa fa-code-branch me-1" aria-hidden="true"></i>Bütçeyi revize et
+                    </button>
+                }
+                <button type="button" class="btn btn-sm btn-primary" id="BtnAddBudgetLine">
+                    <i class="fa fa-plus me-1" aria-hidden="true"></i>Kalem ekle
+                </button>
+            </div>
+        }
+    </div>
+
+    @if (!b.Lines.Any())
+    {
+        <partial name="_EmptyState" model='new Apya.Platform.Web.Pages.Shared.EmptyStateModel {
+            Icon = "fa-list-ul",
+            Title = "Bu projede bütçe kalemi yok",
+            Description = "Kalem tanımlayana kadar bütçe tek tutar olarak yönetilir; harcamalar kaleme yazılamaz." }' />
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table apya-clean-table align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Kalem</th>
+                        <th class="text-end apya-numeric">Sözleşme</th>
+                        <th class="text-end apya-numeric">Onaylanan</th>
+                        <th class="text-end apya-numeric">Harcanan</th>
+                        <th class="text-end apya-numeric">Kalan</th>
+                        <th style="width:140px">Gerçekleşme</th>
+                        @if (Model.CanEditBudget)
+                        {
+                            <th style="width:96px"></th>
+                        }
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var line in b.Lines)
+                    {
+                        <tr>
+                            <td>
+                                <div class="fw-semibold">@line.Name</div>
+                                <div class="small text-muted">
+                                    @if (!string.IsNullOrWhiteSpace(line.Code))
+                                    {
+                                        <span class="apya-numeric">@line.Code</span>
+                                    }
+                                    @if (line.TransferLimitPercent.HasValue)
+                                    {
+                                        <span class="apya-chip apya-chip-neutral ms-1">aktarım payı %@line.TransferLimitPercent.Value.ToString("N0")</span>
+                                    }
+                                    @if (line.LinkedRecordCount > 0)
+                                    {
+                                        <span class="apya-chip apya-chip-neutral ms-1">@line.LinkedRecordCount kayıt</span>
+                                    }
+                                </div>
+                            </td>
+                            <td class="text-end apya-numeric text-muted">@Money(line.PlannedAmount)</td>
+                            <td class="text-end apya-numeric fw-semibold">@Money(line.ApprovedAmount)</td>
+                            <td class="text-end apya-numeric">@Money(line.SpentAmount)</td>
+                            <td class="text-end apya-numeric fw-semibold @(line.RemainingAmount < 0 ? "text-danger" : "")">@Money(line.RemainingAmount)</td>
+                            <td>
+                                <div class="apya-tile-progress-label">
+                                    <span class="apya-numeric">%@line.UsagePercent</span>
+                                </div>
+                                <div class="apya-mini-progress @BarTone(line.UsagePercent)">
+                                    <span style="width:@(Math.Min(line.UsagePercent, 100))%"></span>
+                                </div>
+                            </td>
+                            @if (Model.CanEditBudget)
+                            {
+                                <td class="text-end">
+                                    <button type="button" class="btn btn-sm btn-link p-1 text-decoration-none"
+                                            data-edit-line="@line.Id" title="Düzenle">
+                                        <i class="fa fa-pen" aria-hidden="true"></i>
+                                    </button>
+                                    @if (line.LinkedRecordCount == 0)
+                                    {
+                                        <form method="post" asp-page-handler="DeleteLine" class="d-inline"
+                                              asp-route-projectId="@Model.ProjectId" asp-route-tab="@Model.ActiveTab">
+                                            <input type="hidden" name="LineId" value="@line.Id" />
+                                            <button type="submit" class="btn btn-sm btn-link p-1 text-danger text-decoration-none"
+                                                    title="Sil" data-confirm="Kalem silinsin mi?">
+                                                <i class="fa fa-trash" aria-hidden="true"></i>
+                                            </button>
+                                        </form>
+                                    }
+                                    else
+                                    {
+                                        <span class="btn btn-sm btn-link p-1 text-muted disabled"
+                                              title="Bu kaleme bağlı @line.LinkedRecordCount kayıt var; önce onları başka kaleme taşıyın.">
+                                            <i class="fa fa-trash" aria-hidden="true"></i>
+                                        </span>
+                                    }
+                                </td>
+                            }
+                        </tr>
+                    }
+                </tbody>
+                <tfoot>
+                    <tr class="fw-bold">
+                        <td>TOPLAM</td>
+                        <td class="text-end apya-numeric">@Money(b.Lines.Sum(x => x.PlannedAmount))</td>
+                        <td class="text-end apya-numeric">@Money(b.ApprovedBudget)</td>
+                        <td class="text-end apya-numeric">@Money(b.Lines.Sum(x => x.SpentAmount))</td>
+                        <td class="text-end apya-numeric">@Money(b.Lines.Sum(x => x.RemainingAmount))</td>
+                        <td colspan="@(Model.CanEditBudget ? 2 : 1)"></td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+
+        @if (b.UnassignedSpentAmount > 0)
+        {
+            <p class="text-muted mt-3 mb-0" style="font-size:12.5px">
+                <i class="fa fa-circle-info me-1" aria-hidden="true"></i>
+                Bu projede <strong class="apya-numeric">@cur@Money(b.UnassignedSpentAmount)</strong>
+                tutarında harcama <strong>hiçbir kaleme yazılmamış</strong> — kalem toplamları ile
+                projenin toplam harcaması arasındaki fark budur.
+            </p>
+        }
+    }
+}

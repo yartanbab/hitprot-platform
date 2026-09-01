@@ -1,0 +1,52 @@
+@*
+    Kasa/banka hesap listesi — "Genel" ve "Kasa" sekmelerinin ortak parçası
+    (tasarımda liste her iki ekranda da var; iki kopya markup istemiyoruz).
+*@
+@using Apya.Platform.CashAccounts
+@using Apya.Platform.Web.Pages.Finance
+@model IndexModel
+
+@functions {
+    string MoneyC(decimal v, string cur) => v.ToString("N2") + (cur == "TRY" ? " ₺" : " " + cur);
+
+    string TypeIcon(CashAccountType t) => t switch
+    {
+        CashAccountType.Bank => "fa-building-columns",
+        CashAccountType.CreditCard => "fa-credit-card",
+        _ => "fa-wallet"
+    };
+
+    string TypeLabel(CashAccountType t) => t switch
+    {
+        CashAccountType.Bank => "Banka hesabı",
+        CashAccountType.CreditCard => "Kredi kartı",
+        _ => "Nakit kasa"
+    };
+}
+
+@if (!Model.Accounts.Any())
+{
+    <div class="card-body text-muted text-center py-4" style="font-size:13px">
+        Henüz kasa/banka hesabı yok. <a href="/CashAccounts">Kasa &amp; Banka</a>'dan ekleyin.
+    </div>
+}
+else
+{
+    <div class="list-group list-group-flush">
+        @foreach (var a in Model.Accounts)
+        {
+            <div class="list-group-item d-flex align-items-center gap-3">
+                <div class="kpi-icon-box kpi-icon-box--accent kpi-icon-box--sm">
+                    <i class="fa @TypeIcon(a.Type)" aria-hidden="true"></i>
+                </div>
+                <div class="flex-grow-1 min-w-0">
+                    <div class="fw-semibold text-truncate">
+                        @a.Name <span class="apya-chip apya-chip-neutral ms-1">@a.Currency</span>
+                    </div>
+                    <div class="small text-muted apya-numeric text-truncate">@(a.Iban ?? TypeLabel(a.Type))</div>
+                </div>
+                <div class="text-end apya-numeric fw-bold text-nowrap">@MoneyC(a.Balance, a.Currency)</div>
+            </div>
+        }
+    </div>
+}

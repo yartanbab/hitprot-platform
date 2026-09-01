@@ -61,12 +61,16 @@ $(function () {
 
     function readStateFromUrl() {
         state.readUrl();
-        currentView = new URLSearchParams(window.location.search).get('view') === 'board' ? 'kanban' : 'list';
+        var v = new URLSearchParams(window.location.search).get('view');
+        // finans sekmesi yalnız yetkiliye basılır; yoksa listeye düşülür.
+        currentView = v === 'board' ? 'kanban'
+            : (v === 'finance' && $('#btn-view-finance').length) ? 'finance'
+            : 'list';
     }
 
     function writeStateToUrl() {
         // 'view' bu sayfada 'board' olarak yazılır (eski derin bağlantılar bozulmasın).
-        state.writeUrl({ view: currentView === 'kanban' ? 'board' : '' });
+        state.writeUrl({ view: currentView === 'kanban' ? 'board' : currentView === 'finance' ? 'finance' : '' });
     }
 
     // 6 → "6", 6.5 → "6,5" (ondalık yalnız gerekiyorsa, TR ayracıyla)
@@ -639,11 +643,18 @@ $(function () {
     // tam yükseklik flex zinciri `.view-panel:not(.d-none)` seçicisine dayanıyor,
     // .tab-pane'in kendi display/opacity yönetimi zinciri koparıyordu.
     function switchView(mode) {
-        currentView = (mode === 'kanban' || mode === 'gantt') ? mode : 'list';
+        currentView = (mode === 'kanban' || mode === 'gantt' || mode === 'finance') ? mode : 'list';
         $('.apya-console-views > .view-panel').addClass('d-none');
         $('.apya-console-tab').removeClass('active').attr('aria-selected', 'false');
 
-        if (currentView === 'gantt') {
+        // Görev filtreleri finans panelinde hiçbir şeyi süzmez; şerit gizlenir.
+        $('#console-filters').toggleClass('d-none', currentView === 'finance');
+
+        if (currentView === 'finance') {
+            // Panel sunucuda basıldı; yüklenecek bir şey yok.
+            $('#view-finance').removeClass('d-none');
+            $('#btn-view-finance').addClass('active').attr('aria-selected', 'true');
+        } else if (currentView === 'gantt') {
             $('#view-gantt').removeClass('d-none');
             $('#btn-view-gantt').addClass('active').attr('aria-selected', 'true');
             gantt.load();
@@ -841,6 +852,7 @@ $(function () {
     $('#btn-view-list').click(function () { switchView('list'); });
     $('#btn-view-kanban').click(function () { switchView('kanban'); });
     $('#btn-view-gantt').click(function () { switchView('gantt'); });
+    $('#btn-view-finance').click(function () { switchView('finance'); });
 
     // Kaydedilmemiş Gantt sürüklemesi varken sayfadan ayrılma uyarısı (handoff).
     $(window).on('beforeunload', function () {

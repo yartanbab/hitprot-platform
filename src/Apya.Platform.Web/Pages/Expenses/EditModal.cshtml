@@ -19,7 +19,15 @@
                 </abp-column>
             </abp-row>
             @* Çoklu para birimi gizlendi — mevcut kaydın para birimi korunur. *@
-            <input type="hidden" asp-for="Expense.Currency" />
+            @* Para birimi seçici 5. adımda geri açıldı: kur köprüsü olmadan
+               açılsaydı, ₺ karşılığını hiçbir şeyin hesaplamadığı kayıtlar üretip
+               bütçe toplamlarını sessizce yanlışlardı. Artık kayıt oluşurken
+               ₺ defter ve donör karşılığı damgalanıyor (FxLedgerStamper). *@
+            <abp-row>
+                <abp-column size-md="_6">
+                    <abp-select asp-for="Expense.Currency" asp-items="Model.Currencies" label="Para birimi" />
+                </abp-column>
+            </abp-row>
             <abp-row>
                 <abp-column size-md="_6">
                     <abp-select asp-for="Expense.Category" asp-items="Model.Categories" label="Kategori" />
@@ -33,6 +41,27 @@
                     <abp-select asp-for="Expense.ProjectId" asp-items="Model.Projects" label="Proje (opsiyonel)">
                         <option value="">— Proje yok —</option>
                     </abp-select>
+                </abp-column>
+            </abp-row>
+
+            @* Bütçe kalemi + görev: seçenekleri proje seçimine göre JS doldurur
+               (apya-finance-modal.js → bindBudgetContext). Proje seçili değilken
+               ikisi de gizlidir; sunucu da aynı kuralı doğrular. *@
+            <abp-row>
+                <abp-column size-md="_6">
+                    <div class="mb-3 d-none" data-budget-line-wrap>
+                        <label class="form-label" asp-for="Expense.BudgetLineId">
+                            Bütçe kalemi
+                            <span class="apya-chip apya-chip-neutral ms-1 d-none" data-budget-line-hint></span>
+                        </label>
+                        <select asp-for="Expense.BudgetLineId" class="form-select"></select>
+                    </div>
+                </abp-column>
+                <abp-column size-md="_6">
+                    <div class="mb-3 d-none" data-budget-task-wrap>
+                        <label class="form-label" asp-for="Expense.TaskId">Görev (opsiyonel)</label>
+                        <select asp-for="Expense.TaskId" class="form-select"></select>
+                    </div>
                 </abp-column>
             </abp-row>
             @* Cari alanı gizlendi (kullanıcı kararı 2026-06-22); mevcut değer korunsun diye gizli alan. *@
@@ -55,6 +84,17 @@
                 projectSelector: '#Expense_ProjectId',
                 dateSelector: '#Expense_ExpenseDate',
                 projectDates: dates
+            });
+            apya.financeModal.bindBudgetContext({
+                formSelector: 'form[action$="/Expenses/EditModal"]',
+                projectSelector: '#Expense_ProjectId',
+                lineSelector: '#Expense_BudgetLineId',
+                taskSelector: '#Expense_TaskId',
+                lineWrapSelector: '[data-budget-line-wrap]',
+                taskWrapSelector: '[data-budget-task-wrap]',
+                hintSelector: '[data-budget-line-hint]',
+                selectedLineId: '@Model.Expense.BudgetLineId',
+                selectedTaskId: '@Model.Expense.TaskId'
             });
         }, 0);
     })();
