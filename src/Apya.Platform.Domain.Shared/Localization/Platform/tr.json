@@ -1158,6 +1158,12 @@
         "Project:CodeEmpty": "Proje kodu boş bırakılamaz.",
 
         "DisplayName:CreateProjectDto.Name": "Proje adı",
+        "DisplayName:FullName": "Ad Soyad",
+        "DisplayName:CompanyName": "Kurum / Firma",
+        "DisplayName:OrganizationKind": "Kurum türü",
+        "DisplayName:CompanySize": "Çalışan sayısı",
+        "DisplayName:AcceptKvkk": "Aydınlatma metni onayı",
+        "DisplayName:AdminNote": "İç not",
         "DisplayName:CreateProjectDto.Code": "Proje kodu",
         "DisplayName:CreateUpdateTaskDto.Title": "Görev başlığı",
         "DisplayName:CreateIssueTaskInput.Title": "Görev başlığı",

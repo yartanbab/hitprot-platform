@@ -18,7 +18,9 @@
     @* Bal küpü: gerçek kullanıcı görmez, bot doldurur. Ekran okuyucudan da gizli. *@
     <div class="apya-auth__hp" aria-hidden="true">
         <label for="Website">Web sitesi</label>
-        <input id="Website" asp-for="Website" type="text" tabindex="-1" autocomplete="off" />
+        @* asp-for KULLANILMAZ: bal küpü gerçek bir alan değil, model meta verisine
+           (ve dolayısıyla Türkçe ad sözlüğüne) girmesinin bir anlamı yok. *@
+        <input id="Website" name="Website" type="text" tabindex="-1" autocomplete="off" />
     </div>
 
     @* Kısa alanlar yan yana, uzun olanlar tam genişlikte: kartın iç genişliği
