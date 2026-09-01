@@ -9,51 +9,32 @@ using Xunit;
 namespace Apya.Platform.Pages;
 
 /// <summary>
-/// Form'a bağlanan ONDALIK alan <c>type="number"</c> OLAMAZ.
+/// Elle yazılan ONDALIK form alanı <c>__Invariant</c> işaretçisi İSTER.
 ///
-/// <para>HTML sayı alanının gönderdiği değer daima "valid floating-point number"dır,
-/// yani ondalık ayracı <c>.</c>'tır — tarayıcının dili ne olursa olsun. Uygulama ise
-/// istekleri <c>tr-TR</c> ile bağlıyor; orada ayraç <c>,</c>. Sonuç: kullanıcının
-/// girdiği <c>1234,56</c> tarayıcıda <c>1234.56</c> olarak POST edilir ve sunucuda
-/// <c>123456</c> olarak bağlanır — para alanında YÜZ KAT hata, hiçbir uyarı olmadan.</para>
+/// <para>Uygulama form değerlerini <c>tr-TR</c> ile bağlar; orada ondalık ayracı
+/// virgüldür ve NOKTA binlik ayracıdır. HTML <c>type="number"</c> alanı ise değeri
+/// daima noktalı gönderir, <c>apya-money-input.js</c> de gizli alana noktalı
+/// invariant değer yazar. İkisi de tek başına 100× (hatta 1000×) sapma üretir.</para>
 ///
-/// <para>Doğru desen <c>abp-input</c>'un ürettiğidir: <c>type="text"</c> + kültüre göre
-/// biçimlenmiş değer. Elle yazılan alanlarda <c>type="text" inputmode="decimal"</c>.</para>
+/// <para>ASP.NET bunun çözümünü sağlıyor: <c>asp-for</c> ile basılan sayı alanının
+/// yanına <c>&lt;input name="__Invariant" value="Alan.Adı" /&gt;</c> koyuyor ve o alan
+/// invariant kültürle ayrıştırılıyor. ELLE <c>name="..."</c> yazılan alanlarda bu
+/// işaretçi OLUŞMAZ — geliştiricinin kendisi eklemek zorundadır.</para>
 ///
-/// <para>Bu kural YALNIZ form'a bağlanan (<c>asp-for</c> ya da <c>name="..."</c>) alanlar
-/// içindir. Değeri JS ile okunup JSON gövdede giden alanlar etkilenmez: System.Text.Json
-/// invariant kültürle ayrıştırır, nokta oradadır ve doğrudur.</para>
-///
-/// <para>2026-09-01'de iki yerde bu hata yapıldı (görev bütçesi ve bağlam sihirbazı);
-/// ikisi de canlı denemede 100× sapma verdi. Test o yüzden var.</para>
+/// <para>2026-09-02'de fatura kalemlerinde bu eksikti: miktar 2,5 ve birim fiyat
+/// 1.234,56 girilen fatura 3.703,68 yerine 3.703.680 olarak kaydediliyordu.
+/// Canlı denemeyle doğrulandı, düzeltildi; test tekrarını engellemek için var.</para>
 /// </summary>
 public class DecimalInputBinding_Tests
 {
-    /// <summary>
-    /// MEVCUT BORÇ — bu alanlar tarama eklendiğinde (2026-09-02) zaten vardı ve
-    /// BU OTURUMDA DOĞRULANMADI. Fatura alanlarında <c>data-money-input</c> var;
-    /// o yardımcı görünür alanı text'e çevirip ham değeri gizli input'ta taşıyor,
-    /// dolayısıyla davranışları farklı olabilir. Listeyi UZATMAYIN: yeni alanda
-    /// kural <c>type="text" inputmode="decimal"</c> ya da <c>abp-input</c>.
-    /// </summary>
-    private static readonly string[] KnownDebt =
-    {
-        // Fatura kalemi alanlarinin hepsi (miktar + birim fiyat, sunucu satiri ve
-        // JS sablonu). Tek girdi: JS sablonundaki ${itemIndex} kacisi bu dosyada
-        // yeniden kacirmak zorunda kalmadan eslessin.
-        "InvoiceInfo.Items[",
-        "InvoiceInfo.TaxRate",
-        "Task.EstimatedHours",
-    };
-
-    /// <summary>Ondalık taşıdığı adından belli olan alanlar.</summary>
+    /// <summary>Ondalık taşıdığı adından ya da step'inden belli olan alanlar.</summary>
     private static readonly string[] DecimalNameHints =
     {
-        "Amount", "Rate", "Budget", "Price", "Total", "Hours", "Percent"
+        "Amount", "Rate", "Budget", "Price", "Total", "Hours", "Percent", "Quantity"
     };
 
     [Fact]
-    public void Forma_baglanan_ondalik_alan_type_number_OLAMAZ()
+    public void Elle_yazilan_ondalik_alan_Invariant_isaretcisi_ister()
     {
         var offenders = new List<string>();
 
@@ -65,39 +46,47 @@ public class DecimalInputBinding_Tests
             {
                 var input = tag.Value;
 
-                if (!input.Contains("type=\"number\"", StringComparison.Ordinal))
+                // Gizli alan kullanıcıdan değer almaz; adında "Budget" geçen bir bool
+                // (BudgetFormRendered) bu kurala takılmasın.
+                if (input.Contains("type=\"hidden\"", StringComparison.Ordinal))
                 {
                     continue;
                 }
 
-                // Form'a bağlanmayan alan (JS'in okuduğu, yalnız id'li) bu kuralın dışında.
-                var bound = input.Contains("asp-for=", StringComparison.Ordinal)
-                            || input.Contains("name=", StringComparison.Ordinal);
-                if (!bound)
+                // asp-for ile basılan alana işaretçiyi ASP.NET kendisi ekler.
+                if (input.Contains("asp-for=", StringComparison.Ordinal))
                 {
                     continue;
                 }
 
-                // Tam sayı alanları (adet, sıra, gün) sorunsuz: ayraç hiç yok.
+                var nameMatch = Regex.Match(input, "name=\"([^\"]+)\"");
+                if (!nameMatch.Success || nameMatch.Groups[1].Value == "__Invariant")
+                {
+                    continue;
+                }
+
+                var name = nameMatch.Groups[1].Value;
+
                 var looksDecimal = input.Contains("step=\"0.", StringComparison.Ordinal)
-                                   || DecimalNameHints.Any(h => input.Contains(h, StringComparison.Ordinal));
+                                   || input.Contains("data-money-input", StringComparison.Ordinal)
+                                   || DecimalNameHints.Any(h => name.Contains(h, StringComparison.Ordinal));
                 if (!looksDecimal)
                 {
                     continue;
                 }
 
-                if (KnownDebt.Any(d => input.Contains(d, StringComparison.Ordinal)))
+                // İşaretçi aynı dosyada, tam bu alan adıyla bulunmalı.
+                var marker = $"name=\"__Invariant\" value=\"{name}\"";
+                if (!text.Contains(marker, StringComparison.Ordinal))
                 {
-                    continue;
+                    offenders.Add($"{Path.GetFileName(file)}: {name}");
                 }
-
-                offenders.Add($"{Path.GetFileName(file)}: {Collapse(input)}");
             }
         }
 
         offenders.ShouldBeEmpty(
-            "Bu alanlar type=\"text\" inputmode=\"decimal\" olmalı (ya da abp-input kullanmalı); " +
-            "type=\"number\" NOKTALI gönderir, tr-TR bağlaması 100× sapma üretir:" +
+            "Bu alanlara <input type=\"hidden\" name=\"__Invariant\" value=\"<alan adı>\" /> " +
+            "eklenmeli; yoksa noktalı gelen değer tr-TR ile bağlanır ve tutar 100× büyür:" +
             Environment.NewLine + string.Join(Environment.NewLine, offenders));
     }
 
@@ -122,24 +111,5 @@ public class DecimalInputBinding_Tests
         }
 
         throw new DirectoryNotFoundException("Apya.Platform.Web proje kökü bulunamadı.");
-    }
-
-    private static string Collapse(string s)
-        => Regex.Replace(s, @"\s+", " ").Trim();
-
-    /// <summary>
-    /// Borç listesi ÖLÜ girdi biriktirmesin: listedeki bir alan düzeltilip
-    /// kaldırıldığında girdisi de silinmeli, yoksa liste zamanla anlamsızlaşır.
-    /// </summary>
-    [Fact]
-    public void Borc_listesindeki_her_girdi_hala_kodda_karsiligi_olan_bir_alandir()
-    {
-        var all = string.Concat(RazorPages().Select(File.ReadAllText));
-
-        foreach (var entry in KnownDebt)
-        {
-            all.ShouldContain(entry,
-                customMessage: $"'{entry}' artık kodda yok — KnownDebt listesinden çıkarın.");
-        }
     }
 }

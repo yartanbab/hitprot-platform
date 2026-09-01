@@ -93,10 +93,13 @@
                             <input type="hidden" name="Rows.Index" value="@i" />
                             <td><input class="form-control form-control-sm" name="Rows[@i].Code" value="@Model.Rows[i].Code" maxlength="32" /></td>
                             <td><input class="form-control form-control-sm" name="Rows[@i].Name" value="@Model.Rows[i].Name" maxlength="200" /></td>
-                            @* type="number" DEĞİL: HTML sayı alanı değeri daima NOKTALI gönderir, sunucu ise
-                                   tr-TR ile bağlar → "1234.56" 123456 olur (100× hata). abp-input da bu
-                                   yüzden text basar. Kullanıcı kendi ayracıyla yazar. *@
-                            <td><input class="form-control form-control-sm text-end apya-numeric" name="Rows[@i].Amount" type="text" inputmode="decimal" value="0" /></td>
+                            @* __Invariant ŞART: alan elle name= ile yazıldığı için ASP.NET işaretçiyi
+                               kendiliğinden eklemiyor. type="number" değeri DAİMA noktalı gönderir;
+                               işaretçi olmadan tr-TR bağlaması "1234.56"yı 123456 yapardı. *@
+                            <td>
+                                <input class="form-control form-control-sm text-end apya-numeric" name="Rows[@i].Amount" type="number" step="0.01" min="0" value="0" />
+                                <input type="hidden" name="__Invariant" value="Rows[@i].Amount" />
+                            </td>
                             <td class="text-end">
                                 <button type="button" class="btn btn-sm btn-link p-1 text-danger text-decoration-none js-wizard-remove" title="Satırı çıkar">
                                     <i class="fa fa-trash" aria-hidden="true"></i>
@@ -138,7 +141,8 @@
                 '<input type="hidden" name="Rows.Index" value="' + i + '" />' +
                 '<td><input class="form-control form-control-sm" name="Rows[' + i + '].Code" maxlength="32" /></td>' +
                 '<td><input class="form-control form-control-sm" name="Rows[' + i + '].Name" maxlength="200" /></td>' +
-                '<td><input class="form-control form-control-sm text-end apya-numeric" name="Rows[' + i + '].Amount" type="text" inputmode="decimal" value="0" /></td>' +
+                '<td><input class="form-control form-control-sm text-end apya-numeric" name="Rows[' + i + '].Amount" type="number" step="0.01" min="0" value="0" />' +
+                '<input type="hidden" name="__Invariant" value="Rows[' + i + '].Amount" /></td>' +
                 '<td class="text-end"><button type="button" class="btn btn-sm btn-link p-1 text-danger text-decoration-none js-wizard-remove" title="Satırı çıkar"><i class="fa fa-trash"></i></button></td>' +
                 '</tr>');
         });
