@@ -41,6 +41,12 @@ public class GrantApplication : FullAuditedAggregateRoot<Guid>, IMultiTenant
     /// <summary>Başvurunun kuruma gönderildiği an; doluysa sihirbaz kilitlenir.</summary>
     public DateTime? SubmittedAt { get; private set; }
 
+    // --- 2b · Gönderim paketi ---
+    // Paket TEK dosyadır ve yenisi üretildiğinde eskisinin yerini alır; sürüm
+    // geçmişi evrakların kendisinde tutulur, paketin geçmişine gerek yok.
+    public string? PackageStoredFileName { get; private set; }
+    public DateTime? PackageCreatedAt { get; private set; }
+
     public ICollection<GrantApplicationBudgetLine> BudgetLines { get; set; }
         = new List<GrantApplicationBudgetLine>();
 
@@ -88,6 +94,13 @@ public class GrantApplication : FullAuditedAggregateRoot<Guid>, IMultiTenant
 
     /// <summary>Sırayı karşı tarafa devreder ("Danışmana devret" / "Firmaya geri ver").</summary>
     public void HandOverTo(GrantPartyRole party) => PendingParty = party;
+
+    /// <summary>Üretilen gönderim paketini başvuruya bağlar.</summary>
+    public void SetPackage(string storedFileName, DateTime now)
+    {
+        PackageStoredFileName = storedFileName;
+        PackageCreatedAt = now;
+    }
 
     /// <summary>Kuruma gönderim. İkinci kez gönderilemez.</summary>
     public void Submit(DateTime now)

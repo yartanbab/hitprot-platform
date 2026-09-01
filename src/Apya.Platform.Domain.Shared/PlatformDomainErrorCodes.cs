@@ -104,6 +104,10 @@ public static class PlatformDomainErrorCodes
     public const string GrantFieldLockedByOther = "Platform:Grant:FieldLockedByOther";
     public const string GrantApplicationLocked = "Platform:Grant:ApplicationLocked";
 
+    // 2b · Evrak takibi
+    public const string GrantDocumentNotUploaded = "Platform:Grant:DocumentNotUploaded";
+    public const string GrantDocumentPackageIncomplete = "Platform:Grant:DocumentPackageIncomplete";
+
     // --- Dosya (File) Modülü ---
     public const string FileUnsupportedExtension = "Platform:File:UnsupportedExtension";
     public const string FileSizeExceeded = "Platform:File:SizeExceeded";
