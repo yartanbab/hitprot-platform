@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 namespace Apya.Platform.Grants.Dtos;
 
@@ -22,4 +23,37 @@ public class GrantRecommendationDto
     /// <summary>Çağrı firmaya önerilir mi: skor >= program eşiği ya da host-push.
     /// False olanlar da kiracıya listelenir ("Diğer Açık Çağrılar"), yalnız ayrı blokta.</summary>
     public bool IsRecommended { get; set; }
+
+    // --- 1d/9a · kiracı yüzeyi ---
+    /// <summary>Destek oranı — kartlardaki tutar/oran kutusu.</summary>
+    public int? SupportRatePercent { get; set; }
+
+    /// <summary>Kiracının bu çağrıya göre durduğu kova (Uygun / Koşullu / Uygun değil).</summary>
+    public GrantEligibilityBucket Bucket { get; set; }
+
+    /// <summary>Kartlardaki "neden uygun" maddeleri — kanıtlı sağlanan şartlar.</summary>
+    public List<GrantEligibilityRule> PassedRules { get; set; } = new();
+
+    /// <summary>Açıkça sağlanmayan şartlar.</summary>
+    public List<GrantEligibilityRule> FailedRules { get; set; } = new();
+
+    /// <summary>Firma verisi eksik olduğu için ölçülemeyen şartlar.</summary>
+    public List<GrantEligibilityRule> UnknownRules { get; set; } = new();
+
+    /// <summary>Tek satırlık gerekçenin dayandığı şart. Uygun çağrılarda null.</summary>
+    public GrantEligibilityRule? ReasonRule { get; set; }
+
+    /// <summary>Gerekçedeki firma değeri ("7 yıl").</summary>
+    public string? ReasonFirmValue { get; set; }
+
+    /// <summary>Gerekçedeki program eşiği ("2").</summary>
+    public string? ReasonGrantValue { get; set; }
+
+    /// <summary>Engel firmanın kendi elinde mi — "sadece giderilebilir eksikler" süzgeci.</summary>
+    public bool IsFixable { get; set; }
+
+    /// <summary>Başvuru zorluğu (1-5).</summary>
+    public int Difficulty { get; set; }
+
+    public bool IsBookmarked { get; set; }
 }
