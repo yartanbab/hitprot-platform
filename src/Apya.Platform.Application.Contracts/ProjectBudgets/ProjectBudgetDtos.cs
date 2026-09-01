@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.ComponentModel.DataAnnotations;
+using Apya.Platform.Projects;
 using Volo.Abp.Application.Dtos;
 
 namespace Apya.Platform.ProjectBudgets.Dtos;
@@ -280,4 +282,142 @@ public class ProjectBudgetOverviewDto
     public int CollectedTrancheCount { get; set; }
 
     public List<ProjectBudgetLineDto> Lines { get; set; } = new();
+}
+
+/// <summary>
+/// Portföy tablosunun bir satırı — "Tüm projeler" seçiliyken bir proje.
+/// Tek projelik <see cref="ProjectBudgetOverviewDto"/> ile AYNI kuralları kullanır
+/// (kalem yoksa proje bütçesine düşer, dilim varsa gelen para tahsilattan gelir),
+/// ama kalem listesi taşımaz: portföyde kırılım gösterilmiyor.
+/// </summary>
+public class ProjectPortfolioRowDto
+{
+    public Guid ProjectId { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public string Currency { get; set; } = "TRY";
+
+    /// <summary>Kategori davranış anahtarı — şablon chip'i buradan türer; kiracı kategorisinde null.</summary>
+    public ProjectCategory? CategorySystemKey { get; set; }
+
+    public decimal ApprovedBudget { get; set; }
+    public decimal MoneyIn { get; set; }
+    public decimal SpentAmount { get; set; }
+    public decimal UnfundedTotal { get; set; }
+
+    /// <summary>İtiraz edilmiş dilim var mı — durum chip'i buna bakar.</summary>
+    public bool HasDisputedTranche { get; set; }
+
+    public decimal AvailableCash => MoneyIn - SpentAmount;
+    public decimal RemainingBudget => ApprovedBudget - SpentAmount;
+
+    public int UsagePercent => ApprovedBudget > 0
+        ? (int)Math.Round(SpentAmount / ApprovedBudget * 100m)
+        : 0;
+
+    public bool IsOverBudget => ApprovedBudget > 0 && SpentAmount > ApprovedBudget;
+
+    /// <summary>Harcama gelen parayı aşmış: bütçe uygun olsa da kasada para yok.</summary>
+    public bool HasCashRisk => AvailableCash < 0;
+}
+
+/// <summary>
+/// Portföy KPI şeridi tek bir para birimi için. Projeler farklı para birimindeyse
+/// birden çok satır döner — çapraz kur TOPLAMI YAPILMAZ.
+/// </summary>
+public class PortfolioCurrencyTotalDto
+{
+    public string Currency { get; set; } = "TRY";
+    public int ProjectCount { get; set; }
+    public decimal ApprovedBudget { get; set; }
+    public decimal MoneyIn { get; set; }
+    public decimal SpentAmount { get; set; }
+    public decimal UnfundedTotal { get; set; }
+
+    public decimal AvailableCash => MoneyIn - SpentAmount;
+}
+
+/// <summary>"Tüm projeler" görünümünün tek veri kaynağı (tasarım 2d).</summary>
+public class ProjectPortfolioDto
+{
+    public List<PortfolioCurrencyTotalDto> Totals { get; set; } = new();
+    public List<ProjectPortfolioRowDto> Rows { get; set; } = new();
+
+    /// <summary>Bütçesi de kaydı da olmayan, tabloya alınmayan proje sayısı.</summary>
+    public int SkippedProjectCount { get; set; }
+
+    /// <summary>Birden çok para birimi varsa KPI şeridi tek rakam BASMAZ.</summary>
+    public bool IsMixedCurrency => Totals.Count > 1;
+}
+
+/// <summary>
+/// Kalem ↔ görev matrisinin bir görev satırı (tasarım 4b).
+///
+/// Plan görevin bütçe bağından, gerçekleşen HARCAMANIN kaleminden gelir. İkisi
+/// ayrı alanlar: bir görevin harcaması, görevin bağlı olduğu kalemden BAŞKA bir
+/// kaleme yazılmış olabilir (kalem kaydın üzerinde seçilir). Bu yüzden plansız
+/// ama harcamalı görev satırı meşrudur.
+/// </summary>
+public class BudgetLineTaskRowDto
+{
+    public Guid TaskId { get; set; }
+    public string Title { get; set; } = string.Empty;
+    public string? Code { get; set; }
+
+    /// <summary>Görevin bu kaleme ayrılmış planı; görev bu kaleme bağlı değilse null.</summary>
+    public decimal? PlannedAmount { get; set; }
+
+    /// <summary>Bu kaleme yazılmış ve bu göreve etiketlenmiş gider toplamı.</summary>
+    public decimal SpentAmount { get; set; }
+
+    public decimal? RemainingAmount => PlannedAmount - SpentAmount;
+
+    public int UsagePercent => PlannedAmount is > 0
+        ? (int)Math.Round(SpentAmount / PlannedAmount.Value * 100m)
+        : 0;
+
+    public bool IsOverPlan => PlannedAmount is > 0 && SpentAmount > PlannedAmount.Value;
+}
+
+/// <summary>Matrisin bir kalem satırı: kalem + altındaki görevler + göreve bağlanmamış tutar.</summary>
+public class BudgetLineMatrixRowDto
+{
+    public Guid BudgetLineId { get; set; }
+    public string Code { get; set; } = string.Empty;
+    public string Name { get; set; } = string.Empty;
+    public decimal ApprovedAmount { get; set; }
+    public decimal SpentAmount { get; set; }
+
+    public List<BudgetLineTaskRowDto> Tasks { get; set; } = new();
+
+    /// <summary>
+    /// Bu kaleme yazılmış ama hiçbir göreve etiketlenmemiş gider. MEŞRUDUR
+    /// (bordro, kira, idari gider) — uyarı değil, ayrı satır olarak gösterilir.
+    /// </summary>
+    public decimal UnassignedSpentAmount { get; set; }
+
+    /// <summary>Görev planlarının toplamı — kalem tutarını AŞAMAZ (sunucuda doğrulanır).</summary>
+    public decimal PlannedTotal => Tasks.Sum(t => t.PlannedAmount ?? 0m);
+
+    /// <summary>Kalemin göreve dağıtılmamış kısmı; negatife düşmez.</summary>
+    public decimal UndistributedAmount => Math.Max(0m, ApprovedAmount - PlannedTotal);
+
+    public decimal RemainingAmount => ApprovedAmount - SpentAmount;
+
+    public int UsagePercent => ApprovedAmount > 0
+        ? (int)Math.Round(SpentAmount / ApprovedAmount * 100m)
+        : 0;
+
+    public bool IsOverBudget => ApprovedAmount > 0 && SpentAmount > ApprovedAmount;
+}
+
+/// <summary>Kalem ↔ görev matrisi (tasarım 4b). İki yön de AYNI veriden basılır.</summary>
+public class BudgetLineTaskMatrixDto
+{
+    public Guid ProjectId { get; set; }
+    public string Currency { get; set; } = "TRY";
+
+    public List<BudgetLineMatrixRowDto> Lines { get; set; } = new();
+
+    /// <summary>Hiçbir kaleme yazılmamış gider — kalem toplamlarının dışında kalır.</summary>
+    public decimal UnassignedToLineAmount { get; set; }
 }

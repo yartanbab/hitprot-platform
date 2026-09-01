@@ -7476,3 +7476,44 @@ html[data-sidebar] .apya-sidebar-resizer {
     min-height: 0;
     overflow-y: auto;
 }
+
+/* Portfoy tablosu (tasarim 2d). Kiracida yuzlerce proje olabiliyor; satir
+   GIZLENMEZ (mali veriyi sessizce kirpmak yanlis olurdu), tablo kendi icinde
+   kaydirilir. Baslik satiri sticky: 100+ satirda kolon adi kaybolmasin.
+   S23'teki gantt ekseninin ayni deseni. */
+.apya-portfolio-scroll {
+    max-height: 460px;
+    overflow: auto;
+}
+.apya-portfolio-scroll thead th {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    background: var(--apya-surface-base);
+}
+
+/* Kalem <-> gorev matrisi (tasarim 4b). Kalem satiri gorev satirlarindan
+   ZEMINLE ayrilir; girinti tek basina 100+ satirda hiyerarsiyi kaybettiriyor.
+   S17 .apya-clean-table tbody td'ye transparent !important bastigi icin
+   burada da !important sart (ayni gerekce kesinti satirinda da yazili). */
+.apya-clean-table tbody tr.apya-matrix-line > td {
+    /* OLCUM NOTU: once --apya-surface-sunken denendi. Acik temada dogru
+       (beyaz uzerinde gri bant) ama KOYU temada sunken karttan DAHA KOYU
+       oldugu icin bant 1.09 kontrastla goze carpmiyordu. text-primary ile
+       karisim kendi kendini tersler: acik temada koyu metin -> gri bant,
+       koyu temada acik metin -> aydinlik bant. Tek kural, iki tema. */
+    background: color-mix(in srgb, var(--apya-text-primary) 9%, transparent) !important;
+    border-top: 1px solid var(--apya-border-default);
+}
+.apya-clean-table tbody tr.apya-matrix-task > td:first-child {
+    padding-left: 44px;
+}
+
+/* Revizyon modali — kesinti kipindeki iki secenek karti (tasarim 2b).
+   Secili kart cerceve + halka ile isaretlenir; tasarimin
+   box-shadow:0 0 0 1px deseninin token'li karsiligi. */
+.apya-revmode { cursor: pointer; }
+.apya-revmode.is-selected {
+    border-color: var(--apya-accent-500);
+    box-shadow: 0 0 0 1px var(--apya-accent-500);
+}

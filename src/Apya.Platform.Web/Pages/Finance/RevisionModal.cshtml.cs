@@ -14,6 +14,14 @@ namespace Apya.Platform.Web.Pages.Finance;
 ///
 /// Kesinti satırındaki "Bütçeye işle" bunu <see cref="DeductionId"/> ile açar;
 /// o zaman revizyon kesintiye bağlanır ve kesinti "Bütçeye işlendi · Rev.N" olur.
+///
+/// İKİ KİP (tasarım 2b):
+///   • Kesintiden açıldıysa "DÜŞÜLECEK" kipi: kullanıcı kalemden ne kadar
+///     düşüleceğini yazar, yeni tutar hesaplanır ve dağıtılmayan kalan canlı
+///     gösterilir. Bilinen bir toplamı dağıtırken doğal olan giriş budur.
+///   • Doğrudan açıldıysa "YENİ TUTAR" kipi: dağıtılacak bir toplam yoktur,
+///     kullanıcı hedef tutarı yazar.
+/// Aynı modal, çünkü ikisi de tek bir <c>ApplyRevisionAsync</c> çağrısına iner.
 /// </summary>
 public class RevisionModalModel : AbpPageModel
 {
@@ -35,8 +43,15 @@ public class RevisionModalModel : AbpPageModel
     [BindProperty]
     public List<RevisionLineInput> Lines { get; set; } = new();
 
-    /// <summary>Bilgi amaçlı: dağıtılması beklenen kesinti tutarı.</summary>
+    /// <summary>Dağıtılması beklenen kesinti tutarı; doğrudan açıldıysa 0.</summary>
     public decimal SourceDeductionAmount { get; set; }
+
+    /// <summary>Kesinti kipinde iki seçenek: "revise" (varsayılan) | "unfunded".</summary>
+    [BindProperty]
+    public string Mode { get; set; } = "revise";
+
+    /// <summary>Kesintiden mi açıldı — görünüm bu bayrağa göre kip seçer.</summary>
+    public bool IsDeductionMode => DeductionId.HasValue;
 
     public int NextRevisionNo { get; set; }
 
@@ -57,7 +72,8 @@ public class RevisionModalModel : AbpPageModel
                 LineId = l.Id,
                 Name = string.IsNullOrWhiteSpace(l.Code) ? l.Name : $"{l.Code} · {l.Name}",
                 CurrentAmount = l.ApprovedAmount,
-                NewAmount = l.ApprovedAmount
+                NewAmount = l.ApprovedAmount,
+                TransferLimitPercent = l.TransferLimitPercent
             })
             .ToList();
 
@@ -76,7 +92,26 @@ public class RevisionModalModel : AbpPageModel
 
     public virtual async Task<IActionResult> OnPostAsync()
     {
+        // "Açık bırak" revizyon DEĞİL: kesinti finanse edilmeyen olarak kapanır,
+        // bütçe olduğu gibi kalır. Gerekçe/tarih/kalem alanları hiç okunmaz.
+        if (IsDeductionMode && Mode == "unfunded")
+        {
+            await _budgetAppService.MarkDeductionUnfundedAsync(DeductionId!.Value);
+            return NoContent();
+        }
+
         ValidateModel();
+
+        // Kesinti kipinde kullanıcı DÜŞÜLECEK tutarı yazar; hedef tutar buradan
+        // türer. Tek bir doğruluk kaynağı olsun diye dönüşüm burada yapılır,
+        // görünümde değil.
+        if (IsDeductionMode)
+        {
+            foreach (var line in Lines)
+            {
+                line.NewAmount = line.CurrentAmount - line.Reduction;
+            }
+        }
 
         // Yalnız GERÇEKTEN değişen kalemler gönderilir — değişmeyeni revizyon
         // satırı olarak yazmak geçmişi gürültüyle doldurur.
@@ -100,6 +135,16 @@ public class RevisionModalModel : AbpPageModel
         public Guid LineId { get; set; }
         public string Name { get; set; } = string.Empty;
         public decimal CurrentAmount { get; set; }
+
+        /// <summary>"Yeni tutar" kipinde doğrudan yazılır.</summary>
         public decimal NewAmount { get; set; }
+
+        /// <summary>"Düşülecek" kipinde yazılır; yeni tutar = mevcut − bu.</summary>
+        public decimal Reduction { get; set; }
+
+        /// <summary>Aktarım payı sınırı (%). Tanımlıysa aşım AMBER UYARI üretir —
+        /// engellemez: sınır bugün sunucuda uygulanmıyor, uygulanıyormuş gibi
+        /// davranmak yalan olurdu.</summary>
+        public decimal? TransferLimitPercent { get; set; }
     }
 }

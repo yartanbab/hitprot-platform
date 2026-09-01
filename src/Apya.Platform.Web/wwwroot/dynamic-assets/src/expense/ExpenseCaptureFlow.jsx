@@ -1,9 +1,11 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { CameraCapture } from './components/CameraCapture';
 import { OcrProcessingScreen } from './components/OcrProcessingScreen';
 import { ExpenseFormSheet } from './components/ExpenseFormSheet';
 import { SuccessConfirmation } from './components/SuccessConfirmation';
-import { useOcrParse, useSubmitExpense } from './hooks/useExpenseCapture';
+import {
+    useBudgetLines, useCaptureContext, useOcrParse, useOfflineState, useQueueFlush, useSubmitExpense,
+} from './hooks/useExpenseCapture';
 import { ThemeToggle } from '../components/ui';
 import { useToast } from '../lib/feedback';
 import { formatMoney } from '../lib/utils';
@@ -28,6 +30,11 @@ export function ExpenseCaptureFlow() {
     const [phase, setPhase] = useState(PHASES.CAPTURE);
     const [previewUrl, setPreviewUrl] = useState(null);
     const [submittedResult, setSubmittedResult] = useState(null);
+    const [projectId, setProjectId] = useState(null);
+
+    const context = useCaptureContext();
+    const lines = useBudgetLines(projectId);
+    const { isOnline, queued, refreshQueued } = useOfflineState();
 
     const ocr = useOcrParse();
     const submit = useSubmitExpense();
@@ -60,12 +67,23 @@ export function ExpenseCaptureFlow() {
 
     const handleSubmit = useCallback(async (payload) => {
         try {
-            const result = await submit.mutateAsync(payload);
-            setSubmittedResult(result);
+            const outcome = await submit.mutateAsync(payload);
+            setSubmittedResult(outcome.result);
             setPhase(PHASES.SUCCESS);
-            toast.success('Masraf kaydedildi', {
-                description: `${formatMoney(payload.amount, payload.currency)} — ${payload.vendor || 'Kayıt'}`,
-            });
+            refreshQueued();
+
+            // "Kuyruğa alındı" ile "kaydedildi" AYNI ŞEY DEĞİL: kuyruktaki kayıt
+            // henüz sunucuda yok. Ekranın ikisini aynı sözle anlatması, bu
+            // ekranın eski hâlindeki yalanın tekrarı olurdu.
+            if (outcome.queued) {
+                toast.warning('Kuyruğa alındı', {
+                    description: 'Bağlantı yok — bağlantı gelince otomatik gönderilecek.',
+                });
+            } else {
+                toast.success('Masraf kaydedildi', {
+                    description: `${formatMoney(payload.amount, payload.currency)} — ${payload.vendor || 'Kayıt'}`,
+                });
+            }
             /* Auto-reset: saha kullanıcısı seri kayıt için bekler. Kullanıcı
                success ekranındaki "Kapat"a basarsa zaten reset oluşur. */
             setTimeout(() => {
@@ -82,7 +100,28 @@ export function ExpenseCaptureFlow() {
             });
             /* Form açık kalsın — kullanıcı düzeltsin */
         }
-    }, [submit, toast, resetForCapture]);
+    }, [submit, toast, resetForCapture, refreshQueued]);
+
+    // Bağlantı gelince kuyruğu boşalt. Sonucu KULLANICIYA SÖYLER: sessizce
+    // göndermek, gönderilemeyen kaydın fark edilmemesi demekti.
+    const flush = useQueueFlush((summary) => {
+        refreshQueued();
+        if (summary.sent > 0) {
+            toast.success(`${summary.sent} kayıt gönderildi`, {
+                description: summary.remaining > 0
+                    ? `${summary.remaining} kayıt hâlâ kuyrukta.`
+                    : 'Kuyruk boşaldı.',
+            });
+        } else if (summary.failed > 0) {
+            toast.error('Kuyruk gönderilemedi', {
+                description: `${summary.remaining} kayıt cihazda bekliyor.`,
+            });
+        }
+    });
+
+    useEffect(() => {
+        if (isOnline) { flush(); }
+    }, [isOnline, flush]);
 
     const handleClose = useCallback(() => {
         if (previewUrl) URL.revokeObjectURL(previewUrl);
@@ -93,7 +132,23 @@ export function ExpenseCaptureFlow() {
         <div className="min-h-screen bg-surface-base text-text-primary">
             <header className="sticky top-0 z-sticky bg-surface-raised/95 backdrop-blur-sm border-b border-default px-4 py-3 flex items-center justify-between">
                 <h1 className="text-base font-semibold">Masraf Yakala</h1>
-                <ThemeToggle />
+                <div className="flex items-center gap-2">
+                    {!isOnline && (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-warning-subtle px-2.5 py-1 text-[11.5px] font-semibold text-warning">
+                            <i className="fa-solid fa-wifi-slash" />Çevrimdışı
+                        </span>
+                    )}
+                    {queued > 0 && (
+                        <button
+                            type="button"
+                            onClick={flush}
+                            className="inline-flex min-h-[44px] items-center gap-1 rounded-full bg-accent-subtle px-3 text-[11.5px] font-semibold text-accent"
+                        >
+                            <i className="fa-solid fa-cloud-arrow-up" />{queued} bekliyor
+                        </button>
+                    )}
+                    <ThemeToggle />
+                </div>
             </header>
 
             <main className="max-w-2xl mx-auto p-4">
@@ -116,6 +171,10 @@ export function ExpenseCaptureFlow() {
                 ocrResult={ocr.data}
                 onSubmit={handleSubmit}
                 isSubmitting={submit.isPending}
+                context={context.data}
+                lines={lines.data}
+                onProjectChange={setProjectId}
+                isOffline={!isOnline}
             />
         </div>
     );
