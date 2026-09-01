@@ -95,6 +95,15 @@ public static class PlatformDomainErrorCodes
     public const string GrantStageTemplateInUse = "Platform:Grant:StageTemplateInUse";
     public const string GrantDraftIdentityRequired = "Platform:Grant:DraftIdentityRequired";
 
+    // 2a · Başvuru sihirbazı
+    public const string GrantBudgetAmountNegative = "Platform:Grant:BudgetAmountNegative";
+    public const string GrantBudgetCostItemNotEligible = "Platform:Grant:BudgetCostItemNotEligible";
+    public const string GrantWizardStepInvalid = "Platform:Grant:WizardStepInvalid";
+    public const string GrantWizardDurationInvalid = "Platform:Grant:WizardDurationInvalid";
+    public const string GrantApplicationAlreadySubmitted = "Platform:Grant:ApplicationAlreadySubmitted";
+    public const string GrantFieldLockedByOther = "Platform:Grant:FieldLockedByOther";
+    public const string GrantApplicationLocked = "Platform:Grant:ApplicationLocked";
+
     // --- Dosya (File) Modülü ---
     public const string FileUnsupportedExtension = "Platform:File:UnsupportedExtension";
     public const string FileSizeExceeded = "Platform:File:SizeExceeded";

@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using Volo.Abp;
 using Volo.Abp.Domain.Entities.Auditing;
 using Volo.Abp.MultiTenancy;
 
@@ -8,14 +10,39 @@ namespace Apya.Platform.Grants;
 /// Firma başvurusu. Faz C: ApprovedAmount + pipeline aşama ilerletme eklendi (host ilerletir,
 /// bkz <see cref="AdvanceStage"/>). Tahsilat dilimleri (<see cref="GrantDisbursementTranche"/>)
 /// ve milestone'lar (<see cref="GrantMilestone"/>) ayrı child entity'lerdir.
+///
+/// 2a · Başvuru sihirbazı: proje özeti alanları, adım imleci ve sıranın kimde olduğu
+/// (<see cref="PendingParty"/>) burada tutulur. Bütçe satırları, alan kilitleri ve
+/// yazışma ayrı entity'lerdedir.
 /// </summary>
 public class GrantApplication : FullAuditedAggregateRoot<Guid>, IMultiTenant
 {
+    /// <summary>Sihirbazın adım sayısı. 2a'da 4 adım var: firma · özet · bütçe · gönder.</summary>
+    public const int StepCount = 4;
+
     public Guid? TenantId { get; set; }
     public Guid GrantCallId { get; private set; }
     public GrantApplicationStage Stage { get; private set; }
     public DateTime AppliedDate { get; private set; }
     public decimal? ApprovedAmount { get; private set; }
+
+    // --- 2a · Sihirbaz ---
+
+    /// <summary>Kullanıcının en son bulunduğu adım (1..<see cref="StepCount"/>).</summary>
+    public int CurrentStep { get; private set; }
+
+    /// <summary>Sıra kimde — "Danışmana devret" bunu değiştirir, iki taraf da aynı rozeti görür.</summary>
+    public GrantPartyRole PendingParty { get; private set; }
+
+    public string? ProjectTitle { get; private set; }
+    public string? ProjectSummary { get; private set; }
+    public int? ProjectDurationMonths { get; private set; }
+
+    /// <summary>Başvurunun kuruma gönderildiği an; doluysa sihirbaz kilitlenir.</summary>
+    public DateTime? SubmittedAt { get; private set; }
+
+    public ICollection<GrantApplicationBudgetLine> BudgetLines { get; set; }
+        = new List<GrantApplicationBudgetLine>();
 
     protected GrantApplication() { }
 
@@ -25,6 +52,8 @@ public class GrantApplication : FullAuditedAggregateRoot<Guid>, IMultiTenant
         GrantCallId = grantCallId;
         Stage = GrantApplicationStage.Basvuru;
         AppliedDate = DateTime.Now;
+        CurrentStep = 1;
+        PendingParty = GrantPartyRole.Firma;
     }
 
     /// <summary>Aşamayı ilerletir (host). <paramref name="approvedAmount"/> verilmezse mevcut değer korunur.</summary>
@@ -35,5 +64,39 @@ public class GrantApplication : FullAuditedAggregateRoot<Guid>, IMultiTenant
         {
             ApprovedAmount = approvedAmount;
         }
+    }
+
+    public void SetStep(int step)
+    {
+        if (step < 1 || step > StepCount)
+        {
+            throw new BusinessException(PlatformDomainErrorCodes.GrantWizardStepInvalid);
+        }
+        CurrentStep = step;
+    }
+
+    public void SetProjectSummary(string? title, string? summary, int? durationMonths)
+    {
+        if (durationMonths is < 1 or > 120)
+        {
+            throw new BusinessException(PlatformDomainErrorCodes.GrantWizardDurationInvalid);
+        }
+        ProjectTitle = title;
+        ProjectSummary = summary;
+        ProjectDurationMonths = durationMonths;
+    }
+
+    /// <summary>Sırayı karşı tarafa devreder ("Danışmana devret" / "Firmaya geri ver").</summary>
+    public void HandOverTo(GrantPartyRole party) => PendingParty = party;
+
+    /// <summary>Kuruma gönderim. İkinci kez gönderilemez.</summary>
+    public void Submit(DateTime now)
+    {
+        if (SubmittedAt.HasValue)
+        {
+            throw new BusinessException(PlatformDomainErrorCodes.GrantApplicationAlreadySubmitted);
+        }
+        SubmittedAt = now;
+        CurrentStep = StepCount;
     }
 }
