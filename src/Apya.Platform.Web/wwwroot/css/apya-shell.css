@@ -7476,3 +7476,18 @@ html[data-sidebar] .apya-sidebar-resizer {
     min-height: 0;
     overflow-y: auto;
 }
+
+/* Portfoy tablosu (tasarim 2d). Kiracida yuzlerce proje olabiliyor; satir
+   GIZLENMEZ (mali veriyi sessizce kirpmak yanlis olurdu), tablo kendi icinde
+   kaydirilir. Baslik satiri sticky: 100+ satirda kolon adi kaybolmasin.
+   S23'teki gantt ekseninin ayni deseni. */
+.apya-portfolio-scroll {
+    max-height: 460px;
+    overflow: auto;
+}
+.apya-portfolio-scroll thead th {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    background: var(--apya-surface-base);
+}

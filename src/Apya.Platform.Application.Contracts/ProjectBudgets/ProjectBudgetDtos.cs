@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using Apya.Platform.Projects;
 using Volo.Abp.Application.Dtos;
 
 namespace Apya.Platform.ProjectBudgets.Dtos;
@@ -280,4 +281,69 @@ public class ProjectBudgetOverviewDto
     public int CollectedTrancheCount { get; set; }
 
     public List<ProjectBudgetLineDto> Lines { get; set; } = new();
+}
+
+/// <summary>
+/// Portföy tablosunun bir satırı — "Tüm projeler" seçiliyken bir proje.
+/// Tek projelik <see cref="ProjectBudgetOverviewDto"/> ile AYNI kuralları kullanır
+/// (kalem yoksa proje bütçesine düşer, dilim varsa gelen para tahsilattan gelir),
+/// ama kalem listesi taşımaz: portföyde kırılım gösterilmiyor.
+/// </summary>
+public class ProjectPortfolioRowDto
+{
+    public Guid ProjectId { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public string Currency { get; set; } = "TRY";
+
+    /// <summary>Kategori davranış anahtarı — şablon chip'i buradan türer; kiracı kategorisinde null.</summary>
+    public ProjectCategory? CategorySystemKey { get; set; }
+
+    public decimal ApprovedBudget { get; set; }
+    public decimal MoneyIn { get; set; }
+    public decimal SpentAmount { get; set; }
+    public decimal UnfundedTotal { get; set; }
+
+    /// <summary>İtiraz edilmiş dilim var mı — durum chip'i buna bakar.</summary>
+    public bool HasDisputedTranche { get; set; }
+
+    public decimal AvailableCash => MoneyIn - SpentAmount;
+    public decimal RemainingBudget => ApprovedBudget - SpentAmount;
+
+    public int UsagePercent => ApprovedBudget > 0
+        ? (int)Math.Round(SpentAmount / ApprovedBudget * 100m)
+        : 0;
+
+    public bool IsOverBudget => ApprovedBudget > 0 && SpentAmount > ApprovedBudget;
+
+    /// <summary>Harcama gelen parayı aşmış: bütçe uygun olsa da kasada para yok.</summary>
+    public bool HasCashRisk => AvailableCash < 0;
+}
+
+/// <summary>
+/// Portföy KPI şeridi tek bir para birimi için. Projeler farklı para birimindeyse
+/// birden çok satır döner — çapraz kur TOPLAMI YAPILMAZ.
+/// </summary>
+public class PortfolioCurrencyTotalDto
+{
+    public string Currency { get; set; } = "TRY";
+    public int ProjectCount { get; set; }
+    public decimal ApprovedBudget { get; set; }
+    public decimal MoneyIn { get; set; }
+    public decimal SpentAmount { get; set; }
+    public decimal UnfundedTotal { get; set; }
+
+    public decimal AvailableCash => MoneyIn - SpentAmount;
+}
+
+/// <summary>"Tüm projeler" görünümünün tek veri kaynağı (tasarım 2d).</summary>
+public class ProjectPortfolioDto
+{
+    public List<PortfolioCurrencyTotalDto> Totals { get; set; } = new();
+    public List<ProjectPortfolioRowDto> Rows { get; set; } = new();
+
+    /// <summary>Bütçesi de kaydı da olmayan, tabloya alınmayan proje sayısı.</summary>
+    public int SkippedProjectCount { get; set; }
+
+    /// <summary>Birden çok para birimi varsa KPI şeridi tek rakam BASMAZ.</summary>
+    public bool IsMixedCurrency => Totals.Count > 1;
 }

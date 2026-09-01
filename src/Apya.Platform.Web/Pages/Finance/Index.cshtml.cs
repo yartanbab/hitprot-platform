@@ -74,6 +74,12 @@ public class IndexModel : AbpPageModel
     /// </summary>
     public ProjectBudgetOverviewDto? Budget { get; private set; }
 
+    /// <summary>
+    /// "Tüm projeler" seçiliyken portföy tablosu (tasarım 2d). Proje seçiliyken
+    /// ya da bütçe görme yetkisi yokken null — panel hiç basılmaz.
+    /// </summary>
+    public ProjectPortfolioDto? Portfolio { get; private set; }
+
     /// <summary>"Dilimler &amp; kesintiler" sekmesinin verisi.</summary>
     public List<FundingTrancheDto> Tranches { get; private set; } = new();
 
@@ -165,6 +171,13 @@ public class IndexModel : AbpPageModel
             await LoadAccountsAsync();
             await LoadTransactionsAsync();
             await LoadBudgetAsync();
+
+            // Portföy YALNIZ proje seçilmemişken: tek proje bağlamında zaten
+            // o projenin özeti var, tüm projeleri okumak boşuna sorgu olurdu.
+            if (SelectedProject == null)
+            {
+                await TryAddAsync(async () => Portfolio = await _projectBudgetAppService.GetPortfolioAsync());
+            }
         }
         else if (ActiveTab == FinanceContext.TabCash)
         {

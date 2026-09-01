@@ -33,6 +33,7 @@ public class ProjectBudgetAppService : ApplicationService, IProjectBudgetAppServ
     private readonly IRepository<TrancheDeduction, Guid> _deductionRepository;
     private readonly IRepository<BudgetRevision, Guid> _revisionRepository;
     private readonly IRepository<Project, Guid> _projectRepository;
+    private readonly IRepository<ProjectCategoryDefinition, Guid> _categoryRepository;
     private readonly IRepository<Expense, Guid> _expenseRepository;
     private readonly IRepository<IncomeEntry, Guid> _incomeRepository;
     private readonly IRepository<TaskItem, Guid> _taskRepository;
@@ -44,6 +45,7 @@ public class ProjectBudgetAppService : ApplicationService, IProjectBudgetAppServ
         IRepository<TrancheDeduction, Guid> deductionRepository,
         IRepository<BudgetRevision, Guid> revisionRepository,
         IRepository<Project, Guid> projectRepository,
+        IRepository<ProjectCategoryDefinition, Guid> categoryRepository,
         IRepository<Expense, Guid> expenseRepository,
         IRepository<IncomeEntry, Guid> incomeRepository,
         IRepository<TaskItem, Guid> taskRepository,
@@ -54,6 +56,7 @@ public class ProjectBudgetAppService : ApplicationService, IProjectBudgetAppServ
         _deductionRepository = deductionRepository;
         _revisionRepository = revisionRepository;
         _projectRepository = projectRepository;
+        _categoryRepository = categoryRepository;
         _expenseRepository = expenseRepository;
         _incomeRepository = incomeRepository;
         _taskRepository = taskRepository;
@@ -106,6 +109,109 @@ public class ProjectBudgetAppService : ApplicationService, IProjectBudgetAppServ
             LatestRevisionNo = await LatestRevisionNoAsync(projectId),
             Lines = lines
         };
+
+        return dto;
+    }
+
+    /// <summary>
+    /// Portföy: her projenin özeti TEK geçişte. Proje başına GetOverviewAsync
+    /// çağırmak proje sayısı kadar sorgu üretirdi; burada beş liste bir kez okunur
+    /// ve bellekte gruplanır.
+    ///
+    /// PARA BİRİMİ: toplamlar para birimi BAŞINA hesaplanır. Farklı para birimindeki
+    /// projeleri toplamak kur olmadan yanlış bir rakam üretirdi; ekran çapraz kur
+    /// yerine "karışık PB" der.
+    ///
+    /// Bütçesi de kaydı da olmayan projeler tabloya ALINMAZ (sayısı ayrıca döner) —
+    /// yüzlerce sıfır satırı riskli projeleri görünmez kılardı.
+    /// </summary>
+    public async Task<ProjectPortfolioDto> GetPortfolioAsync()
+    {
+        using var scope = HostScope();
+
+        var projects = await _projectRepository.GetListAsync();
+        var lines = await _lineRepository.GetListAsync();
+        var tranches = await _trancheRepository.GetListAsync();
+        var expenses = await _expenseRepository.GetListAsync();
+        var incomes = await _incomeRepository.GetListAsync();
+        var deductions = await _deductionRepository.GetListAsync();
+
+        // Sablon chip'i kategorinin davranis anahtarindan turer; kiracinin kendi
+        // kategorisinde SystemKey null'dir ve chip basilmaz.
+        var categoryKeys = (await _categoryRepository.GetListAsync())
+            .ToDictionary(c => c.Id, c => c.SystemKey);
+
+        var linesByProject = lines.GroupBy(x => x.ProjectId).ToDictionary(g => g.Key, g => g.ToList());
+        var tranchesByProject = tranches.GroupBy(x => x.ProjectId).ToDictionary(g => g.Key, g => g.ToList());
+        var expensesByProject = expenses.Where(x => x.ProjectId != null)
+            .GroupBy(x => x.ProjectId!.Value).ToDictionary(g => g.Key, g => g.ToList());
+        var incomesByProject = incomes.Where(x => x.ProjectId != null)
+            .GroupBy(x => x.ProjectId!.Value).ToDictionary(g => g.Key, g => g.ToList());
+        var unfundedByTranche = deductions
+            .Where(x => x.Resolution == DeductionResolution.Unfunded)
+            .GroupBy(x => x.TrancheId).ToDictionary(g => g.Key, g => g.Sum(x => x.Amount));
+
+        var dto = new ProjectPortfolioDto();
+
+        foreach (var project in projects)
+        {
+            var projectLines = linesByProject.GetValueOrDefault(project.Id) ?? new List<ProjectBudgetLine>();
+            var projectTranches = tranchesByProject.GetValueOrDefault(project.Id) ?? new List<FundingTranche>();
+            var projectExpenses = expensesByProject.GetValueOrDefault(project.Id) ?? new List<Expense>();
+            var projectIncomes = incomesByProject.GetValueOrDefault(project.Id) ?? new List<IncomeEntry>();
+
+            var hasLines = projectLines.Count > 0;
+            var approved = hasLines ? projectLines.Sum(x => x.ApprovedAmount) : project.TotalBudget;
+            var spent = projectExpenses.Sum(x => x.Amount);
+
+            // Tek proje özetiyle AYNI kural: dilim varsa gelen para tahsilattır,
+            // yoksa gelir kayıtlarıdır. İkisi toplanmaz — aynı para iki kez sayılırdı.
+            var moneyIn = projectTranches.Count > 0
+                ? projectTranches.Sum(x => x.ReceivedAmount)
+                : projectIncomes.Sum(x => x.Amount);
+
+            if (approved <= 0 && spent <= 0 && moneyIn <= 0)
+            {
+                dto.SkippedProjectCount++;
+                continue;
+            }
+
+            dto.Rows.Add(new ProjectPortfolioRowDto
+            {
+                ProjectId = project.Id,
+                Name = project.Name,
+                Currency = string.IsNullOrWhiteSpace(project.Currency) ? "TRY" : project.Currency,
+                CategorySystemKey = categoryKeys.GetValueOrDefault(project.CategoryId),
+                ApprovedBudget = approved,
+                MoneyIn = moneyIn,
+                SpentAmount = spent,
+                UnfundedTotal = projectTranches.Sum(t => unfundedByTranche.GetValueOrDefault(t.Id)),
+                HasDisputedTranche = projectTranches.Any(t => t.Status == FundingTrancheStatus.Disputed)
+            });
+        }
+
+        dto.Totals = dto.Rows
+            .GroupBy(r => r.Currency)
+            .Select(g => new PortfolioCurrencyTotalDto
+            {
+                Currency = g.Key,
+                ProjectCount = g.Count(),
+                ApprovedBudget = g.Sum(r => r.ApprovedBudget),
+                MoneyIn = g.Sum(r => r.MoneyIn),
+                SpentAmount = g.Sum(r => r.SpentAmount),
+                UnfundedTotal = g.Sum(r => r.UnfundedTotal)
+            })
+            .OrderByDescending(t => t.ProjectCount)
+            .ToList();
+
+        // Riskli projeler ÜSTTE: nakit riski > bütçe aşımı > itiraz > kullanım.
+        dto.Rows = dto.Rows
+            .OrderByDescending(r => r.HasCashRisk)
+            .ThenByDescending(r => r.IsOverBudget)
+            .ThenByDescending(r => r.HasDisputedTranche)
+            .ThenByDescending(r => r.UsagePercent)
+            .ThenBy(r => r.Name)
+            .ToList();
 
         return dto;
     }
