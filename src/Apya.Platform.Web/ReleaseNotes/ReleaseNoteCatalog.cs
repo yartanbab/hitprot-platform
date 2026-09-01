@@ -25,8 +25,60 @@ public static class ReleaseNoteCatalog
         new ReleaseNote(
             version: "2026.09.01",
             date: "1 Eylül 2026",
-            title: "Yayındaki bütün hibe çağrıları artık görünür",
+            title: "Proje finansı tek ekranda, hibe çağrılarının tamamı listede",
 
+            // ── Finans ───────────────────────────────────────────────────────
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "Projenin bütün finansı tek ekranda toplandı",
+                "Bütçe, gelir-gider ve faturalar ayrı ayrı ekranlarda duruyordu; hangi rakamın hangi " +
+                "projeye ait olduğunu her seferinde yeniden süzmeniz gerekiyordu. Finans ekranında " +
+                "artık önce projeyi seçiyorsunuz, sekmeler o projenin bütçesini, kayıtlarını ve " +
+                "faturalarını gösteriyor. Sekmeler projenin türüne göre değişiyor: hibe projesinde " +
+                "fonlama dilimleri, kurumsal projede kâr-zarar öne çıkıyor."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "Bütçenizi kalemlere ayırıp gerçekleşmeyi kalem kalem izliyorsunuz",
+                "Projeye \"Personel\", \"Hizmet alımı\", \"Ekipman\" gibi bütçe kalemleri tanımlıyor, " +
+                "her gider ve geliri bir kaleme yazıyorsunuz. Kalemin ne kadarının harcandığını, ne " +
+                "kadarının kaldığını ve yüzde kaçının kullanıldığını tek tabloda görüyorsunuz. Kalem " +
+                "tanımlı bir projede kayıt açarken kalem seçimi zorunlu oluyor, böylece hiçbir harcama " +
+                "sınıflandırılmadan kalmıyor."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "Fonlama dilimleri, kesintiler ve bütçe revizyonları kayıt altında",
+                "Destek ödemesini dilim dilim planlıyor, geldiğinde tahsilatı işliyorsunuz; hangi " +
+                "dilimin ne kadarının geldiğini ve ne kadarının beklendiğini ekranda görüyorsunuz. " +
+                "Fon veren bir kesinti uyguladığında kesintiyi gerekçesiyle kaydediyor, kesintiyi ister " +
+                "bütçeye işliyor ister \"finanse edilmeyen\" olarak kapatıyorsunuz. Bütçe kalemlerinin " +
+                "tutarını değiştirdiğinizde önceki ve yeni tutar gerekçesiyle birlikte revizyon " +
+                "geçmişine yazılıyor — \"bu kalem neden değişti\" sorusunun cevabı kaybolmuyor."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "Görevlere bütçe ayırıp harcamayı görev bazında karşılaştırıyorsunuz",
+                "Bir görevi bütçe kalemine bağlayıp o göreve ayırdığınız tutarı yazabiliyorsunuz. " +
+                "Aynı kalemdeki görev bütçelerinin toplamı kalemi aşarsa kayıt kabul edilmiyor, " +
+                "böylece aynı para iki işe birden ayrılmıyor. Proje ekranına eklenen \"Finans\" " +
+                "sekmesinde hangi göreve ne kadar ayrıldığını ve o görevde ne kadar harcandığını " +
+                "yan yana görüyorsunuz; görev detayının Finans sekmesinde de görevin kendi bütçesi, " +
+                "gerçekleşeni ve kalanı çıkıyor."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "Döviz bütçeli projede üç rakamı birden görüyorsunuz",
+                "Hibe bütçeniz euro, harcamanız TL olduğunda hangi kurun geçerli olacağı hep tartışma " +
+                "konusuydu. Artık projede kur politikasını siz belirliyorsunuz: harcama günündeki kur, " +
+                "dilimin geldiği gündeki kur, ay başındaki kur ya da sözleşmedeki sabit kur. Her kayıt " +
+                "işlem para biriminde, TL karşılığıyla ve donör para birimiyle birlikte saklanıyor; " +
+                "hangi kurun kullanıldığı kayıtta yazıyor. Kur bulunamazsa uydurma bir rakam " +
+                "gösterilmiyor, \"kur yok\" uyarısı çıkıyor."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Fix,
+                "Gider veya geliri düzenlediğinizde görev bağı artık silinmiyor",
+                "Bir göreve bağlı gider ya da gelir kaydını açıp herhangi bir alanını değiştirip " +
+                "kaydettiğinizde görev bağı sessizce siliniyordu; kayıt görevin Finans sekmesinden " +
+                "kayboluyor, görev bazlı raporlar eksik çıkıyordu. Düzenleme ekranı artık görev " +
+                "bilgisini koruyor."),
+
+            // ── Hibe ─────────────────────────────────────────────────────────
             new ReleaseNoteItem(ReleaseNoteCategory.Feature,
                 "Açık hibe çağrılarının tamamını görüyorsunuz",
                 "Hibeler ekranında şimdiye kadar yalnız firma profilinize yeterince uyan çağrılar " +
