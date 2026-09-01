@@ -139,6 +139,8 @@ namespace Apya.Platform.EntityFrameworkCore
         public DbSet<GrantApplicationMessage> GrantApplicationMessages { get; set; }
         public DbSet<GrantApplicationDocument> GrantApplicationDocuments { get; set; }
         public DbSet<GrantApplicationDocumentVersion> GrantApplicationDocumentVersions { get; set; }
+        public DbSet<GrantApplicationActivity> GrantApplicationActivities { get; set; }
+        public DbSet<GrantConsultingLog> GrantConsultingLogs { get; set; }
         public DbSet<GrantRecommendation> GrantRecommendations { get; set; }
         public DbSet<GrantDisbursementTranche> GrantDisbursementTranches { get; set; }
         public DbSet<GrantMilestone> GrantMilestones { get; set; }
@@ -770,6 +772,7 @@ namespace Apya.Platform.EntityFrameworkCore
                 b.HasIndex(x => x.CurrentStepId);
                 b.Property(x => x.ProjectTitle).HasMaxLength(200);
                 b.Property(x => x.ProjectSummary).HasMaxLength(2000);
+                b.Property(x => x.SuccessFeePercent).HasColumnType("decimal(5,2)");
                 // Aynı tenant + çağrı için tek başvuru.
                 b.HasIndex(x => new { x.TenantId, x.GrantCallId }).IsUnique();
             });
@@ -835,6 +838,29 @@ namespace Apya.Platform.EntityFrameworkCore
                 b.Property(x => x.Note).HasMaxLength(256);
                 b.HasOne<GrantApplicationDocument>().WithMany(d => d.Versions).HasForeignKey(x => x.DocumentId).OnDelete(DeleteBehavior.Cascade);
                 b.HasIndex(x => new { x.DocumentId, x.VersionNo }).IsUnique();
+            });
+
+            // --- 2d · Başvuru detayı (danışman görünümü) ---
+
+            builder.Entity<GrantApplicationActivity>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "GrantApplicationActivities", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+                b.Property(x => x.ActorName).IsRequired().HasMaxLength(96);
+                b.Property(x => x.Context).HasMaxLength(128);
+                b.HasOne<GrantApplication>().WithMany().HasForeignKey(x => x.GrantApplicationId).OnDelete(DeleteBehavior.Cascade);
+                b.HasIndex(x => new { x.GrantApplicationId, x.CreationTime });
+            });
+
+            builder.Entity<GrantConsultingLog>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "GrantConsultingLogs", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+                b.Property(x => x.UserName).IsRequired().HasMaxLength(96);
+                b.Property(x => x.Note).HasMaxLength(256);
+                b.Property(x => x.Hours).HasColumnType("decimal(5,2)");
+                b.HasOne<GrantApplication>().WithMany().HasForeignKey(x => x.GrantApplicationId).OnDelete(DeleteBehavior.Cascade);
+                b.HasIndex(x => new { x.GrantApplicationId, x.WorkDate });
             });
 
             builder.Entity<GrantDisbursementTranche>(b =>
