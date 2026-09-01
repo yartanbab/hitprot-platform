@@ -141,6 +141,8 @@ namespace Apya.Platform.EntityFrameworkCore
         public DbSet<GrantApplicationDocumentVersion> GrantApplicationDocumentVersions { get; set; }
         public DbSet<GrantApplicationActivity> GrantApplicationActivities { get; set; }
         public DbSet<GrantConsultingLog> GrantConsultingLogs { get; set; }
+        public DbSet<GrantDecision> GrantDecisions { get; set; }
+        public DbSet<GrantAppealItem> GrantAppealItems { get; set; }
         public DbSet<GrantRecommendation> GrantRecommendations { get; set; }
         public DbSet<GrantDisbursementTranche> GrantDisbursementTranches { get; set; }
         public DbSet<GrantMilestone> GrantMilestones { get; set; }
@@ -864,6 +866,31 @@ namespace Apya.Platform.EntityFrameworkCore
                 b.Property(x => x.Hours).HasColumnType("decimal(5,2)");
                 b.HasOne<GrantApplication>().WithMany().HasForeignKey(x => x.GrantApplicationId).OnDelete(DeleteBehavior.Cascade);
                 b.HasIndex(x => new { x.GrantApplicationId, x.WorkDate });
+            });
+
+            // --- 6b · Red ve itiraz ---
+
+            builder.Entity<GrantDecision>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "GrantDecisions", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+                b.Property(x => x.ReferenceNo).HasMaxLength(64);
+                b.HasOne<GrantApplication>().WithMany().HasForeignKey(x => x.GrantApplicationId).OnDelete(DeleteBehavior.Cascade);
+                // Başvuru başına tek karar.
+                b.HasIndex(x => x.GrantApplicationId).IsUnique();
+            });
+
+            builder.Entity<GrantAppealItem>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "GrantAppealItems", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+                b.Property(x => x.Title).IsRequired().HasMaxLength(256);
+                b.Property(x => x.InstitutionText).HasMaxLength(2000);
+                b.Property(x => x.OpinionSummary).HasMaxLength(128);
+                b.Property(x => x.OpinionDetail).HasMaxLength(2000);
+                b.Property(x => x.OpinionByName).HasMaxLength(96);
+                b.HasOne<GrantDecision>().WithMany(d => d.Items).HasForeignKey(x => x.DecisionId).OnDelete(DeleteBehavior.Cascade);
+                b.HasIndex(x => new { x.DecisionId, x.Order });
             });
 
             builder.Entity<GrantDisbursementTranche>(b =>
