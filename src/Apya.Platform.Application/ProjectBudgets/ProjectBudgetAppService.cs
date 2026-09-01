@@ -218,6 +218,83 @@ public class ProjectBudgetAppService : ApplicationService, IProjectBudgetAppServ
 
     // ─────────────────────────── KALEMLER ───────────────────────────
 
+    /// <summary>
+    /// Kalem ↔ görev matrisi. Üç liste bir kez okunur; görev başına sorgu yok.
+    ///
+    /// PLAN ve GERÇEKLEŞEN AYRI KAYNAKLARDAN gelir:
+    ///   plan       → görevin bütçe bağı (TaskItem.BudgetLineId + PlannedAmount)
+    ///   gerçekleşen→ HARCAMANIN kalemi (Expense.BudgetLineId + TaskId)
+    /// Bir görevin harcaması, görevin bağlı olduğu kalemden başka bir kaleme
+    /// yazılmış olabilir (kalem kaydın üzerinde seçilir). Bu yüzden "planı yok
+    /// ama harcaması var" satırı hatadan değil, meşru kullanımdan doğar.
+    /// </summary>
+    public async Task<BudgetLineTaskMatrixDto> GetLineTaskMatrixAsync(Guid projectId)
+    {
+        using var scope = HostScope();
+
+        var project = await _projectRepository.GetAsync(projectId);
+        var lines = await _lineRepository.GetListAsync(x => x.ProjectId == projectId);
+        var tasks = await _taskRepository.GetListAsync(x => x.ProjectId == projectId);
+        var expenses = await _expenseRepository.GetListAsync(x => x.ProjectId == projectId);
+
+        var taskTitles = tasks.ToDictionary(t => t.Id, t => t);
+
+        var dto = new BudgetLineTaskMatrixDto
+        {
+            ProjectId = projectId,
+            Currency = string.IsNullOrWhiteSpace(project.Currency) ? "TRY" : project.Currency,
+            UnassignedToLineAmount = expenses.Where(e => e.BudgetLineId == null).Sum(e => e.Amount)
+        };
+
+        foreach (var line in lines.OrderBy(x => x.Order).ThenBy(x => x.Code))
+        {
+            var lineExpenses = expenses.Where(e => e.BudgetLineId == line.Id).ToList();
+
+            var row = new BudgetLineMatrixRowDto
+            {
+                BudgetLineId = line.Id,
+                Code = line.Code,
+                Name = line.Name,
+                ApprovedAmount = line.ApprovedAmount,
+                SpentAmount = lineExpenses.Sum(e => e.Amount),
+                UnassignedSpentAmount = lineExpenses.Where(e => e.TaskId == null).Sum(e => e.Amount)
+            };
+
+            // Satır üreten iki küme: kaleme BAĞLI görevler + bu kaleme harcaması
+            // olan görevler. Birleşimleri alınır, hiçbiri diğerini gizlemez.
+            var taskIds = tasks.Where(t => t.BudgetLineId == line.Id).Select(t => t.Id)
+                .Union(lineExpenses.Where(e => e.TaskId != null).Select(e => e.TaskId!.Value))
+                .ToList();
+
+            foreach (var taskId in taskIds)
+            {
+                if (!taskTitles.TryGetValue(taskId, out var task))
+                {
+                    continue; // başka projeye taşınmış ya da silinmiş görev
+                }
+
+                row.Tasks.Add(new BudgetLineTaskRowDto
+                {
+                    TaskId = task.Id,
+                    Title = task.Title,
+                    Code = task.Number > 0 ? "GRV-" + task.Number : null,
+                    PlannedAmount = task.BudgetLineId == line.Id ? task.PlannedAmount : null,
+                    SpentAmount = lineExpenses.Where(e => e.TaskId == taskId).Sum(e => e.Amount)
+                });
+            }
+
+            row.Tasks = row.Tasks
+                .OrderByDescending(t => t.PlannedAmount ?? 0m)
+                .ThenByDescending(t => t.SpentAmount)
+                .ThenBy(t => t.Title)
+                .ToList();
+
+            dto.Lines.Add(row);
+        }
+
+        return dto;
+    }
+
     public async Task<List<ProjectBudgetLineDto>> GetLinesAsync(Guid projectId)
     {
         using var scope = HostScope();

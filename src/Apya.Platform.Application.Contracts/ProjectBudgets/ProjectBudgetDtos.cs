@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.ComponentModel.DataAnnotations;
 using Apya.Platform.Projects;
 using Volo.Abp.Application.Dtos;
@@ -346,4 +347,77 @@ public class ProjectPortfolioDto
 
     /// <summary>Birden çok para birimi varsa KPI şeridi tek rakam BASMAZ.</summary>
     public bool IsMixedCurrency => Totals.Count > 1;
+}
+
+/// <summary>
+/// Kalem ↔ görev matrisinin bir görev satırı (tasarım 4b).
+///
+/// Plan görevin bütçe bağından, gerçekleşen HARCAMANIN kaleminden gelir. İkisi
+/// ayrı alanlar: bir görevin harcaması, görevin bağlı olduğu kalemden BAŞKA bir
+/// kaleme yazılmış olabilir (kalem kaydın üzerinde seçilir). Bu yüzden plansız
+/// ama harcamalı görev satırı meşrudur.
+/// </summary>
+public class BudgetLineTaskRowDto
+{
+    public Guid TaskId { get; set; }
+    public string Title { get; set; } = string.Empty;
+    public string? Code { get; set; }
+
+    /// <summary>Görevin bu kaleme ayrılmış planı; görev bu kaleme bağlı değilse null.</summary>
+    public decimal? PlannedAmount { get; set; }
+
+    /// <summary>Bu kaleme yazılmış ve bu göreve etiketlenmiş gider toplamı.</summary>
+    public decimal SpentAmount { get; set; }
+
+    public decimal? RemainingAmount => PlannedAmount - SpentAmount;
+
+    public int UsagePercent => PlannedAmount is > 0
+        ? (int)Math.Round(SpentAmount / PlannedAmount.Value * 100m)
+        : 0;
+
+    public bool IsOverPlan => PlannedAmount is > 0 && SpentAmount > PlannedAmount.Value;
+}
+
+/// <summary>Matrisin bir kalem satırı: kalem + altındaki görevler + göreve bağlanmamış tutar.</summary>
+public class BudgetLineMatrixRowDto
+{
+    public Guid BudgetLineId { get; set; }
+    public string Code { get; set; } = string.Empty;
+    public string Name { get; set; } = string.Empty;
+    public decimal ApprovedAmount { get; set; }
+    public decimal SpentAmount { get; set; }
+
+    public List<BudgetLineTaskRowDto> Tasks { get; set; } = new();
+
+    /// <summary>
+    /// Bu kaleme yazılmış ama hiçbir göreve etiketlenmemiş gider. MEŞRUDUR
+    /// (bordro, kira, idari gider) — uyarı değil, ayrı satır olarak gösterilir.
+    /// </summary>
+    public decimal UnassignedSpentAmount { get; set; }
+
+    /// <summary>Görev planlarının toplamı — kalem tutarını AŞAMAZ (sunucuda doğrulanır).</summary>
+    public decimal PlannedTotal => Tasks.Sum(t => t.PlannedAmount ?? 0m);
+
+    /// <summary>Kalemin göreve dağıtılmamış kısmı; negatife düşmez.</summary>
+    public decimal UndistributedAmount => Math.Max(0m, ApprovedAmount - PlannedTotal);
+
+    public decimal RemainingAmount => ApprovedAmount - SpentAmount;
+
+    public int UsagePercent => ApprovedAmount > 0
+        ? (int)Math.Round(SpentAmount / ApprovedAmount * 100m)
+        : 0;
+
+    public bool IsOverBudget => ApprovedAmount > 0 && SpentAmount > ApprovedAmount;
+}
+
+/// <summary>Kalem ↔ görev matrisi (tasarım 4b). İki yön de AYNI veriden basılır.</summary>
+public class BudgetLineTaskMatrixDto
+{
+    public Guid ProjectId { get; set; }
+    public string Currency { get; set; } = "TRY";
+
+    public List<BudgetLineMatrixRowDto> Lines { get; set; } = new();
+
+    /// <summary>Hiçbir kaleme yazılmamış gider — kalem toplamlarının dışında kalır.</summary>
+    public decimal UnassignedToLineAmount { get; set; }
 }

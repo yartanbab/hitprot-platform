@@ -80,6 +80,16 @@ public class IndexModel : AbpPageModel
     /// </summary>
     public ProjectPortfolioDto? Portfolio { get; private set; }
 
+    /// <summary>
+    /// "Bütçe kalemleri" sekmesinin kırılımı (tasarım 4b): boş = düz kalem listesi,
+    /// "kalem-gorev" / "gorev-kalem" = matris. URL'de taşınır, kayıtlı bağlantı kırılmasın.
+    /// </summary>
+    [BindProperty(SupportsGet = true)]
+    public string? Breakdown { get; set; }
+
+    /// <summary>Matris verisi; yalnız kırılım seçiliyken yüklenir.</summary>
+    public BudgetLineTaskMatrixDto? Matrix { get; private set; }
+
     /// <summary>"Dilimler &amp; kesintiler" sekmesinin verisi.</summary>
     public List<FundingTrancheDto> Tranches { get; private set; } = new();
 
@@ -105,6 +115,10 @@ public class IndexModel : AbpPageModel
 
     [BindProperty(SupportsGet = true)]
     public Guid? AccountId { get; set; }
+
+    /// <summary>Kırılım anahtarı matris yönlerinden birinde mi.</summary>
+    public bool IsMatrixBreakdown
+        => Breakdown == "kalem-gorev" || Breakdown == "gorev-kalem";
 
     /// <summary>Bütçe yazma yetkisi — ekleme/düzenleme düğmeleri buna bakar.</summary>
     public bool CanEditBudget { get; private set; }
@@ -186,6 +200,13 @@ public class IndexModel : AbpPageModel
         else if (ActiveTab == FinanceContext.TabBudgetLines)
         {
             await LoadBudgetAsync();
+
+            // Matris yalnız istendiğinde okunur; düz listede üç sorgu boşuna koşmasın.
+            if (SelectedProject != null && IsMatrixBreakdown)
+            {
+                await TryAddAsync(async () =>
+                    Matrix = await _projectBudgetAppService.GetLineTaskMatrixAsync(SelectedProject.Id));
+            }
         }
         else if (ActiveTab == FinanceContext.TabTranches)
         {

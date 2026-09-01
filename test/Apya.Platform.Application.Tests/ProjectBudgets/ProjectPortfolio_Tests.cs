@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Threading;
 using System.Threading.Tasks;
 using Apya.Platform.Expenses;
@@ -211,5 +212,139 @@ public class ProjectPortfolio_Tests
         var portfolio = await _sut.GetPortfolioAsync();
 
         portfolio.Rows.Single().ApprovedBudget.ShouldBe(95_000m);
+    }
+
+    /* ─── KALEM ↔ GÖREV MATRİSİ (tasarım 4b) ──────────────────────── */
+
+    private void GivenProject(Project project)
+        => _projectRepo.GetAsync(project.Id, Arg.Any<bool>(), Arg.Any<CancellationToken>()).Returns(project);
+
+    private void GivenScoped(
+        List<ProjectBudgetLine>? lines = null,
+        List<TaskItem>? tasks = null,
+        List<Expense>? expenses = null)
+    {
+        _lineRepo.GetListAsync(Arg.Any<Expression<Func<ProjectBudgetLine, bool>>>(), Arg.Any<bool>(), Arg.Any<CancellationToken>())
+            .Returns(lines ?? new List<ProjectBudgetLine>());
+        _taskRepo.GetListAsync(Arg.Any<Expression<Func<TaskItem, bool>>>(), Arg.Any<bool>(), Arg.Any<CancellationToken>())
+            .Returns(tasks ?? new List<TaskItem>());
+        _expenseRepo.GetListAsync(Arg.Any<Expression<Func<Expense, bool>>>(), Arg.Any<bool>(), Arg.Any<CancellationToken>())
+            .Returns(expenses ?? new List<Expense>());
+    }
+
+    private static TaskItem Gorev(Guid projectId, string title, Guid? lineId = null, decimal? plan = null)
+    {
+        var t = new TaskItem(Guid.NewGuid(), title, projectId, now: new DateTime(2026, 9, 1));
+        if (lineId != null) { t.SetBudgetLink(lineId, plan); }
+        return t;
+    }
+
+    private static Expense GiderKalemli(Guid projectId, Guid lineId, decimal amount, Guid? taskId = null)
+    {
+        var e = new Expense(Guid.NewGuid(), "Gider", amount, Guid.NewGuid(), new DateTime(2026, 8, 1),
+                            projectId: projectId, taskId: taskId);
+        e.BudgetLineId = lineId;
+        return e;
+    }
+
+    [Fact]
+    public async Task Matris_gorevi_kalemin_ALTINDA_listeler()
+    {
+        var proje = Proje("Hibe", 100_000m);
+        var kalem = new ProjectBudgetLine(Guid.NewGuid(), null, proje.Id, "1", "Personel", 60_000m, 60_000m);
+        var gorev = Gorev(proje.Id, "Yazılım ekibi", kalem.Id, 40_000m);
+
+        GivenProject(proje);
+        GivenScoped(
+            lines: new List<ProjectBudgetLine> { kalem },
+            tasks: new List<TaskItem> { gorev },
+            expenses: new List<Expense> { GiderKalemli(proje.Id, kalem.Id, 15_000m, gorev.Id) });
+
+        var matrix = await _sut.GetLineTaskMatrixAsync(proje.Id);
+
+        var satir = matrix.Lines.Single();
+        satir.ApprovedAmount.ShouldBe(60_000m);
+        satir.SpentAmount.ShouldBe(15_000m);
+
+        var gorevSatiri = satir.Tasks.Single();
+        gorevSatiri.PlannedAmount.ShouldBe(40_000m);
+        gorevSatiri.SpentAmount.ShouldBe(15_000m);
+        gorevSatiri.RemainingAmount.ShouldBe(25_000m);
+    }
+
+    [Fact]
+    public async Task Goreve_baglanmamis_harcama_AYRI_satirda_toplanir()
+    {
+        // Bordro/kira meşrudur: uyarı değil, kendi satırı.
+        var proje = Proje("Hibe", 100_000m);
+        var kalem = new ProjectBudgetLine(Guid.NewGuid(), null, proje.Id, "1", "Personel", 60_000m, 60_000m);
+
+        GivenProject(proje);
+        GivenScoped(
+            lines: new List<ProjectBudgetLine> { kalem },
+            expenses: new List<Expense> { GiderKalemli(proje.Id, kalem.Id, 9_000m) });
+
+        var satir = (await _sut.GetLineTaskMatrixAsync(proje.Id)).Lines.Single();
+
+        satir.UnassignedSpentAmount.ShouldBe(9_000m);
+        satir.Tasks.ShouldBeEmpty();
+    }
+
+    [Fact]
+    public async Task Plani_olmayan_ama_harcamasi_olan_gorev_satir_URETIR()
+    {
+        // Kalem KAYDIN üzerinde seçilir; görevin bağlı olduğu kalemden farklı
+        // olabilir. Bu satır hata değil, meşru kullanımdır.
+        var proje = Proje("Hibe", 100_000m);
+        var kalem = new ProjectBudgetLine(Guid.NewGuid(), null, proje.Id, "1", "Personel", 60_000m, 60_000m);
+        var gorev = Gorev(proje.Id, "Bağsız görev");
+
+        GivenProject(proje);
+        GivenScoped(
+            lines: new List<ProjectBudgetLine> { kalem },
+            tasks: new List<TaskItem> { gorev },
+            expenses: new List<Expense> { GiderKalemli(proje.Id, kalem.Id, 5_000m, gorev.Id) });
+
+        var gorevSatiri = (await _sut.GetLineTaskMatrixAsync(proje.Id)).Lines.Single().Tasks.Single();
+
+        gorevSatiri.PlannedAmount.ShouldBeNull();
+        gorevSatiri.SpentAmount.ShouldBe(5_000m);
+        gorevSatiri.RemainingAmount.ShouldBeNull();
+    }
+
+    [Fact]
+    public async Task Dagitilmamis_tutar_kalem_eksi_gorev_planlari()
+    {
+        var proje = Proje("Hibe", 100_000m);
+        var kalem = new ProjectBudgetLine(Guid.NewGuid(), null, proje.Id, "1", "Personel", 60_000m, 60_000m);
+
+        GivenProject(proje);
+        GivenScoped(
+            lines: new List<ProjectBudgetLine> { kalem },
+            tasks: new List<TaskItem> { Gorev(proje.Id, "A", kalem.Id, 25_000m), Gorev(proje.Id, "B", kalem.Id, 10_000m) });
+
+        var satir = (await _sut.GetLineTaskMatrixAsync(proje.Id)).Lines.Single();
+
+        satir.PlannedTotal.ShouldBe(35_000m);
+        satir.UndistributedAmount.ShouldBe(25_000m);
+    }
+
+    [Fact]
+    public async Task Kaleme_yazilmamis_harcama_matrisin_DISINDA_raporlanir()
+    {
+        var proje = Proje("Hibe", 100_000m);
+        var kalem = new ProjectBudgetLine(Guid.NewGuid(), null, proje.Id, "1", "Personel", 60_000m, 60_000m);
+        var kalemsiz = new Expense(Guid.NewGuid(), "İdari", 7_000m, Guid.NewGuid(), new DateTime(2026, 8, 1),
+                                   projectId: proje.Id);
+
+        GivenProject(proje);
+        GivenScoped(
+            lines: new List<ProjectBudgetLine> { kalem },
+            expenses: new List<Expense> { kalemsiz });
+
+        var matrix = await _sut.GetLineTaskMatrixAsync(proje.Id);
+
+        matrix.UnassignedToLineAmount.ShouldBe(7_000m);
+        matrix.Lines.Single().SpentAmount.ShouldBe(0m);
     }
 }

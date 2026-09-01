@@ -23,6 +23,12 @@ public interface IProjectBudgetAppService : IApplicationService
     /// </summary>
     Task<ProjectPortfolioDto> GetPortfolioAsync();
 
+    /// <summary>
+    /// Kalem ↔ görev matrisi (tasarım 4b): her kalemin altında ona bağlı görevler,
+    /// planları ve gerçekleşenleri. Görev başına sorgu YOK — tek geçiş.
+    /// </summary>
+    Task<BudgetLineTaskMatrixDto> GetLineTaskMatrixAsync(Guid projectId);
+
     Task<List<ProjectBudgetLineDto>> GetLinesAsync(Guid projectId);
 
     /// <summary>
