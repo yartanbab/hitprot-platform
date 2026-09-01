@@ -1,0 +1,263 @@
+@*
+    Finans → "Donör & raporlama" sekmesi (tasarım 2a).
+
+    YALNIZ HİBE ŞABLONUNDA açılır (FinanceContext.Sets). Kurumsal projede donör
+    yoktur; boş bir ekran basmak yerine sekme hiç görünmez.
+
+    TASARIMDAN BİLİNÇLİ SAPMA — prototipin uygunluk denetiminde "uygun olmayan
+    tutar" satırı var, burada YOK. Kayıtta uygunluk (eligible/ineligible) diye
+    bir alan şemada bulunmuyor. Olmayan bir kavramı ekrana yazmak, kullanıcının
+    denetlendiğini sandığı ama hiç denetlenmeyen bir rakam üretirdi. Buradaki
+    bulguların hepsi sayılabilir gerçeklere dayanıyor (belgesiz kayıt, kuru
+    eksik kayıt, proje tarihleri dışındaki kayıt).
+*@
+@using Apya.Platform.Documents
+@using Apya.Platform.Web.Pages.Shared
+@model Apya.Platform.Web.Pages.Finance.IndexModel
+
+@functions {
+    string Money(decimal v, string cur) => v.ToString("N2") + (cur == "TRY" ? " ₺" : " " + cur);
+    string MoneyKpi(decimal v, string cur) => cur == "TRY" ? "₺" + v.ToString("N0") : v.ToString("N0") + " " + cur;
+
+    string StatusLabel(DeliveryPackageStatus s) => s switch
+    {
+        DeliveryPackageStatus.Sent => "Gönderildi",
+        DeliveryPackageStatus.Generated => "Üretildi",
+        _ => "Taslak"
+    };
+
+    string StatusTone(DeliveryPackageStatus s) => s switch
+    {
+        DeliveryPackageStatus.Sent => "positive",
+        DeliveryPackageStatus.Generated => "accent",
+        _ => "neutral"
+    };
+}
+
+@{
+    var projectId = Model.SelectedProject!.Id;
+    var fx = Model.FxBridge;
+    var donorCur = fx?.Policy.DonorCurrency;
+}
+
+@if (fx == null || string.IsNullOrWhiteSpace(donorCur))
+{
+    <partial name="_EmptyState" model='new EmptyStateModel {
+        Icon = "fa-file-export",
+        Title = "Bu projede donör para birimi tanımlı değil",
+        Description = "Donör raporlaması, projenin donör para birimi ve kur politikası tanımlandıktan sonra anlam kazanır." }' />
+    <div class="text-center">
+        <a href="@Model.TabUrl(Apya.Platform.Web.Pages.Finance.FinanceContext.TabFxBridge)" class="btn btn-sm btn-outline-secondary">
+            <i class="fa fa-arrow-right-arrow-left me-1" aria-hidden="true"></i>Kur köprüsünü aç
+        </a>
+    </div>
+    return;
+}
+
+@* ── DONÖR DEFTERİ ŞERİDİ ─────────────────────────────────────────────── *@
+<div class="row g-3 mb-3 apya-finance-kpis">
+    <div class="col-6 col-md-3">
+        <partial name="_KpiCard" model='new KpiCardModel {
+            Icon = "fa-arrow-down-long", Accent = "positive", Label = "Donör geliri",
+            Value = MoneyKpi(fx.DonorIncome, donorCur), SubText = "donör defteri" }' />
+    </div>
+    <div class="col-6 col-md-3">
+        <partial name="_KpiCard" model='new KpiCardModel {
+            Icon = "fa-arrow-up-long", Accent = "negative", Label = "Donör gideri",
+            Value = MoneyKpi(fx.DonorExpense, donorCur), SubText = "donör defteri" }' />
+    </div>
+    <div class="col-6 col-md-3">
+        <partial name="_KpiCard" model='new KpiCardModel {
+            Icon = "fa-scale-balanced", Accent = fx.DonorNet < 0 ? "negative" : "neutral",
+            Label = "Donör net", Value = MoneyKpi(fx.DonorNet, donorCur),
+            SubText = "gelen − harcanan" }' />
+    </div>
+    <div class="col-6 col-md-3">
+        <partial name="_KpiCard" model='new KpiCardModel {
+            Icon = "fa-triangle-exclamation",
+            Accent = fx.MissingDonorRateCount > 0 ? "warning" : "neutral",
+            Label = "Kuru eksik kayıt",
+            Value = fx.MissingDonorRateCount.ToString("N0"),
+            SubText = fx.MissingDonorRateCount > 0 ? "donör tutarı hesaplanamadı" : "tamamı hesaplandı" }' />
+    </div>
+</div>
+
+<div class="row g-3">
+
+    @* ── DONÖR KODLU KALEM TABLOSU ─────────────────────────────────────── *@
+    <div class="col-12 col-xl-7">
+        <div class="card h-100 mb-0">
+            <div class="card-header d-flex align-items-center justify-content-between">
+                <div>
+                    <span class="fw-semibold">Donör kalemleri</span>
+                    <div class="small text-muted">Aktarım payı, kalemler arası kaydırma sınırıdır</div>
+                </div>
+            </div>
+
+            @if (Model.Budget == null || Model.Budget.Lines.Count == 0)
+            {
+                <div class="card-body">
+                    <p class="text-muted mb-0" style="font-size:12.5px">Bu projede bütçe kalemi yok.</p>
+                </div>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="table apya-clean-table align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th style="width:70px">Kod</th>
+                                <th>Kalem</th>
+                                <th class="text-end apya-numeric">Onaylanan</th>
+                                <th class="text-end apya-numeric">Harcanan</th>
+                                <th class="text-end apya-numeric" style="width:120px">Aktarım payı</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var line in Model.Budget.Lines)
+                            {
+                                <tr>
+                                    <td class="apya-numeric text-muted">@(string.IsNullOrWhiteSpace(line.Code) ? "—" : line.Code)</td>
+                                    <td class="fw-semibold">@line.Name</td>
+                                    <td class="text-end apya-numeric">@Money(line.ApprovedAmount, Model.Budget.Currency)</td>
+                                    <td class="text-end apya-numeric @(line.IsOverBudget ? "text-danger" : "")">@Money(line.SpentAmount, Model.Budget.Currency)</td>
+                                    <td class="text-end apya-numeric">
+                                        @if (line.TransferLimitPercent.HasValue)
+                                        {
+                                            <span>%@line.TransferLimitPercent.Value.ToString("N0")</span>
+                                            <div class="small text-muted">@Money(line.ApprovedAmount * line.TransferLimitPercent.Value / 100m, Model.Budget.Currency)</div>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">sınırsız</span>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+                <div class="card-body pt-2">
+                    <p class="text-muted mb-0" style="font-size:12px">
+                        <i class="fa fa-circle-info me-1" aria-hidden="true"></i>
+                        Aktarım payı bugün <strong>uygulanmıyor</strong>; kesinti dağıtımında aşım
+                        uyarı olarak gösterilir, kayıt engellenmez.
+                    </p>
+                </div>
+            }
+        </div>
+    </div>
+
+    @* ── UYGUNLUK DENETİMİ ─────────────────────────────────────────────── *@
+    <div class="col-12 col-xl-5">
+        <div class="card h-100 mb-0">
+            <div class="card-header">
+                <span class="fw-semibold">Uygunluk denetimi</span>
+                <div class="small text-muted">Donöre göndermeden önce kapatılması gerekenler</div>
+            </div>
+            <div class="card-body">
+                @if (Model.EligibilityFindings.Count == 0)
+                {
+                    <p class="mb-0" style="font-size:12.5px;color:var(--apya-positive-500)">
+                        <i class="fa fa-circle-check me-1" aria-hidden="true"></i>
+                        Denetlenen üç başlıkta bulgu yok: her harcamanın belgesi var, kur karşılıkları
+                        hesaplandı, kayıtlar proje tarih aralığında.
+                    </p>
+                }
+                else
+                {
+                    <div class="d-flex flex-column gap-2">
+                        @foreach (var f in Model.EligibilityFindings)
+                        {
+                            <div class="d-flex align-items-start gap-2">
+                                <span class="apya-chip apya-chip-@f.Tone flex-shrink-0">@f.Count</span>
+                                <div class="flex-grow-1" style="min-width:0">
+                                    <div class="fw-semibold" style="font-size:12.5px">
+                                        @f.Title
+                                        @if (f.Amount > 0)
+                                        {
+                                            <span class="apya-numeric ms-1">· @Money(f.Amount, Model.Budget?.Currency ?? "TRY")</span>
+                                        }
+                                    </div>
+                                    <div class="small text-muted">@f.Detail</div>
+                                </div>
+                                @if (!string.IsNullOrEmpty(f.Url))
+                                {
+                                    <a href="@f.Url" class="btn btn-sm btn-link p-0 text-decoration-none flex-shrink-0">Aç</a>
+                                }
+                            </div>
+                        }
+                    </div>
+                }
+
+                <p class="text-muted mb-0 mt-3" style="font-size:12px">
+                    <i class="fa fa-circle-info me-1" aria-hidden="true"></i>
+                    Kayıt bazında <strong>uygun/uygun değil</strong> işareti henüz yok; bu denetim
+                    belge, kur ve tarih üzerinden yapılır.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    @* ── DONÖR RAPOR PAKETLERİ ─────────────────────────────────────────── *@
+    <div class="col-12">
+        <div class="card mb-0">
+            <div class="card-header d-flex align-items-center justify-content-between">
+                <div>
+                    <span class="fw-semibold">Rapor dönemleri</span>
+                    <div class="small text-muted">Donöre giden paketler ve durumları</div>
+                </div>
+                <a href="@($"/Documents/Deliveries?projectId={projectId}")" class="btn btn-sm btn-outline-secondary">
+                    <i class="fa fa-file-export me-1" aria-hidden="true"></i>Teslimler
+                </a>
+            </div>
+
+            @if (Model.DonorPackages.Count == 0)
+            {
+                <div class="card-body">
+                    <p class="text-muted mb-0" style="font-size:12.5px">
+                        Bu projede rapor paketi yok. Dönem paketini Teslimler ekranından kurar,
+                        Excel/PDF çıktısını oradan alırsınız.
+                    </p>
+                </div>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="table apya-clean-table align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th>Paket</th>
+                                <th style="width:110px">Dönem</th>
+                                <th class="text-end apya-numeric" style="width:80px">Ek</th>
+                                <th style="width:130px">Durum</th>
+                                <th style="width:150px">Üretim</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var p in Model.DonorPackages)
+                            {
+                                <tr>
+                                    <td class="fw-semibold">@p.Name</td>
+                                    <td class="apya-numeric">@(p.PeriodCode ?? "—")</td>
+                                    <td class="text-end apya-numeric">@p.ItemCount</td>
+                                    <td><span class="apya-chip apya-chip-@StatusTone(p.Status)">@StatusLabel(p.Status)</span></td>
+                                    <td class="small text-muted">
+                                        @if (p.GeneratedAt.HasValue)
+                                        {
+                                            <span class="apya-numeric">@p.GeneratedAt.Value.ToString("dd.MM.yyyy")</span>
+                                        }
+                                        else
+                                        {
+                                            <span>henüz üretilmedi</span>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+    </div>
+</div>

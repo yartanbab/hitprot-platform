@@ -1,0 +1,263 @@
+@*
+    Kalem ↔ Görev Matrisi (tasarım 4b).
+
+    "Bütçe kalemleri" sekmesinin ikinci ve üçüncü kırılımı; düz kalem listesi
+    (1a) varsayılan olarak duruyor, bu panel onun yerine geçmiyor — yanına
+    geliyor. İki yön de AYNI veriden basılır (tek servis çağrısı).
+
+    TASARIMDAN BİLİNÇLİ SAPMA: prototipte "Taahhüt" kolonu var, burada YOK.
+    Onay bekleyen sipariş/talep diye bir varlık şemada yok; eklenseydi her
+    satırda 0 gösteren bir kolon olurdu. 4a'daki "Bütçe bağı" kartında da aynı
+    gerekçeyle atlanmıştı.
+
+    PLAN ve GERÇEKLEŞEN AYRI KAYNAKLARDAN gelir (bkz. GetLineTaskMatrixAsync):
+    plan görevin bütçe bağından, gerçekleşen harcamanın kaleminden. Bu yüzden
+    "planı yok ama harcaması var" satırı hata değil, meşru kullanımdır.
+*@
+@using Apya.Platform.ProjectBudgets.Dtos
+@model Apya.Platform.Web.Pages.Finance.IndexModel
+
+@functions {
+    string Money(decimal v) => v.ToString("N2");
+
+    string BarTone(int pct) => pct >= 100 ? "is-negative" : pct >= 80 ? "is-warning" : "is-positive";
+}
+
+@{
+    var m = Model.Matrix!;
+    var cur = m.Currency == "TRY" ? "₺" : m.Currency;
+    var taskFirst = Model.Breakdown == "gorev-kalem";
+}
+
+@if (m.Lines.Count == 0)
+{
+    <partial name="_EmptyState" model='new Apya.Platform.Web.Pages.Shared.EmptyStateModel {
+        Icon = "fa-table-cells",
+        Title = "Matris için bütçe kalemi gerekiyor",
+        Description = "Önce kalem tanımlayın; görevleri kalemlere bağladıkça kırılım burada oluşur." }' />
+    return;
+}
+
+<div class="table-responsive">
+    <table class="table apya-clean-table align-middle mb-0">
+        <thead>
+            <tr>
+                <th>@(taskFirst ? "Görev" : "Kalem / görev")</th>
+                <th class="text-end apya-numeric">Planlanan</th>
+                <th class="text-end apya-numeric">Gerçekleşen</th>
+                <th class="text-end apya-numeric">Kalan</th>
+                <th style="width:130px">Kullanım</th>
+                <th style="width:190px">Uyarı</th>
+            </tr>
+        </thead>
+
+        @if (!taskFirst)
+        {
+            @* ── KALEM → GÖREV ───────────────────────────────────────────── *@
+            <tbody>
+                @foreach (var line in m.Lines)
+                {
+                    <tr class="apya-matrix-line">
+                        <td>
+                            <span class="fw-bold">@line.Name</span>
+                            @if (!string.IsNullOrWhiteSpace(line.Code))
+                            {
+                                <span class="small text-muted apya-numeric ms-1">@line.Code</span>
+                            }
+                        </td>
+                        <td class="text-end apya-numeric fw-bold">@Money(line.ApprovedAmount)</td>
+                        <td class="text-end apya-numeric fw-bold">@Money(line.SpentAmount)</td>
+                        <td class="text-end apya-numeric fw-bold @(line.RemainingAmount < 0 ? "text-danger" : "")">@Money(line.RemainingAmount)</td>
+                        <td>
+                            <div class="apya-tile-progress-label"><span class="apya-numeric">%@line.UsagePercent</span></div>
+                            <div class="apya-mini-progress @BarTone(line.UsagePercent)">
+                                <span style="width:@(Math.Min(line.UsagePercent, 100))%"></span>
+                            </div>
+                        </td>
+                        <td>
+                            @if (line.IsOverBudget)
+                            {
+                                <span class="apya-chip apya-chip-negative">kalem aşıldı</span>
+                            }
+                            else if (line.UndistributedAmount > 0)
+                            {
+                                <span class="apya-chip apya-chip-neutral" title="Kalemin göreve ayrılmamış kısmı">
+                                    <span class="apya-numeric">@Money(line.UndistributedAmount)</span> dağıtılmamış
+                                </span>
+                            }
+                        </td>
+                    </tr>
+
+                    @foreach (var task in line.Tasks)
+                    {
+                        <tr class="apya-matrix-task">
+                            <td>
+                                <i class="fa fa-list-check me-2 text-muted" aria-hidden="true"></i>@task.Title
+                                @if (!string.IsNullOrWhiteSpace(task.Code))
+                                {
+                                    <span class="small text-muted apya-numeric ms-1">@task.Code</span>
+                                }
+                            </td>
+                            <td class="text-end apya-numeric">
+                                @if (task.PlannedAmount != null)
+                                {
+                                    @Money(task.PlannedAmount.Value)
+                                }
+                                else
+                                {
+                                    <span class="text-muted">—</span>
+                                }
+                            </td>
+                            <td class="text-end apya-numeric">@Money(task.SpentAmount)</td>
+                            <td class="text-end apya-numeric @(task.RemainingAmount < 0 ? "text-danger" : "")">
+                                @if (task.RemainingAmount != null)
+                                {
+                                    @Money(task.RemainingAmount.Value)
+                                }
+                                else
+                                {
+                                    <span class="text-muted">—</span>
+                                }
+                            </td>
+                            <td>
+                                @if (task.PlannedAmount is > 0)
+                                {
+                                    <div class="apya-tile-progress-label"><span class="apya-numeric">%@task.UsagePercent</span></div>
+                                    <div class="apya-mini-progress @BarTone(task.UsagePercent)">
+                                        <span style="width:@(Math.Min(task.UsagePercent, 100))%"></span>
+                                    </div>
+                                }
+                            </td>
+                            <td>
+                                @if (task.IsOverPlan)
+                                {
+                                    <span class="apya-chip apya-chip-negative">görev planı aşıldı</span>
+                                }
+                                else if (task.PlannedAmount == null)
+                                {
+                                    <span class="apya-chip apya-chip-neutral">plansız harcama</span>
+                                }
+                            </td>
+                        </tr>
+                    }
+
+                    @if (line.UnassignedSpentAmount > 0)
+                    {
+                        <tr class="apya-matrix-task">
+                            <td class="text-muted">
+                                <i class="fa fa-circle-notch me-2" aria-hidden="true"></i>Göreve bağlanmamış
+                            </td>
+                            <td class="text-end apya-numeric text-muted">—</td>
+                            <td class="text-end apya-numeric">@Money(line.UnassignedSpentAmount)</td>
+                            <td class="text-end apya-numeric text-muted">—</td>
+                            <td></td>
+                            <td></td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        }
+        else
+        {
+            @* ── GÖREV → KALEM ───────────────────────────────────────────
+               Bir görev TEK kaleme bağlanır, dolayısıyla bu yön hiyerarşi
+               değil düz listedir: görev satırı + hangi kaleme yazıldığı. *@
+            <tbody>
+                @{
+                    var taskRows = m.Lines
+                        .SelectMany(l => l.Tasks.Select(t => new { Line = l, Task = t }))
+                        .OrderByDescending(x => x.Task.IsOverPlan)
+                        .ThenByDescending(x => x.Task.SpentAmount)
+                        .ToList();
+                }
+
+                @if (taskRows.Count == 0)
+                {
+                    <tr>
+                        <td colspan="6" class="text-muted text-center py-4" style="font-size:12.5px">
+                            Hiçbir görev bir bütçe kalemine bağlanmamış.
+                        </td>
+                    </tr>
+                }
+
+                @foreach (var x in taskRows)
+                {
+                    <tr>
+                        <td>
+                            <div class="fw-semibold">
+                                <i class="fa fa-list-check me-2 text-muted" aria-hidden="true"></i>@x.Task.Title
+                                @if (!string.IsNullOrWhiteSpace(x.Task.Code))
+                                {
+                                    <span class="small text-muted apya-numeric ms-1">@x.Task.Code</span>
+                                }
+                            </div>
+                            <div class="small text-muted" style="padding-left:26px">
+                                <span class="apya-chip apya-chip-neutral">@x.Line.Name</span>
+                            </div>
+                        </td>
+                        <td class="text-end apya-numeric">
+                            @if (x.Task.PlannedAmount != null)
+                            {
+                                @Money(x.Task.PlannedAmount.Value)
+                            }
+                            else
+                            {
+                                <span class="text-muted">—</span>
+                            }
+                        </td>
+                        <td class="text-end apya-numeric">@Money(x.Task.SpentAmount)</td>
+                        <td class="text-end apya-numeric @(x.Task.RemainingAmount < 0 ? "text-danger" : "")">
+                            @if (x.Task.RemainingAmount != null)
+                            {
+                                @Money(x.Task.RemainingAmount.Value)
+                            }
+                            else
+                            {
+                                <span class="text-muted">—</span>
+                            }
+                        </td>
+                        <td>
+                            @if (x.Task.PlannedAmount is > 0)
+                            {
+                                <div class="apya-tile-progress-label"><span class="apya-numeric">%@x.Task.UsagePercent</span></div>
+                                <div class="apya-mini-progress @BarTone(x.Task.UsagePercent)">
+                                    <span style="width:@(Math.Min(x.Task.UsagePercent, 100))%"></span>
+                                </div>
+                            }
+                        </td>
+                        <td>
+                            @if (x.Task.IsOverPlan)
+                            {
+                                <span class="apya-chip apya-chip-negative">görev planı aşıldı</span>
+                            }
+                            else if (x.Task.PlannedAmount == null)
+                            {
+                                <span class="apya-chip apya-chip-neutral">plansız harcama</span>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        }
+    </table>
+</div>
+
+@* Tasarımın iki kural notu — ekranda okunur durması istenmişti. *@
+<div class="d-flex flex-column gap-1 mt-3 text-muted" style="font-size:12px">
+    <span>
+        <i class="fa fa-circle-info me-1" aria-hidden="true"></i>
+        Bir kalemdeki görev planlarının toplamı kalem bütçesini geçemez; geçiren kayıt sunucuda reddedilir.
+    </span>
+    <span>
+        <i class="fa fa-circle-info me-1" aria-hidden="true"></i>
+        <strong>Göreve bağlanmamış</strong> harcama meşrudur — bordro, kira ve idari giderler bir göreve yazılmaz.
+    </span>
+    @if (m.UnassignedToLineAmount > 0)
+    {
+        <span>
+            <i class="fa fa-circle-info me-1" aria-hidden="true"></i>
+            <strong class="apya-numeric">@cur@Money(m.UnassignedToLineAmount)</strong> tutarındaki harcama
+            hiçbir <strong>kaleme</strong> yazılmamış; matrisin dışında kalır.
+        </span>
+    }
+</div>

@@ -77,11 +77,18 @@
                     </div>
                     <div class="col-md-3">
                         <label class="form-label">Miktar</label>
+                        @* __Invariant ŞART: bu alanlar asp-for ile değil elle name= ile yazıldığı
+                           için ASP.NET işaretçiyi kendiliğinden eklemiyor. Onsuz "2.5" tr-TR ile
+                           bağlanır ve 25 olur; type="number" ise değeri DAİMA noktalı gönderir. *@
                         <input name="InvoiceInfo.Items[0].Quantity" type="number" step="0.01" class="form-control input-qty" value="1" required />
+                        <input type="hidden" name="__Invariant" value="InvoiceInfo.Items[0].Quantity" />
                     </div>
                     <div class="col-md-3">
                         <label class="form-label">Birim Fiyat</label>
+                        @* data-money-input gizli alana String(num) yazar, yani NOKTALI invariant
+                           değer — __Invariant olmadan o da 1234.56'yı 123456 yapardı. *@
                         <input name="InvoiceInfo.Items[0].UnitPrice" type="number" step="0.01" data-money-input class="form-control input-price" required />
+                        <input type="hidden" name="__Invariant" value="InvoiceInfo.Items[0].UnitPrice" />
                     </div>
                     <div class="col-md-1 text-end">
                         <button type="button" class="btn btn-outline-danger btn-remove-item" aria-label="Kalemi sil" title="Kalemi sil"><i class="fa fa-trash"></i></button>
@@ -102,11 +109,18 @@
                             </div>
                             <div class="col-md-3">
                                 <label class="form-label">Miktar</label>
+                                @* __Invariant ŞART: bu alanlar asp-for ile değil elle name= ile yazıldığı
+                                   için ASP.NET işaretçiyi kendiliğinden eklemiyor. Onsuz "2.5" tr-TR ile
+                                   bağlanır ve 25 olur; type="number" ise değeri DAİMA noktalı gönderir. *@
                                 <input name="InvoiceInfo.Items[\${itemIndex}].Quantity" type="number" step="0.01" class="form-control input-qty" value="1" required />
+                                <input type="hidden" name="__Invariant" value="InvoiceInfo.Items[\${itemIndex}].Quantity" />
                             </div>
                             <div class="col-md-3">
                                 <label class="form-label">Birim Fiyat</label>
+                                @* data-money-input gizli alana String(num) yazar, yani NOKTALI invariant
+                                   değer — __Invariant olmadan o da 1234.56'yı 123456 yapardı. *@
                                 <input name="InvoiceInfo.Items[\${itemIndex}].UnitPrice" type="number" step="0.01" data-money-input class="form-control input-price" required />
+                                <input type="hidden" name="__Invariant" value="InvoiceInfo.Items[\${itemIndex}].UnitPrice" />
                             </div>
                             <div class="col-md-1 text-end">
                                 <button type="button" class="btn btn-outline-danger btn-remove-item" aria-label="Kalemi sil" title="Kalemi sil"><i class="fa fa-trash"></i></button>

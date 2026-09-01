@@ -28,6 +28,16 @@ else
     var b = Model.Budget;
     var cur = b.Currency == "TRY" ? "₺" : b.Currency;
 
+    // Kırılım anahtarının bağlantıları — seçim URL'de taşınır.
+    string BreakUrl(string? mode) =>
+        $"/Finance?projectId={Model.ProjectId}&tab={Model.ActiveTab}" +
+        (string.IsNullOrEmpty(mode) ? "" : $"&breakdown={mode}");
+
+    string BreakCls(string? mode) =>
+        (Model.Breakdown ?? "") == (mode ?? "")
+            ? "btn btn-sm btn-primary"
+            : "btn btn-sm btn-outline-secondary";
+
     <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
         <span class="fw-semibold">Bütçe kalemleri</span>
         <span class="apya-chip apya-chip-neutral">@b.Lines.Count kalem</span>
@@ -44,6 +54,9 @@ else
                         <i class="fa fa-code-branch me-1" aria-hidden="true"></i>Bütçeyi revize et
                     </button>
                 }
+                <button type="button" class="btn btn-sm btn-outline-secondary" id="BtnContextWizard">
+                    <i class="fa fa-wand-magic-sparkles me-1" aria-hidden="true"></i>Bağlamı kur
+                </button>
                 <button type="button" class="btn btn-sm btn-primary" id="BtnAddBudgetLine">
                     <i class="fa fa-plus me-1" aria-hidden="true"></i>Kalem ekle
                 </button>
@@ -51,12 +64,28 @@ else
         }
     </div>
 
+    @* Kırılım anahtarı (tasarım 4b). Düz kalem listesi VARSAYILAN kalır;
+       matris onun yerine geçmez, yanına gelir. Seçim URL'de taşınır. *@
+    @if (b.Lines.Any())
+    {
+        <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+            <span class="apya-overline mb-0">Kırılım</span>
+            <a href="@BreakUrl(null)" class="@BreakCls(null)">Kalem listesi</a>
+            <a href="@BreakUrl("kalem-gorev")" class="@BreakCls("kalem-gorev")">Kalem → görev</a>
+            <a href="@BreakUrl("gorev-kalem")" class="@BreakCls("gorev-kalem")">Görev → kalem</a>
+        </div>
+    }
+
     @if (!b.Lines.Any())
     {
         <partial name="_EmptyState" model='new Apya.Platform.Web.Pages.Shared.EmptyStateModel {
             Icon = "fa-list-ul",
             Title = "Bu projede bütçe kalemi yok",
             Description = "Kalem tanımlayana kadar bütçe tek tutar olarak yönetilir; harcamalar kaleme yazılamaz." }' />
+    }
+    else if (Model.IsMatrixBreakdown && Model.Matrix != null)
+    {
+        <partial name="_PanelMatrix" model="Model" />
     }
     else
     {

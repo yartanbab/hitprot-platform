@@ -1,0 +1,150 @@
+@page
+@model Apya.Platform.Web.Pages.Finance.ContextWizardModalModel
+@using Volo.Abp.AspNetCore.Mvc.UI.Bootstrap.TagHelpers.Modal
+@using Apya.Platform.Localization
+@using Microsoft.AspNetCore.Mvc.Localization
+@inject IHtmlLocalizer<PlatformResource> L
+@{
+    Layout = null;
+
+    string TemplateLabel(Apya.Platform.Web.Pages.Finance.FinanceContextTemplate t) => t switch
+    {
+        Apya.Platform.Web.Pages.Finance.FinanceContextTemplate.Grant => "Hibe projesi",
+        Apya.Platform.Web.Pages.Finance.FinanceContextTemplate.Event => "Etkinlik",
+        _ => "Kurumsal proje"
+    };
+}
+
+@* ── BAĞLAM SİHİRBAZI (tasarım 1c) ─────────────────────────────────────
+   Prototipteki üç panelden biri burada: kalem kurulumu. Diğer ikisi
+   BİLİNÇLİ OLARAK yok (gerekçeler .cshtml.cs başlığında):
+     • sekme toggle'ları → sekme seti saklanmıyor, salt-okunur gösteriliyor
+     • kalem AĞACI     → kalem düz liste, iki seviye şemada yok
+     • şablon kaydetme → kiracı finans şablonu varlığı yok
+   Şablon kartları da seçilebilir değil: şablon projenin kategorisinden
+   türüyor, kategoriyi buradan değiştirmek tüm projeyi yeniden yazmak olurdu. *@
+
+<form method="post" action="@Url.Page("/Finance/ContextWizardModal", new { projectId = Model.ProjectId })">
+    <abp-modal size="Large">
+        <abp-modal-header title="Finans bağlamını kur"></abp-modal-header>
+        <abp-modal-body>
+
+            @* ── 1. BAĞLAM (salt-okunur) ───────────────────────────────── *@
+            <div class="apya-overline mb-2">Bu projenin bağlamı</div>
+            <div class="card mb-3">
+                <div class="card-body d-flex align-items-start gap-3">
+                    <span class="kpi-icon-box kpi-icon-box--accent">
+                        <i class="fa @(string.IsNullOrWhiteSpace(Model.CategoryIcon) ? "fa-folder" : Model.CategoryIcon)" aria-hidden="true"></i>
+                    </span>
+                    <div class="flex-grow-1">
+                        <div class="fw-semibold">@Model.ProjectName</div>
+                        <div class="small text-muted mb-2">
+                            Kategori: <strong>@Model.CategoryName</strong> →
+                            finans şablonu: <strong>@TemplateLabel(Model.Template)</strong>
+                        </div>
+                        <div class="d-flex flex-wrap gap-1">
+                            @foreach (var tab in Model.Tabs)
+                            {
+                                <span class="apya-chip @(Apya.Platform.Web.Pages.Finance.FinanceContext.IsContextual(tab.Code) ? "apya-chip-accent" : "apya-chip-neutral")">
+                                    <i class="fa @tab.Icon me-1" aria-hidden="true"></i>@L[tab.LabelKey]
+                                </span>
+                            }
+                        </div>
+                        <div class="form-text mt-2">
+                            Bu şablonda açılan sekmeler yukarıda; mor olanlar bu şablona özeldir.
+                            Şablonu değiştirmek için projenin <strong>kategorisini</strong> değiştirin —
+                            <a href="@($"/Projects/Edit/{Model.ProjectId}")">proje düzenleme ekranı</a>.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            @* ── 2. BÜTÇE KALEMLERİ ────────────────────────────────────── *@
+            <div class="apya-overline mb-2">Bütçe kalemleri</div>
+
+            @if (Model.ExistingLineCount > 0)
+            {
+                <div class="apya-chip apya-chip-warning d-inline-flex mb-2">
+                    <i class="fa fa-triangle-exclamation me-1" aria-hidden="true"></i>
+                    Bu projede zaten @Model.ExistingLineCount kalem var — aşağıdakiler ÜSTÜNE eklenir.
+                </div>
+            }
+
+            <p class="text-muted" style="font-size:12px">
+                Aşağıdaki adlar yalnızca öneridir; düzenleyin, silin ya da satır ekleyin.
+                <strong>Tutarlar boş gelir</strong> — girmediğiniz bir bütçeyi sizin adınıza yazmıyoruz.
+            </p>
+
+            <table class="table apya-clean-table align-middle mb-2" id="WizardLineTable">
+                <thead>
+                    <tr>
+                        <th style="width:90px">Kod</th>
+                        <th>Kalem adı</th>
+                        <th class="text-end" style="width:170px">Sözleşme tutarı</th>
+                        <th style="width:44px"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @for (var i = 0; i < Model.Rows.Count; i++)
+                    {
+                        <tr>
+                            @* Rows.Index olmadan ARADAN satir silinince sonraki satirlar
+                               hic baglanmaz (ASP.NET bitisik indeks bekler). *@
+                            <input type="hidden" name="Rows.Index" value="@i" />
+                            <td><input class="form-control form-control-sm" name="Rows[@i].Code" value="@Model.Rows[i].Code" maxlength="32" /></td>
+                            <td><input class="form-control form-control-sm" name="Rows[@i].Name" value="@Model.Rows[i].Name" maxlength="200" /></td>
+                            @* __Invariant ŞART: alan elle name= ile yazıldığı için ASP.NET işaretçiyi
+                               kendiliğinden eklemiyor. type="number" değeri DAİMA noktalı gönderir;
+                               işaretçi olmadan tr-TR bağlaması "1234.56"yı 123456 yapardı. *@
+                            <td>
+                                <input class="form-control form-control-sm text-end apya-numeric" name="Rows[@i].Amount" type="number" step="0.01" min="0" value="0" />
+                                <input type="hidden" name="__Invariant" value="Rows[@i].Amount" />
+                            </td>
+                            <td class="text-end">
+                                <button type="button" class="btn btn-sm btn-link p-1 text-danger text-decoration-none js-wizard-remove" title="Satırı çıkar">
+                                    <i class="fa fa-trash" aria-hidden="true"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+
+            <button type="button" class="btn btn-sm btn-outline-secondary" id="WizardAddRow">
+                <i class="fa fa-plus me-1" aria-hidden="true"></i>Satır ekle
+            </button>
+
+        </abp-modal-body>
+        <abp-modal-footer buttons="@(AbpModalButtons.Cancel | AbpModalButtons.Save)"></abp-modal-footer>
+    </abp-modal>
+</form>
+
+<script>
+    (function () {
+        var $table = $('#WizardLineTable');
+
+        // Satır çıkarmak satırı DOM'dan siler. Kalan satırlar Rows.Index gizli
+        // alanı sayesinde kendi indeksleriyle bağlanmaya devam eder; yeniden
+        // numaralamaya gerek yok.
+        $table.on('click', '.js-wizard-remove', function () {
+            $(this).closest('tr').remove();
+        });
+
+        // Yeni satırın indeksi mevcut hiçbir satırla ÇAKIŞMAMALI: silinen satırlar
+        // dizide boşluk bıraktığı için satır sayısı güvenli bir sayaç değildir.
+        var nextIndex = $table.find('tbody tr').length;
+
+        $('#WizardAddRow').on('click', function () {
+            var i = nextIndex++;
+            $table.find('tbody').append(
+                '<tr>' +
+                '<input type="hidden" name="Rows.Index" value="' + i + '" />' +
+                '<td><input class="form-control form-control-sm" name="Rows[' + i + '].Code" maxlength="32" /></td>' +
+                '<td><input class="form-control form-control-sm" name="Rows[' + i + '].Name" maxlength="200" /></td>' +
+                '<td><input class="form-control form-control-sm text-end apya-numeric" name="Rows[' + i + '].Amount" type="number" step="0.01" min="0" value="0" />' +
+                '<input type="hidden" name="__Invariant" value="Rows[' + i + '].Amount" /></td>' +
+                '<td class="text-end"><button type="button" class="btn btn-sm btn-link p-1 text-danger text-decoration-none js-wizard-remove" title="Satırı çıkar"><i class="fa fa-trash"></i></button></td>' +
+                '</tr>');
+        });
+    })();
+</script>

@@ -1,0 +1,185 @@
+@*
+    Finans → "Tüm projeler" (tasarım 2d).
+
+    Proje seçicide "Tüm projeler" seçiliyken Genel sekmesinin üstüne gelir.
+    Veri TEK çağrıdan gelir (IProjectBudgetAppService.GetPortfolioAsync) — proje
+    başına özet çağırmak proje sayısı kadar sorgu üretirdi.
+
+    ÇAPRAZ KUR TOPLAMI YOK: projeler farklı para birimindeyse KPI şeridi tek rakam
+    basmaz, para birimi başına satır gösterir. Kur olmadan toplamak yanlış bir
+    rakam üretirdi.
+
+    TASARIMDAN BİLİNÇLİ SAPMA: prototipin durum chip'lerinden "N eksik belge"
+    burada YOK. Belge açığı proje başına ayrı bir servis çağrısı ister
+    (IDocumentMatchingAppService.GetBoardAsync) ve portföyde bu, proje sayısı
+    kadar sorgu demek. Belge açığı proje seçiliyken "Belgeler" sekmesinde duruyor.
+*@
+@using Apya.Platform.ProjectBudgets.Dtos
+@using Apya.Platform.Projects
+@model Apya.Platform.Web.Pages.Finance.IndexModel
+
+@functions {
+    string Money(decimal v, string cur) => v.ToString("N2") + (cur == "TRY" ? " ₺" : " " + cur);
+    string MoneyKpi(decimal v, string cur) => cur == "TRY" ? "₺" + v.ToString("N0") : v.ToString("N0") + " " + cur;
+
+    string BarTone(int pct) => pct >= 100 ? "is-negative" : pct >= 80 ? "is-warning" : "is-positive";
+
+    string TemplateLabel(ProjectCategory? key) => key switch
+    {
+        ProjectCategory.GrantProject => "Hibe",
+        ProjectCategory.Event => "Etkinlik",
+        _ => "Kurumsal"
+    };
+}
+
+@{
+    var p = Model.Portfolio!;
+    var single = p.Totals.Count == 1 ? p.Totals[0] : null;
+}
+
+@if (p.Rows.Count == 0)
+{
+    <partial name="_EmptyState" model='new Apya.Platform.Web.Pages.Shared.EmptyStateModel {
+        Icon = "fa-layer-group",
+        Title = "Bütçesi olan proje yok",
+        Description = "Bir projeye bütçe tanımladığınızda ya da ilk gelir/gider kaydını girdiğinizde portföy burada oluşur." }' />
+    return;
+}
+
+@* ── KONSOLİDE KPI ŞERİDİ ────────────────────────────────────────────── *@
+@if (single != null)
+{
+    var cur = single.Currency;
+    <div class="row g-3 mb-3 apya-finance-kpis">
+        <div class="col-6 col-md-3">
+            <partial name="_KpiCard" model='new Apya.Platform.Web.Pages.Shared.KpiCardModel {
+                Icon = "fa-wallet", Accent = "accent", Label = "Onaylanan",
+                Value = MoneyKpi(single.ApprovedBudget, cur),
+                SubText = $"{single.ProjectCount} proje" }' />
+        </div>
+        <div class="col-6 col-md-3">
+            <partial name="_KpiCard" model='new Apya.Platform.Web.Pages.Shared.KpiCardModel {
+                Icon = "fa-arrow-down-long", Accent = "positive", Label = "Gelen",
+                Value = MoneyKpi(single.MoneyIn, cur),
+                SubText = "tahsilat + gelir" }' />
+        </div>
+        <div class="col-6 col-md-3">
+            <partial name="_KpiCard" model='new Apya.Platform.Web.Pages.Shared.KpiCardModel {
+                Icon = "fa-arrow-up-long", Accent = "negative", Label = "Harcanan",
+                Value = MoneyKpi(single.SpentAmount, cur),
+                SubText = $"kullanılabilir {MoneyKpi(single.AvailableCash, cur)}" }' />
+        </div>
+        <div class="col-6 col-md-3">
+            <partial name="_KpiCard" model='new Apya.Platform.Web.Pages.Shared.KpiCardModel {
+                Icon = "fa-ban", Accent = single.UnfundedTotal > 0 ? "warning" : "neutral",
+                Label = "Finanse edilmeyen",
+                Value = MoneyKpi(single.UnfundedTotal, cur),
+                SubText = single.UnfundedTotal > 0 ? "kesinti karşılanmadı" : "kesinti yok" }' />
+        </div>
+    </div>
+}
+else
+{
+    <div class="card mb-3">
+        <div class="card-body">
+            <div class="d-flex align-items-center gap-2 mb-2">
+                <span class="apya-chip apya-chip-warning">karışık PB</span>
+                <span class="text-muted" style="font-size:12px">
+                    Projeler farklı para birimlerinde; toplamlar para birimi başına verilir.
+                </span>
+            </div>
+            <table class="table apya-clean-table align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th style="width:90px">PB</th>
+                        <th class="text-end apya-numeric">Onaylanan</th>
+                        <th class="text-end apya-numeric">Gelen</th>
+                        <th class="text-end apya-numeric">Harcanan</th>
+                        <th class="text-end apya-numeric">Finanse edilmeyen</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var t in p.Totals)
+                    {
+                        <tr>
+                            <td><span class="apya-chip apya-chip-neutral">@t.Currency</span> <span class="small text-muted">@t.ProjectCount proje</span></td>
+                            <td class="text-end apya-numeric fw-semibold">@Money(t.ApprovedBudget, t.Currency)</td>
+                            <td class="text-end apya-numeric">@Money(t.MoneyIn, t.Currency)</td>
+                            <td class="text-end apya-numeric">@Money(t.SpentAmount, t.Currency)</td>
+                            <td class="text-end apya-numeric">@Money(t.UnfundedTotal, t.Currency)</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}
+
+@* ── PROJE TABLOSU (riskli üstte) ─────────────────────────────────────── *@
+<div class="card mb-3">
+    <div class="card-header d-flex align-items-center justify-content-between">
+        <div>
+            <span class="fw-semibold">Projeler</span>
+            <div class="small text-muted">Riskli projeler üstte</div>
+        </div>
+        @if (p.SkippedProjectCount > 0)
+        {
+            <span class="small text-muted">@p.SkippedProjectCount proje bütçesiz — listelenmedi</span>
+        }
+    </div>
+    <div class="table-responsive apya-portfolio-scroll">
+        <table class="table apya-clean-table align-middle mb-0">
+            <thead>
+                <tr>
+                    <th>Proje</th>
+                    <th style="width:96px">Şablon</th>
+                    <th class="text-end apya-numeric">Onaylanan</th>
+                    <th class="text-end apya-numeric">Gelen</th>
+                    <th class="text-end apya-numeric">Harcanan</th>
+                    <th class="text-end apya-numeric">Kullanılabilir</th>
+                    <th style="width:130px">Kullanım</th>
+                    <th style="width:150px">Durum</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var row in p.Rows)
+                {
+                    <tr>
+                        <td>
+                            <a href="@($"/Finance?projectId={row.ProjectId}&tab=genel")" class="fw-semibold text-decoration-none">@row.Name</a>
+                        </td>
+                        <td><span class="apya-chip apya-chip-neutral">@TemplateLabel(row.CategorySystemKey)</span></td>
+                        <td class="text-end apya-numeric fw-semibold">@Money(row.ApprovedBudget, row.Currency)</td>
+                        <td class="text-end apya-numeric">@Money(row.MoneyIn, row.Currency)</td>
+                        <td class="text-end apya-numeric">@Money(row.SpentAmount, row.Currency)</td>
+                        <td class="text-end apya-numeric @(row.AvailableCash < 0 ? "text-danger" : "")">@Money(row.AvailableCash, row.Currency)</td>
+                        <td>
+                            <div class="apya-tile-progress-label"><span class="apya-numeric">%@row.UsagePercent</span></div>
+                            <div class="apya-mini-progress @BarTone(row.UsagePercent)">
+                                <span style="width:@(Math.Min(row.UsagePercent, 100))%"></span>
+                            </div>
+                        </td>
+                        <td>
+                            @if (row.HasCashRisk)
+                            {
+                                <span class="apya-chip apya-chip-negative">Nakit riski</span>
+                            }
+                            else if (row.IsOverBudget)
+                            {
+                                <span class="apya-chip apya-chip-negative">Bütçe aşımı</span>
+                            }
+                            else if (row.HasDisputedTranche)
+                            {
+                                <span class="apya-chip apya-chip-warning">Kesinti itirazı</span>
+                            }
+                            else
+                            {
+                                <span class="apya-chip apya-chip-positive">Sağlıklı</span>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

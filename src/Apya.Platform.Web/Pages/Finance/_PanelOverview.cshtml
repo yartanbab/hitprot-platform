@@ -112,6 +112,11 @@
         </div>
     }
 }
+else if (Model.SelectedProject == null && Model.Portfolio != null)
+{
+    @* Tasarım 2d: proje seçilmemişken şerit boş kalmaz, portföy gelir. *@
+    <partial name="_PanelPortfolio" model="Model" />
+}
 else if (Model.SelectedProject == null)
 {
     <div class="apya-chip apya-chip-neutral d-inline-flex mb-3">

@@ -17,6 +17,18 @@ public interface IProjectBudgetAppService : IApplicationService
     /// <summary>"Genel" sekmesinin tek çağrısı: KPI'lar + fonlama akışı + kalem tablosu.</summary>
     Task<ProjectBudgetOverviewDto> GetOverviewAsync(Guid projectId);
 
+    /// <summary>
+    /// "Tüm projeler" görünümü: her projenin bütçe/gelen/harcanan özeti TEK geçişte.
+    /// Proje başına <see cref="GetOverviewAsync"/> çağırmak N+1 üretirdi.
+    /// </summary>
+    Task<ProjectPortfolioDto> GetPortfolioAsync();
+
+    /// <summary>
+    /// Kalem ↔ görev matrisi (tasarım 4b): her kalemin altında ona bağlı görevler,
+    /// planları ve gerçekleşenleri. Görev başına sorgu YOK — tek geçiş.
+    /// </summary>
+    Task<BudgetLineTaskMatrixDto> GetLineTaskMatrixAsync(Guid projectId);
+
     Task<List<ProjectBudgetLineDto>> GetLinesAsync(Guid projectId);
 
     /// <summary>
