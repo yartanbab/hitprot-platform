@@ -78,6 +78,23 @@ public static class ReleaseNoteCatalog
                 "kayboluyor, görev bazlı raporlar eksik çıkıyordu. Düzenleme ekranı artık görev " +
                 "bilgisini koruyor."),
 
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "Belge açığını finans ekranından görüyorsunuz",
+                "Finans ekranına \"Belgeler\" sekmesi eklendi. Kaç harcamanın belgesi eksik, bu " +
+                "harcamaların hangi bütçe kalemlerine yazıldığı ve kaç belgenin henüz bir harcamaya " +
+                "bağlanmadığı tek bakışta görünüyor. Aynı sekmede kurumun istediği belge listesinin " +
+                "yüzde kaçının tamamlandığı ve teslim paketinizin dışa aktarılmaya hazır olup " +
+                "olmadığı da yazıyor — teslimi bloke eden bir eksik varsa orada uyarı çıkıyor. " +
+                "Belgeleriniz yine Dokümanlar modülünde duruyor; bu sekme onları finans gözüyle " +
+                "özetliyor ve tek tıkla ilgili ekrana götürüyor."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
+                "Belge eşleştirirken hangi kalemin belgeleneceğini görüyorsunuz",
+                "Harcama-belge eşleştirme ekranında bir aday belgeyi bağlamadan önce \"bağlanınca " +
+                "hangi bütçe kalemi belgeli olur\" bilgisi kartın üzerinde yazıyor. Harcamalar " +
+                "listesinde de her satırın kalemi görünüyor, böylece hangi kalemin açığını " +
+                "kapattığınızı kaybetmiyorsunuz."),
+
             // ── Hibe ─────────────────────────────────────────────────────────
             new ReleaseNoteItem(ReleaseNoteCategory.Feature,
                 "Açık hibe çağrılarının tamamını görüyorsunuz",
