@@ -12,6 +12,7 @@ using Volo.Abp.Domain.Repositories;
 using Volo.Abp.Identity;
 using Volo.Abp.MultiTenancy;
 using Volo.Abp.TenantManagement;
+using Volo.Abp.Users;
 using Apya.Platform.Grants.Dtos;
 using Apya.Platform.Permissions;
 
@@ -37,6 +38,7 @@ public class GrantPipelineAppService : ApplicationService, IGrantPipelineAppServ
     public const int RiskyDayThreshold = 20;
 
     private readonly IRepository<GrantApplication, Guid> _appRepo;
+    private readonly IRepository<GrantApplicationActivity, Guid> _activityRepo;
     private readonly IRepository<GrantApplicationBudgetLine, Guid> _budgetRepo;
     private readonly IRepository<GrantApplicationDocument, Guid> _docRepo;
     private readonly IRepository<GrantCall, Guid> _callRepo;
@@ -51,6 +53,7 @@ public class GrantPipelineAppService : ApplicationService, IGrantPipelineAppServ
 
     public GrantPipelineAppService(
         IRepository<GrantApplication, Guid> appRepo,
+        IRepository<GrantApplicationActivity, Guid> activityRepo,
         IRepository<GrantApplicationBudgetLine, Guid> budgetRepo,
         IRepository<GrantApplicationDocument, Guid> docRepo,
         IRepository<GrantCall, Guid> callRepo,
@@ -64,6 +67,7 @@ public class GrantPipelineAppService : ApplicationService, IGrantPipelineAppServ
         IDataFilter<IMultiTenant> mtFilter)
     {
         _appRepo = appRepo;
+        _activityRepo = activityRepo;
         _budgetRepo = budgetRepo;
         _docRepo = docRepo;
         _callRepo = callRepo;
@@ -87,6 +91,7 @@ public class GrantPipelineAppService : ApplicationService, IGrantPipelineAppServ
     {
         EnsureHostContext();
         var application = await GetApplicationAsync(input.ApplicationId);
+        string? movedTo = null;
 
         if (input.StepId.HasValue)
         {
@@ -98,13 +103,17 @@ public class GrantPipelineAppService : ApplicationService, IGrantPipelineAppServ
                 throw new BusinessException(PlatformDomainErrorCodes.GrantPipelineStepNotInTemplate);
             }
             application.MoveToStep(input.StepId.Value);
+            movedTo = (await _stepRepo.FirstOrDefaultAsync(x => x.Id == input.StepId.Value))?.Name;
         }
         else if (input.Stage.HasValue)
         {
             application.AdvanceStage(input.Stage.Value);
+            movedTo = input.Stage.Value.ToString();
         }
 
         await _appRepo.UpdateAsync(application, autoSave: true);
+        // 2d'deki süreç akışı bu kaydı okur; taşıma başka yerde iz bırakmıyor.
+        await LogAsync(application, GrantActivityKind.StageMoved, movedTo);
 
         var call = await GetCallAsync(application.GrantCallId);
         return await BuildAsync(call.Id, null);
@@ -115,6 +124,8 @@ public class GrantPipelineAppService : ApplicationService, IGrantPipelineAppServ
         EnsureHostContext();
         var application = await GetApplicationAsync(input.ApplicationId);
 
+        string? assigneeName = null;
+
         if (input.UserId.HasValue)
         {
             // Danışman host kullanıcısı olmalı; kiracı kullanıcısı atanamaz.
@@ -124,16 +135,29 @@ public class GrantPipelineAppService : ApplicationService, IGrantPipelineAppServ
             {
                 throw new BusinessException(PlatformDomainErrorCodes.GrantPipelineAssigneeNotHost);
             }
+            assigneeName = $"{user.Name} {user.Surname}".Trim();
         }
 
         application.AssignTo(input.UserId);
         await _appRepo.UpdateAsync(application, autoSave: true);
+        await LogAsync(application, GrantActivityKind.AssignmentChanged, assigneeName);
 
         var call = await GetCallAsync(application.GrantCallId);
         return await BuildAsync(call.Id, null);
     }
 
     // ------------------------------------------------------------------ yardımcılar
+
+    private async Task LogAsync(GrantApplication application, GrantActivityKind kind, string? context)
+    {
+        await _activityRepo.InsertAsync(new GrantApplicationActivity(
+            GuidGenerator.Create(), application.TenantId, application.Id, kind,
+            CurrentUser.GetId(),
+            CurrentUser.Name.IsNullOrWhiteSpace()
+                ? (CurrentUser.UserName ?? "?")
+                : $"{CurrentUser.Name} {CurrentUser.SurName}".Trim(),
+            GrantPartyRole.Danisman, context), autoSave: true);
+    }
 
     private void EnsureHostContext()
     {
