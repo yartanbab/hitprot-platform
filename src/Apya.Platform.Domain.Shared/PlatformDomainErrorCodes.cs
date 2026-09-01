@@ -108,6 +108,10 @@ public static class PlatformDomainErrorCodes
     public const string GrantDocumentNotUploaded = "Platform:Grant:DocumentNotUploaded";
     public const string GrantDocumentPackageIncomplete = "Platform:Grant:DocumentPackageIncomplete";
 
+    // 2c · Pipeline konsolu
+    public const string GrantPipelineStepNotInTemplate = "Platform:Grant:PipelineStepNotInTemplate";
+    public const string GrantPipelineAssigneeNotHost = "Platform:Grant:PipelineAssigneeNotHost";
+
     // --- Dosya (File) Modülü ---
     public const string FileUnsupportedExtension = "Platform:File:UnsupportedExtension";
     public const string FileSizeExceeded = "Platform:File:SizeExceeded";

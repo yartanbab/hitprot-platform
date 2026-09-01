@@ -23,6 +23,26 @@ public class GrantApplication : FullAuditedAggregateRoot<Guid>, IMultiTenant
     public Guid? TenantId { get; set; }
     public Guid GrantCallId { get; private set; }
     public GrantApplicationStage Stage { get; private set; }
+
+    /// <summary>
+    /// 2c · Başvurunun panodaki yeri: çağrının aşama ŞABLONUNDAKİ adım.
+    /// Programda şablon tanımlı değilse null kalır ve pano dört değerli
+    /// <see cref="Stage"/> enum'una düşer.
+    ///
+    /// 🔴 <see cref="Stage"/> KALDIRILMADI: eski başvurular ve şablonsuz programlar
+    /// onu kullanmayı sürdürür. Şablonlu başvuruda tek doğru kaynak bu alandır;
+    /// enum o satırlarda yazılmaz, ekranlar adım adını gösterir.
+    /// </summary>
+    public Guid? CurrentStepId { get; private set; }
+
+    /// <summary>
+    /// 2c · Başvuruyu yürüten danışman. 1c'deki öneri ataması (GrantRecommendation)
+    /// ÇAĞRI bazlıdır ve firma başvurmadan önce yapılır; başvuru açıldıktan sonra
+    /// sorumluluk buraya taşınır — pano kart bazında atama yapabilsin.
+    /// </summary>
+    public Guid? AssignedUserId { get; private set; }
+
+    public void AssignTo(Guid? userId) => AssignedUserId = userId;
     public DateTime AppliedDate { get; private set; }
     public decimal? ApprovedAmount { get; private set; }
 
@@ -61,6 +81,12 @@ public class GrantApplication : FullAuditedAggregateRoot<Guid>, IMultiTenant
         CurrentStep = 1;
         PendingParty = GrantPartyRole.Firma;
     }
+
+    /// <summary>
+    /// 2c · Başvuruyu şablondaki bir adıma taşır (pano sürükle-bırak).
+    /// Onaylanan tutar aşamadan bağımsızdır; <see cref="AdvanceStage"/> ile girilir.
+    /// </summary>
+    public void MoveToStep(Guid stepId) => CurrentStepId = stepId;
 
     /// <summary>Aşamayı ilerletir (host). <paramref name="approvedAmount"/> verilmezse mevcut değer korunur.</summary>
     public void AdvanceStage(GrantApplicationStage stage, decimal? approvedAmount = null)
