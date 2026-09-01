@@ -1,0 +1,72 @@
+@page
+@model Apya.Platform.Web.Pages.Finance.RevisionModalModel
+@using Volo.Abp.AspNetCore.Mvc.UI.Bootstrap.TagHelpers.Modal
+@{
+    Layout = null;
+}
+<form method="post" action="@Url.Page("/Finance/RevisionModal", new { projectId = Model.ProjectId, deductionId = Model.DeductionId })">
+    <abp-modal size="Large">
+        <abp-modal-header title="@($"Bütçe Revizyonu — Rev.{Model.NextRevisionNo}")"></abp-modal-header>
+        <abp-modal-body>
+            @if (Model.SourceDeductionAmount > 0)
+            {
+                <div class="alert alert-warning py-2" style="font-size:12.5px">
+                    Bu revizyon bir kesintiden doğuyor:
+                    <strong class="apya-numeric">@Model.SourceDeductionAmount.ToString("N2")</strong>.
+                    Kalemlerden düşülen toplam bu tutarı karşılamak zorunda değildir —
+                    karşılamayan kısım bütçede açık olarak kalır.
+                </div>
+            }
+
+            <abp-row>
+                <abp-column size-md="_8">
+                    <abp-input asp-for="Reason" label="Gerekçe" />
+                </abp-column>
+                <abp-column size-md="_4">
+                    <abp-input asp-for="EffectiveDate" type="date" label="Yürürlük tarihi" />
+                </abp-column>
+            </abp-row>
+
+            @if (!Model.Lines.Any())
+            {
+                <p class="text-muted mb-0">Bu projede bütçe kalemi yok — önce kalem tanımlayın.</p>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="table table-sm apya-clean-table mb-0">
+                        <thead>
+                            <tr>
+                                <th>Kalem</th>
+                                <th class="text-end apya-numeric">Mevcut</th>
+                                <th class="text-end apya-numeric" style="width:180px">Yeni tutar</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @for (var i = 0; i < Model.Lines.Count; i++)
+                            {
+                                <tr>
+                                    <td>
+                                        @Model.Lines[i].Name
+                                        <input type="hidden" asp-for="Lines[i].LineId" />
+                                        <input type="hidden" asp-for="Lines[i].Name" />
+                                        <input type="hidden" asp-for="Lines[i].CurrentAmount" />
+                                    </td>
+                                    <td class="text-end apya-numeric">@Model.Lines[i].CurrentAmount.ToString("N2")</td>
+                                    <td>
+                                        <input asp-for="Lines[i].NewAmount" class="form-control form-control-sm text-end apya-numeric" />
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+                <p class="text-muted mb-0 mt-2" style="font-size:12px">
+                    Yalnız <strong>değiştirdiğiniz</strong> kalemler revizyon kaydına girer.
+                    Kalemin sözleşme tutarı değişmez; sadece onaylanan tutar taşınır.
+                </p>
+            }
+        </abp-modal-body>
+        <abp-modal-footer buttons="@(AbpModalButtons.Cancel | AbpModalButtons.Save)"></abp-modal-footer>
+    </abp-modal>
+</form>

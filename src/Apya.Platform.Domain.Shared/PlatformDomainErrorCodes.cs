@@ -192,4 +192,22 @@ public static class PlatformDomainErrorCodes
 
     // --- Dashboard ---
     public const string DashboardLayoutTooLarge = "Platform:Dashboard:LayoutTooLarge";
+
+    // --- Proje bütçesi (ProjectBudget) — kalem, dilim, kesinti, revizyon ---
+    public const string BudgetLineNameRequired = "Platform:ProjectBudget:LineNameRequired";
+    public const string BudgetLineCodeAlreadyExists = "Platform:ProjectBudget:LineCodeAlreadyExists";
+    public const string BudgetLineAmountInvalid = "Platform:ProjectBudget:LineAmountInvalid";
+    public const string BudgetLineInUse = "Platform:ProjectBudget:LineInUse";
+    public const string BudgetLineProjectMismatch = "Platform:ProjectBudget:LineProjectMismatch";
+    public const string BudgetTransferLimitInvalid = "Platform:ProjectBudget:TransferLimitInvalid";
+
+    public const string TrancheAmountInvalid = "Platform:ProjectBudget:TrancheAmountInvalid";
+    public const string TrancheCollectionInvalid = "Platform:ProjectBudget:TrancheCollectionInvalid";
+
+    public const string DeductionAmountInvalid = "Platform:ProjectBudget:DeductionAmountInvalid";
+    public const string DeductionReasonRequired = "Platform:ProjectBudget:DeductionReasonRequired";
+    public const string DeductionExceedsTranche = "Platform:ProjectBudget:DeductionExceedsTranche";
+
+    public const string BudgetRevisionEmpty = "Platform:ProjectBudget:RevisionEmpty";
+    public const string BudgetRevisionAmountInvalid = "Platform:ProjectBudget:RevisionAmountInvalid";
 }

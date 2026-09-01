@@ -17,27 +17,14 @@
         <abp-script src="/js/apya-transfer.js" />
         <abp-script src="/Pages/Finance/Index.js" />
     }
-}
-
-@functions {
-    string Money(decimal v) => v.ToString("N0");
-    string MoneyC(decimal v, string cur) => v.ToString("N2") + (cur == "TRY" ? " ₺" : " " + cur);
-
-    // KPI kartı kuruşu GÖSTERMEZ: değer 20px+ basılıyor ve dört kart tek satırı
-    // paylaşıyor — "3.954.000,00 ₺" karta sığmayıp kırpılıyordu (ölçüm: 1440px,
-    // col-xl-3). Kuruş yalnız kayıt listesinde anlamlı, özet metrikte değil.
-    string MoneyKpi(decimal v, string cur)
-        => cur == "TRY" ? "₺" + v.ToString("N0") : v.ToString("N0") + " " + cur;
-
-    (string tone, string icon) TxVisual(IndexModel.TxType type, bool isInflow) => type switch
+    @if (Model.ActiveTab == FinanceContext.TabBudgetLines || Model.ActiveTab == FinanceContext.TabTranches)
     {
-        IndexModel.TxType.Transfer => ("kpi-icon-box--accent", "fa-right-left"),
-        _ when isInflow => ("kpi-icon-box--positive", "fa-arrow-down-long"),
-        _ => ("kpi-icon-box--negative", "fa-arrow-up-long")
-    };
+        <abp-script src="/Pages/Finance/Budget.js" />
+    }
 }
 
-<div data-page-description="Bütçe, gelir-gider ve kasa — tek çatı" class="apya-page">
+<div data-page-description="Bütçe, gelir-gider ve kasa — tek çatı" class="apya-page"
+     data-project-id="@Model.ProjectId">
 
 @* ─── BAĞLAM ÇUBUĞU — proje seçici + şablon + aksiyonlar ─── *@
 <div class="apya-console-rail apya-finance-context">
@@ -57,9 +44,10 @@
         <noscript><button type="submit" class="btn btn-sm btn-outline-secondary">@L["Finance:Apply"]</button></noscript>
     </form>
 
+    <span class="apya-console-sep" aria-hidden="true"></span>
+
     @if (Model.SelectedProject != null)
     {
-        <span class="apya-console-sep" aria-hidden="true"></span>
         <span class="apya-chip apya-chip-accent">
             <i class="fa fa-layer-group me-1" aria-hidden="true"></i>@L[FinanceContext.LabelKeyOf(Model.Template)]
         </span>
@@ -71,7 +59,6 @@
     }
     else
     {
-        <span class="apya-console-sep" aria-hidden="true"></span>
         <span class="apya-chip apya-chip-neutral">
             <i class="fa fa-layer-group me-1" aria-hidden="true"></i>@L["Finance:PortfolioContext"]
         </span>
@@ -103,133 +90,19 @@
         @switch (Model.ActiveTab)
         {
             case FinanceContext.TabOverview:
-                @* --- GENEL --- *@
-                if (Model.Summary != null)
-                {
-                    var s = Model.Summary;
-                    <div class="row g-3 mb-3 apya-finance-kpis">
-                        <div class="col-6 col-xl-3">
-                            <partial name="_KpiCard" model='new KpiCardModel {
-                                Icon = "fa-wallet", Accent = "accent", Label = "Bütçe",
-                                Value = MoneyKpi(s.Budget, s.Currency),
-                                SubText = "projenin toplam bütçesi",
-                                Hint = "Projenin tanımlı toplam bütçesi. Kalem bazlı kırılım henüz yok — tek tutardır." }' />
-                        </div>
-                        <div class="col-6 col-xl-3">
-                            <partial name="_KpiCard" model='new KpiCardModel {
-                                Icon = "fa-arrow-up-long", Accent = "negative", Label = "Harcanan",
-                                Value = MoneyKpi(s.TotalExpense, s.Currency),
-                                SubText = $"%{s.BudgetUsagePercent} bütçe",
-                                Hint = "Yalnız bu projeye bağlı Gider kayıtlarının toplamı — kasa transferi veya başka hareket türü sayılmaz." }' />
-                        </div>
-                        <div class="col-6 col-xl-3">
-                            <partial name="_KpiCard" model='new KpiCardModel {
-                                Icon = "fa-arrow-down-long", Accent = "positive", Label = "Gelir",
-                                Value = MoneyKpi(s.TotalIncome, s.Currency),
-                                SubText = "faturasız gelir kayıtları",
-                                Hint = "Yalnız bu projeye bağlı, faturasız Gelir kayıtlarının toplamı. Bu projeye kesilen SATIŞ FATURALARININ tutarı buraya girmez." }' />
-                        </div>
-                        <div class="col-6 col-xl-3">
-                            <partial name="_KpiCard" model='new KpiCardModel {
-                                Icon = "fa-scale-balanced", Accent = s.OverBudget ? "negative" : "brand",
-                                Label = "Kalan bütçe",
-                                Value = MoneyKpi(s.BudgetRemaining, s.Currency),
-                                SubText = s.OverBudget ? "bütçe aşıldı" : "bütçe − harcanan",
-                                Hint = "Bütçe eksi toplam gider. Gelir bu hesaba girmez." }' />
-                        </div>
-                    </div>
-                }
-                else
-                {
-                    <div class="apya-chip apya-chip-neutral d-inline-flex mb-3">
-                        <i class="fa fa-circle-info me-1" aria-hidden="true"></i>
-                        @L["Finance:SelectProjectForBudget"]
-                    </div>
-                }
-
-                <div class="row g-3">
-                    <div class="col-lg-7">
-                        <div class="card mb-0">
-                            <div class="card-header d-flex align-items-center justify-content-between">
-                                <div>
-                                    <span class="fw-semibold">Son İşlemler</span>
-                                    <div class="small text-muted">
-                                        @(Model.SelectedProject?.Name ?? "Tüm hesaplar")
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="list-group list-group-flush">
-                                @if (!Model.Transactions.Any())
-                                {
-                                    <div class="list-group-item text-muted text-center py-4" style="font-size:13px">Henüz işlem yok.</div>
-                                }
-                                @foreach (var t in Model.Transactions)
-                                {
-                                    var (tone, icon) = TxVisual(t.Type, t.IsInflow);
-                                    <a href="@t.Url" class="list-group-item list-group-item-action d-flex align-items-center gap-3">
-                                        <div class="kpi-icon-box kpi-icon-box--sm @tone">
-                                            <i class="fa @icon" aria-hidden="true"></i>
-                                        </div>
-                                        <div class="flex-grow-1 min-w-0">
-                                            <div class="fw-semibold text-truncate">@t.Title</div>
-                                            <div class="small text-muted text-truncate">
-                                                @(t.CustomerName ?? t.ProjectName ?? "—") · @t.Date.ToString("dd MMM yyyy")
-                                            </div>
-                                        </div>
-                                        <div class="text-end flex-shrink-0">
-                                            <span class="apya-chip apya-chip-neutral d-block mb-1">@t.CategoryLabel</span>
-                                            <div class="apya-numeric fw-bold @(t.IsInflow ? "text-success" : "text-danger")">
-                                                @(t.IsInflow ? "▲ +" : "▼ −")@MoneyC(t.Amount, t.Currency)
-                                            </div>
-                                        </div>
-                                    </a>
-                                }
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="col-lg-5">
-                        <div class="card mb-0">
-                            <div class="card-header fw-semibold">Kasa &amp; Banka</div>
-                            <partial name="_AccountsList" model="Model" />
-                        </div>
-                    </div>
-                </div>
+                <partial name="_PanelOverview" model="Model" />
                 break;
 
             case FinanceContext.TabCash:
-                @* --- KASA — bugünkü Finans Hub'ın işlem yüzeyi, birebir --- *@
-                <div class="row g-3">
-                    <div class="col-lg-5">
-                        <div class="card mb-3 text-white" style="background: linear-gradient(135deg, var(--apya-accent-500), var(--apya-accent-700));">
-                            <div class="card-body">
-                                <div class="apya-overline text-white-50 d-flex align-items-center">
-                                    Toplam Bakiye (₺ karşılığı)
-                                    <apya-hint placement="bottom" text="Her hesabın bakiyesi, o para birimi için kayıtlı EN GÜNCEL kurla ₺'ye çevrilip toplanır. Kuru hiç girilmemiş bir para birimi toplama 0 olarak katılır — eksik görünüyorsa Kurlar sayfasından kur ekleyin." />
-                                </div>
-                                <h2 class="fw-bold apya-numeric mb-1">₺@Money(Model.TotalBalanceTry)</h2>
-                                <div class="small text-white-50">
-                                    <i class="fa fa-arrow-trend-up me-1" aria-hidden="true"></i>
-                                    @Model.Accounts.Count hesap · @Model.DistinctCurrencyCount para birimi
-                                </div>
-                            </div>
-                        </div>
+                <partial name="_PanelCash" model="Model" />
+                break;
 
-                        <div class="card mb-0">
-                            <div class="card-header fw-semibold">Hesaplar</div>
-                            <partial name="_AccountsList" model="Model" />
-                        </div>
-                    </div>
+            case FinanceContext.TabBudgetLines:
+                <partial name="_PanelBudgetLines" model="Model" />
+                break;
 
-                    <div class="col-lg-7">
-                        <div class="card mb-0">
-                            <div class="card-header fw-semibold"><i class="fa fa-paper-plane me-1" aria-hidden="true"></i>Hızlı Transfer</div>
-                            <div class="card-body" id="ApyaTransferWidget">
-                                <div class="text-muted text-center py-3" style="font-size:13px">Hesaplar yükleniyor...</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+            case FinanceContext.TabTranches:
+                <partial name="_PanelTranches" model="Model" />
                 break;
 
             case FinanceContext.TabLedger:
@@ -263,23 +136,6 @@
                 <div class="text-center">
                     <a href="/Documents" class="btn btn-sm btn-outline-secondary"><i class="fa fa-folder-open me-1" aria-hidden="true"></i>Dokümanlar</a>
                 </div>
-                break;
-
-            case FinanceContext.TabBudgetLines:
-                <partial name="_EmptyState" model='new EmptyStateModel {
-                    Icon = "fa-list-ul",
-                    Title = "Bütçe kalemleri henüz tanımlanamıyor",
-                    Description = "Bugün proje bütçesi tek tutardır. Kalem bazlı bütçe, taahhüt ve gerçekleşme takibi hazırlanıyor." }' />
-                <div class="text-center">
-                    <a href="/Reports/ProjectBudget" class="btn btn-sm btn-outline-secondary"><i class="fa fa-chart-column me-1" aria-hidden="true"></i>Proje Bütçe Raporu</a>
-                </div>
-                break;
-
-            case FinanceContext.TabTranches:
-                <partial name="_EmptyState" model='new EmptyStateModel {
-                    Icon = "fa-scissors",
-                    Title = "Dilim ve kesinti kaydı henüz yok",
-                    Description = "Parçalı fonlama (dilim · kesinti · bütçe revizyonu) hazırlanıyor. Bugün gelen para, gelir kaydı olarak tutuluyor." }' />
                 break;
 
             case FinanceContext.TabDonor:

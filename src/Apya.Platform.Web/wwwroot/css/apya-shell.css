@@ -7413,3 +7413,57 @@ html[data-sidebar] .apya-sidebar-resizer {
 .apya-finance-kpis .kpi-card-text h3 {
     font-size: 20px;
 }
+
+/* Fonlama akisi seridi (tasarim 1a): gelen / bekleyen / kesinti tek barda.
+   .apya-mini-progress TEK segment icindir; burada uc segment yan yana ve
+   toplamlari %100 olmayabilir (plan disi tahsilat), o yuzden ayri kural. */
+.apya-funding-flow {
+    display: flex;
+    height: 14px;
+    border-radius: var(--apya-radius-full);
+    background: var(--apya-surface-sunken);
+    overflow: hidden;
+}
+.apya-funding-flow > span {
+    display: block;
+    height: 100%;
+}
+.apya-funding-flow > .is-received { background: var(--apya-positive-500); }
+.apya-funding-flow > .is-deducted { background: var(--apya-negative-500); }
+/* Bekleyen dilim taranmis: "para YOK ama gelecek" ile "para geldi" ayni duz
+   renkte gorunmesin. */
+.apya-funding-flow > .is-pending {
+    background: repeating-linear-gradient(135deg,
+        var(--apya-neutral-300) 0 6px,
+        var(--apya-neutral-200) 6px 12px);
+}
+
+/* Kesinti alt satiri: ait oldugu dilimin ALTINDA, ayri tablo degil.
+   Kesikli ust cizgi "bu satir yukaridakinin devami" der; hafif kirmizi zemin
+   de onu normal bir dilim satiri sanmayi engeller. */
+/* Iki ayri tuzak birden, ikisi de OLCULDU:
+   1) Ozgulluk: sade `.apya-deduction-row > td` 0-1-1; S17 zincirinden
+      yazmak gerekiyor.
+   2) `!important` ZORUNLU: S17'deki `.apya-clean-table tbody td` zemini
+      `transparent !important` ile basiyor -> ozgulluk yetse bile renk
+      dusuyordu (getComputedStyle backgroundColor rgba(0,0,0,0)).
+      Ayni gerekce S17 kendi yorumunda da yazili. */
+.apya-clean-table tbody tr.apya-deduction-row > td {
+    border-top: 1px dashed var(--apya-border-default);
+    background: color-mix(in srgb, var(--apya-negative-500) 5%, transparent) !important;
+    font-size: 12.5px;
+}
+
+/* KPI kartinin IKONU finans seridinde gizlenir. Tasarimin KPI karti zaten
+   ikonsuz (etiket -> deger -> alt not); paylasilan _KpiCard ise 38px ikon
+   kutusu + 16px bosluk yiyor. Alti metrik yan yana durdugu icin o 54px
+   dogrudan degerin okunabilirligine gidiyor. Markup'a dokunulmuyor:
+   paylasilan kart diger sayfalarda ikonlu kalir.
+
+   OLCUM NOTU - serit yine de ALTI SUTUN degil UC: 1440px + acik kenar
+   cubugunda alti sutunda karta 147px kaliyor ve Turkce etiketler
+   ("Sozlesme butcesi", "Kullanilabilir nakit") kirpiliyor. Tasarimin tek
+   satirlik alti-up seridi bu etiket uzunluklariyla tutmuyor; 3x2 secildi. */
+.apya-finance-kpis .kpi-icon-box {
+    display: none;
+}

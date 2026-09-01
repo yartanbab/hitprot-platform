@@ -29,6 +29,17 @@ public class Expense : FullAuditedAggregateRoot<Guid>, IMultiTenant
     /// <summary>APYA-143: Opsiyonel task etiketi — task bazlı maliyet kırılımı.</summary>
     public Guid? TaskId { get; set; }
 
+    /// <summary>
+    /// Harcamanın yazıldığı bütçe kalemi (<see cref="ProjectBudgets.ProjectBudgetLine"/>).
+    /// Kalem tablosundaki "Harcanan" kolonu bunun üzerinden toplanır; kalemde
+    /// denormalize bir toplam TUTULMAZ.
+    ///
+    /// Nullable: kalem modeli sonradan geldi, mevcut giderler kalemsiz. Bağlam
+    /// şablonu zorunlu kılana kadar kalemsiz gider meşrudur (bordro, kira gibi
+    /// proje geneli kalemler de öyle kalabilir).
+    /// </summary>
+    public Guid? BudgetLineId { get; set; }
+
     /// <summary>Opsiyonel cari ilişkisi.</summary>
     public Guid? CustomerId { get; set; }
 

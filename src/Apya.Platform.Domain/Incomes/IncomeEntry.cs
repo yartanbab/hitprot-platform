@@ -26,6 +26,13 @@ public class IncomeEntry : FullAuditedAggregateRoot<Guid>, IMultiTenant
     public Guid? ProjectId { get; set; }
     /// <summary>APYA-143: Opsiyonel task etiketi — task bazlı maliyet kırılımı.</summary>
     public Guid? TaskId { get; set; }
+
+    /// <summary>
+    /// Gelirin yazıldığı bütçe kalemi. Giderdeki ile aynı gerekçe
+    /// (bkz. <see cref="Expenses.Expense.BudgetLineId"/>): kalemde toplam
+    /// saklanmaz, buradan toplanır.
+    /// </summary>
+    public Guid? BudgetLineId { get; set; }
     public Guid? CustomerId { get; set; }
     public string? Description { get; set; }
 

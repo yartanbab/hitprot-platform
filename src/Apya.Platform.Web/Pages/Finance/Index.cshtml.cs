@@ -8,7 +8,9 @@ using Apya.Platform.Expenses;
 using Apya.Platform.ExchangeRates;
 using Apya.Platform.Incomes;
 using Apya.Platform.Invoices;
-using Apya.Platform.ProjectFinance;
+using Apya.Platform.Permissions;
+using Apya.Platform.ProjectBudgets;
+using Apya.Platform.ProjectBudgets.Dtos;
 using Apya.Platform.Projects;
 using Apya.Platform.Projects.Dtos;
 using Apya.Platform.Web.Pages.Shared;
@@ -45,7 +47,7 @@ public class IndexModel : AbpPageModel
     private readonly ICashMovementAppService _cashMovementAppService;
     private readonly IExchangeRateAppService _exchangeRateAppService;
     private readonly IProjectAppService _projectAppService;
-    private readonly IProjectFinanceAppService _projectFinanceAppService;
+    private readonly IProjectBudgetAppService _projectBudgetAppService;
 
     /// <summary>Seçili proje; boş = "Tüm projeler" (portföy).</summary>
     [BindProperty(SupportsGet = true)]
@@ -61,8 +63,18 @@ public class IndexModel : AbpPageModel
     public List<FinanceTabDefinition> Tabs { get; private set; } = new();
     public string ActiveTab { get; private set; } = FinanceContext.TabOverview;
 
-    /// <summary>Proje seçiliyken "Genel" sekmesinin KPI kaynağı; portföyde null.</summary>
-    public ProjectFinanceSummaryDto? Summary { get; private set; }
+    /// <summary>
+    /// Proje seçiliyken bütçe/fonlama özeti — "Genel", "Bütçe kalemleri" ve
+    /// "Dilimler" sekmelerinin ortak kaynağı. Portföyde ya da bütçe görme yetkisi
+    /// yoksa null.
+    /// </summary>
+    public ProjectBudgetOverviewDto? Budget { get; private set; }
+
+    /// <summary>"Dilimler &amp; kesintiler" sekmesinin verisi.</summary>
+    public List<FundingTrancheDto> Tranches { get; private set; } = new();
+
+    /// <summary>Bütçe yazma yetkisi — ekleme/düzenleme düğmeleri buna bakar.</summary>
+    public bool CanEditBudget { get; private set; }
 
     public List<TransactionRow> Transactions { get; private set; } = new();
     public List<AccountSummary> Accounts { get; private set; } = new();
@@ -77,7 +89,7 @@ public class IndexModel : AbpPageModel
         ICashMovementAppService cashMovementAppService,
         IExchangeRateAppService exchangeRateAppService,
         IProjectAppService projectAppService,
-        IProjectFinanceAppService projectFinanceAppService)
+        IProjectBudgetAppService projectBudgetAppService)
     {
         _expenseAppService = expenseAppService;
         _incomeAppService = incomeAppService;
@@ -86,7 +98,7 @@ public class IndexModel : AbpPageModel
         _cashMovementAppService = cashMovementAppService;
         _exchangeRateAppService = exchangeRateAppService;
         _projectAppService = projectAppService;
-        _projectFinanceAppService = projectFinanceAppService;
+        _projectBudgetAppService = projectBudgetAppService;
     }
 
     public async Task OnGetAsync()
@@ -94,22 +106,47 @@ public class IndexModel : AbpPageModel
         await LoadProjectContextAsync();
         await LoadTabsAsync();
 
+        CanEditBudget = await AuthorizationService.IsGrantedAsync(PlatformPermissions.Projects.Edit);
+
         // Sekme başına yükleme: pasif sekmenin sorgusu hiç koşmaz.
         if (ActiveTab == FinanceContext.TabOverview)
         {
             await LoadAccountsAsync();
             await LoadTransactionsAsync();
-
-            if (SelectedProject != null)
-            {
-                await TryAddAsync(async () =>
-                    Summary = await _projectFinanceAppService.GetSummaryAsync(SelectedProject.Id));
-            }
+            await LoadBudgetAsync();
         }
         else if (ActiveTab == FinanceContext.TabCash)
         {
             await LoadAccountsAsync();
         }
+        else if (ActiveTab == FinanceContext.TabBudgetLines)
+        {
+            await LoadBudgetAsync();
+        }
+        else if (ActiveTab == FinanceContext.TabTranches)
+        {
+            await LoadBudgetAsync();
+            if (SelectedProject != null)
+            {
+                await TryAddAsync(async () =>
+                    Tranches = await _projectBudgetAppService.GetTranchesAsync(SelectedProject.Id));
+            }
+        }
+    }
+
+    /// <summary>
+    /// Bütçe özeti. Yetkisi olmayan kullanıcıda sessizce atlanır (TryAddAsync) —
+    /// "Genel" sekmesi bütçe bloğu olmadan da anlamlıdır.
+    /// </summary>
+    private async Task LoadBudgetAsync()
+    {
+        if (SelectedProject == null)
+        {
+            return;
+        }
+
+        await TryAddAsync(async () =>
+            Budget = await _projectBudgetAppService.GetOverviewAsync(SelectedProject.Id));
     }
 
     /// <summary>
@@ -316,6 +353,45 @@ public class IndexModel : AbpPageModel
             TotalBalanceTry = accounts.Sum(a => CurrencyConversionHelper.ToTry(a.Balance, a.Currency, ratesToTry));
         });
     }
+
+    // ─── Tek tıklık işlemler ───
+    // Bunlar için ayrı modal/AJAX katmanı kurulmadı: hepsi tek bir id alıp tek bir
+    // çağrı yapıyor ve sonuç sayfanın yeniden render edilmesi. Form POST + redirect
+    // en az hareketli eden yol; JS'e bağımlılık da doğurmuyor.
+
+    public async Task<IActionResult> OnPostDeleteLineAsync(Guid lineId)
+    {
+        await _projectBudgetAppService.DeleteLineAsync(lineId);
+        return RedirectToActiveTab();
+    }
+
+    public async Task<IActionResult> OnPostDeleteTrancheAsync(Guid trancheId)
+    {
+        await _projectBudgetAppService.DeleteTrancheAsync(trancheId);
+        return RedirectToActiveTab();
+    }
+
+    public async Task<IActionResult> OnPostRemoveDeductionAsync(Guid deductionId)
+    {
+        await _projectBudgetAppService.RemoveDeductionAsync(deductionId);
+        return RedirectToActiveTab();
+    }
+
+    public async Task<IActionResult> OnPostMarkDeductionUnfundedAsync(Guid deductionId)
+    {
+        await _projectBudgetAppService.MarkDeductionUnfundedAsync(deductionId);
+        return RedirectToActiveTab();
+    }
+
+    public async Task<IActionResult> OnPostReopenDeductionAsync(Guid deductionId)
+    {
+        await _projectBudgetAppService.ReopenDeductionAsync(deductionId);
+        return RedirectToActiveTab();
+    }
+
+    /// <summary>POST sonrası aynı proje + aynı sekmeye döner (PRG).</summary>
+    private IActionResult RedirectToActiveTab()
+        => RedirectToPage(new { projectId = ProjectId, tab = Tab });
 
     /// <summary>Sekme bağlantısı — seçili proje korunarak sekme değiştirir.</summary>
     public string TabUrl(string tabCode)

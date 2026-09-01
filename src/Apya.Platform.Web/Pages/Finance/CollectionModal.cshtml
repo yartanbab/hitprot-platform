@@ -1,0 +1,51 @@
+@page
+@model Apya.Platform.Web.Pages.Finance.CollectionModalModel
+@using Volo.Abp.AspNetCore.Mvc.UI.Bootstrap.TagHelpers.Modal
+@{
+    Layout = null;
+    var t = Model.Tranche!;
+}
+<form method="post" action="@Url.Page("/Finance/CollectionModal", new { projectId = Model.ProjectId, id = Model.Id })">
+    <abp-modal>
+        <abp-modal-header title="@($"{t.SequenceNo}. Dilim — Tahsilat")"></abp-modal-header>
+        <abp-modal-body>
+            <div class="d-flex flex-wrap gap-3 mb-3">
+                <div>
+                    <div class="apya-overline">Planlanan</div>
+                    <div class="apya-numeric fw-bold">@t.PlannedAmount.ToString("N2")</div>
+                </div>
+                <div>
+                    <div class="apya-overline">Kesinti</div>
+                    <div class="apya-numeric fw-bold text-danger">@t.DeductionTotal.ToString("N2")</div>
+                </div>
+                <div>
+                    <div class="apya-overline">Beklenen</div>
+                    <div class="apya-numeric fw-bold">@t.ExpectedAmount.ToString("N2")</div>
+                </div>
+            </div>
+
+            <abp-row>
+                <abp-column size-md="_6">
+                    <abp-input asp-for="Collection.ReceivedAmount" label="Tahsil edilen (toplam)" />
+                </abp-column>
+                <abp-column size-md="_6">
+                    <abp-input asp-for="Collection.ReceivedDate" type="date" label="Tahsilat tarihi" />
+                </abp-column>
+            </abp-row>
+
+            @if (Model.IncomeEntries.Any())
+            {
+                <abp-select asp-for="Collection.IncomeEntryId" asp-items="Model.IncomeEntries"
+                            label="Karşılık gelen gelir kaydı (opsiyonel)">
+                    <option value="">— Bağlanmadı —</option>
+                </abp-select>
+            }
+
+            <p class="text-muted mb-0" style="font-size:12px">
+                Tutar <strong>kümülatiftir</strong>: bugüne kadar gelen toplamı yazın, farkı değil.
+                Beklenen tutara ulaşınca dilim “Tahsil edildi” olur.
+            </p>
+        </abp-modal-body>
+        <abp-modal-footer buttons="@(AbpModalButtons.Cancel | AbpModalButtons.Save)"></abp-modal-footer>
+    </abp-modal>
+</form>
