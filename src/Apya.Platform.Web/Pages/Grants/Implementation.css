@@ -1,0 +1,166 @@
+/* =============================================================================
+   6c · Uygulama & Tahsilat
+   Ortak sözlük Shared.css'te; burada yalnız bu ekranın ölçüleri.
+   ============================================================================= */
+
+.apya-im-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 340px;
+    gap: var(--apya-space-5);
+    align-items: start;
+}
+
+@media (max-width: 1279.98px) {
+    .apya-im-layout { grid-template-columns: minmax(0, 1fr); }
+    .apya-im-side { position: static; }
+}
+
+.apya-im-side {
+    position: sticky;
+    top: var(--apya-space-4);
+    display: flex;
+    flex-direction: column;
+    gap: var(--apya-space-3);
+}
+
+.apya-im-meta {
+    font-size: var(--apya-fs-xs);
+    color: var(--apya-text-tertiary);
+}
+
+.apya-im-hint {
+    font-size: var(--apya-fs-xs);
+    color: var(--apya-text-tertiary);
+    line-height: 1.5;
+}
+
+.apya-im-figures {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--apya-space-4);
+    flex: none;
+}
+
+.apya-im-metric {
+    display: block;
+    font-family: var(--apya-font-mono);
+    font-variant-numeric: tabular-nums;
+    font-size: var(--apya-fs-lg);
+    font-weight: var(--apya-weight-bold);
+    letter-spacing: var(--apya-tracking-tight);
+}
+
+.apya-im-metric--good { color: var(--apya-positive-700); }
+
+.apya-im-progress {
+    display: flex;
+    align-items: center;
+    gap: var(--apya-space-2);
+    flex: none;
+    width: 200px;
+}
+
+.apya-im-progress .apya-mini-bar { flex: 1; }
+
+/* --- Rapor-dilim zinciri --- */
+.apya-im-chain-item {
+    display: grid;
+    grid-template-columns: 26px minmax(0, 1fr) 150px;
+    gap: var(--apya-space-3);
+    padding: var(--apya-space-3);
+    border: 1px solid var(--apya-border-subtle);
+    border-radius: var(--apya-radius-lg);
+}
+
+/* Ödemesi bekleyen halka vurgulanır: sıradaki iş burada. */
+.apya-im-chain-item.is-blocked { border-color: var(--apya-warning-500); }
+.apya-im-chain-item.is-paid { background: var(--apya-surface-raised); }
+
+.apya-im-no {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    border-radius: var(--apya-radius-full);
+    background: var(--apya-surface-sunken);
+    font-family: var(--apya-font-mono);
+    font-size: var(--apya-fs-xs);
+    font-weight: var(--apya-weight-bold);
+}
+
+.apya-im-title { font-weight: var(--apya-weight-semibold); }
+
+.apya-im-sections {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+    margin-top: var(--apya-space-2);
+}
+
+@media (max-width: 767.98px) {
+    .apya-im-sections { grid-template-columns: minmax(0, 1fr); }
+}
+
+.apya-im-section {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px;
+    border-radius: var(--apya-radius-md);
+    background: var(--apya-surface-raised);
+    font-size: var(--apya-fs-xs);
+}
+
+.apya-im-section-note { color: var(--apya-text-tertiary); }
+
+.apya-im-tranche {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4px;
+    text-align: right;
+}
+
+.apya-im-amount {
+    font-family: var(--apya-font-mono);
+    font-variant-numeric: tabular-nums;
+    font-weight: var(--apya-weight-semibold);
+}
+
+/* --- Bütçe gerçekleşmesi --- */
+.apya-im-budget-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 120px 120px 120px 140px;
+    align-items: center;
+    gap: var(--apya-space-2);
+    padding: 9px var(--apya-space-3);
+    border-bottom: 1px solid var(--apya-border-subtle);
+    font-size: var(--apya-fs-sm);
+}
+
+.apya-im-budget-row:last-child { border-bottom: 0; }
+
+/* Kullanımı eşiğe dayanan kalem uyarılı: aktarım revizyon onayı ister. */
+.apya-im-budget-row.is-near { background: var(--apya-warning-50); }
+
+.apya-im-usage { display: flex; align-items: center; gap: 6px; }
+.apya-im-usage .apya-mini-bar { flex: 1; }
+.apya-im-usage-bar-over > span { background: var(--apya-warning-500); }
+
+/* --- Yükümlülükler --- */
+.apya-im-obligation {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--apya-space-2);
+    font-size: var(--apya-fs-sm);
+}
+
+.apya-im-obligation-date {
+    font-family: var(--apya-font-mono);
+    font-size: var(--apya-fs-xs);
+    color: var(--apya-text-tertiary);
+}
+
+.apya-im-obligation.is-overdue .apya-im-obligation-date { color: var(--apya-negative-700); }

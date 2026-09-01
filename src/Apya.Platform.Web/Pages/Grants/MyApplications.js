@@ -37,8 +37,10 @@ $(function () {
             ? '<a class="btn btn-sm btn-outline-danger" href="/Grants/Appeal?id=' + r.id + '">' +
               esc(l('Grants:Mine:Cta:Appeal')) + '</a>'
             : r.projectId
-            ? '<a class="btn btn-sm btn-outline-secondary" href="/Projects/ProjectDetails/' + r.projectId + '">' +
-              esc(l('Grants:Mine:Cta:Project')) + '</a>'
+            // Projeye dönüşen başvuruda uygulama/tahsilat ekranı esas yüzeydir;
+            // proje sayfasına oradan da gidilebiliyor.
+            ? '<a class="btn btn-sm btn-outline-secondary" href="/Grants/Implementation?id=' + r.id + '">' +
+              esc(l('Grants:Mine:Cta:Implementation')) + '</a>'
             : '<a class="btn btn-sm btn-' + (isYours(r.nextAction) ? 'primary' : 'outline-secondary') +
               '" href="/Grants/Wizard?id=' + r.id + '">' +
               esc(l(isYours(r.nextAction) ? 'Grants:Mine:Cta:Continue' : 'Grants:Mine:Cta:View')) + '</a>';
