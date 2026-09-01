@@ -18,6 +18,8 @@ $(function () {
 
     function esc(t) { return $('<div>').text(t == null ? '' : t).html(); }
     function money(v) { return v != null ? Math.round(v).toLocaleString('tr-TR') + ' ₺' : '—'; }
+    // Tavan belirtilmemiş program 0 ile saklanır (MaxAmount kolonu NOT NULL) — "0 ₺" yerine — göster.
+    function ceiling(v) { return v ? money(v) : '—'; }
     function fmtDate(v) { return v ? new Date(v).toLocaleDateString('tr-TR') : '—'; }
     function numOrNull(sel) { var v = $(sel).val(); return v === '' || v == null ? null : parseFloat(v); }
 
@@ -116,7 +118,7 @@ $(function () {
             '    <div class="d-flex flex-column align-items-end gap-1">' + scoreChip + '</div>' +
             '  </div>' +
             (criteria ? '<div class="d-flex flex-wrap gap-1">' + criteria + '</div>' : '') +
-            '  <div class="apya-tile-progress-label"><span>Maks. Tutar</span><span class="apya-numeric fw-semibold">' + money(g.maxAmount) + '</span></div>' +
+            '  <div class="apya-tile-progress-label"><span>Maks. Tutar</span><span class="apya-numeric fw-semibold">' + ceiling(g.maxAmount) + '</span></div>' +
             '  <div class="apya-calls-section">' +
             '    <a href="#" class="apya-toggle-calls small text-decoration-none">Çağrılar (<span class="apya-call-count">' + (g.callCount || 0) + '</span>) <i class="fa fa-chevron-down apya-expand-chevron ms-1"></i></a>' +
             '    <div class="apya-calls-panel d-none mt-2"></div>' +
