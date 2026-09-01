@@ -1,0 +1,161 @@
+/* =============================================================================
+   6b · Red & İtiraz
+   Ortak sözlük Shared.css'te; burada yalnız bu ekranın ölçüleri.
+   ============================================================================= */
+
+.apya-ap-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 360px;
+    gap: var(--apya-space-5);
+    align-items: start;
+}
+
+@media (max-width: 1279.98px) {
+    .apya-ap-layout { grid-template-columns: minmax(0, 1fr); }
+    .apya-ap-side { position: static; }
+}
+
+.apya-ap-side {
+    position: sticky;
+    top: var(--apya-space-4);
+    display: flex;
+    flex-direction: column;
+    gap: var(--apya-space-3);
+}
+
+/* Red barı: ekranın ilk okunan şeyi olmalı, ama panik yaratmamalı —
+   zemin negatif tint, metin normal renkte. */
+.apya-ap-head { border-color: var(--apya-negative-500); }
+
+.apya-ap-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    flex: none;
+    border-radius: var(--apya-radius-lg);
+    background: var(--apya-negative-50);
+    color: var(--apya-negative-700);
+    font-size: var(--apya-fs-base);
+}
+
+.apya-ap-meta {
+    font-size: var(--apya-fs-xs);
+    color: var(--apya-text-tertiary);
+}
+
+.apya-ap-hint {
+    font-size: var(--apya-fs-xs);
+    color: var(--apya-text-tertiary);
+    line-height: 1.5;
+}
+
+.apya-ap-countdown {
+    font-size: var(--apya-fs-lg);
+    font-weight: var(--apya-weight-bold);
+    color: var(--apya-warning-700);
+    letter-spacing: var(--apya-tracking-tight);
+}
+
+/* --- Gerekçe maddesi --- */
+.apya-ap-item {
+    display: grid;
+    grid-template-columns: 26px minmax(0, 1fr) 92px;
+    gap: var(--apya-space-3);
+    padding: var(--apya-space-3);
+    border: 1px solid var(--apya-border-subtle);
+    border-radius: var(--apya-radius-lg);
+}
+
+.apya-ap-no {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    border-radius: var(--apya-radius-full);
+    background: var(--apya-surface-sunken);
+    font-family: var(--apya-font-mono);
+    font-size: var(--apya-fs-xs);
+    font-weight: var(--apya-weight-bold);
+}
+
+.apya-ap-title {
+    font-weight: var(--apya-weight-semibold);
+    line-height: 1.45;
+}
+
+/* Kurum metni ALINTIDIR: zeminle ayrılır, bizim yazdığımızla karışmasın. */
+.apya-ap-quote {
+    margin: var(--apya-space-2) 0;
+    padding: 10px var(--apya-space-3);
+    border-left: 3px solid var(--apya-border-default);
+    border-radius: var(--apya-radius-md);
+    background: var(--apya-surface-raised);
+    font-size: var(--apya-fs-sm);
+    line-height: 1.55;
+    color: var(--apya-text-secondary);
+}
+
+.apya-ap-opinion {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--apya-space-2);
+    padding: 10px;
+    border-radius: var(--apya-radius-lg);
+    font-size: var(--apya-fs-sm);
+    line-height: 1.5;
+}
+
+/* İtiraz edilebilir görüş aksan kutusunda; "haklı, kabul et" uyarı kutusunda. */
+.apya-ap-opinion.is-appeal { background: var(--apya-accent-soft); color: var(--apya-accent-600); }
+.apya-ap-opinion.is-accept { background: var(--apya-warning-50); color: var(--apya-warning-700); }
+.apya-ap-opinion.is-none { background: var(--apya-surface-raised); color: var(--apya-text-tertiary); }
+
+.apya-ap-opinion-summary { font-weight: var(--apya-weight-semibold); }
+
+.apya-ap-avatar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    flex: none;
+    border-radius: var(--apya-radius-full);
+    background: var(--apya-accent-500);
+    color: #fff;
+    font-size: 9px;
+    font-weight: var(--apya-weight-bold);
+}
+
+.apya-ap-stance { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+
+.apya-ap-metric {
+    font-family: var(--apya-font-mono);
+    font-variant-numeric: tabular-nums;
+    font-size: var(--apya-fs-2xl);
+    font-weight: var(--apya-weight-bold);
+    letter-spacing: var(--apya-tracking-tight);
+}
+
+.apya-ap-stat {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--apya-space-2);
+    font-size: var(--apya-fs-sm);
+}
+
+.apya-ap-stat-value {
+    font-family: var(--apya-font-mono);
+    font-variant-numeric: tabular-nums;
+    font-weight: var(--apya-weight-semibold);
+}
+
+/* --- Koyu tema: aksan METNİ ---
+   accent-600 koyu temada -500'den DAHA KOYU; tint üstünde kontrast 4:1'in
+   altına düşer. Metin -300'e çıkar. */
+[data-theme="dark"] .apya-ap-opinion.is-appeal {
+    color: var(--apya-accent-300);
+}
