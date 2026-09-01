@@ -117,6 +117,11 @@ public static class PlatformDomainErrorCodes
     public const string GrantSuccessFeeInvalid = "Platform:Grant:SuccessFeeInvalid";
     public const string GrantPipelineNoNextStep = "Platform:Grant:PipelineNoNextStep";
 
+    // 2e · Projeye dönüştürme
+    public const string GrantApplicationAlreadyConverted = "Platform:Grant:ApplicationAlreadyConverted";
+    public const string GrantConversionNotApproved = "Platform:Grant:ConversionNotApproved";
+    public const string GrantConversionMappingMissing = "Platform:Grant:ConversionMappingMissing";
+
     // --- Dosya (File) Modülü ---
     public const string FileUnsupportedExtension = "Platform:File:UnsupportedExtension";
     public const string FileSizeExceeded = "Platform:File:SizeExceeded";

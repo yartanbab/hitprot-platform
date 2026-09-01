@@ -51,6 +51,24 @@ public class GrantApplication : FullAuditedAggregateRoot<Guid>, IMultiTenant
     /// </summary>
     public decimal? SuccessFeePercent { get; private set; }
 
+    /// <summary>
+    /// 2e · Başvurudan üretilen proje. Doluysa başvuru İKİNCİ kez projeye
+    /// dönüştürülemez.
+    ///
+    /// 🔴 Başvuru KAPANMAZ: proje ile bağlı kalır, aşaması ilerlemeye devam eder.
+    /// Tasarımın notu birebir: "Başvuru kapanmaz; proje ile bağlı kalır."
+    /// </summary>
+    public Guid? ProjectId { get; private set; }
+
+    public void LinkToProject(Guid projectId)
+    {
+        if (ProjectId.HasValue)
+        {
+            throw new BusinessException(PlatformDomainErrorCodes.GrantApplicationAlreadyConverted);
+        }
+        ProjectId = projectId;
+    }
+
     public void SetSuccessFee(decimal? percent)
     {
         if (percent is < 0 or > 100)
