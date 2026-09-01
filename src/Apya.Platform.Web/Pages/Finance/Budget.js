@@ -9,14 +9,19 @@ $(function () {
     var deductionModal = new abp.ModalManager(abp.appPath + 'Finance/DeductionModal');
     var revisionModal = new abp.ModalManager(abp.appPath + 'Finance/RevisionModal');
     var fxPolicyModal = new abp.ModalManager(abp.appPath + 'Finance/FxPolicyModal');
+    var contextWizard = new abp.ModalManager(abp.appPath + 'Finance/ContextWizardModal');
 
     // Paneller sunucuda render ediliyor; kaydettikten sonra sayfayı tazelemek
     // hem tabloyu hem KPI'ları hem şerit toplamlarını tek hamlede tutarlı yapar.
-    [lineModal, trancheModal, collectionModal, deductionModal, revisionModal, fxPolicyModal]
+    [lineModal, trancheModal, collectionModal, deductionModal, revisionModal, fxPolicyModal, contextWizard]
         .forEach(function (m) { m.onResult(function () { window.location.reload(); }); });
 
     $('#BtnFxPolicy').on('click', function () {
         fxPolicyModal.open({ projectId: projectId });
+    });
+
+    $('#BtnContextWizard').on('click', function () {
+        contextWizard.open({ projectId: projectId });
     });
 
     $('#BtnAddBudgetLine').on('click', function () {
