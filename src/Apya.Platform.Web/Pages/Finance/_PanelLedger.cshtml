@@ -1,0 +1,170 @@
+@*
+    "Gelir-Gider" sekmesi — tasarım 3a.
+
+    Gelir ve gider TEK tabloda; fatura buraya girmez (kendi sekmesi var,
+    iki yerde göstermek aynı parayı iki kez saydırır).
+
+    TASARIMDAN EKSİK OLAN İKİ KOLON — bilerek:
+      · İşlem PB / Kur / ₺ defter / EUR donör → kur politikası ve donör
+        karşılığı henüz yok (5. adım). Bugün tüm kayıtlar TRY.
+      · Belge → doküman entegrasyonu 7. adımda.
+    Uydurma kolon basmak yerine, geldiklerinde eklenecekler.
+*@
+@using Apya.Platform.Web.Pages.Finance
+@model IndexModel
+
+@functions {
+    string Money(decimal v) => v.ToString("N2");
+}
+
+@{
+    var gelir = Model.LedgerRows.Where(r => r.IsInflow).Sum(r => r.Amount);
+    var gider = Model.LedgerRows.Where(r => !r.IsInflow).Sum(r => r.Amount);
+    var suzgecVar = !string.IsNullOrEmpty(Model.Kind) || Model.LineId.HasValue || Model.AccountId.HasValue;
+}
+
+@* ─── Süzgeç çubuğu ─── *@
+<div class="apya-console-filters mb-3" style="border-radius:var(--apya-radius-lg)">
+    <span class="apya-console-filter-label">Filtre</span>
+
+    <a href="@Model.LedgerUrl(null, Model.LineId, Model.AccountId)"
+       class="apya-filter-chip text-decoration-none @(string.IsNullOrEmpty(Model.Kind) ? "is-active" : "")">Tümü</a>
+    <a href="@Model.LedgerUrl("gelir", Model.LineId, Model.AccountId)"
+       class="apya-filter-chip text-decoration-none @(Model.Kind == "gelir" ? "is-active" : "")">Gelir</a>
+    <a href="@Model.LedgerUrl("gider", Model.LineId, Model.AccountId)"
+       class="apya-filter-chip text-decoration-none @(Model.Kind == "gider" ? "is-active" : "")">Gider</a>
+
+    @if (Model.LedgerLineOptions.Any())
+    {
+        <div class="dropdown">
+            <button type="button" class="apya-filter-chip @(Model.LineId.HasValue ? "is-active" : "")"
+                    data-bs-toggle="dropdown" aria-expanded="false">
+                <span>Kalem: @(Model.LineId.HasValue ? Model.LedgerLineOptions.FirstOrDefault(o => o.Id == Model.LineId).Name : "tümü")</span>
+                <i class="fa fa-chevron-down" aria-hidden="true"></i>
+            </button>
+            <div class="dropdown-menu apya-console-menu">
+                <a class="apya-console-menu-item text-decoration-none" href="@Model.LedgerUrl(Model.Kind, null, Model.AccountId)">Tümü</a>
+                @foreach (var o in Model.LedgerLineOptions)
+                {
+                    <a class="apya-console-menu-item text-decoration-none" href="@Model.LedgerUrl(Model.Kind, o.Id, Model.AccountId)">@o.Name</a>
+                }
+            </div>
+        </div>
+    }
+
+    @if (Model.LedgerAccountOptions.Any())
+    {
+        <div class="dropdown">
+            <button type="button" class="apya-filter-chip @(Model.AccountId.HasValue ? "is-active" : "")"
+                    data-bs-toggle="dropdown" aria-expanded="false">
+                <span>Kasa: @(Model.AccountId.HasValue ? Model.LedgerAccountOptions.FirstOrDefault(o => o.Id == Model.AccountId).Name : "tümü")</span>
+                <i class="fa fa-chevron-down" aria-hidden="true"></i>
+            </button>
+            <div class="dropdown-menu apya-console-menu">
+                <a class="apya-console-menu-item text-decoration-none" href="@Model.LedgerUrl(Model.Kind, Model.LineId, null)">Tümü</a>
+                @foreach (var o in Model.LedgerAccountOptions)
+                {
+                    <a class="apya-console-menu-item text-decoration-none" href="@Model.LedgerUrl(Model.Kind, Model.LineId, o.Id)">@o.Name</a>
+                }
+            </div>
+        </div>
+    }
+
+    @if (suzgecVar)
+    {
+        <a href="@Model.LedgerUrl(null, null, null)" class="apya-console-filter-clear text-decoration-none">Filtreleri temizle</a>
+    }
+
+    <span class="ms-auto d-flex gap-2">
+        <a href="/Incomes" class="btn btn-sm btn-outline-secondary">
+            <i class="fa fa-arrow-down-long me-1" aria-hidden="true"></i>Gelir ekle
+        </a>
+        <a href="/Expenses" class="btn btn-sm btn-outline-secondary">
+            <i class="fa fa-arrow-up-long me-1" aria-hidden="true"></i>Gider ekle
+        </a>
+    </span>
+</div>
+
+@if (!Model.LedgerRows.Any())
+{
+    <partial name="_EmptyState" model='new Apya.Platform.Web.Pages.Shared.EmptyStateModel {
+        Icon = "fa-right-left",
+        Title = "Kayıt bulunamadı",
+        Description = "Seçilen süzgeçlerle eşleşen gelir/gider kaydı yok." }' />
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table apya-clean-table align-middle mb-0">
+            <thead>
+                <tr>
+                    <th style="width:110px">Tarih</th>
+                    <th>Kayıt</th>
+                    <th style="width:200px">Kalem</th>
+                    <th style="width:190px">Kasa</th>
+                    <th class="text-end apya-numeric" style="width:150px">Tutar</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var r in Model.LedgerRows)
+                {
+                    <tr>
+                        <td class="apya-numeric text-muted">@r.Date.ToString("dd.MM.yyyy")</td>
+                        <td>
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="apya-chip apya-chip-@(r.IsInflow ? "positive" : "warning")">
+                                    @(r.IsInflow ? "Gelir" : "Gider")
+                                </span>
+                                <a href="@r.Url" class="fw-semibold text-decoration-none">@r.Title</a>
+                            </div>
+                            <div class="small text-muted">@r.CategoryLabel</div>
+                        </td>
+                        <td class="small">
+                            @if (!string.IsNullOrWhiteSpace(r.BudgetLineName))
+                            {
+                                @r.BudgetLineName
+                            }
+                            else
+                            {
+                                <span class="text-muted">—</span>
+                            }
+                        </td>
+                        <td class="small text-muted">@(r.CashAccountName ?? "—")</td>
+                        <td class="text-end apya-numeric fw-semibold @(r.IsInflow ? "text-success" : "text-danger")">
+                            @(r.IsInflow ? "+" : "−")@Money(r.Amount) @(r.Currency == "TRY" ? "₺" : r.Currency)
+                        </td>
+                    </tr>
+                }
+            </tbody>
+            <tfoot>
+                <tr class="fw-bold">
+                    <td colspan="4">
+                        DÖNEM TOPLAMI
+                        <span class="fw-normal text-muted ms-2" style="font-size:12px">@Model.LedgerRows.Count kayıt</span>
+                    </td>
+                    <td class="text-end apya-numeric">
+                        @* İşaret satır hücreleriyle aynı yazılır: kültürün "-" karakteri
+                           yerine tabloda kullanılan "−" (U+2212). *@
+                        <div class="text-success">+@Money(gelir)</div>
+                        <div class="text-danger">−@Money(gider)</div>
+                        <div class="@(gelir - gider >= 0 ? "text-success" : "text-danger")">
+                            = @(gelir - gider >= 0 ? "+" : "−")@Money(Math.Abs(gelir - gider))
+                        </div>
+                    </td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+
+    @if (Model.LedgerRows.Count >= 100)
+    {
+        @* Sessiz kırpma yapmıyoruz: kaynak başına 100 kayıt çekiliyor, sınıra
+           dayanıldıysa kullanıcı bunu BİLMELİ — aksi halde toplam satırı
+           "dönemin tamamı" sanılır. *@
+        <p class="text-muted mt-3 mb-0" style="font-size:12.5px">
+            <i class="fa fa-circle-info me-1" aria-hidden="true"></i>
+            Liste kaynak başına en fazla 100 kayıt gösterir; toplam bu kesitin toplamıdır.
+            Daralt­mak için süzgeçleri kullanın.
+        </p>
+    }
+}

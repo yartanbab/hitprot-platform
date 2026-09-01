@@ -73,6 +73,23 @@ public class IndexModel : AbpPageModel
     /// <summary>"Dilimler &amp; kesintiler" sekmesinin verisi.</summary>
     public List<FundingTrancheDto> Tranches { get; private set; } = new();
 
+    /// <summary>"Gelir-Gider" sekmesinin birleşik kayıt listesi.</summary>
+    public List<LedgerRow> LedgerRows { get; private set; } = new();
+
+    /// <summary>Gelir-Gider süzgeçlerinin seçenekleri (kalem/kasa adları).</summary>
+    public List<(Guid Id, string Name)> LedgerLineOptions { get; private set; } = new();
+    public List<(Guid Id, string Name)> LedgerAccountOptions { get; private set; } = new();
+
+    /// <summary>Gelir-Gider süzgeci: "gelir" | "gider" | boş.</summary>
+    [BindProperty(SupportsGet = true)]
+    public string? Kind { get; set; }
+
+    [BindProperty(SupportsGet = true)]
+    public Guid? LineId { get; set; }
+
+    [BindProperty(SupportsGet = true)]
+    public Guid? AccountId { get; set; }
+
     /// <summary>Bütçe yazma yetkisi — ekleme/düzenleme düğmeleri buna bakar.</summary>
     public bool CanEditBudget { get; private set; }
 
@@ -132,6 +149,120 @@ public class IndexModel : AbpPageModel
                     Tranches = await _projectBudgetAppService.GetTranchesAsync(SelectedProject.Id));
             }
         }
+        else if (ActiveTab == FinanceContext.TabLedger)
+        {
+            await LoadLedgerAsync();
+        }
+    }
+
+    /// <summary>
+    /// "Gelir-Gider": gelir ve gider kayıtları TEK tabloda. Fatura buraya
+    /// GİRMEZ — kendi sekmesi var ve iki yerde göstermek aynı parayı iki kez
+    /// saydırırdı (Genel'deki "Son İşlemler" listesindeki çift sayım kuralıyla aynı).
+    /// </summary>
+    private async Task LoadLedgerAsync()
+    {
+        var accountNames = new Dictionary<Guid, string>();
+        await TryAddAsync(async () =>
+        {
+            var accounts = await _cashAccountAppService.GetListAsync(
+                new GetCashAccountsInput { MaxResultCount = 1000 });
+            foreach (var a in accounts.Items)
+            {
+                accountNames[a.Id] = $"{a.Name} ({a.Currency})";
+            }
+        });
+
+        var lineNames = new Dictionary<Guid, string>();
+        if (SelectedProject != null)
+        {
+            await TryAddAsync(async () =>
+            {
+                var lines = await _projectBudgetAppService.GetLinesAsync(SelectedProject.Id);
+                foreach (var l in lines)
+                {
+                    lineNames[l.Id] = string.IsNullOrWhiteSpace(l.Code) ? l.Name : $"{l.Code} · {l.Name}";
+                }
+            });
+        }
+
+        var rows = new List<LedgerRow>();
+
+        if (Kind != "gider")
+        {
+            await TryAddAsync(async () =>
+            {
+                var page = await _incomeAppService.GetListAsync(new GetIncomeEntriesInput
+                {
+                    MaxResultCount = MaxPerSource,
+                    ProjectId = ProjectId,
+                    CashAccountId = AccountId,
+                    Sorting = "IncomeDate desc"
+                });
+
+                foreach (var x in page.Items)
+                {
+                    rows.Add(new LedgerRow
+                    {
+                        Id = x.Id,
+                        IsInflow = true,
+                        Date = x.IncomeDate,
+                        Title = x.Title,
+                        CategoryLabel = CategoryLabels.ForIncome(x.Category),
+                        BudgetLineId = x.BudgetLineId,
+                        BudgetLineName = NameOf(lineNames, x.BudgetLineId),
+                        CashAccountName = NameOf(accountNames, x.CashAccountId),
+                        Amount = x.Amount,
+                        Currency = x.Currency,
+                        Url = "/Incomes"
+                    });
+                }
+            });
+        }
+
+        if (Kind != "gelir")
+        {
+            await TryAddAsync(async () =>
+            {
+                var page = await _expenseAppService.GetListAsync(new GetExpensesInput
+                {
+                    MaxResultCount = MaxPerSource,
+                    ProjectId = ProjectId,
+                    CashAccountId = AccountId,
+                    Sorting = "ExpenseDate desc"
+                });
+
+                foreach (var x in page.Items)
+                {
+                    rows.Add(new LedgerRow
+                    {
+                        Id = x.Id,
+                        IsInflow = false,
+                        Date = x.ExpenseDate,
+                        Title = x.Title,
+                        CategoryLabel = CategoryLabels.ForExpense(x.Category),
+                        BudgetLineId = x.BudgetLineId,
+                        BudgetLineName = NameOf(lineNames, x.BudgetLineId),
+                        CashAccountName = NameOf(accountNames, x.CashAccountId),
+                        Amount = x.Amount,
+                        Currency = x.Currency,
+                        Url = "/Expenses"
+                    });
+                }
+            });
+        }
+
+        // Kalem süzgeci bellekte: gelir/gider uçlarında BudgetLineId filtresi yok
+        // ve sırf bunun için iki app service sözleşmesini genişletmek, sayfalı
+        // sonuç üzerinde çalışan bir süzgeç için gereğinden fazla olurdu.
+        if (LineId.HasValue)
+        {
+            rows = rows.Where(r => r.BudgetLineId == LineId.Value).ToList();
+        }
+
+        LedgerRows = rows.OrderByDescending(r => r.Date).ToList();
+        LedgerLineOptions = lineNames.Select(kv => (kv.Key, kv.Value)).OrderBy(x => x.Value).ToList();
+        LedgerAccountOptions = accountNames.Select(kv => (kv.Key, kv.Value)).OrderBy(x => x.Value).ToList();
     }
 
     /// <summary>
@@ -397,6 +528,21 @@ public class IndexModel : AbpPageModel
     public string TabUrl(string tabCode)
         => ProjectId.HasValue ? $"/Finance?projectId={ProjectId.Value}&tab={tabCode}" : $"/Finance?tab={tabCode}";
 
+    /// <summary>
+    /// Gelir-Gider süzgeç bağlantısı. Çağıran, süzgecin TAMAMINI verir (kısmi
+    /// güncelleme yok) — böylece "şu çipe basınca hangi hâle geçilecek" bağlantıya
+    /// bakınca okunur, sayfada gizli durum birikmez.
+    /// </summary>
+    public string LedgerUrl(string? kind, Guid? lineId, Guid? accountId)
+    {
+        var q = new List<string> { $"tab={FinanceContext.TabLedger}" };
+        if (ProjectId.HasValue) q.Insert(0, $"projectId={ProjectId.Value}");
+        if (!string.IsNullOrEmpty(kind)) q.Add($"kind={kind}");
+        if (lineId.HasValue) q.Add($"lineId={lineId.Value}");
+        if (accountId.HasValue) q.Add($"accountId={accountId.Value}");
+        return "/Finance?" + string.Join("&", q);
+    }
+
     private static string? NameOf(Dictionary<Guid, string> map, Guid? id)
         => id.HasValue && map.TryGetValue(id.Value, out var name) ? name : null;
 
@@ -425,6 +571,22 @@ public class IndexModel : AbpPageModel
         public string CategoryLabel { get; set; } = string.Empty;
         public string? ProjectName { get; set; }
         public string? CustomerName { get; set; }
+        public string Url { get; set; } = "#";
+    }
+
+    /// <summary>"Gelir-Gider" tablosunun tek satırı — gelir ve gider ortak biçimde.</summary>
+    public class LedgerRow
+    {
+        public Guid Id { get; set; }
+        public bool IsInflow { get; set; }
+        public DateTime Date { get; set; }
+        public string Title { get; set; } = string.Empty;
+        public string CategoryLabel { get; set; } = string.Empty;
+        public Guid? BudgetLineId { get; set; }
+        public string? BudgetLineName { get; set; }
+        public string? CashAccountName { get; set; }
+        public decimal Amount { get; set; }
+        public string Currency { get; set; } = "TRY";
         public string Url { get; set; } = "#";
     }
 

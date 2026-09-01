@@ -21,6 +21,11 @@
     {
         <abp-script src="/Pages/Finance/Budget.js" />
     }
+    @if (Model.ActiveTab == FinanceContext.TabInvoices)
+    {
+        @* Faturaların ikinci bir arayüzü yok: /Invoices'ın script'i aynen kullanılır. *@
+        <abp-script src="/Pages/Invoices/index.js" />
+    }
 }
 
 <div data-page-description="Bütçe, gelir-gider ve kasa — tek çatı" class="apya-page"
@@ -106,26 +111,11 @@
                 break;
 
             case FinanceContext.TabLedger:
-                @* Kayıtlar bugün iki ayrı sayfada yaşıyor; tek tabloya taşınana
-                   kadar sekme köprü görevi görür — ölü ekran basılmaz. *@
-                <partial name="_EmptyState" model='new EmptyStateModel {
-                    Icon = "fa-right-left",
-                    Title = "Gelir ve gider kayıtları ayrı sayfalarda",
-                    Description = "Üç para birimli tek tablo hazırlanıyor. Şimdilik kayıtlara kendi sayfalarından ulaşın." }' />
-                <div class="text-center">
-                    <a href="/Incomes" class="btn btn-sm btn-outline-secondary me-2"><i class="fa fa-arrow-down-long me-1" aria-hidden="true"></i>Gelirler</a>
-                    <a href="/Expenses" class="btn btn-sm btn-outline-secondary"><i class="fa fa-arrow-up-long me-1" aria-hidden="true"></i>Giderler</a>
-                </div>
+                <partial name="_PanelLedger" model="Model" />
                 break;
 
             case FinanceContext.TabInvoices:
-                <partial name="_EmptyState" model='new EmptyStateModel {
-                    Icon = "fa-file-invoice-dollar",
-                    Title = "Faturalar kendi sayfasında",
-                    Description = "Master-detail fatura görünümü bu sekmeye taşınacak." }' />
-                <div class="text-center">
-                    <a href="/Invoices" class="btn btn-sm btn-outline-secondary"><i class="fa fa-file-invoice-dollar me-1" aria-hidden="true"></i>Faturalar &amp; Ödemeler</a>
-                </div>
+                <partial name="_PanelInvoices" model="Model" />
                 break;
 
             case FinanceContext.TabDocuments:

@@ -1,0 +1,59 @@
+@*
+    "Faturalar" sekmesi — tasarım 3b.
+
+    Faturaların İKİNCİ bir arayüzü YAZILMADI: /Invoices sayfasının master-detail
+    markup'ı ve Pages/Invoices/index.js aynen kullanılıyor. Tek fark, kök düğüme
+    verilen data-project-id: dolu olduğunda liste o projeyle sınırlanır
+    (/Invoices'ta öznitelik yok → davranış değişmez).
+
+    Tasarımın "₺ defter (fatura kuru)" özet kutusu ve "Ödemeler ve kur farkı"
+    bloğu burada YOK: fatura bugün tek para biriminde saklanıyor, kur farkı
+    kaydı 5. adımda geliyor.
+*@
+@using Apya.Platform.Permissions
+@using Apya.Platform.Web.Pages.Finance
+@using Microsoft.AspNetCore.Authorization
+@inject IAuthorizationService AuthorizationService
+@model IndexModel
+
+@if (Model.SelectedProject != null)
+{
+    <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+        <span class="fw-semibold">Faturalar</span>
+        <span class="apya-chip apya-chip-neutral">@Model.SelectedProject.Name</span>
+        @if (await AuthorizationService.IsGrantedAsync(PlatformPermissions.Invoices.Create))
+        {
+            <a href="/Invoices" class="btn btn-sm btn-outline-secondary ms-auto">
+                <i class="fa fa-arrow-up-right-from-square me-1" aria-hidden="true"></i>Faturalar sayfasında aç
+            </a>
+        }
+    </div>
+}
+
+<div class="apya-md" id="InvoicesMd" data-project-id="@Model.ProjectId">
+    <div class="apya-md-list">
+        <div class="apya-md-toolbar">
+            <input type="text" id="InvoiceFilter" class="form-control form-control-sm" placeholder="Fatura no, cari ara..." />
+            <div class="d-flex flex-wrap gap-1 align-items-center" id="InvoiceStatusPills">
+                <button type="button" class="btn btn-sm btn-primary" data-status="">Tümü</button>
+                <button type="button" class="btn btn-sm btn-outline-secondary" data-status="1">Gönderildi</button>
+                <button type="button" class="btn btn-sm btn-outline-secondary" data-status="2">Ödendi</button>
+                <button type="button" class="btn btn-sm btn-outline-secondary" data-status="4">Gecikmiş</button>
+                <button type="button" class="btn btn-sm btn-outline-secondary" data-status="0">Taslak</button>
+                <apya-hint text="Durum ödemelere göre otomatik belirlenir: kayıt Taslak olarak açılır, ödeme girildikçe Gönderildi, ödenen tutar genel toplamı karşılayınca Ödendi olur." placement="bottom" />
+            </div>
+        </div>
+        <ul class="apya-md-items" id="InvoicesList" role="listbox" aria-label="Fatura listesi"></ul>
+        <div class="apya-md-empty" id="InvoicesListEmpty" hidden>
+            <i class="fa fa-inbox" aria-hidden="true"></i>
+            <span>Eşleşen fatura bulunamadı</span>
+        </div>
+        <div class="apya-md-pager"><span id="InvoicesPagerInfo">—</span></div>
+    </div>
+    <div class="apya-md-detail" id="InvoiceDetail">
+        <div class="apya-md-empty">
+            <i class="fa fa-file-invoice-dollar" aria-hidden="true"></i>
+            <span>Detaylarını görmek için soldaki listeden bir fatura seçin.</span>
+        </div>
+    </div>
+</div>
