@@ -1,0 +1,101 @@
+/* =============================================================================
+   6a · Kiracı · Başvurularım
+   Ortak sözlük Shared.css / Tenant.css'te; burada yalnız bu ekranın ölçüleri.
+   ============================================================================= */
+
+.apya-my-kpis {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: var(--apya-space-3);
+}
+
+@media (max-width: 1199.98px) {
+    .apya-my-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 575.98px) {
+    .apya-my-kpis { grid-template-columns: minmax(0, 1fr); }
+}
+
+.apya-my-kpi {
+    display: block;
+    font-family: var(--apya-font-mono);
+    font-variant-numeric: tabular-nums;
+    font-size: var(--apya-fs-2xl);
+    font-weight: var(--apya-weight-bold);
+    letter-spacing: var(--apya-tracking-tight);
+    line-height: 1.15;
+}
+
+.apya-my-kpi--good { color: var(--apya-positive-700); }
+
+/* Satır — tasarım 6a: 1fr | 168px | 118px | 128px | 240px | 108px */
+.apya-my-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 168px 118px 128px 240px 108px;
+    align-items: center;
+    gap: var(--apya-space-2);
+    padding: 10px var(--apya-space-3);
+    border-bottom: 1px solid var(--apya-border-subtle);
+    font-size: var(--apya-fs-sm);
+}
+
+.apya-my-row:last-child { border-bottom: 0; }
+
+/* Kapanmış başvuru zeminle geri çekilir; iş kalmadı. */
+.apya-my-row.is-closed { background: var(--apya-surface-raised); }
+
+.apya-my-grant { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+
+.apya-my-grant-name {
+    font-weight: var(--apya-weight-medium);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.apya-my-grant-meta {
+    font-family: var(--apya-font-mono);
+    font-size: var(--apya-fs-xs);
+    color: var(--apya-text-tertiary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.apya-my-stage { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+
+.apya-my-next {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+    font-size: var(--apya-fs-xs);
+}
+
+.apya-my-next-text {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--apya-text-secondary);
+}
+
+/* Firmadan beklenen iş vurgulanır: kullanıcı kendi işini görmeli. */
+.apya-my-next.is-yours .apya-my-next-text {
+    color: var(--apya-warning-700);
+    font-weight: var(--apya-weight-medium);
+}
+
+.apya-my-avatar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    flex: none;
+    border-radius: var(--apya-radius-full);
+    background: var(--apya-accent-500);
+    color: #fff;
+    font-size: 9px;
+    font-weight: var(--apya-weight-bold);
+}
