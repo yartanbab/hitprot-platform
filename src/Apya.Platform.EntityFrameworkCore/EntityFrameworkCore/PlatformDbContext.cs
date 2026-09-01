@@ -143,6 +143,8 @@ namespace Apya.Platform.EntityFrameworkCore
         public DbSet<GrantConsultingLog> GrantConsultingLogs { get; set; }
         public DbSet<GrantDecision> GrantDecisions { get; set; }
         public DbSet<GrantAppealItem> GrantAppealItems { get; set; }
+        public DbSet<GrantReport> GrantReports { get; set; }
+        public DbSet<GrantReportSection> GrantReportSections { get; set; }
         public DbSet<GrantRecommendation> GrantRecommendations { get; set; }
         public DbSet<GrantDisbursementTranche> GrantDisbursementTranches { get; set; }
         public DbSet<GrantMilestone> GrantMilestones { get; set; }
@@ -891,6 +893,30 @@ namespace Apya.Platform.EntityFrameworkCore
                 b.Property(x => x.OpinionByName).HasMaxLength(96);
                 b.HasOne<GrantDecision>().WithMany(d => d.Items).HasForeignKey(x => x.DecisionId).OnDelete(DeleteBehavior.Cascade);
                 b.HasIndex(x => new { x.DecisionId, x.Order });
+            });
+
+            // --- 6c · Uygulama ve tahsilat ---
+
+            builder.Entity<GrantReport>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "GrantReports", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+                b.Property(x => x.Title).IsRequired().HasMaxLength(128);
+                b.Property(x => x.Note).HasMaxLength(256);
+                b.HasOne<GrantApplication>().WithMany().HasForeignKey(x => x.GrantApplicationId).OnDelete(DeleteBehavior.Cascade);
+                // Dilime FK KURULMADI: dilim silinse bile rapor durmalı, bağ yalnız
+                // ödeme kapısını kurar.
+                b.HasIndex(x => new { x.GrantApplicationId, x.Order });
+            });
+
+            builder.Entity<GrantReportSection>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "GrantReportSections", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+                b.Property(x => x.Name).IsRequired().HasMaxLength(96);
+                b.Property(x => x.Note).HasMaxLength(256);
+                b.HasOne<GrantReport>().WithMany(r => r.Sections).HasForeignKey(x => x.ReportId).OnDelete(DeleteBehavior.Cascade);
+                b.HasIndex(x => new { x.ReportId, x.Order });
             });
 
             builder.Entity<GrantDisbursementTranche>(b =>
