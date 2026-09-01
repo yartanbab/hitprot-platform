@@ -10,6 +10,10 @@ module.exports = {
     ],
     mappings: {
         // CDN'e bağımlı kalmasınlar diye yerelleştirildi (bkz. Tasks/Board/ProjectDetails.cshtml).
-        "node_modules/sortablejs/Sortable.min.js": "wwwroot/libs/sortablejs/"
+        "node_modules/sortablejs/Sortable.min.js": "wwwroot/libs/sortablejs/",
+        // 2a · başvuru sihirbazının canlı kanalı. React tarafı bu paketi Vite ile
+        // demetliyor; Razor sayfası global `signalR` beklediği için tarayıcı
+        // demeti ayrıca libs altına kopyalanır.
+        "node_modules/@microsoft/signalr/dist/browser/signalr.min.js": "wwwroot/libs/signalr/"
     }
 };

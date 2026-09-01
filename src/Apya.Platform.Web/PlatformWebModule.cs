@@ -776,6 +776,7 @@ public class PlatformWebModule : AbpModule
             endpoints.MapHub<Apya.Platform.Web.Hubs.NotificationHub>("/notification-hub");
             endpoints.MapHub<Apya.Platform.Web.Hubs.TaskHub>("/task-hub");
             endpoints.MapHub<Apya.Platform.Web.Hubs.AiHub>("/ai-hub");
+            endpoints.MapHub<Apya.Platform.Web.Hubs.GrantApplicationHub>("/grant-application-hub");
 
             // CSP ihlal raporları — tarayıcı POST eder, biz Serilog'a yazarız.
             // AllowAnonymous zorunlu: tarayıcı raporu auth cookie olmadan gönderir.
