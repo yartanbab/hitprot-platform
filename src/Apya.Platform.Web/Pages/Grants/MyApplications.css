@@ -45,6 +45,15 @@
 /* Kapanmış başvuru zeminle geri çekilir; iş kalmadı. */
 .apya-my-row.is-closed { background: var(--apya-surface-raised); }
 
+/* Reddedilen başvuru ayrı işaretlenir: kapanmış değil, itiraz penceresi açık
+   olabilir ve kullanıcının hemen görmesi gerekir. */
+.apya-my-row.is-rejected { background: var(--apya-negative-50); }
+
+.apya-my-row.is-rejected .apya-my-next-text {
+    color: var(--apya-negative-700);
+    font-weight: var(--apya-weight-medium);
+}
+
 .apya-my-grant { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 
 .apya-my-grant-name {

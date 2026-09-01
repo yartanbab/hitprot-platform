@@ -61,6 +61,12 @@ public class GrantMyApplicationRowDto
 
     public decimal CollectedAmount { get; set; }
     public bool IsClosed { get; set; }
+
+    /// <summary>6b · Kurum kararı red mi — satır uyarı zeminiyle gösterilir.</summary>
+    public bool IsRejected { get; set; }
+
+    /// <summary>İtiraz penceresine kalan gün; pencere kapalıysa null.</summary>
+    public int? AppealDaysLeft { get; set; }
 }
 
 /// <summary>

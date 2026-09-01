@@ -32,6 +32,7 @@ public class GrantMyApplicationsAppService : ApplicationService, IGrantMyApplica
     private readonly IRepository<GrantApplicationBudgetLine, Guid> _budgetRepo;
     private readonly IRepository<GrantApplicationDocument, Guid> _docRepo;
     private readonly IRepository<GrantDisbursementTranche, Guid> _trancheRepo;
+    private readonly IRepository<GrantDecision, Guid> _decisionRepo;
     private readonly IRepository<GrantCall, Guid> _callRepo;
     private readonly IRepository<Grant, Guid> _grantRepo;
     private readonly IRepository<GrantEligibleCostItem, Guid> _costItemRepo;
@@ -44,6 +45,7 @@ public class GrantMyApplicationsAppService : ApplicationService, IGrantMyApplica
         IRepository<GrantApplicationBudgetLine, Guid> budgetRepo,
         IRepository<GrantApplicationDocument, Guid> docRepo,
         IRepository<GrantDisbursementTranche, Guid> trancheRepo,
+        IRepository<GrantDecision, Guid> decisionRepo,
         IRepository<GrantCall, Guid> callRepo,
         IRepository<Grant, Guid> grantRepo,
         IRepository<GrantEligibleCostItem, Guid> costItemRepo,
@@ -55,6 +57,7 @@ public class GrantMyApplicationsAppService : ApplicationService, IGrantMyApplica
         _budgetRepo = budgetRepo;
         _docRepo = docRepo;
         _trancheRepo = trancheRepo;
+        _decisionRepo = decisionRepo;
         _callRepo = callRepo;
         _grantRepo = grantRepo;
         _costItemRepo = costItemRepo;
@@ -79,6 +82,8 @@ public class GrantMyApplicationsAppService : ApplicationService, IGrantMyApplica
             .GroupBy(d => d.GrantApplicationId).ToDictionary(g => g.Key, g => g.ToList());
         var tranches = (await _trancheRepo.GetListAsync(t => appIds.Contains(t.GrantApplicationId)))
             .GroupBy(t => t.GrantApplicationId).ToDictionary(g => g.Key, g => g.ToList());
+        var decisions = (await _decisionRepo.GetListAsync(x => appIds.Contains(x.GrantApplicationId)))
+            .ToDictionary(x => x.GrantApplicationId);
 
         List<GrantCall> calls;
         Dictionary<Guid, Grant> grants;
@@ -192,8 +197,20 @@ public class GrantMyApplicationsAppService : ApplicationService, IGrantMyApplica
             (row.NextAction, row.NextActionValue) = ResolveNextAction(
                 application, missingDocs, emptyFields);
 
+            // 6b · Red kararı satırı işaretler ve itiraz geri sayımını taşır.
+            if (decisions.TryGetValue(application.Id, out var decision))
+            {
+                row.IsRejected = decision.Outcome == GrantDecisionOutcome.Reddedildi;
+                if (row.IsRejected && decision.IsAppealWindowOpen(today) && decision.AppealDeadline.HasValue)
+                {
+                    row.AppealDaysLeft = (int)(decision.AppealDeadline.Value.Date - today).TotalDays;
+                }
+            }
+
+            // Reddedilen başvuru itiraz penceresi kapandıktan sonra kapanmış sayılır.
             row.IsClosed = application.ProjectId.HasValue
-                           || application.Stage == GrantApplicationStage.Odeme;
+                           || application.Stage == GrantApplicationStage.Odeme
+                           || (row.IsRejected && row.AppealDaysLeft == null);
 
             dto.Items.Add(row);
         }

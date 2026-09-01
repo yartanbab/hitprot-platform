@@ -32,14 +32,18 @@ $(function () {
     // ---------- Satır ----------
     function row(r) {
         var stageName = r.stageName || l('Grants:Stage:' + stageKeys[r.stage]);
-        var cta = r.projectId
+        // Red kararı olan başvuruda CTA doğrudan itiraz ekranına gider.
+        var cta = r.isRejected
+            ? '<a class="btn btn-sm btn-outline-danger" href="/Grants/Appeal?id=' + r.id + '">' +
+              esc(l('Grants:Mine:Cta:Appeal')) + '</a>'
+            : r.projectId
             ? '<a class="btn btn-sm btn-outline-secondary" href="/Projects/ProjectDetails/' + r.projectId + '">' +
               esc(l('Grants:Mine:Cta:Project')) + '</a>'
             : '<a class="btn btn-sm btn-' + (isYours(r.nextAction) ? 'primary' : 'outline-secondary') +
               '" href="/Grants/Wizard?id=' + r.id + '">' +
               esc(l(isYours(r.nextAction) ? 'Grants:Mine:Cta:Continue' : 'Grants:Mine:Cta:View')) + '</a>';
 
-        return '<div class="apya-my-row' + (r.isClosed ? ' is-closed' : '') + '">' +
+        return '<div class="apya-my-row' + (r.isRejected ? ' is-rejected' : (r.isClosed ? ' is-closed' : '')) + '">' +
             '<span class="apya-my-grant">' +
             '<span class="apya-my-grant-name">' + esc(r.grantName) + '</span>' +
             '<span class="apya-my-grant-meta">' + esc(r.issuer) +
@@ -62,7 +66,11 @@ $(function () {
             (r.assignedUserName && !isYours(r.nextAction)
                 ? '<span class="apya-my-avatar">' + esc(initials(r.assignedUserName)) + '</span>' : '') +
             '<span class="apya-my-next-text">' +
-            esc(l('Grants:Mine:Action:' + actionKeys[r.nextAction], r.nextActionValue)) + '</span></span>' +
+            esc(r.isRejected
+                ? (r.appealDaysLeft != null
+                    ? l('Grants:Mine:Action:Rejected', r.appealDaysLeft)
+                    : l('Grants:Mine:Action:RejectedClosed'))
+                : l('Grants:Mine:Action:' + actionKeys[r.nextAction], r.nextActionValue)) + '</span></span>' +
 
             '<span>' + cta + '</span></div>';
     }
