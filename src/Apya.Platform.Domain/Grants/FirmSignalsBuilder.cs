@@ -50,6 +50,12 @@ public class FirmSignalsBuilder : DomainService
             if (profile != null)
             {
                 signals.Size = profile.Size;
+                signals.FoundedOn = profile.FoundedOn;
+                signals.StaffCount = profile.StaffCount;
+                signals.RdStaffCount = profile.RdStaffCount;
+                signals.AnnualRevenue = profile.AnnualRevenue;
+                signals.Trl = profile.Trl;
+                signals.HasConsortiumPartner = profile.HasConsortiumPartner;
                 var ptags = await _profileTagRepo.GetListAsync(t => t.FirmProfileId == profile.Id);
                 signals.Tags = ptags.Select(t => new FirmSignalTag(t.Kind, t.Value)).ToList();
             }

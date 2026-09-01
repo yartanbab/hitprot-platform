@@ -17,6 +17,12 @@ public class GrantRecommendation : FullAuditedAggregateRoot<Guid>, IMultiTenant
     public string? Note { get; private set; }
     public GrantRecommendationStatus Status { get; private set; }
 
+    /// <summary>
+    /// 1c · Bu öneriyi yürütecek danışman (host kullanıcısı). null = atanmamış.
+    /// Danışmanlık kapasitesinin hangi işlere gittiğini görünür kılar.
+    /// </summary>
+    public Guid? AssignedUserId { get; set; }
+
     protected GrantRecommendation() { }
 
     public GrantRecommendation(Guid id, Guid? tenantId, Guid grantCallId, GrantRecommendationSource source, string? note) : base(id)

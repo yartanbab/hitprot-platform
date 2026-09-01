@@ -90,6 +90,10 @@ public static class PlatformDomainErrorCodes
 
     // --- Hibe (Grant) Modülü ---
     public const string GrantCallScheduleInvalid = "Platform:Grant:CallScheduleInvalid";
+    public const string GrantCostLimitPercentInvalid = "Platform:Grant:CostLimitPercentInvalid";
+    public const string GrantPublishRequiredFieldsMissing = "Platform:Grant:PublishRequiredFieldsMissing";
+    public const string GrantStageTemplateInUse = "Platform:Grant:StageTemplateInUse";
+    public const string GrantDraftIdentityRequired = "Platform:Grant:DraftIdentityRequired";
 
     // --- Dosya (File) Modülü ---
     public const string FileUnsupportedExtension = "Platform:File:UnsupportedExtension";
