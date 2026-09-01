@@ -45,7 +45,15 @@ public class DemoRequestAppService : PlatformAppService, IDemoRequestAppService
             DemoRequestConsts.NormalizeModules(input.InterestedModules?.ToArray()),
             TrimToNull(input.Message),
             TrimToNull(input.IpAddress),
-            TrimToNull(input.UserAgent));
+            TrimToNull(input.UserAgent),
+            new DemoRequestProjectBrief
+            {
+                TargetAudience = TrimToNull(input.TargetAudience),
+                ProblemStatement = TrimToNull(input.ProblemStatement),
+                PlannedActivities = TrimToNull(input.PlannedActivities),
+                BudgetRange = input.BudgetRange,
+                ExpectedOutcomes = TrimToNull(input.ExpectedOutcomes)
+            });
 
         return request.Id;
     }

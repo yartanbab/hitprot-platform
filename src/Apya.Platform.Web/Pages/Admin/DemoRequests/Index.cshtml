@@ -130,6 +130,49 @@
                                             }
                                         </dl>
 
+                                        @if (item.BudgetRange.HasValue || !string.IsNullOrWhiteSpace(item.TargetAudience)
+                                             || !string.IsNullOrWhiteSpace(item.ProblemStatement)
+                                             || !string.IsNullOrWhiteSpace(item.PlannedActivities)
+                                             || !string.IsNullOrWhiteSpace(item.ExpectedOutcomes))
+                                        {
+                                            <div class="mt-3">
+                                                <div class="fw-semibold small mb-1">Proje fikri</div>
+                                                <dl class="row mb-0 small">
+                                                    @if (!string.IsNullOrWhiteSpace(item.TargetAudience))
+                                                    {
+                                                        <dt class="col-5">Hedef kitle</dt>
+                                                        <dd class="col-7">@item.TargetAudience</dd>
+                                                    }
+                                                    @if (item.BudgetRange.HasValue)
+                                                    {
+                                                        <dt class="col-5">Tahmini bütçe</dt>
+                                                        <dd class="col-7">@L["DemoRequest:BudgetRange:" + item.BudgetRange.Value]</dd>
+                                                    }
+                                                </dl>
+                                                @if (!string.IsNullOrWhiteSpace(item.ProblemStatement))
+                                                {
+                                                    <div class="mt-2">
+                                                        <div class="fw-semibold small">Çözüm aranan sorun</div>
+                                                        <p class="mb-0 small">@item.ProblemStatement</p>
+                                                    </div>
+                                                }
+                                                @if (!string.IsNullOrWhiteSpace(item.PlannedActivities))
+                                                {
+                                                    <div class="mt-2">
+                                                        <div class="fw-semibold small">Planlanan faaliyetler</div>
+                                                        <p class="mb-0 small">@item.PlannedActivities</p>
+                                                    </div>
+                                                }
+                                                @if (!string.IsNullOrWhiteSpace(item.ExpectedOutcomes))
+                                                {
+                                                    <div class="mt-2">
+                                                        <div class="fw-semibold small">Beklenen çıktılar</div>
+                                                        <p class="mb-0 small">@item.ExpectedOutcomes</p>
+                                                    </div>
+                                                }
+                                            </div>
+                                        }
+
                                         @if (!string.IsNullOrWhiteSpace(item.Message))
                                         {
                                             <div class="mt-2">

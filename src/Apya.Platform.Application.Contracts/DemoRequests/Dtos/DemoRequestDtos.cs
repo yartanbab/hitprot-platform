@@ -46,6 +46,22 @@ public class CreateDemoRequestDto
     [StringLength(DemoRequestConsts.MaxMessageLength, ErrorMessage = "Mesaj en fazla {1} karakter olabilir.")]
     public string? Message { get; set; }
 
+    // --- Proje fikri (ön görüşme) — tamamı isteğe bağlı ---
+
+    [StringLength(DemoRequestConsts.MaxTargetAudienceLength, ErrorMessage = "Hedef kitle en fazla {1} karakter olabilir.")]
+    public string? TargetAudience { get; set; }
+
+    [StringLength(DemoRequestConsts.MaxProblemStatementLength, ErrorMessage = "Sorun tanımı en fazla {1} karakter olabilir.")]
+    public string? ProblemStatement { get; set; }
+
+    [StringLength(DemoRequestConsts.MaxPlannedActivitiesLength, ErrorMessage = "Planlanan faaliyetler en fazla {1} karakter olabilir.")]
+    public string? PlannedActivities { get; set; }
+
+    public DemoRequestBudgetRange? BudgetRange { get; set; }
+
+    [StringLength(DemoRequestConsts.MaxExpectedOutcomesLength, ErrorMessage = "Beklenen çıktılar en fazla {1} karakter olabilir.")]
+    public string? ExpectedOutcomes { get; set; }
+
     public string? IpAddress { get; set; }
 
     public string? UserAgent { get; set; }
@@ -62,6 +78,11 @@ public class DemoRequestDto : EntityDto<Guid>
     public DemoRequestCompanySize? CompanySize { get; set; }
     public string? InterestedModules { get; set; }
     public string? Message { get; set; }
+    public string? TargetAudience { get; set; }
+    public string? ProblemStatement { get; set; }
+    public string? PlannedActivities { get; set; }
+    public DemoRequestBudgetRange? BudgetRange { get; set; }
+    public string? ExpectedOutcomes { get; set; }
     public DemoRequestStatus Status { get; set; }
     public string? AdminNote { get; set; }
     public string? IpAddress { get; set; }

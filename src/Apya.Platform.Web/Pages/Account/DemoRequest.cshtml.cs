@@ -124,4 +124,7 @@ public class DemoRequestModel : PlatformPageModel
 
     public IEnumerable<DemoRequestCompanySize> CompanySizes
         => Enum.GetValues<DemoRequestCompanySize>();
+
+    public IEnumerable<DemoRequestBudgetRange> BudgetRanges
+        => Enum.GetValues<DemoRequestBudgetRange>();
 }

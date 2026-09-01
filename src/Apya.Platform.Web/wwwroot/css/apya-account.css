@@ -565,3 +565,13 @@
     height: 1px;
     overflow: hidden;
 }
+
+/* Proje fikri bloğunun başlığı — iletişim alanlarından görsel olarak ayırır. */
+.apya-auth__section {
+    margin: 22px 0 10px;
+    padding-top: 16px;
+    border-top: 1px solid var(--apya-border-default, #E5E7EB);
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--apya-text-secondary, #6B7280);
+}

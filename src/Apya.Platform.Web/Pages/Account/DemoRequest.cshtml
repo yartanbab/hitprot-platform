@@ -82,6 +82,59 @@
         </div>
     </div>
 
+    @* Proje fikri bloğu — iletişim bilgilerinden SONRA gelir. Beş açık uçlu soruyla
+       karşılamak terk oranını artırırdı; kısa ve kolay alanlar önce doldurulsun. *@
+    <p class="apya-auth__section">@L["DemoRequest:ProjectSection"]</p>
+
+    <div class="apya-auth__field">
+        <label class="apya-auth__label" asp-for="Input.TargetAudience">
+            @L["DemoRequest:TargetAudience"] <span class="apya-auth__optional">@L["DemoRequest:Optional"]</span>
+        </label>
+        <input class="apya-auth__input" asp-for="Input.TargetAudience"
+               placeholder="@L["DemoRequest:TargetAudiencePlaceholder"]" />
+        <span class="apya-auth__error" asp-validation-for="Input.TargetAudience"></span>
+    </div>
+
+    <div class="apya-auth__field">
+        <label class="apya-auth__label" asp-for="Input.ProblemStatement">
+            @L["DemoRequest:ProblemStatement"] <span class="apya-auth__optional">@L["DemoRequest:Optional"]</span>
+        </label>
+        <textarea class="apya-auth__input apya-auth__textarea" asp-for="Input.ProblemStatement" rows="3"
+                  placeholder="@L["DemoRequest:ProblemStatementPlaceholder"]"></textarea>
+        <span class="apya-auth__error" asp-validation-for="Input.ProblemStatement"></span>
+    </div>
+
+    <div class="apya-auth__field">
+        <label class="apya-auth__label" asp-for="Input.PlannedActivities">
+            @L["DemoRequest:PlannedActivities"] <span class="apya-auth__optional">@L["DemoRequest:Optional"]</span>
+        </label>
+        <textarea class="apya-auth__input apya-auth__textarea" asp-for="Input.PlannedActivities" rows="3"
+                  placeholder="@L["DemoRequest:PlannedActivitiesPlaceholder"]"></textarea>
+        <span class="apya-auth__error" asp-validation-for="Input.PlannedActivities"></span>
+    </div>
+
+    <div class="apya-auth__field">
+        <label class="apya-auth__label" asp-for="Input.BudgetRange">
+            @L["DemoRequest:BudgetRange"] <span class="apya-auth__optional">@L["DemoRequest:Optional"]</span>
+        </label>
+        <select class="apya-auth__input apya-auth__select" asp-for="Input.BudgetRange">
+            <option value="">@L["DemoRequest:Choose"]</option>
+            @foreach (var range in Model.BudgetRanges)
+            {
+                <option value="@range">@L["DemoRequest:BudgetRange:" + range]</option>
+            }
+        </select>
+    </div>
+
+    <div class="apya-auth__field">
+        <label class="apya-auth__label" asp-for="Input.ExpectedOutcomes">
+            @L["DemoRequest:ExpectedOutcomes"] <span class="apya-auth__optional">@L["DemoRequest:Optional"]</span>
+        </label>
+        <textarea class="apya-auth__input apya-auth__textarea" asp-for="Input.ExpectedOutcomes" rows="3"
+                  placeholder="@L["DemoRequest:ExpectedOutcomesPlaceholder"]"></textarea>
+        <span class="apya-auth__error" asp-validation-for="Input.ExpectedOutcomes"></span>
+    </div>
+
     <div class="apya-auth__field">
         <span class="apya-auth__label">
             @L["DemoRequest:Modules"] <span class="apya-auth__optional">@L["DemoRequest:Optional"]</span>
