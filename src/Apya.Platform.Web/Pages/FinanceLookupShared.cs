@@ -1,7 +1,12 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
+using System.Threading.Tasks;
 using Apya.Platform.Projects.Dtos;
+using Apya.Platform.Tasks;
+using Volo.Abp.Authorization;
+using Volo.Abp.Domain.Entities;
 
 namespace Apya.Platform.Web.Pages;
 
@@ -22,6 +27,28 @@ public static class FinanceLookupShared
                 e = p.EndDate?.ToString("yyyy-MM-dd")
             });
         return JsonSerializer.Serialize(map);
+    }
+
+
+    /// <summary>
+    /// Görev panelinden açılan kayıt modalı için görevin projesini çözer.
+    /// Görevi görme yetkisi yoksa null döner — modal projesiz açılır, akış
+    /// bozulmaz (kullanıcı projeyi elle seçer).
+    /// </summary>
+    public static async Task<Guid?> ResolveTaskProjectAsync(ITaskAppService taskSvc, Guid taskId)
+    {
+        try
+        {
+            return (await taskSvc.GetAsync(taskId)).ProjectId;
+        }
+        catch (AbpAuthorizationException)
+        {
+            return null;
+        }
+        catch (EntityNotFoundException)
+        {
+            return null;
+        }
     }
 
     // JSON anahtarları kasıtlı kısa (s/e) — client 'i.s' / 'i.e' okur.

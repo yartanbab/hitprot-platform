@@ -8,6 +8,7 @@ using Volo.Abp.Domain.Repositories;
 using Apya.Platform.CashAccounts;
 using Apya.Platform.CashMovements;
 using Apya.Platform.Permissions;
+using Apya.Platform.ProjectBudgets;
 
 namespace Apya.Platform.Incomes;
 
@@ -23,15 +24,18 @@ public class IncomeEntryAppService :
 {
     private readonly IRepository<CashMovement, Guid> _cashMovementRepository;
     private readonly IRepository<CashAccount, Guid> _cashAccountRepository;
+    private readonly ProjectBudgetManager _budgetManager;
 
     public IncomeEntryAppService(
         IRepository<IncomeEntry, Guid> repository,
         IRepository<CashMovement, Guid> cashMovementRepository,
-        IRepository<CashAccount, Guid> cashAccountRepository)
+        IRepository<CashAccount, Guid> cashAccountRepository,
+        ProjectBudgetManager budgetManager)
         : base(repository)
     {
         _cashMovementRepository = cashMovementRepository;
         _cashAccountRepository = cashAccountRepository;
+        _budgetManager = budgetManager;
         GetPolicyName = PlatformPermissions.Incomes.Default;
         GetListPolicyName = PlatformPermissions.Incomes.Default;
         CreatePolicyName = PlatformPermissions.Incomes.Create;
@@ -72,6 +76,9 @@ public class IncomeEntryAppService :
 
     public override async Task<IncomeEntryDto> CreateAsync(CreateUpdateIncomeEntryDto input)
     {
+        // Giderdeki ile aynı koşullu kural; bkz. ExpenseAppService.
+        await _budgetManager.EnsureBudgetLineIsValidAsync(input.ProjectId, input.BudgetLineId);
+
         var dto = await base.CreateAsync(input);
 
         if (input.CashAccountId.HasValue)
@@ -93,6 +100,8 @@ public class IncomeEntryAppService :
 
     public override async Task<IncomeEntryDto> UpdateAsync(Guid id, CreateUpdateIncomeEntryDto input)
     {
+        await _budgetManager.EnsureBudgetLineIsValidAsync(input.ProjectId, input.BudgetLineId);
+
         var dto = await base.UpdateAsync(id, input);
 
         var linked = await _cashMovementRepository.FirstOrDefaultAsync(

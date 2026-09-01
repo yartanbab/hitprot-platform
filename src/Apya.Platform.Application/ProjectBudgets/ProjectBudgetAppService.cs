@@ -7,6 +7,7 @@ using Apya.Platform.Incomes;
 using Apya.Platform.Permissions;
 using Apya.Platform.ProjectBudgets.Dtos;
 using Apya.Platform.Projects;
+using Apya.Platform.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Volo.Abp;
 using Volo.Abp.Application.Services;
@@ -34,6 +35,7 @@ public class ProjectBudgetAppService : ApplicationService, IProjectBudgetAppServ
     private readonly IRepository<Project, Guid> _projectRepository;
     private readonly IRepository<Expense, Guid> _expenseRepository;
     private readonly IRepository<IncomeEntry, Guid> _incomeRepository;
+    private readonly IRepository<TaskItem, Guid> _taskRepository;
     private readonly ProjectBudgetManager _budgetManager;
 
     public ProjectBudgetAppService(
@@ -44,6 +46,7 @@ public class ProjectBudgetAppService : ApplicationService, IProjectBudgetAppServ
         IRepository<Project, Guid> projectRepository,
         IRepository<Expense, Guid> expenseRepository,
         IRepository<IncomeEntry, Guid> incomeRepository,
+        IRepository<TaskItem, Guid> taskRepository,
         ProjectBudgetManager budgetManager)
     {
         _lineRepository = lineRepository;
@@ -53,6 +56,7 @@ public class ProjectBudgetAppService : ApplicationService, IProjectBudgetAppServ
         _projectRepository = projectRepository;
         _expenseRepository = expenseRepository;
         _incomeRepository = incomeRepository;
+        _taskRepository = taskRepository;
         _budgetManager = budgetManager;
     }
 
@@ -112,6 +116,44 @@ public class ProjectBudgetAppService : ApplicationService, IProjectBudgetAppServ
     {
         using var scope = HostScope();
         return await LoadLinesAsync(projectId);
+    }
+
+    public async Task<ProjectRecordFormLookupDto> GetRecordFormLookupAsync(Guid projectId)
+    {
+        using var scope = HostScope();
+
+        var project = await _projectRepository.GetAsync(projectId);
+        var lines = await LoadLinesAsync(projectId);
+
+        var dto = new ProjectRecordFormLookupDto
+        {
+            ProjectId = projectId,
+            Currency = string.IsNullOrWhiteSpace(project.Currency) ? "TRY" : project.Currency,
+            Lines = lines.Select(l => new BudgetLineLookupDto
+            {
+                Id = l.Id,
+                Code = l.Code,
+                Name = l.Name,
+                ApprovedAmount = l.ApprovedAmount,
+                SpentAmount = l.SpentAmount,
+                RemainingAmount = l.RemainingAmount
+            }).ToList()
+        };
+
+        // Görev listesi AYRI bir izne bağlı. Repository doğrudan okunduğu için
+        // izin kontrolü burada AÇIKÇA yapılır — app service çağrısındaki örtük
+        // kontrol yok, olmadığını varsaymak sessiz bir sızıntı olurdu.
+        // Yetki yoksa liste boş döner ve seçici hiç basılmaz.
+        if (await AuthorizationService.IsGrantedAsync(PlatformPermissions.Tasks.Default))
+        {
+            var tasks = await _taskRepository.GetListAsync(x => x.ProjectId == projectId);
+            dto.Tasks = tasks
+                .OrderBy(t => t.Title)
+                .Select(t => new ProjectTaskLookupDto { Id = t.Id, Title = t.Title })
+                .ToList();
+        }
+
+        return dto;
     }
 
     [Authorize(PlatformPermissions.Projects.Edit)]

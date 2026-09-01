@@ -15,6 +15,7 @@ public class ExpenseDto : FullAuditedEntityDto<Guid>
     public string? CashAccountName { get; set; }
     public Guid? ProjectId { get; set; }
     public Guid? TaskId { get; set; }
+    public Guid? BudgetLineId { get; set; }
     public Guid? CustomerId { get; set; }
     public string? Description { get; set; }
 }

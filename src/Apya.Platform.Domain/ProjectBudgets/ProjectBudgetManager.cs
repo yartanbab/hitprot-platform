@@ -103,6 +103,47 @@ public class ProjectBudgetManager : DomainService
         await _lineRepository.DeleteAsync(line);
     }
 
+    /// <summary>
+    /// Bir gelir/gider kaydının kalem seçimini doğrular. Kural (kullanıcı kararı
+    /// 2026-09-01): kalem, PROJENİN KALEMİ VARSA zorunludur.
+    ///
+    /// "Proje seçilince koşulsuz zorunlu" DEĞİL: bugün hiçbir projede kalem yok,
+    /// o kural mevcut kullanıcıların gider girişini anında kilitlerdi. Kalem
+    /// tanımlayan takım otomatik olarak disipline girer, tanımlamayan engellenmez.
+    /// </summary>
+    public async Task EnsureBudgetLineIsValidAsync(Guid? projectId, Guid? budgetLineId)
+    {
+        if (projectId == null)
+        {
+            // Projesiz kayıtta kalem anlamsız — sessizce yok saymak yerine reddedilir,
+            // aksi halde ekranda seçili görünen kalem kaydedilmemiş olurdu.
+            if (budgetLineId != null)
+                throw new BusinessException(PlatformDomainErrorCodes.BudgetLineProjectMismatch)
+                    .WithData("BudgetLineId", budgetLineId);
+
+            return;
+        }
+
+        var lines = await _lineRepository.GetListAsync(x => x.ProjectId == projectId.Value);
+
+        if (lines.Count == 0)
+        {
+            if (budgetLineId != null)
+                throw new BusinessException(PlatformDomainErrorCodes.BudgetLineProjectMismatch)
+                    .WithData("BudgetLineId", budgetLineId);
+
+            return;
+        }
+
+        if (budgetLineId == null)
+            throw new BusinessException(PlatformDomainErrorCodes.BudgetLineRequired);
+
+        if (lines.All(x => x.Id != budgetLineId.Value))
+            throw new BusinessException(PlatformDomainErrorCodes.BudgetLineProjectMismatch)
+                .WithData("BudgetLineId", budgetLineId)
+                .WithData("ProjectId", projectId);
+    }
+
     /// <summary>Projedeki bir sonraki dilim sırası.</summary>
     public async Task<int> NextTrancheSequenceAsync(Guid projectId)
     {

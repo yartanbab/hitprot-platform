@@ -1034,6 +1034,7 @@
     "DisplayName:Body": "Content",
     "DisplayName:Branch": "Branch",
     "DisplayName:BreadcrumbJson": "Breadcrumb trail",
+    "DisplayName:BudgetLineId": "Budget line",
     "DisplayName:CashAccountId": "Cash / bank account",
     "DisplayName:Category": "Category",
     "DisplayName:CategoryId": "Category",

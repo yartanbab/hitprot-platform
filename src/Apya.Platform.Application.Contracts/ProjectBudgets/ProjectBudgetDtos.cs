@@ -66,6 +66,43 @@ public class CreateUpdateBudgetLineDto
     public decimal? TransferLimitPercent { get; set; }
 }
 
+/// <summary>
+/// Gelir/gider modalının kalem seçicisi için hafif kayıt. Kalan tutar burada
+/// da hesaplanır — form "kalan ₺230.700" yazabilsin diye.
+/// </summary>
+public class BudgetLineLookupDto : EntityDto<Guid>
+{
+    public string Code { get; set; } = string.Empty;
+    public string Name { get; set; } = string.Empty;
+    public decimal ApprovedAmount { get; set; }
+    public decimal SpentAmount { get; set; }
+    public decimal RemainingAmount { get; set; }
+}
+
+public class ProjectTaskLookupDto : EntityDto<Guid>
+{
+    public string Title { get; set; } = string.Empty;
+}
+
+/// <summary>
+/// Kayıt formunun proje değişince ihtiyaç duyduğu HER ŞEY tek çağrıda.
+///
+/// Görevler de burada: modal proje değişiminde iki ayrı istek atıp iki ayrı
+/// yetki hatasını ayrı ayrı ele almak zorunda kalmasın. Görevleri görme yetkisi
+/// yoksa <see cref="Tasks"/> boş döner ve seçici hiç basılmaz.
+/// </summary>
+public class ProjectRecordFormLookupDto
+{
+    public Guid ProjectId { get; set; }
+    public string Currency { get; set; } = "TRY";
+
+    /// <summary>Kalem tanımlıysa form kalem seçimini ZORUNLU kılar.</summary>
+    public bool RequiresBudgetLine => Lines.Count > 0;
+
+    public List<BudgetLineLookupDto> Lines { get; set; } = new();
+    public List<ProjectTaskLookupDto> Tasks { get; set; } = new();
+}
+
 public class TrancheDeductionDto : EntityDto<Guid>
 {
     public Guid TrancheId { get; set; }

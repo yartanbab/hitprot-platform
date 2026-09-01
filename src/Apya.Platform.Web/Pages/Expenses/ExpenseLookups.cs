@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -8,6 +9,7 @@ using Apya.Platform.Expenses;
 using Apya.Platform.Projects;
 using Apya.Platform.Projects.Dtos;
 using Volo.Abp.Application.Dtos;
+using Volo.Abp.Authorization;
 
 namespace Apya.Platform.Web.Pages.Expenses;
 
@@ -40,4 +42,5 @@ public static class ExpenseLookups
 
         return (accounts, projects, customers, categories, projectDatesJson);
     }
+
 }

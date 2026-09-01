@@ -245,6 +245,76 @@ public class ProjectBudgetManager_Tests
             Arg.Any<CancellationToken>());
     }
 
+    // ── Kayıt formunun kalem kuralı (kullanıcı kararı 2026-09-01) ──────────
+    // "Projenin kalemi VARSA zorunlu." Ne koşulsuz zorunlu ne de tamamen serbest;
+    // ikisi de yanlış olurdu — biri mevcut kullanıcıları kilitler, diğeri kalem
+    // tablosunu boş bırakır.
+
+    [Fact]
+    public async Task Projesiz_kayitta_kalem_secilemez()
+    {
+        var ex = await Should.ThrowAsync<BusinessException>(() =>
+            _sut.EnsureBudgetLineIsValidAsync(projectId: null, budgetLineId: Guid.NewGuid()));
+
+        ex.Code.ShouldBe(PlatformDomainErrorCodes.BudgetLineProjectMismatch);
+    }
+
+    [Fact]
+    public async Task Projesiz_kayitta_kalemsiz_gecerli()
+    {
+        await _sut.EnsureBudgetLineIsValidAsync(projectId: null, budgetLineId: null);
+    }
+
+    [Fact]
+    public async Task Kalemi_olmayan_projede_kalem_ZORUNLU_DEGIL()
+    {
+        GivenLines();
+
+        await _sut.EnsureBudgetLineIsValidAsync(_projectId, budgetLineId: null);
+    }
+
+    [Fact]
+    public async Task Kalemi_olmayan_projeye_kalem_yazilamaz()
+    {
+        GivenLines();
+
+        var ex = await Should.ThrowAsync<BusinessException>(() =>
+            _sut.EnsureBudgetLineIsValidAsync(_projectId, Guid.NewGuid()));
+
+        ex.Code.ShouldBe(PlatformDomainErrorCodes.BudgetLineProjectMismatch);
+    }
+
+    [Fact]
+    public async Task Kalemi_olan_projede_kalem_ZORUNLU()
+    {
+        GivenLines(Line("1", "Personel", 100_000m, 100_000m));
+
+        var ex = await Should.ThrowAsync<BusinessException>(() =>
+            _sut.EnsureBudgetLineIsValidAsync(_projectId, budgetLineId: null));
+
+        ex.Code.ShouldBe(PlatformDomainErrorCodes.BudgetLineRequired);
+    }
+
+    [Fact]
+    public async Task Baska_projenin_kalemi_kabul_edilmez()
+    {
+        GivenLines(Line("1", "Personel", 100_000m, 100_000m));
+
+        var ex = await Should.ThrowAsync<BusinessException>(() =>
+            _sut.EnsureBudgetLineIsValidAsync(_projectId, Guid.NewGuid()));
+
+        ex.Code.ShouldBe(PlatformDomainErrorCodes.BudgetLineProjectMismatch);
+    }
+
+    [Fact]
+    public async Task Projenin_kendi_kalemi_kabul_edilir()
+    {
+        var line = Line("1", "Personel", 100_000m, 100_000m);
+        GivenLines(line);
+
+        await _sut.EnsureBudgetLineIsValidAsync(_projectId, line.Id);
+    }
+
     [Fact]
     public async Task Onaylanan_tutar_verilmezse_sozlesme_tutari_kullanilir()
     {

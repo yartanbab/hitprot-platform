@@ -16,6 +16,7 @@ public class IncomeEntryDto : FullAuditedEntityDto<Guid>
     public string? CashAccountName { get; set; }
     public Guid? ProjectId { get; set; }
     public Guid? TaskId { get; set; }
+    public Guid? BudgetLineId { get; set; }
     public Guid? CustomerId { get; set; }
     public string? Description { get; set; }
 }
@@ -40,6 +41,13 @@ public class CreateUpdateIncomeEntryDto
     public Guid? CashAccountId { get; set; }
     public Guid? ProjectId { get; set; }
     public Guid? TaskId { get; set; }
+
+    /// <summary>
+    /// Gelirin yazıldığı bütçe kalemi. Zorunluluğu giderdeki ile aynı koşullu
+    /// kurala tabi (bkz. <see cref="Expenses.CreateUpdateExpenseDto.BudgetLineId"/>).
+    /// </summary>
+    public Guid? BudgetLineId { get; set; }
+
     public Guid? CustomerId { get; set; }
 
     [StringLength(IncomeConsts.MaxDescriptionLength)]

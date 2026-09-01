@@ -18,6 +18,12 @@ public interface IProjectBudgetAppService : IApplicationService
     Task<ProjectBudgetOverviewDto> GetOverviewAsync(Guid projectId);
 
     Task<List<ProjectBudgetLineDto>> GetLinesAsync(Guid projectId);
+
+    /// <summary>
+    /// Gelir/gider modalının proje değişiminde çağırdığı arama: kalemler (kalan
+    /// tutarlarıyla) + görevler. Tek çağrı, çünkü ikisi de aynı anda gerekiyor.
+    /// </summary>
+    Task<ProjectRecordFormLookupDto> GetRecordFormLookupAsync(Guid projectId);
     Task<ProjectBudgetLineDto> CreateLineAsync(Guid projectId, CreateUpdateBudgetLineDto input);
     Task<ProjectBudgetLineDto> UpdateLineAsync(Guid id, CreateUpdateBudgetLineDto input);
 

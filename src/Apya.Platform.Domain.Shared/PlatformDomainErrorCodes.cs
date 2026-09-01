@@ -198,6 +198,7 @@ public static class PlatformDomainErrorCodes
     public const string BudgetLineCodeAlreadyExists = "Platform:ProjectBudget:LineCodeAlreadyExists";
     public const string BudgetLineAmountInvalid = "Platform:ProjectBudget:LineAmountInvalid";
     public const string BudgetLineInUse = "Platform:ProjectBudget:LineInUse";
+    public const string BudgetLineRequired = "Platform:ProjectBudget:LineRequired";
     public const string BudgetLineProjectMismatch = "Platform:ProjectBudget:LineProjectMismatch";
     public const string BudgetTransferLimitInvalid = "Platform:ProjectBudget:TransferLimitInvalid";
 

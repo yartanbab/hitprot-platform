@@ -8,9 +8,6 @@
     <abp-modal>
         <abp-modal-header title="Yeni Gider"></abp-modal-header>
         <abp-modal-body>
-            @* Görev panelinden açılınca TaskId query'den gelir; POST'ta korunması için gizli alan.
-               Eksikti → gider TaskId'siz oluşuyor, görevin Finans sekmesinde listelenmiyordu. *@
-            <input type="hidden" asp-for="Expense.TaskId" />
             <abp-input asp-for="Expense.Title" label="Başlık" />
             <abp-row>
                 <abp-column size-md="_6">
@@ -37,6 +34,28 @@
                     </abp-select>
                 </abp-column>
             </abp-row>
+
+            @* Bütçe kalemi + görev: seçenekleri proje seçimine göre JS doldurur
+               (apya-finance-modal.js → bindBudgetContext). Proje seçili değilken
+               ikisi de gizlidir; sunucu da aynı kuralı doğrular. *@
+            <abp-row>
+                <abp-column size-md="_6">
+                    <div class="mb-3 d-none" data-budget-line-wrap>
+                        <label class="form-label" asp-for="Expense.BudgetLineId">
+                            Bütçe kalemi
+                            <span class="apya-chip apya-chip-neutral ms-1 d-none" data-budget-line-hint></span>
+                        </label>
+                        <select asp-for="Expense.BudgetLineId" class="form-select"></select>
+                    </div>
+                </abp-column>
+                <abp-column size-md="_6">
+                    <div class="mb-3 d-none" data-budget-task-wrap>
+                        <label class="form-label" asp-for="Expense.TaskId">Görev (opsiyonel)</label>
+                        <select asp-for="Expense.TaskId" class="form-select"></select>
+                    </div>
+                </abp-column>
+            </abp-row>
+
             @* Cari alanı gizlendi (kullanıcı kararı 2026-06-22); değer korunsun diye gizli alan. *@
             <input type="hidden" asp-for="Expense.CustomerId" />
             <abp-input asp-for="Expense.Description" label="Açıklama" />
@@ -57,6 +76,16 @@
                 projectSelector: '#Expense_ProjectId',
                 dateSelector: '#Expense_ExpenseDate',
                 projectDates: dates
+            });
+            apya.financeModal.bindBudgetContext({
+                formSelector: 'form[action$="/Expenses/CreateModal"]',
+                projectSelector: '#Expense_ProjectId',
+                lineSelector: '#Expense_BudgetLineId',
+                taskSelector: '#Expense_TaskId',
+                lineWrapSelector: '[data-budget-line-wrap]',
+                taskWrapSelector: '[data-budget-task-wrap]',
+                hintSelector: '[data-budget-line-hint]',
+                selectedTaskId: '@Model.Expense.TaskId'
             });
         }, 0);
     })();

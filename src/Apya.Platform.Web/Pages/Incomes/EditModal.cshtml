@@ -37,6 +37,27 @@
                     </abp-select>
                 </abp-column>
             </abp-row>
+
+            @* Bütçe kalemi + görev: seçenekleri proje seçimine göre JS doldurur
+               (apya-finance-modal.js → bindBudgetContext). Proje seçili değilken
+               ikisi de gizlidir; sunucu da aynı kuralı doğrular. *@
+            <abp-row>
+                <abp-column size-md="_6">
+                    <div class="mb-3 d-none" data-budget-line-wrap>
+                        <label class="form-label" asp-for="Income.BudgetLineId">
+                            Bütçe kalemi
+                            <span class="apya-chip apya-chip-neutral ms-1 d-none" data-budget-line-hint></span>
+                        </label>
+                        <select asp-for="Income.BudgetLineId" class="form-select"></select>
+                    </div>
+                </abp-column>
+                <abp-column size-md="_6">
+                    <div class="mb-3 d-none" data-budget-task-wrap>
+                        <label class="form-label" asp-for="Income.TaskId">Görev (opsiyonel)</label>
+                        <select asp-for="Income.TaskId" class="form-select"></select>
+                    </div>
+                </abp-column>
+            </abp-row>
             @* Cari alanı gizlendi (kullanıcı kararı 2026-06-22); mevcut değer korunsun diye gizli alan. *@
             <input type="hidden" asp-for="Income.CustomerId" />
             <abp-input asp-for="Income.Description" label="Açıklama" />
@@ -57,6 +78,17 @@
                 projectSelector: '#Income_ProjectId',
                 dateSelector: '#Income_IncomeDate',
                 projectDates: dates
+            });
+            apya.financeModal.bindBudgetContext({
+                formSelector: 'form[action$="/Incomes/EditModal"]',
+                projectSelector: '#Income_ProjectId',
+                lineSelector: '#Income_BudgetLineId',
+                taskSelector: '#Income_TaskId',
+                lineWrapSelector: '[data-budget-line-wrap]',
+                taskWrapSelector: '[data-budget-task-wrap]',
+                hintSelector: '[data-budget-line-hint]',
+                selectedLineId: '@Model.Income.BudgetLineId',
+                selectedTaskId: '@Model.Income.TaskId'
             });
         }, 0);
     })();

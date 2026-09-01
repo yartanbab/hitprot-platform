@@ -8,6 +8,7 @@ using Volo.Abp.Domain.Repositories;
 using Apya.Platform.CashAccounts;
 using Apya.Platform.CashMovements;
 using Apya.Platform.Permissions;
+using Apya.Platform.ProjectBudgets;
 
 namespace Apya.Platform.Expenses;
 
@@ -23,15 +24,18 @@ public class ExpenseAppService :
 {
     private readonly IRepository<CashMovement, Guid> _cashMovementRepository;
     private readonly IRepository<CashAccount, Guid> _cashAccountRepository;
+    private readonly ProjectBudgetManager _budgetManager;
 
     public ExpenseAppService(
         IRepository<Expense, Guid> repository,
         IRepository<CashMovement, Guid> cashMovementRepository,
-        IRepository<CashAccount, Guid> cashAccountRepository)
+        IRepository<CashAccount, Guid> cashAccountRepository,
+        ProjectBudgetManager budgetManager)
         : base(repository)
     {
         _cashMovementRepository = cashMovementRepository;
         _cashAccountRepository = cashAccountRepository;
+        _budgetManager = budgetManager;
         GetPolicyName = PlatformPermissions.Expenses.Default;
         GetListPolicyName = PlatformPermissions.Expenses.Default;
         CreatePolicyName = PlatformPermissions.Expenses.Create;
@@ -74,6 +78,10 @@ public class ExpenseAppService :
 
     public override async Task<ExpenseDto> CreateAsync(CreateUpdateExpenseDto input)
     {
+        // Kalem kuralı DTO attribute'uyla ifade edilemez (projeye bağlı koşullu
+        // zorunluluk) — kaydetmeden önce burada doğrulanır.
+        await _budgetManager.EnsureBudgetLineIsValidAsync(input.ProjectId, input.BudgetLineId);
+
         var dto = await base.CreateAsync(input);
 
         // Otomatik kasa çıkış hareketi
@@ -93,6 +101,8 @@ public class ExpenseAppService :
 
     public override async Task<ExpenseDto> UpdateAsync(Guid id, CreateUpdateExpenseDto input)
     {
+        await _budgetManager.EnsureBudgetLineIsValidAsync(input.ProjectId, input.BudgetLineId);
+
         var dto = await base.UpdateAsync(id, input);
 
         // Bağlı kasa hareketini senkronla

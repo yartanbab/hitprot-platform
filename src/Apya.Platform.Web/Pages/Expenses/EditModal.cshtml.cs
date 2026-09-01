@@ -55,6 +55,11 @@ public class EditModalModel : AbpPageModel
         Expense.Category = dto.Category;
         Expense.CashAccountId = dto.CashAccountId;
         Expense.ProjectId = dto.ProjectId;
+        Expense.BudgetLineId = dto.BudgetLineId;
+        // TaskId BURAYA HİÇ KOPYALANMIYORDU: form da basmadığı için düzenleme
+        // POST'unda null gidiyor ve gider, görevin Finans sekmesinden SESSİZCE
+        // düşüyordu. Alan artık forma da basıldığı için burada da doldurulur.
+        Expense.TaskId = dto.TaskId;
         Expense.CustomerId = dto.CustomerId;
         Expense.Description = dto.Description;
 
