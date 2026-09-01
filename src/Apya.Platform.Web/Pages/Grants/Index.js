@@ -1,8 +1,7 @@
 $(function () {
     var grantService = apya.platform.grants.grant;
     var callService = apya.platform.grants.grantCall;
-    var dispatchService = apya.platform.grants.grantHostDispatch;
-    var canCreate = abp.auth.isGranted('Platform.Grants.Create');
+        var canCreate = abp.auth.isGranted('Platform.Grants.Create');
     var canEdit = abp.auth.isGranted('Platform.Grants.Edit');
     var canDelete = abp.auth.isGranted('Platform.Grants.Delete');
 
@@ -10,7 +9,6 @@ $(function () {
     var $empty = $('#GrantTileGridEmpty');
     var grantModal = new bootstrap.Modal(document.getElementById('GrantModal'));
     var callModal = new bootstrap.Modal(document.getElementById('CallModal'));
-    var sendRecModal = new bootstrap.Modal(document.getElementById('SendRecModal'));
 
     var statusLabels = { 0: 'Planlandı', 1: 'Açık', 2: 'Kapandı' };
     var statusTone = { 0: 'neutral', 1: 'positive', 2: 'warning' };
@@ -105,6 +103,7 @@ $(function () {
         var criteria = critChips(g.criteriaTags) + sizeChips(g.eligibleCompanySizes);
         var actions =
             '<div class="apya-tile-actions">' +
+            (canEdit ? '<a class="btn btn-sm btn-link text-muted apya-param-link" title="Parametreler" href="/Grants/Parameters?id=' + g.id + '"><i class="fa fa-sliders"></i></a>' : '') +
             (canEdit ? '<button type="button" class="btn btn-sm btn-link text-muted apya-edit-btn" title="Düzenle"><i class="fa fa-pen"></i></button>' : '') +
             (canDelete ? '<button type="button" class="btn btn-sm btn-link text-danger apya-delete-btn" title="Sil"><i class="fa fa-trash"></i></button>' : '') +
             '</div>';
@@ -321,78 +320,12 @@ $(function () {
         });
     });
 
-    // ---------- Firmalara Gönder (host toplu-öneri, B3) ----------
-    var selectedCandidates = [];
-    function getRecSizeMask() {
-        var m = 0;
-        $('#SendRecModal .apya-rec-size:checked').each(function () { m += parseInt($(this).val(), 10); });
-        return m;
-    }
+    // ---------- Firmalara Gönder ----------
+    // Modal, 1c ekranına (/Grants/Dispatch) devredildi: skor kırılımı, danışman
+    // ataması ve kanal seçimi bir modala sığmıyordu. Buradaki düğme oraya götürür.
     $grid.on('click', '.apya-call-send', function () {
         var c = $(this).closest('.apya-call-row').data('call');
-        $('#SendRecCallId').val(c.id);
-        $('#SendRecModal .apya-rec-size').prop('checked', false);
-        $('#SendRecBudgetMin, #SendRecBudgetMax').val('');
-        $('#SendRecCategory').val('');
-        $('#SendRecMinScore').val(0);
-        $('#SendRecNote').val('');
-        $('#SendRecResults').addClass('d-none');
-        $('#SendRecEmpty').addClass('d-none');
-        $('#SendRecSendBtn').addClass('d-none');
-        sendRecModal.show();
-    });
-    $('#SendRecPreviewBtn').click(function () {
-        var categoryVal = $('#SendRecCategory').val();
-        var input = {
-            grantCallId: $('#SendRecCallId').val(),
-            sizes: getRecSizeMask() || null,
-            budgetMin: numOrNull('#SendRecBudgetMin'),
-            budgetMax: numOrNull('#SendRecBudgetMax'),
-            category: categoryVal === '' ? null : parseInt(categoryVal, 10),
-            minScore: parseInt($('#SendRecMinScore').val(), 10) || 0
-        };
-        dispatchService.preview(input).then(function (items) {
-            selectedCandidates = items;
-            var $rows = $('#SendRecCandidateRows').empty();
-            if (!items.length) {
-                $('#SendRecResults').addClass('d-none');
-                $('#SendRecSendBtn').addClass('d-none');
-                $('#SendRecEmpty').removeClass('d-none');
-                return;
-            }
-            $('#SendRecEmpty').addClass('d-none');
-            items.forEach(function (it) {
-                $rows.append(
-                    '<tr data-tenant-id="' + it.tenantId + '">' +
-                    '<td><input type="checkbox" class="apya-rec-candidate" checked /></td>' +
-                    '<td>' + esc(it.tenantName) + '</td>' +
-                    '<td><span class="apya-chip apya-chip-ai">%' + it.score + '</span></td>' +
-                    '</tr>'
-                );
-            });
-            $('#SendRecResults').removeClass('d-none');
-            $('#SendRecSendBtn').removeClass('d-none');
-        });
-    });
-    $('#SendRecModal').on('change', '#SendRecSelectAll', function () {
-        $('#SendRecCandidateRows .apya-rec-candidate').prop('checked', $(this).is(':checked'));
-    });
-    $('#SendRecSendBtn').click(function () {
-        var tenantIds = [];
-        $('#SendRecCandidateRows tr').each(function () {
-            if ($(this).find('.apya-rec-candidate').is(':checked')) {
-                tenantIds.push($(this).data('tenant-id'));
-            }
-        });
-        if (!tenantIds.length) { abp.notify.warn('En az bir firma seçin.'); return; }
-        dispatchService.send({
-            grantCallId: $('#SendRecCallId').val(),
-            tenantIds: tenantIds,
-            note: $('#SendRecNote').val().trim() || null
-        }).then(function () {
-            sendRecModal.hide();
-            abp.notify.success(tenantIds.length + ' firmaya öneri gönderildi.');
-        });
+        window.location.href = '/Grants/Dispatch?id=' + c.id;
     });
 
     loadList();
