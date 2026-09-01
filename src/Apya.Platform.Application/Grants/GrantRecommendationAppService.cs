@@ -25,8 +25,6 @@ public class GrantRecommendationAppService : ApplicationService, IGrantRecommend
     private readonly IRepository<GrantCall, Guid> _callRepo;
     private readonly IRepository<Grant, Guid> _grantRepo;
     private readonly IRepository<GrantCriteriaTag, Guid> _criteriaRepo;
-    private readonly IRepository<FirmProfile, Guid> _profileRepo;
-    private readonly IRepository<FirmProfileTag, Guid> _profileTagRepo;
     private readonly IRepository<GrantApplication, Guid> _appRepo;
     private readonly IRepository<GrantRecommendation, Guid> _hostRecRepo;
     private readonly FirmSignalsBuilder _signalsBuilder;
