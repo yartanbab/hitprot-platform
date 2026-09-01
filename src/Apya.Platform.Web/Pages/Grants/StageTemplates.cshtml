@@ -1,0 +1,124 @@
+@page
+@using Apya.Platform.Localization
+@using Microsoft.AspNetCore.Mvc.Localization
+@inject IHtmlLocalizer<PlatformResource> L
+@model Apya.Platform.Web.Pages.Grants.StageTemplatesModel
+@{
+    ViewBag.Title = L["Grants:StageTemplates:Title"].Value;
+}
+
+@section styles {
+    <abp-style src="/Pages/Grants/Shared.css" />
+    <abp-style src="/Pages/Grants/StageTemplates.css" />
+}
+
+@section scripts {
+    <script src="~/libs/sortablejs/Sortable.min.js"></script>
+    <abp-script src="/Pages/Grants/StageTemplates.js" />
+}
+
+@* Başlık + açıklama app header'da; sayfa içinde tekrarlanmıyor. *@
+<div data-page-description="@L["Grants:StageTemplates:Description"]" class="apya-page">
+    <div class="apya-page-head">
+        <div class="apya-page-head-actions">
+            <a href="/Grants" class="btn btn-sm btn-outline-secondary">
+                <i class="fa fa-arrow-left me-1"></i>@L["Grants:Parameters:BackToPrograms"]
+            </a>
+        </div>
+    </div>
+
+    <div class="apya-tpl-layout">
+
+        @* ---------- Sol: şablon listesi ---------- *@
+        <nav class="apya-tpl-list card mb-0">
+            <div class="card-body d-flex flex-column gap-2">
+                <div class="apya-overline">@L["Grants:StageTemplates:List"]</div>
+                <div id="TplList" class="d-flex flex-column gap-1"></div>
+                <button type="button" id="TplNewBtn" class="apya-tpl-new">
+                    <i class="fa fa-plus"></i>@L["Grants:StageTemplates:New"]
+                </button>
+            </div>
+        </nav>
+
+        @* ---------- Orta: aşama tablosu ---------- *@
+        <section class="card mb-0" id="TplEditor">
+            <div class="card-body d-flex flex-column gap-3">
+                <div class="d-flex align-items-start justify-content-between gap-3">
+                    <div class="apya-field flex-grow-1">
+                        <input type="text" id="TplName" class="form-control form-control-sm fw-bold"
+                               maxlength="96" placeholder="@L["Grants:StageTemplates:NamePlaceholder"]" />
+                        <input type="text" id="TplDescription" class="form-control form-control-sm"
+                               maxlength="256" placeholder="@L["Grants:StageTemplates:DescriptionPlaceholder"]" />
+                    </div>
+                    <div class="d-flex flex-column align-items-end gap-2">
+                        <span class="apya-chip apya-chip-accent" id="TplStepCount">0</span>
+                        <div class="form-check mb-0">
+                            <input class="form-check-input" type="checkbox" id="TplIsDefault" />
+                            <label class="form-check-label small" for="TplIsDefault">@L["Grants:StageTemplates:MakeDefault"]</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="apya-tpl-table">
+                    <div class="apya-tpl-row apya-tpl-head">
+                        <span></span>
+                        <span>@L["Grants:StageTemplates:Col:Stage"]</span>
+                        <span>@L["Grants:StageTemplates:Col:Owner"]</span>
+                        <span>@L["Grants:StageTemplates:Col:Documents"]</span>
+                        <span>@L["Grants:StageTemplates:Col:Completion"]</span>
+                        <span>@L["Grants:StageTemplates:Col:Reminder"]</span>
+                        <span></span>
+                    </div>
+                    <div id="TplSteps"></div>
+                    <div id="TplStepsEmpty" class="apya-tpl-empty d-none">@L["Grants:StageTemplates:NoSteps"]</div>
+                </div>
+
+                <div class="d-flex align-items-center justify-content-between gap-2">
+                    <div class="d-flex align-items-center gap-2">
+                        <button type="button" id="TplAddStep" class="apya-tpl-new apya-tpl-new--inline">
+                            <i class="fa fa-plus"></i>@L["Grants:StageTemplates:AddStep"]
+                        </button>
+                        <span class="small text-muted"><i class="fa fa-grip-vertical me-1"></i>@L["Grants:StageTemplates:DragHint"]</span>
+                    </div>
+                    <div class="d-flex align-items-center gap-2">
+                        <button type="button" id="TplDelete" class="btn btn-sm btn-link text-danger">
+                            @L["Grants:StageTemplates:Delete"]
+                        </button>
+                        <button type="button" id="TplSave" class="btn btn-sm btn-primary">
+                            <i class="fa fa-check me-1"></i>@L["Grants:StageTemplates:Save"]
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        @* ---------- Sağ: pano önizlemesi + kullanım ---------- *@
+        <aside class="apya-tpl-side">
+            <div class="card mb-0">
+                <div class="card-body d-flex flex-column gap-2">
+                    <span class="apya-overline">@L["Grants:StageTemplates:BoardPreview"]</span>
+                    <div id="TplBoard" class="d-flex flex-column gap-1"></div>
+                    <div class="small text-muted">@L["Grants:StageTemplates:BoardNote"]</div>
+                    <div class="small text-muted">@L["Grants:StageTemplates:BoardCountsLater"]</div>
+                </div>
+            </div>
+
+            <div class="card mb-0">
+                <div class="card-body d-flex flex-column gap-2">
+                    <span class="apya-overline">@L["Grants:StageTemplates:UsingCalls"]</span>
+                    <div id="TplCalls" class="d-flex flex-column gap-1"></div>
+                    <div id="TplWarning" class="apya-tpl-warning d-none"></div>
+                </div>
+            </div>
+        </aside>
+    </div>
+
+    <div id="TplEmpty" class="d-none">
+        <partial name="_EmptyState" model='new Apya.Platform.Web.Pages.Shared.EmptyStateModel
+        {
+            Icon = "fa-diagram-project",
+            Title = L["Grants:StageTemplates:Empty"].Value,
+            Description = L["Grants:StageTemplates:EmptyHint"].Value
+        }' />
+    </div>
+</div>

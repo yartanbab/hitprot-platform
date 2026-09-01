@@ -1,0 +1,52 @@
+/* =============================================================================
+   1e · Kiracı hibe detayı — yalnız bu sayfaya özel ölçüler.
+   Ortak kiracı sözlüğü Tenant.css'te.
+   ============================================================================= */
+
+.apya-detail-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 340px;
+    gap: var(--apya-space-5);
+    align-items: start;
+}
+
+@media (max-width: 1199.98px) {
+    .apya-detail-layout { grid-template-columns: minmax(0, 1fr); }
+    .apya-detail-side { position: static; }
+}
+
+.apya-detail-side {
+    position: sticky;
+    top: var(--apya-space-4);
+    display: flex;
+    flex-direction: column;
+    gap: var(--apya-space-3);
+}
+
+/* Üstteki 4'lü metrik şeridi (üst limit / oran / süre / son başvuru). */
+.apya-detail-metrics {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: var(--apya-space-3);
+    margin-top: var(--apya-space-2);
+}
+
+@media (max-width: 767.98px) {
+    .apya-detail-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+.apya-detail-metric {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: var(--apya-space-2) 10px;
+    border-radius: var(--apya-radius-lg);
+    background: var(--apya-surface-raised);
+}
+
+.apya-detail-metric-value {
+    font-family: var(--apya-font-mono);
+    font-variant-numeric: tabular-nums;
+    font-size: var(--apya-fs-md);
+    font-weight: var(--apya-weight-semibold);
+}

@@ -1,0 +1,102 @@
+@page
+@using Apya.Platform.Localization
+@using Microsoft.AspNetCore.Mvc.Localization
+@inject IHtmlLocalizer<PlatformResource> L
+@model Apya.Platform.Web.Pages.Grants.ImportModel
+@{
+    ViewBag.Title = L["Grants:Import:Title"].Value;
+}
+
+@section styles {
+    <abp-style src="/Pages/Grants/Import.css" />
+}
+
+@section scripts {
+    <abp-script src="/Pages/Grants/Import.js" />
+}
+
+@* Başlık + açıklama app header'da; sayfa içinde tekrarlanmıyor. *@
+<div data-page-description="@L["Grants:Import:Description"]" class="apya-page">
+    <div class="apya-page-head">
+        <div class="apya-page-head-actions">
+            <a href="/Grants/Sources" class="btn btn-sm btn-outline-secondary">
+                <i class="fa fa-arrow-left me-1"></i>@L["Grants:Sources:Title"]
+            </a>
+        </div>
+    </div>
+
+    <div class="apya-imp-tabs">
+        <button type="button" class="apya-imp-tab is-active" data-mode="text">@L["Grants:Import:Tab:Text"]</button>
+        <button type="button" class="apya-imp-tab" data-mode="blank">@L["Grants:Import:Tab:Blank"]</button>
+        <button type="button" class="apya-imp-tab" disabled>
+            @L["Grants:Import:Tab:Pdf"]
+            <span class="apya-chip apya-chip-neutral">@L["Grants:Import:Tab:Soon"]</span>
+        </button>
+        <button type="button" class="apya-imp-tab" disabled>
+            @L["Grants:Import:Tab:Copy"]
+            <span class="apya-chip apya-chip-neutral">@L["Grants:Import:Tab:Soon"]</span>
+        </button>
+    </div>
+
+    <div class="apya-imp-layout">
+
+        @* ---------- Sol: çağrı metni ---------- *@
+        <section class="card mb-0" id="ImportTextPane">
+            <div class="card-body d-flex flex-column gap-3">
+                <div class="d-flex align-items-center justify-content-between gap-2">
+                    <div>
+                        <div class="fw-bold">@L["Grants:Import:TextLabel"]</div>
+                        <div class="small text-muted">@L["Grants:Import:TextHint"]</div>
+                    </div>
+                    <span class="apya-numeric small text-muted" id="CharCount"></span>
+                </div>
+
+                <textarea id="CallText" class="form-control apya-imp-textarea" rows="16"></textarea>
+
+                <div class="apya-imp-preview d-none" id="TextPreview"></div>
+
+                <div class="d-flex align-items-center gap-2">
+                    <button type="button" id="ExtractBtn" class="btn btn-sm btn-primary">
+                        <i class="fa fa-wand-magic-sparkles me-1"></i><span id="ExtractBtnText">@L["Grants:Import:Extract"]</span>
+                    </button>
+                    <button type="button" id="EditTextBtn" class="btn btn-sm btn-outline-secondary d-none">
+                        @L["Grants:Import:EditText"]
+                    </button>
+                    <span class="small text-muted d-none" id="HighlightNote">@L["Grants:Import:HighlightNote"]</span>
+                </div>
+            </div>
+        </section>
+
+        @* ---------- Sağ: çıkarılan alanlar ---------- *@
+        <section class="card mb-0">
+            <div class="card-body d-flex flex-column gap-3">
+                <div class="d-flex align-items-center justify-content-between gap-2 flex-wrap">
+                    <div class="fw-bold">@L["Grants:Import:Fields"]</div>
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="apya-chip apya-chip-accent d-none" id="SuggestionCount"></span>
+                        <span class="apya-chip apya-chip-warning d-none" id="EmptyCount"></span>
+                        <button type="button" id="AcceptAllBtn" class="btn btn-sm btn-link text-secondary">
+                            @L["Grants:Import:AcceptAll"]
+                        </button>
+                    </div>
+                </div>
+
+                <div id="FieldList" class="d-flex flex-column gap-2"></div>
+                <div id="FieldListEmpty" class="apya-imp-empty">@L["Grants:Import:PasteFirst"]</div>
+
+                <div class="d-flex flex-column gap-2 pt-3 border-top">
+                    <div class="small text-muted">@L["Grants:Import:SourceNote"]</div>
+                    <input type="url" id="TrackUrl" class="form-control form-control-sm apya-numeric"
+                           maxlength="512" placeholder="@L["Grants:Sources:UrlPlaceholder"]" />
+                </div>
+
+                <div class="d-flex align-items-center justify-content-between gap-2">
+                    <span class="apya-numeric small text-muted" id="FilledCount"></span>
+                    <button type="button" id="SaveDraftBtn" class="btn btn-sm btn-primary" disabled>
+                        <i class="fa fa-check me-1"></i>@L["Grants:Import:SaveDraft"]
+                    </button>
+                </div>
+            </div>
+        </section>
+    </div>
+</div>

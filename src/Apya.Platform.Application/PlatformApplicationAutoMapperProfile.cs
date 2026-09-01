@@ -30,7 +30,29 @@ namespace Apya.Platform
                 .ForMember(d => d.CriteriaTags, o => o.Ignore());
             CreateMap<CreateUpdateGrantDto, Grant>()
                 .ForMember(d => d.CriteriaTags, o => o.Ignore())
+                .ForMember(d => d.EligibleCostItems, o => o.Ignore())
+                .ForMember(d => d.DocumentRequirements, o => o.Ignore())
                 .ForMember(d => d.Calls, o => o.Ignore());
+
+            // 1b · Parametre formu — türetilmiş alanlar (eş finansman) ve form durumu
+            // (tamamlanma, eksik zorunlu alanlar, yayına uygunluk) AppService'te doldurulur.
+            CreateMap<Grant, GrantParameterDto>()
+                .ForMember(d => d.CriteriaTags, o => o.Ignore())
+                .ForMember(d => d.EligibleCostItems, o => o.Ignore())
+                .ForMember(d => d.DocumentRequirements, o => o.Ignore())
+                .ForMember(d => d.StageTemplateName, o => o.Ignore())
+                .ForMember(d => d.StageStepCount, o => o.Ignore())
+                .ForMember(d => d.CoFinancingRatePercent, o => o.Ignore())
+                .ForMember(d => d.CompletionPercent, o => o.Ignore())
+                .ForMember(d => d.MissingRequiredFields, o => o.Ignore())
+                .ForMember(d => d.DraftCallCount, o => o.Ignore())
+                .ForMember(d => d.CanPublish, o => o.Ignore());
+            CreateMap<UpdateGrantParameterDto, Grant>()
+                .ForMember(d => d.CriteriaTags, o => o.Ignore())
+                .ForMember(d => d.EligibleCostItems, o => o.Ignore())
+                .ForMember(d => d.DocumentRequirements, o => o.Ignore())
+                .ForMember(d => d.Calls, o => o.Ignore());
+            CreateMap<GrantEligibleCostItem, GrantEligibleCostItemDto>();
 
             // Hibe Çağrısı (GrantCall) — GrantName MapToGetOutputDtoAsync'te doldurulur.
             // (Girdi→entity dönüşümü AppService'te MapToEntityAsync ile yapılır, AutoMapper değil.)
