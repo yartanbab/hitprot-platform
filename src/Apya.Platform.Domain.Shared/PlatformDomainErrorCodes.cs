@@ -112,6 +112,11 @@ public static class PlatformDomainErrorCodes
     public const string GrantPipelineStepNotInTemplate = "Platform:Grant:PipelineStepNotInTemplate";
     public const string GrantPipelineAssigneeNotHost = "Platform:Grant:PipelineAssigneeNotHost";
 
+    // 2d · Başvuru detayı
+    public const string GrantConsultingHoursInvalid = "Platform:Grant:ConsultingHoursInvalid";
+    public const string GrantSuccessFeeInvalid = "Platform:Grant:SuccessFeeInvalid";
+    public const string GrantPipelineNoNextStep = "Platform:Grant:PipelineNoNextStep";
+
     // --- Dosya (File) Modülü ---
     public const string FileUnsupportedExtension = "Platform:File:UnsupportedExtension";
     public const string FileSizeExceeded = "Platform:File:SizeExceeded";

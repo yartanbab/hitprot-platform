@@ -43,6 +43,22 @@ public class GrantApplication : FullAuditedAggregateRoot<Guid>, IMultiTenant
     public Guid? AssignedUserId { get; private set; }
 
     public void AssignTo(Guid? userId) => AssignedUserId = userId;
+
+    /// <summary>
+    /// 2d · Danışmanlık sözleşmesindeki başarı primi (%). Tahmini danışmanlık geliri
+    /// bu oranla hesaplanır; onaylı tutar yoksa talep edilen destek üzerinden.
+    /// Kiracıya GÖSTERİLMEZ — ücretlendirme verisidir.
+    /// </summary>
+    public decimal? SuccessFeePercent { get; private set; }
+
+    public void SetSuccessFee(decimal? percent)
+    {
+        if (percent is < 0 or > 100)
+        {
+            throw new BusinessException(PlatformDomainErrorCodes.GrantSuccessFeeInvalid);
+        }
+        SuccessFeePercent = percent;
+    }
     public DateTime AppliedDate { get; private set; }
     public decimal? ApprovedAmount { get; private set; }
 
