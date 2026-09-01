@@ -33,8 +33,17 @@ const CATEGORY_OPTIONS = [
 
 const CURRENCIES = ['TRY', 'USD', 'EUR'];
 
+/* Seçici stili — mevcut Input/textarea deseniyle aynı token'lar.
+   min-h-[44px]: tasarım 1d "tüm dokunma hedefleri ≥44px" diyor. */
+const SELECT_CLS = [
+    'block w-full min-h-[44px] rounded-md border border-default bg-surface-base text-text-primary',
+    'px-3 py-2 text-sm',
+    'focus-visible:outline-none focus-visible:shadow-focus focus-visible:border-focus',
+].join(' ');
+
 export function ExpenseFormSheet({
     open, onOpenChange, ocrResult, onSubmit, isSubmitting,
+    context, lines, onProjectChange, isOffline,
 }) {
     const [form, setForm] = useState(() => initialFromOcr(ocrResult));
     const [showMore, setShowMore] = useState(false);
@@ -74,9 +83,16 @@ export function ExpenseFormSheet({
     const update = (field) => (e) =>
         setForm((s) => ({ ...s, [field]: e?.target ? e.target.value : e }));
 
+    /* Kalem tanımlı projede kalem ZORUNLU — aynı kural sunucuda da işliyor
+       (ProjectBudgetManager.EnsureBudgetLineIsValidAsync). Burada engellemek
+       erken geri bildirimdir, tek savunma hattı değil. */
+    const lineRequired = !!lines?.requiresBudgetLine;
+    const missingContext = !form.cashAccountId
+        || (lineRequired && !form.budgetLineId);
+
     const handleSubmit = async (e) => {
         e.preventDefault();
-        if (isSubmitting) return;          /* Double-submit guard */
+        if (isSubmitting || missingContext) return;   /* Double-submit guard */
         const payload = {
             ...form,
             amount: typeof form.amount === 'number' ? form.amount : parseFloat(form.amount),
@@ -103,6 +119,59 @@ export function ExpenseFormSheet({
                     </header>
 
                     <div className="flex-1 overflow-y-auto px-4 py-4 flex flex-col gap-4">
+                        {isOffline && (
+                            <div className="rounded-xl border border-warning bg-warning-subtle px-3 py-2 text-[12.5px] text-warning">
+                                <i className="fa-solid fa-wifi-slash mr-1.5" />
+                                Bağlantı yok — kayıt <strong>cihazda saklanır</strong>, bağlantı gelince
+                                gönderilir. Fotoğraf kuyruğa girmez; kayıt belgesiz oluşur.
+                            </div>
+                        )}
+
+                        {/* ── BAĞLAM (tasarım 1d): proje · kalem · kasa ───────────
+                            Kasa ZORUNLU (sunucu sözleşmesi), kalem projede kalem
+                            tanımlıysa zorunlu. Bunlar olmadan saha kaydı doğrudan
+                            "kaleme yazılmamış" kovasına düşerdi. */}
+                        <Field label="Proje">
+                            <select
+                                className={SELECT_CLS}
+                                value={form.projectId || ''}
+                                onChange={(e) => { update('projectId')(e); onProjectChange?.(e.target.value); }}
+                            >
+                                <option value="">— Projesiz —</option>
+                                {(context?.projects ?? []).map(p => (
+                                    <option key={p.id} value={p.id}>{p.name}</option>
+                                ))}
+                            </select>
+                        </Field>
+
+                        {form.projectId && (lines?.lines?.length ?? 0) > 0 && (
+                            <Field label="Bütçe kalemi" required={lineRequired}>
+                                <select
+                                    className={SELECT_CLS}
+                                    value={form.budgetLineId || ''}
+                                    onChange={update('budgetLineId')}
+                                >
+                                    <option value="">— Kalem seçin —</option>
+                                    {lines.lines.map(l => (
+                                        <option key={l.id} value={l.id}>{l.label}</option>
+                                    ))}
+                                </select>
+                            </Field>
+                        )}
+
+                        <Field label="Kasa / banka" required>
+                            <select
+                                className={SELECT_CLS}
+                                value={form.cashAccountId || ''}
+                                onChange={update('cashAccountId')}
+                            >
+                                <option value="">— Kasa seçin —</option>
+                                {(context?.accounts ?? []).map(a => (
+                                    <option key={a.id} value={a.id}>{a.name} ({a.currency})</option>
+                                ))}
+                            </select>
+                        </Field>
+
                         <Field label="Tutar" required confidence={fieldConfidence.amount?.confidence}>
                             <MoneyInput
                                 ref={firstLowConf === 'amount' ? firstLowConfFieldRef : undefined}
