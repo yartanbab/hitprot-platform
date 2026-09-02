@@ -95,6 +95,74 @@ public static class ReleaseNoteCatalog
                 "listesinde de her satırın kalemi görünüyor, böylece hangi kalemin açığını " +
                 "kapattığınızı kaybetmiyorsunuz."),
 
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "Tüm projelerinizin finansını tek tabloda karşılaştırıyorsunuz",
+                "Finans ekranında proje seçicideki \"Tüm projeler\" seçeneği artık boş bir sayfa değil: " +
+                "bütün projelerinizin onaylanan bütçesi, harcaması ve gelen parası üstte tek şeritte " +
+                "toplanıyor, altında proje başına bir satır açılıyor. Satırlar riske göre sıralı — nakit " +
+                "riski taşıyan proje en üstte, sonra bütçesini aşan, sonra kesinti itirazı olan. Farklı " +
+                "para birimindeki projeler tek rakama zorlanmıyor; şerit \"karışık para birimi\" diyor. " +
+                "Bütçesi ve kaydı olmayan projeler tabloyu şişirmiyor, sayısı ekranda yazıyor."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "Bütçe kalemlerini görev kırılımıyla okuyorsunuz",
+                "\"Bütçe kalemleri\" sekmesine üç görünümlü bir anahtar eklendi: kalem listesi, kalem → " +
+                "görev ve görev → kalem. Hangi kalemin ne kadarının hangi göreve planlandığını, ne " +
+                "kadarının henüz dağıtılmadığını ve o görevde ne kadar harcandığını aynı tabloda " +
+                "görüyorsunuz. Göreve bağlanmamış harcamalar hata sayılmıyor — bordro, kira gibi giderler " +
+                "kendi satırında duruyor. Görünüm adresle taşınıyor; bağlantıyı paylaştığınızda karşı " +
+                "taraf aynı kırılımı açıyor."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "Projenin finans kurulumunu sihirbazla yapıyorsunuz",
+                "\"Bütçe kalemleri\" sekmesindeki \"Bağlamı kur\" düğmesi projenin finans şablonunu, " +
+                "açılacak sekmeleri ve şablonun önerdiği kalem listesini tek ekranda gösteriyor. Önerilen " +
+                "kalemler adıyla gelir, tutarları sıfırdır — rakamı siz yazarsınız, sistem uydurmaz. Kalem " +
+                "kodlarından biri projede zaten varsa ya da listede iki kez geçiyorsa hiçbir kalem " +
+                "eklenmez ve hepsi tek mesajda söylenir; yarım kurulum kalmaz."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "Kesintiyi kalemlere dağıtıp yeni bütçe revizyonu üretiyorsunuz",
+                "Fon verenin uyguladığı kesintiyi kaydettikten sonra iki seçenek çıkıyor: \"Bütçeyi " +
+                "revize et\" ya da \"Açık bırak\". Revize ederken her kalemden ne kadar düşüleceğini " +
+                "yazıyorsunuz, yeni tutar ve \"dağıtılmayan kalan\" sayacı anında hesaplanıyor; tamamını " +
+                "dağıtmak zorunlu değil, kalan kısım bütçede açık olarak durur. Bir kalemin aktarım payı " +
+                "sınırı aşılırsa uyarı çıkar, kayıt engellenmez. Sonuç yeni bir revizyon olarak geçmişe " +
+                "yazılır."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "Hibe projelerinde Donör ve raporlama sekmesi açıldı",
+                "Hibe şablonlu projelerde Finans ekranına \"Donör\" sekmesi geldi. Donör para biriminde " +
+                "gelir, gider ve net tutar üstte; kur bilgisi eksik olduğu için donör karşılığı " +
+                "hesaplanamayan kayıt sayısı yanında. Kalem tablosunda her kalemin aktarım payı yüzdesi ve " +
+                "tutar karşılığı yazıyor. Uygunluk denetimi üç sayılabilir bulgu veriyor: belgesiz " +
+                "harcama, donör kuru hesaplanamayan kayıt ve proje tarih aralığı dışındaki kayıt. Rapor " +
+                "dönemleri de paket, dönem, ek sayısı ve durumuyla listeleniyor."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Fix,
+                "\"Masraf Yakala\" ekranı artık gerçekten kaydediyor",
+                "Giderler ekranındaki \"Masraf Yakala\" düğmesiyle açılan saha girişi \"Masraf " +
+                "kaydedildi\" diyor ama hiçbir kayıt oluşturmuyordu. Artık gerçek gider kaydı açıyor; " +
+                "forma proje, bütçe kalemi ve kasa seçimi eklendi. Bağlantı yokken girdiğiniz kayıt " +
+                "cihazda bekler, bağlantı gelince kendiliğinden gönderilir; başlıkta \"Çevrimdışı\" " +
+                "rozeti ve kaç kaydın beklediği görünür. Bekleyen kayıt \"kaydedildi\" sayılmaz, " +
+                "gönderilene kadar listede kalır. Fişin fotoğrafı çevrimdışı kuyruğa alınmaz; belgeyi " +
+                "sonra eşleştirme ekranından bağlarsınız."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Fix,
+                "Fatura kalemlerinde ondalıklı miktar ve birim fiyat artık doğru hesaplanıyor",
+                "Fatura kalemine ondalıklı bir miktar ya da birim fiyat girildiğinde (örneğin 2,5 adet × " +
+                "1.234,56 ₺) tutar bin kat büyüyor, 3.703,68 yerine 3.703.680 yazıyordu; hata sessizdi, " +
+                "uyarı çıkmıyordu. Düzeltildi. Daha önce ondalıklı kalemle kaydettiğiniz bir fatura varsa " +
+                "tutarını bir kez kontrol etmenizi öneririz."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Fix,
+                "Kur değerleme detayında satırlar görünüyor",
+                "Kur değerlemesini çalıştıran kişi satırları görüyordu; kaydı daha sonra açan ise boş bir " +
+                "tablo ve altında dolu bir toplam buluyordu. Detay artık her açılışta hesap hesap " +
+                "satırları gösteriyor, toplam satırlarla tutuyor. Değerleme sonucunda hangi hesabın ne " +
+                "kadar fark ürettiğini yeniden görebiliyorsunuz."),
+
             // ── Hibe: çağrılar ve uygunluk ────────────────────────────────────
             new ReleaseNoteItem(ReleaseNoteCategory.Feature,
                 "Açık hibe çağrılarının tamamını görüyorsunuz",
@@ -275,7 +343,15 @@ public static class ReleaseNoteCatalog
                 "yalnız \"canlı\" işareti kayboluyordu ve neyin çalışmaya devam ettiği belirsizdi. " +
                 "Artık açıkça yazıyor: yazdıklarınız kaydedilmeye devam ediyor, üzerinde " +
                 "çalıştığınız alanlar size ayrılmış kalıyor; yansımayan tek şey karşı tarafın o " +
-                "anki değişiklikleri. Bağlantı gelince ekran kendiliğinden tazeleniyor.")
+                "anki değişiklikleri. Bağlantı gelince ekran kendiliğinden tazeleniyor."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Fix,
+                "Görev açıklaması kayıtlı olduğu hâlde boş görünmüyor",
+                "Bir görevin detayını ikinci kez açtığınızda açıklama alanı boş geliyor, kayıt yerinde " +
+                "olduğu hâlde \"kaydedilmemiş\" izlenimi veriyordu. Ayrıca alt görev panelinden \"tam " +
+                "ekran aç\" ya da \"görevi çoğalt\" ile başka göreve geçildiğinde önceki görevin metni " +
+                "ekranda kalıyor, üzerine yazılıp kaydedilirse yeni görevin açıklamasını eziyordu. İkisi " +
+                "de düzeltildi; açıklama her açılışta kayıtlı hâliyle geliyor.")
         ),
 
         new ReleaseNote(
