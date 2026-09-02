@@ -25,7 +25,7 @@ public static class ReleaseNoteCatalog
         new ReleaseNote(
             version: "2026.09.02",
             date: "2 Eylül 2026",
-            title: "Proje finansı tek ekranda, hibe süreci baştan sona platformda",
+            title: "Proje finansı tek ekranda, hibe süreci baştan sona, görevler ekip dışına açık",
 
             // ── Finans ───────────────────────────────────────────────────────
             new ReleaseNoteItem(ReleaseNoteCategory.Feature,
@@ -196,14 +196,9 @@ public static class ReleaseNoteCatalog
                 "Sözleşme imzalandıktan sonra hibe, projelerinizin arasında yerini alıyor: bütçe " +
                 "kalemleriniz proje bütçesine, planladığınız aşamalar göreve, ödeme dilimleri projenin " +
                 "gelir planına işleniyor. Başvurunuz kapanmıyor — projeyle bağlı kalıyor, evraklarınız " +
-                "ve yazışmalarınız yerinde duruyor.")
-        ),
+                "ve yazışmalarınız yerinde duruyor."),
 
-        new ReleaseNote(
-            version: "2026.08.31",
-            date: "31 Ağustos 2026",
-            title: "Görev paylaşımı, mobilde daha az kaydırma ve tek tıklama",
-
+            // ── Görev paylaşımı ───────────────────────────────────────────────
             new ReleaseNoteItem(ReleaseNoteCategory.Feature,
                 "Bir görevi ekibinizde olmayan kişiye açabiliyorsunuz",
                 "Taşeron, tasarımcı, danışman ya da müşteriniz — göreve dahil etmek istediğiniz kişinin " +
