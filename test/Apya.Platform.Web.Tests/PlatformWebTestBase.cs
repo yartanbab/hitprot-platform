@@ -1,4 +1,5 @@
-﻿using System.Net;
+﻿using System;
+using System.Net;
 using System.Net.Http;
 using System.Text.Json;
 using System.Threading.Tasks;
@@ -10,6 +11,14 @@ namespace Apya.Platform;
 
 public abstract class PlatformWebTestBase : AbpWebApplicationFactoryIntegratedTest<Program>
 {
+    // Soğuk ABP host + ilk Razor derlemesi yük altında HttpClient'ın varsayılan
+    // 100 sn sınırını aşıyor; paket TaskCanceledException ile rastgele düşüyordu.
+    // İddia hatası değil, zaman aşımı — sınırı gevşetmek yeter.
+    protected PlatformWebTestBase()
+    {
+        Client.Timeout = TimeSpan.FromMinutes(10);
+    }
+
     protected virtual async Task<T?> GetResponseAsObjectAsync<T>(string url, HttpStatusCode expectedStatusCode = HttpStatusCode.OK)
     {
         var strResponse = await GetResponseAsStringAsync(url, expectedStatusCode);
