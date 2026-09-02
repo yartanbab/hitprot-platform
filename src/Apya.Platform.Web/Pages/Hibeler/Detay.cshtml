@@ -4,6 +4,9 @@
 @using System.Linq
 @using Microsoft.AspNetCore.Mvc.Localization
 @inject IHtmlLocalizer<PlatformResource> L
+@* 🔴 Dize döndüren yardımcıda IHtmlLocalizer.Value BİÇİMLENDİRMEZ — argümanlar
+   render sırasında uygulanıyor. Biçimlenmiş dize için IStringLocalizer şart. *@
+@inject Microsoft.Extensions.Localization.IStringLocalizer<PlatformResource> S
 @model Apya.Platform.Web.Pages.Hibeler.DetayModel
 @{
     Layout = "_PublicLayout";
@@ -11,6 +14,58 @@
     ViewBag.MetaDescription = Model.Detail.Description;
 
     string Money(decimal? v) => v.HasValue ? v.Value.ToString("N0") + " ₺" : "—";
+
+    // Şart değeri servisten "min|max" (ya da ölçekte "2,4") olarak gelir; birim ve
+    // aralık metni BURADA kurulur. Ham dizeyi ekrana basmak "2|" gibi anlamsız bir
+    // değer gösteriyordu.
+    string CriterionText(Apya.Platform.Grants.Dtos.GrantPublicCriterionDto c)
+    {
+        var raw = c.Value ?? string.Empty;
+
+        if (c.Rule == Apya.Platform.Grants.GrantEligibilityRule.Consortium)
+        {
+            return S["Grants:Public:Criterion:Consortium", raw].Value;
+        }
+
+        if (c.Rule == Apya.Platform.Grants.GrantEligibilityRule.CompanySize)
+        {
+            var names = raw.Split(',', StringSplitOptions.RemoveEmptyEntries)
+                .Select(v => S["Grants:CompanySize:" + (Apya.Platform.Grants.CompanySize)int.Parse(v)].Value);
+            return string.Join(" · ", names);
+        }
+
+        var parts = raw.Split('|');
+        var min = parts.Length > 0 && !string.IsNullOrWhiteSpace(parts[0]) ? decimal.Parse(parts[0]) : (decimal?)null;
+        var max = parts.Length > 1 && !string.IsNullOrWhiteSpace(parts[1]) ? decimal.Parse(parts[1]) : (decimal?)null;
+
+        string Key(string suffix) => $"Grants:Public:Criterion:{suffix}";
+
+        return c.Rule switch
+        {
+            Apya.Platform.Grants.GrantEligibilityRule.CompanyAge => max.HasValue
+                ? S[Key("CompanyAgeRange"), min!, max!].Value
+                : S[Key("CompanyAgeMin"), min!].Value,
+
+            Apya.Platform.Grants.GrantEligibilityRule.Revenue => (min, max) switch
+            {
+                (not null, not null) => S[Key("RevenueRange"), min.Value.ToString("N0"), max.Value.ToString("N0")].Value,
+                (not null, null) => S[Key("RevenueMin"), min.Value.ToString("N0")].Value,
+                _ => S[Key("RevenueMax"), max!.Value.ToString("N0")].Value
+            },
+
+            Apya.Platform.Grants.GrantEligibilityRule.RdStaffCount => S[Key("RdStaffMin"), min!].Value,
+            Apya.Platform.Grants.GrantEligibilityRule.StaffCount => S[Key("StaffMin"), min!].Value,
+
+            Apya.Platform.Grants.GrantEligibilityRule.Trl => (min, max) switch
+            {
+                (not null, not null) => S[Key("TrlRange"), min, max].Value,
+                (not null, null) => S[Key("TrlMin"), min].Value,
+                _ => S[Key("TrlMax"), max].Value
+            },
+
+            _ => raw
+        };
+    }
 }
 
 @section scripts {
@@ -26,7 +81,7 @@
                 {
                     value = o.Value,
                     label = o.LabelKey == "Trl"
-                        ? L["Grants:Public:Option:Trl", o.Value].Value
+                        ? S["Grants:Public:Option:Trl", o.Value].Value
                         : L["Grants:Public:Option:" + o.LabelKey].Value
                 })
             }),
@@ -101,9 +156,14 @@
             <div class="apya-pub-metric">
                 <span class="apya-pub-metric-label">@L["Grants:Public:Detail:Duration"]</span>
                 <span class="apya-pub-metric-value">
-                    @(Model.Detail.ProjectDurationMonths.HasValue
-                        ? L["Grants:Public:Detail:Months", Model.Detail.ProjectDurationMonths].Value
-                        : "—")
+                    @if (Model.Detail.ProjectDurationMonths.HasValue)
+                    {
+                        @L["Grants:Public:Detail:Months", Model.Detail.ProjectDurationMonths.Value]
+                    }
+                    else
+                    {
+                        @:—
+                    }
                 </span>
             </div>
         </div>
@@ -117,7 +177,7 @@
                     {
                         <div class="apya-pub-criterion">
                             <span>@L["Grants:Rule:" + c.Rule]</span>
-                            <strong>@L["Grants:Public:Criterion:" + c.Rule, c.Value ?? ""]</strong>
+                            <strong>@CriterionText(c)</strong>
                         </div>
                     }
                 </div>
@@ -183,13 +243,23 @@
         <div class="apya-pub-panel">
             <div class="apya-pub-test-head">
                 <strong>@L["Grants:Public:Test:Title"]</strong>
-                <span class="apya-pub-result-score" id="TestProgress"></span>
+                @if (Model.Detail.Questions.Count > 0)
+                {
+                    <span class="apya-pub-result-score" id="TestProgress"></span>
+                }
             </div>
             @* Tasarımın açık kuralı: duvar yok. *@
             <p class="apya-pub-test-note">@L["Grants:Public:Test:NoWall"]</p>
 
             <div id="TestAnswered"></div>
             <div id="TestQuestion" class="apya-pub-question"></div>
+
+            @* 7a kuralı: boş durum bir sonraki adımı söyler. Çağrının ölçülebilir
+               şartı yoksa test paneli sessiz bir kutu olarak kalmamalı. *@
+            @if (Model.Detail.Questions.Count == 0)
+            {
+                <p class="apya-pub-test-note apya-pub-test-empty">@L["Grants:Public:Test:NoCriteria"]</p>
+            }
         </div>
 
         <div class="apya-pub-panel d-none" id="TestResult" hidden>

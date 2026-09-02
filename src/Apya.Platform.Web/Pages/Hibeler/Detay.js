@@ -99,8 +99,10 @@
     function paintResult(r) {
         $('#TestResult').prop('hidden', false).removeClass('d-none');
 
-        var failed = r.rules.filter(function (x) { return x.outcome === 2; }).length;
-        var title = failed > 0 ? data.labels.notEligible
+        // 🔴 Enum sırasını BURADA yeniden türetme: GrantRuleOutcome.Failed = 1,
+        // Unknown = 2. Önce 2 sayılmıştı; karşılanmayan şart "uygun" gösteriliyordu.
+        // Sunucu engelleyen şartı zaten hesaplıyor — tek kaynak o.
+        var title = r.blockingRule != null ? data.labels.notEligible
             : (index < data.questions.length ? data.labels.partial : data.labels.eligible);
 
         $('#ResultTitle').text(title);
@@ -132,6 +134,9 @@
         record(v);
     });
 
-    paintAnswered();
-    paintQuestion();
+    // Ölçülebilir şartı olmayan çağrıda test hiç başlamaz; boş durum Razor'da.
+    if (data.questions.length) {
+        paintAnswered();
+        paintQuestion();
+    }
 })();

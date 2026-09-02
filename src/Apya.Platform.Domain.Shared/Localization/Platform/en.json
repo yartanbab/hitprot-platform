@@ -2291,6 +2291,17 @@
     "Platform:Grant:LeadAlreadyConverted": "This request was converted into a customer; its status cannot be reverted.",
     "Platform:Grant:LeadCallNotOpen": "This call is not published.",
     "Platform:Grant:LeadNotFound": "Request not found.",
-    "Platform:Grant:LeadRateLimitExceeded": "Too many requests in a short time. Please try again later."
+    "Platform:Grant:LeadRateLimitExceeded": "Too many requests in a short time. Please try again later.",
+    "Grants:Public:Test:NoCriteria": "No measurable eligibility criteria are defined for this call, so the test cannot run. Read the official call text to see who can apply.",
+    "Grants:Public:Criterion:CompanyAgeMin": "Operating for at least {0} years",
+    "Grants:Public:Criterion:CompanyAgeRange": "Operating for {0} — {1} years",
+    "Grants:Public:Criterion:RevenueMin": "At least {0} ₺",
+    "Grants:Public:Criterion:RevenueMax": "At most {0} ₺",
+    "Grants:Public:Criterion:RevenueRange": "{0} ₺ — {1} ₺",
+    "Grants:Public:Criterion:RdStaffMin": "At least {0} full-time people",
+    "Grants:Public:Criterion:StaffMin": "At least {0} employees",
+    "Grants:Public:Criterion:TrlRange": "TRL {0} — TRL {1}",
+    "Grants:Public:Criterion:TrlMin": "At least TRL {0}",
+    "Grants:Public:Criterion:TrlMax": "At most TRL {0}"
   }
 }

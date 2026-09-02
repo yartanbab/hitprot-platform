@@ -119,6 +119,18 @@ body {
     .apya-pub-hero h1 { font-size: 26px; }
 }
 
+/* Metrik değeri mono ve tabular; sarmalanamaz. Dar ekranda 22px sabit kalsaydı
+   uzun değer ("02.09.2026", büyük bütçe) kutusundan taşıp kırpılırdı — ölçümde
+   375px'te 2px taşma görüldü. Aşağıda önce yazı küçülür, en dar bantta kutu
+   tek sütuna geçip tam genişliği alır. */
+@media (max-width: 767.98px) {
+    .apya-pub-metric-value { font-size: clamp(16px, 4.6vw, 22px); }
+}
+
+@media (max-width: 479.98px) {
+    .apya-pub-metrics { grid-template-columns: minmax(0, 1fr); }
+}
+
 .apya-pub-metric {
     display: flex;
     flex-direction: column;
@@ -345,11 +357,28 @@ body {
 .apya-pub-row:hover { background: var(--apya-surface-app-bg, #F5F5F5); }
 
 .apya-pub-row-name { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+
+/* Ana tablo kendi kabında kayıyor ama "benzer hibeler" satırı kaymıyor: dar
+   ekranda ad sütunu ~79px'e düşüyor ve metin taşıyordu. Kırpma çocuklarda
+   olmalı — kabın min-width:0'ı tek başına yetmez. */
+.apya-pub-row-name > strong,
+.apya-pub-row-name > span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
 .apya-pub-row-name > strong { font-size: 14px; font-weight: 600; }
 
 .apya-pub-row-name > span {
     font-size: 12px;
     color: var(--apya-text-secondary, #4B5563);
+}
+
+/* Dar ekranda üç sütun 335px'e sığmıyor; tutar düşürülür, ad ve zorluk kalır. */
+@media (max-width: 575.98px) {
+    .apya-pub-row--compact { grid-template-columns: minmax(0, 1fr) 92px; }
+    .apya-pub-row--compact > .apya-pub-num { display: none; }
 }
 
 .apya-pub-num {
@@ -721,6 +750,15 @@ body {
 [data-theme="dark"] .apya-pub-cta { background: var(--apya-surface-raised, #1F2937); }
 [data-theme="dark"] .apya-pub-cta p { color: var(--apya-text-secondary, #9CA3AF); }
 
+/* 🔴 accent-600 koyu temada DAHA KOYU (#4F46E5) — bağlantı metni olarak koyu
+   zeminde 2.93:1 ölçüldü. Aksan metni koyu temada -300'e çıkar. */
+[data-theme="dark"] .apya-pub-link { color: var(--apya-accent-300, #A5B4FC); }
+
+/* Aynı sebebin tersi: düğmede zemin aksan, metin beyaz. accent-500 koyu temada
+   açılıyor (#6366F1) ve beyaz metinle 4.47:1'e düşüyor — AA'nın 0,03 altı.
+   Zemin -600'e indirilince 6.29:1 oluyor. */
+[data-theme="dark"] .apya-pub-btn { background: var(--apya-accent-600, #4F46E5); }
+
 /* Benzer hibeler satırı: ana tablodan dar, kendi ızgarası var. */
 .apya-pub-row--compact {
     grid-template-columns: minmax(0, 1fr) 132px 96px;
@@ -730,3 +768,5 @@ body {
 .apya-pub-form--inset { margin-top: 14px; }
 
 .apya-pub-next { margin-top: 8px; }
+
+.apya-pub-test-empty { margin: 0; }

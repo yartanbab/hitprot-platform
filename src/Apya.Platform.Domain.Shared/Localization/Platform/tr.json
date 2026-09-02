@@ -2568,6 +2568,17 @@
         "Platform:Grant:LeadAlreadyConverted": "Bu talep müşteriye dönüştürüldü; durumu geri alınamaz.",
         "Platform:Grant:LeadCallNotOpen": "Bu çağrı yayında değil.",
         "Platform:Grant:LeadNotFound": "Talep bulunamadı.",
-        "Platform:Grant:LeadRateLimitExceeded": "Kısa sürede çok fazla talep gönderildi. Lütfen daha sonra tekrar deneyin."
+        "Platform:Grant:LeadRateLimitExceeded": "Kısa sürede çok fazla talep gönderildi. Lütfen daha sonra tekrar deneyin.",
+        "Grants:Public:Test:NoCriteria": "Bu çağrı için ölçülebilir uygunluk şartı tanımlı değil; test yapılamıyor. Kimlerin başvurabileceğini resmî çağrı metninden okuyun.",
+        "Grants:Public:Criterion:CompanyAgeMin": "En az {0} yıldır faaliyette",
+        "Grants:Public:Criterion:CompanyAgeRange": "{0} — {1} yıldır faaliyette",
+        "Grants:Public:Criterion:RevenueMin": "En az {0} ₺",
+        "Grants:Public:Criterion:RevenueMax": "En çok {0} ₺",
+        "Grants:Public:Criterion:RevenueRange": "{0} ₺ — {1} ₺",
+        "Grants:Public:Criterion:RdStaffMin": "Tam zamanlı en az {0} kişi",
+        "Grants:Public:Criterion:StaffMin": "En az {0} çalışan",
+        "Grants:Public:Criterion:TrlRange": "TRL {0} — TRL {1}",
+        "Grants:Public:Criterion:TrlMin": "En az TRL {0}",
+        "Grants:Public:Criterion:TrlMax": "En çok TRL {0}"
     }
 }
