@@ -1,93 +1,82 @@
-# Deploy delta — 2026-09-01 (`63cb35c6` → `main`)
+# Deploy delta — 2026-09-02 (`63cb35c6` → `main`)
 
 > **Hedef SHA bilerek başlıkta değil.** Bu belgenin kendi commit'i `main`'i ilerlettiği için
 > buraya yazılan her SHA yazıldığı anda bayatlar. Paketin üretildiği tam commit, ZIP adında
 > (`Apya-Yayin-<sha>.zip`) yazılıdır — tek doğru kaynak orasıdır.
 
-Taban `63cb35c6` — 2026-08-27 #2 yayınıyla canlıya inen commit. 2026-08-31 için hazırlanan
-paket **canlıya uygulanmadı** (aşağıya bak), bu yüzden delta hâlâ `63cb35c6`'dan ölçülüyor.
+Taban `63cb35c6` — 2026-08-27 #2 yayınıyla canlıya inen commit. 2026-08-31 ve 2026-09-01
+için hazırlanan iki paket de **canlıya uygulanmadı**; delta hâlâ `63cb35c6`'dan ölçülüyor.
+Bu belge `deploy-delta-2026-09-01.md`'nin yerini alır: aynı taban, aynı yordam, genişleyen
+kapsam (09-01 paketinden sonra #302–#307 indi: finansın kalan altı ekranı, hibenin kalan
+13 ekranı, üç para/veri düzeltmesi).
 
-**27 commit · 21 PR · 12 migration (çift sağlayıcı).**
+**33 commit · 29 PR (#279 → #307) · 21 migration (çift sağlayıcı).**
 
 ---
 
-## 🔴 ÖNCE OKU — canlı şu anda ÇÖKÜK, ama sebebi 31 Ağustos'takinden BAŞKA
+## 🔴 ÖNCE OKU — canlı hâlâ kapalı, belirti değişti
 
-2026-09-01 14:06 UTC'de dışarıdan ölçüldü:
+2026-09-02'de dışarıdan ölçüldü:
 
 | Uç | Ölçülen | Süre |
 |---|---|---|
-| `/health/ready` | **500** | 1,17 sn |
-| `/` | **500** | 0,07 sn |
-| `/js/style.css` (statik) | **500** | 0,05 sn |
+| `/health/ready` | **503** | 0,28 sn |
+| `/` | **503** | 0,05 sn |
+| `/libs/signalr/signalr.min.js` (statik) | **503** | 0,05 sn |
 
-Gövde: **`HTTP Error 500.31 — Failed to load ASP.NET Core runtime`**
-*"The specified version of Microsoft.NetCore.App or Microsoft.AspNetCore.App was not found."*
+2026-09-01'de üçü de **500.31** veriyordu (`Failed to load ASP.NET Core runtime`,
+0,05 sn). Şimdi **503 Service Unavailable**. IIS'te 503, istek uygulamaya hiç ulaşmadan
+döner: **uygulama havuzu durmuş** demektir — ya biri Plesk'ten durdurdu ya da art arda
+düşen başlangıçlardan sonra IIS "rapid-fail protection" ile havuzu kendisi kapattı. İkinci
+ihtimalde 500.31'in kök nedeni (aşağıda) hâlâ yerinde duruyor; havuzu başlatınca 500.31'e
+geri dönersin.
 
-31 Ağustos'ta belirti **502.5** ve yanıt **8-9 saniye**ydi. Şimdi **500.31** ve yanıt
-**0,05 saniye**. Bu fark tesadüf değil, teşhisin kendisi:
+500.31 teşhisi (2026-09-01) değişmedi: yanıt anında geldiği için süreç hiç başlatılmıyor →
+`web.config`'te `hostingModel="InProcess"` imzası. `deploy-delta-2026-08-27.md` bölüm 5.2
+bu senaryoyu öngörmüştü: *"500.30 / 500.31 → satırı geri al, yeniden publish gerekmez."*
 
-| | 502.5 (31 Ağu) | 500.31 (bugün) |
-|---|---|---|
-| ANCM ne yapıyor | ayrı süreç başlatmayı deniyor, düşüyor | runtime'ı IIS işçisinin **içine** yüklemeyi deniyor, anında düşüyor |
-| Yanıt süresi | 8-9 sn (süreç başlatma zaman aşımı) | 0,05 sn (süreç hiç başlatılmıyor) |
-| İşaret ettiği | `openiddict.pfx` / `secrets` kaybı | **`hostingModel="InProcess"`** |
+### Adım 0 — deploy'dan ÖNCE (bir dakika)
 
-Aradaki değişim, `web.config`'te `hostingModel`'in `InProcess`e alınmış olmasıyla birebir
-uyuşuyor. `deploy-delta-2026-08-27.md` bölüm 5.2 bu senaryoyu zaten öngörmüş:
+1. Plesk → Dosya Yöneticisi → site kökü → `web.config`:
+   `hostingModel="InProcess"` → `hostingModel="OutOfProcess"`
+2. Plesk → uygulama havuzunu **başlat** (503'ün sebebi bu) ve geri dönüştür.
+3. `https://apya.pargetto.com/health/ready` **200** dönene kadar deploy'a geçme.
 
-> Site açılmazsa (**500.30 / 500.31** = ANCM sürümü .NET 10 self-contained barındırmayı
-> desteklemiyor) satırı geri al. **Yeniden publish gerekmez.**
+Açılırsa kök neden buydu ve deploy'a sakin kafayla geçilir. **Açılmazsa** ikinci aday:
+sunucudaki paket **framework-dependent** yayımlanmış olabilir (sunucuda .NET 10 runtime
+yok). Bu paket o ihtimali kapatıyor — `--self-contained` üretiliyor ve
+`publish-release.ps1` runtime'ın pakette olduğunu `System.Private.CoreLib.dll` ile
+**doğrulamadan** ZIP üretmiyor.
 
-### Adım 0 — deploy'dan ÖNCE dene (30 saniye)
+### 🔑 Bu paket güvenli varsayılanla çıkıyor
 
-Plesk → Dosya Yöneticisi → site kökü → `web.config`:
+`web.config` #264'ten beri `hostingModel="InProcess"` **ve** `<applicationInitialization>`
+bloğu açık halde commit'liydi — canlıya inen `63cb35c6` dâhil. #301 ikisini de belgenin
+vaat ettiği duruma çekti ve `AspNetCoreHostingModel` csproj'da açıkça `OutOfProcess` yapıldı
+(publish `<aspNetCore>` elemanını yeniden yazıp değeri bu MSBuild özelliğinden alır;
+özellik tanımsızken SDK varsayılanı `InProcess`'tir, yani yalnız `web.config`'i düzeltmek
+publish'te sessizce geri alınırdı).
 
-```
-hostingModel="InProcess"   ->   hostingModel="OutOfProcess"
-```
-
-App pool'u geri dönüştür, siteyi aç. Açılırsa kök neden buydu ve deploy'a sakin
-kafayla geçilir.
-
-**Açılmazsa** ikinci aday devrede: paket **framework-dependent** yayımlanmış olabilir
-(sunucuda .NET 10 runtime yok). O ihtimali bu yayın zaten kapatıyor — bu paket
-`--self-contained` üretiliyor ve `publish-release.ps1` runtime'ın pakette olduğunu
-`System.Private.CoreLib.dll` ile **doğrulamadan** ZIP üretmiyor.
-
-### 🔑 Bu paket artık güvenli varsayılanla çıkıyor
-
-Deploy hazırlığında ölçüldü: `web.config`, #264'ten beri `hostingModel="InProcess"`
-**ve** `<applicationInitialization>` bloğu **açık** halde commit'liydi — canlıya inen
-`63cb35c6` de dâhil. Oysa `deploy-delta-2026-08-27.md` bölüm 5 "bu pakette ikisi de
-KAPALI gelir" diyordu; belge ile dosya çelişiyordu.
-
-İkisi de belgenin vaat ettiği duruma çekildi. Ek olarak `AspNetCoreHostingModel`
-csproj'da **açıkça** `OutOfProcess` yapıldı: publish, `<aspNetCore>` elemanını yeniden
-yazıp `hostingModel`'i bu MSBuild özelliğinden alıyor ve özellik tanımsızken SDK
-varsayılanı `InProcess`'tir — yani yalnız `web.config`'i düzeltmek publish sırasında
-**sessizce geri alınırdı.** Publish çıktısı ölçülerek doğrulandı:
-`hostingModel="OutOfProcess"`, `applicationInitialization` yorumda.
-
-Sonuç: bu paket çöküşü yeniden üretemez. Soğuk başlangıç kazanımları site ayağa
-kalktıktan sonra, aşağıdaki "bekleyen işler" sırasıyla tek tek açılır.
+Sonuç: bu paket çöküşü yeniden üretemez. Soğuk başlangıç kazanımları site ayağa kalktıktan
+sonra, en sondaki "bekleyen işler" sırasıyla **tek tek** açılır.
 
 🔴 **Sıra önemli.** Site çökükken deploy edersen, sonrasında hâlâ hata alırsan sebebin
 eski mi yeni mi olduğunu ayırt edemezsin.
 
 ---
 
-## 🔴 12 MIGRATION VAR — DbMigrator ve veritabanı yedeği ZORUNLU
+## 🔴 21 MIGRATION VAR — DbMigrator ve veritabanı yedeği ZORUNLU
 
-| | 08-31 (uygulanmadı) | **Bu yayın** |
+| | 09-01 paketi (uygulanmadı) | **Bu yayın** |
 |---|---|---|
-| Yeni migration | 2 | **12 (çift sağlayıcı)** |
-| Şema değişikliği | 2 tablo, 3 kolon | **13 tablo, 45 kolon, 23 indeks** |
-| DbMigrator | zorunlu | **🔴 ZORUNLU — şema + izin tohumu + şablon tohumu** |
+| Yeni migration | 12 | **21 (çift sağlayıcı)** |
+| Şema değişikliği | 12 migration'lık kısım | **31 tablo, 65 kolon, 47 indeks** |
+| DbMigrator | zorunlu | **🔴 ZORUNLU — şema + izin tohumu + üç veri tohumu** |
 | Veritabanı yedeği | zorunlu | **🔴 ZORUNLU** |
 
 Canlı **SqlServer** kullanıyor; aşağıdakiler o sağlayıcının migration'ları
-(PostgreSql karşılıkları aynı adla, dakika farkıyla mevcut):
+(PostgreSql karşılıkları aynı adla, saniye farkıyla mevcut). İlk 12'si 09-01 paketiyle
+aynı, 13–21 #305 ile geldi:
 
 | # | Migration | Kaynak |
 |---|---|---|
@@ -103,19 +92,32 @@ Canlı **SqlServer** kullanıyor; aşağıdakiler o sağlayıcının migration'l
 | 10 | `20260901121838_GrantSourcesAndDrafts` | #299 |
 | 11 | `20260901124156_GrantBookmarks` | #299 |
 | 12 | `20260901130814_GrantRecommendationAssignee` | #299 |
+| 13 | `20260901201412_GrantApplicationWizard` | #305 |
+| 14 | `20260901210232_GrantApplicationDocuments` | #305 |
+| 15 | `20260901212456_GrantApplicationPipelineStep` | #305 |
+| 16 | `20260901214047_GrantApplicationDetail` | #305 |
+| 17 | `20260901220050_GrantApplicationProjectLink` | #305 |
+| 18 | `20260901223910_GrantDecisionAndAppeal` | #305 |
+| 19 | `20260901225640_GrantReports` | #305 |
+| 20 | `20260902085859_GrantNotificationTemplates` | #305 |
+| 21 | `20260902100049_GrantLeads` | #305 |
+
+#302 · #303 · #304 · #306 · #307 **migration getirmedi** (yalnız kod / repository
+yapılandırması / test).
 
 ### Mevcut veri korunuyor — ölçüldü
 
-12 migration'ın `Up()` gövdeleri tarandı:
+21 migration'ın `Up()` gövdelerindeki `migrationBuilder.*` çağrıları sayıldı:
 
 | Aranan | Bulunan |
 |---|---|
-| `DropColumn` · `DropTable` · `AlterColumn` · `RenameColumn` · `DropIndex` | **0 adet** |
-| `CreateTable` · `AddColumn` · `CreateIndex` | 13 · 45 · 23 |
-| `nullable: false` olup `defaultValue` verilmeyen kolon | **0 adet** |
+| `DropColumn` · `DropTable` · `AlterColumn` · `RenameColumn` · `RenameTable` · `DropIndex` | **0 adet** |
+| `CreateTable` · `AddColumn` · `CreateIndex` · `AddForeignKey` | 31 · 65 · 47 · 2 |
+| `AddColumn` içinde `nullable: false` olup `defaultValue` verilmeyen kolon | **0 adet** |
+| Ham `migrationBuilder.Sql` | **2 adet**, ikisi de aşağıdaki geri doldurma |
 
-Tek istisna `AddFxLedgerFields` içindeki **iki ham SQL**, ikisi de yalnız yeni kolonlara
-**geri doldurma** yapıyor — eski kolonlara dokunmuyor:
+Tek istisna `AddFxLedgerFields` içindeki iki ham SQL, ikisi de yalnız **yeni** kolonlara
+geri doldurma yapıyor — eski kolonlara dokunmuyor:
 
 ```sql
 UPDATE [AppExpenses]      SET [BookAmount] = [Amount], [BookRate] = 1;
@@ -146,30 +148,66 @@ basmak secrets'ı web klasöründen alır ve 502.5 verir.
 
 ---
 
-## Ne değişti — 21 PR
+## 🔴 YENİ: `wwwroot\libs\signalr\` pakette OLMALI
 
-### İki büyük modül
+#305'in başvuru sihirbazı (`/Grants/Wizard`) Razor sayfasından doğrudan
+`/libs/signalr/signalr.min.js` yüklüyor; klasör yoksa sayfa **500** döner (ölçüldü:
+kütüphane kurulmadan `GrantWizardPage_Tests` düştü, kurulunca 15/15). Dosya
+`@microsoft/signalr` paketinden `abp install-libs` ile kopyalanır; **bayat bir
+install-libs çıktısı bu klasörü taşımaz** — bu paket hazırlanırken worktree'de 19 paket
+vardı, signalr yoktu, install-libs yeniden koşturuldu (→ 20).
+
+`publish-release.ps1` artık iki yerde bunu doğruluyor: kaynak `wwwroot\libs`'te ve
+publish çıktısında `signalr\signalr.min.js` yoksa paket üretmiyor.
+
+Deploy sonrası kontrol: `curl -o /dev/null -w "%{http_code}" https://apya.pargetto.com/libs/signalr/signalr.min.js`
+→ **200** (statik dosya, oturum istemez; 302 dönerse dosya yok demektir).
+
+---
+
+## Ne değişti — 29 PR
+
+### İki büyük modül, dörder PR
 
 | PR | Başlık |
 |---|---|
 | #298 | **Finans modülü proje bağlamlı tek çatıya taşındı** (7 adımın tamamı) |
-| #299 | **Hibe modülü yeniden kuruldu** — 9 ekran, çift sağlayıcı şema |
+| #302 | Finans: kalan altı tasarım ekranı + **iki para hatası** düzeltmesi |
+| #299 | **Hibe modülü yeniden kuruldu** — ilk 9 ekran, çift sağlayıcı şema |
+| #305 | Hibe: başvuru süreci, bildirimler, kamu yüzeyi ve durum galerisi — **13 ekran, dokuz çift migration** |
 
-**#298 — `/Finance` tek çatı.** Bütçe, gelir-gider ve faturalar tek ekranda proje
-bağlamında toplandı. Bütçe kalemi · fonlama dilimi · kesinti · bütçe revizyonu modeli
-geldi; görev↔bütçe kalemi bağı kuruldu; üç defterli kayıt (işlem PB · ₺ · donör) ve
-proje bazlı kur politikası eklendi. Yol boyunca mevcut bir hata da düzeltildi: gider/gelir
-düzenleme ekranı DTO kopyalamasında `TaskId` taşımadığı için **her düzenleme görev bağını
-sessizce siliyordu.**
+**#298 + #302 — `/Finance` tek çatı, tasarımın on ekranı tamamlandı.** Bütçe, gelir-gider
+ve faturalar tek ekranda proje bağlamında toplandı. Bütçe kalemi · fonlama dilimi · kesinti ·
+bütçe revizyonu modeli geldi; görev↔bütçe kalemi bağı kuruldu; üç defterli kayıt (işlem PB ·
+₺ · donör) ve proje bazlı kur politikası eklendi. #302 ile portföy tablosu ("Tüm projeler"),
+kalem↔görev matrisi, bağlam sihirbazı, kesinti sonrası yeniden dağıtım, Donör & raporlama
+sekmesi ve gerçek kayıt yapan saha girişi (offline kuyruklu) tamamlandı.
 
-**#299 — hibe modülü.** 20 ekranlık yeniden tasarımın ilk 9'u. Yedisi host yüzeyi
-(program parametreleri, aşama şablonları, eşleşme ağırlıkları, kaynaklar, metinden içe
-aktarma, gönderim konsolu), üçü kiracı yüzeyi (hibe akışı, çağrı kataloğu, program
-detayı). Kalan 11 ekran **henüz başlanmadı** — canlıda yarım/bozuk ekran yok.
+**#299 + #305 — hibe modülü, 20 ekranlık tasarımın 22 ekranı.** #299 yedi host + üç kiracı
+ekranı getirdi (parametreler, aşama şablonları, eşleşme ağırlıkları, kaynaklar, metinden içe
+aktarma, gönderim konsolu; kiracıda hibe akışı, katalog, program detayı). #305 başvuru
+sürecinin tamamı: canlı birlikte düzenlenen başvuru sihirbazı (SignalR), iki taraflı evrak
+takibi, pipeline konsolu, başvuru detayı, onay→projeye dönüştürme, "Başvurularım",
+red & itiraz, uygulama & tahsilat, bildirim/e-posta şablonları (yedi tetikleyici gerçekten
+bağlı), **anonim kamu yüzeyi** (`/Hibeler`, `/Hibeler/Detay`, `/Hibeler/Randevu`), lead
+kutusu ve tüm ekranlar için iskelet/boş/hata durumları. Tasarımdan yalnız bülten (7e)
+kaldı — abone modeli yok.
 
-🔑 Kalan 11 ekranın en görünür etkisi: `GrantApplicationStage` hâlâ sabit 4 değerli enum.
-Aşama şablonları tanımlanabiliyor ama **başvurular henüz şablona bağlanmıyor**; o geçiş
-pano adımında (2c) yapılacak.
+### Mevcut kodda bulunan para / veri hataları
+
+Üçü de yeni özellik değil, canlıdaki kodda vardı ve canlı ölçümle bulundu:
+
+| PR | Hata | Etki |
+|---|---|---|
+| #302 | Fatura kalemi miktar/birim fiyatı **1000× sapıyordu** — elle `name=` yazılan ondalık alanlarda `__Invariant` işaretçisi yoktu, `tr-TR` noktayı binlik saydı | **Müşteriye giden fatura**, sessiz. `2,5 × 1.234,56` → 3.703.680 yerine 3.703,68 |
+| #302 | **"Masraf Yakala" hiçbir şey kaydetmiyordu** — gönderim mock'a gidiyordu, "kaydedildi" toast'ı çıkıyordu | Sahada girilen her masraf kayboluyordu |
+| #303 | `FundingTranche.Deductions` / `BudgetRevision.Lines` hiç yüklenmiyordu (`DefaultWithDetailsFunc` kaydı yoktu) → **kesinti sınırı kuralı devre dışıydı**: 700.000'lik dilime 1.200.000 kesinti girilebiliyordu | Veri bütünlüğü (dilimler bu yayınla geliyor, canlıda henüz yok) |
+| #304 | Aynı eksiklik `FxRevaluationSnapshot.Lines`'ta → kur değerleme detayı **sıfır satır + dolu toplam** basıyordu | Değerlemeyi sonradan açan kullanıcı |
+
+🔑 #303/#304 dersi: ABP'de `includeDetails: true` **tek başına hiçbir şey yapmaz**;
+`DefaultWithDetailsFunc` kaydı yoksa alt koleksiyon boş gelir ve ondan hesaplanan domain
+kuralı sessizce devre dışı kalır. Yedi aggregate tarandı, ikisi düzeltildi, beşi zaten
+açık `Include`/`WithDetails` kullanıyordu.
 
 ### Hibe eşleştirme
 
@@ -196,6 +234,8 @@ yıllarca maskelemişti.
 
 | PR | Başlık | Etkilenen |
 |---|---|---|
+| #290 | Görev açıklaması kayıtlı olduğu hâlde boş görünüyordu (kalıcı önbellek geri yükleme penceresi); v1 kökü aynı pencerede çöküyordu | **Görev detayı** |
+| #306 | Hibe doğrulama mesajlarında ham property adı yerine Türkçe alan adı (27 anahtar) | Hibe formları |
 | #279 | Giriş sayfası service worker'da önbelleklenmiyor | **Mobil giriş** |
 | #285 | Projeler mobil başlık bloğu 313px → 126px | **Mobil** |
 | #286 | Sekmeler ve sürüklenebilir öğeler tek tıklamayla çalışıyor | Görev detayı · takvim · belgeler |
@@ -204,13 +244,13 @@ yıllarca maskelemişti.
 | #281 | Kenar çubuğu "+" düğmesi proje oluşturma yetkisine bağlandı | Yetkisiz kullanıcılar |
 | #282 · #283 | 4xx uçlar hata görevi açmıyor, kendi kanalına alındı | Sistem Sağlığı (host) |
 
-### Bu deploy hazırlığında çıkan ve düzeltilen kusur
+### İç işler
 
-`ValidationLocalization_Tests` düştü (Web.Tests 320/321): #299 üç DTO'da doğrulama
-attribute'u taşıyan **19 alanı Türkçe adı olmadan** bırakmıştı. 16'sı host ekranlarına
-ait, **4'ü kiracı yüzeyindeki firma profilinde** (`StaffCount`, `RdStaffCount`,
-`AnnualRevenue`, `Trl`) — müşteri "StaffCount boş bırakılamaz" görecekti. `tr.json`'a 19
-anahtar eklendi.
+| PR | Başlık |
+|---|---|
+| #280 · #297 · #300 · #301 | Sürüm notu / deploy belgesi / paketleme betiği / güvenli barındırma varsayılanı |
+| #291 | `dev-up.ps1` veritabanı adımı aktif sağlayıcıya göre |
+| #307 | Web test tabanında `HttpClient` zaman aşımı 10 dk (rastgele `TaskCanceledException`) |
 
 ---
 
@@ -218,31 +258,54 @@ anahtar eklendi.
 
 | Kontrol | Sonuç |
 |---|---|
-| `dotnet build Apya.Platform.slnx` | **0 hata** (586 uyarı, hepsi mevcut) |
-| Domain.Tests | **292/292** |
-| Application.Tests | **235/235** |
-| EntityFrameworkCore.Tests | **245/245** |
-| Web.Tests | **321/321** (düzeltme sonrası) |
+| `dotnet build Apya.Platform.slnx` | **0 hata** |
+| Domain.Tests | **314/314** |
+| Application.Tests | **247/247** |
+| EntityFrameworkCore.Tests | **249/249** |
+| Web.Tests | **449/449** (48 sınıf; 12 öbek hâlinde ayrı süreçlerde, aşağıya bak) |
+| Vitest (dynamic-assets) | **511/511** (61 dosya) |
 
-> 🔑 **Worktree'de test koşturacaksan önce `abp install-libs`.** Eksikken Web.Tests
-> **98 hata** veriyordu ve hepsi ortam kaynaklıydı; kurulumdan sonra tek gerçek hata kaldı.
-> `install-libs` `dynamic-assets` altında yarn koşup `yarn.lock`'u değiştirir — ardından
-> `npm ci` çalıştır ve `yarn.lock` artığını `git checkout --` ile at.
+> 🔴 **Web.Tests tek süreçte koşturulamıyor.** Her test kendi ABP host'unu kurduğu için
+> testhost belleği 5 dakikada **9,7 GB**'a çıkıyor, makine takasa düşüyor ve takım saatlerce
+> sürünüyor (bu hazırlıkta ölçüldü; `xUnit.ParallelizeTestCollections=false` ÇÖZMÜYOR).
+> Çözüm: sınıfları ~35 testlik öbeklere bölüp her öbeği `dotnet test --filter` ile **ayrı
+> süreçte** koşturmak — öbek başına tepe bellek 1–4,5 GB, toplam 9 dakika. Aynı sebeple
+> `publish-release.ps1` **`-SkipTests`** ile koşturuldu; testler paketle aynı ağaçta ayrıca
+> koşturuldu. `dotnet test` özet satırı bu makinede **Türkçe** ("Başarılı! - Başarısız: 0 …");
+> dili `DOTNET_CLI_UI_LANGUAGE=en` ile İngilizceye zorlamak testhost'a da geçip Türkçe metin
+> bekleyen 5 testi sahte düşürüyor — sayarken dili değil süzgeci değiştir.
+
+> 🔑 **Worktree'de test koşturacaksan önce `abp install-libs`, ardından `dynamic-assets`
+> içinde `npm ci`.** install-libs `yarn` koşup `yarn.lock`'u değiştirir ve
+> `@testing-library/dom` peer bağımlılığını düşürür; `npm ci` de var olan `yarn.lock`'u
+> `package-lock.json`'a göre yeniden yazar — sıra: install-libs → `npm ci` → `git checkout --
+> yarn.lock`. signalr için de install-libs şart (yukarıda).
 
 ---
 
-## Sürüm notları — `2026.09.01` (14 madde)
+## Sürüm notları — `2026.09.02` (39 madde, 7 bölüm)
 
-Başlık: *"Proje finansı tek ekranda, hibe çağrılarının tamamı listede"*
+Başlık: *"Proje finansı tek ekranda, hibe süreci baştan sona, görevler ekip dışına açık"*
 
-Not **yayınlanmamıştı**, bu yüzden yeni sürüm açılmadı; `version`/`date` değişmedi ve tek
-deploy'un hikâyesi ikiye bölünmedi.
+Canlı `63cb35c6`'nın en yeni notu `2026.08.27`; 08.31 · 09.01 · 09.02 için yazılan üç not
+hiç yayınlanmadığı için **tek nota birleştirildi** (modal yalnız `All[0]`'ı gösterir,
+ayrı kalsalardı alttakiler hiç duyurulmazdı). Bu turda #302 · #304 · #290'ın müşteriye
+bakan maddeleri eklendi (5 yenilik + 4 düzeltme).
 
-| Kaynak | Madde |
+| Bölüm | Madde |
 |---|---|
-| #298 | 7 madde (finans tek çatı, bütçe kalemleri, fonlama dilimleri, görev bütçesi, döviz, belge açığı) + 1 düzeltme (görev bağı silinmesi) |
-| #292 · #295 | 3 madde (tüm açık çağrılar, önerilenlerin ayrılması, Erasmus+) |
-| #299 | 3 madde (uygunluk şartlarının tek tek durumu, bütçe hesaplayıcı, giderilebilir eksik süzgeci) |
+| Finans | 16 |
+| Hibe: çağrılar ve uygunluk | 6 |
+| Hibe: başvuru süreci | 7 |
+| Görev paylaşımı | 3 |
+| Mobil | 3 |
+| Paket | 1 |
+| Genel | 3 |
+
+Rozet dağılımı: 23 Yenilik · 8 İyileştirme · 7 Düzeltme · 1 Güvenlik.
+
+🔴 **Deploy başka güne kayarsa `version` + `date` birlikte güncellenmeli** — not henüz
+yayınlanmadığı için sürüm kimliğine dokunmak serbest; yayınlandıktan sonra dokunma.
 
 **Bilerek dışarıda bırakılanlar** — katalogun kendi kuralı: "Yenilikler" penceresinin ve
 `/ReleaseNotes` sayfasının **izin kapısı yoktur**, host maddesi yazılırsa kiracı
@@ -250,14 +313,18 @@ erişemediği bir özelliği arar.
 
 | Konu | Sebep |
 |---|---|
-| #299'un 7 host ekranı | Yalnız host yöneticisi görür |
-| #294 demo talebi yönetimi | Host kaydı |
+| #299 / #305 host ekranları (parametreler, şablonlar, pipeline, detay, dönüştürme, bildirim şablonları, lead kutusu) | Yalnız host yöneticisi görür |
+| #305 kamu yüzeyi (`/Hibeler`) | Oturum açmış müşterinin yapabildiklerini değiştirmiyor |
+| #303 dilim kesintisi | Dilimler bu yayınla geliyor; müşteri "eski hâli" hiç görmedi |
+| #306 doğrulama metinleri | Yeni ekranların içindeki düzeltme |
+| #294 demo talebi | Giriş ekranı; oturumlu kullanıcıyı ilgilendirmez |
 | #296 kiracı sızıntısı | Canlıda gerçekleşip gerçekleşmediği ölçülemedi |
-| #281 · #282 · #283 · #287 · #288 | Host / iç mesele |
+| #281 · #282 · #283 · #287 · #288 · #291 · #307 | Host / iç mesele |
+| E-posta bildirimi | Şablonlar hazır ama **SMTP yapılandırılmadı** — vaat edilmedi |
 
 ---
 
-## 🔴 İzin tohumu — DbMigrator koşmazsa kiracıya ULAŞMAZ
+## 🔴 İzin ve veri tohumu — DbMigrator koşmazsa kiracıya ULAŞMAZ
 
 Bu yayında iki yeni izin var, ikisi de **feature kapısının arkasında değil**:
 
@@ -266,26 +333,31 @@ Bu yayında iki yeni izin var, ikisi de **feature kapısının arkasında değil
 | `Tasks.ShareExternally` | kiracı | `TenantPackageManager.LateAddedPermissions` (tavan) + `TaskSharePermissionDataSeedContributor` (grant) |
 | `DemoRequests.*` | **host** | `DemoRequestsPermissionDataSeedContributor` |
 
-Hibe modülü **yeni izin eklemedi** — mevcut `Grants.*` izinlerini kullanıyor.
+Hibe modülü (#299 ve #305) **yeni izin eklemedi** — mevcut `Grants.*` izinlerini kullanıyor.
 
-Ayrıca iki veri tohumlayıcısı: `ErasmusYouthCatalogDataSeedContributor` (5 program) ve
-`GrantStageTemplateDataSeedContributor` (3 hazır aşama şablonu).
+Üç **veri** tohumlayıcısı (hepsi host seviyesi, sabit kimlikli, idempotent):
 
-✅ **DbMigrator artık `Apya.Platform.Application`'a referans veriyor** (hem `ProjectReference`
-hem `PlatformApplicationModule` bağımlılığı) — o katmandaki tohumlayıcılar koşuyor.
-Bu geçmişte kırıktı ve 7 tohumlayıcı hiç çalışmıyordu (#246 ile kapandı).
+| Tohumlayıcı | Ne yazar | Koşmazsa |
+|---|---|---|
+| `ErasmusYouthCatalogDataSeedContributor` | 5 Erasmus+ programı | Katalogda Erasmus+ görünmez |
+| `GrantStageTemplateDataSeedContributor` | 3 hazır aşama şablonu | Aşama şablonu ekranı boş açılır, programlar şablonsuz kalır |
+| `GrantNotificationTemplateDataSeedContributor` | Yedi tetikleyicinin bildirim şablonları | Hibe bildirimleri hiç üretilmez (şablon yok → metin yok) |
+
+✅ DbMigrator `Apya.Platform.Application`'a referans veriyor (#246) — o katmandaki
+tohumlayıcılar da koşuyor. `dotnet ef database update` **yeter DEĞİL**: yalnız şema uygular.
 
 ---
 
 ## Deploy adımları — SIRAYLA
 
-### 0. 🔴 Önce 500.31'i çöz
+### 0. 🔴 Önce siteyi ayağa kaldır
 
-Yukarıdaki "Adım 0". Site ayağa kalkmadan deploy etme.
+Yukarıdaki "Adım 0": `web.config` → `OutOfProcess`, havuzu başlat, `/health/ready` 200.
+Site ayağa kalkmadan deploy etme.
 
 ### 1. Veritabanı yedeği al
 
-**Bu yayında zorunlu** — 12 migration şema değiştiriyor. Plesk → Veritabanları → Yedekle.
+**Bu yayında zorunlu** — 21 migration şema değiştiriyor. Plesk → Veritabanları → Yedekle.
 
 ### 2. Korunacak dosyaları yedekle
 
@@ -310,14 +382,14 @@ Adım 2'deki dört öğe yerine.
 
 ### 6. 🔴 DbMigrator'ı çalıştır
 
-Bu turda **şema + izin tohumu + şablon tohumu** için — üçü de bundan geçiyor.
+Bu turda **şema + izin tohumu + üç veri tohumu** için — hepsi bundan geçiyor.
 
 1. `Apya-DbMigrator-<sha>.zip`'i site kökünün **DIŞINDA** bir klasöre aç (ör. `dbmigrator\`).
 2. `migrate.bat` içindeki üç değeri doldur (bağlantı dizesi, client secret).
 3. Plesk → **Zamanlanmış Görevler** → tek seferlik görev → `migrate.bat` (tırnaksız tam yol).
 4. 🔑 Başarıyı **çıkış kodundan değil log'dan** doğrula: `Logs\logs.txt` içinde
    **`Successfully completed all database migrations.`** satırını ara. Öncesinde
-   **`Executing data seeders...`** de görünmeli — izin ve şablon tohumu orada koşar.
+   **`Executing data seeders...`** de görünmeli — izin ve veri tohumu orada koşar.
 5. İşi biten `dbmigrator\` klasörünü sunucudan **SİL** — `migrate.bat` içinde parola düz metin.
 
 ### 7. Siteyi başlat
@@ -344,7 +416,9 @@ Bu yayın **yeni sayfalar** getiriyor; parmak izi turuna gerek yok:
 |---|---|---|
 | `/Finance` | 404 | **200 / 302** (giriş) |
 | `/Grants/Catalog` | 404 | **200 / 302** |
-|  `/Account/DemoRequest` | 404 | **200** (anonim) |
+| `/Hibeler` | 404 | **200** (anonim kamu yüzeyi) |
+| `/Account/DemoRequest` | 404 | **200** (anonim) |
+| `/libs/signalr/signalr.min.js` | 302 / 404 | **200** (statik) |
 
 ### 3. Şema uygulandı mı
 
@@ -353,13 +427,17 @@ demektir (EF entity'nin TÜM kolonlarını SELECT eder; eksik kolon sorguyu topt
 
 ### 4. 🔴 İzin ve tohum gerçekten koştu mu — KİRACI hesabıyla bak
 
-Host hesabıyla bakmak **yanıltır**. Bir kiracı kullanıcısıyla gir ve üçüne de bak:
+Host hesabıyla bakmak **yanıltır**. Bir kiracı kullanıcısıyla gir:
 
 | Kontrol | Beklenen |
 |---|---|
 | Görev detayı → **"Dış Paylaşım"** sekmesi | görünmeli (`Tasks.ShareExternally` grant'ı geçmiş) |
-| **/Grants/Catalog** → Erasmus+ programları | listede 5 program görünmeli |
+| **/Grants/Catalog** → Erasmus+ programları | listede 5 program |
 | Hibe programı detayı → **aşama şablonu** | şablon listesi boş OLMAMALI |
+| Hibeler → bir çağrıya **başvur** → sihirbaz | sayfa açılmalı; üstte "canlı" işareti (SignalR bağlı) |
+
+Host hesabıyla ayrıca: `/Grants/NotificationTemplates` → şablon listesi **dolu** olmalı
+(bildirim tohumu koştu).
 
 Biri eksikse DbMigrator ya hiç koşmadı ya da seed adımı düştü.
 
@@ -367,14 +445,19 @@ Biri eksikse DbMigrator ya hiç koşmadı ya da seed adımı düştü.
 
 - Giriş yapılabiliyor mu (`DataProtection-Keys` yerinde mi)
 - Bir görevin dosya eki açılıyor mu (`App_Data\uploads` yerinde mi)
-- **"Yenilikler" penceresi** açılıyor mu — turu tamamlamış kullanıcıda 14 maddelik
-  `2026.09.01` notu çıkmalı
-- **Finans → Belgeler** sekmesi açılıyor mu
+- **"Yenilikler" penceresi** açılıyor mu — turu tamamlamış kullanıcıda 39 maddelik
+  `2026.09.02` notu çıkmalı
+- **Finans → Bütçe kalemleri → "Bağlamı kur"** sihirbazı açılıyor mu
+- **Giderler → "Masraf Yakala"** ile girilen masraf Giderler listesinde **görünüyor mu**
+  (#302 düzeltmesi — eskiden "kaydedildi" deyip kaydetmiyordu)
 - Bir gider kaydını düzenleyip kaydet → **görev bağı korunuyor mu** (#298 düzeltmesi)
+- Fatura kalemine ondalıklı miktar gir → tutar **bin kat büyümüyor mu** (#302 düzeltmesi)
 - Firma profilinde boş bırakılan sayısal alanda hata mesajı **Türkçe alan adı** basıyor mu
 
-🔴 **Ne #298 ne #299 canlı, oturumlu QA'den geçti.** Ölçümler test host'u ve izole harness
-üzerinden. Bu iki modülün uçtan uca denenmesi deploy sonrasına kaldı.
+🔴 **Dürüst sınırlar:** #298/#302 ve #299/#305 test host'u, izole harness ve yerel
+tarayıcı QA'sinden geçti; **canlı, kiracı oturumlu uçtan uca QA yapılmadı.** #299'un izin
+kapıları test host'unda `AddAlwaysAllowAuthorization` ile açık koştu — kiracı kontrolü şart.
+Web test takımı bu makinede yük altında rastgele zaman aşımı veriyor (#307 ile sınır 10 dk).
 
 ---
 
@@ -384,10 +467,12 @@ Biri eksikse DbMigrator ya hiç koşmadı ya da seed adımı düştü.
 eski kod onları hiç sormaz. Geri alma pratikte **yalnız dosya işidir**: bir önceki
 `Apya-Yayin-63cb35c6.zip` paketini aynı yordamla geri açmak yeterli.
 
-⚠️ Gerçekten şemayı da geri almak istersen 12 migration'ın `Down` adımları 13 tabloyu ve
-45 kolonu düşürür — **paylaşım linkleri, misafir yorumları, bütçe kalemleri, fonlama
-dilimleri, hibe parametreleri ve aşama şablonları kalıcı olarak silinir.** Bunu yapma;
-dosya geri alması yeterli.
+⚠️ Gerçekten şemayı da geri almak istersen 21 migration'ın `Down` adımları 31 tabloyu ve
+65 kolonu düşürür — **paylaşım linkleri, misafir yorumları, bütçe kalemleri, fonlama
+dilimleri, kesintiler, revizyonlar, hibe parametreleri, aşama şablonları, başvuru
+sihirbazı verileri, evraklar ve sürümleri, kurum kararları, itirazlar, raporlar, bildirim
+şablonları ve ön değerlendirme talepleri kalıcı olarak silinir.** Bunu yapma; dosya geri
+alması yeterli.
 
 ⚠️ İkinci kalıcı iz: tohumun kiracı admin rollerine yazdığı `Tasks.ShareExternally`
 grant'ları geri dönmez. Zararsızdır — eski kod o izni hiç sormaz.
@@ -398,9 +483,10 @@ grant'ları geri dönmez. Zararsızdır — eski kod o izni hiç sormaz.
 
 | İş | Nerede | Neden bekliyor |
 |---|---|---|
-| **SMTP** | `/SettingManagement` → E-posta | Girilmeden şifre sıfırlama postası **gitmez**. Varsayılan gönderen `noreply@abp.io` değiştirilmeli |
-| **Plesk app pool** (Idle=0, AlwaysRunning) | Plesk | Yalnız hız değil **işlevsel**: `SubscriptionExpiryWorker` saatlik koşar, havuz uyursa abonelik süresi işlenmez |
-| **`hostingModel="InProcess"`** | `web.config` + csproj | 🔴 Bu yayında çöküşün muhtemel sebebi; paket artık `OutOfProcess` çıkıyor. Açmak istersen app pool ayarından SONRA, **tek başına** dene; açılmazsa satırı geri al (yeniden publish gerekmez). Kalıcı yapacaksan csproj'daki `AspNetCoreHostingModel` da değişmeli — yoksa sonraki publish geri alır |
+| **SMTP** | `/SettingManagement` → E-posta | Girilmeden ne şifre sıfırlama ne hibe bildirimi e-postası **gider**. Varsayılan gönderen `noreply@abp.io` değiştirilmeli |
+| **Plesk app pool** (Idle=0, AlwaysRunning) | Plesk | Yalnız hız değil **işlevsel**: `SubscriptionExpiryWorker` saatlik, hibe hatırlatmaları (7/3/1 ve 30/14/3 gün) günlük koşar; havuz uyursa hiçbiri işlenmez |
+| **`hostingModel="InProcess"`** | `web.config` + csproj | 🔴 Bu yayında çöküşün muhtemel sebebi; paket `OutOfProcess` çıkıyor. Açmak istersen app pool ayarından SONRA, **tek başına** dene; açılmazsa satırı geri al (yeniden publish gerekmez). Kalıcı yapacaksan csproj'daki `AspNetCoreHostingModel` da değişmeli — yoksa sonraki publish geri alır |
 | **`<applicationInitialization>`** | `web.config` | En son, ve yalnız IIS "Application Initialization" bileşeni kuruluysa (yoksa 500.19). **Üçü birden açılmaz** |
-| Hibe modülü 2a–2d | — | Kalan 11 ekran; başvuruların aşama şablonuna bağlanması burada |
+| Hibe bülteni (7e) | — | Abone modeli yok; düşük ısılı lead "Takipte" olarak kapanıyor |
 | Yükseltme kanalı | `/PackageManagement` | Satış e-postası/telefon/fiyat sayfası üçü de boşsa "Paketim" ekranında yükseltme düğmesi basılmaz |
+| Host admin kiracı projesinde finans | `/Finance` | Bilinen boşluk: özet KPI görünür ama gider/gelir listesi boş gelir (`ExpenseAppService` MT filtresini kapatmıyor). Kiracı kullanıcısını etkilemez |
