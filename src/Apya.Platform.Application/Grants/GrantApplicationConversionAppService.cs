@@ -38,7 +38,7 @@ namespace Apya.Platform.Grants;
 /// kodu göstermektense gerçek bir alanı eşlemek doğru.</para>
 /// </summary>
 [Authorize(PlatformPermissions.Grants.Edit)]
-public class GrantApplicationConversionAppService : ApplicationService, IGrantApplicationConversionAppService
+public class GrantApplicationConversionAppService : PlatformAppService, IGrantApplicationConversionAppService
 {
     private readonly IRepository<GrantApplication, Guid> _appRepo;
     private readonly IRepository<GrantApplicationBudgetLine, Guid> _budgetRepo;
