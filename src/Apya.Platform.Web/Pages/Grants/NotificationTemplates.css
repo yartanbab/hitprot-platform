@@ -189,3 +189,10 @@
 
 /* Koyu temada aksan metni -600 yerine -300 olmalı; -600 koyu temada DAHA KOYU. */
 [data-theme="dark"] .apya-nt-var:hover { border-color: var(--apya-accent-300); }
+
+/* 7b · İskelet ölçüsü bu ekranın GERÇEK satır yüksekliğine eşit; farklı bir değer
+   yükleme sırasındaki zıplamayı önlemek yerine yerini değiştirir. */
+#NtRows {
+    --apya-skel-row: 62px;
+    --apya-skel-count: 5;
+}

@@ -138,3 +138,10 @@
 [data-theme="dark"] .apya-opportunity {
     color: var(--apya-ai-500);
 }
+
+/* 7b · İskelet ölçüsü bu ekranın GERÇEK satır yüksekliğine eşit; farklı bir değer
+   yükleme sırasındaki zıplamayı önlemek yerine yerini değiştirir. */
+#CandidateRows {
+    --apya-skel-row: 64px;
+    --apya-skel-count: 4;
+}

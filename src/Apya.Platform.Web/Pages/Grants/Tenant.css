@@ -437,3 +437,10 @@
 [data-theme="dark"] .apya-cat-bookmark.is-on {
     color: var(--apya-accent-300);
 }
+
+/* 7b · İskelet ölçüsü bu ekranın GERÇEK satır yüksekliğine eşit; farklı bir değer
+   yükleme sırasındaki zıplamayı önlemek yerine yerini değiştirir. */
+#CatalogRows {
+    --apya-skel-row: 56px;
+    --apya-skel-count: 6;
+}

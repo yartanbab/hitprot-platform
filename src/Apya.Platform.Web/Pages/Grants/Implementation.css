@@ -164,3 +164,10 @@
 }
 
 .apya-im-obligation.is-overdue .apya-im-obligation-date { color: var(--apya-negative-700); }
+
+/* 7b · İskelet ölçüsü bu ekranın GERÇEK satır yüksekliğine eşit; farklı bir değer
+   yükleme sırasındaki zıplamayı önlemek yerine yerini değiştirir. */
+#Chain {
+    --apya-skel-row: 88px;
+    --apya-skel-count: 3;
+}

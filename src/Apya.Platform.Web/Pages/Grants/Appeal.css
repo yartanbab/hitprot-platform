@@ -159,3 +159,10 @@
 [data-theme="dark"] .apya-ap-opinion.is-appeal {
     color: var(--apya-accent-300);
 }
+
+/* 7b · İskelet ölçüsü bu ekranın GERÇEK satır yüksekliğine eşit; farklı bir değer
+   yükleme sırasındaki zıplamayı önlemek yerine yerini değiştirir. */
+#Items {
+    --apya-skel-row: 96px;
+    --apya-skel-count: 2;
+}

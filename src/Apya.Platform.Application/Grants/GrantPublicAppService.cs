@@ -121,8 +121,61 @@ public class GrantPublicAppService : PlatformAppService, IGrantPublicAppService
             .Take(MaxResults)
             .ToList();
 
+        if (dto.Items.Count == 0)
+        {
+            dto.Relaxations = BuildRelaxations(rows, input);
+        }
+
         return dto;
     }
+
+    /// <summary>
+    /// 7a · "Hangi süzgeci gevşetirsen kaç sonuç var". Her uygulanmış süzgeç
+    /// TEK TEK kaldırılıp sayım yapılır; kullanıcıya "filtreleri gözden geçirin"
+    /// demek yerine hangisinin kaç sonuç açacağı söylenir.
+    ///
+    /// <para>Sonuç açmayan gevşetme LİSTELENMEZ: "kurumu kaldır → 0 sonuç"
+    /// öneri değil, gürültüdür.</para>
+    /// </summary>
+    private static List<GrantPublicRelaxationDto> BuildRelaxations(
+        List<(GrantPublicCallDto Dto, Grant Grant)> rows, GrantPublicSearchInput input)
+    {
+        var result = new List<GrantPublicRelaxationDto>();
+
+        void Try(string key, bool applied, Action<GrantPublicSearchInput> relax)
+        {
+            if (!applied) { return; }
+
+            var probe = Clone(input);
+            relax(probe);
+            var count = rows.Count(r => Matches(r, probe));
+            if (count > 0)
+            {
+                result.Add(new GrantPublicRelaxationDto { Filter = key, Count = count });
+            }
+        }
+
+        Try("Query", !input.Query.IsNullOrWhiteSpace(), p => p.Query = null);
+        Try("Issuer", input.Issuers.Count > 0, p => p.Issuers = new List<string>());
+        Try("Amount", input.MinAmount.HasValue || input.MaxAmount.HasValue,
+            p => { p.MinAmount = null; p.MaxAmount = null; });
+        Try("Deadline", input.DeadlineWithinDays.HasValue, p => p.DeadlineWithinDays = null);
+        Try("Size", input.Sizes.Count > 0, p => p.Sizes = new List<CompanySize>());
+        Try("Difficulty", input.Difficulties.Count > 0, p => p.Difficulties = new List<int>());
+
+        return result.OrderByDescending(r => r.Count).ToList();
+    }
+
+    private static GrantPublicSearchInput Clone(GrantPublicSearchInput input) => new()
+    {
+        Query = input.Query,
+        Issuers = new List<string>(input.Issuers),
+        MinAmount = input.MinAmount,
+        MaxAmount = input.MaxAmount,
+        DeadlineWithinDays = input.DeadlineWithinDays,
+        Sizes = new List<CompanySize>(input.Sizes),
+        Difficulties = new List<int>(input.Difficulties)
+    };
 
     private static bool Matches((GrantPublicCallDto Dto, Grant Grant) row, GrantPublicSearchInput input)
     {

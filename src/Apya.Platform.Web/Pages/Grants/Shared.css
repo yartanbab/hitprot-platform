@@ -209,3 +209,87 @@
 [data-theme="dark"] .apya-tag-chip {
     color: var(--apya-accent-300);
 }
+
+/* ── 7b · İskeletler ─────────────────────────────────────────────────────────
+   Bu ekranlar boş bir kap render edip veriyi JS ile dolduruyor; arada kap boş
+   duruyor ve veri gelince düzen ZIPLIYOR.
+
+   Mekanizma `:empty`: kap doluyken kural hiç eşleşmez. Mevcut boyama kodunun
+   tek satırı değişmiyor ve iskeleti kaldırmayı unutma riski YOK — platformun
+   `.apya-console-skeleton` deseninde bunu JS yapıyor.
+
+   🔴 GÖRSEL platformun kendi dilini kullanır: `apyaShimmer` animasyonu,
+   `--apya-motion-skeleton` süresi ve `.apya-skeleton`'ın border-subtle →
+   border-default geçişi. İkinci bir parlama dili uydurmak aynı uygulamada iki
+   farklı "yükleniyor" görüntüsü demek olurdu.
+
+   🔴 Yükseklik gerçek satır yüksekliğine eşit olmalı; yanlış değer zıplamayı
+   önlemek yerine yerini değiştirir. */
+
+/* Platformun shimmer dolgusu — .apya-skeleton ile birebir. */
+.apya-skel-rows:empty::before,
+.apya-skel-cards:empty::before,
+.apya-skel-cards:empty::after,
+.apya-skel-num:empty::before {
+    content: '';
+    background: linear-gradient(
+        90deg,
+        var(--apya-border-subtle) 25%,
+        var(--apya-border-default) 37%,
+        var(--apya-border-subtle) 63%);
+    background-size: 300% 100%;
+    animation: apyaShimmer var(--apya-motion-skeleton) ease-in-out infinite;
+    border-radius: var(--apya-radius-sm);
+}
+
+/* Satır listesi: TEK pseudo-element, N çubuk. Shimmer dolgusu blok boyunca
+   akıyor, satır aralarındaki boşluk maskeyle açılıyor — N adet boş div basmaya
+   gerek kalmıyor ve parlama bütün satırlarda aynı anda ilerliyor. */
+.apya-skel-rows:empty::before {
+    display: block;
+    height: calc(var(--apya-skel-row, 62px) * var(--apya-skel-count, 4));
+    /* Satır ayrımı: shimmer dolgusunun üstüne 1px'lik saydam şerit. */
+    -webkit-mask-image: repeating-linear-gradient(
+        to bottom,
+        #000 0,
+        #000 calc(var(--apya-skel-row, 62px) - 12px),
+        transparent calc(var(--apya-skel-row, 62px) - 12px),
+        transparent var(--apya-skel-row, 62px));
+    mask-image: repeating-linear-gradient(
+        to bottom,
+        #000 0,
+        #000 calc(var(--apya-skel-row, 62px) - 12px),
+        transparent calc(var(--apya-skel-row, 62px) - 12px),
+        transparent var(--apya-skel-row, 62px));
+}
+
+/* Kart ızgarası: iki kutu yeter, ızgara kalanını zaten boş bırakır. */
+.apya-skel-cards:empty {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: var(--apya-space-3);
+}
+
+.apya-skel-cards:empty::before,
+.apya-skel-cards:empty::after {
+    display: block;
+    height: var(--apya-skel-card, 132px);
+    border-radius: var(--apya-radius-md);
+}
+
+/* Tek sayı (KPI). Metin gelince :empty düşer ve blok kaybolur. */
+.apya-skel-num:empty::before {
+    display: inline-block;
+    width: var(--apya-skel-num-w, 64px);
+    height: 1em;
+    vertical-align: -0.1em;
+}
+
+/* Hareketi kapatanlarda sabit blok kalır. tokens.css zaten süreyi 1ms'e
+   çekiyor; bu kural yine de açık yazılıyor. */
+@media (prefers-reduced-motion: reduce) {
+    .apya-skel-rows:empty::before,
+    .apya-skel-cards:empty::before,
+    .apya-skel-cards:empty::after,
+    .apya-skel-num:empty::before { animation: none; }
+}

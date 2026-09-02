@@ -168,6 +168,12 @@
                     <div class="d-flex align-items-center justify-content-between">
                         <span class="apya-overline">@L["Grants:Wizard:WhoIsHere"]</span>
                         <span class="apya-chip apya-chip-positive d-none" id="LiveChip">@L["Grants:Wizard:Live"]</span>
+                        @* 7c · Bağlantı koptuğunda rozeti gizlemek yetmiyor; kullanıcı
+                           NEYİ kaybettiğini bilmeli. Kaydetme ve kilitler HTTP üzerinden
+                           çalışmaya devam ediyor, kaybolan yalnız canlı yansıma. *@
+                        <span class="apya-chip apya-chip-warning d-none" id="OfflineChip">
+                            <i class="fa fa-plug-circle-xmark me-1"></i>@L["Grants:Wizard:Offline"]
+                        </span>
                     </div>
                     <div id="PresenceList" class="d-flex flex-column gap-2"></div>
                     <div class="apya-wiz-hint">@L["Grants:Wizard:LockHint"]</div>

@@ -135,12 +135,25 @@
                     <div class="apya-pub-table">
                         @if (Model.Result.Items.Count == 0)
                         {
-                            @* 7a kuralı: boş durum bir sonraki adımı söyler. *@
-                            <p class="apya-pub-empty">
-                                @(Model.HasFilter
-                                    ? L["Grants:Public:Search:EmptyFiltered"]
-                                    : L["Grants:Public:Search:EmptyAll"])
-                            </p>
+                            @* 7a kuralı: boş durum bir sonraki adımı SÖYLER. Süzgeç varsa
+                               genel bir uyarı değil, hangi süzgecin kaç sonuç açacağı yazılır. *@
+                            <div class="apya-pub-empty">
+                                <p>
+                                    @(Model.HasFilter
+                                        ? L["Grants:Public:Search:EmptyFiltered"]
+                                        : L["Grants:Public:Search:EmptyAll"])
+                                </p>
+                                @if (Model.Result.Relaxations.Count > 0)
+                                {
+                                    <p class="apya-pub-relax-title">@L["Grants:Public:Search:RelaxTitle"]</p>
+                                    <ul class="apya-pub-relax">
+                                        @foreach (var r in Model.Result.Relaxations)
+                                        {
+                                            <li>@L["Grants:Public:Relax:" + r.Filter, r.Count]</li>
+                                        }
+                                    </ul>
+                                }
+                            </div>
                         }
                         else
                         {

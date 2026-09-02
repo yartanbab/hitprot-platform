@@ -142,3 +142,10 @@
 [data-theme="dark"] .apya-doc-history-no {
     color: var(--apya-accent-300);
 }
+
+/* 7b · İskelet ölçüsü bu ekranın GERÇEK satır yüksekliğine eşit; farklı bir değer
+   yükleme sırasındaki zıplamayı önlemek yerine yerini değiştirir. */
+#DocumentRows {
+    --apya-skel-row: 100px;
+    --apya-skel-count: 3;
+}

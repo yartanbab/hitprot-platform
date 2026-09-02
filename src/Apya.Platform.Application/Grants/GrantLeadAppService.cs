@@ -98,7 +98,8 @@ public class GrantLeadAppService : PlatformAppService, IGrantLeadAppService
                 .Where(l => l.Status is not (GrantLeadStatus.Kapandi or GrantLeadStatus.MusteriOldu))
                 .Sum(l => l.EstimatedSupport ?? 0m),
             QualifiedThreshold = GrantLeadHeatCalculator.QualifiedThreshold,
-            CallThreshold = GrantLeadHeatCalculator.CallThreshold
+            CallThreshold = GrantLeadHeatCalculator.CallThreshold,
+            TopHeatScore = leads.Count == 0 ? null : leads.Max(l => l.HeatScore)
         };
     }
 

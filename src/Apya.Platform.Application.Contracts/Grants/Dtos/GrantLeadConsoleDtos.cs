@@ -31,6 +31,13 @@ public class GrantLeadConsoleDto
     public int QualifiedThreshold { get; set; }
 
     public int CallThreshold { get; set; }
+
+    /// <summary>
+    /// 7a · Talep VAR ama hiçbiri eşiği geçmiyorsa en yüksek ısı. Boş durum
+    /// "henüz talep yok" demek yerine "N talep geldi, en yükseği M, eşik 70 —
+    /// fazla katı olabilir" diyebilsin diye. Talep yoksa null.
+    /// </summary>
+    public int? TopHeatScore { get; set; }
 }
 
 public class GrantLeadRowDto

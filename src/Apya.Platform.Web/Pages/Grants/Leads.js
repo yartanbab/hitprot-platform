@@ -55,6 +55,16 @@ $(function () {
         $('#LeadEmpty').toggleClass('d-none', items.length > 0);
         $('#LeadCount').text(items.length);
 
+        // 7a · Talep VAR ama hiçbiri eşiği geçmiyorsa teşhis göster. Bu boş liste
+        // değil — liste dolu, ama triage kuralı hiçbirini nitelikli saymıyor;
+        // "henüz talep yok" demek yanıltıcı olurdu.
+        var esikSorunu = items.length > 0 && model.qualifiedCount === 0 && model.topHeatScore != null;
+        $('#LeadThresholdHint').toggleClass('d-none', !esikSorunu);
+        if (esikSorunu) {
+            $('#LeadThresholdHint').text(l('Grants:Leads:ThresholdHint',
+                items.length, model.topHeatScore, model.qualifiedThreshold));
+        }
+
         $('#KpiWeek').text(model.thisWeekCount);
         $('#KpiQualified').text(model.qualifiedCount);
         $('#KpiQualifiedLabel').text(l('Grants:Leads:Kpi:Qualified', model.qualifiedThreshold));

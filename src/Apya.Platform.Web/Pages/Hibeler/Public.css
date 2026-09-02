@@ -770,3 +770,23 @@ body {
 .apya-pub-next { margin-top: 8px; }
 
 .apya-pub-test-empty { margin: 0; }
+
+/* 7a · Boş sonuçta gevşetme önerileri. Sonuç açmayan öneri sunucuda zaten
+   elenmiş oluyor; burada yalnız listeleme var. */
+.apya-pub-empty > p { margin: 0 0 4px; }
+
+.apya-pub-relax-title { margin-top: 14px; font-weight: 600; }
+
+.apya-pub-relax {
+    display: inline-block;
+    margin: 6px 0 0;
+    padding: 0;
+    list-style: none;
+    text-align: start;
+}
+
+.apya-pub-relax > li {
+    padding: 4px 0;
+    font-size: 13px;
+    color: var(--apya-text-secondary, #4B5563);
+}

@@ -46,15 +46,25 @@ $(function () {
         });
         hub.on('ApplicationChanged', function () { load(); });
 
+        // 7c · Bağlantıyı gizlemek yetmez, durumu SÖYLE. Kaydetme ve alan kilitleri
+        // HTTP üzerinden gittiği için çalışmaya devam ediyor; kaybolan yalnız
+        // karşı tarafın değişikliklerinin anlık yansıması.
+        function setLive(online) {
+            $('#LiveChip').toggleClass('d-none', !online);
+            $('#OfflineChip').toggleClass('d-none', online)
+                .attr('title', online ? null : l('Grants:Wizard:OfflineHint'));
+        }
+
         hub.start()
             .then(function () {
-                $('#LiveChip').removeClass('d-none');
+                setLive(true);
                 return hub.invoke('Subscribe', appId);
             })
-            .catch(function () { $('#LiveChip').addClass('d-none'); });
+            .catch(function () { setLive(false); });
 
-        hub.onreconnected(function () { hub.invoke('Subscribe', appId); load(); });
-        hub.onclose(function () { $('#LiveChip').addClass('d-none'); });
+        hub.onreconnecting(function () { setLive(false); });
+        hub.onreconnected(function () { setLive(true); hub.invoke('Subscribe', appId); load(); });
+        hub.onclose(function () { setLive(false); });
     }
 
     function announce(fieldKey) {

@@ -24,6 +24,16 @@ public class GrantSourceDto : EntityDto<Guid>
 
     /// <summary>Son koşuda ilk kez eklenen taslak sayısı — "N yeni" chip'i.</summary>
     public int LastRunNewCount { get; set; }
+
+    /// <summary>
+    /// 7c · Son BAŞARILI tarama. Hatalı kaynakta "en son ne zaman veri geldi"
+    /// sorusunun cevabı bu; <c>LastScrapedAt</c> başarısız koşuyu da sayar ve
+    /// "dün tarandı" diyerek yanıltır.
+    /// </summary>
+    public DateTime? LastSuccessAt { get; set; }
+
+    /// <summary>7c · Son koşunun hata mesajı (401 gibi). Yalnız hatalı koşuda dolu.</summary>
+    public string? LastRunMessage { get; set; }
 }
 
 public class CreateUpdateGrantSourceDto

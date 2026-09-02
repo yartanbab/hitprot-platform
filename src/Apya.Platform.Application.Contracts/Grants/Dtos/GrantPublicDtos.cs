@@ -43,6 +43,22 @@ public class GrantPublicSearchResultDto
 
     /// <summary>Kurum adı → açık çağrı sayısı (süzgeç panelindeki sayaçlar).</summary>
     public List<GrantPublicFacetDto> IssuerFacets { get; set; } = new();
+
+    /// <summary>
+    /// 7a · Sonuç boşken "hangi süzgeci gevşetirsen kaç sonuç çıkar". Yalnız
+    /// sonuç sıfırken ve o süzgeç GERÇEKTEN uygulanmışken doldurulur — boş durum
+    /// bir sonraki adımı söylemeli, genel bir "filtreleri gözden geçirin" değil.
+    /// </summary>
+    public List<GrantPublicRelaxationDto> Relaxations { get; set; } = new();
+}
+
+public class GrantPublicRelaxationDto
+{
+    /// <summary>Gevşetilecek süzgecin anahtarı; istemci yerelleştirir.</summary>
+    public string Filter { get; set; } = string.Empty;
+
+    /// <summary>O süzgeç kaldırılırsa çıkacak sonuç sayısı.</summary>
+    public int Count { get; set; }
 }
 
 public class GrantPublicFacetDto

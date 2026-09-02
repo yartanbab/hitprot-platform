@@ -22,23 +22,23 @@
     <div class="apya-lead-kpis">
         <div class="apya-lead-kpi">
             <span class="apya-lead-kpi-label">@L["Grants:Leads:Kpi:Week"]</span>
-            <span class="apya-lead-kpi-value" id="KpiWeek">—</span>
+            <span class="apya-skel-num apya-lead-kpi-value" id="KpiWeek"></span>
         </div>
         <div class="apya-lead-kpi">
             <span class="apya-lead-kpi-label" id="KpiQualifiedLabel">@L["Grants:Leads:Kpi:Qualified", Model.QualifiedThreshold]</span>
-            <span class="apya-lead-kpi-value" id="KpiQualified">—</span>
+            <span class="apya-skel-num apya-lead-kpi-value" id="KpiQualified"></span>
         </div>
         <div class="apya-lead-kpi">
             <span class="apya-lead-kpi-label">@L["Grants:Leads:Kpi:Meetings"]</span>
-            <span class="apya-lead-kpi-value" id="KpiMeetings">—</span>
+            <span class="apya-skel-num apya-lead-kpi-value" id="KpiMeetings"></span>
         </div>
         <div class="apya-lead-kpi">
             <span class="apya-lead-kpi-label">@L["Grants:Leads:Kpi:Converted"]</span>
-            <span class="apya-lead-kpi-value" id="KpiConverted">—</span>
+            <span class="apya-skel-num apya-lead-kpi-value" id="KpiConverted"></span>
         </div>
         <div class="apya-lead-kpi">
             <span class="apya-lead-kpi-label">@L["Grants:Leads:Kpi:Pipeline"]</span>
-            <span class="apya-lead-kpi-value" id="KpiPipeline">—</span>
+            <span class="apya-skel-num apya-lead-kpi-value" id="KpiPipeline"></span>
         </div>
     </div>
 
@@ -60,7 +60,10 @@
                     <span>@L["Grants:Leads:Col:Difficulty"]</span>
                     <span>@L["Grants:Leads:Col:Status"]</span>
                 </div>
-                <div id="LeadRows"></div>
+                @* 7a · Talep VAR ama hiçbiri eşiği geçmiyorsa teşhis: kaç talep, en
+                   yüksek ısı kaç, eşik kaç. "Henüz talep yok" demek yanıltıcı olurdu. *@
+                <p id="LeadThresholdHint" class="apya-side-note apya-side-note--quiet d-none"></p>
+                <div id="LeadRows" class="apya-skel-rows"></div>
                 <p id="LeadEmpty" class="apya-src-empty d-none">@L["Grants:Leads:Empty"]</p>
             </div>
             <div class="card-footer apya-side-note">

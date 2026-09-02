@@ -2302,6 +2302,18 @@
     "Grants:Public:Criterion:StaffMin": "At least {0} employees",
     "Grants:Public:Criterion:TrlRange": "TRL {0} — TRL {1}",
     "Grants:Public:Criterion:TrlMin": "At least TRL {0}",
-    "Grants:Public:Criterion:TrlMax": "At most TRL {0}"
+    "Grants:Public:Criterion:TrlMax": "At most TRL {0}",
+    "Grants:Public:Search:RelaxTitle": "Relaxing one of these brings results:",
+    "Grants:Public:Relax:Query": "Drop the search text → {0} calls",
+    "Grants:Public:Relax:Issuer": "Drop the institution filter → {0} calls",
+    "Grants:Public:Relax:Amount": "Drop the amount range → {0} calls",
+    "Grants:Public:Relax:Deadline": "Drop the deadline filter → {0} calls",
+    "Grants:Public:Relax:Size": "Drop the size filter → {0} calls",
+    "Grants:Public:Relax:Difficulty": "Drop the difficulty filter → {0} calls",
+    "Grants:Leads:ThresholdHint": "{0} requests arrived but none passed the qualified threshold; the highest heat is {1}, the threshold is {2}. The threshold may be too strict, or these requests genuinely do not need consulting.",
+    "Grants:Sources:FailSince": "Last successful scrape {0} — no data for {1} days.",
+    "Grants:Sources:FailNeverOk": "No data has ever been received from this source.",
+    "Grants:Wizard:Offline": "No live connection",
+    "Grants:Wizard:OfflineHint": "Your edits are still being saved and your field locks are intact; only the other side’s changes are not reflected live. The screen refreshes itself once the connection returns."
   }
 }

@@ -108,3 +108,10 @@
     font-size: 9px;
     font-weight: var(--apya-weight-bold);
 }
+
+/* 7b · İskelet ölçüsü bu ekranın GERÇEK satır yüksekliğine eşit; farklı bir değer
+   yükleme sırasındaki zıplamayı önlemek yerine yerini değiştirir. */
+#Rows {
+    --apya-skel-row: 56px;
+    --apya-skel-count: 4;
+}

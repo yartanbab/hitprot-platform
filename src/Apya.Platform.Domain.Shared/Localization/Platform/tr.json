@@ -2579,6 +2579,18 @@
         "Grants:Public:Criterion:StaffMin": "En az {0} çalışan",
         "Grants:Public:Criterion:TrlRange": "TRL {0} — TRL {1}",
         "Grants:Public:Criterion:TrlMin": "En az TRL {0}",
-        "Grants:Public:Criterion:TrlMax": "En çok TRL {0}"
+        "Grants:Public:Criterion:TrlMax": "En çok TRL {0}",
+        "Grants:Public:Search:RelaxTitle": "Şu süzgeci gevşetirseniz sonuç çıkar:",
+        "Grants:Public:Relax:Query": "Arama metnini kaldırın → {0} çağrı",
+        "Grants:Public:Relax:Issuer": "Kurum seçimini kaldırın → {0} çağrı",
+        "Grants:Public:Relax:Amount": "Tutar aralığını kaldırın → {0} çağrı",
+        "Grants:Public:Relax:Deadline": "Son başvuru süzgecini kaldırın → {0} çağrı",
+        "Grants:Public:Relax:Size": "Ölçek seçimini kaldırın → {0} çağrı",
+        "Grants:Public:Relax:Difficulty": "Zorluk seçimini kaldırın → {0} çağrı",
+        "Grants:Leads:ThresholdHint": "{0} talep geldi ama hiçbiri nitelikli eşiğini geçmedi; en yüksek ısı {1}, eşik {2}. Eşik fazla katı olabilir ya da gelen talepler gerçekten danışmanlık gerektirmiyor.",
+        "Grants:Sources:FailSince": "Son başarılı tarama {0} — {1} gündür veri gelmiyor.",
+        "Grants:Sources:FailNeverOk": "Bu kaynaktan hiç veri alınamadı.",
+        "Grants:Wizard:Offline": "Canlı bağlantı yok",
+        "Grants:Wizard:OfflineHint": "Yazdıklarınız kaydedilmeye devam ediyor ve alan kilitleriniz duruyor; yalnız karşı tarafın değişiklikleri anlık yansımıyor. Bağlantı gelince ekran kendiliğinden tazelenir."
     }
 }
