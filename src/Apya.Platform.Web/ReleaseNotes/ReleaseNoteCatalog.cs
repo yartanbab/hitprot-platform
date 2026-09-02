@@ -23,6 +23,68 @@ public static class ReleaseNoteCatalog
     public static IReadOnlyList<ReleaseNote> All { get; } = new List<ReleaseNote>
     {
         new ReleaseNote(
+            version: "2026.09.02",
+            date: "2 Eylül 2026",
+            title: "Hibe başvurunuzu danışmanınızla birlikte, tek ekranda yürütüyorsunuz",
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "Başvuru formunu danışmanınızla aynı anda dolduruyorsunuz",
+                "Hibe başvurusu artık adım adım ilerleyen bir formda hazırlanıyor: firma bilgileri, proje " +
+                "özeti, bütçe ve gönderim. Danışmanınız aynı anda aynı formda çalışabiliyor; kimin hangi " +
+                "alanda olduğunu görüyorsunuz. Aynı alanı ikiniz birden yazamıyorsunuz — girdiğiniz alan " +
+                "size ayrılıyor, iki dakika dokunmazsanız serbest kalıyor. Yazdıklarınız kendiliğinden " +
+                "kaydediliyor. İlk adımda firma profilinizden gelen bilgiler ve eksik kalan alanlar " +
+                "gösteriliyor; eksik bilgi uygunluk şartını ölçülemez bıraktığı için ekran sizi profili " +
+                "tamamlamaya yönlendiriyor. Bütçe adımında tutarları girerken destek oranı ve üst " +
+                "limitler anında uygulanıyor; alacağınız desteği yazarken görüyorsunuz."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "Evrak listesi çağrıdan otomatik oluşuyor, kim ne yükleyecek belli",
+                "Başvurduğunuz çağrının istediği belgeler kontrol listesine kendiliğinden geliyor. Her " +
+                "satırda belgenin zorunlu mu koşullu mu olduğu, kimin yükleyeceği ve son durumu yazıyor. " +
+                "Yüklediğiniz her dosya yeni bir sürüm olarak saklanıyor — eski sürümler silinmiyor, " +
+                "kimin ne zaman yüklediği listede duruyor. Danışmanınız belgeyi onaylıyor ya da gerekçesini " +
+                "yazarak revizyon istiyor; düzeltilmiş dosyayı yüklediğinizde eski gerekçe ekrandan " +
+                "kalkıyor. Onaylanan belgeler tek tuşla, kurumun beklediği sırayla adlandırılmış tek bir " +
+                "zip dosyasında toplanıyor."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "\"Başvurularım\" ekranı sıradaki işin kimde olduğunu söylüyor",
+                "Tüm hibe başvurularınız tek listede: hangi aşamada, ne kadar tutarında, son başvuruya kaç " +
+                "gün kaldı. En önemlisi her satırda sıradaki işin kimde olduğu yazıyor — sizde bekleyen " +
+                "işler ayrıca vurgulanıyor ve doğrudan yapılacak yere götürüyor. Üstteki özet açık " +
+                "başvurularınızı, onaylananları, sizden bekleneni, bugüne kadar tahsil edilen tutarı ve " +
+                "en yakın son başvuru tarihini gösteriyor."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "Red kararında gerekçeleri madde madde ve danışman görüşüyle görüyorsunuz",
+                "Başvurunuz reddedildiğinde kurumun karar yazısındaki her gerekçe ayrı bir madde olarak " +
+                "listeleniyor; kurumun kendi ifadesi alıntı olarak duruyor. Danışmanınız her maddeye " +
+                "görüşünü yazıyor: bu maddeye itiraz edilebilir mi, yoksa kurum haklı mı. İtiraz " +
+                "süresinin ne kadar kaldığını ekranın üstünde gün gün görüyorsunuz. İtiraza konu edilen " +
+                "maddeler itiraz dosyasını oluşturuyor; hiçbir madde itiraza konu değilse dosya boş " +
+                "gönderilmiyor. Reddedilen başvuru, itiraz süresi dolana kadar açık başvurularınız " +
+                "arasında kalıyor. Aynı programın açık bir sonraki çağrısı varsa \"bir daha denemek " +
+                "için\" bölümünden doğrudan ulaşabiliyorsunuz."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "Onaylanan hibede raporları ve tahsilatı tek zincirde izliyorsunuz",
+                "Desteğiniz onaylandıktan sonra rapor takvimi ve ödeme dilimleri aynı ekranda, birbirine " +
+                "bağlı halkalar hâlinde duruyor: hangi raporun hangi ödemeyi açtığı görünüyor ve raporu " +
+                "onaylanmamış bir dilim tahsil edilmiş gösterilemiyor. Raporun alt bölümleri (teknik, " +
+                "mali, çizelge, mali müşavir onayı) ayrı ayrı işaretleniyor. Proje bütçeniz kalem kalem " +
+                "onaylı / harcanan / kalan olarak izleniyor; bir kalem sınıra yaklaştığında uyarı " +
+                "çıkıyor. Yaklaşan rapor teslimleri ve beklenen tahsilatlar tarih sırasıyla listeleniyor."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
+                "Onaylanan hibeniz projeye bağlanıyor",
+                "Sözleşme imzalandıktan sonra hibe, projelerinizin arasında yerini alıyor: bütçe " +
+                "kalemleriniz proje bütçesine, planladığınız aşamalar göreve, ödeme dilimleri projenin " +
+                "gelir planına işleniyor. Başvurunuz kapanmıyor — projeyle bağlı kalıyor, evraklarınız " +
+                "ve yazışmalarınız yerinde duruyor.")
+        ),
+
+        new ReleaseNote(
             version: "2026.09.01",
             date: "1 Eylül 2026",
             title: "Proje finansı tek ekranda, hibe çağrılarının tamamı listede",
