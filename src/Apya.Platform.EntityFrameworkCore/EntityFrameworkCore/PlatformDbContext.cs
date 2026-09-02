@@ -147,6 +147,7 @@ namespace Apya.Platform.EntityFrameworkCore
         public DbSet<GrantReportSection> GrantReportSections { get; set; }
         public DbSet<GrantNotificationTemplate> GrantNotificationTemplates { get; set; }
         public DbSet<GrantNotificationLog> GrantNotificationLogs { get; set; }
+        public DbSet<GrantLead> GrantLeads { get; set; }
         public DbSet<GrantRecommendation> GrantRecommendations { get; set; }
         public DbSet<GrantDisbursementTranche> GrantDisbursementTranches { get; set; }
         public DbSet<GrantMilestone> GrantMilestones { get; set; }
@@ -919,6 +920,31 @@ namespace Apya.Platform.EntityFrameworkCore
                 b.Property(x => x.Note).HasMaxLength(256);
                 b.HasOne<GrantReport>().WithMany(r => r.Sections).HasForeignKey(x => x.ReportId).OnDelete(DeleteBehavior.Cascade);
                 b.HasIndex(x => new { x.ReportId, x.Order });
+            });
+
+            // --- 5a · Ön değerlendirme talepleri ---
+
+            builder.Entity<GrantLead>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "GrantLeads", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+                b.Property(x => x.FirmName).IsRequired().HasMaxLength(160);
+                b.Property(x => x.ContactName).IsRequired().HasMaxLength(120);
+                b.Property(x => x.ContactTitle).HasMaxLength(96);
+                b.Property(x => x.Email).IsRequired().HasMaxLength(160);
+                b.Property(x => x.Phone).HasMaxLength(32);
+                b.Property(x => x.Sector).HasMaxLength(96);
+                b.Property(x => x.SignalCodes).HasMaxLength(64);
+                b.Property(x => x.Note).HasMaxLength(1000);
+                b.Property(x => x.IpAddress).HasMaxLength(64);
+                b.Property(x => x.UserAgent).HasMaxLength(512);
+                b.Property(x => x.AnnualRevenue).HasPrecision(18, 2);
+                b.Property(x => x.EstimatedSupport).HasPrecision(18, 2);
+                // Çağrıya FK KURULMADI: çağrı arşivlense bile talep durmalı,
+                // 5a kutusu geçmişi anlatır.
+                b.HasIndex(x => new { x.Status, x.HeatScore });
+                b.HasIndex(x => x.GrantCallId);
+                b.HasIndex(x => new { x.IpAddress, x.CreationTime });
             });
 
             // --- 6d · Bildirim şablonları ---

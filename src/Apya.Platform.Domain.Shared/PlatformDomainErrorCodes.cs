@@ -138,6 +138,12 @@ public static class PlatformDomainErrorCodes
     public const string GrantNotificationTemplateMandatory = "Platform:Grant:NotificationTemplateMandatory";
     public const string GrantNotificationTemplateNotFound = "Platform:Grant:NotificationTemplateNotFound";
 
+    // 5a / 1g · Ön değerlendirme talepleri
+    public const string GrantLeadAlreadyConverted = "Platform:Grant:LeadAlreadyConverted";
+    public const string GrantLeadCallNotOpen = "Platform:Grant:LeadCallNotOpen";
+    public const string GrantLeadNotFound = "Platform:Grant:LeadNotFound";
+    public const string GrantLeadRateLimitExceeded = "Platform:Grant:LeadRateLimitExceeded";
+
     // --- Dosya (File) Modülü ---
     public const string FileUnsupportedExtension = "Platform:File:UnsupportedExtension";
     public const string FileSizeExceeded = "Platform:File:SizeExceeded";
