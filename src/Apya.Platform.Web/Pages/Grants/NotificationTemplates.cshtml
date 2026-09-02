@@ -1,0 +1,109 @@
+@page
+@using Apya.Platform.Localization
+@using Microsoft.AspNetCore.Mvc.Localization
+@inject IHtmlLocalizer<PlatformResource> L
+@model Apya.Platform.Web.Pages.Grants.NotificationTemplatesModel
+@{
+    ViewBag.Title = L["Grants:Notify:Title"].Value;
+}
+
+@section styles {
+    <abp-style src="/Pages/Grants/Shared.css" />
+    <abp-style src="/Pages/Grants/NotificationTemplates.css" />
+}
+
+@section scripts {
+    <abp-script src="/Pages/Grants/NotificationTemplates.js" />
+}
+
+<div data-page-description="@L["Grants:Notify:Subtitle"]" class="apya-page">
+    <div class="apya-nt-layout">
+
+        @* --- Sol: şablon listesi --- *@
+        <section class="card apya-nt-list">
+            <div class="card-header apya-param-section-head">
+                <span class="apya-param-section-icon"><i class="fa fa-bell"></i></span>
+                <span>@L["Grants:Notify:Templates"]</span>
+                <span id="NtCount" class="apya-chip apya-chip-neutral ms-auto"></span>
+            </div>
+            <div class="card-body p-0">
+                <div class="apya-nt-head">
+                    <span>@L["Grants:Notify:Col:Template"]</span>
+                    <span>@L["Grants:Notify:Col:Trigger"]</span>
+                    <span>@L["Grants:Notify:Col:Recipient"]</span>
+                    <span>@L["Grants:Notify:Col:Channel"]</span>
+                    <span>@L["Grants:Notify:Col:State"]</span>
+                </div>
+                <div id="NtRows"></div>
+                <p id="NtEmpty" class="apya-src-empty d-none">@L["Grants:Notify:Empty"]</p>
+            </div>
+            <div class="card-footer apya-side-note">
+                <i class="fa fa-circle-info me-1"></i>@L["Grants:Notify:MandatoryHint"]
+            </div>
+        </section>
+
+        @* --- Sağ: düzenleme + önizleme --- *@
+        <section class="card apya-nt-editor">
+            <div class="card-header apya-param-section-head">
+                <span class="apya-param-section-icon"><i class="fa fa-pen-to-square"></i></span>
+                <span id="NtEditorTitle">@L["Grants:Notify:Preview"]</span>
+            </div>
+            <div class="card-body">
+                <p id="NtSelectHint" class="apya-src-empty">@L["Grants:Notify:SelectHint"]</p>
+
+                <div id="NtEditor" class="d-none">
+                    <div class="apya-field">
+                        <label class="apya-field-label" for="NtSubject">@L["Grants:Notify:Field:Subject"]</label>
+                        <input type="text" id="NtSubject" class="form-control form-control-sm" maxlength="200" />
+                    </div>
+
+                    <div class="apya-field">
+                        <label class="apya-field-label" for="NtBody">@L["Grants:Notify:Field:Body"]</label>
+                        <textarea id="NtBody" class="form-control form-control-sm" rows="4" maxlength="2000"></textarea>
+                    </div>
+
+                    <div class="apya-field">
+                        <span class="apya-field-label">@L["Grants:Notify:Variables"]</span>
+                        <div id="NtVariables" class="apya-nt-vars"></div>
+                        <span class="apya-field-hint">@L["Grants:Notify:VariablesHint"]</span>
+                    </div>
+
+                    <div class="apya-nt-switches">
+                        <label class="apya-choice" for="NtInApp">
+                            <input type="checkbox" id="NtInApp" />
+                            <span>@L["Grants:Notify:Channel:InApp"]</span>
+                        </label>
+                        <label class="apya-choice" for="NtEmail">
+                            <input type="checkbox" id="NtEmail" />
+                            <span>@L["Grants:Notify:Channel:Email"]</span>
+                        </label>
+                        <label class="apya-choice" for="NtEnabled">
+                            <input type="checkbox" id="NtEnabled" />
+                            <span>@L["Grants:Notify:State:On"]</span>
+                        </label>
+                        <span id="NtMandatoryChip" class="apya-chip apya-chip-warning d-none">
+                            <i class="fa fa-lock me-1"></i>@L["Grants:Notify:Mandatory"]
+                        </span>
+                    </div>
+
+                    <div class="apya-nt-preview">
+                        <div class="apya-nt-preview-head">
+                            <span>@L["Grants:Notify:Preview"]</span>
+                        </div>
+                        <div class="apya-nt-preview-body">
+                            <div id="NtPreviewSubject" class="apya-nt-preview-subject"></div>
+                            <p id="NtPreviewBody" class="apya-nt-preview-text"></p>
+                        </div>
+                        <span class="apya-field-hint">@L["Grants:Notify:PreviewHint"]</span>
+                    </div>
+
+                    <div class="apya-nt-actions">
+                        <button type="button" id="NtSaveBtn" class="btn btn-sm btn-primary">
+                            <i class="fa fa-check me-1"></i>@L["Grants:Notify:Save"]
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+</div>
