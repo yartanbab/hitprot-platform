@@ -1,0 +1,114 @@
+@page
+@using Apya.Platform.Localization
+@using Microsoft.AspNetCore.Mvc.Localization
+@inject IHtmlLocalizer<PlatformResource> L
+@model Apya.Platform.Web.Pages.Grants.LeadsModel
+@{
+    ViewBag.Title = L["Grants:Leads:Title"].Value;
+}
+
+@section styles {
+    <abp-style src="/Pages/Grants/Shared.css" />
+    <abp-style src="/Pages/Grants/Leads.css" />
+}
+
+@section scripts {
+    <abp-script src="/Pages/Grants/Leads.js" />
+}
+
+<div data-page-description="@L["Grants:Leads:Description"]" class="apya-page">
+
+    @* --- KPI şeridi --- *@
+    <div class="apya-lead-kpis">
+        <div class="apya-lead-kpi">
+            <span class="apya-lead-kpi-label">@L["Grants:Leads:Kpi:Week"]</span>
+            <span class="apya-lead-kpi-value" id="KpiWeek">—</span>
+        </div>
+        <div class="apya-lead-kpi">
+            <span class="apya-lead-kpi-label" id="KpiQualifiedLabel">@L["Grants:Leads:Kpi:Qualified", Model.QualifiedThreshold]</span>
+            <span class="apya-lead-kpi-value" id="KpiQualified">—</span>
+        </div>
+        <div class="apya-lead-kpi">
+            <span class="apya-lead-kpi-label">@L["Grants:Leads:Kpi:Meetings"]</span>
+            <span class="apya-lead-kpi-value" id="KpiMeetings">—</span>
+        </div>
+        <div class="apya-lead-kpi">
+            <span class="apya-lead-kpi-label">@L["Grants:Leads:Kpi:Converted"]</span>
+            <span class="apya-lead-kpi-value" id="KpiConverted">—</span>
+        </div>
+        <div class="apya-lead-kpi">
+            <span class="apya-lead-kpi-label">@L["Grants:Leads:Kpi:Pipeline"]</span>
+            <span class="apya-lead-kpi-value" id="KpiPipeline">—</span>
+        </div>
+    </div>
+
+    <div class="apya-lead-layout">
+
+        @* --- Sol: talep listesi --- *@
+        <section class="card apya-lead-list">
+            <div class="card-header apya-param-section-head">
+                <span class="apya-param-section-icon"><i class="fa fa-inbox"></i></span>
+                <span>@L["Grants:Leads:Requests"]</span>
+                <span id="LeadCount" class="apya-chip apya-chip-neutral ms-auto"></span>
+            </div>
+            <div class="card-body p-0">
+                <div class="apya-lead-head">
+                    <span>@L["Grants:Leads:Col:Firm"]</span>
+                    <span>@L["Grants:Leads:Col:Heat"]</span>
+                    <span>@L["Grants:Leads:Col:Test"]</span>
+                    <span>@L["Grants:Leads:Col:Potential"]</span>
+                    <span>@L["Grants:Leads:Col:Difficulty"]</span>
+                    <span>@L["Grants:Leads:Col:Status"]</span>
+                </div>
+                <div id="LeadRows"></div>
+                <p id="LeadEmpty" class="apya-src-empty d-none">@L["Grants:Leads:Empty"]</p>
+            </div>
+            <div class="card-footer apya-side-note">
+                <i class="fa fa-circle-info me-1"></i>@L["Grants:Leads:HeatNote"]
+            </div>
+        </section>
+
+        @* --- Sağ: seçili talep --- *@
+        <section class="card apya-lead-detail">
+            <div class="card-header apya-param-section-head">
+                <span class="apya-param-section-icon"><i class="fa fa-user-check"></i></span>
+                <span id="LeadDetailTitle">@L["Grants:Leads:Selected"]</span>
+                <span id="LeadDetailHeat" class="apya-chip apya-chip-neutral ms-auto d-none"></span>
+            </div>
+            <div class="card-body">
+                <p id="LeadSelectHint" class="apya-src-empty">@L["Grants:Leads:SelectHint"]</p>
+
+                <div id="LeadDetail" class="d-none">
+                    <div class="apya-lead-contact" id="LeadContact"></div>
+
+                    <div class="apya-field">
+                        <span class="apya-field-label">@L["Grants:Leads:Answers"]</span>
+                        <div id="LeadAnswers" class="apya-lead-answers"></div>
+                    </div>
+
+                    <div class="apya-field">
+                        <span class="apya-field-label">@L["Grants:Leads:WhyQualified"]</span>
+                        <div id="LeadSignals" class="apya-lead-signals"></div>
+                    </div>
+
+                    <div class="apya-field">
+                        <span class="apya-field-label">@L["Grants:Leads:Status"]</span>
+                        <div class="apya-choice-row" id="LeadStatusRow"></div>
+                    </div>
+
+                    <div class="apya-field">
+                        <span class="apya-field-label">@L["Grants:Leads:ConsultantLoad"]</span>
+                        <div id="LeadLoads" class="apya-lead-loads"></div>
+                    </div>
+
+                    <div class="apya-lead-actions">
+                        <button type="button" id="ConvertBtn" class="btn btn-sm btn-primary">
+                            <i class="fa fa-building-user me-1"></i>@L["Grants:Leads:Convert"]
+                        </button>
+                    </div>
+                    <p id="ConvertedNote" class="apya-field-hint d-none"></p>
+                </div>
+            </div>
+        </section>
+    </div>
+</div>

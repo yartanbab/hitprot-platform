@@ -1,0 +1,207 @@
+@page "/Hibeler"
+@using Apya.Platform.Grants
+@using Apya.Platform.Localization
+@using Microsoft.AspNetCore.Mvc.Localization
+@inject IHtmlLocalizer<PlatformResource> L
+@model Apya.Platform.Web.Pages.Hibeler.IndexModel
+@{
+    Layout = "_PublicLayout";
+    ViewBag.Title = L["Grants:Public:Search:Title"].Value;
+
+    string Money(decimal? v) => v.HasValue ? v.Value.ToString("N0") + " ₺" : "—";
+}
+
+<section class="apya-pub-hero">
+    <div class="apya-pub-wrap">
+        <h1>@L["Grants:Public:Search:Headline"]</h1>
+        <p>@L["Grants:Public:Search:Lede"]</p>
+
+        <div class="apya-pub-metrics">
+            <div class="apya-pub-metric">
+                <span class="apya-pub-metric-label">@L["Grants:Public:Metric:Open"]</span>
+                <span class="apya-pub-metric-value">@Model.Result.TotalOpenCount</span>
+            </div>
+            <div class="apya-pub-metric">
+                <span class="apya-pub-metric-label">@L["Grants:Public:Metric:Budget"]</span>
+                <span class="apya-pub-metric-value">@Money(Model.Result.TotalBudget)</span>
+            </div>
+            <div class="apya-pub-metric">
+                <span class="apya-pub-metric-label">@L["Grants:Public:Metric:ClosingSoon"]</span>
+                <span class="apya-pub-metric-value">@Model.Result.ClosingSoonCount</span>
+            </div>
+            <div class="apya-pub-metric">
+                <span class="apya-pub-metric-label">@L["Grants:Public:Metric:Updated"]</span>
+                <span class="apya-pub-metric-value">
+                    @(Model.Result.LastUpdatedAt?.ToString("dd.MM.yyyy") ?? "—")
+                </span>
+            </div>
+        </div>
+
+        @* Süzgeçler GET ile taşınır: bağlantı paylaşılabilir, JS'siz de çalışır. *@
+        <form method="get" id="SearchForm">
+            <div class="apya-pub-search">
+                <input type="search" name="q" value="@Model.Query"
+                       placeholder="@L["Grants:Public:Search:Placeholder"]"
+                       aria-label="@L["Grants:Public:Search:Placeholder"]" />
+                <button type="submit" class="apya-pub-btn">
+                    <i class="fa fa-magnifying-glass"></i>@L["Grants:Public:Search:Button"]
+                </button>
+            </div>
+
+            <div class="apya-pub-body">
+                <aside class="apya-pub-panel">
+                    <div class="apya-pub-filter-head">
+                        <strong>@L["Grants:Public:Filters"]</strong>
+                        <a class="apya-pub-link" href="/Hibeler">@L["Grants:Public:Filters:Clear"]</a>
+                    </div>
+
+                    @if (Model.Result.IssuerFacets.Count > 0)
+                    {
+                        <div class="apya-pub-filter-group">
+                            <span class="apya-pub-filter-title">@L["Grants:Public:Filter:Issuer"]</span>
+                            @foreach (var facet in Model.Result.IssuerFacets)
+                            {
+                                <label class="apya-pub-check">
+                                    <input type="checkbox" name="kurum" value="@facet.Value"
+                                           checked="@Model.Issuers.Contains(facet.Value)" />
+                                    <span>@facet.Value</span>
+                                    <span class="apya-pub-check-count">@facet.Count</span>
+                                </label>
+                            }
+                        </div>
+                    }
+
+                    <div class="apya-pub-filter-group">
+                        <span class="apya-pub-filter-title">@L["Grants:Public:Filter:Amount"]</span>
+                        <div class="apya-pub-range">
+                            <input type="number" name="min" value="@Model.MinAmount" min="0" step="100000"
+                                   aria-label="@L["Grants:Public:Filter:AmountMin"]" />
+                            <span>—</span>
+                            <input type="number" name="max" value="@Model.MaxAmount" min="0" step="100000"
+                                   aria-label="@L["Grants:Public:Filter:AmountMax"]" />
+                        </div>
+                    </div>
+
+                    <div class="apya-pub-filter-group">
+                        <span class="apya-pub-filter-title">@L["Grants:Public:Filter:Size"]</span>
+                        @foreach (var size in Enum.GetValues<CompanySize>())
+                        {
+                            <label class="apya-pub-check">
+                                <input type="checkbox" name="olcek" value="@((int)size)"
+                                       checked="@Model.Sizes.Contains(size)" />
+                                <span>@L["Grants:CompanySize:" + size]</span>
+                            </label>
+                        }
+                    </div>
+
+                    <div class="apya-pub-filter-group">
+                        <span class="apya-pub-filter-title">@L["Grants:Public:Filter:Deadline"]</span>
+                        <label class="apya-pub-check">
+                            <input type="radio" name="gun" value="30" checked="@(Model.DeadlineWithinDays == 30)" />
+                            <span>@L["Grants:Public:Filter:Within30"]</span>
+                        </label>
+                        <label class="apya-pub-check">
+                            <input type="radio" name="gun" value="90" checked="@(Model.DeadlineWithinDays == 90)" />
+                            <span>@L["Grants:Public:Filter:Within90"]</span>
+                        </label>
+                        <label class="apya-pub-check">
+                            <input type="radio" name="gun" value="" checked="@(Model.DeadlineWithinDays == null)" />
+                            <span>@L["Grants:Public:Filter:AnyDeadline"]</span>
+                        </label>
+                    </div>
+
+                    <div class="apya-pub-filter-group">
+                        <span class="apya-pub-filter-title">@L["Grants:Public:Filter:Difficulty"]</span>
+                        @foreach (var (value, key) in new[] { (1, "Easy"), (3, "Medium"), (5, "Hard") })
+                        {
+                            <label class="apya-pub-check">
+                                <input type="checkbox" name="zorluk" value="@value"
+                                       checked="@Model.Difficulties.Contains(value)" />
+                                <span>@L["Grants:Public:Difficulty:" + key]</span>
+                            </label>
+                        }
+                    </div>
+
+                    <button type="submit" class="apya-pub-btn apya-pub-btn--ghost">
+                        @L["Grants:Public:Filters:Apply"]
+                    </button>
+                </aside>
+
+                <div>
+                    <div class="apya-pub-results-head">
+                        <span>@L["Grants:Public:Search:ResultCount", Model.Result.Items.Count]</span>
+                    </div>
+
+                    <div class="apya-pub-table">
+                        @if (Model.Result.Items.Count == 0)
+                        {
+                            @* 7a kuralı: boş durum bir sonraki adımı söyler. *@
+                            <p class="apya-pub-empty">
+                                @(Model.HasFilter
+                                    ? L["Grants:Public:Search:EmptyFiltered"]
+                                    : L["Grants:Public:Search:EmptyAll"])
+                            </p>
+                        }
+                        else
+                        {
+                            <div class="apya-pub-scroll">
+                                <div class="apya-pub-row-head">
+                                    <span>@L["Grants:Public:Col:Grant"]</span>
+                                    <span>@L["Grants:Public:Col:Issuer"]</span>
+                                    <span>@L["Grants:Public:Col:Amount"]</span>
+                                    <span>@L["Grants:Public:Col:Rate"]</span>
+                                    <span>@L["Grants:Public:Col:Deadline"]</span>
+                                    <span>@L["Grants:Public:Col:Difficulty"]</span>
+                                </div>
+                                @foreach (var item in Model.Result.Items)
+                                {
+                                    <a class="apya-pub-row" href="/Hibeler/@item.CallId">
+                                        <span class="apya-pub-row-name">
+                                            <strong>@item.GrantName</strong>
+                                            <span>@item.Period</span>
+                                        </span>
+                                        <span>@item.Issuer</span>
+                                        <span class="apya-pub-num">@Money(item.MaxAmount)</span>
+                                        <span class="apya-pub-num">
+                                            @(item.SupportRatePercent.HasValue ? "%" + item.SupportRatePercent : "—")
+                                        </span>
+                                        <span class="apya-pub-num">
+                                            @if (item.DaysRemaining is int d and >= 0)
+                                            {
+                                                <span class="apya-pub-chip @(d <= 30 ? "apya-pub-chip--hot" : "")">
+                                                    @L["Grants:Feed:Card:DaysLeft", d]
+                                                </span>
+                                            }
+                                            else
+                                            {
+                                                @:—
+                                            }
+                                        </span>
+                                        <span>
+                                            <span class="apya-pub-chip @(item.Difficulty >= 4 ? "apya-pub-chip--warn" : "")">
+                                                @L["Grants:Difficulty:" + item.Difficulty]
+                                            </span>
+                                        </span>
+                                    </a>
+                                }
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</section>
+
+<section class="apya-pub-cta">
+    <div class="apya-pub-wrap">
+        <h2>@L["Grants:Public:Cta:Headline"]</h2>
+        <p>@L["Grants:Public:Cta:Lede"]</p>
+        @if (Model.Result.Items.Count > 0)
+        {
+            <a class="apya-pub-btn" href="/Hibeler/@Model.Result.Items[0].CallId">
+                @L["Grants:Public:Cta:Button"]
+            </a>
+        }
+    </div>
+</section>
