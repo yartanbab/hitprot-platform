@@ -145,6 +145,8 @@ namespace Apya.Platform.EntityFrameworkCore
         public DbSet<GrantAppealItem> GrantAppealItems { get; set; }
         public DbSet<GrantReport> GrantReports { get; set; }
         public DbSet<GrantReportSection> GrantReportSections { get; set; }
+        public DbSet<GrantNotificationTemplate> GrantNotificationTemplates { get; set; }
+        public DbSet<GrantNotificationLog> GrantNotificationLogs { get; set; }
         public DbSet<GrantRecommendation> GrantRecommendations { get; set; }
         public DbSet<GrantDisbursementTranche> GrantDisbursementTranches { get; set; }
         public DbSet<GrantMilestone> GrantMilestones { get; set; }
@@ -917,6 +919,27 @@ namespace Apya.Platform.EntityFrameworkCore
                 b.Property(x => x.Note).HasMaxLength(256);
                 b.HasOne<GrantReport>().WithMany(r => r.Sections).HasForeignKey(x => x.ReportId).OnDelete(DeleteBehavior.Cascade);
                 b.HasIndex(x => new { x.ReportId, x.Order });
+            });
+
+            // --- 6d · Bildirim şablonları ---
+
+            builder.Entity<GrantNotificationTemplate>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "GrantNotificationTemplates", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+                b.Property(x => x.Subject).IsRequired().HasMaxLength(200);
+                b.Property(x => x.Body).IsRequired().HasMaxLength(2000);
+                // Host katalogunda tetikleyici başına tek şablon.
+                b.HasIndex(x => new { x.TenantId, x.Trigger }).IsUnique();
+            });
+
+            builder.Entity<GrantNotificationLog>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "GrantNotificationLogs", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+                // Aynı eşik iki kez gönderilemesin. Soft delete olmadığı için
+                // indeks silinmiş satırlarla dolmaz.
+                b.HasIndex(x => new { x.Trigger, x.EntityId, x.DayMark }).IsUnique();
             });
 
             builder.Entity<GrantDisbursementTranche>(b =>

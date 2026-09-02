@@ -133,6 +133,11 @@ public static class PlatformDomainErrorCodes
     // 6c · Uygulama ve tahsilat
     public const string GrantTranchePaymentBlockedByReport = "Platform:Grant:TranchePaymentBlockedByReport";
 
+    // 6d · Bildirim şablonları
+    public const string GrantNotificationTemplateNeedsChannel = "Platform:Grant:NotificationTemplateNeedsChannel";
+    public const string GrantNotificationTemplateMandatory = "Platform:Grant:NotificationTemplateMandatory";
+    public const string GrantNotificationTemplateNotFound = "Platform:Grant:NotificationTemplateNotFound";
+
     // --- Dosya (File) Modülü ---
     public const string FileUnsupportedExtension = "Platform:File:UnsupportedExtension";
     public const string FileSizeExceeded = "Platform:File:SizeExceeded";

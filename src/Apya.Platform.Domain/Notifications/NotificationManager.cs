@@ -51,8 +51,11 @@ public class NotificationManager : DomainService
         var info = NotificationTypeRegistry.Get(type);
 
         // 0. Kullanıcı bu kategoriyi sessize aldıysa hiç kayıt açma.
+        //    Zorunlu türler bunun dışındadır: kaçırılması hak kaybına yol açar
+        //    (kurum kararı + itiraz süresi). E-posta yine tercihe bağlıdır —
+        //    zorunluluk bildirimin görünmesini garanti eder, kanal seçmez.
         var preference = await GetPreferenceAsync(userId, info.Category);
-        if (!preference.InApp)
+        if (!preference.InApp && !info.Mandatory)
             return;
 
         var effectiveSeverity = severity ?? info.DefaultSeverity;
@@ -96,6 +99,14 @@ public class NotificationManager : DomainService
         await PublishCreatedEventAsync(userId, title, body, entityType, entityId, type);
         await TrySendCriticalEmailAsync(userId, preference.Email, effectiveSeverity, title, body);
     }
+
+    /// <summary>
+    /// Kullanıcı bu kategoriden e-posta istiyor mu? Bildirimi kendi kanalından
+    /// gönderen üreticiler (bkz. hibe bildirim şablonları) tercihi burada sorar —
+    /// aynı varsayılan mantığı ikinci kez yazmasınlar diye açıldı.
+    /// </summary>
+    public async Task<bool> IsEmailEnabledAsync(Guid userId, NotificationCategory category)
+        => (await GetPreferenceAsync(userId, category)).Email;
 
     /// <summary>
     /// Kullanıcının bu kategorideki etkin kanal tercihi. Kayıt yoksa varsayılan

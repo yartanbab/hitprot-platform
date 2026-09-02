@@ -14,12 +14,18 @@ namespace Apya.Platform.Notifications;
 /// (atama, son tarih uyarısı) için kapalıdır — o üreticiler zaten "gönderildi"
 /// bayrağı tutuyor.
 /// </param>
+/// <param name="Mandatory">
+/// Kullanıcının kategori tercihi kapalı olsa bile bildirim üretilir. Yalnızca
+/// kaçırılması hak kaybına yol açan olaylar için açılır (kurum kararı ve onunla
+/// birlikte işleyen itiraz süresi). Tercih ekranı bu türü "kapatılamaz" gösterir.
+/// </param>
 public sealed record NotificationTypeInfo(
     NotificationCategory Category,
     NotificationSeverity DefaultSeverity,
     string Icon,
     string? DeepLinkTemplate,
-    bool GroupSimilar);
+    bool GroupSimilar,
+    bool Mandatory = false);
 
 /// <summary>
 /// Bildirim türlerinin tek kaydı. Kategori, aciliyet, ikon ve derin link daha önce
@@ -68,6 +74,34 @@ public static class NotificationTypeRegistry
             [NotificationType.GrantRecommended] = new(
                 NotificationCategory.Grants, NotificationSeverity.Normal,
                 "fa fa-award", "/Grants", GroupSimilar: false),
+
+            // Hibe süreci tetikleyicileri. Derin link {0} = başvuru kimliği
+            // (çağrı yayınında çağrı kimliği) — sayfalar sorgu dizesiyle çalışıyor.
+            [NotificationType.GrantDocumentReminder] = new(
+                NotificationCategory.Grants, NotificationSeverity.High,
+                "fa fa-file-circle-exclamation", "/Grants/Documents?id={0}", GroupSimilar: false),
+
+            [NotificationType.GrantDocumentRevisionRequested] = new(
+                NotificationCategory.Grants, NotificationSeverity.High,
+                "fa fa-rotate-left", "/Grants/Documents?id={0}", GroupSimilar: false),
+
+            // Aşama birden çok kez ilerleyebilir; okunmamış satır varsa sayacı artır.
+            [NotificationType.GrantApplicationStageChanged] = new(
+                NotificationCategory.Grants, NotificationSeverity.Normal,
+                "fa fa-arrow-right-arrow-left", "/Grants/Wizard?id={0}", GroupSimilar: true),
+
+            // Kaçırılırsa itiraz süresi kaçar: hem Critical hem Mandatory.
+            [NotificationType.GrantDecisionIssued] = new(
+                NotificationCategory.Grants, NotificationSeverity.Critical,
+                "fa fa-gavel", "/Grants/Appeal?id={0}", GroupSimilar: false, Mandatory: true),
+
+            [NotificationType.GrantReportDue] = new(
+                NotificationCategory.Grants, NotificationSeverity.High,
+                "fa fa-calendar-check", "/Grants/Implementation?id={0}", GroupSimilar: false),
+
+            [NotificationType.GrantCallPublished] = new(
+                NotificationCategory.Grants, NotificationSeverity.Normal,
+                "fa fa-bullhorn", "/Grants/Detail?id={0}", GroupSimilar: false),
 
             [NotificationType.AiWorkflowTriggered] = new(
                 NotificationCategory.Ai, NotificationSeverity.Info,
