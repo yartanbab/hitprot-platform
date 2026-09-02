@@ -1,0 +1,198 @@
+/* 6d · Host: Bildirim ve E-posta Şablonları.
+   Ortak alan/bölüm sınıfları Shared.css'te; burada yalnız bu ekrana özgü olanlar. */
+
+.apya-nt-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1.35fr) minmax(360px, 1fr);
+    gap: var(--apya-space-4);
+    align-items: start;
+}
+
+@media (max-width: 1199.98px) {
+    .apya-nt-layout { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* --- Sol: şablon listesi ------------------------------------------------ */
+
+/* Sütunlar: ad · tetikleyici · alıcı · kanal · durum.
+   Kanal iki rozet alabiliyor (bildirim + e-posta), o yüzden 132px. */
+.apya-nt-head,
+.apya-nt-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr) minmax(0, 0.9fr) 132px 64px;
+    gap: var(--apya-space-3);
+    align-items: center;
+    padding: 10px var(--apya-space-4);
+}
+
+.apya-nt-head {
+    font-size: var(--apya-text-xs);
+    font-weight: var(--apya-weight-medium);
+    /* -tertiary (#9CA3AF) kart zemininde 2.54:1 ölçüldü — AA altı.
+       Sütun başlığı okunması GEREKEN metin, -secondary kullanılıyor (7.56:1). */
+    color: var(--apya-text-secondary);
+    border-bottom: 1px solid var(--apya-border-subtle);
+}
+
+.apya-nt-row {
+    border-bottom: 1px solid var(--apya-border-subtle);
+    cursor: pointer;
+    background: none;
+    border-left: 0;
+    border-right: 0;
+    border-top: 0;
+    width: 100%;
+    text-align: start;
+}
+
+.apya-nt-row:last-child { border-bottom: 0; }
+
+.apya-nt-row:hover { background: var(--apya-surface-hover); }
+
+/* Seçili satır: sol aksan şeridi + nötr zemin.
+   Aksan rengini zemine basmak koyu temada metni AA altına düşürüyordu. */
+.apya-nt-row.is-selected {
+    background: var(--apya-surface-raised);
+    box-shadow: inset 3px 0 0 0 var(--apya-accent-500);
+}
+
+.apya-nt-name {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.apya-nt-name > strong {
+    font-size: var(--apya-text-sm);
+    font-weight: var(--apya-weight-medium);
+    color: var(--apya-text-primary);
+}
+
+/* Şablonun başlık metninden kısa bir alıntı — hangi metnin düzenlendiği belli olsun. */
+.apya-nt-name > span {
+    font-size: var(--apya-text-xs);
+    color: var(--apya-text-secondary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.apya-nt-meta {
+    font-size: var(--apya-text-xs);
+    color: var(--apya-text-secondary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.apya-nt-channels {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+
+/* Kapalı şablonun soluklaştırılması KALDIRILDI: durumu zaten "Kapalı" rozeti
+   anlatıyor, kontrastı düşürmek okunurluğu bedavaya bozuyordu. */
+
+/* --- Sağ: düzenleme + önizleme ----------------------------------------- */
+
+.apya-nt-editor .card-body {
+    display: flex;
+    flex-direction: column;
+    gap: var(--apya-space-4);
+}
+
+.apya-field-hint {
+    font-size: var(--apya-text-xs);
+    /* Aynı gerekçe: ipucu metni okunmak için var. */
+    color: var(--apya-text-secondary);
+}
+
+.apya-nt-vars {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+/* Değişken rozeti — tıklanınca gövdenin sonuna eklenir, o yüzden button. */
+.apya-nt-var {
+    font-family: var(--apya-font-mono);
+    font-size: 11px;
+    font-variant-numeric: tabular-nums;
+    padding: 3px 8px;
+    border-radius: var(--apya-radius-sm);
+    border: 1px solid var(--apya-border-subtle);
+    background: var(--apya-surface-raised);
+    color: var(--apya-text-secondary);
+    cursor: pointer;
+}
+
+.apya-nt-var:hover {
+    border-color: var(--apya-accent-500);
+    color: var(--apya-text-primary);
+}
+
+.apya-nt-switches {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--apya-space-3);
+}
+
+/* Zorunlu tetikleyicide kanal/durum anahtarları kilitli gelir. */
+.apya-nt-switches .apya-choice.is-locked {
+    opacity: .6;
+    cursor: not-allowed;
+}
+
+.apya-nt-preview {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.apya-nt-preview-head {
+    font-size: var(--apya-text-xs);
+    font-weight: var(--apya-weight-medium);
+    color: var(--apya-text-secondary);
+}
+
+.apya-nt-preview-body {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: var(--apya-space-3);
+    border: 1px solid var(--apya-border-subtle);
+    border-radius: var(--apya-radius-md);
+    background: var(--apya-surface-raised);
+}
+
+.apya-nt-preview-subject {
+    font-size: var(--apya-text-sm);
+    font-weight: var(--apya-weight-medium);
+    color: var(--apya-text-primary);
+}
+
+.apya-nt-preview-text {
+    margin: 0;
+    font-size: var(--apya-text-xs);
+    line-height: 1.55;
+    color: var(--apya-text-secondary);
+    white-space: pre-wrap;
+}
+
+.apya-nt-actions {
+    display: flex;
+    justify-content: flex-end;
+}
+
+/* Koyu temada aksan metni -600 yerine -300 olmalı; -600 koyu temada DAHA KOYU. */
+[data-theme="dark"] .apya-nt-var:hover { border-color: var(--apya-accent-300); }
+
+/* 7b · İskelet ölçüsü bu ekranın GERÇEK satır yüksekliğine eşit; farklı bir değer
+   yükleme sırasındaki zıplamayı önlemek yerine yerini değiştirir. */
+#NtRows {
+    --apya-skel-row: 62px;
+    --apya-skel-count: 5;
+}

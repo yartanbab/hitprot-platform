@@ -228,3 +228,12 @@
 [data-theme="dark"] .apya-src-item.is-active {
     color: var(--apya-accent-300);
 }
+
+/* 7c · Hatalı kaynağın teşhis satırı. Rozet "düzelt" diyor, bu satır NEYİ
+   düzelteceğini söylüyor. */
+.apya-src-problem {
+    display: block;
+    margin-top: 2px;
+    font-size: var(--apya-text-xs);
+    color: var(--apya-danger-700);
+}

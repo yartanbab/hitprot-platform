@@ -23,9 +23,9 @@ public static class ReleaseNoteCatalog
     public static IReadOnlyList<ReleaseNote> All { get; } = new List<ReleaseNote>
     {
         new ReleaseNote(
-            version: "2026.09.01",
-            date: "1 Eylül 2026",
-            title: "Proje finansı tek ekranda, hibe çağrılarının tamamı listede",
+            version: "2026.09.02",
+            date: "2 Eylül 2026",
+            title: "Proje finansı tek ekranda, hibe süreci baştan sona, görevler ekip dışına açık",
 
             // ── Finans ───────────────────────────────────────────────────────
             new ReleaseNoteItem(ReleaseNoteCategory.Feature,
@@ -95,7 +95,7 @@ public static class ReleaseNoteCatalog
                 "listesinde de her satırın kalemi görünüyor, böylece hangi kalemin açığını " +
                 "kapattığınızı kaybetmiyorsunuz."),
 
-            // ── Hibe ─────────────────────────────────────────────────────────
+            // ── Hibe: çağrılar ve uygunluk ────────────────────────────────────
             new ReleaseNoteItem(ReleaseNoteCategory.Feature,
                 "Açık hibe çağrılarının tamamını görüyorsunuz",
                 "Hibeler ekranında şimdiye kadar yalnız firma profilinize yeterince uyan çağrılar " +
@@ -141,14 +141,74 @@ public static class ReleaseNoteCatalog
                 "Tüm açık hibeler listesinde her satırda uygunluk durumunuz, uyum puanınız, destek " +
                 "üst limiti ve son başvuruya kalan gün yan yana duruyor. \"Sadece giderilebilir " +
                 "eksikleri göster\" süzgeciyle şu an şartını karşılamadığınız ama tamamlayabileceğiniz " +
-                "çağrıları ayırıyor, ilgilendiğiniz çağrıları takibe alıp listenizde tutuyorsunuz.")
-        ),
+                "çağrıları ayırıyor, ilgilendiğiniz çağrıları takibe alıp listenizde tutuyorsunuz."),
 
-        new ReleaseNote(
-            version: "2026.08.31",
-            date: "31 Ağustos 2026",
-            title: "Görev paylaşımı, mobilde daha az kaydırma ve tek tıklama",
+            // ── Hibe: başvuru süreci ──────────────────────────────────────────
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "Başvuru formunu danışmanınızla aynı anda dolduruyorsunuz",
+                "Hibe başvurusu artık adım adım ilerleyen bir formda hazırlanıyor: firma bilgileri, proje " +
+                "özeti, bütçe ve gönderim. Danışmanınız aynı anda aynı formda çalışabiliyor; kimin hangi " +
+                "alanda olduğunu görüyorsunuz. Aynı alanı ikiniz birden yazamıyorsunuz — girdiğiniz alan " +
+                "size ayrılıyor, iki dakika dokunmazsanız serbest kalıyor. Yazdıklarınız kendiliğinden " +
+                "kaydediliyor. Bütçe adımında girdiğiniz tutarlara destek oranı ve üst limitler " +
+                "anında uygulanıyor; alacağınız desteği ve kendi payınızı yazarken görüyorsunuz."),
 
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "Evrak listesi çağrıdan otomatik oluşuyor, kim ne yükleyecek belli",
+                "Başvurduğunuz çağrının istediği belgeler kontrol listesine kendiliğinden geliyor. Her " +
+                "satırda belgenin zorunlu mu koşullu mu olduğu, kimin yükleyeceği ve son durumu yazıyor. " +
+                "Yüklediğiniz her dosya yeni bir sürüm olarak saklanıyor — eski sürümler silinmiyor, " +
+                "kimin ne zaman yüklediği listede duruyor. Danışmanınız belgeyi onaylıyor ya da gerekçesini " +
+                "yazarak revizyon istiyor; düzeltilmiş dosyayı yüklediğinizde eski gerekçe ekrandan " +
+                "kalkıyor. Onaylanan belgeler tek tuşla, kurumun beklediği sırayla adlandırılmış tek bir " +
+                "zip dosyasında toplanıyor."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "\"Başvurularım\" ekranı sıradaki işin kimde olduğunu söylüyor",
+                "Tüm hibe başvurularınız tek listede: hangi aşamada, ne kadar tutarında, son başvuruya kaç " +
+                "gün kaldı. En önemlisi her satırda sıradaki işin kimde olduğu yazıyor — sizde bekleyen " +
+                "işler ayrıca vurgulanıyor ve doğrudan yapılacak yere götürüyor. Üstteki özet açık " +
+                "başvurularınızı, onaylananları, sizden bekleneni, bugüne kadar tahsil edilen tutarı ve " +
+                "en yakın son başvuru tarihini gösteriyor."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "Red kararında gerekçeleri madde madde ve danışman görüşüyle görüyorsunuz",
+                "Başvurunuz reddedildiğinde kurumun karar yazısındaki her gerekçe ayrı bir madde olarak " +
+                "listeleniyor; kurumun kendi ifadesi alıntı olarak duruyor. Danışmanınız her maddeye " +
+                "görüşünü yazıyor: bu maddeye itiraz edilebilir mi, yoksa kurum haklı mı. İtiraz " +
+                "süresinin ne kadar kaldığını ekranın üstünde gün gün görüyorsunuz. İtiraza konu edilen " +
+                "maddeler itiraz dosyasını oluşturuyor; hiçbir madde itiraza konu değilse dosya boş " +
+                "gönderilmiyor. Reddedilen başvuru, itiraz süresi dolana kadar açık başvurularınız " +
+                "arasında kalıyor. Aynı programın açık bir sonraki çağrısı varsa \"bir daha denemek " +
+                "için\" bölümünden doğrudan ulaşabiliyorsunuz."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "Onaylanan hibede raporları ve tahsilatı tek zincirde izliyorsunuz",
+                "Desteğiniz onaylandıktan sonra rapor takvimi ve ödeme dilimleri aynı ekranda, birbirine " +
+                "bağlı halkalar hâlinde duruyor: hangi raporun hangi ödemeyi açtığı görünüyor ve raporu " +
+                "onaylanmamış bir dilim tahsil edilmiş gösterilemiyor. Raporun alt bölümleri (teknik, " +
+                "mali, çizelge, mali müşavir onayı) ayrı ayrı işaretleniyor. Proje bütçeniz kalem kalem " +
+                "onaylı / harcanan / kalan olarak izleniyor; bir kalem sınıra yaklaştığında uyarı " +
+                "çıkıyor. Yaklaşan rapor teslimleri ve beklenen tahsilatlar tarih sırasıyla listeleniyor."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
+                "Onaylanan hibeniz projeye bağlanıyor",
+                "Sözleşme imzalandıktan sonra hibe, projelerinizin arasında yerini alıyor: bütçe " +
+                "kalemleriniz proje bütçesine, planladığınız aşamalar göreve, ödeme dilimleri projenin " +
+                "gelir planına işleniyor. Başvurunuz kapanmıyor — projeyle bağlı kalıyor, evraklarınız " +
+                "ve yazışmalarınız yerinde duruyor."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "Hibe sürecindeki her adım size bildiriliyor",
+                "Danışmanınız bir evrakta revizyon istediğinde, başvurunuz yeni bir aşamaya " +
+                "geçtiğinde ve kurum kararını girdiğinde bildirim alıyorsunuz. Tarihe bağlı iki " +
+                "hatırlatma da otomatik: zorunlu evrak eksikken son başvuruya 7, 3 ve 1 gün kala, " +
+                "rapor teslimine ise 30, 14 ve 3 gün kala. Programınıza uygun yeni bir çağrı " +
+                "yayına alındığında da haberiniz oluyor. Bildirim tercihlerinizi kapatabilirsiniz — " +
+                "tek istisna kurum kararı ve onunla gelen itiraz süresi: kaçırılması doğrudan " +
+                "itiraz hakkınızı kaybettirdiği için o bildirim kapatılamıyor."),
+
+            // ── Görev paylaşımı ───────────────────────────────────────────────
             new ReleaseNoteItem(ReleaseNoteCategory.Feature,
                 "Bir görevi ekibinizde olmayan kişiye açabiliyorsunuz",
                 "Taşeron, tasarımcı, danışman ya da müşteriniz — göreve dahil etmek istediğiniz kişinin " +
@@ -198,7 +258,24 @@ public static class ReleaseNoteCatalog
                 "Menünün altında \"Kilitli özellikler\" kısayolu çıkıyor; oradan paketinizde kapalı olan " +
                 "yeteneklerin listesine ulaşıyorsunuz. Daha önce kapalı bir modül menüde hiç görünmediği " +
                 "için neyi kaçırdığınızı fark etmiyordunuz. Kısayol yalnız gerçekten kapalı bir özelliğiniz " +
-                "varsa çıkar — her şeyi kapsayan pakette hiç görünmez.")
+                "varsa çıkar — her şeyi kapsayan pakette hiç görünmez."),
+
+            // ── Genel ─────────────────────────────────────────────────────────
+            new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
+                "Hibe ekranları açılırken içerik zıplamıyor",
+                "Liste ve sayaç içeren hibe ekranlarında veri gelene kadar boş bir alan duruyor, " +
+                "veri gelince de sayfa yerinden oynuyordu. Artık yükleme sırasında satırların ve " +
+                "sayıların yerini tutan gri bloklar görünüyor; içerik geldiğinde aynı yere " +
+                "yerleşiyor, tıklamak üzere olduğunuz düğme kaymıyor. Sayaçlar da veri gelmeden " +
+                "önce \"0\" yazmıyor — boş bir rakam gerçek bir değer sanılabiliyordu."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
+                "Başvuru formunda bağlantı koptuğunda ne olduğunu görüyorsunuz",
+                "Danışmanınızla birlikte doldurduğunuz formda canlı bağlantı koptuğunda ekranda " +
+                "yalnız \"canlı\" işareti kayboluyordu ve neyin çalışmaya devam ettiği belirsizdi. " +
+                "Artık açıkça yazıyor: yazdıklarınız kaydedilmeye devam ediyor, üzerinde " +
+                "çalıştığınız alanlar size ayrılmış kalıyor; yansımayan tek şey karşı tarafın o " +
+                "anki değişiklikleri. Bağlantı gelince ekran kendiliğinden tazeleniyor.")
         ),
 
         new ReleaseNote(

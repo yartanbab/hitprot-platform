@@ -134,6 +134,20 @@ namespace Apya.Platform.EntityFrameworkCore
         public DbSet<FirmProfile> FirmProfiles { get; set; }
         public DbSet<FirmProfileTag> FirmProfileTags { get; set; }
         public DbSet<GrantApplication> GrantApplications { get; set; }
+        public DbSet<GrantApplicationBudgetLine> GrantApplicationBudgetLines { get; set; }
+        public DbSet<GrantApplicationFieldLock> GrantApplicationFieldLocks { get; set; }
+        public DbSet<GrantApplicationMessage> GrantApplicationMessages { get; set; }
+        public DbSet<GrantApplicationDocument> GrantApplicationDocuments { get; set; }
+        public DbSet<GrantApplicationDocumentVersion> GrantApplicationDocumentVersions { get; set; }
+        public DbSet<GrantApplicationActivity> GrantApplicationActivities { get; set; }
+        public DbSet<GrantConsultingLog> GrantConsultingLogs { get; set; }
+        public DbSet<GrantDecision> GrantDecisions { get; set; }
+        public DbSet<GrantAppealItem> GrantAppealItems { get; set; }
+        public DbSet<GrantReport> GrantReports { get; set; }
+        public DbSet<GrantReportSection> GrantReportSections { get; set; }
+        public DbSet<GrantNotificationTemplate> GrantNotificationTemplates { get; set; }
+        public DbSet<GrantNotificationLog> GrantNotificationLogs { get; set; }
+        public DbSet<GrantLead> GrantLeads { get; set; }
         public DbSet<GrantRecommendation> GrantRecommendations { get; set; }
         public DbSet<GrantDisbursementTranche> GrantDisbursementTranches { get; set; }
         public DbSet<GrantMilestone> GrantMilestones { get; set; }
@@ -760,8 +774,198 @@ namespace Apya.Platform.EntityFrameworkCore
                 b.ToTable(PlatformConsts.DbTablePrefix + "GrantApplications", PlatformConsts.DbSchema);
                 b.ConfigureByConvention();
                 b.HasOne<GrantCall>().WithMany().HasForeignKey(x => x.GrantCallId).OnDelete(DeleteBehavior.Cascade);
+                // Şablon adımına FK KURULMADI: adım silindiğinde başvuru silinmemeli
+                // ve geçmiş kayıt adımsız kalabilmeli. Çözümleme uygulama katmanında.
+                b.HasIndex(x => x.CurrentStepId);
+                b.Property(x => x.ProjectTitle).HasMaxLength(200);
+                b.Property(x => x.ProjectSummary).HasMaxLength(2000);
+                b.Property(x => x.SuccessFeePercent).HasColumnType("decimal(5,2)");
+                // Projeye FK KURULMADI: proje silinse bile başvurunun kendisi durmalı,
+                // dönüştürüldüğü bilgisi denetim izidir.
+                b.HasIndex(x => x.ProjectId);
                 // Aynı tenant + çağrı için tek başvuru.
                 b.HasIndex(x => new { x.TenantId, x.GrantCallId }).IsUnique();
+            });
+
+            // --- 2a · Başvuru sihirbazı ---
+
+            builder.Entity<GrantApplicationBudgetLine>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "GrantApplicationBudgetLines", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+                b.Property(x => x.Amount).HasColumnType("decimal(18,2)");
+                b.Property(x => x.Justification).HasMaxLength(512);
+                b.HasOne<GrantApplication>().WithMany(a => a.BudgetLines).HasForeignKey(x => x.GrantApplicationId).OnDelete(DeleteBehavior.Cascade);
+                // Başvuru başına kalem başına tek satır.
+                b.HasIndex(x => new { x.GrantApplicationId, x.Kind }).IsUnique();
+            });
+
+            builder.Entity<GrantApplicationFieldLock>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "GrantApplicationFieldLocks", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+                b.Property(x => x.FieldKey).IsRequired().HasMaxLength(64);
+                b.Property(x => x.OwnerName).IsRequired().HasMaxLength(96);
+                b.Property(x => x.TakeoverRequestedByName).HasMaxLength(96);
+                b.HasOne<GrantApplication>().WithMany().HasForeignKey(x => x.GrantApplicationId).OnDelete(DeleteBehavior.Cascade);
+                // Bir alanın tek kilidi olur. Soft delete OLMADIĞI için (BasicAggregateRoot)
+                // bu tekil indeks silinmiş satırlarla dolmaz.
+                b.HasIndex(x => new { x.GrantApplicationId, x.FieldKey }).IsUnique();
+            });
+
+            builder.Entity<GrantApplicationMessage>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "GrantApplicationMessages", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+                b.Property(x => x.SenderName).IsRequired().HasMaxLength(96);
+                b.Property(x => x.Body).IsRequired().HasMaxLength(1000);
+                b.HasOne<GrantApplication>().WithMany().HasForeignKey(x => x.GrantApplicationId).OnDelete(DeleteBehavior.Cascade);
+                b.HasIndex(x => new { x.GrantApplicationId, x.CreationTime });
+            });
+
+            // --- 2b · İki taraflı evrak takibi ---
+
+            builder.Entity<GrantApplicationDocument>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "GrantApplicationDocuments", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+                b.Property(x => x.Name).IsRequired().HasMaxLength(128);
+                b.Property(x => x.ReviewNote).HasMaxLength(512);
+                b.HasOne<GrantApplication>().WithMany().HasForeignKey(x => x.GrantApplicationId).OnDelete(DeleteBehavior.Cascade);
+                // Şablondan türetme idempotent olsun diye (başvuru, şablon satırı) tekil.
+                // Elle eklenen evrakta RequirementId null; NULL davranışı sağlayıcılar
+                // arasında ayrıştığı için asıl güvence AppService tarafındaki upsert.
+                b.HasIndex(x => new { x.GrantApplicationId, x.RequirementId });
+            });
+
+            builder.Entity<GrantApplicationDocumentVersion>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "GrantApplicationDocumentVersions", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+                b.Property(x => x.StoredFileName).IsRequired().HasMaxLength(256);
+                b.Property(x => x.OriginalFileName).IsRequired().HasMaxLength(256);
+                b.Property(x => x.UploaderName).IsRequired().HasMaxLength(96);
+                b.Property(x => x.Note).HasMaxLength(256);
+                b.HasOne<GrantApplicationDocument>().WithMany(d => d.Versions).HasForeignKey(x => x.DocumentId).OnDelete(DeleteBehavior.Cascade);
+                b.HasIndex(x => new { x.DocumentId, x.VersionNo }).IsUnique();
+            });
+
+            // --- 2d · Başvuru detayı (danışman görünümü) ---
+
+            builder.Entity<GrantApplicationActivity>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "GrantApplicationActivities", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+                b.Property(x => x.ActorName).IsRequired().HasMaxLength(96);
+                b.Property(x => x.Context).HasMaxLength(128);
+                b.HasOne<GrantApplication>().WithMany().HasForeignKey(x => x.GrantApplicationId).OnDelete(DeleteBehavior.Cascade);
+                b.HasIndex(x => new { x.GrantApplicationId, x.CreationTime });
+            });
+
+            builder.Entity<GrantConsultingLog>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "GrantConsultingLogs", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+                b.Property(x => x.UserName).IsRequired().HasMaxLength(96);
+                b.Property(x => x.Note).HasMaxLength(256);
+                b.Property(x => x.Hours).HasColumnType("decimal(5,2)");
+                b.HasOne<GrantApplication>().WithMany().HasForeignKey(x => x.GrantApplicationId).OnDelete(DeleteBehavior.Cascade);
+                b.HasIndex(x => new { x.GrantApplicationId, x.WorkDate });
+            });
+
+            // --- 6b · Red ve itiraz ---
+
+            builder.Entity<GrantDecision>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "GrantDecisions", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+                b.Property(x => x.ReferenceNo).HasMaxLength(64);
+                b.HasOne<GrantApplication>().WithMany().HasForeignKey(x => x.GrantApplicationId).OnDelete(DeleteBehavior.Cascade);
+                // Başvuru başına tek karar.
+                b.HasIndex(x => x.GrantApplicationId).IsUnique();
+            });
+
+            builder.Entity<GrantAppealItem>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "GrantAppealItems", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+                b.Property(x => x.Title).IsRequired().HasMaxLength(256);
+                b.Property(x => x.InstitutionText).HasMaxLength(2000);
+                b.Property(x => x.OpinionSummary).HasMaxLength(128);
+                b.Property(x => x.OpinionDetail).HasMaxLength(2000);
+                b.Property(x => x.OpinionByName).HasMaxLength(96);
+                b.HasOne<GrantDecision>().WithMany(d => d.Items).HasForeignKey(x => x.DecisionId).OnDelete(DeleteBehavior.Cascade);
+                b.HasIndex(x => new { x.DecisionId, x.Order });
+            });
+
+            // --- 6c · Uygulama ve tahsilat ---
+
+            builder.Entity<GrantReport>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "GrantReports", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+                b.Property(x => x.Title).IsRequired().HasMaxLength(128);
+                b.Property(x => x.Note).HasMaxLength(256);
+                b.HasOne<GrantApplication>().WithMany().HasForeignKey(x => x.GrantApplicationId).OnDelete(DeleteBehavior.Cascade);
+                // Dilime FK KURULMADI: dilim silinse bile rapor durmalı, bağ yalnız
+                // ödeme kapısını kurar.
+                b.HasIndex(x => new { x.GrantApplicationId, x.Order });
+            });
+
+            builder.Entity<GrantReportSection>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "GrantReportSections", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+                b.Property(x => x.Name).IsRequired().HasMaxLength(96);
+                b.Property(x => x.Note).HasMaxLength(256);
+                b.HasOne<GrantReport>().WithMany(r => r.Sections).HasForeignKey(x => x.ReportId).OnDelete(DeleteBehavior.Cascade);
+                b.HasIndex(x => new { x.ReportId, x.Order });
+            });
+
+            // --- 5a · Ön değerlendirme talepleri ---
+
+            builder.Entity<GrantLead>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "GrantLeads", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+                b.Property(x => x.FirmName).IsRequired().HasMaxLength(160);
+                b.Property(x => x.ContactName).IsRequired().HasMaxLength(120);
+                b.Property(x => x.ContactTitle).HasMaxLength(96);
+                b.Property(x => x.Email).IsRequired().HasMaxLength(160);
+                b.Property(x => x.Phone).HasMaxLength(32);
+                b.Property(x => x.Sector).HasMaxLength(96);
+                b.Property(x => x.SignalCodes).HasMaxLength(64);
+                b.Property(x => x.Note).HasMaxLength(1000);
+                b.Property(x => x.IpAddress).HasMaxLength(64);
+                b.Property(x => x.UserAgent).HasMaxLength(512);
+                b.Property(x => x.AnnualRevenue).HasPrecision(18, 2);
+                b.Property(x => x.EstimatedSupport).HasPrecision(18, 2);
+                // Çağrıya FK KURULMADI: çağrı arşivlense bile talep durmalı,
+                // 5a kutusu geçmişi anlatır.
+                b.HasIndex(x => new { x.Status, x.HeatScore });
+                b.HasIndex(x => x.GrantCallId);
+                b.HasIndex(x => new { x.IpAddress, x.CreationTime });
+            });
+
+            // --- 6d · Bildirim şablonları ---
+
+            builder.Entity<GrantNotificationTemplate>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "GrantNotificationTemplates", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+                b.Property(x => x.Subject).IsRequired().HasMaxLength(200);
+                b.Property(x => x.Body).IsRequired().HasMaxLength(2000);
+                // Host katalogunda tetikleyici başına tek şablon.
+                b.HasIndex(x => new { x.TenantId, x.Trigger }).IsUnique();
+            });
+
+            builder.Entity<GrantNotificationLog>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "GrantNotificationLogs", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+                // Aynı eşik iki kez gönderilemesin. Soft delete olmadığı için
+                // indeks silinmiş satırlarla dolmaz.
+                b.HasIndex(x => new { x.Trigger, x.EntityId, x.DayMark }).IsUnique();
             });
 
             builder.Entity<GrantDisbursementTranche>(b =>

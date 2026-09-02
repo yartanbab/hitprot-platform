@@ -1,0 +1,151 @@
+/* =============================================================================
+   2b · İki Taraflı Evrak Takibi
+   Ortak sözlük Shared.css / Tenant.css'te; burada yalnız bu ekranın ölçüleri.
+   Dosya adı Docs.css: Documents.css, Documents modülünün sayfasıyla karışırdı.
+   ============================================================================= */
+
+.apya-doc-kpis {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: var(--apya-space-3);
+}
+
+@media (max-width: 1199.98px) {
+    .apya-doc-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 575.98px) {
+    .apya-doc-kpis { grid-template-columns: minmax(0, 1fr); }
+}
+
+.apya-doc-kpi {
+    display: block;
+    font-family: var(--apya-font-mono);
+    font-variant-numeric: tabular-nums;
+    font-size: var(--apya-fs-2xl);
+    font-weight: var(--apya-weight-bold);
+    letter-spacing: var(--apya-tracking-tight);
+    line-height: 1.15;
+}
+
+.apya-doc-kpi--good { color: var(--apya-positive-700); }
+
+.apya-doc-kpi-sub {
+    font-size: var(--apya-fs-xs);
+    color: var(--apya-text-tertiary);
+}
+
+.apya-doc-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 330px;
+    gap: var(--apya-space-5);
+    align-items: start;
+}
+
+@media (max-width: 1199.98px) {
+    .apya-doc-layout { grid-template-columns: minmax(0, 1fr); }
+    .apya-doc-side { position: static; }
+}
+
+.apya-doc-side {
+    position: sticky;
+    top: var(--apya-space-4);
+    display: flex;
+    flex-direction: column;
+    gap: var(--apya-space-3);
+}
+
+.apya-doc-hint {
+    font-size: var(--apya-fs-xs);
+    color: var(--apya-text-tertiary);
+    line-height: 1.5;
+}
+
+/* Evrak satırı. Tasarımda son sütun 34px (tek eylem); burada dört eylem var
+   (yükle · indir · onayla · revizyon) ve 34px'e sıkışınca düğmeler alt alta
+   düşüp satırı üç katına çıkarıyordu. Eylem sütunu 118px'e açıldı, durum
+   sütunu 250 → 200px'e çekildi; toplam genişlik korunuyor. */
+.apya-doc-row {
+    display: grid;
+    grid-template-columns: 20px minmax(0, 1fr) 92px 200px 60px 118px;
+    align-items: center;
+    gap: var(--apya-space-2);
+    padding: 10px var(--apya-space-3);
+    border-bottom: 1px solid var(--apya-border-subtle);
+    font-size: var(--apya-fs-sm);
+}
+
+.apya-doc-row:last-child { border-bottom: 0; }
+
+/* Seçili evrakın sürüm geçmişi sağda açılır; satır sol kenarlıkla işaretlenir.
+   Zemin aksan tintine boyanırsa dosya adı gibi ikincil metin koyu temada
+   3.35:1'e düşüyor (ölçüldü) — işaret kenarlıkta, zemin nötr. */
+.apya-doc-row.is-selected {
+    background: var(--apya-surface-raised);
+    box-shadow: inset 3px 0 0 0 var(--apya-accent-500);
+}
+
+.apya-doc-name { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+
+.apya-doc-name-text {
+    font-weight: var(--apya-weight-medium);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.apya-doc-file {
+    font-family: var(--apya-font-mono);
+    font-size: var(--apya-fs-xs);
+    color: var(--apya-text-tertiary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.apya-doc-note {
+    font-size: var(--apya-fs-xs);
+    color: var(--apya-warning-700);
+    line-height: 1.4;
+}
+
+.apya-doc-actions { display: flex; align-items: center; justify-content: flex-end; gap: 3px; }
+
+.apya-doc-actions .btn { padding: 2px 6px; line-height: 1.2; }
+
+.apya-doc-version {
+    font-family: var(--apya-font-mono);
+    font-variant-numeric: tabular-nums;
+    font-size: var(--apya-fs-xs);
+}
+
+/* --- Sürüm geçmişi --- */
+.apya-doc-history {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--apya-space-2);
+    font-size: var(--apya-fs-xs);
+}
+
+.apya-doc-history-no {
+    flex: none;
+    font-family: var(--apya-font-mono);
+    font-weight: var(--apya-weight-bold);
+    color: var(--apya-accent-600);
+}
+
+.apya-doc-history-meta { color: var(--apya-text-tertiary); }
+
+/* --- Koyu tema: aksan METNİ ---
+   accent-600 koyu temada -500'den DAHA KOYU; tint üstünde kontrast 4:1'in
+   altına düşer. Metin -300'e çıkar. */
+[data-theme="dark"] .apya-doc-history-no {
+    color: var(--apya-accent-300);
+}
+
+/* 7b · İskelet ölçüsü bu ekranın GERÇEK satır yüksekliğine eşit; farklı bir değer
+   yükleme sırasındaki zıplamayı önlemek yerine yerini değiştirir. */
+#DocumentRows {
+    --apya-skel-row: 100px;
+    --apya-skel-count: 3;
+}

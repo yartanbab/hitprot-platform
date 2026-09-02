@@ -1,0 +1,153 @@
+/* 5a · Host: Ön Değerlendirme Talepleri. Ortak sınıflar Shared.css'te. */
+
+.apya-lead-kpis {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: var(--apya-space-3);
+}
+
+@media (max-width: 1199.98px) {
+    .apya-lead-kpis { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+@media (max-width: 575.98px) {
+    .apya-lead-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+.apya-lead-kpi {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: var(--apya-space-3) var(--apya-space-4);
+    background: var(--apya-surface-raised);
+    border: 1px solid var(--apya-border-subtle);
+    border-radius: var(--apya-radius-md);
+}
+
+.apya-lead-kpi-label {
+    font-size: var(--apya-text-xs);
+    color: var(--apya-text-secondary);
+}
+
+.apya-lead-kpi-value {
+    font-family: var(--apya-font-mono);
+    font-variant-numeric: tabular-nums;
+    font-size: var(--apya-fs-2xl);
+    font-weight: var(--apya-weight-bold);
+    letter-spacing: var(--apya-tracking-tight);
+    line-height: 1.15;
+}
+
+.apya-lead-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1.4fr) minmax(340px, 1fr);
+    gap: var(--apya-space-4);
+    align-items: start;
+}
+
+@media (max-width: 1199.98px) {
+    .apya-lead-layout { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* Sütunlar: firma+kişi · ısı · test · potansiyel · zorluk · durum */
+.apya-lead-head,
+.apya-lead-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1.6fr) 96px 64px 116px 84px 116px;
+    gap: var(--apya-space-3);
+    align-items: center;
+    padding: 10px var(--apya-space-4);
+}
+
+.apya-lead-head {
+    font-size: var(--apya-text-xs);
+    font-weight: var(--apya-weight-medium);
+    color: var(--apya-text-secondary);
+    border-bottom: 1px solid var(--apya-border-subtle);
+}
+
+.apya-lead-row {
+    width: 100%;
+    text-align: start;
+    background: none;
+    border: 0;
+    border-bottom: 1px solid var(--apya-border-subtle);
+    cursor: pointer;
+}
+
+.apya-lead-row:last-child { border-bottom: 0; }
+.apya-lead-row:hover { background: var(--apya-surface-hover); }
+
+.apya-lead-row.is-selected {
+    background: var(--apya-surface-raised);
+    box-shadow: inset 3px 0 0 0 var(--apya-accent-500);
+}
+
+.apya-lead-firm { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+
+.apya-lead-firm > strong {
+    font-size: var(--apya-text-sm);
+    font-weight: var(--apya-weight-medium);
+    color: var(--apya-text-primary);
+}
+
+.apya-lead-firm > span {
+    font-size: var(--apya-text-xs);
+    color: var(--apya-text-secondary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Isı: sayı + bar. Bar tek başına okunmaz, sayı yanında durur. */
+.apya-lead-heat { display: flex; align-items: center; gap: 6px; }
+
+.apya-lead-heat > span:first-child {
+    font-family: var(--apya-font-mono);
+    font-variant-numeric: tabular-nums;
+    font-size: var(--apya-text-sm);
+    font-weight: var(--apya-weight-medium);
+    min-width: 22px;
+}
+
+.apya-lead-num {
+    font-family: var(--apya-font-mono);
+    font-variant-numeric: tabular-nums;
+    font-size: var(--apya-text-xs);
+    color: var(--apya-text-secondary);
+}
+
+.apya-lead-contact {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    font-size: var(--apya-text-xs);
+    color: var(--apya-text-secondary);
+    margin-bottom: var(--apya-space-3);
+}
+
+.apya-lead-answers,
+.apya-lead-signals,
+.apya-lead-loads { display: flex; flex-wrap: wrap; gap: 6px; }
+
+.apya-lead-loads { flex-direction: column; }
+
+.apya-lead-load {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--apya-space-3);
+    font-size: var(--apya-text-xs);
+    color: var(--apya-text-secondary);
+}
+
+.apya-lead-load > span:last-child {
+    font-family: var(--apya-font-mono);
+    font-variant-numeric: tabular-nums;
+}
+
+.apya-lead-actions { display: flex; justify-content: flex-end; margin-top: var(--apya-space-3); }
+
+.apya-field-hint {
+    font-size: var(--apya-text-xs);
+    color: var(--apya-text-secondary);
+}

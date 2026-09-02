@@ -1,0 +1,51 @@
+@using Apya.Platform.Localization
+@using Microsoft.AspNetCore.Mvc.Localization
+@inject IHtmlLocalizer<PlatformResource> L
+@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    @* Bu sayfalar arama motorlarına AÇIK — /Paylasim'ın tersine, bulunmak amaç. *@
+    <meta name="description" content="@(ViewBag.MetaDescription ?? L["Grants:Public:MetaDescription"].Value)" />
+    <title>@ViewBag.Title</title>
+
+    <link rel="stylesheet" href="~/dynamic-assets/src/styles/tokens.css" />
+    <link rel="stylesheet" href="~/css/apya-fonts.css" />
+    <link rel="stylesheet" href="~/libs/@@fortawesome/fontawesome-free/css/all.css" />
+    <link rel="stylesheet" href="~/Pages/Hibeler/Public.css" />
+</head>
+<body>
+    @* Uygulama kabuğu KULLANILMAZ: bu sayfalar oturumsuz ziyaretçiye açık ve
+       kenar çubuğu / bildirim zili gibi hiçbir uygulama öğesi anlam taşımıyor. *@
+    <header class="apya-pub-header">
+        <div class="apya-pub-wrap apya-pub-header-inner">
+            <a class="apya-pub-logo" href="/Hibeler">
+                <span class="apya-pub-logo-mark">p</span>
+                <span>pargetto</span>
+            </a>
+            <nav class="apya-pub-nav">
+                <a href="/Hibeler" class="is-current">@L["Grants:Public:Nav:Grants"]</a>
+            </nav>
+            <a class="apya-pub-login" href="/Account/Login">@L["Grants:Public:Nav:Login"]</a>
+        </div>
+    </header>
+
+    <main>
+        @RenderBody()
+    </main>
+
+    <footer class="apya-pub-footer">
+        <div class="apya-pub-wrap">
+            <span>@L["Grants:Public:Footer:Note"]</span>
+            <a href="/Legal/Gizlilik">@L["Grants:Public:Footer:Privacy"]</a>
+        </div>
+    </footer>
+
+    <script src="~/libs/jquery/jquery.js"></script>
+    @await RenderSectionAsync("scripts", required: false)
+</body>
+</html>

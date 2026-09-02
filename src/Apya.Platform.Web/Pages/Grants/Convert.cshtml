@@ -1,0 +1,179 @@
+@page
+@using Apya.Platform.Localization
+@using Microsoft.AspNetCore.Mvc.Localization
+@inject IHtmlLocalizer<PlatformResource> L
+@model Apya.Platform.Web.Pages.Grants.ConvertModel
+@{
+    ViewBag.Title = L["Grants:Conversion:Title"].Value;
+}
+
+@section styles {
+    <abp-style src="/Pages/Grants/Shared.css" />
+    <abp-style src="/Pages/Grants/Convert.css" />
+}
+
+@section scripts {
+    <abp-script src="/Pages/Grants/Convert.js" />
+}
+
+<div data-page-description="@L["Grants:Conversion:Description"]" class="apya-page" data-application-id="@Model.Id">
+
+    @* ---------- Künye ---------- *@
+    <div class="card mb-0">
+        <div class="card-body d-flex align-items-center gap-3 flex-wrap">
+            <span class="apya-cv-badge"><i class="fa fa-file-signature"></i></span>
+            <div class="flex-fill min-w-0">
+                <div class="fw-bold" id="HeaderTitle"></div>
+                <div class="apya-cv-meta apya-numeric" id="HeaderMeta"></div>
+            </div>
+            <span class="apya-chip apya-chip-positive d-none" id="ReadyChip">@L["Grants:Conversion:Ready"]</span>
+            <span class="apya-chip apya-chip-neutral d-none" id="ConvertedChip"></span>
+        </div>
+    </div>
+
+    <div class="apya-side-note d-none" id="BlockedNote">
+        <i class="fa fa-triangle-exclamation mt-1"></i>
+        <span id="BlockedText"></span>
+    </div>
+
+    <div class="apya-cv-layout">
+        <section class="d-flex flex-column gap-3">
+
+            @* ---------- Proje künyesi ---------- *@
+            <div class="card mb-0">
+                <div class="card-body d-flex flex-column gap-3">
+                    <span class="apya-overline">@L["Grants:Conversion:ProjectSection"]</span>
+                    <div class="apya-param-grid apya-param-grid--2">
+                        <div class="apya-field">
+                            <label class="apya-field-label" for="ProjectName"><span>@L["Grants:Conversion:ProjectName"]</span></label>
+                            <input type="text" class="form-control form-control-sm" id="ProjectName" maxlength="200" />
+                        </div>
+                        <div class="apya-field">
+                            <span class="apya-field-label"><span>@L["Grants:Conversion:ProjectCode"]</span></span>
+                            <span class="apya-numeric fw-semibold" id="ProjectCode"></span>
+                        </div>
+                        <div class="apya-field">
+                            <label class="apya-field-label" for="StartDate"><span>@L["Grants:Conversion:StartDate"]</span></label>
+                            <input type="date" class="form-control form-control-sm apya-numeric" id="StartDate" />
+                        </div>
+                        <div class="apya-field">
+                            <label class="apya-field-label" for="EndDate"><span>@L["Grants:Conversion:EndDate"]</span></label>
+                            <input type="date" class="form-control form-control-sm apya-numeric" id="EndDate" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            @* ---------- Bütçe kalemi eşleme ---------- *@
+            <div class="card mb-0">
+                <div class="card-body d-flex flex-column gap-3">
+                    <div class="d-flex align-items-center justify-content-between gap-2 flex-wrap">
+                        <div>
+                            <div class="fw-bold">@L["Grants:Conversion:BudgetSection"]</div>
+                            <div class="apya-cv-hint">@L["Grants:Conversion:BudgetHint"]</div>
+                        </div>
+                        <span class="apya-chip apya-numeric apya-chip-accent" id="AutoMatchChip"></span>
+                    </div>
+
+                    <div class="apya-cat-table">
+                        <div class="apya-cv-row apya-cat-head">
+                            <span>@L["Grants:Conversion:Col:GrantItem"]</span>
+                            <span>@L["Grants:Conversion:Col:Amount"]</span>
+                            <span></span>
+                            <span>@L["Grants:Conversion:Col:BudgetLine"]</span>
+                            <span>@L["Grants:Conversion:Col:Category"]</span>
+                        </div>
+                        <div id="BudgetRows"></div>
+                        <div id="BudgetEmpty" class="apya-src-empty d-none">
+                            <div class="fw-semibold">@L["Grants:Conversion:NoBudget"]</div>
+                            <div class="small">@L["Grants:Conversion:NoBudgetHint"]</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            @* ---------- Plan aktarımı ---------- *@
+            <div class="card mb-0">
+                <div class="card-body d-flex flex-column gap-3">
+                    <div>
+                        <div class="fw-bold">@L["Grants:Conversion:PlanSection"]</div>
+                        <div class="apya-cv-hint">@L["Grants:Conversion:PlanHint"]</div>
+                    </div>
+
+                    <div class="apya-cv-plan">
+                        <div class="d-flex flex-column gap-2">
+                            <div class="form-check mb-0">
+                                <input class="form-check-input" type="checkbox" id="CreateTasks" checked />
+                                <label class="form-check-label fw-semibold" for="CreateTasks" id="TaskCountLabel"></label>
+                            </div>
+                            <div id="TaskList" class="d-flex flex-column gap-1"></div>
+                        </div>
+                        <div class="d-flex flex-column gap-2">
+                            <div class="form-check mb-0">
+                                <input class="form-check-input" type="checkbox" id="CreateTranches" checked />
+                                <label class="form-check-label fw-semibold" for="CreateTranches" id="TrancheCountLabel"></label>
+                            </div>
+                            <div id="TrancheList" class="d-flex flex-column gap-1"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        @* ---------- Sağ panel ---------- *@
+        <aside class="apya-cv-side">
+            <div class="card mb-0">
+                <div class="card-body d-flex flex-column gap-3">
+                    <span class="apya-overline">@L["Grants:Conversion:Outcome"]</span>
+                    <div class="fw-bold" id="OutcomeName"></div>
+                    <div class="apya-cv-meta apya-numeric" id="OutcomeCode"></div>
+
+                    <div class="apya-cv-metrics">
+                        <div>
+                            <span class="apya-field-label"><span>@L["Grants:Conversion:Duration"]</span></span>
+                            <span class="apya-cv-metric apya-numeric" id="OutcomeDuration">—</span>
+                        </div>
+                        <div>
+                            <span class="apya-field-label"><span>@L["Grants:Conversion:Budget"]</span></span>
+                            <span class="apya-cv-metric apya-numeric" id="OutcomeBudget">—</span>
+                        </div>
+                        <div>
+                            <span class="apya-field-label"><span>@L["Grants:Conversion:GrantIncome"]</span></span>
+                            <span class="apya-cv-metric apya-cv-metric--good apya-numeric" id="OutcomeIncome">—</span>
+                        </div>
+                        <div>
+                            <span class="apya-field-label"><span>@L["Grants:Conversion:Tasks"]</span></span>
+                            <span class="apya-cv-metric apya-numeric" id="OutcomeTasks">—</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mb-0">
+                <div class="card-body d-flex flex-column gap-2">
+                    <span class="apya-overline">@L["Grants:Conversion:Team"]</span>
+                    <div class="apya-cv-hint">@L["Grants:Conversion:TeamHint"]</div>
+                    <div id="MemberList" class="d-flex flex-column gap-1"></div>
+                </div>
+            </div>
+
+            <div class="card mb-0">
+                <div class="card-body d-flex flex-column gap-2">
+                    <span class="apya-overline">@L["Grants:Conversion:Carried"]</span>
+                    <div id="CarriedList" class="d-flex flex-column gap-1"></div>
+                    <div class="apya-side-note d-none" id="UnmappedNote">
+                        <i class="fa fa-triangle-exclamation mt-1"></i>
+                        <span id="UnmappedText"></span>
+                    </div>
+                    <button type="button" class="btn btn-sm btn-primary" id="ConvertBtn">
+                        <i class="fa fa-wand-magic-sparkles me-1"></i>@L["Grants:Conversion:Convert"]
+                    </button>
+                    <a class="btn btn-sm btn-outline-secondary d-none" id="OpenProjectBtn">
+                        <i class="fa fa-arrow-right me-1"></i>@L["Grants:Conversion:OpenProject"]
+                    </a>
+                    <div class="apya-cv-hint">@L["Grants:Conversion:StaysOpen"]</div>
+                </div>
+            </div>
+        </aside>
+    </div>
+</div>

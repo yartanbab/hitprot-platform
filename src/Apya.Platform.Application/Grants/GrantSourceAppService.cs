@@ -60,9 +60,18 @@ public class GrantSourceAppService : ApplicationService, IGrantSourceAppService
             .GroupBy(f => f.GrantCallId)
             .ToDictionary(g => g.Key, g => g.ToList());
 
-        var lastRunBySource = (await _runRepo.GetListAsync())
+        var allRuns = await _runRepo.GetListAsync();
+        var lastRunBySource = allRuns
             .GroupBy(r => r.SourceId)
             .ToDictionary(g => g.Key, g => g.OrderByDescending(r => r.StartedAt).First());
+
+        // 7c · Son BAŞARILI koşu ayrı tutulur: hatalı kaynakta "en son ne zaman
+        // veri geldi" sorusunun cevabı budur. LastScrapedAt başarısız koşuyu da
+        // sayıyor ve "dün tarandı" diyerek yanıltıyor.
+        var lastSuccessBySource = allRuns
+            .Where(r => r.Status == GrantScrapeRunStatus.Basarili)
+            .GroupBy(r => r.SourceId)
+            .ToDictionary(g => g.Key, g => g.Max(r => r.FinishedAt ?? r.StartedAt));
 
         var weekAgo = Clock.Now.AddDays(-7);
 
@@ -82,7 +91,10 @@ public class GrantSourceAppService : ApplicationService, IGrantSourceAppService
                 Initial = s.Initial,
                 CallCount = calls.Count(c => c.SourceId == s.Id),
                 LastRunStatus = lastRunBySource.TryGetValue(s.Id, out var run) ? run.Status : null,
-                LastRunNewCount = lastRunBySource.TryGetValue(s.Id, out var r2) ? r2.NewCount : 0
+                LastRunNewCount = lastRunBySource.TryGetValue(s.Id, out var r2) ? r2.NewCount : 0,
+                LastSuccessAt = lastSuccessBySource.TryGetValue(s.Id, out var ok) ? ok : null,
+                LastRunMessage = lastRunBySource.TryGetValue(s.Id, out var r3)
+                                 && r3.Status == GrantScrapeRunStatus.Hatali ? r3.Message : null
             }).ToList(),
             Drafts = drafts
                 .Select(d => new GrantDraftQueueItemDto

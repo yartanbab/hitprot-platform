@@ -1,0 +1,238 @@
+/* =============================================================================
+   2a · Başvuru Sihirbazı — canlı birlikte düzenleme
+   Ortak sözlük Shared.css / Tenant.css'te; burada yalnız bu ekranın ölçüleri.
+   ============================================================================= */
+
+.apya-wiz-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 330px;
+    gap: var(--apya-space-5);
+    align-items: start;
+}
+
+@media (max-width: 1199.98px) {
+    .apya-wiz-layout { grid-template-columns: minmax(0, 1fr); }
+    .apya-wiz-side { position: static; }
+}
+
+.apya-wiz-side {
+    position: sticky;
+    top: var(--apya-space-4);
+    display: flex;
+    flex-direction: column;
+    gap: var(--apya-space-3);
+}
+
+/* --- Program künyesi --- */
+.apya-wiz-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    flex: none;
+    border-radius: var(--apya-radius-lg);
+    background: var(--apya-accent-soft);
+    color: var(--apya-accent-500);
+    font-size: var(--apya-fs-base);
+}
+
+.apya-wiz-meta {
+    font-size: var(--apya-fs-xs);
+    color: var(--apya-text-tertiary);
+}
+
+/* --- Adım şeridi --- */
+.apya-wiz-steps {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+    flex: 1;
+    min-width: 0;
+}
+
+.apya-wiz-step-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px var(--apya-space-3);
+    border: 1px solid var(--apya-border-default);
+    border-radius: var(--apya-radius-full);
+    background: var(--apya-surface-base);
+    color: var(--apya-text-tertiary);
+    font-size: var(--apya-text-xs);
+    cursor: pointer;
+}
+
+.apya-wiz-step-chip.is-active {
+    border-color: var(--apya-accent-500);
+    background: var(--apya-accent-soft);
+    color: var(--apya-accent-600);
+    font-weight: var(--apya-weight-semibold);
+}
+
+.apya-wiz-step-chip.is-done { color: var(--apya-positive-700); }
+
+.apya-wiz-step-no {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    flex: none;
+    border-radius: var(--apya-radius-full);
+    background: var(--apya-surface-sunken);
+    font-family: var(--apya-font-mono);
+    font-size: 10px;
+}
+
+.apya-wiz-progress {
+    display: flex;
+    align-items: center;
+    gap: var(--apya-space-2);
+    flex: none;
+    width: 210px;
+}
+
+.apya-wiz-progress .apya-mini-bar { flex: 1; }
+
+/* --- Adım gövdesi --- */
+.apya-wiz-step { display: flex; flex-direction: column; gap: var(--apya-space-3); }
+
+.apya-wiz-hint {
+    margin: 0;
+    font-size: var(--apya-fs-xs);
+    color: var(--apya-text-tertiary);
+    line-height: 1.5;
+}
+
+/* --- Bütçe tablosu: tasarım 2a → 1fr | 168px | 92px | 150px --- */
+.apya-wiz-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 168px 92px 150px;
+    align-items: center;
+    gap: var(--apya-space-2);
+    padding: 10px var(--apya-space-3);
+    border-bottom: 1px solid var(--apya-border-subtle);
+    font-size: var(--apya-fs-sm);
+}
+
+.apya-wiz-row:last-child { border-bottom: 0; }
+
+/* Program bu kalemi desteklemiyor: satır görünür ama girilemez. */
+.apya-wiz-row.is-ineligible { background: var(--apya-surface-raised); color: var(--apya-text-tertiary); }
+
+.apya-wiz-item { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.apya-wiz-item-name { font-weight: var(--apya-weight-medium); }
+
+.apya-wiz-item-note {
+    font-size: var(--apya-fs-xs);
+    color: var(--apya-text-tertiary);
+}
+
+/* Kilit sahibinin adı alanın hemen yanında — kim yazıyor belli olsun. */
+.apya-wiz-lock {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: var(--apya-fs-xs);
+    color: var(--apya-accent-600);
+}
+
+.apya-wiz-lock:empty { display: none; }
+
+.apya-wiz-avatar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    flex: none;
+    border-radius: var(--apya-radius-full);
+    background: var(--apya-accent-500);
+    color: #fff;
+    font-size: 9px;
+    font-weight: var(--apya-weight-bold);
+}
+
+/* Başkası kilitlediyse alan görsel olarak da kapanır. */
+.apya-wiz-field.is-locked input,
+.apya-wiz-field.is-locked textarea,
+.apya-wiz-row.is-locked input {
+    background: var(--apya-surface-sunken);
+    pointer-events: none;
+}
+
+/* --- Toplamlar --- */
+.apya-wiz-totals {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--apya-space-3);
+    padding: var(--apya-space-3);
+    border-radius: var(--apya-radius-lg);
+    background: var(--apya-surface-raised);
+}
+
+.apya-wiz-total {
+    display: block;
+    font-size: var(--apya-fs-xl);
+    font-weight: var(--apya-weight-bold);
+    letter-spacing: var(--apya-tracking-tight);
+}
+
+.apya-wiz-total--support { color: var(--apya-positive-700); }
+
+/* --- Sağ panel --- */
+.apya-wiz-person {
+    display: flex;
+    align-items: center;
+    gap: var(--apya-space-2);
+    font-size: var(--apya-fs-sm);
+}
+
+.apya-wiz-person-field {
+    font-size: var(--apya-fs-xs);
+    color: var(--apya-text-tertiary);
+}
+
+.apya-wiz-messages {
+    display: flex;
+    flex-direction: column;
+    gap: var(--apya-space-2);
+    max-height: 260px;
+    overflow-y: auto;
+}
+
+.apya-wiz-message {
+    padding: var(--apya-space-2) 10px;
+    border-radius: var(--apya-radius-lg);
+    background: var(--apya-surface-raised);
+    font-size: var(--apya-fs-xs);
+    line-height: 1.5;
+}
+
+.apya-wiz-message.is-mine { background: var(--apya-accent-soft); }
+
+.apya-wiz-message-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--apya-space-2);
+    font-weight: var(--apya-weight-semibold);
+}
+
+.apya-wiz-message-time {
+    font-family: var(--apya-font-mono);
+    color: var(--apya-text-tertiary);
+}
+
+.apya-wiz-compose { display: flex; gap: 6px; }
+
+/* --- Koyu tema: aksan METNİ ---
+   accent-600 koyu temada -500'den DAHA KOYU (#4F46E5); tint üstünde kontrast
+   4:1'in altına düşer. Metin -300'e çıkar. */
+[data-theme="dark"] .apya-wiz-step-chip.is-active,
+[data-theme="dark"] .apya-wiz-lock {
+    color: var(--apya-accent-300);
+}

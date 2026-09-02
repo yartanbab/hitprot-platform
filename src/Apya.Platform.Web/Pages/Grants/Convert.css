@@ -1,0 +1,118 @@
+/* =============================================================================
+   2e · Onay → Projeye Dönüştürme Sihirbazı
+   Ortak sözlük Shared.css'te; burada yalnız bu ekranın ölçüleri.
+   ============================================================================= */
+
+.apya-cv-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 360px;
+    gap: var(--apya-space-5);
+    align-items: start;
+}
+
+@media (max-width: 1279.98px) {
+    .apya-cv-layout { grid-template-columns: minmax(0, 1fr); }
+    .apya-cv-side { position: static; }
+}
+
+.apya-cv-side {
+    position: sticky;
+    top: var(--apya-space-4);
+    display: flex;
+    flex-direction: column;
+    gap: var(--apya-space-3);
+}
+
+.apya-cv-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    flex: none;
+    border-radius: var(--apya-radius-lg);
+    background: var(--apya-positive-50);
+    color: var(--apya-positive-700);
+    font-size: var(--apya-fs-base);
+}
+
+.apya-cv-meta {
+    font-size: var(--apya-fs-xs);
+    color: var(--apya-text-tertiary);
+}
+
+.apya-cv-hint {
+    font-size: var(--apya-fs-xs);
+    color: var(--apya-text-tertiary);
+    line-height: 1.5;
+}
+
+/* Eşleme satırı — tasarım 2e: 1fr | 130px | 22px | 1fr | 148px */
+.apya-cv-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 130px 22px minmax(0, 1fr) 148px;
+    align-items: center;
+    gap: var(--apya-space-2);
+    padding: 9px var(--apya-space-3);
+    border-bottom: 1px solid var(--apya-border-subtle);
+    font-size: var(--apya-fs-sm);
+}
+
+.apya-cv-row:last-child { border-bottom: 0; }
+
+/* Program kapsamı dışındaki kalem zeminle geri çekilir; bütçeye planlanan
+   olarak girer ama destekten karşılanmaz. */
+.apya-cv-row.is-outside { background: var(--apya-surface-raised); }
+
+.apya-cv-arrow {
+    text-align: center;
+    color: var(--apya-text-tertiary);
+}
+
+.apya-cv-item-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.apya-cv-plan {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--apya-space-4);
+}
+
+@media (max-width: 767.98px) {
+    .apya-cv-plan { grid-template-columns: minmax(0, 1fr); }
+}
+
+.apya-cv-line {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--apya-space-2);
+    font-size: var(--apya-fs-xs);
+    color: var(--apya-text-secondary);
+}
+
+.apya-cv-line-date {
+    font-family: var(--apya-font-mono);
+    color: var(--apya-text-tertiary);
+}
+
+/* --- Sağ panel --- */
+.apya-cv-metrics {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--apya-space-3);
+}
+
+.apya-cv-metric {
+    display: block;
+    font-family: var(--apya-font-mono);
+    font-variant-numeric: tabular-nums;
+    font-size: var(--apya-fs-lg);
+    font-weight: var(--apya-weight-bold);
+    letter-spacing: var(--apya-tracking-tight);
+}
+
+.apya-cv-metric--good { color: var(--apya-positive-700); }

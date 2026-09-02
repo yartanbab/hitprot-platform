@@ -1,0 +1,139 @@
+@page
+@using Apya.Platform.Localization
+@using Microsoft.AspNetCore.Mvc.Localization
+@inject IHtmlLocalizer<PlatformResource> L
+@model Apya.Platform.Web.Pages.Grants.DocumentsModel
+@{
+    ViewBag.Title = L["Grants:Documents:Title"].Value;
+}
+
+@section styles {
+    <abp-style src="/Pages/Grants/Shared.css" />
+    <abp-style src="/Pages/Grants/Tenant.css" />
+    <abp-style src="/Pages/Grants/Docs.css" />
+}
+
+@section scripts {
+    <abp-script src="/Pages/Grants/Documents.js" />
+}
+
+<div data-page-description="@L["Grants:Documents:Description"]" class="apya-page" data-application-id="@Model.Id">
+
+    @* ---------- Beşli sayaç (tasarım 2b) ---------- *@
+    <div class="apya-doc-kpis">
+        <div class="card mb-0"><div class="card-body">
+            <span class="apya-field-label"><span>@L["Grants:Documents:Kpi:Total"]</span></span>
+            <span class="apya-skel-num apya-doc-kpi apya-numeric" id="KpiTotal"></span>
+        </div></div>
+        <div class="card mb-0"><div class="card-body">
+            <span class="apya-field-label"><span>@L["Grants:Documents:Kpi:Approved"]</span></span>
+            <span class="apya-skel-num apya-doc-kpi apya-doc-kpi--good apya-numeric" id="KpiApproved"></span>
+        </div></div>
+        <div class="card mb-0"><div class="card-body">
+            <span class="apya-field-label"><span>@L["Grants:Documents:Kpi:OnYou"]</span></span>
+            <span class="apya-skel-num apya-doc-kpi apya-numeric" id="KpiOnYou"></span>
+        </div></div>
+        <div class="card mb-0"><div class="card-body">
+            <span class="apya-field-label"><span>@L["Grants:Documents:Kpi:OnOther"]</span></span>
+            <span class="apya-skel-num apya-doc-kpi apya-numeric" id="KpiOnOther"></span>
+        </div></div>
+        <div class="card mb-0"><div class="card-body">
+            <span class="apya-field-label"><span>@L["Grants:Documents:Kpi:Ready"]</span></span>
+            <span class="apya-skel-num apya-doc-kpi apya-numeric" id="KpiReady"></span>
+            <div class="apya-mini-bar"><span id="ReadyBar" style="width:0"></span></div>
+            <span class="apya-numeric apya-doc-kpi-sub" id="KpiReadySub"></span>
+        </div></div>
+    </div>
+
+    <div class="apya-doc-layout">
+
+        @* ---------- Sol: kontrol listesi ---------- *@
+        <section class="card mb-0">
+            <div class="card-body d-flex flex-column gap-3">
+                <div class="d-flex align-items-center justify-content-between gap-2 flex-wrap">
+                    <div>
+                        <div class="fw-bold">@L["Grants:Documents:Checklist"]</div>
+                        <div class="apya-doc-hint">@L["Grants:Documents:ChecklistHint"]</div>
+                    </div>
+                    <div class="apya-choice-row">
+                        <button type="button" class="apya-choice is-on" data-filter="all">@L["Grants:Documents:Filter:All"]</button>
+                        <button type="button" class="apya-choice" data-filter="mine">@L["Grants:Documents:Filter:Mine"]</button>
+                    </div>
+                </div>
+
+                <div class="apya-cat-table">
+                    <div class="apya-doc-row apya-cat-head">
+                        <span></span>
+                        <span>@L["Grants:Documents:Col:Document"]</span>
+                        <span>@L["Grants:Documents:Col:Party"]</span>
+                        <span>@L["Grants:Documents:Col:Status"]</span>
+                        <span>@L["Grants:Documents:Col:Version"]</span>
+                        <span></span>
+                    </div>
+                    <div id="DocumentRows" class="apya-skel-rows"></div>
+                    <div id="DocumentEmpty" class="apya-src-empty d-none">
+                        <div class="fw-semibold">@L["Grants:Documents:Empty"]</div>
+                        <div class="small">@L["Grants:Documents:EmptyHint"]</div>
+                    </div>
+                </div>
+
+                <div class="d-flex align-items-center gap-2 flex-wrap pt-3 border-top">
+                    <button type="button" class="btn btn-sm btn-outline-secondary" id="AddDocBtn">
+                        <i class="fa fa-plus me-1"></i>@L["Grants:Documents:Add"]
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" id="RemindBtn">
+                        <i class="fa fa-bell me-1"></i>@L["Grants:Documents:Remind"]
+                    </button>
+                    <div class="flex-fill"></div>
+                    <span class="apya-doc-hint" id="LastActivity"></span>
+                </div>
+            </div>
+        </section>
+
+        @* ---------- Sağ: sürüm geçmişi · e-imza · paket ---------- *@
+        <aside class="apya-doc-side">
+            <div class="card mb-0">
+                <div class="card-body d-flex flex-column gap-2">
+                    <span class="apya-overline">@L["Grants:Documents:History"]</span>
+                    <div class="fw-semibold" id="HistoryTitle"></div>
+                    <div id="HistoryList" class="d-flex flex-column gap-2"></div>
+                </div>
+            </div>
+
+            <div class="card mb-0">
+                <div class="card-body d-flex flex-column gap-2">
+                    <span class="apya-overline">@L["Grants:Documents:ESignature"]</span>
+                    <div id="ESignList" class="d-flex flex-column gap-2"></div>
+                    @* Repoda e-imza/KEP entegrasyonu YOK; liste yalnız durumu gösterir,
+                       imza göndermez. Çalışmayan bir düğme koymak yerine bu not duruyor. *@
+                    <div class="apya-doc-hint">@L["Grants:Documents:ESignatureHint"]</div>
+                </div>
+            </div>
+
+            <div class="card mb-0">
+                <div class="card-body d-flex flex-column gap-2">
+                    <span class="apya-overline">@L["Grants:Documents:Package"]</span>
+                    <div class="apya-doc-hint">@L["Grants:Documents:PackageHint"]</div>
+                    <div class="apya-numeric fw-semibold" id="PackageReady"></div>
+                    <div class="apya-side-note d-none" id="PackageWarning">
+                        <i class="fa fa-triangle-exclamation mt-1"></i>
+                        <span id="PackageWarningText"></span>
+                    </div>
+                    <button type="button" class="btn btn-sm btn-primary" id="CreatePackageBtn">
+                        <i class="fa fa-file-zipper me-1"></i>@L["Grants:Documents:CreatePackage"]
+                    </button>
+                    <a class="btn btn-sm btn-outline-secondary d-none" id="DownloadPackageBtn"
+                       href="?handler=DownloadPackage&amp;applicationId=@Model.Id">
+                        <i class="fa fa-download me-1"></i>@L["Grants:Documents:DownloadPackage"]
+                    </a>
+                </div>
+            </div>
+        </aside>
+    </div>
+
+    @* Yükleme formu: satırdaki düğme dosya seçiciyi açar, seçim yapılınca gönderilir. *@
+    <form id="UploadForm" class="d-none" method="post" enctype="multipart/form-data">
+        <input type="hidden" name="documentId" id="UploadDocumentId" />
+        <input type="file" name="file" id="UploadFile" />
+    </form>
+</div>

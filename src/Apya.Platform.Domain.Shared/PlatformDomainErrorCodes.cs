@@ -95,6 +95,55 @@ public static class PlatformDomainErrorCodes
     public const string GrantStageTemplateInUse = "Platform:Grant:StageTemplateInUse";
     public const string GrantDraftIdentityRequired = "Platform:Grant:DraftIdentityRequired";
 
+    // 2a · Başvuru sihirbazı
+    public const string GrantBudgetAmountNegative = "Platform:Grant:BudgetAmountNegative";
+    public const string GrantBudgetCostItemNotEligible = "Platform:Grant:BudgetCostItemNotEligible";
+    public const string GrantWizardStepInvalid = "Platform:Grant:WizardStepInvalid";
+    public const string GrantWizardDurationInvalid = "Platform:Grant:WizardDurationInvalid";
+    public const string GrantApplicationAlreadySubmitted = "Platform:Grant:ApplicationAlreadySubmitted";
+    public const string GrantFieldLockedByOther = "Platform:Grant:FieldLockedByOther";
+    public const string GrantApplicationLocked = "Platform:Grant:ApplicationLocked";
+
+    // 2b · Evrak takibi
+    public const string GrantDocumentNotUploaded = "Platform:Grant:DocumentNotUploaded";
+    public const string GrantDocumentPackageIncomplete = "Platform:Grant:DocumentPackageIncomplete";
+
+    // 2c · Pipeline konsolu
+    public const string GrantPipelineStepNotInTemplate = "Platform:Grant:PipelineStepNotInTemplate";
+    public const string GrantPipelineAssigneeNotHost = "Platform:Grant:PipelineAssigneeNotHost";
+
+    // 2d · Başvuru detayı
+    public const string GrantConsultingHoursInvalid = "Platform:Grant:ConsultingHoursInvalid";
+    public const string GrantSuccessFeeInvalid = "Platform:Grant:SuccessFeeInvalid";
+    public const string GrantPipelineNoNextStep = "Platform:Grant:PipelineNoNextStep";
+
+    // 2e · Projeye dönüştürme
+    public const string GrantApplicationAlreadyConverted = "Platform:Grant:ApplicationAlreadyConverted";
+    public const string GrantConversionNotApproved = "Platform:Grant:ConversionNotApproved";
+    public const string GrantConversionMappingMissing = "Platform:Grant:ConversionMappingMissing";
+
+    // 6b · Red ve itiraz
+    public const string GrantAppealOnlyForRejection = "Platform:Grant:AppealOnlyForRejection";
+    public const string GrantAppealAlreadySubmitted = "Platform:Grant:AppealAlreadySubmitted";
+    public const string GrantAppealWindowClosed = "Platform:Grant:AppealWindowClosed";
+    public const string GrantAppealNotSubmitted = "Platform:Grant:AppealNotSubmitted";
+    public const string GrantAppealNoItems = "Platform:Grant:AppealNoItems";
+    public const string GrantDecisionNotFound = "Platform:Grant:DecisionNotFound";
+
+    // 6c · Uygulama ve tahsilat
+    public const string GrantTranchePaymentBlockedByReport = "Platform:Grant:TranchePaymentBlockedByReport";
+
+    // 6d · Bildirim şablonları
+    public const string GrantNotificationTemplateNeedsChannel = "Platform:Grant:NotificationTemplateNeedsChannel";
+    public const string GrantNotificationTemplateMandatory = "Platform:Grant:NotificationTemplateMandatory";
+    public const string GrantNotificationTemplateNotFound = "Platform:Grant:NotificationTemplateNotFound";
+
+    // 5a / 1g · Ön değerlendirme talepleri
+    public const string GrantLeadAlreadyConverted = "Platform:Grant:LeadAlreadyConverted";
+    public const string GrantLeadCallNotOpen = "Platform:Grant:LeadCallNotOpen";
+    public const string GrantLeadNotFound = "Platform:Grant:LeadNotFound";
+    public const string GrantLeadRateLimitExceeded = "Platform:Grant:LeadRateLimitExceeded";
+
     // --- Dosya (File) Modülü ---
     public const string FileUnsupportedExtension = "Platform:File:UnsupportedExtension";
     public const string FileSizeExceeded = "Platform:File:SizeExceeded";

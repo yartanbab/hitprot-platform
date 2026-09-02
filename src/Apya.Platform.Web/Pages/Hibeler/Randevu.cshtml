@@ -1,0 +1,102 @@
+@page "/Hibeler/Randevu"
+@using Apya.Platform.Localization
+@using Microsoft.AspNetCore.Mvc.Localization
+@inject IHtmlLocalizer<PlatformResource> L
+@model Apya.Platform.Web.Pages.Hibeler.RandevuModel
+@{
+    Layout = "_PublicLayout";
+    ViewBag.Title = L["Grants:Public:Meeting:Title"].Value;
+}
+
+<div class="apya-pub-wrap apya-pub-detail">
+    <article>
+        <h1>@L["Grants:Public:Meeting:Headline"]</h1>
+        @* Tasarımın tonu: "satış görüşmesi değil". *@
+        <p class="apya-pub-lede">@L["Grants:Public:Meeting:Lede"]</p>
+
+        <div class="apya-pub-trust">
+            <div>
+                <strong>@L["Grants:Public:Meeting:Trust1:Title"]</strong>
+                @L["Grants:Public:Meeting:Trust1:Body"]
+            </div>
+            <div>
+                <strong>@L["Grants:Public:Meeting:Trust2:Title"]</strong>
+                @L["Grants:Public:Meeting:Trust2:Body"]
+            </div>
+            <div>
+                <strong>@L["Grants:Public:Meeting:Trust3:Title"]</strong>
+                @L["Grants:Public:Meeting:Trust3:Body"]
+            </div>
+            <div>
+                <strong>@L["Grants:Public:Meeting:Trust4:Title"]</strong>
+                @L["Grants:Public:Meeting:Trust4:Body"]
+            </div>
+        </div>
+    </article>
+
+    <aside class="apya-pub-aside">
+        <div class="apya-pub-panel">
+            @if (Model.Submitted)
+            {
+                <div class="apya-pub-success">
+                    <strong>@L["Grants:Public:Meeting:Done"]</strong><br />
+                    @L["Grants:Public:Meeting:DoneBody"]
+                </div>
+            }
+            else
+            {
+                <form method="post" class="apya-pub-form">
+                    @if (Model.ErrorMessage != null)
+                    {
+                        <div class="apya-pub-error">@Model.ErrorMessage</div>
+                    }
+
+                    <div class="apya-pub-field">
+                        <label>
+                            @L["Grants:Public:Lead:Firm"]
+                            <span class="apya-pub-prefill">@L["Grants:Public:Meeting:FromTest"]</span>
+                        </label>
+                        <input value="@Model.Prefill.FirmName" readonly />
+                    </div>
+
+                    <div class="apya-pub-field">
+                        <label>
+                            @L["Grants:Public:Lead:Name"]
+                            <span class="apya-pub-prefill">@L["Grants:Public:Meeting:FromTest"]</span>
+                        </label>
+                        <input value="@Model.Prefill.ContactName" readonly />
+                    </div>
+
+                    <div class="apya-pub-field">
+                        <label>
+                            @L["Grants:Public:Lead:Email"]
+                            <span class="apya-pub-prefill">@L["Grants:Public:Meeting:FromTest"]</span>
+                        </label>
+                        <input value="@Model.Prefill.Email" readonly />
+                    </div>
+
+                    <div class="apya-pub-field">
+                        <label asp-for="Input.Phone">@L["Grants:Public:Lead:Phone"]</label>
+                        <input asp-for="Input.Phone" />
+                    </div>
+
+                    <div class="apya-pub-field">
+                        <label asp-for="Input.PreferredAt">@L["Grants:Public:Meeting:Preferred"]</label>
+                        <input asp-for="Input.PreferredAt" type="datetime-local" />
+                        <span asp-validation-for="Input.PreferredAt" class="apya-pub-error"></span>
+                    </div>
+
+                    <div class="apya-pub-field">
+                        <label asp-for="Input.Note">@L["Grants:Public:Meeting:Note"]</label>
+                        <textarea asp-for="Input.Note"></textarea>
+                    </div>
+
+                    <button type="submit" class="apya-pub-btn">@L["Grants:Public:Meeting:Submit"]</button>
+
+                    @* 🔴 Müsaitlik takvimi YOK; bu bir tercihtir, onaylanmış slot değil. *@
+                    <p class="apya-pub-cta-note">@L["Grants:Public:Meeting:PreferenceOnly"]</p>
+                </form>
+            }
+        </div>
+    </aside>
+</div>

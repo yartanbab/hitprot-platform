@@ -591,6 +591,14 @@ public class PlatformNavigationResolver : IScopedDependency
             grants.AddItem(new ApplicationMenuItem("Apya.Grants.StageTemplates", l["Menu:Grants:StageTemplates"], icon: "fa fa-diagram-project", url: "/Grants/StageTemplates"));
         if (_currentTenant.Id == null && await _permission.IsGrantedAsync(PlatformPermissions.Grants.Edit))
             grants.AddItem(new ApplicationMenuItem("Apya.Grants.Sources", l["Menu:Grants:Sources"], icon: "fa fa-globe", url: "/Grants/Sources"));
+        if (_currentTenant.Id == null && await _permission.IsGrantedAsync(PlatformPermissions.Grants.Edit))
+            grants.AddItem(new ApplicationMenuItem("Apya.Grants.Pipeline", l["Menu:Grants:Pipeline"], icon: "fa fa-table-columns", url: "/Grants/Pipeline"));
+        if (_currentTenant.Id == null && await _permission.IsGrantedAsync(PlatformPermissions.Grants.Edit))
+            grants.AddItem(new ApplicationMenuItem("Apya.Grants.Leads", l["Menu:Grants:Leads"], icon: "fa fa-inbox", url: "/Grants/Leads"));
+        if (_currentTenant.Id == null && await _permission.IsGrantedAsync(PlatformPermissions.Grants.Edit))
+            grants.AddItem(new ApplicationMenuItem("Apya.Grants.NotificationTemplates", l["Menu:Grants:NotificationTemplates"], icon: "fa fa-bell", url: "/Grants/NotificationTemplates"));
+        if (_currentTenant.Id != null && await _permission.IsGrantedAsync(PlatformPermissions.Grants.Default))
+            grants.AddItem(new ApplicationMenuItem("Apya.Grants.MyApplications", l["Menu:Grants:MyApplications"], icon: "fa fa-list-check", url: "/Grants/MyApplications"));
         if (grants.Items.Count > 0) roots.Add(grants);
 
         // Finans — Faz 1 sadeleştirme: yalnızca günlük işlem + hesap öğeleri kalır.

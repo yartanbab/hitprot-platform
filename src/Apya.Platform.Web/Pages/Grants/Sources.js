@@ -12,6 +12,14 @@ $(function () {
     function money(v) { return v ? Math.round(v).toLocaleString('tr-TR') + ' ₺' : '—'; }
     function date(v) { return v ? new Date(v).toLocaleDateString('tr-TR') : '—'; }
 
+    // Gün farkı YEREL gün sınırından hesaplanır; ham milisaniye farkı saat
+    // kaymasında bir gün eksik/fazla verir.
+    function missedDays(v) {
+        var a = new Date(v); a.setHours(0, 0, 0, 0);
+        var b = new Date(); b.setHours(0, 0, 0, 0);
+        return Math.max(0, Math.round((b - a) / 86400000));
+    }
+
     // ---------- Kaynak listesi ----------
     function sourceChip(s) {
         if (!s.isActive) {
@@ -40,13 +48,26 @@ $(function () {
                 ? l('Grants:Sources:LastScrape') + ' ' + date(s.lastScrapedAt)
                 : l('Grants:Sources:NeverScraped')) +
                 ' · ' + l('Grants:Sources:CallCount', s.callCount);
+
+            // 7c · Hatalı kaynakta "en son ne zaman VERİ geldi" ve kaç gündür
+            // gelmediği yazılır. lastScrapedAt başarısız koşuyu da saydığı için
+            // tek başına "dün tarandı" diyerek yanıltıyor.
+            var sorun = '';
+            if (s.lastRunStatus === STATUS_FAILED) {
+                sorun = '<span class="apya-src-problem">' +
+                    esc(s.lastSuccessAt
+                        ? l('Grants:Sources:FailSince', date(s.lastSuccessAt), missedDays(s.lastSuccessAt))
+                        : l('Grants:Sources:FailNeverOk')) +
+                    (s.lastRunMessage ? ' · ' + esc(s.lastRunMessage) : '') + '</span>';
+            }
+
             $list.append(
                 '<button type="button" class="apya-src-item' + (s.id === editingId ? ' is-active' : '') +
                 '" data-id="' + s.id + '">' +
                 '<span class="apya-src-initial">' + esc(s.initial) + '</span>' +
                 '<span class="apya-src-body">' +
                 '<span class="apya-src-name">' + esc(s.name) + '</span>' +
-                '<span class="apya-src-meta">' + esc(meta) + '</span>' +
+                '<span class="apya-src-meta">' + esc(meta) + '</span>' + sorun +
                 '</span>' + sourceChip(s) + '</button>');
         });
         $('#SourceListEmpty').toggleClass('d-none', sources.length > 0);

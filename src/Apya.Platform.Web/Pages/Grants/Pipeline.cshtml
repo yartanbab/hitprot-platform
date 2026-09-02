@@ -1,0 +1,71 @@
+@page
+@using Apya.Platform.Localization
+@using Microsoft.AspNetCore.Mvc.Localization
+@inject IHtmlLocalizer<PlatformResource> L
+@model Apya.Platform.Web.Pages.Grants.PipelineModel
+@{
+    ViewBag.Title = L["Grants:Pipeline:Title"].Value;
+}
+
+@section styles {
+    <abp-style src="/Pages/Grants/Shared.css" />
+    <abp-style src="/Pages/Grants/Pipeline.css" />
+}
+
+@section scripts {
+    <script src="~/libs/sortablejs/Sortable.min.js"></script>
+    <abp-script src="/Pages/Grants/Pipeline.js" />
+}
+
+<div data-page-description="@L["Grants:Pipeline:Description"]" class="apya-page">
+
+    @* ---------- Üst şerit: çağrı + danışman süzgeci ---------- *@
+    <div class="card mb-0">
+        <div class="card-body d-flex align-items-center gap-3 flex-wrap">
+            <div class="apya-field" style="min-width:280px">
+                <label class="apya-field-label" for="CallSelect"><span>@L["Grants:Pipeline:Call"]</span></label>
+                <select class="form-select form-select-sm" id="CallSelect"></select>
+            </div>
+            <div class="apya-field" style="min-width:220px">
+                <label class="apya-field-label" for="ConsultantFilter"><span>@L["Grants:Pipeline:Consultant"]</span></label>
+                <select class="form-select form-select-sm" id="ConsultantFilter"></select>
+            </div>
+            <div class="flex-fill"></div>
+            <div class="d-flex flex-column gap-1 align-items-end">
+                <span class="apya-chip apya-chip-neutral" id="TemplateChip"></span>
+                <a href="/Grants/StageTemplates" class="small" id="TemplateLink">@L["Grants:Pipeline:EditTemplate"]</a>
+            </div>
+        </div>
+    </div>
+
+    @* ---------- Pano ---------- *@
+    <div class="apya-pipe-board apya-skel-cards" id="Board"></div>
+    <div id="BoardEmpty" class="apya-src-empty d-none">
+        <div class="fw-semibold">@L["Grants:Pipeline:Empty"]</div>
+        <div class="small">@L["Grants:Pipeline:EmptyHint"]</div>
+    </div>
+
+    @* ---------- Alt şerit: özet ---------- *@
+    <div class="apya-pipe-summary">
+        <div class="card mb-0"><div class="card-body">
+            <span class="apya-field-label"><span>@L["Grants:Pipeline:Summary:Risky"]</span></span>
+            <span class="apya-pipe-metric apya-numeric" id="SumRisky">0</span>
+            <span class="apya-pipe-metric-sub" id="SumRiskySub"></span>
+        </div></div>
+        <div class="card mb-0"><div class="card-body">
+            <span class="apya-field-label"><span>@L["Grants:Pipeline:Summary:Documents"]</span></span>
+            <span class="apya-pipe-metric apya-numeric" id="SumDocs">0</span>
+            <span class="apya-pipe-metric-sub" id="SumDocsSub"></span>
+        </div></div>
+        <div class="card mb-0"><div class="card-body">
+            <span class="apya-field-label"><span>@L["Grants:Pipeline:Summary:LastStage"]</span></span>
+            <span class="apya-pipe-metric apya-numeric" id="SumReady">0</span>
+            <span class="apya-pipe-metric-sub" id="SumReadySub"></span>
+        </div></div>
+        <div class="card mb-0"><div class="card-body">
+            <span class="apya-field-label"><span>@L["Grants:Pipeline:Summary:Amount"]</span></span>
+            <span class="apya-pipe-metric apya-pipe-metric--good apya-numeric" id="SumAmount">0</span>
+            <span class="apya-pipe-metric-sub">@L["Grants:Pipeline:Summary:AmountSub"]</span>
+        </div></div>
+    </div>
+</div>

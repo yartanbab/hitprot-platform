@@ -1,0 +1,322 @@
+@page "/Hibeler/{id:guid}"
+@using Apya.Platform.Grants
+@using Apya.Platform.Localization
+@using System.Linq
+@using Microsoft.AspNetCore.Mvc.Localization
+@inject IHtmlLocalizer<PlatformResource> L
+@* 🔴 Dize döndüren yardımcıda IHtmlLocalizer.Value BİÇİMLENDİRMEZ — argümanlar
+   render sırasında uygulanıyor. Biçimlenmiş dize için IStringLocalizer şart. *@
+@inject Microsoft.Extensions.Localization.IStringLocalizer<PlatformResource> S
+@model Apya.Platform.Web.Pages.Hibeler.DetayModel
+@{
+    Layout = "_PublicLayout";
+    ViewBag.Title = Model.Detail.GrantName;
+    ViewBag.MetaDescription = Model.Detail.Description;
+
+    string Money(decimal? v) => v.HasValue ? v.Value.ToString("N0") + " ₺" : "—";
+
+    // Şart değeri servisten "min|max" (ya da ölçekte "2,4") olarak gelir; birim ve
+    // aralık metni BURADA kurulur. Ham dizeyi ekrana basmak "2|" gibi anlamsız bir
+    // değer gösteriyordu.
+    string CriterionText(Apya.Platform.Grants.Dtos.GrantPublicCriterionDto c)
+    {
+        var raw = c.Value ?? string.Empty;
+
+        if (c.Rule == Apya.Platform.Grants.GrantEligibilityRule.Consortium)
+        {
+            return S["Grants:Public:Criterion:Consortium", raw].Value;
+        }
+
+        if (c.Rule == Apya.Platform.Grants.GrantEligibilityRule.CompanySize)
+        {
+            var names = raw.Split(',', StringSplitOptions.RemoveEmptyEntries)
+                .Select(v => S["Grants:CompanySize:" + (Apya.Platform.Grants.CompanySize)int.Parse(v)].Value);
+            return string.Join(" · ", names);
+        }
+
+        var parts = raw.Split('|');
+        var min = parts.Length > 0 && !string.IsNullOrWhiteSpace(parts[0]) ? decimal.Parse(parts[0]) : (decimal?)null;
+        var max = parts.Length > 1 && !string.IsNullOrWhiteSpace(parts[1]) ? decimal.Parse(parts[1]) : (decimal?)null;
+
+        string Key(string suffix) => $"Grants:Public:Criterion:{suffix}";
+
+        return c.Rule switch
+        {
+            Apya.Platform.Grants.GrantEligibilityRule.CompanyAge => max.HasValue
+                ? S[Key("CompanyAgeRange"), min!, max!].Value
+                : S[Key("CompanyAgeMin"), min!].Value,
+
+            Apya.Platform.Grants.GrantEligibilityRule.Revenue => (min, max) switch
+            {
+                (not null, not null) => S[Key("RevenueRange"), min.Value.ToString("N0"), max.Value.ToString("N0")].Value,
+                (not null, null) => S[Key("RevenueMin"), min.Value.ToString("N0")].Value,
+                _ => S[Key("RevenueMax"), max!.Value.ToString("N0")].Value
+            },
+
+            Apya.Platform.Grants.GrantEligibilityRule.RdStaffCount => S[Key("RdStaffMin"), min!].Value,
+            Apya.Platform.Grants.GrantEligibilityRule.StaffCount => S[Key("StaffMin"), min!].Value,
+
+            Apya.Platform.Grants.GrantEligibilityRule.Trl => (min, max) switch
+            {
+                (not null, not null) => S[Key("TrlRange"), min, max].Value,
+                (not null, null) => S[Key("TrlMin"), min].Value,
+                _ => S[Key("TrlMax"), max].Value
+            },
+
+            _ => raw
+        };
+    }
+}
+
+@section scripts {
+    @* Sorular ve etiketler sunucuda üretilir; JS metin uydurmaz. *@
+    <script type="application/json" id="TestData">
+        @Html.Raw(System.Text.Json.JsonSerializer.Serialize(new
+        {
+            questions = Model.Detail.Questions.Select(q => new
+            {
+                rule = (int)q.Rule,
+                text = L["Grants:Public:Question:" + q.Rule].Value,
+                options = q.Options.Select(o => new
+                {
+                    value = o.Value,
+                    label = o.LabelKey == "Trl"
+                        ? S["Grants:Public:Option:Trl", o.Value].Value
+                        : L["Grants:Public:Option:" + o.LabelKey].Value
+                })
+            }),
+            labels = new
+            {
+                progress = L["Grants:Public:Test:Progress"].Value,
+                eligible = L["Grants:Public:Test:Eligible"].Value,
+                notEligible = L["Grants:Public:Test:NotEligible"].Value,
+                partial = L["Grants:Public:Test:Partial"].Value,
+                score = L["Grants:Public:Test:Score"].Value,
+                difficulty = new[]
+                {
+                    "",
+                    L["Grants:Difficulty:1"].Value, L["Grants:Difficulty:2"].Value,
+                    L["Grants:Difficulty:3"].Value, L["Grants:Difficulty:4"].Value,
+                    L["Grants:Difficulty:5"].Value
+                },
+                blocking = L["Grants:Public:Test:Blocking"].Value,
+                honestNeed = L["Grants:Public:Test:HonestNeed"].Value,
+                honestNoNeed = L["Grants:Public:Test:HonestNoNeed"].Value,
+                rules = System.Enum.GetValues<Apya.Platform.Grants.GrantEligibilityRule>()
+                    .ToDictionary(r => ((int)r).ToString(), r => L["Grants:Rule:" + r].Value)
+            }
+        }))
+    </script>
+    <script src="~/Pages/Hibeler/Detay.js"></script>
+}
+
+<div class="apya-pub-wrap apya-pub-detail" data-call-id="@Model.Id">
+
+    @* --- Sol: içerik --- *@
+    <article>
+        <nav class="apya-pub-crumbs">
+            <a href="/Hibeler">@L["Grants:Public:Nav:Grants"]</a>
+            <span>·</span>
+            <span>@Model.Detail.Issuer</span>
+        </nav>
+
+        <div class="apya-pub-tags">
+            <span class="apya-pub-chip apya-pub-chip--ok">@L["Grants:Public:Detail:Open"]</span>
+            @if (Model.Detail.DaysRemaining is int d and >= 0)
+            {
+                <span class="apya-pub-chip @(d <= 30 ? "apya-pub-chip--hot" : "")">
+                    @L["Grants:Feed:Card:DaysLeft", d]
+                </span>
+            }
+            <span class="apya-pub-chip @(Model.Detail.Difficulty >= 4 ? "apya-pub-chip--warn" : "")">
+                @L["Grants:Difficulty:" + Model.Detail.Difficulty]
+            </span>
+        </div>
+
+        <h1>@Model.Detail.GrantName</h1>
+        <p class="apya-pub-lede">@Model.Detail.Description</p>
+
+        <div class="apya-pub-metrics">
+            <div class="apya-pub-metric">
+                <span class="apya-pub-metric-label">@L["Grants:Public:Detail:MaxAmount"]</span>
+                <span class="apya-pub-metric-value">@Money(Model.Detail.MaxAmount)</span>
+            </div>
+            <div class="apya-pub-metric">
+                <span class="apya-pub-metric-label">@L["Grants:Public:Detail:Rate"]</span>
+                <span class="apya-pub-metric-value">
+                    @(Model.Detail.SupportRatePercent.HasValue ? "%" + Model.Detail.SupportRatePercent : "—")
+                </span>
+            </div>
+            <div class="apya-pub-metric">
+                <span class="apya-pub-metric-label">@L["Grants:Public:Detail:Deadline"]</span>
+                <span class="apya-pub-metric-value">
+                    @(Model.Detail.Deadline?.ToString("dd.MM.yyyy") ?? "—")
+                </span>
+            </div>
+            <div class="apya-pub-metric">
+                <span class="apya-pub-metric-label">@L["Grants:Public:Detail:Duration"]</span>
+                <span class="apya-pub-metric-value">
+                    @if (Model.Detail.ProjectDurationMonths.HasValue)
+                    {
+                        @L["Grants:Public:Detail:Months", Model.Detail.ProjectDurationMonths.Value]
+                    }
+                    else
+                    {
+                        @:—
+                    }
+                </span>
+            </div>
+        </div>
+
+        @if (Model.Detail.Criteria.Count > 0)
+        {
+            <section class="apya-pub-section">
+                <h2>@L["Grants:Public:Detail:WhoCanApply"]</h2>
+                <div class="apya-pub-criteria">
+                    @foreach (var c in Model.Detail.Criteria)
+                    {
+                        <div class="apya-pub-criterion">
+                            <span>@L["Grants:Rule:" + c.Rule]</span>
+                            <strong>@CriterionText(c)</strong>
+                        </div>
+                    }
+                </div>
+            </section>
+        }
+
+        @if (Model.Detail.CostItems.Count > 0)
+        {
+            <section class="apya-pub-section">
+                <h2>@L["Grants:Public:Detail:CostItems"]</h2>
+                <table class="apya-pub-costs">
+                    <thead>
+                        <tr>
+                            <th>@L["Grants:Public:Detail:CostItem"]</th>
+                            <th>@L["Grants:Public:Detail:CostLimit"]</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model.Detail.CostItems)
+                        {
+                            <tr>
+                                <td>@L["Grants:CostItem:" + item.Kind]</td>
+                                <td>@(item.LimitPercent.HasValue ? "%" + item.LimitPercent : "—")</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </section>
+        }
+
+        @if (!string.IsNullOrWhiteSpace(Model.Detail.SourceUrl))
+        {
+            <section class="apya-pub-section">
+                <a class="apya-pub-link" href="@Model.Detail.SourceUrl" target="_blank" rel="noopener noreferrer">
+                    <i class="fa fa-file-lines"></i> @L["Grants:Public:Detail:OfficialText"]
+                </a>
+            </section>
+        }
+
+        @if (Model.Detail.SimilarCalls.Count > 0)
+        {
+            <section class="apya-pub-section">
+                <h2>@L["Grants:Public:Detail:Similar"]</h2>
+                <div class="apya-pub-table">
+                    @foreach (var s in Model.Detail.SimilarCalls)
+                    {
+                        <a class="apya-pub-row apya-pub-row--compact" href="/Hibeler/@s.CallId">
+                            <span class="apya-pub-row-name">
+                                <strong>@s.GrantName</strong>
+                                <span>@s.Issuer</span>
+                            </span>
+                            <span class="apya-pub-num">@Money(s.MaxAmount)</span>
+                            <span class="apya-pub-chip">@L["Grants:Difficulty:" + s.Difficulty]</span>
+                        </a>
+                    }
+                </div>
+            </section>
+        }
+    </article>
+
+    @* --- Sağ: uygunluk testi --- *@
+    <aside class="apya-pub-aside">
+        <div class="apya-pub-panel">
+            <div class="apya-pub-test-head">
+                <strong>@L["Grants:Public:Test:Title"]</strong>
+                @if (Model.Detail.Questions.Count > 0)
+                {
+                    <span class="apya-pub-result-score" id="TestProgress"></span>
+                }
+            </div>
+            @* Tasarımın açık kuralı: duvar yok. *@
+            <p class="apya-pub-test-note">@L["Grants:Public:Test:NoWall"]</p>
+
+            <div id="TestAnswered"></div>
+            <div id="TestQuestion" class="apya-pub-question"></div>
+
+            @* 7a kuralı: boş durum bir sonraki adımı söyler. Çağrının ölçülebilir
+               şartı yoksa test paneli sessiz bir kutu olarak kalmamalı. *@
+            @if (Model.Detail.Questions.Count == 0)
+            {
+                <p class="apya-pub-test-note apya-pub-test-empty">@L["Grants:Public:Test:NoCriteria"]</p>
+            }
+        </div>
+
+        <div class="apya-pub-panel d-none" id="TestResult" hidden>
+            <div class="apya-pub-result-line">
+                <strong id="ResultTitle"></strong>
+                <span class="apya-pub-result-score" id="ResultScore"></span>
+            </div>
+            <div class="apya-pub-result-row">
+                <span>@L["Grants:Public:Test:EstimatedSupport"]</span>
+                <span id="ResultSupport"></span>
+            </div>
+            <div class="apya-pub-result-row">
+                <span>@L["Grants:Public:Test:Difficulty"]</span>
+                <span id="ResultDifficulty"></span>
+            </div>
+            <div class="apya-pub-warn" id="ResultBlocking" hidden></div>
+            <div class="apya-pub-honest" id="ResultHonest" hidden></div>
+
+            <div id="LeadCta" hidden>
+                <form method="post" class="apya-pub-form apya-pub-form--inset">
+                    @if (Model.ErrorMessage != null)
+                    {
+                        <div class="apya-pub-error">@Model.ErrorMessage</div>
+                    }
+                    <div class="apya-pub-field">
+                        <label asp-for="Lead.FirmName">@L["Grants:Public:Lead:Firm"]</label>
+                        <input asp-for="Lead.FirmName" />
+                        <span asp-validation-for="Lead.FirmName" class="apya-pub-error"></span>
+                    </div>
+                    <div class="apya-pub-field">
+                        <label asp-for="Lead.ContactName">@L["Grants:Public:Lead:Name"]</label>
+                        <input asp-for="Lead.ContactName" />
+                        <span asp-validation-for="Lead.ContactName" class="apya-pub-error"></span>
+                    </div>
+                    <div class="apya-pub-field">
+                        <label asp-for="Lead.Email">@L["Grants:Public:Lead:Email"]</label>
+                        <input asp-for="Lead.Email" type="email" />
+                        <span asp-validation-for="Lead.Email" class="apya-pub-error"></span>
+                    </div>
+                    <div class="apya-pub-field">
+                        <label asp-for="Lead.Phone">@L["Grants:Public:Lead:Phone"]</label>
+                        <input asp-for="Lead.Phone" />
+                    </div>
+
+                    @* Test cevapları formla birlikte gider; JS bunları doldurur. *@
+                    <input type="hidden" asp-for="Lead.Answers.Size" id="AnsSize" />
+                    <input type="hidden" asp-for="Lead.Answers.CompanyAgeYears" id="AnsAge" />
+                    <input type="hidden" asp-for="Lead.Answers.RdStaffCount" id="AnsRd" />
+                    <input type="hidden" asp-for="Lead.Answers.StaffCount" id="AnsStaff" />
+                    <input type="hidden" asp-for="Lead.Answers.Trl" id="AnsTrl" />
+                    <input type="hidden" asp-for="Lead.Answers.AnnualRevenue" id="AnsRevenue" />
+                    <input type="hidden" asp-for="Lead.Answers.HasConsortiumPartner" id="AnsConsortium" />
+
+                    <button type="submit" class="apya-pub-btn">@L["Grants:Public:Lead:Submit"]</button>
+                    <p class="apya-pub-cta-note">@L["Grants:Public:Lead:Note"]</p>
+                </form>
+            </div>
+        </div>
+    </aside>
+</div>

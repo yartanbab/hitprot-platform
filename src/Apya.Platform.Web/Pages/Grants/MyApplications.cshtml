@@ -1,0 +1,75 @@
+@page
+@using Apya.Platform.Localization
+@using Microsoft.AspNetCore.Mvc.Localization
+@inject IHtmlLocalizer<PlatformResource> L
+@model Apya.Platform.Web.Pages.Grants.MyApplicationsModel
+@{
+    ViewBag.Title = L["Grants:Mine:Title"].Value;
+}
+
+@section styles {
+    <abp-style src="/Pages/Grants/Shared.css" />
+    <abp-style src="/Pages/Grants/Tenant.css" />
+    <abp-style src="/Pages/Grants/MyApplications.css" />
+}
+
+@section scripts {
+    <abp-script src="/Pages/Grants/MyApplications.js" />
+}
+
+<div data-page-description="@L["Grants:Mine:Description"]" class="apya-page">
+
+    @* ---------- Beşli KPI ---------- *@
+    <div class="apya-my-kpis">
+        <div class="card mb-0"><div class="card-body">
+            <span class="apya-field-label"><span>@L["Grants:Mine:Kpi:Open"]</span></span>
+            <span class="apya-skel-num apya-my-kpi apya-numeric" id="KpiOpen"></span>
+        </div></div>
+        <div class="card mb-0"><div class="card-body">
+            <span class="apya-field-label"><span>@L["Grants:Mine:Kpi:Approved"]</span></span>
+            <span class="apya-skel-num apya-my-kpi apya-my-kpi--good apya-numeric" id="KpiApproved"></span>
+        </div></div>
+        <div class="card mb-0"><div class="card-body">
+            <span class="apya-field-label"><span>@L["Grants:Mine:Kpi:OnYou"]</span></span>
+            <span class="apya-skel-num apya-my-kpi apya-numeric" id="KpiOnYou"></span>
+        </div></div>
+        <div class="card mb-0"><div class="card-body">
+            <span class="apya-field-label"><span>@L["Grants:Mine:Kpi:Collected"]</span></span>
+            <span class="apya-skel-num apya-my-kpi apya-numeric" id="KpiCollected"></span>
+        </div></div>
+        <div class="card mb-0"><div class="card-body">
+            <span class="apya-field-label"><span>@L["Grants:Mine:Kpi:Nearest"]</span></span>
+            <span class="apya-skel-num apya-my-kpi apya-numeric" id="KpiNearest"></span>
+        </div></div>
+    </div>
+
+    @* ---------- Liste ---------- *@
+    <div class="card mb-0">
+        <div class="card-body d-flex flex-column gap-3">
+            <div class="d-flex align-items-center justify-content-between gap-2 flex-wrap">
+                <div class="fw-bold">@L["Grants:Mine:List"]</div>
+                <div class="apya-choice-row">
+                    <button type="button" class="apya-choice is-on" data-filter="all" id="FilterAll"></button>
+                    <button type="button" class="apya-choice" data-filter="open" id="FilterOpen"></button>
+                    <button type="button" class="apya-choice" data-filter="closed" id="FilterClosed"></button>
+                </div>
+            </div>
+
+            <div class="apya-cat-table">
+                <div class="apya-my-row apya-cat-head">
+                    <span>@L["Grants:Mine:Col:Grant"]</span>
+                    <span>@L["Grants:Mine:Col:Stage"]</span>
+                    <span>@L["Grants:Mine:Col:Amount"]</span>
+                    <span>@L["Grants:Mine:Col:Deadline"]</span>
+                    <span>@L["Grants:Mine:Col:NextAction"]</span>
+                    <span></span>
+                </div>
+                <div id="Rows" class="apya-skel-rows"></div>
+                <div id="Empty" class="apya-src-empty d-none">
+                    <div class="fw-semibold">@L["Grants:Mine:Empty"]</div>
+                    <div class="small">@L["Grants:Mine:EmptyHint"]</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

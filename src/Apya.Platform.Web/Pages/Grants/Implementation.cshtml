@@ -1,0 +1,127 @@
+@page
+@using Apya.Platform.Localization
+@using Microsoft.AspNetCore.Mvc.Localization
+@inject IHtmlLocalizer<PlatformResource> L
+@model Apya.Platform.Web.Pages.Grants.ImplementationModel
+@{
+    ViewBag.Title = L["Grants:Impl:Title"].Value;
+}
+
+@section styles {
+    <abp-style src="/Pages/Grants/Shared.css" />
+    <abp-style src="/Pages/Grants/Implementation.css" />
+}
+
+@section scripts {
+    <abp-script src="/Pages/Grants/Implementation.js" />
+}
+
+<div data-page-description="@L["Grants:Impl:Description"]" class="apya-page" data-application-id="@Model.Id">
+
+    @* ---------- Üst bar ---------- *@
+    <div class="card mb-0">
+        <div class="card-body d-flex align-items-center gap-4 flex-wrap">
+            <div class="flex-fill min-w-0">
+                <div class="fw-bold" id="HeaderTitle"></div>
+                <div class="apya-im-meta apya-numeric" id="HeaderMeta"></div>
+            </div>
+            <div class="apya-im-figures">
+                <div>
+                    <span class="apya-field-label"><span>@L["Grants:Impl:Approved"]</span></span>
+                    <span class="apya-im-metric apya-numeric" id="Approved">—</span>
+                </div>
+                <div>
+                    <span class="apya-field-label"><span>@L["Grants:Impl:Collected"]</span></span>
+                    <span class="apya-im-metric apya-im-metric--good apya-numeric" id="Collected">—</span>
+                </div>
+                <div>
+                    <span class="apya-field-label"><span>@L["Grants:Impl:Remaining"]</span></span>
+                    <span class="apya-im-metric apya-numeric" id="Remaining">—</span>
+                </div>
+            </div>
+            <div class="apya-im-progress">
+                <div class="apya-mini-bar"><span id="CollectedBar" style="width:0"></span></div>
+                <span class="apya-numeric fw-semibold" id="CollectedPercent">%0</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="apya-im-layout">
+        <section class="d-flex flex-column gap-3">
+
+            @* ---------- Rapor-dilim zinciri ---------- *@
+            <div class="card mb-0">
+                <div class="card-body d-flex flex-column gap-3">
+                    <div class="d-flex align-items-center justify-content-between gap-2 flex-wrap">
+                        <div>
+                            <div class="fw-bold">@L["Grants:Impl:Chain"]</div>
+                            <div class="apya-im-hint">@L["Grants:Impl:ChainHint"]</div>
+                        </div>
+                        <button type="button" class="btn btn-sm btn-outline-secondary d-none" id="AddReportBtn">
+                            <i class="fa fa-plus me-1"></i>@L["Grants:Impl:AddReport"]
+                        </button>
+                    </div>
+
+                    <div id="Chain" class="apya-skel-rows d-flex flex-column gap-3"></div>
+                    <div id="ChainEmpty" class="apya-src-empty d-none">
+                        <div class="fw-semibold">@L["Grants:Impl:NoChain"]</div>
+                        <div class="small">@L["Grants:Impl:NoChainHint"]</div>
+                    </div>
+                </div>
+            </div>
+
+            @* ---------- Bütçe gerçekleşmesi ---------- *@
+            <div class="card mb-0">
+                <div class="card-body d-flex flex-column gap-3">
+                    <div>
+                        <div class="fw-bold">@L["Grants:Impl:Budget"]</div>
+                        <div class="apya-im-hint">@L["Grants:Impl:BudgetHint"]</div>
+                    </div>
+
+                    <div class="apya-cat-table d-none" id="BudgetTable">
+                        <div class="apya-im-budget-row apya-cat-head">
+                            <span>@L["Grants:Impl:Col:Line"]</span>
+                            <span>@L["Grants:Impl:Col:Approved"]</span>
+                            <span>@L["Grants:Impl:Col:Spent"]</span>
+                            <span>@L["Grants:Impl:Col:Remaining"]</span>
+                            <span>@L["Grants:Impl:Col:Usage"]</span>
+                        </div>
+                        <div id="BudgetRows"></div>
+                    </div>
+
+                    <div class="apya-side-note apya-side-note--quiet d-none" id="NoProjectNote">
+                        <i class="fa fa-circle-info mt-1"></i>
+                        <span>@L["Grants:Impl:NoProject"]</span>
+                    </div>
+                    <div class="apya-side-note d-none" id="TransferNote">
+                        <i class="fa fa-triangle-exclamation mt-1"></i>
+                        <span>@L["Grants:Impl:TransferWarning"]</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        @* ---------- Sağ panel ---------- *@
+        <aside class="apya-im-side">
+            <div class="card mb-0">
+                <div class="card-body d-flex flex-column gap-2">
+                    <span class="apya-overline">@L["Grants:Impl:Obligations"]</span>
+                    <div id="Obligations" class="d-flex flex-column gap-2"></div>
+                </div>
+            </div>
+
+            <div class="card mb-0">
+                <div class="card-body d-flex flex-column gap-2">
+                    <span class="apya-overline">@L["Grants:Impl:Links"]</span>
+                    <a class="btn btn-sm btn-outline-secondary d-none" id="ProjectLink">
+                        <i class="fa fa-diagram-project me-1"></i>@L["Grants:Impl:GoToProject"]
+                    </a>
+                    <a class="btn btn-sm btn-outline-secondary" id="DocumentsLink">
+                        <i class="fa fa-folder-open me-1"></i>@L["Grants:Impl:GoToDocuments"]
+                    </a>
+                    <div class="apya-im-hint">@L["Grants:Impl:ReapplyHint"]</div>
+                </div>
+            </div>
+        </aside>
+    </div>
+</div>
