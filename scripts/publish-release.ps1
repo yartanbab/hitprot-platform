@@ -75,6 +75,14 @@ if (-not (Test-Path $LibsDir)) {
 $libCount = (Get-ChildItem -LiteralPath $LibsDir -Directory).Count
 Write-Host "      wwwroot\libs      : $libCount paket"
 
+# #305: hibe başvuru sihirbazı /libs/signalr/signalr.min.js'i doğrudan yükler; klasör yoksa
+# sayfa 500 verir. Bayat bir install-libs çıktısı bu paketi taşımaz (2026-09-02'de ölçüldü).
+$SignalR = Join-Path $LibsDir 'signalr\signalr.min.js'
+if (-not (Test-Path $SignalR)) {
+    throw "wwwroot\libs\signalr\signalr.min.js YOK. 'abp install-libs' yeniden çalıştırılmalı (sonra dynamic-assets içinde 'npm ci'). Bu dosya olmadan hibe başvuru sihirbazı 500 döner."
+}
+Write-Host "      libs\signalr      : var"
+
 if (-not (Test-Path $ViteMan)) {
     throw ".vite\manifest.json YOK. Island preload'ları sunucuda sessizce boşa düşer (bkz. #287)."
 }
@@ -151,7 +159,10 @@ Write-Host "      secrets            : pakette değil (doğru)"
 # 4e. libs publish'e taşındı mı
 $libsOut = Join-Path $WebPublish 'wwwroot\libs'
 if (-not (Test-Path $libsOut)) { throw "wwwroot\libs publish çıktısında yok." }
-Write-Host "      wwwroot\libs       : pakette"
+if (-not (Test-Path (Join-Path $libsOut 'signalr\signalr.min.js'))) {
+    throw "wwwroot\libs\signalr publish çıktısına GİRMEDİ - hibe başvuru sihirbazı canlıda 500 verir."
+}
+Write-Host "      wwwroot\libs       : pakette (signalr dahil)"
 
 # --- 5. migrate.bat (DbMigrator paketine) --------------------------------
 # Şablon: sırlar BOŞ bırakılır, sunucuda elle doldurulur ve iş bitince klasör SİLİNİR.
