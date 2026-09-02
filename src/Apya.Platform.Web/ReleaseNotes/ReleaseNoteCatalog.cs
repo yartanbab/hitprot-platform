@@ -198,6 +198,16 @@ public static class ReleaseNoteCatalog
                 "gelir planına işleniyor. Başvurunuz kapanmıyor — projeyle bağlı kalıyor, evraklarınız " +
                 "ve yazışmalarınız yerinde duruyor."),
 
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "Hibe sürecindeki her adım size bildiriliyor",
+                "Danışmanınız bir evrakta revizyon istediğinde, başvurunuz yeni bir aşamaya " +
+                "geçtiğinde ve kurum kararını girdiğinde bildirim alıyorsunuz. Tarihe bağlı iki " +
+                "hatırlatma da otomatik: zorunlu evrak eksikken son başvuruya 7, 3 ve 1 gün kala, " +
+                "rapor teslimine ise 30, 14 ve 3 gün kala. Programınıza uygun yeni bir çağrı " +
+                "yayına alındığında da haberiniz oluyor. Bildirim tercihlerinizi kapatabilirsiniz — " +
+                "tek istisna kurum kararı ve onunla gelen itiraz süresi: kaçırılması doğrudan " +
+                "itiraz hakkınızı kaybettirdiği için o bildirim kapatılamıyor."),
+
             // ── Görev paylaşımı ───────────────────────────────────────────────
             new ReleaseNoteItem(ReleaseNoteCategory.Feature,
                 "Bir görevi ekibinizde olmayan kişiye açabiliyorsunuz",
@@ -248,7 +258,24 @@ public static class ReleaseNoteCatalog
                 "Menünün altında \"Kilitli özellikler\" kısayolu çıkıyor; oradan paketinizde kapalı olan " +
                 "yeteneklerin listesine ulaşıyorsunuz. Daha önce kapalı bir modül menüde hiç görünmediği " +
                 "için neyi kaçırdığınızı fark etmiyordunuz. Kısayol yalnız gerçekten kapalı bir özelliğiniz " +
-                "varsa çıkar — her şeyi kapsayan pakette hiç görünmez.")
+                "varsa çıkar — her şeyi kapsayan pakette hiç görünmez."),
+
+            // ── Genel ─────────────────────────────────────────────────────────
+            new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
+                "Hibe ekranları açılırken içerik zıplamıyor",
+                "Liste ve sayaç içeren hibe ekranlarında veri gelene kadar boş bir alan duruyor, " +
+                "veri gelince de sayfa yerinden oynuyordu. Artık yükleme sırasında satırların ve " +
+                "sayıların yerini tutan gri bloklar görünüyor; içerik geldiğinde aynı yere " +
+                "yerleşiyor, tıklamak üzere olduğunuz düğme kaymıyor. Sayaçlar da veri gelmeden " +
+                "önce \"0\" yazmıyor — boş bir rakam gerçek bir değer sanılabiliyordu."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
+                "Başvuru formunda bağlantı koptuğunda ne olduğunu görüyorsunuz",
+                "Danışmanınızla birlikte doldurduğunuz formda canlı bağlantı koptuğunda ekranda " +
+                "yalnız \"canlı\" işareti kayboluyordu ve neyin çalışmaya devam ettiği belirsizdi. " +
+                "Artık açıkça yazıyor: yazdıklarınız kaydedilmeye devam ediyor, üzerinde " +
+                "çalıştığınız alanlar size ayrılmış kalıyor; yansımayan tek şey karşı tarafın o " +
+                "anki değişiklikleri. Bağlantı gelince ekran kendiliğinden tazeleniyor.")
         ),
 
         new ReleaseNote(
