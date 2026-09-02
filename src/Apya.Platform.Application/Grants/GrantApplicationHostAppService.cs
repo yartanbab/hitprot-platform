@@ -28,6 +28,7 @@ public class GrantApplicationHostAppService : ApplicationService, IGrantApplicat
     private readonly IRepository<Grant, Guid> _grantRepo;
     private readonly ITenantRepository _tenantRepo;
     private readonly ICurrentTenant _currentTenant;
+    private readonly GrantNotificationDispatcher _notifyDispatcher;
 
     public GrantApplicationHostAppService(
         IRepository<GrantApplication, Guid> appRepo,
@@ -36,7 +37,8 @@ public class GrantApplicationHostAppService : ApplicationService, IGrantApplicat
         IRepository<GrantCall, Guid> callRepo,
         IRepository<Grant, Guid> grantRepo,
         ITenantRepository tenantRepo,
-        ICurrentTenant currentTenant)
+        ICurrentTenant currentTenant,
+        GrantNotificationDispatcher notifyDispatcher)
     {
         _appRepo = appRepo;
         _trancheRepo = trancheRepo;
@@ -45,6 +47,7 @@ public class GrantApplicationHostAppService : ApplicationService, IGrantApplicat
         _grantRepo = grantRepo;
         _tenantRepo = tenantRepo;
         _currentTenant = currentTenant;
+        _notifyDispatcher = notifyDispatcher;
     }
 
     public async Task<List<GrantApplicationDto>> GetListAsync()
@@ -77,12 +80,39 @@ public class GrantApplicationHostAppService : ApplicationService, IGrantApplicat
         EnsureHostContext();
 
         var tenantId = await FindApplicationTenantIdAsync(input.ApplicationId);
+        Guid callId;
         using (_currentTenant.Change(tenantId))
         {
             var app = await _appRepo.GetAsync(input.ApplicationId);
             app.AdvanceStage(input.Stage, input.ApprovedAmount);
             await _appRepo.UpdateAsync(app, autoSave: true);
+            callId = app.GrantCallId;
         }
+
+        // 6d · Aşamayı hangi ekrandan ilerlettiğimiz firmayı ilgilendirmiyor;
+        // pano ve 2d ile aynı bildirim buradan da çıkar.
+        await _notifyDispatcher.DispatchToTenantAsync(
+            GrantNotificationTrigger.ApplicationStageChanged,
+            tenantId,
+            new Dictionary<string, string?>
+            {
+                ["{çağrı_adı}"] = await GetGrantNameAsync(callId),
+                ["{aşama}"] = input.Stage.ToString()
+            },
+            nameof(GrantApplication), input.ApplicationId);
+    }
+
+    /// <summary>
+    /// Katalog okuması host bağlamında yapılır (çağıran <c>EnsureHostContext</c>'ten
+    /// geçmiştir), bu yüzden kiracı filtresini kapatmaya gerek yok — filtre zaten
+    /// <c>TenantId == null</c> satırlarını getiriyor.
+    /// </summary>
+    private async Task<string?> GetGrantNameAsync(Guid callId)
+    {
+        var call = await _callRepo.FirstOrDefaultAsync(c => c.Id == callId);
+        return call == null
+            ? null
+            : (await _grantRepo.FirstOrDefaultAsync(g => g.Id == call.GrantId))?.Name;
     }
 
     public async Task<GrantDisbursementTrancheDto> AddTrancheAsync(Guid applicationId, CreateUpdateTrancheDto input)

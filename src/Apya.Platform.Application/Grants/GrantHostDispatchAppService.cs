@@ -41,6 +41,7 @@ public class GrantHostDispatchAppService : ApplicationService, IGrantHostDispatc
     private readonly IDataFilter<IMultiTenant> _mtFilter;
     private readonly NotificationManager _notificationManager;
     private readonly IEmailSender _emailSender;
+    private readonly GrantNotificationDispatcher _notifyDispatcher;
 
     public GrantHostDispatchAppService(
         IRepository<GrantCall, Guid> callRepo,
@@ -56,7 +57,8 @@ public class GrantHostDispatchAppService : ApplicationService, IGrantHostDispatc
         ICurrentTenant currentTenant,
         IDataFilter<IMultiTenant> mtFilter,
         NotificationManager notificationManager,
-        IEmailSender emailSender)
+        IEmailSender emailSender,
+        GrantNotificationDispatcher notifyDispatcher)
     {
         _callRepo = callRepo;
         _grantRepo = grantRepo;
@@ -72,6 +74,7 @@ public class GrantHostDispatchAppService : ApplicationService, IGrantHostDispatc
         _mtFilter = mtFilter;
         _notificationManager = notificationManager;
         _emailSender = emailSender;
+        _notifyDispatcher = notifyDispatcher;
     }
 
     public async Task<GrantDispatchConsoleDto> PreviewAsync(PreviewHostRecommendationInput input)
@@ -191,10 +194,14 @@ public class GrantHostDispatchAppService : ApplicationService, IGrantHostDispatc
 
         var call = await _callRepo.GetAsync(input.GrantCallId);
         var grant = await _grantRepo.GetAsync(call.GrantId);
-        var title = $"Yeni hibe önerisi: {grant.Name}";
-        var body = string.IsNullOrWhiteSpace(input.Note)
-            ? $"{grant.Name} ({call.Period}) programı firmanız için önerildi."
-            : input.Note!;
+
+        // 6d · Metin artık host'un düzenlediği şablondan gelir; daha önce burada
+        // Türkçe dizeler koda gömülüydü.
+        var daysLeft = call.Deadline.HasValue
+            ? Math.Max(0, (call.Deadline.Value.Date - Clock.Now.Date).Days).ToString()
+            : null;
+        var firmNames = (await _tenantRepo.GetListAsync())
+            .ToDictionary(t => t.Id, t => t.Name);
 
         var result = new GrantDispatchResultDto();
 
@@ -202,6 +209,18 @@ public class GrantHostDispatchAppService : ApplicationService, IGrantHostDispatc
         {
             using (_currentTenant.Change(tenantId))
             {
+                // Metin firma başına üretilir: {firma_adı} ancak burada bilinir.
+                var rendered = await _notifyDispatcher.RenderAsync(
+                    GrantNotificationTrigger.RecommendationSent,
+                    new Dictionary<string, string?>
+                    {
+                        ["{firma_adı}"] = firmNames.GetValueOrDefault(tenantId),
+                        ["{çağrı_adı}"] = grant.Name,
+                        ["{son_tarih}"] = call.Deadline?.ToString("dd.MM.yyyy"),
+                        ["{kalan_gün}"] = daysLeft,
+                        ["{host_notu}"] = input.Note
+                    });
+
                 var existing = await _recRepo.FirstOrDefaultAsync(r => r.GrantCallId == input.GrantCallId);
                 if (existing != null)
                 {
@@ -223,6 +242,15 @@ public class GrantHostDispatchAppService : ApplicationService, IGrantHostDispatc
                 };
                 await _recRepo.InsertAsync(rec, autoSave: true);
                 result.SentCount++;
+
+                // Şablon kapalıysa öneri kaydı yine açılır, duyuru yapılmaz —
+                // host bildirim metnini bilinçli olarak susturmuş demektir.
+                if (rendered == null)
+                {
+                    continue;
+                }
+
+                var (title, body) = rendered.Value;
 
                 var users = await _userRepo.GetListAsync();
                 foreach (var user in users.Where(u => u.IsActive))

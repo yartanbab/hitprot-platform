@@ -50,6 +50,7 @@ public class GrantPipelineAppService : ApplicationService, IGrantPipelineAppServ
     private readonly IIdentityUserRepository _userRepo;
     private readonly ICurrentTenant _currentTenant;
     private readonly IDataFilter<IMultiTenant> _mtFilter;
+    private readonly GrantNotificationDispatcher _notifyDispatcher;
 
     public GrantPipelineAppService(
         IRepository<GrantApplication, Guid> appRepo,
@@ -64,7 +65,8 @@ public class GrantPipelineAppService : ApplicationService, IGrantPipelineAppServ
         ITenantRepository tenantRepo,
         IIdentityUserRepository userRepo,
         ICurrentTenant currentTenant,
-        IDataFilter<IMultiTenant> mtFilter)
+        IDataFilter<IMultiTenant> mtFilter,
+        GrantNotificationDispatcher notifyDispatcher)
     {
         _appRepo = appRepo;
         _activityRepo = activityRepo;
@@ -79,6 +81,7 @@ public class GrantPipelineAppService : ApplicationService, IGrantPipelineAppServ
         _userRepo = userRepo;
         _currentTenant = currentTenant;
         _mtFilter = mtFilter;
+        _notifyDispatcher = notifyDispatcher;
     }
 
     public async Task<GrantPipelineBoardDto> GetBoardAsync(Guid? grantCallId, Guid? assignedUserId)
@@ -116,6 +119,19 @@ public class GrantPipelineAppService : ApplicationService, IGrantPipelineAppServ
         await LogAsync(application, GrantActivityKind.StageMoved, movedTo);
 
         var call = await GetCallAsync(application.GrantCallId);
+
+        // 6d · Panodan sürüklemek de aşama değişikliğidir; firma bunu 2d'deki
+        // "ilerlet" düğmesinden ayırt edemez, aynı bildirimi almalı.
+        await _notifyDispatcher.DispatchToTenantAsync(
+            GrantNotificationTrigger.ApplicationStageChanged,
+            application.TenantId,
+            new Dictionary<string, string?>
+            {
+                ["{çağrı_adı}"] = await GetGrantNameAsync(call.GrantId),
+                ["{aşama}"] = movedTo
+            },
+            nameof(GrantApplication), application.Id);
+
         return await BuildAsync(call.Id, null);
     }
 
@@ -183,6 +199,14 @@ public class GrantPipelineAppService : ApplicationService, IGrantPipelineAppServ
         {
             return await _callRepo.FirstOrDefaultAsync(c => c.Id == id && c.TenantId == null)
                    ?? throw new EntityNotFoundException(typeof(GrantCall), id);
+        }
+    }
+
+    private async Task<string?> GetGrantNameAsync(Guid grantId)
+    {
+        using (_mtFilter.Disable())
+        {
+            return (await _grantRepo.FirstOrDefaultAsync(g => g.Id == grantId && g.TenantId == null))?.Name;
         }
     }
 

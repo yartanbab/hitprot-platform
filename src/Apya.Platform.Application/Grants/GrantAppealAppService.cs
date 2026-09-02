@@ -27,7 +27,7 @@ namespace Apya.Platform.Grants;
 /// yanlış yönlendirir.</para>
 /// </summary>
 [Authorize(PlatformPermissions.Grants.Default)]
-public class GrantAppealAppService : ApplicationService, IGrantAppealAppService
+public class GrantAppealAppService : PlatformAppService, IGrantAppealAppService
 {
     /// <summary>Bu sayıdan az karar varsa oran gösterilmez.</summary>
     public const int MinimumStatsSample = 5;
@@ -39,6 +39,7 @@ public class GrantAppealAppService : ApplicationService, IGrantAppealAppService
     private readonly IRepository<Grant, Guid> _grantRepo;
     private readonly ICurrentTenant _currentTenant;
     private readonly IDataFilter<IMultiTenant> _mtFilter;
+    private readonly GrantNotificationDispatcher _notifyDispatcher;
 
     public GrantAppealAppService(
         IRepository<GrantApplication, Guid> appRepo,
@@ -47,7 +48,8 @@ public class GrantAppealAppService : ApplicationService, IGrantAppealAppService
         IRepository<GrantCall, Guid> callRepo,
         IRepository<Grant, Guid> grantRepo,
         ICurrentTenant currentTenant,
-        IDataFilter<IMultiTenant> mtFilter)
+        IDataFilter<IMultiTenant> mtFilter,
+        GrantNotificationDispatcher notifyDispatcher)
     {
         _appRepo = appRepo;
         _decisionRepo = decisionRepo;
@@ -56,6 +58,7 @@ public class GrantAppealAppService : ApplicationService, IGrantAppealAppService
         _grantRepo = grantRepo;
         _currentTenant = currentTenant;
         _mtFilter = mtFilter;
+        _notifyDispatcher = notifyDispatcher;
     }
 
     private bool IsConsultant => _currentTenant.Id == null;
@@ -90,7 +93,46 @@ public class GrantAppealAppService : ApplicationService, IGrantAppealAppService
             await _decisionRepo.UpdateAsync(decision, autoSave: true);
         }
 
+        await NotifyDecisionAsync(application, decision);
+
         return await BuildAsync(application);
+    }
+
+    /// <summary>
+    /// 6d · Kurum kararını firmaya duyurur. Bu tetikleyici ZORUNLUDUR: kullanıcı
+    /// hibe bildirimlerini kapatmış olsa bile üretilir, çünkü kaçırılması doğrudan
+    /// itiraz hakkının kaybı demektir (bkz. <c>NotificationTypeInfo.Mandatory</c>).
+    /// </summary>
+    private async Task NotifyDecisionAsync(GrantApplication application, GrantDecision decision)
+    {
+        string? grantName;
+        using (_mtFilter.Disable())
+        {
+            var call = await _callRepo.FirstOrDefaultAsync(
+                c => c.Id == application.GrantCallId && c.TenantId == null);
+            grantName = call == null
+                ? null
+                : (await _grantRepo.FirstOrDefaultAsync(g => g.Id == call.GrantId && g.TenantId == null))?.Name;
+        }
+
+        // İtiraz penceresi TEK cümle olarak taşınır: onay kararında pencere yoktur ve
+        // ayrı tarih/gün değişkenleri kalsaydı gövde yarım cümleyle giderdi.
+        var appealInfo = decision.Outcome == GrantDecisionOutcome.Reddedildi && decision.AppealDeadline.HasValue
+            ? L["Grants:Notify:AppealWindow",
+                decision.AppealDeadline!.Value.ToString("dd.MM.yyyy"),
+                Math.Max(0, (decision.AppealDeadline.Value.Date - Clock.Now.Date).Days)].Value
+            : null;
+
+        await _notifyDispatcher.DispatchToTenantAsync(
+            GrantNotificationTrigger.DecisionIssued,
+            application.TenantId,
+            new Dictionary<string, string?>
+            {
+                ["{çağrı_adı}"] = grantName,
+                ["{karar}"] = L[$"Grants:Notify:Decision:{decision.Outcome}"].Value,
+                ["{itiraz_bilgisi}"] = appealInfo
+            },
+            nameof(GrantApplication), application.Id);
     }
 
     public async Task<GrantAppealConsoleDto> AddItemAsync(AddGrantAppealItemInput input)

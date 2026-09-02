@@ -44,6 +44,7 @@ public class GrantApplicationDocumentAppService : ApplicationService, IGrantAppl
     private readonly NotificationManager _notificationManager;
     private readonly ICurrentTenant _currentTenant;
     private readonly IDataFilter<IMultiTenant> _mtFilter;
+    private readonly GrantNotificationDispatcher _notifyDispatcher;
 
     public GrantApplicationDocumentAppService(
         IRepository<GrantApplication, Guid> appRepo,
@@ -55,7 +56,8 @@ public class GrantApplicationDocumentAppService : ApplicationService, IGrantAppl
         IIdentityUserRepository userRepo,
         NotificationManager notificationManager,
         ICurrentTenant currentTenant,
-        IDataFilter<IMultiTenant> mtFilter)
+        IDataFilter<IMultiTenant> mtFilter,
+        GrantNotificationDispatcher notifyDispatcher)
     {
         _appRepo = appRepo;
         _docRepo = docRepo;
@@ -67,6 +69,7 @@ public class GrantApplicationDocumentAppService : ApplicationService, IGrantAppl
         _notificationManager = notificationManager;
         _currentTenant = currentTenant;
         _mtFilter = mtFilter;
+        _notifyDispatcher = notifyDispatcher;
     }
 
     private GrantPartyRole ViewerRole =>
@@ -121,13 +124,31 @@ public class GrantApplicationDocumentAppService : ApplicationService, IGrantAppl
 
         document.RequestRevision(input.Note);
         await _docRepo.UpdateAsync(document, autoSave: true);
+
+        // 6d · Revizyon isteği firmaya duyurulur. Danışman isteği yazdı ama firma
+        // ekranı açmadan haberi olmazdı; evrak beklerken en pahalı gecikme bu.
+        await NotifyFirmAsync(application, GrantNotificationTrigger.DocumentRevisionRequested,
+            new Dictionary<string, string?>
+            {
+                ["{çağrı_adı}"] = (await GetCatalogAsync(application)).Grant.Name,
+                ["{evrak_adı}"] = document.Name,
+                ["{danışman_notu}"] = input.Note
+            });
+
         return await BuildAsync(application);
     }
+
+    private Task NotifyFirmAsync(
+        GrantApplication application,
+        GrantNotificationTrigger trigger,
+        Dictionary<string, string?> values)
+        => _notifyDispatcher.DispatchToTenantAsync(
+            trigger, application.TenantId, values, nameof(GrantApplication), application.Id);
 
     public async Task<GrantDocumentConsoleDto> AddAsync(AddGrantDocumentInput input)
     {
         var application = await GetEditableApplicationAsync(input.ApplicationId);
-        var existing = await _docRepo.GetListAsync(d => d.GrantApplicationId == application.Id);
+        var existing = await ReadDocumentsAsync(application.Id);
 
         await _docRepo.InsertAsync(new GrantApplicationDocument(
             GuidGenerator.Create(), application.TenantId, application.Id,
@@ -144,7 +165,7 @@ public class GrantApplicationDocumentAppService : ApplicationService, IGrantAppl
     public async Task<GrantDocumentReminderResultDto> SendReminderAsync(Guid applicationId)
     {
         var application = await GetApplicationAsync(applicationId);
-        var documents = await _docRepo.GetListAsync(d => d.GrantApplicationId == application.Id);
+        var documents = await ReadDocumentsAsync(application.Id);
 
         // Hatırlatma KARŞI tarafa gider: kendi eksiğini kendine hatırlatmanın anlamı yok.
         var otherParty = ViewerRole == GrantPartyRole.Firma ? GrantPartyRole.Danisman : GrantPartyRole.Firma;
@@ -160,22 +181,35 @@ public class GrantApplicationDocumentAppService : ApplicationService, IGrantAppl
             return result;
         }
 
-        var grantName = (await GetCatalogAsync(application)).Grant.Name;
-        var title = L["Grants:Documents:ReminderTitle"];
-        var body = L["Grants:Documents:ReminderBody", grantName, missing.Count];
+        var (call, grant) = await GetCatalogAsync(application);
+
+        // 6d · Elle gönderilen hatırlatma da otomatik olanla AYNI şablonu kullanır:
+        // aynı olayın iki farklı metinle gitmesi kullanıcı için tutarsızlık olurdu.
+        // Tür de düzeltildi — daha önce "hibe önerisi" tipiyle gidiyordu, yani
+        // bildirim listesinde ödül ikonuyla çıkıp katalog sayfasına götürüyordu.
+        var values = new Dictionary<string, string?>
+        {
+            ["{çağrı_adı}"] = grant.Name,
+            ["{eksik_evrak_sayısı}"] = missing.Count.ToString(),
+            ["{son_tarih}"] = call.Deadline?.ToString("dd.MM.yyyy"),
+            ["{kalan_gün}"] = call.Deadline.HasValue
+                ? Math.Max(0, (call.Deadline.Value.Date - Clock.Now.Date).Days).ToString()
+                : null
+        };
 
         // Firmadan danışmana giden hatırlatma host kullanıcılarına, danışmandan
         // firmaya giden ise kiracı kullanıcılarına düşer.
         var targetTenantId = otherParty == GrantPartyRole.Firma ? application.TenantId : null;
         using (_currentTenant.Change(targetTenantId))
         {
-            var users = await _userRepo.GetListAsync();
-            foreach (var user in users.Where(u => u.IsActive))
+            var userIds = (await _userRepo.GetListAsync())
+                .Where(u => u.IsActive).Select(u => u.Id).ToList();
+
+            if (await _notifyDispatcher.DispatchAsync(
+                    GrantNotificationTrigger.DocumentDeadlineNear, userIds, values,
+                    nameof(GrantApplication), application.Id))
             {
-                await _notificationManager.PublishAsync(
-                    user.Id, title, body, NotificationType.GrantRecommended,
-                    nameof(GrantApplication), application.Id);
-                result.NotifiedUserCount++;
+                result.NotifiedUserCount = userIds.Count;
             }
         }
 
@@ -202,7 +236,7 @@ public class GrantApplicationDocumentAppService : ApplicationService, IGrantAppl
     {
         var application = await GetApplicationAsync(applicationId);
         var (_, grant) = await GetCatalogAsync(application);
-        var documents = (await _docRepo.GetListAsync(d => d.GrantApplicationId == application.Id))
+        var documents = (await ReadDocumentsAsync(application.Id))
             .OrderBy(d => d.Order).ToList();
         var versions = await GetVersionsAsync(documents);
 
@@ -337,12 +371,37 @@ public class GrantApplicationDocumentAppService : ApplicationService, IGrantAppl
         }
     }
 
+    /// <summary>
+    /// Başvurunun evrak satırları.
+    ///
+    /// <para>🔴 Danışman HOST bağlamında çalışır, evrak satırları ise KİRACIYA aittir.
+    /// Filtre açık okunursa host tarafında liste BOŞ döner: ekran boş görünür ve daha
+    /// kötüsü <see cref="EnsureChecklistAsync"/> "hiç evrak yok" sanıp kontrol
+    /// listesini her açılışta yeniden üretir. <see cref="GetDocumentAsync"/> bu kapıyı
+    /// zaten kapatıyordu; liste okumaları atlanmıştı.</para>
+    ///
+    /// <para><c>Disable()</c> kapsamı tüm kiracılara açar; burada güvenli çünkü
+    /// sorgu TEK bir başvuruya bağlı ve o başvuruya erişim zaten doğrulandı.</para>
+    /// </summary>
+    private async Task<List<GrantApplicationDocument>> ReadDocumentsAsync(Guid applicationId)
+    {
+        using (_mtFilter.Disable())
+        {
+            return await _docRepo.GetListAsync(d => d.GrantApplicationId == applicationId);
+        }
+    }
+
     private async Task<List<GrantApplicationDocumentVersion>> GetVersionsAsync(
         List<GrantApplicationDocument> documents)
     {
         if (documents.Count == 0) { return new List<GrantApplicationDocumentVersion>(); }
         var ids = documents.Select(d => d.Id).ToList();
-        return await _versionRepo.GetListAsync(v => ids.Contains(v.DocumentId));
+
+        // Sürümler de kiracıya ait; aynı gerekçeyle filtre kapatılır.
+        using (_mtFilter.Disable())
+        {
+            return await _versionRepo.GetListAsync(v => ids.Contains(v.DocumentId));
+        }
     }
 
     /// <summary>
@@ -362,7 +421,7 @@ public class GrantApplicationDocumentAppService : ApplicationService, IGrantAppl
         }
         if (requirements.Count == 0) { return; }
 
-        var existing = await _docRepo.GetListAsync(d => d.GrantApplicationId == application.Id);
+        var existing = await ReadDocumentsAsync(application.Id);
         var known = existing.Where(d => d.RequirementId.HasValue)
             .Select(d => d.RequirementId!.Value).ToHashSet();
 
@@ -379,7 +438,7 @@ public class GrantApplicationDocumentAppService : ApplicationService, IGrantAppl
     private async Task<GrantDocumentConsoleDto> BuildAsync(GrantApplication application)
     {
         var (_, grant) = await GetCatalogAsync(application);
-        var documents = (await _docRepo.GetListAsync(d => d.GrantApplicationId == application.Id))
+        var documents = (await ReadDocumentsAsync(application.Id))
             .OrderBy(d => d.Order).ThenBy(d => d.Name).ToList();
         var versions = await GetVersionsAsync(documents);
 

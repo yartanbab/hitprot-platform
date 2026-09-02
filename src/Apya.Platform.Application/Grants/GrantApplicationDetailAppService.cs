@@ -53,6 +53,7 @@ public class GrantApplicationDetailAppService : ApplicationService, IGrantApplic
     private readonly GrantMatchWeightResolver _weightResolver;
     private readonly ICurrentTenant _currentTenant;
     private readonly IDataFilter<IMultiTenant> _mtFilter;
+    private readonly GrantNotificationDispatcher _notifyDispatcher;
 
     public GrantApplicationDetailAppService(
         IRepository<GrantApplication, Guid> appRepo,
@@ -75,7 +76,8 @@ public class GrantApplicationDetailAppService : ApplicationService, IGrantApplic
         GrantMatchManager matcher,
         GrantMatchWeightResolver weightResolver,
         ICurrentTenant currentTenant,
-        IDataFilter<IMultiTenant> mtFilter)
+        IDataFilter<IMultiTenant> mtFilter,
+        GrantNotificationDispatcher notifyDispatcher)
     {
         _appRepo = appRepo;
         _budgetRepo = budgetRepo;
@@ -98,6 +100,7 @@ public class GrantApplicationDetailAppService : ApplicationService, IGrantApplic
         _weightResolver = weightResolver;
         _currentTenant = currentTenant;
         _mtFilter = mtFilter;
+        _notifyDispatcher = notifyDispatcher;
     }
 
     public const string SectionFirm = "Firm";
@@ -164,11 +167,31 @@ public class GrantApplicationDetailAppService : ApplicationService, IGrantApplic
         application.MoveToStep(next.Id);
         await _appRepo.UpdateAsync(application, autoSave: true);
         await LogAsync(application, GrantActivityKind.StageMoved, next.Name);
+        await NotifyStageAsync(application, next.Name);
 
         return await BuildAsync(application);
     }
 
     // ------------------------------------------------------------------ yardımcılar
+
+    /// <summary>
+    /// 6d · Aşama değişikliğini firmaya duyurur. Danışman ekranı host bağlamında
+    /// koştuğu için bildirim kiracıya <see cref="ICurrentTenant.Change"/> ile yazılır.
+    /// </summary>
+    private async Task NotifyStageAsync(GrantApplication application, string? stageName)
+    {
+        var grantName = (await GetCatalogAsync(application)).Grant.Name;
+
+        await _notifyDispatcher.DispatchToTenantAsync(
+            GrantNotificationTrigger.ApplicationStageChanged,
+            application.TenantId,
+            new Dictionary<string, string?>
+            {
+                ["{çağrı_adı}"] = grantName,
+                ["{aşama}"] = stageName
+            },
+            nameof(GrantApplication), application.Id);
+    }
 
     private string ActorName =>
         CurrentUser.Name.IsNullOrWhiteSpace()
