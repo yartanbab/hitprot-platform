@@ -90,11 +90,19 @@
                 <div>
                     <abp-select asp-for="Project.CategoryId" asp-items="Model.Categories" label="Proje Kategorisi" />
                 </div>
+                @* abp-data-datepicker="false" ŞART. ABP'nin genel başlatıcısı
+                   (abp.dom.initializers.initializeDatepickers) tam sayfa yüklenmesinde
+                   input[type=date] alanlarını type="text" yapıp bootstrap-datepicker bağlar
+                   ve değeri tr biçimine ("24.07.2025") çevirir. Sunucu ise asp-for yüzünden
+                   bu alanlar için gizli __Invariant işaretçisi bastığından değer
+                   InvariantCulture ile çözülür → tarihe hiç dokunulmasa bile her kayıt
+                   "… Başlangıç tarihi için geçerli bir değer değil." ile düşüyordu.
+                   İşaretçi, ISO değer basan yerleşik tarayıcı seçicisini korur. *@
                 <div>
-                    <abp-input asp-for="Project.StartDate" type="date" label="Başlangıç Tarihi" />
+                    <abp-input asp-for="Project.StartDate" type="date" abp-data-datepicker="false" label="Başlangıç Tarihi" />
                 </div>
                 <div>
-                    <abp-input asp-for="Project.EndDate" type="date" label="Bitiş Tarihi" />
+                    <abp-input asp-for="Project.EndDate" type="date" abp-data-datepicker="false" label="Bitiş Tarihi" />
                 </div>
                 @if (Model.CanViewBudget)
                 {
