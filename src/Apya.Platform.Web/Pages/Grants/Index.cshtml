@@ -173,14 +173,18 @@
                                 <option value="2">Kapandı</option>
                             </select>
                         </div>
+                        @* Tarih alanlarında abp-data-datepicker="false" ŞART: ABP'nin genel
+                           başlatıcısı input[type=date] alanlarını type="text" yapıp değeri tr
+                           biçimine ("22.08.2026") çevirir. Index.js ise .val()'i ISO sanıp
+                           doğrudan API'ye gönderiyor — çağrı kaydı bu yüzden düşüyordu. *@
                         <div class="row">
                             <div class="col-6 mb-3">
                                 <label class="form-label" for="CallOpenDate">Açılış Tarihi</label>
-                                <input type="date" class="form-control" id="CallOpenDate" />
+                                <input type="date" abp-data-datepicker="false" class="form-control" id="CallOpenDate" />
                             </div>
                             <div class="col-6 mb-3">
                                 <label class="form-label" for="CallDeadline">Son Başvuru Tarihi</label>
-                                <input type="date" class="form-control" id="CallDeadline" />
+                                <input type="date" abp-data-datepicker="false" class="form-control" id="CallDeadline" />
                             </div>
                         </div>
                         <div class="row">
@@ -283,7 +287,7 @@ else
                     </div>
                     <div class="apya-field">
                         <label class="apya-field-label" for="ProfileFoundedOn"><span>@L["Grants:DataField:FoundedOn"]</span></label>
-                        <input type="date" class="form-control form-control-sm apya-numeric" id="ProfileFoundedOn" />
+                        <input type="date" abp-data-datepicker="false" class="form-control form-control-sm apya-numeric" id="ProfileFoundedOn" />
                     </div>
                     <div class="apya-field">
                         <label class="apya-field-label" for="ProfileStaff"><span>@L["Grants:DataField:StaffCount"]</span></label>

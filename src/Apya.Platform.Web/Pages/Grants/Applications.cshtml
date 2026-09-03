@@ -97,9 +97,12 @@
                                 <option value="2">Ödendi</option>
                             </select>
                         </div>
+                        @* abp-data-datepicker="false" ŞART: ABP'nin genel başlatıcısı
+                           input[type=date] alanını type="text" yapıp değeri tr biçimine
+                           çevirir; Applications.js ise .val()'i ISO sanıp API'ye gönderir. *@
                         <div class="col-6 mb-1">
                             <label class="form-label" for="TrancheDueDate">Vade</label>
-                            <input type="date" class="form-control" id="TrancheDueDate" />
+                            <input type="date" abp-data-datepicker="false" class="form-control" id="TrancheDueDate" />
                         </div>
                     </div>
                 </div>
@@ -131,7 +134,7 @@
                     <div class="row">
                         <div class="col-6 mb-3">
                             <label class="form-label" for="MilestoneDueDate">Vade</label>
-                            <input type="date" class="form-control" id="MilestoneDueDate" />
+                            <input type="date" abp-data-datepicker="false" class="form-control" id="MilestoneDueDate" />
                         </div>
                         <div class="col-6 mb-1 d-flex align-items-end">
                             <div class="form-check">
