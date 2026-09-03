@@ -658,7 +658,10 @@ public class PlatformNavigationResolver : IScopedDependency
         // olurdu.
         var financeReports = new ApplicationMenuItem(
             "Apya.Finance.Reports", l["Menu:Finance:Reports"], icon: "fa fa-chart-simple", order: 4);
-        if (await _permission.IsGrantedAsync(PlatformPermissions.Projects.Default))
+        // Sayfa bütçe özetinden beslenir; kapı sayfayla AYNI izin olmalı, yoksa
+        // menüdeki öğe tıklanınca 403 verir. (PR #311'den geldi — bu PR aynı
+        // satırı taşıdığı için merge'de çakışmıştı.)
+        if (await _permission.IsGrantedAsync(PlatformPermissions.Projects.ViewBudget))
             financeReports.AddItem(new ApplicationMenuItem("Apya.Reports.ProjectBudget", l["Menu:ProjectBudget"], icon: "fa fa-chart-bar", url: "/Reports/ProjectBudget"));
         if (await _permission.IsGrantedAsync(PlatformPermissions.Customers.Default))
             financeReports.AddItem(new ApplicationMenuItem("Apya.Reports.CustomerStatement", l["Menu:CustomerStatement"], icon: "fa fa-file-lines", url: "/Reports/CustomerStatement"));

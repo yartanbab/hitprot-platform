@@ -6,11 +6,10 @@
     iki ekranın rakamı ayrışmasın diye ikinci bir hesap yazılmadı.
 
     Görev bazlı kırılım İKİ kaynağı birleştirir: plan görevin bütçe bağından
-    (TaskDto.PlannedAmount), gerçekleşen ise finans özetinin TaskBreakdown alanindan.
+    (TaskDto.PlannedAmount), gerçekleşen ise aynı bütçe özetinin TaskBreakdown alanından.
     Planı olmayan ama harcaması olan görev de tabloda görünür — plan sütunu boş kalır.
 *@
 @using Apya.Platform.Web.Pages.Shared
-@using Apya.Platform.ProjectFinance
 @model Apya.Platform.Web.Pages.Projects.ProjectDetailsModel
 
 @functions {
@@ -26,7 +25,7 @@
     var financeUrl = $"/Finance?projectId={Model.Id}&tab=genel";
 
     // Plan gorevden, gerceklesen finans ozetinden gelir; ikisi TaskId uzerinde bulusur.
-    var actualByTask = (Model.Finance?.TaskBreakdown ?? new List<ProjectFinanceTaskLineDto>())
+    var actualByTask = b.TaskBreakdown
         .Where(x => x.TaskId != null)
         .ToDictionary(x => x.TaskId!.Value);
 
@@ -47,7 +46,7 @@
         .ToList();
 
     // Hicbir goreve baglanmamis harcama; tabloda ayri satir olarak gosterilir.
-    var untaggedSpent = (Model.Finance?.TaskBreakdown ?? new List<ProjectFinanceTaskLineDto>())
+    var untaggedSpent = b.TaskBreakdown
         .Where(x => x.TaskId == null).Sum(x => x.Expense);
 
     var plannedTotal = taskRows.Sum(r => r.Plan ?? 0m);

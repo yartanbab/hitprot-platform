@@ -223,6 +223,7 @@ public class ApplyBudgetRevisionDto
 public class ProjectBudgetOverviewDto
 {
     public Guid ProjectId { get; set; }
+    public string ProjectName { get; set; } = string.Empty;
     public string Currency { get; set; } = "TRY";
     public bool HasBudgetLines { get; set; }
 
@@ -281,7 +282,26 @@ public class ProjectBudgetOverviewDto
     public int TrancheCount { get; set; }
     public int CollectedTrancheCount { get; set; }
 
+    public bool IsOverBudget => ApprovedBudget > 0 && SpentAmount > ApprovedBudget;
+
     public List<ProjectBudgetLineDto> Lines { get; set; } = new();
+
+    /// <summary>
+    /// Gider/gelirin göreve göre kırılımı. Göreve etiketlenmemiş kayıtlar tek bir
+    /// <c>TaskId = null</c> satırında toplanır — "proje geneli" meşru bir durumdur.
+    /// </summary>
+    public List<ProjectBudgetTaskLineDto> TaskBreakdown { get; set; } = new();
+}
+
+/// <summary>Görev bazlı gerçekleşme satırı; <c>TaskId</c> null ise proje geneli.</summary>
+public class ProjectBudgetTaskLineDto
+{
+    public Guid? TaskId { get; set; }
+    public string? TaskName { get; set; }
+    public decimal Expense { get; set; }
+    public decimal Income { get; set; }
+
+    public decimal Net => Income - Expense;
 }
 
 /// <summary>

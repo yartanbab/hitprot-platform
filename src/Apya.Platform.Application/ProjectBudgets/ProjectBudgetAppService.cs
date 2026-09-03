@@ -87,6 +87,7 @@ public class ProjectBudgetAppService : ApplicationService, IProjectBudgetAppServ
         var dto = new ProjectBudgetOverviewDto
         {
             ProjectId = projectId,
+            ProjectName = project.Name,
             Currency = string.IsNullOrWhiteSpace(project.Currency) ? "TRY" : project.Currency,
             HasBudgetLines = hasLines,
 
@@ -110,7 +111,38 @@ public class ProjectBudgetAppService : ApplicationService, IProjectBudgetAppServ
             Lines = lines
         };
 
+        dto.TaskBreakdown = await BuildTaskBreakdownAsync(expenses, incomes);
+
         return dto;
+    }
+
+    /// <summary>
+    /// Gider/gelirin görev kırılımı. Görev adları TEK sorguda çekilir; görev
+    /// etiketi hiç yoksa sorgu açılmaz.
+    /// </summary>
+    private async Task<List<ProjectBudgetTaskLineDto>> BuildTaskBreakdownAsync(
+        List<Expense> expenses,
+        List<IncomeEntry> incomes)
+    {
+        var taskKeys = expenses.Select(e => e.TaskId)
+            .Concat(incomes.Select(i => i.TaskId))
+            .Distinct()
+            .ToList();
+
+        var taskIds = taskKeys.Where(x => x.HasValue).Select(x => x!.Value).ToList();
+        var tasks = taskIds.Count > 0
+            ? await _taskRepository.GetListAsync(t => taskIds.Contains(t.Id))
+            : new List<TaskItem>();
+
+        return taskKeys
+            .Select(tk => new ProjectBudgetTaskLineDto
+            {
+                TaskId = tk,
+                TaskName = tk.HasValue ? tasks.FirstOrDefault(t => t.Id == tk.Value)?.Title : null,
+                Expense = expenses.Where(e => e.TaskId == tk).Sum(e => e.Amount),
+                Income = incomes.Where(i => i.TaskId == tk).Sum(i => i.Amount)
+            })
+            .ToList();
     }
 
     /// <summary>

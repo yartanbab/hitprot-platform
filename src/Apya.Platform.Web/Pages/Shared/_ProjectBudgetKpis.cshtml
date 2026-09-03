@@ -1,0 +1,75 @@
+@*
+    Proje bütçesi KPI şeridi — TEK kaynak.
+
+    Finans → Genel sekmesi ve Proje Detay'daki "Bütçe Durumu" modalı AYNI partial'ı
+    basar. İki yerde ayrı markup tutmak, etiketlerin ve ipuçlarının zamanla
+    ayrışması demekti; rakamlar da (Bütçe = TotalBudget mü, onaylanan mı) öyle
+    ayrışmıştı.
+*@
+@using Apya.Platform.ProjectBudgets.Dtos
+@using Apya.Platform.Web.Pages.Shared
+@model ProjectBudgetOverviewDto
+
+@functions {
+    string MoneyKpi(decimal v, string cur)
+        => cur == "TRY" ? "₺" + v.ToString("N0") : v.ToString("N0") + " " + cur;
+}
+
+@{
+    var b = Model;
+    var cur = b.Currency;
+}
+
+<div class="row g-3 mb-3 apya-finance-kpis">
+    <div class="col-6 col-md-4">
+        <partial name="_KpiCard" model='new KpiCardModel {
+            Icon = "fa-file-signature", Accent = "neutral", Label = "Sözleşme bütçesi",
+            Value = MoneyKpi(b.ContractBudget, cur),
+            SubText = b.HasBudgetLines ? $"{b.Lines.Count} kalem" : "kalem tanımlı değil",
+            Hint = b.HasBudgetLines
+                ? "Kalemlerin sözleşmedeki ilk tutarlarının toplamı. Revizyon bu tutarı değiştirmez."
+                : "Bu projede bütçe kalemi tanımlı değil; proje bütçesi tek tutar olarak gösteriliyor." }' />
+    </div>
+    <div class="col-6 col-md-4">
+        <partial name="_KpiCard" model='new KpiCardModel {
+            Icon = "fa-wallet", Accent = "accent", Label = "Onaylanan bütçe",
+            Value = MoneyKpi(b.ApprovedBudget, cur),
+            SubText = b.LatestRevisionNo > 0 ? $"Rev.{b.LatestRevisionNo}" : "revizyon yok",
+            Hint = "Yürürlükteki bütçe. Bütçe revizyonu yalnız bu tutarı değiştirir." }' />
+    </div>
+    <div class="col-6 col-md-4">
+        <partial name="_KpiCard" model='new KpiCardModel {
+            Icon = "fa-arrow-down-long", Accent = "positive",
+            Label = b.TrancheCount > 0 ? "Gelen (tahsil)" : "Gelir",
+            Value = MoneyKpi(b.MoneyIn, cur),
+            SubText = b.TrancheCount > 0
+                ? $"{b.CollectedTrancheCount}/{b.TrancheCount} dilim · %{b.FundingPercent} bütçe"
+                : "gelir kayıtları",
+            Hint = b.TrancheCount > 0
+                ? "Fonlama dilimlerinden tahsil edilen toplam."
+                : "Bu projede dilim tanımlı değil; projeye bağlı gelir kayıtlarının toplamı gösteriliyor." }' />
+    </div>
+    <div class="col-6 col-md-4">
+        <partial name="_KpiCard" model='new KpiCardModel {
+            Icon = "fa-arrow-up-long", Accent = "negative", Label = "Harcanan",
+            Value = MoneyKpi(b.SpentAmount, cur),
+            SubText = $"%{b.BudgetUsagePercent} bütçe",
+            Hint = "Bu projeye bağlı TÜM gider kayıtları — kaleme yazılmamış olanlar dahil." }' />
+    </div>
+    <div class="col-6 col-md-4">
+        <partial name="_KpiCard" model='new KpiCardModel {
+            Icon = "fa-sack-dollar", Accent = b.AvailableCash < 0 ? "negative" : "brand",
+            Label = "Kullanılabilir nakit",
+            Value = MoneyKpi(b.AvailableCash, cur),
+            SubText = "gelen − harcanan",
+            Hint = "Bütçe değil NAKİT sorusunun cevabı: eline geçen paradan ne kadarı duruyor." }' />
+    </div>
+    <div class="col-6 col-md-4">
+        <partial name="_KpiCard" model='new KpiCardModel {
+            Icon = "fa-scale-balanced", Accent = b.RemainingBudget < 0 ? "negative" : "neutral",
+            Label = "Kalan bütçe",
+            Value = MoneyKpi(b.RemainingBudget, cur),
+            SubText = b.RemainingBudget < 0 ? "bütçe aşıldı" : "onaylanan − harcanan",
+            Hint = "Onaylanan bütçe eksi toplam gider. Gelir bu hesaba girmez." }' />
+    </div>
+</div>
