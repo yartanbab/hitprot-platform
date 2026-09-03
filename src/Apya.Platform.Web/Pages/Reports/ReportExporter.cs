@@ -8,7 +8,7 @@ using Apya.Platform.DynamicAssets;
 using Apya.Platform.DynamicAssets.Dtos;
 using Apya.Platform.Feedbacks;
 using Apya.Platform.Feedbacks.Dtos;
-using Apya.Platform.ProjectFinance;
+using Apya.Platform.ProjectBudgets.Dtos;
 using Apya.Platform.Reports;
 using ClosedXML.Excel;
 using QuestPDF.Fluent;
@@ -281,7 +281,9 @@ internal static class ReportExporter
 
     // ─── PROJECT BUDGET ───────────────────────────────────────────────────────
 
-    public static byte[] ProjectBudgetToExcel(ProjectFinanceSummaryDto s)
+    // Ekranla AYNI sözlük ve AYNI hesap: sözleşme/onaylanan bütçe, gelen para,
+    // harcanan, kullanılabilir nakit, kalan bütçe.
+    public static byte[] ProjectBudgetToExcel(ProjectBudgetOverviewDto s)
     {
         using var wb = new XLWorkbook();
         var ws = wb.AddWorksheet("Bütçe");
@@ -290,29 +292,30 @@ internal static class ReportExporter
         ws.Range(1, 1, 1, 4).Merge().Style.Font.Bold = true;
 
         // Özet
-        ws.Cell(3, 1).Value = "Bütçe"; ws.Cell(3, 2).Value = s.Budget;
-        ws.Cell(4, 1).Value = "Toplam Gider"; ws.Cell(4, 2).Value = s.TotalExpense;
-        ws.Cell(5, 1).Value = "Toplam Gelir"; ws.Cell(5, 2).Value = s.TotalIncome;
-        ws.Cell(6, 1).Value = "Net (Gelir−Gider)"; ws.Cell(6, 2).Value = s.Net;
-        ws.Cell(7, 1).Value = "Kalan Bütçe"; ws.Cell(7, 2).Value = s.BudgetRemaining;
-        ws.Cell(8, 1).Value = "Bütçe Kullanımı %"; ws.Cell(8, 2).Value = s.BudgetUsagePercent;
+        ws.Cell(3, 1).Value = "Sözleşme bütçesi"; ws.Cell(3, 2).Value = s.ContractBudget;
+        ws.Cell(4, 1).Value = "Onaylanan bütçe"; ws.Cell(4, 2).Value = s.ApprovedBudget;
+        ws.Cell(5, 1).Value = s.TrancheCount > 0 ? "Gelen (tahsil)" : "Gelir"; ws.Cell(5, 2).Value = s.MoneyIn;
+        ws.Cell(6, 1).Value = "Harcanan"; ws.Cell(6, 2).Value = s.SpentAmount;
+        ws.Cell(7, 1).Value = "Kullanılabilir nakit"; ws.Cell(7, 2).Value = s.AvailableCash;
+        ws.Cell(8, 1).Value = "Kalan bütçe"; ws.Cell(8, 2).Value = s.RemainingBudget;
+        ws.Cell(9, 1).Value = "Bütçe Kullanımı %"; ws.Cell(9, 2).Value = s.BudgetUsagePercent;
 
-        for (int r = 3; r <= 7; r++)
-            ws.Cell(r, 2).Style.NumberFormat.Format = "#,##0.00";
         for (int r = 3; r <= 8; r++)
+            ws.Cell(r, 2).Style.NumberFormat.Format = "#,##0.00";
+        for (int r = 3; r <= 9; r++)
             ws.Cell(r, 1).Style.Font.Bold = true;
 
-        if (s.Net < 0) ws.Cell(6, 2).Style.Font.FontColor = XLColor.Red;
-        if (s.OverBudget) ws.Cell(7, 2).Style.Font.FontColor = XLColor.Red;
+        if (s.AvailableCash < 0) ws.Cell(7, 2).Style.Font.FontColor = XLColor.Red;
+        if (s.IsOverBudget) ws.Cell(8, 2).Style.Font.FontColor = XLColor.Red;
 
         // Task kırılımı
         if (s.TaskBreakdown.Any(t => t.TaskId.HasValue))
         {
-            int headerRow = 10;
-            ws.Cell(headerRow, 1).Value = "Task Kırılımı";
+            int headerRow = 11;
+            ws.Cell(headerRow, 1).Value = "Görev Kırılımı";
             ws.Cell(headerRow, 1).Style.Font.Bold = true;
 
-            string[] headers = ["Task", "Gider", "Gelir", "Net"];
+            string[] headers = ["Görev", "Gider", "Gelir", "Net"];
             for (int i = 0; i < headers.Length; i++)
             {
                 ws.Cell(headerRow + 1, i + 1).Value = headers[i];
@@ -324,7 +327,7 @@ internal static class ReportExporter
             foreach (var t in s.TaskBreakdown.OrderByDescending(x => x.Expense))
             {
                 ws.Cell(row, 1).Value = t.TaskId.HasValue
-                    ? t.TaskId.ToString()![..8] + "…"
+                    ? (t.TaskName ?? t.TaskId.ToString()![..8] + "…")
                     : "(Proje geneli)";
                 ws.Cell(row, 2).Value = t.Expense;
                 ws.Cell(row, 3).Value = t.Income;
@@ -341,9 +344,9 @@ internal static class ReportExporter
         return ms.ToArray();
     }
 
-    public static byte[] ProjectBudgetToPdf(ProjectFinanceSummaryDto s, DateTime? now = null)
+    public static byte[] ProjectBudgetToPdf(ProjectBudgetOverviewDto s, DateTime? now = null)
     {
-        var barColor = s.OverBudget ? Colors.Red.Medium : (s.BudgetUsagePercent >= 80 ? Colors.Yellow.Medium : Colors.Green.Medium);
+        var barColor = s.IsOverBudget ? Colors.Red.Medium : (s.BudgetUsagePercent >= 80 ? Colors.Yellow.Medium : Colors.Green.Medium);
 
         return Document.Create(container =>
         {
@@ -372,11 +375,12 @@ internal static class ReportExporter
                             else { lc.Text(label); vc.AlignRight().Text(value); }
                         }
 
-                        Row("Bütçe", $"{s.Budget:N2} {s.Currency}");
-                        Row("Toplam Gider", $"{s.TotalExpense:N2}");
-                        Row("Toplam Gelir", $"{s.TotalIncome:N2}");
-                        Row("Net (Gelir−Gider)", $"{s.Net:N2}", bold: true);
-                        Row("Kalan Bütçe", $"{s.BudgetRemaining:N2}", bold: true);
+                        Row("Sözleşme bütçesi", $"{s.ContractBudget:N2} {s.Currency}");
+                        Row("Onaylanan bütçe", $"{s.ApprovedBudget:N2} {s.Currency}");
+                        Row(s.TrancheCount > 0 ? "Gelen (tahsil)" : "Gelir", $"{s.MoneyIn:N2}");
+                        Row("Harcanan", $"{s.SpentAmount:N2}");
+                        Row("Kullanılabilir nakit", $"{s.AvailableCash:N2}", bold: true);
+                        Row("Kalan bütçe", $"{s.RemainingBudget:N2}", bold: true);
                         Row("Bütçe Kullanımı", $"%{s.BudgetUsagePercent}");
                     });
 
@@ -385,7 +389,7 @@ internal static class ReportExporter
                     // Task kırılımı
                     if (s.TaskBreakdown.Any(t => t.TaskId.HasValue))
                     {
-                        col.Item().Text("Task Bazlı Kırılım").Bold().FontSize(11);
+                        col.Item().Text("Görev Bazlı Kırılım").Bold().FontSize(11);
                         col.Item().Height(4);
                         col.Item().Table(table =>
                         {
@@ -404,7 +408,7 @@ internal static class ReportExporter
 
                             table.Header(h =>
                             {
-                                foreach (var t in new[] { "Task", "Gider", "Gelir", "Net" })
+                                foreach (var t in new[] { "Görev", "Gider", "Gelir", "Net" })
                                     h.Cell().Element(HeaderCell).Text(t).Bold();
                             });
 
@@ -412,7 +416,7 @@ internal static class ReportExporter
                             {
                                 var net = t.Income - t.Expense;
                                 table.Cell().Element(DataCell)
-                                     .Text(t.TaskId.HasValue ? t.TaskId.ToString()![..8] + "…" : "(Proje geneli)");
+                                     .Text(t.TaskId.HasValue ? (t.TaskName ?? t.TaskId.ToString()![..8] + "…") : "(Proje geneli)");
                                 table.Cell().Element(DataCell).AlignRight().Text(t.Expense.ToString("N2"));
                                 table.Cell().Element(DataCell).AlignRight().Text(t.Income.ToString("N2"));
                                 table.Cell().Element(DataCell).AlignRight()
