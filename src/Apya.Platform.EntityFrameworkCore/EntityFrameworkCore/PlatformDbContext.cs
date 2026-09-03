@@ -166,6 +166,7 @@ namespace Apya.Platform.EntityFrameworkCore
         public DbSet<TaskTagAssignment> TaskTagAssignments { get; set; }
         public DbSet<TaskFeatureAssignment> TaskFeatureAssignments { get; set; }
         public DbSet<TaskChecklistItem> TaskChecklistItems { get; set; }
+        public DbSet<TaskDocument> TaskDocuments { get; set; }
         public DbSet<TaskFavorite> TaskFavorites { get; set; }
         public DbSet<TaskWatcher> TaskWatchers { get; set; }
         public DbSet<TaskTemplate> TaskTemplates { get; set; }
@@ -1227,6 +1228,17 @@ namespace Apya.Platform.EntityFrameworkCore
                 b.ToTable(PlatformConsts.DbTablePrefix + "TaskChecklistItems", PlatformConsts.DbSchema);
                 b.ConfigureByConvention();
                 b.Property(x => x.Text).IsRequired().HasMaxLength(500);
+                b.HasIndex(x => x.TaskId);
+            });
+
+            builder.Entity<TaskDocument>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "TaskDocuments", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+                b.Property(x => x.Title).IsRequired().HasMaxLength(200);
+                // Content uzunluk SINIRI YOK: zengin metin gövdesi (nvarchar(max) /
+                // text). HasMaxLength verilirse uzun bir belge kaydederken sessizce
+                // kesilir ya da patlar.
                 b.HasIndex(x => x.TaskId);
             });
 

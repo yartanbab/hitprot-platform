@@ -37,6 +37,7 @@ namespace Apya.Platform.Tasks
         private readonly IRepository<TaskTagAssignment, Guid> _taskTagRepository;
         private readonly IRepository<TaskFeatureAssignment, Guid> _featureAssignmentRepository;
         private readonly IRepository<TaskChecklistItem, Guid> _checklistRepository;
+        private readonly IRepository<TaskDocument, Guid> _documentRepository;
         private readonly IRepository<TaskFavorite, Guid> _favoriteRepository;
         private readonly IRepository<TaskWatcher, Guid> _watcherRepository;
         private readonly TaskManager _taskManager;
@@ -62,6 +63,7 @@ namespace Apya.Platform.Tasks
             IRepository<TaskTagAssignment, Guid> taskTagRepository,
             IRepository<TaskFeatureAssignment, Guid> featureAssignmentRepository,
             IRepository<TaskChecklistItem, Guid> checklistRepository,
+            IRepository<TaskDocument, Guid> documentRepository,
             IRepository<TaskFavorite, Guid> favoriteRepository,
             IRepository<TaskWatcher, Guid> watcherRepository,
             TaskManager taskManager,
@@ -88,6 +90,7 @@ namespace Apya.Platform.Tasks
             _taskTagRepository     = taskTagRepository;
             _featureAssignmentRepository = featureAssignmentRepository;
             _checklistRepository   = checklistRepository;
+            _documentRepository    = documentRepository;
             _favoriteRepository    = favoriteRepository;
             _watcherRepository     = watcherRepository;
             _taskManager           = taskManager;
@@ -1279,6 +1282,139 @@ namespace Apya.Platform.Tasks
                 await _featureAssignmentRepository.DeleteAsync(assignment, autoSave: true);
             }
         }
+
+        // --- BELGELER (TaskDocument) ---
+        // Yetki kapısı görevin KENDİSİ: EnsureTaskAccessAllowedAsync tenant + gizlilik
+        // süzgecini uygular, yazma uçları ayrıca Tasks.Edit ister. Ayrı bir belge izni
+        // TANIMLANMADI — feature kapısı olmayan izin kiracıya ulaşmıyor, o zincire
+        // girmeye değecek bir ayrım yok.
+
+        /// <summary>
+        /// Görevin belgeleri. Content BİLEREK boş bırakılır: gövdeler uzun olabiliyor
+        /// ve liste satırı yalnız başlık/tarih/yazar gösteriyor. Tam gövde için
+        /// <see cref="GetDocumentAsync"/>.
+        /// </summary>
+        public async Task<List<TaskDocumentDto>> GetDocumentsAsync(Guid taskId)
+        {
+            await EnsureTaskAccessAllowedAsync(taskId);
+
+            var query = await _documentRepository.GetQueryableAsync();
+            var rows = await AsyncExecuter.ToListAsync(
+                query.Where(d => d.TaskId == taskId)
+                     .OrderByDescending(d => d.LastModificationTime ?? d.CreationTime)
+                     .Select(d => new
+                     {
+                         d.Id, d.TaskId, d.Title,
+                         d.CreationTime, d.CreatorId,
+                         d.LastModificationTime, d.LastModifierId,
+                         // Gövdeyi ÇEKMEDEN uzunluğunu al — "boş belge" ayrımı için yeterli.
+                         Length = d.Content == null ? 0 : d.Content.Length
+                     }));
+
+            var names = await ResolveUserNamesAsync(
+                rows.SelectMany(r => new[] { r.LastModifierId, r.CreatorId }));
+
+            return rows.Select(r => new TaskDocumentDto
+            {
+                Id = r.Id,
+                TaskId = r.TaskId,
+                Title = r.Title,
+                Content = null,
+                ContentLength = r.Length,
+                CreationTime = r.CreationTime,
+                CreatorId = r.CreatorId,
+                LastModificationTime = r.LastModificationTime,
+                LastModifierId = r.LastModifierId,
+                EditorName = NameOf(names, r.LastModifierId ?? r.CreatorId)
+            }).ToList();
+        }
+
+        public async Task<TaskDocumentDto> GetDocumentAsync(Guid documentId)
+        {
+            var doc = await _documentRepository.GetAsync(documentId);
+            await EnsureTaskAccessAllowedAsync(doc.TaskId);
+
+            var names = await ResolveUserNamesAsync(new[] { doc.LastModifierId, doc.CreatorId });
+            return MapDocument(doc, NameOf(names, doc.LastModifierId ?? doc.CreatorId));
+        }
+
+        public async Task<TaskDocumentDto> CreateDocumentAsync(Guid taskId, string title)
+        {
+            await CheckPolicyAsync(PlatformPermissions.Tasks.Edit);
+            await EnsureTaskAccessAllowedAsync(taskId);
+
+            if (string.IsNullOrWhiteSpace(title))
+            {
+                throw new Volo.Abp.UserFriendlyException("Belge başlığı boş olamaz.", "Platform:Task:DocumentTitleRequired");
+            }
+
+            // autoSave: aynı UoW içinde geri okunacak bir alan yok, ama dönen DTO'nun
+            // CreationTime/CreatorId'si dolu olmalı — kaydetmeden bunlar boş gelir.
+            var doc = await _documentRepository.InsertAsync(
+                new TaskDocument(GuidGenerator.Create(), taskId, title.Trim()), autoSave: true);
+
+            var names = await ResolveUserNamesAsync(new[] { doc.CreatorId });
+            return MapDocument(doc, NameOf(names, doc.CreatorId));
+        }
+
+        public async Task<TaskDocumentDto> UpdateDocumentAsync(Guid documentId, string title, string? content)
+        {
+            await CheckPolicyAsync(PlatformPermissions.Tasks.Edit);
+
+            var doc = await _documentRepository.GetAsync(documentId);
+            await EnsureTaskAccessAllowedAsync(doc.TaskId);
+
+            if (string.IsNullOrWhiteSpace(title))
+            {
+                throw new Volo.Abp.UserFriendlyException("Belge başlığı boş olamaz.", "Platform:Task:DocumentTitleRequired");
+            }
+
+            doc.Title = title.Trim();
+            doc.Content = content;
+            await _documentRepository.UpdateAsync(doc, autoSave: true);
+
+            var names = await ResolveUserNamesAsync(new[] { doc.LastModifierId, doc.CreatorId });
+            return MapDocument(doc, NameOf(names, doc.LastModifierId ?? doc.CreatorId));
+        }
+
+        public async Task DeleteDocumentAsync(Guid documentId)
+        {
+            await CheckPolicyAsync(PlatformPermissions.Tasks.Edit);
+
+            var doc = await _documentRepository.GetAsync(documentId);
+            await EnsureTaskAccessAllowedAsync(doc.TaskId);
+
+            // FullAuditedEntity → SOFT delete. Kullanıcı yazısı, geri alınabilir kalsın.
+            await _documentRepository.DeleteAsync(doc, autoSave: true);
+        }
+
+        private static TaskDocumentDto MapDocument(TaskDocument doc, string editorName) => new TaskDocumentDto
+        {
+            Id = doc.Id,
+            TaskId = doc.TaskId,
+            Title = doc.Title,
+            Content = doc.Content,
+            ContentLength = doc.Content?.Length ?? 0,
+            CreationTime = doc.CreationTime,
+            CreatorId = doc.CreatorId,
+            LastModificationTime = doc.LastModificationTime,
+            LastModifierId = doc.LastModifierId,
+            EditorName = editorName
+        };
+
+        /// <summary>Kullanıcı id'lerini görünen ada çözer (tek sorgu, null'lar elenir).</summary>
+        private async Task<Dictionary<Guid, string>> ResolveUserNamesAsync(IEnumerable<Guid?> ids)
+        {
+            var list = ids.Where(id => id.HasValue).Select(id => id!.Value).Distinct().ToList();
+            if (list.Count == 0) { return new Dictionary<Guid, string>(); }
+
+            var queryable = await _identityRepository.GetQueryableAsync();
+            var users = await AsyncExecuter.ToListAsync(queryable.Where(u => list.Contains(u.Id)));
+            return users.ToDictionary(u => u.Id, u => u.UserName);
+        }
+
+        private static string NameOf(Dictionary<Guid, string> names, Guid? id)
+            => id.HasValue && names.TryGetValue(id.Value, out var n) ? n : "Sistem";
 
         public async Task<List<TaskChecklistItemDto>> GetChecklistItemsAsync(Guid taskId)
         {

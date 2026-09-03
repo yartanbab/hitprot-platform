@@ -11,6 +11,7 @@ import { GalleryTabV3 } from './v3/features/GalleryTabV3';
 import { SubtaskTableTabV3 } from './v3/features/SubtaskTableTabV3';
 import { SubtaskBoardTabV3 } from './v3/features/SubtaskBoardTabV3';
 import { TaskCalendarTabV3 } from './v3/features/TaskCalendarTabV3';
+import { DocumentsTabV3 } from './v3/features/DocumentsTabV3';
 import { GanttTabV3 } from './v3/features/GanttTabV3';
 import { DependenciesTabV3 } from './v3/features/DependenciesAndFinanceTabV3';
 // Not: dosyada artık yalnız TimeTrackingTabV3 var — diğer "OtherFeatures*"
@@ -151,6 +152,13 @@ export const TASK_FEATURE_REGISTRY = [
         category: 'iletisim', isCore: false, order: 33, permission: null,
         implemented: true, component: null,
         hidden: true, // GİZLİ (2026-09-03) — bkz. dosya sonundaki not
+    },
+    {
+        // Göreve bağlı zengin metin belgeleri (TaskDocument tablosu). Dosya
+        // ekinden ayrıdır: ek yüklenen dosyayı, belge yazılan metni saklar.
+        code: 'documents', title: 'Belge', icon: 'fa-file-lines',
+        category: 'gorev', isCore: false, order: 9, permission: null,
+        implemented: true, component: DocumentsTabV3,
     },
     {
         code: 'gallery', title: 'Dosya Galerisi', icon: 'fa-image',

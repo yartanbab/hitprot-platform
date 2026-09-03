@@ -82,6 +82,22 @@ namespace Apya.Platform.Tasks
         Task RemoveFeatureAsync(Guid taskId, string featureCode);
 
         // Kontrol Listesi (Faz 4)
+        // --- Belgeler ---
+        // Göreve bağlı zengin metin belgeleri (TaskDocument). Dosya ekinden ayrıdır:
+        // ek yüklenmiş dosyayı saklar, belge uygulama içinde YAZILAN metni.
+        // Yetki kapısı görevin kendisidir — ayrı izin tanımlanmadı.
+
+        /// <summary>Görevin belgeleri. Content BOŞ döner (liste uzun gövdelerle
+        /// şişmesin); tam gövde için GetDocumentAsync kullanılır.</summary>
+        Task<List<TaskDocumentDto>> GetDocumentsAsync(Guid taskId);
+
+        /// <summary>Tek belgenin tam gövdesiyle birlikte hâli.</summary>
+        Task<TaskDocumentDto> GetDocumentAsync(Guid documentId);
+
+        Task<TaskDocumentDto> CreateDocumentAsync(Guid taskId, string title);
+        Task<TaskDocumentDto> UpdateDocumentAsync(Guid documentId, string title, string? content);
+        Task DeleteDocumentAsync(Guid documentId);
+
         Task<List<TaskChecklistItemDto>> GetChecklistItemsAsync(Guid taskId);
         Task<Guid> AddChecklistItemAsync(Guid taskId, string text);
         Task ToggleChecklistItemAsync(Guid itemId);
