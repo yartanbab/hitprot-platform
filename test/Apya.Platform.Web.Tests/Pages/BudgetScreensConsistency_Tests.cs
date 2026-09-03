@@ -87,4 +87,38 @@ public class BudgetScreensConsistency_Tests : PlatformWebTestBase
             html.ShouldNotContain("₺1.000.000");
         }
     }
+
+    /// <summary>
+    /// Bütçesi olan projeden bütçe · finans · belge ekranlarına giden bağlantılar
+    /// üç giriş noktasında da basılır ve AYNI adreslere gider. Adresler iki yerde
+    /// yazılıyor (Razor partial + Index.js) — bu test ikisinin ayrışmasını yakalar.
+    /// </summary>
+    [Fact]
+    public async Task Projeden_butce_finans_ve_belge_ekranlarina_gidilebilir()
+    {
+        var projectId = await CreateProjectWithRevisedLineAsync("BSC-2");
+
+        var detail = WebUtility.HtmlDecode(
+            await GetResponseAsStringAsync($"/Projects/ProjectDetails/{projectId}"));
+
+        // Şeritteki Bütçe çubuğu artık menü açıyor (eskiden doğrudan modal).
+        detail.ShouldContain("id=\"btn-budget-summary\"");
+        detail.ShouldContain("data-bs-toggle=\"dropdown\"");
+
+        // Üçlü: bütçe kalemleri · finans çatısı · belgeler. Şerit menüsü ve ⋯
+        // menüsü aynı partial'ı bastığı için her adres en az iki kez geçer.
+        detail.ShouldContain($"/Finance?projectId={projectId}&tab=kalemler");
+        detail.ShouldContain($"/Finance?projectId={projectId}&tab=genel");
+        detail.ShouldContain($"/Documents/Scope?projectId={projectId}");
+        detail.ShouldContain("Bütçe durumu");
+
+        // Proje listesi: menü kabuğu sayfa KÖKÜNDE durur (kart overflow:hidden
+        // taşıdığı için içeride kırpılırdı); adresleri Index.js yazar.
+        var list = WebUtility.HtmlDecode(await GetResponseAsStringAsync("/Projects"));
+
+        list.ShouldContain("id=\"ProjectMoneyMenu\"");
+        list.ShouldContain("data-link=\"budget\"");
+        list.ShouldContain("data-link=\"finance\"");
+        list.ShouldContain("data-link=\"documents\"");
+    }
 }
