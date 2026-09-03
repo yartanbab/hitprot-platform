@@ -7737,3 +7737,19 @@ html[data-sidebar] .apya-sidebar-resizer {
    sonsuz büyüme döngüsüne giriyordu (responsive + auto height klasik tuzağı). */
 .apya-dash-canvas { position: relative; height: 240px; }
 .apya-dash-card-wide .apya-dash-canvas { height: 300px; }
+
+/* Takvim hücresinde "+N daha": bir güne düşen kayıt sayısı MAX_PER_DAY'i aşınca
+   çıkar. Gizlemek değil ERTELEMEK için — tıklanınca o günün tamamı açılır. */
+.apya-cal-more {
+    align-self: flex-start;
+    padding: 1px 6px;
+    border: none;
+    border-radius: var(--apya-radius-sm);
+    background: transparent;
+    color: var(--apya-text-tertiary);
+    font-size: 10.5px;
+    font-weight: var(--apya-weight-bold);
+    cursor: pointer;
+}
+.apya-cal-more:hover { color: var(--apya-accent-500); background: var(--apya-surface-hover); }
+.apya-cal-more:focus-visible { outline: none; box-shadow: var(--apya-shadow-focus); }

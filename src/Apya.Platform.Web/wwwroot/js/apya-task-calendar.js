@@ -28,6 +28,8 @@
         'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'];
     var WEEKDAYS = ['Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz'];
 
+    var MAX_PER_DAY = 4;   // hücrede gösterilecek azami olay; kalanı '+N daha'
+
     // Kart rengi durum tonuna bağlanır — kanban.css'teki sınıflarla aynı aile.
     var STATUS_TONE = {
         0: 'neutral', 1: 'neutral', 2: 'warning', 3: 'brand', 4: 'positive'
@@ -58,7 +60,9 @@
             loading: false,
             tasks: [],
             year: now.getFullYear(),
-            month: now.getMonth()
+            month: now.getMonth(),
+            // Hangi günün tam listesi açıldı (gün anahtarı -> true)
+            expanded: {}
         };
 
         /** Gün anahtarı → olay listesi. Bir görev hem başlangıç hem termin basar. */
@@ -122,7 +126,16 @@
             html += '  </div><div class="apya-cal-grid">';
 
             $.each(monthCells(), function (_, cell) {
-                var dayEvents = cell.inMonth ? (events[cell.key] || []) : [];
+                var tumOlaylar = cell.inMonth ? (events[cell.key] || []) : [];
+
+                // Bir güne 16 kayıt düştüğünde hücre uzuyor ve o hafta satırının
+                // TAMAMI devleşiyordu (ızgara satır yüksekliği en uzun hücreye göre).
+                // İlk MAX_PER_DAY tanesi gösterilir, kalanı "+N daha" ile açılır —
+                // gizlemek yerine istendiğinde göstermek.
+                var acik = state.expanded[cell.key] === true;
+                var dayEvents = acik ? tumOlaylar : tumOlaylar.slice(0, MAX_PER_DAY);
+                var gizliSayi = tumOlaylar.length - dayEvents.length;
+
                 html += '<div class="apya-cal-cell' + (cell.inMonth ? '' : ' apya-cal-cell-out') + '">';
                 if (cell.inMonth) {
                     html += '<span class="apya-cal-day' + (cell.key === todayKey ? ' apya-cal-day-today' : '') + '">' + cell.day + '</span>';
@@ -135,6 +148,9 @@
                           + ' title="' + esc(ev.task.title + ' — ' + (ev.kind === 'due' ? 'termin' : 'başlangıç')) + '">'
                           + '<i class="fa ' + icon + '"></i><span>' + esc(ev.task.title) + '</span></button>';
                 });
+                if (gizliSayi > 0) {
+                    html += '<button type="button" class="apya-cal-more" data-more="' + cell.key + '">+' + gizliSayi + ' daha</button>';
+                }
                 html += '</div>';
             });
 
@@ -143,6 +159,7 @@
         }
 
         function shift(delta) {
+            state.expanded = {};   // yeni ayda eski açılmışlar taşınmasın
             var m = state.month + delta;
             state.year += Math.floor(m / 12);
             state.month = ((m % 12) + 12) % 12;
@@ -157,6 +174,12 @@
                 var t = new Date();
                 state.year = t.getFullYear();
                 state.month = t.getMonth();
+                state.expanded = {};
+                render();
+            });
+
+            $mount.on('click', '[data-more]', function () {
+                state.expanded[$(this).data('more')] = true;
                 render();
             });
 

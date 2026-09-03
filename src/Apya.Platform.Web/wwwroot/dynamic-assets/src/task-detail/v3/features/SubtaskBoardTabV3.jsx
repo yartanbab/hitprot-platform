@@ -45,7 +45,12 @@ export function SubtaskBoardTabV3({ taskId, task = {}, onOpenSubtask }) {
     }
 
     return (
-        <div className="grid grid-cols-[repeat(4,minmax(190px,1fr))] lt-1080:grid-cols-[repeat(auto-fit,minmax(190px,1fr))] gap-3 items-start">
+        // 🔴 `grid-cols-[repeat(4,minmax(190px,1fr))]` KULLANMA: Tailwind bu keyfi
+        // değer için kural ÜRETMİYOR (repeat(auto-fit,…) üretiliyor, repeat(4,…)
+        // üretilmiyor) → sınıf HTML'de durur ama CSS'i yoktur ve ızgara sessizce
+        // tek sütuna düşer. auto-fit zaten istediğimizi yapıyor: dört durum
+        // sütunu geniş alanda yan yana, dar alanda alt alta sarar.
+        <div className="grid grid-cols-[repeat(auto-fit,minmax(190px,1fr))] gap-3 items-start">
             {SELECTABLE_STATUSES.map((status) => {
                 const st = statusOf(status);
                 const items = subtasks.filter((s) => s.status === status);

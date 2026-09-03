@@ -116,6 +116,7 @@ export function DocumentsTabV3({ taskId }) {
                 ) : (
                     <RichTextEditorV3
                         value={draftContent}
+                        placeholder="Belgeyi buraya yazın…"
                         onChange={(html) => { setDraftContent(html); setDirty(true); }}
                     />
                 )}
