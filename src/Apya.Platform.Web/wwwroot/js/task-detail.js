@@ -2235,7 +2235,7 @@ function Us(t) {
     mutationFn: (c) => Promise.resolve(Fe().createDocument(t, c)),
     onSuccess: i
   }), l = se({
-    mutationFn: ({ id: c, title: d, content: b }) => Promise.resolve(Fe().updateDocument(c, d, b)),
+    mutationFn: ({ id: c, title: d, content: b }) => Promise.resolve(Fe().updateDocument(c, { title: d, content: b })),
     onSuccess: (c) => {
       i(), c != null && c.id && a.setQueryData(["task-document", c.id], c);
     }

@@ -40,7 +40,7 @@ export function useTaskDocuments(taskId) {
     });
 
     const updateMutation = useMutation({
-        mutationFn: ({ id, title, content }) => Promise.resolve(svc().updateDocument(id, title, content)),
+        mutationFn: ({ id, title, content }) => Promise.resolve(svc().updateDocument(id, { title, content })),
         onSuccess: (saved) => {
             invalidateList();
             if (saved?.id) {

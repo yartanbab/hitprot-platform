@@ -22,7 +22,7 @@ beforeEach(() => {
                 ...DOCS.find((d) => d.id === id), content: '<p>Gövde metni</p>',
             })),
             createDocument: vi.fn(() => Promise.resolve({ id: 'd-3', taskId: 't-1', title: 'Yeni belge', content: '', contentLength: 0, editorName: 'Ayşe' })),
-            updateDocument: vi.fn((id, title, content) => Promise.resolve({ id, taskId: 't-1', title, content, contentLength: (content || '').length, editorName: 'Ayşe' })),
+            updateDocument: vi.fn((id, input) => Promise.resolve({ id, taskId: 't-1', title: input.title, content: input.content, contentLength: (input.content || '').length, editorName: 'Ayşe' })),
             deleteDocument: vi.fn(() => Promise.resolve()),
         } } },
         notify: { success: vi.fn(), error: vi.fn() },
@@ -95,7 +95,7 @@ describe('DocumentsTabV3 — editör', () => {
         fireEvent.click(screen.getByRole('button', { name: /^Kaydet$/ }));
 
         await waitFor(() => expect(window.apya.platform.tasks.task.updateDocument)
-            .toHaveBeenCalledWith('d-1', 'Kickoff notu', '<p>Gövde metni</p>'));
+            .toHaveBeenCalledWith('d-1', { title: 'Kickoff notu', content: '<p>Gövde metni</p>' }));
     });
 
     it('bos baslikla kaydetmeyi REDDEDER, sunucuya gitmez', async () => {

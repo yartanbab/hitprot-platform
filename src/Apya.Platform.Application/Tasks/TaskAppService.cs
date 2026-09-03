@@ -1357,20 +1357,20 @@ namespace Apya.Platform.Tasks
             return MapDocument(doc, NameOf(names, doc.CreatorId));
         }
 
-        public async Task<TaskDocumentDto> UpdateDocumentAsync(Guid documentId, string title, string? content)
+        public async Task<TaskDocumentDto> UpdateDocumentAsync(Guid documentId, UpdateTaskDocumentDto input)
         {
             await CheckPolicyAsync(PlatformPermissions.Tasks.Edit);
 
             var doc = await _documentRepository.GetAsync(documentId);
             await EnsureTaskAccessAllowedAsync(doc.TaskId);
 
-            if (string.IsNullOrWhiteSpace(title))
+            if (string.IsNullOrWhiteSpace(input.Title))
             {
                 throw new Volo.Abp.UserFriendlyException("Belge başlığı boş olamaz.", "Platform:Task:DocumentTitleRequired");
             }
 
-            doc.Title = title.Trim();
-            doc.Content = content;
+            doc.Title = input.Title.Trim();
+            doc.Content = input.Content;
             await _documentRepository.UpdateAsync(doc, autoSave: true);
 
             var names = await ResolveUserNamesAsync(new[] { doc.LastModifierId, doc.CreatorId });

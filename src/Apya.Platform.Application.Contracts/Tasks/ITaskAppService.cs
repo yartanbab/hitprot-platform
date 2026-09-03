@@ -81,7 +81,6 @@ namespace Apya.Platform.Tasks
         Task AddFeatureAsync(Guid taskId, string featureCode);
         Task RemoveFeatureAsync(Guid taskId, string featureCode);
 
-        // Kontrol Listesi (Faz 4)
         // --- Belgeler ---
         // Göreve bağlı zengin metin belgeleri (TaskDocument). Dosya ekinden ayrıdır:
         // ek yüklenmiş dosyayı saklar, belge uygulama içinde YAZILAN metni.
@@ -95,9 +94,15 @@ namespace Apya.Platform.Tasks
         Task<TaskDocumentDto> GetDocumentAsync(Guid documentId);
 
         Task<TaskDocumentDto> CreateDocumentAsync(Guid taskId, string title);
-        Task<TaskDocumentDto> UpdateDocumentAsync(Guid documentId, string title, string? content);
+
+        /// <summary>Belgeyi kaydeder. Girdi DÜZ PARAMETRE DEĞİL, DTO'dur: ABP'nin
+        /// otomatik API'si basit tipleri query string'e koyar ve kilobaytlık bir
+        /// gövde URL sınırını aşardı (bkz. UpdateTaskDocumentDto).</summary>
+        Task<TaskDocumentDto> UpdateDocumentAsync(Guid documentId, UpdateTaskDocumentDto input);
+
         Task DeleteDocumentAsync(Guid documentId);
 
+        // Kontrol Listesi (Faz 4)
         Task<List<TaskChecklistItemDto>> GetChecklistItemsAsync(Guid taskId);
         Task<Guid> AddChecklistItemAsync(Guid taskId, string text);
         Task ToggleChecklistItemAsync(Guid itemId);
