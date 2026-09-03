@@ -1,0 +1,182 @@
+@page
+@using Apya.Platform.ReleaseNotes
+@model Apya.Platform.Web.Pages.Admin.ReleaseNotes.IndexModel
+@{
+    ViewData["Title"] = "Sürüm notu yayını";
+    var index = 0;
+}
+
+<div class="apya-page apya-rnadmin" data-page-description="Sürüm notu yayın onayı">
+    <form method="post">
+        <div class="container-fluid py-3" style="max-width: 1180px;">
+
+            <div class="apya-rnadmin-head">
+                <div>
+                    <div class="apya-rnadmin-kicker">Yayın onayı</div>
+                    <h1 class="h4 mb-1">Sürüm notu yayını</h1>
+                    <p class="text-muted mb-0">
+                        Onaylamadığınız madde hiçbir kullanıcıya gitmez; siz onu yine de
+                        &laquo;Onay bekliyor&raquo; rozetiyle görürsünüz.
+                    </p>
+                </div>
+                <div class="apya-rnadmin-summary">
+                    @if (Model.PendingCount > 0)
+                    {
+                        <span class="apya-rnadmin-pending-count">@Model.PendingCount madde onay bekliyor</span>
+                    }
+                    else
+                    {
+                        <span class="text-muted">Onay bekleyen madde yok</span>
+                    }
+                </div>
+            </div>
+
+            <div class="apya-rnadmin-bar">
+                <label class="form-check-label d-flex align-items-center gap-2 mb-0">
+                    <input type="checkbox" class="form-check-input mt-0" id="rnSelectAll">
+                    <strong>Hepsini onayla</strong>
+                </label>
+                <span class="text-muted small">Tek tek de seçebilirsiniz. Kaydetmeden hiçbir şey yayınlanmaz.</span>
+                <button type="submit" class="btn btn-primary btn-sm ms-auto">Kaydet</button>
+            </div>
+
+            @foreach (var release in Model.Releases)
+            {
+                var pending = release.Items.Count(i => i.IsPending);
+                <details class="apya-rnadmin-release" open="@(release.Version == Model.Releases[0].Version)">
+                    <summary>
+                        <span class="apya-rnadmin-rel-title">@release.Title</span>
+                        <span class="apya-rnadmin-ver">Sürüm @release.Version · @release.Date</span>
+                        @if (pending > 0)
+                        {
+                            <span class="apya-rn-pending">@pending onay bekliyor</span>
+                        }
+                    </summary>
+
+                    <div class="apya-rnadmin-relbar">
+                        <label class="form-check-label d-flex align-items-center gap-2 mb-0">
+                            <input type="checkbox" class="form-check-input mt-0 rn-select-version"
+                                   data-version="@release.Version">
+                            Bu sürümün tümünü onayla
+                        </label>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="table table-sm align-middle apya-rnadmin-table">
+                            <thead>
+                                <tr>
+                                    <th style="width:78px;">Yayınla</th>
+                                    <th>Madde</th>
+                                    <th style="width:88px;">Pencere</th>
+                                    <th style="width:88px;">Geçmiş</th>
+                                    <th style="width:250px;">Paketler</th>
+                                    <th style="width:190px;">Kimler görsün</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var item in release.Items)
+                                {
+                                    var i = index++;
+                                    <tr class="@(item.IsPending ? "apya-rnadmin-pending-row" : null)">
+                                        <td>
+                                            <input type="hidden" asp-for="Items[i].Version" />
+                                            <input type="hidden" asp-for="Items[i].ItemKey" />
+                                            <input class="form-check-input rn-approve" type="checkbox"
+                                                   asp-for="Items[i].IsApproved" data-version="@release.Version" />
+                                        </td>
+                                        <td>
+                                            <div class="apya-rnadmin-item-title">
+                                                <span class="apya-rn-tag apya-rn-tag--@ReleaseNoteCategoryInfo.Key(item.Category)">@ReleaseNoteCategoryInfo.Label(item.Category)</span>
+                                                @item.Title
+                                                @if (item.IsPending)
+                                                {
+                                                    <span class="apya-rn-pending">Onay bekliyor</span>
+                                                }
+                                            </div>
+                                            <div class="apya-rnadmin-item-desc text-muted">@item.Description</div>
+                                        </td>
+                                        <td><input class="form-check-input" type="checkbox" asp-for="Items[i].ShowInModal" /></td>
+                                        <td><input class="form-check-input" type="checkbox" asp-for="Items[i].ShowInHistory" /></td>
+                                        <td>
+                                            <div class="apya-rnadmin-pkgs">
+                                                <label><input class="form-check-input" type="checkbox" asp-for="Items[i].Basic" /> Basic</label>
+                                                <label><input class="form-check-input" type="checkbox" asp-for="Items[i].Standard" /> Standard</label>
+                                                <label><input class="form-check-input" type="checkbox" asp-for="Items[i].Premium" /> Premium</label>
+                                                <label><input class="form-check-input" type="checkbox" asp-for="Items[i].Enterprise" /> Enterprise</label>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <select class="form-select form-select-sm" asp-for="Items[i].Audience">
+                                                @* Değerler enum ADI olmalı: select tag helper "selected"i modelin
+                                                   ToString() çıktısıyla karşılaştırır; sayı verilirse hiçbir
+                                                   seçenek seçili gelmez. *@
+                                                <option value="@nameof(ReleaseNoteAudience.Everyone)">Herkes</option>
+                                                <option value="@nameof(ReleaseNoteAudience.TenantAdmins)">Kiracı yöneticileri</option>
+                                                <option value="@nameof(ReleaseNoteAudience.HostOnly)">Yalnız host</option>
+                                            </select>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </details>
+            }
+
+            <div class="apya-rnadmin-footer">
+                <button type="submit" class="btn btn-primary">Kaydet</button>
+            </div>
+        </div>
+    </form>
+</div>
+
+<style>
+    .apya-rnadmin-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 18px; flex-wrap: wrap; margin-bottom: 18px; }
+    .apya-rnadmin-kicker { font-size: .68rem; letter-spacing: .13em; text-transform: uppercase; font-weight: 700; color: var(--lpx-primary, #37437d); margin-bottom: 4px; }
+    .apya-rnadmin-pending-count { font-size: .84rem; font-weight: 600; color: #8a6413; border: 1px dashed currentColor; border-radius: 5px; padding: 4px 10px; }
+    .apya-rnadmin-bar { position: sticky; top: 0; z-index: 3; display: flex; align-items: center; gap: 14px; flex-wrap: wrap; background: var(--apya-surface, #fff); border: 1px solid var(--apya-border, rgba(0,0,0,.12)); border-radius: 6px; padding: 10px 14px; margin-bottom: 16px; }
+    .apya-rnadmin-release { border: 1px solid var(--apya-border, rgba(0,0,0,.12)); border-radius: 6px; margin-bottom: 14px; background: var(--apya-surface, #fff); }
+    .apya-rnadmin-release > summary { cursor: pointer; padding: 12px 14px; display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+    .apya-rnadmin-rel-title { font-weight: 600; }
+    .apya-rnadmin-ver { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .74rem; color: var(--apya-text-secondary, #616b7a); }
+    .apya-rnadmin-relbar { padding: 0 14px 10px; font-size: .86rem; }
+    .apya-rnadmin-table { font-size: .86rem; margin-bottom: 0; }
+    .apya-rnadmin-item-title { font-weight: 600; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .apya-rnadmin-item-desc { font-size: .8rem; margin-top: 3px; }
+    .apya-rnadmin-pkgs { display: grid; grid-template-columns: 1fr 1fr; gap: 2px 10px; font-size: .8rem; }
+    .apya-rnadmin-pkgs label { display: flex; align-items: center; gap: 5px; margin: 0; }
+    .apya-rnadmin-pending-row > td { background: rgba(138, 100, 19, .06); }
+    .apya-rnadmin-footer { display: flex; justify-content: flex-end; padding: 8px 0 24px; }
+    .apya-rn-tag { display: inline-block; font-size: .62rem; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; padding: 1px 7px; border-radius: 4px; border: 1px solid currentColor; line-height: 1.5; white-space: nowrap; }
+    .apya-rn-tag--security { color: #a4373a; } .apya-rn-tag--feature { color: #2c7355; }
+    .apya-rn-tag--improvement { color: #2f6d84; } .apya-rn-tag--fix { color: #8a6413; }
+    .apya-rn-pending { display: inline-block; font-size: .62rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; padding: 1px 7px; border-radius: 4px; border: 1px dashed currentColor; color: #8a6413; white-space: nowrap; }
+    [data-theme="dark"] .apya-rn-tag--security { color: #d98a8b; }
+    [data-theme="dark"] .apya-rn-tag--feature { color: #7dc3a2; }
+    [data-theme="dark"] .apya-rn-tag--improvement { color: #84bcd0; }
+    [data-theme="dark"] .apya-rn-tag--fix { color: #d9b567; }
+    [data-theme="dark"] .apya-rn-pending, [data-theme="dark"] .apya-rnadmin-pending-count { color: #d9b567; }
+    [data-theme="dark"] .apya-rnadmin-pending-row > td { background: rgba(217, 181, 103, .08); }
+    @@media (max-width: 900px) { .apya-rnadmin-item-desc { display: none; } }
+</style>
+
+<script>
+    (function () {
+        var all = document.getElementById('rnSelectAll');
+        var approves = Array.prototype.slice.call(document.querySelectorAll('.rn-approve'));
+
+        if (all) {
+            all.addEventListener('change', function () {
+                approves.forEach(function (cb) { cb.checked = all.checked; });
+            });
+        }
+
+        document.querySelectorAll('.rn-select-version').forEach(function (box) {
+            box.addEventListener('change', function () {
+                var version = box.getAttribute('data-version');
+                approves.filter(function (cb) { return cb.getAttribute('data-version') === version; })
+                        .forEach(function (cb) { cb.checked = box.checked; });
+            });
+        });
+    })();
+</script>

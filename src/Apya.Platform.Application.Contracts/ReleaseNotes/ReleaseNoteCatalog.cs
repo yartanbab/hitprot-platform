@@ -1,7 +1,6 @@
 using System.Collections.Generic;
-using System.Linq;
 
-namespace Apya.Platform.Web.ReleaseNotes;
+namespace Apya.Platform.ReleaseNotes;
 
 /// <summary>
 /// Sürüm notları — kod içinde tutulur (her yayın kod ile birlikte gelir).
@@ -9,14 +8,18 @@ namespace Apya.Platform.Web.ReleaseNotes;
 /// (en yeni ilk). <see cref="Latest"/> otomatik ilk öğedir; kullanıcı bunu
 /// görmediyse ilk açılışta "Yenilikler" penceresi açılır.
 ///
-/// MADDELER MÜŞTERİ ODAKLIDIR. Bu liste hem "Yenilikler" penceresinde hem de
-/// /ReleaseNotes geçmiş sayfasında HER oturumlu kullanıcıya aynı şekilde gösterilir —
-/// izin kapısı YOKTUR. Bu yüzden yalnız host yöneticisini ilgilendiren maddeler
+/// MADDELER MÜŞTERİ ODAKLIDIR. Yalnız host yöneticisini ilgilendiren maddeler
 /// (Sistem Sağlığı, kiracı yönetimi, paket süresi tanımlama, hibe çağrısı yönetimi)
 /// BURAYA YAZILMAZ: kiracı müşterisi ya erişemediği bir özelliği arar ya da kendisini
 /// ilgilendirmeyen işletim ayrıntısını okur. Ölçü tek soru: "bunu kiracıdaki bir
 /// kullanıcı kendi ekranında görebilir/yapabilir mi?" Hayırsa madde girmez.
 /// Kiracı yöneticisinin yaptığı işler (Ayarlar, menü düzeni, "Paketim") girer.
+///
+/// <para>🔴 KATALOGA MADDE EKLEMEK YAYINLAMAK DEĞİLDİR. Buradaki hiçbir madde host
+/// /Admin/ReleaseNotes ekranından onaylamadan kullanıcıya gitmez; onaysız madde yalnız
+/// host'a, "Onay bekliyor" rozetiyle görünür. Onay kararı maddenin BAŞLIĞINDAN türeyen
+/// anahtara bağlıdır (<see cref="ReleaseNoteItem.Key"/>) — yayınlanmış bir maddenin
+/// başlığını değiştirirsen onayı düşer.</para>
 /// </summary>
 public static class ReleaseNoteCatalog
 {
@@ -730,7 +733,4 @@ public static class ReleaseNoteCatalog
 
     /// <summary>En yeni sürüm (listenin ilk öğesi). Görülme takibi bununla yapılır.</summary>
     public static ReleaseNote Latest => All[0];
-
-    public static ReleaseNote? Find(string? version) =>
-        version is null ? null : All.FirstOrDefault(r => r.Version == version);
 }

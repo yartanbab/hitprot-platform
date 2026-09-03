@@ -10,6 +10,8 @@
     "Menu:Management": "Administration",
     "Menu:Settings": "Settings",
     "Menu:ReleaseNotes": "What's New",
+    "Menu:ReleaseNotesAdmin": "Release Note Publishing",
+    "Permission:ReleaseNotes.Manage": "Approve release notes for publishing",
     "Menu:TenantManagement": "Tenant Management",
     "Menu:IdentityUsers": "Users",
     "Menu:IdentityRoles": "Roles",
