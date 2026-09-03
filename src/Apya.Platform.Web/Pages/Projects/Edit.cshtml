@@ -120,7 +120,11 @@
                     <abp-input asp-for="Project.Activities" label="Faaliyetleri" />
                 </div>
                 <div class="is-wide">
-                    <abp-input asp-for="Project.Description" type="textarea" label="Açıklama" />
+                    @* ABP'de textarea'yı açan öznitelik `text-area`; `type="textarea"`
+                       geçerli bir input tipi olmadığı için DOM'a <input type="textarea">
+                       düşüyordu — yani tek satırlık kutu. Bkz. AbpInputTagHelperService
+                       .TryGetTextAreaAttribute. *@
+                    <abp-input asp-for="Project.Description" text-area rows="3" label="Açıklama" />
                 </div>
             </div>
 
