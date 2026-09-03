@@ -24,6 +24,12 @@ namespace Apya.Platform.Tasks
         /// kullanır; RootOnly yok sayılır (alt görevler de sayılır).</summary>
         Task<TaskListSummaryDto> GetSummaryAsync(GetTasksInput input);
 
+        /// <summary>Konsolun "Dosya galerisi" görünümü: süzülmüş görevlerin GÖRSEL
+        /// eklerini tek turda döner. Liste DTO'su yalnız ek SAYISINI taşıdığı için
+        /// galeri onunla beslenemez; görev başına ayrı istek de N+1 olurdu.
+        /// RootOnly yok sayılır — alt görevlere yüklenen görseller de galeride görünür.</summary>
+        Task<List<TaskGalleryItemDto>> GetGalleryAsync(GetTasksInput input);
+
         /// <summary>Select2 tag girişinin başlangıç seçenek listesi için tenant'ın tüm etiketleri.</summary>
         Task<List<TagDto>> GetAllTagsAsync();
 

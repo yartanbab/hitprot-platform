@@ -613,6 +613,86 @@ namespace Apya.Platform.Tasks
             };
         }
 
+        /// <summary>
+        /// Konsolun "Dosya galerisi" görünümü. Süzülmüş görevlerin GÖRSEL eklerini
+        /// TEK sorguda düzleştirir — liste DTO'su yalnız ek sayısını taşıdığı için
+        /// galeriyi besleyemez, görev başına <see cref="GetAttachmentsAsync"/> çağırmak
+        /// ise N+1 olurdu.
+        ///
+        /// RootOnly BİLEREK kapatılır: liste hiyerarşik kipte yalnız kök görevleri
+        /// sayfalar, ama alt göreve yüklenmiş bir görselin galeriden düşmesi için
+        /// bir sebep yok.
+        ///
+        /// Görsel süzgeci uzantı üzerinden yapılır ve VERİTABANINDA çalışır; dosya
+        /// içeriğine bakılmaz (ContentType tüm ekler için "application/octet-stream"
+        /// yazılıyor, ona güvenilemez).
+        /// </summary>
+        public async Task<List<TaskGalleryItemDto>> GetGalleryAsync(GetTasksInput input)
+        {
+            input.RootOnly = false;
+            var taskQuery = await CreateFilteredQueryAsync(input);
+
+            var attachmentQuery = await _attachmentRepository.GetQueryableAsync();
+
+            // Uzantı süzgeci VERİTABANINDA çalışsın diye açık OR zinciri; bir dizi
+            // üzerinde `Any(ext => FileName.EndsWith(ext))` EF Core'da çevrilemez ve
+            // sorgu istemciye düşerdi. Küme istemcideki isImageFile ile AYNI olmalı;
+            // ayrışırsa galeride eksik görsel ya da boş kare çıkar.
+            //
+            // ToLower() şart: MSSQL varsayılan harmanlaması harf duyarsızdır ama
+            // Postgres DEĞİLDİR — onsuz "FOTO.PNG" yalnız SQL Server'da görünürdü.
+            var rows = await AsyncExecuter.ToListAsync(
+                from a in attachmentQuery
+                join t in taskQuery on a.TaskId equals t.Id
+                where a.FileName.ToLower().EndsWith(".png")
+                   || a.FileName.ToLower().EndsWith(".jpg")
+                   || a.FileName.ToLower().EndsWith(".jpeg")
+                   || a.FileName.ToLower().EndsWith(".gif")
+                   || a.FileName.ToLower().EndsWith(".webp")
+                   || a.FileName.ToLower().EndsWith(".svg")
+                   || a.FileName.ToLower().EndsWith(".bmp")
+                orderby a.CreationTime descending
+                select new
+                {
+                    t.Id,
+                    t.Title,
+                    t.Number,
+                    Attachment = a
+                });
+
+            var userIds = rows.Select(r => r.Attachment.CreatorId)
+                .Where(id => id.HasValue).Select(id => id!.Value).Distinct().ToList();
+            var userQueryable = await _identityRepository.GetQueryableAsync();
+            var users = await AsyncExecuter.ToListAsync(userQueryable.Where(u => userIds.Contains(u.Id)));
+            var userDict = users.ToDictionary(k => k.Id, v => v.UserName);
+
+            // Misafir yüklemesinde CreatorId yoktur; ad paylaşım linkinden çözülür
+            // (GetAttachmentsAsync ile aynı kural — orada "Sistem" görünmesi hataydı).
+            var shareLinkIds = rows.Where(r => r.Attachment.ShareLinkId.HasValue)
+                .Select(r => r.Attachment.ShareLinkId!.Value).Distinct().ToList();
+            var recipientNames = shareLinkIds.Count == 0
+                ? new Dictionary<Guid, string>()
+                : (await _shareLinkRepository.GetListAsync(l => shareLinkIds.Contains(l.Id)))
+                    .ToDictionary(l => l.Id, l => l.RecipientName);
+
+            return rows.Select(r => new TaskGalleryItemDto
+            {
+                TaskId = r.Id,
+                TaskTitle = r.Title,
+                TaskCode = r.Number > 0 ? $"GRV-{r.Number}" : "GRV-—",
+                AttachmentId = r.Attachment.Id,
+                FileName = r.Attachment.FileName,
+                FileSize = r.Attachment.FileSize,
+                DownloadUrl = "/file/get/" + r.Attachment.StoredFileName,
+                CreationTime = r.Attachment.CreationTime,
+                UploaderName = r.Attachment.ShareLinkId.HasValue
+                    ? recipientNames.GetValueOrDefault(r.Attachment.ShareLinkId.Value, "Dış katılımcı")
+                    : (r.Attachment.CreatorId.HasValue && userDict.ContainsKey(r.Attachment.CreatorId.Value))
+                        ? userDict[r.Attachment.CreatorId.Value]
+                        : "Sistem"
+            }).ToList();
+        }
+
         // Create/Update ortak: TagNames'i get-or-create edip TaskTagAssignment'ları senkronlar
         // (PredecessorIds senkronuyla aynı sil-sonra-yeniden-ekle deseni).
         private async Task<List<TagDto>> SyncTagsAsync(Guid taskId, List<string>? tagNames)

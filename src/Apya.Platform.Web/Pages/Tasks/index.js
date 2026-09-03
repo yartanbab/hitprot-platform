@@ -51,6 +51,20 @@ $(function () {
 
     var currentView = 'list';
 
+    // Görünüm kaydı: sekme, panel ve o görünümün yükleyicisi TEK yerde.
+    // Yükleyiciler kb/gantt/calendar/... değişkenlerine kapanış üzerinden
+    // erişir; bunlar aşağıda kuruluyor ama çağrı ancak kullanıcı sekmeye
+    // bastığında olur, o an hepsi hazırdır. Kayıt BURADA duruyor çünkü
+    // applyFilters() ilk süzgeç uygulamasında VIEWS'u okuyor.
+    var VIEWS = {
+        list:      { panel: '#view-list',      btn: '#btn-view-list',      load: null },
+        kanban:    { panel: '#view-kanban',    btn: '#btn-view-kanban',    load: function () { kb.load(); } },
+        gantt:     { panel: '#view-gantt',     btn: '#btn-view-gantt',     load: function () { loadGantt(); } },
+        calendar:  { panel: '#view-calendar',  btn: '#btn-view-calendar',  load: function () { calendar.load(); } },
+        dashboard: { panel: '#view-dashboard', btn: '#btn-view-dashboard', load: function () { dashboard.load(); } },
+        gallery:   { panel: '#view-gallery',   btn: '#btn-view-gallery',   load: function () { gallery.load(); } }
+    };
+
     // Gün sınırı: dueDate saat taşıyabildiği için gün SONU kullanılır.
     function dayBound(offsetDays, endOfDay) {
         var m = moment().startOf('day').add(offsetDays, 'days');
@@ -189,8 +203,14 @@ $(function () {
         renderFilterUi();
         state.writeUrl({ view: currentView === 'list' ? '' : currentView });
         if (dataTable) { dataTable.ajax.reload(); }
-        if (kb && currentView === 'kanban') { kb.load(); }
-        if (currentView === 'gantt') { loadGantt(); }
+        reloadActiveView();
+    }
+
+    // Yalnız AÇIK görünüm yeniden yüklenir; gizli paneller sekmeye basılınca
+    // zaten kendi load'ını çağırır. VIEWS kaydı tek doğruluk kaynağıdır.
+    function reloadActiveView() {
+        var def = VIEWS[currentView];
+        if (def && def.load) { def.load(); }
     }
 
     // ─── Şerit sayaçları ───────────────────────────────────────────────────
@@ -634,9 +654,13 @@ $(function () {
     });
 
     // ─── Görünüm sekmeleri ─────────────────────────────────────────────────
-    $('#btn-view-list').click(function () { switchView('list'); });
-    $('#btn-view-kanban').click(function () { switchView('kanban'); kb.load(); });
-    $('#btn-view-gantt').click(function () { switchView('gantt'); loadGantt(); });
+
+    $.each(VIEWS, function (mode, def) {
+        $(def.btn).click(function () {
+            switchView(mode);
+            if (def.load) { def.load(); }
+        });
+    });
 
     // Kaydedilmemiş Gantt sürüklemesi varken sayfadan ayrılma uyarısı (konsoldaki gibi).
     $(window).on('beforeunload', function () {
@@ -644,17 +668,17 @@ $(function () {
     });
 
     function switchView(mode) {
-        currentView = mode;
+        var def = VIEWS[mode] || VIEWS.list;
+        currentView = VIEWS[mode] ? mode : 'list';
+
         $('.view-panel').addClass('d-none');
         $('.apya-console-tab').removeClass('active').attr('aria-selected', 'false');
 
-        var id = mode === 'list' ? '#view-list' : (mode === 'kanban' ? '#view-kanban' : '#view-gantt');
-        var btn = mode === 'list' ? '#btn-view-list' : (mode === 'kanban' ? '#btn-view-kanban' : '#btn-view-gantt');
-        $(id).removeClass('d-none');
-        $(btn).addClass('active').attr('aria-selected', 'true');
+        $(def.panel).removeClass('d-none');
+        $(def.btn).addClass('active').attr('aria-selected', 'true');
 
         // Filtre çubuğu her görünümde geçerli; yalnız kolon seçici listeye özel.
-        state.writeUrl({ view: mode === 'list' ? '' : mode });
+        state.writeUrl({ view: currentView === 'list' ? '' : currentView });
     }
 
     // ─── Zaman Çizelgesi (paylaşılan bileşen: /js/apya-gantt.js) ───────────
@@ -675,13 +699,25 @@ $(function () {
 
     function loadGantt() { gantt.load(); }
 
+    // ─── Takvim / Gösterge Paneli / Dosya Galerisi ─────────────────────────
+    // Gantt ile aynı sözleşme: kapsamı `getFilter` belirler, bileşende sabit
+    // proje YOK. Üçü de salt okuma (galeri kendi ucundan, diğer ikisi getList'ten).
+    var calendar = apya.taskCalendar.create({
+        mount: '#view-calendar', getFilter: buildInput, editModal: editModal
+    });
+    var dashboard = apya.taskDashboard.create({
+        mount: '#view-dashboard', getFilter: buildInput
+    });
+    var gallery = apya.taskGallery.create({
+        mount: '#view-gallery', getFilter: buildInput, editModal: editModal
+    });
+
     // ─── Yenileme ──────────────────────────────────────────────────────────
     function reloadAll() {
         hierarchy.reset();
         dataTable.ajax.reload(null, false);
         loadSummary();
-        if (currentView === 'kanban') { kb.load(); }
-        if (currentView === 'gantt') { loadGantt(); }
+        reloadActiveView();
     }
 
     createModal.onResult(function () { reloadAll(); });
@@ -721,7 +757,7 @@ $(function () {
             // state nesnesini yeniden atamak senkron bağını koparır).
             state.reset();
             $.extend(state.values, v.state);
-            currentView = v.view === 'kanban' ? 'kanban' : (v.view === 'gantt' ? 'gantt' : 'list');
+            currentView = VIEWS[v.view] ? v.view : 'list';
             if (dataTable) { dataTable.search(v.q || ''); }
             $('#console-search').val(v.q || '');
             kb.setProject(state.get('project') || null);
