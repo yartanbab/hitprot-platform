@@ -75,7 +75,9 @@
     };
     var timeHealthBarTone = ToApyaBarTone(Model.TimeHealthColor);
     var budgetBarTone = Model.BudgetPercent > 90 ? "is-negative" : Model.BudgetPercent > 60 ? "is-warning" : "is-positive";
-    var hasBudget = Model.Project?.TotalBudget > 0;
+    @* Bütçe yüzeyleri Finans çatısının özetine bağlı: yetki yoksa (Budget null)
+       ya da onaylanan bütçe sıfırsa hiç basılmaz. *@
+    var hasBudget = Model.Budget?.ApprovedBudget > 0;
     var hasDates  = Model.TimeNotStarted || Model.Project?.EndDate.HasValue == true;
 
     // 403 hâli sunucuda karara bağlanır: yetki yoksa DataTables hiç kurulmaz
@@ -224,7 +226,10 @@
             }
         </div>
 
-        @* Bütçe — mevcut "Bütçe vs Gerçekleşen" modalını açar *@
+        @* Bütçe — "Bütçe Durumu" modalını açar. Bütçe yetkisi yoksa hiç basılmaz;
+           "Bütçe tanımsız" yazmak yetki eksiğini veri eksiği gibi gösterirdi. *@
+        @if (Model.Budget != null)
+        {
         <button type="button" class="apya-console-bar" id="btn-budget-summary"
                 data-project-id="@Model.Project?.Id"
                 title="@(hasBudget ? "Bütçe vs Gerçekleşen" : "Bütçe tanımlı değil")"
@@ -237,7 +242,7 @@
             {
                 <span class="apya-console-bar-value">
                     <strong class="apya-numeric">@Model.BudgetSpent.ToString("N0")</strong>
-                    <small class="apya-numeric">/ @Model.Project?.TotalBudget.ToString("N0")</small>
+                    <small class="apya-numeric">/ @Model.Budget?.ApprovedBudget.ToString("N0")</small>
                 </span>
                 <span class="apya-mini-progress @budgetBarTone"><span style="width:@Model.BudgetPercent%"></span></span>
             }
@@ -246,6 +251,7 @@
                 <span class="apya-console-bar-value"><small>Bütçe tanımsız</small></span>
             }
         </button>
+        }
 
         @* İlerleme *@
         <button type="button" class="apya-console-bar" id="bar-progress" aria-pressed="false" title="Tamamlanmamış görevleri filtrele">
