@@ -8,6 +8,9 @@ import { ActivityTab } from './components/ActivityTab';
 import { HistoryTabV3 } from './v3/features/HistoryTabV3';
 import { FinanceTab } from './components/FinanceTab';
 import { GalleryTabV3 } from './v3/features/GalleryTabV3';
+import { SubtaskTableTabV3 } from './v3/features/SubtaskTableTabV3';
+import { SubtaskBoardTabV3 } from './v3/features/SubtaskBoardTabV3';
+import { TaskCalendarTabV3 } from './v3/features/TaskCalendarTabV3';
 import { GanttTabV3 } from './v3/features/GanttTabV3';
 import { DependenciesTabV3 } from './v3/features/DependenciesAndFinanceTabV3';
 // Not: dosyada artık yalnız TimeTrackingTabV3 var — diğer "OtherFeatures*"
@@ -16,7 +19,8 @@ import { DependenciesTabV3 } from './v3/features/DependenciesAndFinanceTabV3';
 import { TimeTrackingTabV3 } from './v3/features/OtherFeaturesTabV3';
 
 /**
- * Görev detayının 17 özelliklik sekme/özellik kayıt defteri (V3).
+ * Görev detayının sekme/özellik kayıt defteri (V3). Sayı sık değiştiği için
+ * burada yazılmaz — tek doğruluk kaynağı dizinin kendisi.
  */
 export const TASK_FEATURE_REGISTRY = [
     {
@@ -33,6 +37,23 @@ export const TASK_FEATURE_REGISTRY = [
         code: 'files', title: 'Dosyalar', icon: 'fa-paperclip',
         category: 'gorev', isCore: true, order: 2, permission: null,
         implemented: true, component: FilesTab,
+    },
+    {
+        // Alt görevlerin tablo/kanban görünümleri ve tarih takvimi — üçü de
+        // görevin kendi `subTasks` koleksiyonundan beslenir, ek uç YOK.
+        code: 'subtask-table', title: 'Tablo', icon: 'fa-table',
+        category: 'gorev', isCore: false, order: 6, permission: null,
+        implemented: true, component: SubtaskTableTabV3,
+    },
+    {
+        code: 'subtask-board', title: 'Kanban', icon: 'fa-table-columns',
+        category: 'gorev', isCore: false, order: 7, permission: null,
+        implemented: true, component: SubtaskBoardTabV3,
+    },
+    {
+        code: 'calendar', title: 'Takvim', icon: 'fa-calendar-days',
+        category: 'gorev', isCore: false, order: 8, permission: null,
+        implemented: true, component: TaskCalendarTabV3,
     },
     {
         code: 'checklist', title: 'Kontrol Listesi', icon: 'fa-square-check',

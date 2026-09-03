@@ -9,6 +9,9 @@ import { TASK_FEATURE_REGISTRY } from '../TaskFeatureRegistry';
 const REGISTRY = Object.fromEntries(TASK_FEATURE_REGISTRY.map((f) => [f.code, f]));
 
 const PRESENTATION = {
+    'subtask-table': { desc: 'Alt görevlerin sıralanabilir tablosu',      bg: 'bg-neutral-subtle',  fg: 'text-text-secondary' },
+    'subtask-board': { desc: 'Alt görevleri duruma göre sütunlarda taşı', bg: 'bg-primary-subtle',  fg: 'text-primary' },
+    calendar:        { desc: 'Görev ve alt görev tarihleri aylık ızgarada', bg: 'bg-primary-subtle', fg: 'text-primary' },
     checklist:       { desc: 'Alt görev ve onay kontrol listeleri',        bg: 'bg-success-subtle',  fg: 'text-success' },
     gantt:           { desc: 'İnteraktif zaman çizelgesi ve aşamalar',     bg: 'bg-primary-subtle',  fg: 'text-primary' },
     'time-tracking': { desc: 'Canlı süre takibi, sayaç ve raporlama',      bg: 'bg-warning-subtle',  fg: 'text-warning' },
@@ -28,7 +31,7 @@ const PRESENTATION = {
 };
 
 const GROUPS = [
-    { title: 'GÖREV & PLANLAMA',               codes: ['checklist', 'gantt', 'time-tracking', 'dependencies', 'risks', 'approvals', 'dashboard'] },
+    { title: 'GÖREV & PLANLAMA',               codes: ['subtask-table', 'subtask-board', 'calendar', 'checklist', 'gantt', 'time-tracking', 'dependencies', 'risks', 'approvals', 'dashboard'] },
     { title: 'İLETİŞİM',                       codes: ['comments', 'emails'] },
     { title: 'GEÇMİŞ & FİNANS',                codes: ['activity', 'history', 'finance', 'gallery'] },
     { title: 'İLERİ ÖZELLİKLER & YAPAY ZEKA',  codes: ['ai', 'automations', 'custom-fields'] },
