@@ -7264,6 +7264,25 @@ html[data-sidebar] .apya-sidebar-resizer {
     flex-shrink: 0;
 }
 
+/* Satir ici "agenta kopyala" ikonu. Dokunmatik cihazda hover YOK: ikon her zaman
+   gorunur, yalnizca imlec satira gelince belirginlesir -- gizlenseydi telefonda
+   hic ulasilamazdi. */
+.apya-health-row-copy {
+    flex-shrink: 0;
+    align-self: flex-start;
+    padding: 3px 5px;
+    border-radius: var(--apya-radius-sm);
+    color: var(--apya-text-secondary);
+    font-size: 11px;
+    opacity: 0.5;
+    transition: opacity var(--apya-motion-fast) ease, background var(--apya-motion-fast) ease;
+}
+.apya-health-row:hover .apya-health-row-copy { opacity: 1; }
+.apya-health-row-copy:hover {
+    background: var(--apya-surface-sunken);
+    color: var(--apya-text-primary);
+}
+
 /* --- Kanit paneli: olgu seridi --- */
 .apya-health-facts {
     display: grid;

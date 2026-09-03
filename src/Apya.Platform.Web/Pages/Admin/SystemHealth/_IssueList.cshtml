@@ -70,6 +70,14 @@ else
                         <span class="text-muted">@IndexModel.MetaTail(issue)</span>
                     </span>
                 </span>
+                @* Satırda olayın kanıtı YOK — ikon, detay parçasını arka planda çekip
+                   oradaki tam özeti kopyalar. Odak alınamaz ve ekran okuyucudan
+                   gizlidir: iç içe düğme geçersiz olurdu, erişilebilir eşdeğeri
+                   kanıt panelindeki "Agent'a kopyala" düğmesidir. *@
+                <span class="apya-health-row-copy" aria-hidden="true"
+                      title="Bu olayın özetini agent'a kopyala">
+                    <i class="fa fa-robot"></i>
+                </span>
             </button>
         }
     </div>
@@ -77,5 +85,17 @@ else
 
 <div class="apya-md-pager">
     <span>@list.TotalCount kayıttan @list.Items.Count tanesi gösteriliyor</span>
-    <span class="text-muted">Etkiye göre sıralı</span>
+    <span class="d-flex align-items-center gap-2">
+        @if (list.Items.Count > 0)
+        {
+            @* Yalnız tek satırlık künyeler — kanıt taşımaz. Hangi olaya bakılacağını
+               seçtirmek içindir; ayrıntı olayın kendi özetinden kopyalanır. *@
+            <button type="button" class="btn btn-sm btn-link p-0 issue-agent-copy-list"
+                    title="Listelenen olayların künyesini agent'a kopyala">
+                <i class="fa fa-robot me-1"></i>Görünenleri kopyala
+            </button>
+            <textarea class="d-none" data-agent-list-summary aria-hidden="true" tabindex="-1">@HealthIssueSummaryBuilder.BuildList(list, Model.WindowDays)</textarea>
+        }
+        <span class="text-muted">Etkiye göre sıralı</span>
+    </span>
 </div>
