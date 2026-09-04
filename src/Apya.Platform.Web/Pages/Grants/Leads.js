@@ -51,7 +51,7 @@ $(function () {
 
     function paintList() {
         var items = model.items || [];
-        $('#LeadRows').html(items.map(row).join(''));
+        $('#LeadRows').removeClass('apya-skel-rows').html(items.map(row).join(''));
         $('#LeadEmpty').toggleClass('d-none', items.length > 0);
         $('#LeadCount').text(items.length);
 

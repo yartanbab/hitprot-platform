@@ -1,8 +1,8 @@
-@using Apya.Platform.Web.ReleaseNotes
-@model ReleaseNote
+@using Apya.Platform.ReleaseNotes
+@model ReleaseNoteModalDto
 
 <div class="modal fade apya-rn-modal" id="apyaReleaseNotesModal" tabindex="-1"
-     aria-labelledby="apyaReleaseNotesTitle" aria-hidden="true" data-version="@Model.Version">
+     aria-labelledby="apyaReleaseNotesTitle" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
         <div class="modal-content">
             <div class="modal-header">
@@ -14,17 +14,34 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
             </div>
             <div class="modal-body">
+                @if (Model.HasPendingItems)
+                {
+                    <div class="apya-rn-notice">
+                        Bu pencerede <strong>onay bekleyen</strong> maddeler var. Onay bekleyen maddeler
+                        yalnız size görünür; kullanıcılara gitmez.
+                    </div>
+                }
                 <ul class="apya-rn-summary list-unstyled mb-0">
                     @foreach (var item in Model.Items)
                     {
                         <li>
                             <span class="apya-rn-tag apya-rn-tag--@ReleaseNoteCategoryInfo.Key(item.Category)">@ReleaseNoteCategoryInfo.Label(item.Category)</span>
-                            <span class="apya-rn-summary-title">@item.Title</span>
+                            <span class="apya-rn-summary-title">
+                                @item.Title
+                                @if (item.IsPendingApproval)
+                                {
+                                    <span class="apya-rn-pending">Onay bekliyor</span>
+                                }
+                            </span>
                         </li>
                     }
                 </ul>
             </div>
             <div class="modal-footer">
+                @if (Model.HasPendingItems)
+                {
+                    <a href="~/Admin/ReleaseNotes" class="btn btn-outline-primary me-auto">Yayın onayı</a>
+                }
                 <a href="~/ReleaseNotes" class="btn btn-outline-secondary">Ayrıntı gör</a>
                 <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Anladım</button>
             </div>
@@ -34,20 +51,24 @@
 
 <style>
     .apya-rn-kicker { font-size: .68rem; letter-spacing: .13em; text-transform: uppercase; font-weight: 700; color: var(--lpx-primary, #37437d); margin-bottom: 4px; }
+    .apya-rn-notice { font-size: .82rem; border: 1px solid var(--apya-border, rgba(0,0,0,.12)); border-left-width: 3px; border-left-color: #8a6413; border-radius: 5px; padding: 9px 12px; margin-bottom: 14px; }
     .apya-rn-summary li { display: grid; grid-template-columns: 108px 1fr; gap: 12px; align-items: baseline; padding: 8px 0; border-bottom: 1px solid var(--apya-border, rgba(0,0,0,.08)); }
     .apya-rn-summary li:last-child { border-bottom: 0; }
     .apya-rn-summary-title { font-size: .92rem; }
     .apya-rn-tag { display: inline-block; font-size: .64rem; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; padding: 2px 8px; border-radius: 4px; border: 1px solid currentColor; line-height: 1.5; white-space: nowrap; }
     .apya-rn-tag--security { color: #a4373a; } .apya-rn-tag--feature { color: #2c7355; }
     .apya-rn-tag--improvement { color: #2f6d84; } .apya-rn-tag--fix { color: #8a6413; }
+    .apya-rn-pending { display: inline-block; margin-left: 8px; font-size: .64rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; padding: 1px 7px; border-radius: 4px; border: 1px dashed currentColor; color: #8a6413; white-space: nowrap; }
     @@media (prefers-color-scheme: dark) {
         .apya-rn-tag--security { color: #d98a8b; } .apya-rn-tag--feature { color: #7dc3a2; }
         .apya-rn-tag--improvement { color: #84bcd0; } .apya-rn-tag--fix { color: #d9b567; }
+        .apya-rn-pending { color: #d9b567; }
     }
     [data-theme="dark"] .apya-rn-tag--security { color: #d98a8b; }
     [data-theme="dark"] .apya-rn-tag--feature { color: #7dc3a2; }
     [data-theme="dark"] .apya-rn-tag--improvement { color: #84bcd0; }
     [data-theme="dark"] .apya-rn-tag--fix { color: #d9b567; }
+    [data-theme="dark"] .apya-rn-pending { color: #d9b567; }
     @@media (max-width: 560px) { .apya-rn-summary li { grid-template-columns: 1fr; gap: 3px; } }
 </style>
 
@@ -55,11 +76,11 @@
     (function () {
         var el = document.getElementById('apyaReleaseNotesModal');
         if (!el || typeof bootstrap === 'undefined') { return; }
-        var version = el.getAttribute('data-version');
         var marked = false;
         function markSeen() {
             if (marked) { return; } marked = true;
-            try { fetch('/release-notes/mark-seen?version=' + encodeURIComponent(version), { method: 'POST' }); } catch (e) { }
+            // Damga SUNUCUDA hesaplanır — istemci hangi sürümü gördüğünü bildirmez.
+            try { fetch('/release-notes/mark-seen', { method: 'POST' }); } catch (e) { }
         }
         el.addEventListener('hide.bs.modal', markSeen);
         new bootstrap.Modal(el).show();

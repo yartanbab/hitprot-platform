@@ -201,6 +201,9 @@ namespace Apya.Platform.EntityFrameworkCore
         /* --- DEMO TALEPLERİ (giriş ekranı) --- */
         public DbSet<Apya.Platform.DemoRequests.DemoRequest> DemoRequests { get; set; }
 
+        /* --- SÜRÜM NOTU YAYIN KARARLARI (host) --- */
+        public DbSet<Apya.Platform.ReleaseNotes.ReleaseNotePublication> ReleaseNotePublications { get; set; }
+
         /* --- DASHBOARD --- */
         public DbSet<Apya.Platform.Dashboard.DashboardLayout> DashboardLayouts { get; set; }
 
@@ -2146,6 +2149,24 @@ namespace Apya.Platform.EntityFrameworkCore
                 b.HasIndex(x => new { x.Status, x.CreationTime });
                 // Kötüye kullanım sayacı: aynı IP adresinin son bir saatteki talepleri.
                 b.HasIndex(x => new { x.IpAddress, x.CreationTime });
+            });
+
+            /* --- SÜRÜM NOTU YAYIN KARARLARI --- */
+            builder.Entity<Apya.Platform.ReleaseNotes.ReleaseNotePublication>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "ReleaseNotePublications", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+
+                b.Property(x => x.Version).IsRequired()
+                    .HasMaxLength(Apya.Platform.ReleaseNotes.ReleaseNotePublicationConsts.MaxVersionLength);
+                b.Property(x => x.ItemKey).IsRequired()
+                    .HasMaxLength(Apya.Platform.ReleaseNotes.ReleaseNotePublicationConsts.MaxItemKeyLength);
+                b.Property(x => x.Packages).IsRequired()
+                    .HasMaxLength(Apya.Platform.ReleaseNotes.ReleaseNotePublicationConsts.MaxPackagesLength);
+
+                // Madde başına tek karar. Kayıt host seviyesindedir (IMultiTenant yok) ve
+                // soft-delete DEĞİL → filtresiz tekil indeks güvenli.
+                b.HasIndex(x => new { x.Version, x.ItemKey }).IsUnique();
             });
 
             builder.Entity<Apya.Platform.Dashboard.DashboardLayout>(b =>

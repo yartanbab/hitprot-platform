@@ -331,6 +331,17 @@ $(function () {
     }
 
     // ================================================================ LİSTE
+    // Satır/kart ⋯ düğmesi. Menünün KENDİSİ burada basılmaz: .apya-proj-card
+    // `overflow:hidden` taşıyor, kart içine konan menü kırpılırdı. Sayfa kökündeki
+    // tek #ProjectMoneyMenu açılışta buraya konumlanır.
+    function moreButtonHtml(p) {
+        return '' +
+            '<button type="button" class="btn btn-sm btn-outline-secondary apya-proj-more" data-stop' +
+            ' data-id="' + p.id + '" aria-haspopup="true" aria-expanded="false"' +
+            ' title="Proje menüsü" aria-label="' + esc(p.name) + ' menüsü">' +
+            '<i class="fa fa-ellipsis"></i></button>';
+    }
+
     function rowHtml(p) {
         var cat = category(p);
         var chips = [];
@@ -366,10 +377,7 @@ $(function () {
             '<div class="apya-proj-cell apya-proj-row-actions">' +
             '  <a class="btn btn-sm btn-outline-secondary" href="/Projects/ProjectDetails/' + p.id + '"' +
             '     data-stop title="Proje detayına git"><i class="fa fa-list-check me-1"></i>Detay</a>' +
-            (CAN_EDIT
-                ? '  <a class="btn btn-sm btn-outline-secondary" href="/Projects/Edit/' + p.id + '" data-stop' +
-                  '   title="Projeyi düzenle" aria-label="Projeyi düzenle"><i class="fa fa-pen"></i></a>'
-                : '') +
+            moreButtonHtml(p) +
             '</div>' +
             '</div>';
     }
@@ -427,12 +435,9 @@ $(function () {
             '<div class="apya-proj-card-foot">' +
             facepileHtml(p, true) +
             '  <div class="apya-proj-card-actions">' +
-            (CAN_EDIT
-                ? '    <a class="btn btn-sm btn-outline-secondary" href="/Projects/Edit/' + p.id + '" data-stop' +
-                  '       title="Projeyi düzenle" aria-label="Projeyi düzenle"><i class="fa fa-pen"></i></a>'
-                : '') +
             '    <a class="btn btn-sm btn-outline-secondary" href="/Projects/ProjectDetails/' + p.id + '" data-stop>' +
             '      <i class="fa fa-list-check me-1"></i>Detay</a>' +
+            moreButtonHtml(p) +
             '  </div>' +
             '</div>' +
             '</div>';
@@ -995,6 +1000,72 @@ $(function () {
     $(document).on('keydown', function (e) {
         if (e.key === 'Escape' && drawer.projectId) { closeDrawer(); }
     });
+
+    // --- Proje ⋯ menüsü ------------------------------------------------------
+    // Tek örnek sayfa kökünde durur; açılışta hedef projenin adresleri yazılır ve
+    // düğmenin yanına position:fixed ile yerleştirilir. Bootstrap dropdown DEĞİL:
+    // menü kartın İÇİNDE doğsaydı .apya-proj-card'ın overflow:hidden'ı kırpardı.
+    // Adresler Pages/Shared/_ProjectMoneyLinks.cshtml ile AYNI olmalı.
+    var $moneyMenu = $('#ProjectMoneyMenu');
+    var moneyMenuOwner = null;
+
+    function moneyMenuHref(kind, id) {
+        if (kind === 'detail')    { return '/Projects/ProjectDetails/' + id; }
+        if (kind === 'budget')    { return '/Finance?projectId=' + id + '&tab=kalemler'; }
+        if (kind === 'finance')   { return '/Finance?projectId=' + id + '&tab=genel'; }
+        if (kind === 'documents') { return '/Documents/Scope?projectId=' + id; }
+        if (kind === 'edit')      { return '/Projects/Edit/' + id; }
+        return '#';
+    }
+
+    function closeMoneyMenu() {
+        if (!moneyMenuOwner) { return; }
+        $(moneyMenuOwner).attr('aria-expanded', 'false');
+        moneyMenuOwner = null;
+        $moneyMenu.prop('hidden', true);
+    }
+
+    function openMoneyMenu(btn) {
+        var id = String($(btn).data('id'));
+        if (!id) { return; }
+
+        $moneyMenu.find('[data-link]').each(function () {
+            this.setAttribute('href', moneyMenuHref(this.getAttribute('data-link'), id));
+        });
+
+        // Ölçmek için önce göster: hidden iken getBoundingClientRect sıfır döner.
+        $moneyMenu.prop('hidden', false).css({ top: '0px', left: '0px' });
+
+        var r = btn.getBoundingClientRect();
+        var m = $moneyMenu[0].getBoundingClientRect();
+        var gap = 4;
+        // Sağ kenara hizala, ekrandan taşarsa içeri çek; altta yer yoksa yukarı aç.
+        var left = Math.max(8, Math.min(r.right - m.width, window.innerWidth - m.width - 8));
+        var top = (r.bottom + gap + m.height > window.innerHeight)
+            ? Math.max(8, r.top - gap - m.height)
+            : r.bottom + gap;
+
+        $moneyMenu.css({ top: top + 'px', left: left + 'px' });
+        moneyMenuOwner = btn;
+        $(btn).attr('aria-expanded', 'true');
+    }
+
+    $console.on('click', '.apya-proj-more', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        if (moneyMenuOwner === this) { closeMoneyMenu(); return; }
+        closeMoneyMenu();
+        openMoneyMenu(this);
+    });
+
+    // Dış tık / ESC / kaydırma-boyut değişimi kapatır: menü fixed olduğu için
+    // sayfa kaydığında düğmesinden kopardı.
+    $(document).on('click', function (e) {
+        if (moneyMenuOwner && !$(e.target).closest('#ProjectMoneyMenu').length) { closeMoneyMenu(); }
+    });
+    $(document).on('keydown', function (e) { if (e.key === 'Escape') { closeMoneyMenu(); } });
+    window.addEventListener('scroll', closeMoneyMenu, true);
+    window.addEventListener('resize', closeMoneyMenu);
 
     // --- Panel: görev tamamla (iyimser) / geri al
     $(document).on('click', '.js-task-toggle', function () {

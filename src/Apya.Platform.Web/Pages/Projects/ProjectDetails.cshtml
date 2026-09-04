@@ -4,6 +4,7 @@
 @using Microsoft.AspNetCore.Authorization
 @using Microsoft.AspNetCore.Mvc.Localization
 @using Volo.Abp.AspNetCore.Mvc.UI.Bootstrap.TagHelpers.Modal
+@using Apya.Platform.Web.Pages.Shared
 @inject IAuthorizationService AuthorizationService
 @inject IHtmlLocalizer<PlatformResource> L
 @model Apya.Platform.Web.Pages.Projects.ProjectDetailsModel
@@ -75,7 +76,9 @@
     };
     var timeHealthBarTone = ToApyaBarTone(Model.TimeHealthColor);
     var budgetBarTone = Model.BudgetPercent > 90 ? "is-negative" : Model.BudgetPercent > 60 ? "is-warning" : "is-positive";
-    var hasBudget = Model.Project?.TotalBudget > 0;
+    @* Bütçe yüzeyleri Finans çatısının özetine bağlı: yetki yoksa (Budget null)
+       ya da onaylanan bütçe sıfırsa hiç basılmaz. *@
+    var hasBudget = Model.Budget?.ApprovedBudget > 0;
     var hasDates  = Model.TimeNotStarted || Model.Project?.EndDate.HasValue == true;
 
     // 403 hâli sunucuda karara bağlanır: yetki yoksa DataTables hiç kurulmaz
@@ -157,7 +160,7 @@
     <span class="apya-console-sep" aria-hidden="true"></span>
 
     @* ── Metrik barları ──
-       Bütçe barı bugünkü davranışını korur (#btn-budget-summary → modal).
+       Bütçe barı projenin para/belge ekranlarına açılan menüyü verir.
        İlerleme / Gecikmiş / 7 Gün barları filtre üretmeye 3. adımda bağlanır. *@
     <div class="apya-console-bars">
 
@@ -224,28 +227,43 @@
             }
         </div>
 
-        @* Bütçe — mevcut "Bütçe vs Gerçekleşen" modalını açar *@
-        <button type="button" class="apya-console-bar" id="btn-budget-summary"
-                data-project-id="@Model.Project?.Id"
-                title="@(hasBudget ? "Bütçe vs Gerçekleşen" : "Bütçe tanımlı değil")"
-                disabled="@(!hasBudget)">
-            <span class="apya-console-bar-head">
-                <span class="apya-console-bar-label"><i class="fa fa-wallet me-1" aria-hidden="true"></i>Bütçe</span>
-                <span class="apya-console-bar-chevron" aria-hidden="true">&rsaquo;</span>
-            </span>
-            @if (hasBudget)
-            {
-                <span class="apya-console-bar-value">
-                    <strong class="apya-numeric">@Model.BudgetSpent.ToString("N0")</strong>
-                    <small class="apya-numeric">/ @Model.Project?.TotalBudget.ToString("N0")</small>
+        @* Bütçe — çubuk artık projenin para ekranlarına açılan menüyü verir:
+           hızlı bakış (modal), kalem kırılımı, Finans çatısı ve belgeler.
+           Bütçe yetkisi yoksa hiç basılmaz; "Bütçe tanımsız" yazmak yetki
+           eksiğini veri eksiği gibi gösterirdi. *@
+        @if (Model.Budget != null)
+        {
+        <div class="dropdown">
+            <button type="button" class="apya-console-bar" id="btn-budget-summary"
+                    data-bs-toggle="dropdown" aria-expanded="false"
+                    data-project-id="@Model.Project?.Id"
+                    title="@(hasBudget ? "Bütçe, finans ve belgeler" : "Bütçe tanımlı değil")"
+                    disabled="@(!hasBudget)">
+                <span class="apya-console-bar-head">
+                    <span class="apya-console-bar-label"><i class="fa fa-wallet me-1" aria-hidden="true"></i>Bütçe</span>
+                    <span class="apya-console-bar-chevron" aria-hidden="true">&rsaquo;</span>
                 </span>
-                <span class="apya-mini-progress @budgetBarTone"><span style="width:@Model.BudgetPercent%"></span></span>
-            }
-            else
-            {
-                <span class="apya-console-bar-value"><small>Bütçe tanımsız</small></span>
-            }
-        </button>
+                @if (hasBudget)
+                {
+                    <span class="apya-console-bar-value">
+                        <strong class="apya-numeric">@Model.BudgetSpent.ToString("N0")</strong>
+                        <small class="apya-numeric">/ @Model.Budget?.ApprovedBudget.ToString("N0")</small>
+                    </span>
+                    <span class="apya-mini-progress @budgetBarTone"><span style="width:@Model.BudgetPercent%"></span></span>
+                }
+                else
+                {
+                    <span class="apya-console-bar-value"><small>Bütçe tanımsız</small></span>
+                }
+            </button>
+            <div class="dropdown-menu apya-console-menu" aria-labelledby="btn-budget-summary">
+                <partial name="_ProjectMoneyLinks" model="@(new ProjectMoneyLinksModel {
+                    ProjectId = Model.Id,
+                    IncludeStatusModal = true,
+                    CanViewDocuments = await AuthorizationService.IsGrantedAsync(PlatformPermissions.Documents.Default) })" />
+            </div>
+        </div>
+        }
 
         @* İlerleme *@
         <button type="button" class="apya-console-bar" id="bar-progress" aria-pressed="false" title="Tamamlanmamış görevleri filtrele">
@@ -354,11 +372,10 @@
                 }
                 @if (hasBudget)
                 {
-                    <button type="button" class="apya-console-menu-item" id="menu-budget-summary"
-                            data-project-id="@Model.Project?.Id">
-                        <span class="apya-console-menu-icon"><i class="fa fa-wallet" aria-hidden="true"></i></span>
-                        Bütçe vs gerçekleşen
-                    </button>
+                    @* Şeritteki Bütçe çubuğuyla AYNI üçlü — iki menü ayrışmasın.
+                       Belge bağlantısı aşağıdaki belge bölümünde zaten var. *@
+                    <partial name="_ProjectMoneyLinks" model="@(new ProjectMoneyLinksModel {
+                        ProjectId = Model.Id, IncludeStatusModal = true, CanViewDocuments = false })" />
                 }
                 <button type="button" class="apya-console-menu-item" data-copy-code="@Model.Project?.Code">
                     <span class="apya-console-menu-icon"><i class="fa fa-copy" aria-hidden="true"></i></span>

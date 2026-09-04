@@ -195,6 +195,13 @@ public static class PlatformPermissions
         public const string Manage = Default + ".Manage";           // Durum / iç not güncelleme
     }
 
+    // --- SÜRÜM NOTU YAYIN ONAYI (host) ---
+    public static class ReleaseNotes
+    {
+        /// <summary>Sürüm notu maddelerini onaylama / kime gösterileceğini belirleme. Host-only.</summary>
+        public const string Manage = GroupName + ".ReleaseNotes.Manage";
+    }
+
     // --- DİNAMİK VARLIK (FORM/ŞABLON) YETKİLERİ ---
     public static class DynamicAssets
     {
