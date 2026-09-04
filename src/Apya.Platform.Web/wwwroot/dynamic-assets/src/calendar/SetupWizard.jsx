@@ -3,6 +3,7 @@ import { Button, Dialog, DialogContent } from '../components/ui';
 import { cn } from '../lib/utils';
 import { INTERNAL_SOURCE_ORDER, SOURCES } from './lib/model';
 import { useUpdatePreferences } from './hooks/useCalendarPreferences';
+import { useConnectAccount } from './hooks/useCalendarAccounts';
 
 const CAPACITY_OPTIONS = [
     { value: 4, label: '4 sa' },
@@ -26,6 +27,7 @@ export function SetupWizard({ open, counts, onDone }) {
     const [sources, setSources] = useState(() => new Set(INTERNAL_SOURCE_ORDER));
     const [capacity, setCapacity] = useState(8);
     const update = useUpdatePreferences();
+    const connect = useConnectAccount();
 
     const finish = () => {
         update.mutate(
@@ -157,17 +159,24 @@ export function SetupWizard({ open, counts, onDone }) {
                             <div className="mt-3 flex gap-2">
                                 <Button
                                     size="sm" variant="outline"
-                                    onClick={() => { window.location.href = '/Calendars/SimulateAuth?provider=1'; }}
+                                    disabled={connect.isPending}
+                                    onClick={() => connect.mutate(1)}
                                 >
                                     <i className="fab fa-google me-1.5" aria-hidden="true" />Google bağla
                                 </Button>
                                 <Button
                                     size="sm" variant="outline"
-                                    onClick={() => { window.location.href = '/Calendars/SimulateAuth?provider=2'; }}
+                                    disabled={connect.isPending}
+                                    onClick={() => connect.mutate(2)}
                                 >
                                     <i className="fab fa-windows me-1.5" aria-hidden="true" />Outlook bağla
                                 </Button>
                             </div>
+                            {connect.isError && (
+                                <p role="alert" className="mt-2 text-[11.5px] text-negative-700">
+                                    {connect.error?.message || 'Yetkilendirme adresi alınamadı.'}
+                                </p>
+                            )}
                         </>
                     )}
 
