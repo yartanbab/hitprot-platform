@@ -31,5 +31,11 @@ public enum GrantNotificationTrigger
     ReportDeadlineNear = 5,
 
     /// <summary>Yeni çağrı yayına alındı; uygunluk eşiğini geçen firmalara gider.</summary>
-    CallPublished = 6
+    CallPublished = 6,
+
+    /// <summary>
+    /// Host, kiracının ilgi talebini karara bağladı. Başvuru süreci başlatıldıysa
+    /// gövde bunu duyurur; uygun bulunmadıysa gerekçeyi taşır.
+    /// </summary>
+    InterestAnswered = 7
 }

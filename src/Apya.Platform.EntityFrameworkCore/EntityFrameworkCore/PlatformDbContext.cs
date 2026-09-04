@@ -148,6 +148,7 @@ namespace Apya.Platform.EntityFrameworkCore
         public DbSet<GrantNotificationTemplate> GrantNotificationTemplates { get; set; }
         public DbSet<GrantNotificationLog> GrantNotificationLogs { get; set; }
         public DbSet<GrantLead> GrantLeads { get; set; }
+        public DbSet<GrantInterest> GrantInterests { get; set; }
         public DbSet<GrantRecommendation> GrantRecommendations { get; set; }
         public DbSet<GrantDisbursementTranche> GrantDisbursementTranches { get; set; }
         public DbSet<GrantMilestone> GrantMilestones { get; set; }
@@ -945,6 +946,24 @@ namespace Apya.Platform.EntityFrameworkCore
                 b.HasIndex(x => new { x.Status, x.HeatScore });
                 b.HasIndex(x => x.GrantCallId);
                 b.HasIndex(x => new { x.IpAddress, x.CreationTime });
+            });
+
+            // --- İlgi talepleri · kiracı bildirir, host karara bağlar ---
+
+            builder.Entity<GrantInterest>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "GrantInterests", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+                b.Property(x => x.Note).HasMaxLength(1000);
+                b.Property(x => x.HostFeedback).HasMaxLength(1000);
+                // Çağrıya FK: emsali GrantApplication — ikisi de kiracıya ait ve çağrıya
+                // bağlı. Başvuruya FK KURULMADI: başvuru silinse bile talebin kendisi
+                // ve host'un kararı durmalı.
+                b.HasOne<GrantCall>().WithMany().HasForeignKey(x => x.GrantCallId).OnDelete(DeleteBehavior.Cascade);
+                // Kiracının açık talebi var mı sorgusu (mükerrer talep kapısı).
+                b.HasIndex(x => new { x.TenantId, x.GrantCallId, x.Status });
+                // Host kutusunun sıralaması: bekleyenler önce, tarihe göre.
+                b.HasIndex(x => new { x.Status, x.CreationTime });
             });
 
             // --- 6d · Bildirim şablonları ---

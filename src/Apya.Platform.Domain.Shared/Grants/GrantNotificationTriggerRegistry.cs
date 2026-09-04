@@ -21,7 +21,8 @@ public static class GrantNotificationTriggerRegistry
             [GrantNotificationTrigger.ApplicationStageChanged]   = NotificationType.GrantApplicationStageChanged,
             [GrantNotificationTrigger.DecisionIssued]            = NotificationType.GrantDecisionIssued,
             [GrantNotificationTrigger.ReportDeadlineNear]        = NotificationType.GrantReportDue,
-            [GrantNotificationTrigger.CallPublished]             = NotificationType.GrantCallPublished
+            [GrantNotificationTrigger.CallPublished]             = NotificationType.GrantCallPublished,
+            [GrantNotificationTrigger.InterestAnswered]          = NotificationType.GrantInterestAnswered
         };
 
     /// <summary>
@@ -56,7 +57,13 @@ public static class GrantNotificationTriggerRegistry
                 ["{çağrı_adı}", "{rapor_adı}", "{son_tarih}", "{kalan_gün}"],
 
             [GrantNotificationTrigger.CallPublished] =
-                ["{firma_adı}", "{çağrı_adı}", "{son_tarih}", "{kalan_gün}"]
+                ["{firma_adı}", "{çağrı_adı}", "{son_tarih}", "{kalan_gün}"],
+
+            // Karar ve gerekçe AYRI tokenlar: olumlu kararda gerekçe boştur ve tek
+            // tokenda birleştirilseydi gövde "Kararımız: başvuru süreci başlatıldı —"
+            // diye yarım cümleyle giderdi.
+            [GrantNotificationTrigger.InterestAnswered] =
+                ["{çağrı_adı}", "{karar}", "{gerekçe}"]
         };
 
     public static IReadOnlyCollection<GrantNotificationTrigger> All => (IReadOnlyCollection<GrantNotificationTrigger>)Map.Keys;

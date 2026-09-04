@@ -5,7 +5,6 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Volo.Abp.Application.Services;
 using Volo.Abp.Data;
-using Volo.Abp.Domain.Entities;
 using Volo.Abp.Domain.Repositories;
 using Volo.Abp.MultiTenancy;
 using Apya.Platform.Grants.Dtos;
@@ -13,14 +12,19 @@ using Apya.Platform.Permissions;
 
 namespace Apya.Platform.Grants;
 
-/// <summary>Tenant başvuruları (minimal). "Başvur" idempotent; katalog okuması filtre-kapalı.</summary>
+/// <summary>
+/// Tenant başvuruları (minimal) — okuma yüzeyi. Katalog okuması filtre-kapalı.
+///
+/// <para>🔴 "Başvur" ucu KALDIRILDI: kiracı artık başvuru açmaz, çağrıya ilgi bildirir
+/// (<see cref="GrantInterestAppService"/>) ve başvuruyu host'un kararı doğurur. Uç açık
+/// kalsaydı bu kapı REST üzerinden atlanabilirdi.</para>
+/// </summary>
 [Authorize(PlatformPermissions.Grants.Default)]
 public class GrantApplicationAppService : ApplicationService, IGrantApplicationAppService
 {
     private readonly IRepository<GrantApplication, Guid> _appRepo;
     private readonly IRepository<GrantCall, Guid> _callRepo;
     private readonly IRepository<Grant, Guid> _grantRepo;
-    private readonly IRepository<GrantRecommendation, Guid> _recRepo;
     private readonly IRepository<GrantDisbursementTranche, Guid> _trancheRepo;
     private readonly IRepository<GrantMilestone, Guid> _milestoneRepo;
     private readonly IGrantRecommendationAppService _recommendationAppService;
@@ -30,7 +34,6 @@ public class GrantApplicationAppService : ApplicationService, IGrantApplicationA
         IRepository<GrantApplication, Guid> appRepo,
         IRepository<GrantCall, Guid> callRepo,
         IRepository<Grant, Guid> grantRepo,
-        IRepository<GrantRecommendation, Guid> recRepo,
         IRepository<GrantDisbursementTranche, Guid> trancheRepo,
         IRepository<GrantMilestone, Guid> milestoneRepo,
         IGrantRecommendationAppService recommendationAppService,
@@ -39,47 +42,10 @@ public class GrantApplicationAppService : ApplicationService, IGrantApplicationA
         _appRepo = appRepo;
         _callRepo = callRepo;
         _grantRepo = grantRepo;
-        _recRepo = recRepo;
         _trancheRepo = trancheRepo;
         _milestoneRepo = milestoneRepo;
         _recommendationAppService = recommendationAppService;
         _mtFilter = mtFilter;
-    }
-
-    public async Task<GrantApplicationDto> ApplyAsync(Guid grantCallId)
-    {
-        // İdempotent: aynı tenant+çağrı için varsa mevcut başvuruyu döndür.
-        var existing = await _appRepo.FirstOrDefaultAsync(a => a.GrantCallId == grantCallId);
-        if (existing != null)
-        {
-            return await ToDtoAsync(existing);
-        }
-
-        // Yalnız HOST kataloğuna başvurulabilir. Filtre kapalıyken TenantId koşulu elle
-        // konmazsa kiracı, başka kiracının çağrı Id'siyle kendine başvuru açabilir.
-        bool callExists;
-        using (_mtFilter.Disable())
-        {
-            callExists = await _callRepo.FirstOrDefaultAsync(
-                c => c.Id == grantCallId && c.TenantId == null) != null;
-        }
-        if (!callExists)
-        {
-            throw new EntityNotFoundException(typeof(GrantCall), grantCallId);
-        }
-
-        var app = new GrantApplication(GuidGenerator.Create(), CurrentTenant.Id, grantCallId);
-        await _appRepo.InsertAsync(app, autoSave: true);
-
-        // Host bu çağrıyı bu firmaya göndermişse (B3), başvuruldu olarak işaretle.
-        var rec = await _recRepo.FirstOrDefaultAsync(r => r.GrantCallId == grantCallId);
-        if (rec != null)
-        {
-            rec.MarkApplied();
-            await _recRepo.UpdateAsync(rec, autoSave: true);
-        }
-
-        return await ToDtoAsync(app);
     }
 
     public async Task<List<GrantApplicationDto>> GetMyApplicationsAsync()

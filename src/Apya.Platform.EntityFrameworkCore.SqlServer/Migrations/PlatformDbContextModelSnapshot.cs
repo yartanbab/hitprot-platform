@@ -6884,6 +6884,94 @@ namespace Apya.Platform.Migrations
                     b.ToTable("AppGrantEligibleCostItems", (string)null);
                 });
 
+            modelBuilder.Entity("Apya.Platform.Grants.GrantInterest", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("ConcurrencyStamp")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("nvarchar(40)")
+                        .HasColumnName("ConcurrencyStamp");
+
+                    b.Property<DateTime>("CreationTime")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("CreationTime");
+
+                    b.Property<Guid?>("CreatorId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("CreatorId");
+
+                    b.Property<Guid?>("DeleterId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("DeleterId");
+
+                    b.Property<DateTime?>("DeletionTime")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("DeletionTime");
+
+                    b.Property<string>("ExtraProperties")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("ExtraProperties");
+
+                    b.Property<Guid?>("GrantApplicationId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("GrantCallId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("HostFeedback")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<bool>("IsDeleted")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false)
+                        .HasColumnName("IsDeleted");
+
+                    b.Property<DateTime?>("LastModificationTime")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("LastModificationTime");
+
+                    b.Property<Guid?>("LastModifierId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("LastModifierId");
+
+                    b.Property<string>("Note")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<Guid?>("RequestedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("ReviewedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("ReviewedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<Guid?>("TenantId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("TenantId");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("GrantCallId");
+
+                    b.HasIndex("Status", "CreationTime");
+
+                    b.HasIndex("TenantId", "GrantCallId", "Status");
+
+                    b.ToTable("AppGrantInterests", (string)null);
+                });
+
             modelBuilder.Entity("Apya.Platform.Grants.GrantLead", b =>
                 {
                     b.Property<Guid>("Id")
@@ -12802,6 +12890,15 @@ namespace Apya.Platform.Migrations
                     b.HasOne("Apya.Platform.Grants.Grant", null)
                         .WithMany("EligibleCostItems")
                         .HasForeignKey("GrantId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Apya.Platform.Grants.GrantInterest", b =>
+                {
+                    b.HasOne("Apya.Platform.Grants.GrantCall", null)
+                        .WithMany()
+                        .HasForeignKey("GrantCallId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });

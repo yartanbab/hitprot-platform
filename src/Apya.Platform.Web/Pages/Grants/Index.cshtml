@@ -350,4 +350,31 @@ else
         <div id="AppsList" class="d-flex flex-column gap-2"></div>
         <div id="AppsEmpty" class="text-muted small d-none">Henüz başvurunuz yok.</div>
     </div>
+
+    @* ---- İlgi talebi modalı (kart akışındaki "İlgileniyorum" düğmesi açar) ---- *@
+    <div class="modal fade" id="InterestModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <form id="InterestForm">
+                    <div class="modal-header">
+                        <h5 class="modal-title">@L["Grants:Interest:Modal:Title"]</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
+                    </div>
+                    <div class="modal-body d-flex flex-column gap-2">
+                        <div class="fw-semibold" id="InterestCallName"></div>
+                        <div class="small text-muted">@L["Grants:Interest:Modal:Hint"]</div>
+                        <label class="form-label mb-0" for="InterestNote">@L["Grants:Interest:Modal:Note"]</label>
+                        <textarea class="form-control" id="InterestNote" rows="4" maxlength="1000"></textarea>
+                        <div class="small text-muted">@L["Grants:Interest:Modal:NoteOptional"]</div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">@L["Grants:Sources:Cancel"]</button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fa fa-paper-plane me-1"></i>@L["Grants:Interest:Modal:Submit"]
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 }

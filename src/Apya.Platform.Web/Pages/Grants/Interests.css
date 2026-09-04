@@ -1,0 +1,110 @@
+/* Host: İlgi Talepleri. Ortak sınıflar Shared.css'te. */
+
+.apya-int-kpis {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: var(--apya-space-3);
+    margin-bottom: var(--apya-space-4);
+}
+
+@media (max-width: 767.98px) {
+    .apya-int-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+.apya-int-kpi {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: var(--apya-space-3) var(--apya-space-4);
+    background: var(--apya-surface-raised);
+    border: 1px solid var(--apya-border-subtle);
+    border-radius: var(--apya-radius-md);
+}
+
+.apya-int-kpi-label {
+    font-size: var(--apya-text-xs);
+    color: var(--apya-text-secondary);
+}
+
+.apya-int-kpi-value {
+    font-family: var(--apya-font-mono);
+    font-variant-numeric: tabular-nums;
+    font-size: var(--apya-fs-2xl);
+    font-weight: var(--apya-weight-bold);
+    letter-spacing: var(--apya-tracking-tight);
+    line-height: 1.15;
+}
+
+/* Sütunlar: firma+kişi · çağrı+tarih · not · durum · eylemler */
+.apya-int-head,
+.apya-int-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 1.1fr) minmax(0, 1.2fr) 128px minmax(0, auto);
+    gap: var(--apya-space-3);
+    align-items: center;
+    padding: 10px var(--apya-space-4);
+}
+
+.apya-int-head {
+    font-size: var(--apya-text-xs);
+    color: var(--apya-text-secondary);
+    border-bottom: 1px solid var(--apya-border-subtle);
+}
+
+.apya-int-item + .apya-int-item {
+    border-top: 1px solid var(--apya-border-subtle);
+}
+
+/* Dar ekranda ızgara tek sütuna düşer; başlık satırı anlamını yitirdiği için gizlenir. */
+@media (max-width: 991.98px) {
+    .apya-int-head { display: none; }
+
+    .apya-int-row {
+        grid-template-columns: minmax(0, 1fr);
+        gap: var(--apya-space-2);
+    }
+}
+
+.apya-int-cell {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.apya-int-cell strong {
+    font-weight: var(--apya-weight-semibold);
+    overflow-wrap: anywhere;
+}
+
+.apya-int-cell span {
+    font-size: var(--apya-text-xs);
+    color: var(--apya-text-secondary);
+    overflow-wrap: anywhere;
+}
+
+.apya-int-note {
+    font-size: var(--apya-text-xs);
+    color: var(--apya-text-secondary);
+    overflow-wrap: anywhere;
+}
+
+.apya-int-note.is-empty {
+    font-style: italic;
+}
+
+.apya-int-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--apya-space-2);
+    justify-content: flex-end;
+}
+
+@media (max-width: 991.98px) {
+    .apya-int-actions { justify-content: flex-start; }
+}
+
+/* Karara bağlanmış talebin gerekçesi — satırın altında, firmaya giden metnin aynısı. */
+.apya-int-extra {
+    padding: 0 var(--apya-space-4) 10px;
+}

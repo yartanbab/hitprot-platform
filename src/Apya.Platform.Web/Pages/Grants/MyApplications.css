@@ -115,3 +115,32 @@
     --apya-skel-row: 56px;
     --apya-skel-count: 4;
 }
+
+/* --- İlgi taleplerim: çağrı | tarih | durum | geri bildirim --- */
+.apya-my-interest-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 118px 168px minmax(0, 1.3fr);
+    align-items: center;
+    gap: var(--apya-space-2);
+    padding: 10px var(--apya-space-3);
+    border-bottom: 1px solid var(--apya-border-subtle);
+    font-size: var(--apya-fs-sm);
+}
+
+.apya-my-interest-row:last-child { border-bottom: 0; }
+
+/* Gerekçe kısaltılmaz: host'un yazdığı cümlenin tamamı okunabilmeli. */
+.apya-my-interest-feedback {
+    color: var(--apya-text-secondary);
+    font-size: var(--apya-text-xs);
+    overflow-wrap: anywhere;
+}
+
+@media (max-width: 767.98px) {
+    .apya-my-interest-row {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 4px;
+    }
+
+    .apya-my-interest-row.apya-cat-head { display: none; }
+}

@@ -27,9 +27,15 @@
             <button type="button" id="BookmarkBtn" class="btn btn-sm btn-outline-secondary">
                 <i class="fa fa-bookmark me-1"></i><span id="BookmarkText"></span>
             </button>
-            <button type="button" id="ApplyBtn" class="btn btn-sm btn-primary">
-                @L["Grants:Detail:Apply"]
+            @* Kiracı başvuruyu kendi açmaz: ilgi bildirir, host değerlendirir.
+               Buton ve rozet dönüşümlü görünür — durumu JS boyar. *@
+            <button type="button" id="InterestBtn" class="btn btn-sm btn-primary d-none">
+                <i class="fa fa-handshake me-1"></i><span id="InterestBtnText"></span>
             </button>
+            <span id="InterestChip" class="apya-chip d-none"></span>
+            <a id="InterestAppLink" class="btn btn-sm btn-outline-primary d-none" href="#">
+                @L["Grants:Interest:GoToApplication"]
+            </a>
         </div>
     </div>
 
@@ -42,6 +48,11 @@
             </div>
             <div class="apya-feed-issuer" id="CallIssuer"></div>
             <div class="small text-muted" id="CallDescription"></div>
+            @* Uygun bulunmayan talebin gerekçesi — host'un yazdığı cümle birebir. *@
+            <div id="InterestFeedback" class="apya-side-note d-none">
+                <i class="fa fa-circle-info mt-1"></i>
+                <span><strong>@L["Grants:Interest:Feedback"]:</strong> <span id="InterestFeedbackText"></span></span>
+            </div>
             <div class="apya-detail-metrics" id="CallMetrics"></div>
         </div>
     </div>
@@ -142,5 +153,31 @@
                 </div>
             </div>
         </aside>
+    </div>
+</div>
+
+@* ---- İlgi talebi modalı ---- *@
+<div class="modal fade" id="InterestModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <form id="InterestForm">
+                <div class="modal-header">
+                    <h5 class="modal-title">@L["Grants:Interest:Modal:Title"]</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
+                </div>
+                <div class="modal-body d-flex flex-column gap-2">
+                    <div class="small text-muted">@L["Grants:Interest:Modal:Hint"]</div>
+                    <label class="form-label mb-0" for="InterestNote">@L["Grants:Interest:Modal:Note"]</label>
+                    <textarea class="form-control" id="InterestNote" rows="4" maxlength="1000"></textarea>
+                    <div class="small text-muted">@L["Grants:Interest:Modal:NoteOptional"]</div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">@L["Grants:Sources:Cancel"]</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fa fa-paper-plane me-1"></i>@L["Grants:Interest:Modal:Submit"]
+                    </button>
+                </div>
+            </form>
+        </div>
     </div>
 </div>

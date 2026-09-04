@@ -17,6 +17,12 @@ public class GrantRecommendationDto
     public int Score { get; set; }
     public bool AlreadyApplied { get; set; }
 
+    /// <summary>
+    /// Kiracının bu çağrıya bıraktığı SON ilgi talebinin durumu; hiç talep yoksa null.
+    /// Kart CTA'sı buna bakar: talep sürüyorsa buton yerine rozet çıkar.
+    /// </summary>
+    public GrantInterestStatus? InterestStatus { get; set; }
+
     /// <summary>Host bu çağrıyı bu firmaya bilinçli olarak gönderdi mi (B3 host-push).</summary>
     public bool IsHostRecommended { get; set; }
 
