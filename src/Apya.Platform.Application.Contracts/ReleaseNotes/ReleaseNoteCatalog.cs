@@ -371,7 +371,47 @@ public static class ReleaseNoteCatalog
                 "olduğu hâlde \"kaydedilmemiş\" izlenimi veriyordu. Ayrıca alt görev panelinden \"tam " +
                 "ekran aç\" ya da \"görevi çoğalt\" ile başka göreve geçildiğinde önceki görevin metni " +
                 "ekranda kalıyor, üzerine yazılıp kaydedilirse yeni görevin açıklamasını eziyordu. İkisi " +
-                "de düzeltildi; açıklama her açılışta kayıtlı hâliyle geliyor.")
+                "de düzeltildi; açıklama her açılışta kayıtlı hâliyle geliyor."),
+
+            // ── Görev görünümleri ─────────────────────────────────────────────
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "Görevin içine belge yazıyorsunuz",
+                "Göreve şimdiye kadar yalnız dosya ekleyebiliyordunuz; toplantı notunu, teknik " +
+                "şartnameyi ya da teslim tutanağını ya ayrı bir dosyada tutuyor ya da açıklama " +
+                "alanına sıkıştırıyordunuz. Artık görevin Belge sekmesinde istediğiniz kadar belge " +
+                "açıp içine doğrudan yazıyorsunuz — başlık veriyor, biçimlendiriyor, kaydediyorsunuz. " +
+                "Listede her belgenin son düzenleyeni ve tarihi görünüyor; sildiğiniz belge geri " +
+                "getirilebilir şekilde saklanıyor."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "Alt görevlerinizi tablo, kanban ve takvim olarak görüyorsunuz",
+                "Bir görevin alt görevleri yalnız kart listesi hâlinde duruyordu; hangisinin terminin " +
+                "yaklaştığını ya da kaçının hangi durumda olduğunu görmek için tek tek bakmak " +
+                "gerekiyordu. Görev detayına üç yeni sekme geldi: Tablo, alt görevleri kolonlara " +
+                "dizip başlığa tıklayarak sıralamanızı sağlıyor (tarihi girilmemiş satırlar hep " +
+                "sonda kalıyor); Kanban, alt görevleri duruma göre sütunlara ayırıyor ve kartı başka " +
+                "sütuna sürüklediğinizde durum anında kaydediliyor; Takvim, görevin ve alt " +
+                "görevlerinin başlangıç ve termin tarihlerini aylık ızgarada gösteriyor."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "Görevler ekranına takvim, gösterge paneli ve dosya galerisi eklendi",
+                "Görevler konsolunda Liste, Kanban ve Zaman Çizelgesi vardı; üçü de tek tek görevlere " +
+                "bakmak içindi. Üç görünüm daha geldi ve hepsi o an seçili filtreyi izliyor: Takvim, " +
+                "görevleri başlangıç ve termin tarihlerine göre aylık olarak yerleştiriyor; Gösterge " +
+                "Paneli, seçtiğiniz kapsamın durum, öncelik ve kişi dağılımını grafiklerle ve " +
+                "toplam / tamamlanan / gecikmiş sayaçlarıyla özetliyor; Dosya Galerisi ise " +
+                "görevlere eklenmiş görselleri tek ızgarada topluyor. Filtreyi değiştirdiğinizde " +
+                "üçü de yeni kapsama göre yenileniyor."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
+                "Özellik kataloğunda artık yalnız çalışan modüller var",
+                "Göreve özellik eklerken çıkan listede, eklediğinizde \"yapım aşamasında\" boş " +
+                "ekranıyla karşılaştığınız modüller de duruyordu — Riskler, Onaylar, Otomasyonlar, " +
+                "Özel Alanlar, E-postalar, Yapay Zeka ve Gösterge Paneli gibi. Katalog artık yalnız " +
+                "gerçekten iş gören modülleri listeliyor. Aynı turda Kontrol Listesi, Geçmiş ve " +
+                "Dosya Galerisi sekmeleri kullanıma açıldı. Görev yorumları ayrı bir sekme olmaktan " +
+                "çıktı; zaten Genel sekmesinde durdukları yerde duruyorlar. Daha önce bir göreve " +
+                "eklediğiniz özellikler silinmedi, yalnız görünmüyor.")
         ),
 
         new ReleaseNote(
