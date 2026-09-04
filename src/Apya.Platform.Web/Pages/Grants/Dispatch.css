@@ -99,7 +99,7 @@
 }
 
 .apya-cand-dim-label {
-    font-size: 10px;
+    font-size: 12px;
     color: var(--apya-text-tertiary);
     overflow: hidden;
     text-overflow: ellipsis;

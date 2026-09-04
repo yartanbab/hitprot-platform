@@ -121,7 +121,7 @@ $(function () {
 
     // ---------- Çizim ----------
     function paint() {
-        $('#Board').html((board.columns || []).map(column).join(''));
+        $('#Board').removeClass('apya-skel-cards').html((board.columns || []).map(column).join(''));
         $('#BoardEmpty').toggleClass('d-none', (board.columns || []).length > 0);
 
         $('#TemplateChip').text(board.isTemplateDriven

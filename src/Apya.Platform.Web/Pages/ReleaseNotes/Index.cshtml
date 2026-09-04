@@ -1,5 +1,5 @@
 @page
-@using Apya.Platform.Web.ReleaseNotes
+@using Apya.Platform.ReleaseNotes
 @model Apya.Platform.Web.Pages.ReleaseNotes.IndexModel
 @{
     ViewData["Title"] = "Yenilikler";
@@ -12,6 +12,29 @@
             <h1 class="h4 mb-1">Sürüm geçmişi</h1>
             <p class="text-muted mb-0">Uygulamadaki güncellemelerin sürüm sürüm kaydı.</p>
         </div>
+
+        @if (Model.CanManage)
+        {
+            <div class="apya-rn-admin-bar">
+                <div>
+                    @if (Model.PendingCount > 0)
+                    {
+                        <strong>@Model.PendingCount madde onay bekliyor.</strong>
+                        <span class="text-muted">Onay bekleyen maddeler yalnız size görünür; kullanıcılara gitmez.</span>
+                    }
+                    else
+                    {
+                        <span class="text-muted">Tüm maddeler için yayın kararı verilmiş.</span>
+                    }
+                </div>
+                <a href="~/Admin/ReleaseNotes" class="btn btn-sm btn-outline-primary">Yayın onayı</a>
+            </div>
+        }
+
+        @if (Model.Releases.Count == 0)
+        {
+            <div class="card"><div class="card-body text-muted">Henüz yayınlanmış bir sürüm notu yok.</div></div>
+        }
 
         @foreach (var release in Model.Releases)
         {
@@ -31,7 +54,13 @@
                                 <span class="apya-rn-tag apya-rn-tag--@ReleaseNoteCategoryInfo.Key(item.Category)">@ReleaseNoteCategoryInfo.Label(item.Category)</span>
                             </div>
                             <div>
-                                <div class="apya-rn-row-title">@item.Title</div>
+                                <div class="apya-rn-row-title">
+                                    @item.Title
+                                    @if (item.IsPendingApproval)
+                                    {
+                                        <span class="apya-rn-pending">Onay bekliyor</span>
+                                    }
+                                </div>
                                 <p class="text-muted mb-0">@item.Description</p>
                             </div>
                         </div>
@@ -45,6 +74,7 @@
 <style>
     .apya-rn-head { margin-bottom: 22px; }
     .apya-rn-kicker { font-size: .68rem; letter-spacing: .13em; text-transform: uppercase; font-weight: 700; color: var(--lpx-primary, #37437d); margin-bottom: 4px; }
+    .apya-rn-admin-bar { display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap; font-size: .86rem; border: 1px solid var(--apya-border, rgba(0,0,0,.12)); border-left-width: 3px; border-left-color: var(--lpx-primary, #37437d); border-radius: 6px; padding: 10px 14px; margin-bottom: 18px; }
     .apya-rn-ver { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .76rem; color: var(--apya-text-secondary, #616b7a); border: 1px solid var(--apya-border, rgba(0,0,0,.12)); border-radius: 5px; padding: 3px 9px; white-space: nowrap; }
     .apya-rn-row { display: grid; grid-template-columns: 120px 1fr; gap: 16px; padding: 15px 0; }
     .apya-rn-row + .apya-rn-row { border-top: 1px solid var(--apya-border, rgba(0,0,0,.08)); }
@@ -53,13 +83,16 @@
     .apya-rn-tag { display: inline-block; font-size: .64rem; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; padding: 2px 8px; border-radius: 4px; border: 1px solid currentColor; line-height: 1.5; white-space: nowrap; }
     .apya-rn-tag--security { color: #a4373a; } .apya-rn-tag--feature { color: #2c7355; }
     .apya-rn-tag--improvement { color: #2f6d84; } .apya-rn-tag--fix { color: #8a6413; }
+    .apya-rn-pending { display: inline-block; margin-left: 8px; font-size: .64rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; padding: 1px 7px; border-radius: 4px; border: 1px dashed currentColor; color: #8a6413; white-space: nowrap; }
     @@media (prefers-color-scheme: dark) {
         .apya-rn-tag--security { color: #d98a8b; } .apya-rn-tag--feature { color: #7dc3a2; }
         .apya-rn-tag--improvement { color: #84bcd0; } .apya-rn-tag--fix { color: #d9b567; }
+        .apya-rn-pending { color: #d9b567; }
     }
     [data-theme="dark"] .apya-rn-tag--security { color: #d98a8b; }
     [data-theme="dark"] .apya-rn-tag--feature { color: #7dc3a2; }
     [data-theme="dark"] .apya-rn-tag--improvement { color: #84bcd0; }
     [data-theme="dark"] .apya-rn-tag--fix { color: #d9b567; }
+    [data-theme="dark"] .apya-rn-pending { color: #d9b567; }
     @@media (max-width: 560px) { .apya-rn-row { grid-template-columns: 1fr; gap: 6px; } }
 </style>

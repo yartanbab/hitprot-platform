@@ -45,7 +45,7 @@ $(function () {
 
     function paintItems() {
         var items = model.items || [];
-        $('#Items').html(items.map(item).join(''));
+        $('#Items').removeClass('apya-skel-rows').html(items.map(item).join(''));
         $('#ItemsEmpty').toggleClass('d-none', items.length > 0 || !model.decisionId);
     }
 

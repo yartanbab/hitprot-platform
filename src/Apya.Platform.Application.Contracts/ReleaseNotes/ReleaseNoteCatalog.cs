@@ -1,7 +1,6 @@
 using System.Collections.Generic;
-using System.Linq;
 
-namespace Apya.Platform.Web.ReleaseNotes;
+namespace Apya.Platform.ReleaseNotes;
 
 /// <summary>
 /// Sürüm notları — kod içinde tutulur (her yayın kod ile birlikte gelir).
@@ -9,14 +8,18 @@ namespace Apya.Platform.Web.ReleaseNotes;
 /// (en yeni ilk). <see cref="Latest"/> otomatik ilk öğedir; kullanıcı bunu
 /// görmediyse ilk açılışta "Yenilikler" penceresi açılır.
 ///
-/// MADDELER MÜŞTERİ ODAKLIDIR. Bu liste hem "Yenilikler" penceresinde hem de
-/// /ReleaseNotes geçmiş sayfasında HER oturumlu kullanıcıya aynı şekilde gösterilir —
-/// izin kapısı YOKTUR. Bu yüzden yalnız host yöneticisini ilgilendiren maddeler
+/// MADDELER MÜŞTERİ ODAKLIDIR. Yalnız host yöneticisini ilgilendiren maddeler
 /// (Sistem Sağlığı, kiracı yönetimi, paket süresi tanımlama, hibe çağrısı yönetimi)
 /// BURAYA YAZILMAZ: kiracı müşterisi ya erişemediği bir özelliği arar ya da kendisini
 /// ilgilendirmeyen işletim ayrıntısını okur. Ölçü tek soru: "bunu kiracıdaki bir
 /// kullanıcı kendi ekranında görebilir/yapabilir mi?" Hayırsa madde girmez.
 /// Kiracı yöneticisinin yaptığı işler (Ayarlar, menü düzeni, "Paketim") girer.
+///
+/// <para>🔴 KATALOGA MADDE EKLEMEK YAYINLAMAK DEĞİLDİR. Buradaki hiçbir madde host
+/// /Admin/ReleaseNotes ekranından onaylamadan kullanıcıya gitmez; onaysız madde yalnız
+/// host'a, "Onay bekliyor" rozetiyle görünür. Onay kararı maddenin BAŞLIĞINDAN türeyen
+/// anahtara bağlıdır (<see cref="ReleaseNoteItem.Key"/>) — yayınlanmış bir maddenin
+/// başlığını değiştirirsen onayı düşer.</para>
 /// </summary>
 public static class ReleaseNoteCatalog
 {
@@ -70,6 +73,23 @@ public static class ReleaseNoteCatalog
                 "işlem para biriminde, TL karşılığıyla ve donör para birimiyle birlikte saklanıyor; " +
                 "hangi kurun kullanıldığı kayıtta yazıyor. Kur bulunamazsa uydurma bir rakam " +
                 "gösterilmiyor, \"kur yok\" uyarısı çıkıyor."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Fix,
+                "Bütçe rakamı artık her ekranda aynı",
+                "Projenin bütçesi baktığınız ekrana göre değişebiliyordu: proje ekranındaki \"Bütçe " +
+                "Durumu\" penceresi ve Proje Bütçesi raporu projeye girdiğiniz toplam tutarı " +
+                "gösterirken, Finans ekranı bütçe kalemlerinin güncel toplamını gösteriyordu. Kalem " +
+                "tanımladığınız ya da bütçe revizyonu yaptığınız anda aynı proje için iki farklı " +
+                "rakam görüyordunuz. Artık hepsi tek hesaptan besleniyor: yürürlükteki onaylanan " +
+                "bütçe, harcanan, gelen para ve kalan tutar nereye bakarsanız bakın aynı. \"Bütçe " +
+                "Durumu\" penceresi de Finans ekranıyla aynı altı rakamı gösteriyor."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
+                "Projeden bütçe, finans ve belge ekranlarına tek tıkla geçiyorsunuz",
+                "Bir projenin parasal ekranlarına ulaşmak için farklı yerleri hatırlamanız " +
+                "gerekiyordu. Artık hem proje listesindeki her projenin yanındaki menüden hem de " +
+                "proje ekranındaki Bütçe kutucuğundan o projenin bütçe kalemlerine, Finans " +
+                "ekranına ve belgelerine doğrudan gidiyorsunuz."),
 
             new ReleaseNoteItem(ReleaseNoteCategory.Fix,
                 "Gider veya geliri düzenlediğinizde görev bağı artık silinmiyor",
@@ -210,6 +230,21 @@ public static class ReleaseNoteCatalog
                 "üst limiti ve son başvuruya kalan gün yan yana duruyor. \"Sadece giderilebilir " +
                 "eksikleri göster\" süzgeciyle şu an şartını karşılamadığınız ama tamamlayabileceğiniz " +
                 "çağrıları ayırıyor, ilgilendiğiniz çağrıları takibe alıp listenizde tutuyorsunuz."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Fix,
+                "Uygun çağrı çıkmadığında ekranın altı boşuna \"yükleniyor\" görünmüyor",
+                "Hibeler ekranında size uygun açık çağrı bulunmadığında sayfanın alt kısmı gri " +
+                "yükleniyor kutularını göstermeye devam ediyor, \"Şu an size uygun açık çağrı yok\" " +
+                "açıklaması bu kutuların arasında kayboluyordu. Liste boş döndüğünde artık yükleme " +
+                "görüntüsü kapanıyor ve doğrudan açıklamayı görüyorsunuz. Aynı durum hibe " +
+                "modülündeki bütün listelerde giderildi."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Fix,
+                "\"Yaklaşan son tarihler\" şeridinde çağrı adları üst üste binmiyor",
+                "Son başvuru tarihi birbirine yakın olan ya da aynı güne düşen çağrıların adları " +
+                "zaman şeridinde iç içe geçip okunamaz hâle geliyordu. Başlıklar artık birbirine " +
+                "değmeyecek şekilde aralanıyor, tarayıcı penceresini daralttığınızda da yeniden " +
+                "yerleşiyor."),
 
             // ── Hibe: başvuru süreci ──────────────────────────────────────────
             new ReleaseNoteItem(ReleaseNoteCategory.Feature,
@@ -730,7 +765,4 @@ public static class ReleaseNoteCatalog
 
     /// <summary>En yeni sürüm (listenin ilk öğesi). Görülme takibi bununla yapılır.</summary>
     public static ReleaseNote Latest => All[0];
-
-    public static ReleaseNote? Find(string? version) =>
-        version is null ? null : All.FirstOrDefault(r => r.Version == version);
 }
