@@ -188,7 +188,7 @@
     function validateFile($input, file) {
         var maxMb = parseFloat($input.data('max-mb'));
         if (maxMb > 0 && file.size > maxMb * 1024 * 1024) {
-            return file.name + ': dosya çok büyük (' + (file.size / 1024 / 1024).toFixed(1) +
+            return file.name + ': dosya çok büyük (' + (file.size / 1024 / 1024).toLocaleString('tr-TR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) +
                    ' MB). En fazla ' + maxMb + ' MB yükleyebilirsiniz.';
         }
 
