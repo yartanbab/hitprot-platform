@@ -84,7 +84,8 @@
 }
 
 .apya-timeline-label {
-    max-width: 128px;
+    /* Genişlik JS tarafından nokta kutusuna verilir; etiket kendi payının içinde kısalır. */
+    max-width: 100%;
     font-size: var(--apya-fs-xs);
     color: var(--apya-text-secondary);
     text-align: center;

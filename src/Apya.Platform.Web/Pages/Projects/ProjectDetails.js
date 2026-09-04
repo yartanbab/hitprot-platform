@@ -1010,10 +1010,11 @@ $(function () {
     // Yeniden çizimde odak satırı kaybolmasın.
     if (dataTable) { dataTable.on('draw', shortcuts.renderFocusedRow); }
 
-    // --- APYA-143b: Bütçe-vs-Gerçekleşen modalı ---
-    // İki giriş noktası: şeritteki Bütçe barı ve ⋯ menüsündeki öğe.
+    // --- APYA-143b: Bütçe Durumu modalı ---
+    // Artık iki menüde birden duruyor (şerit barının menüsü + ⋯ menüsü), bu yüzden
+    // id değil SINIF ile bağlanır: aynı id'yi iki kez basmak geçersiz HTML olurdu.
     var budgetModal = new abp.ModalManager(abp.appPath + 'Projects/BudgetSummaryModal');
-    $('#btn-budget-summary, #menu-budget-summary').click(function (e) {
+    $(document).on('click', '.js-budget-status', function (e) {
         e.preventDefault();
         var pid = $(this).data('project-id');
         if (pid) budgetModal.open({ projectId: pid });

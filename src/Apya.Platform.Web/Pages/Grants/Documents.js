@@ -81,7 +81,7 @@ $(function () {
 
     function paintRows() {
         var rows = visibleDocuments();
-        $('#DocumentRows').html(rows.map(documentRow).join(''));
+        $('#DocumentRows').removeClass('apya-skel-rows').html(rows.map(documentRow).join(''));
         $('#DocumentEmpty').toggleClass('d-none', rows.length > 0);
     }
 

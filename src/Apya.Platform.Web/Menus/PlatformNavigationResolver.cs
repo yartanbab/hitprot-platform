@@ -707,7 +707,9 @@ public class PlatformNavigationResolver : IScopedDependency
         // Alt öğe etiketi kategori adıyla aynıydı ("Raporlar & Analiz" iki kez); ayrı anahtar verildi.
         if (await _permission.IsGrantedAsync(PlatformPermissions.Reports.Default))
             reports.AddItem(new ApplicationMenuItem("Apya.Reports.Overview", l["Menu:Reports:Overview"], icon: "fa fa-gauge", url: "/Reports"));
-        if (await _permission.IsGrantedAsync(PlatformPermissions.Projects.Default))
+        // Sayfa bütçe özetinden beslenir; kapı sayfayla AYNI izin olmalı, yoksa
+        // menüdeki öğe tıklanınca 403 verir.
+        if (await _permission.IsGrantedAsync(PlatformPermissions.Projects.ViewBudget))
             reports.AddItem(new ApplicationMenuItem("Apya.Reports.ProjectBudget", l["Menu:ProjectBudget"], icon: "fa fa-chart-bar", url: "/Reports/ProjectBudget"));
         if (await _permission.IsGrantedAsync(PlatformPermissions.Customers.Default))
             reports.AddItem(new ApplicationMenuItem("Apya.Reports.CustomerStatement", l["Menu:CustomerStatement"], icon: "fa fa-file-lines", url: "/Reports/CustomerStatement"));
@@ -735,6 +737,9 @@ public class PlatformNavigationResolver : IScopedDependency
             platform.AddItem(new ApplicationMenuItem("Apya.Platform.Consents", l["Menu:Consents"], icon: "fa fa-shield-halved", url: "/Admin/Consent"));
         if (await _permission.IsGrantedAsync(PlatformPermissions.DemoRequests.Default))
             platform.AddItem(new ApplicationMenuItem("Apya.Platform.DemoRequests", l["Menu:DemoRequests"], icon: "fa fa-handshake", url: "/Admin/DemoRequests"));
+        // Sürüm notu yayın onayı — host-only izin; kiracıda hiç görünmez.
+        if (await _permission.IsGrantedAsync(PlatformPermissions.ReleaseNotes.Manage))
+            platform.AddItem(new ApplicationMenuItem("Apya.Platform.ReleaseNotesAdmin", l["Menu:ReleaseNotesAdmin"], icon: "fa fa-stamp", url: "/Admin/ReleaseNotes"));
         if (platform.Items.Count > 0) roots.Add(platform);
 
         // Kilitli özellikler — üst pakette açılacak bir şeyi OLAN kiracıya TEK keşif öğesi.
