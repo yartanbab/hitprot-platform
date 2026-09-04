@@ -8,6 +8,7 @@ using Volo.Abp.Data;
 using Volo.Abp.Domain.Entities;
 using Volo.Abp.Domain.Repositories;
 using Volo.Abp.MultiTenancy;
+using Volo.Abp.TenantManagement;
 using Apya.Platform.Grants.Dtos;
 using Apya.Platform.Permissions;
 
@@ -27,6 +28,8 @@ public class GrantInterestAppService : PlatformAppService, IGrantInterestAppServ
     private readonly IRepository<GrantApplication, Guid> _appRepo;
     private readonly IRepository<GrantCall, Guid> _callRepo;
     private readonly IRepository<Grant, Guid> _grantRepo;
+    private readonly ITenantRepository _tenantRepo;
+    private readonly GrantNotificationDispatcher _notifyDispatcher;
     private readonly IDataFilter<IMultiTenant> _mtFilter;
 
     public GrantInterestAppService(
@@ -34,12 +37,16 @@ public class GrantInterestAppService : PlatformAppService, IGrantInterestAppServ
         IRepository<GrantApplication, Guid> appRepo,
         IRepository<GrantCall, Guid> callRepo,
         IRepository<Grant, Guid> grantRepo,
+        ITenantRepository tenantRepo,
+        GrantNotificationDispatcher notifyDispatcher,
         IDataFilter<IMultiTenant> mtFilter)
     {
         _interestRepo = interestRepo;
         _appRepo = appRepo;
         _callRepo = callRepo;
         _grantRepo = grantRepo;
+        _tenantRepo = tenantRepo;
+        _notifyDispatcher = notifyDispatcher;
         _mtFilter = mtFilter;
     }
 
@@ -80,6 +87,8 @@ public class GrantInterestAppService : PlatformAppService, IGrantInterestAppServ
         await _interestRepo.InsertAsync(interest, autoSave: true);
 
         var catalog = await ResolveCatalogAsync(new[] { interest.GrantCallId });
+        await NotifyHostAsync(interest, catalog);
+
         return MapMine(interest, catalog);
     }
 
@@ -96,6 +105,58 @@ public class GrantInterestAppService : PlatformAppService, IGrantInterestAppServ
             .OrderByDescending(i => i.CreationTime)
             .Select(i => MapMine(i, catalog))
             .ToList();
+    }
+
+    /// <summary>
+    /// Talebi HOST'a duyurur — kutuyu birinin açmasını beklemeyelim diye.
+    ///
+    /// <para>Alıcı kiracı değil host kullanıcılarıdır: <c>tenantId: null</c> ile
+    /// gönderilir, dispatcher host bağlamına geçip etkin kullanıcıları toplar.</para>
+    ///
+    /// <para>Bildirim akışı KIRMAZ: şablon kapalıysa dispatcher sessizce <c>false</c>
+    /// döner, talep yine de kaydedilmiştir.</para>
+    /// </summary>
+    private async Task NotifyHostAsync(
+        GrantInterest interest, Dictionary<Guid, (string Name, string? Period)> catalog)
+    {
+        var values = new Dictionary<string, string?>
+        {
+            ["{firma_adı}"] = await GetFirmNameAsync(),
+            ["{çağrı_adı}"] = catalog.TryGetValue(interest.GrantCallId, out var call) ? call.Name : null,
+            // Not boşsa token ham "{firma_notu}" olarak gitmesin diye açık bir karşılık yazılır.
+            ["{firma_notu}"] = interest.Note ?? L["Grants:Notify:Trigger:InterestReceived:NoNote"]
+        };
+
+        await _notifyDispatcher.DispatchToTenantAsync(
+            GrantNotificationTrigger.InterestReceived,
+            tenantId: null,
+            values,
+            nameof(GrantInterest), interest.Id);
+    }
+
+    /// <summary>
+    /// Kiracının adı. <see cref="ICurrentTenant.Name"/> istek dışı bağlamlarda
+    /// (arka plan işi, test) boş gelebiliyor; o zaman kiracı kaydından okunur —
+    /// bildirim "— firması ilgileniyor" diye gitmesin.
+    /// </summary>
+    private async Task<string?> GetFirmNameAsync()
+    {
+        if (!CurrentTenant.Name.IsNullOrWhiteSpace())
+        {
+            return CurrentTenant.Name;
+        }
+
+        var tenantId = CurrentTenant.Id;
+        if (tenantId == null)
+        {
+            return null;
+        }
+
+        // Kiracı kaydı host kataloğunda yaşıyor; okuma host bağlamında yapılır.
+        using (CurrentTenant.Change(null))
+        {
+            return (await _tenantRepo.FindAsync(tenantId.Value))?.Name;
+        }
     }
 
     /// <summary>Çağrı → (program adı, dönem). Katalog host'ta yaşıyor: filtre kapatılır.</summary>

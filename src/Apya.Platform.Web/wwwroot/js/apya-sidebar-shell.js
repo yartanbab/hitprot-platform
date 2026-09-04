@@ -365,6 +365,8 @@ $(function () {
         // öğeyi bulamazsa çıkıyor — hata vermiyor). Artık yaprağın kendisinde.
         addBadge('Apya.Work.Boards', b.overdueTasks, 'apya-shell-badge--plain');
         addBadge('Apya.Grants.Applications', b.pendingGrantApplications, 'apya-shell-badge--warning');
+        // Karara bağlanmamış ilgi talepleri — kutuyu açmadan da görünsün.
+        addBadge('Apya.Grants.Interests', b.pendingGrantInterests, 'apya-shell-badge--warning');
         addBadge('Apya.Platform.Webhooks', b.webhookErrors, 'apya-shell-badge--negative');
     }
 

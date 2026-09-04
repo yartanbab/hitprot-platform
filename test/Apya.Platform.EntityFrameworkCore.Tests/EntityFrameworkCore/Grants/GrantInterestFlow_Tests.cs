@@ -3,6 +3,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Apya.Platform.Grants;
 using Apya.Platform.Grants.Dtos;
+using Apya.Platform.Notifications;
 using Shouldly;
 using Volo.Abp;
 using Volo.Abp.Domain.Repositories;
@@ -28,6 +29,7 @@ public class GrantInterestFlow_Tests : PlatformEntityFrameworkCoreTestBase
     private readonly IRepository<Grant, Guid> _grantRepository;
     private readonly IRepository<GrantCall, Guid> _callRepository;
     private readonly IRepository<GrantApplication, Guid> _applicationRepository;
+    private readonly IRepository<Notification, Guid> _notificationRepository;
     private readonly ITenantManager _tenantManager;
     private readonly ITenantRepository _tenantRepository;
     private readonly ICurrentTenant _currentTenant;
@@ -39,6 +41,7 @@ public class GrantInterestFlow_Tests : PlatformEntityFrameworkCoreTestBase
         _grantRepository = GetRequiredService<IRepository<Grant, Guid>>();
         _callRepository = GetRequiredService<IRepository<GrantCall, Guid>>();
         _applicationRepository = GetRequiredService<IRepository<GrantApplication, Guid>>();
+        _notificationRepository = GetRequiredService<IRepository<Notification, Guid>>();
         _tenantManager = GetRequiredService<ITenantManager>();
         _tenantRepository = GetRequiredService<ITenantRepository>();
         _currentTenant = GetRequiredService<ICurrentTenant>();
@@ -101,6 +104,33 @@ public class GrantInterestFlow_Tests : PlatformEntityFrameworkCoreTestBase
             row.Status.ShouldBe(GrantInterestStatus.BasvuruAcildi);
             row.GrantApplicationId.ShouldBe(application.Id);
         }
+    }
+
+    [Fact]
+    public async Task Talep_birakilinca_host_bildirim_alir()
+    {
+        var call = await CreateHostCallAsync("Bildirim Programı");
+        var tenantId = await CreateTenantAsync("Haber Veren " + Guid.NewGuid().ToString("N")[..6]);
+
+        using (_currentTenant.Change(tenantId))
+        {
+            await _interestAppService.ExpressAsync(new ExpressGrantInterestInput
+            {
+                GrantCallId = call.Id,
+                Note = "Ortak arayışımız var."
+            });
+        }
+
+        // Bildirim HOST'a gider: kiracıya değil, kutuyu açacak danışman ekibine.
+        var notifications = await _notificationRepository.GetListAsync(
+            n => n.Type == NotificationType.GrantInterestReceived);
+
+        notifications.ShouldNotBeEmpty("kiracı ilgi bildirdiğinde host haberdar olmalı");
+        notifications.ShouldContain(n => n.TenantId == null, "alıcı host kullanıcısıdır");
+
+        var latest = notifications.OrderByDescending(n => n.CreationTime).First();
+        latest.Body.ShouldContain("Bildirim Programı");
+        latest.Body.ShouldContain("Ortak arayışımız var.");
     }
 
     [Fact]
