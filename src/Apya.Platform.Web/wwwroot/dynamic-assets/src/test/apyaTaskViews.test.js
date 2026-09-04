@@ -12,8 +12,8 @@ import { installJqueryShim } from './jqueryShim';
  */
 
 let mount;
-let listResult;
-let galleryResult;
+let pointsResult;      // Takvim + Gösterge Paneli → getPoints (yalın uç, DÜZ DİZİ)
+let galleryResult;    // Dosya Galerisi → getGallery
 
 beforeAll(async () => {
     installJqueryShim();
@@ -23,7 +23,7 @@ beforeAll(async () => {
     };
     global.apya = {
         platform: { tasks: { task: {
-            getList: () => Promise.resolve(listResult),
+            getPoints: () => Promise.resolve(pointsResult),
             getGallery: () => Promise.resolve(galleryResult)
         } } }
     };
@@ -36,7 +36,7 @@ beforeAll(async () => {
 beforeEach(() => {
     document.body.innerHTML = '<div id="mount"></div>';
     mount = document.getElementById('mount');
-    listResult = { items: [] };
+    pointsResult = [];
     galleryResult = [];
 });
 
@@ -64,7 +64,7 @@ describe('apya.taskCalendar', () => {
     });
 
     it('gorevi hem baslangic hem termin gununde gosterir', async () => {
-        listResult = { items: [{ id: 't1', title: 'Sözleşme', status: 2, startDate: thisMonthDay(3), dueDate: thisMonthDay(20) }] };
+        pointsResult = [{ id: 't1', title: 'Sözleşme', status: 2, startDate: thisMonthDay(3), dueDate: thisMonthDay(20) }];
         const cal = apya.taskCalendar.create({ mount: '#mount', getFilter: () => ({}) });
         await cal.load();
         await flush();
@@ -76,7 +76,7 @@ describe('apya.taskCalendar', () => {
     });
 
     it('tarihsiz gorevi HIC basmaz', async () => {
-        listResult = { items: [{ id: 't1', title: 'Tarihsiz', status: 1, startDate: null, dueDate: null }] };
+        pointsResult = [{ id: 't1', title: 'Tarihsiz', status: 1, startDate: null, dueDate: null }];
         const cal = apya.taskCalendar.create({ mount: '#mount', getFilter: () => ({}) });
         await cal.load();
         await flush();
@@ -86,7 +86,7 @@ describe('apya.taskCalendar', () => {
     });
 
     it('baslikta XSS kacisi yapar', async () => {
-        listResult = { items: [{ id: 't1', title: '<img src=x onerror=alert(1)>', status: 1, dueDate: thisMonthDay(20) }] };
+        pointsResult = [{ id: 't1', title: '<img src=x onerror=alert(1)>', status: 1, dueDate: thisMonthDay(20) }];
         const cal = apya.taskCalendar.create({ mount: '#mount', getFilter: () => ({}) });
         await cal.load();
         await flush();
@@ -96,7 +96,7 @@ describe('apya.taskCalendar', () => {
     });
 
     it('ay ileri ve geri gider, basladigi aya doner', async () => {
-        listResult = { items: [{ id: 't1', title: 'x', status: 1, dueDate: thisMonthDay(10) }] };
+        pointsResult = [{ id: 't1', title: 'x', status: 1, dueDate: thisMonthDay(10) }];
         const cal = apya.taskCalendar.create({ mount: '#mount', getFilter: () => ({}) });
         await cal.load();
         await flush();
@@ -111,7 +111,7 @@ describe('apya.taskCalendar', () => {
     });
 
     it('olaya tiklayinca gorev detayini acar', async () => {
-        listResult = { items: [{ id: 't1', title: 'Aç beni', status: 1, dueDate: thisMonthDay(20) }] };
+        pointsResult = [{ id: 't1', title: 'Aç beni', status: 1, dueDate: thisMonthDay(20) }];
         const open = vi.fn();
         const cal = apya.taskCalendar.create({ mount: '#mount', getFilter: () => ({}), editModal: { open } });
         await cal.load();
@@ -139,11 +139,11 @@ describe('apya.taskDashboard', () => {
     };
 
     it('toplam ve tamamlanan sayilarini basar', async () => {
-        listResult = { items: [
+        pointsResult = [
             { id: '1', status: 4, priority: 2 },
             { id: '2', status: 1, priority: 3 },
             { id: '3', status: 4, priority: 1 }
-        ] };
+        ];
         await load();
         expect(statValue('Tasks:Dashboard:Total')).toBe('3');
         expect(statValue('Tasks:Dashboard:Done')).toBe('2');
@@ -152,12 +152,12 @@ describe('apya.taskDashboard', () => {
     it('gecikmis: yalniz ACIK ve termini GECMIS gorevler sayilir', async () => {
         const dun = new Date(Date.now() - 86400000).toISOString();
         const yarin = new Date(Date.now() + 86400000).toISOString();
-        listResult = { items: [
+        pointsResult = [
             { id: '1', status: 1, priority: 2, dueDate: dun },    // acik + gecmis → sayilir
             { id: '2', status: 4, priority: 2, dueDate: dun },    // TAMAMLANMIS → sayilmaz
             { id: '3', status: 2, priority: 2, dueDate: yarin },  // gelecek → sayilmaz
             { id: '4', status: 2, priority: 2, dueDate: null }    // terminsiz → sayilmaz
-        ] };
+        ];
         await load();
         expect(statValue('Tasks:Dashboard:Overdue')).toBe('1');
     });
@@ -165,20 +165,20 @@ describe('apya.taskDashboard', () => {
     it('bugun termini olan gorev GECIKMIS sayilmaz (gun bazinda olculur)', async () => {
         const bugun = new Date();
         bugun.setHours(9, 0, 0, 0);
-        listResult = { items: [{ id: '1', status: 1, priority: 2, dueDate: bugun.toISOString() }] };
+        pointsResult = [{ id: '1', status: 1, priority: 2, dueDate: bugun.toISOString() }];
         await load();
         expect(statValue('Tasks:Dashboard:Overdue')).toBe('0');
     });
 
     it('gorev yoksa bos durum yazar, sayac kartlari basmaz', async () => {
-        listResult = { items: [] };
+        pointsResult = [];
         await load();
         expect(mount.querySelector('.apya-dash-empty')).not.toBeNull();
         expect(mount.querySelectorAll('.apya-dash-stat').length).toBe(0);
     });
 
     it('Chart yokken sayaclar durur, grafik alani sessizce BOS kalmaz', async () => {
-        listResult = { items: [{ id: '1', status: 1, priority: 2 }] };
+        pointsResult = [{ id: '1', status: 1, priority: 2 }];
         await load();
         expect(statValue('Tasks:Dashboard:Total')).toBe('1');
         expect(mount.querySelector('.apya-dash-charts').textContent).toContain('Grafik bileşeni yüklenemedi');

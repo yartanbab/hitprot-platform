@@ -191,10 +191,11 @@
         function load() {
             state.loading = true;
             render();
-            // RootOnly gönderilmez: alt görevlerin tarihleri de takvimde görünsün.
-            var filter = $.extend({ maxResultCount: 1000 }, getFilter(), { rootOnly: false });
-            return taskSvc.getList(filter).then(function (res) {
-                state.tasks = (res.items || []).filter(function (t) {
+            // getPoints: yalın projeksiyon (getList'in altı zenginleştirme turu
+            // bu görünümde kullanılmıyordu). RootOnly sunucuda zaten kapatılıyor.
+            var filter = $.extend({ maxResultCount: 1000 }, getFilter());
+            return taskSvc.getPoints(filter).then(function (items) {
+                state.tasks = (items || []).filter(function (t) {
                     return !!(t.startDate || t.dueDate);
                 });
                 state.loading = false;

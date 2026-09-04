@@ -617,6 +617,42 @@ namespace Apya.Platform.Tasks
         }
 
         /// <summary>
+        /// Takvim ve Gösterge Paneli görünümlerinin veri kaynağı — YALIN projeksiyon.
+        ///
+        /// <see cref="GetListAsync"/> kullanılmıyor çünkü o, her çağrıda altı ek tur
+        /// koşuyor (pano kolonu adı, etiketler, favoriler, alt görev sayaçları, proje
+        /// adları, kart meta'sı) ve AutoMapper ile tam TaskDto üretiyor. Bu iki görünüm
+        /// yalnız başlık, durum, öncelik, tarihler ve atanan adını okuyor; gerisi 1000
+        /// satırda boşa harcanan saniyeler.
+        ///
+        /// AssigneeName alt sorgu DEĞİL: temel sorgu Assignee'yi zaten Include ediyor,
+        /// projeksiyonda `t.Assignee.UserName` tek LEFT JOIN'e çevriliyor (N+1 yok).
+        /// </summary>
+        public async Task<List<TaskPointDto>> GetPointsAsync(GetTasksInput input)
+        {
+            input.RootOnly = false;
+            var query = await CreateFilteredQueryAsync(input);
+
+            // MaxResultCount istemciden geliyor; 0/negatif gelirse ABP varsayılanına düş.
+            var limit = input.MaxResultCount > 0 ? input.MaxResultCount : 1000;
+
+            return await AsyncExecuter.ToListAsync(
+                query.OrderBy(t => t.StartDate)
+                     .Take(limit)
+                     .Select(t => new TaskPointDto
+                     {
+                         Id = t.Id,
+                         Title = t.Title,
+                         Number = t.Number,
+                         Status = t.Status,
+                         Priority = t.Priority,
+                         StartDate = t.StartDate,
+                         DueDate = t.DueDate,
+                         AssigneeName = t.Assignee != null ? t.Assignee.UserName : null
+                     }));
+        }
+
+        /// <summary>
         /// Konsolun "Dosya galerisi" görünümü. Süzülmüş görevlerin GÖRSEL eklerini
         /// TEK sorguda düzleştirir — liste DTO'su yalnız ek sayısını taşıdığı için
         /// galeriyi besleyemez, görev başına <see cref="GetAttachmentsAsync"/> çağırmak

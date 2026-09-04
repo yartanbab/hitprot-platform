@@ -30,6 +30,13 @@ namespace Apya.Platform.Tasks
         /// RootOnly yok sayılır — alt görevlere yüklenen görseller de galeride görünür.</summary>
         Task<List<TaskGalleryItemDto>> GetGalleryAsync(GetTasksInput input);
 
+        /// <summary>Konsolun Takvim ve Gösterge Paneli görünümleri için YALIN görev
+        /// listesi: tek sorgu, tek projeksiyon, zenginleştirme YOK. GetListAsync'in
+        /// altı ek turu (etiket, favori, alt görev sayacı, proje adı, kart meta…)
+        /// bu görünümlerde kullanılmıyor ve 1000 satırda saniyelere mal oluyordu.
+        /// RootOnly yok sayılır — alt görevlerin tarihleri de takvime düşmeli.</summary>
+        Task<List<TaskPointDto>> GetPointsAsync(GetTasksInput input);
+
         /// <summary>Select2 tag girişinin başlangıç seçenek listesi için tenant'ın tüm etiketleri.</summary>
         Task<List<TagDto>> GetAllTagsAsync();
 

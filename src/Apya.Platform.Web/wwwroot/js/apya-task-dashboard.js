@@ -171,10 +171,11 @@
         function load() {
             state.loading = true;
             render();
-            // RootOnly kapalı: dağılım tüm görevleri kapsasın, yalnız kökleri değil.
-            var filter = $.extend({ maxResultCount: 1000 }, getFilter(), { rootOnly: false });
-            return taskSvc.getList(filter).then(function (res) {
-                state.tasks = res.items || [];
+            // getPoints: yalın projeksiyon — dağılım için başlık/durum/öncelik/
+            // atanan/termin yetiyor. RootOnly sunucuda kapatılıyor (tüm görevler).
+            var filter = $.extend({ maxResultCount: 1000 }, getFilter());
+            return taskSvc.getPoints(filter).then(function (items) {
+                state.tasks = items || [];
                 state.loading = false;
                 render();
             });
