@@ -393,6 +393,14 @@ public static class ReleaseNoteCatalog
                 "artık ilk tıklamada çalışıyor. Form oluşturucuda kartlar yalnız soldaki tutamaçtan " +
                 "sürükleniyor, böylece kart içindeki metni fareyle seçebiliyorsunuz."),
 
+            new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
+                "Genel Bakış telefonda ekranın tepesinden başlıyor",
+                "Genel Bakış'ta üst barda zaten yazan sayfa adı bir kez daha başlık olarak " +
+                "tekrarlanıyor, altındaki boş şeritle birlikte ekranın üst üçte birini kaplıyordu — " +
+                "kartları görmek için kaydırmanız gerekiyordu. Telefonda bu başlık kaldırıldı; özet " +
+                "kartları üst barın hemen altından başlıyor. Görünüm ve dönem seçicileri kartların " +
+                "hemen altında, yan yana duruyor. Bilgisayarda görünüm aynı kaldı."),
+
             // ── Paket ─────────────────────────────────────────────────────────
             new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
                 "Paketinizde kapalı olan özellikleri menüden görebiliyorsunuz",
@@ -400,6 +408,15 @@ public static class ReleaseNoteCatalog
                 "yeteneklerin listesine ulaşıyorsunuz. Daha önce kapalı bir modül menüde hiç görünmediği " +
                 "için neyi kaçırdığınızı fark etmiyordunuz. Kısayol yalnız gerçekten kapalı bir özelliğiniz " +
                 "varsa çıkar — her şeyi kapsayan pakette hiç görünmez."),
+
+            // ── Takvim ────────────────────────────────────────────────────────
+            new ReleaseNoteItem(ReleaseNoteCategory.Fix,
+                "Google ve Outlook takvim bağlantısı gerçekten çalışıyor",
+                "\"Google bağla\" / \"Outlook bağla\" düğmeleri sizi sağlayıcının kendi izin ekranına " +
+                "değil bir deneme sayfasına götürüyordu: hesap bağlı görünüyor, ama bağlı takvimden " +
+                "hiçbir etkinlik gelmiyordu. Düğmeler artık gerçek izin ekranını açıyor. Ayrıca " +
+                "gönderilen etkinlikler dış takvime saat farkı kadar kaymış işleniyordu (Türkiye'de " +
+                "üç saat); saatler artık her iki yönde de doğru taşınıyor."),
 
             // ── Genel ─────────────────────────────────────────────────────────
             new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
@@ -425,6 +442,37 @@ public static class ReleaseNoteCatalog
                 "ekran aç\" ya da \"görevi çoğalt\" ile başka göreve geçildiğinde önceki görevin metni " +
                 "ekranda kalıyor, üzerine yazılıp kaydedilirse yeni görevin açıklamasını eziyordu. İkisi " +
                 "de düzeltildi; açıklama her açılışta kayıtlı hâliyle geliyor."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Fix,
+                "Proje ve hibe ekranlarında tarih alanları kaydedilebiliyor",
+                "Proje düzenleme ekranında tarihe hiç dokunmasanız bile kayıt \"«24.07.2025», " +
+                "Başlangıç tarihi için geçerli bir değer değil\" hatasıyla düşüyordu — hiçbir " +
+                "değişikliği kaydedemiyordunuz. Aynı kusur hibe tarafında da vardı: çağrının açılış " +
+                "ve son başvuru tarihi, dilim ve kilometre taşı vadesi, projeye dönüştürmede " +
+                "başlangıç-bitiş, kurum profilinde kuruluş tarihi. Hepsi düzeltildi."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Fix,
+                "Açıklama alanları tek satırlık kutu olmaktan çıktı",
+                "Proje düzenleme, hibe ekleme-düzenleme ve görev düzenleme formlarındaki Açıklama " +
+                "alanı çok satırlı olması gerekirken sıradan tek satırlık metin kutusu olarak " +
+                "çiziliyordu; uzun bir metni yazarken göremiyordunuz. Bu alanlar artık birkaç satır " +
+                "yüksekliğinde açılıyor."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Fix,
+                "Cari yetkisi olmayan kullanıcı da proje açıp düzenleyebiliyor",
+                "\"Yeni Proje Ekle\" düğmesi görünüyor ama tıklayınca pencere hiç açılmıyordu; proje " +
+                "düzenleme ekranı da aynı şekilde açılmıyordu. Sebebi, formdaki cari listesinin cari " +
+                "yetkisi olmayan kullanıcıda pencerenin tamamını düşürmesiydi. Artık yetkiniz yoksa " +
+                "cari alanı hiç çizilmiyor ve form normal açılıyor. Ayrıca proje düzenlemede kayıt " +
+                "sırasında mevcut cari bağlantısının sessizce silinmesi de giderildi."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
+                "Hibe ekranlarında yazılar ve düğmeler okunaklı boyuta geldi",
+                "Hibe ekranları yoğun kullanım için sıkışık çizilmişti: yardımcı metinler ve tablo " +
+                "hücreleri küçük ve açık gri, düğmeler dardı. Yirmi hibe ekranında gövde yazısı, " +
+                "etiketler ve rozet metinleri büyütüldü, ikincil metnin rengi koyulaştırıldı, giriş " +
+                "kutuları ve düğmeler dokunmaya elverişli yüksekliğe çıkarıldı, kart içi boşluklar " +
+                "açıldı. İçerik ve akış değişmedi; yalnız okunması kolaylaştı."),
 
             // ── Görev görünümleri ─────────────────────────────────────────────
             new ReleaseNoteItem(ReleaseNoteCategory.Feature,
