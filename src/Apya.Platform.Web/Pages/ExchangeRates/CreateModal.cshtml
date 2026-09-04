@@ -16,7 +16,7 @@
                     <abp-select asp-for="ExchangeRate.ToCurrency" asp-items="Model.Currencies" label="Hedef Para Birimi" />
                 </abp-column>
                 <abp-column size-md="_4">
-                    <abp-input asp-for="ExchangeRate.Rate" label="Kur (1 kaynak = ? hedef)" />
+                    <abp-input asp-for="ExchangeRate.Rate" label="Kur (1 kaynak = ? hedef)" data-money-input="true" data-decimals="6" />
                 </abp-column>
             </abp-row>
             <label class="form-label" for="ExchangeRate_RateDate">

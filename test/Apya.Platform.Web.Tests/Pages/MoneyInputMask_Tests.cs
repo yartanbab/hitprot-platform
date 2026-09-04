@@ -40,4 +40,28 @@ public class MoneyInputMask_Tests : PlatformWebTestBase
                 $"'{fieldName}' alanına data-money-input geçmemiş — maske devre dışı. " +
                 "abp-input özniteliği render edilen input'a aktarıyor mu, ona bak.");
     }
+
+    /// <summary>
+    /// Kur alanları <c>decimal(18,6)</c>. Maskenin varsayılanı 2 hane; <c>data-decimals</c>
+    /// düşerse kur ekranda 2 haneye KIRPILIR ve kırpılmış değer kaydedilir — sessiz veri kaybı.
+    ///
+    /// <para>Yalnız CreateModal ölçülüyor: EditModal gerçek bir kayıt id'si istiyor
+    /// (<c>OnGetAsync</c> yoksa <c>EntityNotFoundException</c> atıyor) ve bu suite veri
+    /// tohumlamıyor. Kanıtlanan sözleşme aynı: <c>abp-input</c> data-decimals'ı aktarıyor.</para>
+    /// </summary>
+    [Theory]
+    [InlineData("/ExchangeRates/CreateModal", "ExchangeRate.Rate", "6")]
+    public async Task Ondalik_hane_ayari_render_edilir(string url, string fieldName, string decimals)
+    {
+        var doc = new HtmlDocument();
+        doc.LoadHtml(await GetResponseAsStringAsync(url));
+
+        var input = doc.DocumentNode.SelectSingleNode($"//input[@name='{fieldName}']");
+        input.ShouldNotBeNull($"{url} sayfasında '{fieldName}' alanı basılmadı.");
+
+        input.GetAttributeValue("data-money-input", null).ShouldNotBeNull();
+        input.GetAttributeValue("data-decimals", null)
+            .ShouldBe(decimals, $"'{fieldName}' {decimals} ondalık hane taşımalı; " +
+                                "eksik kalırsa maske 2 haneye kırpar ve değer öyle kaydedilir.");
+    }
 }

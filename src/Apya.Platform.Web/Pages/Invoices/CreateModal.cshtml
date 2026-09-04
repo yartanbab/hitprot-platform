@@ -50,7 +50,7 @@
                 </div>
                 <div class="col-md-2 mb-3">
                     <label class="form-label" asp-for="InvoiceInfo.TaxRate">KDV Oranı (%)</label>
-                    <input asp-for="InvoiceInfo.TaxRate" type="number" step="0.01" class="form-control" />
+                    <input asp-for="InvoiceInfo.TaxRate" type="number" step="0.01" class="form-control" data-money-input="true" />
                 </div>
                 @* Çoklu para birimi gizlendi — tüm faturalar TRY. *@
                 <input type="hidden" asp-for="InvoiceInfo.Currency" value="TRY" />
@@ -80,7 +80,7 @@
                         @* __Invariant ŞART: bu alanlar asp-for ile değil elle name= ile yazıldığı
                            için ASP.NET işaretçiyi kendiliğinden eklemiyor. Onsuz "2.5" tr-TR ile
                            bağlanır ve 25 olur; type="number" ise değeri DAİMA noktalı gönderir. *@
-                        <input name="InvoiceInfo.Items[0].Quantity" type="number" step="0.01" class="form-control input-qty" value="1" required />
+                        <input name="InvoiceInfo.Items[0].Quantity" type="number" step="0.01" class="form-control input-qty" value="1" data-money-input="true" required />
                         <input type="hidden" name="__Invariant" value="InvoiceInfo.Items[0].Quantity" />
                     </div>
                     <div class="col-md-3">
@@ -112,7 +112,7 @@
                                 @* __Invariant ŞART: bu alanlar asp-for ile değil elle name= ile yazıldığı
                                    için ASP.NET işaretçiyi kendiliğinden eklemiyor. Onsuz "2.5" tr-TR ile
                                    bağlanır ve 25 olur; type="number" ise değeri DAİMA noktalı gönderir. *@
-                                <input name="InvoiceInfo.Items[\${itemIndex}].Quantity" type="number" step="0.01" class="form-control input-qty" value="1" required />
+                                <input name="InvoiceInfo.Items[\${itemIndex}].Quantity" type="number" step="0.01" class="form-control input-qty" value="1" data-money-input="true" required />
                                 <input type="hidden" name="__Invariant" value="InvoiceInfo.Items[\${itemIndex}].Quantity" />
                             </div>
                             <div class="col-md-3">
