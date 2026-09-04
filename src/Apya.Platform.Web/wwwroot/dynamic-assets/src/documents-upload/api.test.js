@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { humanMessage, statusMessage, validate } from './api';
+import { fmtSize, humanMessage, statusMessage, validate } from './api';
 
 const dosya = (name, size = 10) => ({ name, size });
 
@@ -69,5 +69,26 @@ describe('validate', () => {
     it('geçerli dosyada null döner', () => {
         expect(validate(dosya('rapor.pdf', 1024))).toBeNull();
         expect(validate(dosya('TABLO.CSV', 1024))).toBeNull(); /* uzantı büyük harfli olabilir */
+    });
+});
+
+describe('fmtSize', () => {
+    // Türkçe arayüzde ondalık ayracı VİRGÜL; toFixed(1) İngiliz noktası basıyordu
+    // ("1.5 MB"), bu da binlik ayracıyla karışıyordu.
+    it('MB ondalığını virgülle basar', () => {
+        expect(fmtSize(1.5 * 1024 * 1024)).toBe('1,5 MB');
+    });
+
+    it('tam sayı MB de tek ondalık taşır', () => {
+        expect(fmtSize(5 * 1024 * 1024)).toBe('5,0 MB');
+    });
+
+    it('büyük dosyada binlik ayracı nokta olur', () => {
+        expect(fmtSize(1234.5 * 1024 * 1024)).toBe('1.234,5 MB');
+    });
+
+    it('KB ve B eşikleri değişmedi', () => {
+        expect(fmtSize(2048)).toBe('2 KB');
+        expect(fmtSize(512)).toBe('512 B');
     });
 });

@@ -30,6 +30,7 @@ public class GrantRecommendationAppService : ApplicationService, IGrantRecommend
     private readonly IRepository<Grant, Guid> _grantRepo;
     private readonly IRepository<GrantCriteriaTag, Guid> _criteriaRepo;
     private readonly IRepository<GrantApplication, Guid> _appRepo;
+    private readonly IRepository<GrantInterest, Guid> _interestRepo;
     private readonly IRepository<GrantRecommendation, Guid> _hostRecRepo;
     private readonly IRepository<GrantBookmark, Guid> _bookmarkRepo;
     private readonly IRepository<GrantDocumentRequirement, Guid> _documentRepo;
@@ -47,6 +48,7 @@ public class GrantRecommendationAppService : ApplicationService, IGrantRecommend
         IRepository<Grant, Guid> grantRepo,
         IRepository<GrantCriteriaTag, Guid> criteriaRepo,
         IRepository<GrantApplication, Guid> appRepo,
+        IRepository<GrantInterest, Guid> interestRepo,
         IRepository<GrantRecommendation, Guid> hostRecRepo,
         IRepository<GrantBookmark, Guid> bookmarkRepo,
         IRepository<GrantDocumentRequirement, Guid> documentRepo,
@@ -63,6 +65,7 @@ public class GrantRecommendationAppService : ApplicationService, IGrantRecommend
         _grantRepo = grantRepo;
         _criteriaRepo = criteriaRepo;
         _appRepo = appRepo;
+        _interestRepo = interestRepo;
         _hostRecRepo = hostRecRepo;
         _bookmarkRepo = bookmarkRepo;
         _documentRepo = documentRepo;
@@ -105,6 +108,11 @@ public class GrantRecommendationAppService : ApplicationService, IGrantRecommend
         var signals = await _signalsBuilder.BuildAsync(CurrentTenant.Id);
         var applied = (await _appRepo.GetListAsync()).Select(a => a.GrantCallId).ToHashSet();
         var bookmarked = (await _bookmarkRepo.GetListAsync()).Select(b => b.GrantCallId).ToHashSet();
+        // Aynı çağrıya birden fazla talep bırakılabilir (red sonrası yeniden bildirim);
+        // ekran SON kaydı gösterir, eski gerekçe geçmişte kalır.
+        var interest = (await _interestRepo.GetListAsync(i => i.GrantCallId == grantCallId))
+            .OrderByDescending(i => i.CreationTime)
+            .FirstOrDefault();
         var today = Clock.Now.Date;
 
         using (_mtFilter.Disable())
@@ -208,7 +216,10 @@ public class GrantRecommendationAppService : ApplicationService, IGrantRecommend
                 IsHard = difficulty.IsHard,
                 Similar = await BuildSimilarAsync(call, grant, signals, today),
                 AlreadyApplied = applied.Contains(call.Id),
-                IsBookmarked = bookmarked.Contains(call.Id)
+                IsBookmarked = bookmarked.Contains(call.Id),
+                InterestStatus = interest?.Status,
+                InterestFeedback = interest?.HostFeedback,
+                InterestApplicationId = interest?.GrantApplicationId
             };
         }
     }
@@ -279,6 +290,11 @@ public class GrantRecommendationAppService : ApplicationService, IGrantRecommend
         // 2) Başvurduğum çağrılar + takip ettiklerim (tenant-scoped).
         var appliedIds = (await _appRepo.GetListAsync()).Select(a => a.GrantCallId).ToHashSet();
         var bookmarkedIds = (await _bookmarkRepo.GetListAsync()).Select(b => b.GrantCallId).ToHashSet();
+
+        // 2a) Bıraktığım ilgi talepleri — kart CTA'sı buna bakar. Çağrı başına SON kayıt.
+        var interestByCall = (await _interestRepo.GetListAsync())
+            .GroupBy(i => i.GrantCallId)
+            .ToDictionary(g => g.Key, g => g.OrderByDescending(i => i.CreationTime).First().Status);
 
         // 2b) Host'un gönderdiği aktif öneriler (B3, tenant-scoped, Dismissed hariç).
         var hostRecCallIds = (await _hostRecRepo.GetListAsync(
@@ -351,6 +367,9 @@ public class GrantRecommendationAppService : ApplicationService, IGrantRecommend
                     SupportRatePercent = grant.SupportRatePercent,
                     Score = score,
                     AlreadyApplied = appliedIds.Contains(call.Id),
+                    InterestStatus = interestByCall.TryGetValue(call.Id, out var interestStatus)
+                        ? interestStatus
+                        : null,
                     IsHostRecommended = isHostRecommended,
                     IsRecommended = score >= grant.MinMatchScore || isHostRecommended,
                     Bucket = eligibility.Bucket,

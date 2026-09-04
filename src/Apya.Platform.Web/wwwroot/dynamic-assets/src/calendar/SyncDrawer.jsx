@@ -3,6 +3,7 @@ import { Button, EmptyState, Sheet, SheetContent, Skeleton } from '../components
 import { cn } from '../lib/utils';
 import { INTERNAL_SOURCE_ORDER, SOURCES, fmt } from './lib/model';
 import { useSyncSettings, useUpdateSyncRules } from './hooks/useSyncSettings';
+import { useConnectAccount, useDisconnectAccount, useForceSync } from './hooks/useCalendarAccounts';
 import {
     useAddIcalSubscription, useDeleteIcalSubscription, useIcalFeedLink,
     useIcalSubscriptions, useProbeIcal, useRegenerateIcalFeed,
@@ -37,6 +38,10 @@ function relativeTime(iso) {
 /** Bir hesabın kartı: bağlantı durumu + kuralları. */
 function AccountCard({ account, onSave, saving }) {
     const meta = PROVIDER[account.provider] ?? { label: 'Takvim', icon: 'fa-calendar', brand: 'bg-neutral-700' };
+    /* Mutasyonlar KART BAŞINA: bir hesabın senkronu dönerken diğerinin düğmesi
+       kilitlenmesin, hata da yanlış kartta görünmesin. */
+    const forceSync = useForceSync();
+    const disconnect = useDisconnectAccount();
     const [sources, setSources] = useState(() => new Set(account.syncSources ?? []));
     const [conflictRule, setConflictRule] = useState(account.conflictRule ?? 0);
     const [enabled, setEnabled] = useState(account.isSyncEnabled);
@@ -163,6 +168,37 @@ function AccountCard({ account, onSave, saving }) {
                     </div>
                 )}
             </div>
+
+            {/* Hesap eylemleri. "Şimdi senkronize et" olmadan kullanıcı bir öğenin
+                dış takvime gitmesi için görev olayını beklemek zorundaydı; kaldırma
+                ucu ise sunucuda vardı ama hiçbir yerden çağrılmıyordu. */}
+            <footer className="flex items-center gap-2 border-t border-subtle px-3 py-2">
+                <Button
+                    size="sm" variant="outline"
+                    disabled={forceSync.isPending}
+                    onClick={() => forceSync.mutate(account.id)}
+                >
+                    <i className="fa fa-rotate me-1.5" aria-hidden="true" />
+                    {forceSync.isPending ? 'Senkronlanıyor…' : 'Şimdi senkronize et'}
+                </Button>
+                <button
+                    type="button"
+                    disabled={disconnect.isPending}
+                    onClick={() => {
+                        if (!window.confirm(`${account.externalEmail} bağlantısı kaldırılsın mı? Dış takvimdeki mevcut etkinlikler silinmez.`)) return;
+                        disconnect.mutate(account.id);
+                    }}
+                    className="ms-auto rounded-md px-2 py-1 text-[11.5px] font-medium text-negative-700 hover:bg-surface-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-border-focus disabled:opacity-60"
+                >
+                    {disconnect.isPending ? 'Kaldırılıyor…' : 'Bağlantıyı kaldır'}
+                </button>
+            </footer>
+
+            {(forceSync.isError || disconnect.isError) && (
+                <p role="alert" className="border-t border-subtle px-3 py-2 text-[11.5px] text-negative-700">
+                    {(forceSync.error || disconnect.error)?.message || 'İşlem tamamlanamadı.'}
+                </p>
+            )}
         </section>
     );
 }
@@ -360,6 +396,7 @@ function IcalSection({ open }) {
 export function SyncDrawer({ open, onClose }) {
     const { data, isPending } = useSyncSettings(open);
     const update = useUpdateSyncRules();
+    const connect = useConnectAccount();
 
     return (
         <Sheet open={open} onOpenChange={(next) => { if (!next) onClose(); }}>
@@ -395,21 +432,45 @@ export function SyncDrawer({ open, onClose }) {
                                         title="Bağlı hesap yok"
                                         description="Google veya Outlook bağlayınca size atanan tarihli öğeler oraya etkinlik olarak yazılır."
                                         action={
-                                            <Button size="sm" variant="outline" onClick={() => { window.location.href = '/Calendars/SimulateAuth?provider=1'; }}>
-                                                Hesap bağla
-                                            </Button>
+                                            <div className="flex flex-wrap items-center justify-center gap-2">
+                                                <Button size="sm" variant="outline" disabled={connect.isPending} onClick={() => connect.mutate(1)}>
+                                                    <i className="fab fa-google me-1.5" aria-hidden="true" />Google bağla
+                                                </Button>
+                                                <Button size="sm" variant="outline" disabled={connect.isPending} onClick={() => connect.mutate(2)}>
+                                                    <i className="fab fa-windows me-1.5" aria-hidden="true" />Outlook bağla
+                                                </Button>
+                                            </div>
                                         }
                                     />
                                 </div>
                             ) : (
-                                data.accounts.map((account) => (
-                                    <AccountCard
-                                        key={account.id}
-                                        account={account}
-                                        saving={update.isPending}
-                                        onSave={(input) => update.mutate(input)}
-                                    />
-                                ))
+                                <>
+                                    {data.accounts.map((account) => (
+                                        <AccountCard
+                                            key={account.id}
+                                            account={account}
+                                            saving={update.isPending}
+                                            onSave={(input) => update.mutate(input)}
+                                        />
+                                    ))}
+                                    {/* İkinci bir hesap bağlamanın başka yolu yoktu:
+                                        "bağla" düğmeleri yalnız hiç hesap yokken çıkıyordu. */}
+                                    <div className="flex flex-wrap items-center gap-2">
+                                        <span className="text-[11.5px] text-text-tertiary">Başka hesap bağla:</span>
+                                        <Button size="sm" variant="outline" disabled={connect.isPending} onClick={() => connect.mutate(1)}>
+                                            <i className="fab fa-google me-1.5" aria-hidden="true" />Google
+                                        </Button>
+                                        <Button size="sm" variant="outline" disabled={connect.isPending} onClick={() => connect.mutate(2)}>
+                                            <i className="fab fa-windows me-1.5" aria-hidden="true" />Outlook
+                                        </Button>
+                                    </div>
+                                </>
+                            )}
+
+                            {connect.isError && (
+                                <p role="alert" className="text-[11.5px] text-negative-700">
+                                    {connect.error?.message || 'Yetkilendirme adresi alınamadı.'}
+                                </p>
                             )}
 
                             {/* iCal hesap GEREKTİRMEZ: OAuth bağlantısı olmayan kullanıcı da

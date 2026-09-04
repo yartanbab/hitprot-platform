@@ -17,7 +17,7 @@
     <abp-script src="/Pages/Grants/MyApplications.js" />
 }
 
-<div data-page-description="@L["Grants:Mine:Description"]" class="apya-page">
+<div data-page-description="@L["Grants:Mine:Description"]" class="apya-page apya-grant-scope">
 
     @* ---------- Beşli KPI ---------- *@
     <div class="apya-my-kpis">
@@ -69,6 +69,29 @@
                     <div class="fw-semibold">@L["Grants:Mine:Empty"]</div>
                     <div class="small">@L["Grants:Mine:EmptyHint"]</div>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    @* ---------- İlgi taleplerim ---------- *@
+    @* Başvuruya dönen talep yukarıdaki listede görünüyor; burada yalnız bekleyen
+       ve uygun bulunmayanlar kalır — aynı satır iki yerde tekrarlanmasın. *@
+    <div class="card mb-0 mt-4">
+        <div class="card-body d-flex flex-column gap-3">
+            <div>
+                <div class="fw-bold">@L["Grants:Mine:Interests"]</div>
+                <div class="small text-muted">@L["Grants:Mine:Interests:Hint"]</div>
+            </div>
+
+            <div class="apya-cat-table">
+                <div class="apya-my-interest-row apya-cat-head">
+                    <span>@L["Grants:Mine:Interests:Col:Call"]</span>
+                    <span>@L["Grants:Mine:Interests:Col:Date"]</span>
+                    <span>@L["Grants:Mine:Interests:Col:Status"]</span>
+                    <span>@L["Grants:Mine:Interests:Col:Feedback"]</span>
+                </div>
+                <div id="InterestRows"></div>
+                <div id="InterestEmpty" class="apya-src-empty d-none">@L["Grants:Mine:Interests:Empty"]</div>
             </div>
         </div>
     </div>

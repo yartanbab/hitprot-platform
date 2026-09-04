@@ -73,9 +73,10 @@ public class GoogleCalendarProvider : ICalendarProvider, ITransientDependency
     public async Task<List<CalendarEvent>> GetEventsAsync(ExternalCalendarAccount account, DateTime start, DateTime end)
     {
         var client = BuildClient(_tokenProtector.Unprotect(account.AccessToken));
+        // timeMin/timeMax OFSETLİ olmak ZORUNDA — ofsetsiz damgada Google 400 döner.
         var url = $"{CalendarApiBase}/calendars/primary/events" +
-                  $"?timeMin={Uri.EscapeDataString(start.ToString("o"))}" +
-                  $"&timeMax={Uri.EscapeDataString(end.ToString("o"))}" +
+                  $"?timeMin={Uri.EscapeDataString(CalendarTimes.ToRfc3339Utc(start))}" +
+                  $"&timeMax={Uri.EscapeDataString(CalendarTimes.ToRfc3339Utc(end))}" +
                   "&singleEvents=true&orderBy=startTime&maxResults=250";
 
         var response = await client.GetAsync(url);
@@ -179,12 +180,17 @@ public class GoogleCalendarProvider : ICalendarProvider, ITransientDependency
         return client;
     }
 
+    /// <summary>
+    /// Etkinlik gövdesi. Saatler UTC'ye ÇEVRİLİR: uygulamanın saatleri yereldir ama
+    /// gövdedeki etiket "UTC" — çevirmeden gönderildiğinde etkinlik dış takvime saat
+    /// farkı kadar (TR'de 3 saat) kaymış gidiyordu.
+    /// </summary>
     private static object BuildGoogleEventBody(CalendarEvent e) => new
     {
         summary     = e.Title,
         description = e.Description,
-        start       = new { dateTime = e.StartTime.ToString("o"), timeZone = "UTC" },
-        end         = new { dateTime = e.EndTime.ToString("o"),   timeZone = "UTC" }
+        start       = new { dateTime = CalendarTimes.ToRfc3339Utc(e.StartTime), timeZone = "UTC" },
+        end         = new { dateTime = CalendarTimes.ToRfc3339Utc(e.EndTime),   timeZone = "UTC" }
     };
 
     private class GoogleTokenResponse

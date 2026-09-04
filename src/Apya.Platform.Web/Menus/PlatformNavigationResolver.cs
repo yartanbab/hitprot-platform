@@ -577,6 +577,21 @@ public class PlatformNavigationResolver : IScopedDependency
             boards.AddItem(new ApplicationMenuItem("Apya.Work.Calendar", l["Menu:Calendar"], icon: "fa fa-calendar-days", url: "/Calendars"));
         if (boards.Items.Count > 0) work.AddItem(boards);
 
+        // Özet Raporlar — "Raporlar & Analiz" kategorisinden BURAYA taşındı
+        // (2026-09-03). Sayfanın içeriği finans değil: aktif proje sayısı,
+        // harcanan efor, personel bazlı efor yükü, PDKS özeti ve müşteri ROI.
+        // Kategorinin geri kalan dördü finans çıktısı olduğu için Finans
+        // çatısına indi; tek başına kalan bu sayfa da içeriğinin ait olduğu
+        // yere geldi ve kök kategori kapandı.
+        //
+        // Menü ID'si "Apya.Reports.Overview" olarak KALIYOR. Üst öğesiyle
+        // uyumsuz görünüyor ama ad, kullanıcının menü düzeninde ve kısayol
+        // iğnelerinde saklı (PlatformSettings ShellMenuLayout / ShellPins —
+        // ShellPins VARSAYILANI bile bu adı içeriyor); değiştirmek kayıtlı
+        // düzenleri sessizce çözülemez hâle getirirdi.
+        if (await _permission.IsGrantedAsync(PlatformPermissions.Reports.Default))
+            work.AddItem(new ApplicationMenuItem("Apya.Reports.Overview", l["Menu:Reports:Overview"], icon: "fa fa-gauge", url: "/Reports", order: 3));
+
         if (work.Items.Count > 0) roots.Add(work);
 
         // Hibe Yönetimi — kendi izin grubu (Groups.Grants) ve kendi feature'ı (Features.Grants)
@@ -593,6 +608,9 @@ public class PlatformNavigationResolver : IScopedDependency
             grants.AddItem(new ApplicationMenuItem("Apya.Grants.Sources", l["Menu:Grants:Sources"], icon: "fa fa-globe", url: "/Grants/Sources"));
         if (_currentTenant.Id == null && await _permission.IsGrantedAsync(PlatformPermissions.Grants.Edit))
             grants.AddItem(new ApplicationMenuItem("Apya.Grants.Pipeline", l["Menu:Grants:Pipeline"], icon: "fa fa-table-columns", url: "/Grants/Pipeline"));
+        // Kiracıların "İlgileniyorum" talepleri; başvuru bu kutudaki kararla açılır.
+        if (_currentTenant.Id == null && await _permission.IsGrantedAsync(PlatformPermissions.Grants.Edit))
+            grants.AddItem(new ApplicationMenuItem("Apya.Grants.Interests", l["Menu:Grants:Interests"], icon: "fa fa-handshake", url: "/Grants/Interests"));
         if (_currentTenant.Id == null && await _permission.IsGrantedAsync(PlatformPermissions.Grants.Edit))
             grants.AddItem(new ApplicationMenuItem("Apya.Grants.Leads", l["Menu:Grants:Leads"], icon: "fa fa-inbox", url: "/Grants/Leads"));
         if (_currentTenant.Id == null && await _permission.IsGrantedAsync(PlatformPermissions.Grants.Edit))
@@ -601,10 +619,13 @@ public class PlatformNavigationResolver : IScopedDependency
             grants.AddItem(new ApplicationMenuItem("Apya.Grants.MyApplications", l["Menu:Grants:MyApplications"], icon: "fa fa-list-check", url: "/Grants/MyApplications"));
         if (grants.Items.Count > 0) roots.Add(grants);
 
-        // Finans — Faz 1 sadeleştirme: yalnızca günlük işlem + hesap öğeleri kalır.
-        // Raporlar tek "Raporlar" menüsünde toplandı. Kurlar bir dönem Yönetim'e
-        // taşınmıştı; kabuk handoff'u (2026-08-13) onu Finans'a geri aldı — kur bir
-        // finans verisi, yönetim ayarı değil.
+        // Finans & Bütçe — TEK ÇATI (kullanıcı kararı 2026-09-03). Finansa dair
+        // ne varsa burada: günlük işlem/hesap ekranları üstte, rapor ve çıktı
+        // ekranları "Raporlar" alt grubunda. İki seviyeli bu düzen yeni bir desen
+        // değil — İş Yönetimi > Panolar aynı biçimde kurulu.
+        //
+        // Kurlar bir dönem Yönetim'e taşınmıştı; kabuk handoff'u (2026-08-13) onu
+        // Finans'a geri aldı — kur bir finans verisi, yönetim ayarı değil.
         var finance = new ApplicationMenuItem("Apya.Finance", l["Menu:Finance"], icon: "fa fa-coins", order: 4);
         // Sıralama (kullanıcı kararı 2026-06-22): 1) Kasalar  2) Para Hareketleri.
         if (await _permission.IsGrantedAsync(PlatformPermissions.CashAccounts.Default))
@@ -626,6 +647,35 @@ public class PlatformNavigationResolver : IScopedDependency
         // izinli kullanıcı doğrudan erişebilir. Geri açmak için aşağıyı yorumdan çıkar:
         // if (await _permission.IsGrantedAsync(PlatformPermissions.Customers.Default))
         //     finance.AddItem(new ApplicationMenuItem("Apya.Finance.Customers", l["Menu:Customers"], icon: "fa fa-id-card", url: "/Customers"));
+
+        // Raporlar — dördü de finans çıktısı olduğu için kök "Raporlar & Analiz"
+        // kategorisinden (order 5) buraya indi ve o kategori kapandı.
+        //
+        // Menü ID'leri BİLEREK "Apya.Reports.*" kaldı: adlar kullanıcının menü
+        // düzeninde ve kısayol iğnelerinde saklı, yeniden adlandırmak kayıtlı
+        // düzenleri sessizce çözülemez hâle getirirdi. Ağaçtaki YERİ değişti,
+        // kimliği değil.
+        //
+        // İkon fa-chart-simple: kategorinin eski ikonu fa-chart-pie'ydı ama artık
+        // kardeşi olan "Finans Merkezi" onu kullanıyor; aynı çatıda iki özdeş ikon
+        // olurdu.
+        var financeReports = new ApplicationMenuItem(
+            "Apya.Finance.Reports", l["Menu:Finance:Reports"], icon: "fa fa-chart-simple", order: 4);
+        // Sayfa bütçe özetinden beslenir; kapı sayfayla AYNI izin olmalı, yoksa
+        // menüdeki öğe tıklanınca 403 verir. (PR #311'den geldi — bu PR aynı
+        // satırı taşıdığı için merge'de çakışmıştı.)
+        if (await _permission.IsGrantedAsync(PlatformPermissions.Projects.ViewBudget))
+            financeReports.AddItem(new ApplicationMenuItem("Apya.Reports.ProjectBudget", l["Menu:ProjectBudget"], icon: "fa fa-chart-bar", url: "/Reports/ProjectBudget"));
+        if (await _permission.IsGrantedAsync(PlatformPermissions.Customers.Default))
+            financeReports.AddItem(new ApplicationMenuItem("Apya.Reports.CustomerStatement", l["Menu:CustomerStatement"], icon: "fa fa-file-lines", url: "/Reports/CustomerStatement"));
+        if (await _permission.IsGrantedAsync(PlatformPermissions.Reports.TrialBalance)
+            && await _feature.IsEnabledAsync(PlatformFeatures.AdvancedReports))
+            financeReports.AddItem(new ApplicationMenuItem("Apya.Reports.TrialBalance", l["Menu:TrialBalance"], icon: "fa fa-scale-unbalanced", url: "/Reports/TrialBalance"));
+        if (await _permission.IsGrantedAsync(PlatformPermissions.FxRevaluations.Default)
+            && await _feature.IsEnabledAsync(PlatformFeatures.AdvancedReports))
+            financeReports.AddItem(new ApplicationMenuItem("Apya.Reports.FxRevaluation", l["Menu:FxRevaluation"], icon: "fa fa-scale-balanced", url: "/FxRevaluations"));
+        if (financeReports.Items.Count > 0) finance.AddItem(financeReports);
+
         if (finance.Items.Count > 0) roots.Add(finance);
 
         // İçerik
@@ -702,24 +752,17 @@ public class PlatformNavigationResolver : IScopedDependency
             if (aiCenter.Items.Count > 0) roots.Add(aiCenter);
         }
 
-        // Raporlar — tüm rapor/çıktı sayfaları tek menüde toplandı (Finans'tan taşındı; çift menü giderildi).
-        var reports = new ApplicationMenuItem("Apya.Reports", l["Menu:Reports"], icon: "fa fa-chart-pie", order: 5);
-        // Alt öğe etiketi kategori adıyla aynıydı ("Raporlar & Analiz" iki kez); ayrı anahtar verildi.
-        if (await _permission.IsGrantedAsync(PlatformPermissions.Reports.Default))
-            reports.AddItem(new ApplicationMenuItem("Apya.Reports.Overview", l["Menu:Reports:Overview"], icon: "fa fa-gauge", url: "/Reports"));
-        // Sayfa bütçe özetinden beslenir; kapı sayfayla AYNI izin olmalı, yoksa
-        // menüdeki öğe tıklanınca 403 verir.
-        if (await _permission.IsGrantedAsync(PlatformPermissions.Projects.ViewBudget))
-            reports.AddItem(new ApplicationMenuItem("Apya.Reports.ProjectBudget", l["Menu:ProjectBudget"], icon: "fa fa-chart-bar", url: "/Reports/ProjectBudget"));
-        if (await _permission.IsGrantedAsync(PlatformPermissions.Customers.Default))
-            reports.AddItem(new ApplicationMenuItem("Apya.Reports.CustomerStatement", l["Menu:CustomerStatement"], icon: "fa fa-file-lines", url: "/Reports/CustomerStatement"));
-        if (await _permission.IsGrantedAsync(PlatformPermissions.Reports.TrialBalance)
-            && await _feature.IsEnabledAsync(PlatformFeatures.AdvancedReports))
-            reports.AddItem(new ApplicationMenuItem("Apya.Reports.TrialBalance", l["Menu:TrialBalance"], icon: "fa fa-scale-unbalanced", url: "/Reports/TrialBalance"));
-        if (await _permission.IsGrantedAsync(PlatformPermissions.FxRevaluations.Default)
-            && await _feature.IsEnabledAsync(PlatformFeatures.AdvancedReports))
-            reports.AddItem(new ApplicationMenuItem("Apya.Reports.FxRevaluation", l["Menu:FxRevaluation"], icon: "fa fa-scale-balanced", url: "/FxRevaluations"));
-        if (reports.Items.Count > 0) roots.Add(reports);
+        // ── "Raporlar & Analiz" kök kategorisi (order 5) KALDIRILDI ───────────
+        // Kullanıcı kararı 2026-09-03: finans dağınıktı. Beş öğesinden dördü
+        // (Proje Bütçesi · Cari Ekstre · Mizan · Yıl Sonu Değerleme) finans
+        // çıktısıydı ve Finans çatısının "Raporlar" alt grubuna indi; beşincisi
+        // (Özet Raporlar) efor/personel/ROI içerdiği için İş Yönetimi'ne geçti.
+        // Geriye kategoriyi ayakta tutacak bir öğe kalmadı.
+        //
+        // Öğelerin menü ID'leri "Apya.Reports.*" olarak KORUNDU (gerekçe iki
+        // taşıma noktasında da yazılı). Kullanıcının düzeninde "Apya.Reports"
+        // GRUBU geçiyorsa artık havuzda karşılığı yok → ResolveParents onu
+        // sessizce yok sayar, çocuklar yeni varsayılan yerlerinde doğar.
 
         // Platform — entegrasyon ve işletim yüzeyi. Günlük iş değil ama yönetim
         // ayarı da değil: kullanıcı buraya "çalışıyor mu / neden tetiklenmedi"

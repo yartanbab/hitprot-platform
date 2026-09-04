@@ -109,7 +109,7 @@ function Pe({ result: t, loading: s, busy: l, onGenerate: p, onClose: y }) {
 }
 const Y = (...t) => t.filter(Boolean).join(" "), N = {
   date: (t) => t ? new Intl.DateTimeFormat("tr-TR", { day: "2-digit", month: "2-digit", year: "numeric" }).format(new Date(t)) : "—",
-  size: (t) => t ? t < 1024 * 1024 ? (t / 1024).toFixed(0) + " KB" : (t / (1024 * 1024)).toFixed(1) + " MB" : "—"
+  size: (t) => t ? t < 1024 * 1024 ? (t / 1024).toFixed(0) + " KB" : (t / (1024 * 1024)).toLocaleString("tr-TR", { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + " MB" : "—"
 }, Z = {
   1: { text: "Taslak", chip: "apya-chip-neutral" },
   2: { text: "Üretildi", chip: "apya-chip-positive" },
@@ -122,7 +122,7 @@ function ze({ message: t, onDone: s }) {
   }, [s]), /* @__PURE__ */ e.jsx("div", { className: "apya-pop-in apya-doc-toast", role: "status", children: /* @__PURE__ */ e.jsx("span", { style: { fontSize: 12 }, children: t }) });
 }
 function Te() {
-  const t = new URLSearchParams(window.location.search).get("projectId"), [s, l] = r.useState([]), [p, y] = r.useState([]), [o, b] = r.useState([]), [x, g] = r.useState(!0), [B, I] = r.useState(null), [i, j] = r.useState(null), [u, d] = r.useState(!1), [Q, V] = r.useState(null), [X, A] = r.useState(!1), [ee, S] = r.useState(!1), [ae, L] = r.useState(""), [G, P] = r.useState([]), [$, z] = r.useState([]), [W, O] = r.useState(null), v = M("Platform.Documents.GenerateReports"), T = M("Platform.Documents.ShareExternally"), f = r.useCallback(async () => {
+  const t = new URLSearchParams(window.location.search).get("projectId"), [s, l] = r.useState([]), [p, y] = r.useState([]), [o, b] = r.useState([]), [x, g] = r.useState(!0), [B, I] = r.useState(null), [i, j] = r.useState(null), [u, d] = r.useState(!1), [Q, V] = r.useState(null), [X, L] = r.useState(!1), [ee, S] = r.useState(!1), [ae, A] = r.useState(""), [G, P] = r.useState([]), [$, z] = r.useState([]), [W, O] = r.useState(null), v = M("Platform.Documents.GenerateReports"), T = M("Platform.Documents.ShareExternally"), f = r.useCallback(async () => {
     if (!t) {
       g(!1);
       return;
@@ -179,7 +179,7 @@ function Te() {
       d(!1);
     }
   }, ie = async (a) => {
-    if (L(a), !a.trim()) {
+    if (A(a), !a.trim()) {
       P([]);
       return;
     }
@@ -192,7 +192,7 @@ function Te() {
   }, ne = async (a) => {
     d(!0);
     try {
-      j(await ue(i.id, [a])), L(""), P([]), await f();
+      j(await ue(i.id, [a])), A(""), P([]), await f();
     } catch {
       h("error", "Ek eklenemedi.");
     } finally {
@@ -208,13 +208,13 @@ function Te() {
       d(!1);
     }
   }, le = async () => {
-    S(!0), A(!0);
+    S(!0), L(!0);
     try {
       V(await ge(i.id));
     } catch {
       h("error", "Kontrol çalıştırılamadı."), S(!1);
     } finally {
-      A(!1);
+      L(!1);
     }
   }, oe = async () => {
     d(!0);

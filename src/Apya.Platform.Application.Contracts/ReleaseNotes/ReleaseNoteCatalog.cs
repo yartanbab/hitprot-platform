@@ -31,6 +31,16 @@ public static class ReleaseNoteCatalog
             title: "Proje finansı tek ekranda, hibe süreci baştan sona, görevler ekip dışına açık",
 
             // ── Finans ───────────────────────────────────────────────────────
+            new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
+                "Finansa dair her şey menüde tek başlık altında",
+                "Kasa, kur ve finans ekranları \"Finans\" başlığındaydı; proje bütçesi, cari ekstre, " +
+                "mizan ve yıl sonu değerleme ise ayrı bir \"Raporlar & Analiz\" başlığında duruyordu — " +
+                "bir rakamı ararken iki ayrı yere bakmanız gerekiyordu. Hepsi artık \"Finans & Bütçe\" " +
+                "başlığı altında: günlük ekranlar üstte, dört rapor da içindeki \"Raporlar\" grubunda. " +
+                "Efor, personel ve müşteri kârlılığını gösteren \"Özet Raporlar\" ise içeriğine uygun " +
+                "olarak \"İş Yönetimi\" başlığına taşındı. Menüyü kendinize göre düzenlediyseniz " +
+                "düzeniniz korunuyor."),
+
             new ReleaseNoteItem(ReleaseNoteCategory.Feature,
                 "Projenin bütün finansı tek ekranda toplandı",
                 "Bütçe, gelir-gider ve faturalar ayrı ayrı ekranlarda duruyordu; hangi rakamın hangi " +
@@ -183,6 +193,14 @@ public static class ReleaseNoteCatalog
                 "satırları gösteriyor, toplam satırlarla tutuyor. Değerleme sonucunda hangi hesabın ne " +
                 "kadar fark ürettiğini yeniden görebiliyorsunuz."),
 
+            new ReleaseNoteItem(ReleaseNoteCategory.Fix,
+                "Kur, girdiğiniz hane sayısıyla görünüyor",
+                "Kurlar altı ondalık haneye kadar saklanıyor ama kur listesinde, kur köprüsünde ve " +
+                "değerleme detayında dört haneye yuvarlanarak gösteriliyordu: 34,215678 olarak " +
+                "girdiğiniz kur ekranda 34,2157 çıkıyor, kaydınızı olduğu gibi bulamıyordunuz. " +
+                "Kayıt her zaman doğruydu, kırpan yalnızca gösterimdi. Artık kur girdiğiniz hâliyle " +
+                "görünüyor; gereksiz sıfır da eklenmiyor, 34,5 kuru 34,5000 diye yazılmıyor."),
+
             // ── Hibe: çağrılar ve uygunluk ────────────────────────────────────
             new ReleaseNoteItem(ReleaseNoteCategory.Feature,
                 "Açık hibe çağrılarının tamamını görüyorsunuz",
@@ -231,7 +249,33 @@ public static class ReleaseNoteCatalog
                 "eksikleri göster\" süzgeciyle şu an şartını karşılamadığınız ama tamamlayabileceğiniz " +
                 "çağrıları ayırıyor, ilgilendiğiniz çağrıları takibe alıp listenizde tutuyorsunuz."),
 
+            new ReleaseNoteItem(ReleaseNoteCategory.Fix,
+                "Uygun çağrı çıkmadığında ekranın altı boşuna \"yükleniyor\" görünmüyor",
+                "Hibeler ekranında size uygun açık çağrı bulunmadığında sayfanın alt kısmı gri " +
+                "yükleniyor kutularını göstermeye devam ediyor, \"Şu an size uygun açık çağrı yok\" " +
+                "açıklaması bu kutuların arasında kayboluyordu. Liste boş döndüğünde artık yükleme " +
+                "görüntüsü kapanıyor ve doğrudan açıklamayı görüyorsunuz. Aynı durum hibe " +
+                "modülündeki bütün listelerde giderildi."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Fix,
+                "\"Yaklaşan son tarihler\" şeridinde çağrı adları üst üste binmiyor",
+                "Son başvuru tarihi birbirine yakın olan ya da aynı güne düşen çağrıların adları " +
+                "zaman şeridinde iç içe geçip okunamaz hâle geliyordu. Başlıklar artık birbirine " +
+                "değmeyecek şekilde aralanıyor, tarayıcı penceresini daralttığınızda da yeniden " +
+                "yerleşiyor."),
+
             // ── Hibe: başvuru süreci ──────────────────────────────────────────
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "Hibeye \"İlgileniyorum\" diyorsunuz, süreci birlikte başlatıyoruz",
+                "Hibe detayındaki \"Başvuru Aç\" düğmesi yerini \"İlgileniyorum\"a bıraktı. Talebinizi " +
+                "kısa bir notla bırakıyorsunuz; danışmanlarımız değerlendirip sizinle irtibata geçiyor ve " +
+                "uygun görülürse başvuru sürecini birlikte başlatıyoruz — başvurunuz o an açılıyor ve " +
+                "\"Başvurularım\" ekranınızda beliriyor. Uygun bulunmayan talepte gerekçesini yazılı " +
+                "olarak alıyorsunuz; gerekçe hem bildirim olarak geliyor hem de çağrı sayfasında " +
+                "duruyor. Durumunuzu değişirse aynı çağrıya yeniden ilgi bildirebiliyorsunuz. " +
+                "Bıraktığınız talepleri \"Başvurularım\" ekranındaki \"İlgi Taleplerim\" listesinden " +
+                "izliyorsunuz."),
+
             new ReleaseNoteItem(ReleaseNoteCategory.Feature,
                 "Başvuru formunu danışmanınızla aynı anda dolduruyorsunuz",
                 "Hibe başvurusu artık adım adım ilerleyen bir formda hazırlanıyor: firma bilgileri, proje " +
@@ -411,7 +455,16 @@ public static class ReleaseNoteCatalog
                 "gerçekten iş gören modülleri listeliyor. Aynı turda Kontrol Listesi, Geçmiş ve " +
                 "Dosya Galerisi sekmeleri kullanıma açıldı. Görev yorumları ayrı bir sekme olmaktan " +
                 "çıktı; zaten Genel sekmesinde durdukları yerde duruyorlar. Daha önce bir göreve " +
-                "eklediğiniz özellikler silinmedi, yalnız görünmüyor.")
+                "eklediğiniz özellikler silinmedi, yalnız görünmüyor."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
+                "Tutar yazarken binlik ve ondalık ayracı kendiliğinden çıkıyor",
+                "Gider, gelir, kasa hareketi, fatura, bütçe kalemi, tahsilat, fonlama dilimi ve görev " +
+                "bütçesi gibi tutar alanlarında ayraçları elle koymanız gerekmiyor: 1234567 " +
+                "yazdığınızda alan yazarken 1.234.567 hâline geliyor, ondalık için virgül " +
+                "kullanıyorsunuz. Uzun tutarlarda basamak saymak ya da fazladan yazılmış bir sıfırı " +
+                "gözden kaçırmak yok. Kur alanları altı, oran ve miktar alanları iki ondalık hane " +
+                "kabul ediyor.")
         ),
 
         new ReleaseNote(

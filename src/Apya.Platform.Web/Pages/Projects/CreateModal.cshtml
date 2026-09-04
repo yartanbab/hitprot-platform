@@ -299,13 +299,18 @@
                             <div class="apya-pform-err" id="PfCodeErr"></div>
                         </div>
 
-                        <div class="apya-pform-field">
-                            <label class="apya-pform-label" asp-for="Project.CustomerId">Cari (Müşteri)</label>
-                            <select class="form-select" asp-for="Project.CustomerId" asp-items="Model.Customers" id="PfCustomer">
-                                <option value="">— Cari seçilmedi —</option>
-                            </select>
-                            <div class="apya-pform-help">Bütçe ve fatura eşleşmesi için; sonradan da bağlanabilir.</div>
-                        </div>
+                        @* Cari yalnız finans izni olan kullanıcıda: liste Customers.Default
+                           iznine bağlı, düğme ise Projects.Create ile görünüyor. *@
+                        @if (Model.CanSelectCustomer)
+                        {
+                            <div class="apya-pform-field">
+                                <label class="apya-pform-label" asp-for="Project.CustomerId">Cari (Müşteri)</label>
+                                <select class="form-select" asp-for="Project.CustomerId" asp-items="Model.Customers" id="PfCustomer">
+                                    <option value="">— Cari seçilmedi —</option>
+                                </select>
+                                <div class="apya-pform-help">Bütçe ve fatura eşleşmesi için; sonradan da bağlanabilir.</div>
+                            </div>
+                        }
                     </div>
 
                     @if (Model.CurrentTenantId == null)
