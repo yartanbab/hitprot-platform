@@ -231,6 +231,21 @@ public static class ReleaseNoteCatalog
                 "eksikleri göster\" süzgeciyle şu an şartını karşılamadığınız ama tamamlayabileceğiniz " +
                 "çağrıları ayırıyor, ilgilendiğiniz çağrıları takibe alıp listenizde tutuyorsunuz."),
 
+            new ReleaseNoteItem(ReleaseNoteCategory.Fix,
+                "Uygun çağrı çıkmadığında ekranın altı boşuna \"yükleniyor\" görünmüyor",
+                "Hibeler ekranında size uygun açık çağrı bulunmadığında sayfanın alt kısmı gri " +
+                "yükleniyor kutularını göstermeye devam ediyor, \"Şu an size uygun açık çağrı yok\" " +
+                "açıklaması bu kutuların arasında kayboluyordu. Liste boş döndüğünde artık yükleme " +
+                "görüntüsü kapanıyor ve doğrudan açıklamayı görüyorsunuz. Aynı durum hibe " +
+                "modülündeki bütün listelerde giderildi."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Fix,
+                "\"Yaklaşan son tarihler\" şeridinde çağrı adları üst üste binmiyor",
+                "Son başvuru tarihi birbirine yakın olan ya da aynı güne düşen çağrıların adları " +
+                "zaman şeridinde iç içe geçip okunamaz hâle geliyordu. Başlıklar artık birbirine " +
+                "değmeyecek şekilde aralanıyor, tarayıcı penceresini daralttığınızda da yeniden " +
+                "yerleşiyor."),
+
             // ── Hibe: başvuru süreci ──────────────────────────────────────────
             new ReleaseNoteItem(ReleaseNoteCategory.Feature,
                 "Başvuru formunu danışmanınızla aynı anda dolduruyorsunuz",
