@@ -47,7 +47,7 @@
 {
     @* Başlık + açıklama app header'da (ViewBag.Title + data-page-description);
        sayfa içinde tekrarlanmıyor — bkz. apya-shell.css §19. *@
-    <div data-page-description="KOSGEB, TÜBİTAK, AB gibi kurumların destek programları ve dönemsel çağrıları" class="apya-page">
+    <div data-page-description="KOSGEB, TÜBİTAK, AB gibi kurumların destek programları ve dönemsel çağrıları" class="apya-page apya-grant-scope">
         <div class="apya-page-head">
             <div class="apya-page-head-actions">
                 @if (await AuthorizationService.IsGrantedAsync(PlatformPermissions.Grants.Edit))
@@ -111,7 +111,7 @@
                         <div class="row">
                             <div class="col-6 mb-3">
                                 <label class="form-label" for="GrantMaxAmount">Maksimum Destek Tutarı (₺)</label>
-                                <input type="number" step="0.01" class="form-control" id="GrantMaxAmount" />
+                                <input type="number" step="0.01" class="form-control" id="GrantMaxAmount" data-money-input="true" />
                             </div>
                             <div class="col-6 mb-3">
                                 <label class="form-label" for="GrantMinMatchScore">Minimum Uyum Puanı (%)</label>
@@ -173,20 +173,24 @@
                                 <option value="2">Kapandı</option>
                             </select>
                         </div>
+                        @* Tarih alanlarında abp-data-datepicker="false" ŞART: ABP'nin genel
+                           başlatıcısı input[type=date] alanlarını type="text" yapıp değeri tr
+                           biçimine ("22.08.2026") çevirir. Index.js ise .val()'i ISO sanıp
+                           doğrudan API'ye gönderiyor — çağrı kaydı bu yüzden düşüyordu. *@
                         <div class="row">
                             <div class="col-6 mb-3">
                                 <label class="form-label" for="CallOpenDate">Açılış Tarihi</label>
-                                <input type="date" class="form-control" id="CallOpenDate" />
+                                <input type="date" abp-data-datepicker="false" class="form-control" id="CallOpenDate" />
                             </div>
                             <div class="col-6 mb-3">
                                 <label class="form-label" for="CallDeadline">Son Başvuru Tarihi</label>
-                                <input type="date" class="form-control" id="CallDeadline" />
+                                <input type="date" abp-data-datepicker="false" class="form-control" id="CallDeadline" />
                             </div>
                         </div>
                         <div class="row">
                             <div class="col-6 mb-1">
                                 <label class="form-label" for="CallBudget">Bütçe (₺)</label>
-                                <input type="number" step="0.01" class="form-control" id="CallBudget" />
+                                <input type="number" step="0.01" class="form-control" id="CallBudget" data-money-input="true" />
                             </div>
                             <div class="col-6 mb-1">
                                 <label class="form-label" for="CallReference">Referans No</label>
@@ -207,7 +211,7 @@
 else
 {
     @* 1d · Kiracı: Uygun Hibeler. Başlık + açıklama app header'da. *@
-    <div data-page-description="Profilinize uygun açık hibe çağrıları ve başvurularınız" class="apya-page">
+    <div data-page-description="Profilinize uygun açık hibe çağrıları ve başvurularınız" class="apya-page apya-grant-scope">
 
         <div class="apya-tenant-tabs">
             <button type="button" class="apya-tenant-tab is-active" data-tab="eligible">
@@ -283,7 +287,7 @@ else
                     </div>
                     <div class="apya-field">
                         <label class="apya-field-label" for="ProfileFoundedOn"><span>@L["Grants:DataField:FoundedOn"]</span></label>
-                        <input type="date" class="form-control form-control-sm apya-numeric" id="ProfileFoundedOn" />
+                        <input type="date" abp-data-datepicker="false" class="form-control form-control-sm apya-numeric" id="ProfileFoundedOn" />
                     </div>
                     <div class="apya-field">
                         <label class="apya-field-label" for="ProfileStaff"><span>@L["Grants:DataField:StaffCount"]</span></label>
@@ -295,7 +299,7 @@ else
                     </div>
                     <div class="apya-field">
                         <label class="apya-field-label" for="ProfileRevenue"><span>@L["Grants:DataField:Revenue"]</span></label>
-                        <input type="number" min="0" step="0.01" class="form-control form-control-sm apya-numeric" id="ProfileRevenue" />
+                        <input type="number" min="0" step="0.01" class="form-control form-control-sm apya-numeric" id="ProfileRevenue" data-money-input="true" />
                     </div>
                     <div class="apya-field">
                         <label class="apya-field-label" for="ProfileTrl"><span>@L["Grants:DataField:Trl"]</span></label>

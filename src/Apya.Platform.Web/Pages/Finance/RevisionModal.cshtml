@@ -95,7 +95,7 @@
                                         <td>
                                             @* __Invariant ŞART — bkz. reference: type="number" değeri daima
                                                noktalı gönderir, tr-TR bağlaması onu binlik sayardı. *@
-                                            <input asp-for="Lines[i].Reduction" type="number" step="0.01" min="0"
+                                            <input asp-for="Lines[i].Reduction" type="number" step="0.01" min="0" data-money-input="true"
                                                    class="form-control form-control-sm text-end apya-numeric fw-bold text-danger"
                                                    data-reduction data-limit="@(Model.Lines[i].TransferLimitPercent?.ToString(System.Globalization.CultureInfo.InvariantCulture))" />
                                             <input type="hidden" name="__Invariant" value="Lines[@i].Reduction" />
@@ -106,7 +106,7 @@
                                     else
                                     {
                                         <td>
-                                            <input asp-for="Lines[i].NewAmount" class="form-control form-control-sm text-end apya-numeric" />
+                                            <input asp-for="Lines[i].NewAmount" class="form-control form-control-sm text-end apya-numeric" data-money-input="true" />
                                         </td>
                                     }
                                 </tr>
@@ -152,7 +152,7 @@
                     var $inp = $(this);
                     var $row = $inp.closest('tr');
                     var current = parseFloat($row.find('[data-current]').data('current')) || 0;
-                    var red = parseFloat($inp.val().replace(',', '.')) || 0;
+                    var red = apya.moneyInput.parse($inp.val()) || 0;
                     allocated += red;
 
                     $row.find('[data-result]').text(fmt(current - red));

@@ -13,7 +13,12 @@ $(function () {
     var previewTimer = null;
 
     function esc(t) { return $('<div>').text(t == null ? '' : t).html(); }
-    function num(sel) { var v = $(sel).val(); return v === '' || v == null ? null : Number(v); }
+    function num(sel) {
+        // Maskeli tutar alanında .val() "1.234,56" döndürür; Number() NaN verir.
+        var el = $(sel)[0];
+        if (el && el.__apyaMoney) { return apya.moneyInput.getValue(el); }
+        var v = $(sel).val(); return v === '' || v == null ? null : Number(v);
+    }
     function initials(name) {
         return (name || '?').trim().split(/\s+/).slice(0, 2)
             .map(function (w) { return w[0]; }).join('').toUpperCase();
@@ -128,7 +133,7 @@ $(function () {
     });
 
     function paintCandidates() {
-        $('#CandidateRows').html(candidates.map(candidateRow).join(''));
+        $('#CandidateRows').removeClass('apya-skel-rows').html(candidates.map(candidateRow).join(''));
         $('#CandidateEmpty').toggleClass('d-none', candidates.length > 0);
 
         var count = candidates.filter(function (c) { return selected[c.tenantId]; }).length;

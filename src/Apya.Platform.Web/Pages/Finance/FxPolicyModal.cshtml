@@ -19,8 +19,10 @@
                 </abp-column>
             </abp-row>
 
+            @* decimal(18,6) — data-decimals 6 olmazsa kur 2 haneye kırpılıp öyle kaydedilir. *@
             <abp-input asp-for="Policy.FixedDonorRate"
-                       label="@($"Sabit kur — 1 {Model.ProjectCurrency} = ? donör PB (yalnız \"Sabit sözleşme kuru\" için)")" />
+                       label="@($"Sabit kur — 1 {Model.ProjectCurrency} = ? donör PB (yalnız \"Sabit sözleşme kuru\" için)")"
+                       data-money-input="true" data-decimals="6" />
 
             <p class="text-muted mb-0" style="font-size:12px">
                 Donör para birimi boş bırakılırsa proje tek defterli olur; politika ve sabit kur temizlenir.

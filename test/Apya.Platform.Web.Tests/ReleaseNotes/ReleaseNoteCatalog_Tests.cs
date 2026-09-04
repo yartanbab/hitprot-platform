@@ -1,5 +1,4 @@
 using System.Linq;
-using Apya.Platform.Web.ReleaseNotes;
 using Shouldly;
 using Xunit;
 
@@ -72,13 +71,34 @@ public class ReleaseNoteCatalog_Tests
         }
     }
 
+    /// <summary>
+    /// Madde anahtarı yayın kararının (onay / paket / seviye) tek bağıdır. Anahtar boş
+    /// kalır ya da sürüm içinde tekrar ederse iki farklı maddenin kararı birbirine
+    /// karışır — üstelik ekran normal göründüğü için bu sessizce olur.
+    /// </summary>
     [Fact]
-    public void Find_var_olan_surumu_bulur_olmayana_null_doner()
+    public void Madde_anahtarlari_surum_icinde_benzersiz_ve_dolu()
     {
-        var known = ReleaseNoteCatalog.All[0].Version;
+        foreach (var note in ReleaseNoteCatalog.All)
+        {
+            var keys = note.Items.Select(i => i.Key).ToList();
 
-        ReleaseNoteCatalog.Find(known).ShouldNotBeNull();
-        ReleaseNoteCatalog.Find("1900.01.01").ShouldBeNull();
-        ReleaseNoteCatalog.Find(null).ShouldBeNull();
+            keys.ShouldAllBe(k => !string.IsNullOrWhiteSpace(k),
+                $"{note.Version} sürümünde anahtarsız madde var");
+
+            keys.Distinct().Count().ShouldBe(keys.Count,
+                $"{note.Version} sürümünde anahtar tekrarı var — yayın kararları karışır");
+        }
+    }
+
+    /// <summary>Anahtar başlıktan türer: aynı başlık her koşuda aynı anahtarı vermeli.</summary>
+    [Fact]
+    public void Anahtar_baslikla_kararlidir()
+    {
+        var item = ReleaseNoteCatalog.All[0].Items[0];
+        var yeniden = new ReleaseNote("9999.01.01", "test", "test",
+            new ReleaseNoteItem(item.Category, item.Title, "başka açıklama"));
+
+        yeniden.Items[0].Key.ShouldBe(item.Key);
     }
 }

@@ -33,7 +33,7 @@
                     <td>@l.CashAccountName</td>
                     <td>@l.Currency</td>
                     <td class="text-end apya-numeric">@l.Balance.ToString("N2")</td>
-                    <td class="text-end apya-numeric">@(l.Rate.HasValue ? l.Rate.Value.ToString("N4") : "-")</td>
+                    <td class="text-end apya-numeric">@(l.Rate.HasValue ? l.Rate.Value.ToString("#,##0.00####") : "-")</td>
                     <td class="text-end apya-numeric">@l.TryValue.ToString("N2")</td>
                 </tr>
             }
