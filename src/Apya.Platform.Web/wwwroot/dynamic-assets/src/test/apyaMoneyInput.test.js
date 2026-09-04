@@ -162,6 +162,37 @@ describe('alanın yükseltilmesi', () => {
         expect(hidden.value).toBe('34,215678');
     });
 
+    it('min="0" eksi işaretini reddeder', () => {
+        // Alan type="text"e döndüğü için tarayıcı min'i uygulayamıyor; name de
+        // gizli alana taşındığından jQuery validate devrede değil. Kısıtı maske sürdürür.
+        const { el, hidden } = upgradeFirst('<input name="A" min="0" data-money-input />');
+        type(el, '-500');
+        expect(el.value).toBe('500');
+        expect(hidden.value).toBe('500');
+    });
+
+    it('min yoksa eksi değer korunur', () => {
+        const { el, hidden } = upgradeFirst('<input name="A" data-money-input />');
+        type(el, '-500');
+        expect(el.value).toBe('-500');
+        expect(hidden.value).toBe('-500');
+    });
+
+    it('min negatifse eksi değer korunur', () => {
+        const { el } = upgradeFirst('<input name="A" min="-1000" data-money-input />');
+        type(el, '-500');
+        expect(el.value).toBe('-500');
+    });
+
+    it('kur alanı 6 hane taşır (decimal(18,6) kırpılmaz)', () => {
+        const { el, hidden } = upgradeFirst(
+            '<input name="ExchangeRate.Rate" data-money-input data-decimals="6" />'
+        );
+        type(el, '34,215678');
+        expect(el.value).toBe('34,215678');
+        expect(hidden.value).toBe('34,215678');
+    });
+
     it('aynı alan iki kez yükseltilmez', () => {
         const form = buildForm('<input name="A" data-money-input />');
         const el = form.querySelector('input[data-money-input]');

@@ -20,6 +20,10 @@
                              Para decimal(18,2) → 2 · kur decimal(18,6) → 6
          data-group="false"  binlik ayracını kapat (oran/yüzde alanları)
 
+     • Markup'taki `min` OKUNUR: min >= 0 ise eksi işareti kabul edilmez.
+       Alan type="text"e döndüğü ve `name`'ini kaybettiği için ne tarayıcı ne de
+       jQuery validate bu kısıtı artık uygulayabiliyor — maske sürdürüyor.
+
      • Dinamik satırlar (JS ile eklenen fatura kalemleri):
        apya.moneyInput.upgrade(el) veya apya.moneyInput.scan(container).
    Salt görüntü için: apya-money.js (apya.money.format).
@@ -58,11 +62,11 @@
     }
 
     // Görünür biçim: tam kısma binlik '.', ondalık ','. Ondalık = İLK virgül.
-    function formatWhileTyping(raw, decimals, group) {
+    function formatWhileTyping(raw, decimals, group, allowNegative) {
         var dec = (decimals === undefined || decimals === null) ? DEFAULT_DECIMALS : decimals;
         var grouped = group !== false;
         var src = String(raw);
-        var neg = /^\s*-/.test(src);
+        var neg = allowNegative !== false && /^\s*-/.test(src);
         var ci = src.indexOf(',');
         var intSrc, decSrc, hasDec;
         if (ci === -1) { intSrc = src; decSrc = ''; hasDec = false; }
@@ -111,7 +115,17 @@
     function optionsOf(el) {
         var d = parseInt(el.getAttribute('data-decimals'), 10);
         if (!isFinite(d) || d < 0 || d > 8) { d = DEFAULT_DECIMALS; }
-        return { decimals: d, group: el.getAttribute('data-group') !== 'false' };
+
+        // Alan type="text"e döndüğü için markup'taki min= artık tarayıcıya bir şey
+        // ifade etmiyor; yazarın niyetini burada sürdürüyoruz. min >= 0 ise eksi
+        // işareti kabul edilmez. (Alan `name`'ini kaybettiği için jQuery validate
+        // de bu kısıtı uygulamıyordu — sessizce negatif tutar girilebiliyordu.)
+        var min = parseFloat(el.getAttribute('min'));
+        return {
+            decimals: d,
+            group: el.getAttribute('data-group') !== 'false',
+            allowNegative: !(isFinite(min) && min >= 0)
+        };
     }
 
     // Gizli alana yazılacak ham değer: işaretçi varsa invariant (nokta), yoksa tr (virgül).
@@ -137,7 +151,7 @@
         var before = el.value;
         var caret = el.selectionStart || 0;
         var digitsBefore = countDigits(before, caret);
-        var formatted = formatWhileTyping(before, opts.decimals, opts.group);
+        var formatted = formatWhileTyping(before, opts.decimals, opts.group, opts.allowNegative);
         if (formatted !== before) {
             el.value = formatted;
             var pos = indexAfterNthDigit(formatted, digitsBefore);
@@ -170,7 +184,7 @@
             // Sunucunun bastığı ondalık haneyi KORU: sayıya çevirip geri yazmak
             // "0,00" alanını "0" yapar (ondalık alan decimal(18,2) olsa bile).
             var trSrc = initRaw.indexOf(',') !== -1 ? initRaw : numToTrString(initNum);
-            el.value = formatWhileTyping(trSrc, el.__apyaOpts.decimals, el.__apyaOpts.group);
+            el.value = formatWhileTyping(trSrc, el.__apyaOpts.decimals, el.__apyaOpts.group, el.__apyaOpts.allowNegative);
         }
         syncHidden(el);
 
@@ -187,9 +201,9 @@
     // yazarken setValue kullan; yoksa "1.234,56" API'ye olduğu gibi gider.
     function setValue(el, value) {
         if (!el) { return; }
-        var opts = el.__apyaOpts || { decimals: DEFAULT_DECIMALS, group: true };
+        var opts = el.__apyaOpts || { decimals: DEFAULT_DECIMALS, group: true, allowNegative: true };
         var num = (value === null || value === undefined || value === '') ? NaN : Number(value);
-        el.value = isFinite(num) ? formatWhileTyping(numToTrString(num), opts.decimals, opts.group) : '';
+        el.value = isFinite(num) ? formatWhileTyping(numToTrString(num), opts.decimals, opts.group, opts.allowNegative) : '';
         syncHidden(el);
     }
 
