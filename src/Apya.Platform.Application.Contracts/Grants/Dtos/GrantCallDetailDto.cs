@@ -57,6 +57,17 @@ public class GrantCallDetailDto
 
     public bool AlreadyApplied { get; set; }
     public bool IsBookmarked { get; set; }
+
+    // --- İlgi talebi (son kayıt) ---
+
+    /// <summary>Hiç talep bırakılmadıysa null — buton "İlgileniyorum" olarak çıkar.</summary>
+    public GrantInterestStatus? InterestStatus { get; set; }
+
+    /// <summary>Uygun bulunmadıysa host'un gerekçesi; kiracıya birebir gösterilir.</summary>
+    public string? InterestFeedback { get; set; }
+
+    /// <summary>Süreç başlatıldıysa açılan başvuru — "Başvuruya git" bağlantısı.</summary>
+    public Guid? InterestApplicationId { get; set; }
 }
 
 /// <summary>1e · Uygunluk tablosunun tek satırı.</summary>

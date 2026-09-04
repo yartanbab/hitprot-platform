@@ -232,7 +232,7 @@
     background: var(--apya-surface-base);
 }
 
-/* "Uygunsunuz" kartı 2px yeşil kenarlıkla ayrışır (tasarım 9a). */
+/* "Şartları karşılıyor" kartı 2px yeşil kenarlıkla ayrışır (tasarım 9a). */
 .apya-bucket.is-eligible {
     border-width: 2px;
     border-color: var(--apya-positive-500);
@@ -257,7 +257,7 @@
 
 .apya-cat-row {
     display: grid;
-    grid-template-columns: 20px minmax(0, 1fr) 118px 78px 150px 104px 92px 110px;
+    grid-template-columns: 20px minmax(0, 1fr) 140px 78px 150px 104px 92px 110px;
     align-items: center;
     gap: var(--apya-space-2);
     padding: 11px var(--apya-space-4);

@@ -1872,5 +1872,4 @@ namespace Apya.Platform.Tasks
         }
     }
 }
-
 

@@ -20,8 +20,17 @@ $(function () {
     var lastDraftCount = 0;
 
     function esc(t) { return $('<div>').text(t == null ? '' : t).html(); }
-    function num(sel) { var v = $(sel).val(); return v === '' || v == null ? null : Number(v); }
-    function setNum(sel, v) { $(sel).val(v == null ? '' : v); }
+    function num(sel) {
+        // Maskeli tutar alanında .val() "1.234,56" döndürür; Number() NaN verir.
+        var el = $(sel)[0];
+        if (el && el.__apyaMoney) { return apya.moneyInput.getValue(el); }
+        var v = $(sel).val(); return v === '' || v == null ? null : Number(v);
+    }
+    function setNum(sel, v) {
+        var el = $(sel)[0];
+        if (el && el.__apyaMoney) { apya.moneyInput.setValue(el, v); return; }
+        $(sel).val(v == null ? '' : v);
+    }
 
     // ---------- Etiket (chip) girişi ----------
     function addTag($input, value) {

@@ -144,5 +144,4 @@ namespace Apya.Platform.Tasks
         Task<TaskTimeLogDto?> GetActiveTimeLogAsync();
     }
 }
-
 

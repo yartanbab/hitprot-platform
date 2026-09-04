@@ -648,7 +648,8 @@ $(function () {
     });
 
     // ─── Yeni Görev ────────────────────────────────────────────────────────
-    $('#NewTaskButton').click(function (e) {
+    // Mobil FAB (#btn-new-task-fab) aynı girişi kullanır — ikinci bir akış yok.
+    $('#NewTaskButton, #btn-new-task-fab').click(function (e) {
         e.preventDefault();
         createModal.open(state.get('project') ? { projectId: state.get('project') } : {});
     });

@@ -82,19 +82,32 @@
                 <div>
                     <abp-input asp-for="Project.Code" label="Proje Kodu" />
                 </div>
-                <div>
-                    <abp-select asp-for="Project.CustomerId" asp-items="Model.Customers" label="Cari (Müşteri)">
-                        <option value="">— Cari seçilmedi —</option>
-                    </abp-select>
-                </div>
+                @* Cari yalnız finans izni olan kullanıcıda: liste Customers.Default
+                   iznine bağlı, ekran ise Projects.Edit ile açılıyor. *@
+                @if (Model.CanSelectCustomer)
+                {
+                    <div>
+                        <abp-select asp-for="Project.CustomerId" asp-items="Model.Customers" label="Cari (Müşteri)">
+                            <option value="">— Cari seçilmedi —</option>
+                        </abp-select>
+                    </div>
+                }
                 <div>
                     <abp-select asp-for="Project.CategoryId" asp-items="Model.Categories" label="Proje Kategorisi" />
                 </div>
+                @* abp-data-datepicker="false" ŞART. ABP'nin genel başlatıcısı
+                   (abp.dom.initializers.initializeDatepickers) tam sayfa yüklenmesinde
+                   input[type=date] alanlarını type="text" yapıp bootstrap-datepicker bağlar
+                   ve değeri tr biçimine ("24.07.2025") çevirir. Sunucu ise asp-for yüzünden
+                   bu alanlar için gizli __Invariant işaretçisi bastığından değer
+                   InvariantCulture ile çözülür → tarihe hiç dokunulmasa bile her kayıt
+                   "… Başlangıç tarihi için geçerli bir değer değil." ile düşüyordu.
+                   İşaretçi, ISO değer basan yerleşik tarayıcı seçicisini korur. *@
                 <div>
-                    <abp-input asp-for="Project.StartDate" type="date" label="Başlangıç Tarihi" />
+                    <abp-input asp-for="Project.StartDate" type="date" abp-data-datepicker="false" label="Başlangıç Tarihi" />
                 </div>
                 <div>
-                    <abp-input asp-for="Project.EndDate" type="date" label="Bitiş Tarihi" />
+                    <abp-input asp-for="Project.EndDate" type="date" abp-data-datepicker="false" label="Bitiş Tarihi" />
                 </div>
                 @if (Model.CanViewBudget)
                 {
@@ -112,7 +125,11 @@
                     <abp-input asp-for="Project.Activities" label="Faaliyetleri" />
                 </div>
                 <div class="is-wide">
-                    <abp-input asp-for="Project.Description" type="textarea" label="Açıklama" />
+                    @* ABP'de textarea'yı açan öznitelik `text-area`; `type="textarea"`
+                       geçerli bir input tipi olmadığı için DOM'a <input type="textarea">
+                       düşüyordu — yani tek satırlık kutu. Bkz. AbpInputTagHelperService
+                       .TryGetTextAreaAttribute. *@
+                    <abp-input asp-for="Project.Description" text-area rows="3" label="Açıklama" />
                 </div>
             </div>
 

@@ -14,7 +14,7 @@
                     <abp-select asp-for="Movement.Direction" asp-items="Model.Directions" label="Yön" />
                 </abp-column>
                 <abp-column size-md="_4">
-                    <abp-input asp-for="Movement.Amount" label="Tutar" />
+                    <abp-input asp-for="Movement.Amount" label="Tutar" data-money-input="true" />
                 </abp-column>
                 <abp-column size-md="_4">
                     <abp-input asp-for="Movement.MovementDate" type="date" label="Tarih" />

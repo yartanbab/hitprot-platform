@@ -14,7 +14,9 @@
 
 @functions {
     string Money(decimal v, string cur) => v.ToString("N2") + (cur == "TRY" ? " ₺" : " " + cur);
-    string Rate(decimal? v) => v.HasValue ? v.Value.ToString("N4") : "—";
+    // Kur decimal(18,6) saklanır; N4 ekranda 34,215678u 34,2157 yapıyordu. Sondaki
+    // gereksiz haneler basılmaz: 34,50 kısa kalır, 6 haneli kur tam görünür.
+    string Rate(decimal? v) => v.HasValue ? v.Value.ToString("#,##0.00####") : "—";
 
     (string label, string hint) PolicyText(FxPolicy p) => p switch
     {
