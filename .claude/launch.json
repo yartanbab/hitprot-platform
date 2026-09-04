@@ -14,6 +14,14 @@
       "runtimeArgs": ["run", "--launch-profile", "Apya.Platform.Web", "--project", "src/Apya.Platform.Web", "--", "--urls", "https://localhost:44387"],
       "port": 44387,
       "url": "https://localhost:44387"
+    },
+    {
+      "//": "Üçüncü QA portu: 44386 ana kopyada, 44387 ise paralel bir worktree'de açık kalabiliyor. Yol GÖRELİ olduğu için hangi worktree'den başlatılırsa onun kodunu çalıştırır.",
+      "name": "apya-web-qa2",
+      "runtimeExecutable": "dotnet",
+      "runtimeArgs": ["run", "--launch-profile", "Apya.Platform.Web", "--project", "src/Apya.Platform.Web", "--", "--urls", "https://localhost:44388"],
+      "port": 44388,
+      "url": "https://localhost:44388"
     }
   ]
 }
