@@ -147,6 +147,16 @@ function DashboardRoot() {
         setDraftCards(source.filter((c) => c.cardKey !== cardKey));
     }, [draftCards, cards]);
 
+    /* Mobilde başlık şeridi hiç render edilmiyor (bkz. PageHeader); görünüm ve
+       zaman aralığı seçicileri özet kartlarının hemen ALTINA, yan yana iki
+       kolona giriyor (yerleştirme NativeStack'te). */
+    const mobileFilters = (
+        <div className="hidden mobile:grid grid-cols-2 gap-2" style={{ gridColumn: '1 / -1' }}>
+            <ViewSelect value={viewKey} onChange={handleViewChange} className="w-full" />
+            <RangeSelect value={range} onChange={setRange} className="w-full" />
+        </div>
+    );
+
     return (
         <div className="min-h-screen bg-surface-app-bg">
             <PageHeader
@@ -173,7 +183,7 @@ function DashboardRoot() {
                   başlık → ilk kart 16px
                   kart ↔ kart 12px (GRID_MARGIN) — kenar boşluğundan DAHA DAR,
                   böylece kartlar tek blok gibi okunur, başlık ayrışır. */}
-            <main className="px-[18px] pt-4 pb-[18px] mobile:px-3">
+            <main className="px-[18px] pt-4 pb-[18px] mobile:px-3 mobile:pt-3">
                 {/* Ölçüm kabı — hem RGL'in `width`'i hem de kırılım (tier) kararı bu
                     düğümün ölçülen genişliğinden gelir. */}
                 <div ref={gridHostRef}>
@@ -225,7 +235,13 @@ function DashboardRoot() {
                     })}
                 </Responsive>
                 ) : (
-                    <NativeStack tier={tier} cards={cards} filter={filter} strip={strip} />
+                    <NativeStack
+                        tier={tier}
+                        cards={cards}
+                        filter={filter}
+                        strip={strip}
+                        filters={mobileFilters}
+                    />
                 ))}
                 </div>
 
@@ -260,26 +276,34 @@ function DashboardRoot() {
  *   - tablet (iki kolon): kartlar ikişerli akar; şerit kartları (band) tam satır kaplar.
  * `strip` şablonu DashboardRoot'ta kabın genişliğinden türetilir; burada yalnız aktarılır.
  */
-function NativeStack({ tier, cards, filter, strip }) {
+function NativeStack({ tier, cards, filter, strip, filters }) {
     const columns = tier === 'tablet' ? 2 : 1;
+    /* `filters` özet şeridinin HEMEN ALTINA girer — sayfa dibinde kalırsa
+       görünüm/aralık değiştirmek için tüm kartları kaydırmak gerekiyordu.
+       Şerit bu görünümde yoksa en başa alınır. */
+    const stripIndex = cards.findIndex((card) => card.cardKey === 'summary-strip');
     return (
         <div
             className={cn('grid items-stretch', tier === 'tablet' ? 'gap-3.5' : 'gap-3')}
             style={{ gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` }}
         >
-            {cards.map((card) => {
+            {stripIndex < 0 && filters}
+            {cards.map((card, index) => {
                 const meta = CARD_REGISTRY[card.cardKey];
                 if (!meta) return null;
                 const Card = meta.component;
                 const spanFull = columns > 1 && meta.band;
                 return (
-                    <div key={card.cardKey} style={spanFull ? { gridColumn: '1 / -1' } : undefined}>
-                        <Card
-                            filter={filter}
-                            editMode={false}
-                            {...(card.cardKey === 'summary-strip' ? { template: strip.template, compact: strip.compact } : null)}
-                        />
-                    </div>
+                    <React.Fragment key={card.cardKey}>
+                        <div style={spanFull ? { gridColumn: '1 / -1' } : undefined}>
+                            <Card
+                                filter={filter}
+                                editMode={false}
+                                {...(card.cardKey === 'summary-strip' ? { template: strip.template, compact: strip.compact } : null)}
+                            />
+                        </div>
+                        {index === stripIndex && filters}
+                    </React.Fragment>
                 );
             })}
         </div>
@@ -290,23 +314,25 @@ function PageHeader({ viewKey, onViewChange, range, onRangeChange, editMode, can
     const activeView = VIEWS.find((v) => v.key === viewKey) ?? VIEWS[0];
 
     /* Yatay dolgu `main` ile AYNI (18px): başlık, kartların sol/sağ rayına
-       hizalanmazsa şerit kaymış görünüyor. */
+       hizalanmazsa şerit kaymış görünüyor.
+
+       MOBİLDE HİÇ RENDER EDİLMEZ: sayfa adı ("Genel Bakış") üst barda zaten
+       yazıyor; başlık + rozet + sekme satırı dar ekranda ekranın üst üçte birini
+       aynı bilgiye harcıyordu. Filtreler kartların ALTINA taşındı
+       (bkz. DashboardRoot > main). */
     return (
-        <header className="px-[18px] pt-4 pb-3 bg-surface-base border-b border-default flex items-end justify-between gap-5 mobile:px-3 mobile:flex-col mobile:items-stretch mobile:gap-3">
+        <header className="px-[18px] pt-4 pb-3 bg-surface-base border-b border-default flex items-end justify-between gap-5 mobile:hidden">
             <div className="flex flex-col gap-2.5 min-w-0">
                 <div className="flex items-center gap-2.5">
                     <h1 className="text-[22px] font-semibold tracking-[-0.025em] text-text-primary m-0">
                         {t('Dashboard:Title', 'Genel Bakış')}
                     </h1>
-                    {/* Rozet mobilde gizli: aktif görünümü zaten dropdown gösteriyor. */}
-                    <span className="inline-flex items-center h-[22px] px-[9px] rounded-full bg-accent-soft text-accent-600 text-[11.5px] font-semibold flex-none mobile:hidden">
+                    <span className="inline-flex items-center h-[22px] px-[9px] rounded-full bg-accent-soft text-accent-600 text-[11.5px] font-semibold flex-none">
                         {t(activeView.labelKey, activeView.fallback)}
                     </span>
                 </div>
 
-                {/* Sekmeler mobilde çok yer kaplıyordu (4 sekme 2 satıra sarıyordu) —
-                    dar ekranda gizlenir, yerini alttaki ViewSelect dropdown'ı alır. */}
-                <nav className="flex items-center gap-1 flex-wrap mobile:hidden" aria-label={t('Dashboard:Views', 'Görünümler')}>
+                <nav className="flex items-center gap-1 flex-wrap" aria-label={t('Dashboard:Views', 'Görünümler')}>
                     {VIEWS.map((view) => (
                         <button
                             key={view.key}
@@ -327,8 +353,7 @@ function PageHeader({ viewKey, onViewChange, range, onRangeChange, editMode, can
                 </nav>
             </div>
 
-            <div className="flex items-center gap-2 flex-none mobile:flex-wrap">
-                <ViewSelect value={viewKey} onChange={onViewChange} />
+            <div className="flex items-center gap-2 flex-none">
                 <RangeSelect value={range} onChange={onRangeChange} />
                 {canEdit && (
                     <>
@@ -346,9 +371,9 @@ function PageHeader({ viewKey, onViewChange, range, onRangeChange, editMode, can
 }
 
 /* Görünüm seçimi — YALNIZ mobilde görünür; geniş ekranda sekmeler (nav) iş görür. */
-function ViewSelect({ value, onChange }) {
+function ViewSelect({ value, onChange, className }) {
     return (
-        <label className="hidden mobile:inline-flex items-center flex-1 min-w-0">
+        <label className={cn('hidden mobile:inline-flex items-center flex-1 min-w-0', className)}>
             <span className="sr-only">{t('Dashboard:SelectView', 'Görünüm seç')}</span>
             <select
                 value={value}
@@ -356,6 +381,10 @@ function ViewSelect({ value, onChange }) {
                 className={cn(
                     'h-8 w-full px-3 rounded-[9px] text-[12.5px] font-medium',
                     'bg-surface-sunken text-text-secondary border-0',
+                    /* Mobilde kutu, başlık şeridinin beyazı yerine gri sayfa
+                       zemininin üstünde duruyor; sunken (#F3F4F6) o zeminle
+                       (#F5F5F5) neredeyse aynı → kartlarla aynı beyaz+çerçeve. */
+                    'mobile:bg-surface-base mobile:border mobile:border-default',
                     'focus-visible:outline-none focus-visible:shadow-focus',
                 )}
             >
@@ -367,9 +396,9 @@ function ViewSelect({ value, onChange }) {
     );
 }
 
-function RangeSelect({ value, onChange }) {
+function RangeSelect({ value, onChange, className }) {
     return (
-        <label className="inline-flex items-center">
+        <label className={cn('inline-flex items-center', className)}>
             <span className="sr-only">{t('Dashboard:SelectRange', 'Zaman aralığı seç')}</span>
             <select
                 value={value}
@@ -378,8 +407,12 @@ function RangeSelect({ value, onChange }) {
                     writeRangeToUrl(e.target.value);
                 }}
                 className={cn(
-                    'h-8 px-3 rounded-[9px] text-[12.5px] font-medium',
+                    'h-8 w-full px-3 rounded-[9px] text-[12.5px] font-medium',
                     'bg-surface-sunken text-text-secondary border-0',
+                    /* Mobilde kutu, başlık şeridinin beyazı yerine gri sayfa
+                       zemininin üstünde duruyor; sunken (#F3F4F6) o zeminle
+                       (#F5F5F5) neredeyse aynı → kartlarla aynı beyaz+çerçeve. */
+                    'mobile:bg-surface-base mobile:border mobile:border-default',
                     'focus-visible:outline-none focus-visible:shadow-focus',
                 )}
             >
