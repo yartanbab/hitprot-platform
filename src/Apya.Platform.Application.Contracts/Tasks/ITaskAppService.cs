@@ -109,6 +109,28 @@ namespace Apya.Platform.Tasks
 
         Task DeleteDocumentAsync(Guid documentId);
 
+        // --- Formlar ---
+        // Göreve bağlanmış DynamicAssets formları. Form KOPYALANMAZ; bağ kurulur,
+        // aynı form birden çok göreve bağlanabilir. Yetki kapısı görevin kendisi:
+        // okuma için göreve erişim, yazma için Tasks.Edit.
+
+        /// <summary>Göreve bağlı formlar. Yanıt sayısı YALNIZ bu görev bağlamında
+        /// toplananları sayar — formun toplam yanıt sayısı değil.</summary>
+        Task<List<TaskFormLinkDto>> GetLinkedFormsAsync(Guid taskId);
+
+        /// <summary>Form seçicisi: kiracının formları, bu göreve bağlı olanlar işaretli.</summary>
+        Task<List<TaskFormOptionDto>> GetFormOptionsAsync(Guid taskId);
+
+        Task<TaskFormLinkDto> LinkFormAsync(Guid taskId, Guid documentId);
+        Task UnlinkFormAsync(Guid linkId);
+
+        /// <summary>Formu görevin süreli paylaşım linkine açar/kapatır.
+        /// Bağlamak dışarı açmak DEĞİLDİR; bu ayrı ve bilinçli bir karardır.</summary>
+        Task SetFormGuestFillableAsync(Guid linkId, bool isGuestFillable);
+
+        /// <summary>Bu görev bağlamında toplanmış yanıtlar (en yeni üstte).</summary>
+        Task<List<TaskFormResponseDto>> GetFormResponsesAsync(Guid taskId, Guid documentId);
+
         // Kontrol Listesi (Faz 4)
         Task<List<TaskChecklistItemDto>> GetChecklistItemsAsync(Guid taskId);
         Task<Guid> AddChecklistItemAsync(Guid taskId, string text);

@@ -12,6 +12,7 @@ const PRESENTATION = {
     'subtask-table': { desc: 'Alt görevlerin sıralanabilir tablosu',      bg: 'bg-neutral-subtle',  fg: 'text-text-secondary' },
     'subtask-board': { desc: 'Alt görevleri duruma göre sütunlarda taşı', bg: 'bg-primary-subtle',  fg: 'text-primary' },
     calendar:        { desc: 'Görev ve alt görev tarihleri aylık ızgarada', bg: 'bg-primary-subtle', fg: 'text-primary' },
+    forms:           { desc: 'Form bağla, yanıtları görevde topla',          bg: 'bg-primary-subtle',  fg: 'text-primary' },
     documents:       { desc: 'Göreve bağlı yazılı belgeler',                bg: 'bg-primary-subtle',  fg: 'text-primary' },
     checklist:       { desc: 'Alt görev ve onay kontrol listeleri',        bg: 'bg-success-subtle',  fg: 'text-success' },
     gantt:           { desc: 'İnteraktif zaman çizelgesi ve aşamalar',     bg: 'bg-primary-subtle',  fg: 'text-primary' },
@@ -32,7 +33,7 @@ const PRESENTATION = {
 };
 
 const GROUPS = [
-    { title: 'GÖREV & PLANLAMA',               codes: ['subtask-table', 'subtask-board', 'calendar', 'documents', 'checklist', 'gantt', 'time-tracking', 'dependencies', 'risks', 'approvals', 'dashboard'] },
+    { title: 'GÖREV & PLANLAMA',               codes: ['subtask-table', 'subtask-board', 'calendar', 'documents', 'forms', 'checklist', 'gantt', 'time-tracking', 'dependencies', 'risks', 'approvals', 'dashboard'] },
     { title: 'İLETİŞİM',                       codes: ['comments', 'emails'] },
     { title: 'GEÇMİŞ & FİNANS',                codes: ['activity', 'history', 'finance', 'gallery'] },
     { title: 'İLERİ ÖZELLİKLER & YAPAY ZEKA',  codes: ['ai', 'automations', 'custom-fields'] },
