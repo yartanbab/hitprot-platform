@@ -107,6 +107,16 @@ function PublicForm({ slug }) {
   const [errorMsg, setErrorMsg] = useState('');
   const [kvkkConsent, setKvkkConsent] = useState(false);
   const honeypot = useRef(''); // bot doldurur, insan boş bırakır
+
+  // GÖREV BAĞLAMI — form bir görevin süreli paylaşım linkinden açıldıysa adreste
+  // gelir. Bu iki değer YETKİ TAŞIMAZ, yalnız iddiadır: sunucu token'ı, görevin
+  // kapsamını ve formun misafire açık olduğunu kendisi doğrular.
+  const gorevBaglami = useRef((() => {
+    const q = new URLSearchParams(window.location.search);
+    const token = q.get('shareToken');
+    const taskId = q.get('taskId');
+    return token && taskId ? { taskShareToken: token, taskId } : null;
+  })());
   const startedAt = useRef(Date.now());
 
   useEffect(() => {
@@ -159,6 +169,7 @@ function PublicForm({ slug }) {
         completionSeconds: Math.round((Date.now() - startedAt.current) / 1000),
         kvkkConsent,
         website: honeypot.current, // honeypot; boş kalmalı
+        ...(gorevBaglami.current ?? {}),
       });
       setStatus('done');
     } catch (e) {
