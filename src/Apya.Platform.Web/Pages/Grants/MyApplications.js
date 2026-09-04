@@ -89,7 +89,7 @@ $(function () {
 
     function paintRows() {
         var rows = visible();
-        $('#Rows').html(rows.map(row).join(''));
+        $('#Rows').removeClass('apya-skel-rows').html(rows.map(row).join(''));
         $('#Empty').toggleClass('d-none', rows.length > 0);
     }
 

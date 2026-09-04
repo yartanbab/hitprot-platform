@@ -68,46 +68,16 @@
         else
         {
             var s = Model.Summary;
-            var barColor = s.OverBudget ? "danger" : (s.BudgetUsagePercent >= 80 ? "warning" : "success");
+            var barColor = s.IsOverBudget ? "danger" : (s.BudgetUsagePercent >= 80 ? "warning" : "success");
 
             <h5 class="mb-3">@s.ProjectName</h5>
 
-            <div class="row text-center mb-3">
-                <div class="col-md-3 col-6 mb-2">
-                    <div class="card h-100 py-2">
-                        <div class="text-muted small">Bütçe</div>
-                        <div class="fw-bold fs-5">@s.Budget.ToString("N2")</div>
-                    </div>
-                </div>
-                <div class="col-md-3 col-6 mb-2">
-                    <div class="card h-100 py-2">
-                        <div class="text-muted small">
-                            Toplam Gider
-                            <apya-hint text="Yalnız bu projeye bağlı Gider kayıtlarının toplamı — kasa transferi veya başka hareket türü sayılmaz." />
-                        </div>
-                        <div class="fw-bold fs-5 text-danger">@s.TotalExpense.ToString("N2")</div>
-                    </div>
-                </div>
-                <div class="col-md-3 col-6 mb-2">
-                    <div class="card h-100 py-2">
-                        <div class="text-muted small">
-                            Toplam Gelir
-                            <apya-hint text="Yalnız bu projeye bağlı, faturasız Gelir kayıtlarının toplamı. Bu projeye kesilen SATIŞ FATURALARININ tutarı buraya girmez — fatura geliri bu raporda hiç görünmez." />
-                        </div>
-                        <div class="fw-bold fs-5 text-success">@s.TotalIncome.ToString("N2")</div>
-                    </div>
-                </div>
-                <div class="col-md-3 col-6 mb-2">
-                    <div class="card h-100 py-2">
-                        <div class="text-muted small">Net (Gelir−Gider)</div>
-                        <div class="fw-bold fs-5 @(s.Net >= 0 ? "text-success" : "text-danger")">@s.Net.ToString("N2")</div>
-                    </div>
-                </div>
-            </div>
+            @* Finans → Genel ve Bütçe Durumu modalıyla AYNI şerit, aynı hesap. *@
+            <partial name="_ProjectBudgetKpis" model="s" />
 
             <label class="small text-muted">
                 Bütçe Kullanımı: %@s.BudgetUsagePercent
-                <apya-hint text="Toplam Gider / Bütçe oranı. Gelir bu orana girmez — bütçenin ne kadarının harcandığını gösterir, kâr/zarar durumunu değil." />
+                <apya-hint text="Harcanan / onaylanan bütçe oranı. Gelir bu orana girmez — bütçenin ne kadarının harcandığını gösterir, kâr/zarar durumunu değil." />
             </label>
             <div class="progress mb-2" style="height:22px;">
                 <div class="progress-bar bg-@barColor" role="progressbar"
@@ -116,21 +86,17 @@
                 </div>
             </div>
 
-            <div class="alert alert-@(s.OverBudget ? "danger" : "secondary") py-2 mb-3">
-                @if (s.OverBudget)
-                {
+            @if (s.IsOverBudget)
+            {
+                <div class="alert alert-danger py-2 mb-3">
                     <strong>⚠ Bütçe aşıldı!</strong>
-                    <span> Aşım: @((s.TotalExpense - s.Budget).ToString("N2"))</span>
-                }
-                else
-                {
-                    <span>Kalan harcanabilir bütçe: <strong>@s.BudgetRemaining.ToString("N2")</strong></span>
-                }
-            </div>
+                    <span> Aşım: @((s.SpentAmount - s.ApprovedBudget).ToString("N2"))</span>
+                </div>
+            }
 
             @if (s.TaskBreakdown.Any(t => t.TaskId.HasValue))
             {
-                <h6>Task Bazlı Kırılım</h6>
+                <h6>Görev Bazlı Kırılım</h6>
                 <div class="table-responsive">
                 <table class="table table-sm apya-clean-table">
                     <thead>
@@ -156,9 +122,9 @@
                     <tfoot>
                         <tr class="fw-bold table-secondary">
                             <td>TOPLAM</td>
-                            <td class="text-end apya-numeric text-danger">@s.TotalExpense.ToString("N2")</td>
-                            <td class="text-end apya-numeric text-success">@s.TotalIncome.ToString("N2")</td>
-                            <td class="text-end apya-numeric @(s.Net >= 0 ? "text-success" : "text-danger")">@s.Net.ToString("N2")</td>
+                            <td class="text-end apya-numeric text-danger">@s.SpentAmount.ToString("N2")</td>
+                            <td class="text-end apya-numeric text-success">@s.IncomeRecordTotal.ToString("N2")</td>
+                            <td class="text-end apya-numeric @(s.IncomeRecordTotal - s.SpentAmount >= 0 ? "text-success" : "text-danger")">@((s.IncomeRecordTotal - s.SpentAmount).ToString("N2"))</td>
                         </tr>
                     </tfoot>
                 </table>

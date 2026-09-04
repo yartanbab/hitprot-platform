@@ -63,7 +63,9 @@ $(function () {
                 data: 'rate',
                 className: 'text-end apya-numeric',
                 render: function (data) {
-                    return Number(data).toLocaleString('tr-TR', { minimumFractionDigits: 4 });
+                    // Kur decimal(18,6); min 4 hem eksik hem fazlaydı — 6 haneli kuru yuvarlıyor,
+                    // 34,5 kuru da 34,5000 gösteriyordu.
+                    return Number(data).toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 6 });
                 }
             },
             {

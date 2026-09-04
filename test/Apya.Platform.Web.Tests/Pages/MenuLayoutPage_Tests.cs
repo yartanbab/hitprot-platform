@@ -71,20 +71,56 @@ public class MenuLayoutPage_Tests : PlatformWebTestBase
     /// <summary>
     /// Düzen kaydetmemiş kullanıcıda bölüm sırası KODDAKİ order: değerleridir.
     /// Havuz kurulum sırasını esas aldığı için ağaç Order'a göre sıralanmazsa
-    /// "Raporlar" (order 5) "İçerik"in (order 6) arkasına düşer — kullanıcı
-    /// hiçbir şey yapmadan menüsünün sırası değişir.
+    /// "Finans &amp; Bütçe" (order 4) "İçerik"in (order 6) arkasına düşer —
+    /// kullanıcı hiçbir şey yapmadan menüsünün sırası değişir.
     /// </summary>
     [Fact]
     public async Task Duzen_yokken_bolum_sirasi_koddaki_order_degerlerine_uyar()
     {
         var sidebar = SidebarUrls(await GetResponseAsStringAsync("/Settings"));
 
-        var reports = System.Array.IndexOf(sidebar, "/Reports");
+        var cash = System.Array.IndexOf(sidebar, "/CashAccounts");
         var documents = System.Array.IndexOf(sidebar, "/Documents");
 
-        reports.ShouldBeGreaterThan(-1);
+        cash.ShouldBeGreaterThan(-1);
         documents.ShouldBeGreaterThan(-1);
-        reports.ShouldBeLessThan(documents);
+        cash.ShouldBeLessThan(documents);
+    }
+
+    /// <summary>
+    /// Finans TEK ÇATI (2026-09-03): rapor ekranları artık ayrı bir kök kategori
+    /// değil, çatının içindeki "Raporlar" alt grubu. Ölçü, Proje Bütçesi'nin
+    /// Finans'ın kendi maddeleriyle Genel Bakış arasında kalması — eskiden
+    /// İçerik'ten sonra gelen ayrı bir bölümdeydi.
+    /// </summary>
+    [Fact]
+    public async Task Finans_raporlari_catinin_icinde_durur()
+    {
+        var sidebar = SidebarUrls(await GetResponseAsStringAsync("/Settings"));
+
+        var cash = System.Array.IndexOf(sidebar, "/CashAccounts");
+        var budget = System.Array.IndexOf(sidebar, "/Reports/ProjectBudget");
+        var documents = System.Array.IndexOf(sidebar, "/Documents");
+
+        budget.ShouldBeGreaterThan(cash);
+        budget.ShouldBeLessThan(documents);
+    }
+
+    /// <summary>
+    /// "Özet Raporlar" finans değil (efor, PDKS, personel yükü, müşteri ROI) →
+    /// İş Yönetimi'nde durur, Finans'ın önünde.
+    /// </summary>
+    [Fact]
+    public async Task Ozet_raporlar_is_yonetiminde_durur()
+    {
+        var sidebar = SidebarUrls(await GetResponseAsStringAsync("/Settings"));
+
+        var projects = System.Array.IndexOf(sidebar, "/Projects");
+        var overview = System.Array.IndexOf(sidebar, "/Reports");
+        var cash = System.Array.IndexOf(sidebar, "/CashAccounts");
+
+        overview.ShouldBeGreaterThan(projects);
+        overview.ShouldBeLessThan(cash);
     }
 
     [Fact]
@@ -225,20 +261,20 @@ public class MenuLayoutPage_Tests : PlatformWebTestBase
     public async Task Bolum_sirasi_kayitli_duzene_gore_uygulanir()
     {
         await SetLayoutAsync("""
-            {"sections":["Apya.Reports","Apya.Finance","Apya.Dashboard"]}
+            {"sections":["Apya.Content","Apya.Finance","Apya.Dashboard"]}
             """);
 
         var sidebar = SidebarUrls(await GetResponseAsStringAsync("/Settings"));
 
         // Bölüm başlıklarının URL'si yok; ilk çocuklarının sırasıyla ölçülür.
-        var reports = Array.IndexOf(sidebar, "/Reports");
+        var documents = Array.IndexOf(sidebar, "/Documents");
         var cash = Array.IndexOf(sidebar, "/CashAccounts");
         var dashboard = Array.IndexOf(sidebar, "/Dashboard");
 
-        reports.ShouldBeGreaterThan(-1);
+        documents.ShouldBeGreaterThan(-1);
         cash.ShouldBeGreaterThan(-1);
         dashboard.ShouldBeGreaterThan(-1);
-        reports.ShouldBeLessThan(cash);
+        documents.ShouldBeLessThan(cash);
         cash.ShouldBeLessThan(dashboard);
     }
 
@@ -300,7 +336,7 @@ public class MenuLayoutPage_Tests : PlatformWebTestBase
     [Fact]
     public async Task Duzende_adi_gecmeyen_oge_menude_kalir()
     {
-        await SetLayoutAsync("""{"sections":["Apya.Reports"]}""");
+        await SetLayoutAsync("""{"sections":["Apya.Content"]}""");
 
         SidebarUrls(await GetResponseAsStringAsync("/Settings"))
             .ShouldContain("/Dashboard");
