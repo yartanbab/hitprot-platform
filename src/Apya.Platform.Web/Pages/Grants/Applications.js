@@ -101,16 +101,16 @@ $(function () {
         var a = $(this).closest('.apya-app-row').data('app');
         $('#StageAppId').val(a.id);
         $('#StageSelect').val(a.stage);
-        $('#StageApprovedAmount').val(a.approvedAmount != null ? a.approvedAmount : '');
+        apya.moneyInput.setValue($('#StageApprovedAmount')[0], a.approvedAmount);
         advanceModal.show();
     });
     $('#AdvanceStageForm').on('submit', function (e) {
         e.preventDefault();
-        var amountVal = $('#StageApprovedAmount').val();
+        var approvedAmount = apya.moneyInput.getValue($('#StageApprovedAmount')[0]);
         hostSvc.advanceStage({
             applicationId: $('#StageAppId').val(),
             stage: parseInt($('#StageSelect').val(), 10),
-            approvedAmount: amountVal === '' ? null : parseFloat(amountVal)
+            approvedAmount: approvedAmount
         }).then(function () {
             advanceModal.hide();
             abp.notify.success('Aşama güncellendi.');
@@ -137,7 +137,7 @@ $(function () {
         $('#TrancheId').val(t.id);
         $('#TrancheAppId').val(a.id);
         $('#TrancheSeq').val(t.sequenceNo);
-        $('#TrancheAmount').val(t.amount);
+        apya.moneyInput.setValue($('#TrancheAmount')[0], t.amount);
         $('#TrancheStatus').val(t.status);
         $('#TrancheDueDate').val(t.dueDate ? t.dueDate.substring(0, 10) : '');
         $('#TrancheModalTitle').text('Dilim Düzenle');
@@ -147,7 +147,7 @@ $(function () {
         e.preventDefault();
         var dto = {
             sequenceNo: parseInt($('#TrancheSeq').val(), 10),
-            amount: parseFloat($('#TrancheAmount').val()),
+            amount: apya.moneyInput.getValue($('#TrancheAmount')[0]),
             status: parseInt($('#TrancheStatus').val(), 10),
             dueDate: $('#TrancheDueDate').val() || null
         };

@@ -59,7 +59,12 @@ $(function () {
     });
 
     // ---------- Profil ----------
-    function num(sel) { var v = $(sel).val(); return v === '' || v == null ? null : Number(v); }
+    function num(sel) {
+        // Maskeli tutar alanında .val() "1.234,56" döndürür; Number() NaN verir.
+        var el = $(sel)[0];
+        if (el && el.__apyaMoney) { return apya.moneyInput.getValue(el); }
+        var v = $(sel).val(); return v === '' || v == null ? null : Number(v);
+    }
 
     function paintProfile(p) {
         $('#ProfileCompleteText').text(l('Grants:Feed:Profile:Complete', p.completionPercent));
@@ -78,7 +83,7 @@ $(function () {
         $('#ProfileFoundedOn').val(p.foundedOn ? p.foundedOn.substring(0, 10) : '');
         $('#ProfileStaff').val(p.staffCount == null ? '' : p.staffCount);
         $('#ProfileRdStaff').val(p.rdStaffCount == null ? '' : p.rdStaffCount);
-        $('#ProfileRevenue').val(p.annualRevenue == null ? '' : p.annualRevenue);
+        apya.moneyInput.setValue($('#ProfileRevenue')[0], p.annualRevenue);
         $('#ProfileTrl').val(p.trl == null ? '' : p.trl);
         $('#ProfileConsortium').val(p.hasConsortiumPartner == null ? '' : String(p.hasConsortiumPartner));
 
