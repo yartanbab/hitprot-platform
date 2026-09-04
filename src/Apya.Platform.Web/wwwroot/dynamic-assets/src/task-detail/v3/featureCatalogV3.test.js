@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { isUnbuilt, UNBUILT_CODES, featureInfo } from './featureCatalogV3';
-import { TASK_FEATURE_REGISTRY } from '../TaskFeatureRegistry';
+import { isUnbuilt, UNBUILT_CODES, featureInfo, catalogGroups } from './featureCatalogV3';
+import { TASK_FEATURE_REGISTRY, getVisibleTabs } from '../TaskFeatureRegistry';
 
 /**
  * featureCatalogV3 — "hangi sekme gerçek, hangisi yapım aşamasında" kararının
@@ -25,6 +25,12 @@ describe('featureCatalogV3 / isUnbuilt', () => {
         expect(isUnbuilt('activity')).toBe(false);
     });
 
+    it('2026-09-03 te acilan sekmeler artik unbuilt DEGIL', () => {
+        expect(isUnbuilt('checklist')).toBe(false);
+        expect(isUnbuilt('history')).toBe(false);
+        expect(isUnbuilt('gallery')).toBe(false);
+    });
+
     it('general sekmesi asla unbuilt olamaz (RootV3 onu ayri render eder)', () => {
         expect(isUnbuilt('general')).toBe(false);
     });
@@ -35,14 +41,16 @@ describe('featureCatalogV3 / isUnbuilt', () => {
 });
 
 /**
- * BILINCLI ISTISNA — bu uc sekmenin GERCEK bileseni var (ChecklistTab /
- * CommentsTab / HistoryTab) ama kodlari UNBUILT_CODES'ta oldugu icin RootV3 onlari
- * hic render etmiyor; icerikleri Genel sekmesinde sunuluyor (bkz. featureCatalogV3
- * icindeki not). Yani binding OLU KOD. Burada tek tek listeleniyor ki:
+ * BILINCLI ISTISNA — CommentsTab'in GERCEK bileseni var ama kodu UNBUILT_CODES'ta
+ * oldugu icin RootV3 onu hic render etmiyor; icerigi Genel sekmesinde sunuluyor
+ * (bkz. featureCatalogV3 icindeki not). Yani binding OLU KOD. Burada listeleniyor ki:
  *   - durum belgelensin (yeni gelen "bu neden calismiyor?" diye aramasin),
  *   - YENI bir sekme yanlislikla ayni tuzaga duserse asagidaki test kirilsin.
+ *
+ * 2026-09-03: `checklist` ve `history` buradan CIKTI — ikisi de artik kendi V3
+ * bilesenlerine (ChecklistTabV3 / HistoryTabV3) bagli ve gercekten render ediliyor.
  */
-const BOUND_BUT_HIDDEN = new Set(['checklist', 'comments', 'history']);
+const BOUND_BUT_HIDDEN = new Set(['comments']);
 
 describe('featureCatalogV3 / registry tutarliligi', () => {
     /**
@@ -77,6 +85,46 @@ describe('featureCatalogV3 / registry tutarliligi', () => {
     });
 });
 
+/**
+ * GIZLENEN OZELLIKLER (2026-09-03) — arkalarinda DB'ye yazan bir akis olmadigi
+ * (ya da icerikleri baska sekmede sunuldugu) icin katalogdan ve sekme cubugundan
+ * cikarildilar. Karar registry'deki `hidden: true` satirinda yasiyor; bu testler
+ * sessizce geri alinmasini engeller. Geri acmak = o satiri silmek + burayi guncellemek.
+ */
+const HIDDEN_CODES = [
+    'risks', 'comments', 'activity', 'ai', 'custom-fields', 'automations', 'emails',
+    'approvals', 'dashboard',
+];
+
+describe('featureCatalogV3 / gizlenen ozellikler', () => {
+    it('gizli kodlar katalogda HIC gorunmez', () => {
+        const shown = catalogGroups().flatMap((g) => g.items.map((i) => i.code));
+        for (const code of HIDDEN_CODES) {
+            expect(shown, `${code} hala katalogda`).not.toContain(code);
+        }
+    });
+
+    it('gizli kod icin featureInfo null doner', () => {
+        for (const code of HIDDEN_CODES) {
+            expect(featureInfo(code), `${code} featureInfo dondu`).toBeNull();
+        }
+    });
+
+    it('gizli kod atanmis olsa bile sekme cubuguna cikmaz', () => {
+        const codes = getVisibleTabs(HIDDEN_CODES).map((t) => t.code);
+        for (const code of HIDDEN_CODES) {
+            expect(codes, `${code} sekme cubugunda`).not.toContain(code);
+        }
+    });
+
+    it('gizlenmeyen gercek ozellikler yerinde duruyor', () => {
+        const shown = catalogGroups().flatMap((g) => g.items.map((i) => i.code));
+        for (const code of ['checklist', 'gantt', 'time-tracking', 'dependencies', 'history', 'finance', 'gallery']) {
+            expect(shown, `${code} katalogdan dusmus`).toContain(code);
+        }
+    });
+});
+
 describe('featureCatalogV3 / featureInfo', () => {
     it('baslik ve ikonu registry den alir (tek dogruluk kaynagi)', () => {
         const info = featureInfo('time-tracking');
@@ -86,7 +134,7 @@ describe('featureCatalogV3 / featureInfo', () => {
     });
 
     it('sunum bilgisini (aciklama/renk) ekler', () => {
-        const info = featureInfo('approvals');
+        const info = featureInfo('gallery');
         expect(info.desc).toBeTruthy();
         expect(info.bg).toBeTruthy();
         expect(info.fg).toBeTruthy();

@@ -73,9 +73,11 @@ public class MicrosoftOutlookProvider : ICalendarProvider, ITransientDependency
     public async Task<List<CalendarEvent>> GetEventsAsync(ExternalCalendarAccount account, DateTime start, DateTime end)
     {
         var client = BuildClient(_tokenProtector.Unprotect(account.AccessToken));
+        // Graph ofsetsiz damgayı UTC sayar; yerel değeri çevirmeden göndermek pencereyi
+        // saat farkı kadar kaydırıyordu (günün ilk/son saatleri kapsam dışı kalıyordu).
         var url = "https://graph.microsoft.com/v1.0/me/calendarView" +
-                  $"?startDateTime={Uri.EscapeDataString(start.ToString("s"))}" +
-                  $"&endDateTime={Uri.EscapeDataString(end.ToString("s"))}" +
+                  $"?startDateTime={Uri.EscapeDataString(CalendarTimes.ToGraphUtc(start))}" +
+                  $"&endDateTime={Uri.EscapeDataString(CalendarTimes.ToGraphUtc(end))}" +
                   "&$select=id,subject,start,end,isAllDay&$orderby=start/dateTime&$top=250";
 
         var response = await client.GetAsync(url);
@@ -172,12 +174,18 @@ public class MicrosoftOutlookProvider : ICalendarProvider, ITransientDependency
         return client;
     }
 
+    /// <summary>
+    /// Etkinlik gövdesi. Saatler UTC'ye ÇEVRİLİR: uygulamanın saatleri yereldir ama
+    /// gövdedeki etiket "UTC" — çevirmeden gönderildiğinde etkinlik dış takvime saat
+    /// farkı kadar (TR'de 3 saat) kaymış gidiyordu. Graph'ın <c>dateTime</c> alanı
+    /// ofset taşımaz, saat dilimini ayrı alandan okur.
+    /// </summary>
     private static object BuildGraphEventBody(CalendarEvent e) => new
     {
         subject = e.Title,
         body    = new { contentType = "text", content = e.Description ?? string.Empty },
-        start   = new { dateTime = e.StartTime.ToString("o"), timeZone = "UTC" },
-        end     = new { dateTime = e.EndTime.ToString("o"),   timeZone = "UTC" }
+        start   = new { dateTime = CalendarTimes.ToGraphUtc(e.StartTime), timeZone = "UTC" },
+        end     = new { dateTime = CalendarTimes.ToGraphUtc(e.EndTime),   timeZone = "UTC" }
     };
 
     private class MsTokenResponse

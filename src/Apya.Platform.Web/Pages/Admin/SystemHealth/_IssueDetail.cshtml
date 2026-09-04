@@ -1,6 +1,7 @@
 @using System.Globalization
 @using Apya.Platform.Telemetry.Dtos
 @using Apya.Platform.Web.Pages.Shared
+@using Apya.Platform.Web.Pages.Admin.SystemHealth
 @using Apya.Platform.Web.Telemetry
 @model Apya.Platform.Web.Pages.Admin.SystemHealth.IssueDetailViewModel
 @{
@@ -62,6 +63,14 @@ else
                     </code>
                 </div>
                 <div class="d-flex flex-shrink-0 gap-2">
+                    @* Olayın tüm kanıtı tek markdown metinde: panoya basılıp bir yapay
+                       zekâ ajanına yapıştırılır. Metin SUNUCUDA üretilir (tek kaynak);
+                       DOM'dan toplansaydı kırpılmış hücreler özete kırpık girerdi. *@
+                    <button type="button" class="btn btn-sm btn-outline-secondary issue-agent-copy"
+                            title="Olayın tüm kanıtını markdown olarak panoya kopyalar">
+                        <i class="fa fa-robot me-1"></i>Agent'a kopyala
+                    </button>
+                    <textarea class="d-none" data-agent-summary aria-hidden="true" tabindex="-1">@HealthIssueSummaryBuilder.Build(d, Model.WindowDays)</textarea>
                     @if (Model.CanCreateIssueTask
                          && issue.Kind != HealthIssueKind.Performance
                          && issue.Kind != HealthIssueKind.RequestRejected)

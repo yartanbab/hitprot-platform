@@ -103,6 +103,12 @@ public static class NotificationTypeRegistry
                 NotificationCategory.Grants, NotificationSeverity.Normal,
                 "fa fa-bullhorn", "/Grants/Detail?id={0}", GroupSimilar: false),
 
+            // İlgi talebinin cevabı — olumlu da olumsuz da aynı sayfaya götürür:
+            // "İlgi Taleplerim" listesi ikisini de gerekçesiyle gösteriyor.
+            [NotificationType.GrantInterestAnswered] = new(
+                NotificationCategory.Grants, NotificationSeverity.Normal,
+                "fa fa-handshake", "/Grants/MyApplications", GroupSimilar: false),
+
             [NotificationType.AiWorkflowTriggered] = new(
                 NotificationCategory.Ai, NotificationSeverity.Info,
                 "fa fa-robot", "/AiCenter/Evaluations", GroupSimilar: false),

@@ -37,6 +37,7 @@ namespace Apya.Platform.Tasks
         private readonly IRepository<TaskTagAssignment, Guid> _taskTagRepository;
         private readonly IRepository<TaskFeatureAssignment, Guid> _featureAssignmentRepository;
         private readonly IRepository<TaskChecklistItem, Guid> _checklistRepository;
+        private readonly IRepository<TaskDocument, Guid> _documentRepository;
         private readonly IRepository<TaskFavorite, Guid> _favoriteRepository;
         private readonly IRepository<TaskWatcher, Guid> _watcherRepository;
         private readonly TaskManager _taskManager;
@@ -62,6 +63,7 @@ namespace Apya.Platform.Tasks
             IRepository<TaskTagAssignment, Guid> taskTagRepository,
             IRepository<TaskFeatureAssignment, Guid> featureAssignmentRepository,
             IRepository<TaskChecklistItem, Guid> checklistRepository,
+            IRepository<TaskDocument, Guid> documentRepository,
             IRepository<TaskFavorite, Guid> favoriteRepository,
             IRepository<TaskWatcher, Guid> watcherRepository,
             TaskManager taskManager,
@@ -88,6 +90,7 @@ namespace Apya.Platform.Tasks
             _taskTagRepository     = taskTagRepository;
             _featureAssignmentRepository = featureAssignmentRepository;
             _checklistRepository   = checklistRepository;
+            _documentRepository    = documentRepository;
             _favoriteRepository    = favoriteRepository;
             _watcherRepository     = watcherRepository;
             _taskManager           = taskManager;
@@ -611,6 +614,122 @@ namespace Apya.Platform.Tasks
                     ? 0
                     : await AsyncExecuter.CountAsync(open.Where(t => t.AssigneeId == userId.Value))
             };
+        }
+
+        /// <summary>
+        /// Takvim ve Gösterge Paneli görünümlerinin veri kaynağı — YALIN projeksiyon.
+        ///
+        /// <see cref="GetListAsync"/> kullanılmıyor çünkü o, her çağrıda altı ek tur
+        /// koşuyor (pano kolonu adı, etiketler, favoriler, alt görev sayaçları, proje
+        /// adları, kart meta'sı) ve AutoMapper ile tam TaskDto üretiyor. Bu iki görünüm
+        /// yalnız başlık, durum, öncelik, tarihler ve atanan adını okuyor; gerisi 1000
+        /// satırda boşa harcanan saniyeler.
+        ///
+        /// AssigneeName alt sorgu DEĞİL: temel sorgu Assignee'yi zaten Include ediyor,
+        /// projeksiyonda `t.Assignee.UserName` tek LEFT JOIN'e çevriliyor (N+1 yok).
+        /// </summary>
+        public async Task<List<TaskPointDto>> GetPointsAsync(GetTasksInput input)
+        {
+            input.RootOnly = false;
+            var query = await CreateFilteredQueryAsync(input);
+
+            // MaxResultCount istemciden geliyor; 0/negatif gelirse ABP varsayılanına düş.
+            var limit = input.MaxResultCount > 0 ? input.MaxResultCount : 1000;
+
+            return await AsyncExecuter.ToListAsync(
+                query.OrderBy(t => t.StartDate)
+                     .Take(limit)
+                     .Select(t => new TaskPointDto
+                     {
+                         Id = t.Id,
+                         Title = t.Title,
+                         Number = t.Number,
+                         Status = t.Status,
+                         Priority = t.Priority,
+                         StartDate = t.StartDate,
+                         DueDate = t.DueDate,
+                         AssigneeName = t.Assignee != null ? t.Assignee.UserName : null
+                     }));
+        }
+
+        /// <summary>
+        /// Konsolun "Dosya galerisi" görünümü. Süzülmüş görevlerin GÖRSEL eklerini
+        /// TEK sorguda düzleştirir — liste DTO'su yalnız ek sayısını taşıdığı için
+        /// galeriyi besleyemez, görev başına <see cref="GetAttachmentsAsync"/> çağırmak
+        /// ise N+1 olurdu.
+        ///
+        /// RootOnly BİLEREK kapatılır: liste hiyerarşik kipte yalnız kök görevleri
+        /// sayfalar, ama alt göreve yüklenmiş bir görselin galeriden düşmesi için
+        /// bir sebep yok.
+        ///
+        /// Görsel süzgeci uzantı üzerinden yapılır ve VERİTABANINDA çalışır; dosya
+        /// içeriğine bakılmaz (ContentType tüm ekler için "application/octet-stream"
+        /// yazılıyor, ona güvenilemez).
+        /// </summary>
+        public async Task<List<TaskGalleryItemDto>> GetGalleryAsync(GetTasksInput input)
+        {
+            input.RootOnly = false;
+            var taskQuery = await CreateFilteredQueryAsync(input);
+
+            var attachmentQuery = await _attachmentRepository.GetQueryableAsync();
+
+            // Uzantı süzgeci VERİTABANINDA çalışsın diye açık OR zinciri; bir dizi
+            // üzerinde `Any(ext => FileName.EndsWith(ext))` EF Core'da çevrilemez ve
+            // sorgu istemciye düşerdi. Küme istemcideki isImageFile ile AYNI olmalı;
+            // ayrışırsa galeride eksik görsel ya da boş kare çıkar.
+            //
+            // ToLower() şart: MSSQL varsayılan harmanlaması harf duyarsızdır ama
+            // Postgres DEĞİLDİR — onsuz "FOTO.PNG" yalnız SQL Server'da görünürdü.
+            var rows = await AsyncExecuter.ToListAsync(
+                from a in attachmentQuery
+                join t in taskQuery on a.TaskId equals t.Id
+                where a.FileName.ToLower().EndsWith(".png")
+                   || a.FileName.ToLower().EndsWith(".jpg")
+                   || a.FileName.ToLower().EndsWith(".jpeg")
+                   || a.FileName.ToLower().EndsWith(".gif")
+                   || a.FileName.ToLower().EndsWith(".webp")
+                   || a.FileName.ToLower().EndsWith(".svg")
+                   || a.FileName.ToLower().EndsWith(".bmp")
+                orderby a.CreationTime descending
+                select new
+                {
+                    t.Id,
+                    t.Title,
+                    t.Number,
+                    Attachment = a
+                });
+
+            var userIds = rows.Select(r => r.Attachment.CreatorId)
+                .Where(id => id.HasValue).Select(id => id!.Value).Distinct().ToList();
+            var userQueryable = await _identityRepository.GetQueryableAsync();
+            var users = await AsyncExecuter.ToListAsync(userQueryable.Where(u => userIds.Contains(u.Id)));
+            var userDict = users.ToDictionary(k => k.Id, v => v.UserName);
+
+            // Misafir yüklemesinde CreatorId yoktur; ad paylaşım linkinden çözülür
+            // (GetAttachmentsAsync ile aynı kural — orada "Sistem" görünmesi hataydı).
+            var shareLinkIds = rows.Where(r => r.Attachment.ShareLinkId.HasValue)
+                .Select(r => r.Attachment.ShareLinkId!.Value).Distinct().ToList();
+            var recipientNames = shareLinkIds.Count == 0
+                ? new Dictionary<Guid, string>()
+                : (await _shareLinkRepository.GetListAsync(l => shareLinkIds.Contains(l.Id)))
+                    .ToDictionary(l => l.Id, l => l.RecipientName);
+
+            return rows.Select(r => new TaskGalleryItemDto
+            {
+                TaskId = r.Id,
+                TaskTitle = r.Title,
+                TaskCode = r.Number > 0 ? $"GRV-{r.Number}" : "GRV-—",
+                AttachmentId = r.Attachment.Id,
+                FileName = r.Attachment.FileName,
+                FileSize = r.Attachment.FileSize,
+                DownloadUrl = "/file/get/" + r.Attachment.StoredFileName,
+                CreationTime = r.Attachment.CreationTime,
+                UploaderName = r.Attachment.ShareLinkId.HasValue
+                    ? recipientNames.GetValueOrDefault(r.Attachment.ShareLinkId.Value, "Dış katılımcı")
+                    : (r.Attachment.CreatorId.HasValue && userDict.ContainsKey(r.Attachment.CreatorId.Value))
+                        ? userDict[r.Attachment.CreatorId.Value]
+                        : "Sistem"
+            }).ToList();
         }
 
         // Create/Update ortak: TagNames'i get-or-create edip TaskTagAssignment'ları senkronlar
@@ -1199,6 +1318,139 @@ namespace Apya.Platform.Tasks
                 await _featureAssignmentRepository.DeleteAsync(assignment, autoSave: true);
             }
         }
+
+        // --- BELGELER (TaskDocument) ---
+        // Yetki kapısı görevin KENDİSİ: EnsureTaskAccessAllowedAsync tenant + gizlilik
+        // süzgecini uygular, yazma uçları ayrıca Tasks.Edit ister. Ayrı bir belge izni
+        // TANIMLANMADI — feature kapısı olmayan izin kiracıya ulaşmıyor, o zincire
+        // girmeye değecek bir ayrım yok.
+
+        /// <summary>
+        /// Görevin belgeleri. Content BİLEREK boş bırakılır: gövdeler uzun olabiliyor
+        /// ve liste satırı yalnız başlık/tarih/yazar gösteriyor. Tam gövde için
+        /// <see cref="GetDocumentAsync"/>.
+        /// </summary>
+        public async Task<List<TaskDocumentDto>> GetDocumentsAsync(Guid taskId)
+        {
+            await EnsureTaskAccessAllowedAsync(taskId);
+
+            var query = await _documentRepository.GetQueryableAsync();
+            var rows = await AsyncExecuter.ToListAsync(
+                query.Where(d => d.TaskId == taskId)
+                     .OrderByDescending(d => d.LastModificationTime ?? d.CreationTime)
+                     .Select(d => new
+                     {
+                         d.Id, d.TaskId, d.Title,
+                         d.CreationTime, d.CreatorId,
+                         d.LastModificationTime, d.LastModifierId,
+                         // Gövdeyi ÇEKMEDEN uzunluğunu al — "boş belge" ayrımı için yeterli.
+                         Length = d.Content == null ? 0 : d.Content.Length
+                     }));
+
+            var names = await ResolveUserNamesAsync(
+                rows.SelectMany(r => new[] { r.LastModifierId, r.CreatorId }));
+
+            return rows.Select(r => new TaskDocumentDto
+            {
+                Id = r.Id,
+                TaskId = r.TaskId,
+                Title = r.Title,
+                Content = null,
+                ContentLength = r.Length,
+                CreationTime = r.CreationTime,
+                CreatorId = r.CreatorId,
+                LastModificationTime = r.LastModificationTime,
+                LastModifierId = r.LastModifierId,
+                EditorName = NameOf(names, r.LastModifierId ?? r.CreatorId)
+            }).ToList();
+        }
+
+        public async Task<TaskDocumentDto> GetDocumentAsync(Guid documentId)
+        {
+            var doc = await _documentRepository.GetAsync(documentId);
+            await EnsureTaskAccessAllowedAsync(doc.TaskId);
+
+            var names = await ResolveUserNamesAsync(new[] { doc.LastModifierId, doc.CreatorId });
+            return MapDocument(doc, NameOf(names, doc.LastModifierId ?? doc.CreatorId));
+        }
+
+        public async Task<TaskDocumentDto> CreateDocumentAsync(Guid taskId, string title)
+        {
+            await CheckPolicyAsync(PlatformPermissions.Tasks.Edit);
+            await EnsureTaskAccessAllowedAsync(taskId);
+
+            if (string.IsNullOrWhiteSpace(title))
+            {
+                throw new Volo.Abp.UserFriendlyException("Belge başlığı boş olamaz.", "Platform:Task:DocumentTitleRequired");
+            }
+
+            // autoSave: aynı UoW içinde geri okunacak bir alan yok, ama dönen DTO'nun
+            // CreationTime/CreatorId'si dolu olmalı — kaydetmeden bunlar boş gelir.
+            var doc = await _documentRepository.InsertAsync(
+                new TaskDocument(GuidGenerator.Create(), taskId, title.Trim()), autoSave: true);
+
+            var names = await ResolveUserNamesAsync(new[] { doc.CreatorId });
+            return MapDocument(doc, NameOf(names, doc.CreatorId));
+        }
+
+        public async Task<TaskDocumentDto> UpdateDocumentAsync(Guid documentId, UpdateTaskDocumentDto input)
+        {
+            await CheckPolicyAsync(PlatformPermissions.Tasks.Edit);
+
+            var doc = await _documentRepository.GetAsync(documentId);
+            await EnsureTaskAccessAllowedAsync(doc.TaskId);
+
+            if (string.IsNullOrWhiteSpace(input.Title))
+            {
+                throw new Volo.Abp.UserFriendlyException("Belge başlığı boş olamaz.", "Platform:Task:DocumentTitleRequired");
+            }
+
+            doc.Title = input.Title.Trim();
+            doc.Content = input.Content;
+            await _documentRepository.UpdateAsync(doc, autoSave: true);
+
+            var names = await ResolveUserNamesAsync(new[] { doc.LastModifierId, doc.CreatorId });
+            return MapDocument(doc, NameOf(names, doc.LastModifierId ?? doc.CreatorId));
+        }
+
+        public async Task DeleteDocumentAsync(Guid documentId)
+        {
+            await CheckPolicyAsync(PlatformPermissions.Tasks.Edit);
+
+            var doc = await _documentRepository.GetAsync(documentId);
+            await EnsureTaskAccessAllowedAsync(doc.TaskId);
+
+            // FullAuditedEntity → SOFT delete. Kullanıcı yazısı, geri alınabilir kalsın.
+            await _documentRepository.DeleteAsync(doc, autoSave: true);
+        }
+
+        private static TaskDocumentDto MapDocument(TaskDocument doc, string editorName) => new TaskDocumentDto
+        {
+            Id = doc.Id,
+            TaskId = doc.TaskId,
+            Title = doc.Title,
+            Content = doc.Content,
+            ContentLength = doc.Content?.Length ?? 0,
+            CreationTime = doc.CreationTime,
+            CreatorId = doc.CreatorId,
+            LastModificationTime = doc.LastModificationTime,
+            LastModifierId = doc.LastModifierId,
+            EditorName = editorName
+        };
+
+        /// <summary>Kullanıcı id'lerini görünen ada çözer (tek sorgu, null'lar elenir).</summary>
+        private async Task<Dictionary<Guid, string>> ResolveUserNamesAsync(IEnumerable<Guid?> ids)
+        {
+            var list = ids.Where(id => id.HasValue).Select(id => id!.Value).Distinct().ToList();
+            if (list.Count == 0) { return new Dictionary<Guid, string>(); }
+
+            var queryable = await _identityRepository.GetQueryableAsync();
+            var users = await AsyncExecuter.ToListAsync(queryable.Where(u => list.Contains(u.Id)));
+            return users.ToDictionary(u => u.Id, u => u.UserName);
+        }
+
+        private static string NameOf(Dictionary<Guid, string> names, Guid? id)
+            => id.HasValue && names.TryGetValue(id.Value, out var n) ? n : "Sistem";
 
         public async Task<List<TaskChecklistItemDto>> GetChecklistItemsAsync(Guid taskId)
         {

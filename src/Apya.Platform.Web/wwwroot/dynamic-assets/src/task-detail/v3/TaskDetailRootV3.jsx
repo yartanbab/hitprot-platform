@@ -332,6 +332,7 @@ export function TaskDetailRootV3({ taskId, presentation = 'modal', onClose, swit
                 <activeTabDef.component
                     taskId={currentTaskId}
                     task={task}
+                    nameById={assignees.nameById}
                     onOpenSubtask={setOpenSubtaskId}
                 />
             ) : (

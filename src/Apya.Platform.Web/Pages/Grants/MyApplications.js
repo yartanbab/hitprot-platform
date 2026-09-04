@@ -1,5 +1,6 @@
 $(function () {
     var service = apya.platform.grants.grantMyApplications;
+    var interestService = apya.platform.grants.grantInterest;
     var l = abp.localization.getResource('Platform');
 
     // Enum sıraları sunucudakiyle birebir.
@@ -21,6 +22,8 @@ $(function () {
     function date(v) {
         return v ? new Date(v).toLocaleDateString('tr-TR', { day: '2-digit', month: '2-digit' }) : '—';
     }
+    // Talep tarihi gün.ay ile değil tam tarihle gösterilir: liste tarihsel bir kayıt.
+    function fullDate(v) { return v ? new Date(v).toLocaleDateString('tr-TR') : '—'; }
     function initials(n) {
         return (n || '?').trim().split(/\s+/).slice(0, 2)
             .map(function (w) { return w[0]; }).join('').toUpperCase();
@@ -86,7 +89,7 @@ $(function () {
 
     function paintRows() {
         var rows = visible();
-        $('#Rows').html(rows.map(row).join(''));
+        $('#Rows').removeClass('apya-skel-rows').html(rows.map(row).join(''));
         $('#Empty').toggleClass('d-none', rows.length > 0);
     }
 
@@ -116,5 +119,34 @@ $(function () {
         paintRows();
     }
 
+    // ---------- İlgi taleplerim ----------
+    // GrantInterestStatus enum sırasıyla birebir.
+    var interestKeys = ['Yeni', 'Inceleniyor', 'BasvuruAcildi', 'UygunDegil'];
+    var interestTone = ['neutral', 'neutral', 'positive', 'negative'];
+
+    function interestRow(r) {
+        return '<div class="apya-my-interest-row">' +
+            '<span class="apya-my-grant">' +
+            '<a class="apya-my-grant-name text-decoration-none" href="/Grants/Detail?id=' + r.grantCallId + '">' +
+            esc(r.grantName) + '</a>' +
+            (r.period ? '<span class="apya-my-grant-meta">' + esc(r.period) + '</span>' : '') + '</span>' +
+
+            '<span class="apya-numeric apya-my-grant-meta">' + esc(fullDate(r.creationTime)) + '</span>' +
+
+            '<span><span class="apya-chip apya-chip-' + interestTone[r.status] + '">' +
+            esc(l('Grants:Interest:Status:' + interestKeys[r.status])) + '</span></span>' +
+
+            '<span class="apya-my-interest-feedback">' + esc(r.hostFeedback || '—') + '</span>' +
+            '</div>';
+    }
+
+    function paintInterests(items) {
+        // Başvuruya dönenler üstteki listede zaten var.
+        var rows = (items || []).filter(function (r) { return r.status !== 2; });
+        $('#InterestRows').html(rows.map(interestRow).join(''));
+        $('#InterestEmpty').toggleClass('d-none', rows.length > 0);
+    }
+
     service.get().then(function (dto) { model = dto; paint(); });
+    interestService.getMine().then(paintInterests);
 });

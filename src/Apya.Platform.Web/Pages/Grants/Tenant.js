@@ -2,7 +2,11 @@ $(function () {
     var profileSvc = apya.platform.grants.firmProfile;
     var recoSvc = apya.platform.grants.grantRecommendation;
     var appSvc = apya.platform.grants.grantApplication;
+    var interestSvc = apya.platform.grants.grantInterest;
     var l = abp.localization.getResource('Platform');
+
+    var interestModal = new bootstrap.Modal(document.getElementById('InterestModal'));
+    var interestCallId = null;
 
     var stageLabels = { 0: 'Başvuru', 1: 'Değerlendirme', 2: 'Onay', 3: 'Ödeme' };
     var stageTone = { 0: 'neutral', 1: 'warning', 2: 'positive', 3: 'ai' };
@@ -59,7 +63,12 @@ $(function () {
     });
 
     // ---------- Profil ----------
-    function num(sel) { var v = $(sel).val(); return v === '' || v == null ? null : Number(v); }
+    function num(sel) {
+        // Maskeli tutar alanında .val() "1.234,56" döndürür; Number() NaN verir.
+        var el = $(sel)[0];
+        if (el && el.__apyaMoney) { return apya.moneyInput.getValue(el); }
+        var v = $(sel).val(); return v === '' || v == null ? null : Number(v);
+    }
 
     function paintProfile(p) {
         $('#ProfileCompleteText').text(l('Grants:Feed:Profile:Complete', p.completionPercent));
@@ -78,7 +87,7 @@ $(function () {
         $('#ProfileFoundedOn').val(p.foundedOn ? p.foundedOn.substring(0, 10) : '');
         $('#ProfileStaff').val(p.staffCount == null ? '' : p.staffCount);
         $('#ProfileRdStaff').val(p.rdStaffCount == null ? '' : p.rdStaffCount);
-        $('#ProfileRevenue').val(p.annualRevenue == null ? '' : p.annualRevenue);
+        apya.moneyInput.setValue($('#ProfileRevenue')[0], p.annualRevenue);
         $('#ProfileTrl').val(p.trl == null ? '' : p.trl);
         $('#ProfileConsortium').val(p.hasConsortiumPartner == null ? '' : String(p.hasConsortiumPartner));
 
@@ -125,6 +134,10 @@ $(function () {
     });
 
     // ---------- Takvim şeridi (90 gün) ----------
+    // Konum son tarihle orantılıdır; ancak son tarihi aynı ya da birbirine yakın
+    // çağrılar aynı yüzdeye düşüp etiketleri üst üste bindiriyordu. Orantılı
+    // konum hesaplandıktan sonra soldan sağa tek geçişte etiket genişliği kadar
+    // asgari aralık zorlanıyor: sıra ve yaklaşık orantı korunuyor, çakışma bitiyor.
     function paintTimeline() {
         var horizon = 90;
         var points = feed
@@ -135,21 +148,66 @@ $(function () {
         var $t = $('#Timeline').empty();
         $('#TimelineEmpty').toggleClass('d-none', points.length > 0);
         $t.toggleClass('d-none', points.length === 0);
+        if (points.length === 0) { return; }
+
+        // Etiket kutusu en fazla 132px; şerit dar olduğunda pay eşit bölünür, bu
+        // sayede son nokta da sağ kenarın içinde kalır (kanıt: half + (n-1)*slot
+        // <= width - half, çünkü slot <= width / n).
+        var width = $t.width() || 640;
+        var slot = Math.min(132, width / points.length);
+        var half = slot / 2;
+        var cursor = half;
 
         points.forEach(function (r) {
+            var x = Math.max(cursor, Math.min(width - half, (r.daysRemaining / horizon) * width));
+            cursor = x + slot;
             // <20 gün kırmızı · 20-40 sarı · 40+ accent.
             var tone = r.daysRemaining < 20 ? 'is-urgent' : r.daysRemaining <= 40 ? 'is-soon' : '';
-            var left = Math.min(97, Math.max(3, (r.daysRemaining / horizon) * 100));
             $t.append(
-                '<a class="apya-timeline-point" style="left:' + left + '%" href="/Grants/Detail?id=' + r.grantCallId + '">' +
+                '<a class="apya-timeline-point" style="left:' + ((x / width) * 100).toFixed(2) + '%;width:' +
+                Math.floor(slot) + 'px" href="/Grants/Detail?id=' + r.grantCallId + '">' +
                 '<span class="apya-timeline-label">' + esc(r.grantName) + '</span>' +
                 '<span class="apya-timeline-date">' + esc(fmtDate(r.deadline)) + '</span>' +
                 '<span class="apya-timeline-dot ' + tone + '"></span></a>');
         });
     }
 
+    // Şerit genişliği değişince (pencere, kenar çubuğu) asgari aralık yeniden
+    // hesaplanmalı — yoksa daralan şeritte çakışma geri gelir.
+    var timelineResizeTimer;
+    $(window).on('resize', function () {
+        clearTimeout(timelineResizeTimer);
+        timelineResizeTimer = setTimeout(paintTimeline, 150);
+    });
+
     // ---------- Kart akışı ----------
     function ruleText(rule) { return l('Grants:Rule:' + ruleKeys[rule]); }
+
+    // GrantInterestStatus enum sırasıyla birebir.
+    var interestKeys = ['Yeni', 'Inceleniyor', 'BasvuruAcildi', 'UygunDegil'];
+    var interestTone = ['neutral', 'neutral', 'positive', 'negative'];
+
+    /// Kartın eylem alanı. Kiracı başvuruyu kendi açmaz: ilgi bildirir, host karar verir.
+    /// Süren talepte düğme yerine durum rozeti çıkar; uygun bulunmayan talep yeniden bildirilebilir.
+    function interestCta(r) {
+        var st = r.interestStatus;
+
+        if (r.alreadyApplied || st === 2) {
+            return '<span class="apya-chip apya-chip-positive">' +
+                esc(l('Grants:Interest:Status:BasvuruAcildi')) + '</span>';
+        }
+        if (st === 0 || st === 1) {
+            return '<span class="apya-chip apya-chip-' + interestTone[st] + '">' +
+                esc(l('Grants:Interest:Status:' + interestKeys[st])) + '</span>';
+        }
+        if (r.score >= 65) {
+            return '<button type="button" class="btn btn-sm btn-primary apya-interest-btn" data-id="' +
+                r.grantCallId + '">' +
+                esc(l(st === 3 ? 'Grants:Interest:ExpressAgain' : 'Grants:Interest:Express')) + '</button>';
+        }
+        return '<a class="btn btn-sm btn-outline-secondary" href="/Grants/Detail?id=' + r.grantCallId + '">' +
+            esc(l('Grants:Feed:Card:WhyNot')) + '</a>';
+    }
 
     function feedCard(r) {
         var chips = '<span class="apya-chip apya-numeric apya-chip-' + (r.score >= 65 ? 'positive' : 'neutral') + '">%' + r.score + '</span>';
@@ -175,13 +233,7 @@ $(function () {
             : '<span class="apya-chip apya-chip-' + (r.daysRemaining < 20 ? 'negative' : r.daysRemaining <= 40 ? 'warning' : 'neutral') +
               '">' + esc(l('Grants:Feed:Card:DaysLeft', r.daysRemaining)) + '</span>';
 
-        var cta = r.alreadyApplied
-            ? '<span class="apya-chip apya-chip-positive">' + esc(l('Grants:Feed:Card:Applied')) + '</span>'
-            : r.score >= 65
-                ? '<button type="button" class="btn btn-sm btn-primary apya-apply-btn" data-id="' + r.grantCallId + '">' +
-                  esc(l('Grants:Feed:Card:Apply')) + '</button>'
-                : '<a class="btn btn-sm btn-outline-secondary" href="/Grants/Detail?id=' + r.grantCallId + '">' +
-                  esc(l('Grants:Feed:Card:WhyNot')) + '</a>';
+        var cta = interestCta(r);
 
         return '<div class="apya-feed-card">' +
             '<div class="apya-feed-head">' +
@@ -215,20 +267,39 @@ $(function () {
             ? feed.filter(function (r) { return r.isBookmarked; })
             : feed.filter(function (r) { return r.isRecommended; });
 
-        $('#FeedGrid').html(items.map(feedCard).join(''));
+        // İskelet `:empty` kuralıyla çiziliyor; sonuç boş gelince kap boş kalır ve
+        // iskelet sonsuza dek parlamaya devam ederdi (boş durum metniyle yan yana).
+        // Veri geldiği anda sınıfı düşür.
+        $('#FeedGrid').removeClass('apya-skel-cards').html(items.map(feedCard).join(''));
         $('#FeedEmpty').toggleClass('d-none', items.length > 0 || activeTab === 'bookmarked');
         $('#BookmarkEmpty').toggleClass('d-none', items.length > 0 || activeTab !== 'bookmarked');
 
         paintTimeline();
     }
 
-    $('#FeedGrid').on('click', '.apya-apply-btn', function () {
-        var id = $(this).data('id');
-        $(this).prop('disabled', true);
-        appSvc.apply(id).then(function () {
-            abp.notify.success('Başvurunuz alındı.');
-            load();
-        });
+    $('#FeedGrid').on('click', '.apya-interest-btn', function () {
+        interestCallId = $(this).data('id');
+
+        // Program adı kartın kendisinden değil veriden okunur: tırnak içeren bir ad
+        // data- özniteliğinde markup'ı kırardı.
+        var row = feed.filter(function (r) { return r.grantCallId === interestCallId; })[0];
+        $('#InterestCallName').text(row ? row.grantName : '');
+        $('#InterestNote').val('');
+        interestModal.show();
+    });
+
+    $('#InterestForm').on('submit', function (e) {
+        e.preventDefault();
+        if (!interestCallId) { return; }
+
+        var $submit = $(this).find('button[type=submit]').prop('disabled', true);
+        interestSvc.express({ grantCallId: interestCallId, note: $('#InterestNote').val() })
+            .then(function () {
+                interestModal.hide();
+                abp.notify.success(l('Grants:Interest:Toast'));
+                return load();
+            })
+            .always(function () { $submit.prop('disabled', false); });
     });
 
     // ---------- Başvurularım ----------

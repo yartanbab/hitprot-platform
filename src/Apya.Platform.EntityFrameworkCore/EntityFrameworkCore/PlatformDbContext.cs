@@ -148,6 +148,7 @@ namespace Apya.Platform.EntityFrameworkCore
         public DbSet<GrantNotificationTemplate> GrantNotificationTemplates { get; set; }
         public DbSet<GrantNotificationLog> GrantNotificationLogs { get; set; }
         public DbSet<GrantLead> GrantLeads { get; set; }
+        public DbSet<GrantInterest> GrantInterests { get; set; }
         public DbSet<GrantRecommendation> GrantRecommendations { get; set; }
         public DbSet<GrantDisbursementTranche> GrantDisbursementTranches { get; set; }
         public DbSet<GrantMilestone> GrantMilestones { get; set; }
@@ -166,6 +167,7 @@ namespace Apya.Platform.EntityFrameworkCore
         public DbSet<TaskTagAssignment> TaskTagAssignments { get; set; }
         public DbSet<TaskFeatureAssignment> TaskFeatureAssignments { get; set; }
         public DbSet<TaskChecklistItem> TaskChecklistItems { get; set; }
+        public DbSet<TaskDocument> TaskDocuments { get; set; }
         public DbSet<TaskFavorite> TaskFavorites { get; set; }
         public DbSet<TaskWatcher> TaskWatchers { get; set; }
         public DbSet<TaskTemplate> TaskTemplates { get; set; }
@@ -199,6 +201,9 @@ namespace Apya.Platform.EntityFrameworkCore
 
         /* --- DEMO TALEPLERİ (giriş ekranı) --- */
         public DbSet<Apya.Platform.DemoRequests.DemoRequest> DemoRequests { get; set; }
+
+        /* --- SÜRÜM NOTU YAYIN KARARLARI (host) --- */
+        public DbSet<Apya.Platform.ReleaseNotes.ReleaseNotePublication> ReleaseNotePublications { get; set; }
 
         /* --- DASHBOARD --- */
         public DbSet<Apya.Platform.Dashboard.DashboardLayout> DashboardLayouts { get; set; }
@@ -947,6 +952,24 @@ namespace Apya.Platform.EntityFrameworkCore
                 b.HasIndex(x => new { x.IpAddress, x.CreationTime });
             });
 
+            // --- İlgi talepleri · kiracı bildirir, host karara bağlar ---
+
+            builder.Entity<GrantInterest>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "GrantInterests", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+                b.Property(x => x.Note).HasMaxLength(1000);
+                b.Property(x => x.HostFeedback).HasMaxLength(1000);
+                // Çağrıya FK: emsali GrantApplication — ikisi de kiracıya ait ve çağrıya
+                // bağlı. Başvuruya FK KURULMADI: başvuru silinse bile talebin kendisi
+                // ve host'un kararı durmalı.
+                b.HasOne<GrantCall>().WithMany().HasForeignKey(x => x.GrantCallId).OnDelete(DeleteBehavior.Cascade);
+                // Kiracının açık talebi var mı sorgusu (mükerrer talep kapısı).
+                b.HasIndex(x => new { x.TenantId, x.GrantCallId, x.Status });
+                // Host kutusunun sıralaması: bekleyenler önce, tarihe göre.
+                b.HasIndex(x => new { x.Status, x.CreationTime });
+            });
+
             // --- 6d · Bildirim şablonları ---
 
             builder.Entity<GrantNotificationTemplate>(b =>
@@ -1227,6 +1250,17 @@ namespace Apya.Platform.EntityFrameworkCore
                 b.ToTable(PlatformConsts.DbTablePrefix + "TaskChecklistItems", PlatformConsts.DbSchema);
                 b.ConfigureByConvention();
                 b.Property(x => x.Text).IsRequired().HasMaxLength(500);
+                b.HasIndex(x => x.TaskId);
+            });
+
+            builder.Entity<TaskDocument>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "TaskDocuments", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+                b.Property(x => x.Title).IsRequired().HasMaxLength(200);
+                // Content uzunluk SINIRI YOK: zengin metin gövdesi (nvarchar(max) /
+                // text). HasMaxLength verilirse uzun bir belge kaydederken sessizce
+                // kesilir ya da patlar.
                 b.HasIndex(x => x.TaskId);
             });
 
@@ -2134,6 +2168,24 @@ namespace Apya.Platform.EntityFrameworkCore
                 b.HasIndex(x => new { x.Status, x.CreationTime });
                 // Kötüye kullanım sayacı: aynı IP adresinin son bir saatteki talepleri.
                 b.HasIndex(x => new { x.IpAddress, x.CreationTime });
+            });
+
+            /* --- SÜRÜM NOTU YAYIN KARARLARI --- */
+            builder.Entity<Apya.Platform.ReleaseNotes.ReleaseNotePublication>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "ReleaseNotePublications", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+
+                b.Property(x => x.Version).IsRequired()
+                    .HasMaxLength(Apya.Platform.ReleaseNotes.ReleaseNotePublicationConsts.MaxVersionLength);
+                b.Property(x => x.ItemKey).IsRequired()
+                    .HasMaxLength(Apya.Platform.ReleaseNotes.ReleaseNotePublicationConsts.MaxItemKeyLength);
+                b.Property(x => x.Packages).IsRequired()
+                    .HasMaxLength(Apya.Platform.ReleaseNotes.ReleaseNotePublicationConsts.MaxPackagesLength);
+
+                // Madde başına tek karar. Kayıt host seviyesindedir (IMultiTenant yok) ve
+                // soft-delete DEĞİL → filtresiz tekil indeks güvenli.
+                b.HasIndex(x => new { x.Version, x.ItemKey }).IsUnique();
             });
 
             builder.Entity<Apya.Platform.Dashboard.DashboardLayout>(b =>

@@ -6,14 +6,14 @@ import { E as W } from "./EmptyState-Bhcx2Wdd.js";
 const w = (t, n) => {
   var l, d, c;
   return (c = (d = (l = window == null ? void 0 : window.abp) == null ? void 0 : l.notify) == null ? void 0 : d[t]) == null ? void 0 : c.call(d, n);
-}, C = () => {
+}, B = () => {
   var t;
   return ((t = window == null ? void 0 : window.abp) == null ? void 0 : t.appPath) ?? "/";
 }, H = () => {
   var t, n, l;
   return (l = (n = (t = window == null ? void 0 : window.apya) == null ? void 0 : t.platform) == null ? void 0 : n.documents) == null ? void 0 : l.document;
 };
-function R(t) {
+function C(t) {
   return new Promise((n, l) => {
     window.abp.ajax(t).done(n).fail(l);
   });
@@ -24,8 +24,8 @@ const E = (t, n = {}) => {
     u != null && u !== "" && l.append(c, u);
   });
   const d = l.toString();
-  return `${C()}Documents/Upload?handler=${t}${d ? "&" + d : ""}`;
-}, J = () => R({ url: E("DocumentTypes"), type: "GET" }), Y = (t, n) => R({
+  return `${B()}Documents/Upload?handler=${t}${d ? "&" + d : ""}`;
+}, J = () => C({ url: E("DocumentTypes"), type: "GET" }), Y = (t, n) => C({
   url: E("SetMeta", { id: t }),
   type: "POST",
   contentType: "application/json",
@@ -53,14 +53,14 @@ function Q(t) {
 }
 function V(t, n, { onProgress: l, signal: d } = {}) {
   return new Promise((c, u) => {
-    var y, x, k, v, b;
+    var y, g, k, v, b;
     const j = new FormData();
     j.append("documentId", t), j.append("file", n);
     const o = new XMLHttpRequest();
     o.open("POST", E("Upload"), !0);
-    const h = ((v = (k = (x = (y = window == null ? void 0 : window.abp) == null ? void 0 : y.security) == null ? void 0 : x.antiForgery) == null ? void 0 : k.getToken) == null ? void 0 : v.call(k)) ?? ((b = document.querySelector('input[name="__RequestVerificationToken"]')) == null ? void 0 : b.value);
-    h && o.setRequestHeader("RequestVerificationToken", h), o.upload.onprogress = (g) => {
-      g.lengthComputable && l && l(Math.round(g.loaded / g.total * 100));
+    const h = ((v = (k = (g = (y = window == null ? void 0 : window.abp) == null ? void 0 : y.security) == null ? void 0 : g.antiForgery) == null ? void 0 : k.getToken) == null ? void 0 : v.call(k)) ?? ((b = document.querySelector('input[name="__RequestVerificationToken"]')) == null ? void 0 : b.value);
+    h && o.setRequestHeader("RequestVerificationToken", h), o.upload.onprogress = (x) => {
+      x.lengthComputable && l && l(Math.round(x.loaded / x.total * 100));
     }, o.onload = () => {
       if (o.status >= 200 && o.status < 300)
         try {
@@ -73,7 +73,7 @@ function V(t, n, { onProgress: l, signal: d } = {}) {
     }, o.onerror = () => u(new Error("Ağ hatası")), o.onabort = () => u(new Error("İptal edildi")), d && d.addEventListener("abort", () => o.abort(), { once: !0 }), o.send(j);
   });
 }
-const Z = /(^|[\s.])[A-Z][\w.]*(Exception|Error)\b/, q = {
+const Z = /(^|[\s.])[A-Z][\w.]*(Exception|Error)\b/, R = {
   400: "Dosya kabul edilmedi.",
   401: "Oturumunuz düşmüş — sayfayı yenileyin.",
   403: "Bu klasöre yükleme yetkiniz yok.",
@@ -86,7 +86,7 @@ function G(t) {
   return !n || Z.test(n) || n.includes("--->") || n.includes(" at ") ? null : n.length > 160 ? `${n.slice(0, 157)}…` : n;
 }
 function ee(t) {
-  return q[t] ? q[t] : t >= 500 ? "Sunucu hatası — tekrar deneyebilirsiniz." : `Sunucu ${t} döndü`;
+  return R[t] ? R[t] : t >= 500 ? "Sunucu hatası — tekrar deneyebilirsiniz." : `Sunucu ${t} döndü`;
 }
 function ae(t) {
   var l, d;
@@ -99,7 +99,7 @@ function ae(t) {
   }
   return n && console.error("[Upload] sunucu hatası:", n), G(n) ?? ee(t.status);
 }
-const te = (t) => t < 1024 ? `${t} B` : t < 1024 * 1024 ? `${(t / 1024).toFixed(0)} KB` : `${(t / (1024 * 1024)).toFixed(1)} MB`, ne = 3, se = {
+const te = (t) => t < 1024 ? `${t} B` : t < 1024 * 1024 ? `${(t / 1024).toFixed(0)} KB` : `${(t / (1024 * 1024)).toLocaleString("tr-TR", { minimumFractionDigits: 1, maximumFractionDigits: 1 })} MB`, ne = 3, se = {
   queued: { label: "sırada", variant: "neutral" },
   uploading: { label: "yükleniyor", variant: "accent" },
   done: { label: "tamam", variant: "positive" },
@@ -108,7 +108,7 @@ const te = (t) => t < 1024 ? `${t} B` : t < 1024 * 1024 ? `${(t / 1024).toFixed(
 };
 let re = 0;
 function le() {
-  const t = new URLSearchParams(window.location.search), [n, l] = p.useState([]), [d, c] = p.useState([]), [u, j] = p.useState((t.get("documentId") || "").toLowerCase()), [o, h] = p.useState([]), [y, x] = p.useState(!1), [k, v] = p.useState(!0), [b, g] = p.useState(!1), [N, $] = p.useState(""), [z, A] = p.useState(""), T = p.useRef(null);
+  const t = new URLSearchParams(window.location.search), [n, l] = p.useState([]), [d, c] = p.useState([]), [u, j] = p.useState((t.get("documentId") || "").toLowerCase()), [o, h] = p.useState([]), [y, g] = p.useState(!1), [k, v] = p.useState(!0), [b, x] = p.useState(!1), [N, F] = p.useState(""), [T, $] = p.useState(""), z = p.useRef(null);
   p.useEffect(() => {
     (async () => {
       try {
@@ -141,12 +141,12 @@ function le() {
     h((r) => [...r, ...s]);
     const i = s.filter((r) => r.status === "rejected").length;
     i > 0 && w("warn", `${i} dosya kabul edilmedi (tür veya boyut).`);
-  }, []), S = (e, s) => h((i) => i.map((r) => r.key === e ? { ...r, ...s } : r)), F = async () => {
+  }, []), S = (e, s) => h((i) => i.map((r) => r.key === e ? { ...r, ...s } : r)), A = async () => {
     if (!u) {
       w("warn", "Önce hedef klasör seçin.");
       return;
     }
-    x(!0);
+    g(!0);
     const s = [...o.filter((r) => r.status === "queued" || r.status === "failed")], i = async () => {
       for (; s.length > 0; ) {
         const r = s.shift();
@@ -166,23 +166,23 @@ function le() {
         }
       }
     };
-    await Promise.all(Array.from({ length: Math.min(ne, s.length) }, i)), x(!1);
+    await Promise.all(Array.from({ length: Math.min(ne, s.length) }, i)), g(!1);
   }, O = async () => {
     const e = o.filter((i) => i.status === "done" && i.documentFileId);
     if (e.length === 0) return;
-    x(!0);
+    g(!0);
     let s = 0;
     for (const i of e)
       try {
         await Y(i.documentFileId, {
           displayName: i.name,
           documentTypeId: N || null,
-          periodCode: z || null
+          periodCode: T || null
         }), s++;
       } catch (r) {
         console.error("[Upload] setMeta", i.name, r);
       }
-    x(!1), w(s === e.length ? "success" : "warn", `${s}/${e.length} belgeye künye atandı.`);
+    g(!1), w(s === e.length ? "success" : "warn", `${s}/${e.length} belgeye künye atandı.`);
   }, m = p.useMemo(() => {
     const e = { queued: 0, uploading: 0, done: 0, failed: 0, rejected: 0 };
     return o.forEach((s) => {
@@ -190,7 +190,7 @@ function le() {
     }), e;
   }, [o]), P = (e) => {
     var s, i;
-    e.preventDefault(), g(!1), (i = (s = e.dataTransfer) == null ? void 0 : s.files) != null && i.length && L(e.dataTransfer.files);
+    e.preventDefault(), x(!1), (i = (s = e.dataTransfer) == null ? void 0 : s.files) != null && i.length && L(e.dataTransfer.files);
   };
   return k ? /* @__PURE__ */ a.jsx("div", { className: "p-4", children: /* @__PURE__ */ a.jsx(_, { rows: 6 }) }) : /* @__PURE__ */ a.jsxs("div", { className: "apya-fade-in px-4 py-4 sm:px-7 sm:py-7 mx-auto", style: { maxWidth: 1560 }, children: [
     /* @__PURE__ */ a.jsxs("div", { className: "d-flex align-items-start justify-content-between flex-wrap gap-3 mb-4", children: [
@@ -198,7 +198,7 @@ function le() {
         /* @__PURE__ */ a.jsx("h1", { style: { fontSize: 20, fontWeight: 700, margin: 0 }, children: "Yükleme kuyruğu" }),
         /* @__PURE__ */ a.jsx("p", { style: { fontSize: 12, color: "var(--apya-text-tertiary)", margin: "4px 0 0" }, children: "Dosyaları sürükleyin; sıra tek tek yükler, hatalı olanı tekrar denersiniz" })
       ] }),
-      /* @__PURE__ */ a.jsx("a", { className: "apya-doc-linkbtn", href: `${C()}Documents`, children: "Dokümanlar'a dön" })
+      /* @__PURE__ */ a.jsx("a", { className: "apya-doc-linkbtn", href: `${B()}Documents`, children: "Dokümanlar'a dön" })
     ] }),
     /* @__PURE__ */ a.jsxs("div", { className: "apya-doc-uploadgrid", children: [
       /* @__PURE__ */ a.jsxs("div", { className: "apya-doc-check-card", children: [
@@ -221,19 +221,19 @@ function le() {
           {
             className: `apya-doc-dropzone${b ? " is-over" : ""}`,
             onDragOver: (e) => {
-              e.preventDefault(), g(!0);
+              e.preventDefault(), x(!0);
             },
-            onDragLeave: () => g(!1),
+            onDragLeave: () => x(!1),
             onDrop: P,
             onClick: () => {
               var e;
-              return (e = T.current) == null ? void 0 : e.click();
+              return (e = z.current) == null ? void 0 : e.click();
             },
             role: "button",
             tabIndex: 0,
             onKeyDown: (e) => {
               var s;
-              (e.key === "Enter" || e.key === " ") && ((s = T.current) == null || s.click());
+              (e.key === "Enter" || e.key === " ") && ((s = z.current) == null || s.click());
             },
             children: [
               /* @__PURE__ */ a.jsx("i", { className: "fa fa-cloud-arrow-up", style: { fontSize: 22, color: "var(--apya-text-tertiary)" } }),
@@ -245,7 +245,7 @@ function le() {
         /* @__PURE__ */ a.jsx(
           "input",
           {
-            ref: T,
+            ref: z,
             type: "file",
             multiple: !0,
             hidden: !0,
@@ -270,7 +270,7 @@ function le() {
             {
               className: "apya-doc-select w-100 mb-2",
               value: N,
-              onChange: (e) => $(e.target.value),
+              onChange: (e) => F(e.target.value),
               "aria-label": "Belge türü",
               children: [
                 /* @__PURE__ */ a.jsx("option", { value: "", children: "Tür seçin…" }),
@@ -283,8 +283,8 @@ function le() {
             {
               className: "apya-doc-input w-100 mb-2",
               placeholder: "Dönem (örn. 2026-Q1)",
-              value: z,
-              onChange: (e) => A(e.target.value),
+              value: T,
+              onChange: (e) => $(e.target.value),
               "aria-label": "Dönem kodu"
             }
           ),
@@ -294,7 +294,7 @@ function le() {
               variant: "outline",
               size: "sm",
               className: "w-100",
-              disabled: y || !N && !z,
+              disabled: y || !N && !T,
               onClick: O,
               children: "Yüklenenlere uygula"
             }
@@ -333,7 +333,7 @@ function le() {
                 variant: "primary",
                 size: "sm",
                 disabled: y || !u || m.queued + m.failed === 0,
-                onClick: F,
+                onClick: A,
                 children: y ? "Yükleniyor…" : `Yükle (${m.queued + m.failed})`
               }
             )
@@ -385,5 +385,5 @@ function le() {
     ] })
   ] });
 }
-const B = document.getElementById("upload-queue-island");
-B && K(B).render(/* @__PURE__ */ a.jsx(le, {}));
+const q = document.getElementById("upload-queue-island");
+q && K(q).render(/* @__PURE__ */ a.jsx(le, {}));

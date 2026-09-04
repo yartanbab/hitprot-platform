@@ -81,7 +81,7 @@ export function fmtSize(bytes) {
     if (!bytes) return '0 KB';
     if (bytes < 1024) return `${bytes} B`;
     if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
-    return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
+    return `${(bytes / 1024 / 1024).toLocaleString('tr-TR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} MB`;
 }
 
 /** "5s 42dk" — süreleri ondalık saat yerine okunur biçimde. */
@@ -110,6 +110,9 @@ const FILE_KINDS = {
     zip:   { icon: 'fa-file-zipper', bg: 'bg-warning-subtle', fg: 'text-warning' },
     other: { icon: 'fa-file',       bg: 'bg-neutral-subtle',  fg: 'text-text-secondary' },
 };
+
+/** Dosya bir görsel mi — galeri sekmesi ekleri bununla süzer. */
+export const isImageFile = (fileName = '') => fileKindOf(fileName) === FILE_KINDS.image;
 
 export function fileKindOf(fileName = '') {
     const ext = fileName.split('.').pop()?.toLowerCase() ?? '';

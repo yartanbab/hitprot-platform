@@ -2609,7 +2609,8 @@ i.apya-priority-dot {
 
 /* Bootstrap .dropdown-menu üzerine biner: kendi dolgusunu sıfırlar, bölüm
    başlıklı panel düzenine geçer. */
-.apya-console-menu.dropdown-menu {
+.apya-console-menu.dropdown-menu,
+.apya-proj-money-menu {
     width: 262px;
     padding: 0;
     overflow: hidden;
@@ -2617,6 +2618,17 @@ i.apya-priority-dot {
     border-radius: var(--apya-radius-lg);
     background: var(--apya-surface-elevated);
     box-shadow: var(--apya-shadow-lg);
+}
+/* Proje listesindeki ⋯ menüsü: sayfa kökünde TEK örnek, konumu JS yazar.
+   Kartın içine konsaydı .apya-proj-card'ın overflow:hidden'ı kırpardı. */
+.apya-proj-money-menu {
+    position: fixed;
+    top: 0;
+    left: 0;
+    /* Yedek ŞART: --apya-z-dropdown yalnız React demetinin tokens.css'inde
+       tanımlı, Razor sayfalarında çözülmez (bu dosyadaki diğer üç kullanım
+       sessizce z-index:auto'ya düşüyor). 1000 = Bootstrap dropdown seviyesi. */
+    z-index: var(--apya-z-dropdown, 1000);
 }
 .apya-console-menu-head {
     padding: 8px 12px 6px;
@@ -7264,6 +7276,25 @@ html[data-sidebar] .apya-sidebar-resizer {
     flex-shrink: 0;
 }
 
+/* Satir ici "agenta kopyala" ikonu. Dokunmatik cihazda hover YOK: ikon her zaman
+   gorunur, yalnizca imlec satira gelince belirginlesir -- gizlenseydi telefonda
+   hic ulasilamazdi. */
+.apya-health-row-copy {
+    flex-shrink: 0;
+    align-self: flex-start;
+    padding: 3px 5px;
+    border-radius: var(--apya-radius-sm);
+    color: var(--apya-text-secondary);
+    font-size: 11px;
+    opacity: 0.5;
+    transition: opacity var(--apya-motion-fast) ease, background var(--apya-motion-fast) ease;
+}
+.apya-health-row:hover .apya-health-row-copy { opacity: 1; }
+.apya-health-row-copy:hover {
+    background: var(--apya-surface-sunken);
+    color: var(--apya-text-primary);
+}
+
 /* --- Kanit paneli: olgu seridi --- */
 .apya-health-facts {
     display: grid;
@@ -7517,3 +7548,239 @@ html[data-sidebar] .apya-sidebar-resizer {
     border-color: var(--apya-accent-500);
     box-shadow: 0 0 0 1px var(--apya-accent-500);
 }
+
+/* ============================================================================
+   KONSOL GÖRÜNÜMLERİ — Takvim / Gösterge Paneli / Dosya Galerisi   (2026-09-03)
+   ----------------------------------------------------------------------------
+   Görevler konsolundaki Liste / Kanban / Zaman Çizelgesi'nin yanına eklenen üç
+   görünüm. Üçü de `.view-panel` içinde yaşar; kart çerçevesi ve tipografi
+   konsolun geri kalanıyla aynı token'lardan gelir, YENİ RENK TANIMLANMAZ.
+   ========================================================================== */
+
+/* --- Ortak boş durum --- */
+.apya-cal-empty,
+.apya-gal-empty,
+.apya-dash-empty {
+    margin: 0;
+    padding: var(--apya-space-6) var(--apya-space-4);
+    text-align: center;
+    font-size: 12.5px;
+    color: var(--apya-text-secondary);
+}
+
+/* --- Takvim --- */
+.apya-cal { display: flex; flex-direction: column; }
+.apya-cal-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--apya-space-3);
+    padding: var(--apya-space-3) var(--apya-space-4);
+    border-bottom: 1px solid var(--apya-border-subtle);
+}
+.apya-cal-title { margin: 0; font-size: 13.5px; font-weight: var(--apya-weight-bold); color: var(--apya-text-primary); }
+.apya-cal-nav { display: flex; align-items: center; gap: 6px; }
+.apya-cal-btn {
+    height: 28px;
+    min-width: 28px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    border: 1px solid var(--apya-border-subtle);
+    border-radius: var(--apya-radius-sm);
+    background: var(--apya-surface-base);
+    color: var(--apya-text-secondary);
+    font-size: 11px;
+    cursor: pointer;
+}
+.apya-cal-btn:hover { color: var(--apya-text-primary); background: var(--apya-surface-hover); }
+.apya-cal-btn:focus-visible { outline: none; box-shadow: var(--apya-shadow-focus); }
+.apya-cal-btn-text { padding: 0 10px; font-size: 11.5px; font-weight: var(--apya-weight-medium); }
+
+.apya-cal-weekdays {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    border-bottom: 1px solid var(--apya-border-subtle);
+    background: var(--apya-surface-raised);
+}
+.apya-cal-weekdays > span {
+    padding: 6px 0;
+    text-align: center;
+    font-size: 11px;
+    font-weight: var(--apya-weight-bold);
+    color: var(--apya-text-tertiary);
+}
+
+.apya-cal-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); }
+.apya-cal-cell {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-height: 92px;
+    padding: 5px;
+    border-right: 1px solid var(--apya-border-subtle);
+    border-bottom: 1px solid var(--apya-border-subtle);
+}
+.apya-cal-cell:nth-child(7n) { border-right: none; }
+.apya-cal-cell-out { background: var(--apya-surface-sunken); }
+.apya-cal-day {
+    align-self: flex-end;
+    font-size: 11px;
+    font-weight: var(--apya-weight-bold);
+    color: var(--apya-text-tertiary);
+    font-variant-numeric: tabular-nums;
+}
+.apya-cal-day-today {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 18px;
+    min-width: 18px;
+    border-radius: 999px;
+    background: var(--apya-accent-500);
+    color: #fff;
+}
+.apya-cal-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    width: 100%;
+    padding: 2px 6px;
+    border: none;
+    border-radius: var(--apya-radius-sm);
+    font-size: 10.5px;
+    font-weight: var(--apya-weight-medium);
+    text-align: left;
+    cursor: pointer;
+}
+.apya-cal-item > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.apya-cal-item > i { flex: none; font-size: 8px; }
+.apya-cal-item:focus-visible { outline: none; box-shadow: var(--apya-shadow-focus); }
+/* Metin tonu -700: bu sistemde -700 KOYU TEMADA parlak metin tonuna döner
+   (tokens.css'teki "dark konvansiyonu"), yani tek kural iki temada da okunur.
+   .kpi-icon-box--* ile aynı desen. */
+.apya-cal-item-neutral  { background: var(--apya-surface-sunken); color: var(--apya-text-secondary); }
+.apya-cal-item-warning  { background: var(--apya-warning-50);     color: var(--apya-warning-700); }
+.apya-cal-item-positive { background: var(--apya-positive-50);    color: var(--apya-positive-700); }
+
+/* Accent'in -700'ü koyu temada yeterince açılmıyor; repo bu durumda -300'e
+   düşüyor (.apya-filter-chip.is-active ve .apya-tc-pchip-tag ile aynı çözüm). */
+.apya-cal-item-brand { background: var(--apya-accent-soft); color: var(--apya-accent-600); }
+[data-theme="dark"] .apya-cal-item-brand { color: var(--apya-accent-300); }
+
+/* --- Dosya galerisi --- */
+.apya-gal-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+    gap: var(--apya-space-3);
+    padding: var(--apya-space-4);
+}
+.apya-gal-card {
+    display: flex;
+    flex-direction: column;
+    margin: 0;
+    overflow: hidden;
+    border: 1px solid var(--apya-border-subtle);
+    border-radius: var(--apya-radius-md);
+    background: var(--apya-surface-base);
+}
+.apya-gal-card:hover { border-color: var(--apya-accent-500); }
+.apya-gal-thumb {
+    display: block;
+    aspect-ratio: 4 / 3;
+    overflow: hidden;
+    background: var(--apya-surface-sunken);
+}
+.apya-gal-thumb > img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.apya-gal-meta { display: flex; flex-direction: column; gap: 2px; padding: 8px 10px; }
+.apya-gal-task {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    padding: 0;
+    border: none;
+    background: transparent;
+    text-align: left;
+    cursor: pointer;
+    overflow: hidden;
+}
+.apya-gal-code { flex: none; font-size: 10.5px; font-weight: var(--apya-weight-bold); color: var(--apya-text-tertiary); }
+.apya-gal-title {
+    font-size: 12px;
+    font-weight: var(--apya-weight-bold);
+    color: var(--apya-text-primary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.apya-gal-task:hover .apya-gal-title { color: var(--apya-accent-500); }
+.apya-gal-file,
+.apya-gal-size {
+    font-size: 11px;
+    color: var(--apya-text-tertiary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* --- Gösterge paneli --- */
+.apya-dash { display: flex; flex-direction: column; gap: var(--apya-space-4); padding: var(--apya-space-4); }
+.apya-dash-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: var(--apya-space-3);
+}
+.apya-dash-stat {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: var(--apya-space-3) var(--apya-space-4);
+    border: 1px solid var(--apya-border-subtle);
+    border-left-width: 3px;
+    border-radius: var(--apya-radius-md);
+    background: var(--apya-surface-base);
+}
+.apya-dash-stat-neutral  { border-left-color: var(--apya-neutral-500); }
+.apya-dash-stat-positive { border-left-color: var(--apya-positive-500); }
+.apya-dash-stat-negative { border-left-color: var(--apya-negative-500); }
+.apya-dash-stat-value { font-size: 22px; font-weight: var(--apya-weight-bold); color: var(--apya-text-primary); }
+.apya-dash-stat-label { font-size: 11.5px; color: var(--apya-text-secondary); }
+
+.apya-dash-charts {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: var(--apya-space-3);
+}
+.apya-dash-card {
+    display: flex;
+    flex-direction: column;
+    gap: var(--apya-space-2);
+    padding: var(--apya-space-4);
+    border: 1px solid var(--apya-border-subtle);
+    border-radius: var(--apya-radius-md);
+    background: var(--apya-surface-base);
+}
+.apya-dash-card > h3 { margin: 0; font-size: 12.5px; font-weight: var(--apya-weight-bold); color: var(--apya-text-primary); }
+.apya-dash-card-wide { grid-column: 1 / -1; }
+/* Canvas'a SABİT yükseklik: Chart.js sarmalayıcının yüksekliğini okur; grid
+   öğesi doğal yüksekliğe düşünce grafik her çizimde birkaç piksel büyüyerek
+   sonsuz büyüme döngüsüne giriyordu (responsive + auto height klasik tuzağı). */
+.apya-dash-canvas { position: relative; height: 240px; }
+.apya-dash-card-wide .apya-dash-canvas { height: 300px; }
+
+/* Takvim hücresinde "+N daha": bir güne düşen kayıt sayısı MAX_PER_DAY'i aşınca
+   çıkar. Gizlemek değil ERTELEMEK için — tıklanınca o günün tamamı açılır. */
+.apya-cal-more {
+    align-self: flex-start;
+    padding: 1px 6px;
+    border: none;
+    border-radius: var(--apya-radius-sm);
+    background: transparent;
+    color: var(--apya-text-tertiary);
+    font-size: 10.5px;
+    font-weight: var(--apya-weight-bold);
+    cursor: pointer;
+}
+.apya-cal-more:hover { color: var(--apya-accent-500); background: var(--apya-surface-hover); }
+.apya-cal-more:focus-visible { outline: none; box-shadow: var(--apya-shadow-focus); }
