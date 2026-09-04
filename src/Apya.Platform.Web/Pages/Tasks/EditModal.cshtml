@@ -221,7 +221,7 @@
                             <label class="apya-overline d-block mb-1" asp-for="Task.PlannedAmount">Görev bütçesi</label>
                             @* type="number" DEĞİL — bkz. Finance/ContextWizardModal.cshtml'deki not:
                                sayı alanı NOKTALI gönderir, tr-TR bağlaması "1234.56"yı 123456 yapardı. *@
-                            <input asp-for="Task.PlannedAmount" type="text" inputmode="decimal"
+                            <input asp-for="Task.PlannedAmount" type="text" inputmode="decimal" data-money-input="true"
                                    class="form-control apya-numeric" placeholder="—" />
                         </div>
                         <div class="col-12">

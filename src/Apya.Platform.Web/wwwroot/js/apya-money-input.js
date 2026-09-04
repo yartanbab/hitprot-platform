@@ -1,13 +1,25 @@
 /* =============================================================================
    APYA MONEY INPUT — Tutar giriş maskesi (yazarken binlik nokta)
    -----------------------------------------------------------------------------
-   Kullanım (opt-in): <input data-money-input value="@Model.X" ...>  (type=number DEĞİL)
+   Kullanım (opt-in): <input data-money-input value="@Model.X" ...>
      • Görünür alan type=text; yazarken "1.234.567,89" olarak biçimlenir (tr-TR).
        Ondalık ayraç YALNIZ virgül; nokta her zaman binlik.
-     • VERİ GÜVENLİĞİ: helper, alanın `name`'ini GİZLİ bir input'a taşır ve orada
-       HAM invariant değeri ("1234567.89") tutar. Sunucu, bugün type=number'dan
-       aldığı değerin AYNISINI alır → binding/kayıt davranışı değişmez. Görünür
-       alan gönderilmez.
+     • VERİ GÜVENLİĞİ: helper, alanın `name`'ini GİZLİ bir input'a taşır ve ham
+       değeri orada tutar. Görünür alan sunucuya gönderilmez.
+
+       🔴 Ham değerin BİÇİMİ alanın __Invariant işaretçisine göre seçilir:
+          işaretçi VAR → "1234.56" (ASP.NET o alanı invariant kültürle çözer)
+          işaretçi YOK → "1234,56" (alan tr-TR ile çözülür; NOKTA BİNLİK sayılır)
+       Sabit noktalı yazmak, işaretçisi olmayan alanda 1000× sapma üretiyordu;
+       artık işaretçi çalışma anında aranıyor. Bkz. DecimalInputBinding_Tests.
+
+     • Alan başına ayar:
+         data-decimals="N"   ondalık hane sınırı (varsayılan 2)
+                             🔴 alanın DB ölçeğinden KÜÇÜK verme: gösterim
+                             kırpılır ve kırpılmış değer kaydedilir.
+                             Para decimal(18,2) → 2 · kur decimal(18,6) → 6
+         data-group="false"  binlik ayracını kapat (oran/yüzde alanları)
+
      • Dinamik satırlar (JS ile eklenen fatura kalemleri):
        apya.moneyInput.upgrade(el) veya apya.moneyInput.scan(container).
    Salt görüntü için: apya-money.js (apya.money.format).
@@ -15,6 +27,8 @@
 (function () {
     window.apya = window.apya || {};
     if (window.apya.moneyInput) { return; }
+
+    var DEFAULT_DECIMALS = 2;
 
     // tr-maskeli değer -> Number. Ondalık = virgül; noktalar (binlik) atılır. "1.234.567,89" -> 1234567.89
     function parse(masked) {
@@ -43,18 +57,21 @@
         return neg ? -num : num;
     }
 
-    // Görünür biçim: tam kısma binlik '.', ondalık ',' (en çok 2 hane). Ondalık = İLK virgül.
-    function formatWhileTyping(raw) {
-        var neg = /^\s*-/.test(raw);
-        var ci = raw.indexOf(',');
+    // Görünür biçim: tam kısma binlik '.', ondalık ','. Ondalık = İLK virgül.
+    function formatWhileTyping(raw, decimals, group) {
+        var dec = (decimals === undefined || decimals === null) ? DEFAULT_DECIMALS : decimals;
+        var grouped = group !== false;
+        var src = String(raw);
+        var neg = /^\s*-/.test(src);
+        var ci = src.indexOf(',');
         var intSrc, decSrc, hasDec;
-        if (ci === -1) { intSrc = raw; decSrc = ''; hasDec = false; }
-        else { intSrc = raw.slice(0, ci); decSrc = raw.slice(ci + 1); hasDec = true; }
+        if (ci === -1) { intSrc = src; decSrc = ''; hasDec = false; }
+        else { intSrc = src.slice(0, ci); decSrc = src.slice(ci + 1); hasDec = true; }
         var intDigits = intSrc.replace(/\D/g, '').replace(/^0+(?=\d)/, '');
-        var decDigits = decSrc.replace(/\D/g, '').slice(0, 2);
-        var grouped = intDigits.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-        var out = (neg ? '-' : '') + (grouped || (hasDec ? '0' : ''));
-        if (hasDec) { out += ',' + decDigits; }
+        var decDigits = decSrc.replace(/\D/g, '').slice(0, dec);
+        var intOut = grouped ? intDigits.replace(/\B(?=(\d{3})+(?!\d))/g, '.') : intDigits;
+        var out = (neg ? '-' : '') + (intOut || (hasDec ? '0' : ''));
+        if (hasDec && dec > 0) { out += ',' + decDigits; }
         return out;
     }
     function numToTrString(num) { return String(num).replace('.', ','); }
@@ -77,11 +94,37 @@
         return str.length;
     }
 
+    // ASP.NET, invariant kültürle çözülecek alanların ADINI gizli __Invariant
+    // alanlarında listeler. Bu ad için işaretçi aynı formda var mı?
+    // Form yoksa belgeye düşeriz; o durumda başka formdaki aynı adlı alanın
+    // işaretçisi yanlış eşleşebilir — maskeli alan bir form içinde olmalı.
+    function hasInvariantMarker(el, name) {
+        if (!name) { return false; }
+        var scope = el.form || document;
+        var markers = scope.querySelectorAll('input[name="__Invariant"]');
+        for (var i = 0; i < markers.length; i++) {
+            if (markers[i].value === name) { return true; }
+        }
+        return false;
+    }
+
+    function optionsOf(el) {
+        var d = parseInt(el.getAttribute('data-decimals'), 10);
+        if (!isFinite(d) || d < 0 || d > 8) { d = DEFAULT_DECIMALS; }
+        return { decimals: d, group: el.getAttribute('data-group') !== 'false' };
+    }
+
+    // Gizli alana yazılacak ham değer: işaretçi varsa invariant (nokta), yoksa tr (virgül).
+    function rawValueFor(el, num) {
+        var s = String(num);
+        return el.__apyaInvariant ? s : s.replace('.', ',');
+    }
+
     function syncHidden(el) {
         var hidden = el.__apyaHidden;
         if (!hidden) { return; }
         var num = parse(el.value);
-        var next = isFinite(num) ? String(num) : '';
+        var next = isFinite(num) ? rawValueFor(el, num) : '';
         if (hidden.value !== next) {
             hidden.value = next;
             hidden.dispatchEvent(new Event('change', { bubbles: true }));
@@ -90,10 +133,11 @@
 
     function onInput(e) {
         var el = e.target;
+        var opts = el.__apyaOpts;
         var before = el.value;
         var caret = el.selectionStart || 0;
         var digitsBefore = countDigits(before, caret);
-        var formatted = formatWhileTyping(before);
+        var formatted = formatWhileTyping(before, opts.decimals, opts.group);
         if (formatted !== before) {
             el.value = formatted;
             var pos = indexAfterNthDigit(formatted, digitsBefore);
@@ -105,10 +149,14 @@
     function upgrade(el) {
         if (!el || el.__apyaMoney) { return; }
         el.__apyaMoney = true;
+        el.__apyaOpts = optionsOf(el);
+
+        var name = el.name;
+        el.__apyaInvariant = hasInvariantMarker(el, name);
 
         var hidden = document.createElement('input');
         hidden.type = 'hidden';
-        if (el.name) { hidden.name = el.name; el.removeAttribute('name'); }
+        if (name) { hidden.name = name; el.removeAttribute('name'); }
         el.parentNode.insertBefore(hidden, el.nextSibling);
         el.__apyaHidden = hidden;
 
@@ -116,9 +164,13 @@
         el.setAttribute('inputmode', 'decimal');
         el.setAttribute('autocomplete', 'off');
 
-        var initNum = parseInitial(el.value);
-        if (isFinite(initNum) && String(el.value).trim() !== '') {
-            el.value = formatWhileTyping(numToTrString(initNum));
+        var initRaw = String(el.value).trim();
+        var initNum = parseInitial(initRaw);
+        if (isFinite(initNum) && initRaw !== '') {
+            // Sunucunun bastığı ondalık haneyi KORU: sayıya çevirip geri yazmak
+            // "0,00" alanını "0" yapar (ondalık alan decimal(18,2) olsa bile).
+            var trSrc = initRaw.indexOf(',') !== -1 ? initRaw : numToTrString(initNum);
+            el.value = formatWhileTyping(trSrc, el.__apyaOpts.decimals, el.__apyaOpts.group);
         }
         syncHidden(el);
 
@@ -130,11 +182,43 @@
         (root || document).querySelectorAll('input[data-money-input]').forEach(upgrade);
     }
 
-    window.apya.moneyInput = { upgrade: upgrade, scan: scan, parse: parse, parseInitial: parseInitial, format: formatWhileTyping };
+    // JS ile doldurulan/okunan alanlar için (name taşımayan, değeri API'ye giden
+    // hibe ekranları). Ham .val() maskeli metin döndürür — okurken getValue,
+    // yazarken setValue kullan; yoksa "1.234,56" API'ye olduğu gibi gider.
+    function setValue(el, value) {
+        if (!el) { return; }
+        var opts = el.__apyaOpts || { decimals: DEFAULT_DECIMALS, group: true };
+        var num = (value === null || value === undefined || value === '') ? NaN : Number(value);
+        el.value = isFinite(num) ? formatWhileTyping(numToTrString(num), opts.decimals, opts.group) : '';
+        syncHidden(el);
+    }
+
+    // Maskeli alanda tr çözümü, maskesiz alanda ham sayı. Boş/geçersiz -> null.
+    function getValue(el) {
+        if (!el) { return null; }
+        var s = String(el.value == null ? '' : el.value).trim();
+        if (s === '') { return null; }
+        var num = el.__apyaMoney ? parse(s) : Number(s);
+        return isFinite(num) ? num : null;
+    }
+
+    window.apya.moneyInput = {
+        upgrade: upgrade, scan: scan, parse: parse, parseInitial: parseInitial,
+        format: formatWhileTyping, setValue: setValue, getValue: getValue
+    };
 
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', function () { scan(document); });
     } else {
         scan(document);
     }
+
+    // 🔴 Tutar alanlarının ÇOĞU AJAX ile yüklenen ABP modallarında; yukarıdaki
+    // scan(document) onları göremez, çünkü sayfa açılırken DOM'da yoklar.
+    // Bootstrap açılışı bildirdiğinde modalın içini tararız.
+    // JS ile SONRADAN eklenen satırlar (fatura kalemi, bütçe sihirbazı satırı)
+    // bu olayı üretmez; oralarda çağıran kendisi scan(satır) demeli.
+    document.addEventListener('shown.bs.modal', function (e) {
+        if (e.target && e.target.querySelectorAll) { scan(e.target); }
+    });
 })();

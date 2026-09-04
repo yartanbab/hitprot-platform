@@ -111,7 +111,7 @@
                         <div class="row">
                             <div class="col-6 mb-3">
                                 <label class="form-label" for="GrantMaxAmount">Maksimum Destek Tutarı (₺)</label>
-                                <input type="number" step="0.01" class="form-control" id="GrantMaxAmount" />
+                                <input type="number" step="0.01" class="form-control" id="GrantMaxAmount" data-money-input="true" />
                             </div>
                             <div class="col-6 mb-3">
                                 <label class="form-label" for="GrantMinMatchScore">Minimum Uyum Puanı (%)</label>
@@ -186,7 +186,7 @@
                         <div class="row">
                             <div class="col-6 mb-1">
                                 <label class="form-label" for="CallBudget">Bütçe (₺)</label>
-                                <input type="number" step="0.01" class="form-control" id="CallBudget" />
+                                <input type="number" step="0.01" class="form-control" id="CallBudget" data-money-input="true" />
                             </div>
                             <div class="col-6 mb-1">
                                 <label class="form-label" for="CallReference">Referans No</label>
@@ -295,7 +295,7 @@ else
                     </div>
                     <div class="apya-field">
                         <label class="apya-field-label" for="ProfileRevenue"><span>@L["Grants:DataField:Revenue"]</span></label>
-                        <input type="number" min="0" step="0.01" class="form-control form-control-sm apya-numeric" id="ProfileRevenue" />
+                        <input type="number" min="0" step="0.01" class="form-control form-control-sm apya-numeric" id="ProfileRevenue" data-money-input="true" />
                     </div>
                     <div class="apya-field">
                         <label class="apya-field-label" for="ProfileTrl"><span>@L["Grants:DataField:Trl"]</span></label>

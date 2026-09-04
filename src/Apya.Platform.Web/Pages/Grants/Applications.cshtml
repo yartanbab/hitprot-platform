@@ -54,7 +54,7 @@
                             Onaylanan Tutar (₺, opsiyonel)
                             <apya-hint text="Boş bırakırsanız daha önce girilmiş tutar korunur, sıfırlanmaz. Yalnız değer yazdığınızda güncellenir." />
                         </label>
-                        <input type="number" step="0.01" class="form-control" id="StageApprovedAmount" />
+                        <input type="number" step="0.01" class="form-control" id="StageApprovedAmount" data-money-input="true" />
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -85,7 +85,7 @@
                         </div>
                         <div class="col-6 mb-3">
                             <label class="form-label" for="TrancheAmount">Tutar (₺)</label>
-                            <input type="number" step="0.01" class="form-control" id="TrancheAmount" required />
+                            <input type="number" step="0.01" class="form-control" id="TrancheAmount" data-money-input="true" required />
                         </div>
                     </div>
                     <div class="row">

@@ -18,11 +18,11 @@
             </abp-row>
             <abp-row>
                 <abp-column size-md="_6">
-                    <abp-input asp-for="Line.PlannedAmount" label="Sözleşme tutarı" />
+                    <abp-input asp-for="Line.PlannedAmount" label="Sözleşme tutarı" data-money-input="true" />
                 </abp-column>
                 <abp-column size-md="_6">
                     @* Boş bırakılırsa sunucu sözleşme tutarını kullanır (yeni kalemde ikisi aynıdır). *@
-                    <abp-input asp-for="Line.ApprovedAmount" label="Onaylanan tutar" />
+                    <abp-input asp-for="Line.ApprovedAmount" label="Onaylanan tutar" data-money-input="true" />
                 </abp-column>
             </abp-row>
             <abp-input asp-for="Line.TransferLimitPercent" label="Aktarım payı sınırı (%) — opsiyonel" />

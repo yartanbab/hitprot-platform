@@ -225,9 +225,9 @@
                             <span class="apya-field-impact" data-impact="5"></span>
                         </span>
                         <div class="apya-field-range">
-                            <input type="number" min="0" step="0.01" id="ParamMinRevenue" class="form-control form-control-sm apya-numeric" />
+                            <input type="number" min="0" step="0.01" id="ParamMinRevenue" data-money-input="true" class="form-control form-control-sm apya-numeric" />
                             <span class="apya-field-range-sep">—</span>
-                            <input type="number" min="0" step="0.01" id="ParamMaxRevenue" class="form-control form-control-sm apya-numeric"
+                            <input type="number" min="0" step="0.01" id="ParamMaxRevenue" data-money-input="true" class="form-control form-control-sm apya-numeric"
                                    placeholder="@L["Grants:Parameters:Unlimited"]" />
                         </div>
                     </div>
@@ -276,7 +276,7 @@
                     <div class="apya-param-grid apya-param-grid--4">
                         <div class="apya-field">
                             <label class="apya-field-label" for="ParamMaxAmount"><span>@L["Grants:Parameters:MaxAmount"]</span></label>
-                            <input type="number" min="0" step="0.01" id="ParamMaxAmount" class="form-control form-control-sm apya-numeric" />
+                            <input type="number" min="0" step="0.01" id="ParamMaxAmount" data-money-input="true" class="form-control form-control-sm apya-numeric" />
                             <div class="small text-muted">@L["Grants:Parameters:MaxAmountHint"]</div>
                         </div>
                         <div class="apya-field">
