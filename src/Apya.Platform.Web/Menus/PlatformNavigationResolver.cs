@@ -707,7 +707,9 @@ public class PlatformNavigationResolver : IScopedDependency
         // Alt öğe etiketi kategori adıyla aynıydı ("Raporlar & Analiz" iki kez); ayrı anahtar verildi.
         if (await _permission.IsGrantedAsync(PlatformPermissions.Reports.Default))
             reports.AddItem(new ApplicationMenuItem("Apya.Reports.Overview", l["Menu:Reports:Overview"], icon: "fa fa-gauge", url: "/Reports"));
-        if (await _permission.IsGrantedAsync(PlatformPermissions.Projects.Default))
+        // Sayfa bütçe özetinden beslenir; kapı sayfayla AYNI izin olmalı, yoksa
+        // menüdeki öğe tıklanınca 403 verir.
+        if (await _permission.IsGrantedAsync(PlatformPermissions.Projects.ViewBudget))
             reports.AddItem(new ApplicationMenuItem("Apya.Reports.ProjectBudget", l["Menu:ProjectBudget"], icon: "fa fa-chart-bar", url: "/Reports/ProjectBudget"));
         if (await _permission.IsGrantedAsync(PlatformPermissions.Customers.Default))
             reports.AddItem(new ApplicationMenuItem("Apya.Reports.CustomerStatement", l["Menu:CustomerStatement"], icon: "fa fa-file-lines", url: "/Reports/CustomerStatement"));

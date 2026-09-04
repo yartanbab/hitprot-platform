@@ -2609,7 +2609,8 @@ i.apya-priority-dot {
 
 /* Bootstrap .dropdown-menu üzerine biner: kendi dolgusunu sıfırlar, bölüm
    başlıklı panel düzenine geçer. */
-.apya-console-menu.dropdown-menu {
+.apya-console-menu.dropdown-menu,
+.apya-proj-money-menu {
     width: 262px;
     padding: 0;
     overflow: hidden;
@@ -2617,6 +2618,17 @@ i.apya-priority-dot {
     border-radius: var(--apya-radius-lg);
     background: var(--apya-surface-elevated);
     box-shadow: var(--apya-shadow-lg);
+}
+/* Proje listesindeki ⋯ menüsü: sayfa kökünde TEK örnek, konumu JS yazar.
+   Kartın içine konsaydı .apya-proj-card'ın overflow:hidden'ı kırpardı. */
+.apya-proj-money-menu {
+    position: fixed;
+    top: 0;
+    left: 0;
+    /* Yedek ŞART: --apya-z-dropdown yalnız React demetinin tokens.css'inde
+       tanımlı, Razor sayfalarında çözülmez (bu dosyadaki diğer üç kullanım
+       sessizce z-index:auto'ya düşüyor). 1000 = Bootstrap dropdown seviyesi. */
+    z-index: var(--apya-z-dropdown, 1000);
 }
 .apya-console-menu-head {
     padding: 8px 12px 6px;

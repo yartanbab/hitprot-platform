@@ -4,7 +4,6 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Apya.Platform.Projects;
 using Apya.Platform.Projects.Dtos;
-using Apya.Platform.ProjectFinance;
 using TaskDto = Apya.Platform.Tasks.TaskDto;
 using Microsoft.AspNetCore.Authorization;
 using Apya.Platform.Permissions;
@@ -47,12 +46,6 @@ public class ProjectDetailsModel : PlatformPageModel
     /// </summary>
     public Apya.Platform.ProjectBudgets.Dtos.ProjectBudgetOverviewDto? Budget { get; set; }
 
-    /// <summary>
-    /// Görev bazlı kırılımın kaynağı. Zaten çağrılan özet servisinin sonucu artık
-    /// atılmıyor; iki skaler yerine tamamı saklanıyor (ek sorgu yok).
-    /// </summary>
-    public ProjectFinanceSummaryDto? Finance { get; set; }
-
     public decimal BudgetSpent { get; set; }
     public int BudgetPercent { get; set; }
 
@@ -60,18 +53,15 @@ public class ProjectDetailsModel : PlatformPageModel
     public List<ProjectMemberDto> Members { get; set; } = new();
 
     private readonly IProjectAppService _projectAppService;
-    private readonly IProjectFinanceAppService _projectFinanceAppService;
     private readonly Apya.Platform.ProjectBudgets.IProjectBudgetAppService _projectBudgetAppService;
     private readonly IProjectMemberAppService _projectMemberAppService;
 
     public ProjectDetailsModel(
         IProjectAppService projectAppService,
-        IProjectFinanceAppService projectFinanceAppService,
         IProjectMemberAppService projectMemberAppService,
         Apya.Platform.ProjectBudgets.IProjectBudgetAppService projectBudgetAppService)
     {
         _projectAppService = projectAppService;
-        _projectFinanceAppService = projectFinanceAppService;
         _projectMemberAppService = projectMemberAppService;
         _projectBudgetAppService = projectBudgetAppService;
     }
@@ -98,17 +88,15 @@ public class ProjectDetailsModel : PlatformPageModel
         TimeHealthLabel = detail.TimeHealthLabel;
         TimeNotStarted = detail.TimeNotStarted;
 
-        // "Bütçe Tüketimi" widget'ı, Bütçe Durumu modalıyla AYNI kaynaktan beslensin
-        // (tek doğru kaynak = ProjectFinanceAppService). Önceki SpentBudget zaman
-        // loglarından (emek maliyeti) hesaplanıyordu → gerçek gider/kalanı yansıtmıyordu.
-        var finance = await _projectFinanceAppService.GetSummaryAsync(Id);
-        Finance = finance;
-        BudgetSpent = finance.TotalExpense;
-        BudgetPercent = finance.BudgetUsagePercent;
-
-        // Yetkisi olmayan kullanıcıda sessizce atlanır; sekme basılmaz.
+        // Yetkisi olmayan kullanıcıda sessizce atlanır; sekme ve bütçe çubuğu basılmaz.
         try { Budget = await _projectBudgetAppService.GetOverviewAsync(Id); }
         catch (Volo.Abp.Authorization.AbpAuthorizationException) { Budget = null; }
+
+        // Şeritteki "Bütçe" çubuğu, Bütçe Durumu modalı ve Finans çatısı AYNI
+        // hesaptan beslensin: onaylanan bütçe (kalem + revizyon), Project.TotalBudget
+        // değil. Çubuk zaten yüklü olan özeti kullanır, ek sorgu açmaz.
+        BudgetSpent = Budget?.SpentAmount ?? 0m;
+        BudgetPercent = Budget?.BudgetUsagePercent ?? 0;
 
         Members = await _projectMemberAppService.GetListByProjectAsync(Id);
     }

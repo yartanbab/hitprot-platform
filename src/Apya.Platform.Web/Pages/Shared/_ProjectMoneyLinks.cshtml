@@ -1,0 +1,43 @@
+@*
+    Bir projenin para/belge ekranlarına giden menü öğeleri — TEK kaynak.
+
+    Üç giriş noktası bunu basar: proje konsolundaki Bütçe çubuğu, konsolun ⋯
+    menüsü ve proje listesindeki ⋯ menüsü. Adresler burada durur; kopyalanınca
+    biri "kalemler", öteki "genel" sekmesine giden üç ayrı menü doğuyordu.
+
+    Liste tarafı bu partial'ı basmaz (satırlar JS ile çizilir) ama AYNI adresleri
+    kullanır — Index.js'teki moneyMenuHtml() ile birlikte değiştir.
+*@
+@using Apya.Platform.Web.Pages.Finance
+@using Apya.Platform.Web.Pages.Shared
+@model ProjectMoneyLinksModel
+
+@if (Model.IncludeStatusModal)
+{
+    <button type="button" class="apya-console-menu-item js-budget-status"
+            data-project-id="@Model.ProjectId">
+        <span class="apya-console-menu-icon"><i class="fa fa-gauge-high" aria-hidden="true"></i></span>
+        Bütçe durumu
+    </button>
+}
+
+<a href="/Finance?projectId=@Model.ProjectId&tab=@FinanceContext.TabBudgetLines"
+   class="apya-console-menu-item text-decoration-none">
+    <span class="apya-console-menu-icon"><i class="fa fa-list-ul" aria-hidden="true"></i></span>
+    Proje bütçesi
+</a>
+
+<a href="/Finance?projectId=@Model.ProjectId&tab=@FinanceContext.TabOverview"
+   class="apya-console-menu-item text-decoration-none">
+    <span class="apya-console-menu-icon"><i class="fa fa-coins" aria-hidden="true"></i></span>
+    Finans
+</a>
+
+@if (Model.CanViewDocuments)
+{
+    <a href="/Documents/Scope?projectId=@Model.ProjectId"
+       class="apya-console-menu-item text-decoration-none">
+        <span class="apya-console-menu-icon"><i class="fa fa-folder-open" aria-hidden="true"></i></span>
+        Belgeler
+    </a>
+}

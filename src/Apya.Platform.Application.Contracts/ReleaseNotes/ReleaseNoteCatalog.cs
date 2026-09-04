@@ -75,6 +75,23 @@ public static class ReleaseNoteCatalog
                 "gösterilmiyor, \"kur yok\" uyarısı çıkıyor."),
 
             new ReleaseNoteItem(ReleaseNoteCategory.Fix,
+                "Bütçe rakamı artık her ekranda aynı",
+                "Projenin bütçesi baktığınız ekrana göre değişebiliyordu: proje ekranındaki \"Bütçe " +
+                "Durumu\" penceresi ve Proje Bütçesi raporu projeye girdiğiniz toplam tutarı " +
+                "gösterirken, Finans ekranı bütçe kalemlerinin güncel toplamını gösteriyordu. Kalem " +
+                "tanımladığınız ya da bütçe revizyonu yaptığınız anda aynı proje için iki farklı " +
+                "rakam görüyordunuz. Artık hepsi tek hesaptan besleniyor: yürürlükteki onaylanan " +
+                "bütçe, harcanan, gelen para ve kalan tutar nereye bakarsanız bakın aynı. \"Bütçe " +
+                "Durumu\" penceresi de Finans ekranıyla aynı altı rakamı gösteriyor."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
+                "Projeden bütçe, finans ve belge ekranlarına tek tıkla geçiyorsunuz",
+                "Bir projenin parasal ekranlarına ulaşmak için farklı yerleri hatırlamanız " +
+                "gerekiyordu. Artık hem proje listesindeki her projenin yanındaki menüden hem de " +
+                "proje ekranındaki Bütçe kutucuğundan o projenin bütçe kalemlerine, Finans " +
+                "ekranına ve belgelerine doğrudan gidiyorsunuz."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Fix,
                 "Gider veya geliri düzenlediğinizde görev bağı artık silinmiyor",
                 "Bir göreve bağlı gider ya da gelir kaydını açıp herhangi bir alanını değiştirip " +
                 "kaydettiğinizde görev bağı sessizce siliniyordu; kayıt görevin Finans sekmesinden " +

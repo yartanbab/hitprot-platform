@@ -68,7 +68,7 @@ $(function () {
         var onlyFixable = $('#OnlyFixable').is(':checked');
         var shown = onlyFixable ? items.filter(function (r) { return r.isFixable; }) : items;
 
-        $('#CatalogRows').html(shown.map(row).join(''));
+        $('#CatalogRows').removeClass('apya-skel-rows').html(shown.map(row).join(''));
         $('#CatalogEmpty').toggleClass('d-none', shown.length > 0);
     }
 

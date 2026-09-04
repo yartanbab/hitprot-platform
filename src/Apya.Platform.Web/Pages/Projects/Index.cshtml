@@ -257,3 +257,39 @@
 @* Görev paneli (slide-over) — satır/karttan açılır, içeriği Index.js basar.
    Bootstrap modal DEĞİL: backdrop/ESC/dış-tık yönetimi panelin kendisinde. *@
 <div id="ProjectsDrawerRoot"></div>
+
+@* Proje ⋯ menüsü — TEK örnek, sayfa kökünde.
+   Kart içine basılamaz: .apya-proj-card `overflow:hidden` taşıyor, menü kırpılırdı.
+   Index.js açılışta bağlantıları o projenin id'siyle yazar ve position:fixed ile
+   düğmenin yanına yerleştirir. *@
+<div id="ProjectMoneyMenu" class="apya-console-menu apya-proj-money-menu" hidden role="menu">
+    <a class="apya-console-menu-item text-decoration-none" data-link="detail" href="#">
+        <span class="apya-console-menu-icon"><i class="fa fa-list-check" aria-hidden="true"></i></span>
+        Proje detayı
+    </a>
+    @if (canViewBudget)
+    {
+        <a class="apya-console-menu-item text-decoration-none" data-link="budget" href="#">
+            <span class="apya-console-menu-icon"><i class="fa fa-list-ul" aria-hidden="true"></i></span>
+            Proje bütçesi
+        </a>
+        <a class="apya-console-menu-item text-decoration-none" data-link="finance" href="#">
+            <span class="apya-console-menu-icon"><i class="fa fa-coins" aria-hidden="true"></i></span>
+            Finans
+        </a>
+    }
+    @if (await AuthorizationService.IsGrantedAsync(PlatformPermissions.Documents.Default))
+    {
+        <a class="apya-console-menu-item text-decoration-none" data-link="documents" href="#">
+            <span class="apya-console-menu-icon"><i class="fa fa-folder-open" aria-hidden="true"></i></span>
+            Belgeler
+        </a>
+    }
+    @if (canEdit)
+    {
+        <a class="apya-console-menu-item text-decoration-none" data-link="edit" href="#">
+            <span class="apya-console-menu-icon"><i class="fa fa-pen" aria-hidden="true"></i></span>
+            Projeyi düzenle
+        </a>
+    }
+</div>

@@ -1,7 +1,7 @@
 using System;
 using System.Linq;
 using System.Threading.Tasks;
-using Apya.Platform.ProjectFinance;
+using Apya.Platform.ProjectBudgets;
 using Apya.Platform.Projects;
 using Shouldly;
 using Volo.Abp.Domain.Repositories;
@@ -28,7 +28,7 @@ public class HostTenantProjectAccess_Tests : PlatformEntityFrameworkCoreTestBase
     private static readonly Guid OtherTenantId = Guid.Parse("11111111-2222-3333-4444-555555555555");
 
     private readonly IProjectAppService _projectAppService;
-    private readonly IProjectFinanceAppService _financeAppService;
+    private readonly IProjectBudgetAppService _budgetAppService;
     private readonly IProjectMemberAppService _memberAppService;
     private readonly IRepository<Project, Guid> _projectRepository;
     private readonly IRepository<ProjectMember, Guid> _memberRepository;
@@ -37,7 +37,7 @@ public class HostTenantProjectAccess_Tests : PlatformEntityFrameworkCoreTestBase
     public HostTenantProjectAccess_Tests()
     {
         _projectAppService = GetRequiredService<IProjectAppService>();
-        _financeAppService = GetRequiredService<IProjectFinanceAppService>();
+        _budgetAppService = GetRequiredService<IProjectBudgetAppService>();
         _memberAppService = GetRequiredService<IProjectMemberAppService>();
         _projectRepository = GetRequiredService<IRepository<Project, Guid>>();
         _memberRepository = GetRequiredService<IRepository<ProjectMember, Guid>>();
@@ -76,10 +76,10 @@ public class HostTenantProjectAccess_Tests : PlatformEntityFrameworkCoreTestBase
         // sonra GetSummaryAsync çağırıyor, o da filtreyi kapatmıyordu.
         var project = await CreateTenantProjectAsync("HT-2");
 
-        var summary = await _financeAppService.GetSummaryAsync(project.Id);
+        var summary = await _budgetAppService.GetOverviewAsync(project.Id);
 
         summary.ProjectId.ShouldBe(project.Id);
-        summary.Budget.ShouldBe(5000);
+        summary.ApprovedBudget.ShouldBe(5000);
     }
 
     [Fact]

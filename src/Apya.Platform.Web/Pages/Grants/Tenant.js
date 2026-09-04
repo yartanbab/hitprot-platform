@@ -125,6 +125,10 @@ $(function () {
     });
 
     // ---------- Takvim şeridi (90 gün) ----------
+    // Konum son tarihle orantılıdır; ancak son tarihi aynı ya da birbirine yakın
+    // çağrılar aynı yüzdeye düşüp etiketleri üst üste bindiriyordu. Orantılı
+    // konum hesaplandıktan sonra soldan sağa tek geçişte etiket genişliği kadar
+    // asgari aralık zorlanıyor: sıra ve yaklaşık orantı korunuyor, çakışma bitiyor.
     function paintTimeline() {
         var horizon = 90;
         var points = feed
@@ -135,18 +139,37 @@ $(function () {
         var $t = $('#Timeline').empty();
         $('#TimelineEmpty').toggleClass('d-none', points.length > 0);
         $t.toggleClass('d-none', points.length === 0);
+        if (points.length === 0) { return; }
+
+        // Etiket kutusu en fazla 132px; şerit dar olduğunda pay eşit bölünür, bu
+        // sayede son nokta da sağ kenarın içinde kalır (kanıt: half + (n-1)*slot
+        // <= width - half, çünkü slot <= width / n).
+        var width = $t.width() || 640;
+        var slot = Math.min(132, width / points.length);
+        var half = slot / 2;
+        var cursor = half;
 
         points.forEach(function (r) {
+            var x = Math.max(cursor, Math.min(width - half, (r.daysRemaining / horizon) * width));
+            cursor = x + slot;
             // <20 gün kırmızı · 20-40 sarı · 40+ accent.
             var tone = r.daysRemaining < 20 ? 'is-urgent' : r.daysRemaining <= 40 ? 'is-soon' : '';
-            var left = Math.min(97, Math.max(3, (r.daysRemaining / horizon) * 100));
             $t.append(
-                '<a class="apya-timeline-point" style="left:' + left + '%" href="/Grants/Detail?id=' + r.grantCallId + '">' +
+                '<a class="apya-timeline-point" style="left:' + ((x / width) * 100).toFixed(2) + '%;width:' +
+                Math.floor(slot) + 'px" href="/Grants/Detail?id=' + r.grantCallId + '">' +
                 '<span class="apya-timeline-label">' + esc(r.grantName) + '</span>' +
                 '<span class="apya-timeline-date">' + esc(fmtDate(r.deadline)) + '</span>' +
                 '<span class="apya-timeline-dot ' + tone + '"></span></a>');
         });
     }
+
+    // Şerit genişliği değişince (pencere, kenar çubuğu) asgari aralık yeniden
+    // hesaplanmalı — yoksa daralan şeritte çakışma geri gelir.
+    var timelineResizeTimer;
+    $(window).on('resize', function () {
+        clearTimeout(timelineResizeTimer);
+        timelineResizeTimer = setTimeout(paintTimeline, 150);
+    });
 
     // ---------- Kart akışı ----------
     function ruleText(rule) { return l('Grants:Rule:' + ruleKeys[rule]); }
@@ -215,7 +238,10 @@ $(function () {
             ? feed.filter(function (r) { return r.isBookmarked; })
             : feed.filter(function (r) { return r.isRecommended; });
 
-        $('#FeedGrid').html(items.map(feedCard).join(''));
+        // İskelet `:empty` kuralıyla çiziliyor; sonuç boş gelince kap boş kalır ve
+        // iskelet sonsuza dek parlamaya devam ederdi (boş durum metniyle yan yana).
+        // Veri geldiği anda sınıfı düşür.
+        $('#FeedGrid').removeClass('apya-skel-cards').html(items.map(feedCard).join(''));
         $('#FeedEmpty').toggleClass('d-none', items.length > 0 || activeTab === 'bookmarked');
         $('#BookmarkEmpty').toggleClass('d-none', items.length > 0 || activeTab !== 'bookmarked');
 

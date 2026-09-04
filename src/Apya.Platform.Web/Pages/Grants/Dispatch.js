@@ -128,7 +128,7 @@ $(function () {
     });
 
     function paintCandidates() {
-        $('#CandidateRows').html(candidates.map(candidateRow).join(''));
+        $('#CandidateRows').removeClass('apya-skel-rows').html(candidates.map(candidateRow).join(''));
         $('#CandidateEmpty').toggleClass('d-none', candidates.length > 0);
 
         var count = candidates.filter(function (c) { return selected[c.tenantId]; }).length;

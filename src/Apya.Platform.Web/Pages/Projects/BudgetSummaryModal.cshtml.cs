@@ -2,29 +2,30 @@ using System;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Volo.Abp.AspNetCore.Mvc.UI.RazorPages;
-using Apya.Platform.ProjectFinance;
+using Apya.Platform.ProjectBudgets;
+using Apya.Platform.ProjectBudgets.Dtos;
 using Microsoft.AspNetCore.Authorization;
 using Apya.Platform.Permissions;
 
 namespace Apya.Platform.Web.Pages.Projects;
 
-// Beslendiği ProjectFinanceAppService ile aynı izin — sayfa seviyesinde
+// Beslendiği ProjectBudgetAppService ile aynı izin — sayfa seviyesinde
 // yetki olmayınca anonim istek 302 yerine 500 dönüyordu.
-[Authorize(PlatformPermissions.Projects.Default)]
+[Authorize(PlatformPermissions.Projects.ViewBudget)]
 public class BudgetSummaryModalModel : AbpPageModel
 {
-    private readonly IProjectFinanceAppService _projectFinanceAppService;
+    private readonly IProjectBudgetAppService _projectBudgetAppService;
 
-    public ProjectFinanceSummaryDto Summary { get; set; } = new();
+    public ProjectBudgetOverviewDto Budget { get; set; } = new();
 
-    public BudgetSummaryModalModel(IProjectFinanceAppService projectFinanceAppService)
+    public BudgetSummaryModalModel(IProjectBudgetAppService projectBudgetAppService)
     {
-        _projectFinanceAppService = projectFinanceAppService;
+        _projectBudgetAppService = projectBudgetAppService;
     }
 
     public virtual async Task<IActionResult> OnGetAsync(Guid projectId)
     {
-        Summary = await _projectFinanceAppService.GetSummaryAsync(projectId);
+        Budget = await _projectBudgetAppService.GetOverviewAsync(projectId);
         return Page();
     }
 }

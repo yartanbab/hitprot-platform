@@ -71,7 +71,7 @@ $(function () {
 
     function paintChain() {
         var chain = model.chain || [];
-        $('#Chain').html(chain.map(chainItem).join(''));
+        $('#Chain').removeClass('apya-skel-rows').html(chain.map(chainItem).join(''));
         $('#ChainEmpty').toggleClass('d-none', chain.length > 0);
     }
 
