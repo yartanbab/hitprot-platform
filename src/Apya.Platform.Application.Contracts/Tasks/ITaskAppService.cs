@@ -24,6 +24,19 @@ namespace Apya.Platform.Tasks
         /// kullanır; RootOnly yok sayılır (alt görevler de sayılır).</summary>
         Task<TaskListSummaryDto> GetSummaryAsync(GetTasksInput input);
 
+        /// <summary>Konsolun "Dosya galerisi" görünümü: süzülmüş görevlerin GÖRSEL
+        /// eklerini tek turda döner. Liste DTO'su yalnız ek SAYISINI taşıdığı için
+        /// galeri onunla beslenemez; görev başına ayrı istek de N+1 olurdu.
+        /// RootOnly yok sayılır — alt görevlere yüklenen görseller de galeride görünür.</summary>
+        Task<List<TaskGalleryItemDto>> GetGalleryAsync(GetTasksInput input);
+
+        /// <summary>Konsolun Takvim ve Gösterge Paneli görünümleri için YALIN görev
+        /// listesi: tek sorgu, tek projeksiyon, zenginleştirme YOK. GetListAsync'in
+        /// altı ek turu (etiket, favori, alt görev sayacı, proje adı, kart meta…)
+        /// bu görünümlerde kullanılmıyor ve 1000 satırda saniyelere mal oluyordu.
+        /// RootOnly yok sayılır — alt görevlerin tarihleri de takvime düşmeli.</summary>
+        Task<List<TaskPointDto>> GetPointsAsync(GetTasksInput input);
+
         /// <summary>Select2 tag girişinin başlangıç seçenek listesi için tenant'ın tüm etiketleri.</summary>
         Task<List<TagDto>> GetAllTagsAsync();
 
@@ -74,6 +87,27 @@ namespace Apya.Platform.Tasks
         Task<List<string>> GetFeatureAssignmentsAsync(Guid taskId);
         Task AddFeatureAsync(Guid taskId, string featureCode);
         Task RemoveFeatureAsync(Guid taskId, string featureCode);
+
+        // --- Belgeler ---
+        // Göreve bağlı zengin metin belgeleri (TaskDocument). Dosya ekinden ayrıdır:
+        // ek yüklenmiş dosyayı saklar, belge uygulama içinde YAZILAN metni.
+        // Yetki kapısı görevin kendisidir — ayrı izin tanımlanmadı.
+
+        /// <summary>Görevin belgeleri. Content BOŞ döner (liste uzun gövdelerle
+        /// şişmesin); tam gövde için GetDocumentAsync kullanılır.</summary>
+        Task<List<TaskDocumentDto>> GetDocumentsAsync(Guid taskId);
+
+        /// <summary>Tek belgenin tam gövdesiyle birlikte hâli.</summary>
+        Task<TaskDocumentDto> GetDocumentAsync(Guid documentId);
+
+        Task<TaskDocumentDto> CreateDocumentAsync(Guid taskId, string title);
+
+        /// <summary>Belgeyi kaydeder. Girdi DÜZ PARAMETRE DEĞİL, DTO'dur: ABP'nin
+        /// otomatik API'si basit tipleri query string'e koyar ve kilobaytlık bir
+        /// gövde URL sınırını aşardı (bkz. UpdateTaskDocumentDto).</summary>
+        Task<TaskDocumentDto> UpdateDocumentAsync(Guid documentId, UpdateTaskDocumentDto input);
+
+        Task DeleteDocumentAsync(Guid documentId);
 
         // Kontrol Listesi (Faz 4)
         Task<List<TaskChecklistItemDto>> GetChecklistItemsAsync(Guid taskId);

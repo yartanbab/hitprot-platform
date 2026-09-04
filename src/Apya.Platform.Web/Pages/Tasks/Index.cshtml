@@ -196,6 +196,21 @@
                 title="Başlangıç-bitiş tarihlerinden türeyen zaman çizelgesi">
             <i class="fa fa-clock" aria-hidden="true"></i>@L["Tasks:View:Gantt"]
         </button>
+        <button type="button" class="apya-console-tab" id="btn-view-calendar"
+                role="tab" aria-selected="false" aria-controls="view-calendar"
+                title="Başlangıç ve termin tarihleri aylık takvimde">
+            <i class="fa fa-calendar-days" aria-hidden="true"></i>@L["Tasks:View:Calendar"]
+        </button>
+        <button type="button" class="apya-console-tab" id="btn-view-dashboard"
+                role="tab" aria-selected="false" aria-controls="view-dashboard"
+                title="Seçili süzgecin durum, öncelik ve kişi dağılımı">
+            <i class="fa fa-chart-pie" aria-hidden="true"></i>@L["Tasks:View:Dashboard"]
+        </button>
+        <button type="button" class="apya-console-tab" id="btn-view-gallery"
+                role="tab" aria-selected="false" aria-controls="view-gallery"
+                title="Süzülmüş görevlere eklenmiş görseller">
+            <i class="fa fa-images" aria-hidden="true"></i>@L["Tasks:View:Gallery"]
+        </button>
         <span class="apya-console-count apya-numeric" id="console-task-count"></span>
     </div>
 
@@ -348,6 +363,14 @@
              frappe-gantt'ın yerini aldı. İçerik tamamen JS ile basılır. *@
         <div id="view-gantt" class="view-panel d-none" role="tabpanel" aria-labelledby="btn-view-gantt"></div>
 
+        @* --- TAKVİM / GÖSTERGE PANELİ / DOSYA GALERİSİ ---
+             Üçü de Gantt ile aynı sözleşmeyi kullanan paylaşılan bileşenler
+             (/js/apya-task-calendar.js, -dashboard.js, -gallery.js); kapsamlarını
+             konsolun filtresi belirler. İçerik tamamen JS ile basılır. *@
+        <div id="view-calendar" class="view-panel d-none" role="tabpanel" aria-labelledby="btn-view-calendar"></div>
+        <div id="view-dashboard" class="view-panel d-none" role="tabpanel" aria-labelledby="btn-view-dashboard"></div>
+        <div id="view-gallery" class="view-panel d-none" role="tabpanel" aria-labelledby="btn-view-gallery"></div>
+
     </div>
 </div>
 
@@ -407,6 +430,13 @@
     <abp-script src="/js/task-drawer.js" />
     <abp-script src="/js/apya-kanban.js" />
     <abp-script src="/js/apya-gantt.js" />
+    @* Gösterge paneli grafikleri — Reports/Consent/Analytics ile aynı ikili:
+       vendor chart.js + apyaChart tema yardımcısı (ham hex yazılmasın diye). *@
+    <script src="~/js/chart.umd.min.js"></script>
+    <abp-script src="/js/apya-chart-theme.js" />
+    <abp-script src="/js/apya-task-calendar.js" />
+    <abp-script src="/js/apya-task-dashboard.js" />
+    <abp-script src="/js/apya-task-gallery.js" />
     <abp-script src="/Pages/Tasks/index.js" />
 }
 

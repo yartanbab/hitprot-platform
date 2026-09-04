@@ -1,12 +1,17 @@
 import { isGranted } from './hooks/useTaskDetail';
 import { SubtasksTab } from './components/SubtasksTab';
 import { FilesTab } from './components/FilesTab';
-import { ChecklistTab } from './components/ChecklistTab';
+import { ChecklistTabV3 } from './v3/features/ChecklistTabV3';
 import { CommentsTab } from './components/CommentsTab';
 import { SharingTab } from './components/SharingTab';
 import { ActivityTab } from './components/ActivityTab';
-import { HistoryTab } from './components/HistoryTab';
+import { HistoryTabV3 } from './v3/features/HistoryTabV3';
 import { FinanceTab } from './components/FinanceTab';
+import { GalleryTabV3 } from './v3/features/GalleryTabV3';
+import { SubtaskTableTabV3 } from './v3/features/SubtaskTableTabV3';
+import { SubtaskBoardTabV3 } from './v3/features/SubtaskBoardTabV3';
+import { TaskCalendarTabV3 } from './v3/features/TaskCalendarTabV3';
+import { DocumentsTabV3 } from './v3/features/DocumentsTabV3';
 import { GanttTabV3 } from './v3/features/GanttTabV3';
 import { DependenciesTabV3 } from './v3/features/DependenciesAndFinanceTabV3';
 // Not: dosyada artık yalnız TimeTrackingTabV3 var — diğer "OtherFeatures*"
@@ -15,7 +20,8 @@ import { DependenciesTabV3 } from './v3/features/DependenciesAndFinanceTabV3';
 import { TimeTrackingTabV3 } from './v3/features/OtherFeaturesTabV3';
 
 /**
- * Görev detayının 17 özelliklik sekme/özellik kayıt defteri (V3).
+ * Görev detayının sekme/özellik kayıt defteri (V3). Sayı sık değiştiği için
+ * burada yazılmaz — tek doğruluk kaynağı dizinin kendisi.
  */
 export const TASK_FEATURE_REGISTRY = [
     {
@@ -34,9 +40,26 @@ export const TASK_FEATURE_REGISTRY = [
         implemented: true, component: FilesTab,
     },
     {
+        // Alt görevlerin tablo/kanban görünümleri ve tarih takvimi — üçü de
+        // görevin kendi `subTasks` koleksiyonundan beslenir, ek uç YOK.
+        code: 'subtask-table', title: 'Tablo', icon: 'fa-table',
+        category: 'gorev', isCore: false, order: 6, permission: null,
+        implemented: true, component: SubtaskTableTabV3,
+    },
+    {
+        code: 'subtask-board', title: 'Kanban', icon: 'fa-table-columns',
+        category: 'gorev', isCore: false, order: 7, permission: null,
+        implemented: true, component: SubtaskBoardTabV3,
+    },
+    {
+        code: 'calendar', title: 'Takvim', icon: 'fa-calendar-days',
+        category: 'gorev', isCore: false, order: 8, permission: null,
+        implemented: true, component: TaskCalendarTabV3,
+    },
+    {
         code: 'checklist', title: 'Kontrol Listesi', icon: 'fa-square-check',
         category: 'gorev', isCore: false, order: 10, permission: null,
-        implemented: true, component: ChecklistTab,
+        implemented: true, component: ChecklistTabV3,
     },
     {
         code: 'gantt', title: 'Gantt', icon: 'fa-bars-staggered',
@@ -56,17 +79,19 @@ export const TASK_FEATURE_REGISTRY = [
     {
         code: 'history', title: 'Geçmiş', icon: 'fa-clock-rotate-left',
         category: 'gecmis', isCore: false, order: 14, permission: null,
-        implemented: true, component: HistoryTab,
+        implemented: true, component: HistoryTabV3,
     },
     {
         code: 'activity', title: 'Aktiviteler', icon: 'fa-timeline',
         category: 'gecmis', isCore: false, order: 15, permission: null,
         implemented: true, component: ActivityTab,
+        hidden: true, // GİZLİ (2026-09-03) — bkz. dosya sonundaki not
     },
     {
         code: 'comments', title: 'Yorumlar', icon: 'fa-comments',
         category: 'iletisim', isCore: false, order: 20, permission: null,
         implemented: true, component: CommentsTab,
+        hidden: true, // GİZLİ (2026-09-03) — bkz. dosya sonundaki not
     },
     {
         // Ekip dışına açılan süreli linkler. permission dolu olduğu için "+" picker'da
@@ -81,6 +106,7 @@ export const TASK_FEATURE_REGISTRY = [
         code: 'risks', title: 'Riskler', icon: 'fa-triangle-exclamation',
         category: 'gorev', isCore: false, order: 21, permission: null,
         implemented: true, component: null,
+        hidden: true, // GİZLİ (2026-09-03) — bkz. dosya sonundaki not
     },
     {
         // component yok: onay akışı backend'i gelene kadar "yapım aşamasında" boş
@@ -88,6 +114,7 @@ export const TASK_FEATURE_REGISTRY = [
         code: 'approvals', title: 'Onaylar', icon: 'fa-stamp',
         category: 'gorev', isCore: false, order: 22, permission: null,
         implemented: true, component: null,
+        hidden: true, // GİZLİ (2026-09-03) — bkz. dosya sonundaki not
     },
     {
         code: 'time-tracking', title: 'Zaman Takibi', icon: 'fa-stopwatch',
@@ -98,33 +125,45 @@ export const TASK_FEATURE_REGISTRY = [
         code: 'dashboard', title: 'Gösterge Paneli', icon: 'fa-chart-pie',
         category: 'gorev', isCore: false, order: 24, permission: null,
         implemented: true, component: null,
+        hidden: true, // GİZLİ (2026-09-03) — bkz. dosya sonundaki not
     },
     {
         code: 'ai', title: 'Yapay Zeka', icon: 'fa-sparkles',
         category: 'ileri', isCore: false, order: 30, permission: null,
         // component yok: LLM entegrasyonu gelene kadar boş durum (UNBUILT_CODES).
         implemented: true, component: null,
+        hidden: true, // GİZLİ (2026-09-03) — bkz. dosya sonundaki not
     },
     {
         code: 'custom-fields', title: 'Özel Alanlar', icon: 'fa-square-plus',
         category: 'ileri', isCore: false, order: 31, permission: null,
         implemented: true, component: null,
+        hidden: true, // GİZLİ (2026-09-03) — bkz. dosya sonundaki not
     },
     {
         code: 'automations', title: 'Otomasyonlar', icon: 'fa-wand-magic-sparkles',
         category: 'ileri', isCore: false, order: 32, permission: null,
         // component yok: kural motoru gelene kadar boş durum (UNBUILT_CODES).
         implemented: true, component: null,
+        hidden: true, // GİZLİ (2026-09-03) — bkz. dosya sonundaki not
     },
     {
         code: 'emails', title: 'E-postalar', icon: 'fa-envelope',
         category: 'iletisim', isCore: false, order: 33, permission: null,
         implemented: true, component: null,
+        hidden: true, // GİZLİ (2026-09-03) — bkz. dosya sonundaki not
+    },
+    {
+        // Göreve bağlı zengin metin belgeleri (TaskDocument tablosu). Dosya
+        // ekinden ayrıdır: ek yüklenen dosyayı, belge yazılan metni saklar.
+        code: 'documents', title: 'Belge', icon: 'fa-file-lines',
+        category: 'gorev', isCore: false, order: 9, permission: null,
+        implemented: true, component: DocumentsTabV3,
     },
     {
         code: 'gallery', title: 'Dosya Galerisi', icon: 'fa-image',
         category: 'finans', isCore: false, order: 34, permission: null,
-        implemented: true, component: null,
+        implemented: true, component: GalleryTabV3,
     },
 ];
 
@@ -133,14 +172,31 @@ export const TASK_FEATURE_REGISTRY = [
 export function getVisibleTabs(assignedCodes = []) {
     const assigned = new Set(assignedCodes);
     return TASK_FEATURE_REGISTRY
+        .filter((f) => !f.hidden)
         .filter((f) => f.implemented && (f.isCore || assigned.has(f.code)))
         .sort((a, b) => a.order - b.order);
 }
+
+/**
+ * GİZLİ ÖZELLİKLER (2026-09-03) — `hidden: true` işaretli kayıtlar hem "+"
+ * kataloğundan hem sekme çubuğundan düşer; göreve daha önce atanmış olsalar bile
+ * render EDİLMEZLER (atama satırı DB'de durmaya devam eder, veri kaybı yok).
+ *
+ * Gerekçe: arkalarında DB'ye yazan bir akış yoktu (Riskler, Yapay Zeka,
+ * Otomasyonlar, Özel Alanlar, E-postalar, Onaylar, Gösterge Paneli) ya da
+ * içerikleri başka bir sekmede zaten sunuluyordu (Yorumlar → Genel sekmesi).
+ * Aktiviteler'in çalışan bir bileşeni VAR; ürün kararıyla şimdilik kapatıldı,
+ * kodu yerinde duruyor.
+ *
+ * Geri açmak: ilgili kayıttan `hidden` satırını sil (tek yer) ve
+ * `v3/featureCatalogV3.test.js` içindeki HIDDEN_CODES listesini güncelle.
+ */
 
 /** "+" picker'da listelenecek non-core entry'ler. */
 export function getPickerEntries(assignedCodes = []) {
     const assigned = new Set(assignedCodes);
     return TASK_FEATURE_REGISTRY
+        .filter((f) => !f.hidden)
         .filter((f) => !f.isCore)
         .filter((f) => !f.permission || isGranted(f.permission))
         .map((f) => ({ ...f, isAssigned: assigned.has(f.code) }))

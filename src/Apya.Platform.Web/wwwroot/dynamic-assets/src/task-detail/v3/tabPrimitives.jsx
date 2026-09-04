@@ -111,6 +111,9 @@ const FILE_KINDS = {
     other: { icon: 'fa-file',       bg: 'bg-neutral-subtle',  fg: 'text-text-secondary' },
 };
 
+/** Dosya bir görsel mi — galeri sekmesi ekleri bununla süzer. */
+export const isImageFile = (fileName = '') => fileKindOf(fileName) === FILE_KINDS.image;
+
 export function fileKindOf(fileName = '') {
     const ext = fileName.split('.').pop()?.toLowerCase() ?? '';
     if (ext === 'pdf') return FILE_KINDS.pdf;
