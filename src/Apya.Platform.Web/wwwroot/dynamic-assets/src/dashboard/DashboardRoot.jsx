@@ -147,6 +147,16 @@ function DashboardRoot() {
         setDraftCards(source.filter((c) => c.cardKey !== cardKey));
     }, [draftCards, cards]);
 
+    /* Mobilde başlık şeridi hiç render edilmiyor (bkz. PageHeader); görünüm ve
+       zaman aralığı seçicileri özet kartlarının hemen ALTINA, yan yana iki
+       kolona giriyor (yerleştirme NativeStack'te). */
+    const mobileFilters = (
+        <div className="hidden mobile:grid grid-cols-2 gap-2" style={{ gridColumn: '1 / -1' }}>
+            <ViewSelect value={viewKey} onChange={handleViewChange} className="w-full" />
+            <RangeSelect value={range} onChange={setRange} className="w-full" />
+        </div>
+    );
+
     return (
         <div className="min-h-screen bg-surface-app-bg">
             <PageHeader
@@ -225,15 +235,14 @@ function DashboardRoot() {
                     })}
                 </Responsive>
                 ) : (
-                    <NativeStack tier={tier} cards={cards} filter={filter} strip={strip} />
+                    <NativeStack
+                        tier={tier}
+                        cards={cards}
+                        filter={filter}
+                        strip={strip}
+                        filters={mobileFilters}
+                    />
                 ))}
-                </div>
-
-                {/* Mobilde başlık şeridi hiç render edilmiyor (bkz. PageHeader);
-                    filtreler kartların ALTINA, yan yana iki kolona alınır. */}
-                <div className="hidden mobile:grid grid-cols-2 gap-2 mt-3">
-                    <ViewSelect value={viewKey} onChange={handleViewChange} className="w-full" />
-                    <RangeSelect value={range} onChange={setRange} className="w-full" />
                 </div>
 
                 {/* Izgara ile alt şerit arası da kart↔kart boşluğuyla aynı (12px). */}
@@ -267,26 +276,34 @@ function DashboardRoot() {
  *   - tablet (iki kolon): kartlar ikişerli akar; şerit kartları (band) tam satır kaplar.
  * `strip` şablonu DashboardRoot'ta kabın genişliğinden türetilir; burada yalnız aktarılır.
  */
-function NativeStack({ tier, cards, filter, strip }) {
+function NativeStack({ tier, cards, filter, strip, filters }) {
     const columns = tier === 'tablet' ? 2 : 1;
+    /* `filters` özet şeridinin HEMEN ALTINA girer — sayfa dibinde kalırsa
+       görünüm/aralık değiştirmek için tüm kartları kaydırmak gerekiyordu.
+       Şerit bu görünümde yoksa en başa alınır. */
+    const stripIndex = cards.findIndex((card) => card.cardKey === 'summary-strip');
     return (
         <div
             className={cn('grid items-stretch', tier === 'tablet' ? 'gap-3.5' : 'gap-3')}
             style={{ gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` }}
         >
-            {cards.map((card) => {
+            {stripIndex < 0 && filters}
+            {cards.map((card, index) => {
                 const meta = CARD_REGISTRY[card.cardKey];
                 if (!meta) return null;
                 const Card = meta.component;
                 const spanFull = columns > 1 && meta.band;
                 return (
-                    <div key={card.cardKey} style={spanFull ? { gridColumn: '1 / -1' } : undefined}>
-                        <Card
-                            filter={filter}
-                            editMode={false}
-                            {...(card.cardKey === 'summary-strip' ? { template: strip.template, compact: strip.compact } : null)}
-                        />
-                    </div>
+                    <React.Fragment key={card.cardKey}>
+                        <div style={spanFull ? { gridColumn: '1 / -1' } : undefined}>
+                            <Card
+                                filter={filter}
+                                editMode={false}
+                                {...(card.cardKey === 'summary-strip' ? { template: strip.template, compact: strip.compact } : null)}
+                            />
+                        </div>
+                        {index === stripIndex && filters}
+                    </React.Fragment>
                 );
             })}
         </div>
