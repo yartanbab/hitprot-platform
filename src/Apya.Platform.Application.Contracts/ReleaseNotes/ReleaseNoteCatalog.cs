@@ -183,6 +183,14 @@ public static class ReleaseNoteCatalog
                 "satırları gösteriyor, toplam satırlarla tutuyor. Değerleme sonucunda hangi hesabın ne " +
                 "kadar fark ürettiğini yeniden görebiliyorsunuz."),
 
+            new ReleaseNoteItem(ReleaseNoteCategory.Fix,
+                "Kur, girdiğiniz hane sayısıyla görünüyor",
+                "Kurlar altı ondalık haneye kadar saklanıyor ama kur listesinde, kur köprüsünde ve " +
+                "değerleme detayında dört haneye yuvarlanarak gösteriliyordu: 34,215678 olarak " +
+                "girdiğiniz kur ekranda 34,2157 çıkıyor, kaydınızı olduğu gibi bulamıyordunuz. " +
+                "Kayıt her zaman doğruydu, kırpan yalnızca gösterimdi. Artık kur girdiğiniz hâliyle " +
+                "görünüyor; gereksiz sıfır da eklenmiyor, 34,5 kuru 34,5000 diye yazılmıyor."),
+
             // ── Hibe: çağrılar ve uygunluk ────────────────────────────────────
             new ReleaseNoteItem(ReleaseNoteCategory.Feature,
                 "Açık hibe çağrılarının tamamını görüyorsunuz",
@@ -386,7 +394,16 @@ public static class ReleaseNoteCatalog
                 "olduğu hâlde \"kaydedilmemiş\" izlenimi veriyordu. Ayrıca alt görev panelinden \"tam " +
                 "ekran aç\" ya da \"görevi çoğalt\" ile başka göreve geçildiğinde önceki görevin metni " +
                 "ekranda kalıyor, üzerine yazılıp kaydedilirse yeni görevin açıklamasını eziyordu. İkisi " +
-                "de düzeltildi; açıklama her açılışta kayıtlı hâliyle geliyor.")
+                "de düzeltildi; açıklama her açılışta kayıtlı hâliyle geliyor."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
+                "Tutar yazarken binlik ve ondalık ayracı kendiliğinden çıkıyor",
+                "Gider, gelir, kasa hareketi, fatura, bütçe kalemi, tahsilat, fonlama dilimi ve görev " +
+                "bütçesi gibi tutar alanlarında ayraçları elle koymanız gerekmiyor: 1234567 " +
+                "yazdığınızda alan yazarken 1.234.567 hâline geliyor, ondalık için virgül " +
+                "kullanıyorsunuz. Uzun tutarlarda basamak saymak ya da fazladan yazılmış bir sıfırı " +
+                "gözden kaçırmak yok. Kur alanları altı, oran ve miktar alanları iki ondalık hane " +
+                "kabul ediyor.")
         ),
 
         new ReleaseNote(
