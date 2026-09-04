@@ -84,8 +84,10 @@ public class PackageCeilingStore : ITransientDependency
     /// <summary>
     /// Tenant'ın paket kodu. Profil kaydı yoksa <see cref="TenantProfile"/> varsayılanı
     /// (<see cref="PackageCode.Basic"/>) geçerlidir — profilsiz tenant "sınırsız" sayılmaz.
+    /// <para>Public: sürüm notu yayın kapısı da paketi burada önbelleklenmiş hâliyle okur;
+    /// ikinci bir cache kurmak yerine bu tek kaynak paylaşılır.</para>
     /// </summary>
-    private async Task<PackageCode> GetPackageCodeAsync(Guid tenantId)
+    public async Task<PackageCode> GetPackageCodeAsync(Guid tenantId)
     {
         var item = await _tenantPackageCache.GetOrAddAsync(
             tenantId.ToString(),

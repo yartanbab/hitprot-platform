@@ -192,6 +192,13 @@ public class PlatformPermissionDefinitionProvider : PermissionDefinitionProvider
         // ait değildir, bu yüzden feature kapısı yoktur.
         var demoRequestsPermission = systemGroup.AddPermission(PlatformPermissions.DemoRequests.Default, L("Permission:DemoRequests"));
         demoRequestsPermission.AddChild(PlatformPermissions.DemoRequests.Manage, L("Permission:DemoRequests.Manage"));
+
+        // Sürüm notu yayın onayı — karar TÜM kiracılar için tektir ve host bağlamında
+        // verilir; kiracı yöneticisine sızmasın diye MultiTenancySides.Host.
+        systemGroup.AddPermission(
+            PlatformPermissions.ReleaseNotes.Manage,
+            L("Permission:ReleaseNotes.Manage"),
+            MultiTenancySides.Host);
     }
 
     private static LocalizableString L(string name)
