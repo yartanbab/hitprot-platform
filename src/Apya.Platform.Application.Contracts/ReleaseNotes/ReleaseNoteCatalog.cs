@@ -370,6 +370,15 @@ public static class ReleaseNoteCatalog
                 "İlk proje kartı artık ekranın çok daha yukarısında başlıyor, araç çubuğu tek satıra indi. " +
                 "Bilgisayarda görünüm aynı kaldı."),
 
+            new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
+                "Görevler ekranı telefonda tek satıra indi, ekleme düğmesi parmağın altına geldi",
+                "Görevler ekranında üstteki blok telefonda üç satır kaplıyor, arama kutusunu ve " +
+                "sayaçları aşağı itiyordu. Başlık, arama ve \"⋯\" menüsü artık tek satırda duruyor; " +
+                "\"Yeni Görev\" düğmesi sağ alt köşedeki yuvarlak + düğmesine taşındı, yani tek elle " +
+                "kullanırken parmağınızın zaten olduğu yere. Kanban'daki \"Grupla\" seçimi de " +
+                "\"Filtreler\" düğmesinin içine girdi. Görev listesi bu sayede ekranın belirgin " +
+                "biçimde yukarısından başlıyor. Bilgisayarda görünüm aynı kaldı."),
+
             new ReleaseNoteItem(ReleaseNoteCategory.Fix,
                 "Mobilde giriş sırasında çıkan hata giderildi",
                 "Telefondan giriş yaparken zaman zaman \"Hata! Sayfa işlenirken sunucu tarafında " +
