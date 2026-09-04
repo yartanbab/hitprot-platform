@@ -52,13 +52,16 @@
                             <span class="apya-field-label"><span>@L["Grants:Conversion:ProjectCode"]</span></span>
                             <span class="apya-numeric fw-semibold" id="ProjectCode"></span>
                         </div>
+                        @* abp-data-datepicker="false" ŞART: ABP'nin genel başlatıcısı
+                           input[type=date] alanını type="text" yapıp değeri tr biçimine
+                           çevirir; Convert.js ise .val()'i ISO sanıp API'ye gönderir. *@
                         <div class="apya-field">
                             <label class="apya-field-label" for="StartDate"><span>@L["Grants:Conversion:StartDate"]</span></label>
-                            <input type="date" class="form-control form-control-sm apya-numeric" id="StartDate" />
+                            <input type="date" abp-data-datepicker="false" class="form-control form-control-sm apya-numeric" id="StartDate" />
                         </div>
                         <div class="apya-field">
                             <label class="apya-field-label" for="EndDate"><span>@L["Grants:Conversion:EndDate"]</span></label>
-                            <input type="date" class="form-control form-control-sm apya-numeric" id="EndDate" />
+                            <input type="date" abp-data-datepicker="false" class="form-control form-control-sm apya-numeric" id="EndDate" />
                         </div>
                     </div>
                 </div>
