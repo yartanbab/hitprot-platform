@@ -5,6 +5,82 @@
    Yalnız bir ekrana ait ölçüler ilgili sayfanın kendi dosyasında kalır.
    ============================================================================= */
 
+/* ── Tur 10a · Okunabilirlik ölçeği ───────────────────────────────────────────
+   Tur 1-9 bu ekranları "operatör yoğunluğu" ile çizmişti: 11px yardımcı metin,
+   12,5px tablo hücresi, #9CA3AF üçüncül metin. Tur 10a aynı içeriği okunabilir
+   ölçeğe taşıyor — gövde 14px, yardımcı 13px, en küçük etiket 12px.
+
+   🔑 Token'lar GLOBAL DEĞİL, bu KAPSAMDA yeniden tanımlanıyor. Aynı token'ları
+   platformun geri kalanı da kullanıyor (--apya-text-tertiary tek başına
+   apya-shell.css'te 102 yerde geçiyor); tokens.css'te değiştirmek 21 hibe
+   ekranının çok dışına taşardı. Kapsam sınıfı sayfanın kökünde `.apya-page`in
+   yanında durur; geri alma = bu bloğu silmek + sınıfı kaldırmak.
+
+   🔴 Sınıf sayfanın KÖKÜNDE olmalı — token'lar miras yoluyla iniyor. Modallar
+   body'ye portal edilir, kökün DIŞINDA kalır: Create/EditModal birer ABP
+   dinamik formu ve kendi hibe CSS'ini yüklemiyor, bilinçle platform ölçeğinde
+   bırakıldı.
+   ────────────────────────────────────────────────────────────────────────── */
+.apya-grant-scope {
+    --apya-fs-xs:   13px;   /* yardımcı · meta, hint, note, sub  (idi 11px) */
+    --apya-fs-sm:   14px;   /* gövde · tablo hücresi, satır      (idi 12,5px) */
+    --apya-fs-base: 14px;   /* gövde                             (idi 13px) */
+    --apya-fs-lg:   17px;   /* kart başlığı alt sınırı           (idi 16px) */
+
+    /* --apya-text-xs (12px) ZATEN 10a'nın tabanı: kolon başlığı, alan etiketi,
+       chip. Dokunulmuyor — fs-xs artık ondan büyük, hiyerarşi korunuyor.
+       fs-md/xl/2xl/3xl de aralıkta (14/20/26/28) — değiştirilmiyor. */
+
+    /* #9CA3AF kart zemininde 2,54:1 — okunan metinde AA'nın altında.
+       #6B7280 aynı zeminde 4,84:1. */
+    --apya-text-tertiary: #6B7280;
+}
+
+/* Koyu temada üçüncül metin #71717A; #141416 kart üstünde 3,80:1 — o da AA
+   altı. #8A8A93 aynı zeminde 5,38:1 ve ikincil (#A1A1AA, 7,16:1) ile hâlâ
+   ayrışıyor. */
+[data-theme="dark"] .apya-grant-scope {
+    --apya-text-tertiary: #8A8A93;
+}
+
+/* Sabit punto yazan global kurallar token okumaz; kapsam içinde tek tek
+   yükseltiliyor. Seçici (0,2,0) kendi (0,1,0) kurallarını yener. */
+.apya-grant-scope .apya-chip,
+.apya-grant-scope .apya-overline {
+    font-size: var(--apya-text-xs);
+}
+
+.apya-grant-scope .apya-tile-sub,
+.apya-grant-scope .apya-tile-meta,
+.apya-grant-scope .apya-tile-foot,
+.apya-grant-scope .apya-tile-progress-label {
+    font-size: var(--apya-fs-xs);
+}
+
+/* 10a: input 42px, buton 44px, dokunma hedefi 40px'in altına inmez.
+   btn-sm'e min-width DE veriliyor: ikon-only satır butonları 40×40 kare kalsın,
+   yalnız boyu uzayıp oval olmasın.
+   🔴 .apya-tag-entry dışarıda: o gerçek bir kutu değil, chip kabının içindeki
+   kenarlıksız yazı alanı — 42px verilirse kap iki katına çıkar. */
+.apya-grant-scope .form-control:not(.apya-tag-entry),
+.apya-grant-scope .form-select {
+    min-height: 42px;
+}
+
+.apya-grant-scope .btn {
+    min-height: 44px;
+}
+
+.apya-grant-scope .btn-sm {
+    min-height: 40px;
+    min-width: 40px;
+}
+
+/* 10a: kart içi 24px. */
+.apya-grant-scope .card > .card-body {
+    padding: var(--apya-space-6);
+}
+
 /* --- Bölüm başlığı (Parametreler, Eşleşme Ağırlıkları) --- */
 .apya-param-section-head {
     display: flex;

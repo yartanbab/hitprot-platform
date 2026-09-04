@@ -5,6 +5,10 @@
     ViewBag.Title = "Hibe Başvuruları";
 }
 
+@section styles {
+    <abp-style src="/Pages/Grants/Shared.css" />
+}
+
 @section scripts {
     <abp-script src="/Pages/Grants/Applications.js" />
 }
@@ -14,7 +18,7 @@
 </style>
 
 @* Başlık + açıklama app header'da; sayfa içinde tekrarlanmıyor. *@
-<div data-page-description="Tüm firmaların başvuruları; aşama, onaylanan tutar ve tahsilat dilimleri" class="apya-page">
+<div data-page-description="Tüm firmaların başvuruları; aşama, onaylanan tutar ve tahsilat dilimleri" class="apya-page apya-grant-scope">
     <div class="apya-page-head">
         <div class="apya-page-head-actions">
             <a href="/Grants" class="btn btn-sm btn-outline-secondary"><i class="fa fa-arrow-left me-1"></i>Programlara Dön</a>

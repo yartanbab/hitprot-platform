@@ -47,7 +47,7 @@
 {
     @* Başlık + açıklama app header'da (ViewBag.Title + data-page-description);
        sayfa içinde tekrarlanmıyor — bkz. apya-shell.css §19. *@
-    <div data-page-description="KOSGEB, TÜBİTAK, AB gibi kurumların destek programları ve dönemsel çağrıları" class="apya-page">
+    <div data-page-description="KOSGEB, TÜBİTAK, AB gibi kurumların destek programları ve dönemsel çağrıları" class="apya-page apya-grant-scope">
         <div class="apya-page-head">
             <div class="apya-page-head-actions">
                 @if (await AuthorizationService.IsGrantedAsync(PlatformPermissions.Grants.Edit))
@@ -207,7 +207,7 @@
 else
 {
     @* 1d · Kiracı: Uygun Hibeler. Başlık + açıklama app header'da. *@
-    <div data-page-description="Profilinize uygun açık hibe çağrıları ve başvurularınız" class="apya-page">
+    <div data-page-description="Profilinize uygun açık hibe çağrıları ve başvurularınız" class="apya-page apya-grant-scope">
 
         <div class="apya-tenant-tabs">
             <button type="button" class="apya-tenant-tab is-active" data-tab="eligible">
