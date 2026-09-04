@@ -31,6 +31,16 @@ public static class ReleaseNoteCatalog
             title: "Proje finansı tek ekranda, hibe süreci baştan sona, görevler ekip dışına açık",
 
             // ── Finans ───────────────────────────────────────────────────────
+            new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
+                "Finansa dair her şey menüde tek başlık altında",
+                "Kasa, kur ve finans ekranları \"Finans\" başlığındaydı; proje bütçesi, cari ekstre, " +
+                "mizan ve yıl sonu değerleme ise ayrı bir \"Raporlar & Analiz\" başlığında duruyordu — " +
+                "bir rakamı ararken iki ayrı yere bakmanız gerekiyordu. Hepsi artık \"Finans & Bütçe\" " +
+                "başlığı altında: günlük ekranlar üstte, dört rapor da içindeki \"Raporlar\" grubunda. " +
+                "Efor, personel ve müşteri kârlılığını gösteren \"Özet Raporlar\" ise içeriğine uygun " +
+                "olarak \"İş Yönetimi\" başlığına taşındı. Menüyü kendinize göre düzenlediyseniz " +
+                "düzeniniz korunuyor."),
+
             new ReleaseNoteItem(ReleaseNoteCategory.Feature,
                 "Projenin bütün finansı tek ekranda toplandı",
                 "Bütçe, gelir-gider ve faturalar ayrı ayrı ekranlarda duruyordu; hangi rakamın hangi " +

@@ -352,7 +352,10 @@ $(function () {
     // dört hedefi. İzin yüzünden biri yoksa yerine kalan üst düzey öğelerden
     // DOM sırasına göre doldurulur; hiç doldurulamazsa sekme sayısı 5'in altına
     // düşer (grid esnek, bkz. CSS).
-    var DAILY_KEYS = ['Apya.Dashboard', 'Apya.Work', 'Apya.Finance', 'Apya.Reports'];
+    // Dördüncü anahtar eskiden 'Apya.Reports'tu; o kategori Finans çatısına
+    // katılınca (2026-09-03) menüde bir daha doğmuyor ve slot zaten otomatik
+    // doldurmaya kalıyordu. Otomatik doldurmanın seçeceği hedef açıkça yazıldı.
+    var DAILY_KEYS = ['Apya.Dashboard', 'Apya.Work', 'Apya.Finance', 'Apya.Grants'];
     var DAILY_MAX = 4;
 
     function splitItems() {
