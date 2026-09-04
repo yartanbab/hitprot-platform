@@ -64,6 +64,13 @@ public class EditModel : PlatformPageModel
     public bool CanViewBudget { get; set; }
     public bool CanDelete { get; set; }
 
+    /// <summary>
+    /// Cari alanı çizilsin mi. Cari FİNANS modülüne ait: <c>Customers.Default</c> izni
+    /// <c>Finance</c> feature kapısının arkasındadır, bu ekran ise <c>Projects.Edit</c>
+    /// ile açılır. İzin yoksa alan hiç gösterilmez.
+    /// </summary>
+    public bool CanSelectCustomer { get; set; }
+
     private readonly IProjectAppService _projectAppService;
     private readonly IProjectCategoryAppService _projectCategoryAppService;
     private readonly ICustomerAppService _customerAppService;
@@ -129,6 +136,10 @@ public class EditModel : PlatformPageModel
         if (!CanViewBudget)
         {
             Project.TotalBudget = Current.TotalBudget;
+        }
+        if (!CanSelectCustomer)
+        {
+            Project.CustomerId = Current.CustomerId;
         }
 
         await _projectAppService.UpdateAsync(Id, Project);
@@ -242,11 +253,19 @@ public class EditModel : PlatformPageModel
         CanViewBudget = await AuthorizationService.IsGrantedAsync(PlatformPermissions.Projects.ViewBudget);
         CanDelete = await AuthorizationService.IsGrantedAsync(PlatformPermissions.Projects.Delete);
 
-        var customerResult = await _customerAppService.GetListAsync(
-            new GetCustomersInput { MaxResultCount = 1000, IsActive = true });
-        Customers = customerResult.Items
-            .Select(c => new SelectListItem(c.Name, c.Id.ToString()))
-            .ToList();
+        // İZİN KAPISI ŞART: cari, Finance feature'ının arkasındaki Customers.Default
+        // iznine bağlı; bu ekran ise Projects.Edit ile açılıyor. İzin sorulmadan
+        // çağrıldığında finans izni olmayan kullanıcıda AppService
+        // AbpAuthorizationException atıyor ve SAYFANIN TAMAMI 403 dönüyordu.
+        CanSelectCustomer = await AuthorizationService.IsGrantedAsync(PlatformPermissions.Customers.Default);
+        if (CanSelectCustomer)
+        {
+            var customerResult = await _customerAppService.GetListAsync(
+                new GetCustomersInput { MaxResultCount = 1000, IsActive = true });
+            Customers = customerResult.Items
+                .Select(c => new SelectListItem(c.Name, c.Id.ToString()))
+                .ToList();
+        }
 
         // Kategoriler tanım tablosundan gelir. Projenin MEVCUT kategorisi bu arada
         // gizlenmiş/pasife alınmış olabilir — listede yoksa açılır kutu onu sessizce

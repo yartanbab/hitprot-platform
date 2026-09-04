@@ -41,6 +41,13 @@ public class CreateModalModel : PlatformPageModel
     public List<SelectListItem> Customers { get; set; } = new();
 
     /// <summary>
+    /// Cari alanı çizilsin mi. Cari FİNANS modülüne ait: <c>Customers.Default</c> izni
+    /// <c>Finance</c> feature kapısının arkasındadır, bu modal ise <c>Projects.Create</c>
+    /// ile açılır. İzin yoksa alan hiç gösterilmez.
+    /// </summary>
+    public bool CanSelectCustomer { get; private set; }
+
+    /// <summary>
     /// Kategori artık açılır liste değil, seçim kartı — formun geri kalanının
     /// hangi alanları göstereceğini bu belirlediği için en görünür alan o.
     /// Liste tanım tablosundan gelir; kullanıcının eklediği kategoriler de buradadır.
@@ -83,7 +90,11 @@ public class CreateModalModel : PlatformPageModel
                           ?? CategoryCards.FirstOrDefault())?.Value
         };
 
-        if (!CurrentUser.TenantId.HasValue)
+        // Kiracı listesi kiracı yönetimi iznine bağlı. İzin sorulmadan çağrılınca
+        // AppService AbpAuthorizationException atıyor ve MODALIN TAMAMI 403 dönüyordu;
+        // liste boş kalırsa form yalnız "Kendi Hesabım (Platform)" seçeneğini gösterir.
+        if (!CurrentUser.TenantId.HasValue
+            && await AuthorizationService.IsGrantedAsync(TenantManagementPermissions.Tenants.Default))
         {
             var tenantResult = await _tenantAppService.GetListAsync(new GetTenantsInput { MaxResultCount = 1000 });
             Tenants = tenantResult.Items
@@ -100,11 +111,21 @@ public class CreateModalModel : PlatformPageModel
         };
 
         // APYA-132: CARİLER (aktif olanlar)
-        var customerResult = await _customerAppService.GetListAsync(
-            new GetCustomersInput { MaxResultCount = 1000, IsActive = true });
-        Customers = customerResult.Items
-            .Select(c => new SelectListItem(c.Name, c.Id.ToString()))
-            .ToList();
+        //
+        // İZİN KAPISI ŞART: cari, Finance feature'ının arkasındaki Customers.Default
+        // iznine bağlı; "Yeni Proje Ekle" düğmesi ise Projects.Create ile görünüyor.
+        // İzin sorulmadan çağrıldığında finans izni olmayan kullanıcıda AppService
+        // AbpAuthorizationException atıyor, modal 403 dönüyor ve HİÇ AÇILMIYORDU.
+        // Cari zorunlu alan değil: izin yoksa liste boş kalır ve alan gizlenir.
+        CanSelectCustomer = await AuthorizationService.IsGrantedAsync(PlatformPermissions.Customers.Default);
+        if (CanSelectCustomer)
+        {
+            var customerResult = await _customerAppService.GetListAsync(
+                new GetCustomersInput { MaxResultCount = 1000, IsActive = true });
+            Customers = customerResult.Items
+                .Select(c => new SelectListItem(c.Name, c.Id.ToString()))
+                .ToList();
+        }
     }
 
     public async Task<IActionResult> OnPostAsync()
