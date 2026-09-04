@@ -2,7 +2,11 @@ $(function () {
     var profileSvc = apya.platform.grants.firmProfile;
     var recoSvc = apya.platform.grants.grantRecommendation;
     var appSvc = apya.platform.grants.grantApplication;
+    var interestSvc = apya.platform.grants.grantInterest;
     var l = abp.localization.getResource('Platform');
+
+    var interestModal = new bootstrap.Modal(document.getElementById('InterestModal'));
+    var interestCallId = null;
 
     var stageLabels = { 0: 'Başvuru', 1: 'Değerlendirme', 2: 'Onay', 3: 'Ödeme' };
     var stageTone = { 0: 'neutral', 1: 'warning', 2: 'positive', 3: 'ai' };
@@ -179,6 +183,32 @@ $(function () {
     // ---------- Kart akışı ----------
     function ruleText(rule) { return l('Grants:Rule:' + ruleKeys[rule]); }
 
+    // GrantInterestStatus enum sırasıyla birebir.
+    var interestKeys = ['Yeni', 'Inceleniyor', 'BasvuruAcildi', 'UygunDegil'];
+    var interestTone = ['neutral', 'neutral', 'positive', 'negative'];
+
+    /// Kartın eylem alanı. Kiracı başvuruyu kendi açmaz: ilgi bildirir, host karar verir.
+    /// Süren talepte düğme yerine durum rozeti çıkar; uygun bulunmayan talep yeniden bildirilebilir.
+    function interestCta(r) {
+        var st = r.interestStatus;
+
+        if (r.alreadyApplied || st === 2) {
+            return '<span class="apya-chip apya-chip-positive">' +
+                esc(l('Grants:Interest:Status:BasvuruAcildi')) + '</span>';
+        }
+        if (st === 0 || st === 1) {
+            return '<span class="apya-chip apya-chip-' + interestTone[st] + '">' +
+                esc(l('Grants:Interest:Status:' + interestKeys[st])) + '</span>';
+        }
+        if (r.score >= 65) {
+            return '<button type="button" class="btn btn-sm btn-primary apya-interest-btn" data-id="' +
+                r.grantCallId + '">' +
+                esc(l(st === 3 ? 'Grants:Interest:ExpressAgain' : 'Grants:Interest:Express')) + '</button>';
+        }
+        return '<a class="btn btn-sm btn-outline-secondary" href="/Grants/Detail?id=' + r.grantCallId + '">' +
+            esc(l('Grants:Feed:Card:WhyNot')) + '</a>';
+    }
+
     function feedCard(r) {
         var chips = '<span class="apya-chip apya-numeric apya-chip-' + (r.score >= 65 ? 'positive' : 'neutral') + '">%' + r.score + '</span>';
         if (r.isHostRecommended) {
@@ -203,13 +233,7 @@ $(function () {
             : '<span class="apya-chip apya-chip-' + (r.daysRemaining < 20 ? 'negative' : r.daysRemaining <= 40 ? 'warning' : 'neutral') +
               '">' + esc(l('Grants:Feed:Card:DaysLeft', r.daysRemaining)) + '</span>';
 
-        var cta = r.alreadyApplied
-            ? '<span class="apya-chip apya-chip-positive">' + esc(l('Grants:Feed:Card:Applied')) + '</span>'
-            : r.score >= 65
-                ? '<button type="button" class="btn btn-sm btn-primary apya-apply-btn" data-id="' + r.grantCallId + '">' +
-                  esc(l('Grants:Feed:Card:Apply')) + '</button>'
-                : '<a class="btn btn-sm btn-outline-secondary" href="/Grants/Detail?id=' + r.grantCallId + '">' +
-                  esc(l('Grants:Feed:Card:WhyNot')) + '</a>';
+        var cta = interestCta(r);
 
         return '<div class="apya-feed-card">' +
             '<div class="apya-feed-head">' +
@@ -253,13 +277,29 @@ $(function () {
         paintTimeline();
     }
 
-    $('#FeedGrid').on('click', '.apya-apply-btn', function () {
-        var id = $(this).data('id');
-        $(this).prop('disabled', true);
-        appSvc.apply(id).then(function () {
-            abp.notify.success('Başvurunuz alındı.');
-            load();
-        });
+    $('#FeedGrid').on('click', '.apya-interest-btn', function () {
+        interestCallId = $(this).data('id');
+
+        // Program adı kartın kendisinden değil veriden okunur: tırnak içeren bir ad
+        // data- özniteliğinde markup'ı kırardı.
+        var row = feed.filter(function (r) { return r.grantCallId === interestCallId; })[0];
+        $('#InterestCallName').text(row ? row.grantName : '');
+        $('#InterestNote').val('');
+        interestModal.show();
+    });
+
+    $('#InterestForm').on('submit', function (e) {
+        e.preventDefault();
+        if (!interestCallId) { return; }
+
+        var $submit = $(this).find('button[type=submit]').prop('disabled', true);
+        interestSvc.express({ grantCallId: interestCallId, note: $('#InterestNote').val() })
+            .then(function () {
+                interestModal.hide();
+                abp.notify.success(l('Grants:Interest:Toast'));
+                return load();
+            })
+            .always(function () { $submit.prop('disabled', false); });
     });
 
     // ---------- Başvurularım ----------

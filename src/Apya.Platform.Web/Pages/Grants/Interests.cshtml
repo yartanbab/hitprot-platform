@@ -1,0 +1,88 @@
+@page
+@using Apya.Platform.Localization
+@using Microsoft.AspNetCore.Mvc.Localization
+@inject IHtmlLocalizer<PlatformResource> L
+@model Apya.Platform.Web.Pages.Grants.InterestsModel
+@{
+    ViewBag.Title = L["Grants:Interests:Title"].Value;
+}
+
+@section styles {
+    <abp-style src="/Pages/Grants/Shared.css" />
+    <abp-style src="/Pages/Grants/Interests.css" />
+}
+
+@section scripts {
+    <abp-script src="/Pages/Grants/Interests.js" />
+}
+
+<div data-page-description="@L["Grants:Interests:Description"]" class="apya-page">
+
+    @* --- KPI şeridi --- *@
+    <div class="apya-int-kpis">
+        <div class="apya-int-kpi">
+            <span class="apya-int-kpi-label">@L["Grants:Interests:Kpi:New"]</span>
+            <span class="apya-skel-num apya-int-kpi-value" id="KpiNew"></span>
+        </div>
+        <div class="apya-int-kpi">
+            <span class="apya-int-kpi-label">@L["Grants:Interests:Kpi:InReview"]</span>
+            <span class="apya-skel-num apya-int-kpi-value" id="KpiInReview"></span>
+        </div>
+        <div class="apya-int-kpi">
+            <span class="apya-int-kpi-label">@L["Grants:Interests:Kpi:Started"]</span>
+            <span class="apya-skel-num apya-int-kpi-value" id="KpiStarted"></span>
+        </div>
+        <div class="apya-int-kpi">
+            <span class="apya-int-kpi-label">@L["Grants:Interests:Kpi:Rejected"]</span>
+            <span class="apya-skel-num apya-int-kpi-value" id="KpiRejected"></span>
+        </div>
+    </div>
+
+    <section class="card mb-0">
+        <div class="card-header apya-param-section-head">
+            <span class="apya-param-section-icon"><i class="fa fa-handshake"></i></span>
+            <span>@L["Grants:Interests:List"]</span>
+            <div class="apya-choice-row ms-auto">
+                <button type="button" class="apya-choice is-on" data-filter="pending">@L["Grants:Interests:Filter:Open"]</button>
+                <button type="button" class="apya-choice" data-filter="all">@L["Grants:Interests:Filter:All"]</button>
+            </div>
+        </div>
+        <div class="card-body p-0">
+            <div class="apya-int-head">
+                <span>@L["Grants:Interests:Col:Firm"]</span>
+                <span>@L["Grants:Interests:Col:Call"]</span>
+                <span>@L["Grants:Interests:Col:Note"]</span>
+                <span>@L["Grants:Interests:Col:Status"]</span>
+                <span></span>
+            </div>
+            <div id="InterestRows" class="apya-skel-rows"></div>
+            <p id="InterestEmpty" class="apya-src-empty d-none">@L["Grants:Interests:Empty"]</p>
+        </div>
+    </section>
+</div>
+
+@* ---- Gerekçe modalı ---- *@
+<div class="modal fade" id="RejectModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <form id="RejectForm">
+                <div class="modal-header">
+                    <h5 class="modal-title">@L["Grants:Interests:Reject:Title"]</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
+                </div>
+                <div class="modal-body d-flex flex-column gap-2">
+                    <div class="fw-semibold" id="RejectTarget"></div>
+                    <div class="small text-muted">@L["Grants:Interests:Reject:Hint"]</div>
+                    <label class="form-label mb-0" for="RejectReason">@L["Grants:Interests:Reject:Reason"]</label>
+                    <textarea class="form-control" id="RejectReason" rows="4" maxlength="1000" required></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">@L["Grants:Sources:Cancel"]</button>
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fa fa-paper-plane me-1"></i>@L["Grants:Interests:Reject:Submit"]
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

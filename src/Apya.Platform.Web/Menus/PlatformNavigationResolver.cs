@@ -608,6 +608,9 @@ public class PlatformNavigationResolver : IScopedDependency
             grants.AddItem(new ApplicationMenuItem("Apya.Grants.Sources", l["Menu:Grants:Sources"], icon: "fa fa-globe", url: "/Grants/Sources"));
         if (_currentTenant.Id == null && await _permission.IsGrantedAsync(PlatformPermissions.Grants.Edit))
             grants.AddItem(new ApplicationMenuItem("Apya.Grants.Pipeline", l["Menu:Grants:Pipeline"], icon: "fa fa-table-columns", url: "/Grants/Pipeline"));
+        // Kiracıların "İlgileniyorum" talepleri; başvuru bu kutudaki kararla açılır.
+        if (_currentTenant.Id == null && await _permission.IsGrantedAsync(PlatformPermissions.Grants.Edit))
+            grants.AddItem(new ApplicationMenuItem("Apya.Grants.Interests", l["Menu:Grants:Interests"], icon: "fa fa-handshake", url: "/Grants/Interests"));
         if (_currentTenant.Id == null && await _permission.IsGrantedAsync(PlatformPermissions.Grants.Edit))
             grants.AddItem(new ApplicationMenuItem("Apya.Grants.Leads", l["Menu:Grants:Leads"], icon: "fa fa-inbox", url: "/Grants/Leads"));
         if (_currentTenant.Id == null && await _permission.IsGrantedAsync(PlatformPermissions.Grants.Edit))

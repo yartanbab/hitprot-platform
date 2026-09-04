@@ -266,6 +266,17 @@ public static class ReleaseNoteCatalog
 
             // ── Hibe: başvuru süreci ──────────────────────────────────────────
             new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "Hibeye \"İlgileniyorum\" diyorsunuz, süreci birlikte başlatıyoruz",
+                "Hibe detayındaki \"Başvuru Aç\" düğmesi yerini \"İlgileniyorum\"a bıraktı. Talebinizi " +
+                "kısa bir notla bırakıyorsunuz; danışmanlarımız değerlendirip sizinle irtibata geçiyor ve " +
+                "uygun görülürse başvuru sürecini birlikte başlatıyoruz — başvurunuz o an açılıyor ve " +
+                "\"Başvurularım\" ekranınızda beliriyor. Uygun bulunmayan talepte gerekçesini yazılı " +
+                "olarak alıyorsunuz; gerekçe hem bildirim olarak geliyor hem de çağrı sayfasında " +
+                "duruyor. Durumunuzu değişirse aynı çağrıya yeniden ilgi bildirebiliyorsunuz. " +
+                "Bıraktığınız talepleri \"Başvurularım\" ekranındaki \"İlgi Taleplerim\" listesinden " +
+                "izliyorsunuz."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
                 "Başvuru formunu danışmanınızla aynı anda dolduruyorsunuz",
                 "Hibe başvurusu artık adım adım ilerleyen bir formda hazırlanıyor: firma bilgileri, proje " +
                 "özeti, bütçe ve gönderim. Danışmanınız aynı anda aynı formda çalışabiliyor; kimin hangi " +
