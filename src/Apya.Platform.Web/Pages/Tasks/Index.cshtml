@@ -113,9 +113,10 @@
             <input type="search" id="console-search" placeholder="Görev ara" aria-label="Görev ara" />
         </div>
 
-        @* Kolon araçları "Yeni Görev"in solunda (kullanıcı kararı 2026-08-25);
-           yalnız Kanban görünümünde ve koşulları sağlanınca JS tarafından açılır. *@
-        <partial name="_KanbanColumnTools" />
+        @* NOT — Kanban kolon araçları ("Grupla" + "Kolonları düzenle") burada
+           DEĞİL: 2026-09-04'te filtre çubuğuna taşındı (kullanıcı kararı), aşağıda
+           #console-filter-set içinde. Diğer iki sayfada (Board, ProjectDetails)
+           eylem çubuğunda kalmaya devam eder. *@
 
         @if (canCreate)
         {
@@ -216,6 +217,13 @@
         </button>
 
         <div class="apya-console-filter-set" id="console-filter-set">
+
+            @* Kanban kolon araçları — kullanıcı kararı 2026-09-04: "Grupla" filtre
+               çubuğuna girer. Mobilde "Filtreler" düğmesinin arkasına katlanır,
+               masaüstünde chip'lerin yanında durur (sarmalayıcı orada
+               `display: contents`). Yalnız Kanban görünümünde ve koşulları
+               sağlanınca JS (/js/apya-kanban.js) `d-none`'ı kaldırır. *@
+            <partial name="_KanbanColumnTools" />
 
             <div class="dropdown">
                 <button type="button" class="apya-filter-chip" id="chip-status"
@@ -384,6 +392,18 @@
     </div>
 }
 </div> @* /.apya-page *@
+
+@* Mobil birincil aksiyon — şeritteki "Yeni Görev" dar ekranda gizlenir, yerini
+   sağ alttaki FAB alır. Proje konsoluyla AYNI desen (.apya-console-fab), stil
+   apya-shell.css §21'de tek kaynakta. Sayfa gövdesinin floating aksiyonu
+   olduğu için konsol kartının DIŞINDA. *@
+@if (canCreate)
+{
+    <button type="button" class="apya-console-fab" id="btn-new-task-fab"
+            aria-label="Yeni görev ekle" title="Yeni görev ekle">
+        <i class="fa fa-plus" aria-hidden="true"></i>
+    </button>
+}
 
 @section styles {
     @* Merkezi kanban tasarımı (tek kaynak) *@
