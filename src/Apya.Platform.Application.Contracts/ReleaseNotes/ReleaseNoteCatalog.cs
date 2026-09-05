@@ -438,8 +438,8 @@ public static class ReleaseNoteCatalog
                 "Takvim, görev görünüşlerini toplayan \"Panolar\" grubunun içindeydi: kendi ekranı, " +
                 "kendi hatırlatmaları ve Google/Outlook bağlantısı olmasına rağmen açmak için önce " +
                 "o grubu açmanız gerekiyordu. Artık sol menüde doğrudan kendi satırında — tek tıkla " +
-                "geliyor. Takvimi eskiden Panolar'ın altında arıyorsanız yeni yeri menünün üst " +
-                "kısmında, İş Yönetimi'nin hemen altında. Ekranın içinde hiçbir şey değişmedi."),
+                "geliyor. Takvimi eskiden Panolar'ın altında arıyorsanız artık menüde kendi " +
+                "başlığıyla duruyor. Ekranın içinde hiçbir şey değişmedi."),
 
             // ── Genel ─────────────────────────────────────────────────────────
             new ReleaseNoteItem(ReleaseNoteCategory.Feature,
