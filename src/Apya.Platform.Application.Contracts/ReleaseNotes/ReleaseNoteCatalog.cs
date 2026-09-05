@@ -581,7 +581,15 @@ public static class ReleaseNoteCatalog
                 "gerekiyordu. Grup başlıkları kalktı, katalog tek liste oldu ve üst şerit " +
                 "inceltildi: on iki seçeneğin hepsi hem bilgisayarda hem telefonda kaydırmadan " +
                 "sığıyor. Telefonda kart açıklamaları gizleniyor, ekli olan özellikler kartın " +
-                "kenarlığından anlaşılıyor. Arama kutusu yerinde duruyor.")
+                "kenarlığından anlaşılıyor. Arama kutusu yerinde duruyor."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
+                "Görevin dosyaları ve görselleri sekmeyi açar açmaz görünüyor",
+                "Görev detayındaki Dosyalar ve Görseller sekmelerinde \"buraya sürükleyin\" kutusu " +
+                "en üstte duruyordu; yüklü dosyalar ve görseller onun altında kaldığı için sekmeyi " +
+                "açtığınızda ekranda hiçbiri görünmüyor, listeye ulaşmak için her seferinde aşağı " +
+                "kaydırmanız gerekiyordu. Kutu listenin altına alındı: sekme açılır açılmaz dosyalar " +
+                "ve görseller karşınıza çıkıyor, yükleme yine aynı yerde, sadece listeden sonra.")
         ),
 
         new ReleaseNote(
