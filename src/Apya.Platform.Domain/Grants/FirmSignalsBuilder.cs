@@ -51,7 +51,7 @@ public class FirmSignalsBuilder : DomainService
             {
                 signals.Size = profile.Size;
                 signals.FoundedOn = profile.FoundedOn;
-                signals.StaffCount = profile.StaffCount;
+                signals.StaffCount = profile.EffectiveStaffCount;
                 signals.RdStaffCount = profile.RdStaffCount;
                 signals.AnnualRevenue = profile.AnnualRevenue;
                 signals.Trl = profile.Trl;

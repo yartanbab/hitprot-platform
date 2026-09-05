@@ -5420,8 +5420,18 @@ namespace Apya.Platform.Migrations
                         .HasColumnType("uniqueidentifier")
                         .HasColumnName("LastModifierId");
 
+                    b.Property<int?>("ProfessionalStaffBand")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("ProjectExperience")
+                        .HasColumnType("int");
+
                     b.Property<int?>("RdStaffCount")
                         .HasColumnType("int");
+
+                    b.Property<string>("RegistryNumber")
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
 
                     b.Property<int?>("Size")
                         .HasColumnType("int");
@@ -5429,11 +5439,22 @@ namespace Apya.Platform.Migrations
                     b.Property<int?>("StaffCount")
                         .HasColumnType("int");
 
+                    b.Property<string>("TaxNumber")
+                        .HasMaxLength(16)
+                        .HasColumnType("nvarchar(16)");
+
+                    b.Property<string>("TaxOffice")
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
                     b.Property<Guid?>("TenantId")
                         .HasColumnType("uniqueidentifier")
                         .HasColumnName("TenantId");
 
                     b.Property<int?>("Trl")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Type")
                         .HasColumnType("int");
 
                     b.HasKey("Id");

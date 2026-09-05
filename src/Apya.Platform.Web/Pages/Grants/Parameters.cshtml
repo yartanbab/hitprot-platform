@@ -183,6 +183,18 @@
                         </div>
                     </div>
 
+                    @* STK çağrılarının hedefi: firma profilindeki tematik alanla aynı sabit
+                       listeden seçilir, iki taraf da enum adını yazdığı için birebir eşleşir. *@
+                    <div class="apya-field">
+                        <label class="apya-field-label"><span>@L["Grants:Parameters:Thematic"]</span></label>
+                        <div class="apya-choice-row" id="ParamThematic">
+                            @foreach (var area in Enum.GetNames<Apya.Platform.Grants.GrantThematicArea>())
+                            {
+                                <button type="button" class="apya-choice" data-area="@area">@L["Grants:Thematic:" + area]</button>
+                            }
+                        </div>
+                    </div>
+
                     <div class="apya-field">
                         <span class="apya-field-label">
                             <span>@L["Grants:Parameters:Trl"]</span>

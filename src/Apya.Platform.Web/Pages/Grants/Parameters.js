@@ -70,6 +70,11 @@ $(function () {
     });
 
     // ---------- Ölçek chip'leri ----------
+    $('#ParamThematic').on('click', '.apya-choice', function () {
+        $(this).toggleClass('is-on');
+        schedulePreview();
+    });
+
     $('#ParamSizes').on('click', '.apya-choice', function () {
         $(this).toggleClass('is-on');
         schedulePreview();
@@ -221,6 +226,9 @@ $(function () {
         [0, 1, 2, 3].forEach(function (kind) {
             readTags(kind).forEach(function (v) { tags.push({ kind: kind, value: v }); });
         });
+        $('#ParamThematic .apya-choice.is-on').each(function () {
+            tags.push({ kind: 4, value: String($(this).data('area')) });
+        });
 
         var costItems = [];
         $('#ParamCostItems .apya-cost-tile.is-open').each(function () {
@@ -295,7 +303,14 @@ $(function () {
         $('#ParamPrefersYoung').prop('checked', !!dto.prefersYoungEntrepreneur);
 
         $('.apya-tag-input .apya-tag-chips').empty();
-        (dto.criteriaTags || []).forEach(function (t) {
+        // Tematik alan sabit listeden seçilir; serbest metin kutusu yoktur.
+        var thematic = (dto.criteriaTags || [])
+            .filter(function (t) { return t.kind === 4; })
+            .map(function (t) { return t.value; });
+        $('#ParamThematic .apya-choice').each(function () {
+            $(this).toggleClass('is-on', thematic.indexOf(String($(this).data('area'))) >= 0);
+        });
+        (dto.criteriaTags || []).filter(function (t) { return t.kind !== 4; }).forEach(function (t) {
             addTag($('.apya-tag-input[data-kind="' + t.kind + '"]'), t.value);
         });
 

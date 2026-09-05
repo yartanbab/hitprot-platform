@@ -764,6 +764,9 @@ namespace Apya.Platform.EntityFrameworkCore
                 // Tenant başına tekil profil.
                 b.HasIndex(x => x.TenantId).IsUnique();
                 b.Property(x => x.AnnualRevenue).HasColumnType("decimal(18,2)");
+                b.Property(x => x.RegistryNumber).HasMaxLength(64);
+                b.Property(x => x.TaxNumber).HasMaxLength(16);
+                b.Property(x => x.TaxOffice).HasMaxLength(128);
             });
 
             builder.Entity<FirmProfileTag>(b =>
