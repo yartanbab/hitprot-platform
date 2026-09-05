@@ -1,6 +1,6 @@
 import React from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { TAB_CARD, TabCardHeader, TabEmptyState, RowBadge, fmtShortDate } from '../v3/tabPrimitives';
+import { TAB_CARD, TAB_CARD_UNCLIPPED, TabCardHeader, TabEmptyState, RowBadge, fmtShortDate } from '../v3/tabPrimitives';
 import { Button, Combobox, MoneyInput } from '../../components/ui';
 import { isGranted } from '../hooks/useTaskDetail';
 import { useProjectBudgetLines } from '../hooks/useProjectBudgetLines';
@@ -178,7 +178,9 @@ function BudgetLinkCard({ task, form, spentByCurrency }) {
     };
 
     return (
-        <div className={TAB_CARD}>
+        /* Kırpmayan kart ŞART: kalem seçicisinin listesi kartın içine absolute
+           konumlanır, TAB_CARD'ın overflow-hidden'ı onu alt kenarda keserdi. */
+        <div className={TAB_CARD_UNCLIPPED}>
             <TabCardHeader
                 title="Bütçe bağı"
                 action={editable && lineId ? (

@@ -211,6 +211,17 @@ describe('FinanceTab · butce bagi atamasi', () => {
         expect(setField).toHaveBeenCalledWith('plannedAmount', null);
     });
 
+    /* Tarayicida yakalandi: TAB_CARD'in overflow-hidden'i kalem listesini kartin
+       alt kenarinda kesiyordu (jsdom kirpma yapmadigi icin test gormezdi). */
+    it('butce karti KIRPMAYAN kart sinifini kullanir', async () => {
+        setup();
+        const header = await screen.findByText('Bütçe bağı');
+        const card = header.closest('[class*="rounded-2xl"]');
+
+        expect(card).not.toBeNull();
+        expect(card.className).not.toContain('overflow-hidden');
+    });
+
     it('projede kalem yoksa secici yerine aciklama basar', async () => {
         setup({ lines: [] });
         expect(await screen.findByText(/bütçe kalemi tanımlı değil/i)).toBeInTheDocument();
