@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { catalogGroups, TOTAL_FEATURE_COUNT } from '../featureCatalogV3';
+import { catalogItems, TOTAL_FEATURE_COUNT } from '../featureCatalogV3';
 import { OverlayLayerV3 } from './OverlayLayerV3';
 
 /**
@@ -25,7 +25,7 @@ export function FeaturePickerV3({
     if (!open) return null;
 
     const assigned = new Set(assignedCodes);
-    const groups = catalogGroups(query);
+    const items = catalogItems(query);
     const assignedCount = assignedCodes.length + 3; // + çekirdek sekmeler
 
     const handleClick = (code) => {
@@ -42,7 +42,7 @@ export function FeaturePickerV3({
         <OverlayLayerV3 open={open} onClose={onClose} label="Özellik ekle">
         <div
             data-apya-overlay
-            className="absolute inset-0 flex items-center justify-center p-6 bg-surface-overlay backdrop-blur-sm animate-fade-in-fast"
+            className="absolute inset-0 flex items-center justify-center p-6 mobile:p-3 bg-surface-overlay backdrop-blur-sm animate-fade-in-fast"
             onClick={onClose}
             role="presentation"
         >
@@ -53,14 +53,14 @@ export function FeaturePickerV3({
                 onClick={(e) => e.stopPropagation()}
                 className="flex flex-col w-full max-w-[840px] max-h-[86vh] rounded-[22px] border border-default bg-surface-base shadow-xl overflow-hidden animate-dialog-in"
             >
-                <div className="flex items-center justify-between gap-4 px-[22px] py-5 border-b border-subtle bg-surface-raised">
-                    <div className="flex items-center gap-3 min-w-0">
-                        <span className="flex shrink-0 items-center justify-center h-10 w-10 rounded-[13px] bg-primary text-white shadow-md">
-                            <i className="fa-solid fa-shapes text-base" />
+                <div className="flex items-center justify-between gap-3 px-4 py-2.5 border-b border-subtle bg-surface-raised">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                        <span className="flex shrink-0 items-center justify-center h-8 w-8 rounded-[10px] bg-primary text-white shadow-md">
+                            <i className="fa-solid fa-shapes text-[13px]" />
                         </span>
                         <div className="min-w-0">
-                            <h3 className="m-0 text-base font-extrabold tracking-[-.02em] text-text-primary">Özellik ekle</h3>
-                            <p className="mt-0.5 mb-0 text-[12px] text-text-tertiary">
+                            <h3 className="m-0 text-[14px] leading-tight font-extrabold tracking-[-.02em] text-text-primary">Özellik ekle</h3>
+                            <p className="mt-0.5 mb-0 text-[11px] leading-tight text-text-tertiary truncate">
                                 Bir özelliğe tıklayarak görevinize yeni sekme ve fonksiyon ekleyin.
                             </p>
                         </div>
@@ -69,13 +69,13 @@ export function FeaturePickerV3({
                         type="button"
                         onClick={onClose}
                         aria-label="Kapat"
-                        className="flex shrink-0 items-center justify-center h-[34px] w-[34px] rounded-[10px] text-text-tertiary hover:bg-surface-hover hover:text-text-primary cursor-pointer"
+                        className="flex shrink-0 items-center justify-center h-8 w-8 rounded-[9px] text-text-tertiary hover:bg-surface-hover hover:text-text-primary cursor-pointer"
                     >
                         <i className="fa-solid fa-xmark text-[15px]" />
                     </button>
                 </div>
 
-                <div className="px-[22px] pt-4 pb-2">
+                <div className="px-4 pt-2.5">
                     <div className="relative">
                         <i className="fa-solid fa-magnifying-glass absolute left-[13px] top-1/2 -translate-y-1/2 text-[12px] text-text-tertiary" />
                         <input
@@ -84,67 +84,58 @@ export function FeaturePickerV3({
                             value={query}
                             onChange={(e) => setQuery(e.target.value)}
                             placeholder={`${TOTAL_FEATURE_COUNT} özellik arasında ara (Gantt, Finans, Risk, AI…)`}
-                            className="w-full h-[42px] pl-9 pr-3.5 rounded-xl border border-default bg-neutral-subtle text-text-primary text-[13px] focus:border-focus focus:bg-surface-base focus:shadow-focus focus:outline-none"
+                            className="w-full h-[36px] pl-9 pr-3.5 rounded-[10px] border border-default bg-neutral-subtle text-text-primary text-[12.5px] focus:border-focus focus:bg-surface-base focus:shadow-focus focus:outline-none"
                         />
                     </div>
                 </div>
 
-                <div className="flex-1 flex flex-col gap-5 px-[22px] pt-3 pb-[22px] overflow-y-auto custom-scrollbar">
-                    {groups.map((group) => (
-                        <div key={group.title} className="flex flex-col gap-[11px]">
-                            <div className="flex items-center gap-2.5">
-                                <span className="text-[10.5px] font-extrabold uppercase tracking-[.1em] text-text-tertiary">
-                                    {group.title}
-                                </span>
-                                <span className="flex-1 h-px bg-subtle" />
-                            </div>
-
-                            <div className="grid grid-cols-[repeat(auto-fill,minmax(250px,1fr))] gap-[11px]">
-                                {group.items.map((f) => {
-                                    const isAdded = assigned.has(f.code);
-                                    return (
-                                        <button
-                                            key={f.code}
-                                            type="button"
-                                            onClick={() => handleClick(f.code)}
-                                            className={`group flex items-start gap-3 p-3.5 rounded-[15px] border text-left cursor-pointer hover:border-focus hover:shadow-md ${
-                                                isAdded ? 'border-primary bg-primary-subtle' : 'border-subtle bg-surface-base'
-                                            }`}
-                                        >
-                                            <span className={`flex shrink-0 items-center justify-center h-10 w-10 rounded-xl ${f.bg} ${f.fg}`}>
-                                                <i className={`fa-solid ${f.icon} text-[15px]`} />
+                <div className="flex-1 px-4 pt-2.5 pb-4 overflow-y-auto custom-scrollbar">
+                    <div className="grid grid-cols-3 mobile:grid-cols-2 gap-2">
+                        {items.map((f) => {
+                            const isAdded = assigned.has(f.code);
+                            return (
+                                <button
+                                    key={f.code}
+                                    type="button"
+                                    onClick={() => handleClick(f.code)}
+                                    className={`group flex items-center gap-2.5 p-2.5 rounded-xl border text-left cursor-pointer hover:border-focus hover:shadow-md ${
+                                        isAdded ? 'border-primary bg-primary-subtle' : 'border-subtle bg-surface-base'
+                                    }`}
+                                >
+                                    <span className={`flex shrink-0 items-center justify-center h-9 w-9 rounded-[10px] ${f.bg} ${f.fg}`}>
+                                        <i className={`fa-solid ${f.icon} text-[14px]`} />
+                                    </span>
+                                    <span className="flex flex-col min-w-0 flex-1">
+                                        <span className="flex items-center justify-between gap-1.5">
+                                            <span className="text-[12.5px] font-bold text-text-primary truncate">{f.title}</span>
+                                            {/* Rozet dar ekranda tamamen düşer: başlık kırpılmasın diye.
+                                                Ekli durumu orada da okunur, kartın kenarlığı/zemini söylüyor. */}
+                                            <span className={`mobile:hidden shrink-0 text-[10px] font-extrabold ${isAdded ? 'text-primary' : 'text-text-tertiary'}`}>
+                                                {isAdded ? '✓ Ekli' : 'Ekle →'}
                                             </span>
-                                            <span className="flex flex-col gap-[3px] min-w-0 flex-1">
-                                                <span className="flex items-center justify-between gap-2">
-                                                    <span className="text-[13px] font-bold text-text-primary truncate">{f.title}</span>
-                                                    <span className={`shrink-0 text-[10.5px] font-extrabold ${isAdded ? 'text-primary' : 'text-text-tertiary'}`}>
-                                                        {isAdded ? '✓ Ekli' : 'Ekle →'}
-                                                    </span>
-                                                </span>
-                                                <span className="text-[11.5px] leading-[1.5] text-text-tertiary">{f.desc}</span>
-                                            </span>
-                                        </button>
-                                    );
-                                })}
-                            </div>
-                        </div>
-                    ))}
+                                        </span>
+                                        <span className="mobile:hidden text-[11px] leading-[1.35] text-text-tertiary line-clamp-2">{f.desc}</span>
+                                    </span>
+                                </button>
+                            );
+                        })}
+                    </div>
 
-                    {groups.length === 0 && (
-                        <div className="flex flex-col items-center gap-2 py-12 text-center">
-                            <i className="fa-solid fa-magnifying-glass text-3xl text-text-tertiary mb-2" />
+                    {items.length === 0 && (
+                        <div className="flex flex-col items-center gap-1.5 py-10 text-center">
+                            <i className="fa-solid fa-magnifying-glass text-2xl text-text-tertiary mb-1" />
                             <p className="m-0 text-sm font-semibold text-text-primary">Eşleşen özellik bulunamadı</p>
                             <p className="m-0 text-xs text-text-tertiary">Lütfen farklı bir arama terimi deneyin.</p>
                         </div>
                     )}
                 </div>
 
-                <div className="flex items-center justify-between px-[22px] py-3.5 border-t border-subtle bg-surface-raised text-[11.5px] text-text-tertiary">
-                    <span>Toplam {TOTAL_FEATURE_COUNT} modül · {assignedCount} tanesi bu göreve ekli</span>
+                <div className="flex items-center justify-between gap-3 px-4 py-2 border-t border-subtle bg-surface-raised text-[11px] text-text-tertiary">
+                    <span className="truncate">Toplam {TOTAL_FEATURE_COUNT} modül · {assignedCount} tanesi bu göreve ekli</span>
                     <button
                         type="button"
                         onClick={onClose}
-                        className="border-0 bg-transparent text-text-secondary text-[11.5px] font-bold cursor-pointer hover:text-primary"
+                        className="shrink-0 border-0 bg-transparent text-text-secondary text-[11px] font-bold cursor-pointer hover:text-primary"
                     >
                         Kapat (ESC)
                     </button>
