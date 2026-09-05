@@ -4,6 +4,7 @@ const EMPTY_VALUES = {
     title: '', description: '', startDate: '', dueDate: '',
     status: 1, priority: 2, assigneeId: null, tagNames: [], isPrivate: false, projectId: null,
     estimatedHours: null, taskType: '', sprint: '',
+    budgetLineId: null, plannedAmount: null,
 };
 
 function toFormValues(task) {
@@ -22,6 +23,8 @@ function toFormValues(task) {
         estimatedHours: task.estimatedHours ?? null,
         taskType: task.taskType ?? '',
         sprint: task.sprint ?? '',
+        budgetLineId: task.budgetLineId ?? null,
+        plannedAmount: task.plannedAmount ?? null,
     };
 }
 
@@ -87,6 +90,13 @@ export function useTaskForm(task) {
         estimatedHours: values.estimatedHours,
         taskType: values.taskType || null,
         sprint: values.sprint || null,
+        /* DTO'dan DÜŞÜRÜLEMEZ: UpdateAsync bu iki alanı koşulsuz uyguluyor
+           (task.SetBudgetLink), dolayısıyla gönderilmediklerinde görevin bütçe
+           bağı HER kayıtta sessizce siliniyordu. Eski Razor modali aynı tuzağa
+           karşı "koru" bloğu yazmıştı (Tasks/EditModal.cshtml.cs); burada alanlar
+           form state'inde taşındığı için koruma kendiliğinden oluşuyor. */
+        budgetLineId: values.budgetLineId ?? null,
+        plannedAmount: values.plannedAmount ?? null,
     }), [values, task]);
 
     const reset = useCallback(() => {
