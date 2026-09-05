@@ -116,5 +116,14 @@ export function catalogGroups(query = '') {
         .filter((g) => g.items.length > 0);
 }
 
+/**
+ * Katalogdaki özelliklerin TEK düz listesi — özellik ekleme modalı artık grup
+ * başlığı basmıyor: hepsi tek ekranda, kaydırmasız görünsün diye. Sıra
+ * `GROUPS`'taki sıradır.
+ */
+export function catalogItems(query = '') {
+    return catalogGroups(query).flatMap((g) => g.items);
+}
+
 /** Katalogdaki toplam modül sayısı — `hidden` işaretliler sayılmaz. */
 export const TOTAL_FEATURE_COUNT = TASK_FEATURE_REGISTRY.filter((f) => !f.hidden).length;
