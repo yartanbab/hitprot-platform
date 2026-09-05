@@ -168,6 +168,7 @@ namespace Apya.Platform.EntityFrameworkCore
         public DbSet<TaskFeatureAssignment> TaskFeatureAssignments { get; set; }
         public DbSet<TaskChecklistItem> TaskChecklistItems { get; set; }
         public DbSet<TaskDocument> TaskDocuments { get; set; }
+        public DbSet<TaskFormLink> TaskFormLinks { get; set; }
         public DbSet<TaskFavorite> TaskFavorites { get; set; }
         public DbSet<TaskWatcher> TaskWatchers { get; set; }
         public DbSet<TaskTemplate> TaskTemplates { get; set; }
@@ -1262,6 +1263,16 @@ namespace Apya.Platform.EntityFrameworkCore
                 // text). HasMaxLength verilirse uzun bir belge kaydederken sessizce
                 // kesilir ya da patlar.
                 b.HasIndex(x => x.TaskId);
+            });
+
+            builder.Entity<TaskFormLink>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "TaskFormLinks", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+                // Aynı form aynı göreve iki kez bağlanamaz — sekmede mükerrer satır
+                // ve yanıt sayımında çift hesap olurdu.
+                b.HasIndex(x => new { x.TaskId, x.DocumentId }).IsUnique();
+                b.HasIndex(x => x.DocumentId);
             });
 
             builder.Entity<TaskTimeLog>(b =>

@@ -85,6 +85,20 @@ public class GuestTaskNodeDto
 
     /// <summary>Misafirin kendi yükledikleri + ekibin dışa açtığı ekler.</summary>
     public List<GuestAttachmentDto> Attachments { get; set; } = new();
+
+    /// <summary>Ekibin bu görevde dışarıya AÇTIĞI formlar. Yalnız `IsGuestFillable`
+    /// işaretli ve YAYINDA olanlar; göreve bağlı olmak tek başına yetmez.</summary>
+    public List<GuestFormDto> Forms { get; set; } = new();
+}
+
+/// <summary>Misafirin doldurabileceği form — süreli link sayfasındaki satır.</summary>
+public class GuestFormDto
+{
+    public Guid DocumentId { get; set; }
+    public string Title { get; set; } = string.Empty;
+
+    /// <summary>Formun herkese açık adresi; sayfa buna token ve görev ekleyerek bağlar.</summary>
+    public string Slug { get; set; } = string.Empty;
 }
 
 public class GuestCommentDto : EntityDto<Guid>

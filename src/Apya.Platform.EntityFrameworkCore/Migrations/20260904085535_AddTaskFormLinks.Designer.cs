@@ -3,6 +3,7 @@ using System;
 using Apya.Platform.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Volo.Abp.EntityFrameworkCore;
@@ -12,9 +13,11 @@ using Volo.Abp.EntityFrameworkCore;
 namespace Apya.Platform.Migrations
 {
     [DbContext(typeof(PlatformDbContext))]
-    partial class PlatformDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260904085535_AddTaskFormLinks")]
+    partial class AddTaskFormLinks
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -6884,94 +6887,6 @@ namespace Apya.Platform.Migrations
                     b.ToTable("AppGrantEligibleCostItems", (string)null);
                 });
 
-            modelBuilder.Entity("Apya.Platform.Grants.GrantInterest", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("ConcurrencyStamp")
-                        .IsConcurrencyToken()
-                        .IsRequired()
-                        .HasMaxLength(40)
-                        .HasColumnType("character varying(40)")
-                        .HasColumnName("ConcurrencyStamp");
-
-                    b.Property<DateTime>("CreationTime")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("CreationTime");
-
-                    b.Property<Guid?>("CreatorId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("CreatorId");
-
-                    b.Property<Guid?>("DeleterId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("DeleterId");
-
-                    b.Property<DateTime?>("DeletionTime")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("DeletionTime");
-
-                    b.Property<string>("ExtraProperties")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("ExtraProperties");
-
-                    b.Property<Guid?>("GrantApplicationId")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("GrantCallId")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("HostFeedback")
-                        .HasMaxLength(1000)
-                        .HasColumnType("character varying(1000)");
-
-                    b.Property<bool>("IsDeleted")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("boolean")
-                        .HasDefaultValue(false)
-                        .HasColumnName("IsDeleted");
-
-                    b.Property<DateTime?>("LastModificationTime")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("LastModificationTime");
-
-                    b.Property<Guid?>("LastModifierId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("LastModifierId");
-
-                    b.Property<string>("Note")
-                        .HasMaxLength(1000)
-                        .HasColumnType("character varying(1000)");
-
-                    b.Property<Guid?>("RequestedByUserId")
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime?>("ReviewedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid?>("ReviewedByUserId")
-                        .HasColumnType("uuid");
-
-                    b.Property<int>("Status")
-                        .HasColumnType("integer");
-
-                    b.Property<Guid?>("TenantId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("TenantId");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("GrantCallId");
-
-                    b.HasIndex("Status", "CreationTime");
-
-                    b.HasIndex("TenantId", "GrantCallId", "Status");
-
-                    b.ToTable("AppGrantInterests", (string)null);
-                });
-
             modelBuilder.Entity("Apya.Platform.Grants.GrantLead", b =>
                 {
                     b.Property<Guid>("Id")
@@ -13037,15 +12952,6 @@ namespace Apya.Platform.Migrations
                     b.HasOne("Apya.Platform.Grants.Grant", null)
                         .WithMany("EligibleCostItems")
                         .HasForeignKey("GrantId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
-            modelBuilder.Entity("Apya.Platform.Grants.GrantInterest", b =>
-                {
-                    b.HasOne("Apya.Platform.Grants.GrantCall", null)
-                        .WithMany()
-                        .HasForeignKey("GrantCallId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });

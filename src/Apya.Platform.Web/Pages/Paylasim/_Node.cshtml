@@ -52,6 +52,25 @@ else
     </form>
 }
 
+@* Ekibin bu görevde dışarıya AÇTIĞI formlar. Hiç yoksa başlık da basılmaz —
+   misafire kullanamayacağı boş bir bölüm göstermenin anlamı yok. Adresteki
+   token ve görev YETKİ TAŞIMAZ; sunucu gönderimde ikisini de yeniden doğrular. *@
+@if (node.Forms.Count > 0)
+{
+    <h3>Formlar</h3>
+    foreach (var form in node.Forms)
+    {
+        <div class="item">
+            <div>
+                <div>@form.Title</div>
+                <div class="meta">doldurmanız isteniyor</div>
+            </div>
+            <a class="dl"
+               href="/f/@form.Slug?shareToken=@Uri.EscapeDataString(token ?? string.Empty)&amp;taskId=@node.Id">Doldur</a>
+        </div>
+    }
+}
+
 <h3>Dosyalar</h3>
 @if (node.Attachments.Count == 0)
 {

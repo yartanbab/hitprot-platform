@@ -4471,6 +4471,12 @@ namespace Apya.Platform.Migrations
                     b.Property<string>("TagsJson")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<Guid?>("TaskId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("TaskShareLinkId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<Guid?>("TenantId")
                         .HasColumnType("uniqueidentifier")
                         .HasColumnName("TenantId");
@@ -4480,6 +4486,8 @@ namespace Apya.Platform.Migrations
                     b.HasIndex("DocumentId");
 
                     b.HasIndex("RespondentId");
+
+                    b.HasIndex("TaskId", "DocumentId");
 
                     b.HasIndex("TenantId", "Status");
 
@@ -9800,6 +9808,42 @@ namespace Apya.Platform.Migrations
                         .IsUnique();
 
                     b.ToTable("AppTaskFeatureAssignments", (string)null);
+                });
+
+            modelBuilder.Entity("Apya.Platform.Tasks.TaskFormLink", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreationTime")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("CreationTime");
+
+                    b.Property<Guid?>("CreatorId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("CreatorId");
+
+                    b.Property<Guid>("DocumentId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("IsGuestFillable")
+                        .HasColumnType("bit");
+
+                    b.Property<Guid>("TaskId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("TenantId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("TenantId");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DocumentId");
+
+                    b.HasIndex("TaskId", "DocumentId")
+                        .IsUnique();
+
+                    b.ToTable("AppTaskFormLinks", (string)null);
                 });
 
             modelBuilder.Entity("Apya.Platform.Tasks.TaskItem", b =>

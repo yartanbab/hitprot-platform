@@ -38,6 +38,9 @@ namespace Apya.Platform.Tasks
         private readonly IRepository<TaskFeatureAssignment, Guid> _featureAssignmentRepository;
         private readonly IRepository<TaskChecklistItem, Guid> _checklistRepository;
         private readonly IRepository<TaskDocument, Guid> _documentRepository;
+        private readonly IRepository<TaskFormLink, Guid> _formLinkRepository;
+        private readonly IRepository<Apya.Platform.DynamicAssets.AppDocument, Guid> _appDocumentRepository;
+        private readonly IRepository<Apya.Platform.DynamicAssets.AppResponse, Guid> _appResponseRepository;
         private readonly IRepository<TaskFavorite, Guid> _favoriteRepository;
         private readonly IRepository<TaskWatcher, Guid> _watcherRepository;
         private readonly TaskManager _taskManager;
@@ -64,6 +67,9 @@ namespace Apya.Platform.Tasks
             IRepository<TaskFeatureAssignment, Guid> featureAssignmentRepository,
             IRepository<TaskChecklistItem, Guid> checklistRepository,
             IRepository<TaskDocument, Guid> documentRepository,
+            IRepository<TaskFormLink, Guid> formLinkRepository,
+            IRepository<Apya.Platform.DynamicAssets.AppDocument, Guid> appDocumentRepository,
+            IRepository<Apya.Platform.DynamicAssets.AppResponse, Guid> appResponseRepository,
             IRepository<TaskFavorite, Guid> favoriteRepository,
             IRepository<TaskWatcher, Guid> watcherRepository,
             TaskManager taskManager,
@@ -91,6 +97,9 @@ namespace Apya.Platform.Tasks
             _featureAssignmentRepository = featureAssignmentRepository;
             _checklistRepository   = checklistRepository;
             _documentRepository    = documentRepository;
+            _formLinkRepository    = formLinkRepository;
+            _appDocumentRepository = appDocumentRepository;
+            _appResponseRepository = appResponseRepository;
             _favoriteRepository    = favoriteRepository;
             _watcherRepository     = watcherRepository;
             _taskManager           = taskManager;
@@ -1319,6 +1328,172 @@ namespace Apya.Platform.Tasks
             }
         }
 
+        // --- FORMLAR (TaskFormLink → DynamicAssets.AppDocument) ---
+        // Form kopyalanmaz, BAĞ kurulur: aynı form birden çok göreve bağlanabilir.
+        // Yetki kapısı görevin kendisi (EnsureTaskAccessAllowedAsync = tenant +
+        // gizlilik); yazma uçları ayrıca Tasks.Edit ister.
+
+        public async Task<List<TaskFormLinkDto>> GetLinkedFormsAsync(Guid taskId)
+        {
+            await EnsureTaskAccessAllowedAsync(taskId);
+
+            var links = (await _formLinkRepository.GetListAsync(x => x.TaskId == taskId))
+                .OrderBy(x => x.CreationTime)
+                .ToList();
+            if (links.Count == 0) { return new List<TaskFormLinkDto>(); }
+
+            var docIds = links.Select(l => l.DocumentId).Distinct().ToList();
+
+            var docQuery = await _appDocumentRepository.GetQueryableAsync();
+            var docs = (await AsyncExecuter.ToListAsync(
+                    docQuery.Where(d => docIds.Contains(d.Id))
+                            .Select(d => new { d.Id, d.Title, d.Slug, d.Status })))
+                .ToDictionary(d => d.Id);
+
+            // Yanıt sayısı TEK GroupBy ile — form başına ayrı sorgu N+1 olurdu.
+            // Süzgeç (TaskId, DocumentId) bileşik indeksini kullanır.
+            var respQuery = await _appResponseRepository.GetQueryableAsync();
+            var counts = (await AsyncExecuter.ToListAsync(
+                    respQuery.Where(r => r.TaskId == taskId && docIds.Contains(r.DocumentId))
+                             .GroupBy(r => r.DocumentId)
+                             .Select(g => new { DocumentId = g.Key, Count = g.Count() })))
+                .ToDictionary(x => x.DocumentId, x => x.Count);
+
+            return links.Select(l =>
+            {
+                var doc = docs.GetValueOrDefault(l.DocumentId);
+                var yayinda = doc?.Status == Apya.Platform.DynamicAssets.FormStatus.Published;
+                return new TaskFormLinkDto
+                {
+                    Id = l.Id,
+                    TaskId = l.TaskId,
+                    DocumentId = l.DocumentId,
+                    // Form silinmişse bağ ortada kalır; adını uydurmak yerine durumu söyle.
+                    Title = doc?.Title ?? "(form silinmiş)",
+                    Slug = yayinda ? doc?.Slug : null,
+                    IsPublished = yayinda,
+                    IsGuestFillable = l.IsGuestFillable,
+                    ResponseCount = counts.GetValueOrDefault(l.DocumentId, 0),
+                    CreationTime = l.CreationTime
+                };
+            }).ToList();
+        }
+
+        public async Task<List<TaskFormOptionDto>> GetFormOptionsAsync(Guid taskId)
+        {
+            await EnsureTaskAccessAllowedAsync(taskId);
+
+            var linked = (await _formLinkRepository.GetListAsync(x => x.TaskId == taskId))
+                .Select(x => x.DocumentId).ToHashSet();
+
+            // Şablonlar seçicide çıkmaz: şablon doldurulacak bir form değil, form üretme kalıbıdır.
+            var docQuery = await _appDocumentRepository.GetQueryableAsync();
+            var docs = await AsyncExecuter.ToListAsync(
+                docQuery.Where(d => !d.IsTemplate
+                                 && d.Status != Apya.Platform.DynamicAssets.FormStatus.Archived)
+                        .OrderBy(d => d.Title)
+                        .Select(d => new { d.Id, d.Title, d.Status }));
+
+            return docs.Select(d => new TaskFormOptionDto
+            {
+                DocumentId = d.Id,
+                Title = d.Title,
+                IsPublished = d.Status == Apya.Platform.DynamicAssets.FormStatus.Published,
+                IsLinked = linked.Contains(d.Id)
+            }).ToList();
+        }
+
+        public async Task<TaskFormLinkDto> LinkFormAsync(Guid taskId, Guid documentId)
+        {
+            await CheckPolicyAsync(PlatformPermissions.Tasks.Edit);
+            await EnsureTaskAccessAllowedAsync(taskId);
+
+            // Formun VARLIĞI ve kiracıya aitliği burada doğrulanır; GetAsync tenant
+            // süzgecinden geçer, başka kiracının formu bulunamaz.
+            var doc = await _appDocumentRepository.GetAsync(documentId);
+
+            if (await _formLinkRepository.AnyAsync(x => x.TaskId == taskId && x.DocumentId == documentId))
+            {
+                throw new Volo.Abp.UserFriendlyException(
+                    "Bu form göreve zaten bağlı.", "Platform:Task:FormAlreadyLinked");
+            }
+
+            await _formLinkRepository.InsertAsync(
+                new TaskFormLink(GuidGenerator.Create(), taskId, doc.Id), autoSave: true);
+
+            // Tek kaynaktan dön: sayaç/başlık/yayın durumu aynı kuralla hesaplansın.
+            return (await GetLinkedFormsAsync(taskId)).First(x => x.DocumentId == documentId);
+        }
+
+        public async Task UnlinkFormAsync(Guid linkId)
+        {
+            await CheckPolicyAsync(PlatformPermissions.Tasks.Edit);
+
+            var link = await _formLinkRepository.GetAsync(linkId);
+            await EnsureTaskAccessAllowedAsync(link.TaskId);
+
+            // YALNIZ bağ silinir. Form da, toplanmış yanıtlar da yerinde kalır —
+            // bağı kaldırmak "bu formu artık bu görevde kullanmıyoruz" demektir,
+            // toplanmış veriyi silmek değil.
+            await _formLinkRepository.DeleteAsync(link, autoSave: true);
+        }
+
+        public async Task SetFormGuestFillableAsync(Guid linkId, bool isGuestFillable)
+        {
+            await CheckPolicyAsync(PlatformPermissions.Tasks.Edit);
+
+            var link = await _formLinkRepository.GetAsync(linkId);
+            await EnsureTaskAccessAllowedAsync(link.TaskId);
+
+            // Ekip dışına açmak ayrı bir yetki: paylaşım linki üretmekle aynı kapı.
+            if (isGuestFillable)
+            {
+                await CheckPolicyAsync(PlatformPermissions.Tasks.ShareExternally);
+            }
+
+            link.SetGuestFillable(isGuestFillable);
+            await _formLinkRepository.UpdateAsync(link, autoSave: true);
+        }
+
+        public async Task<List<TaskFormResponseDto>> GetFormResponsesAsync(Guid taskId, Guid documentId)
+        {
+            await EnsureTaskAccessAllowedAsync(taskId);
+
+            var respQuery = await _appResponseRepository.GetQueryableAsync();
+            var rows = await AsyncExecuter.ToListAsync(
+                respQuery.Where(r => r.TaskId == taskId && r.DocumentId == documentId)
+                         .OrderByDescending(r => r.CreationTime)
+                         .Select(r => new
+                         {
+                             r.Id, r.DocumentId, r.CreationTime, r.Status,
+                             r.RespondentId, r.TaskShareLinkId
+                         }));
+            if (rows.Count == 0) { return new List<TaskFormResponseDto>(); }
+
+            var userNames = await ResolveUserNamesAsync(rows.Select(r => r.RespondentId));
+
+            // Misafirin kullanıcı kaydı YOKTUR; adı paylaşım linkinin alıcısından
+            // çözülür (GetAttachmentsAsync ile aynı kural).
+            var linkIds = rows.Where(r => r.TaskShareLinkId.HasValue)
+                              .Select(r => r.TaskShareLinkId!.Value).Distinct().ToList();
+            var recipients = linkIds.Count == 0
+                ? new Dictionary<Guid, string>()
+                : (await _shareLinkRepository.GetListAsync(l => linkIds.Contains(l.Id)))
+                    .ToDictionary(l => l.Id, l => l.RecipientName);
+
+            return rows.Select(r => new TaskFormResponseDto
+            {
+                Id = r.Id,
+                DocumentId = r.DocumentId,
+                CreationTime = r.CreationTime,
+                Status = r.Status,
+                IsGuestSubmission = r.TaskShareLinkId.HasValue,
+                RespondentName = r.TaskShareLinkId.HasValue
+                    ? recipients.GetValueOrDefault(r.TaskShareLinkId.Value, "Dış katılımcı")
+                    : NameOf(userNames, r.RespondentId)
+            }).ToList();
+        }
+
         // --- BELGELER (TaskDocument) ---
         // Yetki kapısı görevin KENDİSİ: EnsureTaskAccessAllowedAsync tenant + gizlilik
         // süzgecini uygular, yazma uçları ayrıca Tasks.Edit ister. Ayrı bir belge izni
@@ -1697,5 +1872,4 @@ namespace Apya.Platform.Tasks
         }
     }
 }
-
 
