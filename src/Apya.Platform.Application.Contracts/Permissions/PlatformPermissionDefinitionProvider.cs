@@ -193,6 +193,13 @@ public class PlatformPermissionDefinitionProvider : PermissionDefinitionProvider
         var registrationRequestsPermission = systemGroup.AddPermission(PlatformPermissions.RegistrationRequests.Default, L("Permission:RegistrationRequests"));
         registrationRequestsPermission.AddChild(PlatformPermissions.RegistrationRequests.Manage, L("Permission:RegistrationRequests.Manage"));
 
+        // Faturalama — PARGETTO'nun kiracıya kestiği fatura. Kiracının kendi faturalarıyla
+        // (Invoices izni) ilgisi yoktur, bu yüzden host-only.
+        var billingPermission = systemGroup.AddPermission(
+            PlatformPermissions.Billing.Default, L("Permission:Billing"), MultiTenancySides.Host);
+        billingPermission.AddChild(
+            PlatformPermissions.Billing.Manage, L("Permission:Billing.Manage"), MultiTenancySides.Host);
+
         // Sürüm notu yayın onayı — karar TÜM kiracılar için tektir ve host bağlamında
         // verilir; kiracı yöneticisine sızmasın diye MultiTenancySides.Host.
         systemGroup.AddPermission(

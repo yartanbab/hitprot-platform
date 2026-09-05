@@ -783,6 +783,10 @@ public class PlatformNavigationResolver : IScopedDependency
         // bu yüzden düzen bozulmaz; öğe yalnızca varsayılan yerinde yeniden belirir.
         if (await _permission.IsGrantedAsync(PlatformPermissions.RegistrationRequests.Default))
             platform.AddItem(new ApplicationMenuItem("Apya.Platform.RegistrationRequests", l["Menu:RegistrationRequests"], icon: "fa fa-file-signature", url: "/Admin/RegistrationRequests"));
+        // Host'un kiracıya kestiği faturalar. Kiracının kendi faturalarıyla (Finans & Bütçe
+        // altındaki Faturalar) karıştırılmasın diye kayıt taleplerinin yanında duruyor.
+        if (await _permission.IsGrantedAsync(PlatformPermissions.Billing.Default))
+            platform.AddItem(new ApplicationMenuItem("Apya.Platform.Billing", l["Menu:Billing"], icon: "fa fa-file-invoice", url: "/Admin/Billing"));
         // Sürüm notu yayın onayı — host-only izin; kiracıda hiç görünmez.
         if (await _permission.IsGrantedAsync(PlatformPermissions.ReleaseNotes.Manage))
             platform.AddItem(new ApplicationMenuItem("Apya.Platform.ReleaseNotesAdmin", l["Menu:ReleaseNotesAdmin"], icon: "fa fa-stamp", url: "/Admin/ReleaseNotes"));

@@ -195,6 +195,13 @@ public static class PlatformPermissions
         public const string Manage = Default + ".Manage";                   // Durum / paket / bedel / iç not
     }
 
+    // --- FATURALAMA YETKİLERİ (host → kiracı) ---
+    public static class Billing
+    {
+        public const string Default = GroupName + ".Billing";   // Fatura listesini görüntüleme
+        public const string Manage = Default + ".Manage";       // Fatura açma / belge ekleme / tahsilat onaylama
+    }
+
     // --- SÜRÜM NOTU YAYIN ONAYI (host) ---
     public static class ReleaseNotes
     {

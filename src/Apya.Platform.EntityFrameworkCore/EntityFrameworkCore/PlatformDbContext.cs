@@ -206,6 +206,10 @@ namespace Apya.Platform.EntityFrameworkCore
         /* --- HİZMET PROTOKOLLERİ (host ↔ kiracı sözleşmesi) --- */
         public DbSet<Apya.Platform.Agreements.ServiceAgreement> ServiceAgreements { get; set; }
 
+        /* --- FATURALAMA (host → kiracı) --- */
+        public DbSet<Apya.Platform.Billing.SubscriptionInvoice> SubscriptionInvoices { get; set; }
+        public DbSet<Apya.Platform.Billing.SubscriptionPayment> SubscriptionPayments { get; set; }
+
         /* --- SÜRÜM NOTU YAYIN KARARLARI (host) --- */
         public DbSet<Apya.Platform.ReleaseNotes.ReleaseNotePublication> ReleaseNotePublications { get; set; }
 
@@ -2224,6 +2228,49 @@ namespace Apya.Platform.EntityFrameworkCore
                 b.HasIndex(x => x.TenantId);
                 // Yeniden deneme yolu: bu talebin sözleşmesi zaten var mı?
                 b.HasIndex(x => x.RegistrationRequestId).IsUnique();
+            });
+
+            /* --- FATURALAMA YAPILANDIRMASI --- */
+            builder.Entity<Apya.Platform.Billing.SubscriptionInvoice>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "SubscriptionInvoices", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+
+                b.Property(x => x.Number).IsRequired().HasMaxLength(Apya.Platform.Billing.BillingConsts.MaxNumberLength);
+                b.Property(x => x.OfficialNumber).HasMaxLength(Apya.Platform.Billing.BillingConsts.MaxOfficialNumberLength);
+                b.Property(x => x.Notes).HasMaxLength(Apya.Platform.Billing.BillingConsts.MaxNotesLength);
+                b.Property(x => x.FileName).HasMaxLength(Apya.Platform.Billing.BillingConsts.MaxFileNameLength);
+                b.Property(x => x.StoredFileName).HasMaxLength(Apya.Platform.Billing.BillingConsts.MaxStoredFileNameLength);
+                b.Property(x => x.NetAmount).HasColumnType("decimal(18,2)");
+                b.Property(x => x.VatRate).HasColumnType("decimal(5,2)");
+
+                // Tahsilatlar faturanın parçası: fatura silinirse birlikte gider.
+                b.HasMany(x => x.Payments)
+                 .WithOne()
+                 .HasForeignKey(p => p.InvoiceId)
+                 .OnDelete(DeleteBehavior.Cascade);
+
+                // İç takip numarası benzersiz. Kayıt soft-delete DEĞİL (fatura silinmez,
+                // iptal edilir) → filtresiz tekil indeks güvenli.
+                b.HasIndex(x => x.Number).IsUnique();
+
+                // Kiracının "faturalarım" sorgusu ve host listesinin varsayılan sıralaması.
+                b.HasIndex(x => new { x.TenantId, x.IssueDate });
+                // Vadesi geçenler taraması.
+                b.HasIndex(x => new { x.Status, x.DueDate });
+            });
+
+            builder.Entity<Apya.Platform.Billing.SubscriptionPayment>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "SubscriptionPayments", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+
+                b.Property(x => x.Reference).HasMaxLength(Apya.Platform.Billing.BillingConsts.MaxReferenceLength);
+                b.Property(x => x.FileName).HasMaxLength(Apya.Platform.Billing.BillingConsts.MaxFileNameLength);
+                b.Property(x => x.StoredFileName).HasMaxLength(Apya.Platform.Billing.BillingConsts.MaxStoredFileNameLength);
+                b.Property(x => x.Amount).HasColumnType("decimal(18,2)");
+
+                b.HasIndex(x => x.InvoiceId);
             });
 
             /* --- SÜRÜM NOTU YAYIN KARARLARI --- */

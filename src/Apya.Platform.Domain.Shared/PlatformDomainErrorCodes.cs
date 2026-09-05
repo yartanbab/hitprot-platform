@@ -285,6 +285,15 @@ public static class PlatformDomainErrorCodes
     public const string RegistrationRequestNotApproved = "Platform:RegistrationRequest:NotApproved";
     public const string RegistrationRequestAlreadyProvisioned = "Platform:RegistrationRequest:AlreadyProvisioned";
 
+    // --- Faturalama (Billing) Modülü ---
+    public const string BillingAmountInvalid = "Platform:Billing:AmountInvalid";
+    public const string BillingInvoiceCancelled = "Platform:Billing:InvoiceCancelled";
+    public const string BillingInvoiceHasPayment = "Platform:Billing:InvoiceHasPayment";
+    public const string BillingPaymentNotFound = "Platform:Billing:PaymentNotFound";
+    public const string BillingFileRequired = "Platform:Billing:FileRequired";
+    public const string BillingFileTooLarge = "Platform:Billing:FileTooLarge";
+    public const string BillingFileTypeNotAllowed = "Platform:Billing:FileTypeNotAllowed";
+
     // --- Hizmet Protokolü (Agreements) Modülü ---
     public const string AgreementInviteInvalid = "Platform:Agreement:InviteInvalid";
     public const string AgreementInviteExpired = "Platform:Agreement:InviteExpired";
