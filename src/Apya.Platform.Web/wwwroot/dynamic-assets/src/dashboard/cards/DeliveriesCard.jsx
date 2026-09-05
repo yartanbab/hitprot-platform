@@ -12,9 +12,9 @@ import { t } from '../../lib/i18n';
  * Aksiyon = navigasyon: satır tıklaması görev sayfasına gider, satır içi düzenleme yok.
  */
 
-const GROUP_ORDER = ['ThisWeek', 'NextWeek', 'EndOfMonth', 'Later'];
+export const GROUP_ORDER = ['ThisWeek', 'NextWeek', 'EndOfMonth', 'Later'];
 
-const GROUP_LABEL = {
+export const GROUP_LABEL = {
     ThisWeek:   ['Dashboard:Deliveries:ThisWeek', 'Bu hafta'],
     NextWeek:   ['Dashboard:Deliveries:NextWeek', 'Gelecek hafta'],
     EndOfMonth: ['Dashboard:Deliveries:EndOfMonth', 'Ay sonu'],

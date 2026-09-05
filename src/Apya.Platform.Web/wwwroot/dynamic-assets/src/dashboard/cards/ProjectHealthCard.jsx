@@ -8,7 +8,7 @@ import { t } from '../../lib/i18n';
 
 const VISIBLE_ROWS = 4;
 
-const STATE_BADGE = {
+export const STATE_BADGE = {
     Healthy:   ['bg-positive-50 text-positive-700',  'Dashboard:Health:Healthy',   'Sağlıklı'],
     Attention: ['bg-warning-50 text-warning-700',    'Dashboard:Health:Attention', 'Dikkat'],
     Risky:     ['bg-negative-50 text-negative-700',  'Dashboard:Health:Risky',     'Riskli'],

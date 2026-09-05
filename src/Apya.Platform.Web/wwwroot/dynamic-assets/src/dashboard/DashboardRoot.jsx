@@ -12,6 +12,7 @@ import {
     readViewPreference, writeViewPreference,
 } from './layouts/viewPresets';
 import { useDashboardLayout, useSaveLayout, useResetLayout } from './hooks/useDashboardLayout';
+import { DashboardPrintView } from './print/DashboardPrintView';
 import { CHART_TYPE_NUMBER_TREND } from './hooks/enums';
 
 import { Button } from '../components/ui';
@@ -36,6 +37,10 @@ function DashboardRoot() {
     const [editMode, setEditMode] = useState(false);
     const [catalogOpen, setCatalogOpen] = useState(false);
     const [draftCards, setDraftCards] = useState(null); /* düzenleme modunda kaydedilmemiş düzen */
+    /* 'idle' → baskı görünümü hiç mount edilmedi (sekiz sorgusunun hiçbiri atılmadı);
+       'preparing' → mount edildi, veriler bekleniyor; 'ready' → en az bir kez basıldı. */
+    const [printState, setPrintState] = useState('idle');
+    const printedRef = useRef(false);
 
     const layoutQuery = useDashboardLayout(viewKey);
     const saveLayout = useSaveLayout();
@@ -84,6 +89,25 @@ function DashboardRoot() {
         () => ({ desktop: cards.map((card) => toGridItem(card, strip.h)) }),
         [cards, strip.h],
     );
+
+    /* Baskı görünümü ekrandaki kartlardan BAĞIMSIZ, sekiz bölümü birden basar.
+       Sayfayla birlikte mount edilseydi görünümde OLMAYAN kartların sorguları da
+       her açılışta atılırdı — düzenin sayfaya gömülmesiyle kazanılan turu geri
+       verirdi (bkz IndexModel). Bu yüzden mount ilk 'Yazdır'a ertelenir. */
+    const handlePrint = useCallback(() => {
+        if (printState === 'ready') { window.print(); return; }
+        setPrintState((current) => (current === 'idle' ? 'preparing' : current));
+    }, [printState]);
+
+    /* Veriler oturunca baskı diyaloğunu BİR KEZ aç. requestAnimationFrame şart:
+       DOM commit edildi ama tarayıcı henüz düzenlemedi; aynı tik içinde print()
+       çağırmak yarım çizilmiş çıktı riski taşıyor. */
+    const handlePrintReady = useCallback(() => {
+        if (printedRef.current) return;
+        printedRef.current = true;
+        setPrintState('ready');
+        window.requestAnimationFrame(() => window.print());
+    }, []);
 
     const handleViewChange = useCallback((next) => {
         setViewKey(next);
@@ -158,6 +182,8 @@ function DashboardRoot() {
                 canEdit={canEdit}
                 onToggleEdit={() => setEditMode((v) => !v)}
                 onOpenCatalog={() => setCatalogOpen(true)}
+                onPrint={handlePrint}
+                printState={printState}
             />
 
             {editMode && (
@@ -239,6 +265,11 @@ function DashboardRoot() {
                 />
             </main>
 
+            {/* Ekranda görünmez (hidden print:block) — yalnız kağıda çıkar. */}
+            {printState !== 'idle' && (
+                <DashboardPrintView viewKey={viewKey} range={range} onReady={handlePrintReady} />
+            )}
+
             <CardCatalog
                 open={catalogOpen}
                 onOpenChange={setCatalogOpen}
@@ -286,7 +317,10 @@ function NativeStack({ tier, cards, filter, strip }) {
     );
 }
 
-function PageHeader({ viewKey, onViewChange, range, onRangeChange, editMode, canEdit, onToggleEdit, onOpenCatalog }) {
+function PageHeader({
+    viewKey, onViewChange, range, onRangeChange,
+    editMode, canEdit, onToggleEdit, onOpenCatalog, onPrint, printState,
+}) {
     const activeView = VIEWS.find((v) => v.key === viewKey) ?? VIEWS[0];
 
     /* Yatay dolgu `main` ile AYNI (18px): başlık, kartların sol/sağ rayına
@@ -330,6 +364,19 @@ function PageHeader({ viewKey, onViewChange, range, onRangeChange, editMode, can
             <div className="flex items-center gap-2 flex-none mobile:flex-wrap">
                 <ViewSelect value={viewKey} onChange={onViewChange} />
                 <RangeSelect value={range} onChange={onRangeChange} />
+                {/* Düzenleme düğmelerinin AKSİNE dar ekranda da durur: çıktı almak
+                    masaüstüne özgü bir iş değil. */}
+                <Button
+                    size="sm"
+                    variant="secondary"
+                    onClick={onPrint}
+                    disabled={printState === 'preparing'}
+                    title={t('Dashboard:Print:Hint', 'A4 yatay · tüm bölümler, kırpılmadan')}
+                >
+                    {printState === 'preparing'
+                        ? t('Dashboard:Print:Preparing', 'Hazırlanıyor…')
+                        : t('Dashboard:Print:Action', 'Yazdır')}
+                </Button>
                 {canEdit && (
                     <>
                         <Button size="sm" variant="secondary" onClick={onOpenCatalog}>

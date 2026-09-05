@@ -93,9 +93,13 @@
 }
 
 /* ---------------------------------------------------------------------------
-   Takvim baskı çıktısı (Faz 8) — A4 YATAY, iki sayfa.
+   Baskı çıktıları — A4 YATAY. Takvim (Faz 8) ve Dashboard aynı iskeleti paylaşır.
    Tailwind ile ifade EDİLEMEZ: @page kuralı ve ekran arayüzünü baskıda tamamen
    gizlemek. Kapsam .apya-print-* ile sınırlı; başka sayfaların baskısına sızmaz.
+
+   @page TEK OLMALI: index.css bütün island'lara giriyor ve @page seçiciyle
+   daraltılamaz — ikinci bir kural yazılsa GLOBAL kazanır, takvimin yönünü de
+   değiştirirdi. Yatay ikisine de uyuyor (takvim 7 kolon, dashboard geniş tablo).
 --------------------------------------------------------------------------- */
 @media print {
     @page {
@@ -103,8 +107,9 @@
         margin: 10mm;
     }
 
-    /* Ekran arayüzü (araç çubuğu, ray, drawer'lar) baskıda YOK. */
-    #apya-calendar-root > div > *:not(.apya-print-root) {
+    /* Ekran arayüzü (araç çubuğu, ray, drawer'lar, kart ızgarası) baskıda YOK. */
+    #apya-calendar-root > div > *:not(.apya-print-root),
+    #apya-dashboard-root > div > *:not(.apya-print-root) {
         display: none !important;
     }
 
@@ -118,6 +123,17 @@
         display: block !important;
         color: #111;
         background: #fff;
+
+        /* Nötr token'lar KOYU TEMADA tersine döner (tokens.css: neutral-200
+           rgba(255,255,255,.14), neutral-700 #D4D4D8). Kağıt her zaman beyaz
+           olduğu için o değerlerle çizgiler ve gri metinler GÖRÜNMEZ oluyordu.
+           Çıktı temadan bağımsız olsun diye açık tema değerleri sabitlenir. */
+        --apya-neutral-100: #F3F4F6;
+        --apya-neutral-200: #E5E7EB;
+        --apya-neutral-300: #D1D5DB;
+        --apya-neutral-400: #9CA3AF;
+        --apya-neutral-500: #6B7280;
+        --apya-neutral-700: #374151;
     }
 
     .apya-print-page {
@@ -134,5 +150,16 @@
     .apya-print-root * {
         background: transparent !important;
         box-shadow: none !important;
+    }
+
+    /* Dashboard listelerinin uzunluğu sınırsız; bir tablo ikinci kağıda
+       taşarsa sütun adı olmayan sayı okunmaz. Başlık her sayfada tekrarlanır,
+       satırlar sayfa sınırında ortadan bölünmez. */
+    .apya-print-root thead {
+        display: table-header-group;
+    }
+
+    .apya-print-root tr {
+        break-inside: avoid;
     }
 }
