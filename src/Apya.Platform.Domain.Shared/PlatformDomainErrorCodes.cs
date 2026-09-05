@@ -282,4 +282,12 @@ public static class PlatformDomainErrorCodes
     // --- Kayıt Talebi (RegistrationRequests) Modülü ---
     public const string RegistrationRequestRateLimitExceeded = "Platform:RegistrationRequest:RateLimitExceeded";
     public const string RegistrationRequestOfferAmountInvalid = "Platform:RegistrationRequest:OfferAmountInvalid";
+    public const string RegistrationRequestNotApproved = "Platform:RegistrationRequest:NotApproved";
+    public const string RegistrationRequestAlreadyProvisioned = "Platform:RegistrationRequest:AlreadyProvisioned";
+
+    // --- Hizmet Protokolü (Agreements) Modülü ---
+    public const string AgreementInviteInvalid = "Platform:Agreement:InviteInvalid";
+    public const string AgreementInviteExpired = "Platform:Agreement:InviteExpired";
+    public const string AgreementConsentRequired = "Platform:Agreement:ConsentRequired";
+    public const string AgreementTenantNameTaken = "Platform:Agreement:TenantNameTaken";
 }

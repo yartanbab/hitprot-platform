@@ -2,12 +2,15 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Apya.Platform.Agreements;
 using Apya.Platform.Permissions;
 using Apya.Platform.RegistrationRequests.Dtos;
+using Apya.Platform.Tenants;
 using Microsoft.AspNetCore.Authorization;
 using Volo.Abp;
 using Volo.Abp.Application.Dtos;
 using Volo.Abp.Domain.Repositories;
+using Volo.Abp.Timing;
 
 namespace Apya.Platform.RegistrationRequests;
 
@@ -23,13 +26,19 @@ public class RegistrationRequestAppService : PlatformAppService, IRegistrationRe
 {
     private readonly IRepository<RegistrationRequest, Guid> _repository;
     private readonly RegistrationRequestManager _registrationRequestManager;
+    private readonly TenantProfileManager _tenantProfileManager;
+    private readonly IClock _clock;
 
     public RegistrationRequestAppService(
         IRepository<RegistrationRequest, Guid> repository,
-        RegistrationRequestManager registrationRequestManager)
+        RegistrationRequestManager registrationRequestManager,
+        TenantProfileManager tenantProfileManager,
+        IClock clock)
     {
         _repository = repository;
         _registrationRequestManager = registrationRequestManager;
+        _tenantProfileManager = tenantProfileManager;
+        _clock = clock;
     }
 
     [AllowAnonymous]
@@ -118,6 +127,33 @@ public class RegistrationRequestAppService : PlatformAppService, IRegistrationRe
         return ObjectMapper.Map<RegistrationRequest, RegistrationRequestDto>(request);
     }
 
+    [Authorize(PlatformPermissions.RegistrationRequests.Manage)]
+    public async Task<RegistrationInviteDto> IssueInviteAsync(Guid id)
+    {
+        var request = await _repository.GetAsync(id);
+
+        // Onaylanmamış bir talebe davet üretmek, protokolü henüz kabul etmediğimiz bir
+        // adaya sözleşme imzalatmak olurdu.
+        if (!request.CanIssueInvite)
+        {
+            throw new BusinessException(PlatformDomainErrorCodes.RegistrationRequestNotApproved);
+        }
+
+        // Vergi numarası kiracılar arasında TEKİL (TenantProfileManager kuralı). Burada
+        // bakılmazsa çakışma en son adımda patlar: aday protokolü okur, şifresini belirler,
+        // onaylar — ve hesap açılışı düşer. Host'a ŞİMDİ söylemek, kaydı düzeltme şansı verir.
+        await _tenantProfileManager.CheckTaxNumberUniqueAsync(request.TaxNumber);
+
+        var token = InviteToken.Generate();
+        var now = _clock.Now;
+        var expiresAt = now.AddDays(ServiceAgreementConsts.InviteValidDays);
+
+        request.IssueInvite(InviteToken.Hash(token), now, expiresAt);
+        await _repository.UpdateAsync(request, autoSave: true);
+
+        return new RegistrationInviteDto { Token = token, ExpiresAt = expiresAt };
+    }
+
     public async Task<RegistrationRequestSummaryDto> GetSummaryAsync()
     {
         var query = await _repository.GetQueryableAsync();
@@ -135,7 +171,9 @@ public class RegistrationRequestAppService : PlatformAppService, IRegistrationRe
             InReviewCount = CountOf(RegistrationRequestStatus.InReview),
             ApprovedCount = CountOf(RegistrationRequestStatus.Approved),
             RejectedCount = CountOf(RegistrationRequestStatus.Rejected),
-            ClosedCount = CountOf(RegistrationRequestStatus.Closed)
+            ClosedCount = CountOf(RegistrationRequestStatus.Closed),
+            AwaitingProtocolCount = CountOf(RegistrationRequestStatus.AwaitingProtocol),
+            AccountCreatedCount = CountOf(RegistrationRequestStatus.AccountCreated)
         };
     }
 

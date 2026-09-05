@@ -202,6 +202,9 @@ namespace Apya.Platform.EntityFrameworkCore
         /* --- KAYIT TALEPLERİ (giriş ekranı) --- */
         public DbSet<Apya.Platform.RegistrationRequests.RegistrationRequest> RegistrationRequests { get; set; }
 
+        /* --- HİZMET PROTOKOLLERİ (host ↔ kiracı sözleşmesi) --- */
+        public DbSet<Apya.Platform.Agreements.ServiceAgreement> ServiceAgreements { get; set; }
+
         /* --- SÜRÜM NOTU YAYIN KARARLARI (host) --- */
         public DbSet<Apya.Platform.ReleaseNotes.ReleaseNotePublication> ReleaseNotePublications { get; set; }
 
@@ -2168,10 +2171,45 @@ namespace Apya.Platform.EntityFrameworkCore
                 b.Property(x => x.UserAgent).HasMaxLength(Apya.Platform.RegistrationRequests.RegistrationRequestConsts.MaxUserAgentLength);
                 // Para alanı: teklif edilen yıllık bedel (TL). Kuruş hassasiyeti yeter.
                 b.Property(x => x.OfferedAmount).HasColumnType("decimal(18,2)");
+                b.Property(x => x.InviteTokenHash).HasMaxLength(Apya.Platform.Agreements.ServiceAgreementConsts.InviteTokenHashLength);
                 // Panelin varsayılan sorgusu: duruma göre süz, en yeniden eskiye sırala.
                 b.HasIndex(x => new { x.Status, x.CreationTime });
                 // Kötüye kullanım sayacı: aynı IP adresinin son bir saatteki talepleri.
                 b.HasIndex(x => new { x.IpAddress, x.CreationTime });
+                // Davet bağlantısının tek sorgusu: gelen jetonun özetini bul. Tekil DEĞİL —
+                // host yeni bağlantı üretince eski hash yerini yenisine bırakır, ama iki
+                // farklı talebin aynı özeti taşıması pratikte imkânsız olduğu için tekillik
+                // kısıtı eklemek yalnızca gereksiz bir kilitlenme noktası olurdu.
+                b.HasIndex(x => x.InviteTokenHash);
+            });
+
+            /* --- HİZMET PROTOKOLÜ YAPILANDIRMASI --- */
+            builder.Entity<Apya.Platform.Agreements.ServiceAgreement>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "ServiceAgreements", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+
+                b.Property(x => x.Number).IsRequired().HasMaxLength(Apya.Platform.Agreements.ServiceAgreementConsts.MaxNumberLength);
+                b.Property(x => x.TemplateVersion).IsRequired().HasMaxLength(Apya.Platform.Agreements.ServiceAgreementConsts.MaxTemplateVersionLength);
+                // Onaylanan metnin tamamı: uzunluk sınırı YOK, belge kırpılamaz.
+                b.Property(x => x.RenderedHtml).IsRequired();
+                b.Property(x => x.ContentHash).IsRequired().HasMaxLength(Apya.Platform.Agreements.ServiceAgreementConsts.MaxContentHashLength);
+                b.Property(x => x.ApproverName).IsRequired().HasMaxLength(Apya.Platform.Agreements.ServiceAgreementConsts.MaxApproverNameLength);
+                b.Property(x => x.ApproverTitle).IsRequired().HasMaxLength(Apya.Platform.Agreements.ServiceAgreementConsts.MaxApproverTitleLength);
+                b.Property(x => x.ApproverEmail).IsRequired().HasMaxLength(Apya.Platform.Agreements.ServiceAgreementConsts.MaxApproverEmailLength);
+                b.Property(x => x.ApprovedIp).HasMaxLength(Apya.Platform.Agreements.ServiceAgreementConsts.MaxIpAddressLength);
+                b.Property(x => x.ApprovedUserAgent).HasMaxLength(Apya.Platform.Agreements.ServiceAgreementConsts.MaxUserAgentLength);
+                b.Property(x => x.TerminationReason).HasMaxLength(Apya.Platform.Agreements.ServiceAgreementConsts.MaxTerminationReasonLength);
+                b.Property(x => x.Amount).HasColumnType("decimal(18,2)");
+                b.Property(x => x.SuccessFeePercent).HasColumnType("decimal(5,2)");
+
+                // Sözleşme numarası benzersiz. Kayıt soft-delete DEĞİL (AuditedAggregateRoot),
+                // bu yüzden filtresiz tekil indeks güvenli: silinen bir numara rezerve kalmaz.
+                b.HasIndex(x => x.Number).IsUnique();
+                // Kiracının "sözleşmem" sorgusu.
+                b.HasIndex(x => x.TenantId);
+                // Yeniden deneme yolu: bu talebin sözleşmesi zaten var mı?
+                b.HasIndex(x => x.RegistrationRequestId).IsUnique();
             });
 
             /* --- SÜRÜM NOTU YAYIN KARARLARI --- */

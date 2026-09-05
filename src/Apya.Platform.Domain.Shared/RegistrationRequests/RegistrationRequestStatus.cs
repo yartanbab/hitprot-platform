@@ -9,8 +9,10 @@ namespace Apya.Platform.RegistrationRequests;
 /// "elimize aldık" idi.
 /// </para>
 /// <para>
-/// Protokol onayı ve hesap açılışı durumları (Faz 2) BİLEREK yok: bugün onları
-/// üretecek bir akış olmadığı için panelde ölü seçenek olarak durmaları yanıltırdı.
+/// <see cref="AwaitingProtocol"/> ve <see cref="AccountCreated"/> host tarafından ELLE
+/// SEÇİLMEZ; akış onları kendisi yazar (davet üretilince / hesap açılınca). Panelde
+/// seçici bunları göstermez — elle "hesap açıldı" işaretlemek ortada hesap yokken
+/// süreci bitmiş gösterirdi.
 /// </para>
 /// </summary>
 public enum RegistrationRequestStatus
@@ -28,5 +30,17 @@ public enum RegistrationRequestStatus
     Approved = 3,
 
     /// <summary>Talep reddedildi. Gerekçe iç notta durur, adaya gösterilmez.</summary>
-    Rejected = 4
+    Rejected = 4,
+
+    /// <summary>
+    /// Davet bağlantısı üretildi, adayın protokolü onaylaması bekleniyor.
+    /// Akış yazar; host elle seçemez.
+    /// </summary>
+    AwaitingProtocol = 5,
+
+    /// <summary>
+    /// Protokol onaylandı ve kiracı hesabı açıldı — sürecin son durağı.
+    /// Akış yazar; host elle seçemez.
+    /// </summary>
+    AccountCreated = 6
 }

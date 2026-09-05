@@ -1,6 +1,8 @@
 using System;
 using System.Threading.Tasks;
 using Apya.Platform.Permissions;
+using Apya.Platform.Agreements;
+using Apya.Platform.Agreements.Dtos;
 using Apya.Platform.Tenants;
 using Microsoft.AspNetCore.Authorization;
 using Volo.Abp.AspNetCore.Mvc.UI.RazorPages;
@@ -19,16 +21,26 @@ namespace Apya.Platform.Web.Pages.Subscription;
 public class IndexModel : AbpPageModel
 {
     private readonly IMySubscriptionAppService _mySubscriptionAppService;
+    private readonly IMyAgreementAppService _myAgreementAppService;
 
-    public IndexModel(IMySubscriptionAppService mySubscriptionAppService)
+    public IndexModel(
+        IMySubscriptionAppService mySubscriptionAppService,
+        IMyAgreementAppService myAgreementAppService)
     {
         _mySubscriptionAppService = mySubscriptionAppService;
+        _myAgreementAppService = myAgreementAppService;
     }
 
     /// <summary>Host bağlamında paket kavramı yoktur — ekran bilgi notuna düşer.</summary>
     public bool IsHost { get; private set; }
 
     public MySubscriptionDto Subscription { get; private set; } = new();
+
+    /// <summary>
+    /// Kiracının hizmet protokolü. <c>null</c> = sözleşme YOK; protokol akışı devreye
+    /// girmeden önce kurulmuş kiracılar böyledir ve bu bir hata değildir.
+    /// </summary>
+    public MyAgreementDto? Agreement { get; private set; }
 
     public async Task OnGetAsync()
     {
@@ -39,6 +51,7 @@ public class IndexModel : AbpPageModel
         }
 
         Subscription = await _mySubscriptionAppService.GetAsync();
+        Agreement = await _myAgreementAppService.GetAsync();
     }
 
     /// <summary>

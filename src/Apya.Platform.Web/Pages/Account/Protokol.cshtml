@@ -1,0 +1,105 @@
+@page
+@using Apya.Platform.Localization
+@using Microsoft.AspNetCore.Mvc.Localization
+@model Apya.Platform.Web.Pages.Account.ProtokolModel
+@inject IHtmlLocalizer<PlatformResource> L
+@{
+    Layout = "~/Pages/Account/_ApyaAccountLayout.cshtml";
+    ViewBag.Title = L["Protokol:Title"].Value;
+}
+
+@if (Model.Invite == null)
+{
+    <p class="apya-auth__summary apya-auth__error">@Model.BlockingError</p>
+    <div class="apya-auth__row">
+        <a class="apya-auth__link" asp-page="./Login">&larr; @L["Protokol:BackToLogin"]</a>
+    </div>
+    return;
+}
+
+<p class="apya-auth__hint">@L["Protokol:Intro"]</p>
+
+<dl class="apya-wiz__summary">
+    <dt>@L["Protokol:Company"]</dt>
+    <dd>@Model.Invite.CompanyName</dd>
+    <dt>@L["Protokol:Authorized"]</dt>
+    <dd>@Model.Invite.FullName · @Model.Invite.AuthorizedTitle</dd>
+    <dt>@L["Protokol:Plan"]</dt>
+    <dd>@Model.Invite.PlanName</dd>
+    @if (Model.Invite.Amount.HasValue)
+    {
+        <dt>@L["Protokol:Amount"]</dt>
+        <dd>@Model.Invite.Amount.Value.ToString("N2") TL + KDV</dd>
+    }
+</dl>
+
+@if (Model.Invite.RequiresSecondTenant)
+{
+    <p class="apya-wiz__note">@L["Protokol:JointNote"]</p>
+}
+
+@* Belge kutusu. Kaydırma denetimi buna bağlı: kutu sonuna gelmeden onay kutuları
+   açılmaz (clickwrap'in "okuma fırsatı" şartı). *@
+<div class="apya-doc__frame" data-protocol-doc tabindex="0" role="document"
+     aria-label="@L["Protokol:DocumentLabel"]">
+    @Html.Raw(Model.Invite.PreviewHtml)
+</div>
+
+<p class="apya-doc__gate" data-protocol-gate>@L["Protokol:ScrollHint"]</p>
+
+<form method="post" data-protocol-form>
+    <div asp-validation-summary="ModelOnly" class="apya-auth__summary apya-auth__error"></div>
+
+    @* Jeton FORMLA taşınır ve adı Input.Token'dır.
+       🔴 Sayfa özelliği "Token" olarak taşınsaydı model bağlama Input.Token'ı BOŞ görür,
+       DTO'daki [Required] daha handler çalışmadan düşer ve POST sessizce sayfaya dönerdi
+       (ölçüldü: onay hiç kaydedilmiyordu). Handler içinde atamak GEÇ kalır — doğrulama
+       bağlama sırasında yapılır. *@
+    <input type="hidden" asp-for="Input.Token" />
+
+    @* Onay kutuları JS ile kilitlenir. JS yoksa açık gelirler: kilidi sunucuda taklit
+       edemeyiz (kaydırma istemci olayıdır) ve kilitli doğan bir kutu, JS'siz kullanıcının
+       formu HİÇ gönderememesi demek olurdu. Onayın kendisi sunucuda ayrıca denetlenir. *@
+    <div class="apya-auth__field">
+        <label class="apya-auth__check">
+            <input type="checkbox" asp-for="Input.AcceptAgreement" data-protocol-accept />
+            <span>@L["Protokol:AcceptAgreement"]</span>
+        </label>
+        <span class="apya-auth__error" asp-validation-for="Input.AcceptAgreement"></span>
+    </div>
+
+    <div class="apya-auth__field">
+        <label class="apya-auth__check">
+            <input type="checkbox" asp-for="Input.AcceptKvkk" data-protocol-accept />
+            <span>@L["Protokol:AcceptKvkk"]</span>
+        </label>
+        <span class="apya-auth__error" asp-validation-for="Input.AcceptKvkk"></span>
+    </div>
+
+    <p class="apya-auth__section">@L["Protokol:PasswordSection"]</p>
+    <p class="apya-auth__hint-inline">@L["Protokol:PasswordHint", Model.Invite.Email]</p>
+
+    <div class="apya-auth__field">
+        <label class="apya-auth__label" asp-for="Input.Password">@L["Protokol:Password"]</label>
+        <input class="apya-auth__input" asp-for="Input.Password" type="password"
+               autocomplete="new-password" />
+        <span class="apya-auth__error" asp-validation-for="Input.Password"></span>
+    </div>
+
+    <div class="apya-auth__field">
+        <label class="apya-auth__label" asp-for="Input.PasswordConfirm">@L["Protokol:PasswordConfirm"]</label>
+        <input class="apya-auth__input" asp-for="Input.PasswordConfirm" type="password"
+               autocomplete="new-password" />
+        <span class="apya-auth__error" asp-validation-for="Input.PasswordConfirm"></span>
+    </div>
+
+    <button class="apya-auth__submit" type="submit">@L["Protokol:Submit"]</button>
+</form>
+
+<div class="apya-auth__row">
+    <a class="apya-auth__link" asp-page="./Login">&larr; @L["Protokol:BackToLogin"]</a>
+</div>
+
+@section scripts {
+    <abp-script src="/Pages/Account/Protokol.js" />
+}

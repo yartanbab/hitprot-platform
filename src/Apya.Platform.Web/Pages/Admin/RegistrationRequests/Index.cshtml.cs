@@ -8,6 +8,7 @@ using Apya.Platform.Tenants;
 using Apya.Platform.Web.Pages;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Volo.Abp;
 
 namespace Apya.Platform.Web.Pages.Admin.RegistrationRequests;
 
@@ -87,6 +88,32 @@ public class IndexModel : PlatformPageModel
         return RedirectToPage(new { Status, Filter, PageIndex });
     }
 
+    /// <summary>
+    /// Protokol adımının davet bağlantısını üretir.
+    /// <para>
+    /// 🔐 Ham jeton veritabanında DURMAZ; yalnız burada, bir kez, host'un ekranına düşer.
+    /// Bağlantı <c>TempData</c> ile taşınır: sorgu dizesine konsaydı tarayıcı geçmişine ve
+    /// sunucu erişim loglarına yazılır, oradan da yetkisiz birine ulaşabilirdi.
+    /// </para>
+    /// </summary>
+    public async Task<IActionResult> OnPostIssueInviteAsync(Guid id)
+    {
+        try
+        {
+            var invite = await _registrationRequestAppService.IssueInviteAsync(id);
+
+            TempData["InviteLink"] = Url.Page("/Account/Protokol", null, new { token = invite.Token }, Request.Scheme);
+            TempData["InviteExpiresAt"] = invite.ExpiresAt.ToString("dd.MM.yyyy");
+            TempData["InviteRequestId"] = id.ToString();
+        }
+        catch (BusinessException ex) when (ex.Code == PlatformDomainErrorCodes.RegistrationRequestNotApproved)
+        {
+            TempData["InviteError"] = "Davet bağlantısı yalnız ONAYLANMIŞ talep için üretilebilir. Önce durumu \"Onaylandı\" yapın.";
+        }
+
+        return RedirectToPage(new { Status, Filter, PageIndex });
+    }
+
     private async Task LoadAsync()
     {
         if (PageIndex < 1)
@@ -114,7 +141,23 @@ public class IndexModel : PlatformPageModel
         RegistrationRequestStatus.InReview => "bg-warning text-dark",
         RegistrationRequestStatus.Approved => "bg-success",
         RegistrationRequestStatus.Rejected => "bg-danger",
+        RegistrationRequestStatus.AwaitingProtocol => "bg-info text-dark",
+        RegistrationRequestStatus.AccountCreated => "bg-dark",
         RegistrationRequestStatus.Closed => "bg-secondary",
         _ => "bg-secondary"
+    };
+
+    /// <summary>
+    /// Host'un ELLE seçebileceği durumlar. Protokol bekleme ve hesap açıldı durumları
+    /// akışa aittir: elle "hesap açıldı" işaretlemek, ortada kiracı yokken süreci bitmiş
+    /// gösterir ve davet bağlantısı üretmeyi de kilitlerdi.
+    /// </summary>
+    public static readonly RegistrationRequestStatus[] SelectableStatuses =
+    {
+        RegistrationRequestStatus.New,
+        RegistrationRequestStatus.InReview,
+        RegistrationRequestStatus.Approved,
+        RegistrationRequestStatus.Rejected,
+        RegistrationRequestStatus.Closed
     };
 }

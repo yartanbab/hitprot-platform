@@ -103,6 +103,10 @@ public class ConsentAppService : ApplicationService, IConsentAppService
         ConsentType.CookieNotice => ConsentConsts.CookiePolicyVersion,
         ConsentType.FormKvkk => ConsentConsts.KvkkPolicyVersion,
         ConsentType.AiTransfer => ConsentConsts.KvkkPolicyVersion,
+        // Protokol onayları KENDİ sürümünü taşır: metin değişince KVKK aydınlatmasından
+        // bağımsız artar, aksi halde hangi sözleşme metnine onay verildiği kaybolurdu.
+        ConsentType.ServiceAgreement => ConsentConsts.ServiceAgreementPolicyVersion,
+        ConsentType.ServiceAgreementKvkk => ConsentConsts.ServiceAgreementPolicyVersion,
         _ => ConsentConsts.KvkkPolicyVersion
     };
 }

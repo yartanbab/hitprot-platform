@@ -1,6 +1,7 @@
 @page
 @using System
 @using System.Globalization
+@using System.Linq
 @using Apya.Platform.RegistrationRequests
 @using Apya.Platform.Permissions
 @using Apya.Platform.Tenants
@@ -24,6 +25,8 @@
             <span class="badge bg-warning text-dark">İncelemede: @Model.Summary.InReviewCount</span>
             <span class="badge bg-success">Onaylı: @Model.Summary.ApprovedCount</span>
             <span class="badge bg-danger">Red: @Model.Summary.RejectedCount</span>
+            <span class="badge bg-info text-dark">Protokolde: @Model.Summary.AwaitingProtocolCount</span>
+            <span class="badge bg-dark">Hesap açıldı: @Model.Summary.AccountCreatedCount</span>
             <span class="badge bg-secondary">Kapalı: @Model.Summary.ClosedCount</span>
         </div>
     </div>
@@ -31,6 +34,36 @@
     @if (TempData["Saved"] != null)
     {
         <div class="alert alert-success" role="status">Talep güncellendi.</div>
+    }
+
+    @if (TempData["InviteError"] != null)
+    {
+        <div class="alert alert-warning" role="alert">@TempData["InviteError"]</div>
+    }
+
+    @if (TempData["InviteLink"] is string inviteLink)
+    {
+        @* 🔐 Bağlantı YALNIZ BURADA, bir kez görünür — jetonun kendisi veritabanında
+           saklanmaz. Sayfa yenilenince kaybolur; kaybedilirse yenisi üretilir. *@
+        <div class="alert alert-success" role="status">
+            <div class="fw-semibold mb-1">
+                <i class="fa fa-link me-1" aria-hidden="true"></i> Davet bağlantısı üretildi
+            </div>
+            <p class="small mb-2">
+                Bu bağlantı <strong>yalnız şimdi</strong> görünür ve
+                <strong>@TempData["InviteExpiresAt"]</strong> tarihine kadar geçerlidir.
+                Adaya iletin; protokolü onaylayıp hesabını kendisi açacak.
+            </p>
+            <div class="input-group input-group-sm">
+                <input type="text" class="form-control" readonly value="@inviteLink"
+                       id="invite-link" aria-label="Davet bağlantısı"
+                       onclick="this.select()" />
+                <button class="btn btn-outline-secondary" type="button"
+                        onclick="navigator.clipboard.writeText(document.getElementById('invite-link').value); this.textContent='Kopyalandı';">
+                    Kopyala
+                </button>
+            </div>
+        </div>
     }
 
     <form method="get" class="row g-2 align-items-end mb-3">
@@ -192,11 +225,20 @@
 
                                                 <div class="col-12">
                                                     <label class="form-label small" for="status-@item.Id">Durum</label>
+                                                    @* Akışa ait durumlar (protokol bekliyor / hesap açıldı) seçicide YOK;
+                                                       onları davet üretimi ve protokol onayı yazar. Kayıt hâlihazırda
+                                                       o durumdaysa listeye eklenir, yoksa "Kaydet" onu geri düşürürdü. *@
                                                     <select class="form-select form-select-sm" id="status-@item.Id" name="newStatus">
-                                                        @foreach (var status in Enum.GetValues<RegistrationRequestStatus>())
+                                                        @foreach (var status in Apya.Platform.Web.Pages.Admin.RegistrationRequests.IndexModel.SelectableStatuses)
                                                         {
                                                             <option value="@status" selected="@(status == item.Status)">
                                                                 @L["RegistrationRequest:Status:" + status]
+                                                            </option>
+                                                        }
+                                                        @if (!Apya.Platform.Web.Pages.Admin.RegistrationRequests.IndexModel.SelectableStatuses.Contains(item.Status))
+                                                        {
+                                                            <option value="@item.Status" selected>
+                                                                @L["RegistrationRequest:Status:" + item.Status]
                                                             </option>
                                                         }
                                                     </select>
@@ -242,6 +284,42 @@
                                                     </button>
                                                 </div>
                                             </form>
+
+                                            @* Davet üretimi AYRI form: değerlendirme formunun içine konsaydı
+                                               iki gönder düğmesi tek forma düşer ve Enter tuşu hangisini
+                                               tetikleyeceği tarayıcıya kalırdı. *@
+                                            <div class="border-top mt-3 pt-3">
+                                                @if (item.InviteUsedAt.HasValue)
+                                                {
+                                                    <div class="small text-success">
+                                                        <i class="fa fa-circle-check me-1" aria-hidden="true"></i>
+                                                        Hesap açıldı — @item.InviteUsedAt.Value.ToString("dd.MM.yyyy HH:mm")
+                                                    </div>
+                                                }
+                                                else
+                                                {
+                                                    <form method="post" asp-page-handler="IssueInvite">
+                                                        <input type="hidden" name="id" value="@item.Id" />
+                                                        <input type="hidden" name="Status" value="@Model.Status" />
+                                                        <input type="hidden" name="Filter" value="@Model.Filter" />
+                                                        <input type="hidden" name="PageIndex" value="@Model.PageIndex" />
+
+                                                        @if (item.HasPendingInvite)
+                                                        {
+                                                            <div class="small text-muted mb-2">
+                                                                Davet bağlantısı @item.InviteIssuedAt!.Value.ToString("dd.MM.yyyy HH:mm") tarihinde üretildi,
+                                                                @item.InviteExpiresAt!.Value.ToString("dd.MM.yyyy") tarihine kadar geçerli.
+                                                                Bağlantı bir daha gösterilemez; kayıpsa yenisini üretin (eskisi geçersizleşir).
+                                                            </div>
+                                                        }
+
+                                                        <button type="submit" class="btn btn-sm btn-outline-primary">
+                                                            <i class="fa fa-link me-1" aria-hidden="true"></i>
+                                                            @(item.HasPendingInvite ? "Yeni davet bağlantısı üret" : "Davet bağlantısı üret")
+                                                        </button>
+                                                    </form>
+                                                }
+                                            </div>
                                         }
                                         else
                                         {

@@ -117,6 +117,18 @@ public class RegistrationRequestDto : EntityDto<Guid>
     public string? IpAddress { get; set; }
     public DateTime CreationTime { get; set; }
     public DateTime? LastModificationTime { get; set; }
+
+    // --- Protokol adımı ---
+    // Ham jeton BURADA YOK ve olmamalı: panel listesi her açılışta görülür, jeton ise
+    // yalnız üretim anında bir kez gösterilir (RegistrationInviteDto).
+
+    public DateTime? InviteIssuedAt { get; set; }
+    public DateTime? InviteExpiresAt { get; set; }
+    public DateTime? InviteUsedAt { get; set; }
+    public Guid? TenantId { get; set; }
+
+    /// <summary>Davet üretilmiş ve henüz kullanılmamış mı?</summary>
+    public bool HasPendingInvite => InviteIssuedAt.HasValue && !InviteUsedAt.HasValue;
 }
 
 /// <summary>
@@ -147,6 +159,17 @@ public class UpdateRegistrationRequestDto
     public string? AdminNote { get; set; }
 }
 
+/// <summary>
+/// Üretilen davet bağlantısı. Ham jeton BURADA bir kez görünür; kayıtta yalnız özeti kalır.
+/// Host bu bağlantıyı kopyalayıp adaya iletir (SMTP yapılandırılınca e-postayla da gidebilir).
+/// </summary>
+public class RegistrationInviteDto
+{
+    public string Token { get; set; } = string.Empty;
+
+    public DateTime ExpiresAt { get; set; }
+}
+
 /// <summary>Panel başlığındaki durum rozetleri için sayımlar.</summary>
 public class RegistrationRequestSummaryDto
 {
@@ -155,6 +178,10 @@ public class RegistrationRequestSummaryDto
     public int ApprovedCount { get; set; }
     public int RejectedCount { get; set; }
     public int ClosedCount { get; set; }
+    public int AwaitingProtocolCount { get; set; }
+    public int AccountCreatedCount { get; set; }
 
-    public int TotalCount => NewCount + InReviewCount + ApprovedCount + RejectedCount + ClosedCount;
+    public int TotalCount =>
+        NewCount + InReviewCount + ApprovedCount + RejectedCount + ClosedCount
+        + AwaitingProtocolCount + AccountCreatedCount;
 }

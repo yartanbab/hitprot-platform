@@ -1,4 +1,5 @@
 using System;
+using Apya.Platform.Agreements;
 using Apya.Platform.Tenants;
 using Volo.Abp;
 using Volo.Abp.Domain.Entities.Auditing;
@@ -77,6 +78,30 @@ public class RegistrationRequest : AuditedAggregateRoot<Guid>
     public decimal? OfferedAmount { get; private set; }
 
     public string? Message { get; private set; }
+
+    // --- Davet bağlantısı (protokol adımının kapısı) ---
+
+    /// <summary>
+    /// Davet jetonunun SHA-256 hex özeti. 🔐 <b>Jetonun kendisi SAKLANMAZ</b> — veritabanı
+    /// sızsa bile bağlantılar kullanılamaz; doğrulama gelen jetonu hash'leyip karşılaştırarak
+    /// yapılır. Ham jeton host'a YALNIZ üretim anında bir kez gösterilir.
+    /// Emsal: <c>TaskShareLink</c>.
+    /// </summary>
+    public string? InviteTokenHash { get; private set; }
+
+    public DateTime? InviteIssuedAt { get; private set; }
+
+    public DateTime? InviteExpiresAt { get; private set; }
+
+    /// <summary>
+    /// Jeton ancak hesap AÇILDIKTAN sonra tüketilmiş sayılır. Protokol onaylanıp kiracı
+    /// oluşturma düşerse aday aynı bağlantıyı yeniden açıp tekrar deneyebilir; jetonu
+    /// onay anında yakmak, adayı elimizde bağlantı olmadan ortada bırakırdı.
+    /// </summary>
+    public DateTime? InviteUsedAt { get; private set; }
+
+    /// <summary>Hesap açıldıktan sonra doldurulur — talebin hangi kiracıyı doğurduğu.</summary>
+    public Guid? TenantId { get; private set; }
 
     public RegistrationRequestStatus Status { get; private set; }
 
@@ -177,6 +202,59 @@ public class RegistrationRequest : AuditedAggregateRoot<Guid>
     {
         AdminNote = Truncate(note, RegistrationRequestConsts.MaxAdminNoteLength);
     }
+
+    /// <summary>
+    /// Davet bağlantısını üretir ve talebi protokol beklemeye alır. Tekrar çağrılabilir:
+    /// bağlantı kaybolduysa host yenisini üretir, eskisi geçersizleşir (hash değişir).
+    /// </summary>
+    public void IssueInvite(string tokenHash, DateTime issuedAt, DateTime expiresAt)
+    {
+        if (InviteUsedAt.HasValue)
+        {
+            throw new BusinessException(PlatformDomainErrorCodes.RegistrationRequestAlreadyProvisioned);
+        }
+
+        InviteTokenHash = Check.NotNullOrWhiteSpace(tokenHash, nameof(tokenHash), ServiceAgreementConsts.InviteTokenHashLength);
+        InviteIssuedAt = issuedAt;
+        InviteExpiresAt = expiresAt;
+        Status = RegistrationRequestStatus.AwaitingProtocol;
+    }
+
+    /// <summary>
+    /// Davetin kullanılabilirliğini denetler. Hata kodları AYRI: "bağlantı geçersiz" ile
+    /// "süresi doldu" farklı çözümler gerektirir (birinde host yeni bağlantı üretir,
+    /// diğerinde önce talebin hâlâ geçerli olduğunu teyit eder).
+    /// </summary>
+    public void EnsureInviteUsable(DateTime now)
+    {
+        if (InviteTokenHash.IsNullOrWhiteSpace() || InviteUsedAt.HasValue)
+        {
+            throw new BusinessException(PlatformDomainErrorCodes.AgreementInviteInvalid);
+        }
+
+        if (InviteExpiresAt.HasValue && InviteExpiresAt.Value <= now)
+        {
+            throw new BusinessException(PlatformDomainErrorCodes.AgreementInviteExpired);
+        }
+    }
+
+    /// <summary>Hesap açıldı: jeton yakılır, kiracı bağlanır, süreç kapanır.</summary>
+    public void CompleteWithTenant(Guid tenantId, DateTime usedAt)
+    {
+        if (InviteUsedAt.HasValue)
+        {
+            throw new BusinessException(PlatformDomainErrorCodes.RegistrationRequestAlreadyProvisioned);
+        }
+
+        TenantId = tenantId;
+        InviteUsedAt = usedAt;
+        Status = RegistrationRequestStatus.AccountCreated;
+    }
+
+    /// <summary>Davet üretilebilir mi? Yalnız onaylanmış ve henüz hesabı açılmamış talep.</summary>
+    public bool CanIssueInvite =>
+        !InviteUsedAt.HasValue
+        && Status is RegistrationRequestStatus.Approved or RegistrationRequestStatus.AwaitingProtocol;
 
     /// <summary>Sözleşmeye yazılacak paket: onayda değiştiyse o, değilse adayın seçtiği.</summary>
     public SalesPlan EffectivePlan => ApprovedPlan ?? RequestedPlan;

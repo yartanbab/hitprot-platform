@@ -28,4 +28,13 @@ public interface IRegistrationRequestAppService : IApplicationService
 
     /// <summary>Durumlara göre kayıt sayıları — panel sekmelerinin rozetleri.</summary>
     Task<RegistrationRequestSummaryDto> GetSummaryAsync();
+
+    /// <summary>
+    /// Protokol adımının davet bağlantısını üretir (izin: RegistrationRequests.Manage).
+    /// <para>
+    /// 🔐 Ham jeton YALNIZ bu çağrının dönüşünde görülür; veritabanında özeti durur.
+    /// Tekrar çağrılabilir — bağlantı kaybolduysa yenisi üretilir ve eskisi geçersizleşir.
+    /// </para>
+    /// </summary>
+    Task<RegistrationInviteDto> IssueInviteAsync(Guid id);
 }
