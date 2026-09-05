@@ -1,36 +1,34 @@
 using System.Threading.Tasks;
-using Apya.Platform.Settings;
-using Apya.Platform.Web.ReleaseNotes;
+using Apya.Platform.ReleaseNotes;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Volo.Abp.AspNetCore.Mvc;
-using Volo.Abp.SettingManagement;
 
 namespace Apya.Platform.Web.Controllers;
 
 /// <summary>
 /// "Yenilikler" penceresinin görülme işaretini yazar (kullanıcı ayarına). Antiforgery bilinçli
 /// devre dışı: uç yalnız kullanıcının kendi "gördüm" bayrağını günceller, sahte istek zararsızdır.
+///
+/// <para>Damga istemciden ALINMAZ; sunucu kullanıcının o an göreceği madde kümesinden
+/// yeniden hesaplar. Böylece manipülasyonla "hepsini gördüm" yazdırılamaz.</para>
 /// </summary>
 [Authorize]
 [IgnoreAntiforgeryToken]
 [Route("release-notes")]
 public class ReleaseNotesController : AbpController
 {
-    private readonly ISettingManager _settingManager;
+    private readonly IReleaseNotePublicationAppService _publicationAppService;
 
-    public ReleaseNotesController(ISettingManager settingManager)
+    public ReleaseNotesController(IReleaseNotePublicationAppService publicationAppService)
     {
-        _settingManager = settingManager;
+        _publicationAppService = publicationAppService;
     }
 
     [HttpPost("mark-seen")]
-    public async Task<IActionResult> MarkSeenAsync(string? version)
+    public async Task<IActionResult> MarkSeenAsync()
     {
-        // Yalnız katalogda var olan bir sürümü kabul et; yoksa en yeniye çek (manipülasyona karşı).
-        var target = ReleaseNoteCatalog.Find(version) ?? ReleaseNoteCatalog.Latest;
-        await _settingManager.SetForCurrentUserAsync(
-            PlatformSettings.ReleaseNotes.LastSeenVersion, target.Version);
+        await _publicationAppService.MarkSeenAsync();
         return NoContent();
     }
 }

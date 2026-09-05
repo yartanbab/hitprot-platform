@@ -46,6 +46,8 @@ public class TaskShareAppService : PlatformAppService, ITaskShareAppService
     private readonly ITaskAppService _taskAppService;
     private readonly ILocalEventBus _localEventBus;
     private readonly IDataFilter<IMultiTenant> _mtFilter;
+    private readonly IRepository<TaskFormLink, Guid> _formLinkRepository;
+    private readonly IRepository<Apya.Platform.DynamicAssets.AppDocument, Guid> _appDocumentRepository;
 
     public TaskShareAppService(
         IRepository<TaskShareLink, Guid> linkRepository,
@@ -56,7 +58,9 @@ public class TaskShareAppService : PlatformAppService, ITaskShareAppService
         IRepository<IdentityUser, Guid> identityRepository,
         ITaskAppService taskAppService,
         ILocalEventBus localEventBus,
-        IDataFilter<IMultiTenant> mtFilter)
+        IDataFilter<IMultiTenant> mtFilter,
+        IRepository<TaskFormLink, Guid> formLinkRepository,
+        IRepository<Apya.Platform.DynamicAssets.AppDocument, Guid> appDocumentRepository)
     {
         _linkRepository = linkRepository;
         _accessLogRepository = accessLogRepository;
@@ -67,6 +71,8 @@ public class TaskShareAppService : PlatformAppService, ITaskShareAppService
         _taskAppService = taskAppService;
         _localEventBus = localEventBus;
         _mtFilter = mtFilter;
+        _formLinkRepository = formLinkRepository;
+        _appDocumentRepository = appDocumentRepository;
     }
 
     /* ═════════════════════════ EKİP TARAFI ═════════════════════════ */
@@ -421,6 +427,35 @@ public class TaskShareAppService : PlatformAppService, ITaskShareAppService
         var attachments = await _attachmentRepository.GetListAsync(
             a => taskIds.Contains(a.TaskId) && (a.ShareLinkId == link.Id || a.IsVisibleToGuests));
 
+        // Misafire AÇIK formlar: göreve bağlı olmak yetmez, ekip ayrıca
+        // IsGuestFillable işaretlemiş VE form yayında olmalı. Yayınlanmamış forma
+        // zaten yanıt toplanamaz; linki göstermek boş bir umut olurdu.
+        var formLinks = await _formLinkRepository.GetListAsync(
+            f => taskIds.Contains(f.TaskId) && f.IsGuestFillable);
+
+        var formsByTask = new Dictionary<Guid, List<GuestFormDto>>();
+        if (formLinks.Count > 0)
+        {
+            var docIds = formLinks.Select(f => f.DocumentId).Distinct().ToList();
+            var docQuery = await _appDocumentRepository.GetQueryableAsync();
+            var docs = (await AsyncExecuter.ToListAsync(
+                    docQuery.Where(d => docIds.Contains(d.Id)
+                                     && d.Status == Apya.Platform.DynamicAssets.FormStatus.Published)
+                            .Select(d => new { d.Id, d.Title, d.Slug })))
+                .ToDictionary(d => d.Id);
+
+            foreach (var fl in formLinks)
+            {
+                if (!docs.TryGetValue(fl.DocumentId, out var doc)) { continue; }
+                if (!formsByTask.TryGetValue(fl.TaskId, out var list))
+                {
+                    list = new List<GuestFormDto>();
+                    formsByTask[fl.TaskId] = list;
+                }
+                list.Add(new GuestFormDto { DocumentId = doc.Id, Title = doc.Title, Slug = doc.Slug });
+            }
+        }
+
         var teamUserIds = comments
             .Where(c => c.CreatorId.HasValue)
             .Select(c => c.CreatorId!.Value)
@@ -459,7 +494,7 @@ public class TaskShareAppService : PlatformAppService, ITaskShareAppService
             AllowComment = link.AllowComment,
             AllowUpload = link.AllowUpload,
             AllowDownload = link.AllowDownload,
-            Root = BuildNode(root, link, childrenByParent, commentsByTask, attachmentsByTask, userNames, 0),
+            Root = BuildNode(root, link, childrenByParent, commentsByTask, attachmentsByTask, formsByTask, userNames, 0),
         };
     }
 
@@ -469,6 +504,7 @@ public class TaskShareAppService : PlatformAppService, ITaskShareAppService
         IReadOnlyDictionary<Guid, List<TaskItem>> childrenByParent,
         IReadOnlyDictionary<Guid, List<TaskComment>> commentsByTask,
         IReadOnlyDictionary<Guid, List<TaskAttachment>> attachmentsByTask,
+        IReadOnlyDictionary<Guid, List<GuestFormDto>> formsByTask,
         IReadOnlyDictionary<Guid, string> userNames,
         int depth)
     {
@@ -523,13 +559,18 @@ public class TaskShareAppService : PlatformAppService, ITaskShareAppService
                 }).ToList();
         }
 
+        if (formsByTask.TryGetValue(task.Id, out var taskForms))
+        {
+            node.Forms = taskForms.OrderBy(f => f.Title).ToList();
+        }
+
         if (depth < TaskShareConsts.MaxScopeDepth
             && childrenByParent.TryGetValue(task.Id, out var children))
         {
             node.SubTasks = children
                 .OrderBy(c => c.Number)
                 .Select(c => BuildNode(
-                    c, link, childrenByParent, commentsByTask, attachmentsByTask, userNames, depth + 1))
+                    c, link, childrenByParent, commentsByTask, attachmentsByTask, formsByTask, userNames, depth + 1))
                 .ToList();
         }
 
@@ -564,6 +605,58 @@ public class TaskShareAppService : PlatformAppService, ITaskShareAppService
         var bytes = RandomNumberGenerator.GetBytes(32);
         return Convert.ToBase64String(bytes)
             .Replace('+', '-').Replace('/', '_').TrimEnd('=');
+    }
+
+    [AllowAnonymous]
+    public virtual async Task<GuestFormContextDto> ResolveGuestFormAsync(
+        string token, Guid taskId, string documentSlug)
+    {
+        // 🔴 Anonim yol: çoklu-kiracı süzgeci KAPALI. Bu blokta okunan hiçbir kayıt
+        // kiracı sınırıyla korunmuyor; kiracıyı token'daki link belirliyor ve
+        // aşağıdaki her sorgu ONUN TenantId'siyle daraltılıyor.
+        using (_mtFilter.Disable())
+        {
+            var link = await ResolveLinkAsync(token);          // süre + iptal kontrolü içinde
+            await EnsureTaskInScopeAsync(link, taskId);        // görev linkin kapsamında mı
+
+            if (string.IsNullOrWhiteSpace(documentSlug))
+            {
+                throw new EntityNotFoundException(typeof(Apya.Platform.DynamicAssets.AppDocument), string.Empty);
+            }
+
+            // Slug tek başına GLOBAL bir anahtar değil — kiracıyla birlikte aranır,
+            // yoksa başka kiracının aynı slug'lı formu bulunabilirdi.
+            var docQuery = await _appDocumentRepository.GetQueryableAsync();
+            var document = await AsyncExecuter.FirstOrDefaultAsync(
+                docQuery.Where(d => d.Slug == documentSlug && d.TenantId == link.TenantId));
+
+            if (document == null)
+            {
+                throw new EntityNotFoundException(typeof(Apya.Platform.DynamicAssets.AppDocument), documentSlug);
+            }
+
+            // Form bu göreve BAĞLI ve misafire AÇIK olmalı. Bağlamak dışarı açmak
+            // değildir; ekip `IsGuestFillable`ı ayrıca işaretlemiş olmalı.
+            var formLinkQuery = await _formLinkRepository.GetQueryableAsync();
+            var formLink = await AsyncExecuter.FirstOrDefaultAsync(
+                formLinkQuery.Where(x => x.TaskId == taskId
+                                      && x.DocumentId == document.Id
+                                      && x.TenantId == link.TenantId));
+
+            if (formLink == null || !formLink.IsGuestFillable)
+            {
+                throw new UserFriendlyException(
+                    "Bu form dış paylaşımda doldurulamaz.", "Platform:TaskShare:FormNotGuestFillable");
+            }
+
+            return new GuestFormContextDto
+            {
+                TenantId = link.TenantId,
+                TaskId = taskId,
+                ShareLinkId = link.Id,
+                DocumentId = document.Id
+            };
+        }
     }
 
     private static string Hash(string token)

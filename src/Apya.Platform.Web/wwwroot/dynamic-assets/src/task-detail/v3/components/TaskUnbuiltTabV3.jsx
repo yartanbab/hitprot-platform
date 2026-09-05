@@ -1,12 +1,12 @@
 import React from 'react';
-import { featureInfo } from '../featureCatalogV3';
+import { featureDisplay } from '../featureCatalogV3';
 
 /**
  * İçeriği henüz yazılmamış sekmenin boş durumu. Boş pano göstermek yerine ne
  * olduğunu söyler ve iki çıkış yolu sunar: özelliği kaldır ya da başka özellik ekle.
  */
 export function TaskUnbuiltTabV3({ code, onRemoveFeature, onOpenPicker, canRemove = true }) {
-    const info = featureInfo(code) ?? { title: code, desc: '', icon: 'fa-cube', bg: 'bg-neutral-subtle', fg: 'text-text-secondary' };
+    const info = featureDisplay(code) ?? { title: code, desc: '', icon: 'fa-cube', bg: 'bg-neutral-subtle', fg: 'text-text-secondary' };
 
     return (
         <div className="flex flex-col items-center gap-3 py-14 px-6 rounded-2xl border border-dashed border-strong bg-surface-base text-center">

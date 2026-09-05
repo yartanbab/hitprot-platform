@@ -62,4 +62,17 @@ public class SubmitResponseDto
     /// Görünmez alan olarak render edilir (public-form.jsx).
     /// </summary>
     public string? Website { get; set; }
+
+    /// <summary>
+    /// GÖREV BAĞLAMI (opsiyonel) — form bir görevin süreli paylaşım linki üzerinden
+    /// dolduruluyorsa dolu gelir. Doluysa gönderim, token doğrulandıktan sonra o
+    /// görevin kiracısında yürütülür ve yanıt göreve damgalanır.
+    ///
+    /// <para>🔑 Bu iki alan YETKİ TAŞIMAZ, yalnız iddiadır: doğrulamayı
+    /// <c>ITaskShareAppService.ResolveGuestFormAsync</c> yapar ve geçersizse
+    /// gönderim hiç başlamaz.</para>
+    /// </summary>
+    public string? TaskShareToken { get; set; }
+
+    public Guid? TaskId { get; set; }
 }

@@ -1,7 +1,6 @@
 using System.Collections.Generic;
-using System.Linq;
 
-namespace Apya.Platform.Web.ReleaseNotes;
+namespace Apya.Platform.ReleaseNotes;
 
 /// <summary>
 /// Sürüm notları — kod içinde tutulur (her yayın kod ile birlikte gelir).
@@ -9,14 +8,18 @@ namespace Apya.Platform.Web.ReleaseNotes;
 /// (en yeni ilk). <see cref="Latest"/> otomatik ilk öğedir; kullanıcı bunu
 /// görmediyse ilk açılışta "Yenilikler" penceresi açılır.
 ///
-/// MADDELER MÜŞTERİ ODAKLIDIR. Bu liste hem "Yenilikler" penceresinde hem de
-/// /ReleaseNotes geçmiş sayfasında HER oturumlu kullanıcıya aynı şekilde gösterilir —
-/// izin kapısı YOKTUR. Bu yüzden yalnız host yöneticisini ilgilendiren maddeler
+/// MADDELER MÜŞTERİ ODAKLIDIR. Yalnız host yöneticisini ilgilendiren maddeler
 /// (Sistem Sağlığı, kiracı yönetimi, paket süresi tanımlama, hibe çağrısı yönetimi)
 /// BURAYA YAZILMAZ: kiracı müşterisi ya erişemediği bir özelliği arar ya da kendisini
 /// ilgilendirmeyen işletim ayrıntısını okur. Ölçü tek soru: "bunu kiracıdaki bir
 /// kullanıcı kendi ekranında görebilir/yapabilir mi?" Hayırsa madde girmez.
 /// Kiracı yöneticisinin yaptığı işler (Ayarlar, menü düzeni, "Paketim") girer.
+///
+/// <para>🔴 KATALOGA MADDE EKLEMEK YAYINLAMAK DEĞİLDİR. Buradaki hiçbir madde host
+/// /Admin/ReleaseNotes ekranından onaylamadan kullanıcıya gitmez; onaysız madde yalnız
+/// host'a, "Onay bekliyor" rozetiyle görünür. Onay kararı maddenin BAŞLIĞINDAN türeyen
+/// anahtara bağlıdır (<see cref="ReleaseNoteItem.Key"/>) — yayınlanmış bir maddenin
+/// başlığını değiştirirsen onayı düşer.</para>
 /// </summary>
 public static class ReleaseNoteCatalog
 {
@@ -28,6 +31,16 @@ public static class ReleaseNoteCatalog
             title: "Proje finansı tek ekranda, hibe süreci baştan sona, görevler ekip dışına açık",
 
             // ── Finans ───────────────────────────────────────────────────────
+            new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
+                "Finansa dair her şey menüde tek başlık altında",
+                "Kasa, kur ve finans ekranları \"Finans\" başlığındaydı; proje bütçesi, cari ekstre, " +
+                "mizan ve yıl sonu değerleme ise ayrı bir \"Raporlar & Analiz\" başlığında duruyordu — " +
+                "bir rakamı ararken iki ayrı yere bakmanız gerekiyordu. Hepsi artık \"Finans & Bütçe\" " +
+                "başlığı altında: günlük ekranlar üstte, dört rapor da içindeki \"Raporlar\" grubunda. " +
+                "Efor, personel ve müşteri kârlılığını gösteren \"Özet Raporlar\" ise içeriğine uygun " +
+                "olarak \"İş Yönetimi\" başlığına taşındı. Menüyü kendinize göre düzenlediyseniz " +
+                "düzeniniz korunuyor."),
+
             new ReleaseNoteItem(ReleaseNoteCategory.Feature,
                 "Projenin bütün finansı tek ekranda toplandı",
                 "Bütçe, gelir-gider ve faturalar ayrı ayrı ekranlarda duruyordu; hangi rakamın hangi " +
@@ -70,6 +83,23 @@ public static class ReleaseNoteCatalog
                 "işlem para biriminde, TL karşılığıyla ve donör para birimiyle birlikte saklanıyor; " +
                 "hangi kurun kullanıldığı kayıtta yazıyor. Kur bulunamazsa uydurma bir rakam " +
                 "gösterilmiyor, \"kur yok\" uyarısı çıkıyor."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Fix,
+                "Bütçe rakamı artık her ekranda aynı",
+                "Projenin bütçesi baktığınız ekrana göre değişebiliyordu: proje ekranındaki \"Bütçe " +
+                "Durumu\" penceresi ve Proje Bütçesi raporu projeye girdiğiniz toplam tutarı " +
+                "gösterirken, Finans ekranı bütçe kalemlerinin güncel toplamını gösteriyordu. Kalem " +
+                "tanımladığınız ya da bütçe revizyonu yaptığınız anda aynı proje için iki farklı " +
+                "rakam görüyordunuz. Artık hepsi tek hesaptan besleniyor: yürürlükteki onaylanan " +
+                "bütçe, harcanan, gelen para ve kalan tutar nereye bakarsanız bakın aynı. \"Bütçe " +
+                "Durumu\" penceresi de Finans ekranıyla aynı altı rakamı gösteriyor."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
+                "Projeden bütçe, finans ve belge ekranlarına tek tıkla geçiyorsunuz",
+                "Bir projenin parasal ekranlarına ulaşmak için farklı yerleri hatırlamanız " +
+                "gerekiyordu. Artık hem proje listesindeki her projenin yanındaki menüden hem de " +
+                "proje ekranındaki Bütçe kutucuğundan o projenin bütçe kalemlerine, Finans " +
+                "ekranına ve belgelerine doğrudan gidiyorsunuz."),
 
             new ReleaseNoteItem(ReleaseNoteCategory.Fix,
                 "Gider veya geliri düzenlediğinizde görev bağı artık silinmiyor",
@@ -163,6 +193,14 @@ public static class ReleaseNoteCatalog
                 "satırları gösteriyor, toplam satırlarla tutuyor. Değerleme sonucunda hangi hesabın ne " +
                 "kadar fark ürettiğini yeniden görebiliyorsunuz."),
 
+            new ReleaseNoteItem(ReleaseNoteCategory.Fix,
+                "Kur, girdiğiniz hane sayısıyla görünüyor",
+                "Kurlar altı ondalık haneye kadar saklanıyor ama kur listesinde, kur köprüsünde ve " +
+                "değerleme detayında dört haneye yuvarlanarak gösteriliyordu: 34,215678 olarak " +
+                "girdiğiniz kur ekranda 34,2157 çıkıyor, kaydınızı olduğu gibi bulamıyordunuz. " +
+                "Kayıt her zaman doğruydu, kırpan yalnızca gösterimdi. Artık kur girdiğiniz hâliyle " +
+                "görünüyor; gereksiz sıfır da eklenmiyor, 34,5 kuru 34,5000 diye yazılmıyor."),
+
             // ── Hibe: çağrılar ve uygunluk ────────────────────────────────────
             new ReleaseNoteItem(ReleaseNoteCategory.Feature,
                 "Açık hibe çağrılarının tamamını görüyorsunuz",
@@ -211,7 +249,33 @@ public static class ReleaseNoteCatalog
                 "eksikleri göster\" süzgeciyle şu an şartını karşılamadığınız ama tamamlayabileceğiniz " +
                 "çağrıları ayırıyor, ilgilendiğiniz çağrıları takibe alıp listenizde tutuyorsunuz."),
 
+            new ReleaseNoteItem(ReleaseNoteCategory.Fix,
+                "Uygun çağrı çıkmadığında ekranın altı boşuna \"yükleniyor\" görünmüyor",
+                "Hibeler ekranında size uygun açık çağrı bulunmadığında sayfanın alt kısmı gri " +
+                "yükleniyor kutularını göstermeye devam ediyor, \"Şu an size uygun açık çağrı yok\" " +
+                "açıklaması bu kutuların arasında kayboluyordu. Liste boş döndüğünde artık yükleme " +
+                "görüntüsü kapanıyor ve doğrudan açıklamayı görüyorsunuz. Aynı durum hibe " +
+                "modülündeki bütün listelerde giderildi."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Fix,
+                "\"Yaklaşan son tarihler\" şeridinde çağrı adları üst üste binmiyor",
+                "Son başvuru tarihi birbirine yakın olan ya da aynı güne düşen çağrıların adları " +
+                "zaman şeridinde iç içe geçip okunamaz hâle geliyordu. Başlıklar artık birbirine " +
+                "değmeyecek şekilde aralanıyor, tarayıcı penceresini daralttığınızda da yeniden " +
+                "yerleşiyor."),
+
             // ── Hibe: başvuru süreci ──────────────────────────────────────────
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "Hibeye \"İlgileniyorum\" diyorsunuz, süreci birlikte başlatıyoruz",
+                "Hibe detayındaki \"Başvuru Aç\" düğmesi yerini \"İlgileniyorum\"a bıraktı. Talebinizi " +
+                "kısa bir notla bırakıyorsunuz; danışmanlarımız değerlendirip sizinle irtibata geçiyor ve " +
+                "uygun görülürse başvuru sürecini birlikte başlatıyoruz — başvurunuz o an açılıyor ve " +
+                "\"Başvurularım\" ekranınızda beliriyor. Uygun bulunmayan talepte gerekçesini yazılı " +
+                "olarak alıyorsunuz; gerekçe hem bildirim olarak geliyor hem de çağrı sayfasında " +
+                "duruyor. Durumunuzu değişirse aynı çağrıya yeniden ilgi bildirebiliyorsunuz. " +
+                "Bıraktığınız talepleri \"Başvurularım\" ekranındaki \"İlgi Taleplerim\" listesinden " +
+                "izliyorsunuz."),
+
             new ReleaseNoteItem(ReleaseNoteCategory.Feature,
                 "Başvuru formunu danışmanınızla aynı anda dolduruyorsunuz",
                 "Hibe başvurusu artık adım adım ilerleyen bir formda hazırlanıyor: firma bilgileri, proje " +
@@ -306,6 +370,15 @@ public static class ReleaseNoteCatalog
                 "İlk proje kartı artık ekranın çok daha yukarısında başlıyor, araç çubuğu tek satıra indi. " +
                 "Bilgisayarda görünüm aynı kaldı."),
 
+            new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
+                "Görevler ekranı telefonda tek satıra indi, ekleme düğmesi parmağın altına geldi",
+                "Görevler ekranında üstteki blok telefonda üç satır kaplıyor, arama kutusunu ve " +
+                "sayaçları aşağı itiyordu. Başlık, arama ve \"⋯\" menüsü artık tek satırda duruyor; " +
+                "\"Yeni Görev\" düğmesi sağ alt köşedeki yuvarlak + düğmesine taşındı, yani tek elle " +
+                "kullanırken parmağınızın zaten olduğu yere. Kanban'daki \"Grupla\" seçimi de " +
+                "\"Filtreler\" düğmesinin içine girdi. Görev listesi bu sayede ekranın belirgin " +
+                "biçimde yukarısından başlıyor. Bilgisayarda görünüm aynı kaldı."),
+
             new ReleaseNoteItem(ReleaseNoteCategory.Fix,
                 "Mobilde giriş sırasında çıkan hata giderildi",
                 "Telefondan giriş yaparken zaman zaman \"Hata! Sayfa işlenirken sunucu tarafında " +
@@ -320,6 +393,14 @@ public static class ReleaseNoteCatalog
                 "artık ilk tıklamada çalışıyor. Form oluşturucuda kartlar yalnız soldaki tutamaçtan " +
                 "sürükleniyor, böylece kart içindeki metni fareyle seçebiliyorsunuz."),
 
+            new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
+                "Genel Bakış telefonda ekranın tepesinden başlıyor",
+                "Genel Bakış'ta üst barda zaten yazan sayfa adı bir kez daha başlık olarak " +
+                "tekrarlanıyor, altındaki boş şeritle birlikte ekranın üst üçte birini kaplıyordu — " +
+                "kartları görmek için kaydırmanız gerekiyordu. Telefonda bu başlık kaldırıldı; özet " +
+                "kartları üst barın hemen altından başlıyor. Görünüm ve dönem seçicileri kartların " +
+                "hemen altında, yan yana duruyor. Bilgisayarda görünüm aynı kaldı."),
+
             // ── Paket ─────────────────────────────────────────────────────────
             new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
                 "Paketinizde kapalı olan özellikleri menüden görebiliyorsunuz",
@@ -327,6 +408,15 @@ public static class ReleaseNoteCatalog
                 "yeteneklerin listesine ulaşıyorsunuz. Daha önce kapalı bir modül menüde hiç görünmediği " +
                 "için neyi kaçırdığınızı fark etmiyordunuz. Kısayol yalnız gerçekten kapalı bir özelliğiniz " +
                 "varsa çıkar — her şeyi kapsayan pakette hiç görünmez."),
+
+            // ── Takvim ────────────────────────────────────────────────────────
+            new ReleaseNoteItem(ReleaseNoteCategory.Fix,
+                "Google ve Outlook takvim bağlantısı gerçekten çalışıyor",
+                "\"Google bağla\" / \"Outlook bağla\" düğmeleri sizi sağlayıcının kendi izin ekranına " +
+                "değil bir deneme sayfasına götürüyordu: hesap bağlı görünüyor, ama bağlı takvimden " +
+                "hiçbir etkinlik gelmiyordu. Düğmeler artık gerçek izin ekranını açıyor. Ayrıca " +
+                "gönderilen etkinlikler dış takvime saat farkı kadar kaymış işleniyordu (Türkiye'de " +
+                "üç saat); saatler artık her iki yönde de doğru taşınıyor."),
 
             // ── Genel ─────────────────────────────────────────────────────────
             new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
@@ -351,7 +441,87 @@ public static class ReleaseNoteCatalog
                 "olduğu hâlde \"kaydedilmemiş\" izlenimi veriyordu. Ayrıca alt görev panelinden \"tam " +
                 "ekran aç\" ya da \"görevi çoğalt\" ile başka göreve geçildiğinde önceki görevin metni " +
                 "ekranda kalıyor, üzerine yazılıp kaydedilirse yeni görevin açıklamasını eziyordu. İkisi " +
-                "de düzeltildi; açıklama her açılışta kayıtlı hâliyle geliyor.")
+                "de düzeltildi; açıklama her açılışta kayıtlı hâliyle geliyor."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Fix,
+                "Proje ve hibe ekranlarında tarih alanları kaydedilebiliyor",
+                "Proje düzenleme ekranında tarihe hiç dokunmasanız bile kayıt \"«24.07.2025», " +
+                "Başlangıç tarihi için geçerli bir değer değil\" hatasıyla düşüyordu — hiçbir " +
+                "değişikliği kaydedemiyordunuz. Aynı kusur hibe tarafında da vardı: çağrının açılış " +
+                "ve son başvuru tarihi, dilim ve kilometre taşı vadesi, projeye dönüştürmede " +
+                "başlangıç-bitiş, kurum profilinde kuruluş tarihi. Hepsi düzeltildi."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Fix,
+                "Açıklama alanları tek satırlık kutu olmaktan çıktı",
+                "Proje düzenleme, hibe ekleme-düzenleme ve görev düzenleme formlarındaki Açıklama " +
+                "alanı çok satırlı olması gerekirken sıradan tek satırlık metin kutusu olarak " +
+                "çiziliyordu; uzun bir metni yazarken göremiyordunuz. Bu alanlar artık birkaç satır " +
+                "yüksekliğinde açılıyor."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Fix,
+                "Cari yetkisi olmayan kullanıcı da proje açıp düzenleyebiliyor",
+                "\"Yeni Proje Ekle\" düğmesi görünüyor ama tıklayınca pencere hiç açılmıyordu; proje " +
+                "düzenleme ekranı da aynı şekilde açılmıyordu. Sebebi, formdaki cari listesinin cari " +
+                "yetkisi olmayan kullanıcıda pencerenin tamamını düşürmesiydi. Artık yetkiniz yoksa " +
+                "cari alanı hiç çizilmiyor ve form normal açılıyor. Ayrıca proje düzenlemede kayıt " +
+                "sırasında mevcut cari bağlantısının sessizce silinmesi de giderildi."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
+                "Hibe ekranlarında yazılar ve düğmeler okunaklı boyuta geldi",
+                "Hibe ekranları yoğun kullanım için sıkışık çizilmişti: yardımcı metinler ve tablo " +
+                "hücreleri küçük ve açık gri, düğmeler dardı. Yirmi hibe ekranında gövde yazısı, " +
+                "etiketler ve rozet metinleri büyütüldü, ikincil metnin rengi koyulaştırıldı, giriş " +
+                "kutuları ve düğmeler dokunmaya elverişli yüksekliğe çıkarıldı, kart içi boşluklar " +
+                "açıldı. İçerik ve akış değişmedi; yalnız okunması kolaylaştı."),
+
+            // ── Görev görünümleri ─────────────────────────────────────────────
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "Görevin içine belge yazıyorsunuz",
+                "Göreve şimdiye kadar yalnız dosya ekleyebiliyordunuz; toplantı notunu, teknik " +
+                "şartnameyi ya da teslim tutanağını ya ayrı bir dosyada tutuyor ya da açıklama " +
+                "alanına sıkıştırıyordunuz. Artık görevin Belge sekmesinde istediğiniz kadar belge " +
+                "açıp içine doğrudan yazıyorsunuz — başlık veriyor, biçimlendiriyor, kaydediyorsunuz. " +
+                "Listede her belgenin son düzenleyeni ve tarihi görünüyor; sildiğiniz belge geri " +
+                "getirilebilir şekilde saklanıyor."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "Alt görevlerinizi tablo, kanban ve takvim olarak görüyorsunuz",
+                "Bir görevin alt görevleri yalnız kart listesi hâlinde duruyordu; hangisinin terminin " +
+                "yaklaştığını ya da kaçının hangi durumda olduğunu görmek için tek tek bakmak " +
+                "gerekiyordu. Görev detayına üç yeni sekme geldi: Tablo, alt görevleri kolonlara " +
+                "dizip başlığa tıklayarak sıralamanızı sağlıyor (tarihi girilmemiş satırlar hep " +
+                "sonda kalıyor); Kanban, alt görevleri duruma göre sütunlara ayırıyor ve kartı başka " +
+                "sütuna sürüklediğinizde durum anında kaydediliyor; Takvim, görevin ve alt " +
+                "görevlerinin başlangıç ve termin tarihlerini aylık ızgarada gösteriyor."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "Görevler ekranına takvim, gösterge paneli ve dosya galerisi eklendi",
+                "Görevler konsolunda Liste, Kanban ve Zaman Çizelgesi vardı; üçü de tek tek görevlere " +
+                "bakmak içindi. Üç görünüm daha geldi ve hepsi o an seçili filtreyi izliyor: Takvim, " +
+                "görevleri başlangıç ve termin tarihlerine göre aylık olarak yerleştiriyor; Gösterge " +
+                "Paneli, seçtiğiniz kapsamın durum, öncelik ve kişi dağılımını grafiklerle ve " +
+                "toplam / tamamlanan / gecikmiş sayaçlarıyla özetliyor; Dosya Galerisi ise " +
+                "görevlere eklenmiş görselleri tek ızgarada topluyor. Filtreyi değiştirdiğinizde " +
+                "üçü de yeni kapsama göre yenileniyor."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
+                "Özellik kataloğunda artık yalnız çalışan modüller var",
+                "Göreve özellik eklerken çıkan listede, eklediğinizde \"yapım aşamasında\" boş " +
+                "ekranıyla karşılaştığınız modüller de duruyordu — Riskler, Onaylar, Otomasyonlar, " +
+                "Özel Alanlar, E-postalar, Yapay Zeka ve Gösterge Paneli gibi. Katalog artık yalnız " +
+                "gerçekten iş gören modülleri listeliyor. Aynı turda Kontrol Listesi, Geçmiş ve " +
+                "Dosya Galerisi sekmeleri kullanıma açıldı. Görev yorumları ayrı bir sekme olmaktan " +
+                "çıktı; zaten Genel sekmesinde durdukları yerde duruyorlar. Daha önce bir göreve " +
+                "eklediğiniz özellikler silinmedi, yalnız görünmüyor."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
+                "Tutar yazarken binlik ve ondalık ayracı kendiliğinden çıkıyor",
+                "Gider, gelir, kasa hareketi, fatura, bütçe kalemi, tahsilat, fonlama dilimi ve görev " +
+                "bütçesi gibi tutar alanlarında ayraçları elle koymanız gerekmiyor: 1234567 " +
+                "yazdığınızda alan yazarken 1.234.567 hâline geliyor, ondalık için virgül " +
+                "kullanıyorsunuz. Uzun tutarlarda basamak saymak ya da fazladan yazılmış bir sıfırı " +
+                "gözden kaçırmak yok. Kur alanları altı, oran ve miktar alanları iki ondalık hane " +
+                "kabul ediyor.")
         ),
 
         new ReleaseNote(
@@ -730,7 +900,4 @@ public static class ReleaseNoteCatalog
 
     /// <summary>En yeni sürüm (listenin ilk öğesi). Görülme takibi bununla yapılır.</summary>
     public static ReleaseNote Latest => All[0];
-
-    public static ReleaseNote? Find(string? version) =>
-        version is null ? null : All.FirstOrDefault(r => r.Version == version);
 }

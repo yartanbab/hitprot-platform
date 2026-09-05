@@ -19,7 +19,13 @@ $(function () {
     // Tavan belirtilmemiş program 0 ile saklanır (MaxAmount kolonu NOT NULL) — "0 ₺" yerine — göster.
     function ceiling(v) { return v ? money(v) : '—'; }
     function fmtDate(v) { return v ? new Date(v).toLocaleDateString('tr-TR') : '—'; }
-    function numOrNull(sel) { var v = $(sel).val(); return v === '' || v == null ? null : parseFloat(v); }
+    function numOrNull(sel) {
+        // Maskeli tutar alanında .val() "1.234,56" döndürür; parseFloat onu 1'e indirir.
+        var el = $(sel)[0];
+        if (el && el.__apyaMoney) { return apya.moneyInput.getValue(el); }
+        var v = $(sel).val(); return v === '' || v == null ? null : parseFloat(v);
+    }
+    function setMoney(sel, v) { apya.moneyInput.setValue($(sel)[0], v); }
 
     // ---------- Etiket (chip) girişi ----------
     function addTag($input, value) {
@@ -204,7 +210,7 @@ $(function () {
         $('#GrantName').val(g.name);
         $('#GrantIssuer').val(g.issuer);
         $('#GrantDescription').val(g.description || '');
-        $('#GrantMaxAmount').val(g.maxAmount != null ? g.maxAmount : '');
+        setMoney('#GrantMaxAmount', g.maxAmount);
         $('#GrantMinMatchScore').val(g.minMatchScore || 0);
         setSizeMask(g.eligibleCompanySizes || 0);
         setTags(0, (g.criteriaTags || []).filter(function (t) { return t.kind === 0; }).map(function (t) { return t.value; }));
@@ -262,7 +268,7 @@ $(function () {
             $('#CallStatus').val(call.status);
             $('#CallOpenDate').val(call.openDate ? call.openDate.substring(0, 10) : '');
             $('#CallDeadline').val(call.deadline ? call.deadline.substring(0, 10) : '');
-            $('#CallBudget').val(call.budget != null ? call.budget : '');
+            setMoney('#CallBudget', call.budget);
             $('#CallReference').val(call.reference || '');
             $('#CallModalTitle').text('Çağrı Düzenle');
         } else {

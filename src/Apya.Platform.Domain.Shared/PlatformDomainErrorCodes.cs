@@ -144,6 +144,12 @@ public static class PlatformDomainErrorCodes
     public const string GrantLeadNotFound = "Platform:Grant:LeadNotFound";
     public const string GrantLeadRateLimitExceeded = "Platform:Grant:LeadRateLimitExceeded";
 
+    // İlgi talepleri · kiracı bildirir, host karara bağlar
+    public const string GrantInterestAlreadyOpen = "Platform:Grant:InterestAlreadyOpen";
+    public const string GrantInterestNotFound = "Platform:Grant:InterestNotFound";
+    public const string GrantInterestAlreadyAnswered = "Platform:Grant:InterestAlreadyAnswered";
+    public const string GrantInterestReasonRequired = "Platform:Grant:InterestReasonRequired";
+
     // --- Dosya (File) Modülü ---
     public const string FileUnsupportedExtension = "Platform:File:UnsupportedExtension";
     public const string FileSizeExceeded = "Platform:File:SizeExceeded";

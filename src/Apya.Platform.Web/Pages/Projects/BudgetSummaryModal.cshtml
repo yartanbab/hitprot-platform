@@ -3,55 +3,38 @@
 @using Volo.Abp.AspNetCore.Mvc.UI.Bootstrap.TagHelpers.Modal
 @{
     Layout = null;
-    var s = Model.Summary;
-    var barTone = s.OverBudget ? "is-negative" : (s.BudgetUsagePercent >= 80 ? "is-warning" : "is-positive");
+    var b = Model.Budget;
+    var barTone = b.IsOverBudget ? "is-negative" : (b.BudgetUsagePercent >= 80 ? "is-warning" : "is-positive");
+    var cur = b.Currency;
 }
-<abp-modal>
-    <abp-modal-header title="@($"Bütçe Durumu — {s.ProjectName}")"></abp-modal-header>
+<abp-modal size="Large">
+    <abp-modal-header title="@($"Bütçe Durumu — {b.ProjectName}")"></abp-modal-header>
     <abp-modal-body>
-        <div class="row text-center mb-3">
-            <div class="col-6 col-md-3 mb-2 mb-md-0">
-                <div class="text-muted small">Bütçe</div>
-                <div class="fw-bold fs-5 apya-numeric">@s.Budget.ToString("N2")</div>
-            </div>
-            <div class="col-6 col-md-3 mb-2 mb-md-0">
-                <div class="text-muted small">Toplam Gider</div>
-                <div class="fw-bold fs-5 apya-numeric text-danger">@s.TotalExpense.ToString("N2")</div>
-            </div>
-            <div class="col-6 col-md-3">
-                <div class="text-muted small">Toplam Gelir</div>
-                <div class="fw-bold fs-5 apya-numeric text-success">@s.TotalIncome.ToString("N2")</div>
-            </div>
-            <div class="col-6 col-md-3">
-                <div class="text-muted small">Net (Gelir−Gider)</div>
-                <div class="fw-bold fs-5 apya-numeric @(s.Net >= 0 ? "text-success" : "text-danger")">@s.Net.ToString("N2")</div>
-            </div>
-        </div>
+        @* Finans → Genel sekmesiyle AYNI şerit, aynı hesap. *@
+        <partial name="_ProjectBudgetKpis" model="b" />
 
-        <label class="small text-muted">Bütçe Kullanımı: <span class="apya-numeric">%@s.BudgetUsagePercent</span></label>
-        <div class="apya-mini-progress @barTone mb-2" style="height:10px"><span style="width:@(Math.Min(s.BudgetUsagePercent, 100))%"></span></div>
-        <div class="alert alert-@(s.OverBudget ? "danger" : "secondary") py-2">
-            @if (s.OverBudget)
-            {
-                <strong>⚠ Bütçe aşıldı!</strong> <span class="apya-numeric">Aşım: @((s.TotalExpense - s.Budget).ToString("N2"))</span>
-            }
-            else
-            {
-                <span>Kalan harcanabilir bütçe: <strong class="apya-numeric">@s.BudgetRemaining.ToString("N2")</strong></span>
-            }
-        </div>
+        <label class="small text-muted">Bütçe Kullanımı: <span class="apya-numeric">%@b.BudgetUsagePercent</span></label>
+        <div class="apya-mini-progress @barTone mb-2" style="height:10px"><span style="width:@(Math.Min(b.BudgetUsagePercent, 100))%"></span></div>
 
-        @if (s.TaskBreakdown.Any(t => t.TaskId.HasValue))
+        @if (b.IsOverBudget)
         {
-            <h6 class="mt-3">Task Bazlı Kırılım</h6>
+            <div class="alert alert-danger py-2">
+                <strong>⚠ Bütçe aşıldı!</strong>
+                <span class="apya-numeric">Aşım: @((b.SpentAmount - b.ApprovedBudget).ToString("N2")) @cur</span>
+            </div>
+        }
+
+        @if (b.TaskBreakdown.Any(t => t.TaskId.HasValue))
+        {
+            <h6 class="mt-3">Görev Bazlı Kırılım</h6>
             <div class="table-responsive">
             <table class="table table-sm apya-clean-table">
-                <thead><tr><th>Task</th><th class="text-end apya-numeric">Gider</th><th class="text-end apya-numeric">Gelir</th></tr></thead>
+                <thead><tr><th>Görev</th><th class="text-end apya-numeric">Gider</th><th class="text-end apya-numeric">Gelir</th></tr></thead>
                 <tbody>
-                @foreach (var t in s.TaskBreakdown.OrderByDescending(x => x.Expense))
+                @foreach (var t in b.TaskBreakdown.OrderByDescending(x => x.Expense))
                 {
                     <tr>
-                        <td>@(t.TaskId.HasValue ? t.TaskId.ToString()![..8] : "(Proje geneli)")</td>
+                        <td>@(t.TaskId.HasValue ? (t.TaskName ?? t.TaskId.ToString()![..8] + "…") : "(Proje geneli)")</td>
                         <td class="text-end apya-numeric">@t.Expense.ToString("N2")</td>
                         <td class="text-end apya-numeric">@t.Income.ToString("N2")</td>
                     </tr>
@@ -60,6 +43,11 @@
             </table>
             </div>
         }
+
+        <a class="small text-decoration-none"
+           href="/Finance?projectId=@b.ProjectId&tab=@Apya.Platform.Web.Pages.Finance.FinanceContext.TabOverview">
+            Finans çatısında aç →
+        </a>
     </abp-modal-body>
     <abp-modal-footer buttons="@(AbpModalButtons.Close)"></abp-modal-footer>
 </abp-modal>

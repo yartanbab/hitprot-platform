@@ -7,7 +7,14 @@ import { initialsOf, avatarColorOf } from './taskMetaV3';
  * satır rozeti, avatar ve biçimlendiriciler.
  */
 
-export const TAB_CARD = 'rounded-2xl border border-subtle bg-surface-base shadow-xs overflow-hidden';
+/**
+ * Kırpmayan kart. İçinde açılır liste/popover barındıran kartlar bunu kullanır:
+ * `overflow-hidden`, kartın alt kenarına yakın açılan bir dropdown'ı keser
+ * (Combobox listesi kartın içine `absolute` konumlanır).
+ */
+export const TAB_CARD_UNCLIPPED = 'rounded-2xl border border-subtle bg-surface-base shadow-xs';
+
+export const TAB_CARD = `${TAB_CARD_UNCLIPPED} overflow-hidden`;
 
 /** Kart üstü başlık şeridi — sol tarafta başlık + isteğe bağlı rozet, sağda aksiyon. */
 export function TabCardHeader({ title, badge, action }) {
@@ -81,7 +88,7 @@ export function fmtSize(bytes) {
     if (!bytes) return '0 KB';
     if (bytes < 1024) return `${bytes} B`;
     if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
-    return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
+    return `${(bytes / 1024 / 1024).toLocaleString('tr-TR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} MB`;
 }
 
 /** "5s 42dk" — süreleri ondalık saat yerine okunur biçimde. */
@@ -110,6 +117,9 @@ const FILE_KINDS = {
     zip:   { icon: 'fa-file-zipper', bg: 'bg-warning-subtle', fg: 'text-warning' },
     other: { icon: 'fa-file',       bg: 'bg-neutral-subtle',  fg: 'text-text-secondary' },
 };
+
+/** Dosya bir görsel mi — galeri sekmesi ekleri bununla süzer. */
+export const isImageFile = (fileName = '') => fileKindOf(fileName) === FILE_KINDS.image;
 
 export function fileKindOf(fileName = '') {
     const ext = fileName.split('.').pop()?.toLowerCase() ?? '';

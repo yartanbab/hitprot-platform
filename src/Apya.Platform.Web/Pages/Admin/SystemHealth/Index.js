@@ -212,13 +212,7 @@ $(function () {
         });
     }
 
-    function loadDetail($row) {
-        $('#IssueList .apya-health-row').removeClass('selected');
-        $row.addClass('selected');
-
-        // Dar ekranda liste gizlenip detay gelir (.apya-md media query'si).
-        $console.addClass('has-selection');
-
+    function detailUrl($row) {
         var params = {
             handler: 'IssueDetail',
             windowDays: windowDays,
@@ -230,12 +224,96 @@ $(function () {
         if ($row.data('url')) { params.url = $row.data('url'); }
         if ($row.data('http-method')) { params.httpMethod = $row.data('http-method'); }
 
-        $.get(basePath + '?' + $.param(params)).done(function (html) {
+        return basePath + '?' + $.param(params);
+    }
+
+    function loadDetail($row) {
+        $('#IssueList .apya-health-row').removeClass('selected');
+        $row.addClass('selected');
+
+        // Dar ekranda liste gizlenip detay gelir (.apya-md media query'si).
+        $console.addClass('has-selection');
+
+        $.get(detailUrl($row)).done(function (html) {
             $('#IssueDetail').html(
                 '<button type="button" class="apya-md-back" id="IssueBack">' +
                 '<i class="fa fa-chevron-left"></i> Listeye dön</button>' + html);
         });
     }
+
+    /* --- Agent'a kopyalama ---
+       Özetin METNİ sunucuda üretilir (HealthIssueSummaryBuilder) ve gizli bir
+       textarea ile taşınır; burada yalnız panoya basılır. DOM'dan toplansaydı
+       ekranda kırpılmış hücreler özete kırpık girerdi. */
+
+    function copyToClipboard(text) {
+        if (!text) {
+            abp.notify.warn('Kopyalanacak özet bulunamadı.');
+            return;
+        }
+
+        function announce() {
+            abp.notify.success('Özet panoya kopyalandı. Agent\'a yapıştırabilirsiniz.');
+        }
+
+        // Güvenli olmayan bağlamda (düz http) clipboard API yoktur; seçili
+        // textarea üzerinden kopyalamaya düşülür.
+        function legacyCopy() {
+            var $temp = $('<textarea>')
+                .css({ position: 'fixed', top: 0, left: 0, opacity: 0 })
+                .val(text)
+                .appendTo('body');
+
+            $temp[0].select();
+            var copied = document.execCommand('copy');
+            $temp.remove();
+
+            if (copied) {
+                announce();
+            } else {
+                abp.notify.error('Kopyalanamadı; metni elle seçmeniz gerekiyor.');
+            }
+        }
+
+        if (navigator.clipboard && window.isSecureContext) {
+            navigator.clipboard.writeText(text).then(announce, legacyCopy);
+        } else {
+            legacyCopy();
+        }
+    }
+
+    // Kanıt paneli: seçili olayın tüm kanıtı.
+    $('#IssueDetail').on('click', '.issue-agent-copy', function () {
+        copyToClipboard($('#IssueDetail textarea[data-agent-summary]').val());
+    });
+
+    // Liste altı: süzgeçten geçen olayların tek satırlık künyeleri.
+    $('#IssueList').on('click', '.issue-agent-copy-list', function () {
+        copyToClipboard($('#IssueList textarea[data-agent-list-summary]').val());
+    });
+
+    // Satır ikonu: satırda kanıt yok, detay parçası arka planda çekilip
+    // içindeki hazır özet alınır. Panel ve seçim DEĞİŞMEZ.
+    $('#IssueList').on('click', '.apya-health-row-copy', function (e) {
+        e.stopPropagation();
+
+        var $icon = $(this).addClass('apya-pulse');
+
+        $.get(detailUrl($(this).closest('.apya-health-row')))
+            .done(function (html) {
+                var node = new DOMParser()
+                    .parseFromString(html, 'text/html')
+                    .querySelector('textarea[data-agent-summary]');
+
+                copyToClipboard(node ? node.value : '');
+            })
+            .fail(function () {
+                abp.notify.error('Olay özeti alınamadı.');
+            })
+            .always(function () {
+                $icon.removeClass('apya-pulse');
+            });
+    });
 
     /* --- Sol liste --- */
 

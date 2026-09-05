@@ -26,20 +26,54 @@ public class ResponseAppService : PlatformAppService, IResponseAppService
     private readonly IRepository<AppResponse, Guid> _responseRepository;
     private readonly IConsentAppService _consentAppService;
     private readonly ILogger<ResponseAppService> _logger;
+    private readonly Apya.Platform.Tasks.ITaskShareAppService _taskShareAppService;
 
     public ResponseAppService(
         IAppDocumentRepository documentRepository,
         IRepository<AppResponse, Guid> responseRepository,
         IConsentAppService consentAppService,
-        ILogger<ResponseAppService> logger)
+        ILogger<ResponseAppService> logger,
+        Apya.Platform.Tasks.ITaskShareAppService taskShareAppService)
     {
         _documentRepository = documentRepository;
         _responseRepository = responseRepository;
         _consentAppService = consentAppService;
         _logger = logger;
+        _taskShareAppService = taskShareAppService;
     }
 
     public async Task SubmitAsync(SubmitResponseDto input)
+    {
+        // Görev bağlamı iddiası varsa ÖNCE doğrulanır: token geçerli mi, görev
+        // linkin kapsamında mı, form o göreve bağlı ve misafire AÇIK mı. Doğrulama
+        // düşerse gönderim hiç başlamaz.
+        var tokenVar = !string.IsNullOrWhiteSpace(input.TaskShareToken);
+        if (tokenVar != input.TaskId.HasValue)
+        {
+            // Yarım bağlam sessizce anonim gönderime düşmesin: token'ı olup görevi
+            // olmayan istek, yanıtı damgalamadan kaydederdi.
+            throw new BusinessException(PlatformDomainErrorCodes.FormNotPublished);
+        }
+
+        if (!tokenVar)
+        {
+            await SubmitCoreAsync(input, null);
+            return;
+        }
+
+        var guest = await _taskShareAppService.ResolveGuestFormAsync(
+            input.TaskShareToken!, input.TaskId!.Value, input.DocumentSlug);
+
+        // 🔴 Anonim istekte geçerli kiracı YOKTUR. Gövdedeki her okuma/yazma
+        // (form arama, yanıt kaydı, KVKK rıza kaydı) token'ın işaret ettiği
+        // kiracıda yürümeli — aksi halde kayıtlar host'a düşerdi.
+        using (CurrentTenant.Change(guest.TenantId))
+        {
+            await SubmitCoreAsync(input, guest);
+        }
+    }
+
+    private async Task SubmitCoreAsync(SubmitResponseDto input, Apya.Platform.Tasks.GuestFormContextDto? guest)
     {
         // Find the document by slug
         var document = await _documentRepository.GetBySlugWithBlocksAsync(input.DocumentSlug);
@@ -96,6 +130,13 @@ public class ResponseAppService : PlatformAppService, IResponseAppService
             respondentId: CurrentUser.Id,
             completionSeconds: input.CompletionSeconds
         );
+
+        // Görev bağlamı doğrulanmışsa yanıt o göreve (ve linke) damgalanır;
+        // görevin Form sekmesi yanıtları bununla süzer.
+        if (guest != null)
+        {
+            response.AttachToTask(guest.TaskId, guest.ShareLinkId);
+        }
 
         await _responseRepository.InsertAsync(response, autoSave: true);
 

@@ -1,8 +1,9 @@
 $(function () {
     var service = apya.platform.grants.grantRecommendation;
-    var appSvc = apya.platform.grants.grantApplication;
+    var interestSvc = apya.platform.grants.grantInterest;
     var l = abp.localization.getResource('Platform');
     var callId = $('.apya-page').data('call-id');
+    var interestModal = new bootstrap.Modal(document.getElementById('InterestModal'));
 
     // Enum sıraları sunucudakiyle birebir.
     var bucketKeys = ['Uygun', 'Kosullu', 'UygunDegil'];
@@ -47,9 +48,37 @@ $(function () {
                 '</span><span class="apya-detail-metric-value">' + esc(m[1]) + '</span></div>';
         }).join(''));
 
-        $('#ApplyBtn').prop('disabled', d.alreadyApplied)
-            .text(d.alreadyApplied ? l('Grants:Feed:Card:Applied') : l('Grants:Detail:Apply'));
+        paintInterest(d);
         paintBookmark(d.isBookmarked);
+    }
+
+    // ---------- İlgi talebi ----------
+    // Enum sırası sunucudakiyle birebir: Yeni · İnceleniyor · BaşvuruAçıldı · UygunDeğil.
+    var interestKeys = ['Yeni', 'Inceleniyor', 'BasvuruAcildi', 'UygunDegil'];
+    var interestTone = ['neutral', 'neutral', 'positive', 'negative'];
+
+    function paintInterest(d) {
+        var st = d.interestStatus;
+        var rejected = st === 3;
+
+        // Buton yalnız yeni talep bırakılabiliyorken çıkar. Uygun bulunmayan talep
+        // kapıyı kapatmaz: "Yeniden ilgi bildir" ile yeni kayıt açılır.
+        var canExpress = !d.alreadyApplied && (st == null || rejected);
+        $('#InterestBtn').toggleClass('d-none', !canExpress).prop('disabled', false);
+        $('#InterestBtnText').text(l(rejected ? 'Grants:Interest:ExpressAgain' : 'Grants:Interest:Express'));
+
+        // Talep kaydı olmayan ESKİ başvurular da rozet görür (bu özellikten önce açılanlar).
+        var chipKey = st != null ? interestKeys[st] : (d.alreadyApplied ? 'BasvuruAcildi' : null);
+        var tone = st != null ? interestTone[st] : 'positive';
+        $('#InterestChip')
+            .attr('class', 'apya-chip apya-chip-' + tone + (chipKey == null ? ' d-none' : ''))
+            .text(chipKey == null ? '' : l('Grants:Interest:Status:' + chipKey));
+
+        $('#InterestAppLink').toggleClass('d-none', !d.interestApplicationId)
+            .attr('href', '/Grants/Wizard?id=' + d.interestApplicationId);
+
+        $('#InterestFeedback').toggleClass('d-none', !d.interestFeedback);
+        $('#InterestFeedbackText').text(d.interestFeedback || '');
     }
 
     function paintBookmark(on) {
@@ -192,14 +221,26 @@ $(function () {
             .always(function () { $btn.prop('disabled', false); });
     });
 
-    $('#ApplyBtn').on('click', function () {
-        var $btn = $(this).prop('disabled', true);
-        appSvc.apply(callId)
+    $('#InterestBtn').on('click', function () {
+        $('#InterestNote').val('');
+        interestModal.show();
+    });
+
+    $('#InterestForm').on('submit', function (e) {
+        e.preventDefault();
+        var $submit = $(this).find('button[type=submit]').prop('disabled', true);
+
+        interestSvc.express({ grantCallId: callId, note: $('#InterestNote').val() })
             .then(function () {
-                abp.notify.success('Başvurunuz alındı.');
-                $btn.text(l('Grants:Feed:Card:Applied'));
+                interestModal.hide();
+                abp.notify.success(l('Grants:Interest:Toast'));
+                // Durumu sunucudan geri okuyoruz: rozet, buton ve gerekçe tek yerden boyanıyor.
+                return service.getCallDetail(callId).then(function (d) {
+                    detail = d;
+                    paintInterest(d);
+                });
             })
-            .fail(function () { $btn.prop('disabled', false); });
+            .always(function () { $submit.prop('disabled', false); });
     });
 
     service.getCallDetail(callId).then(function (d) {

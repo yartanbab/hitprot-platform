@@ -404,7 +404,36 @@ public class CalendarAppService : ApplicationService, ICalendarAppService
         }).ToList();
     }
 
+    /// <summary>
+    /// Sağlayıcı gerçekten yapılandırılmış mı? İKİ değer birden şart: yalnız ClientId
+    /// varken kullanıcıyı gerçek Google/Microsoft ekranına göndermek, dönüşte code
+    /// exchange'in secret olmadan düşmesi ve "bağlantı başarısız" demesi anlamına gelir.
+    /// </summary>
+    private bool IsProviderConfigured(CalendarProviderType provider)
+    {
+        var sectionKey = provider == CalendarProviderType.Google ? "Google" : "Outlook";
+        return !string.IsNullOrWhiteSpace(_configuration[$"Calendars:{sectionKey}:ClientId"])
+            && !string.IsNullOrWhiteSpace(_configuration[$"Calendars:{sectionKey}:ClientSecret"]);
+    }
+
+    /// <summary>
+    /// Token'ı İSTEMCİDEN alan bağlama yolu — yalnız sağlayıcı YAPILANDIRILMAMIŞKEN
+    /// açıktır (geliştirme/simülasyon). Gerçek OAuth kurulu bir ortamda bu uç, sahte
+    /// token'lı hesap üretmenin serbest kapısı olurdu: bağlantı kurulmuş görünür,
+    /// her okuma sessizce hataya düşerdi.
+    /// </summary>
     public async Task ConnectAccountAsync(ConnectCalendarInput input)
+    {
+        if (IsProviderConfigured(input.Provider))
+        {
+            throw new BusinessException(message:
+                "Bu sağlayıcı için gerçek bağlantı yapılandırılmış; hesap yalnız OAuth ile bağlanabilir.");
+        }
+
+        await UpsertAccountAsync(input);
+    }
+
+    private async Task UpsertAccountAsync(ConnectCalendarInput input)
     {
         var existing = await _accountRepository.FirstOrDefaultAsync(x =>
             x.UserId == CurrentUser.Id &&
@@ -439,12 +468,12 @@ public class CalendarAppService : ApplicationService, ICalendarAppService
 
     public async Task<string> GetAuthUrlAsync(CalendarProviderType provider)
     {
+        if (!IsProviderConfigured(provider))
+            return $"/Calendars/SimulateAuth?provider={(int)provider}";
+
         var clientId = provider == CalendarProviderType.Google
             ? _configuration["Calendars:Google:ClientId"]
             : _configuration["Calendars:Outlook:ClientId"];
-
-        if (string.IsNullOrEmpty(clientId))
-            return $"/Calendars/SimulateAuth?provider={(int)provider}";
 
         var selfUrl     = _configuration["App:SelfUrl"]?.TrimEnd('/') ?? throw new InvalidOperationException("App:SelfUrl eksik.");
         var redirectUri = Uri.EscapeDataString($"{selfUrl}/Calendars/Callback");
@@ -506,7 +535,9 @@ public class CalendarAppService : ApplicationService, ICalendarAppService
                 await MicrosoftOutlookProvider.ExchangeCodeAsync(_httpClientFactory, code, clientId, clientSecret, redirectUri);
         }
 
-        await ConnectAccountAsync(new ConnectCalendarInput
+        // Doğrudan yazma yolu: ConnectAccountAsync yapılandırılmış sağlayıcıyı reddeder,
+        // burada token zaten sağlayıcıdan alınmıştır.
+        await UpsertAccountAsync(new ConnectCalendarInput
         {
             Provider        = provider,
             ExternalEmail   = email,

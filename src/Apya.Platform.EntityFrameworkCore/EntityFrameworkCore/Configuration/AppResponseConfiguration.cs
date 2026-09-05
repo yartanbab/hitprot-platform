@@ -44,5 +44,10 @@ public class AppResponseConfiguration : IEntityTypeConfiguration<AppResponse>
         builder.HasIndex(x => x.DocumentId);
         builder.HasIndex(x => x.RespondentId);
         builder.HasIndex(x => new { x.TenantId, x.Status });
+
+        // Görevin Form sekmesi yanıtları (TaskId, DocumentId) ile süzer; tek sorgu
+        // bu bileşik indeksi kullanır. Kolonların ikisi de nullable — eski yanıtlar
+        // görev bağlamı olmadan toplandı, onlarda null kalır.
+        builder.HasIndex(x => new { x.TaskId, x.DocumentId });
     }
 }

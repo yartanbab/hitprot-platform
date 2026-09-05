@@ -40,6 +40,20 @@ public class AppResponse : CreationAuditedAggregateRoot<Guid>, IMultiTenant
 
     public Guid? TenantId { get; set; }
 
+    /// <summary>
+    /// Yanıt bir GÖREV bağlamında toplandıysa o görev. Null = form kendi başına
+    /// dolduruldu (eski yanıtların tamamı böyledir; kolon bu yüzden nullable).
+    /// Görevin Form sekmesi yanıtları bununla süzer.
+    /// </summary>
+    public Guid? TaskId { get; private set; }
+
+    /// <summary>
+    /// Yanıt görevin süreli paylaşım linkinden geldiyse o link. Kimin doldurduğu
+    /// buradan çözülür (misafirin kullanıcı kaydı yoktur, RespondentId boştur) —
+    /// TaskAttachment.ShareLinkId ve TaskComment.ShareLinkId ile aynı desen.
+    /// </summary>
+    public Guid? TaskShareLinkId { get; private set; }
+
     private readonly List<ResponseComment> _comments = new();
     public IReadOnlyList<ResponseComment> Comments => _comments.AsReadOnly();
 
@@ -65,6 +79,16 @@ public class AppResponse : CreationAuditedAggregateRoot<Guid>, IMultiTenant
         CompletionSeconds = completionSeconds;
         RespondentMetaJson = respondentMetaJson;
         Status = ResponseStatus.Pending;
+    }
+
+    /// <summary>
+    /// Yanıtı bir görev bağlamına iliştirir. Cevaplar gönderimden sonra değişmez;
+    /// bu yalnız BAĞLAM bilgisidir ve yanıt oluşturulurken bir kez çağrılır.
+    /// </summary>
+    public void AttachToTask(Guid taskId, Guid? shareLinkId = null)
+    {
+        TaskId = taskId;
+        TaskShareLinkId = shareLinkId;
     }
 
     public void SetStatus(ResponseStatus status)

@@ -19,7 +19,7 @@ const Oa = () => {
   var a;
   return ((a = window == null ? void 0 : window.abp) == null ? void 0 : a.appPath) ?? "/";
 };
-function R(a) {
+function B(a) {
   return new Promise((n, t) => {
     window.abp.ajax(a).done(n).fail(t);
   });
@@ -37,9 +37,9 @@ const S = (a, n = {}) => {
   });
   const d = t.toString();
   return `${ce()}Documents?handler=${a}${d ? "&" + d : ""}`;
-}, M = (a, n) => R({ url: a, type: "POST", contentType: "application/json", data: JSON.stringify(n) }), ze = (a) => R({ url: S("Files", a), type: "GET" }), He = (a) => R({ url: S("File", { id: a }), type: "GET" }), Ka = (a, n) => M(S("UpdateFileMeta", { id: a }), n), Wa = (a, n) => R({ url: S("MoveFile", { id: a, targetDocumentId: n }), type: "POST" }), Ve = (a, n) => M(S("BulkMove"), { documentFileIds: a, targetDocumentId: n }), Ua = (a, n, t = !1) => M(S("BulkTag"), { documentFileIds: a, tags: n, remove: t }), Ga = (a) => R({ url: S("DeleteFile", { id: a }), type: "POST" }), qa = (a) => R({ url: S("RestoreFile", { id: a }), type: "POST" }), Ya = () => R({ url: S("DocumentTypes"), type: "GET" }), _a = (a) => R({ url: S("WorkSteps", { projectId: a }), type: "GET" }), Ha = (a) => R({ url: S("CompliancePackages", { projectId: a }), type: "GET" }), la = (a, n) => R({ url: S("ComplianceOverview", { projectId: a, periodCode: n }), type: "GET" }), Va = (a, n, t) => M(S("ApplyCompliancePackage"), { projectId: a, packageId: n, periodCode: t }), Qa = (a) => R({ url: S("RemoveComplianceAssignment", { assignmentId: a }), type: "POST" }), Za = (a) => M(S("WaiveComplianceItem"), a), Ja = (a) => M(S("LinkComplianceDocument"), a), Xa = () => R({ url: S("SetupState"), type: "GET" }), es = (a) => M(S("ApplySetup"), a), as = () => R({ url: S("CompleteSetup"), type: "POST" }), ss = (a) => R({ url: S("Suggestions", { projectId: a }), type: "GET" }), Qe = (a) => M(S("ApplySuggestions"), { suggestions: a }), ts = (a) => M(S("DismissSuggestions"), { suggestions: a }), ns = (a) => R({ url: S("ProjectTasks", { projectId: a }), type: "GET" }), ls = (a) => R({ url: S("ComplianceRequirements", { packageId: a }), type: "GET" }), is = (a) => M(S("CreateCompliancePackage"), a), rs = (a, n) => M(S("UpdateCompliancePackage", { id: a }), n), os = (a) => R({ url: S("DeleteCompliancePackage", { id: a }), type: "POST" }), cs = (a, n) => M(S("AddComplianceRequirement", { packageId: a }), n), ds = (a, n) => M(S("UpdateComplianceRequirement", { id: a }), n), us = (a) => R({ url: S("DeleteComplianceRequirement", { id: a }), type: "POST" }), ms = (a) => R({ url: S("Activity", a), type: "GET" }), ps = (a, n) => {
+}, M = (a, n) => B({ url: a, type: "POST", contentType: "application/json", data: JSON.stringify(n) }), ze = (a) => B({ url: S("Files", a), type: "GET" }), He = (a) => B({ url: S("File", { id: a }), type: "GET" }), Ka = (a, n) => M(S("UpdateFileMeta", { id: a }), n), Wa = (a, n) => B({ url: S("MoveFile", { id: a, targetDocumentId: n }), type: "POST" }), Ve = (a, n) => M(S("BulkMove"), { documentFileIds: a, targetDocumentId: n }), Ua = (a, n, t = !1) => M(S("BulkTag"), { documentFileIds: a, tags: n, remove: t }), Ga = (a) => B({ url: S("DeleteFile", { id: a }), type: "POST" }), qa = (a) => B({ url: S("RestoreFile", { id: a }), type: "POST" }), Ya = () => B({ url: S("DocumentTypes"), type: "GET" }), _a = (a) => B({ url: S("WorkSteps", { projectId: a }), type: "GET" }), Ha = (a) => B({ url: S("CompliancePackages", { projectId: a }), type: "GET" }), la = (a, n) => B({ url: S("ComplianceOverview", { projectId: a, periodCode: n }), type: "GET" }), Va = (a, n, t) => M(S("ApplyCompliancePackage"), { projectId: a, packageId: n, periodCode: t }), Qa = (a) => B({ url: S("RemoveComplianceAssignment", { assignmentId: a }), type: "POST" }), Za = (a) => M(S("WaiveComplianceItem"), a), Ja = (a) => M(S("LinkComplianceDocument"), a), Xa = () => B({ url: S("SetupState"), type: "GET" }), es = (a) => M(S("ApplySetup"), a), as = () => B({ url: S("CompleteSetup"), type: "POST" }), ss = (a) => B({ url: S("Suggestions", { projectId: a }), type: "GET" }), Qe = (a) => M(S("ApplySuggestions"), { suggestions: a }), ts = (a) => M(S("DismissSuggestions"), { suggestions: a }), ns = (a) => B({ url: S("ProjectTasks", { projectId: a }), type: "GET" }), ls = (a) => B({ url: S("ComplianceRequirements", { packageId: a }), type: "GET" }), is = (a) => M(S("CreateCompliancePackage"), a), rs = (a, n) => M(S("UpdateCompliancePackage", { id: a }), n), os = (a) => B({ url: S("DeleteCompliancePackage", { id: a }), type: "POST" }), cs = (a, n) => M(S("AddComplianceRequirement", { packageId: a }), n), ds = (a, n) => M(S("UpdateComplianceRequirement", { id: a }), n), us = (a) => B({ url: S("DeleteComplianceRequirement", { id: a }), type: "POST" }), ms = (a) => B({ url: S("Activity", a), type: "GET" }), ps = (a, n) => {
   const t = new FormData();
-  return t.append("documentId", a), t.append("file", n), R({
+  return t.append("documentId", a), t.append("file", n), B({
     url: S("UploadFile"),
     type: "POST",
     data: t,
@@ -50,7 +50,7 @@ const S = (a, n = {}) => {
   date: (a) => a ? new Intl.DateTimeFormat("tr-TR", { day: "2-digit", month: "2-digit", year: "numeric" }).format(new Date(a)) : "—",
   dateTime: (a) => a ? new Intl.DateTimeFormat("tr-TR", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }).format(new Date(a)) : "—",
   money: (a, n) => a == null ? "—" : new Intl.NumberFormat("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(a) + (n ? " " + ys(n) : ""),
-  size: (a) => !a && a !== 0 ? "—" : a < 1024 ? a + " B" : a < 1024 * 1024 ? (a / 1024).toFixed(0) + " KB" : (a / (1024 * 1024)).toFixed(1) + " MB",
+  size: (a) => !a && a !== 0 ? "—" : a < 1024 ? a + " B" : a < 1024 * 1024 ? (a / 1024).toFixed(0) + " KB" : (a / (1024 * 1024)).toLocaleString("tr-TR", { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + " MB",
   daysLeft: (a) => a ? Math.ceil((new Date(a) - /* @__PURE__ */ new Date()) / (1e3 * 60 * 60 * 24)) : null
 };
 function ys(a) {
@@ -415,7 +415,7 @@ function Ns({
   pageSize: b,
   onPageChange: k,
   onDragStart: x,
-  emptyHint: B,
+  emptyHint: R,
   missingItems: $ = [],
   onUploadMissing: l,
   canUpload: N = !1,
@@ -428,7 +428,7 @@ function Ns({
     {
       icon: /* @__PURE__ */ e.jsx("i", { className: "fa fa-inbox" }),
       title: "Burada henüz belge yok",
-      description: B
+      description: R
     }
   ) : /* @__PURE__ */ e.jsxs(e.Fragment, { children: [
     d === "grid" ? /* @__PURE__ */ e.jsx("div", { className: "apya-tile-grid p-3", children: n.map((p) => /* @__PURE__ */ e.jsx(
@@ -570,7 +570,7 @@ function Ds({
   saving: m,
   documentTypes: y
 }) {
-  var x, B, $;
+  var x, R, $;
   const [h, c] = i.useState(null);
   if (i.useEffect(() => {
     c(a ? { ...a, fields: (a.fields || []).map((l) => ({ ...l })) } : null);
@@ -759,7 +759,7 @@ function Ds({
       /* @__PURE__ */ e.jsx("div", { className: "apya-md-overline mb-2", children: "Etiketler" }),
       /* @__PURE__ */ e.jsx(ws, { tags: a.tags })
     ] }),
-    ((B = a.related) == null ? void 0 : B.length) > 0 && /* @__PURE__ */ e.jsxs("div", { className: "mb-3", children: [
+    ((R = a.related) == null ? void 0 : R.length) > 0 && /* @__PURE__ */ e.jsxs("div", { className: "mb-3", children: [
       /* @__PURE__ */ e.jsxs("div", { className: "apya-md-overline mb-2 d-flex align-items-center", children: [
         "İlişkili kayıtlar",
         /* @__PURE__ */ e.jsx(Ce, { text: "Belgenin bağlandığı harcama, içinde gittiği teslim paketi ve karşıladığı kontrol listesi kalemleri." })
@@ -936,7 +936,7 @@ function Es({ pkg: a, projectId: n, documentTypes: t, onClose: d, onChanged: o }
     issuer: a.issuer,
     description: a.description || "",
     order: a.order || 0
-  }), [B, $] = i.useState(null), [l, N] = i.useState(null), r = i.useCallback(async () => {
+  }), [R, $] = i.useState(null), [l, N] = i.useState(null), r = i.useCallback(async () => {
     g(!0);
     try {
       const [p, F] = await Promise.all([
@@ -973,13 +973,13 @@ function Es({ pkg: a, projectId: n, documentTypes: t, onClose: d, onChanged: o }
     b(!0);
     try {
       const p = {
-        title: B.title.trim(),
-        scope: Number(B.scope),
-        documentTypeId: B.documentTypeId || null,
-        isBlocking: B.isBlocking,
-        order: Number(B.order) || m.length,
-        source: Number(B.source),
-        sourceEntityId: B.sourceEntityId || null
+        title: R.title.trim(),
+        scope: Number(R.scope),
+        documentTypeId: R.documentTypeId || null,
+        isBlocking: R.isBlocking,
+        order: Number(R.order) || m.length,
+        source: Number(R.source),
+        sourceEntityId: R.sourceEntityId || null
       };
       l ? await ds(l, p) : await cs(a.id, p), $(null), N(null), await r(), o == null || o();
     } catch (p) {
@@ -1089,10 +1089,10 @@ function Es({ pkg: a, projectId: n, documentTypes: t, onClose: d, onChanged: o }
         ] }, p.id);
       })
     ] }),
-    B ? /* @__PURE__ */ e.jsx(
+    R ? /* @__PURE__ */ e.jsx(
       Ts,
       {
-        draft: B,
+        draft: R,
         setDraft: $,
         documentTypes: t,
         tasks: h,
@@ -1178,17 +1178,17 @@ const Xe = {
   1: { text: "Karşılandı", chip: "apya-chip-positive", icon: "fa-check" },
   2: { text: "Eksik", chip: "apya-chip-warning", icon: "fa-triangle-exclamation" },
   3: { text: "Feragat", chip: "apya-chip-neutral", icon: "fa-ban" }
-}, Bs = { 1: "Proje", 2: "İş adımı", 3: "Dönem" }, ea = {
+}, Rs = { 1: "Proje", 2: "İş adımı", 3: "Dönem" }, ea = {
   1: "kurum şablonu",
   2: "klasör şeması",
   3: "task eki"
 };
-function Rs({ percent: a, blocking: n }) {
+function Bs({ percent: a, blocking: n }) {
   const t = n > 0 ? "var(--apya-negative-500)" : a >= 90 ? "var(--apya-positive-500)" : "var(--apya-warning-500)";
   return /* @__PURE__ */ e.jsx("div", { className: "apya-doc-progress", role: "progressbar", "aria-valuenow": a, "aria-valuemin": 0, "aria-valuemax": 100, children: /* @__PURE__ */ e.jsx("div", { style: { width: `${a}%`, background: t } }) });
 }
 function $s({ item: a, canManage: n, onWaive: t, busy: d }) {
-  const o = Xe[a.status] || Xe[2], m = a.workStepName ? `${a.workStepOrder} · ${a.workStepName}` : a.periodCode || Bs[a.scope];
+  const o = Xe[a.status] || Xe[2], m = a.workStepName ? `${a.workStepOrder} · ${a.workStepName}` : a.periodCode || Rs[a.scope];
   return /* @__PURE__ */ e.jsxs("div", { className: E("apya-doc-check-row", a.status === 2 && a.isBlocking && "is-blocking"), children: [
     /* @__PURE__ */ e.jsxs("span", { className: E("apya-chip", o.chip), children: [
       /* @__PURE__ */ e.jsx("i", { className: `fa ${o.icon}` }),
@@ -1254,7 +1254,7 @@ function Fs({ projectId: a, periodCode: n, onSummaryChange: t, documentTypes: d 
     } finally {
       f(!1);
     }
-  }, B = async (r) => {
+  }, R = async (r) => {
     f(!0);
     try {
       await Qa(r), await k();
@@ -1327,13 +1327,13 @@ function Fs({ projectId: a, periodCode: n, onSummaryChange: t, documentTypes: d 
               type: "button",
               className: "apya-doc-linkbtn",
               disabled: g,
-              onClick: () => B(r.assignmentId),
+              onClick: () => R(r.assignmentId),
               children: "Kaldır"
             }
           )
         ] })
       ] }),
-      /* @__PURE__ */ e.jsx(Rs, { percent: r.summary.percent, blocking: r.summary.blockingMissingCount }),
+      /* @__PURE__ */ e.jsx(Bs, { percent: r.summary.percent, blocking: r.summary.blockingMissingCount }),
       /* @__PURE__ */ e.jsxs("div", { style: { fontSize: 11.5, color: "var(--apya-text-tertiary)" }, children: [
         r.summary.satisfiedCount,
         " / ",
@@ -1611,7 +1611,7 @@ function Gs({ state: a, onDone: n }) {
     } finally {
       f(!1);
     }
-  }, B = async () => {
+  }, R = async () => {
     f(!0);
     try {
       const l = await es({
@@ -1720,7 +1720,7 @@ function Gs({ state: a, onDone: n }) {
           size: "sm",
           isLoading: g,
           disabled: a.projects.length === 0 || !y,
-          onClick: B,
+          onClick: R,
           children: "Şemayı kur"
         }
       )
@@ -1810,13 +1810,13 @@ function Hs({ uploadedThisMonth: a, expiring: n, compliance: t }) {
   ] }, o.key)) });
 }
 function Vs() {
-  const [a, n] = i.useState([]), [t, d] = i.useState([]), [o, m] = i.useState([]), [y, h] = i.useState(!0), [c, j] = i.useState([]), [g, f] = i.useState(0), [b, k] = i.useState(null), [x, B] = i.useState(null), [$, l] = i.useState(!0), N = i.useMemo(() => new URLSearchParams(window.location.search), []), [r, w] = i.useState(() => {
+  const [a, n] = i.useState([]), [t, d] = i.useState([]), [o, m] = i.useState([]), [y, h] = i.useState(!0), [c, j] = i.useState([]), [g, f] = i.useState(0), [b, k] = i.useState(null), [x, R] = i.useState(null), [$, l] = i.useState(!0), N = i.useMemo(() => new URLSearchParams(window.location.search), []), [r, w] = i.useState(() => {
     const s = N.get("smart");
     return s ? { key: s, kind: "smart", smart: s } : { key: "all", kind: "all" };
   }), C = r.kind === "folder" ? r.documentId : null, P = r.projectId || null, W = r.kind === "smart" && r.smart === "trash", [p, F] = i.useState(/* @__PURE__ */ new Set()), [A, te] = i.useState(N.get("q") || ""), [X, da] = i.useState(N.get("sort") || "creationTime desc"), [ee, Ee] = i.useState(N.get("view") === "grid" ? "grid" : "list"), [ae, ue] = i.useState(Number(N.get("page")) || 0), [q, ua] = i.useState(() => {
     const s = N.get("tab");
     return ["files", "compliance", "activity"].includes(s) ? s : "files";
-  }), [ma, pa] = i.useState(null), [Pe, Be] = i.useState(null), [ya, xe] = i.useState(null), [xa, Re] = i.useState(!1), [ha, $e] = i.useState(!1), [Y, V] = i.useState(/* @__PURE__ */ new Set()), [fa, ga] = i.useState(null), he = i.useRef([]), [ne, fe] = i.useState(null), [Fe, Ae] = i.useState(null), [Me, Le] = i.useState(!1), ge = i.useRef(null), Oe = i.useRef(null), [me, Ke] = i.useState(null), [_, We] = i.useState(null), [va, Ue] = i.useState(!1), [ka, ve] = i.useState([]), ke = i.useRef(null), Q = re("Platform.Documents.Create"), Ge = re("Platform.Documents.ManageMeta"), ja = re("Platform.Documents.BulkOperations"), ba = re("Platform.Documents.Delete"), U = i.useCallback((s) => Ae(s), []), Z = i.useCallback(async () => {
+  }), [ma, pa] = i.useState(null), [Pe, Re] = i.useState(null), [ya, xe] = i.useState(null), [xa, Be] = i.useState(!1), [ha, $e] = i.useState(!1), [Y, V] = i.useState(/* @__PURE__ */ new Set()), [fa, ga] = i.useState(null), he = i.useRef([]), [ne, fe] = i.useState(null), [Fe, Ae] = i.useState(null), [Me, Le] = i.useState(!1), ge = i.useRef(null), Oe = i.useRef(null), [me, Ke] = i.useState(null), [_, We] = i.useState(null), [va, Ue] = i.useState(!1), [ka, ve] = i.useState([]), ke = i.useRef(null), Q = re("Platform.Documents.Create"), Ge = re("Platform.Documents.ManageMeta"), ja = re("Platform.Documents.BulkOperations"), ba = re("Platform.Documents.Delete"), U = i.useCallback((s) => Ae(s), []), Z = i.useCallback(async () => {
     h(!0);
     try {
       const [s, u, v] = await Promise.all([
@@ -1857,7 +1857,7 @@ function Vs() {
         ze({ maxResultCount: 1, skipCount: 0, expiringWithinDays: 30 }),
         ze({ maxResultCount: 1, skipCount: 0, uploadedAfter: u })
       ]);
-      k(v.totalCount ?? 0), B(T.totalCount ?? 0);
+      k(v.totalCount ?? 0), R(T.totalCount ?? 0);
     } catch (s) {
       console.error("[Documents] loadKpis", s);
     }
@@ -1962,13 +1962,13 @@ function Vs() {
     window.history.replaceState(null, "", u ? `${window.location.pathname}?${u}` : window.location.pathname);
   }, [q, r, A, ee, X, ae]);
   const Na = i.useCallback(async (s) => {
-    Be(s.id), Re(!0);
+    Re(s.id), Be(!0);
     try {
       xe(await He(s.id));
     } catch (u) {
       z("error", "Belge detayı açılamadı."), console.error("[Documents] openDetail", u);
     } finally {
-      Re(!1);
+      Be(!1);
     }
   }, []), Sa = async (s) => {
     $e(!0);
@@ -2001,7 +2001,7 @@ function Vs() {
   }, wa = async () => {
     if (ne)
       try {
-        await Ga(ne.id), Pe === ne.id && (Be(null), xe(null)), U("Belge silindi."), await Promise.all([O(), le()]);
+        await Ga(ne.id), Pe === ne.id && (Re(null), xe(null)), U("Belge silindi."), await Promise.all([O(), le()]);
       } catch (s) {
         z("error", "Belge silinemedi."), console.error("[Documents] handleDelete", s);
       } finally {
@@ -2085,10 +2085,10 @@ function Vs() {
   }, Ye = (s) => F((u) => {
     const v = new Set(u);
     return v.has(s) ? v.delete(s) : v.add(s), v;
-  }), Ba = (s) => {
+  }), Ra = (s) => {
     var u;
     w(s), ue(0), V(/* @__PURE__ */ new Set()), (u = s.key) != null && u.startsWith("folder-") && Ye(s.key);
-  }, Ra = (s) => V((u) => {
+  }, Ba = (s) => V((u) => {
     const v = new Set(u);
     return v.has(s) ? v.delete(s) : v.add(s), v;
   }), $a = () => V((s) => c.every((u) => s.has(u.id)) ? /* @__PURE__ */ new Set() : new Set(c.map((u) => u.id)));
@@ -2204,7 +2204,7 @@ function Vs() {
               activeKey: r.key,
               expanded: p,
               onToggle: Ye,
-              onSelect: Ba,
+              onSelect: Ra,
               onDropFiles: za,
               dragTarget: fa,
               setDragTarget: ga
@@ -2297,7 +2297,7 @@ function Vs() {
                 selectedId: Pe,
                 onSelect: Na,
                 checkedIds: Y,
-                onToggleCheck: Ra,
+                onToggleCheck: Ba,
                 onToggleAll: $a,
                 page: ae,
                 pageSize: De,

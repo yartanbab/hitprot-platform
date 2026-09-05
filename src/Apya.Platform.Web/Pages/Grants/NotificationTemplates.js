@@ -41,7 +41,7 @@ $(function () {
 
     function paintList() {
         var items = model.templates || [];
-        $('#NtRows').html(items.map(row).join(''));
+        $('#NtRows').removeClass('apya-skel-rows').html(items.map(row).join(''));
         $('#NtEmpty').toggleClass('d-none', items.length > 0);
         $('#NtCount').text(l('Grants:Notify:ActiveCount', model.enabledCount));
     }

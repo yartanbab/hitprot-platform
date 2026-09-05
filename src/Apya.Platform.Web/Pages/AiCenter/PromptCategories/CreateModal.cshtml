@@ -10,7 +10,7 @@
         <abp-modal-body>
             <abp-input asp-for="Category.Name" label="Ad" />
             <abp-input asp-for="Category.Code" label="Kod (benzersiz)" />
-            <abp-input asp-for="Category.Description" type="textarea" label="Açıklama" />
+            <abp-input asp-for="Category.Description" text-area rows="3" label="Açıklama" />
         </abp-modal-body>
         <abp-modal-footer buttons="@(AbpModalButtons.Cancel | AbpModalButtons.Save)"></abp-modal-footer>
     </abp-modal>

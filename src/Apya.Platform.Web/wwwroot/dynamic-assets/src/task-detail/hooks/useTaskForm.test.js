@@ -123,3 +123,37 @@ describe('useTaskForm', () => {
         expect(result.current.isDirty).toBe(true);
     });
 });
+
+describe('useTaskForm · butce bagi', () => {
+    /* UpdateAsync bu iki alani kosulsuz uyguluyor (task.SetBudgetLink). DTO'dan
+       duserlerse gorevin butce bagi HER kayitta sessizce silinir. */
+    it('mevcut bagi DTO ya tasir (dokunulmasa bile)', () => {
+        const { result } = renderHook(() => useTaskForm({
+            ...TASK, budgetLineId: 'b1', plannedAmount: 12500,
+        }));
+
+        const dto = result.current.toUpdateDto();
+        expect(dto.budgetLineId).toBe('b1');
+        expect(dto.plannedAmount).toBe(12500);
+    });
+
+    it('bagi olmayan gorevde null gonderir', () => {
+        const { result } = renderHook(() => useTaskForm(TASK));
+
+        const dto = result.current.toUpdateDto();
+        expect(dto.budgetLineId).toBeNull();
+        expect(dto.plannedAmount).toBeNull();
+    });
+
+    it('kalem/tutar degisimi kirli sayilir ve DTO ya yansir', () => {
+        const { result } = renderHook(() => useTaskForm(TASK));
+
+        act(() => {
+            result.current.setField('budgetLineId', 'b2');
+            result.current.setField('plannedAmount', 3000);
+        });
+
+        expect(result.current.isDirty).toBe(true);
+        expect(result.current.toUpdateDto()).toMatchObject({ budgetLineId: 'b2', plannedAmount: 3000 });
+    });
+});
