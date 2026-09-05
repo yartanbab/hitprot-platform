@@ -433,6 +433,14 @@ public static class ReleaseNoteCatalog
                 "gönderilen etkinlikler dış takvime saat farkı kadar kaymış işleniyordu (Türkiye'de " +
                 "üç saat); saatler artık her iki yönde de doğru taşınıyor."),
 
+            new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
+                "Takvim sol menüde kendi başına duruyor",
+                "Takvim, görev görünüşlerini toplayan \"Panolar\" grubunun içindeydi: kendi ekranı, " +
+                "kendi hatırlatmaları ve Google/Outlook bağlantısı olmasına rağmen açmak için önce " +
+                "o grubu açmanız gerekiyordu. Artık sol menüde doğrudan kendi satırında — tek tıkla " +
+                "geliyor. Takvimi eskiden Panolar'ın altında arıyorsanız yeni yeri menünün üst " +
+                "kısmında, İş Yönetimi'nin hemen altında. Ekranın içinde hiçbir şey değişmedi."),
+
             // ── Genel ─────────────────────────────────────────────────────────
             new ReleaseNoteItem(ReleaseNoteCategory.Feature,
                 "Genel Bakış'ı olduğu gibi kağıda dökebiliyorsunuz",
@@ -541,6 +549,19 @@ public static class ReleaseNoteCatalog
                 "Dosya Galerisi sekmeleri kullanıma açıldı. Görev yorumları ayrı bir sekme olmaktan " +
                 "çıktı; zaten Genel sekmesinde durdukları yerde duruyorlar. Daha önce bir göreve " +
                 "eklediğiniz özellikler silinmedi, yalnız görünmüyor."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
+                "Panolar tek ekrana bağlandı, Kanban'ın adı Kart Panosu oldu",
+                "Kanban'ın menüde ayrı bir sayfası vardı ve Görevler ekranındaki sekmeyle aynı " +
+                "panoyu gösteriyordu; ama ikisi filtre çubuğunu paylaşmadığı için birinde " +
+                "daralttığınız kapsam diğerine geçmiyor, aynı işi iki yerde yapıyordunuz. " +
+                "Menüdeki \"Panolar\" başlığı artık üç görünüşü de aynı ekrana bağlıyor: Görevler, " +
+                "Kart Panosu ve Zaman Çizelgesi. Her biri Görevler ekranını doğrudan kendi " +
+                "sekmesiyle açıyor, üçü de o an seçili filtreyi paylaşıyor. Başlığın kendisi de " +
+                "tıklanabilir hâle geldi — üstüne basınca görev listesi geliyor, yanındaki oka " +
+                "basınca grup katlanıyor. \"Kanban\" adı hem menüde hem sekmede \"Kart Panosu\" " +
+                "oldu; kanbanı eski ayrı adresinden açmaya çalışırsanız sizi doğru sekmeye " +
+                "yönlendiriyor, kaydettiğiniz bağlantılar boşa düşmüyor."),
 
             new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
                 "Tutar yazarken binlik ve ondalık ayracı kendiliğinden çıkıyor",
