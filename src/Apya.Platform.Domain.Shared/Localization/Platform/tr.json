@@ -2426,6 +2426,7 @@
         "DisplayName:TargetProjectIds": "Hedef projeler",
         "DisplayName:AuthorizedTitle": "Görev / unvan",
         "DisplayName:Token": "Davet bağlantısı",
+        "DisplayName:RegistryNumber": "Kütük numarası",
         "DisplayName:AcceptAgreement": "Protokol onayı",
         "DisplayName:PasswordConfirm": "Şifre tekrarı",
         "DisplayName:RequestedPlan": "Paket",
