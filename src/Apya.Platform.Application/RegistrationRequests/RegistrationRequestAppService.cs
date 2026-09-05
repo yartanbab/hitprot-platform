@@ -27,17 +27,20 @@ public class RegistrationRequestAppService : PlatformAppService, IRegistrationRe
     private readonly IRepository<RegistrationRequest, Guid> _repository;
     private readonly RegistrationRequestManager _registrationRequestManager;
     private readonly TenantProfileManager _tenantProfileManager;
+    private readonly SalesPlanPricing _pricing;
     private readonly IClock _clock;
 
     public RegistrationRequestAppService(
         IRepository<RegistrationRequest, Guid> repository,
         RegistrationRequestManager registrationRequestManager,
         TenantProfileManager tenantProfileManager,
+        SalesPlanPricing pricing,
         IClock clock)
     {
         _repository = repository;
         _registrationRequestManager = registrationRequestManager;
         _tenantProfileManager = tenantProfileManager;
+        _pricing = pricing;
         _clock = clock;
     }
 
@@ -119,7 +122,14 @@ public class RegistrationRequestAppService : PlatformAppService, IRegistrationRe
         var request = await _repository.GetAsync(id);
 
         request.SetStatus(input.Status);
-        request.SetOffer(input.ApprovedPlan, input.OfferedAmount);
+
+        // Bedel boş bırakıldıysa paketin liste bedeli kullanılır (/PackageManagement'ta
+        // tanımlanır). Host her onayda rakamı elle yazmak zorunda kalmasın; tanımlı bedel
+        // yoksa alan boş kalır ve sözleşmeye rakam UYDURULMAZ.
+        var amount = input.OfferedAmount
+                     ?? await _pricing.GetPriceOrNullAsync(input.ApprovedPlan ?? request.RequestedPlan);
+
+        request.SetOffer(input.ApprovedPlan, amount);
         request.SetAdminNote(TrimToNull(input.AdminNote));
 
         await _repository.UpdateAsync(request, autoSave: true);

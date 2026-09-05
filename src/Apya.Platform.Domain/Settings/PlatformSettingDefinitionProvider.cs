@@ -173,6 +173,32 @@ public class PlatformSettingDefinitionProvider : SettingDefinitionProvider
                 .WithProviders(GlobalSettingValueProvider.ProviderName)
         );
 
+        // --- Satış paketi bedelleri --- (host seviyesinde)
+        // Varsayılan "0" = TANIMLI DEĞİL. Uydurulmuş bir rakamın sözleşmeye geçmesindense
+        // alanın boş kalması yeğdir; host onay ekranında elle girer.
+        context.Add(
+            new SettingDefinition(
+                PlatformSettings.Pricing.StandardPlan,
+                defaultValue: "0",
+                displayName: L("Setting:Pricing.StandardPlan"),
+                description: L("Setting:Pricing.Description"))
+                .WithProviders(GlobalSettingValueProvider.ProviderName),
+
+            new SettingDefinition(
+                PlatformSettings.Pricing.CorporatePlan,
+                defaultValue: "0",
+                displayName: L("Setting:Pricing.CorporatePlan"),
+                description: L("Setting:Pricing.Description"))
+                .WithProviders(GlobalSettingValueProvider.ProviderName),
+
+            new SettingDefinition(
+                PlatformSettings.Pricing.JointPlan,
+                defaultValue: "0",
+                displayName: L("Setting:Pricing.JointPlan"),
+                description: L("Setting:Pricing.Description"))
+                .WithProviders(GlobalSettingValueProvider.ProviderName)
+        );
+
         // --- Giriş ekranı --- (host seviyesinde)
         // isVisibleToClients: giriş sayfası oturumsuz render edilir; ayar Global
         // provider'dan anonim de okunabilir.

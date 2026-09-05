@@ -31,6 +31,7 @@ public class PackageAppService : PlatformAppService, IPackageAppService
     private readonly IStringLocalizerFactory _stringLocalizerFactory;
     private readonly PackageCeilingStore _ceilingStore;
     private readonly ISettingManager _settingManager;
+    private readonly SalesPlanPricing _pricing;
 
     public PackageAppService(
         IRepository<PlatformPackage, Guid> packageRepository,
@@ -39,9 +40,11 @@ public class PackageAppService : PlatformAppService, IPackageAppService
         IPermissionDefinitionManager permissionDefinitionManager,
         IStringLocalizerFactory stringLocalizerFactory,
         PackageCeilingStore ceilingStore,
-        ISettingManager settingManager)
+        ISettingManager settingManager,
+        SalesPlanPricing pricing)
     {
         _settingManager = settingManager;
+        _pricing = pricing;
         _packageRepository = packageRepository;
         _tenantProfileRepository = tenantProfileRepository;
         _packageManager = packageManager;
@@ -197,7 +200,12 @@ public class PackageAppService : PlatformAppService, IPackageAppService
             UpgradeContactPhone = await SettingProvider.GetOrNullAsync(
                 PlatformSettings.Subscription.UpgradeContactPhone) ?? string.Empty,
             UpgradeUrl = await SettingProvider.GetOrNullAsync(
-                PlatformSettings.Subscription.UpgradeUrl) ?? string.Empty
+                PlatformSettings.Subscription.UpgradeUrl) ?? string.Empty,
+
+            // Tanımsız bedel 0 olarak döner: ekran boş kutu gösterir, "0 TL" değil.
+            StandardPlanPrice = await _pricing.GetPriceOrNullAsync(SalesPlan.Standard) ?? 0m,
+            CorporatePlanPrice = await _pricing.GetPriceOrNullAsync(SalesPlan.Corporate) ?? 0m,
+            JointPlanPrice = await _pricing.GetPriceOrNullAsync(SalesPlan.Joint) ?? 0m
         };
     }
 
@@ -238,7 +246,18 @@ public class PackageAppService : PlatformAppService, IPackageAppService
         await _settingManager.SetGlobalAsync(
             PlatformSettings.Subscription.UpgradeUrl,
             SanitizeUpgradeUrl(input.UpgradeUrl));
+
+        // Paket bedelleri. Negatif değer sıfırlanır (= tanımsız); ayar INVARIANT kültürle
+        // yazılır — "12000.50" olarak saklanmazsa okurken bin kat sapar.
+        await SetPriceAsync(SalesPlan.Standard, input.StandardPlanPrice);
+        await SetPriceAsync(SalesPlan.Corporate, input.CorporatePlanPrice);
+        await SetPriceAsync(SalesPlan.Joint, input.JointPlanPrice);
     }
+
+    private Task SetPriceAsync(SalesPlan plan, decimal price)
+        => _settingManager.SetGlobalAsync(
+            SalesPlanPricing.SettingNameOf(plan),
+            (price < 0 ? 0m : decimal.Round(price, 2)).ToString(CultureInfo.InvariantCulture));
 
     /// <summary>
     /// Yükseltme bağlantısı kiracının "Paketim" ekranında doğrudan <c>href</c> olarak basılır.
