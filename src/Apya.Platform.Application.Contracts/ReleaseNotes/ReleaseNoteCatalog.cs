@@ -419,6 +419,19 @@ public static class ReleaseNoteCatalog
                 "üç saat); saatler artık her iki yönde de doğru taşınıyor."),
 
             // ── Genel ─────────────────────────────────────────────────────────
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "Genel Bakış'ı olduğu gibi kağıda dökebiliyorsunuz",
+                "Ekranı yazdırmayı denediğinizde kart düzeni kağıda sığmıyor, kartların ekrana " +
+                "sığsın diye kısalttığı listeler de kısalmış hâliyle çıkıyordu; toplantıya " +
+                "götürdüğünüz çıktıda satırların bir kısmı eksik oluyordu. Artık üstteki " +
+                "\"Yazdır\" düğmesi A4 yatay, üç bölümlük bir rapor üretiyor: sayısal özet ve " +
+                "istatistikler, teslimler-proje sağlığı-tıkanan işler, onaylar-gelir/gider-teslim " +
+                "yoğunluğu. Listeler kırpılmıyor ve ekranda tek sekmede gördüğünüz " +
+                "istatistiklerin beş grubu da basılıyor. Her sayfanın üstünde kurum adı, seçili " +
+                "görünüm, dönemin tarih aralığı, yazdıran kişi ve saat yazıyor — tek yaprak " +
+                "elden ele dolaşsa da neye ait olduğu belli oluyor. Yetkiniz olmayan kutucuklar " +
+                "kağıda da rakam yazmıyor. Telefondan da yazdırabiliyorsunuz."),
+
             new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
                 "Hibe ekranları açılırken içerik zıplamıyor",
                 "Liste ve sayaç içeren hibe ekranlarında veri gelene kadar boş bir alan duruyor, " +
