@@ -22,9 +22,10 @@ public class AccountSettingOverrideProvider : SettingDefinitionProvider
     public override void Define(ISettingDefinitionContext context)
     {
         // Self-servis kayıt KAPALI: aday müşteri kendi hesabını açmaz, giriş
-        // ekranından demo talep eder (bkz. Pages/Account/DemoRequest.cshtml) ve
-        // hesabı ekip açar. Varsayılanı değiştirmek hem giriş ekranındaki bağlantıyı
-        // düşürür hem de /Account/Register adresine doğrudan gideni reddeder.
+        // ekranından kayıt talebi gönderir (bkz. Pages/Account/RegistrationRequest.cshtml);
+        // hesap, host onayı ve protokol onayından sonra açılır. Varsayılanı değiştirmek
+        // hem giriş ekranındaki bağlantıyı düşürür hem de /Account/Register adresine
+        // doğrudan gideni reddeder.
         // Geri açmak: bu satırı kaldır (ya da ayarı Global düzeyde true yap).
         var selfRegistration = context.GetOrNull(AccountSettingNames.IsSelfRegistrationEnabled);
         if (selfRegistration != null)

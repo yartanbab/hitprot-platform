@@ -279,6 +279,7 @@ public static class PlatformDomainErrorCodes
     public const string BudgetRevisionEmpty = "Platform:ProjectBudget:RevisionEmpty";
     public const string BudgetRevisionAmountInvalid = "Platform:ProjectBudget:RevisionAmountInvalid";
 
-    // --- Demo Talebi (DemoRequests) Modülü ---
-    public const string DemoRequestRateLimitExceeded = "Platform:DemoRequest:RateLimitExceeded";
+    // --- Kayıt Talebi (RegistrationRequests) Modülü ---
+    public const string RegistrationRequestRateLimitExceeded = "Platform:RegistrationRequest:RateLimitExceeded";
+    public const string RegistrationRequestOfferAmountInvalid = "Platform:RegistrationRequest:OfferAmountInvalid";
 }

@@ -85,10 +85,11 @@
             </label>
 
             @* Self-servis kayıt kapalı (bkz. AccountSettingOverrideProvider): aday
-               müşteri hesap açmaz, demo talep eder ve ekip kendisine döner. *@
+               müşteri hesabı kendi açmaz, kayıt talebi gönderir; hesap onay ve
+               protokol adımından sonra açılır. *@
             <span class="apya-auth__muted">
-                @PL["DemoRequest:LoginPrompt"]
-                <a class="apya-auth__link" asp-page="./DemoRequest">@PL["DemoRequest:LoginLink"]</a>
+                @PL["RegistrationRequest:LoginPrompt"]
+                <a class="apya-auth__link" asp-page="./RegistrationRequest">@PL["RegistrationRequest:LoginLink"]</a>
             </span>
         </div>
 

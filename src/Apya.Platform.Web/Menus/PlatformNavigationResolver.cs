@@ -778,8 +778,11 @@ public class PlatformNavigationResolver : IScopedDependency
             platform.AddItem(new ApplicationMenuItem("Apya.Platform.SystemHealth", l["Menu:SystemHealth"], icon: "fa fa-heart-pulse", url: "/Admin/SystemHealth"));
         if (await _permission.IsGrantedAsync(PlatformPermissions.Consents.Default))
             platform.AddItem(new ApplicationMenuItem("Apya.Platform.Consents", l["Menu:Consents"], icon: "fa fa-shield-halved", url: "/Admin/Consent"));
-        if (await _permission.IsGrantedAsync(PlatformPermissions.DemoRequests.Default))
-            platform.AddItem(new ApplicationMenuItem("Apya.Platform.DemoRequests", l["Menu:DemoRequests"], icon: "fa fa-handshake", url: "/Admin/DemoRequests"));
+        // Menü ID'si "Apya.Platform.DemoRequests"ten değişti. Kayıtlı menü düzenleri
+        // tanımadıkları ID'yi eler (bkz. ResolveHidden'daki pool.ContainsKey süzgeci),
+        // bu yüzden düzen bozulmaz; öğe yalnızca varsayılan yerinde yeniden belirir.
+        if (await _permission.IsGrantedAsync(PlatformPermissions.RegistrationRequests.Default))
+            platform.AddItem(new ApplicationMenuItem("Apya.Platform.RegistrationRequests", l["Menu:RegistrationRequests"], icon: "fa fa-file-signature", url: "/Admin/RegistrationRequests"));
         // Sürüm notu yayın onayı — host-only izin; kiracıda hiç görünmez.
         if (await _permission.IsGrantedAsync(PlatformPermissions.ReleaseNotes.Manage))
             platform.AddItem(new ApplicationMenuItem("Apya.Platform.ReleaseNotesAdmin", l["Menu:ReleaseNotesAdmin"], icon: "fa fa-stamp", url: "/Admin/ReleaseNotes"));

@@ -202,9 +202,10 @@ namespace Apya.Platform
                 .ForMember(d => d.BudgetLineName, o => o.Ignore());
             CreateMap<Apya.Platform.ProjectBudgets.BudgetRevision, Apya.Platform.ProjectBudgets.Dtos.BudgetRevisionDto>();
 
-            // --- DEMO TALEBİ (DEMO REQUESTS) MODÜLÜ ---
-            // InterestedModuleKeys hesaplanan bir özelliktir, eşlenmez.
-            CreateMap<Apya.Platform.DemoRequests.DemoRequest, Apya.Platform.DemoRequests.Dtos.DemoRequestDto>();
+            // --- KAYIT TALEBİ (REGISTRATION REQUESTS) MODÜLÜ ---
+            // EffectivePlan entity'de hesaplanır (ApprovedPlan ?? RequestedPlan); DTO'da
+            // düz alan olarak taşınır ki panel ve sözleşme aynı değeri okusun.
+            CreateMap<Apya.Platform.RegistrationRequests.RegistrationRequest, Apya.Platform.RegistrationRequests.Dtos.RegistrationRequestDto>();
         }
     }
 }

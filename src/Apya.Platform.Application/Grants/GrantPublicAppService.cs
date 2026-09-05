@@ -24,7 +24,7 @@ namespace Apya.Platform.Grants;
 /// sonucu doğrudan döner. Talep ancak ziyaretçi CTA'ya basınca oluşur.</para>
 ///
 /// <para>🔴 HTTP API olarak AÇILMAZ (<c>RemoteService(false)</c>) — emsal
-/// <c>DemoRequestAppService</c>: yazma oturumsuz ve IP yalnız Web sınırında
+/// <c>RegistrationRequestAppService</c>: yazma oturumsuz ve IP yalnız Web sınırında
 /// güvenilir yakalanır; açık bir uç formu atlayıp kayıt üretmeye izin verirdi.
 /// Kamu sayfaları bu servisi kendi sayfa işleyicilerinden çağırır.</para>
 /// </summary>

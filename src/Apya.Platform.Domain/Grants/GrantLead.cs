@@ -72,7 +72,7 @@ public class GrantLead : FullAuditedAggregateRoot<Guid>
 
     /// <summary>
     /// Talebi bırakanın IP'si. Oturumsuz form olduğu için kötüye kullanım
-    /// koruması buna dayanır (emsal: <c>DemoRequestManager</c>).
+    /// koruması buna dayanır (emsal: <c>RegistrationRequestManager</c>).
     /// </summary>
     public string? IpAddress { get; private set; }
 

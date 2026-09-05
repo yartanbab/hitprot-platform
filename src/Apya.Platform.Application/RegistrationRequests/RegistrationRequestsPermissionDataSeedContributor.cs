@@ -6,25 +6,29 @@ using Volo.Abp.DependencyInjection;
 using Volo.Abp.Identity;
 using Volo.Abp.PermissionManagement;
 
-namespace Apya.Platform.DemoRequests;
+namespace Apya.Platform.RegistrationRequests;
 
 /// <summary>
-/// Demo talebi izinlerini host'un "admin" rolüne verir (<c>/Admin/DemoRequests</c> bunlara bağlı).
+/// Kayıt talebi izinlerini host'un "admin" rolüne verir (<c>/Admin/RegistrationRequests</c> bunlara bağlı).
 ///
 /// Neden gerekli: ABP yeni izinleri var olan rollere OTOMATİK vermez — izin yalnız rol ilk
 /// oluşturulurken seed edilir. Bu seeder olmadan panel, kurulu bir sistemde deploy'dan sonra
 /// kimseye görünmez. Aynı desen: <see cref="Apya.Platform.Consents.ConsentsPermissionDataSeedContributor"/>.
 ///
-/// Yalnız HOST bağlamında çalışır: demo talebi henüz kiracı olmayan bir adaydan gelir,
+/// Yalnız HOST bağlamında çalışır: kayıt talebi henüz kiracı olmayan bir adaydan gelir,
 /// kayıt host'a aittir; kiracıya taşınacak bir şey yoktur.
 /// <see cref="IPermissionDataSeeder"/> var olan grant'ları eleyerek ekler → tekrar çalıştırmak güvenli.
+///
+/// <para>DİKKAT: izin adı <c>Platform.DemoRequests*</c>'ten değişti. Eski grant satırları
+/// veritabanında kalır ama artık hiçbir izne karşılık gelmez; ABP tanınmayan grant'ı yok
+/// sayar, temizlik ayrı bir iştir.</para>
 /// </summary>
-public class DemoRequestsPermissionDataSeedContributor : IDataSeedContributor, ITransientDependency
+public class RegistrationRequestsPermissionDataSeedContributor : IDataSeedContributor, ITransientDependency
 {
     private readonly IPermissionDataSeeder _permissionDataSeeder;
     private readonly IIdentityRoleRepository _roleRepository;
 
-    public DemoRequestsPermissionDataSeedContributor(
+    public RegistrationRequestsPermissionDataSeedContributor(
         IPermissionDataSeeder permissionDataSeeder,
         IIdentityRoleRepository roleRepository)
     {
@@ -50,8 +54,8 @@ public class DemoRequestsPermissionDataSeedContributor : IDataSeedContributor, I
             adminRole.Name,
             new[]
             {
-                PlatformPermissions.DemoRequests.Default,
-                PlatformPermissions.DemoRequests.Manage
+                PlatformPermissions.RegistrationRequests.Default,
+                PlatformPermissions.RegistrationRequests.Manage
             },
             context.TenantId);
     }
