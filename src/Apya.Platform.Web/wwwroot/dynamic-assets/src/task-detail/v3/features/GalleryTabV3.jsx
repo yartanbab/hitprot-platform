@@ -50,25 +50,6 @@ export function GalleryTabV3({ taskId }) {
                 disabled={isUploading}
             />
 
-            <div
-                role="button"
-                tabIndex={0}
-                onClick={() => inputRef.current?.click()}
-                onKeyDown={(e) => { if (e.key === 'Enter') inputRef.current?.click(); }}
-                onDragOver={(e) => { e.preventDefault(); if (!dragging) setDragging(true); }}
-                onDragLeave={() => setDragging(false)}
-                onDrop={(e) => { e.preventDefault(); setDragging(false); uploadFile(e.dataTransfer?.files?.[0]); }}
-                className={`flex flex-col items-center justify-center gap-2.5 p-[34px] rounded-2xl border-2 border-dashed cursor-pointer transition-colors duration-fast ${
-                    dragging ? 'border-focus bg-primary-subtle' : 'border-strong bg-surface-base'
-                }`}
-            >
-                <i className={`fa-solid ${isUploading ? 'fa-circle-notch fa-spin' : 'fa-images'} text-[26px] ${dragging ? 'text-primary' : 'text-text-tertiary'}`} />
-                <span className="text-[13.5px] font-bold text-text-primary">
-                    {isUploading ? 'Yükleniyor…' : dragging ? 'Bırakın, yükleyelim' : 'Görselleri buraya sürükleyin veya tıklayın'}
-                </span>
-                <span className="text-[12px] text-text-tertiary">PNG, JPG, GIF, WEBP, SVG · max 25MB</span>
-            </div>
-
             {isLoading && images.length === 0 && (
                 <p className="m-0 text-[12.5px] text-text-tertiary">Yükleniyor…</p>
             )}
@@ -122,6 +103,25 @@ export function GalleryTabV3({ taskId }) {
                     ))}
                 </div>
             )}
+
+            <div
+                role="button"
+                tabIndex={0}
+                onClick={() => inputRef.current?.click()}
+                onKeyDown={(e) => { if (e.key === 'Enter') inputRef.current?.click(); }}
+                onDragOver={(e) => { e.preventDefault(); if (!dragging) setDragging(true); }}
+                onDragLeave={() => setDragging(false)}
+                onDrop={(e) => { e.preventDefault(); setDragging(false); uploadFile(e.dataTransfer?.files?.[0]); }}
+                className={`flex flex-col items-center justify-center gap-2.5 p-[34px] rounded-2xl border-2 border-dashed cursor-pointer transition-colors duration-fast ${
+                    dragging ? 'border-focus bg-primary-subtle' : 'border-strong bg-surface-base'
+                }`}
+            >
+                <i className={`fa-solid ${isUploading ? 'fa-circle-notch fa-spin' : 'fa-images'} text-[26px] ${dragging ? 'text-primary' : 'text-text-tertiary'}`} />
+                <span className="text-[13.5px] font-bold text-text-primary">
+                    {isUploading ? 'Yükleniyor…' : dragging ? 'Bırakın, yükleyelim' : 'Görselleri buraya sürükleyin veya tıklayın'}
+                </span>
+                <span className="text-[12px] text-text-tertiary">PNG, JPG, GIF, WEBP, SVG · max 25MB</span>
+            </div>
         </div>
     );
 }
