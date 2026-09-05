@@ -1024,35 +1024,6 @@ function $s({ taskId: t }) {
         disabled: n
       }
     ),
-    /* @__PURE__ */ e.jsxs(
-      "div",
-      {
-        role: "button",
-        tabIndex: 0,
-        onClick: () => {
-          var u;
-          return (u = o.current) == null ? void 0 : u.click();
-        },
-        onKeyDown: (u) => {
-          var c;
-          u.key === "Enter" && ((c = o.current) == null || c.click());
-        },
-        onDragOver: (u) => {
-          u.preventDefault(), i || d(!0);
-        },
-        onDragLeave: () => d(!1),
-        onDrop: (u) => {
-          var c, f;
-          u.preventDefault(), d(!1), m((f = (c = u.dataTransfer) == null ? void 0 : c.files) == null ? void 0 : f[0]);
-        },
-        className: `flex flex-col items-center justify-center gap-2.5 p-[34px] rounded-2xl border-2 border-dashed cursor-pointer transition-colors duration-fast ${i ? "border-focus bg-primary-subtle" : "border-strong bg-surface-base"}`,
-        children: [
-          /* @__PURE__ */ e.jsx("i", { className: `fa-solid ${n ? "fa-circle-notch fa-spin" : "fa-cloud-arrow-up"} text-[26px] ${i ? "text-primary" : "text-text-tertiary"}` }),
-          /* @__PURE__ */ e.jsx("span", { className: "text-[13.5px] font-bold text-text-primary", children: n ? "Yükleniyor…" : i ? "Bırakın, yükleyelim" : "Dosyaları buraya sürükleyin veya tıklayın" }),
-          /* @__PURE__ */ e.jsx("span", { className: "text-[12px] text-text-tertiary", children: "PNG, PDF, DOCX · max 25MB" })
-        ]
-      }
-    ),
     a.length === 0 ? /* @__PURE__ */ e.jsx("p", { className: "m-0 text-[12.5px] text-text-tertiary", children: "Henüz dosya yüklenmemiş." }) : /* @__PURE__ */ e.jsx("div", { className: "grid grid-cols-[repeat(auto-fill,minmax(210px,1fr))] gap-3", children: a.map((u) => {
       const c = $a(u.fileName);
       return /* @__PURE__ */ e.jsxs(
@@ -1113,7 +1084,36 @@ function $s({ taskId: t }) {
         },
         u.id
       );
-    }) })
+    }) }),
+    /* @__PURE__ */ e.jsxs(
+      "div",
+      {
+        role: "button",
+        tabIndex: 0,
+        onClick: () => {
+          var u;
+          return (u = o.current) == null ? void 0 : u.click();
+        },
+        onKeyDown: (u) => {
+          var c;
+          u.key === "Enter" && ((c = o.current) == null || c.click());
+        },
+        onDragOver: (u) => {
+          u.preventDefault(), i || d(!0);
+        },
+        onDragLeave: () => d(!1),
+        onDrop: (u) => {
+          var c, f;
+          u.preventDefault(), d(!1), m((f = (c = u.dataTransfer) == null ? void 0 : c.files) == null ? void 0 : f[0]);
+        },
+        className: `flex flex-col items-center justify-center gap-2.5 p-[34px] rounded-2xl border-2 border-dashed cursor-pointer transition-colors duration-fast ${i ? "border-focus bg-primary-subtle" : "border-strong bg-surface-base"}`,
+        children: [
+          /* @__PURE__ */ e.jsx("i", { className: `fa-solid ${n ? "fa-circle-notch fa-spin" : "fa-cloud-arrow-up"} text-[26px] ${i ? "text-primary" : "text-text-tertiary"}` }),
+          /* @__PURE__ */ e.jsx("span", { className: "text-[13.5px] font-bold text-text-primary", children: n ? "Yükleniyor…" : i ? "Bırakın, yükleyelim" : "Dosyaları buraya sürükleyin veya tıklayın" }),
+          /* @__PURE__ */ e.jsx("span", { className: "text-[12px] text-text-tertiary", children: "PNG, PDF, DOCX · max 25MB" })
+        ]
+      }
+    )
   ] });
 }
 function Je() {
@@ -2129,35 +2129,6 @@ function Xs({ taskId: t }) {
         disabled: l
       }
     ),
-    /* @__PURE__ */ e.jsxs(
-      "div",
-      {
-        role: "button",
-        tabIndex: 0,
-        onClick: () => {
-          var p;
-          return (p = o.current) == null ? void 0 : p.click();
-        },
-        onKeyDown: (p) => {
-          var u;
-          p.key === "Enter" && ((u = o.current) == null || u.click());
-        },
-        onDragOver: (p) => {
-          p.preventDefault(), i || d(!0);
-        },
-        onDragLeave: () => d(!1),
-        onDrop: (p) => {
-          var u, c;
-          p.preventDefault(), d(!1), b((c = (u = p.dataTransfer) == null ? void 0 : u.files) == null ? void 0 : c[0]);
-        },
-        className: `flex flex-col items-center justify-center gap-2.5 p-[34px] rounded-2xl border-2 border-dashed cursor-pointer transition-colors duration-fast ${i ? "border-focus bg-primary-subtle" : "border-strong bg-surface-base"}`,
-        children: [
-          /* @__PURE__ */ e.jsx("i", { className: `fa-solid ${l ? "fa-circle-notch fa-spin" : "fa-images"} text-[26px] ${i ? "text-primary" : "text-text-tertiary"}` }),
-          /* @__PURE__ */ e.jsx("span", { className: "text-[13.5px] font-bold text-text-primary", children: l ? "Yükleniyor…" : i ? "Bırakın, yükleyelim" : "Görselleri buraya sürükleyin veya tıklayın" }),
-          /* @__PURE__ */ e.jsx("span", { className: "text-[12px] text-text-tertiary", children: "PNG, JPG, GIF, WEBP, SVG · max 25MB" })
-        ]
-      }
-    ),
     s && x.length === 0 && /* @__PURE__ */ e.jsx("p", { className: "m-0 text-[12.5px] text-text-tertiary", children: "Yükleniyor…" }),
     !s && x.length === 0 && /* @__PURE__ */ e.jsx("p", { className: "m-0 text-[12.5px] text-text-tertiary", children: "Bu görevde henüz görsel yok. Yüklediğiniz görseller Dosyalar sekmesinde de görünür." }),
     x.length > 0 && /* @__PURE__ */ e.jsx("div", { className: "grid grid-cols-[repeat(auto-fill,minmax(180px,1fr))] gap-3", children: x.map((p) => /* @__PURE__ */ e.jsxs(
@@ -2204,7 +2175,36 @@ function Xs({ taskId: t }) {
         ]
       },
       p.id
-    )) })
+    )) }),
+    /* @__PURE__ */ e.jsxs(
+      "div",
+      {
+        role: "button",
+        tabIndex: 0,
+        onClick: () => {
+          var p;
+          return (p = o.current) == null ? void 0 : p.click();
+        },
+        onKeyDown: (p) => {
+          var u;
+          p.key === "Enter" && ((u = o.current) == null || u.click());
+        },
+        onDragOver: (p) => {
+          p.preventDefault(), i || d(!0);
+        },
+        onDragLeave: () => d(!1),
+        onDrop: (p) => {
+          var u, c;
+          p.preventDefault(), d(!1), b((c = (u = p.dataTransfer) == null ? void 0 : u.files) == null ? void 0 : c[0]);
+        },
+        className: `flex flex-col items-center justify-center gap-2.5 p-[34px] rounded-2xl border-2 border-dashed cursor-pointer transition-colors duration-fast ${i ? "border-focus bg-primary-subtle" : "border-strong bg-surface-base"}`,
+        children: [
+          /* @__PURE__ */ e.jsx("i", { className: `fa-solid ${l ? "fa-circle-notch fa-spin" : "fa-images"} text-[26px] ${i ? "text-primary" : "text-text-tertiary"}` }),
+          /* @__PURE__ */ e.jsx("span", { className: "text-[13.5px] font-bold text-text-primary", children: l ? "Yükleniyor…" : i ? "Bırakın, yükleyelim" : "Görselleri buraya sürükleyin veya tıklayın" }),
+          /* @__PURE__ */ e.jsx("span", { className: "text-[12px] text-text-tertiary", children: "PNG, JPG, GIF, WEBP, SVG · max 25MB" })
+        ]
+      }
+    )
   ] });
 }
 const er = [
