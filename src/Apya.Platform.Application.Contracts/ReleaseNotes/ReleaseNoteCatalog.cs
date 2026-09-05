@@ -534,7 +534,54 @@ public static class ReleaseNoteCatalog
                 "yazdığınızda alan yazarken 1.234.567 hâline geliyor, ondalık için virgül " +
                 "kullanıyorsunuz. Uzun tutarlarda basamak saymak ya da fazladan yazılmış bir sıfırı " +
                 "gözden kaçırmak yok. Kur alanları altı, oran ve miktar alanları iki ondalık hane " +
-                "kabul ediyor.")
+                "kabul ediyor."),
+
+            // ── Görev finansı ─────────────────────────────────────────────────
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "Gideri, geliri ve faturayı görevin içinden kesiyorsunuz",
+                "Görev detayındaki Finans sekmesi yalnız okunuyordu: göreve ait bir gider ya da " +
+                "gelir kaydetmek için Finans modülüne gidip kaydı görevle elle eşleştirmeniz " +
+                "gerekiyordu. Sekmenin başlığında artık \"Gider ekle\", \"Gelir ekle\" ve " +
+                "\"Fatura ekle\" düğmeleri var; alışık olduğunuz formlar açılıyor ve görevin " +
+                "projesi önden seçili geliyor. Kayıt kapanınca sekme kendiliğinden tazeleniyor. " +
+                "Her düğme kendi yetkisine bağlı — gider yetkiniz yoksa yalnız o düğme çıkmıyor. " +
+                "Faturalar ayrı bir kartta duruyor: tutarları KDV dâhil olduğu için gider ve " +
+                "gelir toplamlarına karıştırılmadı, yoksa fatura ödendiğinde aynı para iki kez " +
+                "sayılırdı."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "Görevi bütçe kalemine görevin kendi ekranından bağlıyorsunuz",
+                "\"Bütçe bağı\" kartı artık düzenlenebilir: görevin hangi bütçe kalemine ait " +
+                "olduğunu ve o görev için ayırdığınız tutarı buradan seçiyorsunuz. Bu iki alan " +
+                "daha önce yalnız eski görev penceresinden ayarlanabiliyordu, o pencere de artık " +
+                "açılmıyordu; yani kart pratikte hiç dolmuyordu. Kalem listesi finans " +
+                "formlarındakiyle aynı. Bütçe görme yetkiniz varsa görünür."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "Gidere evrakını bağlayabiliyorsunuz",
+                "Finans sekmesindeki gider satırlarında \"Evrak\" düğmesi çıktı; bir gideri, " +
+                "Belgeler modülünde duran fatura ya da fişiyle eşleştiriyorsunuz. Kaç evrak bağlı " +
+                "olduğu satırda yazıyor. Yükleme buradan yapılmıyor — belge Belgeler modülünde " +
+                "yaşamaya devam ediyor, bu ekran yalnız bağı kuruyor; proje ekranındaki " +
+                "eşleştirme tezgâhıyla aynı bağ."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Fix,
+                "Görevi kaydetmek bütçe bağını artık silmiyor",
+                "Görev detayından yaptığınız her kayıt, görevin bütçe kalemi bağını ve planlanan " +
+                "tutarını sessizce siliyordu — ilgisiz bir alanı düzeltip Kaydet'e bassanız bile. " +
+                "Hiçbir uyarı çıkmadığı için kaybın fark edilmesi ancak bütçe raporuna " +
+                "bakıldığında mümkündü. Düzeltildi. Bütçe kalemine bağladığınız görevler varsa " +
+                "bağlarının yerinde olduğunu bir kez kontrol etmenizde fayda var; artık " +
+                "görevin kendi Finans sekmesinden yeniden kurabilirsiniz."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
+                "Göreve özellik eklerken bütün seçenekler tek ekranda görünüyor",
+                "Özellik ekleme penceresinde kartlar \"GÖREV & PLANLAMA\", \"GEÇMİŞ & FİNANS\" " +
+                "gibi gruplara ayrılmıştı ve aradığınızı bulmak için pencereyi kaydırmanız " +
+                "gerekiyordu. Grup başlıkları kalktı, katalog tek liste oldu ve üst şerit " +
+                "inceltildi: on iki seçeneğin hepsi hem bilgisayarda hem telefonda kaydırmadan " +
+                "sığıyor. Telefonda kart açıklamaları gizleniyor, ekli olan özellikler kartın " +
+                "kenarlığından anlaşılıyor. Arama kutusu yerinde duruyor.")
         ),
 
         new ReleaseNote(
