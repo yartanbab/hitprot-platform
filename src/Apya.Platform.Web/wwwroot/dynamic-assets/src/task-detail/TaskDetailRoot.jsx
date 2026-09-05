@@ -266,6 +266,7 @@ export function TaskDetailRoot({ taskId, presentation = 'modal', onClose }) {
                                     <ActiveFeatureComponent
                                         taskId={currentTaskId}
                                         task={task}
+                                        form={form}
                                         onOpenSubtask={switchToTask}
                                     />
                                 )}

@@ -1,5 +1,9 @@
 import React from 'react';
-import { TAB_CARD, TabCardHeader, TabEmptyState, RowBadge, fmtShortDate } from '../v3/tabPrimitives';
+import { useQueryClient } from '@tanstack/react-query';
+import { TAB_CARD, TAB_CARD_UNCLIPPED, TabCardHeader, TabEmptyState, RowBadge, fmtShortDate } from '../v3/tabPrimitives';
+import { Button, Combobox, MoneyInput } from '../../components/ui';
+import { isGranted } from '../hooks/useTaskDetail';
+import { useProjectBudgetLines } from '../hooks/useProjectBudgetLines';
 
 function fmtMoney(amount, currency) {
     const cur = currency || 'TRY';
@@ -8,6 +12,64 @@ function fmtMoney(amount, currency) {
     } catch {
         return `${(amount || 0).toLocaleString('tr-TR', { minimumFractionDigits: 2 })} ${cur}`.trim();
     }
+}
+
+/**
+ * Gider/gelir kaydını AÇMAK için mevcut ABP modallerini kullanırız — React'te
+ * ikinci bir finans formu YAZMIYORUZ. Modaller zaten görevden açılmak üzere
+ * yazılmış: `?TaskId=` geldiğinde görevin projesini de önden seçiyorlar
+ * (bkz. Pages/Expenses/CreateModal.cshtml.cs).
+ *
+ * Kayıt kapanınca görev detayı tazelenir; yeni satır sekmede belirir.
+ */
+function openFinanceModal(page, taskId, onSaved) {
+    const manager = window?.abp?.ModalManager;
+    if (!manager) {
+        window?.abp?.notify?.error?.('Kayıt formu yüklenemedi.');
+        return;
+    }
+    const appPath = window?.abp?.appPath ?? '/';
+    const modal = new manager({ viewUrl: `${appPath}${page}?TaskId=${taskId}` });
+    modal.onResult(() => onSaved?.());
+    modal.open();
+}
+
+/** Sekme başlığındaki "Gider ekle" / "Gelir ekle" — her biri kendi izniyle. */
+function FinanceActions({ taskId }) {
+    const queryClient = useQueryClient();
+    const canAddExpense = isGranted('Platform.Expenses.Create');
+    const canAddIncome = isGranted('Platform.Incomes.Create');
+
+    if (!taskId || (!canAddExpense && !canAddIncome)) { return null; }
+
+    const refresh = () => queryClient.invalidateQueries({ queryKey: ['task-detail', taskId] });
+
+    return (
+        <div className="flex shrink-0 items-center gap-2">
+            {canAddExpense && (
+                <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => openFinanceModal('Expenses/CreateModal', taskId, refresh)}
+                >
+                    <i className="fa-solid fa-arrow-up text-[11px]" />
+                    Gider ekle
+                </Button>
+            )}
+            {canAddIncome && (
+                <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => openFinanceModal('Incomes/CreateModal', taskId, refresh)}
+                >
+                    <i className="fa-solid fa-arrow-down text-[11px]" />
+                    Gelir ekle
+                </Button>
+            )}
+        </div>
+    );
 }
 
 function KpiCard({ label, value, tone, note }) {
@@ -23,64 +85,159 @@ function KpiCard({ label, value, tone, note }) {
 }
 
 /**
+ * Kalem + görev bütçesi girişi.
+ *
+ * Lookup gelene kadar HİÇBİR ŞEY basılmaz: yükleme anında "kalem tanımlı değil"
+ * yazmak, kalemi olan projede de bir an yanlış bilgi gösterirdi.
+ */
+function BudgetLinkEditor({ options, isLoading, lineId, planned, onField }) {
+    if (isLoading) { return null; }
+
+    if (options.length === 0) {
+        return (
+            <p className="m-0 text-[12px] text-text-tertiary">
+                Bu projede bütçe kalemi tanımlı değil — kalemler Finans &amp; Bütçe ekranından açılır.
+            </p>
+        );
+    }
+
+    return (
+        <div className="grid grid-cols-[repeat(auto-fit,minmax(190px,1fr))] gap-3">
+            <label className="flex flex-col gap-1.5">
+                <span className="text-[10.5px] font-bold uppercase tracking-[.07em] text-text-tertiary">
+                    Bütçe kalemi
+                </span>
+                <Combobox
+                    options={options}
+                    value={lineId ?? undefined}
+                    onChange={(value) => onField('budgetLineId', value ?? null)}
+                    placeholder="Kalem seç"
+                    size="sm"
+                />
+            </label>
+            <label className="flex flex-col gap-1.5">
+                <span className="text-[10.5px] font-bold uppercase tracking-[.07em] text-text-tertiary">
+                    Görev bütçesi
+                </span>
+                <MoneyInput
+                    value={planned}
+                    onValueChange={(value) => onField('plannedAmount', value)}
+                    currency="TRY"
+                    min={0}
+                    size="sm"
+                    disabled={!lineId}
+                />
+            </label>
+        </div>
+    );
+}
+
+/**
  * "Bütçe bağı" kartı (tasarım 4a).
  *
- * Görev artık bir bütçe kalemine bağlanabiliyor ve kendi planlanan tutarını
- * taşıyor, dolayısıyla bu kart uydurma değil GERÇEK veriye dayanıyor.
+ * İKİ KİP:
+ *  - Düzenlenebilir: `form` geldi, görev bir projeye bağlı ve kullanıcıda
+ *    `Projects.ViewBudget` var. Kalem ve görev bütçesi buradan atanır; değer
+ *    detayın ORTAK form state'ine yazılır, footer'daki Kaydet ile kalıcı olur.
+ *    (Ayrı bir kaydet düğmesi kullanıcının o an açık diğer düzenlemelerini
+ *    yarım kaydederdi.)
+ *  - Salt okunur: yetki/proje yoksa yalnız mevcut bağın özeti basılır; bağ da
+ *    yoksa kart hiç görünmez.
  *
  * TASARIMDAN BİLİNÇLİ SAPMA: prototip DÖRT hücre gösteriyor
  * (bütçe · taahhüt · gerçekleşen · kalan); burada ÜÇ var. "Taahhüt" onay
  * bekleyen sipariş/talep demek ve arkasında bir varlık yok — eklenseydi
  * ekranda hep 0 gösteren bir hücre olurdu.
  */
-function BudgetLinkCard({ task, spentByCurrency }) {
-    const planned = task?.plannedAmount;
-    if (!task?.budgetLineId || planned == null) { return null; }
+function BudgetLinkCard({ task, form, spentByCurrency }) {
+    const projectId = (form ? form.values.projectId : task?.projectId) ?? null;
+    const { options, lines, canViewBudget, isLoading } = useProjectBudgetLines(projectId);
+
+    const editable = Boolean(form) && canViewBudget && Boolean(projectId);
+    const lineId = (form ? form.values.budgetLineId : task?.budgetLineId) ?? null;
+    const planned = (form ? form.values.plannedAmount : task?.plannedAmount) ?? null;
+
+    if (!editable && (!lineId || planned == null)) { return null; }
+
+    // Kalem değiştirildiğinde DTO'daki "kalemde kalan" bayatlar; lookup elde
+    // varsa seçili kalemin kendi kalanı kullanılır.
+    const selectedLine = lines.find((l) => l.id === lineId);
+    const lineRemaining = selectedLine ? selectedLine.remainingAmount : task?.budgetLineRemaining;
 
     // Görevin planı proje para birimindedir; gerçekleşen de aynı defterden
     // okunur (₺). Çapraz kur toplamı YAPILMAZ.
     const spent = spentByCurrency;
-    const remaining = planned - spent;
+    const hasPlan = Boolean(lineId) && planned != null;
+    const remaining = (planned ?? 0) - spent;
     const pct = planned > 0 ? Math.round((spent / planned) * 100) : 0;
     const over = remaining < 0;
 
+    const clearLink = () => {
+        form.setField('budgetLineId', null);
+        form.setField('plannedAmount', null);
+    };
+
     return (
-        <div className={TAB_CARD}>
-            <TabCardHeader title="Bütçe bağı" />
+        /* Kırpmayan kart ŞART: kalem seçicisinin listesi kartın içine absolute
+           konumlanır, TAB_CARD'ın overflow-hidden'ı onu alt kenarda keserdi. */
+        <div className={TAB_CARD_UNCLIPPED}>
+            <TabCardHeader
+                title="Bütçe bağı"
+                action={editable && lineId ? (
+                    <Button type="button" variant="ghost" size="sm" onClick={clearLink}>
+                        Bağı kaldır
+                    </Button>
+                ) : null}
+            />
             <div className="px-4 pb-4 pt-1 flex flex-col gap-3">
-                <div className="flex items-center gap-2">
-                    <span className="inline-flex items-center rounded-full bg-accent-subtle px-2.5 py-0.5 text-[11px] font-semibold text-accent">
-                        {task.budgetLineName || 'Bütçe kalemi'}
-                    </span>
-                    {task.budgetLineRemaining != null && (
-                        <span className="text-[11px] text-text-tertiary">
-                            kalemde kalan {fmtMoney(task.budgetLineRemaining, 'TRY')}
-                        </span>
-                    )}
-                </div>
-
-                <div className="grid grid-cols-[repeat(auto-fit,minmax(120px,1fr))] gap-3">
-                    <Cell label="Görev bütçesi" value={fmtMoney(planned, 'TRY')} />
-                    <Cell label="Gerçekleşen" value={fmtMoney(spent, 'TRY')} />
-                    <Cell
-                        label="Kalan"
-                        value={fmtMoney(remaining, 'TRY')}
-                        tone={over ? 'text-negative' : 'text-success'}
+                {editable ? (
+                    <BudgetLinkEditor
+                        options={options}
+                        isLoading={isLoading}
+                        lineId={lineId}
+                        planned={planned}
+                        onField={form.setField}
                     />
-                </div>
+                ) : (
+                    <div className="flex items-center gap-2">
+                        <span className="inline-flex items-center rounded-full bg-accent-subtle px-2.5 py-0.5 text-[11px] font-semibold text-accent">
+                            {task.budgetLineName || 'Bütçe kalemi'}
+                        </span>
+                    </div>
+                )}
 
-                <div>
-                    <div className="h-2 w-full overflow-hidden rounded-full bg-neutral-subtle">
-                        <div
-                            className={`h-full rounded-full ${over ? 'bg-negative' : pct >= 80 ? 'bg-warning' : 'bg-success'}`}
-                            style={{ width: `${Math.min(Math.max(pct, 0), 100)}%` }}
-                        />
-                    </div>
-                    <div className="mt-1 text-[11.5px] text-text-tertiary">
-                        %{pct}
-                        {over && <span className="ml-1 text-negative">· görev bütçesi aşıldı</span>}
-                    </div>
-                </div>
+                {lineRemaining != null && (
+                    <span className="text-[11px] text-text-tertiary">
+                        kalemde kalan {fmtMoney(lineRemaining, 'TRY')}
+                    </span>
+                )}
+
+                {hasPlan && (
+                    <>
+                        <div className="grid grid-cols-[repeat(auto-fit,minmax(120px,1fr))] gap-3">
+                            <Cell label="Görev bütçesi" value={fmtMoney(planned, 'TRY')} />
+                            <Cell label="Gerçekleşen" value={fmtMoney(spent, 'TRY')} />
+                            <Cell
+                                label="Kalan"
+                                value={fmtMoney(remaining, 'TRY')}
+                                tone={over ? 'text-negative' : 'text-success'}
+                            />
+                        </div>
+
+                        <div>
+                            <div className="h-2 w-full overflow-hidden rounded-full bg-neutral-subtle">
+                                <div
+                                    className={`h-full rounded-full ${over ? 'bg-negative' : pct >= 80 ? 'bg-warning' : 'bg-success'}`}
+                                    style={{ width: `${Math.min(Math.max(pct, 0), 100)}%` }}
+                                />
+                            </div>
+                            <div className="mt-1 text-[11.5px] text-text-tertiary">
+                                %{pct}
+                                {over && <span className="ml-1 text-negative">· görev bütçesi aşıldı</span>}
+                            </div>
+                        </div>
+                    </>
+                )}
             </div>
         </div>
     );
@@ -104,7 +261,7 @@ function Cell({ label, value, tone }) {
  * Üstte "Bütçe bağı" kartı (yalnız görevin bütçe kalemi ve planı varsa),
  * ardından para birimi başına üç KPI ve kayıt listesi.
  */
-export function FinanceTab({ task }) {
+export function FinanceTab({ task, taskId, form }) {
     const expenses = task?.expenses || [];
     const incomes = task?.incomes || [];
 
@@ -112,7 +269,8 @@ export function FinanceTab({ task }) {
     const spentTry = expenses
         .filter((l) => (l.currency || 'TRY') === 'TRY')
         .reduce((a, l) => a + (l.amount || 0), 0);
-    const budgetCard = <BudgetLinkCard task={task} spentByCurrency={spentTry} />;
+    const budgetCard = <BudgetLinkCard task={task} form={form} spentByCurrency={spentTry} />;
+    const actions = <FinanceActions taskId={taskId ?? task?.id} />;
 
     if (expenses.length === 0 && incomes.length === 0) {
         // Bütçe bağı kartı BURADA DA basılır: kaydı olmayan ama bütçesi planlanmış
@@ -121,7 +279,7 @@ export function FinanceTab({ task }) {
             <div className="flex flex-col gap-4">
                 {budgetCard}
                 <div className={TAB_CARD}>
-                    <TabCardHeader title="Görev Finansı" />
+                    <TabCardHeader title="Görev Finansı" action={actions} />
                     <TabEmptyState
                         icon="fa-coins"
                         title="Kayıt yok"
@@ -161,7 +319,7 @@ export function FinanceTab({ task }) {
             ))}
 
             <div className={TAB_CARD}>
-                <TabCardHeader title="Finans kalemleri" />
+                <TabCardHeader title="Finans kalemleri" action={actions} />
                 {lines.map((l) => (
                     <div
                         key={`${l.kind}-${l.id}`}
@@ -188,7 +346,7 @@ export function FinanceTab({ task }) {
             </div>
 
             <p className="m-0 text-[11px] text-text-tertiary">
-                Kayıtlar Finans modülünden yönetilir; buraya göreve etiketlenmiş gider/gelirler yansır.
+                Buradan eklenen kayıt göreve ve projesine etiketlenir; düzenleme/silme Finans modülünden yapılır.
             </p>
         </div>
     );
