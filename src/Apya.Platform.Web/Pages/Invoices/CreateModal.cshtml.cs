@@ -7,12 +7,18 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Volo.Abp.AspNetCore.Mvc.UI.RazorPages;
 using Apya.Platform.Invoices;
 using Apya.Platform.Invoices.Dtos;
+using Apya.Platform.Tasks;
+using Apya.Platform.Web.Pages;
 
 namespace Apya.Platform.Web.Pages.Invoices;
 
 public class CreateModalModel : AbpPageModel
 {
     private readonly IInvoiceAppService _invoiceAppService;
+    private readonly ITaskAppService _taskAppService;
+
+    [BindProperty(SupportsGet = true)]
+    public Guid? TaskId { get; set; }
 
     [BindProperty]
     public CreateInvoiceViewModel InvoiceInfo { get; set; } = new();
@@ -20,9 +26,10 @@ public class CreateModalModel : AbpPageModel
     public List<SelectListItem> Projects { get; set; } = new();
     public List<SelectListItem> Customers { get; set; } = new();
 
-    public CreateModalModel(IInvoiceAppService invoiceAppService)
+    public CreateModalModel(IInvoiceAppService invoiceAppService, ITaskAppService taskAppService)
     {
         _invoiceAppService = invoiceAppService;
+        _taskAppService = taskAppService;
     }
 
     public async Task OnGetAsync(Guid? customerId = null)
@@ -32,8 +39,21 @@ public class CreateModalModel : AbpPageModel
         {
             InvoiceDate = Clock.Now,
             DueDate = Clock.Now.AddDays(15),
-            CustomerId = customerId
+            CustomerId = customerId,
+            TaskId = TaskId
         };
+
+        // Görev panelinden açıldığında projeyi de ÖNDEN seç — fatura projesi
+        // ZORUNLU, görevin projesi dururken kullanıcıya tekrar seçtirmenin
+        // anlamı yok (gelir/gider modalleriyle aynı davranış).
+        if (TaskId.HasValue)
+        {
+            var taskProjectId = await FinanceLookupShared.ResolveTaskProjectAsync(_taskAppService, TaskId.Value);
+            if (taskProjectId.HasValue)
+            {
+                InvoiceInfo.ProjectId = taskProjectId.Value;
+            }
+        }
 
         var projectLookup  = await _invoiceAppService.GetProjectLookupAsync();
         var customerLookup = await _invoiceAppService.GetCustomerLookupAsync();
@@ -50,6 +70,7 @@ public class CreateModalModel : AbpPageModel
         var dto = new CreateInvoiceDto
         {
             ProjectId     = InvoiceInfo.ProjectId,
+            TaskId        = InvoiceInfo.TaskId,
             CustomerId    = InvoiceInfo.CustomerId == Guid.Empty ? null : InvoiceInfo.CustomerId,
             Direction     = InvoiceInfo.Direction,
             InvoiceNumber = InvoiceInfo.InvoiceNumber,
@@ -73,6 +94,7 @@ public class CreateModalModel : AbpPageModel
     public class CreateInvoiceViewModel
     {
         public Guid ProjectId { get; set; }
+        public Guid? TaskId { get; set; }
         public Guid? CustomerId { get; set; }
         public InvoiceDirection Direction { get; set; } = InvoiceDirection.Sales;
         public string InvoiceNumber { get; set; } = null!;

@@ -34,13 +34,14 @@ function openFinanceModal(page, taskId, onSaved) {
     modal.open();
 }
 
-/** Sekme başlığındaki "Gider ekle" / "Gelir ekle" — her biri kendi izniyle. */
+/** Sekme başlığındaki "Gider ekle" / "Gelir ekle" / "Fatura ekle" — her biri kendi izniyle. */
 function FinanceActions({ taskId }) {
     const queryClient = useQueryClient();
     const canAddExpense = isGranted('Platform.Expenses.Create');
     const canAddIncome = isGranted('Platform.Incomes.Create');
+    const canAddInvoice = isGranted('Platform.Invoices.Create');
 
-    if (!taskId || (!canAddExpense && !canAddIncome)) { return null; }
+    if (!taskId || (!canAddExpense && !canAddIncome && !canAddInvoice)) { return null; }
 
     const refresh = () => queryClient.invalidateQueries({ queryKey: ['task-detail', taskId] });
 
@@ -68,6 +69,71 @@ function FinanceActions({ taskId }) {
                     Gelir ekle
                 </Button>
             )}
+            {canAddInvoice && (
+                <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => openFinanceModal('Invoices/CreateModal', taskId, refresh)}
+                >
+                    <i className="fa-solid fa-file-invoice text-[11px]" />
+                    Fatura ekle
+                </Button>
+            )}
+        </div>
+    );
+}
+
+/* Fatura durum/yön etiketleri — sunucudaki enum'la (InvoiceStatus, InvoiceDirection)
+   birebir; sayıyı ekrana basmamak için burada Türkçeleşir. */
+const INVOICE_STATUS = {
+    0: { label: 'Taslak', bg: 'bg-neutral-subtle', fg: 'text-text-secondary' },
+    1: { label: 'Gönderildi', bg: 'bg-primary-subtle', fg: 'text-primary' },
+    2: { label: 'Ödendi', bg: 'bg-success-subtle', fg: 'text-success' },
+    3: { label: 'İptal', bg: 'bg-neutral-subtle', fg: 'text-text-tertiary' },
+    4: { label: 'Gecikti', bg: 'bg-negative-subtle', fg: 'text-negative' },
+};
+
+/**
+ * Göreve bağlı faturalar.
+ *
+ * Gider/gelir satırlarından AYRI bir kart: faturanın numarası, vadesi ve durumu
+ * var ve tutarı KDV dâhil — aynı listeye karıştırılsa "toplam gider" yanlış
+ * okunurdu (fatura ödendiğinde zaten kendi gider/tahsilat kaydını doğurur).
+ */
+function InvoicesCard({ invoices, action }) {
+    return (
+        <div className={TAB_CARD}>
+            <TabCardHeader title="Faturalar" action={action} />
+            {invoices.map((inv) => {
+                const status = INVOICE_STATUS[inv.status] ?? INVOICE_STATUS[0];
+                return (
+                    <div
+                        key={inv.id}
+                        className="flex items-center gap-3.5 px-4 py-3 border-t border-subtle first:border-t-0 hover:bg-surface-raised"
+                    >
+                        <span className="flex shrink-0 items-center justify-center h-7 w-7 rounded-lg bg-neutral-subtle text-text-secondary">
+                            <i className="fa-solid fa-file-invoice text-[11px]" />
+                        </span>
+                        <span className="flex-1 min-w-0 truncate text-[12.5px] font-semibold text-text-primary">
+                            {inv.invoiceNumber || 'Fatura'}
+                            <span className="ml-2 font-normal text-text-tertiary">
+                                {inv.direction === 1 ? 'Alış' : 'Satış'}
+                            </span>
+                        </span>
+                        <span className="shrink-0 font-mono text-[11px] text-text-tertiary lt-860:hidden">
+                            vade {fmtShortDate(inv.dueDate)}
+                        </span>
+                        <RowBadge bg={status.bg} fg={status.fg}>{status.label}</RowBadge>
+                        <span
+                            className="shrink-0 font-mono text-[12.5px] font-bold text-text-primary"
+                            style={{ fontVariantNumeric: 'tabular-nums' }}
+                        >
+                            {fmtMoney(inv.totalAmount, inv.currency)}
+                        </span>
+                    </div>
+                );
+            })}
         </div>
     );
 }
@@ -264,6 +330,7 @@ function Cell({ label, value, tone }) {
 export function FinanceTab({ task, taskId, form }) {
     const expenses = task?.expenses || [];
     const incomes = task?.incomes || [];
+    const invoices = task?.invoices || [];
 
     // Görev bütçesi ₺ defterde tutulur; gerçekleşen de oradan toplanır.
     const spentTry = expenses
@@ -272,7 +339,7 @@ export function FinanceTab({ task, taskId, form }) {
     const budgetCard = <BudgetLinkCard task={task} form={form} spentByCurrency={spentTry} />;
     const actions = <FinanceActions taskId={taskId ?? task?.id} />;
 
-    if (expenses.length === 0 && incomes.length === 0) {
+    if (expenses.length === 0 && incomes.length === 0 && invoices.length === 0) {
         // Bütçe bağı kartı BURADA DA basılır: kaydı olmayan ama bütçesi planlanmış
         // görev, "kayıt yok" derken planını göstermeye devam etmeli.
         return (
@@ -318,6 +385,13 @@ export function FinanceTab({ task, taskId, form }) {
                 </div>
             ))}
 
+            {/* Aksiyonlar basılan İLK kartın başlığında durur: yalnız fatura varsa
+                "Finans kalemleri" kartı hiç açılmaz, düğmeler kaybolmamalı. */}
+            {invoices.length > 0 && (
+                <InvoicesCard invoices={invoices} action={lines.length === 0 ? actions : null} />
+            )}
+
+            {lines.length > 0 && (
             <div className={TAB_CARD}>
                 <TabCardHeader title="Finans kalemleri" action={actions} />
                 {lines.map((l) => (
@@ -344,6 +418,7 @@ export function FinanceTab({ task, taskId, form }) {
                     </div>
                 ))}
             </div>
+            )}
 
             <p className="m-0 text-[11px] text-text-tertiary">
                 Buradan eklenen kayıt göreve ve projesine etiketlenir; düzenleme/silme Finans modülünden yapılır.
