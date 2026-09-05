@@ -16,6 +16,12 @@
     <script type="application/json" id="apya-dashboard-layout">@Html.Raw(Model.LayoutJson)</script>
 }
 
+@* Baskı künyesi (kurum + yazdıran) — istemci tenant ADINI bilemez, bkz IndexModel. *@
+@if (Model.PrintContextJson != null)
+{
+    <script type="application/json" id="apya-dashboard-print-context">@Html.Raw(Model.PrintContextJson)</script>
+}
+
 <div id="apya-dashboard-root"></div>
 
 <script type="module" src="~/js/dashboard.js" asp-append-version="true"></script>

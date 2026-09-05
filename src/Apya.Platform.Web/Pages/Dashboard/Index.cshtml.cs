@@ -44,11 +44,33 @@ public class IndexModel : PlatformPageModel
     /// <summary>Varsayılan görünümün kart düzeni, island'ın beklediği camelCase JSON.</summary>
     public string? LayoutJson { get; private set; }
 
+    /// <summary>
+    /// Baskı çıktısının künyesi (kurum + yazdıran kişi).
+    /// <para>
+    /// SUNUCUDAN gelmek ZORUNDA: <c>abp.currentUser</c> tenant ADINI taşımıyor
+    /// (yalnız <c>tenantId</c>), dolayısıyla istemci "Kurum: …" satırını kendi
+    /// başına üretemez. Kağıda basılan bir belgede hangi kurumun verisi olduğu
+    /// yazmazsa çıktı bağlamsız kalır.
+    /// </para>
+    /// </summary>
+    public string? PrintContextJson { get; private set; }
+
     public async Task OnGetAsync()
     {
         // null → AppService kendi NormalizeViewKey'i ile varsayılana düşer; anahtarı
         // burada TEKRAR TANIMLAMIYORUZ, dönen DTO'nun ViewKey'i tek doğru kaynak.
         var layout = await _dashboardAppService.GetLayoutAsync(null!);
         LayoutJson = JsonSerializer.Serialize(layout, JsonOptions);
+
+        PrintContextJson = JsonSerializer.Serialize(
+            new { tenantName = CurrentTenant.Name, userName = PrintUserName() },
+            JsonOptions);
+    }
+
+    /// <summary>Ad + soyad; ikisi de boşsa kullanıcı adı. Hiçbiri yoksa boş string.</summary>
+    private string PrintUserName()
+    {
+        var fullName = $"{CurrentUser.Name} {CurrentUser.SurName}".Trim();
+        return fullName.Length > 0 ? fullName : (CurrentUser.UserName ?? string.Empty);
     }
 }
