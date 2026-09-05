@@ -4478,6 +4478,12 @@ namespace Apya.Platform.Migrations
                     b.Property<string>("TagsJson")
                         .HasColumnType("text");
 
+                    b.Property<Guid?>("TaskId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("TaskShareLinkId")
+                        .HasColumnType("uuid");
+
                     b.Property<Guid?>("TenantId")
                         .HasColumnType("uuid")
                         .HasColumnName("TenantId");
@@ -4487,6 +4493,8 @@ namespace Apya.Platform.Migrations
                     b.HasIndex("DocumentId");
 
                     b.HasIndex("RespondentId");
+
+                    b.HasIndex("TaskId", "DocumentId");
 
                     b.HasIndex("TenantId", "Status");
 
@@ -5419,8 +5427,18 @@ namespace Apya.Platform.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("LastModifierId");
 
+                    b.Property<int?>("ProfessionalStaffBand")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("ProjectExperience")
+                        .HasColumnType("integer");
+
                     b.Property<int?>("RdStaffCount")
                         .HasColumnType("integer");
+
+                    b.Property<string>("RegistryNumber")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
 
                     b.Property<int?>("Size")
                         .HasColumnType("integer");
@@ -5428,11 +5446,22 @@ namespace Apya.Platform.Migrations
                     b.Property<int?>("StaffCount")
                         .HasColumnType("integer");
 
+                    b.Property<string>("TaxNumber")
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)");
+
+                    b.Property<string>("TaxOffice")
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
                     b.Property<Guid?>("TenantId")
                         .HasColumnType("uuid")
                         .HasColumnName("TenantId");
 
                     b.Property<int?>("Trl")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Type")
                         .HasColumnType("integer");
 
                     b.HasKey("Id");
@@ -9944,6 +9973,42 @@ namespace Apya.Platform.Migrations
                         .IsUnique();
 
                     b.ToTable("AppTaskFeatureAssignments", (string)null);
+                });
+
+            modelBuilder.Entity("Apya.Platform.Tasks.TaskFormLink", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreationTime")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("CreationTime");
+
+                    b.Property<Guid?>("CreatorId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("CreatorId");
+
+                    b.Property<Guid>("DocumentId")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("IsGuestFillable")
+                        .HasColumnType("boolean");
+
+                    b.Property<Guid>("TaskId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("TenantId");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DocumentId");
+
+                    b.HasIndex("TaskId", "DocumentId")
+                        .IsUnique();
+
+                    b.ToTable("AppTaskFormLinks", (string)null);
                 });
 
             modelBuilder.Entity("Apya.Platform.Tasks.TaskItem", b =>

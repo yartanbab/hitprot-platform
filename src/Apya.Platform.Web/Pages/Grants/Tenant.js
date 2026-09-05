@@ -70,6 +70,35 @@ $(function () {
         var v = $(sel).val(); return v === '' || v == null ? null : Number(v);
     }
 
+    // Kurum türü formu ikiye ayırır: şirket alanları ile STK alanları asla birlikte
+    // görünmez. Görünmeyen grubun değerini sunucu zaten temizler (FirmProfileAppService.Apply),
+    // burada yalnız görünürlük yönetilir.
+    function applyOrgType(type) {
+        var isNgo = type !== 0;
+        $('[data-org-group="company"]').toggleClass('d-none', isNgo);
+        $('[data-org-group="ngo"]').toggleClass('d-none', !isNgo);
+    }
+
+    function setThematic(values) {
+        $('#ProfileThematic .apya-choice').each(function () {
+            $(this).toggleClass('is-on', values.indexOf(String($(this).data('area'))) >= 0);
+        });
+    }
+
+    function getThematic() {
+        return $('#ProfileThematic .apya-choice.is-on').map(function () {
+            return String($(this).data('area'));
+        }).get();
+    }
+
+    $('#ProfileThematic').on('click', '.apya-choice', function () {
+        $(this).toggleClass('is-on');
+    });
+
+    $('#ProfileOrgType').on('change', function () {
+        applyOrgType(Number($(this).val()));
+    });
+
     function paintProfile(p) {
         $('#ProfileCompleteText').text(l('Grants:Feed:Profile:Complete', p.completionPercent));
         $('#ProfileBar').css('width', p.completionPercent + '%');
@@ -83,6 +112,10 @@ $(function () {
             ? l('Grants:Feed:Profile:Full')
             : l('Grants:Feed:Profile:Gain', conditional));
 
+        var type = p.type || 0;
+        $('#ProfileOrgType').val(String(type));
+        applyOrgType(type);
+
         $('#ProfileSize').val(p.size == null ? '' : String(p.size));
         $('#ProfileFoundedOn').val(p.foundedOn ? p.foundedOn.substring(0, 10) : '');
         $('#ProfileStaff').val(p.staffCount == null ? '' : p.staffCount);
@@ -91,10 +124,19 @@ $(function () {
         $('#ProfileTrl').val(p.trl == null ? '' : p.trl);
         $('#ProfileConsortium').val(p.hasConsortiumPartner == null ? '' : String(p.hasConsortiumPartner));
 
+        $('#ProfileRegistryNo').val(p.registryNumber || '');
+        $('#ProfileTaxNo').val(p.taxNumber || '');
+        $('#ProfileTaxOffice').val(p.taxOffice || '');
+        // Bantlarda 0 geçerli bir değerdir (proje deneyimi "yok"), bu yüzden == null.
+        $('#ProfileStaffBand').val(p.professionalStaffBand == null ? '' : String(p.professionalStaffBand));
+        $('#ProfileExperience').val(p.projectExperience == null ? '' : String(p.projectExperience));
+
         [0, 1, 2, 3].forEach(function (kind) {
             setTags(kind, (p.tags || []).filter(function (t) { return t.kind === kind; })
                 .map(function (t) { return t.value; }));
         });
+        setThematic((p.tags || []).filter(function (t) { return t.kind === 4; })
+            .map(function (t) { return t.value; }));
     }
 
     $('#ProfileToggleBtn').on('click', function () {
@@ -108,8 +150,11 @@ $(function () {
         [0, 1, 2, 3].forEach(function (kind) {
             getTags(kind).forEach(function (v) { tags.push({ kind: kind, value: v }); });
         });
+        getThematic().forEach(function (v) { tags.push({ kind: 4, value: v }); });
 
+        // İki grubun alanları da gönderilir; sunucu türe göre karşı grubu temizler.
         profileSvc.updateMyProfile({
+            type: Number($('#ProfileOrgType').val()),
             size: num('#ProfileSize'),
             foundedOn: $('#ProfileFoundedOn').val() || null,
             staffCount: num('#ProfileStaff'),
@@ -117,6 +162,11 @@ $(function () {
             annualRevenue: num('#ProfileRevenue'),
             trl: num('#ProfileTrl'),
             hasConsortiumPartner: consortium === '' ? null : consortium === 'true',
+            registryNumber: $('#ProfileRegistryNo').val() || null,
+            taxNumber: $('#ProfileTaxNo').val() || null,
+            taxOffice: $('#ProfileTaxOffice').val() || null,
+            professionalStaffBand: num('#ProfileStaffBand'),
+            projectExperience: num('#ProfileExperience'),
             tags: tags
         }).then(function () {
             abp.notify.success(l('Grants:Sources:Saved'));

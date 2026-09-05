@@ -13,7 +13,9 @@ import { t } from '../../lib/i18n';
  * çizer. Frontend hiçbir değeri kendi kararıyla saklamaz.
  */
 
-const TABS = [
+/* Baskı çıktısı beş grubun TAMAMINI basar (ekranda tek sekme görünür) —
+   etiketler tek kaynaktan gelsin diye dışarı açık. bkz print/DashboardPrintView. */
+export const STAT_GROUPS = [
     ['Work',          'Dashboard:StatTab:Work',          'İş & teslim'],
     ['Finance',       'Dashboard:StatTab:Finance',       'Finans'],
     ['Grants',        'Dashboard:StatTab:Grants',        'Hibe'],
@@ -28,7 +30,7 @@ function StatisticsBand({ filter, editMode }) {
 
     /* Yalnız veri dönen sekmeler gösterilir — boş sekme tıklanabilir olmamalı. */
     const availableTabs = useMemo(
-        () => TABS.filter(([group]) => stats.some((s) => s.group === group)),
+        () => STAT_GROUPS.filter(([group]) => stats.some((s) => s.group === group)),
         [stats],
     );
 

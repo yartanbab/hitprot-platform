@@ -46,4 +46,15 @@ public interface ITaskShareAppService : IApplicationService
     Task EnsureGuestUploadAllowedAsync(string token, Guid taskId);
 
     Task<GuestDownloadDto> PrepareGuestDownloadAsync(string token, Guid attachmentId, GuestRequestContextDto context);
+
+    /// <summary>
+    /// Misafirin bir formu doldurabilmesi için gereken bağlamı çözer ve YETKİYİ
+    /// DOĞRULAR: token geçerli/süresi dolmamış mı, görev linkin kapsamında mı,
+    /// form o göreve bağlı mı ve misafire AÇIK mı.
+    ///
+    /// <para>Form gönderimi <c>ResponseAppService.SubmitAsync</c>'te kalır — yayın
+    /// penceresi, bot koruması, KVKK onayı ve cevap doğrulaması orada. Bu metot
+    /// yalnız "kim, hangi kiracıda, hangi forma yazabilir" sorusunu cevaplar.</para>
+    /// </summary>
+    Task<GuestFormContextDto> ResolveGuestFormAsync(string token, Guid taskId, string documentSlug);
 }

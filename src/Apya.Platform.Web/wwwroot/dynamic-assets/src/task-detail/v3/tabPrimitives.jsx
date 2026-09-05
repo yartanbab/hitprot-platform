@@ -7,7 +7,14 @@ import { initialsOf, avatarColorOf } from './taskMetaV3';
  * satır rozeti, avatar ve biçimlendiriciler.
  */
 
-export const TAB_CARD = 'rounded-2xl border border-subtle bg-surface-base shadow-xs overflow-hidden';
+/**
+ * Kırpmayan kart. İçinde açılır liste/popover barındıran kartlar bunu kullanır:
+ * `overflow-hidden`, kartın alt kenarına yakın açılan bir dropdown'ı keser
+ * (Combobox listesi kartın içine `absolute` konumlanır).
+ */
+export const TAB_CARD_UNCLIPPED = 'rounded-2xl border border-subtle bg-surface-base shadow-xs';
+
+export const TAB_CARD = `${TAB_CARD_UNCLIPPED} overflow-hidden`;
 
 /** Kart üstü başlık şeridi — sol tarafta başlık + isteğe bağlı rozet, sağda aksiyon. */
 export function TabCardHeader({ title, badge, action }) {

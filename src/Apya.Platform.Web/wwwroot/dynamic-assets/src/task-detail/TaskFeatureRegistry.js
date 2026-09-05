@@ -12,6 +12,7 @@ import { SubtaskTableTabV3 } from './v3/features/SubtaskTableTabV3';
 import { SubtaskBoardTabV3 } from './v3/features/SubtaskBoardTabV3';
 import { TaskCalendarTabV3 } from './v3/features/TaskCalendarTabV3';
 import { DocumentsTabV3 } from './v3/features/DocumentsTabV3';
+import { FormsTabV3 } from './v3/features/FormsTabV3';
 import { GanttTabV3 } from './v3/features/GanttTabV3';
 import { DependenciesTabV3 } from './v3/features/DependenciesAndFinanceTabV3';
 // Not: dosyada artık yalnız TimeTrackingTabV3 var — diğer "OtherFeatures*"
@@ -159,6 +160,13 @@ export const TASK_FEATURE_REGISTRY = [
         code: 'documents', title: 'Belge', icon: 'fa-file-lines',
         category: 'gorev', isCore: false, order: 9, permission: null,
         implemented: true, component: DocumentsTabV3,
+    },
+    {
+        // Form KOPYALANMAZ: Form Yönetimi'ndeki bir AppDocument'e bağ kurulur.
+        // Yanıtlar görev bağlamıyla (AppResponse.TaskId) toplanır.
+        code: 'forms', title: 'Form', icon: 'fa-clipboard-list',
+        category: 'gorev', isCore: false, order: 9.5, permission: null,
+        implemented: true, component: FormsTabV3,
     },
     {
         code: 'gallery', title: 'Dosya Galerisi', icon: 'fa-image',

@@ -226,6 +226,21 @@ public static class ReleaseNoteCatalog
                 "görünüyor; KA210 ile KA220 ise 2027 başvuru takvimi açıklandığında listenize düşecek."),
 
             new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "Dernek, vakıf ve kulüpler kendi profil formunu dolduruyor",
+                "Hibe ekranındaki kurum profili yalnız şirketlere göre kurulmuştu: dernek ya da " +
+                "vakıfsanız firma ölçeği, ciro ve teknoloji hazırlık seviyesi gibi sizde karşılığı " +
+                "olmayan alanlarla karşılaşıyordunuz. Profilin başında artık kurum türünüzü " +
+                "seçiyorsunuz — şirket, dernek, kulüp, vakıf ya da federasyon — ve form ona göre " +
+                "değişiyor. Sivil toplum kuruluşlarına kayıt (DERBİS) veya vakıf sicil numarası, " +
+                "vergi kimlik numarası ve vergi dairesi soruluyor; profesyonel ekibinizin ve bugüne " +
+                "dek yürüttüğünüz projelerin sayısını tek tek yazmak yerine aralık seçerek " +
+                "belirtiyorsunuz. Çalışma alanınızı ise eğitimden çevreye, insan haklarından afet " +
+                "yönetimine 14 tematik başlıktan işaretliyorsunuz ve çağrı eşleştirmesi bu " +
+                "başlıklar üzerinden yapılıyor. Kurum türünü değiştirdiğinizde diğer türe ait " +
+                "alanlar profilinizden kalkıyor; profil doluluk oranınız da kurum türünüze uygun " +
+                "alanlar üzerinden hesaplanıyor."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
                 "Bir hibeye uygun olup olmadığınızı şart şart görüyorsunuz",
                 "Hibe detayında programın uygunluk şartları tek tek listeleniyor ve her şartın " +
                 "yanında sizin durumunuz yazıyor: sağlıyorsunuz, sağlamıyorsunuz ya da bilgi eksik. " +
@@ -419,6 +434,19 @@ public static class ReleaseNoteCatalog
                 "üç saat); saatler artık her iki yönde de doğru taşınıyor."),
 
             // ── Genel ─────────────────────────────────────────────────────────
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "Genel Bakış'ı olduğu gibi kağıda dökebiliyorsunuz",
+                "Ekranı yazdırmayı denediğinizde kart düzeni kağıda sığmıyor, kartların ekrana " +
+                "sığsın diye kısalttığı listeler de kısalmış hâliyle çıkıyordu; toplantıya " +
+                "götürdüğünüz çıktıda satırların bir kısmı eksik oluyordu. Artık üstteki " +
+                "\"Yazdır\" düğmesi A4 yatay, üç bölümlük bir rapor üretiyor: sayısal özet ve " +
+                "istatistikler, teslimler-proje sağlığı-tıkanan işler, onaylar-gelir/gider-teslim " +
+                "yoğunluğu. Listeler kırpılmıyor ve ekranda tek sekmede gördüğünüz " +
+                "istatistiklerin beş grubu da basılıyor. Her sayfanın üstünde kurum adı, seçili " +
+                "görünüm, dönemin tarih aralığı, yazdıran kişi ve saat yazıyor — tek yaprak " +
+                "elden ele dolaşsa da neye ait olduğu belli oluyor. Yetkiniz olmayan kutucuklar " +
+                "kağıda da rakam yazmıyor. Telefondan da yazdırabiliyorsunuz."),
+
             new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
                 "Hibe ekranları açılırken içerik zıplamıyor",
                 "Liste ve sayaç içeren hibe ekranlarında veri gelene kadar boş bir alan duruyor, " +
@@ -521,7 +549,62 @@ public static class ReleaseNoteCatalog
                 "yazdığınızda alan yazarken 1.234.567 hâline geliyor, ondalık için virgül " +
                 "kullanıyorsunuz. Uzun tutarlarda basamak saymak ya da fazladan yazılmış bir sıfırı " +
                 "gözden kaçırmak yok. Kur alanları altı, oran ve miktar alanları iki ondalık hane " +
-                "kabul ediyor.")
+                "kabul ediyor."),
+
+            // ── Görev finansı ─────────────────────────────────────────────────
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "Gideri, geliri ve faturayı görevin içinden kesiyorsunuz",
+                "Görev detayındaki Finans sekmesi yalnız okunuyordu: göreve ait bir gider ya da " +
+                "gelir kaydetmek için Finans modülüne gidip kaydı görevle elle eşleştirmeniz " +
+                "gerekiyordu. Sekmenin başlığında artık \"Gider ekle\", \"Gelir ekle\" ve " +
+                "\"Fatura ekle\" düğmeleri var; alışık olduğunuz formlar açılıyor ve görevin " +
+                "projesi önden seçili geliyor. Kayıt kapanınca sekme kendiliğinden tazeleniyor. " +
+                "Her düğme kendi yetkisine bağlı — gider yetkiniz yoksa yalnız o düğme çıkmıyor. " +
+                "Faturalar ayrı bir kartta duruyor: tutarları KDV dâhil olduğu için gider ve " +
+                "gelir toplamlarına karıştırılmadı, yoksa fatura ödendiğinde aynı para iki kez " +
+                "sayılırdı."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "Görevi bütçe kalemine görevin kendi ekranından bağlıyorsunuz",
+                "\"Bütçe bağı\" kartı artık düzenlenebilir: görevin hangi bütçe kalemine ait " +
+                "olduğunu ve o görev için ayırdığınız tutarı buradan seçiyorsunuz. Bu iki alan " +
+                "daha önce yalnız eski görev penceresinden ayarlanabiliyordu, o pencere de artık " +
+                "açılmıyordu; yani kart pratikte hiç dolmuyordu. Kalem listesi finans " +
+                "formlarındakiyle aynı. Bütçe görme yetkiniz varsa görünür."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "Gidere evrakını bağlayabiliyorsunuz",
+                "Finans sekmesindeki gider satırlarında \"Evrak\" düğmesi çıktı; bir gideri, " +
+                "Belgeler modülünde duran fatura ya da fişiyle eşleştiriyorsunuz. Kaç evrak bağlı " +
+                "olduğu satırda yazıyor. Yükleme buradan yapılmıyor — belge Belgeler modülünde " +
+                "yaşamaya devam ediyor, bu ekran yalnız bağı kuruyor; proje ekranındaki " +
+                "eşleştirme tezgâhıyla aynı bağ."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Fix,
+                "Görevi kaydetmek bütçe bağını artık silmiyor",
+                "Görev detayından yaptığınız her kayıt, görevin bütçe kalemi bağını ve planlanan " +
+                "tutarını sessizce siliyordu — ilgisiz bir alanı düzeltip Kaydet'e bassanız bile. " +
+                "Hiçbir uyarı çıkmadığı için kaybın fark edilmesi ancak bütçe raporuna " +
+                "bakıldığında mümkündü. Düzeltildi. Bütçe kalemine bağladığınız görevler varsa " +
+                "bağlarının yerinde olduğunu bir kez kontrol etmenizde fayda var; artık " +
+                "görevin kendi Finans sekmesinden yeniden kurabilirsiniz."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
+                "Göreve özellik eklerken bütün seçenekler tek ekranda görünüyor",
+                "Özellik ekleme penceresinde kartlar \"GÖREV & PLANLAMA\", \"GEÇMİŞ & FİNANS\" " +
+                "gibi gruplara ayrılmıştı ve aradığınızı bulmak için pencereyi kaydırmanız " +
+                "gerekiyordu. Grup başlıkları kalktı, katalog tek liste oldu ve üst şerit " +
+                "inceltildi: on iki seçeneğin hepsi hem bilgisayarda hem telefonda kaydırmadan " +
+                "sığıyor. Telefonda kart açıklamaları gizleniyor, ekli olan özellikler kartın " +
+                "kenarlığından anlaşılıyor. Arama kutusu yerinde duruyor."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
+                "Görevin dosyaları ve görselleri sekmeyi açar açmaz görünüyor",
+                "Görev detayındaki Dosyalar ve Görseller sekmelerinde \"buraya sürükleyin\" kutusu " +
+                "en üstte duruyordu; yüklü dosyalar ve görseller onun altında kaldığı için sekmeyi " +
+                "açtığınızda ekranda hiçbiri görünmüyor, listeye ulaşmak için her seferinde aşağı " +
+                "kaydırmanız gerekiyordu. Kutu listenin altına alındı: sekme açılır açılmaz dosyalar " +
+                "ve görseller karşınıza çıkıyor, yükleme yine aynı yerde, sadece listeden sonra.")
         ),
 
         new ReleaseNote(

@@ -39,6 +39,9 @@ public class GrantParametersPage_Tests : PlatformWebTestBase
         html.ShouldContain("apya-param-layout");
         html.ShouldContain("Uygunluk Şartları");
         html.ShouldContain("Canlı Eşleşme");
+        // STK hedeflemesi: firma profilindekiyle aynı sabit tematik alan listesi.
+        html.ShouldContain("ParamThematic");
+        html.ShouldContain("Kültür ve Sanat");
         // Sayfa script/stili ABP demetine girer (/__bundles/...Parameters.<hash>.js),
         // ham dosya yolu HTML'de görünmez.
         System.Text.RegularExpressions.Regex.IsMatch(html, @"Parameters[^""]*\.js")
