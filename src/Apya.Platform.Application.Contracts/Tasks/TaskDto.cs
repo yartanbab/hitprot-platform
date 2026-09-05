@@ -94,6 +94,8 @@ namespace Apya.Platform.Tasks
         public List<TaskFinanceLineDto> Expenses { get; set; } = new List<TaskFinanceLineDto>();
         /// <summary>Göreve bağlı gelirler (yalnızca Incomes izni olan kullanıcıya doldurulur).</summary>
         public List<TaskFinanceLineDto> Incomes { get; set; } = new List<TaskFinanceLineDto>();
+        /// <summary>Göreve bağlı faturalar (yalnızca Invoices izni olan kullanıcıya doldurulur).</summary>
+        public List<TaskInvoiceLineDto> Invoices { get; set; } = new List<TaskInvoiceLineDto>();
 
         public List<TaskDto> SubTasks { get; set; } = new List<TaskDto>();
         public List<TaskCommentDto> Comments { get; set; } = new List<TaskCommentDto>();

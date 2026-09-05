@@ -47,6 +47,7 @@ namespace Apya.Platform.Tasks
         private readonly Apya.Platform.IssueTasks.IssueTaskManager _issueTaskManager;
         private readonly IRepository<Expense, Guid> _expenseRepository;
         private readonly IRepository<IncomeEntry, Guid> _incomeRepository;
+        private readonly IRepository<Apya.Platform.Invoices.Invoice, Guid> _invoiceRepository;
         private readonly IRepository<Apya.Platform.Projects.Project, Guid> _projectLookupRepository;
         private readonly IRepository<TaskShareLink, Guid> _shareLinkRepository;
         private readonly ILocalEventBus _localEventBus;
@@ -76,6 +77,7 @@ namespace Apya.Platform.Tasks
             Apya.Platform.IssueTasks.IssueTaskManager issueTaskManager,
             IRepository<Expense, Guid> expenseRepository,
             IRepository<IncomeEntry, Guid> incomeRepository,
+            IRepository<Apya.Platform.Invoices.Invoice, Guid> invoiceRepository,
             IRepository<Apya.Platform.Projects.Project, Guid> projectLookupRepository,
             IRepository<TaskShareLink, Guid> shareLinkRepository,
             ILocalEventBus localEventBus,
@@ -106,6 +108,7 @@ namespace Apya.Platform.Tasks
             _issueTaskManager      = issueTaskManager;
             _expenseRepository     = expenseRepository;
             _incomeRepository      = incomeRepository;
+            _invoiceRepository     = invoiceRepository;
             _projectLookupRepository = projectLookupRepository;
             _shareLinkRepository   = shareLinkRepository;
             _localEventBus         = localEventBus;
@@ -239,6 +242,24 @@ namespace Apya.Platform.Tasks
                 var taskIncomes = await _incomeRepository.GetListAsync(i => i.TaskId == id);
                 taskDto.Incomes = taskIncomes
                     .Select(i => new TaskFinanceLineDto { Id = i.Id, Title = i.Title, Amount = i.Amount, Currency = i.Currency, Date = i.IncomeDate })
+                    .ToList();
+            }
+            if (await AuthorizationService.IsGrantedAsync(PlatformPermissions.Invoices.Default))
+            {
+                var taskInvoices = await _invoiceRepository.GetListAsync(x => x.TaskId == id);
+                taskDto.Invoices = taskInvoices
+                    .OrderByDescending(x => x.InvoiceDate)
+                    .Select(x => new TaskInvoiceLineDto
+                    {
+                        Id = x.Id,
+                        InvoiceNumber = x.InvoiceNumber,
+                        InvoiceDate = x.InvoiceDate,
+                        DueDate = x.DueDate,
+                        TotalAmount = x.TotalAmount,
+                        Currency = x.Currency,
+                        Status = x.Status,
+                        Direction = x.Direction,
+                    })
                     .ToList();
             }
 

@@ -54,6 +54,10 @@
                 </div>
                 @* Çoklu para birimi gizlendi — tüm faturalar TRY. *@
                 <input type="hidden" asp-for="InvoiceInfo.Currency" value="TRY" />
+                @* Görev panelinden açıldıysa faturayı o göreve etiketle. Görünür bir
+                   görev seçicisi YOK: modal göreve bağlı açılır, serbest seçim
+                   Faturalar sayfasının işi. *@
+                <input type="hidden" asp-for="InvoiceInfo.TaskId" />
             </div>
 
             <div class="mb-3">

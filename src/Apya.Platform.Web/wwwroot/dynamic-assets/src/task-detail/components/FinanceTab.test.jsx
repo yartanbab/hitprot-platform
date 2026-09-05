@@ -236,3 +236,86 @@ describe('FinanceTab · butce bagi atamasi', () => {
         expect(window.apya.platform.projectBudgets.projectBudget.getRecordFormLookup).not.toHaveBeenCalled();
     });
 });
+
+describe('FinanceTab · faturalar', () => {
+    const INVOICE = {
+        id: 'inv1', invoiceNumber: 'FTR-2026-001', direction: 0, status: 1,
+        invoiceDate: '2026-09-01T00:00:00Z', dueDate: '2026-09-16T00:00:00Z',
+        totalAmount: 24000, currency: 'TRY',
+    };
+
+    function grantAll() {
+        window.abp = {
+            appPath: '/',
+            auth: { isGranted: () => true },
+            ModalManager: vi.fn(function ModalManager() {
+                this.onResult = vi.fn();
+                this.open = vi.fn();
+            }),
+        };
+        window.apya = { platform: { projectBudgets: { projectBudget: { getRecordFormLookup: vi.fn(() => Promise.resolve({ lines: [] })) } } } };
+        return window.abp.ModalManager;
+    }
+
+    it('fatura satirini numara, vade, durum ve KDV dahil tutarla basar', () => {
+        grantAll();
+        renderWithClient(<FinanceTab taskId="t-1" task={{ id: 't-1', expenses: [], incomes: [], invoices: [INVOICE] }} />);
+
+        expect(screen.getByText('Faturalar')).toBeInTheDocument();
+        expect(screen.getByText(/FTR-2026-001/)).toBeInTheDocument();
+        expect(screen.getByText('Gönderildi')).toBeInTheDocument();
+        // Tarih ayiraci node ICU surumune gore degisiyor (16.09 / 16/09) — gunu dogrula.
+        expect(screen.getByText(/vade 16/)).toBeInTheDocument();
+        expect(screen.getByText(/24\.000,00/)).toBeInTheDocument();
+    });
+
+    it('alis faturasi Alis olarak isaretlenir', () => {
+        grantAll();
+        renderWithClient(<FinanceTab taskId="t-1" task={{
+            id: 't-1', expenses: [], incomes: [], invoices: [{ ...INVOICE, direction: 1, status: 4 }],
+        }} />);
+
+        expect(screen.getByText('Alış')).toBeInTheDocument();
+        expect(screen.getByText('Gecikti')).toBeInTheDocument();
+    });
+
+    it('YALNIZ fatura varsa bos durum basilmaz ve aksiyonlar fatura kartinda kalir', () => {
+        grantAll();
+        renderWithClient(<FinanceTab taskId="t-1" task={{ id: 't-1', expenses: [], incomes: [], invoices: [INVOICE] }} />);
+
+        expect(screen.queryByText(/gider\/gelir kaydı yok/i)).not.toBeInTheDocument();
+        expect(screen.queryByText('Finans kalemleri')).not.toBeInTheDocument();
+        expect(screen.getByRole('button', { name: /fatura ekle/i })).toBeInTheDocument();
+    });
+
+    it('fatura tutari gider/gelir toplamlarina KARISMAZ', () => {
+        grantAll();
+        renderWithClient(<FinanceTab taskId="t-1" task={{
+            id: 't-1',
+            expenses: [{ id: 'e1', amount: 100, currency: 'TRY', title: 'Gider' }],
+            incomes: [],
+            invoices: [INVOICE],
+        }} />);
+
+        // Toplam Gider KPI'si 100 kalmali; 24.100 olsaydi fatura toplama girmis olurdu.
+        const kpi = screen.getByText(/Toplam Gider/).parentElement;
+        expect(kpi).toHaveTextContent('100,00');
+        expect(kpi).not.toHaveTextContent('24.100');
+    });
+
+    it('fatura ekle butonu modali TaskId ile acar', () => {
+        const ModalManager = grantAll();
+        renderWithClient(<FinanceTab taskId="t-1" task={{ id: 't-1', expenses: [], incomes: [], invoices: [] }} />);
+
+        fireEvent.click(screen.getByRole('button', { name: /fatura ekle/i }));
+
+        expect(ModalManager).toHaveBeenCalledWith({ viewUrl: '/Invoices/CreateModal?TaskId=t-1' });
+    });
+
+    it('Invoices.Create izni yoksa fatura dugmesi basilmaz', () => {
+        window.abp = { appPath: '/', auth: { isGranted: (p) => p !== 'Platform.Invoices.Create' } };
+        renderWithClient(<FinanceTab taskId="t-1" task={{ id: 't-1', expenses: [], incomes: [], invoices: [] }} />);
+
+        expect(screen.queryByRole('button', { name: /fatura ekle/i })).not.toBeInTheDocument();
+    });
+});
