@@ -283,7 +283,7 @@ yıllarca maskelemişti.
 
 ---
 
-## Sürüm notları — `2026.09.02` (39 madde, 7 bölüm)
+## Sürüm notları — `2026.09.02` (65 madde, 10 bölüm)
 
 Başlık: *"Proje finansı tek ekranda, hibe süreci baştan sona, görevler ekip dışına açık"*
 
@@ -294,15 +294,22 @@ bakan maddeleri eklendi (5 yenilik + 4 düzeltme).
 
 | Bölüm | Madde |
 |---|---|
-| Finans | 16 |
-| Hibe: çağrılar ve uygunluk | 6 |
-| Hibe: başvuru süreci | 7 |
+| Finans | 20 |
+| Hibe: çağrılar ve uygunluk | 9 |
+| Hibe: başvuru süreci | 8 |
 | Görev paylaşımı | 3 |
-| Mobil | 3 |
+| Mobil | 5 |
 | Paket | 1 |
-| Genel | 3 |
+| Takvim | 1 |
+| Genel | 8 |
+| Görev görünümleri | 5 |
+| Görev finansı | 5 |
 
-Rozet dağılımı: 23 Yenilik · 8 İyileştirme · 7 Düzeltme · 1 Güvenlik.
+Rozet dağılımı: 32 Yenilik · 16 İyileştirme · 16 Düzeltme · 1 Güvenlik.
+
+Not delta ilk yazıldığında 39 maddeydi, **65 maddeye** çıktı: görev görünümleri ve görev
+finansı maddeleri #338 ile, dernek/vakıf/kulüp profil formu #339 ile eklendi. Finans
+bölümü 16 → 20, iki hibe bölümü 13 → 17 oldu.
 
 🔴 **Deploy başka güne kayarsa `version` + `date` birlikte güncellenmeli** — not henüz
 yayınlanmadığı için sürüm kimliğine dokunmak serbest; yayınlandıktan sonra dokunma.
@@ -321,6 +328,64 @@ erişemediği bir özelliği arar.
 | #296 kiracı sızıntısı | Canlıda gerçekleşip gerçekleşmediği ölçülemedi |
 | #281 · #282 · #283 · #287 · #288 · #291 · #307 | Host / iç mesele |
 | E-posta bildirimi | Şablonlar hazır ama **SMTP yapılandırılmadı** — vaat edilmedi |
+
+---
+
+## 🔴 Deploy SONRASI — sürüm notu yayın kararları (`/Admin/ReleaseNotes`)
+
+Bu paket **yayın onayı kapısını** (#322) da getiriyor: bundan sonra kataloğa madde
+eklemek yayınlamak DEĞİL, host onayı gerekiyor. Ama **bu ilk deploy'da iş onaylamak
+değil, DARALTMAKTIR** — sebebi aşağıda.
+
+### Ne olacak: tohum her şeyi otomatik onaylar
+
+`ReleaseNotePublicationDataSeedContributor`, `AppReleaseNotePublications` tablosu
+**tamamen boşsa** kataloğun bütün sürümlerindeki bütün maddelerini şu değerlerle yazar:
+
+```
+isApproved: true · showInModal: true · showInHistory: true · tüm paketler · Audience.Everyone
+```
+
+Kapı canlıya indiği an sürüm notlarının herkes için boşalmaması adına bilinçli konmuş.
+Tablo canlıda henüz YOK (migration bu pakette yaratıyor) → tohum çalışacak →
+**`2026.09.02`'nin 65 maddesi dâhil her şey onaylı ve herkese açık başlayacak.**
+
+🔑 Sonraki sürümlerde tohum bir daha çalışmaz (tablo dolu olur); her yeni madde
+varsayılan KAPALI gelir ve host onayı bekler.
+
+### Yapılacaklar — DbMigrator koştuktan sonra
+
+1. Host olarak gir → `/Admin/ReleaseNotes` → `2026.09.02`.
+2. **"Paketinizde kapalı olan özellikleri menüden görebiliyorsunuz"** maddesinin
+   seviyesini **Kiracı yöneticileri** yap. Paket yükseltme kararı kiracı yöneticisinin
+   işidir; sıradan kullanıcıya "paketinizde şunlar kapalı" demek gürültü üretir.
+   Madde anahtarı `679419437037` (anahtar = başlığın SHA-256'sının ilk 12 hanesi).
+3. Aşağıdaki **25 maddeden Basic kutusunu kaldır.** Bu maddeler Basic pakette hiç
+   açılmayan modülleri anlatıyor; kutu kalırsa Basic müşterisi kullanamayacağı
+   özellikleri okur.
+
+| Madde grubu | Adet | Gereken özellik | Basic | Kalacak kutular |
+|---|---|---|---|---|
+| Hibe: çağrılar ve uygunluk + başvuru süreci | 17 | `Platform.Grants` | ❌ | Standard · Premium · Enterprise |
+| Belge açığı · belge eşleştirme · gidere evrak bağlama | 3 | `Platform.Documents` | ❌ | Standard · Premium · Enterprise |
+| Döviz bütçe · kur değerleme detayı · kur hane sayısı | 3 | `Platform.MultiCurrency` | ❌ | Standard · Premium · Enterprise |
+| Google / Outlook takvim bağlantısı | 1 | `Platform.Calendar` | ❌ | Standard · Premium · Enterprise |
+| *Sınırda:* "Hibe projelerinde Donör ve raporlama sekmesi" | 1 | Finans açık, içerik hibe bağlamlı | — | Standard+ önerilir |
+
+Kalan **40 madde** dört pakete de gider: hepsi ya `Platform.Finance` (her pakette açık)
+ya da hiçbir modül kapısına bağlı olmayan proje/görev yüzeyleri.
+
+🔑 Görev ekranındaki **Takvim / Kanban / Gösterge Paneli görünümleri** ve **görev içi
+Belge sekmesi** `Platform.Calendar` veya `Platform.Documents` kapısına bağlı DEĞİL —
+`PackageFeatureGates`'te Tasks bilerek dışarıda bırakılmış. Onları daraltma.
+
+### Denetlendi: host-only madde yok
+
+65 maddenin tamamı "bunu kiracıdaki bir kullanıcı kendi ekranında görebilir/yapabilir mi"
+kuralıyla tarandı. Host tarafına kapalı tek izinler `Grants.Create/Edit/Delete` ve
+`ReleaseNotes.Manage`; bu izinlerin arkasındaki sayfaları (`Interests`, `Pipeline`,
+`Leads`, `/Admin/ReleaseNotes`) anlatan madde bulunmuyor. Hibe maddelerinin dayandığı
+sayfaların hepsi `Grants.Default` ile korunuyor, yani kiracıya açık.
 
 ---
 
@@ -395,6 +460,14 @@ Bu turda **şema + izin tohumu + üç veri tohumu** için — hepsi bundan geçi
 ### 7. Siteyi başlat
 
 Plesk → havuzu başlat.
+
+### 8. Sürüm notu yayın kararlarını daralt
+
+Doğrulama bittikten sonra `/Admin/ReleaseNotes` → `2026.09.02`. Tohum her maddeyi
+"onaylı · tüm paketler · herkes" yazdığı için burada **onaylamak değil daraltmak**
+gerekiyor: bir maddenin seviyesi kiracı yöneticisine çekilecek, 25 maddeden Basic
+kutusu kalkacak. Ayrıntı: yukarıdaki *"Deploy SONRASI — sürüm notu yayın kararları"*
+bölümü.
 
 ---
 
