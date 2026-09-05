@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 
 /**
- * Pages/Tasks/index.js, Pages/Board/index.js, Pages/Projects/ProjectDetails.js
+ * Pages/Tasks/index.js, Pages/Projects/ProjectDetails.js
  * jQuery IIFE'leri — bu repoda vitest/jsdom altında ÇALIŞTIRILAMAZ (DataTables,
  * Select2, SortableJS bağımlılıkları + gerçek DOM elemanları
  * gerektiriyor). Bayrağın GERÇEK DAVRANIŞI (kapalıyken eski drawer, açıkken
@@ -19,7 +19,6 @@ const pagesDir = path.resolve(dynamicAssetsSrc, '../../../Pages');
 
 const FILES = [
     { path: path.join(pagesDir, 'Tasks', 'index.js'), fallback: "abp.ModalManager(abp.appPath + 'Tasks/EditModal')" },
-    { path: path.join(pagesDir, 'Board', 'index.js'), fallback: "abp.ModalManager({ viewUrl: abp.appPath + 'Tasks/EditModal' })" },
     { path: path.join(pagesDir, 'Projects', 'ProjectDetails.js'), fallback: "abp.ModalManager({ viewUrl: abp.appPath + 'Tasks/EditModal' })" },
 ];
 

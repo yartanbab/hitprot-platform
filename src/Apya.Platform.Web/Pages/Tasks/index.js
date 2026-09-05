@@ -814,6 +814,20 @@ $(function () {
         }, 3000);
     });
 
+    // ─── Açılış görünüşü (?view=) ──────────────────────────────────────────
+    // switchView() görünüşü URL'e ZATEN yazıyordu ama kimse geri okumuyordu;
+    // yenilemede ya da derin bağlantıda sayfa hep listeyle açılıyordu. Menüdeki
+    // "Kart Panosu" / "Zaman Çizelgesi" öğeleri bu parametreye bağlı
+    // (PlatformNavigationResolver → Apya.Work.Board / Apya.Work.Timeline).
+    //
+    // BURADA duruyor çünkü yükleyiciler kb/gantt/calendar/... kapanış
+    // değişkenlerine bakıyor; hepsi ancak bu noktada kurulmuş olur.
+    var initialView = new URLSearchParams(window.location.search).get('view');
+    if (initialView && VIEWS[initialView] && initialView !== currentView) {
+        switchView(initialView);
+        if (VIEWS[initialView].load) { VIEWS[initialView].load(); }
+    }
+
     // ─── İlk render ────────────────────────────────────────────────────────
     renderFilterUi();
     loadSummary();

@@ -289,6 +289,39 @@ $(function () {
             applyCaret(true);
         }
 
+        // Başlık TIKLANABİLİR (kullanıcı kararı 2026-09-06): Panolar da bir hedef,
+        // yalnız bir kapak değil.
+        //
+        // DİKKAT: LeptonX alt öğesi olan bir satırın anchor'ına href'i HİÇ BASMIYOR
+        // — menü ağacındaki `url:` sessizce düşüyor (ölçüldü, dump 2026-09-06).
+        // Bu yüzden hedefi İLK ÇOCUĞUN href'inden alıyoruz: sabit bir yol gömmek
+        // yerine menü tek kaynak kalır, Görevler taşınırsa başlık da onunla gider.
+        var href = anchor.getAttribute('href') || child.getAttribute('href');
+        var navigable = href && href !== '#' && href.indexOf('javascript:') !== 0;
+
+        if (navigable) {
+            // href'i satıra da yazıyoruz: imleç link olur, orta tık / ctrl+tık
+            // yeni sekmede açar, durum çubuğu hedefi gösterir.
+            anchor.setAttribute('href', href);
+
+            // Satırın iki işi var, tıklamayı ikiye bölüyoruz:
+            //   · caret → temanın kendi aç/kapası (yalnız navigasyonu keseriz)
+            //   · kalanı → hedefe git; temanın handler'ına hiç ulaştırmayız,
+            //     aksi halde sayfa hem gider hem katlanır.
+            anchor.addEventListener('click', function (e) {
+                if (e.button !== 0 || e.ctrlKey || e.metaKey || e.shiftKey || e.altKey) { return; }
+
+                if (caret && (e.target === caret || caret.contains(e.target))) {
+                    e.preventDefault();
+                    return;
+                }
+
+                e.preventDefault();
+                e.stopImmediatePropagation();
+                window.location.href = href;
+            }, true);
+        }
+
         // Temanın kendi aç/kapa handler'ına dokunmuyoruz; tıklamadan SONRA
         // sonucu okuyup kaydediyoruz (handler bu dinleyiciden önce çalışmış olur).
         anchor.addEventListener('click', function () {

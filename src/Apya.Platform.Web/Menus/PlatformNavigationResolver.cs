@@ -563,18 +563,30 @@ public class PlatformNavigationResolver : IScopedDependency
         if (await _permission.IsGrantedAsync(PlatformPermissions.Projects.Default))
             work.AddItem(new ApplicationMenuItem("Apya.Work.Projects", l["Menu:Projects"], icon: "fa fa-rocket", url: "/Projects", order: 1));
 
-        // Handoff'un Panolar listesinde Gantt ve Zaman Çizelgesi de var; ikisinin de
-        // bağımsız sayfası YOK (Gantt yalnız proje detay konsolunun içinde yaşıyor).
-        // Olmayan ekrana menü girişi açmıyoruz — handoff'un "yalnız çalışan şeyi listele"
-        // kuralı kısayol penceresi için konmuş, aynı kural menüde de geçerli.
+        // Panolar = Görevler konsolunun (/Tasks) üç görünüşü. Alt öğeler aynı
+        // sayfanın sekmelerine derin bağlantıdır (?view= parametresini
+        // Pages/Tasks/index.js açılışta okur).
+        //
+        // Grubun kendisi de TIKLANABİLİR (kullanıcı kararı 2026-09-06) ama burada
+        // `url:` VERİLMEZ: LeptonX alt öğesi olan bir satırın anchor'ına href
+        // basmıyor, verilen URL sessizce düşüyor. Başlığın hedefi kabukta ilk
+        // çocuğun href'inden türetilir (apya-sidebar-shell.js → setupBoards).
+        //
+        // Üçünün de müstakil sayfası YOK, üçü de konsolun sekmesi. Kanban'ın
+        // ayrı bir /Board sayfası vardı; menü konsola geçince kimsenin
+        // gitmediği ikinci bir kopya olarak kaldı ve SİLİNDİ (2026-09-06) —
+        // yerinde yalnız /Tasks?view=kanban'a kalıcı yönlendirme duruyor.
+        // Böylece üç görünüş aynı süzgeç çubuğunu paylaşır.
+        //
+        // Menü ID'si "Apya.Work.Board" KALIYOR (etiketi Kart Panosu oldu): ad,
+        // kullanıcının menü düzeninde ve kısayol iğnelerinde saklı.
         var boards = new ApplicationMenuItem("Apya.Work.Boards", l["Menu:Boards"], icon: "fa fa-table-columns", order: 2);
         if (await _permission.IsGrantedAsync(PlatformPermissions.Tasks.Default))
         {
             boards.AddItem(new ApplicationMenuItem("Apya.Work.Tasks", l["Menu:Tasks"], icon: "fa fa-tasks", url: "/Tasks"));
-            boards.AddItem(new ApplicationMenuItem("Apya.Work.Board", l["Menu:KanbanBoard"], icon: "fa fa-columns", url: "/Board"));
+            boards.AddItem(new ApplicationMenuItem("Apya.Work.Board", l["Menu:KanbanBoard"], icon: "fa fa-columns", url: "/Tasks?view=kanban"));
+            boards.AddItem(new ApplicationMenuItem("Apya.Work.Timeline", l["Menu:Timeline"], icon: "fa fa-clock", url: "/Tasks?view=gantt"));
         }
-        if (await _permission.IsGrantedAsync(PlatformPermissions.Calendars.Default))
-            boards.AddItem(new ApplicationMenuItem("Apya.Work.Calendar", l["Menu:Calendar"], icon: "fa fa-calendar-days", url: "/Calendars"));
         if (boards.Items.Count > 0) work.AddItem(boards);
 
         // Özet Raporlar — "Raporlar & Analiz" kategorisinden BURAYA taşındı
@@ -594,10 +606,22 @@ public class PlatformNavigationResolver : IScopedDependency
 
         if (work.Items.Count > 0) roots.Add(work);
 
+        // Takvim — Panolar'dan ÇIKARILDI, kök seviyede müstakil kategori oldu
+        // (kullanıcı kararı 2026-09-06). Panolar'ın üçü de tek bir görev
+        // konsolunun görünüşü; Takvim ise ayrı bir modül (kendi izni, kendi
+        // dış takvim entegrasyonu) ve o grubun içinde yanlış yerdeydi.
+        //
+        // Menü ID'si "Apya.Work.Calendar" KORUNUYOR: ağaçtaki yeri değişti,
+        // kimliği değil — kayıtlı menü düzenleri ve kısayol iğneleri bu adı
+        // saklıyor, yeniden adlandırmak onları sessizce çözülemez hâle getirirdi.
+        if (await _permission.IsGrantedAsync(PlatformPermissions.Calendars.Default))
+            roots.Add(new ApplicationMenuItem(
+                "Apya.Work.Calendar", l["Menu:Calendar"], icon: "fa fa-calendar-days", url: "/Calendars", order: 3));
+
         // Hibe Yönetimi — kendi izin grubu (Groups.Grants) ve kendi feature'ı (Features.Grants)
         // olduğu için İş Yönetimi'nden ayrı kategori. "Başvurular" sayfası HOST'a özel
         // (GrantApplicationHostAppService.EnsureHostContext) → tenant menüsünde gösterilmez.
-        var grants = new ApplicationMenuItem("Apya.Grants", l["Menu:Grants:Group"], icon: "fa fa-award", order: 3);
+        var grants = new ApplicationMenuItem("Apya.Grants", l["Menu:Grants:Group"], icon: "fa fa-award", order: 4);
         if (await _permission.IsGrantedAsync(PlatformPermissions.Grants.Default))
             grants.AddItem(new ApplicationMenuItem("Apya.Grants.Calls", l["Menu:Grants:Calls"], icon: "fa fa-bullhorn", url: "/Grants"));
         if (_currentTenant.Id == null && await _permission.IsGrantedAsync(PlatformPermissions.Grants.Edit))
@@ -626,7 +650,7 @@ public class PlatformNavigationResolver : IScopedDependency
         //
         // Kurlar bir dönem Yönetim'e taşınmıştı; kabuk handoff'u (2026-08-13) onu
         // Finans'a geri aldı — kur bir finans verisi, yönetim ayarı değil.
-        var finance = new ApplicationMenuItem("Apya.Finance", l["Menu:Finance"], icon: "fa fa-coins", order: 4);
+        var finance = new ApplicationMenuItem("Apya.Finance", l["Menu:Finance"], icon: "fa fa-coins", order: 5);
         // Sıralama (kullanıcı kararı 2026-06-22): 1) Kasalar  2) Para Hareketleri.
         if (await _permission.IsGrantedAsync(PlatformPermissions.CashAccounts.Default))
             finance.AddItem(new ApplicationMenuItem("Apya.Finance.CashAccounts", l["Menu:CashAccounts"], icon: "fa fa-cash-register", url: "/CashAccounts", order: 1));
