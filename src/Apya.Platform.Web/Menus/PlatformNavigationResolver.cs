@@ -572,11 +572,11 @@ public class PlatformNavigationResolver : IScopedDependency
         // basmıyor, verilen URL sessizce düşüyor. Başlığın hedefi kabukta ilk
         // çocuğun href'inden türetilir (apya-sidebar-shell.js → setupBoards).
         //
-        // Zaman Çizelgesi'nin müstakil sayfası YOK — Gantt bileşeni konsolun
-        // sekmesinde yaşıyor; dördüncü bir kopya monte etmek yerine sekmeye
-        // bağlanıyoruz. Kanban için de aynısı: müstakil /Board sayfası yerinde
-        // duruyor ama menü artık konsola götürüyor, böylece üç görünüş aynı
-        // süzgeç çubuğunu paylaşır.
+        // Üçünün de müstakil sayfası YOK, üçü de konsolun sekmesi. Kanban'ın
+        // ayrı bir /Board sayfası vardı; menü konsola geçince kimsenin
+        // gitmediği ikinci bir kopya olarak kaldı ve SİLİNDİ (2026-09-06) —
+        // yerinde yalnız /Tasks?view=kanban'a kalıcı yönlendirme duruyor.
+        // Böylece üç görünüş aynı süzgeç çubuğunu paylaşır.
         //
         // Menü ID'si "Apya.Work.Board" KALIYOR (etiketi Kart Panosu oldu): ad,
         // kullanıcının menü düzeninde ve kısayol iğnelerinde saklı.
