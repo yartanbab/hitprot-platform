@@ -319,3 +319,62 @@ describe('FinanceTab · faturalar', () => {
         expect(screen.queryByRole('button', { name: /fatura ekle/i })).not.toBeInTheDocument();
     });
 });
+
+describe('FinanceTab · gider satirinda evrak', () => {
+    const TASK = {
+        id: 't-1',
+        projectId: 'p1',
+        expenses: [{ id: 'e1', amount: 1500, currency: 'TRY', title: 'Sunucu kirasi' }],
+        incomes: [{ id: 'i1', amount: 500, currency: 'TRY', title: 'Tahsilat' }],
+        invoices: [],
+    };
+
+    function deferred(value) {
+        return { done(f) { setTimeout(() => f(value), 0); return this; }, fail() { return this; } };
+    }
+
+    function setup({ canSeeDocuments = true, matches = [] } = {}) {
+        window.abp = {
+            appPath: '/',
+            auth: { isGranted: (p) => (p === 'Platform.Documents.Default' ? canSeeDocuments : true) },
+            notify: { error: vi.fn() },
+            ajax: vi.fn((options) => deferred(options.url.includes('handler=Matches') ? matches : [])),
+        };
+        window.apya = { platform: { projectBudgets: { projectBudget: { getRecordFormLookup: vi.fn(() => Promise.resolve({ lines: [] })) } } } };
+        renderWithClient(<FinanceTab taskId="t-1" task={TASK} />);
+    }
+
+    it('evrak dugmesi YALNIZ gider satirinda cikar', async () => {
+        setup();
+        await waitFor(() => expect(screen.getAllByRole('button', { name: /evrak/i })).toHaveLength(1));
+
+        // Gelir satirinda dugme yok: bag modeli gider tarafinda yasiyor.
+        const row = screen.getByText('Tahsilat').closest('div');
+        expect(row.textContent).not.toMatch(/Evrak/);
+    });
+
+    it('bagli evrak sayisi dugmede gorunur', async () => {
+        setup({ matches: [{ id: 'm1', expenseId: 'e1', documentFileId: 'd1', documentFileName: 'Fatura.pdf' }] });
+        expect(await screen.findByRole('button', { name: /evrak 1/i })).toBeInTheDocument();
+    });
+
+    it('panel ACILMADAN aday sorgusu ATILMAZ, acilinca atilir', async () => {
+        setup();
+        const btn = await screen.findByRole('button', { name: /evrak/i });
+
+        const candidateCall = () => window.abp.ajax.mock.calls.some(([o]) => o.url.includes('handler=Candidates'));
+        expect(candidateCall()).toBe(false);
+
+        fireEvent.click(btn);
+        await waitFor(() => expect(candidateCall()).toBe(true));
+        expect(screen.getByText('Aday evraklar')).toBeInTheDocument();
+    });
+
+    it('Documents izni yoksa evrak dugmesi hic basilmaz ve eslestirme SORULMAZ', async () => {
+        setup({ canSeeDocuments: false });
+        await screen.findByText('Finans kalemleri');
+
+        expect(screen.queryByRole('button', { name: /evrak/i })).not.toBeInTheDocument();
+        expect(window.abp.ajax).not.toHaveBeenCalled();
+    });
+});

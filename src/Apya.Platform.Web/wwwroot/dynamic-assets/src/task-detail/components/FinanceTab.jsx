@@ -1,9 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { TAB_CARD, TAB_CARD_UNCLIPPED, TabCardHeader, TabEmptyState, RowBadge, fmtShortDate } from '../v3/tabPrimitives';
 import { Button, Combobox, MoneyInput } from '../../components/ui';
 import { isGranted } from '../hooks/useTaskDetail';
 import { useProjectBudgetLines } from '../hooks/useProjectBudgetLines';
+import { useExpenseMatches } from '../hooks/useExpenseDocuments';
+import { ExpenseDocumentsPanel } from './ExpenseDocumentsPanel';
 
 function fmtMoney(amount, currency) {
     const cur = currency || 'TRY';
@@ -134,6 +136,56 @@ function InvoicesCard({ invoices, action }) {
                     </div>
                 );
             })}
+        </div>
+    );
+}
+
+/**
+ * Finans kalemi satırı. Gider satırı, evrak şeridini açan bir düğme taşır
+ * (gelirde evrak eşleştirmesi YOK — bağ modeli gider tarafında yaşıyor).
+ */
+function FinanceLineRow({ line, projectId, matches, docsEnabled }) {
+    const [open, setOpen] = useState(false);
+    const isIncome = line.kind === 'income';
+
+    return (
+        <div className="border-t border-subtle first:border-t-0">
+            <div className="flex items-center gap-3.5 px-4 py-3 hover:bg-surface-raised">
+                <span className="flex shrink-0 items-center justify-center h-7 w-7 rounded-lg bg-neutral-subtle text-text-secondary">
+                    <i className={`fa-solid ${isIncome ? 'fa-arrow-down' : 'fa-arrow-up'} text-[11px]`} />
+                </span>
+                <span className="flex-1 min-w-0 truncate text-[12.5px] font-semibold text-text-primary">
+                    {line.title || (isIncome ? 'Gelir' : 'Gider')}
+                </span>
+                {docsEnabled && (
+                    <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        aria-expanded={open}
+                        onClick={() => setOpen((v) => !v)}
+                    >
+                        <i className="fa-solid fa-paperclip text-[11px]" />
+                        {matches.length > 0 ? `Evrak ${matches.length}` : 'Evrak'}
+                    </Button>
+                )}
+                <span className="shrink-0 font-mono text-[11px] text-text-tertiary lt-860:hidden">{fmtShortDate(line.date)}</span>
+                {isIncome
+                    ? <RowBadge bg="bg-success-subtle" fg="text-success">Gelir</RowBadge>
+                    : <RowBadge bg="bg-warning-subtle" fg="text-warning">Gider</RowBadge>}
+                <span
+                    className={`shrink-0 font-mono text-[12.5px] font-bold ${isIncome ? 'text-success' : 'text-text-primary'}`}
+                    style={{ fontVariantNumeric: 'tabular-nums' }}
+                >
+                    {isIncome ? '+' : '−'}{fmtMoney(line.amount, line.currency)}
+                </span>
+            </div>
+
+            {/* Panel yalnız AÇILINCA monte edilir: aday sorgusu gider başına ayrı
+                bir istek, kapalı satırlar için atılmamalı. */}
+            {docsEnabled && open && (
+                <ExpenseDocumentsPanel expenseId={line.id} projectId={projectId} matches={matches} />
+            )}
         </div>
     );
 }
@@ -331,6 +383,8 @@ export function FinanceTab({ task, taskId, form }) {
     const expenses = task?.expenses || [];
     const incomes = task?.incomes || [];
     const invoices = task?.invoices || [];
+    const projectId = (form ? form.values.projectId : task?.projectId) ?? null;
+    const { byExpense: matchesByExpense, enabled: docsEnabled } = useExpenseMatches(projectId);
 
     // Görev bütçesi ₺ defterde tutulur; gerçekleşen de oradan toplanır.
     const spentTry = expenses
@@ -395,33 +449,20 @@ export function FinanceTab({ task, taskId, form }) {
             <div className={TAB_CARD}>
                 <TabCardHeader title="Finans kalemleri" action={actions} />
                 {lines.map((l) => (
-                    <div
+                    <FinanceLineRow
                         key={`${l.kind}-${l.id}`}
-                        className="flex items-center gap-3.5 px-4 py-3 border-t border-subtle first:border-t-0 hover:bg-surface-raised"
-                    >
-                        <span className="flex shrink-0 items-center justify-center h-7 w-7 rounded-lg bg-neutral-subtle text-text-secondary">
-                            <i className={`fa-solid ${l.kind === 'income' ? 'fa-arrow-down' : 'fa-arrow-up'} text-[11px]`} />
-                        </span>
-                        <span className="flex-1 min-w-0 truncate text-[12.5px] font-semibold text-text-primary">
-                            {l.title || (l.kind === 'income' ? 'Gelir' : 'Gider')}
-                        </span>
-                        <span className="shrink-0 font-mono text-[11px] text-text-tertiary lt-860:hidden">{fmtShortDate(l.date)}</span>
-                        {l.kind === 'income'
-                            ? <RowBadge bg="bg-success-subtle" fg="text-success">Gelir</RowBadge>
-                            : <RowBadge bg="bg-warning-subtle" fg="text-warning">Gider</RowBadge>}
-                        <span
-                            className={`shrink-0 font-mono text-[12.5px] font-bold ${l.kind === 'income' ? 'text-success' : 'text-text-primary'}`}
-                            style={{ fontVariantNumeric: 'tabular-nums' }}
-                        >
-                            {l.kind === 'income' ? '+' : '−'}{fmtMoney(l.amount, l.currency)}
-                        </span>
-                    </div>
+                        line={l}
+                        projectId={projectId}
+                        matches={l.kind === 'expense' ? (matchesByExpense.get(l.id) ?? []) : []}
+                        docsEnabled={docsEnabled && l.kind === 'expense'}
+                    />
                 ))}
             </div>
             )}
 
             <p className="m-0 text-[11px] text-text-tertiary">
                 Buradan eklenen kayıt göreve ve projesine etiketlenir; düzenleme/silme Finans modülünden yapılır.
+                Evraklar Belgeler modülünde yaşar, buradan gidere bağlanır.
             </p>
         </div>
     );
