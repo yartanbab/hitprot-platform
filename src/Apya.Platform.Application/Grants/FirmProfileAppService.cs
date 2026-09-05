@@ -57,7 +57,8 @@ public class FirmProfileAppService : ApplicationService, IFirmProfileAppService
         await _tagRepo.DeleteManyAsync(existing);
 
         var saved = new List<GrantCriteriaTagDto>();
-        foreach (var t in input.Tags.Where(x => !string.IsNullOrWhiteSpace(x.Value)))
+        var allowedKinds = AllowedTagKinds(input.Type);
+        foreach (var t in input.Tags.Where(x => !string.IsNullOrWhiteSpace(x.Value) && allowedKinds.Contains(x.Kind)))
         {
             await _tagRepo.InsertAsync(new FirmProfileTag(GuidGenerator.Create(), profile.Id, t.Kind, t.Value));
             saved.Add(new GrantCriteriaTagDto { Kind = t.Kind, Value = t.Value.Trim() });
@@ -68,19 +69,71 @@ public class FirmProfileAppService : ApplicationService, IFirmProfileAppService
         return WithCompleteness(Map(profile, saved));
     }
 
+    /// <summary>
+    /// Kurum türüne göre anlamlı etiket türleri. Karşı türün etiketleri kayıtta ELENİR:
+    /// STK'ya geçen bir profilde eski NACE kodu kalsaydı program hâlâ o kodla eşleşirdi.
+    /// Bölge ve anahtar kelime her iki türde de ortaktır.
+    /// </summary>
+    private static HashSet<GrantCriteriaKind> AllowedTagKinds(OrganizationType type) => type.IsNgo()
+        ? new HashSet<GrantCriteriaKind>
+        {
+            GrantCriteriaKind.TematikAlan,
+            GrantCriteriaKind.Bolge,
+            GrantCriteriaKind.AnahtarKelime
+        }
+        : new HashSet<GrantCriteriaKind>
+        {
+            GrantCriteriaKind.NaceKodu,
+            GrantCriteriaKind.Sektor,
+            GrantCriteriaKind.Bolge,
+            GrantCriteriaKind.AnahtarKelime
+        };
+
+    /// <summary>
+    /// Form yalnız seçili türün alanlarını gönderir; karşı grubun alanları burada
+    /// AÇIKÇA null'lanır. Aksi halde şirketten STK'ya geçen profil eski TRL/ciro
+    /// beyanını taşımayı sürdürür ve eşleştirme olmayan bir veriyle ölçüm yapardı.
+    /// </summary>
     private static void Apply(FirmProfile profile, UpdateFirmProfileDto input)
     {
-        profile.Size = input.Size;
+        profile.Type = input.Type;
         profile.FoundedOn = input.FoundedOn;
-        profile.StaffCount = input.StaffCount;
-        profile.RdStaffCount = input.RdStaffCount;
-        profile.AnnualRevenue = input.AnnualRevenue;
-        profile.Trl = input.Trl;
-        profile.HasConsortiumPartner = input.HasConsortiumPartner;
+
+        if (input.Type.IsNgo())
+        {
+            profile.Size = null;
+            profile.StaffCount = null;
+            profile.RdStaffCount = null;
+            profile.AnnualRevenue = null;
+            profile.Trl = null;
+            profile.HasConsortiumPartner = null;
+
+            profile.RegistryNumber = input.RegistryNumber?.Trim();
+            profile.TaxNumber = input.TaxNumber?.Trim();
+            profile.TaxOffice = input.TaxOffice?.Trim();
+            profile.ProfessionalStaffBand = input.ProfessionalStaffBand;
+            profile.ProjectExperience = input.ProjectExperience;
+        }
+        else
+        {
+            profile.Size = input.Size;
+            profile.StaffCount = input.StaffCount;
+            profile.RdStaffCount = input.RdStaffCount;
+            profile.AnnualRevenue = input.AnnualRevenue;
+            profile.Trl = input.Trl;
+            profile.HasConsortiumPartner = input.HasConsortiumPartner;
+
+            profile.RegistryNumber = null;
+            profile.TaxNumber = null;
+            profile.TaxOffice = null;
+            profile.ProfessionalStaffBand = null;
+            profile.ProjectExperience = null;
+        }
     }
 
     private static FirmProfileDto Map(FirmProfile p, List<GrantCriteriaTagDto> tags) => new()
     {
+        Type = p.Type,
         Size = p.Size,
         FoundedOn = p.FoundedOn,
         StaffCount = p.StaffCount,
@@ -88,28 +141,44 @@ public class FirmProfileAppService : ApplicationService, IFirmProfileAppService
         AnnualRevenue = p.AnnualRevenue,
         Trl = p.Trl,
         HasConsortiumPartner = p.HasConsortiumPartner,
+        RegistryNumber = p.RegistryNumber,
+        TaxNumber = p.TaxNumber,
+        TaxOffice = p.TaxOffice,
+        ProfessionalStaffBand = p.ProfessionalStaffBand,
+        ProjectExperience = p.ProjectExperience,
         Tags = tags
     };
 
     /// <summary>
     /// Doluluk, programların ölçebildiği alanlar üzerinden sayılır: her biri bir uygunluk
     /// şartının ya da bir skor boyutunun karşılığıdır. Boş bırakılan alan o şartı
-    /// ölçülemez yapar — 1d'deki "N alan eksik" tam olarak bunu sayar.
+    /// ölçülemez yapar — 1d'deki "N alan eksik" tam olarak bunu sayar. STK'da sayılan
+    /// küme farklıdır; kimlik verileri (kütük no, VKN, vergi dairesi) eşleştirmeye
+    /// girmediği için yüzdeye de girmez.
     /// </summary>
     private static FirmProfileDto WithCompleteness(FirmProfileDto dto)
     {
-        var filled = new[]
-        {
-            dto.Size.HasValue,
-            dto.FoundedOn.HasValue,
-            dto.StaffCount.HasValue,
-            dto.RdStaffCount.HasValue,
-            dto.AnnualRevenue.HasValue,
-            dto.Trl.HasValue,
-            dto.HasConsortiumPartner.HasValue,
-            dto.Tags.Any(t => t.Kind == GrantCriteriaKind.NaceKodu),
-            dto.Tags.Any(t => t.Kind == GrantCriteriaKind.Sektor)
-        };
+        var filled = dto.Type.IsNgo()
+            ? new[]
+            {
+                dto.FoundedOn.HasValue,
+                dto.ProfessionalStaffBand.HasValue,
+                dto.ProjectExperience.HasValue,
+                dto.Tags.Any(t => t.Kind == GrantCriteriaKind.TematikAlan),
+                dto.Tags.Any(t => t.Kind == GrantCriteriaKind.Bolge)
+            }
+            : new[]
+            {
+                dto.Size.HasValue,
+                dto.FoundedOn.HasValue,
+                dto.StaffCount.HasValue,
+                dto.RdStaffCount.HasValue,
+                dto.AnnualRevenue.HasValue,
+                dto.Trl.HasValue,
+                dto.HasConsortiumPartner.HasValue,
+                dto.Tags.Any(t => t.Kind == GrantCriteriaKind.NaceKodu),
+                dto.Tags.Any(t => t.Kind == GrantCriteriaKind.Sektor)
+            };
 
         dto.MissingFieldCount = filled.Count(f => !f);
         dto.CompletionPercent = (int)Math.Round(filled.Count(f => f) * 100.0 / filled.Length);

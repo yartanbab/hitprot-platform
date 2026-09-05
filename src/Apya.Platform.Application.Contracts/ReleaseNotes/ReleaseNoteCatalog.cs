@@ -226,6 +226,21 @@ public static class ReleaseNoteCatalog
                 "görünüyor; KA210 ile KA220 ise 2027 başvuru takvimi açıklandığında listenize düşecek."),
 
             new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "Dernek, vakıf ve kulüpler kendi profil formunu dolduruyor",
+                "Hibe ekranındaki kurum profili yalnız şirketlere göre kurulmuştu: dernek ya da " +
+                "vakıfsanız firma ölçeği, ciro ve teknoloji hazırlık seviyesi gibi sizde karşılığı " +
+                "olmayan alanlarla karşılaşıyordunuz. Profilin başında artık kurum türünüzü " +
+                "seçiyorsunuz — şirket, dernek, kulüp, vakıf ya da federasyon — ve form ona göre " +
+                "değişiyor. Sivil toplum kuruluşlarına kayıt (DERBİS) veya vakıf sicil numarası, " +
+                "vergi kimlik numarası ve vergi dairesi soruluyor; profesyonel ekibinizin ve bugüne " +
+                "dek yürüttüğünüz projelerin sayısını tek tek yazmak yerine aralık seçerek " +
+                "belirtiyorsunuz. Çalışma alanınızı ise eğitimden çevreye, insan haklarından afet " +
+                "yönetimine 14 tematik başlıktan işaretliyorsunuz ve çağrı eşleştirmesi bu " +
+                "başlıklar üzerinden yapılıyor. Kurum türünü değiştirdiğinizde diğer türe ait " +
+                "alanlar profilinizden kalkıyor; profil doluluk oranınız da kurum türünüze uygun " +
+                "alanlar üzerinden hesaplanıyor."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
                 "Bir hibeye uygun olup olmadığınızı şart şart görüyorsunuz",
                 "Hibe detayında programın uygunluk şartları tek tek listeleniyor ve her şartın " +
                 "yanında sizin durumunuz yazıyor: sağlıyorsunuz, sağlamıyorsunuz ya da bilgi eksik. " +

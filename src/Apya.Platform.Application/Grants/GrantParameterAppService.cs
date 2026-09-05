@@ -365,7 +365,7 @@ public class GrantParameterAppService : ApplicationService, IGrantParameterAppSe
         {
             Size = profile.Size,
             FoundedOn = profile.FoundedOn,
-            StaffCount = profile.StaffCount,
+            StaffCount = profile.EffectiveStaffCount,
             RdStaffCount = profile.RdStaffCount,
             AnnualRevenue = profile.AnnualRevenue,
             Trl = profile.Trl,

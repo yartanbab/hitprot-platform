@@ -9,6 +9,7 @@ namespace Apya.Platform.Grants.Dtos;
 /// </summary>
 public class FirmProfileDto
 {
+    public OrganizationType Type { get; set; }
     public CompanySize? Size { get; set; }
     public DateTime? FoundedOn { get; set; }
     public int? StaffCount { get; set; }
@@ -16,6 +17,14 @@ public class FirmProfileDto
     public decimal? AnnualRevenue { get; set; }
     public int? Trl { get; set; }
     public bool? HasConsortiumPartner { get; set; }
+
+    // --- STK alanları (Type şirket dışıysa doludur) ---
+    public string? RegistryNumber { get; set; }
+    public string? TaxNumber { get; set; }
+    public string? TaxOffice { get; set; }
+    public NgoStaffBand? ProfessionalStaffBand { get; set; }
+    public NgoProjectExperienceBand? ProjectExperience { get; set; }
+
     public List<GrantCriteriaTagDto> Tags { get; set; } = new();
 
     /// <summary>1d profil kartındaki ilerleme çubuğu.</summary>

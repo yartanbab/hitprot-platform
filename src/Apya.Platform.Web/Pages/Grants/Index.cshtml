@@ -276,6 +276,24 @@ else
 
                 <div class="apya-param-grid apya-param-grid--4">
                     <div class="apya-field">
+                        <label class="apya-field-label" for="ProfileOrgType"><span>@L["Grants:DataField:OrganizationType"]</span></label>
+                        <select class="form-select form-select-sm" id="ProfileOrgType">
+                            <option value="0">@L["Grants:OrgType:Sirket"]</option>
+                            <option value="1">@L["Grants:OrgType:Dernek"]</option>
+                            <option value="2">@L["Grants:OrgType:Kulup"]</option>
+                            <option value="3">@L["Grants:OrgType:Vakif"]</option>
+                            <option value="4">@L["Grants:OrgType:Federasyon"]</option>
+                        </select>
+                    </div>
+                    <div class="apya-field">
+                        <label class="apya-field-label" for="ProfileFoundedOn"><span>@L["Grants:DataField:FoundedOn"]</span></label>
+                        <input type="date" abp-data-datepicker="false" class="form-control form-control-sm apya-numeric" id="ProfileFoundedOn" />
+                    </div>
+                </div>
+
+                @* --- Şirket alanları --- *@
+                <div class="apya-param-grid apya-param-grid--4" data-org-group="company">
+                    <div class="apya-field">
                         <label class="apya-field-label" for="ProfileSize"><span>@L["Grants:Parameters:CompanySizes"]</span></label>
                         <select class="form-select form-select-sm" id="ProfileSize">
                             <option value="">@L["Grants:Detail:NotEntered"]</option>
@@ -284,10 +302,6 @@ else
                             <option value="4">@L["Grants:Size:Orta"]</option>
                             <option value="8">@L["Grants:Size:Buyuk"]</option>
                         </select>
-                    </div>
-                    <div class="apya-field">
-                        <label class="apya-field-label" for="ProfileFoundedOn"><span>@L["Grants:DataField:FoundedOn"]</span></label>
-                        <input type="date" abp-data-datepicker="false" class="form-control form-control-sm apya-numeric" id="ProfileFoundedOn" />
                     </div>
                     <div class="apya-field">
                         <label class="apya-field-label" for="ProfileStaff"><span>@L["Grants:DataField:StaffCount"]</span></label>
@@ -315,12 +329,61 @@ else
                     </div>
                 </div>
 
-                <div class="apya-param-grid apya-param-grid--4">
+                @* --- STK alanları --- *@
+                <div class="apya-param-grid apya-param-grid--4 d-none" data-org-group="ngo">
                     <div class="apya-field">
+                        <label class="apya-field-label" for="ProfileRegistryNo"><span>@L["Grants:DataField:RegistryNumber"]</span></label>
+                        <input type="text" maxlength="64" class="form-control form-control-sm" id="ProfileRegistryNo" placeholder="@L["Grants:DataFieldHint:RegistryNumber"]" />
+                    </div>
+                    <div class="apya-field">
+                        <label class="apya-field-label" for="ProfileTaxNo"><span>@L["Grants:DataField:TaxNumber"]</span></label>
+                        <input type="text" maxlength="16" class="form-control form-control-sm apya-numeric" id="ProfileTaxNo" />
+                    </div>
+                    <div class="apya-field">
+                        <label class="apya-field-label" for="ProfileTaxOffice"><span>@L["Grants:DataField:TaxOffice"]</span></label>
+                        <input type="text" maxlength="128" class="form-control form-control-sm" id="ProfileTaxOffice" />
+                    </div>
+                    <div class="apya-field">
+                        <label class="apya-field-label" for="ProfileStaffBand"><span>@L["Grants:DataField:StaffBand"]</span></label>
+                        <select class="form-select form-select-sm" id="ProfileStaffBand">
+                            <option value="">@L["Grants:Detail:NotEntered"]</option>
+                            <option value="1">@L["Grants:StaffBand:BirUc"]</option>
+                            <option value="2">@L["Grants:StaffBand:DortOn"]</option>
+                            <option value="3">@L["Grants:StaffBand:OnBirYirmiBes"]</option>
+                            <option value="4">@L["Grants:StaffBand:YirmiBesUstu"]</option>
+                        </select>
+                    </div>
+                    <div class="apya-field">
+                        <label class="apya-field-label" for="ProfileExperience"><span>@L["Grants:DataField:ProjectExperience"]</span></label>
+                        <select class="form-select form-select-sm" id="ProfileExperience">
+                            <option value="">@L["Grants:Detail:NotEntered"]</option>
+                            <option value="0">@L["Grants:Experience:Yok"]</option>
+                            <option value="1">@L["Grants:Experience:BirUc"]</option>
+                            <option value="2">@L["Grants:Experience:DortOn"]</option>
+                            <option value="3">@L["Grants:Experience:OnBirYirmiBes"]</option>
+                            <option value="4">@L["Grants:Experience:YirmiBesUstu"]</option>
+                        </select>
+                    </div>
+                </div>
+
+                @* Tematik alan sabit listeden seçilir: host da program tarafında aynı
+                   listeden hedefler, iki taraf aynı anahtarı yazınca eşleşme birebir tutar. *@
+                <div class="apya-field d-none" data-org-group="ngo">
+                    <label class="apya-field-label"><span>@L["Grants:Parameters:Thematic"]</span></label>
+                    <div class="apya-choice-row" id="ProfileThematic">
+                        @foreach (var area in Enum.GetNames<Apya.Platform.Grants.GrantThematicArea>())
+                        {
+                            <button type="button" class="apya-choice" data-area="@area">@L["Grants:Thematic:" + area]</button>
+                        }
+                    </div>
+                </div>
+
+                <div class="apya-param-grid apya-param-grid--4">
+                    <div class="apya-field" data-org-group="company">
                         <label class="apya-field-label"><span>@L["Grants:Parameters:Nace"]</span></label>
                         <div class="apya-tag-input" data-kind="3"><span class="apya-tag-chips"></span><input type="text" class="form-control apya-tag-entry" placeholder="@L["Grants:Parameters:TagPlaceholder"]" /></div>
                     </div>
-                    <div class="apya-field">
+                    <div class="apya-field" data-org-group="company">
                         <label class="apya-field-label"><span>@L["Grants:Parameters:Sector"]</span></label>
                         <div class="apya-tag-input" data-kind="0"><span class="apya-tag-chips"></span><input type="text" class="form-control apya-tag-entry" placeholder="@L["Grants:Parameters:TagPlaceholder"]" /></div>
                     </div>

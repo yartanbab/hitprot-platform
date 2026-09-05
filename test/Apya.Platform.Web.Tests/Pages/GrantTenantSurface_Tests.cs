@@ -194,4 +194,92 @@ public class GrantTenantSurface_Tests : PlatformWebTestBase
         dolu.CompletionPercent.ShouldBe(100);
         dolu.MissingFieldCount.ShouldBe(0);
     }
+
+    /// <summary>
+    /// STK'ya geçen profilde şirket alanları KALMAMALI: kalsaydı eşleştirme, kurumun
+    /// artık beyan etmediği bir TRL/ciro üzerinden ölçüm yapmayı sürdürürdü.
+    /// </summary>
+    [Fact]
+    public async Task Kurum_Turu_Degisince_Karsi_Grubun_Alanlari_Temizlenir()
+    {
+        var service = GetRequiredService<IFirmProfileAppService>();
+
+        await service.UpdateMyProfileAsync(new UpdateFirmProfileDto
+        {
+            Type = OrganizationType.Sirket,
+            Size = CompanySize.Kucuk,
+            StaffCount = 40,
+            RdStaffCount = 3,
+            AnnualRevenue = 10_000_000m,
+            Trl = 5,
+            HasConsortiumPartner = true,
+            Tags =
+            {
+                new GrantCriteriaTagDto { Kind = GrantCriteriaKind.NaceKodu, Value = "62.01" },
+                new GrantCriteriaTagDto { Kind = GrantCriteriaKind.Bolge, Value = "Ankara" }
+            }
+        });
+
+        var stk = await service.UpdateMyProfileAsync(new UpdateFirmProfileDto
+        {
+            Type = OrganizationType.Dernek,
+            FoundedOn = new DateTime(2015, 5, 1),
+            RegistryNumber = "06-123-045",
+            TaxNumber = "1234567890",
+            TaxOffice = "Çankaya",
+            ProfessionalStaffBand = NgoStaffBand.DortOn,
+            ProjectExperience = NgoProjectExperienceBand.OnBirYirmiBes,
+            Tags =
+            {
+                new GrantCriteriaTagDto { Kind = GrantCriteriaKind.TematikAlan, Value = nameof(GrantThematicArea.Egitim) },
+                new GrantCriteriaTagDto { Kind = GrantCriteriaKind.Bolge, Value = "Ankara" },
+                // Form STK'da göstermez ama gönderilse bile kayda girmemeli:
+                new GrantCriteriaTagDto { Kind = GrantCriteriaKind.NaceKodu, Value = "62.01" }
+            }
+        });
+
+        stk.Type.ShouldBe(OrganizationType.Dernek);
+        stk.Size.ShouldBeNull();
+        stk.StaffCount.ShouldBeNull();
+        stk.RdStaffCount.ShouldBeNull();
+        stk.AnnualRevenue.ShouldBeNull();
+        stk.Trl.ShouldBeNull();
+        stk.HasConsortiumPartner.ShouldBeNull();
+        stk.RegistryNumber.ShouldBe("06-123-045");
+        stk.ProfessionalStaffBand.ShouldBe(NgoStaffBand.DortOn);
+        stk.Tags.ShouldNotContain(t => t.Kind == GrantCriteriaKind.NaceKodu);
+        stk.Tags.ShouldContain(t => t.Kind == GrantCriteriaKind.TematikAlan);
+
+        // Yeniden okumada da aynı: temizlik kalıcı, dönüş değerine özel değil.
+        var tekrar = await service.GetMyProfileAsync();
+        tekrar.Trl.ShouldBeNull();
+        tekrar.Tags.ShouldNotContain(t => t.Kind == GrantCriteriaKind.NaceKodu);
+    }
+
+    /// <summary>STK'da doluluk kendi beş alanından sayılır; şirket alanları hiç aranmaz.</summary>
+    [Fact]
+    public async Task Stk_Dolulugu_Kendi_Alanlarindan_Sayilir()
+    {
+        var service = GetRequiredService<IFirmProfileAppService>();
+
+        var bos = await service.UpdateMyProfileAsync(new UpdateFirmProfileDto { Type = OrganizationType.Vakif });
+        bos.CompletionPercent.ShouldBe(0);
+        bos.MissingFieldCount.ShouldBe(5);
+
+        var dolu = await service.UpdateMyProfileAsync(new UpdateFirmProfileDto
+        {
+            Type = OrganizationType.Vakif,
+            FoundedOn = new DateTime(2015, 5, 1),
+            ProfessionalStaffBand = NgoStaffBand.OnBirYirmiBes,
+            ProjectExperience = NgoProjectExperienceBand.Yok,
+            Tags =
+            {
+                new GrantCriteriaTagDto { Kind = GrantCriteriaKind.TematikAlan, Value = nameof(GrantThematicArea.Cevre) },
+                new GrantCriteriaTagDto { Kind = GrantCriteriaKind.Bolge, Value = "İzmir" }
+            }
+        });
+
+        dolu.CompletionPercent.ShouldBe(100);
+        dolu.MissingFieldCount.ShouldBe(0);
+    }
 }
