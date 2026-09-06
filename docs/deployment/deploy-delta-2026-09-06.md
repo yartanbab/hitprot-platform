@@ -4,7 +4,12 @@
 > buraya yazılan her SHA yazıldığı anda bayatlar. Paketin üretildiği tam commit, ZIP adında
 > (`Apya-Yayin-<sha>.zip`) yazılıdır — tek doğru kaynak orasıdır.
 
-**38 commit · PR #309 → #346 · 8 migration (çift sağlayıcı).**
+**40 commit · PR #309 → #348 · 8 migration (çift sağlayıcı).**
+
+> Taban **2026-09-06 15:5x'te yeniden ölçüldü** ve değişmedi: `/health/ready` **200**
+> (34,1 sn — soğuk başlangıç), `/` **302**, canlıdan inen `Pages/Grants/Tenant.js`'in
+> blob'u `a43d311361` = **`ece0755a` ağacındaki blob** (bugünkü `main`'inki
+> `998bd81b26`, tutmuyor). Yani bu paket henüz inmedi; aşağıdaki sayılar geçerli.
 
 ---
 
@@ -29,7 +34,7 @@ tutmuyor. `Pages/Tasks/index.js` de aynı sonucu veriyor.
 
 Yani canlı kod **`ece0755a`**, şema da 2026-09-03'te koşan DbMigrator ile aynı seviyede
 (21 migration + üç veri tohumu uygulanmıştı). Bu paketin taşıdığı yük buradan itibaren
-ölçülüyor: **38 commit, 8 migration** — 09-02 belgesindeki 33 commit / 21 migration
+ölçülüyor: **40 commit, 8 migration** — 09-02 belgesindeki 33 commit / 21 migration
 **tekrar uygulanmayacak**.
 
 Ayrıca 09-02 belgesinin "Adım 0"ı (503 → `hostingModel` düzeltmesi + havuzu başlatma)
@@ -44,8 +49,8 @@ Ayrıca 09-02 belgesinin "Adım 0"ı (503 → `hostingModel` düzeltmesi + havuz
 | Görevler | Görev finansı (#334 gider/gelir + bütçe bağı, #335 fatura, #336 evrak), göreve form bağlama (#329, misafir doldurması dâhil), özellik kataloğu gerçek modüllerle sınırlandı + yedi yeni görünüm (#326), özellik modalı tek listeye indi (#333), mobil üst şerit + FAB (#330), dosya/görsel listeleri sürükle-bırak kutusunun üstüne alındı |
 | Hibe | "Başvuru Aç" yerine "İlgileniyorum" akışı (#327), dernek/vakıf/kulüp profil formu (#339), boş sonuçta kalkmayan iskelet + üst üste binen son tarih etiketleri (#309), okunabilirlik ölçeği (#310), rozet dili (#320) |
 | Finans | Bütçe rakamı tek kaynağa indi (#311), projeden bütçe/finans/belge geçişi (#319), menüde "Finans & Bütçe" tek çatı (#315), tutar/kur/oran maskesi (#318, #321, #324) |
-| Genel | Genel Bakış baskı çıktısı (#337), Takvim menüde kök başlık + Panolar görev konsolu görünüşleri (#341 · **#344** taşımayı gerçekten uygular), takvim Google/Outlook entegrasyonu düzeltmesi (#317), form textarea (#314), proje tarih alanları (#312), proje modalı finans izni (#316), mobil Genel Bakış (#323), doğrulama mesajlarında üç alanın Türkçe adı |
-| Kayıt & abonelik (#342) | Demo talebi yerine dört adımlı **kayıt talebi sihirbazı**; host onayınca davet bağlantısı e-postayla gidiyor, davetli clickwrap **protokol onayı** verince hesap otomatik açılıyor; host→kiracı **fatura ve tahsilat takibi**; satış paketlerine yıllık liste bedeli — 🔴 `AppDemoRequests` → `AppRegistrationRequests` yeniden adlandırması ve altı serbest metin alanının düşmesi bu işten geliyor. **Sürüm notuna girmez** — akışın tamamı aday müşteri ve host tarafında, mevcut kiracı kullanıcı hiçbir ekranını görmüyor |
+| Genel | Genel Bakış baskı çıktısı (#337), Takvim menüde kök başlık + Panolar görev konsolu görünüşleri (#341 · **#344** taşımayı gerçekten uygular), takvim Google/Outlook entegrasyonu düzeltmesi (#317), form textarea (#314), proje tarih alanları (#312), proje modalı finans izni (#316), mobil Genel Bakış (#323), doğrulama mesajlarında üç alanın Türkçe adı (#348 mükerrer kalan anahtarları temizledi — #342 ile #345 aynı üç alanı birbirinden habersiz eklemişti) |
+| Kayıt & abonelik (#342) | Demo talebi yerine dört adımlı **kayıt talebi sihirbazı**; host onayınca davet bağlantısı e-postayla gidiyor, davetli clickwrap **protokol onayı** verince hesap otomatik açılıyor; host→kiracı **fatura ve tahsilat takibi**; satış paketlerine yıllık liste bedeli — 🔴 `AppDemoRequests` → `AppRegistrationRequests` yeniden adlandırması ve altı serbest metin alanının düşmesi bu işten geliyor. Sürüm notuna **yalnız iki maddesi girdi** (#347): kiracının `/Subscription` ekranındaki "Hizmet Protokolüm" ve "Faturalarım" bölümleri. Aday sihirbazı, host değerlendirme paneli, faturalama paneli, paket bedeli ayarları ve davet/posta akışı **girmedi** — mevcut kiracı kullanıcı bunları kendi ekranında görmüyor |
 | Host | Sürüm notu yayın onayı (#322), Sistem Sağlığı markdown özeti (#313) — **ikisi de sürüm notuna girmez** |
 
 ---
@@ -121,7 +126,7 @@ Tohumlanmazsa host `/Admin/ReleaseNotes` ekranına giremez.
 > 🔴 **Bu tohum, sürüm notlarının kullanıcıya görünürlüğünü belirler.** Yayın onayı kapısı
 > (#322) "karar yoksa gösterme" mantığıyla çalışır. Tohum, **tablo tamamen boşsa** —
 > canlıda öyle, tablo bu paketle geliyor — katalogdaki **bütün maddeleri** "onaylı · tüm
-> paketler · herkes" olarak geri doldurur. Sonuç: `2026.09.06` sürümünün **68 maddesi
+> paketler · herkes" olarak geri doldurur. Sonuç: `2026.09.06` sürümünün **70 maddesi
 > de onaylı** başlar ve kullanıcılar ilk girişte "Yenilikler" penceresini görür.
 > İstenmeyen madde varsa host `/Admin/ReleaseNotes` ekranından kaldırır.
 > Bundan **sonraki** her sürüm host onayı bekler; tohum bir daha çalışmaz (tablo dolu).
@@ -168,6 +173,13 @@ Tohumlanmazsa host `/Admin/ReleaseNotes` ekranına giremez.
 - Doğrulama hatası mesajlarında ham property adı görünmüyor (hibe "İlgileniyorum"
   gönderimi ve STK profilinde kayıt/kütük numarası alanı)
 - Genel Bakış → yazdır: künye var, istatistikler kırpılmamış
+- `/Subscription` ("Paketim") → "Faturalarım" bölümü açılıyor; fatura yoksa boş durum
+  düzgün görünüyor, fatura varsa belge indiriliyor ve ödeme bildirimi kaydediliyor
+- 🔴 **"Hizmet Protokolüm" kartı MEVCUT kiracılarda ÇIKMAZ** — kart, protokolü sistem
+  üzerinden onaylamış kiracıda oluşan `ServiceAgreement` kaydına bağlı; bugünkü
+  müşterilerin böyle bir kaydı yok. Kartın görünmemesi **hata değildir**. Buna rağmen
+  sürüm notunda maddesi var; host `/Admin/ReleaseNotes`'ta bu maddeyi onaylarken
+  "duyurulan ekranı eski müşteri bulamaz" durumunu bilerek kabul etmeli
 - İlk girişte "Yenilikler" penceresi 2026.09.06 sürümüyle açılıyor
 
 **Host hesabıyla:**
