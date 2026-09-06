@@ -28,7 +28,7 @@ public static class ReleaseNoteCatalog
         new ReleaseNote(
             version: "2026.09.07",
             date: "7 Eylül 2026",
-            title: "Muhasebe ekranları yenileniyor",
+            title: "Muhasebe ekranları yenileniyor, kaydetme hataları artık bildiriliyor",
 
             new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
                 "Cari, mizan ve ekstre ekranları yenilenmek üzere geçici olarak kaldırıldı",
@@ -50,7 +50,24 @@ public static class ReleaseNoteCatalog
                 "Faturalarda müşteri seçimi eskisi gibi çalışıyor",
                 "Fatura keserken müşteri seçmeye devam ediyorsunuz — fatura ekranında hiçbir şey " +
                 "değişmedi. Yukarıdaki düzenleme yalnız menüdeki muhasebe raporlarını ve proje " +
-                "formunu kapsıyor.")
+                "formunu kapsıyor."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Fix,
+                "Kaydedilemeyen değişiklikler artık size bildiriliyor",
+                "Bir ekranı uzun süre açık bıraktığınızda oturumunuz zaman aşımına uğrayabiliyor. " +
+                "Bundan sonra yaptığınız kaydetme işlemi sunucuya ulaşamıyor, ama ekranda hiçbir " +
+                "uyarı çıkmadığı için değişikliğinizin kaydedildiğini sanıyordunuz — pano düzeninde " +
+                "ve takvim senkron kurallarında bu böyleydi. Artık kaydetme başarısız olduğunda " +
+                "ekranda bir uyarı görüyorsunuz; oturumunuz sona ermişse bunu açıkça söyleyip " +
+                "sayfayı yenilemenizi istiyor. Pano düzeninde düzenleme modu da açık kalıyor, " +
+                "böylece taslak yerleşiminiz kaybolmadan tekrar deneyebiliyorsunuz."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
+                "Hata mesajları teknik kod yerine anlaşılır metin gösteriyor",
+                "Bazı durumlarda ekranda hata açıklaması yerine \"HTTP 401\" gibi teknik bir kod " +
+                "çıkıyordu. Bu mesajlar sadeleştirildi: oturumun sona erdiği, yetkinin bulunmadığı " +
+                "ya da kaydın bulunamadığı durumlar artık ne yapmanız gerektiğini söyleyen " +
+                "Türkçe bir cümleyle anlatılıyor.")
         ),
 
         new ReleaseNote(

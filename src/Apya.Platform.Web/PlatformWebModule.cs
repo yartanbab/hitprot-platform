@@ -661,7 +661,8 @@ public class PlatformWebModule : AbpModule
 
         if (!env.IsDevelopment())
         {
-            app.UseErrorPage();
+            // Dostane hata sayfası YALNIZ gerçek HTML gezinmelerinde — bkz. IsHtmlNavigation.
+            app.UseWhen(IsHtmlNavigation, branch => branch.UseErrorPage());
 
             // HSTS: yalnızca HTTPS isteklerinde başlık eklenir, bu yüzden SSL kurulmadan
             // önce de güvenle açık kalabilir. HTTP→HTTPS yönlendirmesi uygulamada DEĞİL,
@@ -801,5 +802,68 @@ public class PlatformWebModule : AbpModule
                 return Results.NoContent();
             }).AllowAnonymous();
         });
+    }
+
+    /// <summary>
+    /// ABP'nin <c>UseErrorPage()</c>'i durum kodu sayfalarını YÖNLENDİRME ile kurar
+    /// (gövdesiz her 4xx/5xx → <c>302 ~/Error?httpStatusCode={0}</c>). Bu, yalnızca
+    /// tam sayfa gezinmelerinde doğru davranıştır:
+    /// <list type="bullet">
+    /// <item>Tarayıcı 302'de HTTP yöntemini <b>yalnız POST için</b> GET'e düşürür;
+    /// PUT/PATCH/DELETE korunur. Gövdesiz 4xx alan bir PUT böylece <c>PUT /Error</c>'a
+    /// gider, ABP'nin otomatik antiforgery filtresi (muaf yöntemler yalnız
+    /// GET/HEAD/OPTIONS/TRACE) onu yine gövdesiz 400 ile reddeder ve döngü tarayıcının
+    /// 20 yönlendirme sınırına kadar sürer. Belirti: istemcide
+    /// <c>ERR_TOO_MANY_REDIRECTS</c>, Sistem Sağlığı'nda <c>6|PUT|/Error</c> altında
+    /// bir kullanıcı eylemi başına 20 kayıt (audit middleware bu sarmalın İÇİNDE olduğu
+    /// için her sıçrama ayrı satır olur).</item>
+    /// <item>AJAX POST'ta yönlendirme izlenir ama <c>GET /Error</c> <b>200 + HTML</b>
+    /// döner; JSON bekleyen JS <c>Unexpected token '&lt;'</c> ile patlar.</item>
+    /// </list>
+    /// Her iki durumda da istemci gerçek hata zarfını hiç göremez. Bu yüzden hata
+    /// sayfası yalnız HTML gezinmelerine bağlanır; API/AJAX ham durum kodunu alır.
+    /// </summary>
+    private static bool IsHtmlNavigation(HttpContext ctx)
+    {
+        var request = ctx.Request;
+
+        // Hata sayfası ASLA kendine yönlendirilmez. Tarayıcı POST'u GET'e düşürdüğü için
+        // pratikte oraya yalnız GET gelir, ama yöntemi koruyan istemcilerde (curl, bazı
+        // HTTP kütüphaneleri) döngü buradan doğar — yapısal olarak kapatıyoruz.
+        if (request.Path.StartsWithSegments("/Error", StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        // 302 yalnız POST'ta yöntemi GET'e düşürür; diğer mutasyonlarda döngü doğar.
+        if (!HttpMethods.IsGet(request.Method) &&
+            !HttpMethods.IsHead(request.Method) &&
+            !HttpMethods.IsPost(request.Method))
+        {
+            return false;
+        }
+
+        if (request.Path.StartsWithSegments("/api", StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        // abp.ajax, jQuery ve React httpClient bu başlığı gönderir.
+        if (string.Equals(request.Headers["X-Requested-With"].ToString(), "XMLHttpRequest",
+                StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        // fetch/XHR çoğunlukla Accept: application/json der; tarayıcı gezinmesi text/html.
+        var accept = request.Headers.Accept.ToString();
+        if (!string.IsNullOrEmpty(accept) &&
+            !accept.Contains("text/html", StringComparison.OrdinalIgnoreCase) &&
+            !accept.Contains("*/*", StringComparison.Ordinal))
+        {
+            return false;
+        }
+
+        return true;
     }
 }

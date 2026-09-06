@@ -7,6 +7,8 @@
  * Dış bağımlılık YOK (axios eklemekten kaçındık).
  */
 
+import { t } from '../i18n';
+
 const DEFAULT_HEADERS = {
     'Accept': 'application/json',
     'Content-Type': 'application/json',
@@ -32,12 +34,32 @@ export function readAntiForgeryToken() {
     return input ? input.value : null;
 }
 
+/**
+ * Gövdesiz 4xx'te gösterilecek metin. ABP'nin hata zarfı yoksa (antiforgery
+ * reddi, kimlik doğrulama challenge'ı, rota bulunamadı) elimizde yalnız durum
+ * kodu kalır; `HTTP 401` kullanıcıya hiçbir şey anlatmaz.
+ */
+function defaultMessage(status) {
+    switch (status) {
+        case 400: return t('Api:Error:BadRequest',
+            'İstek doğrulanamadı. Sayfayı yenileyip tekrar deneyin.');
+        case 401: return t('Api:Error:Unauthorized',
+            'Oturumunuz sona ermiş. Sayfayı yenileyip tekrar giriş yapın.');
+        case 403: return t('Api:Error:Forbidden',
+            'Bu işlem için yetkiniz yok.');
+        case 404: return t('Api:Error:NotFound',
+            'Aradığınız kayıt bulunamadı.');
+        default:  return t('Api:Error:Generic',
+            'İşlem tamamlanamadı, lütfen tekrar deneyin.');
+    }
+}
+
 async function parseError(response) {
     let body = null;
     try { body = await response.json(); } catch (_) { /* not JSON */ }
     const env = body?.error;
     return new ApiError(
-        env?.message || `HTTP ${response.status}`,
+        env?.message || defaultMessage(response.status),
         {
             status: response.status,
             code: env?.code,

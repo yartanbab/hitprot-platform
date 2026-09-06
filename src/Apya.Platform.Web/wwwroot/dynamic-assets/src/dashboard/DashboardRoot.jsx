@@ -18,6 +18,7 @@ import { CHART_TYPE_NUMBER_TREND } from './hooks/enums';
 import { Button } from '../components/ui';
 import { cn } from '../lib/utils';
 import { t } from '../lib/i18n';
+import { useToast } from '../lib/feedback';
 
 const RANGES = [
     ['Month',   'Dashboard:Range:Month',   'Bu ay'],
@@ -45,6 +46,7 @@ function DashboardRoot() {
     const layoutQuery = useDashboardLayout(viewKey);
     const saveLayout = useSaveLayout();
     const resetLayout = useResetLayout();
+    const toast = useToast();
 
     const filter = useMemo(() => ({ range }), [range]);
 
@@ -140,18 +142,30 @@ function DashboardRoot() {
        türetilmiş tek/çift kolona diziliyor, sürüklemenin kaydedilecek karşılığı yok. */
     const canEdit = tier === 'desktop';
 
+    /* Hata halinde düzenleme modu AÇIK ve taslak düzen DURUYOR kalır: kapatırsak
+       kullanıcı düzenini kaydettiğini sanır, oysa sunucuya hiç ulaşmamıştır. */
     const handleSave = useCallback(() => {
         saveLayout.mutate(
             { viewKey, cards: draftCards ?? cards },
-            { onSuccess: () => { setDraftCards(null); setEditMode(false); } },
+            {
+                onSuccess: () => { setDraftCards(null); setEditMode(false); },
+                onError: (error) => toast.error(
+                    error?.message
+                        || t('Dashboard:Layout:SaveError', 'Düzen kaydedilemedi.'),
+                ),
+            },
         );
-    }, [saveLayout, viewKey, draftCards, cards]);
+    }, [saveLayout, viewKey, draftCards, cards, toast]);
 
     const handleReset = useCallback(() => {
         resetLayout.mutate(viewKey, {
             onSuccess: () => { setDraftCards(null); setEditMode(false); },
+            onError: (error) => toast.error(
+                error?.message
+                    || t('Dashboard:Layout:ResetError', 'Düzen sıfırlanamadı.'),
+            ),
         });
-    }, [resetLayout, viewKey]);
+    }, [resetLayout, viewKey, toast]);
 
     const handleAddCard = useCallback((cardKey) => {
         const meta = CARD_REGISTRY[cardKey];

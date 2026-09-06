@@ -445,6 +445,13 @@ export function SyncDrawer({ open, onClose }) {
                                 </div>
                             ) : (
                                 <>
+                                    {/* Kaydetme sessizce düşerse kullanıcı kuralı
+                                        değiştirdiğini sanıyordu — hata görünür olmalı. */}
+                                    {update.isError && (
+                                        <p role="alert" className="text-[11.5px] text-negative-700">
+                                            {update.error?.message || 'Senkron kuralları kaydedilemedi.'}
+                                        </p>
+                                    )}
                                     {data.accounts.map((account) => (
                                         <AccountCard
                                             key={account.id}
