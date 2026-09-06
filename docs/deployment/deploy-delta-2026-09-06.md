@@ -4,7 +4,7 @@
 > buraya yazılan her SHA yazıldığı anda bayatlar. Paketin üretildiği tam commit, ZIP adında
 > (`Apya-Yayin-<sha>.zip`) yazılıdır — tek doğru kaynak orasıdır.
 
-**38 commit · PR #309 → #346 · 8 migration (çift sağlayıcı).**
+**40 commit · PR #309 → #348 · 8 migration (çift sağlayıcı).**
 
 ---
 
@@ -29,7 +29,7 @@ tutmuyor. `Pages/Tasks/index.js` de aynı sonucu veriyor.
 
 Yani canlı kod **`ece0755a`**, şema da 2026-09-03'te koşan DbMigrator ile aynı seviyede
 (21 migration + üç veri tohumu uygulanmıştı). Bu paketin taşıdığı yük buradan itibaren
-ölçülüyor: **38 commit, 8 migration** — 09-02 belgesindeki 33 commit / 21 migration
+ölçülüyor: **40 commit, 8 migration** — 09-02 belgesindeki 33 commit / 21 migration
 **tekrar uygulanmayacak**.
 
 Ayrıca 09-02 belgesinin "Adım 0"ı (503 → `hostingModel` düzeltmesi + havuzu başlatma)
@@ -45,7 +45,7 @@ Ayrıca 09-02 belgesinin "Adım 0"ı (503 → `hostingModel` düzeltmesi + havuz
 | Hibe | "Başvuru Aç" yerine "İlgileniyorum" akışı (#327), dernek/vakıf/kulüp profil formu (#339), boş sonuçta kalkmayan iskelet + üst üste binen son tarih etiketleri (#309), okunabilirlik ölçeği (#310), rozet dili (#320) |
 | Finans | Bütçe rakamı tek kaynağa indi (#311), projeden bütçe/finans/belge geçişi (#319), menüde "Finans & Bütçe" tek çatı (#315), tutar/kur/oran maskesi (#318, #321, #324) |
 | Genel | Genel Bakış baskı çıktısı (#337), Takvim menüde kök başlık + Panolar görev konsolu görünüşleri (#341 · **#344** taşımayı gerçekten uygular), takvim Google/Outlook entegrasyonu düzeltmesi (#317), form textarea (#314), proje tarih alanları (#312), proje modalı finans izni (#316), mobil Genel Bakış (#323), doğrulama mesajlarında üç alanın Türkçe adı |
-| Kayıt & abonelik (#342) | Demo talebi yerine dört adımlı **kayıt talebi sihirbazı**; host onayınca davet bağlantısı e-postayla gidiyor, davetli clickwrap **protokol onayı** verince hesap otomatik açılıyor; host→kiracı **fatura ve tahsilat takibi**; satış paketlerine yıllık liste bedeli — 🔴 `AppDemoRequests` → `AppRegistrationRequests` yeniden adlandırması ve altı serbest metin alanının düşmesi bu işten geliyor. **Sürüm notuna girmez** — akışın tamamı aday müşteri ve host tarafında, mevcut kiracı kullanıcı hiçbir ekranını görmüyor |
+| Kayıt & abonelik (#342) | Demo talebi yerine dört adımlı **kayıt talebi sihirbazı**; host onayınca davet bağlantısı e-postayla gidiyor, davetli clickwrap **protokol onayı** verince hesap otomatik açılıyor; host→kiracı **fatura ve tahsilat takibi**; satış paketlerine yıllık liste bedeli — 🔴 `AppDemoRequests` → `AppRegistrationRequests` yeniden adlandırması ve altı serbest metin alanının düşmesi bu işten geliyor. Sürüm notuna **iki maddesi girdi** (#347): kiracı "Paketim" ekranında protokol metnini, "Faturalarım" bölümünde faturalarını görüyor ve ödemesini dekontuyla bildiriyor. Sihirbaz, davet ve host tarafındaki tahsilat kontrolü nota girmez |
 | Host | Sürüm notu yayın onayı (#322), Sistem Sağlığı markdown özeti (#313) — **ikisi de sürüm notuna girmez** |
 
 ---
@@ -121,7 +121,7 @@ Tohumlanmazsa host `/Admin/ReleaseNotes` ekranına giremez.
 > 🔴 **Bu tohum, sürüm notlarının kullanıcıya görünürlüğünü belirler.** Yayın onayı kapısı
 > (#322) "karar yoksa gösterme" mantığıyla çalışır. Tohum, **tablo tamamen boşsa** —
 > canlıda öyle, tablo bu paketle geliyor — katalogdaki **bütün maddeleri** "onaylı · tüm
-> paketler · herkes" olarak geri doldurur. Sonuç: `2026.09.06` sürümünün **68 maddesi
+> paketler · herkes" olarak geri doldurur. Sonuç: `2026.09.06` sürümünün **70 maddesi
 > de onaylı** başlar ve kullanıcılar ilk girişte "Yenilikler" penceresini görür.
 > İstenmeyen madde varsa host `/Admin/ReleaseNotes` ekranından kaldırır.
 > Bundan **sonraki** her sürüm host onayı bekler; tohum bir daha çalışmaz (tablo dolu).
