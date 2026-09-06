@@ -75,6 +75,14 @@ $(function () {
         avatar.className = 'apya-avatar apya-avatar-brand apya-user-avatar';
         avatar.textContent = initials.toUpperCase();
         avatar.title = fullName;
+        // Çevrimiçi noktası (Avatar Profil Menüsü handoff, 2026-09-06) — salt
+        // kozmetik, gerçek bir "presence" sistemi yok; kullanıcı hep kendi
+        // oturumunu görür. Avatar menüsü bu rozeti KLONLAR (bkz. apya-shell-
+        // actions.js syncAvatar) — nokta da klonla birlikte gelir.
+        var dot = document.createElement('span');
+        dot.className = 'apya-avatar-dot';
+        dot.setAttribute('aria-hidden', 'true');
+        avatar.appendChild(dot);
         userNameEl.replaceWith(avatar);
         return true;
     }
