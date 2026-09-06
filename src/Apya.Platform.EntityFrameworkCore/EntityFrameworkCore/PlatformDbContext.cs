@@ -355,7 +355,11 @@ namespace Apya.Platform.EntityFrameworkCore
             {
                 b.ToTable(PlatformConsts.DbTablePrefix + "TenantProfiles", PlatformConsts.DbSchema);
                 b.ConfigureByConvention(); // Auto configure for the base class props
-                b.HasIndex(x => x.TenantId).IsUnique(); // 1:1 relation logic
+                // 1:1 ilişki. Tekillik yalnız CANLI satırlar arasında: ABP soft-delete satırı
+                // tabloda bırakır, filtresiz UNIQUE onun anahtarını kalıcı rezerve ediyordu —
+                // silinen profilin yerine yenisi açılamıyordu (duplicate key → 500).
+                b.HasIndex(x => x.TenantId).IsUnique()
+                    .HasFilter(isSqlServer ? "[IsDeleted] = 0" : "\"IsDeleted\" = false");
                 b.Property(x => x.TaxNumber).HasMaxLength(50);
                 b.Property(x => x.CorporateEmail).HasMaxLength(256);
                 // Paket (edition): mevcut profiller migration'da Basic'e düşsün (enum 0 değil).
@@ -383,7 +387,10 @@ namespace Apya.Platform.EntityFrameworkCore
                 b.ConfigureByConvention();
                 b.Property(x => x.Name).IsRequired().HasMaxLength(64);
                 b.Property(x => x.Description).HasMaxLength(256);
-                b.HasIndex(x => x.Code).IsUnique();
+                // Silinen paketin kodu yeniden kullanılabilmeli: soft-delete satırı anahtarı
+                // rezerve etmesin.
+                b.HasIndex(x => x.Code).IsUnique()
+                    .HasFilter(isSqlServer ? "[IsDeleted] = 0" : "\"IsDeleted\" = false");
                 b.HasMany(x => x.Features).WithOne().HasForeignKey(f => f.PackageId).IsRequired();
                 b.HasMany(x => x.Permissions).WithOne().HasForeignKey(p => p.PackageId).IsRequired();
             });
@@ -634,7 +641,14 @@ namespace Apya.Platform.EntityFrameworkCore
                 b.Property(x => x.Tone).IsRequired().HasMaxLength(ProjectCategoryConsts.MaxToneLength);
                 // Sistem kayıtları TenantId = null ile global tutulur; aynı ad kiracı
                 // içinde tekrarlanamaz ama farklı kiracılar aynı adı kullanabilir.
-                b.HasIndex(x => new { x.TenantId, x.Name }).IsUnique();
+                // Tekillik yalnız CANLI satırlar arasında: ABP soft-delete satırı tabloda
+                // bırakır, filtresiz UNIQUE onun anahtarını kalıcı rezerve ediyordu —
+                // silinen kategori aynı adla yeniden açılamıyordu (SQL 2601, canlı
+                // doğrulandı 2026-09-04). NULL kiracı satırları da kapsanır: SQL Server
+                // NULL'ları eşit saydığı için sistem kayıtları kendi içinde tekil kalır
+                // (üretim indeksi zaten böyle; migration'daki tanım filtresizdi).
+                b.HasIndex(x => new { x.TenantId, x.Name }).IsUnique()
+                    .HasFilter(isSqlServer ? "[IsDeleted] = 0" : "\"IsDeleted\" = false");
                 b.HasIndex(x => x.SystemKey);
             });
 
@@ -680,8 +694,11 @@ namespace Apya.Platform.EntityFrameworkCore
                 b.ToTable(PlatformConsts.DbTablePrefix + "GrantEligibleCostItems", PlatformConsts.DbSchema);
                 b.ConfigureByConvention();
                 b.HasOne<Grant>().WithMany(g => g.EligibleCostItems).HasForeignKey(x => x.GrantId).OnDelete(DeleteBehavior.Cascade);
-                // Bir kalem bir programda en fazla bir kez açılabilir.
-                b.HasIndex(x => new { x.GrantId, x.Kind }).IsUnique();
+                // Bir kalem bir programda en fazla bir kez açılabilir — CANLI satırlar
+                // arasında: parametre kaydı "sil → yeniden ekle" desenini aynı UoW'da
+                // kullanıyor, filtresiz UNIQUE bunu duplicate key ile düşürüyordu.
+                b.HasIndex(x => new { x.GrantId, x.Kind }).IsUnique()
+                    .HasFilter(isSqlServer ? "[IsDeleted] = 0" : "\"IsDeleted\" = false");
             });
 
             builder.Entity<GrantBookmark>(b =>
@@ -730,7 +747,11 @@ namespace Apya.Platform.EntityFrameworkCore
                 // Kapsam başına tek satır. Benzersiz indeksin NULL davranışı sağlayıcılar
                 // arasında ayrışır (MSSQL tek NULL'a izin verir, Postgres çoğuna) — bu
                 // yüzden asıl güvence AppService'teki upsert; indeks yalnız okuma içindir.
-                b.HasIndex(x => x.GrantId).IsUnique();
+                // Tekillik yalnız CANLI satırlar arasında ("Sıfırla" sonrası aynı programa
+                // yeniden ağırlık verilebilmeli). EF'in nullable kolon için eklediği
+                // "IS NOT NULL" korunur — HasFilter onu ezdiği için açıkça yazıldı.
+                b.HasIndex(x => x.GrantId).IsUnique()
+                    .HasFilter(isSqlServer ? "[GrantId] IS NOT NULL AND [IsDeleted] = 0" : "\"IsDeleted\" = false");
             });
 
             builder.Entity<GrantDocumentRequirement>(b =>
@@ -768,8 +789,11 @@ namespace Apya.Platform.EntityFrameworkCore
             {
                 b.ToTable(PlatformConsts.DbTablePrefix + "FirmProfiles", PlatformConsts.DbSchema);
                 b.ConfigureByConvention();
-                // Tenant başına tekil profil.
-                b.HasIndex(x => x.TenantId).IsUnique();
+                // Tenant başına tekil profil — CANLI satırlar arasında (silinen profil
+                // yenisini engellemesin). EF'in nullable TenantId için eklediği
+                // "IS NOT NULL" korunur — HasFilter onu ezdiği için açıkça yazıldı.
+                b.HasIndex(x => x.TenantId).IsUnique()
+                    .HasFilter(isSqlServer ? "[TenantId] IS NOT NULL AND [IsDeleted] = 0" : "\"IsDeleted\" = false");
                 b.Property(x => x.AnnualRevenue).HasColumnType("decimal(18,2)");
                 b.Property(x => x.RegistryNumber).HasMaxLength(64);
                 b.Property(x => x.TaxNumber).HasMaxLength(16);
@@ -799,8 +823,10 @@ namespace Apya.Platform.EntityFrameworkCore
                 // Projeye FK KURULMADI: proje silinse bile başvurunun kendisi durmalı,
                 // dönüştürüldüğü bilgisi denetim izidir.
                 b.HasIndex(x => x.ProjectId);
-                // Aynı tenant + çağrı için tek başvuru.
-                b.HasIndex(x => new { x.TenantId, x.GrantCallId }).IsUnique();
+                // Aynı tenant + çağrı için tek CANLI başvuru; silinen başvuru aynı çağrıya
+                // yeniden başvurmayı engellemesin. EF'in "IS NOT NULL" filtresi korunur.
+                b.HasIndex(x => new { x.TenantId, x.GrantCallId }).IsUnique()
+                    .HasFilter(isSqlServer ? "[TenantId] IS NOT NULL AND [IsDeleted] = 0" : "\"IsDeleted\" = false");
             });
 
             // --- 2a · Başvuru sihirbazı ---
@@ -812,8 +838,10 @@ namespace Apya.Platform.EntityFrameworkCore
                 b.Property(x => x.Amount).HasColumnType("decimal(18,2)");
                 b.Property(x => x.Justification).HasMaxLength(512);
                 b.HasOne<GrantApplication>().WithMany(a => a.BudgetLines).HasForeignKey(x => x.GrantApplicationId).OnDelete(DeleteBehavior.Cascade);
-                // Başvuru başına kalem başına tek satır.
-                b.HasIndex(x => new { x.GrantApplicationId, x.Kind }).IsUnique();
+                // Başvuru başına kalem başına tek CANLI satır; soft-delete süzgeçli upsert
+                // ilk silme yolunda duplicate key'e düşmesin.
+                b.HasIndex(x => new { x.GrantApplicationId, x.Kind }).IsUnique()
+                    .HasFilter(isSqlServer ? "[IsDeleted] = 0" : "\"IsDeleted\" = false");
             });
 
             builder.Entity<GrantApplicationFieldLock>(b =>
@@ -897,8 +925,10 @@ namespace Apya.Platform.EntityFrameworkCore
                 b.ConfigureByConvention();
                 b.Property(x => x.ReferenceNo).HasMaxLength(64);
                 b.HasOne<GrantApplication>().WithMany().HasForeignKey(x => x.GrantApplicationId).OnDelete(DeleteBehavior.Cascade);
-                // Başvuru başına tek karar.
-                b.HasIndex(x => x.GrantApplicationId).IsUnique();
+                // Başvuru başına tek CANLI karar; silinen karar yeni karar verilmesini
+                // engellemesin.
+                b.HasIndex(x => x.GrantApplicationId).IsUnique()
+                    .HasFilter(isSqlServer ? "[IsDeleted] = 0" : "\"IsDeleted\" = false");
             });
 
             builder.Entity<GrantAppealItem>(b =>
@@ -989,8 +1019,10 @@ namespace Apya.Platform.EntityFrameworkCore
                 b.ConfigureByConvention();
                 b.Property(x => x.Subject).IsRequired().HasMaxLength(200);
                 b.Property(x => x.Body).IsRequired().HasMaxLength(2000);
-                // Host katalogunda tetikleyici başına tek şablon.
-                b.HasIndex(x => new { x.TenantId, x.Trigger }).IsUnique();
+                // Host katalogunda tetikleyici başına tek CANLI şablon. EF'in nullable
+                // TenantId için eklediği "IS NOT NULL" korunur (davranış değişmesin).
+                b.HasIndex(x => new { x.TenantId, x.Trigger }).IsUnique()
+                    .HasFilter(isSqlServer ? "[TenantId] IS NOT NULL AND [IsDeleted] = 0" : "\"IsDeleted\" = false");
             });
 
             builder.Entity<GrantNotificationLog>(b =>
@@ -1026,7 +1058,9 @@ namespace Apya.Platform.EntityFrameworkCore
                 b.Property(x => x.Note).HasMaxLength(256);
                 b.HasOne<GrantCall>().WithMany().HasForeignKey(x => x.GrantCallId).OnDelete(DeleteBehavior.Cascade);
                 // Aynı tenant + çağrı için tek (host-push) öneri kaydı — tekrar gönderim idempotent.
-                b.HasIndex(x => new { x.TenantId, x.GrantCallId }).IsUnique();
+                // Tekillik yalnız CANLI satırlar arasında; EF'in "IS NOT NULL" filtresi korunur.
+                b.HasIndex(x => new { x.TenantId, x.GrantCallId }).IsUnique()
+                    .HasFilter(isSqlServer ? "[TenantId] IS NOT NULL AND [IsDeleted] = 0" : "\"IsDeleted\" = false");
             });
 
             // (BUG-001) ProjectTask, SubTask, ProjectTaskComment konfigürasyonları kaldırıldı.
@@ -1364,8 +1398,10 @@ namespace Apya.Platform.EntityFrameworkCore
             {
                 b.ToTable(PlatformConsts.DbTablePrefix + "NotificationPreferences", PlatformConsts.DbSchema);
                 b.ConfigureByConvention();
-                // Kullanıcı başına kategori başına tek satır; her bildirimde okunuyor
-                b.HasIndex(x => new { x.UserId, x.Category }).IsUnique();
+                // Kullanıcı başına kategori başına tek CANLI satır; her bildirimde okunuyor.
+                // Soft-delete satırı anahtarı rezerve etmesin.
+                b.HasIndex(x => new { x.UserId, x.Category }).IsUnique()
+                    .HasFilter(isSqlServer ? "[IsDeleted] = 0" : "\"IsDeleted\" = false");
             });
 
             /* --- TAKVİM MODÜLÜ YAPILANDIRMASI --- */

@@ -4595,10 +4595,11 @@ namespace Apya.Platform.Migrations
                     b.HasIndex("Slug")
                         .IsUnique()
                         .HasDatabaseName("IX_AppDocuments_Dynamic_Slug_Host")
-                        .HasFilter("\"TenantId\" IS NULL");
+                        .HasFilter("\"TenantId\" IS NULL AND \"IsDeleted\" = false");
 
                     b.HasIndex("TenantId", "Slug")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasFilter("\"IsDeleted\" = false");
 
                     b.HasIndex("TenantId", "Status");
 
@@ -5641,7 +5642,8 @@ namespace Apya.Platform.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("TenantId")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasFilter("\"IsDeleted\" = false");
 
                     b.ToTable("AppFirmProfiles", (string)null);
                 });
@@ -6054,7 +6056,8 @@ namespace Apya.Platform.Migrations
                     b.HasIndex("ProjectId");
 
                     b.HasIndex("TenantId", "GrantCallId")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasFilter("\"IsDeleted\" = false");
 
                     b.ToTable("AppGrantApplications", (string)null);
                 });
@@ -6183,7 +6186,8 @@ namespace Apya.Platform.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("GrantApplicationId", "Kind")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasFilter("\"IsDeleted\" = false");
 
                     b.ToTable("AppGrantApplicationBudgetLines", (string)null);
                 });
@@ -6787,7 +6791,8 @@ namespace Apya.Platform.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("GrantApplicationId")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasFilter("\"IsDeleted\" = false");
 
                     b.ToTable("AppGrantDecisions", (string)null);
                 });
@@ -7086,7 +7091,8 @@ namespace Apya.Platform.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("GrantId", "Kind")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasFilter("\"IsDeleted\" = false");
 
                     b.ToTable("AppGrantEligibleCostItems", (string)null);
                 });
@@ -7412,7 +7418,8 @@ namespace Apya.Platform.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("GrantId")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasFilter("\"IsDeleted\" = false");
 
                     b.ToTable("AppGrantMatchWeights", (string)null);
                 });
@@ -7594,7 +7601,8 @@ namespace Apya.Platform.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("TenantId", "Trigger")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasFilter("\"IsDeleted\" = false");
 
                     b.ToTable("AppGrantNotificationTemplates", (string)null);
                 });
@@ -7671,7 +7679,8 @@ namespace Apya.Platform.Migrations
                     b.HasIndex("GrantCallId");
 
                     b.HasIndex("TenantId", "GrantCallId")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasFilter("\"IsDeleted\" = false");
 
                     b.ToTable("AppGrantRecommendations", (string)null);
                 });
@@ -8697,7 +8706,8 @@ namespace Apya.Platform.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("UserId", "Category")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasFilter("\"IsDeleted\" = false");
 
                     b.ToTable("AppNotificationPreferences", (string)null);
                 });
@@ -9389,7 +9399,8 @@ namespace Apya.Platform.Migrations
                     b.HasIndex("SystemKey");
 
                     b.HasIndex("TenantId", "Name")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasFilter("\"IsDeleted\" = false");
 
                     b.ToTable("AppProjectCategories", (string)null);
                 });
@@ -10890,7 +10901,8 @@ namespace Apya.Platform.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("Code")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasFilter("\"IsDeleted\" = false");
 
                     b.ToTable("AppPlatformPackages", (string)null);
                 });
@@ -11037,7 +11049,8 @@ namespace Apya.Platform.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("TenantId")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasFilter("\"IsDeleted\" = false");
 
                     b.ToTable("AppTenantProfiles", (string)null);
                 });
