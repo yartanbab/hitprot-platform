@@ -82,16 +82,10 @@
                 <div>
                     <abp-input asp-for="Project.Code" label="Proje Kodu" />
                 </div>
-                @* Cari yalnız finans izni olan kullanıcıda: liste Customers.Default
-                   iznine bağlı, ekran ise Projects.Edit ile açılıyor. *@
-                @if (Model.CanSelectCustomer)
-                {
-                    <div>
-                        <abp-select asp-for="Project.CustomerId" asp-items="Model.Customers" label="Cari (Müşteri)">
-                            <option value="">— Cari seçilmedi —</option>
-                        </abp-select>
-                    </div>
-                }
+                @* Cari (Müşteri) alanı GÖMÜLDÜ (2026-09-06, kullanıcı kararı): muhasebe
+                   ekseni bugünkü hâliyle sunulmuyor. Kaydın CustomerId DEĞERİ KORUNUYOR —
+                   OnPostAsync'teki "koru" bloğu mevcut değeri geri yazıyor, yoksa formda
+                   olmayan alan her kayıtta silinirdi. *@
                 <div>
                     <abp-select asp-for="Project.CategoryId" asp-items="Model.Categories" label="Proje Kategorisi" />
                 </div>

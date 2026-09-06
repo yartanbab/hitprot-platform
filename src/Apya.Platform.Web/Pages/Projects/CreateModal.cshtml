@@ -282,35 +282,28 @@
                         <div class="apya-pform-err" id="PfNameErr">Proje adı zorunlu.</div>
                     </div>
 
-                    <div class="apya-pform-grid-2">
-                        <div class="apya-pform-field" id="PfCodeField">
-                            @* Rozet ve "Yeniden üret" label'ın DIŞINDA: label'ın içindeki
-                               tıklama `for` hedefine yönlendirilir, buton kendi işini yapamaz. *@
-                            <div class="apya-pform-label">
-                                <label asp-for="Project.Code" class="mb-0">
-                                    Proje Kodu <span class="apya-pform-req" aria-hidden="true">*</span>
-                                </label>
-                                <span class="apya-pform-chip-auto" id="PfCodeAuto">otomatik</span>
-                                <button type="button" class="apya-pform-label-action" id="PfCodeRegen">Yeniden üret</button>
-                            </div>
-                            <input class="form-control apya-pform-mono" asp-for="Project.Code" id="PfCode"
-                                   maxlength="32" autocomplete="off" />
-                            <div class="apya-pform-help" id="PfCodeHelp">Yıl + sıra numarası; istediğiniz gibi değiştirebilirsiniz.</div>
-                            <div class="apya-pform-err" id="PfCodeErr"></div>
-                        </div>
+                    @* Proje Kodu bir zamanlar "Cari (Müşteri)" ile yan yanaydı. Cari alanı
+                       GÖMÜLDÜ (2026-09-06, kullanıcı kararı): muhasebe ekseni bugünkü hâliyle
+                       sunulmuyor. Tek çocuk kaldığı için ızgara sarmalayıcısı da düştü —
+                       bölüm (.apya-pform-sec) zaten dikey boşluğu veriyor.
 
-                        @* Cari yalnız finans izni olan kullanıcıda: liste Customers.Default
-                           iznine bağlı, düğme ise Projects.Create ile görünüyor. *@
-                        @if (Model.CanSelectCustomer)
-                        {
-                            <div class="apya-pform-field">
-                                <label class="apya-pform-label" asp-for="Project.CustomerId">Cari (Müşteri)</label>
-                                <select class="form-select" asp-for="Project.CustomerId" asp-items="Model.Customers" id="PfCustomer">
-                                    <option value="">— Cari seçilmedi —</option>
-                                </select>
-                                <div class="apya-pform-help">Bütçe ve fatura eşleşmesi için; sonradan da bağlanabilir.</div>
-                            </div>
-                        }
+                       Proje kaydındaki CustomerId DEĞERİ KORUNUYOR: entity, kolon ve DTO
+                       yerinde duruyor, yalnız form alanı çizilmiyor. Geri açmak için alanı
+                       ve .apya-pform-grid-2 sarmalayıcısını geri koymak yeterli. *@
+                    <div class="apya-pform-field" id="PfCodeField">
+                        @* Rozet ve "Yeniden üret" label'ın DIŞINDA: label'ın içindeki
+                           tıklama `for` hedefine yönlendirilir, buton kendi işini yapamaz. *@
+                        <div class="apya-pform-label">
+                            <label asp-for="Project.Code" class="mb-0">
+                                Proje Kodu <span class="apya-pform-req" aria-hidden="true">*</span>
+                            </label>
+                            <span class="apya-pform-chip-auto" id="PfCodeAuto">otomatik</span>
+                            <button type="button" class="apya-pform-label-action" id="PfCodeRegen">Yeniden üret</button>
+                        </div>
+                        <input class="form-control apya-pform-mono" asp-for="Project.Code" id="PfCode"
+                               maxlength="32" autocomplete="off" />
+                        <div class="apya-pform-help" id="PfCodeHelp">Yıl + sıra numarası; istediğiniz gibi değiştirebilirsiniz.</div>
+                        <div class="apya-pform-err" id="PfCodeErr"></div>
                     </div>
 
                     @if (Model.CurrentTenantId == null)
@@ -713,7 +706,7 @@
         }
 
         // ---------------------------------------------------- TASLAK
-        var DRAFT_FIELDS = ['PfName', 'PfCode', 'PfCustomer', 'PfStart', 'PfEnd',
+        var DRAFT_FIELDS = ['PfName', 'PfCode', 'PfStart', 'PfEnd',
             'PfPurpose', 'PfAudience', 'PfActivities', 'PfDescription'];
 
         var draftTimer = null;

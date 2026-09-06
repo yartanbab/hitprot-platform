@@ -5488,7 +5488,8 @@ i.apya-priority-dot {
 .apya-proj-list-head,
 .apya-proj-row {
     display: grid;
-    grid-template-columns: 3px 300px 150px 150px 190px 150px 118px 96px 116px;
+    /* Müşteri kolonu (eskiden 2. sıradaki 150px) 2026-09-06'da kaldırıldı — cari gömüldü. */
+    grid-template-columns: 3px 300px 150px 190px 150px 118px 96px 116px;
     align-items: center;
     gap: 14px;
     padding-right: 16px;
@@ -5559,13 +5560,6 @@ i.apya-priority-dot {
 .apya-proj-code {
     font-size: 11px;
     color: var(--apya-text-tertiary);
-}
-.apya-proj-client {
-    font-size: var(--apya-fs-sm);
-    color: var(--apya-text-secondary);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
 }
 /* Tarih aralığı DAR kolonda sarmamalı: sardığında satır sıkı kipte 48px yerine
    52px oluyordu ve iki satırlık tarih okunmuyordu. Kırpılan tam metin title'da. */
@@ -5680,7 +5674,6 @@ i.apya-priority-dot {
     color: var(--apya-text-tertiary);
     min-width: 0;
 }
-.apya-proj-card-sub > .apya-proj-client { font-size: inherit; color: inherit; }
 .apya-proj-chips {
     display: flex;
     align-items: center;
@@ -6035,7 +6028,7 @@ i.apya-priority-dot {
 @container projconsole (max-width: 1385px) {
     .apya-proj-list-head,
     .apya-proj-row {
-        grid-template-columns: 3px minmax(200px, 1fr) 130px 128px 168px 138px 108px 84px 108px;
+        grid-template-columns: 3px minmax(200px, 1fr) 128px 168px 138px 108px 84px 108px;
         gap: 12px;
     }
 }
@@ -6044,7 +6037,6 @@ i.apya-priority-dot {
     .apya-proj-row {
         grid-template-columns: 3px minmax(190px, 1fr) 126px 164px 136px 106px 82px 104px;
     }
-    .apya-proj-col-client { display: none; }
 }
 @container projconsole (max-width: 980px) {
     .apya-proj-list-head,

@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
-using Apya.Platform.Customers;
 using Apya.Platform.Permissions;
 using Apya.Platform.Projects;
 using Apya.Platform.Projects.Dtos;
@@ -58,35 +57,24 @@ public class EditModel : PlatformPageModel
 
     public ProjectDto Current { get; set; } = new();
     public List<ProjectAttachmentDto> Attachments { get; set; } = new();
-    public List<SelectListItem> Customers { get; set; } = new();
     public List<SelectListItem> Categories { get; set; } = new();
 
     public bool CanViewBudget { get; set; }
     public bool CanDelete { get; set; }
 
-    /// <summary>
-    /// Cari alanı çizilsin mi. Cari FİNANS modülüne ait: <c>Customers.Default</c> izni
-    /// <c>Finance</c> feature kapısının arkasındadır, bu ekran ise <c>Projects.Edit</c>
-    /// ile açılır. İzin yoksa alan hiç gösterilmez.
-    /// </summary>
-    public bool CanSelectCustomer { get; set; }
-
     private readonly IProjectAppService _projectAppService;
     private readonly IProjectCategoryAppService _projectCategoryAppService;
-    private readonly ICustomerAppService _customerAppService;
     private readonly IUploadedFileStorage _fileStorage;
     private readonly IUploadedFileRootFolderProvider _rootFolderProvider;
 
     public EditModel(
         IProjectAppService projectAppService,
         IProjectCategoryAppService projectCategoryAppService,
-        ICustomerAppService customerAppService,
         IUploadedFileStorage fileStorage,
         IUploadedFileRootFolderProvider rootFolderProvider)
     {
         _projectAppService = projectAppService;
         _projectCategoryAppService = projectCategoryAppService;
-        _customerAppService = customerAppService;
         _fileStorage = fileStorage;
         _rootFolderProvider = rootFolderProvider;
     }
@@ -137,10 +125,9 @@ public class EditModel : PlatformPageModel
         {
             Project.TotalBudget = Current.TotalBudget;
         }
-        if (!CanSelectCustomer)
-        {
-            Project.CustomerId = Current.CustomerId;
-        }
+        // Cari alanı gömüldü (2026-09-06) ama DEĞERİ KORUNMALI: form artık CustomerId
+        // göndermiyor, koşulsuz geri yazılmazsa bağlı proje her kayıtta cariyi kaybederdi.
+        Project.CustomerId = Current.CustomerId;
 
         await _projectAppService.UpdateAsync(Id, Project);
 
@@ -253,19 +240,9 @@ public class EditModel : PlatformPageModel
         CanViewBudget = await AuthorizationService.IsGrantedAsync(PlatformPermissions.Projects.ViewBudget);
         CanDelete = await AuthorizationService.IsGrantedAsync(PlatformPermissions.Projects.Delete);
 
-        // İZİN KAPISI ŞART: cari, Finance feature'ının arkasındaki Customers.Default
-        // iznine bağlı; bu ekran ise Projects.Edit ile açılıyor. İzin sorulmadan
-        // çağrıldığında finans izni olmayan kullanıcıda AppService
-        // AbpAuthorizationException atıyor ve SAYFANIN TAMAMI 403 dönüyordu.
-        CanSelectCustomer = await AuthorizationService.IsGrantedAsync(PlatformPermissions.Customers.Default);
-        if (CanSelectCustomer)
-        {
-            var customerResult = await _customerAppService.GetListAsync(
-                new GetCustomersInput { MaxResultCount = 1000, IsActive = true });
-            Customers = customerResult.Items
-                .Select(c => new SelectListItem(c.Name, c.Id.ToString()))
-                .ToList();
-        }
+        // Cari listesi GÖMÜLDÜ (2026-09-06): ekran cari sormuyor, dolayısıyla listeyi
+        // çekmek de gereksiz bir Customers.Default çağrısıydı. Kaydın CustomerId değeri
+        // Current üzerinden korunuyor (bkz. OnPostAsync).
 
         // Kategoriler tanım tablosundan gelir. Projenin MEVCUT kategorisi bu arada
         // gizlenmiş/pasife alınmış olabilir — listede yoksa açılır kutu onu sessizce

@@ -216,9 +216,10 @@ $(function () {
         return state.items.filter(function (p) {
             if (state.myScope && !p.isAssignedToMe) { return false; }
             if (!q) { return true; }
+            // Cari gömüldü (2026-09-06): müşteri adı artık listede gösterilmediği için
+            // aramanın kapsamı da ad + koddan ibaret. Alan DTO'da duruyor.
             return lower(p.name).indexOf(q) >= 0
-                || lower(p.code).indexOf(q) >= 0
-                || lower(p.customerName).indexOf(q) >= 0;
+                || lower(p.code).indexOf(q) >= 0;
         });
     }
 
@@ -365,7 +366,6 @@ $(function () {
             '    </div>' +
             '  </div>' +
             '</div>' +
-            '<div class="apya-proj-cell apya-proj-col-client apya-proj-client">' + (esc(p.customerName) || '—') + '</div>' +
             '<div class="apya-proj-cell apya-proj-col-duration">' +
             '  <div class="apya-proj-range apya-numeric" title="' + esc(dateRange(p)) + '">' + esc(dateRangeShort(p)) + '</div>' +
             daysTextHtml(p) +
@@ -421,8 +421,7 @@ $(function () {
             '  <div style="flex:1 1 auto;min-width:0">' +
             '    <div class="apya-proj-card-title">' + esc(p.name) + '</div>' +
             '    <div class="apya-proj-card-sub">' +
-            '      <span class="apya-numeric">' + esc(p.code) + '</span><span>·</span>' +
-            '      <span class="apya-proj-client">' + (esc(p.customerName) || 'müşteri girilmemiş') + '</span>' +
+            '      <span class="apya-numeric">' + esc(p.code) + '</span>' +
             '    </div>' +
             '  </div>' +
             '</div>' +
@@ -459,7 +458,8 @@ $(function () {
     function stepsHtml(p) {
         var steps = [];
         if (!(p.taskCount > 0)) { steps.push(['fa-circle-plus', 'Görev ekle']); }
-        if (!p.customerName) { steps.push(['fa-building', 'Müşteri bağla']); }
+        // "Müşteri bağla" adımı kaldırıldı (2026-09-06): cari gömüldü, kullanıcıyı
+        // artık açamayacağı bir alana yönlendiremeyiz.
         if (p.daysRemaining === null || p.daysRemaining === undefined || p.daysRemaining <= 0) {
             steps.push(['fa-calendar', 'Bitiş tarihini güncelle']);
         }
@@ -692,8 +692,7 @@ $(function () {
             '    <span class="kpi-icon-box kpi-icon-box--sm ' + cat.box + '"><i class="fa ' + cat.icon + '"></i></span>' +
             '    <div style="flex:1 1 auto;min-width:0">' +
             '      <div class="apya-proj-drawer-title">' + esc(p.name) + '</div>' +
-            '      <div class="apya-proj-drawer-sub"><span class="apya-numeric">' + esc(p.code) + '</span> · ' +
-            (esc(p.customerName) || 'müşteri girilmemiş') + '</div>' +
+            '      <div class="apya-proj-drawer-sub"><span class="apya-numeric">' + esc(p.code) + '</span></div>' +
             '    </div>' +
             '    <button type="button" class="apya-proj-drawer-close" data-drawer-close aria-label="Paneli kapat">' +
             '      <i class="fa fa-xmark"></i></button>' +
