@@ -4,7 +4,7 @@
 > buraya yazılan her SHA yazıldığı anda bayatlar. Paketin üretildiği tam commit, ZIP adında
 > (`Apya-Yayin-<sha>.zip`) yazılıdır — tek doğru kaynak orasıdır.
 
-**34 commit · PR #309 → #343 · 5 migration (çift sağlayıcı).**
+**35 commit · PR #309 → #344 · 5 migration (çift sağlayıcı).**
 
 ---
 
@@ -29,7 +29,7 @@ tutmuyor. `Pages/Tasks/index.js` de aynı sonucu veriyor.
 
 Yani canlı kod **`ece0755a`**, şema da 2026-09-03'te koşan DbMigrator ile aynı seviyede
 (21 migration + üç veri tohumu uygulanmıştı). Bu paketin taşıdığı yük buradan itibaren
-ölçülüyor: **34 commit, 5 migration** — 09-02 belgesindeki 33 commit / 21 migration
+ölçülüyor: **35 commit, 5 migration** — 09-02 belgesindeki 33 commit / 21 migration
 **tekrar uygulanmayacak**.
 
 Ayrıca 09-02 belgesinin "Adım 0"ı (503 → `hostingModel` düzeltmesi + havuzu başlatma)
@@ -44,7 +44,7 @@ Ayrıca 09-02 belgesinin "Adım 0"ı (503 → `hostingModel` düzeltmesi + havuz
 | Görevler | Görev finansı (#334 gider/gelir + bütçe bağı, #335 fatura, #336 evrak), göreve form bağlama (#329, misafir doldurması dâhil), özellik kataloğu gerçek modüllerle sınırlandı + yedi yeni görünüm (#326), özellik modalı tek listeye indi (#333), mobil üst şerit + FAB (#330), dosya/görsel listeleri sürükle-bırak kutusunun üstüne alındı |
 | Hibe | "Başvuru Aç" yerine "İlgileniyorum" akışı (#327), dernek/vakıf/kulüp profil formu (#339), boş sonuçta kalkmayan iskelet + üst üste binen son tarih etiketleri (#309), okunabilirlik ölçeği (#310), rozet dili (#320) |
 | Finans | Bütçe rakamı tek kaynağa indi (#311), projeden bütçe/finans/belge geçişi (#319), menüde "Finans & Bütçe" tek çatı (#315), tutar/kur/oran maskesi (#318, #321, #324) |
-| Genel | Genel Bakış baskı çıktısı (#337), Takvim menüde kök başlık + Panolar görev konsolu görünüşleri (#341), takvim Google/Outlook entegrasyonu düzeltmesi (#317), form textarea (#314), proje tarih alanları (#312), proje modalı finans izni (#316), mobil Genel Bakış (#323) |
+| Genel | Genel Bakış baskı çıktısı (#337), Takvim menüde kök başlık + Panolar görev konsolu görünüşleri (#341 · **#344** taşımayı gerçekten uygular), takvim Google/Outlook entegrasyonu düzeltmesi (#317), form textarea (#314), proje tarih alanları (#312), proje modalı finans izni (#316), mobil Genel Bakış (#323), doğrulama mesajlarında üç alanın Türkçe adı |
 | Host | Sürüm notu yayın onayı (#322), Sistem Sağlığı markdown özeti (#313) — **ikisi de sürüm notuna girmez** |
 
 ---
@@ -89,7 +89,7 @@ Tohumlanmazsa host `/Admin/ReleaseNotes` ekranına giremez.
 > 🔴 **Bu tohum, sürüm notlarının kullanıcıya görünürlüğünü belirler.** Yayın onayı kapısı
 > (#322) "karar yoksa gösterme" mantığıyla çalışır. Tohum, **tablo tamamen boşsa** —
 > canlıda öyle, tablo bu paketle geliyor — katalogdaki **bütün maddeleri** "onaylı · tüm
-> paketler · herkes" olarak geri doldurur. Sonuç: `2026.09.06` sürümünün **67 maddesi
+> paketler · herkes" olarak geri doldurur. Sonuç: `2026.09.06` sürümünün **68 maddesi
 > de onaylı** başlar ve kullanıcılar ilk girişte "Yenilikler" penceresini görür.
 > İstenmeyen madde varsa host `/Admin/ReleaseNotes` ekranından kaldırır.
 > Bundan **sonraki** her sürüm host onayı bekler; tohum bir daha çalışmaz (tablo dolu).
@@ -127,6 +127,14 @@ Tohumlanmazsa host `/Admin/ReleaseNotes` ekranına giremez.
   şeridinde aynı tarihli çağrıların adları üst üste binmiyor
 - Menü: Takvim kök başlıkta; Panolar → Görevler / Kart Panosu / Zaman Çizelgesi;
   eski `/Board` adresi kart panosuna yönleniyor (301)
+- 🔴 **Menüsünü özelleştirmiş kullanıcıda Takvim'i ayrıca kontrol et.** #344 menü
+  kimliğini `Apya.Work.Calendar` → `Apya.Calendar` yaptı; taşımanın görünmesi için
+  şarttı (kayıtlı `ShellMenuLayout` koddaki varsayılanı eziyor, ID korunursa taşıma
+  ekranda hiç görünmüyor). Bedeli: kayıtlı düzeni olan kullanıcıda yeni düğüm listenin
+  **sonuna** düşüyor ve Takvim'e elle koyulmuş iğne kayboluyor. Ayarlar → Menü Düzeni'nden
+  tek sürüklemeyle düzeltilebiliyor; düzeni olmayan kullanıcıda doğru sırada geliyor.
+- Doğrulama hatası mesajlarında ham property adı görünmüyor (hibe "İlgileniyorum"
+  gönderimi ve STK profilinde kayıt/kütük numarası alanı)
 - Genel Bakış → yazdır: künye var, istatistikler kırpılmamış
 - İlk girişte "Yenilikler" penceresi 2026.09.06 sürümüyle açılıyor
 

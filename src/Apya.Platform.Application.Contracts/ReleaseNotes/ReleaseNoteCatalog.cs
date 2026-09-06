@@ -625,17 +625,7 @@ public static class ReleaseNoteCatalog
                 "en üstte duruyordu; yüklü dosyalar ve görseller onun altında kaldığı için sekmeyi " +
                 "açtığınızda ekranda hiçbiri görünmüyor, listeye ulaşmak için her seferinde aşağı " +
                 "kaydırmanız gerekiyordu. Kutu listenin altına alındı: sekme açılır açılmaz dosyalar " +
-                "ve görseller karşınıza çıkıyor, yükleme yine aynı yerde, sadece listeden sonra."),
-
-            new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
-                "Takvim menüde kendi başlığına çıktı, Panolar görev görünüşlerini topladı",
-                "Takvim, \"Panolar\" grubunun içinde duruyordu — oysa kendi izni ve Google/Outlook " +
-                "bağlantısı olan ayrı bir modül. Artık menüde kök seviyede kendi başlığı var. " +
-                "\"Panolar\" ise görev konsolunun üç görünüşünü topluyor: Görevler, Kart Panosu ve " +
-                "Zaman Çizelgesi — üçüne de tek tıkla, doğrudan o görünüşe gidiyorsunuz, başlığın " +
-                "kendisi de tıklanabilir. \"Kanban\" adı hem menüde hem sekmede \"Kart Panosu\" oldu. " +
-                "Eski Pano adresini kullandıysanız kayıt ya da yer imi kaybolmuyor, sizi doğrudan " +
-                "kart panosuna götürüyor.")
+                "ve görseller karşınıza çıkıyor, yükleme yine aynı yerde, sadece listeden sonra.")
         ),
 
         new ReleaseNote(
