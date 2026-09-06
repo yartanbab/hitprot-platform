@@ -20,6 +20,14 @@ public static class ConsentConsts
     /// <summary>Form KVKK aydınlatma metninin güncel sürümü.</summary>
     public const string KvkkPolicyVersion = "kvkk-v1";
 
+    /// <summary>
+    /// Hizmet protokolünün güncel sürümü. <b>Protokol metni değişince BURASI da
+    /// artırılmalı</b> — rıza kaydı hangi metne onay verildiğini yalnız bu alanla
+    /// gösterir; sürüm sabit kalırsa eski onaylar yeni metne verilmiş görünür.
+    /// Şablonun kendi sürümüyle aynı tutulur: <c>ServiceAgreementConsts.TemplateVersion</c>.
+    /// </summary>
+    public const string ServiceAgreementPolicyVersion = "protokol-v1";
+
     /// <summary>Oturumsuz ziyaretçiyi tanımlayan çerezin adı (rıza tekrarını önler).</summary>
     public const string AnonymousIdCookieName = "apya_cid";
 

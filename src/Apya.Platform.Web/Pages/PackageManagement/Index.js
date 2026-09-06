@@ -270,7 +270,25 @@ $(function () {
             $('#SubUpgradeEmail').val(s.upgradeContactEmail || '');
             $('#SubUpgradePhone').val(s.upgradeContactPhone || '');
             $('#SubUpgradeUrl').val(s.upgradeUrl || '');
+
+            // 0 = TANIMLI DEĞİL → kutu BOŞ bırakılır. "0" yazsaydık host, bedeli sıfır
+            // olarak tanımlanmış sanır ve sözleşmeye "0,00 TL" geçtiğini düşünürdü.
+            setPrice('#PriceStandard', s.standardPlanPrice);
+            setPrice('#PriceCorporate', s.corporatePlanPrice);
+            setPrice('#PriceJoint', s.jointPlanPrice);
         });
+    }
+
+    function setPrice(selector, value) {
+        $(selector).val(value > 0 ? value : '');
+    }
+
+    /**
+     * Boş kutu 0 olarak gider (= tanımsız). parseFloat NaN döndürürse de 0 — sunucu
+     * negatifi zaten sıfırlıyor.
+     */
+    function readPrice(selector) {
+        return parseFloat($(selector).val()) || 0;
     }
 
     $('#SubSaveBtn').on('click', function () {
@@ -283,9 +301,12 @@ $(function () {
             warningDays: $('#SubWarningDays').val(),
             upgradeContactEmail: $('#SubUpgradeEmail').val(),
             upgradeContactPhone: $('#SubUpgradePhone').val(),
-            upgradeUrl: $('#SubUpgradeUrl').val()
+            upgradeUrl: $('#SubUpgradeUrl').val(),
+            standardPlanPrice: readPrice('#PriceStandard'),
+            corporatePlanPrice: readPrice('#PriceCorporate'),
+            jointPlanPrice: readPrice('#PriceJoint')
         }).then(function () {
-            abp.notify.success('Süre ayarları kaydedildi.');
+            abp.notify.success('Ayarlar kaydedildi.');
             // Sunucu değerleri normalize eder ("9, abc, 3" → "9,3"); ekrana kaydedileni bas.
             loadSubscriptionSettings();
         }).always(function () { $btn.prop('disabled', false); });

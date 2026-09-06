@@ -200,8 +200,15 @@ namespace Apya.Platform.EntityFrameworkCore
         /* --- RIZA / KVKK OMURGASI --- */
         public DbSet<Apya.Platform.Consents.ConsentRecord> ConsentRecords { get; set; }
 
-        /* --- DEMO TALEPLERİ (giriş ekranı) --- */
-        public DbSet<Apya.Platform.DemoRequests.DemoRequest> DemoRequests { get; set; }
+        /* --- KAYIT TALEPLERİ (giriş ekranı) --- */
+        public DbSet<Apya.Platform.RegistrationRequests.RegistrationRequest> RegistrationRequests { get; set; }
+
+        /* --- HİZMET PROTOKOLLERİ (host ↔ kiracı sözleşmesi) --- */
+        public DbSet<Apya.Platform.Agreements.ServiceAgreement> ServiceAgreements { get; set; }
+
+        /* --- FATURALAMA (host → kiracı) --- */
+        public DbSet<Apya.Platform.Billing.SubscriptionInvoice> SubscriptionInvoices { get; set; }
+        public DbSet<Apya.Platform.Billing.SubscriptionPayment> SubscriptionPayments { get; set; }
 
         /* --- SÜRÜM NOTU YAYIN KARARLARI (host) --- */
         public DbSet<Apya.Platform.ReleaseNotes.ReleaseNotePublication> ReleaseNotePublications { get; set; }
@@ -2160,28 +2167,110 @@ namespace Apya.Platform.EntityFrameworkCore
                 b.HasIndex(x => new { x.TenantId, x.Type, x.SubjectId });
             });
 
-            /* --- DEMO TALEPLERİ YAPILANDIRMASI --- */
-            builder.Entity<Apya.Platform.DemoRequests.DemoRequest>(b =>
+            /* --- KAYIT TALEPLERİ YAPILANDIRMASI --- */
+            builder.Entity<Apya.Platform.RegistrationRequests.RegistrationRequest>(b =>
             {
-                b.ToTable(PlatformConsts.DbTablePrefix + "DemoRequests", PlatformConsts.DbSchema);
+                b.ToTable(PlatformConsts.DbTablePrefix + "RegistrationRequests", PlatformConsts.DbSchema);
                 b.ConfigureByConvention();
-                b.Property(x => x.FullName).IsRequired().HasMaxLength(Apya.Platform.DemoRequests.DemoRequestConsts.MaxFullNameLength);
-                b.Property(x => x.CompanyName).IsRequired().HasMaxLength(Apya.Platform.DemoRequests.DemoRequestConsts.MaxCompanyNameLength);
-                b.Property(x => x.Email).IsRequired().HasMaxLength(Apya.Platform.DemoRequests.DemoRequestConsts.MaxEmailLength);
-                b.Property(x => x.Phone).IsRequired().HasMaxLength(Apya.Platform.DemoRequests.DemoRequestConsts.MaxPhoneLength);
-                b.Property(x => x.InterestedModules).HasMaxLength(Apya.Platform.DemoRequests.DemoRequestConsts.MaxInterestedModulesLength);
-                b.Property(x => x.Message).HasMaxLength(Apya.Platform.DemoRequests.DemoRequestConsts.MaxMessageLength);
-                b.Property(x => x.TargetAudience).HasMaxLength(Apya.Platform.DemoRequests.DemoRequestConsts.MaxTargetAudienceLength);
-                b.Property(x => x.ProblemStatement).HasMaxLength(Apya.Platform.DemoRequests.DemoRequestConsts.MaxProblemStatementLength);
-                b.Property(x => x.PlannedActivities).HasMaxLength(Apya.Platform.DemoRequests.DemoRequestConsts.MaxPlannedActivitiesLength);
-                b.Property(x => x.ExpectedOutcomes).HasMaxLength(Apya.Platform.DemoRequests.DemoRequestConsts.MaxExpectedOutcomesLength);
-                b.Property(x => x.AdminNote).HasMaxLength(Apya.Platform.DemoRequests.DemoRequestConsts.MaxAdminNoteLength);
-                b.Property(x => x.IpAddress).HasMaxLength(Apya.Platform.DemoRequests.DemoRequestConsts.MaxIpAddressLength);
-                b.Property(x => x.UserAgent).HasMaxLength(Apya.Platform.DemoRequests.DemoRequestConsts.MaxUserAgentLength);
+                b.Property(x => x.FullName).IsRequired().HasMaxLength(Apya.Platform.RegistrationRequests.RegistrationRequestConsts.MaxFullNameLength);
+                b.Property(x => x.AuthorizedTitle).IsRequired().HasMaxLength(Apya.Platform.RegistrationRequests.RegistrationRequestConsts.MaxAuthorizedTitleLength);
+                b.Property(x => x.Email).IsRequired().HasMaxLength(Apya.Platform.RegistrationRequests.RegistrationRequestConsts.MaxEmailLength);
+                b.Property(x => x.Phone).IsRequired().HasMaxLength(Apya.Platform.RegistrationRequests.RegistrationRequestConsts.MaxPhoneLength);
+                b.Property(x => x.CompanyName).IsRequired().HasMaxLength(Apya.Platform.RegistrationRequests.RegistrationRequestConsts.MaxCompanyNameLength);
+                b.Property(x => x.TaxNumber).IsRequired().HasMaxLength(Apya.Platform.RegistrationRequests.RegistrationRequestConsts.MaxTaxNumberLength);
+                b.Property(x => x.TaxOffice).HasMaxLength(Apya.Platform.RegistrationRequests.RegistrationRequestConsts.MaxTaxOfficeLength);
+                b.Property(x => x.Address).IsRequired().HasMaxLength(Apya.Platform.RegistrationRequests.RegistrationRequestConsts.MaxAddressLength);
+                b.Property(x => x.CorporateEmail).HasMaxLength(Apya.Platform.RegistrationRequests.RegistrationRequestConsts.MaxCorporateEmailLength);
+                b.Property(x => x.OperationalContactName).HasMaxLength(Apya.Platform.RegistrationRequests.RegistrationRequestConsts.MaxOperationalContactNameLength);
+                b.Property(x => x.OperationalContactPhone).HasMaxLength(Apya.Platform.RegistrationRequests.RegistrationRequestConsts.MaxOperationalContactPhoneLength);
+                b.Property(x => x.Message).HasMaxLength(Apya.Platform.RegistrationRequests.RegistrationRequestConsts.MaxMessageLength);
+                b.Property(x => x.AdminNote).HasMaxLength(Apya.Platform.RegistrationRequests.RegistrationRequestConsts.MaxAdminNoteLength);
+                b.Property(x => x.IpAddress).HasMaxLength(Apya.Platform.RegistrationRequests.RegistrationRequestConsts.MaxIpAddressLength);
+                b.Property(x => x.UserAgent).HasMaxLength(Apya.Platform.RegistrationRequests.RegistrationRequestConsts.MaxUserAgentLength);
+                // Para alanı: teklif edilen yıllık bedel (TL). Kuruş hassasiyeti yeter.
+                b.Property(x => x.OfferedAmount).HasColumnType("decimal(18,2)");
+                b.Property(x => x.InviteTokenHash).HasMaxLength(Apya.Platform.Agreements.ServiceAgreementConsts.InviteTokenHashLength);
                 // Panelin varsayılan sorgusu: duruma göre süz, en yeniden eskiye sırala.
                 b.HasIndex(x => new { x.Status, x.CreationTime });
                 // Kötüye kullanım sayacı: aynı IP adresinin son bir saatteki talepleri.
                 b.HasIndex(x => new { x.IpAddress, x.CreationTime });
+                // Davet bağlantısının tek sorgusu: gelen jetonun özetini bul. Tekil DEĞİL —
+                // host yeni bağlantı üretince eski hash yerini yenisine bırakır, ama iki
+                // farklı talebin aynı özeti taşıması pratikte imkânsız olduğu için tekillik
+                // kısıtı eklemek yalnızca gereksiz bir kilitlenme noktası olurdu.
+                b.HasIndex(x => x.InviteTokenHash);
+            });
+
+            /* --- HİZMET PROTOKOLÜ YAPILANDIRMASI --- */
+            builder.Entity<Apya.Platform.Agreements.ServiceAgreement>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "ServiceAgreements", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+
+                b.Property(x => x.Number).IsRequired().HasMaxLength(Apya.Platform.Agreements.ServiceAgreementConsts.MaxNumberLength);
+                b.Property(x => x.TemplateVersion).IsRequired().HasMaxLength(Apya.Platform.Agreements.ServiceAgreementConsts.MaxTemplateVersionLength);
+                // Onaylanan metnin tamamı: uzunluk sınırı YOK, belge kırpılamaz.
+                b.Property(x => x.RenderedHtml).IsRequired();
+                b.Property(x => x.ContentHash).IsRequired().HasMaxLength(Apya.Platform.Agreements.ServiceAgreementConsts.MaxContentHashLength);
+                b.Property(x => x.ApproverName).IsRequired().HasMaxLength(Apya.Platform.Agreements.ServiceAgreementConsts.MaxApproverNameLength);
+                b.Property(x => x.ApproverTitle).IsRequired().HasMaxLength(Apya.Platform.Agreements.ServiceAgreementConsts.MaxApproverTitleLength);
+                b.Property(x => x.ApproverEmail).IsRequired().HasMaxLength(Apya.Platform.Agreements.ServiceAgreementConsts.MaxApproverEmailLength);
+                b.Property(x => x.ApprovedIp).HasMaxLength(Apya.Platform.Agreements.ServiceAgreementConsts.MaxIpAddressLength);
+                b.Property(x => x.ApprovedUserAgent).HasMaxLength(Apya.Platform.Agreements.ServiceAgreementConsts.MaxUserAgentLength);
+                b.Property(x => x.TerminationReason).HasMaxLength(Apya.Platform.Agreements.ServiceAgreementConsts.MaxTerminationReasonLength);
+                b.Property(x => x.Amount).HasColumnType("decimal(18,2)");
+                b.Property(x => x.SuccessFeePercent).HasColumnType("decimal(5,2)");
+
+                // Sözleşme numarası benzersiz. Kayıt soft-delete DEĞİL (AuditedAggregateRoot),
+                // bu yüzden filtresiz tekil indeks güvenli: silinen bir numara rezerve kalmaz.
+                b.HasIndex(x => x.Number).IsUnique();
+                // Kiracının "sözleşmem" sorgusu.
+                b.HasIndex(x => x.TenantId);
+                // Yeniden deneme yolu: bu talebin sözleşmesi zaten var mı?
+                b.HasIndex(x => x.RegistrationRequestId).IsUnique();
+            });
+
+            /* --- FATURALAMA YAPILANDIRMASI --- */
+            builder.Entity<Apya.Platform.Billing.SubscriptionInvoice>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "SubscriptionInvoices", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+
+                b.Property(x => x.Number).IsRequired().HasMaxLength(Apya.Platform.Billing.BillingConsts.MaxNumberLength);
+                b.Property(x => x.OfficialNumber).HasMaxLength(Apya.Platform.Billing.BillingConsts.MaxOfficialNumberLength);
+                b.Property(x => x.Notes).HasMaxLength(Apya.Platform.Billing.BillingConsts.MaxNotesLength);
+                b.Property(x => x.FileName).HasMaxLength(Apya.Platform.Billing.BillingConsts.MaxFileNameLength);
+                b.Property(x => x.StoredFileName).HasMaxLength(Apya.Platform.Billing.BillingConsts.MaxStoredFileNameLength);
+                b.Property(x => x.NetAmount).HasColumnType("decimal(18,2)");
+                b.Property(x => x.VatRate).HasColumnType("decimal(5,2)");
+
+                // Tahsilatlar faturanın parçası: fatura silinirse birlikte gider.
+                b.HasMany(x => x.Payments)
+                 .WithOne()
+                 .HasForeignKey(p => p.InvoiceId)
+                 .OnDelete(DeleteBehavior.Cascade);
+
+                // İç takip numarası benzersiz. Kayıt soft-delete DEĞİL (fatura silinmez,
+                // iptal edilir) → filtresiz tekil indeks güvenli.
+                b.HasIndex(x => x.Number).IsUnique();
+
+                // Kiracının "faturalarım" sorgusu ve host listesinin varsayılan sıralaması.
+                b.HasIndex(x => new { x.TenantId, x.IssueDate });
+                // Vadesi geçenler taraması.
+                b.HasIndex(x => new { x.Status, x.DueDate });
+            });
+
+            builder.Entity<Apya.Platform.Billing.SubscriptionPayment>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "SubscriptionPayments", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+
+                b.Property(x => x.Reference).HasMaxLength(Apya.Platform.Billing.BillingConsts.MaxReferenceLength);
+                b.Property(x => x.FileName).HasMaxLength(Apya.Platform.Billing.BillingConsts.MaxFileNameLength);
+                b.Property(x => x.StoredFileName).HasMaxLength(Apya.Platform.Billing.BillingConsts.MaxStoredFileNameLength);
+                b.Property(x => x.Amount).HasColumnType("decimal(18,2)");
+
+                b.HasIndex(x => x.InvoiceId);
             });
 
             /* --- SÜRÜM NOTU YAYIN KARARLARI --- */

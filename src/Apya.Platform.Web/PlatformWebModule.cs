@@ -23,6 +23,8 @@ using Microsoft.AspNetCore.Extensions.DependencyInjection;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using Volo.Abp.Emailing;
 using Microsoft.Extensions.Hosting;
 using Apya.Platform.EntityFrameworkCore;
 using Apya.Platform.Localization;
@@ -200,6 +202,16 @@ public class PlatformWebModule : AbpModule
     {
         var hostingEnvironment = context.Services.GetHostingEnvironment();
         var configuration = context.Services.GetConfiguration();
+
+#if DEBUG
+        // Yerelde e-postayı DOSYAYA yaz (App_Data/mail-drop), sessizce yutma.
+        // PlatformDomainModule DEBUG'da NullEmailSender kaydeder ve testler onu kullanır;
+        // burası Web uygulaması için onu EZER. Web modülü Domain'e bağımlı olduğu için
+        // ConfigureServices'i sonra koşar ve bu Replace kazanır.
+        // Release derlemede iki kayıt da devrede olmaz; ABP'nin SMTP göndericisi çalışır.
+        context.Services.Replace(
+            ServiceDescriptor.Transient<IEmailSender, Apya.Platform.Web.Mailing.FileDropEmailSender>());
+#endif
 
         // New configurations from the instruction
         // ConfigureMenus(context.Services.GetConfiguration()); // This method is not defined in the original code. Assuming it's a placeholder or needs to be added elsewhere.

@@ -268,6 +268,9 @@ src/Apya.Platform.Web/App_Data/uploads/*
 # Veri koruma anahtarları — uygulama İLK ÇALIŞTIRMADA kendisi üretir.
 # Çerez ve antiforgery jetonlarını imzalayan anahtar malzemesi; commit'lenmemeli.
 src/Apya.Platform.Web/App_Data/DataProtection-Keys/*
+# Yerelde gönderilen e-postaların dökümü (yalnız DEBUG; bkz. FileDropEmailSender).
+# Gerçek alıcı adresleri ve şifre sıfırlama jetonları içerir — commit'lenmemeli.
+src/Apya.Platform.Web/App_Data/mail-drop/*
 
 # Local secrets — must never be committed (contains DB password, API keys vb.)
 **/appsettings.secrets.json

@@ -1,0 +1,22 @@
+@page
+@using Apya.Platform.Localization
+@using Microsoft.AspNetCore.Mvc.Localization
+@model Apya.Platform.Web.Pages.Account.RegistrationRequestSentModel
+@inject IHtmlLocalizer<PlatformResource> L
+@{
+    Layout = "~/Pages/Account/_ApyaAccountLayout.cshtml";
+    ViewBag.Title = L["RegistrationRequest:Sent:Title"].Value;
+}
+
+<p class="apya-auth__hint">@L["RegistrationRequest:Sent:Message"]</p>
+
+<ol class="apya-wiz__next-steps">
+    <li>@L["RegistrationRequest:Sent:Step1"]</li>
+    <li>@L["RegistrationRequest:Sent:Step2"]</li>
+    <li>@L["RegistrationRequest:Sent:Step3"]</li>
+</ol>
+
+<a class="apya-auth__submit d-flex align-items-center justify-content-center text-decoration-none"
+   asp-page="./Login">
+    &larr; @L["RegistrationRequest:BackToLogin"]
+</a>

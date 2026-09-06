@@ -548,13 +548,6 @@
     font-family: inherit;
 }
 
-/* Modül onay kutuları: dar kartta iki kolon, taşarsa tek kolona iner. */
-.apya-auth__choices {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-    gap: 8px 14px;
-}
-
 /* Bal küpü — ekrandan ve ekran okuyucudan çıkarılır ama forma GÖNDERİLİR.
    display:none KULLANILMAZ: bazı botlar görünmeyen alanı atlar, amaç onları
    doldurmaya teşvik etmek. */
@@ -566,7 +559,8 @@
     overflow: hidden;
 }
 
-/* Proje fikri bloğunun başlığı — iletişim alanlarından görsel olarak ayırır. */
+/* Bölüm başlığı — form bloklarını görsel olarak ayırır. Sihirbazda her adımın
+   <legend>'i budur; ilk panelde üst çizgi gereksiz (kartın kendi kenarı var). */
 .apya-auth__section {
     margin: 22px 0 10px;
     padding-top: 16px;
@@ -574,4 +568,243 @@
     font-size: 13px;
     font-weight: 600;
     color: var(--apya-text-secondary, #6B7280);
+}
+
+/* Alan altındaki açıklama — hata mesajının yerini almaz, onun üstünde durur. */
+.apya-auth__hint-inline {
+    display: block;
+    margin-top: 4px;
+    font-size: 12px;
+    color: var(--apya-text-tertiary, #9CA3AF);
+}
+
+/* ============================================================
+   KAYIT TALEBİ SİHİRBAZI
+   Adım gezinmesi JS ile açılır; JS yoksa bu blokların hiçbiri
+   devreye girmez ve form düz bir liste olarak çalışır.
+   ============================================================ */
+
+/* Adım göstergesi. Dar kartta (384px) dört adım yan yana sığmadığı için
+   etiketler <480px'te gizlenir, yalnız numaralı noktalar kalır. */
+.apya-wiz__steps {
+    display: flex;
+    gap: 6px;
+    margin: 0 0 18px;
+    padding: 0;
+    list-style: none;
+}
+
+.apya-wiz__step {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex: 1 1 0;
+    min-width: 0;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--apya-text-tertiary, #9CA3AF);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.apya-wiz__dot {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: var(--apya-bg-muted, #F3F4F6);
+    border: 1px solid var(--apya-border-default, #E5E7EB);
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.apya-wiz__step.is-active {
+    color: var(--apya-accent-600, #4338CA);
+}
+
+.apya-wiz__step.is-active .apya-wiz__dot {
+    background: var(--apya-accent-500, #4F46E5);
+    border-color: var(--apya-accent-500, #4F46E5);
+    color: #FFFFFF;
+}
+
+.apya-wiz__step.is-done .apya-wiz__dot {
+    background: var(--apya-accent-100, #E0E7FF);
+    border-color: var(--apya-accent-300, #A5B4FC);
+    color: var(--apya-accent-600, #4338CA);
+}
+
+@media (max-width: 480px) {
+    .apya-wiz__step {
+        font-size: 0;
+        gap: 0;
+        justify-content: center;
+    }
+}
+
+/* fieldset varsayılan kenarlığı ve iç boşluğu düzeni bozuyor. */
+.apya-wiz__panel {
+    margin: 0;
+    padding: 0;
+    border: 0;
+    min-width: 0;
+}
+
+/* İlk panelin legend'ı kartın üst kenarıyla çift çizgi oluşturuyordu. */
+.apya-wiz__panel[data-wizard-panel="1"] .apya-auth__section {
+    margin-top: 0;
+    padding-top: 0;
+    border-top: 0;
+}
+
+/* --- Paket kartları --- */
+.apya-wiz__plans {
+    display: grid;
+    gap: 10px;
+}
+
+.apya-wiz__plan {
+    display: block;
+    position: relative;
+    padding: 12px 14px;
+    border: 1px solid var(--apya-border-default, #E5E7EB);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: border-color .15s ease, background-color .15s ease;
+}
+
+.apya-wiz__plan:hover {
+    border-color: var(--apya-accent-300, #A5B4FC);
+}
+
+/* Radyo düğmesi görünmez ama ODAKLANILABİLİR kalır: display:none klavye
+   gezinmesini ve ekran okuyucuyu keserdi. */
+.apya-wiz__plan-radio {
+    position: absolute;
+    opacity: 0;
+    width: 1px;
+    height: 1px;
+}
+
+.apya-wiz__plan-radio:checked + .apya-wiz__plan-body {
+    color: var(--apya-text-primary, #374151);
+}
+
+.apya-wiz__plan:has(.apya-wiz__plan-radio:checked) {
+    border-color: var(--apya-accent-500, #4F46E5);
+    background: var(--apya-accent-50, #EEF2FF);
+}
+
+.apya-wiz__plan:has(.apya-wiz__plan-radio:focus-visible) {
+    outline: 2px solid var(--apya-accent-500, #4F46E5);
+    outline-offset: 2px;
+}
+
+.apya-wiz__plan-body {
+    display: grid;
+    gap: 3px;
+}
+
+.apya-wiz__plan-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--apya-text-primary, #374151);
+}
+
+.apya-wiz__plan-tag {
+    display: inline-block;
+    margin-inline-start: 6px;
+    padding: 1px 7px;
+    border-radius: 999px;
+    background: var(--apya-accent-500, #4F46E5);
+    color: #FFFFFF;
+    font-size: 10px;
+    font-weight: 600;
+    vertical-align: middle;
+}
+
+.apya-wiz__plan-quota {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--apya-accent-600, #4338CA);
+}
+
+.apya-wiz__plan-desc {
+    font-size: 12px;
+    line-height: 1.45;
+    color: var(--apya-text-secondary, #6B7280);
+}
+
+/* --- Özet ve bilgi notları --- */
+.apya-wiz__note {
+    margin: 14px 0 0;
+    padding: 10px 12px;
+    border-radius: 8px;
+    background: var(--apya-bg-muted, #F3F4F6);
+    font-size: 12px;
+    line-height: 1.5;
+    color: var(--apya-text-secondary, #6B7280);
+}
+
+.apya-wiz__summary {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr);
+    gap: 4px 12px;
+    margin: 0;
+    font-size: 12px;
+}
+
+.apya-wiz__summary dt {
+    font-weight: 500;
+    color: var(--apya-text-tertiary, #9CA3AF);
+    overflow-wrap: anywhere;
+}
+
+.apya-wiz__summary dd {
+    margin: 0;
+    color: var(--apya-text-primary, #374151);
+    overflow-wrap: anywhere;
+}
+
+.apya-wiz__next-steps {
+    margin: 0 0 18px;
+    padding-inline-start: 20px;
+    font-size: 13px;
+    line-height: 1.6;
+    color: var(--apya-text-secondary, #6B7280);
+}
+
+/* --- Gezinme düğmeleri --- */
+.apya-wiz__nav {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 18px;
+}
+
+/* Gönder ve İleri aynı yeri paylaşır; hangisinin görüneceğini JS seçer. */
+.apya-wiz__nav .apya-auth__submit {
+    flex: 1 1 auto;
+    margin-top: 0;
+}
+
+.apya-wiz__back {
+    flex: 0 0 auto;
+    padding: 0 14px;
+    height: 42px;
+    border: 1px solid var(--apya-border-default, #E5E7EB);
+    border-radius: 8px;
+    background: transparent;
+    font-size: 13px;
+    color: var(--apya-text-secondary, #6B7280);
+    cursor: pointer;
+}
+
+.apya-wiz__back:hover {
+    border-color: var(--apya-accent-300, #A5B4FC);
+    color: var(--apya-accent-600, #4338CA);
 }

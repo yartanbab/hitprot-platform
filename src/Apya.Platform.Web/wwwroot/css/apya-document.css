@@ -1,0 +1,161 @@
+/* ============================================================
+   HUKUKİ BELGE GÖRÜNÜMÜ (.apya-doc*)
+
+   İKİ AYRI YÜZEYDE kullanılır ve bu yüzden kendi dosyasında durur:
+     · /Account/Protokol       → hesap düzeni (apya-account.css yanında)
+     · /Subscription           → uygulama kabuğu (LeptonX)
+   Bir tarafın stil dosyasına konsaydı diğer yüzeyde belge biçimsiz kalırdı.
+
+   Kurallar bilerek DÜŞÜK ÖZGÜLLÜKTE ve .apya-doc kapsayıcısına bağlı: iki farklı
+   tema altında da aynı görünsün, dışarı sızmasın.
+   ============================================================ */
+
+/* Kaydırılabilir belge kutusu. Protokol onayında kaydırma kapısı buna bağlıdır
+   (Protokol.js) — sabit yükseklik olmadan "sona gelindi" ölçülemez. */
+.apya-doc__frame {
+    max-height: 340px;
+    overflow-y: auto;
+    padding: 16px 18px;
+    border: 1px solid var(--apya-border-default, #E5E7EB);
+    border-radius: 10px;
+    background: var(--apya-bg-surface, #FFFFFF);
+    font-size: 12px;
+    line-height: 1.6;
+    color: var(--apya-text-primary, #374151);
+}
+
+.apya-doc__frame:focus-visible {
+    outline: 2px solid var(--apya-accent-500, #4F46E5);
+    outline-offset: 2px;
+}
+
+/* Sözleşme zaten onaylanmışsa okuma alanı daha geniş olabilir — kapı yok. */
+.apya-doc__frame--tall {
+    max-height: 520px;
+}
+
+.apya-doc h1 {
+    margin: 0 0 4px;
+    font-size: 15px;
+    font-weight: 700;
+    line-height: 1.35;
+}
+
+.apya-doc h2 {
+    margin: 18px 0 6px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--apya-accent-600, #4338CA);
+}
+
+.apya-doc p {
+    margin: 0 0 8px;
+}
+
+.apya-doc ol {
+    margin: 0 0 8px;
+    padding-inline-start: 20px;
+}
+
+.apya-doc li {
+    margin-bottom: 6px;
+}
+
+.apya-doc__meta {
+    font-size: 11px;
+    color: var(--apya-text-tertiary, #9CA3AF);
+}
+
+/* Paket ve taraf tabloları. Dar ekranda kendi içinde kayar — belgenin tamamını
+   yatay kaydırmaya zorlamak metni okunmaz yapardı. */
+.apya-doc__table {
+    display: block;
+    width: 100%;
+    overflow-x: auto;
+    margin: 0 0 10px;
+    border-collapse: collapse;
+    font-size: 11px;
+}
+
+.apya-doc__table th,
+.apya-doc__table td {
+    padding: 6px 8px;
+    border: 1px solid var(--apya-border-default, #E5E7EB);
+    text-align: start;
+    vertical-align: top;
+}
+
+.apya-doc__table th {
+    background: var(--apya-bg-muted, #F3F4F6);
+    font-weight: 600;
+}
+
+.apya-doc__highlight {
+    padding: 8px 10px;
+    border-radius: 6px;
+    background: var(--apya-accent-50, #EEF2FF);
+}
+
+/* Elektronik onay kaydı — belgenin "imza" bloğu. */
+.apya-doc__seal {
+    margin-top: 14px;
+    padding: 12px 14px;
+    border: 1px dashed var(--apya-accent-300, #A5B4FC);
+    border-radius: 8px;
+    background: var(--apya-bg-muted, #F3F4F6);
+}
+
+.apya-doc__seal-title {
+    font-weight: 600;
+    font-size: 11px;
+    letter-spacing: .02em;
+}
+
+.apya-doc__seal dl {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.6fr);
+    gap: 3px 10px;
+    margin: 8px 0 0;
+}
+
+.apya-doc__seal dt {
+    font-weight: 500;
+    color: var(--apya-text-secondary, #6B7280);
+}
+
+.apya-doc__seal dd {
+    margin: 0;
+    overflow-wrap: anywhere;
+}
+
+/* Hash 64 karakter: taşmasın diye kırılır ve dar yazı tipiyle basılır. */
+.apya-doc__hash {
+    font-family: var(--apya-font-mono, ui-monospace, "JetBrains Mono", monospace);
+    font-size: 10px;
+    overflow-wrap: anywhere;
+}
+
+/* Onay kutularının kilidi açılmadan gösterilen ipucu. */
+.apya-doc__gate {
+    margin: 8px 0 14px;
+    font-size: 12px;
+    color: var(--apya-text-tertiary, #9CA3AF);
+}
+
+.apya-doc__details > summary {
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--apya-accent-600, #4338CA);
+}
+
+/* Yazdırma: belge tam görünsün, kutu kesmesin. */
+@media print {
+    .apya-doc__frame,
+    .apya-doc__frame--tall {
+        max-height: none;
+        overflow: visible;
+        border: 0;
+        padding: 0;
+    }
+}

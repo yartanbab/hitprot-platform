@@ -1,0 +1,384 @@
+@page
+@using System
+@using System.Globalization
+@using System.Linq
+@using Apya.Platform.RegistrationRequests
+@using Apya.Platform.Permissions
+@using Apya.Platform.Tenants
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Mvc.Localization
+@using Apya.Platform.Localization
+@model Apya.Platform.Web.Pages.Admin.RegistrationRequests.IndexModel
+@inject IAuthorizationService AuthorizationService
+@inject IHtmlLocalizer<PlatformResource> L
+@{
+    ViewBag.Title = "Kayıt Talepleri";
+    var canManage = await AuthorizationService.IsGrantedAsync(PlatformPermissions.RegistrationRequests.Manage);
+}
+
+<div data-page-description="Giriş ekranından gelen kayıt taleplerini değerlendirin" class="apya-page">
+
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+        <h5 class="mb-0"><i class="fa fa-file-signature me-2" aria-hidden="true"></i> Kayıt Talepleri</h5>
+        <div class="d-flex gap-2 align-items-center flex-wrap">
+            <span class="badge bg-primary">Yeni: @Model.Summary.NewCount</span>
+            <span class="badge bg-warning text-dark">İncelemede: @Model.Summary.InReviewCount</span>
+            <span class="badge bg-success">Onaylı: @Model.Summary.ApprovedCount</span>
+            <span class="badge bg-danger">Red: @Model.Summary.RejectedCount</span>
+            <span class="badge bg-info text-dark">Protokolde: @Model.Summary.AwaitingProtocolCount</span>
+            <span class="badge bg-dark">Hesap açıldı: @Model.Summary.AccountCreatedCount</span>
+            <span class="badge bg-secondary">Kapalı: @Model.Summary.ClosedCount</span>
+        </div>
+    </div>
+
+    @if (TempData["Saved"] != null)
+    {
+        <div class="alert alert-success" role="status">Talep güncellendi.</div>
+    }
+
+    @if (TempData["InviteError"] != null)
+    {
+        <div class="alert alert-warning" role="alert">@TempData["InviteError"]</div>
+    }
+
+    @if (TempData["InviteLink"] is string inviteLink)
+    {
+        @* 🔐 Bağlantı YALNIZ BURADA, bir kez görünür — jetonun kendisi veritabanında
+           saklanmaz. Sayfa yenilenince kaybolur; kaybedilirse yenisi üretilir. *@
+        <div class="alert alert-success" role="status">
+            <div class="fw-semibold mb-1">
+                <i class="fa fa-link me-1" aria-hidden="true"></i> Davet bağlantısı üretildi
+            </div>
+            <p class="small mb-2">
+                Bu bağlantı <strong>yalnız şimdi</strong> görünür ve
+                <strong>@TempData["InviteExpiresAt"]</strong> tarihine kadar geçerlidir.
+                Aday protokolü onaylayıp hesabını kendisi açacak.
+            </p>
+            @if (TempData["InviteMailSent"] is true)
+            {
+                <p class="small mb-2">
+                    <i class="fa fa-envelope-circle-check me-1" aria-hidden="true"></i>
+                    Bağlantı adaya <strong>e-postayla gönderildi</strong>. Yine de aşağıdan
+                    kopyalayıp ikinci bir kanaldan iletebilirsiniz.
+                </p>
+            }
+            else
+            {
+                <p class="small mb-2 text-warning-emphasis">
+                    <i class="fa fa-triangle-exclamation me-1" aria-hidden="true"></i>
+                    E-posta gönderilemedi (SMTP tanımlı değil). Bağlantıyı <strong>siz iletin</strong>.
+                </p>
+            }
+            <div class="input-group input-group-sm">
+                <input type="text" class="form-control" readonly value="@inviteLink"
+                       id="invite-link" aria-label="Davet bağlantısı"
+                       onclick="this.select()" />
+                <button class="btn btn-outline-secondary" type="button"
+                        onclick="navigator.clipboard.writeText(document.getElementById('invite-link').value); this.textContent='Kopyalandı';">
+                    Kopyala
+                </button>
+            </div>
+        </div>
+    }
+
+    <form method="get" class="row g-2 align-items-end mb-3">
+        <div class="col-sm-4 col-md-3">
+            <label class="form-label" for="Status">Durum</label>
+            <select class="form-select" id="Status" name="Status" asp-for="Status">
+                <option value="">Tümü</option>
+                @foreach (var status in Enum.GetValues<RegistrationRequestStatus>())
+                {
+                    <option value="@status">@L["RegistrationRequest:Status:" + status]</option>
+                }
+            </select>
+        </div>
+        <div class="col-sm-5 col-md-4">
+            <label class="form-label" for="Filter">Ara</label>
+            <input class="form-control" id="Filter" name="Filter" asp-for="Filter"
+                   placeholder="Ad, kurum, vergi no, e-posta veya telefon" />
+        </div>
+        <div class="col-sm-3 col-md-2">
+            <button type="submit" class="btn btn-outline-secondary w-100">
+                <i class="fa fa-filter me-1" aria-hidden="true"></i> Süz
+            </button>
+        </div>
+    </form>
+
+    @if (Model.Items.Count == 0)
+    {
+        <div class="alert alert-light border" role="status">
+            Bu süzgece uyan kayıt talebi yok.
+        </div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table align-middle">
+                <thead>
+                    <tr>
+                        <th scope="Column">Tarih</th>
+                        <th scope="Column">Kurum</th>
+                        <th scope="Column">Yetkili</th>
+                        <th scope="Column">Paket</th>
+                        <th scope="Column">Durum</th>
+                        <th scope="Column" class="text-end">Detay</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model.Items)
+                    {
+                        var detailId = "registration-detail-" + item.Id;
+                        <tr>
+                            <td class="text-nowrap">@item.CreationTime.ToString("dd.MM.yyyy HH:mm")</td>
+                            <td>
+                                @item.CompanyName<br />
+                                <span class="text-muted small">@L["RegistrationRequest:CompanyType:" + item.CompanyType]</span>
+                            </td>
+                            <td>
+                                @item.FullName<br />
+                                <span class="text-muted small">@item.AuthorizedTitle</span>
+                            </td>
+                            <td>
+                                <span class="badge bg-light text-dark border">
+                                    @L["RegistrationRequest:Plan:" + item.EffectivePlan]
+                                </span>
+                                @if (item.ApprovedPlan.HasValue && item.ApprovedPlan != item.RequestedPlan)
+                                {
+                                    <br />
+                                    <span class="text-muted small">
+                                        talep: @L["RegistrationRequest:Plan:" + item.RequestedPlan]
+                                    </span>
+                                }
+                            </td>
+                            <td>
+                                <span class="badge @Apya.Platform.Web.Pages.Admin.RegistrationRequests.IndexModel.StatusBadgeClass(item.Status)">
+                                    @L["RegistrationRequest:Status:" + item.Status]
+                                </span>
+                            </td>
+                            <td class="text-end">
+                                <button class="btn btn-sm btn-outline-secondary" type="button"
+                                        data-bs-toggle="collapse" data-bs-target="#@detailId"
+                                        aria-expanded="false" aria-controls="@detailId">
+                                    <i class="fa fa-chevron-down" aria-hidden="true"></i>
+                                    <span class="visually-hidden">Detayı aç</span>
+                                </button>
+                            </td>
+                        </tr>
+                        <tr class="collapse" id="@detailId">
+                            <td colspan="6" class="bg-body-tertiary">
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <div class="fw-semibold small mb-1">Kurum bilgileri</div>
+                                        <dl class="row mb-0 small">
+                                            <dt class="col-5">Vergi / kütük no</dt>
+                                            <dd class="col-7">@item.TaxNumber</dd>
+                                            @if (!string.IsNullOrWhiteSpace(item.TaxOffice))
+                                            {
+                                                <dt class="col-5">Vergi dairesi</dt>
+                                                <dd class="col-7">@item.TaxOffice</dd>
+                                            }
+                                            <dt class="col-5">Tebligat adresi</dt>
+                                            <dd class="col-7">@item.Address</dd>
+                                            @if (!string.IsNullOrWhiteSpace(item.CorporateEmail))
+                                            {
+                                                <dt class="col-5">Kurumsal e-posta</dt>
+                                                <dd class="col-7"><a href="mailto:@item.CorporateEmail">@item.CorporateEmail</a></dd>
+                                            }
+                                            @if (item.CompanySize.HasValue)
+                                            {
+                                                <dt class="col-5">Çalışan sayısı</dt>
+                                                <dd class="col-7">@L["RegistrationRequest:CompanySize:" + item.CompanySize.Value]</dd>
+                                            }
+                                        </dl>
+
+                                        <div class="fw-semibold small mt-3 mb-1">İletişim</div>
+                                        <dl class="row mb-0 small">
+                                            <dt class="col-5">Yetkili e-posta</dt>
+                                            <dd class="col-7"><a href="mailto:@item.Email">@item.Email</a></dd>
+                                            <dt class="col-5">Yetkili telefon</dt>
+                                            <dd class="col-7"><a href="tel:@item.Phone">@item.Phone</a></dd>
+                                            @if (!string.IsNullOrWhiteSpace(item.OperationalContactName))
+                                            {
+                                                <dt class="col-5">Operasyonel kişi</dt>
+                                                <dd class="col-7">
+                                                    @item.OperationalContactName
+                                                    @if (!string.IsNullOrWhiteSpace(item.OperationalContactPhone))
+                                                    {
+                                                        <text> · </text><a href="tel:@item.OperationalContactPhone">@item.OperationalContactPhone</a>
+                                                    }
+                                                </dd>
+                                            }
+                                            <dt class="col-5">IP</dt>
+                                            <dd class="col-7">@(item.IpAddress ?? "—")</dd>
+                                            @if (item.LastModificationTime.HasValue)
+                                            {
+                                                <dt class="col-5">Son güncelleme</dt>
+                                                <dd class="col-7">@item.LastModificationTime.Value.ToString("dd.MM.yyyy HH:mm")</dd>
+                                            }
+                                        </dl>
+
+                                        @if (!string.IsNullOrWhiteSpace(item.Message))
+                                        {
+                                            <div class="mt-3">
+                                                <div class="fw-semibold small">Eklemek istedikleri</div>
+                                                <p class="mb-0 small">@item.Message</p>
+                                            </div>
+                                        }
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        @if (canManage)
+                                        {
+                                            <form method="post" asp-page-handler="Update" class="row g-2">
+                                                @* SIRA ÖNEMLİ: süzgeci koruyan gizli alanlar ÖNCE, satırın
+                                                   seçicileri SONRA. Bağlama aynı adı taşıyan değerlerden
+                                                   İLKİNİ alır; bu yüzden seçicinin adı newStatus. *@
+                                                <input type="hidden" name="id" value="@item.Id" />
+                                                <input type="hidden" name="Status" value="@Model.Status" />
+                                                <input type="hidden" name="Filter" value="@Model.Filter" />
+                                                <input type="hidden" name="PageIndex" value="@Model.PageIndex" />
+
+                                                <div class="col-12">
+                                                    <label class="form-label small" for="status-@item.Id">Durum</label>
+                                                    @* Akışa ait durumlar (protokol bekliyor / hesap açıldı) seçicide YOK;
+                                                       onları davet üretimi ve protokol onayı yazar. Kayıt hâlihazırda
+                                                       o durumdaysa listeye eklenir, yoksa "Kaydet" onu geri düşürürdü. *@
+                                                    <select class="form-select form-select-sm" id="status-@item.Id" name="newStatus">
+                                                        @foreach (var status in Apya.Platform.Web.Pages.Admin.RegistrationRequests.IndexModel.SelectableStatuses)
+                                                        {
+                                                            <option value="@status" selected="@(status == item.Status)">
+                                                                @L["RegistrationRequest:Status:" + status]
+                                                            </option>
+                                                        }
+                                                        @if (!Apya.Platform.Web.Pages.Admin.RegistrationRequests.IndexModel.SelectableStatuses.Contains(item.Status))
+                                                        {
+                                                            <option value="@item.Status" selected>
+                                                                @L["RegistrationRequest:Status:" + item.Status]
+                                                            </option>
+                                                        }
+                                                    </select>
+                                                </div>
+
+                                                <div class="col-sm-6">
+                                                    <label class="form-label small" for="plan-@item.Id">Onaylanan paket</label>
+                                                    <select class="form-select form-select-sm" id="plan-@item.Id" name="approvedPlan">
+                                                        <option value="">Adayın seçtiği (@L["RegistrationRequest:Plan:" + item.RequestedPlan])</option>
+                                                        @foreach (var plan in Enum.GetValues<SalesPlan>())
+                                                        {
+                                                            <option value="@plan" selected="@(item.ApprovedPlan == plan)">
+                                                                @L["RegistrationRequest:Plan:" + plan]
+                                                            </option>
+                                                        }
+                                                    </select>
+                                                </div>
+
+                                                <div class="col-sm-6">
+                                                    <label class="form-label small" for="amount-@item.Id">
+                                                        Yıllık bedel (TL, KDV hariç)
+                                                    </label>
+                                                    @* type="number" değeri DAİMA noktalı gönderir; alan elle
+                                                       name= ile yazıldığı için ASP.NET işaretçiyi kendisi
+                                                       basmaz. __Invariant olmadan tr-TR bağlaması noktayı
+                                                       binlik sayar ve tutar bin kat sapar. *@
+                                                    <input class="form-control form-control-sm" id="amount-@item.Id"
+                                                           type="number" step="0.01" min="0" name="offeredAmount"
+                                                           value="@(item.OfferedAmount?.ToString(CultureInfo.InvariantCulture))" />
+                                                    <input type="hidden" name="__Invariant" value="offeredAmount" />
+                                                </div>
+
+                                                <div class="col-12">
+                                                    <label class="form-label small" for="note-@item.Id">İç not</label>
+                                                    <textarea class="form-control form-control-sm" id="note-@item.Id"
+                                                              name="adminNote" rows="3"
+                                                              placeholder="Görüşme notu, onay/ret gerekçesi">@item.AdminNote</textarea>
+                                                </div>
+
+                                                <div class="col-12">
+                                                    <button type="submit" class="btn btn-sm btn-primary">
+                                                        <i class="fa fa-save me-1" aria-hidden="true"></i> Kaydet
+                                                    </button>
+                                                </div>
+                                            </form>
+
+                                            @* Davet üretimi AYRI form: değerlendirme formunun içine konsaydı
+                                               iki gönder düğmesi tek forma düşer ve Enter tuşu hangisini
+                                               tetikleyeceği tarayıcıya kalırdı. *@
+                                            <div class="border-top mt-3 pt-3">
+                                                @if (item.InviteUsedAt.HasValue)
+                                                {
+                                                    <div class="small text-success">
+                                                        <i class="fa fa-circle-check me-1" aria-hidden="true"></i>
+                                                        Hesap açıldı — @item.InviteUsedAt.Value.ToString("dd.MM.yyyy HH:mm")
+                                                    </div>
+                                                }
+                                                else
+                                                {
+                                                    <form method="post" asp-page-handler="IssueInvite">
+                                                        <input type="hidden" name="id" value="@item.Id" />
+                                                        <input type="hidden" name="Status" value="@Model.Status" />
+                                                        <input type="hidden" name="Filter" value="@Model.Filter" />
+                                                        <input type="hidden" name="PageIndex" value="@Model.PageIndex" />
+
+                                                        @if (item.HasPendingInvite)
+                                                        {
+                                                            <div class="small text-muted mb-2">
+                                                                Davet bağlantısı @item.InviteIssuedAt!.Value.ToString("dd.MM.yyyy HH:mm") tarihinde üretildi,
+                                                                @item.InviteExpiresAt!.Value.ToString("dd.MM.yyyy") tarihine kadar geçerli.
+                                                                Bağlantı bir daha gösterilemez; kayıpsa yenisini üretin (eskisi geçersizleşir).
+                                                            </div>
+                                                        }
+
+                                                        <button type="submit" class="btn btn-sm btn-outline-primary">
+                                                            <i class="fa fa-link me-1" aria-hidden="true"></i>
+                                                            @(item.HasPendingInvite ? "Yeni davet bağlantısı üret" : "Davet bağlantısı üret")
+                                                        </button>
+                                                    </form>
+                                                }
+                                            </div>
+                                        }
+                                        else
+                                        {
+                                            <dl class="row mb-0 small">
+                                                @if (item.OfferedAmount.HasValue)
+                                                {
+                                                    <dt class="col-5">Yıllık bedel</dt>
+                                                    <dd class="col-7">@item.OfferedAmount.Value.ToString("N2") TL + KDV</dd>
+                                                }
+                                            </dl>
+                                            @if (!string.IsNullOrWhiteSpace(item.AdminNote))
+                                            {
+                                                <div class="fw-semibold small mt-2">İç not</div>
+                                                <p class="mb-0 small">@item.AdminNote</p>
+                                            }
+                                        }
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        @if (Model.TotalPages > 1)
+        {
+            <nav aria-label="Sayfalama">
+                <ul class="pagination pagination-sm">
+                    <li class="page-item @(Model.PageIndex <= 1 ? "disabled" : "")">
+                        <a class="page-link"
+                           asp-route-Status="@Model.Status" asp-route-Filter="@Model.Filter"
+                           asp-route-PageIndex="@(Model.PageIndex - 1)">Önceki</a>
+                    </li>
+                    <li class="page-item disabled">
+                        <span class="page-link">@Model.PageIndex / @Model.TotalPages</span>
+                    </li>
+                    <li class="page-item @(Model.PageIndex >= Model.TotalPages ? "disabled" : "")">
+                        <a class="page-link"
+                           asp-route-Status="@Model.Status" asp-route-Filter="@Model.Filter"
+                           asp-route-PageIndex="@(Model.PageIndex + 1)">Sonraki</a>
+                    </li>
+                </ul>
+            </nav>
+        }
+    }
+</div>

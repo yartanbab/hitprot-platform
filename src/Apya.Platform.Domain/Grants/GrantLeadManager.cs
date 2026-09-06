@@ -12,7 +12,7 @@ namespace Apya.Platform.Grants;
 /// 1g / 5b · Oturumsuz talep formunun iş kuralları: kötüye kullanım koruması ve
 /// kaydın oluşturulması. AppService yalnız DTO ve orkestrasyon işi yapar.
 ///
-/// <para>Emsal <c>DemoRequestManager</c>: aynı IP'den kısa sürede gelen talepler
+/// <para>Emsal <c>RegistrationRequestManager</c>: aynı IP'den kısa sürede gelen talepler
 /// sınırlanır. Form oturumsuz olduğu için başka bir tutamak yok.</para>
 /// </summary>
 public class GrantLeadManager : DomainService

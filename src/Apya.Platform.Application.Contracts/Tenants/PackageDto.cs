@@ -105,6 +105,16 @@ public class SubscriptionSettingsDto
 
     /// <summary>Dış satış/fiyat sayfası adresi.</summary>
     public string UpgradeUrl { get; set; } = string.Empty;
+
+    // --- Satış paketi bedelleri (TL, KDV hariç) — protokol Madde 3 ---
+    // 0 = TANIMLI DEĞİL. Kayıt talebi onaylanırken bedel boş bırakılırsa buradaki
+    // değer kullanılır; burası da boşsa sözleşmeye rakam YAZILMAZ.
+
+    public decimal StandardPlanPrice { get; set; }
+
+    public decimal CorporatePlanPrice { get; set; }
+
+    public decimal JointPlanPrice { get; set; }
 }
 
 public class UpdatePackagePermissionsDto

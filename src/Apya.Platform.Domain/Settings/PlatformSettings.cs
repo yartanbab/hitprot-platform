@@ -368,6 +368,28 @@ public static class PlatformSettings
         /// <summary>Dış satış/fiyat sayfası adresi. Boş = bağlantı gösterilmez.</summary>
         public const string UpgradeUrl = Prefix + ".Subscription.UpgradeUrl";
     }
+
+    /// <summary>
+    /// Satış paketlerinin yıllık liste bedeli (TL, KDV hariç) — protokolün 3. maddesindeki
+    /// "Yıllık Lisans/Kullanım Bedeli".
+    ///
+    /// <para><b>Neden ayar, neden kod sabiti değil:</b> bedel ticari bir karardır ve zamla
+    /// değişir; sürüm çıkmadan güncellenebilmeli.</para>
+    ///
+    /// <para><b>Neden paket başına ayrı ayar:</b> tek bir "fiyat listesi" metni ayrıştırma
+    /// gerektirir ve ayar ekranında tek bir kutuya sıkışırdı. Yeni bir satış paketi
+    /// eklenirse buraya bir sabit daha girer — açık ve okunaklı kalır.</para>
+    ///
+    /// <para>Boş ya da "0" = <b>tanımlı değil</b>: sistem bedeli kendiliğinden yazmaz,
+    /// host onay ekranında elle girer. Uydurulmuş bir rakamın sözleşmeye geçmesindense
+    /// alanın boş kalması yeğdir.</para>
+    /// </summary>
+    public static class Pricing
+    {
+        public const string StandardPlan = Prefix + ".Pricing.StandardPlan";
+        public const string CorporatePlan = Prefix + ".Pricing.CorporatePlan";
+        public const string JointPlan = Prefix + ".Pricing.JointPlan";
+    }
 }
 
 /// <summary>Ayarların kod içinde tekrarlanmaması için varsayılanlar tek yerde.</summary>

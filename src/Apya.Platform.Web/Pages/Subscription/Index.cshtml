@@ -7,6 +7,11 @@
     var sub = Model.Subscription;
 }
 
+@section styles {
+    @* Sözleşme kartındaki belge görünümü. Aynı dosya /Account/Protokol'de de yüklenir. *@
+    <abp-style src="/css/apya-document.css" />
+}
+
 @*
     PAKETİM — kiracının kendi paketini gördüğü tek yüzey.
 
@@ -221,6 +226,256 @@ else
             </abp-card-body>
         </abp-card>
     }
+
+    @* --- SÖZLEŞMEM ---
+       Sözleşmesi olmayan kiracıda kart HİÇ basılmaz: protokol akışı devreye girmeden
+       önce kurulmuş müşteriler için "sözleşme bulunamadı" yazmak, olmayan bir eksiklik
+       varmış gibi gösterirdi. *@
+    @if (Model.Agreement is { } agreement)
+    {
+        <abp-card class="mt-3">
+            <abp-card-header>
+                <abp-card-title>
+                    <i class="fa fa-file-signature me-2"></i>@L["Subscription:Agreement.Title"]
+                </abp-card-title>
+            </abp-card-header>
+            <abp-card-body>
+                @if (!agreement.HashVerified)
+                {
+                    @* Saklanan metin, saklanan özetle tutmuyor. Sessiz geçmek, delil değerini
+                       yitirmiş bir belgeyi geçerli göstermek olurdu. *@
+                    <div class="alert alert-danger" role="alert">
+                        <i class="fa fa-triangle-exclamation me-2"></i>@L["Subscription:Agreement.HashMismatch"]
+                    </div>
+                }
+
+                <dl class="row small mb-3">
+                    <dt class="col-sm-4">@L["Subscription:Agreement.Number"]</dt>
+                    <dd class="col-sm-8">@agreement.Number</dd>
+
+                    <dt class="col-sm-4">@L["Subscription:Agreement.Plan"]</dt>
+                    <dd class="col-sm-8">@agreement.PlanName</dd>
+
+                    @if (agreement.Amount.HasValue)
+                    {
+                        <dt class="col-sm-4">@L["Subscription:Agreement.Amount"]</dt>
+                        <dd class="col-sm-8">@agreement.Amount.Value.ToString("N2") TL + KDV</dd>
+                    }
+
+                    <dt class="col-sm-4">@L["Subscription:Agreement.Term"]</dt>
+                    <dd class="col-sm-8">
+                        @agreement.StartDate.ToString("dd.MM.yyyy") – @agreement.EndDate.ToString("dd.MM.yyyy")
+                    </dd>
+
+                    <dt class="col-sm-4">@L["Subscription:Agreement.Approver"]</dt>
+                    <dd class="col-sm-8">
+                        @agreement.ApproverName · @agreement.ApproverTitle<br />
+                        <span class="text-muted">
+                            @agreement.ApprovedAt.ToString("dd.MM.yyyy HH:mm:ss")
+                            @if (!string.IsNullOrWhiteSpace(agreement.ApprovedIp))
+                            {
+                                <text> · IP @agreement.ApprovedIp</text>
+                            }
+                        </span>
+                    </dd>
+
+                    <dt class="col-sm-4">@L["Subscription:Agreement.Hash"]</dt>
+                    <dd class="col-sm-8"><code class="apya-doc__hash">@agreement.ContentHash</code></dd>
+                </dl>
+
+                <details class="apya-doc__details">
+                    <summary>@L["Subscription:Agreement.ShowDocument"]</summary>
+                    @* Belge onay anında sunucuda üretildi ve kaçırıldı; saklanan kopya
+                       olduğu gibi basılır — yeniden render etmek "onaylanan metin" iddiasını
+                       bozardı. *@
+                    <div class="apya-doc__frame apya-doc__frame--tall mt-2">
+                        @Html.Raw(agreement.RenderedHtml)
+                    </div>
+                    <button type="button" class="btn btn-sm btn-outline-secondary mt-2"
+                            onclick="window.print()">
+                        <i class="fa fa-print me-1"></i>@L["Subscription:Agreement.Print"]
+                    </button>
+                </details>
+            </abp-card-body>
+        </abp-card>
+    }
+
+    @* --- FATURALARIM ---
+       Faturası olmayan kiracıda kart yine basılır (boş mesajıyla): "faturam nerede"
+       sorusunun cevabı, ekranın hiç olmaması değil, boş olduğunu söylemesidir. *@
+    <abp-card class="mt-3">
+        <abp-card-header>
+            <abp-card-title>
+                <i class="fa fa-file-invoice me-2"></i>@L["Subscription:Billing.Title"]
+            </abp-card-title>
+        </abp-card-header>
+        <abp-card-body>
+            @if (TempData["BillingSaved"] != null)
+            {
+                <div class="alert alert-success" role="status">@TempData["BillingSaved"]</div>
+            }
+            @if (TempData["BillingError"] != null)
+            {
+                <div class="alert alert-danger" role="alert">@TempData["BillingError"]</div>
+            }
+
+            @if (Model.Invoices.Count == 0)
+            {
+                <p class="text-muted mb-0">@L["Subscription:Billing.Empty"]</p>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="table table-sm align-middle small">
+                        <thead>
+                            <tr>
+                                <th scope="Column">@L["Subscription:Billing.Number"]</th>
+                                <th scope="Column">@L["Subscription:Billing.IssueDate"]</th>
+                                <th scope="Column">@L["Subscription:Billing.DueDate"]</th>
+                                <th scope="Column" class="text-end">@L["Subscription:Billing.Total"]</th>
+                                <th scope="Column" class="text-end">@L["Subscription:Billing.Remaining"]</th>
+                                <th scope="Column">@L["Subscription:Billing.Status"]</th>
+                                <th scope="Column"></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var invoice in Model.Invoices)
+                            {
+                                var formId = "declare-" + invoice.Id;
+                                <tr>
+                                    <td class="text-nowrap">
+                                        @invoice.Number<br />
+                                        <span class="text-muted">@L["Billing:Type:" + invoice.Type]</span>
+                                    </td>
+                                    <td class="text-nowrap">@invoice.IssueDate.ToString("dd.MM.yyyy")</td>
+                                    <td class="text-nowrap @(invoice.IsOverdue ? "text-danger fw-semibold" : "")">
+                                        @invoice.DueDate.ToString("dd.MM.yyyy")
+                                    </td>
+                                    <td class="text-end text-nowrap">@invoice.TotalAmount.ToString("N2") TL</td>
+                                    <td class="text-end text-nowrap">@invoice.RemainingAmount.ToString("N2") TL</td>
+                                    <td>
+                                        @if (invoice.IsOverdue)
+                                        {
+                                            <span class="badge bg-danger">@L["Subscription:Billing.Overdue"]</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-light text-dark border">@L["Billing:Status:" + invoice.Status]</span>
+                                        }
+                                        @if (invoice.HasPendingDeclaration)
+                                        {
+                                            <br />
+                                            <span class="badge bg-info text-dark mt-1">@L["Subscription:Billing.PendingDeclaration"]</span>
+                                        }
+                                    </td>
+                                    <td class="text-end text-nowrap">
+                                        @if (invoice.HasDocument)
+                                        {
+                                            <a class="btn btn-sm btn-outline-secondary"
+                                               asp-page-handler="DownloadInvoice" asp-route-id="@invoice.Id">
+                                                <i class="fa fa-download me-1"></i>@L["Subscription:Billing.Download"]
+                                            </a>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">@L["Subscription:Billing.NoDocument"]</span>
+                                        }
+                                        @if (invoice.Status != Apya.Platform.Billing.SubscriptionInvoiceStatus.Paid
+                                             && invoice.Status != Apya.Platform.Billing.SubscriptionInvoiceStatus.Cancelled)
+                                        {
+                                            <button class="btn btn-sm btn-link" type="button"
+                                                    data-bs-toggle="collapse" data-bs-target="#@formId">
+                                                @L["Subscription:Billing.DeclareTitle"]
+                                            </button>
+                                        }
+                                    </td>
+                                </tr>
+
+                                @if (invoice.Payments.Count > 0)
+                                {
+                                    <tr>
+                                        <td colspan="7" class="text-muted">
+                                            <span class="fw-semibold">@L["Subscription:Billing.Payments"]:</span>
+                                            @foreach (var payment in invoice.Payments)
+                                            {
+                                                <span class="me-3">
+                                                    @payment.PaidAt.ToString("dd.MM.yyyy") ·
+                                                    @payment.Amount.ToString("N2") TL ·
+                                                    @(payment.IsConfirmed
+                                                        ? L["Subscription:Billing.Confirmed"]
+                                                        : L["Subscription:Billing.Declared"])
+                                                </span>
+                                            }
+                                        </td>
+                                    </tr>
+                                }
+
+                                <tr class="collapse" id="@formId">
+                                    <td colspan="7" class="bg-body-tertiary">
+                                        <p class="text-muted mb-2">@L["Subscription:Billing.DeclareHint"]</p>
+                                        <form method="post" asp-page-handler="Declare" enctype="multipart/form-data"
+                                              class="row g-2 align-items-end">
+                                            <input type="hidden" name="id" value="@invoice.Id" />
+
+                                            <div class="col-sm-3">
+                                                <label class="form-label small mb-0" for="paid-@invoice.Id">
+                                                    @L["Subscription:Billing.PaidAt"]
+                                                </label>
+                                                <input class="form-control form-control-sm" type="date"
+                                                       id="paid-@invoice.Id" name="declarePaidAt"
+                                                       value="@DateTime.Today.ToString("yyyy-MM-dd")" />
+                                            </div>
+                                            <div class="col-sm-3">
+                                                <label class="form-label small mb-0" for="amt-@invoice.Id">
+                                                    @L["Subscription:Billing.Amount"]
+                                                </label>
+                                                @* __Invariant ŞART: elle name= ile yazılan ondalık alan.
+                                                   Onsuz tr-TR bağlaması noktayı binlik sayar ve tutar bin kat sapar. *@
+                                                <input class="form-control form-control-sm" type="number" step="0.01" min="0.01"
+                                                       id="amt-@invoice.Id" name="declareAmount"
+                                                       value="@invoice.RemainingAmount.ToString(System.Globalization.CultureInfo.InvariantCulture)" />
+                                                <input type="hidden" name="__Invariant" value="declareAmount" />
+                                            </div>
+                                            <div class="col-sm-2">
+                                                <label class="form-label small mb-0" for="mth-@invoice.Id">
+                                                    @L["Subscription:Billing.Method"]
+                                                </label>
+                                                <select class="form-select form-select-sm" id="mth-@invoice.Id" name="declareMethod">
+                                                    @foreach (var method in Enum.GetValues<Apya.Platform.Billing.PaymentMethod>())
+                                                    {
+                                                        <option value="@method">@L["Billing:Method:" + method]</option>
+                                                    }
+                                                </select>
+                                            </div>
+                                            <div class="col-sm-4">
+                                                <label class="form-label small mb-0" for="ref-@invoice.Id">
+                                                    @L["Subscription:Billing.Reference"]
+                                                </label>
+                                                <input class="form-control form-control-sm" id="ref-@invoice.Id"
+                                                       name="declareReference" />
+                                            </div>
+                                            <div class="col-sm-8">
+                                                <label class="form-label small mb-0" for="rcpt-@invoice.Id">
+                                                    @L["Subscription:Billing.Receipt"]
+                                                </label>
+                                                <input class="form-control form-control-sm" type="file"
+                                                       id="rcpt-@invoice.Id" name="receipt" accept=".pdf,.jpg,.jpeg,.png" />
+                                            </div>
+                                            <div class="col-sm-4">
+                                                <button type="submit" class="btn btn-sm btn-primary w-100">
+                                                    @L["Subscription:Billing.Submit"]
+                                                </button>
+                                            </div>
+                                        </form>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </abp-card-body>
+    </abp-card>
 }
 
 </div>

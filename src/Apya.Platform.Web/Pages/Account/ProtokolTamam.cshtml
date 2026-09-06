@@ -1,0 +1,27 @@
+@page
+@using Apya.Platform.Localization
+@using Microsoft.AspNetCore.Mvc.Localization
+@model Apya.Platform.Web.Pages.Account.ProtokolTamamModel
+@inject IHtmlLocalizer<PlatformResource> L
+@{
+    Layout = "~/Pages/Account/_ApyaAccountLayout.cshtml";
+    ViewBag.Title = L["Protokol:Done:Title"].Value;
+}
+
+<p class="apya-auth__hint">@L["Protokol:Done:Message"]</p>
+
+<dl class="apya-wiz__summary">
+    <dt>@L["Protokol:Done:TenantName"]</dt>
+    <dd>@Model.TenantName</dd>
+    <dt>@L["Protokol:Done:AdminEmail"]</dt>
+    <dd>@Model.AdminEmail</dd>
+    <dt>@L["Protokol:Done:AgreementNumber"]</dt>
+    <dd>@Model.AgreementNumber</dd>
+</dl>
+
+<p class="apya-wiz__note">@L["Protokol:Done:Note"]</p>
+
+<a class="apya-auth__submit d-flex align-items-center justify-content-center text-decoration-none"
+   asp-page="./Login">
+    @L["Protokol:Done:GoToLogin"]
+</a>

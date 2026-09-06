@@ -23,8 +23,8 @@ public class TenantProfileAppService : PlatformAppService, ITenantProfileAppServ
     private readonly TenantPackageManager _tenantPackageManager;
     private readonly TenantSubscriptionManager _tenantSubscriptionManager;
     private readonly IRepository<TenantSubscription, Guid> _subscriptionRepository;
-    private readonly IDataSeeder _dataSeeder;
     private readonly IUnitOfWorkManager _unitOfWorkManager;
+    private readonly TenantProvisioner _tenantProvisioner;
 
     public TenantProfileAppService(
         ITenantRepository tenantRepository,
@@ -34,8 +34,8 @@ public class TenantProfileAppService : PlatformAppService, ITenantProfileAppServ
         TenantPackageManager tenantPackageManager,
         TenantSubscriptionManager tenantSubscriptionManager,
         IRepository<TenantSubscription, Guid> subscriptionRepository,
-        IDataSeeder dataSeeder,
-        IUnitOfWorkManager unitOfWorkManager)
+        IUnitOfWorkManager unitOfWorkManager,
+        TenantProvisioner tenantProvisioner)
     {
         _tenantRepository = tenantRepository;
         _tenantManager = tenantManager;
@@ -44,8 +44,8 @@ public class TenantProfileAppService : PlatformAppService, ITenantProfileAppServ
         _tenantPackageManager = tenantPackageManager;
         _tenantSubscriptionManager = tenantSubscriptionManager;
         _subscriptionRepository = subscriptionRepository;
-        _dataSeeder = dataSeeder;
         _unitOfWorkManager = unitOfWorkManager;
+        _tenantProvisioner = tenantProvisioner;
     }
 
     public async Task<PagedResultDto<TenantProfileDto>> GetListAsync(PagedAndSortedResultRequestDto input)
@@ -99,54 +99,18 @@ public class TenantProfileAppService : PlatformAppService, ITenantProfileAppServ
         return new PagedResultDto<TenantProfileDto>(totalCount, dtos);
     }
 
+    /// <summary>
+    /// Host'un "Yeni Müşteri" modalı. Kurulumun kendisi <see cref="TenantProvisioner"/>'da:
+    /// aynı gövde, adayın protokol onayından (oturumsuz, davet jetonuyla yetkilendirilmiş)
+    /// da çağrılıyor. Yetki kapısı burada kalır.
+    /// </summary>
     [Authorize(TenantManagementPermissions.Tenants.Create)]
     public async Task<TenantProfileDto> CreateTenantWithProfileAsync(CreateTenantExtendedDto input)
     {
-        // Tenant oluşturma + seed'i KENDİ requiresNew + transactional UnitOfWork'ünde yürütüyoruz.
-        // Aksi halde işlem dıştaki sayfa UoW'una (AbpUowPageFilter) katılır; seed edilen admin
-        // permission grant'ları hem seed sırasında hem sayfa UoW'unun SaveChanges'inde izlenip
-        // İKİ KEZ INSERT edilir → IX_AbpPermissionGrants_TenantId_Name_ProviderName_ProviderKey
-        // (23505 duplicate) → "Yeni Müşteri" 500. Tek sahip UoW + tek geçiş seed ile grant'lar
-        // tam olarak bir kez yazılır. (Bu yüzden contributor'daki iç içe requiresNew de kaldırıldı.)
-        using var uow = _unitOfWorkManager.Begin(requiresNew: true, isTransactional: true);
+        var provisioned = await _tenantProvisioner.ProvisionAsync(input);
 
-        var tenant = await _tenantManager.CreateAsync(input.Name);
-        await _tenantRepository.InsertAsync(tenant, autoSave: true);
-
-        using (CurrentTenant.Change(tenant.Id, tenant.Name))
-        {
-            await _dataSeeder.SeedAsync(new DataSeedContext(tenant.Id).WithProperty("AdminEmail", input.AdminEmailAddress).WithProperty("AdminPassword", input.AdminPassword));
-        }
-
-        var profile = await _tenantProfileManager.CreateProfileAsync(
-            tenant.Id,
-            input.CompanyType,
-            input.TaxNumber,
-            input.CorporateEmail
-        );
-
-        profile.SetPackage(input.PackageCode);
-        profile.TaxOffice = input.TaxOffice ?? string.Empty;
-        profile.Address = input.Address ?? string.Empty;
-        profile.LegalRepresentativeName = input.LegalRepresentativeName ?? string.Empty;
-        profile.LegalRepresentativePhone = input.LegalRepresentativePhone ?? string.Empty;
-        profile.OperationalContactName = input.OperationalContactName ?? string.Empty;
-        profile.OperationalContactPhone = input.OperationalContactPhone ?? string.Empty;
-
-        await _tenantProfileRepository.InsertAsync(profile);
-
-        // Paketin feature setini tenant'a uygula → feature'lar permission tavanını belirler.
-        await _tenantPackageManager.ApplyPackageAsync(tenant.Id, input.PackageCode);
-
-        // Abonelik dönemi: süresiz seçilirse satır yine açılır ama EndDate boş kalır, yani
-        // süre işleyicisi bu müşteriye hiç dokunmaz.
-        var subscription = await _tenantSubscriptionManager.StartAsync(
-            tenant.Id, input.PackageCode, input.SubscriptionPeriod, SubscriptionSource.Manual);
-
-        var result = ObjectMapper.Map<TenantProfile, TenantProfileDto>(profile);
-        FillSubscription(result, subscription);
-
-        await uow.CompleteAsync();
+        var result = ObjectMapper.Map<TenantProfile, TenantProfileDto>(provisioned.Profile);
+        FillSubscription(result, provisioned.Subscription);
 
         return result;
     }

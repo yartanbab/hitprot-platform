@@ -37,6 +37,10 @@
        apya-account.css yalnız bu düzende yüklenir — uygulama kabuğuna sızmaz. *@
     <abp-style-bundle name="@LeptonXLiteThemeBundles.Styles.Global" />
     <abp-style src="/css/apya-account.css" />
+    @* Hukuki belge görünümü — /Account/Protokol burada basılır. Uygulama kabuğundaki
+       "Sözleşmem" kartı da AYNI dosyayı yükler; ortak olduğu için apya-account.css'e
+       konulmadı. *@
+    <abp-style src="/css/apya-document.css" />
 
     @await RenderSectionAsync("styles", false)
 </head>

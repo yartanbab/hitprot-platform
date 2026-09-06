@@ -1,0 +1,246 @@
+@page
+@using Apya.Platform.Localization
+@using Microsoft.AspNetCore.Mvc.Localization
+@model Apya.Platform.Web.Pages.Account.RegistrationRequestModel
+@inject IHtmlLocalizer<PlatformResource> L
+@{
+    Layout = "~/Pages/Account/_ApyaAccountLayout.cshtml";
+    ViewBag.Title = L["RegistrationRequest:Title"].Value;
+}
+
+<p class="apya-auth__hint">@L["RegistrationRequest:Intro"]</p>
+
+@* Adım göstergesi. JavaScript kapalıysa hidden kalır ve tüm adımlar art arda
+   görünür — form yine tek gönderimle çalışır. *@
+<ol class="apya-wiz__steps" data-wizard-steps hidden>
+    <li class="apya-wiz__step is-active" data-wizard-indicator="1">
+        <span class="apya-wiz__dot">1</span> @L["RegistrationRequest:Step1"]
+    </li>
+    <li class="apya-wiz__step" data-wizard-indicator="2">
+        <span class="apya-wiz__dot">2</span> @L["RegistrationRequest:Step2"]
+    </li>
+    <li class="apya-wiz__step" data-wizard-indicator="3">
+        <span class="apya-wiz__dot">3</span> @L["RegistrationRequest:Step3"]
+    </li>
+    <li class="apya-wiz__step" data-wizard-indicator="4">
+        <span class="apya-wiz__dot">4</span> @L["RegistrationRequest:Step4"]
+    </li>
+</ol>
+
+<form method="post" autocomplete="on" data-wizard-form>
+    <div asp-validation-summary="ModelOnly" class="apya-auth__summary apya-auth__error"></div>
+
+    @* Bal küpü: gerçek kullanıcı görmez, bot doldurur. Ekran okuyucudan da gizli. *@
+    <div class="apya-auth__hp" aria-hidden="true">
+        <label for="Website">Web sitesi</label>
+        @* asp-for KULLANILMAZ: bal küpü gerçek bir alan değil, model meta verisine
+           (ve dolayısıyla Türkçe ad sözlüğüne) girmesinin bir anlamı yok. *@
+        <input id="Website" name="Website" type="text" tabindex="-1" autocomplete="off" />
+    </div>
+
+    @* ---------- 1. ADIM: PAKET ---------- *@
+    <fieldset class="apya-wiz__panel" data-wizard-panel="1">
+        <legend class="apya-auth__section">@L["RegistrationRequest:PlanSection"]</legend>
+
+        <div class="apya-wiz__plans">
+            @foreach (var plan in Model.Plans)
+            {
+                var inputId = "plan-" + plan;
+                <label class="apya-wiz__plan" for="@inputId">
+                    <input class="apya-wiz__plan-radio" type="radio" id="@inputId"
+                           asp-for="Input.RequestedPlan" value="@plan" />
+                    <span class="apya-wiz__plan-body">
+                        <span class="apya-wiz__plan-name">
+                            @L["RegistrationRequest:Plan:" + plan]
+                            @if (plan == Apya.Platform.Tenants.SalesPlan.Corporate)
+                            {
+                                <span class="apya-wiz__plan-tag">@L["RegistrationRequest:Plan:Popular"]</span>
+                            }
+                        </span>
+                        <span class="apya-wiz__plan-quota">@L["RegistrationRequest:Plan:Quota:" + plan]</span>
+                        <span class="apya-wiz__plan-desc">@L["RegistrationRequest:Plan:Desc:" + plan]</span>
+                    </span>
+                </label>
+            }
+        </div>
+        <span class="apya-auth__error" asp-validation-for="Input.RequestedPlan"></span>
+
+        <p class="apya-wiz__note">@L["RegistrationRequest:PlanNote"]</p>
+    </fieldset>
+
+    @* ---------- 2. ADIM: KURUM ---------- *@
+    <fieldset class="apya-wiz__panel" data-wizard-panel="2">
+        <legend class="apya-auth__section">@L["RegistrationRequest:CompanySection"]</legend>
+
+        <div class="apya-auth__field">
+            <label class="apya-auth__label" asp-for="Input.CompanyName">@L["RegistrationRequest:CompanyName"]</label>
+            <input class="apya-auth__input" asp-for="Input.CompanyName" autocomplete="organization" />
+            <span class="apya-auth__error" asp-validation-for="Input.CompanyName"></span>
+        </div>
+
+        <div class="apya-auth__grid">
+            <div class="apya-auth__field">
+                <label class="apya-auth__label" asp-for="Input.CompanyType">@L["RegistrationRequest:CompanyType"]</label>
+                <select class="apya-auth__input apya-auth__select" asp-for="Input.CompanyType">
+                    <option value="">@L["RegistrationRequest:Choose"]</option>
+                    @foreach (var type in Model.CompanyTypes)
+                    {
+                        <option value="@type">@L["RegistrationRequest:CompanyType:" + type]</option>
+                    }
+                </select>
+                <span class="apya-auth__error" asp-validation-for="Input.CompanyType"></span>
+            </div>
+
+            <div class="apya-auth__field">
+                <label class="apya-auth__label" asp-for="Input.CompanySize">
+                    @L["RegistrationRequest:CompanySize"] <span class="apya-auth__optional">@L["RegistrationRequest:Optional"]</span>
+                </label>
+                <select class="apya-auth__input apya-auth__select" asp-for="Input.CompanySize">
+                    <option value="">@L["RegistrationRequest:Choose"]</option>
+                    @foreach (var size in Model.CompanySizes)
+                    {
+                        <option value="@size">@L["RegistrationRequest:CompanySize:" + size]</option>
+                    }
+                </select>
+            </div>
+        </div>
+
+        <div class="apya-auth__grid">
+            <div class="apya-auth__field">
+                <label class="apya-auth__label" asp-for="Input.TaxNumber">@L["RegistrationRequest:TaxNumber"]</label>
+                <input class="apya-auth__input" asp-for="Input.TaxNumber" inputmode="numeric" />
+                <span class="apya-auth__error" asp-validation-for="Input.TaxNumber"></span>
+            </div>
+
+            <div class="apya-auth__field">
+                <label class="apya-auth__label" asp-for="Input.TaxOffice">
+                    @L["RegistrationRequest:TaxOffice"] <span class="apya-auth__optional">@L["RegistrationRequest:Optional"]</span>
+                </label>
+                <input class="apya-auth__input" asp-for="Input.TaxOffice" />
+                <span class="apya-auth__error" asp-validation-for="Input.TaxOffice"></span>
+            </div>
+        </div>
+
+        <div class="apya-auth__field">
+            <label class="apya-auth__label" asp-for="Input.Address">@L["RegistrationRequest:Address"]</label>
+            <textarea class="apya-auth__input apya-auth__textarea" asp-for="Input.Address" rows="3"
+                      autocomplete="street-address"
+                      placeholder="@L["RegistrationRequest:AddressPlaceholder"]"></textarea>
+            <span class="apya-auth__error" asp-validation-for="Input.Address"></span>
+        </div>
+
+        <div class="apya-auth__field">
+            <label class="apya-auth__label" asp-for="Input.CorporateEmail">
+                @L["RegistrationRequest:CorporateEmail"] <span class="apya-auth__optional">@L["RegistrationRequest:Optional"]</span>
+            </label>
+            <input class="apya-auth__input" asp-for="Input.CorporateEmail" type="email"
+                   placeholder="info@kurum.com" />
+            <span class="apya-auth__error" asp-validation-for="Input.CorporateEmail"></span>
+        </div>
+    </fieldset>
+
+    @* ---------- 3. ADIM: YETKİLİ ---------- *@
+    <fieldset class="apya-wiz__panel" data-wizard-panel="3">
+        <legend class="apya-auth__section">@L["RegistrationRequest:ContactSection"]</legend>
+
+        <div class="apya-auth__grid">
+            <div class="apya-auth__field">
+                <label class="apya-auth__label" asp-for="Input.FullName">@L["RegistrationRequest:FullName"]</label>
+                <input class="apya-auth__input" asp-for="Input.FullName" autocomplete="name" />
+                <span class="apya-auth__error" asp-validation-for="Input.FullName"></span>
+            </div>
+
+            <div class="apya-auth__field">
+                <label class="apya-auth__label" asp-for="Input.AuthorizedTitle">@L["RegistrationRequest:AuthorizedTitle"]</label>
+                <input class="apya-auth__input" asp-for="Input.AuthorizedTitle" autocomplete="organization-title"
+                       placeholder="@L["RegistrationRequest:AuthorizedTitlePlaceholder"]" />
+                <span class="apya-auth__error" asp-validation-for="Input.AuthorizedTitle"></span>
+            </div>
+        </div>
+
+        <div class="apya-auth__field">
+            <label class="apya-auth__label" asp-for="Input.Email">@L["RegistrationRequest:Email"]</label>
+            <input class="apya-auth__input" asp-for="Input.Email" type="email" autocomplete="email"
+                   placeholder="ad.soyad@kurum.com" />
+            <span class="apya-auth__hint-inline">@L["RegistrationRequest:EmailHint"]</span>
+            <span class="apya-auth__error" asp-validation-for="Input.Email"></span>
+        </div>
+
+        <div class="apya-auth__field">
+            <label class="apya-auth__label" asp-for="Input.Phone">@L["RegistrationRequest:Phone"]</label>
+            <input class="apya-auth__input" asp-for="Input.Phone" type="tel" autocomplete="tel"
+                   placeholder="05xx xxx xx xx" />
+            <span class="apya-auth__error" asp-validation-for="Input.Phone"></span>
+        </div>
+
+        <div class="apya-auth__grid">
+            <div class="apya-auth__field">
+                <label class="apya-auth__label" asp-for="Input.OperationalContactName">
+                    @L["RegistrationRequest:OperationalContactName"] <span class="apya-auth__optional">@L["RegistrationRequest:Optional"]</span>
+                </label>
+                <input class="apya-auth__input" asp-for="Input.OperationalContactName" />
+                <span class="apya-auth__error" asp-validation-for="Input.OperationalContactName"></span>
+            </div>
+
+            <div class="apya-auth__field">
+                <label class="apya-auth__label" asp-for="Input.OperationalContactPhone">
+                    @L["RegistrationRequest:OperationalContactPhone"] <span class="apya-auth__optional">@L["RegistrationRequest:Optional"]</span>
+                </label>
+                <input class="apya-auth__input" asp-for="Input.OperationalContactPhone" type="tel" />
+                <span class="apya-auth__error" asp-validation-for="Input.OperationalContactPhone"></span>
+            </div>
+        </div>
+
+        <div class="apya-auth__field">
+            <label class="apya-auth__label" asp-for="Input.Message">
+                @L["RegistrationRequest:Message"] <span class="apya-auth__optional">@L["RegistrationRequest:Optional"]</span>
+            </label>
+            <textarea class="apya-auth__input apya-auth__textarea" asp-for="Input.Message" rows="3"
+                      placeholder="@L["RegistrationRequest:MessagePlaceholder"]"></textarea>
+            <span class="apya-auth__error" asp-validation-for="Input.Message"></span>
+        </div>
+    </fieldset>
+
+    @* ---------- 4. ADIM: ÖZET + KVKK ---------- *@
+    <fieldset class="apya-wiz__panel" data-wizard-panel="4">
+        <legend class="apya-auth__section">@L["RegistrationRequest:SummarySection"]</legend>
+
+        @* Özet, gönderim ANINDA istemcide doldurulur — sunucuya ek tur atmadan
+           adayın girdiğini geri okuması için. JS kapalıysa boş kalır ve gizlenir. *@
+        <dl class="apya-wiz__summary" data-wizard-summary hidden></dl>
+
+        <p class="apya-wiz__note">@L["RegistrationRequest:ProcessNote"]</p>
+
+        <div class="apya-auth__field">
+            <label class="apya-auth__check">
+                <input type="checkbox" asp-for="AcceptKvkk" />
+                <span>
+                    @L["RegistrationRequest:KvkkPrefix"]
+                    <a class="apya-auth__link" href="~/aydinlatma-metni" target="_blank" rel="noopener">@L["RegistrationRequest:KvkkLinkText"]</a>
+                    @L["RegistrationRequest:KvkkSuffix"]
+                </span>
+            </label>
+            <span class="apya-auth__error" asp-validation-for="AcceptKvkk"></span>
+        </div>
+    </fieldset>
+
+    <div class="apya-wiz__nav">
+        <button class="apya-wiz__back" type="button" data-wizard-back hidden>
+            &larr; @L["RegistrationRequest:Back"]
+        </button>
+        <button class="apya-auth__submit apya-wiz__next" type="button" data-wizard-next hidden>
+            @L["RegistrationRequest:Next"] &rarr;
+        </button>
+        <button class="apya-auth__submit" type="submit" data-wizard-submit>
+            @L["RegistrationRequest:Submit"]
+        </button>
+    </div>
+</form>
+
+<div class="apya-auth__row">
+    <a class="apya-auth__link" asp-page="./Login">&larr; @L["RegistrationRequest:BackToLogin"]</a>
+</div>
+
+@section scripts {
+    <abp-script src="/Pages/Account/RegistrationRequest.js" />
+}

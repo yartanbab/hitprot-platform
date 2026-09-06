@@ -188,11 +188,18 @@ public static class PlatformPermissions
         public const string Default = GroupName + ".Consents"; // Rıza analiz panelini görüntüleme
     }
 
-    // --- DEMO TALEBİ YETKİLERİ ---
-    public static class DemoRequests
+    // --- KAYIT TALEBİ YETKİLERİ ---
+    public static class RegistrationRequests
     {
-        public const string Default = GroupName + ".DemoRequests";  // Talep listesini görüntüleme
-        public const string Manage = Default + ".Manage";           // Durum / iç not güncelleme
+        public const string Default = GroupName + ".RegistrationRequests";  // Talep listesini görüntüleme
+        public const string Manage = Default + ".Manage";                   // Durum / paket / bedel / iç not
+    }
+
+    // --- FATURALAMA YETKİLERİ (host → kiracı) ---
+    public static class Billing
+    {
+        public const string Default = GroupName + ".Billing";   // Fatura listesini görüntüleme
+        public const string Manage = Default + ".Manage";       // Fatura açma / belge ekleme / tahsilat onaylama
     }
 
     // --- SÜRÜM NOTU YAYIN ONAYI (host) ---
