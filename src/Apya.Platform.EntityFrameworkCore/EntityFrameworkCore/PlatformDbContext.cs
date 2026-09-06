@@ -1118,13 +1118,46 @@ namespace Apya.Platform.EntityFrameworkCore
                 b.Property(x => x.CancelReason).HasMaxLength(256); // Faz 4b: iptal nedeni
 
                 // REV-004: Performans indeksleri
-                b.HasIndex(x => x.ProjectId);
+                // Proje başına açık görev sayacı (kabuk alt listesi HER sayfa açılışında,
+                // proje kartları) ProjectId ile arayıp Status/IsPrivate/TenantId/IsDeleted'ı
+                // satır başına kümelenmiş indekse dönerek okuyordu. INCLUDE ile kapsayıcı:
+                // seek + sayım tamamen indekste biter. Filtresiz bırakıldı ki soft-delete
+                // süzgeci kapalı okumalar da aynı indeksi kullanabilsin. (IncludeProperties
+                // uzantısı iki sağlayıcıda aynı adla tanımlı olduğu için annotation kullanıldı.)
+                b.HasIndex(x => x.ProjectId)
+                    .HasAnnotation(isSqlServer ? "SqlServer:Include" : "Npgsql:IndexInclude",
+                        new[] { nameof(TaskItem.TenantId), nameof(TaskItem.Status), nameof(TaskItem.IsPrivate), nameof(TaskItem.IsDeleted) });
                 // TenantId öneki: liste sorguları hep "TenantId + ParentTaskId IS NULL" (kök
                 // görevler) ya da "TenantId + Status IN (...)" gelir; öneksiz hâlde SQL Server
                 // diğer kiracıların satırlarını okuyup ayıklıyordu — maliyet kiracı sayısıyla
                 // büyür. GUID kolonlu indeksler (ProjectId vb.) zaten seçici, önek gerekmez.
                 b.HasIndex(x => new { x.TenantId, x.ParentTaskId });
-                b.HasIndex(x => new { x.TenantId, x.Status, x.AssigneeId });
+
+                // Konsol liste/kanban/sayaç sorguları "TenantId + Status IN (...)" ile başlar;
+                // gizlilik süzgeci (IsPrivate/CreatorId/AssigneeId), proje kapsamı ve vade
+                // sayaçları için gereken kolonlar INCLUDE'da → satır başına key lookup biter.
+                b.HasIndex(x => new { x.TenantId, x.Status, x.AssigneeId })
+                    .HasAnnotation(isSqlServer ? "SqlServer:Include" : "Npgsql:IndexInclude",
+                        new[] { nameof(TaskItem.ProjectId), nameof(TaskItem.DueDate), nameof(TaskItem.IsPrivate), nameof(TaskItem.CreatorId) });
+
+                // Kabuğun "geciken görev" rozeti HER sayfa açılışında koşar (cache yok):
+                // TenantId + AssigneeId eşitlik, DueDate aralık; Status NOT IN anahtara
+                // giremez (eşitlik değil) → INCLUDE'da artık predikat. Tam kapsayıcı sayım.
+                // ABP soft-delete süzgeci SQL'e literal iner (ölçüldü 2026-09-06), filtreli
+                // indeks eşleşir.
+                b.HasIndex(x => new { x.TenantId, x.AssigneeId, x.DueDate })
+                    .HasAnnotation(isSqlServer ? "SqlServer:Include" : "Npgsql:IndexInclude",
+                        new[] { nameof(TaskItem.Status) })
+                    .HasFilter(isSqlServer ? "[IsDeleted] = 0" : "\"IsDeleted\" = false");
+
+                // Takvim akışı, teslimler ve konsolun vade sayaçları: TenantId + DueDate
+                // aralığı, ORDER BY DueDate. DueDate hiçbir AppTasks indeksinde yoktu →
+                // her açılış tarama + sıralama. INCLUDE gizlilik süzgecini ve proje
+                // kapsamını kapsar.
+                b.HasIndex(x => new { x.TenantId, x.DueDate })
+                    .HasAnnotation(isSqlServer ? "SqlServer:Include" : "Npgsql:IndexInclude",
+                        new[] { nameof(TaskItem.Status), nameof(TaskItem.AssigneeId), nameof(TaskItem.ProjectId), nameof(TaskItem.IsPrivate), nameof(TaskItem.CreatorId) })
+                    .HasFilter(isSqlServer ? "[IsDeleted] = 0" : "\"IsDeleted\" = false");
 
                 /* Görev kodu (GRV-N) tenant içinde tekil. UNIQUE DEĞİL bilinçli olarak:
                    soft-delete'li görevler tabloda kalıyor ve numaraları serbest bırakılmıyor,

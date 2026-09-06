@@ -4824,6 +4824,9 @@ namespace Apya.Platform.Migrations
 
                     b.HasIndex("SubscriptionId");
 
+                    b.HasIndex("IsSuccess", "CreationTime")
+                        .HasDatabaseName("IX_AppWebhookDeliveryLogs_IsSuccess_CreationTime");
+
                     b.HasIndex("SubscriptionId", "IsSuccess")
                         .HasDatabaseName("IX_AppWebhookDeliveryLogs_SubSuccess");
 
@@ -10334,11 +10337,25 @@ namespace Apya.Platform.Migrations
 
                     b.HasIndex("ProjectId");
 
+                    SqlServerIndexBuilderExtensions.IncludeProperties(b.HasIndex("ProjectId"), new[] { "TenantId", "Status", "IsPrivate", "IsDeleted" });
+
+                    b.HasIndex("TenantId", "DueDate")
+                        .HasFilter("[IsDeleted] = 0");
+
+                    SqlServerIndexBuilderExtensions.IncludeProperties(b.HasIndex("TenantId", "DueDate"), new[] { "Status", "AssigneeId", "ProjectId", "IsPrivate", "CreatorId" });
+
                     b.HasIndex("TenantId", "Number");
 
                     b.HasIndex("TenantId", "ParentTaskId");
 
+                    b.HasIndex("TenantId", "AssigneeId", "DueDate")
+                        .HasFilter("[IsDeleted] = 0");
+
+                    SqlServerIndexBuilderExtensions.IncludeProperties(b.HasIndex("TenantId", "AssigneeId", "DueDate"), new[] { "Status" });
+
                     b.HasIndex("TenantId", "Status", "AssigneeId");
+
+                    SqlServerIndexBuilderExtensions.IncludeProperties(b.HasIndex("TenantId", "Status", "AssigneeId"), new[] { "ProjectId", "DueDate", "IsPrivate", "CreatorId" });
 
                     b.ToTable("AppTasks", (string)null);
                 });
