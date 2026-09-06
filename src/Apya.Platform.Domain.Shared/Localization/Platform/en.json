@@ -1830,6 +1830,8 @@
     "Setting:Shell.SavedViews.Description": "Named filter combinations per screen. Per user, carried across devices.",
     "Setting:Shell.MenuLayout": "Menu Layout",
     "Setting:Shell.MenuLayout.Description": "Order of sidebar sections and which items live on the Settings page. Per user, carried across devices.",
+    "Setting:Shell.BoardTabs": "Board Tabs",
+    "Setting:Shell.BoardTabs.Description": "Which tabs stay open on the Boards screen, and their order. Per user, carried across devices.",
     "Menu:ProductTour": "Product tour",
     "Tour:Kicker": "Product tour",
     "Tour:Close": "Close",

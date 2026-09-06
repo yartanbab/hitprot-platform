@@ -155,6 +155,15 @@ public class PlatformSettingDefinitionProvider : SettingDefinitionProvider
                 description: L("Setting:Shell.MenuLayout.Description"))
         );
 
+        // Pano sekmeleri — MenuLayout ile aynı ray (kullanıcı seviyesi, JSON değer).
+        context.Add(
+            new SettingDefinition(
+                PlatformSettings.Shell.BoardTabs,
+                defaultValue: PlatformSettingDefaults.ShellBoardTabs,
+                displayName: L("Setting:Shell.BoardTabs"),
+                description: L("Setting:Shell.BoardTabs.Description"))
+        );
+
         // --- Telemetri ---
         // Global (host) ayarları: tenant'lar değiştiremez.
         context.Add(

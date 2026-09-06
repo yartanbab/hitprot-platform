@@ -551,15 +551,17 @@ public static class ReleaseNoteCatalog
                 "eklediğiniz özellikler silinmedi, yalnız görünmüyor."),
 
             new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
-                "Panolar tek ekrana bağlandı, Kanban'ın adı Kart Panosu oldu",
+                "Panolar tek ekranda toplandı, hangi sekmelerin duracağına siz karar veriyorsunuz",
                 "Kanban'ın menüde ayrı bir sayfası vardı ve Görevler ekranındaki sekmeyle aynı " +
                 "panoyu gösteriyordu; ama ikisi filtre çubuğunu paylaşmadığı için birinde " +
                 "daralttığınız kapsam diğerine geçmiyor, aynı işi iki yerde yapıyordunuz. " +
-                "Menüdeki \"Panolar\" başlığı artık üç görünüşü de aynı ekrana bağlıyor: Görevler, " +
-                "Kart Panosu ve Zaman Çizelgesi. Her biri Görevler ekranını doğrudan kendi " +
-                "sekmesiyle açıyor, üçü de o an seçili filtreyi paylaşıyor. Başlığın kendisi de " +
-                "tıklanabilir hâle geldi — üstüne basınca görev listesi geliyor, yanındaki oka " +
-                "basınca grup katlanıyor. \"Kanban\" adı hem menüde hem sekmede \"Kart Panosu\" " +
+                "Menüde artık tek bir \"Panolar\" girişi var; bütün panolar orada, ortak bir " +
+                "sekme şeridinde. Görevler, Kart Panosu, Takvim ve Zaman Çizelgesi açık geliyor; " +
+                "Gösterge Paneli ile Dosya Galerisi \"＋\" içinde bekliyor. Kullanmadığınız sekmeyi " +
+                "✕ ile kapatıyor, \"＋\" ile geri açıyorsunuz. \"＋\" ayrıca kayıtlı görünümlerinizi " +
+                "ve tek tek proje panolarını sekme olarak eklemenizi sağlıyor — birkaç projenin " +
+                "panosu aynı anda açık durabiliyor. Sekme düzeniniz hesabınızda saklandığı için " +
+                "başka bir cihazda açtığınızda aynı düzenle geliyor. \"Kanban\" adı \"Kart Panosu\" " +
                 "oldu; kanbanı eski ayrı adresinden açmaya çalışırsanız sizi doğru sekmeye " +
                 "yönlendiriyor, kaydettiğiniz bağlantılar boşa düşmüyor."),
 

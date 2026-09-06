@@ -183,35 +183,66 @@
 @* ─── GÖREV ALANI ─── *@
 <div class="card apya-console-main">
 
-    <div class="apya-console-tabs" role="tablist">
-        <button type="button" class="apya-console-tab active" id="btn-view-list"
-                role="tab" aria-selected="true" aria-controls="view-list">
-            <i class="fa fa-list" aria-hidden="true"></i>@L["Tasks:View:List"]
-        </button>
-        <button type="button" class="apya-console-tab" id="btn-view-kanban"
-                role="tab" aria-selected="false" aria-controls="view-kanban">
-            <i class="fa fa-table-columns" aria-hidden="true"></i>@L["Tasks:View:Kanban"]
-        </button>
-        <button type="button" class="apya-console-tab" id="btn-view-gantt"
-                role="tab" aria-selected="false" aria-controls="view-gantt"
-                title="Başlangıç-bitiş tarihlerinden türeyen zaman çizelgesi">
-            <i class="fa fa-clock" aria-hidden="true"></i>@L["Tasks:View:Gantt"]
-        </button>
-        <button type="button" class="apya-console-tab" id="btn-view-calendar"
-                role="tab" aria-selected="false" aria-controls="view-calendar"
-                title="Başlangıç ve termin tarihleri aylık takvimde">
-            <i class="fa fa-calendar-days" aria-hidden="true"></i>@L["Tasks:View:Calendar"]
-        </button>
-        <button type="button" class="apya-console-tab" id="btn-view-dashboard"
-                role="tab" aria-selected="false" aria-controls="view-dashboard"
-                title="Seçili süzgecin durum, öncelik ve kişi dağılımı">
-            <i class="fa fa-chart-pie" aria-hidden="true"></i>@L["Tasks:View:Dashboard"]
-        </button>
-        <button type="button" class="apya-console-tab" id="btn-view-gallery"
-                role="tab" aria-selected="false" aria-controls="view-gallery"
-                title="Süzülmüş görevlere eklenmiş görseller">
-            <i class="fa fa-images" aria-hidden="true"></i>@L["Tasks:View:Gallery"]
-        </button>
+    @*
+        Sekme şeridi — sekmeler AÇILIP KAPANABİLİR (kullanıcı kararı 2026-09-06).
+        Menüdeki "Panolar" tek yaprak; hangi panoların açık duracağı buradan
+        seçilir ve düzen kullanıcıya kaydedilir (Shell.BoardTabs).
+
+        Sabit görünüşler burada Razor'dan basılır — etiketleri localization'dan
+        gelsin diye. KAPALI olanlar DOM'da kalır, yalnız `d-none` ile gizlenir:
+        panelleri ve yükleyicileri zaten kurulu, "＋" menüsünden geri açmak
+        böylece tek sınıf değişimi oluyor. Kayıtlı görünüm ve proje panosu
+        sekmeleri ise JS ile üretilir (index.js → renderTabs).
+
+        Şeridin görünürlüğünü ve sırasını index.js kurar; ilk çizimde hepsi
+        gizli gelir ki kullanıcının kapattığı sekme bir an parlayıp kaybolmasın.
+    *@
+    @{
+        // (tür, ikon, etiket, ipucu) — sıra varsayılan sırayı da verir.
+        var boardTabs = new[]
+        {
+            ("list",      "fa fa-list",          L["Tasks:View:List"].Value,      ""),
+            ("kanban",    "fa fa-table-columns", L["Tasks:View:Kanban"].Value,    ""),
+            ("calendar",  "fa fa-calendar-days", L["Tasks:View:Calendar"].Value,  "Başlangıç ve termin tarihleri aylık takvimde"),
+            ("gantt",     "fa fa-clock",         L["Tasks:View:Gantt"].Value,     "Başlangıç-bitiş tarihlerinden türeyen zaman çizelgesi"),
+            ("dashboard", "fa fa-chart-pie",     L["Tasks:View:Dashboard"].Value, "Seçili süzgecin durum, öncelik ve kişi dağılımı"),
+            ("gallery",   "fa fa-images",        L["Tasks:View:Gallery"].Value,   "Süzülmüş görevlere eklenmiş görseller")
+        };
+    }
+    <div class="apya-console-tabs">
+        @* Kaydırma YALNIZ sekmelerde: "＋" ve sayaç dışarıda kalır. Kaydırmayı
+           dış kaba verseydik açılır menü kırpılırdı (overflow kabı popover'ı
+           keser) ve şerit dolduğunda "＋" de görünmez olurdu. *@
+        <div class="apya-console-tabstrip" role="tablist" id="console-tabs"
+             data-board-tabs="@Model.BoardTabsJson">
+            @foreach (var (kind, icon, label, hint) in boardTabs)
+            {
+                <span class="apya-console-tab d-none" data-tab="@kind" title="@hint">
+                    <button type="button" class="apya-console-tab-main" id="btn-view-@kind"
+                            role="tab" aria-selected="false" aria-controls="view-@kind">
+                        <i class="@icon" aria-hidden="true"></i><span class="apya-console-tab-label">@label</span>
+                    </button>
+                    <button type="button" class="apya-console-tab-close"
+                            aria-label="@label sekmesini kapat" title="Sekmeyi kapat">
+                        <i class="fa fa-xmark" aria-hidden="true"></i>
+                    </button>
+                </span>
+            }
+
+            @* Kullanıcının eklediği sekmeler (kayıtlı görünüm / proje panosu) JS
+               ile bu kabın SONUNA eklenir — sabit sekmelerle aynı flex
+               seviyesinde dursunlar ki sıra kullanıcının seçtiği gibi olsun. *@
+        </div>
+
+        <div class="dropdown apya-console-tabadd">
+            <button type="button" class="apya-console-tabadd-btn" id="btn-tab-add"
+                    data-bs-toggle="dropdown" aria-expanded="false"
+                    title="Pano ekle" aria-label="Pano ekle">
+                <i class="fa fa-plus" aria-hidden="true"></i>
+            </button>
+            <div class="dropdown-menu apya-console-menu" id="tab-add-menu"></div>
+        </div>
+
         <span class="apya-console-count apya-numeric" id="console-task-count"></span>
     </div>
 
