@@ -48,6 +48,36 @@ public class ShellSavedViewDto
 }
 
 /// <summary>
+/// Panolar konsolunun (/Tasks) açık sekmelerinden BİRİ.
+///
+/// Sekme bir GÖRÜNÜŞ değil, görünüşün bir ÖRNEĞİdir: "kanban" tek bir sekme,
+/// ama "project" türünden aynı anda birden çok sekme açılabilir (her biri başka
+/// projenin panosu). Bu yüzden kimlik (tür + referans) çiftidir, tek başına tür
+/// değil.
+/// </summary>
+public class ShellBoardTabDto
+{
+    /// <summary>
+    /// Sekme türü. Sabit görünüşler: list · kanban · gantt · calendar ·
+    /// dashboard · gallery. Parametreli olanlar: view (kayıtlı görünüm),
+    /// project (projeye kapsanmış kart panosu).
+    /// </summary>
+    public string Kind { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Parametreli türlerin hedefi: "project" için proje Id'si (GUID),
+    /// "view" için kayıtlı görünümün adı. Sabit görünüşlerde boştur.
+    /// </summary>
+    public string Ref { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Sekmede yazan ad. Sabit görünüşlerde boş bırakılır — etiket
+    /// localization'dan gelir, dil değişince sekme Türkçe donup kalmasın.
+    /// </summary>
+    public string Title { get; set; } = string.Empty;
+}
+
+/// <summary>
 /// Oluşturma yetkileri — "+ Yeni" menüsü yalnız gerçekten yapılabilecek işleri
 /// listeler. Yetkisi olmayana satır GÖSTERİLİP 403 aldırmak, hiç göstermemekten
 /// daha kötü: kullanıcı işin mümkün olduğunu sanır.

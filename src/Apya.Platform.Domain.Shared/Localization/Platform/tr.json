@@ -2080,6 +2080,8 @@
         "Setting:Shell.SavedViews.Description": "Ekranların filtre kombinasyonlarını adlandırıp kaydeder. Kullanıcıya özeldir, cihazlar arasında taşınır.",
         "Setting:Shell.MenuLayout": "Menü Düzeni",
         "Setting:Shell.MenuLayout.Description": "Kenar çubuğu bölümlerinin sırası ve hangi öğelerin Ayarlar sayfasında durduğu. Kullanıcıya özeldir, cihazlar arasında taşınır.",
+        "Setting:Shell.BoardTabs": "Pano Sekmeleri",
+        "Setting:Shell.BoardTabs.Description": "Panolar ekranında hangi sekmelerin açık duracağı ve sırası. Kullanıcıya özeldir, cihazlar arasında taşınır.",
         "Menu:ProductTour": "Tanıtım turu",
         "Tour:Kicker": "Tanıtım turu",
         "Tour:Close": "Kapat",

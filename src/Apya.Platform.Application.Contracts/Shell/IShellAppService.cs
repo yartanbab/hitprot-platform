@@ -26,4 +26,15 @@ public interface IShellAppService : IApplicationService
     /// saklanır ki cihazlar arası taşınsın.
     /// </summary>
     Task<List<ShellSavedViewDto>> SetSavedViewsAsync(List<ShellSavedViewDto> views);
+
+    /// <summary>
+    /// Panolar konsolunun açık sekmelerini topluca değiştirir — sekme açma,
+    /// kapatma ve sıralama aynı çağrıdan geçer (istemci tam listeyi gönderir).
+    /// Sunucuda saklanır ki düzen cihazlar arası taşınsın.
+    ///
+    /// OKUMA burada YOK: sekmeleri /Tasks sayfasının kendi PageModel'i doğrudan
+    /// ayardan okur. ShellStateDto'ya konsaydı her sayfa yükünde taşınırdı,
+    /// oysa yalnız tek sayfayı ilgilendiriyor.
+    /// </summary>
+    Task<List<ShellBoardTabDto>> SetBoardTabsAsync(List<ShellBoardTabDto> tabs);
 }

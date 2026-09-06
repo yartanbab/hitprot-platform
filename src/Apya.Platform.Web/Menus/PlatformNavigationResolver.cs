@@ -563,31 +563,29 @@ public class PlatformNavigationResolver : IScopedDependency
         if (await _permission.IsGrantedAsync(PlatformPermissions.Projects.Default))
             work.AddItem(new ApplicationMenuItem("Apya.Work.Projects", l["Menu:Projects"], icon: "fa fa-rocket", url: "/Projects", order: 1));
 
-        // Panolar = Görevler konsolunun (/Tasks) üç görünüşü. Alt öğeler aynı
-        // sayfanın sekmelerine derin bağlantıdır (?view= parametresini
-        // Pages/Tasks/index.js açılışta okur).
+        // Panolar = Görevler konsolu (/Tasks). TEK YAPRAK, alt öğesi YOK
+        // (kullanıcı kararı 2026-09-06).
         //
-        // Grubun kendisi de TIKLANABİLİR (kullanıcı kararı 2026-09-06) ama burada
-        // `url:` VERİLMEZ: LeptonX alt öğesi olan bir satırın anchor'ına href
-        // basmıyor, verilen URL sessizce düşüyor. Başlığın hedefi kabukta ilk
-        // çocuğun href'inden türetilir (apya-sidebar-shell.js → setupBoards).
+        // Görünüşler bir gün önce menüde üç sabit çocuktu (Görevler / Kart
+        // Panosu / Zaman Çizelgesi → ?view= derin bağlantıları). Konsol o
+        // günden beri altı görünüşe çıktı ve hangilerinin açık duracağı artık
+        // KULLANICININ kararı: seçim sayfanın kendi sekme şeridinde yapılıyor,
+        // düzen kullanıcıda saklanıyor (PlatformSettings.Shell.BoardTabs).
+        // Menüde sabit bir alt liste tutmak aynı seçimi ikinci bir yerden
+        // taşırdı — kullanıcının kapattığı görünüş menüde durmaya devam eder,
+        // açtığı proje panosu ise menüde hiç görünmezdi.
         //
-        // Üçünün de müstakil sayfası YOK, üçü de konsolun sekmesi. Kanban'ın
-        // ayrı bir /Board sayfası vardı; menü konsola geçince kimsenin
-        // gitmediği ikinci bir kopya olarak kaldı ve SİLİNDİ (2026-09-06) —
-        // yerinde yalnız /Tasks?view=kanban'a kalıcı yönlendirme duruyor.
-        // Böylece üç görünüş aynı süzgeç çubuğunu paylaşır.
+        // Yaprağa dönünce `url:` GERÇEKTEN çalışır: LeptonX'in href'i düşürme
+        // kusuru yalnız ALT ÖĞESİ OLAN satırlarda vardı, o yüzden başlığı
+        // tıklanabilir yapan kabuk kodu (setupBoards) da kalktı.
         //
-        // Menü ID'si "Apya.Work.Board" KALIYOR (etiketi Kart Panosu oldu): ad,
-        // kullanıcının menü düzeninde ve kısayol iğnelerinde saklı.
-        var boards = new ApplicationMenuItem("Apya.Work.Boards", l["Menu:Boards"], icon: "fa fa-table-columns", order: 2);
+        // Menü ID'si "Apya.Work.Boards" KORUNUR — grup yaprağa döndü, kimliği
+        // değişmedi; ad kullanıcının menü düzeninde ve kısayol iğnelerinde
+        // saklı. Silinen çocuklardan "Apya.Work.Tasks" gecikmiş görev rozetini
+        // taşıyordu; rozet bu yaprağa taşındı (apya-sidebar-shell.js → addBadge).
         if (await _permission.IsGrantedAsync(PlatformPermissions.Tasks.Default))
-        {
-            boards.AddItem(new ApplicationMenuItem("Apya.Work.Tasks", l["Menu:Tasks"], icon: "fa fa-tasks", url: "/Tasks"));
-            boards.AddItem(new ApplicationMenuItem("Apya.Work.Board", l["Menu:KanbanBoard"], icon: "fa fa-columns", url: "/Tasks?view=kanban"));
-            boards.AddItem(new ApplicationMenuItem("Apya.Work.Timeline", l["Menu:Timeline"], icon: "fa fa-clock", url: "/Tasks?view=gantt"));
-        }
-        if (boards.Items.Count > 0) work.AddItem(boards);
+            work.AddItem(new ApplicationMenuItem(
+                "Apya.Work.Boards", l["Menu:Boards"], icon: "fa fa-table-columns", url: "/Tasks", order: 2));
 
         // Özet Raporlar — "Raporlar & Analiz" kategorisinden BURAYA taşındı
         // (2026-09-03). Sayfanın içeriği finans değil: aktif proje sayısı,
