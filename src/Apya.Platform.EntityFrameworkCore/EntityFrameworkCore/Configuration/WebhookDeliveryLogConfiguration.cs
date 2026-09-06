@@ -26,5 +26,13 @@ public class WebhookDeliveryLogConfiguration : IEntityTypeConfiguration<WebhookD
         builder.HasIndex(x => x.SubscriptionId);
         builder.HasIndex(x => new { x.SubscriptionId, x.IsSuccess })
             .HasDatabaseName("IX_AppWebhookDeliveryLogs_SubSuccess");
+
+        // Kabuğun webhook hata rozeti HER sayfa açılışında "IsSuccess = 0 AND
+        // CreationTime >= son 24 saat" sayar; iki mevcut indeksin lideri SubscriptionId
+        // olduğu için sınırsız büyüyen log tablosu baştan sona taranıyordu. Eşitlik
+        // (IsSuccess) önce, aralık (CreationTime) sonra. Entity IMultiTenant/ISoftDelete
+        // değil → ABP süzgeç eklemez, sağlayıcı-nötr düz indeks yeterli.
+        builder.HasIndex(x => new { x.IsSuccess, x.CreationTime })
+            .HasDatabaseName("IX_AppWebhookDeliveryLogs_IsSuccess_CreationTime");
     }
 }

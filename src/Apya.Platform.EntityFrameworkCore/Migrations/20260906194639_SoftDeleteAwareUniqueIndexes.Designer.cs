@@ -3,6 +3,7 @@ using System;
 using Apya.Platform.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Volo.Abp.EntityFrameworkCore;
@@ -12,9 +13,11 @@ using Volo.Abp.EntityFrameworkCore;
 namespace Apya.Platform.Migrations
 {
     [DbContext(typeof(PlatformDbContext))]
-    partial class PlatformDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260906194639_SoftDeleteAwareUniqueIndexes")]
+    partial class SoftDeleteAwareUniqueIndexes
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -4819,9 +4822,6 @@ namespace Apya.Platform.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("SubscriptionId");
-
-                    b.HasIndex("IsSuccess", "CreationTime")
-                        .HasDatabaseName("IX_AppWebhookDeliveryLogs_IsSuccess_CreationTime");
 
                     b.HasIndex("SubscriptionId", "IsSuccess")
                         .HasDatabaseName("IX_AppWebhookDeliveryLogs_SubSuccess");
@@ -10331,25 +10331,11 @@ namespace Apya.Platform.Migrations
 
                     b.HasIndex("ProjectId");
 
-                    NpgsqlIndexBuilderExtensions.IncludeProperties(b.HasIndex("ProjectId"), new[] { "TenantId", "Status", "IsPrivate", "IsDeleted" });
-
-                    b.HasIndex("TenantId", "DueDate")
-                        .HasFilter("\"IsDeleted\" = false");
-
-                    NpgsqlIndexBuilderExtensions.IncludeProperties(b.HasIndex("TenantId", "DueDate"), new[] { "Status", "AssigneeId", "ProjectId", "IsPrivate", "CreatorId" });
-
                     b.HasIndex("TenantId", "Number");
 
                     b.HasIndex("TenantId", "ParentTaskId");
 
-                    b.HasIndex("TenantId", "AssigneeId", "DueDate")
-                        .HasFilter("\"IsDeleted\" = false");
-
-                    NpgsqlIndexBuilderExtensions.IncludeProperties(b.HasIndex("TenantId", "AssigneeId", "DueDate"), new[] { "Status" });
-
                     b.HasIndex("TenantId", "Status", "AssigneeId");
-
-                    NpgsqlIndexBuilderExtensions.IncludeProperties(b.HasIndex("TenantId", "Status", "AssigneeId"), new[] { "ProjectId", "DueDate", "IsPrivate", "CreatorId" });
 
                     b.ToTable("AppTasks", (string)null);
                 });

@@ -28,7 +28,29 @@ public static class ReleaseNoteCatalog
         new ReleaseNote(
             version: "2026.09.07",
             date: "7 Eylül 2026",
-            title: "Kaydedemediğiniz bir değişiklik artık sessizce kaybolmuyor",
+            title: "Muhasebe ekranları yenileniyor, kaydetme hataları artık bildiriliyor",
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
+                "Cari, mizan ve ekstre ekranları yenilenmek üzere geçici olarak kaldırıldı",
+                "Cari kartı, cari ekstre, mizan ve yıl sonu kur değerlemesi ekranlarını menüden " +
+                "kaldırdık. Bu ekranlar muhasebe tarafını gerçekten karşılamıyordu; olduğu gibi " +
+                "bırakmak yerine baştan tasarlıyoruz ve hazır olduklarında geri getireceğiz. " +
+                "Girdiğiniz hiçbir kayıt silinmedi, bilgileriniz olduğu gibi duruyor — ekranlar " +
+                "geri geldiğinde her şeyi bıraktığınız yerde bulacaksınız. Günlük kullandığınız " +
+                "Kasalar, Finans Merkezi, Kurlar ve Proje Bütçesi ekranlarında bir değişiklik yok."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
+                "Proje formu sadeleşti, cari seçimi kaldırıldı",
+                "Yeni proje açarken ve proje düzenlerken sorulan \"Cari (Müşteri)\" alanı kalktı; " +
+                "proje listesindeki \"Müşteri\" sütunu da öyle. Cari ekranlarıyla birlikte bu alan " +
+                "da yenileniyor. Daha önce projelerinize bağladığınız cariler kayıtlarınızda " +
+                "duruyor, kaybolmadı. Proje arama kutusu artık proje adı ve kodu üzerinde çalışıyor."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Fix,
+                "Faturalarda müşteri seçimi eskisi gibi çalışıyor",
+                "Fatura keserken müşteri seçmeye devam ediyorsunuz — fatura ekranında hiçbir şey " +
+                "değişmedi. Yukarıdaki düzenleme yalnız menüdeki muhasebe raporlarını ve proje " +
+                "formunu kapsıyor."),
 
             new ReleaseNoteItem(ReleaseNoteCategory.Fix,
                 "Kaydedilemeyen değişiklikler artık size bildiriliyor",

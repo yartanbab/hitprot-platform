@@ -52,7 +52,11 @@ public class AppDocumentConfiguration : IEntityTypeConfiguration<AppDocument>
         // (EfCoreAppDocumentRepository.GetBySlugWithBlocksAsync) ABP'nin çok-kiracı
         // süzgecine tabi bir sorgudur — çözümleme zaten kiracı kapsamlıdır, dolayısıyla
         // global tekillik gereğinden fazla kısıtlayıcıydı.
-        builder.HasIndex(x => new { x.TenantId, x.Slug }).IsUnique();
+        // Tekillik yalnız CANLI satırlar arasında: silinen formun/şablonun slug'ı yeniden
+        // kullanılabilmeli. EF'in nullable TenantId için eklediği "IS NOT NULL" korunur —
+        // HasFilter onu ezdiği için açıkça yazıldı; host satırları aşağıdaki ayrı indekste.
+        builder.HasIndex(x => new { x.TenantId, x.Slug }).IsUnique()
+            .HasFilter(_isSqlServer ? "[TenantId] IS NOT NULL AND [IsDeleted] = 0" : "\"IsDeleted\" = false");
 
         // Host (TenantId NULL) satırları yukarıdaki indeksin kapsamı dışında kalır:
         // SQL Server nullable kolonlu tekil indekse otomatik "IS NOT NULL" filtresi ekler,
@@ -61,7 +65,7 @@ public class AppDocumentConfiguration : IEntityTypeConfiguration<AppDocument>
         builder.HasIndex(x => x.Slug)
             .IsUnique()
             .HasDatabaseName("IX_AppDocuments_Dynamic_Slug_Host")
-            .HasFilter(_isSqlServer ? "[TenantId] IS NULL" : "\"TenantId\" IS NULL");
+            .HasFilter(_isSqlServer ? "[TenantId] IS NULL AND [IsDeleted] = 0" : "\"TenantId\" IS NULL AND \"IsDeleted\" = false");
         builder.HasIndex(x => x.ParentTemplateId);
         builder.HasIndex(x => x.IsTemplate);
         builder.HasIndex(x => new { x.TenantId, x.Status });

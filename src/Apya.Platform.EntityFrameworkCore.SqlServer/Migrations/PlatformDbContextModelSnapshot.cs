@@ -4599,11 +4599,11 @@ namespace Apya.Platform.Migrations
                     b.HasIndex("Slug")
                         .IsUnique()
                         .HasDatabaseName("IX_AppDocuments_Dynamic_Slug_Host")
-                        .HasFilter("[TenantId] IS NULL");
+                        .HasFilter("[TenantId] IS NULL AND [IsDeleted] = 0");
 
                     b.HasIndex("TenantId", "Slug")
                         .IsUnique()
-                        .HasFilter("[TenantId] IS NOT NULL");
+                        .HasFilter("[TenantId] IS NOT NULL AND [IsDeleted] = 0");
 
                     b.HasIndex("TenantId", "Status");
 
@@ -4823,6 +4823,9 @@ namespace Apya.Platform.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("SubscriptionId");
+
+                    b.HasIndex("IsSuccess", "CreationTime")
+                        .HasDatabaseName("IX_AppWebhookDeliveryLogs_IsSuccess_CreationTime");
 
                     b.HasIndex("SubscriptionId", "IsSuccess")
                         .HasDatabaseName("IX_AppWebhookDeliveryLogs_SubSuccess");
@@ -5647,7 +5650,7 @@ namespace Apya.Platform.Migrations
 
                     b.HasIndex("TenantId")
                         .IsUnique()
-                        .HasFilter("[TenantId] IS NOT NULL");
+                        .HasFilter("[TenantId] IS NOT NULL AND [IsDeleted] = 0");
 
                     b.ToTable("AppFirmProfiles", (string)null);
                 });
@@ -6061,7 +6064,7 @@ namespace Apya.Platform.Migrations
 
                     b.HasIndex("TenantId", "GrantCallId")
                         .IsUnique()
-                        .HasFilter("[TenantId] IS NOT NULL");
+                        .HasFilter("[TenantId] IS NOT NULL AND [IsDeleted] = 0");
 
                     b.ToTable("AppGrantApplications", (string)null);
                 });
@@ -6190,7 +6193,8 @@ namespace Apya.Platform.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("GrantApplicationId", "Kind")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasFilter("[IsDeleted] = 0");
 
                     b.ToTable("AppGrantApplicationBudgetLines", (string)null);
                 });
@@ -6795,7 +6799,8 @@ namespace Apya.Platform.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("GrantApplicationId")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasFilter("[IsDeleted] = 0");
 
                     b.ToTable("AppGrantDecisions", (string)null);
                 });
@@ -7094,7 +7099,8 @@ namespace Apya.Platform.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("GrantId", "Kind")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasFilter("[IsDeleted] = 0");
 
                     b.ToTable("AppGrantEligibleCostItems", (string)null);
                 });
@@ -7421,7 +7427,7 @@ namespace Apya.Platform.Migrations
 
                     b.HasIndex("GrantId")
                         .IsUnique()
-                        .HasFilter("[GrantId] IS NOT NULL");
+                        .HasFilter("[GrantId] IS NOT NULL AND [IsDeleted] = 0");
 
                     b.ToTable("AppGrantMatchWeights", (string)null);
                 });
@@ -7604,7 +7610,7 @@ namespace Apya.Platform.Migrations
 
                     b.HasIndex("TenantId", "Trigger")
                         .IsUnique()
-                        .HasFilter("[TenantId] IS NOT NULL");
+                        .HasFilter("[TenantId] IS NOT NULL AND [IsDeleted] = 0");
 
                     b.ToTable("AppGrantNotificationTemplates", (string)null);
                 });
@@ -7682,7 +7688,7 @@ namespace Apya.Platform.Migrations
 
                     b.HasIndex("TenantId", "GrantCallId")
                         .IsUnique()
-                        .HasFilter("[TenantId] IS NOT NULL");
+                        .HasFilter("[TenantId] IS NOT NULL AND [IsDeleted] = 0");
 
                     b.ToTable("AppGrantRecommendations", (string)null);
                 });
@@ -8709,7 +8715,8 @@ namespace Apya.Platform.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("UserId", "Category")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasFilter("[IsDeleted] = 0");
 
                     b.ToTable("AppNotificationPreferences", (string)null);
                 });
@@ -9402,7 +9409,7 @@ namespace Apya.Platform.Migrations
 
                     b.HasIndex("TenantId", "Name")
                         .IsUnique()
-                        .HasFilter("[TenantId] IS NOT NULL");
+                        .HasFilter("[IsDeleted] = 0");
 
                     b.ToTable("AppProjectCategories", (string)null);
                 });
@@ -10330,11 +10337,25 @@ namespace Apya.Platform.Migrations
 
                     b.HasIndex("ProjectId");
 
+                    SqlServerIndexBuilderExtensions.IncludeProperties(b.HasIndex("ProjectId"), new[] { "TenantId", "Status", "IsPrivate", "IsDeleted" });
+
+                    b.HasIndex("TenantId", "DueDate")
+                        .HasFilter("[IsDeleted] = 0");
+
+                    SqlServerIndexBuilderExtensions.IncludeProperties(b.HasIndex("TenantId", "DueDate"), new[] { "Status", "AssigneeId", "ProjectId", "IsPrivate", "CreatorId" });
+
                     b.HasIndex("TenantId", "Number");
 
                     b.HasIndex("TenantId", "ParentTaskId");
 
+                    b.HasIndex("TenantId", "AssigneeId", "DueDate")
+                        .HasFilter("[IsDeleted] = 0");
+
+                    SqlServerIndexBuilderExtensions.IncludeProperties(b.HasIndex("TenantId", "AssigneeId", "DueDate"), new[] { "Status" });
+
                     b.HasIndex("TenantId", "Status", "AssigneeId");
+
+                    SqlServerIndexBuilderExtensions.IncludeProperties(b.HasIndex("TenantId", "Status", "AssigneeId"), new[] { "ProjectId", "DueDate", "IsPrivate", "CreatorId" });
 
                     b.ToTable("AppTasks", (string)null);
                 });
@@ -10904,7 +10925,8 @@ namespace Apya.Platform.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("Code")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasFilter("[IsDeleted] = 0");
 
                     b.ToTable("AppPlatformPackages", (string)null);
                 });
@@ -11051,7 +11073,8 @@ namespace Apya.Platform.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("TenantId")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasFilter("[IsDeleted] = 0");
 
                     b.ToTable("AppTenantProfiles", (string)null);
                 });

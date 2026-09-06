@@ -696,14 +696,25 @@ public class PlatformNavigationResolver : IScopedDependency
         // satırı taşıdığı için merge'de çakışmıştı.)
         if (await _permission.IsGrantedAsync(PlatformPermissions.Projects.ViewBudget))
             financeReports.AddItem(new ApplicationMenuItem("Apya.Reports.ProjectBudget", l["Menu:ProjectBudget"], icon: "fa fa-chart-bar", url: "/Reports/ProjectBudget"));
-        if (await _permission.IsGrantedAsync(PlatformPermissions.Customers.Default))
-            financeReports.AddItem(new ApplicationMenuItem("Apya.Reports.CustomerStatement", l["Menu:CustomerStatement"], icon: "fa fa-file-lines", url: "/Reports/CustomerStatement"));
-        if (await _permission.IsGrantedAsync(PlatformPermissions.Reports.TrialBalance)
-            && await _feature.IsEnabledAsync(PlatformFeatures.AdvancedReports))
-            financeReports.AddItem(new ApplicationMenuItem("Apya.Reports.TrialBalance", l["Menu:TrialBalance"], icon: "fa fa-scale-unbalanced", url: "/Reports/TrialBalance"));
-        if (await _permission.IsGrantedAsync(PlatformPermissions.FxRevaluations.Default)
-            && await _feature.IsEnabledAsync(PlatformFeatures.AdvancedReports))
-            financeReports.AddItem(new ApplicationMenuItem("Apya.Reports.FxRevaluation", l["Menu:FxRevaluation"], icon: "fa fa-scale-balanced", url: "/FxRevaluations"));
+
+        // ── GÖMÜLDÜ (2026-09-06, kullanıcı kararı) ───────────────────────────
+        // Cari ekstre, mizan ve yıl sonu değerleme menüden kaldırıldı. Muhasebe
+        // ekseni (cari kartı, cari defter, mizan, kur değerlemesi) bugünkü hâliyle
+        // sunulmayacak; zamanı gelince yeniden tasarlanıp açılacak.
+        //
+        // SAYFALAR, İZİNLER VE VERİ AYNEN DURUYOR — yalnız menü kaydı yok. Aynı
+        // desen Cariler için 2026-06-22'de kullanıldı (yukarı bak). Geri açmak
+        // için aşağıyı yorumdan çıkarmak yeterli, başka değişiklik gerekmez.
+        //
+        // if (await _permission.IsGrantedAsync(PlatformPermissions.Customers.Default))
+        //     financeReports.AddItem(new ApplicationMenuItem("Apya.Reports.CustomerStatement", l["Menu:CustomerStatement"], icon: "fa fa-file-lines", url: "/Reports/CustomerStatement"));
+        // if (await _permission.IsGrantedAsync(PlatformPermissions.Reports.TrialBalance)
+        //     && await _feature.IsEnabledAsync(PlatformFeatures.AdvancedReports))
+        //     financeReports.AddItem(new ApplicationMenuItem("Apya.Reports.TrialBalance", l["Menu:TrialBalance"], icon: "fa fa-scale-unbalanced", url: "/Reports/TrialBalance"));
+        // if (await _permission.IsGrantedAsync(PlatformPermissions.FxRevaluations.Default)
+        //     && await _feature.IsEnabledAsync(PlatformFeatures.AdvancedReports))
+        //     financeReports.AddItem(new ApplicationMenuItem("Apya.Reports.FxRevaluation", l["Menu:FxRevaluation"], icon: "fa fa-scale-balanced", url: "/FxRevaluations"));
+
         if (financeReports.Items.Count > 0) finance.AddItem(financeReports);
 
         if (finance.Items.Count > 0) roots.Add(finance);
