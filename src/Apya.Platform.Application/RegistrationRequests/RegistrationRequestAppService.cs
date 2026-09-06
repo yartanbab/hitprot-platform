@@ -28,6 +28,7 @@ public class RegistrationRequestAppService : PlatformAppService, IRegistrationRe
     private readonly RegistrationRequestManager _registrationRequestManager;
     private readonly TenantProfileManager _tenantProfileManager;
     private readonly SalesPlanPricing _pricing;
+    private readonly RegistrationInviteMailer _inviteMailer;
     private readonly IClock _clock;
 
     public RegistrationRequestAppService(
@@ -35,12 +36,14 @@ public class RegistrationRequestAppService : PlatformAppService, IRegistrationRe
         RegistrationRequestManager registrationRequestManager,
         TenantProfileManager tenantProfileManager,
         SalesPlanPricing pricing,
+        RegistrationInviteMailer inviteMailer,
         IClock clock)
     {
         _repository = repository;
         _registrationRequestManager = registrationRequestManager;
         _tenantProfileManager = tenantProfileManager;
         _pricing = pricing;
+        _inviteMailer = inviteMailer;
         _clock = clock;
     }
 
@@ -162,6 +165,14 @@ public class RegistrationRequestAppService : PlatformAppService, IRegistrationRe
         await _repository.UpdateAsync(request, autoSave: true);
 
         return new RegistrationInviteDto { Token = token, ExpiresAt = expiresAt };
+    }
+
+    [Authorize(PlatformPermissions.RegistrationRequests.Manage)]
+    public async Task<bool> SendInviteMailAsync(Guid id, string protocolUrl)
+    {
+        var request = await _repository.GetAsync(id);
+
+        return await _inviteMailer.TrySendAsync(request, protocolUrl);
     }
 
     public async Task<RegistrationRequestSummaryDto> GetSummaryAsync()

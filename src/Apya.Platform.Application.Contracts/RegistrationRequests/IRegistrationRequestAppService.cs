@@ -37,4 +37,19 @@ public interface IRegistrationRequestAppService : IApplicationService
     /// </para>
     /// </summary>
     Task<RegistrationInviteDto> IssueInviteAsync(Guid id);
+
+    /// <summary>
+    /// Davet bağlantısını adaya e-postayla iletir (izin: RegistrationRequests.Manage).
+    /// <para>
+    /// <c>true</c> = gönderildi. <c>false</c> = SMTP yapılandırılmamış ya da gönderim
+    /// düştü; İSTİSNA ATMAZ — davet zaten üretildi ve host bağlantıyı ekrandan kopyalayıp
+    /// kendisi iletebilir. Akışın e-postaya bağlanması, posta ayarı gelene kadar hesap
+    /// açılışını tamamen durdururdu.
+    /// </para>
+    /// <para>
+    /// Bağlantıyı ÇAĞIRAN üretir: mutlak adres Web sınırında bilinir, uygulama katmanı
+    /// hangi şema/host altında çalıştığını bilmez.
+    /// </para>
+    /// </summary>
+    Task<bool> SendInviteMailAsync(Guid id, string protocolUrl);
 }

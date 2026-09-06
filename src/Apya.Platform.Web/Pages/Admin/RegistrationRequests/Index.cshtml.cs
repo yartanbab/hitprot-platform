@@ -101,10 +101,15 @@ public class IndexModel : PlatformPageModel
         try
         {
             var invite = await _registrationRequestAppService.IssueInviteAsync(id);
+            var url = Url.Page("/Account/Protokol", null, new { token = invite.Token }, Request.Scheme)!;
 
-            TempData["InviteLink"] = Url.Page("/Account/Protokol", null, new { token = invite.Token }, Request.Scheme);
+            TempData["InviteLink"] = url;
             TempData["InviteExpiresAt"] = invite.ExpiresAt.ToString("dd.MM.yyyy");
             TempData["InviteRequestId"] = id.ToString();
+
+            // E-posta BAŞARISIZ olsa da bağlantı ekranda kalır: host'un elinde geçerli bir
+            // davet var, gönderim düştü diye onu kaybetmemeli.
+            TempData["InviteMailSent"] = await _registrationRequestAppService.SendInviteMailAsync(id, url);
         }
         catch (BusinessException ex) when (ex.Code == PlatformDomainErrorCodes.RegistrationRequestNotApproved)
         {

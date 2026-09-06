@@ -52,8 +52,23 @@
             <p class="small mb-2">
                 Bu bağlantı <strong>yalnız şimdi</strong> görünür ve
                 <strong>@TempData["InviteExpiresAt"]</strong> tarihine kadar geçerlidir.
-                Adaya iletin; protokolü onaylayıp hesabını kendisi açacak.
+                Aday protokolü onaylayıp hesabını kendisi açacak.
             </p>
+            @if (TempData["InviteMailSent"] is true)
+            {
+                <p class="small mb-2">
+                    <i class="fa fa-envelope-circle-check me-1" aria-hidden="true"></i>
+                    Bağlantı adaya <strong>e-postayla gönderildi</strong>. Yine de aşağıdan
+                    kopyalayıp ikinci bir kanaldan iletebilirsiniz.
+                </p>
+            }
+            else
+            {
+                <p class="small mb-2 text-warning-emphasis">
+                    <i class="fa fa-triangle-exclamation me-1" aria-hidden="true"></i>
+                    E-posta gönderilemedi (SMTP tanımlı değil). Bağlantıyı <strong>siz iletin</strong>.
+                </p>
+            }
             <div class="input-group input-group-sm">
                 <input type="text" class="form-control" readonly value="@inviteLink"
                        id="invite-link" aria-label="Davet bağlantısı"
