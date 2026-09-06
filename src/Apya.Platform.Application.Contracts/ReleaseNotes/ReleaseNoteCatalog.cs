@@ -424,6 +424,23 @@ public static class ReleaseNoteCatalog
                 "için neyi kaçırdığınızı fark etmiyordunuz. Kısayol yalnız gerçekten kapalı bir özelliğiniz " +
                 "varsa çıkar — her şeyi kapsayan pakette hiç görünmez."),
 
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "Hizmet protokolünüz artık \"Paketim\" ekranında duruyor",
+                "Kurumunuzun onayladığı hizmet protokolüne ulaşmak için elinizdeki dosyayı ya da " +
+                "e-postayı aramanız gerekiyordu. Protokolün tam metni artık \"Paketim\" ekranında: " +
+                "hangi paketi, hangi bedelle ve hangi tarihler arasında kapsadığını, protokolü kimin " +
+                "hangi tarihte onayladığını ve belgenin doğrulama kodunu tek yerden görüyorsunuz. " +
+                "Metni yazdırabilir veya PDF olarak kaydedebilirsiniz."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "Faturalarınızı görüyor, ödemenizi dekontuyla bildiriyorsunuz",
+                "Size kesilen faturaların tutarını, vadesini ve kalan bakiyesini öğrenmek için bizimle " +
+                "yazışmanız gerekiyordu. \"Paketim\" ekranındaki \"Faturalarım\" bölümünde hepsi " +
+                "listeleniyor, fatura belgesini oradan indiriyorsunuz. Ödemenizi yaptığınızda tarihini, " +
+                "tutarını ve dekontunuzu aynı ekrandan bildirebiliyorsunuz; bildiriminiz ekibimiz " +
+                "tarafından kontrol edildikten sonra faturaya işleniyor. Vadesi geçen faturalar ayrıca " +
+                "işaretleniyor, böylece gözden kaçmıyor."),
+
             // ── Takvim ────────────────────────────────────────────────────────
             new ReleaseNoteItem(ReleaseNoteCategory.Fix,
                 "Google ve Outlook takvim bağlantısı gerçekten çalışıyor",
