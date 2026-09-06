@@ -4,7 +4,7 @@
 > buraya yazılan her SHA yazıldığı anda bayatlar. Paketin üretildiği tam commit, ZIP adında
 > (`Apya-Yayin-<sha>.zip`) yazılıdır — tek doğru kaynak orasıdır.
 
-**35 commit · PR #309 → #344 · 5 migration (çift sağlayıcı).**
+**38 commit · PR #309 → #346 · 8 migration (çift sağlayıcı).**
 
 ---
 
@@ -29,7 +29,7 @@ tutmuyor. `Pages/Tasks/index.js` de aynı sonucu veriyor.
 
 Yani canlı kod **`ece0755a`**, şema da 2026-09-03'te koşan DbMigrator ile aynı seviyede
 (21 migration + üç veri tohumu uygulanmıştı). Bu paketin taşıdığı yük buradan itibaren
-ölçülüyor: **35 commit, 5 migration** — 09-02 belgesindeki 33 commit / 21 migration
+ölçülüyor: **38 commit, 8 migration** — 09-02 belgesindeki 33 commit / 21 migration
 **tekrar uygulanmayacak**.
 
 Ayrıca 09-02 belgesinin "Adım 0"ı (503 → `hostingModel` düzeltmesi + havuzu başlatma)
@@ -45,32 +45,64 @@ Ayrıca 09-02 belgesinin "Adım 0"ı (503 → `hostingModel` düzeltmesi + havuz
 | Hibe | "Başvuru Aç" yerine "İlgileniyorum" akışı (#327), dernek/vakıf/kulüp profil formu (#339), boş sonuçta kalkmayan iskelet + üst üste binen son tarih etiketleri (#309), okunabilirlik ölçeği (#310), rozet dili (#320) |
 | Finans | Bütçe rakamı tek kaynağa indi (#311), projeden bütçe/finans/belge geçişi (#319), menüde "Finans & Bütçe" tek çatı (#315), tutar/kur/oran maskesi (#318, #321, #324) |
 | Genel | Genel Bakış baskı çıktısı (#337), Takvim menüde kök başlık + Panolar görev konsolu görünüşleri (#341 · **#344** taşımayı gerçekten uygular), takvim Google/Outlook entegrasyonu düzeltmesi (#317), form textarea (#314), proje tarih alanları (#312), proje modalı finans izni (#316), mobil Genel Bakış (#323), doğrulama mesajlarında üç alanın Türkçe adı |
+| Kayıt & abonelik (#342) | Demo talebi yerine dört adımlı **kayıt talebi sihirbazı**; host onayınca davet bağlantısı e-postayla gidiyor, davetli clickwrap **protokol onayı** verince hesap otomatik açılıyor; host→kiracı **fatura ve tahsilat takibi**; satış paketlerine yıllık liste bedeli — 🔴 `AppDemoRequests` → `AppRegistrationRequests` yeniden adlandırması ve altı serbest metin alanının düşmesi bu işten geliyor. **Sürüm notuna girmez** — akışın tamamı aday müşteri ve host tarafında, mevcut kiracı kullanıcı hiçbir ekranını görmüyor |
 | Host | Sürüm notu yayın onayı (#322), Sistem Sağlığı markdown özeti (#313) — **ikisi de sürüm notuna girmez** |
 
 ---
 
-## Migration — 5 adet, **hepsi salt eklemeli**
+## Migration — 8 adet, biri **veri düşürüyor**
 
 ```
 20260903100503_AddTaskDocuments
 20260903121602_Add_ReleaseNotePublications
 20260904082319_GrantInterests
 20260904085559_AddTaskFormLinks
+20260905205359_RenameDemoRequestsToRegistrationRequests   🔴
 20260905210029_Add_FirmProfile_NgoFields
+20260905215134_AddServiceAgreementsAndInvite
+20260905230857_AddSubscriptionBilling
 ```
 
-| Migration | Tablo | Kolon | İndeks | FK |
+| Migration | Tablo | Kolon (+/−) | İndeks | FK |
 |---|---|---|---|---|
 | `AddTaskDocuments` | 1 | — | 1 | — |
 | `Add_ReleaseNotePublications` | 1 | — | 1 | — |
 | `GrantInterests` | 1 | — | 3 | — |
-| `AddTaskFormLinks` | 1 | 2 | 3 | — |
-| `Add_FirmProfile_NgoFields` | — | 6 | — | — |
-| **Toplam** | **4** | **8** | **8** | **0** |
+| `AddTaskFormLinks` | 1 | +2 | 3 | — |
+| `RenameDemoRequestsToRegistrationRequests` | rename | **+11 / −7** | 2 yeniden adlandırıldı | — |
+| `Add_FirmProfile_NgoFields` | — | +6 | — | — |
+| `AddServiceAgreementsAndInvite` | 1 | +5 | 4 | — |
+| `AddSubscriptionBilling` | 2 | — | 4 | — |
+| **Toplam** | **7** | **+24 / −7** | **16** | **0** |
 
-Denetlendi: `Up()` gövdelerinde **`DropTable` / `DropColumn` / `RenameTable` /
-`RenameColumn` / `AlterColumn` yok** ve **varsayılansız `nullable: false` AddColumn yok** —
-yani mevcut satırları kıracak işlem içermiyor. Yine de **deploy öncesi yedek şart**.
+Yedi migration salt eklemeli: `Up()` gövdelerinde `DropTable` / `DropColumn` /
+`RenameTable` / `RenameColumn` / `AlterColumn` yok, varsayılansız `nullable: false`
+AddColumn yok.
+
+### 🔴 `RenameDemoRequestsToRegistrationRequests` — tek istisna, veri kaybı var
+
+#342 demo talebi kavramını kayıt talebine çevirdi. Migration `AppDemoRequests` tablosunu
+`AppRegistrationRequests` olarak **yeniden adlandırıyor** (tablo silinmiyor, satırlar
+korunuyor; PK ve iki indeks de yeni ada çekiliyor) ve şu **altı sütunu kalıcı olarak
+düşürüyor**:
+
+```
+TargetAudience   ProblemStatement   PlannedActivities
+BudgetRange      ExpectedOutcomes   InterestedModules
+```
+
+Bunlar eski demo talebi formunun serbest metin alanları. Yeni akışta karşılıkları yok;
+**içerikleri geri getirilemez.** Yedinci düşen sütun `OrganizationKind`, kör bırakılmıyor:
+migration önce `CompanyType`'ı ekliyor, bir `UPDATE` ile enum eşlemesini yapıyor
+(Dernek → Dernek, Kamu → Kamu, kalan → Diğer), sonra eskisini düşürüyor — veri korunuyor.
+
+🔴 **Deploy öncesi `AppDemoRequests` tablosunu ayrıca dışa aktar.** Canlıda kaç talep
+birikmiş bilinmiyor (yerelde 4 satır var). Genel DB yedeği bunu zaten kapsar, ama o altı
+alanı bir daha okumak isteyeceksen yedeği geri yüklemek yerine elinde bir CSV olsun:
+
+```sql
+SELECT * FROM AppDemoRequests;   -- deploy ÖNCESİ, sonuç CSV olarak saklansın
+```
 
 Postgres tarafında karşılıkları mevcut (çift sağlayıcı); canlı SQL Server kullanıyor.
 
@@ -140,6 +172,17 @@ Tohumlanmazsa host `/Admin/ReleaseNotes` ekranına giremez.
 
 **Host hesabıyla:**
 - `/Admin/ReleaseNotes` açılıyor (yeni izin tohumlandı mı) ve maddeler onaylı görünüyor
+- `/Admin/RegistrationRequests` açılıyor ve **eski demo talepleri listede duruyor** — tablo
+  yeniden adlandırıldı, satırların kaybolmaması gerekiyor. Kurum türü sütunu dolu
+  görünmeli (`OrganizationKind` → `CompanyType` çevrimi tuttu mu). Kayıt öncesi aldığın
+  CSV ile satır sayısını karşılaştır.
+- Bir talebi onayla → davet bağlantısı üretiliyor mu. 🔴 **SMTP hâlâ ayarlı değil**, posta
+  gitmez; bağlantıyı ekrandan kopyalayıp elle denemen gerekir.
+- Abonelik faturası/tahsilatı ekranları açılıyor (yeni üç tablo)
+
+**Anonim (oturumsuz):**
+- `/Account/RegistrationRequest` dört adımlı sihirbazı açıyor
+- `/Account/Protokol?token=<davet>` protokol metnini gösteriyor, onay hesabı açıyor
 
 ---
 
