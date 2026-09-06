@@ -15,6 +15,7 @@ using Volo.Abp.EntityFrameworkCore.PostgreSql;
 using Volo.Abp.EntityFrameworkCore.SqlServer;
 using Volo.Abp.FeatureManagement;
 using Volo.Abp.FeatureManagement.EntityFrameworkCore;
+using Volo.Abp.Guids;
 using Volo.Abp.Identity;
 using Volo.Abp.Identity.EntityFrameworkCore;
 using Volo.Abp.Modularity;
@@ -60,6 +61,23 @@ public class PlatformEntityFrameworkCoreModule : AbpModule
     {
         var configuration = context.Services.GetConfiguration();
         var provider = DatabaseProviderResolver.Resolve(configuration);
+
+        // Sıralı GUID tipi SAĞLAYICIYA ÖZELDİR ve burada AÇIKÇA belirlenmelidir.
+        // AbpEntityFrameworkCorePostgreSqlModule ile AbpEntityFrameworkCoreSqlServerModule
+        // bu değeri "null ise ata" mantığıyla set eder; ikisi de koşulsuz [DependsOn]
+        // listemizde olduğu için önce çalışan PostgreSql modülü kazanıyordu ve üretim
+        // SQL Server olmasına rağmen SequentialAsString yürürlükteydi. SQL Server
+        // uniqueidentifier'ı SON 6 bayttan karşılaştırır; damga GUID'in başına yazılınca
+        // 179 tablonun kümelenmiş anahtarı rastgele doğuyordu (ölçüldü, 2026-09-04:
+        // AppTasks'ta Id↔CreationTime sıralama örtüşmesi %0, sayfa doluluğu %65).
+        // PostgreSQL uuid'i baştan bayt-bayt karşılaştırdığı için orada doğru olan
+        // SequentialAsString'dir — bu yüzden koşulsuz SequentialAtEnd YAZMA.
+        Configure<AbpSequentialGuidGeneratorOptions>(options =>
+        {
+            options.DefaultSequentialGuidType = provider == DatabaseProvider.SqlServer
+                ? SequentialGuidType.SequentialAtEnd
+                : SequentialGuidType.SequentialAsString;
+        });
 
         // Seçilen provider'ın bağlantı dizisini ABP'nin "Default" bağlantısı olarak ata.
         // İki bağlantı dizisi (ConnectionStrings:PostgreSql / :SqlServer) yan yana durur;
