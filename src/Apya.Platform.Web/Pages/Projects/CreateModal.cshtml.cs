@@ -10,7 +10,6 @@ using Volo.Abp.TenantManagement;
 using Volo.Abp.Application.Dtos;
 using Apya.Platform.Projects;
 using Apya.Platform.Projects.Dtos;
-using Apya.Platform.Customers;
 using Microsoft.AspNetCore.Authorization;
 using Apya.Platform.Permissions;
 
@@ -38,14 +37,6 @@ public class CreateModalModel : PlatformPageModel
 
     public List<SelectListItem> Tenants { get; set; } = new();
     public List<SelectListItem> Currencies { get; set; } = new();
-    public List<SelectListItem> Customers { get; set; } = new();
-
-    /// <summary>
-    /// Cari alanı çizilsin mi. Cari FİNANS modülüne ait: <c>Customers.Default</c> izni
-    /// <c>Finance</c> feature kapısının arkasındadır, bu modal ise <c>Projects.Create</c>
-    /// ile açılır. İzin yoksa alan hiç gösterilmez.
-    /// </summary>
-    public bool CanSelectCustomer { get; private set; }
 
     /// <summary>
     /// Kategori artık açılır liste değil, seçim kartı — formun geri kalanının
@@ -59,20 +50,17 @@ public class CreateModalModel : PlatformPageModel
     private readonly IProjectAppService _projectAppService;
     private readonly IProjectCategoryAppService _projectCategoryAppService;
     private readonly ITenantAppService _tenantAppService;
-    private readonly ICustomerAppService _customerAppService;
     private readonly IUploadedFileStorage _fileStorage;
 
     public CreateModalModel(
         IProjectAppService projectAppService,
         IProjectCategoryAppService projectCategoryAppService,
         ITenantAppService tenantAppService,
-        ICustomerAppService customerAppService,
         IUploadedFileStorage fileStorage)
     {
         _projectAppService = projectAppService;
         _projectCategoryAppService = projectCategoryAppService;
         _tenantAppService = tenantAppService;
-        _customerAppService = customerAppService;
         _fileStorage = fileStorage;
     }
 
@@ -110,22 +98,10 @@ public class CreateModalModel : PlatformPageModel
             new SelectListItem("€ (EUR)", "EUR")
         };
 
-        // APYA-132: CARİLER (aktif olanlar)
-        //
-        // İZİN KAPISI ŞART: cari, Finance feature'ının arkasındaki Customers.Default
-        // iznine bağlı; "Yeni Proje Ekle" düğmesi ise Projects.Create ile görünüyor.
-        // İzin sorulmadan çağrıldığında finans izni olmayan kullanıcıda AppService
-        // AbpAuthorizationException atıyor, modal 403 dönüyor ve HİÇ AÇILMIYORDU.
-        // Cari zorunlu alan değil: izin yoksa liste boş kalır ve alan gizlenir.
-        CanSelectCustomer = await AuthorizationService.IsGrantedAsync(PlatformPermissions.Customers.Default);
-        if (CanSelectCustomer)
-        {
-            var customerResult = await _customerAppService.GetListAsync(
-                new GetCustomersInput { MaxResultCount = 1000, IsActive = true });
-            Customers = customerResult.Items
-                .Select(c => new SelectListItem(c.Name, c.Id.ToString()))
-                .ToList();
-        }
+        // APYA-132 cari listesi GÖMÜLDÜ (2026-09-06): form artık cari sormuyor,
+        // dolayısıyla listeyi çekmek de gereksiz bir Customers.Default çağrısıydı.
+        // CreateProjectDto.CustomerId yerinde duruyor ve boş gider — yeni projede
+        // zaten değeri yoktu, davranış değişmiyor.
     }
 
     public async Task<IActionResult> OnPostAsync()
