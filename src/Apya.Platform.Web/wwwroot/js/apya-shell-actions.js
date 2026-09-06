@@ -472,29 +472,109 @@ $(function () {
         profilePanel.innerHTML = rows;
         section.appendChild(profilePanel);
 
-        // --- Görünüm sekmesi — bugünkü dört denetim, AYNI teknikle taşınır ---
+        // --- Görünüm sekmesi (Faz 2) — segment kontrolleri ---
+        // Faz 1'de native denetimler (Dil/Tema/Yoğunluk/Kenar çubuğu) buraya
+        // TAŞINIYORDU; artık taşınmıyor. apya-shell.css onları üst barda
+        // kalıcı gizliyor (`display:none`) — DOM'da kalıyorlar, kendi
+        // handler'ları hâlâ bağlı, yalnız görünmüyorlar. Buradaki segmentler
+        // kendi window.apya.* API'lerini çağırıyor: dark-mode.js (theme),
+        // density-toggle.js (density, ZATEN vardı), sidebar-toggle.js (sidebar).
         var appearancePanel = document.createElement('div');
         appearancePanel.className = 'apya-avatar-menu-panel';
         appearancePanel.dataset.panel = 'appearance';
         appearancePanel.hidden = true;
 
-        var entries = [
-            ['.lpx-language-selection', 'Dil'],
-            ['.apya-theme-toggle', 'Tema'],
-            ['.apya-density-toggle', 'Yoğunluk'],
-            ['.apya-sidebar-mode', 'Kenar çubuğu']
-        ].map(function (e) { return { el: content.querySelector(':scope > ' + e[0]), label: e[1] }; })
-         .filter(function (e) { return !!e.el; });
-        entries.forEach(function (e) {
-            var item = document.createElement('div');
-            item.className = 'apya-avatar-menu-item';
+        function buildSegmentRow(labelText, options, getCurrent, setValue, extraClass) {
+            var row = document.createElement('div');
+            row.className = 'apya-avatar-menu-item';
             var label = document.createElement('span');
             label.className = 'apya-avatar-menu-label';
-            label.textContent = e.label;
-            item.appendChild(label);
-            item.appendChild(e.el);
-            appearancePanel.appendChild(item);
+            label.textContent = labelText;
+            row.appendChild(label);
+            var seg = document.createElement('div');
+            seg.className = 'apya-avatar-menu-segment' + (extraClass ? ' ' + extraClass : '');
+            options.forEach(function (opt) {
+                var btn = document.createElement('button');
+                btn.type = 'button';
+                btn.dataset.value = opt.value;
+                btn.textContent = opt.label;
+                seg.appendChild(btn);
+            });
+            function sync() {
+                var cur = getCurrent();
+                seg.querySelectorAll('button').forEach(function (b) {
+                    b.classList.toggle('is-active', b.dataset.value === cur);
+                });
+            }
+            seg.addEventListener('click', function (e) {
+                var btn = e.target.closest('button');
+                if (!btn) { return; }
+                setValue(btn.dataset.value);
+                sync();
+            });
+            row.appendChild(seg);
+            appearancePanel.appendChild(row);
+            return sync;
+        }
+
+        // Dil — yalnız TR/EN (karar, 2026-09-06: Platform metinleri zaten bu
+        // ikisinde; tam 18 dilli liste elsewhere değişmedi). LeptonX'in KENDİ
+        // ~/Abp/Languages/Switch bağlantıları buradan OKUNUR, URL ikinci kez
+        // yazılmaz — culture değişimi tam sayfa geçişi gerektirir, segment
+        // tıklaması bu yüzden navigasyon yapar (yerinde state değişimi değil).
+        var langMenu = content.querySelector(':scope > .lpx-language-selection .dropdown-menu');
+        function langHref(code) {
+            var a = langMenu && langMenu.querySelector('a[href*="culture=' + code + '&"]');
+            return a ? a.getAttribute('href') : null;
+        }
+        var langOptions = [
+            { value: 'tr', label: 'TR', href: langHref('tr') },
+            { value: 'en', label: 'EN', href: langHref('en') }
+        ].filter(function (o) { return !!o.href; });
+        var syncLangSeg = langOptions.length ? buildSegmentRow('Dil', langOptions, function () {
+            var cultureName = (window.abp && abp.localization && abp.localization.currentCulture && abp.localization.currentCulture.name) || document.documentElement.lang || '';
+            return cultureName.slice(0, 2).toLowerCase();
+        }, function (code) {
+            var opt = langOptions.filter(function (o) { return o.value === code; })[0];
+            if (opt) { location.href = opt.href; }
+        }) : null;
+
+        var syncThemeSeg = buildSegmentRow('Tema', [
+            { value: 'light', label: 'Açık' },
+            { value: 'dark', label: 'Koyu' }
+        ], apya.theme.current, apya.theme.set);
+
+        // Yoğunluk etiketleri #DensityToggle'ın data-label-*'ından okunur —
+        // sunucudan gelen ZATEN localize edilmiş metin (bkz. updateSummary
+        // aynı teknik), JS'e ikinci bir sözlük gömülmez.
+        function densityLabel(d) {
+            var toggleEl = document.getElementById('DensityToggle');
+            var raw = toggleEl ? (toggleEl.getAttribute('data-label-' + d) || '') : '';
+            return raw.split(':').pop().trim() || d;
+        }
+        var syncDensitySeg = buildSegmentRow('Yoğunluk', apya.density.order.map(function (d) {
+            return { value: d, label: densityLabel(d) };
+        }), apya.density.current, apya.density.set, 'apya-avatar-menu-segment--3');
+
+        // Kenar çubuğu — segment DEĞİL, tek satır + döngü (handoff: "Tıklama
+        // sırayla döndürür"), diğer sekmelerdeki `.apya-shell-menu-row` ile
+        // aynı desen (etiket solda, değer+chevron sağda).
+        var sidebarRow = document.createElement('button');
+        sidebarRow.type = 'button';
+        sidebarRow.className = 'apya-shell-menu-row';
+        sidebarRow.innerHTML = '<span>Kenar çubuğu</span><span class="apya-avatar-menu-summary"></span>' +
+            '<i class="fa fa-chevron-right" aria-hidden="true"></i>';
+        function syncSidebarRow() {
+            sidebarRow.querySelector('.apya-avatar-menu-summary').textContent = apya.sidebar.label(apya.sidebar.current());
+        }
+        sidebarRow.addEventListener('click', function () {
+            var order = apya.sidebar.order;
+            var idx = order.indexOf(apya.sidebar.current());
+            apya.sidebar.set(order[(idx + 1) % order.length]);
+            syncSidebarRow();
         });
+        appearancePanel.appendChild(sidebarRow);
+
         // Handoff: "Görünüm sekmesinde de altta aynı ayraç + Çıkış satırı durur".
         if (logoutItem) {
             var sep = document.createElement('div');
@@ -567,13 +647,8 @@ $(function () {
             if (!summaryEl) { return; }
             var cultureName = (window.abp && abp.localization && abp.localization.currentCulture && abp.localization.currentCulture.name) || document.documentElement.lang || '';
             var lang = cultureName.slice(0, 2).toUpperCase();
-            var theme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'Koyu' : 'Açık';
-            var density = '';
-            if (window.apya && apya.density) {
-                var toggleEl = document.getElementById('DensityToggle');
-                var raw = toggleEl ? (toggleEl.getAttribute('data-label-' + apya.density.current()) || '') : '';
-                density = raw.split(':').pop().trim();
-            }
+            var theme = apya.theme.current() === 'dark' ? 'Koyu' : 'Açık';
+            var density = densityLabel(apya.density.current());
             summaryEl.textContent = [lang, theme, density].filter(Boolean).join(' · ');
         }
 
@@ -610,6 +685,10 @@ $(function () {
             syncAvatar();
             syncIdentityText();
             updateSummary();
+            if (syncLangSeg) { syncLangSeg(); }
+            syncThemeSeg();
+            syncDensitySeg();
+            syncSidebarRow();
             setActiveTab('profile');
             var first = profilePanel.querySelector('.apya-shell-menu-row');
             if (first) { first.focus(); }

@@ -5140,6 +5140,49 @@ i.apya-priority-dot {
 }
 .apya-shell-menu-row.is-static { cursor: default; }
 .apya-shell-menu-row.is-static:hover { background: transparent; }
+
+/* ============================================================================
+   GÖRÜNÜM SEKMESİ SEGMENTLERİ (Faz 2, 2026-09-06)
+   ----------------------------------------------------------------------------
+   Native denetimler (Dil/Tema/Yoğunluk/Kenar çubuğu) artık buraya TAŞINMIYOR;
+   apya-shell-actions.js kendi segment/satır DOM'unu kuruyor ve window.apya.*
+   API'lerini çağırıyor. Native öğeler DOM'da kalmaya devam ediyor (kendi
+   handler'ları hâlâ bağlı) ama üst barda GÖRÜNMÜYORLAR — aşağıdaki kural.
+   ============================================================================ */
+.lpx-topbar-content > .lpx-language-selection,
+.lpx-topbar-content > .apya-theme-toggle,
+.lpx-topbar-content > .apya-density-toggle,
+.lpx-topbar-content > .apya-sidebar-mode {
+    display: none;
+}
+
+.apya-avatar-menu-segment {
+    display: flex;
+    gap: 2px;
+    padding: 2px;
+    border-radius: var(--apya-radius-md);
+    background: var(--apya-surface-hover);
+}
+[data-theme="dark"] .apya-avatar-menu-segment { background: var(--apya-surface-base); }
+.apya-avatar-menu-segment button {
+    padding: 3px 8px;
+    border: 0;
+    border-radius: var(--apya-radius-sm);
+    background: transparent;
+    font-size: 11.5px;
+    font-weight: var(--apya-weight-medium);
+    color: var(--apya-text-tertiary);
+    cursor: pointer;
+}
+.apya-avatar-menu-segment button:hover { color: var(--apya-text-secondary); }
+.apya-avatar-menu-segment button.is-active {
+    background: var(--apya-surface-base);
+    color: var(--apya-text-primary);
+    font-weight: var(--apya-weight-semibold);
+}
+[data-theme="dark"] .apya-avatar-menu-segment button.is-active { background: var(--apya-surface-hover); }
+/* 3 seçenekli segment (Yoğunluk) daha dar yatay dolgu alır (tasarım). */
+.apya-avatar-menu-segment--3 button { padding: 3px 7px; }
 /* Renk noktası ile ad bitişikti (ölçüm: nokta 46–53, metin 53 → 0px boşluk).
    Satıra `display:flex` verirken temanın kendi `gap`'i devreden çıkmış;
    handoff alt madde aralığını 9px veriyor, açıkça kurulur. */
