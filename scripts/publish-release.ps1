@@ -165,35 +165,76 @@ if (-not (Test-Path (Join-Path $libsOut 'signalr\signalr.min.js'))) {
 Write-Host "      wwwroot\libs       : pakette (signalr dahil)"
 
 # --- 5. migrate.bat (DbMigrator paketine) --------------------------------
-# Şablon: sırlar BOŞ bırakılır, sunucuda elle doldurulur ve iş bitince klasör SİLİNİR.
+# Baglanti dizesi bat'a YAZILMAZ: sunucudaki appsettings.secrets.json bu klasore
+# kopyalanir, arac onu kendisi okur. Boylece DB parolasi hicbir yerde duz metin
+# kalmaz. Komut satirinda yalniz ClientSecret override edilir - o anahtar secrets
+# dosyasinda YOKTUR ve bos birakilirsa OpenIddict tohumlayicisi confidential
+# istemcide bos secret'i reddedip TUM tohumlama zincirini ilk adimda dusurur.
+#
+# Sablon SALT ASCII: dosya `-Encoding ascii` ile yazildigi icin buraya konan her
+# ASCII disi karakter ciktida "?" olur.
 Write-Host "[5/6] migrate.bat yazılıyor" -ForegroundColor Yellow
 $migrateBat = @'
 @echo off
 REM ---------------------------------------------------------------------
 REM  Apya.Platform - veritabani migrate + seed
 REM
-REM  ASAGIDAKI UC DEGERI DOLDUR, sonra Plesk > Zamanlanmis Gorevler ile
-REM  bu .bat dosyasini TEK SEFERLIK calistir.
+REM  KULLANIM (Plesk > Zamanlanmis Gorevler > "Bir komut calistir"):
 REM
-REM  🔴 IS BITINCE BU KLASORU SUNUCUDAN SIL - asagida sifre duz metin durur.
-REM  🔴 Basariyi cikis kodundan DEGIL, Logs\logs.txt icindeki
-REM     "Successfully completed all database migrations." satirindan dogrula.
+REM   1) Bu ZIP'i  ...\pargetto.com\dbmigrator\  KOKUNE ac. Alt klasore
+REM      acilirsa exe yanindaki dll'leri bulamaz.
+REM   2) Sunucudaki apya.pargetto.com\appsettings.secrets.json dosyasini bu
+REM      klasore KOPYALA -- Plesk'te "Kopyala", sakin "Tasi" degil.
+REM   3) Asagidaki CLIENTSECRET satirini doldur.
+REM   4) Goreve TIRNAKSIZ tam yolu ver:
+REM      C:\inetpub\vhosts\pargetto.com\dbmigrator\migrate.bat
+REM      Gorev turu "Bir komut calistir" olmali; "PHP betigi" secilirse Plesk
+REM      yolu abonelik kokune ekleyip ikiye katlar.
+REM   5) IS BITINCE bu klasoru SUNUCUDAN SIL (secret duz metin kalir) ve
+REM      zamanlanmis gorevi de SIL (varsayilani gunluk 00:00).
+REM
+REM  Basariyi cikis kodundan DEGIL, Logs\logs.txt icindeki
+REM  "Successfully completed all database migrations." satirindan dogrula.
 REM ---------------------------------------------------------------------
 cd /d "%~dp0"
 
-set "CONN=Server=SUNUCU;Database=VERITABANI;User Id=KULLANICI;Password=PAROLA;TrustServerCertificate=True;Encrypt=False"
 set "CLIENTSECRET=BURAYA_CLIENT_SECRET"
 
-Apya.Platform.DbMigrator.exe ^
-  --Database:Provider=SqlServer ^
-  --ConnectionStrings:SqlServer="%CONN%" ^
-  --OpenIddict:Applications:Platform_Web:ClientSecret=%CLIENTSECRET%
+if not exist "appsettings.secrets.json" (
+  echo HATA: appsettings.secrets.json bu klasorde YOK.
+  echo Kopyalamadan calistirirsan arac localhost'a baglanmaya calisir.
+  exit /b 1
+)
 
+if "%CLIENTSECRET%"=="BURAYA_CLIENT_SECRET" (
+  echo HATA: CLIENTSECRET doldurulmamis.
+  exit /b 1
+)
+
+echo === Paket butunlugu: dll sayisi ===
+dir /b *.dll | find /c /v ""
 echo.
-echo Bitti. Simdi Logs\logs.txt dosyasini ac ve su satiri ara:
-echo   "Successfully completed all database migrations."
-pause
+
+echo === Migrate + seed basliyor ===
+Apya.Platform.DbMigrator.exe --OpenIddict:Applications:Platform_Web:ClientSecret=%CLIENTSECRET% > migrate-output.txt 2>&1
+echo Cikis kodu: %ERRORLEVEL%
+echo.
+
+echo === KONTROL ===
+echo 1) migrate-output.txt dosyasini ac.
+echo 2) Logs\logs.txt icinde su satiri ara:
+echo      Successfully completed all database migrations.
+echo 3) Islem birkac saniyede bittiyse HICBIR SEY kosmamistir.
 '@
+# -cmatch (buyuk/kucuk harfe DUYARLI) sart: -match varsayilan olarak duyarsizdir ve
+# .NET IgnoreCase esleme tr-TR kulturunde 'I' harfini noktasiz 'ı' (U+0131) ile
+# eslestirir -> ASCII disi sinifi salt ASCII metinde bile eslesir, guard hep patlar.
+if ($migrateBat -cmatch '[^\x00-\x7F]') {
+    throw "migrate.bat sablonunda ASCII disi karakter var - dosya ascii yazildigi icin '?' olarak cikar."
+}
+if ($migrateBat -match '(?m)^\s*pause\s*$') {
+    throw "migrate.bat sablonunda 'pause' var - Plesk zamanlanmis gorevi etkilesimsiz kosar, is asili kalir."
+}
 Set-Content -LiteralPath (Join-Path $MigPublish 'migrate.bat') -Value $migrateBat -Encoding ascii
 
 # --- 6. ZIP ---------------------------------------------------------------
