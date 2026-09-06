@@ -1288,6 +1288,33 @@ i.apya-priority-dot {
 .apya-avatar-ai { background: var(--apya-ai-500); }
 .apya-avatar-neutral { background: var(--apya-neutral-500); }
 
+/* Avatar menüsü kimlik bloğu — üst bar rozetinin (30px) büyütülmüş hâli. */
+.apya-avatar-lg {
+    width: 36px;
+    height: 36px;
+    font-size: 11.5px;
+    position: relative;
+}
+/* Çevrimiçi noktası — salt kozmetik, gerçek bir "presence" sistemi yok
+   (kullanıcı hep kendi oturumunu görür). Zemin rengi konuma göre değişir:
+   üst barda --apya-surface-base, menü kimlik bloğunda --apya-surface-elevated
+   (bkz. .apya-avatar-lg .apya-avatar-dot altında). */
+.apya-avatar-dot {
+    position: absolute;
+    right: -1px;
+    bottom: -1px;
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: var(--apya-positive-500);
+    border: 2px solid var(--apya-surface-base);
+}
+.apya-avatar-lg .apya-avatar-dot {
+    width: 10px;
+    height: 10px;
+    border-color: var(--apya-surface-elevated);
+}
+
 /* --- Alt görev hiyerarşisi (Görevler listesi) ---
    Üst görev satırı chevron ile açılır, alt görevleri DataTables child satırında
    listelenir. Filtre/arama aktifken liste düz kipe döner ve chevron basılmaz. */
@@ -5006,10 +5033,113 @@ i.apya-priority-dot {
     flex: 0 0 auto;
     margin: 0 !important;
 }
-/* Kullanıcı menüsü tasarımda 250px; etiketli satırlar 164px'e sıkışıyordu. */
-.lpx-topbar-content .dropdown-menu:has(.apya-avatar-menu-section) {
-    min-width: 250px;
+
+/* ============================================================================
+   AVATAR MENÜSÜ — kimlik bloğu + Profil/Görünüm sekmeleri
+   (Avatar Profil Menüsü handoff, 2026-09-06, Faz 1)
+   ----------------------------------------------------------------------------
+   `:has(> .apya-avatar-menu)` YALNIZ bu spesifik kullanıcı menüsünü hedefler —
+   sayfadaki diğer .dropdown-menu'lere (bildirim, kiracı, kenar çubuğu modu…)
+   sızmaz, çünkü onların hiçbiri bu wrapper'ı DOĞRUDAN çocuk olarak taşımaz.
+   ============================================================================ */
+/* Tasarım genişliği 274px + iç dolgu 6px — Bootstrap'in .dropdown-menu
+   varsayılan dolgusunu (.5rem 0) ezer. */
+.lpx-topbar-content .dropdown-menu:has(> .apya-avatar-menu) {
+    width: 274px;
+    padding: 6px;
 }
+/* Temanın kendi öğeleri (Hesabım, Genel Ayarlar, Tanıtım turu, Çıkış) SİLİNMEZ
+   — href/metinleri apya-shell-actions.js tarafından OKUNUP kendi satırlarımızda
+   kullanılır (URL ikinci kez yazılmaz), burada yalnız görsel olarak gizlenir. */
+.lpx-topbar-content .dropdown-menu:has(> .apya-avatar-menu) > :not(.apya-avatar-menu) {
+    display: none;
+}
+
+.apya-avatar-menu-identity {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    padding: 10px 8px 12px;
+}
+.apya-avatar-menu-idtext { min-width: 0; flex: 1; }
+.apya-avatar-menu-name {
+    font-size: 13.5px;
+    font-weight: var(--apya-weight-semibold);
+    letter-spacing: -0.01em;
+    color: var(--apya-text-primary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.apya-avatar-menu-role {
+    margin-top: 2px;
+    font-size: 11.5px;
+    /* Tasarım text-tertiary (#9CA3AF/#71717A) veriyor ama beyaz zeminde AA
+       altında kalıyor (bkz. reference-text-tertiary-below-aa) — text-secondary
+       kullanılır (kullanıcı onayı, 2026-09-06). .apya-avatar-menu-summary da
+       aynı gerekçeyle aynı tonu kullanır. */
+    color: var(--apya-text-secondary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.apya-avatar-menu-tabs {
+    display: flex;
+    gap: 2px;
+    padding: 3px;
+    border-radius: var(--apya-radius-lg);
+    background: var(--apya-surface-hover);
+    margin: 0 4px 8px;
+}
+[data-theme="dark"] .apya-avatar-menu-tabs { background: var(--apya-surface-base); }
+.apya-avatar-menu-tab {
+    flex: 1;
+    height: 28px;
+    border: 0;
+    border-radius: var(--apya-radius-md);
+    background: transparent;
+    font-size: 12px;
+    font-weight: var(--apya-weight-medium);
+    color: var(--apya-text-tertiary);
+    cursor: pointer;
+}
+.apya-avatar-menu-tab:hover { color: var(--apya-text-secondary); }
+.apya-avatar-menu-tab.is-active {
+    background: var(--apya-surface-base);
+    color: var(--apya-text-primary);
+    font-weight: var(--apya-weight-semibold);
+    box-shadow: var(--apya-shadow-sm);
+}
+[data-theme="dark"] .apya-avatar-menu-tab.is-active {
+    background: var(--apya-surface-hover);
+    box-shadow: none;
+}
+
+.apya-avatar-menu-panel[hidden] { display: none; }
+.apya-avatar-menu-panel .apya-shell-menu-row > i:first-child {
+    flex: none;
+    width: 16px;
+    text-align: center;
+    font-size: 13px;
+    color: var(--apya-text-secondary);
+}
+.apya-avatar-menu-panel .apya-shell-menu-row .fa-chevron-right {
+    flex: none;
+    font-size: 10px;
+    color: var(--apya-text-tertiary);
+}
+.apya-avatar-menu-summary {
+    flex: none;
+    max-width: 110px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 11.5px;
+    color: var(--apya-text-secondary);
+}
+.apya-shell-menu-row.is-static { cursor: default; }
+.apya-shell-menu-row.is-static:hover { background: transparent; }
 /* Renk noktası ile ad bitişikti (ölçüm: nokta 46–53, metin 53 → 0px boşluk).
    Satıra `display:flex` verirken temanın kendi `gap`'i devreden çıkmış;
    handoff alt madde aralığını 9px veriyor, açıkça kurulur. */

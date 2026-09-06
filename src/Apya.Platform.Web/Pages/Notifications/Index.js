@@ -292,5 +292,16 @@ $(function () {
         });
     });
 
+    // Avatar menüsü "Bildirim tercihleri" derin bağlantısı (Avatar Profil
+    // Menüsü handoff, 2026-09-06) — ProductTour'un `?tur=1` deseniyle AYNI:
+    // modal açılır, adres yenilemede tekrar açılmasın diye temizlenir.
+    if (/[?&]tercihler=1(&|$)/.test(location.search)) {
+        new bootstrap.Modal(document.getElementById('notif-pref-modal')).show();
+        if (window.history && history.replaceState) {
+            var q = location.search.replace(/([?&])tercihler=1(&|$)/, '$1').replace(/[?&]$/, '');
+            history.replaceState(null, '', location.pathname + q + location.hash);
+        }
+    }
+
     reload();
 });

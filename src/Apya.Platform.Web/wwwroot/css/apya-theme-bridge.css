@@ -2236,6 +2236,8 @@ html.js .lpx-breadcrumb-container {
     height: 30px;
     font-size: 11.5px;
     margin: 0 2px;
+    /* Çevrimiçi noktası (.apya-avatar-dot) buna göre konumlanır — bkz. apya-shell.css */
+    position: relative;
 }
 /* Rozete dönüşene kadar ham ad metnini gizle (dark-mode.js tryReplaceUserAvatar).
    html.js şartı güvenli geri dönüş — bkz. yukarıdaki breadcrumb kuralı. */
