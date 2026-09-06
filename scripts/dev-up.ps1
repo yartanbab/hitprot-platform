@@ -141,7 +141,14 @@ if ($libsCount -gt 0) {
 } else {
     Write-Host "    libs eksik — 'abp install-libs' çalıştırılıyor (Web aksi halde HTTP 500 'Libs Folder is Missing' döner)..."
     Push-Location $webProj
-    try { abp install-libs } finally { Pop-Location }
+    # abp install-libs alttan yarn çağırır; yarn zararsız uyarılarını ("chart.js@4.5.1:
+    # The engine pnpm appears to be invalid") stderr'e yazar. PowerShell 5.1 native
+    # stderr'i ErrorRecord'a çevirdiği için $ErrorActionPreference='Stop' script'i o
+    # uyarıda düşürür ve libs yarım kalır. Gerçek başarısızlığı çıkış kodundan anla.
+    $prevEap = $ErrorActionPreference
+    $ErrorActionPreference = 'Continue'
+    try { abp install-libs } finally { $ErrorActionPreference = $prevEap; Pop-Location }
+    if ($LASTEXITCODE -ne 0) { throw "abp install-libs başarısız (çıkış kodu $LASTEXITCODE)." }
     Write-Host "    install-libs tamamlandı." -ForegroundColor Green
 }
 
