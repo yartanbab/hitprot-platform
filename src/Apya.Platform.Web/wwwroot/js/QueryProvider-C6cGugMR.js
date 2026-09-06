@@ -1,6 +1,6 @@
 import { r, j as a } from "./react-vendor-D57GAUXd.js";
 import { c as i, Q as d, d as u, P as c } from "./query-vendor-Bf69L2iP.js";
-import { A as l } from "./httpClient-CRlyQ1eg.js";
+import { A as l } from "./httpClient-DePjXdo1.js";
 const p = "apya-rq-cache", o = 60 * 60 * 1e3;
 function h() {
   try {

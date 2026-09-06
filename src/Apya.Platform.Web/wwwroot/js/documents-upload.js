@@ -1,8 +1,8 @@
 import { r as p, j as a, b as K } from "./react-vendor-D57GAUXd.js";
 /* empty css               */
-import { B as M, g as D } from "./Dialog-BdNKdiS6.js";
-import { S as _ } from "./SkeletonShape-CiCOe1YJ.js";
-import { E as W } from "./EmptyState-Bhcx2Wdd.js";
+import { B as M, e as D } from "./Dialog-Bky2XNdc.js";
+import { S as _ } from "./SkeletonShape-BzeBQ1R3.js";
+import { E as W } from "./EmptyState-D5m5kdmR.js";
 const w = (t, n) => {
   var l, d, c;
   return (c = (d = (l = window == null ? void 0 : window.abp) == null ? void 0 : l.notify) == null ? void 0 : d[t]) == null ? void 0 : c.call(d, n);
@@ -53,14 +53,14 @@ function Q(t) {
 }
 function V(t, n, { onProgress: l, signal: d } = {}) {
   return new Promise((c, u) => {
-    var y, g, k, v, b;
+    var y, x, k, v, b;
     const j = new FormData();
     j.append("documentId", t), j.append("file", n);
     const o = new XMLHttpRequest();
     o.open("POST", E("Upload"), !0);
-    const h = ((v = (k = (g = (y = window == null ? void 0 : window.abp) == null ? void 0 : y.security) == null ? void 0 : g.antiForgery) == null ? void 0 : k.getToken) == null ? void 0 : v.call(k)) ?? ((b = document.querySelector('input[name="__RequestVerificationToken"]')) == null ? void 0 : b.value);
-    h && o.setRequestHeader("RequestVerificationToken", h), o.upload.onprogress = (x) => {
-      x.lengthComputable && l && l(Math.round(x.loaded / x.total * 100));
+    const h = ((v = (k = (x = (y = window == null ? void 0 : window.abp) == null ? void 0 : y.security) == null ? void 0 : x.antiForgery) == null ? void 0 : k.getToken) == null ? void 0 : v.call(k)) ?? ((b = document.querySelector('input[name="__RequestVerificationToken"]')) == null ? void 0 : b.value);
+    h && o.setRequestHeader("RequestVerificationToken", h), o.upload.onprogress = (g) => {
+      g.lengthComputable && l && l(Math.round(g.loaded / g.total * 100));
     }, o.onload = () => {
       if (o.status >= 200 && o.status < 300)
         try {
@@ -108,7 +108,7 @@ const te = (t) => t < 1024 ? `${t} B` : t < 1024 * 1024 ? `${(t / 1024).toFixed(
 };
 let re = 0;
 function le() {
-  const t = new URLSearchParams(window.location.search), [n, l] = p.useState([]), [d, c] = p.useState([]), [u, j] = p.useState((t.get("documentId") || "").toLowerCase()), [o, h] = p.useState([]), [y, g] = p.useState(!1), [k, v] = p.useState(!0), [b, x] = p.useState(!1), [N, F] = p.useState(""), [T, $] = p.useState(""), z = p.useRef(null);
+  const t = new URLSearchParams(window.location.search), [n, l] = p.useState([]), [d, c] = p.useState([]), [u, j] = p.useState((t.get("documentId") || "").toLowerCase()), [o, h] = p.useState([]), [y, x] = p.useState(!1), [k, v] = p.useState(!0), [b, g] = p.useState(!1), [N, F] = p.useState(""), [T, $] = p.useState(""), z = p.useRef(null);
   p.useEffect(() => {
     (async () => {
       try {
@@ -146,7 +146,7 @@ function le() {
       w("warn", "Önce hedef klasör seçin.");
       return;
     }
-    g(!0);
+    x(!0);
     const s = [...o.filter((r) => r.status === "queued" || r.status === "failed")], i = async () => {
       for (; s.length > 0; ) {
         const r = s.shift();
@@ -166,11 +166,11 @@ function le() {
         }
       }
     };
-    await Promise.all(Array.from({ length: Math.min(ne, s.length) }, i)), g(!1);
+    await Promise.all(Array.from({ length: Math.min(ne, s.length) }, i)), x(!1);
   }, O = async () => {
     const e = o.filter((i) => i.status === "done" && i.documentFileId);
     if (e.length === 0) return;
-    g(!0);
+    x(!0);
     let s = 0;
     for (const i of e)
       try {
@@ -182,7 +182,7 @@ function le() {
       } catch (r) {
         console.error("[Upload] setMeta", i.name, r);
       }
-    g(!1), w(s === e.length ? "success" : "warn", `${s}/${e.length} belgeye künye atandı.`);
+    x(!1), w(s === e.length ? "success" : "warn", `${s}/${e.length} belgeye künye atandı.`);
   }, m = p.useMemo(() => {
     const e = { queued: 0, uploading: 0, done: 0, failed: 0, rejected: 0 };
     return o.forEach((s) => {
@@ -190,7 +190,7 @@ function le() {
     }), e;
   }, [o]), P = (e) => {
     var s, i;
-    e.preventDefault(), x(!1), (i = (s = e.dataTransfer) == null ? void 0 : s.files) != null && i.length && L(e.dataTransfer.files);
+    e.preventDefault(), g(!1), (i = (s = e.dataTransfer) == null ? void 0 : s.files) != null && i.length && L(e.dataTransfer.files);
   };
   return k ? /* @__PURE__ */ a.jsx("div", { className: "p-4", children: /* @__PURE__ */ a.jsx(_, { rows: 6 }) }) : /* @__PURE__ */ a.jsxs("div", { className: "apya-fade-in px-4 py-4 sm:px-7 sm:py-7 mx-auto", style: { maxWidth: 1560 }, children: [
     /* @__PURE__ */ a.jsxs("div", { className: "d-flex align-items-start justify-content-between flex-wrap gap-3 mb-4", children: [
@@ -221,9 +221,9 @@ function le() {
           {
             className: `apya-doc-dropzone${b ? " is-over" : ""}`,
             onDragOver: (e) => {
-              e.preventDefault(), x(!0);
+              e.preventDefault(), g(!0);
             },
-            onDragLeave: () => x(!1),
+            onDragLeave: () => g(!1),
             onDrop: P,
             onClick: () => {
               var e;
