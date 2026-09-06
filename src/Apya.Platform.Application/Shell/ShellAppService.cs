@@ -152,6 +152,81 @@ public class ShellAppService : PlatformAppService, IShellAppService
         return Clip(screen, 200);
     }
 
+    /// <summary>
+    /// Sabit (parametresiz) sekme türleri. Beyaz liste, çünkü tür doğrudan
+    /// istemciden geliyor: tanınmayan bir tür saklanırsa konsol onu çizemez ve
+    /// kullanıcı kapatamadığı ölü bir sekmeyle kalır.
+    /// Pages/Tasks/index.js → VIEWS ile aynı adlar.
+    /// </summary>
+    private static readonly HashSet<string> BoardTabViewKinds =
+        new(StringComparer.Ordinal) { "list", "kanban", "gantt", "calendar", "dashboard", "gallery" };
+
+    /// <summary>
+    /// Sekme düzenini camelCase yazar. Bu ayarı C# YAZIYOR ama JavaScript
+    /// OKUYOR (/Tasks sayfası ham değeri sayfaya basıyor, index.js ayrıştırıyor)
+    /// — varsayılan PascalCase çıktıda istemci "Kind" alanını göremez, düzeni
+    /// tanınmaz sayıp varsayılana döner ve kullanıcının sekmeleri sessizce
+    /// kaybolur. SavedViews'ta bu sorun yok: onu yazan da okuyan da C#.
+    /// </summary>
+    private static readonly JsonSerializerOptions BoardTabsJson =
+        new() { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
+
+    public async Task<List<ShellBoardTabDto>> SetBoardTabsAsync(List<ShellBoardTabDto> tabs)
+    {
+        var cleaned = new List<ShellBoardTabDto>();
+        var seen = new HashSet<string>(StringComparer.Ordinal);
+
+        foreach (var tab in tabs ?? new List<ShellBoardTabDto>())
+        {
+            var kind = (tab?.Kind ?? string.Empty).Trim();
+            var reference = (tab?.Ref ?? string.Empty).Trim();
+
+            if (BoardTabViewKinds.Contains(kind))
+            {
+                // Sabit görünüşün referansı OLMAZ; gelirse atılır (aksi halde
+                // aynı görünüş farklı referanslarla defalarca açılabilirdi).
+                reference = string.Empty;
+            }
+            else if (kind == "project")
+            {
+                // Proje sekmesi bir GUID taşır. Doğrulamak "kötü değeri eleme"
+                // değil, sekmeyi çizilebilir tutma meselesi.
+                if (!Guid.TryParse(reference, out var projectId)) { continue; }
+                reference = projectId.ToString();
+            }
+            else if (kind == "view")
+            {
+                // Kayıtlı görünüm ADI ile anılır (konsolun kendi listesi de adla
+                // çalışıyor). Adsız görünüm sekmesi hedefsizdir.
+                if (reference.Length == 0) { continue; }
+                reference = Clip(reference, PlatformSettingDefaults.ShellBoardTabsTitleMax);
+            }
+            else
+            {
+                continue; // tanınmayan tür
+            }
+
+            if (!seen.Add(kind + " " + reference)) { continue; }
+
+            cleaned.Add(new ShellBoardTabDto
+            {
+                Kind = kind,
+                Ref = reference,
+                // Sabit görünüşlerde başlık taşımıyoruz: etiketi localization verir.
+                Title = BoardTabViewKinds.Contains(kind)
+                    ? string.Empty
+                    : Clip(tab!.Title, PlatformSettingDefaults.ShellBoardTabsTitleMax)
+            });
+
+            if (cleaned.Count >= PlatformSettingDefaults.ShellBoardTabsMax) { break; }
+        }
+
+        await _settingManager.SetForCurrentUserAsync(
+            PlatformSettings.Shell.BoardTabs, JsonSerializer.Serialize(cleaned, BoardTabsJson));
+
+        return cleaned;
+    }
+
     public async Task<List<string>> SetPinsAsync(List<string> pins)
     {
         // Menü ADI saklanır; serbest metin değil. Virgül ayraç olduğu için

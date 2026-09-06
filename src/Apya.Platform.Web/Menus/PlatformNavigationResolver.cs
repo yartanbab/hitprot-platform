@@ -563,19 +563,29 @@ public class PlatformNavigationResolver : IScopedDependency
         if (await _permission.IsGrantedAsync(PlatformPermissions.Projects.Default))
             work.AddItem(new ApplicationMenuItem("Apya.Work.Projects", l["Menu:Projects"], icon: "fa fa-rocket", url: "/Projects", order: 1));
 
-        // Handoff'un Panolar listesinde Gantt ve Zaman Çizelgesi de var; ikisinin de
-        // bağımsız sayfası YOK (Gantt yalnız proje detay konsolunun içinde yaşıyor).
-        // Olmayan ekrana menü girişi açmıyoruz — handoff'un "yalnız çalışan şeyi listele"
-        // kuralı kısayol penceresi için konmuş, aynı kural menüde de geçerli.
-        var boards = new ApplicationMenuItem("Apya.Work.Boards", l["Menu:Boards"], icon: "fa fa-table-columns", order: 2);
+        // Panolar = Görevler konsolu (/Tasks). TEK YAPRAK, alt öğesi YOK
+        // (kullanıcı kararı 2026-09-06).
+        //
+        // Görünüşler bir gün önce menüde üç sabit çocuktu (Görevler / Kart
+        // Panosu / Zaman Çizelgesi → ?view= derin bağlantıları). Konsol o
+        // günden beri altı görünüşe çıktı ve hangilerinin açık duracağı artık
+        // KULLANICININ kararı: seçim sayfanın kendi sekme şeridinde yapılıyor,
+        // düzen kullanıcıda saklanıyor (PlatformSettings.Shell.BoardTabs).
+        // Menüde sabit bir alt liste tutmak aynı seçimi ikinci bir yerden
+        // taşırdı — kullanıcının kapattığı görünüş menüde durmaya devam eder,
+        // açtığı proje panosu ise menüde hiç görünmezdi.
+        //
+        // Yaprağa dönünce `url:` GERÇEKTEN çalışır: LeptonX'in href'i düşürme
+        // kusuru yalnız ALT ÖĞESİ OLAN satırlarda vardı, o yüzden başlığı
+        // tıklanabilir yapan kabuk kodu (setupBoards) da kalktı.
+        //
+        // Menü ID'si "Apya.Work.Boards" KORUNUR — grup yaprağa döndü, kimliği
+        // değişmedi; ad kullanıcının menü düzeninde ve kısayol iğnelerinde
+        // saklı. Silinen çocuklardan "Apya.Work.Tasks" gecikmiş görev rozetini
+        // taşıyordu; rozet bu yaprağa taşındı (apya-sidebar-shell.js → addBadge).
         if (await _permission.IsGrantedAsync(PlatformPermissions.Tasks.Default))
-        {
-            boards.AddItem(new ApplicationMenuItem("Apya.Work.Tasks", l["Menu:Tasks"], icon: "fa fa-tasks", url: "/Tasks"));
-            boards.AddItem(new ApplicationMenuItem("Apya.Work.Board", l["Menu:KanbanBoard"], icon: "fa fa-columns", url: "/Board"));
-        }
-        if (await _permission.IsGrantedAsync(PlatformPermissions.Calendars.Default))
-            boards.AddItem(new ApplicationMenuItem("Apya.Work.Calendar", l["Menu:Calendar"], icon: "fa fa-calendar-days", url: "/Calendars"));
-        if (boards.Items.Count > 0) work.AddItem(boards);
+            work.AddItem(new ApplicationMenuItem(
+                "Apya.Work.Boards", l["Menu:Boards"], icon: "fa fa-table-columns", url: "/Tasks", order: 2));
 
         // Özet Raporlar — "Raporlar & Analiz" kategorisinden BURAYA taşındı
         // (2026-09-03). Sayfanın içeriği finans değil: aktif proje sayısı,
@@ -594,10 +604,30 @@ public class PlatformNavigationResolver : IScopedDependency
 
         if (work.Items.Count > 0) roots.Add(work);
 
+        // Takvim — Panolar'dan ÇIKARILDI, kök seviyede müstakil kategori oldu
+        // (kullanıcı kararı 2026-09-06). Panolar'ın üçü de tek bir görev
+        // konsolunun görünüşü; Takvim ise ayrı bir modül (kendi izni, kendi
+        // dış takvim entegrasyonu) ve o grubun içinde yanlış yerdeydi.
+        //
+        // 🔴 Menü ID'si "Apya.Work.Calendar" → "Apya.Calendar" olarak DEĞİŞTİ
+        // (2026-09-06). İlk denemede ad korunmuştu (kayıtlı düzenler ve kısayol
+        // iğneleri adı saklıyor), ama ölçüldü ki bu taşımayı ETKİSİZ bırakıyor:
+        // menüsünü bir kez özelleştirmiş kullanıcının ShellMenuLayout kaydı
+        // "Apya.Work.Calendar → Panolar'ın altında" diyor ve kayıtlı düzen
+        // koddaki varsayılanın ÖNÜNDE gelir → Takvim eski yerinde kalıyordu.
+        //
+        // Yeni adın kayıtlı düzende karşılığı olmadığı için düğüm buradaki
+        // varsayılan yerine düşer. Bedeli: Takvim'e iğne koymuş kullanıcıda o
+        // iğne düşer — varsayılan iğne listesinde (PlatformSettingDefaults.ShellPins)
+        // Takvim YOK, yani yalnız elle iğnelemiş kullanıcıyı etkiler.
+        if (await _permission.IsGrantedAsync(PlatformPermissions.Calendars.Default))
+            roots.Add(new ApplicationMenuItem(
+                "Apya.Calendar", l["Menu:Calendar"], icon: "fa fa-calendar-days", url: "/Calendars", order: 3));
+
         // Hibe Yönetimi — kendi izin grubu (Groups.Grants) ve kendi feature'ı (Features.Grants)
         // olduğu için İş Yönetimi'nden ayrı kategori. "Başvurular" sayfası HOST'a özel
         // (GrantApplicationHostAppService.EnsureHostContext) → tenant menüsünde gösterilmez.
-        var grants = new ApplicationMenuItem("Apya.Grants", l["Menu:Grants:Group"], icon: "fa fa-award", order: 3);
+        var grants = new ApplicationMenuItem("Apya.Grants", l["Menu:Grants:Group"], icon: "fa fa-award", order: 4);
         if (await _permission.IsGrantedAsync(PlatformPermissions.Grants.Default))
             grants.AddItem(new ApplicationMenuItem("Apya.Grants.Calls", l["Menu:Grants:Calls"], icon: "fa fa-bullhorn", url: "/Grants"));
         if (_currentTenant.Id == null && await _permission.IsGrantedAsync(PlatformPermissions.Grants.Edit))
@@ -626,7 +656,7 @@ public class PlatformNavigationResolver : IScopedDependency
         //
         // Kurlar bir dönem Yönetim'e taşınmıştı; kabuk handoff'u (2026-08-13) onu
         // Finans'a geri aldı — kur bir finans verisi, yönetim ayarı değil.
-        var finance = new ApplicationMenuItem("Apya.Finance", l["Menu:Finance"], icon: "fa fa-coins", order: 4);
+        var finance = new ApplicationMenuItem("Apya.Finance", l["Menu:Finance"], icon: "fa fa-coins", order: 5);
         // Sıralama (kullanıcı kararı 2026-06-22): 1) Kasalar  2) Para Hareketleri.
         if (await _permission.IsGrantedAsync(PlatformPermissions.CashAccounts.Default))
             finance.AddItem(new ApplicationMenuItem("Apya.Finance.CashAccounts", l["Menu:CashAccounts"], icon: "fa fa-cash-register", url: "/CashAccounts", order: 1));

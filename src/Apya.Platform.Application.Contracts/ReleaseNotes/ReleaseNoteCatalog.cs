@@ -433,6 +433,14 @@ public static class ReleaseNoteCatalog
                 "gönderilen etkinlikler dış takvime saat farkı kadar kaymış işleniyordu (Türkiye'de " +
                 "üç saat); saatler artık her iki yönde de doğru taşınıyor."),
 
+            new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
+                "Takvim sol menüde kendi başına duruyor",
+                "Takvim, görev görünüşlerini toplayan \"Panolar\" grubunun içindeydi: kendi ekranı, " +
+                "kendi hatırlatmaları ve Google/Outlook bağlantısı olmasına rağmen açmak için önce " +
+                "o grubu açmanız gerekiyordu. Artık sol menüde doğrudan kendi satırında — tek tıkla " +
+                "geliyor. Takvimi eskiden Panolar'ın altında arıyorsanız artık menüde kendi " +
+                "başlığıyla duruyor. Ekranın içinde hiçbir şey değişmedi."),
+
             // ── Genel ─────────────────────────────────────────────────────────
             new ReleaseNoteItem(ReleaseNoteCategory.Feature,
                 "Genel Bakış'ı olduğu gibi kağıda dökebiliyorsunuz",
@@ -541,6 +549,21 @@ public static class ReleaseNoteCatalog
                 "Dosya Galerisi sekmeleri kullanıma açıldı. Görev yorumları ayrı bir sekme olmaktan " +
                 "çıktı; zaten Genel sekmesinde durdukları yerde duruyorlar. Daha önce bir göreve " +
                 "eklediğiniz özellikler silinmedi, yalnız görünmüyor."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
+                "Panolar tek ekranda toplandı, hangi sekmelerin duracağına siz karar veriyorsunuz",
+                "Kanban'ın menüde ayrı bir sayfası vardı ve Görevler ekranındaki sekmeyle aynı " +
+                "panoyu gösteriyordu; ama ikisi filtre çubuğunu paylaşmadığı için birinde " +
+                "daralttığınız kapsam diğerine geçmiyor, aynı işi iki yerde yapıyordunuz. " +
+                "Menüde artık tek bir \"Panolar\" girişi var; bütün panolar orada, ortak bir " +
+                "sekme şeridinde. Görevler, Kart Panosu, Takvim ve Zaman Çizelgesi açık geliyor; " +
+                "Gösterge Paneli ile Dosya Galerisi \"＋\" içinde bekliyor. Kullanmadığınız sekmeyi " +
+                "✕ ile kapatıyor, \"＋\" ile geri açıyorsunuz. \"＋\" ayrıca kayıtlı görünümlerinizi " +
+                "ve tek tek proje panolarını sekme olarak eklemenizi sağlıyor — birkaç projenin " +
+                "panosu aynı anda açık durabiliyor. Sekme düzeniniz hesabınızda saklandığı için " +
+                "başka bir cihazda açtığınızda aynı düzenle geliyor. \"Kanban\" adı \"Kart Panosu\" " +
+                "oldu; kanbanı eski ayrı adresinden açmaya çalışırsanız sizi doğru sekmeye " +
+                "yönlendiriyor, kaydettiğiniz bağlantılar boşa düşmüyor."),
 
             new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
                 "Tutar yazarken binlik ve ondalık ayracı kendiliğinden çıkıyor",

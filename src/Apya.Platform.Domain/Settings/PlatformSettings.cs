@@ -128,6 +128,21 @@ public static class PlatformSettings
         /// (bkz. PlatformSettingDefaults.ShellMenuLayout*).
         /// </summary>
         public const string MenuLayout = Prefix + ".Shell.MenuLayout";
+
+        /// <summary>
+        /// Panolar konsolunun (/Tasks) AÇIK SEKMELERİ — JSON dizi:
+        /// <c>[{"k":"list"},{"k":"project","r":"&lt;guid&gt;","t":"Apya Web"}]</c>
+        /// Menü artık tek "Panolar" yaprağı; hangi görünüşlerin açık duracağı
+        /// kullanıcının kararı, o yüzden düzen kullanıcıda saklanır.
+        ///
+        /// BOŞ değer "kullanıcı hiç dokunmadı" demektir; varsayılan dört sekmeyi
+        /// istemci kurar (Pages/Tasks/index.js → DEFAULT_TABS). Varsayılanı
+        /// buraya da yazsaydık liste iki yerde durur ve ayrışırdı.
+        ///
+        /// Ayar değeri sınırlı uzunlukta → adet/uzunluk kısıtlanır
+        /// (bkz. PlatformSettingDefaults.ShellBoardTabs*).
+        /// </summary>
+        public const string BoardTabs = Prefix + ".Shell.BoardTabs";
     }
 
     /// <summary>
@@ -434,6 +449,18 @@ public static class PlatformSettingDefaults
 
     /// <summary>Saklanan filtre sorgusu üst sınırı (karakter).</summary>
     public const int ShellSavedViewQueryMax = 400;
+
+    /// <summary>
+    /// Pano sekmeleri varsayılanı: BOŞ = kullanıcı düzeni değiştirmedi.
+    /// Varsayılan sekme listesi istemcide (DEFAULT_TABS); buraya kopyalanmaz.
+    /// </summary>
+    public const string ShellBoardTabs = "";
+
+    /// <summary>En fazla açık sekme — şerit kaydırma çubuğuna boğulmasın.</summary>
+    public const int ShellBoardTabsMax = 16;
+
+    /// <summary>Sekme başlığı üst sınırı (proje adı / kayıtlı görünüm adı).</summary>
+    public const int ShellBoardTabsTitleMax = 40;
 
     /// <summary>
     /// Menü düzeni varsayılanı: BOŞ — "kullanıcı hiç dokunmadı" demek. Boşken

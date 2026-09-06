@@ -42,11 +42,10 @@ $(function () {
             return {
                 sections: parsed.sections || {},
                 projectsOpen: parsed.projectsOpen !== false,
-                pinnedOpen: parsed.pinnedOpen !== false,
-                boardsOpen: parsed.boardsOpen !== false
+                pinnedOpen: parsed.pinnedOpen !== false
             };
         } catch (e) {
-            return { sections: {}, projectsOpen: true, pinnedOpen: true, boardsOpen: true };
+            return { sections: {}, projectsOpen: true, pinnedOpen: true };
         }
     }
     function saveLayout() {
@@ -257,49 +256,6 @@ $(function () {
     }
 
     // =========================================================================
-    // 2b) Panolar grubu varsayılan AÇIK
-    // sidebar-toggle.js tüm 2. seviye grupları kapalı başlatıyor. O kural
-    // YÖNETİM'in alt grupları (Kiracı/Kimlik/Platform/Geri Bildirim) için
-    // konmuştu; YÖNETİM kalktı ve artık tek 2. seviye grup Panolar. Görevler
-    // oraya taşınınca günlük kullanılan sayfa kapalı grubun ardında kalıyor,
-    // geciken rozeti de görünmüyordu (ölçüldü). Handoff da Panolar'ı açık
-    // gösteriyor. Durum kullanıcı başına saklanır.
-    // =========================================================================
-    function setupBoards() {
-        // DİKKAT: LeptonX `id="MenuItem_..."` yalnız URL'Sİ OLAN yaprak öğelere
-        // basıyor; grup başlıklarında id yok (yalnız title). Bu yüzden Panolar
-        // adıyla bulunamaz — bilinen bir ÇOCUĞUNDAN yukarı yürünür.
-        var child = anchorByName('Apya.Work.Tasks') || anchorByName('Apya.Work.Board');
-        var li = child && child.closest('li.lpx-inner-menu-item')
-                              && child.closest('li.lpx-inner-menu-item').parentElement
-                              && child.closest('li.lpx-inner-menu-item').parentElement.closest('li.lpx-inner-menu-item');
-        var list = li && li.querySelector(':scope > ul.lpx-inner-menu');
-        var anchor = li && li.querySelector(':scope > a.lpx-menu-item-link');
-        if (!list || !anchor) { return; }
-
-        var caret = anchor.querySelector('.lpx-caret');
-        var applyCaret = function (open) {
-            if (!caret) { return; }
-            caret.classList.toggle('bi-chevron-up', open);
-            caret.classList.toggle('bi-chevron-down', !open);
-        };
-
-        if (layout.boardsOpen) {
-            list.classList.remove('collapsed');
-            applyCaret(true);
-        }
-
-        // Temanın kendi aç/kapa handler'ına dokunmuyoruz; tıklamadan SONRA
-        // sonucu okuyup kaydediyoruz (handler bu dinleyiciden önce çalışmış olur).
-        anchor.addEventListener('click', function () {
-            setTimeout(function () {
-                layout.boardsOpen = !list.classList.contains('collapsed');
-                saveLayout();
-            }, 0);
-        });
-    }
-
-    // =========================================================================
     // 3) Projeler satırı: "+" (yeni proje) + chevron + proje alt listesi
     // =========================================================================
     function setupProjects() {
@@ -404,7 +360,10 @@ $(function () {
         var b = state.badges || {};
         // Geciken görev handoff'ta rozet DEĞİL düz sayı — "bekleyen iş" ile
         // "gecikmiş iş" görsel olarak ayrışsın diye.
-        addBadge('Apya.Work.Tasks', b.overdueTasks, 'apya-shell-badge--plain');
+        // Rozet "Apya.Work.Tasks" çocuğundaydı; Panolar tek yaprağa inince o ad
+        // menüden kalktı ve rozet sessizce hiçbir yere basılmıyordu (addBadge
+        // öğeyi bulamazsa çıkıyor — hata vermiyor). Artık yaprağın kendisinde.
+        addBadge('Apya.Work.Boards', b.overdueTasks, 'apya-shell-badge--plain');
         addBadge('Apya.Grants.Applications', b.pendingGrantApplications, 'apya-shell-badge--warning');
         addBadge('Apya.Platform.Webhooks', b.webhookErrors, 'apya-shell-badge--negative');
     }
@@ -467,7 +426,6 @@ $(function () {
 
             sidebar.classList.add('apya-shell-ready');
             setupSections();
-            setupBoards();
             setupProjects();
             setupBadges();
             setupPins();

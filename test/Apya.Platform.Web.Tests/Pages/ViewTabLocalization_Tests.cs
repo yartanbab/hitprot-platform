@@ -58,7 +58,9 @@ public class ViewTabLocalization_Tests : PlatformWebTestBase
     public void Sekme_etiketleri_konsoldaki_sozcuklerle_ayni()
     {
         _localizer["Tasks:View:List"].Value.ShouldBe("Liste");
-        _localizer["Tasks:View:Kanban"].Value.ShouldBe("Kanban");
+        // Menüdeki "Kart Panosu" öğesi doğrudan bu sekmeye götürüyor (2026-09-06);
+        // iki etiket AYNI sözcük olmalı, yoksa kullanıcı tıkladığı adı bulamaz.
+        _localizer["Tasks:View:Kanban"].Value.ShouldBe("Kart Panosu");
         _localizer["Tasks:View:Gantt"].Value.ShouldBe("Zaman Çizelgesi");
     }
 }

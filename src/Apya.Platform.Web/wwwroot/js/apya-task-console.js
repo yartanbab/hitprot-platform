@@ -362,7 +362,11 @@
         });
 
         render();
-        return { render: render };
+        // `read` dışarı veriliyor: Görevler konsolunun "＋ Pano ekle" menüsü
+        // kayıtlı görünümleri sekme olarak sunuyor ve listeyi okuması gerek.
+        // Depolama biçimi (scope'lu/scope'suz) burada kapalı kalsın diye
+        // çağıran localStorage'a kendisi uzanmıyor.
+        return { render: render, read: read };
     }
 
     // --- Alt görev hiyerarşisi ------------------------------------------------
