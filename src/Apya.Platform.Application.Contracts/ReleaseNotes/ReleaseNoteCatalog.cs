@@ -26,8 +26,8 @@ public static class ReleaseNoteCatalog
     public static IReadOnlyList<ReleaseNote> All { get; } = new List<ReleaseNote>
     {
         new ReleaseNote(
-            version: "2026.09.02",
-            date: "2 Eylül 2026",
+            version: "2026.09.06",
+            date: "6 Eylül 2026",
             title: "Proje finansı tek ekranda, hibe süreci baştan sona, görevler ekip dışına açık",
 
             // ── Finans ───────────────────────────────────────────────────────
