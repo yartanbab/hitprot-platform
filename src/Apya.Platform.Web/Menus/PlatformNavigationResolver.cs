@@ -611,12 +611,20 @@ public class PlatformNavigationResolver : IScopedDependency
         // konsolunun görünüşü; Takvim ise ayrı bir modül (kendi izni, kendi
         // dış takvim entegrasyonu) ve o grubun içinde yanlış yerdeydi.
         //
-        // Menü ID'si "Apya.Work.Calendar" KORUNUYOR: ağaçtaki yeri değişti,
-        // kimliği değil — kayıtlı menü düzenleri ve kısayol iğneleri bu adı
-        // saklıyor, yeniden adlandırmak onları sessizce çözülemez hâle getirirdi.
+        // 🔴 Menü ID'si "Apya.Work.Calendar" → "Apya.Calendar" olarak DEĞİŞTİ
+        // (2026-09-06). İlk denemede ad korunmuştu (kayıtlı düzenler ve kısayol
+        // iğneleri adı saklıyor), ama ölçüldü ki bu taşımayı ETKİSİZ bırakıyor:
+        // menüsünü bir kez özelleştirmiş kullanıcının ShellMenuLayout kaydı
+        // "Apya.Work.Calendar → Panolar'ın altında" diyor ve kayıtlı düzen
+        // koddaki varsayılanın ÖNÜNDE gelir → Takvim eski yerinde kalıyordu.
+        //
+        // Yeni adın kayıtlı düzende karşılığı olmadığı için düğüm buradaki
+        // varsayılan yerine düşer. Bedeli: Takvim'e iğne koymuş kullanıcıda o
+        // iğne düşer — varsayılan iğne listesinde (PlatformSettingDefaults.ShellPins)
+        // Takvim YOK, yani yalnız elle iğnelemiş kullanıcıyı etkiler.
         if (await _permission.IsGrantedAsync(PlatformPermissions.Calendars.Default))
             roots.Add(new ApplicationMenuItem(
-                "Apya.Work.Calendar", l["Menu:Calendar"], icon: "fa fa-calendar-days", url: "/Calendars", order: 3));
+                "Apya.Calendar", l["Menu:Calendar"], icon: "fa fa-calendar-days", url: "/Calendars", order: 3));
 
         // Hibe Yönetimi — kendi izin grubu (Groups.Grants) ve kendi feature'ı (Features.Grants)
         // olduğu için İş Yönetimi'nden ayrı kategori. "Başvurular" sayfası HOST'a özel
