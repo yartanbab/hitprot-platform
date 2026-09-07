@@ -318,4 +318,52 @@ public class RegistrationRequestPages_Tests : PlatformWebTestBase
         html.ShouldContain("Talebiniz Alındı");
         html.ShouldContain("protokol");
     }
+
+    /// <summary>
+    /// Aynı e-postayla ikinci gönderim formda ALAN HATASI olarak dönmeli.
+    /// <para>
+    /// Ölçülen şey domain kuralı değil (o <c>DuplicateEmailAccount_Tests</c>'te);
+    /// buradaki risk, kuralın fırlattığı <c>BusinessException</c>'ın sayfada
+    /// yakalanmayıp oturumsuz adayın önüne hata ekranı çıkarmasıdır.
+    /// </para>
+    /// </summary>
+    [Fact]
+    public async Task Ayni_eposta_ile_ikinci_gonderim_alan_hatasiyla_doner()
+    {
+        var email = "mukerrer-" + Guid.NewGuid().ToString("N") + "@ornek.com";
+
+        var first = await SubmitRegistrationFormAsync(email);
+        first.StatusCode.ShouldBe(HttpStatusCode.Redirect);
+
+        var second = await SubmitRegistrationFormAsync(email);
+
+        // 302 DEĞİL: ikinci talep kaydedilmemeli. 500 de değil: mesaj formda çıkmalı.
+        second.StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        var html = WebUtility.HtmlDecode(await second.Content.ReadAsStringAsync());
+        html.ShouldContain("daha önce bir kayıt talebi alınmış");
+    }
+
+    /// <summary>Oturumsuz sihirbazı tek gönderimde doldurur (JS kapalı yolu).</summary>
+    private async Task<HttpResponseMessage> SubmitRegistrationFormAsync(string email)
+    {
+        var token = AntiforgeryToken(await GetResponseAsStringAsync("/Account/RegistrationRequest"));
+
+        return await Client.PostAsync(
+            "/Account/RegistrationRequest",
+            new FormUrlEncodedContent(new Dictionary<string, string>
+            {
+                ["Input.RequestedPlan"] = nameof(SalesPlan.Standard),
+                ["Input.CompanyName"] = "Mükerrer Form Derneği",
+                ["Input.CompanyType"] = nameof(Tenants.CompanyType.Association),
+                ["Input.TaxNumber"] = Random.Shared.NextInt64(1_000_000_000L, 9_999_999_999L).ToString(),
+                ["Input.Address"] = "Merkez Mah. Atatürk Cad. No:1, İstanbul",
+                ["Input.FullName"] = "Ayşe Yılmaz",
+                ["Input.AuthorizedTitle"] = "Yönetim Kurulu Başkanı",
+                ["Input.Email"] = email,
+                ["Input.Phone"] = "05551112233",
+                ["AcceptKvkk"] = "true",
+                ["__RequestVerificationToken"] = token
+            }));
+    }
 }

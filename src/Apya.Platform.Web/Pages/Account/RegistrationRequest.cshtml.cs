@@ -92,6 +92,16 @@ public class RegistrationRequestModel : PlatformPageModel
             ModelState.AddModelError(string.Empty, L["Platform:RegistrationRequest:RateLimitExceeded"].Value);
             return Page();
         }
+        catch (BusinessException ex) when (ex.Code == PlatformDomainErrorCodes.RegistrationRequestEmailAlreadyRegistered)
+        {
+            // Hata e-posta alanına bağlanır ki aday nereyi düzelteceğini görsün. Mesaj,
+            // "hesabınız var" ile "talebiniz işlemde" ayrımını YAPMAZ — bkz.
+            // RegistrationRequestManager.EnsureEmailAvailableAsync.
+            ModelState.AddModelError(
+                $"{nameof(Input)}.{nameof(Input.Email)}",
+                L["Platform:RegistrationRequest:EmailAlreadyRegistered"].Value);
+            return Page();
+        }
 
         await TryRecordKvkkConsentAsync();
 

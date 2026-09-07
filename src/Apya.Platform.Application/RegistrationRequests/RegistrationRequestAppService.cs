@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Apya.Platform.Accounts;
 using Apya.Platform.Agreements;
 using Apya.Platform.Permissions;
 using Apya.Platform.RegistrationRequests.Dtos;
@@ -27,6 +28,7 @@ public class RegistrationRequestAppService : PlatformAppService, IRegistrationRe
     private readonly IRepository<RegistrationRequest, Guid> _repository;
     private readonly RegistrationRequestManager _registrationRequestManager;
     private readonly TenantProfileManager _tenantProfileManager;
+    private readonly RegisteredEmailChecker _registeredEmailChecker;
     private readonly SalesPlanPricing _pricing;
     private readonly RegistrationInviteMailer _inviteMailer;
     private readonly IClock _clock;
@@ -35,6 +37,7 @@ public class RegistrationRequestAppService : PlatformAppService, IRegistrationRe
         IRepository<RegistrationRequest, Guid> repository,
         RegistrationRequestManager registrationRequestManager,
         TenantProfileManager tenantProfileManager,
+        RegisteredEmailChecker registeredEmailChecker,
         SalesPlanPricing pricing,
         RegistrationInviteMailer inviteMailer,
         IClock clock)
@@ -42,6 +45,7 @@ public class RegistrationRequestAppService : PlatformAppService, IRegistrationRe
         _repository = repository;
         _registrationRequestManager = registrationRequestManager;
         _tenantProfileManager = tenantProfileManager;
+        _registeredEmailChecker = registeredEmailChecker;
         _pricing = pricing;
         _inviteMailer = inviteMailer;
         _clock = clock;
@@ -156,6 +160,11 @@ public class RegistrationRequestAppService : PlatformAppService, IRegistrationRe
         // bakılmazsa çakışma en son adımda patlar: aday protokolü okur, şifresini belirler,
         // onaylar — ve hesap açılışı düşer. Host'a ŞİMDİ söylemek, kaydı düzeltme şansı verir.
         await _tenantProfileManager.CheckTaxNumberUniqueAsync(request.TaxNumber);
+
+        // Aynı gerekçe e-posta için de geçerli: adres başka bir hesabın kullanıcısıysa
+        // kurulum en son adımda düşerdi. Host'a ŞİMDİ söylüyoruz ki adaydan farklı bir
+        // adres istesin — davet üretilmeden.
+        await _registeredEmailChecker.CheckNotRegisteredAsync(request.Email);
 
         var token = InviteToken.Generate();
         var now = _clock.Now;

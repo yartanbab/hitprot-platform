@@ -37,9 +37,14 @@ public class RegistrationRequestAppService_Tests : PlatformEntityFrameworkCoreTe
     /// <summary>
     /// IP verilmezse sel koruması hiç çalışmaz; testlerin birbirinin sayacını
     /// tüketmemesi için sınırı ölçmeyen testler IP'siz gider.
+    /// <para>
+    /// E-posta HER ÇAĞRIDA benzersiz: aynı adres ikinci kez sürece giremez
+    /// (<c>RegistrationRequestManager.EnsureEmailAvailableAsync</c>), sabit bir adres
+    /// koleksiyonu paylaşan testlerin ikincisini düşürürdü.
+    /// </para>
     /// </summary>
     private static CreateRegistrationRequestDto NewInput(
-        string email = "aday@ornek.com",
+        string? email = null,
         SalesPlan plan = SalesPlan.Standard,
         string? ipAddress = null)
         => new()
@@ -54,7 +59,7 @@ public class RegistrationRequestAppService_Tests : PlatformEntityFrameworkCoreTe
             CompanySize = RegistrationRequestCompanySize.From11To50,
             FullName = "  Ayşe Yılmaz  ",
             AuthorizedTitle = " Yönetim Kurulu Başkanı ",
-            Email = email,
+            Email = email ?? $"aday-{Guid.NewGuid():N}@ornek.com",
             Phone = " 05551112233 ",
             Message = "  Hibe takibi için bakıyoruz.  ",
             IpAddress = ipAddress

@@ -1595,6 +1595,8 @@
         "Platform:Agreement:TenantNameTaken": "Kurum adından benzersiz bir hesap adı üretilemedi. Lütfen ekibimizle iletişime geçin.",
         "Platform:RegistrationRequest:NotApproved": "Bu işlem yalnız onaylanmış kayıt talebi için yapılabilir.",
         "Platform:RegistrationRequest:AlreadyProvisioned": "Bu talebin hesabı zaten açılmış.",
+        "Platform:RegistrationRequest:EmailAlreadyRegistered": "Bu e-posta adresiyle daha önce bir kayıt talebi alınmış. Ekibimiz sizinle iletişime geçecek. Hesabınız zaten varsa giriş yapabilir veya şifrenizi sıfırlayabilirsiniz.",
+        "Platform:Tenant:AdminEmailAlreadyInUse": "Bu e-posta adresi zaten bir hesaba tanımlı. Aynı e-posta ile ikinci bir hesap açılamaz; lütfen farklı bir adres kullanın.",
         "Protokol:Title": "Hizmet Protokolü Onayı",
         "Protokol:Intro": "Kayıt talebiniz onaylandı. Protokolü okuyup onayladığınızda hesabınız açılacak.",
         "Protokol:Company": "Kurum",

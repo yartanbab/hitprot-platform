@@ -1,6 +1,7 @@
 using System;
 using System.Text;
 using System.Threading.Tasks;
+using Apya.Platform.Accounts;
 using Volo.Abp;
 using Volo.Abp.Data;
 using Volo.Abp.DependencyInjection;
@@ -40,6 +41,7 @@ public class TenantProvisioner : ITransientDependency
     private readonly TenantProfileManager _tenantProfileManager;
     private readonly TenantPackageManager _tenantPackageManager;
     private readonly TenantSubscriptionManager _tenantSubscriptionManager;
+    private readonly RegisteredEmailChecker _registeredEmailChecker;
     private readonly IDataSeeder _dataSeeder;
     private readonly IUnitOfWorkManager _unitOfWorkManager;
     private readonly ICurrentTenant _currentTenant;
@@ -51,6 +53,7 @@ public class TenantProvisioner : ITransientDependency
         TenantProfileManager tenantProfileManager,
         TenantPackageManager tenantPackageManager,
         TenantSubscriptionManager tenantSubscriptionManager,
+        RegisteredEmailChecker registeredEmailChecker,
         IDataSeeder dataSeeder,
         IUnitOfWorkManager unitOfWorkManager,
         ICurrentTenant currentTenant)
@@ -61,6 +64,7 @@ public class TenantProvisioner : ITransientDependency
         _tenantProfileManager = tenantProfileManager;
         _tenantPackageManager = tenantPackageManager;
         _tenantSubscriptionManager = tenantSubscriptionManager;
+        _registeredEmailChecker = registeredEmailChecker;
         _dataSeeder = dataSeeder;
         _unitOfWorkManager = unitOfWorkManager;
         _currentTenant = currentTenant;
@@ -83,6 +87,11 @@ public class TenantProvisioner : ITransientDependency
         CreateTenantExtendedDto input,
         bool resolveUniqueName = false)
     {
+        // 🔴 Aynı e-postayla ikinci hesap açılamaz. Kontrol BURADA çünkü kurulumun tek
+        // gövdesi burası: host'un "Yeni Müşteri" modalı da, adayın protokol onayı da
+        // buradan geçer. UoW'dan ÖNCE — düşecek bir kurulum için transaction açmayalım.
+        await _registeredEmailChecker.CheckNotRegisteredAsync(input.AdminEmailAddress);
+
         using var uow = _unitOfWorkManager.Begin(requiresNew: true, isTransactional: true);
 
         var tenant = resolveUniqueName
