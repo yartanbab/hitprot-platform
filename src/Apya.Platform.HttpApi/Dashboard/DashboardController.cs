@@ -56,6 +56,10 @@ public class DashboardController : PlatformController
     public Task<List<DeliveryHeatmapCellDto>> GetDeliveryHeatmapAsync([FromQuery] DashboardQueryDto input)
         => _dashboardAppService.GetDeliveryHeatmapAsync(input);
 
+    [HttpGet("effort-distribution")]
+    public Task<List<EffortDistributionDto>> GetEffortDistributionAsync([FromQuery] DashboardQueryDto input)
+        => _dashboardAppService.GetEffortDistributionAsync(input);
+
     [HttpGet("layout")]
     public Task<DashboardLayoutDto> GetLayoutAsync([FromQuery] string viewKey)
         => _dashboardAppService.GetLayoutAsync(viewKey);

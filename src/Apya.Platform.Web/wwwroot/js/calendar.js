@@ -1,7 +1,7 @@
 import { j as e, d as pe, r as g, b as jt } from "./react-vendor-D57GAUXd.js";
 import { c as k, B as z, d as oe, e as ce, S as ie, D as Je, i as Ze, T as Nt } from "./Dialog-BdNKdiS6.js";
 import { D as wt } from "./useDeviceMode-Dk7fb2QY.js";
-import { a as St } from "./QueryProvider-AIUp_Zk5.js";
+import { a as St } from "./QueryProvider-B4lJkcLB.js";
 import { E as de } from "./EmptyState-Bhcx2Wdd.js";
 import { a as A } from "./httpClient-CRlyQ1eg.js";
 import { d as Dt } from "./draggableActivation-Ybw9Upbh.js";

@@ -587,20 +587,24 @@ public class PlatformNavigationResolver : IScopedDependency
             work.AddItem(new ApplicationMenuItem(
                 "Apya.Work.Boards", l["Menu:Boards"], icon: "fa fa-table-columns", url: "/Tasks", order: 2));
 
-        // Özet Raporlar — "Raporlar & Analiz" kategorisinden BURAYA taşındı
-        // (2026-09-03). Sayfanın içeriği finans değil: aktif proje sayısı,
-        // harcanan efor, personel bazlı efor yükü, PDKS özeti ve müşteri ROI.
-        // Kategorinin geri kalan dördü finans çıktısı olduğu için Finans
-        // çatısına indi; tek başına kalan bu sayfa da içeriğinin ait olduğu
-        // yere geldi ve kök kategori kapandı.
+        // ── "Özet Raporlar" (Apya.Reports.Overview) KALDIRILDI ────────────────
+        // Kullanıcı kararı 2026-09-07: Genel Bakış ile aynı işi yapan ikinci bir
+        // ekrandı. KPI'ları (aktif proje / bütçe kullanımı), bütçe-sapma grafiği
+        // ve proje tablosu Genel Bakış'ın özet şeridi, "Proje sağlığı" kartı ve
+        // İstatistikler bandında zaten vardı; kalan tek özgün içeriği olan
+        // personel eforu "Efor dağılımı" kartına ve "logged-hours" istatistiğine
+        // taşındı. Ar-Ge uyum puanı taşınmadı — sabit kodlanmış bir sayıydı.
         //
-        // Menü ID'si "Apya.Reports.Overview" olarak KALIYOR. Üst öğesiyle
-        // uyumsuz görünüyor ama ad, kullanıcının menü düzeninde ve kısayol
-        // iğnelerinde saklı (PlatformSettings ShellMenuLayout / ShellPins —
-        // ShellPins VARSAYILANI bile bu adı içeriyor); değiştirmek kayıtlı
-        // düzenleri sessizce çözülemez hâle getirirdi.
-        if (await _permission.IsGrantedAsync(PlatformPermissions.Reports.Default))
-            work.AddItem(new ApplicationMenuItem("Apya.Reports.Overview", l["Menu:Reports:Overview"], icon: "fa fa-gauge", url: "/Reports", order: 3));
+        // Sayfa silinmedi: /Reports artık /Dashboard'a 301 veriyor (bkz.
+        // Pages/Reports/Index.cshtml.cs), böylece eski yer imleri 404 görmez.
+        // "Apya.Reports.*" ID'li DİĞER sayfalar (Proje Bütçesi, Mizan, Cari
+        // Ekstre) Finans çatısında duruyor; bu satır yalnız genel bakış
+        // ekranını kaldırır.
+        //
+        // ShellPins VARSAYILANINDAN da çıkarıldı (PlatformSettings): havuzda
+        // karşılığı kalmayan ad orada dursaydı iğne sessizce boşa düşerdi.
+        // Menüsünü ÖZELLEŞTİRMİŞ kullanıcının kayıtlı düzeninde ad geçmeye
+        // devam eder ama ResolveHidden'daki pool.ContainsKey süzgeci onu eler.
 
         if (work.Items.Count > 0) roots.Add(work);
 
