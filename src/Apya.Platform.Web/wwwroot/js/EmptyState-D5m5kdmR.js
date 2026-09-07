@@ -1,5 +1,5 @@
 import { j as t } from "./react-vendor-D57GAUXd.js";
-import { c as s } from "./Dialog-BdNKdiS6.js";
+import { c as s } from "./Dialog-Bky2XNdc.js";
 const l = {
   default: { ring: "bg-neutral-100 text-neutral-500", text: "text-text-tertiary" },
   success: { ring: "bg-positive-50 text-positive-600", text: "text-text-secondary" },

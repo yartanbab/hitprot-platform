@@ -1,5 +1,5 @@
 import { b as z, j as e, r as m } from "./react-vendor-D57GAUXd.js";
-import { a as C } from "./httpClient-CRlyQ1eg.js";
+import { a as C } from "./httpClient-DePjXdo1.js";
 /* empty css               */
 const l = {
   LongText: 1,

@@ -1,5 +1,5 @@
 import { b as F, j as e, r as i } from "./react-vendor-D57GAUXd.js";
-import { a as m } from "./httpClient-CRlyQ1eg.js";
+import { a as m } from "./httpClient-DePjXdo1.js";
 import { H as A } from "./Hint-CNW95h3H.js";
 /* empty css               */
 const N = {
