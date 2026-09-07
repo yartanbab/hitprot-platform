@@ -80,7 +80,32 @@ public static class ReleaseNoteCatalog
                 "Bazı durumlarda ekranda hata açıklaması yerine \"HTTP 401\" gibi teknik bir kod " +
                 "çıkıyordu. Bu mesajlar sadeleştirildi: oturumun sona erdiği, yetkinin bulunmadığı " +
                 "ya da kaydın bulunamadığı durumlar artık ne yapmanız gerektiğini söyleyen " +
-                "Türkçe bir cümleyle anlatılıyor.")
+                "Türkçe bir cümleyle anlatılıyor."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
+                "Profil menünüz yenilendi: tema, yoğunluk ve dil aynı yerde",
+                "Sağ üstteki avatarınıza tıkladığınızda açılan menüyü baştan düzenledik. En üstte " +
+                "adınız, e-postanız ve avatarınız duruyor; altında iki sekme var. \"Profil\" " +
+                "sekmesinden bildirim tercihlerinize ve klavye kısayolları listesine geçiyorsunuz. " +
+                "\"Görünüm\" sekmesinde ise arayüz dilini, açık/koyu temayı ve satır yoğunluğunu " +
+                "menüden çıkmadan değiştiriyorsunuz — seçtiğiniz anda uygulanıyor, ayrı bir ayar " +
+                "sayfasına gitmeniz gerekmiyor."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Fix,
+                "Sildiğiniz bir kaydın adını yeniden kullanabiliyorsunuz",
+                "Bir proje kategorisini, bildirim tercihini ya da hibe başvurusu bütçe kalemini " +
+                "sildikten sonra aynı adla yenisini oluşturmak istediğinizde \"bu kayıt zaten var\" " +
+                "hatası alıyordunuz — oysa eski kayıt ekranlarınızda görünmüyordu bile. Silinen " +
+                "kayıtlar artık adın üzerinde yer tutmuyor; sildiğiniz bir adı veya kodu doğrudan " +
+                "yeniden kullanabiliyorsunuz."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
+                "Bildirimler, görev listesi, belgeler ve finans toplamları daha hızlı geliyor",
+                "Kayıt sayısı arttıkça bazı ekranların açılması yavaşlıyordu. Bildirim zili ve " +
+                "bildirim listesi, görev konsolu (size atananlar ve yaklaşan teslim tarihleri), " +
+                "proje belge listesi ve finans ekranındaki gelir, gider, fatura ve kasa toplamları " +
+                "belirgin biçimde hızlandı. Ekranların görünümünde bir değişiklik yok; yalnızca " +
+                "bekleme süresi kısaldı.")
         ),
 
         new ReleaseNote(
