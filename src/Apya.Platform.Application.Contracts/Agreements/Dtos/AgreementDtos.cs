@@ -1,6 +1,7 @@
 using System;
 using System.ComponentModel.DataAnnotations;
 using Apya.Platform.Tenants;
+using Apya.Platform.Validation;
 
 namespace Apya.Platform.Agreements.Dtos;
 
@@ -49,10 +50,10 @@ public class ApproveProtocolInput
     [Required(ErrorMessage = "Davet bağlantısı geçersiz.")]
     public string Token { get; set; } = string.Empty;
 
-    [Range(typeof(bool), "true", "true", ErrorMessage = "Protokolü kabul etmeden devam edilemez.")]
+    [MustBeTrue(ErrorMessage = "Protokolü kabul etmeden devam edilemez.")]
     public bool AcceptAgreement { get; set; }
 
-    [Range(typeof(bool), "true", "true", ErrorMessage = "KVKK taahhütlerini onaylamadan devam edilemez.")]
+    [MustBeTrue(ErrorMessage = "KVKK taahhütlerini onaylamadan devam edilemez.")]
     public bool AcceptKvkk { get; set; }
 
     /// <summary>

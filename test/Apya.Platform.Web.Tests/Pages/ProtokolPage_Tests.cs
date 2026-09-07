@@ -179,6 +179,81 @@ public class ProtokolPage_Tests : PlatformWebTestBase
     }
 
     /// <summary>
+    /// 🔴 Onay kutularına ISTEMCI tarafında ters çalışan bir kural basılmamalı.
+    ///
+    /// <para>Kutular <c>[Range(typeof(bool), "true", "true")]</c> ile işaretlenmişti. Sunucuda
+    /// doğru çalışıyordu — yukarıdaki POST testi de geçiyordu, çünkü doğrudan HTTP'den
+    /// gönderiyor. Tarayıcıda ise kural TERSİNE dönüyordu: adaptör markup'a
+    /// <c>data-val-range-min="True"</c> basar, jQuery kural değeri olarak kutunun
+    /// <c>value</c>'sunu ("true") okur ve dizeleri büyük/küçük harfe DUYARLI karşılaştırır;
+    /// <c>"true" &lt;= "True"</c> yanlıştır. Sonuç: kutu İŞARETLİYKEN alan geçersiz sayılıyor,
+    /// form hiç gönderilemiyordu (canlıda ölçüldü).</para>
+    /// </summary>
+    [Fact]
+    public async Task Onay_kutulari_ters_calisan_istemci_kurali_basmaz()
+    {
+        var token = await CreateInvitedRequestAsync("İstemci Kuralı Derneği");
+
+        var doc = new HtmlAgilityPack.HtmlDocument();
+        doc.LoadHtml(await GetResponseAsStringAsync($"/Account/Protokol?token={token}"));
+
+        foreach (var name in new[] { "Input.AcceptAgreement", "Input.AcceptKvkk" })
+        {
+            var box = doc.DocumentNode.SelectSingleNode($"//input[@type='checkbox' and @name='{name}']");
+
+            box.ShouldNotBeNull($"{name} onay kutusu basılmamış.");
+            box!.GetAttributeValue("data-val-range", string.Empty).ShouldBeNullOrEmpty(
+                $"{name} alanına range kuralı basılmış; kutu işaretliyken jQuery alanı geçersiz sayar.");
+        }
+    }
+
+    /// <summary>
+    /// İstemci kuralı kalktı — onay denetimi SUNUCUDA duruyor mu? Kutular işaretsizken
+    /// hesap açılmamalı ve aday her iki mesajı da görmeli.
+    /// </summary>
+    [Fact]
+    public async Task Isaretlenmemis_onay_kutulari_sunucuda_reddedilir()
+    {
+        var token = await CreateInvitedRequestAsync("Onaysız Gönderim Derneği");
+
+        var doc = new HtmlAgilityPack.HtmlDocument();
+        doc.LoadHtml(await GetResponseAsStringAsync($"/Account/Protokol?token={token}"));
+        var antiforgery = doc.DocumentNode
+            .SelectSingleNode("//input[@name='__RequestVerificationToken']")
+            .GetAttributeValue("value", "");
+
+        var response = await Client.PostAsync("/Account/Protokol", new FormUrlEncodedContent(
+            new System.Collections.Generic.Dictionary<string, string>
+            {
+                ["Input.Token"] = token,
+                ["Input.AcceptAgreement"] = "false",
+                ["Input.AcceptKvkk"] = "false",
+                ["Input.Password"] = "Qa!Protokol2026",
+                ["Input.PasswordConfirm"] = "Qa!Protokol2026",
+                ["__RequestVerificationToken"] = antiforgery
+            }));
+
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        var html = WebUtility.HtmlDecode(await response.Content.ReadAsStringAsync());
+        html.ShouldContain("Protokolü kabul etmeden devam edilemez.");
+        html.ShouldContain("KVKK taahhütlerini onaylamadan devam edilemez.");
+
+        var uowManager = GetRequiredService<IUnitOfWorkManager>();
+        using (var uow = uowManager.Begin(requiresNew: true))
+        {
+            var repository = GetRequiredService<IRepository<RegistrationRequest, Guid>>();
+            var saved = await repository.FirstOrDefaultAsync(r => r.InviteTokenHash == InviteToken.Hash(token));
+
+            saved.ShouldNotBeNull();
+            saved!.Status.ShouldBe(RegistrationRequestStatus.AwaitingProtocol);
+            saved.TenantId.ShouldBeNull();
+
+            await uow.CompleteAsync();
+        }
+    }
+
+    /// <summary>
     /// Süresi dolmuş davet, "geçersiz" değil KENDİ mesajını göstermeli: aday ne yapacağını
     /// (yeni bağlantı istemek) ancak böyle anlar.
     /// </summary>
