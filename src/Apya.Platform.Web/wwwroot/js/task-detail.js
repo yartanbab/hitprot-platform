@@ -1,6 +1,6 @@
 import { j as e, r as y, d as Ge, b as ua } from "./react-vendor-D57GAUXd.js";
 /* empty css               */
-import { a as et } from "./QueryProvider-C6cGugMR.js";
+import { a as et } from "./QueryProvider-B4436sFh.js";
 import { u as te, a as se, b as ae } from "./query-vendor-Bf69L2iP.js";
 import { D as pa, h as ma, e as gt, B as ee, I as qe, M as Ha, S as je } from "./Dialog-Bky2XNdc.js";
 import { C as fa } from "./Combobox-D5mSMyzC.js";

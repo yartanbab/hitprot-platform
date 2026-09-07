@@ -25,6 +25,11 @@ $(function () {
     if (!content) { return; }
 
     var state = null;
+    // Bu dosyanın geri kalanı kabuk metinlerini hâlâ hardcoded basıyor
+    // (bilinen/kabul edilmiş sapma) — yalnız avatar menüsü EN kültüründe
+    // gerçekten erişilebilir olduğu için (Faz 2, dil segmenti) o satırlar
+    // 'Platform' kaynağından okunur.
+    var l = abp.localization.getResource('Platform');
 
     function svg(path, size, width) {
         return '<svg width="' + size + '" height="' + size + '" viewBox="0 0 20 20" fill="none" ' +
@@ -38,6 +43,14 @@ $(function () {
         if (!el) { return false; }
         var tag = (el.tagName || '').toLowerCase();
         return tag === 'input' || tag === 'textarea' || tag === 'select' || el.isContentEditable;
+    }
+
+    // Avatar menüsü satırları kullanıcı/kiracı adı gibi VERİYE dayalı metinleri
+    // innerHTML ile basıyor — tek yer bu yüzden burada kaçış gerekiyor.
+    function escapeHtml(s) {
+        return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+            return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+        });
     }
 
     // Açık katman varsa kısayollar tetiklenmesin (palet, modal, diyalog).
@@ -172,11 +185,28 @@ $(function () {
         // ikinci bir akış kurmaz (eski barda bu link iki kez geçiyordu).
         var hasFeedback = !!document.querySelector('.apya-feedback-open-link');
 
+        // Tanıtım turu (2026-09-06 avatar menüsü revizyonu): satır avatar
+        // menüsünden buraya taşındı — erişim kaybolmasın diye. Href/etiket
+        // PlatformMenuContributor'ın kullanıcı menüsüne eklediği ("Apya.
+        // Account.Tour") ve LeptonX'in ZATEN bastığı öğeden okunur; ikinci
+        // bir URL/etiket kaynağı açılmaz (bkz. buildAvatarMenu()).
+        var tourAnchor = (function () {
+            var p = content.querySelector('.lpx-user-profile');
+            var d = p && p.closest('.dropdown');
+            return d && d.querySelector('.dropdown-menu a[href*="tur=1"]');
+        })();
+        var tourHref = tourAnchor ? tourAnchor.getAttribute('href') : null;
+        var tourLabel = tourAnchor ? (tourAnchor.textContent || '').trim() : '';
+
         menu.innerHTML =
             '<button type="button" class="apya-shell-menu-row" role="menuitem" data-act="palette">' +
                 '<span>Komut paleti</span><kbd class="apya-shell-kbd">' + modLabel() + 'K</kbd></button>' +
             '<button type="button" class="apya-shell-menu-row" role="menuitem" data-act="shortcuts">' +
                 '<span>Klavye kısayolları</span><kbd class="apya-shell-kbd">?</kbd></button>' +
+            (tourHref
+                ? '<button type="button" class="apya-shell-menu-row" role="menuitem" data-act="tour">' +
+                  '<span>' + escapeHtml(tourLabel || 'Tanıtım turu') + '</span></button>'
+                : '') +
             (hasFeedback
                 ? '<button type="button" class="apya-shell-menu-row" role="menuitem" data-act="feedback">' +
                   '<span>Bu sayfa hakkında geri bildirim</span></button>'
@@ -198,6 +228,7 @@ $(function () {
             var act = row.dataset.act;
             if (act === 'palette') { openPalette(); }
             if (act === 'shortcuts') { openShortcuts(); }
+            if (act === 'tour') { location.href = tourHref; }
             if (act === 'feedback') { document.querySelector('.apya-feedback-open-link').click(); }
         });
     }
@@ -339,11 +370,22 @@ $(function () {
     }
 
     // =========================================================================
-    // Avatar menüsü — bardaki tekil düğmeleri toplar
-    // Tasarımda dil/tema/yoğunluk/kenar-çubuğu ayrı ikon olarak barda DURMUYOR;
-    // avatar menüsünün içindeler. Düğümler LeptonX'in MEVCUT kullanıcı
-    // dropdown'ına TAŞINIR — yeniden üretilmez, böylece her birinin kendi
-    // handler'ı, ViewComponent durumu ve kalıcılık anahtarı olduğu gibi çalışır.
+    // Avatar menüsü — kimlik bloğu + Profil/Görünüm sekmeleri
+    // (Avatar Profil Menüsü handoff, 2026-09-06, Faz 1)
+    //
+    // Bootstrap'in KENDİ dropdown mekanizması (aç/kapat, dış tıklama, Esc,
+    // `.dropdown-item` satırları arası ↑↓ — bkz. bootstrap.bundle.js
+    // SELECTOR_VISIBLE_ITEMS) KORUNUR; yalnız İÇERİĞİ değiştirilir. Temanın
+    // kendi öğeleri (Hesabım, Genel Ayarlar, Tanıtım turu, Çıkış) SİLİNMEZ —
+    // href/metinleri buradan OKUNUP kendi satırlarımızda kullanılır (ikinci
+    // bir URL kaynağı açılmaz, PlatformMenuContributor/ABP Account modülü tek
+    // kaynak kalır), sonra CSS ile gizlenir (apya-shell.css, `:has(> .apya-
+    // avatar-menu)`). Tanıtım turu satırı artık burada değil — yardım
+    // menüsünde (bkz. buildHelpMenu).
+    //
+    // Görünüm sekmesindeki dört denetim (Dil/Tema/Yoğunluk/Kenar çubuğu) eski
+    // davranışla AYNI teknikle taşınır (yeniden üretilmez) — bkz. aşağıdaki
+    // yorum, bu fazda değişmedi.
     // =========================================================================
     function buildAvatarMenu() {
         // DİKKAT: `document.querySelector('.lpx-user-profile')` MOBİL navbar'ın
@@ -352,52 +394,312 @@ $(function () {
         // basıyor. Arama ÜST BARA kısıtlanır.
         var profile = content.querySelector('.lpx-user-profile');
         var dropdown = profile && profile.closest('.dropdown');
+        var toggle = dropdown && dropdown.querySelector('[data-bs-toggle="dropdown"]');
         var menu = dropdown && dropdown.querySelector('.dropdown-menu');
-        if (!menu) { return; }
+        if (!menu || !toggle) { return; }
 
-        // ETİKET ŞART: üst barda ikon tek başına yeterliydi (kompakt araç
-        // çubuğu + tooltip), ama menü içinde satırın ne yaptığı yazıyla
-        // anlaşılmalı — dört ikon alt alta dizilince hiçbiri okunmuyordu.
-        // Handoff da avatar menüsünü "Dil (sağda Türkçe) · Tema (sağda Açık)"
-        // diye tarif ediyor: solda etiket, sağda denetim/değer.
-        var entries = [
-            ['.lpx-language-selection', 'Dil'],
-            ['.apya-theme-toggle', 'Tema'],
-            ['.apya-density-toggle', 'Yoğunluk'],
-            ['.apya-sidebar-mode', 'Kenar çubuğu']
-        ].map(function (e) { return { el: content.querySelector(':scope > ' + e[0]), label: e[1] }; })
-         .filter(function (e) { return !!e.el; });
-        if (!entries.length) { return; }
+        function extractItem(hrefPart) {
+            var a = menu.querySelector('a[href*="' + hrefPart + '"]');
+            return a ? { href: a.getAttribute('href'), label: (a.textContent || '').trim() } : null;
+        }
+        var manageItem = extractItem('/Account/Manage');
+        var logoutItem = extractItem('/Account/Logout');
+        var settingsItem = extractItem('/Settings');
+
+        var tenantRoot = document.getElementById('apya-tenant-switch');
+        var tenantCanSwitch = !!(tenantRoot && tenantRoot.classList.contains('dropdown'));
 
         var section = document.createElement('div');
-        section.className = 'apya-avatar-menu-section';
-        var head = document.createElement('div');
-        head.className = 'apya-avatar-menu-head';
-        head.textContent = 'GÖRÜNÜM';
-        section.appendChild(head);
+        section.className = 'apya-avatar-menu';
 
-        entries.forEach(function (e) {
-            var item = document.createElement('div');
-            item.className = 'apya-avatar-menu-item';
+        var avatarSlot = document.createElement('span');
+        avatarSlot.className = 'apya-avatar-menu-avatar';
+        var nameEl = document.createElement('div');
+        nameEl.className = 'apya-avatar-menu-name';
+        var roleEl = document.createElement('div');
+        roleEl.className = 'apya-avatar-menu-role';
+        var idText = document.createElement('div');
+        idText.className = 'apya-avatar-menu-idtext';
+        idText.appendChild(nameEl);
+        idText.appendChild(roleEl);
+        var identity = document.createElement('div');
+        identity.className = 'apya-avatar-menu-identity';
+        identity.appendChild(avatarSlot);
+        identity.appendChild(idText);
+        section.appendChild(identity);
+
+        var tabs = document.createElement('div');
+        tabs.className = 'apya-avatar-menu-tabs';
+        tabs.setAttribute('role', 'tablist');
+        tabs.innerHTML =
+            '<button type="button" class="apya-avatar-menu-tab" data-tab="profile" role="tab">' + escapeHtml(l('AvatarMenu:Profile')) + '</button>' +
+            '<button type="button" class="apya-avatar-menu-tab" data-tab="appearance" role="tab">' + escapeHtml(l('AvatarMenu:Appearance')) + '</button>';
+        section.appendChild(tabs);
+
+        // --- Profil sekmesi ---
+        var profilePanel = document.createElement('div');
+        profilePanel.className = 'apya-avatar-menu-panel';
+        profilePanel.dataset.panel = 'profile';
+
+        var rows = '';
+        if (tenantCanSwitch) {
+            rows += '<button type="button" class="apya-shell-menu-row dropdown-item" role="menuitem" data-act="tenant">' +
+                '<i class="fa fa-building" aria-hidden="true"></i><span class="apya-avatar-menu-tenant-name"></span>' +
+                '<i class="fa fa-chevron-right" aria-hidden="true"></i></button>';
+        } else {
+            rows += '<div class="apya-shell-menu-row is-static">' +
+                '<i class="fa fa-building" aria-hidden="true"></i><span class="apya-avatar-menu-tenant-name"></span></div>';
+        }
+        if (manageItem) {
+            rows += '<a class="apya-shell-menu-row dropdown-item" role="menuitem" href="' + manageItem.href + '">' +
+                '<i class="fa fa-gear" aria-hidden="true"></i><span>' + escapeHtml(manageItem.label) + '</span></a>';
+        }
+        rows += '<button type="button" class="apya-shell-menu-row dropdown-item" role="menuitem" data-act="notif-prefs">' +
+            // fa-bell REGULAR (fa-regular) değil — bu depoda tek yüklü yüz
+            // "Font Awesome 7 Free" 900/solid; regular ağırlık YÜKLENMİYOR
+            // (bkz. reference-fontawesome-version). Bare "fa" = solid.
+            '<i class="fa fa-bell" aria-hidden="true"></i><span>' + escapeHtml(l('AvatarMenu:NotificationPreferences')) + '</span></button>';
+        if (settingsItem) {
+            rows += '<a class="apya-shell-menu-row dropdown-item" role="menuitem" href="' + settingsItem.href + '">' +
+                '<i class="fa fa-sliders" aria-hidden="true"></i><span>' + escapeHtml(settingsItem.label) + '</span></a>';
+        }
+        rows += '<button type="button" class="apya-shell-menu-row dropdown-item" role="menuitem" data-act="shortcuts">' +
+            '<i class="fa fa-keyboard" aria-hidden="true"></i><span>' + escapeHtml(l('AvatarMenu:KeyboardShortcuts')) + '</span>' +
+            '<kbd class="apya-shell-kbd">?</kbd></button>';
+        rows += '<button type="button" class="apya-shell-menu-row dropdown-item" role="menuitem" data-act="appearance-tab">' +
+            '<i class="fa fa-eye" aria-hidden="true"></i><span>' + escapeHtml(l('AvatarMenu:Appearance')) + '</span>' +
+            '<span class="apya-avatar-menu-summary"></span></button>';
+        if (logoutItem) {
+            rows += '<div class="apya-shell-menu-sep"></div>' +
+                '<a class="apya-shell-menu-row dropdown-item" role="menuitem" href="' + logoutItem.href + '">' +
+                '<i class="fa fa-power-off" aria-hidden="true"></i><span>' + escapeHtml(logoutItem.label) + '</span></a>';
+        }
+        profilePanel.innerHTML = rows;
+        section.appendChild(profilePanel);
+
+        // --- Görünüm sekmesi (Faz 2) — segment kontrolleri ---
+        // Faz 1'de native denetimler (Dil/Tema/Yoğunluk/Kenar çubuğu) buraya
+        // TAŞINIYORDU; artık taşınmıyor. apya-shell.css onları üst barda
+        // kalıcı gizliyor (`display:none`) — DOM'da kalıyorlar, kendi
+        // handler'ları hâlâ bağlı, yalnız görünmüyorlar. Buradaki segmentler
+        // kendi window.apya.* API'lerini çağırıyor: dark-mode.js (theme),
+        // density-toggle.js (density, ZATEN vardı), sidebar-toggle.js (sidebar).
+        var appearancePanel = document.createElement('div');
+        appearancePanel.className = 'apya-avatar-menu-panel';
+        appearancePanel.dataset.panel = 'appearance';
+        appearancePanel.hidden = true;
+
+        function buildSegmentRow(labelText, options, getCurrent, setValue, extraClass) {
+            var row = document.createElement('div');
+            row.className = 'apya-avatar-menu-item';
             var label = document.createElement('span');
             label.className = 'apya-avatar-menu-label';
-            label.textContent = e.label;
-            item.appendChild(label);
-            item.appendChild(e.el);
-            section.appendChild(item);
+            label.textContent = labelText;
+            row.appendChild(label);
+            var seg = document.createElement('div');
+            seg.className = 'apya-avatar-menu-segment' + (extraClass ? ' ' + extraClass : '');
+            options.forEach(function (opt) {
+                var btn = document.createElement('button');
+                btn.type = 'button';
+                btn.dataset.value = opt.value;
+                btn.textContent = opt.label;
+                seg.appendChild(btn);
+            });
+            function sync() {
+                var cur = getCurrent();
+                seg.querySelectorAll('button').forEach(function (b) {
+                    b.classList.toggle('is-active', b.dataset.value === cur);
+                });
+            }
+            seg.addEventListener('click', function (e) {
+                var btn = e.target.closest('button');
+                if (!btn) { return; }
+                setValue(btn.dataset.value);
+                sync();
+            });
+            row.appendChild(seg);
+            appearancePanel.appendChild(row);
+            return sync;
+        }
+
+        // Dil — yalnız TR/EN (karar, 2026-09-06: Platform metinleri zaten bu
+        // ikisinde; tam 18 dilli liste elsewhere değişmedi). LeptonX'in KENDİ
+        // ~/Abp/Languages/Switch bağlantıları buradan OKUNUR, URL ikinci kez
+        // yazılmaz — culture değişimi tam sayfa geçişi gerektirir, segment
+        // tıklaması bu yüzden navigasyon yapar (yerinde state değişimi değil).
+        var langMenu = content.querySelector(':scope > .lpx-language-selection .dropdown-menu');
+        function langHref(code) {
+            var a = langMenu && langMenu.querySelector('a[href*="culture=' + code + '&"]');
+            return a ? a.getAttribute('href') : null;
+        }
+        var langOptions = [
+            { value: 'tr', label: 'TR', href: langHref('tr') },
+            { value: 'en', label: 'EN', href: langHref('en') }
+        ].filter(function (o) { return !!o.href; });
+        var syncLangSeg = langOptions.length ? buildSegmentRow(l('AvatarMenu:Language'), langOptions, function () {
+            var cultureName = (window.abp && abp.localization && abp.localization.currentCulture && abp.localization.currentCulture.name) || document.documentElement.lang || '';
+            return cultureName.slice(0, 2).toLowerCase();
+        }, function (code) {
+            var opt = langOptions.filter(function (o) { return o.value === code; })[0];
+            if (opt) { location.href = opt.href; }
+        }) : null;
+
+        var syncThemeSeg = buildSegmentRow(l('AvatarMenu:Theme'), [
+            { value: 'light', label: l('AvatarMenu:ThemeLight') },
+            { value: 'dark', label: l('AvatarMenu:ThemeDark') }
+        ], apya.theme.current, apya.theme.set);
+
+        // Yoğunluk etiketleri #DensityToggle'ın data-label-*'ından okunur —
+        // sunucudan gelen ZATEN localize edilmiş metin (bkz. updateSummary
+        // aynı teknik), JS'e ikinci bir sözlük gömülmez.
+        function densityLabel(d) {
+            var toggleEl = document.getElementById('DensityToggle');
+            var raw = toggleEl ? (toggleEl.getAttribute('data-label-' + d) || '') : '';
+            return raw.split(':').pop().trim() || d;
+        }
+        var syncDensitySeg = buildSegmentRow(l('AvatarMenu:Density'), apya.density.order.map(function (d) {
+            return { value: d, label: densityLabel(d) };
+        }), apya.density.current, apya.density.set, 'apya-avatar-menu-segment--3');
+
+        // Kenar çubuğu — segment DEĞİL, tek satır + döngü (handoff: "Tıklama
+        // sırayla döndürür"), diğer sekmelerdeki `.apya-shell-menu-row` ile
+        // aynı desen (etiket solda, değer+chevron sağda).
+        var sidebarRow = document.createElement('button');
+        sidebarRow.type = 'button';
+        sidebarRow.className = 'apya-shell-menu-row';
+        // Etiket için yeni anahtar açılmadı — SidebarMode ViewComponent'in
+        // KENDİ başlığı zaten kısa ve iki dilde var, aynen okunur.
+        sidebarRow.innerHTML = '<span>' + escapeHtml(l('Sidebar:Mode')) + '</span><span class="apya-avatar-menu-summary"></span>' +
+            '<i class="fa fa-chevron-right" aria-hidden="true"></i>';
+        function syncSidebarRow() {
+            sidebarRow.querySelector('.apya-avatar-menu-summary').textContent = apya.sidebar.label(apya.sidebar.current());
+        }
+        sidebarRow.addEventListener('click', function () {
+            var order = apya.sidebar.order;
+            var idx = order.indexOf(apya.sidebar.current());
+            apya.sidebar.set(order[(idx + 1) % order.length]);
+            syncSidebarRow();
         });
+        appearancePanel.appendChild(sidebarRow);
+
+        // Handoff: "Görünüm sekmesinde de altta aynı ayraç + Çıkış satırı durur".
+        if (logoutItem) {
+            var sep = document.createElement('div');
+            sep.className = 'apya-shell-menu-sep';
+            appearancePanel.appendChild(sep);
+            var logoutRow2 = document.createElement('a');
+            logoutRow2.className = 'apya-shell-menu-row dropdown-item';
+            logoutRow2.setAttribute('role', 'menuitem');
+            logoutRow2.href = logoutItem.href;
+            logoutRow2.innerHTML = '<i class="fa fa-power-off" aria-hidden="true"></i><span>' + escapeHtml(logoutItem.label) + '</span>';
+            appearancePanel.appendChild(logoutRow2);
+        }
+        section.appendChild(appearancePanel);
 
         menu.appendChild(section);
 
-        // Menü içindeki tıklama dropdown'ı kapatmasın.
-        // `stopPropagation` KULLANILMAZ: taşınan denetimlerin bir kısmı
-        // DELEGE dinleyici (document seviyesinde) kullanıyor ve propagation'ı
-        // kesmek onları da öldürüyor — ölçüldü: tema düğmesi menü içinden
-        // basıldığında hiç çalışmıyordu (light → light).
-        // Bootstrap'in kendi mekanizması hem menüyü açık tutar hem olayı
-        // document'e ulaştırır.
-        var toggle = dropdown.querySelector('[data-bs-toggle="dropdown"]') || profile;
+        // Menü içindeki tıklama dropdown'ı kapatmasın (Görünüm sekmesindeki
+        // denetimler DELEGE dinleyici kullanıyor — bkz. eski yorum, ölçüldü:
+        // stopPropagation onları öldürüyordu). Bootstrap'in kendi mekanizması
+        // hem menüyü açık tutar hem olayı document'e ulaştırır.
         toggle.setAttribute('data-bs-auto-close', 'outside');
+
+        function setActiveTab(tab) {
+            tabs.querySelectorAll('.apya-avatar-menu-tab').forEach(function (b) {
+                var active = b.dataset.tab === tab;
+                b.classList.toggle('is-active', active);
+                b.setAttribute('aria-selected', active ? 'true' : 'false');
+            });
+            profilePanel.hidden = tab !== 'profile';
+            appearancePanel.hidden = tab !== 'appearance';
+        }
+        tabs.addEventListener('click', function (e) {
+            var b = e.target.closest('.apya-avatar-menu-tab');
+            if (b) { setActiveTab(b.dataset.tab); }
+        });
+
+        function syncAvatar() {
+            // Menü, üst bardaki 30px rozeti (dark-mode.js tryReplaceUserAvatar)
+            // KLONLAR — baş harf/renk hesabı İKİNCİ bir yerde tekrarlanmaz (bkz.
+            // reference-abp-currentuser-surname, iki kopya zaten var). Rozet
+            // dark-mode.js'in MutationObserver'ı yüzünden gecikebildiği için
+            // senkron her menü AÇILIŞINDA tekrarlanır (bkz. shown.bs.dropdown).
+            var src = document.querySelector('.lpx-user-profile .apya-user-avatar');
+            avatarSlot.innerHTML = '';
+            var badge = src ? src.cloneNode(true) : document.createElement('span');
+            if (!src) { badge.className = 'apya-avatar apya-avatar-brand'; }
+            badge.classList.remove('apya-user-avatar');
+            badge.classList.add('apya-avatar-lg');
+            var dot = document.createElement('span');
+            dot.className = 'apya-avatar-dot';
+            dot.setAttribute('aria-hidden', 'true');
+            badge.appendChild(dot);
+            avatarSlot.appendChild(badge);
+            nameEl.textContent = badge.title || '';
+        }
+
+        function syncIdentityText() {
+            var cu = (window.abp && abp.currentUser) || {};
+            var role = (cu.roles && cu.roles.length) ? cu.roles[0] : '';
+            var tenantName = (tenantRoot && (tenantRoot.querySelector('.apya-tenant-switch-name') || {}).textContent || '').trim();
+            profilePanel.querySelectorAll('.apya-avatar-menu-tenant-name').forEach(function (el) {
+                el.textContent = tenantName;
+            });
+            roleEl.textContent = [role, tenantName].filter(Boolean).join(' · ');
+            roleEl.hidden = !roleEl.textContent;
+        }
+
+        function updateSummary() {
+            var summaryEl = profilePanel.querySelector('.apya-avatar-menu-summary');
+            if (!summaryEl) { return; }
+            var cultureName = (window.abp && abp.localization && abp.localization.currentCulture && abp.localization.currentCulture.name) || document.documentElement.lang || '';
+            var lang = cultureName.slice(0, 2).toUpperCase();
+            var theme = l(apya.theme.current() === 'dark' ? 'AvatarMenu:ThemeDark' : 'AvatarMenu:ThemeLight');
+            var density = densityLabel(apya.density.current());
+            summaryEl.textContent = [lang, theme, density].filter(Boolean).join(' · ');
+        }
+
+        section.addEventListener('click', function (e) {
+            var actBtn = e.target.closest('[data-act]');
+            if (!actBtn) { return; }
+            var act = actBtn.dataset.act;
+            if (act === 'appearance-tab') { setActiveTab('appearance'); return; }
+            var inst = window.bootstrap && bootstrap.Dropdown.getInstance(toggle);
+            if (act === 'tenant') {
+                if (inst) { inst.hide(); }
+                // DİKKAT: TenantBadge/Default.cshtml düğmesi `.dropdown-toggle`
+                // SINIFI TAŞIMAZ — Bootstrap'ı çalıştıran `data-bs-toggle`
+                // özniteliğidir (ölçüldü, 2026-09-06). Sınıfa göre arama sessizce
+                // hiçbir şey bulamıyordu.
+                var tenantToggle = tenantRoot.querySelector('[data-bs-toggle="dropdown"]');
+                // Menünün kendi kapanış geçişiyle çakışmasın diye bir sonraki
+                // görev döngüsünde tıklanır — aynı akış tetiklenir, ikinci bir
+                // müşteri değiştirme mantığı KURULMAZ.
+                if (tenantToggle) { setTimeout(function () { tenantToggle.click(); }, 0); }
+            } else if (act === 'shortcuts') {
+                if (inst) { inst.hide(); }
+                openShortcuts();
+            } else if (act === 'notif-prefs') {
+                if (inst) { inst.hide(); }
+                location.href = '/Notifications?tercihler=1';
+            }
+        });
+
+        // Menü HER açıldığında Profil sekmesiyle başlar (handoff: "menü her
+        // açıldığında Profil ile başlar") ve kimlik/özet verisi tazelenir —
+        // sekme seçimi menü kapanınca hafızada TUTULMAZ.
+        $(toggle).on('shown.bs.dropdown', function () {
+            syncAvatar();
+            syncIdentityText();
+            updateSummary();
+            if (syncLangSeg) { syncLangSeg(); }
+            syncThemeSeg();
+            syncDensitySeg();
+            syncSidebarRow();
+            setActiveTab('profile');
+            var first = profilePanel.querySelector('.apya-shell-menu-row');
+            if (first) { first.focus(); }
+        });
     }
 
     // =========================================================================

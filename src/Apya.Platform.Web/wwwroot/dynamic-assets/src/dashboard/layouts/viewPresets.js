@@ -7,6 +7,7 @@ import { AiSuggestionsCard } from '../cards/AiSuggestionsCard';
 import { IncomeExpenseCard } from '../cards/IncomeExpenseCard';
 import { DeliveryHeatmapCard } from '../cards/DeliveryHeatmapCard';
 import { ProjectPhasesCard } from '../cards/ProjectPhasesCard';
+import { EffortDistributionCard } from '../cards/EffortDistributionCard';
 import { StatisticsBand } from '../cards/StatisticsBand';
 
 /**
@@ -42,6 +43,7 @@ export const CARD_REGISTRY = {
     'income-expense':   { component: IncomeExpenseCard,  titleKey: 'Dashboard:IncomeExpense:Title', fallback: 'Gelir / gider',      w: 4,  h: 6, minW: 3, minH: 4 },
     'delivery-heatmap': { component: DeliveryHeatmapCard,titleKey: 'Dashboard:Heatmap:Title',       fallback: 'Teslim yoğunluğu',   w: 4,  h: 6, minW: 3, minH: 4 },
     'project-phases':   { component: ProjectPhasesCard,  titleKey: 'Dashboard:Phases:Title',        fallback: 'Proje fazları',      w: 4,  h: 6, minW: 3, minH: 4 },
+    'effort-distribution': { component: EffortDistributionCard, titleKey: 'Dashboard:Effort:Title', fallback: 'Efor dağılımı',      w: 4,  h: 6, minW: 3, minH: 4 },
     'statistics-band':  { component: StatisticsBand,     titleKey: 'Dashboard:Statistics:Title',    fallback: 'İstatistikler',      w: 12, h: 6, minW: 6, minH: 4, band: true },
 };
 

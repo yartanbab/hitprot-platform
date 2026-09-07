@@ -97,3 +97,11 @@ export function useDeliveryHeatmap(filter) {
         staleTime: STALE_DEFAULT,
     });
 }
+
+export function useEffortDistribution(filter) {
+    return useQuery({
+        queryKey: QK.dashboard.effortDistribution(filter),
+        queryFn: () => get('effort-distribution', filter),
+        staleTime: STALE_DEFAULT,
+    });
+}

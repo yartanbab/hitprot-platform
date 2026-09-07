@@ -4,6 +4,7 @@ using Apya.Platform.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Volo.Abp.EntityFrameworkCore;
 
@@ -12,9 +13,11 @@ using Volo.Abp.EntityFrameworkCore;
 namespace Apya.Platform.Migrations
 {
     [DbContext(typeof(PlatformDbContext))]
-    partial class PlatformDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260906203048_FinanceCoveringIndexes")]
+    partial class FinanceCoveringIndexes
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -3275,14 +3278,11 @@ namespace Apya.Platform.Migrations
 
                     b.HasIndex("WorkStepId");
 
+                    b.HasIndex("TenantId", "DocumentId");
+
                     b.HasIndex("TenantId", "PeriodCode");
 
                     b.HasIndex("TenantId", "ProjectId");
-
-                    b.HasIndex("TenantId", "DocumentId", "CreationTime")
-                        .IsDescending(false, false, true);
-
-                    SqlServerIndexBuilderExtensions.IncludeProperties(b.HasIndex("TenantId", "DocumentId", "CreationTime"), new[] { "IsDeleted" });
 
                     b.ToTable("AppDocumentFiles", (string)null);
                 });
@@ -8671,15 +8671,9 @@ namespace Apya.Platform.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("CreationTime");
+
                     b.HasIndex("UserId", "IsRead");
-
-                    SqlServerIndexBuilderExtensions.IncludeProperties(b.HasIndex("UserId", "IsRead"), new[] { "TenantId", "IsDeleted" });
-
-                    b.HasIndex("UserId", "LastOccurredAt")
-                        .IsDescending(false, true)
-                        .HasDatabaseName("IX_AppNotifications_UserId_LastOccurredAt");
-
-                    SqlServerIndexBuilderExtensions.IncludeProperties(b.HasIndex("UserId", "LastOccurredAt"), new[] { "TenantId", "IsDeleted", "IsRead", "Severity" });
 
                     b.HasIndex("UserId", "Category", "IsRead");
 

@@ -39,8 +39,8 @@
       "_react-vendor-D57GAUXd.js"
     ]
   },
-  "_QueryProvider-C6cGugMR.js": {
-    "file": "QueryProvider-C6cGugMR.js",
+  "_QueryProvider-B4436sFh.js": {
+    "file": "QueryProvider-B4436sFh.js",
     "name": "QueryProvider",
     "imports": [
       "_react-vendor-D57GAUXd.js",
@@ -125,7 +125,7 @@
       "_react-vendor-D57GAUXd.js",
       "_Dialog-Bky2XNdc.js",
       "_useDeviceMode-Dk7fb2QY.js",
-      "_QueryProvider-C6cGugMR.js",
+      "_QueryProvider-B4436sFh.js",
       "_EmptyState-D5m5kdmR.js",
       "_httpClient-DePjXdo1.js",
       "_draggableActivation-Ybw9Upbh.js",
@@ -150,7 +150,7 @@
     "imports": [
       "_react-vendor-D57GAUXd.js",
       "_Dialog-Bky2XNdc.js",
-      "_QueryProvider-C6cGugMR.js",
+      "_QueryProvider-B4436sFh.js",
       "_signalr-vendor-CjTpd8t3.js",
       "_useDeviceMode-Dk7fb2QY.js",
       "_registerServiceWorker-MivfkJsD.js",
@@ -245,7 +245,7 @@
     "imports": [
       "_react-vendor-D57GAUXd.js",
       "_Dialog-Bky2XNdc.js",
-      "_QueryProvider-C6cGugMR.js",
+      "_QueryProvider-B4436sFh.js",
       "_registerServiceWorker-MivfkJsD.js",
       "_Combobox-D5mSMyzC.js",
       "_i18n-DkhYld-7.js",
@@ -303,7 +303,7 @@
     "isEntry": true,
     "imports": [
       "_react-vendor-D57GAUXd.js",
-      "_QueryProvider-C6cGugMR.js",
+      "_QueryProvider-B4436sFh.js",
       "_query-vendor-Bf69L2iP.js",
       "_Dialog-Bky2XNdc.js",
       "_Combobox-D5mSMyzC.js",

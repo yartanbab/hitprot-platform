@@ -75,6 +75,14 @@ $(function () {
         avatar.className = 'apya-avatar apya-avatar-brand apya-user-avatar';
         avatar.textContent = initials.toUpperCase();
         avatar.title = fullName;
+        // Çevrimiçi noktası (Avatar Profil Menüsü handoff, 2026-09-06) — salt
+        // kozmetik, gerçek bir "presence" sistemi yok; kullanıcı hep kendi
+        // oturumunu görür. Avatar menüsü bu rozeti KLONLAR (bkz. apya-shell-
+        // actions.js syncAvatar) — nokta da klonla birlikte gelir.
+        var dot = document.createElement('span');
+        dot.className = 'apya-avatar-dot';
+        dot.setAttribute('aria-hidden', 'true');
+        avatar.appendChild(dot);
         userNameEl.replaceWith(avatar);
         return true;
     }
@@ -108,19 +116,32 @@ $(function () {
     }
     setToggleIcon(current);
 
-    $(document).on('click', '#ThemeToggle', function (e) {
-        e.preventDefault();
-        var now = $html.attr('data-theme') === 'dark' ? 'dark' : 'light';
-        var next = now === 'dark' ? 'light' : 'dark';
-        applyTheme(next);
-        try { localStorage.setItem(THEME_KEY, next); } catch (e2) { /* yok say */ }
-        setToggleIcon(next);
+    // Tema değiştirme mantığı tek yerde — hem üst bardaki düğme hem avatar
+    // menüsünün Görünüm sekmesindeki segment (Faz 2) AYNI fonksiyonu çağırır.
+    function setTheme(theme) {
+        applyTheme(theme);
+        try { localStorage.setItem(THEME_KEY, theme); } catch (e2) { /* yok say */ }
+        setToggleIcon(theme);
 
         // LeptonX kendi theming'ini de senkron tut (dropdown vs.).
         if (window.abp && abp.leptonX && abp.leptonX.theme) {
-            try { abp.leptonX.theme.setTheme(next); } catch (e3) { /* yok say */ }
+            try { abp.leptonX.theme.setTheme(theme); } catch (e3) { /* yok say */ }
         }
+    }
+
+    $(document).on('click', '#ThemeToggle', function (e) {
+        e.preventDefault();
+        var now = $html.attr('data-theme') === 'dark' ? 'dark' : 'light';
+        setTheme(now === 'dark' ? 'light' : 'dark');
     });
+
+    // Paylaşılan API — density-toggle.js'teki window.apya.density ile AYNI
+    // desen. Avatar menüsü segmenti gizli düğmeye tıklamak yerine BUNU çağırır.
+    window.apya = window.apya || {};
+    window.apya.theme = {
+        current: function () { return $html.attr('data-theme') === 'dark' ? 'dark' : 'light'; },
+        set: setTheme
+    };
 
     function setToggleIcon(theme) {
         $('#ThemeToggle i')

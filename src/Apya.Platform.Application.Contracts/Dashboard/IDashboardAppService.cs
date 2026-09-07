@@ -36,6 +36,8 @@ public interface IDashboardAppService : IApplicationService
 
     Task<List<DeliveryHeatmapCellDto>> GetDeliveryHeatmapAsync(DashboardQueryDto input);
 
+    Task<List<EffortDistributionDto>> GetEffortDistributionAsync(DashboardQueryDto input);
+
     Task<DashboardLayoutDto> GetLayoutAsync(string viewKey);
 
     Task SaveLayoutAsync(SaveDashboardLayoutInput input);

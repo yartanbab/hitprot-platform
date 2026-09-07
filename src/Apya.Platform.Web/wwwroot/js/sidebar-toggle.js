@@ -133,6 +133,20 @@ $(function () {
         });
     }
 
+    // Paylaşılan API — density-toggle.js'teki window.apya.density ile AYNI
+    // desen. Avatar menüsü satırı (Faz 2) gizli dropdown öğesine tıklamak
+    // yerine BUNU çağırır; etiketler için data-label-* okur (bkz. renderMode).
+    window.apya = window.apya || {};
+    window.apya.sidebar = {
+        current: currentMode,
+        set: function (mode) { applyMode(mode); },
+        order: MODES,
+        label: function (mode) {
+            var toggle = document.getElementById('SidebarModeToggle');
+            return (toggle && toggle.getAttribute('data-label-' + mode)) || mode;
+        }
+    };
+
     // Dikey scrollbar telafisi. .lpx-sidebar-container 280px ve overflow-y:auto;
     // scrollbar çıkınca iç genişlik 264px'e düşüyor ama .lpx-nav'ın min-width'i
     // 280px'te kalıyor → menü satırlarının sağ 16px'i kırpılıyor (kullanıcıya göre

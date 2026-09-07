@@ -23,6 +23,7 @@ public class DashboardApi_Tests : PlatformWebTestBase
     [InlineData("/api/dashboard/statistics")]
     [InlineData("/api/dashboard/income-expense")]
     [InlineData("/api/dashboard/delivery-heatmap")]
+    [InlineData("/api/dashboard/effort-distribution")]
     [InlineData("/api/dashboard/layout?viewKey=project-management")]
     public async Task Endpoint_Returns200(string url)
     {

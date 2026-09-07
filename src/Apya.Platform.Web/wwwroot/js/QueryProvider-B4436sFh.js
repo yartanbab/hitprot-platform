@@ -31,7 +31,7 @@ function y() {
     }
   } : null;
 }
-function m() {
+function f() {
   return new d({
     defaultOptions: {
       queries: {
@@ -64,12 +64,13 @@ const v = {
     statistics: (e) => ["dashboard", "statistics", e],
     incomeExpense: (e) => ["dashboard", "income-expense", e],
     deliveryHeatmap: (e) => ["dashboard", "delivery-heatmap", e],
+    effortDistribution: (e) => ["dashboard", "effort-distribution", e],
     layout: (e) => ["dashboard", "layout", e],
     aiSuggestions: (e) => e ? ["dashboard", "ai-suggestions", e] : ["dashboard", "ai-suggestions"]
   }
 };
 function S({ children: e }) {
-  const [t] = r.useState(() => m()), [s] = r.useState(() => y());
+  const [t] = r.useState(() => f()), [s] = r.useState(() => y());
   return s ? /* @__PURE__ */ a.jsx(c, { client: t, persistOptions: s, children: e }) : /* @__PURE__ */ a.jsx(u, { client: t, children: e });
 }
 export {

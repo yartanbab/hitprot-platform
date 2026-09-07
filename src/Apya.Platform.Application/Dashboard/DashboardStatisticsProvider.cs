@@ -57,6 +57,7 @@ public class DashboardStatisticsProvider : ITransientDependency
 {
     private readonly IRepository<TaskItem, Guid> _taskRepo;
     private readonly IRepository<Apya.Platform.Tasks.TaskComment, Guid> _commentRepo;
+    private readonly IRepository<TaskTimeLog, Guid> _timeLogRepo;
     private readonly IRepository<Project, Guid> _projectRepo;
     private readonly IRepository<Expense, Guid> _expenseRepo;
     private readonly IRepository<IncomeEntry, Guid> _incomeRepo;
@@ -87,6 +88,7 @@ public class DashboardStatisticsProvider : ITransientDependency
     public DashboardStatisticsProvider(
         IRepository<TaskItem, Guid> taskRepo,
         IRepository<Apya.Platform.Tasks.TaskComment, Guid> commentRepo,
+        IRepository<TaskTimeLog, Guid> timeLogRepo,
         IRepository<Project, Guid> projectRepo,
         IRepository<Expense, Guid> expenseRepo,
         IRepository<IncomeEntry, Guid> incomeRepo,
@@ -115,6 +117,7 @@ public class DashboardStatisticsProvider : ITransientDependency
     {
         _taskRepo = taskRepo;
         _commentRepo = commentRepo;
+        _timeLogRepo = timeLogRepo;
         _projectRepo = projectRepo;
         _expenseRepo = expenseRepo;
         _incomeRepo = incomeRepo;
@@ -298,6 +301,8 @@ public class DashboardStatisticsProvider : ITransientDependency
             StatUnit.Count, ScopeGrowthAsync),
         new("blocked-count", DashboardStatGroup.Work, PlatformPermissions.Tasks.Default,
             StatUnit.Count, BlockedCountAsync),
+        new("logged-hours", DashboardStatGroup.Work, PlatformPermissions.Tasks.Default,
+            StatUnit.Hours, LoggedHoursAsync),
 
         // --- İletişim ---
         new("unread-notifications", DashboardStatGroup.Communication, PlatformPermissions.Notifications.Default,
@@ -460,6 +465,43 @@ public class DashboardStatisticsProvider : ITransientDependency
                             && (projectId == null || t.ProjectId == projectId)));
 
         return StatValue.Of(count);
+    }
+
+    /// <summary>
+    /// Dönemde kaydedilen toplam süre (saat). Pencere <c>StartTime</c> üzerinden kurulur —
+    /// kayıt işin YAPILDIĞI döneme düşer, girildiği döneme değil.
+    /// <para>
+    /// Süresi girilmemiş görev toplama katkı vermez; sayı "harcanan efor" değil,
+    /// <b>kaydedilmiş</b> efordur. Proje süzgeci görev üzerinden uygulanır.
+    /// </para>
+    /// </summary>
+    private async Task<StatValue> LoggedHoursAsync(DashboardPeriod period, Guid? projectId)
+    {
+        async Task<decimal?> Total(DashboardPeriod p)
+        {
+            var query = (await _timeLogRepo.GetQueryableAsync())
+                .Where(l => l.SecondsSpent != null
+                            && l.StartTime >= p.Start
+                            && l.StartTime < p.EndExclusive);
+
+            if (projectId != null)
+            {
+                var projectTaskIds = (await _taskRepo.GetQueryableAsync())
+                    .Where(t => t.ProjectId == projectId)
+                    .Select(t => t.Id);
+
+                query = query.Where(l => projectTaskIds.Contains(l.TaskId));
+            }
+
+            var seconds = await _executer.SumAsync(query, l => l.SecondsSpent!.Value);
+
+            // Kayıt yoksa SUM 0 döner. Süre takibini hiç kullanmayan kiracıda
+            // kalıcı "0 sa" kutucuğu göstermek yerine null veriyoruz → kutucuk
+            // "—" çizer. Aynı ayrım BudgetUsageAsync'te de yapılıyor.
+            return seconds <= 0 ? null : Math.Round(seconds / 3600m, 1);
+        }
+
+        return new StatValue(await Total(period), await Total(period.Previous()));
     }
 
     // ─────────────────────────── İletişim ───────────────────────────

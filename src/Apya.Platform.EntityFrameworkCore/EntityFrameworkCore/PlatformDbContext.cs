@@ -488,7 +488,12 @@ namespace Apya.Platform.EntityFrameworkCore
                 b.Property(x => x.Currency).IsRequired().HasMaxLength(ExpenseConsts.CurrencyLength);
                 b.Property(x => x.Amount).HasColumnType("decimal(18,2)");
                 b.HasOne<CashAccount>().WithMany().HasForeignKey(x => x.CashAccountId).OnDelete(DeleteBehavior.Restrict);
-                b.HasIndex(x => new { x.TenantId, x.ExpenseDate });
+                // Gösterge paneli aylık gelir-gider grafiği ve dönem istatistikleri:
+                // TenantId eşitlik + ExpenseDate aralığı → SUM(Amount) / COUNT, isteğe bağlı
+                // ProjectId süzgeci. ProjectId/Amount/IsDeleted INCLUDE'da → toplama indekste biter.
+                b.HasIndex(x => new { x.TenantId, x.ExpenseDate })
+                    .HasAnnotation(isSqlServer ? "SqlServer:Include" : "Npgsql:IndexInclude",
+                        new[] { nameof(Expense.ProjectId), nameof(Expense.Amount), "IsDeleted" });
                 b.HasIndex(x => new { x.TenantId, x.Category });
                 b.HasIndex(x => x.ProjectId);
                 b.HasIndex(x => x.TaskId);
@@ -513,7 +518,10 @@ namespace Apya.Platform.EntityFrameworkCore
                 b.Property(x => x.Description).HasMaxLength(IncomeConsts.MaxDescriptionLength);
                 b.Property(x => x.Currency).IsRequired().HasMaxLength(IncomeConsts.CurrencyLength);
                 b.Property(x => x.Amount).HasColumnType("decimal(18,2)");
-                b.HasIndex(x => new { x.TenantId, x.IncomeDate });
+                // Gider tarafındaki notla aynı: aylık net ve dönem toplamları için kapsayıcı.
+                b.HasIndex(x => new { x.TenantId, x.IncomeDate })
+                    .HasAnnotation(isSqlServer ? "SqlServer:Include" : "Npgsql:IndexInclude",
+                        new[] { nameof(IncomeEntry.ProjectId), nameof(IncomeEntry.Amount), "IsDeleted" });
                 b.HasIndex(x => new { x.TenantId, x.Category });
                 b.HasIndex(x => x.ProjectId);
                 b.HasIndex(x => x.TaskId);
@@ -595,7 +603,25 @@ namespace Apya.Platform.EntityFrameworkCore
                 b.Property(x => x.Amount).HasColumnType("decimal(18,2)");
                 b.Property(x => x.Description).HasMaxLength(CashMovementConsts.MaxDescriptionLength);
                 b.HasOne<CashAccount>().WithMany().HasForeignKey(x => x.CashAccountId).OnDelete(DeleteBehavior.Cascade);
-                b.HasIndex(x => new { x.TenantId, x.CashAccountId, x.MovementDate });
+                // Kasa bakiyesi (Kasalar + Finans Merkezi, aktif hesap BAŞINA çağrılıyor):
+                // TenantId + CashAccountId seek, ardından Direction'a göre iki ayrı SUM.
+                // Direction/Amount/IsDeleted INCLUDE'a alınınca toplama tamamen indekste
+                // biter — hesabın her hareketi için kümelenmiş indekse dönmek kalkar.
+                // IsDeleted filtreye DEĞİL INCLUDE'a kondu: bu indeks tarih sıralı hareket
+                // listesini de besliyor ve soft-delete süzgeci kapalı okumaları bozmamalı.
+                b.HasIndex(x => new { x.TenantId, x.CashAccountId, x.MovementDate })
+                    .HasAnnotation(isSqlServer ? "SqlServer:Include" : "Npgsql:IndexInclude",
+                        new[] { nameof(CashMovement.Direction), nameof(CashMovement.Amount), "IsDeleted" });
+
+                // Hesap süzgeci OLMADAN tarih sıralı hareket listesi ve gösterge panelinin
+                // nakit akışı toplamı: mevcut indekste MovementDate 3. anahtar olduğu için
+                // seek edilemiyordu. Eşitlik (TenantId) önce, aralık/sıralama (MovementDate) sonra.
+                b.HasIndex(x => new { x.TenantId, x.MovementDate })
+                    .HasDatabaseName("IX_AppCashMovements_TenantId_MovementDate")
+                    .HasAnnotation(isSqlServer ? "SqlServer:Include" : "Npgsql:IndexInclude",
+                        new[] { nameof(CashMovement.CashAccountId), nameof(CashMovement.Direction), nameof(CashMovement.Amount) })
+                    .HasFilter(isSqlServer ? "[IsDeleted] = 0" : "\"IsDeleted\" = false");
+
                 b.HasIndex(x => x.ReferenceId);
             });
 
@@ -1383,7 +1409,19 @@ namespace Apya.Platform.EntityFrameworkCore
                     .HasFilter(isSqlServer ? "[TenantId] IS NULL" : "\"TenantId\" IS NULL");
                 b.HasIndex(x => x.ProjectId);
                 // TenantId öneki: Status düşük seçicilikli — TaskItem indekslerindeki gerekçeyle aynı.
-                b.HasIndex(x => new { x.TenantId, x.Status });
+                // Gösterge panelinin "onay bekleyen tutar" toplamı (Status = Draft → SUM)
+                // TotalAmount'ı indekste bulsun diye INCLUDE eklendi.
+                b.HasIndex(x => new { x.TenantId, x.Status })
+                    .HasAnnotation(isSqlServer ? "SqlServer:Include" : "Npgsql:IndexInclude",
+                        new[] { nameof(Invoice.TotalAmount), nameof(Invoice.ProjectId), "IsDeleted" });
+
+                // Fatura listesinin VARSAYILAN sıralaması "InvoiceDate desc" (InvoiceAppService:50)
+                // ama InvoiceDate hiçbir indekste yoktu → her açılış kiracının tüm faturalarını
+                // sıralıyordu. INCLUDE bilinçli olarak YOK: sayfa başına ~20 satır için anahtar
+                // araması ucuz, geniş INCLUDE ise her fatura yazımını pahalılaştırırdı.
+                b.HasIndex(x => new { x.TenantId, x.InvoiceDate })
+                    .HasDatabaseName("IX_AppInvoices_TenantId_InvoiceDate")
+                    .HasFilter(isSqlServer ? "[IsDeleted] = 0" : "\"IsDeleted\" = false");
                 b.HasIndex(x => x.CustomerId); // APYA-142c
                 b.HasMany(x => x.Items).WithOne().HasForeignKey(x => x.InvoiceId).IsRequired();
             });
@@ -1418,9 +1456,30 @@ namespace Apya.Platform.EntityFrameworkCore
                 b.Property(x => x.EntityType).HasMaxLength(NotificationConsts.MaxEntityType);
                 b.Property(x => x.GroupKey).HasMaxLength(NotificationConsts.MaxGroupKey);
                 b.Property(x => x.ActorName).HasMaxLength(NotificationConsts.MaxActorName);
-                // Performans için index
-                b.HasIndex(x => new { x.UserId, x.IsRead });
-                b.HasIndex(x => x.CreationTime);
+                // Zil rozeti HER SAYFA RENDER'INDA sayılıyor (NotificationToolbarContributor →
+                // NotificationBellViewComponent → GetUnreadCountAsync, cache yok). ABP sorguya
+                // TenantId ve IsDeleted ekliyor; ikisi de indekste olmadığı için okunmamış her
+                // satır için kümelenmiş indekse dönülüyordu. INCLUDE ile sayım tamamen indekste
+                // biter. Filtre DEĞİL INCLUDE: temizlik işçisi IsDeleted=1 satırları da okuyor.
+                b.HasIndex(x => new { x.UserId, x.IsRead })
+                    .HasAnnotation(isSqlServer ? "SqlServer:Include" : "Npgsql:IndexInclude",
+                        new[] { nameof(Notification.TenantId), "IsDeleted" });
+
+                // Liste sıralamasının ve temizlik işçisinin TEK ölçütü LastOccurredAt
+                // (NotificationAppService:66 — gruplanan bildirim yeni olayla yukarı çıkmalı;
+                // NotificationCleanupWorker:53 — LastOccurredAt < eşik). Kolon hiçbir indekste
+                // yoktu → her /Notifications açılışı kullanıcının tüm bildirimlerini sırala-
+                // sonra-sayfala yapıyordu. DESC yazıldı: liste en yeniden başlar.
+                b.HasIndex(x => new { x.UserId, x.LastOccurredAt })
+                    .IsDescending(false, true)
+                    .HasDatabaseName("IX_AppNotifications_UserId_LastOccurredAt")
+                    .HasAnnotation(isSqlServer ? "SqlServer:Include" : "Npgsql:IndexInclude",
+                        new[] { nameof(Notification.TenantId), "IsDeleted", nameof(Notification.IsRead), nameof(Notification.Severity) });
+
+                // IX_AppNotifications_CreationTime KALDIRILDI: Notification.CreationTime kod
+                // tabanında yalnız DTO ataması olarak geçiyor (NotificationAppService:258) —
+                // hiçbir Where/OrderBy onu kullanmıyor. Her bildirim yazımında karşılıksız
+                // bakım maliyeti üretiyordu; temizlik işçisinin ihtiyacı LastOccurredAt'tir.
                 // Kategori sekmeleri ve önem sıralaması bu index üzerinden okunur
                 b.HasIndex(x => new { x.UserId, x.Category, x.IsRead });
                 // Gruplama: aynı kayda ait okunmamış bildirimin aranması
@@ -1937,7 +1996,17 @@ namespace Apya.Platform.EntityFrameworkCore
                  .OnDelete(DeleteBehavior.SetNull);
 
                 // Liste sorgusu daima klasör (+kiracı) kapsamında çalışır.
-                b.HasIndex(x => new { x.TenantId, x.DocumentId });
+                // Belge listesinin baskın süzgeci klasördür (DocumentFileAppService
+                // ApplyFiltersAsync — DocumentId) ve VARSAYILAN sıralaması CreationTime desc
+                // (ApplySorting:684). CreationTime hiçbir indekste yoktu → her klasör açılışı
+                // süzülmüş kümeyi baştan sıralıyordu. Üçüncü anahtar olarak eklendi: eşitlikler
+                // (TenantId, DocumentId) önce, sıralama kolonu sonra.
+                // IsDeleted filtreye DEĞİL INCLUDE'a kondu — /Documents'ın ÇÖP KUTUSU kipi
+                // (QueryPageAsync: Where(f => f.IsDeleted)) aynı indeksi kullanabilmeli.
+                b.HasIndex(x => new { x.TenantId, x.DocumentId, x.CreationTime })
+                    .IsDescending(false, false, true)
+                    .HasAnnotation(isSqlServer ? "SqlServer:Include" : "Npgsql:IndexInclude",
+                        new[] { "IsDeleted" });
                 b.HasIndex(x => new { x.TenantId, x.ProjectId });
                 b.HasIndex(x => x.WorkStepId);
                 b.HasIndex(x => x.DocumentTypeId);
