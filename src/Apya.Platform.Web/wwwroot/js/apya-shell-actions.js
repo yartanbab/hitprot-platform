@@ -25,6 +25,11 @@ $(function () {
     if (!content) { return; }
 
     var state = null;
+    // Bu dosyanın geri kalanı kabuk metinlerini hâlâ hardcoded basıyor
+    // (bilinen/kabul edilmiş sapma) — yalnız avatar menüsü EN kültüründe
+    // gerçekten erişilebilir olduğu için (Faz 2, dil segmenti) o satırlar
+    // 'Platform' kaynağından okunur.
+    var l = abp.localization.getResource('Platform');
 
     function svg(path, size, width) {
         return '<svg width="' + size + '" height="' + size + '" viewBox="0 0 20 20" fill="none" ' +
@@ -427,8 +432,8 @@ $(function () {
         tabs.className = 'apya-avatar-menu-tabs';
         tabs.setAttribute('role', 'tablist');
         tabs.innerHTML =
-            '<button type="button" class="apya-avatar-menu-tab" data-tab="profile" role="tab">Profil</button>' +
-            '<button type="button" class="apya-avatar-menu-tab" data-tab="appearance" role="tab">Görünüm</button>';
+            '<button type="button" class="apya-avatar-menu-tab" data-tab="profile" role="tab">' + escapeHtml(l('AvatarMenu:Profile')) + '</button>' +
+            '<button type="button" class="apya-avatar-menu-tab" data-tab="appearance" role="tab">' + escapeHtml(l('AvatarMenu:Appearance')) + '</button>';
         section.appendChild(tabs);
 
         // --- Profil sekmesi ---
@@ -453,16 +458,16 @@ $(function () {
             // fa-bell REGULAR (fa-regular) değil — bu depoda tek yüklü yüz
             // "Font Awesome 7 Free" 900/solid; regular ağırlık YÜKLENMİYOR
             // (bkz. reference-fontawesome-version). Bare "fa" = solid.
-            '<i class="fa fa-bell" aria-hidden="true"></i><span>Bildirim tercihleri</span></button>';
+            '<i class="fa fa-bell" aria-hidden="true"></i><span>' + escapeHtml(l('AvatarMenu:NotificationPreferences')) + '</span></button>';
         if (settingsItem) {
             rows += '<a class="apya-shell-menu-row dropdown-item" role="menuitem" href="' + settingsItem.href + '">' +
                 '<i class="fa fa-sliders" aria-hidden="true"></i><span>' + escapeHtml(settingsItem.label) + '</span></a>';
         }
         rows += '<button type="button" class="apya-shell-menu-row dropdown-item" role="menuitem" data-act="shortcuts">' +
-            '<i class="fa fa-keyboard" aria-hidden="true"></i><span>Klavye kısayolları</span>' +
+            '<i class="fa fa-keyboard" aria-hidden="true"></i><span>' + escapeHtml(l('AvatarMenu:KeyboardShortcuts')) + '</span>' +
             '<kbd class="apya-shell-kbd">?</kbd></button>';
         rows += '<button type="button" class="apya-shell-menu-row dropdown-item" role="menuitem" data-act="appearance-tab">' +
-            '<i class="fa fa-eye" aria-hidden="true"></i><span>Görünüm</span>' +
+            '<i class="fa fa-eye" aria-hidden="true"></i><span>' + escapeHtml(l('AvatarMenu:Appearance')) + '</span>' +
             '<span class="apya-avatar-menu-summary"></span></button>';
         if (logoutItem) {
             rows += '<div class="apya-shell-menu-sep"></div>' +
@@ -531,7 +536,7 @@ $(function () {
             { value: 'tr', label: 'TR', href: langHref('tr') },
             { value: 'en', label: 'EN', href: langHref('en') }
         ].filter(function (o) { return !!o.href; });
-        var syncLangSeg = langOptions.length ? buildSegmentRow('Dil', langOptions, function () {
+        var syncLangSeg = langOptions.length ? buildSegmentRow(l('AvatarMenu:Language'), langOptions, function () {
             var cultureName = (window.abp && abp.localization && abp.localization.currentCulture && abp.localization.currentCulture.name) || document.documentElement.lang || '';
             return cultureName.slice(0, 2).toLowerCase();
         }, function (code) {
@@ -539,9 +544,9 @@ $(function () {
             if (opt) { location.href = opt.href; }
         }) : null;
 
-        var syncThemeSeg = buildSegmentRow('Tema', [
-            { value: 'light', label: 'Açık' },
-            { value: 'dark', label: 'Koyu' }
+        var syncThemeSeg = buildSegmentRow(l('AvatarMenu:Theme'), [
+            { value: 'light', label: l('AvatarMenu:ThemeLight') },
+            { value: 'dark', label: l('AvatarMenu:ThemeDark') }
         ], apya.theme.current, apya.theme.set);
 
         // Yoğunluk etiketleri #DensityToggle'ın data-label-*'ından okunur —
@@ -552,7 +557,7 @@ $(function () {
             var raw = toggleEl ? (toggleEl.getAttribute('data-label-' + d) || '') : '';
             return raw.split(':').pop().trim() || d;
         }
-        var syncDensitySeg = buildSegmentRow('Yoğunluk', apya.density.order.map(function (d) {
+        var syncDensitySeg = buildSegmentRow(l('AvatarMenu:Density'), apya.density.order.map(function (d) {
             return { value: d, label: densityLabel(d) };
         }), apya.density.current, apya.density.set, 'apya-avatar-menu-segment--3');
 
@@ -562,7 +567,9 @@ $(function () {
         var sidebarRow = document.createElement('button');
         sidebarRow.type = 'button';
         sidebarRow.className = 'apya-shell-menu-row';
-        sidebarRow.innerHTML = '<span>Kenar çubuğu</span><span class="apya-avatar-menu-summary"></span>' +
+        // Etiket için yeni anahtar açılmadı — SidebarMode ViewComponent'in
+        // KENDİ başlığı zaten kısa ve iki dilde var, aynen okunur.
+        sidebarRow.innerHTML = '<span>' + escapeHtml(l('Sidebar:Mode')) + '</span><span class="apya-avatar-menu-summary"></span>' +
             '<i class="fa fa-chevron-right" aria-hidden="true"></i>';
         function syncSidebarRow() {
             sidebarRow.querySelector('.apya-avatar-menu-summary').textContent = apya.sidebar.label(apya.sidebar.current());
@@ -647,7 +654,7 @@ $(function () {
             if (!summaryEl) { return; }
             var cultureName = (window.abp && abp.localization && abp.localization.currentCulture && abp.localization.currentCulture.name) || document.documentElement.lang || '';
             var lang = cultureName.slice(0, 2).toUpperCase();
-            var theme = apya.theme.current() === 'dark' ? 'Koyu' : 'Açık';
+            var theme = l(apya.theme.current() === 'dark' ? 'AvatarMenu:ThemeDark' : 'AvatarMenu:ThemeLight');
             var density = densityLabel(apya.density.current());
             summaryEl.textContent = [lang, theme, density].filter(Boolean).join(' · ');
         }
