@@ -1456,9 +1456,30 @@ namespace Apya.Platform.EntityFrameworkCore
                 b.Property(x => x.EntityType).HasMaxLength(NotificationConsts.MaxEntityType);
                 b.Property(x => x.GroupKey).HasMaxLength(NotificationConsts.MaxGroupKey);
                 b.Property(x => x.ActorName).HasMaxLength(NotificationConsts.MaxActorName);
-                // Performans için index
-                b.HasIndex(x => new { x.UserId, x.IsRead });
-                b.HasIndex(x => x.CreationTime);
+                // Zil rozeti HER SAYFA RENDER'INDA sayılıyor (NotificationToolbarContributor →
+                // NotificationBellViewComponent → GetUnreadCountAsync, cache yok). ABP sorguya
+                // TenantId ve IsDeleted ekliyor; ikisi de indekste olmadığı için okunmamış her
+                // satır için kümelenmiş indekse dönülüyordu. INCLUDE ile sayım tamamen indekste
+                // biter. Filtre DEĞİL INCLUDE: temizlik işçisi IsDeleted=1 satırları da okuyor.
+                b.HasIndex(x => new { x.UserId, x.IsRead })
+                    .HasAnnotation(isSqlServer ? "SqlServer:Include" : "Npgsql:IndexInclude",
+                        new[] { nameof(Notification.TenantId), "IsDeleted" });
+
+                // Liste sıralamasının ve temizlik işçisinin TEK ölçütü LastOccurredAt
+                // (NotificationAppService:66 — gruplanan bildirim yeni olayla yukarı çıkmalı;
+                // NotificationCleanupWorker:53 — LastOccurredAt < eşik). Kolon hiçbir indekste
+                // yoktu → her /Notifications açılışı kullanıcının tüm bildirimlerini sırala-
+                // sonra-sayfala yapıyordu. DESC yazıldı: liste en yeniden başlar.
+                b.HasIndex(x => new { x.UserId, x.LastOccurredAt })
+                    .IsDescending(false, true)
+                    .HasDatabaseName("IX_AppNotifications_UserId_LastOccurredAt")
+                    .HasAnnotation(isSqlServer ? "SqlServer:Include" : "Npgsql:IndexInclude",
+                        new[] { nameof(Notification.TenantId), "IsDeleted", nameof(Notification.IsRead), nameof(Notification.Severity) });
+
+                // IX_AppNotifications_CreationTime KALDIRILDI: Notification.CreationTime kod
+                // tabanında yalnız DTO ataması olarak geçiyor (NotificationAppService:258) —
+                // hiçbir Where/OrderBy onu kullanmıyor. Her bildirim yazımında karşılıksız
+                // bakım maliyeti üretiyordu; temizlik işçisinin ihtiyacı LastOccurredAt'tir.
                 // Kategori sekmeleri ve önem sıralaması bu index üzerinden okunur
                 b.HasIndex(x => new { x.UserId, x.Category, x.IsRead });
                 // Gruplama: aynı kayda ait okunmamış bildirimin aranması
@@ -1975,7 +1996,17 @@ namespace Apya.Platform.EntityFrameworkCore
                  .OnDelete(DeleteBehavior.SetNull);
 
                 // Liste sorgusu daima klasör (+kiracı) kapsamında çalışır.
-                b.HasIndex(x => new { x.TenantId, x.DocumentId });
+                // Belge listesinin baskın süzgeci klasördür (DocumentFileAppService
+                // ApplyFiltersAsync — DocumentId) ve VARSAYILAN sıralaması CreationTime desc
+                // (ApplySorting:684). CreationTime hiçbir indekste yoktu → her klasör açılışı
+                // süzülmüş kümeyi baştan sıralıyordu. Üçüncü anahtar olarak eklendi: eşitlikler
+                // (TenantId, DocumentId) önce, sıralama kolonu sonra.
+                // IsDeleted filtreye DEĞİL INCLUDE'a kondu — /Documents'ın ÇÖP KUTUSU kipi
+                // (QueryPageAsync: Where(f => f.IsDeleted)) aynı indeksi kullanabilmeli.
+                b.HasIndex(x => new { x.TenantId, x.DocumentId, x.CreationTime })
+                    .IsDescending(false, false, true)
+                    .HasAnnotation(isSqlServer ? "SqlServer:Include" : "Npgsql:IndexInclude",
+                        new[] { "IsDeleted" });
                 b.HasIndex(x => new { x.TenantId, x.ProjectId });
                 b.HasIndex(x => x.WorkStepId);
                 b.HasIndex(x => x.DocumentTypeId);
