@@ -3271,11 +3271,14 @@ namespace Apya.Platform.Migrations
 
                     b.HasIndex("WorkStepId");
 
-                    b.HasIndex("TenantId", "DocumentId");
-
                     b.HasIndex("TenantId", "PeriodCode");
 
                     b.HasIndex("TenantId", "ProjectId");
+
+                    b.HasIndex("TenantId", "DocumentId", "CreationTime")
+                        .IsDescending(false, false, true);
+
+                    NpgsqlIndexBuilderExtensions.IncludeProperties(b.HasIndex("TenantId", "DocumentId", "CreationTime"), new[] { "IsDeleted" });
 
                     b.ToTable("AppDocumentFiles", (string)null);
                 });
@@ -8662,9 +8665,15 @@ namespace Apya.Platform.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("CreationTime");
-
                     b.HasIndex("UserId", "IsRead");
+
+                    NpgsqlIndexBuilderExtensions.IncludeProperties(b.HasIndex("UserId", "IsRead"), new[] { "TenantId", "IsDeleted" });
+
+                    b.HasIndex("UserId", "LastOccurredAt")
+                        .IsDescending(false, true)
+                        .HasDatabaseName("IX_AppNotifications_UserId_LastOccurredAt");
+
+                    NpgsqlIndexBuilderExtensions.IncludeProperties(b.HasIndex("UserId", "LastOccurredAt"), new[] { "TenantId", "IsDeleted", "IsRead", "Severity" });
 
                     b.HasIndex("UserId", "Category", "IsRead");
 
