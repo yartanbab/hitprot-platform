@@ -52,10 +52,12 @@ public static class ReleaseNoteCatalog
                 "proje sayısı, bütçe kullanımı ve proje bazlı bütçe karşılaştırması iki ekranda da " +
                 "vardı. İkinci ekranı kaldırdık. Genel Bakış'ta karşılığı olmayan tek bilgi kimin " +
                 "ne kadar süre kaydettiğiydi; onun için \"Efor dağılımı\" adında yeni bir kart " +
-                "ekledik — Genel Bakış'ta \"+ Kart ekle\" ile ekleyebilir, kişi kişi harcanan " +
-                "saati ve görev sayısını görebilirsiniz. Ayrıca İstatistikler bandındaki \"İş & " +
-                "teslim\" sekmesine \"Kaydedilen efor\" kutucuğu geldi. Eski \"Özet Raporlar\" " +
-                "bağlantınız ya da kısayolunuz sizi doğrudan Genel Bakış'a getirir."),
+                "ekledik: kişi kişi harcanan saat ve görev sayısı. Kart Proje Yönetimi " +
+                "görünümünde hazır geliyor — Genel Bakış'ı daha önce kendinize göre " +
+                "düzenlediyseniz düzeniniz korunur, kartı \"+ Kart ekle\" ile eklersiniz. " +
+                "Ayrıca İstatistikler bandındaki \"İş & teslim\" sekmesine \"Kaydedilen efor\" " +
+                "kutucuğu geldi. Eski \"Özet Raporlar\" bağlantınız ya da kısayolunuz sizi " +
+                "doğrudan Genel Bakış'a getirir."),
 
             new ReleaseNoteItem(ReleaseNoteCategory.Fix,
                 "Faturalarda müşteri seçimi eskisi gibi çalışıyor",
