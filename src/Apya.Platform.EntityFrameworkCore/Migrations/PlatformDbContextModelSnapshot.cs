@@ -1883,7 +1883,15 @@ namespace Apya.Platform.Migrations
 
                     b.HasIndex("ReferenceId");
 
+                    b.HasIndex("TenantId", "MovementDate")
+                        .HasDatabaseName("IX_AppCashMovements_TenantId_MovementDate")
+                        .HasFilter("\"IsDeleted\" = false");
+
+                    NpgsqlIndexBuilderExtensions.IncludeProperties(b.HasIndex("TenantId", "MovementDate"), new[] { "CashAccountId", "Direction", "Amount" });
+
                     b.HasIndex("TenantId", "CashAccountId", "MovementDate");
+
+                    NpgsqlIndexBuilderExtensions.IncludeProperties(b.HasIndex("TenantId", "CashAccountId", "MovementDate"), new[] { "Direction", "Amount", "IsDeleted" });
 
                     b.ToTable("AppCashMovements", (string)null);
                 });
@@ -5103,6 +5111,8 @@ namespace Apya.Platform.Migrations
 
                     b.HasIndex("TenantId", "ExpenseDate");
 
+                    NpgsqlIndexBuilderExtensions.IncludeProperties(b.HasIndex("TenantId", "ExpenseDate"), new[] { "ProjectId", "Amount", "IsDeleted" });
+
                     b.ToTable("AppExpenses", (string)null);
                 });
 
@@ -8270,6 +8280,8 @@ namespace Apya.Platform.Migrations
 
                     b.HasIndex("TenantId", "IncomeDate");
 
+                    NpgsqlIndexBuilderExtensions.IncludeProperties(b.HasIndex("TenantId", "IncomeDate"), new[] { "ProjectId", "Amount", "IsDeleted" });
+
                     b.ToTable("AppIncomeEntries", (string)null);
                 });
 
@@ -8373,10 +8385,16 @@ namespace Apya.Platform.Migrations
 
                     b.HasIndex("ProjectId");
 
+                    b.HasIndex("TenantId", "InvoiceDate")
+                        .HasDatabaseName("IX_AppInvoices_TenantId_InvoiceDate")
+                        .HasFilter("\"IsDeleted\" = false");
+
                     b.HasIndex("TenantId", "InvoiceNumber")
                         .IsUnique();
 
                     b.HasIndex("TenantId", "Status");
+
+                    NpgsqlIndexBuilderExtensions.IncludeProperties(b.HasIndex("TenantId", "Status"), new[] { "TotalAmount", "ProjectId", "IsDeleted" });
 
                     b.ToTable("AppInvoices", (string)null);
                 });
