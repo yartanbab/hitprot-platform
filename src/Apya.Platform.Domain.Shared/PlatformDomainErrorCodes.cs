@@ -285,6 +285,13 @@ public static class PlatformDomainErrorCodes
     public const string RegistrationRequestNotApproved = "Platform:RegistrationRequest:NotApproved";
     public const string RegistrationRequestAlreadyProvisioned = "Platform:RegistrationRequest:AlreadyProvisioned";
 
+    /// <summary>
+    /// Aday formda aynı e-postayla ikinci kez ilerlemeye çalıştı. HEM var olan bir hesabı
+    /// HEM de işlenmekte olan bir talebi kapsar: oturumsuz form iki durumu AYIRT ETMEZ,
+    /// aksi halde yanıt farkından "bu e-posta sistemde var mı" sorusu okunabilirdi.
+    /// </summary>
+    public const string RegistrationRequestEmailAlreadyRegistered = "Platform:RegistrationRequest:EmailAlreadyRegistered";
+
     // --- Faturalama (Billing) Modülü ---
     public const string BillingAmountInvalid = "Platform:Billing:AmountInvalid";
     public const string BillingInvoiceCancelled = "Platform:Billing:InvoiceCancelled";
@@ -293,6 +300,10 @@ public static class PlatformDomainErrorCodes
     public const string BillingFileRequired = "Platform:Billing:FileRequired";
     public const string BillingFileTooLarge = "Platform:Billing:FileTooLarge";
     public const string BillingFileTypeNotAllowed = "Platform:Billing:FileTypeNotAllowed";
+
+    // --- Kiracı Kurulumu (Tenants) Modülü ---
+    /// <summary>Bu e-posta zaten bir kiracıda kullanıcıya tanımlı; ikinci hesap açılamaz.</summary>
+    public const string TenantAdminEmailAlreadyInUse = "Platform:Tenant:AdminEmailAlreadyInUse";
 
     // --- Hizmet Protokolü (Agreements) Modülü ---
     public const string AgreementInviteInvalid = "Platform:Agreement:InviteInvalid";

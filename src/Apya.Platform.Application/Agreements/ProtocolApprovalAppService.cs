@@ -2,6 +2,7 @@ using System;
 using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
+using Apya.Platform.Accounts;
 using Apya.Platform.Agreements.Dtos;
 using Apya.Platform.Consents;
 using Apya.Platform.Consents.Dtos;
@@ -31,6 +32,7 @@ public class ProtocolApprovalAppService : PlatformAppService, IProtocolApprovalA
     private readonly ServiceAgreementManager _agreementManager;
     private readonly ProtocolRenderer _renderer;
     private readonly TenantProvisioner _provisioner;
+    private readonly RegisteredEmailChecker _registeredEmailChecker;
     private readonly IConsentAppService _consentAppService;
     private readonly IClock _clock;
 
@@ -40,6 +42,7 @@ public class ProtocolApprovalAppService : PlatformAppService, IProtocolApprovalA
         ServiceAgreementManager agreementManager,
         ProtocolRenderer renderer,
         TenantProvisioner provisioner,
+        RegisteredEmailChecker registeredEmailChecker,
         IConsentAppService consentAppService,
         IClock clock)
     {
@@ -48,6 +51,7 @@ public class ProtocolApprovalAppService : PlatformAppService, IProtocolApprovalA
         _agreementManager = agreementManager;
         _renderer = renderer;
         _provisioner = provisioner;
+        _registeredEmailChecker = registeredEmailChecker;
         _consentAppService = consentAppService;
         _clock = clock;
     }
@@ -87,6 +91,12 @@ public class ProtocolApprovalAppService : PlatformAppService, IProtocolApprovalA
 
         var request = await FindByTokenAsync(input.Token);
         var plan = request.EffectivePlan;
+
+        // 🔴 E-posta kontrolü SÖZLEŞMEDEN ÖNCE. Son savunma hattı TenantProvisioner'da ama
+        // orada patlarsa geriye onaylanmış bir sözleşme ve açılmamış bir hesap kalırdı —
+        // kurulum kendi UoW'unda commit olduğu için sözleşme geri alınmaz. Burada durursak
+        // aday hiçbir hukuki kayıt üretmeden bilgilendirilir.
+        await _registeredEmailChecker.CheckNotRegisteredAsync(request.Email);
 
         // Yeniden deneme yolu: sözleşme yazılmış ama kurulum düşmüşse İKİNCİ bir sözleşme
         // üretmeyiz — aynı onayın iki hukuki kaydı olmamalı.
