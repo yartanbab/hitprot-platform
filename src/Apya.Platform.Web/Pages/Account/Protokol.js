@@ -22,6 +22,12 @@
 
     var unlocked = false;
 
+    // Sayfa POST'tan geri geldiyse (ör. şifre ABP politikasına takıldı) kutular
+    // ModelState'ten İŞARETLİ basılır. Bunları silip kapıyı yeniden kurmak, düzeltilebilir
+    // bir hatayı "belgeyi baştan kaydır" çıkmazına çevirirdi — kapı bu oturumda zaten
+    // geçilmişti. Taze GET'te kutular hep işaretsiz doğar, yani kapı atlanamaz.
+    var restored = boxes.some(function (box) { return box.checked; });
+
     function lock() {
         boxes.forEach(function (box) {
             box.disabled = true;
@@ -61,7 +67,7 @@
         }
     }
 
-    lock();
+    if (restored) { unlock(); } else { lock(); }
     doc.addEventListener('scroll', evaluate, { passive: true });
 
     // Yazı tipleri geç yüklenince belge yüksekliği değişiyor; ilk ölçüm yanlış çıkabilir.
