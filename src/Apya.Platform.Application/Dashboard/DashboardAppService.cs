@@ -30,6 +30,7 @@ public class DashboardAppService : PlatformAppService, IDashboardAppService
 {
     private readonly IRepository<TaskItem, Guid> _taskRepo;
     private readonly IRepository<TaskDependency, Guid> _dependencyRepo;
+    private readonly IRepository<TaskTimeLog, Guid> _timeLogRepo;
     private readonly IRepository<Project, Guid> _projectRepo;
     private readonly IRepository<Invoice, Guid> _invoiceRepo;
     private readonly IRepository<Expense, Guid> _expenseRepo;
@@ -44,6 +45,7 @@ public class DashboardAppService : PlatformAppService, IDashboardAppService
     public DashboardAppService(
         IRepository<TaskItem, Guid> taskRepo,
         IRepository<TaskDependency, Guid> dependencyRepo,
+        IRepository<TaskTimeLog, Guid> timeLogRepo,
         IRepository<Project, Guid> projectRepo,
         IRepository<Invoice, Guid> invoiceRepo,
         IRepository<Expense, Guid> expenseRepo,
@@ -57,6 +59,7 @@ public class DashboardAppService : PlatformAppService, IDashboardAppService
     {
         _taskRepo = taskRepo;
         _dependencyRepo = dependencyRepo;
+        _timeLogRepo = timeLogRepo;
         _projectRepo = projectRepo;
         _invoiceRepo = invoiceRepo;
         _expenseRepo = expenseRepo;
@@ -487,6 +490,96 @@ public class DashboardAppService : PlatformAppService, IDashboardAppService
                 .Select(t => t.DueDate!.Value.Date));
 
         return milestoneDays.Concat(trancheDays).ToHashSet();
+    }
+
+    // ─────────────────────────── Efor dağılımı ───────────────────────────
+
+    /// <summary>
+    /// Dönemde kişi başına kaydedilen süre — çoktan aza sıralı.
+    /// <para>
+    /// Pencere <see cref="TaskTimeLog.StartTime"/> üzerinden kurulur: kayıt, işin
+    /// YAPILDIĞI döneme düşer, girildiği döneme değil.
+    /// </para>
+    /// </summary>
+    public async Task<List<EffortDistributionDto>> GetEffortDistributionAsync(DashboardQueryDto input)
+    {
+        // Efor, görev verisidir — Platform.Tasks yoksa sorgu ATILMAZ, kart boş döner.
+        if (!await AuthorizationService.IsGrantedAsync(PlatformPermissions.Tasks.Default))
+        {
+            return new List<EffortDistributionDto>();
+        }
+
+        var period = DashboardPeriod.Resolve(input.Range, Clock.Now);
+
+        var logs = (await _timeLogRepo.GetQueryableAsync())
+            .Where(l => l.SecondsSpent != null
+                        && l.StartTime >= period.Start
+                        && l.StartTime < period.EndExclusive);
+
+        if (input.ProjectId.HasValue)
+        {
+            var projectTaskIds = (await _taskRepo.GetQueryableAsync())
+                .Where(t => t.ProjectId == input.ProjectId.Value)
+                .Select(t => t.Id);
+
+            logs = logs.Where(l => projectTaskIds.Contains(l.TaskId));
+        }
+
+        // (kişi, görev) kırılımında toplanır, kişi toplamı BELLEKTE çıkarılır.
+        // Tek adımda `g.Select(x => x.TaskId).Distinct().Count()` yazılabilirdi ama
+        // COUNT(DISTINCT) çevirisi iki sağlayıcıda da garanti değil; buradaki satır
+        // sayısı dönemdeki ayrık (kişi, görev) çifti kadar, yani zaten küçük.
+        var pairs = await AsyncExecuter.ToListAsync(
+            logs.GroupBy(l => new { l.UserId, l.TaskId })
+                .Select(g => new
+                {
+                    g.Key.UserId,
+                    Seconds = g.Sum(x => x.SecondsSpent!.Value)
+                }));
+
+        if (pairs.Count == 0)
+        {
+            return new List<EffortDistributionDto>();
+        }
+
+        var totals = pairs
+            .GroupBy(p => p.UserId)
+            .Select(g => new
+            {
+                UserId = g.Key,
+                Seconds = g.Sum(x => x.Seconds),
+                TaskCount = g.Count()
+            })
+            .OrderByDescending(t => t.Seconds)
+            .ToList();
+
+        var userIds = totals.Select(t => t.UserId).ToList();
+        var users = await AsyncExecuter.ToListAsync(
+            (await _userRepo.GetQueryableAsync())
+                .Where(u => userIds.Contains(u.Id))
+                .Select(u => new { u.Id, u.Name, u.Surname, u.UserName }));
+
+        var nameMap = users.ToDictionary(
+            u => u.Id,
+            u =>
+            {
+                var fullName = $"{u.Name} {u.Surname}".Trim();
+                return fullName.Length > 0 ? fullName : u.UserName;
+            });
+
+        var unknownUser = L["Dashboard:Effort:UnknownUser"].Value;
+
+        return totals
+            .Select(t => new EffortDistributionDto
+            {
+                UserId = t.UserId,
+                // Kullanıcı silinmişse kayıt öksüz kalır; satırı düşürmek yerine
+                // eforu görünür tutuyoruz — toplam saat aksi halde sessizce eksilirdi.
+                UserName = nameMap.TryGetValue(t.UserId, out var name) ? name : unknownUser,
+                Hours = Math.Round(t.Seconds / 3600m, 1),
+                TaskCount = t.TaskCount
+            })
+            .ToList();
     }
 
     // ─────────────────────────── Kart düzeni ───────────────────────────

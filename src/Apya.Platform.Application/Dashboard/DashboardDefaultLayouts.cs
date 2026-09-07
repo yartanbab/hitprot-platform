@@ -36,7 +36,14 @@ public static class DashboardDefaultLayouts
             Card("income-expense",    DashboardChartType.GroupedBar,  0, 13, 4, 5),
             Card("delivery-heatmap",  DashboardChartType.Heatmap,     4, 13, 4, 5),
             Card("project-phases",    DashboardChartType.MiniGantt,   8, 13, 4, 5),
-            Card("statistics-band",   DashboardChartType.NumberTrend, 0, 18, 12, 5)
+            // Efor dağılımı — kaldırılan "Özet Raporlar" ekranının personel eforu
+            // buraya taşındı (2026-09-07). Kendi satırını AÇMAZ: tek başına bir
+            // 4-kolonluk kart 8 kolonluk delik bırakıyordu. İstatistikler bandı
+            // 12'den 8'e iniyor; `band` bayrağı yalnız tablet/mobil akışını
+            // etkiler (NativeStack), masaüstü ızgarasında bandın dar olması
+            // sorun değil — Finans görünümü bandı zaten w=6 ile kullanıyor.
+            Card("effort-distribution", DashboardChartType.RankBar,   0, 18, 4, 5),
+            Card("statistics-band",   DashboardChartType.NumberTrend, 4, 18, 8, 5)
         },
         [Finance] = new()
         {

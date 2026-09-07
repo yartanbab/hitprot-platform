@@ -430,10 +430,15 @@ public static class PlatformSettingDefaults
 
     /// <summary>
     /// Sabitlenen menü öğeleri varsayılanı — handoff'un "varsayılan: Kasa & Banka,
-    /// Özet Raporlar, Başvurular" listesi. Kullanıcı iğneye ilk kez dokunduğunda
-    /// kendi listesi yazılır ve bu varsayılan devreden çıkar.
+    /// Özet Raporlar, Başvurular" listesinden türedi. Kullanıcı iğneye ilk kez
+    /// dokunduğunda kendi listesi yazılır ve bu varsayılan devreden çıkar.
+    /// <para>
+    /// "Apya.Reports.Overview" 2026-09-07'de ÇIKARILDI: Özet Raporlar ekranı
+    /// kaldırıldı (Genel Bakış'la aynı işi yapıyordu) ve menü havuzunda artık
+    /// karşılığı yok — adı burada bırakmak boşa düşen bir iğne üretirdi.
+    /// </para>
     /// </summary>
-    public const string ShellPins = "Apya.Finance.CashAccounts,Apya.Reports.Overview,Apya.Grants.Applications";
+    public const string ShellPins = "Apya.Finance.CashAccounts,Apya.Grants.Applications";
 
     /// <summary>Sabitlenebilir en fazla öğe — liste kenar çubuğunu boğmasın.</summary>
     public const int ShellPinsMax = 12;

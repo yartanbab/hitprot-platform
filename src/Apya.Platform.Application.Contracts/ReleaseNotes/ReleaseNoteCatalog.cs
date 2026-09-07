@@ -46,6 +46,19 @@ public static class ReleaseNoteCatalog
                 "da yenileniyor. Daha önce projelerinize bağladığınız cariler kayıtlarınızda " +
                 "duruyor, kaybolmadı. Proje arama kutusu artık proje adı ve kodu üzerinde çalışıyor."),
 
+            new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
+                "Özet Raporlar kalktı, efor bilgisi Genel Bakış'a taşındı",
+                "\"Özet Raporlar\" ekranı Genel Bakış ile büyük ölçüde aynı işi yapıyordu: aktif " +
+                "proje sayısı, bütçe kullanımı ve proje bazlı bütçe karşılaştırması iki ekranda da " +
+                "vardı. İkinci ekranı kaldırdık. Genel Bakış'ta karşılığı olmayan tek bilgi kimin " +
+                "ne kadar süre kaydettiğiydi; onun için \"Efor dağılımı\" adında yeni bir kart " +
+                "ekledik: kişi kişi harcanan saat ve görev sayısı. Kart Proje Yönetimi " +
+                "görünümünde hazır geliyor — Genel Bakış'ı daha önce kendinize göre " +
+                "düzenlediyseniz düzeniniz korunur, kartı \"+ Kart ekle\" ile eklersiniz. " +
+                "Ayrıca İstatistikler bandındaki \"İş & teslim\" sekmesine \"Kaydedilen efor\" " +
+                "kutucuğu geldi. Eski \"Özet Raporlar\" bağlantınız ya da kısayolunuz sizi " +
+                "doğrudan Genel Bakış'a getirir."),
+
             new ReleaseNoteItem(ReleaseNoteCategory.Fix,
                 "Faturalarda müşteri seçimi eskisi gibi çalışıyor",
                 "Fatura keserken müşteri seçmeye devam ediyorsunuz — fatura ekranında hiçbir şey " +

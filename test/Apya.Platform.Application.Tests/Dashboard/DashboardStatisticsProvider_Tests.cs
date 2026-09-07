@@ -68,6 +68,7 @@ public class DashboardStatisticsProvider_Tests
         return new DashboardStatisticsProvider(
             _taskRepo,
             Substitute.For<IRepository<Apya.Platform.Tasks.TaskComment, Guid>>(),
+            Substitute.For<IRepository<Apya.Platform.Tasks.TaskTimeLog, Guid>>(),
             _projectRepo,
             Substitute.For<IRepository<Expense, Guid>>(),
             Substitute.For<IRepository<IncomeEntry, Guid>>(),

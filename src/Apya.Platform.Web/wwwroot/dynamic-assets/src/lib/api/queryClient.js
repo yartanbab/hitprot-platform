@@ -58,6 +58,7 @@ export const QK = {
         statistics:     (f) => ['dashboard', 'statistics', f],
         incomeExpense:  (f) => ['dashboard', 'income-expense', f],
         deliveryHeatmap:(f) => ['dashboard', 'delivery-heatmap', f],
+        effortDistribution: (f) => ['dashboard', 'effort-distribution', f],
         layout:         (viewKey) => ['dashboard', 'layout', viewKey],
         aiSuggestions: (scope) => scope ? ['dashboard', 'ai-suggestions', scope] : ['dashboard', 'ai-suggestions'],
     },

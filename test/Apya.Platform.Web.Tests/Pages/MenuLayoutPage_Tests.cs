@@ -107,20 +107,19 @@ public class MenuLayoutPage_Tests : PlatformWebTestBase
     }
 
     /// <summary>
-    /// "Özet Raporlar" finans değil (efor, PDKS, personel yükü, müşteri ROI) →
-    /// İş Yönetimi'nde durur, Finans'ın önünde.
+    /// "Özet Raporlar" menüden KALDIRILDI (2026-09-07) — Genel Bakış'la aynı işi
+    /// yapıyordu. Test eskiden öğenin İş Yönetimi'ndeki sırasını ölçüyordu;
+    /// artık kaldırılışın kalıcılığını ve yan hasar bırakmadığını ölçüyor:
+    /// aynı "Apya.Reports.*" ailesinden olan Proje Bütçesi Finans'ta DURMALI.
     /// </summary>
     [Fact]
-    public async Task Ozet_raporlar_is_yonetiminde_durur()
+    public async Task Ozet_raporlar_menude_yok_ama_finans_raporlari_duruyor()
     {
         var sidebar = SidebarUrls(await GetResponseAsStringAsync("/Settings"));
 
-        var projects = System.Array.IndexOf(sidebar, "/Projects");
-        var overview = System.Array.IndexOf(sidebar, "/Reports");
-        var cash = System.Array.IndexOf(sidebar, "/CashAccounts");
-
-        overview.ShouldBeGreaterThan(projects);
-        overview.ShouldBeLessThan(cash);
+        sidebar.ShouldNotContain("/Reports");
+        sidebar.ShouldContain("/Reports/ProjectBudget");
+        sidebar.ShouldContain("/Dashboard");
     }
 
     [Fact]
@@ -357,16 +356,24 @@ public class MenuLayoutPage_Tests : PlatformWebTestBase
         SettingsLinkUrls(html).ShouldContain("/TenantManagement/Tenants");
     }
 
-    /// <summary>Yaprağın altına öğe yerleştirilemez — düğüm varsayılan yerinde kalır.</summary>
+    /// <summary>
+    /// Yaprağın altına öğe yerleştirilemez — düğüm varsayılan yerinde kalır.
+    /// <para>
+    /// Taşınan öğe eskiden "Apya.Reports.Overview"du; Özet Raporlar ekranı
+    /// 2026-09-07'de kaldırılınca menü havuzunda karşılığı kalmadı ve senaryo
+    /// "tanınmayan ad" testine dönüşüyordu. Ölçülen davranış aynı kalsın diye
+    /// hâlâ var olan bir yaprakla kuruldu.
+    /// </para>
+    /// </summary>
     [Fact]
     public async Task Yapragin_altina_yerlestirme_yok_sayilir()
     {
-        await SetLayoutAsync("""{"items":{"Apya.Dashboard":["Apya.Reports.Overview"]}}""");
+        await SetLayoutAsync("""{"items":{"Apya.Dashboard":["Apya.Platform.Notifications"]}}""");
 
         var sidebar = SidebarUrls(await GetResponseAsStringAsync("/Settings"));
 
         sidebar.ShouldContain("/Dashboard");
-        sidebar.ShouldContain("/Reports");
+        sidebar.ShouldContain("/Notifications");
     }
 
     /// <summary>Döngüsel yerleşim menüyü kilitlememeli; düğümler varsayılana döner.</summary>
