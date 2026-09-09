@@ -1,7 +1,10 @@
-# Deploy delta — 2026-09-07 (`e1f93653` → `main`)
+# Deploy delta — 2026-09-09 (`e1f93653` → `b2b15129`)
 
 Canlıda koşan kod **`e1f93653`** + tek dosyalık protokol yaması (`5411a19d`).
 Bu paket ikisinin de üzerine gelir.
+
+Paket: `Apya-Yayin-b2b15129.zip` + `Apya-DbMigrator-b2b15129.zip`
+(`Masaüstü\Apya-Yayin-2026-09-09\`).
 
 ## Taban nasıl ölçüldü
 
