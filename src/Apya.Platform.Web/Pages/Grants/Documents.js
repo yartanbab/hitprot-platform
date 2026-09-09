@@ -156,9 +156,9 @@ $(function () {
 
     $('#DocumentRows').on('click', '.apya-doc-revise', function () {
         var id = $(this).data('id');
-        abp.message.prompt(l('Grants:Documents:RevisionPrompt')).then(function (result) {
-            if (!result.isConfirmed || !result.value) { return; }
-            service.requestRevision({ documentId: id, note: result.value }).then(function (dto) {
+        abp.message.prompt(l('Grants:Documents:RevisionPrompt')).then(function (note) {
+            if (!note) { return; }
+            service.requestRevision({ documentId: id, note: note }).then(function (dto) {
                 model = dto; paint();
                 abp.notify.success(l('Grants:Documents:RevisionRequested'));
             });
@@ -167,11 +167,11 @@ $(function () {
 
     // ---------- Evrak ekle / hatırlat ----------
     $('#AddDocBtn').on('click', function () {
-        abp.message.prompt(l('Grants:Documents:AddPrompt')).then(function (result) {
-            if (!result.isConfirmed || !result.value) { return; }
+        abp.message.prompt(l('Grants:Documents:AddPrompt')).then(function (name) {
+            if (!name) { return; }
             service.add({
                 applicationId: appId,
-                name: result.value,
+                name: name,
                 // Ekleyen taraf sorumluluğu da üstlenir; karşı tarafa iş yazmak
                 // için evrakın sahibi ayrıca değiştirilmeli (2d).
                 uploaderParty: model.viewerRole

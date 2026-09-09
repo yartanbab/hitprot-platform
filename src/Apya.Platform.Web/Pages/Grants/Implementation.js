@@ -77,9 +77,9 @@ $(function () {
 
     // ---------- Eylemler ----------
     $('#AddReportBtn').on('click', function () {
-        abp.message.prompt(l('Grants:Impl:AddReportPrompt')).then(function (r) {
-            if (!r.isConfirmed || !r.value) { return; }
-            service.saveReport({ applicationId: appId, title: r.value }).then(function (dto) {
+        abp.message.prompt(l('Grants:Impl:AddReportPrompt')).then(function (title) {
+            if (!title) { return; }
+            service.saveReport({ applicationId: appId, title: title }).then(function (dto) {
                 model = dto; paint();
             });
         });
@@ -91,10 +91,10 @@ $(function () {
         reportKeys.forEach(function (k, i) { options[i] = l('Grants:Impl:Status:' + k); });
 
         abp.message.prompt(l('Grants:Impl:StatusPrompt'), '', {
-            inputType: 'select', inputOptions: options
-        }).then(function (r) {
-            if (!r.isConfirmed) { return; }
-            service.setReportStatus({ reportId: reportId, status: Number(r.value) }).then(function (dto) {
+            input: 'select', inputOptions: options
+        }).then(function (status) {
+            if (status === null) { return; }
+            service.setReportStatus({ reportId: reportId, status: Number(status) }).then(function (dto) {
                 model = dto; paint();
             });
         });
@@ -102,9 +102,9 @@ $(function () {
 
     $('#Chain').on('click', '.apya-im-add-section', function () {
         var reportId = $(this).closest('.apya-im-chain-item').data('report');
-        abp.message.prompt(l('Grants:Impl:AddSectionPrompt')).then(function (r) {
-            if (!r.isConfirmed || !r.value) { return; }
-            service.addSection({ reportId: reportId, name: r.value }).then(function (dto) {
+        abp.message.prompt(l('Grants:Impl:AddSectionPrompt')).then(function (name) {
+            if (!name) { return; }
+            service.addSection({ reportId: reportId, name: name }).then(function (dto) {
                 model = dto; paint();
             });
         });
@@ -117,14 +117,14 @@ $(function () {
         reportKeys.forEach(function (k, i) { options[i] = l('Grants:Impl:Status:' + k); });
 
         abp.message.prompt(l('Grants:Impl:SectionStatusPrompt'), '', {
-            inputType: 'select', inputOptions: options
-        }).then(function (r) {
-            if (!r.isConfirmed) { return; }
-            abp.message.prompt(l('Grants:Impl:SectionNotePrompt')).then(function (n) {
+            input: 'select', inputOptions: options
+        }).then(function (status) {
+            if (status === null) { return; }
+            abp.message.prompt(l('Grants:Impl:SectionNotePrompt')).then(function (note) {
                 service.setSectionStatus({
                     sectionId: sectionId,
-                    status: Number(r.value),
-                    note: n.isConfirmed ? (n.value || null) : null
+                    status: Number(status),
+                    note: note || null
                 }).then(function (dto) { model = dto; paint(); });
             });
         });
