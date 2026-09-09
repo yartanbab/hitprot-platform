@@ -152,9 +152,9 @@ $(function () {
     }
 
     $('#AddHoursBtn').on('click', function () {
-        abp.message.prompt(l('Grants:DetailHost:HoursPrompt')).then(function (result) {
-            if (!result.isConfirmed) { return; }
-            var value = Number((result.value || '').replace(',', '.'));
+        abp.message.prompt(l('Grants:DetailHost:HoursPrompt')).then(function (input) {
+            if (input === null) { return; }
+            var value = Number((input || '').replace(',', '.'));
             if (!value) { return; }
             service.addConsultingLog({ applicationId: appId, hours: value }).then(function (dto) {
                 model = dto; paint();
@@ -163,9 +163,9 @@ $(function () {
     });
 
     $('#SetFeeBtn').on('click', function () {
-        abp.message.prompt(l('Grants:DetailHost:FeePrompt')).then(function (result) {
-            if (!result.isConfirmed) { return; }
-            var value = (result.value || '').replace(',', '.');
+        abp.message.prompt(l('Grants:DetailHost:FeePrompt')).then(function (input) {
+            if (input === null) { return; }
+            var value = (input || '').replace(',', '.');
             service.setSuccessFee({
                 applicationId: appId,
                 percent: value === '' ? null : Number(value)

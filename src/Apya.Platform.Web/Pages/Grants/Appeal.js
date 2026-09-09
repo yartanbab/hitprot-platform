@@ -55,33 +55,33 @@ $(function () {
         var current = (model.items || []).filter(function (i) { return i.id === id; })[0];
 
         abp.message.prompt(l('Grants:Appeal:OpinionPrompt'), '', {
-            inputType: 'select',
+            input: 'select',
             inputOptions: {
                 1: l('Grants:Appeal:Stance:Itiraz'),
                 2: l('Grants:Appeal:Stance:Kabul')
             }
-        }).then(function (stanceResult) {
-            if (!stanceResult.isConfirmed) { return; }
+        }).then(function (stance) {
+            if (stance === null) { return; }
             abp.message.prompt(l('Grants:Appeal:OpinionDetailPrompt'), '', {
                 inputValue: (current && current.opinionDetail) || ''
-            }).then(function (detailResult) {
-                if (!detailResult.isConfirmed) { return; }
+            }).then(function (detail) {
+                if (detail === null) { return; }
                 service.saveOpinion({
                     itemId: id,
-                    stance: Number(stanceResult.value),
-                    summary: Number(stanceResult.value) === 1
+                    stance: Number(stance),
+                    summary: Number(stance) === 1
                         ? l('Grants:Appeal:Summary:Appeal')
                         : l('Grants:Appeal:Summary:Accept'),
-                    detail: detailResult.value || null
+                    detail: detail || null
                 }).then(function (dto) { model = dto; paint(); });
             });
         });
     });
 
     $('#AddItemBtn').on('click', function () {
-        abp.message.prompt(l('Grants:Appeal:AddItemPrompt')).then(function (result) {
-            if (!result.isConfirmed || !result.value) { return; }
-            service.addItem({ applicationId: appId, title: result.value }).then(function (dto) {
+        abp.message.prompt(l('Grants:Appeal:AddItemPrompt')).then(function (title) {
+            if (!title) { return; }
+            service.addItem({ applicationId: appId, title: title }).then(function (dto) {
                 model = dto; paint();
             });
         });

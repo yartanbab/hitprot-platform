@@ -92,12 +92,12 @@ $(function () {
         });
         options[''] = l('Grants:Dispatch:ConsultantNone');
 
-        abp.message.prompt(l('Grants:Pipeline:AssignPrompt'), '', { inputType: 'select', inputOptions: options })
-            .then(function (result) {
-                if (!result.isConfirmed) { return; }
+        abp.message.prompt(l('Grants:Pipeline:AssignPrompt'), '', { input: 'select', inputOptions: options })
+            .then(function (userId) {
+                if (userId === null) { return; }
                 service.assign({
                     applicationId: applicationId,
-                    userId: result.value === '' ? null : result.value
+                    userId: userId === '' ? null : userId
                 }).then(function (dto) {
                     board = dto; paint();
                     abp.notify.success(l('Grants:Pipeline:Assigned'));
