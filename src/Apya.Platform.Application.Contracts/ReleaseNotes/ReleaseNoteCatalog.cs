@@ -99,6 +99,18 @@ public static class ReleaseNoteCatalog
                 "kayıtlar artık adın üzerinde yer tutmuyor; sildiğiniz bir adı veya kodu doğrudan " +
                 "yeniden kullanabiliyorsunuz."),
 
+            new ReleaseNoteItem(ReleaseNoteCategory.Fix,
+                "Hibe ekranlarında evrak, itiraz ve rapor ekleyebiliyorsunuz",
+                "Hibe başvurunuzun ekranlarında ekleme düğmeleri işlemiyordu: küçük pencere " +
+                "açılıyor, adı yazıp Tamam'a bastığınızda hiçbir şey olmuyordu — ekranda bir " +
+                "hata da çıkmadığı için kaydedildiğini sanıyordunuz. Başvuru Sihirbazı'ndan " +
+                "açtığınız \"Evrak Takibi\" ekranında evrak ekleme ve revizyon isteme, " +
+                "Başvurularım'dan açtığınız \"Red ve İtiraz\" ekranında gerekçe maddesi ve " +
+                "görüş girme, \"Uygulama ve Tahsilat\" ekranında rapor ve bölüm ekleme " +
+                "düğmelerinin hepsi artık çalışıyor. Durum seçtiğiniz yerler de düzeldi: " +
+                "eskiden karşınıza boş bir yazı kutusu çıkıyordu, şimdi seçeneklerin listesi " +
+                "açılıyor."),
+
             new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
                 "Bildirimler, görev listesi, belgeler ve finans toplamları daha hızlı geliyor",
                 "Kayıt sayısı arttıkça bazı ekranların açılması yavaşlıyordu. Bildirim zili ve " +
