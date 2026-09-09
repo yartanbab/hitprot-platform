@@ -19,7 +19,7 @@ Sürüm tespitini her zaman birden çok dosyada yap.
 
 ## Ne iniyor
 
-**14 commit · PR #349 → #364.** Müşterinin göreceği başlıklar:
+**17 commit · PR #349 → #367.** Müşterinin göreceği başlıklar:
 
 | Alan | Değişiklik |
 |---|---|
@@ -28,6 +28,7 @@ Sürüm tespitini her zaman birden çok dosyada yap.
 | Kabuk | Avatar menüsü yenilendi: kimlik bloğu + "Profil" / "Görünüm" sekmeleri; dil, açık/koyu tema ve yoğunluk menüden değiştiriliyor (#357). |
 | Hata yönetimi | PUT/AJAX isteklerinde `/Error` yönlendirme döngüsü giderildi; kaydedilemeyen değişiklikler artık kullanıcıya bildiriliyor, teknik kod yerine Türkçe mesaj çıkıyor (#355). |
 | Kayıt akışı | Aynı e-posta ile ikinci hesap açılması dört noktada engellendi (#363). Protokol onay kutuları düzeltmesi (#360) zaten canlıda yamalı, pakete de girdi. |
+| Hibe | Başvuru ekranlarındaki ekleme diyalogları hiçbir işlem yapmıyordu: "Evrak Takibi"nde evrak ekleme ve revizyon isteme, "Red ve İtiraz"da gerekçe maddesi ve görüş, "Uygulama ve Tahsilat"ta rapor ve bölüm ekleme düğmeleri tıklanınca sessizce hiçbir şey olmuyordu; durum seçimleri de açılır liste yerine boş metin kutusu gösteriyordu (#366). Yalnız istemci tarafı — migration yok. |
 | Hız | Bildirim zili/listesi, görev konsolu, proje belge listesi ve finans toplamları için indeksler (#359, #361, #362). |
 | Veri bütünlüğü | Filtresiz UNIQUE indeksler soft-delete satırının anahtarını kalıcı rezerve ediyordu; 14 indeks yeniden kuruldu, 7'si `IsDeleted = 0` filtresi aldı (#353). SQL Server'da sıralı GUID sağlayıcısı düzeltildi (#352). |
 
@@ -61,7 +62,7 @@ davranışı önemli:
 
 🔴 **Yeni sürüm notu maddeleri VARSAYILAN OLARAK KAPALIDIR.** Tohum yalnız tablo
 tamamen boşsa çalışır; canlıda tablo 2026-09-06 paketiyle doldu. Dolayısıyla
-`2026.09.07`'nin **9 maddesi kullanıcıya GİTMEZ** — host `/Admin/ReleaseNotes`
+`2026.09.07`'nin **10 maddesi kullanıcıya GİTMEZ** — host `/Admin/ReleaseNotes`
 ekranından onaylayana kadar yalnız host'a "Onay bekliyor" rozetiyle görünür.
 
 ## Deploy adımları
@@ -88,6 +89,8 @@ ekranından onaylayana kadar yalnız host'a "Onay bekliyor" rozetiyle görünür
   Bütçesi **var**.
 - Fatura ekranında müşteri seçimi çalışıyor.
 - Bildirim zili ve görev konsolu açılış süresi.
+- Hibe: "Evrak Takibi"nde evrak ekleme, "Red ve İtiraz"da madde ekleme, "Uygulama ve
+  Tahsilat"ta rapor ekleme düğmeleri iş yapıyor mu; durum seçimi açılır liste mi.
 - Sürüm notu penceresi: onaydan **önce** kullanıcıda çıkmamalı, onaydan **sonra** çıkmalı.
 
 ## Bilinen sınır
