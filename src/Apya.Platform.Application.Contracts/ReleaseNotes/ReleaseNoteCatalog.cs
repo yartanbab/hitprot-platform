@@ -99,6 +99,19 @@ public static class ReleaseNoteCatalog
                 "kayıtlar artık adın üzerinde yer tutmuyor; sildiğiniz bir adı veya kodu doğrudan " +
                 "yeniden kullanabiliyorsunuz."),
 
+            new ReleaseNoteItem(ReleaseNoteCategory.Fix,
+                "Hibe başvurularında evrak, madde ve rapor ekleme düğmeleri artık çalışıyor",
+                "Hibe başvurularınızda bir ad ya da not girmeniz için küçük bir pencere açan " +
+                "düğmeler, siz yazıp \"Tamam\"a bastığınızda hiçbir şey yapmıyordu: kayıt " +
+                "oluşmuyor, ekranda bir uyarı da çıkmıyordu — işlemin yapıldığını sanıyordunuz. " +
+                "Evrak takibindeki \"Evrak ekle\" ve \"Revizyon iste\", itiraz ekranındaki " +
+                "\"Madde ekle\" ve görüş kaydetme, uygulama takibindeki rapor ekleme, bölüm " +
+                "ekleme ve durum değiştirme düğmelerinin hepsi böyleydi; artık hepsi kaydediyor. " +
+                "Çağrının evrak şablonu boş olan başvurularda listeye evrak eklemenin tek yolu " +
+                "bu düğmeydi, o başvurular da açıldı. Ayrıca görüş ve durum seçtiğiniz " +
+                "pencereler düz bir metin kutusu yerine seçenekleri listeleyen açılır liste " +
+                "gösteriyor."),
+
             new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
                 "Bildirimler, görev listesi, belgeler ve finans toplamları daha hızlı geliyor",
                 "Kayıt sayısı arttıkça bazı ekranların açılması yavaşlıyordu. Bildirim zili ve " +
