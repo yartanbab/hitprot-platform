@@ -111,6 +111,8 @@
 
 @* Tailwind island stylesheet (js/style.css) — bu partial olmadan görev detay modalı stilsiz kalır. *@
 <partial name="_ApyaThemeBootstrap" />
+@* Proje panelleri island'ı (PR-2b) — preload sayfa üstünde durur (IslandPreloadTagHelper notu). *@
+<island-preload entry="project-panels" />
 
 @section styles {
     @* Merkezi kanban tasarımı (tek kaynak) *@
@@ -487,12 +489,16 @@
         // menüsünün "Panolar" bölümü onları bu Razor satırlarından okur.
         var boardTabs = new[]
         {
-            ("list",      "fa fa-list",          L["Tasks:View:List"].Value,      "", false),
-            ("kanban",    "fa fa-table-columns", L["Tasks:View:Kanban"].Value,    "", false),
-            ("gantt",     "fa fa-clock",         L["Tasks:View:Gantt"].Value,     "Başlangıç-bitiş tarihlerinden türeyen zaman çizelgesi", true),
-            ("calendar",  "fa fa-calendar-days", L["Tasks:View:Calendar"].Value,  "Başlangıç ve termin tarihleri aylık takvimde", true),
-            ("dashboard", "fa fa-chart-pie",     L["Tasks:View:Dashboard"].Value, "Seçili süzgecin durum, öncelik ve kişi dağılımı", true),
-            ("gallery",   "fa fa-images",        L["Tasks:View:Gallery"].Value,   "Süzülmüş görevlere eklenmiş görseller", true)
+            ("list",         "fa fa-list",           L["Tasks:View:List"].Value,         "", false),
+            ("kanban",       "fa fa-table-columns",  L["Tasks:View:Kanban"].Value,       "", false),
+            ("gantt",        "fa fa-clock",          L["Tasks:View:Gantt"].Value,        "Başlangıç-bitiş tarihlerinden türeyen zaman çizelgesi", true),
+            ("calendar",     "fa fa-calendar-days",  L["Tasks:View:Calendar"].Value,     "Başlangıç ve termin tarihleri aylık takvimde", true),
+            ("dashboard",    "fa fa-chart-pie",      L["Tasks:View:Dashboard"].Value,    "Seçili süzgecin durum, öncelik ve kişi dağılımı", true),
+            ("gallery",      "fa fa-images",         L["Tasks:View:Gallery"].Value,      "Süzülmüş görevlere eklenmiş görseller", true),
+            ("documents",    "fa fa-file-lines",     L["Tasks:View:Documents"].Value,    "Görevlere bağlı yazılı belgeler, proje genelinde", true),
+            ("forms",        "fa fa-clipboard-list", L["Tasks:View:Forms"].Value,        "Görevlere bağlı formlar ve yanıt sayıları", true),
+            ("checklist",    "fa fa-square-check",   L["Tasks:View:Checklist"].Value,    "Görev kontrol listelerinin proje toplamı", true),
+            ("dependencies", "fa fa-link",           L["Tasks:View:Dependencies"].Value, "Proje içi öncül-ardıl bağ haritası", true)
         };
     }
     <div class="apya-console-tabs">
@@ -678,6 +684,17 @@
         <div id="view-dashboard" class="view-panel d-none" role="tabpanel" aria-labelledby="btn-view-dashboard"></div>
         <div id="view-gallery" class="view-panel d-none" role="tabpanel" aria-labelledby="btn-view-gallery"></div>
 
+        @* --- BELGE / FORM / KONTROL LİSTESİ / BAĞIMLILIKLAR (PR-2b) ---
+             React island (project-panels.jsx) bu kaplara mount olur; veri
+             TEMBEL çekilir — ProjectDetails.js switchView panel ilk açılınca
+             `apya:project-panel-shown` yayınlar. Kayıtlar görevlerin kayıtları:
+             gizlilik süzgeci sunucuda liste uçlarıyla ortak (TaskAppService
+             proje kapsamı uçları). *@
+        <div id="view-documents" class="view-panel d-none" role="tabpanel" aria-labelledby="btn-view-documents" data-project-id="@Model.Id"></div>
+        <div id="view-forms" class="view-panel d-none" role="tabpanel" aria-labelledby="btn-view-forms" data-project-id="@Model.Id"></div>
+        <div id="view-checklist" class="view-panel d-none" role="tabpanel" aria-labelledby="btn-view-checklist" data-project-id="@Model.Id"></div>
+        <div id="view-dependencies" class="view-panel d-none" role="tabpanel" aria-labelledby="btn-view-dependencies" data-project-id="@Model.Id"></div>
+
         @* --- FİNANS GÖRÜNÜMÜ (tasarım 2c) --- *@
         @if (Model.Budget != null)
         {
@@ -824,4 +841,7 @@
     <abp-script src="/js/apya-task-dashboard.js" />
     <abp-script src="/js/apya-task-gallery.js" />
     <abp-script src="/Pages/Projects/ProjectDetails.js" />
+    @* Proje panelleri island'ı — abp-script DEĞİL: island'lar ES module olarak
+       yüklenir ve chunk graph'ı hash'li dosyalara gider (documents-project deseni). *@
+    <script type="module" src="~/js/project-panels.js" asp-append-version="true"></script>
 }
