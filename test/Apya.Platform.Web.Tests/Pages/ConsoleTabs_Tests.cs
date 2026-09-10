@@ -60,27 +60,33 @@ public class ConsoleTabs_Tests : PlatformWebTestBase
         html.ShouldContain("id=\"btn-tab-add\"");
 
         // Sabitler + kapatılabilir katalog panoları kind'larıyla basılır
-        // (PR-2a: takvim/gösterge/galeri paylaşılan bileşenlerle eklendi).
-        html.ShouldContain("data-tab=\"list\"");
-        html.ShouldContain("data-tab=\"kanban\"");
-        html.ShouldContain("data-tab=\"gantt\"");
-        html.ShouldContain("data-tab=\"calendar\"");
-        html.ShouldContain("data-tab=\"dashboard\"");
-        html.ShouldContain("data-tab=\"gallery\"");
+        // (PR-2a paylaşılan bileşenler + PR-2b island panelleri).
+        foreach (var kind in new[]
+        {
+            "list", "kanban", "gantt", "calendar", "dashboard", "gallery",
+            "documents", "forms", "checklist", "dependencies"
+        })
+        {
+            html.ShouldContain($"data-tab=\"{kind}\"");
+        }
         // Test host'u her zaman yetkili → bütçe özeti döner ve Finans sekmesi basılır.
         html.ShouldContain("data-tab=\"finance\"");
 
-        // Kapatma düğmesi yalnız katalog panolarında (gantt/takvim/gösterge/
-        // galeri): sabitler (Liste, Kart Panosu, Finans) kapatılamaz — düğme
-        // sayısı bunu yapısal olarak kanıtlar.
-        Regex.Matches(html, "apya-console-tab-close").Count.ShouldBe(4,
-            "proje konsolunda yalnız 4 katalog panosu kapatılabilir olmalı");
+        // Kapatma düğmesi yalnız katalog panolarında (8 adet): sabitler (Liste,
+        // Kart Panosu, Finans) kapatılamaz — düğme sayısı bunu yapısal kanıtlar.
+        Regex.Matches(html, "apya-console-tab-close").Count.ShouldBe(8,
+            "proje konsolunda yalnız 8 katalog panosu kapatılabilir olmalı");
 
         // Katalog panellerinin panel kapları da basılı olmalı — sekme var ama
-        // panel yoksa etkinleştirme sessizce boş ekrana düşer.
+        // panel yoksa etkinleştirme sessizce boş ekrana düşer. Island kapları
+        // ayrıca projectId taşımalı: island mount'u onsuz hiç render etmez.
         html.ShouldContain("id=\"view-calendar\"");
         html.ShouldContain("id=\"view-dashboard\"");
         html.ShouldContain("id=\"view-gallery\"");
+        foreach (var kind in new[] { "documents", "forms", "checklist", "dependencies" })
+        {
+            html.ShouldContain($"id=\"view-{kind}\" class=\"view-panel d-none\" role=\"tabpanel\" aria-labelledby=\"btn-view-{kind}\" data-project-id=\"{projectId}\"");
+        }
     }
 
     [Fact]

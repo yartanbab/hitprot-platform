@@ -169,7 +169,12 @@ public class ShellAppService : PlatformAppService, IShellAppService
     /// paneli ve galeri paylaşılan bileşenlerle bağlandı).
     /// </summary>
     private static readonly HashSet<string> ProjectBoardTabViewKinds =
-        new(StringComparer.Ordinal) { "list", "kanban", "gantt", "finance", "calendar", "dashboard", "gallery" };
+        new(StringComparer.Ordinal)
+        {
+            "list", "kanban", "gantt", "finance",
+            "calendar", "dashboard", "gallery",                  // PR-2a: paylaşılan bileşenler
+            "documents", "forms", "checklist", "dependencies"    // PR-2b: island panelleri
+        };
 
     // JSON biçimi (camelCase gerekçesi dahil) ShellBoardTabsSetting'de — yazan
     // (burası) ve okuyan (PageModel/View'lar) aynı yardımcının içinden geçer.

@@ -59,8 +59,11 @@ $(function () {
     var filterState = state.values;
     var currentView = 'list';
 
-    // Katalog panelleri (PR-2a) — derin bağlantıda kabul edilen görünüşler.
-    var CATALOG_VIEWS = ['gantt', 'calendar', 'dashboard', 'gallery'];
+    // Katalog panelleri — derin bağlantıda kabul edilen görünüşler. İkinci küme
+    // React island panelleridir (PR-2b): içerik project-panels.js island'ında,
+    // burada yalnız panel gösterilir ve tembel yükleme olayı yayınlanır.
+    var ISLAND_VIEWS = ['documents', 'forms', 'checklist', 'dependencies'];
+    var CATALOG_VIEWS = ['gantt', 'calendar', 'dashboard', 'gallery'].concat(ISLAND_VIEWS);
 
     function readStateFromUrl() {
         state.readUrl();
@@ -698,12 +701,22 @@ $(function () {
             ? mode : 'list';
         $('.apya-console-views > .view-panel').addClass('d-none');
 
-        // Görev filtreleri finans panelinde hiçbir şeyi süzmez; şerit gizlenir.
-        $('#console-filters').toggleClass('d-none', currentView === 'finance');
+        // Görev filtreleri finans ve island panellerinde hiçbir şeyi süzmez
+        // (belge/form/kontrol/bağ kayıtları durum-atanan filtresine tabi değil);
+        // şerit gizlenir ki "filtre çalışmıyor" yanılgısı doğmasın.
+        $('#console-filters').toggleClass('d-none',
+            currentView === 'finance' || ISLAND_VIEWS.indexOf(currentView) > -1);
 
         if (currentView === 'finance') {
             // Panel sunucuda basıldı; yüklenecek bir şey yok.
             $('#view-finance').removeClass('d-none');
+        } else if (ISLAND_VIEWS.indexOf(currentView) > -1) {
+            $('#view-' + currentView).removeClass('d-none');
+            // Island TEMBEL yükler: panel ilk gösterildiğinde veri çeker
+            // (project-panels → usePanelShown bu olayı dinliyor).
+            document.dispatchEvent(new CustomEvent('apya:project-panel-shown', {
+                detail: { kind: currentView }
+            }));
         } else if (currentView === 'gantt') {
             $('#view-gantt').removeClass('d-none');
             gantt.load();
