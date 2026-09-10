@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import { useTabOrder } from './useTabOrder';
 
@@ -93,5 +93,65 @@ describe('useTabOrder', () => {
         localStorage.setItem(ORDER_KEY, JSON.stringify({ nope: true }));
         const { result } = renderHook(() => useTabOrder(TABS));
         expect(codes(result)).toEqual(['general', 'subtasks', 'files']);
+    });
+});
+
+/**
+ * Sira artik sunucuda yasar (Shell.BoardTabs -> taskdetail scope'u): host sayfa
+ * kaydi `data-tab-order` ile basar, surukleme sonunda ayni uca POST edilir.
+ * localStorage geri-uyum yedegi olarak kalir.
+ */
+describe('useTabOrder sunucu kaliciligi', () => {
+    let fetchSpy;
+
+    beforeEach(() => {
+        fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue({ ok: true });
+    });
+
+    afterEach(() => {
+        fetchSpy.mockRestore();
+        document.querySelectorAll('[data-tab-order]').forEach((el) => el.remove());
+    });
+
+    function mountServerOrder(kinds) {
+        const el = document.createElement('div');
+        el.id = 'task-detail-island';
+        el.setAttribute('data-tab-order', JSON.stringify(kinds.map((k) => ({ kind: k, ref: '', title: '' }))));
+        document.body.appendChild(el);
+    }
+
+    it('sunucudan gelen sira localStorage tercihinin ONUNDE gelir', () => {
+        mountServerOrder(['files', 'general']);
+        localStorage.setItem(ORDER_KEY, JSON.stringify(['subtasks', 'general', 'files']));
+        const { result } = renderHook(() => useTabOrder(TABS));
+        expect(codes(result)).toEqual(['files', 'general', 'subtasks']);
+    });
+
+    it('surukleme bitince sira taskdetail scope uyla sunucuya yazilir', () => {
+        const { result } = renderHook(() => useTabOrder(TABS));
+        drag(result, 'files', 'general');
+
+        const call = fetchSpy.mock.calls.at(-1);
+        expect(call[0]).toBe('/api/app/shell/set-board-tabs');
+        const body = JSON.parse(call[1].body);
+        expect(body.scope).toBe('taskdetail');
+        expect(body.tabs.map((t) => t.kind)).toEqual(['files', 'general', 'subtasks']);
+    });
+
+    it('sunucuda kayit yokken yerel tercih bir kez sunucuya tasinir', () => {
+        localStorage.setItem(ORDER_KEY, JSON.stringify(['files', 'general', 'subtasks']));
+        renderHook(() => useTabOrder(TABS));
+
+        const call = fetchSpy.mock.calls.at(-1);
+        expect(call).toBeDefined();
+        const body = JSON.parse(call[1].body);
+        expect(body.scope).toBe('taskdetail');
+        expect(body.tabs.map((t) => t.kind)).toEqual(['files', 'general', 'subtasks']);
+    });
+
+    it('sunucu kaydi varken tasima POST u atilmaz', () => {
+        mountServerOrder(['general', 'subtasks', 'files']);
+        renderHook(() => useTabOrder(TABS));
+        expect(fetchSpy).not.toHaveBeenCalled();
     });
 });

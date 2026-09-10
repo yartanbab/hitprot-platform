@@ -1597,6 +1597,7 @@
         "Platform:RegistrationRequest:AlreadyProvisioned": "Bu talebin hesabı zaten açılmış.",
         "Platform:RegistrationRequest:EmailAlreadyRegistered": "Bu e-posta adresiyle daha önce bir kayıt talebi alınmış. Ekibimiz sizinle iletişime geçecek. Hesabınız zaten varsa giriş yapabilir veya şifrenizi sıfırlayabilirsiniz.",
         "Platform:Tenant:AdminEmailAlreadyInUse": "Bu e-posta adresi zaten bir hesaba tanımlı. Aynı e-posta ile ikinci bir hesap açılamaz; lütfen farklı bir adres kullanın.",
+        "Platform:Shell:BoardTabsScopeInvalid": "Sekme düzeni kaydedilemedi: tanınmayan yüzey anahtarı.",
         "Protokol:Title": "Hizmet Protokolü Onayı",
         "Protokol:Intro": "Kayıt talebiniz onaylandı. Protokolü okuyup onayladığınızda hesabınız açılacak.",
         "Protokol:Company": "Kurum",

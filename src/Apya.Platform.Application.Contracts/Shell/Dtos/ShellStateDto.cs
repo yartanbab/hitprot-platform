@@ -78,6 +78,24 @@ public class ShellBoardTabDto
 }
 
 /// <summary>
+/// Sekme düzeni yazma isteği. Düzen artık YÜZEY başına saklanır (birleşik sekme
+/// sistemi): /Tasks, proje detay konsolu ve görev detayı aynı ayarın farklı
+/// scope anahtarlarına yazar — bkz. ShellBoardTabsSetting.
+/// </summary>
+public class SetShellBoardTabsInput
+{
+    /// <summary>
+    /// Hangi yüzeyin düzeni: "tasks" · "project:{guid}" · "taskdetail".
+    /// Tanınmayan scope reddedilir (yanlış anahtara yazmak başka yüzeyin
+    /// düzenini sessizce ezerdi).
+    /// </summary>
+    public string Scope { get; set; } = string.Empty;
+
+    /// <summary>Scope'un TAM sekme listesi — açma/kapama/sıralama tek çağrıdır.</summary>
+    public List<ShellBoardTabDto> Tabs { get; set; } = new();
+}
+
+/// <summary>
 /// Oluşturma yetkileri — "+ Yeni" menüsü yalnız gerçekten yapılabilecek işleri
 /// listeler. Yetkisi olmayana satır GÖSTERİLİP 403 aldırmak, hiç göstermemekten
 /// daha kötü: kullanıcı işin mümkün olduğunu sanır.

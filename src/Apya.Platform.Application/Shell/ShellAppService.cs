@@ -15,6 +15,7 @@ using Apya.Platform.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.Hosting;
 using System.Text.Json;
+using Volo.Abp;
 using Volo.Abp.Identity;
 // System.Threading.Tasks.TaskStatus ile çakışıyor — domain enum'u kastediliyor.
 using TaskStatus = Apya.Platform.Tasks.TaskStatus;
@@ -153,48 +154,101 @@ public class ShellAppService : PlatformAppService, IShellAppService
     }
 
     /// <summary>
-    /// Sabit (parametresiz) sekme türleri. Beyaz liste, çünkü tür doğrudan
-    /// istemciden geliyor: tanınmayan bir tür saklanırsa konsol onu çizemez ve
-    /// kullanıcı kapatamadığı ölü bir sekmeyle kalır.
-    /// Pages/Tasks/index.js → VIEWS ile aynı adlar.
+    /// Sabit (parametresiz) sekme türleri — /Tasks ("tasks" scope'u). Beyaz
+    /// liste, çünkü tür doğrudan istemciden geliyor: tanınmayan bir tür
+    /// saklanırsa konsol onu çizemez ve kullanıcı kapatamadığı ölü bir sekmeyle
+    /// kalır. Pages/Tasks/index.js → VIEWS ile aynı adlar.
     /// </summary>
     private static readonly HashSet<string> BoardTabViewKinds =
         new(StringComparer.Ordinal) { "list", "kanban", "gantt", "calendar", "dashboard", "gallery" };
 
     /// <summary>
-    /// Sekme düzenini camelCase yazar. Bu ayarı C# YAZIYOR ama JavaScript
-    /// OKUYOR (/Tasks sayfası ham değeri sayfaya basıyor, index.js ayrıştırıyor)
-    /// — varsayılan PascalCase çıktıda istemci "Kind" alanını göremez, düzeni
-    /// tanınmaz sayıp varsayılana döner ve kullanıcının sekmeleri sessizce
-    /// kaybolur. SavedViews'ta bu sorun yok: onu yazan da okuyan da C#.
+    /// Proje detay konsolunun ("project:{id}" scope'u) çizebildiği türler.
+    /// Katalog panelleri (takvim, gösterge paneli…) proje yüzeyine açıldıkça
+    /// buraya da eklenmeli — ProjectDetails.cshtml sekmeleriyle aynı adlar.
     /// </summary>
-    private static readonly JsonSerializerOptions BoardTabsJson =
-        new() { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
+    private static readonly HashSet<string> ProjectBoardTabViewKinds =
+        new(StringComparer.Ordinal) { "list", "kanban", "gantt", "finance" };
 
-    public async Task<List<ShellBoardTabDto>> SetBoardTabsAsync(List<ShellBoardTabDto> tabs)
+    // JSON biçimi (camelCase gerekçesi dahil) ShellBoardTabsSetting'de — yazan
+    // (burası) ve okuyan (PageModel/View'lar) aynı yardımcının içinden geçer.
+    public async Task<List<ShellBoardTabDto>> SetBoardTabsAsync(SetShellBoardTabsInput input)
+    {
+        var scope = NormalizeBoardTabsScope(input?.Scope);
+        var cleaned = CleanBoardTabs(scope, input?.Tabs);
+
+        // Oku-değiştir-yaz: ayar TÜM yüzeylerin düzenlerini tek değerde tutar,
+        // yalnız istenen scope değişir — öbür yüzeylerin düzeni korunur.
+        var raw = await _settingManager.GetOrNullForCurrentUserAsync(PlatformSettings.Shell.BoardTabs);
+        var scopes = ShellBoardTabsSetting.Parse(raw);
+        scopes[scope] = cleaned;
+
+        await _settingManager.SetForCurrentUserAsync(
+            PlatformSettings.Shell.BoardTabs, ShellBoardTabsSetting.Serialize(scopes));
+
+        return cleaned;
+    }
+
+    /// <summary>
+    /// Scope anahtarını doğrular ve normalleştirir (proje GUID'i tek biçime
+    /// iner). Tanınmayan scope HATA: sessizce bir varsayılana düşmek başka
+    /// yüzeyin düzenini ezerdi.
+    /// </summary>
+    private static string NormalizeBoardTabsScope(string? scope)
+    {
+        scope = (scope ?? string.Empty).Trim();
+
+        if (scope == ShellBoardTabsSetting.TasksScope ||
+            scope == ShellBoardTabsSetting.TaskDetailScope)
+        {
+            return scope;
+        }
+
+        const string projectPrefix = "project:";
+        if (scope.StartsWith(projectPrefix, StringComparison.Ordinal) &&
+            Guid.TryParse(scope.Substring(projectPrefix.Length), out var projectId))
+        {
+            return ShellBoardTabsSetting.ProjectScope(projectId);
+        }
+
+        throw new BusinessException(PlatformDomainErrorCodes.ShellBoardTabsScopeInvalid);
+    }
+
+    private static List<ShellBoardTabDto> CleanBoardTabs(string scope, List<ShellBoardTabDto>? tabs)
     {
         var cleaned = new List<ShellBoardTabDto>();
         var seen = new HashSet<string>(StringComparer.Ordinal);
+        var isTasksScope = scope == ShellBoardTabsSetting.TasksScope;
 
         foreach (var tab in tabs ?? new List<ShellBoardTabDto>())
         {
             var kind = (tab?.Kind ?? string.Empty).Trim();
             var reference = (tab?.Ref ?? string.Empty).Trim();
 
-            if (BoardTabViewKinds.Contains(kind))
+            if (scope == ShellBoardTabsSetting.TaskDetailScope)
+            {
+                // Görev detayında "sekme" = özellik KODU (TaskFeatureRegistry).
+                // Kod listesi istemcide yaşıyor; burada kopyasını tutmayız —
+                // biçim denetimi yeter, atama doğrulamasını TaskAppService
+                // (AddFeatureAsync) zaten yapıyor. Tanınmayan kod çizilmez,
+                // sıradan sessizce düşer; ölü sekme riski yok.
+                if (!IsFeatureCode(kind)) { continue; }
+                reference = string.Empty;
+            }
+            else if ((isTasksScope ? BoardTabViewKinds : ProjectBoardTabViewKinds).Contains(kind))
             {
                 // Sabit görünüşün referansı OLMAZ; gelirse atılır (aksi halde
                 // aynı görünüş farklı referanslarla defalarca açılabilirdi).
                 reference = string.Empty;
             }
-            else if (kind == "project")
+            else if (isTasksScope && kind == "project")
             {
                 // Proje sekmesi bir GUID taşır. Doğrulamak "kötü değeri eleme"
                 // değil, sekmeyi çizilebilir tutma meselesi.
                 if (!Guid.TryParse(reference, out var projectId)) { continue; }
                 reference = projectId.ToString();
             }
-            else if (kind == "view")
+            else if (isTasksScope && kind == "view")
             {
                 // Kayıtlı görünüm ADI ile anılır (konsolun kendi listesi de adla
                 // çalışıyor). Adsız görünüm sekmesi hedefsizdir.
@@ -212,8 +266,9 @@ public class ShellAppService : PlatformAppService, IShellAppService
             {
                 Kind = kind,
                 Ref = reference,
-                // Sabit görünüşlerde başlık taşımıyoruz: etiketi localization verir.
-                Title = BoardTabViewKinds.Contains(kind)
+                // Yalnız parametreli sekmeler başlık taşır: sabit görünüşlerin
+                // etiketi localization'dan, özellik kodlarınınki registry'den gelir.
+                Title = reference.Length == 0
                     ? string.Empty
                     : Clip(tab!.Title, PlatformSettingDefaults.ShellBoardTabsTitleMax)
             });
@@ -221,10 +276,18 @@ public class ShellAppService : PlatformAppService, IShellAppService
             if (cleaned.Count >= PlatformSettingDefaults.ShellBoardTabsMax) { break; }
         }
 
-        await _settingManager.SetForCurrentUserAsync(
-            PlatformSettings.Shell.BoardTabs, JsonSerializer.Serialize(cleaned, BoardTabsJson));
-
         return cleaned;
+    }
+
+    /// <summary>Registry kodu biçimi: küçük harf/rakam/tire, 1-64 karakter ("subtask-table").</summary>
+    private static bool IsFeatureCode(string kind)
+    {
+        if (kind.Length is 0 or > 64) { return false; }
+        foreach (var c in kind)
+        {
+            if (c is not ((>= 'a' and <= 'z') or (>= '0' and <= '9') or '-')) { return false; }
+        }
+        return true;
     }
 
     public async Task<List<string>> SetPinsAsync(List<string> pins)

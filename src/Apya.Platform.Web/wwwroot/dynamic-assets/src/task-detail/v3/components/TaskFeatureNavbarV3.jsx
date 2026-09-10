@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { draggableActivation } from '../../../lib/dom/draggableActivation';
+import { FeatureAddMenuV3 } from './FeatureAddMenuV3';
 
 /**
  * Yatay sekme çubuğu (modal görünümü).
@@ -7,6 +8,7 @@ import { draggableActivation } from '../../../lib/dom/draggableActivation';
  * İki kullanıcı talebi burada karşılanır:
  *  1) "+" düğmesi SON SEKMENİN HEMEN SAĞINDA, çubuğun en sağında değil — yani yatay
  *     kaydırma alanının İÇİNDE. Hover'da genişleyip "Özellik ekle" yazısını açar.
+ *     Tıklama düz liste menüsünü açar (FeatureAddMenuV3 — modal picker kalktı).
  *  2) Sekmeler sürükle-bırak ile yeniden sıralanır; dragover'da CANLI yer değiştirir
  *     (ayrı bir drop göstergesi yok).
  */
@@ -19,7 +21,8 @@ export function TaskFeatureNavbarV3({
     onDragEnd,
     onReorderTo,
     onReorderDrop,
-    onOpenPicker,
+    pickerEntries = [],
+    onPickFeature,
     counts = {},
     isDirty = false,
 }) {
@@ -79,25 +82,29 @@ export function TaskFeatureNavbarV3({
 
                 {/* "+" — son sekmenin hemen sağında, kaydırma alanının içinde.
                     Genişleme padding üzerinden yapılır (width değil): metin belirirken
-                    düğme sağa doğru açılır, sekmeler yerinde kalır. */}
-                <button
-                    type="button"
-                    title="Özellik ekle"
-                    onClick={() => { setPlusHover(false); onOpenPicker(); }}
-                    onMouseEnter={() => setPlusHover(true)}
-                    onMouseLeave={() => setPlusHover(false)}
-                    className={[
-                        'flex shrink-0 items-center gap-[7px] h-[34px] ml-1 rounded-[10px]',
-                        'border border-dashed border-primary bg-primary-subtle text-primary',
-                        'text-[12.5px] font-bold whitespace-nowrap cursor-pointer',
-                        'hover:border-solid',
-                        'transition-[padding] duration-[160ms] ease-[cubic-bezier(.16,1,.3,1)]',
-                        plusHover ? 'px-[13px]' : 'px-[11px]',
-                    ].join(' ')}
-                >
-                    <i className="fa-solid fa-plus text-[11px]" />
-                    {plusHover && <span className="animate-fade-in-fast">Özellik ekle</span>}
-                </button>
+                    düğme sağa doğru açılır, sekmeler yerinde kalır. Menü Radix
+                    Popover ile portal edilir — kaydırma kabının overflow'u onu
+                    kırpamaz (TAB_CARD kırpma tuzağının bilinen çözümü). */}
+                <FeatureAddMenuV3 entries={pickerEntries} onPick={onPickFeature}>
+                    <button
+                        type="button"
+                        title="Özellik ekle"
+                        onClick={() => setPlusHover(false)}
+                        onMouseEnter={() => setPlusHover(true)}
+                        onMouseLeave={() => setPlusHover(false)}
+                        className={[
+                            'flex shrink-0 items-center gap-[7px] h-[34px] ml-1 rounded-[10px]',
+                            'border border-dashed border-primary bg-primary-subtle text-primary',
+                            'text-[12.5px] font-bold whitespace-nowrap cursor-pointer',
+                            'hover:border-solid',
+                            'transition-[padding] duration-[160ms] ease-[cubic-bezier(.16,1,.3,1)]',
+                            plusHover ? 'px-[13px]' : 'px-[11px]',
+                        ].join(' ')}
+                    >
+                        <i className="fa-solid fa-plus text-[11px]" />
+                        {plusHover && <span className="animate-fade-in-fast">Özellik ekle</span>}
+                    </button>
+                </FeatureAddMenuV3>
             </div>
 
             {isDirty && (

@@ -26,11 +26,18 @@ describe('TaskUnbuiltTabV3', () => {
         expect(onRemoveFeature).toHaveBeenCalledWith('automations');
     });
 
-    it('baska ozellik ekle dugmesi picker i acar', () => {
-        const onOpenPicker = vi.fn();
-        render(<TaskUnbuiltTabV3 code="approvals" onOpenPicker={onOpenPicker} />);
+    it('baska ozellik ekle dugmesi duz liste menusunu acar, secim onPickFeature i cagirir', () => {
+        const onPickFeature = vi.fn();
+        render(
+            <TaskUnbuiltTabV3
+                code="approvals"
+                pickerEntries={[{ code: 'checklist', title: 'Kontrol Listesi', icon: 'fa-square-check', isAssigned: false }]}
+                onPickFeature={onPickFeature}
+            />,
+        );
         fireEvent.click(screen.getByRole('button', { name: /başka özellik ekle/i }));
-        expect(onOpenPicker).toHaveBeenCalledTimes(1);
+        fireEvent.click(screen.getByRole('button', { name: /kontrol listesi/i }));
+        expect(onPickFeature).toHaveBeenCalledWith('checklist', false);
     });
 
     /** Core sekme kaldirilamaz — kaldir dugmesi hic basilmamali. */

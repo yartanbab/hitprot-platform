@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Authorization;
 using Apya.Platform.Permissions;
 using Apya.Platform.Settings;
+using Apya.Platform.Shell;
 using Volo.Abp.Settings;
 
 namespace Apya.Platform.Web.Pages.Tasks
@@ -35,8 +36,12 @@ namespace Apya.Platform.Web.Pages.Tasks
 
         public async Task OnGetAsync()
         {
-            BoardTabsJson = await _settingProvider.GetOrNullAsync(
-                PlatformSettings.Shell.BoardTabs) ?? string.Empty;
+            // Ayar tüm yüzeylerin düzenlerini tek değerde tutar; buraya yalnız
+            // /Tasks'ın ("tasks" scope'u) dizisi basılır. Eski düz-dizi değeri
+            // ExtractScopeJson geri-uyumla aynı scope'a sayar.
+            BoardTabsJson = ShellBoardTabsSetting.ExtractScopeJson(
+                await _settingProvider.GetOrNullAsync(PlatformSettings.Shell.BoardTabs),
+                ShellBoardTabsSetting.TasksScope);
         }
     }
 }

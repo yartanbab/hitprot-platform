@@ -473,29 +473,64 @@
 @* ─── GÖREV ALANI (kalan yüksekliğin tamamı) ─── *@
 <div class="card apya-console-main">
 
-    <div class="apya-console-tabs" role="tablist">
-        <button type="button" class="apya-console-tab active" id="btn-view-list"
-                role="tab" aria-selected="true" aria-controls="view-list">
-            <i class="fa fa-list" aria-hidden="true"></i>@L["Tasks:View:List"]
-        </button>
-        <button type="button" class="apya-console-tab" id="btn-view-kanban"
-                role="tab" aria-selected="false" aria-controls="view-kanban">
-            <i class="fa fa-table-columns" aria-hidden="true"></i>@L["Tasks:View:Kanban"]
-        </button>
-        <button type="button" class="apya-console-tab" id="btn-view-gantt"
-                role="tab" aria-selected="false" aria-controls="view-gantt"
-                title="Başlangıç-bitiş tarihlerinden türeyen zaman çizelgesi">
-            <i class="fa fa-clock" aria-hidden="true"></i>@L["Tasks:View:Gantt"]
-        </button>
-        @if (Model.Budget != null)
+    @* Sekme şeridi — /Tasks ile AYNI model (birleşik sekme sistemi; mekanizma
+       apya-task-console.js → createTabs). Liste · Kart Panosu · Finans SABİT
+       (kapatma düğmesi basılmaz, hep açık); Zaman Çizelgesi kapatılabilir ve
+       "＋" menüsünden geri açılır. Düzen kullanıcıya PROJE BAŞINA kaydedilir
+       (Shell.BoardTabs → "project:{id}" scope'u). Sabit görünüşler Razor'dan
+       basılır (etiket localization'dan), ilk çizimde d-none — sırayı ve
+       görünürlüğü ProjectDetails.js kurar (Tasks/Index ile aynı gerekçe). *@
+    @{
+        // (tür, ikon, etiket, ipucu, kapatılabilir mi)
+        var boardTabs = new[]
         {
-            @* Tasarım 2c: şerit ve diğer sekmeler AYNEN kalır, yalnız bu sekme eklenir. *@
-            <button type="button" class="apya-console-tab" id="btn-view-finance"
-                    role="tab" aria-selected="false" aria-controls="view-finance"
-                    title="Projenin bütçe ve harcama özeti">
-                <i class="fa fa-coins" aria-hidden="true"></i>Finans
+            ("list",   "fa fa-list",          L["Tasks:View:List"].Value,   "", false),
+            ("kanban", "fa fa-table-columns", L["Tasks:View:Kanban"].Value, "", false),
+            ("gantt",  "fa fa-clock",         L["Tasks:View:Gantt"].Value,  "Başlangıç-bitiş tarihlerinden türeyen zaman çizelgesi", true)
+        };
+    }
+    <div class="apya-console-tabs">
+        <div class="apya-console-tabstrip" role="tablist" id="console-tabs"
+             data-board-tabs="@Model.BoardTabsJson">
+            @foreach (var (kind, icon, label, hint, closable) in boardTabs)
+            {
+                <span class="apya-console-tab d-none" data-tab="@kind" title="@hint">
+                    <button type="button" class="apya-console-tab-main" id="btn-view-@kind"
+                            role="tab" aria-selected="false" aria-controls="view-@kind">
+                        <i class="@icon" aria-hidden="true"></i><span class="apya-console-tab-label">@label</span>
+                    </button>
+                    @if (closable)
+                    {
+                        <button type="button" class="apya-console-tab-close"
+                                aria-label="@label sekmesini kapat" title="Sekmeyi kapat">
+                            <i class="fa fa-xmark" aria-hidden="true"></i>
+                        </button>
+                    }
+                </span>
+            }
+            @if (Model.Budget != null)
+            {
+                @* Finans SABİT ama koşullu: bütçe yetkisi yoksa sekme hiç basılmaz
+                   (tasarım 2c davranışı korunuyor). *@
+                <span class="apya-console-tab d-none" data-tab="finance"
+                      title="Projenin bütçe ve harcama özeti">
+                    <button type="button" class="apya-console-tab-main" id="btn-view-finance"
+                            role="tab" aria-selected="false" aria-controls="view-finance">
+                        <i class="fa fa-coins" aria-hidden="true"></i><span class="apya-console-tab-label">Finans</span>
+                    </button>
+                </span>
+            }
+        </div>
+
+        <div class="dropdown apya-console-tabadd">
+            <button type="button" class="apya-console-tabadd-btn" id="btn-tab-add"
+                    data-bs-toggle="dropdown" aria-expanded="false"
+                    title="Pano ekle" aria-label="Pano ekle">
+                <i class="fa fa-plus" aria-hidden="true"></i>
             </button>
-        }
+            <div class="dropdown-menu apya-console-menu" id="tab-add-menu"></div>
+        </div>
+
         <span class="apya-console-count apya-numeric" id="console-task-count">@totalTasks görev</span>
     </div>
 

@@ -658,28 +658,17 @@ $(function () {
     });
 
     // ─── Pano sekmeleri ────────────────────────────────────────────────────
-    // Menüde artık tek "Panolar" yaprağı var (2026-09-06): hangi panoların
-    // açık duracağı BURADAN seçilir ve düzen kullanıcıya kaydedilir
-    // (PlatformSettings.Shell.BoardTabs).
+    // Şerit + "＋" menüsü + kalıcılık ORTAK modülde (apya-task-console.js →
+    // createTabs; ProjectDetails konsolu da aynısını kullanır). Burada yalnız
+    // bu yüzeye özgü olanlar var: görünüş kaydı (VIEWS), kayıtlı görünüm ve
+    // proje panosu sekmeleri, kanban kapsam senkronu.
     //
     // Sekme bir görünüş DEĞİL, görünüşün bir ÖRNEĞİdir: "kanban" tek sekmedir
     // ama "project" türünden aynı anda birkaç sekme açık olabilir — her biri
     // başka projenin panosu. Kimlik bu yüzden tür+referans çiftidir.
     var DEFAULT_TABS = [{ kind: 'list' }, { kind: 'kanban' }, { kind: 'calendar' }, { kind: 'gantt' }];
 
-    // Sunucudaki üst sınırla (PlatformSettingDefaults.ShellBoardTabsMax) aynı
-    // olmalı: burada durdurmazsak kullanıcı 20 sekme açar, sunucu 16'sını
-    // saklar ve yenilemede dördü sessizce kaybolur.
-    var MAX_TABS = 16;
-
-    var tabs = readInitialTabs();
-    var activeTabId = null;
     var projectLookup = [];   // "＋" menüsündeki proje panoları (aşağıda dolar)
-
-    function tabId(t) { return t.ref ? t.kind + ':' + t.ref : t.kind; }
-    function findTab(id) {
-        return tabs.filter(function (t) { return tabId(t) === id; })[0] || null;
-    }
 
     // Sekmenin kullandığı PANEL. Proje panosunun kendi paneli yok, kanban
     // panelini kullanır: tek kanban örneği projeye yeniden kapsanır
@@ -695,215 +684,35 @@ $(function () {
         return VIEWS[t.kind] ? t.kind : 'list';
     }
 
-    function readInitialTabs() {
-        // Düzen sayfayla birlikte geldi (Index.cshtml.cs → BoardTabsJson).
-        // BOŞ = kullanıcı hiç dokunmamış → varsayılan dört sekme.
-        var raw = $('#console-tabs').attr('data-board-tabs');
-        var parsed = [];
-        try { parsed = raw ? JSON.parse(raw) : []; } catch (e) { parsed = []; }
-        var clean = (Array.isArray(parsed) ? parsed : []).filter(function (t) {
-            return t && (VIEWS[t.kind] || t.kind === 'view' || t.kind === 'project');
-        });
-        return clean.length ? clean : DEFAULT_TABS.slice();
-    }
-
-    function persistTabs() {
-        // Sunucuya yaz — başarısız olursa SESSİZCE yut: sekme düzeni kritik
-        // değil, kullanıcıya hata kutusu göstermek işi bölerdi (kabuk
-        // sabitlemeleriyle aynı gerekçe, apya-sidebar-shell.js → savePins).
-        // Bir sonraki yüklemede sunucudaki hâl geri gelir.
-        var token = (document.cookie.match(/XSRF-TOKEN=([^;]+)/) || [])[1];
-        fetch('/api/app/shell/set-board-tabs', {
-            method: 'POST',
-            credentials: 'same-origin',
-            headers: {
-                'Content-Type': 'application/json',
-                'RequestVerificationToken': token ? decodeURIComponent(token) : ''
-            },
-            body: JSON.stringify(tabs.map(function (t) {
-                return { kind: t.kind, ref: t.ref || '', title: t.title || '' };
-            }))
-        }).catch(function () { /* yoksay */ });
-    }
+    var tabsApi = console_.createTabs({
+        scope: 'tasks',
+        strip: '#console-tabs',
+        menu: '#tab-add-menu',
+        addButton: '#btn-tab-add',
+        // Sunucudaki üst sınırla (PlatformSettingDefaults.ShellBoardTabsMax) aynı
+        // olmalı: burada durdurmazsak kullanıcı 20 sekme açar, sunucu 16'sını
+        // saklar ve yenilemede dördü sessizce kaybolur.
+        maxTabs: 16,
+        defaultTabs: DEFAULT_TABS,
+        isValidTab: function (t) {
+            return !!(VIEWS[t.kind] || t.kind === 'view' || t.kind === 'project');
+        },
+        dynamicIcon: function (t) {
+            return t.kind === 'project' ? 'fa fa-diagram-project' : 'fa fa-bookmark';
+        },
+        onActivate: onTabActivate,
+        populateMenu: populateAddMenu
+    });
 
     // Kanban'ın KAPSAMI iki yerden gelebilir: proje panosu sekmesi (sekmenin
     // kendi projesi) ya da proje süzgeci (genel panoda). SEKME KAZANIR — proje
     // panosuna bakarken süzgeci değiştirmek panoyu başka projeye kaydırmamalı.
     function syncKanbanScope() {
-        var t = findTab(activeTabId);
+        var t = tabsApi.findTab(tabsApi.activeId());
         kb.setProject(t && t.kind === 'project' ? t.ref : (state.get('project') || null));
     }
 
-    function buildDynamicTab(t) {
-        var el = document.createElement('span');
-        el.className = 'apya-console-tab';
-        el.setAttribute('data-tab', tabId(t));
-        el.setAttribute('data-tab-dynamic', '1');
-        el.title = t.title || '';
-
-        var main = document.createElement('button');
-        main.type = 'button';
-        main.className = 'apya-console-tab-main';
-        main.setAttribute('role', 'tab');
-        main.setAttribute('aria-selected', 'false');
-        var icon = document.createElement('i');
-        icon.className = t.kind === 'project' ? 'fa fa-diagram-project' : 'fa fa-bookmark';
-        icon.setAttribute('aria-hidden', 'true');
-        main.appendChild(icon);
-        // Başlık PROJE ADI / GÖRÜNÜM ADI — kullanıcı girdisi. textContent ile
-        // basılır, innerHTML ile değil. Kendi span'inde duruyor çünkü dar
-        // yerlerde (mobil alt bar) kırpılması gerekiyor ve çıplak metin
-        // düğümüne text-overflow uygulanamaz.
-        var label = document.createElement('span');
-        label.className = 'apya-console-tab-label';
-        label.textContent = t.title || '';
-        main.appendChild(label);
-        el.appendChild(main);
-
-        var close = document.createElement('button');
-        close.type = 'button';
-        close.className = 'apya-console-tab-close';
-        close.title = 'Sekmeyi kapat';
-        close.setAttribute('aria-label', (t.title || 'Sekme') + ' sekmesini kapat');
-        close.innerHTML = '<i class="fa fa-xmark" aria-hidden="true"></i>';
-        el.appendChild(close);
-        return el;
-    }
-
-    function renderTabs() {
-        var strip = document.getElementById('console-tabs');
-
-        // Sabit sekmeler DOM'da KALIR, yalnız gizlenir: panelleri ve
-        // yükleyicileri zaten kurulu, geri açmak tek sınıf değişimi olsun.
-        $(strip).children('.apya-console-tab').addClass('d-none');
-        $(strip).children('[data-tab-dynamic]').remove();
-
-        // Sıra kullanıcının: her sekme yeniden SONA eklenir, böylece DOM
-        // sırası `tabs` dizisiyle birebir olur.
-        tabs.forEach(function (t) {
-            var el = t.ref
-                ? buildDynamicTab(t)
-                : strip.querySelector(':scope > [data-tab="' + t.kind + '"]');
-            if (!el) { return; }
-            el.classList.remove('d-none');
-            // Son sekme kapatılamaz: sekmesiz konsol hiçbir şey göstermez.
-            el.classList.toggle('is-only', tabs.length === 1);
-            strip.appendChild(el);
-        });
-
-        syncActiveTab();
-        renderAddMenu();
-    }
-
-    function syncActiveTab() {
-        var $all = $('#console-tabs').children('.apya-console-tab');
-        $all.removeClass('active').find('.apya-console-tab-main').attr('aria-selected', 'false');
-        $all.filter('[data-tab="' + activeTabId + '"]')
-            .addClass('active').find('.apya-console-tab-main').attr('aria-selected', 'true');
-    }
-
-    // "＋ Pano ekle" — üç kaynak: kapatılmış sabit panolar, kayıtlı görünümler
-    // ve proje panoları. AÇIK olanlar listelenmez; menü "ne ekleyebilirim"
-    // sorusunu yanıtlar, açık sekmeleri tekrarlamaz.
-    function renderAddMenu() {
-        var $menu = $('#tab-add-menu').empty();
-        var open = {};
-        tabs.forEach(function (t) { open[tabId(t)] = true; });
-
-        function section(title) {
-            $menu.append($('<div class="apya-console-menu-head is-divided">').text(title));
-        }
-        function row(icon, label, onPick) {
-            $('<button type="button" class="apya-console-menu-item">')
-                .append($('<span class="apya-console-menu-icon">')
-                    .append($('<i aria-hidden="true">').attr('class', icon)))
-                .append($('<span>').text(label))
-                .on('click', onPick)
-                .appendTo($menu);
-        }
-
-        // Kapalı sabit panoların etiketi/ikonu DOM'dan okunur: ikinci bir
-        // Türkçe kopya tutmayalım, adlandırma Razor'da tek kaynak kalsın.
-        var closed = [];
-        $('#console-tabs').children('.apya-console-tab:not([data-tab-dynamic])').each(function () {
-            var kind = this.getAttribute('data-tab');
-            if (open[kind]) { return; }
-            closed.push({
-                kind: kind,
-                label: $(this).find('.apya-console-tab-main').text().trim(),
-                icon: $(this).find('.apya-console-tab-main i').attr('class') || 'fa fa-table-columns'
-            });
-        });
-        if (closed.length) {
-            section('Panolar');
-            closed.forEach(function (c) {
-                row(c.icon, c.label, function () { openTab({ kind: c.kind }); });
-            });
-        }
-
-        var views = (savedViews ? savedViews.read() : []).filter(function (v) {
-            return !open['view:' + v.name];
-        });
-        if (views.length) {
-            section('Kaydedilmiş görünümler');
-            views.forEach(function (v) {
-                row('fa fa-bookmark', v.name, function () {
-                    openTab({ kind: 'view', ref: v.name, title: v.name });
-                });
-            });
-        }
-
-        var projects = projectLookup.filter(function (p) { return !open['project:' + p.id]; });
-        if (projects.length) {
-            section('Proje panoları');
-            projects.forEach(function (p) {
-                row('fa fa-diagram-project', p.name, function () {
-                    openTab({ kind: 'project', ref: p.id, title: p.name });
-                });
-            });
-        }
-
-        if (!$menu.children().length) {
-            $menu.append($('<div class="apya-console-menu-hint px-3 py-2">')
-                .text('Eklenecek başka pano yok.'));
-        }
-    }
-
-    function openTab(t) {
-        if (!findTab(tabId(t))) {
-            if (tabs.length >= MAX_TABS) {
-                abp.notify.warn('En fazla ' + MAX_TABS + ' pano açık olabilir. Önce bir sekme kapatın.');
-                return;
-            }
-            tabs.push(t);
-            renderTabs();
-            persistTabs();
-        }
-        activateTab(tabId(t));
-    }
-
-    function closeTab(id) {
-        if (tabs.length <= 1) { return; }
-        var i = -1;
-        tabs.forEach(function (t, ix) { if (tabId(t) === id) { i = ix; } });
-        if (i < 0) { return; }
-
-        tabs.splice(i, 1);
-        renderTabs();
-        persistTabs();
-
-        // Kapatılan sekme AKTİFSE komşusuna geçilir; değilse bakılan pano
-        // yerinde kalsın — kapatma bir gezinme değil.
-        if (activeTabId === id) {
-            activateTab(tabId(tabs[Math.min(i, tabs.length - 1)]));
-        }
-    }
-
-    function activateTab(id) {
-        var t = findTab(id);
-        if (!t) { return; }
-        activeTabId = id;
-        syncActiveTab();
+    function onTabActivate(t, id) {
         // Parametreli sekmeler ?view= ile anlatılamaz (hangi proje?) → ?tab=.
         // Düz panolarda silinir; onları ?view= zaten tarif ediyor.
         state.writeUrl({ tab: t.ref ? id : '' });
@@ -914,6 +723,33 @@ $(function () {
         var mode = tabMode(t);
         switchView(mode);
         if (VIEWS[mode] && VIEWS[mode].load) { VIEWS[mode].load(); }
+    }
+
+    // "＋" menüsünün bu yüzeye özgü bölümleri — kapalı sabit panoları ("Panolar")
+    // modül kendisi basar; buraya kayıtlı görünümler (localStorage) ve proje
+    // panoları (lookup) eklenir. AÇIK olanları ctx.open süzer.
+    function populateAddMenu(ctx) {
+        var views = (savedViews ? savedViews.read() : []).filter(function (v) {
+            return !ctx.open['view:' + v.name];
+        });
+        if (views.length) {
+            ctx.section('Kaydedilmiş görünümler');
+            views.forEach(function (v) {
+                ctx.row('fa fa-bookmark', v.name, function () {
+                    ctx.openTab({ kind: 'view', ref: v.name, title: v.name });
+                });
+            });
+        }
+
+        var projects = projectLookup.filter(function (p) { return !ctx.open['project:' + p.id]; });
+        if (projects.length) {
+            ctx.section('Proje panoları');
+            projects.forEach(function (p) {
+                ctx.row('fa fa-diagram-project', p.name, function () {
+                    ctx.openTab({ kind: 'project', ref: p.id, title: p.name });
+                });
+            });
+        }
     }
 
     function applyViewTab(t) {
@@ -929,14 +765,7 @@ $(function () {
         applySavedView(v);
     }
 
-    $('#console-tabs')
-        .on('click', '.apya-console-tab-main', function () {
-            activateTab($(this).closest('.apya-console-tab').attr('data-tab'));
-        })
-        .on('click', '.apya-console-tab-close', function (e) {
-            e.stopPropagation();
-            closeTab($(this).closest('.apya-console-tab').attr('data-tab'));
-        });
+    // Şerit tıklamaları (etkinleştir/kapat) modülün kendi delegasyonunda.
 
     // Kaydedilmemiş Gantt sürüklemesi varken sayfadan ayrılma uyarısı (konsoldaki gibi).
     $(window).on('beforeunload', function () {
@@ -957,15 +786,10 @@ $(function () {
         // sekmede olduğumuzu bilmiyor: gösterilen panelin sekmesi kapalıysa
         // açılır, açıksa yalnız işaretlenir. Aksi halde kanban görünürken
         // şeritte "Görevler" vurgulu kalırdı.
-        var active = findTab(activeTabId);
+        var active = tabsApi.findTab(tabsApi.activeId());
         if (!active || tabMode(active) !== currentView) {
-            if (!findTab(currentView)) {
-                tabs.push({ kind: currentView });
-                renderTabs();
-                persistTabs();
-            }
-            activeTabId = currentView;
-            syncActiveTab();
+            tabsApi.ensure({ kind: currentView });
+            tabsApi.markActive(currentView);
         }
 
         // Filtre çubuğu her görünümde geçerli; yalnız kolon seçici listeye özel.
@@ -1068,11 +892,7 @@ $(function () {
         onApply: applySavedView
     });
 
-    // Menü HER AÇILIŞTA yeniden çizilir: kayıtlı görünüm listesi bu sayfada
-    // (kebap menüsünden) değişebiliyor ve değişimin ne zaman biteceği belli
-    // değil — kaydetme bir SweetAlert diyaloğunun ardından tamamlanıyor.
-    // Açılışta çizmek tek güvenilir an.
-    $('#btn-tab-add').on('show.bs.dropdown', renderAddMenu);
+    // "＋" menüsünün her açılışta yeniden çizilmesi modülde (createTabs).
 
     // ─── Klavye kısayolları ────────────────────────────────────────────────
     var shortcuts = console_.bindShortcuts({
@@ -1084,10 +904,10 @@ $(function () {
         canBulk: canBulk,
         canChangeStatus: canChangeStatus,
         getView: function () { return currentView; },
-        // Kısayol kapalı bir panoya götürebilir; openTab yoksa açar, varsa
+        // Kısayol kapalı bir panoya götürebilir; open yoksa açar, varsa
         // yalnız etkinleştirir. Düz switchView paneli açardı ama sekme şeridi
         // onu göstermezdi — kullanıcı nerede olduğunu göremezdi.
-        switchView: function (mode) { openTab({ kind: mode }); },
+        switchView: function (mode) { tabsApi.open({ kind: mode }); },
         openTask: function (id) { editModal.open(id); },
         onStatusKey: function (id, status) {
             taskService.updateStatus(id, status).then(function () {
@@ -1133,20 +953,20 @@ $(function () {
     //
     // BURADA duruyor çünkü yükleyiciler kb/gantt/calendar/... kapanış
     // değişkenlerine bakıyor; hepsi ancak bu noktada kurulmuş olur.
-    renderTabs();
+    tabsApi.render();
 
     var qs = new URLSearchParams(window.location.search);
     var wanted = qs.get('tab') || qs.get('view') || '';
 
-    if (findTab(wanted)) {
-        activateTab(wanted);
+    if (tabsApi.findTab(wanted)) {
+        tabsApi.activate(wanted);
     } else if (VIEWS[wanted]) {
         // Derin bağlantı KAPALI bir panoya işaret ediyor (kullanıcı o sekmeyi
         // kapatmış). Panoyu açıyoruz: bağlantı sessizce listeye düşseydi
         // kullanıcı istediğinden başka ekrana bakardı.
-        openTab({ kind: wanted });
+        tabsApi.open({ kind: wanted });
     } else {
-        activateTab(tabId(tabs[0]));
+        tabsApi.activate(tabsApi.firstId());
     }
 
     // ─── İlk render ────────────────────────────────────────────────────────

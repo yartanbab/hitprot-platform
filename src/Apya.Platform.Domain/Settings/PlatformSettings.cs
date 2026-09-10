@@ -130,12 +130,14 @@ public static class PlatformSettings
         public const string MenuLayout = Prefix + ".Shell.MenuLayout";
 
         /// <summary>
-        /// Panolar konsolunun (/Tasks) AÇIK SEKMELERİ — JSON dizi:
-        /// <c>[{"k":"list"},{"k":"project","r":"&lt;guid&gt;","t":"Apya Web"}]</c>
-        /// Menü artık tek "Panolar" yaprağı; hangi görünüşlerin açık duracağı
-        /// kullanıcının kararı, o yüzden düzen kullanıcıda saklanır.
+        /// Konsolların AÇIK SEKMELERİ — yüzey (scope) başına JSON sözlük:
+        /// <c>{"tasks":[{"kind":"list"}...],"project:&lt;guid&gt;":[...],"taskdetail":[...]}</c>
+        /// Scope'lar: "tasks" (/Tasks), "project:{id}" (proje detay konsolu),
+        /// "taskdetail" (görev detayının sekme sırası). Eski düz-dizi değer
+        /// "tasks" scope'u sayılır; biçimin tek kaynağı ShellBoardTabsSetting
+        /// (Application.Contracts/Shell).
         ///
-        /// BOŞ değer "kullanıcı hiç dokunmadı" demektir; varsayılan dört sekmeyi
+        /// BOŞ scope "kullanıcı hiç dokunmadı" demektir; varsayılan sekmeleri
         /// istemci kurar (Pages/Tasks/index.js → DEFAULT_TABS). Varsayılanı
         /// buraya da yazsaydık liste iki yerde durur ve ayrışırdı.
         ///

@@ -5,8 +5,15 @@
 @inject Volo.Abp.Settings.ISettingProvider SettingProvider
 @{
     var taskUi = await SettingProvider.GetOrNullAsync(Apya.Platform.Settings.PlatformSettings.TaskDetail.Ui) ?? "v2";
+
+    // Sekme SIRASI ("taskdetail" scope'u) island'a sayfayla gelir — ayrı GET
+    // ucu yok (Shell.BoardTabs okuma kararı: IShellAppService notu). BOŞ =
+    // kullanıcı sırayı hiç değiştirmemiş → registry sırası kullanılır.
+    var tabOrder = Apya.Platform.Shell.ShellBoardTabsSetting.ExtractScopeJson(
+        await SettingProvider.GetOrNullAsync(Apya.Platform.Settings.PlatformSettings.Shell.BoardTabs),
+        Apya.Platform.Shell.ShellBoardTabsSetting.TaskDetailScope);
 }
-<div id="task-detail-island" data-taskui="@taskUi"></div>
+<div id="task-detail-island" data-taskui="@taskUi" data-tab-order="@tabOrder"></div>
 
 @* Kuyruk köprüsü: jQuery script'leri (index.js vb.) ES module yüklenmeden önce
    window.apya.taskDetail.open(id) çağırırsa bu fonksiyon ID'yi kuyruğa alır.

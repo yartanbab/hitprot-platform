@@ -639,13 +639,38 @@ $(function () {
     // sunucu tarafında da doğrulanarak yapılıyor.
 
     // --- 5. Görünüm sekmeleri ---
+    // Şerit + "＋" menüsü + kalıcılık ORTAK modülde (apya-task-console.js →
+    // createTabs; /Tasks ile aynı birleşik sekme modeli). Liste · Kart Panosu ·
+    // Finans SABİTTİR (Razor kapatma düğmesi basmaz), Zaman Çizelgesi
+    // kapatılabilir; düzen kullanıcıya PROJE BAŞINA sunucuda saklanır.
+    var FIXED_TABS = ['list', 'kanban'];
+    if ($('#btn-view-finance').length) { FIXED_TABS.push('finance'); }
+
+    var tabsApi = console_.createTabs({
+        scope: 'project:' + projectId,
+        strip: '#console-tabs',
+        menu: '#tab-add-menu',
+        addButton: '#btn-tab-add',
+        // Sunucudaki üst sınırla (PlatformSettingDefaults.ShellBoardTabsMax) aynı.
+        maxTabs: 16,
+        // Sabitler önce (Liste · Kart Panosu · Finans), sonra Zaman Çizelgesi.
+        defaultTabs: FIXED_TABS.map(function (k) { return { kind: k }; }).concat([{ kind: 'gantt' }]),
+        requiredTabs: FIXED_TABS,
+        // Bu yüzeyde parametreli sekme yok; geçerli sekme = Razor'ın bastığı
+        // sekme. Finans yetkiye bağlı hiç basılmamış olabilir — kayıtlı
+        // düzendeki izi burada elenir, panel açılmaya çalışılmaz.
+        isValidTab: function (t) {
+            return !t.ref && !!document.querySelector('#console-tabs > [data-tab="' + t.kind + '"]');
+        },
+        onActivate: function (t) { switchView(t.kind); }
+    });
+
     // Bootstrap tab yerine .view-panel + .d-none deseni (Tasks/Index ile aynı):
     // tam yükseklik flex zinciri `.view-panel:not(.d-none)` seçicisine dayanıyor,
     // .tab-pane'in kendi display/opacity yönetimi zinciri koparıyordu.
     function switchView(mode) {
         currentView = (mode === 'kanban' || mode === 'gantt' || mode === 'finance') ? mode : 'list';
         $('.apya-console-views > .view-panel').addClass('d-none');
-        $('.apya-console-tab').removeClass('active').attr('aria-selected', 'false');
 
         // Görev filtreleri finans panelinde hiçbir şeyi süzmez; şerit gizlenir.
         $('#console-filters').toggleClass('d-none', currentView === 'finance');
@@ -653,21 +678,28 @@ $(function () {
         if (currentView === 'finance') {
             // Panel sunucuda basıldı; yüklenecek bir şey yok.
             $('#view-finance').removeClass('d-none');
-            $('#btn-view-finance').addClass('active').attr('aria-selected', 'true');
         } else if (currentView === 'gantt') {
             $('#view-gantt').removeClass('d-none');
-            $('#btn-view-gantt').addClass('active').attr('aria-selected', 'true');
             gantt.load();
         } else if (currentView === 'kanban') {
             $('#view-kanban').removeClass('d-none');
-            $('#btn-view-kanban').addClass('active').attr('aria-selected', 'true');
             kb.load();
         } else {
             $('#view-list').removeClass('d-none');
-            $('#btn-view-list').addClass('active').attr('aria-selected', 'true');
             // Gizliyken yeniden çizilen tablo kolon genişliklerini 0 ölçer.
             if (dataTable) { dataTable.columns.adjust(); }
         }
+
+        // Şerit ile panel ayrışmasın: buraya sekme tıklaması DIŞINDAN da
+        // geliniyor (kayıtlı görünüm uygulama, klavye kısayolu) ve o yollar
+        // hangi sekmede olduğumuzu bilmiyor. Panelin sekmesi kapalıysa açılır,
+        // açıksa yalnız işaretlenir (Tasks/index.js ile aynı onarım).
+        var active = tabsApi.findTab(tabsApi.activeId());
+        if (!active || active.kind !== currentView) {
+            tabsApi.ensure({ kind: currentView });
+            tabsApi.markActive(currentView);
+        }
+
         writeStateToUrl();
     }
 
@@ -849,10 +881,8 @@ $(function () {
         });
     }
 
-    $('#btn-view-list').click(function () { switchView('list'); });
-    $('#btn-view-kanban').click(function () { switchView('kanban'); });
-    $('#btn-view-gantt').click(function () { switchView('gantt'); });
-    $('#btn-view-finance').click(function () { switchView('finance'); });
+    // Sekme tıklamaları (etkinleştir/kapat) ortak modülün delegasyonunda
+    // (createTabs → onActivate → switchView).
 
     // Kaydedilmemiş Gantt sürüklemesi varken sayfadan ayrılma uyarısı (handoff).
     $(window).on('beforeunload', function () {
@@ -908,9 +938,10 @@ $(function () {
         applyFilters();
     });
 
-    // Başlangıç: URL'den okunan state'i arayüze bas ve görünümü aç.
+    // Başlangıç: URL'den okunan state'i arayüze bas, şeridi kur ve görünümü aç.
     renderFilterUi();
-    switchView(currentView);
+    tabsApi.render();
+    tabsApi.activate(currentView);
 
     // ================================================================
     // KOLON SEÇİCİ — localStorage `apya.project.columns`
@@ -997,7 +1028,9 @@ $(function () {
         canBulk: canBulk,
         canChangeStatus: canChangeStatus,
         getView: function () { return currentView; },
-        switchView: switchView,
+        // Kısayol kapalı bir panoya götürebilir (Zaman Çizelgesi); open yoksa
+        // açar, varsa yalnız etkinleştirir — Tasks/index.js ile aynı davranış.
+        switchView: function (mode) { tabsApi.open({ kind: mode }); },
         openTask: function (id) { editModal.open(id); },
         onStatusKey: function (id, status) {
             taskService.updateStatus(id, status).then(function () {

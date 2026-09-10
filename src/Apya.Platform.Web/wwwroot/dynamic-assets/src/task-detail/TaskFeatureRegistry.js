@@ -23,22 +23,31 @@ import { TimeTrackingTabV3 } from './v3/features/OtherFeaturesTabV3';
 /**
  * Görev detayının sekme/özellik kayıt defteri (V3). Sayı sık değiştiği için
  * burada yazılmaz — tek doğruluk kaynağı dizinin kendisi.
+ *
+ * `surfaces`: modülün hangi yüzeylerde panel olarak açılabildiği (birleşik
+ * sekme sistemi) — 'task' (görev detayı) · 'project' (proje detay konsolu) ·
+ * 'tasks' (/Tasks çapraz-proje). Alansız kayıt yalnız 'task' sayılır. PR-1'de
+ * yalnız VERİ: proje//Tasks katalog menüleri bu alanı PR-2'de okuyacak.
+ * Kaynak: design_handoff_sekme_esitleme (wireframe 2a-2i kapsam çipleri).
  */
 export const TASK_FEATURE_REGISTRY = [
     {
         code: 'general', title: 'Genel', icon: 'fa-circle-info',
         category: 'gorev', isCore: true, order: 0, permission: null,
         implemented: true, component: null,
+        surfaces: ['task'],
     },
     {
         code: 'subtasks', title: 'Alt Görevler', icon: 'fa-list-check',
         category: 'gorev', isCore: true, order: 1, permission: null,
         implemented: true, component: SubtasksTab,
+        surfaces: ['task'],
     },
     {
         code: 'files', title: 'Dosyalar', icon: 'fa-paperclip',
         category: 'gorev', isCore: true, order: 2, permission: null,
         implemented: true, component: FilesTab,
+        surfaces: ['task'],
     },
     {
         // Alt görevlerin tablo/kanban görünümleri ve tarih takvimi — üçü de
@@ -46,41 +55,51 @@ export const TASK_FEATURE_REGISTRY = [
         code: 'subtask-table', title: 'Tablo', icon: 'fa-table',
         category: 'gorev', isCore: false, order: 6, permission: null,
         implemented: true, component: SubtaskTableTabV3,
+        surfaces: ['task'],
     },
     {
         code: 'subtask-board', title: 'Kanban', icon: 'fa-table-columns',
         category: 'gorev', isCore: false, order: 7, permission: null,
         implemented: true, component: SubtaskBoardTabV3,
+        surfaces: ['task'],
     },
     {
         code: 'calendar', title: 'Takvim', icon: 'fa-calendar-days',
         category: 'gorev', isCore: false, order: 8, permission: null,
         implemented: true, component: TaskCalendarTabV3,
+        surfaces: ['task', 'project', 'tasks'],
     },
     {
         code: 'checklist', title: 'Kontrol Listesi', icon: 'fa-square-check',
         category: 'gorev', isCore: false, order: 10, permission: null,
         implemented: true, component: ChecklistTabV3,
+        surfaces: ['task', 'project'],
     },
     {
         code: 'gantt', title: 'Gantt', icon: 'fa-bars-staggered',
         category: 'gorev', isCore: false, order: 11, permission: null,
         implemented: true, component: GanttTabV3,
+        surfaces: ['task', 'project', 'tasks'],
     },
     {
         code: 'dependencies', title: 'Bağımlılıklar', icon: 'fa-link',
         category: 'gorev', isCore: false, order: 12, permission: null,
         implemented: true, component: DependenciesTabV3,
+        surfaces: ['task', 'project'],
     },
     {
         code: 'finance', title: 'Finans', icon: 'fa-coins',
         category: 'finans', isCore: false, order: 13, permission: null,
         implemented: true, component: FinanceTab,
+        // Proje ve /Tasks yüzeylerinde Finans katalog modülü değil SABİT sekme
+        // (bütçe kapılı) — o yüzden yalnız 'task'.
+        surfaces: ['task'],
     },
     {
         code: 'history', title: 'Geçmiş', icon: 'fa-clock-rotate-left',
         category: 'gecmis', isCore: false, order: 14, permission: null,
         implemented: true, component: HistoryTabV3,
+        surfaces: ['task', 'project'],
     },
     {
         code: 'activity', title: 'Aktiviteler', icon: 'fa-timeline',
@@ -102,6 +121,7 @@ export const TASK_FEATURE_REGISTRY = [
         category: 'iletisim', isCore: false, order: 25,
         permission: 'Platform.Tasks.ShareExternally',
         implemented: true, component: SharingTab,
+        surfaces: ['task'],
     },
     {
         code: 'risks', title: 'Riskler', icon: 'fa-triangle-exclamation',
@@ -121,12 +141,16 @@ export const TASK_FEATURE_REGISTRY = [
         code: 'time-tracking', title: 'Zaman Takibi', icon: 'fa-stopwatch',
         category: 'gorev', isCore: false, order: 23, permission: null,
         implemented: true, component: TimeTrackingTabV3,
+        surfaces: ['task'],
     },
     {
         code: 'dashboard', title: 'Gösterge Paneli', icon: 'fa-chart-pie',
         category: 'gorev', isCore: false, order: 24, permission: null,
         implemented: true, component: null,
         hidden: true, // GİZLİ (2026-09-03) — bkz. dosya sonundaki not
+        // `hidden` yalnız GÖREV DETAYI yüzeyini kapatır; /Tasks'ta Gösterge
+        // Paneli sabit pano olarak zaten var, proje yüzeyi PR-2'de açılacak.
+        surfaces: ['project', 'tasks'],
     },
     {
         code: 'ai', title: 'Yapay Zeka', icon: 'fa-sparkles',
@@ -160,6 +184,7 @@ export const TASK_FEATURE_REGISTRY = [
         code: 'documents', title: 'Belge', icon: 'fa-file-lines',
         category: 'gorev', isCore: false, order: 9, permission: null,
         implemented: true, component: DocumentsTabV3,
+        surfaces: ['task', 'project'],
     },
     {
         // Form KOPYALANMAZ: Form Yönetimi'ndeki bir AppDocument'e bağ kurulur.
@@ -167,11 +192,13 @@ export const TASK_FEATURE_REGISTRY = [
         code: 'forms', title: 'Form', icon: 'fa-clipboard-list',
         category: 'gorev', isCore: false, order: 9.5, permission: null,
         implemented: true, component: FormsTabV3,
+        surfaces: ['task', 'project'],
     },
     {
         code: 'gallery', title: 'Dosya Galerisi', icon: 'fa-image',
         category: 'finans', isCore: false, order: 34, permission: null,
         implemented: true, component: GalleryTabV3,
+        surfaces: ['task', 'project', 'tasks'],
     },
 ];
 

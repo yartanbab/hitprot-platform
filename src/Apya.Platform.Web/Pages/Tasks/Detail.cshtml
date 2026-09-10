@@ -5,9 +5,15 @@
 @using Apya.Platform.Permissions
 @using Apya.Platform.Web.Pages.Tasks
 @inject IHtmlLocalizer<PlatformResource> L
+@inject Volo.Abp.Settings.ISettingProvider SettingProvider
 @model DetailModel
 @{
     ViewBag.Title = Model.Task?.Title ?? "Görev Detayı";
+
+    // Sekme sırası — _TaskDetailIsland.cshtml ile aynı mekanizma (taskdetail scope'u).
+    var tabOrder = Apya.Platform.Shell.ShellBoardTabsSetting.ExtractScopeJson(
+        await SettingProvider.GetOrNullAsync(Apya.Platform.Settings.PlatformSettings.Shell.BoardTabs),
+        Apya.Platform.Shell.ShellBoardTabsSetting.TaskDetailScope);
 }
 
 @* Tailwind island stylesheet (js/style.css) *@
@@ -16,7 +22,7 @@
 
 <div data-page-description="Görev detayları" class="apya-page max-w-7xl mx-auto py-4 px-4">
     @* Embedded React Island Mount Point *@
-    <div id="task-detail-page-island" data-task-id="@Model.Id"></div>
+    <div id="task-detail-page-island" data-task-id="@Model.Id" data-tab-order="@tabOrder"></div>
 </div>
 
 @section styles {

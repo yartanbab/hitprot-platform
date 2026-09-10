@@ -9,10 +9,9 @@ import { TaskSidePanelV3 } from './components/TaskSidePanelV3';
 import { TaskGeneralTabV3 } from './components/TaskGeneralTabV3';
 import { TaskDetailFooterV3 } from './components/TaskDetailFooterV3';
 import { TaskUnbuiltTabV3 } from './components/TaskUnbuiltTabV3';
-import { FeaturePickerV3 } from './components/FeaturePickerV3';
 import { TaskTransferDialogV3 } from './components/TaskTransferDialogV3';
 import { SubtaskSheetV3 } from './components/SubtaskSheetV3';
-import { getVisibleTabs, TASK_FEATURE_REGISTRY } from '../TaskFeatureRegistry';
+import { getPickerEntries, getVisibleTabs, TASK_FEATURE_REGISTRY } from '../TaskFeatureRegistry';
 import { isUnbuilt } from './featureCatalogV3';
 import { useTabOrder } from './hooks/useTabOrder';
 import { useTaskDetail } from '../hooks/useTaskDetail';
@@ -64,7 +63,6 @@ export function TaskDetailRootV3({ taskId, presentation = 'modal', onClose, swit
     const [activeTabCode, setActiveTabCode] = useState('general');
     const [isSaving, setIsSaving] = useState(false);
     const [justSaved, setJustSaved] = useState(false);
-    const [pickerOpen, setPickerOpen] = useState(false);
     const [transfer, setTransfer] = useState(null);   // { mode } | null
     const [openSubtaskId, setOpenSubtaskId] = useState(null);
     const [isFavorite, setIsFavorite] = useState(false);
@@ -105,6 +103,18 @@ export function TaskDetailRootV3({ taskId, presentation = 'modal', onClose, swit
         [features.assignedCodes],
     );
     const tabOrder = useTabOrder(visibleTabs);
+
+    /* "＋" düz liste menüsünün içeriği (FeaturePickerV3 modalının yerine).
+       Menü kendi açık/kapalı durumunu yönetir (Radix); root yalnız veriyi ve
+       seçim davranışını verir: ekli olana geç, olmayanı ekle (+geç). */
+    const pickerEntries = useMemo(
+        () => getPickerEntries(features.assignedCodes),
+        [features.assignedCodes],
+    );
+    const handlePickFeature = (code, isAssigned) => {
+        if (isAssigned) { setActiveTabCode(code); return; }
+        handleAddFeature(code);
+    };
 
     const counts = useMemo(() => ({
         subtasks:     task?.subTasks?.length ?? 0,
@@ -153,14 +163,14 @@ export function TaskDetailRootV3({ taskId, presentation = 'modal', onClose, swit
                 return;
             }
             if (e.key !== 'Escape') return;
-            /* Sıra: önce üstteki overlay. Alt görev paneli kendi Esc'ini dinliyor,
-               modalın Esc'ini Radix yönetiyor — burada yalnız aradaki iki katman. */
-            if (transfer) { e.stopPropagation(); setTransfer(null); return; }
-            if (pickerOpen) { e.stopPropagation(); setPickerOpen(false); }
+            /* Sıra: önce üstteki overlay. Alt görev paneli ve "＋" menüsü
+               (Radix Popover) kendi Esc'lerini dinliyor, modalın Esc'ini Radix
+               yönetiyor — burada yalnız aradaki transfer katmanı. */
+            if (transfer) { e.stopPropagation(); setTransfer(null); }
         };
         window.addEventListener('keydown', onKey);
         return () => window.removeEventListener('keydown', onKey);
-    }, [doSave, form.isDirty, isSaving, transfer, pickerOpen]);
+    }, [doSave, form.isDirty, isSaving, transfer]);
 
     /* ─── ⋯ menüsü eylemleri ─── */
     const svc = () => window?.apya?.platform?.tasks?.task;
@@ -323,7 +333,8 @@ export function TaskDetailRootV3({ taskId, presentation = 'modal', onClose, swit
         <TaskUnbuiltTabV3
             code={activeTabCode}
             onRemoveFeature={handleRemoveFeature}
-            onOpenPicker={() => setPickerOpen(true)}
+            pickerEntries={pickerEntries}
+            onPickFeature={handlePickFeature}
             canRemove={!activeTabDef?.isCore}
         />
     ) : (
@@ -340,7 +351,8 @@ export function TaskDetailRootV3({ taskId, presentation = 'modal', onClose, swit
                 <TaskUnbuiltTabV3
                     code={activeTabCode}
                     onRemoveFeature={handleRemoveFeature}
-                    onOpenPicker={() => setPickerOpen(true)}
+                    pickerEntries={pickerEntries}
+                    onPickFeature={handlePickFeature}
                     canRemove={!activeTabDef?.isCore}
                 />
             )}
@@ -413,7 +425,8 @@ export function TaskDetailRootV3({ taskId, presentation = 'modal', onClose, swit
                             onDragEnd={tabOrder.handleDragEnd}
                             onReorderTo={tabOrder.reorderTo}
                             onReorderDrop={() => notify.info('Sekme sırası güncellendi.')}
-                            onOpenPicker={() => setPickerOpen(true)}
+                            pickerEntries={pickerEntries}
+                            onPickFeature={handlePickFeature}
                             counts={counts}
                         />
                     )}
@@ -431,7 +444,8 @@ export function TaskDetailRootV3({ taskId, presentation = 'modal', onClose, swit
                                 onDragEnd={tabOrder.handleDragEnd}
                                 onReorderTo={tabOrder.reorderTo}
                                 onReorderDrop={() => notify.info('Sekme sırası güncellendi.')}
-                                onOpenPicker={() => setPickerOpen(true)}
+                                pickerEntries={pickerEntries}
+                                onPickFeature={handlePickFeature}
                                 counts={counts}
                                 isDirty={form.isDirty}
                             />
@@ -457,13 +471,6 @@ export function TaskDetailRootV3({ taskId, presentation = 'modal', onClose, swit
 
     const overlays = (
         <>
-            <FeaturePickerV3
-                open={pickerOpen}
-                onClose={() => setPickerOpen(false)}
-                assignedCodes={features.assignedCodes}
-                onAddFeature={handleAddFeature}
-                onGoToTab={setActiveTabCode}
-            />
             <TaskTransferDialogV3
                 open={Boolean(transfer)}
                 mode={transfer?.mode ?? 'move'}
@@ -511,21 +518,22 @@ export function TaskDetailRootV3({ taskId, presentation = 'modal', onClose, swit
                     className={fullscreen
                         ? 'p-0 rounded-xl border border-default shadow-xl short:h-[100svh]'
                         : 'w-[min(96vw,1180px)] max-w-none p-0 rounded-[18px] border border-default shadow-xl short:h-[100svh]'}
-                    /* Özellik seçici / transfer diyaloğu / alt görev paneli createPortal ile
-                       body'ye basılıyor; Radix'in dismissable-layer yığınında olmadıkları için
+                    /* Transfer diyaloğu / alt görev paneli createPortal ile body'ye
+                       basılıyor; Radix'in dismissable-layer yığınında olmadıkları için
                        içlerindeki HER tıklama "dışarı tıklama" sayılıp ana modalı kapatıyordu
                        (alt görev panelinde "Tamam"a basmak görev detayını kapatıyordu).
-                       Üstte açık bir katman varsa dışarı tıklama yok sayılır. */
+                       Üstte açık bir katman varsa dışarı tıklama yok sayılır. "＋" menüsü
+                       Radix Popover olduğu için bu korumaya girmez — kendi katmanında. */
                     onInteractOutside={(e) => {
                         e.preventDefault();
-                        if (pickerOpen || transfer || openSubtaskId) return;
+                        if (transfer || openSubtaskId) return;
                         if (e.target?.closest?.('[data-apya-overlay]')) return;
                         requestClose();
                     }}
                     onEscapeKeyDown={(e) => {
                         /* Üstte açık bir katman varsa modal kapanmasın — o katman
                            kendi Esc'ini zaten işliyor. */
-                        if (pickerOpen || transfer || openSubtaskId) { e.preventDefault(); return; }
+                        if (transfer || openSubtaskId) { e.preventDefault(); return; }
                         e.preventDefault();
                         requestClose();
                     }}

@@ -7,6 +7,9 @@ using Apya.Platform.Projects.Dtos;
 using TaskDto = Apya.Platform.Tasks.TaskDto;
 using Microsoft.AspNetCore.Authorization;
 using Apya.Platform.Permissions;
+using Apya.Platform.Settings;
+using Apya.Platform.Shell;
+using Volo.Abp.Settings;
 
 namespace Apya.Platform.Web.Pages.Projects;
 
@@ -52,18 +55,29 @@ public class ProjectDetailsModel : PlatformPageModel
     /// <summary>Konsol 8. adım: proje ekibi. Şeritteki facepile artık bunu gösterir.</summary>
     public List<ProjectMemberDto> Members { get; set; } = new();
 
+    /// <summary>
+    /// Kullanıcının BU PROJE için açık sekmeleri ("project:{id}" scope'u) —
+    /// HAM JSON, sayfaya olduğu gibi basılır ve ProjectDetails.js ayrıştırır.
+    /// Sekmeler sayfayla gelir (ayrı istek yok) — gerekçe Tasks/Index.cshtml.cs.
+    /// BOŞ = kullanıcı düzene hiç dokunmamış → istemci varsayılanı kurar.
+    /// </summary>
+    public string BoardTabsJson { get; private set; } = string.Empty;
+
     private readonly IProjectAppService _projectAppService;
     private readonly Apya.Platform.ProjectBudgets.IProjectBudgetAppService _projectBudgetAppService;
     private readonly IProjectMemberAppService _projectMemberAppService;
+    private readonly ISettingProvider _settingProvider;
 
     public ProjectDetailsModel(
         IProjectAppService projectAppService,
         IProjectMemberAppService projectMemberAppService,
-        Apya.Platform.ProjectBudgets.IProjectBudgetAppService projectBudgetAppService)
+        Apya.Platform.ProjectBudgets.IProjectBudgetAppService projectBudgetAppService,
+        ISettingProvider settingProvider)
     {
         _projectAppService = projectAppService;
         _projectMemberAppService = projectMemberAppService;
         _projectBudgetAppService = projectBudgetAppService;
+        _settingProvider = settingProvider;
     }
 
     public async Task OnGetAsync()
@@ -99,5 +113,9 @@ public class ProjectDetailsModel : PlatformPageModel
         BudgetPercent = Budget?.BudgetUsagePercent ?? 0;
 
         Members = await _projectMemberAppService.GetListByProjectAsync(Id);
+
+        BoardTabsJson = ShellBoardTabsSetting.ExtractScopeJson(
+            await _settingProvider.GetOrNullAsync(PlatformSettings.Shell.BoardTabs),
+            ShellBoardTabsSetting.ProjectScope(Id));
     }
 }
