@@ -5110,6 +5110,8 @@ namespace Apya.Platform.Migrations
 
                     b.HasIndex("TaskId");
 
+                    b.HasIndex("ProjectId", "ExpenseDate");
+
                     b.HasIndex("TenantId", "Category");
 
                     b.HasIndex("TenantId", "ExpenseDate");
@@ -10004,7 +10006,10 @@ namespace Apya.Platform.Migrations
                     b.Property<bool>("IsDone")
                         .HasColumnType("boolean");
 
-                    b.Property<Guid>("TaskId")
+                    b.Property<Guid?>("ProjectId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("TaskId")
                         .HasColumnType("uuid");
 
                     b.Property<string>("Text")
@@ -10013,6 +10018,8 @@ namespace Apya.Platform.Migrations
                         .HasColumnType("character varying(500)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("ProjectId");
 
                     b.HasIndex("TaskId");
 
@@ -10090,6 +10097,8 @@ namespace Apya.Platform.Migrations
                         .HasColumnType("uuid");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("PredecessorTaskId");
 
                     b.HasIndex("TaskId", "PredecessorTaskId")
                         .IsUnique();
