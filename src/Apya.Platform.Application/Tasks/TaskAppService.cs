@@ -1670,6 +1670,36 @@ namespace Apya.Platform.Tasks
         {
             await EnsureTaskAccessAllowedAsync(taskId);
 
+            var item = await _checklistRepository.InsertAsync(new TaskChecklistItem
+            {
+                // ProjectId BİLEREK boş: görev-bağlı maddenin projesi görevden
+                // türetilir (join), senkron kopya gizli görevi join'siz sorguya
+                // sızdırırdı — bkz. TaskChecklistItem sınıf notu.
+                TaskId = taskId,
+                Text = NormalizeChecklistText(text),
+            }, autoSave: true);
+
+            return item.Id;
+        }
+
+        /// <summary>PR-3a hiyerarşik kapsam: doğrudan PROJEYE bağlı madde
+        /// (TaskId boş). Görev maddeleriyle aynı doğrulama ve aynı toggle/delete
+        /// uçları; erişim proje üzerinden denetlenir.</summary>
+        public async Task<Guid> AddProjectChecklistItemAsync(Guid projectId, string text)
+        {
+            await EnsureProjectAccessAllowedAsync(projectId);
+
+            var item = await _checklistRepository.InsertAsync(new TaskChecklistItem
+            {
+                ProjectId = projectId,
+                Text = NormalizeChecklistText(text),
+            }, autoSave: true);
+
+            return item.Id;
+        }
+
+        private static string NormalizeChecklistText(string text)
+        {
             if (string.IsNullOrWhiteSpace(text))
             {
                 throw new Volo.Abp.UserFriendlyException("Kontrol listesi maddesi boş olamaz.");
@@ -1679,20 +1709,41 @@ namespace Apya.Platform.Tasks
             {
                 throw new Volo.Abp.UserFriendlyException("Kontrol listesi maddesi 500 karakterden uzun olamaz.");
             }
+            return text;
+        }
 
-            var item = await _checklistRepository.InsertAsync(new TaskChecklistItem
+        /// <summary>Madde iki kapsamdan birinde yaşar: görev (gizlilik+tenant
+        /// görev guard'ından) ya da proje (tenant, IMultiTenant proje
+        /// repository'sinden). İkisi de boşsa kayıt bozuktur — yok sayılmaz,
+        /// bulunamadı gibi davranılır.</summary>
+        private async Task EnsureChecklistScopeAccessAsync(TaskChecklistItem item)
+        {
+            if (item.TaskId.HasValue)
             {
-                TaskId = taskId,
-                Text = text,
-            }, autoSave: true);
+                await EnsureTaskAccessAllowedAsync(item.TaskId.Value);
+            }
+            else if (item.ProjectId.HasValue)
+            {
+                await EnsureProjectAccessAllowedAsync(item.ProjectId.Value);
+            }
+            else
+            {
+                throw new Volo.Abp.Domain.Entities.EntityNotFoundException(
+                    typeof(TaskChecklistItem), item.Id);
+            }
+        }
 
-            return item.Id;
+        /// <summary>Projenin varlığını ve kiracıya aitliğini doğrular —
+        /// IMultiTenant süzgeçli GetAsync başka kiracının projesini getiremez.</summary>
+        private async Task EnsureProjectAccessAllowedAsync(Guid projectId)
+        {
+            await _projectLookupRepository.GetAsync(projectId);
         }
 
         public async Task ToggleChecklistItemAsync(Guid itemId)
         {
             var item = await _checklistRepository.GetAsync(itemId);
-            await EnsureTaskAccessAllowedAsync(item.TaskId);
+            await EnsureChecklistScopeAccessAsync(item);
 
             item.IsDone = !item.IsDone;
             await _checklistRepository.UpdateAsync(item, autoSave: true);
@@ -1701,7 +1752,7 @@ namespace Apya.Platform.Tasks
         public async Task DeleteChecklistItemAsync(Guid itemId)
         {
             var item = await _checklistRepository.GetAsync(itemId);
-            await EnsureTaskAccessAllowedAsync(item.TaskId);
+            await EnsureChecklistScopeAccessAsync(item);
 
             await _checklistRepository.DeleteAsync(item, autoSave: true);
         }
@@ -1805,13 +1856,18 @@ namespace Apya.Platform.Tasks
 
         public async Task<List<TaskChecklistItemDto>> GetProjectChecklistAsync(Guid projectId)
         {
+            // Proje-seviyesi maddeler görev join'inden geçmediği için projenin
+            // kiracıya aitliği burada AYRICA doğrulanır (görev maddelerinde
+            // taskQuery'nin tenant süzgeci zaten yeter).
+            await EnsureProjectAccessAllowedAsync(projectId);
+
             var taskQuery = await CreateProjectScopeQueryAsync(projectId);
             var itemQuery = await _checklistRepository.GetQueryableAsync();
 
-            return await AsyncExecuter.ToListAsync(
+            // Görev maddeleri: gizlilik görev join'inden miras (PR-2b deseni).
+            var taskItems = await AsyncExecuter.ToListAsync(
                 from x in itemQuery
-                join t in taskQuery on x.TaskId equals t.Id
-                orderby x.CreationTime
+                join t in taskQuery on x.TaskId equals (Guid?)t.Id
                 select new TaskChecklistItemDto
                 {
                     Id = x.Id,
@@ -1820,6 +1876,23 @@ namespace Apya.Platform.Tasks
                     Text = x.Text,
                     IsDone = x.IsDone,
                 });
+
+            // Proje maddeleri (PR-3a): doğrudan projeye bağlı, TaskId boş.
+            var projectItems = await AsyncExecuter.ToListAsync(
+                itemQuery
+                    .Where(x => x.TaskId == null && x.ProjectId == projectId)
+                    .Select(x => new TaskChecklistItemDto
+                    {
+                        Id = x.Id,
+                        TaskId = x.TaskId,
+                        CreationTime = x.CreationTime,
+                        Text = x.Text,
+                        IsDone = x.IsDone,
+                    }));
+
+            return taskItems.Concat(projectItems)
+                .OrderBy(x => x.CreationTime)
+                .ToList();
         }
 
         public async Task<List<TaskDependencyEdgeDto>> GetProjectDependenciesAsync(Guid projectId)

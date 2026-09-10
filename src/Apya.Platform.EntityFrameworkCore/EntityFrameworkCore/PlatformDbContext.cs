@@ -496,6 +496,9 @@ namespace Apya.Platform.EntityFrameworkCore
                         new[] { nameof(Expense.ProjectId), nameof(Expense.Amount), "IsDeleted" });
                 b.HasIndex(x => new { x.TenantId, x.Category });
                 b.HasIndex(x => x.ProjectId);
+                // PR-3a: proje Finans paneli — projenin harcamaları tarih sıralı
+                // listelenir (handoff veri kuralı: Expense(ProjectId, Date)).
+                b.HasIndex(x => new { x.ProjectId, x.ExpenseDate });
                 b.HasIndex(x => x.TaskId);
                 b.HasIndex(x => x.CustomerId);
                 // Kalem tablosundaki "Harcanan" kolonu bu indeks üzerinden toplanır.
@@ -1266,6 +1269,10 @@ namespace Apya.Platform.EntityFrameworkCore
                 b.ToTable(PlatformConsts.DbTablePrefix + "TaskDependencies", PlatformConsts.DbSchema);
                 b.ConfigureByConvention();
                 b.HasIndex(x => new { x.TaskId, x.PredecessorTaskId }).IsUnique();
+                // PR-3a: ters yön ("bu görevi kim önceler") — bağımlılık panelleri
+                // ve bloke uyarıları öncül tarafından da sorguluyor; unique indeks
+                // yalnız TaskId önekini kapsıyordu.
+                b.HasIndex(x => x.PredecessorTaskId);
             });
 
             builder.Entity<Tag>(b =>
@@ -1355,6 +1362,9 @@ namespace Apya.Platform.EntityFrameworkCore
                 b.ConfigureByConvention();
                 b.Property(x => x.Text).IsRequired().HasMaxLength(500);
                 b.HasIndex(x => x.TaskId);
+                // PR-3a hiyerarşik kapsam: proje-seviyesi maddeler (TaskId boş)
+                // proje panelinde bu indeksle süzülür.
+                b.HasIndex(x => x.ProjectId);
             });
 
             builder.Entity<TaskDocument>(b =>

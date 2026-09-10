@@ -137,6 +137,10 @@ namespace Apya.Platform.Tasks
         Task ToggleChecklistItemAsync(Guid itemId);
         Task DeleteChecklistItemAsync(Guid itemId);
 
+        /// <summary>PR-3a hiyerarşik kapsam: göreve bağlı olmayan, doğrudan
+        /// PROJE seviyesinde kontrol listesi maddesi. Toggle/Delete aynı uçlar.</summary>
+        Task<Guid> AddProjectChecklistItemAsync(Guid projectId, string text);
+
         // --- Proje kapsamı (birleşik sekme sistemi PR-2b) ---
         // Proje Detayı'ndaki Belge / Form / Kontrol Listesi / Bağımlılıklar
         // panelleri: projenin GÖRÜNÜR görevlerine bağlı kayıtların toplamı.
