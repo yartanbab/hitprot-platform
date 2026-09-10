@@ -43,7 +43,7 @@ function renderNavbar(props = {}) {
             onDragStart={vi.fn()}
             onDragEnd={vi.fn()}
             onReorderTo={vi.fn()}
-            onOpenPicker={vi.fn()}
+            onPickFeature={vi.fn()}
             {...props}
         />,
     );
@@ -100,5 +100,27 @@ describe('TaskFeatureNavbarV3 sekme secimi', () => {
         renderNavbar({ onDragStart });
         fireEvent.dragStart(screen.getByRole('button', { name: /Alt Görevler/ }));
         expect(onDragStart).toHaveBeenCalledWith('subtasks');
+    });
+});
+
+describe('TaskFeatureNavbarV3 "+" menusu (duz liste — modal picker kalkti)', () => {
+    const ENTRY = { code: 'checklist', title: 'Kontrol Listesi', icon: 'fa-square-check', isAssigned: false };
+
+    it('arti dugmesi menuyu acar, secim onPickFeature i kod+ekli durumuyla cagirir', () => {
+        const onPickFeature = vi.fn();
+        renderNavbar({ pickerEntries: [ENTRY], onPickFeature });
+
+        fireEvent.click(screen.getByRole('button', { name: /özellik ekle/i }));
+        fireEvent.click(screen.getByRole('button', { name: /kontrol listesi/i }));
+
+        expect(onPickFeature).toHaveBeenCalledWith('checklist', false);
+    });
+
+    it('ekli ozellik menude acik isaretiyle listelenir', () => {
+        renderNavbar({ pickerEntries: [{ ...ENTRY, isAssigned: true }] });
+
+        fireEvent.click(screen.getByRole('button', { name: /özellik ekle/i }));
+
+        expect(screen.getByText(/✓ açık/)).toBeInTheDocument();
     });
 });

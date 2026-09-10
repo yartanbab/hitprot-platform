@@ -1,5 +1,6 @@
 import React from 'react';
 import { draggableActivation } from '../../../lib/dom/draggableActivation';
+import { FeatureAddMenuV3 } from './FeatureAddMenuV3';
 
 /**
  * Tam sayfa (odak) görünümündeki sol dikey özellik rayı — üst yatay sekme çubuğunun
@@ -17,7 +18,8 @@ export function TaskFeatureRailV3({
     onDragEnd,
     onReorderTo,
     onReorderDrop,
-    onOpenPicker,
+    pickerEntries = [],
+    onPickFeature,
     counts = {},
 }) {
     return (
@@ -78,14 +80,16 @@ export function TaskFeatureRailV3({
                 );
             })}
 
-            <button
-                type="button"
-                onClick={onOpenPicker}
-                className="flex shrink-0 items-center gap-[11px] h-9 mt-1.5 px-[11px] rounded-[9px] border border-dashed border-primary bg-primary-subtle text-primary text-[12.5px] font-bold text-left cursor-pointer hover:border-solid"
-            >
-                <i className="fa-solid fa-plus text-[11px] w-[15px]" />
-                <span>Özellik ekle</span>
-            </button>
+            {/* Düz liste menüsü (FeatureAddMenuV3) — modal picker kalktı. */}
+            <FeatureAddMenuV3 entries={pickerEntries} onPick={onPickFeature}>
+                <button
+                    type="button"
+                    className="flex shrink-0 items-center gap-[11px] h-9 mt-1.5 px-[11px] rounded-[9px] border border-dashed border-primary bg-primary-subtle text-primary text-[12.5px] font-bold text-left cursor-pointer hover:border-solid"
+                >
+                    <i className="fa-solid fa-plus text-[11px] w-[15px]" />
+                    <span>Özellik ekle</span>
+                </button>
+            </FeatureAddMenuV3>
         </nav>
     );
 }

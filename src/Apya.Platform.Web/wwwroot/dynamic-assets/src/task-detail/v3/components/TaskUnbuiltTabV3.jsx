@@ -1,11 +1,13 @@
 import React from 'react';
 import { featureDisplay } from '../featureCatalogV3';
+import { FeatureAddMenuV3 } from './FeatureAddMenuV3';
 
 /**
  * İçeriği henüz yazılmamış sekmenin boş durumu. Boş pano göstermek yerine ne
- * olduğunu söyler ve iki çıkış yolu sunar: özelliği kaldır ya da başka özellik ekle.
+ * olduğunu söyler ve iki çıkış yolu sunar: özelliği kaldır ya da başka özellik
+ * ekle (CTA düz liste menüsünü yerinde açar — modal picker kalktı).
  */
-export function TaskUnbuiltTabV3({ code, onRemoveFeature, onOpenPicker, canRemove = true }) {
+export function TaskUnbuiltTabV3({ code, onRemoveFeature, pickerEntries = [], onPickFeature, canRemove = true }) {
     const info = featureDisplay(code) ?? { title: code, desc: '', icon: 'fa-cube', bg: 'bg-neutral-subtle', fg: 'text-text-secondary' };
 
     return (
@@ -34,14 +36,15 @@ export function TaskUnbuiltTabV3({ code, onRemoveFeature, onOpenPicker, canRemov
                         Bu özelliği kaldır
                     </button>
                 )}
-                <button
-                    type="button"
-                    onClick={onOpenPicker}
-                    className="flex items-center gap-2 h-[34px] px-3.5 rounded-[10px] bg-primary text-white text-[12.5px] font-bold cursor-pointer hover:bg-primary-hover"
-                >
-                    <i className="fa-solid fa-shapes text-[10px]" />
-                    Başka özellik ekle
-                </button>
+                <FeatureAddMenuV3 entries={pickerEntries} onPick={onPickFeature}>
+                    <button
+                        type="button"
+                        className="flex items-center gap-2 h-[34px] px-3.5 rounded-[10px] bg-primary text-white text-[12.5px] font-bold cursor-pointer hover:bg-primary-hover"
+                    >
+                        <i className="fa-solid fa-shapes text-[10px]" />
+                        Başka özellik ekle
+                    </button>
+                </FeatureAddMenuV3>
             </div>
         </div>
     );

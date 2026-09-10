@@ -40,7 +40,7 @@ function renderRail(props = {}) {
             onDragStart={vi.fn()}
             onDragEnd={vi.fn()}
             onReorderTo={vi.fn()}
-            onOpenPicker={vi.fn()}
+            onPickFeature={vi.fn()}
             {...props}
         />,
     );
