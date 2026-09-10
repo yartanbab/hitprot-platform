@@ -48,6 +48,14 @@
       "_httpClient-DePjXdo1.js"
     ]
   },
+  "_RichTextEditorV3-D3Amhpsv.js": {
+    "file": "RichTextEditorV3-D3Amhpsv.js",
+    "name": "RichTextEditorV3",
+    "imports": [
+      "_react-vendor-D57GAUXd.js",
+      "_ui-vendor-DaE-uom6.js"
+    ]
+  },
   "_SkeletonShape-BzeBQ1R3.js": {
     "file": "SkeletonShape-BzeBQ1R3.js",
     "name": "SkeletonShape",
@@ -275,6 +283,16 @@
       "_Hint-CNW95h3H.js"
     ]
   },
+  "src/project-panels.jsx": {
+    "file": "project-panels.js",
+    "name": "project-panels",
+    "src": "src/project-panels.jsx",
+    "isEntry": true,
+    "imports": [
+      "_react-vendor-D57GAUXd.js",
+      "_RichTextEditorV3-D3Amhpsv.js"
+    ]
+  },
   "src/public-form.jsx": {
     "file": "public-form.js",
     "name": "public-form",
@@ -307,6 +325,7 @@
       "_query-vendor-Bf69L2iP.js",
       "_Dialog-Bky2XNdc.js",
       "_Combobox-D5mSMyzC.js",
+      "_RichTextEditorV3-D3Amhpsv.js",
       "_httpClient-DePjXdo1.js",
       "_ui-vendor-DaE-uom6.js",
       "_draggableActivation-Ybw9Upbh.js"
