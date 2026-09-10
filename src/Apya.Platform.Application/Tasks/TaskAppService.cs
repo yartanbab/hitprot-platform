@@ -1658,6 +1658,7 @@ namespace Apya.Platform.Tasks
                 .Select(x => new TaskChecklistItemDto
                 {
                     Id = x.Id,
+                    TaskId = x.TaskId,
                     CreationTime = x.CreationTime,
                     Text = x.Text,
                     IsDone = x.IsDone,
@@ -1703,6 +1704,140 @@ namespace Apya.Platform.Tasks
             await EnsureTaskAccessAllowedAsync(item.TaskId);
 
             await _checklistRepository.DeleteAsync(item, autoSave: true);
+        }
+
+        // --- PROJE KAPSAMI (birleşik sekme sistemi PR-2b) ---
+        // Dört uç da GetGalleryAsync ile AYNI deseni izler: çocuk tablo,
+        // CreateFilteredQueryAsync'in görev sorgusuna JOIN'lenir. Böylece
+        // tenant + gizlilik süzgeci TEK yerden miras alınır — gizli görevin
+        // belgesi/maddesi/bağı proje panelinden sızmaz. RootOnly kapatılır:
+        // alt görevlerin kayıtları da projenin toplamıdır.
+
+        private Task<IQueryable<TaskItem>> CreateProjectScopeQueryAsync(Guid projectId)
+            => CreateFilteredQueryAsync(new GetTasksInput { ProjectId = projectId, RootOnly = false });
+
+        public async Task<List<TaskDocumentDto>> GetProjectDocumentsAsync(Guid projectId)
+        {
+            var taskQuery = await CreateProjectScopeQueryAsync(projectId);
+            var docQuery = await _documentRepository.GetQueryableAsync();
+
+            // Content BİLEREK çekilmez — GetDocumentsAsync ile aynı gerekçe:
+            // liste satırı gövde göstermiyor, tam gövde GetDocumentAsync'te.
+            var rows = await AsyncExecuter.ToListAsync(
+                from d in docQuery
+                join t in taskQuery on d.TaskId equals t.Id
+                orderby (d.LastModificationTime ?? d.CreationTime) descending
+                select new
+                {
+                    d.Id, d.TaskId, d.Title,
+                    d.CreationTime, d.CreatorId,
+                    d.LastModificationTime, d.LastModifierId,
+                    Length = d.Content == null ? 0 : d.Content.Length
+                });
+
+            var names = await ResolveUserNamesAsync(
+                rows.SelectMany(r => new[] { r.LastModifierId, r.CreatorId }));
+
+            return rows.Select(r => new TaskDocumentDto
+            {
+                Id = r.Id,
+                TaskId = r.TaskId,
+                Title = r.Title,
+                Content = null,
+                ContentLength = r.Length,
+                CreationTime = r.CreationTime,
+                CreatorId = r.CreatorId,
+                LastModificationTime = r.LastModificationTime,
+                LastModifierId = r.LastModifierId,
+                EditorName = NameOf(names, r.LastModifierId ?? r.CreatorId)
+            }).ToList();
+        }
+
+        public async Task<List<TaskFormLinkDto>> GetProjectLinkedFormsAsync(Guid projectId)
+        {
+            var taskQuery = await CreateProjectScopeQueryAsync(projectId);
+            var linkQuery = await _formLinkRepository.GetQueryableAsync();
+
+            var links = await AsyncExecuter.ToListAsync(
+                from l in linkQuery
+                join t in taskQuery on l.TaskId equals t.Id
+                orderby l.CreationTime
+                select l);
+            if (links.Count == 0) { return new List<TaskFormLinkDto>(); }
+
+            var docIds = links.Select(l => l.DocumentId).Distinct().ToList();
+
+            var docQuery = await _appDocumentRepository.GetQueryableAsync();
+            var docs = (await AsyncExecuter.ToListAsync(
+                    docQuery.Where(d => docIds.Contains(d.Id))
+                            .Select(d => new { d.Id, d.Title, d.Slug, d.Status })))
+                .ToDictionary(d => d.Id);
+
+            // Yanıt sayısı GÖREV bağlamında ve TEK GroupBy — görev sorgusuna
+            // join'li ki görünmeyen görevin yanıtı da sayılmasın.
+            var respQuery = await _appResponseRepository.GetQueryableAsync();
+            var counts = (await AsyncExecuter.ToListAsync(
+                    from r in respQuery
+                    join t in taskQuery on r.TaskId equals (Guid?)t.Id
+                    where docIds.Contains(r.DocumentId)
+                    group r by new { r.TaskId, r.DocumentId } into g
+                    select new { g.Key.TaskId, g.Key.DocumentId, Count = g.Count() }))
+                .ToDictionary(x => (x.TaskId!.Value, x.DocumentId), x => x.Count);
+
+            return links.Select(l =>
+            {
+                var doc = docs.GetValueOrDefault(l.DocumentId);
+                var yayinda = doc?.Status == Apya.Platform.DynamicAssets.FormStatus.Published;
+                return new TaskFormLinkDto
+                {
+                    Id = l.Id,
+                    TaskId = l.TaskId,
+                    DocumentId = l.DocumentId,
+                    Title = doc?.Title ?? "(form silinmiş)",
+                    Slug = yayinda ? doc?.Slug : null,
+                    IsPublished = yayinda,
+                    IsGuestFillable = l.IsGuestFillable,
+                    ResponseCount = counts.GetValueOrDefault((l.TaskId, l.DocumentId), 0),
+                    CreationTime = l.CreationTime
+                };
+            }).ToList();
+        }
+
+        public async Task<List<TaskChecklistItemDto>> GetProjectChecklistAsync(Guid projectId)
+        {
+            var taskQuery = await CreateProjectScopeQueryAsync(projectId);
+            var itemQuery = await _checklistRepository.GetQueryableAsync();
+
+            return await AsyncExecuter.ToListAsync(
+                from x in itemQuery
+                join t in taskQuery on x.TaskId equals t.Id
+                orderby x.CreationTime
+                select new TaskChecklistItemDto
+                {
+                    Id = x.Id,
+                    TaskId = x.TaskId,
+                    CreationTime = x.CreationTime,
+                    Text = x.Text,
+                    IsDone = x.IsDone,
+                });
+        }
+
+        public async Task<List<TaskDependencyEdgeDto>> GetProjectDependenciesAsync(Guid projectId)
+        {
+            var taskQuery = await CreateProjectScopeQueryAsync(projectId);
+            var depQuery = await _dependencyRepository.GetQueryableAsync();
+
+            // İKİ uç da görünür görev kümesinde olmalı: harita proje İÇİ —
+            // ve gizli görev, kenar üzerinden bile varlığını ele vermemeli.
+            return await AsyncExecuter.ToListAsync(
+                from d in depQuery
+                join s in taskQuery on d.TaskId equals s.Id
+                join p in taskQuery on d.PredecessorTaskId equals p.Id
+                select new TaskDependencyEdgeDto
+                {
+                    TaskId = d.TaskId,
+                    PredecessorTaskId = d.PredecessorTaskId
+                });
         }
 
         public async Task UpdateStatusAsync(Guid id, Apya.Platform.Tasks.TaskStatus status)
