@@ -59,17 +59,28 @@ public class ConsoleTabs_Tests : PlatformWebTestBase
         html.ShouldContain("data-board-tabs=");
         html.ShouldContain("id=\"btn-tab-add\"");
 
-        // Sabitler + kapatılabilir Zaman Çizelgesi kind'larıyla basılır.
+        // Sabitler + kapatılabilir katalog panoları kind'larıyla basılır
+        // (PR-2a: takvim/gösterge/galeri paylaşılan bileşenlerle eklendi).
         html.ShouldContain("data-tab=\"list\"");
         html.ShouldContain("data-tab=\"kanban\"");
         html.ShouldContain("data-tab=\"gantt\"");
+        html.ShouldContain("data-tab=\"calendar\"");
+        html.ShouldContain("data-tab=\"dashboard\"");
+        html.ShouldContain("data-tab=\"gallery\"");
         // Test host'u her zaman yetkili → bütçe özeti döner ve Finans sekmesi basılır.
         html.ShouldContain("data-tab=\"finance\"");
 
-        // Kapatma düğmesi YALNIZ Zaman Çizelgesi'nde: sabitler (Liste, Kart
-        // Panosu, Finans) kapatılamaz — düğme sayısı bunu yapısal olarak kanıtlar.
-        Regex.Matches(html, "apya-console-tab-close").Count.ShouldBe(1,
-            "proje konsolunda yalnız Zaman Çizelgesi kapatılabilir olmalı");
+        // Kapatma düğmesi yalnız katalog panolarında (gantt/takvim/gösterge/
+        // galeri): sabitler (Liste, Kart Panosu, Finans) kapatılamaz — düğme
+        // sayısı bunu yapısal olarak kanıtlar.
+        Regex.Matches(html, "apya-console-tab-close").Count.ShouldBe(4,
+            "proje konsolunda yalnız 4 katalog panosu kapatılabilir olmalı");
+
+        // Katalog panellerinin panel kapları da basılı olmalı — sekme var ama
+        // panel yoksa etkinleştirme sessizce boş ekrana düşer.
+        html.ShouldContain("id=\"view-calendar\"");
+        html.ShouldContain("id=\"view-dashboard\"");
+        html.ShouldContain("id=\"view-gallery\"");
     }
 
     [Fact]

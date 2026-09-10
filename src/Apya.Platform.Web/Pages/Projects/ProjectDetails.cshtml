@@ -482,11 +482,17 @@
        görünürlüğü ProjectDetails.js kurar (Tasks/Index ile aynı gerekçe). *@
     @{
         // (tür, ikon, etiket, ipucu, kapatılabilir mi)
+        // Katalog panelleri (takvim/gösterge/galeri — PR-2a) kapatılabilirdir ve
+        // varsayılan düzende KAPALIDIR (ProjectDetails.js → defaultTabs); "＋"
+        // menüsünün "Panolar" bölümü onları bu Razor satırlarından okur.
         var boardTabs = new[]
         {
-            ("list",   "fa fa-list",          L["Tasks:View:List"].Value,   "", false),
-            ("kanban", "fa fa-table-columns", L["Tasks:View:Kanban"].Value, "", false),
-            ("gantt",  "fa fa-clock",         L["Tasks:View:Gantt"].Value,  "Başlangıç-bitiş tarihlerinden türeyen zaman çizelgesi", true)
+            ("list",      "fa fa-list",          L["Tasks:View:List"].Value,      "", false),
+            ("kanban",    "fa fa-table-columns", L["Tasks:View:Kanban"].Value,    "", false),
+            ("gantt",     "fa fa-clock",         L["Tasks:View:Gantt"].Value,     "Başlangıç-bitiş tarihlerinden türeyen zaman çizelgesi", true),
+            ("calendar",  "fa fa-calendar-days", L["Tasks:View:Calendar"].Value,  "Başlangıç ve termin tarihleri aylık takvimde", true),
+            ("dashboard", "fa fa-chart-pie",     L["Tasks:View:Dashboard"].Value, "Seçili süzgecin durum, öncelik ve kişi dağılımı", true),
+            ("gallery",   "fa fa-images",        L["Tasks:View:Gallery"].Value,   "Süzülmüş görevlere eklenmiş görseller", true)
         };
     }
     <div class="apya-console-tabs">
@@ -664,6 +670,14 @@
              kullanır. İçerik tamamen JS ile basılır. *@
         <div id="view-gantt" class="view-panel d-none" role="tabpanel" aria-labelledby="btn-view-gantt"></div>
 
+        @* --- TAKVİM / GÖSTERGE PANELİ / DOSYA GALERİSİ (PR-2a) ---
+             Paylaşılan bileşenler (/js/apya-task-calendar|dashboard|gallery.js),
+             /Tasks ile aynı sözleşme: kapsamı getFilter (projectId) belirler,
+             içerik tamamen JS ile basılır. *@
+        <div id="view-calendar" class="view-panel d-none" role="tabpanel" aria-labelledby="btn-view-calendar"></div>
+        <div id="view-dashboard" class="view-panel d-none" role="tabpanel" aria-labelledby="btn-view-dashboard"></div>
+        <div id="view-gallery" class="view-panel d-none" role="tabpanel" aria-labelledby="btn-view-gallery"></div>
+
         @* --- FİNANS GÖRÜNÜMÜ (tasarım 2c) --- *@
         @if (Model.Budget != null)
         {
@@ -802,5 +816,12 @@
     <abp-script src="/js/task-drawer.js" />
     <abp-script src="/js/apya-kanban.js" />
     <abp-script src="/js/apya-gantt.js" />
+    @* Gösterge paneli grafikleri — /Tasks ile aynı ikili: vendor chart.js +
+       apyaChart tema yardımcısı (ham hex yazılmasın diye). *@
+    <script src="~/js/chart.umd.min.js"></script>
+    <abp-script src="/js/apya-chart-theme.js" />
+    <abp-script src="/js/apya-task-calendar.js" />
+    <abp-script src="/js/apya-task-dashboard.js" />
+    <abp-script src="/js/apya-task-gallery.js" />
     <abp-script src="/Pages/Projects/ProjectDetails.js" />
 }

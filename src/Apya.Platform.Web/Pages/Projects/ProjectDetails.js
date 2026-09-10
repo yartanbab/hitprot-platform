@@ -59,18 +59,23 @@ $(function () {
     var filterState = state.values;
     var currentView = 'list';
 
+    // Katalog panelleri (PR-2a) — derin bağlantıda kabul edilen görünüşler.
+    var CATALOG_VIEWS = ['gantt', 'calendar', 'dashboard', 'gallery'];
+
     function readStateFromUrl() {
         state.readUrl();
         var v = new URLSearchParams(window.location.search).get('view');
         // finans sekmesi yalnız yetkiliye basılır; yoksa listeye düşülür.
         currentView = v === 'board' ? 'kanban'
             : (v === 'finance' && $('#btn-view-finance').length) ? 'finance'
+            : CATALOG_VIEWS.indexOf(v) > -1 ? v
             : 'list';
     }
 
     function writeStateToUrl() {
-        // 'view' bu sayfada 'board' olarak yazılır (eski derin bağlantılar bozulmasın).
-        state.writeUrl({ view: currentView === 'kanban' ? 'board' : currentView === 'finance' ? 'finance' : '' });
+        // 'view' bu sayfada 'board' olarak yazılır (eski derin bağlantılar
+        // bozulmasın); liste boş kalır, kalan görünüşler kendi adıyla yazılır.
+        state.writeUrl({ view: currentView === 'kanban' ? 'board' : currentView === 'list' ? '' : currentView });
     }
 
     // 6 → "6", 6.5 → "6,5" (ondalık yalnız gerekiyorsa, TR ayracıyla)
@@ -173,6 +178,12 @@ $(function () {
         hierarchy.reset();
         if (dataTable) { dataTable.ajax.reload(); }
         if (kb && currentView === 'kanban') { kb.load(); }
+        // Salt-okur katalog panelleri filtre değişiminde tazelenir. Gantt
+        // BİLEREK dışarıda: otomatik yeniden yükleme bekleyen tarih
+        // sürüklemelerini (hasPending) sessizce silerdi.
+        if (currentView === 'calendar') { calendar.load(); }
+        else if (currentView === 'dashboard') { dashboard.load(); }
+        else if (currentView === 'gallery') { gallery.load(); }
     }
 
     readStateFromUrl();
@@ -485,6 +496,20 @@ $(function () {
         }
     });
 
+    // --- Takvim / Gösterge Paneli / Dosya Galerisi (PR-2a) ---
+    // /Tasks ile AYNI paylaşılan bileşenler ve aynı sözleşme: kapsamı
+    // getFilter belirler (buildInput projectId'yi zaten koyuyor), bileşende
+    // sabit proje yok. Üçü de salt okuma; panel ilk açılışta tembel yüklenir.
+    var calendar = apya.taskCalendar.create({
+        mount: '#view-calendar', getFilter: buildInput, editModal: editModal
+    });
+    var dashboard = apya.taskDashboard.create({
+        mount: '#view-dashboard', getFilter: buildInput
+    });
+    var gallery = apya.taskGallery.create({
+        mount: '#view-gallery', getFilter: buildInput, editModal: editModal
+    });
+
     // --- Satıra tıklayınca görev detay modalını aç ---
     $(document).on('click', '#ProjectTasksTable tbody tr', function (e) {
         if ($(e.target).closest('a, button, .form-check-input, input, select, .dropdown').length) return;
@@ -669,7 +694,8 @@ $(function () {
     // tam yükseklik flex zinciri `.view-panel:not(.d-none)` seçicisine dayanıyor,
     // .tab-pane'in kendi display/opacity yönetimi zinciri koparıyordu.
     function switchView(mode) {
-        currentView = (mode === 'kanban' || mode === 'gantt' || mode === 'finance') ? mode : 'list';
+        currentView = (mode === 'kanban' || mode === 'finance' || CATALOG_VIEWS.indexOf(mode) > -1)
+            ? mode : 'list';
         $('.apya-console-views > .view-panel').addClass('d-none');
 
         // Görev filtreleri finans panelinde hiçbir şeyi süzmez; şerit gizlenir.
@@ -681,6 +707,15 @@ $(function () {
         } else if (currentView === 'gantt') {
             $('#view-gantt').removeClass('d-none');
             gantt.load();
+        } else if (currentView === 'calendar') {
+            $('#view-calendar').removeClass('d-none');
+            calendar.load();
+        } else if (currentView === 'dashboard') {
+            $('#view-dashboard').removeClass('d-none');
+            dashboard.load();
+        } else if (currentView === 'gallery') {
+            $('#view-gallery').removeClass('d-none');
+            gallery.load();
         } else if (currentView === 'kanban') {
             $('#view-kanban').removeClass('d-none');
             kb.load();
@@ -941,7 +976,15 @@ $(function () {
     // Başlangıç: URL'den okunan state'i arayüze bas, şeridi kur ve görünümü aç.
     renderFilterUi();
     tabsApi.render();
-    tabsApi.activate(currentView);
+    if (tabsApi.findTab(currentView)) {
+        tabsApi.activate(currentView);
+    } else {
+        // Derin bağlantı KAPALI bir katalog panosuna işaret ediyor (kullanıcı
+        // o sekmeyi hiç açmamış/kapatmış). Panoyu açıyoruz — bağlantı sessizce
+        // listeye düşseydi kullanıcı istediğinden başka ekrana bakardı
+        // (Tasks/index.js ile aynı gerekçe).
+        tabsApi.open({ kind: currentView });
+    }
 
     // ================================================================
     // KOLON SEÇİCİ — localStorage `apya.project.columns`

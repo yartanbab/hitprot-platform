@@ -164,11 +164,12 @@ public class ShellAppService : PlatformAppService, IShellAppService
 
     /// <summary>
     /// Proje detay konsolunun ("project:{id}" scope'u) çizebildiği türler.
-    /// Katalog panelleri (takvim, gösterge paneli…) proje yüzeyine açıldıkça
-    /// buraya da eklenmeli — ProjectDetails.cshtml sekmeleriyle aynı adlar.
+    /// Katalog panelleri proje yüzeyine açıldıkça buraya da eklenmeli —
+    /// ProjectDetails.cshtml sekmeleriyle aynı adlar (PR-2a: takvim, gösterge
+    /// paneli ve galeri paylaşılan bileşenlerle bağlandı).
     /// </summary>
     private static readonly HashSet<string> ProjectBoardTabViewKinds =
-        new(StringComparer.Ordinal) { "list", "kanban", "gantt", "finance" };
+        new(StringComparer.Ordinal) { "list", "kanban", "gantt", "finance", "calendar", "dashboard", "gallery" };
 
     // JSON biçimi (camelCase gerekçesi dahil) ShellBoardTabsSetting'de — yazan
     // (burası) ve okuyan (PageModel/View'lar) aynı yardımcının içinden geçer.
