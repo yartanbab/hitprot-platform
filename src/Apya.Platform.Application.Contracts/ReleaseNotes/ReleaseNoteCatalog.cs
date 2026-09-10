@@ -26,6 +26,77 @@ public static class ReleaseNoteCatalog
     public static IReadOnlyList<ReleaseNote> All { get; } = new List<ReleaseNote>
     {
         new ReleaseNote(
+            version: "2026.09.10",
+            date: "10 Eylül 2026",
+            title: "Görevler, projeler ve finans tek sekme düzeninde buluştu",
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "Sekmeler artık her ekranda aynı şekilde çalışıyor",
+                "Görevler ekranı, proje detayı ve görev penceresi bugüne kadar sekmeleri üç ayrı " +
+                "biçimde yönetiyordu; hepsini tek düzende birleştirdik. Her ekranda sabit " +
+                "sekmelerin yanına ＋ düğmesiyle istediğiniz panoyu ekliyor, kullanmadıklarınızı " +
+                "üzerindeki ✕ ile kapatıyorsunuz. Düzeniniz hesabınızda saklanıyor: ekranı hangi " +
+                "sekmelerle bıraktıysanız — başka bir bilgisayardan girseniz bile — öyle " +
+                "buluyorsunuz. Kapattığınız bir pano kaybolmaz, ＋ menüsünden geri gelir."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "Proje detayına yeni panolar: takvim, gösterge, galeri, belgeler ve fazlası",
+                "Bugüne kadar yalnız Görevler ekranında bulunan Takvim, Gösterge Paneli ve Galeri " +
+                "panoları artık proje detayında da var — yalnız o projenin görevlerini gösterirler. " +
+                "Yanlarına dört yeni panel daha geldi: Belgeler, Formlar, Kontrol Listesi ve " +
+                "Bağımlılıklar. Projenin bütün görevlerine dağılmış belgeleri, bağlı formları, " +
+                "yapılacak maddelerini ve birbirini bekleyen görevlerini tek panelde, görev görev " +
+                "gruplanmış hâlde görüyorsunuz; bir satıra tıklayınca ilgili görev açılıyor. " +
+                "Hepsi ＋ menüsünden eklenir."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "Kontrol listesine proje maddeleri ekleyebiliyorsunuz",
+                "Bir yapılacak maddesi her zaman tek bir göreve ait olmak zorunda değil. Proje " +
+                "detayındaki Kontrol Listesi panelinde artık \"Proje maddeleri\" bölümü var: " +
+                "doğrudan projeye bağlı maddeler burada tutuluyor, görevlerin kendi maddeleri de " +
+                "görev görev listelenmeye devam ediyor."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "Proje finansında görev harcamaları tablosu",
+                "Proje detayının Finans panosuna \"Görev harcamaları\" bölümü eklendi. Projenin " +
+                "her gider kaydını tek tabloda görüyorsunuz: hangi görevden geldiği, kategorisi, " +
+                "belgesinin olup olmadığı, tarihi ve tutarı. Üstteki özet çipleri görevlerden gelen " +
+                "toplamı ve belgesi eksik kayıtları anında gösteriyor; kategori, görev ve " +
+                "\"yalnız belgesizler\" süzgeçleriyle listeyi daraltıp görünen toplamı takip " +
+                "edebiliyorsunuz. \"Harcama ekle\" düğmesi yeni gideri proje seçili olarak açar."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "Görevler ekranına Finans sekmesi: tüm projelerin giderleri tek yerde",
+                "Görevler ekranına yeni bir Finans sekmesi geldi. Bütün projelerinizin giderlerini " +
+                "proje proje gruplanmış görüyorsunuz; her grubun ara toplamı ve en altta genel " +
+                "toplam hazır hesaplanmış geliyor. Farklı para birimlerindeki kayıtlar birbirine " +
+                "karıştırılmaz — her para biriminin toplamı ayrı yazılır. Hiçbir projeye bağlı " +
+                "olmayan kayıtlar \"Genel gider\" başlığı altında ayrıca toplanır ve hiçbir proje " +
+                "bütçesine sayılmaz; böylece kargo, aidat gibi ortak masraflar bütçelerinizi " +
+                "şişirmez."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "Gider kaydının bağlantısını sonradan değiştirebiliyorsunuz",
+                "Bir gideri yanlış yere mi işlediniz? Satırın yanındaki menüden \"İlişkiyi " +
+                "değiştir…\" seçin: kaydı bir göreve bağlayabilir, yalnız projede bırakabilir ya da " +
+                "tamamen bağımsız (genel gider) yapabilirsiniz. Kayıt hangi projeye taşınırsa " +
+                "bütçe toplamları da onunla birlikte güncellenir. Bir görevi başka projeye " +
+                "taşıdığınızda da görevin gider ve gelir kayıtları artık otomatik olarak yeni " +
+                "projeyi izler."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
+                "Görev penceresinde özellik eklemek tek menüye indi",
+                "Görev penceresinde yeni bir özellik (kontrol listesi, bütçe, belge…) eklemek için " +
+                "açılan büyük seçim penceresini kaldırdık; ＋ düğmesi artık sade bir liste açıyor " +
+                "ve seçtiğiniz özellik anında ekleniyor. Sekmelerin sırası da hesabınızda " +
+                "saklanıyor: sıralamanız her cihazda aynı."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
+                "Telefonda sekme şeridi rahatladı",
+                "Dar ekranlarda sekme şeridi artık parmakla kaydırılıyor ve ＋ düğmesi her zaman " +
+                "görünür kalıyor; pano eklemek için ekranı büyütmeniz gerekmiyor.")),
+
+        new ReleaseNote(
             version: "2026.09.07",
             date: "7 Eylül 2026",
             title: "Muhasebe ekranları yenileniyor, kaydetme hataları artık bildiriliyor",
