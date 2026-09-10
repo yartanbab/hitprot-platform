@@ -451,6 +451,8 @@
     "Tasks:View:Forms": "Forms",
     "Tasks:View:Checklist": "Checklist",
     "Tasks:View:Dependencies": "Dependencies",
+    "Tasks:View:Finance": "Finance",
+    "Tasks:Finance:Empty": "No expense records in the filtered scope",
     "Tasks:Calendar:Today": "Today",
     "Tasks:Calendar:PrevMonth": "Previous month",
     "Tasks:Calendar:NextMonth": "Next month",

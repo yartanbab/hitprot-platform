@@ -12,11 +12,22 @@ namespace Apya.Platform.Web.Pages.Tasks
     public class IndexModel : PageModel
     {
         private readonly ISettingProvider _settingProvider;
+        private readonly Microsoft.AspNetCore.Authorization.IAuthorizationService _authorizationService;
 
-        public IndexModel(ISettingProvider settingProvider)
+        public IndexModel(
+            ISettingProvider settingProvider,
+            Microsoft.AspNetCore.Authorization.IAuthorizationService authorizationService)
         {
             _settingProvider = settingProvider;
+            _authorizationService = authorizationService;
         }
+
+        /// <summary>
+        /// Sabit "Finans" sekmesi (PR-3b) yalnız gider görme yetkisiyle basılır —
+        /// panel ExpenseAppService'ten besleniyor (Expenses.Default kapılı);
+        /// yetkisiz kullanıcıya sekme gösterip 403 aldırmak daha kötü.
+        /// </summary>
+        public bool CanViewFinance { get; private set; }
 
         /// <summary>
         /// Kullanıcının açık pano sekmeleri — HAM JSON, sayfaya olduğu gibi
@@ -42,6 +53,9 @@ namespace Apya.Platform.Web.Pages.Tasks
             BoardTabsJson = ShellBoardTabsSetting.ExtractScopeJson(
                 await _settingProvider.GetOrNullAsync(PlatformSettings.Shell.BoardTabs),
                 ShellBoardTabsSetting.TasksScope);
+
+            CanViewFinance = (await _authorizationService.AuthorizeAsync(
+                User, null, PlatformPermissions.Expenses.Default)).Succeeded;
         }
     }
 }

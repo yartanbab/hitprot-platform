@@ -45,6 +45,14 @@ public class ConsoleTabs_Tests : PlatformWebTestBase
         html.ShouldContain("data-board-tabs=");
         html.ShouldContain("id=\"btn-tab-add\"");
         html.ShouldContain("id=\"tab-add-menu\"");
+
+        // PR-3b: sabit üçlü (Liste · Kart Panosu · Finans) ✕'siz — kapatma
+        // düğmesi yalnız 4 katalog panosunda. Test host'u her zaman yetkili →
+        // Finans sekmesi ve paneli basılır.
+        html.ShouldContain("data-tab=\"finance\"");
+        html.ShouldContain("id=\"view-finance\"");
+        Regex.Matches(html, "apya-console-tab-close").Count.ShouldBe(4,
+            "/Tasks şeridinde yalnız takvim/gantt/gösterge/galeri kapatılabilir olmalı");
     }
 
     [Fact]

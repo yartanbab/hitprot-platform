@@ -160,7 +160,8 @@ public class ShellAppService : PlatformAppService, IShellAppService
     /// kalır. Pages/Tasks/index.js → VIEWS ile aynı adlar.
     /// </summary>
     private static readonly HashSet<string> BoardTabViewKinds =
-        new(StringComparer.Ordinal) { "list", "kanban", "gantt", "calendar", "dashboard", "gallery" };
+        new(StringComparer.Ordinal)
+        { "list", "kanban", "gantt", "calendar", "dashboard", "gallery", "finance" /* PR-3b */ };
 
     /// <summary>
     /// Proje detay konsolunun ("project:{id}" scope'u) çizebildiği türler.

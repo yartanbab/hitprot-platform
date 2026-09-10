@@ -198,15 +198,17 @@
         gizli gelir ki kullanıcının kapattığı sekme bir an parlayıp kaybolmasın.
     *@
     @{
-        // (tür, ikon, etiket, ipucu) — sıra varsayılan sırayı da verir.
+        // (tür, ikon, etiket, ipucu, kapatılabilir mi) — sıra varsayılan sırayı da verir.
+        // Birleşik sekme modeli (PR-3b): Liste · Kart Panosu · Finans SABİTTİR
+        // (✕ basılmaz — üç yüzeyde aynı kural, Proje Detayı ile bire bir).
         var boardTabs = new[]
         {
-            ("list",      "fa fa-list",          L["Tasks:View:List"].Value,      ""),
-            ("kanban",    "fa fa-table-columns", L["Tasks:View:Kanban"].Value,    ""),
-            ("calendar",  "fa fa-calendar-days", L["Tasks:View:Calendar"].Value,  "Başlangıç ve termin tarihleri aylık takvimde"),
-            ("gantt",     "fa fa-clock",         L["Tasks:View:Gantt"].Value,     "Başlangıç-bitiş tarihlerinden türeyen zaman çizelgesi"),
-            ("dashboard", "fa fa-chart-pie",     L["Tasks:View:Dashboard"].Value, "Seçili süzgecin durum, öncelik ve kişi dağılımı"),
-            ("gallery",   "fa fa-images",        L["Tasks:View:Gallery"].Value,   "Süzülmüş görevlere eklenmiş görseller")
+            ("list",      "fa fa-list",          L["Tasks:View:List"].Value,      "", false),
+            ("kanban",    "fa fa-table-columns", L["Tasks:View:Kanban"].Value,    "", false),
+            ("calendar",  "fa fa-calendar-days", L["Tasks:View:Calendar"].Value,  "Başlangıç ve termin tarihleri aylık takvimde", true),
+            ("gantt",     "fa fa-clock",         L["Tasks:View:Gantt"].Value,     "Başlangıç-bitiş tarihlerinden türeyen zaman çizelgesi", true),
+            ("dashboard", "fa fa-chart-pie",     L["Tasks:View:Dashboard"].Value, "Seçili süzgecin durum, öncelik ve kişi dağılımı", true),
+            ("gallery",   "fa fa-images",        L["Tasks:View:Gallery"].Value,   "Süzülmüş görevlere eklenmiş görseller", true)
         };
     }
     <div class="apya-console-tabs">
@@ -215,16 +217,32 @@
            keser) ve şerit dolduğunda "＋" de görünmez olurdu. *@
         <div class="apya-console-tabstrip" role="tablist" id="console-tabs"
              data-board-tabs="@Model.BoardTabsJson">
-            @foreach (var (kind, icon, label, hint) in boardTabs)
+            @foreach (var (kind, icon, label, hint, closable) in boardTabs)
             {
                 <span class="apya-console-tab d-none" data-tab="@kind" title="@hint">
                     <button type="button" class="apya-console-tab-main" id="btn-view-@kind"
                             role="tab" aria-selected="false" aria-controls="view-@kind">
                         <i class="@icon" aria-hidden="true"></i><span class="apya-console-tab-label">@label</span>
                     </button>
-                    <button type="button" class="apya-console-tab-close"
-                            aria-label="@label sekmesini kapat" title="Sekmeyi kapat">
-                        <i class="fa fa-xmark" aria-hidden="true"></i>
+                    @if (closable)
+                    {
+                        <button type="button" class="apya-console-tab-close"
+                                aria-label="@label sekmesini kapat" title="Sekmeyi kapat">
+                            <i class="fa fa-xmark" aria-hidden="true"></i>
+                        </button>
+                    }
+                </span>
+            }
+            @if (Model.CanViewFinance)
+            {
+                @* Finans SABİT ama koşullu: gider görme yetkisi yoksa hiç basılmaz
+                   (Proje Detayı'ndaki bütçe kapısıyla aynı desen). Çapraz-proje
+                   özetidir; sıradaki yeri JS düzeni belirler (DOM sırası değil). *@
+                <span class="apya-console-tab d-none" data-tab="finance"
+                      title="Tüm projelerin harcamaları — proje gruplu, Genel gider ayrı">
+                    <button type="button" class="apya-console-tab-main" id="btn-view-finance"
+                            role="tab" aria-selected="false" aria-controls="view-finance">
+                        <i class="fa fa-coins" aria-hidden="true"></i><span class="apya-console-tab-label">@L["Tasks:View:Finance"]</span>
                     </button>
                 </span>
             }
@@ -410,6 +428,15 @@
         <div id="view-dashboard" class="view-panel d-none" role="tabpanel" aria-labelledby="btn-view-dashboard"></div>
         <div id="view-gallery" class="view-panel d-none" role="tabpanel" aria-labelledby="btn-view-gallery"></div>
 
+        @* --- FİNANS (PR-3b, tasarım 2b/3c) ---
+             Çapraz-proje harcama özeti (/js/apya-task-finance.js): proje gruplu,
+             ara toplamlar sunucudan, Genel gider ayrı. Sekme gibi panel de
+             yetkiye bağlı basılır. *@
+        @if (Model.CanViewFinance)
+        {
+            <div id="view-finance" class="view-panel d-none" role="tabpanel" aria-labelledby="btn-view-finance"></div>
+        }
+
     </div>
 </div>
 
@@ -488,6 +515,8 @@
     <abp-script src="/js/apya-task-calendar.js" />
     <abp-script src="/js/apya-task-dashboard.js" />
     <abp-script src="/js/apya-task-gallery.js" />
+    <abp-script src="/js/apya-finance-scope.js" />
+    <abp-script src="/js/apya-task-finance.js" />
     <abp-script src="/Pages/Tasks/index.js" />
 }
 
