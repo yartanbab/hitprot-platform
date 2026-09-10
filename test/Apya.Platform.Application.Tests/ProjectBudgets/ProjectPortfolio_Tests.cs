@@ -42,6 +42,7 @@ public class ProjectPortfolio_Tests
     private readonly IRepository<IncomeEntry, Guid> _incomeRepo = Substitute.For<IRepository<IncomeEntry, Guid>>();
     private readonly IRepository<TaskItem, Guid> _taskRepo = Substitute.For<IRepository<TaskItem, Guid>>();
     private readonly IRepository<ProjectCategoryDefinition, Guid> _categoryRepo = Substitute.For<IRepository<ProjectCategoryDefinition, Guid>>();
+    private readonly IRepository<Apya.Platform.Documents.DocumentExpenseMatch, Guid> _matchRepo = Substitute.For<IRepository<Apya.Platform.Documents.DocumentExpenseMatch, Guid>>();
 
     private readonly ProjectBudgetAppService _sut;
 
@@ -52,7 +53,7 @@ public class ProjectPortfolio_Tests
 
         _sut = new ProjectBudgetAppService(
             _lineRepo, _trancheRepo, _deductionRepo, _revisionRepo, _projectRepo,
-            _categoryRepo, _expenseRepo, _incomeRepo, _taskRepo, manager);
+            _categoryRepo, _expenseRepo, _incomeRepo, _taskRepo, _matchRepo, manager);
 
         var services = new ServiceCollection();
         services.AddSingleton<IGuidGenerator>(SimpleGuidGenerator.Instance);

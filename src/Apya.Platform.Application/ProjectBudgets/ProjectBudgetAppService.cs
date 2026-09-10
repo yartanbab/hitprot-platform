@@ -37,6 +37,7 @@ public class ProjectBudgetAppService : ApplicationService, IProjectBudgetAppServ
     private readonly IRepository<Expense, Guid> _expenseRepository;
     private readonly IRepository<IncomeEntry, Guid> _incomeRepository;
     private readonly IRepository<TaskItem, Guid> _taskRepository;
+    private readonly IRepository<Apya.Platform.Documents.DocumentExpenseMatch, Guid> _matchRepository;
     private readonly ProjectBudgetManager _budgetManager;
 
     public ProjectBudgetAppService(
@@ -49,6 +50,7 @@ public class ProjectBudgetAppService : ApplicationService, IProjectBudgetAppServ
         IRepository<Expense, Guid> expenseRepository,
         IRepository<IncomeEntry, Guid> incomeRepository,
         IRepository<TaskItem, Guid> taskRepository,
+        IRepository<Apya.Platform.Documents.DocumentExpenseMatch, Guid> matchRepository,
         ProjectBudgetManager budgetManager)
     {
         _lineRepository = lineRepository;
@@ -60,6 +62,7 @@ public class ProjectBudgetAppService : ApplicationService, IProjectBudgetAppServ
         _expenseRepository = expenseRepository;
         _incomeRepository = incomeRepository;
         _taskRepository = taskRepository;
+        _matchRepository = matchRepository;
         _budgetManager = budgetManager;
     }
 
@@ -114,6 +117,65 @@ public class ProjectBudgetAppService : ApplicationService, IProjectBudgetAppServ
         dto.TaskBreakdown = await BuildTaskBreakdownAsync(expenses, incomes);
 
         return dto;
+    }
+
+    /// <summary>
+    /// Finans panelinin "Görev harcamaları" bölümü (PR-3b, tasarım 2a). Satırlar
+    /// tek sorguda: görev başlığı GİZLİLİK süzgeçli left join'den (gizli görevin
+    /// başlığı finans kullanıcısına sızmaz — TaskTitle boş kalır, satır kalır),
+    /// belge durumu DocumentExpenseMatch EXISTS'inden. Toplamlar dönen satırlar
+    /// üzerinden sunucuda; SpentAmount semantiğiyle bire bir (Amount toplamı).
+    /// </summary>
+    public async Task<ProjectExpensePanelDto> GetExpensePanelAsync(Guid projectId)
+    {
+        using var _ = HostScope();
+
+        var expQ = await _expenseRepository.GetQueryableAsync();
+        var taskQ = await ApplyTaskPrivacyFilterAsync(await _taskRepository.GetQueryableAsync());
+        var matchQ = await _matchRepository.GetQueryableAsync();
+
+        var rows = await AsyncExecuter.ToListAsync(
+            from e in expQ
+            where e.ProjectId == projectId
+            join t in taskQ on e.TaskId equals (Guid?)t.Id into tt
+            from t in tt.DefaultIfEmpty()
+            orderby e.ExpenseDate descending
+            select new ProjectExpenseRowDto
+            {
+                Id = e.Id,
+                Title = e.Title,
+                Amount = e.Amount,
+                Currency = e.Currency,
+                ExpenseDate = e.ExpenseDate,
+                Category = e.Category,
+                TaskId = e.TaskId,
+                TaskTitle = t != null ? t.Title : null,
+                HasDocument = matchQ.Any(m => m.ExpenseId == e.Id)
+            });
+
+        var taskLinked = rows.Where(r => r.TaskId != null).ToList();
+        var undocumented = rows.Where(r => !r.HasDocument).ToList();
+
+        return new ProjectExpensePanelDto
+        {
+            Rows = rows,
+            Total = rows.Sum(r => r.Amount),
+            TaskLinkedTotal = taskLinked.Sum(r => r.Amount),
+            TaskLinkedCount = taskLinked.Count,
+            TaskLinkedTaskCount = taskLinked.Select(r => r.TaskId).Distinct().Count(),
+            UndocumentedTotal = undocumented.Sum(r => r.Amount),
+            UndocumentedCount = undocumented.Count
+        };
+    }
+
+    /// <summary>Görev gizlilik süzgeci — kural tek kaynakta (TaskPrivacyQueryFilter),
+    /// bayraklar burada hesaplanır.</summary>
+    private async Task<IQueryable<TaskItem>> ApplyTaskPrivacyFilterAsync(IQueryable<TaskItem> query)
+    {
+        bool isImpersonated = CurrentUser.FindClaim(Volo.Abp.Security.Claims.AbpClaimTypes.ImpersonatorUserId) != null;
+        bool canManageTeam = await AuthorizationService.IsGrantedAsync(PlatformPermissions.Projects.ManageTeam);
+
+        return TaskPrivacyQueryFilter.Apply(query, isImpersonated, canManageTeam, CurrentUser.Id);
     }
 
     /// <summary>

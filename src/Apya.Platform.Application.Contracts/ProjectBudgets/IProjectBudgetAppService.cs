@@ -18,6 +18,13 @@ public interface IProjectBudgetAppService : IApplicationService
     Task<ProjectBudgetOverviewDto> GetOverviewAsync(Guid projectId);
 
     /// <summary>
+    /// Proje Finans panelinin "Görev harcamaları" bölümü (PR-3b, tasarım 2a):
+    /// gider satırları görev başlığı ve belge (evrak) durumuyla TEK sorguda,
+    /// toplamlar sunucuda. Görev başlığı gizlilik süzgecinden geçer.
+    /// </summary>
+    Task<ProjectExpensePanelDto> GetExpensePanelAsync(Guid projectId);
+
+    /// <summary>
     /// "Tüm projeler" görünümü: her projenin bütçe/gelen/harcanan özeti TEK geçişte.
     /// Proje başına <see cref="GetOverviewAsync"/> çağırmak N+1 üretirdi.
     /// </summary>
