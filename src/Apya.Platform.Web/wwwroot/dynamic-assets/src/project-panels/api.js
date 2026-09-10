@@ -24,6 +24,8 @@ export const api = {
     deleteDocument: (documentId) => p(svc().deleteDocument(documentId)),
 
     addChecklistItem: (taskId, text) => p(svc().addChecklistItem(taskId, text)),
+    // PR-3a hiyerarşik kapsam: doğrudan projeye bağlı madde (TaskId boş).
+    addProjectChecklistItem: (projectId, text) => p(svc().addProjectChecklistItem(projectId, text)),
     toggleChecklistItem: (itemId) => p(svc().toggleChecklistItem(itemId)),
     deleteChecklistItem: (itemId) => p(svc().deleteChecklistItem(itemId)),
 };
