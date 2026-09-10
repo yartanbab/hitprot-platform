@@ -259,6 +259,120 @@ public class ExpenseAppService :
         return await MapToGetOutputDtoAsync(expense);
     }
 
+    /// <summary>
+    /// /Tasks Finans paneli (PR-3b, tasarım 2b/3c). İki sorgu: (1) ara
+    /// toplamlar DB'de GROUP BY (proje × para birimi) — kabul kriteri:
+    /// istemcide toplama yok; (2) satırlar en yeni RowLimit kayıt, görev
+    /// başlığı GİZLİLİK süzgeçli left join'den. Grupta görünen satır sayısı
+    /// TotalCount'tan az olabilir; toplamlar yine tüm kümedendir.
+    /// Genel gider (ProjectId boş) ayrı grup ve EN SONDA.
+    /// </summary>
+    public async Task<ExpenseProjectGroupsDto> GetProjectGroupedAsync(GetExpensesInput input)
+    {
+        const int RowLimit = 500;
+
+        var query = await CreateFilteredQueryAsync(input);
+
+        var totals = await AsyncExecuter.ToListAsync(
+            query.GroupBy(e => new { e.ProjectId, e.Currency })
+                 .Select(g => new
+                 {
+                     g.Key.ProjectId,
+                     g.Key.Currency,
+                     Total = g.Sum(x => x.Amount),
+                     Count = g.Count()
+                 }));
+
+        bool isImpersonated = CurrentUser.FindClaim(Volo.Abp.Security.Claims.AbpClaimTypes.ImpersonatorUserId) != null;
+        bool canManageTeam = await AuthorizationService.IsGrantedAsync(PlatformPermissions.Projects.ManageTeam);
+        var taskQuery = Apya.Platform.Tasks.TaskPrivacyQueryFilter.Apply(
+            await _taskRepository.GetQueryableAsync(), isImpersonated, canManageTeam, CurrentUser.Id);
+
+        var rows = await AsyncExecuter.ToListAsync(
+            (from e in query
+             join t in taskQuery on e.TaskId equals (Guid?)t.Id into tt
+             from t in tt.DefaultIfEmpty()
+             orderby e.ExpenseDate descending
+             select new
+             {
+                 e.Id, e.Title, e.Amount, e.Currency, e.ExpenseDate, e.Category,
+                 e.ProjectId, e.TaskId,
+                 TaskTitle = t != null ? t.Title : null
+             }).Take(RowLimit));
+
+        var projectIds = totals.Where(x => x.ProjectId.HasValue)
+            .Select(x => x.ProjectId!.Value).Distinct().ToList();
+        var projects = projectIds.Count > 0
+            ? await _projectRepository.GetListAsync(p => projectIds.Contains(p.Id))
+            : new System.Collections.Generic.List<Project>();
+        var projectMap = projects.ToDictionary(p => p.Id);
+
+        var rowsByProject = rows.GroupBy(r => r.ProjectId)
+            .ToDictionary(g => g.Key ?? Guid.Empty, g => g.ToList());
+
+        ExpenseProjectGroupDto BuildGroup(Guid? projectId, string name, string? code)
+        {
+            var groupTotals = totals.Where(x => x.ProjectId == projectId).ToList();
+            return new ExpenseProjectGroupDto
+            {
+                ProjectId = projectId,
+                ProjectName = name,
+                ProjectCode = code,
+                TotalCount = groupTotals.Sum(x => x.Count),
+                Totals = groupTotals
+                    .GroupBy(x => x.Currency)
+                    .Select(g => new ExpenseCurrencyTotalDto
+                    {
+                        Currency = g.Key,
+                        Total = g.Sum(x => x.Total),
+                        Count = g.Sum(x => x.Count)
+                    })
+                    .OrderBy(x => x.Currency)
+                    .ToList(),
+                Rows = rowsByProject.TryGetValue(projectId ?? Guid.Empty, out var list)
+                    ? list.Select(r => new ExpenseGroupRowDto
+                    {
+                        Id = r.Id,
+                        Title = r.Title,
+                        Amount = r.Amount,
+                        Currency = r.Currency,
+                        ExpenseDate = r.ExpenseDate,
+                        Category = r.Category,
+                        TaskId = r.TaskId,
+                        TaskTitle = r.TaskTitle
+                    }).ToList()
+                    : new System.Collections.Generic.List<ExpenseGroupRowDto>()
+            };
+        }
+
+        var groups = projectMap.Values
+            .OrderBy(p => p.Name)
+            .Select(p => BuildGroup(p.Id, p.Name, p.Code))
+            .ToList();
+
+        // Genel gider EN SONDA (README toplama kuralı: "Bağımsız grubu en altta").
+        if (totals.Any(x => x.ProjectId == null))
+        {
+            groups.Add(BuildGroup(null, "Genel gider", null));
+        }
+
+        return new ExpenseProjectGroupsDto
+        {
+            Groups = groups,
+            GrandTotals = totals
+                .GroupBy(x => x.Currency)
+                .Select(g => new ExpenseCurrencyTotalDto
+                {
+                    Currency = g.Key,
+                    Total = g.Sum(x => x.Total),
+                    Count = g.Sum(x => x.Count)
+                })
+                .OrderBy(x => x.Currency)
+                .ToList(),
+            RowsTruncated = rows.Count >= RowLimit
+        };
+    }
+
     public override async Task<PagedResultDto<ExpenseDto>> GetListAsync(GetExpensesInput input)
     {
         var result = await base.GetListAsync(input);

@@ -752,6 +752,91 @@ $(function () {
     }
 
     // ================================================================
+    // FİNANS PANELİ — Görev harcamaları tablosu (PR-3b, tasarım 2a)
+    // Satırlar sunucuda basıldı; buradaki filtreler yalnız satır gizler ve
+    // görünen ara toplamı günceller (başlık toplamları sunucudan, bütçe
+    // özetiyle tutarlı). Kapsam taşıma paylaşılan diyalogla (apya-finance-scope).
+    // ================================================================
+    (function initFinanceTable() {
+        var $panel = $('#finance-expense-panel');
+        if (!$panel.length) { return; }
+
+        var expenseCreateModal = new abp.ModalManager({ viewUrl: abp.appPath + 'Expenses/CreateModal' });
+        // Panel sunucuda basılı — dürüst tazeleme tam yükleme (?view=finance korunur).
+        expenseCreateModal.onResult(function () { window.location.reload(); });
+        $('#btn-add-expense').on('click', function () {
+            expenseCreateModal.open({ ProjectId: projectId });
+        });
+
+        var $rows = $('#fin-expense-table tbody tr');
+
+        function fmt(total, currency) {
+            var n = total.toLocaleString('tr-TR', { minimumFractionDigits: 2 });
+            return currency === 'TRY' ? n + ' ₺' : n + ' ' + currency;
+        }
+
+        function apply() {
+            var cat = $('#fin-filter-category').val();
+            var task = $('#fin-filter-task').val();
+            var undoc = $('#fin-filter-undocumented').attr('aria-pressed') === 'true';
+            var visible = 0, total = 0;
+
+            $rows.each(function () {
+                var $r = $(this);
+                var show = (!cat || String($r.data('cat')) === cat)
+                    && (!task || String($r.data('task')) === task)
+                    && (!undoc || String($r.data('doc')) === '0');
+                $r.toggleClass('d-none', !show);
+                if (show) { visible++; total += parseFloat($r.attr('data-amount')) || 0; }
+            });
+
+            var filtered = !!(cat || task || undoc);
+            $('#fin-visible-note').text(filtered ? '· süzülmüş ' + visible + ' kayıt' : '');
+            var $total = $('#fin-visible-total');
+            var shown = filtered ? total : (parseFloat($total.attr('data-server-total')) || 0);
+            $total.text(fmt(shown, $total.attr('data-currency') || 'TRY'));
+        }
+
+        function sortRows() {
+            var mode = $('#fin-sort').val();
+            var tbody = document.querySelector('#fin-expense-table tbody');
+            $rows.get().sort(function (a, b) {
+                return mode === 'amount'
+                    ? (parseFloat(b.getAttribute('data-amount')) || 0) - (parseFloat(a.getAttribute('data-amount')) || 0)
+                    : String(b.getAttribute('data-date')).localeCompare(String(a.getAttribute('data-date')));
+            }).forEach(function (r) { tbody.appendChild(r); });
+        }
+
+        $('#fin-filter-category, #fin-filter-task').on('change', apply);
+        $('#fin-filter-undocumented').on('click', function () {
+            $(this).attr('aria-pressed', String($(this).attr('aria-pressed') !== 'true'));
+            apply();
+        });
+        $('#fin-sort').on('change', sortRows);
+
+        $panel.on('click', '.fin-open-task', function (e) {
+            e.preventDefault();
+            editModal.open($(this).data('task-id'));
+        });
+
+        $panel.on('click', '.fin-change-scope', function () {
+            var $b = $(this);
+            apya.financeScope.open({
+                kind: 'expense',
+                projectId: projectId,   // "yalnız projeye" hedefi bu projedir
+                record: {
+                    id: $b.data('id'),
+                    title: $b.data('title'),
+                    amount: parseFloat($b.attr('data-amount')) || 0,
+                    currency: $b.data('currency'),
+                    taskId: $b.data('task-id') || null
+                },
+                onSaved: function () { window.location.reload(); }
+            });
+        });
+    })();
+
+    // ================================================================
     // EKİP YÖNETİMİ DRAWER (8. adım)
     // Üyelik YALNIZ kayıttır: burada yapılan hiçbir şey görev atamasını,
     // görünürlüğü veya yetkileri değiştirmez (bkz. ProjectMember sınıf notu).

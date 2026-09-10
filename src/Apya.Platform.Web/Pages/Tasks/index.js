@@ -62,7 +62,9 @@ $(function () {
         gantt:     { panel: '#view-gantt',     btn: '#btn-view-gantt',     load: function () { loadGantt(); } },
         calendar:  { panel: '#view-calendar',  btn: '#btn-view-calendar',  load: function () { calendar.load(); } },
         dashboard: { panel: '#view-dashboard', btn: '#btn-view-dashboard', load: function () { dashboard.load(); } },
-        gallery:   { panel: '#view-gallery',   btn: '#btn-view-gallery',   load: function () { gallery.load(); } }
+        gallery:   { panel: '#view-gallery',   btn: '#btn-view-gallery',   load: function () { gallery.load(); } },
+        // Finans yetkiye bağlı basılır (PR-3b) — panel yoksa yükleyici sessiz.
+        finance:   { panel: '#view-finance',   btn: '#btn-view-finance',   load: function () { if (finance) { finance.load(); } } }
     };
 
     // Gün sınırı: dueDate saat taşıyabildiği için gün SONU kullanılır.
@@ -666,7 +668,14 @@ $(function () {
     // Sekme bir görünüş DEĞİL, görünüşün bir ÖRNEĞİdir: "kanban" tek sekmedir
     // ama "project" türünden aynı anda birkaç sekme açık olabilir — her biri
     // başka projenin panosu. Kimlik bu yüzden tür+referans çiftidir.
-    var DEFAULT_TABS = [{ kind: 'list' }, { kind: 'kanban' }, { kind: 'calendar' }, { kind: 'gantt' }];
+    // SABİT sekmeler (PR-3b, birleşik model): Liste · Kart Panosu · Finans —
+    // ✕'siz, kayıtlı düzen onları içermese bile requiredTabs onarımıyla açılır.
+    // Finans yetkiye bağlı basılmayabilir; varlığı DOM'dan okunur.
+    var FIXED_TABS = ['list', 'kanban'];
+    if ($('#btn-view-finance').length) { FIXED_TABS.push('finance'); }
+
+    var DEFAULT_TABS = FIXED_TABS.map(function (k) { return { kind: k }; })
+        .concat([{ kind: 'calendar' }, { kind: 'gantt' }]);
 
     var projectLookup = [];   // "＋" menüsündeki proje panoları (aşağıda dolar)
 
@@ -694,8 +703,12 @@ $(function () {
         // saklar ve yenilemede dördü sessizce kaybolur.
         maxTabs: 16,
         defaultTabs: DEFAULT_TABS,
+        requiredTabs: FIXED_TABS,
         isValidTab: function (t) {
-            return !!(VIEWS[t.kind] || t.kind === 'view' || t.kind === 'project');
+            if (t.kind === 'view' || t.kind === 'project') { return true; }
+            // Sabit görünüş DOM'da da olmalı: Finans yetkiye bağlı basılmayabilir,
+            // kayıtlı düzendeki izi panelsiz sekmeye dönüşmesin.
+            return !!(VIEWS[t.kind] && document.querySelector('#console-tabs > [data-tab="' + t.kind + '"]'));
         },
         dynamicIcon: function (t) {
             return t.kind === 'project' ? 'fa fa-diagram-project' : 'fa fa-bookmark';
@@ -781,6 +794,11 @@ $(function () {
         $('.view-panel').addClass('d-none');
         $(def.panel).removeClass('d-none');
 
+        // Görev filtreleri Finans panelinde süzmez (proje kapsamı HARİÇ — o,
+        // panelin kendi ayırıcı çubuğunda); şerit gizlenir ki "filtre
+        // çalışmıyor" yanılgısı doğmasın (proje konsolundaki kararla aynı).
+        $('#console-filters').toggleClass('d-none', currentView === 'finance');
+
         // Şerit ile panel ayrışmasın. Buraya activateTab dışından da geliniyor
         // (kebap menüsünden kayıtlı görünüm uygulamak gibi) ve o yol hangi
         // sekmede olduğumuzu bilmiyor: gösterilen panelin sekmesi kapalıysa
@@ -826,6 +844,20 @@ $(function () {
     var gallery = apya.taskGallery.create({
         mount: '#view-gallery', getFilter: buildInput, editModal: editModal
     });
+
+    // ─── Finans (çapraz proje — PR-3b) ─────────────────────────────────────
+    // Proje ayırıcı çubuğu KONSOLUN state'ine yazar (ikinci filtre mekanizması
+    // yok): seçim applyFilters'tan geçer, reloadActiveView paneli tazeler.
+    var finance = $('#view-finance').length ? apya.taskFinance.create({
+        mount: '#view-finance',
+        getProject: function () { return state.get('project') || ''; },
+        setProject: function (id) {
+            state.set('project', id || '');
+            applyFilters();
+        },
+        getProjects: function () { return projectLookup; },
+        openTask: function (id) { editModal.open(id); }
+    }) : null;
 
     // ─── Yenileme ──────────────────────────────────────────────────────────
     function reloadAll() {

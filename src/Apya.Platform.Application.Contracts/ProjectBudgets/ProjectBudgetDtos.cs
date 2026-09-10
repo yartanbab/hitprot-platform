@@ -441,3 +441,45 @@ public class BudgetLineTaskMatrixDto
     /// <summary>Hiçbir kaleme yazılmamış gider — kalem toplamlarının dışında kalır.</summary>
     public decimal UnassignedToLineAmount { get; set; }
 }
+
+/// <summary>
+/// Proje Finans panelinin "Görev harcamaları" bölümü (birleşik sekme sistemi
+/// PR-3b, tasarım 2a). Satırlar TEK sorguyla gelir; toplamlar sunucuda
+/// hesaplanır ve bütçe özetiyle (SpentAmount = proje giderleri toplamı) aynı
+/// semantiği kullanır. NOT: toplamlar mevcut özet gibi para birimi ayrımı
+/// yapmadan Amount toplar — bütçe özetiyle tutarlılık bilinçli tercih.
+/// </summary>
+public class ProjectExpensePanelDto
+{
+    public List<ProjectExpenseRowDto> Rows { get; set; } = new();
+
+    /// <summary>Projenin tüm giderleri (bütçe özetindeki Harcanan ile aynı).</summary>
+    public decimal Total { get; set; }
+
+    /// <summary>Görev etiketli giderler — "Görevlerden Gelen" kartı.</summary>
+    public decimal TaskLinkedTotal { get; set; }
+    public int TaskLinkedCount { get; set; }
+    public int TaskLinkedTaskCount { get; set; }
+
+    /// <summary>Belge (evrak) eşleşmesi olmayan giderler — amber uyarı kartı.</summary>
+    public decimal UndocumentedTotal { get; set; }
+    public int UndocumentedCount { get; set; }
+}
+
+public class ProjectExpenseRowDto
+{
+    public Guid Id { get; set; }
+    public string Title { get; set; } = string.Empty;
+    public decimal Amount { get; set; }
+    public string Currency { get; set; } = "TRY";
+    public DateTime ExpenseDate { get; set; }
+    public Apya.Platform.Expenses.ExpenseCategory Category { get; set; }
+
+    public Guid? TaskId { get; set; }
+
+    /// <summary>Bağlı görevin başlığı. Görev GİZLİYSE ve kullanıcı göremiyorsa
+    /// BOŞ döner — başlık, gizlilik süzgecinden geçen görev join'inden gelir.</summary>
+    public string? TaskTitle { get; set; }
+
+    public bool HasDocument { get; set; }
+}

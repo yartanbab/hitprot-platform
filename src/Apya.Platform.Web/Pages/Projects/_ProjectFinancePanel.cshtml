@@ -17,6 +17,18 @@
     string MoneyKpi(decimal v, string cur) => cur == "TRY" ? "₺" + v.ToString("N0") : v.ToString("N0") + " " + cur;
 
     string BarTone(int pct) => pct >= 100 ? "is-negative" : pct >= 80 ? "is-warning" : "is-positive";
+
+    // Etiketler Finance/Index.cshtml.cs'teki eşlemeyle aynı dil; kısa biçim.
+    string CatLabel(Apya.Platform.Expenses.ExpenseCategory c) => c switch
+    {
+        Apya.Platform.Expenses.ExpenseCategory.Office => "Ofis",
+        Apya.Platform.Expenses.ExpenseCategory.Travel => "Seyahat",
+        Apya.Platform.Expenses.ExpenseCategory.Personnel => "Personel",
+        Apya.Platform.Expenses.ExpenseCategory.Material => "Malzeme",
+        Apya.Platform.Expenses.ExpenseCategory.Service => "Hizmet",
+        Apya.Platform.Expenses.ExpenseCategory.Tax => "Vergi",
+        _ => "Genel"
+    };
 }
 
 @{
@@ -270,6 +282,159 @@
                     </tfoot>
                 }
             </table>
+        </div>
+    }
+
+    @* ─── Görev harcamaları (PR-3b, tasarım 2a) ───
+       Satırlar TEK sorguyla sunucudan (GetExpensePanelAsync): görev başlığı
+       gizlilik süzgeçli join'den, belge durumu evrak eşleşmesinden. Filtreler
+       İSTEMCİDE yalnız satır gizler (ProjectDetails.js → initFinanceTable);
+       başlık toplamları sunucudan gelir ve bütçe özetiyle tutarlıdır. *@
+    @if (Model.ExpensePanel != null)
+    {
+        var xp = Model.ExpensePanel;
+        <div class="mt-4" id="finance-expense-panel" data-project-id="@Model.Id">
+            <div class="d-flex align-items-center gap-2 flex-wrap mb-2">
+                <h6 class="mb-0">Görev harcamaları</h6>
+                <span class="apya-chip apya-chip-neutral" title="Görev etiketli giderlerin toplamı">
+                    Görevlerden gelen: <span class="apya-numeric">@Money(xp.TaskLinkedTotal, cur)</span>
+                    · @xp.TaskLinkedCount kayıt / @xp.TaskLinkedTaskCount görev
+                </span>
+                @if (xp.UndocumentedCount > 0)
+                {
+                    <span class="apya-chip apya-chip-warning" title="Evrak (belge) eşleşmesi olmayan giderler">
+                        Belgesiz: <span class="apya-numeric">@Money(xp.UndocumentedTotal, cur)</span>
+                        · @xp.UndocumentedCount kayıt
+                    </span>
+                }
+                <button type="button" class="btn btn-primary btn-sm ms-auto" id="btn-add-expense">
+                    <i class="fa fa-plus me-1" aria-hidden="true"></i>Harcama ekle
+                </button>
+            </div>
+
+            @if (xp.Rows.Count == 0)
+            {
+                <div class="apya-console-state">
+                    <span class="apya-console-state-icon"><i class="fa fa-coins" aria-hidden="true"></i></span>
+                    <strong>Henüz harcama kaydı yok</strong>
+                    <p>İlk harcamayı ekleyin — bir göreve bağlı ya da doğrudan projeye.</p>
+                </div>
+            }
+            else
+            {
+                <div class="d-flex align-items-center gap-2 flex-wrap mb-2">
+                    <select class="form-select form-select-sm w-auto" id="fin-filter-category" aria-label="Kategori süz">
+                        <option value="">Kategori: tümü</option>
+                        @foreach (var c in xp.Rows.Select(r => r.Category).Distinct().OrderBy(c => (int)c))
+                        {
+                            <option value="@((int)c)">@CatLabel(c)</option>
+                        }
+                    </select>
+                    <select class="form-select form-select-sm w-auto" id="fin-filter-task" aria-label="Görev süz">
+                        <option value="">Görev: tümü</option>
+                        @foreach (var t in xp.Rows.Where(r => r.TaskId != null && r.TaskTitle != null)
+                                                  .Select(r => new { r.TaskId, r.TaskTitle })
+                                                  .Distinct().OrderBy(t => t.TaskTitle))
+                        {
+                            <option value="@t.TaskId">@t.TaskTitle</option>
+                        }
+                    </select>
+                    <button type="button" class="apya-filter-chip" id="fin-filter-undocumented" aria-pressed="false">Belgesiz</button>
+                    <select class="form-select form-select-sm w-auto ms-auto" id="fin-sort" aria-label="Sırala">
+                        <option value="date">Sırala: Tarih ↓</option>
+                        <option value="amount">Sırala: Tutar ↓</option>
+                    </select>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table table-sm align-middle apya-clean-table" id="fin-expense-table">
+                        <thead>
+                            <tr class="text-muted" style="font-size:11px">
+                                <th>HARCAMA</th>
+                                <th>GÖREV</th>
+                                <th>KATEGORİ</th>
+                                <th class="text-center" style="width:56px">BELGE</th>
+                                <th style="width:90px">TARİH</th>
+                                <th class="text-end" style="width:110px">TUTAR</th>
+                                <th style="width:36px"></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        @foreach (var r in xp.Rows)
+                        {
+                            <tr data-cat="@((int)r.Category)" data-task="@r.TaskId" data-doc="@(r.HasDocument ? 1 : 0)"
+                                data-amount="@r.Amount.ToString(System.Globalization.CultureInfo.InvariantCulture)"
+                                data-date="@r.ExpenseDate.ToString("yyyy-MM-dd")">
+                                <td class="fw-semibold">@r.Title</td>
+                                <td>
+                                    @if (r.TaskId != null)
+                                    {
+                                        @* Başlık gizlilik süzgecinden geldi; görünmeyen görevde boş. *@
+                                        <a href="#" class="text-decoration-none fin-open-task" data-task-id="@r.TaskId">
+                                            @(r.TaskTitle ?? "—")
+                                        </a>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">—</span>
+                                    }
+                                </td>
+                                <td><span class="apya-chip apya-chip-neutral">@CatLabel(r.Category)</span></td>
+                                <td class="text-center">
+                                    @if (r.HasDocument)
+                                    {
+                                        <i class="fa fa-circle-check text-success" title="Belge bağlı" aria-hidden="true"></i>
+                                    }
+                                    else
+                                    {
+                                        <i class="fa fa-triangle-exclamation text-warning" title="Belge yok" aria-hidden="true"></i>
+                                    }
+                                </td>
+                                <td class="apya-numeric text-muted" style="font-size:12px">@r.ExpenseDate.ToString("dd.MM.yyyy")</td>
+                                <td class="text-end apya-numeric fw-semibold">@Money(r.Amount, r.Currency)</td>
+                                <td>
+                                    <div class="dropdown">
+                                        <button type="button" class="btn btn-sm btn-link text-muted p-0" data-bs-toggle="dropdown"
+                                                aria-expanded="false" aria-label="Satır işlemleri">
+                                            <i class="fa fa-ellipsis" aria-hidden="true"></i>
+                                        </button>
+                                        <div class="dropdown-menu apya-console-menu">
+                                            <button type="button" class="apya-console-menu-item fin-change-scope"
+                                                    data-id="@r.Id" data-title="@r.Title"
+                                                    data-amount="@r.Amount.ToString(System.Globalization.CultureInfo.InvariantCulture)"
+                                                    data-currency="@r.Currency" data-task-id="@r.TaskId">
+                                                <span class="apya-console-menu-icon"><i class="fa fa-arrows-turn-to-dots" aria-hidden="true"></i></span>
+                                                İlişkiyi değiştir…
+                                            </button>
+                                            @if (r.TaskId != null)
+                                            {
+                                                <button type="button" class="apya-console-menu-item fin-open-task" data-task-id="@r.TaskId">
+                                                    <span class="apya-console-menu-icon"><i class="fa fa-list-check" aria-hidden="true"></i></span>
+                                                    Görevde aç
+                                                </button>
+                                            }
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <td colspan="5" class="fw-semibold">
+                                    Ara toplam <span class="text-muted" style="font-size:12px" id="fin-visible-note"></span>
+                                </td>
+                                <td class="text-end apya-numeric fw-semibold" id="fin-visible-total"
+                                    data-server-total="@xp.Total.ToString(System.Globalization.CultureInfo.InvariantCulture)"
+                                    data-currency="@cur">
+                                    @Money(xp.Total, cur)
+                                </td>
+                                <td></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            }
         </div>
     }
 

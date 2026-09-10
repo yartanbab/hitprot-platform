@@ -410,16 +410,12 @@ namespace Apya.Platform.Tasks
         // görevin varlığını chevron/rozet üzerinden ele verir.
         private async Task<IQueryable<TaskItem>> ApplyPrivacyFilterAsync(IQueryable<TaskItem> query)
         {
+            // Kuralın kendisi TEK kaynakta: TaskPrivacyQueryFilter (finans
+            // yüzeyleri de aynı süzgeci kullanıyor — PR-3b).
             bool isImpersonated = CurrentUser.FindClaim(Volo.Abp.Security.Claims.AbpClaimTypes.ImpersonatorUserId) != null;
             bool canManageTeam = await AuthorizationService.IsGrantedAsync(PlatformPermissions.Projects.ManageTeam);
-            var currentUserId = CurrentUser.Id;
 
-            // 1. Impersonated ise (örn. Admin) diğer tenantın "gizli" verilerini ASLA göremez.
-            // 2. Normal kullanıcı gizli görevi yalnız kendisi açtıysa, kendisine atandıysa VEYA yöneticiyse görür.
-            return query.Where(t =>
-                !t.IsPrivate ||
-                (!isImpersonated && (canManageTeam || t.CreatorId == currentUserId || t.AssigneeId == currentUserId))
-            );
+            return TaskPrivacyQueryFilter.Apply(query, isImpersonated, canManageTeam, CurrentUser.Id);
         }
 
         // Alt görev sayaçlarını tek toplu GroupBy sorgusuyla iliştirir (N+1 yok) —
