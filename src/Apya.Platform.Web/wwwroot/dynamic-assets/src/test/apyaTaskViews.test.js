@@ -82,7 +82,8 @@ describe('apya.taskCalendar', () => {
         await flush();
 
         expect(mount.querySelectorAll('.apya-cal-item').length).toBe(0);
-        expect(mount.querySelector('.apya-cal-empty')).not.toBeNull();
+        // Boş durum ortak konsol kartına taşındı (tasarım 3a, PR-2a).
+        expect(mount.querySelector('.apya-console-state')).not.toBeNull();
     });
 
     it('baslikta XSS kacisi yapar', async () => {
@@ -173,7 +174,8 @@ describe('apya.taskDashboard', () => {
     it('gorev yoksa bos durum yazar, sayac kartlari basmaz', async () => {
         pointsResult = [];
         await load();
-        expect(mount.querySelector('.apya-dash-empty')).not.toBeNull();
+        // Boş durum ortak konsol kartına taşındı (tasarım 3a, PR-2a).
+        expect(mount.querySelector('.apya-console-state')).not.toBeNull();
         expect(mount.querySelectorAll('.apya-dash-stat').length).toBe(0);
     });
 
@@ -211,7 +213,8 @@ describe('apya.taskGallery', () => {
     it('gorsel yoksa bos durum yazar', async () => {
         galleryResult = [];
         await load();
-        expect(mount.querySelector('.apya-gal-empty')).not.toBeNull();
+        // Boş durum ortak konsol kartına taşındı (tasarım 3a, PR-2a).
+        expect(mount.querySelector('.apya-console-state')).not.toBeNull();
     });
 
     it('gorev basligina tiklayinca detay acar', async () => {

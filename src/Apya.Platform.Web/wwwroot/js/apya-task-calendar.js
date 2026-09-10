@@ -116,7 +116,12 @@
                 + '  </div>';
 
             if (state.tasks.length === 0) {
-                html += '<p class="apya-cal-empty">' + esc(l('Tasks:Calendar:Empty')) + '</p></div>';
+                // Boş durum ortak konsol kartıyla (tasarım 3a): tonlu ikon karesi
+                // + başlık — liste panelinin boş hâliyle aynı görsel dil.
+                html += '<div class="apya-console-state">'
+                    + '<span class="apya-console-state-icon"><i class="fa fa-calendar-days" aria-hidden="true"></i></span>'
+                    + '<strong>' + esc(l('Tasks:Calendar:Empty')) + '</strong>'
+                    + '</div></div>';
                 $mount.html(html);
                 return;
             }

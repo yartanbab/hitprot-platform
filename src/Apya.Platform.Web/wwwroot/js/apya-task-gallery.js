@@ -46,7 +46,11 @@
             }
 
             if (state.items.length === 0) {
-                $mount.html('<p class="apya-gal-empty">' + esc(l('Tasks:Gallery:Empty')) + '</p>');
+                // Boş durum ortak konsol kartıyla (tasarım 3a) — bkz. takvimdeki not.
+                $mount.html('<div class="apya-console-state">'
+                    + '<span class="apya-console-state-icon"><i class="fa fa-images" aria-hidden="true"></i></span>'
+                    + '<strong>' + esc(l('Tasks:Gallery:Empty')) + '</strong>'
+                    + '</div>');
                 return;
             }
 
