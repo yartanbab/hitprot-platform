@@ -310,4 +310,11 @@ public static class PlatformDomainErrorCodes
     public const string AgreementInviteExpired = "Platform:Agreement:InviteExpired";
     public const string AgreementConsentRequired = "Platform:Agreement:ConsentRequired";
     public const string AgreementTenantNameTaken = "Platform:Agreement:TenantNameTaken";
+
+    // --- Uygulama Kabuğu (Shell) ---
+    /// <summary>
+    /// Sekme düzeni tanınmayan bir yüzey (scope) anahtarıyla yazılmak istendi.
+    /// Sessizce varsayılana düşmek başka yüzeyin düzenini ezerdi; açık hata doğru.
+    /// </summary>
+    public const string ShellBoardTabsScopeInvalid = "Platform:Shell:BoardTabsScopeInvalid";
 }

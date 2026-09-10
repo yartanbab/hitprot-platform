@@ -28,13 +28,15 @@ public interface IShellAppService : IApplicationService
     Task<List<ShellSavedViewDto>> SetSavedViewsAsync(List<ShellSavedViewDto> views);
 
     /// <summary>
-    /// Panolar konsolunun açık sekmelerini topluca değiştirir — sekme açma,
+    /// Bir yüzeyin (scope) açık sekmelerini topluca değiştirir — sekme açma,
     /// kapatma ve sıralama aynı çağrıdan geçer (istemci tam listeyi gönderir).
-    /// Sunucuda saklanır ki düzen cihazlar arası taşınsın.
+    /// Sunucuda saklanır ki düzen cihazlar arası taşınsın. Scope'lar:
+    /// "tasks" (/Tasks), "project:{guid}" (proje detay konsolu), "taskdetail"
+    /// (görev detayının sekme sırası) — bkz. ShellBoardTabsSetting.
     ///
-    /// OKUMA burada YOK: sekmeleri /Tasks sayfasının kendi PageModel'i doğrudan
-    /// ayardan okur. ShellStateDto'ya konsaydı her sayfa yükünde taşınırdı,
-    /// oysa yalnız tek sayfayı ilgilendiriyor.
+    /// OKUMA burada YOK: her yüzeyin kendi sayfası düzeni doğrudan ayardan okuyup
+    /// data attribute ile basar. ShellStateDto'ya konsaydı her sayfa yükünde
+    /// taşınırdı, oysa yalnız bu sayfaları ilgilendiriyor.
     /// </summary>
-    Task<List<ShellBoardTabDto>> SetBoardTabsAsync(List<ShellBoardTabDto> tabs);
+    Task<List<ShellBoardTabDto>> SetBoardTabsAsync(SetShellBoardTabsInput input);
 }
