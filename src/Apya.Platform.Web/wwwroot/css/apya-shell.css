@@ -3877,6 +3877,16 @@ i.apya-priority-dot {
         line-height: 1.1;
         text-align: center;
     }
+    /* KAYAN şeritte (tabstrip'li konsollar — /Tasks, Proje Detayı) sekmeler
+       az iken eşit bölüşür, çoğaldıkça 64px tabanının altına inmek yerine
+       şerit yatay kayar (tasarım 3d): katalog panelleri mobilden de
+       açılabildiği için sekme sayısı sabit değil. Sarmalayıcısız tüketici
+       (/Finance şeridi) üstteki eşit-kolon kuralında kalır. */
+    .apya-console-tabs .apya-console-tabstrip .apya-console-tab {
+        flex: 1 0 auto;
+        min-width: 64px;
+        max-width: 112px;
+    }
     /* Etiket düğmesi sekmenin tamamını kaplar ve ikon/yazı ALT ALTA dizilir —
        masaüstünde yan yanaydılar. */
     .apya-console-tabs .apya-console-tab-main {
@@ -3899,17 +3909,44 @@ i.apya-priority-dot {
     }
     .apya-console-tabs .apya-console-tab i { font-size: 16px; }
 
-    /* Alt barda sekmeler EŞİT genişlikte kolonlardır; araya bir kaydırma kabı
-       giremez. `display: contents` ile kap kalkar, sekmeler barın doğrudan
-       flex öğesi olur ve `flex: 1 1 0` yeniden çalışır. */
-    .apya-console-tabs .apya-console-tabstrip { display: contents; }
+    /* Şerit alt barın kayan gövdesidir: ＋ dışarıda sabit kalsın diye
+       `display: contents` yerine kendi flex kabı olarak kalır ve taşan
+       sekmeler yatay kayar (tasarım 3d). Kaydırma çubuğu gizli — 58px'lik
+       barda ikinci bir yatay çizgi gürültü olurdu. */
+    .apya-console-tabs .apya-console-tabstrip {
+        display: flex;
+        flex: 1 1 auto;
+        min-width: 0;
+        overflow-x: auto;
+        scrollbar-width: none;
+    }
+    .apya-console-tabs .apya-console-tabstrip::-webkit-scrollbar { display: none; }
 
-    /* Sekme YÖNETİMİ (kapat / ekle) alt barda YOK. Burası bir gezinme çubuğu:
-       58px'lik kolonlara ✕ ve ＋ sıkıştırmak etiketleri okunmaz yapardı.
-       Düzen masaüstünde kurulur, mobil onu yalnız OKUR — ayar kullanıcıda
-       saklandığı için seçim iki cihazda da aynıdır. */
-    .apya-console-tabs .apya-console-tab-close,
-    .apya-console-tabs .apya-console-tabadd { display: none; }
+    /* Sekme KAPATMA alt barda yine yok: 58px'lik kolona ✕ sıkıştırmak etiketi
+       okunmaz yapardı; kapatma masaüstünde. ＋ ise artık GÖRÜNÜR (tasarım 3d):
+       birleşik sekme sisteminde katalog panelleri mobilden de açılabilmeli.
+       Şeridin DIŞINDA durduğu için kaymaz — sağda sabittir. */
+    .apya-console-tabs .apya-console-tab-close { display: none; }
+    .apya-console-tabs .apya-console-tabadd {
+        display: inline-flex;
+        align-self: center;
+        position: relative;
+        margin: 0 10px 0 4px;
+    }
+    /* Sağ kenar solması: şeritten taşan sekme olduğunun görsel ipucu. Sabit
+       gradyan — az sekmede sekmeler ＋'a kadar uzamadığı için (max-width)
+       zararsız kalır; zemin değişkenden gelir ki koyu temada da doğru sönsün. */
+    .apya-console-tabs .apya-console-tabadd::before {
+        content: "";
+        position: absolute;
+        right: 100%;
+        top: 50%;
+        height: 58px;
+        width: 28px;
+        transform: translateY(-50%);
+        background: linear-gradient(90deg, transparent, var(--apya-surface-base));
+        pointer-events: none;
+    }
     /* Aktif çizgi ALTTAN ÜSTE alınır: altta ekran kenarına denk gelip
        görünmüyordu. */
     .apya-console-tabs .apya-console-tab.active {
