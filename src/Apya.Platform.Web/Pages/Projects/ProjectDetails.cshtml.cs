@@ -49,6 +49,10 @@ public class ProjectDetailsModel : PlatformPageModel
     /// </summary>
     public Apya.Platform.ProjectBudgets.Dtos.ProjectBudgetOverviewDto? Budget { get; set; }
 
+    /// <summary>Finans panelinin "Görev harcamaları" bölümü (PR-3b) — Budget ile
+    /// aynı yetki kapısından geçer; Budget null ise hiç istenmez.</summary>
+    public Apya.Platform.ProjectBudgets.Dtos.ProjectExpensePanelDto? ExpensePanel { get; set; }
+
     public decimal BudgetSpent { get; set; }
     public int BudgetPercent { get; set; }
 
@@ -105,6 +109,12 @@ public class ProjectDetailsModel : PlatformPageModel
         // Yetkisi olmayan kullanıcıda sessizce atlanır; sekme ve bütçe çubuğu basılmaz.
         try { Budget = await _projectBudgetAppService.GetOverviewAsync(Id); }
         catch (Volo.Abp.Authorization.AbpAuthorizationException) { Budget = null; }
+
+        if (Budget != null)
+        {
+            // Aynı yetki kapısı (ViewBudget) — Budget geldiyse bu da gelir.
+            ExpensePanel = await _projectBudgetAppService.GetExpensePanelAsync(Id);
+        }
 
         // Şeritteki "Bütçe" çubuğu, Bütçe Durumu modalı ve Finans çatısı AYNI
         // hesaptan beslensin: onaylanan bütçe (kalem + revizyon), Project.TotalBudget

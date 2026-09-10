@@ -23,6 +23,11 @@ public class CreateModalModel : AbpPageModel
     [BindProperty(SupportsGet = true)]
     public Guid? TaskId { get; set; }
 
+    /// <summary>Proje Finans panelinden açılınca proje ÖNDEN seçili gelir (PR-3b).
+    /// TaskId doluysa yok sayılır — görev projeyi zaten belirler.</summary>
+    [BindProperty(SupportsGet = true)]
+    public Guid? ProjectId { get; set; }
+
     [BindProperty]
     public CreateUpdateExpenseDto Expense { get; set; } = new();
 
@@ -62,6 +67,11 @@ public class CreateModalModel : AbpPageModel
             // proje seçilene kadar gizli olduğu için, proje boş kalırsa gelen
             // TaskId POST'ta kaybolurdu.
             Expense.ProjectId = await FinanceLookupShared.ResolveTaskProjectAsync(_taskAppService, TaskId.Value);
+        }
+        else if (ProjectId.HasValue)
+        {
+            // Proje Finans panelinden: yalnız proje ön seçilir, görev boş kalır.
+            Expense.ProjectId = ProjectId;
         }
 
         return Page();
