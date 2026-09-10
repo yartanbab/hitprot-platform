@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Apya.Platform.Expenses;
+using Apya.Platform.Incomes;
 using Volo.Abp;
 using Volo.Abp.Domain.Repositories;
 using Volo.Abp.Domain.Services;
@@ -18,6 +20,8 @@ public class TaskManager : DomainService
     private readonly IRepository<TaskAttachment, Guid> _attachmentRepository;
     private readonly IRepository<TaskDependency, Guid> _dependencyRepository;
     private readonly IRepository<TaskTagAssignment, Guid> _tagAssignmentRepository;
+    private readonly IRepository<Expense, Guid> _expenseRepository;
+    private readonly IRepository<IncomeEntry, Guid> _incomeRepository;
 
     public TaskManager(
         IRepository<TaskItem, Guid> taskRepository,
@@ -25,7 +29,9 @@ public class TaskManager : DomainService
         IRepository<TaskComment, Guid> commentRepository,
         IRepository<TaskAttachment, Guid> attachmentRepository,
         IRepository<TaskDependency, Guid> dependencyRepository,
-        IRepository<TaskTagAssignment, Guid> tagAssignmentRepository)
+        IRepository<TaskTagAssignment, Guid> tagAssignmentRepository,
+        IRepository<Expense, Guid> expenseRepository,
+        IRepository<IncomeEntry, Guid> incomeRepository)
     {
         _taskRepository = taskRepository;
         _checklistRepository = checklistRepository;
@@ -33,6 +39,8 @@ public class TaskManager : DomainService
         _attachmentRepository = attachmentRepository;
         _dependencyRepository = dependencyRepository;
         _tagAssignmentRepository = tagAssignmentRepository;
+        _expenseRepository = expenseRepository;
+        _incomeRepository = incomeRepository;
     }
 
     /// <summary>Tenant içindeki bir sonraki görev sırası. DB sequence kullanılmaz —
@@ -73,6 +81,7 @@ public class TaskManager : DomainService
         {
             source.MoveToProject(targets[0]);
             await _taskRepository.UpdateAsync(source);
+            await SyncFinanceProjectAsync(source.Id, targets[0]);
             copyTargets = targets.Skip(1).ToList(); // kalanlar kopya
         }
 
@@ -83,6 +92,34 @@ public class TaskManager : DomainService
         }
 
         return createdIds;
+    }
+
+    /// <summary>
+    /// Kapsam tutarlılığı (birleşik sekme sistemi PR-3a): TaskId dolu finans
+    /// kaydının ProjectId'si görevden türetilir — görev taşınınca gider/gelir
+    /// kayıtları da yeni projeye geçer, bütçe toplamları görevle birlikte yürür.
+    /// Change-tracker üzerinden güncellenir (DeleteDirect/raw SQL değil):
+    /// Expense/IncomeEntry entity-history seçicisinde, eski/yeni değer audit'e düşer.
+    /// Kalem bağı düşürülür — bütçe kalemi projeye özgüdür, eski projenin
+    /// kalemine yazılı kalmak sessizce yanlış toplam üretirdi.
+    /// </summary>
+    private async Task SyncFinanceProjectAsync(Guid taskId, Guid newProjectId)
+    {
+        var expenses = await _expenseRepository.GetListAsync(x => x.TaskId == taskId);
+        foreach (var e in expenses)
+        {
+            e.ProjectId = newProjectId;
+            e.BudgetLineId = null;
+            await _expenseRepository.UpdateAsync(e);
+        }
+
+        var incomes = await _incomeRepository.GetListAsync(x => x.TaskId == taskId);
+        foreach (var i in incomes)
+        {
+            i.ProjectId = newProjectId;
+            i.BudgetLineId = null;
+            await _incomeRepository.UpdateAsync(i);
+        }
     }
 
     /// <summary>Kaynağın seçilen içerikleriyle birlikte tek bir hedef projede kopyasını üretir.</summary>

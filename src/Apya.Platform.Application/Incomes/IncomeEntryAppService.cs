@@ -9,6 +9,8 @@ using Apya.Platform.CashAccounts;
 using Apya.Platform.CashMovements;
 using Apya.Platform.Permissions;
 using Apya.Platform.ProjectBudgets;
+using Apya.Platform.Projects;
+using Apya.Platform.Tasks;
 
 namespace Apya.Platform.Incomes;
 
@@ -24,6 +26,8 @@ public class IncomeEntryAppService :
 {
     private readonly IRepository<CashMovement, Guid> _cashMovementRepository;
     private readonly IRepository<CashAccount, Guid> _cashAccountRepository;
+    private readonly IRepository<TaskItem, Guid> _taskRepository;
+    private readonly IRepository<Project, Guid> _projectRepository;
     private readonly ProjectBudgetManager _budgetManager;
     private readonly FxLedgerStamper _fxStamper;
 
@@ -31,12 +35,16 @@ public class IncomeEntryAppService :
         IRepository<IncomeEntry, Guid> repository,
         IRepository<CashMovement, Guid> cashMovementRepository,
         IRepository<CashAccount, Guid> cashAccountRepository,
+        IRepository<TaskItem, Guid> taskRepository,
+        IRepository<Project, Guid> projectRepository,
         ProjectBudgetManager budgetManager,
         FxLedgerStamper fxStamper)
         : base(repository)
     {
         _cashMovementRepository = cashMovementRepository;
         _cashAccountRepository = cashAccountRepository;
+        _taskRepository = taskRepository;
+        _projectRepository = projectRepository;
         _budgetManager = budgetManager;
         _fxStamper = fxStamper;
         GetPolicyName = PlatformPermissions.Incomes.Default;
@@ -82,19 +90,34 @@ public class IncomeEntryAppService :
     protected override async Task<IncomeEntry> MapToEntityAsync(CreateUpdateIncomeEntryDto createInput)
     {
         var entity = await base.MapToEntityAsync(createInput);
-        await ApplyFxStampAsync(entity, createInput);
+        // Kapsam kuralı damgadan önce — gerekçe ExpenseAppService'teki notta.
+        await ApplyScopeRuleAsync(entity);
+        await ApplyFxStampAsync(entity);
         return entity;
     }
 
     protected override async Task MapToEntityAsync(CreateUpdateIncomeEntryDto updateInput, IncomeEntry entity)
     {
         await base.MapToEntityAsync(updateInput, entity);
-        await ApplyFxStampAsync(entity, updateInput);
+        await ApplyScopeRuleAsync(entity);
+        await ApplyFxStampAsync(entity);
     }
 
-    private async Task ApplyFxStampAsync(IncomeEntry entity, CreateUpdateIncomeEntryDto input)
+    /* Kapsam tutarlılığı (PR-3a) — gerekçe ExpenseAppService'teki notla aynı:
+       TaskId doluysa ProjectId görevden türetilir, istemci değeri yok sayılır. */
+    private async Task ApplyScopeRuleAsync(IncomeEntry entity)
     {
-        var stamp = await _fxStamper.StampAsync(input.ProjectId, input.Currency, input.Amount, input.IncomeDate);
+        if (entity.TaskId.HasValue)
+        {
+            var task = await _taskRepository.GetAsync(entity.TaskId.Value); // tenant süzgeçli
+            entity.ProjectId = task.ProjectId;
+        }
+    }
+
+    private async Task ApplyFxStampAsync(IncomeEntry entity)
+    {
+        // entity.ProjectId: kapsam kuralı projeyi türetmiş olabilir.
+        var stamp = await _fxStamper.StampAsync(entity.ProjectId, entity.Currency, entity.Amount, entity.IncomeDate);
         entity.BookAmount = stamp.BookAmount;
         entity.BookRate = stamp.BookRate;
         entity.DonorAmount = stamp.DonorAmount;
@@ -102,10 +125,17 @@ public class IncomeEntryAppService :
         entity.RateLocked = stamp.DonorAmount != null;
     }
 
+    /// <summary>Kalem doğrulaması türetilmiş projeye göre — bkz. ExpenseAppService.</summary>
+    private async Task<Guid?> ResolveEffectiveProjectIdAsync(CreateUpdateIncomeEntryDto input)
+        => input.TaskId.HasValue
+            ? (await _taskRepository.GetAsync(input.TaskId.Value)).ProjectId
+            : input.ProjectId;
+
     public override async Task<IncomeEntryDto> CreateAsync(CreateUpdateIncomeEntryDto input)
     {
         // Giderdeki ile aynı koşullu kural; bkz. ExpenseAppService.
-        await _budgetManager.EnsureBudgetLineIsValidAsync(input.ProjectId, input.BudgetLineId);
+        await _budgetManager.EnsureBudgetLineIsValidAsync(
+            await ResolveEffectiveProjectIdAsync(input), input.BudgetLineId);
 
         var dto = await base.CreateAsync(input);
 
@@ -128,7 +158,8 @@ public class IncomeEntryAppService :
 
     public override async Task<IncomeEntryDto> UpdateAsync(Guid id, CreateUpdateIncomeEntryDto input)
     {
-        await _budgetManager.EnsureBudgetLineIsValidAsync(input.ProjectId, input.BudgetLineId);
+        await _budgetManager.EnsureBudgetLineIsValidAsync(
+            await ResolveEffectiveProjectIdAsync(input), input.BudgetLineId);
 
         var dto = await base.UpdateAsync(id, input);
 
@@ -169,6 +200,44 @@ public class IncomeEntryAppService :
             await _cashMovementRepository.DeleteAsync(m);
 
         await base.DeleteAsync(id);
+    }
+
+    /// <summary>"İlişkiyi değiştir…" — gerekçe ve kurallar ExpenseAppService
+    /// .SetScopeAsync ile aynı (granüler uç, çifte yetki, otomatik audit).</summary>
+    public async Task<IncomeEntryDto> SetScopeAsync(Guid id, SetIncomeScopeDto input)
+    {
+        await CheckPolicyAsync(PlatformPermissions.Incomes.Edit);
+        await CheckPolicyAsync(PlatformPermissions.Tasks.Edit);
+
+        var income = await Repository.GetAsync(id);
+        var oldProjectId = income.ProjectId;
+
+        if (input.TaskId.HasValue)
+        {
+            var task = await _taskRepository.GetAsync(input.TaskId.Value);
+            income.TaskId = task.Id;
+            income.ProjectId = task.ProjectId; // türetilir
+        }
+        else if (input.ProjectId.HasValue)
+        {
+            await _projectRepository.GetAsync(input.ProjectId.Value);
+            income.TaskId = null;
+            income.ProjectId = input.ProjectId;
+        }
+        else
+        {
+            income.TaskId = null;
+            income.ProjectId = null; // bağımsız
+        }
+
+        if (income.ProjectId != oldProjectId)
+        {
+            income.BudgetLineId = null;          // kalem projeye özgü
+            await ApplyFxStampAsync(income);     // donör defteri yeni projeye göre
+        }
+
+        await Repository.UpdateAsync(income, autoSave: true);
+        return await MapToGetOutputDtoAsync(income);
     }
 
     public override async Task<PagedResultDto<IncomeEntryDto>> GetListAsync(GetIncomeEntriesInput input)
