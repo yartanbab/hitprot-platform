@@ -164,6 +164,15 @@ public class PlatformSettingDefinitionProvider : SettingDefinitionProvider
                 description: L("Setting:Shell.BoardTabs.Description"))
         );
 
+        // Kanban görünüm tercihi — BoardTabs ile aynı ray (kullanıcı seviyesi, JSON değer).
+        context.Add(
+            new SettingDefinition(
+                PlatformSettings.Shell.KanbanView,
+                defaultValue: PlatformSettingDefaults.ShellKanbanView,
+                displayName: L("Setting:Shell.KanbanView"),
+                description: L("Setting:Shell.KanbanView.Description"))
+        );
+
         // --- Telemetri ---
         // Global (host) ayarları: tenant'lar değiştiremez.
         context.Add(
