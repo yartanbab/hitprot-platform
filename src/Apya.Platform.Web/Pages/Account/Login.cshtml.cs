@@ -1,11 +1,13 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Threading.Tasks;
 using Apya.Platform.Accounts;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Volo.Abp.Account.Web;
 using Volo.Abp.Identity;
@@ -35,6 +37,14 @@ public class ApyaLoginModel : Volo.Abp.Account.Web.Pages.Account.LoginModel
     private const int MaxTenantProbe = 25;
 
     private readonly LoginTenantFinder _loginTenantFinder;
+    private readonly IOptions<PlatformPerformanceOptions> _performanceOptions;
+
+    // Faz ölçümü alanları. Sayfa modeli istek başına oluşturulduğu için istekler
+    // arasında paylaşılmaz; kilit/temizlik gerekmez.
+    private long _finderMs;
+    private long _probeMs;
+    private int _candidateCount;
+    private int _probeCount;
 
     public ApyaLoginModel(
         IAuthenticationSchemeProvider schemeProvider,
@@ -42,27 +52,75 @@ public class ApyaLoginModel : Volo.Abp.Account.Web.Pages.Account.LoginModel
         IOptions<IdentityOptions> identityOptions,
         IdentityDynamicClaimsPrincipalContributorCache dynamicClaimsPrincipalContributorCache,
         IWebHostEnvironment webHostEnvironment,
-        LoginTenantFinder loginTenantFinder)
+        LoginTenantFinder loginTenantFinder,
+        IOptions<PlatformPerformanceOptions> performanceOptions)
         : base(schemeProvider, accountOptions, identityOptions, dynamicClaimsPrincipalContributorCache, webHostEnvironment)
     {
         _loginTenantFinder = loginTenantFinder;
+        _performanceOptions = performanceOptions;
     }
 
     public override async Task<IActionResult> OnPostAsync(string action)
     {
         TrimUserNameInput();
 
-        var tenantId = await ResolveTenantAsync(action);
+        var watch = Stopwatch.StartNew();
 
+        var tenantId = await ResolveTenantAsync(action);
+        var resolveMs = watch.ElapsedMilliseconds;
+
+        IActionResult result;
         if (tenantId == null)
         {
-            return await base.OnPostAsync(action);
+            result = await base.OnPostAsync(action);
+        }
+        else
+        {
+            using (CurrentTenant.Change(tenantId))
+            {
+                result = await base.OnPostAsync(action);
+            }
         }
 
-        using (CurrentTenant.Change(tenantId))
+        watch.Stop();
+        LogPhasesIfSlow(watch.ElapsedMilliseconds, resolveMs);
+
+        return result;
+    }
+
+    /// <summary>
+    /// Giriş POST'u eşiği aşarsa geçen süreyi fazlara ayırıp Warning loglar.
+    /// Amaç, "giriş yavaş" gözlemini ölçülebilir bir adıma indirmek: kiracı arama
+    /// sorgusu mu, aday kiracılarda şifre denemesi mi (her denemesi bir PBKDF2
+    /// doğrulaması), yoksa ABP'nin kendi giriş akışı mı.
+    ///
+    /// Eşik, yavaş istek middleware'i ile AYNI ayardan okunur
+    /// (<see cref="PlatformPerformanceOptions.SlowRequestThresholdMs"/>), böylece bu
+    /// satır her zaman ilgili "[PERF] Yavaş istek" satırının yanında belirir.
+    ///
+    /// KİŞİSEL VERİ YAZILMAZ: yalnız süreler ve sayılar loglanır — kullanıcı adı,
+    /// e-posta ve kiracı kimliği bilinçli olarak dışarıda bırakıldı.
+    /// </summary>
+    private void LogPhasesIfSlow(long totalMs, long resolveMs)
+    {
+        var thresholdMs = _performanceOptions.Value.SlowRequestThresholdMs;
+        if (thresholdMs <= 0 || totalMs < thresholdMs)
         {
-            return await base.OnPostAsync(action);
+            return;
         }
+
+        Logger.LogWarning(
+            "[PERF] Yavaş giriş: toplam {TotalMs} ms (eşik {ThresholdMs} ms) = " +
+            "kiracı arama {FinderMs} ms ({CandidateCount} aday) + " +
+            "kiracı deneme {ProbeMs} ms ({ProbeCount} şifre doğrulaması) + " +
+            "ABP giriş akışı {SignInMs} ms.",
+            totalMs,
+            thresholdMs,
+            _finderMs,
+            _candidateCount,
+            _probeMs,
+            _probeCount,
+            totalMs - resolveMs);
     }
 
     /// <summary>
@@ -88,7 +146,10 @@ public class ApyaLoginModel : Volo.Abp.Account.Web.Pages.Account.LoginModel
             return null;
         }
 
+        var finderWatch = Stopwatch.StartNew();
         var candidates = await _loginTenantFinder.FindTenantIdsAsync(userNameOrEmail);
+        _finderMs = finderWatch.ElapsedMilliseconds;
+        _candidateCount = candidates.Count;
 
         // Hiç eşleşme yok ya da yalnız host'ta var → stok akış. Kullanıcı bulunamadığında
         // ABP'nin verdiği mesajın aynısı üretilir, böylece "bu kullanıcı sistemde var mı"
@@ -105,7 +166,11 @@ public class ApyaLoginModel : Volo.Abp.Account.Web.Pages.Account.LoginModel
             return candidates[0];
         }
 
-        return await ProbeTenantsAsync(candidates, userNameOrEmail, LoginInput.Password);
+        var probeWatch = Stopwatch.StartNew();
+        var probedTenantId = await ProbeTenantsAsync(candidates, userNameOrEmail, LoginInput.Password);
+        _probeMs = probeWatch.ElapsedMilliseconds;
+
+        return probedTenantId;
     }
 
     /// <summary>
@@ -128,7 +193,17 @@ public class ApyaLoginModel : Volo.Abp.Account.Web.Pages.Account.LoginModel
                 var user = await UserManager.FindByNameAsync(userNameOrEmail)
                            ?? await UserManager.FindByEmailAsync(userNameOrEmail);
 
-                if (user != null && await UserManager.CheckPasswordAsync(user, password))
+                if (user == null)
+                {
+                    continue;
+                }
+
+                // Sayaç döngü turunu değil ŞİFRE DOĞRULAMASINI sayar: pahalı olan
+                // (PBKDF2) yalnız kullanıcı bulunduğunda çalışır, teşhis için anlamlı
+                // sayı budur.
+                _probeCount++;
+
+                if (await UserManager.CheckPasswordAsync(user, password))
                 {
                     return candidates[i];
                 }
