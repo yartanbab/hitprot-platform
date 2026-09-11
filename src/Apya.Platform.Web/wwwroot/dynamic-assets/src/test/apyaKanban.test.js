@@ -1617,3 +1617,45 @@ describe('kart ⋯ menüsü (v2)', () => {
         expect(items).toContain('İptali geri al');
     });
 });
+
+// ── Kayıtlı görünüm köprüsü: get/setViewPrefs ───────────────────────────────
+describe('görünüm tercihi API (kayıtlı görünümler)', () => {
+    beforeEach(() => {
+        global.fetch = () => Promise.resolve({ ok: true });
+    });
+
+    it('getViewPrefs anlık görüntü döner, setViewPrefs uygular ve sunucuya yazar', async () => {
+        let saved = null;
+        global.fetch = (url, opts) => { saved = JSON.parse(opts.body); return Promise.resolve({ ok: true }); };
+        mountBoard(sysCols, [{ id: 't1', code: 'GRV-1', title: 'A', status: 1, priority: 2 }]);
+        const kb = apya.kanban.create({ projectId: 'p1' });
+        kb.load();
+        await flush();
+
+        const snap = kb.getViewPrefs();
+        expect(snap.density).toBe('compact');
+        expect(snap.collapseEmpty).toBe(false); // ayna varsayılanı
+
+        kb.setViewPrefs({ density: 'title', hideDone: true });
+        await flush();
+
+        expect(document.querySelector('.kanban-board').getAttribute('data-kb-density')).toBe('title');
+        expect(saved.density).toBe('title');
+        expect(saved.hideDone).toBe(true);
+        // Anlık görüntü KOPYA olmalı — dışarıda değiştirmek tercihe sızmaz.
+        snap.density = 'card';
+        expect(kb.getViewPrefs().density).toBe('title');
+    });
+
+    it('tanınmayan yoğunluk yok sayılır', async () => {
+        mountBoard(sysCols, [{ id: 't1', code: 'GRV-1', title: 'A', status: 1, priority: 2 }]);
+        const kb = apya.kanban.create({ projectId: 'p1' });
+        kb.load();
+        await flush();
+
+        kb.setViewPrefs({ density: 'yamuk' });
+        await flush();
+
+        expect(kb.getViewPrefs().density).toBe('compact');
+    });
+});

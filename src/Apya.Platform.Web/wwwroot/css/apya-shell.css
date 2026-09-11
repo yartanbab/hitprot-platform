@@ -2915,6 +2915,49 @@ i.apya-priority-dot {
 }
 [data-theme="dark"] .apya-filter-chip.is-active,
 [data-theme="dark"] .apya-filter-chip[aria-pressed="true"] { color: var(--apya-accent-300); }
+
+/* --- Kanban v2 filtre modeli (/Tasks) ---
+   Pasif "X: tümü" chip'leri gizlenir (index.js yönetir); etkin chip değeri +
+   ✕ taşır, chevron düşer. Yeni filtre kesik çizgili "＋ Filtre"den seçilir. */
+.apya-filter-chip.is-active > .fa-chevron-down { display: none; }
+.apya-filter-chip-x {
+    display: inline-grid;
+    place-items: center;
+    width: 14px;
+    height: 14px;
+    margin-left: 2px;
+    border-radius: 50%;
+    font-size: 9px;
+    opacity: 0.75;
+}
+.apya-filter-chip-x:hover { opacity: 1; background: color-mix(in srgb, currentColor 12%, transparent); }
+.apya-filter-add {
+    border-style: dashed;
+    border-color: var(--apya-border-strong);
+    background: transparent;
+    border-radius: var(--apya-radius-full, 9999px);
+}
+.apya-filter-add > i { font-size: 10px; opacity: 1; }
+.apya-filter-add:hover { border-color: var(--apya-accent-500); color: var(--apya-accent-600); }
+/* Gecikmiş chip'i: kırmızı nokta + sayaç; basılıyken negatif tona döner
+   (accent'e değil — sinyal rengi korunur). */
+.apya-filter-overdue { color: var(--apya-text-negative, var(--apya-negative-700, #991b1b)); }
+.apya-overdue-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--apya-negative-500);
+    flex: none;
+}
+.apya-filter-chip.apya-filter-overdue[aria-pressed="true"] {
+    border-color: var(--apya-negative-500);
+    background: color-mix(in srgb, var(--apya-negative-500) 10%, transparent);
+    color: var(--apya-text-negative, var(--apya-negative-700, #991b1b));
+}
+/* Kanban araçları (Grupla · Kolonlar · Görünüm) filtre çubuğunun sağına yaslanır */
+#kanban-tools-slot { display: inline-flex; margin-left: auto; }
+#kanban-tools-slot.d-none { display: none; }
+
 .apya-console-filter-clear {
     height: 26px;
     padding: 0 8px;
