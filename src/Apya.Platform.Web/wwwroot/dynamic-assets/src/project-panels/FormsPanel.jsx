@@ -1,29 +1,35 @@
 import React from 'react';
 import { api, projectTasks, openTask } from './api';
 import { usePanelShown, useAsyncData } from './usePanel';
-import { groupByTask } from './grouping';
-import { PanelLoading, PanelError, PanelEmpty, TaskGroupHeader } from './PanelChrome';
+import { groupByTask, partitionByProject } from './grouping';
+import { PanelLoading, PanelError, PanelEmpty, TaskGroupHeader, ProjectGroupHeader } from './PanelChrome';
 
 /**
  * Form — proje kapsamı (wireframe 2f). Projenin görevlerine bağlı formlar
  * görev gruplu listelenir; yanıt sayısı görev bağlamındadır. Form BAĞLAMA
  * bilinçli olarak burada yok: bağ görevin işi, satırdan görev detayı açılır
  * (v1 kararı — kapsam modeli PR-3'te ilişki seçiciyi getirecek).
+ * projectId null = ÇAPRAZ PROJE (/Tasks): görev grupları proje başlıkları
+ * altında toplanır.
  */
 export function FormsPanel({ projectId, kind, mountEl }) {
+    const isGlobal = !projectId;
     const shown = usePanelShown(kind, mountEl);
     const panel = useAsyncData(
-        () => Promise.all([projectTasks(projectId), api.projectForms(projectId)]),
+        () => Promise.all([
+            projectTasks(projectId),
+            api.projectForms(projectId),
+            isGlobal ? api.projectsLookup() : Promise.resolve([]),
+        ]),
         shown,
     );
 
     if (!shown || panel.status === 'idle' || panel.status === 'loading') { return <PanelLoading />; }
     if (panel.status === 'error') { return <PanelError onRetry={panel.reload} />; }
 
-    const [tasks, links] = panel.data;
-    const groups = groupByTask(tasks, links, (l) => l.taskId);
+    const [tasks, links, projects] = panel.data;
 
-    if (groups.length === 0) {
+    if (links.length === 0) {
         return (
             <PanelEmpty
                 icon="fa-clipboard-list"
@@ -33,9 +39,8 @@ export function FormsPanel({ projectId, kind, mountEl }) {
         );
     }
 
-    return (
-        <div className="pb-4">
-            {groups.map((g) => (
+    const renderTaskGroups = (groupTasks, groupLinks) =>
+        groupByTask(groupTasks, groupLinks, (l) => l.taskId).map((g) => (
                 <section key={g.task?.id ?? 'orphan'}>
                     <TaskGroupHeader task={g.task} />
                     <ul className="m-0 p-0 list-none">
@@ -67,7 +72,18 @@ export function FormsPanel({ projectId, kind, mountEl }) {
                         ))}
                     </ul>
                 </section>
-            ))}
+        ));
+
+    return (
+        <div className="pb-4">
+            {isGlobal
+                ? partitionByProject(projects, tasks, links, (l) => l.taskId).map((part) => (
+                    <section key={part.project?.id ?? 'no-project'}>
+                        <ProjectGroupHeader project={part.project} />
+                        {renderTaskGroups(part.tasks, part.records)}
+                    </section>
+                ))
+                : renderTaskGroups(tasks, links)}
         </div>
     );
 }

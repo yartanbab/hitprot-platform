@@ -120,6 +120,56 @@ public class ProjectPanelQueries_Tests : PlatformWebTestBase
         p2Edges.ShouldBeEmpty();
     }
 
+    // --- Çapraz-proje kip (projectId = null, /Tasks Panolar yüzeyi) ---
+    // Sıkı eşitlik YOK: null kip veritabanındaki TÜM görünür kayıtları döner,
+    // paylaşılan test DB'sinde başka seed'ler de görünebilir. Bu yüzden
+    // iddialar bu seed'in GUID'leriyle çapalanır (ShouldContain).
+
+    [Fact]
+    public async Task Capraz_proje_kip_kayitlari_tum_projelerden_toplar()
+    {
+        var s = await SeedAsync("PPQ-X");
+
+        // Proje-seviyesi madde de görünmeli — global kipte kiracı sınırı
+        // proje join'inden gelir, bu dal ancak böyle bir kayıtla çalışır.
+        var uowManager = GetRequiredService<IUnitOfWorkManager>();
+        using (var uow = uowManager.Begin(requiresNew: true))
+        {
+            var items = GetRequiredService<IRepository<TaskChecklistItem, Guid>>();
+            await items.InsertAsync(new TaskChecklistItem { ProjectId = s.P1, Text = "PPQ-X proje maddesi" }, autoSave: true);
+            await uow.CompleteAsync();
+        }
+
+        var docs = await _taskAppService.GetProjectDocumentsAsync(null);
+        docs.ShouldContain(d => d.TaskId == s.T1a && d.Title == "P1 belgesi");
+        docs.ShouldContain(d => d.TaskId == s.T2 && d.Title == "P2 belgesi");
+
+        var forms = await _taskAppService.GetProjectLinkedFormsAsync(null);
+        forms.ShouldContain(f => f.TaskId == s.T1a);
+        forms.ShouldContain(f => f.TaskId == s.T2);
+
+        var checklist = await _taskAppService.GetProjectChecklistAsync(null);
+        // Görev maddesinde ProjectId GÖREVİN projesi dolu gelir — istemci
+        // proje başına bununla gruplar (partitionByProject).
+        checklist.ShouldContain(i => i.TaskId == s.T1a && i.ProjectId == s.P1);
+        checklist.ShouldContain(i => i.TaskId == s.T2 && i.ProjectId == s.P2);
+        checklist.ShouldContain(i => i.TaskId == null && i.ProjectId == s.P1 && i.Text == "PPQ-X proje maddesi");
+    }
+
+    [Fact]
+    public async Task Capraz_proje_kip_bagimlilik_haritasi_capraz_kenari_da_gosterir()
+    {
+        var s = await SeedAsync("PPQ-Y");
+
+        var edges = await _taskAppService.GetProjectDependenciesAsync(null);
+
+        // Proje içi kenar her iki kipte de var…
+        edges.ShouldContain(e => e.TaskId == s.T1b && e.PredecessorTaskId == s.T1a);
+        // …iki projeye yayılan kenar ise tekil haritalarda elenirken burada
+        // görünür: iki ucu da görünür görev kümesinde.
+        edges.ShouldContain(e => e.TaskId == s.T1a && e.PredecessorTaskId == s.T2);
+    }
+
     [Fact]
     public async Task Formlar_projeyle_sinirli_gelir_ayni_form_iki_projede_ayri_bag()
     {

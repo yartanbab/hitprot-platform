@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { api, projectTasks } from './api';
 import { usePanelShown, useAsyncData } from './usePanel';
-import { groupByTask } from './grouping';
-import { PanelLoading, PanelError, PanelEmpty, TaskGroupHeader } from './PanelChrome';
+import { groupByTask, partitionByProject } from './grouping';
+import { PanelLoading, PanelError, PanelEmpty, TaskGroupHeader, ProjectGroupHeader } from './PanelChrome';
 import { RichTextEditorV3 } from '../task-detail/v3/components/RichTextEditorV3';
 
 const notify = {
@@ -18,11 +18,18 @@ const fmtDate = (v) => (v ? new Date(v).toLocaleDateString('tr-TR') : '');
  * düzenlenir ve kaynağına (görevin belgesine) kaydedilir. Yeni belge bir
  * GÖREV seçilerek oluşturulur — "yalnız projeye bağlı / bağımsız" seçenekleri
  * PR-3'ün kapsam modeliyle gelecek.
+ * projectId null = ÇAPRAZ PROJE (/Tasks): aynı liste tüm görünür görevler
+ * üzerinden gelir ve görev grupları proje başlıkları altında toplanır.
  */
 export function DocumentsPanel({ projectId, kind, mountEl }) {
+    const isGlobal = !projectId;
     const shown = usePanelShown(kind, mountEl);
     const panel = useAsyncData(
-        () => Promise.all([projectTasks(projectId), api.projectDocuments(projectId)]),
+        () => Promise.all([
+            projectTasks(projectId),
+            api.projectDocuments(projectId),
+            isGlobal ? api.projectsLookup() : Promise.resolve([]),
+        ]),
         shown,
     );
 
@@ -32,7 +39,7 @@ export function DocumentsPanel({ projectId, kind, mountEl }) {
     if (!shown || panel.status === 'idle' || panel.status === 'loading') { return <PanelLoading />; }
     if (panel.status === 'error') { return <PanelError onRetry={panel.reload} />; }
 
-    const [tasks, docs] = panel.data;
+    const [tasks, docs, projects] = panel.data;
 
     if (openId) {
         return (
@@ -49,6 +56,7 @@ export function DocumentsPanel({ projectId, kind, mountEl }) {
         return (
             <CreateDocumentForm
                 tasks={tasks}
+                showProject={isGlobal}
                 onCancel={() => setCreating(false)}
                 onCreated={(doc) => { setCreating(false); panel.reload(); setOpenId(doc.id); }}
             />
@@ -70,52 +78,62 @@ export function DocumentsPanel({ projectId, kind, mountEl }) {
         return (
             <PanelEmpty
                 icon="fa-file-lines"
-                title="Bu projede henüz belge yok"
+                title={isGlobal ? 'Henüz belge yok' : 'Bu projede henüz belge yok'}
                 desc="Belgeler görevlere bağlı yazılır; ilkini buradan bir görev seçerek oluşturabilirsiniz."
                 action={newButton}
             />
         );
     }
 
-    const groups = groupByTask(tasks, docs, (d) => d.taskId);
+    // Görev grupları iki kipte de aynı basılır; çapraz-proje kip yalnız
+    // grupları proje başlıklarının altına yerleştirir.
+    const renderTaskGroups = (groupTasks, groupDocs) =>
+        groupByTask(groupTasks, groupDocs, (d) => d.taskId).map((g) => (
+            <section key={g.task?.id ?? 'orphan'}>
+                <TaskGroupHeader task={g.task} />
+                <ul className="m-0 p-0 list-none">
+                    {g.records.map((doc) => (
+                        <li key={doc.id}>
+                            <button
+                                type="button"
+                                onClick={() => setOpenId(doc.id)}
+                                className="flex w-full items-center gap-2.5 min-h-[44px] pl-10 pr-4 border-b border-subtle text-left cursor-pointer hover:bg-surface-hover"
+                            >
+                                <i className="fa-solid fa-file-lines text-[12px] text-text-tertiary" aria-hidden="true" />
+                                <span className="flex-1 min-w-0 text-[12.5px] font-semibold text-text-primary truncate">
+                                    {doc.title}
+                                </span>
+                                {doc.contentLength === 0 && (
+                                    <span className="shrink-0 h-5 inline-flex items-center px-2 rounded-full bg-neutral-subtle text-text-tertiary text-[10.5px] font-semibold">
+                                        boş
+                                    </span>
+                                )}
+                                <span className="shrink-0 text-[11px] text-text-tertiary">
+                                    {doc.editorName} · {fmtDate(doc.lastModificationTime ?? doc.creationTime)}
+                                </span>
+                            </button>
+                        </li>
+                    ))}
+                </ul>
+            </section>
+        ));
 
     return (
         <div className="pb-4">
             <div className="flex items-center justify-end px-4 py-3">{newButton}</div>
-            {groups.map((g) => (
-                <section key={g.task?.id ?? 'orphan'}>
-                    <TaskGroupHeader task={g.task} />
-                    <ul className="m-0 p-0 list-none">
-                        {g.records.map((doc) => (
-                            <li key={doc.id}>
-                                <button
-                                    type="button"
-                                    onClick={() => setOpenId(doc.id)}
-                                    className="flex w-full items-center gap-2.5 min-h-[44px] pl-10 pr-4 border-b border-subtle text-left cursor-pointer hover:bg-surface-hover"
-                                >
-                                    <i className="fa-solid fa-file-lines text-[12px] text-text-tertiary" aria-hidden="true" />
-                                    <span className="flex-1 min-w-0 text-[12.5px] font-semibold text-text-primary truncate">
-                                        {doc.title}
-                                    </span>
-                                    {doc.contentLength === 0 && (
-                                        <span className="shrink-0 h-5 inline-flex items-center px-2 rounded-full bg-neutral-subtle text-text-tertiary text-[10.5px] font-semibold">
-                                            boş
-                                        </span>
-                                    )}
-                                    <span className="shrink-0 text-[11px] text-text-tertiary">
-                                        {doc.editorName} · {fmtDate(doc.lastModificationTime ?? doc.creationTime)}
-                                    </span>
-                                </button>
-                            </li>
-                        ))}
-                    </ul>
-                </section>
-            ))}
+            {isGlobal
+                ? partitionByProject(projects, tasks, docs, (d) => d.taskId).map((part) => (
+                    <section key={part.project?.id ?? 'no-project'}>
+                        <ProjectGroupHeader project={part.project} />
+                        {renderTaskGroups(part.tasks, part.records)}
+                    </section>
+                ))
+                : renderTaskGroups(tasks, docs)}
         </div>
     );
 }
 
-function CreateDocumentForm({ tasks, onCancel, onCreated }) {
+function CreateDocumentForm({ tasks, showProject = false, onCancel, onCreated }) {
     const [taskId, setTaskId] = useState(tasks[0]?.id ?? '');
     const [title, setTitle] = useState('');
     const [busy, setBusy] = useState(false);
@@ -145,7 +163,8 @@ function CreateDocumentForm({ tasks, onCancel, onCreated }) {
                 >
                     {tasks.map((t) => (
                         <option key={t.id} value={t.id}>
-                            {(t.number > 0 ? `GRV-${t.number} · ` : '') + t.title}
+                            {(showProject && t.projectName ? t.projectName + ' — ' : '')
+                                + (t.number > 0 ? `GRV-${t.number} · ` : '') + t.title}
                         </option>
                     ))}
                 </select>

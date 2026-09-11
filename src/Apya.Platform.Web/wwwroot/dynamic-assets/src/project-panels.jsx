@@ -5,9 +5,14 @@
  * Belge / Form / Kontrol Listesi / Bağımlılıklar —
  * Pages/Projects/ProjectDetails.cshtml'deki .view-panel kaplarına mount olur.
  *
+ * İKİ KİP: kapta `data-project-id` varsa PROJE kapsamı (Proje Detayı);
+ * `data-scope="all"` varsa ÇAPRAZ PROJE (/Tasks Panolar yüzeyi) — projectId
+ * null gider, sunucu uçları tüm görünür görevler üzerinden döner ve paneller
+ * proje başına gruplar (partitionByProject).
+ *
  * TEMBEL yükleme: her panel, sekmesi İLK gösterildiğinde veri çeker.
- * ProjectDetails.js switchView'da `apya:project-panel-shown` olayı yayınlar;
- * kökler kendi kind'ını dinler (usePanel.js → usePanelShown).
+ * ProjectDetails.js / Tasks/index.js switchView'da `apya:project-panel-shown`
+ * olayı yayınlar; kökler kendi kind'ını dinler (usePanel.js → usePanelShown).
  *
  * Vite → /wwwroot/js/project-panels.js
  */
@@ -29,7 +34,7 @@ const PANELS = [
 for (const [elementId, kind, Panel] of PANELS) {
     const el = document.getElementById(elementId);
     const projectId = el?.getAttribute('data-project-id');
-    if (el && projectId) {
-        createRoot(el).render(<Panel projectId={projectId} kind={kind} mountEl={el} />);
+    if (el && (projectId || el.getAttribute('data-scope') === 'all')) {
+        createRoot(el).render(<Panel projectId={projectId || null} kind={kind} mountEl={el} />);
     }
 }

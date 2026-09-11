@@ -1,26 +1,33 @@
 import React from 'react';
 import { api, projectTasks, openTask } from './api';
 import { usePanelShown, useAsyncData } from './usePanel';
-import { blockedEdges } from './grouping';
-import { PanelLoading, PanelError, PanelEmpty, StatusPill } from './PanelChrome';
+import { blockedEdges, partitionByProject } from './grouping';
+import { PanelLoading, PanelError, PanelEmpty, StatusPill, ProjectGroupHeader } from './PanelChrome';
 
 /**
  * Bağımlılıklar — proje kapsamı (wireframe 2h: "P'de proje içi görevler arası
  * bağ haritası (liste); bloke eden öncül kırmızı uyarı verir"). Salt okuma;
  * bağ kurma/ayırma görev detayının işi. Kenarlar sunucudan yalın gelir
  * (TaskDependencyEdgeDto), başlık/durum görev listesiyle burada birleşir.
+ * projectId null = ÇAPRAZ PROJE (/Tasks): kenarlar ARDILIN projesine göre
+ * gruplanır (bekleyen taraf o); bloke uyarısı tüm liste için tek.
  */
 export function DependenciesPanel({ projectId, kind, mountEl }) {
+    const isGlobal = !projectId;
     const shown = usePanelShown(kind, mountEl);
     const panel = useAsyncData(
-        () => Promise.all([projectTasks(projectId), api.projectDependencies(projectId)]),
+        () => Promise.all([
+            projectTasks(projectId),
+            api.projectDependencies(projectId),
+            isGlobal ? api.projectsLookup() : Promise.resolve([]),
+        ]),
         shown,
     );
 
     if (!shown || panel.status === 'idle' || panel.status === 'loading') { return <PanelLoading />; }
     if (panel.status === 'error') { return <PanelError onRetry={panel.reload} />; }
 
-    const [tasks, edges] = panel.data;
+    const [tasks, edges, projects] = panel.data;
     const taskById = new Map(tasks.map((t) => [t.id, t]));
     const blocked = blockedEdges(edges, taskById);
     const blockedSet = new Set(blocked.map((e) => e.predecessorTaskId + '→' + e.taskId));
@@ -29,7 +36,7 @@ export function DependenciesPanel({ projectId, kind, mountEl }) {
         return (
             <PanelEmpty
                 icon="fa-link"
-                title="Bu projede görevler arası bağ yok"
+                title={isGlobal ? 'Görevler arası bağ yok' : 'Bu projede görevler arası bağ yok'}
                 desc="Öncül/ardıl bağlantıları görev detayının Bağımlılıklar sekmesinden kurulur."
             />
         );
@@ -69,8 +76,21 @@ export function DependenciesPanel({ projectId, kind, mountEl }) {
                 <span className="w-8" />
                 <span className="flex-1">ARDIL (bunu bekliyor)</span>
             </div>
+            {isGlobal
+                ? partitionByProject(projects, tasks, edges, (e) => e.taskId).map((part) => (
+                    <section key={part.project?.id ?? 'no-project'}>
+                        <ProjectGroupHeader project={part.project} />
+                        {renderEdgeList(part.records)}
+                    </section>
+                ))
+                : renderEdgeList(edges)}
+        </div>
+    );
+
+    function renderEdgeList(list) {
+        return (
             <ul className="m-0 p-0 list-none">
-                {edges.map((e) => {
+                {list.map((e) => {
                     const isBlocked = blockedSet.has(e.predecessorTaskId + '→' + e.taskId);
                     return (
                         <li key={e.predecessorTaskId + e.taskId}
@@ -91,6 +111,6 @@ export function DependenciesPanel({ projectId, kind, mountEl }) {
                     );
                 })}
             </ul>
-        </div>
-    );
+        );
+    }
 }

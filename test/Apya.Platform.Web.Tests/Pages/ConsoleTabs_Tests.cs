@@ -47,12 +47,21 @@ public class ConsoleTabs_Tests : PlatformWebTestBase
         html.ShouldContain("id=\"tab-add-menu\"");
 
         // PR-3b: sabit üçlü (Liste · Kart Panosu · Finans) ✕'siz — kapatma
-        // düğmesi yalnız 4 katalog panosunda. Test host'u her zaman yetkili →
+        // düğmesi yalnız katalog panolarında. Test host'u her zaman yetkili →
         // Finans sekmesi ve paneli basılır.
         html.ShouldContain("data-tab=\"finance\"");
         html.ShouldContain("id=\"view-finance\"");
-        Regex.Matches(html, "apya-console-tab-close").Count.ShouldBe(4,
-            "/Tasks şeridinde yalnız takvim/gantt/gösterge/galeri kapatılabilir olmalı");
+        Regex.Matches(html, "apya-console-tab-close").Count.ShouldBe(8,
+            "/Tasks şeridinde takvim/gantt/gösterge/galeri + belge/form/kontrol/bağ kapatılabilir olmalı");
+
+        // Çapraz-proje island panoları: sekme kind'ları basılı, kapları
+        // data-scope="all" taşımalı — island mount'u onsuz hiç render etmez
+        // (proje detayındaki data-project-id'nin global karşılığı).
+        foreach (var kind in new[] { "documents", "forms", "checklist", "dependencies" })
+        {
+            html.ShouldContain($"data-tab=\"{kind}\"");
+            html.ShouldContain($"id=\"view-{kind}\" class=\"view-panel d-none\" role=\"tabpanel\" aria-labelledby=\"btn-view-{kind}\" data-scope=\"all\"");
+        }
     }
 
     [Fact]

@@ -48,6 +48,25 @@ export function PanelEmpty({ icon, title, desc, action = null, tone = 'primary' 
     );
 }
 
+/** Proje grup başlığı — çapraz-proje kip (/Tasks): görev gruplarının üstünde,
+ * 46px + üst çizgiyle görev başlığından ayrışır; project null ise projesi
+ * çözülemeyen kayıtların kovası. */
+export function ProjectGroupHeader({ project }) {
+    return (
+        <div className="flex items-center gap-2.5 h-[46px] px-4 bg-surface-raised border-t-2 border-b border-subtle">
+            <i className="fa-solid fa-diagram-project text-[12px] text-text-tertiary" aria-hidden="true" />
+            <span className="text-[13px] font-bold text-text-primary truncate">
+                {project ? (project.name || '(adsız proje)') : 'Projesiz görevler'}
+            </span>
+            {project?.code && (
+                <span className="shrink-0 h-5 inline-flex items-center px-2 rounded-full bg-neutral-subtle text-text-secondary text-[10.5px] font-semibold font-mono">
+                    {project.code}
+                </span>
+            )}
+        </div>
+    );
+}
+
 /** Görev grup başlığı — 42px, kod pill'li; task null ise "kaynağı silinmiş" grubu. */
 export function TaskGroupHeader({ task, trailing = null }) {
     return (

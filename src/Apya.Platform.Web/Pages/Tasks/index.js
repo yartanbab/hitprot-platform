@@ -67,6 +67,24 @@ $(function () {
         finance:   { panel: '#view-finance',   btn: '#btn-view-finance',   load: function () { if (finance) { finance.load(); } } }
     };
 
+    // Belge / Form / Kontrol Listesi / Bağımlılıklar — Proje Detayı'ndaki
+    // project-panels island'ının ÇAPRAZ-PROJE kipi (kapta data-scope="all").
+    // İçerik React'te; buradaki yükleyici yalnız tembel yükleme olayını
+    // yayınlar (usePanelShown ilk olayda veri çeker, sonrakiler zararsız).
+    // Görev filtreleri bu panellerde süzmez → şerit switchView'da gizlenir.
+    var ISLAND_VIEWS = ['documents', 'forms', 'checklist', 'dependencies'];
+    ISLAND_VIEWS.forEach(function (kind) {
+        VIEWS[kind] = {
+            panel: '#view-' + kind,
+            btn: '#btn-view-' + kind,
+            load: function () {
+                document.dispatchEvent(new CustomEvent('apya:project-panel-shown', {
+                    detail: { kind: kind }
+                }));
+            }
+        };
+    });
+
     // Gün sınırı: dueDate saat taşıyabildiği için gün SONU kullanılır.
     function dayBound(offsetDays, endOfDay) {
         var m = moment().startOf('day').add(offsetDays, 'days');
@@ -845,10 +863,11 @@ $(function () {
         $('.view-panel').addClass('d-none');
         $(def.panel).removeClass('d-none');
 
-        // Görev filtreleri Finans panelinde süzmez (proje kapsamı HARİÇ — o,
-        // panelin kendi ayırıcı çubuğunda); şerit gizlenir ki "filtre
-        // çalışmıyor" yanılgısı doğmasın (proje konsolundaki kararla aynı).
-        $('#console-filters').toggleClass('d-none', currentView === 'finance');
+        // Görev filtreleri Finans ve island panellerinde süzmez (proje kapsamı
+        // HARİÇ — o, Finans panelinin kendi ayırıcı çubuğunda); şerit gizlenir
+        // ki "filtre çalışmıyor" yanılgısı doğmasın (proje konsoluyla aynı).
+        $('#console-filters').toggleClass('d-none',
+            currentView === 'finance' || ISLAND_VIEWS.indexOf(currentView) > -1);
 
         // Kanban araçları (Grupla · Kolonlar · Görünüm) yalnız Kart Panosu'nda
         // anlamlı — slot diğer görünümlerde kapanır; içindeki düğmelerin kendi
