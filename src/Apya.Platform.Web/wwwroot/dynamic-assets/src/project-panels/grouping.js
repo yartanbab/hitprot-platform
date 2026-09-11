@@ -24,6 +24,45 @@ export function groupByTask(tasks, records, getTaskId) {
 }
 
 /**
+ * Çapraz-proje kip (/Tasks Panolar yüzeyi): kayıtları ÖNCE projeye böler;
+ * proje içindeki görev gruplaması yine groupByTask'ın işi. Sıra proje
+ * lookup'ının sırasıdır (sunucu ada göre sıralı döndürür). Kaydın projesi
+ * görevinden çözülür; görevi listede olmayan kayıt için getRecordProjectId
+ * (kontrol listesinin proje-seviyesi maddeleri) denenir. Projesi yine de
+ * çözülemeyenler — projesiz görevlerin kayıtları dahil — `project: null`
+ * kovasında SONA düşer, veri sessizce kaybolmasın.
+ */
+export function partitionByProject(projects, tasks, records, getTaskId, getRecordProjectId = null) {
+    const taskById = new Map(tasks.map((t) => [t.id, t]));
+    const buckets = new Map(projects.map((p) => [p.id, { project: p, tasks: [], records: [] }]));
+    // Lookup'ta olmayan proje (yarış: panel açıkken proje eklendi) görev
+    // verisindeki adıyla lookup sırasının ARKASINA eklenir.
+    const ensure = (id, name) => {
+        if (!buckets.has(id)) { buckets.set(id, { project: { id, name: name || '' }, tasks: [], records: [] }); }
+        return buckets.get(id);
+    };
+
+    for (const t of tasks) {
+        if (t.projectId) { ensure(t.projectId, t.projectName).tasks.push(t); }
+    }
+
+    const orphans = { project: null, tasks: [], records: [] };
+    for (const record of records) {
+        const task = taskById.get(getTaskId(record));
+        const projectId = task?.projectId ?? (getRecordProjectId ? getRecordProjectId(record) : null);
+        (projectId ? ensure(projectId, task?.projectName) : orphans).records.push(record);
+    }
+
+    // Projesiz görevler orphan kovasının görev listesine — groupByTask orada
+    // da görev başlığıyla gruplayabilsin.
+    orphans.tasks = tasks.filter((t) => !t.projectId);
+
+    const groups = [...buckets.values()].filter((g) => g.records.length > 0);
+    if (orphans.records.length > 0) { groups.push(orphans); }
+    return groups;
+}
+
+/**
  * Bloke eden kenarlar — handoff kuralı birebir: öncül `Status != Done` VE
  * `DueDate < bugün`. (Done = 4; iptal edilmiş öncül de kurala göre bloke
  * sayılır — kural durum adına değil "Done değil"e bakıyor.)

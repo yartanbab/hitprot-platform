@@ -22,6 +22,8 @@
 
 @* Tailwind island stylesheet (js/style.css) — bu partial olmadan görev detay modalı stilsiz kalır. *@
 <partial name="_ApyaThemeBootstrap" />
+@* Proje panelleri island'ı (çapraz-proje kip) — preload sayfa üstünde durur (IslandPreloadTagHelper notu). *@
+<island-preload entry="project-panels" />
 
 @* Proje Detay konsolunun tasarım dili buraya uyarlandı. Fark: burası TÜM
    projelerin görevleri — proje kimliği/bütçe/ekip yerine proje FİLTRESİ ve
@@ -208,7 +210,11 @@
             ("calendar",  "fa fa-calendar-days", L["Tasks:View:Calendar"].Value,  "Başlangıç ve termin tarihleri aylık takvimde", true),
             ("gantt",     "fa fa-clock",         L["Tasks:View:Gantt"].Value,     "Başlangıç-bitiş tarihlerinden türeyen zaman çizelgesi", true),
             ("dashboard", "fa fa-chart-pie",     L["Tasks:View:Dashboard"].Value, "Seçili süzgecin durum, öncelik ve kişi dağılımı", true),
-            ("gallery",   "fa fa-images",        L["Tasks:View:Gallery"].Value,   "Süzülmüş görevlere eklenmiş görseller", true)
+            ("gallery",   "fa fa-images",        L["Tasks:View:Gallery"].Value,   "Süzülmüş görevlere eklenmiş görseller", true),
+            ("documents",    "fa fa-file-lines",     L["Tasks:View:Documents"].Value,    "Görevlere bağlı yazılı belgeler, tüm projelerde proje gruplu", true),
+            ("forms",        "fa fa-clipboard-list", L["Tasks:View:Forms"].Value,        "Görevlere bağlı formlar ve yanıt sayıları, tüm projelerde", true),
+            ("checklist",    "fa fa-square-check",   L["Tasks:View:Checklist"].Value,    "Görev ve proje kontrol listelerinin tüm projelerdeki toplamı", true),
+            ("dependencies", "fa fa-link",           L["Tasks:View:Dependencies"].Value, "Görevler arası öncül-ardıl bağ haritası, tüm projelerde", true)
         };
     }
     <div class="apya-console-tabs">
@@ -463,6 +469,17 @@
         <div id="view-dashboard" class="view-panel d-none" role="tabpanel" aria-labelledby="btn-view-dashboard"></div>
         <div id="view-gallery" class="view-panel d-none" role="tabpanel" aria-labelledby="btn-view-gallery"></div>
 
+        @* --- BELGE / FORM / KONTROL LİSTESİ / BAĞIMLILIKLAR (çapraz proje) ---
+             Proje Detayı'ndaki project-panels island'ının GLOBAL kipi:
+             data-scope="all" → projectId null gider, sunucu tüm görünür
+             görevler üzerinden döner, panel proje başına gruplar. Veri TEMBEL
+             çekilir — index.js VIEWS[kind].load `apya:project-panel-shown`
+             yayınlar (Proje Detayı'ndaki switchView ile aynı sözleşme). *@
+        <div id="view-documents" class="view-panel d-none" role="tabpanel" aria-labelledby="btn-view-documents" data-scope="all"></div>
+        <div id="view-forms" class="view-panel d-none" role="tabpanel" aria-labelledby="btn-view-forms" data-scope="all"></div>
+        <div id="view-checklist" class="view-panel d-none" role="tabpanel" aria-labelledby="btn-view-checklist" data-scope="all"></div>
+        <div id="view-dependencies" class="view-panel d-none" role="tabpanel" aria-labelledby="btn-view-dependencies" data-scope="all"></div>
+
         @* --- FİNANS (PR-3b, tasarım 2b/3c) ---
              Çapraz-proje harcama özeti (/js/apya-task-finance.js): proje gruplu,
              ara toplamlar sunucudan, Genel gider ayrı. Sekme gibi panel de
@@ -553,6 +570,10 @@
     <abp-script src="/js/apya-finance-scope.js" />
     <abp-script src="/js/apya-task-finance.js" />
     <abp-script src="/Pages/Tasks/index.js" />
+    @* Proje panelleri island'ı (çapraz-proje kip) — abp-script DEĞİL: island'lar
+       ES module olarak yüklenir ve chunk graph'ı hash'li dosyalara gider
+       (ProjectDetails ile aynı desen). *@
+    <script type="module" src="~/js/project-panels.js" asp-append-version="true"></script>
 }
 
 <style>

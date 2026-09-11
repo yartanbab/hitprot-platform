@@ -1759,11 +1759,13 @@ namespace Apya.Platform.Tasks
         // tenant + gizlilik süzgeci TEK yerden miras alınır — gizli görevin
         // belgesi/maddesi/bağı proje panelinden sızmaz. RootOnly kapatılır:
         // alt görevlerin kayıtları da projenin toplamıdır.
+        // projectId NULL = ÇAPRAZ PROJE (/Tasks Panolar yüzeyi): proje filtresi
+        // düşer, görev sorgusunun tenant + gizlilik süzgeci aynen kalır.
 
-        private Task<IQueryable<TaskItem>> CreateProjectScopeQueryAsync(Guid projectId)
+        private Task<IQueryable<TaskItem>> CreateProjectScopeQueryAsync(Guid? projectId)
             => CreateFilteredQueryAsync(new GetTasksInput { ProjectId = projectId, RootOnly = false });
 
-        public async Task<List<TaskDocumentDto>> GetProjectDocumentsAsync(Guid projectId)
+        public async Task<List<TaskDocumentDto>> GetProjectDocumentsAsync(Guid? projectId = null)
         {
             var taskQuery = await CreateProjectScopeQueryAsync(projectId);
             var docQuery = await _documentRepository.GetQueryableAsync();
@@ -1800,7 +1802,7 @@ namespace Apya.Platform.Tasks
             }).ToList();
         }
 
-        public async Task<List<TaskFormLinkDto>> GetProjectLinkedFormsAsync(Guid projectId)
+        public async Task<List<TaskFormLinkDto>> GetProjectLinkedFormsAsync(Guid? projectId = null)
         {
             var taskQuery = await CreateProjectScopeQueryAsync(projectId);
             var linkQuery = await _formLinkRepository.GetQueryableAsync();
@@ -1850,17 +1852,22 @@ namespace Apya.Platform.Tasks
             }).ToList();
         }
 
-        public async Task<List<TaskChecklistItemDto>> GetProjectChecklistAsync(Guid projectId)
+        public async Task<List<TaskChecklistItemDto>> GetProjectChecklistAsync(Guid? projectId = null)
         {
             // Proje-seviyesi maddeler görev join'inden geçmediği için projenin
             // kiracıya aitliği burada AYRICA doğrulanır (görev maddelerinde
             // taskQuery'nin tenant süzgeci zaten yeter).
-            await EnsureProjectAccessAllowedAsync(projectId);
+            if (projectId.HasValue)
+            {
+                await EnsureProjectAccessAllowedAsync(projectId.Value);
+            }
 
             var taskQuery = await CreateProjectScopeQueryAsync(projectId);
             var itemQuery = await _checklistRepository.GetQueryableAsync();
 
             // Görev maddeleri: gizlilik görev join'inden miras (PR-2b deseni).
+            // ProjectId GÖREVİN projesi — çapraz-proje kip proje başına gruplarken
+            // maddenin kendi (çoğunlukla boş) alanı değil bu kullanılır.
             var taskItems = await AsyncExecuter.ToListAsync(
                 from x in itemQuery
                 join t in taskQuery on x.TaskId equals (Guid?)t.Id
@@ -1868,19 +1875,37 @@ namespace Apya.Platform.Tasks
                 {
                     Id = x.Id,
                     TaskId = x.TaskId,
+                    ProjectId = t.ProjectId,
                     CreationTime = x.CreationTime,
                     Text = x.Text,
                     IsDone = x.IsDone,
                 });
 
             // Proje maddeleri (PR-3a): doğrudan projeye bağlı, TaskId boş.
+            // Maddelerde tenant süzgeci YOK (yukarıdaki not) — çapraz-proje
+            // kipte kiracı sınırı tenant süzgeçli proje sorgusuna join'lenerek
+            // miras alınır; tek projede EnsureProjectAccessAllowedAsync yetti.
+            var projectItemQuery = itemQuery.Where(x => x.TaskId == null);
+            if (projectId.HasValue)
+            {
+                projectItemQuery = projectItemQuery.Where(x => x.ProjectId == projectId);
+            }
+            else
+            {
+                var projectQuery = await _projectLookupRepository.GetQueryableAsync();
+                projectItemQuery =
+                    from x in projectItemQuery
+                    join p in projectQuery on x.ProjectId equals (Guid?)p.Id
+                    select x;
+            }
+
             var projectItems = await AsyncExecuter.ToListAsync(
-                itemQuery
-                    .Where(x => x.TaskId == null && x.ProjectId == projectId)
+                projectItemQuery
                     .Select(x => new TaskChecklistItemDto
                     {
                         Id = x.Id,
                         TaskId = x.TaskId,
+                        ProjectId = x.ProjectId,
                         CreationTime = x.CreationTime,
                         Text = x.Text,
                         IsDone = x.IsDone,
@@ -1891,13 +1916,15 @@ namespace Apya.Platform.Tasks
                 .ToList();
         }
 
-        public async Task<List<TaskDependencyEdgeDto>> GetProjectDependenciesAsync(Guid projectId)
+        public async Task<List<TaskDependencyEdgeDto>> GetProjectDependenciesAsync(Guid? projectId = null)
         {
             var taskQuery = await CreateProjectScopeQueryAsync(projectId);
             var depQuery = await _dependencyRepository.GetQueryableAsync();
 
             // İKİ uç da görünür görev kümesinde olmalı: harita proje İÇİ —
             // ve gizli görev, kenar üzerinden bile varlığını ele vermemeli.
+            // Çapraz-proje kipte küme tüm görünür görevler: iki projeye yayılan
+            // bir kenar tekil proje haritalarında elenirken burada görünür.
             return await AsyncExecuter.ToListAsync(
                 from d in depQuery
                 join s in taskQuery on d.TaskId equals s.Id

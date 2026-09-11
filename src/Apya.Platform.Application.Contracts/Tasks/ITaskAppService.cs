@@ -148,23 +148,26 @@ namespace Apya.Platform.Tasks
         // görevin kaydı proje panelinden de sızmaz. YAZMA uçları aynı kalır
         // (ToggleChecklistItemAsync, UpdateDocumentAsync…): üst kapsamdan
         // düzenleme kaynağa yazar, yetki gevşemez.
+        // projectId NULL = ÇAPRAZ PROJE: /Tasks (Panolar) yüzeyi aynı panelleri
+        // tüm görünür görevler üzerinden ister — süzgeç yine aynı yerden miras.
 
         /// <summary>Projenin görevlerine bağlı belgeler (Content boş — liste;
-        /// tam gövde GetDocumentAsync ile).</summary>
-        Task<List<TaskDocumentDto>> GetProjectDocumentsAsync(Guid projectId);
+        /// tam gövde GetDocumentAsync ile). projectId null = tüm projeler.</summary>
+        Task<List<TaskDocumentDto>> GetProjectDocumentsAsync(Guid? projectId = null);
 
         /// <summary>Projenin görevlerine bağlı formlar; yanıt sayısı görev
-        /// bağlamında sayılır (görev+form çifti başına).</summary>
-        Task<List<TaskFormLinkDto>> GetProjectLinkedFormsAsync(Guid projectId);
+        /// bağlamında sayılır (görev+form çifti başına). projectId null = tüm projeler.</summary>
+        Task<List<TaskFormLinkDto>> GetProjectLinkedFormsAsync(Guid? projectId = null);
 
         /// <summary>Projenin görevlerindeki kontrol listesi maddeleri
-        /// (TaskId dolu — istemci görev başına gruplar).</summary>
-        Task<List<TaskChecklistItemDto>> GetProjectChecklistAsync(Guid projectId);
+        /// (TaskId dolu — istemci görev başına gruplar). projectId null = tüm projeler.</summary>
+        Task<List<TaskChecklistItemDto>> GetProjectChecklistAsync(Guid? projectId = null);
 
         /// <summary>Proje İÇİ bağımlılık kenarları (öncül→ardıl). İki uç da
         /// projede ve görünür olmalı; başlık/durum bilgisi istemcide görev
-        /// listesiyle birleştirilir — kenar başına zenginleştirme yapılmaz.</summary>
-        Task<List<TaskDependencyEdgeDto>> GetProjectDependenciesAsync(Guid projectId);
+        /// listesiyle birleştirilir — kenar başına zenginleştirme yapılmaz.
+        /// projectId null = tüm görünür görevler; çapraz-proje kenarlar da gelir.</summary>
+        Task<List<TaskDependencyEdgeDto>> GetProjectDependenciesAsync(Guid? projectId = null);
 
         // Zaman Takibi
         Task StartTimeTrackingAsync(Guid taskId);

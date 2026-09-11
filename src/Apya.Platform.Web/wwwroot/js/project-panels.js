@@ -1,86 +1,103 @@
-import { r as f, j as e, b as Y } from "./react-vendor-D57GAUXd.js";
+import { r as j, j as e, b as ee } from "./react-vendor-D57GAUXd.js";
 /* empty css               */
-import { S as O, R as K } from "./RichTextEditorV3-D3Amhpsv.js";
-function y() {
-  var s, n, a;
-  const t = (a = (n = (s = window == null ? void 0 : window.apya) == null ? void 0 : s.platform) == null ? void 0 : n.tasks) == null ? void 0 : a.task;
+import { S as W, R as te } from "./RichTextEditorV3-D3Amhpsv.js";
+function k() {
+  var s, n, r;
+  const t = (r = (n = (s = window == null ? void 0 : window.apya) == null ? void 0 : s.platform) == null ? void 0 : n.tasks) == null ? void 0 : r.task;
   if (!t) throw new Error("ABP görev servisi yüklenmedi.");
   return t;
 }
-const j = (t) => Promise.resolve(t), k = {
-  projectDocuments: (t) => j(y().getProjectDocuments(t)),
-  projectForms: (t) => j(y().getProjectLinkedForms(t)),
-  projectChecklist: (t) => j(y().getProjectChecklist(t)),
-  projectDependencies: (t) => j(y().getProjectDependencies(t)),
-  document: (t) => j(y().getDocument(t)),
-  createDocument: (t, s) => j(y().createDocument(t, s)),
-  updateDocument: (t, s) => j(y().updateDocument(t, s)),
-  deleteDocument: (t) => j(y().deleteDocument(t)),
-  addChecklistItem: (t, s) => j(y().addChecklistItem(t, s)),
+const v = (t) => Promise.resolve(t), E = (t) => t ?? void 0, g = {
+  projectDocuments: (t) => v(k().getProjectDocuments(E(t))),
+  projectForms: (t) => v(k().getProjectLinkedForms(E(t))),
+  projectChecklist: (t) => v(k().getProjectChecklist(E(t))),
+  projectDependencies: (t) => v(k().getProjectDependencies(E(t))),
+  /** Proje adı/kodu lookup'ı — çapraz-proje kipte grup başlıkları için
+   *  (görevi olmayan projenin proje-seviyesi maddesi ada başka yerden ulaşamaz). */
+  projectsLookup: () => v(k().getProjectsLookup()),
+  document: (t) => v(k().getDocument(t)),
+  createDocument: (t, s) => v(k().createDocument(t, s)),
+  updateDocument: (t, s) => v(k().updateDocument(t, s)),
+  deleteDocument: (t) => v(k().deleteDocument(t)),
+  addChecklistItem: (t, s) => v(k().addChecklistItem(t, s)),
   // PR-3a hiyerarşik kapsam: doğrudan projeye bağlı madde (TaskId boş).
-  addProjectChecklistItem: (t, s) => j(y().addProjectChecklistItem(t, s)),
-  toggleChecklistItem: (t) => j(y().toggleChecklistItem(t)),
-  deleteChecklistItem: (t) => j(y().deleteChecklistItem(t))
-}, B = /* @__PURE__ */ new Map();
-function I(t, { force: s = !1 } = {}) {
-  if (!s && B.has(t))
-    return B.get(t);
-  const n = j(y().getList({ projectId: t, maxResultCount: 1e3, rootOnly: !1 })).then((a) => (a == null ? void 0 : a.items) ?? []);
-  return B.set(t, n), n.catch(() => {
-    B.delete(t);
-  }), n;
+  addProjectChecklistItem: (t, s) => v(k().addProjectChecklistItem(t, s)),
+  toggleChecklistItem: (t) => v(k().toggleChecklistItem(t)),
+  deleteChecklistItem: (t) => v(k().deleteChecklistItem(t))
+}, z = /* @__PURE__ */ new Map();
+function _(t, { force: s = !1 } = {}) {
+  const n = t ?? "__all__";
+  if (!s && z.has(n))
+    return z.get(n);
+  const r = v(k().getList({ projectId: E(t), maxResultCount: 1e3, rootOnly: !1 })).then((o) => (o == null ? void 0 : o.items) ?? []);
+  return z.set(n, r), r.catch(() => {
+    z.delete(n);
+  }), r;
 }
-function V(t) {
-  var s, n, a;
-  (a = (n = (s = window == null ? void 0 : window.apya) == null ? void 0 : s.taskDetail) == null ? void 0 : n.open) == null || a.call(n, t);
+function Z(t) {
+  var s, n, r;
+  (r = (n = (s = window == null ? void 0 : window.apya) == null ? void 0 : s.taskDetail) == null ? void 0 : n.open) == null || r.call(n, t);
 }
-function T(t, s) {
-  const [n, a] = f.useState(
+function $(t, s) {
+  const [n, r] = j.useState(
     () => !!s && !s.classList.contains("d-none")
   );
-  return f.useEffect(() => {
+  return j.useEffect(() => {
     if (n) return;
-    const r = (o) => {
+    const o = (a) => {
       var i;
-      ((i = o == null ? void 0 : o.detail) == null ? void 0 : i.kind) === t && a(!0);
+      ((i = a == null ? void 0 : a.detail) == null ? void 0 : i.kind) === t && r(!0);
     };
-    return document.addEventListener("apya:project-panel-shown", r), () => document.removeEventListener("apya:project-panel-shown", r);
+    return document.addEventListener("apya:project-panel-shown", o), () => document.removeEventListener("apya:project-panel-shown", o);
   }, [t, n]), n;
 }
-function C(t, s) {
-  const [n, a] = f.useState({ status: "idle", data: null, error: null }), r = f.useRef(t);
-  r.current = t;
-  const o = f.useCallback(() => (a((i) => ({ ...i, status: i.data ? "reloading" : "loading", error: null })), r.current().then(
-    (i) => a({ status: "ready", data: i, error: null }),
-    (i) => a({ status: "error", data: null, error: i })
+function L(t, s) {
+  const [n, r] = j.useState({ status: "idle", data: null, error: null }), o = j.useRef(t);
+  o.current = t;
+  const a = j.useCallback(() => (r((i) => ({ ...i, status: i.data ? "reloading" : "loading", error: null })), o.current().then(
+    (i) => r({ status: "ready", data: i, error: null }),
+    (i) => r({ status: "error", data: null, error: i })
   )), []);
-  return f.useEffect(() => {
-    s && n.status === "idle" && o();
-  }, [s, n.status, o]), { ...n, reload: o };
+  return j.useEffect(() => {
+    s && n.status === "idle" && a();
+  }, [s, n.status, a]), { ...n, reload: a };
 }
-function F(t, s, n) {
-  const a = new Map(t.map((i) => [i.id, { task: i, records: [] }])), r = { task: null, records: [] };
+function M(t, s, n) {
+  const r = new Map(t.map((i) => [i.id, { task: i, records: [] }])), o = { task: null, records: [] };
   for (const i of s) {
-    const m = a.get(n(i));
-    (m ? m.records : r.records).push(i);
+    const p = r.get(n(i));
+    (p ? p.records : o.records).push(i);
   }
-  const o = [...a.values()].filter((i) => i.records.length > 0);
-  return r.records.length > 0 && o.push(r), o;
+  const a = [...r.values()].filter((i) => i.records.length > 0);
+  return o.records.length > 0 && a.push(o), a;
 }
-function H(t, s, n = /* @__PURE__ */ new Date()) {
-  const a = new Date(n.getFullYear(), n.getMonth(), n.getDate());
-  return t.filter((r) => {
-    const o = s.get(r.predecessorTaskId);
-    return !o || o.status === 4 ? !1 : !!o.dueDate && new Date(o.dueDate) < a;
+function O(t, s, n, r, o = null) {
+  const a = new Map(s.map((l) => [l.id, l])), i = new Map(t.map((l) => [l.id, { project: l, tasks: [], records: [] }])), p = (l, m) => (i.has(l) || i.set(l, { project: { id: l, name: m || "" }, tasks: [], records: [] }), i.get(l));
+  for (const l of s)
+    l.projectId && p(l.projectId, l.projectName).tasks.push(l);
+  const b = { project: null, tasks: [], records: [] };
+  for (const l of n) {
+    const m = a.get(r(l)), c = (m == null ? void 0 : m.projectId) ?? (o ? o(l) : null);
+    (c ? p(c, m == null ? void 0 : m.projectName) : b).records.push(l);
+  }
+  b.tasks = s.filter((l) => !l.projectId);
+  const f = [...i.values()].filter((l) => l.records.length > 0);
+  return b.records.length > 0 && f.push(b), f;
+}
+function se(t, s, n = /* @__PURE__ */ new Date()) {
+  const r = new Date(n.getFullYear(), n.getMonth(), n.getDate());
+  return t.filter((o) => {
+    const a = s.get(o.predecessorTaskId);
+    return !a || a.status === 4 ? !1 : !!a.dueDate && new Date(a.dueDate) < r;
   });
 }
-function D() {
+function R() {
   return /* @__PURE__ */ e.jsxs("div", { className: "p-5", "aria-hidden": "true", children: [
     /* @__PURE__ */ e.jsx("div", { className: "h-10 w-1/3 rounded-lg bg-neutral-subtle animate-pulse mb-3" }),
     /* @__PURE__ */ e.jsx("div", { className: "h-36 rounded-xl bg-neutral-subtle animate-pulse" })
   ] });
 }
-function P({ onRetry: t }) {
+function F({ onRetry: t }) {
   return /* @__PURE__ */ e.jsxs("div", { className: "flex flex-col items-center gap-2 py-12 px-6 text-center", children: [
     /* @__PURE__ */ e.jsx("i", { className: "fa-solid fa-triangle-exclamation text-2xl text-warning" }),
     /* @__PURE__ */ e.jsx("span", { className: "text-[13px] font-semibold text-text-primary", children: "Panel yüklenemedi." }),
@@ -95,16 +112,23 @@ function P({ onRetry: t }) {
     )
   ] });
 }
-function E({ icon: t, title: s, desc: n, action: a = null, tone: r = "primary" }) {
-  const o = r === "success" ? "bg-success-subtle text-success" : "bg-primary-subtle text-primary";
+function G({ icon: t, title: s, desc: n, action: r = null, tone: o = "primary" }) {
+  const a = o === "success" ? "bg-success-subtle text-success" : "bg-primary-subtle text-primary";
   return /* @__PURE__ */ e.jsxs("div", { className: "flex flex-col items-center gap-2 py-14 px-6 text-center", children: [
-    /* @__PURE__ */ e.jsx("span", { className: `flex h-11 w-11 items-center justify-center rounded-xl ${o}`, children: /* @__PURE__ */ e.jsx("i", { className: `fa-solid ${t} text-[18px]`, "aria-hidden": "true" }) }),
+    /* @__PURE__ */ e.jsx("span", { className: `flex h-11 w-11 items-center justify-center rounded-xl ${a}`, children: /* @__PURE__ */ e.jsx("i", { className: `fa-solid ${t} text-[18px]`, "aria-hidden": "true" }) }),
     /* @__PURE__ */ e.jsx("span", { className: "text-[14px] font-bold text-text-primary", children: s }),
     n && /* @__PURE__ */ e.jsx("span", { className: "max-w-[360px] text-[12px] leading-[1.55] text-text-secondary", children: n }),
-    a && /* @__PURE__ */ e.jsx("div", { className: "mt-1.5", children: a })
+    r && /* @__PURE__ */ e.jsx("div", { className: "mt-1.5", children: r })
   ] });
 }
-function L({ task: t, trailing: s = null }) {
+function H({ project: t }) {
+  return /* @__PURE__ */ e.jsxs("div", { className: "flex items-center gap-2.5 h-[46px] px-4 bg-surface-raised border-t-2 border-b border-subtle", children: [
+    /* @__PURE__ */ e.jsx("i", { className: "fa-solid fa-diagram-project text-[12px] text-text-tertiary", "aria-hidden": "true" }),
+    /* @__PURE__ */ e.jsx("span", { className: "text-[13px] font-bold text-text-primary truncate", children: t ? t.name || "(adsız proje)" : "Projesiz görevler" }),
+    (t == null ? void 0 : t.code) && /* @__PURE__ */ e.jsx("span", { className: "shrink-0 h-5 inline-flex items-center px-2 rounded-full bg-neutral-subtle text-text-secondary text-[10.5px] font-semibold font-mono", children: t.code })
+  ] });
+}
+function V({ task: t, trailing: s = null }) {
   return /* @__PURE__ */ e.jsxs("div", { className: "flex items-center gap-2.5 h-[42px] px-4 bg-surface-raised border-b border-subtle", children: [
     /* @__PURE__ */ e.jsx("i", { className: "fa-solid fa-list-check text-[11px] text-text-tertiary", "aria-hidden": "true" }),
     /* @__PURE__ */ e.jsx("span", { className: "text-[12.5px] font-bold text-text-primary truncate", children: t ? t.title : "Görevi bulunamayan kayıtlar" }),
@@ -112,61 +136,66 @@ function L({ task: t, trailing: s = null }) {
     s && /* @__PURE__ */ e.jsx("span", { className: "ml-auto flex items-center gap-2", children: s })
   ] });
 }
-function q({ status: t }) {
-  const s = O[t] ?? O[1];
+function re({ status: t }) {
+  const s = W[t] ?? W[1];
   return /* @__PURE__ */ e.jsxs("span", { className: `h-5 inline-flex items-center gap-1 px-2 rounded-full text-[10.5px] font-semibold ${s.bg} ${s.fg}`, children: [
     /* @__PURE__ */ e.jsx("i", { className: `fa-solid ${s.icon} text-[9px]`, "aria-hidden": "true" }),
     s.label
   ] });
 }
-const N = {
+const P = {
   ok: (t) => {
-    var s, n, a;
-    return (a = (n = (s = window == null ? void 0 : window.abp) == null ? void 0 : s.notify) == null ? void 0 : n.success) == null ? void 0 : a.call(n, t);
+    var s, n, r;
+    return (r = (n = (s = window == null ? void 0 : window.abp) == null ? void 0 : s.notify) == null ? void 0 : n.success) == null ? void 0 : r.call(n, t);
   },
   err: (t) => {
-    var s, n, a;
-    return (a = (n = (s = window == null ? void 0 : window.abp) == null ? void 0 : s.notify) == null ? void 0 : n.error) == null ? void 0 : a.call(n, t);
+    var s, n, r;
+    return (r = (n = (s = window == null ? void 0 : window.abp) == null ? void 0 : s.notify) == null ? void 0 : n.error) == null ? void 0 : r.call(n, t);
   }
-}, J = (t) => t ? new Date(t).toLocaleDateString("tr-TR") : "";
-function U({ projectId: t, kind: s, mountEl: n }) {
-  const a = T(s, n), r = C(
-    () => Promise.all([I(t), k.projectDocuments(t)]),
-    a
-  ), [o, i] = f.useState(null), [m, d] = f.useState(!1);
-  if (!a || r.status === "idle" || r.status === "loading")
-    return /* @__PURE__ */ e.jsx(D, {});
-  if (r.status === "error")
-    return /* @__PURE__ */ e.jsx(P, { onRetry: r.reload });
-  const [p, x] = r.data;
-  if (o)
+}, ne = (t) => t ? new Date(t).toLocaleDateString("tr-TR") : "";
+function ae({ projectId: t, kind: s, mountEl: n }) {
+  const r = !t, o = $(s, n), a = L(
+    () => Promise.all([
+      _(t),
+      g.projectDocuments(t),
+      r ? g.projectsLookup() : Promise.resolve([])
+    ]),
+    o
+  ), [i, p] = j.useState(null), [b, f] = j.useState(!1);
+  if (!o || a.status === "idle" || a.status === "loading")
+    return /* @__PURE__ */ e.jsx(R, {});
+  if (a.status === "error")
+    return /* @__PURE__ */ e.jsx(F, { onRetry: a.reload });
+  const [l, m, c] = a.data;
+  if (i)
     return /* @__PURE__ */ e.jsx(
-      W,
+      oe,
       {
-        documentId: o,
-        onBack: () => i(null),
-        onChanged: () => r.reload(),
+        documentId: i,
+        onBack: () => p(null),
+        onChanged: () => a.reload(),
         onDeleted: () => {
-          i(null), r.reload();
+          p(null), a.reload();
         }
       }
     );
-  if (m)
+  if (b)
     return /* @__PURE__ */ e.jsx(
-      Q,
+      le,
       {
-        tasks: p,
-        onCancel: () => d(!1),
-        onCreated: (b) => {
-          d(!1), r.reload(), i(b.id);
+        tasks: l,
+        showProject: r,
+        onCancel: () => f(!1),
+        onCreated: (d) => {
+          f(!1), a.reload(), p(d.id);
         }
       }
     );
-  const l = /* @__PURE__ */ e.jsxs(
+  const y = /* @__PURE__ */ e.jsxs(
     "button",
     {
       type: "button",
-      onClick: () => d(!0),
+      onClick: () => f(!0),
       className: "h-8 inline-flex items-center gap-1.5 px-3.5 rounded-lg bg-primary text-white text-[12.5px] font-bold cursor-pointer hover:bg-primary-hover",
       children: [
         /* @__PURE__ */ e.jsx("i", { className: "fa-solid fa-plus text-[10px]", "aria-hidden": "true" }),
@@ -174,55 +203,61 @@ function U({ projectId: t, kind: s, mountEl: n }) {
       ]
     }
   );
-  if (x.length === 0)
+  if (m.length === 0)
     return /* @__PURE__ */ e.jsx(
-      E,
+      G,
       {
         icon: "fa-file-lines",
-        title: "Bu projede henüz belge yok",
+        title: r ? "Henüz belge yok" : "Bu projede henüz belge yok",
         desc: "Belgeler görevlere bağlı yazılır; ilkini buradan bir görev seçerek oluşturabilirsiniz.",
-        action: l
+        action: y
       }
     );
-  const g = F(p, x, (b) => b.taskId);
+  const h = (d, C) => M(d, C, (D) => D.taskId).map((D) => {
+    var I;
+    return /* @__PURE__ */ e.jsxs("section", { children: [
+      /* @__PURE__ */ e.jsx(V, { task: D.task }),
+      /* @__PURE__ */ e.jsx("ul", { className: "m-0 p-0 list-none", children: D.records.map((w) => /* @__PURE__ */ e.jsx("li", { children: /* @__PURE__ */ e.jsxs(
+        "button",
+        {
+          type: "button",
+          onClick: () => p(w.id),
+          className: "flex w-full items-center gap-2.5 min-h-[44px] pl-10 pr-4 border-b border-subtle text-left cursor-pointer hover:bg-surface-hover",
+          children: [
+            /* @__PURE__ */ e.jsx("i", { className: "fa-solid fa-file-lines text-[12px] text-text-tertiary", "aria-hidden": "true" }),
+            /* @__PURE__ */ e.jsx("span", { className: "flex-1 min-w-0 text-[12.5px] font-semibold text-text-primary truncate", children: w.title }),
+            w.contentLength === 0 && /* @__PURE__ */ e.jsx("span", { className: "shrink-0 h-5 inline-flex items-center px-2 rounded-full bg-neutral-subtle text-text-tertiary text-[10.5px] font-semibold", children: "boş" }),
+            /* @__PURE__ */ e.jsxs("span", { className: "shrink-0 text-[11px] text-text-tertiary", children: [
+              w.editorName,
+              " · ",
+              ne(w.lastModificationTime ?? w.creationTime)
+            ] })
+          ]
+        }
+      ) }, w.id)) })
+    ] }, ((I = D.task) == null ? void 0 : I.id) ?? "orphan");
+  });
   return /* @__PURE__ */ e.jsxs("div", { className: "pb-4", children: [
-    /* @__PURE__ */ e.jsx("div", { className: "flex items-center justify-end px-4 py-3", children: l }),
-    g.map((b) => {
-      var v;
+    /* @__PURE__ */ e.jsx("div", { className: "flex items-center justify-end px-4 py-3", children: y }),
+    r ? O(c, l, m, (d) => d.taskId).map((d) => {
+      var C;
       return /* @__PURE__ */ e.jsxs("section", { children: [
-        /* @__PURE__ */ e.jsx(L, { task: b.task }),
-        /* @__PURE__ */ e.jsx("ul", { className: "m-0 p-0 list-none", children: b.records.map((u) => /* @__PURE__ */ e.jsx("li", { children: /* @__PURE__ */ e.jsxs(
-          "button",
-          {
-            type: "button",
-            onClick: () => i(u.id),
-            className: "flex w-full items-center gap-2.5 min-h-[44px] pl-10 pr-4 border-b border-subtle text-left cursor-pointer hover:bg-surface-hover",
-            children: [
-              /* @__PURE__ */ e.jsx("i", { className: "fa-solid fa-file-lines text-[12px] text-text-tertiary", "aria-hidden": "true" }),
-              /* @__PURE__ */ e.jsx("span", { className: "flex-1 min-w-0 text-[12.5px] font-semibold text-text-primary truncate", children: u.title }),
-              u.contentLength === 0 && /* @__PURE__ */ e.jsx("span", { className: "shrink-0 h-5 inline-flex items-center px-2 rounded-full bg-neutral-subtle text-text-tertiary text-[10.5px] font-semibold", children: "boş" }),
-              /* @__PURE__ */ e.jsxs("span", { className: "shrink-0 text-[11px] text-text-tertiary", children: [
-                u.editorName,
-                " · ",
-                J(u.lastModificationTime ?? u.creationTime)
-              ] })
-            ]
-          }
-        ) }, u.id)) })
-      ] }, ((v = b.task) == null ? void 0 : v.id) ?? "orphan");
-    })
+        /* @__PURE__ */ e.jsx(H, { project: d.project }),
+        h(d.tasks, d.records)
+      ] }, ((C = d.project) == null ? void 0 : C.id) ?? "no-project");
+    }) : h(l, m)
   ] });
 }
-function Q({ tasks: t, onCancel: s, onCreated: n }) {
-  var x;
-  const [a, r] = f.useState(((x = t[0]) == null ? void 0 : x.id) ?? ""), [o, i] = f.useState(""), [m, d] = f.useState(!1), p = async () => {
-    if (!(!a || !o.trim() || m)) {
-      d(!0);
+function le({ tasks: t, showProject: s = !1, onCancel: n, onCreated: r }) {
+  var m;
+  const [o, a] = j.useState(((m = t[0]) == null ? void 0 : m.id) ?? ""), [i, p] = j.useState(""), [b, f] = j.useState(!1), l = async () => {
+    if (!(!o || !i.trim() || b)) {
+      f(!0);
       try {
-        const l = await k.createDocument(a, o.trim());
-        N.ok("Belge oluşturuldu."), n(l);
-      } catch (l) {
-        N.err((l == null ? void 0 : l.message) || "Belge oluşturulamadı."), d(!1);
+        const c = await g.createDocument(o, i.trim());
+        P.ok("Belge oluşturuldu."), r(c);
+      } catch (c) {
+        P.err((c == null ? void 0 : c.message) || "Belge oluşturulamadı."), f(!1);
       }
     }
   };
@@ -233,10 +268,10 @@ function Q({ tasks: t, onCancel: s, onCreated: n }) {
       /* @__PURE__ */ e.jsx(
         "select",
         {
-          value: a,
-          onChange: (l) => r(l.target.value),
+          value: o,
+          onChange: (c) => a(c.target.value),
           className: "h-9 px-2 rounded-lg border border-default bg-surface-base text-[12.5px] text-text-primary",
-          children: t.map((l) => /* @__PURE__ */ e.jsx("option", { value: l.id, children: (l.number > 0 ? `GRV-${l.number} · ` : "") + l.title }, l.id))
+          children: t.map((c) => /* @__PURE__ */ e.jsx("option", { value: c.id, children: (s && c.projectName ? c.projectName + " — " : "") + (c.number > 0 ? `GRV-${c.number} · ` : "") + c.title }, c.id))
         }
       )
     ] }),
@@ -247,10 +282,10 @@ function Q({ tasks: t, onCancel: s, onCreated: n }) {
         {
           autoFocus: !0,
           type: "text",
-          value: o,
-          onChange: (l) => i(l.target.value),
-          onKeyDown: (l) => {
-            l.key === "Enter" && p();
+          value: i,
+          onChange: (c) => p(c.target.value),
+          onKeyDown: (c) => {
+            c.key === "Enter" && l();
           },
           placeholder: "Toplantı notu, kapsam taslağı…",
           className: "h-9 px-2.5 rounded-lg border border-default bg-surface-base text-[12.5px] text-text-primary focus:outline-none focus:border-focus"
@@ -262,7 +297,7 @@ function Q({ tasks: t, onCancel: s, onCreated: n }) {
         "button",
         {
           type: "button",
-          onClick: s,
+          onClick: n,
           className: "h-8 px-3.5 rounded-lg border border-default bg-surface-base text-[12.5px] font-semibold text-text-secondary cursor-pointer hover:bg-surface-hover",
           children: "Vazgeç"
         }
@@ -271,8 +306,8 @@ function Q({ tasks: t, onCancel: s, onCreated: n }) {
         "button",
         {
           type: "button",
-          onClick: p,
-          disabled: m || !o.trim() || !a,
+          onClick: l,
+          disabled: b || !i.trim() || !o,
           className: "h-8 px-4 rounded-lg bg-primary text-white text-[12.5px] font-bold cursor-pointer hover:bg-primary-hover disabled:opacity-50 disabled:cursor-not-allowed",
           children: "Oluştur"
         }
@@ -280,29 +315,29 @@ function Q({ tasks: t, onCancel: s, onCreated: n }) {
     ] })
   ] });
 }
-function W({ documentId: t, onBack: s, onChanged: n, onDeleted: a }) {
-  const r = C(() => k.document(t), !0), [o, i] = f.useState(null), [m, d] = f.useState(null), [p, x] = f.useState(!1);
-  if (r.status !== "ready")
-    return r.status === "error" ? /* @__PURE__ */ e.jsx(P, { onRetry: r.reload }) : /* @__PURE__ */ e.jsx(D, {});
-  const l = o ?? r.data.title, g = o !== null || m !== null, b = async () => {
-    if (!p) {
-      x(!0);
+function oe({ documentId: t, onBack: s, onChanged: n, onDeleted: r }) {
+  const o = L(() => g.document(t), !0), [a, i] = j.useState(null), [p, b] = j.useState(null), [f, l] = j.useState(!1);
+  if (o.status !== "ready")
+    return o.status === "error" ? /* @__PURE__ */ e.jsx(F, { onRetry: o.reload }) : /* @__PURE__ */ e.jsx(R, {});
+  const m = a ?? o.data.title, c = a !== null || p !== null, y = async () => {
+    if (!f) {
+      l(!0);
       try {
-        await k.updateDocument(t, {
-          title: l,
-          content: m ?? r.data.content
-        }), N.ok("Belge kaydedildi."), n(), s();
-      } catch (u) {
-        N.err((u == null ? void 0 : u.message) || "Belge kaydedilemedi."), x(!1);
+        await g.updateDocument(t, {
+          title: m,
+          content: p ?? o.data.content
+        }), P.ok("Belge kaydedildi."), n(), s();
+      } catch (d) {
+        P.err((d == null ? void 0 : d.message) || "Belge kaydedilemedi."), l(!1);
       }
     }
-  }, v = async () => {
-    if (!(p || !window.confirm("Belge silinecek (geri alınabilir arşive gider). Devam edilsin mi?"))) {
-      x(!0);
+  }, h = async () => {
+    if (!(f || !window.confirm("Belge silinecek (geri alınabilir arşive gider). Devam edilsin mi?"))) {
+      l(!0);
       try {
-        await k.deleteDocument(t), N.ok("Belge silindi."), a();
-      } catch (u) {
-        N.err((u == null ? void 0 : u.message) || "Belge silinemedi."), x(!1);
+        await g.deleteDocument(t), P.ok("Belge silindi."), r();
+      } catch (d) {
+        P.err((d == null ? void 0 : d.message) || "Belge silinemedi."), l(!1);
       }
     }
   };
@@ -324,8 +359,8 @@ function W({ documentId: t, onBack: s, onChanged: n, onDeleted: a }) {
         "input",
         {
           type: "text",
-          value: l,
-          onChange: (u) => i(u.target.value),
+          value: m,
+          onChange: (d) => i(d.target.value),
           className: "flex-1 h-9 px-2.5 rounded-lg border border-default bg-surface-base text-[13.5px] font-bold text-text-primary focus:outline-none focus:border-focus",
           "aria-label": "Belge başlığı"
         }
@@ -334,8 +369,8 @@ function W({ documentId: t, onBack: s, onChanged: n, onDeleted: a }) {
         "button",
         {
           type: "button",
-          onClick: v,
-          disabled: p,
+          onClick: h,
+          disabled: f,
           title: "Belgeyi sil",
           className: "h-8 w-8 rounded-lg text-text-tertiary cursor-pointer hover:bg-negative-subtle hover:text-negative",
           children: /* @__PURE__ */ e.jsx("i", { className: "fa-solid fa-trash text-[12px]", "aria-hidden": "true" })
@@ -345,48 +380,54 @@ function W({ documentId: t, onBack: s, onChanged: n, onDeleted: a }) {
         "button",
         {
           type: "button",
-          onClick: b,
-          disabled: p || !g || !l.trim(),
+          onClick: y,
+          disabled: f || !c || !m.trim(),
           className: "h-8 px-4 rounded-lg bg-primary text-white text-[12.5px] font-bold cursor-pointer hover:bg-primary-hover disabled:opacity-50 disabled:cursor-not-allowed",
           children: "Kaydet"
         }
       )
     ] }),
     /* @__PURE__ */ e.jsx(
-      K,
+      te,
       {
-        value: r.data.content || "",
-        onChange: d,
+        value: o.data.content || "",
+        onChange: b,
         placeholder: "Belge içeriği…"
       }
     )
   ] });
 }
-function X({ projectId: t, kind: s, mountEl: n }) {
-  const a = T(s, n), r = C(
-    () => Promise.all([I(t), k.projectForms(t)]),
-    a
+function ie({ projectId: t, kind: s, mountEl: n }) {
+  const r = !t, o = $(s, n), a = L(
+    () => Promise.all([
+      _(t),
+      g.projectForms(t),
+      r ? g.projectsLookup() : Promise.resolve([])
+    ]),
+    o
   );
-  if (!a || r.status === "idle" || r.status === "loading")
-    return /* @__PURE__ */ e.jsx(D, {});
-  if (r.status === "error")
-    return /* @__PURE__ */ e.jsx(P, { onRetry: r.reload });
-  const [o, i] = r.data, m = F(o, i, (d) => d.taskId);
-  return m.length === 0 ? /* @__PURE__ */ e.jsx(
-    E,
-    {
-      icon: "fa-clipboard-list",
-      title: "Henüz form bağlanmadı",
-      desc: "Form Yönetimi'ndeki bir formu görev detayından bağlayın; yanıtlar o görev bağlamında toplansın."
-    }
-  ) : /* @__PURE__ */ e.jsx("div", { className: "pb-4", children: m.map((d) => {
-    var p;
+  if (!o || a.status === "idle" || a.status === "loading")
+    return /* @__PURE__ */ e.jsx(R, {});
+  if (a.status === "error")
+    return /* @__PURE__ */ e.jsx(F, { onRetry: a.reload });
+  const [i, p, b] = a.data;
+  if (p.length === 0)
+    return /* @__PURE__ */ e.jsx(
+      G,
+      {
+        icon: "fa-clipboard-list",
+        title: "Henüz form bağlanmadı",
+        desc: "Form Yönetimi'ndeki bir formu görev detayından bağlayın; yanıtlar o görev bağlamında toplansın."
+      }
+    );
+  const f = (l, m) => M(l, m, (c) => c.taskId).map((c) => {
+    var y;
     return /* @__PURE__ */ e.jsxs("section", { children: [
-      /* @__PURE__ */ e.jsx(L, { task: d.task }),
-      /* @__PURE__ */ e.jsx("ul", { className: "m-0 p-0 list-none", children: d.records.map((x) => /* @__PURE__ */ e.jsxs("li", { className: "flex items-center gap-2.5 min-h-[44px] pl-10 pr-4 border-b border-subtle", children: [
+      /* @__PURE__ */ e.jsx(V, { task: c.task }),
+      /* @__PURE__ */ e.jsx("ul", { className: "m-0 p-0 list-none", children: c.records.map((h) => /* @__PURE__ */ e.jsxs("li", { className: "flex items-center gap-2.5 min-h-[44px] pl-10 pr-4 border-b border-subtle", children: [
         /* @__PURE__ */ e.jsx("i", { className: "fa-solid fa-clipboard-list text-[12px] text-text-tertiary", "aria-hidden": "true" }),
-        /* @__PURE__ */ e.jsx("span", { className: "flex-1 min-w-0 text-[12.5px] font-semibold text-text-primary truncate", children: x.title }),
-        x.isGuestFillable && /* @__PURE__ */ e.jsx(
+        /* @__PURE__ */ e.jsx("span", { className: "flex-1 min-w-0 text-[12.5px] font-semibold text-text-primary truncate", children: h.title }),
+        h.isGuestFillable && /* @__PURE__ */ e.jsx(
           "span",
           {
             className: "shrink-0 h-5 inline-flex items-center px-2 rounded-full bg-warning-subtle text-warning text-[10.5px] font-semibold",
@@ -395,84 +436,95 @@ function X({ projectId: t, kind: s, mountEl: n }) {
           }
         ),
         /* @__PURE__ */ e.jsxs("span", { className: "shrink-0 h-5 inline-flex items-center px-2 rounded-full bg-neutral-subtle text-text-secondary text-[10.5px] font-semibold font-mono", children: [
-          x.responseCount,
+          h.responseCount,
           " yanıt"
         ] }),
-        d.task && /* @__PURE__ */ e.jsx(
+        c.task && /* @__PURE__ */ e.jsx(
           "button",
           {
             type: "button",
-            onClick: () => V(d.task.id),
+            onClick: () => Z(c.task.id),
             className: "shrink-0 text-[12px] font-semibold text-primary cursor-pointer hover:underline",
             children: "Görevde aç →"
           }
         )
-      ] }, x.id)) })
-    ] }, ((p = d.task) == null ? void 0 : p.id) ?? "orphan");
-  }) });
+      ] }, h.id)) })
+    ] }, ((y = c.task) == null ? void 0 : y.id) ?? "orphan");
+  });
+  return /* @__PURE__ */ e.jsx("div", { className: "pb-4", children: r ? O(b, i, p, (l) => l.taskId).map((l) => {
+    var m;
+    return /* @__PURE__ */ e.jsxs("section", { children: [
+      /* @__PURE__ */ e.jsx(H, { project: l.project }),
+      f(l.tasks, l.records)
+    ] }, ((m = l.project) == null ? void 0 : m.id) ?? "no-project");
+  }) : f(i, p) });
 }
-const w = "__project__";
-function Z({ projectId: t, kind: s, mountEl: n }) {
-  const a = T(s, n), r = C(
-    () => Promise.all([I(t), k.projectChecklist(t)]),
-    a
-  ), [o, i] = f.useState(null), [m, d] = f.useState(""), [p, x] = f.useState(!1);
-  if (!a || r.status === "idle" || r.status === "loading")
-    return /* @__PURE__ */ e.jsx(D, {});
-  if (r.status === "error")
-    return /* @__PURE__ */ e.jsx(P, { onRetry: r.reload });
-  const [l, g] = r.data, b = g.filter((c) => !c.taskId), v = F(l, g.filter((c) => c.taskId), (c) => c.taskId), u = async (c) => {
-    var h, S, _;
-    x(!0);
+const K = "__project__:", A = (t) => K + t;
+function ce({ projectId: t, kind: s, mountEl: n }) {
+  const r = !t, o = $(s, n), a = L(
+    () => Promise.all([
+      _(t),
+      g.projectChecklist(t),
+      r ? g.projectsLookup() : Promise.resolve([])
+    ]),
+    o
+  ), [i, p] = j.useState(null), [b, f] = j.useState(""), [l, m] = j.useState(!1);
+  if (!o || a.status === "idle" || a.status === "loading")
+    return /* @__PURE__ */ e.jsx(R, {});
+  if (a.status === "error")
+    return /* @__PURE__ */ e.jsx(F, { onRetry: a.reload });
+  const [c, y, h] = a.data, d = y.filter((x) => !x.taskId), C = M(c, y.filter((x) => x.taskId), (x) => x.taskId), D = async (x) => {
+    var u, N, S;
+    m(!0);
     try {
-      await c(), await r.reload();
-    } catch (R) {
-      (_ = (S = (h = window == null ? void 0 : window.abp) == null ? void 0 : h.notify) == null ? void 0 : S.error) == null || _.call(S, (R == null ? void 0 : R.message) || "İşlem tamamlanamadı.");
+      await x(), await a.reload();
+    } catch (B) {
+      (S = (N = (u = window == null ? void 0 : window.abp) == null ? void 0 : u.notify) == null ? void 0 : N.error) == null || S.call(N, (B == null ? void 0 : B.message) || "İşlem tamamlanamadı.");
     } finally {
-      x(!1);
+      m(!1);
     }
-  }, A = (c) => {
-    const h = m.trim();
-    if (!h) {
-      i(null);
+  }, I = (x) => {
+    const u = b.trim();
+    if (!u) {
+      p(null);
       return;
     }
-    d(""), i(null), u(() => c === w ? k.addProjectChecklistItem(t, h) : k.addChecklistItem(c, h));
-  }, G = (c) => /* @__PURE__ */ e.jsxs("li", { className: "group flex items-center gap-2.5 min-h-[38px] pl-10 pr-4 border-b border-subtle", children: [
+    f(""), p(null), D(() => String(x).indexOf(K) === 0 ? g.addProjectChecklistItem(String(x).slice(K.length), u) : g.addChecklistItem(x, u));
+  }, w = (x) => /* @__PURE__ */ e.jsxs("li", { className: "group flex items-center gap-2.5 min-h-[38px] pl-10 pr-4 border-b border-subtle", children: [
     /* @__PURE__ */ e.jsx(
       "input",
       {
         type: "checkbox",
-        checked: c.isDone,
-        disabled: p,
-        onChange: () => u(() => k.toggleChecklistItem(c.id)),
+        checked: x.isDone,
+        disabled: l,
+        onChange: () => D(() => g.toggleChecklistItem(x.id)),
         className: "h-[15px] w-[15px] accent-[var(--apya-accent-500,#4F46E5)] cursor-pointer",
-        "aria-label": c.text
+        "aria-label": x.text
       }
     ),
-    /* @__PURE__ */ e.jsx("span", { className: `flex-1 text-[12.5px] ${c.isDone ? "text-text-tertiary line-through" : "text-text-primary"}`, children: c.text }),
+    /* @__PURE__ */ e.jsx("span", { className: `flex-1 text-[12.5px] ${x.isDone ? "text-text-tertiary line-through" : "text-text-primary"}`, children: x.text }),
     /* @__PURE__ */ e.jsx(
       "button",
       {
         type: "button",
         title: "Maddeyi sil",
-        disabled: p,
-        onClick: () => u(() => k.deleteChecklistItem(c.id)),
+        disabled: l,
+        onClick: () => D(() => g.deleteChecklistItem(x.id)),
         className: "opacity-0 group-hover:opacity-100 h-6 w-6 rounded-md text-text-tertiary hover:bg-negative-subtle hover:text-negative cursor-pointer",
         children: /* @__PURE__ */ e.jsx("i", { className: "fa-solid fa-xmark text-[11px]", "aria-hidden": "true" })
       }
     )
-  ] }, c.id), z = (c) => /* @__PURE__ */ e.jsx("li", { className: "flex items-center gap-2.5 min-h-[36px] pl-10 pr-4", children: o === c ? /* @__PURE__ */ e.jsx(
+  ] }, x.id), Y = (x) => /* @__PURE__ */ e.jsx("li", { className: "flex items-center gap-2.5 min-h-[36px] pl-10 pr-4", children: i === x ? /* @__PURE__ */ e.jsx(
     "input",
     {
       autoFocus: !0,
       type: "text",
-      value: m,
-      onChange: (h) => d(h.target.value),
-      onKeyDown: (h) => {
-        h.key === "Enter" && A(c), h.key === "Escape" && (i(null), d(""));
+      value: b,
+      onChange: (u) => f(u.target.value),
+      onKeyDown: (u) => {
+        u.key === "Enter" && I(x), u.key === "Escape" && (p(null), f(""));
       },
-      onBlur: () => A(c),
+      onBlur: () => I(x),
       placeholder: "Madde yazın, Enter ile ekleyin",
       className: "flex-1 h-7 px-2 rounded-md border border-default bg-surface-base text-[12.5px] focus:outline-none focus:border-focus"
     }
@@ -481,14 +533,68 @@ function Z({ projectId: t, kind: s, mountEl: n }) {
     {
       type: "button",
       onClick: () => {
-        i(c), d("");
+        p(x), f("");
       },
       className: "text-[12px] font-semibold text-primary cursor-pointer hover:underline",
       children: "＋ madde ekle…"
     }
-  ) }, "add"), M = (c) => c.filter((h) => h.isDone).length, $ = b.length > 0 || o === w;
-  return !$ && v.length === 0 ? /* @__PURE__ */ e.jsx(
-    E,
+  ) }, "add"), q = (x) => x.filter((u) => u.isDone).length, J = (x, u) => /* @__PURE__ */ e.jsxs("section", { children: [
+    /* @__PURE__ */ e.jsxs("div", { className: "flex items-center gap-2.5 h-[42px] px-4 bg-surface-raised border-b border-subtle", children: [
+      /* @__PURE__ */ e.jsx("i", { className: "fa-solid fa-diagram-project text-[11px] text-text-tertiary", "aria-hidden": "true" }),
+      /* @__PURE__ */ e.jsx("span", { className: "text-[12.5px] font-bold text-text-primary", children: "Proje maddeleri" }),
+      u.length > 0 && /* @__PURE__ */ e.jsxs("span", { className: "ml-auto text-[11px] font-bold font-mono text-text-secondary", children: [
+        q(u),
+        "/",
+        u.length
+      ] })
+    ] }),
+    /* @__PURE__ */ e.jsxs("ul", { className: "m-0 p-0 list-none", children: [
+      u.map(w),
+      Y(A(x))
+    ] })
+  ] }), U = (x) => x.map((u) => {
+    var N;
+    return /* @__PURE__ */ e.jsxs("section", { children: [
+      /* @__PURE__ */ e.jsx(
+        V,
+        {
+          task: u.task,
+          trailing: /* @__PURE__ */ e.jsxs("span", { className: "text-[11px] font-bold font-mono text-text-secondary", children: [
+            q(u.records),
+            "/",
+            u.records.length
+          ] })
+        }
+      ),
+      /* @__PURE__ */ e.jsxs("ul", { className: "m-0 p-0 list-none", children: [
+        u.records.map(w),
+        u.task && Y(u.task.id)
+      ] })
+    ] }, ((N = u.task) == null ? void 0 : N.id) ?? "orphan");
+  });
+  if (r) {
+    const x = O(h, c, y, (u) => u.taskId, (u) => u.projectId);
+    return x.length === 0 ? /* @__PURE__ */ e.jsx(
+      G,
+      {
+        icon: "fa-square-check",
+        tone: "success",
+        title: "Henüz kontrol listesi yok",
+        desc: "Maddeler görev detayından ya da projenin Kontrol Listesi panelinden eklenir."
+      }
+    ) : /* @__PURE__ */ e.jsx("div", { className: "pb-4", children: x.map((u) => {
+      var Q;
+      const N = (Q = u.project) == null ? void 0 : Q.id, S = u.records.filter((T) => !T.taskId), B = M(u.tasks, u.records.filter((T) => T.taskId), (T) => T.taskId);
+      return /* @__PURE__ */ e.jsxs("section", { children: [
+        /* @__PURE__ */ e.jsx(H, { project: u.project }),
+        !!N && S.length > 0 && J(N, S),
+        U(B)
+      ] }, N ?? "no-project");
+    }) });
+  }
+  const X = d.length > 0 || i === A(t);
+  return !X && C.length === 0 ? /* @__PURE__ */ e.jsx(
+    G,
     {
       icon: "fa-square-check",
       tone: "success",
@@ -499,7 +605,7 @@ function Z({ projectId: t, kind: s, mountEl: n }) {
         {
           type: "button",
           onClick: () => {
-            i(w), d("");
+            p(A(t)), f("");
           },
           className: "h-8 inline-flex items-center gap-1.5 px-3.5 rounded-lg bg-primary text-white text-[12.5px] font-bold cursor-pointer hover:bg-primary-hover",
           children: [
@@ -510,93 +616,64 @@ function Z({ projectId: t, kind: s, mountEl: n }) {
       )
     }
   ) : /* @__PURE__ */ e.jsxs("div", { className: "pb-4", children: [
-    $ ? /* @__PURE__ */ e.jsxs("section", { children: [
-      /* @__PURE__ */ e.jsxs("div", { className: "flex items-center gap-2.5 h-[42px] px-4 bg-surface-raised border-b border-subtle", children: [
-        /* @__PURE__ */ e.jsx("i", { className: "fa-solid fa-diagram-project text-[11px] text-text-tertiary", "aria-hidden": "true" }),
-        /* @__PURE__ */ e.jsx("span", { className: "text-[12.5px] font-bold text-text-primary", children: "Proje maddeleri" }),
-        b.length > 0 && /* @__PURE__ */ e.jsxs("span", { className: "ml-auto text-[11px] font-bold font-mono text-text-secondary", children: [
-          M(b),
-          "/",
-          b.length
-        ] })
-      ] }),
-      /* @__PURE__ */ e.jsxs("ul", { className: "m-0 p-0 list-none", children: [
-        b.map(G),
-        z(w)
-      ] })
-    ] }) : /* @__PURE__ */ e.jsx("div", { className: "flex justify-end px-4 py-2", children: /* @__PURE__ */ e.jsx(
+    X ? J(t, d) : /* @__PURE__ */ e.jsx("div", { className: "flex justify-end px-4 py-2", children: /* @__PURE__ */ e.jsx(
       "button",
       {
         type: "button",
         onClick: () => {
-          i(w), d("");
+          p(A(t)), f("");
         },
         className: "text-[12px] font-semibold text-primary cursor-pointer hover:underline",
         children: "＋ Proje maddesi ekle…"
       }
     ) }),
-    v.map((c) => {
-      var h;
-      return /* @__PURE__ */ e.jsxs("section", { children: [
-        /* @__PURE__ */ e.jsx(
-          L,
-          {
-            task: c.task,
-            trailing: /* @__PURE__ */ e.jsxs("span", { className: "text-[11px] font-bold font-mono text-text-secondary", children: [
-              M(c.records),
-              "/",
-              c.records.length
-            ] })
-          }
-        ),
-        /* @__PURE__ */ e.jsxs("ul", { className: "m-0 p-0 list-none", children: [
-          c.records.map(G),
-          c.task && z(c.task.id)
-        ] })
-      ] }, ((h = c.task) == null ? void 0 : h.id) ?? "orphan");
-    })
+    U(C)
   ] });
 }
-function ee({ projectId: t, kind: s, mountEl: n }) {
-  const a = T(s, n), r = C(
-    () => Promise.all([I(t), k.projectDependencies(t)]),
-    a
+function de({ projectId: t, kind: s, mountEl: n }) {
+  const r = !t, o = $(s, n), a = L(
+    () => Promise.all([
+      _(t),
+      g.projectDependencies(t),
+      r ? g.projectsLookup() : Promise.resolve([])
+    ]),
+    o
   );
-  if (!a || r.status === "idle" || r.status === "loading")
-    return /* @__PURE__ */ e.jsx(D, {});
-  if (r.status === "error")
-    return /* @__PURE__ */ e.jsx(P, { onRetry: r.reload });
-  const [o, i] = r.data, m = new Map(o.map((l) => [l.id, l])), d = H(i, m), p = new Set(d.map((l) => l.predecessorTaskId + "→" + l.taskId));
-  if (i.length === 0)
+  if (!o || a.status === "idle" || a.status === "loading")
+    return /* @__PURE__ */ e.jsx(R, {});
+  if (a.status === "error")
+    return /* @__PURE__ */ e.jsx(F, { onRetry: a.reload });
+  const [i, p, b] = a.data, f = new Map(i.map((h) => [h.id, h])), l = se(p, f), m = new Set(l.map((h) => h.predecessorTaskId + "→" + h.taskId));
+  if (p.length === 0)
     return /* @__PURE__ */ e.jsx(
-      E,
+      G,
       {
         icon: "fa-link",
-        title: "Bu projede görevler arası bağ yok",
+        title: r ? "Görevler arası bağ yok" : "Bu projede görevler arası bağ yok",
         desc: "Öncül/ardıl bağlantıları görev detayının Bağımlılıklar sekmesinden kurulur."
       }
     );
-  const x = ({ id: l }) => {
-    const g = m.get(l);
-    return g ? /* @__PURE__ */ e.jsxs(
+  const c = ({ id: h }) => {
+    const d = f.get(h);
+    return d ? /* @__PURE__ */ e.jsxs(
       "button",
       {
         type: "button",
-        onClick: () => V(g.id),
+        onClick: () => Z(d.id),
         className: "flex items-center gap-2 min-w-0 text-left cursor-pointer group",
         children: [
-          /* @__PURE__ */ e.jsx("span", { className: "text-[12.5px] font-semibold text-text-primary truncate group-hover:text-primary", children: g.title }),
-          /* @__PURE__ */ e.jsx(q, { status: g.status })
+          /* @__PURE__ */ e.jsx("span", { className: "text-[12.5px] font-semibold text-text-primary truncate group-hover:text-primary", children: d.title }),
+          /* @__PURE__ */ e.jsx(re, { status: d.status })
         ]
       }
     ) : /* @__PURE__ */ e.jsx("span", { className: "text-[12.5px] text-text-tertiary", children: "(görünmeyen görev)" });
   };
   return /* @__PURE__ */ e.jsxs("div", { className: "pb-4", children: [
-    d.length > 0 && /* @__PURE__ */ e.jsxs("div", { className: "flex items-start gap-2.5 m-4 mb-0 px-3.5 py-3 rounded-xl bg-negative-subtle border border-negative/30", children: [
+    l.length > 0 && /* @__PURE__ */ e.jsxs("div", { className: "flex items-start gap-2.5 m-4 mb-0 px-3.5 py-3 rounded-xl bg-negative-subtle border border-negative/30", children: [
       /* @__PURE__ */ e.jsx("i", { className: "fa-solid fa-link-slash text-[13px] text-negative mt-0.5", "aria-hidden": "true" }),
       /* @__PURE__ */ e.jsxs("div", { className: "text-[12px] leading-[1.55] text-negative", children: [
         /* @__PURE__ */ e.jsxs("b", { children: [
-          d.length,
+          l.length,
           " bağlantı bloke ediyor:"
         ] }),
         " öncülü tamamlanmamış ve termini geçmiş görevler ardıllarını bekletiyor. Satırlarda ⚠ ile işaretli."
@@ -607,15 +684,24 @@ function ee({ projectId: t, kind: s, mountEl: n }) {
       /* @__PURE__ */ e.jsx("span", { className: "w-8" }),
       /* @__PURE__ */ e.jsx("span", { className: "flex-1", children: "ARDIL (bunu bekliyor)" })
     ] }),
-    /* @__PURE__ */ e.jsx("ul", { className: "m-0 p-0 list-none", children: i.map((l) => {
-      const g = p.has(l.predecessorTaskId + "→" + l.taskId);
+    r ? O(b, i, p, (h) => h.taskId).map((h) => {
+      var d;
+      return /* @__PURE__ */ e.jsxs("section", { children: [
+        /* @__PURE__ */ e.jsx(H, { project: h.project }),
+        y(h.records)
+      ] }, ((d = h.project) == null ? void 0 : d.id) ?? "no-project");
+    }) : y(p)
+  ] });
+  function y(h) {
+    return /* @__PURE__ */ e.jsx("ul", { className: "m-0 p-0 list-none", children: h.map((d) => {
+      const C = m.has(d.predecessorTaskId + "→" + d.taskId);
       return /* @__PURE__ */ e.jsxs(
         "li",
         {
           className: "flex items-center min-h-[44px] px-4 border-b border-subtle",
           children: [
             /* @__PURE__ */ e.jsxs("span", { className: "flex-1 min-w-0 flex items-center gap-2", children: [
-              g && /* @__PURE__ */ e.jsx(
+              C && /* @__PURE__ */ e.jsx(
                 "i",
                 {
                   className: "fa-solid fa-triangle-exclamation text-[11px] text-negative",
@@ -623,24 +709,24 @@ function ee({ projectId: t, kind: s, mountEl: n }) {
                   "aria-hidden": "true"
                 }
               ),
-              /* @__PURE__ */ e.jsx(x, { id: l.predecessorTaskId })
+              /* @__PURE__ */ e.jsx(c, { id: d.predecessorTaskId })
             ] }),
             /* @__PURE__ */ e.jsx("span", { className: "w-8 text-center text-text-tertiary", "aria-hidden": "true", children: "→" }),
-            /* @__PURE__ */ e.jsx("span", { className: "flex-1 min-w-0", children: /* @__PURE__ */ e.jsx(x, { id: l.taskId }) })
+            /* @__PURE__ */ e.jsx("span", { className: "flex-1 min-w-0", children: /* @__PURE__ */ e.jsx(c, { id: d.taskId }) })
           ]
         },
-        l.predecessorTaskId + l.taskId
+        d.predecessorTaskId + d.taskId
       );
-    }) })
-  ] });
+    }) });
+  }
 }
-const te = [
-  ["view-documents", "documents", U],
-  ["view-forms", "forms", X],
-  ["view-checklist", "checklist", Z],
-  ["view-dependencies", "dependencies", ee]
+const ue = [
+  ["view-documents", "documents", ae],
+  ["view-forms", "forms", ie],
+  ["view-checklist", "checklist", ce],
+  ["view-dependencies", "dependencies", de]
 ];
-for (const [t, s, n] of te) {
-  const a = document.getElementById(t), r = a == null ? void 0 : a.getAttribute("data-project-id");
-  a && r && Y(a).render(/* @__PURE__ */ e.jsx(n, { projectId: r, kind: s, mountEl: a }));
+for (const [t, s, n] of ue) {
+  const r = document.getElementById(t), o = r == null ? void 0 : r.getAttribute("data-project-id");
+  r && (o || r.getAttribute("data-scope") === "all") && ee(r).render(/* @__PURE__ */ e.jsx(n, { projectId: o || null, kind: s, mountEl: r }));
 }
