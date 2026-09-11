@@ -938,7 +938,10 @@
             window.removeEventListener('resize', closeCardMenu);
         }
         function onCardMenuDoc(e) {
-            if (cardMenu && !cardMenu.contains(e.target)) { closeCardMenu(); }
+            // target Element olmayabilir (programatik document tıklaması) —
+            // menü dışı sayılır ve kapatılır, closest çağrısı patlamaz.
+            var t = e.target instanceof Element ? e.target : null;
+            if (cardMenu && (!t || !cardMenu.contains(t))) { closeCardMenu(); }
         }
         function onCardMenuKey(e) {
             if (e.key === 'Escape') { closeCardMenu(); }
@@ -1171,7 +1174,9 @@
             syncViewButton();
         }
         function onViewPopDoc(e) {
-            if (viewPop && !viewPop.contains(e.target) && !e.target.closest('.js-kanban-view')) { closeViewPop(); }
+            if (!viewPop) { return; }
+            var t = e.target instanceof Element ? e.target : null;
+            if (!t || (!viewPop.contains(t) && !t.closest('.js-kanban-view'))) { closeViewPop(); }
         }
         function onViewPopKey(e) {
             if (e.key === 'Escape') { closeViewPop(); }
@@ -2337,7 +2342,26 @@
             openColumnPanel: openColumnPanel,
             closeColumnPanel: closeColumnPanel,
             setGrouping: setGrouping,
-            getGrouping: function () { return grouping; }
+            getGrouping: function () { return grouping; },
+            // Kayıtlı görünümler (Tasks/index.js) kanban tercihinin anlık
+            // görüntüsünü de saklayıp geri uygulayabilsin diye dışarı verilir.
+            getViewPrefs: function () {
+                return {
+                    density: view.density,
+                    fields: $.extend({}, view.fields),
+                    collapseEmpty: view.collapseEmpty,
+                    hideDone: view.hideDone
+                };
+            },
+            setViewPrefs: function (p) {
+                p = p || {};
+                if (DENSITIES.indexOf(p.density) >= 0) { view.density = p.density; }
+                if (p.fields && typeof p.fields === 'object') { view.fields = $.extend({}, p.fields); }
+                if (typeof p.collapseEmpty === 'boolean') { view.collapseEmpty = p.collapseEmpty; }
+                if (typeof p.hideDone === 'boolean') { view.hideDone = p.hideDone; }
+                applyViewPrefs();
+                persistViewPrefs();
+            }
         };
     }
 

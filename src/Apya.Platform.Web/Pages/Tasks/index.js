@@ -173,6 +173,19 @@ $(function () {
         return n;
     }
 
+    // Kanban v2 filtre modeli: pasif "X: tümü" chip'i GİZLENİR; yeni filtre
+    // "＋ Filtre" menüsünden seçilir. Menüden seçilen kategori chip'i, değer
+    // seçilene kadar görünür tutulur (revealedChip) — dropdown değer seçilmeden
+    // kapanırsa chip yeniden gizlenir.
+    var revealedChip = null;
+
+    function syncFilterChip(id, active) {
+        var $chip = $('#' + id);
+        $chip.toggleClass('is-active', active);
+        $chip.find('[data-chip-clear]').toggleClass('d-none', !active);
+        $chip.closest('.dropdown').toggleClass('d-none', !(active || revealedChip === id));
+    }
+
     function renderFilterUi() {
         $('#chip-status [data-chip-text]').text('Durum: ' + STATUS_LABELS[state.get('status')]);
         $('#chip-priority [data-chip-text]').text('Öncelik: ' + PRIORITY_LABELS[state.get('priority')]);
@@ -180,11 +193,12 @@ $(function () {
         $('#chip-project [data-chip-text]').text('Proje: ' + projectLabel());
         $('#chip-daterange [data-chip-text]').text('Son Tarih: ' + dateRangeLabel());
 
-        $('#chip-status').toggleClass('is-active', state.get('status') !== '');
-        $('#chip-priority').toggleClass('is-active', state.get('priority') !== '');
-        $('#chip-assignee').toggleClass('is-active', state.get('mine') || state.get('assignee') !== '');
-        $('#chip-project').toggleClass('is-active', state.get('project') !== '');
-        $('#chip-daterange').toggleClass('is-active', !!(state.get('minDue') || state.get('maxDue')));
+        syncFilterChip('chip-status', state.get('status') !== '');
+        syncFilterChip('chip-priority', state.get('priority') !== '');
+        // "Bana atanan"ın kendi chip'i var; Atanan chip'i yalnız kişi seçiminde açılır.
+        syncFilterChip('chip-assignee', state.get('assignee') !== '');
+        syncFilterChip('chip-project', state.get('project') !== '');
+        syncFilterChip('chip-daterange', !!(state.get('minDue') || state.get('maxDue')));
 
         $('#chip-overdue').attr('aria-pressed', String(state.get('overdue')));
         $('#chip-mine').attr('aria-pressed', String(state.get('mine')));
@@ -232,6 +246,8 @@ $(function () {
 
             $('#sum-overdue').text(s.overdue);
             $('#sum-overdue-bar').find('span').css('width', (s.total > 0 ? s.overdue * 100 / s.total : 0) + '%');
+            // v2 chip'i sayıyı taşır: "5 gecikmiş". Sıfırda düz etikete döner.
+            $('#chip-overdue-text').text(s.overdue > 0 ? s.overdue + ' gecikmiş' : 'Gecikmiş');
 
             $('#sum-due7').text(s.dueIn7Days);
             $('#sum-due7-bar').find('span').css('width', (s.total > 0 ? s.dueIn7Days * 100 / s.total : 0) + '%');
@@ -479,6 +495,41 @@ $(function () {
         applyFilters();
         $('#chip-daterange').dropdown('hide');
     });
+
+    // ── v2: "＋ Filtre" + chip ✕ ───────────────────────────────────────────
+    // Menüden kategori seçilince o chip görünür olur ve kendi menüsü açılır;
+    // değer seçilmeden kapanırsa renderFilterUi chip'i yeniden gizler.
+    $(document).on('click', '[data-open-chip]', function () {
+        var id = String($(this).data('open-chip'));
+        revealedChip = id;
+        renderFilterUi();
+        // Bootstrap "＋ Filtre" menüsünü kapatırken açıyoruz — sıradaki tick'te.
+        setTimeout(function () { $('#' + id).dropdown('show'); }, 0);
+    });
+    $(document).on('hidden.bs.dropdown', '#console-filter-set .dropdown', function () {
+        if (!revealedChip) { return; }
+        revealedChip = null;
+        renderFilterUi();
+    });
+    // ✕ chip'in (dropdown tetikleyicisinin) İÇİNDE: Bootstrap'ın data-api'si
+    // menüyü açmadan yakalamak için CAPTURE aşamasında dinlenir.
+    document.addEventListener('click', function (e) {
+        if (!(e.target instanceof Element)) { return; }
+        var x = e.target.closest('[data-chip-clear]');
+        if (!x) { return; }
+        e.preventDefault();
+        e.stopPropagation();
+        var key = x.getAttribute('data-chip-clear');
+        if (key === 'daterange') {
+            state.set('minDue', '').set('maxDue', '');
+            $('#Filter_MinDueDate').val('');
+            $('#Filter_MaxDueDate').val('');
+        } else {
+            state.set(key, '');
+        }
+        applyFilters();
+        if (key === 'project') { loadSummary(); syncKanbanScope(); }
+    }, true);
 
     // Filtreleri katla/aç — düğme yalnız mobilde görünür, sınıfı taşıyan
     // .apya-console-filters'tır (chip kümesi CSS'te ona bağlı).
@@ -799,6 +850,11 @@ $(function () {
         // çalışmıyor" yanılgısı doğmasın (proje konsolundaki kararla aynı).
         $('#console-filters').toggleClass('d-none', currentView === 'finance');
 
+        // Kanban araçları (Grupla · Kolonlar · Görünüm) yalnız Kart Panosu'nda
+        // anlamlı — slot diğer görünümlerde kapanır; içindeki düğmelerin kendi
+        // d-none'ları /js/apya-kanban.js'e aittir.
+        $('#kanban-tools-slot').toggleClass('d-none', currentView !== 'kanban');
+
         // Şerit ile panel ayrışmasın. Buraya activateTab dışından da geliniyor
         // (kebap menüsünden kayıtlı görünüm uygulamak gibi) ve o yol hangi
         // sekmede olduğumuzu bilmiyor: gösterilen panelin sekmesi kapalıysa
@@ -896,6 +952,9 @@ $(function () {
         currentView = VIEWS[v.view] ? v.view : 'list';
         if (dataTable) { dataTable.search(v.q || ''); }
         $('#console-search').val(v.q || '');
+        // Kanban görünüm tercihi de kayda dâhil (v2): eski kayıtlarda alan yok,
+        // o zaman mevcut tercihe dokunulmaz.
+        if (v.kanban) { kb.setViewPrefs(v.kanban); }
         syncKanbanScope();
         switchView(currentView);
         applyFilters();
@@ -918,7 +977,9 @@ $(function () {
             return {
                 state: $.extend({}, state.values),
                 view: currentView,
-                q: dataTable ? dataTable.search() : ''
+                q: dataTable ? dataTable.search() : '',
+                // Kanban yoğunluk/alan/anahtar tercihi de kayda girer (v2).
+                kanban: kb.getViewPrefs()
             };
         },
         onApply: applySavedView

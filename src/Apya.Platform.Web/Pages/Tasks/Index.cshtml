@@ -282,17 +282,16 @@
 
         <div class="apya-console-filter-set" id="console-filter-set">
 
-            @* Kanban kolon araçları — kullanıcı kararı 2026-09-04: "Grupla" filtre
-               çubuğuna girer. Mobilde "Filtreler" düğmesinin arkasına katlanır,
-               masaüstünde chip'lerin yanında durur (sarmalayıcı orada
-               `display: contents`). Yalnız Kanban görünümünde ve koşulları
-               sağlanınca JS (/js/apya-kanban.js) `d-none`'ı kaldırır. *@
-            <partial name="_KanbanColumnTools" />
-
+            @* Kanban v2 filtre modeli: yalnız ETKİN filtreler chip olarak durur
+               (pasif "X: tümü" chip'leri gizli), yeni filtre "＋ Filtre"
+               menüsünden seçilir. Görünürlüğü index.js → renderFilterUi yönetir;
+               ✕ dokunuşu o filtreyi temizler. *@
             <div class="dropdown">
                 <button type="button" class="apya-filter-chip" id="chip-status"
                         data-bs-toggle="dropdown" aria-expanded="false">
                     <span data-chip-text>Durum: tümü</span><i class="fa fa-chevron-down" aria-hidden="true"></i>
+                    <span class="apya-filter-chip-x d-none" data-chip-clear="status" role="button"
+                          title="Filtreyi kaldır" aria-label="Durum filtresini kaldır"><i class="fa fa-xmark" aria-hidden="true"></i></span>
                 </button>
                 <div class="dropdown-menu apya-console-menu">
                     <button type="button" class="apya-console-menu-item" data-filter="status" data-value="">Tümü</button>
@@ -310,6 +309,8 @@
                 <button type="button" class="apya-filter-chip" id="chip-assignee"
                         data-bs-toggle="dropdown" aria-expanded="false">
                     <span data-chip-text>Atanan: tümü</span><i class="fa fa-chevron-down" aria-hidden="true"></i>
+                    <span class="apya-filter-chip-x d-none" data-chip-clear="assignee" role="button"
+                          title="Filtreyi kaldır" aria-label="Atanan filtresini kaldır"><i class="fa fa-xmark" aria-hidden="true"></i></span>
                 </button>
                 <div class="dropdown-menu apya-console-menu" id="chip-assignee-menu">
                     <button type="button" class="apya-console-menu-item" data-filter="assignee" data-value="">Tümü</button>
@@ -320,6 +321,8 @@
                 <button type="button" class="apya-filter-chip" id="chip-project"
                         data-bs-toggle="dropdown" aria-expanded="false">
                     <span data-chip-text>Proje: tümü</span><i class="fa fa-chevron-down" aria-hidden="true"></i>
+                    <span class="apya-filter-chip-x d-none" data-chip-clear="project" role="button"
+                          title="Filtreyi kaldır" aria-label="Proje filtresini kaldır"><i class="fa fa-xmark" aria-hidden="true"></i></span>
                 </button>
                 <div class="dropdown-menu apya-console-menu" id="chip-project-menu">
                     <button type="button" class="apya-console-menu-item" data-filter="project" data-value="">Tümü</button>
@@ -331,6 +334,8 @@
                 <button type="button" class="apya-filter-chip" id="chip-priority"
                         data-bs-toggle="dropdown" aria-expanded="false">
                     <span data-chip-text>Öncelik: tümü</span><i class="fa fa-chevron-down" aria-hidden="true"></i>
+                    <span class="apya-filter-chip-x d-none" data-chip-clear="priority" role="button"
+                          title="Filtreyi kaldır" aria-label="Öncelik filtresini kaldır"><i class="fa fa-xmark" aria-hidden="true"></i></span>
                 </button>
                 <div class="dropdown-menu apya-console-menu">
                     <button type="button" class="apya-console-menu-item" data-filter="priority" data-value="">Tümü</button>
@@ -347,6 +352,8 @@
                 <button type="button" class="apya-filter-chip" id="chip-daterange"
                         data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
                     <span data-chip-text>Son Tarih: tümü</span><i class="fa fa-chevron-down" aria-hidden="true"></i>
+                    <span class="apya-filter-chip-x d-none" data-chip-clear="daterange" role="button"
+                          title="Filtreyi kaldır" aria-label="Son tarih filtresini kaldır"><i class="fa fa-xmark" aria-hidden="true"></i></span>
                 </button>
                 <div class="dropdown-menu apya-console-menu p-3" style="min-width:240px;">
                     <label for="Filter_MinDueDate" class="form-label small fw-bold text-muted">@L["Tasks:Filter:MinDueDate"]</label>
@@ -357,9 +364,37 @@
                 </div>
             </div>
 
-            <button type="button" class="apya-filter-chip" id="chip-overdue" aria-pressed="false">Gecikmiş</button>
+            @* Yeni filtre buradan seçilir; seçilen kategori chip'i görünür olup
+               menüsü açılır. Değer seçilmeden kapanırsa chip yine gizlenir. *@
+            <div class="dropdown">
+                <button type="button" class="apya-filter-chip apya-filter-add" id="chip-add-filter"
+                        data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="fa fa-plus" aria-hidden="true"></i><span>Filtre</span>
+                </button>
+                <div class="dropdown-menu apya-console-menu">
+                    <button type="button" class="apya-console-menu-item" data-open-chip="chip-status">Durum</button>
+                    <button type="button" class="apya-console-menu-item" data-open-chip="chip-assignee">Atanan</button>
+                    <button type="button" class="apya-console-menu-item" data-open-chip="chip-project">Proje</button>
+                    <button type="button" class="apya-console-menu-item" data-open-chip="chip-priority">Öncelik</button>
+                    <button type="button" class="apya-console-menu-item" data-open-chip="chip-daterange">Son tarih</button>
+                </div>
+            </div>
+
+            @* Gecikmiş: kırmızı noktalı sayaç chip'i — #bar-overdue ile AYNI
+               state'i okur/yazar; sayıyı loadSummary doldurur. *@
+            <button type="button" class="apya-filter-chip apya-filter-overdue" id="chip-overdue" aria-pressed="false">
+                <span class="apya-overdue-dot" aria-hidden="true"></span><span id="chip-overdue-text">Gecikmiş</span>
+            </button>
             <button type="button" class="apya-filter-chip" id="chip-mine" aria-pressed="false">Bana atanan</button>
             <button type="button" class="apya-console-filter-clear d-none" id="btn-clear-filters">Filtreleri temizle</button>
+
+            @* Kanban kolon araçları (Grupla · Kolonlar · Görünüm) — v2'de filtre
+               çubuğunun SAĞINA yaslanır. Slot'un görünürlüğünü index.js yönetir
+               (yalnız Kanban görünümünde); içindeki düğmelerin kendi d-none'ları
+               /js/apya-kanban.js'e aittir. *@
+            <span id="kanban-tools-slot" class="d-none">
+                <partial name="_KanbanColumnTools" />
+            </span>
         </div>
     </div>
 
