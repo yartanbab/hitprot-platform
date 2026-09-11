@@ -297,6 +297,18 @@ public class ShellAppService : PlatformAppService, IShellAppService
         return true;
     }
 
+    // Doğrulama ve saklama biçimi ShellKanbanViewSetting'de — yazan (burası) ve
+    // okuyan (_KanbanBoard.cshtml → data-kanban-view) aynı sözlüğe bakar.
+    public async Task<ShellKanbanViewDto> SetKanbanViewAsync(ShellKanbanViewDto input)
+    {
+        var cleaned = ShellKanbanViewSetting.Clean(input);
+
+        await _settingManager.SetForCurrentUserAsync(
+            PlatformSettings.Shell.KanbanView, ShellKanbanViewSetting.Serialize(cleaned));
+
+        return cleaned;
+    }
+
     public async Task<List<string>> SetPinsAsync(List<string> pins)
     {
         // Menü ADI saklanır; serbest metin değil. Virgül ayraç olduğu için

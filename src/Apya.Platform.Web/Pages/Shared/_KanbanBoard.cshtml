@@ -2,8 +2,11 @@
 @using Microsoft.AspNetCore.Authorization
 @using Apya.Platform.Localization
 @using Apya.Platform.Permissions
+@using Apya.Platform.Settings
+@using Volo.Abp.Settings
 @inject IHtmlLocalizer<PlatformResource> L
 @inject IAuthorizationService AuthorizationService
+@inject ISettingProvider SettingProvider
 @*
     Merkezi Kanban board kabı (tek kaynak).
     Projeler / Görevler (/Board) / Tasks sayfaları bu partial'ı kullanır.
@@ -24,6 +27,13 @@
     // position:absolute olduğu için konumlandırılmış bir sarmalayıcı ister.
     var kbCanChangeStatus = await AuthorizationService.IsGrantedAsync(PlatformPermissions.Tasks.ChangeStatus);
     var kbCanDelete = await AuthorizationService.IsGrantedAsync(PlatformPermissions.Tasks.Delete);
+
+    // Kanban görünüm tercihi (Shell.KanbanView) — HAM JSON, apya-kanban.js
+    // ayrıştırır. Sekme düzeniyle (data-board-tabs) aynı gerekçe: tercih
+    // SAYFAYLA gelir, ikinci bir istekle değil — pano önce varsayılan
+    // yoğunlukta çizilip sonra yerine oturmasın. BOŞ = kullanıcı hiç dokunmadı
+    // → istemci varsayılanları kurar. Yazma/doğrulama ShellAppService.SetKanbanViewAsync'te.
+    var kbViewJson = await SettingProvider.GetOrNullAsync(PlatformSettings.Shell.KanbanView) ?? string.Empty;
 }
 @* Kolon araçları artık sayfanın kendi eylem çubuğunda (_KanbanColumnTools.cshtml).
    Burada yalnız board ve toplu işlem çubuğu kalır — çubuk .apya-console-bulkbar
@@ -34,7 +44,8 @@
          data-col-2="@L["Tasks:Status:InProgress"]"
          data-col-3="@L["Tasks:Status:InReview"]"
          data-col-4="@L["Tasks:Status:Done"]"
-         data-can-bulk="@((kbCanChangeStatus || kbCanDelete).ToString().ToLowerInvariant())"></div>
+         data-can-bulk="@((kbCanChangeStatus || kbCanDelete).ToString().ToLowerInvariant())"
+         data-kanban-view="@kbViewJson"></div>
 
     @if (kbCanChangeStatus || kbCanDelete)
     {

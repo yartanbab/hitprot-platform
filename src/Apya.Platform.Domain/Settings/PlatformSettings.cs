@@ -145,6 +145,20 @@ public static class PlatformSettings
         /// (bkz. PlatformSettingDefaults.ShellBoardTabs*).
         /// </summary>
         public const string BoardTabs = Prefix + ".Shell.BoardTabs";
+
+        /// <summary>
+        /// Kart Panosu (kanban) görünüm tercihi — JSON nesne:
+        /// <c>{"density":"compact","fields":{"code":true,...},"collapseEmpty":true,"hideDone":false}</c>
+        /// Yoğunluk kanban'a ÖZELDİR; uygulama geneli &lt;html data-density&gt;
+        /// ayarına BAĞLANMAZ (kanban v2 kararı — dört kademe kart tasarımıdır,
+        /// tablo satır yüksekliği değil). Üç kanban yüzeyi (/Tasks, proje detay,
+        /// /Board) aynı değeri okur; biçimin tek kaynağı ShellKanbanViewSetting
+        /// (Application.Contracts/Shell).
+        ///
+        /// BOŞ = kullanıcı hiç dokunmadı; varsayılanları istemci kurar
+        /// (/js/apya-kanban.js — BoardTabs'taki gerekçeyle aynı).
+        /// </summary>
+        public const string KanbanView = Prefix + ".Shell.KanbanView";
     }
 
     /// <summary>
@@ -468,6 +482,12 @@ public static class PlatformSettingDefaults
 
     /// <summary>Sekme başlığı üst sınırı (proje adı / kayıtlı görünüm adı).</summary>
     public const int ShellBoardTabsTitleMax = 40;
+
+    /// <summary>
+    /// Kanban görünüm tercihi varsayılanı: BOŞ = kullanıcı hiç dokunmadı.
+    /// Varsayılan değerler istemcide (/js/apya-kanban.js); buraya kopyalanmaz.
+    /// </summary>
+    public const string ShellKanbanView = "";
 
     /// <summary>
     /// Menü düzeni varsayılanı: BOŞ — "kullanıcı hiç dokunmadı" demek. Boşken

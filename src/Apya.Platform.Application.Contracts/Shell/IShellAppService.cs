@@ -39,4 +39,12 @@ public interface IShellAppService : IApplicationService
     /// taşınırdı, oysa yalnız bu sayfaları ilgilendiriyor.
     /// </summary>
     Task<List<ShellBoardTabDto>> SetBoardTabsAsync(SetShellBoardTabsInput input);
+
+    /// <summary>
+    /// Kart Panosu görünüm tercihini topluca değiştirir (istemci tam nesneyi
+    /// gönderir). Sunucuda saklanır ki üç kanban yüzeyi ve cihazlar arası
+    /// taşınsın. OKUMA burada YOK — BoardTabs'taki gerekçeyle aynı:
+    /// _KanbanBoard.cshtml ayarı doğrudan okuyup data attribute ile basar.
+    /// </summary>
+    Task<ShellKanbanViewDto> SetKanbanViewAsync(ShellKanbanViewDto input);
 }
