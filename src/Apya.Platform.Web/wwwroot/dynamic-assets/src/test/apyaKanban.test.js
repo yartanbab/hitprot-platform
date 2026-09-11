@@ -13,9 +13,15 @@ let granted = {};
 // _KanbanBoard.cshtml'in birebir yansıması: kolonlar JS'ten basılır, partial
 // yalnız kabı ve proje seçili değilken kullanılacak varsayılan adları taşır.
 // Araç çubuğu da partial'da: "Grupla" kulvar açık panoda, "Kolonları düzenle"
-// yetki + proje seçiliyken görünür (ikisi de JS tarafından açılıp kapanıyor).
-function boardHtml(canBulk) {
+// yetki + proje seçiliyken, "Görünüm" (v2) her zaman görünür.
+//
+// data-kanban-view: Shell.KanbanView tercihinin sayfaya basılmış hâli. Testler
+// varsayılan olarak {"collapseEmpty":false} kullanır ki boş kolonlar raya inip
+// eski senaryoları bulandırmasın; otomatik daraltma kendi describe'ında
+// gerçek varsayılanla (boş attribute) doğrulanır.
+function boardHtml(canBulk, viewJson) {
     canBulk = canBulk === false ? 'false' : 'true';
+    const view = viewJson === undefined ? '{"collapseEmpty":false}' : viewJson;
     return `<div class="kanban-page">
         <div class="kanban-toolbar js-kanban-toolbar d-none">
             <label class="kanban-group js-kanban-group d-none">
@@ -25,17 +31,22 @@ function boardHtml(canBulk) {
                     <option value="assignee">Atanana göre</option>
                 </select>
             </label>
-            <button type="button" class="kanban-edit-cols js-edit-cols d-none">Kolonları düzenle</button>
+            <button type="button" class="kanban-edit-cols js-edit-cols d-none">Kolonlar</button>
+            <button type="button" class="kanban-view-btn js-kanban-view" aria-expanded="false">
+                Görünüm: <span class="js-kanban-view-density">Kompakt</span>
+            </button>
         </div>
         <div class="kanban-wrap">
             <div class="kanban-board"
                 data-col-1="Yapılacak" data-col-2="Sürüyor"
                 data-col-3="Testte" data-col-4="Tamamlandı"
-                data-can-bulk="${canBulk}"></div>
+                data-can-bulk="${canBulk}" data-kanban-view='${view}'></div>
             <div class="apya-console-bulkbar d-none js-kb-bar">
                 <span class="js-kb-count">0 kart seçili</span>
                 <div class="js-kb-move-menu"></div>
                 <div class="js-kb-assign-menu"></div>
+                <button type="button" class="js-kb-defer" data-days="1">1 gün ertele</button>
+                <button type="button" class="js-kb-priority" data-priority="1">Düşük</button>
                 <button type="button" class="js-kb-cancel-tasks">İptal et</button>
                 <button type="button" class="js-kb-delete">Sil</button>
                 <button type="button" class="js-kb-undo d-none">Geri al</button>
@@ -64,17 +75,20 @@ async function flush() {
 // değişen satırları göndermeli, sıra değişmediyse reorder'a hiç dokunmamalı.
 let colCalls;
 
-function mountBoard(cols, tasks, canBulk) {
-    document.body.innerHTML = boardHtml(canBulk);
-    colCalls = { update: [], reorder: [], create: [], delete: [], map: [], assign: [], priority: [], cancel: [], restore: [] };
+function mountBoard(cols, tasks, canBulk, viewJson) {
+    document.body.innerHTML = boardHtml(canBulk, viewJson);
+    colCalls = { update: [], reorder: [], create: [], delete: [], map: [], assign: [], priority: [], cancel: [], restore: [], status: [], defer: [], taskDelete: [], move: [], list: 0 };
     window.apya.platform = {
         tasks: {
             task: {
-                getList: () => Promise.resolve({ items: tasks || [] }),
+                getList: () => { colCalls.list += 1; return Promise.resolve({ items: tasks || [] }); },
                 getActiveTimeLog: () => Promise.resolve(null),
                 getUsersLookup: () => Promise.resolve({ items: [{ id: 'u1', userName: 'burak' }, { id: 'u2', userName: 'selin' }] }),
                 setAssignee: (id, uid) => { colCalls.assign.push({ id, uid }); return Promise.resolve(); },
                 setPriority: (id, p) => { colCalls.priority.push({ id, p }); return Promise.resolve(); },
+                updateStatus: (id, s) => { colCalls.status.push({ id, s }); return Promise.resolve(); },
+                defer: (id, days) => { colCalls.defer.push({ id, days }); return Promise.resolve(); },
+                delete: (id) => { colCalls.taskDelete.push(id); return Promise.resolve(); },
                 cancel: (id, reason) => { colCalls.cancel.push({ id, reason }); return Promise.resolve(); },
                 restoreFromCancel: (id) => { colCalls.restore.push(id); return Promise.resolve(); }
             }
@@ -86,7 +100,8 @@ function mountBoard(cols, tasks, canBulk) {
                 reorder: (pid, ids) => { colCalls.reorder.push({ pid, ids }); return Promise.resolve(); },
                 create: (dto) => { colCalls.create.push(dto); return Promise.resolve({}); },
                 delete: (id) => { colCalls.delete.push(id); return Promise.resolve(); },
-                setStatusMapping: (id, dto) => { colCalls.map.push({ id, dto }); return Promise.resolve({}); }
+                setStatusMapping: (id, dto) => { colCalls.map.push({ id, dto }); return Promise.resolve({}); },
+                moveTaskToColumn: (taskId, columnId) => { colCalls.move.push({ taskId, columnId }); return Promise.resolve(); }
             }
         }
     };
@@ -388,6 +403,9 @@ describe('kolon başlığındaki ＋ (görev ekle)', () => {
 });
 
 describe('boş kolon metni', () => {
+    // v2: durum başına ayrı metinler kalktı — tek kesik çizgili bırakma hedefi.
+    // (Bu describe daraltma KAPALI aynayla koşar; açıkken boş kolon raya iner,
+    // o yol "Görünüm tercihi" describe'ında.)
     it('kartı olmayan kolonda görünür, dolu kolonda görünmez', async () => {
         mountBoard(sysCols, [{ id: 't1', code: 'GRV-1', title: 'A', status: 1, priority: 2 }]);
         apya.kanban.create({ projectId: 'p1' }).load();
@@ -395,7 +413,7 @@ describe('boş kolon metni', () => {
 
         expect(col(1).querySelector('.kanban-empty')).toBeNull();
         expect(col(2).querySelector('.kanban-empty')).not.toBeNull();
-        expect(col(3).querySelector('.kanban-empty-title').textContent).toBe('Test bekleyen iş yok');
+        expect(col(3).querySelector('.kanban-empty').textContent).toBe('Kart yok · buraya sürükle');
     });
 
     it('boş metin kart sayılmaz — sayaç 0 kalır', async () => {
@@ -406,17 +424,17 @@ describe('boş kolon metni', () => {
         expect(col(2).querySelector('.kanban-count').textContent).toBe('0');
     });
 
-    it('özel kolonun kendi genel metni olur', async () => {
+    it('özel kolonda da aynı bırakma hedefi görünür', async () => {
         mountBoard(sysCols.concat([customCol]), []);
         apya.kanban.create({ projectId: 'p1' }).load();
         await flush();
 
         const custom = document.querySelector('.js-custom-col');
-        expect(custom.querySelector('.kanban-empty-title').textContent).toBe('Bu kolon boş');
+        expect(custom.querySelector('.kanban-empty').textContent).toBe('Kart yok · buraya sürükle');
     });
 });
 
-describe('sistem kolonunda WIP rozeti', () => {
+describe('sistem kolonunda WIP çizgisi', () => {
     it('limit gelince "n / limit" yazar, aşımda is-over sınıfı alır', async () => {
         const cols = sysCols.map((c) => (c.statusValue === 2 ? { ...c, wipLimit: 1 } : c));
         mountBoard(cols, [
@@ -428,8 +446,10 @@ describe('sistem kolonunda WIP rozeti', () => {
 
         const wip = col(2).querySelector('.kanban-wip');
         expect(wip.classList.contains('d-none')).toBe(false);
-        expect(wip.textContent).toBe('2 / 1');
+        expect(wip.querySelector('.kanban-wip-label').textContent).toBe('2 / 1');
         expect(wip.classList.contains('is-over')).toBe(true);
+        // Dolum çizgisi %100'de kırpılır — aşım rengi zaten söylüyor.
+        expect(wip.querySelector('.kanban-wip-fill').style.width).toBe('100%');
     });
 
     it('limiti olmayan sistem kolonunda rozet gizli kalır', async () => {
@@ -463,7 +483,7 @@ describe('kart kimlik rozeti', () => {
         apya.kanban.create({ projectId: 'p1' }).load();
         await flush();
 
-        expect(document.querySelector('#kanban-todo .kanban-card small').textContent).toContain('GRV-17');
+        expect(document.querySelector('#kanban-todo .kanban-card .kanban-card-code').textContent).toContain('GRV-17');
     });
 
     it('kod yoksa GUID kısaltmasına düşer', async () => {
@@ -471,7 +491,7 @@ describe('kart kimlik rozeti', () => {
         apya.kanban.create({ projectId: 'p1' }).load();
         await flush();
 
-        expect(document.querySelector('#kanban-todo .kanban-card small').textContent).toContain('#aaaa');
+        expect(document.querySelector('#kanban-todo .kanban-card .kanban-card-code').textContent).toContain('#aaaa');
     });
 });
 
@@ -794,12 +814,14 @@ describe('araç çubuğu görünürlüğü', () => {
         expect(hidden('.js-kanban-toolbar')).toBe(false);
     });
 
-    it('ne kulvar ne kolon yetkisi varsa çubuğun tamamı gizlenir', async () => {
+    it('kulvar ve kolon yetkisi olmasa da çubuk görünür — "Görünüm" hep var (v2)', async () => {
         mountBoard(sysCols, []);
         apya.kanban.create({ projectId: 'p1' }).load();
         await flush();
 
-        expect(hidden('.js-kanban-toolbar')).toBe(true);
+        expect(hidden('.js-kanban-toolbar')).toBe(false);
+        expect(hidden('.js-kanban-group')).toBe(true);
+        expect(hidden('.js-edit-cols')).toBe(true);
     });
 
     it('genel panoda proje seçilince "Kolonları düzenle" açılır', async () => {
@@ -1162,22 +1184,23 @@ describe('risk dili ve kart meta', () => {
         });
     });
 
-    it('gecikmiş kartta gün sayısı yazar', async () => {
+    it('gecikmiş kart gün sayısını taşır: data-late + tarih dilinde "gün geç"', async () => {
         mountBoard(sysCols, [{ id: 't1', code: 'GRV-1', title: 'A', status: 1, priority: 2, dueDate: gecmis }]);
         apya.kanban.create({ projectId: 'p1' }).load();
         await flush();
 
-        const chip = document.querySelector('.kanban-chip-late');
-        expect(chip).not.toBeNull();
-        expect(chip.textContent).toBe('3 gün gecikti');
+        const card = document.querySelector('.kanban-card');
+        expect(card.getAttribute('data-late')).toBe('3');
+        expect(card.classList.contains('is-late')).toBe(true);
+        expect(card.querySelector('.kanban-card-due').textContent).toContain('3 gün geç');
     });
 
-    it('zamanı gelmemiş kartta gecikme rozeti olmaz', async () => {
+    it('zamanı gelmemiş kart gecikme işareti taşımaz', async () => {
         mountBoard(sysCols, [{ id: 't1', code: 'GRV-1', title: 'A', status: 1, priority: 2, dueDate: ileri }]);
         apya.kanban.create({ projectId: 'p1' }).load();
         await flush();
 
-        expect(document.querySelector('.kanban-chip-late')).toBeNull();
+        expect(document.querySelector('.kanban-card[data-late]')).toBeNull();
     });
 
     it('tamamlanmış kart gecikmiş sayılmaz', async () => {
@@ -1185,7 +1208,7 @@ describe('risk dili ve kart meta', () => {
         apya.kanban.create({ projectId: 'p1' }).load();
         await flush();
 
-        expect(document.querySelector('.kanban-chip-late')).toBeNull();
+        expect(document.querySelector('.kanban-card[data-late]')).toBeNull();
     });
 
     it('engelli kart bekleten görevin kodunu taşır', async () => {
@@ -1204,13 +1227,13 @@ describe('risk dili ve kart meta', () => {
         apya.kanban.create({ projectId: 'p1' }).load();
         await flush();
 
-        const meta = document.querySelector('.kanban-card-meta').textContent;
-        expect(meta).toContain('2');
-        expect(meta).toContain('3/8');
-        expect(document.querySelectorAll('.kanban-card-metaitem').length).toBe(2); // ek yok
+        const items = document.querySelectorAll('.kanban-card-metaitem');
+        expect(items.length).toBe(2); // ek yok
+        expect(items[0].textContent).toContain('2');
+        expect(items[1].textContent).toContain('3/8');
     });
 
-    it('kolon başlığı gecikmiş/engelli özetini gösterir', async () => {
+    it('kolon başlığı "N geç" rozetini gösterir (kartların data-late\'inden)', async () => {
         mountBoard(sysCols, [
             { id: 't1', code: 'GRV-1', title: 'A', status: 1, priority: 2, dueDate: gecmis },
             { id: 't2', code: 'GRV-2', title: 'B', status: 1, priority: 2, dueDate: gecmis },
@@ -1219,26 +1242,21 @@ describe('risk dili ve kart meta', () => {
         apya.kanban.create({ projectId: 'p1' }).load();
         await flush();
 
-        const sum = col(1).querySelector('.kanban-col-summary');
-        expect(sum.querySelector('.is-late').textContent).toBe('2 gecikmiş');
-        expect(sum.querySelector('.is-blocked').textContent).toBe('1 engelli');
+        const late = col(1).querySelector('.js-col-late');
+        expect(late.classList.contains('d-none')).toBe(false);
+        expect(late.textContent).toBe('2 geç');
+        // Gecikmesiz kolonda rozet gizli.
+        expect(col(2).querySelector('.js-col-late').classList.contains('d-none')).toBe(true);
     });
 
-    it('pano üstü uyarı şeridi toplamları söyler, risk yokken hiç çizilmez', async () => {
+    it('pano üstü kırmızı risk şeridi v2\'de HİÇ çizilmez', async () => {
         mountBoard(sysCols, [
             { id: 't1', code: 'GRV-1', title: 'A', status: 1, priority: 2, dueDate: gecmis },
             { id: 't2', code: 'GRV-2', title: 'B', status: 2, priority: 2, blockedByCodes: ['GRV-9'] }
         ]);
-        const kb = apya.kanban.create({ projectId: 'p1' });
-        kb.load();
-        await flush();
-        expect(document.querySelector('.kanban-risk-strip').textContent)
-            .toContain('1 görev gecikmiş, 1 görev engelli.');
-
-        // Riskler kalkınca şerit de kalkmalı.
-        mountBoard(sysCols, [{ id: 't3', code: 'GRV-3', title: 'C', status: 1, priority: 2 }]);
         apya.kanban.create({ projectId: 'p1' }).load();
         await flush();
+
         expect(document.querySelector('.kanban-risk-strip')).toBeNull();
     });
 });
@@ -1342,5 +1360,260 @@ describe('kolon aç/kapa', () => {
         expect(col(1).classList.contains('is-collapsed')).toBe(true);
         expect(col(1).querySelectorAll('.kanban-card').length).toBe(2);
         expect(col(1).querySelector('.kanban-count').textContent).toBe('2');
+    });
+});
+
+// ── Kanban v2: Görünüm tercihi (Shell.KanbanView) ──────────────────────────
+// Tercih sayfaya data-kanban-view ile gelir, her değişiklik POST ile sunucuya
+// yazılır. Yoğunluk kart YAPISINI değiştirir; alan chip'leri parça basımını,
+// anahtarlar boş kolon/Tamamlandı davranışını yönetir.
+describe('görünüm tercihi (v2)', () => {
+    let fetchCalls;
+    beforeEach(() => {
+        fetchCalls = [];
+        global.fetch = (url, opts) => {
+            fetchCalls.push({ url, body: JSON.parse((opts && opts.body) || '{}') });
+            return Promise.resolve({ ok: true });
+        };
+    });
+
+    const task = { id: 't1', code: 'GRV-17', title: 'Kart', status: 1, priority: 2 };
+
+    it('kayıt yokken varsayılan kompakt: board attribute + 2 satır kırpılmış başlık', async () => {
+        mountBoard(sysCols, [task]);
+        apya.kanban.create({ projectId: 'p1' }).load();
+        await flush();
+
+        expect(document.querySelector('.kanban-board').getAttribute('data-kb-density')).toBe('compact');
+        expect(document.querySelector('.kanban-card-title').classList.contains('is-clamped')).toBe(true);
+    });
+
+    it('kayıtlı yoğunluk uygulanır: listede tek satır, kod kısalır, alt satır yok', async () => {
+        mountBoard(sysCols, [task], true, '{"density":"list","collapseEmpty":false}');
+        apya.kanban.create({ projectId: 'p1' }).load();
+        await flush();
+
+        expect(document.querySelector('.kanban-board').getAttribute('data-kb-density')).toBe('list');
+        const card = document.querySelector('.kanban-card');
+        expect(card.querySelector('.kanban-card-foot')).toBeNull();
+        expect(card.querySelector('.kanban-card-code').textContent).toBe('17');
+        expect(card.querySelector('.kanban-card-code').title).toBe('GRV-17');
+        expect(document.querySelector('.js-kanban-view-density').textContent).toBe('Liste');
+    });
+
+    it('başlık yoğunluğu: yalnız başlık + ⋯ (kod alanı hiç basılmaz)', async () => {
+        mountBoard(sysCols, [task], true, '{"density":"title","collapseEmpty":false}');
+        apya.kanban.create({ projectId: 'p1' }).load();
+        await flush();
+
+        const card = document.querySelector('.kanban-card');
+        expect(card.querySelector('.kanban-card-title')).not.toBeNull();
+        expect(card.querySelector('.kanban-card-code')).toBeNull();
+        expect(card.querySelector('.js-card-menu')).not.toBeNull();
+    });
+
+    it('alan kapatma: kod kapalıyken basılmaz, öncelik kapalıyken kb-no-pri', async () => {
+        mountBoard(sysCols, [task], true,
+            '{"fields":{"code":false,"pri":false},"collapseEmpty":false}');
+        apya.kanban.create({ projectId: 'p1' }).load();
+        await flush();
+
+        const card = document.querySelector('.kanban-card');
+        expect(card.querySelector('.kanban-card-code')).toBeNull();
+        expect(card.classList.contains('kb-no-pri')).toBe(true);
+    });
+
+    it('kayıtta olmayan alan AÇIK sayılır (yeni alan eski kaydı ezmez)', async () => {
+        mountBoard(sysCols, [task], true, '{"fields":{},"collapseEmpty":false}');
+        apya.kanban.create({ projectId: 'p1' }).load();
+        await flush();
+
+        expect(document.querySelector('.kanban-card-code')).not.toBeNull();
+    });
+
+    it('tamamlananları gizle: Tamamlandı kolonu tamamen gizlenir', async () => {
+        mountBoard(sysCols, [task], true, '{"hideDone":true,"collapseEmpty":false}');
+        apya.kanban.create({ projectId: 'p1' }).load();
+        await flush();
+
+        expect(col(4).classList.contains('d-none')).toBe(true);
+        expect(col(1).classList.contains('d-none')).toBe(false);
+    });
+
+    it('boş kolonları daralt (gerçek varsayılan): boş kolon raya iner, kartlısı inmez', async () => {
+        mountBoard(sysCols, [task], true, '');
+        apya.kanban.create({ projectId: 'p1' }).load();
+        await flush();
+
+        expect(col(2).classList.contains('is-collapsed')).toBe(true);
+        expect(col(2).classList.contains('is-auto-collapsed')).toBe(true);
+        expect(col(1).classList.contains('is-collapsed')).toBe(false);
+        // Ray hâlinde bırakma kutusu basılmaz.
+        expect(col(2).querySelector('.kanban-empty')).toBeNull();
+    });
+
+    it('kullanıcının açık tutma tercihi otomatik daraltmayı ezer', async () => {
+        localStorage.setItem('apya-kanban-collapsed-p1', '{"s2":false}');
+        mountBoard(sysCols, [task], true, '');
+        apya.kanban.create({ projectId: 'p1' }).load();
+        await flush();
+
+        expect(col(2).classList.contains('is-collapsed')).toBe(false);
+        expect(col(2).querySelector('.kanban-empty')).not.toBeNull();
+        localStorage.removeItem('apya-kanban-collapsed-p1');
+    });
+
+    it('raya tıklamak kolonu açar ve tercihi açık olarak saklar', async () => {
+        mountBoard(sysCols, [task], true, '');
+        apya.kanban.create({ projectId: 'p1' }).load();
+        await flush();
+        expect(col(2).classList.contains('is-collapsed')).toBe(true);
+
+        col(2).click();
+
+        expect(col(2).classList.contains('is-collapsed')).toBe(false);
+        expect(JSON.parse(localStorage.getItem('apya-kanban-collapsed-p1')).s2).toBe(false);
+        localStorage.removeItem('apya-kanban-collapsed-p1');
+    });
+
+    it('Görünüm popover\'ı: yoğunluk seçimi anında uygular, sunucuya yazar, yeni istek atmaz', async () => {
+        mountBoard(sysCols, [task]);
+        apya.kanban.create({ projectId: 'p1' }).load();
+        await flush();
+        const listCallsBefore = colCalls.list;
+
+        document.querySelector('.js-kanban-view').click();
+        const pop = document.querySelector('.kanban-view-pop');
+        expect(pop).not.toBeNull();
+
+        pop.querySelector('[data-kb-density="list"]').click();
+        await flush();
+
+        expect(document.querySelector('.kanban-board').getAttribute('data-kb-density')).toBe('list');
+        expect(document.querySelector('.js-kanban-view-density').textContent).toBe('Liste');
+        // Yeniden çizim bellekteki listeden — görev servisi tekrar ÇAĞRILMAZ.
+        expect(colCalls.list).toBe(listCallsBefore);
+        expect(fetchCalls.length).toBe(1);
+        expect(fetchCalls[0].url).toBe('/api/app/shell/set-kanban-view');
+        expect(fetchCalls[0].body.density).toBe('list');
+    });
+
+    it('popover alan chip\'i alanı kapatıp sunucuya yazar', async () => {
+        mountBoard(sysCols, [task]);
+        apya.kanban.create({ projectId: 'p1' }).load();
+        await flush();
+
+        document.querySelector('.js-kanban-view').click();
+        document.querySelector('.kanban-view-pop [data-kb-field="code"]').click();
+        await flush();
+
+        expect(document.querySelector('.kanban-card-code')).toBeNull();
+        expect(fetchCalls[0].body.fields.code).toBe(false);
+    });
+
+    it('Proje / Alt görev chip\'leri yalnız genel panoda listelenir', async () => {
+        mountBoard(sysCols, [task]);
+        apya.kanban.create({ projectId: 'p1', showProjectName: false }).load();
+        await flush();
+        document.querySelector('.js-kanban-view').click();
+        expect(document.querySelector('.kanban-view-pop [data-kb-field="project"]')).toBeNull();
+        document.querySelector('.kanban-view-pop').remove();
+
+        mountBoard(sysCols, [task]);
+        apya.kanban.create({ projectId: null, showProjectName: true }).load();
+        await flush();
+        document.querySelector('.js-kanban-view').click();
+        expect(document.querySelector('.kanban-view-pop [data-kb-field="project"]')).not.toBeNull();
+    });
+});
+
+// ── Kanban v2: kart ⋯ menüsü ────────────────────────────────────────────────
+// Eylemler toplu çubuğun tekil karşılıkları; yetki kapıları çubuktaki
+// düğmelerin VARLIĞINDAN okunur (sunucu neyi bastıysa o).
+describe('kart ⋯ menüsü (v2)', () => {
+    const task = { id: 't1', code: 'GRV-17', title: 'Kart', status: 1, priority: 2 };
+    const openMenu = () => {
+        document.querySelector('.js-card-menu').click();
+        return document.querySelector('.kanban-card-popmenu');
+    };
+
+    it('menü BODY\'ye açılır; başlıkta kod, çubuktaki eylemler listede', async () => {
+        mountBoard(sysCols, [task]);
+        apya.kanban.create({ projectId: 'p1' }).load();
+        await flush();
+
+        const menu = openMenu();
+        expect(menu).not.toBeNull();
+        expect(menu.parentElement).toBe(document.body);
+        expect(menu.querySelector('.kanban-popmenu-head').textContent).toBe('GRV-17');
+        const items = [...menu.querySelectorAll('.kanban-popmenu-item')].map((b) => b.textContent);
+        expect(items).toContain('Taşı');
+        expect(items).toContain('Ata');
+    });
+
+    it('öncelik noktası tek karta işler', async () => {
+        mountBoard(sysCols, [task]);
+        apya.kanban.create({ projectId: 'p1' }).load();
+        await flush();
+
+        openMenu().querySelector('.kanban-popmenu-dot[data-priority="4"]').click();
+        await flush();
+
+        expect(colCalls.priority).toEqual([{ id: 't1', p: 4 }]);
+        expect(document.querySelector('.kanban-card-popmenu')).toBeNull(); // eylem menüyü kapatır
+    });
+
+    it('Ertele 1g tek kartı öteler', async () => {
+        mountBoard(sysCols, [task]);
+        apya.kanban.create({ projectId: 'p1' }).load();
+        await flush();
+
+        const pills = openMenu().querySelectorAll('.kanban-popmenu-pill');
+        pills[0].click();
+        await flush();
+
+        expect(colCalls.defer).toEqual([{ id: 't1', days: 1 }]);
+    });
+
+    it('Taşı alt menüsü panodaki kolonları listeler, seçim durumu günceller', async () => {
+        mountBoard(sysCols, [task]);
+        apya.kanban.create({ projectId: 'p1' }).load();
+        await flush();
+
+        const menu = openMenu();
+        [...menu.querySelectorAll('.kanban-popmenu-item')]
+            .find((b) => b.textContent === 'Taşı').click();
+        const sub = menu.querySelectorAll('.kanban-popmenu-subitem');
+        // 4 sistem kolonu; İptal hedeflerde YOK (iptal sebep sorar).
+        expect(sub.length).toBe(4);
+
+        [...sub].find((b) => b.textContent === 'Sürüyor').click();
+        await flush();
+
+        // Proje panosunda sistem kolonunun DB kaydı var → kolon ucundan taşınır
+        // (MoveTaskToColumnAsync durumu da günceller — toplu Taşı ile aynı yol).
+        expect(colCalls.move).toEqual([{ taskId: 't1', columnId: 'c2' }]);
+    });
+
+    it('toplu çubuk yokken yalnız kart-sahibi eylemleri kalır (Sil)', async () => {
+        mountBoard(sysCols, [{ ...task, creatorId: 'u1' }]);
+        document.querySelector('.js-kb-bar').remove();   // yetkisiz sayfa: çubuk hiç basılmaz
+        apya.kanban.create({ projectId: 'p1' }).load();
+        await flush();
+
+        const menu = openMenu();
+        const items = [...menu.querySelectorAll('.kanban-popmenu-item')].map((b) => b.textContent);
+        expect(items).not.toContain('Taşı');
+        expect(items).not.toContain('Ata');
+        expect(items).toContain('Sil');
+    });
+
+    it('iptal edilmiş kartın menüsünde "İptali geri al" olur', async () => {
+        mountBoard(sysCols, [{ ...task, status: 0 }]);
+        apya.kanban.create({ projectId: 'p1' }).load();
+        await flush();
+
+        const items = [...openMenu().querySelectorAll('.kanban-popmenu-item')].map((b) => b.textContent);
+        expect(items).toContain('İptali geri al');
     });
 });
